@@ -33,7 +33,7 @@ test('empty or unstructured privileged output is UNKNOWN, never implicit success
   await assert.rejects(()=>before({sessionID:'s',tool:'bash',args:{command:'git push',cwd:'/repo'}},{args:{command:'git push',cwd:'/repo'}}),/already in-flight or completed/)
 })
 
-test('nonzero exit is deterministic failure but persistent/native authority may retry without a second HHC approval', async()=>{
+test('nonzero exit is deterministic failure but persistent/native authority may retry without a second Hi approval', async()=>{
   const store=new MissionStore(); const m=store.start('s','deploy release')
   const before=createToolBeforeHook(store), after=createToolAfterHook(store)
   authorize(m,'git push','/repo')
@@ -42,7 +42,7 @@ test('nonzero exit is deterministic failure but persistent/native authority may 
   assert.equal(m.authority?.executing,undefined)
   assert.equal(m.status,'waiting-user')
   await before({sessionID:'s',tool:'bash',args:{command:'git push',cwd:'/repo'}},{args:{command:'git push',cwd:'/repo'}})
-  assert.ok(m.authority?.executing,'retry may proceed after host permission resolution; HHC must not add a second approval gate')
+  assert.ok(m.authority?.executing,'retry may proceed after host permission resolution; Hi must not add a second approval gate')
 })
 
 test('authority outcome uses OpenCode bash metadata.exit and treats no exit signal as unknown',()=>{

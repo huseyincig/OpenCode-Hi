@@ -1,4 +1,4 @@
-// Auto-init: when `.opencode/oho-routing.json` is missing in the
+// Auto-init: when `.opencode/hi/policy/routing.json` is missing in the
 // project root, write a sensible default based on the opencode-go
 // provider family. This makes per-role model routing work out of
 // the box without the user having to run
@@ -12,7 +12,7 @@
 // are preserved across runs.
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 
 export const DEFAULT_ROLE_MODELS_OPENCODE_GO: Record<string, string[]> = {
   'working-manager': ['opencode-go/minimax-m3'],
@@ -29,33 +29,33 @@ export const DEFAULT_STRATEGY: 'quality' = 'quality'
 
 export function defaultProjectRoutingConfig(availableModelIDs?: string[]): {
   schema: 1
-  type: 'oho-routing'
-  routing: { strategy: 'quality'; modelPolicy:'recommended'; roleModels: Record<string, string[]>; roleVariants:Record<string,Record<string,string>>; smartSelectRoles:string[] }
+  type: 'hi-routing'
+  routing: { strategy: 'quality'; modelPolicy:'recommended'; roleModels: Record<string, string[]>; roleVariants:Record<string,Record<string,string>>; adaptiveRoles:string[] }
   applied_at: number
   applied_by: string
 } {
   return {
     schema: 1,
-    type: 'oho-routing',
+    type: 'hi-routing',
     routing: {
       strategy: DEFAULT_STRATEGY,
       modelPolicy: 'recommended',
       roleModels: Object.fromEntries(Object.entries(DEFAULT_ROLE_MODELS_OPENCODE_GO).map(([role, ids])=>[role, availableModelIDs !== undefined ? ids.filter(id=>availableModelIDs.includes(id)) : [...ids]]).filter(([,ids])=>(ids as string[]).length>0)),
       roleVariants: {},
-      smartSelectRoles: availableModelIDs === undefined ? [] : Object.entries(DEFAULT_ROLE_MODELS_OPENCODE_GO).filter(([,ids])=>!ids.some(id=>availableModelIDs.includes(id))).map(([role])=>role),
+      adaptiveRoles: availableModelIDs === undefined ? [] : Object.entries(DEFAULT_ROLE_MODELS_OPENCODE_GO).filter(([,ids])=>!ids.some(id=>availableModelIDs.includes(id))).map(([role])=>role),
     },
     applied_at: Date.now(),
-    applied_by: 'opencode-hhc-orchestrator',
+    applied_by: 'opencode-hi',
   }
 }
 
 export function ensureProjectRoutingConfig(projectRoot: string, availableModelIDs?: string[]): { created: boolean; path: string; configuredRoles?: number; reason?: string } {
-  const path = join(projectRoot, '.opencode', 'oho-routing.json')
+  const path = join(projectRoot, '.opencode', 'hi', 'policy', 'routing.json')
   if (existsSync(path)) {
     try {
       const current=JSON.parse(readFileSync(path,'utf8'))
-      if(current?.schema===1&&current?.type==='oho-routing'&&current.routing&&typeof current.routing==='object')return{created:false,path}
-      if(current?.schema===1&&current?.type==='oho-routing'){
+      if(current?.schema===1&&current?.type==='hi-routing'&&current.routing&&typeof current.routing==='object')return{created:false,path}
+      if(current?.schema===1&&current?.type==='hi-routing'){
         const next=defaultProjectRoutingConfig(availableModelIDs),configuredRoles=Object.keys(next.routing.roleModels).length
         if(availableModelIDs !== undefined && configuredRoles===0)return{created:false,path,configuredRoles:0,reason:'runtime-inventory-has-no-curated-recommended-models'}
         current.routing=next.routing;current.applied_at=next.applied_at;current.applied_by=next.applied_by
@@ -68,7 +68,7 @@ export function ensureProjectRoutingConfig(projectRoot: string, availableModelID
   const next=defaultProjectRoutingConfig(availableModelIDs)
   const configuredRoles=Object.keys(next.routing.roleModels).length
   if(availableModelIDs !== undefined && configuredRoles===0)return { created:false, path, configuredRoles:0, reason:'runtime-inventory-has-no-curated-recommended-models' }
-  mkdirSync(join(projectRoot, '.opencode'), { recursive: true })
+  mkdirSync(dirname(path), { recursive: true })
   writeFileSync(path, JSON.stringify(next, null, 2) + '\n', 'utf8')
   return { created: true, path, configuredRoles, reason:availableModelIDs !== undefined?'inventory-validated-recommended-models':'offline-defaults' }
 }

@@ -16,8 +16,8 @@ export interface MissionMetrics {
     user_interruptions: number;
     premature_stop_blocks: number;
     stale_verification_blocks: number;
-    autopilot_recovery_events: number;
-    autopilot_recovery_success: number;
+    continuation_recovery_events: number;
+    continuation_recovery_success: number;
     evidence_items: number;
     failed_workers: number;
 }

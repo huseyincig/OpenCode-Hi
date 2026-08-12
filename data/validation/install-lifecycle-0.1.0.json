@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "kind": "LOCAL_CONFIG_LIFECYCLE",
+  "claim_boundary": "Local filesystem/config lifecycle only. No OpenCode binary was available, so plugin-loader/runtime acceptance is not claimed.",
+  "steps": {
+    "doctor-reconfigured": {
+      "status": "OK",
+      "product": "OpenCode-Hi",
+      "short": "HI",
+      "config": "/tmp/tmp.fpphWd43Ij/project/opencode.json",
+      "hi_specs": [
+        "opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git#0123456789abcdef0123456789abcdef01234567"
+      ],
+      "ownership": {
+        "state": "healthy",
+        "schema": 2,
+        "config_drift": false
+      },
+      "routing": {
+        "path": "/tmp/tmp.fpphWd43Ij/project/.opencode/hi/policy/routing.json",
+        "schema": 1,
+        "valid": true
+      },
+      "issues": [],
+      "warnings": [],
+      "note": "Registration/ownership doctor is static; actual plugin/agent/native-skill/model load must be verified in OpenCode runtime."
+    },
+    "uninstall": {
+      "status": "APPLIED",
+      "product": "OpenCode-Hi",
+      "config": "/tmp/tmp.fpphWd43Ij/project/opencode.json",
+      "removed": [
+        "opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git#0123456789abcdef0123456789abcdef01234567"
+      ],
+      "restart_required": true
+    },
+    "reconfigure": {
+      "status": "APPLIED",
+      "product": "OpenCode-Hi",
+      "config": "/tmp/tmp.fpphWd43Ij/project/opencode.json",
+      "project_config": "/tmp/tmp.fpphWd43Ij/project/.opencode/hi/policy/routing.json",
+      "routing_config": "/tmp/tmp.fpphWd43Ij/project/.opencode/hi/policy/routing.json",
+      "changed": [
+        "primaryMode",
+        "parallel.enabled",
+        "parallel.max",
+        "routing.maxFallbacks"
+      ],
+      "primaryMode": "working-manager",
+      "restart_required": true,
+      "note": "Only explicitly supplied HI settings were changed in the project-owned HI config. Native OpenCode config, user plugins/MCP/unknown fields were not mutated."
+    },
+    "doctor-installed": {
+      "status": "OK",
+      "product": "OpenCode-Hi",
+      "short": "HI",
+      "config": "/tmp/tmp.fpphWd43Ij/project/opencode.json",
+      "hi_specs": [
+        "opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git#0123456789abcdef0123456789abcdef01234567"
+      ],
+      "ownership": {
+        "state": "healthy",
+        "schema": 2,
+        "config_drift": false
+      },
+      "routing": {
+        "path": "/tmp/tmp.fpphWd43Ij/project/.opencode/hi/policy/routing.json",
+        "schema": null,
+        "valid": true
+      },
+      "issues": [],
+      "warnings": [],
+      "note": "Registration/ownership doctor is static; actual plugin/agent/native-skill/model load must be verified in OpenCode runtime."
+    },
+    "plan": {
+      "status": "READY",
+      "product": "OpenCode-Hi",
+      "short": "HI",
+      "project": "/tmp/tmp.fpphWd43Ij/project",
+      "config": "/tmp/tmp.fpphWd43Ij/project/opencode.json",
+      "plugin_spec": "opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git#0123456789abcdef0123456789abcdef01234567",
+      "conflicting_hi_specs": [],
+      "before_plugins": [
+        "user-plugin@1"
+      ],
+      "after_plugins": [
+        "user-plugin@1",
+        "opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git#0123456789abcdef0123456789abcdef01234567"
+      ],
+      "changed": true
+    },
+    "install": {
+      "status": "APPLIED",
+      "config": "/tmp/tmp.fpphWd43Ij/project/opencode.json",
+      "plugin_spec": "opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git#0123456789abcdef0123456789abcdef01234567",
+      "restart_required": true,
+      "next": "Restart OpenCode, then verify HI tools, agents, native skills and role-model routing in the runtime."
+    }
+  },
+  "final_user_config_preserved": true,
+  "external_host_status": "PENDING_EXTERNAL",
+  "external_host_reason": "opencode binary unavailable in execution environment"
+}

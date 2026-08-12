@@ -6,10 +6,10 @@ import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
 import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
 import { parallelSafety } from '../dist/runtime/scheduler/parallel-safety.js'
 import { createTask } from '../dist/runtime/worker/worker-runtime.js'
-import { resolveHhcConfig } from '../dist/config/resolver.js'
+import { resolveHiConfig } from '../dist/config/resolver.js'
 
 function client(){let n=0;return {session:{create:async()=>({data:{id:`child-${++n}`}}),promptAsync:async()=>{}}}}
-function runtime(scheduler=new ConcurrencyScheduler(()=>({global:4}))){return new TaskRuntime(client(),new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>resolveHhcConfig({}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced']}],()=>({}))}
+function runtime(scheduler=new ConcurrencyScheduler(()=>({global:4}))){return new TaskRuntime(client(),new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced']}],()=>({}))}
 
 test('dedupe fingerprint preserves distinct task contracts with same objective/role/model',async()=>{
   const store=new MissionStore(),m=store.start('sched-dedupe','apply same fix to independent surfaces');m.execution_mode='parallel'

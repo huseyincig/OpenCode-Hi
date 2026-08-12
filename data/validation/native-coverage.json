@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "release": "2.0.10",
+  "release": "0.1.0",
   "summary": {
     "total": 20,
     "source_present": 20,
@@ -75,7 +75,7 @@
       "evidence": [
         "plugin/src/opencode/event-adapter.ts",
         "plugin/src/plugin.ts",
-        "plugin/src/runtime/autopilot/evaluator.ts"
+        "plugin/src/runtime/continuation/evaluator.ts"
       ],
       "missing": []
     },
@@ -122,7 +122,7 @@
       ],
       "missing": []
     },
-    "GAP-113-hhc-native-skills-bootstrap-meta-override": {
+    "GAP-113-hi-native-skills-bootstrap-meta-override": {
       "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
       "evidence": [
         "plugin/src/hooks/messages-transform.ts",
@@ -131,7 +131,7 @@
       ],
       "missing": []
     },
-    "GAP-114-hhc-native-skills-actual-skill-discovery": {
+    "GAP-114-hi-native-skills-actual-skill-discovery": {
       "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
       "evidence": [
         "plugin/src/runtime/skills/registry.ts",
@@ -164,7 +164,7 @@
       ],
       "missing": []
     },
-    "GAP-118-native-command-vs-hhc-task": {
+    "GAP-118-native-command-vs-hi-task": {
       "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
       "evidence": [
         "plugin/src/runtime/task/native-first-policy.ts",
@@ -388,7 +388,7 @@
         "missing": []
       }
     },
-    "HHC Core": {
+    "Hi Core": {
       "mission-obligation": {
         "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
         "evidence": [
@@ -481,14 +481,14 @@
       "completion-adjudicator": {
         "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
         "evidence": [
-          "plugin/src/runtime/completion/adjudicator.ts"
+          "plugin/src/runtime/completion/evaluator.ts"
         ],
         "missing": []
       },
-      "event-driven-autopilot": {
+      "event-driven-continuation": {
         "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
         "evidence": [
-          "plugin/src/runtime/autopilot/evaluator.ts",
+          "plugin/src/runtime/continuation/evaluator.ts",
           "plugin/src/plugin.ts"
         ],
         "missing": []
@@ -505,7 +505,7 @@
         "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
         "evidence": [
           "plugin/src/plugin.ts",
-          "plugin/src/runtime/autopilot/evaluator.ts"
+          "plugin/src/runtime/continuation/evaluator.ts"
         ],
         "missing": []
       },
@@ -528,7 +528,7 @@
       "stagnation-recovery": {
         "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
         "evidence": [
-          "plugin/src/runtime/autopilot/recovery.ts"
+          "plugin/src/runtime/continuation/recovery.ts"
         ],
         "missing": []
       },
@@ -563,7 +563,7 @@
         "missing": []
       }
     },
-    "HHC Native Skills": {
+    "Hi Native Skills": {
       "official-separate-plugin": {
         "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
         "evidence": [
@@ -587,7 +587,7 @@
         ],
         "missing": []
       },
-      "hhc-safe-policy": {
+      "hi-safe-policy": {
         "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
         "evidence": [
           "plugin/src/runtime/skills/methodology.ts",
@@ -603,7 +603,7 @@
         ],
         "missing": []
       },
-      "orchestration-hhc-owned": {
+      "orchestration-hi-owned": {
         "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
         "evidence": [
           "plugin/src/runtime/skills/methodology.ts",
@@ -611,7 +611,7 @@
         ],
         "missing": []
       },
-      "hhc-native-methodologies-no-control-plane": {
+      "hi-native-methodologies-no-control-plane": {
         "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
         "evidence": [
           "plugin/src/runtime/skills/methodology.ts"
@@ -656,7 +656,7 @@
         ],
         "missing": []
       },
-      "hhc-native-skills-methodology-only": {
+      "hi-native-skills-methodology-only": {
         "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
         "evidence": [
           "plugin/src/runtime/skills/methodology.ts",
@@ -740,7 +740,7 @@
         ],
         "missing": []
       },
-      "hhc-native-skills-loaded-identity": {
+      "hi-native-skills-loaded-identity": {
         "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
         "evidence": [
           "plugin/src/runtime/skills/registry.ts",

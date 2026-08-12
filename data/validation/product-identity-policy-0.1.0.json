@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "product": "OpenCode-Hi",
+  "version": "0.1.0",
+  "source_ancestry": "OpenCode-HHC-Orchestrator v58 exact baseline",
+  "legacy_product_compatibility": false,
+  "legacy_runtime_aliases": false,
+  "legacy_config_aliases": false,
+  "legacy_cli_aliases": false,
+  "legacy_telemetry_schema_aliases": false,
+  "legacy_package_fallbacks": false,
+  "allowed_historical_identifier_reasons": [
+    "exact baseline provenance",
+    "source attribution",
+    "license obligation",
+    "immutable historical receipt"
+  ]
+}

@@ -24,6 +24,7 @@ import { assessDiffOwnership } from './diff-ownership.js';
 import { recordPreexistingUserBaseline } from '../safety/staging-safety.js';
 import { evaluateTaskPreconditions, TaskPreconditionError } from '../readiness/preconditions.js';
 import { effectiveExecutionSurface, promptToolOverrides } from '../routing/execution-profile.js';
+import { redactProviderContext } from '../privacy/boundary.js';
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']), CHILD_ROLES = new Set(['coder', 'architect', 'repository-explorer', 'qa-reviewer', 'security-reviewer', 'visual-qa']), READ_ONLY = new Set(['architect', 'repository-explorer', 'qa-reviewer', 'security-reviewer', 'visual-qa']);
 const MAX_QUEUE = 32;
 function missionModelFeedback(m) {
@@ -46,7 +47,7 @@ function missionModelFeedback(m) {
     }
     return { failures, successes, retries };
 }
-function words(text) { return new Set(text.toLowerCase().replace(/[^a-z0-9çğıöşü]+/gi, ' ').split(/\s+/).filter(x => x.length > 2)); }
+function words(text) { return new Set(text.toLowerCase().replace(/[^a-z0-9]+/gi, ' ').split(/\s+/).filter(x => x.length > 2)); }
 function overlap(a, b) { const aa = words(a), bb = words(b); let n = 0; for (const x of aa)
     if (bb.has(x))
         n++; return n; }
@@ -99,24 +100,25 @@ export class TaskRuntime {
     registry;
     scheduler;
     projectRoot;
-    hhcRoot;
+    hiRoot;
     getConfig;
     getModels;
     getHostConfig;
     events;
     #queue = [];
     #draining = false;
-    constructor(client, registry, scheduler, projectRoot, hhcRoot, getConfig, getModels, getHostConfig, events) {
+    constructor(client, registry, scheduler, projectRoot, hiRoot, getConfig, getModels, getHostConfig, events) {
         this.client = client;
         this.registry = registry;
         this.scheduler = scheduler;
         this.projectRoot = projectRoot;
-        this.hhcRoot = hhcRoot;
+        this.hiRoot = hiRoot;
         this.getConfig = getConfig;
         this.getModels = getModels;
         this.getHostConfig = getHostConfig;
         this.events = events;
     }
+    async sendProviderPrompt(sessionID, text, role, model, variant, tools) { const safe = redactProviderContext(text); return sendPromptAsync(this.client, sessionID, safe.providerText, role, model, variant, tools); }
     async captureNativeDiff(worker, phase) {
         if (!worker.session_id)
             return undefined;
@@ -150,7 +152,7 @@ export class TaskRuntime {
         // Session diff can contain user-owned dirty files that existed before this worker started.
         // A file whose native diff signature is identical to the worker baseline is not part of the
         // worker's net delta, even if the worker self-reports it or briefly touched and restored it.
-        // This prevents HHC cleanup from stealing/reverting pre-existing user work.
+        // This prevents Hi cleanup from stealing/reverting pre-existing user work.
         const preservedPreexisting = final ? reportedRaw.filter(file => baseline[file] !== undefined && final[file] === baseline[file]) : [];
         const reported = reportedRaw.filter(file => !preservedPreexisting.includes(file));
         const observed = final ? observedRaw.filter(file => !(baseline[file] !== undefined && final[file] === baseline[file])) : observedRaw;
@@ -248,7 +250,7 @@ export class TaskRuntime {
         return false; if (m.execution_mode === 'single' && m.workers.some(w => w.id !== worker.id && ['starting', 'busy'].includes(w.status)))
         return false; return chain.some(model => this.scheduler.canStart(worker.id, providerOf(model), model === 'host-default' ? undefined : model).ok); }
     queueTask(m, worker, run) { if (this.#queue.length >= MAX_QUEUE)
-        throw new Error('HHC bounded dispatch queue is full'); const t = m.tasks.find(x => x.id === worker.task_id); worker.status = 'queued'; if (t)
+        throw new Error('Hi bounded dispatch queue is full'); const t = m.tasks.find(x => x.id === worker.task_id); worker.status = 'queued'; if (t)
         t.status = 'queued'; if (!this.#queue.some(x => x.worker.id === worker.id))
         this.#queue.push({ mission: m, worker, run, created: Date.now() }); this.registry.set(worker); appendLedger(m, 'worker.queued', { task_id: t?.id, worker_id: worker.id, payload: { queue_depth: this.#queue.length } }); void this.events?.(runtimeSignal('worker.queued', m.mission_id, { task_id: t?.id, worker_id: worker.id, payload: { queue_depth: this.#queue.length } })); syncMissionGates(m); }
     drainQueue() { if (this.#draining)
@@ -305,7 +307,7 @@ export class TaskRuntime {
             appendLedger(m, 'model.policy.rejected', { payload: { items: selected.rejected.slice(0, 20) } });
         if (selected.scores?.length)
             appendLedger(m, 'model.scored', { payload: { role, category, top: selected.scores.slice(0, 6), feedback } });
-        const candidates = discoverSkills(this.projectRoot, this.hhcRoot, configuredSkillPaths(hostConfig)), permissionMap = resolveSkillPermissionMap(hostConfig, role), skillToolEnabled = resolveSkillToolEnabled(hostConfig, role), surface = effectiveExecutionSurface(hostConfig, role, skillToolEnabled), skillPlan = resolveSkillPlan(m.intent.requiredCapabilities, candidates, permissionMap, skillToolEnabled, role), skills = skillPlan.selected.map(s => s.name);
+        const candidates = discoverSkills(this.projectRoot, this.hiRoot, configuredSkillPaths(hostConfig)), permissionMap = resolveSkillPermissionMap(hostConfig, role), skillToolEnabled = resolveSkillToolEnabled(hostConfig, role), surface = effectiveExecutionSurface(hostConfig, role, skillToolEnabled), skillPlan = resolveSkillPlan(m.intent.requiredCapabilities, candidates, permissionMap, skillToolEnabled, role), skills = skillPlan.selected.map(s => s.name);
         appendLedger(m, 'skill.resolved', { payload: { role, requested: skillPlan.requested, outcomes: skillPlan.outcomes } });
         void this.events?.(runtimeSignal('skill.resolved', m.mission_id, { payload: { role, requested: skillPlan.requested, outcomes: skillPlan.outcomes } }));
         if (skillPlan.missing.length)
@@ -335,7 +337,7 @@ export class TaskRuntime {
                 const issues = oldTask.result.open_issues.join(' | '), missing = oldTask.result.needs_context.join(' | '), reviewScope = READ_ONLY.has(existing.role) ? `Scoped rereview only: previous findings=${issues || 'none'}; changed scope=${m.changed_files.slice(-20).join(',') || 'none'}; affected evidence=${m.evidence.items.filter(e => !e.invalidated_at).slice(-8).map(e => e.summary).join(' | ') || 'none'}.` : '';
                 const resumeVariant = nextModel === selected.primary ? selected.primaryVariant : selected.fallbackVariants[nextModel];
                 const protectedBaseline = Object.keys(existing.native_diff_baseline ?? {}).slice(0, 60);
-                await sendPromptAsync(this.client, existing.session_id, clipText([`HHC corrective resume for existing task ${oldTask.id}.`, `Previous status: ${oldTask.result.status}.`, `Missing context: ${missing || 'none'}.`, `Open issues: ${issues || 'none'}.`, `Current user constraints: ${(oldTask.constraints ?? []).join(' | ') || 'none'}.`, protectedBaseline.length ? `PRE-EXISTING USER DIRTY BASELINE: ${protectedBaseline.join(', ')}. Cleanup means restore these paths to their exact worker-start baseline, NOT to HEAD. Never discard user-owned edits with git checkout/reset/restore.` : 'Pre-existing user dirty baseline: none observed.', reviewScope, 'Resume from current session context. Apply the smallest correction. Do not restart planning or create sub-orchestrators. Return the structured WorkerResult again.'].filter(Boolean).join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), existing.role, nextModel === 'host-default' ? undefined : nextModel, resumeVariant, promptToolOverrides(oldTask.execution_profile?.tools ?? []));
+                await this.sendProviderPrompt(existing.session_id, clipText([`Hi corrective resume for existing task ${oldTask.id}.`, `Previous status: ${oldTask.result.status}.`, `Missing context: ${missing || 'none'}.`, `Open issues: ${issues || 'none'}.`, `Current user constraints: ${(oldTask.constraints ?? []).join(' | ') || 'none'}.`, protectedBaseline.length ? `PRE-EXISTING USER DIRTY BASELINE: ${protectedBaseline.join(', ')}. Cleanup means restore these paths to their exact worker-start baseline, NOT to HEAD. Never discard user-owned edits with git checkout/reset/restore.` : 'Pre-existing user dirty baseline: none observed.', reviewScope, 'Resume from current session context. Apply the smallest correction. Do not restart planning or create sub-orchestrators. Return the structured WorkerResult again.'].filter(Boolean).join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), existing.role, nextModel === 'host-default' ? undefined : nextModel, resumeVariant, promptToolOverrides(oldTask.execution_profile?.tools ?? []));
                 existing.model_variant = resumeVariant;
                 existing.restart_reconcile_pending = false;
                 appendLedger(m, nextModel !== previousModel ? 'worker.model-escalated' : 'worker.resumed', { task_id: oldTask.id, worker_id: existing.id, payload: { status: oldTask.result.status, model: nextModel } });
@@ -399,7 +401,7 @@ export class TaskRuntime {
                 task.status = 'queued';
                 const native = new NativeOpenCodeAdapter(this.client);
                 const canFork = false;
-                const child = input.forkFromSession && canFork && native.has('fork') ? await native.fork(input.forkFromSession, `HHC · ${role} · ${objective.slice(0, 60)}`) : await createChildSession(this.client, m.session_id, `HHC · ${role} · ${objective.slice(0, 60)}`, role, model === 'host-default' ? undefined : model, variant);
+                const child = input.forkFromSession && canFork && native.has('fork') ? await native.fork(input.forkFromSession, `Hi · ${role} · ${objective.slice(0, 60)}`) : await createChildSession(this.client, m.session_id, `Hi · ${role} · ${objective.slice(0, 60)}`, role, model === 'host-default' ? undefined : model, variant);
                 if (input.forkFromSession)
                     appendLedger(m, 'worker.session-fork', { task_id: task.id, worker_id: worker.id, payload: { source_session: input.forkFromSession, native: native.has('fork'), used: false, reason: 'native fork cannot set specialist agent; created isolated child instead' } });
                 if (m.status !== 'active' || m.user_interrupted || worker.status === 'cancelled') {
@@ -428,7 +430,7 @@ export class TaskRuntime {
                 appendLedger(m, 'worker.started', { task_id: task.id, worker_id: worker.id, payload: { session_id: worker.session_id, model, variant, index: i, reason: i === 0 ? (input.modelVariant ? [...selected.reason, 'user-specified-variant'] : selected.reason) : [selected.fallbackReasons[i - 1]?.reason ?? 'runtime fallback', `fallback-index:${i}`] } });
                 const handoff = buildHandoff();
                 appendLedger(m, 'worker.handoff', { task_id: task.id, worker_id: worker.id, payload: { chars: handoff.length, skills: worker.loaded_skills.length, tools: profile.tools.slice(0, 20), permission_source: profile.permission_profile.native?.source, context_budget: profile.max_context_chars, handoff_budget: profile.max_handoff_chars, result_budget: profile.max_result_chars } });
-                await sendPromptAsync(this.client, worker.session_id, handoff, role, model === 'host-default' ? undefined : model, variant, toolOverrides);
+                await this.sendProviderPrompt(worker.session_id, handoff, role, model === 'host-default' ? undefined : model, variant, toolOverrides);
                 return worker;
             }
             catch (error) {
@@ -508,7 +510,7 @@ export class TaskRuntime {
             }
             catch { }
             try {
-                const child = await createChildSession(this.client, m.session_id, `HHC · ${worker.role} · constraint update · ${task.objective.slice(0, 45)}`, worker.role, model === 'host-default' ? undefined : model, variant);
+                const child = await createChildSession(this.client, m.session_id, `Hi · ${worker.role} · constraint update · ${task.objective.slice(0, 45)}`, worker.role, model === 'host-default' ? undefined : model, variant);
                 if (!child?.id)
                     throw new Error('Constraint rebase child session id missing');
                 worker.session_id = child.id;
@@ -519,8 +521,8 @@ export class TaskRuntime {
                 worker.started_at = Date.now();
                 task.status = 'running';
                 this.registry.set(worker);
-                const handoff = clipText([ownershipContract('child', worker.loaded_skills), `HHC USER CONSTRAINT UPDATE for existing task ${task.id}.`, `OBJECTIVE: ${task.objective}`, `SCOPE: ${task.scope.join(', ') || 'bounded by objective'}`, `CURRENT USER CONSTRAINTS: ${task.constraints.join(' | ')}`, `OBSERVED CHANGED FILES SO FAR: ${m.changed_files.slice(-30).join(', ') || 'none'}`, 'The previous child session was aborted because the user changed constraints. The latest constraint supersedes conflicting prior instructions. Do not write to prohibited surfaces. If prohibited files were already changed, report that explicitly; do not conceal or assume those edits are acceptable. Reconcile the existing task under the new constraint with the minimum safe change.', 'Return the normal structured WorkerResult.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars);
-                await sendPromptAsync(this.client, child.id, handoff, worker.role, model === 'host-default' ? undefined : model, variant, promptToolOverrides(task.execution_profile?.tools ?? []));
+                const handoff = clipText([ownershipContract('child', worker.loaded_skills), `Hi USER CONSTRAINT UPDATE for existing task ${task.id}.`, `OBJECTIVE: ${task.objective}`, `SCOPE: ${task.scope.join(', ') || 'bounded by objective'}`, `CURRENT USER CONSTRAINTS: ${task.constraints.join(' | ')}`, `OBSERVED CHANGED FILES SO FAR: ${m.changed_files.slice(-30).join(', ') || 'none'}`, 'The previous child session was aborted because the user changed constraints. The latest constraint supersedes conflicting prior instructions. Do not write to prohibited surfaces. If prohibited files were already changed, report that explicitly; do not conceal or assume those edits are acceptable. Reconcile the existing task under the new constraint with the minimum safe change.', 'Return the normal structured WorkerResult.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars);
+                await this.sendProviderPrompt(child.id, handoff, worker.role, model === 'host-default' ? undefined : model, variant, promptToolOverrides(task.execution_profile?.tools ?? []));
                 appendLedger(m, 'worker.constraint-rebased', { task_id: task.id, worker_id: worker.id, payload: { from_session: oldSession, to_session: worker.session_id, generation: m.generation, constraint: text.slice(0, 300) } });
                 void this.events?.(runtimeSignal('worker.constraint-rebased', m.mission_id, { task_id: task.id, worker_id: worker.id, payload: { generation: m.generation } }));
                 reconciled++;
@@ -578,7 +580,7 @@ export class TaskRuntime {
                 catch { }
             const resume = async () => { const model = loser.model, provider = providerOf(model), capacity = this.scheduler.canStart(loser.id, provider, model === 'host-default' ? undefined : model); if (!capacity.ok)
                 throw new Error(`Conflict resume capacity unavailable: ${capacity.reason}`); this.scheduler.acquire(loser.id, provider, model === 'host-default' ? undefined : model); loser.status = 'busy'; loser.started_at = Date.now(); loser.generation_at_spawn = m.generation; loser.parent_mission_id = m.mission_id; loserTask.status = 'running'; this.registry.set(loser); if (!loser.session_id)
-                throw new Error('Conflict resume child session missing'); await sendPromptAsync(this.client, loser.session_id, clipText([`HHC runtime write-conflict reconciliation for existing task ${loserTask.id}.`, `Conflicting task ${winnerTask.id} has completed before this resume gate opened.`, `Conflicting files: ${overlap.join(', ')}`, `Current task objective: ${loserTask.objective}`, `Current user constraints: ${(loserTask.constraints ?? []).join(' | ') || 'none'}.`, 'Inspect the current diff/state first. Preserve valid work from the completed task. Reconcile only this task sequentially; do not blindly overwrite or restart planning. Re-run the required scoped verification and return the structured WorkerResult.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), loser.role, model === 'host-default' ? undefined : model, loser.model_variant, promptToolOverrides(loserTask.execution_profile?.tools ?? [])); appendLedger(m, 'parallel.write-conflict.resumed', { task_id: loserTask.id, worker_id: loser.id, payload: { after_task: winnerTask.id, files: overlap.slice(0, 30) } }); return loser; };
+                throw new Error('Conflict resume child session missing'); await this.sendProviderPrompt(loser.session_id, clipText([`Hi runtime write-conflict reconciliation for existing task ${loserTask.id}.`, `Conflicting task ${winnerTask.id} has completed before this resume gate opened.`, `Conflicting files: ${overlap.join(', ')}`, `Current task objective: ${loserTask.objective}`, `Current user constraints: ${(loserTask.constraints ?? []).join(' | ') || 'none'}.`, 'Inspect the current diff/state first. Preserve valid work from the completed task. Reconcile only this task sequentially; do not blindly overwrite or restart planning. Re-run the required scoped verification and return the structured WorkerResult.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), loser.role, model === 'host-default' ? undefined : model, loser.model_variant, promptToolOverrides(loserTask.execution_profile?.tools ?? [])); appendLedger(m, 'parallel.write-conflict.resumed', { task_id: loserTask.id, worker_id: loser.id, payload: { after_task: winnerTask.id, files: overlap.slice(0, 30) } }); return loser; };
             this.queueTask(m, loser, resume);
             appendLedger(m, 'parallel.write-conflict.quarantined', { task_id: loserTask.id, worker_id: loser.id, payload: { winner_worker_id: winner.id, winner_task_id: winnerTask.id, files: overlap.slice(0, 30), policy: 'abort-later-writer-then-serialize' } });
             void this.events?.(runtimeSignal('parallel.write-conflict', m.mission_id, { task_id: loserTask.id, worker_id: loser.id, payload: { other_worker_id: winner.id, files: overlap.slice(0, 30), action: 'quarantined' } }));
@@ -735,9 +737,9 @@ export class TaskRuntime {
             task.status = 'running';
             this.registry.set(worker);
             const instruction = level === 1
-                ? 'HHC stagnation recovery: continue the SAME task/session with one narrowly scoped corrective attempt. Preserve completed work and evidence. Do not restart planning.'
-                : `HHC stagnation recovery: continue the SAME task/session with policy escalation from ${previous ?? 'default'} to ${model ?? 'default'}. Preserve completed work and evidence. Do not restart planning.`;
-            await sendPromptAsync(this.client, worker.session_id, clipText(`${instruction}\nReturn the normal structured WorkerResult.`, DEFAULT_CONTEXT_BUDGET.max_handoff_chars), worker.role, model === 'host-default' ? undefined : model, variant, promptToolOverrides(task.execution_profile?.tools ?? []));
+                ? 'Hi stagnation recovery: continue the SAME task/session with one narrowly scoped corrective attempt. Preserve completed work and evidence. Do not restart planning.'
+                : `Hi stagnation recovery: continue the SAME task/session with policy escalation from ${previous ?? 'default'} to ${model ?? 'default'}. Preserve completed work and evidence. Do not restart planning.`;
+            await this.sendProviderPrompt(worker.session_id, clipText(`${instruction}\nReturn the normal structured WorkerResult.`, DEFAULT_CONTEXT_BUDGET.max_handoff_chars), worker.role, model === 'host-default' ? undefined : model, variant, promptToolOverrides(task.execution_profile?.tools ?? []));
             appendLedger(m, 'worker.stagnation-recovery', { task_id: task.id, worker_id: worker.id, payload: { level, action, from: previous, to: model, variant, generation: m.generation } });
             void this.events?.(runtimeSignal('worker.recovered', m.mission_id, { task_id: task.id, worker_id: worker.id, payload: { level, action, from: previous, to: model, variant } }));
             return true;
@@ -776,7 +778,7 @@ export class TaskRuntime {
             worker.runtime_recovery_attempt = (worker.runtime_recovery_attempt ?? 0) + 1;
             if (task)
                 task.status = 'running';
-            await sendPromptAsync(this.client, worker.session_id, clipText([`HHC native runtime recovery for task ${task?.id ?? worker.task_id}.`, `Failure class: ${failure.kind}.`, `Previous model/provider failed: ${previous ?? 'unknown'}.`, `Continue the SAME task/session with fallback model. Preserve completed work. Do not restart planning. Return the normal structured WorkerResult.`].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), worker.role, model === 'host-default' ? undefined : model, variant, promptToolOverrides(task?.execution_profile?.tools ?? []));
+            await this.sendProviderPrompt(worker.session_id, clipText([`Hi native runtime recovery for task ${task?.id ?? worker.task_id}.`, `Failure class: ${failure.kind}.`, `Previous model/provider failed: ${previous ?? 'unknown'}.`, `Continue the SAME task/session with fallback model. Preserve completed work. Do not restart planning. Return the normal structured WorkerResult.`].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), worker.role, model === 'host-default' ? undefined : model, variant, promptToolOverrides(task?.execution_profile?.tools ?? []));
             appendLedger(m, 'worker.runtime-fallback', { task_id: task?.id, worker_id: worker.id, payload: { from: previous, to: model, variant, reason: fallbackReason, failure_class: failure.kind, attempt: worker.runtime_recovery_attempt } });
             return true;
         }

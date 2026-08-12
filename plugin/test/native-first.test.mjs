@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { resolveModel } from '../dist/runtime/routing/model-resolver.js'
-import { auditHhcToolNamespace } from '../dist/opencode/tool-namespace.js'
+import { auditHiToolNamespace } from '../dist/opencode/tool-namespace.js'
 import { providerPolicyView } from '../dist/opencode/native-adapter.js'
 import { classifyWorkerFailure } from '../dist/runtime/worker/failure-classifier.js'
 import { auditNativeAgentReuse } from '../dist/runtime/routing/agent-reuse.js'
@@ -9,9 +9,9 @@ import { nativeFirstTaskDecision } from '../dist/runtime/task/native-first-polic
 
 const baseConfig={routing:{allowedProviders:[],deniedModels:[],roleModels:{},categoryModels:{},categoryVariants:{},strategy:'cost-quality',maxFallbacks:3}}
 
-test('Native-08 HHC tools cannot shadow native tool names',()=>{
-  assert.equal(auditHhcToolNamespace(['hhc_task_start','hhc_status']).ok,true)
-  assert.equal(auditHhcToolNamespace(['task']).ok,false)
+test('Native-08 Hi tools cannot shadow native tool names',()=>{
+  assert.equal(auditHiToolNamespace(['hi_task_start','hi_status']).ok,true)
+  assert.equal(auditHiToolNamespace(['task']).ok,false)
 })
 
 test('Native-10 provider policy deny removes an otherwise available model',()=>{
@@ -38,11 +38,11 @@ test('Native-04 provider failure is not reasoning stagnation',()=>{
 })
 
 test('Native-first agent reuse audit rejects persona explosion by default',()=>{
-  assert.equal(auditNativeAgentReuse('coder').decision,'hhc-custom-required')
+  assert.equal(auditNativeAgentReuse('coder').decision,'hi-custom-required')
   assert.equal(auditNativeAgentReuse('generic-librarian').decision,'native-reuse-preferred')
 })
 
-test('Native command vs HHC task split remains explicit',()=>{
+test('Native command vs Hi task split remains explicit',()=>{
   assert.equal(nativeFirstTaskDecision('static-repeatable').preferred,'opencode-command-subtask')
-  assert.equal(nativeFirstTaskDecision('dynamic-mission').preferred,'hhc-task-adapter')
+  assert.equal(nativeFirstTaskDecision('dynamic-mission').preferred,'hi-task-adapter')
 })

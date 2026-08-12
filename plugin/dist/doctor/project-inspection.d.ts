@@ -1,9 +1,9 @@
 export interface ProjectInspection {
     configPath?: string;
     pluginRegistered?: boolean;
-    configuredHhcPluginSpecs: string[];
-    localHhcPlugin: boolean;
-    hhcLocalPluginPaths: string[];
+    configuredHiPluginSpecs: string[];
+    localHiPlugin: boolean;
+    hiLocalPluginPaths: string[];
     permissionConfigured: boolean;
     skillPermissionConfigured: boolean;
     ownershipState: 'missing' | 'healthy' | 'invalid';

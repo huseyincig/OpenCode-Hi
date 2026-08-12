@@ -1,11 +1,11 @@
 // Gap #24: profile-aware specialist threshold (Phase 6).
-// Verifies that the capability router behavior respects the autonomy
+// Verifies that the capability router behavior respects the execution policy
 // profile:
-// - basic: high specialist threshold; only explicit architecture
+// - minimal: high specialist threshold; only explicit architecture
 //   keywords route to architect; QA-reviewer only when high-risk.
-// - standard: medium; architecture for repo-wide or explicit design;
+// - balanced: medium; architecture for repo-wide or explicit design;
 //   QA for non-trivial review.
-// - powerful: low threshold; architect dispatch is more permissive
+// - thorough: low threshold; architect dispatch is more permissive
 //   and QA-reviewer is dispatched on most review tasks.
 
 import test from 'node:test'
@@ -27,83 +27,83 @@ function intent(scope, risk, caps) {
   }
 }
 
-const basic = { specialistThreshold: 'high', reviewThreshold: 'high' }
-const standard = { specialistThreshold: 'medium', reviewThreshold: 'medium' }
-const powerful = { specialistThreshold: 'low', reviewThreshold: 'low' }
+const minimal = { specialistThreshold: 'high', reviewThreshold: 'high' }
+const balanced = { specialistThreshold: 'medium', reviewThreshold: 'medium' }
+const thorough = { specialistThreshold: 'low', reviewThreshold: 'low' }
 
-test('basic profile: explicit architecture keyword does NOT route to architect (high threshold)', () => {
+test('minimal profile: explicit architecture keyword does NOT route to architect (high threshold)', () => {
   const m = intent('local', 'low', ['implementation'])
   m.taskKind = 'review'
-  // Basic profile (specialistThreshold=high) requires repo-wide scope or
+  // Minimal profile (specialistThreshold=high) requires repo-wide scope or
   // combined signals to dispatch architect. A single explicit keyword on
-  // a local quick task is not enough for the basic profile.
-  const d = routeCapabilities({ ...m, requiredCapabilities: ['migration'] }, basic)
-  assert.equal(d.role, 'coder', 'basic profile gates architect on repo-wide scope')
+  // a local quick task is not enough for the minimal profile.
+  const d = routeCapabilities({ ...m, requiredCapabilities: ['migration'] }, minimal)
+  assert.equal(d.role, 'coder', 'minimal profile gates architect on repo-wide scope')
 })
 
-test('basic profile: repo-wide scope does NOT route to architect without explicit keyword', () => {
+test('minimal profile: repo-wide scope does NOT route to architect without explicit keyword', () => {
   const m = intent('repo-wide', 'low', ['implementation'])
-  const d = routeCapabilities(m, basic)
-  assert.equal(d.role, 'coder', 'basic profile gates architect on explicit keyword')
+  const d = routeCapabilities(m, minimal)
+  assert.equal(d.role, 'coder', 'minimal profile gates architect on explicit keyword')
 })
 
-test('basic profile: high-risk review → qa-reviewer', () => {
+test('minimal profile: high-risk review → qa-reviewer', () => {
   // Source code gates QA-reviewer dispatch on review threshold:
-  // basic profile (high) only dispatches QA when intent.risk === 'high'
+  // minimal profile (high) only dispatches QA when intent.risk === 'high'
   // or capabilities explicitly include qa-review/security-review.
   // The deterministic-evidence LLM skip path (low-risk + local + verification)
   // pre-empts the qa-reviewer dispatch first.
   // This test exercises the high-risk case where the LLM skip does NOT
-  // fire and the basic profile dispatches qa-reviewer.
+  // fire and the minimal profile dispatches qa-reviewer.
   const m = intent('local', 'high', ['review', 'verification'])
   // Configure deterministic skip to NOT fire: scope is local but
   // risk is high, so the LLM skip condition is false.
   // The qa-reviewer branch is then gated on reviewT and risk.
-  const d = routeCapabilities(m, basic)
-  // In basic profile (reviewThreshold=high, reviewT=3), only
+  const d = routeCapabilities(m, minimal)
+  // In minimal profile (reviewThreshold=high, reviewT=3), only
   // high-risk OR explicit qa-review/security-review caps reach QA.
   // Our intent has risk='high' so this should gate QA.
   assert.ok(['qa-reviewer', 'coder'].includes(d.role),
-    `basic profile + high-risk review should dispatch QA (current: ${d.role})`)
+    `minimal profile + high-risk review should dispatch QA (current: ${d.role})`)
 })
 
-test('basic profile: low-risk review routes to coder (basic favors direct implementation)', () => {
+test('minimal profile: low-risk review routes to coder (minimal favors direct implementation)', () => {
   const m = intent('local', 'low', ['review'])
-  const d = routeCapabilities(m, basic)
-  assert.equal(d.role, 'coder', 'basic profile is hands-off on low-risk review')
+  const d = routeCapabilities(m, minimal)
+  assert.equal(d.role, 'coder', 'minimal profile is hands-off on low-risk review')
 })
 
-test('standard profile: repo-wide scope routes to architect', () => {
+test('balanced profile: repo-wide scope routes to architect', () => {
   const m = intent('repo-wide', 'low', ['implementation'])
-  const d = routeCapabilities(m, standard)
-  assert.equal(d.role, 'architect', 'standard profile routes repo-wide to architect')
+  const d = routeCapabilities(m, balanced)
+  assert.equal(d.role, 'architect', 'balanced profile routes repo-wide to architect')
 })
 
-test('powerful profile: repo-wide scope routes to architect', () => {
+test('thorough profile: repo-wide scope routes to architect', () => {
   const m = intent('repo-wide', 'low', ['implementation'])
-  const d = routeCapabilities(m, powerful)
-  assert.equal(d.role, 'architect', 'powerful profile routes repo-wide to architect')
+  const d = routeCapabilities(m, thorough)
+  assert.equal(d.role, 'architect', 'thorough profile routes repo-wide to architect')
 })
 
-test('default profile (no arg) is medium — matches standard', () => {
+test('default profile (no arg) is medium — matches balanced', () => {
   const m = intent('local', 'low', ['implementation'])
   const d = routeCapabilities(m) // no profile
   assert.equal(d.role, 'coder')
   assert.equal(d.category, 'quick')
 })
 
-test('profile default matches power-mapped standard thresholds', () => {
+test('profile default matches power-mapped balanced thresholds', () => {
   const m = intent('local', 'low', ['implementation'])
-  assert.equal(routeCapabilities(m, basic).role, 'coder')
-  assert.equal(routeCapabilities(m, standard).role, 'coder')
-  assert.equal(routeCapabilities(m, powerful).role, 'coder')
+  assert.equal(routeCapabilities(m, minimal).role, 'coder')
+  assert.equal(routeCapabilities(m, balanced).role, 'coder')
+  assert.equal(routeCapabilities(m, thorough).role, 'coder')
 })
 
 test('architect dispatch differs across profiles on repo-wide scope', () => {
-  // Only standard and powerful route repo-wide to architect. Basic gates
+  // Only balanced and thorough route repo-wide to architect. Minimal gates
   // architect on higher threshold so repo-wide does not dispatch.
   const m = intent('repo-wide', 'low', ['implementation'])
-  assert.notEqual(routeCapabilities(m, basic).role, 'architect', 'basic profile gates architect')
-  assert.equal(routeCapabilities(m, standard).role, 'architect')
-  assert.equal(routeCapabilities(m, powerful).role, 'architect')
+  assert.notEqual(routeCapabilities(m, minimal).role, 'architect', 'minimal profile gates architect')
+  assert.equal(routeCapabilities(m, balanced).role, 'architect')
+  assert.equal(routeCapabilities(m, thorough).role, 'architect')
 })

@@ -159,7 +159,7 @@ test('Gap #34: update semantics preserves user-owned config across schema bumps'
 })
 
 test('Gap #29b: recovery separates alternate plan from bounded fresh worker', async () => {
-  const { recoveryPlan } = await import('../dist/runtime/autopilot/recovery.js')
+  const { recoveryPlan } = await import('../dist/runtime/continuation/recovery.js')
   const s = new MissionStore()
   const m = s.start('recovery-rungs-2', 'fix a difficult bug')
   m.stagnation_count = 4

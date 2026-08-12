@@ -1,9 +1,9 @@
 {
   "schema": 1,
-  "release": "2.0.10",
+  "release": "0.1.0",
   "role": "end-to-end flow consistency map; flows may evolve when source/runtime evidence justifies a better design",
   "groups": {
-    "understand-autonomy-authority": {
+    "understand-execution-policy-authority": {
       "evidence": [
         "plugin/src/runtime/intent/normalize.ts",
         "plugin/src/runtime/readiness/preconditions.ts",
@@ -34,7 +34,7 @@
         "plugin/src/runtime/mission/types.ts"
       ]
     },
-    "hhc-native-skills-ownership-selective-skills": {
+    "hi-native-skills-ownership-selective-skills": {
       "evidence": [
         "plugin/src/runtime/skills/registry.ts",
         "plugin/src/runtime/skills/methodology.ts",
@@ -70,10 +70,10 @@
         "plugin/src/plugin.ts"
       ]
     },
-    "autopilot-idle-race-recovery": {
+    "continuation-idle-race-recovery": {
       "evidence": [
-        "plugin/src/runtime/autopilot/evaluator.ts",
-        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/evaluator.ts",
+        "plugin/src/runtime/continuation/recovery.ts",
         "plugin/src/runtime/nudge/runtime-nudge.ts"
       ]
     },
@@ -81,7 +81,7 @@
       "evidence": [
         "plugin/src/runtime/evidence/evidence-runtime.ts",
         "plugin/src/runtime/verification/policy.ts",
-        "plugin/src/runtime/completion/adjudicator.ts"
+        "plugin/src/runtime/completion/evaluator.ts"
       ]
     },
     "context-compaction-continuity": {

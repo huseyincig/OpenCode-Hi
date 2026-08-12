@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-const FILE = '.opencode/hhc-authority.json';
+const FILE = '.opencode/hi/policy/authority.json';
 const CLASS_PATTERNS = {
     'git-push': ['git push *', 'gh release create *'],
     'package-publish': ['npm publish*', 'pnpm publish*', 'yarn publish*', 'bun publish*'],
@@ -42,7 +42,7 @@ function explicitDecision(bash, pattern) { if (typeof bash === 'string')
     if (wildcard(k, pattern.replace(/\*$/, '')) || wildcard(k, pattern))
         decision = v;
 } return ['allow', 'ask', 'deny'].includes(decision) ? decision : undefined; }
-/** Merge HHC's authority prompt/persistent grants without ever weakening a user/native explicit deny. */
+/** Merge Hi's authority prompt/persistent grants without ever weakening a user/native explicit deny. */
 export function applyProjectAuthorityPermissions(config, store) {
     const permission = (config.permission && typeof config.permission === 'object' && !Array.isArray(config.permission) ? config.permission : {});
     const existing = permission.bash;

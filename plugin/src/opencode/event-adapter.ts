@@ -1,12 +1,12 @@
 import { eventSessionID } from './client-adapter.js'
 
-export type HhcNativeEventKind =
+export type HiNativeEventKind =
   | 'session-idle'|'session-error'|'session-deleted'|'session-status'|'session-diff'|'session-compacted'
   | 'todo-updated'|'permission-asked'|'permission-replied'|'file-edited'|'file-watcher-updated'
   | 'lsp-diagnostics'|'installation-updated'|'unknown'
 
-export interface NormalizedOpenCodeEvent {kind:HhcNativeEventKind;rawType:string;sessionID?:string;properties:any;raw:any}
-const MAP:Record<string,HhcNativeEventKind>={
+export interface NormalizedOpenCodeEvent {kind:HiNativeEventKind;rawType:string;sessionID?:string;properties:any;raw:any}
+const MAP:Record<string,HiNativeEventKind>={
   'session.idle':'session-idle','session.error':'session-error','session.deleted':'session-deleted','session.status':'session-status','session.diff':'session-diff','session.compacted':'session-compacted',
   'todo.updated':'todo-updated','permission.asked':'permission-asked','permission.replied':'permission-replied','file.edited':'file-edited','file.watcher.updated':'file-watcher-updated',
   'lsp.client.diagnostics':'lsp-diagnostics','installation.updated':'installation-updated',

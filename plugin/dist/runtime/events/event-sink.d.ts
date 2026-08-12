@@ -2,7 +2,7 @@
  * Thin mission-scoped event adapter.
  *
  * This is intentionally NOT a broker/event bus. OpenCode is the runtime event
- * source of truth. HHC only normalizes a small mission signal so core policy
+ * source of truth. Hi only normalizes a small mission signal so core policy
  * code can be tested without depending on raw host event payloads.
  */
 export interface RuntimeSignal {

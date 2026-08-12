@@ -4,16 +4,16 @@ export type PluginToolDefinition = {
     args?: Record<string, JsonSchema>;
     execute: (args: any, ctx: any) => Promise<any> | any;
 };
-type HhcSchema = JsonSchema & {
-    __hhc_optional?: true;
-    optional: () => HhcSchema;
+type HiSchema = JsonSchema & {
+    __hi_optional?: true;
+    optional: () => HiSchema;
 };
 interface NativeToolFactory {
     (definition: PluginToolDefinition): PluginToolDefinition;
     schema: {
-        string: () => HhcSchema;
-        number: () => HhcSchema;
-        boolean: () => HhcSchema;
+        string: () => HiSchema;
+        number: () => HiSchema;
+        boolean: () => HiSchema;
     };
 }
 export declare const nativeTool: NativeToolFactory;

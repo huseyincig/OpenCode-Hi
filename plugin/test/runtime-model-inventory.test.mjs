@@ -1,12 +1,12 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtempSync, rmSync, readFileSync } from 'node:fs'
+import { mkdtempSync, rmSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import HhcPlugin from '../dist/plugin.js'
+import HiPlugin from '../dist/plugin.js'
 
 test('runtime inventory -> project routing -> child uses effective per-role model', async () => {
-  const dir=mkdtempSync(join(tmpdir(),'hhc-runtime-model-'))
+  const dir=mkdtempSync(join(tmpdir(),'hi-runtime-model-'))
   const created=[]
   const prompted=[]
   try{
@@ -23,19 +23,17 @@ test('runtime inventory -> project routing -> child uses effective per-role mode
         abort:async()=>({data:{}}),
       },
     }
-    const hooks=await HhcPlugin({directory:dir,worktree:dir,project:{},client})
+    const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client})
     const config={}
     await hooks.config(config)
     await hooks['chat.message'](
-      {sessionID:'parent-1',message:{role:'user',parts:[{type:'text',text:'login bugını düzelt test et'}]}},
+      {sessionID:'parent-1',message:{role:'user',parts:[{type:'text',text:'fix the login bug and test it'}]}},
       {parts:[]},
     )
 
-    const routing=JSON.parse(readFileSync(join(dir,'.opencode','oho-routing.json'),'utf8'))
-    assert.deepEqual(routing.routing.roleModels.coder,['opencode-go/deepseek-v4-pro'])
-    assert.deepEqual(routing.routing.roleModels['working-manager'],['opencode-go/minimax-m3'])
+    assert.equal(existsSync(join(dir,'.opencode','hi','policy','routing.json')),false,'runtime inventory must not silently persist project policy')
 
-    const result=JSON.parse(await hooks.tool.hhc_task_start.execute(
+    const result=JSON.parse(await hooks.tool.hi_task_start.execute(
       {objective:'login fix implementation',role:'coder',category:'deep'},
       {sessionID:'parent-1'},
     ))

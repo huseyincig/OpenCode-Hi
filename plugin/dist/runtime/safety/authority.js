@@ -2,9 +2,9 @@ import { payloadHash } from './idempotency.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { notePrivilegedReleaseOutcome } from './release-chain.js';
 const PRIVILEGED = /\b(git\s+push|npm\s+publish|pnpm\s+publish|yarn\s+publish|bun\s+publish|docker\s+push|kubectl\s+(apply|delete)|terraform\s+apply|gh\s+release\s+create|deploy|vercel\s+deploy|netlify\s+deploy)\b/i;
-const APPROVE = /^\s*(approve|approved|onay|onaylıyorum|bu işlemi onaylıyorum)\s*[.!]?\s*$/i;
-const CONFIRM_SUCCESS = /^\s*(confirm action succeeded|action succeeded|işlem başarılı|işlemin başarılı olduğunu onaylıyorum)\s*[.!]?\s*$/i;
-const CONFIRM_FAILURE = /^\s*(confirm action failed|action failed|işlem başarısız|işlemin başarısız olduğunu onaylıyorum)\s*[.!]?\s*$/i;
+const APPROVE = /^\s*(approve|approved|I approve|approve this action)\s*[.!]?\s*$/i;
+const CONFIRM_SUCCESS = /^\s*(confirm action succeeded|action succeeded|I confirm the action succeeded)\s*[.!]?\s*$/i;
+const CONFIRM_FAILURE = /^\s*(confirm action failed|action failed|I confirm the action failed)\s*[.!]?\s*$/i;
 export function privilegedAction(command) { return PRIVILEGED.test(command); }
 export function actionContract(command, cwd) { const action = `cwd=${cwd ?? ''}\ncommand=${command.trim()}`; return { action, hash: payloadHash(action) }; }
 function authorityObligation(m, hash) { return m.obligations.find(x => x.id === `o-authority-${hash.slice(0, 10)}` && x.kind === 'authority' && x.status === 'open'); }
@@ -47,7 +47,7 @@ export function requireAuthority(m, command, cwd) { const c = actionContract(com
     o = { id: `o-authority-${c.hash.slice(0, 10)}`, kind: 'authority', summary: `External privileged action ${c.hash.slice(0, 10)} explicitly authorized and completed`, status: 'open' };
     m.obligations.push(o);
     appendLedger(m, 'obligation.opened', { payload: { obligation: o.id, kind: 'authority', hash: c.hash } });
-} m.authority = { ...(m.authority ?? {}), pending: { hash: c.hash, action: c.action, created_at: Date.now() } }; m.status = 'waiting-user'; appendLedger(m, 'user.action.required', { payload: { kind: 'authority', hash: c.hash, action: c.action } }); throw new Error(`HHC authority boundary: explicit approval required for exact action contract ${c.hash}. Reply with 'approve' or 'onaylıyorum' to authorize this exact action. Generic continuation commands do not approve privileged actions. Action was not executed.`); }
+} m.authority = { ...(m.authority ?? {}), pending: { hash: c.hash, action: c.action, created_at: Date.now() } }; m.status = 'waiting-user'; appendLedger(m, 'user.action.required', { payload: { kind: 'authority', hash: c.hash, action: c.action } }); throw new Error(`Hi authority boundary: explicit approval required for exact action contract ${c.hash}. Reply with 'approve' to authorize this exact action. Generic continuation commands do not approve privileged actions. Action was not executed.`); }
 export function approvePendingAuthority(m, text) { if (!APPROVE.test(text) || !m.authority?.pending)
     return false; const p = m.authority.pending; m.authority = { ...m.authority, pending: undefined, approved: { hash: p.hash, approved_at: Date.now() } }; m.status = 'active'; appendLedger(m, 'authority.approved', { payload: { hash: p.hash } }); return true; }
 export function resolveUncertainAuthority(m, text) { const e = m.authority?.executing; if (!e)

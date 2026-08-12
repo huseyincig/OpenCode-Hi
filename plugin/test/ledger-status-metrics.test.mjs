@@ -23,7 +23,7 @@ test('user status is separate from ledger/log detail and exposes only compact op
   appendLedger(m,'sensitive.internal',{payload:{secretish:'do-not-surface',raw:'tool trajectory'}})
   m.blockers.push('verification-env')
   const status=formatUserMissionStatus(m)
-  assert.match(status,/^HHC:/)
+  assert.match(status,/^Hi:/)
   assert.match(status,/next /)
   assert.doesNotMatch(status,/do-not-surface|tool trajectory|sensitive\.internal/)
 })

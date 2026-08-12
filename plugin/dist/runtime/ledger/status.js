@@ -16,5 +16,5 @@ export function userMissionStatus(m) {
 }
 export function formatUserMissionStatus(m) {
     const s = userMissionStatus(m);
-    return `HHC: ${s.status} · ${s.active_workers} worker active · ${s.open_obligations} obligation open · evidence ${s.evidence} · next ${s.next_action}`;
+    return `Hi: ${s.status} · ${s.active_workers} worker active · ${s.open_obligations} obligation open · evidence ${s.evidence} · next ${s.next_action}`;
 }

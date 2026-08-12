@@ -47,7 +47,7 @@ def main():
     OUT.parent.mkdir(parents=True,exist_ok=True)
     payload=json.dumps(agents,ensure_ascii=False,sort_keys=True,separators=(',',':'))
     OUT.write_text('/* generated from roles/*.md by scripts/generate_plugin_agents.py; do not hand edit */\n'
-                   f'export const PACKAGED_HHC_AGENTS = {payload} as const\n',encoding='utf-8')
+                   f'export const PACKAGED_HI_AGENTS = {payload} as const\n',encoding='utf-8')
     print(f'generated {len(agents)} agents -> {OUT.relative_to(ROOT)}')
 
 if __name__=='__main__': main()

@@ -14,19 +14,19 @@ export function createToolBeforeHook(store, background, projectRoot) {
         if (child && ((child.parent_mission_id !== undefined && child.parent_mission_id !== m.mission_id) || (child.generation_at_spawn !== undefined && child.generation_at_spawn !== m.generation)))
             return;
         const tool = String(input?.tool ?? ''), args = output?.args ?? input?.args ?? {};
-        if (child && tool.startsWith('hhc_'))
-            throw new Error(`HHC ownership guard: child workers cannot invoke HHC control-plane tool '${tool}'.`);
+        if (child && tool.startsWith('hi_'))
+            throw new Error(`Hi ownership guard: child workers cannot invoke Hi control-plane tool '${tool}'.`);
         if (tool === 'skill') {
             const name = requestedSkill(args);
             if (name && child) {
                 const worker = m.workers.find(w => w.id === child.id), allowed = new Set(worker?.loaded_skills ?? []);
                 if (!allowed.has(name))
-                    throw new Error(`HHC child skill guard: '${name}' is outside this worker methodology allowlist.`);
+                    throw new Error(`Hi child skill guard: '${name}' is outside this worker methodology allowlist.`);
             }
             else if (name) {
                 m.parent_loaded_skills ??= [];
                 if (!m.parent_loaded_skills.includes(name) && m.parent_loaded_skills.length >= 3)
-                    throw new Error('HHC skill budget: parent session may load at most 3 distinct skills for one mission.');
+                    throw new Error('Hi skill budget: parent session may load at most 3 distinct skills for one mission.');
                 if (!m.parent_loaded_skills.includes(name))
                     m.parent_loaded_skills.push(name);
             }
@@ -43,10 +43,10 @@ export function createToolBeforeHook(store, background, projectRoot) {
         if (tool === 'bash' && typeof args?.command === 'string' && privilegedAction(args.command)) {
             assertReleaseChainPrecondition(m, args.command, projectRoot ?? args?.cwd);
             if (child)
-                throw new Error('HHC authority boundary: child workers may not execute publish/push/deploy or other privileged external effects. Parent HHC must own the exact authority contract.');
+                throw new Error('Hi authority boundary: child workers may not execute publish/push/deploy or other privileged external effects. Parent Hi must own the exact authority contract.');
             const claim = claimAuthorizedAction(m, args.command, args?.cwd);
             if (claim === 'duplicate')
-                throw new Error('HHC idempotency guard: this exact privileged action is already in-flight or completed.');
+                throw new Error('Hi idempotency guard: this exact privileged action is already in-flight or completed.');
             beginAuthorizedAction(m, args.command, args?.cwd);
         }
         if (m.status !== 'active' && !matchRollback(m, String(args?.command ?? '')))

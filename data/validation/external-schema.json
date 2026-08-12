@@ -2,7 +2,7 @@
   "schema": 5,
   "required_coexistence": [
     "plain_opencode_smoke",
-    "oho_only_smoke"
+    "hi_only_smoke"
   ],
   "required_acceptance": [
     "A",
@@ -20,7 +20,7 @@
     "dependency_supply_chain_audit"
   ],
   "binding": [
-    "oho_version",
+    "hi_version",
     "git_ref",
     "package_sha256",
     "opencode_version",
@@ -35,7 +35,7 @@
     "BLOCKED",
     "NA"
   ],
-  "note": "PASS evidence is valid only when bound to the exact OHO Git candidate, OpenCode runtime/platform, effective config and packaged HHC-native skill catalog. Native-01..18 and Flow-01..08 are required runtime contracts.",
+  "note": "PASS evidence is valid only when bound to the exact Hi Git candidate, OpenCode runtime/platform, effective config and packaged Hi-native skill catalog. Native-01..18 and Flow-01..08 are required runtime contracts.",
   "required_native_acceptance": [
     "Native-01",
     "Native-02",

@@ -1,2 +1,2 @@
-import { type HhcConfig } from './schema.js';
-export declare const DEFAULT_HHC_CONFIG: HhcConfig;
+import { type HiConfig } from './schema.js';
+export declare const DEFAULT_HI_CONFIG: HiConfig;

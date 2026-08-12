@@ -11,7 +11,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { resolveModel } from '../dist/runtime/routing/model-resolver.js'
-import { resolveHhcConfig } from '../dist/config/resolver.js'
+import { resolveHiConfig } from '../dist/config/resolver.js'
 
 const OPENCODE_GO_INVENTORY = [
   { id: 'opencode-go/minimax-m3', provider: 'opencode-go', tags: ['balanced', 'coding'], variants: ['medium', 'low', 'none'] },
@@ -20,7 +20,7 @@ const OPENCODE_GO_INVENTORY = [
 ]
 
 function cfgWith(roleModels) {
-  return resolveHhcConfig({ routing: { roleModels } })
+  return resolveHiConfig({ routing: { roleModels } })
 }
 
 test('per-role primary: roleModels supplies primary when role model is in inventory', () => {

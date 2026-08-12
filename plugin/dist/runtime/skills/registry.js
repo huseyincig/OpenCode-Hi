@@ -3,73 +3,73 @@ import { join, resolve } from 'node:path';
 import { resolveSkillPermission } from './permissions.js';
 const ROLE_CAPABILITY_SKILLS = {
     coder: {
-        debugging: ['hhc-debugging-root-cause'],
-        'tdd-required': ['hhc-test-driven-development'],
-        'implementation-planning': ['hhc-implementation-planning'],
-        verification: ['hhc-test-strategy'],
-        'docs-change': ['hhc-changelog-and-documentation'],
-        refactor: ['hhc-safe-refactoring'],
-        'database-migration': ['hhc-database-migration'],
-        'dependency-change': ['hhc-dependency-change'],
-        'api-contract': ['hhc-api-contract-review'],
-        'api-interface-design': ['hhc-api-interface-design'],
-        'ci-recovery': ['hhc-ci-build-recovery'],
-        'performance-analysis': ['hhc-performance-analysis'],
-        'release-guardrails': ['hhc-release-guardrails'],
-        'source-verification': ['hhc-source-driven-development'],
-        'review-feedback': ['hhc-review-feedback'],
-        'workspace-isolation': ['hhc-workspace-isolation'],
-        'skill-authoring': ['hhc-skill-authoring'],
-        'critical-validation': ['hhc-adversarial-validation'],
+        debugging: ['hi-debugging-root-cause'],
+        'tdd-required': ['hi-test-driven-development'],
+        'implementation-planning': ['hi-implementation-planning'],
+        verification: ['hi-test-strategy'],
+        'docs-change': ['hi-changelog-and-documentation'],
+        refactor: ['hi-safe-refactoring'],
+        'database-migration': ['hi-database-migration'],
+        'dependency-change': ['hi-dependency-change'],
+        'api-contract': ['hi-api-contract-review'],
+        'api-interface-design': ['hi-api-interface-design'],
+        'ci-recovery': ['hi-ci-build-recovery'],
+        'performance-analysis': ['hi-performance-analysis'],
+        'release-guardrails': ['hi-release-guardrails'],
+        'source-verification': ['hi-source-driven-development'],
+        'review-feedback': ['hi-review-feedback'],
+        'workspace-isolation': ['hi-workspace-isolation'],
+        'skill-authoring': ['hi-skill-authoring'],
+        'critical-validation': ['hi-adversarial-validation'],
     },
     architect: {
-        'design-exploration': ['hhc-design-discovery'],
-        'implementation-planning': ['hhc-architecture-decisions', 'hhc-implementation-planning'],
-        'repository-analysis': ['hhc-iterative-retrieval', 'hhc-repository-analysis'],
-        'api-contract': ['hhc-api-interface-design'],
-        'api-interface-design': ['hhc-api-interface-design'],
-        'source-verification': ['hhc-source-driven-development'],
-        'critical-validation': ['hhc-adversarial-validation'],
+        'design-exploration': ['hi-design-discovery'],
+        'implementation-planning': ['hi-architecture-decisions', 'hi-implementation-planning'],
+        'repository-analysis': ['hi-iterative-retrieval', 'hi-repository-analysis'],
+        'api-contract': ['hi-api-interface-design'],
+        'api-interface-design': ['hi-api-interface-design'],
+        'source-verification': ['hi-source-driven-development'],
+        'critical-validation': ['hi-adversarial-validation'],
     },
     'repository-explorer': {
-        'repository-analysis': ['hhc-iterative-retrieval', 'hhc-repository-analysis'],
-        'source-verification': ['hhc-source-driven-development'],
+        'repository-analysis': ['hi-iterative-retrieval', 'hi-repository-analysis'],
+        'source-verification': ['hi-source-driven-development'],
     },
     'qa-reviewer': {
-        review: ['hhc-code-review'],
-        verification: ['hhc-test-strategy'],
-        'review-feedback': ['hhc-review-feedback'],
-        'critical-validation': ['hhc-adversarial-validation'],
-        'regression-review': ['hhc-regression-review'],
+        review: ['hi-code-review'],
+        verification: ['hi-test-strategy'],
+        'review-feedback': ['hi-review-feedback'],
+        'critical-validation': ['hi-adversarial-validation'],
+        'regression-review': ['hi-regression-review'],
     },
     'security-reviewer': {
-        'security-review': ['hhc-security-review'],
-        review: ['hhc-code-review'],
-        'review-feedback': ['hhc-review-feedback'],
-        'critical-validation': ['hhc-adversarial-validation'],
-        'dependency-change': ['hhc-dependency-change'],
+        'security-review': ['hi-security-review'],
+        review: ['hi-code-review'],
+        'review-feedback': ['hi-review-feedback'],
+        'critical-validation': ['hi-adversarial-validation'],
+        'dependency-change': ['hi-dependency-change'],
     },
     'visual-qa': {
-        'visual-qa': ['hhc-visual-qa'],
-        accessibility: ['hhc-accessibility-review'],
-        'browser-testing': ['hhc-browser-testing'],
-        'design-exploration': ['hhc-design-discovery'],
+        'visual-qa': ['hi-visual-qa'],
+        accessibility: ['hi-accessibility-review'],
+        'browser-testing': ['hi-browser-testing'],
+        'design-exploration': ['hi-design-discovery'],
     },
 };
 const GENERIC = {
-    debugging: ['hhc-debugging-root-cause'],
-    'tdd-required': ['hhc-test-driven-development'],
-    'design-exploration': ['hhc-design-discovery'],
-    'implementation-planning': ['hhc-implementation-planning'],
-    verification: ['hhc-test-strategy'],
-    review: ['hhc-code-review'],
-    'security-review': ['hhc-security-review'],
-    'source-verification': ['hhc-source-driven-development'],
-    'review-feedback': ['hhc-review-feedback'],
-    'api-interface-design': ['hhc-api-interface-design'],
-    'workspace-isolation': ['hhc-workspace-isolation'],
-    'skill-authoring': ['hhc-skill-authoring'],
-    'critical-validation': ['hhc-adversarial-validation'],
+    debugging: ['hi-debugging-root-cause'],
+    'tdd-required': ['hi-test-driven-development'],
+    'design-exploration': ['hi-design-discovery'],
+    'implementation-planning': ['hi-implementation-planning'],
+    verification: ['hi-test-strategy'],
+    review: ['hi-code-review'],
+    'security-review': ['hi-security-review'],
+    'source-verification': ['hi-source-driven-development'],
+    'review-feedback': ['hi-review-feedback'],
+    'api-interface-design': ['hi-api-interface-design'],
+    'workspace-isolation': ['hi-workspace-isolation'],
+    'skill-authoring': ['hi-skill-authoring'],
+    'critical-validation': ['hi-adversarial-validation'],
 };
 function validSkillFrontmatter(text, name) { const m = text.match(/^---\s*\n([\s\S]*?)\n---\s*\n/); if (!m)
     return false; const fm = m[1], n = fm.match(/^name:\s*["']?([^"'\n]+)["']?\s*$/m)?.[1]?.trim(), d = fm.match(/^description:\s*(.+)$/m)?.[1]?.trim(); return n === name && Boolean(d); }
@@ -92,13 +92,13 @@ catch {
     return resolve(path);
 } }
 export function configuredSkillPaths(hostConfig) { const skills = (hostConfig.skills && typeof hostConfig.skills === 'object') ? hostConfig.skills : {}; const paths = Array.isArray(skills.paths) ? skills.paths : []; return [...new Set(paths.filter((x) => typeof x === 'string' && x.trim().length > 0).map(x => canonical(x.trim())))]; }
-export function discoverSkills(projectRoot, hhcRoot, extraPaths = []) { const home = process.env.HOME ?? process.env.USERPROFILE ?? '', opencodeConfigDir = process.env.OPENCODE_CONFIG_DIR ? resolve(process.env.OPENCODE_CONFIG_DIR) : join(home, '.config', 'opencode'), roots = [[join(projectRoot, '.opencode', 'skills'), 'project'], [join(projectRoot, '.claude', 'skills'), 'project'], [join(projectRoot, '.agents', 'skills'), 'project'], ...(hhcRoot ? [[join(hhcRoot, 'skills'), 'hhc']] : []), [join(opencodeConfigDir, 'skills'), 'personal'], [join(home, '.claude', 'skills'), 'personal'], [join(home, '.agents', 'skills'), 'personal'], ...extraPaths.map(x => [x, 'personal'])]; const out = []; for (const [root, provider] of roots)
+export function discoverSkills(projectRoot, hiRoot, extraPaths = []) { const home = process.env.HOME ?? process.env.USERPROFILE ?? '', opencodeConfigDir = process.env.OPENCODE_CONFIG_DIR ? resolve(process.env.OPENCODE_CONFIG_DIR) : join(home, '.config', 'opencode'), roots = [[join(projectRoot, '.opencode', 'skills'), 'project'], [join(projectRoot, '.claude', 'skills'), 'project'], [join(projectRoot, '.agents', 'skills'), 'project'], ...(hiRoot ? [[join(hiRoot, 'skills'), 'hi']] : []), [join(opencodeConfigDir, 'skills'), 'personal'], [join(home, '.claude', 'skills'), 'personal'], [join(home, '.agents', 'skills'), 'personal'], ...extraPaths.map(x => [x, 'personal'])]; const out = []; for (const [root, provider] of roots)
     out.push(...inspectDir(root, provider)); return out; }
 function desiredFor(role, capabilities) { const map = ROLE_CAPABILITY_SKILLS[role] ?? GENERIC; return [...new Set(capabilities.flatMap(c => map[c] ?? GENERIC[c] ?? []))]; }
 export function resolveSkillPlan(capabilities, candidates, permissionMap, skillToolEnabled = true, role = 'coder') {
     const requested = desiredFor(role, capabilities).slice(0, 3), selected = [], missing = [], outcomes = [];
     for (const name of requested) {
-        const permission = resolveSkillPermission(name, permissionMap), all = candidates.filter(c => c.name === name), ordered = [...all.filter(c => c.provider === 'hhc'), ...all.filter(c => c.provider === 'project'), ...all.filter(c => c.provider === 'personal')], candidate = ordered.find(c => c.valid && c.enabled);
+        const permission = resolveSkillPermission(name, permissionMap), all = candidates.filter(c => c.name === name), ordered = [...all.filter(c => c.provider === 'hi'), ...all.filter(c => c.provider === 'project'), ...all.filter(c => c.provider === 'personal')], candidate = ordered.find(c => c.valid && c.enabled);
         let outcome;
         if (!all.length)
             outcome = 'missing';
@@ -122,3 +122,41 @@ export function resolveSkillPlan(capabilities, candidates, permissionMap, skillT
     return { selected, requested, missing, outcomes, reason };
 }
 export function selectSkills(capabilities, candidates) { return resolveSkillPlan(capabilities, candidates).selected; }
+export function indexSkillResources(skill) {
+    if (!skill.valid)
+        return [];
+    const base = canonical(resolve(skill.path, '..')), out = [];
+    for (const kind of ['references', 'scripts', 'assets', 'examples']) {
+        const root = join(base, kind);
+        if (!existsSync(root))
+            continue;
+        const walk = (dir) => { for (const entry of readdirSync(dir, { withFileTypes: true })) {
+            const raw = join(dir, entry.name);
+            let actual;
+            try {
+                actual = realpathSync(raw);
+            }
+            catch {
+                continue;
+            }
+            if (actual !== base && !actual.startsWith(`${base}/`) && !actual.startsWith(`${base}\\`))
+                continue;
+            if (entry.isDirectory())
+                walk(raw);
+            else if (entry.isFile()) {
+                const relativePath = actual.slice(canonical(root).length).replace(/^[\\/]+/, '').replace(/\\/g, '/');
+                out.push({ name: skill.name, kind, relativePath, absolutePath: actual });
+            }
+        } };
+        walk(root);
+    }
+    return out.sort((a, b) => `${a.kind}/${a.relativePath}`.localeCompare(`${b.kind}/${b.relativePath}`));
+}
+export function readSkillResource(skill, kind, relativePath) {
+    if (relativePath.includes('..') || relativePath.startsWith('/') || relativePath.startsWith('\\'))
+        throw new Error('Unsafe skill resource path');
+    const hit = indexSkillResources(skill).find(r => r.kind === kind && r.relativePath === relativePath.replace(/\\/g, '/'));
+    if (!hit)
+        throw new Error(`Skill resource not found: ${skill.name}/${kind}/${relativePath}`);
+    return readFileSync(hit.absolutePath, 'utf8');
+}

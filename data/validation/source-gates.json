@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "release": "2.0.10",
+  "release": "0.1.0",
   "phases": {
     "plugin-shell": {
       "evidence": [
@@ -49,14 +49,14 @@
       "evidence": [
         "plugin/src/runtime/evidence/evidence-runtime.ts",
         "plugin/src/runtime/verification/policy.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/hooks/tool-after.ts"
       ]
     },
-    "autopilot": {
+    "continuation": {
       "evidence": [
-        "plugin/src/runtime/autopilot/evaluator.ts",
-        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/evaluator.ts",
+        "plugin/src/runtime/continuation/recovery.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
         "plugin/src/hooks/chat-message.ts"
       ]
@@ -83,7 +83,7 @@
         "plugin/src/doctor/project-inspection.ts",
         "data/validation/opencode-version-matrix.json"
       ],
-      "note": "OHO uses OpenCode native plugin manager; no custom package updater."
+      "note": "Hi uses OpenCode native plugin manager; no custom package updater."
     },
     "team-mode": {
       "evidence": [

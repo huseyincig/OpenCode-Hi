@@ -9,5 +9,5 @@ export declare class ProjectAuthorityStore {
 }
 export declare function authorityClassForPatterns(patterns: string[]): PersistentAuthorityClass | undefined;
 export declare function authorityPatterns(cls: PersistentAuthorityClass): string[];
-/** Merge HHC's authority prompt/persistent grants without ever weakening a user/native explicit deny. */
+/** Merge Hi's authority prompt/persistent grants without ever weakening a user/native explicit deny. */
 export declare function applyProjectAuthorityPermissions(config: Record<string, unknown>, store: ProjectAuthorityStore): void;

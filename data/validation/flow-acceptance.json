@@ -46,7 +46,7 @@
       "name": "native-event-to-ledger",
       "expects": [
         "opencode-event-normalized",
-        "thin-hhc-signal-adapter",
+        "thin-hi-signal-adapter",
         "ledger-persists-compact-event",
         "no-second-broker"
       ]
@@ -68,5 +68,5 @@
       ]
     }
   },
-  "release": "2.0.10"
+  "release": "0.1.0"
 }

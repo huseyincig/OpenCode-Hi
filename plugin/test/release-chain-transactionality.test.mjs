@@ -46,8 +46,8 @@ test('user-confirmed success for an unknown push ACK satisfies the release-chain
 })
 
 test('explicit create-release mission cannot complete after push alone',async()=>{
- const { adjudicateCompletion }=await import('../dist/runtime/completion/adjudicator.js')
+ const { evaluateCompletion }=await import('../dist/runtime/completion/evaluator.js')
  const {m}=setup();m.obligations.forEach(o=>{o.status='closed'});m.evidence.fresh=true;m.release_chain={push:{outcome:'success',at:Date.now(),command:'git push origin main'}}
- const c=adjudicateCompletion(m);assert.equal(c.complete,false);assert.ok(c.reasons.some(r=>r==='release-chain:release-not-completed'))
- m.release_chain.release={outcome:'success',at:Date.now(),command:'gh release create v1',remote_verified:true};const d=adjudicateCompletion(m);assert.ok(!d.reasons.includes('release-chain:release-not-completed'))
+ const c=evaluateCompletion(m);assert.equal(c.complete,false);assert.ok(c.reasons.some(r=>r==='release-chain:release-not-completed'))
+ m.release_chain.release={outcome:'success',at:Date.now(),command:'gh release create v1',remote_verified:true};const d=evaluateCompletion(m);assert.ok(!d.reasons.includes('release-chain:release-not-completed'))
 })

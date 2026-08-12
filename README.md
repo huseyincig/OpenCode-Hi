@@ -1,81 +1,92 @@
-# OpenCode HHC Orchestrator (OHO)
+# OpenCode-Hi
 
-**Sürüm: 2.0.10**
+[Türkçe README](README.tr.md)
 
-Canonical plugin spec:
+OpenCode-Hi is an evidence-aware adaptive execution and Hybrid Intelligence control plane for AI-assisted software engineering on OpenCode. It keeps OpenCode native execution primitives authoritative while OpenCode-Hi owns evidence-aware execution-control semantics, decision routing, verification, and deterministic completion.
 
-`opencode-hhc-orchestrator@git+https://github.com/huseyincig/OpenCode-HHC-Orchestrator.git#2.0.10`
+Its operating principle is **minimum sufficient computation with maximum relevant judgment**: use the cheapest sufficient model/tool trajectory, the smallest useful context and topology, risk-proportional verification, and human judgment only when authority, preference, ambiguity, or irreversible impact materially requires it.
 
-OHO, OpenCode için mission, agent, model, cost, task, evidence, authority ve STOP orchestration control-plane pluginidir.
+## Status
 
-HHC orchestration contract:
+The repository is on the `0.1.x` development line. `0.1.0` is the first coherent OpenCode-Hi candidate and is considered ready only when the repository's verification and candidate-binding gates pass. Historical v58 validation receipts remain provenance and are not treated as fresh 0.1.0 evidence.
 
-`WHO + WHEN + MODEL + COST + TASK + STATE + EVIDENCE + STOP`
+## Installation
 
-- **OHO** ürün/plugin kimliğidir.
-- **HHC** OHO içindeki orchestration mimarisidir.
-- **OpenCode** session/agent/skill/permission/provider/model/tool/diff/event primitive'lerini sağlar.
-- **HHC Native Skills** yalnız methodology/HOW sağlar; orchestration ownership taşımaz.
+Project-local OpenCode configuration is:
 
-## Kurulum
+`<project-root>/opencode.json`
 
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "plugin": [
-    "opencode-hhc-orchestrator@git+https://github.com/huseyincig/OpenCode-HHC-Orchestrator.git#2.0.10"
-  ]
-}
+If the file already exists, preserve unrelated settings and merge the OpenCode-Hi plugin entry. If it does not exist, create it. OpenCode-Hi does not unpack product source into the repository root; all Hi-owned project data lives under `<project-root>/.opencode/hi/`. See [Filesystem Layout](docs/FILESYSTEM-LAYOUT.md). The canonical package name is `opencode-hi`. Register it in the OpenCode project configuration as a package plugin; OpenCode installs package plugins into its own cache rather than unpacking product source into the repository. See [Installation](docs/INSTALLATION.md).
+
+A restart of the OpenCode host is required after plugin configuration changes when the host does not hot-reload plugin configuration.
+
+## Configuration
+
+OpenCode-Hi supports bounded adaptive policy with explicit override precedence:
+
+1. task/user override
+2. project policy
+3. OpenCode-Hi adaptive selection
+4. host/provider default
+
+Execution topology may remain adaptive, be constrained to one agent, or explicitly permit multi-agent execution. Model selection may remain adaptive, fixed, or role-mapped. Capability availability never implies activation.
+
+## Architecture
+
+OpenCode-Hi owns mission interpretation, obligations, execution policy, topology decisions, model/tool policy, context depth, isolation depth, evidence requirements, retry/recovery, human-decision routing, continuation, completion adjudication, and authoritative STOP.
+
+OpenCode owns native host primitives: sessions, child sessions, model/provider execution, tools, permissions, shell, events, edits, and host lifecycle.
+
+Skills own methodology only. They do not own routing, topology, models, authority, continuation, completion, or STOP.
+
+See [Architecture](docs/ARCHITECTURE.md), [Execution Policy](docs/EXECUTION-POLICY.md), [Context](docs/CONTEXT.md), and [Hosts](docs/HOSTS.md).
+
+## Agents and models
+
+Role, agent instance, model, and topology are independent concepts. The adaptive path defaults to one agent and one sufficient model when that is enough. Multi-role single-agent, multi-agent shared-model, role-mapped models, and repeated role instances are supported only when policy and host capability justify them.
+
+## Skills
+
+The canonical methodology namespace is `hi-*`. OpenCode-Hi ships the 29 migrated native skills with default-zero activation and bounded composition. Large skill references are accessed lazily and path-safely. See [Skills](docs/SKILLS.md).
+
+## Authority and human decisions
+
+Hi may restrict host authority but never expand it. Read-only intent does not silently become mutation authority. Human interaction is reserved for decisions where authority, preference, contract ambiguity, security, or irreversible effects can materially change the outcome. See [Human Decisions](docs/HUMAN-DECISIONS.md).
+
+## Privacy
+
+Local knowledge is not automatically provider knowledge. Provider-facing context passes through sensitivity filtering and redaction; plaintext secrets must not be written to telemetry, durable artifacts, mission state, or logs. See [Privacy](docs/PRIVACY.md).
+
+## Doctor, update, and uninstall
+
+Lifecycle behavior preserves unrelated user configuration. Doctor/diagnostic flows report product, configuration, and environment problems without converting environment blockers into product failures. Update/reinstall and uninstall must preserve foreign plugins and user-owned configuration. Exact commands and verified resolver syntax are maintained in [Installation](docs/INSTALLATION.md) and [Verification](docs/VERIFICATION.md).
+
+## Supported OpenCode version
+
+The v58 provenance includes real OpenCode CLI `1.18.16` receipts. Those historical receipts do not by themselves certify the 0.1.0 candidate. The exact 0.1.0 supported-host statement is bound only after fresh loader/runtime verification.
+
+## Portability
+
+OpenCode is the reference host for `0.1.x`. Core mission, evidence, authority, completion, execution-policy, context-policy, topology, failure, and human-decision semantics are kept behind a host-capability boundary so future Codex, Claude Code, Cursor, or MCP-capable adapters are not architecturally blocked. Full alternate-host adapters are not required for `0.1.0`.
+
+## Development and verification
+
+From `plugin/`:
+
+```sh
+npm run build
+npm test
 ```
 
-OpenCode'u yeniden başlatın. Plugin config hook'u packaged HHC skill path'ini native skill discovery'ye ekler ve sekiz HHC agent tanımını effective config'e enjekte eder.
+From the repository root:
 
-## OHO helper
-
-```bash
-python scripts/native_plugin_setup.py plan /path/to/project --ref <REF>
-python scripts/native_plugin_setup.py install /path/to/project --ref <REF>
-python scripts/native_plugin_setup.py doctor /path/to/project
-python scripts/native_plugin_setup.py uninstall /path/to/project
-python scripts/native_plugin_setup.py reconfigure /path/to/project --primary-mode manager --parallel-max 2
-python scripts/native_plugin_setup.py role-models /path/to/project --print
+```sh
+python -m pytest -q
+python scripts/validate.py
 ```
 
-Helper yalnız OHO registration/ownership alanını yönetir; diğer kullanıcı plugin ve MCP kayıtlarını korur.
+Release-candidate construction uses `scripts/release-build.py` only after the build and verification gates pass. See [Verification](docs/VERIFICATION.md) and [Release](docs/RELEASE.md).
 
-## Runtime yüzeyi
+## License
 
-- HHC Mission / Obligation / Task / Evidence state
-- SMART minimum-team routing
-- native child sessions
-- role-specific model/provider/variant/fallback routing
-- 29 packaged HHC-native methodology skill
-- skill default zero; child-specific bounded loading
-- evidence freshness
-- event-driven continuation/autopilot
-- authority boundaries
-- completion adjudication / deterministic STOP
-- Team Mode default kapalı
-
-Prensip: bir worker yeterliyse bir worker; skill gerekmiyorsa 0 skill.
-
-## Agent'lar
-
-`working-manager`, `manager`, `coder`, `repository-explorer`, `qa-reviewer`, `architect`, `security-reviewer`, `visual-qa`.
-
-## Native skill policy
-
-HHC skill'leri methodology sağlar. Skill hiçbir zaman task dispatch, model seçimi, worker spawning, authority, continuation, completion veya STOP sahibi değildir. Normal worker hedefi 0–1 skill, birleşik ihtiyaçta en fazla 3 skill'dir.
-
-Detay: `docs/SKILLS.md`.
-
-## Geliştirme ve external validation
-
-Local/in-process PASS, exact Git install/runtime PASS anlamına gelmez. External validation exact OpenCode sürümü, exact OHO candidate ve gerçek platform/runtime receipt'lerine bağlanır.
-
-## Release artifacts
-
-- `OpenCode-HHC-Orchestrator-<VERSION>-SOURCE.zip`
-- `OpenCode-HHC-Orchestrator-<VERSION>-DISTRIBUTABLE.zip`
-
-Archive metadata deterministic olarak canonicalize edilir; release manifest/SBOM provenance doğrulaması yapılır.
+OpenCode-Hi is licensed under Apache-2.0. Third-party dependencies, adapted concepts, clean-room decisions, and attribution requirements are documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [Source Reuse Matrix](docs/SOURCE-REUSE-MATRIX.md).

@@ -1,7 +1,7 @@
 // Regression guard for the user-input vs assistant-output split in
 // chat-message.ts. Previously a single `extractText(output)` was used, which
 // read the assistant response — so user-supplied keywords (approve,
-// onaylıyorum, stop, resume, amend) were never matched and the
+// approve, stop, resume, amend) were never matched and the
 // authority boundary re-threw on every privilege-action retry.
 // Fixed in this commit by extracting user text from `input.message` and
 // assistant text from `output` separately, then routing STOP / RESUME /
@@ -38,7 +38,7 @@ test('user "approve" matches pending authority and advances state', async () => 
   assert.equal(m.status, 'active', 'mission must resume to active after approval')
 })
 
-test('user "onaylıyorum" matches pending authority (Turkish phrase)', async () => {
+test('user "approve" matches pending authority (English phrase)', async () => {
   const store = new MissionStore()
   const hook = createChatMessageHook(store)
   store.start('s1', 'demo')
@@ -47,7 +47,7 @@ test('user "onaylıyorum" matches pending authority (Turkish phrase)', async () 
     pending: { hash: 'b'.repeat(64), action: 'cwd=\ncommand=git push', created_at: Date.now() },
     approved: undefined, executing: undefined, completed_hashes: [],
   }
-  await callHook(hook, 's1', 'onaylıyorum', '')
+  await callHook(hook, 's1', 'approve', '')
   assert.equal(m.authority?.approved?.hash, 'b'.repeat(64))
   assert.equal(m.status, 'active')
 })
@@ -72,7 +72,7 @@ test('user "STOP" calls store.stop via user stream', async () => {
   const store = new MissionStore()
   const onStop = async () => {}
   const hook = createChatMessageHook(store, onStop)
-  store.start('s1', 'tek bir bug düzelt')
+  store.start('s1', 'tek fix one bug')
   assert.equal(store.get('s1').status, 'active')
   await callHook(hook, 's1', 'stop', '')
   assert.equal(store.get('s1').status, 'stopped')
@@ -112,10 +112,10 @@ test('uncertain authority requires explicit USER reconciliation; assistant self-
 test('user AMEND during active mission routes to mission.amend', async () => {
   const store = new MissionStore()
   const hook = createChatMessageHook(store)
-  store.start('s1', 'bir bug düzelt')
+  store.start('s1', 'fix one bug')
   const m = store.get('s1')
   assert.equal(m.intent.scope, 'local')
-  await callHook(hook, 's1', 'ayrıca üç bağımsız geliştirme ekle', '')
+  await callHook(hook, 's1', 'also add three independent features', '')
   assert.equal(m.intent.scope, 'multi-stream')
   assert.equal(m.execution_mode, 'parallel')
 })
@@ -134,7 +134,7 @@ test('assistant passage without user keyword does NOT trigger approval', async (
     hook,
     's1',
     'devam et',
-    'HHC authority boundary: explicit approval required for exact action contract ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff. Reply with approve ile onay verin',
+    'Hi authority boundary: explicit approval required for exact action contract ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff. Reply with approve ile onay verin',
   )
   assert.ok(m.authority?.pending, 'user "devam et" must not match approve pattern')
   assert.equal(m.authority?.approved, undefined)
@@ -144,7 +144,7 @@ test('createSystemTransformHook co-exists with chat-message hook (no regression)
   // Sanity: the system transform hook still injects scope + execution mode.
   const store = new MissionStore()
   const bg = new BackgroundRegistry()
-  store.start('s1', 'üç bağımsız geliştirme ekle')
+  store.start('s1', 'add three independent features')
   const sysHook = createSystemTransformHook(store, bg)
   const sysOut = { system: [] }
   await sysHook({ sessionID: 's1' }, sysOut)

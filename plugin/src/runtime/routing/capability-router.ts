@@ -2,14 +2,12 @@ import type { Category, NormalizedMissionIntent } from '../mission/types.js'
 
 export interface CapabilityDecision { role: string; category: Category; capabilities: string[]; reason: string[] }
 
-export type AutonomyProfile = 'basic' | 'standard' | 'powerful' | 'smart'
-
 export interface ProfileSettingsLite {
   specialistThreshold: 'low' | 'medium' | 'high'
   reviewThreshold: 'low' | 'medium' | 'high'
 }
 
-// Default profile is `standard` (matches DEFAULT_HHC_CONFIG.profile.standard).
+// Default profile is `balanced` (matches DEFAULT_HI_CONFIG.profile.balanced).
 // Lower threshold → more specialist dispatch; higher threshold → fewer.
 function thresholdFrom(value: 'low' | 'medium' | 'high'): number {
   return value === 'low' ? 1 : value === 'medium' ? 2 : 3
@@ -30,16 +28,16 @@ export function routeCapabilities(intent: NormalizedMissionIntent, profile: Prof
   }
 
   // QA-reviewer dispatch is gated by the profile's reviewThreshold.
-  // basic profile = high threshold = only review-heavy tasks get QA.
+  // minimal profile = high threshold = only review-heavy tasks get QA.
   if (/review|audit|qa|verify|test/.test(text) && !/implement|fix|build/.test(text)) {
     if (reviewT <= 1) return { role:'qa-reviewer', category:intent.risk==='high'?'critical':'standard', capabilities:caps, reason:['verification/review dominant task'] }
-    // standard/powerful: QA dispatched for non-trivial review; basic: only when high-risk.
+    // balanced/thorough: QA dispatched for non-trivial review; minimal: only when high-risk.
     if (intent.risk === 'high' || caps.includes('qa-review') || caps.includes('security-review')) return { role:'qa-reviewer', category:intent.risk==='high'?'critical':'standard', capabilities:caps, reason:['verification/review dominant task'] }
   }
 
   // Architect dispatch is gated by the profile's specialistThreshold.
-  // powerful profile = low threshold = architect for any cross-cutting,
-  // medium = architect for repo-wide or explicit design, basic = only
+  // thorough profile = low threshold = architect for any cross-cutting,
+  // medium = architect for repo-wide or explicit design, minimal = only
   // explicit architecture keyword.
   if (/architecture|design|migration|repo-wide/.test(text) || intent.scope==='repo-wide') {
     if (specialistT <= 1) return { role:'architect', category:intent.risk==='high'?'critical':'deep', capabilities:caps, reason:['cross-cutting design or repo-wide scope'] }

@@ -3,7 +3,7 @@ import { dirname, join, resolve } from 'node:path'
 
 export type PersistentAuthorityClass='git-push'|'package-publish'|'deploy'
 interface AuthorityFile{schema:1;grants:Partial<Record<PersistentAuthorityClass,{approved_at:number;source:'native-always'}>>}
-const FILE='.opencode/hhc-authority.json'
+const FILE='.opencode/hi/policy/authority.json'
 const CLASS_PATTERNS:Record<PersistentAuthorityClass,string[]>={
   'git-push':['git push *','gh release create *'],
   'package-publish':['npm publish*','pnpm publish*','yarn publish*','bun publish*'],
@@ -24,7 +24,7 @@ export function authorityClassForPatterns(patterns:string[]):PersistentAuthority
 export function authorityPatterns(cls:PersistentAuthorityClass):string[]{return CLASS_PATTERNS[cls]}
 function wildcard(pattern:string,value:string):boolean{const esc=pattern.replace(/[.+^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*').replace(/\?/g,'.');return new RegExp(`^${esc}$`,'i').test(value)}
 function explicitDecision(bash:any,pattern:string):'allow'|'ask'|'deny'|undefined{if(typeof bash==='string')return bash==='deny'?'deny':undefined;if(!bash||typeof bash!=='object')return undefined;let decision: any;for(const [k,v] of Object.entries(bash)){if(k==='*')continue;if(wildcard(k,pattern.replace(/\*$/,''))||wildcard(k,pattern))decision=v}return['allow','ask','deny'].includes(decision)?decision:undefined}
-/** Merge HHC's authority prompt/persistent grants without ever weakening a user/native explicit deny. */
+/** Merge Hi's authority prompt/persistent grants without ever weakening a user/native explicit deny. */
 export function applyProjectAuthorityPermissions(config:Record<string,unknown>,store:ProjectAuthorityStore):void{
   const permission=(config.permission&&typeof config.permission==='object'&&!Array.isArray(config.permission)?config.permission:{}) as Record<string,any>
   const existing=permission.bash

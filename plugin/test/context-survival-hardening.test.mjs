@@ -5,7 +5,7 @@ import { compactMissionContext } from '../dist/runtime/state/snapshot.js'
 import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
 import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
-import { DEFAULT_HHC_CONFIG } from '../dist/config/defaults.js'
+import { DEFAULT_HI_CONFIG } from '../dist/config/defaults.js'
 import { DEFAULT_CONTEXT_BUDGET } from '../dist/runtime/context/budget.js'
 
 function addLargeState(m){
@@ -36,7 +36,7 @@ test('oversized relevant context is replaced by native summary instead of being 
     abort:async()=>({data:{}}),
   }}
   const store=new MissionStore(),m=store.start('parent-context','fix bounded context')
-  const rt=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2})),process.cwd(),process.cwd(),()=>DEFAULT_HHC_CONFIG,()=>[],()=>({}))
+  const rt=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
   const huge=`FULL_TRANSCRIPT_MARKER_${'z'.repeat(DEFAULT_CONTEXT_BUDGET.max_context_chars+5000)}`
   await rt.start(m,{objective:'small fix',role:'coder',category:'quick',relevantContext:[huge]})
   assert.equal(prompts.length,1)
@@ -54,9 +54,9 @@ test('handoff remains within total budget when native summarization is unavailab
     abort:async()=>({data:{}}),
   }}
   const store=new MissionStore(),m=store.start('parent-context-no-summary','fix bounded context')
-  const rt=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2})),process.cwd(),process.cwd(),()=>DEFAULT_HHC_CONFIG,()=>[],()=>({}))
+  const rt=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
   await rt.start(m,{objective:'small fix',role:'coder',category:'quick',relevantContext:Array.from({length:40},(_,i)=>`context-${i}-${'q'.repeat(1000)}`)})
   const text=prompts[0].body.parts[0].text
   assert.ok(text.length<=DEFAULT_CONTEXT_BUDGET.max_handoff_chars)
-  assert.match(text,/HHC WORKER HANDOFF/)
+  assert.match(text,/Hi WORKER HANDOFF/)
 })

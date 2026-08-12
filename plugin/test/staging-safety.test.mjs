@@ -18,9 +18,9 @@ test('commit requires a fresh staged-set proof and rejects user or unrelated sta
   const {m}=mission();recordPreexistingUserBaseline(m,{'notes/user.md':'baseline-user'});m.changed_files=['src/a.ts','src/a.test.ts']
   assert.throws(()=>assertSafeGitMutation(m,'git commit -m "fix"'),/inspect the exact staged set/i)
   recordStagingInspection(m,'git diff --cached --name-only',{stdout:'src/a.ts\nnotes/user.md\n'})
-  assert.throws(()=>assertSafeGitMutation(m,'git commit -m "fix"'),/outside HHC-owned delta/i)
+  assert.throws(()=>assertSafeGitMutation(m,'git commit -m "fix"'),/outside Hi-owned delta/i)
   recordStagingInspection(m,'git diff --cached --name-only',{stdout:'src/a.ts\nsrc/unrelated.ts\n'})
-  assert.throws(()=>assertSafeGitMutation(m,'git commit -m "fix"'),/outside HHC-owned delta/i)
+  assert.throws(()=>assertSafeGitMutation(m,'git commit -m "fix"'),/outside Hi-owned delta/i)
   recordStagingInspection(m,'git diff --cached --name-only',{stdout:'src/a.ts\nsrc/a.test.ts\n'})
   assert.doesNotThrow(()=>assertSafeGitMutation(m,'git commit -m "fix"'))
 })
@@ -45,10 +45,10 @@ test('hook-level flow invalidates staged proof after index mutation and after co
   assert.equal(m.staging_safety,undefined)
 })
 
-test('pre-existing user baseline is frozen once and later HHC worker deltas are not reclassified as user-owned',()=>{
+test('pre-existing user baseline is frozen once and later Hi worker deltas are not reclassified as user-owned',()=>{
   const {m}=mission();recordPreexistingUserBaseline(m,{'notes/user.md':'u1'})
   m.changed_files.push('src/a.ts')
-  recordPreexistingUserBaseline(m,{'notes/user.md':'u1','src/a.ts':'hhc-later'})
+  recordPreexistingUserBaseline(m,{'notes/user.md':'u1','src/a.ts':'hi-later'})
   assert.deepEqual(m.preexisting_user_changes,{'notes/user.md':'u1'})
   assert.equal(m.preexisting_user_baseline_captured,true)
 })
@@ -87,5 +87,5 @@ test('merge conflict staged files become topology-owned and can be committed wit
   assert.deepEqual(m.git_topology_owned_files,['src/shared.ts'])
   assert.doesNotThrow(()=>assertSafeGitMutation(m,'git commit -m "merge feature"'))
   recordStagingInspection(m,'git diff --cached --name-only',{stdout:'src/shared.ts\nnotes/user.md\n'})
-  assert.throws(()=>assertSafeGitMutation(m,'git commit -m "merge feature"'),/outside HHC-owned delta/i)
+  assert.throws(()=>assertSafeGitMutation(m,'git commit -m "merge feature"'),/outside Hi-owned delta/i)
 })

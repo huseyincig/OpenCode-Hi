@@ -1,5 +1,5 @@
 import type { Category } from '../mission/types.js'
-import type { HhcConfig } from '../../config/schema.js'
+import type { HiConfig } from '../../config/schema.js'
 import { providerPolicyView } from '../../opencode/native-adapter.js'
 
 export interface AvailableModel{id:string;provider?:string;cost?:number;quality?:number;writeCapable?:boolean;tags?:string[];expectedTurns?:number;contextOverhead?:number;variants?:string[]}
@@ -11,11 +11,11 @@ const CATEGORY_TAG:Record<Category,string[]>={quick:['fast','cheap'],standard:['
 const EXPECTED:Record<Category,{turns:number;context:number}>={quick:{turns:2,context:.5},standard:{turns:4,context:1},deep:{turns:7,context:1.5},visual:{turns:5,context:1.2},critical:{turns:8,context:1.7}}
 const VARIANT_PREFERENCE:Record<Category,string[]>={quick:['low','minimal','none'],standard:['medium','low','none'],deep:['high','xhigh','medium'],visual:['high','medium','xhigh'],critical:['xhigh','max','high']}
 function providerOf(m:AvailableModel):string|undefined{return m.provider??(m.id.includes('/')?m.id.slice(0,m.id.indexOf('/')):undefined)}
-function policyFilter(available:AvailableModel[],config:HhcConfig,hostConfig?:Record<string,unknown>){
+function policyFilter(available:AvailableModel[],config:HiConfig,hostConfig?:Record<string,unknown>){
   const explicitAllowed=new Set(config.routing.allowedProviders),deniedModels=new Set(config.routing.deniedModels),native=providerPolicyView(hostConfig),rejected:Array<{id:string;reason:string}>=[],allowed:AvailableModel[]=[]
   for(const m of available){const provider=providerOf(m)
-    if(deniedModels.has(m.id)){rejected.push({id:m.id,reason:'hhc-denied-model'});continue}
-    if(explicitAllowed.size&&(!provider||!explicitAllowed.has(provider))){rejected.push({id:m.id,reason:`hhc-provider-not-allowed:${provider??'unknown'}`});continue}
+    if(deniedModels.has(m.id)){rejected.push({id:m.id,reason:'hi-denied-model'});continue}
+    if(explicitAllowed.size&&(!provider||!explicitAllowed.has(provider))){rejected.push({id:m.id,reason:`hi-provider-not-allowed:${provider??'unknown'}`});continue}
     if(provider&&native.denied.has(provider)){rejected.push({id:m.id,reason:`opencode-provider-policy-deny:${provider}`});continue}
     if(native.allowed.size&&provider&&!native.allowed.has(provider)){rejected.push({id:m.id,reason:`opencode-provider-not-enabled:${provider}`});continue}
     if(m.writeCapable===false){rejected.push({id:m.id,reason:'not-write-capable'});continue}
@@ -24,9 +24,9 @@ function policyFilter(available:AvailableModel[],config:HhcConfig,hostConfig?:Re
   return{allowed,rejected,nativePolicySources:native.source}
 }
 function uniqueRuntime(ids:string[],available:AvailableModel[]):string[]{const live=new Set(available.map(m=>m.id));return[...new Set(ids)].filter(id=>live.has(id))}
-export function runtimeModelCandidateStatus(id:string,availableInput:AvailableModel[],config:HhcConfig,hostConfig?:Record<string,unknown>):RuntimeModelCandidateStatus{
+export function runtimeModelCandidateStatus(id:string,availableInput:AvailableModel[],config:HiConfig,hostConfig?:Record<string,unknown>):RuntimeModelCandidateStatus{
   if(id==='host-default'){
-    if(config.routing.deniedModels.includes('host-default'))return{ok:false,reason:'hhc-denied-model:host-default'}
+    if(config.routing.deniedModels.includes('host-default'))return{ok:false,reason:'hi-denied-model:host-default'}
     if(config.routing.allowedProviders.length)return{ok:false,reason:'host-default-disallowed-by-explicit-provider-allowlist'}
     const native=providerPolicyView(hostConfig);if(native.allowed.size)return{ok:false,reason:'host-default-disallowed-by-opencode-provider-allowlist'}
     return{ok:true}
@@ -35,11 +35,13 @@ export function runtimeModelCandidateStatus(id:string,availableInput:AvailableMo
   const candidate=found??{id,provider:providerOf({id}),writeCapable:true};const checked=policyFilter([candidate],config,hostConfig);if(checked.allowed.length)return{ok:true,reason:found?'runtime-model-available':'runtime-inventory-unavailable-pre-resolved-candidate'}
   return{ok:false,reason:checked.rejected[0]?.reason??'routing-policy-rejected'}
 }
-function chooseVariant(category:Category,model:AvailableModel|undefined,config:HhcConfig,role?:string):string|undefined{if(!model?.variants?.length)return undefined;const rolePreferred=role&&model?config.routing.roleVariants?.[role]?.[model.id]:undefined;const preferred=[...(rolePreferred?[rolePreferred]:[]),...(config.routing.categoryVariants?.[category]??[]),...VARIANT_PREFERENCE[category]];for(const v of preferred)if(model.variants.includes(v))return v;return model.variants[0]}
-export function resolveModel(category:Category,availableInput:AvailableModel[],config:HhcConfig,explicit?:string,role?:string,hostConfig?:Record<string,unknown>,feedback:MissionModelFeedback={}):ModelResolution{
+function chooseVariant(category:Category,model:AvailableModel|undefined,config:HiConfig,role?:string):string|undefined{if(!model?.variants?.length)return undefined;const rolePreferred=role&&model?config.routing.roleVariants?.[role]?.[model.id]:undefined;const preferred=[...(rolePreferred?[rolePreferred]:[]),...(config.routing.categoryVariants?.[category]??[]),...VARIANT_PREFERENCE[category]];for(const v of preferred)if(model.variants.includes(v))return v;return model.variants[0]}
+export function resolveModel(category:Category,availableInput:AvailableModel[],config:HiConfig,explicit?:string,role?:string,hostConfig?:Record<string,unknown>,feedback:MissionModelFeedback={}):ModelResolution{
   const {allowed:available,rejected,nativePolicySources}=policyFilter(availableInput,config,hostConfig),reason:string[]=[],preferred:string[]=[]
   if(!availableInput.length){const deniedDefault=config.routing.deniedModels.includes('host-default');if(!deniedDefault&&!config.routing.allowedProviders.length){return{primary:'host-default',fallbacks:[],fallbackVariants:{},reason:['runtime inventory unavailable','policy permits host-default compatibility delegation'],fallbackReasons:[],rejected}}}
   if(explicit){if(available.some(m=>m.id===explicit)){preferred.push(explicit);reason.push('explicit override','runtime available','policy allowed')}else if(availableInput.some(m=>m.id===explicit))reason.push('explicit override rejected by routing/provider policy; fallback constrained to policy');else reason.push('explicit override unavailable; fallback allowed')}
+  const projectModel=config.models?.mode==='fixed'&&config.models.default!=='auto'?config.models.default:config.models?.mode==='role-mapped'&&role?config.models.roles[role]:undefined
+  if(!explicit&&projectModel){preferred.push(projectModel);reason.push(config.models?.mode==='fixed'?'project fixed-model override':`project role-model override:${role}`)}
   const roleConfigured=role?config.routing.roleModels[role]??[]:[];if(roleConfigured.length){preferred.push(...roleConfigured);reason.push(`role override:${role}`)}const categoryConfigured=config.routing.categoryModels[category]??[];if(categoryConfigured.length){preferred.push(...categoryConfigured);reason.push(`category override:${category}`)}
   const preferredLive=uniqueRuntime(preferred,available),wanted=CATEGORY_TAG[category],expected=EXPECTED[category]
   if(roleConfigured.length&&roleConfigured[0]&&!available.some(m=>m.id===roleConfigured[0]))reason.push(`role-primary-unavailable-or-policy-rejected:${roleConfigured[0]}`)

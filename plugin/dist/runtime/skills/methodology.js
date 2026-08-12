@@ -20,7 +20,7 @@ export function buildMethodologyBundle(skills) { const chunks = [], loaded = [],
         content = content.slice(0, MAX_SKILL_CHARS);
         truncated.push(skill.name);
     }
-    const chunk = [`HHC SELECTED METHODOLOGY: ${skill.name}`, 'Provider: HHC-native', 'The methodology below is loaded only for this worker. Follow its engineering method, but HHC retains task/model/continuation/completion/STOP ownership.', content].join('\n');
+    const chunk = [`Hi SELECTED METHODOLOGY: ${skill.name}`, 'Provider: Hi-native', 'The methodology below is loaded only for this worker. Follow its engineering method, but Hi retains task/model/continuation/completion/STOP ownership.', content].join('\n');
     if (total + chunk.length > MAX_BUNDLE_CHARS)
         break;
     chunks.push(chunk);
@@ -28,4 +28,4 @@ export function buildMethodologyBundle(skills) { const chunks = [], loaded = [],
     total += chunk.length;
 } return { text: chunks.join('\n\n---\n\n'), loaded, truncated }; }
 export function ownershipContract(kind, skills = []) { if (kind === 'parent')
-    return ['HHC CONTROL-PLANE CONTRACT', 'HHC owns mission decomposition, task dispatch, model routing, continuation, completion adjudication and STOP.', 'HHC-native skills provide methodology only; they never own orchestration, worker spawning, model selection, authority, continuation or STOP.', 'Do not create parallel/subagent workflows directly; use HHC task/team runtime when delegation is required.', 'For ordinary work, use zero skills unless HHC selected one for the task.'].join('\n'); return ['HHC CHILD CONTROL-PLANE CONTRACT', 'You are an execution worker, not the top-level orchestrator.', `HHC-selected methodology allowlist: ${skills.length ? skills.join(', ') : 'none'}.`, 'Selected methodology content may already be embedded in this handoff. Do not load unrelated skills.', 'Do not spawn or coordinate additional agents. Return the structured WorkerResult to HHC.'].join('\n'); }
+    return ['Hi CONTROL-PLANE CONTRACT', 'Hi owns mission decomposition, task dispatch, model routing, continuation, completion adjudication and STOP.', 'Hi-native skills provide methodology only; they never own orchestration, worker spawning, model selection, authority, continuation or STOP.', 'Do not create parallel/subagent workflows directly; use Hi task/team runtime when delegation is required.', 'For ordinary work, use zero skills unless Hi selected one for the task.'].join('\n'); return ['Hi CHILD CONTROL-PLANE CONTRACT', 'You are an execution worker, not the top-level orchestrator.', `Hi-selected methodology allowlist: ${skills.length ? skills.join(', ') : 'none'}.`, 'Selected methodology content may already be embedded in this handoff. Do not load unrelated skills.', 'Do not spawn or coordinate additional agents. Return the structured WorkerResult to Hi.'].join('\n'); }

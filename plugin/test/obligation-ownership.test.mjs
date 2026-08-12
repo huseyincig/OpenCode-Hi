@@ -7,10 +7,10 @@ import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { createTask, createWorker } from '../dist/runtime/worker/worker-runtime.js'
 import { addEvidence } from '../dist/runtime/evidence/evidence-runtime.js'
 import { verificationSatisfied } from '../dist/runtime/verification/policy.js'
-import { DEFAULT_HHC_CONFIG } from '../dist/config/defaults.js'
+import { DEFAULT_HI_CONFIG } from '../dist/config/defaults.js'
 
 function runtime(){
-  return new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HHC_CONFIG,()=>[],()=>({}))
+  return new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
 }
 
 const done={status:'DONE',summary:'done',changed_files:[],evidence:[],open_issues:[],needs_context:[]}

@@ -1,0 +1,162 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "skills_audited": 29,
+  "principle": "storage follows semantic ownership, lifecycle, scope, and sensitivity; never skill name or file extension",
+  "canonical_project_families": [
+    ".opencode/skills/<project-created-skill>/",
+    ".opencode/hi/policy/",
+    ".opencode/hi/provenance/",
+    ".opencode/hi/project-intelligence/",
+    ".opencode/hi/artifacts/"
+  ],
+  "lazy_creation": true,
+  "ephemeral_project_storage_forbidden": true,
+  "skills": [
+    {
+      "skill": "hi-accessibility-review",
+      "storage_owner_class": "MISSION_EVIDENCE_OPTIONAL_ARTIFACT",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-adversarial-validation",
+      "storage_owner_class": "MISSION_EVIDENCE_OPTIONAL_ARTIFACT",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-api-contract-review",
+      "storage_owner_class": "MISSION_EVIDENCE_OPTIONAL_ARTIFACT",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-api-interface-design",
+      "storage_owner_class": "PROJECT_INTELLIGENCE_OR_REPOSITORY",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-architecture-decisions",
+      "storage_owner_class": "PROJECT_INTELLIGENCE",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-browser-testing",
+      "storage_owner_class": "MISSION_EVIDENCE_OPTIONAL_ARTIFACT",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-changelog-and-documentation",
+      "storage_owner_class": "REPOSITORY_CANONICAL",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-ci-build-recovery",
+      "storage_owner_class": "MISSION_EVIDENCE_OPTIONAL_ARTIFACT",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-code-review",
+      "storage_owner_class": "MISSION_EVIDENCE_OPTIONAL_ARTIFACT",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-database-migration",
+      "storage_owner_class": "MISSION_EVIDENCE_OPTIONAL_ARTIFACT",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-debugging-root-cause",
+      "storage_owner_class": "MISSION_EVIDENCE_OPTIONAL_ARTIFACT",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-dependency-change",
+      "storage_owner_class": "REPOSITORY_CANONICAL",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-design-discovery",
+      "storage_owner_class": "MISSION_OR_PROJECT_INTELLIGENCE",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-implementation-planning",
+      "storage_owner_class": "MISSION_EVIDENCE_OPTIONAL_ARTIFACT",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-iterative-retrieval",
+      "storage_owner_class": "EPHEMERAL_CONTEXT",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-performance-analysis",
+      "storage_owner_class": "MISSION_EVIDENCE_OPTIONAL_ARTIFACT",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-regression-review",
+      "storage_owner_class": "MISSION_EVIDENCE_OPTIONAL_ARTIFACT",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-release-guardrails",
+      "storage_owner_class": "RELEASE_WORKSPACE",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-repository-analysis",
+      "storage_owner_class": "EPHEMERAL_OR_PROJECT_INTELLIGENCE",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-review-feedback",
+      "storage_owner_class": "MISSION_EVIDENCE_OPTIONAL_ARTIFACT",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-safe-refactoring",
+      "storage_owner_class": "REPOSITORY_CANONICAL",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-security-review",
+      "storage_owner_class": "MISSION_EVIDENCE_OPTIONAL_ARTIFACT",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-skill-authoring",
+      "storage_owner_class": "OPENCODE_PROJECT_SKILL",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-source-driven-development",
+      "storage_owner_class": "MISSION_EVIDENCE_OPTIONAL_ARTIFACT",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-task-classification",
+      "storage_owner_class": "RUNTIME_STATE",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-test-driven-development",
+      "storage_owner_class": "REPOSITORY_CANONICAL",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-test-strategy",
+      "storage_owner_class": "MISSION_EVIDENCE_OPTIONAL_ARTIFACT",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-visual-qa",
+      "storage_owner_class": "MISSION_EVIDENCE_OPTIONAL_ARTIFACT",
+      "skill_specific_hi_directory": false
+    },
+    {
+      "skill": "hi-workspace-isolation",
+      "storage_owner_class": "GIT_OPENCODE_RUNTIME",
+      "skill_specific_hi_directory": false
+    }
+  ]
+}

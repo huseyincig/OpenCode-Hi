@@ -188,8 +188,8 @@ function inspectReleaseQuality(root, command) {
 export function isGitPush(command) { return /^git push(?:\s|$)/i.test(norm(command)); }
 export function isReleaseCreate(command) { return /^gh release create(?:\s|$)/i.test(norm(command)); }
 export function isPackagePublish(command) { return /^(?:npm|pnpm|bun) publish(?:\s|$)|^yarn npm publish(?:\s|$)/i.test(norm(command)); }
-export function missionRequiresPackagePublish(objective) { return /(?:\bnpm\s+publish\b|\bpnpm\s+publish\b|\byarn\s+npm\s+publish\b|\bbun\s+publish\b|\bpublish\s+(?:the\s+)?package\b|\bpaketi\s+yayınla\b)/i.test(objective); }
-export function missionRequiresReleaseCreate(objective) { return /(?:\bgh\s+release\s+create\b|\bcreate\s+(?:a\s+)?release\b|\brelease\s+it\b|\brelease\s+oluştur\b|\bsürüm\s+yayınla\b)/i.test(objective); }
+export function missionRequiresPackagePublish(objective) { return /(?:\bnpm\s+publish\b|\bpnpm\s+publish\b|\byarn\s+npm\s+publish\b|\bbun\s+publish\b|\bpublish\s+(?:the\s+)?package\b)/i.test(objective); }
+export function missionRequiresReleaseCreate(objective) { return /(?:\bgh\s+release\s+create\b|\bcreate\s+(?:a\s+)?release\b|\brelease\s+it\b)/i.test(objective); }
 export function isLocalReleaseMutation(command) { return /^git (?:commit|merge|rebase|cherry-pick)(?:\s|$)/i.test(norm(command)); }
 function parsePushExpectation(command) {
     const t = tokens(command);
@@ -427,7 +427,7 @@ export function noteLocalReleaseMutation(m, command, success) {
 export function assertReleaseChainPrecondition(m, command, projectRoot) {
     if (isPackagePublish(command)) {
         if (!projectRoot)
-            throw new Error('HHC package publish integrity: project root is required.');
+            throw new Error('Hi package publish integrity: project root is required.');
         const pkg = packageJson(projectRoot), version = typeof pkg?.version === 'string' ? pkg.version : undefined, name = typeof pkg?.name === 'string' ? pkg.name : undefined, versionFile = existsSync(join(projectRoot, 'VERSION')) ? readFileSync(join(projectRoot, 'VERSION'), 'utf8').trim() : version, lockVersion = packageLockVersion(projectRoot), pp = m.release_chain?.package;
         const issues = [];
         if (!name || !version)
@@ -444,7 +444,7 @@ export function assertReleaseChainPrecondition(m, command, projectRoot) {
             for (const issue of issues)
                 addBlocker(m, issue);
             appendLedger(m, 'release-chain.package.preflight-failed', { payload: { name, version, lockVersion, issues } });
-            throw new Error(`HHC package publish integrity: publish is blocked (${issues.join(', ')}). Run a fresh npm pack --dry-run --json and keep package/version/lock state unchanged before publish.`);
+            throw new Error(`Hi package publish integrity: publish is blocked (${issues.join(', ')}). Run a fresh npm pack --dry-run --json and keep package/version/lock state unchanged before publish.`);
         }
         clearReleaseBlockers(m, 'release-chain:package-pack-');
         clearReleaseBlockers(m, 'release-chain:package-surface-');
@@ -467,7 +467,7 @@ export function assertReleaseChainPrecondition(m, command, projectRoot) {
             m.release_chain = { ...(m.release_chain ?? {}), blocked_reason: tr };
             addBlocker(m, tr);
             appendLedger(m, 'release-chain.blocked', { payload: { reason: tr, command: norm(command).slice(0, 180), policy: 'release-create-requires-remotely-verified-explicit-tag-push' } });
-            throw new Error(`HHC release-chain safety: release creation is blocked (${tr}). The explicit release tag push must be remotely verified before creating the release.`);
+            throw new Error(`Hi release-chain safety: release creation is blocked (${tr}). The explicit release tag push must be remotely verified before creating the release.`);
         }
     }
     if (projectRoot) {
@@ -476,7 +476,7 @@ export function assertReleaseChainPrecondition(m, command, projectRoot) {
             for (const issue of q.issues)
                 addBlocker(m, `quality-${issue}`);
             appendLedger(m, 'release-chain.quality.failed', { payload: { version: q.version, issues: q.issues, assets: q.assets.map(a => ({ path: basename(a.path), sha256: a.sha256, manifest_match: a.manifest_match })) } });
-            throw new Error(`HHC release quality: release creation is blocked (${q.issues.join(', ')}). VERSION/package/plugin package/CHANGELOG and any supplied release asset must match the release tag and manifest.`);
+            throw new Error(`Hi release quality: release creation is blocked (${q.issues.join(', ')}). VERSION/package/plugin package/CHANGELOG and any supplied release asset must match the release tag and manifest.`);
         }
         m.release_chain = { ...(m.release_chain ?? {}), quality: { version: q.version, verified: true, verified_at: Date.now(), assets: q.assets.map(a => ({ path: basename(a.path), sha256: a.sha256, manifest_match: a.manifest_match })) } };
         clearReleaseBlockers(m, 'release-chain:quality-');
@@ -492,7 +492,7 @@ export function assertReleaseChainPrecondition(m, command, projectRoot) {
         m.release_chain = { ...(chain ?? {}), blocked_reason: reason };
         addBlocker(m, reason);
         appendLedger(m, 'release-chain.blocked', { payload: { reason, command: norm(command).slice(0, 180), policy: 'release-create-requires-current-remotely-verified-push' } });
-        throw new Error(`HHC release-chain safety: release creation is blocked (${reason}). A successful git push for the current local revision must be proven and remote state must be verified before creating the release.`);
+        throw new Error(`Hi release-chain safety: release creation is blocked (${reason}). A successful git push for the current local revision must be proven and remote state must be verified before creating the release.`);
     }
 }
 export function notePrivilegedReleaseOutcome(m, command, outcome) {

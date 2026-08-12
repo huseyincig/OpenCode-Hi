@@ -12,11 +12,11 @@ import { resolveUncertainAuthority } from '../dist/runtime/safety/authority.js'
 function git(cwd,...args){return execFileSync('git',args,{cwd,encoding:'utf8'}).trim()}
 
 test('real bare-remote push with lost ACK is not blindly retried and is reconciled by remote proof', async()=>{
-  const root=mkdtempSync(join(tmpdir(),'hhc-real-remote-'))
+  const root=mkdtempSync(join(tmpdir(),'hi-real-remote-'))
   const remote=join(root,'remote.git'), work=join(root,'work')
   execFileSync('git',['init','--bare',remote])
   execFileSync('git',['init','-b','main',work])
-  git(work,'config','user.name','HHC Test'); git(work,'config','user.email','hhc@example.invalid')
+  git(work,'config','user.name','Hi Test'); git(work,'config','user.email','hi@example.invalid')
   execFileSync('sh',['-c','printf x > tracked.txt'],{cwd:work})
   git(work,'add','tracked.txt'); git(work,'commit','-m','initial'); git(work,'remote','add','origin',remote)
 
@@ -47,11 +47,11 @@ test('real bare-remote push with lost ACK is not blindly retried and is reconcil
 })
 
 test('real bare-remote annotated tag exposes direct tag object and peeled commit hashes', ()=>{
-  const root=mkdtempSync(join(tmpdir(),'hhc-real-tag-'))
+  const root=mkdtempSync(join(tmpdir(),'hi-real-tag-'))
   const remote=join(root,'remote.git'), work=join(root,'work')
   execFileSync('git',['init','--bare','--initial-branch=main',remote])
   execFileSync('git',['init','-b','main',work])
-  git(work,'config','user.name','HHC Test'); git(work,'config','user.email','hhc@example.invalid')
+  git(work,'config','user.name','Hi Test'); git(work,'config','user.email','hi@example.invalid')
   execFileSync('sh',['-c','printf y > tracked.txt'],{cwd:work})
   git(work,'add','tracked.txt'); git(work,'commit','-m','release candidate'); git(work,'remote','add','origin',remote)
   git(work,'push','origin','main'); git(work,'tag','-a','v2.0.10','-m','v2.0.10'); git(work,'push','origin','v2.0.10')

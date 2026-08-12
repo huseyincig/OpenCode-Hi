@@ -13,6 +13,7 @@ declare module 'node:fs' {
   export function renameSync(oldPath:any,newPath:any): void
   export function writeFileSync(path:any,data:any,encoding?:any): void
   export function statSync(path:any): any
+  export function rmSync(path:any, options?:any): void
 }
 declare module 'node:path' {
   export function join(...paths:string[]): string
@@ -20,6 +21,13 @@ declare module 'node:path' {
   export function basename(path:string, suffix?:string): string
   export function dirname(path:string): string
   export function relative(from:string,to:string): string
+  export const sep: string
 }
 
 declare module 'node:url' { export function fileURLToPath(url:any): string }
+declare module 'node:child_process' {
+  export interface ChildProcess { pid?: number; killed:boolean; kill(signal?:string):boolean; once(event:'exit', listener:(code:number|null)=>void):this }
+  export function spawn(command:string,args:string[],options?:any):ChildProcess
+  export function spawnSync(command:string,args:string[],options?:any):{status:number|null;stdout?:string|Buffer;stderr?:string|Buffer}
+}
+declare module 'node:os' { export function tmpdir(): string; export function homedir(): string }

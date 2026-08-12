@@ -1,4 +1,4 @@
-import type { HhcConfig, ConfigResolutionReport } from '../config/schema.js';
+import type { HiConfig, ConfigResolutionReport } from '../config/schema.js';
 import { MissionStore } from '../runtime/mission/mission-store.js';
 import type { AvailableModel } from '../runtime/routing/model-resolver.js';
 import type { OpenCodeCapabilities } from '../opencode/capabilities.js';
@@ -15,5 +15,5 @@ export interface DoctorRuntimeInfo {
     hostConfig?: Record<string, unknown>;
     openCodeVersion?: string;
 }
-export declare function runDoctor(config: HhcConfig, store: MissionStore, directory?: string, info?: DoctorRuntimeInfo): DoctorCheck[];
+export declare function runDoctor(config: HiConfig, store: MissionStore, directory?: string, info?: DoctorRuntimeInfo): DoctorCheck[];
 export declare function formatDoctor(c: DoctorCheck[]): string;

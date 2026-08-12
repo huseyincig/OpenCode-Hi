@@ -3,23 +3,23 @@
   "scenarios": {
     "A": {
       "name": "small-fix",
-      "prompt": "footerdaki yazım hatasını düzelt",
+      "prompt": "fix the footer typo",
       "expects": [
         "single-worker",
         "no-planner",
         "no-reviewer",
-        "no-hhc-native-skills",
+        "no-hi-native-skills",
         "minimal-verify",
         "stop"
       ]
     },
     "B": {
       "name": "bug",
-      "prompt": "login bazen 500 veriyor çöz test et",
+      "prompt": "fix the intermittent login 500 and test it",
       "expects": [
         "bug-fix-intent",
         "minimum-explorer-coder-path",
-        "hhc-debugging-root-cause-if-needed",
+        "hi-debugging-root-cause-if-needed",
         "targeted-tests",
         "fresh-evidence",
         "stop"
@@ -27,7 +27,7 @@
     },
     "C": {
       "name": "large-independent-analysis",
-      "prompt": "bu repo neden yavaş incele ve en büyük 3 darboğazı düzelt",
+      "prompt": "inspect why this repository is slow and fix the three largest bottlenecks",
       "expects": [
         "scope-analysis",
         "bounded-parallel-if-beneficial",
@@ -40,7 +40,7 @@
     },
     "D": {
       "name": "security-sensitive",
-      "prompt": "auth sistemini değiştir",
+      "prompt": "change the auth system",
       "expects": [
         "high-risk",
         "architect-security-capability",
@@ -51,7 +51,7 @@
     },
     "E": {
       "name": "release-authority-boundary",
-      "prompt": "release hazırla ve yayınla",
+      "prompt": "prepare the release and publish it",
       "expects": [
         "automatic-release-preparation",
         "tests-build-version-checks",
@@ -62,7 +62,7 @@
     },
     "F": {
       "name": "user-stop",
-      "prompt": "autopilot sırasında kullanıcı stop",
+      "prompt": "user stops during continuation",
       "expects": [
         "no-auto-resurrection"
       ]
@@ -160,21 +160,21 @@
       ]
     },
     "Native-12": {
-      "name": "hhc-native-skills-tiny-task",
+      "name": "hi-native-skills-tiny-task",
       "expects": [
-        "no-unnecessary-hhc-native-skills",
+        "no-unnecessary-hi-native-skills",
         "single-minimal-path"
       ]
     },
     "Native-13": {
-      "name": "hhc-native-skills-debugging",
+      "name": "hi-native-skills-debugging",
       "expects": [
-        "hhc-debugging-root-cause-loadable",
+        "hi-debugging-root-cause-loadable",
         "selected-worker-only"
       ]
     },
     "Native-14": {
-      "name": "hhc-native-skills-skill-unavailable",
+      "name": "hi-native-skills-skill-unavailable",
       "expects": [
         "preflight-detects",
         "doctor-reports",

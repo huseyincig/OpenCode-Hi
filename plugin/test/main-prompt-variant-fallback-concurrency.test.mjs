@@ -4,7 +4,7 @@ import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
 import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
-import { resolveHhcConfig } from '../dist/config/resolver.js'
+import { resolveHiConfig } from '../dist/config/resolver.js'
 
 function baseClient(created=[],prompts=[]){
   let n=0
@@ -16,7 +16,7 @@ function baseClient(created=[],prompts=[]){
 }
 
 test('selected native model variant must be evidenced by assistant runtime metadata',()=>{
-  const runtime=new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHhcConfig({}),()=>[],()=>({}))
+  const runtime=new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>({}))
   const m=new MissionStore(process.cwd()).start('s','deep task')
   m.tasks.push({id:'t',objective:'x',status:'running',role:'coder',category:'deep',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],worker_id:'w',created_at:Date.now(),updated_at:Date.now()})
   m.workers.push({id:'w',task_id:'t',role:'coder',category:'deep',parent_session_id:'s',parent_mission_id:m.mission_id,model:'p/deep',model_variant:'high',fallbacks:[],loaded_skills:[],methodologies:[],fingerprint:'f',status:'busy',generation_at_spawn:m.generation})
@@ -32,7 +32,7 @@ test('selected native model variant must be evidenced by assistant runtime metad
 })
 
 test('missing runtime variant evidence blocks a variant-constrained child',()=>{
-  const runtime=new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHhcConfig({}),()=>[],()=>({}))
+  const runtime=new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>({}))
   const m=new MissionStore(process.cwd()).start('s','deep task')
   m.tasks.push({id:'t',objective:'x',status:'running',role:'coder',category:'deep',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],worker_id:'w',created_at:Date.now(),updated_at:Date.now()})
   m.workers.push({id:'w',task_id:'t',role:'coder',category:'deep',parent_session_id:'s',parent_mission_id:m.mission_id,model:'p/deep',model_variant:'high',fallbacks:[],loaded_skills:[],methodologies:[],fingerprint:'f',status:'busy',generation_at_spawn:m.generation})
@@ -44,7 +44,7 @@ test('missing runtime variant evidence blocks a variant-constrained child',()=>{
 test('fallback reason persists on worker lifecycle for dispatch and runtime fallback',async()=>{
   const created=[],prompts=[]
   const client=baseClient(created,prompts)
-  const cfg=resolveHhcConfig({routing:{roleModels:{coder:['p/primary','p/fallback']},maxFallbacks:2}})
+  const cfg=resolveHiConfig({routing:{roleModels:{coder:['p/primary','p/fallback']},maxFallbacks:2}})
   const models=[{id:'p/primary',provider:'p',writeCapable:true,tags:['balanced'],variants:['medium']},{id:'p/fallback',provider:'p',writeCapable:true,tags:['balanced'],variants:['low']}]
   let failPrimary=true
   client.session.create=async req=>{const model=req.body?.model?.id;if(model==='primary'&&failPrimary){failPrimary=false;throw new Error('provider unavailable')}const id='child-fallback';created.push({id,req});return {data:{id}}}
@@ -71,7 +71,7 @@ test('fallback reason persists on worker lifecycle for dispatch and runtime fall
 
 test('role-specific children respect model capacity and second worker remains queued until slot releases',async()=>{
   const created=[],prompts=[],client=baseClient(created,prompts)
-  const cfg=resolveHhcConfig({routing:{roleModels:{'repository-explorer':['p/shared'],architect:['p/shared']}}})
+  const cfg=resolveHiConfig({routing:{roleModels:{'repository-explorer':['p/shared'],architect:['p/shared']}}})
   const models=[{id:'p/shared',provider:'p',writeCapable:true,tags:['balanced']}]
   const scheduler=new ConcurrencyScheduler(()=>({global:3,providers:{p:3},models:{'p/shared':1}}))
   const runtime=new TaskRuntime(client,new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>cfg,()=>models,()=>({}))

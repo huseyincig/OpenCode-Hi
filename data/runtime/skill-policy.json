@@ -8,33 +8,33 @@
     "profile_changes_threshold_not_capability": "true"
   },
   "skills": {
-    "hhc-task-classification": {
+    "hi-task-classification": {
       "roles": [
         "manager",
         "working-manager"
       ],
       "activation": "multi-step, multi-domain, risky, ambiguous or dependency-heavy task"
     },
-    "hhc-repository-analysis": {
+    "hi-repository-analysis": {
       "roles": [
         "repository-explorer"
       ],
       "activation": "relationship/test surface spans multiple areas or narrow discovery is insufficient"
     },
-    "hhc-implementation-planning": {
+    "hi-implementation-planning": {
       "roles": [
         "architect"
       ],
       "activation": "architecture, contract, schema, migration or multi-file dependency plan"
     },
-    "hhc-safe-refactoring": {
+    "hi-safe-refactoring": {
       "roles": [
         "working-manager",
         "coder"
       ],
       "activation": "behavior-preserving structural refactor"
     },
-    "hhc-test-strategy": {
+    "hi-test-strategy": {
       "roles": [
         "working-manager",
         "coder",
@@ -42,57 +42,57 @@
       ],
       "activation": "minimum sufficient deterministic verification is not obvious"
     },
-    "hhc-code-review": {
+    "hi-code-review": {
       "roles": [
         "qa-reviewer"
       ],
       "activation": "material diff needs independent semantic review"
     },
-    "hhc-regression-review": {
+    "hi-regression-review": {
       "roles": [
         "qa-reviewer"
       ],
       "activation": "neighboring behavior or consumers may regress"
     },
-    "hhc-security-review": {
+    "hi-security-review": {
       "roles": [
         "security-reviewer"
       ],
       "activation": "real security boundary is affected"
     },
-    "hhc-visual-qa": {
+    "hi-visual-qa": {
       "roles": [
         "visual-qa"
       ],
       "activation": "actual UI/layout/DOM/visual behavior changed"
     },
-    "hhc-accessibility-review": {
+    "hi-accessibility-review": {
       "roles": [
         "visual-qa"
       ],
       "activation": "keyboard, focus, semantics, labels, contrast or assistive access may change"
     },
-    "hhc-browser-testing": {
+    "hi-browser-testing": {
       "roles": [
         "visual-qa"
       ],
       "activation": "browser interaction/runtime evidence is required"
     },
-    "hhc-release-guardrails": {
+    "hi-release-guardrails": {
       "roles": [
         "manager",
         "working-manager"
       ],
       "activation": "version, tag, package, publish or release task"
     },
-    "hhc-changelog-and-documentation": {
+    "hi-changelog-and-documentation": {
       "roles": [
         "working-manager",
         "coder"
       ],
       "activation": "user-visible behavior/configuration/usage changed"
     },
-    "hhc-debugging-root-cause": {
+    "hi-debugging-root-cause": {
       "roles": [
         "working-manager",
         "coder",
@@ -100,7 +100,7 @@
       ],
       "activation": "symptom is known but root cause is uncertain, intermittent or cross-layer"
     },
-    "hhc-api-contract-review": {
+    "hi-api-contract-review": {
       "roles": [
         "architect",
         "coder",
@@ -112,7 +112,7 @@
         "library"
       ]
     },
-    "hhc-database-migration": {
+    "hi-database-migration": {
       "roles": [
         "architect",
         "coder",
@@ -124,7 +124,7 @@
         "database"
       ]
     },
-    "hhc-dependency-change": {
+    "hi-dependency-change": {
       "roles": [
         "architect",
         "coder",
@@ -136,7 +136,7 @@
         "dependency_managed"
       ]
     },
-    "hhc-performance-analysis": {
+    "hi-performance-analysis": {
       "roles": [
         "architect",
         "coder",
@@ -144,7 +144,7 @@
       ],
       "activation": "measured or plausible material latency, memory, throughput or hot-path regression"
     },
-    "hhc-ci-build-recovery": {
+    "hi-ci-build-recovery": {
       "roles": [
         "working-manager",
         "coder",

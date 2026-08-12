@@ -1,10 +1,10 @@
 {
   "schema": 3,
-  "release": "2.0.10",
+  "release": "0.1.0",
   "execution_environment": "external",
   "sequence": [
     "plain-opencode",
-    "oho-only",
+    "hi-only",
     "plugin-shell",
     "packaged-native-skills",
     "methodology-routing",

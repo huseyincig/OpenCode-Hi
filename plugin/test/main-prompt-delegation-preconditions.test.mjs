@@ -4,13 +4,13 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
 import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
-import { resolveHhcConfig } from '../dist/config/resolver.js'
-import { PACKAGED_HHC_AGENTS } from '../dist/generated/agent-config.js'
+import { resolveHiConfig } from '../dist/config/resolver.js'
+import { PACKAGED_HI_AGENTS } from '../dist/generated/agent-config.js'
 import { evaluateTaskPreconditions } from '../dist/runtime/readiness/preconditions.js'
 import { createTask } from '../dist/runtime/worker/worker-runtime.js'
 
-function runtime(client,hostConfig={agent:structuredClone(PACKAGED_HHC_AGENTS)}){
-  return new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:8})),process.cwd(),process.cwd(),()=>resolveHhcConfig({}),()=>[],()=>hostConfig)
+function runtime(client,hostConfig={agent:structuredClone(PACKAGED_HI_AGENTS)}){
+  return new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:8})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>hostConfig)
 }
 function nativeClient(){
   const creates=[],prompts=[];let n=0
@@ -41,7 +41,7 @@ test('real native specialist delegation starts explorer, architect and security 
 
 test('preflight RESOLVE blocks coder before spawn when effective native agent permissions deny edit',async()=>{
   const {client,creates,prompts}=nativeClient(),store=new MissionStore(),m=store.start('deny-edit','implement parser fix')
-  const agents=structuredClone(PACKAGED_HHC_AGENTS);agents.coder.permission.edit='deny'
+  const agents=structuredClone(PACKAGED_HI_AGENTS);agents.coder.permission.edit='deny'
   await assert.rejects(()=>runtime(client,{agent:agents}).start(m,{role:'coder',objective:'implement parser fix'}),/RESOLVE: coder cannot implement because effective OpenCode edit permission is denied/)
   assert.equal(creates.length,0);assert.equal(prompts.length,0);assert.equal(m.tasks.length,0);assert.equal(m.workers.length,0)
   assert.equal(m.ledger.find(e=>e.type==='task.preflight')?.payload?.decision,'RESOLVE')
@@ -49,7 +49,7 @@ test('preflight RESOLVE blocks coder before spawn when effective native agent pe
 
 test('preflight RESOLVE prevents specialist recursion when colliding host agent allows task delegation',async()=>{
   const {client,creates}=nativeClient(),store=new MissionStore(),m=store.start('recursive-agent','inspect architecture')
-  const agents=structuredClone(PACKAGED_HHC_AGENTS);agents.architect.permission.task='allow'
+  const agents=structuredClone(PACKAGED_HI_AGENTS);agents.architect.permission.task='allow'
   await assert.rejects(()=>runtime(client,{agent:agents}).start(m,{role:'architect',objective:'inspect architecture'}),/RESOLVE: architect may recursively delegate via task/)
   assert.equal(creates.length,0)
 })

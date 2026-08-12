@@ -15,7 +15,7 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 
 test('Gap #8: USER STOP sets user_interrupted=true and stops active mission', () => {
   const store = new MissionStore()
-  const m = store.start('s1', 'login bugını düzelt')
+  const m = store.start('s1', 'fix the login bug')
   assert.equal(m.status, 'active')
   assert.equal(m.user_interrupted, false)
   store.stop('s1', 'user-stop-via-ESC')
@@ -70,9 +70,9 @@ test('Gap #9: countStagnation=false skips increment even when signature is uncha
 
 test('Gap #10: amend() updates intent without restarting planning', () => {
   const store = new MissionStore()
-  const m = store.start('s1', 'login bugını düzelt')
+  const m = store.start('s1', 'fix the login bug')
   const before = m.intent.scope
-  store.amend('s1', 'üç bağımsız geliştirme ekle')
+  store.amend('s1', 'add three independent features')
   // multi-stream scope is the result of the test text being detected.
   // Either way, scope is updated and the continuation is reset.
   assert.notEqual(m.intent.scope, before)
@@ -166,11 +166,11 @@ test('Gap #15: amend() does NOT mutate current task; pilot resumes same context'
   const store = new MissionStore()
   const m = store.start('s1', 'demo')
   // The current architecture: amend() updates intent + obligations;
-  // existing tasks remain. The autopilot (resolver) re-decides execution
+  // existing tasks remain. The continuation evaluator (resolver) re-decides execution
   // mode and dispatches a corrective brief to the SAME task_id.
   // This test asserts that amend does not erase the task list.
   const before = m.tasks.length
-  store.amend('s1', 'aynı task — scope netleştir')
+  store.amend('s1', 'same task — clarify scope')
   assert.equal(m.tasks.length, before, 'amend() must not delete existing tasks')
 })
 
@@ -193,7 +193,7 @@ test('Gap #recovery-runtime: level-2 escalation resumes same child session with 
   const { TaskRuntime } = await import('../dist/runtime/task/task-runtime.js')
   const { BackgroundRegistry } = await import('../dist/runtime/background/registry.js')
   const { ConcurrencyScheduler } = await import('../dist/runtime/scheduler/concurrency.js')
-  const { resolveHhcConfig } = await import('../dist/config/resolver.js')
+  const { resolveHiConfig } = await import('../dist/config/resolver.js')
   const calls=[]
   const client={session:{promptAsync:async req=>{calls.push(req)}}}
   const store=new MissionStore()
@@ -207,7 +207,7 @@ test('Gap #recovery-runtime: level-2 escalation resumes same child session with 
     {id:'p/cheap',provider:'p',quality:1,cost:1,tags:['balanced','cheap'],variants:['medium']},
     {id:'p/strong',provider:'p',quality:10,cost:3,tags:['reasoning','coding'],variants:['high']},
   ]
-  const runtime=new TaskRuntime(client,registry,scheduler,process.cwd(),process.cwd(),()=>resolveHhcConfig({}),()=>models,()=>({}))
+  const runtime=new TaskRuntime(client,registry,scheduler,process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>models,()=>({}))
   const ok=await runtime.recoverStagnation(m,2)
   assert.equal(ok,true)
   assert.equal(worker.session_id,'child-1','must preserve same child session')

@@ -14,7 +14,7 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 
 test('A: small-fix scope routes as quick category, direct implementation', () => {
   const store = new MissionStore()
-  const m = store.start('s1', 'footerdaki yazım hatasını düzelt')
+  const m = store.start('s1', 'fix the footer typo')
   // Quick category: small change, low risk, local scope.
   assert.equal(m.intent.taskKind, 'implementation')
   assert.equal(m.intent.scope, 'local')
@@ -23,32 +23,32 @@ test('A: small-fix scope routes as quick category, direct implementation', () =>
 
 test('B: bug intent routes as bug-fix category with verification', () => {
   const store = new MissionStore()
-  const m = store.start('s1', 'login bazen 500 veriyor çöz test et')
+  const m = store.start('s1', 'fix the intermittent login 500 and test it')
   assert.equal(m.intent.taskKind, 'bug-fix')
   assert.ok(m.intent.likelyVerification.length > 0, 'bug-fix has verification candidates')
 })
 
 test('C: large-independent analysis is detected as wide scope (repo-wide)', () => {
   const store = new MissionStore()
-  const m = store.start('s1', 'bu repo neden yavaş incele ve en büyük 3 darboğazı düzelt')
+  const m = store.start('s1', 'inspect why this repository is slow and fix the three largest bottlenecks')
   // Spec Section 90-C expects "scope-analysis" which surfaces as repo-wide
   // scope at this size. Multi-stream is gated by capability routing
   // thresholds, not by raw intent text. We assert the wide scope and
-  // deep category implied by the explicit darboğaz list.
+  // deep category implied by the explicit bottleneck list.
   assert.ok(m.intent.scope === 'repo-wide' || m.intent.scope === 'multi-stream', `scope should be wide; got ${m.intent.scope}`)
 })
 
 test('D: security-sensitive routes to high risk', () => {
   const store = new MissionStore()
-  const m = store.start('s1', 'auth sistemini değiştir')
+  const m = store.start('s1', 'change the auth system')
   assert.equal(m.intent.risk, 'high', 'auth intent must be high risk')
 })
 
 test('E: release intent with publish triggers authority-boundary (higher than high)', () => {
   const store = new MissionStore()
   // Spec text is the exact phrase that triggers release-readiness + publish.
-  const m = store.start('s1', 'release hazırla ve yayınla')
-  // "yayınla" (publish) pushes risk past 'high' into 'authority-boundary'.
+  const m = store.start('s1', 'prepare the release and publish it')
+  // publish pushes risk past 'high' into 'authority-boundary'.
   assert.equal(m.intent.risk, 'authority-boundary', 'release + publish triggers authority-boundary')
   const auth = m.obligations.find(x => x.id === 'o-authority')
   assert.ok(auth, 'authority-boundary must open o-authority obligation')
@@ -56,7 +56,7 @@ test('E: release intent with publish triggers authority-boundary (higher than hi
 
 test('F: user-stop ends the mission and gates any later continuation', () => {
   const store = new MissionStore()
-  const m = store.start('s1', 'autopilot sırasında kullanıcı stop')
+  const m = store.start('s1', 'user stops during continuation')
   store.stop('s1', 'user-stop')
   assert.equal(m.status, 'stopped')
   assert.equal(m.user_interrupted, true)
@@ -66,7 +66,7 @@ test('F: user-stop ends the mission and gates any later continuation', () => {
 
 test('G: evidence becomes stale after a file edit, so stop is denied', () => {
   const store = new MissionStore()
-  const m = store.start('s1', 'test PASS dosya edit sonra agent final')
+  const m = store.start('s1', 'test PASS then file edit then agent final')
   // Mark a successful verification first.
   m.evidence.last_mutation_at = 1000
   // A real file change mutates after the evidence, making it stale.
@@ -90,7 +90,7 @@ test('H: parent waits while a child worker is still pending', () => {
     status: 'busy',
   })
   // The completion adjudicator should report an active-worker reason.
-  // We exercise that path through the autopilot decision signature
+  // We exercise that path through the continuation decision signature
   // via the resolver. For the test we assert m.workers has a busy
   // child, which is the precondition the adjudicator checks.
   assert.ok(m.workers.some(w => w.status === 'busy'))
@@ -103,9 +103,9 @@ test('H: parent waits while a child worker is still pending', () => {
 test('Native-01: child-depth is bounded to 1 in default config', () => {
   const store = new MissionStore()
   const m = store.start('s1', 'subagent-depth test')
-  // Default HHC config sets subagent_depth to 1.
+  // Default Hi config sets subagent_depth to 1.
   assert.equal(1, 1, 'subagent_depth default is 1 (verified in plugin config)')
-  // Recursive control-plane is denied: spawning another HHC mission
+  // Recursive control-plane is denied: spawning another Hi mission
   // from within a task runtime is not allowed.
   // We assert the structural invariant: store is a singleton per session.
   assert.ok(m.mission_id)
@@ -154,7 +154,7 @@ test('Native-05: file edit after verification marks evidence stale', () => {
 test('Native-07: duplicate-plugin detection reports action-required', () => {
   const store = new MissionStore()
   const m = store.start('s1', 'duplicate-plugin')
-  // Doctor would surface duplicate-hhc-plugin. The mission-store
+  // Doctor would surface duplicate-hi-plugin. The mission-store
   // path itself does not detect duplicates; the doctor path does.
   // We assert that the mission has at least the doctor-relevant
   // configuration that the doctor can inspect.
@@ -171,21 +171,21 @@ test('Native-08: tool collision → startup or release failure (in-process path)
   assert.equal(m.status, 'active')
 })
 
-test('Native-12: tiny task uses 0 HHC-native skills by default', () => {
+test('Native-12: tiny task uses 0 Hi-native skills by default', () => {
   const store = new MissionStore()
   // Tiny task: README typo, low risk, local scope, no skill required.
-  const m = store.start('s1', 'README typo düzelt')
-  // Default HHC behavior: no methodology skill loaded.
+  const m = store.start('s1', 'fix the README typo')
+  // Default Hi behavior: no methodology skill loaded.
   assert.equal(m.intent.risk, 'low')
   assert.equal(m.intent.scope, 'local')
   // No unnecessary methodology obligations open at start.
   assert.equal(m.obligations.filter(o => o.kind === 'review').length, 0)
 })
 
-test('Native-13: explicit TDD capability selects HHC-native TDD methodology', () => {
+test('Native-13: explicit TDD capability selects Hi-native TDD methodology', () => {
   const store = new MissionStore()
   // Bug intent at high risk signals debug value.
-  const m = store.start('s1', 'auth bugını TDD ile düzelt')
+  const m = store.start('s1', 'fix the auth bug with TDD')
   // TDD remains a selective capability; actual skill loading is child-specific.
   assert.equal(m.intent.taskKind, 'bug-fix')
   assert.ok(m.intent.requiredCapabilities.includes('tdd-required'))
@@ -222,7 +222,7 @@ test('Flow-03: amend widens the completion contract without invalidating generat
   const store = new MissionStore()
   const m = store.start('s1', 'demo')
   const before = m.generation
-  store.amend('s1', 'kapsam netleştir')
+  store.amend('s1', 'clarify the scope')
   // The mission's generation is preserved across amend; only
   // continuation_active is reset.
   assert.equal(m.generation, before, 'amend must not bump generation')
@@ -294,9 +294,9 @@ test('Native-09: config-precedence — raw input overrides project file when bot
 
 test('Native-15: plugin-order-variation — explicit order preserved in config', () => {
   // The plugin spec array preserves its order. The first occurrence
-  // is the canonical OHO plugin entry.
-  const plugins = ['opencode-hhc-orchestrator@git+...#2.0.10', 'other-plugin@1']
-  assert.equal(plugins[0].startsWith('opencode-hhc-orchestrator'), true)
+  // is the canonical HI plugin entry.
+  const plugins = ['opencode-hi@git+...#2.0.10', 'other-plugin@1']
+  assert.equal(plugins[0].startsWith('opencode-hi'), true)
   assert.equal(plugins[1], 'other-plugin@1')
 })
 
@@ -318,7 +318,7 @@ test('Flow-02: follow-up does NOT create duplicate obligations', () => {
   const m = store.start('s1', 'demo')
   // Establish baseline follow-up count.
   const baseFollowUps = m.obligations.filter(o => o.kind === 'implementation').length
-  store.amend('s1', 'kapsam netleştir')
+  store.amend('s1', 'clarify the scope')
   store.amend('s1', 'biraz daha detay ver')
   const newFollowUps = m.obligations.filter(o => o.kind === 'implementation').length
   assert.equal(newFollowUps, baseFollowUps + 2, 'each follow-up adds an implementation obligation')
@@ -347,6 +347,6 @@ test('Flow-08: planned-amend widens the completion contract', () => {
   // Initial obligation count.
   const initialCount = m.obligations.length
   // A planned amend opens a follow-up implementation obligation.
-  store.amend('s1', 'kapsam netleştir')
+  store.amend('s1', 'clarify the scope')
   assert.equal(m.obligations.length, initialCount + 1, 'amend widens the completion contract')
 })

@@ -6,10 +6,10 @@ import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
 import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { createTask, createWorker } from '../dist/runtime/worker/worker-runtime.js'
 import { verificationSatisfied } from '../dist/runtime/verification/policy.js'
-import { DEFAULT_HHC_CONFIG } from '../dist/config/defaults.js'
+import { DEFAULT_HI_CONFIG } from '../dist/config/defaults.js'
 
 function runtime(){
-  return new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HHC_CONFIG,()=>[],()=>({}))
+  return new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
 }
 
 test('worker-reported verification cannot become fresh when changed_files is only learned from the same result',()=>{

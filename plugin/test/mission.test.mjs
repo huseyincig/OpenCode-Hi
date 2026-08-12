@@ -4,7 +4,7 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 
 test('mission creates obligations without spawning workers', () => {
   const store = new MissionStore()
-  const mission = store.start('s1', 'footerdaki yazım hatasını düzelt')
+  const mission = store.start('s1', 'fix the footer typo')
   assert.equal(mission.execution_mode, 'single')
   assert.equal(mission.workers.length, 0)
   assert.ok(mission.obligations.some(o => o.kind === 'verification'))
@@ -12,7 +12,7 @@ test('mission creates obligations without spawning workers', () => {
 
 test('explicit stop is sticky until resume', () => {
   const store = new MissionStore()
-  store.start('s1', 'bugı düzelt')
+  store.start('s1', 'fix the bug')
   store.stop('s1')
   assert.equal(store.get('s1')?.user_interrupted, true)
   assert.equal(store.get('s1')?.status, 'stopped')
@@ -22,10 +22,10 @@ test('explicit stop is sticky until resume', () => {
 
 test('amend() recomputes execution_mode from single to parallel on multi-stream follow-up', () => {
   const store = new MissionStore()
-  store.start('s1', 'tek bir bug düzelt')
+  store.start('s1', 'tek fix one bug')
   assert.equal(store.get('s1').execution_mode, 'single')
   assert.equal(store.get('s1').intent.scope, 'local')
-  store.amend('s1', 'üç bağımsız geliştirme ekle')
+  store.amend('s1', 'add three independent features')
   const m = store.get('s1')
   assert.equal(m.intent.scope, 'multi-stream')
   assert.equal(m.intent.dependencyClass, 'independent-multi')
@@ -34,17 +34,17 @@ test('amend() recomputes execution_mode from single to parallel on multi-stream 
 
 test('amend() widens scope from local to multi-stream', () => {
   const store = new MissionStore()
-  store.start('s1', 'bir bug düzelt')
+  store.start('s1', 'fix one bug')
   assert.equal(store.get('s1').intent.scope, 'local')
-  store.amend('s1', 'üç bağımsız geliştirme ekle')
+  store.amend('s1', 'add three independent features')
   assert.equal(store.get('s1').intent.scope, 'multi-stream')
 })
 
 test('amend() preserves team mode across follow-up', () => {
   const store = new MissionStore()
-  store.start('s1', 'tek bir bug düzelt')
+  store.start('s1', 'tek fix one bug')
   store.get('s1').execution_mode = 'team'
-  store.amend('s1', 'üç bağımsız geliştirme ekle')
+  store.amend('s1', 'add three independent features')
   assert.equal(store.get('s1').execution_mode, 'team')
 })
 
@@ -52,25 +52,25 @@ test('amend() preserves parallel when active workers exist (safe direction)', ()
   // Bug under RC.1: parallel → single mid-mission would invalidate active workers.
   // Guard: keep parallel if active workers exist, even if follow-up intent would downgrade.
   const store = new MissionStore()
-  store.start('s1', 'üç bağımsız geliştirme ekle')
+  store.start('s1', 'add three independent features')
   store.get('s1').execution_mode = 'parallel'
   store.get('s1').workers.push({
     id: 'w1', task_id: 't1', role: 'coder', category: 'standard',
     parent_session_id: 's1', model: 'host-default', fallbacks: [],
     loaded_skills: [], methodologies: [], fingerprint: 'f1', status: 'busy',
   })
-  store.amend('s1', 'tek bir bug düzelt')
+  store.amend('s1', 'tek fix one bug')
   assert.equal(store.get('s1').execution_mode, 'parallel')
 })
 
 test('amend() does not downgrade parallel when scope is still multi-stream (widen-only)', () => {
-  // Scope is widen-only: follow-up "tek bir bug düzelt" cannot shrink the
+  // Scope is widen-only: follow-up "tek fix one bug" cannot shrink the
   // existing multi-stream signal. The mission-level multi-stream indicator
   // remains authoritative until mission restart.
   const store = new MissionStore()
-  store.start('s1', 'üç bağımsız geliştirme ekle')
+  store.start('s1', 'add three independent features')
   assert.equal(store.get('s1').execution_mode, 'parallel')
-  store.amend('s1', 'tek bir bug düzelt')
+  store.amend('s1', 'tek fix one bug')
   assert.equal(store.get('s1').intent.scope, 'multi-stream')
   assert.equal(store.get('s1').execution_mode, 'parallel')
 })
@@ -82,10 +82,10 @@ test('amend() recomputes parallel→single when scope itself widens down to loca
   // (single→parallel). The reverse (parallel→single) requires explicit
   // mission restart, not amend().
   const store = new MissionStore()
-  store.start('s1', 'üç bağımsız geliştirme ekle')
+  store.start('s1', 'add three independent features')
   store.get('s1').intent.scope = 'local' // force-override (simulating prior state)
   store.get('s1').execution_mode = 'parallel'
-  store.amend('s1', 'tek bir bug düzelt')
+  store.amend('s1', 'tek fix one bug')
   // scope stays local (widen-only), execution_mode recompute: local+cap<=1 → single
   assert.equal(store.get('s1').intent.scope, 'local')
   assert.equal(store.get('s1').execution_mode, 'single')
@@ -95,10 +95,10 @@ test('amend() never relaxes authority-boundary safety', () => {
   // Even if follow-up classifies as multi-stream, authority-boundary must
   // keep execution_mode=single — resolveExecutionMode vetoes it.
   const store = new MissionStore()
-  store.start('s1', 'release hazırla ve yayınla')
+  store.start('s1', 'prepare the release and publish it')
   assert.equal(store.get('s1').risk, 'authority-boundary')
   assert.equal(store.get('s1').execution_mode, 'single')
-  store.amend('s1', 'üç bağımsız geliştirme ekle')
+  store.amend('s1', 'add three independent features')
   assert.equal(store.get('s1').execution_mode, 'single')
   assert.equal(store.get('s1').risk, 'authority-boundary')
 })
@@ -115,6 +115,6 @@ test('amend() does not lower risk when follow-up risk is lower', () => {
   const store = new MissionStore()
   store.start('s1', 'auth endpoint ekle')
   assert.equal(store.get('s1').risk, 'high')
-  store.amend('s1', 'bir typo düzelt')
+  store.amend('s1', 'fix a typo')
   assert.equal(store.get('s1').risk, 'high')
 })

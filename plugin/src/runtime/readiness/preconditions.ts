@@ -50,14 +50,14 @@ export function evaluateTaskPreconditions(input:TaskPreconditionInput):TaskPreco
   if(input.authorityRequired)add('user-authority','USER_ACTION_REQUIRED','Required user authority must be resolved before this task starts')
 
   const def=roleDefinition(input.hostConfig,input.role)
-  // When the live config exposes an agent table, an HHC specialist must exist there as a native subagent.
+  // When the live config exposes an agent table, an Hi specialist must exist there as a native subagent.
   if((input.hostConfig as any)?.agent&&def===undefined)add('agent-definition','RESOLVE',`Native OpenCode agent definition for ${input.role} is unavailable`)
   if(def&&typeof def==='object'){
     if(def.mode!==undefined&&String(def.mode)!=='subagent')add('agent-mode','RESOLVE',`${input.role} must be registered as an OpenCode subagent`)
     const permission=def.permission
     if(toolDecision(permission,'read')==='deny')add('tool-read','RESOLVE',`${input.role} cannot access required read capability under effective OpenCode permissions`)
     if(input.implementation&&toolDecision(permission,'edit')==='deny')add('tool-edit','RESOLVE',`${input.role} cannot implement because effective OpenCode edit permission is denied`)
-    if(toolDecision(permission,'task')==='allow')add('recursive-delegation','RESOLVE',`${input.role} may recursively delegate via task; HHC specialist recursion must remain disabled`)
+    if(toolDecision(permission,'task')==='allow')add('recursive-delegation','RESOLVE',`${input.role} may recursively delegate via task; Hi specialist recursion must remain disabled`)
   }
   if(!items.length)add('task-preflight','READY','All deterministic task preconditions are satisfied')
   const decision=items.reduce<TaskPreconditionDecision>((best,x)=>rank(x.decision)>rank(best)?x.decision:best,'READY')

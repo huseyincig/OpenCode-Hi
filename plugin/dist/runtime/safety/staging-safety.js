@@ -81,29 +81,29 @@ export function assertSafeGitMutation(m, command) {
     const pre = new Set(Object.keys(m.preexisting_user_changes ?? {}).map(normFile));
     if (broadGitStage(command) && pre.size) {
         appendLedger(m, 'git.staging.blocked', { payload: { reason: 'broad-stage-with-preexisting-user-diff', command: command.slice(0, 180), user_files: [...pre].slice(0, 40) } });
-        throw new Error(`HHC staging safety: broad git staging is blocked because pre-existing user changes exist (${[...pre].slice(0, 8).join(', ')}). Stage only HHC-owned files explicitly.`);
+        throw new Error(`Hi staging safety: broad git staging is blocked because pre-existing user changes exist (${[...pre].slice(0, 8).join(', ')}). Stage only Hi-owned files explicitly.`);
     }
     if (commitStagesTrackedChanges(command) && pre.size) {
         appendLedger(m, 'git.commit.blocked', { payload: { reason: 'commit-all-with-preexisting-user-diff', command: command.slice(0, 180) } });
-        throw new Error('HHC staging safety: git commit -a/--all is blocked while pre-existing user changes exist. Stage only HHC-owned files explicitly and commit without -a.');
+        throw new Error('Hi staging safety: git commit -a/--all is blocked while pre-existing user changes exist. Stage only Hi-owned files explicitly and commit without -a.');
     }
     if (commitHasDirectPathspec(command)) {
         appendLedger(m, 'git.commit.blocked', { payload: { reason: 'direct-pathspec-bypasses-staged-proof', command: command.slice(0, 180) } });
-        throw new Error('HHC staging safety: pathspec/--only/--include commit modes are blocked because they bypass the verified staged-set contract. Stage HHC-owned files explicitly, inspect `git diff --cached --name-only`, then use a normal commit.');
+        throw new Error('Hi staging safety: pathspec/--only/--include commit modes are blocked because they bypass the verified staged-set contract. Stage Hi-owned files explicitly, inspect `git diff --cached --name-only`, then use a normal commit.');
     }
     if (isGitTopologyMutation(command)) {
         if (pre.size) {
             appendLedger(m, 'git.topology.blocked', { payload: { reason: 'preexisting-user-diff', command: command.slice(0, 180), user_files: [...pre].slice(0, 40) } });
-            throw new Error(`HHC merge/rebase safety: branch topology changes are blocked while pre-existing user changes exist (${[...pre].slice(0, 8).join(', ')}). Preserve/resolve those user-owned edits outside HHC before switch/checkout/merge/rebase/cherry-pick.`);
+            throw new Error(`Hi merge/rebase safety: branch topology changes are blocked while pre-existing user changes exist (${[...pre].slice(0, 8).join(', ')}). Preserve/resolve those user-owned edits outside Hi before switch/checkout/merge/rebase/cherry-pick.`);
         }
         const proof = m.git_topology_safety;
         if (!proof || Date.now() - proof.verified_at > 120000) {
             appendLedger(m, 'git.topology.blocked', { payload: { reason: 'worktree-not-inspected', command: command.slice(0, 180) } });
-            throw new Error('HHC merge/rebase safety: run `git status --porcelain` immediately before switch/checkout/merge/rebase/cherry-pick. Branch topology mutation is blocked until worktree cleanliness is verified.');
+            throw new Error('Hi merge/rebase safety: run `git status --porcelain` immediately before switch/checkout/merge/rebase/cherry-pick. Branch topology mutation is blocked until worktree cleanliness is verified.');
         }
         if (!proof.clean) {
             appendLedger(m, 'git.topology.blocked', { payload: { reason: 'worktree-dirty', command: command.slice(0, 180), files: proof.verified_files.slice(0, 40) } });
-            throw new Error(`HHC merge/rebase safety: worktree is not clean (${proof.verified_files.slice(0, 8).join(', ')}). Commit or safely reconcile HHC-owned changes first; never absorb user-owned dirty state into a merge/rebase.`);
+            throw new Error(`Hi merge/rebase safety: worktree is not clean (${proof.verified_files.slice(0, 8).join(', ')}). Commit or safely reconcile Hi-owned changes first; never absorb user-owned dirty state into a merge/rebase.`);
         }
         appendLedger(m, 'git.topology.allowed', { payload: { command: command.slice(0, 180), proof_age_ms: Date.now() - proof.verified_at } });
         return;
@@ -113,16 +113,16 @@ export function assertSafeGitMutation(m, command) {
     const proof = m.staging_safety;
     if (!proof || Date.now() - proof.verified_at > 120000) {
         appendLedger(m, 'git.commit.blocked', { payload: { reason: 'staging-not-verified' } });
-        throw new Error('HHC staging safety: inspect the exact staged set with `git diff --cached --name-only` immediately before commit. Commit is blocked until staged ownership is verified.');
+        throw new Error('Hi staging safety: inspect the exact staged set with `git diff --cached --name-only` immediately before commit. Commit is blocked until staged ownership is verified.');
     }
     const owned = new Set([...(m.changed_files ?? []), ...(m.git_topology_owned_files ?? [])].map(normFile));
     const staged = proof.verified_files.map(normFile);
     const user = staged.filter(f => pre.has(f));
     const unrelated = staged.filter(f => !owned.has(f));
     if (user.length || unrelated.length) {
-        appendLedger(m, 'git.commit.blocked', { payload: { reason: 'staged-files-not-hhc-owned', user_files: user.slice(0, 40), unrelated: unrelated.slice(0, 40), owned: [...owned].slice(0, 80) } });
-        throw new Error(`HHC staging safety: commit contains staged files outside HHC-owned delta: ${[...new Set([...user, ...unrelated])].slice(0, 12).join(', ')}. Preserve pre-existing user changes and stage only HHC-owned files.`);
+        appendLedger(m, 'git.commit.blocked', { payload: { reason: 'staged-files-not-hi-owned', user_files: user.slice(0, 40), unrelated: unrelated.slice(0, 40), owned: [...owned].slice(0, 80) } });
+        throw new Error(`Hi staging safety: commit contains staged files outside Hi-owned delta: ${[...new Set([...user, ...unrelated])].slice(0, 12).join(', ')}. Preserve pre-existing user changes and stage only Hi-owned files.`);
     }
-    appendLedger(m, 'git.commit.allowed', { payload: { staged: staged.slice(0, 80), ownership: 'hhc-owned-only' } });
+    appendLedger(m, 'git.commit.allowed', { payload: { staged: staged.slice(0, 80), ownership: 'hi-owned-only' } });
 }
 export function invalidateStagingProof(m) { m.staging_safety = undefined; }

@@ -1,23 +1,20 @@
-# Güvenlik
+# Security
 
-- HHC API anahtarı veya sağlayıcı kimlik bilgisini saklamaz.
-- Uzak Git erişiminde mevcut Git/SSH/Credential Manager yapılandırmasını kullanır; etkileşimli kimlik bilgisi toplamaz.
-- Kullanıcı istemeden push, tag, publish veya release yapılmaz.
-- Ajan izinleri role göre sınırlıdır; inceleyici roller salt okunurdur.
-- MCP varsayılan olarak kurulmaz veya etkinleştirilmez.
-- Mevcut proje dosyalarının üzerine `--force` verilmeden yazılmaz.
+OpenCode-Hi does not persist provider API keys or credentials as product state. Remote Git operations use the host environment's existing Git/SSH/credential-manager configuration; Hi does not collect interactive credentials.
 
-Güvenlik açığı bildirirken gizli bilgi veya özel kod deposu içeriğini paylaşmayın.
-- Skill erişimi `data/skill-policy.json` ile role göre exact allowlist üretilerek sınırlandırılır; skill gövdeleri ihtiyaç olmadan context'e yüklenmez.
-- Primary agent güvenli/geri alınabilir kararları kullanıcı beklemeden verebilir; credential/MFA, yeni ücretli harcama, destructive dış etki ve release/publish/push kullanıcı kapısında kalır.
-- Global updater release manifesti + SHA-256 doğrulamasına ek olarak ZIP path traversal/symlink girdilerini de reddeder.
-## WordPress external skill pilotu
+- Push, tag, publish, deploy, and release operations remain explicit authority gates.
+- Agent permissions are role-scoped; reviewer roles remain read-only.
+- MCP is not installed or enabled by default.
+- Existing project files are not overwritten through setup flows unless the operation explicitly permits replacement.
+- Skill access is generated from exact role allowlists. Skill bodies and large resources are loaded only when activation requires them.
+- Provider-facing context passes through the Privacy Boundary before model invocation. Plaintext secrets must not be persisted to logs, telemetry, mission state, provider transcripts, or durable artifacts.
+- Archive extraction and update/install helpers must reject path traversal and unsafe symlink entries.
+- Host permission denial is authoritative: Hi may restrict host authority but must never expand or bypass it.
 
-HHC, yalnız proje WordPress olarak algılandığında resmi `WordPress/agent-skills` kaynağından seçili skill klasörlerini project-local `.agents/skills/` altına indirebilir. Upstream arşiv **kod olarak çalıştırılmaz**: HHC arşiv boyutu/dosya sayısı/extracted-size sınırlarını uygular, path traversal ve symlink girdilerini reddeder, beklenen skill adı ile `SKILL.md` frontmatter `name` alanını eşleştirir ve yalnız allowlist'teki klasörleri çıkarır. Var olan aynı adlı skill dizinleri üzerine yazılmaz.
+## Reporting a vulnerability
 
-Bu skill'lerin içindeki yardımcı script'ler yalnız dosya olarak gelir; HHC kurulum aşamasında bunları yürütmez. Sonraki agent çalıştırmaları yine ilgili rolün normal bash/permission politikasına tabidir. WordPress skill indirmesi `--wordpress-skills disabled` ile kapatılabilir.
+Do not include credentials, plaintext secrets, or private repository content in a public report. Provide the smallest reproduction that demonstrates the affected trust boundary and identify whether the issue involves provider context, local runtime state, workspace isolation, process lifecycle, package integrity, or host authority.
 
-Pilot kaynak `trunk` branch'ini izler; bu kaynak değişkendir. HHC indirilen ZIP'in SHA-256 değerini proje state'ine kaydeder, fakat bunu sabit upstream sürüm garantisi olarak yorumlamaz. Sıkı yeniden üretilebilirlik gereken projelerde WordPress skill auto-acquisition kapatılabilir veya ekip kendi project-local skill snapshot'ını yönetebilir.
+## External methodology and skill sources
 
-WPCS/PHPCS HHC tarafından yüklenmez veya Composer dependency'si değiştirilmez; yalnız projede mevcut araç/config varsa read-only verification komutu olarak keşfedilir.
-
+Source repositories may be studied or assimilated only under the license and provenance rules in `docs/SOURCE-REUSE-MATRIX.md`. Downloaded skill resources are data until explicitly invoked under the active role's normal permissions; setup must not execute arbitrary helper scripts from an external skill source.

@@ -8,7 +8,7 @@ export async function dispatchContinuation(client:any,mission:MissionState,promp
   const iteration=mission.iteration+1,actionID=`continue:${mission.mission_id}:${generation}:${iteration}:${now.toString(36)}`
   mission.continuation_active=true;mission.active_action_id=actionID;mission.continuation_lock_until=now+2500;mission.suppress_until=now+400;mission.last_continuation_at=now;mission.iteration=iteration;mission.continuation_reason=reason;mission.last_action_id=actionID;appendLedger(mission,'continuation',{payload:{reason,iteration,generation,action_id:actionID}})
   try{
-    await fn({path:{id:mission.session_id},body:{parts:[{type:'text',text:prompt,synthetic:true,metadata:{hhcInternalContinuation:true,reason,generation,actionID}}],noReply:false}})
+    await fn({path:{id:mission.session_id},body:{parts:[{type:'text',text:prompt,synthetic:true,metadata:{hiInternalContinuation:true,reason,generation,actionID}}],noReply:false}})
     if(mission.generation!==generation){appendLedger(mission,'continuation.stale-completion',{payload:{started_generation:generation,current_generation:mission.generation,action_id:actionID}});return false}
     if(mission.active_action_id!==actionID){appendLedger(mission,'continuation.stale-action-completion',{payload:{action_id:actionID,current_action_id:mission.active_action_id??null,generation}});return false}
     mission.continuation_failure_count=0;mission.last_continuation_failure_at=undefined;return true

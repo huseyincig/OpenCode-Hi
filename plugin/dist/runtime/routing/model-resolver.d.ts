@@ -1,5 +1,5 @@
 import type { Category } from '../mission/types.js';
-import type { HhcConfig } from '../../config/schema.js';
+import type { HiConfig } from '../../config/schema.js';
 export interface AvailableModel {
     id: string;
     provider?: string;
@@ -44,5 +44,5 @@ export interface RuntimeModelCandidateStatus {
     ok: boolean;
     reason?: string;
 }
-export declare function runtimeModelCandidateStatus(id: string, availableInput: AvailableModel[], config: HhcConfig, hostConfig?: Record<string, unknown>): RuntimeModelCandidateStatus;
-export declare function resolveModel(category: Category, availableInput: AvailableModel[], config: HhcConfig, explicit?: string, role?: string, hostConfig?: Record<string, unknown>, feedback?: MissionModelFeedback): ModelResolution;
+export declare function runtimeModelCandidateStatus(id: string, availableInput: AvailableModel[], config: HiConfig, hostConfig?: Record<string, unknown>): RuntimeModelCandidateStatus;
+export declare function resolveModel(category: Category, availableInput: AvailableModel[], config: HiConfig, explicit?: string, role?: string, hostConfig?: Record<string, unknown>, feedback?: MissionModelFeedback): ModelResolution;

@@ -5,9 +5,9 @@ import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
 import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {createTask,createWorker} from '../dist/runtime/worker/worker-runtime.js'
-import {DEFAULT_HHC_CONFIG} from '../dist/config/defaults.js'
+import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 
-function runtime(){return new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HHC_CONFIG,()=>[],()=>({}))}
+function runtime(){return new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
 function implementation(m){return m.obligations.find(o=>o.kind==='implementation')}
 
 function result(extra={}){return {status:'DONE',summary:'done',changed_files:['src/a.ts'],scope_expansions:[],evidence:[],open_issues:[],needs_context:[],...extra}}

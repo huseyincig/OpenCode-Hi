@@ -1,6 +1,6 @@
 // Default roleModels regression guard (2.0.10).
 // Verifies that auto-init writes the correct default per-role map
-// when `.opencode/oho-routing.json` does not yet exist.
+// when `.opencode/hi/policy/routing.json` does not yet exist.
 
 import test from 'node:test'
 import assert from 'node:assert/strict'
@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os'
 import { ensureProjectRoutingConfig, DEFAULT_ROLE_MODELS_OPENCODE_GO } from '../dist/config/auto-init.js'
 
 function makeProject() {
-  return mkdtempSync(join(tmpdir(), 'oho-routing-defaults-'))
+  return mkdtempSync(join(tmpdir(), 'hi-routing-defaults-'))
 }
 
 test('default roleModels contains the new per-role map (2.0.10)', () => {
@@ -33,13 +33,13 @@ test('ensureProjectRoutingConfig writes the default file when missing', () => {
   try {
     const result = ensureProjectRoutingConfig(project)
     assert.equal(result.created, true)
-    assert.equal(result.path, join(project, '.opencode', 'oho-routing.json'))
+    assert.equal(result.path, join(project, '.opencode', 'hi', 'policy', 'routing.json'))
     const content = JSON.parse(readFileSync(result.path, 'utf8'))
     assert.equal(content.schema, 1)
-    assert.equal(content.type, 'oho-routing')
+    assert.equal(content.type, 'hi-routing')
     assert.equal(content.routing.strategy, 'quality')
     assert.deepEqual(content.routing.roleModels, DEFAULT_ROLE_MODELS_OPENCODE_GO)
-    assert.equal(content.applied_by, 'opencode-hhc-orchestrator')
+    assert.equal(content.applied_by, 'opencode-hi')
   } finally { rmSync(project, { recursive: true, force: true }) }
 })
 

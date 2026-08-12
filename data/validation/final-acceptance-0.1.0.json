@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "generated_at": "2026-08-12",
+  "status": "LOCAL_CANDIDATE_COMPLETE_EXTERNAL_GATES_PENDING",
+  "known_blocking_internal_findings": [],
+  "local_gates": {
+    "node_runtime_acceptance": "PASS",
+    "python_acceptance": "PASS",
+    "validator": "PASS",
+    "benchmarks": "PASS",
+    "identity_no_legacy_product_compatibility": "PASS",
+    "terminology": "PASS",
+    "filesystem_hygiene": "PASS",
+    "storage_ownership": "PASS",
+    "skill_artifact_ownership_29_of_29": "PASS",
+    "architecture": "PASS_LOCAL",
+    "security_privacy": "PASS_LOCAL",
+    "source_reuse_license": "PASS_LOCAL",
+    "deterministic_release": "PASS_LOCAL_REQUIRES_POST_FREEZE_HASH_RECEIPT"
+  },
+  "pending_external": [
+    "native_opencode_plugin_loader",
+    "native_child_sessions",
+    "model_provider_binding",
+    "permission_denial_runtime",
+    "packaged_agent_skill_discovery",
+    "exact_git_ref_clean_install",
+    "external_dependency_supply_chain_receipt",
+    "windows_runtime_smoke"
+  ],
+  "release_ready": false,
+  "rule": "No historical baseline receipt, local mock, adapter contract, or deterministic simulation satisfies an external host gate."
+}

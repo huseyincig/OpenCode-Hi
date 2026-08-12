@@ -18,11 +18,11 @@ async function registry(){
   const server=http.createServer((req,res)=>{
     const chunks=[];req.on('data',d=>chunks.push(d));req.on('end',()=>{
       const path=decodeURIComponent((req.url??'').split('?')[0])
-      if(req.method==='PUT'&&path==='/opencode-hhc-orchestrator'){
+      if(req.method==='PUT'&&path==='/opencode-hi'){
         published=JSON.parse(Buffer.concat(chunks).toString('utf8'))
         res.writeHead(201,{'content-type':'application/json'});res.end('{"ok":true}');return
       }
-      if(req.method==='GET'&&path==='/opencode-hhc-orchestrator'){
+      if(req.method==='GET'&&path==='/opencode-hi'){
         if(!published){res.writeHead(404,{'content-type':'application/json'});res.end('{"error":"not found"}');return}
         const clean={...published};delete clean._attachments
         res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(clean));return
@@ -34,13 +34,13 @@ async function registry(){
   const addr=server.address();return{server,url:`http://127.0.0.1:${addr.port}/`,get:()=>published}
 }
 
-test('real npm registry publish/view round-trip is bound to HHC pack proof, authority, and registry integrity',async(t)=>{
+test('real npm registry publish/view round-trip is bound to Hi pack proof, authority, and registry integrity',async(t)=>{
   const root=resolve(process.cwd(),'..'),reg=await registry();t.after(()=>reg.server.close())
-  const cfg=mkdtempSync(join(tmpdir(),'hhc-npmrc-'));t.after(()=>rmSync(cfg,{recursive:true,force:true}))
-  const npmrc=join(cfg,'.npmrc');writeFileSync(npmrc,`registry=${reg.url}\n//${new URL(reg.url).host}/:_authToken=hhc-local-test\n`)
+  const cfg=mkdtempSync(join(tmpdir(),'hi-npmrc-'));t.after(()=>rmSync(cfg,{recursive:true,force:true}))
+  const npmrc=join(cfg,'.npmrc');writeFileSync(npmrc,`registry=${reg.url}\n//${new URL(reg.url).host}/:_authToken=hi-local-test\n`)
   const env={NPM_CONFIG_USERCONFIG:npmrc,NPM_CONFIG_CACHE:join(cfg,'cache')}
   const pack=await run('npm',['pack','--dry-run','--json','--ignore-scripts'],{cwd:root,env});assert.equal(pack.code,0,pack.stderr)
-  const packJson=JSON.parse(pack.stdout);assert.equal(packJson[0].name,'opencode-hhc-orchestrator');assert.equal(packJson[0].version,'2.0.10');assert.ok(packJson[0].integrity);assert.ok(packJson[0].shasum)
+  const packJson=JSON.parse(pack.stdout);assert.equal(packJson[0].name,'opencode-hi');assert.equal(packJson[0].version,'0.1.0');assert.ok(packJson[0].integrity);assert.ok(packJson[0].shasum)
 
   const store=new MissionStore(root),m=store.start('real-npm','publish package');recordRemoteReleaseVerification(m,'npm pack --dry-run --json',{stdout:pack.stdout,metadata:{exit:0}},root)
   assert.doesNotThrow(()=>assertReleaseChainPrecondition(m,'npm publish',root))
@@ -51,10 +51,10 @@ test('real npm registry publish/view round-trip is bound to HHC pack proof, auth
   await after({sessionID:'real-npm',tool:'bash',args:{command:'npm publish',cwd:root}},{title:'publish',output:pub.stdout+pub.stderr,metadata:{exit:0}})
   assert.equal(m.release_chain?.package?.outcome,'success');assert.equal(m.release_chain?.package?.remote_verified,false)
 
-  const uploaded=reg.get();assert.equal(uploaded?.versions?.['2.0.10']?.dist?.integrity,packJson[0].integrity);assert.equal(uploaded?.versions?.['2.0.10']?.dist?.shasum,packJson[0].shasum)
-  const view=await run('npm',['view','opencode-hhc-orchestrator@2.0.10','--json'],{cwd:root,env});assert.equal(view.code,0,view.stderr)
-  const seen=JSON.parse(view.stdout);assert.equal(seen.version,'2.0.10');assert.equal(seen.dist.integrity,packJson[0].integrity);assert.equal(seen.dist.shasum,packJson[0].shasum)
-  recordRemoteReleaseVerification(m,'npm view opencode-hhc-orchestrator@2.0.10 --json',{stdout:view.stdout,metadata:{exit:0}},root)
+  const uploaded=reg.get();assert.equal(uploaded?.versions?.['0.1.0']?.dist?.integrity,packJson[0].integrity);assert.equal(uploaded?.versions?.['0.1.0']?.dist?.shasum,packJson[0].shasum)
+  const view=await run('npm',['view','opencode-hi@0.1.0','--json'],{cwd:root,env});assert.equal(view.code,0,view.stderr)
+  const seen=JSON.parse(view.stdout);assert.equal(seen.version,'0.1.0');assert.equal(seen.dist.integrity,packJson[0].integrity);assert.equal(seen.dist.shasum,packJson[0].shasum)
+  recordRemoteReleaseVerification(m,'npm view opencode-hi@0.1.0 --json',{stdout:view.stdout,metadata:{exit:0}},root)
   assert.equal(m.release_chain?.package?.remote_verified,true)
   assert.ok(!m.blockers.includes('release-chain:package-remote-unverified'))
 })

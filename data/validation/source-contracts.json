@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "release": "2.0.10",
+  "release": "0.1.0",
   "contracts": {
     "config-hook": {
       "status": "IMPLEMENTED",
@@ -48,7 +48,7 @@
         "plugin/src/runtime/state/persistence.ts"
       ]
     },
-    "hhc-ownership-contract": {
+    "hi-ownership-contract": {
       "status": "IMPLEMENTED",
       "evidence": [
         "plugin/src/hooks/tool-before.ts",
@@ -139,7 +139,7 @@
       "status": "IMPLEMENTED",
       "evidence": [
         "plugin/src/runtime/nudge/runtime-nudge.ts",
-        "plugin/src/runtime/autopilot/evaluator.ts"
+        "plugin/src/runtime/continuation/evaluator.ts"
       ]
     },
     "thin-native-event-sink": {
@@ -190,7 +190,7 @@
     "model-escalation": {
       "status": "IMPLEMENTED",
       "evidence": [
-        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/recovery.ts",
         "plugin/src/runtime/task/task-runtime.ts"
       ]
     },
@@ -215,7 +215,7 @@
         "scripts/native_plugin_setup.py"
       ]
     },
-    "packaged-hhc-agents": {
+    "packaged-hi-agents": {
       "status": "IMPLEMENTED",
       "evidence": [
         "plugin/src/generated/agent-config.ts",
@@ -223,22 +223,14 @@
         "plugin/src/plugin.ts"
       ]
     },
-    "packaged-hhc-skill-discovery": {
+    "packaged-hi-skill-discovery": {
       "status": "IMPLEMENTED",
       "evidence": [
         "plugin/src/plugin.ts",
-        "skills/hhc-task-classification/SKILL.md"
+        "skills/hi-task-classification/SKILL.md"
       ]
     },
-    "native-oho-entrypoint": {
-      "status": "IMPLEMENTED",
-      "evidence": [
-        "package.json",
-        "plugin/src/plugin.ts",
-        "scripts/native_plugin_setup.py"
-      ]
-    },
-    "hhc-native-skill-catalog": {
+    "hi-native-skill-catalog": {
       "status": "IMPLEMENTED",
       "evidence": [
         "docs/SKILLS.md",
@@ -246,7 +238,7 @@
         "plugin/test/native-skill-catalog.test.mjs"
       ]
     },
-    "hhc-methodology-ownership": {
+    "hi-methodology-ownership": {
       "status": "IMPLEMENTED",
       "evidence": [
         "plugin/src/runtime/skills/methodology.ts",
@@ -262,7 +254,15 @@
         "plugin/src/hooks/tool-before.ts"
       ]
     },
-    "native-oho-setup": {
+    "native-hi-entrypoint": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "package.json",
+        "plugin/src/plugin.ts",
+        "scripts/native_plugin_setup.py"
+      ]
+    },
+    "native-hi-setup": {
       "status": "IMPLEMENTED",
       "evidence": [
         "scripts/native_plugin_setup.py",

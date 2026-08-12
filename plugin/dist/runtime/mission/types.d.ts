@@ -69,7 +69,7 @@ export interface PermissionProfileSnapshot {
     native?: {
         mode?: string;
         decisions: Record<string, 'allow' | 'ask' | 'deny' | 'unknown'>;
-        source: 'effective-opencode-agent' | 'hhc-default-invariants';
+        source: 'effective-opencode-agent' | 'hi-default-invariants';
     };
 }
 export interface ExecutionProfile {
@@ -127,7 +127,7 @@ export interface MissionTask {
 }
 export interface MethodologyProvenance {
     name: string;
-    provider: 'project' | 'personal' | 'hhc';
+    provider: 'project' | 'personal' | 'hi';
     source_path: string;
     source_sha256?: string;
     permission: 'allow' | 'ask' | 'deny';
@@ -253,6 +253,20 @@ export interface MissionState {
     execution_mode: ExecutionMode;
     primary_mode: PrimaryMode;
     verification_policy: VerificationPolicy;
+    adaptive_execution?: {
+        path: 'DIRECT' | 'EVIDENCE' | 'PLANNED' | 'ESCALATED';
+        executionDepth: string;
+        contextDepth: string;
+        isolationDepth: string;
+        reasons: string[];
+    };
+    topology?: {
+        mode: 'single-agent' | 'multi-agent';
+        agentCount: number;
+        parallelism: number;
+        roleReuse: boolean;
+        reason: string[];
+    };
     generation: number;
     iteration: number;
     continuation_budget: number;

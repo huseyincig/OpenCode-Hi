@@ -1,13 +1,13 @@
 {
   "schema": 2,
-  "product_name": "OpenCode HHC Orchestrator",
-  "short_name": "OHO",
-  "version": "2.0.10",
-  "repository": "https://github.com/huseyincig/OpenCode-HHC-Orchestrator",
-  "plugin_package": "opencode-hhc-orchestrator",
-  "plugin_spec_main": "opencode-hhc-orchestrator@git+https://github.com/huseyincig/OpenCode-HHC-Orchestrator.git",
+  "product_name": "OpenCode-Hi",
+  "short_name": "HI",
+  "version": "0.1.0",
+  "repository": "https://github.com/huseyincig/OpenCode-Hi",
+  "plugin_package": "opencode-hi",
+  "plugin_spec_main": "opencode-hi",
   "runtime_entrypoint": "plugin/dist/plugin.js",
-  "product_namespace": "oho",
-  "architecture_namespace": "hhc",
+  "product_namespace": "hi",
+  "architecture_namespace": "hi",
   "distribution": "OpenCode native plugin manager"
 }

@@ -1,14 +1,5 @@
-# OpenCode HHC Orchestrator Threat Model
+# OpenCode-Hi Threat Model
 
-- HHC-T01 recursive orchestration — child control-plane guard; nested teams rejected.
-- HHC-T02 premature completion — runtime-owned CompletionAdjudicator.
-- HHC-T03 stale evidence — mutation invalidates earlier evidence.
-- HHC-T04 user stop ignored — `user_interrupted` dominates idle continuation.
-- HHC-T05 unavailable skill silently assumed — discovery + preflight; missing skill means no injection.
-- HHC-T06 unmanaged config overwrite — ownership-aware installer with before hashes.
-- HHC-T07 privileged action without authority — exact action contract hash + explicit approval.
-- HHC-T08 duplicate background task — worker fingerprint + spawn promise deduplication.
-- HHC-T09 stale approval reuse — approval is bound to exact action contract hash.
-- HHC-T10 provider/model fallback escapes policy — model resolution only from runtime inventory and bounded fallbacks.
+Primary boundaries are host permission denial, external-action authority, provider-facing secret exposure, filesystem/path traversal, child control-plane recursion, stale evidence, user-owned dirty work, release supply-chain integrity, process cleanup, and untrusted execution.
 
-The executable test matrix is intentionally deferred to the external test/debug environment.
+Hi never expands host authority. Privileged external actions are bound to an exact action contract and explicit authority. Skill resources and archive extraction are path-confined. Provider task context is redacted locally. Evidence that covers changed state becomes stale. Worktree/process cleanup must preserve user-owned work. Release claims require exact candidate binding and deterministic artifact evidence.

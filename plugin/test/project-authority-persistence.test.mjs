@@ -8,7 +8,7 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { createToolBeforeHook } from '../dist/hooks/tool-before.js'
 
 test('native always approval persists normal release-chain permission across project restarts',()=>{
-  const root=mkdtempSync(join(tmpdir(),'hhc-auth-'))
+  const root=mkdtempSync(join(tmpdir(),'hi-auth-'))
   try{
     const a=new ProjectAuthorityStore(root)
     assert.equal(a.has('git-push'),false)
@@ -21,14 +21,14 @@ test('native always approval persists normal release-chain permission across pro
     assert.equal(cfg.permission.bash['gh release create *'],'allow')
     assert.equal(cfg.permission.bash['git push --force*'],'ask')
     assert.equal(cfg.permission.bash['git push -f *'],'ask')
-    const saved=JSON.parse(readFileSync(join(root,'.opencode','hhc-authority.json'),'utf8'))
+    const saved=JSON.parse(readFileSync(join(root,'.opencode','hi','policy','authority.json'),'utf8'))
     assert.equal(saved.schema,1)
     assert.ok(saved.grants['git-push'])
   } finally { rmSync(root,{recursive:true,force:true}) }
 })
 
-test('without persistent grant, risky external effects use native OpenCode ask instead of HHC chat approval',async()=>{
-  const root=mkdtempSync(join(tmpdir(),'hhc-auth-'))
+test('without persistent grant, risky external effects use native OpenCode ask instead of Hi chat approval',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-auth-'))
   try{
     const cfg={permission:{bash:{'*':'allow'}}}
     applyProjectAuthorityPermissions(cfg,new ProjectAuthorityStore(root))
@@ -38,12 +38,12 @@ test('without persistent grant, risky external effects use native OpenCode ask i
     const store=new MissionStore(root),m=store.start('s','push the release')
     await createToolBeforeHook(store)({sessionID:'s',tool:'bash',args:{command:'git push origin main',cwd:root}},{args:{command:'git push origin main',cwd:root}})
     assert.ok(m.authority?.executing,'reaching tool-before means OpenCode native permission resolution already completed')
-    assert.equal(m.authority?.pending,undefined,'HHC must not create a second text approval gate')
+    assert.equal(m.authority?.pending,undefined,'Hi must not create a second text approval gate')
   } finally { rmSync(root,{recursive:true,force:true}) }
 })
 
-test('user explicit deny is never weakened by persistent HHC grant',()=>{
-  const root=mkdtempSync(join(tmpdir(),'hhc-auth-'))
+test('user explicit deny is never weakened by persistent Hi grant',()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-auth-'))
   try{
     const st=new ProjectAuthorityStore(root);st.grant('git-push')
     const cfg={permission:{bash:{'*':'allow','git *':'deny'}}}
@@ -61,11 +61,11 @@ test('native permission patterns map to bounded project authority classes',()=>{
 })
 
 test('plugin persists native always reply and applies it on the next project boot',async()=>{
-  const root=mkdtempSync(join(tmpdir(),'hhc-auth-plugin-'))
+  const root=mkdtempSync(join(tmpdir(),'hi-auth-plugin-'))
   try{
-    const {default:HhcPlugin}=await import('../dist/plugin.js')
+    const {default:HiPlugin}=await import('../dist/plugin.js')
     const client={app:{log:async()=>{}},session:{abort:async()=>({data:{}})},provider:{}}
-    let hooks=await HhcPlugin({directory:root,worktree:root,project:{},client})
+    let hooks=await HiPlugin({directory:root,worktree:root,project:{},client})
     const first={permission:{bash:{'*':'allow'}}}
     await hooks.config(first)
     assert.equal(first.permission.bash['git push *'],'ask')
@@ -74,7 +74,7 @@ test('plugin persists native always reply and applies it on the next project boo
     await hooks.event({event:{type:'permission.replied',properties:{id:'per-1',sessionID:'s',response:'always'}}})
     await hooks.dispose?.()
 
-    hooks=await HhcPlugin({directory:root,worktree:root,project:{},client})
+    hooks=await HiPlugin({directory:root,worktree:root,project:{},client})
     const second={permission:{bash:{'*':'allow'}}}
     await hooks.config(second)
     assert.equal(second.permission.bash['git push *'],'allow')
@@ -86,7 +86,7 @@ test('plugin persists native always reply and applies it on the next project boo
 
 
 test('global ask does not spam autonomous local commit/merge steps; external push remains the single authority hinge',()=>{
-  const root=mkdtempSync(join(tmpdir(),'hhc-auth-'))
+  const root=mkdtempSync(join(tmpdir(),'hi-auth-'))
   try{
     const cfg={permission:{bash:{'*':'ask'}}}
     applyProjectAuthorityPermissions(cfg,new ProjectAuthorityStore(root))

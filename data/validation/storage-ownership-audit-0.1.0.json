@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "candidate": "0.1.0",
+  "gate": "CAPABILITY_ARTIFACT_STORAGE_ARCHITECTURE",
+  "status": "PASS_LOCAL_CURRENT_SOURCE",
+  "legacy_product_migration": false,
+  "rules": {
+    "root_pollution": false,
+    "runtime_state_in_project": false,
+    "runtime_policy_auto_write": false,
+    "skill_resources_skill_owned": true,
+    "secrets_project_persisted": false,
+    "release_outputs_consumer_runtime": false
+  },
+  "implemented_project_durable_paths": [
+    ".opencode/hi/policy/routing.json",
+    ".opencode/hi/policy/authority.json",
+    ".opencode/hi/provenance/setup.json"
+  ],
+  "runtime_state_location": "project-keyed OS/OpenCode state directory",
+  "deferred_persistence": [
+    "Project Intelligence durable on-disk store",
+    "ArtifactStore durable on-disk store",
+    "Semantic Context persistent index"
+  ],
+  "note": "Deferred stores remain in-memory in 0.1.0; no speculative empty hierarchy is created."
+}

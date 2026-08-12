@@ -1,6 +1,5 @@
-import { resolveHhcConfigWithReport } from './config/resolver.js';
-import { DEFAULT_HHC_CONFIG } from './config/defaults.js';
-import { ensureProjectRoutingConfig } from './config/auto-init.js';
+import { resolveHiConfigWithReport } from './config/resolver.js';
+import { DEFAULT_HI_CONFIG } from './config/defaults.js';
 import { runDoctor, formatDoctor } from './doctor/checks.js';
 import { createChatMessageHook } from './hooks/chat-message.js';
 import { createSystemTransformHook } from './hooks/system-transform.js';
@@ -10,14 +9,14 @@ import { createToolAfterHook } from './hooks/tool-after.js';
 import { MissionStore } from './runtime/mission/mission-store.js';
 import { BackgroundRegistry } from './runtime/background/registry.js';
 import { TaskRuntime } from './runtime/task/task-runtime.js';
-import { evaluateIdle, shouldCountStagnation } from './runtime/autopilot/evaluator.js';
+import { evaluateIdle, shouldCountStagnation } from './runtime/continuation/evaluator.js';
 import { dispatchContinuation } from './runtime/continuation/dispatcher.js';
 import { lastAssistantText, lastAssistantModel, listMessages, listProviders } from './opencode/client-adapter.js';
 import { NativeOpenCodeAdapter } from './opencode/native-adapter.js';
 import { normalizeOpenCodeEvent, eventFilePaths, permissionDecision, permissionEventID, permissionPatterns, permissionReply } from './opencode/event-adapter.js';
 import { ExperimentalOpenCodeAdapter } from './opencode/experimental-adapter.js';
 import { parseWorkerResult } from './runtime/task/result-parser.js';
-import { adjudicateCompletion } from './runtime/completion/adjudicator.js';
+import { evaluateCompletion } from './runtime/completion/evaluator.js';
 import { appendLedger } from './runtime/ledger/ledger.js';
 import { ConcurrencyScheduler } from './runtime/scheduler/concurrency.js';
 import { TeamRuntime } from './runtime/team/team-runtime.js';
@@ -31,10 +30,10 @@ import { evaluatePreconditions, TaskPreconditionError } from './runtime/readines
 import { registerTemporaryMutation, resolveRollback } from './runtime/mutations/temporary-mutations.js';
 import { createHash } from 'node:crypto';
 import { addEvidence, markMutation } from './runtime/evidence/evidence-runtime.js';
-import { assertHhcToolNamespace } from './opencode/tool-namespace.js';
-import { acquireHhcRuntimeInstance } from './opencode/instance-guard.js';
+import { assertHiToolNamespace } from './opencode/tool-namespace.js';
+import { acquireHiRuntimeInstance } from './opencode/instance-guard.js';
 import { nativeTool as tool } from './opencode/plugin-tool.js';
-import { PACKAGED_HHC_AGENTS } from './generated/agent-config.js';
+import { PACKAGED_HI_AGENTS } from './generated/agent-config.js';
 import { existsSync } from 'node:fs';
 import { ProjectAuthorityStore, applyProjectAuthorityPermissions, authorityClassForPatterns } from './runtime/safety/project-authority.js';
 import { dirname, resolve } from 'node:path';
@@ -62,19 +61,19 @@ function providerModels(raw) {
     }
     return out;
 }
-export const HhcPlugin = async (ctx) => {
+export const HiPlugin = async (ctx) => {
     const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
     const packagedSkillsDir = resolve(packageRoot, 'skills');
     const projectRoot = resolveNativeProjectRoot(process.cwd(), { project: ctx.project, directory: ctx.directory, worktree: ctx.worktree });
     const agentCollisions = [];
     const projectAuthority = new ProjectAuthorityStore(projectRoot);
     const pendingNativePermissions = new Map();
-    let config = DEFAULT_HHC_CONFIG;
+    let config = DEFAULT_HI_CONFIG;
     let configResolution;
     let hostConfig = {};
     const capabilities = detectOpenCodeCapabilities(ctx.client);
     const native = new NativeOpenCodeAdapter(ctx.client);
-    const store = new MissionStore(projectRoot, { project: ctx.project, directory: ctx.directory, worktree: ctx.worktree }, () => config.primaryMode);
+    const store = new MissionStore(projectRoot, { project: ctx.project, directory: ctx.directory, worktree: ctx.worktree }, () => config.primaryMode, () => ({ mode: config.execution.topology, maxAgents: config.execution.maxAgents, parallelism: config.execution.parallelism, allowMultiRoleAgent: config.execution.allowMultiRoleAgent }));
     const background = new BackgroundRegistry();
     const persistence = new RuntimePersistence(projectRoot);
     const restored = persistence.load();
@@ -88,7 +87,7 @@ export const HhcPlugin = async (ctx) => {
     let models = [];
     let openCodeVersion;
     const log = async (level, message, extra) => { try {
-        await ctx.client?.app?.log?.({ body: { service: 'oho', level, message, extra } });
+        await ctx.client?.app?.log?.({ body: { service: 'hi', level, message, extra } });
     }
     catch { } };
     let inventoryRefresh;
@@ -100,17 +99,11 @@ export const HhcPlugin = async (ctx) => {
             const next = providerModels(raw);
             if (next.length)
                 models = next;
-            const init = ensureProjectRoutingConfig(projectRoot, models.map(m => m.id));
-            if (init.created) {
-                const resolved = resolveHhcConfigWithReport(hostConfig.hhc, projectRoot);
-                config = resolved.config;
-                configResolution = resolved.report;
-            }
-            await log('info', 'HHC runtime inventory refreshed', { reason, models: models.length, routing_auto_init: init });
+            await log('info', 'Hi runtime inventory refreshed', { reason, models: models.length, routing_policy: config.routing.modelPolicy });
             return models.length;
         }
         catch (error) {
-            await log('warn', 'HHC runtime inventory refresh failed', { reason, error: String(error) });
+            await log('warn', 'Hi runtime inventory refresh failed', { reason, error: String(error) });
             return models.length;
         }
         finally {
@@ -129,21 +122,21 @@ export const HhcPlugin = async (ctx) => {
                 background.set(w);
     const experimental = new ExperimentalOpenCodeAdapter(store, background);
     const teams = new TeamRuntime(tasks, () => config.teamMode.enabled, () => ({ maxMembers: config.teamMode.maxMembers, maxMessages: config.teamMode.maxMessages, maxWallMs: config.teamMode.maxWallMinutes * 60 * 1000, maxTurns: config.teamMode.maxTurns }));
-    void log('info', 'OpenCode HHC Orchestrator plugin initialized', { directory: ctx.directory, models: models.length, restored: store.all().length, uncleanShutdown: persistence.lastLoadReport.uncleanShutdown === true, capabilities });
-    const doctorTool = tool({ description: 'Run OpenCode HHC Orchestrator runtime/configuration health checks', args: {}, execute: async () => formatDoctor(runDoctor(config, store, projectRoot, { models, resolution: configResolution, capabilities, hostConfig, openCodeVersion })) });
-    const statusTool = tool({ description: 'Show compact user-facing HHC mission status. This intentionally excludes diagnostic logs and ledger payloads.', args: {}, execute: async (_args, c) => { const m = store.get(c?.sessionID); return m ? formatUserMissionStatus(m) : 'HHC: no active mission'; } });
-    const metricsTool = tool({ description: 'Show aggregate HHC runtime metrics derived from bounded mission state. Token/cost telemetry is omitted unless the host provides it.', args: {}, execute: async () => JSON.stringify(aggregateMissionMetrics(store.all())) });
-    const ledgerTool = tool({ description: 'Show a bounded HHC execution ledger/report on demand.', args: { limit: tool.schema.number().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(compactLedgerReport(m, a?.limit ?? 40)) : 'No active HHC mission'; } });
-    const readinessTool = tool({ description: 'Show machine-readable HHC mission readiness/preconditions and gates.', args: {}, execute: async (_a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(evaluatePreconditions(m)) : 'No active HHC mission'; } });
-    const artifactAddTool = tool({ description: 'Attach one bounded context artifact reference to the current HHC mission.', args: { kind: tool.schema.string(), title: tool.schema.string().optional(), uri: tool.schema.string().optional(), summary: tool.schema.string().optional(), sha256: tool.schema.string().optional(), approved: tool.schema.boolean().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
-            return 'No active HHC mission'; const raw = String(a.uri ?? a.summary ?? a.title ?? a.kind), item = { id: `ca_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`, kind: String(a.kind).slice(0, 80), title: a.title ? String(a.title).slice(0, 300) : undefined, uri: a.uri ? String(a.uri).slice(0, 1200) : undefined, summary: a.summary ? String(a.summary).slice(0, 2000) : undefined, sha256: a.sha256 ? String(a.sha256) : createHash('sha256').update(raw).digest('hex'), approved: Boolean(a.approved), added_at: Date.now() }; m.context_artifacts.push(item); if (m.context_artifacts.length > 8)
+    void log('info', 'OpenCode-Hi plugin initialized', { directory: ctx.directory, models: models.length, restored: store.all().length, uncleanShutdown: persistence.lastLoadReport.uncleanShutdown === true, capabilities });
+    const doctorTool = tool({ description: 'Run OpenCode-Hi runtime/configuration health checks', args: {}, execute: async () => formatDoctor(runDoctor(config, store, projectRoot, { models, resolution: configResolution, capabilities, hostConfig, openCodeVersion })) });
+    const statusTool = tool({ description: 'Show compact user-facing Hi mission status. This intentionally excludes diagnostic logs and ledger payloads.', args: {}, execute: async (_args, c) => { const m = store.get(c?.sessionID); return m ? formatUserMissionStatus(m) : 'Hi: no active mission'; } });
+    const metricsTool = tool({ description: 'Show aggregate Hi runtime metrics derived from bounded mission state. Token/cost telemetry is omitted unless the host provides it.', args: {}, execute: async () => JSON.stringify(aggregateMissionMetrics(store.all())) });
+    const ledgerTool = tool({ description: 'Show a bounded Hi execution ledger/report on demand.', args: { limit: tool.schema.number().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(compactLedgerReport(m, a?.limit ?? 40)) : 'No active Hi mission'; } });
+    const readinessTool = tool({ description: 'Show machine-readable Hi mission readiness/preconditions and gates.', args: {}, execute: async (_a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(evaluatePreconditions(m)) : 'No active Hi mission'; } });
+    const artifactAddTool = tool({ description: 'Attach one bounded context artifact reference to the current Hi mission.', args: { kind: tool.schema.string(), title: tool.schema.string().optional(), uri: tool.schema.string().optional(), summary: tool.schema.string().optional(), sha256: tool.schema.string().optional(), approved: tool.schema.boolean().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+            return 'No active Hi mission'; const raw = String(a.uri ?? a.summary ?? a.title ?? a.kind), item = { id: `ca_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`, kind: String(a.kind).slice(0, 80), title: a.title ? String(a.title).slice(0, 300) : undefined, uri: a.uri ? String(a.uri).slice(0, 1200) : undefined, summary: a.summary ? String(a.summary).slice(0, 2000) : undefined, sha256: a.sha256 ? String(a.sha256) : createHash('sha256').update(raw).digest('hex'), approved: Boolean(a.approved), added_at: Date.now() }; m.context_artifacts.push(item); if (m.context_artifacts.length > 8)
             m.context_artifacts.splice(0, m.context_artifacts.length - 8); appendLedger(m, 'context-artifact.added', { payload: { id: item.id, kind: item.kind, sha256: item.sha256 } }); return JSON.stringify(item); } });
-    const artifactsTool = tool({ description: 'List bounded HHC context artifact references.', args: {}, execute: async (_a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(m.context_artifacts) : 'No active HHC mission'; } });
+    const artifactsTool = tool({ description: 'List bounded Hi context artifact references.', args: {}, execute: async (_a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(m.context_artifacts) : 'No active Hi mission'; } });
     const mutationTool = tool({ description: 'Register a temporary execution mutation. Prefer native session revert for project-local tracked experiments; use an exact rollback command only for native-coverage gaps.', args: { kind: tool.schema.string(), description: tool.schema.string(), rollback_command: tool.schema.string().optional(), native_revert: tool.schema.boolean().optional(), session_id: tool.schema.string().optional(), message_id: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
-            return 'No active HHC mission'; const mode = a.native_revert ? 'native-revert' : 'command'; if (mode === 'native-revert' && !capabilities.sessionRevert)
+            return 'No active Hi mission'; const mode = a.native_revert ? 'native-revert' : 'command'; if (mode === 'native-revert' && !capabilities.sessionRevert)
             return 'BLOCKED: OpenCode native session revert is unavailable'; return JSON.stringify(registerTemporaryMutation(m, { kind: String(a.kind), description: String(a.description), rollback_command: a.rollback_command ? String(a.rollback_command) : undefined, rollback_mode: mode, session_id: a.session_id ? String(a.session_id) : c?.sessionID, message_id: a.message_id ? String(a.message_id) : undefined })); } });
     const nativeRollbackTool = tool({ description: 'Resolve a registered native-revert temporary mutation through OpenCode session.revert. Evidence remains stale until reverified.', args: { id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
-            return 'No active HHC mission'; const item = m.temporary_mutations.find(x => x.id === String(a.id)); if (!item)
+            return 'No active Hi mission'; const item = m.temporary_mutations.find(x => x.id === String(a.id)); if (!item)
             return 'Unknown temporary mutation'; if (item.rollback_mode !== 'native-revert')
             return 'BLOCKED: mutation uses command rollback'; const target = item.session_id ?? m.session_id; const belongs = target === m.session_id || m.workers.some(w => w.session_id === target); if (!belongs)
             return 'BLOCKED: target session is outside this mission'; try {
@@ -157,11 +150,11 @@ export const HhcPlugin = async (ctx) => {
             return `Native revert failed: ${String(error)}`;
         } } });
     const directProgressTool = tool({ description: 'Record parent/Working-Manager direct implementation progress after an observed local mutation. Does not bypass verification or review gates.', args: { summary: tool.schema.string(), obligation_id: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
-            return 'No active HHC mission'; if (!m.changed_files.length && !m.evidence.last_mutation_at)
+            return 'No active Hi mission'; if (!m.changed_files.length && !m.evidence.last_mutation_at)
             return 'BLOCKED: no observed mutation for direct progress'; const open = m.obligations.filter(x => x.kind === 'implementation' && x.status === 'open'), o = a.obligation_id ? open.find(x => x.id === String(a.obligation_id)) : open.length === 1 ? open[0] : undefined; if (!o)
-            return open.length > 1 ? 'BLOCKED: multiple implementation obligations are open; specify obligation_id' : 'No open implementation obligation'; o.status = 'closed'; o.closedAt = Date.now(); appendLedger(m, 'implementation.direct-progress', { payload: { summary: String(a.summary).slice(0, 500), obligation: o.id, changed_files: m.changed_files.slice(-30) } }); return JSON.stringify({ status: 'RECORDED', verification_required: !adjudicateCompletion(m).complete, changed_files: m.changed_files.slice(-30) }); } });
-    const startTool = tool({ description: 'Start one bounded HHC worker task. Use only when delegation is actually beneficial.', args: { objective: tool.schema.string().optional(), role: tool.schema.string().optional(), category: tool.schema.string().optional(), model: tool.schema.string().optional(), model_variant: tool.schema.string().optional(), scope: tool.schema.string().optional(), dependencies: tool.schema.string().optional(), required_evidence: tool.schema.string().optional(), obligation_ids: tool.schema.string().optional(), fork_from_session: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
-            return 'No active HHC mission'; try {
+            return open.length > 1 ? 'BLOCKED: multiple implementation obligations are open; specify obligation_id' : 'No open implementation obligation'; o.status = 'closed'; o.closedAt = Date.now(); appendLedger(m, 'implementation.direct-progress', { payload: { summary: String(a.summary).slice(0, 500), obligation: o.id, changed_files: m.changed_files.slice(-30) } }); return JSON.stringify({ status: 'RECORDED', verification_required: !evaluateCompletion(m).complete, changed_files: m.changed_files.slice(-30) }); } });
+    const startTool = tool({ description: 'Start one bounded Hi worker task. Use only when delegation is actually beneficial.', args: { objective: tool.schema.string().optional(), role: tool.schema.string().optional(), category: tool.schema.string().optional(), model: tool.schema.string().optional(), model_variant: tool.schema.string().optional(), scope: tool.schema.string().optional(), dependencies: tool.schema.string().optional(), required_evidence: tool.schema.string().optional(), obligation_ids: tool.schema.string().optional(), fork_from_session: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+            return 'No active Hi mission'; try {
             const input = { ...a, forkFromSession: a.fork_from_session ? String(a.fork_from_session) : undefined, modelVariant: a.model_variant ? String(a.model_variant) : undefined, scope: a.scope ? String(a.scope).split(',').map((x) => x.trim()).filter(Boolean) : undefined, dependencies: a.dependencies ? String(a.dependencies).split(',').map((x) => x.trim()).filter(Boolean) : undefined, requiredEvidence: a.required_evidence ? String(a.required_evidence).split(',').map((x) => x.trim()).filter(Boolean) : undefined, obligationIds: a.obligation_ids ? String(a.obligation_ids).split(',').map((x) => x.trim()).filter(Boolean) : undefined };
             return JSON.stringify(await tasks.start(m, input));
         }
@@ -173,13 +166,13 @@ export const HhcPlugin = async (ctx) => {
             appendLedger(m, 'worker.start.failed', { payload: { error: String(e) } });
             return `Task start failed: ${String(e)}`;
         } } });
-    const peekTool = tool({ description: 'Inspect one HHC task/worker without polling loops.', args: { id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(tasks.peek(m, a.id)) : 'No active HHC mission'; } });
-    const listTool = tool({ description: 'List bounded HHC task and worker state.', args: {}, execute: async (_a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(tasks.list(m)) : 'No active HHC mission'; } });
-    const awaitTool = tool({ description: 'Check whether an HHC task has reached terminal state. HHC uses event-driven wakeups; do not call repeatedly.', args: { id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
-            return 'No active HHC mission'; const x = tasks.peek(m, a.id); const status = x?.task?.status ?? x?.worker?.status ?? 'unknown'; return JSON.stringify({ status, terminal: ['completed', 'failed', 'cancelled', 'blocked'].includes(status), result: x?.task?.result }); } });
-    const cancelTool = tool({ description: 'Cancel one HHC task/worker.', args: { id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? String(await tasks.cancel(m, a.id)) : 'false'; } });
-    const teamCreateTool = tool({ description: 'Create a bounded HHC Team Mode group only for work requiring interacting specialist perspectives.', args: { objective: tool.schema.string(), members: tool.schema.string(), member_models: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
-            return 'No active HHC mission'; if (!config.teamMode.enabled)
+    const peekTool = tool({ description: 'Inspect one Hi task/worker without polling loops.', args: { id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(tasks.peek(m, a.id)) : 'No active Hi mission'; } });
+    const listTool = tool({ description: 'List bounded Hi task and worker state.', args: {}, execute: async (_a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(tasks.list(m)) : 'No active Hi mission'; } });
+    const awaitTool = tool({ description: 'Check whether an Hi task has reached terminal state. Hi uses event-driven wakeups; do not call repeatedly.', args: { id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+            return 'No active Hi mission'; const x = tasks.peek(m, a.id); const status = x?.task?.status ?? x?.worker?.status ?? 'unknown'; return JSON.stringify({ status, terminal: ['completed', 'failed', 'cancelled', 'blocked'].includes(status), result: x?.task?.result }); } });
+    const cancelTool = tool({ description: 'Cancel one Hi task/worker.', args: { id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? String(await tasks.cancel(m, a.id)) : 'false'; } });
+    const teamCreateTool = tool({ description: 'Create a bounded Hi Team Mode group only for work requiring interacting specialist perspectives.', args: { objective: tool.schema.string(), members: tool.schema.string(), member_models: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+            return 'No active Hi mission'; if (!config.teamMode.enabled)
             return 'Team Mode disabled'; let memberModels; if (a.member_models && typeof a.member_models === 'string' && a.member_models.trim()) {
             try {
                 memberModels = JSON.parse(a.member_models);
@@ -190,15 +183,15 @@ export const HhcPlugin = async (ctx) => {
                 return `Invalid member_models JSON: ${e?.message ?? String(e)}`;
             }
         } return JSON.stringify(await teams.create(m, a.objective, String(a.members).split(','), memberModels)); } });
-    const teamMessageTool = tool({ description: 'Write one bounded Team Mode mailbox message.', args: { team_id: tool.schema.string(), from: tool.schema.string(), to: tool.schema.string(), text: tool.schema.string(), dedupe_key: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(teams.message(m, a.team_id, a.from, a.to, a.text, a.dedupe_key)) : 'No active HHC mission'; } });
-    const teamAckTool = tool({ description: 'Acknowledge or release one reserved Team Mode mailbox message.', args: { team_id: tool.schema.string(), member: tool.schema.string(), message_id: tool.schema.string(), processed: tool.schema.boolean().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? String(teams.messageAck(m, a.team_id, a.member, a.message_id, a.processed !== false)) : 'No active HHC mission'; } });
-    const teamStatusTool = tool({ description: 'Show Team Mode state for the current HHC mission.', args: {}, execute: async (_a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(teams.list(m.mission_id)) : 'No active HHC mission'; } });
-    const teamInboxTool = tool({ description: 'Read a bounded Team Mode mailbox view for one member or the parent.', args: { team_id: tool.schema.string(), member: tool.schema.string(), since: tool.schema.number().optional(), limit: tool.schema.number().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(teams.inbox(a.team_id, a.member, a.since, a.limit ?? 12)) : 'No active HHC mission'; } });
-    const teamMemberAddTool = tool({ description: 'Add one bounded Team Mode member and start its worker.', args: { team_id: tool.schema.string(), role: tool.schema.string(), model: tool.schema.string().optional(), variant: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(await teams.addMember(m, a.team_id, a.role, a.model, a.variant)) : 'No active HHC mission'; } });
+    const teamMessageTool = tool({ description: 'Write one bounded Team Mode mailbox message.', args: { team_id: tool.schema.string(), from: tool.schema.string(), to: tool.schema.string(), text: tool.schema.string(), dedupe_key: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(teams.message(m, a.team_id, a.from, a.to, a.text, a.dedupe_key)) : 'No active Hi mission'; } });
+    const teamAckTool = tool({ description: 'Acknowledge or release one reserved Team Mode mailbox message.', args: { team_id: tool.schema.string(), member: tool.schema.string(), message_id: tool.schema.string(), processed: tool.schema.boolean().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? String(teams.messageAck(m, a.team_id, a.member, a.message_id, a.processed !== false)) : 'No active Hi mission'; } });
+    const teamStatusTool = tool({ description: 'Show Team Mode state for the current Hi mission.', args: {}, execute: async (_a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(teams.list(m.mission_id)) : 'No active Hi mission'; } });
+    const teamInboxTool = tool({ description: 'Read a bounded Team Mode mailbox view for one member or the parent.', args: { team_id: tool.schema.string(), member: tool.schema.string(), since: tool.schema.number().optional(), limit: tool.schema.number().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(teams.inbox(a.team_id, a.member, a.since, a.limit ?? 12)) : 'No active Hi mission'; } });
+    const teamMemberAddTool = tool({ description: 'Add one bounded Team Mode member and start its worker.', args: { team_id: tool.schema.string(), role: tool.schema.string(), model: tool.schema.string().optional(), variant: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(await teams.addMember(m, a.team_id, a.role, a.model, a.variant)) : 'No active Hi mission'; } });
     const teamMemberRemoveTool = tool({ description: 'Remove one Team Mode member and cancel its worker.', args: { team_id: tool.schema.string(), role: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? String(await teams.removeMember(m, a.team_id, a.role)) : 'false'; } });
     const teamBoardTool = tool({ description: 'Create or update one bounded Team Mode task-board item.', args: { team_id: tool.schema.string(), title: tool.schema.string(), item_id: tool.schema.string().optional(), owner: tool.schema.string().optional(), status: tool.schema.string().optional(), evidence: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
-            return 'No active HHC mission'; return JSON.stringify(teams.boardUpsert(m, a.team_id, { id: a.item_id, title: a.title, owner: a.owner, status: ['open', 'in-progress', 'done', 'blocked'].includes(a.status) ? a.status : undefined, evidence: a.evidence ? String(a.evidence).split('|').map((x) => x.trim()).filter(Boolean) : undefined })); } });
-    const teamShutdownTool = tool({ description: 'Shutdown one bounded HHC team and cancel its member workers.', args: { team_id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? String(await teams.shutdown(m, a.team_id)) : 'false'; } });
+            return 'No active Hi mission'; return JSON.stringify(teams.boardUpsert(m, a.team_id, { id: a.item_id, title: a.title, owner: a.owner, status: ['open', 'in-progress', 'done', 'blocked'].includes(a.status) ? a.status : undefined, evidence: a.evidence ? String(a.evidence).split('|').map((x) => x.trim()).filter(Boolean) : undefined })); } });
+    const teamShutdownTool = tool({ description: 'Shutdown one bounded Hi team and cancel its member workers.', args: { team_id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? String(await teams.shutdown(m, a.team_id)) : 'false'; } });
     const onEvent = async ({ event }) => {
         const ev = normalizeOpenCodeEvent(event);
         if (ev.kind === 'installation-updated') {
@@ -221,7 +214,7 @@ export const HhcPlugin = async (ctx) => {
                 const cls = authorityClassForPatterns(patterns);
                 if (cls) {
                     projectAuthority.grant(cls);
-                    await log('info', 'HHC project authority persisted from native always approval', { authority_class: cls, patterns });
+                    await log('info', 'Hi project authority persisted from native always approval', { authority_class: cls, patterns });
                 }
             }
             pendingNativePermissions.delete(nativePermissionID);
@@ -331,8 +324,8 @@ export const HhcPlugin = async (ctx) => {
                     m.stagnation_count = 0;
                     appendLedger(m, 'user.action.required', { worker_id: child.id, payload: { reason: 'permission-failure', detail } });
                 }
-                else if (config.autonomy === 'smart' && !m.user_interrupted && !siblingPending.length)
-                    await dispatchContinuation(ctx.client, m, 'HHC child worker failed. Reconcile the failure, preserve completed work, and choose the minimum safe recovery. Do not duplicate completed tasks.', 'child-failed');
+                else if (config.executionPolicy === 'adaptive' && !m.user_interrupted && !siblingPending.length)
+                    await dispatchContinuation(ctx.client, m, 'Hi child worker failed. Reconcile the failure, preserve completed work, and choose the minimum safe recovery. Do not duplicate completed tasks.', 'child-failed');
                 else if (siblingPending.length)
                     appendLedger(m, 'parent.wake.deferred', { worker_id: child.id, payload: { reason: 'sibling-workers-pending', pending: siblingPending.map(w => w.id).slice(0, 20) } });
                 persistence.save(store.all());
@@ -362,8 +355,8 @@ export const HhcPlugin = async (ctx) => {
                     background.set(child);
                 store.updateProgress(m);
                 appendLedger(m, 'parent.wake', { worker_id: child.id, payload: { result: result.status } });
-                if (config.autonomy === 'smart' && !m.user_interrupted && !background.pendingFor(m.session_id).length)
-                    await dispatchContinuation(ctx.client, m, 'HHC child result is ready. Reconcile it against current obligations. Prefer same-session corrective resume for NEEDS_CONTEXT/FIX_REQUIRED. Do not create duplicate tasks.', 'child-result-ready');
+                if (config.executionPolicy === 'adaptive' && !m.user_interrupted && !background.pendingFor(m.session_id).length)
+                    await dispatchContinuation(ctx.client, m, 'Hi child result is ready. Reconcile it against current obligations. Prefer same-session corrective resume for NEEDS_CONTEXT/FIX_REQUIRED. Do not create duplicate tasks.', 'child-result-ready');
             }
             catch (e) {
                 tasks.fail(m, child.id, String(e));
@@ -414,7 +407,7 @@ export const HhcPlugin = async (ctx) => {
         if (ev.kind !== 'session-idle')
             return;
         const m = store.get(sid);
-        if (!m || config.autonomy !== 'smart')
+        if (!m || config.executionPolicy !== 'adaptive')
             return;
         const progressed = store.updateProgress(m, false);
         void eventSink(runtimeSignal('mission.idle', m.mission_id));
@@ -425,7 +418,7 @@ export const HhcPlugin = async (ctx) => {
         }
         appendLedger(m, 'runtime.decision', { payload: { decision: decision.decision, reason: decision.reason, reason_code: decision.reason_code, progressed, stagnation_count: m.stagnation_count } });
         if (decision.decision === 'STOP') {
-            const c = adjudicateCompletion(m);
+            const c = evaluateCompletion(m);
             if (c.complete)
                 store.complete(sid);
             persistence.save(store.all());
@@ -450,26 +443,26 @@ export const HhcPlugin = async (ctx) => {
             await dispatchContinuation(ctx.client, m, decision.prompt, decision.reason);
         persistence.save(store.all());
     };
-    const toolSurface = { hhc_doctor: doctorTool, hhc_status: statusTool, hhc_metrics: metricsTool, hhc_ledger: ledgerTool, hhc_readiness: readinessTool, hhc_context_artifact_add: artifactAddTool, hhc_context_artifacts: artifactsTool, hhc_temporary_mutation_register: mutationTool, hhc_temporary_mutation_revert: nativeRollbackTool, hhc_direct_progress: directProgressTool, hhc_task_start: startTool, hhc_task_await: awaitTool, hhc_task_peek: peekTool, hhc_task_list: listTool, hhc_task_cancel: cancelTool };
-    assertHhcToolNamespace([...Object.keys(toolSurface), 'hhc_team_create', 'hhc_team_message', 'hhc_team_inbox', 'hhc_team_message_ack', 'hhc_team_member_add', 'hhc_team_member_remove', 'hhc_team_status', 'hhc_team_board', 'hhc_team_shutdown']);
+    const toolSurface = { hi_doctor: doctorTool, hi_status: statusTool, hi_metrics: metricsTool, hi_ledger: ledgerTool, hi_readiness: readinessTool, hi_context_artifact_add: artifactAddTool, hi_context_artifacts: artifactsTool, hi_temporary_mutation_register: mutationTool, hi_temporary_mutation_revert: nativeRollbackTool, hi_direct_progress: directProgressTool, hi_task_start: startTool, hi_task_await: awaitTool, hi_task_peek: peekTool, hi_task_list: listTool, hi_task_cancel: cancelTool };
+    assertHiToolNamespace([...Object.keys(toolSurface), 'hi_team_create', 'hi_team_message', 'hi_team_inbox', 'hi_team_message_ack', 'hi_team_member_add', 'hi_team_member_remove', 'hi_team_status', 'hi_team_board', 'hi_team_shutdown']);
     // Team tools are intentionally feature-gated. The default tool surface remains small.
     if (config.teamMode.enabled && capabilities.workerRuntime) {
-        Object.assign(toolSurface, { hhc_team_create: teamCreateTool, hhc_team_message: teamMessageTool, hhc_team_inbox: teamInboxTool, hhc_team_message_ack: teamAckTool, hhc_team_member_add: teamMemberAddTool, hhc_team_member_remove: teamMemberRemoveTool, hhc_team_status: teamStatusTool, hhc_team_board: teamBoardTool, hhc_team_shutdown: teamShutdownTool });
+        Object.assign(toolSurface, { hi_team_create: teamCreateTool, hi_team_message: teamMessageTool, hi_team_inbox: teamInboxTool, hi_team_message_ack: teamAckTool, hi_team_member_add: teamMemberAddTool, hi_team_member_remove: teamMemberRemoveTool, hi_team_status: teamStatusTool, hi_team_board: teamBoardTool, hi_team_shutdown: teamShutdownTool });
     }
     // Acquire only after initialization succeeds so a failed init cannot leave a stale process-global lease.
-    const instanceLease = acquireHhcRuntimeInstance(String(projectRoot));
+    const instanceLease = acquireHiRuntimeInstance(String(projectRoot));
     return {
-        name: 'opencode-hhc-orchestrator',
+        name: 'opencode-hi',
         tool: toolSurface,
         config: async (opencodeConfig) => {
             hostConfig = opencodeConfig;
-            const resolved = resolveHhcConfigWithReport(opencodeConfig.hhc, projectRoot);
+            const resolved = resolveHiConfigWithReport(opencodeConfig.hi, projectRoot);
             config = resolved.config;
             configResolution = resolved.report;
-            opencodeConfig.hhc = config;
-            // Git/npm plugin installs do not place HHC assets in the consumer project's .opencode tree.
+            opencodeConfig.hi = config;
+            // Git/npm plugin installs do not place Hi assets in the consumer project's .opencode tree.
             // Register the packaged skill directory and agent definitions through OpenCode's live config hook,
-            // Register packaged HHC-native skills through OpenCode's live skill discovery config.
+            // Register packaged Hi-native skills through OpenCode's live skill discovery config.
             if (existsSync(packagedSkillsDir)) {
                 const skills = (opencodeConfig.skills && typeof opencodeConfig.skills === 'object' ? opencodeConfig.skills : {});
                 const paths = Array.isArray(skills.paths) ? skills.paths : [];
@@ -479,7 +472,7 @@ export const HhcPlugin = async (ctx) => {
                 opencodeConfig.skills = skills;
             }
             const agents = (opencodeConfig.agent && typeof opencodeConfig.agent === 'object' ? opencodeConfig.agent : {});
-            for (const [name, definition] of Object.entries(PACKAGED_HHC_AGENTS)) {
+            for (const [name, definition] of Object.entries(PACKAGED_HI_AGENTS)) {
                 if (agents[name] === undefined)
                     agents[name] = definition;
                 else
@@ -492,15 +485,15 @@ export const HhcPlugin = async (ctx) => {
                 opencodeConfig.subagent_depth = 1;
             applyProjectAuthorityPermissions(opencodeConfig, projectAuthority);
             if (config.teamMode.enabled && capabilities.workerRuntime)
-                Object.assign(toolSurface, { hhc_team_create: teamCreateTool, hhc_team_message: teamMessageTool, hhc_team_inbox: teamInboxTool, hhc_team_message_ack: teamAckTool, hhc_team_member_add: teamMemberAddTool, hhc_team_member_remove: teamMemberRemoveTool, hhc_team_status: teamStatusTool, hhc_team_board: teamBoardTool, hhc_team_shutdown: teamShutdownTool });
+                Object.assign(toolSurface, { hi_team_create: teamCreateTool, hi_team_message: teamMessageTool, hi_team_inbox: teamInboxTool, hi_team_message_ack: teamAckTool, hi_team_member_add: teamMemberAddTool, hi_team_member_remove: teamMemberRemoveTool, hi_team_status: teamStatusTool, hi_team_board: teamBoardTool, hi_team_shutdown: teamShutdownTool });
             else
-                for (const k of ['hhc_team_create', 'hhc_team_message', 'hhc_team_inbox', 'hhc_team_message_ack', 'hhc_team_member_add', 'hhc_team_member_remove', 'hhc_team_status', 'hhc_team_board', 'hhc_team_shutdown'])
+                for (const k of ['hi_team_create', 'hi_team_message', 'hi_team_inbox', 'hi_team_message_ack', 'hi_team_member_add', 'hi_team_member_remove', 'hi_team_status', 'hi_team_board', 'hi_team_shutdown'])
                     delete toolSurface[k];
         },
         'chat.message': async (input, output) => { try {
             const messageSession = String(input?.sessionID ?? input?.sessionId ?? '');
             if (messageSession && background.list().some(w => w.session_id === messageSession)) {
-                await log('debug', 'HHC child chat message ignored by parent intent hook', { session_id: messageSession });
+                await log('debug', 'Hi child chat message ignored by parent intent hook', { session_id: messageSession });
                 return;
             }
             if (!models.length)
@@ -552,4 +545,4 @@ export const HhcPlugin = async (ctx) => {
         event: onEvent,
     };
 };
-export default HhcPlugin;
+export default HiPlugin;

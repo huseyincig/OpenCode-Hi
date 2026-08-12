@@ -1,6 +1,8 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { runtimeStatePath } from '../runtime/storage/locations.js';
 function stripJsonc(text) {
     let out = '';
     let i = 0;
@@ -68,9 +70,9 @@ function localPluginFiles(root) { try {
 catch {
     return [];
 } }
-function pluginKind(path) { const name = path.toLowerCase(); if (/hhc[-_. ]?next|hhc[-_. ]?ai|hhc/.test(name))
-    return 'hhc'; return 'other'; }
-function hhcPluginSpec(x) { return typeof x === 'string' && (x === 'opencode-hhc-orchestrator' || x.startsWith('opencode-hhc-orchestrator@') || /OpenCode-HHC-Orchestrator/i.test(x)); }
+function pluginKind(path) { const name = path.toLowerCase(); if (/hi[-_. ]?next|hi[-_. ]?ai|hi/.test(name))
+    return 'hi'; return 'other'; }
+function hiPluginSpec(x) { return typeof x === 'string' && (x === 'opencode-hi' || x.startsWith('opencode-hi@') || /OpenCode-Hi/i.test(x)); }
 export function inspectProject(directory) {
     const warnings = [];
     const json = join(directory, 'opencode.json');
@@ -78,27 +80,27 @@ export function inspectProject(directory) {
     const configPath = existsSync(json) ? json : existsSync(jsonc) ? jsonc : undefined;
     const config = configPath ? readJson(configPath) : undefined;
     const plugins = Array.isArray(config?.plugin) ? config.plugin : [];
-    const ownershipPath = join(directory, '.opencode', 'oho-setup.json');
+    const ownershipPath = join(directory, '.opencode', 'hi', 'provenance', 'setup.json');
     const ownershipExists = existsSync(ownershipPath);
     const ownership = ownershipExists ? readJson(ownershipPath) : undefined;
     const ownershipSchema = typeof ownership?.schema === 'number' ? Number(ownership.schema) : undefined;
-    const ownershipSchemaValid = !ownershipExists || (ownership !== undefined && [1, 2].includes(Number(ownership.schema)));
-    const runtimePath = join(directory, '.opencode', '.oho', 'runtime-state.json');
+    const ownershipSchemaValid = !ownershipExists || (ownership !== undefined && Number(ownership.schema) === 2);
+    const runtimePath = runtimeStatePath(directory);
     const runtimeExists = existsSync(runtimePath);
     const runtime = runtimeExists ? readJson(runtimePath) : undefined;
     const runtimeSchema = typeof runtime?.schema === 'number' ? Number(runtime.schema) : undefined;
-    const runtimeSchemaValid = !runtimeExists || (runtime !== undefined && [1, 2, 3].includes(Number(runtime.schema)));
-    const routingPath = join(directory, '.opencode', 'oho-routing.json');
+    const runtimeSchemaValid = !runtimeExists || (runtime !== undefined && Number(runtime.schema) === 3);
+    const routingPath = join(directory, '.opencode', 'hi', 'policy', 'routing.json');
     const routing = existsSync(routingPath) ? readJson(routingPath) : undefined;
     const routingSchema = typeof routing?.schema === 'number' ? routing.schema : undefined;
     const routingStrategy = routingSchema === 1 && (routing.routing?.strategy === 'cost-quality' || routing.routing?.strategy === 'quality' || routing.routing?.strategy === 'cost') ? routing.routing.strategy : undefined;
     const routingRoleModels = routingSchema === 1 && routing.routing?.roleModels && typeof routing.routing.roleModels === 'object' ? Object.fromEntries(Object.entries(routing.routing.roleModels).filter((entry) => Array.isArray(entry[1])).map(([k, v]) => [k, v.filter((x) => typeof x === 'string')])) : undefined;
     const routingSchemaValid = routing === undefined ? true : routingSchema === 1;
-    const journal = join(directory, '.opencode', 'oho-transaction.json');
+    const journal = join(tmpdir(), 'opencode-hi', createHash('sha256').update(directory).digest('hex').slice(0, 16), 'lifecycle-transaction.json');
     const home = process.env.HOME ?? process.env.USERPROFILE ?? '';
     const globalOpenCode = process.env.OPENCODE_CONFIG_DIR || join(home, '.config', 'opencode');
     const localPluginPaths = [...localPluginFiles(join(globalOpenCode, 'plugins')), ...localPluginFiles(join(directory, '.opencode', 'plugins'))];
-    const hhcLocalPluginPaths = localPluginPaths.filter(x => pluginKind(x) === 'hhc');
+    const hiLocalPluginPaths = localPluginPaths.filter(x => pluginKind(x) === 'hi');
     const agentDefinitions = [...new Set([...(config?.agent && typeof config.agent === 'object' ? Object.keys(config.agent) : []), ...childDirsWith(join(directory, '.opencode', 'agents'), '.__never__')])].sort();
     // Agent files are markdown, not directories. Keep config names and add local *.md stems.
     try {
@@ -109,7 +111,7 @@ export function inspectProject(directory) {
     catch { }
     const discoveredSkills = [...new Set([...childDirsWith(join(directory, '.opencode', 'skills'), 'SKILL.md'), ...childDirsWith(join(globalOpenCode, 'skills'), 'SKILL.md')])].sort();
     let configDrift;
-    const item = ownership?.managed?.config ?? ownership?.adopted?.config ?? (ownership?.after_sha256 ? { after_sha256: ownership.after_sha256 } : undefined);
+    const item = ownership?.managed?.config;
     if (configPath && item?.after_sha256) {
         const actual = sha256(configPath);
         if (actual)
@@ -123,14 +125,14 @@ export function inspectProject(directory) {
         warnings.push(`Ownership schema ${String(ownership.schema)} is not supported by this runtime`);
     if (runtimeExists && !runtime)
         warnings.push('Runtime-state exists but could not be parsed');
-    if (runtime && ![1, 2, 3].includes(Number(runtime.schema)))
+    if (runtime && Number(runtime.schema) !== 3)
         warnings.push(`Runtime-state schema ${String(runtime.schema)} is not supported by this runtime`);
     return {
         configPath,
-        pluginRegistered: config ? plugins.some(hhcPluginSpec) : undefined,
-        configuredHhcPluginSpecs: plugins.filter(hhcPluginSpec),
-        localHhcPlugin: hhcLocalPluginPaths.length > 0,
-        hhcLocalPluginPaths,
+        pluginRegistered: config ? plugins.some(hiPluginSpec) : undefined,
+        configuredHiPluginSpecs: plugins.filter(hiPluginSpec),
+        localHiPlugin: hiLocalPluginPaths.length > 0,
+        hiLocalPluginPaths,
         permissionConfigured: Boolean(config?.permission),
         skillPermissionConfigured: Boolean(config?.permission?.skill ?? (config?.agent && Object.values(config.agent).some((a) => Boolean(a?.permission?.skill)))),
         ownershipState: !ownershipExists ? 'missing' : ownership && ownershipSchemaValid ? 'healthy' : 'invalid',

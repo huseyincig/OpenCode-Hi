@@ -1,5 +1,5 @@
 // Regression guard for the 2.0.3 doctor `routing-config` check that
-// surfaces `.opencode/oho-routing.json` roleModels as an explicit
+// surfaces `.opencode/hi/policy/routing.json` roleModels as an explicit
 // `pass` line. Lab dogfood in 2.0.2 reported this gap as a P2
 // observation: the doctor confirmed config-hook wiring but printed
 // only `roleOverrides=0` from `model-fallback`, with no explicit
@@ -14,18 +14,18 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { runDoctor, formatDoctor } from '../dist/doctor/checks.js'
 
 function makeProject() {
-  return mkdtempSync(join(tmpdir(), 'oho-routing-doctor-'))
+  return mkdtempSync(join(tmpdir(), 'hi-routing-doctor-'))
 }
 
 function writeProjectRouting(project, body) {
-  mkdirSync(join(project, '.opencode'), { recursive: true })
-  writeFileSync(join(project, '.opencode', 'oho-routing.json'), JSON.stringify(body), 'utf8')
+  mkdirSync(join(project, '.opencode', 'hi', 'policy'), { recursive: true })
+  writeFileSync(join(project, '.opencode', 'hi', 'policy', 'routing.json'), JSON.stringify(body), 'utf8')
 }
 
-function defaultHhcConfig() {
+function defaultHiConfig() {
   return {
     schemaVersion: 2,
-    autonomy: 'smart',
+    executionPolicy: 'adaptive',
     compatibility: { mode: 'compatible', validatedOpenCodeVersions: [] },
     routing: {
       strategy: 'cost-quality',
@@ -46,7 +46,7 @@ test('doctor routing-config check is present and surface the roleModels file', (
   try {
     writeProjectRouting(project, {
       schema: 1,
-      type: 'oho-routing',
+      type: 'hi-routing',
       routing: {
         strategy: 'quality',
         roleModels: {
@@ -58,7 +58,7 @@ test('doctor routing-config check is present and surface the roleModels file', (
         },
       },
     })
-    const cfg = defaultHhcConfig()
+    const cfg = defaultHiConfig()
     const checks = runDoctor(cfg, new MissionStore(), project, { models: [] })
     const r = checks.find(c => c.id === 'routing-config')
     assert.ok(r, 'routing-config check must be present in 2.0.3+')
@@ -71,12 +71,12 @@ test('doctor routing-config check is present and surface the roleModels file', (
 test('doctor routing-config: no file yields info (not warn)', () => {
   const project = makeProject()
   try {
-    const cfg = defaultHhcConfig()
+    const cfg = defaultHiConfig()
     const checks = runDoctor(cfg, new MissionStore(), project, { models: [] })
     const r = checks.find(c => c.id === 'routing-config')
     assert.ok(r)
     assert.equal(r.status, 'info')
-    assert.match(r.detail, /no \.opencode\/oho-routing\.json/)
+    assert.match(r.detail, /no \.opencode\/hi\/policy\/routing\.json/)
     assert.match(r.detail, /scoring fallback/)
   } finally { rmSync(project, { recursive: true, force: true }) }
 })
@@ -85,7 +85,7 @@ test('doctor routing-config: bad schema yields warn', () => {
   const project = makeProject()
   try {
     writeProjectRouting(project, { schema: 99, type: 'wrong', routing: { roleModels: { coder: ['x'] } } })
-    const cfg = defaultHhcConfig()
+    const cfg = defaultHiConfig()
     const checks = runDoctor(cfg, new MissionStore(), project, { models: [] })
     const r = checks.find(c => c.id === 'routing-config')
     assert.equal(r.status, 'warn')
@@ -98,10 +98,10 @@ test('doctor formatDoctor includes routing-config line', () => {
   try {
     writeProjectRouting(project, {
       schema: 1,
-      type: 'oho-routing',
+      type: 'hi-routing',
       routing: { roleModels: { coder: ['opencode-go/minimax-m3'] } },
     })
-    const out = formatDoctor(runDoctor(defaultHhcConfig(), new MissionStore(), project, { models: [] }))
+    const out = formatDoctor(runDoctor(defaultHiConfig(), new MissionStore(), project, { models: [] }))
     assert.match(out, /PASS routing-config:.*coder/)
   } finally { rmSync(project, { recursive: true, force: true }) }
 })

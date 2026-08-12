@@ -1,6 +1,6 @@
-import { type HhcConfig, type ConfigResolutionReport } from './schema.js';
-export declare function resolveHhcConfigWithReport(raw: unknown, projectRoot?: string): {
-    config: HhcConfig;
+import { type HiConfig, type ConfigResolutionReport } from './schema.js';
+export declare function resolveHiConfigWithReport(raw: unknown, projectRoot?: string): {
+    config: HiConfig;
     report: ConfigResolutionReport;
 };
-export declare function resolveHhcConfig(raw: unknown, projectRoot?: string): HhcConfig;
+export declare function resolveHiConfig(raw: unknown, projectRoot?: string): HiConfig;

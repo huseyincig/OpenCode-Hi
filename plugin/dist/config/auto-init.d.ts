@@ -2,13 +2,13 @@ export declare const DEFAULT_ROLE_MODELS_OPENCODE_GO: Record<string, string[]>;
 export declare const DEFAULT_STRATEGY: 'quality';
 export declare function defaultProjectRoutingConfig(availableModelIDs?: string[]): {
     schema: 1;
-    type: 'oho-routing';
+    type: 'hi-routing';
     routing: {
         strategy: 'quality';
         modelPolicy: 'recommended';
         roleModels: Record<string, string[]>;
         roleVariants: Record<string, Record<string, string>>;
-        smartSelectRoles: string[];
+        adaptiveRoles: string[];
     };
     applied_at: number;
     applied_by: string;

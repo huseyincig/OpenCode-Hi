@@ -1,33 +1,47 @@
 {
-  "name": "opencode-hhc-orchestrator",
-  "version": "2.0.10",
-  "description": "Mission, model, skill, worker, evidence and STOP orchestration for OpenCode.",
+  "name": "opencode-hi",
+  "version": "0.1.0",
+  "description": "Evidence-aware adaptive execution and Hybrid Intelligence control plane for OpenCode.",
   "type": "module",
   "main": "plugin/dist/plugin.js",
   "exports": {
-    ".": "./plugin/dist/plugin.js"
+    ".": {
+      "types": "./plugin/dist/plugin.d.ts",
+      "import": "./plugin/dist/plugin.js"
+    }
   },
   "files": [
     "plugin/dist",
     "skills",
     "README.md",
     "LICENSE",
-    "THIRD_PARTY_NOTICES.md"
+    "THIRD_PARTY_NOTICES.md",
+    "README.tr.md"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/huseyincig/OpenCode-HHC-Orchestrator.git"
+    "url": "git+https://github.com/huseyincig/OpenCode-Hi.git"
   },
-  "homepage": "https://github.com/huseyincig/OpenCode-HHC-Orchestrator#readme",
+  "homepage": "https://github.com/huseyincig/OpenCode-Hi#readme",
   "bugs": {
-    "url": "https://github.com/huseyincig/OpenCode-HHC-Orchestrator/issues"
+    "url": "https://github.com/huseyincig/OpenCode-Hi/issues"
   },
   "keywords": [
     "opencode",
-    "orchestrator",
-    "agents",
+    "hybrid-intelligence",
+    "adaptive-execution",
     "ai",
     "plugin"
   ],
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "types": "plugin/dist/plugin.d.ts",
+  "scripts": {
+    "build": "npm --prefix plugin run build",
+    "test": "npm --prefix plugin test",
+    "check": "npm run build && npm --prefix plugin test",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "@opencode-ai/plugin": ">=1.18.0 <2"
+  }
 }

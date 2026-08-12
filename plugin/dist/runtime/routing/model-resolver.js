@@ -8,11 +8,11 @@ function policyFilter(available, config, hostConfig) {
     for (const m of available) {
         const provider = providerOf(m);
         if (deniedModels.has(m.id)) {
-            rejected.push({ id: m.id, reason: 'hhc-denied-model' });
+            rejected.push({ id: m.id, reason: 'hi-denied-model' });
             continue;
         }
         if (explicitAllowed.size && (!provider || !explicitAllowed.has(provider))) {
-            rejected.push({ id: m.id, reason: `hhc-provider-not-allowed:${provider ?? 'unknown'}` });
+            rejected.push({ id: m.id, reason: `hi-provider-not-allowed:${provider ?? 'unknown'}` });
             continue;
         }
         if (provider && native.denied.has(provider)) {
@@ -35,7 +35,7 @@ function uniqueRuntime(ids, available) { const live = new Set(available.map(m =>
 export function runtimeModelCandidateStatus(id, availableInput, config, hostConfig) {
     if (id === 'host-default') {
         if (config.routing.deniedModels.includes('host-default'))
-            return { ok: false, reason: 'hhc-denied-model:host-default' };
+            return { ok: false, reason: 'hi-denied-model:host-default' };
         if (config.routing.allowedProviders.length)
             return { ok: false, reason: 'host-default-disallowed-by-explicit-provider-allowlist' };
         const native = providerPolicyView(hostConfig);
@@ -73,6 +73,11 @@ export function resolveModel(category, availableInput, config, explicit, role, h
             reason.push('explicit override rejected by routing/provider policy; fallback constrained to policy');
         else
             reason.push('explicit override unavailable; fallback allowed');
+    }
+    const projectModel = config.models?.mode === 'fixed' && config.models.default !== 'auto' ? config.models.default : config.models?.mode === 'role-mapped' && role ? config.models.roles[role] : undefined;
+    if (!explicit && projectModel) {
+        preferred.push(projectModel);
+        reason.push(config.models?.mode === 'fixed' ? 'project fixed-model override' : `project role-model override:${role}`);
     }
     const roleConfigured = role ? config.routing.roleModels[role] ?? [] : [];
     if (roleConfigured.length) {

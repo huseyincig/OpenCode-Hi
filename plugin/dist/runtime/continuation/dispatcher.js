@@ -23,7 +23,7 @@ export async function dispatchContinuation(client, mission, prompt, reason) {
     mission.last_action_id = actionID;
     appendLedger(mission, 'continuation', { payload: { reason, iteration, generation, action_id: actionID } });
     try {
-        await fn({ path: { id: mission.session_id }, body: { parts: [{ type: 'text', text: prompt, synthetic: true, metadata: { hhcInternalContinuation: true, reason, generation, actionID } }], noReply: false } });
+        await fn({ path: { id: mission.session_id }, body: { parts: [{ type: 'text', text: prompt, synthetic: true, metadata: { hiInternalContinuation: true, reason, generation, actionID } }], noReply: false } });
         if (mission.generation !== generation) {
             appendLedger(mission, 'continuation.stale-completion', { payload: { started_generation: generation, current_generation: mission.generation, action_id: actionID } });
             return false;

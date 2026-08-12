@@ -27,8 +27,8 @@ export function effectiveExecutionSurface(hostConfig, role, skillToolEnabled) {
     const decisions = {};
     for (const key of TOOL_KEYS)
         decisions[key] = decision(permission[key]);
-    // HHC owns orchestration policy, while OpenCode owns enforcement. Persist both the
-    // observed effective decisions and the invariants HHC depends on.
+    // Hi owns orchestration policy, while OpenCode owns enforcement. Persist both the
+    // observed effective decisions and the invariants Hi depends on.
     decisions.task = 'deny';
     const tools = [];
     for (const key of TOOL_KEYS) {
@@ -44,11 +44,11 @@ export function effectiveExecutionSurface(hostConfig, role, skillToolEnabled) {
             continue;
         tools.push(...(PERMISSION_TO_TOOLS[key] ?? [key]));
     }
-    return { tools: [...new Set(tools)].sort(), permissions: { mode: def?.mode ? String(def.mode) : undefined, decisions, source: def ? 'effective-opencode-agent' : 'hhc-default-invariants' } };
+    return { tools: [...new Set(tools)].sort(), permissions: { mode: def?.mode ? String(def.mode) : undefined, decisions, source: def ? 'effective-opencode-agent' : 'hi-default-invariants' } };
 }
-export const HHC_CONTROL_TOOL_IDS = ['hhc_doctor', 'hhc_status', 'hhc_metrics', 'hhc_ledger', 'hhc_readiness', 'hhc_context_artifact_add', 'hhc_context_artifacts', 'hhc_temporary_mutation_register', 'hhc_temporary_mutation_revert', 'hhc_direct_progress', 'hhc_task_start', 'hhc_task_await', 'hhc_task_peek', 'hhc_task_list', 'hhc_task_cancel', 'hhc_team_create', 'hhc_team_message', 'hhc_team_inbox', 'hhc_team_message_ack', 'hhc_team_member_add', 'hhc_team_member_remove', 'hhc_team_status', 'hhc_team_board', 'hhc_team_shutdown'];
+export const HI_CONTROL_TOOL_IDS = ['hi_doctor', 'hi_status', 'hi_metrics', 'hi_ledger', 'hi_readiness', 'hi_context_artifact_add', 'hi_context_artifacts', 'hi_temporary_mutation_register', 'hi_temporary_mutation_revert', 'hi_direct_progress', 'hi_task_start', 'hi_task_await', 'hi_task_peek', 'hi_task_list', 'hi_task_cancel', 'hi_team_create', 'hi_team_message', 'hi_team_inbox', 'hi_team_message_ack', 'hi_team_member_add', 'hi_team_member_remove', 'hi_team_status', 'hi_team_board', 'hi_team_shutdown'];
 export const KNOWN_BUILTIN_TOOL_IDS = ['bash', 'edit', 'write', 'apply_patch', 'read', 'grep', 'glob', 'list', 'lsp', 'skill', 'todowrite', 'todoread', 'webfetch', 'websearch', 'question', 'task'];
-export function promptToolOverrides(allowed, hhcToolNames = [...HHC_CONTROL_TOOL_IDS]) { const keep = new Set(allowed); const out = {}; for (const id of KNOWN_BUILTIN_TOOL_IDS)
+export function promptToolOverrides(allowed, hiToolNames = [...HI_CONTROL_TOOL_IDS]) { const keep = new Set(allowed); const out = {}; for (const id of KNOWN_BUILTIN_TOOL_IDS)
     if (!keep.has(id))
-        out[id] = false; for (const id of hhcToolNames)
+        out[id] = false; for (const id of hiToolNames)
     out[id] = false; return out; }

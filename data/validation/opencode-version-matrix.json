@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "updated_at": "2026-08-11",
-  "policy": "Support is granted only after exact OHO Git candidate validation in the canonical external test lab.",
+  "policy": "Support is granted only after exact Hi Git candidate validation in the canonical external test lab.",
   "rows": [],
   "pending_external_validation": true,
   "required_scenarios": [
     "plain-opencode",
-    "oho-only"
+    "hi-only"
   ]
 }

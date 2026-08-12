@@ -3,9 +3,9 @@ import assert from 'node:assert/strict'
 import { replanVerificationForChangedSurface } from '../dist/runtime/verification/policy.js'
 import { normalizeIntent } from '../dist/runtime/intent/normalize.js'
 import { runDoctor } from '../dist/doctor/checks.js'
-import { resolveHhcConfig } from '../dist/config/resolver.js'
+import { resolveHiConfig } from '../dist/config/resolver.js'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
-import { acquireHhcRuntimeInstance } from '../dist/opencode/instance-guard.js'
+import { acquireHiRuntimeInstance } from '../dist/opencode/instance-guard.js'
 
 function repo(){return {ecosystems:['node'],likelyVerification:['npm test','npm run typecheck','npm run build'],characteristics:[]}}
 
@@ -24,7 +24,7 @@ test('dependency graph changes create explicit security/review obligation and ca
 })
 
 test('doctor reports primary-model drift separately when fallback is still available',()=>{
-  const cfg=resolveHhcConfig({routing:{roleModels:{coder:['p/missing','p/live']}}})
+  const cfg=resolveHiConfig({routing:{roleModels:{coder:['p/missing','p/live']}}})
   const store=new MissionStore()
   const checks=runDoctor(cfg,store,process.cwd(),{models:[{id:'p/live',provider:'p',capabilities:['text']}],hostConfig:{}})
   const valid=checks.find(x=>x.id==='model-mapping-validity')
@@ -36,10 +36,10 @@ test('doctor reports primary-model drift separately when fallback is still avail
 })
 
 test('runtime instance guard prevents duplicate hooks per project but permits distinct projects and reacquire',()=>{
-  const a=acquireHhcRuntimeInstance('/tmp/hhc-project-a')
-  assert.throws(()=>acquireHhcRuntimeInstance('/tmp/hhc-project-a'),/Duplicate OpenCode HHC Orchestrator runtime/)
-  const b=acquireHhcRuntimeInstance('/tmp/hhc-project-b')
+  const a=acquireHiRuntimeInstance('/tmp/hi-project-a')
+  assert.throws(()=>acquireHiRuntimeInstance('/tmp/hi-project-a'),/Duplicate OpenCode-Hi runtime/)
+  const b=acquireHiRuntimeInstance('/tmp/hi-project-b')
   b.release();a.release()
-  const c=acquireHhcRuntimeInstance('/tmp/hhc-project-a')
+  const c=acquireHiRuntimeInstance('/tmp/hi-project-a')
   c.release()
 })

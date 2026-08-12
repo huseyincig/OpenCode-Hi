@@ -4,7 +4,7 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
 import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
-import { resolveHhcConfig } from '../dist/config/resolver.js'
+import { resolveHiConfig } from '../dist/config/resolver.js'
 
 function harness(){
   let n=0
@@ -16,7 +16,7 @@ function harness(){
   }}
   const registry=new BackgroundRegistry()
   const scheduler=new ConcurrencyScheduler(()=>({global:4}))
-  const runtime=new TaskRuntime(client,registry,scheduler,process.cwd(),process.cwd(),()=>resolveHhcConfig({parallel:{enabled:true,max:4}}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced']}],()=>({}))
+  const runtime=new TaskRuntime(client,registry,scheduler,process.cwd(),process.cwd(),()=>resolveHiConfig({parallel:{enabled:true,max:4}}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced']}],()=>({}))
   return {runtime,calls,registry,scheduler}
 }
 const done={status:'DONE',summary:'done',changed_files:[],evidence:[],open_issues:[],needs_context:[]}

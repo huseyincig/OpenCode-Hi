@@ -1,7 +1,7 @@
 {
-  "name": "opencode-hhc-orchestrator-runtime",
-  "version": "2.0.10",
-  "description": "OpenCode HHC Orchestrator TypeScript runtime workspace",
+  "name": "opencode-hi-runtime",
+  "version": "0.1.0",
+  "description": "OpenCode-Hi TypeScript runtime workspace",
   "type": "module",
   "main": "dist/plugin.js",
   "types": "dist/plugin.d.ts",
@@ -16,11 +16,12 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "npm run clean && tsc -p tsconfig.json",
     "test": "npm run build && node --test test/*.test.mjs",
     "check": "npm run build && npm test",
     "bundle": "echo \"optional bundle step; canonical runtime is dist/\"",
-    "prepare:local": "npm run build"
+    "prepare:local": "npm run build",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\""
   },
   "peerDependencies": {
     "@opencode-ai/plugin": ">=1.14.0"

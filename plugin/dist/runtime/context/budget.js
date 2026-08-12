@@ -1,5 +1,5 @@
 export const DEFAULT_CONTEXT_BUDGET = { max_context_chars: 12000, max_handoff_chars: 18000, max_result_chars: 16000, max_artifacts: 8 };
-export function clipText(value, max) { const s = value ?? ''; return s.length <= max ? s : `${s.slice(0, Math.max(0, max - 64))}\n[HHC truncated ${s.length - max} chars]`; }
+export function clipText(value, max) { const s = value ?? ''; return s.length <= max ? s : `${s.slice(0, Math.max(0, max - 64))}\n[Hi truncated ${s.length - max} chars]`; }
 export function clipList(values, maxChars, maxItems = 16) { const out = []; let used = 0; for (const raw of values ?? []) {
     if (out.length >= maxItems)
         break;

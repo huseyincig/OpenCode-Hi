@@ -3,22 +3,22 @@ import assert from 'node:assert/strict'
 import { normalizeIntent } from '../dist/runtime/intent/normalize.js'
 
 test('bug prompt becomes bounded bug-fix intent', () => {
-  const intent = normalizeIntent('login bazen 500 veriyor çöz test et')
+  const intent = normalizeIntent('fix the intermittent login 500 and test it')
   assert.equal(intent.taskKind, 'bug-fix')
   assert.deepEqual(intent.likelyVerification, ['targeted-tests'])
 })
 
 test('publish/deploy intent hits authority boundary', () => {
-  const intent = normalizeIntent('release hazırla ve yayınla')
+  const intent = normalizeIntent('prepare the release and publish it')
   assert.equal(intent.risk, 'authority-boundary')
   assert.equal(intent.scope, 'external')
 })
 
 test('numbered Turkish workstream objective becomes multi-stream scope', () => {
   // Original PulseBoard-3-feature regression case:
-  // "üç bağımsız geliştirme ekle" must classify as multi-stream so that
+  // "add three independent features" must classify as multi-stream so that
   // resolveExecutionMode can grant parallel.
-  const intent = normalizeIntent('Bu projeye üç bağımsız geliştirme ekle')
+  const intent = normalizeIntent('Add three independent features to this project')
   assert.equal(intent.scope, 'multi-stream')
   assert.equal(intent.dependencyClass, 'independent-multi')
   assert.ok(intent.requiredCapabilities.includes('multi-stream-delegation'))
@@ -31,22 +31,22 @@ test('numbered English workstream objective becomes multi-stream scope', () => {
 })
 
 test('numbered list in objective becomes multi-stream scope', () => {
-  const intent = normalizeIntent('1. due_date desteği\n2. project statistics\n3. task export')
+  const intent = normalizeIntent('1. due_date support\n2. project statistics\n3. task export')
   assert.equal(intent.scope, 'multi-stream')
   assert.equal(intent.dependencyClass, 'independent-multi')
 })
 
 test('single bug fix stays local even with ambiguous "independent" keyword', () => {
-  // False-positive guard: lone "bağımsız" or "feature" without count/number must
+  // False-positive guard: lone "independent" or "feature" without count/number must
   // NOT trigger multi-stream. This was the original RC.1 over-trigger risk.
-  const intent = normalizeIntent('tek bir bug düzelt')
+  const intent = normalizeIntent('tek fix one bug')
   assert.equal(intent.scope, 'local')
   assert.equal(intent.dependencyClass, 'independent')
   assert.ok(!intent.requiredCapabilities.includes('multi-stream-delegation'))
 })
 
 test('lone "independent" keyword without count stays local', () => {
-  const intent = normalizeIntent('bağımsız test yaz')
+  const intent = normalizeIntent('write an independent test')
   assert.equal(intent.scope, 'local')
   assert.equal(intent.dependencyClass, 'independent')
 })

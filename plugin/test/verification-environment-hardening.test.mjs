@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { observeToolAfter, addEvidence } from '../dist/runtime/evidence/evidence-runtime.js'
 import { verificationSatisfied, latestBlockingVerificationEvidence } from '../dist/runtime/verification/policy.js'
-import { evaluateIdle } from '../dist/runtime/autopilot/evaluator.js'
+import { evaluateIdle } from '../dist/runtime/continuation/evaluator.js'
 
 function mission(){
   const s=new MissionStore(process.cwd())

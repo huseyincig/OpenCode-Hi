@@ -12,7 +12,7 @@ export function createMessagesTransformHook(store, background) {
         const firstUser = output.messages.find((m) => m?.info?.role === 'user');
         if (!firstUser || !Array.isArray(firstUser.parts))
             return;
-        if (containsContract(firstUser.parts, 'HHC CONTROL-PLANE CONTRACT') || containsContract(firstUser.parts, 'HHC CHILD CONTROL-PLANE CONTRACT'))
+        if (containsContract(firstUser.parts, 'Hi CONTROL-PLANE CONTRACT') || containsContract(firstUser.parts, 'Hi CHILD CONTROL-PLANE CONTRACT'))
             return;
         const child = background.list().find(w => w.session_id === sid);
         const mission = child ? store.get(child.parent_session_id) : store.get(sid);

@@ -4,7 +4,7 @@ export function resolveNativeProjectRoot(fallback, nativeContext = {}) {
     const directory = typeof nativeContext.directory === 'string' && nativeContext.directory ? resolve(nativeContext.directory) : undefined;
     const worktree = typeof nativeContext.worktree === 'string' && nativeContext.worktree ? resolve(nativeContext.worktree) : undefined;
     // OpenCode 1.18.x reports the filesystem root as a non-git worktree sentinel.
-    // Never let that sentinel collapse unrelated projects into one HHC state/config root.
+    // Never let that sentinel collapse unrelated projects into one Hi state/config root.
     if (worktree) {
         const isFilesystemRoot = dirname(worktree) === worktree;
         if (isFilesystemRoot && directory && directory !== worktree)

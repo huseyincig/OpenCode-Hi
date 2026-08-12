@@ -13,12 +13,12 @@ function makeWorker(loadedSkills = []) {
   }
 }
 
-test('system-transform injects planning directive when hhc-architecture-decisions skill is loaded', async () => {
+test('system-transform injects planning directive when hi-architecture-decisions skill is loaded', async () => {
   const store = new MissionStore()
   const bg = new BackgroundRegistry()
-  store.start('s1', 'üç bağımsız geliştirme ekle')
+  store.start('s1', 'add three independent features')
   const m = store.get('s1')
-  m.workers.push(makeWorker(['hhc-architecture-decisions']))
+  m.workers.push(makeWorker(['hi-architecture-decisions']))
   bg.set(m.workers[0])
   const hook = createSystemTransformHook(store, bg)
   const output = { system: [] }
@@ -33,12 +33,12 @@ test('system-transform injects planning directive when hhc-architecture-decision
   assert.match(text, /multiple independent workstreams detected in objective/)
 })
 
-test('system-transform omits planning directive when hhc-architecture-decisions is not loaded', async () => {
+test('system-transform omits planning directive when hi-architecture-decisions is not loaded', async () => {
   const store = new MissionStore()
   const bg = new BackgroundRegistry()
-  store.start('s1', 'tek bir bug düzelt')
+  store.start('s1', 'tek fix one bug')
   const m = store.get('s1')
-  m.workers.push(makeWorker(['hhc-test-strategy']))
+  m.workers.push(makeWorker(['hi-test-strategy']))
   bg.set(m.workers[0])
   const hook = createSystemTransformHook(store, bg)
   const output = { system: [] }
@@ -50,7 +50,7 @@ test('system-transform omits planning directive when hhc-architecture-decisions 
 
 test('system-transform injects scope and execution mode reason (parent session)', async () => {
   const store = new MissionStore()
-  store.start('s1', 'bir bug düzelt')
+  store.start('s1', 'fix one bug')
   const hook = createSystemTransformHook(store)
   const output = { system: [] }
   await hook({ sessionID: 's1' }, output)
@@ -61,7 +61,7 @@ test('system-transform injects scope and execution mode reason (parent session)'
 
 test('system-transform is no-op for inactive missions', async () => {
   const store = new MissionStore()
-  store.start('s1', 'bir bug düzelt')
+  store.start('s1', 'fix one bug')
   store.stop('s1')
   const hook = createSystemTransformHook(store)
   const output = { system: [] }
@@ -74,7 +74,7 @@ test('system-transform skips child whose generation is stale', async () => {
   const bg = new BackgroundRegistry()
   store.start('s1', 'tek bir bug')
   const m = store.get('s1')
-  const w = makeWorker(['hhc-architecture-decisions'])
+  const w = makeWorker(['hi-architecture-decisions'])
   w.generation_at_spawn = 99 // stale
   m.workers.push(w)
   bg.set(w)

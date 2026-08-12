@@ -1,15 +1,15 @@
 import { MissionStore } from '../runtime/mission/mission-store.js'
 import { approvePendingAuthority,resolveUncertainAuthority } from '../runtime/safety/authority.js'
 import { appendLedger } from '../runtime/ledger/ledger.js'
-const STOP=/^\s*(stop|dur|durdur|iptal|cancel|esc)\s*[.!]?\s*$/i
-const RESUME=/^\s*(resume|continue|devam|devam et|sürdür)\s*[.!]?\s*$/i
-const AMEND=/(?:\b(?:also|add|include|remove|update|change|fix|rename|make|ensure|plus)\b|(?:ayrıca|bir de|ekle|çıkar|kaldır|güncelle|değiştir|düzelt|yeniden adlandır|şunu da|bunu da))/i
-const CONSTRAINT=/(?:\b(?:do not|don't|dont|never|without|except|avoid)\b|(?:dokunma|değiştirme|silme|kaldırma|yapma|kullanma|hariç|olmadan|sakın))/i
-const VERIFY=/\b(test(?:s|ing)?|verify|verification|lint|build|qa|doğrula|kontrol et|test et|testleri)\b/i
-const MUTATION=/\b(?:fix|change|update|add|remove|implement|rename|edit|modify|düzelt|değiştir|güncelle|ekle|çıkar|kaldır|uygula|yaz)\b/i
+const STOP=/^\s*(stop|cancel|abort|esc)\s*[.!]?\s*$/i
+const RESUME=/^\s*(resume|continue|proceed)\s*[.!]?\s*$/i
+const AMEND=/\b(?:also|add|include|remove|update|change|fix|rename|make|ensure|plus)\b/i
+const CONSTRAINT=/\b(?:do not|don't|dont|never|without|except|avoid)\b/i
+const VERIFY=/\b(test(?:s|ing)?|verify|verification|lint|build|qa|check)\b/i
+const MUTATION=/\b(?:fix|change|update|add|remove|implement|rename|edit|modify|apply|write)\b/i
 export type FollowupKind='amend'|'verification'|'constraint'
 export function classifyFollowup(text:string):FollowupKind|undefined{if(CONSTRAINT.test(text))return'constraint';if(VERIFY.test(text)&&!MUTATION.test(text))return'verification';if(AMEND.test(text))return'amend';return undefined}
-function isHhcInternal(output:any):boolean{const parts=output?.parts??output?.message?.parts??[];return parts.some((p:any)=>p?.type==='text'&&(p?.metadata?.hhcInternalContinuation===true||(p?.synthetic===true&&p?.metadata?.hhcInternalContinuation))) }
+function isHiInternal(output:any):boolean{const parts=output?.parts??output?.message?.parts??[];return parts.some((p:any)=>p?.type==='text'&&(p?.metadata?.hiInternalContinuation===true||(p?.synthetic===true&&p?.metadata?.hiInternalContinuation))) }
 function extractText(value:any):string{const parts=value?.parts??value?.message?.parts??[];return parts.filter((p:any)=>p?.type==='text'&&typeof p.text==='string').map((p:any)=>p.text).join('\n').trim()}
 function normalizeNativeUserText(text:string):string{
   const trimmed=text.trim()
@@ -28,11 +28,11 @@ function extractNativeUserText(input:any,output:any):string{
   if(legacy?.role==='user'||legacy?.role===undefined)return normalizeNativeUserText(extractText(legacy))
   return ''
 }
-const CASUAL=/^(?:(?:merhaba|selam|hey|hi|hello|teşekkür(?:ler)?|sağ ol|sag ol|thanks|thank you|günaydın|iyi akşamlar|iyi geceler)[,! .]*)+(?:tek cümle cevap ver|kısa cevap ver|nasılsın|naber|ne haber)?[.! ]*$/i
+const CASUAL=/^(?:(?:hey|hi|hello|thanks|thank you|good morning|good evening|good night)[,! .]*)+(?:answer in one sentence|one sentence|short answer|how are you)?[.! ]*$/i
 function isClearlyNonMaterial(text:string):boolean{return !text.trim()||CASUAL.test(text.trim())}
 export function createChatMessageHook(store:MissionStore,onStop?: (sessionID:string)=>Promise<void>,onAmend?: (sessionID:string,text:string,kind:FollowupKind)=>Promise<void>){return async(input:any,output:any)=>{
   const sid=input?.sessionID;if(!sid)return;
-  if(isHhcInternal(output))return;
+  if(isHiInternal(output))return;
   // User-controlled state transitions come only from the native user message.
   // OpenCode 1.18.x places that text on output.parts; input.message remains a legacy fallback.
   const userText=extractNativeUserText(input,output);

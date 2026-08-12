@@ -6,25 +6,25 @@
     "normal_target": "0-1",
     "maximum_per_worker": 3,
     "ownership": "methodology-only",
-    "control_plane_owner": "HHC runtime"
+    "control_plane_owner": "Hi runtime"
   },
   "inventory": {
     "count": 29,
     "added_in_native_consolidation": [
-      "hhc-source-driven-development",
-      "hhc-test-driven-development",
-      "hhc-review-feedback",
-      "hhc-architecture-decisions",
-      "hhc-iterative-retrieval",
-      "hhc-design-discovery",
-      "hhc-api-interface-design",
-      "hhc-workspace-isolation",
-      "hhc-skill-authoring",
-      "hhc-adversarial-validation"
+      "hi-source-driven-development",
+      "hi-test-driven-development",
+      "hi-review-feedback",
+      "hi-architecture-decisions",
+      "hi-iterative-retrieval",
+      "hi-design-discovery",
+      "hi-api-interface-design",
+      "hi-workspace-isolation",
+      "hi-skill-authoring",
+      "hi-adversarial-validation"
     ]
   },
   "research_provenance": [
-    {"source":"opencode-agent-orchestration-kit","license":"Apache-2.0","usage":"methodology concepts adapted into HHC-native skills"},
-    {"source":"obra/superpowers","license":"MIT","usage":"methodology concepts adapted into HHC-native skills; no runtime/plugin dependency"}
+    {"source":"opencode-agent-orchestration-kit","license":"Apache-2.0","usage":"methodology concepts adapted into Hi-native skills"},
+    {"source":"obra/superpowers","license":"MIT","usage":"methodology concepts adapted into Hi-native skills; no runtime/plugin dependency"}
   ]
 }

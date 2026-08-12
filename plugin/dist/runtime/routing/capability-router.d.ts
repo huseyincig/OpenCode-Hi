@@ -5,7 +5,6 @@ export interface CapabilityDecision {
     capabilities: string[];
     reason: string[];
 }
-export type AutonomyProfile = 'basic' | 'standard' | 'powerful' | 'smart';
 export interface ProfileSettingsLite {
     specialistThreshold: 'low' | 'medium' | 'high';
     reviewThreshold: 'low' | 'medium' | 'high';

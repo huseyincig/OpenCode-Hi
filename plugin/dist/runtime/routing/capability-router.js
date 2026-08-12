@@ -1,4 +1,4 @@
-// Default profile is `standard` (matches DEFAULT_HHC_CONFIG.profile.standard).
+// Default profile is `balanced` (matches DEFAULT_HI_CONFIG.profile.balanced).
 // Lower threshold → more specialist dispatch; higher threshold → fewer.
 function thresholdFrom(value) {
     return value === 'low' ? 1 : value === 'medium' ? 2 : 3;
@@ -17,17 +17,17 @@ export function routeCapabilities(intent, profile = { specialistThreshold: 'medi
         return { role: 'coder', category: 'critical', capabilities: caps, reason: ['security-sensitive implementation remains write-capable; independent security review is separate'] };
     }
     // QA-reviewer dispatch is gated by the profile's reviewThreshold.
-    // basic profile = high threshold = only review-heavy tasks get QA.
+    // minimal profile = high threshold = only review-heavy tasks get QA.
     if (/review|audit|qa|verify|test/.test(text) && !/implement|fix|build/.test(text)) {
         if (reviewT <= 1)
             return { role: 'qa-reviewer', category: intent.risk === 'high' ? 'critical' : 'standard', capabilities: caps, reason: ['verification/review dominant task'] };
-        // standard/powerful: QA dispatched for non-trivial review; basic: only when high-risk.
+        // balanced/thorough: QA dispatched for non-trivial review; minimal: only when high-risk.
         if (intent.risk === 'high' || caps.includes('qa-review') || caps.includes('security-review'))
             return { role: 'qa-reviewer', category: intent.risk === 'high' ? 'critical' : 'standard', capabilities: caps, reason: ['verification/review dominant task'] };
     }
     // Architect dispatch is gated by the profile's specialistThreshold.
-    // powerful profile = low threshold = architect for any cross-cutting,
-    // medium = architect for repo-wide or explicit design, basic = only
+    // thorough profile = low threshold = architect for any cross-cutting,
+    // medium = architect for repo-wide or explicit design, minimal = only
     // explicit architecture keyword.
     if (/architecture|design|migration|repo-wide/.test(text) || intent.scope === 'repo-wide') {
         if (specialistT <= 1)

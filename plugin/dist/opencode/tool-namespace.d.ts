@@ -4,5 +4,5 @@ export interface ToolNamespaceAudit {
     collisions: string[];
     nonNamespaced: string[];
 }
-export declare function auditHhcToolNamespace(names: string[]): ToolNamespaceAudit;
-export declare function assertHhcToolNamespace(names: string[]): void;
+export declare function auditHiToolNamespace(names: string[]): ToolNamespaceAudit;
+export declare function assertHiToolNamespace(names: string[]): void;

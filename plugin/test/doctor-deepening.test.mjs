@@ -11,21 +11,21 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { runDoctor } from '../dist/doctor/checks.js'
 
 function makeProject() {
-  return mkdtempSync(join(tmpdir(), 'oho-doctor-'))
+  return mkdtempSync(join(tmpdir(), 'hi-doctor-'))
 }
 
-function makeDefaultHhcConfig() {
+function makeDefaultHiConfig() {
   return {
     schemaVersion: 2,
-    autonomy: 'smart',
+    executionPolicy: 'adaptive',
     compatibility: { mode: 'compatible', validatedOpenCodeVersions: ['1.18.16'] },
     routing: { strategy: 'cost-quality', categoryModels: {}, categoryVariants: {}, roleModels: {}, maxFallbacks: 3, allowedProviders: [], deniedModels: [] },
     parallel: { enabled: true, max: 3, providers: {}, models: {} },
     teamMode: { enabled: false, auto: false, maxMembers: 4, maxMessages: 24, maxTurns: 12, maxWallMinutes: 45 },
     profile: {
-      basic: { specialistThreshold: 'high', parallelThreshold: 'high', reviewThreshold: 'low', costSensitivity: 'high', qualityFloor: 'standard' },
-      standard: { specialistThreshold: 'medium', parallelThreshold: 'medium', reviewThreshold: 'medium', costSensitivity: 'medium', qualityFloor: 'standard' },
-      powerful: { specialistThreshold: 'low', parallelThreshold: 'low', reviewThreshold: 'high', costSensitivity: 'low', qualityFloor: 'high' },
+      minimal: { specialistThreshold: 'high', parallelThreshold: 'high', reviewThreshold: 'low', costSensitivity: 'high', qualityFloor: 'standard' },
+      balanced: { specialistThreshold: 'medium', parallelThreshold: 'medium', reviewThreshold: 'medium', costSensitivity: 'medium', qualityFloor: 'standard' },
+      thorough: { specialistThreshold: 'low', parallelThreshold: 'low', reviewThreshold: 'high', costSensitivity: 'low', qualityFloor: 'high' },
     },
   }
 }
@@ -33,7 +33,7 @@ function makeDefaultHhcConfig() {
 test('Gap #16: model-inventory check reports first 8 model ids, not just count', () => {
   const project = makeProject()
   try {
-    const cfg = makeDefaultHhcConfig()
+    const cfg = makeDefaultHiConfig()
     const store = new MissionStore()
     const mockModels = [
       { id: 'opencode-go/minimax-m3', provider: 'opencode-go', tags: ['balanced'] },
@@ -52,7 +52,7 @@ test('Gap #16: model-inventory check reports first 8 model ids, not just count',
 test('Gap #16: model-inventory with empty inventory passes warn', () => {
   const project = makeProject()
   try {
-    const cfg = makeDefaultHhcConfig()
+    const cfg = makeDefaultHiConfig()
     const store = new MissionStore()
     const checks = runDoctor(cfg, store, project, { models: [] })
     const inv = checks.find(c => c.id === 'model-inventory')

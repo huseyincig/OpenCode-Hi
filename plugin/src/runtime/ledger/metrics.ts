@@ -17,8 +17,8 @@ export interface MissionMetrics {
   user_interruptions: number
   premature_stop_blocks: number
   stale_verification_blocks: number
-  autopilot_recovery_events: number
-  autopilot_recovery_success: number
+  continuation_recovery_events: number
+  continuation_recovery_success: number
   evidence_items: number
   failed_workers: number
 }
@@ -48,8 +48,8 @@ export function missionMetrics(m: MissionState): MissionMetrics {
     user_interruptions:m.resume_count??(m.user_interrupted?1:0),
     premature_stop_blocks:count((t,p)=>t==='runtime.decision'&&p?.decision==='STOP_BLOCKED'),
     stale_verification_blocks:count((t,p)=>t==='runtime.decision'&&String(p?.reason??'').includes('stale')),
-    autopilot_recovery_events:recovery,
-    autopilot_recovery_success:recoverySuccess,
+    continuation_recovery_events:recovery,
+    continuation_recovery_success:recoverySuccess,
     evidence_items:m.evidence.items.length,
     failed_workers:m.workers.filter(w=>w.status==='failed').length,
   }
@@ -76,9 +76,9 @@ export function aggregateMissionMetrics(missions:MissionState[]):Record<string,u
     duplicate_work_events:rows.reduce((n,x)=>n+x.duplicate_work_events,0),
     stale_verification_blocks:rows.reduce((n,x)=>n+x.stale_verification_blocks,0),
     premature_stop_blocks:rows.reduce((n,x)=>n+x.premature_stop_blocks,0),
-    autopilot_recovery_events:rows.reduce((n,x)=>n+x.autopilot_recovery_events,0),
-    autopilot_recovery_success:rows.reduce((n,x)=>n+x.autopilot_recovery_success,0),
+    continuation_recovery_events:rows.reduce((n,x)=>n+x.continuation_recovery_events,0),
+    continuation_recovery_success:rows.reduce((n,x)=>n+x.continuation_recovery_success,0),
     failed_workers:rows.reduce((n,x)=>n+x.failed_workers,0),
-    note:'Token and monetary cost metrics require host/provider usage events; HHC reports worker/skill/handoff economy from bounded runtime state and does not fabricate unavailable token/cost telemetry.',
+    note:'Token and monetary cost metrics require host/provider usage events; Hi reports worker/skill/handoff economy from bounded runtime state and does not fabricate unavailable token/cost telemetry.',
   }
 }

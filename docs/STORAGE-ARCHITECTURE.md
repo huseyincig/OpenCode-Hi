@@ -1,0 +1,61 @@
+# Storage Architecture
+
+OpenCode-Hi places data by **capability ownership and lifecycle**, never by file type. The hierarchy below is derived from implemented responsibilities; no empty directory tree is created proactively.
+
+## Storage classes
+
+- **OpenCode-native capability** — plugin registration, packaged skills/agents and future native commands/tools remain owned by OpenCode/package resolution. Hi does not mirror them under `.opencode/hi/`.
+- **Hi project-owned durable data** — explicit project policy and Hi setup/source provenance may live under `.opencode/hi/`.
+- **Hi skill-owned resources** — references/scripts/examples/assets remain inside the owning `hi-*` skill package.
+- **Runtime/session state** — correctness-required mission survival is project-keyed but stored in the OS/OpenCode state area, not the repository.
+- **Sensitive/transient data** — secret redaction mappings, process handles, temporary context transforms and lifecycle journals are memory-only or OS runtime/temp data.
+- **Release outputs** — source/distributable ZIPs, manifests, SBOMs and receipts belong to the release workspace, never consumer project runtime paths.
+
+## Canonical project-local layout
+
+Only implemented durable responsibilities are permitted:
+
+```text
+<project-root>/
+  opencode.json                  # only when the selected OpenCode project config mode requires it
+  .opencode/
+    hi/
+      policy/
+        routing.json             # only after explicit project-policy configuration
+        authority.json           # explicit native-always authority projection; never contains credentials
+      provenance/
+        setup.json               # installer ownership/source binding
+      project-intelligence/      # lazily created only when durable PI is written
+        patterns/
+      artifacts/                 # lazily created only when a durable artifact is retained
+        <semantic-kind>/
+```
+
+No runtime directory is required inside `.opencode/hi/`. Mission survival state is stored outside the repository in a project-keyed OS state path.
+
+OpenCode-owned `.opencode/plugins/`, `.opencode/skills/`, `.opencode/agents/`, `.opencode/commands/`, and `.opencode/tools/` are not Hi-owned storage. Package installation registers `opencode-hi` through OpenCode's resolver rather than unpacking plugin source into the consumer project.
+
+## Runtime state location
+
+Runtime persistence is ephemeral/session-scoped data with a restart-survival requirement. It therefore uses a project-keyed OS state directory:
+
+- `OPENCODE_HI_STATE_DIR` when explicitly configured for testing/embedding;
+- otherwise `XDG_STATE_HOME/opencode-hi/projects/<project-hash>/` on XDG systems;
+- otherwise `LOCALAPPDATA/OpenCode-Hi/state/projects/<project-hash>/` on Windows;
+- otherwise `~/.local/state/opencode-hi/projects/<project-hash>/`.
+
+The project hash is derived from the resolved project root. Raw project paths are not used as directory names.
+
+## Canonical vs derived
+
+Project policy is canonical user/project intent. Setup provenance is canonical ownership metadata. Project Intelligence and durable ArtifactStore support lazy project persistence when a project root is explicitly supplied. Project Intelligence records remain source-hash linked and can become `POTENTIALLY_STALE`; ArtifactStore records carry content hashes and optional source hashes. Without a project root, both stores remain in-memory. Semantic extraction is derived and disposable. Context compaction output is session context, not project knowledge. Memory is optional and provider-owned; it never satisfies verification.
+
+## Skill resources
+
+Reusable methodology stays with its skill, for example `skills/hi-*/references/`, `scripts/`, `examples/`, and `assets/`. Runtime skill APIs are path-confined and may not expose arbitrary project filesystem paths.
+
+## Cleanup
+
+Uninstall removes only setup-owned plugin/config/provenance surfaces. Durable Project Intelligence and retained artifacts are preserved by default because their lifecycle is independent from plugin registration; project-created skills under `.opencode/skills/` are OpenCode-native/user-project content and are also preserved. OS runtime state is cleaned by the runtime state owner when obsolete; diagnostics may report orphan state.
+
+Legacy HHC/OHO layouts are **not migrated**. They are historical provenance only and are not accepted as OpenCode-Hi input.

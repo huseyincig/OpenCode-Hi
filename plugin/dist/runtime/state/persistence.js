@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname } from 'node:path';
+import { runtimeStatePath } from '../storage/locations.js';
 import { verificationPolicyFor } from '../verification/policy.js';
 export const RUNTIME_STATE_SCHEMA = 3;
 function normalizeMission(raw) {
@@ -64,7 +65,7 @@ export class RuntimePersistence {
     startedAt = Date.now();
     previousBootId;
     lastLoadReport = { targetSchema: RUNTIME_STATE_SCHEMA, loaded: 0, ignored: 0 };
-    constructor(projectRoot) { this.path = join(projectRoot, '.opencode', '.oho', 'runtime-state.json'); }
+    constructor(projectRoot) { this.path = runtimeStatePath(projectRoot); }
     load() {
         if (!existsSync(this.path)) {
             this.lastLoadReport = { targetSchema: RUNTIME_STATE_SCHEMA, loaded: 0, ignored: 0 };
@@ -75,7 +76,7 @@ export class RuntimePersistence {
             const schema = Number(parsed.schema);
             if (!Array.isArray(parsed.missions))
                 throw new Error('missions is not an array');
-            if (![1, 2, RUNTIME_STATE_SCHEMA].includes(schema))
+            if (schema !== RUNTIME_STATE_SCHEMA)
                 throw new Error(`unsupported runtime-state schema ${String(parsed.schema)}`);
             const out = [];
             let ignored = 0;
@@ -88,7 +89,7 @@ export class RuntimePersistence {
             }
             const runtime = parsed.runtime;
             this.previousBootId = runtime?.boot_id;
-            this.lastLoadReport = { sourceSchema: schema, targetSchema: RUNTIME_STATE_SCHEMA, loaded: out.length, ignored, previousBootId: runtime?.boot_id, uncleanShutdown: runtime ? runtime.clean_shutdown === false : undefined, migrated: schema !== RUNTIME_STATE_SCHEMA };
+            this.lastLoadReport = { sourceSchema: schema, targetSchema: RUNTIME_STATE_SCHEMA, loaded: out.length, ignored, previousBootId: runtime?.boot_id, uncleanShutdown: runtime ? runtime.clean_shutdown === false : undefined, migrated: false };
             return out;
         }
         catch (error) {

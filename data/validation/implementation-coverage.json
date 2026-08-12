@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "release": "2.0.10",
+  "release": "0.1.0",
   "status": "SOURCE_COVERAGE_COMPLETE_EXTERNAL_VALIDATION_PENDING",
   "gaps": {
     "GAP-001": {
@@ -30,7 +30,7 @@
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/nudge/runtime-nudge.ts",
-        "plugin/src/runtime/autopilot/evaluator.ts"
+        "plugin/src/runtime/continuation/evaluator.ts"
       ]
     },
     "GAP-005": {
@@ -90,7 +90,7 @@
     "GAP-013": {
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
-        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/recovery.ts",
         "plugin/src/runtime/task/task-runtime.ts"
       ]
     },
@@ -106,7 +106,7 @@
   "checklist": {
     "CHK-001": {
       "id": "CHK-001",
-      "section": "Intent / autonomy",
+      "section": "Intent / execution policy",
       "item": "Short-prompt intent normalization",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -118,7 +118,7 @@
     },
     "CHK-002": {
       "id": "CHK-002",
-      "section": "Intent / autonomy",
+      "section": "Intent / execution policy",
       "item": "Repo/conversation context enrichment",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -130,7 +130,7 @@
     },
     "CHK-003": {
       "id": "CHK-003",
-      "section": "Intent / autonomy",
+      "section": "Intent / execution policy",
       "item": "scope/risk/dependency classification",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -142,8 +142,8 @@
     },
     "CHK-004": {
       "id": "CHK-004",
-      "section": "Intent / autonomy",
-      "item": "safe-default autonomy",
+      "section": "Intent / execution policy",
+      "item": "safe-default execution policy",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/intent/normalize.ts",
@@ -154,7 +154,7 @@
     },
     "CHK-005": {
       "id": "CHK-005",
-      "section": "Intent / autonomy",
+      "section": "Intent / execution policy",
       "item": "contract-critical no-guess boundary",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -166,7 +166,7 @@
     },
     "CHK-006": {
       "id": "CHK-006",
-      "section": "Intent / autonomy",
+      "section": "Intent / execution policy",
       "item": "exact USER_ACTION_REQUIRED boundary",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -218,7 +218,7 @@
     "CHK-010": {
       "id": "CHK-010",
       "section": "Routing",
-      "item": "0–3 skill selection",
+      "item": "0\u20133 skill selection",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/routing/capability-router.ts",
@@ -309,7 +309,7 @@
     "CHK-017": {
       "id": "CHK-017",
       "section": "Worker / Task",
-      "item": "Agent ≠ Worker",
+      "item": "Agent \u2260 Worker",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/task/task-runtime.ts",
@@ -464,8 +464,8 @@
     },
     "CHK-029": {
       "id": "CHK-029",
-      "section": "Skills / HHC Native Skills",
-      "item": "29 packaged HHC-native methodology skills",
+      "section": "Skills / Hi Native Skills",
+      "item": "29 packaged Hi-native methodology skills",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/skills/registry.ts",
@@ -477,7 +477,7 @@
     },
     "CHK-030": {
       "id": "CHK-030",
-      "section": "Skills / HHC Native Skills",
+      "section": "Skills / Hi Native Skills",
       "item": "native methodology catalog and source provenance",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -490,7 +490,7 @@
     },
     "CHK-031": {
       "id": "CHK-031",
-      "section": "Skills / HHC Native Skills",
+      "section": "Skills / Hi Native Skills",
       "item": "skill discovery",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -503,7 +503,7 @@
     },
     "CHK-032": {
       "id": "CHK-032",
-      "section": "Skills / HHC Native Skills",
+      "section": "Skills / Hi Native Skills",
       "item": "skill validation",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -516,7 +516,7 @@
     },
     "CHK-033": {
       "id": "CHK-033",
-      "section": "Skills / HHC Native Skills",
+      "section": "Skills / Hi Native Skills",
       "item": "skill permission awareness",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -529,7 +529,7 @@
     },
     "CHK-034": {
       "id": "CHK-034",
-      "section": "Skills / HHC Native Skills",
+      "section": "Skills / Hi Native Skills",
       "item": "child-specific skill load",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -542,8 +542,8 @@
     },
     "CHK-035": {
       "id": "CHK-035",
-      "section": "Skills / HHC Native Skills",
-      "item": "HHC-safe orchestration ownership",
+      "section": "Skills / Hi Native Skills",
+      "item": "Hi-safe orchestration ownership",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/skills/registry.ts",
@@ -555,7 +555,7 @@
     },
     "CHK-036": {
       "id": "CHK-036",
-      "section": "Skills / HHC Native Skills",
+      "section": "Skills / Hi Native Skills",
       "item": "double-orchestration tests",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -568,7 +568,7 @@
     },
     "CHK-037": {
       "id": "CHK-037",
-      "section": "Skills / HHC Native Skills",
+      "section": "Skills / Hi Native Skills",
       "item": "optional context artifacts",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -581,8 +581,8 @@
     },
     "CHK-038": {
       "id": "CHK-038",
-      "section": "Skills / HHC Native Skills",
-      "item": "hhc-debugging-root-cause",
+      "section": "Skills / Hi Native Skills",
+      "item": "hi-debugging-root-cause",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/skills/registry.ts",
@@ -594,7 +594,7 @@
     },
     "CHK-039": {
       "id": "CHK-039",
-      "section": "Skills / HHC Native Skills",
+      "section": "Skills / Hi Native Skills",
       "item": "conditional TDD",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -607,8 +607,8 @@
     },
     "CHK-040": {
       "id": "CHK-040",
-      "section": "Skills / HHC Native Skills",
-      "item": "conditional HHC design-discovery/implementation-planning",
+      "section": "Skills / Hi Native Skills",
+      "item": "conditional Hi design-discovery/implementation-planning",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/skills/registry.ts",
@@ -620,7 +620,7 @@
     },
     "CHK-041": {
       "id": "CHK-041",
-      "section": "Skills / HHC Native Skills",
+      "section": "Skills / Hi Native Skills",
       "item": "verification methodology",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -633,7 +633,7 @@
     },
     "CHK-042": {
       "id": "CHK-042",
-      "section": "Skills / HHC Native Skills",
+      "section": "Skills / Hi Native Skills",
       "item": "bounded fix/review methodology",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -650,8 +650,8 @@
       "item": "runtime-owned completion",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
-        "plugin/src/runtime/autopilot/evaluator.ts",
-        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/evaluator.ts",
+        "plugin/src/runtime/continuation/recovery.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
         "plugin/src/runtime/nudge/runtime-nudge.ts",
         "plugin/src/runtime/readiness/preconditions.ts"
@@ -663,8 +663,8 @@
       "item": "session idle evaluator",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
-        "plugin/src/runtime/autopilot/evaluator.ts",
-        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/evaluator.ts",
+        "plugin/src/runtime/continuation/recovery.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
         "plugin/src/runtime/nudge/runtime-nudge.ts",
         "plugin/src/runtime/readiness/preconditions.ts"
@@ -676,8 +676,8 @@
       "item": "idle reason enum",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
-        "plugin/src/runtime/autopilot/evaluator.ts",
-        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/evaluator.ts",
+        "plugin/src/runtime/continuation/recovery.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
         "plugin/src/runtime/nudge/runtime-nudge.ts",
         "plugin/src/runtime/readiness/preconditions.ts"
@@ -689,8 +689,8 @@
       "item": "bounded continuation budget",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
-        "plugin/src/runtime/autopilot/evaluator.ts",
-        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/evaluator.ts",
+        "plugin/src/runtime/continuation/recovery.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
         "plugin/src/runtime/nudge/runtime-nudge.ts",
         "plugin/src/runtime/readiness/preconditions.ts"
@@ -702,8 +702,8 @@
       "item": "progress signature",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
-        "plugin/src/runtime/autopilot/evaluator.ts",
-        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/evaluator.ts",
+        "plugin/src/runtime/continuation/recovery.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
         "plugin/src/runtime/nudge/runtime-nudge.ts",
         "plugin/src/runtime/readiness/preconditions.ts"
@@ -715,8 +715,8 @@
       "item": "stagnation counter",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
-        "plugin/src/runtime/autopilot/evaluator.ts",
-        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/evaluator.ts",
+        "plugin/src/runtime/continuation/recovery.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
         "plugin/src/runtime/nudge/runtime-nudge.ts",
         "plugin/src/runtime/readiness/preconditions.ts"
@@ -728,8 +728,8 @@
       "item": "corrective resume",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
-        "plugin/src/runtime/autopilot/evaluator.ts",
-        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/evaluator.ts",
+        "plugin/src/runtime/continuation/recovery.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
         "plugin/src/runtime/nudge/runtime-nudge.ts",
         "plugin/src/runtime/readiness/preconditions.ts"
@@ -741,9 +741,9 @@
       "item": "model escalation",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
-        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/recovery.ts",
         "plugin/src/runtime/task/task-runtime.ts",
-        "plugin/src/runtime/autopilot/evaluator.ts",
+        "plugin/src/runtime/continuation/evaluator.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
         "plugin/src/runtime/nudge/runtime-nudge.ts"
       ]
@@ -754,8 +754,8 @@
       "item": "decompose",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
-        "plugin/src/runtime/autopilot/evaluator.ts",
-        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/evaluator.ts",
+        "plugin/src/runtime/continuation/recovery.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
         "plugin/src/runtime/nudge/runtime-nudge.ts",
         "plugin/src/runtime/readiness/preconditions.ts"
@@ -767,8 +767,8 @@
       "item": "re-plan",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
-        "plugin/src/runtime/autopilot/evaluator.ts",
-        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/evaluator.ts",
+        "plugin/src/runtime/continuation/recovery.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
         "plugin/src/runtime/nudge/runtime-nudge.ts",
         "plugin/src/runtime/readiness/preconditions.ts"
@@ -780,8 +780,8 @@
       "item": "bounded fresh worker",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
-        "plugin/src/runtime/autopilot/evaluator.ts",
-        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/evaluator.ts",
+        "plugin/src/runtime/continuation/recovery.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
         "plugin/src/runtime/nudge/runtime-nudge.ts",
         "plugin/src/runtime/readiness/preconditions.ts"
@@ -793,8 +793,8 @@
       "item": "user stop guard",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
-        "plugin/src/runtime/autopilot/evaluator.ts",
-        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/evaluator.ts",
+        "plugin/src/runtime/continuation/recovery.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
         "plugin/src/runtime/nudge/runtime-nudge.ts",
         "plugin/src/runtime/readiness/preconditions.ts"
@@ -806,8 +806,8 @@
       "item": "duplicate continuation guard",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
-        "plugin/src/runtime/autopilot/evaluator.ts",
-        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/evaluator.ts",
+        "plugin/src/runtime/continuation/recovery.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
         "plugin/src/runtime/nudge/runtime-nudge.ts",
         "plugin/src/runtime/readiness/preconditions.ts"
@@ -822,8 +822,8 @@
         "plugin/src/runtime/continuation/dispatcher.ts",
         "plugin/src/plugin.ts",
         "plugin/src/runtime/mission/mission-store.ts",
-        "plugin/src/runtime/autopilot/evaluator.ts",
-        "plugin/src/runtime/autopilot/recovery.ts"
+        "plugin/src/runtime/continuation/evaluator.ts",
+        "plugin/src/runtime/continuation/recovery.ts"
       ]
     },
     "CHK-057": {
@@ -832,8 +832,8 @@
       "item": "suppress/reentrancy guard",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
-        "plugin/src/runtime/autopilot/evaluator.ts",
-        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/evaluator.ts",
+        "plugin/src/runtime/continuation/recovery.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
         "plugin/src/runtime/nudge/runtime-nudge.ts",
         "plugin/src/runtime/readiness/preconditions.ts"
@@ -846,8 +846,8 @@
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/nudge/runtime-nudge.ts",
-        "plugin/src/runtime/autopilot/evaluator.ts",
-        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/evaluator.ts",
+        "plugin/src/runtime/continuation/recovery.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
         "plugin/src/runtime/readiness/preconditions.ts"
       ]
@@ -860,8 +860,8 @@
       "evidence": [
         "plugin/src/runtime/readiness/preconditions.ts",
         "plugin/src/runtime/gates/gates.ts",
-        "plugin/src/runtime/autopilot/evaluator.ts",
-        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/evaluator.ts",
+        "plugin/src/runtime/continuation/recovery.ts",
         "plugin/src/runtime/continuation/dispatcher.ts"
       ]
     },
@@ -873,7 +873,7 @@
       "evidence": [
         "plugin/src/runtime/evidence/evidence-runtime.ts",
         "plugin/src/runtime/verification/policy.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/gates/gates.ts"
       ]
     },
@@ -885,7 +885,7 @@
       "evidence": [
         "plugin/src/runtime/evidence/evidence-runtime.ts",
         "plugin/src/runtime/verification/policy.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/gates/gates.ts"
       ]
     },
@@ -897,7 +897,7 @@
       "evidence": [
         "plugin/src/runtime/evidence/evidence-runtime.ts",
         "plugin/src/runtime/verification/policy.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/gates/gates.ts"
       ]
     },
@@ -909,7 +909,7 @@
       "evidence": [
         "plugin/src/runtime/evidence/evidence-runtime.ts",
         "plugin/src/runtime/verification/policy.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/gates/gates.ts"
       ]
     },
@@ -921,7 +921,7 @@
       "evidence": [
         "plugin/src/runtime/evidence/evidence-runtime.ts",
         "plugin/src/runtime/verification/policy.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/gates/gates.ts"
       ]
     },
@@ -934,7 +934,7 @@
         "plugin/src/runtime/task/task-runtime.ts",
         "plugin/src/runtime/evidence/evidence-runtime.ts",
         "plugin/src/runtime/verification/policy.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/gates/gates.ts"
       ]
     },
@@ -946,7 +946,7 @@
       "evidence": [
         "plugin/src/runtime/evidence/evidence-runtime.ts",
         "plugin/src/runtime/verification/policy.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/gates/gates.ts"
       ]
     },
@@ -958,7 +958,7 @@
       "evidence": [
         "plugin/src/runtime/evidence/evidence-runtime.ts",
         "plugin/src/runtime/verification/policy.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/gates/gates.ts"
       ]
     },
@@ -970,7 +970,7 @@
       "evidence": [
         "plugin/src/runtime/evidence/evidence-runtime.ts",
         "plugin/src/runtime/verification/policy.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/gates/gates.ts"
       ]
     },
@@ -982,7 +982,7 @@
       "evidence": [
         "plugin/src/runtime/evidence/evidence-runtime.ts",
         "plugin/src/runtime/verification/policy.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/gates/gates.ts"
       ]
     },
@@ -994,7 +994,7 @@
       "evidence": [
         "plugin/src/runtime/evidence/evidence-runtime.ts",
         "plugin/src/runtime/verification/policy.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/gates/gates.ts"
       ]
     },
@@ -1474,7 +1474,7 @@
       "evidence": [
         "plugin/src/runtime/routing/execution-mode.ts",
         "plugin/src/runtime/skills/registry.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/skills/methodology.ts",
         "plugin/src/plugin.ts"
       ]
@@ -1487,7 +1487,7 @@
       "evidence": [
         "plugin/src/runtime/routing/execution-mode.ts",
         "plugin/src/runtime/skills/registry.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/skills/methodology.ts",
         "plugin/src/plugin.ts"
       ]
@@ -1500,7 +1500,7 @@
       "evidence": [
         "plugin/src/runtime/routing/execution-mode.ts",
         "plugin/src/runtime/skills/registry.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/skills/methodology.ts",
         "plugin/src/plugin.ts"
       ]
@@ -1508,12 +1508,12 @@
     "CHK-112": {
       "id": "CHK-112",
       "section": "Product discipline",
-      "item": "no mandatory HHC Native Skills every task",
+      "item": "no mandatory Hi Native Skills every task",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/routing/execution-mode.ts",
         "plugin/src/runtime/skills/registry.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/skills/methodology.ts",
         "plugin/src/plugin.ts"
       ]
@@ -1526,7 +1526,7 @@
       "evidence": [
         "plugin/src/runtime/routing/execution-mode.ts",
         "plugin/src/runtime/skills/registry.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/skills/methodology.ts",
         "plugin/src/plugin.ts"
       ]
@@ -1539,7 +1539,7 @@
       "evidence": [
         "plugin/src/runtime/routing/execution-mode.ts",
         "plugin/src/runtime/skills/registry.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/skills/methodology.ts",
         "plugin/src/plugin.ts"
       ]
@@ -1552,7 +1552,7 @@
       "evidence": [
         "plugin/src/runtime/routing/execution-mode.ts",
         "plugin/src/runtime/skills/registry.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/skills/methodology.ts",
         "plugin/src/plugin.ts"
       ]
@@ -1565,7 +1565,7 @@
       "evidence": [
         "plugin/src/runtime/routing/execution-mode.ts",
         "plugin/src/runtime/skills/registry.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/skills/methodology.ts",
         "plugin/src/plugin.ts"
       ]
@@ -1573,12 +1573,12 @@
     "CHK-117": {
       "id": "CHK-117",
       "section": "Product discipline",
-      "item": "no floating unreviewed HHC Native Skills default",
+      "item": "no floating unreviewed Hi Native Skills default",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/routing/execution-mode.ts",
         "plugin/src/runtime/skills/registry.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/skills/methodology.ts",
         "plugin/src/plugin.ts"
       ]
@@ -1591,7 +1591,7 @@
       "evidence": [
         "plugin/src/runtime/routing/execution-mode.ts",
         "plugin/src/runtime/skills/registry.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/skills/methodology.ts",
         "plugin/src/plugin.ts"
       ]
@@ -1604,7 +1604,7 @@
       "evidence": [
         "plugin/src/runtime/routing/execution-mode.ts",
         "plugin/src/runtime/skills/registry.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/skills/methodology.ts",
         "plugin/src/plugin.ts"
       ]
@@ -1617,7 +1617,7 @@
       "evidence": [
         "plugin/src/runtime/routing/execution-mode.ts",
         "plugin/src/runtime/skills/registry.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/skills/methodology.ts",
         "plugin/src/plugin.ts"
       ]
@@ -1630,7 +1630,7 @@
       "evidence": [
         "plugin/src/runtime/routing/execution-mode.ts",
         "plugin/src/runtime/skills/registry.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/skills/methodology.ts",
         "plugin/src/plugin.ts"
       ]
@@ -1643,7 +1643,7 @@
       "evidence": [
         "plugin/src/runtime/routing/execution-mode.ts",
         "plugin/src/runtime/skills/registry.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/skills/methodology.ts",
         "plugin/src/plugin.ts"
       ]
@@ -1651,12 +1651,12 @@
     "CHK-123": {
       "id": "CHK-123",
       "section": "Product discipline",
-      "item": "evidence sufficient → stop immediately",
+      "item": "evidence sufficient \u2192 stop immediately",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/routing/execution-mode.ts",
         "plugin/src/runtime/skills/registry.ts",
-        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/completion/evaluator.ts",
         "plugin/src/runtime/skills/methodology.ts",
         "plugin/src/plugin.ts"
       ]

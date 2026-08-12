@@ -11,24 +11,24 @@ function nativeUser(text){return {message:{role:'user'},parts:[{type:'text',text
 test('OpenCode 1.18 chat.message output.parts is the authoritative user text source', async()=>{
   const store=new MissionStore(process.cwd())
   const hook=createChatMessageHook(store)
-  await hook({sessionID:'native-shape',agent:'working-manager'},nativeUser('src/parser.ts bugını düzelt'))
+  await hook({sessionID:'native-shape',agent:'working-manager'},nativeUser('fix the bug in src/parser.ts'))
   const m=store.get('native-shape')
   assert.ok(m)
   assert.match(m.objective,/parser/i)
   assert.notEqual(m.objective,'')
 })
 
-test('pure greeting on native chat.message shape does not create an HHC mission', async()=>{
+test('pure greeting on native chat.message shape does not create an Hi mission', async()=>{
   const store=new MissionStore(process.cwd())
   const hook=createChatMessageHook(store)
-  await hook({sessionID:'casual',agent:'working-manager'},nativeUser('Merhaba, tek cümle cevap ver.'))
+  await hook({sessionID:'casual',agent:'working-manager'},nativeUser('Hello, answer in one sentence.'))
   assert.equal(store.get('casual'),undefined)
 })
 
 test('legacy input.message fixture remains supported for older hosts/tests', async()=>{
   const store=new MissionStore(process.cwd())
   const hook=createChatMessageHook(store)
-  await hook({sessionID:'legacy',message:{role:'user',parts:[{type:'text',text:'README typo düzelt'}]}},{parts:[]})
+  await hook({sessionID:'legacy',message:{role:'user',parts:[{type:'text',text:'fix the README typo'}]}},{parts:[]})
   assert.ok(store.get('legacy'))
 })
 
@@ -36,18 +36,18 @@ test('legacy input.message fixture remains supported for older hosts/tests', asy
 test('native output.parts shape drives STOP and follow-up verification transitions', async()=>{
   const store=new MissionStore(process.cwd())
   const hook=createChatMessageHook(store)
-  await hook({sessionID:'follow',agent:'working-manager'},nativeUser('src/a.ts düzelt'))
+  await hook({sessionID:'follow',agent:'working-manager'},nativeUser('fix src/a.ts'))
   const m=store.get('follow'); assert.ok(m)
-  await hook({sessionID:'follow',agent:'working-manager'},nativeUser('testleri de yap'))
+  await hook({sessionID:'follow',agent:'working-manager'},nativeUser('also run the tests'))
   assert.equal(m.obligations.find(x=>x.kind==='verification')?.status,'open')
   await hook({sessionID:'follow',agent:'working-manager'},nativeUser('STOP'))
   assert.equal(m.status,'stopped')
 })
 
-test('native title/summary/compaction agents do not receive HHC control-plane transforms', async()=>{
+test('native title/summary/compaction agents do not receive Hi control-plane transforms', async()=>{
   for(const agent of ['title','summary','compaction']){
     const store=new MissionStore(process.cwd())
-    store.start(`s-${agent}`,'src/a.ts düzelt')
+    store.start(`s-${agent}`,'fix src/a.ts')
     const bg=new BackgroundRegistry()
     const sys=createSystemTransformHook(store,bg)
     const out={system:['native']}
@@ -64,24 +64,24 @@ test('native title/summary/compaction agents do not receive HHC control-plane tr
 test('OpenCode CLI quoted chat text normalizes before casual classification', async()=>{
   const store=new MissionStore(process.cwd())
   const hook=createChatMessageHook(store)
-  await hook({sessionID:'cli-quoted',agent:'working-manager'},nativeUser('\"Merhaba, tek cümle cevap ver.\"'))
+  await hook({sessionID:'cli-quoted',agent:'working-manager'},nativeUser('\"Hello, answer in one sentence.\"'))
   assert.equal(store.get('cli-quoted'),undefined)
 })
 
 test('OpenCode 1.18 agentless title system transform is recognized from native prompt fingerprint', async()=>{
   const store=new MissionStore(process.cwd())
-  store.start('agentless-title','src/a.ts düzelt')
+  store.start('agentless-title','fix src/a.ts')
   const out={system:['You are a title generator. You output ONLY a thread title. Nothing else.']}
   await createSystemTransformHook(store,new BackgroundRegistry())({sessionID:'agentless-title',model:{id:'gpt-5.4-nano'}},out)
   assert.equal(out.system.length,1)
-  assert.doesNotMatch(out.system[0],/HHC CONTROL-PLANE CONTRACT/)
+  assert.doesNotMatch(out.system[0],/Hi CONTROL-PLANE CONTRACT/)
 })
 
-test('working-manager still receives HHC system transform', async()=>{
+test('working-manager still receives Hi system transform', async()=>{
   const store=new MissionStore(process.cwd())
-  store.start('parent','src/a.ts düzelt')
+  store.start('parent','fix src/a.ts')
   const out={system:['native']}
   await createSystemTransformHook(store,new BackgroundRegistry())({sessionID:'parent',agent:'working-manager'},out)
   assert.equal(out.system.length,2)
-  assert.match(out.system[1],/HHC CONTROL-PLANE CONTRACT/)
+  assert.match(out.system[1],/Hi CONTROL-PLANE CONTRACT/)
 })

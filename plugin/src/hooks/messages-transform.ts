@@ -13,7 +13,7 @@ export function createMessagesTransformHook(store:MissionStore,background:Backgr
   return async(input:any,output:any)=>{
     const sid=sessionID(input);if(!sid||isNativeHousekeeping(input)||!Array.isArray(output?.messages)||!output.messages.length)return
     const firstUser=output.messages.find((m:any)=>m?.info?.role==='user');if(!firstUser||!Array.isArray(firstUser.parts))return
-    if(containsContract(firstUser.parts,'HHC CONTROL-PLANE CONTRACT')||containsContract(firstUser.parts,'HHC CHILD CONTROL-PLANE CONTRACT'))return
+    if(containsContract(firstUser.parts,'Hi CONTROL-PLANE CONTRACT')||containsContract(firstUser.parts,'Hi CHILD CONTROL-PLANE CONTRACT'))return
     const child=background.list().find(w=>w.session_id===sid)
     const mission=child?store.get(child.parent_session_id):store.get(sid)
     if(!mission)return

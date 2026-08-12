@@ -3,14 +3,14 @@ import assert from 'node:assert/strict'
 import {mkdtempSync,rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import HhcPlugin from '../dist/plugin.js'
+import HiPlugin from '../dist/plugin.js'
 
 test('git package config hook registers packaged agents and skills', async()=>{
-  const dir=mkdtempSync(join(tmpdir(),'hhc-package-'))
+  const dir=mkdtempSync(join(tmpdir(),'hi-package-'))
   try{
     const client={app:{log:async()=>{}},session:{},provider:{}}
-    const hooks=await HhcPlugin({directory:dir,worktree:dir,project:{},client})
-    const config={plugin:['opencode-hhc-orchestrator@git+https://github.com/huseyincig/OpenCode-HHC-Orchestrator.git']}
+    const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client})
+    const config={plugin:['opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git']}
     await hooks.config(config)
     for(const name of ['working-manager','manager','coder','repository-explorer','qa-reviewer','architect','security-reviewer','visual-qa']) assert.ok(config.agent?.[name],name)
     assert.equal(config.default_agent,'working-manager')

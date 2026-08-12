@@ -6,12 +6,15 @@ import { appendLedger } from '../ledger/ledger.js';
 import { verificationPolicyFor } from '../verification/policy.js';
 import { syncMissionGates } from '../gates/gates.js';
 import { minimumTeamFor } from '../routing/minimum-team.js';
+import { decideAdaptiveExecution } from '../execution/adaptive-policy.js';
+import { decideTopology } from '../execution/topology-policy.js';
 function obligation(id, kind, summary, requiredEvidence = []) { return { id, kind, summary, status: 'open', requiredEvidence }; }
 export class MissionStore {
     #bySession = new Map();
     #repo;
     #getPrimaryMode;
-    constructor(root = process.cwd(), nativeContext = {}, getPrimaryMode = () => 'auto') { this.#repo = collectRepoContext(root, nativeContext); this.#getPrimaryMode = getPrimaryMode; }
+    #getTopology;
+    constructor(root = process.cwd(), nativeContext = {}, getPrimaryMode = () => 'auto', getTopology = () => ({ mode: 'adaptive', maxAgents: 4, parallelism: 2, allowMultiRoleAgent: true })) { this.#repo = collectRepoContext(root, nativeContext); this.#getPrimaryMode = getPrimaryMode; this.#getTopology = getTopology; }
     start(sessionID, userText) {
         const intent = normalizeIntent(userText, this.#repo), now = Date.now(), category = resolveCategory(intent), execution = resolveExecutionMode(intent), obligations = [];
         if (intent.taskKind === 'bug-fix' || intent.taskKind === 'performance')
@@ -25,10 +28,10 @@ export class MissionStore {
             obligations.push(obligation('o-high-assurance', 'review', 'Security-sensitive change reviewed'));
         if (intent.risk === 'authority-boundary')
             obligations.push(obligation('o-authority', 'authority', 'External action explicitly authorized and completed'));
-        const verification = verificationPolicyFor(intent), team = minimumTeamFor(intent, verification, this.#getPrimaryMode());
-        const mission = { mission_id: `m_${now.toString(36)}_${Math.random().toString(36).slice(2, 10)}`, session_id: sessionID, objective: intent.objective, intent, status: 'active', risk: intent.risk, execution_mode: execution.mode, primary_mode: team.primary, verification_policy: verification, generation: 1, iteration: 0, continuation_budget: continuationBudget(category), continuation_active: false, obligations, tasks: [], workers: [], evidence: { fresh: false, items: [] }, ledger: [], changed_files: [], blockers: [], constraints: [], native_todos_incomplete: 0, last_progress_signature: '', stagnation_count: 0, context_artifacts: [], gates: [], temporary_mutations: [], parent_loaded_skills: [], pending_permissions: 0, pending_permission_ids: [], user_interrupted: false, resume_count: 0, last_user_message_at: now, created_at: now, updated_at: now };
+        const verification = verificationPolicyFor(intent), team = minimumTeamFor(intent, verification, this.#getPrimaryMode()), adaptive = decideAdaptiveExecution(intent), topology = decideTopology(intent, this.#getTopology());
+        const mission = { mission_id: `m_${now.toString(36)}_${Math.random().toString(36).slice(2, 10)}`, session_id: sessionID, objective: intent.objective, intent, status: 'active', risk: intent.risk, execution_mode: execution.mode, primary_mode: team.primary, verification_policy: verification, adaptive_execution: { path: adaptive.path, executionDepth: adaptive.executionDepth, contextDepth: adaptive.contextDepth, isolationDepth: adaptive.isolationDepth, reasons: adaptive.reasons }, topology: { mode: topology.mode, agentCount: topology.agentCount, parallelism: topology.parallelism, roleReuse: topology.roleReuse, reason: topology.reason }, generation: 1, iteration: 0, continuation_budget: continuationBudget(category), continuation_active: false, obligations, tasks: [], workers: [], evidence: { fresh: false, items: [] }, ledger: [], changed_files: [], blockers: [], constraints: [], native_todos_incomplete: 0, last_progress_signature: '', stagnation_count: 0, context_artifacts: [], gates: [], temporary_mutations: [], parent_loaded_skills: [], pending_permissions: 0, pending_permission_ids: [], user_interrupted: false, resume_count: 0, last_user_message_at: now, created_at: now, updated_at: now };
         syncMissionGates(mission);
-        appendLedger(mission, 'mission.started', { payload: { taskKind: intent.taskKind, scope: intent.scope, risk: intent.risk, category, execution_mode: execution.mode, execution_reason: execution.reason, primary_mode: team.primary, minimum_team: team.roles, direct: team.direct, team_reason: team.reason, dependencyClass: intent.dependencyClass, ambiguity: intent.ambiguity, repo: { name: this.#repo.name, ecosystems: this.#repo.ecosystems, markers: this.#repo.markers, native: this.#repo.native } } });
+        appendLedger(mission, 'mission.started', { payload: { taskKind: intent.taskKind, scope: intent.scope, risk: intent.risk, category, execution_mode: execution.mode, execution_reason: execution.reason, primary_mode: team.primary, minimum_team: team.roles, direct: team.direct, team_reason: team.reason, dependencyClass: intent.dependencyClass, ambiguity: intent.ambiguity, adaptive_execution: adaptive, topology, repo: { name: this.#repo.name, ecosystems: this.#repo.ecosystems, markers: this.#repo.markers, native: this.#repo.native } } });
         mission.last_progress_signature = this.signature(mission);
         this.#bySession.set(sessionID, mission);
         return mission;
@@ -106,6 +109,9 @@ Follow-up: ${text}`.slice(0, 6000);
         if (m.execution_mode !== 'team' && !(m.execution_mode === 'parallel' && activeWorkers.length > 0))
             m.execution_mode = resolveExecutionMode(m.intent, m).mode;
         m.primary_mode = minimumTeamFor(m.intent, m.verification_policy, this.#getPrimaryMode()).primary;
+        const adaptive = decideAdaptiveExecution(m.intent, m), topology = decideTopology(m.intent, this.#getTopology(), m);
+        m.adaptive_execution = { path: adaptive.path, executionDepth: adaptive.executionDepth, contextDepth: adaptive.contextDepth, isolationDepth: adaptive.isolationDepth, reasons: adaptive.reasons };
+        m.topology = { mode: topology.mode, agentCount: topology.agentCount, parallelism: topology.parallelism, roleReuse: topology.roleReuse, reason: topology.reason };
         m.continuation_active = false;
         m.active_action_id = undefined;
         m.continuation_lock_until = undefined;

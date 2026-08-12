@@ -1,30 +1,22 @@
 # Installation
 
-OHO is installed through OpenCode's native plugin configuration. No separate methodology plugin is required.
+OpenCode-Hi is packaged as the npm package `opencode-hi` and exposes its OpenCode plugin entrypoint from the package root.
+
+For a project-local installation, register the package in `<project-root>/opencode.json` while preserving unrelated configuration:
 
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": [
-    "opencode-hhc-orchestrator@git+https://github.com/huseyincig/OpenCode-HHC-Orchestrator.git#<REF>"
-  ]
+  "plugin": ["opencode-hi"]
 }
 ```
 
-Restart OpenCode after changing plugin registration. For release validation, pin OHO to an exact immutable candidate ref rather than `main`.
+OpenCode installs package plugins and their production dependencies into its own cache. OpenCode-Hi therefore does not unpack product source into the project root. Restart OpenCode after changing a package version when the host does not reload that dependency automatically.
 
-## Optional helper
+For local development before npm publication, use OpenCode's supported local-plugin loading mechanism rather than treating a Git URL as a guaranteed npm package specifier. Project-local plugin files belong under `.opencode/plugins/`; local package/path loading must follow the OpenCode version being tested.
 
-```bash
-python scripts/native_plugin_setup.py install /path/to/project --ref <REF>
-python scripts/native_plugin_setup.py doctor /path/to/project
-python scripts/native_plugin_setup.py uninstall /path/to/project
-python scripts/native_plugin_setup.py reconfigure /path/to/project --primary-mode manager --parallel-max 2
-python scripts/native_plugin_setup.py role-models /path/to/project --print
-```
+`scripts/native_plugin_setup.py` provides ownership-aware `plan`, `install`, `doctor`, `reconfigure`, `role-models`, and `uninstall` helpers. It preserves unrelated user plugin/MCP/config state. `doctor` is a static registration/ownership check; real OpenCode plugin/agent/skill/model loading requires a runtime receipt.
 
-The helper edits only OHO-owned fields and preserves unrelated user plugin/MCP/config data.
+## Filesystem hygiene
 
-## Runtime verification
-
-After restart verify actual runtime discovery: OHO loaded, HHC tools present, Team tools hidden by default, 8 HHC agents available, 29 packaged HHC-native skills discoverable, role-selected model actually used by child, child recursive HHC control-plane invocation denied, and evidence/STOP gates active.
+Project-local registration may create or modify `opencode.json` when required by OpenCode. Hi-owned durable project data uses the capability-derived `.opencode/hi/` namespace; OpenCode-native plugin/skill/agent/command/tool directories remain owned by OpenCode. Package source is not unpacked into the repository root. See `docs/FILESYSTEM-LAYOUT.md` and `docs/STORAGE-ARCHITECTURE.md`.

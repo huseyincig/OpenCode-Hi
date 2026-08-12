@@ -23,5 +23,5 @@ export function userMissionStatus(m:MissionState):UserMissionStatus{
 
 export function formatUserMissionStatus(m:MissionState):string{
   const s=userMissionStatus(m)
-  return `HHC: ${s.status} · ${s.active_workers} worker active · ${s.open_obligations} obligation open · evidence ${s.evidence} · next ${s.next_action}`
+  return `Hi: ${s.status} · ${s.active_workers} worker active · ${s.open_obligations} obligation open · evidence ${s.evidence} · next ${s.next_action}`
 }

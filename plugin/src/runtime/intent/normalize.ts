@@ -1,40 +1,40 @@
 import type { NormalizedMissionIntent, Risk } from '../mission/types.js'
 import type { RepoContext } from './repo-context.js'
-const AUTHORITY=/\b(publish|deploy|push|release\s+it|yayınla|yayına al|dağıt|prod(?:uction)?a? al|merge\s+and\s+push)\b/i
-const SECURITY=/\b(auth|authentication|authorization|security|permission|token|secret|credential|şifre|güvenlik|yetki|oauth|session|cookie)\b/i
-const BUG=/\b(bug|fix|broken|error|crash|500|hata|bozuk|düzelt|çöz|regression)\b/i
-const DOC_TINY=/\b(readme|docs?|documentation|markdown|typo|spelling|imla|yazım|dokümantasyon|belge)\b/i
-const TEST=/\b(test|verify|verification|doğrula|kontrol et|qa|lint|build)\b/i
-const TDD=/\b(tdd|test[- ]driven|test driven|önce test|test-first)\b/i
+const AUTHORITY=/\b(publish|deploy|push|release\s+it|merge\s+and\s+push)\b/i
+const SECURITY=/\b(auth|authentication|authorization|security|permission|token|secret|credential|password|oauth|session|cookie)\b/i
+const BUG=/\b(bug|fix|broken|error|crash|500|repair|resolve|regression)\b/i
+const DOC_TINY=/\b(readme|docs?|documentation|markdown|typo|spelling|document)\b/i
+const TEST=/\b(test|verify|verification|check|qa|lint|build)\b/i
+const TDD=/\b(tdd|test[- ]driven|test driven|test-first)\b/i
 const PLAN=/\b(plan|planning|roadmap|tasarla|planla|mimari plan)\b/i
-const DESIGN=/\b(design|architecture|mimari|tasarım|trade[- ]?off|approach|yaklaşım)\b/i
-const REVIEW=/\b(review|audit|incele|denetle|security review|code review)\b/i
-const VISUAL=/\b(ui|ux|visual|css|layout|responsive|frontend|görsel|arayüz)\b/i
-const PERF=/\b(performance|speed|slow|optimi[sz]e|hızlandır|yavaş|profil)\b/i
-const RELEASE=/\b(release|changelog|version|sürüm|yayın hazırl)\b/i
+const DESIGN=/\b(design|architecture|trade[- ]?off|approach)\b/i
+const REVIEW=/\b(review|audit|inspect|security review|code review)\b/i
+const VISUAL=/\b(ui|ux|visual|css|layout|responsive|frontend|interface)\b/i
+const PERF=/\b(performance|speed|slow|optimi[sz]e|profile)\b/i
+const RELEASE=/\b(release|changelog|version|publish preparation)\b/i
 const SOURCE_VERIFY=/\b(official\s+(?:docs?|documentation|source)|source[- ]driven|upstream\s+(?:docs?|source)|current\s+(?:docs?|api)|framework\s+docs?|library\s+docs?|sdk\s+docs?|version[- ]specific)\b/i
 const REVIEW_FEEDBACK=/\b(review\s+(?:feedback|comments?|findings?)|pr\s+comments?|address\s+review|review\s+bulgular|inceleme\s+geri\s+bildirim)\b/i
-const API_DESIGN=/\b(design|create|define|tasarla|oluştur|tanımla)\b[\s\S]{0,48}\b(api|interface|event|schema|protocol|command|endpoint|contract)\b/i
-const WORKSPACE_ISOLATION=/\b(worktree|isolated\s+(?:workspace|checkout)|workspace\s+isolation|izole\s+(?:çalışma|worktree))\b/i
-const SKILL_AUTHORING=/\b(SKILL\.md|skill\s+(?:authoring|create|write|edit|routing)|skill\s+(?:oluştur|yaz|düzenle))\b/i
-const CONTRACT=/\b(api|schema|database|migration|contract|protocol|auth|permission|security|data model|veri modeli|sözleşme)\b/i
+const API_DESIGN=/\b(design|create|define)\b[\s\S]{0,48}\b(api|interface|event|schema|protocol|command|endpoint|contract)\b/i
+const WORKSPACE_ISOLATION=/\b(worktree|isolated\s+(?:workspace|checkout)|workspace\s+isolation)\b/i
+const SKILL_AUTHORING=/\b(SKILL\.md|skill\s+(?:authoring|create|write|edit|routing))\b/i
+const CONTRACT=/\b(api|schema|database|migration|contract|protocol|auth|permission|security|data model)\b/i
 const EXPLICIT_TARGET=/\b(endpoint|table|column|field|route|file|dosya|class|function|method|model)\b/i
-const SEQUENTIAL=/\b(after|before|then|depends|dependency|sonra|önce|ardından|bağıml)\b/i
-const EXTERNAL_GATE=/\b(oauth|mfa|credential|secret|paid|payment|approval|onay|production|prod|deploy|publish)\b/i
-const REPO_WIDE=/\b(repo|repository|entire|all|bütün|tamamı|genel|overall|codebase)\b/i
-const MULTI=/\b(files|modules|packages|birkaç|birden fazla|çoklu)\b/i
+const SEQUENTIAL=/\b(after|before|then|depends|dependency)\b/i
+const EXTERNAL_GATE=/\b(oauth|mfa|credential|secret|paid|payment|approval|production|prod|deploy|publish)\b/i
+const REPO_WIDE=/\b(repo|repository|entire|all|overall|codebase)\b/i
+const MULTI=/\b(files|modules|packages|multiple|several)\b/i
 // Bounded structural detection of multiple independent workstreams in the objective.
 // These are NOT keyword hacks: each pattern requires a numeric/quantifier + a
 // work-unit noun or a numbered list, so plain prose containing "independent"
 // or "feature" without a count/scope marker does not trigger multi-stream.
 // Plural suffixes (English -s, Turkish -ler/-lar) are tolerated on the work-unit noun.
 // Note: \b is NOT used because JavaScript regex \w is ASCII-only; Turkish
-// characters (ü, ç, etc.) are not \w, so \b would never match between a
+// Word-boundary detection is explicit so enumerated work-unit matching remains deterministic.
 // non-ASCII Turkish char and ASCII whitespace. Explicit lookbehind/lookahead
 // against ASCII word chars is used instead.
-const NUMBERED_WORKUNITS=/(?<![a-zA-Z0-9_])(\d+|iki|üç|dört|beş|altı|yedi|sekiz|dokuz|on)\s+(?:ayrı|bağımsız|independent|separate|farklı|parallel)\s+(?:iş(?:ler)?|geliştirme(?:ler)?|feature(?:s)?|özellik(?:ler)?|task(?:s)?|görev(?:ler)?|module(?:s)?|modül(?:ler)?|component(?:s)?|endpoint(?:s)?|parça(?:lar)?|adım(?:lar)?|stream(?:s)?|workstream(?:s)?|fonksiyon(?:lar)?)(?![a-zA-Z0-9_])/i
+const NUMBERED_WORKUNITS=/(?<![a-zA-Z0-9_])(\d+|two|three|four|five|six|seven|eight|nine|ten)\s+(?:independent|separate|different|parallel)\s+(?:tasks?|features?|modules?|components?|endpoints?|steps?|streams?|workstreams?|functions?)(?![a-zA-Z0-9_])/i
 const NUMBERED_LIST=/(?:^|\n)\s*\d+[\.\)]\s+\S[\s\S]*?\n\s*\d+[\.\)]\s+\S/m
-const ENUMERATED_MULTI=/(?<![a-zA-Z0-9_])(iki|üç|dört|beş|altı|yedi|sekiz|dokuz|on|\d+)\s+(?:ayrı|bağımsız|independent|separate)\s+\S[\s\S]{0,60}?\s+(?:ve|veya|and)\s+\S(?![a-zA-Z0-9_])/i
+const ENUMERATED_MULTI=/(?<![a-zA-Z0-9_])(two|three|four|five|six|seven|eight|nine|ten|\d+)\s+(?:independent|separate)\s+\S[\s\S]{0,60}?\s+(?:and|or)\s+\S(?![a-zA-Z0-9_])/i
 const PATH=/(?:^|\s)([\w@.-]+\/(?:[\w@./-]+)|[\w@.-]+\.(?:ts|tsx|js|jsx|py|go|rs|php|json|md|css|scss|html))(?:\s|$)/g
 export function normalizeIntent(text:string,repo?:RepoContext):NormalizedMissionIntent{
   const raw=text.trim();const objective=raw.replace(/\s+/g,' ');const risk:Risk=AUTHORITY.test(objective)?'authority-boundary':SECURITY.test(objective)?'high':RELEASE.test(objective)?'medium':'low'
@@ -45,7 +45,7 @@ export function normalizeIntent(text:string,repo?:RepoContext):NormalizedMission
   const isMultiStream=NUMBERED_WORKUNITS.test(objective)||NUMBERED_LIST.test(raw)||ENUMERATED_MULTI.test(objective)
   const scope=AUTHORITY.test(objective)?'external':REPO_WIDE.test(objective)?'repo-wide':isMultiStream?'multi-stream':MULTI.test(objective)?'multi-file':'local'
   const requiredCapabilities:string[]=[];if(taskKind==='bug-fix')requiredCapabilities.push('repository-analysis','debugging','implementation');else if(taskKind==='review')requiredCapabilities.push('repository-analysis','review');else if(taskKind==='performance')requiredCapabilities.push('repository-analysis','performance-analysis','implementation');else if(taskKind==='release-readiness')requiredCapabilities.push('release-guardrails','verification');else requiredCapabilities.push('implementation')
-  if(TDD.test(objective))requiredCapabilities.push('tdd-required');if(PLAN.test(objective)&&scope!=='local')requiredCapabilities.push('implementation-planning');if(DESIGN.test(objective)&&(scope!=='local'||/design|architecture|mimari|tasarım/i.test(objective)))requiredCapabilities.push('design-exploration');if(SOURCE_VERIFY.test(objective))requiredCapabilities.push('source-verification');if(REVIEW_FEEDBACK.test(objective))requiredCapabilities.push('review-feedback');if(API_DESIGN.test(objective))requiredCapabilities.push('api-interface-design');if(WORKSPACE_ISOLATION.test(objective))requiredCapabilities.push('workspace-isolation');if(SKILL_AUTHORING.test(objective))requiredCapabilities.push('skill-authoring');if(SECURITY.test(objective)){requiredCapabilities.push('security-review','critical-validation')}else if(risk==='high')requiredCapabilities.push('critical-validation');if(VISUAL.test(objective))requiredCapabilities.push('visual-qa');if(scope==='multi-stream')requiredCapabilities.push('multi-stream-delegation')
+  if(TDD.test(objective))requiredCapabilities.push('tdd-required');if(PLAN.test(objective)&&scope!=='local')requiredCapabilities.push('implementation-planning');if(DESIGN.test(objective)&&(scope!=='local'||/design|architecture/i.test(objective)))requiredCapabilities.push('design-exploration');if(SOURCE_VERIFY.test(objective))requiredCapabilities.push('source-verification');if(REVIEW_FEEDBACK.test(objective))requiredCapabilities.push('review-feedback');if(API_DESIGN.test(objective))requiredCapabilities.push('api-interface-design');if(WORKSPACE_ISOLATION.test(objective))requiredCapabilities.push('workspace-isolation');if(SKILL_AUTHORING.test(objective))requiredCapabilities.push('skill-authoring');if(SECURITY.test(objective)){requiredCapabilities.push('security-review','critical-validation')}else if(risk==='high')requiredCapabilities.push('critical-validation');if(VISUAL.test(objective))requiredCapabilities.push('visual-qa');if(scope==='multi-stream')requiredCapabilities.push('multi-stream-delegation')
   const repoVerify=repo?.likelyVerification??[]
   const hasTest=repoVerify.some(x=>/test|pytest|cargo test|go test/i.test(x)),staticKind=repoVerify.find(x=>/typecheck|check|lint/i.test(x)),buildKind=repoVerify.find(x=>/build/i.test(x))
   let likelyVerification:string[]

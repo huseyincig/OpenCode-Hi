@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import argparse, hashlib, json, os, re, subprocess, sys, time
+import argparse, hashlib, json, os, re, shutil, subprocess, sys, time
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
-PRODUCT='OpenCode HHC Orchestrator'
-SHORT='OHO'
-PACKAGE='opencode-hhc-orchestrator'
-REPO='https://github.com/huseyincig/OpenCode-HHC-Orchestrator.git'
-OWNERSHIP=Path('.opencode/oho-setup.json')
+PRODUCT='OpenCode-Hi'
+SHORT='HI'
+PACKAGE='opencode-hi'
+REPO='https://github.com/huseyincig/OpenCode-Hi.git'
+VERSION=(ROOT/'VERSION').read_text(encoding='utf-8').strip()
+OWNERSHIP=Path('.opencode/hi/provenance/setup.json')
 OWNERSHIP_SCHEMA=2
-ROUTING_CONFIG=Path('.opencode/oho-routing.json')
+HI_PROJECT_DIR=Path('.opencode/hi')
+ROUTING_CONFIG=HI_PROJECT_DIR/'policy'/'routing.json'
 
 # Default provider fallback when OpenCode env is not queryable from this script.
-# Mirrors the OHO defaults documented in docs/INSTALLATION.md.
+# Mirrors the HI defaults documented in docs/INSTALLATION.md.
 DEFAULT_PROVIDER_MODELS=[
     'opencode-go/minimax-m3',
     'opencode-go/minimax-m3-high',
@@ -39,6 +41,8 @@ DEFAULT_ROLE_MODELS={
 DEFAULT_ROLE_MODEL='opencode-go/minimax-m3'
 
 ROUTING_SCHEMA=1
+EXECUTION_POLICIES={'minimal','balanced','thorough','adaptive','manual'}
+PROFILE_NAMES={'minimal','balanced','thorough'}
 
 def sha_text(s:str)->str:return hashlib.sha256(s.encode()).hexdigest()
 def load(path:Path)->dict:
@@ -48,76 +52,90 @@ def dump(d:dict)->str:return json.dumps(d,ensure_ascii=False,indent=2)+'\n'
 def config_path(project:Path)->Path:
     j=project/'opencode.json'; jc=project/'opencode.jsonc'
     return j if j.exists() or not jc.exists() else jc
-def oho_spec(ref:str|None=None)->str:
-    base=f'{PACKAGE}@git+{REPO}'
-    return base+(f'#{ref}' if ref else '')
-def is_oho(x:object)->bool:
-    return isinstance(x,str) and (x==PACKAGE or x.startswith(PACKAGE+'@') or 'OpenCode-HHC-Orchestrator' in x)
+def hi_spec(version:str|None=None)->str:
+    return f'{PACKAGE}@{version or VERSION}'
+def is_hi(x:object)->bool:
+    return isinstance(x,str) and (x==PACKAGE or x.startswith(PACKAGE+'@') or 'OpenCode-Hi' in x)
 def _plugins(data:dict)->list[str]:
     raw=data.get('plugin')
     return [x for x in raw if isinstance(x,str)] if isinstance(raw,list) else []
 
-def plan(project:Path,ref:str|None=None)->dict:
-    cfg=config_path(project);data=load(cfg);plugins=_plugins(data);target=oho_spec(ref)
-    oho=[x for x in plugins if is_oho(x)]
-    foreign=[x for x in oho if x!=target]
-    next_plugins=[x for x in plugins if not is_oho(x)]+[target]
+def plan(project:Path,version:str|None=None)->dict:
+    cfg=config_path(project);data=load(cfg);plugins=_plugins(data);target=hi_spec(version)
+    hi=[x for x in plugins if is_hi(x)]
+    foreign=[x for x in hi if x!=target]
+    next_plugins=[x for x in plugins if not is_hi(x)]+[target]
     after=dict(data);after['plugin']=next_plugins
     status='BLOCKED' if foreign or cfg.suffix=='.jsonc' else 'READY'
-    return {'status':status,'product':PRODUCT,'short':SHORT,'project':str(project),'config':str(cfg),'plugin_spec':target,'conflicting_oho_specs':foreign,'before_plugins':plugins,'after_plugins':next_plugins,'changed':plugins!=next_plugins,'rendered':dump(after)}
+    return {'status':status,'product':PRODUCT,'short':SHORT,'project':str(project),'config':str(cfg),'plugin_spec':target,'conflicting_hi_specs':foreign,'before_plugins':plugins,'after_plugins':next_plugins,'changed':plugins!=next_plugins,'rendered':dump(after)}
 
-def install(project:Path,ref:str|None=None)->dict:
-    p=plan(project,ref)
+def install(project:Path,version:str|None=None)->dict:
+    p=plan(project,version)
     if p['status']!='READY':p.pop('rendered',None);return p
     project.mkdir(parents=True,exist_ok=True);cfg=Path(p['config']);cfg.parent.mkdir(parents=True,exist_ok=True)
     before=cfg.read_text(encoding='utf-8') if cfg.exists() else ''
     cfg.write_text(p['rendered'],encoding='utf-8')
     own=project/OWNERSHIP;own.parent.mkdir(parents=True,exist_ok=True)
     own.write_text(dump({'schema':OWNERSHIP_SCHEMA,'product':PRODUCT,'short':SHORT,'plugin_spec':p['plugin_spec'],'managed':{'config':{'path':str(cfg.relative_to(project)),'before_sha256':sha_text(before),'after_sha256':sha_text(p['rendered']),'plugin_spec':p['plugin_spec']}},'preserved':{'user_plugins':True},'installed_at':int(time.time())}),encoding='utf-8')
-    return {'status':'APPLIED','config':str(cfg),'plugin_spec':p['plugin_spec'],'restart_required':True,'next':'Restart OpenCode, then verify OHO tools, agents, native skills and role-model routing in the runtime.'}
+    return {'status':'APPLIED','config':str(cfg),'plugin_spec':p['plugin_spec'],'restart_required':True,'next':'Restart OpenCode, then verify HI tools, agents, native skills and role-model routing in the runtime.'}
 
 def uninstall(project:Path)->dict:
     cfg=config_path(project);data=load(cfg);plugins=_plugins(data);own_path=project/OWNERSHIP;own=load(own_path) if own_path.exists() else {}
     managed=(own.get('managed') or {}).get('config') or {}
-    # Legacy schema-1 ownership used flat plugin_spec/after_sha256 fields.
-    owned_spec=managed.get('plugin_spec') or own.get('plugin_spec')
+    owned_spec=managed.get('plugin_spec')
     if cfg.suffix=='.jsonc':return {'status':'BLOCKED','product':PRODUCT,'reason':'jsonc-safe-mutation-not-supported','config':str(cfg)}
     if not owned_spec:
-        # No ownership proof: never delete an arbitrary HHC registration.
-        found=[x for x in plugins if is_oho(x)]
-        return {'status':'NOOP' if not found else 'BLOCKED','product':PRODUCT,'config':str(cfg),'reason':'ownership-proof-missing' if found else 'not-installed-by-oho','removed':[]}
+        # No ownership proof: never delete an arbitrary Hi registration.
+        found=[x for x in plugins if is_hi(x)]
+        return {'status':'NOOP' if not found else 'BLOCKED','product':PRODUCT,'config':str(cfg),'reason':'ownership-proof-missing' if found else 'not-installed-by-hi','removed':[]}
     if owned_spec not in plugins:
         # User changed/adopted the registration after install. Preserve it.
         if own_path.exists(): own_path.unlink()
-        return {'status':'PRESERVED','product':PRODUCT,'config':str(cfg),'removed':[],'reason':'owned-plugin-spec-no-longer-present; current HHC registration treated as user-owned','restart_required':False}
+        return {'status':'PRESERVED','product':PRODUCT,'config':str(cfg),'removed':[],'reason':'owned-plugin-spec-no-longer-present; current Hi registration treated as user-owned','restart_required':False}
     data['plugin']=[x for x in plugins if x!=owned_spec]
     cfg.write_text(dump(data),encoding='utf-8')
-    if own_path.exists():own_path.unlink()
-    return {'status':'APPLIED','product':PRODUCT,'config':str(cfg),'removed':[owned_spec],'restart_required':True}
+    # Remove only setup-owned/configuration surfaces. Durable project knowledge,
+    # artifacts, and project-created skills are separate ownership classes and
+    # are intentionally preserved unless a future explicit purge operation owns them.
+    removed_paths=[]
+    for rel in (ROUTING_CONFIG, HI_PROJECT_DIR/'policy'/'authority.json', OWNERSHIP):
+        path=project/rel
+        if path.exists() and path.is_file():path.unlink();removed_paths.append(str(rel))
+    for rel in (HI_PROJECT_DIR/'policy', HI_PROJECT_DIR/'provenance', HI_PROJECT_DIR):
+        path=project/rel
+        try:path.rmdir()
+        except OSError:pass
+    opencode_dir=project/'.opencode'
+    try:opencode_dir.rmdir()
+    except OSError:pass
+    preserved=[]
+    for rel in (HI_PROJECT_DIR/'project-intelligence',HI_PROJECT_DIR/'artifacts',Path('.opencode/skills')):
+        if (project/rel).exists():preserved.append(str(rel))
+    return {'status':'APPLIED','product':PRODUCT,'config':str(cfg),'removed':[owned_spec],'removed_owned_paths':removed_paths,'preserved_project_data':preserved,'restart_required':True}
 
 def doctor(project:Path)->dict:
-    cfg=config_path(project);data=load(cfg);plugins=_plugins(data);oho=[x for x in plugins if is_oho(x)]
+    cfg=config_path(project);data=load(cfg);plugins=_plugins(data);hi=[x for x in plugins if is_hi(x)]
     own_path=project/OWNERSHIP;own=load(own_path) if own_path.exists() else {}
     managed=(own.get('managed') or {}).get('config') or {}
-    recorded_after=managed.get('after_sha256') or own.get('after_sha256')
+    recorded_after=managed.get('after_sha256')
     config_drift=None
     if recorded_after and cfg.exists():config_drift=sha_text(cfg.read_text(encoding='utf-8'))!=recorded_after
     routing_path=project/ROUTING_CONFIG;routing=load(routing_path) if routing_path.exists() else {}
     routing_schema=routing.get('schema') if routing_path.exists() else None
     issues=[];warnings=[]
-    if not oho:issues.append('oho-plugin-not-registered')
-    if len(oho)>1:issues.append('duplicate-oho-registration')
-    if oho and not own_path.exists():warnings.append('ownership-proof-missing')
+    if not hi:issues.append('hi-plugin-not-registered')
+    if len(hi)>1:issues.append('duplicate-hi-registration')
+    if hi and not own_path.exists():warnings.append('ownership-proof-missing')
     if config_drift is True:warnings.append('managed-config-drift')
     if routing_path.exists() and routing_schema!=ROUTING_SCHEMA:issues.append('unsupported-routing-schema')
-    return {'status':'FAIL' if issues else ('WARN' if warnings else 'OK'),'product':PRODUCT,'short':SHORT,'config':str(cfg),'oho_specs':oho,'ownership':{'state':'missing' if not own_path.exists() else ('healthy' if own else 'invalid'),'schema':own.get('schema'),'config_drift':config_drift},'routing':{'path':str(routing_path),'schema':routing_schema,'valid':not routing_path.exists() or routing_schema==ROUTING_SCHEMA},'issues':issues,'warnings':warnings,'note':'Registration/ownership doctor is static; actual plugin/agent/native-skill/model load must be verified in OpenCode runtime.'}
+    return {'status':'FAIL' if issues else ('WARN' if warnings else 'OK'),'product':PRODUCT,'short':SHORT,'config':str(cfg),'hi_specs':hi,'ownership':{'state':'missing' if not own_path.exists() else ('healthy' if own else 'invalid'),'schema':own.get('schema'),'config_drift':config_drift},'routing':{'path':str(routing_path),'schema':routing_schema,'valid':not routing_path.exists() or routing_schema==ROUTING_SCHEMA},'issues':issues,'warnings':warnings,'note':'Registration/ownership doctor is static; actual plugin/agent/native-skill/model load must be verified in OpenCode runtime.'}
 
 def discover_available_models()->list[str]:
     """Best-effort enumeration of currently available models.
 
     Tries in order:
       1. `opencode models --json` (if the binary is on PATH)
-      2. parsing the OHO plugin cache config.json (last resort, manifest only)
+      2. parsing the HI plugin cache config.json (last resort, manifest only)
       3. fallback DEFAULT_PROVIDER_MODELS
     """
     try:
@@ -131,7 +149,7 @@ def discover_available_models()->list[str]:
                     elif isinstance(m,str):ids.append(m)
                 if ids:return sorted({i for i in ids if i.strip()})
     except Exception:pass
-    # Fallback: read OHO plugin cache manifest if it ships a model list
+    # Fallback: read HI plugin cache manifest if it ships a model list
     try:
         m=json.loads((ROOT/'plugin/package.json').read_text())
     except Exception:return list(DEFAULT_PROVIDER_MODELS)
@@ -161,10 +179,10 @@ def _prompt_model_selection(role:str,available:list[str],defaults_by_role:dict[s
     return selected or list(defaults_by_role.get(role,[DEFAULT_ROLE_MODEL]))
 
 def role_models(project:Path,list_available:bool=False,defaults:bool=False,print_only:bool=False,sets:list[str]|None=None,variants:list[str]|None=None,policy:str|None=None)->dict:
-    """Interactive role→model mapping for OHO routing.roleModels.
+    """Interactive role→model mapping for HI routing.roleModels.
 
-    Writes `.opencode/oho-routing.json` (schema 1). OHO runtime reads this
-    file at startup and merges roleModels into HHC_CONFIG.routing.
+    Writes `.opencode/hi/policy/routing.json` (schema 1). HI runtime reads this
+    file at startup and merges roleModels into HiConfig.routing.
     """
     cfg=project/ROUTING_CONFIG
     existing=load(cfg) if cfg.exists() else {}
@@ -173,7 +191,7 @@ def role_models(project:Path,list_available:bool=False,defaults:bool=False,print
     existing_variants=existing_routing.get('roleVariants',{}) or {}
 
     if print_only:
-        return {'status':'OK' if cfg.exists() else 'NOT_CONFIGURED','product':PRODUCT,'config':str(cfg),'roleModels':existing_models,'roleVariants':existing_variants,'modelPolicy':existing_routing.get('modelPolicy','smart-select'),'smartSelectRoles':existing_routing.get('smartSelectRoles',[]),'note':'OHO runtime merges roleModels/roleVariants from this file.'}
+        return {'status':'OK' if cfg.exists() else 'NOT_CONFIGURED','product':PRODUCT,'config':str(cfg),'roleModels':existing_models,'roleVariants':existing_variants,'modelPolicy':existing_routing.get('modelPolicy','adaptive'),'adaptiveRoles':existing_routing.get('adaptiveRoles',[]),'note':'HI runtime merges roleModels/roleVariants from this file.'}
 
     available=discover_available_models()
     if list_available:
@@ -230,7 +248,7 @@ def role_models(project:Path,list_available:bool=False,defaults:bool=False,print
     # policy and unknown forward-compatible fields survive untouched.
     merged=dict(existing) if isinstance(existing,dict) else {}
     merged['schema']=ROUTING_SCHEMA
-    merged.setdefault('type','oho-routing')
+    merged.setdefault('type','hi-routing')
     existing_routing=merged.get('routing') if isinstance(merged.get('routing'),dict) else {}
     next_routing=dict(existing_routing)
     next_routing['roleModels']=new_roleModels
@@ -240,12 +258,12 @@ def role_models(project:Path,list_available:bool=False,defaults:bool=False,print
         lhs,var=item.split('=',1);role,model=lhs.split(':',1);role=role.strip();model=model.strip();var=var.strip()
         if role and model and var:next_variants.setdefault(role,{})[model]=var
     next_routing['roleVariants']=next_variants
-    selected_policy=policy if policy in ('recommended','smart-select','manual') else ('manual' if sets or variants else ('recommended' if defaults else existing_routing.get('modelPolicy','manual')))
+    selected_policy=policy if policy in ('recommended','adaptive','manual') else ('manual' if sets or variants else ('recommended' if defaults else existing_routing.get('modelPolicy','manual')))
     next_routing['modelPolicy']=selected_policy
     if selected_policy=='recommended':
-        next_routing['smartSelectRoles']=[r for r in ROLES_WITH_HINT if not new_roleModels.get(r)]
+        next_routing['adaptiveRoles']=[r for r in ROLES_WITH_HINT if not new_roleModels.get(r)]
     elif selected_policy=='manual':
-        next_routing['smartSelectRoles']=[]
+        next_routing['adaptiveRoles']=[]
     next_routing.setdefault('strategy','cost-quality')
     merged['routing']=next_routing
     merged['applied_at']=int(time.time())
@@ -262,11 +280,11 @@ def role_models(project:Path,list_available:bool=False,defaults:bool=False,print
         'roleModels':new_roleModels,
         'roleVariants':next_variants,
         'modelPolicy':next_routing['modelPolicy'],
-        'smartSelectRoles':next_routing.get('smartSelectRoles',[]),
+        'adaptiveRoles':next_routing.get('adaptiveRoles',[]),
         'before_sha256':before_sha,
         'after_sha256':sha_text(merged['routing']['roleModels'] and json.dumps(merged,sort_keys=True) or ''),
         'restart_required':True,
-        'next':'Restart OpenCode. OHO runtime will pick up roleModels from this file on next mission start.',
+        'next':'Restart OpenCode. HI runtime will pick up roleModels from this file on next mission start.',
         'available_models_used':available,
     }
 
@@ -285,41 +303,27 @@ def _kv_limits(items:list[str]|None)->dict[str,int]:
         if key and value>0:out[key]=min(32,value)
     return out
 
-def reconfigure(project:Path,*,print_only:bool=False,autonomy:str|None=None,primary_mode:str|None=None,routing_strategy:str|None=None,model_policy:str|None=None,allow_providers:list[str]|None=None,deny_models:list[str]|None=None,max_fallbacks:int|None=None,parallel_state:str|None=None,parallel_max:int|None=None,provider_limits:list[str]|None=None,model_limits:list[str]|None=None,profile_target:str='standard',specialist_threshold:str|None=None,parallel_threshold:str|None=None,review_threshold:str|None=None,cost_sensitivity:str|None=None,quality_floor:str|None=None,team_state:str|None=None,team_auto:str|None=None,team_max_members:int|None=None,team_max_messages:int|None=None,team_max_turns:int|None=None,team_wall_minutes:int|None=None)->dict:
+def reconfigure(project:Path,*,print_only:bool=False,execution_policy:str|None=None,primary_mode:str|None=None,routing_strategy:str|None=None,model_policy:str|None=None,allow_providers:list[str]|None=None,deny_models:list[str]|None=None,max_fallbacks:int|None=None,parallel_state:str|None=None,parallel_max:int|None=None,provider_limits:list[str]|None=None,model_limits:list[str]|None=None,profile_target:str='balanced',specialist_threshold:str|None=None,parallel_threshold:str|None=None,review_threshold:str|None=None,cost_sensitivity:str|None=None,quality_floor:str|None=None,team_state:str|None=None,team_auto:str|None=None,team_max_members:int|None=None,team_max_messages:int|None=None,team_max_turns:int|None=None,team_wall_minutes:int|None=None)->dict:
     """Ownership-safe project reconfiguration for main-prompt runtime knobs.
 
-    OpenCode 1.18.x canonical config strips unknown top-level `hhc` fields before
-    plugin config hooks run. OHO therefore persists its project-owned runtime
-    settings in `.opencode/oho-routing.json`, next to the existing model-routing
+    OpenCode 1.18.x canonical config strips unknown top-level `hi` fields before
+    plugin config hooks run. HI therefore persists its project-owned runtime
+    settings in `.opencode/hi/policy/routing.json`, next to the existing model-routing
     policy, instead of mutating native OpenCode schema with private keys.
     """
     cfg=config_path(project)
-    # Legacy JSON HHC config is read only for one-way compatibility migration.
-    # JSONC never needs mutation now, so comments/user ownership remain untouched.
-    data={}
-    if cfg.exists() and cfg.suffix=='.json':
-        try:data=load(cfg)
-        except Exception:data={}
-    legacy_hhc=dict(data.get('hhc',{})) if isinstance(data.get('hhc'),dict) else {}
     routing_path=project/ROUTING_CONFIG
     routing_doc=load(routing_path) if routing_path.exists() else {}
     merged=dict(routing_doc) if isinstance(routing_doc,dict) else {}
-    merged['schema']=ROUTING_SCHEMA;merged.setdefault('type','oho-routing')
-    # Preserve recognized legacy intent when a project setting has not yet been
-    # migrated. Unknown/user-owned legacy keys stay exactly where the user put them.
-    for key in ('autonomy','primaryMode','parallel','profile','teamMode'):
-        if key not in merged and key in legacy_hhc:merged[key]=legacy_hhc[key]
-    rr=dict(merged.get('routing',{})) if isinstance(merged.get('routing'),dict) else {}
-    legacy_rr=legacy_hhc.get('routing',{}) if isinstance(legacy_hhc.get('routing'),dict) else {}
-    if 'maxFallbacks' not in rr and 'maxFallbacks' in legacy_rr:rr['maxFallbacks']=legacy_rr['maxFallbacks']
-    if rr:merged['routing']=rr
+    merged['schema']=ROUTING_SCHEMA;merged.setdefault('type','hi-routing')
     if print_only:
-        project_hhc={k:merged[k] for k in ('autonomy','primaryMode','parallel','profile','teamMode') if k in merged}
+        project_hi={k:merged[k] for k in ('executionPolicy','primaryMode','parallel','profile','teamMode') if k in merged}
         if isinstance(merged.get('routing'),dict) and 'maxFallbacks' in merged['routing']:
-            project_hhc['routing']={'maxFallbacks':merged['routing']['maxFallbacks']}
-        return {'status':'OK' if cfg.exists() or routing_path.exists() else 'NOT_CONFIGURED','product':PRODUCT,'config':str(cfg),'project_config':str(routing_path),'hhc':project_hhc,'legacy_hhc':legacy_hhc,'routing':(merged.get('routing',{}) if isinstance(merged.get('routing'),dict) else {}),'note':'Project HHC runtime settings are persisted outside native OpenCode schema; runtime hhc_doctor verifies effective state.'}
+            project_hi['routing']={'maxFallbacks':merged['routing']['maxFallbacks']}
+        return {'status':'OK' if cfg.exists() or routing_path.exists() else 'NOT_CONFIGURED','product':PRODUCT,'config':str(cfg),'project_config':str(routing_path),'hi':project_hi,'routing':(merged.get('routing',{}) if isinstance(merged.get('routing'),dict) else {}),'note':'Project Hi runtime settings are persisted outside native OpenCode schema; runtime hi_doctor verifies effective state.'}
     changed=[]
-    if autonomy is not None:merged['autonomy']=autonomy;changed.append('autonomy')
+    selected_policy=execution_policy if execution_policy in EXECUTION_POLICIES else None
+    if selected_policy is not None:merged['executionPolicy']=selected_policy;changed.append('executionPolicy')
     if primary_mode is not None:merged['primaryMode']=primary_mode;changed.append('primaryMode')
     parallel=dict(merged.get('parallel',{})) if isinstance(merged.get('parallel'),dict) else {}
     if parallel_state is not None:parallel['enabled']=_bool_arg(parallel_state);changed.append('parallel.enabled')
@@ -329,6 +333,7 @@ def reconfigure(project:Path,*,print_only:bool=False,autonomy:str|None=None,prim
     if ml:parallel['models']=ml;changed.append('parallel.models')
     if parallel:merged['parallel']=parallel
     profiles=dict(merged.get('profile',{})) if isinstance(merged.get('profile'),dict) else {}
+    if profile_target not in PROFILE_NAMES: profile_target='balanced'
     target=dict(profiles.get(profile_target,{})) if isinstance(profiles.get(profile_target),dict) else {}
     for key,val in [('specialistThreshold',specialist_threshold),('parallelThreshold',parallel_threshold),('reviewThreshold',review_threshold),('costSensitivity',cost_sensitivity),('qualityFloor',quality_floor)]:
         if val is not None:target[key]=val;changed.append(f'profile.{profile_target}.{key}')
@@ -349,21 +354,21 @@ def reconfigure(project:Path,*,print_only:bool=False,autonomy:str|None=None,prim
     if not changed:return {'status':'NOOP','product':PRODUCT,'config':str(cfg),'project_config':str(routing_path),'reason':'no reconfigure fields supplied'}
     merged['applied_at']=int(time.time());merged['applied_by']=PACKAGE;merged.setdefault('ownership','project-routing-user-reconfigurable')
     routing_path.parent.mkdir(parents=True,exist_ok=True);routing_path.write_text(dump(merged),encoding='utf-8')
-    return {'status':'APPLIED','product':PRODUCT,'config':str(cfg),'project_config':str(routing_path),'routing_config':str(routing_path),'changed':changed,'primaryMode':merged.get('primaryMode','auto'),'restart_required':True,'note':'Only explicitly supplied OHO settings were changed in the project-owned OHO config. Native OpenCode config, user plugins/MCP/unknown fields were not mutated.'}
+    return {'status':'APPLIED','product':PRODUCT,'config':str(cfg),'project_config':str(routing_path),'routing_config':str(routing_path),'changed':changed,'primaryMode':merged.get('primaryMode','auto'),'restart_required':True,'note':'Only explicitly supplied HI settings were changed in the project-owned HI config. Native OpenCode config, user plugins/MCP/unknown fields were not mutated.'}
 
 def main()->int:
     ap=argparse.ArgumentParser(description=f'{PRODUCT} native OpenCode plugin setup')
-    ap.add_argument('command',choices=['plan','install','doctor','uninstall','role-models','reconfigure']);ap.add_argument('project',nargs='?',default='.');ap.add_argument('--ref')
+    ap.add_argument('command',choices=['plan','install','doctor','uninstall','role-models','reconfigure']);ap.add_argument('project',nargs='?',default='.');ap.add_argument('--version')
     ap.add_argument('--list-available',action='store_true',help='For role-models: list available models and exit')
     ap.add_argument('--defaults',action='store_true',help='For role-models: write sensible defaults without prompting')
     ap.add_argument('--print',action='store_true',help='For role-models: print current config and exit')
     ap.add_argument('--set',dest='sets',action='append',default=[],help='For role-models: ROLE=PRIMARY[,FALLBACK1,FALLBACK2] (repeatable)')
     ap.add_argument('--variant',dest='variants',action='append',default=[],help='For role-models: ROLE:MODEL=VARIANT (repeatable)')
-    ap.add_argument('--policy',choices=['recommended','smart-select','manual'],help='For role-models: persisted project model policy')
-    ap.add_argument('--autonomy',choices=['basic','standard','powerful','smart','manual'])
+    ap.add_argument('--policy',choices=['recommended','adaptive','manual'],help='For role-models: persisted project model policy')
+    ap.add_argument('--execution-policy',choices=['minimal','balanced','thorough','adaptive','manual'])
     ap.add_argument('--primary-mode',choices=['auto','working-manager','manager'])
     ap.add_argument('--routing-strategy',choices=['cost-quality','quality','cost'])
-    ap.add_argument('--model-policy',choices=['recommended','smart-select','manual'])
+    ap.add_argument('--model-policy',choices=['recommended','adaptive','manual'])
     ap.add_argument('--allow-provider',dest='allow_providers',action='append')
     ap.add_argument('--deny-model',dest='deny_models',action='append')
     ap.add_argument('--max-fallbacks',type=int)
@@ -371,7 +376,7 @@ def main()->int:
     ap.add_argument('--parallel-max',type=int)
     ap.add_argument('--provider-limit',action='append',default=[])
     ap.add_argument('--model-limit',action='append',default=[])
-    ap.add_argument('--profile-target',choices=['basic','standard','powerful'],default='standard')
+    ap.add_argument('--profile-target',choices=['minimal','balanced','thorough'],default='balanced')
     ap.add_argument('--specialist-threshold',choices=['low','medium','high'])
     ap.add_argument('--parallel-threshold',choices=['low','medium','high'])
     ap.add_argument('--review-threshold',choices=['low','medium','high'])
@@ -385,12 +390,12 @@ def main()->int:
     ap.add_argument('--team-wall-minutes',type=int)
     a=ap.parse_args();project=Path(a.project).expanduser().resolve()
     cmds={
-      'plan':lambda:plan(project,a.ref),
-      'install':lambda:install(project,a.ref),
+      'plan':lambda:plan(project,a.version),
+      'install':lambda:install(project,a.version),
       'doctor':lambda:doctor(project),
       'uninstall':lambda:uninstall(project),
       'role-models':lambda:role_models(project,list_available=a.list_available,defaults=a.defaults,print_only=a.print,sets=a.sets,variants=a.variants,policy=a.policy),
-      'reconfigure':lambda:reconfigure(project,print_only=a.print,autonomy=a.autonomy,primary_mode=a.primary_mode,routing_strategy=a.routing_strategy,model_policy=a.model_policy,allow_providers=a.allow_providers,deny_models=a.deny_models,max_fallbacks=a.max_fallbacks,parallel_state=a.parallel_state,parallel_max=a.parallel_max,provider_limits=a.provider_limit,model_limits=a.model_limit,profile_target=a.profile_target,specialist_threshold=a.specialist_threshold,parallel_threshold=a.parallel_threshold,review_threshold=a.review_threshold,cost_sensitivity=a.cost_sensitivity,quality_floor=a.quality_floor,team_state=a.team_state,team_auto=a.team_auto,team_max_members=a.team_max_members,team_max_messages=a.team_max_messages,team_max_turns=a.team_max_turns,team_wall_minutes=a.team_wall_minutes),
+      'reconfigure':lambda:reconfigure(project,print_only=a.print,execution_policy=a.execution_policy,primary_mode=a.primary_mode,routing_strategy=a.routing_strategy,model_policy=a.model_policy,allow_providers=a.allow_providers,deny_models=a.deny_models,max_fallbacks=a.max_fallbacks,parallel_state=a.parallel_state,parallel_max=a.parallel_max,provider_limits=a.provider_limit,model_limits=a.model_limit,profile_target=a.profile_target,specialist_threshold=a.specialist_threshold,parallel_threshold=a.parallel_threshold,review_threshold=a.review_threshold,cost_sensitivity=a.cost_sensitivity,quality_floor=a.quality_floor,team_state=a.team_state,team_auto=a.team_auto,team_max_members=a.team_max_members,team_max_messages=a.team_max_messages,team_max_turns=a.team_max_turns,team_wall_minutes=a.team_wall_minutes),
     }
     out=cmds[a.command]()
     out.pop('rendered',None);print(dump(out),end='');return 2 if out.get('status') in ('BLOCKED','FAIL') else 0

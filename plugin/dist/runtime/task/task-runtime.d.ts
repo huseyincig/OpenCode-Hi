@@ -1,4 +1,4 @@
-import type { HhcConfig } from '../../config/schema.js';
+import type { HiConfig } from '../../config/schema.js';
 import type { Category, MissionState, WorkerResult } from '../mission/types.js';
 import { type AvailableModel } from '../routing/model-resolver.js';
 import { BackgroundRegistry } from '../background/registry.js';
@@ -24,12 +24,13 @@ export declare class TaskRuntime {
     private registry;
     private scheduler;
     private projectRoot;
-    private hhcRoot;
+    private hiRoot;
     private getConfig;
     private getModels;
     private getHostConfig;
     private events?;
-    constructor(client: any, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hhcRoot: string, getConfig: () => HhcConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined);
+    constructor(client: any, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined);
+    private sendProviderPrompt;
     private captureNativeDiff;
     reconcileNativeResult(m: MissionState, workerID: string, result: WorkerResult): Promise<WorkerResult>;
     noteEffectiveModel(m: MissionState, workerID: string, observed?: {

@@ -1,66 +1,66 @@
 {
-  "schema": 1,
-  "release": "2.0.10",
+  "schema": 2,
+  "release": "0.1.0",
   "generated_at": "2026-08-12",
-  "basis": "OPENCODE-HHC-ORCHESTRATOR — MASTER TRANSFORMATION & COMPLETION PROMPT",
+  "basis": "OPENCODE-HI 0.1.x canonical source-driven implementation prompt",
   "internal_status": "LOCAL_IMPLEMENTATION_AND_IN_PROCESS_ACCEPTANCE_COMPLETE",
   "source_checklist": {
-    "total": 123,
+    "total": 132,
     "status_counts": {
-      "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING": 123
+      "LOCAL_IMPLEMENTED_OR_POLICY_SATISFIED": 128,
+      "EXTERNAL_OR_USER_OWNED_ACTION_PENDING": 4
     },
     "internal_missing": []
   },
   "local_acceptance": {
     "node": {
       "command": "npm --prefix plugin test",
-      "status": "PASS_CURRENT_RUN_REQUIRED"
+      "status": "PASS"
     },
     "python": {
-      "command": "python -m pytest -q",
-      "status": "PASS_CURRENT_RUN_REQUIRED"
+      "command": "python -m pytest -q tests/test_hi.py",
+      "status": "PASS"
     },
     "source_validation": {
       "command": "python scripts/validate.py",
-      "status": "PASS_CURRENT_RUN_REQUIRED"
+      "status": "PASS"
+    },
+    "benchmarks": {
+      "command": "node scripts/run-benchmarks.mjs",
+      "status": "PASS",
+      "scenarios": 9
+    },
+    "install_lifecycle": {
+      "status": "PASS",
+      "receipt": "data/validation/install-lifecycle-0.1.0.json"
+    },
+    "architecture_audit": {
+      "status": "PASS_LOCAL_WITH_EXTERNAL_HOST_GATES_PENDING",
+      "receipt": "data/validation/architecture-audit-0.1.0.json"
     },
     "deterministic_release": {
       "command": "python scripts/release-build.py --out <out> --source-out <source-out>",
-      "status": "PASS_CURRENT_RUN_REQUIRED"
+      "status": "PASS_LOCAL_CURRENT_SOURCE_REQUIRED_AFTER_EACH_SOURCE_CHANGE"
     }
   },
-  "final_internal_gap_closed": {
-    "requirement": "HHC-native methodology inventory: Superpowers integration removed; 29 default-zero child-specific skills with HHC-owned orchestration",
-    "evidence": [
-      "docs/SKILLS.md",
-      "plugin/src/runtime/skills/registry.ts",
-      "plugin/src/runtime/skills/methodology.ts",
-      "plugin/test/native-skill-catalog.test.mjs"
-    ]
-  },
   "external_only_pending": [
-    "native_git_plugin_install",
-    "plain_opencode_smoke",
-    "packaged_agents_skills",
-    "acceptance_scenarios_A_H_external",
-    "native_acceptance_01_18_external",
-    "flow_acceptance_01_08_external",
-    "threat_model_adversarial_external",
-    "windows_runtime_smoke",
-    "dependency_supply_chain_audit_external"
+    "exact OpenCode-Hi Git-ref native plugin loader receipt",
+    "native OpenCode child-session/model-provider/permission runtime receipt",
+    "Windows runtime smoke",
+    "external clean-consumer/supply-chain install receipt"
   ],
   "external_blockers": [
-    "exact-2.0.10-git-ref-not-bound-to-external-receipt",
-    "clean-consumer-git-registration-doctor-pending",
-    "full-external-acceptance-matrix-pending",
-    "windows-runtime-smoke-pending"
+    "opencode binary unavailable in current execution environment",
+    "commit/tag creation is explicitly user-owned and was not performed",
+    "Windows host unavailable",
+    "external clean-consumer registry/network lab unavailable"
   ],
   "release_blocked": true,
-  "rule": "Internal completion plus checkpoint-level CLI E2E does not convert exact Git-bound, full external matrix, real-provider, or Windows gates to PASS. Those remain pending until fresh exact-bound receipts exist.",
-  "checkpoint_external_pass": [
-    "oho_only_smoke: OpenCode CLI 1.18.16 + localhost OpenAI-compatible provider (v49 receipt)",
-    "model-routing: real OpenCode CLI 1.18.16 native coder child + effective model metadata (v56 receipt)",
-    "team-mode: real OpenCode CLI 1.18.16 architect + repository-explorer live subagent sessions (v56 receipt)"
+  "known_internal_blocking_findings": [],
+  "historical_v58_provenance": [
+    "data/validation/forensic-61-progress.json",
+    "data/validation/external-blockers-v58.json",
+    "data/validation/external-opencode-cli-1.18.16.json"
   ],
-  "progress_61": "data/validation/forensic-61-progress.json"
+  "rule": "Historical v58 receipts demonstrate provenance and proven baseline behavior only. They do not certify the changed OpenCode-Hi 0.1.0 candidate."
 }

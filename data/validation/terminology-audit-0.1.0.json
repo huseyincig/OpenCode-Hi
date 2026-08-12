@@ -1,0 +1,48 @@
+{
+  "release": "0.1.0",
+  "status": "PASS",
+  "canonical": {
+    "product": "OpenCode-Hi",
+    "package": "opencode-hi",
+    "skill_namespace": "hi-*",
+    "tool_namespace": "hi_*",
+    "execution_policy": [
+      "minimal",
+      "balanced",
+      "thorough",
+      "adaptive",
+      "manual"
+    ],
+    "continuation_internal": "runtime/continuation/evaluator.ts",
+    "completion_internal": "runtime/completion/evaluator.ts"
+  },
+  "public_aliases": {
+    "Autopilot": "automatic continuation concept"
+  },
+  "legacy_allowed_only_in": [
+    "exact baseline provenance",
+    "source attribution",
+    "license obligations",
+    "immutable historical receipts",
+    "negative rejection tests"
+  ],
+  "decisions_summary": {
+    "KEEP": 18,
+    "RENAME": 8,
+    "REMOVE": 4,
+    "PUBLIC_ALIAS": 1
+  },
+  "legacy_compatibility_policy": {
+    "status": "REMOVED",
+    "config_aliases": false,
+    "cli_aliases": false,
+    "runtime_aliases": false,
+    "telemetry_schema_aliases": false,
+    "allowed_historical_reasons": [
+      "provenance",
+      "attribution",
+      "license obligation",
+      "immutable historical receipt"
+    ]
+  }
+}

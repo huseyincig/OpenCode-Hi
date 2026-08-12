@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { dirname } from 'node:path'
+import { runtimeStatePath } from '../storage/locations.js'
 import type { MissionState } from '../mission/types.js'
 import { verificationPolicyFor } from '../verification/policy.js'
 
@@ -34,17 +35,17 @@ export class RuntimePersistence {
   readonly startedAt:number=Date.now()
   previousBootId?:string
   lastLoadReport:PersistenceLoadReport={targetSchema:RUNTIME_STATE_SCHEMA,loaded:0,ignored:0}
-  constructor(projectRoot:string){this.path=join(projectRoot,'.opencode','.oho','runtime-state.json')}
+  constructor(projectRoot:string){this.path=runtimeStatePath(projectRoot)}
   load():MissionState[]{
     if(!existsSync(this.path)){this.lastLoadReport={targetSchema:RUNTIME_STATE_SCHEMA,loaded:0,ignored:0};return[]}
     try{
       const parsed=JSON.parse(readFileSync(this.path,'utf8')) as Partial<PersistedRuntimeStateV3>;const schema=Number(parsed.schema);if(!Array.isArray(parsed.missions))throw new Error('missions is not an array')
-      if(![1,2,RUNTIME_STATE_SCHEMA].includes(schema))throw new Error(`unsupported runtime-state schema ${String(parsed.schema)}`)
+      if(schema!==RUNTIME_STATE_SCHEMA)throw new Error(`unsupported runtime-state schema ${String(parsed.schema)}`)
       const out:MissionState[]=[];let ignored=0
       for(const raw of parsed.missions){const m=normalizeMission(raw);if(m)out.push(m);else ignored++}
       const runtime=(parsed as PersistedRuntimeStateV3).runtime
       this.previousBootId=runtime?.boot_id
-      this.lastLoadReport={sourceSchema:schema,targetSchema:RUNTIME_STATE_SCHEMA,loaded:out.length,ignored,previousBootId:runtime?.boot_id,uncleanShutdown:runtime?runtime.clean_shutdown===false:undefined,migrated:schema!==RUNTIME_STATE_SCHEMA}
+      this.lastLoadReport={sourceSchema:schema,targetSchema:RUNTIME_STATE_SCHEMA,loaded:out.length,ignored,previousBootId:runtime?.boot_id,uncleanShutdown:runtime?runtime.clean_shutdown===false:undefined,migrated:false}
       return out
     }catch(error){this.lastLoadReport={targetSchema:RUNTIME_STATE_SCHEMA,loaded:0,ignored:0,error:String(error)};return[]}
   }

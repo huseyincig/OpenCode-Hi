@@ -5,7 +5,7 @@ import { createTask, createWorker } from '../dist/runtime/worker/worker-runtime.
 import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
 import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
-import { resolveHhcConfig } from '../dist/config/resolver.js'
+import { resolveHiConfig } from '../dist/config/resolver.js'
 
 function persistedBusy({session=true}={}){
   const store=new MissionStore()
@@ -55,7 +55,7 @@ test('explicit task restart reuses the quarantined child session and only then u
   const client={session:{prompt_async:async body=>{calls.push(body)}}}
   const registry=new BackgroundRegistry(); for(const w of m.workers)registry.set(w)
   const scheduler=new ConcurrencyScheduler(()=>({global:2}))
-  const runtime=new TaskRuntime(client,registry,scheduler,process.cwd(),process.cwd(),()=>resolveHhcConfig({}),()=>[],()=>({}))
+  const runtime=new TaskRuntime(client,registry,scheduler,process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>({}))
   const old=m.workers[0]
   const out=await runtime.start(m,{objective:m.objective,role:'coder',category:'quick',scope:[],dependencies:[],requiredEvidence:m.intent.likelyVerification,obligationIds:m.tasks[0].obligation_ids})
   assert.equal(out.worker_id,old.id)

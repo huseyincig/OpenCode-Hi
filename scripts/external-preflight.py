@@ -23,10 +23,10 @@ def detect_version(exe:str|None)->str|None:
     return None
 
 def main()->int:
-    ap=argparse.ArgumentParser(description='OHO external-runtime preflight; does not claim runtime acceptance.')
+    ap=argparse.ArgumentParser(description='HI external-runtime preflight; does not claim runtime acceptance.')
     ap.add_argument('project',nargs='?',default='.')
     ap.add_argument('--opencode-version')
-    ap.add_argument('--git-ref',help='Exact pushed commit/tag intended for hhc-test-lab')
+    ap.add_argument('--git-ref',help='Exact pushed commit/tag intended for hi-test-lab')
     a=ap.parse_args();project=str(Path(a.project).expanduser().resolve())
     oc=shutil.which('opencode');node=shutil.which('node');npm=shutil.which('npm');detected=detect_version(oc);version=a.opencode_version or detected
     doctor=run_json(['doctor',project])
@@ -41,11 +41,11 @@ def main()->int:
     blockers=[k for k,v in checks.items() if v['status']=='ACTION_REQUIRED']
     if not version:blockers.append('opencode_version')
     out={
-      'status':'READY_FOR_HHC_TEST_LAB' if not blockers else 'PREPARATION_REQUIRED',
-      'product':'OpenCode HHC Orchestrator','short':'OHO','project':project,'opencode_version':version,
+      'status':'READY_FOR_Hi_TEST_LAB' if not blockers else 'PREPARATION_REQUIRED',
+      'product':'OpenCode-Hi','short':'HI','project':project,'opencode_version':version,
       'blockers':blockers,'checks':checks,
-      'canonical_lab':'hhc-test-lab','lab_mode':'clean consumer Git install',
-      'next_commands':[f'python scripts/native_plugin_setup.py install {project}'+(f' --ref {a.git_ref}' if a.git_ref else ''),'Restart OpenCode','Run exact Git candidate acceptance in hhc-test-lab']
+      'canonical_lab':'hi-test-lab','lab_mode':'clean consumer Git install',
+      'next_commands':[f'python scripts/native_plugin_setup.py install {project}'+(f' --ref {a.git_ref}' if a.git_ref else ''),'Restart OpenCode','Run exact Git candidate acceptance in hi-test-lab']
     }
     print(json.dumps(out,ensure_ascii=False,indent=2));return 0 if not blockers else 2
 if __name__=='__main__':raise SystemExit(main())

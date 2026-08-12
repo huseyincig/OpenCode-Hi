@@ -1,0 +1,4864 @@
+================================================================================
+OPENCODE-HI 0.1.x
+CANONICAL SOURCE-DRIVEN IMPLEMENTATION, EVOLUTION, INTEGRATION,
+VERIFICATION AND RELEASE PROMPT
+================================================================================
+
+PROJECT
+=======
+
+Canonical product name:
+
+OpenCode-Hi
+
+Canonical repository:
+
+https://github.com/huseyincig/OpenCode-Hi
+
+Initial release line:
+
+0.1.x
+
+First coherent release candidate:
+
+0.1.0
+
+OpenCode-Hi is NOT a greenfield rewrite.
+
+OpenCode-Hi MUST evolve from the exact proven OpenCode-HHC-Orchestrator v58
+source baseline and preserve its verified control-plane semantics unless a
+change is justified, implemented deliberately, and covered by regression tests.
+
+
+================================================================================
+1. YOUR ROLE
+================================================================================
+
+Act as the senior implementation owner for this repository.
+
+You are responsible for:
+
+- AI systems architecture
+- Hybrid Intelligence architecture
+- OpenCode plugin/runtime engineering
+- adaptive execution design
+- agent orchestration
+- model/resource routing
+- context engineering
+- repository intelligence
+- semantic context extraction
+- memory integration
+- privacy boundaries
+- human decision routing
+- process lifecycle management
+- workspace isolation
+- security
+- testing
+- release engineering
+- supply-chain verification
+- documentation
+- source-level third-party reuse analysis
+
+Your job is NOT merely to:
+
+- analyze
+- brainstorm
+- propose architecture
+- write a roadmap
+- produce a report
+- generate pseudocode
+
+Your job is to produce a working OpenCode-Hi implementation.
+
+The execution lifecycle is:
+
+DISCOVER
+→ ESTABLISH BASELINE
+→ AUDIT SOURCE
+→ DESIGN
+→ IMPLEMENT
+→ INTEGRATE
+→ VERIFY
+→ HARDEN
+→ AUDIT
+→ RELEASE CANDIDATE
+→ STOP
+
+
+================================================================================
+2. NON-NEGOTIABLE BASELINE
+================================================================================
+
+The source-code root of OpenCode-Hi MUST be the exact v58 implementation of:
+
+OpenCode-HHC-Orchestrator
+
+Version reference:
+
+2.0.10-v58
+
+Exact commit:
+
+c4ded95d7ab58efab0efba398560f5b0cc1c9f94
+
+Do NOT start by designing a new framework in the empty OpenCode-Hi repository.
+
+Required evolution path:
+
+exact v58 source
+→ pristine baseline verification
+→ product identity migration
+→ architectural evolution
+→ OpenCode-Hi 0.1.0
+
+Forbidden path:
+
+empty repository
+→ speculative new architecture
+→ reimplementation of already proven v58 behavior
+
+Before implementing any Hi-specific feature:
+
+1. import/establish the exact v58 source baseline;
+2. confirm source identity;
+3. bootstrap dependencies;
+4. run the existing baseline validation suites;
+5. record failures if the pristine baseline cannot pass;
+6. repair environment/bootstrap issues without silently changing product behavior;
+7. establish a trustworthy regression baseline.
+
+No Hi feature implementation may begin before this baseline is understood.
+
+
+================================================================================
+3. V58 CAPABILITIES THAT MUST BE PRESERVED
+================================================================================
+
+The following are proven architectural assets.
+
+Do not casually replace them.
+
+Preserve or deliberately evolve:
+
+- Mission state
+- Obligations
+- Task state
+- Worker state
+- Evidence freshness
+- Authority boundaries
+- Completion adjudication
+- Deterministic STOP
+- Continuation/autopilot runtime
+- Recovery semantics
+- Stagnation detection
+- Retry control
+- Role routing
+- Model/provider routing
+- Native OpenCode child sessions
+- Native OpenCode agent integration
+- Skill methodology separation
+- Default-zero skill activation
+- Bounded skill loading
+- Mission survival state during compaction
+- External-action transaction semantics
+- Permission awareness
+- install/setup lifecycle
+- reconfiguration
+- uninstall ownership
+- doctor/diagnostics
+- deterministic source/distributable artifacts
+- manifests
+- SBOM
+- forensic release binding
+
+General rule:
+
+WORKING PROVEN BEHAVIOR
+MUST NOT BE REPLACED
+WITHOUT A DEMONSTRATED BENEFIT AND REGRESSION COVERAGE.
+
+
+================================================================================
+4. PRODUCT IDENTITY
+================================================================================
+
+The canonical product identity is:
+
+OpenCode-Hi
+
+The canonical skill namespace is:
+
+hi-*
+
+The old public skill namespace:
+
+hhc-*
+
+must be migrated.
+
+Examples:
+
+hhc-release-guardrails
+→ hi-release-guardrails
+
+hhc-changelog-and-documentation
+→ hi-changelog-and-documentation
+
+This is NOT a mechanical string replacement.
+
+Every affected surface must be audited:
+
+- skill directory names
+- SKILL.md frontmatter
+- registries
+- role-to-skill mappings
+- test fixtures
+- documentation
+- packaged resources
+- generated artifacts
+- scripts
+- provenance/hash fixtures
+- runtime references
+- config
+- schemas
+
+The old public project name and package identity must not remain accidentally
+visible in the new product.
+
+Historical identifiers may remain only when they are technically required for:
+
+- fixtures
+- compatibility tests
+- provenance
+- migration tests
+- source attribution
+- license obligations
+
+Do not add unnecessary public lineage documentation referencing the old
+repository.
+
+Never remove required third-party attribution.
+
+
+================================================================================
+5. VERSIONING
+================================================================================
+
+The first development/release family is:
+
+0.1.x
+
+The first coherent release:
+
+0.1.0
+
+0.1.0 must NOT mean:
+
+"early demo with architecture placeholders"
+
+It must mean:
+
+"first coherent implementation of the OpenCode-Hi architecture"
+
+Use later 0.1.x releases for:
+
+- hardening
+- defect correction
+- compatibility fixes
+- measured efficiency improvements
+- targeted behavioral refinement
+
+Do not bump to 0.2.x merely because new features were added.
+
+Version changes must represent coherent verified change sets.
+
+
+================================================================================
+6. LANGUAGE POLICY
+================================================================================
+
+The entire repository and internal system MUST use English.
+
+Mandatory English surfaces:
+
+- source code
+- identifiers
+- function names
+- type names
+- class names
+- comments
+- internal prompts
+- system prompts
+- runtime contracts
+- skill names
+- skill definitions
+- skill resources
+- architecture documents
+- configuration descriptions
+- schemas
+- tests
+- fixtures
+- logs
+- errors
+- CLI help
+- telemetry fields
+- generated technical artifacts
+- commit-facing generated release content where applicable
+
+Canonical README:
+
+README.md
+= English
+
+Turkish alternative:
+
+README.tr.md
+= Turkish translation
+
+README.md is the source of truth.
+
+README.tr.md must not introduce behavior or documentation that does not exist
+in README.md.
+
+README.md should contain an obvious link to README.tr.md.
+
+README.tr.md should contain an obvious link back to README.md.
+
+User-facing conversational responses may follow the user's language.
+
+Conversation language must NOT cause internal repository artifacts to switch
+language.
+
+
+================================================================================
+7. PRODUCT DEFINITION
+================================================================================
+
+OpenCode-Hi is:
+
+An evidence-aware adaptive execution and Hybrid Intelligence control plane
+for AI-assisted software engineering.
+
+It is NOT primarily trying to maximize:
+
+- autonomy
+- agent count
+- prompt complexity
+- reasoning length
+- model strength
+- context volume
+- tool usage
+
+Its goal is:
+
+Use the correct actor,
+with the correct knowledge,
+using the cheapest sufficient model/tool capability,
+with sufficient execution depth,
+sufficient context depth,
+appropriate isolation,
+sufficient verification,
+and human judgment only where human judgment materially improves the outcome.
+
+
+================================================================================
+8. PRIMARY PRINCIPLES
+================================================================================
+
+Primary principle:
+
+MINIMUM SUFFICIENT COMPUTATION
+
+Complementary principle:
+
+MAXIMUM RELEVANT JUDGMENT
+
+Optimization priority:
+
+1. correctness
+2. safety
+3. requested task completion
+4. evidence confidence
+5. authority correctness
+6. minimum sufficient computation
+7. latency
+8. token/cost efficiency
+9. architectural elegance
+
+Never sacrifice correctness or safety for token reduction.
+
+
+================================================================================
+9. HYBRID INTELLIGENCE MODEL
+================================================================================
+
+Do not model humans as merely another compute resource.
+
+Machines are strong at:
+
+- execution
+- retrieval
+- mechanical transformation
+- comparison
+- repetition
+- testing
+- bounded exploration
+- verification
+
+Humans are especially important for:
+
+- intent
+- preference
+- value judgment
+- trade-offs
+- authority
+- irreversible decisions
+- ambiguous contracts
+- product decisions
+- subjective acceptance
+
+OpenCode-Hi must therefore implement:
+
+DECISION ROUTING
+
+The central question is not:
+
+"Can the model decide?"
+
+The central question is:
+
+"Who should own this decision?"
+
+
+================================================================================
+10. RESPONSIBILITY BOUNDARIES
+================================================================================
+
+OpenCode owns native host capabilities.
+
+OpenCode-Hi owns execution-control semantics.
+
+Skills own methodology.
+
+OpenCode native responsibility includes, where supported:
+
+- primary agents
+- subagents
+- sessions
+- child sessions
+- agent execution
+- model/provider execution
+- model availability
+- agent model override mechanisms
+- task/subagent invocation
+- native permissions
+- approval mechanisms
+- tools
+- filesystem operations
+- shell execution
+- events
+- diffs
+- compaction primitives
+- runtime host primitives
+
+OpenCode-Hi owns:
+
+- mission interpretation
+- obligation tracking
+- task state
+- execution path
+- role selection
+- skill activation
+- topology decisions
+- adaptive model selection
+- adaptive tool selection
+- context policy
+- context depth
+- isolation depth
+- evidence requirements
+- evidence freshness
+- retry/recovery decisions
+- continuation
+- human-decision routing
+- completion adjudication
+- STOP
+
+Skills own:
+
+HOW
+
+Skills MUST NOT own:
+
+- routing
+- model selection
+- agent spawning
+- topology
+- authority
+- mission continuation
+- completion
+- STOP
+
+Those belong to the OpenCode-Hi control plane.
+
+
+================================================================================
+11. NATIVE-FIRST HOST POLICY
+================================================================================
+
+OpenCode-Hi MUST use OpenCode native primitives whenever those primitives can
+preserve the required Hi semantics.
+
+Do NOT build a competing agent runtime when OpenCode already supplies the
+required runtime primitive.
+
+General principle:
+
+DECIDE IN HI
+EXECUTE IN OPENCODE
+
+Example:
+
+Hi decides:
+
+"review requires a second agent"
+
+Then:
+
+Hi topology policy
+→ OpenCode host adapter
+→ native OpenCode task/subagent/session behavior
+
+Hi must not reimplement subagent/session functionality merely to own it.
+
+The same applies to:
+
+- providers
+- models
+- permissions
+- approvals
+- tools
+- events
+- session lifecycle
+- compaction primitives
+
+Host-level explicit denial must never be bypassed.
+
+Invariant:
+
+HI MAY RESTRICT HOST AUTHORITY.
+HI MUST NOT EXPAND HOST AUTHORITY.
+
+
+================================================================================
+12. AUTOPILOT IS A CORE CAPABILITY
+================================================================================
+
+Autopilot/continuation runtime MUST remain a first-class subsystem.
+
+Do not remove it.
+
+Do not hide its ownership inside skills.
+
+Autopilot is the execution controller responsible for deciding what should
+happen next after relevant mission/runtime events.
+
+Conceptual decisions include:
+
+NOTHING
+WAIT
+CONTINUE
+RECONCILE
+VERIFY
+RECOVER
+USER_ACTION_REQUIRED
+STOP
+
+The final exact enum may preserve/evolve the proven v58 implementation rather
+than being rewritten merely to match these words.
+
+Autopilot evaluates:
+
+- current MissionState
+- open obligations
+- active tasks
+- active workers
+- pending child sessions
+- evidence freshness
+- authority state
+- mission budget
+- execution path
+- failure classification
+- pending verification
+- runtime processes
+- rollback state
+- user interrupts
+- completion conditions
+
+Autopilot must NOT blindly continue because an agent became idle.
+
+AGENT IDLE
+≠
+MISSION COMPLETE
+
+Autopilot must NOT stop because a model said "done".
+
+MODEL SAYS DONE
+≠
+MISSION COMPLETE
+
+
+================================================================================
+13. COMPLETION AND STOP
+================================================================================
+
+Completion must remain deterministic and evidence-aware.
+
+Conceptual completion contract:
+
+requested outcome satisfied
+AND required obligations closed
+AND required verification evidence fresh
+AND no blocking evidence unresolved
+AND no pending authority decision
+AND no pending task
+AND no pending worker
+AND no pending required child result
+AND no pending required process
+AND no pending rollback
+AND CompletionAdjudicator approves
+→ STOP
+
+STOP is authoritative.
+
+After STOP, do not perform speculative:
+
+- extra refactoring
+- broad review
+- documentation expansion
+- optimization
+- exploration
+
+unless explicitly required by an open obligation.
+
+
+================================================================================
+14. SIX INDEPENDENT ADAPTIVE EXECUTION AXES
+================================================================================
+
+OpenCode-Hi must explicitly separate six decision dimensions.
+
+1. ROLE
+   Who should perform the work?
+
+2. SKILL
+   Which methodology is necessary?
+
+3. MODEL / TOOL
+   Which capability is sufficient?
+
+4. EXECUTION DEPTH
+   How much reasoning, planning, exploration, delegation and verification?
+
+5. CONTEXT DEPTH
+   How much information is necessary?
+
+6. ISOLATION DEPTH
+   How much environmental protection is necessary?
+
+These dimensions must NOT be collapsed.
+
+Examples of forbidden coupling:
+
+complex task
+≠ automatically strongest model
+
+review role
+≠ automatically dedicated agent
+
+specialist role
+≠ automatically separate session
+
+skill available
+≠ automatically activated
+
+high risk
+≠ automatically entire repository context
+
+multi-agent capability
+≠ automatically multi-agent execution
+
+
+================================================================================
+15. ROLE, AGENT AND MODEL ARE DIFFERENT THINGS
+================================================================================
+
+The implementation must model:
+
+ROLE
+AGENT INSTANCE
+MODEL
+TOPOLOGY
+
+as separate concepts.
+
+A role does not imply a dedicated agent.
+
+An agent does not imply a fixed model.
+
+A model does not imply a role.
+
+Required supported execution forms:
+
+A. single agent + single model
+
+B. single agent + multiple logical roles
+
+C. multiple agents + one shared model
+
+D. multiple agents + multiple models
+
+E. multiple instances of the same role
+
+Example:
+
+single primary agent:
+
+roles:
+- repository exploration
+- coding
+- verification
+
+This is valid when task complexity does not justify delegation.
+
+Another valid topology:
+
+manager
+├── explorer
+├── coder
+└── reviewer
+
+All may use one model.
+
+Another:
+
+manager  → model A
+explorer → model B
+coder    → model C
+reviewer → model D
+
+Another:
+
+coder instance A → backend
+coder instance B → frontend
+coder instance C → tests
+
+Do not confuse:
+
+"same agent template used multiple times"
+
+with:
+
+"one agent performing multiple roles"
+
+
+================================================================================
+16. EXECUTION TOPOLOGY POLICY
+================================================================================
+
+Create or evolve an execution-topology decision layer.
+
+Do not create a second runtime.
+
+Its job is decision only.
+
+Conceptually:
+
+ExecutionTopologyPolicy
+→ TopologyDecision
+→ HostAdapter
+→ native OpenCode execution
+
+Topology decisions may include:
+
+- single-agent
+- multi-agent
+- sequential
+- parallel
+- role reuse
+- repeated role instances
+- model assignment
+- maximum parallelism
+- delegation budget
+
+Default principle:
+
+If one agent is sufficient:
+use one agent.
+
+If one model is sufficient:
+use one model.
+
+Only increase topology complexity when expected benefit is material.
+
+
+================================================================================
+17. USER CONFIGURATION AND OVERRIDES
+================================================================================
+
+Topology and model selection must support both adaptive behavior and explicit
+configuration.
+
+Precedence:
+
+1. explicit user/task override
+2. project policy
+3. OpenCode-Hi adaptive selection
+4. host/provider default
+
+Examples of desired configuration semantics:
+
+execution:
+  topology: adaptive
+  max_agents: 4
+  parallelism: 2
+  allow_multi_role_agent: true
+
+models:
+  mode: adaptive
+  default: auto
+  roles:
+    coder: auto
+    reviewer: auto
+
+Possible topology modes:
+
+adaptive
+single-agent
+multi-agent
+
+Possible model-selection modes:
+
+adaptive
+fixed
+role-mapped
+
+Exact schema names may differ if a better coherent configuration model fits
+the existing codebase.
+
+Do not create configuration for theoretical flexibility that is not used.
+
+Configuration must remain minimal and explainable.
+
+
+================================================================================
+18. ADAPTIVE EXECUTION PATHS
+================================================================================
+
+At minimum implement coherent support for:
+
+DIRECT
+EVIDENCE
+PLANNED
+ESCALATED
+
+DIRECT
+------
+
+Use when:
+
+- task is clear
+- scope is local
+- uncertainty is low
+- impact is reversible
+- failure impact is low
+- verification is cheap
+
+Default direct trajectory:
+
+assess
+→ execute
+→ targeted verify
+→ STOP
+
+Typical direct defaults:
+
+planner = 0
+delegation = 0
+specialist = 0
+broad repository scan = 0
+memory lookup = 0
+reviewer = 0
+
+EVIDENCE
+--------
+
+Use when a material uncertainty can change the implementation decision.
+
+Trajectory:
+
+identify decision-changing uncertainty
+→ acquire minimum relevant evidence
+→ decide
+→ execute
+→ verify
+
+Do not perform broad research merely because uncertainty exists.
+
+Ask:
+
+"What information could materially change the next decision?"
+
+PLANNED
+-------
+
+Use when real coordination or sequencing is necessary.
+
+Triggers include:
+
+- cross-module dependency
+- multiple coupled changes
+- migration sequencing
+- interface/contract interaction
+- rollback complexity
+- stateful coordination
+
+Planning must be:
+
+- bounded
+- dependency-oriented
+- implementation-oriented
+- acceptance-oriented
+
+Avoid planning ceremony.
+
+ESCALATED
+---------
+
+Escalation may use:
+
+- stronger model
+- specialist role
+- additional agent
+- broader context
+- broader evidence
+- review
+- increased verification
+- stronger isolation
+
+Escalation MUST have a recorded reason.
+
+Capability availability alone is not an escalation reason.
+
+
+================================================================================
+19. CHEAPEST SUFFICIENT EXECUTION TRAJECTORY
+================================================================================
+
+Do not optimize only by model price.
+
+Total execution cost includes:
+
+- model usage
+- token/context volume
+- expected turns
+- tool calls
+- repository reads
+- search calls
+- child sessions
+- delegation
+- specialist calls
+- verification
+- retries
+- context reconstruction
+- human interactions
+- waiting latency
+- process lifecycle
+- isolation setup
+
+A cheaper model taking seven failed turns may cost more than a stronger model
+that solves the task in one turn.
+
+Optimization target:
+
+CHEAPEST SUFFICIENT EXECUTION TRAJECTORY
+
+Optimization overhead itself must remain bounded.
+
+Invariant:
+
+OPTIMIZATION OVERHEAD
+<
+EXPECTED OPTIMIZATION BENEFIT
+
+
+================================================================================
+20. INTENT-TO-ACTION BOUNDARY
+================================================================================
+
+User intent must control mutation authority.
+
+General semantics:
+
+inspect
+review
+check
+audit
+analyze
+→ read/analyze/report by default
+
+debug
+→ investigate/reproduce/root-cause
+→ fix when repair intent is explicit or reasonably inherent in the request
+→ verify
+
+fix
+repair
+complete
+implement
+finish
+apply
+update
+→ inspect as needed
+→ mutate
+→ verify
+
+Examples:
+
+"Check the repository."
+
+Expected:
+
+inspect
+→ classify findings
+→ report
+
+Do NOT silently start implementing incomplete files.
+
+"Check the repository and fix the problems."
+
+Expected:
+
+inspect
+→ diagnose
+→ prioritize
+→ modify
+→ verify
+
+"Complete the unfinished parts."
+
+Expected:
+
+detect incomplete implementation
+→ complete it
+→ test
+→ continue until required acceptance
+
+General invariant:
+
+READ-ONLY INTENT
+MUST NOT SILENTLY ESCALATE INTO MUTATION INTENT.
+
+Once mutation intent is explicit, do NOT repeatedly ask for permission for
+ordinary reversible edits.
+
+Still respect real:
+
+- authority boundaries
+- destructive operations
+- irreversible effects
+- credentials
+- external publication
+- security-sensitive actions
+
+
+================================================================================
+21. EXTERNAL KNOWLEDGE ASSIMILATION
+================================================================================
+
+OpenCode-Hi must be able to assimilate useful information from:
+
+- source repositories
+- skill repositories
+- technical documentation
+- standards
+- specifications
+- API documentation
+- framework documentation
+- design documents
+- architecture documents
+- internal project documents
+
+Do not treat every new fact as a skill.
+
+Classify incoming knowledge as:
+
+A. PROJECT KNOWLEDGE
+
+Examples:
+
+- project uses PostgreSQL 17
+- project uses Zod for validation
+- project error responses follow a specific envelope
+
+Store in project intelligence.
+
+B. ARCHITECTURE / POLICY
+
+Examples:
+
+- every externally visible operation must be idempotent
+- internal modules use a defined boundary rule
+
+Store as project decision/policy with provenance.
+
+C. REUSABLE METHODOLOGY
+
+Examples:
+
+- migration procedure
+- security audit sequence
+- release verification method
+
+Compare against existing hi-* skills.
+
+D. TEMPORARY EVIDENCE
+
+Examples:
+
+- current test failure
+- current build log
+- one-time external response
+
+Use as mission evidence, not permanent methodology.
+
+
+================================================================================
+22. SKILL ASSIMILATION
+================================================================================
+
+When a user supplies an external skill repository and asks to integrate useful
+content:
+
+1. inspect the actual repository;
+2. inspect LICENSE;
+3. inspect source;
+4. inspect skill definitions;
+5. inspect scripts/resources;
+6. inspect tests;
+7. identify methodology;
+8. compare with existing hi-* skills;
+9. determine overlap;
+10. classify the integration.
+
+Allowed integration decisions:
+
+DIRECT_PORT
+ADAPT
+MERGE_INTO_EXISTING
+CLEAN_ROOM
+IDEA_ONLY
+REJECT
+
+Prefer:
+
+MERGE_INTO_EXISTING
+
+when the external skill substantially overlaps an existing skill.
+
+Do not create duplicate skills merely because the external repository uses a
+different name.
+
+Create a new skill only if the source represents a genuinely distinct,
+reusable HOW capability.
+
+
+================================================================================
+23. DOCUMENT-TO-SKILL LEARNING
+================================================================================
+
+If the user says:
+
+"We will build this project according to this document."
+
+Do NOT automatically create a skill from the whole document.
+
+Instead:
+
+document
+→ classify knowledge
+→ project facts
+→ architecture/policy
+→ reusable methodology
+→ temporary evidence
+
+If reusable methodology fits an existing skill:
+
+enrich existing skill.
+
+If the information is large/specialized:
+
+attach it as a lazy skill/project resource rather than bloating SKILL.md.
+
+Only create a new skill when:
+
+- methodology is reusable;
+- it is distinct from existing skills;
+- it has clear trigger conditions;
+- it has clear do-not-trigger conditions;
+- it has an exit condition;
+- it provides real execution value.
+
+
+================================================================================
+24. KNOWLEDGE PROVENANCE
+================================================================================
+
+Derived knowledge should carry provenance when practical.
+
+Track relevant:
+
+- source
+- source location
+- source version
+- source commit
+- source date
+- retrieval date
+- source hash
+- derived artifact hash
+- confidence
+- freshness
+
+If the source changes materially:
+
+derived knowledge may become:
+
+POTENTIALLY_STALE
+
+Do not use stale project intelligence as equivalent to fresh repository
+evidence.
+
+
+================================================================================
+25. SKILL SYSTEM MIGRATION
+================================================================================
+
+The existing 29 native HHC skills must be preserved initially and migrated to
+the hi-* namespace.
+
+Do NOT simply rename them.
+
+Every skill must undergo a full recalibration audit.
+
+For every skill determine:
+
+- canonical name
+- purpose
+- trigger strength
+- trigger signals
+- default priority
+- default weight
+- role affinity
+- context cost
+- execution cost
+- composition cost
+- useful coexistence with other skills
+- conflicting skill combinations
+- maximum useful simultaneous skill count
+- escalation relationship
+- do-not-trigger conditions
+- exit condition
+- resource requirements
+- verification relationship
+
+Create a machine-readable skill profile if useful and not redundant with the
+existing runtime.
+
+Do not create a configuration explosion.
+
+
+================================================================================
+26. DEFAULT-ZERO SKILL ACTIVATION
+================================================================================
+
+Preserve the existing principle:
+
+DEFAULT SKILL COUNT = 0
+
+Typical task:
+
+0 or 1 skill
+
+Complex task:
+
+more only when justified
+
+Hard upper bound should remain small and be validated against actual need.
+
+Available skill
+≠ activated skill
+
+Skill activation must be conditional.
+
+
+================================================================================
+27. SKILL CONTRACT
+================================================================================
+
+Each skill should conceptually define:
+
+AVAILABLE
+TRIGGER
+DO_NOT_TRIGGER
+EXIT_CONDITION
+ESCALATION_RELATION
+
+Skills contain methodology.
+
+They must not contain orchestration ownership.
+
+A skill may explain:
+
+how to debug
+
+It must not decide:
+
+- which agent is spawned
+- which model is selected
+- whether mission continues
+- whether user authority is required
+- whether the mission is complete
+- whether STOP occurs
+
+
+================================================================================
+28. SKILL WEIGHT RECALIBRATION
+================================================================================
+
+The 0.1.0 work must include a complete calibration review of all 29 migrated
+skills.
+
+Pay special attention to preventing over-activation of:
+
+- planning
+- review
+- adversarial validation
+- broad repository analysis
+- source research
+
+Planning and review must become more selective.
+
+Skills that gain new runtime support may become more effective without being
+activated more often.
+
+Likely strongly affected skills include:
+
+hi-task-classification
+hi-repository-analysis
+hi-iterative-retrieval
+hi-implementation-planning
+hi-test-strategy
+hi-debugging-root-cause
+hi-workspace-isolation
+hi-security-review
+hi-design-discovery
+hi-source-driven-development
+hi-api-interface-design
+hi-api-contract-review
+hi-release-guardrails
+hi-adversarial-validation
+hi-changelog-and-documentation
+
+Do not assume these exact names without checking the real baseline skill set.
+
+
+================================================================================
+29. SKILL RESOURCE REGISTRY
+================================================================================
+
+Study opencode-skillful at source level.
+
+Preserve the existing Hi skill registry unless a real gap is demonstrated.
+
+Evolve skill packages to support lazy resources such as:
+
+SKILL.md
+references/
+scripts/
+assets/
+examples/
+
+Initial child context should contain only necessary methodology.
+
+Large references must be loaded lazily.
+
+Resource access must be:
+
+- skill-scoped
+- indexed
+- path-safe
+- traversal-safe
+- symlink-safe
+- permission-aware
+- provenance-aware where useful
+
+Do not make arbitrary filesystem paths available through skill resource APIs.
+
+
+================================================================================
+30. CONTEXT ARCHITECTURE
+================================================================================
+
+OpenCode-Hi context architecture should include:
+
+A. Mission Survival State
+
+B. Context Governor
+
+C. Project Intelligence
+
+D. Semantic Context
+
+E. Privacy Boundary
+
+F. Optional Memory Broker
+
+These are different responsibilities.
+
+Do not merge them into a mega context manager.
+
+
+================================================================================
+31. MISSION SURVIVAL STATE
+================================================================================
+
+Preserve and evolve the proven v58 compaction-survival logic.
+
+Critical state must survive context pressure.
+
+Protected mission state includes:
+
+- objective
+- open obligations
+- blockers
+- authority state
+- active tasks
+- active workers
+- unreconciled child results
+- fresh evidence
+- required verification
+- rollback requirements
+- active user interrupt
+- next safe action
+- STOP conditions
+
+Transcript summarization is NOT sufficient to preserve mission correctness.
+
+
+================================================================================
+32. CONTEXT GOVERNOR
+================================================================================
+
+Study opencode-dynamic-context-pruning at source and test level.
+
+Because its known license is AGPL:
+
+DO NOT COPY ITS CODE INTO OpenCode-Hi
+unless the project license strategy explicitly changes and compatibility is
+deliberately accepted.
+
+Default decision:
+
+CLEAN_ROOM
+
+Learn its:
+
+- behavior
+- tests
+- edge cases
+- pruning semantics
+- error cleanup behavior
+- duplicate handling
+- compression behavior
+
+Implement Hi-native equivalents independently.
+
+Context classes:
+
+PROTECTED
+COMPRESSIBLE
+PURGEABLE
+
+PROTECTED examples:
+
+- objective
+- blockers
+- authority
+- open obligations
+- active tasks
+- unreconciled results
+- fresh evidence
+- rollback requirements
+- user interrupt
+- next safe action
+- STOP conditions
+
+COMPRESSIBLE examples:
+
+- resolved exploration
+- completed implementation details
+- older research
+- reconciled child detail
+
+PURGEABLE examples:
+
+- duplicate tool output
+- superseded status messages
+- obsolete diagnostics
+- repeated repository metadata
+- bulky failed-tool payloads no longer relevant
+
+Context Governor may return NOOP.
+
+Do not optimize tiny contexts unnecessarily.
+
+
+================================================================================
+33. PROJECT INTELLIGENCE
+================================================================================
+
+Study OpenAgentsControl and Agentic source implementations.
+
+Do not import their orchestration ownership.
+
+Implement evidence-backed reusable project understanding.
+
+Potential project intelligence:
+
+- API conventions
+- validation style
+- testing conventions
+- error handling
+- persistence conventions
+- naming
+- module boundaries
+- architecture decisions
+- dependency policy
+- release conventions
+- canonical implementation examples
+
+Project Intelligence must be:
+
+- repository scoped
+- lazy
+- freshness-aware
+- evidence-backed
+- queryable
+- bounded
+
+
+================================================================================
+34. PROJECT INTELLIGENCE FRESHNESS
+================================================================================
+
+A stored project pattern should, where practical, carry:
+
+- id
+- statement
+- source files
+- source state/hashes
+- observed commit
+- confidence
+- freshness
+- lifecycle status
+
+Lifecycle:
+
+ACTIVE
+SUPERSEDED
+ARCHIVED
+
+Freshness may include:
+
+FRESH
+POTENTIALLY_STALE
+
+If relevant source surface changes:
+
+FRESH
+→ POTENTIALLY_STALE
+
+Historical project knowledge must not override current repository evidence.
+
+
+================================================================================
+35. SEMANTIC CONTEXT
+================================================================================
+
+Study type-inject at source level.
+
+Do not assume code-copy permission until its license is definitively verified.
+
+If license is missing/unclear:
+
+CLEAN_ROOM
+or
+IDEA_ONLY
+
+Core objective:
+
+MINIMUM SUFFICIENT SEMANTICS
+
+Instead of injecting full dependency trees, retrieve only relevant:
+
+- interfaces
+- types
+- signatures
+- schemas
+- contracts
+- dependency boundaries
+
+For 0.1.0, a strong TypeScript implementation is sufficient if architecture
+supports additional adapters later.
+
+Design toward a logical interface such as:
+
+SemanticContextProvider
+
+Possible future adapters:
+
+- TypeScript
+- Python
+- Go
+- Rust
+- API schemas
+- database schemas
+
+Do not implement every language just to satisfy theoretical completeness.
+
+
+================================================================================
+36. PRIVACY BOUNDARY
+================================================================================
+
+Study opencode-vibeguard source-level behavior.
+
+Implement the invariant:
+
+LOCAL KNOWLEDGE
+≠
+MODEL/PROVIDER KNOWLEDGE
+
+Conceptual pipeline:
+
+raw local context
+→ sensitivity classification
+→ local-only redaction/tokenization
+→ relevance filtering
+→ semantic/context reduction
+→ provider request
+
+If restoration is required:
+
+provider output
+→ safe local restoration
+
+Plaintext secrets must not be persisted in:
+
+- telemetry
+- logs
+- durable artifacts
+- mission state
+- provider transcript
+- debug dumps
+
+Redaction/token mappings must be:
+
+- bounded
+- lifecycle scoped
+- protected from accidental persistence
+
+Use synthetic secrets in tests.
+
+
+================================================================================
+37. MEMORY BROKER
+================================================================================
+
+Study opencode-supermemory source-level behavior.
+
+Memory must remain optional.
+
+Memory is not MissionState.
+
+Memory is not verification.
+
+Invariant:
+
+MEMORY MAY GUIDE RETRIEVAL.
+MEMORY MAY NOT SATISFY VERIFICATION.
+
+Potential interface:
+
+MemoryProvider
+- search()
+- add()
+- forget()
+- profile()
+
+Scopes:
+
+USER
+PROJECT
+
+Mission operational state remains authoritative in local runtime state.
+
+Retrieval priority:
+
+1. current MissionState
+2. fresh Project Intelligence
+3. current repository evidence
+4. historical project memory
+5. user memory
+6. external sources
+
+Default:
+
+memory lookup = 0
+
+Before memory retrieval ask:
+
+"Would historical knowledge materially improve this decision?"
+
+If no:
+
+do not retrieve memory.
+
+OpenCode-Hi 0.1.0 must function fully without a remote memory service.
+
+
+================================================================================
+38. KNOWLEDGE ARTIFACT LIFECYCLE
+================================================================================
+
+Study Agentic for useful durable artifact patterns.
+
+Do not import its rigid workflow as orchestration.
+
+Useful concepts may include:
+
+- durable research
+- architecture decisions
+- plans
+- review artifacts
+- source binding
+- supersession
+- archival
+
+Bind durable knowledge to source/repository state where practical.
+
+
+================================================================================
+39. ARTIFACT-FIRST LONG RESULTS
+================================================================================
+
+Study opencode-background-agents source-level behavior.
+
+Do NOT import its orchestration control plane.
+
+Use useful artifact-first primitives.
+
+Long results should prefer:
+
+artifact
++ concise summary
++ hash
++ retrieval handle
++ freshness/provenance metadata
+
+instead of repeatedly injecting large raw results into the active transcript.
+
+Prefer evolving the existing v58 context artifact system rather than creating a
+duplicate artifact store.
+
+
+================================================================================
+40. HUMAN DECISION SURFACE
+================================================================================
+
+Study Plannotator and Octto at source level.
+
+Implement a coherent human-decision contract.
+
+Distinguish:
+
+AUTHORITY
+PREFERENCE
+AMBIGUITY
+ANNOTATION
+VISUAL_DECISION
+BATCHED_QUESTIONS
+
+Human interaction must occur only when materially useful.
+
+
+================================================================================
+41. HUMAN VALUE GATE
+================================================================================
+
+Before asking the user a question, determine whether the answer can materially
+change:
+
+- correctness
+- scope
+- preference
+- contract
+- security
+- irreversible effect
+- authority
+
+If not:
+
+DO NOT ASK.
+
+If yes:
+
+ASK USING MINIMUM SUFFICIENT INTERACTION.
+
+Do not ask the user questions that repository inspection, tools or existing
+state can answer.
+
+
+================================================================================
+42. BATCHED HUMAN QUESTIONS
+================================================================================
+
+Independent questions:
+
+batch when useful.
+
+Dependent questions:
+
+ask sequentially.
+
+Avoid approval spam.
+
+Human attention should be represented as execution cost for telemetry/analysis,
+but the human must not be reduced to a generic compute unit.
+
+
+================================================================================
+43. ACTIVE USER MESSAGE SEMANTICS
+================================================================================
+
+During an active mission classify relevant user messages as:
+
+INTERRUPT
+QUEUE
+SIDEBAND
+
+INTERRUPT:
+changes/stops/redirects the current trajectory.
+
+QUEUE:
+becomes a subsequent obligation/task.
+
+SIDEBAND:
+read-only side question or fork that does not mutate the main mission state.
+
+Do not treat every incoming user message as a destructive mission rewrite.
+
+
+================================================================================
+44. MISSION BUDGET ENVELOPE
+================================================================================
+
+Study both available Goal Plugin implementations.
+
+Compare their source, tests and behavior.
+
+Do not blindly import either architecture.
+
+Preserve v58 continuation/stagnation/retry mechanisms and augment them where
+useful.
+
+Potential budget dimensions:
+
+- max turns
+- max model calls
+- max tool calls
+- max delegations
+- max parallelism
+- max same-failure retries
+- max elapsed time
+- max context growth
+- cost budget
+- planning budget
+- verification budget
+- review budget
+
+Simple tasks may have:
+
+planning budget = 0
+delegation budget = 0
+review budget = 0
+
+Avoid configuration explosion.
+
+
+================================================================================
+45. NO-PROGRESS DETECTION
+================================================================================
+
+No-progress must not mean merely repeated text.
+
+Potential signals:
+
+- no state change
+- no new evidence
+- same failure class
+- same corrective strategy
+- no useful tool effect
+- no changed hypothesis
+- no changed execution path
+
+Distinguish:
+
+reasoning stagnation
+
+from:
+
+- provider failure
+- environment failure
+- permission failure
+- external dependency failure
+- tool failure
+
+
+================================================================================
+46. FAILURE CLASSIFICATION
+================================================================================
+
+Implement explicit failure classes where they improve recovery.
+
+At minimum distinguish concepts such as:
+
+- code failure
+- test failure
+- environment failure
+- provider failure
+- permission failure
+- authority failure
+- tool failure
+- context insufficiency
+- model capability insufficiency
+- contract ambiguity
+
+Do not apply one generic retry policy to all failure classes.
+
+
+================================================================================
+47. BOUNDED RETRY
+================================================================================
+
+Conceptual contract:
+
+while blocking_failure_exists
+AND retry_budget_remaining
+AND next_attempt_is_materially_different:
+    retry
+
+A materially different retry may involve:
+
+- new evidence
+- changed corrective hypothesis
+- different tool
+- different command
+- changed parameters
+- different model when justified
+- specialist role
+- stronger isolation
+- changed implementation strategy
+
+This is NOT a materially different retry:
+
+same model
++ same context
++ same command
++ same strategy
++ hope
+
+
+================================================================================
+48. RUNTIME PROCESS GOVERNOR
+================================================================================
+
+Study opencode-pty source implementation.
+
+Directly port/adapt compatible primitives where useful.
+
+Long-running processes must become first-class runtime state where needed.
+
+Potential ProcessState:
+
+- process_id
+- owner_task
+- purpose
+- cwd
+- status
+- started_at
+- expected_signal
+- cleanup_policy
+
+Relevant workloads:
+
+- dev server
+- watcher
+- test watch
+- local database
+- tunnel
+- profiler
+- long-running build process
+
+Avoid blind:
+
+sleep
+→ poll
+→ sleep
+→ poll
+
+when event-driven host/process state is available.
+
+
+================================================================================
+49. PROCESS LIFECYCLE
+================================================================================
+
+Processes must reconcile with mission lifecycle.
+
+On:
+
+mission complete
+mission failed
+mission cancelled
+STOP
+
+required processes must be:
+
+- stopped
+- retained intentionally
+- handed over explicitly
+
+according to cleanup policy.
+
+Do not leave accidental orphan processes.
+
+
+================================================================================
+50. ADAPTIVE ISOLATION
+================================================================================
+
+Study opencode-worktree source implementation.
+
+Reuse/adapt license-compatible primitives.
+
+Isolation depth is a separate adaptive axis.
+
+Conceptual policy:
+
+LOW
+→ current workspace
+
+MEDIUM
+→ git worktree
+
+HIGH
+→ stronger isolated environment/container when available
+
+UNTRUSTED
+→ sandbox/restricted capabilities
+
+Do not isolate every trivial task.
+
+Safety is not always "more reasoning".
+
+Sometimes stronger isolation is cheaper and safer.
+
+
+================================================================================
+51. WORKSPACE ISOLATION SKILL
+================================================================================
+
+The migrated:
+
+hi-workspace-isolation
+
+skill should remain methodology.
+
+Runtime isolation mechanism remains a runtime capability.
+
+Skill:
+
+HOW / WHEN TO APPLY SAFELY
+
+Runtime:
+
+ACTUAL WORKTREE / ISOLATION OPERATION
+
+Do not collapse the two.
+
+
+================================================================================
+52. SHELL EXECUTION POLICY
+================================================================================
+
+Study opencode-shell-strategy source implementation.
+
+Adapt useful fail-fast/non-interactive behavior.
+
+When an interactive command is detected:
+
+known safe non-interactive form?
+→ use it when appropriate
+
+otherwise:
+
+requires real human interaction?
+→ USER_ACTION_REQUIRED
+
+Do not use blanket:
+
+yes |
+
+or fake approval bypass patterns.
+
+Credential/OAuth/device challenges must not be falsely automated.
+
+
+================================================================================
+53. CAPABILITY PROFILES
+================================================================================
+
+Study OCX source implementation.
+
+Do not import its entire config/control model merely because it exists.
+
+Consider bounded capability profiles such as:
+
+SAFE
+STANDARD
+RESEARCH
+RELEASE
+SANDBOX
+
+These are permission/capability envelopes.
+
+They are NOT agent personalities.
+
+Example semantics:
+
+RESEARCH:
+write restricted
+research/read capabilities enabled
+
+RELEASE:
+external side effects authority-gated
+
+SANDBOX:
+untrusted execution allowed only inside stronger isolation
+
+Do not create unnecessary profile proliferation.
+
+
+================================================================================
+54. TOOL SELECTION
+================================================================================
+
+Tool choice is part of adaptive execution.
+
+Examples:
+
+tiny exact edit
+→ native edit
+
+large deterministic transformation
+→ suitable patch operation
+
+semantic refactor
+→ language-aware operation when available
+
+large repository search
+→ indexed/semantic retrieval when beneficial
+
+Tool available
+≠
+tool executed
+
+
+================================================================================
+55. RISK-PROPORTIONAL VERIFICATION
+================================================================================
+
+Verification target:
+
+SUFFICIENT EVIDENCE-BASED CONFIDENCE
+
+not:
+
+MAXIMUM POSSIBLE CERTAINTY
+
+LOW risk:
+
+targeted verification
+
+MEDIUM risk:
+
+targeted
++
+dependency-aware verification
+
+HIGH risk:
+
+broader integration
++
+review/specialist when materially justified
+
+Avoid verification spirals.
+
+
+================================================================================
+56. EVIDENCE FRESHNESS
+================================================================================
+
+Preserve the proven v58 evidence model.
+
+If a verified surface changes:
+
+affected evidence may become stale.
+
+Project Intelligence freshness and Mission Evidence freshness are different
+concepts.
+
+Do not use historical knowledge as substitute for current verification.
+
+
+================================================================================
+57. SOURCE-DRIVEN REFERENCE IMPLEMENTATION SET
+================================================================================
+
+The following projects are reference/source repositories for the 0.1.x work.
+
+BASELINE
+--------
+
+OpenCode-HHC-Orchestrator v58
+
+CONTEXT / KNOWLEDGE
+-------------------
+
+opencode-dynamic-context-pruning
+opencode-supermemory
+OpenAgentsControl
+agentic
+type-inject
+
+SKILLS
+------
+
+opencode-skillful
+
+HUMAN DECISION
+--------------
+
+plannotator
+octto
+
+RUNTIME
+-------
+
+opencode-pty
+opencode-worktree
+opencode-shell-strategy
+
+MISSION / EXECUTION
+-------------------
+
+OpenCode-goal-plugin
+opencode-goal-plugin
+
+ASYNC / ARTIFACTS
+-----------------
+
+opencode-background-agents
+
+CAPABILITY / CONFIG
+-------------------
+
+ocx
+
+PRIVACY
+-------
+
+opencode-vibeguard
+
+
+================================================================================
+58. SOURCE REUSE POLICY
+================================================================================
+
+Do not implement external functionality from vague memory.
+
+Inspect actual source code.
+
+For every external project inspect:
+
+- README
+- package metadata
+- LICENSE
+- architecture
+- runtime hooks
+- state models
+- tests
+- fixtures
+- edge cases
+- failure handling
+- cleanup semantics
+
+Produce a SOURCE REUSE MATRIX before substantial implementation.
+
+Required fields:
+
+SOURCE PROJECT
+SOURCE FILE / MODULE
+LICENSE
+USEFUL PRIMITIVE
+CURRENT HI/V58 EQUIVALENT
+OWNERSHIP CONFLICT
+ACTION
+TEST STRATEGY
+ATTRIBUTION REQUIREMENT
+
+ACTION must be one of:
+
+DIRECT_PORT
+ADAPT
+CLEAN_ROOM
+IDEA_ONLY
+REJECT
+
+
+================================================================================
+59. LICENSE POLICY
+================================================================================
+
+License compatibility must be determined before copying source.
+
+For permissive compatible code:
+
+DIRECT_PORT or ADAPT may be appropriate.
+
+Preserve required notices and attribution.
+
+For AGPL/incompatible code:
+
+DO NOT COPY CODE.
+
+Study:
+
+- behavior
+- architecture
+- tests
+- edge cases
+
+then independently implement compatible behavior.
+
+For unknown or absent license:
+
+DO NOT ASSUME PERMISSION.
+
+Use:
+
+CLEAN_ROOM
+IDEA_ONLY
+or
+REJECT
+
+until permission is established.
+
+
+================================================================================
+60. NO FOREIGN CONTROL-PLANE OWNERSHIP
+================================================================================
+
+External repositories may contain useful primitives.
+
+Do not import competing orchestration ownership.
+
+Examples:
+
+Do not allow an external project to become owner of:
+
+- MissionState
+- completion
+- STOP
+- authority
+- primary routing
+- core agent topology
+- global continuation
+
+Extract the useful primitive and integrate it under Hi ownership.
+
+
+================================================================================
+61. HOST-INDEPENDENT CORE
+================================================================================
+
+OpenCode is the primary/reference host for 0.1.x.
+
+However, core semantics must not accidentally depend on OpenCode SDK types.
+
+Core concepts should remain host-independent:
+
+- Mission
+- Obligation
+- Task
+- Evidence
+- Authority
+- Completion
+- ExecutionPolicy
+- ContextPolicy
+- TopologyDecision
+- FailureClass
+- HumanDecision semantics
+
+Host-specific behavior belongs behind a host boundary.
+
+
+================================================================================
+62. HOST ADAPTER
+================================================================================
+
+Establish/evolve a HostAdapter boundary only as far as needed.
+
+Do not create abstraction for abstraction's sake.
+
+Host capabilities may include:
+
+- session create/resume
+- child session
+- model invocation
+- tool invocation
+- shell
+- edit
+- permissions
+- events
+- compaction
+- process
+- workspace isolation
+
+Use the existing v58 structure when it already provides an appropriate owner.
+
+Avoid duplicate layers.
+
+
+================================================================================
+63. CAPABILITY MANIFEST
+================================================================================
+
+A host should be able to declare relevant capabilities.
+
+Examples:
+
+- child_sessions
+- async_sessions
+- model_override
+- native_permissions
+- structured_output
+- mcp
+- shell
+- edit
+- compaction_hook
+- process_events
+- workspace_isolation
+
+Execution policy may then resolve:
+
+ideal trajectory
+→ host capabilities
+→ executable trajectory
+
+Missing capability outcomes:
+
+NATIVE
+SAFE_EMULATION
+DEGRADED
+UNSUPPORTED
+
+Never fake compatibility.
+
+
+================================================================================
+64. OPENCODE AS REFERENCE HOST
+================================================================================
+
+0.1.x must prioritize a high-quality OpenCode implementation.
+
+Do not degrade native OpenCode integration merely to make future portability
+look cleaner.
+
+Principle:
+
+NATIVE WHEN AVAILABLE
+PORTABLE AT THE SEMANTIC BOUNDARY
+
+
+================================================================================
+65. FUTURE HOSTS
+================================================================================
+
+Architecture should not prevent future adapters for:
+
+- Codex
+- Claude Code
+- Cursor
+- other CLI/MCP-capable hosts
+
+Full adapters are NOT required for 0.1.0.
+
+At least one mock/secondary-host contract test should be considered to detect
+accidental OpenCode coupling.
+
+
+================================================================================
+66. MCP
+================================================================================
+
+MCP is not the orchestration owner.
+
+If implemented, it should expose portable Hi capabilities.
+
+Potential future capabilities:
+
+hi_status
+hi_readiness
+hi_evidence
+hi_project_context
+hi_pattern_lookup
+hi_skill_resource
+hi_memory_search
+hi_process_status
+hi_telemetry
+
+Do not block 0.1.0 on unnecessary MCP implementation.
+
+
+================================================================================
+67. EXECUTION TELEMETRY
+================================================================================
+
+Minimum Sufficient Computation must be measurable.
+
+Collect privacy-safe telemetry sufficient to evaluate:
+
+- task class
+- risk
+- execution path
+- activated roles
+- activated skills
+- selected models
+- selected tools
+- topology
+- context volume
+- model calls
+- tool calls
+- delegations
+- retries
+- verification actions
+- failure classes
+- escalation reasons
+- human interactions
+- elapsed time
+- completion result
+
+Do not record secrets or unnecessary raw payloads.
+
+
+================================================================================
+68. METRICS
+================================================================================
+
+At minimum support meaningful derivation of:
+
+EXECUTION COST
+
+WASTED COMPUTE RATIO
+
+Conceptually:
+
+actions that changed no:
+- state
+- evidence
+- decision
+- recovery
+
+/
+total actions
+
+HUMAN ATTENTION EFFICIENCY
+
+material human decisions
+/
+human interactions requested
+
+CONTEXT EFFICIENCY
+
+decision-relevant context
+/
+total injected context
+
+Metrics must not produce excessive instrumentation overhead.
+
+
+================================================================================
+69. TELEMETRY DOES NOT SELF-MODIFY POLICY
+================================================================================
+
+Do not create uncontrolled runtime self-modification.
+
+Correct loop:
+
+execution
+→ telemetry
+→ offline analysis
+→ policy recommendation
+→ benchmark/tests
+→ explicit adoption
+
+Runtime telemetry may inform execution according to already-approved policy.
+
+It must not rewrite the policy architecture autonomously.
+
+
+================================================================================
+70. RELEASE AND SUPPLY CHAIN
+================================================================================
+
+Preserve proven v58 release strengths:
+
+- deterministic source artifact
+- deterministic distributable
+- manifest
+- SBOM
+- hash verification
+- exact source identity
+- clean candidate verification
+
+Consider improving:
+
+- OIDC trusted publishing
+- provenance attestations
+- release identity chain
+
+Do not introduce unnecessary long-lived secrets.
+
+
+================================================================================
+71. README AND DOCUMENTATION
+================================================================================
+
+Canonical:
+
+README.md
+
+Turkish alternative:
+
+README.tr.md
+
+README.md must clearly include:
+
+- what OpenCode-Hi is
+- installation
+- exact configuration file location
+- configuration merge behavior
+- restart requirement
+- doctor
+- update
+- uninstall
+- architecture summary
+- agent/model topology behavior
+- skills
+- authority model
+- supported OpenCode version
+- portability status
+- development
+- verification
+- license
+
+Explicitly document project-local configuration as:
+
+<project-root>/opencode.json
+
+If the file exists:
+
+merge the plugin entry without deleting unrelated settings.
+
+If the file does not exist:
+
+create it.
+
+The exact final installation syntax must be verified against the real OpenCode
+resolver before publishing it as guaranteed.
+
+Additional docs should exist where they provide real value, for example:
+
+docs/ARCHITECTURE.md
+docs/EXECUTION-POLICY.md
+docs/CONTEXT.md
+docs/PROJECT-INTELLIGENCE.md
+docs/PRIVACY.md
+docs/HUMAN-DECISIONS.md
+docs/HOSTS.md
+docs/SKILLS.md
+docs/VERIFICATION.md
+docs/RELEASE.md
+
+Do not generate giant documentation files for trivial concepts.
+
+
+================================================================================
+72. REPOSITORY IMPLEMENTATION STRATEGY
+================================================================================
+
+Implementation must proceed incrementally.
+
+Do not rewrite all v58 modules first and test at the end.
+
+Preferred strategy:
+
+preserve proven baseline
+→ identify owner
+→ integrate one architectural capability
+→ targeted tests
+→ affected regression tests
+→ continue
+
+Minimize unnecessary churn.
+
+
+================================================================================
+73. PHASE 0 — REPOSITORY REALITY CHECK
+================================================================================
+
+Inspect OpenCode-Hi.
+
+Confirm:
+
+- repository state
+- branch
+- tracked content
+- current package metadata
+- existing files
+- existing history
+
+Do not assume the repository is empty without checking.
+
+
+================================================================================
+74. PHASE 1 — EXACT V58 SOURCE BASELINE
+================================================================================
+
+Establish exact v58 code as the source root.
+
+Verify exact source identity.
+
+Record relevant baseline identity.
+
+Do not mix Hi modifications into the source-import verification step.
+
+
+================================================================================
+75. PHASE 2 — PRISTINE BASELINE TESTING
+================================================================================
+
+Before Hi feature changes:
+
+- clean dependency bootstrap
+- build
+- static checks
+- Node tests
+- Python validation where present
+- package validation
+- existing integration suites
+- existing release/validator suites where practical
+
+Record:
+
+PASS
+FAIL
+ENVIRONMENT_BLOCKED
+
+Distinguish baseline defect from environment defect.
+
+
+================================================================================
+76. PHASE 3 — SOURCE INVENTORY
+================================================================================
+
+Inventory all supplied reference repositories.
+
+For each record:
+
+- name
+- version/commit if available
+- license
+- relevant modules
+- relevant tests
+- useful primitives
+- ownership conflicts
+
+Hash local source archives/material where useful for provenance.
+
+
+================================================================================
+77. PHASE 4 — SOURCE REUSE MATRIX
+================================================================================
+
+Complete the Source Reuse Matrix before reimplementing external capabilities.
+
+This phase is mandatory.
+
+Do not start writing an original equivalent of a proven source primitive before
+deciding whether DIRECT_PORT or ADAPT is legally and architecturally better.
+
+
+================================================================================
+78. PHASE 5 — PRODUCT IDENTITY MIGRATION
+================================================================================
+
+Migrate:
+
+OpenCode-HHC-Orchestrator
+→ OpenCode-Hi
+
+and:
+
+hhc-*
+→ hi-*
+
+where those are public/canonical skill identities.
+
+Update:
+
+- package
+- plugin identity
+- docs
+- CLI
+- tests
+- manifests
+- registry
+- skill paths
+- config
+- release metadata
+
+At the end of this phase, behavior should remain functionally equivalent to the
+established baseline.
+
+Run regressions.
+
+
+================================================================================
+79. PHASE 6 — SKILL AUDIT AND RECALIBRATION
+================================================================================
+
+Audit all 29 migrated skills.
+
+Do not postpone this until after the architecture is complete.
+
+Produce for every skill:
+
+- trigger policy
+- priority/weight
+- role affinity
+- composition behavior
+- context cost
+- execution cost
+- escalation relationship
+- do-not-trigger
+- exit condition
+
+Update tests accordingly.
+
+
+================================================================================
+80. PHASE 7 — ARCHITECTURE REALITY MAP
+================================================================================
+
+Before adding new modules, map actual current owners of:
+
+- mission
+- obligation
+- task
+- worker
+- intent
+- execution mode
+- routing
+- model policy
+- skills
+- context
+- evidence
+- authority
+- autopilot
+- continuation
+- completion
+- STOP
+- setup
+- release
+- runtime process handling
+- workspace handling
+
+Do not create a subsystem merely because a prompt section has a heading.
+
+Reuse natural existing owners.
+
+
+================================================================================
+81. PHASE 8 — ADAPTIVE EXECUTION POLICY
+================================================================================
+
+Implement/evolve:
+
+- six execution axes
+- Direct path
+- Evidence path
+- Planned path
+- Escalated path
+- topology selection
+- model/tool adaptation
+- execution-depth control
+
+Preserve minimum sufficient defaults.
+
+
+================================================================================
+82. PHASE 9 — AUTOPILOT EVOLUTION
+================================================================================
+
+Integrate Adaptive Execution Policy with the existing autopilot/continuation
+runtime.
+
+Autopilot must reason over:
+
+- MissionState
+- evidence
+- budget
+- topology
+- failure
+- authority
+- processes
+- verification
+- completion
+
+Do not turn autopilot into a mega-orchestrator.
+
+It decides next control-plane action.
+
+Specialized modules execute their owned responsibility.
+
+
+================================================================================
+83. PHASE 10 — CONTEXT GOVERNOR
+================================================================================
+
+Implement mission-aware context pruning/compression.
+
+Preserve protected mission state.
+
+Use DCP only as behavioral/test inspiration under the license policy.
+
+Measure context reduction without correctness loss.
+
+
+================================================================================
+84. PHASE 11 — PROJECT INTELLIGENCE
+================================================================================
+
+Implement durable evidence-backed project knowledge.
+
+Support lazy pattern discovery.
+
+Support freshness invalidation.
+
+Avoid global eager repository indexing when a task does not require it.
+
+
+================================================================================
+85. PHASE 12 — SEMANTIC CONTEXT
+================================================================================
+
+Implement the first useful semantic-context adapter.
+
+Prefer a high-quality scoped TypeScript implementation over shallow
+multi-language placeholders.
+
+Integrate it into context retrieval only when it materially reduces context or
+improves correctness.
+
+
+================================================================================
+86. PHASE 13 — PRIVACY BOUNDARY
+================================================================================
+
+Implement provider-facing context privacy.
+
+Build leak tests.
+
+Use synthetic credentials/secrets.
+
+Ensure logs, telemetry, mission state and artifacts are safe.
+
+
+================================================================================
+87. PHASE 14 — SKILL RESOURCES
+================================================================================
+
+Implement lazy, safe skill resources.
+
+Enhance existing skills rather than adding duplicates.
+
+Verify path safety and packaging.
+
+
+================================================================================
+88. PHASE 15 — KNOWLEDGE ASSIMILATION
+================================================================================
+
+Implement the classification path:
+
+external source
+→ project knowledge
+→ architecture/policy
+→ reusable methodology
+→ temporary evidence
+
+Implement skill merge/new-skill decision logic at the appropriate layer.
+
+Do not create uncontrolled self-modifying skills.
+
+Changes to the project skill set must be explicit repository modifications with
+tests/provenance, not invisible runtime mutation.
+
+
+================================================================================
+89. PHASE 16 — HUMAN DECISION SEMANTICS
+================================================================================
+
+Implement:
+
+- Human Value Gate
+- batched decisions
+- authority vs preference distinction
+- INTERRUPT
+- QUEUE
+- SIDEBAND
+
+Integrate with the existing authority boundary.
+
+
+================================================================================
+90. PHASE 17 — MISSION BUDGET AND RETRY
+================================================================================
+
+Integrate useful Goal Plugin primitives.
+
+Improve:
+
+- budget
+- no-progress
+- failure classification
+- materially different retry
+- bounded recovery
+
+Preserve deterministic completion.
+
+
+================================================================================
+91. PHASE 18 — PROCESS GOVERNOR
+================================================================================
+
+Integrate compatible PTY/runtime process primitives.
+
+Test:
+
+- process start
+- state visibility
+- exit/event detection
+- cancellation
+- cleanup
+- mission completion cleanup
+
+
+================================================================================
+92. PHASE 19 — ADAPTIVE ISOLATION
+================================================================================
+
+Integrate worktree-based isolation.
+
+Do not isolate low-risk tasks unnecessarily.
+
+Ensure existing user work is preserved.
+
+Test failure cleanup.
+
+
+================================================================================
+93. PHASE 20 — ARTIFACT-FIRST RESULTS
+================================================================================
+
+Upgrade the existing context-artifact mechanism where necessary.
+
+Use artifacts for large durable:
+
+- repository audits
+- research
+- review results
+- source-derived reports
+- child outputs
+
+Avoid transcript bloat.
+
+
+================================================================================
+94. PHASE 21 — OPTIONAL MEMORY BROKER
+================================================================================
+
+Only after current mission evidence and Project Intelligence work correctly:
+
+implement the memory provider boundary.
+
+Core correctness must not depend on memory availability.
+
+
+================================================================================
+95. PHASE 22 — HOST BOUNDARY
+================================================================================
+
+Validate that core semantics are not polluted by accidental OpenCode-specific
+types.
+
+Keep OpenCode the reference adapter.
+
+Add only the abstractions actually needed for future portability.
+
+
+================================================================================
+96. PHASE 23 — TELEMETRY
+================================================================================
+
+Implement minimal useful telemetry and efficiency metrics.
+
+Ensure telemetry overhead is measured and bounded.
+
+
+================================================================================
+97. PHASE 24 — RELEASE HARDENING
+================================================================================
+
+Validate:
+
+- install
+- doctor
+- reconfigure
+- upgrade
+- reinstall
+- uninstall
+- user config preservation
+- release build
+- package integrity
+- manifests
+- SBOM
+- exact candidate binding
+- README accuracy
+
+
+================================================================================
+98. PHASE GATES
+================================================================================
+
+Do not blindly run the full suite after every small edit.
+
+Use risk-proportional gates.
+
+Before advancing a phase:
+
+- targeted tests PASS
+- affected regression tests PASS
+- no unresolved internal blocker caused by the phase
+
+At major integration boundaries:
+
+run broader suites.
+
+
+================================================================================
+99. TEST REUSE
+================================================================================
+
+Third-party source tests are valuable engineering assets.
+
+When license permits:
+
+port/adapt relevant tests.
+
+When source license prevents code/test copying:
+
+observe behavior and independently author equivalent tests.
+
+Capture:
+
+- state transitions
+- failure semantics
+- edge cases
+- cleanup
+- timeout behavior
+- permission behavior
+- invalid inputs
+- concurrency
+- security boundaries
+
+
+================================================================================
+100. DIRECT PATH ACCEPTANCE
+================================================================================
+
+A trivial local task must be able to execute with approximately:
+
+planner = 0
+specialist = 0
+reviewer = 0
+memory = 0
+broad project refresh = 0
+unnecessary second model = 0
+unnecessary child agent = 0
+
+Trajectory:
+
+assess
+→ execute
+→ targeted verify
+→ STOP
+
+
+================================================================================
+101. TOPOLOGY ACCEPTANCE
+================================================================================
+
+Prove all relevant topology semantics.
+
+A. One agent, one model.
+
+B. One agent, multiple roles.
+
+C. Multiple agents, one model.
+
+D. Multiple agents, role-mapped models.
+
+E. Multiple instances of one role.
+
+Prove user override precedence.
+
+Prove adaptive topology does not fan out unnecessarily.
+
+
+================================================================================
+102. OPENCODE NATIVE ACCEPTANCE
+================================================================================
+
+Prove that:
+
+- agent creation uses native OpenCode behavior where available;
+- child execution uses native OpenCode sessions/tasks where available;
+- model execution uses native provider/model mechanisms;
+- permission denial is never bypassed;
+- Hi topology is a decision layer, not a competing runtime.
+
+
+================================================================================
+103. EVIDENCE PATH ACCEPTANCE
+================================================================================
+
+Material uncertainty must retrieve only decision-changing evidence.
+
+Do not treat:
+
+"uncertain"
+
+as:
+
+"scan everything"
+
+
+================================================================================
+104. CONTEXT GOVERNOR ACCEPTANCE
+================================================================================
+
+Prove duplicate/obsolete context can be reduced.
+
+Prove the following survive:
+
+- objective
+- blocker
+- authority
+- open obligation
+- fresh evidence
+- active task
+- required verification
+- STOP condition
+
+
+================================================================================
+105. PROJECT INTELLIGENCE ACCEPTANCE
+================================================================================
+
+A repository convention already learned and still fresh should not require
+re-discovery on every task.
+
+If its relevant source changes:
+
+stored knowledge must become suspect/stale rather than silently trusted.
+
+
+================================================================================
+106. SEMANTIC CONTEXT ACCEPTANCE
+================================================================================
+
+For a TypeScript task, prove that relevant type/interface/schema information
+can be supplied without injecting the entire dependency graph.
+
+Measure context difference.
+
+
+================================================================================
+107. PRIVACY ACCEPTANCE
+================================================================================
+
+Using synthetic secrets prove:
+
+local permitted runtime may access required value
+
+while:
+
+provider-facing context does not contain plaintext
+
+and:
+
+logs do not contain plaintext
+telemetry does not contain plaintext
+durable artifacts do not contain plaintext
+mission state does not accidentally persist plaintext
+
+
+================================================================================
+108. SKILL ACCEPTANCE
+================================================================================
+
+Prove:
+
+- hi-* names are canonical
+- all 29 baseline skills were audited
+- weights/triggers were recalibrated
+- default-zero behavior remains
+- duplicate new skills were not introduced unnecessarily
+- resources are lazy
+- resource paths are safe
+
+
+================================================================================
+109. KNOWLEDGE ASSIMILATION ACCEPTANCE
+================================================================================
+
+Test at least:
+
+A. User provides project documentation containing project facts.
+
+Expected:
+Project Intelligence update, not new skill.
+
+B. User provides reusable methodology that overlaps an existing skill.
+
+Expected:
+merge/enrich existing skill.
+
+C. User provides genuinely new reusable methodology.
+
+Expected:
+new skill only if trigger/do-not-trigger/exit contracts can be established.
+
+D. User only asks to inspect external material.
+
+Expected:
+report, not silent mutation.
+
+
+================================================================================
+110. HUMAN DECISION ACCEPTANCE
+================================================================================
+
+Low-risk reversible task:
+
+no unnecessary user question.
+
+Contract-critical ambiguity:
+
+USER_ACTION_REQUIRED.
+
+Multiple independent decisions:
+
+batched when useful.
+
+Explicit authority boundary:
+
+must not be bypassed.
+
+
+================================================================================
+111. RETRY ACCEPTANCE
+================================================================================
+
+Failure:
+
+classify
+→ change hypothesis/action
+→ retry
+
+Same failure + same strategy must not loop.
+
+Budget exhaustion:
+
+explicit blocked/escalation state.
+
+
+================================================================================
+112. PROCESS ACCEPTANCE
+================================================================================
+
+Long-running test/dev-server process:
+
+start
+→ observable state
+→ observable exit/signal
+→ stop/cleanup
+
+Mission cancellation must not leave unintended orphan processes.
+
+
+================================================================================
+113. ISOLATION ACCEPTANCE
+================================================================================
+
+Low-risk task:
+
+no unnecessary worktree.
+
+Higher-risk qualifying task:
+
+worktree can be selected.
+
+Existing user changes must remain safe.
+
+
+================================================================================
+114. MEMORY ACCEPTANCE
+================================================================================
+
+Memory disabled:
+
+system works.
+
+Memory enabled but irrelevant:
+
+lookup count = 0.
+
+Memory conflicts with fresh evidence:
+
+fresh evidence wins.
+
+
+================================================================================
+115. AUTOPILOT ACCEPTANCE
+================================================================================
+
+Test:
+
+worker idle with open obligation
+→ NOT STOP
+
+worker idle with required verification pending
+→ VERIFY/CONTINUE as appropriate
+
+blocking failure with valid recovery
+→ RECOVER
+
+authority required
+→ USER_ACTION_REQUIRED
+
+all obligations closed + evidence fresh + no pending state
+→ STOP
+
+
+================================================================================
+116. COMPLETION ACCEPTANCE
+================================================================================
+
+STOP must not occur while any required state remains pending:
+
+- obligation
+- task
+- worker
+- child result
+- process
+- authority
+- rollback
+- required verification
+- stale blocking evidence
+
+When all completion requirements are satisfied:
+
+STOP
+
+No speculative continuation.
+
+
+================================================================================
+117. BEFORE/AFTER BENCHMARKS
+================================================================================
+
+Create representative scenarios.
+
+SIMPLE LOCAL TASK
+-----------------
+
+Measure:
+
+- model calls
+- agent count
+- tool calls
+- context volume
+- skills
+- verification
+- elapsed time
+
+UNKNOWN REPOSITORY CONVENTION
+-----------------------------
+
+Compare repeated repository discovery vs Project Intelligence.
+
+COMPLEX CROSS-MODULE TASK
+-------------------------
+
+Measure planning/delegation usefulness.
+
+FAILED VERIFICATION
+-------------------
+
+Measure retry/recovery behavior.
+
+LONG SESSION
+------------
+
+Measure context growth and governor effect.
+
+HUMAN-GATED TASK
+----------------
+
+Measure human interaction quality/count.
+
+LONG-RUNNING PROCESS
+--------------------
+
+Compare polling behavior vs process-state/event semantics.
+
+MULTI-MODEL TASK
+----------------
+
+Verify model escalation/mapping produces measurable value rather than fan-out.
+
+MULTI-AGENT TASK
+----------------
+
+Verify delegation materially improves trajectory relative to single-agent mode.
+
+
+================================================================================
+118. ARCHITECTURE FREEZE PRINCIPLE
+================================================================================
+
+Before creating any new core subsystem ask:
+
+"Does this represent a genuinely new responsibility that cannot cleanly belong
+to an existing subsystem?"
+
+If no:
+
+DO NOT CREATE IT.
+
+Expected responsibility families:
+
+- Mission / Task / Worker
+- Evidence
+- Authority
+- Completion
+- Autopilot
+- Adaptive Execution
+- Context
+- Runtime
+- Human Decision
+- Host boundary
+- Telemetry
+
+Avoid architecture inflation.
+
+
+================================================================================
+119. CORE BOUNDARY
+================================================================================
+
+CORE
+----
+
+- Mission
+- Obligation
+- Task
+- Worker
+- Evidence
+- Authority
+- Completion
+- STOP
+- Autopilot / Continuation
+- Adaptive Execution Policy
+- Execution Topology Policy
+- model/tool selection policy
+- Context Governor
+- Project Intelligence
+- Semantic Context
+- Privacy Boundary
+- Human Decision Semantics
+- Mission Budget
+- Failure Classification
+- Process Governor
+- Isolation Policy
+- Artifact model
+- Execution Telemetry
+- Host capability contract
+- OpenCode adapter
+
+CORE-ADJACENT
+-------------
+
+- Skill Resource Registry
+- Capability Profiles
+- MCP Gateway
+- Host renderers
+
+OPTIONAL
+--------
+
+- remote Memory provider
+- remote telemetry backend
+- external sandbox provider
+- specialized search provider
+- alternate tool provider
+- additional semantic language adapters
+- full Codex adapter
+- full Claude Code adapter
+- full Cursor adapter
+- per-model methodology renderer
+
+
+================================================================================
+120. ANTI-PATTERNS
+================================================================================
+
+Do NOT create:
+
+MEGA ORCHESTRATOR
+
+CEREMONY PIPELINE
+
+CAPABILITY FAN-OUT
+
+STRONG MODEL DEFAULT
+
+MULTI-AGENT DEFAULT
+
+MEMORY EVERYWHERE
+
+CONTEXT HOARDING
+
+PLANNING TAX
+
+REVIEW TAX
+
+HUMAN APPROVAL SPAM
+
+VERIFICATION SPIRAL
+
+RETRY SPIRAL
+
+RULE EXPLOSION
+
+SKILL EXPLOSION
+
+FEATURE COLLECTION ARCHITECTURE
+
+ADAPTER LEAKAGE
+
+FAKE PORTABILITY
+
+FAKE EXTERNAL VERIFICATION
+
+OPTIMIZATION TAX
+
+RUNTIME SELF-MODIFYING POLICY
+
+DUPLICATE HOST RUNTIME
+
+
+================================================================================
+121. RELEASE ACCEPTANCE FOR 0.1.0
+================================================================================
+
+0.1.0 may become a release candidate only when the coherent core is real.
+
+Required:
+
+- exact v58 baseline established
+- v58 core behavior preserved
+- OpenCode-Hi identity migration complete
+- canonical hi-* skill migration complete
+- all 29 skills recalibrated
+- Adaptive Execution operational
+- Direct path proven
+- agent/model topology operational
+- OpenCode native-first behavior proven
+- Autopilot operational
+- Evidence freshness intact
+- Context Governor operational
+- Project Intelligence operational
+- useful Semantic Context implementation operational
+- Privacy Boundary operational
+- Human decision semantics operational
+- retry/budget bounded
+- Process Governor operational
+- worktree isolation operational
+- artifact behavior operational
+- Host boundary coherent
+- OpenCode adapter healthy
+- deterministic Completion/STOP healthy
+- README.md correct
+- README.tr.md available
+- install/config documentation correct
+- tests green
+- release artifacts valid
+- no known blocking internal defect
+- no unresolved internal finding
+
+The following do NOT have to block 0.1.0 if architecture supports them cleanly:
+
+- remote memory provider
+- every semantic language adapter
+- full Codex adapter
+- full Claude Code adapter
+- full Cursor adapter
+- remote telemetry service
+- external sandbox backend
+- per-model methodology renderer
+
+
+================================================================================
+122. RELEASE VERIFICATION
+================================================================================
+
+Before final release candidate acceptance:
+
+- fresh dependency bootstrap
+- static validation
+- targeted tests
+- integration tests
+- complete project test suite
+- build
+- source artifact
+- distributable artifact
+- determinism checks
+- manifest
+- SBOM
+- hashes
+- doctor
+- clean install
+- exact Git ref install
+- real OpenCode plugin loader
+- config merge behavior
+- restart/install instructions verification
+- upgrade/reinstall
+- uninstall
+- user config preservation
+- provenance where implemented
+
+Do not represent a mocked external behavior as real external verification.
+
+
+================================================================================
+123. EXACT CANDIDATE BINDING
+================================================================================
+
+Release evidence must bind to one exact candidate.
+
+Bind:
+
+- commit
+- tag
+- source artifact
+- distributable
+- manifest
+- SBOM
+- verification receipts
+- external runtime receipts
+
+If source changes after verification:
+
+candidate changed.
+
+Re-run affected candidate verification.
+
+Do not reuse stale receipts.
+
+
+================================================================================
+124. KNOWN DEFECT POLICY
+================================================================================
+
+Final release state requires:
+
+0 known blocking internal defects
+0 unresolved internal findings
+
+If an external environment genuinely prevents verification:
+
+mark:
+
+PENDING_EXTERNAL
+
+Do not lower the acceptance standard merely to produce PASS.
+
+
+================================================================================
+125. IMPLEMENTATION REPORTING
+================================================================================
+
+Report meaningful milestones only.
+
+Useful milestone reports include:
+
+- baseline status
+- source reuse decisions
+- architecture ownership conflicts
+- significant implemented subsystem
+- important regression
+- external blocker
+- release candidate state
+
+Do not narrate every trivial tool call or file read.
+
+
+================================================================================
+126. DO NOT ASK UNNECESSARY QUESTIONS
+================================================================================
+
+If repository/tool/source inspection can resolve the uncertainty:
+
+inspect it.
+
+Ask the user only when the answer materially depends on:
+
+- preference
+- authority
+- irreversible decision
+- contract-critical ambiguity
+- unavailable external credential
+- unavailable external action
+
+Do not shift routine engineering decisions back to the user.
+
+
+================================================================================
+127. SOURCE-DRIVEN IMPLEMENTATION RULE
+================================================================================
+
+When a proven implementation exists:
+
+PROVEN IMPLEMENTATION
+→ INSPECT SOURCE
+→ ISOLATE USEFUL PRIMITIVE
+→ LICENSE DECISION
+→ PORT / ADAPT / CLEAN-ROOM
+→ REGRESSION TEST
+→ HI INTEGRATION TEST
+
+Do not reinvent code merely to make it look native.
+
+Do not copy incompatible code merely because it is convenient.
+
+
+================================================================================
+128. FINAL ARCHITECTURE AUDIT
+================================================================================
+
+Before declaring 0.1.0 ready, explicitly audit:
+
+DIRECT PATH
+Is trivial work actually minimal?
+
+ROLE
+Is role selection conditional?
+
+SKILL
+Is skill activation default-zero?
+
+MODEL
+Is stronger-model use evidence-gated?
+
+TOOL
+Is tool selection adaptive?
+
+TOPOLOGY
+Can one agent remain one agent when sufficient?
+
+MULTI-AGENT
+Is fan-out justified?
+
+MULTI-MODEL
+Is model diversity useful rather than decorative?
+
+AUTOPILOT
+Does continuation depend on real mission state?
+
+EXECUTION DEPTH
+Is work proportional?
+
+CONTEXT DEPTH
+Is context minimum sufficient?
+
+SEMANTIC CONTEXT
+Does it reduce irrelevant context?
+
+PROJECT INTELLIGENCE
+Is it evidence-backed and freshness-aware?
+
+MEMORY
+Is it subordinate to current evidence?
+
+PRIVACY
+Is provider context properly bounded?
+
+HUMAN JUDGMENT
+Is the user asked only when materially useful?
+
+RETRY
+Is it bounded and materially different?
+
+PROCESS
+Are long-running processes first-class?
+
+ISOLATION
+Is isolation proportional to risk?
+
+VERIFICATION
+Is verification risk-proportional?
+
+COMPLETION
+Is completion deterministic?
+
+STOP
+Is STOP authoritative?
+
+OPENCode NATIVE BEHAVIOR
+Is Hi using host primitives rather than rebuilding them?
+
+PORTABILITY
+Is core semantic ownership host-independent?
+
+EFFICIENCY
+Does optimization save more than it costs?
+
+SKILLS
+Were all 29 skills genuinely recalibrated instead of renamed?
+
+
+================================================================================
+129. FINAL REPORT
+================================================================================
+
+The final implementation report must contain:
+
+BASELINE
+- exact v58 identity
+- baseline validation result
+
+PRODUCT MIGRATION
+- OpenCode-Hi identity changes
+- package/plugin identity
+- hi-* migration
+
+SOURCE REUSE
+For each external project:
+- useful primitive
+- license
+- DIRECT_PORT / ADAPT / CLEAN_ROOM / IDEA_ONLY / REJECT
+- files/modules involved
+- attribution
+
+FINAL ARCHITECTURE
+- real module ownership
+- no aspirational modules presented as implemented
+
+AUTOPILOT
+- continuation model
+- decision semantics
+- completion integration
+
+ADAPTIVE EXECUTION
+- six axes
+- execution paths
+- topology decisions
+- model/tool policy
+
+AGENTS / MODELS
+- single-agent behavior
+- multi-role behavior
+- multi-agent behavior
+- model override
+- user/project precedence
+
+SKILLS
+- complete hi-* set
+- recalibration results
+- resource changes
+- new/merged/rejected skills
+
+CONTEXT
+- survival state
+- governor
+- Project Intelligence
+- Semantic Context
+
+KNOWLEDGE ASSIMILATION
+- project knowledge
+- policies
+- methodology
+- external skill integration
+
+PRIVACY
+- provider boundary
+- leak tests
+
+HUMAN INTELLIGENCE
+- Human Value Gate
+- authority
+- preference
+- INTERRUPT / QUEUE / SIDEBAND
+
+RUNTIME
+- process governor
+- isolation
+- shell policy
+
+MEMORY
+- implemented provider boundary
+- optional status
+
+HOST
+- OpenCode native integration
+- capability manifest
+- future portability
+
+TELEMETRY
+- collected metrics
+- overhead
+
+VERIFICATION
+- test suites
+- integration results
+- regressions
+
+EFFICIENCY
+- before/after benchmark results
+
+RELEASE
+- exact 0.1.0 candidate
+- commit
+- tag
+- hashes
+- manifest
+- SBOM
+- install verification
+
+REMAINING GAPS
+- actual known limitations
+- deferred optional capabilities
+
+
+================================================================================
+130. FINAL SYSTEM INVARIANTS
+================================================================================
+
+AVAILABLE
+≠
+ACTIVATED
+
+ROLE
+≠
+AGENT
+
+AGENT
+≠
+MODEL
+
+COMPLEX
+≠
+MULTI-AGENT
+
+COMPLEX
+≠
+STRONGEST MODEL
+
+MEMORY
+≠
+EVIDENCE
+
+PROJECT KNOWLEDGE
+≠
+CURRENT VERIFICATION
+
+LOCAL KNOWLEDGE
+≠
+PROVIDER KNOWLEDGE
+
+AGENT IDLE
+≠
+MISSION COMPLETE
+
+MODEL SAYS DONE
+≠
+MISSION COMPLETE
+
+SKILL
+≠
+ORCHESTRATOR
+
+READ INTENT
+≠
+MUTATION AUTHORITY
+
+NEW KNOWLEDGE
+≠
+NEW SKILL
+
+HOST CAPABILITY
+≠
+HI OWNERSHIP
+
+HI DECIDES.
+OPENCODE EXECUTES NATIVE HOST PRIMITIVES.
+
+SUFFICIENT EVIDENCE
++
+CLOSED OBLIGATIONS
++
+RESOLVED AUTHORITY
++
+NO PENDING REQUIRED WORK
+=
+STOP
+
+
+================================================================================
+131. FINAL DECISION RULE
+================================================================================
+
+Before adding any:
+
+- agent
+- role
+- skill
+- model
+- tool
+- context
+- retrieval
+- memory lookup
+- planning step
+- human question
+- review
+- verification
+- retry
+- process
+- isolation step
+- architecture component
+
+ask:
+
+DOES THIS MATERIALLY IMPROVE:
+
+- completion
+- correctness
+- confidence
+- safety
+- recovery
+- authority correctness
+
+?
+
+If no:
+
+DO NOT ADD IT.
+
+
+================================================================================
+132. START EXECUTION
+================================================================================
+
+Begin in this exact order:
+
+1. inspect the real OpenCode-Hi repository;
+2. establish the exact v58 source baseline;
+3. verify pristine v58 behavior;
+4. inventory every supplied reference source repository;
+5. verify licenses;
+6. build the complete Source Reuse Matrix;
+7. map existing v58 architectural ownership;
+8. migrate product identity to OpenCode-Hi;
+9. migrate hhc-* skills to hi-*;
+10. audit and recalibrate all 29 skills;
+11. verify post-migration behavioral parity;
+12. implement Adaptive Execution Policy;
+13. integrate Execution Topology Policy;
+14. evolve Autopilot/Continuation;
+15. implement Context Governor;
+16. implement Project Intelligence;
+17. implement Semantic Context;
+18. implement Privacy Boundary;
+19. implement lazy Skill Resources;
+20. implement Knowledge Assimilation;
+21. implement Human Decision semantics;
+22. integrate Mission Budget and failure/retry improvements;
+23. integrate Process Governor;
+24. integrate Adaptive Isolation;
+25. improve artifact-first result handling;
+26. add optional Memory Broker boundary;
+27. validate HostAdapter/CapabilityManifest boundaries;
+28. implement minimal useful telemetry;
+29. run before/after benchmarks;
+30. harden install/doctor/update/uninstall/release;
+31. write canonical English documentation;
+32. produce README.tr.md translation;
+33. run final architecture audit;
+34. build the exact 0.1.0 candidate;
+35. bind all verification evidence to the exact candidate;
+36. declare release-ready only if the acceptance bar is satisfied;
+37. STOP.
+
+Do not skip the baseline.
+
+Do not skip license analysis.
+
+Do not skip the Source Reuse Matrix.
+
+Do not silently rewrite proven v58 primitives.
+
+Do not replace OpenCode native capabilities with a competing runtime.
+
+Do not mechanically rename skills without recalibrating them.
+
+Do not create new skills when existing skills can be enriched.
+
+Do not turn every new user scenario into another hard-coded rule.
+
+Build generalized decision policies.
+
+Implement the system.
+
+Verify the system.
+
+When the exact 0.1.0 candidate satisfies the defined acceptance contract:
+
+STOP.
+================================================================================
+133. PRODUCT IDENTITY OVERRIDE — NO LEGACY PRODUCT COMPATIBILITY
+================================================================================
+
+This section supersedes any earlier wording that could be interpreted as
+requiring HHC/OHO product compatibility.
+
+OpenCode-Hi uses the exact v58 source only as a verified engineering baseline.
+Source ancestry does NOT create a compatibility contract.
+
+Required:
+
+SOURCE ANCESTRY = PRESERVED AS PROVENANCE
+LEGACY PRODUCT COMPATIBILITY = NONE
+
+Do NOT retain or implement:
+
+- HHC/OHO runtime aliases
+- old package/plugin fallback identifiers
+- old hhc-* skill aliases
+- former-product config aliases
+- former-product CLI aliases
+- former-product telemetry/schema aliases
+- migration normalization from old config names or values
+- compatibility fixtures whose only purpose is accepting old product inputs
+
+Historical identifiers may remain only when technically necessary for:
+
+- exact baseline provenance
+- source attribution
+- license obligations
+- immutable historical receipts
+
+They must never be accepted as active OpenCode-Hi inputs.
+
+Canonical OpenCode-Hi configuration and terminology must stand on their own.
+For 0.1.0 this includes:
+
+executionPolicy: minimal | balanced | thorough | adaptive | manual
+routing.modelPolicy: recommended | adaptive | manual
+routing.adaptiveRoles
+CLI: --execution-policy
+
+The former-product names `autonomy`, `basic`, `powerful`, `smart`,
+`--autonomy`, `smart-select`, and `smartSelectRoles` are not compatibility
+aliases and must not alter runtime behavior.
+
+Treat OpenCode-Hi as a zero-kilometer product identity whose verified source
+lineage is an implementation fact, not a user-facing compatibility promise.
+
+================================================================================
+PRODUCT POLICY AMENDMENT — FILESYSTEM LAYOUT & INSTALLATION HYGIENE
+================================================================================
+
+This amendment is mandatory and overrides any earlier layout implication that
+would place OpenCode-Hi-owned files elsewhere in a consumer project.
+
+OpenCode-Hi MUST be a good citizen of the host project.
+
+Project-local installation MUST NOT pollute the repository root.
+
+Except for a canonical OpenCode project configuration file when the chosen
+OpenCode configuration mode requires it, all OpenCode-Hi-owned project files
+must live under:
+
+<project-root>/.opencode/
+
+Use OpenCode-native directories where the responsibility belongs to OpenCode:
+
+.opencode/plugins/
+.opencode/skills/
+.opencode/agents/
+.opencode/commands/
+.opencode/tools/
+
+Use a dedicated Hi-owned namespace for Hi-specific durable project data:
+
+.opencode/hi/
+
+Canonical Hi-owned families include:
+
+.opencode/hi/project-intelligence/
+.opencode/hi/policy/
+.opencode/hi/artifacts/
+.opencode/hi/provenance/
+.opencode/hi/runtime/    # only correctness-required mission survival state
+
+Do not create top-level product directories such as plugin/, plugins/, skills/,
+agents/, runtime/, state/, cache/, logs/, hhc-*, or hi-* in a consumer project
+root.
+
+For package-based plugin installation, prefer OpenCode's native package
+installation/cache mechanism instead of unpacking plugin source into the
+project.
+
+For global installation, use OpenCode's global configuration hierarchy and
+appropriate OS/OpenCode data/cache locations.
+
+Do not store ephemeral runtime state, secrets, caches, logs, transient process
+metadata, or lifecycle journals in version-controlled project paths. Required
+mission-survival state is the narrow exception and must live under
+.opencode/hi/runtime/. Transient lifecycle/process metadata belongs in OS
+runtime/temp locations.
+
+Install, update, doctor/diagnostics and uninstall tests MUST verify filesystem
+hygiene and prove that unrelated project-root files and OpenCode-native
+.opencode directories are not created, removed, or modified by Hi ownership.
+
+Uninstall MUST remove only OpenCode-Hi-owned registration/data. The dedicated
+.opencode/hi/ namespace is Hi-owned and may be removed as a unit; unrelated
+OpenCode and user-owned project state MUST remain intact.
+
+Legacy OpenCode-HHC/OHO filesystem paths and legacy Hi state/ownership schema
+migration are NOT supported by OpenCode-Hi 0.1.0.
+
+
+================================================================================
+AUTHORITATIVE OVERRIDE — CAPABILITY, ARTIFACT & STORAGE ARCHITECTURE AUDIT
+================================================================================
+
+This section is authoritative for OpenCode-Hi 0.1.0 storage/layout decisions.
+
+OpenCode-Hi has NO legacy product compatibility obligation. Any legacy-v58
+migration wording in the storage audit is interpreted as historical provenance
+analysis only. OpenCode-Hi MUST NOT read, migrate, normalize, or preserve
+HHC/OHO runtime/config/storage formats for compatibility.
+
+================================================================================
+CAPABILITY, ARTIFACT & STORAGE ARCHITECTURE AUDIT
+================================================================================
+
+Before finalizing the OpenCode-Hi filesystem layout, storage model, project
+intelligence structure, context directories, artifact directories, or
+skill-resource layout, perform a complete capability-driven storage audit.
+
+Do NOT design the .opencode/hi/ hierarchy from assumptions or aesthetics.
+
+Derive it from the actual behavior of the system.
+
+Audit every existing and planned capability that:
+
+- reads project-local data;
+- writes project-local data;
+- generates derived files;
+- persists knowledge;
+- persists context;
+- creates indexes;
+- creates summaries;
+- extracts Markdown/document fragments;
+- stores research;
+- stores artifacts;
+- stores provenance;
+- stores policy;
+- stores runtime state;
+- stores process state;
+- stores telemetry;
+- stores cache;
+- creates or modifies skills;
+- imports external documentation;
+- imports external repositories;
+- derives reusable methodology;
+- stores project intelligence;
+- stores semantic context;
+- stores memory-related metadata;
+- performs compaction/context transfer;
+- creates installation/runtime files.
+
+This audit MUST include:
+
+1. all migrated hi-* skills;
+2. all v58 runtime capabilities;
+3. all plugin/setup/install behavior;
+4. all supplied reference repositories;
+5. Context Governor behavior;
+6. Project Intelligence;
+7. Semantic Context;
+8. Knowledge Assimilation;
+9. Skill Resource Registry;
+10. Artifact-first result handling;
+11. Memory Broker;
+12. Privacy Boundary;
+13. Process Governor;
+14. Adaptive Isolation;
+15. Human Decision artifacts;
+16. telemetry;
+17. release/provenance outputs;
+18. diagnostics/install/update/uninstall behavior.
+
+For every capability, identify:
+
+- capability owner;
+- data/artifact type produced;
+- data/artifact type consumed;
+- lifecycle;
+- scope;
+- persistence requirement;
+- freshness requirement;
+- version-control suitability;
+- security sensitivity;
+- whether the data is canonical or derived;
+- whether the data is reusable or ephemeral;
+- whether OpenCode already owns the storage location;
+- whether OpenCode-Hi should own the storage location.
+
+Classify every produced artifact into one of these responsibility classes:
+
+A. OPENCODE-NATIVE CONFIGURATION / CAPABILITY
+
+Examples may include:
+
+.opencode/plugins/
+.opencode/skills/
+.opencode/agents/
+.opencode/commands/
+.opencode/tools/
+
+Use OpenCode-native locations whenever OpenCode owns the capability.
+
+Do NOT mirror OpenCode-owned data under .opencode/hi/.
+
+B. HI PROJECT-OWNED DURABLE DATA
+
+Examples:
+
+project intelligence
+project policy
+derived knowledge
+source provenance
+durable context artifacts
+architecture decisions
+project-scoped indexes
+
+These may live under:
+
+<project-root>/.opencode/hi/
+
+C. HI SKILL-OWNED RESOURCES
+
+Reusable methodology resources that belong to a specific skill must remain
+with the skill, for example:
+
+.opencode/skills/<hi-skill>/references/
+.opencode/skills/<hi-skill>/scripts/
+.opencode/skills/<hi-skill>/examples/
+.opencode/skills/<hi-skill>/assets/
+
+Do not move skill-owned resources into a generic Hi knowledge directory merely
+because they are Markdown or data files.
+
+D. EPHEMERAL RUNTIME DATA
+
+Examples:
+
+temporary process metadata
+transient execution state
+temporary redaction mappings
+temporary context transforms
+short-lived cache
+runtime locks
+
+These SHOULD NOT be persisted inside version-controlled project directories
+unless a strong reason exists.
+
+Prefer appropriate OpenCode/OS cache/data/runtime locations.
+
+E. SENSITIVE DATA
+
+Secrets, credentials, private runtime mappings, raw sensitive provider context,
+or equivalent data MUST NOT be stored in project-visible durable paths.
+
+F. RELEASE / BUILD OUTPUT
+
+Release artifacts, manifests, SBOMs, package outputs and candidate receipts must
+follow the release architecture and must not pollute normal project runtime
+directories.
+
+================================================================================
+OWNERSHIP-FIRST STORAGE RULE
+================================================================================
+
+Place data by ownership and lifecycle, NOT by file extension.
+
+Do NOT create directories such as:
+
+markdown/
+json/
+text/
+files/
+
+merely because artifacts share a format.
+
+Examples:
+
+A Markdown file that is a reusable skill reference
+belongs to the skill.
+
+A Markdown file that represents a project architecture decision
+belongs to Project Intelligence / project knowledge.
+
+A Markdown file that is a temporary context extraction
+belongs to temporary/derived context handling.
+
+A Markdown file that is a durable research artifact
+belongs to the artifact/knowledge subsystem.
+
+FILE TYPE DOES NOT DEFINE OWNERSHIP.
+
+================================================================================
+CANONICAL VS DERIVED DATA
+================================================================================
+
+Explicitly distinguish:
+
+CANONICAL
+DERIVED
+CACHE
+EPHEMERAL
+
+Canonical data is authoritative.
+
+Derived data must be reproducible or provenance-linked.
+
+Cache must be disposable.
+
+Ephemeral runtime state must not become accidental long-term project state.
+
+Never allow generated summaries, extracted Markdown fragments, semantic
+indexes or memory caches to become authoritative simply because they are
+persisted.
+
+================================================================================
+CONTEXT TRANSFER / DOCUMENT PROCESSING
+================================================================================
+
+Audit all functionality that:
+
+- truncates Markdown;
+- extracts sections;
+- splits documents;
+- summarizes documents;
+- transfers context;
+- compacts context;
+- indexes documents;
+- generates semantic representations;
+- creates retrieval chunks.
+
+Determine whether each output is:
+
+temporary context
+derived knowledge
+project intelligence
+skill resource
+durable artifact
+cache
+
+Do not assign one global directory to all of these outputs.
+
+Where possible, preserve source linkage:
+
+source
+→ derived fragment
+→ hash/provenance
+→ consumer
+
+If the source changes, derived content must be invalidatable.
+
+================================================================================
+EXTERNAL SKILL / PLUGIN ASSIMILATION
+================================================================================
+
+When evaluating external skills or plugins, inspect not only their methodology
+but also their storage behavior.
+
+Determine:
+
+- what files they create;
+- where they create them;
+- whether those files are necessary;
+- whether their layout pollutes the project root;
+- whether their storage belongs to OpenCode-native paths;
+- whether their behavior should be adapted into Hi-owned storage;
+- whether ephemeral output should be moved outside the repository.
+
+Do NOT copy foreign filesystem layouts blindly.
+
+Port behavior, not accidental directory structure.
+
+================================================================================
+FILESYSTEM HYGIENE INVARIANT
+================================================================================
+
+OpenCode-Hi MUST NOT pollute the repository root.
+
+Except for an explicitly selected canonical OpenCode project configuration
+file, Hi-owned project-local files must live under OpenCode-native or Hi-owned
+scoped directories.
+
+Do not create top-level directories such as:
+
+plugin/
+plugins/
+skills/
+agents/
+runtime/
+state/
+cache/
+logs/
+knowledge/
+artifacts/
+context/
+hhc-*/
+hi-*/
+
+in the project root.
+
+================================================================================
+PROVISIONAL HI STORAGE NAMESPACE
+================================================================================
+
+Do NOT treat the following as mandatory final structure.
+
+Use it only as a provisional namespace while the audit is performed:
+
+.opencode/hi/
+
+Possible responsibility-based areas may include:
+
+.opencode/hi/project-intelligence/
+.opencode/hi/knowledge/
+.opencode/hi/context/
+.opencode/hi/artifacts/
+.opencode/hi/provenance/
+.opencode/hi/policy/
+
+Create only the directories that correspond to real implemented
+responsibilities.
+
+Do NOT create empty directory architecture merely because it appears in this
+prompt.
+
+The final hierarchy MUST be derived from actual capability ownership.
+
+================================================================================
+STORAGE MATRIX
+================================================================================
+
+Before finalizing implementation, produce a Storage Ownership Matrix containing:
+
+CAPABILITY
+PRODUCER
+CONSUMER
+ARTIFACT TYPE
+SCOPE
+OWNER
+CANONICAL / DERIVED / CACHE / EPHEMERAL
+PROJECT / GLOBAL / RUNTIME
+VERSION CONTROLLED?
+SENSITIVE?
+FRESHNESS / INVALIDATION RULE
+FINAL STORAGE LOCATION
+CLEANUP OWNER
+
+Use this matrix to detect:
+
+- duplicate storage;
+- ambiguous ownership;
+- root pollution;
+- stale derived data;
+- accidental persistence;
+- security leaks;
+- duplicate indexes;
+- duplicate knowledge stores.
+
+================================================================================
+PROJECT VS GLOBAL SCOPE
+================================================================================
+
+Every persistent capability must explicitly decide whether its state is:
+
+PROJECT
+GLOBAL
+SESSION/RUNTIME
+
+Project-specific knowledge must not leak into global state by default.
+
+Global reusable configuration must not be duplicated into every project.
+
+Session/runtime state must not accidentally become project knowledge.
+
+Global installation must use appropriate OpenCode/OS global configuration,
+data and cache locations.
+
+Project installation must remain project-scoped.
+
+================================================================================
+INSTALL / UPDATE / UNINSTALL CONTRACT
+================================================================================
+
+Installation, update, diagnostics and uninstall must understand the storage
+ownership model.
+
+Install must create only required files.
+
+Update must preserve user-owned content.
+
+Uninstall must remove only OpenCode-Hi-owned files.
+
+Uninstall MUST NOT delete:
+
+- user project files;
+- unrelated .opencode content;
+- unrelated OpenCode plugins;
+- unrelated skills;
+- user-authored project intelligence unless ownership is explicit.
+
+Diagnostics must verify:
+
+- expected directories;
+- unexpected root pollution;
+- stale legacy HHC paths;
+- orphan runtime data;
+- invalid provenance;
+- unsafe permissions;
+- duplicate storage.
+
+================================================================================
+MIGRATION FROM LEGACY V58 LAYOUT
+================================================================================
+
+Audit all v58 paths.
+
+Classify each legacy path as:
+
+KEEP
+MOVE
+MIGRATE
+DEPRECATE
+REMOVE
+
+If v58 creates project-root folders or other legacy paths that violate the new
+filesystem contract:
+
+implement a controlled migration.
+
+Do not silently lose existing user data.
+
+Do not preserve bad legacy layout merely for convenience.
+
+================================================================================
+FINAL STORAGE ACCEPTANCE
+================================================================================
+
+Before OpenCode-Hi 0.1.0 is considered ready, prove:
+
+1. normal project installation does not pollute the project root;
+2. OpenCode-owned capabilities use OpenCode-native paths;
+3. Hi-owned durable project data uses a coherent scoped namespace;
+4. skill resources remain skill-owned;
+5. ephemeral runtime data is not accidentally version-controlled;
+6. secrets are not persisted in unsafe locations;
+7. derived context/knowledge can be invalidated when sources change;
+8. uninstall removes only owned content;
+9. global and project scope do not leak into one another;
+10. context/document-processing capabilities follow the same ownership rules;
+11. external plugin/skill integration does not import foreign directory clutter;
+12. the final directory hierarchy is based on actual implemented capabilities,
+    not speculative architecture.
+
+OpenCode-Hi-specific override:
+- Legacy v58 paths are classified for audit/provenance only.
+- No legacy path migration code is permitted in 0.1.0.
+- Unsupported old product state/config must be ignored/rejected, never upgraded
+  in place.

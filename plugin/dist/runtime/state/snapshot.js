@@ -19,7 +19,7 @@ export function compactMissionContext(m, worker) {
     const nextSafe = clipText(m.pending_nudge?.instruction ?? m.continuation_reason ?? 'evaluate open obligations', 1200);
     const blockers = rowList(m.blockers.map(clip => clipText(clip, 500)), 2200, 12);
     const essential = [
-        'HHC MISSION SURVIVAL STATE',
+        'Hi MISSION SURVIVAL STATE',
         `MISSION OBJECTIVE: ${clipText(m.objective, 2200)}`,
         `STATUS: ${m.status}`,
         `GENERATION: ${m.generation}`,

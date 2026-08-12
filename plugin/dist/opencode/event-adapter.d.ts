@@ -1,6 +1,6 @@
-export type HhcNativeEventKind = 'session-idle' | 'session-error' | 'session-deleted' | 'session-status' | 'session-diff' | 'session-compacted' | 'todo-updated' | 'permission-asked' | 'permission-replied' | 'file-edited' | 'file-watcher-updated' | 'lsp-diagnostics' | 'installation-updated' | 'unknown';
+export type HiNativeEventKind = 'session-idle' | 'session-error' | 'session-deleted' | 'session-status' | 'session-diff' | 'session-compacted' | 'todo-updated' | 'permission-asked' | 'permission-replied' | 'file-edited' | 'file-watcher-updated' | 'lsp-diagnostics' | 'installation-updated' | 'unknown';
 export interface NormalizedOpenCodeEvent {
-    kind: HhcNativeEventKind;
+    kind: HiNativeEventKind;
     rawType: string;
     sessionID?: string;
     properties: any;

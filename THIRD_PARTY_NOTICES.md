@@ -1,21 +1,18 @@
 # Third-Party Notices
 
-OpenCode HHC Orchestrator (OHO) özgün bir Apache-2.0 uygulamasıdır. Üçüncü taraf runtime kodu veya ayrı orchestration plugin'i ürün içine vendor edilmez.
+OpenCode-Hi is an Apache-2.0 project. Third-party orchestration control planes are not vendored into the product. Source-level references are integrated only under the decisions recorded in `docs/SOURCE-REUSE-MATRIX.md`.
 
-## Doğrudan build/runtime bağımlılıkları
+## Direct build/runtime dependencies
 
-| Paket | İlişki | Lisans | Kullanım |
+| Package | Relationship | License | Use |
 |---|---|---|---|
-| `@opencode-ai/plugin` | host peer dependency | MIT | OpenCode native plugin API/types/runtime contract |
-| `typescript` | development dependency | Apache-2.0 | TypeScript build/compiler toolchain |
+| `@opencode-ai/plugin` | host peer dependency | MIT | OpenCode native plugin API, types, and runtime contract |
+| `typescript` | development dependency | Apache-2.0 | TypeScript compiler/build toolchain |
 
-## Methodology research / adapted concepts
+Transitive dependencies and their detected license metadata are captured in the generated SBOM from the exact lockfile used for the candidate.
 
-Aşağıdaki kaynaklar yeni HHC-native methodology skill'lerin tasarımında incelenmiş ve kavramları HHC control-plane sınırlarına göre yeniden yazılmıştır. OHO bu projeleri runtime dependency veya ayrı plugin olarak gerektirmez.
+## Source-level reference projects
 
-| Kaynak | Lisans | Kullanım |
-|---|---|---|
-| `opencode-agent-orchestration-kit` | Apache-2.0 | source-driven development, API/interface design, ADR, iterative retrieval, TDD, adversarial validation ve ilgili methodology araştırması |
-| `obra/superpowers` | MIT | review-feedback, design discovery, worktree isolation, skill-authoring ve TDD methodology araştırması |
+The 0.1.x implementation studied the user-supplied source archives listed in the Source Reuse Matrix. Permissively licensed primitives may be adapted when ownership boundaries remain under Hi control. AGPL, missing-license, unclear-license, or otherwise incompatible material is restricted to clean-room behavioral study, idea-only use, or rejection as recorded in that matrix.
 
-Bu kaynaklardan alınan fikirler HHC-native, bounded, default-zero skill sözleşmelerine uyarlanmıştır; task/model/worker/continuation/STOP ownership HHC runtime'da kalır.
+Historical baseline source identifiers and third-party names may remain only in provenance records, immutable validation receipts, source-attribution/license records, or negative rejection tests where technically required. They are not the canonical OpenCode-Hi product identity.

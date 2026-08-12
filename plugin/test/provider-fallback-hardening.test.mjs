@@ -4,13 +4,13 @@ import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
 import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
-import {DEFAULT_HHC_CONFIG} from '../dist/config/defaults.js'
+import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 
 function setup(promptImpl=async()=>{}){
   const calls=[]
   const client={session:{promptAsync:async arg=>{calls.push(arg);return promptImpl(arg)},abort:async()=>{}}}
   const scheduler=new ConcurrencyScheduler(()=>({global:4,providers:{},models:{}}))
-  const runtime=new TaskRuntime(client,new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>DEFAULT_HHC_CONFIG,()=>[],()=>({}))
+  const runtime=new TaskRuntime(client,new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
   const store=new MissionStore(process.cwd())
   const m=store.start('parent','fix provider fallback')
   m.tasks.push({id:'t1',objective:'fix it',status:'running',role:'coder',category:'standard',scope:['src/a.ts'],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],execution_profile:{role:'coder',category:'standard',model:'p/primary',fallback_models:['p/fallback1','p/fallback2'],fallback_variants:{'p/fallback1':'high','p/fallback2':'medium'},skills:[],permission_profile:{skill_tool_enabled:true,skill_permissions:{},external_effects:'parent-only',recursive_task:'deny'},verification_policy:m.verification_policy,max_context_chars:1000,max_handoff_chars:1000,max_result_chars:1000,max_artifacts:4},worker_id:'w1',created_at:Date.now(),updated_at:Date.now()})

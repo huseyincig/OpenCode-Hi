@@ -5,10 +5,10 @@ from pathlib import Path
 
 KIT=Path(__file__).resolve().parents[1]
 DIST_DIRS=['skills','plugin/dist']
-DIST_FILES=['VERSION','package.json','README.md','LICENSE','THIRD_PARTY_NOTICES.md']
+DIST_FILES=['VERSION','package.json','README.md','README.tr.md','LICENSE','THIRD_PARTY_NOTICES.md']
 SOURCE_DIRS=['roles','skills','scripts','data','docs','plugin','tests']
-SOURCE_FILES=['VERSION','package.json','README.md','SECURITY.md','CONTRIBUTING.md','LICENSE','THIRD_PARTY_NOTICES.md','CHANGELOG.md','.gitignore','pytest.ini','requirements-dev.txt','.gitattributes']
-# Kişisel/geliştirme ortamı dosyaları hiçbir paylaşılabilir arşive girmez.
+SOURCE_FILES=['VERSION','package.json','README.md','README.tr.md','SECURITY.md','CONTRIBUTING.md','LICENSE','THIRD_PARTY_NOTICES.md','CHANGELOG.md','.gitignore','pytest.ini','requirements-dev.txt','.gitattributes']
+# Personal/development-environment files never enter shareable archives.
 FORBIDDEN_ROOTS={'.opencode','opencode.jsonc','AGENTS.md'}
 
 def sha(p):
@@ -105,7 +105,7 @@ def validate_third_party_notices(root:Path,components):
 
 def write_sbom(path:Path,version:str,components,graph_sha:str):
     direct=[c for c in components if c['relation']!='transitive']
-    sbom={'schema':1,'format':'HHC-SBOM','product':'OpenCode HHC Orchestrator','version':version,'dependency_lock':'plugin/package-lock.json','dependency_graph_sha256':graph_sha,'component_count':len(components),'direct_component_count':len(direct),'components':components}
+    sbom={'schema':1,'format':'Hi-SBOM','product':'OpenCode-Hi','version':version,'dependency_lock':'plugin/package-lock.json','dependency_graph_sha256':graph_sha,'component_count':len(components),'direct_component_count':len(direct),'components':components}
     path.write_text(json.dumps(sbom,indent=2,sort_keys=True)+'\n')
     return sbom
 
@@ -137,7 +137,7 @@ def release_identity(root:Path, version:str):
 def main():
     ap=argparse.ArgumentParser()
     ap.add_argument('--out',type=Path,default=KIT/'dist')
-    ap.add_argument('--source-out',type=Path,help='Temiz SOURCE arşivini yazılacak dizin; kişisel .opencode/opencode.jsonc/AGENTS.md dahil edilmez')
+    ap.add_argument('--source-out',type=Path,help='Output directory for the clean SOURCE archive; personal .opencode/opencode.jsonc/AGENTS.md files are excluded')
     a=ap.parse_args()
     version=(KIT/'VERSION').read_text().strip()
     identity_issues=release_identity(KIT,version)
@@ -148,23 +148,23 @@ def main():
 
     runtime=KIT/'plugin'/'dist'/'plugin.js'
     if not runtime.is_file():
-        raise SystemExit('OHO plugin runtime missing. Build first: cd plugin && npm run build')
+        raise SystemExit('HI plugin runtime missing. Build first: cd plugin && npm run build')
     a.out.mkdir(parents=True,exist_ok=True)
     sbom_path=a.out/f'SBOM-{version}.json'
     sbom=write_sbom(sbom_path,version,components,dependency_graph_sha256)
     e=collect(DIST_DIRS,DIST_FILES)
     e[sbom_path.name]=sbom_path
-    z=a.out/f'OpenCode-HHC-Orchestrator-{version}-DISTRIBUTABLE.zip'
+    z=a.out/f'OpenCode-Hi-{version}-DISTRIBUTABLE.zip'
     write_zip(z,e)
     inputs_sha256=digest_entries(e)
-    m={'schema':5,'product_name':'OpenCode HHC Orchestrator','repository':'https://github.com/huseyincig/OpenCode-HHC-Orchestrator','version':version,'release_identity':{'version_file':version,'root_package':json.loads((KIT/'package.json').read_text()).get('version'),'plugin_package':json.loads((KIT/'plugin'/'package.json').read_text()).get('version'),'plugin_package_lock':((json.loads((KIT/'plugin'/'package-lock.json').read_text()).get('packages') or {}).get('') or {}).get('version') if (KIT/'plugin'/'package-lock.json').is_file() else None,'changelog_entry':True},'archive':z.name,'archive_sha256':sha(z),'file_count':len(e),'plugin_runtime_sha256':sha(runtime),'provenance':{'schema':1,'builder':'scripts/release-build.py','deterministic_zip':True,'canonical_zip_time':'2026-01-01T00:00:00Z','inputs_sha256':inputs_sha256,'input_file_count':len(e)},'supply_chain':{'schema':1,'dependency_lock':'plugin/package-lock.json','dependency_graph_sha256':dependency_graph_sha256,'component_count':len(components),'sbom':sbom_path.name,'sbom_sha256':sha(sbom_path),'third_party_notices_sha256':sha(KIT/'THIRD_PARTY_NOTICES.md')},'files':{n:sha(p) for n,p in sorted(e.items())}}
+    m={'schema':5,'product_name':'OpenCode-Hi','repository':'https://github.com/huseyincig/OpenCode-Hi','version':version,'release_identity':{'version_file':version,'root_package':json.loads((KIT/'package.json').read_text()).get('version'),'plugin_package':json.loads((KIT/'plugin'/'package.json').read_text()).get('version'),'plugin_package_lock':((json.loads((KIT/'plugin'/'package-lock.json').read_text()).get('packages') or {}).get('') or {}).get('version') if (KIT/'plugin'/'package-lock.json').is_file() else None,'changelog_entry':True},'archive':z.name,'archive_sha256':sha(z),'file_count':len(e),'plugin_runtime_sha256':sha(runtime),'provenance':{'schema':1,'builder':'scripts/release-build.py','deterministic_zip':True,'canonical_zip_time':'2026-01-01T00:00:00Z','inputs_sha256':inputs_sha256,'input_file_count':len(e)},'supply_chain':{'schema':1,'dependency_lock':'plugin/package-lock.json','dependency_graph_sha256':dependency_graph_sha256,'component_count':len(components),'sbom':sbom_path.name,'sbom_sha256':sha(sbom_path),'third_party_notices_sha256':sha(KIT/'THIRD_PARTY_NOTICES.md')},'files':{n:sha(p) for n,p in sorted(e.items())}}
     (a.out/f'RELEASE-MANIFEST-{version}.json').write_text(json.dumps(m,indent=2)+'\n')
-    print(f'PAKET: {z}\nDOSYA SAYISI: {len(e)}\nSHA256: {m["archive_sha256"]}')
+    print(f'DISTRIBUTABLE: {z}\nFILE COUNT: {len(e)}\nSHA256: {m["archive_sha256"]}')
 
     if a.source_out:
         se=collect(SOURCE_DIRS,SOURCE_FILES)
-        sz=a.source_out/f'OpenCode-HHC-Orchestrator-{version}-SOURCE.zip'
+        sz=a.source_out/f'OpenCode-Hi-{version}-SOURCE.zip'
         write_zip(sz,se)
-        print(f'SOURCE: {sz}\nSOURCE DOSYA SAYISI: {len(se)}\nSOURCE SHA256: {sha(sz)}')
+        print(f'SOURCE: {sz}\nSOURCE FILE COUNT: {len(se)}\nSOURCE SHA256: {sha(sz)}')
 
 if __name__=='__main__': main()

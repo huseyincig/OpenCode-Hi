@@ -8,12 +8,12 @@ import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
 import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {createTask,createWorker} from '../dist/runtime/worker/worker-runtime.js'
-import {DEFAULT_HHC_CONFIG} from '../dist/config/defaults.js'
+import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 
 function harness(){
   let diffs=[]
   const client={session:{diff:async()=>({data:diffs})}}
-  const rt=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HHC_CONFIG,()=>[],()=>({}))
+  const rt=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
   return {rt,setDiffs:value=>{diffs=value}}
 }
 function done(files){return {status:'DONE',summary:'done',changed_files:files,evidence:[],open_issues:[],needs_context:[]}}
@@ -52,21 +52,21 @@ test('worktree-global-looking native delta is not attributed to one worker while
 })
 
 test('plugin session.idle path converts DONE to FIX_REQUIRED when native diff exposes an undeclared file',async()=>{
-  const {default:HhcPlugin}=await import('../dist/plugin.js')
+  const {default:HiPlugin}=await import('../dist/plugin.js')
   let diffs=[];const childResult={status:'DONE',summary:'done',changed_files:['src/a.ts'],evidence:[],open_issues:[],needs_context:[]}
   const client={app:{log:async()=>{}},provider:{list:async()=>({data:[]})},session:{
     create:async()=>({data:{id:'child-native'}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:{}}),
     diff:async()=>({data:diffs}),messages:async()=>({data:[{info:{role:'assistant'},parts:[{type:'text',text:JSON.stringify(childResult)}]}]})
   }}
-  const root=mkdtempSync(join(tmpdir(),'hhc-native-diff-'))
+  const root=mkdtempSync(join(tmpdir(),'hi-native-diff-'))
   let hooks
   try{
-    hooks=await HhcPlugin({directory:root,worktree:root,project:{},client});const config={};await hooks.config(config)
-    await hooks['chat.message']({sessionID:'parent-native',message:{role:'user',parts:[{type:'text',text:'src/a.ts dosyasını düzelt'}]}},{parts:[]})
-    const started=JSON.parse(await hooks.tool.hhc_task_start.execute({objective:'change a',role:'coder',category:'quick',scope:['src/a.ts']},{sessionID:'parent-native'}))
+    hooks=await HiPlugin({directory:root,worktree:root,project:{},client});const config={};await hooks.config(config)
+    await hooks['chat.message']({sessionID:'parent-native',message:{role:'user',parts:[{type:'text',text:'fix src/a.ts'}]}},{parts:[]})
+    const started=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'change a',role:'coder',category:'quick',scope:['src/a.ts']},{sessionID:'parent-native'}))
     diffs=[{file:'src/a.ts',before:'a',after:'b',additions:1,deletions:1},{file:'src/hidden.ts',before:'x',after:'y',additions:1,deletions:1}]
     await hooks.event({event:{type:'session.idle',properties:{sessionID:'child-native'}}})
-    const rows=JSON.parse(await hooks.tool.hhc_task_list.execute({},{sessionID:'parent-native'}));const row=rows.find(x=>x.task.id===started.task_id)
+    const rows=JSON.parse(await hooks.tool.hi_task_list.execute({},{sessionID:'parent-native'}));const row=rows.find(x=>x.task.id===started.task_id)
     assert.equal(row.task.result.status,'FIX_REQUIRED')
     assert.ok(row.task.result.changed_files.includes('src/hidden.ts'))
     assert.ok(row.task.result.open_issues.some(x=>x.startsWith(`native-diff-mismatch:${started.task_id}:`)))
@@ -110,7 +110,7 @@ test('cleanup cannot be accepted when native diff capability is unavailable',asy
   const s=new MissionStore(),m=s.start('native-cleanup-3','change src/a.ts')
   const t=createTask(m,{objective:'change a',role:'coder',category:'quick',scope:['src/a.ts'],requiredEvidence:[]})
   const w=createWorker(m,t,'host-default');w.status='busy';w.session_id='child-no-diff';w.native_diff_baseline={}
-  const rt=new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HHC_CONFIG,()=>[],()=>({}))
+  const rt=new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
   rt.applyResult(m,w.id,{status:'DONE',summary:'first attempt',changed_files:['src/a.ts','docs/random.md'],evidence:[],open_issues:[],needs_context:[]})
   w.status='busy';t.status='running';w.started_at=Date.now()-5
   const reconciled=await rt.reconcileNativeResult(m,w.id,{status:'DONE',summary:'claimed cleanup',changed_files:['src/a.ts'],evidence:[],open_issues:[],needs_context:[]})
@@ -142,7 +142,7 @@ test('cleanup restores a collateral pre-existing user file to worker-start basel
   setDiffs([{file:'notes/user.md',before:'HEAD text',after:'USER EDIT',additions:1,deletions:0}])
   await rt.reconcileNativeResult(m,w.id,done([]));w.native_diff_baseline=w.native_diff_final
   // Worker accidentally modifies the same user-owned file; first result becomes collateral.
-  setDiffs([{file:'notes/user.md',before:'HEAD text',after:'USER EDIT + HHC',additions:2,deletions:0},{file:'src/a.ts',before:'a',after:'b',additions:1,deletions:1}])
+  setDiffs([{file:'notes/user.md',before:'HEAD text',after:'USER EDIT + Hi',additions:2,deletions:0},{file:'src/a.ts',before:'a',after:'b',additions:1,deletions:1}])
   const first=await rt.reconcileNativeResult(m,w.id,done(['src/a.ts','notes/user.md']));rt.applyResult(m,w.id,first)
   assert.equal(t.result.status,'FIX_REQUIRED')
   // Corrective cleanup restores USER EDIT, not HEAD text.
@@ -157,7 +157,7 @@ test('initial child handoff warns that pre-existing dirty paths are user-owned a
   let prompt='';const diff=[{file:'notes/user.md',before:'HEAD',after:'USER EDIT',additions:1,deletions:0}]
   const client={session:{create:async()=>({data:{id:'child-prompt-dirty'}}),promptAsync:async(args)=>{prompt=String(args?.body?.parts?.[0]?.text??args?.body?.text??JSON.stringify(args));return {data:{}}},abort:async()=>({data:{}}),diff:async()=>({data:diff})}}
   const s=new MissionStore(),m=s.start('native-user-dirty-3','change src/a.ts')
-  const rt=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HHC_CONFIG,()=>[],()=>({}))
+  const rt=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
   await rt.start(m,{objective:'change a',role:'coder',category:'quick',scope:['src/a.ts']})
   assert.match(prompt,/pre-existing user dirty paths/i)
   assert.match(prompt,/notes\/user\.md/)
