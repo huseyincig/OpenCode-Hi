@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "release": "0.1.0",
-  "generated_at": "2026-08-12",
-  "status": "LOCAL_CANDIDATE_COMPLETE_EXTERNAL_GATES_PENDING",
+  "generated_at": "2026-08-13",
+  "status": "HOST_ACCEPTED_CURRENT_WORKTREE_EXACT_CANDIDATE_PENDING",
   "known_blocking_internal_findings": [],
   "local_gates": {
     "node_runtime_acceptance": "PASS",
@@ -20,15 +20,23 @@
     "deterministic_release": "PASS_LOCAL_REQUIRES_POST_FREEZE_HASH_RECEIPT"
   },
   "pending_external": [
-    "native_opencode_plugin_loader",
-    "native_child_sessions",
-    "model_provider_binding",
-    "permission_denial_runtime",
-    "packaged_agent_skill_discovery",
     "exact_git_ref_clean_install",
+    "post_freeze_deterministic_release_rebuild",
     "external_dependency_supply_chain_receipt",
-    "windows_runtime_smoke"
+    "windows_runtime_smoke",
+    "npm_registry_publish_install_verification_if_distributed_through_npm"
   ],
   "release_ready": false,
-  "rule": "No historical baseline receipt, local mock, adapter contract, or deterministic simulation satisfies an external host gate."
+  "rule": "Real-host current-worktree evidence is valid for host behavior but does not become exact-candidate release evidence until the user commits the tested fixes and that exact ref is revalidated.",
+  "host_gates": {
+    "native_opencode_plugin_loader": "PASS_HOST_CURRENT_WORKTREE",
+    "native_child_sessions": "PASS_HOST_CURRENT_WORKTREE",
+    "model_provider_binding": "PASS_HOST_CURRENT_WORKTREE",
+    "permission_denial_runtime": "PASS_HOST_CURRENT_WORKTREE",
+    "packaged_agents": "PASS_HOST_CURRENT_WORKTREE",
+    "native_skill_discovery": "PASS_HOST_CURRENT_WORKTREE",
+    "install_doctor_uninstall_hygiene": "PASS_HOST_CURRENT_WORKTREE",
+    "deterministic_completion_stop": "PASS_HOST_CURRENT_WORKTREE",
+    "receipt": "data/validation/external-opencode-hi-0.1.0-host-current-worktree.json"
+  }
 }

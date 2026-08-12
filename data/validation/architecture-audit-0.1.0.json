@@ -2,34 +2,123 @@
   "schema": 1,
   "release": "0.1.0",
   "generated_at": "2026-08-12",
-  "status": "PASS_LOCAL_WITH_EXTERNAL_HOST_GATES_PENDING",
+  "status": "PASS_HOST_CURRENT_WORKTREE_EXACT_REF_PENDING",
   "checks": {
-    "direct_path": {"status":"PASS_LOCAL","evidence":["plugin/src/runtime/execution/adaptive-policy.ts","plugin/test/hi-benchmarks.test.mjs"],"finding":"Clear low-risk local work remains DIRECT and single-agent."},
-    "role": {"status":"PASS_LOCAL","finding":"Role selection is conditional and separate from agent/model identity."},
-    "skill": {"status":"PASS_LOCAL","finding":"Skill activation remains default-zero with bounded activation."},
-    "model": {"status":"PASS_LOCAL","finding":"Stronger-model behavior is escalation/evidence gated; explicit configuration has precedence."},
-    "tool": {"status":"PASS_LOCAL","finding":"Tool policy is minimum-sufficient and shell interaction is fail-fast/non-interactive."},
-    "topology": {"status":"PASS_LOCAL","finding":"Adaptive topology remains single-agent unless material fan-out benefit exists."},
-    "multi_agent": {"status":"PASS_LOCAL","finding":"Independent multi-stream work can use bounded fan-out; availability alone does not activate it."},
-    "multi_model": {"status":"PASS_LOCAL","finding":"Role/model mapping exists without decorative model diversity."},
-    "continuation": {"status":"PASS_LOCAL","finding":"Continuation evaluates mission state, evidence, authority and completion rather than model-done/idle alone."},
-    "execution_depth": {"status":"PASS_LOCAL","finding":"DIRECT/EVIDENCE/PLANNED/ESCALATED execution depth is explicit."},
-    "context_depth": {"status":"PASS_LOCAL","finding":"Context depth is independent from execution depth and risk."},
-    "semantic_context": {"status":"PASS_LOCAL","finding":"Scoped TypeScript declarations can be extracted without full source injection."},
-    "project_intelligence": {"status":"PASS_LOCAL","finding":"Patterns are evidence-backed, bounded and invalidated to POTENTIALLY_STALE when source changes."},
-    "memory": {"status":"PASS_LOCAL","finding":"Memory provider boundary is optional and cannot satisfy verification."},
-    "privacy": {"status":"PASS_LOCAL","finding":"Provider-facing task prompts pass through local redaction and leak tests use synthetic secrets."},
-    "human_judgment": {"status":"PASS_LOCAL","finding":"Material questions are gated and independent questions can be batched."},
-    "retry": {"status":"PASS_LOCAL","finding":"Retry is budgeted and must be materially different."},
-    "process": {"status":"PASS_LOCAL","finding":"Long-running process state and cleanup are first-class runtime concerns."},
-    "isolation": {"status":"PASS_LOCAL","finding":"Isolation is adaptive; low-risk work stays in current workspace while worktree capability is available."},
-    "verification": {"status":"PASS_LOCAL","finding":"Verification is risk-proportional and evidence freshness remains authoritative."},
-    "completion": {"status":"PASS_LOCAL","finding":"Completion adjudication remains deterministic and pending required state prevents completion."},
-    "stop": {"status":"PASS_LOCAL","finding":"STOP remains authoritative; model completion statements do not own STOP."},
-    "opencode_native_behavior": {"status":"PENDING_EXTERNAL","finding":"Native-first policy and adapter contracts pass locally, but the OpenCode binary is unavailable in this environment so real loader/session/provider acceptance is not claimed."},
-    "portability": {"status":"PASS_LOCAL","finding":"Host capability manifest keeps core semantic ownership outside OpenCode-specific types; no full alternate adapter is claimed."},
-    "efficiency": {"status":"PASS_LOCAL_POLICY_BENCHMARK","evidence":["data/validation/benchmarks-0.1.0.json"],"finding":"Nine deterministic policy scenarios cover execution-shape efficiency without claiming provider billing/latency."},
-    "skills": {"status":"PASS_LOCAL","evidence":["data/skill-profiles.json","docs/SKILLS.md"],"finding":"All 29 canonical hi-* skills have recalibrated trigger/do-not-trigger/exit/cost/composition profiles."}
+    "direct_path": {
+      "status": "PASS_LOCAL",
+      "evidence": [
+        "plugin/src/runtime/execution/adaptive-policy.ts",
+        "plugin/test/hi-benchmarks.test.mjs"
+      ],
+      "finding": "Clear low-risk local work remains DIRECT and single-agent."
+    },
+    "role": {
+      "status": "PASS_LOCAL",
+      "finding": "Role selection is conditional and separate from agent/model identity."
+    },
+    "skill": {
+      "status": "PASS_LOCAL",
+      "finding": "Skill activation remains default-zero with bounded activation."
+    },
+    "model": {
+      "status": "PASS_LOCAL",
+      "finding": "Stronger-model behavior is escalation/evidence gated; explicit configuration has precedence."
+    },
+    "tool": {
+      "status": "PASS_LOCAL",
+      "finding": "Tool policy is minimum-sufficient and shell interaction is fail-fast/non-interactive."
+    },
+    "topology": {
+      "status": "PASS_LOCAL",
+      "finding": "Adaptive topology remains single-agent unless material fan-out benefit exists."
+    },
+    "multi_agent": {
+      "status": "PASS_LOCAL",
+      "finding": "Independent multi-stream work can use bounded fan-out; availability alone does not activate it."
+    },
+    "multi_model": {
+      "status": "PASS_LOCAL",
+      "finding": "Role/model mapping exists without decorative model diversity."
+    },
+    "continuation": {
+      "status": "PASS_LOCAL",
+      "finding": "Continuation evaluates mission state, evidence, authority and completion rather than model-done/idle alone."
+    },
+    "execution_depth": {
+      "status": "PASS_LOCAL",
+      "finding": "DIRECT/EVIDENCE/PLANNED/ESCALATED execution depth is explicit."
+    },
+    "context_depth": {
+      "status": "PASS_LOCAL",
+      "finding": "Context depth is independent from execution depth and risk."
+    },
+    "semantic_context": {
+      "status": "PASS_LOCAL",
+      "finding": "Scoped TypeScript declarations can be extracted without full source injection."
+    },
+    "project_intelligence": {
+      "status": "PASS_LOCAL",
+      "finding": "Patterns are evidence-backed, bounded and invalidated to POTENTIALLY_STALE when source changes."
+    },
+    "memory": {
+      "status": "PASS_LOCAL",
+      "finding": "Memory provider boundary is optional and cannot satisfy verification."
+    },
+    "privacy": {
+      "status": "PASS_LOCAL",
+      "finding": "Provider-facing task prompts pass through local redaction and leak tests use synthetic secrets."
+    },
+    "human_judgment": {
+      "status": "PASS_LOCAL",
+      "finding": "Material questions are gated and independent questions can be batched."
+    },
+    "retry": {
+      "status": "PASS_LOCAL",
+      "finding": "Retry is budgeted and must be materially different."
+    },
+    "process": {
+      "status": "PASS_LOCAL",
+      "finding": "Long-running process state and cleanup are first-class runtime concerns."
+    },
+    "isolation": {
+      "status": "PASS_LOCAL",
+      "finding": "Isolation is adaptive; low-risk work stays in current workspace while worktree capability is available."
+    },
+    "verification": {
+      "status": "PASS_LOCAL",
+      "finding": "Verification is risk-proportional and evidence freshness remains authoritative."
+    },
+    "completion": {
+      "status": "PASS_LOCAL",
+      "finding": "Completion adjudication remains deterministic and pending required state prevents completion."
+    },
+    "stop": {
+      "status": "PASS_LOCAL",
+      "finding": "STOP remains authoritative; model completion statements do not own STOP."
+    },
+    "opencode_native_behavior": {
+      "status": "PASS_HOST_CURRENT_WORKTREE",
+      "finding": "OpenCode 1.18.16 real-host acceptance passed for loader, connected-provider routing, DIRECT zero-child behavior, native child sessions, effective model/variant evidence, native permissions, native skill discovery, bounded retry and deterministic STOP. Exact-ref rebinding remains required after the user commits the tested fixes."
+    },
+    "portability": {
+      "status": "PASS_LOCAL",
+      "finding": "Host capability manifest keeps core semantic ownership outside OpenCode-specific types; no full alternate adapter is claimed."
+    },
+    "efficiency": {
+      "status": "PASS_LOCAL_POLICY_BENCHMARK",
+      "evidence": [
+        "data/validation/benchmarks-0.1.0.json"
+      ],
+      "finding": "Nine deterministic policy scenarios cover execution-shape efficiency without claiming provider billing/latency."
+    },
+    "skills": {
+      "status": "PASS_LOCAL",
+      "evidence": [
+        "data/skill-profiles.json",
+        "docs/SKILLS.md"
+      ],
+      "finding": "All 29 canonical hi-* skills have recalibrated trigger/do-not-trigger/exit/cost/composition profiles."
+    }
   },
   "known_internal_blocking_findings": []
 }

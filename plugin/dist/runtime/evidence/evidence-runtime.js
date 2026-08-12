@@ -31,7 +31,12 @@ export function observeToolBefore(mission, tool, args) { if (WRITE_TOOLS.has(too
 } const command = typeof args?.command === 'string' ? args.command : ''; if (tool === 'bash' && SHELL_MUTATION.test(command))
     markMutation(mission, [], 'bash-mutation'); }
 export function observeToolAfter(mission, tool, args, output) { if (WRITE_TOOLS.has(tool))
-    return; const command = typeof args?.command === 'string' ? args.command : ''; if (tool === 'bash' && VERIFY_HINT.test(command)) {
+    return; const command = typeof args?.command === 'string' ? args.command : ''; if (tool === 'read' && mission.intent.taskKind === 'review') {
+    const path = typeof args?.filePath === 'string' ? args.filePath : typeof args?.path === 'string' ? args.path : undefined;
+    const text = typeof output === 'string' ? output : JSON.stringify(output ?? '');
+    if (text.trim() && !/(^|\n)\s*(error|failed)\b/i.test(text))
+        addEvidence(mission, { kind: 'review-evidence', summary: path ? `Read ${path}` : 'Read-only review evidence', scope: path ? [path] : [], source: 'read', pass: true, outcome: 'passed' });
+} if (tool === 'bash' && VERIFY_HINT.test(command)) {
     const text = typeof output === 'string' ? output : JSON.stringify(output ?? ''), out = outcomeOf(output, text);
     addEvidence(mission, { kind: verificationKind(command), summary: command.slice(0, 180), scope: mission.changed_files, source: 'bash', pass: out.outcome === 'passed' ? true : out.outcome === 'failed' ? false : undefined, outcome: out.outcome, reason: out.reason });
 } }

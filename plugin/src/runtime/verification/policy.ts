@@ -1,7 +1,7 @@
 import type { EvidenceItem,MissionState,MissionTask,NormalizedMissionIntent,VerificationPolicy } from '../mission/types.js'
 import type { RepoContext } from '../intent/repo-context.js'
 function canonical(kind:string):string{const k=kind.toLowerCase().trim();if(/^(pytest|go test|cargo test|npm test|pnpm test|bun test|tests?|targeted-tests)$/.test(k)||/test|pytest|vitest|jest|spec/.test(k))return'targeted-tests';if(/typecheck|tsc|mypy|pyright/.test(k))return'typecheck';if(/lint|eslint|ruff/.test(k))return'lint';if(/build|compile|cargo check/.test(k))return'build';return k}
-export function verificationPolicyFor(intent:NormalizedMissionIntent):VerificationPolicy{return{requiredKinds:[...new Set(intent.likelyVerification.map(canonical))],requireFresh:true,requireReview:intent.risk==='high'||intent.taskKind==='review',allowWorkerReportedEvidence:intent.risk!=='high'}}
+export function verificationPolicyFor(intent:NormalizedMissionIntent):VerificationPolicy{const independentReview=intent.risk==='high'||intent.requiredCapabilities.includes('independent-review')||intent.requiredCapabilities.includes('security-review');return{requiredKinds:[...new Set(intent.likelyVerification.map(canonical))],requireFresh:true,requireReview:independentReview,allowWorkerReportedEvidence:intent.risk!=='high'}}
 
 
 function normPath(p:string):string{return p.trim().replace(/\\/g,'/').replace(/^\.\//,'')}

@@ -5,9 +5,10 @@ export interface MinimumTeamDecision { primary:PrimaryMode; direct:boolean; role
 
 export function minimumTeamFor(intent:NormalizedMissionIntent, verification?:VerificationPolicy, primaryMode:'auto'|PrimaryMode='auto'):MinimumTeamDecision{
   const caps=new Set(intent.requiredCapabilities)
-  const reviewRequired=verification?.requireReview===true||intent.risk==='high'||intent.taskKind==='review'
-  const localDirect=intent.scope==='local'&&intent.risk==='low'&&intent.taskKind==='implementation'&&!caps.has('visual-qa')&&!caps.has('design-exploration')
-  if(localDirect){const primary=primaryMode==='auto'?'working-manager':primaryMode;return{primary,direct:primary==='working-manager',roles:[],reason:['local low-risk change is directly executable','minimum-team:0-child',primaryMode==='auto'?'primary:auto':`primary:forced-${primary}`]}}
+  const reviewRequired=verification?.requireReview===true||intent.risk==='high'
+  const localImplementation=intent.scope==='local'&&intent.risk==='low'&&intent.taskKind==='implementation'&&!caps.has('visual-qa')&&!caps.has('design-exploration')
+  const localReview=intent.scope==='local'&&intent.risk==='low'&&intent.taskKind==='review'&&!reviewRequired
+  if(localImplementation||localReview){const primary=primaryMode==='auto'?'working-manager':primaryMode;const reason=localReview?'local low-risk review is directly evidentiary':'local low-risk change is directly executable';return{primary,direct:primary==='working-manager',roles:[],reason:[reason,'minimum-team:0-child',primaryMode==='auto'?'primary:auto':`primary:forced-${primary}`]}}
   const roles:string[]=[]
   const implementation=intent.taskKind!=='review'&&intent.taskKind!=='release-readiness'
   if(intent.scope==='repo-wide'&&(caps.has('design-exploration')||/architecture|design|migration/i.test(intent.objective)))roles.push('architect')

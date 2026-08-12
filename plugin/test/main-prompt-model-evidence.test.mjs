@@ -95,3 +95,31 @@ test('missing assistant model metadata cannot prove a role-specific child model 
   assert.ok(state.task.result.open_issues.some(x=>x.startsWith('model-effective-unverified:')))
   assert.ok(ledger.events.some(e=>e.type==='model.effective.unverified'))
 })
+
+
+test('pre-assistant child idle is ignored until native assistant model evidence exists',async()=>{
+  const dir=mkdtempSync(join(tmpdir(),'hi-pre-assistant-idle-'))
+  const result={status:'DONE',summary:'done',changed_files:[],evidence:[],open_issues:[],needs_context:[]}
+  let messageReads=0
+  const client={app:{log:async()=>{}},provider:{list:async()=>({data:[{id:'p',models:[{id:'expected',write:true}]}]})},session:{
+    create:async()=>({data:{id:'child-race'}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:{}}),diff:async()=>({data:[]}),
+    messages:async()=>({data:++messageReads===1
+      ?[{info:{id:'u1',role:'user'},parts:[{type:'text',text:'handoff'}]}]
+      :[{info:{id:'u1',role:'user'},parts:[{type:'text',text:'handoff'}]},{info:{id:'a1',role:'assistant',providerID:'p',modelID:'expected'},parts:[{type:'text',text:JSON.stringify(result)}]}]}),
+  }}
+  const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client});await hooks.config({});await hooks['chat.message']({sessionID:'parent-race',message:{role:'user',parts:[{type:'text',text:'fix it'}]}},{parts:[]})
+  const started=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'implementation',role:'coder',category:'standard',model:'p/expected'},{sessionID:'parent-race'}))
+  await hooks.event({event:{type:'session.idle',properties:{sessionID:'child-race'}}})
+  const first=JSON.parse(await hooks.tool.hi_task_peek.execute({id:started.task_id},{sessionID:'parent-race'}))
+  const firstLedger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:80},{sessionID:'parent-race'}))
+  assert.equal(first.worker.status,'busy')
+  assert.equal(first.task.result,undefined)
+  assert.ok(!firstLedger.events.some(e=>e.type==='model.effective.unverified'))
+  assert.ok(firstLedger.events.some(e=>e.type==='worker.idle.pre-assistant-ignored'))
+  await hooks.event({event:{type:'session.idle',properties:{sessionID:'child-race'}}})
+  const second=JSON.parse(await hooks.tool.hi_task_peek.execute({id:started.task_id},{sessionID:'parent-race'}))
+  assert.equal(second.worker.effective_model,'p/expected')
+  assert.equal(second.worker.effective_model_verified,true)
+  assert.equal(second.task.result.status,'DONE')
+  await hooks.dispose?.();rmSync(dir,{recursive:true,force:true})
+})

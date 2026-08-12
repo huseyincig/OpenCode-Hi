@@ -3,7 +3,7 @@ function canonical(kind) { const k = kind.toLowerCase().trim(); if (/^(pytest|go
     return 'typecheck'; if (/lint|eslint|ruff/.test(k))
     return 'lint'; if (/build|compile|cargo check/.test(k))
     return 'build'; return k; }
-export function verificationPolicyFor(intent) { return { requiredKinds: [...new Set(intent.likelyVerification.map(canonical))], requireFresh: true, requireReview: intent.risk === 'high' || intent.taskKind === 'review', allowWorkerReportedEvidence: intent.risk !== 'high' }; }
+export function verificationPolicyFor(intent) { const independentReview = intent.risk === 'high' || intent.requiredCapabilities.includes('independent-review') || intent.requiredCapabilities.includes('security-review'); return { requiredKinds: [...new Set(intent.likelyVerification.map(canonical))], requireFresh: true, requireReview: independentReview, allowWorkerReportedEvidence: intent.risk !== 'high' }; }
 function normPath(p) { return p.trim().replace(/\\/g, '/').replace(/^\.\//, ''); }
 function dependencySurface(files) { return files.some(raw => /(^|\/)(package\.json|package-lock\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lockb?|requirements(?:-[^/]*)?\.txt|pyproject\.toml|poetry\.lock|cargo\.toml|cargo\.lock|go\.mod|go\.sum)(?:$|\/)/i.test(normPath(raw))); }
 function sensitiveSurface(files) { return files.some(raw => { const p = normPath(raw).toLowerCase(); return /(^|\/)(auth|security|permission|oauth|session|credential|secrets?)(\/|\.|$)/.test(p) || /(migration|schema|database|dockerfile|compose\.ya?ml|package\.json|lock\.ya?ml|package-lock\.json|pnpm-lock\.yaml|yarn\.lock|\.github\/workflows)/.test(p); }); }

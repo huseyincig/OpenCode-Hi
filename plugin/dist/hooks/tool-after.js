@@ -39,6 +39,14 @@ export function createToolAfterHook(store, background, events, projectRoot) {
             return;
         const tool = String(input?.tool ?? ''), args = input?.args ?? {}, text = outputText(output);
         observeToolAfter(m, tool, args, output);
+        if (!m.verification_policy.requireReview) {
+            for (const o of m.obligations.filter(x => x.kind === 'review' && x.status === 'open')) {
+                if (verificationSatisfied(m, o.id).ok) {
+                    o.status = 'closed';
+                    o.closedAt = Date.now();
+                }
+            }
+        }
         if (tool === 'bash' && typeof args?.command === 'string') {
             recordRemoteReleaseVerification(m, args.command, output, projectRoot);
             recordStagingInspection(m, args.command, output);

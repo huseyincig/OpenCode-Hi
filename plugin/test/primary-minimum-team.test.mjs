@@ -42,3 +42,24 @@ test('review-dominant security work routes to read-only security reviewer',()=>{
   assert.equal(intent.taskKind,'review')
   assert.equal(routeCapabilities(intent).role,'security-reviewer')
 })
+
+
+test('low-risk local inspect is direct evidence work, not an automatic independent reviewer agent',()=>{
+  const intent=normalizeIntent('inspect opencode.json and report its schema value')
+  const policy=verificationPolicyFor(intent)
+  const d=minimumTeamFor(intent,policy)
+  assert.equal(intent.taskKind,'review')
+  assert.equal(policy.requireReview,false)
+  assert.equal(d.primary,'working-manager')
+  assert.equal(d.direct,true)
+  assert.deepEqual(d.roles,[])
+})
+
+test('explicit independent review remains an independent reviewer decision',()=>{
+  const intent=normalizeIntent('independent review of opencode.json')
+  const policy=verificationPolicyFor(intent)
+  const d=minimumTeamFor(intent,policy)
+  assert.equal(policy.requireReview,true)
+  assert.ok(intent.requiredCapabilities.includes('independent-review'))
+  assert.ok(d.roles.includes('qa-reviewer'))
+})

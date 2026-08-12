@@ -1,36 +1,60 @@
-# OpenCode-Hi 0.1.0 Final Local Acceptance
+# OpenCode-Hi 0.1.0 Final Acceptance
 
-This document binds the final **local** acceptance state. It does not claim external OpenCode host verification that could not be executed in the current environment.
+This document binds the current acceptance state for OpenCode-Hi 0.1.0. It distinguishes real-host evidence for the current worktree from exact-candidate release evidence.
 
 ## Status
 
-**LOCAL_CANDIDATE_COMPLETE — RELEASE BLOCKED ON EXTERNAL RECEIPTS**
+**HOST ACCEPTED CURRENT WORKTREE — RELEASE BLOCKED UNTIL EXACT-CANDIDATE BINDING AND REMAINING EXTERNAL GATES**
 
-There are zero known blocking internal findings after the final repository-wide architecture, security, storage, identity, release, and documentation audit. Release readiness is not declared because the current environment has no `opencode` executable and no user-created exact Git ref for this candidate.
+There are zero known blocking internal findings after the current repository-wide architecture, security, storage, identity, runtime, packaging, and documentation audit.
 
-## Local gates
+Real OpenCode 1.18.16 host acceptance has now been executed against the current worktree. These observations are valid host evidence, but the host-tested fixes are not yet bound to a new user-created Git commit/ref. Release readiness therefore remains false.
 
-- TypeScript build and complete Node runtime/acceptance suite: PASS.
-- Python validation suite: PASS.
-- Source validator: PASS.
-- Nine deterministic execution-policy benchmark scenarios: PASS.
-- Product identity / no-legacy-product surface: PASS.
-- Terminology & naming gate: PASS.
-- Filesystem hygiene and ownership-aware lifecycle: PASS.
-- Capability-driven storage ownership: PASS.
-- 29/29 skill artifact/ownership audit: PASS.
-- Context Governor / Project Intelligence / Semantic Context: PASS_LOCAL.
-- Privacy Boundary and synthetic-secret leak protections: PASS_LOCAL.
-- Authority, evidence freshness, deterministic Completion/STOP: PASS_LOCAL.
-- Process Governor / worktree isolation / non-interactive shell safety: PASS_LOCAL.
-- Source reuse/license matrix and attribution review: PASS_LOCAL.
-- Deterministic source/distributable/manifest/SBOM generation: PASS_LOCAL when rebuilt from this exact source state.
+## Current regression gates
+
+- TypeScript build and complete Node runtime/acceptance suite: **388/388 PASS**.
+- Python validation suite: **47/47 PASS**.
+- Source validator: **PASS**.
+- Nine deterministic execution-policy benchmark scenarios: **9/9 PASS**.
+- Product identity / no-legacy-product compatibility surface: **PASS**.
+- Terminology and naming gate: **PASS**.
+- Filesystem hygiene and ownership-aware lifecycle: **PASS**.
+- Capability-driven storage ownership: **PASS**.
+- 29/29 skill artifact/ownership audit: **PASS**.
+- Context Governor / Project Intelligence / Semantic Context: **PASS_LOCAL**.
+- Privacy Boundary and synthetic-secret leak protections: **PASS_LOCAL**.
+- Authority, evidence freshness, deterministic Completion/STOP: **PASS_LOCAL + PASS_HOST_CURRENT_WORKTREE**.
+- Process Governor / worktree isolation / non-interactive shell safety: **PASS_LOCAL**.
+- Source reuse/license matrix and attribution review: **PASS_LOCAL**.
+
+## Real OpenCode host acceptance
+
+The host receipt is `data/validation/external-opencode-hi-0.1.0-host-current-worktree.json`.
+
+The following passed on OpenCode 1.18.16:
+
+- native local plugin loading through `.opencode/plugins/`;
+- Hi config hook registration of eight canonical native agents;
+- explicit Hi skill path registration;
+- native `skill` tool discovery and loading of `hi-code-review`;
+- provider inventory filtering to the actually connected provider set;
+- DIRECT low-risk review with Working Manager, zero child workers, fresh review evidence, all gates closed, and deterministic STOP;
+- explicit independent review with a native `qa-reviewer` child session;
+- child effective model and model-variant verification from assistant runtime metadata;
+- native permission `ask`, one-shot allow, and reject behavior without fake approval;
+- rejection of shell polling while event-driven worker waiting remained valid;
+- materially different bounded retry after a permission/profile mismatch;
+- successful recovery reviewer completion with review and verification obligations closed;
+- final mission completion and deterministic STOP;
+- install → doctor → uninstall filesystem lifecycle while preserving unrelated OpenCode configuration and durable Hi-owned project data.
+
+The host observed only `opencode-go` and `opencode` as connected providers. Hi no longer treats the full provider catalog as runtime-available inventory.
 
 ## Product identity gate
 
 OpenCode-Hi has no legacy product compatibility surface. Historical baseline identifiers are permitted only in provenance, attribution/license material, immutable historical receipts, and negative rejection tests. They are not accepted as current config, CLI, schema, telemetry, runtime, package, or skill identities.
 
-## Storage gate
+## Storage and uninstall gate
 
 Storage is derived from semantic ownership, scope, lifecycle, sensitivity, and retention need rather than skill name or file type.
 
@@ -42,23 +66,21 @@ Storage is derived from semantic ownership, scope, lifecycle, sensitivity, and r
 - Mission-survival runtime state: OS/OpenCode state area keyed by project, not consumer repository storage.
 - Redaction mappings, process state, caches and transient context: memory/OS runtime only.
 
-Uninstall removes only setup-owned registration/config/provenance surfaces; durable project knowledge, retained artifacts, project-created skills, and unrelated OpenCode/project content are preserved.
+Real filesystem lifecycle acceptance verified that uninstall removes setup-owned registration/provenance while preserving `$schema`, unrelated plugins, theme, MCP configuration, Project Intelligence, retained artifacts, and project-created skills.
 
-## External gates still required
+## Remaining release blockers
 
-The following remain `PENDING_EXTERNAL` and are release blockers rather than internal defects:
+The following remain release blockers:
 
-- exact-candidate OpenCode native plugin-loader smoke;
-- native child-session behavior;
-- model/provider binding and override behavior;
-- host permission-denial runtime behavior;
-- packaged agent/skill discovery through the real OpenCode resolver;
-- exact Git-ref clean-consumer installation;
-- external dependency/supply-chain install receipt;
-- Windows runtime smoke.
+- the current host-tested fixes must be committed by the user and bound to a new exact Git commit/ref;
+- SOURCE/DISTRIBUTABLE/MANIFEST/SBOM must be rebuilt deterministically after that source freeze;
+- the exact ref must pass a clean-consumer package installation receipt;
+- external dependency/supply-chain installation must be verified;
+- Windows runtime smoke must pass;
+- if 0.1.0 is distributed through npm, the exact npm registry publish/install/integrity path must be verified.
 
-No historical v58 receipt, local mock, adapter contract, or deterministic simulation may satisfy these gates.
+The previous Git commit `e24f0d6455f36c4b020885c5b098e95237efc9e6` is the base of the current worktree but does not contain the real-host fixes discovered during acceptance. It must not be represented as the final exact candidate.
 
 ## Candidate binding rule
 
-Any source change after local candidate artifact generation invalidates the previous candidate hashes. Source/distributable/manifest/SBOM hashes must therefore be generated only after this final acceptance document and its machine-readable receipt are present, and must be regenerated if the source changes again.
+Real-host evidence is never promoted across source changes. Once the user commits the current fixes, the resulting exact Git ref becomes the candidate identity. Host binding and deterministic release artifacts must then be regenerated or revalidated against that exact ref before release readiness can be declared.

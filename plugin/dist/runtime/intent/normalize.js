@@ -7,6 +7,7 @@ const TDD = /\b(tdd|test[- ]driven|test driven|test-first)\b/i;
 const PLAN = /\b(plan|planning|roadmap|tasarla|planla|mimari plan)\b/i;
 const DESIGN = /\b(design|architecture|trade[- ]?off|approach)\b/i;
 const REVIEW = /\b(review|audit|inspect|security review|code review)\b/i;
+const INDEPENDENT_REVIEW = /\b(?:independent|separate|second[- ]?pass|second opinion)\s+(?:review|audit|verification)\b/i;
 const VISUAL = /\b(ui|ux|visual|css|layout|responsive|frontend|interface)\b/i;
 const PERF = /\b(performance|speed|slow|optimi[sz]e|profile)\b/i;
 const RELEASE = /\b(release|changelog|version|publish preparation)\b/i;
@@ -55,6 +56,8 @@ export function normalizeIntent(text, repo) {
         requiredCapabilities.push('release-guardrails', 'verification');
     else
         requiredCapabilities.push('implementation');
+    if (INDEPENDENT_REVIEW.test(objective))
+        requiredCapabilities.push('independent-review');
     if (TDD.test(objective))
         requiredCapabilities.push('tdd-required');
     if (PLAN.test(objective) && scope !== 'local')

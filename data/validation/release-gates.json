@@ -1,11 +1,11 @@
 {
   "schema": 6,
   "release": "0.1.0",
-  "generated_at": "2026-08-12",
-  "candidate_status": "LOCAL_CANDIDATE_COMPLETE_EXTERNAL_GATES_PENDING",
+  "generated_at": "2026-08-13",
+  "candidate_status": "HOST_ACCEPTED_CURRENT_WORKTREE_EXACT_CANDIDATE_PENDING",
   "gates": {
-    "source_integrity": "PASS_LOCAL",
-    "deterministic_release": "PASS_LOCAL",
+    "source_integrity": "PASS_LOCAL_CURRENT_SOURCE",
+    "deterministic_release": "PASS_LOCAL_CURRENT_WORKTREE",
     "node_runtime_acceptance": "PASS_LOCAL_CURRENT_SOURCE",
     "python_acceptance": "PASS_LOCAL_CURRENT_SOURCE",
     "validator": "PASS_LOCAL_CURRENT_SOURCE",
@@ -14,25 +14,26 @@
     "native_skill_inventory": "PASS_LOCAL",
     "native_methodology_ownership": "PASS_LOCAL",
     "benchmark_policy_scenarios": "PASS_LOCAL",
-    "install_config_lifecycle": "PASS_LOCAL",
-    "architecture_audit": "PASS_LOCAL_WITH_EXTERNAL_HOST_GATE",
-    "native_git_plugin_install": "PENDING_EXTERNAL_0_1_0",
-    "plain_opencode_smoke": "PENDING_EXTERNAL_0_1_0",
-    "packaged_agents_skills": "PENDING_EXTERNAL_0_1_0",
-    "opencode_native_child_sessions": "PENDING_EXTERNAL_0_1_0",
-    "opencode_model_provider_binding": "PENDING_EXTERNAL_0_1_0",
-    "permission_denial_runtime": "PENDING_EXTERNAL_0_1_0",
+    "install_config_lifecycle": "PASS_HOST_CURRENT_WORKTREE",
+    "architecture_audit": "PASS_HOST_CURRENT_WORKTREE_EXACT_REF_PENDING",
+    "plain_opencode_smoke": "PASS_HOST_CURRENT_WORKTREE",
+    "packaged_agents_skills": "PASS_HOST_CURRENT_WORKTREE",
+    "opencode_native_child_sessions": "PASS_HOST_CURRENT_WORKTREE",
+    "opencode_model_provider_binding": "PASS_HOST_CURRENT_WORKTREE",
+    "permission_denial_runtime": "PASS_HOST_CURRENT_WORKTREE",
     "windows_runtime_smoke": "PENDING_EXTERNAL_WINDOWS_0_1_0",
     "dependency_supply_chain_external": "PENDING_EXTERNAL_0_1_0",
-    "filesystem_hygiene": "PASS_LOCAL_CURRENT_SOURCE"
+    "filesystem_hygiene": "PASS_LOCAL_CURRENT_SOURCE",
+    "native_package_plugin_install_exact_candidate": "PENDING_EXACT_REF_AND_REGISTRY_0_1_0"
   },
   "release_blocked": true,
-  "reason": "The current 0.1.0 source passes local implementation, regression, lifecycle, benchmark and deterministic artifact gates. This execution environment has no OpenCode binary, so exact-candidate native loader/session/provider/permission receipts cannot be produced and remain PENDING_EXTERNAL.",
+  "reason": "Real OpenCode 1.18.16 host acceptance and deterministic release rebuild pass for the current uncommitted worktree. Release remains blocked until these fixes are bound to a new exact Git ref, exact-ref clean package/supply-chain installation is verified, and Windows smoke is complete.",
   "external_blockers": [
-    "opencode-binary-unavailable-for-exact-0.1.0-loader-runtime-receipt",
-    "exact-candidate-git-ref-not-yet-created-by-user",
+    "current-host-tested-fixes-not-yet-bound-to-user-created-exact-git-ref",
+    "exact-ref-clean-consumer-package-install-not-run",
+    "external-supply-chain-install-receipt-not-run",
     "windows-runtime-smoke-not-run",
-    "external-supply-chain-install-receipt-not-run"
+    "npm-registry-publish-install-verification-not-run-if-0.1.0-is-distributed-through-npm"
   ],
   "current_local_evidence": {
     "node": {
@@ -68,6 +69,16 @@
     "final_acceptance": {
       "status": "PASS_LOCAL_WITH_EXTERNAL_GATES_PENDING",
       "receipt": "data/validation/final-acceptance-0.1.0.json"
+    },
+    "host_acceptance": {
+      "status": "PASS_HOST_CURRENT_WORKTREE_EXACT_REF_PENDING",
+      "receipt": "data/validation/external-opencode-hi-0.1.0-host-current-worktree.json",
+      "opencode_version": "1.18.16"
+    },
+    "deterministic_release": {
+      "status": "PASS",
+      "method": "two independent release-build runs with byte-for-byte identical outputs",
+      "hash_binding": "Artifact hashes are emitted by the post-freeze release build/manifest and are intentionally not embedded in this source-owned living receipt to avoid self-referential archive hashes."
     }
   },
   "historical_receipts_not_valid_for_current_candidate": {
@@ -79,5 +90,5 @@
       "data/validation/forensic-61-progress.json"
     ]
   },
-  "rule": "No external PASS is inferred from source, local adapters, deterministic simulations, or historical v58 receipts. Current external PASS requires a fresh exact-bound OpenCode-Hi 0.1.0 host receipt."
+  "rule": "Current-worktree host PASS is real host evidence but is not exact-candidate release evidence until the tested fixes are committed by the user and the exact ref is revalidated. Historical v58 receipts never satisfy OpenCode-Hi gates."
 }

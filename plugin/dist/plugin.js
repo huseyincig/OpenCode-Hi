@@ -42,9 +42,14 @@ import { fileURLToPath } from 'node:url';
 function providerModels(raw) {
     const root = raw?.all ?? raw?.providers ?? raw ?? [];
     const providers = Array.isArray(root) ? root : Object.values(root ?? {});
+    const connectedRaw = Array.isArray(raw?.connected) ? raw.connected : undefined;
+    const connected = connectedRaw ? new Set(connectedRaw.map((x) => typeof x === 'string' ? x : String(x?.id ?? x?.providerID ?? x?.name ?? '')).filter(Boolean)) : undefined;
     const out = [];
     for (const p of providers) {
         const pid = p?.id ?? p?.providerID ?? p?.name;
+        const provider = pid ? String(pid) : undefined;
+        if (connected && provider && !connected.has(provider))
+            continue;
         const models = p?.models ?? p?.model ?? [];
         const list = Array.isArray(models) ? models : Object.values(models ?? {});
         for (const model of list) {
@@ -52,7 +57,6 @@ function providerModels(raw) {
             if (!id)
                 continue;
             const rawID = String(id);
-            const provider = pid ? String(pid) : undefined;
             const canonical = provider && !rawID.startsWith(`${provider}/`) ? `${provider}/${rawID}` : rawID;
             const variantsRaw = model?.variants ?? model?.variant;
             const variants = Array.isArray(variantsRaw) ? variantsRaw.map(String) : (variantsRaw && typeof variantsRaw === 'object' ? Object.keys(variantsRaw) : []);
@@ -153,9 +157,11 @@ export const HiPlugin = async (ctx) => {
             return 'No active Hi mission'; if (!m.changed_files.length && !m.evidence.last_mutation_at)
             return 'BLOCKED: no observed mutation for direct progress'; const open = m.obligations.filter(x => x.kind === 'implementation' && x.status === 'open'), o = a.obligation_id ? open.find(x => x.id === String(a.obligation_id)) : open.length === 1 ? open[0] : undefined; if (!o)
             return open.length > 1 ? 'BLOCKED: multiple implementation obligations are open; specify obligation_id' : 'No open implementation obligation'; o.status = 'closed'; o.closedAt = Date.now(); appendLedger(m, 'implementation.direct-progress', { payload: { summary: String(a.summary).slice(0, 500), obligation: o.id, changed_files: m.changed_files.slice(-30) } }); return JSON.stringify({ status: 'RECORDED', verification_required: !evaluateCompletion(m).complete, changed_files: m.changed_files.slice(-30) }); } });
-    const startTool = tool({ description: 'Start one bounded Hi worker task. Use only when delegation is actually beneficial.', args: { objective: tool.schema.string().optional(), role: tool.schema.string().optional(), category: tool.schema.string().optional(), model: tool.schema.string().optional(), model_variant: tool.schema.string().optional(), scope: tool.schema.string().optional(), dependencies: tool.schema.string().optional(), required_evidence: tool.schema.string().optional(), obligation_ids: tool.schema.string().optional(), fork_from_session: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+    const startTool = tool({ description: 'Start one bounded Hi worker task. Use only when delegation is actually beneficial.', args: { objective: tool.schema.string().optional(), role: tool.schema.string().optional(), category: tool.schema.string().optional(), model: tool.schema.string().optional(), model_variant: tool.schema.string().optional(), scope: tool.schema.string().optional(), constraints: tool.schema.string().optional(), dependencies: tool.schema.string().optional(), required_evidence: tool.schema.string().optional(), obligation_ids: tool.schema.string().optional(), fork_from_session: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
             return 'No active Hi mission'; try {
-            const input = { ...a, forkFromSession: a.fork_from_session ? String(a.fork_from_session) : undefined, modelVariant: a.model_variant ? String(a.model_variant) : undefined, scope: a.scope ? String(a.scope).split(',').map((x) => x.trim()).filter(Boolean) : undefined, dependencies: a.dependencies ? String(a.dependencies).split(',').map((x) => x.trim()).filter(Boolean) : undefined, requiredEvidence: a.required_evidence ? String(a.required_evidence).split(',').map((x) => x.trim()).filter(Boolean) : undefined, obligationIds: a.obligation_ids ? String(a.obligation_ids).split(',').map((x) => x.trim()).filter(Boolean) : undefined };
+            const input = { ...a, forkFromSession: a.fork_from_session ? String(a.fork_from_session) : undefined, modelVariant: a.model_variant ? String(a.model_variant) : undefined, scope: a.scope ? String(a.scope).split(',').map((x) => x.trim()).filter(Boolean) : undefined, constraints: a.constraints ? [String(a.constraints)] : undefined, dependencies: a.dependencies ? String(a.dependencies).split(',').map((x) => x.trim()).filter(Boolean) : undefined, requiredEvidence: a.required_evidence ? String(a.required_evidence).split(',').map((x) => x.trim()).filter(Boolean) : undefined, obligationIds: a.obligation_ids ? String(a.obligation_ids).split(',').map((x) => x.trim()).filter(Boolean) : undefined };
+            if (m.adaptive_execution?.path === 'DIRECT' && !m.verification_policy.requireReview && ['qa-reviewer', 'security-reviewer'].includes(String(input.role ?? '')))
+                return JSON.stringify({ status: 'SKIPPED', reason: 'minimum-sufficient-direct-path: independent reviewer is not required' });
             return JSON.stringify(await tasks.start(m, input));
         }
         catch (e) {
@@ -341,8 +347,13 @@ export const HiPlugin = async (ctx) => {
             if (child.status === 'completed' || child.status === 'failed' || child.status === 'cancelled')
                 return;
             try {
-                const messages = await listMessages(ctx.client, sid, 12), modelEvidence = lastAssistantModel(messages), effective = tasks.noteEffectiveModel(m, child.id, modelEvidence ? { ...modelEvidence, source: 'assistant-message-metadata' } : undefined);
-                const text = lastAssistantText(messages);
+                const messages = await listMessages(ctx.client, sid, 12), modelEvidence = lastAssistantModel(messages), text = lastAssistantText(messages);
+                if (!modelEvidence && !text) {
+                    appendLedger(m, 'worker.idle.pre-assistant-ignored', { task_id: child.task_id, worker_id: child.id, payload: { session_id: sid, messages: messages.length } });
+                    persistence.save(store.all());
+                    return;
+                }
+                const effective = tasks.noteEffectiveModel(m, child.id, modelEvidence ? { ...modelEvidence, source: 'assistant-message-metadata' } : undefined);
                 let result = parseWorkerResult(text);
                 if (!effective.ok)
                     result = { ...result, status: 'BLOCKED', summary: `Effective child model could not be verified against the selected execution model. ${effective.reason}`, open_issues: [...new Set([...(result.open_issues ?? []), effective.reason])], needs_context: [...new Set([...(result.needs_context ?? []), 'effective-model-reconcile: refresh runtime inventory/provider policy and resume with a verified role-selected model'])] };

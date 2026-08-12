@@ -1,0 +1,115 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "generated_at": "2026-08-13",
+  "status": "PASS_HOST_CURRENT_WORKTREE_WITH_EXACT_REF_PENDING",
+  "source_binding": {
+    "base_git_commit": "e24f0d6455f36c4b020885c5b098e95237efc9e6",
+    "worktree": "/workspace/OpenCode-Hi",
+    "state": "UNCOMMITTED_CURRENT_WORKTREE",
+    "exact_candidate": false,
+    "note": "This receipt proves real-host behavior for the current worktree only. A new user-created Git commit/ref is required before these observations can satisfy exact-candidate release binding."
+  },
+  "host": {
+    "os": "linux",
+    "opencode_version": "1.18.16",
+    "server": "http://127.0.0.1:4096",
+    "provider_connected": ["opencode-go", "opencode"]
+  },
+  "gates": {
+    "native_plugin_loader": "PASS_HOST_CURRENT_WORKTREE",
+    "plain_opencode_smoke": "PASS_HOST_CURRENT_WORKTREE",
+    "connected_provider_inventory": "PASS_HOST_CURRENT_WORKTREE",
+    "direct_path_minimum_sufficient": "PASS_HOST_CURRENT_WORKTREE",
+    "native_child_sessions": "PASS_HOST_CURRENT_WORKTREE",
+    "effective_model_binding": "PASS_HOST_CURRENT_WORKTREE",
+    "permission_ask_reject_once": "PASS_HOST_CURRENT_WORKTREE",
+    "bounded_materially_different_retry": "PASS_HOST_CURRENT_WORKTREE",
+    "packaged_agents": "PASS_HOST_CURRENT_WORKTREE",
+    "native_skill_discovery": "PASS_HOST_CURRENT_WORKTREE",
+    "install_doctor_uninstall_filesystem_lifecycle": "PASS_HOST_CURRENT_WORKTREE",
+    "deterministic_completion_stop": "PASS_HOST_CURRENT_WORKTREE"
+  },
+  "evidence": {
+    "provider_inventory": {
+      "catalog_providers_observed": 184,
+      "connected_providers": ["opencode-go", "opencode"],
+      "hi_runtime_models_after_connected_filter": 26,
+      "regression": "runtime inventory excludes catalog-registered but unconnected providers"
+    },
+    "direct_path": {
+      "project": "/workspace/hi-host-test-fixed",
+      "parent_agent": "working-manager",
+      "parent_model": "opencode-go/deepseek-v4-flash",
+      "workers": 0,
+      "review_evidence": "passed",
+      "mission_status": "completed",
+      "runtime_decision": "STOP"
+    },
+    "independent_review": {
+      "project": "/workspace/hi-host-child-accept2",
+      "parent_agent": "working-manager",
+      "parent_model": "opencode-go/deepseek-v4-flash",
+      "reviewer_agent": "qa-reviewer",
+      "first_reviewer_model": "opencode/laguna-s-2.1-free",
+      "recovery_reviewer_model": "opencode/deepseek-v4-flash-free",
+      "recovery_effective_model_verified": true,
+      "recovery_variant_verified": true,
+      "final_review_obligation": "closed",
+      "final_verification_obligation": "closed",
+      "final_gates": "all_closed",
+      "final_mission_status": "completed",
+      "final_runtime_decision": "STOP"
+    },
+    "permission_runtime": {
+      "ask_observed": true,
+      "reject_observed": true,
+      "once_observed": true,
+      "persistent_approval_used": false,
+      "polling_sleep_permission_rejected": true
+    },
+    "native_agents": [
+      "architect",
+      "coder",
+      "manager",
+      "qa-reviewer",
+      "repository-explorer",
+      "security-reviewer",
+      "visual-qa",
+      "working-manager"
+    ],
+    "native_skill": {
+      "tool": "skill",
+      "name": "hi-code-review",
+      "status": "completed",
+      "base_directory": "/workspace/OpenCode-Hi/skills/hi-code-review"
+    },
+    "install_lifecycle": {
+      "canonical_registration": "opencode-hi@0.1.0",
+      "doctor": "OK",
+      "unrelated_plugin_preserved": true,
+      "schema_preserved": true,
+      "theme_preserved": true,
+      "mcp_preserved": true,
+      "project_intelligence_preserved": true,
+      "durable_artifact_preserved": true,
+      "project_skill_preserved": true,
+      "setup_provenance_removed_on_uninstall": true
+    },
+    "current_source_regression": {
+      "node": "388/388 PASS",
+      "python": "47/47 PASS",
+      "validator": "PASS",
+      "benchmarks": "9/9 PASS"
+    }
+  },
+  "remaining_release_gates": [
+    "new exact Git commit/ref containing the host-tested fixes",
+    "post-freeze deterministic SOURCE/DISTRIBUTABLE/MANIFEST/SBOM rebuild",
+    "exact-ref clean-consumer install receipt",
+    "external dependency/supply-chain install receipt",
+    "Windows runtime smoke",
+    "npm registry package publish/install verification if 0.1.0 is to be distributed through npm"
+  ],
+  "rule": "Real-host evidence is not promoted across source changes. Re-run exact-candidate host binding after the tested worktree is committed by the user."
+}

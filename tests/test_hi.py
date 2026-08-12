@@ -144,23 +144,23 @@ def test_living_validation_receipts_do_not_hardcode_stale_test_counts():
     assert isinstance(audit['local_acceptance']['node'],dict) and 'node_tests' not in audit['local_acceptance']
     assert isinstance(audit['local_acceptance']['python'],dict) and 'python_tests' not in audit['local_acceptance']
 
-def test_release_gate_stays_blocked_before_external_lab():
+def test_release_gate_stays_blocked_until_exact_candidate_external_completion():
     d=json.loads((ROOT/'data/validation/release-gates.json').read_text())
     assert d['release']==V
-    assert d['gates']['source_integrity']=='PASS_LOCAL'
-    assert d['gates']['deterministic_release']=='PASS_LOCAL'
+    assert d['gates']['source_integrity'].startswith('PASS_LOCAL_')
+    assert d['gates']['deterministic_release']=='PASS_LOCAL_CURRENT_WORKTREE'
+    assert d['current_local_evidence']['deterministic_release']['status']=='PASS'
+    assert 'self-referential' in d['current_local_evidence']['deterministic_release']['hash_binding']
     assert d['gates']['node_runtime_acceptance'].startswith('PASS_LOCAL_')
     assert d['gates']['python_acceptance'].startswith('PASS_LOCAL_')
-    local_gates={'source_integrity','deterministic_release','node_runtime_acceptance','python_acceptance','validator','worktree_path_acceptance','optional_tool_surface_economy','native_skill_inventory','native_methodology_ownership','benchmark_policy_scenarios','install_config_lifecycle','architecture_audit','filesystem_hygiene'}
-    external={gate:state for gate,state in d['gates'].items() if gate not in local_gates}
-    assert external
-    # Checkpoint-level external evidence may legitimately become PASS before the exact-bound
-    # release lab is complete. What must remain true is that exact candidate/full-matrix/
-    # Windows blockers cannot be promoted by a partial CLI checkpoint.
-    assert all(state.startswith(('PENDING_EXTERNAL','PASS_EXTERNAL_CLI_')) for state in external.values())
-    for gate in ('native_git_plugin_install','plain_opencode_smoke','packaged_agents_skills','opencode_native_child_sessions','opencode_model_provider_binding','permission_denial_runtime','windows_runtime_smoke','dependency_supply_chain_external'):
-        assert external[gate].startswith('PENDING_EXTERNAL')
+    for gate in ('plain_opencode_smoke','packaged_agents_skills','opencode_native_child_sessions','opencode_model_provider_binding','permission_denial_runtime'):
+        assert d['gates'][gate]=='PASS_HOST_CURRENT_WORKTREE'
+    assert d['gates']['native_package_plugin_install_exact_candidate'].startswith('PENDING_EXACT_REF')
+    assert d['gates']['windows_runtime_smoke'].startswith('PENDING_EXTERNAL_WINDOWS')
+    assert d['gates']['dependency_supply_chain_external'].startswith('PENDING_EXTERNAL')
     assert d['release_blocked'] is True
+    assert d['external_blockers']
+    assert d['current_local_evidence']['host_acceptance']['receipt']=='data/validation/external-opencode-hi-0.1.0-host-current-worktree.json'
     progress=json.loads((ROOT/'data/validation/forensic-61-progress.json').read_text())
     assert progress['summary']['total']==61
     assert progress['summary']['complete_local']+progress['summary']['partial_external']==61
@@ -168,8 +168,6 @@ def test_release_gate_stays_blocked_before_external_lab():
     assert progress['summary']['unresolved_internal']==0
     assert len(progress['items'])==61
     assert [x['item'] for x in progress['items']]==list(range(1,62))
-    assert d['release_blocked'] is True
-    assert d['external_blockers']
     assert d['historical_receipts_not_valid_for_current_candidate']['release']!='2.0.10'
 
 def test_uninstall_preserves_user_adopted_hi_registration(tmp_path):
@@ -434,13 +432,13 @@ def test_living_validation_contracts_are_bound_to_hi_0_1_0():
 
 def test_current_0_1_0_receipts_are_not_historical_v58_claims():
     gates=json.loads((ROOT/'data/validation/release-gates.json').read_text())
-    assert gates['candidate_status']=='LOCAL_CANDIDATE_COMPLETE_EXTERNAL_GATES_PENDING'
+    assert gates['candidate_status']=='HOST_ACCEPTED_CURRENT_WORKTREE_EXACT_CANDIDATE_PENDING'
     assert gates['current_local_evidence']['benchmarks']['receipt']=='data/validation/benchmarks-0.1.0.json'
     assert gates['current_local_evidence']['install_lifecycle']['receipt']=='data/validation/install-lifecycle-0.1.0.json'
     assert gates['historical_receipts_not_valid_for_current_candidate']['release']=='2.0.10-v58'
     audit=json.loads((ROOT/'data/validation/architecture-audit-0.1.0.json').read_text())
     assert audit['known_internal_blocking_findings']==[]
-    assert audit['checks']['opencode_native_behavior']['status']=='PENDING_EXTERNAL'
+    assert audit['checks']['opencode_native_behavior']['status']=='PASS_HOST_CURRENT_WORKTREE'
 
 def test_legacy_product_cli_alias_is_rejected(tmp_path):
     r=run(ROOT/'scripts/native_plugin_setup.py','reconfigure',tmp_path,'--autonomy','smart')
