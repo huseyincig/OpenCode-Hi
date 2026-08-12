@@ -1,0 +1,44 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { normalizeIntent } from '../dist/runtime/intent/normalize.js'
+import { verificationPolicyFor } from '../dist/runtime/verification/policy.js'
+import { minimumTeamFor } from '../dist/runtime/routing/minimum-team.js'
+import { routeCapabilities } from '../dist/runtime/routing/capability-router.js'
+import { MissionStore } from '../dist/runtime/mission/mission-store.js'
+
+test('small local low-risk implementation uses Working Manager direct path with zero delegated workers',()=>{
+  const intent=normalizeIntent('README yazım hatasını düzelt')
+  const d=minimumTeamFor(intent,verificationPolicyFor(intent))
+  assert.equal(d.primary,'working-manager')
+  assert.equal(d.direct,true)
+  assert.deepEqual(d.roles,[])
+  const m=new MissionStore().start('s-direct','README yazım hatasını düzelt')
+  assert.equal(m.primary_mode,'working-manager')
+  assert.equal(m.workers.length,0)
+})
+
+test('security-sensitive implementation remains write-capable and adds independent security assurance',()=>{
+  const intent=normalizeIntent('auth token doğrulamasını değiştir')
+  const routed=routeCapabilities(intent)
+  assert.equal(routed.role,'coder','read-only security reviewer must not own implementation')
+  const d=minimumTeamFor(intent,verificationPolicyFor(intent))
+  assert.equal(d.primary,'manager')
+  assert.ok(d.roles.includes('coder'))
+  assert.ok(d.roles.includes('security-reviewer'))
+  assert.equal(d.roles.filter(x=>x==='security-reviewer').length,1)
+})
+
+test('deterministic low-risk evidence does not manufacture a QA reviewer',()=>{
+  const intent=normalizeIntent('src/a.ts dosyasındaki typo düzelt test et')
+  const policy=verificationPolicyFor(intent)
+  assert.equal(policy.requireReview,false)
+  const d=minimumTeamFor(intent,policy)
+  assert.ok(!d.roles.includes('qa-reviewer'))
+  assert.ok(d.reason.includes('deterministic-evidence-preferred')||d.direct)
+})
+
+test('review-dominant security work routes to read-only security reviewer',()=>{
+  const intent=normalizeIntent('auth security review yap')
+  assert.equal(intent.taskKind,'review')
+  assert.equal(routeCapabilities(intent).role,'security-reviewer')
+})

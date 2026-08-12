@@ -1,0 +1,381 @@
+{
+  "schema": 1,
+  "candidate": "2.0.10-v58-checkpoint",
+  "basis": "FINAL ZERO-DEFECT FORENSIC AUDIT & COMPLETION PROMPT (61 sections)",
+  "summary": {
+    "total": 61,
+    "complete_local": 57,
+    "partial_external": 4,
+    "failed": 0,
+    "unresolved_internal": 0
+  },
+  "items": [
+    {
+      "item": 1,
+      "title": "Temel çalışma kuralı",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 2,
+      "title": "Source of truth",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 3,
+      "title": "Tam dosya envanteri",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 4,
+      "title": "Satır-satır code audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 5,
+      "title": "Module contract çaprazlama",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 6,
+      "title": "8 role forensic audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 7,
+      "title": "29 HHC-native skill forensic audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 8,
+      "title": "Superpowers removal audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 9,
+      "title": "Intent / follow-up audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Local/native-shape regression plus real OpenCode CLI 1.18.16 same-session material task → \"testleri de yap\" receipt pass: one mission retained, generation unchanged, verification obligation amended."
+    },
+    {
+      "item": 10,
+      "title": "Mission / obligation ownership audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 11,
+      "title": "Execution profile audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 12,
+      "title": "Model routing forensic audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Real OpenCode CLI 1.18.16 routing E2E: parent openai/hhc-parent invoked hhc_task_start, native coder child session was created with agent=coder/model=openai/hhc-coder, child provider request used hhc-coder, and HHC verified effective_model from assistant-message-metadata. Local adversarial suite covers variants/fallback/provider policy/inventory/concurrency."
+    },
+    {
+      "item": 13,
+      "title": "Model scoring adversarial audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 14,
+      "title": "Precondition evaluator audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 15,
+      "title": "Scheduler / parallel audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 16,
+      "title": "Team Mode final audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Real OpenCode CLI 1.18.16 live Team Mode E2E: model invoked hhc_team_create, HHC created architect and repository-explorer native child sessions with openai/hhc-architect and openai/hhc-explorer, both entered subagent provider loops, and TeamRuntime shut down with members-terminal under configured bounds."
+    },
+    {
+      "item": 17,
+      "title": "Autopilot complete decision audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 18,
+      "title": "WAIT ≠ stagnation",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 19,
+      "title": "Progress signature audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 20,
+      "title": "Recovery ladder audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 21,
+      "title": "Action / generation / race audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 22,
+      "title": "User STOP audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Local STOP guards plus real OpenCode CLI 1.18.16 same-session STOP receipt pass: mission stopped/user_interrupted, generation advanced, late native message/status/idle events ignored."
+    },
+    {
+      "item": 23,
+      "title": "Evidence forensic audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 24,
+      "title": "Stale evidence adversarial test",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 25,
+      "title": "Verification economy audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 26,
+      "title": "Targeted test discovery audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 27,
+      "title": "Changed-surface replan audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 28,
+      "title": "Diff ownership audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 29,
+      "title": "Pre-existing user change audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 30,
+      "title": "Commit / staging safety audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 31,
+      "title": "Merge / rebase safety audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 32,
+      "title": "Authority audit",
+      "status": "PARTIAL_EXTERNAL",
+      "note": "Local authority, real local Git push, real local npm publish and hosted-release side effects are proven. Remaining external-only boundary is a real credential/OAuth/MFA-capable public host; localhost tokens are intentionally not counted as that evidence."
+    },
+    {
+      "item": 33,
+      "title": "External side-effect idempotency",
+      "status": "COMPLETE_LOCAL",
+      "note": "Real bare-Git remote acceptance executes an actual push with an intentionally lost host ACK, proves blind exact-action retry is blocked, requires explicit reconciliation, then verifies the exact remote ref with git ls-remote."
+    },
+    {
+      "item": 34,
+      "title": "Release transaction audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "v55 executes the production HHC release-chain around a real bare-Git branch push, real annotated-tag push with peeled commit verification, and a real local HTTP hosted-release create/view transaction. Release creation stays blocked until current branch push and explicit tag push are remotely verified."
+    },
+    {
+      "item": 35,
+      "title": "Remote release verification",
+      "status": "COMPLETE_LOCAL",
+      "note": "v55 verifies hosted release tagName/targetCommitish/assets from a real HTTP release service and separately verifies the exact remote annotated tag against the pushed commit using git ls-remote direct and peeled refs; hosted metadata alone cannot complete release verification."
+    },
+    {
+      "item": 36,
+      "title": "Package publish audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "v54 runs production HHC pack-proof, authority, publish outcome and registry verification around real npm 10.9.2 commands against a local HTTP registry: npm pack --dry-run --json → actual npm publish PUT side effect → npm view exact version; registry dist.integrity/dist.shasum match the fresh pack proof before remote_verified becomes true."
+    },
+    {
+      "item": 37,
+      "title": "Release quality audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 38,
+      "title": "Provenance / reproducibility audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 39,
+      "title": "SBOM / supply-chain audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 40,
+      "title": "Context economy audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 41,
+      "title": "Compaction survival audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 42,
+      "title": "Ledger audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 43,
+      "title": "Restart / crash audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 44,
+      "title": "Doctor forensic audit",
+      "status": "PARTIAL_EXTERNAL",
+      "note": "Static/effective Doctor plus exact immutable Git-ref registration are proven. Current checkpoint still lacks a remotely resolvable immutable Git ref that the real OpenCode 1.18.16 host loader can consume end-to-end; do not upgrade without that receipt."
+    },
+    {
+      "item": 45,
+      "title": "Reconfigure audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 46,
+      "title": "Install / update / uninstall ownership",
+      "status": "PARTIAL_EXTERNAL",
+      "note": "Install/uninstall ownership and exact-ref registration are proven, including preservation of foreign plugin/MCP/user fields. Real OpenCode host-loader install/update/uninstall against the current remotely resolvable immutable Git candidate remains external-only."
+    },
+    {
+      "item": 47,
+      "title": "Generated / dist drift audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 48,
+      "title": "Dead code / orphan surface audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 49,
+      "title": "Documentation forensic audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 50,
+      "title": "Zero-debug / adversarial pass",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 51,
+      "title": "Clean-room build",
+      "status": "COMPLETE_LOCAL",
+      "note": "v58 real clean-room receipt on hhc-test-lab: public-registry fresh npm ci succeeded after repairing stale invalid lock metadata; clean TypeScript compile, 358/358 Node, 41/41 Python, VALIDATION PASS, and two independent deterministic release builds produced byte-identical source/distributable/manifest/SBOM hashes. Regression validation now rejects incomplete package-lock resolved/integrity metadata and npm install-script allowlist is explicit."
+    },
+    {
+      "item": 52,
+      "title": "Test coverage matrix",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 53,
+      "title": "Bug fix rule",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 54,
+      "title": "Zero warning policy",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 55,
+      "title": "TODO / FIXME / HACK audit",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 56,
+      "title": "Security static sanity",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 57,
+      "title": "Performance sanity",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 58,
+      "title": "External validation ayrımı",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 59,
+      "title": "Final release gate",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    },
+    {
+      "item": 60,
+      "title": "Final çıktı",
+      "status": "PARTIAL_EXTERNAL",
+      "note": "Checkpoint reporting is complete, but final release output remains partial until items 32, 44 and 46 obtain fresh external receipts."
+    },
+    {
+      "item": 61,
+      "title": "En önemli talimat",
+      "status": "COMPLETE_LOCAL",
+      "note": "Locally verifiable contract audited and currently complete; external-only evidence is tracked separately where applicable."
+    }
+  ],
+  "rule": "COMPLETE_LOCAL never upgrades an external-only runtime gate. PARTIAL_EXTERNAL remains incomplete until a fresh external receipt exists."
+}

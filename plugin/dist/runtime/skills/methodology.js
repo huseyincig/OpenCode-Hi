@@ -1,0 +1,31 @@
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+const MAX_SKILL_CHARS = 18000;
+const MAX_BUNDLE_CHARS = 36000;
+function body(text) { const m = text.match(/^---\s*\n[\s\S]*?\n---\s*\n([\s\S]*)$/); return (m?.[1] ?? text).trim(); }
+function sha256(text) { return createHash('sha256').update(text).digest('hex'); }
+export function methodologyProvenance(skills) { const now = Date.now(); return skills.slice(0, 3).map(skill => { let digest; try {
+    digest = sha256(readFileSync(skill.path, 'utf8'));
+}
+catch { } const permission = skill.permission ?? 'allow'; return { name: skill.name, provider: skill.provider, source_path: skill.path, source_sha256: digest, permission, injection: permission === 'ask' ? 'native-skill-tool' : permission === 'allow' ? 'embedded' : 'none', selected_at: now }; }); }
+export function buildMethodologyBundle(skills) { const chunks = [], loaded = [], truncated = []; let total = 0; for (const skill of skills.slice(0, 3)) {
+    let content = '';
+    try {
+        content = body(readFileSync(skill.path, 'utf8'));
+    }
+    catch {
+        continue;
+    }
+    if (content.length > MAX_SKILL_CHARS) {
+        content = content.slice(0, MAX_SKILL_CHARS);
+        truncated.push(skill.name);
+    }
+    const chunk = [`HHC SELECTED METHODOLOGY: ${skill.name}`, 'Provider: HHC-native', 'The methodology below is loaded only for this worker. Follow its engineering method, but HHC retains task/model/continuation/completion/STOP ownership.', content].join('\n');
+    if (total + chunk.length > MAX_BUNDLE_CHARS)
+        break;
+    chunks.push(chunk);
+    loaded.push(skill.name);
+    total += chunk.length;
+} return { text: chunks.join('\n\n---\n\n'), loaded, truncated }; }
+export function ownershipContract(kind, skills = []) { if (kind === 'parent')
+    return ['HHC CONTROL-PLANE CONTRACT', 'HHC owns mission decomposition, task dispatch, model routing, continuation, completion adjudication and STOP.', 'HHC-native skills provide methodology only; they never own orchestration, worker spawning, model selection, authority, continuation or STOP.', 'Do not create parallel/subagent workflows directly; use HHC task/team runtime when delegation is required.', 'For ordinary work, use zero skills unless HHC selected one for the task.'].join('\n'); return ['HHC CHILD CONTROL-PLANE CONTRACT', 'You are an execution worker, not the top-level orchestrator.', `HHC-selected methodology allowlist: ${skills.length ? skills.join(', ') : 'none'}.`, 'Selected methodology content may already be embedded in this handoff. Do not load unrelated skills.', 'Do not spawn or coordinate additional agents. Return the structured WorkerResult to HHC.'].join('\n'); }

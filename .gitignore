@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.hhc-bootstrap-venv/
+
+# Build/release — only top-level dist/build are Python packaging outputs.
+# plugin/dist/ is the canonical plugin runtime (committed).
+/dist/
+/build/
+*.zip
+
+# Node / package manager transient artifacts (anywhere in the tree)
+node_modules/
+.pnp.*
+
+# Local model/user configuration
+model-bindings.local.*
+.env
+.env.*
+
+# IDE/OS
+.DS_Store
+Thumbs.db
+
+# OpenCode project-local workspace/config; never part of the OHO product source.
+.opencode/
+# Root opencode.jsonc (development workspace config; private local MCP URLs).
+# Use opencode.jsonc.example as a generic template for fresh consumer installs.
+opencode.jsonc

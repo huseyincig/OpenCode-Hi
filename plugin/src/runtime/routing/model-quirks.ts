@@ -1,0 +1,2 @@
+export interface ModelQuirkProfile{compactInstructionSensitive?:boolean;avoidLongNestedPlans?:boolean;explicitToolBoundaries?:boolean}
+export function modelQuirks(model:string|undefined):ModelQuirkProfile{const id=(model??'').toLowerCase();return{compactInstructionSensitive:/mini|flash|haiku|small/.test(id)||undefined,avoidLongNestedPlans:/mini|flash|haiku|small/.test(id)||undefined,explicitToolBoundaries:/reason|o[1-9]|deep|sonnet|opus/.test(id)||undefined}}

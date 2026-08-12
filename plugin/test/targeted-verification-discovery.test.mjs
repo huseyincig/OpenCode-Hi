@@ -1,0 +1,19 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import {mkdtempSync,mkdirSync,writeFileSync} from 'node:fs'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
+import {discoverTargetedVerification,targetedVerificationHint} from '../dist/runtime/verification/discovery.js'
+
+function root(){return mkdtempSync(join(tmpdir(),'hhc-target-'))}
+test('discovers nearest vitest-style sibling and npm targeted command',()=>{const r=root();mkdirSync(join(r,'src','auth'),{recursive:true});writeFileSync(join(r,'package.json'),JSON.stringify({scripts:{test:'vitest run'}}));writeFileSync(join(r,'package-lock.json'),'{}');writeFileSync(join(r,'src/auth/token.ts'),'x');writeFileSync(join(r,'src/auth/token.test.ts'),'x');const p=discoverTargetedVerification(r,['src/auth/token.ts'])[0];assert.deepEqual(p.testFiles,['src/auth/token.test.ts']);assert.equal(p.commands[0],'npm test -- src/auth/token.test.ts')})
+test('respects nearest workspace package root and pnpm dir instead of root full suite',()=>{const r=root();writeFileSync(join(r,'pnpm-lock.yaml'),'');mkdirSync(join(r,'packages','api','src'),{recursive:true});writeFileSync(join(r,'packages/api/package.json'),JSON.stringify({scripts:{test:'vitest run'}}));writeFileSync(join(r,'packages/api/src/user.ts'),'x');writeFileSync(join(r,'packages/api/src/user.spec.ts'),'x');const p=discoverTargetedVerification(r,['packages/api/src/user.ts'])[0];assert.equal(p.packageRoot,'packages/api');assert.equal(p.commands[0],'pnpm --dir packages/api test -- src/user.spec.ts')})
+test('python discovery chooses nearest deterministic pytest file',()=>{const r=root();mkdirSync(join(r,'app','tests'),{recursive:true});writeFileSync(join(r,'pyproject.toml'),'');writeFileSync(join(r,'app/user.py'),'x');writeFileSync(join(r,'app/tests/test_user.py'),'x');const p=discoverTargetedVerification(r,['app/user.py'])[0];assert.equal(p.testFiles[0],'app/tests/test_user.py');assert.equal(p.commands[0],'python -m pytest app/tests/test_user.py')})
+test('does not invent full-suite command when no deterministic nearby node test exists',()=>{const r=root();mkdirSync(join(r,'src'),{recursive:true});writeFileSync(join(r,'package.json'),JSON.stringify({scripts:{test:'vitest run'}}));writeFileSync(join(r,'src/a.ts'),'x');const p=discoverTargetedVerification(r,['src/a.ts'])[0];assert.deepEqual(p.commands,[]);assert.match(targetedVerificationHint(r,['src/a.ts']),/command=none/)} )
+
+test('task runtime injects deterministic targeted verification plan into child handoff',async()=>{
+  const {default:HhcPlugin}=await import('../dist/plugin.js')
+  const r=root();mkdirSync(join(r,'src','auth'),{recursive:true});writeFileSync(join(r,'package.json'),JSON.stringify({scripts:{test:'vitest run'}}));writeFileSync(join(r,'package-lock.json'),'{}');writeFileSync(join(r,'src/auth/token.ts'),'x');writeFileSync(join(r,'src/auth/token.test.ts'),'x')
+  const prompted=[];const client={app:{log:async()=>{}},provider:{list:async()=>({data:[]})},session:{create:async()=>({data:{id:'child-target'}}),promptAsync:async req=>{prompted.push(req);return{data:{}}},abort:async()=>({data:{}})}}
+  const hooks=await HhcPlugin({directory:r,worktree:r,project:{},client});const config={};await hooks.config(config);await hooks['chat.message']({sessionID:'parent-target',message:{role:'user',parts:[{type:'text',text:'src/auth/token.ts bugını düzelt test et'}]}},{parts:[]});await hooks.tool.hhc_task_start.execute({objective:'token fix',role:'coder',category:'quick',scope:['src/auth/token.ts']},{sessionID:'parent-target'});assert.equal(prompted.length,1);const text=prompted[0].body.parts[0].text;assert.match(text,/TARGETED VERIFICATION DISCOVERY/);assert.match(text,/src\/auth\/token\.test\.ts/);assert.match(text,/npm test -- src\/auth\/token\.test\.ts/);await hooks.dispose?.()
+})

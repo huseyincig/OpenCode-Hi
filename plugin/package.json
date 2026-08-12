@@ -1,0 +1,41 @@
+{
+  "name": "opencode-hhc-orchestrator-runtime",
+  "version": "2.0.10",
+  "description": "OpenCode HHC Orchestrator TypeScript runtime workspace",
+  "type": "module",
+  "main": "dist/plugin.js",
+  "types": "dist/plugin.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/plugin.d.ts",
+      "import": "./dist/plugin.js"
+    },
+    "./plugin": {
+      "types": "./dist/plugin.d.ts",
+      "import": "./dist/plugin.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "check": "npm run build && npm test",
+    "bundle": "echo \"optional bundle step; canonical runtime is dist/\"",
+    "prepare:local": "npm run build"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": ">=1.14.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0"
+  },
+  "license": "Apache-2.0",
+  "files": [
+    "dist",
+    "bundle",
+    "README.md"
+  ],
+  "private": true,
+  "allowScripts": {
+    "msgpackr-extract@3.0.4": true
+  }
+}

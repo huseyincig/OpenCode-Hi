@@ -1,0 +1,69 @@
+{
+  "schema": 5,
+  "required_coexistence": [
+    "plain_opencode_smoke",
+    "oho_only_smoke"
+  ],
+  "required_acceptance": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H"
+  ],
+  "required_hardening": [
+    "threat_model_adversarial_tests",
+    "windows_runtime_smoke",
+    "dependency_supply_chain_audit"
+  ],
+  "binding": [
+    "oho_version",
+    "git_ref",
+    "package_sha256",
+    "opencode_version",
+    "platform",
+    "config_sha256",
+    "runtime_sha256",
+    "native_skill_catalog_sha256"
+  ],
+  "status_values": [
+    "PASS",
+    "FAIL",
+    "BLOCKED",
+    "NA"
+  ],
+  "note": "PASS evidence is valid only when bound to the exact OHO Git candidate, OpenCode runtime/platform, effective config and packaged HHC-native skill catalog. Native-01..18 and Flow-01..08 are required runtime contracts.",
+  "required_native_acceptance": [
+    "Native-01",
+    "Native-02",
+    "Native-03",
+    "Native-04",
+    "Native-05",
+    "Native-06",
+    "Native-07",
+    "Native-08",
+    "Native-09",
+    "Native-10",
+    "Native-11",
+    "Native-12",
+    "Native-13",
+    "Native-14",
+    "Native-15",
+    "Native-16",
+    "Native-17",
+    "Native-18"
+  ],
+  "required_flow_acceptance": [
+    "Flow-01",
+    "Flow-02",
+    "Flow-03",
+    "Flow-04",
+    "Flow-05",
+    "Flow-06",
+    "Flow-07",
+    "Flow-08"
+  ]
+}

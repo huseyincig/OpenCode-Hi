@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "name": "hhc-test-lab",
+  "role": "canonical external clean-consumer runtime validation environment",
+  "mcp": {
+    "type": "remote",
+    "url": "http://192.168.2.1:4110/mcp"
+  },
+  "rules": [
+    "Do not mount the Windows development source tree as the plugin under test.",
+    "Install OpenCode HHC Orchestrator from the exact Git commit/tag/plugin spec being validated.",
+    "A config string alone is not PASS; verify actual plugin load, tools, agents, skills and runtime behavior.",
+    "Verify all 29 packaged HHC-native skills are discoverable through the OHO plugin skill path; no separate methodology plugin is required.",
+    "Record FAIL/BLOCKED explicitly; never infer runtime PASS from source inspection."
+  ],
+  "binding_required": [
+    "opencode_version",
+    "platform",
+    "hhc_version",
+    "hhc_git_commit",
+    "hhc_plugin_spec",
+    "hhc_plugin_entrypoint_sha256",
+    "config_sha256",
+    "native_skill_catalog_sha256"
+  ],
+  "required_surfaces": [
+    "plugin_loaded",
+    "hhc_core_tools",
+    "team_tools_default_hidden",
+    "hhc_agents_discovered",
+    "hhc_skills_discovered",
+    "selected_child_agent",
+    "recursive_control_plane_denied",
+    "custom_tool_roundtrip",
+    "hhc_native_skill_inventory_29"
+  ],
+  "required_gate_sets": [
+    "Acceptance A-H",
+    "Native-01..18",
+    "Flow-01..08",
+    "Threat/adversarial runtime",
+    "Windows OHO runtime smoke",
+    "Supply-chain exact artifact audit"
+  ]
+}

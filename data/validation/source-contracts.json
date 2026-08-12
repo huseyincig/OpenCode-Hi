@@ -1,0 +1,273 @@
+{
+  "schema": 1,
+  "release": "2.0.10",
+  "contracts": {
+    "config-hook": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/plugin.ts",
+        "plugin/src/config/resolver.ts"
+      ]
+    },
+    "chat-message-hook": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/hooks/chat-message.ts"
+      ]
+    },
+    "system-and-messages-transform": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/hooks/system-transform.ts",
+        "plugin/src/hooks/messages-transform.ts"
+      ]
+    },
+    "tool-before-after": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/hooks/tool-before.ts",
+        "plugin/src/hooks/tool-after.ts"
+      ]
+    },
+    "session-compaction": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/hooks/session-compacting.ts"
+      ]
+    },
+    "event": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "dispose": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/plugin.ts",
+        "plugin/src/runtime/state/persistence.ts"
+      ]
+    },
+    "hhc-ownership-contract": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/hooks/tool-before.ts",
+        "plugin/src/hooks/system-transform.ts"
+      ]
+    },
+    "orchestration-skill-runtime-guard": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/hooks/tool-before.ts",
+        "plugin/src/hooks/tool-before.ts"
+      ]
+    },
+    "live-skills-path-discovery": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/skills/registry.ts"
+      ]
+    },
+    "zero-to-three-methodologies": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/skills/methodology.ts"
+      ]
+    },
+    "permission-allow-embedded": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/hooks/system-transform.ts",
+        "roles/coder.md",
+        "roles/qa-reviewer.md",
+        "roles/architect.md"
+      ]
+    },
+    "permission-ask-native-skill-tool": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/hooks/tool-before.ts"
+      ]
+    },
+    "permission-deny-fallback": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/runtime/skills/permissions.ts",
+        "plugin/src/runtime/skills/methodology.ts"
+      ]
+    },
+    "methodology-provenance-persisted": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/runtime/mission/types.ts",
+        "plugin/src/runtime/state/snapshot.ts"
+      ]
+    },
+    "same-session-worker-reuse": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/runtime/task/task-runtime.ts",
+        "plugin/src/runtime/worker/worker-runtime.ts"
+      ]
+    },
+    "runtime-generation-guard": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/runtime/continuation/dispatcher.ts",
+        "plugin/src/runtime/mission/mission-store.ts"
+      ]
+    },
+    "readiness-precondition-evaluator": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/runtime/readiness/preconditions.ts",
+        "plugin/src/runtime/gates/gates.ts"
+      ]
+    },
+    "context-artifacts": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/runtime/mission/types.ts",
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "runtime-nudge": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/runtime/nudge/runtime-nudge.ts",
+        "plugin/src/runtime/autopilot/evaluator.ts"
+      ]
+    },
+    "thin-native-event-sink": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/runtime/events/event-sink.ts",
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "structured-gates": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/runtime/gates/gates.ts"
+      ]
+    },
+    "explicit-context-budget": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/runtime/context/budget.ts",
+        "plugin/src/runtime/task/task-runtime.ts"
+      ]
+    },
+    "doctor-machine-status": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "scripts/native_plugin_setup.py",
+        "plugin/src/doctor/checks.ts"
+      ]
+    },
+    "archive-traversal-safety": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "scripts/safe_archive.py"
+      ]
+    },
+    "model-fallback-reasons": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/runtime/routing/model-resolver.ts"
+      ]
+    },
+    "scoped-rereview": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/runtime/task/task-runtime.ts"
+      ]
+    },
+    "model-escalation": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/task/task-runtime.ts"
+      ]
+    },
+    "temporary-mutation-rollback": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/runtime/mutations/temporary-mutations.ts",
+        "plugin/src/hooks/tool-after.ts"
+      ]
+    },
+    "implementation-coverage": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "data/validation/implementation-coverage.json"
+      ]
+    },
+    "native-git-package-root": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "package.json",
+        "plugin/dist/plugin.js",
+        "scripts/native_plugin_setup.py"
+      ]
+    },
+    "packaged-hhc-agents": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/generated/agent-config.ts",
+        "scripts/generate_plugin_agents.py",
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "packaged-hhc-skill-discovery": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/plugin.ts",
+        "skills/hhc-task-classification/SKILL.md"
+      ]
+    },
+    "native-oho-entrypoint": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "package.json",
+        "plugin/src/plugin.ts",
+        "scripts/native_plugin_setup.py"
+      ]
+    },
+    "hhc-native-skill-catalog": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "docs/SKILLS.md",
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/test/native-skill-catalog.test.mjs"
+      ]
+    },
+    "hhc-methodology-ownership": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/hooks/tool-before.ts",
+        "plugin/src/runtime/routing/execution-profile.ts"
+      ]
+    },
+    "native-skill-permission-preflight": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "plugin/src/runtime/skills/permissions.ts",
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/hooks/tool-before.ts"
+      ]
+    },
+    "native-oho-setup": {
+      "status": "IMPLEMENTED",
+      "evidence": [
+        "scripts/native_plugin_setup.py",
+        "docs/INSTALLATION.md"
+      ]
+    }
+  }
+}

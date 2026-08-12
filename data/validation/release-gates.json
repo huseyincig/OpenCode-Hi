@@ -1,0 +1,66 @@
+{
+  "schema": 5,
+  "release": "2.0.10",
+  "generated_at": "2026-08-12",
+  "candidate_status": "V56_FORENSIC_PROGRESS_REAL_ROUTING_AND_TEAM_EXTERNAL_PASS",
+  "gates": {
+    "source_integrity": "PASS_LOCAL",
+    "deterministic_release": "PASS_LOCAL",
+    "node_runtime_acceptance": "PASS_LOCAL_CURRENT_SOURCE",
+    "python_acceptance": "PASS_LOCAL_CURRENT_SOURCE",
+    "worktree_path_acceptance": "PASS_LOCAL",
+    "optional_tool_surface_economy": "PASS_LOCAL",
+    "native_git_plugin_install": "PENDING_EXTERNAL_2_0_10",
+    "plain_opencode_smoke": "PENDING_EXTERNAL_2_0_10",
+    "oho_only_smoke": "PASS_EXTERNAL_CLI_1_18_16_CHECKPOINT",
+    "packaged_agents_skills": "PENDING_EXTERNAL_2_0_10",
+    "acceptance_scenarios_A_H_external": "PENDING_EXTERNAL_2_0_10",
+    "native_acceptance_01_18_external": "PENDING_EXTERNAL_2_0_10",
+    "flow_acceptance_01_08_external": "PENDING_EXTERNAL_2_0_10",
+    "threat_model_adversarial_external": "PENDING_EXTERNAL_2_0_10",
+    "windows_runtime_smoke": "PENDING_EXTERNAL_WINDOWS_2_0_10",
+    "dependency_supply_chain_audit_external": "PENDING_EXTERNAL_2_0_10",
+    "native_skill_inventory": "PASS_LOCAL_AND_EXTERNAL_ROLE_CONTEXT",
+    "native_methodology_ownership": "PASS_LOCAL"
+  },
+  "release_blocked": true,
+  "reason": "2.0.10 v56 adds real OpenCode CLI 1.18.16 child model-binding verification and live two-member Team Mode execution. Public credential/OAuth authority, exact Git host-loader execution, clean dependency bootstrap and Windows remain pending.",
+  "external_blockers": [
+    "exact-2.0.10-git-ref-not-bound-to-external-receipt",
+    "clean-consumer-git-registration-doctor-pending",
+    "full-external-acceptance-matrix-pending",
+    "windows-runtime-smoke-pending"
+  ],
+  "current_local_evidence": {
+    "node": {
+      "command": "npm --prefix plugin test",
+      "status": "PASS_CURRENT_RUN_REQUIRED"
+    },
+    "python": {
+      "command": "python -m pytest -q",
+      "status": "PASS_CURRENT_RUN_REQUIRED"
+    },
+    "validation": {
+      "command": "python scripts/validate.py",
+      "status": "PASS"
+    },
+    "external_preflight": {
+      "command": "PATH=/mnt/data/opencode_cli:$PATH python scripts/external-preflight.py .",
+      "status": "PREPARATION_REQUIRED",
+      "note": "OpenCode CLI 1.18.16 is now PASS; remaining preflight blockers are exact Git ref binding and clean-consumer registration doctor."
+    }
+  },
+  "historical_receipts_not_valid_for_current_candidate": {
+    "release": "2.0.1",
+    "date": "2026-08-11",
+    "note": "Retained only as historical context. MUST NOT satisfy 2.0.10 runtime gates.",
+    "jobs": [
+      "e995a669-b30e-4bd5-900a-dcb99bcc6a59",
+      "21b78378-0b47-4bf0-9a02-39fde3088db1",
+      "d5ad5236-c58f-4a2c-bf39-ed4cd5f5cb3d",
+      "d12f42c5-340a-4d27-9275-4ff39f4ad222"
+    ]
+  },
+  "rule": "No external PASS is inferred from source, local adapters, historical receipts, or in-process tests. Current external PASS requires an exact-bound 2.0.10 OpenCode/platform receipt.",
+  "forensic_progress": "data/validation/forensic-61-progress.json"
+}

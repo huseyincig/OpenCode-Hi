@@ -1,0 +1,24 @@
+{
+  "schema": 3,
+  "release": "2.0.10",
+  "execution_environment": "external",
+  "sequence": [
+    "plain-opencode",
+    "oho-only",
+    "plugin-shell",
+    "packaged-native-skills",
+    "methodology-routing",
+    "acceptance-A-H",
+    "native-01-18",
+    "flow-01-08",
+    "threat-model-adversarial"
+  ],
+  "artifacts": [
+    "runtime-binding",
+    "validation-receipt-schema-v3",
+    "doctor-output",
+    "integration-gate-output",
+    "release-gate-output"
+  ],
+  "rule": "No PASS is inferred from source inspection. Runtime PASS must come from an exact-bound external receipt."
+}

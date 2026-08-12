@@ -1,0 +1,155 @@
+{
+  "schema": 1,
+  "release": "2.0.10",
+  "role": "end-to-end flow consistency map; flows may evolve when source/runtime evidence justifies a better design",
+  "groups": {
+    "understand-autonomy-authority": {
+      "evidence": [
+        "plugin/src/runtime/intent/normalize.ts",
+        "plugin/src/runtime/readiness/preconditions.ts",
+        "plugin/src/runtime/safety/authority.ts",
+        "plugin/src/runtime/mission/mission-store.ts",
+        "plugin/src/hooks/chat-message.ts",
+        "data/validation/flow-acceptance.json"
+      ]
+    },
+    "router-execution-mode-role": {
+      "evidence": [
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/routing/agent-reuse.ts",
+        "plugin/src/runtime/task/native-first-policy.ts"
+      ]
+    },
+    "task-contract-execution-profile": {
+      "evidence": [
+        "plugin/src/runtime/mission/types.ts",
+        "plugin/src/runtime/task/task-runtime.ts",
+        "plugin/src/runtime/worker/worker-runtime.ts"
+      ]
+    },
+    "preconditions-gates-artifacts": {
+      "evidence": [
+        "plugin/src/runtime/readiness/preconditions.ts",
+        "plugin/src/runtime/gates/gates.ts",
+        "plugin/src/runtime/mission/types.ts"
+      ]
+    },
+    "hhc-native-skills-ownership-selective-skills": {
+      "evidence": [
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/registry.ts",
+        "docs/SKILLS.md"
+      ]
+    },
+    "model-provider-variant-fallback": {
+      "evidence": [
+        "plugin/src/runtime/routing/model-resolver.ts",
+        "plugin/src/runtime/worker/failure-classifier.ts",
+        "plugin/src/runtime/scheduler/concurrency.ts"
+      ]
+    },
+    "native-worker-lifecycle-resume": {
+      "evidence": [
+        "plugin/src/opencode/native-adapter.ts",
+        "plugin/src/runtime/task/task-runtime.ts",
+        "plugin/src/runtime/worker/worker-runtime.ts",
+        "plugin/src/runtime/background/registry.ts"
+      ]
+    },
+    "single-parallel-conflict-queue": {
+      "evidence": [
+        "plugin/src/runtime/task/task-runtime.ts",
+        "plugin/src/runtime/scheduler/concurrency.ts",
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "team-bounds-mailbox-shutdown": {
+      "evidence": [
+        "plugin/src/runtime/team/team-runtime.ts",
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "autopilot-idle-race-recovery": {
+      "evidence": [
+        "plugin/src/runtime/autopilot/evaluator.ts",
+        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/nudge/runtime-nudge.ts"
+      ]
+    },
+    "evidence-freshness-verification": {
+      "evidence": [
+        "plugin/src/runtime/evidence/evidence-runtime.ts",
+        "plugin/src/runtime/verification/policy.ts",
+        "plugin/src/runtime/completion/adjudicator.ts"
+      ]
+    },
+    "context-compaction-continuity": {
+      "evidence": [
+        "plugin/src/runtime/context/budget.ts",
+        "plugin/src/runtime/state/snapshot.ts",
+        "plugin/src/runtime/state/persistence.ts",
+        "plugin/src/opencode/experimental-adapter.ts"
+      ]
+    },
+    "fork-revert-evidence-isolation": {
+      "evidence": [
+        "plugin/src/opencode/native-adapter.ts",
+        "plugin/src/runtime/task/task-runtime.ts",
+        "plugin/src/runtime/evidence/evidence-runtime.ts",
+        "plugin/src/runtime/state/snapshot.ts"
+      ]
+    },
+    "native-events-observability": {
+      "evidence": [
+        "plugin/src/opencode/event-adapter.ts",
+        "plugin/src/runtime/events/event-sink.ts",
+        "plugin/src/runtime/ledger/ledger.ts",
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "permissions-config-rules-native-first": {
+      "evidence": [
+        "plugin/src/opencode/native-adapter.ts",
+        "plugin/src/runtime/skills/permissions.ts",
+        "plugin/src/config/defaults.ts",
+        "plugin/src/doctor/project-inspection.ts"
+      ]
+    },
+    "plugin-coexistence-tool-instance-guards": {
+      "evidence": [
+        "plugin/src/opencode/instance-guard.ts",
+        "plugin/src/opencode/tool-namespace.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/doctor/checks.ts"
+      ]
+    },
+    "lifecycle-security-doctor": {
+      "evidence": [
+        "scripts/native_plugin_setup.py",
+        "scripts/safe_archive.py",
+        "plugin/src/doctor/checks.ts",
+        "data/runtime/opencode-compatibility.json"
+      ]
+    },
+    "release-acceptance": {
+      "evidence": [
+        "data/validation/acceptance.json",
+        "data/validation/external-schema.json",
+        "data/validation/release-gates.json",
+        "scripts/external-preflight.py"
+      ]
+    }
+  },
+  "external_validation_reuse": {
+    "acceptance": "A-H",
+    "native_acceptance": "Native-01..Native-18",
+    "hardening": [
+      "threat_model_adversarial_tests",
+      "windows_smoke",
+      "installer_update_uninstall_smoke",
+      "dependency_supply_chain_audit"
+    ],
+    "flow_acceptance": "Flow-01..Flow-08"
+  }
+}

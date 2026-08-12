@@ -1,0 +1,47 @@
+{
+  "schema": 3,
+  "required_roles": [
+    "manager",
+    "working-manager",
+    "coder",
+    "repository-explorer",
+    "qa-reviewer"
+  ],
+  "optional_roles": [
+    "architect",
+    "security-reviewer",
+    "visual-qa"
+  ],
+  "hhc_native_methodology_skills": [
+    "hhc-accessibility-review",
+    "hhc-adversarial-validation",
+    "hhc-api-contract-review",
+    "hhc-api-interface-design",
+    "hhc-architecture-decisions",
+    "hhc-browser-testing",
+    "hhc-changelog-and-documentation",
+    "hhc-ci-build-recovery",
+    "hhc-code-review",
+    "hhc-database-migration",
+    "hhc-debugging-root-cause",
+    "hhc-dependency-change",
+    "hhc-design-discovery",
+    "hhc-implementation-planning",
+    "hhc-iterative-retrieval",
+    "hhc-performance-analysis",
+    "hhc-regression-review",
+    "hhc-release-guardrails",
+    "hhc-repository-analysis",
+    "hhc-review-feedback",
+    "hhc-safe-refactoring",
+    "hhc-security-review",
+    "hhc-skill-authoring",
+    "hhc-source-driven-development",
+    "hhc-task-classification",
+    "hhc-test-driven-development",
+    "hhc-test-strategy",
+    "hhc-visual-qa",
+    "hhc-workspace-isolation"
+  ],
+  "external_methodology_plugins": []
+}

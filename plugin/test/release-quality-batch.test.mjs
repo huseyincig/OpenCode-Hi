@@ -1,0 +1,39 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { mkdtempSync,mkdirSync,writeFileSync,readFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { createHash } from 'node:crypto'
+import { MissionStore } from '../dist/runtime/mission/mission-store.js'
+import { assertReleaseChainPrecondition } from '../dist/runtime/safety/release-chain.js'
+
+const H='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+function sha(b){return createHash('sha256').update(b).digest('hex')}
+function depFixture(root){const lock={lockfileVersion:3,packages:{'':{version:'2.0.10',devDependencies:{typescript:'^5.8.0'},peerDependencies:{'@opencode-ai/plugin':'>=1.14.0'}},'node_modules/@opencode-ai/plugin':{version:'1.18.16',license:'MIT'},'node_modules/typescript':{version:'5.9.3',license:'Apache-2.0',dev:true}}};writeFileSync(join(root,'plugin','package-lock.json'),JSON.stringify(lock));writeFileSync(join(root,'THIRD_PARTY_NOTICES.md'),'`@opencode-ai/plugin` MIT\n`typescript` Apache-2.0\n');const rows=[{path:'node_modules/@opencode-ai/plugin',name:'@opencode-ai/plugin',version:'1.18.16',license:'MIT',relation:'direct-peer'},{path:'node_modules/typescript',name:'typescript',version:'5.9.3',license:'Apache-2.0',relation:'direct-dev'}];const h=createHash('sha256');for(const r of rows){for(const k of ['path','name','version','license','relation']){h.update(r[k]);h.update('\0')}h.update('\n')}const digest=h.digest('hex'),sbom={schema:1,format:'HHC-SBOM',product:'OpenCode HHC Orchestrator',version:'2.0.10',dependency_lock:'plugin/package-lock.json',dependency_graph_sha256:digest,component_count:2,direct_component_count:2,components:rows};const sp=join(root,'dist','SBOM-2.0.10.json');writeFileSync(sp,JSON.stringify(sbom,null,2)+'\n');return{digest,sbom:sp}}
+function provenanceManifest(root,asset,version='2.0.10'){const dep=depFixture(root),files={};for(const rel of ['VERSION','package.json','plugin/package.json','CHANGELOG.md']){const path=join(root,...rel.split('/'));files[rel]=sha(readFileSync(path))}const h=createHash('sha256');for(const rel of Object.keys(files).sort()){h.update(rel+'\0');h.update(files[rel]+'\0')}return{schema:5,version,archive:asset.split('/').pop(),archive_sha256:sha(readFileSync(asset)),files,provenance:{schema:1,builder:'scripts/release-build.py',deterministic_zip:true,canonical_zip_time:'2026-01-01T00:00:00Z',inputs_sha256:h.digest('hex'),input_file_count:Object.keys(files).length},supply_chain:{schema:1,dependency_lock:'plugin/package-lock.json',dependency_graph_sha256:dep.digest,component_count:2,sbom:'SBOM-2.0.10.json',sbom_sha256:sha(readFileSync(dep.sbom)),third_party_notices_sha256:sha(readFileSync(join(root,'THIRD_PARTY_NOTICES.md')))}}}
+function fixture(version='2.0.10'){
+ const root=mkdtempSync(join(tmpdir(),'hhc-release-quality-'));mkdirSync(join(root,'plugin'),{recursive:true});mkdirSync(join(root,'dist'),{recursive:true})
+ writeFileSync(join(root,'VERSION'),version+'\n');writeFileSync(join(root,'package.json'),JSON.stringify({version}));writeFileSync(join(root,'plugin','package.json'),JSON.stringify({version}));writeFileSync(join(root,'CHANGELOG.md'),`# Changelog\n\n## ${version}\n\n- release\n`)
+ const asset=join(root,'dist',`OpenCode-HHC-Orchestrator-${version}-DISTRIBUTABLE.zip`),bytes=Buffer.from('canonical-asset');writeFileSync(asset,bytes)
+ writeFileSync(join(root,'dist',`RELEASE-MANIFEST-${version}.json`),JSON.stringify(provenanceManifest(root,asset,version)))
+ const m=new MissionStore(root).start('s','commit push and create release');m.release_chain={push:{outcome:'success',at:Date.now(),command:'git push origin main',expected_remote:'origin',expected_ref:'refs/heads/main',local_head:H,observed_remote:'origin',observed_ref:'refs/heads/main',remote_hash:H,remote_verified:true}}
+ return{root,m,asset}
+}
+
+test('release quality accepts consistent VERSION/package/plugin/changelog and manifest-matching asset',()=>{const x=fixture();assert.doesNotThrow(()=>assertReleaseChainPrecondition(x.m,`gh release create v2.0.10 ${x.asset}`,x.root));assert.equal(x.m.release_chain.quality.verified,true);assert.equal(x.m.release_chain.quality.version,'2.0.10');assert.equal(x.m.release_chain.quality.assets[0].manifest_match,true)})
+
+test('tag/package/version drift blocks release before remote mutation',()=>{const x=fixture();writeFileSync(join(x.root,'package.json'),JSON.stringify({version:'2.0.9'}));assert.throws(()=>assertReleaseChainPrecondition(x.m,'gh release create v2.0.10',x.root),/package-version-mismatch/);assert.ok(x.m.blockers.includes('release-chain:quality-package-version-mismatch'))})
+
+test('missing changelog entry blocks release',()=>{const x=fixture();writeFileSync(join(x.root,'CHANGELOG.md'),'# Changelog\n\n## 2.0.9\n');assert.throws(()=>assertReleaseChainPrecondition(x.m,'gh release create v2.0.10',x.root),/CHANGELOG-version-missing/)})
+
+test('tampered distributable asset is rejected against release manifest sha256',()=>{const x=fixture();writeFileSync(x.asset,'tampered');assert.throws(()=>assertReleaseChainPrecondition(x.m,`gh release create v2.0.10 ${x.asset}`,x.root),/asset-sha256-mismatch/);assert.ok(x.m.blockers.some(b=>b.startsWith('release-chain:quality-asset-sha256-mismatch:')))})
+
+test('release provenance rejects current build-input drift even when archive sha still matches',()=>{const x=fixture();writeFileSync(join(x.root,'README.md'),'untracked-not-in-manifest');assert.doesNotThrow(()=>assertReleaseChainPrecondition(x.m,`gh release create v2.0.10 ${x.asset}`,x.root));writeFileSync(join(x.root,'package.json'),JSON.stringify({version:'2.0.10',extra:true}));assert.throws(()=>assertReleaseChainPrecondition(x.m,`gh release create v2.0.10 ${x.asset}`,x.root),/release-provenance-source-drift/)})
+
+test('release provenance and supply-chain metadata are mandatory for schema-5 release manifest',()=>{const x=fixture();writeFileSync(join(x.root,'dist','RELEASE-MANIFEST-2.0.10.json'),JSON.stringify({schema:5,version:'2.0.10',archive:x.asset.split('/').pop(),archive_sha256:sha(readFileSync(x.asset)),files:{}}));assert.throws(()=>assertReleaseChainPrecondition(x.m,`gh release create v2.0.10 ${x.asset}`,x.root),/release-provenance-missing/)})
+
+test('dependency lock graph drift after build blocks release even when distributable bytes are unchanged',()=>{const x=fixture();const lockPath=join(x.root,'plugin','package-lock.json'),lock=JSON.parse(readFileSync(lockPath,'utf8'));lock.packages['node_modules/typescript'].version='5.9.4';writeFileSync(lockPath,JSON.stringify(lock));assert.throws(()=>assertReleaseChainPrecondition(x.m,`gh release create v2.0.10 ${x.asset}`,x.root),/dependency-graph-drift/);assert.ok(x.m.blockers.includes('release-chain:quality-dependency-graph-drift'))})
+
+test('SBOM drift is detected independently from archive provenance',()=>{const x=fixture();writeFileSync(join(x.root,'dist','SBOM-2.0.10.json'),JSON.stringify({schema:1,dependency_graph_sha256:'bad',component_count:2}));assert.throws(()=>assertReleaseChainPrecondition(x.m,`gh release create v2.0.10 ${x.asset}`,x.root),/sbom-drift/);assert.ok(x.m.blockers.includes('release-chain:quality-sbom-drift'))})
+
+test('third-party notices must enumerate direct dependency names and licenses, not only match a stored hash',()=>{const x=fixture(),np=join(x.root,'THIRD_PARTY_NOTICES.md'),mp=join(x.root,'dist','RELEASE-MANIFEST-2.0.10.json');writeFileSync(np,'`@opencode-ai/plugin` MIT\n');const manifest=JSON.parse(readFileSync(mp,'utf8'));manifest.supply_chain.third_party_notices_sha256=sha(readFileSync(np));writeFileSync(mp,JSON.stringify(manifest));assert.throws(()=>assertReleaseChainPrecondition(x.m,`gh release create v2.0.10 ${x.asset}`,x.root),/third-party-notices-incomplete:typescript/);assert.ok(x.m.blockers.includes('release-chain:quality-third-party-notices-incomplete:typescript'))})

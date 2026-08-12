@@ -1,0 +1,45 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { replanVerificationForChangedSurface } from '../dist/runtime/verification/policy.js'
+import { normalizeIntent } from '../dist/runtime/intent/normalize.js'
+import { runDoctor } from '../dist/doctor/checks.js'
+import { resolveHhcConfig } from '../dist/config/resolver.js'
+import { MissionStore } from '../dist/runtime/mission/mission-store.js'
+import { acquireHhcRuntimeInstance } from '../dist/opencode/instance-guard.js'
+
+function repo(){return {ecosystems:['node'],likelyVerification:['npm test','npm run typecheck','npm run build'],characteristics:[]}}
+
+test('dependency graph changes create explicit security/review obligation and capability',()=>{
+  const intent=normalizeIntent('fix local parser bug',repo())
+  const store=new MissionStore(); const m=store.start('s-dep','fix local parser bug')
+  const task={id:'t1',objective:'fix parser',scope:['src/parser.ts'],dependencies:[],role:'coder',category:'standard',status:'running',obligation_ids:[],required_evidence:[],constraints:[],created_at:1,updated_at:1}
+  m.tasks.push(task)
+  const r=replanVerificationForChangedSurface(m,task,['src/parser.ts','plugin/package-lock.json'],repo())
+  assert.equal(r.changed,true)
+  assert.equal(r.reason,'dependency-changed-surface')
+  assert.equal(m.risk,'high')
+  assert.ok(m.intent.requiredCapabilities.includes('dependency-change'))
+  assert.ok(m.intent.requiredCapabilities.includes('security-review'))
+  assert.ok(m.obligations.some(o=>o.kind==='review'&&o.status==='open'&&/Dependency graph changed/.test(o.summary)))
+})
+
+test('doctor reports primary-model drift separately when fallback is still available',()=>{
+  const cfg=resolveHhcConfig({routing:{roleModels:{coder:['p/missing','p/live']}}})
+  const store=new MissionStore()
+  const checks=runDoctor(cfg,store,process.cwd(),{models:[{id:'p/live',provider:'p',capabilities:['text']}],hostConfig:{}})
+  const valid=checks.find(x=>x.id==='model-mapping-validity')
+  const drift=checks.find(x=>x.id==='model-primary-drift')
+  assert.equal(valid?.status,'pass')
+  assert.equal(drift?.status,'warn')
+  assert.match(drift?.detail??'',/primary=p\/missing/)
+  assert.match(drift?.detail??'',/fallback=p\/live/)
+})
+
+test('runtime instance guard prevents duplicate hooks per project but permits distinct projects and reacquire',()=>{
+  const a=acquireHhcRuntimeInstance('/tmp/hhc-project-a')
+  assert.throws(()=>acquireHhcRuntimeInstance('/tmp/hhc-project-a'),/Duplicate OpenCode HHC Orchestrator runtime/)
+  const b=acquireHhcRuntimeInstance('/tmp/hhc-project-b')
+  b.release();a.release()
+  const c=acquireHhcRuntimeInstance('/tmp/hhc-project-a')
+  c.release()
+})

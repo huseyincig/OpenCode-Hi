@@ -1,0 +1,29 @@
+import { type SkillPermission } from './permissions.js';
+export type SkillProvider = 'project' | 'personal' | 'hhc';
+export interface SkillCandidate {
+    name: string;
+    provider: SkillProvider;
+    path: string;
+    valid: boolean;
+    enabled: boolean;
+    orchestrationRisk: boolean;
+    permission?: SkillPermission;
+}
+export type SkillPreflightOutcome = 'allow' | 'ask' | 'deny' | 'disabled' | 'missing' | 'invalid';
+export interface SkillPreflightResult {
+    name: string;
+    outcome: SkillPreflightOutcome;
+    provider?: SkillProvider;
+    path?: string;
+}
+export interface SkillPlan {
+    selected: SkillCandidate[];
+    requested: string[];
+    missing: string[];
+    outcomes: SkillPreflightResult[];
+    reason: string[];
+}
+export declare function configuredSkillPaths(hostConfig: Record<string, unknown>): string[];
+export declare function discoverSkills(projectRoot: string, hhcRoot?: string, extraPaths?: string[]): SkillCandidate[];
+export declare function resolveSkillPlan(capabilities: string[], candidates: SkillCandidate[], permissionMap?: Record<string, SkillPermission>, skillToolEnabled?: boolean, role?: string): SkillPlan;
+export declare function selectSkills(capabilities: string[], candidates: SkillCandidate[]): SkillCandidate[];

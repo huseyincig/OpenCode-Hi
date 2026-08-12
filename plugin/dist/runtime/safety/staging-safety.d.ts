@@ -1,0 +1,18 @@
+import type { MissionState } from '../mission/types.js';
+export declare function isStagingInspection(command: string): boolean;
+export declare function isGitStatusInspection(command: string): boolean;
+export declare function isGitCommit(command: string): boolean;
+export declare function isGitTopologyMutation(command: string): boolean;
+export declare function broadGitStage(command: string): boolean;
+export declare function commitStagesTrackedChanges(command: string): boolean;
+export declare function commitHasDirectPathspec(command: string): boolean;
+export declare function mutatesGitIndex(command: string): boolean;
+export declare function recordPreexistingUserBaseline(m: MissionState, baseline: Record<string, string> | undefined): void;
+export declare function recordStagingInspection(m: MissionState, command: string, output: any): void;
+export declare function recordGitStatusInspection(m: MissionState, command: string, output: any): void;
+export declare function invalidateGitTopologyProof(m: MissionState): void;
+export declare function beginGitTopologyMutation(m: MissionState, command: string): void;
+export declare function completeGitTopologyMutation(m: MissionState, command: string, success: boolean, text: string): void;
+export declare function clearGitTopologyOwnershipAfterCommit(m: MissionState): void;
+export declare function assertSafeGitMutation(m: MissionState, command: string): void;
+export declare function invalidateStagingProof(m: MissionState): void;

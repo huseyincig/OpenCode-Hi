@@ -1,0 +1,33 @@
+{
+  "name": "opencode-hhc-orchestrator",
+  "version": "2.0.10",
+  "description": "Mission, model, skill, worker, evidence and STOP orchestration for OpenCode.",
+  "type": "module",
+  "main": "plugin/dist/plugin.js",
+  "exports": {
+    ".": "./plugin/dist/plugin.js"
+  },
+  "files": [
+    "plugin/dist",
+    "skills",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/huseyincig/OpenCode-HHC-Orchestrator.git"
+  },
+  "homepage": "https://github.com/huseyincig/OpenCode-HHC-Orchestrator#readme",
+  "bugs": {
+    "url": "https://github.com/huseyincig/OpenCode-HHC-Orchestrator/issues"
+  },
+  "keywords": [
+    "opencode",
+    "orchestrator",
+    "agents",
+    "ai",
+    "plugin"
+  ],
+  "license": "Apache-2.0"
+}

@@ -1,0 +1,195 @@
+{
+  "candidate": "2.0.10-v56-checkpoint",
+  "host": {
+    "product": "OpenCode CLI",
+    "version": "1.18.16",
+    "platform": "linux-x64",
+    "runtime": "bun-1.3.14"
+  },
+  "harness": {
+    "consumer": "fresh isolated /tmp project",
+    "provider": "localhost OpenAI-compatible Responses API test double",
+    "plugin_bootstrap": "offline exact @opencode-ai/plugin@1.18.16 markers pre-seeded in scanned config dirs; no HHC runtime workaround added"
+  },
+  "native_runtime": {
+    "plugin_execution": "PASS",
+    "provider_round_trip": "PASS_LOCAL_OPENAI_COMPATIBLE",
+    "default_hhc_tools_observed": 15,
+    "team_tools_observed": 0,
+    "project_state_isolation": "PASS",
+    "fresh_unclean_shutdown": false
+  },
+  "post_fix_e2e": {
+    "casual": {
+      "message": "Merhaba, tek cümle cevap ver.",
+      "mission_count": 0,
+      "title_hhc_contract": false,
+      "working_manager_hhc_contract": false,
+      "status": "PASS"
+    },
+    "material": {
+      "message": "src/parser.ts bugını düzelt",
+      "mission_count": 1,
+      "mission_objective": "src/parser.ts bugını düzelt",
+      "title_hhc_contract": false,
+      "working_manager_hhc_contract": true,
+      "status": "PASS"
+    }
+  },
+  "findings_closed_in_v49": [
+    "OpenCode CLI wraps opencode run user text in one outer JSON-style quote layer, bypassing casual-message classification",
+    "OpenCode 1.18.x title generation omits input.agent on experimental.chat.system.transform, so agent-name-only housekeeping filtering was ineffective"
+  ],
+  "local_regression": {
+    "node": "358/358 PASS",
+    "python": "38/38 PASS",
+    "validation": "PASS_CURRENT_RUN_REQUIRED"
+  },
+  "external_gates_still_pending": [
+    "exact 2.0.10 Git candidate binding and clean consumer Git registration",
+    "real provider credentials",
+    "Windows runtime smoke",
+    "full external A-H / Native-01-18 / Flow-01-08 adversarial matrix"
+  ],
+  "same_session_external": {
+    "follow_up": {
+      "initial_session": "ses_00a8d0d40ffeagNQGshllC70f5",
+      "initial_objective": "src/parser.ts bugını düzelt",
+      "message": "testleri de yap",
+      "mission_count_after": 1,
+      "generation_after": 1,
+      "verification_obligation": "targeted-tests; testleri de yap",
+      "ledger_event": "mission.amended",
+      "status": "PASS"
+    },
+    "user_stop": {
+      "message": "STOP",
+      "mission_count_after": 1,
+      "mission_status": "stopped",
+      "user_interrupted": true,
+      "generation_after": 2,
+      "late_native_events_ignored": [
+        "message.updated",
+        "session.status",
+        "message.part.updated",
+        "message.part.delta",
+        "session.idle"
+      ],
+      "ledger_event": "runtime.event.after-user-stop-ignored",
+      "status": "PASS"
+    }
+  },
+  "clean_consumer_lifecycle": {
+    "install": "PASS",
+    "doctor_initial": "OK",
+    "doctor_after_user_config_edit": "WARN_MANAGED_CONFIG_DRIFT",
+    "uninstall": "PASS",
+    "preserved": [
+      "foreign plugin",
+      "user MCP",
+      "post-install user theme/config field"
+    ],
+    "exact_git_host_load": "PENDING_OFFLINE_ANCESTOR_BOOTSTRAP",
+    "exact_git_candidate": {
+      "commit": "015d730178697bfa7c7202075175660a7b1d6210",
+      "installer_spec": "opencode-hhc-orchestrator@git+https://github.com/huseyincig/OpenCode-HHC-Orchestrator.git#015d730178697bfa7c7202075175660a7b1d6210",
+      "install": "PASS",
+      "doctor": "OK",
+      "ownership": "healthy",
+      "config_drift": false,
+      "host_loader": "PENDING_OFFLINE_ANCESTOR_BOOTSTRAP"
+    }
+  },
+  "real_remote_side_effect_v53": {
+    "status": "PASS_LOCAL_REAL_GIT_REMOTE",
+    "operation": "git push origin main to a real local bare Git remote",
+    "ack_loss": "host result intentionally omitted exit metadata after side effect completed",
+    "idempotency": "same exact push rejected while outcome uncertain",
+    "reconciliation": "explicit user success confirmation required",
+    "remote_proof": "git rev-parse HEAD matched git ls-remote origin refs/heads/main",
+    "scope": "closes forensic item 33 remote side-effect/ACK-loss semantics without claiming public GitHub/OAuth coverage"
+  },
+  "real_remote_git_release_semantics_v53": {
+    "status": "PASS_LOCAL_REAL_GIT_REMOTE_PARTIAL_RELEASE",
+    "branch_push": "actual push to local bare remote",
+    "annotated_tag_push": "actual annotated v2.0.10 tag pushed to local bare remote",
+    "peeled_tag": "git ls-remote direct tag object SHA and ^{} peeled commit SHA both verified",
+    "remaining": "public release metadata/asset service (gh release view/assets) remains external"
+  },
+  "real_local_npm_registry_v54": {
+    "status": "PASS_LOCAL_REAL_NPM_REGISTRY_PROTOCOL",
+    "npm": "10.9.2",
+    "node": "22.16.0",
+    "registry": "ephemeral localhost HTTP registry implementing npm publish metadata PUT and package metadata GET",
+    "package": "opencode-hhc-orchestrator@2.0.10",
+    "pack_files": 179,
+    "pack_integrity": "sha512-YHVHKDfABar9HOkTGMZOoXRf2I9m6QcSWnhpq0OdtFtjYvTjEtG2gTnWvGgNhv3R9cGuUMkLiius0Zmr273/SQ==",
+    "pack_shasum": "e8b158664340cf3807b9ba1b46ee2048f48a10ce",
+    "flow": [
+      "npm pack --dry-run --json",
+      "HHC package publish preflight",
+      "HHC exact-action authority approval",
+      "actual npm publish PUT side effect",
+      "HHC publish success remains remote-unverified",
+      "actual npm view opencode-hhc-orchestrator@2.0.10 --json",
+      "HHC exact version/integrity/shasum verification"
+    ],
+    "remote_verified": true,
+    "scope": "closes forensic item 36 package publish protocol/integrity semantics without claiming public npm credentials/account coverage; credential/OAuth authority remains item 32 external."
+  },
+  "real_local_hosted_release_v55": {
+    "status": "PASS_LOCAL_HOSTED_RELEASE_PROTOCOL",
+    "git_remote": "real bare Git remote",
+    "branch_push": "actual git push origin main",
+    "branch_remote_verification": "git rev-parse HEAD + git ls-remote origin refs/heads/main",
+    "annotated_tag_push": "actual git tag -a v2.0.10 + git push origin v2.0.10",
+    "tag_remote_verification": "git ls-remote origin refs/tags/v2.0.10 refs/tags/v2.0.10^{} with peeled commit equality",
+    "hosted_release_create": "real HTTP POST side effect through gh-compatible local shim",
+    "hosted_release_view": "real HTTP GET returning tagName,targetCommitish,assets",
+    "asset_verification": "expected release asset name present and size observed",
+    "completion_rule": "release remains remote-unverified until both hosted metadata/assets and exact remote tag commit proof are present",
+    "finding_fixed": "git push origin v2.0.10 no longer overwrites branch/current-revision push proof or misclassifies the remote ref as refs/heads/v2.0.10",
+    "public_github_oauth": "PENDING_EXTERNAL under forensic item 32"
+  },
+  "real_model_routing_v56": {
+    "status": "PASS_LOCAL_REAL_OPENCODE_CHILD_RUNTIME",
+    "parent_session": "ses_00a29f0f5ffennGiXqqtmAADvl",
+    "parent_model": "openai/hhc-parent",
+    "tool": "hhc_task_start",
+    "role": "coder",
+    "selected_model": "openai/hhc-coder",
+    "child_session": "ses_00a29eb21ffeqK5NMh3PdfeAAf",
+    "native_child_agent": "coder",
+    "native_child_provider": "openai",
+    "native_child_model": "hhc-coder",
+    "effective_model_source": "assistant-message-metadata",
+    "effective_model_verified": true,
+    "child_methodology": "hhc-debugging-root-cause",
+    "methodology_provider": "hhc",
+    "scope": "closes forensic item 12 host/runtime model-binding semantics; public provider credentials remain an overall external release blocker, not an item-12 implementation gap."
+  },
+  "real_team_mode_v56": {
+    "status": "PASS_LOCAL_REAL_OPENCODE_LIVE_TEAM",
+    "parent_session": "ses_00a219077ffeWxrh6ajp66tl6q",
+    "tool": "hhc_team_create",
+    "members": [
+      "architect",
+      "repository-explorer"
+    ],
+    "architect": {
+      "session": "ses_00a218a9bffew2Rxf5cZ7t6w4M",
+      "provider": "openai",
+      "model": "hhc-architect",
+      "mode": "subagent"
+    },
+    "repository_explorer": {
+      "session": "ses_00a218977ffe8nHhjzhi9FYXE6",
+      "provider": "openai",
+      "model": "hhc-explorer",
+      "mode": "subagent"
+    },
+    "team_status": "shutdown",
+    "shutdown_reason": "members-terminal",
+    "scope": "closes forensic item 16 live multi-member OpenCode Team Mode execution without claiming public hosted-provider coverage."
+  }
+}

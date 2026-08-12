@@ -1,0 +1,36 @@
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { basename, dirname, join, relative, resolve } from 'node:path'
+
+export interface TargetedVerificationPlan {
+  target:string
+  packageRoot:string
+  testFiles:string[]
+  commands:string[]
+  reason:string
+}
+
+const CODE_EXT=new Set(['.ts','.tsx','.js','.jsx','.mjs','.cjs','.py','.go','.rs'])
+const TEST_EXT=['.test.ts','.spec.ts','.test.tsx','.spec.tsx','.test.js','.spec.js','.test.jsx','.spec.jsx','.test.mjs','.spec.mjs']
+function norm(p:string):string{return p.replace(/\\/g,'/')}
+function within(root:string,p:string):boolean{const r=norm(resolve(root)),x=norm(resolve(p));return x===r||x.startsWith(r+'/')}
+function json(path:string):any{try{return JSON.parse(readFileSync(path,'utf8'))}catch{return undefined}}
+function usableScript(value:unknown):boolean{const s=String(value??'').trim();return Boolean(s)&&!/no test specified|not implemented|todo:?\s*(?:add|write).*test/i.test(s)}
+function nearestPackageRoot(root:string,file:string):string{
+  let cur=dirname(resolve(root,file)),top=resolve(root)
+  while(within(top,cur)){if(existsSync(join(cur,'package.json'))||existsSync(join(cur,'pyproject.toml'))||existsSync(join(cur,'go.mod'))||existsSync(join(cur,'Cargo.toml')))return cur;const next=dirname(cur);if(next===cur)break;cur=next}
+  return top
+}
+function manager(root:string):'pnpm'|'yarn'|'bun'|'npm'{let cur=root;for(let i=0;i<5;i++){if(existsSync(join(cur,'pnpm-lock.yaml')))return'pnpm';if(existsSync(join(cur,'yarn.lock')))return'yarn';if(existsSync(join(cur,'bun.lockb'))||existsSync(join(cur,'bun.lock')))return'bun';if(existsSync(join(cur,'package-lock.json')))return'npm';const next=dirname(cur);if(next===cur)break;cur=next}return'npm'}
+function nodeTestCandidates(root:string,target:string):string[]{
+  const abs=resolve(root,target),dir=dirname(abs),ext='.'+basename(abs).split('.').pop(),stem=basename(abs,ext),out:string[]=[]
+  for(const suffix of TEST_EXT){const p=join(dir,stem+suffix);if(existsSync(p))out.push(norm(relative(root,p)))}
+  for(const folder of ['__tests__','tests','test']){const d=join(dir,folder);if(!existsSync(d))continue;try{for(const ent of readdirSync(d,{withFileTypes:true}).slice(0,200))if(ent.isFile()&&(ent.name.startsWith(stem+'.')||ent.name.startsWith(stem+'-'))&&/\.(?:test|spec)\.[^.]+$/.test(ent.name))out.push(norm(relative(root,join(d,ent.name))))}catch{}}
+  const parent=dirname(dir);for(const folder of ['__tests__','tests','test']){const d=join(parent,folder);if(!existsSync(d))continue;try{for(const ent of readdirSync(d,{withFileTypes:true}).slice(0,300))if(ent.isFile()&&ent.name.includes(stem)&&/\.(?:test|spec)\.[^.]+$/.test(ent.name))out.push(norm(relative(root,join(d,ent.name))))}catch{}}
+  return [...new Set(out)].slice(0,6)
+}
+function pythonCandidates(root:string,target:string):string[]{const abs=resolve(root,target),dir=dirname(abs),stem=basename(abs,'.py'),out:string[]=[];for(const p of [join(dir,`test_${stem}.py`),join(dir,`${stem}_test.py`),join(dir,'tests',`test_${stem}.py`),join(dirname(dir),'tests',`test_${stem}.py`)])if(existsSync(p))out.push(norm(relative(root,p)));return[...new Set(out)].slice(0,6)}
+function nodeCommand(repoRoot:string,pkgRoot:string,testFile:string):string|undefined{const pkg=json(join(pkgRoot,'package.json')),script=pkg?.scripts?.test;if(!usableScript(script))return undefined;const pm=manager(pkgRoot),pkgRel=norm(relative(repoRoot,pkgRoot)),testRel=norm(relative(pkgRoot,resolve(repoRoot,testFile)));if(pm==='pnpm')return pkgRel?`pnpm --dir ${pkgRel} test -- ${testRel}`:`pnpm test -- ${testRel}`;if(pm==='yarn')return pkgRel?`yarn --cwd ${pkgRel} test ${testRel}`:`yarn test ${testRel}`;if(pm==='bun')return pkgRel?`bun --cwd ${pkgRel} test ${testRel}`:`bun test ${testRel}`;return pkgRel?`npm --prefix ${pkgRel} test -- ${testRel}`:`npm test -- ${testRel}`}
+export function discoverTargetedVerification(root:string,targets:string[]):TargetedVerificationPlan[]{const repoRoot=resolve(root),plans:TargetedVerificationPlan[]=[];for(const raw of [...new Set(targets.map(norm))].slice(0,12)){if(!raw||raw.startsWith('..'))continue;const abs=resolve(repoRoot,raw);const ext='.'+basename(abs).split('.').pop();if(!within(repoRoot,abs)||!existsSync(abs)||!CODE_EXT.has(ext))continue;const pkg=nearestPackageRoot(repoRoot,raw);let tests:string[]=[],commands:string[]=[];if(['.ts','.tsx','.js','.jsx','.mjs','.cjs'].includes(ext)){tests=nodeTestCandidates(repoRoot,raw);if(tests[0]){const c=nodeCommand(repoRoot,pkg,tests[0]);if(c)commands.push(c)}}else if(ext==='.py'){tests=pythonCandidates(repoRoot,raw);if(tests[0])commands.push(`python -m pytest ${tests[0]}`)}else if(ext==='.go'){const dirRel=norm(relative(pkg,dirname(abs)))||'.';commands.push(`go test ./${dirRel}`.replace('./.','./'))}else if(ext==='.rs'&&existsSync(join(pkg,'Cargo.toml'))){commands.push('cargo test')}
+    plans.push({target:raw,packageRoot:norm(relative(repoRoot,pkg))||'.',testFiles:tests,commands,reason:tests.length?'nearest deterministic test candidate':'no deterministic nearby test file found'})}
+  return plans}
+export function targetedVerificationHint(root:string,targets:string[]):string|undefined{const plans=discoverTargetedVerification(root,targets);if(!plans.length)return undefined;const useful=plans.filter(p=>p.commands.length||p.testFiles.length);const rows=(useful.length?useful:plans).slice(0,6).map(p=>`${p.target} -> package=${p.packageRoot}; tests=${p.testFiles.join(', ')||'none'}; command=${p.commands.join(' && ')||'none'}; ${p.reason}`);return `TARGETED VERIFICATION DISCOVERY (deterministic hint; validate against repo scripts before execution): ${rows.join(' | ')}`}

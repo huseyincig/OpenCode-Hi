@@ -1,0 +1,48 @@
+import type { Category } from '../mission/types.js';
+import type { HhcConfig } from '../../config/schema.js';
+export interface AvailableModel {
+    id: string;
+    provider?: string;
+    cost?: number;
+    quality?: number;
+    writeCapable?: boolean;
+    tags?: string[];
+    expectedTurns?: number;
+    contextOverhead?: number;
+    variants?: string[];
+}
+export interface ModelFallbackReason {
+    model: string;
+    variant?: string;
+    reason: string;
+}
+export interface ModelResolution {
+    primary?: string;
+    primaryVariant?: string;
+    fallbacks: string[];
+    fallbackVariants: Record<string, string | undefined>;
+    reason: string[];
+    fallbackReasons: ModelFallbackReason[];
+    rejected: Array<{
+        id: string;
+        reason: string;
+    }>;
+    scores?: Array<{
+        model: string;
+        score: number;
+        expected_completion_cost: number;
+        failure_penalty: number;
+        success_credit: number;
+    }>;
+}
+export interface MissionModelFeedback {
+    failures?: Record<string, number>;
+    successes?: Record<string, number>;
+    retries?: Record<string, number>;
+}
+export interface RuntimeModelCandidateStatus {
+    ok: boolean;
+    reason?: string;
+}
+export declare function runtimeModelCandidateStatus(id: string, availableInput: AvailableModel[], config: HhcConfig, hostConfig?: Record<string, unknown>): RuntimeModelCandidateStatus;
+export declare function resolveModel(category: Category, availableInput: AvailableModel[], config: HhcConfig, explicit?: string, role?: string, hostConfig?: Record<string, unknown>, feedback?: MissionModelFeedback): ModelResolution;

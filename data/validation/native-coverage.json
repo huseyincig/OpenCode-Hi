@@ -1,0 +1,793 @@
+{
+  "schema": 1,
+  "release": "2.0.10",
+  "summary": {
+    "total": 20,
+    "source_present": 20,
+    "external_validation_required": true,
+    "p0_checklist_total": 75,
+    "p0_checklist_source_present": 75
+  },
+  "gaps": {
+    "GAP-100-plugin-order-independence": {
+      "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+      "evidence": [
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "data/validation/acceptance.json"
+      ],
+      "missing": []
+    },
+    "GAP-101-duplicate-plugin-detection": {
+      "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+      "evidence": [
+        "plugin/src/doctor/project-inspection.ts",
+        "plugin/src/doctor/checks.ts",
+        "plugin/src/opencode/instance-guard.ts"
+      ],
+      "missing": []
+    },
+    "GAP-102-native-tool-shadowing": {
+      "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+      "evidence": [
+        "plugin/src/opencode/tool-namespace.ts",
+        "plugin/src/plugin.ts",
+        "plugin/src/doctor/checks.ts"
+      ],
+      "missing": []
+    },
+    "GAP-103-effective-config-source-of-truth": {
+      "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+      "evidence": [
+        "plugin/src/plugin.ts",
+        "plugin/src/opencode/native-adapter.ts"
+      ],
+      "missing": []
+    },
+    "GAP-104-model-variants": {
+      "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/model-resolver.ts",
+        "plugin/src/runtime/mission/types.ts"
+      ],
+      "missing": []
+    },
+    "GAP-105-provider-policy-routing": {
+      "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+      "evidence": [
+        "plugin/src/opencode/native-adapter.ts",
+        "plugin/src/runtime/routing/model-resolver.ts"
+      ],
+      "missing": []
+    },
+    "GAP-106-native-diff-snapshot-revert": {
+      "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+      "evidence": [
+        "plugin/src/opencode/native-adapter.ts",
+        "plugin/src/opencode/event-adapter.ts",
+        "plugin/src/runtime/evidence/evidence-runtime.ts",
+        "plugin/src/plugin.ts"
+      ],
+      "missing": []
+    },
+    "GAP-107-permission-wait-not-stagnation": {
+      "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+      "evidence": [
+        "plugin/src/opencode/event-adapter.ts",
+        "plugin/src/plugin.ts",
+        "plugin/src/runtime/autopilot/evaluator.ts"
+      ],
+      "missing": []
+    },
+    "GAP-108-provider-failure-not-stagnation": {
+      "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+      "evidence": [
+        "plugin/src/runtime/worker/failure-classifier.ts",
+        "plugin/src/runtime/task/task-runtime.ts"
+      ],
+      "missing": []
+    },
+    "GAP-109-parallel-conflict-policy": {
+      "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+      "evidence": [
+        "plugin/src/runtime/scheduler/parallel-safety.ts",
+        "plugin/src/runtime/task/task-runtime.ts"
+      ],
+      "missing": []
+    },
+    "GAP-110-opencode-autoupdate-compatibility": {
+      "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+      "evidence": [
+        "plugin/src/opencode/event-adapter.ts",
+        "plugin/src/plugin.ts",
+        "plugin/src/doctor/checks.ts",
+        "data/validation/opencode-version-matrix.json"
+      ],
+      "missing": []
+    },
+    "GAP-111-experimental-api-adapter": {
+      "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+      "evidence": [
+        "plugin/src/opencode/experimental-adapter.ts",
+        "plugin/src/hooks/session-compacting.ts"
+      ],
+      "missing": []
+    },
+    "GAP-112-three-way-compatibility": {
+      "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+      "evidence": [
+        "data/validation/opencode-version-matrix.json",
+        "docs/SKILLS.md",
+        "data/validation/release-gates.json"
+      ],
+      "missing": []
+    },
+    "GAP-113-hhc-native-skills-bootstrap-meta-override": {
+      "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+      "evidence": [
+        "plugin/src/hooks/messages-transform.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "data/validation/acceptance.json"
+      ],
+      "missing": []
+    },
+    "GAP-114-hhc-native-skills-actual-skill-discovery": {
+      "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+      "evidence": [
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/skills/registry.ts"
+      ],
+      "missing": []
+    },
+    "GAP-115-remote-instruction-trust": {
+      "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+      "evidence": [
+        "plugin/src/opencode/native-adapter.ts",
+        "plugin/src/doctor/checks.ts"
+      ],
+      "missing": []
+    },
+    "GAP-116-native-event-trigger-priority": {
+      "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+      "evidence": [
+        "plugin/src/opencode/event-adapter.ts",
+        "plugin/src/plugin.ts"
+      ],
+      "missing": []
+    },
+    "GAP-117-built-in-agent-reuse-audit": {
+      "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/agent-reuse.ts",
+        "plugin/src/doctor/checks.ts"
+      ],
+      "missing": []
+    },
+    "GAP-118-native-command-vs-hhc-task": {
+      "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+      "evidence": [
+        "plugin/src/runtime/task/native-first-policy.ts",
+        "scripts/native_plugin_setup.py",
+        "plugin/src/runtime/task/task-runtime.ts"
+      ],
+      "missing": []
+    },
+    "GAP-119-observability-separation": {
+      "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+      "evidence": [
+        "plugin/src/plugin.ts",
+        "plugin/src/runtime/ledger/ledger.ts",
+        "plugin/src/runtime/ledger/report.ts"
+      ],
+      "missing": []
+    }
+  },
+  "required_native_acceptance": [
+    "Native-01",
+    "Native-02",
+    "Native-03",
+    "Native-04",
+    "Native-05",
+    "Native-06",
+    "Native-07",
+    "Native-08",
+    "Native-09",
+    "Native-10",
+    "Native-11",
+    "Native-12",
+    "Native-13",
+    "Native-14",
+    "Native-15",
+    "Native-16",
+    "Native-17",
+    "Native-18"
+  ],
+  "note": "Source presence is not runtime acceptance. Native-01..18 must pass on an exact-bound external OpenCode runtime receipt.",
+  "p0_checklist": {
+    "OpenCode Native": {
+      "plugin-shell": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/plugin.ts",
+          "plugin/package.json"
+        ],
+        "missing": []
+      },
+      "effective-config": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/plugin.ts",
+          "plugin/src/opencode/native-adapter.ts"
+        ],
+        "missing": []
+      },
+      "opencode-config-dir": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "scripts/native_plugin_setup.py",
+          "plugin/src/runtime/skills/registry.ts"
+        ],
+        "missing": []
+      },
+      "native-project-worktree-context": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/intent/repo-context.ts",
+          "plugin/src/runtime/mission/mission-store.ts"
+        ],
+        "missing": []
+      },
+      "native-agents-subagents": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "roles/coder.md",
+          "plugin/src/runtime/routing/agent-reuse.ts"
+        ],
+        "missing": []
+      },
+      "subagent-depth": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/plugin.ts",
+          "plugin/src/doctor/checks.ts"
+        ],
+        "missing": []
+      },
+      "native-child-sessions": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/opencode/client-adapter.ts",
+          "plugin/src/runtime/task/task-runtime.ts"
+        ],
+        "missing": []
+      },
+      "native-async-prompt": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/opencode/native-adapter.ts",
+          "plugin/src/runtime/task/task-runtime.ts"
+        ],
+        "missing": []
+      },
+      "native-session-status": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/opencode/event-adapter.ts",
+          "plugin/src/plugin.ts"
+        ],
+        "missing": []
+      },
+      "native-session-idle": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/opencode/event-adapter.ts",
+          "plugin/src/plugin.ts"
+        ],
+        "missing": []
+      },
+      "native-abort": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/opencode/client-adapter.ts",
+          "plugin/src/runtime/task/task-runtime.ts"
+        ],
+        "missing": []
+      },
+      "native-todo": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/opencode/event-adapter.ts",
+          "plugin/src/plugin.ts"
+        ],
+        "missing": []
+      },
+      "native-diff-file-events": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/opencode/event-adapter.ts",
+          "plugin/src/plugin.ts"
+        ],
+        "missing": []
+      },
+      "native-revert": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/opencode/native-adapter.ts",
+          "plugin/src/plugin.ts"
+        ],
+        "missing": []
+      },
+      "native-skill-tool": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/hooks/tool-before.ts",
+          "plugin/src/runtime/skills/registry.ts"
+        ],
+        "missing": []
+      },
+      "native-per-agent-skill-permissions": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/skills/permissions.ts",
+          "roles/coder.md"
+        ],
+        "missing": []
+      },
+      "native-general-permissions": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "roles/manager.md",
+          "roles/coder.md"
+        ],
+        "missing": []
+      },
+      "native-provider-policies": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/opencode/native-adapter.ts",
+          "plugin/src/runtime/routing/model-resolver.ts"
+        ],
+        "missing": []
+      },
+      "native-provider-model-inventory": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/opencode/client-adapter.ts",
+          "plugin/src/plugin.ts"
+        ],
+        "missing": []
+      },
+      "native-model-variants": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/routing/model-resolver.ts",
+          "plugin/src/runtime/mission/types.ts"
+        ],
+        "missing": []
+      },
+      "native-mcp-lsp-formatter-first": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "roles/coder.md"
+        ],
+        "missing": []
+      },
+      "native-structured-logging": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/plugin.ts"
+        ],
+        "missing": []
+      },
+      "thin-experimental-adapter": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/opencode/experimental-adapter.ts"
+        ],
+        "missing": []
+      }
+    },
+    "HHC Core": {
+      "mission-obligation": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/mission/mission-store.ts",
+          "plugin/src/runtime/mission/types.ts"
+        ],
+        "missing": []
+      },
+      "smart-router": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/routing/capability-router.ts",
+          "plugin/src/runtime/routing/execution-mode.ts"
+        ],
+        "missing": []
+      },
+      "minimum-execution": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/routing/execution-mode.ts",
+          "plugin/src/runtime/scheduler/parallel-safety.ts"
+        ],
+        "missing": []
+      },
+      "task-contract": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/task/contracts.ts",
+          "plugin/src/runtime/mission/types.ts"
+        ],
+        "missing": []
+      },
+      "task-api-thin-adapter": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/task/task-runtime.ts",
+          "plugin/src/runtime/task/native-first-policy.ts"
+        ],
+        "missing": []
+      },
+      "worker-metadata": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/mission/types.ts"
+        ],
+        "missing": []
+      },
+      "category-model-variant-resolver": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/routing/model-resolver.ts"
+        ],
+        "missing": []
+      },
+      "fallback-reasons": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/routing/model-resolver.ts"
+        ],
+        "missing": []
+      },
+      "provider-model-concurrency": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/scheduler/concurrency.ts"
+        ],
+        "missing": []
+      },
+      "preconditions": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/readiness/preconditions.ts"
+        ],
+        "missing": []
+      },
+      "skill-policy": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/skills/registry.ts"
+        ],
+        "missing": []
+      },
+      "evidence-freshness": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/evidence/evidence-runtime.ts"
+        ],
+        "missing": []
+      },
+      "completion-adjudicator": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/completion/adjudicator.ts"
+        ],
+        "missing": []
+      },
+      "event-driven-autopilot": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/autopilot/evaluator.ts",
+          "plugin/src/plugin.ts"
+        ],
+        "missing": []
+      },
+      "user-stop": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/hooks/chat-message.ts",
+          "plugin/src/runtime/mission/mission-store.ts"
+        ],
+        "missing": []
+      },
+      "permission-wait": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/plugin.ts",
+          "plugin/src/runtime/autopilot/evaluator.ts"
+        ],
+        "missing": []
+      },
+      "provider-failure": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/worker/failure-classifier.ts",
+          "plugin/src/runtime/task/task-runtime.ts"
+        ],
+        "missing": []
+      },
+      "generation-race-guard": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/mission/mission-store.ts",
+          "plugin/src/plugin.ts"
+        ],
+        "missing": []
+      },
+      "stagnation-recovery": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/autopilot/recovery.ts"
+        ],
+        "missing": []
+      },
+      "scoped-rereview": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/task/task-runtime.ts"
+        ],
+        "missing": []
+      },
+      "parallel-conflict": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/scheduler/parallel-safety.ts",
+          "plugin/src/runtime/task/task-runtime.ts"
+        ],
+        "missing": []
+      },
+      "compaction-survival": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/opencode/experimental-adapter.ts",
+          "plugin/src/runtime/state/snapshot.ts"
+        ],
+        "missing": []
+      },
+      "bounded-ledger": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/ledger/ledger.ts"
+        ],
+        "missing": []
+      }
+    },
+    "HHC Native Skills": {
+      "official-separate-plugin": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "docs/SKILLS.md",
+          "scripts/native_plugin_setup.py"
+        ],
+        "missing": []
+      },
+      "reviewed-immutable-pin": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "docs/SKILLS.md"
+        ],
+        "missing": []
+      },
+      "actual-runtime-discovery": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/skills/registry.ts",
+          "plugin/src/runtime/skills/registry.ts"
+        ],
+        "missing": []
+      },
+      "hhc-safe-policy": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/skills/methodology.ts",
+          "plugin/src/hooks/tool-before.ts"
+        ],
+        "missing": []
+      },
+      "bootstrap-meta-block": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/hooks/messages-transform.ts",
+          "plugin/src/runtime/skills/methodology.ts"
+        ],
+        "missing": []
+      },
+      "orchestration-hhc-owned": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/skills/methodology.ts",
+          "plugin/src/hooks/tool-before.ts"
+        ],
+        "missing": []
+      },
+      "hhc-native-methodologies-no-control-plane": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/skills/methodology.ts"
+        ],
+        "missing": []
+      },
+      "native-skill-visibility": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "roles/coder.md",
+          "plugin/src/runtime/skills/permissions.ts"
+        ],
+        "missing": []
+      },
+      "zero-to-three-skills": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/skills/registry.ts",
+          "plugin/src/runtime/task/task-runtime.ts"
+        ],
+        "missing": []
+      },
+      "no-skill-path": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/skills/registry.ts"
+        ],
+        "missing": []
+      },
+      "compatibility-manifest": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "docs/SKILLS.md"
+        ],
+        "missing": []
+      },
+      "semantic-drift-review": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "docs/SKILLS.md",
+          "plugin/src/runtime/skills/registry.ts"
+        ],
+        "missing": []
+      },
+      "hhc-native-skills-methodology-only": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/skills/methodology.ts",
+          "plugin/src/hooks/tool-before.ts"
+        ],
+        "missing": []
+      }
+    },
+    "Lifecycle / Release": {
+      "duplicate-plugin-detection": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/doctor/project-inspection.ts",
+          "plugin/src/doctor/checks.ts"
+        ],
+        "missing": []
+      },
+      "plugin-order-tests": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "data/validation/acceptance.json",
+          "data/validation/external-schema.json"
+        ],
+        "missing": []
+      },
+      "tool-shadowing-test": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/opencode/tool-namespace.ts",
+          "plugin/test/native-first.test.mjs"
+        ],
+        "missing": []
+      },
+      "ownership-manifest": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "scripts/native_plugin_setup.py"
+        ],
+        "missing": []
+      },
+      "zero-write-dry-run": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "scripts/native_plugin_setup.py"
+        ],
+        "missing": []
+      },
+      "narrow-force": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "scripts/native_plugin_setup.py"
+        ],
+        "missing": []
+      },
+      "safe-update-uninstall": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "scripts/native_plugin_setup.py"
+        ],
+        "missing": []
+      },
+      "package-hash-identity": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "scripts/native_plugin_setup.py"
+        ],
+        "missing": []
+      },
+      "archive-symlink-safety": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "scripts/safe_archive.py"
+        ],
+        "missing": []
+      },
+      "opencode-version-check": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/doctor/checks.ts",
+          "data/validation/opencode-version-matrix.json"
+        ],
+        "missing": []
+      },
+      "hhc-native-skills-loaded-identity": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/runtime/skills/registry.ts",
+          "plugin/src/runtime/skills/methodology.ts"
+        ],
+        "missing": []
+      },
+      "three-way-compatibility": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "data/validation/opencode-version-matrix.json",
+          "data/validation/release-gates.json"
+        ],
+        "missing": []
+      },
+      "real-opencode-smoke": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "data/validation/external-protocol.json",
+          "data/validation/external-schema.json"
+        ],
+        "missing": []
+      },
+      "windows-smoke": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "data/validation/release-gates.json",
+          "scripts/native_plugin_setup.py"
+        ],
+        "missing": []
+      },
+      "doctor-action-status": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/src/doctor/checks.ts",
+          "scripts/native_plugin_setup.py"
+        ],
+        "missing": []
+      },
+      "executable-threat-tests": {
+        "status": "SOURCE_PRESENT_EXTERNAL_PENDING",
+        "evidence": [
+          "plugin/test/threat-model.test.mjs",
+          "tests/test_oho.py"
+        ],
+        "missing": []
+      }
+    }
+  }
+}

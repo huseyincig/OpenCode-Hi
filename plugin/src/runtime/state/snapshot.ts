@@ -1,0 +1,53 @@
+import type { MissionState,WorkerState } from '../mission/types.js'
+import { clipList,clipText,DEFAULT_CONTEXT_BUDGET } from '../context/budget.js'
+
+function rowList(values:string[],maxChars:number,maxItems:number):string{
+  return clipList(values,maxChars,maxItems).join(' | ')||'none'
+}
+
+/**
+ * Compaction survival state is intentionally priority-preserving rather than a
+ * transcript summary. Every section is independently bounded so a large task
+ * or obligation list cannot push blockers / next-safe-action / STOP conditions
+ * out of the host compaction context.
+ */
+export function compactMissionContext(m:MissionState,worker?:WorkerState):string{
+  const open=m.obligations.filter(o=>o.status!=='closed')
+  const active=m.workers.filter(w=>!['completed','failed','cancelled'].includes(w.status))
+  const latest=[...m.evidence.items].sort((a,b)=>b.observed_at-a.observed_at).slice(0,8)
+  const gates=m.gates.filter(g=>g.status!=='closed')
+  const artifacts=m.context_artifacts.slice(-DEFAULT_CONTEXT_BUDGET.max_artifacts)
+  const rollbacks=m.temporary_mutations.filter(x=>x.status!=='rolled-back')
+  const unreconciled=m.tasks.filter(t=>t.result&&['FIX_REQUIRED','NEEDS_CONTEXT','BLOCKED'].includes(t.result.status))
+  const nextSafe=clipText(m.pending_nudge?.instruction??m.continuation_reason??'evaluate open obligations',1200)
+  const blockers=rowList(m.blockers.map(clip=>clipText(clip,500)),2200,12)
+
+  const essential=[
+    'HHC MISSION SURVIVAL STATE',
+    `MISSION OBJECTIVE: ${clipText(m.objective,2200)}`,
+    `STATUS: ${m.status}`,
+    `GENERATION: ${m.generation}`,
+    `RISK: ${m.risk}`,
+    `AMBIGUITY: ${m.intent.ambiguity}`,
+    `DEPENDENCY CLASS: ${m.intent.dependencyClass}`,
+    `KNOWN BLOCKERS: ${blockers}`,
+    `NEXT SAFE ACTION: ${nextSafe}`,
+    'STOP CONDITIONS: all required obligations closed; no pending tasks/workers or unreconciled child result; required evidence fresh; no authority/rollback gate pending',
+    `USER INTERRUPTED: ${String(m.user_interrupted)}`,
+  ]
+
+  const boundedState=[
+    `ACTIVE OBLIGATIONS: ${rowList(open.map(o=>`${o.id}:${o.status}:${clipText(o.summary,500)}`),2600,12)}`,
+    `OPEN GATES: ${rowList(gates.map(g=>`${g.id}:${g.status}:${clipText(g.reason??g.summary,400)}`),1800,8)}`,
+    `CURRENT TASKS: ${rowList(m.tasks.map(t=>`${t.id}:${t.status}:${clipText(t.objective,420)}`),3000,14)}`,
+    `UNRECONCILED RESULTS: ${rowList(unreconciled.map(t=>`${t.id}:${t.result?.status}:${clipText(t.result?.summary,350)}`),1600,8)}`,
+    `ACTIVE/PENDING WORKERS: ${rowList(active.map(w=>`${w.id}:${w.status}:${w.role}:g${w.generation_at_spawn??'?'}`),1800,12)}`,
+    `LATEST RELEVANT EVIDENCE: ${rowList(latest.map(e=>`${e.kind}:${e.outcome??e.pass}:${e.invalidated_at?'stale':'fresh'}:${e.source_session_id??e.source??'unknown'}:${clipText(e.summary,420)}`),2600,8)}`,
+    `CONTEXT ARTIFACTS: ${rowList(artifacts.map(a=>`${a.kind}:${clipText(a.title??a.id,300)}:${a.sha256??''}`),1500,DEFAULT_CONTEXT_BUDGET.max_artifacts)}`,
+    `TEMP ROLLBACKS: ${rowList(rollbacks.map(x=>`${x.id}:${x.status}:${clipText(x.description,400)}`),1400,6)}`,
+    worker?`CURRENT CHILD: ${worker.id}:${worker.role}; session=${worker.session_id??'none'}; forked_from=${worker.forked_from_session_id??'none'}; methodologies=${rowList(worker.methodologies.map(x=>`${x.name}@${x.source_sha256?.slice(0,12)??'nohash'}`),900,3)}`:'',
+    'Do not create duplicate tasks or restart planning unless runtime state requires it.',
+  ].filter(Boolean)
+
+  return clipText([...essential,...boundedState].join('\n'),DEFAULT_CONTEXT_BUDGET.max_context_chars)
+}

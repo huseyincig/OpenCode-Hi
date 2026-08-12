@@ -1,0 +1,212 @@
+{
+  "schema": 1,
+  "scenarios": {
+    "A": {
+      "name": "small-fix",
+      "prompt": "footerdaki yazım hatasını düzelt",
+      "expects": [
+        "single-worker",
+        "no-planner",
+        "no-reviewer",
+        "no-hhc-native-skills",
+        "minimal-verify",
+        "stop"
+      ]
+    },
+    "B": {
+      "name": "bug",
+      "prompt": "login bazen 500 veriyor çöz test et",
+      "expects": [
+        "bug-fix-intent",
+        "minimum-explorer-coder-path",
+        "hhc-debugging-root-cause-if-needed",
+        "targeted-tests",
+        "fresh-evidence",
+        "stop"
+      ]
+    },
+    "C": {
+      "name": "large-independent-analysis",
+      "prompt": "bu repo neden yavaş incele ve en büyük 3 darboğazı düzelt",
+      "expects": [
+        "scope-analysis",
+        "bounded-parallel-if-beneficial",
+        "model-category-differentiation",
+        "single-parent-reconcile",
+        "fixes",
+        "verification",
+        "stop"
+      ]
+    },
+    "D": {
+      "name": "security-sensitive",
+      "prompt": "auth sistemini değiştir",
+      "expects": [
+        "high-risk",
+        "architect-security-capability",
+        "contract-ambiguity-check",
+        "ask-user-only-if-critical-semantics-unresolved",
+        "stronger-verification-review"
+      ]
+    },
+    "E": {
+      "name": "release-authority-boundary",
+      "prompt": "release hazırla ve yayınla",
+      "expects": [
+        "automatic-release-preparation",
+        "tests-build-version-checks",
+        "publish-push-boundary",
+        "user-action-required",
+        "approved-contract-only"
+      ]
+    },
+    "F": {
+      "name": "user-stop",
+      "prompt": "autopilot sırasında kullanıcı stop",
+      "expects": [
+        "no-auto-resurrection"
+      ]
+    },
+    "G": {
+      "name": "stale-evidence",
+      "prompt": "test PASS -> file edit -> agent final",
+      "expects": [
+        "stop-blocked",
+        "verify-again"
+      ]
+    },
+    "H": {
+      "name": "background-pending",
+      "prompt": "parent idle/final while worker pending",
+      "expects": [
+        "wait-while-pending",
+        "reconcile-after-result"
+      ]
+    }
+  },
+  "native_scenarios": {
+    "Native-01": {
+      "name": "child-depth",
+      "expects": [
+        "subagent-depth-bounded",
+        "recursive-control-plane-denied"
+      ]
+    },
+    "Native-02": {
+      "name": "pending-child",
+      "expects": [
+        "parent-waits",
+        "reconcile-after-child"
+      ]
+    },
+    "Native-03": {
+      "name": "permission-pending",
+      "expects": [
+        "wait-permission",
+        "no-stagnation-increment"
+      ]
+    },
+    "Native-04": {
+      "name": "provider-failure",
+      "expects": [
+        "fallback-candidate",
+        "no-reasoning-stagnation-increment"
+      ]
+    },
+    "Native-05": {
+      "name": "file-edit-after-pass",
+      "expects": [
+        "native-file-or-diff-event",
+        "evidence-stale"
+      ]
+    },
+    "Native-06": {
+      "name": "native-revert",
+      "expects": [
+        "mission-evidence-reconciled",
+        "no-blind-fresh-assumption"
+      ]
+    },
+    "Native-07": {
+      "name": "duplicate-plugin",
+      "expects": [
+        "doctor-action-required",
+        "no-silent-double-hooks"
+      ]
+    },
+    "Native-08": {
+      "name": "tool-collision",
+      "expects": [
+        "startup-or-release-failure"
+      ]
+    },
+    "Native-09": {
+      "name": "config-precedence",
+      "expects": [
+        "effective-native-config-used"
+      ]
+    },
+    "Native-10": {
+      "name": "provider-policy-deny",
+      "expects": [
+        "policy-denied-provider-not-selected"
+      ]
+    },
+    "Native-11": {
+      "name": "model-variant",
+      "expects": [
+        "model-plus-compatible-variant",
+        "reason-recorded"
+      ]
+    },
+    "Native-12": {
+      "name": "hhc-native-skills-tiny-task",
+      "expects": [
+        "no-unnecessary-hhc-native-skills",
+        "single-minimal-path"
+      ]
+    },
+    "Native-13": {
+      "name": "hhc-native-skills-debugging",
+      "expects": [
+        "hhc-debugging-root-cause-loadable",
+        "selected-worker-only"
+      ]
+    },
+    "Native-14": {
+      "name": "hhc-native-skills-skill-unavailable",
+      "expects": [
+        "preflight-detects",
+        "doctor-reports",
+        "no-fake-load"
+      ]
+    },
+    "Native-15": {
+      "name": "plugin-order-variation",
+      "expects": [
+        "ownership-invariants-stable"
+      ]
+    },
+    "Native-16": {
+      "name": "compaction-api-drift",
+      "expects": [
+        "adapter-detects",
+        "clear-degraded-or-unsupported"
+      ]
+    },
+    "Native-17": {
+      "name": "parallel-write-overlap",
+      "expects": [
+        "no-blind-merge",
+        "serialize-or-reconcile"
+      ]
+    },
+    "Native-18": {
+      "name": "user-stop-background",
+      "expects": [
+        "no-new-continuation",
+        "children-cancelled-or-transitioned"
+      ]
+    }
+  }
+}

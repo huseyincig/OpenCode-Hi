@@ -1,0 +1,48 @@
+{
+  "schema": 3,
+  "verified_at": "2026-08-11",
+  "contract": {
+    "plugin_loading": [
+      "npm config registration",
+      "project-local plugin directory"
+    ],
+    "hooks": [
+      "config",
+      "chat.message",
+      "experimental.chat.system.transform",
+      "tool.execute.before",
+      "tool.execute.after",
+      "experimental.session.compacting",
+      "event",
+      "dispose"
+    ],
+    "events": [
+      "session.idle",
+      "session.status",
+      "session.error",
+      "session.deleted",
+      "session.diff",
+      "session.compacted",
+      "todo.updated",
+      "permission.asked",
+      "permission.replied",
+      "file.edited",
+      "file.watcher.updated",
+      "lsp.client.diagnostics",
+      "installation.updated"
+    ],
+    "custom_tools": true
+  },
+  "release_gate": "Run plain OpenCode and OHO-only clean-consumer smoke tests against the exact Git candidate before release; bind real Windows runtime separately.",
+  "hhc_config_schema": 2,
+  "runtime_state_schemas": {
+    "current": 3
+  },
+  "notes": [
+    "Runtime model fallback is constrained by HHC routing policy.",
+    "User-interrupted missions cannot be reanimated by runtime events; only an explicit resume can reactivate the stopped mission.",
+    "External release smoke remains required.",
+    "Native-01..18 exact-bound external acceptance is required.",
+    "OHO uses native OpenCode session/diff/revert/fork/summarize/events through thin adapters; no second generic session/event infrastructure."
+  ]
+}

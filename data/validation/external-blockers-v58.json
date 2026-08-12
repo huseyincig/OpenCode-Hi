@@ -1,0 +1,62 @@
+{
+  "schema": 1,
+  "candidate": "2.0.10-v58-checkpoint",
+  "status": "BLOCKED_EXTERNAL_ONLY",
+  "internal_unresolved": 0,
+  "partial_items": [
+    32,
+    44,
+    46,
+    60
+  ],
+  "blockers": [
+    {
+      "item": 32,
+      "requirement": "real credential/OAuth/MFA authority boundary",
+      "fresh_evidence_required": [
+        "real credential-bearing external host",
+        "approval/deny/MFA challenge receipt",
+        "no secret persistence or bypass"
+      ],
+      "local_evidence_not_sufficient": [
+        "localhost token",
+        "simulated OAuth text"
+      ]
+    },
+    {
+      "item": 44,
+      "requirement": "current-candidate exact Git Doctor host-loader receipt",
+      "fresh_evidence_required": [
+        "remotely resolvable immutable Git ref for current candidate",
+        "OpenCode 1.18.16 host loader executes plugin",
+        "Doctor observes healthy effective load/config/skills/models"
+      ],
+      "local_evidence_not_sufficient": [
+        "static registration only",
+        "historical candidate"
+      ]
+    },
+    {
+      "item": 46,
+      "requirement": "current-candidate exact Git install/update/uninstall host lifecycle",
+      "fresh_evidence_required": [
+        "real host-loader install from immutable ref",
+        "update to another exact ref or reinstall semantics",
+        "uninstall with user-owned config preserved"
+      ],
+      "local_evidence_not_sufficient": [
+        "filesystem-only setup helper"
+      ]
+    },
+    {
+      "item": 60,
+      "requirement": "final output",
+      "fresh_evidence_required": [
+        "items 32,44,46 complete",
+        "final 61/61 matrix",
+        "final exact-bound artifact hashes"
+      ]
+    }
+  ],
+  "rule": "No blocker may be upgraded by mock/self-report/stale historical evidence."
+}

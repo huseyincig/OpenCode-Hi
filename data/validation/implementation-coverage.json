@@ -1,0 +1,1670 @@
+{
+  "schema": 1,
+  "release": "2.0.10",
+  "status": "SOURCE_COVERAGE_COMPLETE_EXTERNAL_VALIDATION_PENDING",
+  "gaps": {
+    "GAP-001": {
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/continuation/dispatcher.ts",
+        "plugin/src/runtime/mission/mission-store.ts",
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "GAP-002": {
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/readiness/preconditions.ts",
+        "plugin/src/runtime/gates/gates.ts"
+      ]
+    },
+    "GAP-003": {
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/mission/types.ts",
+        "plugin/src/plugin.ts",
+        "plugin/src/runtime/task/task-runtime.ts"
+      ]
+    },
+    "GAP-004": {
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/nudge/runtime-nudge.ts",
+        "plugin/src/runtime/autopilot/evaluator.ts"
+      ]
+    },
+    "GAP-005": {
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/events/event-sink.ts",
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "GAP-006": {
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/gates/gates.ts",
+        "plugin/src/runtime/readiness/preconditions.ts"
+      ]
+    },
+    "GAP-007": {
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/context/budget.ts",
+        "plugin/src/runtime/task/task-runtime.ts",
+        "plugin/src/runtime/state/snapshot.ts"
+      ]
+    },
+    "GAP-008": {
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "scripts/native_plugin_setup.py"
+      ]
+    },
+    "GAP-009": {
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "scripts/native_plugin_setup.py",
+        "plugin/src/doctor/checks.ts"
+      ]
+    },
+    "GAP-010": {
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "scripts/safe_archive.py"
+      ]
+    },
+    "GAP-011": {
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/model-resolver.ts",
+        "plugin/src/runtime/task/task-runtime.ts"
+      ]
+    },
+    "GAP-012": {
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/task/task-runtime.ts"
+      ]
+    },
+    "GAP-013": {
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/task/task-runtime.ts"
+      ]
+    },
+    "GAP-014": {
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/mutations/temporary-mutations.ts",
+        "plugin/src/hooks/tool-after.ts",
+        "plugin/src/runtime/gates/gates.ts"
+      ]
+    }
+  },
+  "checklist": {
+    "CHK-001": {
+      "id": "CHK-001",
+      "section": "Intent / autonomy",
+      "item": "Short-prompt intent normalization",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/intent/normalize.ts",
+        "plugin/src/runtime/intent/repo-context.ts",
+        "plugin/src/runtime/readiness/preconditions.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-002": {
+      "id": "CHK-002",
+      "section": "Intent / autonomy",
+      "item": "Repo/conversation context enrichment",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/intent/normalize.ts",
+        "plugin/src/runtime/intent/repo-context.ts",
+        "plugin/src/runtime/readiness/preconditions.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-003": {
+      "id": "CHK-003",
+      "section": "Intent / autonomy",
+      "item": "scope/risk/dependency classification",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/intent/normalize.ts",
+        "plugin/src/runtime/intent/repo-context.ts",
+        "plugin/src/runtime/readiness/preconditions.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-004": {
+      "id": "CHK-004",
+      "section": "Intent / autonomy",
+      "item": "safe-default autonomy",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/intent/normalize.ts",
+        "plugin/src/runtime/intent/repo-context.ts",
+        "plugin/src/runtime/readiness/preconditions.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-005": {
+      "id": "CHK-005",
+      "section": "Intent / autonomy",
+      "item": "contract-critical no-guess boundary",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/intent/normalize.ts",
+        "plugin/src/runtime/intent/repo-context.ts",
+        "plugin/src/runtime/readiness/preconditions.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-006": {
+      "id": "CHK-006",
+      "section": "Intent / autonomy",
+      "item": "exact USER_ACTION_REQUIRED boundary",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/intent/normalize.ts",
+        "plugin/src/runtime/intent/repo-context.ts",
+        "plugin/src/runtime/readiness/preconditions.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-007": {
+      "id": "CHK-007",
+      "section": "Routing",
+      "item": "execution-mode selection",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/capability-router.ts",
+        "plugin/src/runtime/routing/category.ts",
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/routing/model-resolver.ts",
+        "plugin/src/runtime/scheduler/concurrency.ts"
+      ]
+    },
+    "CHK-008": {
+      "id": "CHK-008",
+      "section": "Routing",
+      "item": "role selection",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/capability-router.ts",
+        "plugin/src/runtime/routing/category.ts",
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/routing/model-resolver.ts",
+        "plugin/src/runtime/scheduler/concurrency.ts"
+      ]
+    },
+    "CHK-009": {
+      "id": "CHK-009",
+      "section": "Routing",
+      "item": "category/capability selection",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/capability-router.ts",
+        "plugin/src/runtime/routing/category.ts",
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/routing/model-resolver.ts",
+        "plugin/src/runtime/scheduler/concurrency.ts"
+      ]
+    },
+    "CHK-010": {
+      "id": "CHK-010",
+      "section": "Routing",
+      "item": "0–3 skill selection",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/capability-router.ts",
+        "plugin/src/runtime/routing/category.ts",
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/routing/model-resolver.ts",
+        "plugin/src/runtime/scheduler/concurrency.ts"
+      ]
+    },
+    "CHK-011": {
+      "id": "CHK-011",
+      "section": "Routing",
+      "item": "model primary resolution",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/capability-router.ts",
+        "plugin/src/runtime/routing/category.ts",
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/routing/model-resolver.ts",
+        "plugin/src/runtime/scheduler/concurrency.ts"
+      ]
+    },
+    "CHK-012": {
+      "id": "CHK-012",
+      "section": "Routing",
+      "item": "model fallback chain",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/capability-router.ts",
+        "plugin/src/runtime/routing/category.ts",
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/routing/model-resolver.ts",
+        "plugin/src/runtime/scheduler/concurrency.ts"
+      ]
+    },
+    "CHK-013": {
+      "id": "CHK-013",
+      "section": "Routing",
+      "item": "model/fallback reasons",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/model-resolver.ts",
+        "plugin/src/runtime/routing/capability-router.ts",
+        "plugin/src/runtime/routing/category.ts",
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/scheduler/concurrency.ts"
+      ]
+    },
+    "CHK-014": {
+      "id": "CHK-014",
+      "section": "Routing",
+      "item": "runtime provider/model availability",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/capability-router.ts",
+        "plugin/src/runtime/routing/category.ts",
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/routing/model-resolver.ts",
+        "plugin/src/runtime/scheduler/concurrency.ts"
+      ]
+    },
+    "CHK-015": {
+      "id": "CHK-015",
+      "section": "Routing",
+      "item": "provider/model concurrency",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/capability-router.ts",
+        "plugin/src/runtime/routing/category.ts",
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/routing/model-resolver.ts",
+        "plugin/src/runtime/scheduler/concurrency.ts"
+      ]
+    },
+    "CHK-016": {
+      "id": "CHK-016",
+      "section": "Routing",
+      "item": "expected turn/context cost awareness",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/model-resolver.ts",
+        "plugin/src/runtime/context/budget.ts",
+        "plugin/src/runtime/routing/capability-router.ts",
+        "plugin/src/runtime/routing/category.ts",
+        "plugin/src/runtime/routing/execution-mode.ts"
+      ]
+    },
+    "CHK-017": {
+      "id": "CHK-017",
+      "section": "Worker / Task",
+      "item": "Agent ≠ Worker",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/task/task-runtime.ts",
+        "plugin/src/runtime/task/contracts.ts",
+        "plugin/src/runtime/worker/worker-runtime.ts",
+        "plugin/src/runtime/background/registry.ts",
+        "plugin/src/runtime/context/budget.ts"
+      ]
+    },
+    "CHK-018": {
+      "id": "CHK-018",
+      "section": "Worker / Task",
+      "item": "Execution Profile",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/task/task-runtime.ts",
+        "plugin/src/runtime/task/contracts.ts",
+        "plugin/src/runtime/worker/worker-runtime.ts",
+        "plugin/src/runtime/background/registry.ts",
+        "plugin/src/runtime/context/budget.ts"
+      ]
+    },
+    "CHK-019": {
+      "id": "CHK-019",
+      "section": "Worker / Task",
+      "item": "minimal async Task API",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/task/task-runtime.ts",
+        "plugin/src/runtime/task/contracts.ts",
+        "plugin/src/runtime/worker/worker-runtime.ts",
+        "plugin/src/runtime/background/registry.ts",
+        "plugin/src/runtime/context/budget.ts"
+      ]
+    },
+    "CHK-020": {
+      "id": "CHK-020",
+      "section": "Worker / Task",
+      "item": "worker lifecycle",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/task/task-runtime.ts",
+        "plugin/src/runtime/task/contracts.ts",
+        "plugin/src/runtime/worker/worker-runtime.ts",
+        "plugin/src/runtime/background/registry.ts",
+        "plugin/src/runtime/context/budget.ts"
+      ]
+    },
+    "CHK-021": {
+      "id": "CHK-021",
+      "section": "Worker / Task",
+      "item": "spawn dedup",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/task/task-runtime.ts",
+        "plugin/src/runtime/task/contracts.ts",
+        "plugin/src/runtime/worker/worker-runtime.ts",
+        "plugin/src/runtime/background/registry.ts",
+        "plugin/src/runtime/context/budget.ts"
+      ]
+    },
+    "CHK-022": {
+      "id": "CHK-022",
+      "section": "Worker / Task",
+      "item": "isolated child/session",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/task/task-runtime.ts",
+        "plugin/src/runtime/task/contracts.ts",
+        "plugin/src/runtime/worker/worker-runtime.ts",
+        "plugin/src/runtime/background/registry.ts",
+        "plugin/src/runtime/context/budget.ts"
+      ]
+    },
+    "CHK-023": {
+      "id": "CHK-023",
+      "section": "Worker / Task",
+      "item": "same-session resume",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/task/task-runtime.ts",
+        "plugin/src/runtime/task/contracts.ts",
+        "plugin/src/runtime/worker/worker-runtime.ts",
+        "plugin/src/runtime/background/registry.ts",
+        "plugin/src/runtime/context/budget.ts"
+      ]
+    },
+    "CHK-024": {
+      "id": "CHK-024",
+      "section": "Worker / Task",
+      "item": "worker reuse fingerprint",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/task/task-runtime.ts",
+        "plugin/src/runtime/worker/worker-runtime.ts",
+        "plugin/src/runtime/task/contracts.ts",
+        "plugin/src/runtime/background/registry.ts",
+        "plugin/src/runtime/context/budget.ts"
+      ]
+    },
+    "CHK-025": {
+      "id": "CHK-025",
+      "section": "Worker / Task",
+      "item": "pending-task guardrail",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/task/task-runtime.ts",
+        "plugin/src/runtime/task/contracts.ts",
+        "plugin/src/runtime/worker/worker-runtime.ts",
+        "plugin/src/runtime/background/registry.ts",
+        "plugin/src/runtime/context/budget.ts"
+      ]
+    },
+    "CHK-026": {
+      "id": "CHK-026",
+      "section": "Worker / Task",
+      "item": "parent wake",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/task/task-runtime.ts",
+        "plugin/src/runtime/task/contracts.ts",
+        "plugin/src/runtime/worker/worker-runtime.ts",
+        "plugin/src/runtime/background/registry.ts",
+        "plugin/src/runtime/context/budget.ts"
+      ]
+    },
+    "CHK-027": {
+      "id": "CHK-027",
+      "section": "Worker / Task",
+      "item": "bounded handoff",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/task/task-runtime.ts",
+        "plugin/src/runtime/task/contracts.ts",
+        "plugin/src/runtime/worker/worker-runtime.ts",
+        "plugin/src/runtime/background/registry.ts",
+        "plugin/src/runtime/context/budget.ts"
+      ]
+    },
+    "CHK-028": {
+      "id": "CHK-028",
+      "section": "Worker / Task",
+      "item": "explicit context budget",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/context/budget.ts",
+        "plugin/src/runtime/task/task-runtime.ts",
+        "plugin/src/runtime/task/contracts.ts",
+        "plugin/src/runtime/worker/worker-runtime.ts",
+        "plugin/src/runtime/background/registry.ts"
+      ]
+    },
+    "CHK-029": {
+      "id": "CHK-029",
+      "section": "Skills / HHC Native Skills",
+      "item": "29 packaged HHC-native methodology skills",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/skills/permissions.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts"
+      ]
+    },
+    "CHK-030": {
+      "id": "CHK-030",
+      "section": "Skills / HHC Native Skills",
+      "item": "native methodology catalog and source provenance",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/skills/permissions.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts"
+      ]
+    },
+    "CHK-031": {
+      "id": "CHK-031",
+      "section": "Skills / HHC Native Skills",
+      "item": "skill discovery",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/skills/permissions.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts"
+      ]
+    },
+    "CHK-032": {
+      "id": "CHK-032",
+      "section": "Skills / HHC Native Skills",
+      "item": "skill validation",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/skills/permissions.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts"
+      ]
+    },
+    "CHK-033": {
+      "id": "CHK-033",
+      "section": "Skills / HHC Native Skills",
+      "item": "skill permission awareness",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/skills/permissions.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts"
+      ]
+    },
+    "CHK-034": {
+      "id": "CHK-034",
+      "section": "Skills / HHC Native Skills",
+      "item": "child-specific skill load",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/skills/permissions.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts"
+      ]
+    },
+    "CHK-035": {
+      "id": "CHK-035",
+      "section": "Skills / HHC Native Skills",
+      "item": "HHC-safe orchestration ownership",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/skills/permissions.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts"
+      ]
+    },
+    "CHK-036": {
+      "id": "CHK-036",
+      "section": "Skills / HHC Native Skills",
+      "item": "double-orchestration tests",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/skills/permissions.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts"
+      ]
+    },
+    "CHK-037": {
+      "id": "CHK-037",
+      "section": "Skills / HHC Native Skills",
+      "item": "optional context artifacts",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/skills/permissions.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts"
+      ]
+    },
+    "CHK-038": {
+      "id": "CHK-038",
+      "section": "Skills / HHC Native Skills",
+      "item": "hhc-debugging-root-cause",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/skills/permissions.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts"
+      ]
+    },
+    "CHK-039": {
+      "id": "CHK-039",
+      "section": "Skills / HHC Native Skills",
+      "item": "conditional TDD",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/skills/permissions.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts"
+      ]
+    },
+    "CHK-040": {
+      "id": "CHK-040",
+      "section": "Skills / HHC Native Skills",
+      "item": "conditional HHC design-discovery/implementation-planning",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/skills/permissions.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts"
+      ]
+    },
+    "CHK-041": {
+      "id": "CHK-041",
+      "section": "Skills / HHC Native Skills",
+      "item": "verification methodology",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/skills/permissions.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts"
+      ]
+    },
+    "CHK-042": {
+      "id": "CHK-042",
+      "section": "Skills / HHC Native Skills",
+      "item": "bounded fix/review methodology",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/skills/permissions.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/runtime/skills/methodology.ts"
+      ]
+    },
+    "CHK-043": {
+      "id": "CHK-043",
+      "section": "Runtime / Autopilot",
+      "item": "runtime-owned completion",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/autopilot/evaluator.ts",
+        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/dispatcher.ts",
+        "plugin/src/runtime/nudge/runtime-nudge.ts",
+        "plugin/src/runtime/readiness/preconditions.ts"
+      ]
+    },
+    "CHK-044": {
+      "id": "CHK-044",
+      "section": "Runtime / Autopilot",
+      "item": "session idle evaluator",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/autopilot/evaluator.ts",
+        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/dispatcher.ts",
+        "plugin/src/runtime/nudge/runtime-nudge.ts",
+        "plugin/src/runtime/readiness/preconditions.ts"
+      ]
+    },
+    "CHK-045": {
+      "id": "CHK-045",
+      "section": "Runtime / Autopilot",
+      "item": "idle reason enum",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/autopilot/evaluator.ts",
+        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/dispatcher.ts",
+        "plugin/src/runtime/nudge/runtime-nudge.ts",
+        "plugin/src/runtime/readiness/preconditions.ts"
+      ]
+    },
+    "CHK-046": {
+      "id": "CHK-046",
+      "section": "Runtime / Autopilot",
+      "item": "bounded continuation budget",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/autopilot/evaluator.ts",
+        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/dispatcher.ts",
+        "plugin/src/runtime/nudge/runtime-nudge.ts",
+        "plugin/src/runtime/readiness/preconditions.ts"
+      ]
+    },
+    "CHK-047": {
+      "id": "CHK-047",
+      "section": "Runtime / Autopilot",
+      "item": "progress signature",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/autopilot/evaluator.ts",
+        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/dispatcher.ts",
+        "plugin/src/runtime/nudge/runtime-nudge.ts",
+        "plugin/src/runtime/readiness/preconditions.ts"
+      ]
+    },
+    "CHK-048": {
+      "id": "CHK-048",
+      "section": "Runtime / Autopilot",
+      "item": "stagnation counter",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/autopilot/evaluator.ts",
+        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/dispatcher.ts",
+        "plugin/src/runtime/nudge/runtime-nudge.ts",
+        "plugin/src/runtime/readiness/preconditions.ts"
+      ]
+    },
+    "CHK-049": {
+      "id": "CHK-049",
+      "section": "Runtime / Autopilot",
+      "item": "corrective resume",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/autopilot/evaluator.ts",
+        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/dispatcher.ts",
+        "plugin/src/runtime/nudge/runtime-nudge.ts",
+        "plugin/src/runtime/readiness/preconditions.ts"
+      ]
+    },
+    "CHK-050": {
+      "id": "CHK-050",
+      "section": "Runtime / Autopilot",
+      "item": "model escalation",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/task/task-runtime.ts",
+        "plugin/src/runtime/autopilot/evaluator.ts",
+        "plugin/src/runtime/continuation/dispatcher.ts",
+        "plugin/src/runtime/nudge/runtime-nudge.ts"
+      ]
+    },
+    "CHK-051": {
+      "id": "CHK-051",
+      "section": "Runtime / Autopilot",
+      "item": "decompose",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/autopilot/evaluator.ts",
+        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/dispatcher.ts",
+        "plugin/src/runtime/nudge/runtime-nudge.ts",
+        "plugin/src/runtime/readiness/preconditions.ts"
+      ]
+    },
+    "CHK-052": {
+      "id": "CHK-052",
+      "section": "Runtime / Autopilot",
+      "item": "re-plan",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/autopilot/evaluator.ts",
+        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/dispatcher.ts",
+        "plugin/src/runtime/nudge/runtime-nudge.ts",
+        "plugin/src/runtime/readiness/preconditions.ts"
+      ]
+    },
+    "CHK-053": {
+      "id": "CHK-053",
+      "section": "Runtime / Autopilot",
+      "item": "bounded fresh worker",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/autopilot/evaluator.ts",
+        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/dispatcher.ts",
+        "plugin/src/runtime/nudge/runtime-nudge.ts",
+        "plugin/src/runtime/readiness/preconditions.ts"
+      ]
+    },
+    "CHK-054": {
+      "id": "CHK-054",
+      "section": "Runtime / Autopilot",
+      "item": "user stop guard",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/autopilot/evaluator.ts",
+        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/dispatcher.ts",
+        "plugin/src/runtime/nudge/runtime-nudge.ts",
+        "plugin/src/runtime/readiness/preconditions.ts"
+      ]
+    },
+    "CHK-055": {
+      "id": "CHK-055",
+      "section": "Runtime / Autopilot",
+      "item": "duplicate continuation guard",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/autopilot/evaluator.ts",
+        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/dispatcher.ts",
+        "plugin/src/runtime/nudge/runtime-nudge.ts",
+        "plugin/src/runtime/readiness/preconditions.ts"
+      ]
+    },
+    "CHK-056": {
+      "id": "CHK-056",
+      "section": "Runtime / Autopilot",
+      "item": "async run-version/generation guard",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/continuation/dispatcher.ts",
+        "plugin/src/plugin.ts",
+        "plugin/src/runtime/mission/mission-store.ts",
+        "plugin/src/runtime/autopilot/evaluator.ts",
+        "plugin/src/runtime/autopilot/recovery.ts"
+      ]
+    },
+    "CHK-057": {
+      "id": "CHK-057",
+      "section": "Runtime / Autopilot",
+      "item": "suppress/reentrancy guard",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/autopilot/evaluator.ts",
+        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/dispatcher.ts",
+        "plugin/src/runtime/nudge/runtime-nudge.ts",
+        "plugin/src/runtime/readiness/preconditions.ts"
+      ]
+    },
+    "CHK-058": {
+      "id": "CHK-058",
+      "section": "Runtime / Autopilot",
+      "item": "RuntimeNudge",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/nudge/runtime-nudge.ts",
+        "plugin/src/runtime/autopilot/evaluator.ts",
+        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/dispatcher.ts",
+        "plugin/src/runtime/readiness/preconditions.ts"
+      ]
+    },
+    "CHK-059": {
+      "id": "CHK-059",
+      "section": "Runtime / Autopilot",
+      "item": "readiness/precondition evaluator",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/readiness/preconditions.ts",
+        "plugin/src/runtime/gates/gates.ts",
+        "plugin/src/runtime/autopilot/evaluator.ts",
+        "plugin/src/runtime/autopilot/recovery.ts",
+        "plugin/src/runtime/continuation/dispatcher.ts"
+      ]
+    },
+    "CHK-060": {
+      "id": "CHK-060",
+      "section": "Evidence / STOP",
+      "item": "tool before/after observer",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/evidence/evidence-runtime.ts",
+        "plugin/src/runtime/verification/policy.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/gates/gates.ts"
+      ]
+    },
+    "CHK-061": {
+      "id": "CHK-061",
+      "section": "Evidence / STOP",
+      "item": "changed-file tracking",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/evidence/evidence-runtime.ts",
+        "plugin/src/runtime/verification/policy.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/gates/gates.ts"
+      ]
+    },
+    "CHK-062": {
+      "id": "CHK-062",
+      "section": "Evidence / STOP",
+      "item": "evidence freshness",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/evidence/evidence-runtime.ts",
+        "plugin/src/runtime/verification/policy.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/gates/gates.ts"
+      ]
+    },
+    "CHK-063": {
+      "id": "CHK-063",
+      "section": "Evidence / STOP",
+      "item": "verification outcome reason",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/evidence/evidence-runtime.ts",
+        "plugin/src/runtime/verification/policy.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/gates/gates.ts"
+      ]
+    },
+    "CHK-064": {
+      "id": "CHK-064",
+      "section": "Evidence / STOP",
+      "item": "task-scope-aware verification",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/evidence/evidence-runtime.ts",
+        "plugin/src/runtime/verification/policy.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/gates/gates.ts"
+      ]
+    },
+    "CHK-065": {
+      "id": "CHK-065",
+      "section": "Evidence / STOP",
+      "item": "scoped rereview",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/task/task-runtime.ts",
+        "plugin/src/runtime/evidence/evidence-runtime.ts",
+        "plugin/src/runtime/verification/policy.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/gates/gates.ts"
+      ]
+    },
+    "CHK-066": {
+      "id": "CHK-066",
+      "section": "Evidence / STOP",
+      "item": "stale todo protection",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/evidence/evidence-runtime.ts",
+        "plugin/src/runtime/verification/policy.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/gates/gates.ts"
+      ]
+    },
+    "CHK-067": {
+      "id": "CHK-067",
+      "section": "Evidence / STOP",
+      "item": "open obligation protection",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/evidence/evidence-runtime.ts",
+        "plugin/src/runtime/verification/policy.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/gates/gates.ts"
+      ]
+    },
+    "CHK-068": {
+      "id": "CHK-068",
+      "section": "Evidence / STOP",
+      "item": "pending worker protection",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/evidence/evidence-runtime.ts",
+        "plugin/src/runtime/verification/policy.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/gates/gates.ts"
+      ]
+    },
+    "CHK-069": {
+      "id": "CHK-069",
+      "section": "Evidence / STOP",
+      "item": "CompletionAdjudicator",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/evidence/evidence-runtime.ts",
+        "plugin/src/runtime/verification/policy.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/gates/gates.ts"
+      ]
+    },
+    "CHK-070": {
+      "id": "CHK-070",
+      "section": "Evidence / STOP",
+      "item": "deterministic STOP",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/evidence/evidence-runtime.ts",
+        "plugin/src/runtime/verification/policy.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/gates/gates.ts"
+      ]
+    },
+    "CHK-071": {
+      "id": "CHK-071",
+      "section": "State / continuity",
+      "item": "minimal mission state",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/mission/types.ts",
+        "plugin/src/runtime/mission/mission-store.ts",
+        "plugin/src/runtime/state/persistence.ts",
+        "plugin/src/runtime/state/snapshot.ts",
+        "plugin/src/runtime/events/event-sink.ts"
+      ]
+    },
+    "CHK-072": {
+      "id": "CHK-072",
+      "section": "State / continuity",
+      "item": "obligations",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/mission/types.ts",
+        "plugin/src/runtime/mission/mission-store.ts",
+        "plugin/src/runtime/state/persistence.ts",
+        "plugin/src/runtime/state/snapshot.ts",
+        "plugin/src/runtime/events/event-sink.ts"
+      ]
+    },
+    "CHK-073": {
+      "id": "CHK-073",
+      "section": "State / continuity",
+      "item": "task state",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/mission/types.ts",
+        "plugin/src/runtime/mission/mission-store.ts",
+        "plugin/src/runtime/state/persistence.ts",
+        "plugin/src/runtime/state/snapshot.ts",
+        "plugin/src/runtime/events/event-sink.ts"
+      ]
+    },
+    "CHK-074": {
+      "id": "CHK-074",
+      "section": "State / continuity",
+      "item": "worker state",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/mission/types.ts",
+        "plugin/src/runtime/mission/mission-store.ts",
+        "plugin/src/runtime/state/persistence.ts",
+        "plugin/src/runtime/state/snapshot.ts",
+        "plugin/src/runtime/events/event-sink.ts"
+      ]
+    },
+    "CHK-075": {
+      "id": "CHK-075",
+      "section": "State / continuity",
+      "item": "bounded ledger",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/mission/types.ts",
+        "plugin/src/runtime/mission/mission-store.ts",
+        "plugin/src/runtime/state/persistence.ts",
+        "plugin/src/runtime/state/snapshot.ts",
+        "plugin/src/runtime/events/event-sink.ts"
+      ]
+    },
+    "CHK-076": {
+      "id": "CHK-076",
+      "section": "State / continuity",
+      "item": "internal event bus",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/events/event-sink.ts",
+        "plugin/src/plugin.ts",
+        "plugin/src/runtime/mission/types.ts",
+        "plugin/src/runtime/mission/mission-store.ts",
+        "plugin/src/runtime/state/persistence.ts"
+      ]
+    },
+    "CHK-077": {
+      "id": "CHK-077",
+      "section": "State / continuity",
+      "item": "action ID/idempotency",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/safety/authority.ts",
+        "plugin/src/runtime/safety/idempotency.ts",
+        "plugin/src/runtime/mission/types.ts",
+        "plugin/src/runtime/mission/mission-store.ts",
+        "plugin/src/runtime/state/persistence.ts"
+      ]
+    },
+    "CHK-078": {
+      "id": "CHK-078",
+      "section": "State / continuity",
+      "item": "compaction survival",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/state/snapshot.ts",
+        "plugin/src/hooks/session-compacting.ts",
+        "plugin/src/runtime/mission/types.ts",
+        "plugin/src/runtime/mission/mission-store.ts",
+        "plugin/src/runtime/state/persistence.ts"
+      ]
+    },
+    "CHK-079": {
+      "id": "CHK-079",
+      "section": "State / continuity",
+      "item": "duplicate compaction continuation guard",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/state/snapshot.ts",
+        "plugin/src/hooks/session-compacting.ts",
+        "plugin/src/runtime/mission/types.ts",
+        "plugin/src/runtime/mission/mission-store.ts",
+        "plugin/src/runtime/state/persistence.ts"
+      ]
+    },
+    "CHK-080": {
+      "id": "CHK-080",
+      "section": "State / continuity",
+      "item": "optional contextArtifacts",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/mission/types.ts",
+        "plugin/src/plugin.ts",
+        "plugin/src/runtime/mission/mission-store.ts",
+        "plugin/src/runtime/state/persistence.ts",
+        "plugin/src/runtime/state/snapshot.ts"
+      ]
+    },
+    "CHK-081": {
+      "id": "CHK-081",
+      "section": "State / continuity",
+      "item": "no general AI memory subsystem",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/mission/types.ts",
+        "plugin/src/runtime/mission/mission-store.ts",
+        "plugin/src/runtime/state/persistence.ts",
+        "plugin/src/runtime/state/snapshot.ts",
+        "plugin/src/runtime/events/event-sink.ts"
+      ]
+    },
+    "CHK-082": {
+      "id": "CHK-082",
+      "section": "Parallel / Team",
+      "item": "dependency/write-set-aware parallelism",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/scheduler/parallel-safety.ts",
+        "plugin/src/runtime/scheduler/concurrency.ts",
+        "plugin/src/runtime/team/team-runtime.ts",
+        "plugin/src/runtime/routing/execution-mode.ts"
+      ]
+    },
+    "CHK-083": {
+      "id": "CHK-083",
+      "section": "Parallel / Team",
+      "item": "parent-mediated parallel default",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/scheduler/parallel-safety.ts",
+        "plugin/src/runtime/scheduler/concurrency.ts",
+        "plugin/src/runtime/team/team-runtime.ts",
+        "plugin/src/runtime/routing/execution-mode.ts"
+      ]
+    },
+    "CHK-084": {
+      "id": "CHK-084",
+      "section": "Parallel / Team",
+      "item": "provider/model queue",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/scheduler/parallel-safety.ts",
+        "plugin/src/runtime/scheduler/concurrency.ts",
+        "plugin/src/runtime/team/team-runtime.ts",
+        "plugin/src/runtime/routing/execution-mode.ts"
+      ]
+    },
+    "CHK-085": {
+      "id": "CHK-085",
+      "section": "Parallel / Team",
+      "item": "Team Mode exceptional",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/scheduler/parallel-safety.ts",
+        "plugin/src/runtime/scheduler/concurrency.ts",
+        "plugin/src/runtime/team/team-runtime.ts",
+        "plugin/src/runtime/routing/execution-mode.ts"
+      ]
+    },
+    "CHK-086": {
+      "id": "CHK-086",
+      "section": "Parallel / Team",
+      "item": "hard team limits",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/scheduler/parallel-safety.ts",
+        "plugin/src/runtime/scheduler/concurrency.ts",
+        "plugin/src/runtime/team/team-runtime.ts",
+        "plugin/src/runtime/routing/execution-mode.ts"
+      ]
+    },
+    "CHK-087": {
+      "id": "CHK-087",
+      "section": "Parallel / Team",
+      "item": "no nested team",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/scheduler/parallel-safety.ts",
+        "plugin/src/runtime/scheduler/concurrency.ts",
+        "plugin/src/runtime/team/team-runtime.ts",
+        "plugin/src/runtime/routing/execution-mode.ts"
+      ]
+    },
+    "CHK-088": {
+      "id": "CHK-088",
+      "section": "Parallel / Team",
+      "item": "shared task state if Team enabled",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/scheduler/parallel-safety.ts",
+        "plugin/src/runtime/scheduler/concurrency.ts",
+        "plugin/src/runtime/team/team-runtime.ts",
+        "plugin/src/runtime/routing/execution-mode.ts"
+      ]
+    },
+    "CHK-089": {
+      "id": "CHK-089",
+      "section": "Parallel / Team",
+      "item": "mailbox only if Team implementation needs it",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/team/team-runtime.ts",
+        "plugin/src/runtime/scheduler/parallel-safety.ts",
+        "plugin/src/runtime/scheduler/concurrency.ts",
+        "plugin/src/runtime/routing/execution-mode.ts"
+      ]
+    },
+    "CHK-090": {
+      "id": "CHK-090",
+      "section": "Lifecycle / security",
+      "item": "ownership manifest",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "scripts/native_plugin_setup.py",
+        "scripts/safe_archive.py",
+        "plugin/src/doctor/checks.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-091": {
+      "id": "CHK-091",
+      "section": "Lifecycle / security",
+      "item": "managed/adopted/preserved/user-owned",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "scripts/native_plugin_setup.py",
+        "scripts/safe_archive.py",
+        "plugin/src/doctor/checks.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-092": {
+      "id": "CHK-092",
+      "section": "Lifecycle / security",
+      "item": "zero-write dry-run",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "scripts/native_plugin_setup.py",
+        "scripts/safe_archive.py",
+        "plugin/src/doctor/checks.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-093": {
+      "id": "CHK-093",
+      "section": "Lifecycle / security",
+      "item": "lock + plan recompute",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "scripts/native_plugin_setup.py",
+        "scripts/safe_archive.py",
+        "plugin/src/doctor/checks.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-094": {
+      "id": "CHK-094",
+      "section": "Lifecycle / security",
+      "item": "narrow force semantics",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "scripts/native_plugin_setup.py",
+        "scripts/safe_archive.py",
+        "plugin/src/doctor/checks.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-095": {
+      "id": "CHK-095",
+      "section": "Lifecycle / security",
+      "item": "safe upgrade collisions",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "scripts/native_plugin_setup.py",
+        "scripts/safe_archive.py",
+        "plugin/src/doctor/checks.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-096": {
+      "id": "CHK-096",
+      "section": "Lifecycle / security",
+      "item": "same-version-different-payload block",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "scripts/native_plugin_setup.py",
+        "scripts/safe_archive.py",
+        "plugin/src/doctor/checks.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-097": {
+      "id": "CHK-097",
+      "section": "Lifecycle / security",
+      "item": "safe uninstall",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "scripts/native_plugin_setup.py",
+        "scripts/safe_archive.py",
+        "plugin/src/doctor/checks.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-098": {
+      "id": "CHK-098",
+      "section": "Lifecycle / security",
+      "item": "rollback/recovery",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "scripts/native_plugin_setup.py",
+        "scripts/safe_archive.py",
+        "plugin/src/doctor/checks.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-099": {
+      "id": "CHK-099",
+      "section": "Lifecycle / security",
+      "item": "interrupted transaction recovery",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "scripts/native_plugin_setup.py",
+        "scripts/safe_archive.py",
+        "plugin/src/doctor/checks.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-100": {
+      "id": "CHK-100",
+      "section": "Lifecycle / security",
+      "item": "archive traversal/symlink safety",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "scripts/safe_archive.py",
+        "scripts/native_plugin_setup.py",
+        "plugin/src/doctor/checks.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-101": {
+      "id": "CHK-101",
+      "section": "Lifecycle / security",
+      "item": "native skill catalog provenance",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "scripts/native_plugin_setup.py",
+        "scripts/safe_archive.py",
+        "plugin/src/doctor/checks.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-102": {
+      "id": "CHK-102",
+      "section": "Lifecycle / security",
+      "item": "supply-chain checks",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "scripts/native_plugin_setup.py",
+        "scripts/safe_archive.py",
+        "plugin/src/doctor/checks.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-103": {
+      "id": "CHK-103",
+      "section": "Lifecycle / security",
+      "item": "OpenCode compatibility smoke",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "scripts/native_plugin_setup.py",
+        "scripts/safe_archive.py",
+        "plugin/src/doctor/checks.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-104": {
+      "id": "CHK-104",
+      "section": "Lifecycle / security",
+      "item": "doctor",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "scripts/native_plugin_setup.py",
+        "scripts/safe_archive.py",
+        "plugin/src/doctor/checks.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-105": {
+      "id": "CHK-105",
+      "section": "Lifecycle / security",
+      "item": "doctor statuses",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "scripts/native_plugin_setup.py",
+        "plugin/src/doctor/checks.ts",
+        "scripts/safe_archive.py",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-106": {
+      "id": "CHK-106",
+      "section": "Lifecycle / security",
+      "item": "executable threat model",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "scripts/native_plugin_setup.py",
+        "scripts/safe_archive.py",
+        "plugin/src/doctor/checks.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-107": {
+      "id": "CHK-107",
+      "section": "Lifecycle / security",
+      "item": "privileged action contract hash",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "scripts/native_plugin_setup.py",
+        "scripts/safe_archive.py",
+        "plugin/src/doctor/checks.ts",
+        "plugin/src/runtime/safety/authority.ts"
+      ]
+    },
+    "CHK-108": {
+      "id": "CHK-108",
+      "section": "Lifecycle / security",
+      "item": "temporary mutation rollback",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/mutations/temporary-mutations.ts",
+        "plugin/src/hooks/tool-after.ts",
+        "scripts/native_plugin_setup.py",
+        "scripts/safe_archive.py",
+        "plugin/src/doctor/checks.ts"
+      ]
+    },
+    "CHK-109": {
+      "id": "CHK-109",
+      "section": "Product discipline",
+      "item": "no generic continue question",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "CHK-110": {
+      "id": "CHK-110",
+      "section": "Product discipline",
+      "item": "no mandatory planner every task",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "CHK-111": {
+      "id": "CHK-111",
+      "section": "Product discipline",
+      "item": "no mandatory reviewer every task",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "CHK-112": {
+      "id": "CHK-112",
+      "section": "Product discipline",
+      "item": "no mandatory HHC Native Skills every task",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "CHK-113": {
+      "id": "CHK-113",
+      "section": "Product discipline",
+      "item": "no mandatory Team Mode",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "CHK-114": {
+      "id": "CHK-114",
+      "section": "Product discipline",
+      "item": "no persona explosion",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "CHK-115": {
+      "id": "CHK-115",
+      "section": "Product discipline",
+      "item": "no giant bundled tool ecosystem",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "CHK-116": {
+      "id": "CHK-116",
+      "section": "Product discipline",
+      "item": "no vector/Neo4j/general memory",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "CHK-117": {
+      "id": "CHK-117",
+      "section": "Product discipline",
+      "item": "no floating unreviewed HHC Native Skills default",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "CHK-118": {
+      "id": "CHK-118",
+      "section": "Product discipline",
+      "item": "OpenCode-native first",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "CHK-119": {
+      "id": "CHK-119",
+      "section": "Product discipline",
+      "item": "minimum agents",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "CHK-120": {
+      "id": "CHK-120",
+      "section": "Product discipline",
+      "item": "minimum skills",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "CHK-121": {
+      "id": "CHK-121",
+      "section": "Product discipline",
+      "item": "minimum context",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "CHK-122": {
+      "id": "CHK-122",
+      "section": "Product discipline",
+      "item": "minimum process",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/plugin.ts"
+      ]
+    },
+    "CHK-123": {
+      "id": "CHK-123",
+      "section": "Product discipline",
+      "item": "evidence sufficient → stop immediately",
+      "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
+      "evidence": [
+        "plugin/src/runtime/routing/execution-mode.ts",
+        "plugin/src/runtime/skills/registry.ts",
+        "plugin/src/runtime/completion/adjudicator.ts",
+        "plugin/src/runtime/skills/methodology.ts",
+        "plugin/src/plugin.ts"
+      ]
+    }
+  },
+  "summary": {
+    "gaps_total": 14,
+    "checklist_items_total": 123,
+    "note": "Source evidence presence is not runtime acceptance."
+  }
+}

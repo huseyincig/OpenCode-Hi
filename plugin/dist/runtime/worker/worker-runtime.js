@@ -1,0 +1,22 @@
+import { appendLedger } from '../ledger/ledger.js';
+function uid(prefix) { return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`; }
+function canon(items = []) { return [...new Set(items.map(x => x.trim().replace(/\\/g, '/').replace(/\/+$/, '')).filter(Boolean))].sort().join(','); }
+export function workerFingerprint(role, category, model, taskFamily, objective = '', contract) { return [role, category, model ?? 'default', taskFamily, objective.trim().toLowerCase().replace(/\s+/g, ' ').slice(0, 240), `scope:${canon(contract?.scope)}`, `constraints:${canon(contract?.constraints)}`, `deps:${canon(contract?.dependencies)}`, `evidence:${canon(contract?.requiredEvidence)}`, `obligations:${canon(contract?.obligationIds)}`].join('|'); }
+export function createTask(m, input) { const now = Date.now(), task = { id: uid('t'), objective: input.objective, status: 'created', role: input.role, category: input.category, scope: input.scope ?? [], constraints: input.constraints ?? [], dependencies: input.dependencies ?? [], requiredEvidence: input.requiredEvidence ?? [], obligation_ids: [...new Set(input.obligationIds ?? [])], context_artifacts: input.contextArtifacts ?? [], execution_profile: input.executionProfile, gate_ids: [], created_at: now, updated_at: now }; m.tasks.push(task); appendLedger(m, 'task.created', { task_id: task.id, payload: { role: task.role, category: task.category, dependencies: task.dependencies, obligation_ids: task.obligation_ids } }); return task; }
+export function createWorker(m, task, model, fallbacks = [], skills = [], methodologies = []) { const w = { id: uid('w'), task_id: task.id, role: task.role, category: task.category, parent_session_id: m.session_id, parent_mission_id: m.mission_id, model, fallbacks, loaded_skills: skills, methodologies, fingerprint: workerFingerprint(task.role, task.category, model, m.intent.taskKind, task.objective, { scope: task.scope, constraints: task.constraints, dependencies: task.dependencies, requiredEvidence: task.requiredEvidence, obligationIds: task.obligation_ids }), status: 'created', generation_at_spawn: m.generation }; m.workers.push(w); task.worker_id = w.id; appendLedger(m, 'worker.created', { task_id: task.id, worker_id: w.id, payload: { model, skills, generation: m.generation, mission_id: m.mission_id, methodologies: methodologies.map(x => ({ name: x.name, provider: x.provider, permission: x.permission, injection: x.injection, sha256: x.source_sha256 })) } }); return w; }
+export function applyWorkerResult(m, task, worker, result) { task.result = result; task.updated_at = Date.now(); worker.completed_at = task.updated_at; if (result.status === 'DONE') {
+    task.status = 'completed';
+    worker.status = 'completed';
+}
+else if (result.status === 'BLOCKED' || result.status === 'NEEDS_CONTEXT') {
+    task.status = 'blocked';
+    worker.status = 'ready';
+}
+else if (result.status === 'FIX_REQUIRED') {
+    task.status = 'waiting';
+    worker.status = 'ready';
+}
+else {
+    task.status = 'failed';
+    worker.status = 'failed';
+} m.changed_files = [...new Set([...m.changed_files, ...result.changed_files])]; m.blockers = [...new Set([...m.blockers, ...result.open_issues])]; appendLedger(m, 'worker.completed', { task_id: task.id, worker_id: worker.id, payload: { status: result.status, changed_files: result.changed_files } }); }
