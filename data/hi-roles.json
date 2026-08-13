@@ -1,0 +1,191 @@
+{
+  "schema": 1,
+  "type": "hi-role-contract-catalog",
+  "roles": [
+    {
+      "id": "manager",
+      "purpose": "Read-only primary coordinator that uses the minimum sufficient team",
+      "role_class": "primary",
+      "use_when": [
+        "coordination is primary and direct repository mutation should remain delegated"
+      ],
+      "do_not_use_when": [
+        "clear work is better completed directly by working-manager"
+      ],
+      "read_only": true,
+      "reviewer": false,
+      "repository_write_authority": "none",
+      "obligation_authority": [],
+      "delegation": {
+        "may_delegate": true,
+        "allowed_role_refs": [
+          "coder",
+          "architect",
+          "repository-explorer",
+          "qa-reviewer",
+          "security-reviewer",
+          "visual-qa"
+        ]
+      }
+    },
+    {
+      "id": "working-manager",
+      "purpose": "Directly completes small and medium work, delegating only when material",
+      "role_class": "primary",
+      "use_when": [
+        "clear work can be completed directly with bounded delegation when needed"
+      ],
+      "do_not_use_when": [
+        "the configured primary policy explicitly requires read-only manager coordination"
+      ],
+      "read_only": false,
+      "reviewer": false,
+      "repository_write_authority": "scoped",
+      "obligation_authority": [],
+      "delegation": {
+        "may_delegate": true,
+        "allowed_role_refs": [
+          "coder",
+          "architect",
+          "repository-explorer",
+          "qa-reviewer",
+          "security-reviewer",
+          "visual-qa"
+        ]
+      }
+    },
+    {
+      "id": "coder",
+      "purpose": "Implements scoped changes and produces test and behavior evidence",
+      "role_class": "child",
+      "use_when": [
+        "scoped implementation or correction requires repository mutation"
+      ],
+      "do_not_use_when": [
+        "the task is review-only, exploration-only, or architecture-only"
+      ],
+      "read_only": false,
+      "reviewer": false,
+      "repository_write_authority": "scoped",
+      "obligation_authority": [
+        "implementation",
+        "analysis",
+        "verification"
+      ],
+      "delegation": {
+        "may_delegate": false,
+        "allowed_role_refs": []
+      }
+    },
+    {
+      "id": "architect",
+      "purpose": "Read-only architecture, contract, and data-model design specialist",
+      "role_class": "child",
+      "use_when": [
+        "architecture or contract design materially changes a subsystem or durable boundary"
+      ],
+      "do_not_use_when": [
+        "local implementation can proceed without architecture judgment"
+      ],
+      "read_only": true,
+      "reviewer": false,
+      "repository_write_authority": "none",
+      "obligation_authority": [
+        "analysis",
+        "verification"
+      ],
+      "delegation": {
+        "may_delegate": false,
+        "allowed_role_refs": []
+      }
+    },
+    {
+      "id": "repository-explorer",
+      "purpose": "Maps only the repository context needed for the current decision",
+      "role_class": "child",
+      "use_when": [
+        "repository scope, ownership, symbols, or dependencies are materially uncertain"
+      ],
+      "do_not_use_when": [
+        "required repository context is already known and fresh"
+      ],
+      "read_only": true,
+      "reviewer": false,
+      "repository_write_authority": "none",
+      "obligation_authority": [
+        "analysis",
+        "verification"
+      ],
+      "delegation": {
+        "may_delegate": false,
+        "allowed_role_refs": []
+      }
+    },
+    {
+      "id": "qa-reviewer",
+      "purpose": "Independently reviews diffs, tests, and acceptance criteria for regressions",
+      "role_class": "child",
+      "use_when": [
+        "material regression or independent quality review is required"
+      ],
+      "do_not_use_when": [
+        "deterministic low-risk evidence is sufficient without an independent reviewer"
+      ],
+      "read_only": true,
+      "reviewer": true,
+      "repository_write_authority": "none",
+      "obligation_authority": [
+        "review",
+        "verification"
+      ],
+      "delegation": {
+        "may_delegate": false,
+        "allowed_role_refs": []
+      }
+    },
+    {
+      "id": "security-reviewer",
+      "purpose": "Reviews real security-boundary changes through data flow and authority",
+      "role_class": "child",
+      "use_when": [
+        "a material security, trust, credential, permission, input, supply-chain, or external-action boundary changed"
+      ],
+      "do_not_use_when": [
+        "no material security boundary changed"
+      ],
+      "read_only": true,
+      "reviewer": true,
+      "repository_write_authority": "none",
+      "obligation_authority": [
+        "review",
+        "verification"
+      ],
+      "delegation": {
+        "may_delegate": false,
+        "allowed_role_refs": []
+      }
+    },
+    {
+      "id": "visual-qa",
+      "purpose": "Verifies UI changes with browser, responsive, console, and network evidence",
+      "role_class": "child",
+      "use_when": [
+        "UI, CSS, DOM, rendering, accessibility, or visual interaction materially changed"
+      ],
+      "do_not_use_when": [
+        "no visual surface changed"
+      ],
+      "read_only": true,
+      "reviewer": true,
+      "repository_write_authority": "none",
+      "obligation_authority": [
+        "review",
+        "verification"
+      ],
+      "delegation": {
+        "may_delegate": false,
+        "allowed_role_refs": []
+      }
+    }
+  ]
+}

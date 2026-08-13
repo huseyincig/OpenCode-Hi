@@ -53,7 +53,7 @@ for p in ROOT.rglob('*'):
     for pattern in legacy:
         if re.search(pattern,t,re.I):err(f'legacy/prototype identity in current path: {rel} / {pattern}')
 # Living data contract names.
-required_data={'data/product.json','data/validation/implementation-coverage.json','data/validation/native-coverage.json','data/validation/flow-coverage.json','data/validation/flow-acceptance.json','data/validation/source-gates.json','data/validation/release-gates.json','data/validation/source-contracts.json','data/validation/final-dod-audit.json','data/hi-methodologies.json','data/validation/benchmarks-0.1.0.json','data/validation/install-lifecycle-0.1.0.json','data/validation/terminology-audit-0.1.0.json'}
+required_data={'data/product.json','data/validation/implementation-coverage.json','data/validation/native-coverage.json','data/validation/flow-coverage.json','data/validation/flow-acceptance.json','data/validation/source-gates.json','data/validation/release-gates.json','data/validation/source-contracts.json','data/validation/final-dod-audit.json','data/hi-methodologies.json','data/hi-roles.json','data/validation/benchmarks-0.1.0.json','data/validation/install-lifecycle-0.1.0.json','data/validation/terminology-audit-0.1.0.json'}
 for rel in required_data:
     if not (ROOT/rel).is_file():err(f'required data contract missing: {rel}')
 for old in ('feature-ledger-09-coverage.json','native-first-10-coverage.json','flow-11-coverage.json','flow-11-acceptance.json','roadmap-source-gates.json','observed-runtime-smoke-1.18.16.json'):
@@ -73,6 +73,27 @@ if final_audit.get('release_blocked') is not True:err('final DoD audit must rema
 rg=json.loads((ROOT/'data/validation/release-gates.json').read_text())
 if not any(str(v).startswith('PENDING_EXTERNAL') for v in rg.get('gates',{}).values()):err('external runtime gates unexpectedly have no pending evidence')
 roles=sorted((ROOT/'roles').glob('*.md')); skills=sorted((ROOT/'skills').glob('*/SKILL.md'))
+try:
+    role_catalog=json.loads((ROOT/'data/hi-roles.json').read_text())
+    if role_catalog.get('schema')!=1 or role_catalog.get('type')!='hi-role-contract-catalog':err('Hi role contract catalog header invalid')
+    role_entries=role_catalog.get('roles',[])
+    role_ids=[x.get('id') for x in role_entries if isinstance(x,dict)]
+    expected_role_ids=sorted(['architect','coder','manager','qa-reviewer','repository-explorer','security-reviewer','visual-qa','working-manager'])
+    if sorted(role_ids)!=expected_role_ids or len(role_ids)!=len(set(role_ids)):err('Hi role contract inventory != canonical 8 unique roles')
+    known=set(role_ids)
+    for item in role_entries:
+        if not isinstance(item,dict):err('Hi role contract entry must be object');continue
+        rid=item.get('id','')
+        if item.get('role_class') not in ('primary','child'):err(f'{rid}: invalid role_class')
+        if not isinstance(item.get('read_only'),bool) or not isinstance(item.get('reviewer'),bool):err(f'{rid}: role flags must be boolean')
+        if item.get('read_only') and item.get('repository_write_authority')!='none':err(f'{rid}: read-only role has write authority')
+        obligations=item.get('obligation_authority',[])
+        if not isinstance(obligations,list) or any(x not in ('implementation','analysis','review','verification') for x in obligations):err(f'{rid}: invalid obligation authority')
+        if item.get('reviewer') and 'review' not in obligations:err(f'{rid}: reviewer lacks review obligation authority')
+        delegation=item.get('delegation',{})
+        refs=delegation.get('allowed_role_refs',[]) if isinstance(delegation,dict) else []
+        if any(ref not in known for ref in refs):err(f'{rid}: delegation references unknown role')
+except Exception as e:err(f'bad Hi role contract catalog: {e}')
 if [p.stem for p in roles]!=sorted(['architect','coder','manager','qa-reviewer','repository-explorer','security-reviewer','visual-qa','working-manager']):err('agent role inventory != canonical 8')
 if not skills:err('packaged Hi methodologies missing')
 try:

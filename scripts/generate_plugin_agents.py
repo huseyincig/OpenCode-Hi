@@ -2,6 +2,7 @@
 from __future__ import annotations
 import json
 from pathlib import Path
+from generate_role_policy import main as generate_roles
 
 ROOT=Path(__file__).resolve().parents[1]
 ROLES=ROOT/'roles'
@@ -39,6 +40,7 @@ def parse_frontmatter(text:str):
 
 
 def main():
+    generate_roles()
     agents={}
     for path in sorted(ROLES.glob('*.md')):
         fm,body=parse_frontmatter(path.read_text(encoding='utf-8'))

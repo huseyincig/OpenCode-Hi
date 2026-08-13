@@ -45,8 +45,8 @@ Rows below are intentionally `PENDING` until code exists.
 | Phase | Implementation | Required proof | Tier | Commit | Status |
 |---|---|---|---|---|---|
 | M0 | constitution documentation foundation | constitution lint PASS; validator PASS; diff check clean | T0 | `e03aefd` | PASS |
-| M1 | common contract/provenance primitives | focused contract tests 6/6 PASS; controlled full suite 464/464 PASS; validator PASS; diff check clean; build generation idempotent | T0/T1 | pending | PASS — COMMIT PENDING |
-| M2 | RoleContract owner/generator | BA01 + agent binding + role routing + full regression | T1/T2 | — | PENDING |
+| M1 | common contract/provenance primitives | focused contract tests 6/6 PASS; controlled full suite 464/464 PASS; validator PASS; diff check clean; build generation idempotent | T0/T1 | `3809cd1` | PASS |
+| M2 | RoleContract owner/generator | canonical role owner migrated; focused 13/13 PASS; controlled suite 467/467 PASS; validator PASS; host projection migration remains | T1/T2 | pending | ACTIVE |
 | M3 | PermissionProfile | safety monotonicity negatives + projection parity | T1/T2 | — | PENDING |
 | M4 | MethodologyContract normalization | BA02 + 27-methodology parity + admission/load/exit tests | T1/T2 | — | PENDING |
 | M5 | ConfigOption catalog | BA03 + config executor lint | T1/T2 | — | PENDING |
