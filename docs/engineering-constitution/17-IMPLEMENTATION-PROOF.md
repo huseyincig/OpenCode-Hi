@@ -44,8 +44,8 @@ Rows below are intentionally `PENDING` until code exists.
 
 | Phase | Implementation | Required proof | Tier | Commit | Status |
 |---|---|---|---|---|---|
-| M0 | constitution documentation foundation | internal consistency + diff check + local commit | T0 | pending | ACTIVE |
-| M1 | common contract/provenance primitives | schema negatives + deterministic receipt/hash + full regression | T0/T1 | — | PENDING |
+| M0 | constitution documentation foundation | constitution lint PASS; validator PASS; diff check clean | T0 | `e03aefd` | PASS |
+| M1 | common contract/provenance primitives | focused contract tests 6/6 PASS; controlled full suite 464/464 PASS; validator PASS; diff check clean; build generation idempotent | T0/T1 | pending | PASS — COMMIT PENDING |
 | M2 | RoleContract owner/generator | BA01 + agent binding + role routing + full regression | T1/T2 | — | PENDING |
 | M3 | PermissionProfile | safety monotonicity negatives + projection parity | T1/T2 | — | PENDING |
 | M4 | MethodologyContract normalization | BA02 + 27-methodology parity + admission/load/exit tests | T1/T2 | — | PENDING |
@@ -58,6 +58,16 @@ Rows below are intentionally `PENDING` until code exists.
 | M11 | deterministic full closure | build + validator + full controlled suite | T0/T1/T2 | — | PENDING |
 | M12 | real-host acceptance | OpenCode version-bound native receipts | T3 | — | PENDING |
 | M13 | release readiness | explicit authority + external receipts | T4 | — | NOT REQUESTED |
+
+### M1 implementation detail
+
+Current implemented files:
+
+- `plugin/src/contracts/common.ts` — strict common contract primitives, technical canonical IDs, deterministic canonical JSON, SHA-256 content/contract hashes;
+- `plugin/src/contracts/provenance.ts` — strict ProvenanceRecord and deterministic ProjectionReceipt validation/generation;
+- `plugin/test/contract-primitives.test.mjs` — deterministic ordering/hash and negative boundary tests.
+
+Controlled full-suite environment explicitly uses isolated writable `HOME`, `XDG_STATE_HOME`, `XDG_DATA_HOME`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME`. A direct server-default `/root` run produced permission-denied harness failures and is not product evidence. Under the controlled environment the suite is 464/464 PASS.
 
 ## Proof record format
 
