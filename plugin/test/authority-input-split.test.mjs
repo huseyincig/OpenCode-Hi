@@ -14,6 +14,7 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { createChatMessageHook } from '../dist/hooks/chat-message.js'
 import { createSystemTransformHook } from '../dist/hooks/system-transform.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
+import {startAssessedMission,applyStructuredFollowup} from './helpers/semantic.mjs'
 
 function callHook(hook, sessionID, userText, assistantText) {
   return hook(
@@ -68,14 +69,10 @@ test('user "approve" does NOT match if assistant text contains "approve" but use
   assert.equal(m.authority?.approved, undefined)
 })
 
-test('user "STOP" calls store.stop via user stream', async () => {
-  const store = new MissionStore()
-  const onStop = async () => {}
-  const hook = createChatMessageHook(store, onStop)
-  store.start('s1', 'tek fix one bug')
-  assert.equal(store.get('s1').status, 'active')
-  await callHook(hook, 's1', 'stop', '')
-  assert.equal(store.get('s1').status, 'stopped')
+test('user stop request opens semantic follow-up; structured stop assessment stops the mission', async () => {
+  const store=new MissionStore(),hook=createChatMessageHook(store);startAssessedMission(store,'s1','opaque task')
+  await callHook(hook,'s1','opaque stop request','');assert.equal(store.get('s1').semantic_assessment.status,'pending')
+  applyStructuredFollowup(store,'s1','opaque stop request',{message_kind:'stop'});assert.equal(store.get('s1').status,'stopped')
 })
 
 test('user "resume" against pending authority is rejected (must use exact approve)', async () => {
@@ -109,15 +106,10 @@ test('uncertain authority requires explicit USER reconciliation; assistant self-
   assert.ok((m.authority?.completed_hashes ?? []).includes('e'.repeat(64)))
 })
 
-test('user AMEND during active mission routes to mission.amend', async () => {
-  const store = new MissionStore()
-  const hook = createChatMessageHook(store)
-  store.start('s1', 'fix one bug')
-  const m = store.get('s1')
-  assert.equal(m.intent.scope, 'local')
-  await callHook(hook, 's1', 'also add three independent features', '')
-  assert.equal(m.intent.scope, 'multi-stream')
-  assert.equal(m.execution_mode, 'parallel')
+test('user amendment opens semantic follow-up and structured assessment updates execution state', async () => {
+  const store=new MissionStore(),hook=createChatMessageHook(store),m=startAssessedMission(store,'s1','opaque task')
+  await callHook(hook,'s1','opaque amendment','');applyStructuredFollowup(store,'s1','opaque amendment',{message_kind:'amendment',scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation']})
+  assert.equal(m.intent.scope,'multi-stream');assert.equal(m.execution_mode,'parallel')
 })
 
 test('assistant passage without user keyword does NOT trigger approval', async () => {
@@ -144,7 +136,7 @@ test('createSystemTransformHook co-exists with chat-message hook (no regression)
   // Sanity: the system transform hook still injects scope + execution mode.
   const store = new MissionStore()
   const bg = new BackgroundRegistry()
-  store.start('s1', 'add three independent features')
+  startAssessedMission(store,'s1','opaque multi-stream',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation']})
   const sysHook = createSystemTransformHook(store, bg)
   const sysOut = { system: [] }
   await sysHook({ sessionID: 's1' }, sysOut)

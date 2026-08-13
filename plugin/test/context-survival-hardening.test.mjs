@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
+import {startAssessedMission} from './helpers/semantic.mjs'
 import { compactMissionContext } from '../dist/runtime/state/snapshot.js'
 import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
@@ -16,7 +17,7 @@ function addLargeState(m){
 }
 
 test('compaction survival keeps blockers, next action and stop contract under very large mission state',()=>{
-  const store=new MissionStore(),m=store.start('ctx-survive','large mission objective')
+  const store=new MissionStore(),m=startAssessedMission(store,'ctx-survive','opaque large mission')
   addLargeState(m)
   const text=compactMissionContext(m)
   assert.ok(text.length<=DEFAULT_CONTEXT_BUDGET.max_context_chars)
@@ -35,7 +36,7 @@ test('oversized relevant context is replaced by native summary instead of being 
     summarize:async()=>({data:'BOUNDED_NATIVE_SUMMARY'}),
     abort:async()=>({data:{}}),
   }}
-  const store=new MissionStore(),m=store.start('parent-context','fix bounded context')
+  const store=new MissionStore(),m=startAssessedMission(store,'parent-context','opaque bounded context task')
   const rt=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
   const huge=`FULL_TRANSCRIPT_MARKER_${'z'.repeat(DEFAULT_CONTEXT_BUDGET.max_context_chars+5000)}`
   await rt.start(m,{objective:'small fix',role:'coder',category:'quick',relevantContext:[huge]})
@@ -53,7 +54,7 @@ test('handoff remains within total budget when native summarization is unavailab
     promptAsync:async req=>{prompts.push(req);return{data:{}}},
     abort:async()=>({data:{}}),
   }}
-  const store=new MissionStore(),m=store.start('parent-context-no-summary','fix bounded context')
+  const store=new MissionStore(),m=startAssessedMission(store,'parent-context-no-summary','opaque bounded context task')
   const rt=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
   await rt.start(m,{objective:'small fix',role:'coder',category:'quick',relevantContext:Array.from({length:40},(_,i)=>`context-${i}-${'q'.repeat(1000)}`)})
   const text=prompts[0].body.parts[0].text

@@ -50,8 +50,33 @@ export async function listMessages(client, sessionID, limit = 20) {
         return dataOf(await client.session.message.list({ path: { id: sessionID }, query: { limit } })) ?? [];
     return [];
 }
-export async function abortSession(client, sessionID) { if (typeof client?.session?.abort === 'function')
-    await client.session.abort({ path: { id: sessionID } }); }
+function lifecycleHeaders(directory) {
+    const headers = {};
+    if (directory)
+        headers['x-opencode-directory'] = encodeURIComponent(directory);
+    const password = process.env.OPENCODE_SERVER_PASSWORD;
+    if (password) {
+        const username = process.env.OPENCODE_SERVER_USERNAME ?? 'opencode';
+        headers.Authorization = `Basic ${btoa(`${username}:${password}`)}`;
+    }
+    return headers;
+}
+export async function abortSession(client, sessionID, endpoint = {}) {
+    if (endpoint.serverUrl) {
+        try {
+            const base = endpoint.serverUrl.replace(/\/$/, '');
+            const response = await fetch(`${base}/session/${encodeURIComponent(sessionID)}/abort`, { method: 'POST', headers: lifecycleHeaders(endpoint.directory), signal: AbortSignal.timeout(5000) });
+            if (response.ok)
+                return 'server';
+        }
+        catch { }
+    }
+    if (typeof client?.session?.abort === 'function') {
+        await client.session.abort({ path: { id: sessionID } });
+        return 'client';
+    }
+    return 'unavailable';
+}
 export async function listProviders(client) { if (typeof client?.provider?.list === 'function')
     return dataOf(await client.provider.list()); if (typeof client?.config?.providers === 'function')
     return dataOf(await client.config.providers()); return undefined; }

@@ -114,10 +114,10 @@
     "skills": {
       "status": "PASS_LOCAL",
       "evidence": [
-        "data/skill-profiles.json",
+        "data/hi-methodologies.json",
         "docs/SKILLS.md"
       ],
-      "finding": "All 29 canonical hi-* skills have recalibrated trigger/do-not-trigger/exit/cost/composition profiles."
+      "finding": "All 27 built-in canonical hi-* methodologies have validated trigger/do-not-trigger/activation/exit/role/cost/composition contracts."
     }
   },
   "known_internal_blocking_findings": []

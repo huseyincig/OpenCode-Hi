@@ -9,5 +9,6 @@ export interface ScopeExpansionClaim {
     reason: string;
     necessary: boolean;
 }
-export declare function assessChangedFileOwnership(scopeInput: string[], changedInput: string[], scopeExpansions?: ScopeExpansionClaim[]): DiffOwnershipAssessment;
+export type ScopeExpansionAuthority = 'worker-proposal' | 'control-plane';
+export declare function assessChangedFileOwnership(scopeInput: string[], changedInput: string[], scopeExpansions?: ScopeExpansionClaim[], authority?: ScopeExpansionAuthority): DiffOwnershipAssessment;
 export declare function assessDiffOwnership(task: MissionTask, result: WorkerResult): DiffOwnershipAssessment;

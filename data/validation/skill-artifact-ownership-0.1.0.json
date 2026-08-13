@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "release": "0.1.0",
-  "skills_audited": 29,
+  "skills_audited": 27,
   "principle": "storage follows semantic ownership, lifecycle, scope, and sensitivity; never skill name or file extension",
   "canonical_project_families": [
     ".opencode/skills/<project-created-skill>/",
@@ -124,18 +124,13 @@
       "skill_specific_hi_directory": false
     },
     {
-      "skill": "hi-skill-authoring",
+      "skill": "hi-methodology-authoring",
       "storage_owner_class": "OPENCODE_PROJECT_SKILL",
       "skill_specific_hi_directory": false
     },
     {
       "skill": "hi-source-driven-development",
       "storage_owner_class": "MISSION_EVIDENCE_OPTIONAL_ARTIFACT",
-      "skill_specific_hi_directory": false
-    },
-    {
-      "skill": "hi-task-classification",
-      "storage_owner_class": "RUNTIME_STATE",
       "skill_specific_hi_directory": false
     },
     {
@@ -151,11 +146,6 @@
     {
       "skill": "hi-visual-qa",
       "storage_owner_class": "MISSION_EVIDENCE_OPTIONAL_ARTIFACT",
-      "skill_specific_hi_directory": false
-    },
-    {
-      "skill": "hi-workspace-isolation",
-      "storage_owner_class": "GIT_OPENCODE_RUNTIME",
       "skill_specific_hi_directory": false
     }
   ]

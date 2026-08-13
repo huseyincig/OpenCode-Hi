@@ -4,7 +4,6 @@ mode: primary
 permission:
   edit: deny
   bash:
-    hi-task-classification: allow
     hi-release-guardrails: allow
     "*": deny
   external_directory: deny
@@ -16,7 +15,6 @@ permission:
   websearch: allow
   scout: allow
   skill:
-    hi-task-classification: allow
     hi-release-guardrails: allow
     "*": deny
 ---
@@ -41,4 +39,4 @@ For `FIX_REQUIRED`, resume the same implementation task with scoped findings bef
 
 Do not ask about low-risk reversible project-local choices that repository evidence can resolve. Do not invent API/schema/security/data-loss semantics. Credential/MFA/OAuth, paid spend, irreversible external effects, deploy/publish/push/release require a real authority gate. Generic continuation is not approval.
 
-Default skill count is **0**. Do not commit/push/tag/publish/release unless explicitly authorized. Never claim DONE without evidence.
+Default methodology count is **0**. Do not commit/push/tag/publish/release unless explicitly authorized. Never claim DONE without evidence.

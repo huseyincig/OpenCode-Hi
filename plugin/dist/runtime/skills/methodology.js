@@ -1,31 +1,40 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-const MAX_SKILL_CHARS = 18000;
-const MAX_BUNDLE_CHARS = 36000;
-function body(text) { const m = text.match(/^---\s*\n[\s\S]*?\n---\s*\n([\s\S]*)$/); return (m?.[1] ?? text).trim(); }
 function sha256(text) { return createHash('sha256').update(text).digest('hex'); }
-export function methodologyProvenance(skills) { const now = Date.now(); return skills.slice(0, 3).map(skill => { let digest; try {
-    digest = sha256(readFileSync(skill.path, 'utf8'));
+export function methodologyProvenance(candidates) {
+    const now = Date.now();
+    return candidates.map(candidate => {
+        let digest;
+        try {
+            digest = sha256(readFileSync(candidate.path, 'utf8'));
+        }
+        catch { }
+        const permission = candidate.permission ?? 'allow';
+        return {
+            name: candidate.name,
+            provider: candidate.provider,
+            source_path: candidate.path,
+            source_sha256: digest,
+            permission,
+            injection: permission === 'deny' ? 'none' : 'native-skill-tool',
+            selected_at: now,
+        };
+    });
 }
-catch { } const permission = skill.permission ?? 'allow'; return { name: skill.name, provider: skill.provider, source_path: skill.path, source_sha256: digest, permission, injection: permission === 'ask' ? 'native-skill-tool' : permission === 'allow' ? 'embedded' : 'none', selected_at: now }; }); }
-export function buildMethodologyBundle(skills) { const chunks = [], loaded = [], truncated = []; let total = 0; for (const skill of skills.slice(0, 3)) {
-    let content = '';
-    try {
-        content = body(readFileSync(skill.path, 'utf8'));
-    }
-    catch {
-        continue;
-    }
-    if (content.length > MAX_SKILL_CHARS) {
-        content = content.slice(0, MAX_SKILL_CHARS);
-        truncated.push(skill.name);
-    }
-    const chunk = [`Hi SELECTED METHODOLOGY: ${skill.name}`, 'Provider: Hi-native', 'The methodology below is loaded only for this worker. Follow its engineering method, but Hi retains task/model/continuation/completion/STOP ownership.', content].join('\n');
-    if (total + chunk.length > MAX_BUNDLE_CHARS)
-        break;
-    chunks.push(chunk);
-    loaded.push(skill.name);
-    total += chunk.length;
-} return { text: chunks.join('\n\n---\n\n'), loaded, truncated }; }
-export function ownershipContract(kind, skills = []) { if (kind === 'parent')
-    return ['Hi CONTROL-PLANE CONTRACT', 'Hi owns mission decomposition, task dispatch, model routing, continuation, completion adjudication and STOP.', 'Hi-native skills provide methodology only; they never own orchestration, worker spawning, model selection, authority, continuation or STOP.', 'Do not create parallel/subagent workflows directly; use Hi task/team runtime when delegation is required.', 'For ordinary work, use zero skills unless Hi selected one for the task.'].join('\n'); return ['Hi CHILD CONTROL-PLANE CONTRACT', 'You are an execution worker, not the top-level orchestrator.', `Hi-selected methodology allowlist: ${skills.length ? skills.join(', ') : 'none'}.`, 'Selected methodology content may already be embedded in this handoff. Do not load unrelated skills.', 'Do not spawn or coordinate additional agents. Return the structured WorkerResult to Hi.'].join('\n'); }
+export function ownershipContract(kind, methodologies = []) {
+    if (kind === 'parent')
+        return [
+            'Hi CONTROL-PLANE CONTRACT',
+            'Hi owns mission decomposition, task dispatch, model routing, continuation, completion adjudication and STOP.',
+            'Hi methodologies provide engineering method only; they never own orchestration, worker spawning, model selection, authority, continuation or STOP.',
+            'Do not create parallel/subagent workflows directly; use Hi task/team runtime when delegation is required.',
+            'Use zero methodologies by default. Load only methodologies selected by Hi, through OpenCode native skill loading.',
+        ].join('\n');
+    return [
+        'Hi CHILD CONTROL-PLANE CONTRACT',
+        'You are an execution worker, not the top-level orchestrator.',
+        `Hi-selected methodology allowlist: ${methodologies.length ? methodologies.join(', ') : 'none'}.`,
+        methodologies.length ? 'Before applying a selected methodology, load it with the OpenCode native skill tool. Do not load unrelated skills.' : 'No methodology is selected; use native engineering judgment without loading unrelated skills.',
+        'Do not spawn or coordinate additional agents. Return the structured WorkerResult to Hi.',
+    ].join('\n');
+}

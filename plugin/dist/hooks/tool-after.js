@@ -6,6 +6,8 @@ import { recordStagingInspection, recordGitStatusInspection, invalidateStagingPr
 import { matchRollback, resolveRollback } from '../runtime/mutations/temporary-mutations.js';
 import { noteLocalReleaseMutation, notePrivilegedReleaseOutcome, recordRemoteReleaseVerification } from '../runtime/safety/release-chain.js';
 import { syncMissionGates } from '../runtime/gates/gates.js';
+import { recordChildMethodologyLoad, recordParentMethodologyLoad, requestedMethodologyName } from '../runtime/methodology/native-loading.js';
+import { reconcileMethodologyExits } from '../runtime/methodology/exit.js';
 function outputText(output) { try {
     if (typeof output === 'string')
         return output;
@@ -39,6 +41,15 @@ export function createToolAfterHook(store, background, events, projectRoot) {
             return;
         const tool = String(input?.tool ?? ''), args = input?.args ?? {}, text = outputText(output);
         observeToolAfter(m, tool, args, output);
+        if (tool === 'skill') {
+            const name = requestedMethodologyName(args);
+            if (name) {
+                if (child)
+                    recordChildMethodologyLoad(m.workers.find(worker => worker.id === child.id), name);
+                else
+                    recordParentMethodologyLoad(m, name);
+            }
+        }
         if (tool === 'bash' && typeof args?.command === 'string') {
             recordRemoteReleaseVerification(m, args.command, output, projectRoot);
             recordStagingInspection(m, args.command, output);
@@ -75,6 +86,7 @@ export function createToolAfterHook(store, background, events, projectRoot) {
                 o.closedAt = Date.now();
             }
         }
+        reconcileMethodologyExits(m, projectRoot);
         syncMissionGates(m);
         store.updateProgress(m);
         void events?.(runtimeSignal('evidence.updated', m.mission_id, { worker_id: child?.id, payload: { fresh: m.evidence.fresh, items: m.evidence.items.length } }));

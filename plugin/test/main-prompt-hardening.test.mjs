@@ -1,7 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { replanVerificationForChangedSurface } from '../dist/runtime/verification/policy.js'
-import { normalizeIntent } from '../dist/runtime/intent/normalize.js'
 import { runDoctor } from '../dist/doctor/checks.js'
 import { resolveHiConfig } from '../dist/config/resolver.js'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
@@ -10,8 +9,8 @@ import { acquireHiRuntimeInstance } from '../dist/opencode/instance-guard.js'
 function repo(){return {ecosystems:['node'],likelyVerification:['npm test','npm run typecheck','npm run build'],characteristics:[]}}
 
 test('dependency graph changes create explicit security/review obligation and capability',()=>{
-  const intent=normalizeIntent('fix local parser bug',repo())
-  const store=new MissionStore(); const m=store.start('s-dep','fix local parser bug')
+  const store=new MissionStore(); const m=store.start('s-dep','opaque parser change')
+  store.applyInitialSemanticAssessment('s-dep',{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:['src/parser.ts'],intent_signals:[],suppressed_intent_signals:[]})
   const task={id:'t1',objective:'fix parser',scope:['src/parser.ts'],dependencies:[],role:'coder',category:'standard',status:'running',obligation_ids:[],required_evidence:[],constraints:[],created_at:1,updated_at:1}
   m.tasks.push(task)
   const r=replanVerificationForChangedSurface(m,task,['src/parser.ts','plugin/package-lock.json'],repo())

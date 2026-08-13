@@ -16,10 +16,10 @@ description: Plan and validate safe schema/data migrations and transitional comp
 
 ## Method
 
-1. Start from the explicit task contract and current repository evidence.
-2. Apply this methodology only to the smallest surface that satisfies its trigger.
-3. Prefer deterministic evidence and existing project conventions over speculative generalization.
-4. Stop when the exit condition is satisfied; do not take routing, topology, authority, completion, or STOP ownership.
+1. Model current and target persistent schema or data states, deployment ordering, live-version overlap, data volume, locking, and rollback constraints.
+2. Design forward migration and any backfill, dual-read, or dual-write transition so old and new application states remain compatible for the required deployment window.
+3. Validate destructive or irreversible operations, defaults, nullability, indexes, transaction boundaries, retry/idempotency, and representative production-scale failure modes.
+4. Stop when ordering, recovery, compatibility, and evidence are explicit and no step relies on an unverified assumption about existing data.
 
 ## Ownership boundary
 

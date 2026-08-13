@@ -6,7 +6,11 @@ export declare function modelIdentity(model?: string): {
 } | undefined;
 export declare function sendPromptAsync(client: any, sessionID: string, text: string, agent?: string, model?: string, variant?: string, tools?: Record<string, boolean>): Promise<void>;
 export declare function listMessages(client: any, sessionID: string, limit?: number): Promise<any[]>;
-export declare function abortSession(client: any, sessionID: string): Promise<void>;
+export interface OpenCodeLifecycleEndpoint {
+    serverUrl?: string;
+    directory?: string;
+}
+export declare function abortSession(client: any, sessionID: string, endpoint?: OpenCodeLifecycleEndpoint): Promise<'server' | 'client' | 'unavailable'>;
 export declare function listProviders(client: any): Promise<any>;
 export declare function eventSessionID(event: any): string | undefined;
 export declare function lastAssistantText(messages: any[]): string;

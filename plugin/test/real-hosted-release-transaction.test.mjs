@@ -7,6 +7,7 @@ import {join} from 'node:path'
 import {execFileSync,execFile} from 'node:child_process'
 import {promisify} from 'node:util'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
+import { startAssessedMission } from './helpers/semantic.mjs'
 import {createToolBeforeHook} from '../dist/hooks/tool-before.js'
 import {createToolAfterHook} from '../dist/hooks/tool-after.js'
 import {evaluateCompletion} from '../dist/runtime/completion/evaluator.js'
@@ -34,7 +35,7 @@ test('real branch+annotated-tag push and hosted release HTTP transaction are rem
   const releases=new Map(), server=http.createServer((req,res)=>{let body='';req.setEncoding('utf8');req.on('data',c=>body+=c);req.on('end',()=>{if(req.method==='POST'&&req.url==='/releases'){const x=JSON.parse(body);releases.set(x.tagName,x);res.writeHead(201,{'content-type':'application/json'});return res.end(JSON.stringify({url:`local://${x.tagName}`}))}const m=req.url?.match(/^\/releases\/(.+)$/);if(req.method==='GET'&&m){const x=releases.get(decodeURIComponent(m[1]));if(!x){res.writeHead(404);return res.end('missing')}res.writeHead(200,{'content-type':'application/json'});return res.end(JSON.stringify(x))}res.writeHead(404);res.end('not found')})})
   const port=await listen(server), env={Hi_RELEASE_BASE:`http://127.0.0.1:${port}`}
   try{
-    const store=new MissionStore(root),m=store.start('hosted-release-session','push and create release v2.0.10')
+    const store=new MissionStore(root),m=startAssessedMission(store,'hosted-release-session','push and create release v2.0.10',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',requested_external_actions:['git-push','release-create']})
     const before=createToolBeforeHook(store,undefined,work),after=createToolAfterHook(store,undefined,undefined,work)
     const push='git push origin main';await before({sessionID:m.session_id,tool:'bash',args:{command:push,cwd:work}},{args:{command:push,cwd:work}});const po=git(work,'push','origin','main');await after({sessionID:m.session_id,tool:'bash',args:{command:push,cwd:work}},{stdout:po,metadata:{exit:0}})
     const head=git(work,'rev-parse','HEAD');await after({sessionID:m.session_id,tool:'bash',args:{command:'git rev-parse HEAD',cwd:work}},{stdout:head+'\n',metadata:{exit:0}});const br=git(work,'ls-remote','origin','refs/heads/main');await after({sessionID:m.session_id,tool:'bash',args:{command:'git ls-remote origin refs/heads/main',cwd:work}},{stdout:br+'\n',metadata:{exit:0}});assert.equal(m.release_chain?.push?.remote_verified,true)

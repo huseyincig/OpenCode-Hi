@@ -15,6 +15,9 @@ function client(created=[],prompts=[]){let n=0;return{session:{
   abort:async()=>({data:{}}),diff:async()=>({data:[]}),
 }}}
 const host={agent:PACKAGED_HI_AGENTS}
+function assess(store,sid,overrides={}){
+  return store.applyInitialSemanticAssessment(sid,{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[],...overrides})
+}
 
 test('execution surface mirrors native agent permissions and maps edit permission to actual write tools',()=>{
   const coder=effectiveExecutionSurface(host,'coder',true)
@@ -30,13 +33,14 @@ test('execution surface mirrors native agent permissions and maps edit permissio
 test('zero-skill task gets a complete bounded execution profile and per-message tool minimization',async()=>{
   const created=[],prompts=[],c=client(created,prompts)
   const runtime=new TaskRuntime(c,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
-  const m=new MissionStore(process.cwd()).start('s','fix the README typo')
+  const store=new MissionStore(process.cwd()),m=store.start('s','fix the README typo')
+  assess(store,'s',{likely_targets:['README.md']})
   const out=await runtime.start(m,{objective:'fix the README typo',role:'coder',category:'quick',scope:['README.md']})
   const task=m.tasks.find(t=>t.id===out.task_id),profile=task.execution_profile
   assert.equal(profile.role,'coder');assert.equal(profile.category,'quick')
   assert.equal(profile.task.objective,'fix the README typo');assert.deepEqual(profile.task.scope,['README.md'])
   assert.deepEqual(profile.task.dependencies,[]);assert.ok(Array.isArray(profile.task.required_evidence))
-  assert.deepEqual(profile.skills,[])
+  assert.deepEqual(profile.methodologies,[])
   assert.ok(profile.tools.includes('edit'));assert.ok(profile.tools.includes('write'));assert.ok(!profile.tools.includes('skill'));assert.ok(!profile.tools.includes('task'))
   assert.equal(profile.permission_profile.native.source,'effective-opencode-agent')
   assert.equal(profile.permission_profile.native.decisions.edit,'allow')
@@ -51,20 +55,23 @@ test('zero-skill task gets a complete bounded execution profile and per-message 
 test('same-session corrective resume preserves the original execution tool surface and does not spawn a new child',async()=>{
   const created=[],prompts=[],c=client(created,prompts)
   const runtime=new TaskRuntime(c,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
-  const m=new MissionStore(process.cwd()).start('s','fix parser bug')
+  const store=new MissionStore(process.cwd()),m=store.start('s','fix parser bug')
+  assess(store,'s',{task_kind:'bug-fix',likely_targets:['src/parser.ts'],likely_verification:['targeted-tests']})
   const first=await runtime.start(m,{objective:'fix parser bug',role:'coder',category:'standard',scope:['src/parser.ts']})
   runtime.applyResult(m,first.worker_id,{status:'FIX_REQUIRED',summary:'one correction remains',changed_files:['src/parser.ts'],evidence:[],open_issues:['fix:x'],needs_context:[]})
+  m.workers.find(w=>w.id===first.worker_id).selected_methodologies=['hi-test-driven-development'];m.workers.find(w=>w.id===first.worker_id).loaded_methodologies=['hi-test-driven-development']
   const second=await runtime.start(m,{objective:'fix parser bug',role:'coder',category:'standard',scope:['src/parser.ts']})
   assert.equal(second.worker_id,first.worker_id);assert.equal(second.session_id,first.session_id);assert.equal(created.length,1);assert.equal(prompts.length,2)
   const resumeTools=prompts[1].body.tools
   assert.equal(resumeTools.task,false);assert.equal(resumeTools.hi_direct_progress,false);assert.equal(resumeTools.hi_task_start,false)
   assert.equal(resumeTools.edit,undefined);assert.equal(resumeTools.write,undefined)
+  assert.match(JSON.stringify(prompts[1]),/METHODOLOGY EXIT REQUIREMENTS: hi-test-driven-development: task-success, no-open-issues, targeted-test-evidence/)
 })
 
 test('child workers cannot invoke any Hi control-plane custom tool, including completion and cancellation surfaces',async()=>{
   const store=new MissionStore(process.cwd()),m=store.start('parent','implement')
   m.tasks.push({id:'t',objective:'x',status:'running',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],worker_id:'w',created_at:Date.now(),updated_at:Date.now()})
-  const worker={id:'w',task_id:'t',role:'coder',category:'standard',session_id:'child',parent_session_id:'parent',parent_mission_id:m.mission_id,model:'host-default',fallbacks:[],loaded_skills:[],methodologies:[],fingerprint:'f',status:'busy',generation_at_spawn:m.generation}
+  const worker={id:'w',task_id:'t',role:'coder',category:'standard',session_id:'child',parent_session_id:'parent',parent_mission_id:m.mission_id,model:'host-default',fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'busy',generation_at_spawn:m.generation}
   m.workers.push(worker)
   const bg=new BackgroundRegistry();bg.set(worker)
   const hook=createToolBeforeHook(store,bg,()=>resolveHiConfig({}),process.cwd())

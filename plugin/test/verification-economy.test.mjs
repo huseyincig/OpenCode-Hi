@@ -4,43 +4,13 @@ import {mkdtempSync,writeFileSync,mkdirSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {collectRepoContext} from '../dist/runtime/intent/repo-context.js'
-import {normalizeIntent} from '../dist/runtime/intent/normalize.js'
 import {verificationPolicyFor,verificationEconomyInstruction} from '../dist/runtime/verification/policy.js'
 
 function repo(scripts){const root=mkdtempSync(join(tmpdir(),'hi-ve-'));writeFileSync(join(root,'package.json'),JSON.stringify({scripts}));mkdirSync(join(root,'src'));return collectRepoContext(root)}
+function intent(overrides={}){return{objective:'opaque',taskKind:'bug-fix',scope:'local',risk:'low',ambiguity:'none',dependencyClass:'independent',requiredCapabilities:['implementation'],requestedExternalActions:[],likelyVerification:['targeted-tests'],avoid:[],...overrides}}
 
-test('local low-risk bug fix requires targeted verification only, not repo-wide lint/build ceremony',()=>{
-  const ctx=repo({test:'vitest run',lint:'eslint .',build:'tsc -b'})
-  const intent=normalizeIntent('fix the bug in src/a.ts and test it',ctx)
-  assert.deepEqual(intent.likelyVerification,['targeted-tests'])
-  assert.deepEqual(verificationPolicyFor(intent).requiredKinds,['targeted-tests'])
-})
-
-test('high-risk auth bug strengthens verification with static and build checks when repo provides them',()=>{
-  const ctx=repo({test:'vitest run',typecheck:'tsc --noEmit',build:'vite build',lint:'eslint .'})
-  const intent=normalizeIntent('fix the auth token bug in src/auth.ts and test it',ctx)
-  assert.equal(intent.risk,'high')
-  assert.deepEqual(intent.likelyVerification,['targeted-tests','typecheck','build'])
-})
-
-test('release-readiness requires repo-native test/static/build evidence instead of only changed-surface sanity',()=>{
-  const ctx=repo({test:'vitest run',lint:'eslint .',build:'vite build'})
-  const intent=normalizeIntent('check release readiness',ctx)
-  assert.equal(intent.taskKind,'release-readiness')
-  assert.deepEqual(intent.likelyVerification,['targeted-tests','lint','build'])
-})
-
-test('placeholder npm test script is not treated as an available verifier',()=>{
-  const ctx=repo({test:'echo "Error: no test specified" && exit 1',lint:'eslint .'})
-  assert.deepEqual(ctx.likelyVerification,['lint'])
-  const intent=normalizeIntent('check release readiness',ctx)
-  assert.deepEqual(intent.likelyVerification,['changed-surface-sanity','lint'])
-})
-
-test('local verification instruction explicitly rejects unnecessary full-suite expansion',()=>{
-  const intent=normalizeIntent('fix the bug in src/a.ts and test it',repo({test:'vitest run',lint:'eslint .'}))
-  const m={intent,risk:intent.risk,verification_policy:verificationPolicyFor(intent)}
-  const text=verificationEconomyInstruction(m)
-  assert.match(text,/smallest repo-native check/i)
-  assert.match(text,/do not run a full repository suite/i)
-})
+test('local low-risk bug fix keeps only structured targeted verification requirement',()=>{const i=intent();assert.deepEqual(verificationPolicyFor(i).requiredKinds,['targeted-tests'])})
+test('high-risk assessment can require targeted static and build evidence explicitly',()=>{const i=intent({risk:'high',likelyVerification:['targeted-tests','typecheck','build']});assert.deepEqual(verificationPolicyFor(i).requiredKinds,['targeted-tests','typecheck','build'])})
+test('release-readiness verification is explicit bounded state rather than prose inference',()=>{const i=intent({taskKind:'release-readiness',risk:'medium',likelyVerification:['targeted-tests','lint','build']});assert.deepEqual(verificationPolicyFor(i).requiredKinds,['targeted-tests','lint','build'])})
+test('repository context does not treat placeholder npm test as an available verifier',()=>{const ctx=repo({test:'echo "Error: no test specified" && exit 1',lint:'eslint .'});assert.deepEqual(ctx.likelyVerification,['lint'])})
+test('local verification instruction explicitly rejects unnecessary full-suite expansion',()=>{const i=intent(),m={intent:i,risk:i.risk,verification_policy:verificationPolicyFor(i)};const text=verificationEconomyInstruction(m);assert.match(text,/smallest repo-native check/i);assert.match(text,/do not run a full repository suite/i)})

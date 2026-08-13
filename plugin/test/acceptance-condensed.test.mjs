@@ -7,6 +7,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
+import { startAssessedMission, applyStructuredFollowup } from './helpers/semantic.mjs'
 
 // ---------------------------------------------------------------------------
 // Section 88 — A-H
@@ -14,8 +15,8 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 
 test('A: small-fix scope routes as quick category, direct implementation', () => {
   const store = new MissionStore()
-  const m = store.start('s1', 'fix the footer typo')
-  // Quick category: small change, low risk, local scope.
+  const m = startAssessedMission(store,'s1','opaque small fix',{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['implementation']})
+  // Quick category inputs are structured: small change, low risk, local scope.
   assert.equal(m.intent.taskKind, 'implementation')
   assert.equal(m.intent.scope, 'local')
   assert.equal(m.intent.risk, 'low')
@@ -23,14 +24,14 @@ test('A: small-fix scope routes as quick category, direct implementation', () =>
 
 test('B: bug intent routes as bug-fix category with verification', () => {
   const store = new MissionStore()
-  const m = store.start('s1', 'fix the intermittent login 500 and test it')
+  const m = startAssessedMission(store,'s1','opaque bug fix',{task_kind:'bug-fix',likely_verification:['targeted-tests']})
   assert.equal(m.intent.taskKind, 'bug-fix')
   assert.ok(m.intent.likelyVerification.length > 0, 'bug-fix has verification candidates')
 })
 
 test('C: large-independent analysis is detected as wide scope (repo-wide)', () => {
   const store = new MissionStore()
-  const m = store.start('s1', 'inspect why this repository is slow and fix the three largest bottlenecks')
+  const m = startAssessedMission(store,'s1','opaque wide performance task',{task_kind:'performance',scope:'repo-wide',dependency_class:'sequential',required_capabilities:['repository-analysis','implementation'],likely_verification:['changed-surface-sanity']})
   // Spec Section 90-C expects "scope-analysis" which surfaces as repo-wide
   // scope at this size. Multi-stream is gated by capability routing
   // thresholds, not by raw intent text. We assert the wide scope and
@@ -40,14 +41,14 @@ test('C: large-independent analysis is detected as wide scope (repo-wide)', () =
 
 test('D: security-sensitive routes to high risk', () => {
   const store = new MissionStore()
-  const m = store.start('s1', 'change the auth system')
+  const m = startAssessedMission(store,'s1','opaque security-sensitive implementation',{risk:'high',required_capabilities:['implementation','security-review','independent-review'],likely_verification:['review-evidence']})
   assert.equal(m.intent.risk, 'high', 'auth intent must be high risk')
 })
 
 test('E: release intent with publish triggers authority-boundary (higher than high)', () => {
   const store = new MissionStore()
   // Spec text is the exact phrase that triggers release-readiness + publish.
-  const m = store.start('s1', 'prepare the release and publish it')
+  const m = startAssessedMission(store,'s1','opaque release request',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',required_capabilities:['verification'],requested_external_actions:['package-publish'],likely_verification:['build']})
   // publish pushes risk past 'high' into 'authority-boundary'.
   assert.equal(m.intent.risk, 'authority-boundary', 'release + publish triggers authority-boundary')
   const auth = m.obligations.find(x => x.id === 'o-authority')
@@ -86,7 +87,7 @@ test('H: parent waits while a child worker is still pending', () => {
   m.workers.push({
     id: 'w1', task_id: 't1', role: 'coder', category: 'standard',
     parent_session_id: 's1', model: 'host-default', fallbacks: [],
-    loaded_skills: [], methodologies: [], fingerprint: 'f1',
+    selected_methodologies: [], loaded_methodologies: [], methodologies: [], fingerprint: 'f1',
     status: 'busy',
   })
   // The completion adjudicator should report an active-worker reason.
@@ -114,7 +115,7 @@ test('Native-01: child-depth is bounded to 1 in default config', () => {
 test('Native-02: parent waits while child is busy, do not complete', () => {
   const store = new MissionStore()
   const m = store.start('s1', 'parent-waits')
-  m.workers.push({ id: 'w1', task_id: 't1', role: 'coder', category: 'standard', parent_session_id: 's1', model: 'host-default', fallbacks: [], loaded_skills: [], methodologies: [], fingerprint: 'f1', status: 'busy' })
+  m.workers.push({ id: 'w1', task_id: 't1', role: 'coder', category: 'standard', parent_session_id: 's1', model: 'host-default', fallbacks: [], selected_methodologies: [], loaded_methodologies: [], methodologies: [], fingerprint: 'f1', status: 'busy' })
   // The adjudicator must report an active-worker reason and the
   // mission must not yet be complete. We assert the precondition.
   const active = m.workers.filter(w => w.status === 'busy').length
@@ -174,8 +175,8 @@ test('Native-08: tool collision → startup or release failure (in-process path)
 test('Native-12: tiny task uses 0 Hi-native skills by default', () => {
   const store = new MissionStore()
   // Tiny task: README typo, low risk, local scope, no skill required.
-  const m = store.start('s1', 'fix the README typo')
-  // Default Hi behavior: no methodology skill loaded.
+  const m = startAssessedMission(store,'s1','opaque tiny task',{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['implementation']})
+  // Default Hi behavior: no methodology is activated.
   assert.equal(m.intent.risk, 'low')
   assert.equal(m.intent.scope, 'local')
   // No unnecessary methodology obligations open at start.
@@ -185,18 +186,18 @@ test('Native-12: tiny task uses 0 Hi-native skills by default', () => {
 test('Native-13: explicit TDD capability selects Hi-native TDD methodology', () => {
   const store = new MissionStore()
   // Bug intent at high risk signals debug value.
-  const m = store.start('s1', 'fix the auth bug with TDD')
-  // TDD remains a selective capability; actual skill loading is child-specific.
+  const m = startAssessedMission(store,'s1','opaque TDD bug fix',{task_kind:'bug-fix',risk:'high',required_capabilities:['implementation'],likely_verification:['targeted-tests'],intent_signals:['intent.tdd']})
+  // TDD is a methodology need, independent from capability classification.
   assert.equal(m.intent.taskKind, 'bug-fix')
-  assert.ok(m.intent.requiredCapabilities.includes('tdd-required'))
-  assert.ok(m.intent.requiredCapabilities.includes('critical-validation'))
+  assert.ok(m.methodology_needs.some(x => x.name === 'hi-test-driven-development' && x.signal === 'intent.tdd' && x.producer === 'intent'))
+  assert.ok(!m.intent.requiredCapabilities.includes('tdd-required'))
 })
 
 test('Native-18: user-stop during background cancels children, no resurrect', () => {
   const store = new MissionStore()
   const m = store.start('s1', 'user-stop-background')
   // Spawn a child worker.
-  m.workers.push({ id: 'w1', task_id: 't1', role: 'coder', category: 'standard', parent_session_id: 's1', model: 'host-default', fallbacks: [], loaded_skills: [], methodologies: [], fingerprint: 'f1', status: 'busy' })
+  m.workers.push({ id: 'w1', task_id: 't1', role: 'coder', category: 'standard', parent_session_id: 's1', model: 'host-default', fallbacks: [], selected_methodologies: [], loaded_methodologies: [], methodologies: [], fingerprint: 'f1', status: 'busy' })
   // User stops.
   store.stop('s1', 'user-stop')
   // After stop, the child worker must NOT auto-resurrect the mission.
@@ -220,19 +221,17 @@ test('Flow-01: stopped mission is not implicitly resumed by a new task', () => {
 
 test('Flow-03: amend widens the completion contract without invalidating generation', () => {
   const store = new MissionStore()
-  const m = store.start('s1', 'demo')
+  const m = startAssessedMission(store,'s1')
   const before = m.generation
-  store.amend('s1', 'clarify the scope')
-  // The mission's generation is preserved across amend; only
-  // continuation_active is reset.
-  assert.equal(m.generation, before, 'amend must not bump generation')
+  applyStructuredFollowup(store,'s1','opaque amendment',{message_kind:'amendment'})
+  assert.equal(m.generation, before+1, 'semantic follow-up opens a new generation')
   assert.equal(m.continuation_active, false)
 })
 
 test('Flow-04: security follow-up escalates risk and verification policy', () => {
   const store = new MissionStore()
-  const m = store.start('s1', 'demo')
-  store.amend('s1', 'auth endpoint ekle')
+  const m = startAssessedMission(store,'s1','opaque',{risk:'low'})
+  applyStructuredFollowup(store,'s1','opaque security follow-up',{risk:'high',required_capabilities:['implementation','security-review','independent-review'],likely_verification:['review-evidence']})
   assert.equal(m.intent.risk, 'high')
   assert.ok(m.verification_policy.requireReview, 'high risk follow-up opens requireReview')
 })
@@ -315,11 +314,10 @@ test('Native-16: compaction-drift — pending_permissions survive mutation', () 
 
 test('Flow-02: follow-up does NOT create duplicate obligations', () => {
   const store = new MissionStore()
-  const m = store.start('s1', 'demo')
-  // Establish baseline follow-up count.
+  const m = startAssessedMission(store,'s1')
   const baseFollowUps = m.obligations.filter(o => o.kind === 'implementation').length
-  store.amend('s1', 'clarify the scope')
-  store.amend('s1', 'biraz daha detay ver')
+  applyStructuredFollowup(store,'s1','opaque amendment one',{message_kind:'amendment'})
+  applyStructuredFollowup(store,'s1','opaque amendment two',{message_kind:'amendment'})
   const newFollowUps = m.obligations.filter(o => o.kind === 'implementation').length
   assert.equal(newFollowUps, baseFollowUps + 2, 'each follow-up adds an implementation obligation')
   // No duplicate IDs.
@@ -331,9 +329,7 @@ test('Flow-06: incomplete evidence does not yet close', () => {
   // We assert the structural invariant: the runner keeps the
   // mission open while an evidence-related obligation is open.
   const store = new MissionStore()
-  const m = store.start('s1', 'critical task')
-  // Force a high-risk mission so a verification obligation opens.
-  store.amend('s1', 'auth endpoint ekle')
+  const m = startAssessedMission(store,'s1','opaque critical task',{risk:'high',required_capabilities:['implementation','security-review','independent-review'],likely_verification:['review-evidence']})
   assert.equal(m.intent.risk, 'high')
   // The verification obligation is open by default for high-risk.
   const ver = m.obligations.find(o => o.kind === 'verification')
@@ -343,10 +339,8 @@ test('Flow-06: incomplete evidence does not yet close', () => {
 
 test('Flow-08: planned-amend widens the completion contract', () => {
   const store = new MissionStore()
-  const m = store.start('s1', 'demo')
-  // Initial obligation count.
+  const m = startAssessedMission(store,'s1')
   const initialCount = m.obligations.length
-  // A planned amend opens a follow-up implementation obligation.
-  store.amend('s1', 'clarify the scope')
-  assert.equal(m.obligations.length, initialCount + 1, 'amend widens the completion contract')
+  applyStructuredFollowup(store,'s1','opaque planned amendment',{message_kind:'amendment'})
+  assert.equal(m.obligations.length, initialCount + 1, 'structured amendment widens the completion contract')
 })

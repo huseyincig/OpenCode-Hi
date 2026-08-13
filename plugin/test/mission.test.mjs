@@ -1,120 +1,52 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { MissionStore } from '../dist/runtime/mission/mission-store.js'
+import {MissionStore} from '../dist/runtime/mission/mission-store.js'
+import {startAssessedMission,applyStructuredFollowup} from './helpers/semantic.mjs'
 
-test('mission creates obligations without spawning workers', () => {
-  const store = new MissionStore()
-  const mission = store.start('s1', 'fix the footer typo')
-  assert.equal(mission.execution_mode, 'single')
-  assert.equal(mission.workers.length, 0)
-  assert.ok(mission.obligations.some(o => o.kind === 'verification'))
+test('mission starts provisional with no executable obligations or workers',()=>{
+  const store=new MissionStore(),m=store.start('s1','opaque request')
+  assert.equal(m.semantic_assessment.status,'pending')
+  assert.deepEqual(m.obligations,[])
+  assert.deepEqual(m.workers,[])
+  assert.equal(m.execution_mode,'single')
 })
 
-test('explicit stop is sticky until resume', () => {
-  const store = new MissionStore()
-  store.start('s1', 'fix the bug')
-  store.stop('s1')
-  assert.equal(store.get('s1')?.user_interrupted, true)
-  assert.equal(store.get('s1')?.status, 'stopped')
-  store.resume('s1')
-  assert.equal(store.get('s1')?.status, 'active')
+test('assessed material mission creates deterministic obligations without spawning workers',()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'s1','opaque request',{task_kind:'bug-fix',likely_verification:['targeted-tests']})
+  assert.ok(m.obligations.some(o=>o.kind==='analysis'))
+  assert.ok(m.obligations.some(o=>o.kind==='implementation'))
+  assert.ok(m.obligations.some(o=>o.kind==='verification'))
+  assert.equal(m.workers.length,0)
 })
 
-test('amend() recomputes execution_mode from single to parallel on multi-stream follow-up', () => {
-  const store = new MissionStore()
-  store.start('s1', 'tek fix one bug')
-  assert.equal(store.get('s1').execution_mode, 'single')
-  assert.equal(store.get('s1').intent.scope, 'local')
-  store.amend('s1', 'add three independent features')
-  const m = store.get('s1')
-  assert.equal(m.intent.scope, 'multi-stream')
-  assert.equal(m.intent.dependencyClass, 'independent-multi')
-  assert.equal(m.execution_mode, 'parallel')
+test('explicit stop is sticky until explicit resume',()=>{
+  const store=new MissionStore();startAssessedMission(store,'s1')
+  store.stop('s1');assert.equal(store.get('s1')?.user_interrupted,true);assert.equal(store.get('s1')?.status,'stopped')
+  store.resume('s1');assert.equal(store.get('s1')?.status,'active')
 })
 
-test('amend() widens scope from local to multi-stream', () => {
-  const store = new MissionStore()
-  store.start('s1', 'fix one bug')
-  assert.equal(store.get('s1').intent.scope, 'local')
-  store.amend('s1', 'add three independent features')
-  assert.equal(store.get('s1').intent.scope, 'multi-stream')
+test('structured multi-stream follow-up recomputes execution mode to parallel',()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'s1')
+  assert.equal(m.execution_mode,'single')
+  const generation=m.generation
+  applyStructuredFollowup(store,'s1','opaque multi-stream follow-up',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation']})
+  assert.equal(m.intent.scope,'multi-stream')
+  assert.equal(m.intent.dependencyClass,'independent-multi')
+  assert.equal(m.execution_mode,'parallel')
+  assert.equal(m.generation,generation+1)
 })
 
-test('amend() preserves team mode across follow-up', () => {
-  const store = new MissionStore()
-  store.start('s1', 'tek fix one bug')
-  store.get('s1').execution_mode = 'team'
-  store.amend('s1', 'add three independent features')
-  assert.equal(store.get('s1').execution_mode, 'team')
+test('structured high-risk follow-up opens high-assurance review and review policy',()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'s1','opaque',{risk:'low'})
+  applyStructuredFollowup(store,'s1','opaque security follow-up',{risk:'high',required_capabilities:['implementation','security-review','independent-review'],likely_verification:['targeted-tests','review-evidence']})
+  assert.equal(m.risk,'high')
+  assert.equal(m.verification_policy.requireReview,true)
+  assert.ok(m.obligations.some(o=>o.id==='o-high-assurance'&&o.status==='open'))
 })
 
-test('amend() preserves parallel when active workers exist (safe direction)', () => {
-  // Bug under RC.1: parallel → single mid-mission would invalidate active workers.
-  // Guard: keep parallel if active workers exist, even if follow-up intent would downgrade.
-  const store = new MissionStore()
-  store.start('s1', 'add three independent features')
-  store.get('s1').execution_mode = 'parallel'
-  store.get('s1').workers.push({
-    id: 'w1', task_id: 't1', role: 'coder', category: 'standard',
-    parent_session_id: 's1', model: 'host-default', fallbacks: [],
-    loaded_skills: [], methodologies: [], fingerprint: 'f1', status: 'busy',
-  })
-  store.amend('s1', 'tek fix one bug')
-  assert.equal(store.get('s1').execution_mode, 'parallel')
-})
-
-test('amend() does not downgrade parallel when scope is still multi-stream (widen-only)', () => {
-  // Scope is widen-only: follow-up "tek fix one bug" cannot shrink the
-  // existing multi-stream signal. The mission-level multi-stream indicator
-  // remains authoritative until mission restart.
-  const store = new MissionStore()
-  store.start('s1', 'add three independent features')
-  assert.equal(store.get('s1').execution_mode, 'parallel')
-  store.amend('s1', 'tek fix one bug')
-  assert.equal(store.get('s1').intent.scope, 'multi-stream')
-  assert.equal(store.get('s1').execution_mode, 'parallel')
-})
-
-test('amend() recomputes parallel→single when scope itself widens down to local', () => {
-  // The only way parallel→single can happen via amend() is if the follow-up
-  // already had a wider scope signal that the original mission pulled inward.
-  // In practice, original scope is local and follow-up introduces multi-stream
-  // (single→parallel). The reverse (parallel→single) requires explicit
-  // mission restart, not amend().
-  const store = new MissionStore()
-  store.start('s1', 'add three independent features')
-  store.get('s1').intent.scope = 'local' // force-override (simulating prior state)
-  store.get('s1').execution_mode = 'parallel'
-  store.amend('s1', 'tek fix one bug')
-  // scope stays local (widen-only), execution_mode recompute: local+cap<=1 → single
-  assert.equal(store.get('s1').intent.scope, 'local')
-  assert.equal(store.get('s1').execution_mode, 'single')
-})
-
-test('amend() never relaxes authority-boundary safety', () => {
-  // Even if follow-up classifies as multi-stream, authority-boundary must
-  // keep execution_mode=single — resolveExecutionMode vetoes it.
-  const store = new MissionStore()
-  store.start('s1', 'prepare the release and publish it')
-  assert.equal(store.get('s1').risk, 'authority-boundary')
-  assert.equal(store.get('s1').execution_mode, 'single')
-  store.amend('s1', 'add three independent features')
-  assert.equal(store.get('s1').execution_mode, 'single')
-  assert.equal(store.get('s1').risk, 'authority-boundary')
-})
-
-test('amend() raises risk when follow-up risk is higher', () => {
-  const store = new MissionStore()
-  store.start('s1', 'bir refactor yap')
-  assert.equal(store.get('s1').risk, 'low')
-  store.amend('s1', 'auth endpoint ekle')
-  assert.equal(store.get('s1').risk, 'high')
-})
-
-test('amend() does not lower risk when follow-up risk is lower', () => {
-  const store = new MissionStore()
-  store.start('s1', 'auth endpoint ekle')
-  assert.equal(store.get('s1').risk, 'high')
-  store.amend('s1', 'fix a typo')
-  assert.equal(store.get('s1').risk, 'high')
+test('authority-boundary structured intent remains single even with multi-stream scope',()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'s1','opaque publish request',{scope:'multi-stream',risk:'authority-boundary',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation'],requested_external_actions:['package-publish']})
+  assert.equal(m.risk,'authority-boundary')
+  assert.equal(m.execution_mode,'single')
+  assert.ok(m.obligations.some(o=>o.kind==='authority'&&o.status==='open'))
 })

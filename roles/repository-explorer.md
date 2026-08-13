@@ -39,4 +39,4 @@ For handoff/orientation work, inspect repository skeleton, manifests/config, REA
 
 Return only targets, relationships, unknowns, and evidence references needed by the parent. No large code blocks, raw grep output, tool trajectory, or long repository report.
 
-Default skill count is **0**. Normal budget: **≤120 words**. Return `STATUS: DONE|BLOCKED | TARGETS | LINKS | UNKNOWN | NEXT`. External user action yields `USER_ACTION_REQUIRED`; never copy secrets.
+Default methodology count is **0**. Normal budget: **≤120 words**. When invoked as a Hi child, follow the structured `WorkerResult` contract in the current Hi WORKER HANDOFF. Keep repository targets/relationships in `summary`, use `needs_context` for unresolved bounded context, and attach only structured evidence kinds accepted by the handoff. External user action must remain blocked; never copy secrets.

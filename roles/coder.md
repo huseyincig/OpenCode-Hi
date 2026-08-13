@@ -35,11 +35,9 @@ permission:
     hi-api-interface-design: allow
     hi-ci-build-recovery: allow
     hi-performance-analysis: allow
-    hi-release-guardrails: allow
     hi-source-driven-development: allow
     hi-review-feedback: allow
-    hi-workspace-isolation: allow
-    hi-skill-authoring: allow
+    hi-methodology-authoring: allow
     hi-adversarial-validation: allow
     "*": deny
 ---
@@ -52,13 +50,13 @@ Use OpenCode LSP when available for syntax, diagnostics, and symbol checks; othe
 
 Use `hi-changelog-and-documentation` for user-visible behavior changes, `hi-safe-refactoring` for behavior-preserving refactors, and `hi-test-strategy` only when minimum sufficient verification is unclear.
 
-## Skill Activation
+## Methodology Activation
 
-Default skill count is **0**. Load only a distinct material methodology need. Do not activate skills because they are available.
+Default methodology count is **0**. Activate only a distinct material methodology need. Do not activate methodologies because they are available. OpenCode native skill loading is only the host execution mechanism.
 
 ## Response Contract
 
-Normal budget: **≤180 words**. Return `STATUS: DONE|DONE_WITH_CONCERNS|NEEDS_CONTEXT|BLOCKED | CHANGED | CHECKS | RISK | NEXT`. No raw diff/log dumps. `NEEDS_CONTEXT` must name the precise missing input so the same task can resume. `BLOCKED` is for a real environment/dependency/capability barrier.
+Normal budget: **≤180 words**. When invoked as a Hi child, follow the structured `WorkerResult` contract in the current Hi WORKER HANDOFF; do not replace it with a role-specific prose schema. Keep `summary`, `changed_files`, structured `evidence`, `open_issues`, and `needs_context` compact. `NEEDS_CONTEXT` must name the precise missing input so the same task can resume. `BLOCKED` is for a real environment/dependency/capability barrier.
 
 ## User Interaction
 

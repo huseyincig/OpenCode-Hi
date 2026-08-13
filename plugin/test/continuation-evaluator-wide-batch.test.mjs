@@ -7,6 +7,13 @@ import HiPlugin from '../dist/plugin.js'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {evaluateIdle,shouldCountStagnation} from '../dist/runtime/continuation/evaluator.js'
 import {dispatchContinuation} from '../dist/runtime/continuation/dispatcher.js'
+import {startAssessedMission,applyStructuredFollowup,DEFAULT_ASSESSMENT} from './helpers/semantic.mjs'
+
+
+async function assessPluginMission(hooks,sessionID,overrides={},revision=1){
+  const assessment={...DEFAULT_ASSESSMENT,...overrides}
+  return JSON.parse(await hooks.tool.hi_intent_assess.execute({revision,assessment_json:JSON.stringify(assessment)},{sessionID}))
+}
 
 function idleTick(store,m){
   const progressed=store.updateProgress(m,false)
@@ -23,13 +30,13 @@ test('permission WAIT and pending-worker WAIT never accumulate reasoning stagnat
   assert.equal(p.stagnation_count,0)
 
   const w=store.start('worker','fix bug')
-  w.workers.push({id:'w1',task_id:'t1',role:'coder',category:'standard',parent_session_id:'worker',parent_mission_id:w.mission_id,fallbacks:[],loaded_skills:[],methodologies:[],fingerprint:'x',status:'busy',generation_at_spawn:w.generation})
+  w.workers.push({id:'w1',task_id:'t1',role:'coder',category:'standard',parent_session_id:'worker',parent_mission_id:w.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'x',status:'busy',generation_at_spawn:w.generation})
   for(let i=0;i<4;i++)assert.equal(idleTick(store,w).decision.reason_code,'waiting-worker')
   assert.equal(w.stagnation_count,0)
 })
 
 test('open-obligation idles do advance the bounded reasoning recovery ladder',()=>{
-  const store=new MissionStore(process.cwd()),m=store.start('s','implement feature')
+  const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'s','opaque implementation')
   m.obligations=m.obligations.filter(o=>o.kind!=='verification');store.updateProgress(m,false)
   let d=idleTick(store,m).decision
   assert.equal(d.reason_code,'stagnation-recovery')
@@ -41,7 +48,7 @@ test('open-obligation idles do advance the bounded reasoning recovery ladder',()
 })
 
 test('exhausted provider fallback is user-action/provider availability blocker, not reasoning stagnation',()=>{
-  const store=new MissionStore(process.cwd()),m=store.start('p','fix bug')
+  const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'p','opaque bug',{task_kind:'bug-fix'})
   m.blockers.push('provider-failure:provider-transport:p/model')
   m.stagnation_count=5
   const d=evaluateIdle(m)
@@ -50,17 +57,16 @@ test('exhausted provider fallback is user-action/provider availability blocker, 
   assert.equal(m.stagnation_count,0)
 })
 
-test('action-id guard prevents an old same-generation continuation from clearing a newer continuation',async()=>{
-  const store=new MissionStore(process.cwd()),m=store.start('s','fix bug')
+test('semantic generation guard prevents an old continuation from clearing a newer continuation',async()=>{
+  const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'s','opaque bug',{task_kind:'bug-fix'})
   let resolve1,resolve2
   const calls=[]
   const client={session:{promptAsync:req=>{calls.push(req);return new Promise(r=>{if(calls.length===1)resolve1=r;else resolve2=r})}}}
   const first=dispatchContinuation(client,m,'first','first')
   const firstID=m.active_action_id
   assert.ok(firstID)
-  // Verification follow-up intentionally preserves mission generation so running workers stay valid,
-  // but it must invalidate the old parent continuation action.
-  store.amend('s','also run the tests','verification')
+  // A semantic follow-up invalidates the previous continuation action.
+  applyStructuredFollowup(store,'s','opaque verification follow-up',{message_kind:'verification',likely_verification:['targeted-tests']})
   assert.equal(m.active_action_id,undefined)
   const second=dispatchContinuation(client,m,'second','second')
   const secondID=m.active_action_id
@@ -73,7 +79,7 @@ test('action-id guard prevents an old same-generation continuation from clearing
   assert.equal(await second,true)
   assert.equal(m.active_action_id,undefined)
   assert.equal(m.continuation_active,false)
-  assert.ok(m.ledger.some(e=>e.type==='continuation.stale-action-completion'))
+  assert.ok(m.ledger.some(e=>e.type==='continuation.stale-completion'))
 })
 
 function baseClient(createIDs=[]){
@@ -91,6 +97,7 @@ test('plugin parent idle while permission/worker wait preserves stagnation_count
   const {client}=baseClient(['child-wait'])
   const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client});await hooks.config({})
   await hooks['chat.message']({sessionID:'p1',message:{role:'user',parts:[{type:'text',text:'fix bug'}]}},{parts:[]})
+  await assessPluginMission(hooks,'p1',{task_kind:'bug-fix',likely_verification:['targeted-tests']})
   await hooks.event({event:{type:'permission.asked',properties:{id:'perm-1',sessionID:'p1',permission:'bash'}}})
   await hooks.event({event:{type:'session.idle',properties:{sessionID:'p1'}}})
   let report=JSON.parse(await hooks.tool.hi_ledger.execute({limit:80},{sessionID:'p1'}))
@@ -109,6 +116,7 @@ test('failed child defers parent continuation while a sibling worker is still pe
   const {client,promptCalls}=baseClient(['child-a','child-b'])
   const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client});await hooks.config({})
   await hooks['chat.message']({sessionID:'parent',message:{role:'user',parts:[{type:'text',text:'research the repository for two separate tasks'}]}},{parts:[]})
+  await assessPluginMission(hooks,'parent',{task_kind:'review',scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['repository-analysis','multi-stream-delegation']})
   const a=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'inspect A',role:'repository-explorer',category:'quick',scope:'src/a.ts'},{sessionID:'parent'}))
   const b=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'inspect B',role:'repository-explorer',category:'quick',scope:'src/b.ts'},{sessionID:'parent'}))
   assert.ok(a.worker_id&&b.worker_id)
@@ -127,7 +135,9 @@ test('late parent-session events after explicit STOP are ignored and cannot recr
   const {client}=baseClient([])
   const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client});await hooks.config({})
   await hooks['chat.message']({sessionID:'stop-parent',message:{role:'user',parts:[{type:'text',text:'fix bug'}]}},{parts:[]})
+  await assessPluginMission(hooks,'stop-parent',{task_kind:'bug-fix',likely_verification:['targeted-tests']})
   await hooks['chat.message']({sessionID:'stop-parent',message:{role:'user',parts:[{type:'text',text:'STOP'}]}},{parts:[]})
+  await assessPluginMission(hooks,'stop-parent',{material:true,message_kind:'stop',task_kind:'bug-fix',likely_verification:['targeted-tests']},2)
   await hooks.event({event:{type:'permission.asked',properties:{id:'late-perm',sessionID:'stop-parent',permission:'bash'}}})
   const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:'stop-parent'}))
   assert.ok(ledger.events.some(e=>e.type==='runtime.event.after-user-stop-ignored'&&e.payload.event==='permission.asked'))
@@ -144,7 +154,7 @@ test('canonical runtime decision includes NOTHING when no active mission exists'
 test('progress signature ignores paraphrased result text and counts only semantic state changes',()=>{
   const store=new MissionStore(process.cwd()),m=store.start('sig','fix bug')
   m.tasks.push({id:'t1',objective:'x',status:'blocked',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],result:{status:'FAILED',summary:'first wording',changed_files:[],evidence:[],open_issues:['same-blocker'],needs_context:[]},created_at:1,updated_at:1})
-  m.workers.push({id:'w1',task_id:'t1',role:'coder',category:'standard',parent_session_id:'sig',parent_mission_id:m.mission_id,fallbacks:[],loaded_skills:[],methodologies:[],fingerprint:'f',status:'failed',last_result_digest:'digest-a',generation_at_spawn:m.generation})
+  m.workers.push({id:'w1',task_id:'t1',role:'coder',category:'standard',parent_session_id:'sig',parent_mission_id:m.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'failed',last_result_digest:'digest-a',generation_at_spawn:m.generation})
   store.updateProgress(m,false)
   m.tasks[0].result.summary='same failure, different prose';m.workers[0].last_result_digest='digest-b'
   const progressed=store.updateProgress(m,true)
@@ -156,7 +166,7 @@ test('progress signature ignores paraphrased result text and counts only semanti
 })
 
 test('continuation transport failures use a separate bounded runtime retry budget, not reasoning stagnation',async()=>{
-  const store=new MissionStore(process.cwd()),m=store.start('cont-fail','implement feature')
+  const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'cont-fail','opaque implementation')
   const failing={session:{promptAsync:async()=>{throw new Error('transport unavailable')}}}
   for(let i=1;i<=2;i++){
     m.continuation_lock_until=undefined;m.suppress_until=undefined
@@ -177,7 +187,7 @@ test('continuation transport failures use a separate bounded runtime retry budge
 })
 
 test('successful continuation delivery resets the runtime-failure counter',async()=>{
-  const store=new MissionStore(process.cwd()),m=store.start('cont-reset','implement feature')
+  const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'cont-reset','opaque implementation')
   m.continuation_failure_count=2;m.continuation_lock_until=undefined;m.suppress_until=undefined
   const ok=await dispatchContinuation({session:{promptAsync:async()=>({data:{}})}},m,'continue','retry-success')
   assert.equal(ok,true)
@@ -190,6 +200,7 @@ test('child permission session-error becomes explicit user action and never pare
   const {client,promptCalls}=baseClient(['child-perm'])
   const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client});await hooks.config({})
   await hooks['chat.message']({sessionID:'parent-perm',message:{role:'user',parts:[{type:'text',text:'inspect the repository file'}]}},{parts:[]})
+  await assessPluginMission(hooks,'parent-perm',{task_kind:'review',required_capabilities:['repository-analysis']})
   const started=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'inspect repository',role:'repository-explorer',category:'quick'},{sessionID:'parent-perm'}))
   assert.ok(started.worker_id)
   await hooks.event({event:{type:'session.error',properties:{sessionID:'child-perm',error:{message:'permission denied by effective OpenCode policy'}}}})

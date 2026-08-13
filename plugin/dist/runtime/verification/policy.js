@@ -1,8 +1,5 @@
-function canonical(kind) { const k = kind.toLowerCase().trim(); if (/^(pytest|go test|cargo test|npm test|pnpm test|bun test|tests?|targeted-tests)$/.test(k) || /test|pytest|vitest|jest|spec/.test(k))
-    return 'targeted-tests'; if (/typecheck|tsc|mypy|pyright/.test(k))
-    return 'typecheck'; if (/lint|eslint|ruff/.test(k))
-    return 'lint'; if (/build|compile|cargo check/.test(k))
-    return 'build'; return k; }
+const VERIFICATION_KIND_ALIASES = { test: 'targeted-tests', tests: 'targeted-tests', 'targeted-tests': 'targeted-tests', pytest: 'targeted-tests', 'go test': 'targeted-tests', 'cargo test': 'targeted-tests', 'npm test': 'targeted-tests', 'pnpm test': 'targeted-tests', 'bun test': 'targeted-tests', vitest: 'targeted-tests', jest: 'targeted-tests', spec: 'targeted-tests', typecheck: 'typecheck', tsc: 'typecheck', mypy: 'typecheck', pyright: 'typecheck', lint: 'lint', eslint: 'lint', ruff: 'lint', build: 'build', compile: 'build', 'cargo check': 'build', check: 'changed-surface-sanity', sanity: 'changed-surface-sanity', 'changed-surface-sanity': 'changed-surface-sanity', 'visual-check': 'visual-check', 'visual-evidence': 'visual-evidence', 'review-evidence': 'review-evidence' };
+function canonical(kind) { const k = kind.toLowerCase().trim(); return VERIFICATION_KIND_ALIASES[k] ?? k; }
 export function verificationPolicyFor(intent) { const independentReview = intent.risk === 'high' || intent.requiredCapabilities.includes('independent-review') || intent.requiredCapabilities.includes('security-review'); return { requiredKinds: [...new Set(intent.likelyVerification.map(canonical))], requireFresh: true, requireReview: independentReview, allowWorkerReportedEvidence: intent.risk !== 'high' }; }
 function normPath(p) { return p.trim().replace(/\\/g, '/').replace(/^\.\//, ''); }
 function dependencySurface(files) { return files.some(raw => /(^|\/)(package\.json|package-lock\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lockb?|requirements(?:-[^/]*)?\.txt|pyproject\.toml|poetry\.lock|cargo\.toml|cargo\.lock|go\.mod|go\.sum)(?:$|\/)/i.test(normPath(raw))); }
@@ -14,7 +11,7 @@ export function replanVerificationForChangedSurface(m, task, files, repo) {
     const actual = [...new Set(files.map(normPath).filter(Boolean))], expanded = scopeExpanded(task, actual), dependencyChanged = dependencySurface(actual), sensitive = sensitiveSurface(actual), added = [];
     if (!actual.length)
         return { changed: false, addedKinds: [], scopeExpanded: false, riskEscalated: false, reason: 'no-changed-files' };
-    const repoKinds = repo?.likelyVerification ?? [], staticKind = repoKinds.find(x => /typecheck|check|lint/i.test(x)), buildKind = repoKinds.find(x => /build/i.test(x));
+    const repoKinds = repo?.likelyVerification ?? [], staticKind = repoKinds.find(x => ['typecheck', 'check', 'lint'].includes(x.toLowerCase().trim())), buildKind = repoKinds.find(x => x.toLowerCase().trim() === 'build');
     if (sensitive || m.risk === 'high') {
         if (staticKind)
             added.push(canonical(staticKind));
@@ -58,14 +55,13 @@ export function verificationEconomyInstruction(m) {
         return `Verification contract: ${required}. Use the smallest repo-native check that covers the changed surface. Prefer a targeted test or changed-surface sanity; do not run a full repository suite unless targeted verification is unavailable or the change proves broader than expected.`;
     return `Verification contract: ${required}. Use repo-native commands with minimum sufficient scope; broaden only when changed surface, dependency impact, or a failed targeted check justifies it.`;
 }
+const STRONGER_EVIDENCE = { 'changed-surface-sanity': ['changed-surface-sanity', 'targeted-tests', 'typecheck', 'lint', 'build'], 'visual-check': ['visual-check', 'visual-evidence'], 'review-evidence': ['review-evidence'] };
 function kindMatches(required, actual) { const r = canonical(required), a = canonical(actual); if (r === a)
-    return true; if (r === 'changed-surface-sanity')
-    return /build|lint|type|check|test|sanity|compile/.test(a); if (r === 'visual-check')
-    return /visual|screenshot|browser|ui/.test(a); if (r === 'review-evidence')
-    return a === 'review-evidence' || /^(?:code-review|security-review|regression-review|audit-findings?|review-findings?)$/.test(a); return false; }
+    return true; return Boolean(STRONGER_EVIDENCE[r]?.includes(a)); }
 export function verificationSatisfied(m, obligationID) { const p = m.verification_policy; if (p.requireFresh && !m.evidence.fresh)
     return { ok: false, missing: ['fresh-evidence'] }; const obligation = obligationID ? m.obligations.find(o => o.id === obligationID) : undefined, requiredKinds = [...new Set((obligation?.requiredEvidence?.length ? obligation.requiredEvidence : p.requiredKinds).map(canonical))]; const valid = m.evidence.items.filter(e => { if (e.invalidated_at || e.pass === false || e.outcome === 'failed' || e.outcome === 'environment-issue' || e.outcome === 'pending')
     return false; const workerSource = String(e.source ?? '').startsWith('worker:'); if (workerSource && !p.allowWorkerReportedEvidence && !String(e.source ?? '').includes(':reviewer'))
+    return false; if (obligationID && canonical(e.kind) === 'review-evidence' && !e.obligation_ids?.includes(obligationID))
     return false; if (obligationID && workerSource && !e.obligation_ids?.includes(obligationID))
     return false; return true; }); const missing = requiredKinds.filter(required => !valid.some(e => kindMatches(required, e.kind))); if (p.requireReview) {
     const review = m.obligations.find(o => o.kind === 'review');

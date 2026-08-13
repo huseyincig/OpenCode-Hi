@@ -16,10 +16,10 @@ description: Use a failing test first when behavior can be specified economicall
 
 ## Method
 
-1. Start from the explicit task contract and current repository evidence.
-2. Apply this methodology only to the smallest surface that satisfies its trigger.
-3. Prefer deterministic evidence and existing project conventions over speculative generalization.
-4. Stop when the exit condition is satisfied; do not take routing, topology, authority, completion, or STOP ownership.
+1. Express the required behavior as the smallest failing executable example before changing implementation when the task permits a red-green loop.
+2. Make the failure specific enough to prove the missing or incorrect behavior rather than environment noise or an unrelated assertion.
+3. Implement the minimum behavior that makes the targeted example pass, then refactor only while preserving the new and relevant existing evidence.
+4. Stop when the behavior is captured by durable tests at the correct boundary; do not manufacture tests that merely mirror implementation internals.
 
 ## Ownership boundary
 

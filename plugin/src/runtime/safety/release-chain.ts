@@ -38,8 +38,8 @@ function inspectReleaseQuality(root:string,command:string):{ok:boolean;version?:
 export function isGitPush(command:string):boolean{return classifyExternalCommand(command).kind==='git-push'}
 export function isReleaseCreate(command:string):boolean{return classifyExternalCommand(command).kind==='gh-release-create'}
 export function isPackagePublish(command:string):boolean{return classifyExternalCommand(command).kind==='package-publish'}
-export function missionRequiresPackagePublish(objective:string):boolean{return /(?:\bnpm\s+publish\b|\bpnpm\s+publish\b|\byarn\s+npm\s+publish\b|\bbun\s+publish\b|\bpublish\s+(?:the\s+)?package\b)/i.test(objective)}
-export function missionRequiresReleaseCreate(objective:string):boolean{return /(?:\bgh\s+release\s+create\b|\bcreate\s+(?:a\s+)?release\b|\brelease\s+it\b)/i.test(objective)}
+export function missionRequiresPackagePublish(m:MissionState):boolean{return m.intent.requestedExternalActions.includes('package-publish')}
+export function missionRequiresReleaseCreate(m:MissionState):boolean{return m.intent.requestedExternalActions.includes('release-create')}
 export function isLocalReleaseMutation(command:string):boolean{return ['commit','merge','rebase','cherry-pick'].includes(gitCommandParts(command).sub??'')}
 
 function parsePushExpectation(command:string):{remote:string;ref:string}|undefined{

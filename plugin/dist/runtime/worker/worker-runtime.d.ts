@@ -18,5 +18,5 @@ export declare function createTask(m: MissionState, input: {
     contextArtifacts?: ContextArtifact[];
     executionProfile?: ExecutionProfile;
 }): MissionTask;
-export declare function createWorker(m: MissionState, task: MissionTask, model?: string, fallbacks?: string[], skills?: string[], methodologies?: MethodologyProvenance[]): WorkerState;
+export declare function createWorker(m: MissionState, task: MissionTask, model?: string, fallbacks?: string[], selectedMethodologies?: string[], methodologyProvenanceItems?: MethodologyProvenance[]): WorkerState;
 export declare function applyWorkerResult(m: MissionState, task: MissionTask, worker: WorkerState, result: WorkerResult): void;

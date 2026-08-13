@@ -3,20 +3,21 @@ import assert from 'node:assert/strict'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
 import { createSystemTransformHook } from '../dist/hooks/system-transform.js'
+import { startAssessedMission } from './helpers/semantic.mjs'
 
 function makeWorker(loadedSkills = []) {
   return {
     id: 'w1', task_id: 't1', role: 'coder', category: 'standard',
     parent_session_id: 's1', model: 'host-default', fallbacks: [],
-    loaded_skills: loadedSkills, methodologies: [], fingerprint: 'f1', status: 'busy',
+    selected_methodologies: loadedSkills, methodologies: [], fingerprint: 'f1', status: 'busy',
     generation_at_spawn: 1, session_id: 'w1_session',
   }
 }
 
-test('system-transform injects planning directive when hi-architecture-decisions skill is loaded', async () => {
+test('system-transform injects planning directive when hi-architecture-decisions methodology is selected', async () => {
   const store = new MissionStore()
   const bg = new BackgroundRegistry()
-  store.start('s1', 'add three independent features')
+  startAssessedMission(store,'s1','opaque multi-stream architecture task',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['design-exploration','multi-stream-delegation'],intent_signals:['intent.architecture-decision']})
   const m = store.get('s1')
   m.workers.push(makeWorker(['hi-architecture-decisions']))
   bg.set(m.workers[0])
@@ -30,13 +31,13 @@ test('system-transform injects planning directive when hi-architecture-decisions
   assert.doesNotMatch(text, /superpowers/i)
   assert.match(text, /Scope: multi-stream/)
   assert.match(text, /Execution mode: parallel/)
-  assert.match(text, /multiple independent workstreams detected in objective/)
+  assert.match(text, /structured multi-stream scope proves independent workstreams/)
 })
 
 test('system-transform omits planning directive when hi-architecture-decisions is not loaded', async () => {
   const store = new MissionStore()
   const bg = new BackgroundRegistry()
-  store.start('s1', 'tek fix one bug')
+  startAssessedMission(store,'s1','opaque local task')
   const m = store.get('s1')
   m.workers.push(makeWorker(['hi-test-strategy']))
   bg.set(m.workers[0])
@@ -50,7 +51,7 @@ test('system-transform omits planning directive when hi-architecture-decisions i
 
 test('system-transform injects scope and execution mode reason (parent session)', async () => {
   const store = new MissionStore()
-  store.start('s1', 'fix one bug')
+  startAssessedMission(store,'s1','opaque local task')
   const hook = createSystemTransformHook(store)
   const output = { system: [] }
   await hook({ sessionID: 's1' }, output)
@@ -87,7 +88,7 @@ test('system-transform skips child whose generation is stale', async () => {
 
 test('system-transform requires child delegation for an independent review obligation', async () => {
   const store = new MissionStore()
-  store.start('s-independent', 'Perform an independent review of src/a.ts for correctness')
+  startAssessedMission(store,'s-independent','opaque independent review',{task_kind:'review',required_capabilities:['review','independent-review'],likely_verification:['review-evidence'],likely_targets:['src/a.ts']})
   const m = store.get('s-independent')
   assert.equal(m.verification_policy.requireReview, true)
   const hook = createSystemTransformHook(store)

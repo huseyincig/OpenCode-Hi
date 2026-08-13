@@ -75,6 +75,7 @@ export declare class TeamRuntime {
         status?: TeamBoardItem['status'];
         evidence?: string[];
     }): TeamBoardItem;
+    adoptSemanticGeneration(m: MissionState): number;
     shutdown(m: MissionState, teamID: string, reason?: string): Promise<boolean>;
     expireMission(m: MissionState, now?: number): Promise<void>;
     reconcileMission(m: MissionState): Promise<void>;

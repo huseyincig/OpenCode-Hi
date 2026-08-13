@@ -24,7 +24,7 @@ export interface BenchmarkScenarioResult{
 
 const baseIntent=(overrides:Partial<NormalizedMissionIntent>):NormalizedMissionIntent=>({
   objective:'benchmark',taskKind:'implementation',risk:'low',scope:'local',ambiguity:'none',dependencyClass:'independent',
-  requiredCapabilities:[],likelyVerification:['changed-surface-sanity'],avoid:[],...overrides,
+  requiredCapabilities:[],requestedExternalActions:[],likelyVerification:['changed-surface-sanity'],avoid:[],...overrides,
 })
 const telemetry=(o:BenchmarkObservation):ExecutionTelemetry=>({
   taskClass:'benchmark',risk:'low',executionPath:'DIRECT',roles:['coder'],skills:[],models:['auto'],tools:[],topology:o.agentCount>1?'multi-agent':'single-agent',

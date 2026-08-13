@@ -4,6 +4,7 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { createToolBeforeHook } from '../dist/hooks/tool-before.js'
 import { createToolAfterHook, authorityOutcome } from '../dist/hooks/tool-after.js'
 import { actionContract, approvePendingAuthority, requireAuthority } from '../dist/runtime/safety/authority.js'
+import {startAssessedMission} from './helpers/semantic.mjs'
 
 function authorize(m,command,cwd){
   try{requireAuthority(m,command,cwd)}catch{}
@@ -11,7 +12,7 @@ function authorize(m,command,cwd){
 }
 
 test('privileged bash success requires explicit exit=0 metadata', async()=>{
-  const store=new MissionStore(); const m=store.start('s','deploy release')
+  const store=new MissionStore(); const m=startAssessedMission(store,'s','opaque push',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',requested_external_actions:['git-push']})
   const before=createToolBeforeHook(store), after=createToolAfterHook(store)
   authorize(m,'git push','/repo')
   await before({sessionID:'s',tool:'bash',args:{command:'git push',cwd:'/repo'}},{args:{command:'git push',cwd:'/repo'}})
@@ -22,7 +23,7 @@ test('privileged bash success requires explicit exit=0 metadata', async()=>{
 })
 
 test('empty or unstructured privileged output is UNKNOWN, never implicit success', async()=>{
-  const store=new MissionStore(); const m=store.start('s','deploy release')
+  const store=new MissionStore(); const m=startAssessedMission(store,'s','opaque push',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',requested_external_actions:['git-push']})
   const before=createToolBeforeHook(store), after=createToolAfterHook(store)
   authorize(m,'git push','/repo')
   await before({sessionID:'s',tool:'bash',args:{command:'git push',cwd:'/repo'}},{args:{command:'git push',cwd:'/repo'}})
@@ -34,7 +35,7 @@ test('empty or unstructured privileged output is UNKNOWN, never implicit success
 })
 
 test('nonzero exit is deterministic failure but persistent/native authority may retry without a second Hi approval', async()=>{
-  const store=new MissionStore(); const m=store.start('s','deploy release')
+  const store=new MissionStore(); const m=startAssessedMission(store,'s','opaque push',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',requested_external_actions:['git-push']})
   const before=createToolBeforeHook(store), after=createToolAfterHook(store)
   authorize(m,'git push','/repo')
   await before({sessionID:'s',tool:'bash',args:{command:'git push',cwd:'/repo'}},{args:{command:'git push',cwd:'/repo'}})

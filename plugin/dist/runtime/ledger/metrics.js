@@ -4,16 +4,16 @@ export function missionMetrics(m) {
     const recovery = count((t, p) => t === 'runtime.decision' && p?.decision === 'RECOVER');
     const recoverySuccess = count((t, p) => t === 'runtime.decision' && p?.decision === 'RECOVER' && String(p?.reason ?? '').includes('level-1'));
     const handoffs = events.filter(e => e.type === 'worker.handoff').map(e => Number(e.payload?.chars ?? 0)).filter(n => Number.isFinite(n) && n >= 0);
-    const skillCounts = m.workers.map(w => w.loaded_skills.length);
+    const methodologyCounts = m.workers.map(w => w.selected_methodologies.length);
     const avg = (xs) => xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length) : 0;
     return {
         completed: m.status === 'completed',
         duration_ms: Math.max(0, m.updated_at - m.created_at),
         agents_spawned: m.workers.length,
         tasks_created: m.tasks.length,
-        zero_skill_workers: skillCounts.filter(n => n === 0).length,
-        skills_loaded_total: skillCounts.reduce((a, b) => a + b, 0),
-        average_skills_per_worker: avg(skillCounts),
+        zero_methodology_workers: methodologyCounts.filter(n => n === 0).length,
+        methodologies_loaded_total: methodologyCounts.reduce((a, b) => a + b, 0),
+        average_methodologies_per_worker: avg(methodologyCounts),
         handoff_events: handoffs.length,
         average_handoff_chars: avg(handoffs),
         max_handoff_chars: handoffs.length ? Math.max(...handoffs) : 0,
@@ -40,9 +40,9 @@ export function aggregateMissionMetrics(missions) {
         average_duration_ms: avg(completed.map(x => x.duration_ms)),
         average_agents_spawned: avg(rows.map(x => x.agents_spawned)),
         average_tasks_created: avg(rows.map(x => x.tasks_created)),
-        zero_skill_workers: rows.reduce((n, x) => n + x.zero_skill_workers, 0),
-        skills_loaded_total: rows.reduce((n, x) => n + x.skills_loaded_total, 0),
-        average_skills_per_worker: avg(rows.map(x => x.average_skills_per_worker)),
+        zero_methodology_workers: rows.reduce((n, x) => n + x.zero_methodology_workers, 0),
+        methodologies_loaded_total: rows.reduce((n, x) => n + x.methodologies_loaded_total, 0),
+        average_methodologies_per_worker: avg(rows.map(x => x.average_methodologies_per_worker)),
         average_handoff_chars: avg(rows.flatMap(x => x.handoff_events ? [x.average_handoff_chars] : [])),
         max_handoff_chars: rows.length ? Math.max(...rows.map(x => x.max_handoff_chars)) : 0,
         same_session_resumes: rows.reduce((n, x) => n + x.same_session_resumes, 0),
@@ -54,6 +54,6 @@ export function aggregateMissionMetrics(missions) {
         continuation_recovery_events: rows.reduce((n, x) => n + x.continuation_recovery_events, 0),
         continuation_recovery_success: rows.reduce((n, x) => n + x.continuation_recovery_success, 0),
         failed_workers: rows.reduce((n, x) => n + x.failed_workers, 0),
-        note: 'Token and monetary cost metrics require host/provider usage events; Hi reports worker/skill/handoff economy from bounded runtime state and does not fabricate unavailable token/cost telemetry.',
+        note: 'Token and monetary cost metrics require host/provider usage events; Hi reports worker/methodology/handoff economy from bounded runtime state and does not fabricate unavailable token/cost telemetry.',
     };
 }

@@ -8,15 +8,21 @@ import { createTask, createWorker } from '../dist/runtime/worker/worker-runtime.
 import { addEvidence } from '../dist/runtime/evidence/evidence-runtime.js'
 import { verificationSatisfied } from '../dist/runtime/verification/policy.js'
 import { DEFAULT_HI_CONFIG } from '../dist/config/defaults.js'
+import { methodologyExitCheck } from '../dist/runtime/methodology/exit.js'
 
 function runtime(){
   return new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
+}
+function assessedMission(id,objective,overrides={}){
+  const store=new MissionStore(); const m=store.start(id,objective)
+  store.applyInitialSemanticAssessment(id,{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[],...overrides})
+  return m
 }
 
 const done={status:'DONE',summary:'done',changed_files:[],evidence:[],open_issues:[],needs_context:[]}
 
 test('coder DONE cannot close an implementation obligation it does not own',()=>{
-  const s=new MissionStore(); const m=s.start('ownership-1','change alpha')
+  const m=assessedMission('ownership-1','change alpha')
   const base=m.obligations.find(o=>o.kind==='implementation')
   assert.ok(base)
   m.obligations.push({id:'o-followup-owned',kind:'implementation',summary:'User follow-up: change beta',status:'open',requiredEvidence:[]})
@@ -34,7 +40,7 @@ test('coder DONE cannot close an implementation obligation it does not own',()=>
 })
 
 test('worker evidence is scoped to its owned verification obligation',()=>{
-  const s=new MissionStore(); const m=s.start('ownership-2','fix bug and test it')
+  const m=assessedMission('ownership-2','fix bug and test it',{task_kind:'bug-fix',likely_verification:['targeted-tests']})
   m.verification_policy={requiredKinds:['targeted-tests'],requireFresh:true,requireReview:false,allowWorkerReportedEvidence:true}
   const v1=m.obligations.find(o=>o.kind==='verification'); assert.ok(v1)
   v1.requiredEvidence=['targeted-tests']
@@ -46,7 +52,7 @@ test('worker evidence is scoped to its owned verification obligation',()=>{
 
 
 test('owned reviewer DONE synthesizes canonical review evidence for its verification obligation',()=>{
-  const store=new MissionStore(); const m=store.start('ownership-review','Perform an independent review of src/a.ts')
+  const m=assessedMission('ownership-review','Perform an independent review of src/a.ts',{task_kind:'review',required_capabilities:['review','independent-review'],likely_verification:['review-evidence'],likely_targets:['src/a.ts']})
   m.verification_policy={requiredKinds:['review-evidence'],requireFresh:true,requireReview:true,allowWorkerReportedEvidence:true}
   const review=m.obligations.find(o=>o.kind==='review'); const verification=m.obligations.find(o=>o.kind==='verification'); assert.ok(review); assert.ok(verification)
   verification.requiredEvidence=['review-evidence']
@@ -55,4 +61,26 @@ test('owned reviewer DONE synthesizes canonical review evidence for its verifica
   runtime().applyResult(m,worker.id,{status:'DONE',summary:'reviewed src/a.ts with no findings',changed_files:[],evidence:[],open_issues:[],needs_context:[]})
   assert.deepEqual(verificationSatisfied(m,verification.id),{ok:true,missing:[]})
   assert.equal(review.status,'closed'); assert.equal(verification.status,'closed')
+})
+
+
+test('review evidence cannot satisfy a different verification obligation',()=>{
+  const m=assessedMission('ownership-review-obligation','review two bounded surfaces',{task_kind:'review',required_capabilities:['review'],likely_verification:['review-evidence']})
+  m.verification_policy={requiredKinds:['review-evidence'],requireFresh:true,requireReview:false,allowWorkerReportedEvidence:true}
+  const first=m.obligations.find(o=>o.kind==='verification'); assert.ok(first); first.requiredEvidence=['review-evidence']
+  m.obligations.push({id:'o-review-verification-beta',kind:'verification',summary:'review beta',status:'open',requiredEvidence:['review-evidence']})
+  addEvidence(m,{kind:'review-evidence',summary:'alpha reviewed',scope:['src/alpha.ts'],source:'parent:direct-review',obligation_ids:[first.id],pass:true,outcome:'passed'})
+  assert.deepEqual(verificationSatisfied(m,first.id),{ok:true,missing:[]})
+  assert.deepEqual(verificationSatisfied(m,'o-review-verification-beta'),{ok:false,missing:['review-evidence']})
+})
+
+
+test('methodology review exit rejects unrelated mission review proof and accepts related surface proof',()=>{
+  const store=new MissionStore(); const m=store.start('ownership-methodology-review','review src/a.ts')
+  const task=createTask(m,{objective:'review src/a.ts',role:'qa-reviewer',category:'standard',scope:['src/a.ts'],requiredEvidence:[],obligationIds:[]})
+  task.status='completed';task.result={status:'DONE',summary:'review task done',changed_files:[],evidence:[],open_issues:[],needs_context:[]}
+  addEvidence(m,{kind:'review-evidence',summary:'unrelated review',scope:['src/b.ts'],source:'parent:direct-review',pass:true,outcome:'passed'})
+  assert.equal(methodologyExitCheck(m,'hi-code-review',{task,result:task.result,projectRoot:process.cwd()}).ok,false)
+  addEvidence(m,{kind:'review-evidence',summary:'independent review of target surface',scope:['src/a.ts'],source:'parent:direct-review',pass:true,outcome:'passed'})
+  assert.equal(methodologyExitCheck(m,'hi-code-review',{task,result:task.result,projectRoot:process.cwd()}).ok,true)
 })

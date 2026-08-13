@@ -16,6 +16,7 @@
     }
   },
   "scripts": {
+    "prebuild": "python3 ../scripts/generate_plugin_agents.py && python3 ../scripts/generate_methodology_policy.py",
     "build": "npm run clean && tsc -p tsconfig.json",
     "test": "npm run build && node --test test/*.test.mjs",
     "check": "npm run build && npm test",

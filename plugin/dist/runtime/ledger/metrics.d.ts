@@ -4,9 +4,9 @@ export interface MissionMetrics {
     duration_ms: number;
     agents_spawned: number;
     tasks_created: number;
-    zero_skill_workers: number;
-    skills_loaded_total: number;
-    average_skills_per_worker: number;
+    zero_methodology_workers: number;
+    methodologies_loaded_total: number;
+    average_methodologies_per_worker: number;
     handoff_events: number;
     average_handoff_chars: number;
     max_handoff_chars: number;

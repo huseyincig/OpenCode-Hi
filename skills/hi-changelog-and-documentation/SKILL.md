@@ -7,7 +7,7 @@ description: Update user-facing documentation for observable behavior changes.
 
 ## Contract
 
-- **Trigger:** A verified change affects users, installation, configuration, API, security, or supported behavior.
+- **Trigger:** A verified change affects users, installation, configuration, API, security, or supported behavior, or documentation/changelog alignment is explicitly requested.
 - **Do not trigger:** Internal refactor/cosmetic rename with no user-visible effect.
 - **Exit condition:** Canonical English documentation matches implemented behavior and translation does not add behavior.
 - **Role affinity:** working-manager
@@ -16,10 +16,10 @@ description: Update user-facing documentation for observable behavior changes.
 
 ## Method
 
-1. Start from the explicit task contract and current repository evidence.
-2. Apply this methodology only to the smallest surface that satisfies its trigger.
-3. Prefer deterministic evidence and existing project conventions over speculative generalization.
-4. Stop when the exit condition is satisfied; do not take routing, topology, authority, completion, or STOP ownership.
+1. Derive documentation impact from the verified changed surface: user-visible behavior, installation, configuration, API/contract, security, support boundary, or release-facing change.
+2. Identify the smallest canonical documentation set that owns that behavior; update English source-of-truth first and keep translations behavior-equivalent rather than additive.
+3. Reconcile examples, commands, defaults, version references, configuration names, and changelog/release notes against executable behavior instead of copying implementation details blindly.
+4. Re-read the changed docs as a user contract and stop only when no documented claim contradicts the verified product behavior.
 
 ## Ownership boundary
 

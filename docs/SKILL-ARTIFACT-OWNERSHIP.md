@@ -38,13 +38,11 @@ This audit maps every canonical `hi-*` methodology to the artifacts it can cause
 | hi-review-feedback | finding classification, fixes, scoped verification | mission evidence + repository edits | MISSION/PROJECT | classification ephemeral; fixes canonical | runtime / repository |
 | hi-safe-refactoring | source edits and verification evidence | repository canonical files | PROJECT | source durable canonical; evidence mission-scoped | repository / MissionState |
 | hi-security-review | security findings, synthetic leak evidence, fixes | sensitive mission evidence + repository edits | MISSION/PROJECT | raw sensitive data never durable; sanitized retained report optional | memory/privacy boundary / repository / ArtifactStore sanitized only |
-| hi-skill-authoring | SKILL.md and skill references/scripts/examples/assets | OpenCode-native skill capability | PROJECT/PACKAGE | durable canonical methodology | project: .opencode/skills/<skill>/; bundled: package skills/<skill>/ |
+| hi-methodology-authoring | SKILL.md and skill references/scripts/examples/assets | OpenCode-native skill capability | PROJECT/PACKAGE | durable canonical methodology | project: .opencode/skills/<skill>/; bundled: package skills/<skill>/ |
 | hi-source-driven-development | source reuse decision, license/provenance, tests | project/release provenance + mission evidence | PROJECT/RELEASE | reuse/provenance durable when implementation depends on it | Hi provenance / repository docs / release workspace |
-| hi-task-classification | task class, risk, execution signals | MissionState | MISSION | ephemeral/restart-survival runtime | OS state via MissionState |
 | hi-test-driven-development | tests and implementation edits | repository canonical files | PROJECT | durable canonical code/tests | repository paths |
 | hi-test-strategy | verification plan and evidence requirements | MissionState | MISSION | ephemeral unless complex plan retained | MissionState / ArtifactStore when justified |
 | hi-visual-qa | visual evidence, screenshots, diff findings | tool/runtime evidence | MISSION | ephemeral by default; retained visual evidence optional | OpenCode/tool output / ArtifactStore |
-| hi-workspace-isolation | worktree lifecycle and handoff state | Git/OpenCode runtime capability | TASK | temporary | Git/OpenCode worktree location; no Hi mirror |
 
 ## Consequences for the filesystem hierarchy
 

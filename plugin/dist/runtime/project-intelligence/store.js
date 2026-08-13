@@ -1,11 +1,35 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
-import { projectIntelligencePath } from '../storage/ownership.js';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { hiProjectRoot, projectIntelligencePath } from '../storage/ownership.js';
+function validPattern(raw) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw))
+        return false;
+    const v = raw;
+    return typeof v.id === 'string' && typeof v.statement === 'string' && Array.isArray(v.sourceFiles) && v.sourceFiles.every(x => typeof x === 'string') && Boolean(v.sourceHashes) && typeof v.sourceHashes === 'object' && !Array.isArray(v.sourceHashes) && Object.values(v.sourceHashes).every(x => typeof x === 'string') && typeof v.confidence === 'number' && ['FRESH', 'POTENTIALLY_STALE'].includes(String(v.freshness)) && ['ACTIVE', 'SUPERSEDED', 'ARCHIVED'].includes(String(v.lifecycle)) && typeof v.updatedAt === 'number';
+}
 export class ProjectIntelligenceStore {
     projectRoot;
     #patterns = new Map();
     constructor(projectRoot) {
         this.projectRoot = projectRoot;
+        this.#load();
+    }
+    #load() {
+        if (!this.projectRoot)
+            return;
+        const dir = join(hiProjectRoot(this.projectRoot), 'project-intelligence', 'patterns');
+        if (!existsSync(dir))
+            return;
+        for (const entry of readdirSync(dir, { withFileTypes: true })) {
+            if (!entry.isFile() || !entry.name.endsWith('.json'))
+                continue;
+            try {
+                const raw = JSON.parse(readFileSync(join(dir, entry.name), 'utf8'));
+                if (validPattern(raw) && entry.name === `${raw.id}.json`)
+                    this.#patterns.set(raw.id, { ...raw, sourceFiles: [...raw.sourceFiles], sourceHashes: { ...raw.sourceHashes } });
+            }
+            catch { }
+        }
     }
     #persist(pattern) { if (!this.projectRoot)
         return; const path = projectIntelligencePath(this.projectRoot, pattern.id); mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, JSON.stringify(pattern, null, 2) + '\n', 'utf8'); }

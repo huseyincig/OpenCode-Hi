@@ -1,11 +1,12 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
+import { startAssessedMission } from './helpers/semantic.mjs'
 import { createToolBeforeHook } from '../dist/hooks/tool-before.js'
 import { createToolAfterHook } from '../dist/hooks/tool-after.js'
 import { evaluateCompletion } from '../dist/runtime/completion/evaluator.js'
 
-function setup(objective='commit push and create release'){const store=new MissionStore('.'),m=store.start(`rv-${Math.random()}`,objective);m.changed_files=['src/a.ts'];return{m,before:createToolBeforeHook(store),after:createToolAfterHook(store)}}
+function setup(objective='opaque release mission'){const store=new MissionStore('.'),sid=`rv-${Math.random()}`,m=startAssessedMission(store,sid,objective,{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',required_capabilities:['verification'],requested_external_actions:['git-push','release-create'],likely_verification:[]});m.changed_files=['src/a.ts'];return{m,before:createToolBeforeHook(store),after:createToolAfterHook(store)}}
 const H1='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',H2='bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
 async function pushOk(x,cmd='git push origin main'){await x.before({sessionID:x.m.session_id,tool:'bash',args:{command:cmd}},{args:{command:cmd}});await x.after({sessionID:x.m.session_id,tool:'bash',args:{command:cmd}},{stdout:'ok',metadata:{exit:0}})}
 async function verifyPush(x,hash=H1,remoteHash=hash,remote='origin',ref='refs/heads/main'){await x.after({sessionID:x.m.session_id,tool:'bash',args:{command:'git rev-parse HEAD'}},{stdout:`${hash}\n`,metadata:{exit:0}});await x.after({sessionID:x.m.session_id,tool:'bash',args:{command:`git ls-remote ${remote} ${ref}`}},{stdout:`${remoteHash}\t${ref}\n`,metadata:{exit:0}})}

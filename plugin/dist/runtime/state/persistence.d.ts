@@ -1,14 +1,12 @@
-import type { MissionState } from '../mission/types.js';
-export declare const RUNTIME_STATE_SCHEMA: 3;
+import { type MissionState } from '../mission/types.js';
+export declare const RUNTIME_STATE_SCHEMA: 7;
 export interface PersistenceLoadReport {
     sourceSchema?: number;
     targetSchema: typeof RUNTIME_STATE_SCHEMA;
     loaded: number;
-    ignored: number;
     error?: string;
     previousBootId?: string;
     uncleanShutdown?: boolean;
-    migrated?: boolean;
 }
 export declare class RuntimePersistence {
     readonly path: string;

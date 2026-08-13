@@ -4,8 +4,9 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { assertSafeGitMutation,recordPreexistingUserBaseline,recordStagingInspection,recordGitStatusInspection } from '../dist/runtime/safety/staging-safety.js'
 import { createToolBeforeHook } from '../dist/hooks/tool-before.js'
 import { createToolAfterHook } from '../dist/hooks/tool-after.js'
+import {startAssessedMission} from './helpers/semantic.mjs'
 
-function mission(){const store=new MissionStore('.');const m=store.start(`s-${Math.random()}`,'implement and commit the requested fix');return{store,m}}
+function mission(){const store=new MissionStore('.'),sid=`s-${Math.random()}`,m=startAssessedMission(store,sid,'opaque implementation');return{store,m}}
 
 test('broad staging is blocked when pre-existing user-owned dirty files exist',()=>{
   const {m}=mission();recordPreexistingUserBaseline(m,{'notes/user.md':'baseline-user'});m.changed_files=['src/a.ts']

@@ -53,7 +53,7 @@ for p in ROOT.rglob('*'):
     for pattern in legacy:
         if re.search(pattern,t,re.I):err(f'legacy/prototype identity in current path: {rel} / {pattern}')
 # Living data contract names.
-required_data={'data/product.json','data/validation/implementation-coverage.json','data/validation/native-coverage.json','data/validation/flow-coverage.json','data/validation/flow-acceptance.json','data/validation/source-gates.json','data/validation/release-gates.json','data/validation/source-contracts.json','data/validation/final-dod-audit.json','data/runtime/requirements.json','data/validation/benchmarks-0.1.0.json','data/validation/install-lifecycle-0.1.0.json','data/validation/terminology-audit-0.1.0.json'}
+required_data={'data/product.json','data/validation/implementation-coverage.json','data/validation/native-coverage.json','data/validation/flow-coverage.json','data/validation/flow-acceptance.json','data/validation/source-gates.json','data/validation/release-gates.json','data/validation/source-contracts.json','data/validation/final-dod-audit.json','data/hi-methodologies.json','data/validation/benchmarks-0.1.0.json','data/validation/install-lifecycle-0.1.0.json','data/validation/terminology-audit-0.1.0.json'}
 for rel in required_data:
     if not (ROOT/rel).is_file():err(f'required data contract missing: {rel}')
 for old in ('feature-ledger-09-coverage.json','native-first-10-coverage.json','flow-11-coverage.json','flow-11-acceptance.json','roadmap-source-gates.json','observed-runtime-smoke-1.18.16.json'):
@@ -74,7 +74,41 @@ rg=json.loads((ROOT/'data/validation/release-gates.json').read_text())
 if not any(str(v).startswith('PENDING_EXTERNAL') for v in rg.get('gates',{}).values()):err('external runtime gates unexpectedly have no pending evidence')
 roles=sorted((ROOT/'roles').glob('*.md')); skills=sorted((ROOT/'skills').glob('*/SKILL.md'))
 if [p.stem for p in roles]!=sorted(['architect','coder','manager','qa-reviewer','repository-explorer','security-reviewer','visual-qa','working-manager']):err('agent role inventory != canonical 8')
-if not skills:err('packaged Hi skills missing')
+if not skills:err('packaged Hi methodologies missing')
+try:
+    methodology=json.loads((ROOT/'data/hi-methodologies.json').read_text())
+    profiles=methodology.get('profiles',[])
+    profile_names=[x.get('name') for x in profiles]
+    skill_names=[p.parent.name for p in skills]
+    if len(profile_names)!=len(set(profile_names)):err('duplicate Hi methodology names')
+    if sorted(profile_names)!=sorted(skill_names):err('Hi methodology policy != packaged SKILL.md inventory')
+    if methodology.get('policy',{}).get('activation_owner')!='Hi methodology activation':err('Hi methodology activation owner mismatch')
+    if methodology.get('policy',{}).get('selection_scope')!='mission-task-or-obligation':err('Hi methodology selection scope mismatch')
+    role_permissions={}
+    for rp in roles:
+        text=rp.read_text()
+        fm=text.split('\n---\n',1)[0]
+        role_permissions[rp.stem]={m.group(1):m.group(2) for m in re.finditer(r'^\s{4}(hi-[\w-]+):\s*(allow|ask|deny)\s*$',fm,re.M)}
+    signal_catalog=methodology.get('signal_catalog',{})
+    exit_catalog=methodology.get('exit_requirement_catalog',{})
+    if not isinstance(signal_catalog,dict) or not signal_catalog:err('Hi methodology signal catalog missing')
+    if not isinstance(exit_catalog,dict) or not exit_catalog:err('Hi methodology exit requirement catalog missing')
+    for x in profiles:
+        name=x.get('name',''); preferred=x.get('role_affinity',[]); compatible=x.get('compatible_roles',[]); signals=x.get('activation_signals',[]); exits=x.get('exit_requirements',[])
+        if not preferred or not compatible:err(f'{name}: methodology roles missing')
+        if any(role not in compatible for role in preferred):err(f'{name}: preferred role not compatible')
+        if not signals:err(f'{name}: methodology activation_signals missing')
+        unknown_signals=[signal for signal in signals if signal not in signal_catalog]
+        if unknown_signals:err(f'{name}: unknown methodology activation signals {unknown_signals}')
+        derived_sources=[signal_catalog[signal].get('trigger_source') for signal in signals if signal in signal_catalog]
+        if not all(isinstance(source,str) and source for source in derived_sources):err(f'{name}: activation signal has invalid trigger source')
+        if 'trigger_sources' in x:err(f'{name}: trigger_sources is legacy duplicate truth; derive it from activation_signals')
+        if not exits:err(f'{name}: methodology exit_requirements missing')
+        unknown_exits=[item for item in exits if item not in exit_catalog]
+        if unknown_exits:err(f'{name}: unknown methodology exit requirements {unknown_exits}')
+        for role in compatible:
+            if role_permissions.get(role,{}).get(name)!='allow':err(f'{name}: compatible role {role} does not allow methodology')
+except Exception as e:err(f'bad Hi methodology policy: {e}')
 for p in (ROOT/'data').rglob('*.json'):
     try:json.loads(p.read_text())
     except Exception as e:err(f'bad json {p.name}: {e}')

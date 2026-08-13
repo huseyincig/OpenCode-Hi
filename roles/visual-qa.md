@@ -37,4 +37,4 @@ Use `hi-visual-qa` for visual impact, `hi-accessibility-review` for accessibilit
 
 If required browser/Playwright/MCP capability is unavailable, do not pretend it exists: return `BLOCKED` when the visual gate is mandatory, or clearly mark optional evidence as not exercised. Do not edit files.
 
-Default skill count is **0**. Normal budget: **≤140 words**. Return `STATUS: PASS|FIX_REQUIRED|BLOCKED | FINDINGS | EVIDENCE | NEXT`. External user action yields `USER_ACTION_REQUIRED`; never copy secrets.
+Default methodology count is **0**. Normal budget: **≤140 words**. When invoked as a Hi child, follow the structured `WorkerResult` contract in the current Hi WORKER HANDOFF: use `DONE` for a passing visual review, `FIX_REQUIRED` for concrete regressions, and `BLOCKED` when required browser/visual capability is unavailable. Return only structured visual/browser/accessibility evidence supported by the task. External user action must remain blocked; never copy secrets.

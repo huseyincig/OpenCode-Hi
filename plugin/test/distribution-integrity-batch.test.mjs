@@ -5,6 +5,7 @@ import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {createHash} from 'node:crypto'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
+import { startAssessedMission } from './helpers/semantic.mjs'
 import {assertReleaseChainPrecondition,notePrivilegedReleaseOutcome,recordRemoteReleaseVerification} from '../dist/runtime/safety/release-chain.js'
 import {evaluateCompletion} from '../dist/runtime/completion/evaluator.js'
 
@@ -19,7 +20,7 @@ function pkgFixture(){
   writeFileSync(join(root,'package.json'),JSON.stringify({name:'opencode-hi',version:'2.0.10',files:['src']}))
   writeFileSync(join(root,'package-lock.json'),JSON.stringify({name:'opencode-hi',version:'2.0.10',packages:{'':{name:'opencode-hi',version:'2.0.10'}}}))
   writeFileSync(join(root,'src','index.js'),'export const v=1\n')
-  const m=new MissionStore(root).start('pkg','publish package')
+  const store=new MissionStore(root),m=startAssessedMission(store,'pkg','publish package',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',requested_external_actions:['package-publish']})
   const pack=[{name:'opencode-hi',version:'2.0.10,',integrity:I,shasum:S,filename:'opencode-hi-2.0.10.tgz',files:[{path:'package.json'},{path:'src/index.js'}]}]
   pack[0].version='2.0.10'
   return{root,m,pack}

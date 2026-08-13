@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { ProjectAuthorityStore, applyProjectAuthorityPermissions, authorityClassForPatterns } from '../dist/runtime/safety/project-authority.js'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
+import { startAssessedMission } from './helpers/semantic.mjs'
 import { createToolBeforeHook } from '../dist/hooks/tool-before.js'
 
 test('native always approval persists normal release-chain permission across project restarts',()=>{
@@ -35,7 +36,7 @@ test('without persistent grant, risky external effects use native OpenCode ask i
     assert.equal(cfg.permission.bash['git push *'],'ask')
     assert.equal(cfg.permission.bash['gh release create *'],'ask')
     assert.equal(cfg.permission.bash['npm publish*'],'ask')
-    const store=new MissionStore(root),m=store.start('s','push the release')
+    const store=new MissionStore(root),m=startAssessedMission(store,'s','push the release',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',requested_external_actions:['git-push']})
     await createToolBeforeHook(store)({sessionID:'s',tool:'bash',args:{command:'git push origin main',cwd:root}},{args:{command:'git push origin main',cwd:root}})
     assert.ok(m.authority?.executing,'reaching tool-before means OpenCode native permission resolution already completed')
     assert.equal(m.authority?.pending,undefined,'Hi must not create a second text approval gate')

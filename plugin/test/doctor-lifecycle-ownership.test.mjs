@@ -24,15 +24,15 @@ test('doctor detects config drift from canonical ownership schema',()=>{
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('runtime persistence loads and saves only canonical schema 3',()=>{
+test('runtime persistence loads and saves only the current canonical schema',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-state-'))
   try{
     const p=new RuntimePersistence(root)
     const mission=new MissionStore(root).start('s1','current mission')
     p.save([mission],true)
     const loaded=p.load()
-    assert.equal(loaded.length,1);assert.equal(p.lastLoadReport.migrated,false);assert.equal(p.lastLoadReport.sourceSchema,3)
-    assert.equal(JSON.parse(readFileSync(p.path,'utf8')).schema,3)
+    assert.equal(loaded.length,1);assert.equal(p.lastLoadReport.sourceSchema,7);assert.equal('migrated' in p.lastLoadReport,false)
+    assert.equal(JSON.parse(readFileSync(p.path,'utf8')).schema,7)
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 

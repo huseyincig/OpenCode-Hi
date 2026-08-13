@@ -10,6 +10,7 @@ import { resolveHiConfig } from '../dist/config/resolver.js'
 function persistedBusy({session=true}={}){
   const store=new MissionStore()
   const m=store.start('parent-1','fix local bug')
+  store.applyInitialSemanticAssessment('parent-1',{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]})
   const impl=m.obligations.find(o=>o.kind==='implementation')
   const task=createTask(m,{objective:m.objective,role:'coder',category:'quick',scope:[],constraints:[],dependencies:[],requiredEvidence:m.intent.likelyVerification,obligationIds:impl?[impl.id]:[]})
   const worker=createWorker(m,task,'host-default',[],[],[])

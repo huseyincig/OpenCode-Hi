@@ -9,7 +9,7 @@ OpenCode-Hi 0.1.0 performs a terminology audit before final architecture freeze.
 | Product | OpenCode-Hi | KEEP | OpenCode-Hi | Canonical product identity. |
 | Package | opencode-hi | KEEP | opencode-hi | Concise npm/plugin identity. |
 | Private runtime workspace | opencode-hi-runtime | KEEP | opencode-hi-runtime | Internal package is private and technically descriptive. |
-| Skill namespace | hhc-* | RENAME | hi-* | Legacy public brand removed; 29 canonical skills use hi-*. |
+| Methodology namespace / OpenCode skill name | hhc-* | RENAME | hi-* | Legacy public brand removed; 27 built-in Hi methodologies use `hi-*`, while OpenCode native `skill` is only their primary-host lazy-loading primitive. |
 | Tool namespace | hhc_* | RENAME | hi_* | Model-facing tools are consistently namespaced and do not shadow OpenCode-native tools. |
 | Config policy | autonomy | REMOVE | executionPolicy | OpenCode-Hi does not support former-product config aliases. |
 | Config values | basic / standard / powerful / smart / manual | RENAME | minimal / balanced / thorough / adaptive / manual | Removes vague/marketing terms and states execution intent directly. |

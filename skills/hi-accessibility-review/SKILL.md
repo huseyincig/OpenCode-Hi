@@ -10,7 +10,7 @@ description: Check user-interface changes for material accessibility regressions
 - **Trigger:** UI behavior or markup changed and accessibility can be affected.
 - **Do not trigger:** No user-facing UI surface changed.
 - **Exit condition:** Accessibility risks are checked and actionable findings are resolved or recorded.
-- **Role affinity:** qa-reviewer
+- **Role affinity:** visual-qa
 - **Context cost:** low
 - **Execution cost:** low
 

@@ -1,62 +1,196 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { runtimeStatePath } from '../storage/locations.js';
-import { verificationPolicyFor } from '../verification/policy.js';
-export const RUNTIME_STATE_SCHEMA = 3;
-function normalizeMission(raw) {
-    if (!raw || typeof raw !== 'object' || typeof raw.session_id !== 'string' || typeof raw.mission_id !== 'string' || !raw.intent)
-        return undefined;
-    const m = raw;
-    m.obligations = Array.isArray(m.obligations) ? m.obligations : [];
-    m.tasks = Array.isArray(m.tasks) ? m.tasks : [];
-    m.workers = Array.isArray(m.workers) ? m.workers : [];
-    for (const w of m.workers) {
-        w.loaded_skills = Array.isArray(w.loaded_skills) ? w.loaded_skills : [];
-        w.methodologies = Array.isArray(w.methodologies) ? w.methodologies : [];
-        w.write_set = Array.isArray(w.write_set) ? w.write_set : [];
-        w.restart_reconcile_pending = Boolean(w.restart_reconcile_pending);
-    }
-    m.evidence = m.evidence && Array.isArray(m.evidence.items) ? m.evidence : { fresh: false, items: [] };
-    m.ledger = Array.isArray(m.ledger) ? m.ledger : [];
-    m.changed_files = Array.isArray(m.changed_files) ? m.changed_files : [];
-    m.preexisting_user_changes = m.preexisting_user_changes && typeof m.preexisting_user_changes === 'object' ? m.preexisting_user_changes : {};
-    m.preexisting_user_baseline_captured = Boolean(m.preexisting_user_baseline_captured || Object.keys(m.preexisting_user_changes).length);
-    m.staging_safety = undefined;
-    m.git_topology_safety = undefined;
-    m.git_topology_pending = undefined;
-    m.git_topology_owned_files = Array.isArray(m.git_topology_owned_files) ? m.git_topology_owned_files : [];
-    m.blockers = Array.isArray(m.blockers) ? m.blockers : [];
-    m.verification_policy = m.verification_policy ?? verificationPolicyFor(m.intent);
-    m.generation = Math.max(1, Number(m.generation) || 1);
-    m.continuation_active = Boolean(m.continuation_active);
-    m.context_artifacts = Array.isArray(m.context_artifacts) ? m.context_artifacts : [];
-    m.gates = Array.isArray(m.gates) ? m.gates : [];
-    m.temporary_mutations = Array.isArray(m.temporary_mutations) ? m.temporary_mutations : [];
-    m.parent_loaded_skills = Array.isArray(m.parent_loaded_skills) ? m.parent_loaded_skills : [];
-    m.pending_permissions = Number.isFinite(m.pending_permissions) ? m.pending_permissions : 0;
-    m.pending_permission_ids = Array.isArray(m.pending_permission_ids) ? m.pending_permission_ids : [];
-    m.intent.dependencyClass ??= 'unknown';
-    for (const w of m.workers) {
-        w.runtime_recovery_pending = false;
-        w.runtime_recovery_attempt = Number.isFinite(w.runtime_recovery_attempt) ? w.runtime_recovery_attempt : 0;
-        w.runtime_fallback_exhausted = Boolean(w.runtime_fallback_exhausted);
-    }
-    for (const t of m.tasks) {
-        t.context_artifacts = Array.isArray(t.context_artifacts) ? t.context_artifacts : [];
-        t.gate_ids = Array.isArray(t.gate_ids) ? t.gate_ids : [];
-        if (t.execution_profile) {
-            t.execution_profile.task ??= { objective: t.objective, scope: [...(t.scope ?? [])], dependencies: [...(t.dependencies ?? [])], required_evidence: [...(t.requiredEvidence ?? [])] };
-            t.execution_profile.tools = Array.isArray(t.execution_profile.tools) ? t.execution_profile.tools : [];
-            t.execution_profile.permission_profile ??= { skill_tool_enabled: true, skill_permissions: {}, external_effects: 'parent-only', recursive_task: 'deny' };
-            t.execution_profile.verification_policy ??= { ...m.verification_policy, requiredKinds: [...m.verification_policy.requiredKinds] };
-        }
-    }
-    m.user_interrupted = Boolean(m.user_interrupted);
-    m.resume_count = Number.isFinite(m.resume_count) ? m.resume_count : 0;
-    m.native_todos_incomplete = Number.isFinite(m.native_todos_incomplete) ? m.native_todos_incomplete : 0;
-    m.stagnation_count = Number.isFinite(m.stagnation_count) ? m.stagnation_count : 0;
-    m.iteration = Number.isFinite(m.iteration) ? m.iteration : 0;
-    return m;
+import { WORKER_EVIDENCE_KINDS } from '../mission/types.js';
+import { HI_METHODOLOGY_PRODUCERS, HI_METHODOLOGY_SIGNAL_CATALOG, HI_METHODOLOGY_TRIGGER_SOURCES } from '../../generated/methodology-policy.js';
+import { SEMANTIC_CAPABILITIES, SEMANTIC_VERIFICATION_KINDS } from '../intent/semantic-assessment.js';
+export const RUNTIME_STATE_SCHEMA = 7;
+function isRecord(value) { return Boolean(value) && typeof value === 'object' && !Array.isArray(value); }
+function stringArray(value) { return Array.isArray(value) && value.every(item => typeof item === 'string'); }
+function recordArray(value) { return Array.isArray(value) && value.every(isRecord); }
+const TASK_STATUSES = new Set(['created', 'queued', 'running', 'waiting', 'completed', 'failed', 'cancelled', 'blocked']);
+const WORKER_STATUSES = new Set(['created', 'queued', 'starting', 'ready', 'busy', 'completed', 'failed', 'cancelled']);
+const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
+const WORKER_RESULT_STATUSES = new Set(['DONE', 'FIX_REQUIRED', 'NEEDS_CONTEXT', 'BLOCKED', 'FAILED']);
+const WORKER_EVIDENCE_KIND_SET = new Set(WORKER_EVIDENCE_KINDS);
+const EVIDENCE_OUTCOMES = new Set(['pending', 'passed', 'failed', 'environment-issue']);
+const MISSION_EVIDENCE_KINDS = new Set([...WORKER_EVIDENCE_KINDS, 'review-input', 'lsp-diagnostics']);
+const OBLIGATION_KINDS = new Set(['analysis', 'implementation', 'verification', 'review', 'authority']);
+const OBLIGATION_STATUSES = new Set(['open', 'closed', 'blocked']);
+const GATE_KINDS = new Set(['verification', 'user-authority', 'reviewer', 'prerequisite-task', 'precondition', 'rollback']);
+const GATE_STATUSES = new Set(['open', 'ready', 'blocked', 'closed']);
+function validObligation(value) {
+    if (!isRecord(value) || typeof value.id !== 'string' || typeof value.status !== 'string' || !OBLIGATION_STATUSES.has(value.status) || typeof value.kind !== 'string' || !OBLIGATION_KINDS.has(value.kind) || typeof value.summary !== 'string')
+        return false;
+    if (value.requiredEvidence !== undefined && (!stringArray(value.requiredEvidence) || !value.requiredEvidence.every(kind => SEMANTIC_VERIFICATION_KINDS.includes(kind))))
+        return false;
+    if (value.blocker !== undefined && typeof value.blocker !== 'string')
+        return false;
+    if (value.closedAt !== undefined && typeof value.closedAt !== 'number')
+        return false;
+    return true;
+}
+function validMissionEvidence(value) {
+    if (!isRecord(value) || typeof value.id !== 'string' || typeof value.kind !== 'string' || !MISSION_EVIDENCE_KINDS.has(value.kind) || typeof value.summary !== 'string' || !stringArray(value.scope) || typeof value.observed_at !== 'number')
+        return false;
+    for (const field of ['source', 'source_session_id', 'source_state_hash', 'task_id', 'reason'])
+        if (value[field] !== undefined && typeof value[field] !== 'string')
+            return false;
+    if (value.obligation_ids !== undefined && !stringArray(value.obligation_ids))
+        return false;
+    if (value.invalidated_at !== undefined && typeof value.invalidated_at !== 'number')
+        return false;
+    if (value.pass !== undefined && typeof value.pass !== 'boolean')
+        return false;
+    if (value.outcome !== undefined && (typeof value.outcome !== 'string' || !EVIDENCE_OUTCOMES.has(value.outcome)))
+        return false;
+    return true;
+}
+function validGate(value) {
+    return isRecord(value) && typeof value.id === 'string' && typeof value.kind === 'string' && GATE_KINDS.has(value.kind) && typeof value.summary === 'string' && typeof value.status === 'string' && GATE_STATUSES.has(value.status) && (value.reason === undefined || typeof value.reason === 'string') && typeof value.updated_at === 'number';
+}
+function validContextArtifact(value) {
+    if (!isRecord(value) || typeof value.id !== 'string' || typeof value.kind !== 'string' || typeof value.added_at !== 'number')
+        return false;
+    for (const field of ['uri', 'title', 'summary', 'sha256'])
+        if (value[field] !== undefined && typeof value[field] !== 'string')
+            return false;
+    return value.approved === undefined || typeof value.approved === 'boolean';
+}
+function validTemporaryMutation(value) {
+    if (!isRecord(value) || typeof value.id !== 'string' || typeof value.kind !== 'string' || typeof value.description !== 'string' || typeof value.rollback_command !== 'string' || typeof value.rollback_hash !== 'string' || !['active', 'rolled-back', 'failed'].includes(String(value.status)) || typeof value.created_at !== 'number')
+        return false;
+    if (value.rollback_mode !== undefined && !['command', 'native-revert'].includes(String(value.rollback_mode)))
+        return false;
+    for (const field of ['session_id', 'message_id', 'detail'])
+        if (value[field] !== undefined && typeof value[field] !== 'string')
+            return false;
+    return value.resolved_at === undefined || typeof value.resolved_at === 'number';
+}
+function validWorkerEvidence(value) {
+    if (!isRecord(value) || typeof value.kind !== 'string' || !WORKER_EVIDENCE_KIND_SET.has(value.kind) || typeof value.summary !== 'string')
+        return false;
+    if (value.scope !== undefined && !stringArray(value.scope))
+        return false;
+    if (value.pass !== undefined && typeof value.pass !== 'boolean')
+        return false;
+    if (value.outcome !== undefined && (typeof value.outcome !== 'string' || !EVIDENCE_OUTCOMES.has(value.outcome)))
+        return false;
+    if (value.reason !== undefined && typeof value.reason !== 'string')
+        return false;
+    return true;
+}
+function validMethodologyObservation(value) {
+    return isRecord(value) && typeof value.key === 'string' && typeof value.procedure === 'string' && typeof value.trigger === 'string' && typeof value.do_not_trigger === 'string' && typeof value.exit_condition === 'string' && stringArray(value.evidence) && value.evidence.every(kind => WORKER_EVIDENCE_KIND_SET.has(kind));
+}
+function validWorkerResult(value) {
+    if (!isRecord(value) || typeof value.status !== 'string' || !WORKER_RESULT_STATUSES.has(value.status) || typeof value.summary !== 'string')
+        return false;
+    if (!stringArray(value.changed_files) || !Array.isArray(value.evidence) || !value.evidence.every(validWorkerEvidence) || !stringArray(value.open_issues) || !stringArray(value.needs_context))
+        return false;
+    if (value.scope_expansions !== undefined && (!Array.isArray(value.scope_expansions) || !value.scope_expansions.every(item => isRecord(item) && typeof item.file === 'string' && typeof item.reason === 'string' && typeof item.necessary === 'boolean')))
+        return false;
+    if (value.context_gap !== undefined && !['scope', 'iterative', 'none'].includes(String(value.context_gap)))
+        return false;
+    if (value.failure_finding !== undefined && !['ci-build', 'unknown-root-cause', 'none'].includes(String(value.failure_finding)))
+        return false;
+    if (value.methodology_observations !== undefined && (!Array.isArray(value.methodology_observations) || !value.methodology_observations.every(validMethodologyObservation)))
+        return false;
+    return true;
+}
+function validMethodologyNeed(value) {
+    if (!isRecord(value) || typeof value.name !== 'string' || !/^hi-[a-z0-9-]+$/.test(value.name))
+        return false;
+    if (typeof value.signal !== 'string' || !Object.prototype.hasOwnProperty.call(HI_METHODOLOGY_SIGNAL_CATALOG, value.signal))
+        return false;
+    const signal = HI_METHODOLOGY_SIGNAL_CATALOG[value.signal];
+    if (typeof value.trigger_source !== 'string' || value.trigger_source !== signal.trigger_source || !HI_METHODOLOGY_TRIGGER_SOURCES.includes(value.trigger_source))
+        return false;
+    if (typeof value.producer !== 'string' || !signal.producers.includes(value.producer) || !HI_METHODOLOGY_PRODUCERS.includes(value.producer))
+        return false;
+    if (value.task_id !== undefined && typeof value.task_id !== 'string')
+        return false;
+    if (value.obligation_id !== undefined && typeof value.obligation_id !== 'string')
+        return false;
+    return typeof value.reason === 'string' && typeof value.created_at === 'number';
+}
+function validMethodologyProvenance(value) {
+    if (!isRecord(value) || typeof value.name !== 'string' || !/^hi-[a-z0-9-]+$/.test(value.name) || !['project', 'personal', 'hi'].includes(String(value.provider)) || typeof value.source_path !== 'string')
+        return false;
+    if (value.source_sha256 !== undefined && typeof value.source_sha256 !== 'string')
+        return false;
+    return ['allow', 'ask', 'deny'].includes(String(value.permission)) && ['native-skill-tool', 'none'].includes(String(value.injection)) && typeof value.selected_at === 'number';
+}
+function validTask(value) {
+    if (!isRecord(value) || typeof value.id !== 'string' || typeof value.objective !== 'string' || typeof value.role !== 'string' || typeof value.category !== 'string' || !CATEGORIES.has(value.category) || typeof value.status !== 'string' || !TASK_STATUSES.has(value.status))
+        return false;
+    if (!stringArray(value.scope) || !stringArray(value.constraints) || !stringArray(value.dependencies) || !stringArray(value.requiredEvidence) || !stringArray(value.obligation_ids) || !recordArray(value.context_artifacts) || !stringArray(value.gate_ids))
+        return false;
+    if (value.result !== undefined && !validWorkerResult(value.result))
+        return false;
+    if (value.worker_id !== undefined && typeof value.worker_id !== 'string')
+        return false;
+    return typeof value.created_at === 'number' && typeof value.updated_at === 'number';
+}
+function validWorker(value) {
+    if (!isRecord(value) || typeof value.id !== 'string' || typeof value.task_id !== 'string' || typeof value.role !== 'string' || typeof value.category !== 'string' || !CATEGORIES.has(value.category) || typeof value.parent_session_id !== 'string' || typeof value.parent_mission_id !== 'string')
+        return false;
+    if (!stringArray(value.selected_methodologies) || !stringArray(value.loaded_methodologies) || (!Array.isArray(value.methodologies) || !value.methodologies.every(validMethodologyProvenance)) || !stringArray(value.fallbacks))
+        return false;
+    if (typeof value.status !== 'string' || !WORKER_STATUSES.has(value.status) || typeof value.fingerprint !== 'string' || typeof value.generation_at_spawn !== 'number')
+        return false;
+    if (value.semantic_pause_revision !== undefined && typeof value.semantic_pause_revision !== 'number')
+        return false;
+    return true;
+}
+function validVerificationPolicy(value) {
+    if (!isRecord(value) || !stringArray(value.requiredKinds) || typeof value.requireFresh !== 'boolean' || typeof value.requireReview !== 'boolean' || typeof value.allowWorkerReportedEvidence !== 'boolean')
+        return false;
+    const allowed = new Set(SEMANTIC_VERIFICATION_KINDS);
+    return value.requiredKinds.every(kind => allowed.has(kind));
+}
+function validSemanticAssessment(value) {
+    if (!isRecord(value))
+        return false;
+    return ['pending', 'assessed'].includes(String(value.status)) && ['initial', 'followup'].includes(String(value.phase)) && typeof value.revision === 'number' && value.revision >= 1 && value.source === 'host-primary' && typeof value.pending_text === 'string' && (value.assessed_at === undefined || typeof value.assessed_at === 'number');
+}
+function validIntent(value) {
+    if (!isRecord(value))
+        return false;
+    return typeof value.objective === 'string'
+        && ['unclassified', 'implementation', 'bug-fix', 'review', 'performance', 'release-readiness'].includes(String(value.taskKind))
+        && ['local', 'multi-file', 'repo-wide', 'external', 'multi-stream'].includes(String(value.scope))
+        && ['low', 'medium', 'high', 'authority-boundary'].includes(String(value.risk))
+        && ['none', 'resolvable', 'contract-critical'].includes(String(value.ambiguity))
+        && ['independent', 'sequential', 'external-gated', 'unknown', 'independent-multi'].includes(String(value.dependencyClass))
+        && stringArray(value.requiredCapabilities) && value.requiredCapabilities.every(x => SEMANTIC_CAPABILITIES.includes(x))
+        && Array.isArray(value.requestedExternalActions) && value.requestedExternalActions.every(x => ['git-push', 'release-create', 'package-publish', 'deploy'].includes(String(x)))
+        && stringArray(value.likelyVerification) && value.likelyVerification.every(x => SEMANTIC_VERIFICATION_KINDS.includes(x))
+        && stringArray(value.avoid)
+        && (value.likelyTargets === undefined || stringArray(value.likelyTargets));
+}
+function validMission(value) {
+    if (!isRecord(value) || typeof value.mission_id !== 'string' || typeof value.session_id !== 'string' || typeof value.objective !== 'string')
+        return false;
+    if (!validIntent(value.intent) || !validSemanticAssessment(value.semantic_assessment) || !validVerificationPolicy(value.verification_policy))
+        return false;
+    if (value.semantic_assessment.status === 'assessed' && value.intent.taskKind === 'unclassified')
+        return false;
+    if (value.semantic_assessment.status === 'pending' && value.semantic_assessment.phase === 'initial' && ((value.obligations?.length ?? 0) > 0 || (value.tasks?.length ?? 0) > 0 || (value.workers?.length ?? 0) > 0 || (value.methodology_needs?.length ?? 0) > 0))
+        return false;
+    if ((!Array.isArray(value.obligations) || !value.obligations.every(validObligation)) || !Array.isArray(value.tasks) || !value.tasks.every(validTask) || !Array.isArray(value.workers) || !value.workers.every(validWorker) || !recordArray(value.ledger))
+        return false;
+    if ((!Array.isArray(value.context_artifacts) || !value.context_artifacts.every(validContextArtifact)) || (!Array.isArray(value.gates) || !value.gates.every(validGate)) || (!Array.isArray(value.temporary_mutations) || !value.temporary_mutations.every(validTemporaryMutation)) || !Array.isArray(value.methodology_needs) || !value.methodology_needs.every(validMethodologyNeed))
+        return false;
+    if (!stringArray(value.changed_files) || !stringArray(value.blockers) || !stringArray(value.constraints) || !stringArray(value.parent_loaded_methodologies))
+        return false;
+    if (!isRecord(value.evidence) || typeof value.evidence.fresh !== 'boolean' || !Array.isArray(value.evidence.items) || !value.evidence.items.every(validMissionEvidence) || (value.evidence.last_mutation_at !== undefined && typeof value.evidence.last_mutation_at !== 'number'))
+        return false;
+    if (typeof value.generation !== 'number' || typeof value.iteration !== 'number' || typeof value.continuation_budget !== 'number' || typeof value.continuation_active !== 'boolean')
+        return false;
+    if (typeof value.pending_permissions !== 'number' || !stringArray(value.pending_permission_ids) || typeof value.user_interrupted !== 'boolean' || typeof value.resume_count !== 'number' || typeof value.created_at !== 'number' || typeof value.updated_at !== 'number')
+        return false;
+    return true;
 }
 function bootID() { return `boot_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`; }
 export class RuntimePersistence {
@@ -64,36 +198,38 @@ export class RuntimePersistence {
     bootId = bootID();
     startedAt = Date.now();
     previousBootId;
-    lastLoadReport = { targetSchema: RUNTIME_STATE_SCHEMA, loaded: 0, ignored: 0 };
+    lastLoadReport = { targetSchema: RUNTIME_STATE_SCHEMA, loaded: 0 };
     constructor(projectRoot) { this.path = runtimeStatePath(projectRoot); }
     load() {
         if (!existsSync(this.path)) {
-            this.lastLoadReport = { targetSchema: RUNTIME_STATE_SCHEMA, loaded: 0, ignored: 0 };
+            this.lastLoadReport = { targetSchema: RUNTIME_STATE_SCHEMA, loaded: 0 };
             return [];
         }
         try {
             const parsed = JSON.parse(readFileSync(this.path, 'utf8'));
+            if (!isRecord(parsed))
+                throw new Error('runtime state is not an object');
             const schema = Number(parsed.schema);
-            if (!Array.isArray(parsed.missions))
-                throw new Error('missions is not an array');
             if (schema !== RUNTIME_STATE_SCHEMA)
                 throw new Error(`unsupported runtime-state schema ${String(parsed.schema)}`);
-            const out = [];
-            let ignored = 0;
-            for (const raw of parsed.missions) {
-                const m = normalizeMission(raw);
-                if (m)
-                    out.push(m);
-                else
-                    ignored++;
+            if (!Array.isArray(parsed.missions))
+                throw new Error('missions is not an array');
+            const missions = [];
+            for (let index = 0; index < parsed.missions.length; index++) {
+                const mission = parsed.missions[index];
+                if (!validMission(mission))
+                    throw new Error(`invalid mission state at index ${index}`);
+                missions.push(mission);
             }
             const runtime = parsed.runtime;
-            this.previousBootId = runtime?.boot_id;
-            this.lastLoadReport = { sourceSchema: schema, targetSchema: RUNTIME_STATE_SCHEMA, loaded: out.length, ignored, previousBootId: runtime?.boot_id, uncleanShutdown: runtime ? runtime.clean_shutdown === false : undefined, migrated: false };
-            return out;
+            if (!isRecord(runtime) || typeof runtime.boot_id !== 'string' || typeof runtime.clean_shutdown !== 'boolean')
+                throw new Error('runtime envelope invalid');
+            this.previousBootId = runtime.boot_id;
+            this.lastLoadReport = { sourceSchema: schema, targetSchema: RUNTIME_STATE_SCHEMA, loaded: missions.length, previousBootId: runtime.boot_id, uncleanShutdown: runtime.clean_shutdown === false };
+            return missions;
         }
         catch (error) {
-            this.lastLoadReport = { targetSchema: RUNTIME_STATE_SCHEMA, loaded: 0, ignored: 0, error: String(error) };
+            this.lastLoadReport = { targetSchema: RUNTIME_STATE_SCHEMA, loaded: 0, error: String(error) };
             return [];
         }
     }

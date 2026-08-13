@@ -8,6 +8,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
+import { startAssessedMission, applyStructuredFollowup } from './helpers/semantic.mjs'
 
 // ---------------------------------------------------------------------------
 // Gap #8 — Native USER STOP integrity
@@ -68,22 +69,20 @@ test('Gap #9: countStagnation=false skips increment even when signature is uncha
 // Gap #10 — Runtime nudge: small targeted corrective, no plan rebuild
 // ---------------------------------------------------------------------------
 
-test('Gap #10: amend() updates intent without restarting planning', () => {
+test('Gap #10: structured follow-up updates intent without rebuilding task identity', () => {
   const store = new MissionStore()
-  const m = store.start('s1', 'fix the login bug')
+  const m = startAssessedMission(store,'s1','opaque')
   const before = m.intent.scope
-  store.amend('s1', 'add three independent features')
-  // multi-stream scope is the result of the test text being detected.
-  // Either way, scope is updated and the continuation is reset.
+  applyStructuredFollowup(store,'s1','opaque multi-stream',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation']})
   assert.notEqual(m.intent.scope, before)
   assert.equal(m.continuation_active, false)
 })
 
-test('Gap #10: amend() with risk-raising content escalates risk and verification', () => {
+test('Gap #10: structured risk-raising follow-up escalates risk and verification', () => {
   const store = new MissionStore()
-  const m = store.start('s1', 'bir refactor yap')
+  const m = startAssessedMission(store,'s1','opaque',{risk:'low'})
   assert.equal(m.intent.risk, 'low')
-  store.amend('s1', 'auth endpoint ekle')
+  applyStructuredFollowup(store,'s1','opaque security change',{risk:'high',required_capabilities:['implementation','security-review','independent-review'],likely_verification:['targeted-tests','review-evidence']})
   assert.equal(m.intent.risk, 'high')
   // Verification policy opens up — the high-risk follow-up widens it.
   assert.ok(m.verification_policy.requireFresh, 'requireFresh must be set')
@@ -94,12 +93,11 @@ test('Gap #10: amend() with risk-raising content escalates risk and verification
 // Gap #11 — Worker dedup fingerprint
 // ---------------------------------------------------------------------------
 
-test('Gap #11: amend() does not create a duplicate obligation for the same risk', () => {
+test('Gap #11: repeated high-risk structured follow-up does not duplicate high-assurance obligation', () => {
   const store = new MissionStore()
-  const m = store.start('s1', 'auth endpoint ekle')
-  // First risk-high amend created o-high-assurance.
+  const m = startAssessedMission(store,'s1','opaque',{risk:'high',required_capabilities:['implementation','security-review','independent-review']})
   const before = m.obligations.filter(o => o.id === 'o-high-assurance').length
-  store.amend('s1', 'auth refresh token da ekle')
+  applyStructuredFollowup(store,'s1','opaque security extension',{risk:'high',required_capabilities:['implementation','security-review','independent-review']})
   const after = m.obligations.filter(o => o.id === 'o-high-assurance').length
   assert.equal(after, before, 'amend() must not create duplicate high-assurance obligations')
 })
@@ -162,15 +160,11 @@ test('Gap #14: nested active team is forbidden', async () => {
 // Gap #15 — Same-session resume preferred on FIX_REQUIRED
 // ---------------------------------------------------------------------------
 
-test('Gap #15: amend() does NOT mutate current task; pilot resumes same context', async () => {
+test('Gap #15: structured follow-up does not delete current task identity', async () => {
   const store = new MissionStore()
-  const m = store.start('s1', 'demo')
-  // The current architecture: amend() updates intent + obligations;
-  // existing tasks remain. The continuation evaluator (resolver) re-decides execution
-  // mode and dispatches a corrective brief to the SAME task_id.
-  // This test asserts that amend does not erase the task list.
+  const m = startAssessedMission(store,'s1','opaque')
   const before = m.tasks.length
-  store.amend('s1', 'same task — clarify scope')
+  applyStructuredFollowup(store,'s1','opaque clarification',{message_kind:'amendment'})
   assert.equal(m.tasks.length, before, 'amend() must not delete existing tasks')
 })
 

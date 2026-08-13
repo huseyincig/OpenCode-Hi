@@ -16,10 +16,10 @@ description: Resolve material product/architecture ambiguity before expensive im
 
 ## Method
 
-1. Start from the explicit task contract and current repository evidence.
-2. Apply this methodology only to the smallest surface that satisfies its trigger.
-3. Prefer deterministic evidence and existing project conventions over speculative generalization.
-4. Stop when the exit condition is satisfied; do not take routing, topology, authority, completion, or STOP ownership.
+1. Establish decision constraints from current repository behavior, user intent, compatibility, operability, and known non-goals before proposing designs.
+2. Generate only materially different viable approaches; discard variants that differ cosmetically or violate established constraints.
+3. Compare surviving approaches on ownership, complexity, migration cost, failure modes, extensibility, testability, and reversibility using repository evidence.
+4. Stop when one approach is clearly preferred or the remaining trade-off requires an explicit human preference or authority decision.
 
 ## Ownership boundary
 

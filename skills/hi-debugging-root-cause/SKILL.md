@@ -16,10 +16,10 @@ description: Turn a symptom into evidence-backed root cause through discriminati
 
 ## Method
 
-1. Start from the explicit task contract and current repository evidence.
-2. Apply this methodology only to the smallest surface that satisfies its trigger.
-3. Prefer deterministic evidence and existing project conventions over speculative generalization.
-4. Stop when the exit condition is satisfied; do not take routing, topology, authority, completion, or STOP ownership.
+1. Reproduce or characterize the failure precisely, separating deterministic product behavior from environment, permission, transport, or stale-state noise.
+2. Trace backward from the first trustworthy failing signal through state and ownership boundaries until the earliest incorrect assumption or transition is found.
+3. Form a falsifiable root-cause hypothesis and test it with the smallest discriminating observation before modifying code.
+4. Fix the natural owner of the defect, then re-run the original failure path plus the nearest regression boundary; stop when cause and fix are both evidenced.
 
 ## Ownership boundary
 

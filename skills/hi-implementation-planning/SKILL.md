@@ -10,7 +10,7 @@ description: Create the minimum dependency-oriented plan required for coordinate
 - **Trigger:** Cross-module sequencing, migration, rollback, or coupled acceptance requires coordination.
 - **Do not trigger:** Clear local task can be executed directly.
 - **Exit condition:** Dependencies, ordered changes, acceptance, verification, and rollback needs are explicit enough to execute.
-- **Role affinity:** working-manager
+- **Role affinity:** architect
 - **Context cost:** medium
 - **Execution cost:** low
 

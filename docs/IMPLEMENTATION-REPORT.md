@@ -22,23 +22,23 @@ The existing continuation runtime remains first-class. It evaluates mission stat
 
 ## Adaptive execution
 
-The adaptive policy implements separate role, skill, model/tool, execution-depth, context-depth, and isolation-depth decisions. Execution paths are `DIRECT`, `EVIDENCE`, `PLANNED`, and `ESCALATED`. Topology is a decision layer only; native host execution remains behind the OpenCode adapter boundary. Direct local work is benchmarked as single-agent/default-zero-skill without planning/review fan-out.
+The adaptive policy implements separate role, methodology, model/tool, execution-depth, context-depth, and isolation-depth decisions. Execution paths are `DIRECT`, `EVIDENCE`, `PLANNED`, and `ESCALATED`. Topology is a decision layer only; native host execution remains behind the OpenCode adapter boundary. Direct local work is benchmarked as single-agent/default-zero-methodology without planning/review fan-out.
 
 ## Agents and models
 
 Role, agent instance, model, and topology remain separate concepts. The configuration/routing surface supports adaptive behavior and explicit project overrides. Single-agent multi-role behavior remains valid; multi-agent behavior is benefit-gated; repeated role/model mapping is bounded by project policy. Explicit task/user policy takes precedence over adaptive selection, which takes precedence over host defaults where supported.
 
-## Skills
+## Methodologies and OpenCode skills
 
-There are 29 canonical `hi-*` skills. Each was recalibrated with trigger, do-not-trigger, exit, role affinity, context/execution cost and composition data in `data/skill-profiles.json`. Default skill activation remains zero. Lazy skill resources are path-scoped and traversal-safe; orchestration ownership remains outside skills.
+There are **27 built-in canonical `hi-*` methodologies**. Each has trigger, do-not-trigger, activation signals, exit requirements, role compatibility, context/execution cost, weight, composition cost, coexistence/conflict metadata, and resource requirements in `data/hi-methodologies.json`. Default methodology activation is zero; typical work uses 0–1 methodology and composition is hard-bounded at 3. On OpenCode, selected methodology content is loaded lazily through the native `skill` primitive. Host skill discovery does not itself grant Hi auto-selection authority.
 
 ## Context
 
 Mission survival state remains protected from transcript pressure. The Context Governor distinguishes `PROTECTED`, `COMPRESSIBLE`, and `PURGEABLE` context and may return NOOP. Project Intelligence stores bounded evidence-backed patterns with freshness invalidation. The first Semantic Context adapter extracts scoped TypeScript interfaces/types/classes/functions/enums instead of injecting full source/dependency trees.
 
-## Knowledge assimilation
+## Knowledge and project methodology learning
 
-External material is classified into project knowledge, architecture/policy, reusable methodology, or temporary evidence. Reusable methodology is merged into an existing skill when overlapping; a new skill is appropriate only for a distinct reusable HOW capability with trigger/do-not-trigger/exit semantics. Runtime self-modifying skills are not implemented.
+Project facts belong to Project Intelligence, proof belongs to Evidence, reusable HOW may become a methodology candidate, and control decisions belong to Hi Runtime Policy. Runtime does not classify arbitrary prose with a keyword heuristic. Project methodology learning accepts only structured methodology observations bound to fresh task evidence, requires repeated independent observations before READY, and admits a `hi-project-*` methodology only through coherent native SKILL + Hi policy + hash-bound provenance. One observation never creates a methodology.
 
 ## Privacy
 
@@ -46,7 +46,7 @@ Provider-facing task prompts pass through the local Privacy Boundary. Synthetic 
 
 ## Human intelligence
 
-The Human Value Gate filters non-material questions. Authority, preference, ambiguity, annotation, visual decisions and batched questions are separate semantics. Active user messages support `INTERRUPT`, `QUEUE`, and `SIDEBAND`; low-risk reversible work does not require approval spam.
+Natural-language user meaning is handled by the host primary model and submitted to the bounded, host-agnostic Hi Semantic Assessment contract. Runtime policy consumes validated structured state rather than language-specific prose classifiers. Authority remains a separate safety protocol and native permission boundary; low-risk reversible work does not require approval spam.
 
 ## Runtime
 

@@ -21,7 +21,7 @@ export function createMessagesTransformHook(store, background) {
         if (child && ((child.parent_mission_id !== undefined && child.parent_mission_id !== mission.mission_id) || (child.generation_at_spawn !== undefined && child.generation_at_spawn !== mission.generation)))
             return;
         const worker = child ? mission.workers.find(w => w.id === child.id) : undefined;
-        const contract = ownershipContract(child ? 'child' : 'parent', worker?.loaded_skills ?? []);
+        const contract = ownershipContract(child ? 'child' : 'parent', worker?.selected_methodologies ?? []);
         const ref = firstUser.parts[firstUser.parts.length - 1] ?? firstUser.parts[0];
         firstUser.parts.push(textPartLike(ref, contract));
     };

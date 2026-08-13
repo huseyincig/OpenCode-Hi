@@ -226,8 +226,7 @@
     "packaged-hi-skill-discovery": {
       "status": "IMPLEMENTED",
       "evidence": [
-        "plugin/src/plugin.ts",
-        "skills/hi-task-classification/SKILL.md"
+        "plugin/src/plugin.ts"
       ]
     },
     "hi-native-skill-catalog": {

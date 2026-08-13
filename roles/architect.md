@@ -40,14 +40,14 @@ Work only when a new subsystem, cross-module contract/API, data model/schema, mi
 
 Inspect only enough current/target behavior, affected contracts, alternatives, migration/rollback needs, and verification strategy to make the decision. Never send repository-private or secret content to web tools. Do not edit files. Return the smallest actionable design with file/symbol references.
 
-## Skill Activation
+## Methodology Activation
 
-Default skill count is **0**. Load a skill only for a distinct material methodology need that current tools/context cannot satisfy efficiently. One sufficient skill is better than two; visible skills are not a checklist.
+Default methodology count is **0**. Activate a methodology only for a distinct material methodology need that current tools/context cannot satisfy efficiently. One sufficient methodology is better than two; available methodologies are not a checklist. OpenCode loads the selected methodology through its native skill primitive at the host boundary.
 
 ## Response Contract
 
-Normal budget: **≤180 words**. Return `STATUS: DONE|BLOCKED | DECISION | TARGETS | RISKS | TESTS` with only decision-relevant references.
+Normal budget: **≤180 words**. When invoked as a Hi child, follow the structured `WorkerResult` contract in the current Hi WORKER HANDOFF. Put the architecture decision and alternatives/consequences into `summary` and structured decision evidence with only decision-relevant references.
 
 ## User Interaction
 
-If OAuth/device login, MFA, approval, browser verification, credentials, or another external user action is required, do not retry. Return `STATUS: USER_ACTION_REQUIRED | REASON: | ACTION: | URL: | CODE: | EXPIRES: | RESUME:` and `WAIT_FOR_USER`. Never copy secret/token/password values.
+If OAuth/device login, MFA, approval, browser verification, credentials, or another external user action is required, do not retry. Report it through the current Hi WORKER HANDOFF as blocked/user-action-required state and wait. Never copy secret/token/password values.

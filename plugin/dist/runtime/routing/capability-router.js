@@ -5,43 +5,33 @@ function thresholdFrom(value) {
 }
 export function routeCapabilities(intent, profile = { specialistThreshold: 'medium', reviewThreshold: 'medium' }) {
     const caps = [...new Set(intent.requiredCapabilities)];
-    const text = `${intent.taskKind} ${caps.join(' ')}`.toLowerCase();
+    const has = (name) => caps.includes(name);
     const specialistT = thresholdFrom(profile.specialistThreshold);
     const reviewT = thresholdFrom(profile.reviewThreshold);
-    // Security-sensitive IMPLEMENTATION remains owned by a write-capable implementer.
-    // Independent security assurance is a separate bounded review obligation/worker.
-    // A review-dominant security task may route directly to the read-only specialist.
-    if (/security|auth|permission|secret|vuln/.test(text)) {
+    if (has('security-review')) {
         if (intent.taskKind === 'review')
-            return { role: 'security-reviewer', category: 'critical', capabilities: caps, reason: ['security review dominant task'] };
-        return { role: 'coder', category: 'critical', capabilities: caps, reason: ['security-sensitive implementation remains write-capable; independent security review is separate'] };
+            return { role: 'security-reviewer', category: 'critical', capabilities: caps, reason: ['structured security-review capability dominates this review task'] };
+        return { role: 'coder', category: 'critical', capabilities: caps, reason: ['security-sensitive implementation remains write-capable; independent security review is a separate obligation'] };
     }
-    // QA-reviewer dispatch is gated by the profile's reviewThreshold.
-    // minimal profile = high threshold = only review-heavy tasks get QA.
-    if (/review|audit|qa|verify|test/.test(text) && !/implement|fix|build/.test(text)) {
+    const reviewDominant = intent.taskKind === 'review' || has('review') || has('qa-review') || has('independent-review');
+    const implementationDominant = intent.taskKind === 'implementation' || intent.taskKind === 'bug-fix' || has('implementation');
+    if (reviewDominant && !implementationDominant) {
         if (reviewT <= 1)
-            return { role: 'qa-reviewer', category: intent.risk === 'high' ? 'critical' : 'standard', capabilities: caps, reason: ['verification/review dominant task'] };
-        // balanced/thorough: QA dispatched for non-trivial review; minimal: only when high-risk.
-        if (intent.risk === 'high' || caps.includes('qa-review') || caps.includes('security-review'))
-            return { role: 'qa-reviewer', category: intent.risk === 'high' ? 'critical' : 'standard', capabilities: caps, reason: ['verification/review dominant task'] };
+            return { role: 'qa-reviewer', category: intent.risk === 'high' ? 'critical' : 'standard', capabilities: caps, reason: ['structured review capability dominates task'] };
+        if (intent.risk === 'high' || has('qa-review') || has('independent-review'))
+            return { role: 'qa-reviewer', category: intent.risk === 'high' ? 'critical' : 'standard', capabilities: caps, reason: ['structured review capability requires specialist'] };
     }
-    // Architect dispatch is gated by the profile's specialistThreshold.
-    // thorough profile = low threshold = architect for any cross-cutting,
-    // medium = architect for repo-wide or explicit design, minimal = only
-    // explicit architecture keyword.
-    if (/architecture|design|migration|repo-wide/.test(text) || intent.scope === 'repo-wide') {
-        if (specialistT <= 1)
-            return { role: 'architect', category: intent.risk === 'high' ? 'critical' : 'deep', capabilities: caps, reason: ['cross-cutting design or repo-wide scope'] };
-        if (specialistT === 2 && (intent.scope === 'repo-wide' || /architecture|design|migration/.test(text)))
-            return { role: 'architect', category: intent.risk === 'high' ? 'critical' : 'deep', capabilities: caps, reason: ['cross-cutting design or repo-wide scope'] };
+    const designDominant = has('design-exploration');
+    if (designDominant) {
+        if (specialistT <= 2)
+            return { role: 'architect', category: intent.risk === 'high' ? 'critical' : 'deep', capabilities: caps, reason: ['structured design capability justifies architect'] };
     }
-    if (/docs|documentation|readme/.test(text))
-        return { role: 'coder', category: 'quick', capabilities: caps, reason: ['documentation-dominant task'] };
+    if (intent.taskKind === 'performance' && intent.scope === 'repo-wide')
+        return { role: 'architect', category: 'deep', capabilities: caps, reason: ['repo-wide performance analysis requires architecture-level system context'] };
+    if (intent.scope === 'repo-wide' && intent.taskKind !== 'implementation')
+        return { role: 'repository-explorer', category: intent.risk === 'high' ? 'critical' : 'deep', capabilities: caps, reason: ['repo-wide non-implementation task starts with bounded repository context'] };
     const base = { role: 'coder', category: intent.scope === 'local' && intent.risk === 'low' ? 'quick' : intent.risk === 'high' ? 'critical' : 'standard', capabilities: caps, reason: ['default child implementation path'] };
-    // Deterministic evidence LLM skip: low-risk local-scope change with a
-    // small diff is verified by tests + typecheck + diff alone. Skip the
-    // qa-reviewer to avoid a deterministic-verifiable second LLM opinion.
-    if (intent.risk === 'low' && intent.scope === 'local' && caps.includes('verification')) {
+    if (intent.risk === 'low' && intent.scope === 'local' && has('verification')) {
         const trimmed = caps.filter(c => c !== 'review' && c !== 'verification');
         return { role: 'coder', category: 'quick', capabilities: trimmed.length ? trimmed : caps, reason: [...base.reason, 'deterministic-evidence-skips-qa-reviewer'] };
     }

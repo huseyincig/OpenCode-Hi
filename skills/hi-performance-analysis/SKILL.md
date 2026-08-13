@@ -16,10 +16,10 @@ description: Analyze measurable performance behavior and compare changes on the 
 
 ## Method
 
-1. Start from the explicit task contract and current repository evidence.
-2. Apply this methodology only to the smallest surface that satisfies its trigger.
-3. Prefer deterministic evidence and existing project conventions over speculative generalization.
-4. Stop when the exit condition is satisfied; do not take routing, topology, authority, completion, or STOP ownership.
+1. Define the performance claim or target and choose an observable metric at the real bottleneck boundary before optimizing.
+2. Establish a reproducible baseline and isolate where time, memory, I/O, allocation, contention, or repeated work is actually spent.
+3. Change the smallest proven bottleneck, preserving behavior, then re-measure under comparable conditions and inspect secondary regressions.
+4. Stop only when measured evidence supports the claimed improvement or a precise external or environmental limitation is documented.
 
 ## Ownership boundary
 

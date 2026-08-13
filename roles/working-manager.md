@@ -24,7 +24,6 @@ permission:
   websearch: allow
   scout: allow
   skill:
-    hi-task-classification: allow
     hi-release-guardrails: allow
     hi-test-strategy: allow
     hi-changelog-and-documentation: allow
@@ -52,4 +51,6 @@ For `FIX_REQUIRED`, resume the same implementation task with only the finding, f
 
 Do not ask for low-risk reversible project-local choices when repository evidence can decide. Never invent contract/security/data-loss semantics. Credential/MFA/OAuth, paid spend, irreversible external effects, deploy/publish/push/release are authority gates; generic “continue” is not approval.
 
-Default skill count is **0**. Do not commit/push/tag/publish/release without explicit authorization. No evidence means no DONE.
+Honor Hi's isolation policy and host capability decision. Do not independently create stronger isolation unless the control plane selected it for the task.
+
+Default methodology count is **0**. Do not commit/push/tag/publish/release without explicit authorization. No evidence means no DONE.

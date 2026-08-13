@@ -16,10 +16,10 @@ description: Run a bounded disproof-oriented challenge for high-stakes claims or
 
 ## Method
 
-1. Start from the explicit task contract and current repository evidence.
-2. Apply this methodology only to the smallest surface that satisfies its trigger.
-3. Prefer deterministic evidence and existing project conventions over speculative generalization.
-4. Stop when the exit condition is satisfied; do not take routing, topology, authority, completion, or STOP ownership.
+1. State the important claim to disprove and enumerate the strongest realistic assumptions, boundary conditions, misuse paths, and counterexamples that would invalidate it.
+2. Attack the claim with evidence from independent code paths, failure injection, contradictory inputs, alternate consumers, or boundary cases proportionate to risk.
+3. Treat a found counterexample as evidence to reconcile, not as a reason to expand scope indefinitely; distinguish product defect from unsupported requirement.
+4. Stop when material attack paths are exhausted for the stated risk or one unresolved counterexample blocks the claim.
 
 ## Ownership boundary
 

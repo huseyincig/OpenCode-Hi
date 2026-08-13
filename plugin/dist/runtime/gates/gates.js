@@ -10,6 +10,8 @@ else
     m.gates.push({ id, kind, summary, status, reason, updated_at: now }); }
 export function syncMissionGates(m) {
     m.gates ??= [];
+    const semanticPending = m.semantic_assessment?.status !== 'assessed';
+    upsert(m, 'gate-semantic-assessment', 'precondition', 'Natural-language intent must be normalized into the host-agnostic Hi semantic contract before execution', semanticPending ? 'blocked' : 'closed', semanticPending ? 'semantic-assessment-pending' : undefined);
     const authorityOpen = m.obligations.some(o => o.kind === 'authority' && o.status !== 'closed') || Boolean(m.authority?.pending || m.authority?.executing);
     upsert(m, 'gate-authority', 'user-authority', 'Privileged external effect requires exact authority and confirmed completion', authorityOpen ? (m.authority?.approved ? 'ready' : 'blocked') : 'closed', authorityOpen ? 'authority-open' : undefined);
     const verifyOpen = m.obligations.some(o => o.kind === 'verification' && o.status !== 'closed');

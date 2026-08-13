@@ -97,7 +97,7 @@ test('Gap #31: pending child worker blocks mission completion', () => {
   m.workers.push({
     id: 'w1', task_id: 't1', role: 'coder', category: 'standard',
     parent_session_id: 's1', model: 'host-default', fallbacks: [],
-    loaded_skills: [], methodologies: [], fingerprint: 'f1',
+    selected_methodologies: [], loaded_methodologies: [], methodologies: [], fingerprint: 'f1',
     status: 'busy',
   })
   // The completion adjudicator must report an active-worker reason.

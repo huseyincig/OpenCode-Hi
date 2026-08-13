@@ -4,10 +4,11 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { observeToolAfter, addEvidence } from '../dist/runtime/evidence/evidence-runtime.js'
 import { verificationSatisfied, latestBlockingVerificationEvidence } from '../dist/runtime/verification/policy.js'
 import { evaluateIdle } from '../dist/runtime/continuation/evaluator.js'
+import {startAssessedMission} from './helpers/semantic.mjs'
 
 function mission(){
   const s=new MissionStore(process.cwd())
-  const m=s.start(`s-${Math.random()}`,'fix login bug and test it')
+  const m=startAssessedMission(s,`s-${Math.random()}`,'opaque bug',{task_kind:'bug-fix',likely_verification:['targeted-tests']})
   m.evidence.last_mutation_at=Date.now()-10
   return m
 }

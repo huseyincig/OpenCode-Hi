@@ -16,10 +16,10 @@ description: Verify release metadata, package integrity, evidence, and authority
 
 ## Method
 
-1. Start from the explicit task contract and current repository evidence.
-2. Apply this methodology only to the smallest surface that satisfies its trigger.
-3. Prefer deterministic evidence and existing project conventions over speculative generalization.
-4. Stop when the exit condition is satisfied; do not take routing, topology, authority, completion, or STOP ownership.
+1. Define the exact release candidate identity and verify source cleanliness, version/package metadata, required quality gates, and declared external pending gates.
+2. Build distributable, source, and package artifacts deterministically and compare manifest, SBOM, hashes, package surface, dependency/install behavior, and source identity.
+3. Keep publish, tag, and push authority separate from preparation; before any authorized external mutation, prove the artifact being acted on is the verified candidate.
+4. After an authorized external action, verify the remote or registry state independently and stop only when local claims and observed external state agree.
 
 ## Ownership boundary
 

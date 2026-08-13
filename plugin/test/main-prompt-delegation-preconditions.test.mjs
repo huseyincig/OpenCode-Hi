@@ -8,6 +8,7 @@ import { resolveHiConfig } from '../dist/config/resolver.js'
 import { PACKAGED_HI_AGENTS } from '../dist/generated/agent-config.js'
 import { evaluateTaskPreconditions } from '../dist/runtime/readiness/preconditions.js'
 import { createTask } from '../dist/runtime/worker/worker-runtime.js'
+import { startAssessedMission } from './helpers/semantic.mjs'
 
 function runtime(client,hostConfig={agent:structuredClone(PACKAGED_HI_AGENTS)}){
   return new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:8})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>hostConfig)
@@ -24,7 +25,7 @@ function nativeClient(){
 
 test('real native specialist delegation starts explorer, architect and security reviewer as bounded OpenCode children',async()=>{
   for(const role of ['repository-explorer','architect','security-reviewer']){
-    const {client,creates,prompts}=nativeClient(),store=new MissionStore(),m=store.start(`specialist-${role}`,`delegate ${role}`)
+    const {client,creates,prompts}=nativeClient(),store=new MissionStore(),m=startAssessedMission(store,`specialist-${role}`,`opaque ${role} mission`)
     const out=await runtime(client).start(m,{role,objective:`bounded ${role} task`,requiredEvidence:[]})
     assert.ok(out.session_id)
     assert.equal(creates.length,1)
@@ -40,7 +41,7 @@ test('real native specialist delegation starts explorer, architect and security 
 })
 
 test('preflight RESOLVE blocks coder before spawn when effective native agent permissions deny edit',async()=>{
-  const {client,creates,prompts}=nativeClient(),store=new MissionStore(),m=store.start('deny-edit','implement parser fix')
+  const {client,creates,prompts}=nativeClient(),store=new MissionStore(),m=startAssessedMission(store,'deny-edit','opaque implementation')
   const agents=structuredClone(PACKAGED_HI_AGENTS);agents.coder.permission.edit='deny'
   await assert.rejects(()=>runtime(client,{agent:agents}).start(m,{role:'coder',objective:'implement parser fix'}),/RESOLVE: coder cannot implement because effective OpenCode edit permission is denied/)
   assert.equal(creates.length,0);assert.equal(prompts.length,0);assert.equal(m.tasks.length,0);assert.equal(m.workers.length,0)
@@ -48,15 +49,14 @@ test('preflight RESOLVE blocks coder before spawn when effective native agent pe
 })
 
 test('preflight RESOLVE prevents specialist recursion when colliding host agent allows task delegation',async()=>{
-  const {client,creates}=nativeClient(),store=new MissionStore(),m=store.start('recursive-agent','inspect architecture')
+  const {client,creates}=nativeClient(),store=new MissionStore(),m=startAssessedMission(store,'recursive-agent','opaque architecture review',{task_kind:'review',required_capabilities:['review']})
   const agents=structuredClone(PACKAGED_HI_AGENTS);agents.architect.permission.task='allow'
   await assert.rejects(()=>runtime(client,{agent:agents}).start(m,{role:'architect',objective:'inspect architecture'}),/RESOLVE: architect may recursively delegate via task/)
   assert.equal(creates.length,0)
 })
 
 test('contract-critical ambiguity blocks implementation but permits repository exploration to resolve it',async()=>{
-  const {client,creates}=nativeClient(),store=new MissionStore(),m=store.start('ambiguity-preflight','change auth contract')
-  m.intent.ambiguity='contract-critical'
+  const {client,creates}=nativeClient(),store=new MissionStore(),m=startAssessedMission(store,'ambiguity-preflight','opaque contract task',{ambiguity:'contract-critical'})
   await assert.rejects(()=>runtime(client).start(m,{role:'coder',objective:'implement ambiguous auth contract'}),/contract-critical ambiguity/i)
   assert.equal(creates.length,0)
   const out=await runtime(client).start(m,{role:'repository-explorer',objective:'resolve auth contract from repository evidence',requiredEvidence:[]})
@@ -64,7 +64,7 @@ test('contract-critical ambiguity blocks implementation but permits repository e
 })
 
 test('incomplete prerequisite is WAIT and queues without native child spawn',async()=>{
-  const {client,creates}=nativeClient(),store=new MissionStore(),m=store.start('dependency-wait-preflight','analyze after prerequisite')
+  const {client,creates}=nativeClient(),store=new MissionStore(),m=startAssessedMission(store,'dependency-wait-preflight','opaque dependent task')
   m.execution_mode='parallel'
   const prereq=createTask(m,{objective:'prerequisite',role:'repository-explorer',category:'quick'});prereq.status='running'
   const out=await runtime(client).start(m,{role:'architect',objective:'dependent design',dependencies:[prereq.id],requiredEvidence:[]})
@@ -75,7 +75,7 @@ test('incomplete prerequisite is WAIT and queues without native child spawn',asy
 })
 
 test('missing native worker capability is RESOLVE before creating task or trying model fallbacks',async()=>{
-  const client={session:{promptAsync:async()=>{throw new Error('must not prompt')}}},store=new MissionStore(),m=store.start('native-missing','explore repo')
+  const client={session:{promptAsync:async()=>{throw new Error('must not prompt')}}},store=new MissionStore(),m=startAssessedMission(store,'native-missing','opaque repository task',{task_kind:'review',required_capabilities:['repository-analysis']})
   await assert.rejects(()=>runtime(client).start(m,{role:'repository-explorer',objective:'explore repo'}),/session\.create is unavailable/)
   assert.equal(m.tasks.length,0);assert.equal(m.workers.length,0)
 })

@@ -1,0 +1,29 @@
+import type { HiMethodologySignalName } from '../../generated/methodology-policy.js';
+import type { NormalizedMissionIntent, Risk } from '../mission/types.js';
+import type { RepoContext } from './repo-context.js';
+export type SemanticMessageKind = 'mission' | 'amendment' | 'constraint' | 'verification' | 'stop' | 'resume' | 'non-material';
+export declare const SEMANTIC_CAPABILITIES: readonly ["implementation", "repository-analysis", "review", "verification", "independent-review", "security-review", "visual-qa", "design-exploration", "multi-stream-delegation", "source-verification", "qa-review", "dependency-change"];
+export type SemanticCapability = typeof SEMANTIC_CAPABILITIES[number];
+export declare const SEMANTIC_EXTERNAL_ACTIONS: readonly ["git-push", "release-create", "package-publish", "deploy"];
+export type SemanticExternalAction = typeof SEMANTIC_EXTERNAL_ACTIONS[number];
+export declare const SEMANTIC_VERIFICATION_KINDS: readonly ["targeted-tests", "typecheck", "lint", "build", "changed-surface-sanity", "visual-check", "review-evidence"];
+export type SemanticVerificationKind = typeof SEMANTIC_VERIFICATION_KINDS[number];
+export interface SemanticIntentAssessment {
+    material: boolean;
+    message_kind: SemanticMessageKind;
+    task_kind: 'implementation' | 'bug-fix' | 'review' | 'performance' | 'release-readiness';
+    scope: 'local' | 'multi-file' | 'repo-wide' | 'external' | 'multi-stream';
+    risk: Risk;
+    ambiguity: 'none' | 'resolvable' | 'contract-critical';
+    dependency_class: 'independent' | 'sequential' | 'external-gated' | 'unknown' | 'independent-multi';
+    required_capabilities: SemanticCapability[];
+    requested_external_actions: SemanticExternalAction[];
+    likely_verification: SemanticVerificationKind[];
+    likely_targets: string[];
+    intent_signals: HiMethodologySignalName[];
+    suppressed_intent_signals: HiMethodologySignalName[];
+}
+export declare function technicalTargets(text: string): string[];
+export declare function provisionalIntent(text: string, repo?: RepoContext): NormalizedMissionIntent;
+export declare function parseSemanticIntentAssessment(raw: unknown): SemanticIntentAssessment;
+export declare function assessedIntent(current: NormalizedMissionIntent, assessment: SemanticIntentAssessment): NormalizedMissionIntent;

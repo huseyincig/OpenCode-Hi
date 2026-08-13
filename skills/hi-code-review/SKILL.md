@@ -16,10 +16,10 @@ description: Independently review meaningful diffs against intent, behavior, ris
 
 ## Method
 
-1. Start from the explicit task contract and current repository evidence.
-2. Apply this methodology only to the smallest surface that satisfies its trigger.
-3. Prefer deterministic evidence and existing project conventions over speculative generalization.
-4. Stop when the exit condition is satisfied; do not take routing, topology, authority, completion, or STOP ownership.
+1. Reconstruct the intended change from task contract, diff, affected callers, and tests before judging individual lines.
+2. Review correctness, scope ownership, failure paths, state transitions, concurrency, compatibility, security-relevant boundaries, and missing verification proportionally to the change risk.
+3. Prefer concrete actionable findings with file or symbol evidence over stylistic commentary; distinguish blockers from improvements and questions.
+4. Re-review only the affected finding surface after fixes and stop when no unresolved material defect remains.
 
 ## Ownership boundary
 

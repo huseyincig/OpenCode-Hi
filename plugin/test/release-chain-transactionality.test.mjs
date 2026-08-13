@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
+import { startAssessedMission } from './helpers/semantic.mjs'
 import { createToolBeforeHook } from '../dist/hooks/tool-before.js'
 import { createToolAfterHook } from '../dist/hooks/tool-after.js'
 import { recordStagingInspection } from '../dist/runtime/safety/staging-safety.js'
@@ -9,7 +10,7 @@ import { recordStagingInspection } from '../dist/runtime/safety/staging-safety.j
 const H='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 async function verifyRemote(m,after){await after({sessionID:m.session_id,tool:'bash',args:{command:'git rev-parse HEAD'}},{stdout:H+'\n',metadata:{exit:0}});await after({sessionID:m.session_id,tool:'bash',args:{command:'git ls-remote origin refs/heads/main'}},{stdout:H+'\trefs/heads/main\n',metadata:{exit:0}})}
 
-function setup(){const store=new MissionStore('.'),m=store.start(`s-${Math.random()}`,'commit merge push and create release');m.changed_files=['src/a.ts'];return{store,m,before:createToolBeforeHook(store),after:createToolAfterHook(store)}}
+function setup(){const store=new MissionStore('.'),sid=`s-${Math.random()}`,m=startAssessedMission(store,sid,'opaque release mission',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',required_capabilities:['verification'],requested_external_actions:['git-push','release-create'],likely_verification:[]});m.changed_files=['src/a.ts'];return{store,m,before:createToolBeforeHook(store),after:createToolAfterHook(store)}}
 
 test('failed push blocks release create even when persistent/native permission would allow it',async()=>{
  const {m,before,after}=setup();await before({sessionID:m.session_id,tool:'bash',args:{command:'git push origin main'}},{args:{command:'git push origin main'}});await after({sessionID:m.session_id,tool:'bash',args:{command:'git push origin main'}},{stdout:'rejected',metadata:{exit:1}})

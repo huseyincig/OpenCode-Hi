@@ -32,13 +32,13 @@ Helper yalnız Hi-owned registration alanını yönetir ve kullanıcıya ait ilg
 
 ## Uyarlanabilir yürütme
 
-Altı eksen birbirinden ayrıdır: **rol, skill, model/araç, execution depth, context depth, isolation depth**. Yürütme yolları `DIRECT`, `EVIDENCE`, `PLANNED`, `ESCALATED`’dır. Açık ve düşük riskli lokal işte varsayılan yol assess → execute → targeted verify → STOP’tur; gerekli değilse planner, reviewer, memory, broad scan, ikinci model veya child agent kullanılmaz.
+Altı eksen birbirinden ayrıdır: **rol, methodology, model/araç, execution depth, context depth, isolation depth**. Yürütme yolları `DIRECT`, `EVIDENCE`, `PLANNED`, `ESCALATED`’dır. Açık ve düşük riskli lokal işte varsayılan yol assess → execute → targeted verify → STOP’tur; gerekli değilse planner, reviewer, memory, broad scan, ikinci model veya child agent kullanılmaz.
 
 Topology adaptive/single-agent/multi-agent modlarını destekler. Açık task override → project policy → Hi adaptive selection → host/provider default önceliği geçerlidir. Host permission denial hiçbir zaman aşılmaz.
 
-## Skills
+## Methodologies ve OpenCode skills
 
-29 canonical `hi-*` methodology skill paketlenir. Varsayılan aktif skill sayısı **0**’dır; normal iş 0–1 skill kullanır ve hard bound 3’tür. Skill’ler HOW metodolojisini taşır; routing, model selection, agent spawning, topology, authority, continuation, completion veya STOP sahibi değildir.
+**27 built-in `hi-*` methodology** paketlenir. Varsayılan aktif methodology sayısı **0**’dır; normal iş 0–1 methodology kullanır ve hard bound 3’tür. OpenCode ana hostunda seçilen methodology içeriği native `skill` primitive’i ile lazy-load edilir. OpenCode-visible bir skill otomatik olarak Hi-selectable methodology değildir. Methodology’ler HOW taşır; routing, model selection, agent spawning, topology, authority, continuation, completion veya STOP sahibi değildir.
 
 ## Bağlam, gizlilik ve insan kararı
 

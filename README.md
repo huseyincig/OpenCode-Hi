@@ -37,7 +37,7 @@ OpenCode-Hi owns mission interpretation, obligations, execution policy, topology
 
 OpenCode owns native host primitives: sessions, child sessions, model/provider execution, tools, permissions, shell, events, edits, and host lifecycle.
 
-Skills own methodology only. They do not own routing, topology, models, authority, continuation, completion, or STOP.
+Hi methodologies own reusable HOW only. OpenCode native skills are the lazy-loading host primitive for methodology content; neither methodologies nor native skills own routing, topology, models, authority, continuation, completion, or STOP.
 
 See [Architecture](docs/ARCHITECTURE.md), [Execution Policy](docs/EXECUTION-POLICY.md), [Context](docs/CONTEXT.md), and [Hosts](docs/HOSTS.md).
 
@@ -45,9 +45,9 @@ See [Architecture](docs/ARCHITECTURE.md), [Execution Policy](docs/EXECUTION-POLI
 
 Role, agent instance, model, and topology are independent concepts. The adaptive path defaults to one agent and one sufficient model when that is enough. Multi-role single-agent, multi-agent shared-model, role-mapped models, and repeated role instances are supported only when policy and host capability justify them.
 
-## Skills
+## Methodologies and OpenCode skills
 
-The canonical methodology namespace is `hi-*`. OpenCode-Hi ships the 29 migrated native skills with default-zero activation and bounded composition. Large skill references are accessed lazily and path-safely. See [Skills](docs/SKILLS.md).
+The canonical methodology namespace is `hi-*`. OpenCode-Hi ships **27 built-in methodologies** with default-zero activation, typical 0–1 composition, and a hard maximum of 3. On the primary OpenCode host, selected methodology content is loaded lazily through the native `skill` primitive; OpenCode-visible skills are not automatically Hi-selectable methodologies. Large methodology resources are accessed lazily and path-safely. See [Methodologies and OpenCode Skills](docs/SKILLS.md).
 
 ## Authority and human decisions
 

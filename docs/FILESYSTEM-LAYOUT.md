@@ -19,10 +19,18 @@ All other OpenCode-Hi-owned project data lives below:
 Canonical Hi-owned locations are:
 
 ```text
-.opencode/hi/policy/       # project execution/routing/authority policy
-.opencode/hi/artifacts/    # durable artifact handles and project-scoped results
+.opencode/hi/policy/                         # project execution/routing/authority policy
+.opencode/hi/policy/methodologies/           # admission policy for Hi project methodologies
+.opencode/hi/artifacts/                      # durable artifact handles and project-scoped results
 .opencode/hi/project-intelligence/
-.opencode/hi/provenance/   # setup/ownership/source binding
+.opencode/hi/provenance/                     # setup/ownership/source binding
+.opencode/hi/provenance/methodologies/       # evidence-backed project methodology provenance
+```
+
+Project-created reusable methodologies use OpenCode's native skill location and are never unpacked into a Hi-owned duplicate tree:
+
+```text
+.opencode/skills/hi-project-<purpose>/SKILL.md
 ```
 
 Responsibilities owned by OpenCode use OpenCode-native directories instead of Hi-specific substitutes:

@@ -10,7 +10,7 @@
     "Do not mount the Windows development source tree as the plugin under test.",
     "Install OpenCode-Hi from the exact Git commit/tag/plugin spec being validated.",
     "A config string alone is not PASS; verify actual plugin load, tools, agents, skills and runtime behavior.",
-    "Verify all 29 packaged Hi-native skills are discoverable through the Hi plugin skill path; no separate methodology plugin is required.",
+    "Verify all 27 built-in Hi methodologies are represented by discoverable OpenCode-native skill artifacts through the Hi plugin skill path; no separate methodology plugin is required.",
     "Record FAIL/BLOCKED explicitly; never infer runtime PASS from source inspection."
   ],
   "binding_required": [

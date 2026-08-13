@@ -6,11 +6,11 @@ export function minimumTeamFor(intent, verification, primaryMode = 'auto') {
     if (localImplementation || localReview) {
         const primary = primaryMode === 'auto' ? 'working-manager' : primaryMode;
         const reason = localReview ? 'local low-risk review is directly evidentiary' : 'local low-risk change is directly executable';
-        return { primary, direct: primary === 'working-manager', roles: [], reason: [reason, 'minimum-team:0-child', primaryMode === 'auto' ? 'primary:auto' : `primary:forced-${primary}`] };
+        return { primary, direct: primary === 'working-manager', roles: [], reason: [reason, 'minimum-team:0-child', primaryMode === 'auto' ? 'primary:auto-working-manager' : `primary:forced-${primary}`] };
     }
     const roles = [];
     const implementation = intent.taskKind !== 'review' && intent.taskKind !== 'release-readiness';
-    if (intent.scope === 'repo-wide' && (caps.has('design-exploration') || /architecture|design|migration/i.test(intent.objective)))
+    if (intent.scope === 'repo-wide' && caps.has('design-exploration'))
         roles.push('architect');
     if (intent.taskKind === 'bug-fix' && intent.scope !== 'local')
         roles.push('repository-explorer');
@@ -23,7 +23,6 @@ export function minimumTeamFor(intent, verification, primaryMode = 'auto') {
     else if (intent.taskKind === 'review' && reviewRequired)
         roles.push('qa-reviewer');
     const unique = [...new Set(roles)];
-    const automatic = unique.length > 1 || intent.scope === 'repo-wide' || intent.scope === 'multi-stream' ? 'manager' : 'working-manager';
-    const primary = primaryMode === 'auto' ? automatic : primaryMode;
-    return { primary, direct: false, roles: unique, reason: [`minimum-team:${unique.length}-child`, reviewRequired ? 'independent-review-required' : 'deterministic-evidence-preferred', primaryMode === 'auto' ? 'primary:auto' : `primary:forced-${primary}`] };
+    const primary = primaryMode === 'auto' ? 'working-manager' : primaryMode;
+    return { primary, direct: false, roles: unique, reason: [`minimum-team:${unique.length}-child`, reviewRequired ? 'independent-review-required' : 'deterministic-evidence-preferred', primaryMode === 'auto' ? 'primary:auto-working-manager' : `primary:forced-${primary}`] };
 }

@@ -11,12 +11,13 @@ import {createTask,createWorker} from '../dist/runtime/worker/worker-runtime.js'
 import {collectRepoContext} from '../dist/runtime/intent/repo-context.js'
 import {replanVerificationForChangedSurface,verificationSatisfied} from '../dist/runtime/verification/policy.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
+import {startAssessedMission} from './helpers/semantic.mjs'
 
 function repo(){const root=mkdtempSync(join(tmpdir(),'hi-replan-'));writeFileSync(join(root,'package.json'),JSON.stringify({scripts:{test:'vitest run',typecheck:'tsc --noEmit',build:'vite build'}}));mkdirSync(join(root,'src','auth'),{recursive:true});writeFileSync(join(root,'src/auth/token.ts'),'x');writeFileSync(join(root,'src/other.ts'),'x');writeFileSync(join(root,'src/extra.ts'),'x');return root}
 function runtime(root){return new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),root,root,()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
 
 test('unexpected multi-file changed surface strengthens a local verification contract with one static check',()=>{
-  const root=repo(),s=new MissionStore(),m=s.start('p','fix the bug in src/other.ts and test it')
+  const root=repo(),s=new MissionStore(),m=startAssessedMission(s,'p','opaque bug',{task_kind:'bug-fix',risk:'low',likely_verification:['targeted-tests'],likely_targets:['src/other.ts']})
   m.risk='low';m.intent.risk='low';m.verification_policy={requiredKinds:['targeted-tests'],requireFresh:true,requireReview:false,allowWorkerReportedEvidence:true}
   const t=createTask(m,{objective:'fix token',role:'coder',category:'quick',scope:['src/other.ts'],requiredEvidence:['targeted-tests']})
   const r=replanVerificationForChangedSurface(m,t,['src/other.ts','src/extra.ts'],collectRepoContext(root))
@@ -26,7 +27,7 @@ test('unexpected multi-file changed surface strengthens a local verification con
 })
 
 test('sensitive changed surface escalates risk and requires static plus build evidence',()=>{
-  const root=repo(),s=new MissionStore(),m=s.start('p','fix the bug in src/other.ts and test it')
+  const root=repo(),s=new MissionStore(),m=startAssessedMission(s,'p','opaque bug',{task_kind:'bug-fix',risk:'low',likely_verification:['targeted-tests'],likely_targets:['src/other.ts']})
   m.risk='low';m.intent.risk='low';m.verification_policy={requiredKinds:['targeted-tests'],requireFresh:true,requireReview:false,allowWorkerReportedEvidence:true}
   const v=m.obligations.find(o=>o.kind==='verification'); if(v)v.requiredEvidence=['targeted-tests']
   const t=createTask(m,{objective:'fix',role:'coder',category:'quick',scope:['src/other.ts'],requiredEvidence:['targeted-tests'],obligationIds:v?[v.id]:[]})
@@ -41,7 +42,7 @@ test('sensitive changed surface escalates risk and requires static plus build ev
 })
 
 test('worker DONE with broader changed_files cannot close verification under the stale narrow plan',()=>{
-  const root=repo(),s=new MissionStore(),m=s.start('p','fix the bug in src/other.ts and test it')
+  const root=repo(),s=new MissionStore(),m=startAssessedMission(s,'p','opaque bug',{task_kind:'bug-fix',risk:'low',likely_verification:['targeted-tests'],likely_targets:['src/other.ts']})
   m.risk='low';m.intent.risk='low';m.verification_policy={requiredKinds:['targeted-tests'],requireFresh:true,requireReview:false,allowWorkerReportedEvidence:true}
   const v=m.obligations.find(o=>o.kind==='verification'); if(v)v.requiredEvidence=['targeted-tests']
   const t=createTask(m,{objective:'fix',role:'coder',category:'quick',scope:['src/other.ts'],requiredEvidence:['targeted-tests'],obligationIds:v?[v.id]:[]})
@@ -55,7 +56,7 @@ test('worker DONE with broader changed_files cannot close verification under the
 })
 
 test('follow-up reviewer defaults to actual changed surface and replanned required evidence',async()=>{
-  const root=repo(),s=new MissionStore(root),m=s.start('p','fix the bug in src/other.ts and test it')
+  const root=repo(),s=new MissionStore(root),m=startAssessedMission(s,'p','opaque bug',{task_kind:'bug-fix',risk:'low',likely_verification:['targeted-tests'],likely_targets:['src/other.ts']})
   m.changed_files=['src/other.ts','src/auth/token.ts']
   m.verification_policy.requiredKinds=['targeted-tests','typecheck','build']
   const prompts=[];let seq=0

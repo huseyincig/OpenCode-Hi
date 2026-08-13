@@ -156,9 +156,9 @@ Preserve or deliberately evolve:
 - Model/provider routing
 - Native OpenCode child sessions
 - Native OpenCode agent integration
-- Skill methodology separation
-- Default-zero skill activation
-- Bounded skill loading
+- Methodology / host-skill separation
+- Default-zero methodology activation
+- Bounded native skill loading
 - Mission survival state during compaction
 - External-action transaction semantics
 - Permission awareness
@@ -468,7 +468,7 @@ OpenCode-Hi owns:
 - task state
 - execution path
 - role selection
-- skill activation
+- methodology activation
 - topology decisions
 - adaptive model selection
 - adaptive tool selection
@@ -483,11 +483,11 @@ OpenCode-Hi owns:
 - completion adjudication
 - STOP
 
-Skills own:
+Methodologies own:
 
 HOW
 
-Skills MUST NOT own:
+Methodologies and their host-native skill loading MUST NOT own:
 
 - routing
 - model selection
@@ -1239,17 +1239,14 @@ evidence.
 
 
 ================================================================================
-25. SKILL SYSTEM MIGRATION
+25. METHODOLOGY SYSTEM
 ================================================================================
 
-The existing 29 native HHC skills must be preserved initially and migrated to
-the hi-* namespace.
+The canonical built-in inventory is 27 Hi methodologies. `hi-task-classification` and `hi-workspace-isolation` are retired because classification and isolation belong to the control plane. OpenCode native `skill` is the primary-host lazy-loading primitive, not the Hi product concept.
 
-Do NOT simply rename them.
+Every methodology must undergo a full executable contract audit.
 
-Every skill must undergo a full recalibration audit.
-
-For every skill determine:
+For every methodology determine:
 
 - canonical name
 - purpose
@@ -1261,32 +1258,31 @@ For every skill determine:
 - context cost
 - execution cost
 - composition cost
-- useful coexistence with other skills
-- conflicting skill combinations
-- maximum useful simultaneous skill count
+- useful coexistence with other methodologies
+- conflicting methodology combinations
+- maximum useful simultaneous methodology count
 - escalation relationship
 - do-not-trigger conditions
 - exit condition
 - resource requirements
 - verification relationship
 
-Create a machine-readable skill profile if useful and not redundant with the
-existing runtime.
+Use `data/hi-methodologies.json` as the canonical machine-readable methodology policy; generated runtime views are derived and must not become a second truth.
 
 Do not create a configuration explosion.
 
 
 ================================================================================
-26. DEFAULT-ZERO SKILL ACTIVATION
+26. DEFAULT-ZERO METHODOLOGY ACTIVATION
 ================================================================================
 
 Preserve the existing principle:
 
-DEFAULT SKILL COUNT = 0
+DEFAULT METHODOLOGY COUNT = 0
 
 Typical task:
 
-0 or 1 skill
+0 or 1 methodology
 
 Complex task:
 
@@ -1294,14 +1290,14 @@ more only when justified
 
 Hard upper bound should remain small and be validated against actual need.
 
-Available skill
-≠ activated skill
+Available methodology
+≠ activated methodology
 
-Skill activation must be conditional.
+Methodology activation must be conditional. OpenCode-visible skill discovery does not grant Hi auto-selection authority.
 
 
 ================================================================================
-27. SKILL CONTRACT
+27. METHODOLOGY CONTRACT
 ================================================================================
 
 Each skill should conceptually define:
@@ -1352,13 +1348,12 @@ activated more often.
 
 Likely strongly affected skills include:
 
-hi-task-classification
 hi-repository-analysis
 hi-iterative-retrieval
 hi-implementation-planning
 hi-test-strategy
 hi-debugging-root-cause
-hi-workspace-isolation
+Adaptive Isolation control-plane policy
 hi-security-review
 hi-design-discovery
 hi-source-driven-development
@@ -2090,7 +2085,7 @@ Sometimes stronger isolation is cheaper and safer.
 
 The migrated:
 
-hi-workspace-isolation
+Adaptive Isolation control-plane policy
 
 skill should remain methodology.
 
@@ -2866,14 +2861,14 @@ Run regressions.
 
 
 ================================================================================
-79. PHASE 6 — SKILL AUDIT AND RECALIBRATION
+79. PHASE 6 — METHODOLOGY AUDIT AND RECALIBRATION
 ================================================================================
 
-Audit all 29 migrated skills.
+Audit all 27 built-in methodologies.
 
 Do not postpone this until after the architecture is complete.
 
-Produce for every skill:
+Produce for every methodology:
 
 - trigger policy
 - priority/weight
@@ -3039,12 +3034,9 @@ external source
 → reusable methodology
 → temporary evidence
 
-Implement skill merge/new-skill decision logic at the appropriate layer.
+Do not classify arbitrary external prose with a reusable-methodology keyword heuristic. Facts belong to Project Intelligence, proof to Evidence, reusable HOW to a structured methodology candidate, and control decisions to Hi Runtime Policy.
 
-Do not create uncontrolled self-modifying skills.
-
-Changes to the project skill set must be explicit repository modifications with
-tests/provenance, not invisible runtime mutation.
+Project methodology learning requires structured observations bound to fresh evidence and repeated independent task evidence before READY. Admission of `hi-project-*` requires coherent native SKILL + Hi policy + hash-bound provenance. One observation never creates a methodology.
 
 
 ================================================================================
@@ -3357,16 +3349,16 @@ mission state does not accidentally persist plaintext
 
 
 ================================================================================
-108. SKILL ACCEPTANCE
+108. METHODOLOGY ACCEPTANCE
 ================================================================================
 
 Prove:
 
 - hi-* names are canonical
-- all 29 baseline skills were audited
+- all 27 built-in methodologies were audited
 - weights/triggers were recalibrated
 - default-zero behavior remains
-- duplicate new skills were not introduced unnecessarily
+- duplicate methodologies were not introduced unnecessarily
 - resources are lazy
 - resource paths are safe
 
@@ -3380,14 +3372,14 @@ Test at least:
 A. User provides project documentation containing project facts.
 
 Expected:
-Project Intelligence update, not new skill.
+Project Intelligence update, not a new methodology.
 
-B. User provides reusable methodology that overlaps an existing skill.
+B. Repeated evidence describes a reusable project procedure already covered by an admitted methodology.
 
 Expected:
-merge/enrich existing skill.
+no duplicate methodology candidate/admission.
 
-C. User provides genuinely new reusable methodology.
+C. Repeated independent evidence supports a genuinely new project-specific reusable methodology.
 
 Expected:
 new skill only if trigger/do-not-trigger/exit contracts can be established.
@@ -3734,7 +3726,7 @@ Required:
 - v58 core behavior preserved
 - OpenCode-Hi identity migration complete
 - canonical hi-* skill migration complete
-- all 29 skills recalibrated
+- all 27 built-in methodologies recalibrated
 - Adaptive Execution operational
 - Direct path proven
 - agent/model topology operational
@@ -3919,8 +3911,8 @@ Is trivial work actually minimal?
 ROLE
 Is role selection conditional?
 
-SKILL
-Is skill activation default-zero?
+METHODOLOGY
+Is methodology activation default-zero and native loading lazy?
 
 MODEL
 Is stronger-model use evidence-gated?
@@ -3989,7 +3981,7 @@ EFFICIENCY
 Does optimization save more than it costs?
 
 SKILLS
-Were all 29 skills genuinely recalibrated instead of renamed?
+Were all 27 built-in methodologies genuinely recalibrated instead of renamed?
 
 
 ================================================================================
@@ -4235,7 +4227,7 @@ Begin in this exact order:
 7. map existing v58 architectural ownership;
 8. migrate product identity to OpenCode-Hi;
 9. migrate hhc-* skills to hi-*;
-10. audit and recalibrate all 29 skills;
+10. audit and recalibrate all 27 built-in methodologies;
 11. verify post-migration behavioral parity;
 12. implement Adaptive Execution Policy;
 13. integrate Execution Topology Policy;

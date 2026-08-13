@@ -9,11 +9,6 @@ export interface AdaptiveExecutionDecision {
         mode: 'single-role' | 'multi-role';
         reason: string;
     };
-    skills: {
-        max: number;
-        defaultZero: true;
-        reason: string;
-    };
     capability: {
         model: 'host-default' | 'adaptive' | 'stronger-if-needed';
         tools: 'minimum-sufficient';

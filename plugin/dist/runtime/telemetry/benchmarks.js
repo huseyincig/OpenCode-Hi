@@ -5,7 +5,7 @@ import { extractTypeScriptSemanticContext } from '../semantic/typescript-context
 import { deriveEfficiencyMetrics } from './execution.js';
 const baseIntent = (overrides) => ({
     objective: 'benchmark', taskKind: 'implementation', risk: 'low', scope: 'local', ambiguity: 'none', dependencyClass: 'independent',
-    requiredCapabilities: [], likelyVerification: ['changed-surface-sanity'], avoid: [], ...overrides,
+    requiredCapabilities: [], requestedExternalActions: [], likelyVerification: ['changed-surface-sanity'], avoid: [], ...overrides,
 });
 const telemetry = (o) => ({
     taskClass: 'benchmark', risk: 'low', executionPath: 'DIRECT', roles: ['coder'], skills: [], models: ['auto'], tools: [], topology: o.agentCount > 1 ? 'multi-agent' : 'single-agent',

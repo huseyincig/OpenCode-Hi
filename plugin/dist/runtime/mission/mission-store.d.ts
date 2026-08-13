@@ -1,12 +1,16 @@
+import { type SemanticIntentAssessment } from '../intent/semantic-assessment.js';
 import { type NativeProjectContext } from '../intent/repo-context.js';
 import { type TopologyPolicyConfig } from '../execution/topology-policy.js';
 import type { MissionState } from './types.js';
 export declare class MissionStore {
     #private;
     constructor(root?: string, nativeContext?: NativeProjectContext, getPrimaryMode?: () => 'auto' | 'working-manager' | 'manager', getTopology?: () => TopologyPolicyConfig);
-    start(sessionID: string, userText: string): MissionState;
+    start(sessionID: string, userText: string, observedPrimary?: MissionState['primary_mode']): MissionState;
+    applyInitialSemanticAssessment(sessionID: string, assessment: SemanticIntentAssessment): MissionState;
+    bindObservedPrimary(sessionID: string, primary: MissionState['primary_mode']): void;
     get(sessionID: string): MissionState | undefined;
-    amend(sessionID: string, userText: string, kind?: 'amend' | 'verification' | 'constraint'): void;
+    beginFollowupSemanticAssessment(sessionID: string, userText: string): MissionState;
+    applyFollowupSemanticAssessment(sessionID: string, assessment: SemanticIntentAssessment): MissionState;
     restore(missions: MissionState[], uncleanShutdown?: boolean): void;
     remove(sessionID: string): void;
     stop(sessionID: string, reason?: string): void;

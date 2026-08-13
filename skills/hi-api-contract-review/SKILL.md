@@ -16,10 +16,10 @@ description: Review changed APIs, events, schemas, and compatibility contracts.
 
 ## Method
 
-1. Start from the explicit task contract and current repository evidence.
-2. Apply this methodology only to the smallest surface that satisfies its trigger.
-3. Prefer deterministic evidence and existing project conventions over speculative generalization.
-4. Stop when the exit condition is satisfied; do not take routing, topology, authority, completion, or STOP ownership.
+1. Identify the changed contract boundary and enumerate affected producers, consumers, version/compatibility expectations, serialization shape, errors, and side effects.
+2. Compare old and new observable behavior using code, schemas, fixtures, tests, and real call sites; distinguish intentional breakage from accidental drift.
+3. Check backward/forward compatibility where the product promises it, including optional/required fields, defaults, ordering, idempotency, error semantics, and event/API evolution.
+4. Produce findings tied to concrete consumers or evidence and stop when every material compatibility risk is resolved, explicitly accepted, or precisely blocked.
 
 ## Ownership boundary
 

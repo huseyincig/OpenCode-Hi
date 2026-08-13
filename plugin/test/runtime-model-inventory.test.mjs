@@ -4,6 +4,7 @@ import { mkdtempSync, rmSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import HiPlugin from '../dist/plugin.js'
+import { assessPluginMission } from './helpers/semantic.mjs'
 
 test('runtime inventory -> project routing -> child uses effective per-role model', async () => {
   const dir=mkdtempSync(join(tmpdir(),'hi-runtime-model-'))
@@ -29,7 +30,7 @@ test('runtime inventory -> project routing -> child uses effective per-role mode
     await hooks['chat.message'](
       {sessionID:'parent-1',message:{role:'user',parts:[{type:'text',text:'fix the login bug and test it'}]}},
       {parts:[]},
-    )
+    ); await assessPluginMission(hooks,'parent-1',{task_kind:'bug-fix',risk:'low',required_capabilities:['implementation'],likely_verification:['targeted-tests']})
 
     assert.equal(existsSync(join(dir,'.opencode','hi','policy','routing.json')),false,'runtime inventory must not silently persist project policy')
 
@@ -44,8 +45,7 @@ test('runtime inventory -> project routing -> child uses effective per-role mode
     assert.equal(prompted.length,1)
     assert.equal(prompted[0].body.model.providerID,'opencode-go')
     assert.equal(prompted[0].body.model.modelID,'deepseek-v4-pro')
-    assert.match(prompted[0].body.parts[0].text,/smallest repo-native check/i)
-    assert.match(prompted[0].body.parts[0].text,/do not run a full repository suite/i)
+    assert.match(prompted[0].body.parts[0].text,/Verification contract: targeted-tests/i)
     await hooks.dispose?.()
   } finally { rmSync(dir,{recursive:true,force:true}) }
 })

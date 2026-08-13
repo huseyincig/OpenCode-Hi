@@ -2,6 +2,7 @@ import type { HiConfig } from '../../config/schema.js';
 import type { Category, MissionState, WorkerResult } from '../mission/types.js';
 import { type AvailableModel } from '../routing/model-resolver.js';
 import { BackgroundRegistry } from '../background/registry.js';
+import { type OpenCodeLifecycleEndpoint } from '../../opencode/client-adapter.js';
 import { ConcurrencyScheduler } from '../scheduler/concurrency.js';
 import type { RuntimeSignalSink } from '../events/event-sink.js';
 export interface StartTaskInput {
@@ -29,8 +30,10 @@ export declare class TaskRuntime {
     private getModels;
     private getHostConfig;
     private events?;
-    constructor(client: any, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined);
+    private lifecycle;
+    constructor(client: any, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined, lifecycle?: OpenCodeLifecycleEndpoint);
     private sendProviderPrompt;
+    private abortNativeSession;
     private captureNativeDiff;
     reconcileNativeResult(m: MissionState, workerID: string, result: WorkerResult): Promise<WorkerResult>;
     noteEffectiveModel(m: MissionState, workerID: string, observed?: {
@@ -54,7 +57,7 @@ export declare class TaskRuntime {
         worker_id: string;
         session_id?: string;
         model?: string;
-        skills: string[];
+        methodologies: string[];
         selection_reason: string[];
         readiness: 'READY' | 'WAIT';
         preconditions: Array<{
@@ -63,6 +66,8 @@ export declare class TaskRuntime {
             reason: string;
         }>;
     }>;
+    pauseForSemanticAssessment(m: MissionState): Promise<number>;
+    resumeAfterSemanticAssessment(m: MissionState, messageKind: string): Promise<number>;
     reconcileUserConstraint(m: MissionState, text: string): Promise<number>;
     noteNativeWriteSet(m: MissionState, workerID: string, files: string[], source?: string, stateHash?: string): Promise<void>;
     noteNativeStatus(m: MissionState, workerID: string, status: string): void;

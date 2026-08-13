@@ -1,13 +1,29 @@
-import { mkdirSync, writeFileSync } from 'node:fs'
-import { dirname } from 'node:path'
-import { projectIntelligencePath } from '../storage/ownership.js'
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { hiProjectRoot, projectIntelligencePath } from '../storage/ownership.js'
 
 export type ProjectPatternLifecycle='ACTIVE'|'SUPERSEDED'|'ARCHIVED'
 export type ProjectPatternFreshness='FRESH'|'POTENTIALLY_STALE'
 export interface ProjectPattern{id:string;statement:string;sourceFiles:string[];sourceHashes:Record<string,string>;observedCommit?:string;confidence:number;freshness:ProjectPatternFreshness;lifecycle:ProjectPatternLifecycle;updatedAt:number}
+
+function validPattern(raw:unknown):raw is ProjectPattern{
+  if(!raw||typeof raw!=='object'||Array.isArray(raw))return false
+  const v=raw as Record<string,unknown>
+  return typeof v.id==='string'&&typeof v.statement==='string'&&Array.isArray(v.sourceFiles)&&v.sourceFiles.every(x=>typeof x==='string')&&Boolean(v.sourceHashes)&&typeof v.sourceHashes==='object'&&!Array.isArray(v.sourceHashes)&&Object.values(v.sourceHashes as Record<string,unknown>).every(x=>typeof x==='string')&&typeof v.confidence==='number'&&['FRESH','POTENTIALLY_STALE'].includes(String(v.freshness))&&['ACTIVE','SUPERSEDED','ARCHIVED'].includes(String(v.lifecycle))&&typeof v.updatedAt==='number'
+}
+
 export class ProjectIntelligenceStore{
   readonly #patterns=new Map<string,ProjectPattern>()
-  constructor(readonly projectRoot?:string){}
+  constructor(readonly projectRoot?:string){this.#load()}
+  #load():void{
+    if(!this.projectRoot)return
+    const dir=join(hiProjectRoot(this.projectRoot),'project-intelligence','patterns')
+    if(!existsSync(dir))return
+    for(const entry of readdirSync(dir,{withFileTypes:true})){
+      if(!entry.isFile()||!entry.name.endsWith('.json'))continue
+      try{const raw=JSON.parse(readFileSync(join(dir,entry.name),'utf8'));if(validPattern(raw)&&entry.name===`${raw.id}.json`)this.#patterns.set(raw.id,{...raw,sourceFiles:[...raw.sourceFiles],sourceHashes:{...raw.sourceHashes}})}catch{}
+    }
+  }
   #persist(pattern:ProjectPattern):void{if(!this.projectRoot)return;const path=projectIntelligencePath(this.projectRoot,pattern.id);mkdirSync(dirname(path),{recursive:true});writeFileSync(path,JSON.stringify(pattern,null,2)+'\n','utf8')}
   upsert(pattern:ProjectPattern):void{const copy={...pattern,sourceFiles:[...pattern.sourceFiles],sourceHashes:{...pattern.sourceHashes}};this.#patterns.set(pattern.id,copy);this.#persist(copy)}
   get(id:string):ProjectPattern|undefined{const p=this.#patterns.get(id);return p?{...p,sourceFiles:[...p.sourceFiles],sourceHashes:{...p.sourceHashes}}:undefined}

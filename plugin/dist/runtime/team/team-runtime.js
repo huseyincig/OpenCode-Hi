@@ -106,6 +106,13 @@ export class TeamRuntime {
         item.evidence = input.evidence?.slice(0, 8) ?? item.evidence;
         item.updated_at = now;
     } appendLedger(m, 'team.board.updated', { payload: { team_id: teamID, item_id: item.id, status: item.status, owner: item.owner } }); return item; }
+    adoptSemanticGeneration(m) { let n = 0; for (const t of this.list(m.mission_id)) {
+        if (t.status !== 'active')
+            continue;
+        t.mission_generation = m.generation;
+        appendLedger(m, 'team.semantic-paused', { payload: { team_id: t.id, generation: m.generation } });
+        n++;
+    } return n; }
     async shutdown(m, teamID, reason = 'explicit') { const t = this.#teams.get(teamID); if (!t)
         return false; this.assertMissionOwner(m, t); if (t.status === 'shutdown')
         return true; t.status = 'shutdown'; t.shutdown_reason = reason; const workers = [...t.worker_ids]; t.worker_ids = []; t.member_workers = {}; if (m.mission_id === t.mission_id && m.execution_mode === 'team')

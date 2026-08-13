@@ -3,7 +3,7 @@ const MAX_STRING = 600;
 const MAX_ARRAY = 24;
 const MAX_KEYS = 32;
 const MAX_DEPTH = 3;
-const CRITICAL = new Set(['mission.started', 'mission.completed', 'mission.stopped', 'user.action.required', 'authority.execution.uncertain']);
+const CRITICAL = new Set(['mission.provisional', 'semantic.assessed', 'mission.completed', 'mission.stopped', 'user.action.required', 'authority.execution.uncertain']);
 function id() { return `e_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`; }
 function bounded(value, depth = 0) {
     if (value === null || value === undefined || typeof value === 'number' || typeof value === 'boolean')

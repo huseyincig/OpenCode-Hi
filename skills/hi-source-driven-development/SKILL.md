@@ -16,10 +16,10 @@ description: Inspect authoritative source before adapting an external implementa
 
 ## Method
 
-1. Start from the explicit task contract and current repository evidence.
-2. Apply this methodology only to the smallest surface that satisfies its trigger.
-3. Prefer deterministic evidence and existing project conventions over speculative generalization.
-4. Stop when the exit condition is satisfied; do not take routing, topology, authority, completion, or STOP ownership.
+1. Identify the exact external fact that can materially change implementation and select the most authoritative current source: official docs, specification, upstream source, release/tag, or generated API contract.
+2. Extract only the version-relevant behavior needed for the task and distinguish normative contract from examples, implementation detail, issues, or speculation.
+3. Map that verified external behavior to the local integration points and record any version or capability assumptions that must remain explicit.
+4. Stop when the implementation decision is supported by traceable current source evidence; do not retain third-party wording or architecture where only the behavior is needed.
 
 ## Ownership boundary
 

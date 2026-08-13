@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { execFileSync } from 'node:child_process'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
+import { startAssessedMission } from './helpers/semantic.mjs'
 import { createToolBeforeHook } from '../dist/hooks/tool-before.js'
 import { createToolAfterHook } from '../dist/hooks/tool-after.js'
 import { resolveUncertainAuthority } from '../dist/runtime/safety/authority.js'
@@ -20,7 +21,7 @@ test('real bare-remote push with lost ACK is not blindly retried and is reconcil
   execFileSync('sh',['-c','printf x > tracked.txt'],{cwd:work})
   git(work,'add','tracked.txt'); git(work,'commit','-m','initial'); git(work,'remote','add','origin',remote)
 
-  const store=new MissionStore(root), m=store.start('real-remote-session','push release')
+  const store=new MissionStore(root), m=startAssessedMission(store,'real-remote-session','push release',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',requested_external_actions:['git-push']})
   const before=createToolBeforeHook(store,undefined,work), after=createToolAfterHook(store,undefined,undefined,work)
   const cmd='git push origin main'
   await before({sessionID:m.session_id,tool:'bash',args:{command:cmd,cwd:work}},{args:{command:cmd,cwd:work}})

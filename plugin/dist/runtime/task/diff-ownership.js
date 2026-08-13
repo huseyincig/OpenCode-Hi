@@ -12,19 +12,19 @@ function autoRelated(file, scope) {
         return true;
     return false;
 }
-export function assessChangedFileOwnership(scopeInput, changedInput, scopeExpansions = []) {
+export function assessChangedFileOwnership(scopeInput, changedInput, scopeExpansions = [], authority = 'worker-proposal') {
     const changed = [...new Set(changedInput.map(norm).filter(Boolean))], scope = [...new Set(scopeInput.map(norm).filter(Boolean))];
     if (!scope.length)
         return { outside: [], accepted: [], collateral: [] };
     const outside = changed.filter(file => !scope.some(s => within(file, s)));
     const declared = new Map(scopeExpansions.map(x => [norm(x.file), x])), accepted = [], collateral = [];
     for (const file of outside) {
-        const claim = declared.get(file);
-        if (autoRelated(file, scope) || (claim?.necessary === true && String(claim.reason ?? '').trim().length >= 8))
+        const claim = declared.get(file), controlPlaneAuthorized = authority === 'control-plane' && claim?.necessary === true;
+        if (autoRelated(file, scope) || controlPlaneAuthorized)
             accepted.push(file);
         else
             collateral.push(file);
     }
     return { outside, accepted, collateral };
 }
-export function assessDiffOwnership(task, result) { return assessChangedFileOwnership(task.scope ?? [], result.changed_files, result.scope_expansions ?? []); }
+export function assessDiffOwnership(task, result) { return assessChangedFileOwnership(task.scope ?? [], result.changed_files, result.scope_expansions ?? [], 'worker-proposal'); }

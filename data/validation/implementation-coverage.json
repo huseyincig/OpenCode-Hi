@@ -464,8 +464,8 @@
     },
     "CHK-029": {
       "id": "CHK-029",
-      "section": "Skills / Hi Native Skills",
-      "item": "29 packaged Hi-native methodology skills",
+      "section": "Methodologies / OpenCode Native Skills",
+      "item": "27 built-in Hi methodologies loaded through OpenCode native skills",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/skills/registry.ts",
@@ -477,7 +477,7 @@
     },
     "CHK-030": {
       "id": "CHK-030",
-      "section": "Skills / Hi Native Skills",
+      "section": "Methodologies / OpenCode Native Skills",
       "item": "native methodology catalog and source provenance",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -490,7 +490,7 @@
     },
     "CHK-031": {
       "id": "CHK-031",
-      "section": "Skills / Hi Native Skills",
+      "section": "Methodologies / OpenCode Native Skills",
       "item": "skill discovery",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -503,7 +503,7 @@
     },
     "CHK-032": {
       "id": "CHK-032",
-      "section": "Skills / Hi Native Skills",
+      "section": "Methodologies / OpenCode Native Skills",
       "item": "skill validation",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -516,7 +516,7 @@
     },
     "CHK-033": {
       "id": "CHK-033",
-      "section": "Skills / Hi Native Skills",
+      "section": "Methodologies / OpenCode Native Skills",
       "item": "skill permission awareness",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -529,7 +529,7 @@
     },
     "CHK-034": {
       "id": "CHK-034",
-      "section": "Skills / Hi Native Skills",
+      "section": "Methodologies / OpenCode Native Skills",
       "item": "child-specific skill load",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -542,7 +542,7 @@
     },
     "CHK-035": {
       "id": "CHK-035",
-      "section": "Skills / Hi Native Skills",
+      "section": "Methodologies / OpenCode Native Skills",
       "item": "Hi-safe orchestration ownership",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -555,7 +555,7 @@
     },
     "CHK-036": {
       "id": "CHK-036",
-      "section": "Skills / Hi Native Skills",
+      "section": "Methodologies / OpenCode Native Skills",
       "item": "double-orchestration tests",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -568,7 +568,7 @@
     },
     "CHK-037": {
       "id": "CHK-037",
-      "section": "Skills / Hi Native Skills",
+      "section": "Methodologies / OpenCode Native Skills",
       "item": "optional context artifacts",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -581,7 +581,7 @@
     },
     "CHK-038": {
       "id": "CHK-038",
-      "section": "Skills / Hi Native Skills",
+      "section": "Methodologies / OpenCode Native Skills",
       "item": "hi-debugging-root-cause",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -594,7 +594,7 @@
     },
     "CHK-039": {
       "id": "CHK-039",
-      "section": "Skills / Hi Native Skills",
+      "section": "Methodologies / OpenCode Native Skills",
       "item": "conditional TDD",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -607,7 +607,7 @@
     },
     "CHK-040": {
       "id": "CHK-040",
-      "section": "Skills / Hi Native Skills",
+      "section": "Methodologies / OpenCode Native Skills",
       "item": "conditional Hi design-discovery/implementation-planning",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -620,7 +620,7 @@
     },
     "CHK-041": {
       "id": "CHK-041",
-      "section": "Skills / Hi Native Skills",
+      "section": "Methodologies / OpenCode Native Skills",
       "item": "verification methodology",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
@@ -633,7 +633,7 @@
     },
     "CHK-042": {
       "id": "CHK-042",
-      "section": "Skills / Hi Native Skills",
+      "section": "Methodologies / OpenCode Native Skills",
       "item": "bounded fix/review methodology",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [

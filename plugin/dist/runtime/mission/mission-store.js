@@ -1,160 +1,227 @@
-import { normalizeIntent } from '../intent/normalize.js';
+import { assessedIntent, provisionalIntent } from '../intent/semantic-assessment.js';
 import { collectRepoContext } from '../intent/repo-context.js';
 import { continuationBudget, resolveCategory } from '../routing/category.js';
-import { resolveExecutionMode } from '../routing/execution-mode.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { verificationPolicyFor } from '../verification/policy.js';
 import { syncMissionGates } from '../gates/gates.js';
 import { minimumTeamFor } from '../routing/minimum-team.js';
 import { decideAdaptiveExecution } from '../execution/adaptive-policy.js';
 import { decideTopology } from '../execution/topology-policy.js';
+import { activateMethodologySignal, suppressIntentMethodologySignals } from '../methodology/activation.js';
+import { architectureMethodologySignals } from '../methodology/signals.js';
 function obligation(id, kind, summary, requiredEvidence = []) { return { id, kind, summary, status: 'open', requiredEvidence }; }
 export class MissionStore {
     #bySession = new Map();
+    #root;
     #repo;
     #getPrimaryMode;
     #getTopology;
-    constructor(root = process.cwd(), nativeContext = {}, getPrimaryMode = () => 'auto', getTopology = () => ({ mode: 'adaptive', maxAgents: 4, parallelism: 2, allowMultiRoleAgent: true })) { this.#repo = collectRepoContext(root, nativeContext); this.#getPrimaryMode = getPrimaryMode; this.#getTopology = getTopology; }
-    start(sessionID, userText) {
-        const intent = normalizeIntent(userText, this.#repo), now = Date.now(), category = resolveCategory(intent), execution = resolveExecutionMode(intent), obligations = [];
-        if (intent.taskKind === 'bug-fix' || intent.taskKind === 'performance')
-            obligations.push(obligation('o-analysis', 'analysis', intent.taskKind === 'bug-fix' ? 'Root cause understood' : 'Relevant performance bottleneck identified'));
-        if (intent.taskKind !== 'review' && intent.taskKind !== 'release-readiness')
-            obligations.push(obligation('o-implementation', 'implementation', 'Requested change completed'));
-        if (intent.taskKind === 'review')
-            obligations.push(obligation('o-review', 'review', 'Requested review completed', intent.likelyVerification));
-        obligations.push(obligation('o-verification', 'verification', intent.likelyVerification.join(', '), intent.likelyVerification));
-        if (intent.risk === 'high')
-            obligations.push(obligation('o-high-assurance', 'review', 'Security-sensitive change reviewed'));
-        if (intent.risk === 'authority-boundary')
-            obligations.push(obligation('o-authority', 'authority', 'External action explicitly authorized and completed'));
-        const verification = verificationPolicyFor(intent), team = minimumTeamFor(intent, verification, this.#getPrimaryMode()), adaptive = decideAdaptiveExecution(intent), topology = decideTopology(intent, this.#getTopology());
-        const mission = { mission_id: `m_${now.toString(36)}_${Math.random().toString(36).slice(2, 10)}`, session_id: sessionID, objective: intent.objective, intent, status: 'active', risk: intent.risk, execution_mode: execution.mode, primary_mode: team.primary, verification_policy: verification, adaptive_execution: { path: adaptive.path, executionDepth: adaptive.executionDepth, contextDepth: adaptive.contextDepth, isolationDepth: adaptive.isolationDepth, reasons: adaptive.reasons }, topology: { mode: topology.mode, agentCount: topology.agentCount, parallelism: topology.parallelism, roleReuse: topology.roleReuse, reason: topology.reason }, generation: 1, iteration: 0, continuation_budget: continuationBudget(category), continuation_active: false, obligations, tasks: [], workers: [], evidence: { fresh: false, items: [] }, ledger: [], changed_files: [], blockers: [], constraints: [], native_todos_incomplete: 0, last_progress_signature: '', stagnation_count: 0, context_artifacts: [], gates: [], temporary_mutations: [], parent_loaded_skills: [], pending_permissions: 0, pending_permission_ids: [], user_interrupted: false, resume_count: 0, last_user_message_at: now, created_at: now, updated_at: now };
+    constructor(root = process.cwd(), nativeContext = {}, getPrimaryMode = () => 'auto', getTopology = () => ({ mode: 'adaptive', maxAgents: 4, parallelism: 2, allowMultiRoleAgent: true })) { this.#root = root; this.#repo = collectRepoContext(root, nativeContext); this.#getPrimaryMode = getPrimaryMode; this.#getTopology = getTopology; }
+    start(sessionID, userText, observedPrimary) {
+        const intent = provisionalIntent(userText, this.#repo), now = Date.now(), primaryConfigured = this.#getPrimaryMode(), primary = observedPrimary ?? (primaryConfigured === 'manager' ? 'manager' : 'working-manager');
+        const mission = { mission_id: `m_${now.toString(36)}_${Math.random().toString(36).slice(2, 10)}`, session_id: sessionID, objective: intent.objective, intent, semantic_assessment: { status: 'pending', phase: 'initial', revision: 1, source: 'host-primary', pending_text: userText.slice(0, 12000) }, status: 'active', risk: intent.risk, execution_mode: 'single', primary_mode: primary, verification_policy: { requiredKinds: [], requireFresh: true, requireReview: false, allowWorkerReportedEvidence: true }, adaptive_execution: { path: 'DIRECT', executionDepth: 'pending-semantic-assessment', contextDepth: 'pending-semantic-assessment', isolationDepth: 'current-workspace', reasons: ['semantic assessment pending'] }, topology: { mode: 'single-agent', agentCount: 1, parallelism: 1, roleReuse: true, reason: ['semantic assessment pending'] }, generation: 1, iteration: 0, continuation_budget: continuationBudget('standard'), continuation_active: false, obligations: [], tasks: [], workers: [], evidence: { fresh: false, items: [] }, ledger: [], changed_files: [], blockers: [], constraints: [], native_todos_incomplete: 0, last_progress_signature: '', stagnation_count: 0, context_artifacts: [], gates: [], temporary_mutations: [], methodology_needs: [], parent_loaded_methodologies: [], pending_permissions: 0, pending_permission_ids: [], user_interrupted: false, resume_count: 0, last_user_message_at: now, created_at: now, updated_at: now };
         syncMissionGates(mission);
-        appendLedger(mission, 'mission.started', { payload: { taskKind: intent.taskKind, scope: intent.scope, risk: intent.risk, category, execution_mode: execution.mode, execution_reason: execution.reason, primary_mode: team.primary, minimum_team: team.roles, direct: team.direct, team_reason: team.reason, dependencyClass: intent.dependencyClass, ambiguity: intent.ambiguity, adaptive_execution: adaptive, topology, repo: { name: this.#repo.name, ecosystems: this.#repo.ecosystems, markers: this.#repo.markers, native: this.#repo.native } } });
+        appendLedger(mission, 'mission.provisional', { payload: { semantic_revision: 1, technical_targets: intent.likelyTargets ?? [], repo: { name: this.#repo.name, ecosystems: this.#repo.ecosystems, markers: this.#repo.markers, native: this.#repo.native } } });
         mission.last_progress_signature = this.signature(mission);
         this.#bySession.set(sessionID, mission);
         return mission;
     }
-    get(sessionID) { return this.#bySession.get(sessionID); }
-    amend(sessionID, userText, kind = 'amend') {
+    applyInitialSemanticAssessment(sessionID, assessment) {
         const m = this.get(sessionID);
-        if (!m || m.status !== 'active')
-            return;
+        if (!m)
+            throw new Error('No active Hi mission');
+        if (m.semantic_assessment.status !== 'pending' || m.semantic_assessment.phase !== 'initial')
+            throw new Error('Hi semantic assessment is not pending for initial mission');
+        if (!['mission', 'non-material'].includes(assessment.message_kind))
+            throw new Error('Initial semantic assessment requires message_kind=mission or non-material');
+        const now = Date.now();
+        m.semantic_assessment.status = 'assessed';
+        m.semantic_assessment.assessed_at = now;
+        if (!assessment.material) {
+            m.status = 'completed';
+            m.obligations = [];
+            m.methodology_needs = [];
+            appendLedger(m, 'semantic.non-material', { payload: { revision: m.semantic_assessment.revision, source: m.semantic_assessment.source } });
+            syncMissionGates(m);
+            m.updated_at = now;
+            m.last_progress_signature = this.signature(m);
+            return m;
+        }
+        m.intent = assessedIntent(m.intent, assessment);
+        m.risk = m.intent.risk;
+        m.objective = m.intent.objective;
+        const obligations = [];
+        if (m.intent.taskKind === 'bug-fix' || m.intent.taskKind === 'performance')
+            obligations.push(obligation('o-analysis', 'analysis', m.intent.taskKind === 'bug-fix' ? 'Root cause understood' : 'Relevant performance bottleneck identified'));
+        if (m.intent.taskKind !== 'review' && m.intent.taskKind !== 'release-readiness')
+            obligations.push(obligation('o-implementation', 'implementation', 'Requested change completed'));
+        if (m.intent.taskKind === 'review')
+            obligations.push(obligation('o-review', 'review', 'Requested review completed', m.intent.likelyVerification));
+        obligations.push(obligation('o-verification', 'verification', m.intent.likelyVerification.join(', '), m.intent.likelyVerification));
+        if (m.intent.risk === 'high')
+            obligations.push(obligation('o-high-assurance', 'review', 'Security-sensitive change reviewed'));
+        if (m.intent.risk === 'authority-boundary')
+            obligations.push(obligation('o-authority', 'authority', 'External action explicitly authorized and completed'));
+        m.obligations = obligations;
+        m.verification_policy = verificationPolicyFor(m.intent);
+        const category = resolveCategory(m.intent), team = minimumTeamFor(m.intent, m.verification_policy, m.primary_mode), adaptive = decideAdaptiveExecution(m.intent), topology = decideTopology(m.intent, this.#getTopology());
+        m.execution_mode = topology.executionMode;
+        m.primary_mode = team.primary;
+        m.adaptive_execution = { path: adaptive.path, executionDepth: adaptive.executionDepth, contextDepth: adaptive.contextDepth, isolationDepth: adaptive.isolationDepth, reasons: adaptive.reasons };
+        m.topology = { mode: topology.mode, agentCount: topology.agentCount, parallelism: topology.parallelism, roleReuse: topology.roleReuse, reason: topology.reason };
+        m.continuation_budget = continuationBudget(category);
+        m.methodology_needs = [];
+        const suppressed = new Set(assessment.suppressed_intent_signals);
+        for (const signal of assessment.intent_signals)
+            if (!suppressed.has(signal))
+                activateMethodologySignal(m, this.#root, { signal, producer: 'intent', reason: 'Host primary semantic assessment reported this explicit intent signal.' });
+        for (const signal of architectureMethodologySignals(m.intent))
+            activateMethodologySignal(m, this.#root, { signal: signal.name, producer: 'architecture', reason: signal.reason });
+        syncMissionGates(m);
+        appendLedger(m, 'semantic.assessed', { payload: { revision: m.semantic_assessment.revision, source: m.semantic_assessment.source, taskKind: m.intent.taskKind, scope: m.intent.scope, risk: m.intent.risk, ambiguity: m.intent.ambiguity, dependencyClass: m.intent.dependencyClass, capabilities: m.intent.requiredCapabilities, intent_signals: assessment.intent_signals, suppressed_intent_signals: assessment.suppressed_intent_signals, technical_targets: m.intent.likelyTargets ?? [] } });
+        m.updated_at = now;
+        m.last_progress_signature = this.signature(m);
+        return m;
+    }
+    bindObservedPrimary(sessionID, primary) { const m = this.get(sessionID); if (!m || m.primary_mode === primary)
+        return; const previous = m.primary_mode; m.primary_mode = primary; appendLedger(m, 'primary.agent-observed', { payload: { previous, observed: primary, source: 'host-chat-message' } }); m.last_progress_signature = this.signature(m); }
+    get(sessionID) { return this.#bySession.get(sessionID); }
+    beginFollowupSemanticAssessment(sessionID, userText) {
+        const m = this.get(sessionID);
+        if (!m)
+            throw new Error('No active Hi mission');
+        if (!['active', 'waiting-user'].includes(m.status))
+            throw new Error('Hi follow-up semantic assessment requires an active/waiting mission');
         const text = userText.trim();
         if (!text)
-            return;
-        const follow = normalizeIntent(text, this.#repo), now = Date.now(), followIndex = m.obligations.filter(o => o.id.startsWith('o-followup-')).length + 1, id = `o-followup-${now.toString(36)}-${followIndex.toString(36)}`;
-        m.constraints ??= [];
+            throw new Error('Empty follow-up cannot be assessed');
+        m.generation += 1;
+        m.semantic_assessment = { status: 'pending', phase: 'followup', revision: m.semantic_assessment.revision + 1, source: 'host-primary', pending_text: text.slice(0, 12000) };
+        m.status = 'active';
+        m.continuation_active = false;
+        m.active_action_id = undefined;
+        m.continuation_lock_until = undefined;
+        m.suppress_until = undefined;
+        m.pending_nudge = undefined;
+        m.last_user_message_at = Date.now();
+        appendLedger(m, 'semantic.followup-pending', { payload: { revision: m.semantic_assessment.revision, generation: m.generation, preview: text.slice(0, 180) } });
+        syncMissionGates(m);
+        m.updated_at = Date.now();
+        m.last_progress_signature = this.signature(m);
+        return m;
+    }
+    applyFollowupSemanticAssessment(sessionID, assessment) {
+        const m = this.get(sessionID);
+        if (!m)
+            throw new Error('No active Hi mission');
+        if (m.semantic_assessment.status !== 'pending' || m.semantic_assessment.phase !== 'followup')
+            throw new Error('Hi semantic assessment is not pending for a follow-up');
+        if (assessment.message_kind === 'mission')
+            throw new Error('A follow-up assessment cannot use message_kind=mission');
+        const text = m.semantic_assessment.pending_text, now = Date.now();
+        m.semantic_assessment.status = 'assessed';
+        m.semantic_assessment.assessed_at = now;
+        if (assessment.message_kind === 'non-material') {
+            appendLedger(m, 'semantic.followup-non-material', { payload: { revision: m.semantic_assessment.revision } });
+            syncMissionGates(m);
+            m.updated_at = now;
+            m.last_progress_signature = this.signature(m);
+            return m;
+        }
+        if (assessment.message_kind === 'stop') {
+            m.user_interrupted = true;
+            m.interrupted_at = now;
+            m.interrupted_reason = 'semantic-user-stop';
+            m.status = 'stopped';
+            appendLedger(m, 'mission.stopped', { payload: { reason: 'semantic-user-stop', generation: m.generation } });
+            syncMissionGates(m);
+            m.updated_at = now;
+            m.last_progress_signature = this.signature(m);
+            return m;
+        }
+        if (assessment.message_kind === 'resume') {
+            m.user_interrupted = false;
+            m.interrupted_reason = undefined;
+            m.resumed_at = now;
+            m.status = 'active';
+            appendLedger(m, 'mission.resumed', { payload: { reason: 'semantic-user-resume', generation: m.generation } });
+            syncMissionGates(m);
+            m.updated_at = now;
+            m.last_progress_signature = this.signature(m);
+            return m;
+        }
+        const kind = assessment.message_kind;
         if (kind === 'constraint') {
-            m.objective = `${m.objective}
-Constraint: ${text}`.slice(0, 6000);
+            m.constraints ??= [];
             if (!m.constraints.includes(text))
                 m.constraints.push(text);
+            m.objective = `${m.objective}\nConstraint: ${text}`.slice(0, 9000);
             for (const task of m.tasks.filter(t => !['completed', 'failed', 'cancelled'].includes(t.status))) {
                 task.constraints ??= [];
                 if (!task.constraints.includes(text))
                     task.constraints.push(text);
                 task.updated_at = now;
             }
-            // Restrictive user constraints invalidate in-flight child instructions. A reconciler may
-            // resume the same session with the new generation; late callbacks from pre-constraint work stay stale.
-            m.generation += 1;
         }
         else if (kind === 'verification') {
-            m.objective = `${m.objective}
-Follow-up verification: ${text}`.slice(0, 6000);
+            m.objective = `${m.objective}\nFollow-up verification: ${text}`.slice(0, 9000);
             let verify = m.obligations.find(o => o.kind === 'verification');
             if (!verify) {
-                verify = obligation(id, 'verification', `User verification follow-up: ${text.slice(0, 500)}`, follow.likelyVerification);
+                verify = obligation('o-followup-verification-r' + m.semantic_assessment.revision, 'verification', `User verification follow-up: ${text.slice(0, 500)}`, assessment.likely_verification);
                 m.obligations.push(verify);
             }
             else {
                 verify.status = 'open';
                 verify.closedAt = undefined;
                 verify.summary = `${verify.summary}; ${text.slice(0, 300)}`.slice(0, 700);
-                verify.requiredEvidence = [...new Set([...(verify.requiredEvidence ?? []), ...follow.likelyVerification])];
             }
         }
         else {
-            m.objective = `${m.objective}
-Follow-up: ${text}`.slice(0, 6000);
-            m.obligations.push(obligation(id, 'implementation', `User follow-up: ${text.slice(0, 500)}`));
+            m.objective = `${m.objective}\nFollow-up: ${text}`.slice(0, 9000);
+            m.obligations.push(obligation('o-followup-r' + m.semantic_assessment.revision, 'implementation', `User follow-up: ${text.slice(0, 500)}`));
         }
-        const riskRank = { low: 0, medium: 1, high: 2, 'authority-boundary': 3 };
-        if (riskRank[follow.risk] > riskRank[m.risk]) {
-            m.risk = follow.risk;
-            m.intent.risk = follow.risk;
-        }
-        const scopeRank = { 'local': 0, 'multi-file': 1, 'multi-stream': 2, 'repo-wide': 3, 'external': 4 };
-        if (scopeRank[follow.scope] > scopeRank[m.intent.scope])
-            m.intent.scope = follow.scope;
-        const depRank = { 'unknown': 0, 'independent': 1, 'independent-multi': 2, 'sequential': 3, 'external-gated': 4 };
-        if (depRank[follow.dependencyClass] > depRank[m.intent.dependencyClass])
-            m.intent.dependencyClass = follow.dependencyClass;
-        const ambRank = { 'none': 0, 'resolvable': 1, 'contract-critical': 2 };
-        if (ambRank[follow.ambiguity] > ambRank[m.intent.ambiguity])
-            m.intent.ambiguity = follow.ambiguity;
-        if (kind !== 'constraint') {
-            const mergedVerify = verificationPolicyFor(follow);
-            m.verification_policy = { requiredKinds: [...new Set([...m.verification_policy.requiredKinds, ...mergedVerify.requiredKinds])], requireFresh: true, requireReview: m.verification_policy.requireReview || mergedVerify.requireReview, allowWorkerReportedEvidence: m.verification_policy.allowWorkerReportedEvidence && mergedVerify.allowWorkerReportedEvidence };
-            m.intent.requiredCapabilities = [...new Set([...m.intent.requiredCapabilities, ...follow.requiredCapabilities])];
-            m.intent.likelyVerification = [...new Set([...m.intent.likelyVerification, ...follow.likelyVerification])];
-        }
-        if (follow.risk === 'high' && !m.obligations.some(o => o.id === 'o-high-assurance' && o.status === 'open'))
+        m.intent = assessedIntent(m.intent, assessment);
+        m.intent.objective = m.objective;
+        m.risk = m.intent.risk;
+        const suppressed = new Set(assessment.suppressed_intent_signals);
+        if (suppressed.size)
+            suppressIntentMethodologySignals(m, [...suppressed], `Host primary semantic follow-up explicitly superseded intent methodology at revision ${m.semantic_assessment.revision}.`);
+        for (const signal of assessment.intent_signals)
+            if (!suppressed.has(signal))
+                activateMethodologySignal(m, this.#root, { signal, producer: 'intent', reason: `Host primary semantic follow-up assessment revision ${m.semantic_assessment.revision}.` });
+        if (m.intent.risk === 'high' && !m.obligations.some(o => o.id === 'o-high-assurance' && o.status === 'open'))
             m.obligations.push(obligation('o-high-assurance', 'review', 'Security-sensitive change reviewed'));
-        if (follow.risk === 'authority-boundary' && !m.obligations.some(o => o.kind === 'authority' && o.status === 'open'))
+        if (m.intent.risk === 'authority-boundary' && !m.obligations.some(o => o.kind === 'authority' && o.status === 'open'))
             m.obligations.push(obligation(`o-authority-${now.toString(36)}`, 'authority', 'External action explicitly authorized and completed'));
-        const modeBefore = m.execution_mode, activeWorkers = m.workers.filter(w => !['completed', 'failed', 'cancelled'].includes(w.status));
-        if (m.execution_mode !== 'team' && !(m.execution_mode === 'parallel' && activeWorkers.length > 0))
-            m.execution_mode = resolveExecutionMode(m.intent, m).mode;
-        m.primary_mode = minimumTeamFor(m.intent, m.verification_policy, this.#getPrimaryMode()).primary;
-        const adaptive = decideAdaptiveExecution(m.intent, m), topology = decideTopology(m.intent, this.#getTopology(), m);
+        m.verification_policy = verificationPolicyFor(m.intent);
+        for (const signal of architectureMethodologySignals(m.intent))
+            activateMethodologySignal(m, this.#root, { signal: signal.name, producer: 'architecture', reason: signal.reason });
+        const category = resolveCategory(m.intent), team = minimumTeamFor(m.intent, m.verification_policy, m.primary_mode), adaptive = decideAdaptiveExecution(m.intent, m), topology = decideTopology(m.intent, this.#getTopology(), m);
+        m.execution_mode = topology.executionMode;
+        m.primary_mode = team.primary;
         m.adaptive_execution = { path: adaptive.path, executionDepth: adaptive.executionDepth, contextDepth: adaptive.contextDepth, isolationDepth: adaptive.isolationDepth, reasons: adaptive.reasons };
         m.topology = { mode: topology.mode, agentCount: topology.agentCount, parallelism: topology.parallelism, roleReuse: topology.roleReuse, reason: topology.reason };
-        m.continuation_active = false;
-        m.active_action_id = undefined;
-        m.continuation_lock_until = undefined;
-        m.suppress_until = undefined;
-        m.pending_nudge = undefined;
-        appendLedger(m, 'mission.amended', { payload: { kind, obligation: kind === 'constraint' ? undefined : (kind === 'verification' ? 'o-verification' : id), preview: text.slice(0, 200), generation: m.generation, followup_risk: follow.risk, followup_capabilities: follow.requiredCapabilities, scope: follow.scope, dependencyClass: follow.dependencyClass, execution_mode: { before: modeBefore, after: m.execution_mode, active_workers: activeWorkers.length } } });
+        m.continuation_budget = Math.max(m.continuation_budget, continuationBudget(category));
+        m.status = 'active';
+        appendLedger(m, 'semantic.followup-assessed', { payload: { revision: m.semantic_assessment.revision, message_kind: kind, taskKind: m.intent.taskKind, scope: m.intent.scope, risk: m.intent.risk, ambiguity: m.intent.ambiguity, dependencyClass: m.intent.dependencyClass, intent_signals: assessment.intent_signals, suppressed_intent_signals: assessment.suppressed_intent_signals } });
         syncMissionGates(m);
-        m.last_progress_signature = this.signature(m);
         m.updated_at = now;
+        m.last_progress_signature = this.signature(m);
+        return m;
     }
     restore(missions, uncleanShutdown = false) { for (const m of missions) {
-        if (!m?.session_id || !m?.mission_id)
-            continue;
-        if (!m.verification_policy)
-            m.verification_policy = verificationPolicyFor(m.intent);
         m.primary_mode = minimumTeamFor(m.intent, m.verification_policy, this.#getPrimaryMode()).primary;
-        m.generation = Math.max(1, Number(m.generation) || 1);
         m.continuation_active = false;
         m.active_action_id = undefined;
         m.continuation_failure_count = 0;
         m.last_continuation_failure_at = undefined;
         m.suppress_until = undefined;
-        m.context_artifacts ??= [];
-        m.constraints ??= [];
-        m.gates ??= [];
-        m.temporary_mutations ??= [];
-        m.parent_loaded_skills ??= [];
-        m.pending_permissions = Number.isFinite(m.pending_permissions) ? m.pending_permissions : 0;
-        m.pending_permission_ids = Array.isArray(m.pending_permission_ids) ? m.pending_permission_ids : [];
-        m.intent.dependencyClass ??= 'unknown';
-        for (const t of m.tasks ?? []) {
-            t.context_artifacts ??= [];
-            t.constraints ??= [];
-            t.obligation_ids ??= [];
-            t.gate_ids ??= [];
-        }
         if (m.status === 'active') {
             const restoredTeam = m.execution_mode === 'team';
             if (restoredTeam)
                 m.execution_mode = 'single';
             const now = Date.now();
-            for (const w of m.workers ?? []) {
-                w.parent_mission_id ??= m.mission_id;
+            for (const w of m.workers) {
                 if (['created', 'queued', 'starting', 'busy'].includes(w.status)) {
                     const t = m.tasks.find(x => x.id === w.task_id);
                     if (w.session_id) {
@@ -179,7 +246,7 @@ Follow-up: ${text}`.slice(0, 6000);
                     }
                 }
             }
-            for (const t of m.tasks ?? [])
+            for (const t of m.tasks)
                 if (['queued', 'running'].includes(t.status))
                     t.status = t.result?.status === 'DONE' ? 'completed' : t.result ? 'waiting' : 'blocked';
             m.continuation_lock_until = undefined;
@@ -190,7 +257,7 @@ Follow-up: ${text}`.slice(0, 6000);
                 if (pendingBefore > 0)
                     appendLedger(m, 'permission.crash-reset', { payload: { cleared: pendingBefore, reason: 'permission requests are process-ephemeral and must be re-established' } });
                 let invalidated = 0;
-                for (const e of m.evidence.items ?? []) {
+                for (const e of m.evidence.items) {
                     if (!e.invalidated_at) {
                         e.invalidated_at = now;
                         invalidated++;

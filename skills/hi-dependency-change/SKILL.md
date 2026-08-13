@@ -16,10 +16,10 @@ description: Evaluate and verify dependency/lockfile changes for necessity, comp
 
 ## Method
 
-1. Start from the explicit task contract and current repository evidence.
-2. Apply this methodology only to the smallest surface that satisfies its trigger.
-3. Prefer deterministic evidence and existing project conventions over speculative generalization.
-4. Stop when the exit condition is satisfied; do not take routing, topology, authority, completion, or STOP ownership.
+1. Prove the dependency change is necessary and identify the exact capability or version constraint, current lock state, transitive impact, and runtime/build surfaces it affects.
+2. Prefer the smallest compatible version or scope change and inspect authoritative compatibility information when behavior can differ by version.
+3. Update manifest and lockfile through the project’s native package workflow, then verify install, build, test behavior, and unexpected transitive changes.
+4. Stop when the dependency graph is intentional, reproducible, minimally changed, and no unexplained package or install-script side effect remains.
 
 ## Ownership boundary
 

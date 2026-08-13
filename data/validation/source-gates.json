@@ -107,7 +107,7 @@
         "plugin/src/runtime/skills/methodology.ts",
         "plugin/src/runtime/skills/registry.ts",
         "scripts/native_plugin_setup.py",
-        "data/runtime/native-skills.json"
+        "data/hi-methodologies.json"
       ]
     }
   },

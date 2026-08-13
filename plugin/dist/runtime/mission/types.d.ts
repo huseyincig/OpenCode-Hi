@@ -11,6 +11,8 @@ export type Category = 'quick' | 'standard' | 'deep' | 'visual' | 'critical';
 export type GateStatus = 'open' | 'ready' | 'blocked' | 'closed';
 export type GateKind = 'verification' | 'user-authority' | 'reviewer' | 'prerequisite-task' | 'precondition' | 'rollback';
 export type EvidenceOutcome = 'pending' | 'passed' | 'failed' | 'environment-issue';
+export declare const WORKER_EVIDENCE_KINDS: readonly ["targeted-tests", "typecheck", "lint", "build", "changed-surface-sanity", "review-evidence", "decision-evidence", "diagnostic-evidence", "measurement-evidence", "browser-evidence", "visual-evidence", "accessibility-evidence", "source-provenance-evidence"];
+export type WorkerEvidenceKind = typeof WORKER_EVIDENCE_KINDS[number];
 export interface Obligation {
     id: string;
     status: ObligationStatus;
@@ -91,7 +93,7 @@ export interface ExecutionProfile {
         variant?: string;
         reason: string;
     }>;
-    skills: string[];
+    methodologies: string[];
     permission_profile: PermissionProfileSnapshot;
     verification_policy: VerificationPolicy;
     max_context_chars: number;
@@ -131,7 +133,7 @@ export interface MethodologyProvenance {
     source_path: string;
     source_sha256?: string;
     permission: 'allow' | 'ask' | 'deny';
-    injection: 'embedded' | 'native-skill-tool' | 'none';
+    injection: 'native-skill-tool' | 'none';
     selected_at: number;
 }
 export interface WorkerState {
@@ -146,7 +148,8 @@ export interface WorkerState {
     model?: string;
     model_variant?: string;
     fallbacks: string[];
-    loaded_skills: string[];
+    selected_methodologies: string[];
+    loaded_methodologies: string[];
     methodologies: MethodologyProvenance[];
     fingerprint: string;
     status: WorkerStatus;
@@ -179,6 +182,7 @@ export interface WorkerState {
     effective_model_variant_verified?: boolean;
     effective_model_source?: string;
     effective_model_observed_at?: number;
+    semantic_pause_revision?: number;
 }
 export interface EvidenceItem {
     id: string;
@@ -205,6 +209,14 @@ export interface LedgerEvent {
     worker_id?: string;
     payload?: Record<string, unknown>;
 }
+export interface MethodologyObservation {
+    key: string;
+    procedure: string;
+    trigger: string;
+    do_not_trigger: string;
+    exit_condition: string;
+    evidence: string[];
+}
 export interface WorkerResult {
     status: WorkerResultStatus;
     summary: string;
@@ -215,7 +227,7 @@ export interface WorkerResult {
         necessary: boolean;
     }>;
     evidence: Array<{
-        kind: string;
+        kind: WorkerEvidenceKind;
         summary: string;
         scope?: string[];
         pass?: boolean;
@@ -224,12 +236,33 @@ export interface WorkerResult {
     }>;
     open_issues: string[];
     needs_context: string[];
+    context_gap?: 'scope' | 'iterative' | 'none';
+    failure_finding?: 'ci-build' | 'unknown-root-cause' | 'none';
+    methodology_observations?: MethodologyObservation[];
 }
 export interface VerificationPolicy {
     requiredKinds: string[];
     requireFresh: boolean;
     requireReview: boolean;
     allowWorkerReportedEvidence: boolean;
+}
+export interface HiMethodologyNeed {
+    name: string;
+    signal: string;
+    trigger_source: string;
+    producer: string;
+    reason: string;
+    created_at: number;
+    task_id?: string;
+    obligation_id?: string;
+}
+export interface SemanticAssessmentState {
+    status: 'pending' | 'assessed';
+    phase: 'initial' | 'followup';
+    revision: number;
+    source: 'host-primary';
+    pending_text: string;
+    assessed_at?: number;
 }
 export interface NormalizedMissionIntent {
     objective: string;
@@ -240,6 +273,7 @@ export interface NormalizedMissionIntent {
     ambiguity: 'none' | 'resolvable' | 'contract-critical';
     dependencyClass: 'independent' | 'sequential' | 'external-gated' | 'unknown' | 'independent-multi';
     requiredCapabilities: string[];
+    requestedExternalActions: Array<'git-push' | 'release-create' | 'package-publish' | 'deploy'>;
     likelyVerification: string[];
     avoid: string[];
 }
@@ -248,6 +282,7 @@ export interface MissionState {
     session_id: string;
     objective: string;
     intent: NormalizedMissionIntent;
+    semantic_assessment: SemanticAssessmentState;
     status: MissionStatus;
     risk: Risk;
     execution_mode: ExecutionMode;
@@ -318,7 +353,8 @@ export interface MissionState {
     context_artifacts: ContextArtifact[];
     gates: MissionGate[];
     temporary_mutations: TemporaryMutation[];
-    parent_loaded_skills: string[];
+    methodology_needs: HiMethodologyNeed[];
+    parent_loaded_methodologies: string[];
     pending_permissions: number;
     pending_permission_ids?: string[];
     user_interrupted: boolean;

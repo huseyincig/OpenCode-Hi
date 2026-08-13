@@ -3,10 +3,9 @@ import { beginAuthorizedAction, claimAuthorizedAction, privilegedAction } from '
 import { canonicalExternalCommand } from '../runtime/safety/command-classifier.js';
 import { matchRollback } from '../runtime/mutations/temporary-mutations.js';
 import { assertSafeGitMutation, invalidateStagingProof, invalidateGitTopologyProof, beginGitTopologyMutation, mutatesGitIndex, isGitTopologyMutation } from '../runtime/safety/staging-safety.js';
-import { assertReleaseChainPrecondition } from '../runtime/safety/release-chain.js';
-function requestedSkill(args) { for (const key of ['name', 'skill', 'skill_name', 'skillName'])
-    if (typeof args?.[key] === 'string' && args[key].trim())
-        return args[key].trim(); return undefined; }
+import { assertReleaseChainPrecondition, isPackagePublish, isReleaseCreate } from '../runtime/safety/release-chain.js';
+import { activateMethodologySignal } from '../runtime/methodology/activation.js';
+import { assertChildMethodologyLoad, assertParentMethodologyLoad, requestedMethodologyName } from '../runtime/methodology/native-loading.js';
 export function createToolBeforeHook(store, background, projectRoot) {
     return async (input, output) => {
         const sid = input?.sessionID ?? input?.sessionId, child = sid && background ? background.list().find(w => w.session_id === sid) : undefined, m = child ? store.get(child.parent_session_id) : store.get(sid);
@@ -17,20 +16,17 @@ export function createToolBeforeHook(store, background, projectRoot) {
         const tool = String(input?.tool ?? ''), args = output?.args ?? input?.args ?? {};
         if (child && tool.startsWith('hi_'))
             throw new Error(`Hi ownership guard: child workers cannot invoke Hi control-plane tool '${tool}'.`);
+        if (m.semantic_assessment.status === 'pending') {
+            const allowed = new Set(['hi_intent_assess', 'hi_status', 'hi_ledger', 'hi_readiness']);
+            if (!allowed.has(tool))
+                throw new Error(`Hi semantic gate: '${tool}' is blocked until the host primary submits the structured semantic assessment.`);
+        }
         if (tool === 'skill') {
-            const name = requestedSkill(args);
-            if (name && child) {
-                const worker = m.workers.find(w => w.id === child.id), allowed = new Set(worker?.loaded_skills ?? []);
-                if (!allowed.has(name))
-                    throw new Error(`Hi child skill guard: '${name}' is outside this worker methodology allowlist.`);
-            }
-            else if (name) {
-                m.parent_loaded_skills ??= [];
-                if (!m.parent_loaded_skills.includes(name) && m.parent_loaded_skills.length >= 3)
-                    throw new Error('Hi skill budget: parent session may load at most 3 distinct skills for one mission.');
-                if (!m.parent_loaded_skills.includes(name))
-                    m.parent_loaded_skills.push(name);
-            }
+            const name = requestedMethodologyName(args);
+            if (name && child)
+                assertChildMethodologyLoad(m.workers.find(worker => worker.id === child.id), name);
+            else if (name)
+                assertParentMethodologyLoad(m, name, projectRoot);
         }
         if (tool === 'bash' && typeof args?.command === 'string') {
             assertSafeGitMutation(m, args.command);
@@ -44,6 +40,8 @@ export function createToolBeforeHook(store, background, projectRoot) {
         if (tool === 'bash' && typeof args?.command === 'string' && privilegedAction(args.command)) {
             if (!canonicalExternalCommand(args.command))
                 throw new Error('Hi authority boundary: external-effect commands must use canonical command form so OpenCode native permission patterns remain authoritative. Use the bash tool cwd field instead of git -C/wrappers, and place supported CLI options after the privileged subcommand.');
+            if (isReleaseCreate(args.command) || isPackagePublish(args.command))
+                activateMethodologySignal(m, projectRoot, { signal: 'release.boundary', producer: 'release', reason: 'A concrete release/package publication command reached the release safety boundary.' });
             assertReleaseChainPrecondition(m, args.command, projectRoot ?? args?.cwd);
             if (child)
                 throw new Error('Hi authority boundary: child workers may not execute publish/push/deploy or other privileged external effects. Parent Hi must own the exact authority contract.');

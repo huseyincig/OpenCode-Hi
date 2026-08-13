@@ -4,6 +4,7 @@ import {mkdtempSync,rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
+import {startAssessedMission,assessPluginMission} from './helpers/semantic.mjs'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
 import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
@@ -19,7 +20,7 @@ function harness(){
 function done(files){return {status:'DONE',summary:'done',changed_files:files,evidence:[],open_issues:[],needs_context:[]}}
 
 test('session-scoped observed native write omitted from WorkerResult forces reconciliation',async()=>{
-  const s=new MissionStore(),m=s.start('native-diff-1','change src/a.ts')
+  const s=new MissionStore(),m=startAssessedMission(s,'native-diff-1','opaque change',{likely_targets:['src/a.ts']})
   const t=createTask(m,{objective:'change a',role:'coder',category:'quick',scope:['src/a.ts'],requiredEvidence:[]})
   const w=createWorker(m,t,'host-default');w.status='busy';w.session_id='child-1';w.write_set=['src/a.ts','src/hidden.ts']
   const {rt}=harness()
@@ -31,7 +32,7 @@ test('session-scoped observed native write omitted from WorkerResult forces reco
 })
 
 test('native diff baseline-to-idle delta catches an undeclared write when this is the sole writer',async()=>{
-  const s=new MissionStore(),m=s.start('native-diff-2','change src/a.ts')
+  const s=new MissionStore(),m=startAssessedMission(s,'native-diff-2','opaque change',{likely_targets:['src/a.ts']})
   const t=createTask(m,{objective:'change a',role:'coder',category:'quick',scope:['src/a.ts'],requiredEvidence:[]})
   const w=createWorker(m,t,'host-default');w.status='busy';w.session_id='child-2';w.native_diff_baseline={}
   const {rt,setDiffs}=harness();setDiffs([{file:'src/hidden.ts',before:'old',after:'new',additions:1,deletions:1}])
@@ -41,7 +42,7 @@ test('native diff baseline-to-idle delta catches an undeclared write when this i
 })
 
 test('worktree-global-looking native delta is not attributed to one worker while multiple writers are active',async()=>{
-  const s=new MissionStore(),m=s.start('native-diff-3','parallel edits');m.execution_mode='parallel'
+  const s=new MissionStore(),m=startAssessedMission(s,'native-diff-3','opaque parallel task');m.execution_mode='parallel'
   const ta=createTask(m,{objective:'a',role:'coder',category:'quick',scope:['src/a.ts'],requiredEvidence:[]}),tb=createTask(m,{objective:'b',role:'coder',category:'quick',scope:['src/b.ts'],requiredEvidence:[]})
   const wa=createWorker(m,ta,'host-default'),wb=createWorker(m,tb,'host-default');wa.status='busy';wb.status='busy';wa.session_id='child-a';wb.session_id='child-b';wa.native_diff_baseline={}
   const {rt,setDiffs}=harness();setDiffs([{file:'src/unrelated.ts',before:'old',after:'new',additions:1,deletions:1}])
@@ -62,7 +63,7 @@ test('plugin session.idle path converts DONE to FIX_REQUIRED when native diff ex
   let hooks
   try{
     hooks=await HiPlugin({directory:root,worktree:root,project:{},client});const config={};await hooks.config(config)
-    await hooks['chat.message']({sessionID:'parent-native',message:{role:'user',parts:[{type:'text',text:'fix src/a.ts'}]}},{parts:[]})
+    await hooks['chat.message']({sessionID:'parent-native',message:{role:'user',parts:[{type:'text',text:'opaque task'}]}},{parts:[]});await assessPluginMission(hooks,'parent-native',{likely_targets:['src/a.ts']})
     const started=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'change a',role:'coder',category:'quick',scope:['src/a.ts']},{sessionID:'parent-native'}))
     diffs=[{file:'src/a.ts',before:'a',after:'b',additions:1,deletions:1},{file:'src/hidden.ts',before:'x',after:'y',additions:1,deletions:1}]
     await hooks.event({event:{type:'session.idle',properties:{sessionID:'child-native'}}})
@@ -75,7 +76,7 @@ test('plugin session.idle path converts DONE to FIX_REQUIRED when native diff ex
 
 
 test('native diff must prove collateral reverted before cleanup blocker can close',async()=>{
-  const s=new MissionStore(),m=s.start('native-cleanup-1','change src/a.ts')
+  const s=new MissionStore(),m=startAssessedMission(s,'native-cleanup-1','opaque change',{likely_targets:['src/a.ts']})
   const impl=m.obligations.find(o=>o.kind==='implementation');assert.ok(impl)
   const t=createTask(m,{objective:'change a',role:'coder',category:'quick',scope:['src/a.ts'],requiredEvidence:[],obligationIds:[impl.id]})
   const w=createWorker(m,t,'host-default');w.status='busy';w.session_id='child-clean';w.native_diff_baseline={}
@@ -94,7 +95,7 @@ test('native diff must prove collateral reverted before cleanup blocker can clos
 })
 
 test('cleanup claim remains FIX_REQUIRED while native diff still contains collateral',async()=>{
-  const s=new MissionStore(),m=s.start('native-cleanup-2','change src/a.ts')
+  const s=new MissionStore(),m=startAssessedMission(s,'native-cleanup-2','opaque change',{likely_targets:['src/a.ts']})
   const t=createTask(m,{objective:'change a',role:'coder',category:'quick',scope:['src/a.ts'],requiredEvidence:[]})
   const w=createWorker(m,t,'host-default');w.status='busy';w.session_id='child-dirty';w.native_diff_baseline={}
   const {rt,setDiffs}=harness()
@@ -107,7 +108,7 @@ test('cleanup claim remains FIX_REQUIRED while native diff still contains collat
 })
 
 test('cleanup cannot be accepted when native diff capability is unavailable',async()=>{
-  const s=new MissionStore(),m=s.start('native-cleanup-3','change src/a.ts')
+  const s=new MissionStore(),m=startAssessedMission(s,'native-cleanup-3','opaque change',{likely_targets:['src/a.ts']})
   const t=createTask(m,{objective:'change a',role:'coder',category:'quick',scope:['src/a.ts'],requiredEvidence:[]})
   const w=createWorker(m,t,'host-default');w.status='busy';w.session_id='child-no-diff';w.native_diff_baseline={}
   const rt=new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
@@ -119,7 +120,7 @@ test('cleanup cannot be accepted when native diff capability is unavailable',asy
 })
 
 test('pre-existing user dirty file unchanged from worker baseline is not attributed to the worker',async()=>{
-  const s=new MissionStore(),m=s.start('native-user-dirty-1','change src/a.ts')
+  const s=new MissionStore(),m=startAssessedMission(s,'native-user-dirty-1','opaque change',{likely_targets:['src/a.ts']})
   const t=createTask(m,{objective:'change a',role:'coder',category:'quick',scope:['src/a.ts'],requiredEvidence:[]})
   const w=createWorker(m,t,'host-default');w.status='busy';w.session_id='child-user-dirty';
   const userSig='preexisting-user-signature';w.native_diff_baseline={'notes/user.md':userSig}
@@ -133,7 +134,7 @@ test('pre-existing user dirty file unchanged from worker baseline is not attribu
 })
 
 test('cleanup restores a collateral pre-existing user file to worker-start baseline rather than HEAD',async()=>{
-  const s=new MissionStore(),m=s.start('native-user-dirty-2','change src/a.ts')
+  const s=new MissionStore(),m=startAssessedMission(s,'native-user-dirty-2','opaque change',{likely_targets:['src/a.ts']})
   const impl=m.obligations.find(o=>o.kind==='implementation');assert.ok(impl)
   const t=createTask(m,{objective:'change a',role:'coder',category:'quick',scope:['src/a.ts'],requiredEvidence:[],obligationIds:[impl.id]})
   const w=createWorker(m,t,'host-default');w.status='busy';w.session_id='child-user-clean';
@@ -156,7 +157,7 @@ test('cleanup restores a collateral pre-existing user file to worker-start basel
 test('initial child handoff warns that pre-existing dirty paths are user-owned and must not be reset',async()=>{
   let prompt='';const diff=[{file:'notes/user.md',before:'HEAD',after:'USER EDIT',additions:1,deletions:0}]
   const client={session:{create:async()=>({data:{id:'child-prompt-dirty'}}),promptAsync:async(args)=>{prompt=String(args?.body?.parts?.[0]?.text??args?.body?.text??JSON.stringify(args));return {data:{}}},abort:async()=>({data:{}}),diff:async()=>({data:diff})}}
-  const s=new MissionStore(),m=s.start('native-user-dirty-3','change src/a.ts')
+  const s=new MissionStore(),m=startAssessedMission(s,'native-user-dirty-3','opaque change',{likely_targets:['src/a.ts']})
   const rt=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
   await rt.start(m,{objective:'change a',role:'coder',category:'quick',scope:['src/a.ts']})
   assert.match(prompt,/pre-existing user dirty paths/i)

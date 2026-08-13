@@ -10,16 +10,16 @@ description: Perform targeted browser validation using an authorized browser cap
 - **Trigger:** Changed behavior requires real browser interaction or rendering evidence.
 - **Do not trigger:** No browser surface is involved or browser tooling is unavailable.
 - **Exit condition:** Target routes/interactions are exercised and relevant console/network/visual evidence is captured.
-- **Role affinity:** qa-reviewer
+- **Role affinity:** visual-qa
 - **Context cost:** medium
 - **Execution cost:** medium
 
 ## Method
 
-1. Start from the explicit task contract and current repository evidence.
-2. Apply this methodology only to the smallest surface that satisfies its trigger.
-3. Prefer deterministic evidence and existing project conventions over speculative generalization.
-4. Stop when the exit condition is satisfied; do not take routing, topology, authority, completion, or STOP ownership.
+1. Define the exact browser-visible behavior and the smallest routes, interactions, and states that require real browser evidence.
+2. Use an authorized browser capability to execute those interactions, capturing rendered state plus relevant console, network, and runtime failures rather than relying on screenshots alone.
+3. Cover only material engine or viewport differences required by the contract; avoid broad browser matrices when one targeted run proves the behavior.
+4. Stop when the user flow is reproducible and the evidence proves the requested behavior or a precise browser/environment blocker.
 
 ## Ownership boundary
 

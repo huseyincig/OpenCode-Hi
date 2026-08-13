@@ -12,12 +12,3 @@ export function resolveCategory(intent) {
 export function continuationBudget(category) {
     return category === 'quick' ? 2 : category === 'standard' || category === 'visual' ? 4 : category === 'deep' ? 6 : 5;
 }
-export function roleForIntent(intent) {
-    if (intent.taskKind === 'review')
-        return intent.requiredCapabilities.includes('security-review') ? 'security-reviewer' : 'qa-reviewer';
-    if (intent.taskKind === 'performance' && intent.scope === 'repo-wide')
-        return 'architect';
-    if (intent.scope === 'repo-wide' && intent.taskKind !== 'implementation')
-        return 'repository-explorer';
-    return 'coder';
-}

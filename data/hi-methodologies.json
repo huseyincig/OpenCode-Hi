@@ -1,0 +1,1312 @@
+{
+  "schema": 2,
+  "profiles": [
+    {
+      "name": "hi-accessibility-review",
+      "purpose": "Check user-interface changes for material accessibility regressions.",
+      "trigger": "UI behavior or markup changed and accessibility can be affected.",
+      "do_not_trigger": "No user-facing UI surface changed.",
+      "exit_condition": "Accessibility risks are checked and actionable findings are resolved or recorded.",
+      "role_affinity": [
+        "visual-qa"
+      ],
+      "context_cost": "low",
+      "execution_cost": "low",
+      "priority": "normal",
+      "weight": 0.6,
+      "composition_cost": "low",
+      "useful_coexistence": [
+        "hi-visual-qa"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "visual-qa"
+      ],
+      "activation_signals": [
+        "intent.accessibility",
+        "surface.ui-markup"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "accessibility-evidence"
+      ]
+    },
+    {
+      "name": "hi-adversarial-validation",
+      "purpose": "Run a bounded disproof-oriented challenge for high-stakes claims or decisions.",
+      "trigger": "Critical, security-sensitive, irreversible, or cross-boundary claim needs independent challenge.",
+      "do_not_trigger": "Mechanical or low-risk work with direct evidence.",
+      "exit_condition": "Material assumptions are challenged and findings are reconciled without an open blocking issue.",
+      "role_affinity": [
+        "qa-reviewer"
+      ],
+      "context_cost": "medium",
+      "execution_cost": "medium",
+      "priority": "low",
+      "weight": 0.35,
+      "composition_cost": "medium",
+      "useful_coexistence": [
+        "hi-security-review",
+        "hi-code-review"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "qa-reviewer",
+        "security-reviewer",
+        "architect",
+        "coder"
+      ],
+      "activation_signals": [
+        "intent.adversarial"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "review-evidence"
+      ]
+    },
+    {
+      "name": "hi-api-contract-review",
+      "purpose": "Review changed APIs, events, schemas, and compatibility contracts.",
+      "trigger": "An implemented contract boundary changed.",
+      "do_not_trigger": "No externally or cross-module observable contract changed.",
+      "exit_condition": "Consumers, errors, compatibility, serialization, and contract tests are reconciled.",
+      "role_affinity": [
+        "qa-reviewer"
+      ],
+      "context_cost": "medium",
+      "execution_cost": "medium",
+      "priority": "normal",
+      "weight": 0.6,
+      "composition_cost": "low",
+      "useful_coexistence": [
+        "hi-api-interface-design"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "qa-reviewer",
+        "coder"
+      ],
+      "activation_signals": [
+        "intent.api-contract-review",
+        "surface.contract"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "review-evidence"
+      ]
+    },
+    {
+      "name": "hi-api-interface-design",
+      "purpose": "Design a stable interface from consumer requirements and compatibility constraints.",
+      "trigger": "A public/internal API, event, schema, command, or durable boundary is being created or materially changed.",
+      "do_not_trigger": "Pure implementation detail with no boundary consequence.",
+      "exit_condition": "Inputs, outputs, errors, side effects, compatibility, and acceptance tests are explicit.",
+      "role_affinity": [
+        "architect"
+      ],
+      "context_cost": "medium",
+      "execution_cost": "medium",
+      "priority": "normal",
+      "weight": 0.6,
+      "composition_cost": "medium",
+      "useful_coexistence": [
+        "hi-api-contract-review",
+        "hi-architecture-decisions"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "architect",
+        "coder"
+      ],
+      "activation_signals": [
+        "intent.api-design",
+        "architecture.contract-ambiguity"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "decision-evidence"
+      ]
+    },
+    {
+      "name": "hi-architecture-decisions",
+      "purpose": "Record durable architecture choices with evidence and consequences.",
+      "trigger": "A durable choice has credible alternatives and future maintenance consequences.",
+      "do_not_trigger": "Local/reversible implementation choice does not need durable rationale.",
+      "exit_condition": "Decision, credible alternatives, consequences, and evidence are recorded in the project convention.",
+      "role_affinity": [
+        "architect"
+      ],
+      "context_cost": "medium",
+      "execution_cost": "low",
+      "priority": "low",
+      "weight": 0.35,
+      "composition_cost": "low",
+      "useful_coexistence": [
+        "hi-implementation-planning"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "architect"
+      ],
+      "activation_signals": [
+        "intent.architecture-decision"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "decision-evidence"
+      ]
+    },
+    {
+      "name": "hi-browser-testing",
+      "purpose": "Perform targeted browser validation using an authorized browser capability.",
+      "trigger": "Changed behavior requires real browser interaction or rendering evidence.",
+      "do_not_trigger": "No browser surface is involved or browser tooling is unavailable.",
+      "exit_condition": "Target routes/interactions are exercised and relevant console/network/visual evidence is captured.",
+      "role_affinity": [
+        "visual-qa"
+      ],
+      "context_cost": "medium",
+      "execution_cost": "medium",
+      "priority": "normal",
+      "weight": 0.6,
+      "composition_cost": "medium",
+      "useful_coexistence": [
+        "hi-visual-qa",
+        "hi-accessibility-review"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "visual-qa"
+      ],
+      "activation_signals": [
+        "intent.browser"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "browser-evidence"
+      ]
+    },
+    {
+      "name": "hi-changelog-and-documentation",
+      "purpose": "Update user-facing documentation for observable behavior changes.",
+      "trigger": "A verified change affects users, installation, configuration, API, security, or supported behavior, or documentation/changelog alignment is explicitly requested.",
+      "do_not_trigger": "Internal refactor/cosmetic rename with no user-visible effect.",
+      "exit_condition": "Canonical English documentation matches implemented behavior and translation does not add behavior.",
+      "role_affinity": [
+        "working-manager"
+      ],
+      "context_cost": "medium",
+      "execution_cost": "low",
+      "priority": "low",
+      "weight": 0.35,
+      "composition_cost": "low",
+      "useful_coexistence": [
+        "hi-release-guardrails"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "working-manager",
+        "coder"
+      ],
+      "activation_signals": [
+        "intent.documentation",
+        "release.boundary"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues"
+      ]
+    },
+    {
+      "name": "hi-ci-build-recovery",
+      "purpose": "Isolate the first real CI/build failure and repair its root cause.",
+      "trigger": "Build or CI fails or differs materially from local execution.",
+      "do_not_trigger": "No build/CI failure exists.",
+      "exit_condition": "Failure class and root cause are identified, repaired when authorized, and the affected pipeline evidence is green or externally blocked.",
+      "role_affinity": [
+        "coder"
+      ],
+      "context_cost": "medium",
+      "execution_cost": "medium",
+      "priority": "normal",
+      "weight": 0.6,
+      "composition_cost": "medium",
+      "useful_coexistence": [
+        "hi-debugging-root-cause",
+        "hi-test-strategy"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "coder"
+      ],
+      "activation_signals": [
+        "intent.ci-failure",
+        "failure.ci-build"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "fresh-verification"
+      ]
+    },
+    {
+      "name": "hi-code-review",
+      "purpose": "Independently review meaningful diffs against intent, behavior, risk, and tests.",
+      "trigger": "A non-trivial code diff merits independent review.",
+      "do_not_trigger": "Tiny mechanical low-risk edits with direct targeted verification.",
+      "exit_condition": "Actionable findings are resolved/rejected with evidence and scoped re-review closes prior findings.",
+      "role_affinity": [
+        "qa-reviewer"
+      ],
+      "context_cost": "medium",
+      "execution_cost": "medium",
+      "priority": "low",
+      "weight": 0.35,
+      "composition_cost": "medium",
+      "useful_coexistence": [
+        "hi-regression-review",
+        "hi-security-review"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "qa-reviewer",
+        "security-reviewer"
+      ],
+      "activation_signals": [
+        "intent.code-review",
+        "verification.review"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "review-evidence"
+      ]
+    },
+    {
+      "name": "hi-database-migration",
+      "purpose": "Plan and validate safe schema/data migrations and transitional compatibility.",
+      "trigger": "Schema, migration, backfill, or persistent data compatibility changes.",
+      "do_not_trigger": "No persistent schema/data transition.",
+      "exit_condition": "Ordering, compatibility, rollback, locking/volume risk, and migration evidence are sufficient.",
+      "role_affinity": [
+        "coder"
+      ],
+      "context_cost": "high",
+      "execution_cost": "high",
+      "priority": "normal",
+      "weight": 0.6,
+      "composition_cost": "medium",
+      "useful_coexistence": [
+        "hi-test-strategy",
+        "hi-architecture-decisions"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "coder"
+      ],
+      "activation_signals": [
+        "intent.database-migration",
+        "surface.migration"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "fresh-verification"
+      ]
+    },
+    {
+      "name": "hi-debugging-root-cause",
+      "purpose": "Turn a symptom into evidence-backed root cause through discriminating experiments.",
+      "trigger": "Failure cause is uncertain, repeated, or crosses boundaries.",
+      "do_not_trigger": "Cause is already direct and proven by local evidence.",
+      "exit_condition": "Root cause is demonstrated or a precise external blocker is established; retries are materially different.",
+      "role_affinity": [
+        "coder"
+      ],
+      "context_cost": "medium",
+      "execution_cost": "medium",
+      "priority": "high",
+      "weight": 0.9,
+      "composition_cost": "medium",
+      "useful_coexistence": [
+        "hi-iterative-retrieval",
+        "hi-ci-build-recovery"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "coder"
+      ],
+      "activation_signals": [
+        "intent.debugging",
+        "failure.unknown-root-cause"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "diagnostic-evidence"
+      ]
+    },
+    {
+      "name": "hi-dependency-change",
+      "purpose": "Evaluate and verify dependency/lockfile changes for necessity, compatibility, and security.",
+      "trigger": "A dependency or lockfile must be added, removed, or upgraded.",
+      "do_not_trigger": "No dependency surface changes.",
+      "exit_condition": "Need, version/lock impact, compatibility, and appropriate verification are established.",
+      "role_affinity": [
+        "coder"
+      ],
+      "context_cost": "medium",
+      "execution_cost": "medium",
+      "priority": "normal",
+      "weight": 0.6,
+      "composition_cost": "medium",
+      "useful_coexistence": [
+        "hi-security-review",
+        "hi-test-strategy"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "coder",
+        "security-reviewer"
+      ],
+      "activation_signals": [
+        "intent.dependency-change",
+        "surface.dependency"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "fresh-verification"
+      ]
+    },
+    {
+      "name": "hi-design-discovery",
+      "purpose": "Resolve material product/architecture ambiguity before expensive implementation.",
+      "trigger": "Multiple materially different designs remain after repository evidence is considered.",
+      "do_not_trigger": "Clear, low-risk, reversible implementation path exists.",
+      "exit_condition": "Material ambiguity is resolved into explicit constraints without unnecessary approval ceremony.",
+      "role_affinity": [
+        "architect"
+      ],
+      "context_cost": "medium",
+      "execution_cost": "medium",
+      "priority": "low",
+      "weight": 0.35,
+      "composition_cost": "medium",
+      "useful_coexistence": [
+        "hi-architecture-decisions",
+        "hi-implementation-planning"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "architect",
+        "visual-qa"
+      ],
+      "activation_signals": [
+        "intent.design-discovery",
+        "architecture.contract-ambiguity"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "decision-evidence"
+      ]
+    },
+    {
+      "name": "hi-implementation-planning",
+      "purpose": "Create the minimum dependency-oriented plan required for coordinated changes.",
+      "trigger": "Cross-module sequencing, migration, rollback, or coupled acceptance requires coordination.",
+      "do_not_trigger": "Clear local task can be executed directly.",
+      "exit_condition": "Dependencies, ordered changes, acceptance, verification, and rollback needs are explicit enough to execute.",
+      "role_affinity": [
+        "architect"
+      ],
+      "context_cost": "medium",
+      "execution_cost": "low",
+      "priority": "low",
+      "weight": 0.35,
+      "composition_cost": "medium",
+      "useful_coexistence": [
+        "hi-architecture-decisions",
+        "hi-test-strategy"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "architect",
+        "coder"
+      ],
+      "activation_signals": [
+        "intent.planning",
+        "architecture.dependency-structure"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "decision-evidence"
+      ]
+    },
+    {
+      "name": "hi-iterative-retrieval",
+      "purpose": "Grow repository context only when current evidence creates a concrete information need.",
+      "trigger": "Relevant symbols/paths are not known and bounded retrieval can reduce uncertainty.",
+      "do_not_trigger": "Required context is already known and fresh.",
+      "exit_condition": "Task can execute or blocker is precise without further context expansion.",
+      "role_affinity": [
+        "repository-explorer"
+      ],
+      "context_cost": "low",
+      "execution_cost": "low",
+      "priority": "high",
+      "weight": 0.9,
+      "composition_cost": "low",
+      "useful_coexistence": [
+        "hi-repository-analysis"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "repository-explorer",
+        "architect"
+      ],
+      "activation_signals": [
+        "context.iterative-gap"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "context-resolved"
+      ]
+    },
+    {
+      "name": "hi-performance-analysis",
+      "purpose": "Analyze measurable performance behavior and compare changes on the same workload.",
+      "trigger": "There is a performance target/regression or hot-path claim requiring evidence.",
+      "do_not_trigger": "No measurable performance concern exists.",
+      "exit_condition": "Relevant baseline and after measurements support the conclusion without correctness regression.",
+      "role_affinity": [
+        "qa-reviewer"
+      ],
+      "context_cost": "medium",
+      "execution_cost": "high",
+      "priority": "normal",
+      "weight": 0.6,
+      "composition_cost": "low",
+      "useful_coexistence": [
+        "hi-test-strategy"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "qa-reviewer",
+        "coder"
+      ],
+      "activation_signals": [
+        "intent.performance"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "measurement-evidence"
+      ]
+    },
+    {
+      "name": "hi-regression-review",
+      "purpose": "Check likely neighboring behavior affected by a changed contract or shared component.",
+      "trigger": "A change can plausibly affect existing consumers/shared behavior, or regression-focused review is explicitly requested.",
+      "do_not_trigger": "Change is isolated with no dependent behavior.",
+      "exit_condition": "Likely regressions are covered by existing or targeted tests; scope does not expand speculatively.",
+      "role_affinity": [
+        "qa-reviewer"
+      ],
+      "context_cost": "medium",
+      "execution_cost": "medium",
+      "priority": "normal",
+      "weight": 0.6,
+      "composition_cost": "medium",
+      "useful_coexistence": [
+        "hi-code-review",
+        "hi-test-strategy"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "qa-reviewer"
+      ],
+      "activation_signals": [
+        "intent.regression-review",
+        "verification.regression"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "review-evidence"
+      ]
+    },
+    {
+      "name": "hi-release-guardrails",
+      "purpose": "Verify release metadata, package integrity, evidence, and authority boundaries.",
+      "trigger": "A release candidate, package, tag, publish, or distribution step is being prepared.",
+      "do_not_trigger": "Ordinary development not approaching a release boundary.",
+      "exit_condition": "Candidate evidence is exact-bound and external publication remains explicitly authorized.",
+      "role_affinity": [
+        "working-manager"
+      ],
+      "context_cost": "high",
+      "execution_cost": "high",
+      "priority": "normal",
+      "weight": 0.6,
+      "composition_cost": "medium",
+      "useful_coexistence": [
+        "hi-changelog-and-documentation",
+        "hi-security-review"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "working-manager",
+        "manager"
+      ],
+      "activation_signals": [
+        "intent.release",
+        "release.boundary"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "release-evidence"
+      ]
+    },
+    {
+      "name": "hi-repository-analysis",
+      "purpose": "Map the minimum relevant files, symbols, dependencies, tests, and configuration.",
+      "trigger": "Task scope or ownership is unclear enough that repository inspection will change execution.",
+      "do_not_trigger": "Known local scope already has fresh evidence.",
+      "exit_condition": "Relevant ownership and affected surface are known with remaining uncertainty explicit.",
+      "role_affinity": [
+        "repository-explorer"
+      ],
+      "context_cost": "medium",
+      "execution_cost": "low",
+      "priority": "high",
+      "weight": 0.9,
+      "composition_cost": "low",
+      "useful_coexistence": [
+        "hi-iterative-retrieval"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "repository-explorer",
+        "architect"
+      ],
+      "activation_signals": [
+        "intent.scope-unknown",
+        "context.scope-gap"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "context-resolved"
+      ]
+    },
+    {
+      "name": "hi-review-feedback",
+      "purpose": "Validate review findings against current code and apply only evidence-backed corrections.",
+      "trigger": "Review/QA/security feedback proposes changes.",
+      "do_not_trigger": "No external review findings need reconciliation.",
+      "exit_condition": "Each finding is classified and actionable ones are fixed and scoped-verified.",
+      "role_affinity": [
+        "coder"
+      ],
+      "context_cost": "medium",
+      "execution_cost": "medium",
+      "priority": "normal",
+      "weight": 0.6,
+      "composition_cost": "low",
+      "useful_coexistence": [
+        "hi-code-review"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "coder",
+        "qa-reviewer",
+        "security-reviewer"
+      ],
+      "activation_signals": [
+        "intent.review-feedback"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "fresh-verification"
+      ]
+    },
+    {
+      "name": "hi-safe-refactoring",
+      "purpose": "Preserve behavior while making bounded structural changes.",
+      "trigger": "Refactor is explicitly requested or needed to enable a required change.",
+      "do_not_trigger": "Behavior change is the primary task and no structural refactor is required.",
+      "exit_condition": "Pre/post behavior evidence is equivalent and public contracts remain stable unless explicitly changed.",
+      "role_affinity": [
+        "coder"
+      ],
+      "context_cost": "medium",
+      "execution_cost": "medium",
+      "priority": "normal",
+      "weight": 0.6,
+      "composition_cost": "medium",
+      "useful_coexistence": [
+        "hi-regression-review",
+        "hi-test-strategy"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "coder",
+        "working-manager"
+      ],
+      "activation_signals": [
+        "intent.refactor"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "fresh-verification"
+      ]
+    },
+    {
+      "name": "hi-security-review",
+      "purpose": "Review authority, secrets, trust boundaries, input handling, and attack surface proportionally.",
+      "trigger": "Security-sensitive code, permissions, credentials, external actions, or trust boundaries changed.",
+      "do_not_trigger": "No material security surface changed.",
+      "exit_condition": "Material threats are addressed or explicitly accepted with evidence; secrets are not exposed.",
+      "role_affinity": [
+        "security-reviewer"
+      ],
+      "context_cost": "high",
+      "execution_cost": "high",
+      "priority": "normal",
+      "weight": 0.6,
+      "composition_cost": "low",
+      "useful_coexistence": [
+        "hi-adversarial-validation"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "security-reviewer"
+      ],
+      "activation_signals": [
+        "intent.security-review",
+        "surface.security",
+        "risk.security"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "review-evidence"
+      ]
+    },
+    {
+      "name": "hi-methodology-authoring",
+      "purpose": "Create or evolve reusable Hi methodologies from explicit demand or repeated project evidence.",
+      "trigger": "A reusable way of working is explicitly requested or repeated project evidence shows a methodology gap.",
+      "do_not_trigger": "One-off facts/evidence, project knowledge, control-plane policy, or an existing methodology already covers the need.",
+      "exit_condition": "Methodology contract, role compatibility, admission policy, provenance, resources, and validation are coherent and non-duplicative.",
+      "role_affinity": [
+        "coder"
+      ],
+      "context_cost": "medium",
+      "execution_cost": "medium",
+      "priority": "low",
+      "weight": 0.35,
+      "composition_cost": "low",
+      "useful_coexistence": [
+        "hi-source-driven-development"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "coder"
+      ],
+      "activation_signals": [
+        "intent.methodology-authoring",
+        "project.methodology-gap"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "methodology-admission"
+      ]
+    },
+    {
+      "name": "hi-source-driven-development",
+      "purpose": "Inspect authoritative source before adapting an external implementation or methodology.",
+      "trigger": "External repository/specification/implementation is material to the requested change.",
+      "do_not_trigger": "Task is fully internal and no external implementation evidence is relevant.",
+      "exit_condition": "Source, license, primitive, ownership, reuse action, and test strategy are recorded before reuse.",
+      "role_affinity": [
+        "repository-explorer"
+      ],
+      "context_cost": "medium",
+      "execution_cost": "medium",
+      "priority": "high",
+      "weight": 0.9,
+      "composition_cost": "medium",
+      "useful_coexistence": [
+        "hi-repository-analysis",
+        "hi-security-review"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "repository-explorer",
+        "architect",
+        "coder"
+      ],
+      "activation_signals": [
+        "intent.external-source"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "source-provenance-evidence"
+      ]
+    },
+    {
+      "name": "hi-test-driven-development",
+      "purpose": "Use a failing test first when behavior can be specified economically before implementation.",
+      "trigger": "New/changed behavior benefits from executable specification and a tight red-green-refactor loop.",
+      "do_not_trigger": "Pure documentation, exploratory diagnosis, or test-first cost exceeds value.",
+      "exit_condition": "Behavior is implemented with focused tests and no unnecessary test ceremony.",
+      "role_affinity": [
+        "coder"
+      ],
+      "context_cost": "medium",
+      "execution_cost": "medium",
+      "priority": "normal",
+      "weight": 0.6,
+      "composition_cost": "low",
+      "useful_coexistence": [
+        "hi-test-strategy"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "coder"
+      ],
+      "activation_signals": [
+        "intent.tdd"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "targeted-test-evidence"
+      ]
+    },
+    {
+      "name": "hi-test-strategy",
+      "purpose": "Choose risk-proportional verification at the narrowest sufficient boundaries.",
+      "trigger": "Implementation changes require deciding what evidence is sufficient.",
+      "do_not_trigger": "No behavior changed or verification policy is already explicit and fresh.",
+      "exit_condition": "Required targeted/dependency/integration evidence is defined and executed without verification spiral.",
+      "role_affinity": [
+        "qa-reviewer"
+      ],
+      "context_cost": "medium",
+      "execution_cost": "medium",
+      "priority": "high",
+      "weight": 0.9,
+      "composition_cost": "low",
+      "useful_coexistence": [
+        "hi-regression-review"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "qa-reviewer",
+        "working-manager",
+        "coder"
+      ],
+      "activation_signals": [
+        "intent.test-strategy",
+        "verification.strategy"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "fresh-verification"
+      ]
+    },
+    {
+      "name": "hi-visual-qa",
+      "purpose": "Validate changed visual output for layout, clipping, state, and responsive regressions.",
+      "trigger": "Visual UI rendering/styling changed materially, or visual QA is explicitly requested.",
+      "do_not_trigger": "No visual surface changed.",
+      "exit_condition": "Relevant viewports/states are checked and visual defects are resolved or recorded.",
+      "role_affinity": [
+        "visual-qa"
+      ],
+      "context_cost": "medium",
+      "execution_cost": "medium",
+      "priority": "normal",
+      "weight": 0.6,
+      "composition_cost": "medium",
+      "useful_coexistence": [
+        "hi-browser-testing",
+        "hi-accessibility-review"
+      ],
+      "conflicts": [],
+      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
+      "resource_requirements": [],
+      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
+      "compatible_roles": [
+        "visual-qa"
+      ],
+      "activation_signals": [
+        "intent.visual-qa",
+        "surface.ui-visual",
+        "verification.visual"
+      ],
+      "exit_requirements": [
+        "task-success",
+        "no-open-issues",
+        "visual-evidence"
+      ]
+    }
+  ],
+  "policy": {
+    "activation_owner": "Hi methodology activation",
+    "host_loading_surface": "OpenCode native skill tool",
+    "default_active": 0,
+    "typical_max": 1,
+    "hard_max": 3,
+    "selection_scope": "mission-task-or-obligation",
+    "methodologies_do_not_own_control_plane": true,
+    "project_admission": "native SKILL.md + Hi policy sidecar + Hi provenance sidecar",
+    "exit_requirement_classes": [
+      "task-success",
+      "no-open-issues",
+      "context-resolved",
+      "decision-evidence",
+      "diagnostic-evidence",
+      "measurement-evidence",
+      "browser-evidence",
+      "visual-evidence",
+      "accessibility-evidence",
+      "source-provenance-evidence",
+      "targeted-test-evidence",
+      "fresh-verification",
+      "review-evidence",
+      "release-evidence",
+      "methodology-admission"
+    ]
+  },
+  "signal_catalog": {
+    "intent.debugging": {
+      "trigger_source": "failure-signal",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.code-review": {
+      "trigger_source": "task-intent",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.performance": {
+      "trigger_source": "performance-signal",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.release": {
+      "trigger_source": "release-boundary",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.tdd": {
+      "trigger_source": "task-intent",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.test-strategy": {
+      "trigger_source": "verification-need",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.planning": {
+      "trigger_source": "dependency-structure",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.architecture-decision": {
+      "trigger_source": "design-decision",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.design-discovery": {
+      "trigger_source": "task-intent",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.external-source": {
+      "trigger_source": "external-source-need",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.review-feedback": {
+      "trigger_source": "human-feedback",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.api-design": {
+      "trigger_source": "task-intent",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.methodology-authoring": {
+      "trigger_source": "task-intent",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.refactor": {
+      "trigger_source": "task-intent",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.database-migration": {
+      "trigger_source": "task-intent",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.dependency-change": {
+      "trigger_source": "task-intent",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.ci-failure": {
+      "trigger_source": "failure-signal",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.documentation": {
+      "trigger_source": "task-intent",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.api-contract-review": {
+      "trigger_source": "task-intent",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.regression-review": {
+      "trigger_source": "task-intent",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.security-review": {
+      "trigger_source": "task-intent",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.adversarial": {
+      "trigger_source": "task-intent",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.visual-qa": {
+      "trigger_source": "task-intent",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.accessibility": {
+      "trigger_source": "task-intent",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.browser": {
+      "trigger_source": "task-intent",
+      "producers": [
+        "intent"
+      ]
+    },
+    "intent.scope-unknown": {
+      "trigger_source": "task-intent",
+      "producers": [
+        "intent"
+      ]
+    },
+    "surface.ui-visual": {
+      "trigger_source": "changed-surface",
+      "producers": [
+        "changed-surface"
+      ]
+    },
+    "surface.ui-markup": {
+      "trigger_source": "changed-surface",
+      "producers": [
+        "changed-surface"
+      ]
+    },
+    "surface.contract": {
+      "trigger_source": "changed-surface",
+      "producers": [
+        "changed-surface"
+      ]
+    },
+    "surface.dependency": {
+      "trigger_source": "changed-surface",
+      "producers": [
+        "changed-surface"
+      ]
+    },
+    "surface.migration": {
+      "trigger_source": "changed-surface",
+      "producers": [
+        "changed-surface"
+      ]
+    },
+    "surface.security": {
+      "trigger_source": "changed-surface",
+      "producers": [
+        "changed-surface"
+      ]
+    },
+    "verification.review": {
+      "trigger_source": "verification-need",
+      "producers": [
+        "verification"
+      ]
+    },
+    "verification.visual": {
+      "trigger_source": "verification-need",
+      "producers": [
+        "verification"
+      ]
+    },
+    "verification.strategy": {
+      "trigger_source": "verification-need",
+      "producers": [
+        "verification"
+      ]
+    },
+    "verification.regression": {
+      "trigger_source": "verification-need",
+      "producers": [
+        "verification"
+      ]
+    },
+    "failure.ci-build": {
+      "trigger_source": "failure-signal",
+      "producers": [
+        "runtime-failure"
+      ]
+    },
+    "failure.unknown-root-cause": {
+      "trigger_source": "failure-signal",
+      "producers": [
+        "runtime-failure"
+      ]
+    },
+    "context.scope-gap": {
+      "trigger_source": "context-gap",
+      "producers": [
+        "context"
+      ]
+    },
+    "context.iterative-gap": {
+      "trigger_source": "context-gap",
+      "producers": [
+        "context"
+      ]
+    },
+    "release.boundary": {
+      "trigger_source": "release-boundary",
+      "producers": [
+        "release"
+      ]
+    },
+    "risk.security": {
+      "trigger_source": "risk-escalation",
+      "producers": [
+        "risk"
+      ]
+    },
+    "architecture.contract-ambiguity": {
+      "trigger_source": "contract-ambiguity",
+      "producers": [
+        "architecture"
+      ]
+    },
+    "architecture.dependency-structure": {
+      "trigger_source": "dependency-structure",
+      "producers": [
+        "architecture"
+      ]
+    },
+    "project.methodology-gap": {
+      "trigger_source": "project-learning",
+      "producers": [
+        "project-intelligence"
+      ]
+    }
+  },
+  "exit_requirement_catalog": {
+    "task-success": {
+      "scope": "worker",
+      "owner": "worker-result"
+    },
+    "no-open-issues": {
+      "scope": "worker",
+      "owner": "worker-result"
+    },
+    "context-resolved": {
+      "scope": "worker",
+      "owner": "context"
+    },
+    "decision-evidence": {
+      "scope": "worker",
+      "owner": "evidence"
+    },
+    "diagnostic-evidence": {
+      "scope": "worker",
+      "owner": "evidence"
+    },
+    "measurement-evidence": {
+      "scope": "worker",
+      "owner": "evidence"
+    },
+    "browser-evidence": {
+      "scope": "worker",
+      "owner": "evidence"
+    },
+    "visual-evidence": {
+      "scope": "worker",
+      "owner": "evidence"
+    },
+    "accessibility-evidence": {
+      "scope": "worker",
+      "owner": "evidence"
+    },
+    "source-provenance-evidence": {
+      "scope": "worker",
+      "owner": "evidence"
+    },
+    "targeted-test-evidence": {
+      "scope": "worker",
+      "owner": "evidence"
+    },
+    "fresh-verification": {
+      "scope": "mission",
+      "owner": "verification"
+    },
+    "review-evidence": {
+      "scope": "mission",
+      "owner": "review"
+    },
+    "release-evidence": {
+      "scope": "mission",
+      "owner": "release-chain"
+    },
+    "methodology-admission": {
+      "scope": "mission",
+      "owner": "project-intelligence"
+    }
+  }
+}

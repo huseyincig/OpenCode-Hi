@@ -16,10 +16,10 @@ description: Design a stable interface from consumer requirements and compatibil
 
 ## Method
 
-1. Start from the explicit task contract and current repository evidence.
-2. Apply this methodology only to the smallest surface that satisfies its trigger.
-3. Prefer deterministic evidence and existing project conventions over speculative generalization.
-4. Stop when the exit condition is satisfied; do not take routing, topology, authority, completion, or STOP ownership.
+1. Identify the real consumers and use cases before defining the interface; state inputs, outputs, errors, side effects, lifecycle, authority, and stability expectations.
+2. Keep the contract minimal and composable, separating required semantics from convenience fields and implementation details.
+3. Evaluate compatibility, idempotency, pagination, versioning, event ordering, and invalid or partial states where applicable.
+4. Express acceptance examples or contract tests that a consumer can rely on and stop when the boundary is understandable without knowledge of the implementation.
 
 ## Ownership boundary
 

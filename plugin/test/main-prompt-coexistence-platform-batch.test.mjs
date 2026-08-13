@@ -4,6 +4,7 @@ import {mkdtempSync,mkdirSync,writeFileSync,existsSync,rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import HiPlugin from '../dist/plugin.js'
+import { assessPluginMission } from './helpers/semantic.mjs'
 import {collectRepoContext} from '../dist/runtime/intent/repo-context.js'
 import {configuredSkillPaths,discoverSkills} from '../dist/runtime/skills/registry.js'
 import {runtimeStatePath} from '../dist/runtime/storage/locations.js'
@@ -60,9 +61,9 @@ test('plugin-wired worker skill resolution preserves Hi-native provider provenan
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{name:'native-provider'},client:c})
     const cfg={};await hooks.config(cfg)
-    await hooks['chat.message']({sessionID:'native-provider-parent',message:{role:'user',parts:[{type:'text',text:'fix the parser bug with TDD'}]}},{parts:[]})
+    await hooks['chat.message']({sessionID:'native-provider-parent',message:{role:'user',parts:[{type:'text',text:'fix the parser bug with TDD'}]}},{parts:[]}); await assessPluginMission(hooks,'native-provider-parent',{task_kind:'bug-fix',required_capabilities:['implementation'],likely_targets:['src/parser.ts'],intent_signals:['intent.tdd']})
     const start=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'fix the parser bug with TDD',role:'coder',category:'bug-fix',scope:'src/parser.ts'},{sessionID:'native-provider-parent'}))
-    assert.ok(start.skills.includes('hi-test-driven-development'))
+    assert.ok(start.methodologies.includes('hi-test-driven-development'))
     const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({},{sessionID:'native-provider-parent'}))
     const resolved=ledger.find?.(x=>x.event==='skill.resolved'||x.type==='skill.resolved')??ledger.events?.find?.(x=>x.event==='skill.resolved'||x.type==='skill.resolved')
     const outcomes=resolved?.payload?.outcomes??resolved?.data?.payload?.outcomes??[]

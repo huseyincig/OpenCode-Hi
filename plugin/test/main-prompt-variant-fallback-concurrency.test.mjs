@@ -4,6 +4,7 @@ import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
 import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
+import {startAssessedMission} from './helpers/semantic.mjs'
 import { resolveHiConfig } from '../dist/config/resolver.js'
 
 function baseClient(created=[],prompts=[]){
@@ -17,9 +18,9 @@ function baseClient(created=[],prompts=[]){
 
 test('selected native model variant must be evidenced by assistant runtime metadata',()=>{
   const runtime=new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>({}))
-  const m=new MissionStore(process.cwd()).start('s','deep task')
+  const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'s','opaque deep task')
   m.tasks.push({id:'t',objective:'x',status:'running',role:'coder',category:'deep',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],worker_id:'w',created_at:Date.now(),updated_at:Date.now()})
-  m.workers.push({id:'w',task_id:'t',role:'coder',category:'deep',parent_session_id:'s',parent_mission_id:m.mission_id,model:'p/deep',model_variant:'high',fallbacks:[],loaded_skills:[],methodologies:[],fingerprint:'f',status:'busy',generation_at_spawn:m.generation})
+  m.workers.push({id:'w',task_id:'t',role:'coder',category:'deep',parent_session_id:'s',parent_mission_id:m.mission_id,model:'p/deep',model_variant:'high',fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'busy',generation_at_spawn:m.generation})
   let r=runtime.noteEffectiveModel(m,'w',{model:'p/deep',variant:'medium',source:'assistant-message-metadata'})
   assert.equal(r.ok,false)
   assert.equal(m.workers[0].effective_model_verified,true)
@@ -33,9 +34,9 @@ test('selected native model variant must be evidenced by assistant runtime metad
 
 test('missing runtime variant evidence blocks a variant-constrained child',()=>{
   const runtime=new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>({}))
-  const m=new MissionStore(process.cwd()).start('s','deep task')
+  const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'s','opaque deep task')
   m.tasks.push({id:'t',objective:'x',status:'running',role:'coder',category:'deep',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],worker_id:'w',created_at:Date.now(),updated_at:Date.now()})
-  m.workers.push({id:'w',task_id:'t',role:'coder',category:'deep',parent_session_id:'s',parent_mission_id:m.mission_id,model:'p/deep',model_variant:'high',fallbacks:[],loaded_skills:[],methodologies:[],fingerprint:'f',status:'busy',generation_at_spawn:m.generation})
+  m.workers.push({id:'w',task_id:'t',role:'coder',category:'deep',parent_session_id:'s',parent_mission_id:m.mission_id,model:'p/deep',model_variant:'high',fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'busy',generation_at_spawn:m.generation})
   const r=runtime.noteEffectiveModel(m,'w',{model:'p/deep',source:'assistant-message-metadata'})
   assert.equal(r.ok,false)
   assert.ok(r.reason.startsWith('model-variant-unverified:'))
@@ -49,7 +50,7 @@ test('fallback reason persists on worker lifecycle for dispatch and runtime fall
   let failPrimary=true
   client.session.create=async req=>{const model=req.body?.model?.id;if(model==='primary'&&failPrimary){failPrimary=false;throw new Error('provider unavailable')}const id='child-fallback';created.push({id,req});return {data:{id}}}
   const runtime=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:3,providers:{p:3},models:{}})),process.cwd(),process.cwd(),()=>cfg,()=>models,()=>({}))
-  const m=new MissionStore(process.cwd()).start('s','implement fix')
+  const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'s','opaque implementation')
   const out=await runtime.start(m,{objective:'implement fix',role:'coder',category:'standard'})
   const w=m.workers.find(x=>x.id===out.worker_id)
   const t=m.tasks.find(x=>x.id===out.task_id)
@@ -75,7 +76,7 @@ test('role-specific children respect model capacity and second worker remains qu
   const models=[{id:'p/shared',provider:'p',writeCapable:true,tags:['balanced']}]
   const scheduler=new ConcurrencyScheduler(()=>({global:3,providers:{p:3},models:{'p/shared':1}}))
   const runtime=new TaskRuntime(client,new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>cfg,()=>models,()=>({}))
-  const m=new MissionStore(process.cwd()).start('s','inspect two independent surfaces');m.execution_mode='parallel'
+  const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'s','opaque parallel inspection',{task_kind:'review',required_capabilities:['repository-analysis']});m.execution_mode='parallel'
   const a=await runtime.start(m,{objective:'inspect alpha',role:'repository-explorer',category:'standard',scope:['src/a.ts']})
   assert.equal(a.readiness,'READY');assert.equal(scheduler.running(),1)
   const b=await runtime.start(m,{objective:'inspect beta',role:'architect',category:'standard',scope:['src/b.ts']})

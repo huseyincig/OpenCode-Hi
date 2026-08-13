@@ -3,6 +3,8 @@ import { verificationSatisfied } from '../verification/policy.js'
 function upsert(m:MissionState,id:string,kind:MissionGate['kind'],summary:string,status:MissionGate['status'],reason?:string):void{const now=Date.now();const existing=m.gates.find(g=>g.id===id);if(existing){existing.kind=kind;existing.summary=summary;existing.status=status;existing.reason=reason;existing.updated_at=now}else m.gates.push({id,kind,summary,status,reason,updated_at:now})}
 export function syncMissionGates(m:MissionState):MissionGate[]{
   m.gates??=[]
+  const semanticPending=m.semantic_assessment?.status!=='assessed'
+  upsert(m,'gate-semantic-assessment','precondition','Natural-language intent must be normalized into the host-agnostic Hi semantic contract before execution',semanticPending?'blocked':'closed',semanticPending?'semantic-assessment-pending':undefined)
   const authorityOpen=m.obligations.some(o=>o.kind==='authority'&&o.status!=='closed')||Boolean(m.authority?.pending||m.authority?.executing)
   upsert(m,'gate-authority','user-authority','Privileged external effect requires exact authority and confirmed completion',authorityOpen?(m.authority?.approved?'ready':'blocked'):'closed',authorityOpen?'authority-open':undefined)
   const verifyOpen=m.obligations.some(o=>o.kind==='verification'&&o.status!=='closed');const verify=verificationSatisfied(m)

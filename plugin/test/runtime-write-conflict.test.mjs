@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
+import {startAssessedMission} from './helpers/semantic.mjs'
 import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
 import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
@@ -22,7 +23,7 @@ function harness(){
 const done={status:'DONE',summary:'done',changed_files:[],evidence:[],open_issues:[],needs_context:[]}
 
 test('runtime-discovered overlapping writes quarantine the later writer and serialize its resume',async()=>{
-  const store=new MissionStore(),m=store.start('runtime-conflict','two initially independent edits');m.execution_mode='parallel'
+  const store=new MissionStore(),m=startAssessedMission(store,'runtime-conflict','opaque parallel edits',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation']})
   const {runtime,calls}=harness()
   const a=await runtime.start(m,{objective:'edit A',role:'coder',category:'standard',scope:['src/a.ts']})
   const b=await runtime.start(m,{objective:'edit B',role:'coder',category:'standard',scope:['src/b.ts']})
@@ -51,7 +52,7 @@ test('runtime-discovered overlapping writes quarantine the later writer and seri
 })
 
 test('successful worker result does not clear unrelated mission blockers',async()=>{
-  const store=new MissionStore(),m=store.start('blocker-ownership','preserve blockers')
+  const store=new MissionStore(),m=startAssessedMission(store,'blocker-ownership','opaque blocker task')
   const {runtime}=harness()
   m.blockers.push('external-authority:deploy')
   const started=await runtime.start(m,{objective:'local edit',role:'coder',category:'standard',scope:['src/a.ts']})

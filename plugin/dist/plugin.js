@@ -36,12 +36,17 @@ import { assertHiToolNamespace } from './opencode/tool-namespace.js';
 import { acquireHiRuntimeInstance } from './opencode/instance-guard.js';
 import { nativeTool as tool } from './opencode/plugin-tool.js';
 import { PACKAGED_HI_AGENTS } from './generated/agent-config.js';
+import { bindHiOpenCodeAgents } from './opencode/agent-binding.js';
 import { existsSync } from 'node:fs';
 import { ProjectAuthorityStore, applyProjectAuthorityPermissions, authorityClassForPatterns } from './runtime/safety/project-authority.js';
 import { dirname, resolve } from 'node:path';
 import { collectRepoContext, resolveNativeProjectRoot } from './runtime/intent/repo-context.js';
+import { parseSemanticIntentAssessment } from './runtime/intent/semantic-assessment.js';
 import { assessChangedFileOwnership } from './runtime/task/diff-ownership.js';
 import { fileURLToPath } from 'node:url';
+import { bindParentMethodologyNeeds } from './runtime/methodology/activation.js';
+import { reconcileMethodologyExits } from './runtime/methodology/exit.js';
+import { applyAdmittedProjectMethodologyPermissions } from './runtime/methodology/host-permissions.js';
 function nativeDiffFiles(raw) { const items = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : []; return [...new Set(items.map((x) => typeof x?.file === 'string' ? x.file : typeof x?.path === 'string' ? x.path : '').filter((x) => Boolean(x)).map((x) => x.replace(/\\/g, '/').replace(/^\.\//, '')))]; }
 function providerModels(raw) {
     const root = raw?.all ?? raw?.providers ?? raw ?? [];
@@ -73,7 +78,6 @@ export const HiPlugin = async (ctx) => {
     const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
     const packagedSkillsDir = resolve(packageRoot, 'skills');
     const projectRoot = resolveNativeProjectRoot(process.cwd(), { project: ctx.project, directory: ctx.directory, worktree: ctx.worktree });
-    const agentCollisions = [];
     const projectAuthority = new ProjectAuthorityStore(projectRoot);
     const pendingNativePermissions = new Map();
     let config = DEFAULT_HI_CONFIG;
@@ -124,7 +128,7 @@ export const HiPlugin = async (ctx) => {
     // Inventory/version are refreshed lazily from config/installation events after hooks are registered.
     const eventSink = ev => { const m = store.all().find(x => x.mission_id === ev.mission_id); if (m)
         appendLedger(m, `event.${ev.type}`, { task_id: ev.task_id, worker_id: ev.worker_id, payload: ev.payload }); };
-    const tasks = new TaskRuntime(ctx.client, background, scheduler, projectRoot, packageRoot, () => config, () => models, () => hostConfig, eventSink);
+    const tasks = new TaskRuntime(ctx.client, background, scheduler, projectRoot, packageRoot, () => config, () => models, () => hostConfig, eventSink, { serverUrl: ctx.serverUrl?.toString?.(), directory: ctx.directory });
     for (const m of store.all())
         for (const w of m.workers)
             if (w.session_id && w.status === 'ready')
@@ -137,6 +141,29 @@ export const HiPlugin = async (ctx) => {
     const metricsTool = tool({ description: 'Show aggregate Hi runtime metrics derived from bounded mission state. Token/cost telemetry is omitted unless the host provides it.', args: {}, execute: async () => JSON.stringify(aggregateMissionMetrics(store.all())) });
     const ledgerTool = tool({ description: 'Show a bounded Hi execution ledger/report on demand.', args: { limit: tool.schema.number().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(compactLedgerReport(m, a?.limit ?? 40)) : 'No active Hi mission'; } });
     const readinessTool = tool({ description: 'Show machine-readable Hi mission readiness/preconditions and gates.', args: {}, execute: async (_a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(evaluatePreconditions(m)) : 'No active Hi mission'; } });
+    const intentAssessTool = tool({ description: 'Submit the host-primary semantic interpretation of the current user message to the host-agnostic Hi Core intent contract. Natural-language semantics belong here, not in language-specific runtime regexes.', args: { revision: tool.schema.number(), assessment_json: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+            return 'No active Hi mission'; if (m.semantic_assessment.status !== 'pending')
+            return JSON.stringify({ status: 'ALREADY_ASSESSED', revision: m.semantic_assessment.revision }); if (Number(a.revision) !== m.semantic_assessment.revision)
+            return JSON.stringify({ status: 'STALE_ASSESSMENT', expected_revision: m.semantic_assessment.revision }); try {
+            const assessment = parseSemanticIntentAssessment(String(a.assessment_json)), phase = m.semantic_assessment.phase, pendingText = m.semantic_assessment.pending_text;
+            const next = phase === 'initial' ? store.applyInitialSemanticAssessment(c.sessionID, assessment) : store.applyFollowupSemanticAssessment(c.sessionID, assessment);
+            let reconciledWorkers = 0;
+            if (phase === 'followup') {
+                if (assessment.message_kind === 'stop') {
+                    await teams.shutdownMission(next);
+                    reconciledWorkers = await tasks.cancelAll(next);
+                }
+                else if (assessment.message_kind === 'constraint')
+                    reconciledWorkers = await tasks.reconcileUserConstraint(next, pendingText);
+                else
+                    reconciledWorkers = await tasks.resumeAfterSemanticAssessment(next, assessment.message_kind);
+            }
+            return JSON.stringify({ status: assessment.material ? 'ASSESSED' : 'NON_MATERIAL', phase, revision: next.semantic_assessment.revision, message_kind: assessment.message_kind, task_kind: next.intent.taskKind, scope: next.intent.scope, risk: next.risk, methodologies: next.methodology_needs.map(x => x.name), reconciled_workers: reconciledWorkers, gates: syncMissionGates(next).filter(g => g.status !== 'closed').map(g => ({ id: g.id, status: g.status, reason: g.reason })) });
+        }
+        catch (error) {
+            appendLedger(m, 'semantic.assessment-rejected', { payload: { revision: m.semantic_assessment.revision, error: String(error) } });
+            return JSON.stringify({ status: 'INVALID_ASSESSMENT', error: String(error) });
+        } } });
     const artifactAddTool = tool({ description: 'Attach one bounded context artifact reference to the current Hi mission.', args: { kind: tool.schema.string(), title: tool.schema.string().optional(), uri: tool.schema.string().optional(), summary: tool.schema.string().optional(), sha256: tool.schema.string().optional(), approved: tool.schema.boolean().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
             return 'No active Hi mission'; const raw = String(a.uri ?? a.summary ?? a.title ?? a.kind), item = { id: `ca_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`, kind: String(a.kind).slice(0, 80), title: a.title ? String(a.title).slice(0, 300) : undefined, uri: a.uri ? String(a.uri).slice(0, 1200) : undefined, summary: a.summary ? String(a.summary).slice(0, 2000) : undefined, sha256: a.sha256 ? String(a.sha256) : createHash('sha256').update(raw).digest('hex'), approved: Boolean(a.approved), added_at: Date.now() }; m.context_artifacts.push(item); if (m.context_artifacts.length > 8)
             m.context_artifacts.splice(0, m.context_artifacts.length - 8); appendLedger(m, 'context-artifact.added', { payload: { id: item.id, kind: item.kind, sha256: item.sha256 } }); return JSON.stringify(item); } });
@@ -186,7 +213,7 @@ export const HiPlugin = async (ctx) => {
                 }
                 catch { }
             ;
-            const ownership = assessChangedFileOwnership(m.intent.likelyTargets ?? [], directFiles, expansions);
+            const ownership = assessChangedFileOwnership(m.intent.likelyTargets ?? [], directFiles, expansions, 'control-plane');
             if (m.intent.scope === 'local' && ownership.collateral.length) {
                 const marker = `direct-diff-cleanliness:${ownership.collateral.slice(0, 12).sort().join(',')}`;
                 m.blockers = [...new Set([...m.blockers, marker])];
@@ -206,11 +233,13 @@ export const HiPlugin = async (ctx) => {
             const mutation = m.evidence.last_mutation_at ?? 0, freshInput = m.evidence.items.filter(e => e.kind === 'review-input' && !e.invalidated_at && e.observed_at >= mutation);
             if (!freshInput.length)
                 return 'BLOCKED: no fresh review input observed';
-            addEvidence(m, { kind: 'review-evidence', summary: String(rawArgs.summary ?? '').slice(0, 1000), scope: [...new Set(freshInput.flatMap(e => e.scope ?? []))].slice(0, 50), source: 'parent:direct-review', obligation_ids: [o.id], pass: true, outcome: 'passed' });
-        } o.status = 'closed'; o.closedAt = Date.now(); appendLedger(m, o.kind === 'review' ? 'review.direct-progress' : 'implementation.direct-progress', { payload: { summary: String(rawArgs.summary ?? '').slice(0, 500), obligation: o.id, changed_files: directFiles.slice(-30) } }); const verify = m.obligations.find(x => x.kind === 'verification' && x.status === 'open'); if (verify && verificationSatisfied(m, verify.id).ok) {
+            const reviewVerification = m.obligations.find(x => x.kind === 'verification' && x.status === 'open');
+            addEvidence(m, { kind: 'review-evidence', summary: String(rawArgs.summary ?? '').slice(0, 1000), scope: [...new Set(freshInput.flatMap(e => e.scope ?? []))].slice(0, 50), source: 'parent:direct-review', obligation_ids: [o.id, ...(reviewVerification ? [reviewVerification.id] : [])], pass: true, outcome: 'passed' });
+        } o.status = 'closed'; o.closedAt = Date.now(); appendLedger(m, o.kind === 'review' ? 'review.direct-progress' : 'implementation.direct-progress', { payload: { summary: String(rawArgs.summary ?? '').slice(0, 500), obligation: o.id, changed_files: directFiles.slice(-30) } }); if (m.parent_loaded_methodologies.length)
+            bindParentMethodologyNeeds(m, m.parent_loaded_methodologies, o.id); const verify = m.obligations.find(x => x.kind === 'verification' && x.status === 'open'); if (verify && verificationSatisfied(m, verify.id).ok) {
             verify.status = 'closed';
             verify.closedAt = Date.now();
-        } syncMissionGates(m); return JSON.stringify({ status: 'RECORDED', verification_required: !evaluateCompletion(m).complete, changed_files: o.kind === 'implementation' ? directFiles.slice(-30) : m.changed_files.slice(-30) }); } });
+        } reconcileMethodologyExits(m, projectRoot); syncMissionGates(m); return JSON.stringify({ status: 'RECORDED', verification_required: !evaluateCompletion(m).complete, changed_files: o.kind === 'implementation' ? directFiles.slice(-30) : m.changed_files.slice(-30) }); } });
     const startTool = tool({ description: 'Start one bounded Hi worker task. Use only when delegation is actually beneficial.', args: { objective: tool.schema.string().optional(), role: tool.schema.string().optional(), category: tool.schema.string().optional(), model: tool.schema.string().optional(), model_variant: tool.schema.string().optional(), scope: tool.schema.string().optional(), constraints: tool.schema.string().optional(), dependencies: tool.schema.string().optional(), required_evidence: tool.schema.string().optional(), obligation_ids: tool.schema.string().optional(), fork_from_session: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
             return 'No active Hi mission'; try {
             const input = { ...a, forkFromSession: a.fork_from_session ? String(a.fork_from_session) : undefined, modelVariant: a.model_variant ? String(a.model_variant) : undefined, scope: a.scope ? String(a.scope).split(',').map((x) => x.trim()).filter(Boolean) : undefined, constraints: a.constraints ? [String(a.constraints)] : undefined, dependencies: a.dependencies ? String(a.dependencies).split(',').map((x) => x.trim()).filter(Boolean) : undefined, requiredEvidence: a.required_evidence ? String(a.required_evidence).split(',').map((x) => x.trim()).filter(Boolean) : undefined, obligationIds: a.obligation_ids ? String(a.obligation_ids).split(',').map((x) => x.trim()).filter(Boolean) : undefined };
@@ -508,7 +537,7 @@ export const HiPlugin = async (ctx) => {
             await dispatchContinuation(ctx.client, m, decision.prompt, decision.reason);
         persistence.save(store.all());
     };
-    const toolSurface = { hi_doctor: doctorTool, hi_status: statusTool, hi_metrics: metricsTool, hi_ledger: ledgerTool, hi_readiness: readinessTool, hi_context_artifact_add: artifactAddTool, hi_context_artifacts: artifactsTool, hi_temporary_mutation_register: mutationTool, hi_temporary_mutation_revert: nativeRollbackTool, hi_direct_progress: directProgressTool, hi_task_start: startTool, hi_task_await: awaitTool, hi_task_peek: peekTool, hi_task_list: listTool, hi_task_cancel: cancelTool };
+    const toolSurface = { hi_doctor: doctorTool, hi_status: statusTool, hi_metrics: metricsTool, hi_ledger: ledgerTool, hi_readiness: readinessTool, hi_intent_assess: intentAssessTool, hi_context_artifact_add: artifactAddTool, hi_context_artifacts: artifactsTool, hi_temporary_mutation_register: mutationTool, hi_temporary_mutation_revert: nativeRollbackTool, hi_direct_progress: directProgressTool, hi_task_start: startTool, hi_task_await: awaitTool, hi_task_peek: peekTool, hi_task_list: listTool, hi_task_cancel: cancelTool };
     assertHiToolNamespace([...Object.keys(toolSurface), 'hi_team_create', 'hi_team_message', 'hi_team_inbox', 'hi_team_message_ack', 'hi_team_member_add', 'hi_team_member_remove', 'hi_team_status', 'hi_team_board', 'hi_team_shutdown']);
     // Team tools are intentionally feature-gated. The default tool surface remains small.
     if (config.teamMode.enabled && capabilities.workerRuntime) {
@@ -536,18 +565,17 @@ export const HiPlugin = async (ctx) => {
                 skills.paths = paths;
                 opencodeConfig.skills = skills;
             }
-            const agents = (opencodeConfig.agent && typeof opencodeConfig.agent === 'object' ? opencodeConfig.agent : {});
-            for (const [name, definition] of Object.entries(PACKAGED_HI_AGENTS)) {
-                if (agents[name] === undefined)
-                    agents[name] = definition;
-                else
-                    agentCollisions.push(name);
-            }
-            opencodeConfig.agent = agents;
+            const agentCollisions = bindHiOpenCodeAgents(opencodeConfig, PACKAGED_HI_AGENTS);
+            if (agentCollisions.length)
+                throw new Error(`OpenCode-Hi agent binding collision: ${agentCollisions.join(', ')}. Canonical Hi role names must resolve to the packaged Hi OpenCode agent contract.`);
+            const requestedPrimary = config.primaryMode === 'manager' ? 'manager' : config.primaryMode === 'working-manager' ? 'working-manager' : undefined;
+            if (requestedPrimary && opencodeConfig.default_agent !== undefined && opencodeConfig.default_agent !== requestedPrimary)
+                throw new Error(`OpenCode-Hi primary binding conflict: primaryMode=${requestedPrimary} but OpenCode default_agent=${String(opencodeConfig.default_agent)}.`);
             if (opencodeConfig.default_agent === undefined)
-                opencodeConfig.default_agent = 'working-manager';
+                opencodeConfig.default_agent = requestedPrimary ?? 'working-manager';
             if (opencodeConfig.subagent_depth === undefined)
                 opencodeConfig.subagent_depth = 1;
+            applyAdmittedProjectMethodologyPermissions(opencodeConfig, projectRoot);
             applyProjectAuthorityPermissions(opencodeConfig, projectAuthority);
             if (config.teamMode.enabled && capabilities.workerRuntime)
                 Object.assign(toolSurface, { hi_team_create: teamCreateTool, hi_team_message: teamMessageTool, hi_team_inbox: teamInboxTool, hi_team_message_ack: teamAckTool, hi_team_member_add: teamMemberAddTool, hi_team_member_remove: teamMemberRemoveTool, hi_team_status: teamStatusTool, hi_team_board: teamBoardTool, hi_team_shutdown: teamShutdownTool });
@@ -563,21 +591,14 @@ export const HiPlugin = async (ctx) => {
             }
             if (!models.length)
                 void refreshRuntimeInventory('chat-message');
-            await createChatMessageHook(store, async (sid) => { const m = store.get(sid); if (m) {
-                await teams.shutdownMission(m);
-                await tasks.cancelAll(m);
-            } }, async (sid, text, kind) => { if (kind !== 'constraint')
-                return; const m = store.get(sid); if (m) {
-                await teams.shutdownMission(m);
-                const n = await tasks.reconcileUserConstraint(m, text);
-                appendLedger(m, 'constraint.reconciled', { payload: { workers: n, generation: m.generation, preview: text.slice(0, 200) } });
-            } })(input, output);
+            await createChatMessageHook(store, async (sid, text) => { const m = store.get(sid); if (!m)
+                return; const teamsPaused = teams.adoptSemanticGeneration(m), workersPaused = await tasks.pauseForSemanticAssessment(m); appendLedger(m, 'semantic.execution-quarantined', { payload: { revision: m.semantic_assessment.revision, workers: workersPaused, teams: teamsPaused, preview: text.slice(0, 180) } }); })(input, output);
         }
         finally {
             persistence.save(store.all());
         } },
         'experimental.chat.messages.transform': createMessagesTransformHook(store, background),
-        'experimental.chat.system.transform': createSystemTransformHook(store, background, () => config.primaryMode),
+        'experimental.chat.system.transform': createSystemTransformHook(store, background, projectRoot),
         'experimental.session.compacting': async (input, output) => { try {
             await experimental.compacting()(input, output);
         }

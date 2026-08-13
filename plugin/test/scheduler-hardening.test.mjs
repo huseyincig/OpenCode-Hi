@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
+import {startAssessedMission} from './helpers/semantic.mjs'
 import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
 import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
@@ -12,7 +13,7 @@ function client(){let n=0;return {session:{create:async()=>({data:{id:`child-${+
 function runtime(scheduler=new ConcurrencyScheduler(()=>({global:4}))){return new TaskRuntime(client(),new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced']}],()=>({}))}
 
 test('dedupe fingerprint preserves distinct task contracts with same objective/role/model',async()=>{
-  const store=new MissionStore(),m=store.start('sched-dedupe','apply same fix to independent surfaces');m.execution_mode='parallel'
+  const store=new MissionStore(),m=startAssessedMission(store,'sched-dedupe','opaque parallel work');m.execution_mode='parallel'
   const r=runtime()
   const a=await r.start(m,{objective:'apply compatibility fix',role:'coder',category:'standard',scope:['src/a.ts']})
   const b=await r.start(m,{objective:'apply compatibility fix',role:'coder',category:'standard',scope:['src/b.ts']})
@@ -30,7 +31,7 @@ test('parallel safety blocks parent/child write surfaces, not just exact path eq
 })
 
 test('parallel safety allows independent siblings that share an already-completed prerequisite',()=>{
-  const store=new MissionStore(),m=store.start('shared-prereq','parallel siblings')
+  const store=new MissionStore(),m=startAssessedMission(store,'shared-prereq','opaque siblings')
   const pre=createTask(m,{objective:'discover',role:'repository-explorer',category:'quick'});pre.status='completed'
   const a=createTask(m,{objective:'change a',role:'coder',category:'standard',scope:['src/a.ts'],dependencies:[pre.id]});a.status='running'
   const decision=parallelSafety(m.tasks,{scope:['src/b.ts'],dependencies:[pre.id],role:'coder'})
@@ -38,7 +39,7 @@ test('parallel safety allows independent siblings that share an already-complete
 })
 
 test('unknown dependency IDs fail preflight instead of queueing forever',async()=>{
-  const store=new MissionStore(),m=store.start('unknown-dep','do work')
+  const store=new MissionStore(),m=startAssessedMission(store,'unknown-dep','opaque work')
   await assert.rejects(()=>runtime().start(m,{objective:'do work',role:'coder',dependencies:['t-does-not-exist']}),/Unknown task dependencies/)
   assert.equal(m.tasks.length,0)
   assert.equal(m.workers.length,0)
@@ -59,7 +60,7 @@ test('model rebind cannot oversubscribe target model capacity',()=>{
 })
 
 test('queued dependent is removed from queue when prerequisite fails',async()=>{
-  const store=new MissionStore(),m=store.start('dep-fail-queue','dependency chain');m.execution_mode='parallel'
+  const store=new MissionStore(),m=startAssessedMission(store,'dep-fail-queue','opaque dependency work');m.execution_mode='parallel'
   const pre=createTask(m,{objective:'prerequisite',role:'coder',category:'standard',scope:['src/pre.ts']});pre.status='running'
   const r=runtime()
   const dependent=await r.start(m,{objective:'dependent',role:'coder',category:'standard',scope:['src/dep.ts'],dependencies:[pre.id]})
@@ -80,7 +81,7 @@ test('queued dependent is removed from queue when prerequisite fails',async()=>{
 })
 
 test('start rejects a dependency that is already failed/cancelled',async()=>{
-  const store=new MissionStore(),m=store.start('dep-fail-preflight','dependency chain')
+  const store=new MissionStore(),m=startAssessedMission(store,'dep-fail-preflight','opaque dependency work')
   const pre=createTask(m,{objective:'prerequisite',role:'coder',category:'standard'});pre.status='failed'
   await assert.rejects(()=>runtime().start(m,{objective:'dependent',role:'coder',dependencies:[pre.id]}),/Unavailable task dependencies/)
 })
