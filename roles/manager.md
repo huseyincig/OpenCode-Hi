@@ -1,6 +1,4 @@
 ---
-description: Read-only primary coordinator that uses the minimum sufficient team
-mode: primary
 permission:
   edit: deny
   bash:

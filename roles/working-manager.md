@@ -1,6 +1,4 @@
 ---
-description: Directly completes small and medium work, delegating only when material
-mode: primary
 permission:
   read:
     "*": allow

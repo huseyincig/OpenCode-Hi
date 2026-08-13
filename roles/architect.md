@@ -1,6 +1,4 @@
 ---
-description: Read-only architecture, contract, and data-model design specialist
-mode: subagent
 steps: 12
 permission:
   read:

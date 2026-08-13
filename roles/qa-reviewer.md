@@ -1,6 +1,4 @@
 ---
-description: Independently reviews diffs, tests, and acceptance criteria for regressions
-mode: subagent
 steps: 12
 permission:
   read:

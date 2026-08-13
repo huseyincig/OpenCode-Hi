@@ -1,6 +1,4 @@
 ---
-description: Implements scoped changes and produces test and behavior evidence
-mode: subagent
 steps: 30
 permission:
   read:

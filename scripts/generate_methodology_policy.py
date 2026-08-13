@@ -6,7 +6,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 PROFILES=ROOT/'data'/'hi-methodologies.json'
 SKILLS=ROOT/'skills'
-ROLES=ROOT/'roles'
+ROLE_CATALOG=ROOT/'data'/'hi-roles.json'
 OUT=ROOT/'plugin'/'src'/'generated'/'methodology-policy.ts'
 
 def contract(path:Path):
@@ -32,11 +32,6 @@ def contract(path:Path):
       'role_affinity':[x.strip() for x in field('Role affinity').split(',') if x.strip()],
       'method':method,
     }
-
-def role_skill_permissions(path:Path):
-    text=path.read_text(encoding='utf-8')
-    fm=text.split('\n---\n',1)[0]
-    return {m.group(1):m.group(2) for m in re.finditer(r'^\s{4}(hi-[\w-]+):\s*(allow|ask|deny)\s*$',fm,re.M)}
 
 def main():
     raw=json.loads(PROFILES.read_text(encoding='utf-8'))
@@ -72,13 +67,8 @@ def main():
     if len(names)!=len(set(names)): raise ValueError('duplicate methodology profile names')
     packaged_names=sorted(path.parent.name for path in SKILLS.glob('hi-*/SKILL.md'))
     if sorted(names)!=packaged_names: raise ValueError(f'methodology catalog/package inventory drift: catalog={sorted(names)} packaged={packaged_names}')
-    roles={p.stem:role_skill_permissions(p) for p in sorted(ROLES.glob('*.md'))}
-    compatible_by_name={p['name']:set(p.get('compatible_roles',[])) for p in profiles}
-    for role,permissions in roles.items():
-        for methodology,decision in permissions.items():
-            if methodology=='*' or decision!='allow' or not methodology.startswith('hi-'): continue
-            if methodology not in compatible_by_name: raise ValueError(f'{role}: native-allows unknown methodology {methodology}')
-            if role not in compatible_by_name[methodology]: raise ValueError(f'{role}: native-allows incompatible methodology {methodology}')
+    role_raw=json.loads(ROLE_CATALOG.read_text(encoding='utf-8'))
+    canonical_roles={item['id'] for item in role_raw.get('roles',[])}
     normalized=[]
     method_owners={}
     for p in profiles:
@@ -103,8 +93,8 @@ def main():
         affinity=list(dict.fromkeys(p['role_affinity']))
         if not affinity: raise ValueError(f'{name}: missing role_affinity')
         if any(role not in compatible for role in affinity): raise ValueError(f'{name}: preferred role must be compatible')
-        for role in compatible:
-            if roles.get(role,{}).get(name)!='allow': raise ValueError(f'{name}: compatible role {role} does not native-allow methodology')
+        unknown_roles=[role for role in compatible if role not in canonical_roles]
+        if unknown_roles: raise ValueError(f'{name}: compatible_roles reference unknown roles {unknown_roles}')
         normalized.append({
           'name':name,
           'purpose':p['purpose'],

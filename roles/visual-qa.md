@@ -1,6 +1,4 @@
 ---
-description: Verifies UI changes with browser, responsive, console, and network evidence
-mode: subagent
 steps: 16
 permission:
   read:

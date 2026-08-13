@@ -6,6 +6,8 @@ from generate_role_policy import main as generate_roles
 
 ROOT=Path(__file__).resolve().parents[1]
 ROLES=ROOT/'roles'
+ROLE_CATALOG=ROOT/'data'/'hi-roles.json'
+METHODOLOGY_CATALOG=ROOT/'data'/'hi-methodologies.json'
 OUT=ROOT/'plugin'/'src'/'generated'/'agent-config.ts'
 
 
@@ -41,14 +43,31 @@ def parse_frontmatter(text:str):
 
 def main():
     generate_roles()
+    raw=json.loads(ROLE_CATALOG.read_text(encoding='utf-8'))
+    contracts={item['id']:item for item in raw['roles']}
+    methodology=json.loads(METHODOLOGY_CATALOG.read_text(encoding='utf-8'))
+    compatible_skills={role_id:[] for role_id in contracts}
+    for item in methodology['profiles']:
+        for role_id in item.get('compatible_roles',[]):
+            if role_id not in compatible_skills: raise ValueError(f"{item['name']}: unknown compatible role {role_id}")
+            compatible_skills[role_id].append(item['name'])
     agents={}
     for path in sorted(ROLES.glob('*.md')):
         fm,body=parse_frontmatter(path.read_text(encoding='utf-8'))
-        fm['prompt']=body
+        contract=contracts[path.stem]
+        if 'description' in fm or 'mode' in fm: raise ValueError(f'{path}: description/mode belong to RoleContract, not Markdown projection')
+        permission=fm.get('permission')
+        if not isinstance(permission,dict): raise ValueError(f'{path}: permission projection required until M3')
+        permission['skill']={name:'allow' for name in sorted(compatible_skills[path.stem])}
+        permission['skill']['*']='deny'
+        fm['description']=contract['purpose']
+        fm['mode']='primary' if contract['role_class']=='primary' else 'subagent'
+        role_contract='## Role Contract\n\nPurpose: '+contract['purpose']+'\n\nUse when:\n'+'\n'.join('- '+x for x in contract['use_when'])+'\n\nDo not use when:\n'+'\n'.join('- '+x for x in contract['do_not_use_when'])+'\n\n'
+        fm['prompt']=role_contract+body
         agents[path.stem]=fm
     OUT.parent.mkdir(parents=True,exist_ok=True)
     payload=json.dumps(agents,ensure_ascii=False,sort_keys=True,separators=(',',':'))
-    OUT.write_text('/* generated from roles/*.md by scripts/generate_plugin_agents.py; do not hand edit */\n'
+    OUT.write_text('/* generated from data/hi-roles.json + roles/*.md by scripts/generate_plugin_agents.py; do not hand edit */\n'
                    f'export const PACKAGED_HI_AGENTS = {payload} as const\n',encoding='utf-8')
     print(f'generated {len(agents)} agents -> {OUT.relative_to(ROOT)}')
 

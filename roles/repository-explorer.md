@@ -1,6 +1,4 @@
 ---
-description: Maps only the repository context needed for the current decision
-mode: subagent
 steps: 12
 permission:
   read:

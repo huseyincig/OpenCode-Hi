@@ -1,6 +1,4 @@
 ---
-description: Reviews real security-boundary changes through data flow and authority
-mode: subagent
 steps: 14
 permission:
   read:

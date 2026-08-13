@@ -46,7 +46,7 @@ Rows below are intentionally `PENDING` until code exists.
 |---|---|---|---|---|---|
 | M0 | constitution documentation foundation | constitution lint PASS; validator PASS; diff check clean | T0 | `e03aefd` | PASS |
 | M1 | common contract/provenance primitives | focused contract tests 6/6 PASS; controlled full suite 464/464 PASS; validator PASS; diff check clean; build generation idempotent | T0/T1 | `3809cd1` | PASS |
-| M2 | RoleContract owner/generator | canonical role owner migrated; focused 13/13 PASS; controlled suite 467/467 PASS; validator PASS; host projection migration remains | T1/T2 | pending | ACTIVE |
+| M2 | RoleContract owner/generator | role identity/mode/description/runtime catalog and methodology permission contribution are canonical-data driven; focused projection suite 24/24 PASS; controlled full suite 467/467 PASS; validator PASS | T1/T2 | pending | ACTIVE — GENERAL PERMISSION PROFILE NEXT |
 | M3 | PermissionProfile | safety monotonicity negatives + projection parity | T1/T2 | — | PENDING |
 | M4 | MethodologyContract normalization | BA02 + 27-methodology parity + admission/load/exit tests | T1/T2 | — | PENDING |
 | M5 | ConfigOption catalog | BA03 + config executor lint | T1/T2 | — | PENDING |
@@ -58,6 +58,15 @@ Rows below are intentionally `PENDING` until code exists.
 | M11 | deterministic full closure | build + validator + full controlled suite | T0/T1/T2 | — | PENDING |
 | M12 | real-host acceptance | OpenCode version-bound native receipts | T3 | — | PENDING |
 | M13 | release readiness | explicit authority + external receipts | T4 | — | NOT REQUESTED |
+
+
+### M2 projection checkpoint
+
+The OpenCode agent projection now derives `description` and `mode` from `data/hi-roles.json`, injects a generated RoleContract purpose/use/do-not-use preamble into the agent prompt, and derives native methodology skill permissions from `data/hi-methodologies.json` compatible-role relationships. `scripts/generate_methodology_policy.py` validates compatible role references against the canonical role catalog rather than treating Markdown skill permissions as an owner.
+
+The remaining mechanical role frontmatter surface is the general OpenCode permission/prompt guidance projection that M3 will normalize through PermissionProfile. Existing `permission.skill` text remains physically present in `roles/*.md` because SentinelX blocked direct edits to those blocks; it is not consumed as runtime truth by the generator. This residue must not be mistaken for a second canonical owner.
+
+Evidence: focused role/methodology/agent projection suite 24/24 PASS; controlled full suite 467/467 PASS; validator PASS; diff check clean.
 
 ### M1 implementation detail
 

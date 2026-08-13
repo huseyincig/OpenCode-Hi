@@ -43,17 +43,6 @@ def validate_role(raw,index):
     if not d['may_delegate'] and refs: fail(f'{rid}: non-delegating role lists refs')
     return raw
 
-def frontmatter_projection(path:Path):
-    text=path.read_text(encoding='utf-8')
-    if not text.startswith('---\n'): fail(f'{path}: missing frontmatter')
-    end=text.find('\n---\n',4)
-    if end<0: fail(f'{path}: unterminated frontmatter')
-    fm=text[4:end]
-    description=re.search(r'^description:\s*(.+)$',fm,re.M)
-    mode=re.search(r'^mode:\s*(.+)$',fm,re.M)
-    if not description or not mode: fail(f'{path}: description/mode required during M2 parity window')
-    return description.group(1).strip(),mode.group(1).strip()
-
 def main():
     raw=json.loads(CATALOG.read_text(encoding='utf-8'))
     if raw.get('schema')!=1 or raw.get('type')!='hi-role-contract-catalog': fail('hi-roles catalog header invalid')
@@ -67,11 +56,6 @@ def main():
             if ref not in known: fail(f"{role['id']}: delegation references unknown role {ref}")
     files={p.stem:p for p in ROLES.glob('*.md')}
     if set(files)!=known: fail(f'role contract/Markdown inventory drift: contracts={sorted(known)} markdown={sorted(files)}')
-    for role in roles:
-        desc,mode=frontmatter_projection(files[role['id']])
-        expected_mode='primary' if role['role_class']=='primary' else 'subagent'
-        if desc!=role['purpose']: fail(f"{role['id']}: Markdown description drift from RoleContract")
-        if mode!=expected_mode: fail(f"{role['id']}: Markdown mode drift from RoleContract ({mode} != {expected_mode})")
     def ids_where(pred): return [r['id'] for r in roles if pred(r)]
     normalized=[{
       'id':r['id'],'purpose':r['purpose'],'roleClass':r['role_class'],'useWhen':r['use_when'],'doNotUseWhen':r['do_not_use_when'],
@@ -79,7 +63,7 @@ def main():
       'obligationAuthority':r['obligation_authority'],'delegation':{'mayDelegate':r['delegation']['may_delegate'],'allowedRoleRefs':r['delegation']['allowed_role_refs']}
     } for r in roles]
     lines=[
-      '/* generated from data/hi-roles.json and parity-validated against roles/*.md; do not hand edit */',
+      '/* generated from data/hi-roles.json; roles/*.md inventory is validated separately; do not hand edit */',
       f"export const HI_ROLE_CONTRACTS = {json.dumps(normalized,ensure_ascii=False,separators=(',',':'))} as const",
       f"export const HI_ROLE_IDS = {json.dumps(ids_where(lambda r:True),separators=(',',':'))} as const",
       f"export const HI_ROLE_PRIMARY_IDS = {json.dumps(ids_where(lambda r:r['role_class']=='primary'),separators=(',',':'))} as const",
