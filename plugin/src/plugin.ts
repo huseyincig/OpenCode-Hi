@@ -92,7 +92,7 @@ export const HiPlugin:Plugin=async(ctx:any)=>{
   let inventoryRefresh:Promise<number>|undefined
   const refreshRuntimeInventory=async(reason:string):Promise<number>=>{
     if(inventoryRefresh)return inventoryRefresh
-    inventoryRefresh=(async()=>{try{const raw=await listProviders(ctx.client);const next=providerModels(raw);models=next;await log('info','Hi runtime inventory refreshed',{reason,models:models.length,routing_policy:config.routing.modelPolicy});return models.length}catch(error){await log('warn','Hi runtime inventory refresh failed',{reason,error:String(error)});return models.length}finally{inventoryRefresh=undefined}})();return inventoryRefresh
+    inventoryRefresh=(async()=>{try{const raw=await listProviders(ctx.client);const next=providerModels(raw);models=next;await log('info','Hi runtime inventory refreshed',{reason,models:models.length});return models.length}catch(error){await log('warn','Hi runtime inventory refresh failed',{reason,error:String(error)});return models.length}finally{inventoryRefresh=undefined}})();return inventoryRefresh
   }
   // Do not await host provider/version APIs during plugin initialization: those APIs may depend on the same config/plugin instance currently loading.
   // Inventory/version are refreshed lazily from config/installation events after hooks are registered.

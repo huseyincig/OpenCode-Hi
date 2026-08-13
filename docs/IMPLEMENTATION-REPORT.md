@@ -26,7 +26,7 @@ The adaptive policy implements separate role, methodology, model/tool, execution
 
 ## Agents and models
 
-Role, agent instance, model, and topology remain separate concepts. The configuration/routing surface supports adaptive behavior and explicit project overrides. Single-agent multi-role behavior remains valid; multi-agent behavior is benefit-gated; repeated role/model mapping is bounded by project policy. Explicit task/user policy takes precedence over adaptive selection, which takes precedence over host defaults where supported.
+Role, agent instance, model, and topology remain separate concepts. The configuration/routing surface supports adaptive behavior and explicit project overrides. Role-model setup metadata records how mappings were generated, while runtime routing consumes the resulting mappings/constraints rather than a decorative setup mode. Single-agent multi-role behavior remains valid; multi-agent behavior is benefit-gated; repeated role/model mapping is bounded by project policy. Explicit task/user policy takes precedence over adaptive selection, which takes precedence over host defaults where supported.
 
 ## Methodologies and OpenCode skills
 

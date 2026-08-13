@@ -73,16 +73,16 @@ test('minimal profile: low-risk review routes to coder (minimal favors direct im
   assert.equal(d.role, 'coder', 'minimal profile is hands-off on low-risk review')
 })
 
-test('balanced profile: repo-wide scope routes to architect', () => {
-  const m = intent('repo-wide', 'low', ['implementation'])
+test('balanced profile: explicit design capability routes to architect', () => {
+  const m = intent('repo-wide', 'low', ['implementation','design-exploration'])
   const d = routeCapabilities(m, balanced)
-  assert.equal(d.role, 'architect', 'balanced profile routes repo-wide to architect')
+  assert.equal(d.role, 'architect', 'balanced profile routes structured design to architect')
 })
 
-test('thorough profile: repo-wide scope routes to architect', () => {
-  const m = intent('repo-wide', 'low', ['implementation'])
+test('thorough profile: explicit design capability routes to architect', () => {
+  const m = intent('repo-wide', 'low', ['implementation','design-exploration'])
   const d = routeCapabilities(m, thorough)
-  assert.equal(d.role, 'architect', 'thorough profile routes repo-wide to architect')
+  assert.equal(d.role, 'architect', 'thorough profile routes structured design to architect')
 })
 
 test('default profile (no arg) is medium — matches balanced', () => {
@@ -99,10 +99,8 @@ test('profile default matches power-mapped balanced thresholds', () => {
   assert.equal(routeCapabilities(m, thorough).role, 'coder')
 })
 
-test('architect dispatch differs across profiles on repo-wide scope', () => {
-  // Only balanced and thorough route repo-wide to architect. Minimal gates
-  // architect on higher threshold so repo-wide does not dispatch.
-  const m = intent('repo-wide', 'low', ['implementation'])
+test('architect dispatch differs across profiles only for structured design capability', () => {
+  const m = intent('repo-wide', 'low', ['implementation','design-exploration'])
   assert.notEqual(routeCapabilities(m, minimal).role, 'architect', 'minimal profile gates architect')
   assert.equal(routeCapabilities(m, balanced).role, 'architect')
   assert.equal(routeCapabilities(m, thorough).role, 'architect')

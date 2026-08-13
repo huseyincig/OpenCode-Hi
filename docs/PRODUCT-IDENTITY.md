@@ -23,8 +23,7 @@ Historical HHC/OHO identifiers may remain only where technically necessary for e
 - Package: `opencode-hi`
 - Skill namespace: `hi-*`
 - Execution policy: `minimal | balanced | thorough | adaptive | manual`
-- Model policy: `recommended | adaptive | manual`
-- Adaptive role set: `adaptiveRoles`
+- Role-model setup metadata may record `recommended | adaptive | manual` and the roles left for adaptive scoring; these are provenance for `.opencode/hi/policy/routing.json`, not runtime routing modes. Runtime model selection consumes concrete role/category mappings, provider/model constraints, explicit model policy, and adaptive scoring.
 - CLI execution option: `--execution-policy`
 
 OpenCode-Hi does not parse or normalize former product configuration names. Unknown legacy fields are treated exactly like other unknown unsupported fields and do not alter canonical state.

@@ -1,4 +1,5 @@
 import { approvePendingAuthority, resolveUncertainAuthority } from '../runtime/safety/authority.js';
+import { isHiPrimaryRole } from '../runtime/roles/catalog.js';
 function isHiInternal(output) { const parts = output?.parts ?? output?.message?.parts ?? []; return parts.some((p) => p?.type === 'text' && (p?.metadata?.hiInternalContinuation === true || (p?.synthetic === true && p?.metadata?.hiInternalContinuation))); }
 function extractText(value) { const parts = value?.parts ?? value?.message?.parts ?? []; return parts.filter((p) => p?.type === 'text' && typeof p.text === 'string').map((p) => p.text).join('\n').trim(); }
 function normalizeNativeUserText(text) {
@@ -39,7 +40,7 @@ export function createChatMessageHook(store, onFollowupPending) {
         if (!userText)
             return;
         const agent = typeof input?.agent === 'string' ? input.agent : '';
-        const observedPrimary = agent === 'manager' || agent === 'working-manager' ? agent : undefined;
+        const observedPrimary = isHiPrimaryRole(agent) ? agent : undefined;
         if (agent && !observedPrimary)
             return;
         const existing = store.get(sid);

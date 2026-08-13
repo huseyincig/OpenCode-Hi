@@ -23,9 +23,9 @@ function makeDefaultHiConfig() {
     parallel: { enabled: true, max: 3, providers: {}, models: {} },
     teamMode: { enabled: false, auto: false, maxMembers: 4, maxMessages: 24, maxTurns: 12, maxWallMinutes: 45 },
     profile: {
-      minimal: { specialistThreshold: 'high', parallelThreshold: 'high', reviewThreshold: 'low', costSensitivity: 'high', qualityFloor: 'standard' },
-      balanced: { specialistThreshold: 'medium', parallelThreshold: 'medium', reviewThreshold: 'medium', costSensitivity: 'medium', qualityFloor: 'standard' },
-      thorough: { specialistThreshold: 'low', parallelThreshold: 'low', reviewThreshold: 'high', costSensitivity: 'low', qualityFloor: 'high' },
+      minimal: { specialistThreshold: 'high', reviewThreshold: 'low' },
+      balanced: { specialistThreshold: 'medium', reviewThreshold: 'medium' },
+      thorough: { specialistThreshold: 'low', reviewThreshold: 'high' },
     },
   }
 }

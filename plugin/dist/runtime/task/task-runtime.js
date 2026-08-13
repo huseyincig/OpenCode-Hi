@@ -31,7 +31,8 @@ import { effectiveExecutionSurface, promptToolOverrides } from '../routing/execu
 import { redactProviderContext } from '../privacy/boundary.js';
 import { ProjectMethodologyLearningStore } from '../project-intelligence/methodology-learning.js';
 import { applyAdmittedProjectMethodologyPermissions } from '../methodology/host-permissions.js';
-const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']), CHILD_ROLES = new Set(['coder', 'architect', 'repository-explorer', 'qa-reviewer', 'security-reviewer', 'visual-qa']), READ_ONLY = new Set(['architect', 'repository-explorer', 'qa-reviewer', 'security-reviewer', 'visual-qa']);
+import { isHiChildRole, isHiReadOnlyChildRole, isHiReviewerRole, roleCanOwnObligation } from '../roles/catalog.js';
+const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
 const MAX_QUEUE = 32;
 function missionModelFeedback(m) {
     const failures = {}, successes = {}, retries = {};
@@ -54,20 +55,23 @@ function missionModelFeedback(m) {
     return { failures, successes, retries };
 }
 function inferObligationIds(m, role, requiredEvidence, explicit = []) {
-    const validExplicit = [...new Set(explicit)].filter(id => m.obligations.some(o => o.id === id && o.status === 'open'));
-    if (validExplicit.length)
-        return validExplicit;
+    const requested = [...new Set(explicit)].map(id => m.obligations.find(o => o.id === id && o.status === 'open')).filter(Boolean);
+    const disallowed = requested.filter(o => !roleCanOwnObligation(role, o.kind));
+    if (disallowed.length)
+        throw new Error(`Role ${role} cannot own obligation(s): ${disallowed.map(o => `${o.id}:${o.kind}`).join(', ')}`);
+    if (requested.length)
+        return requested.map(o => o.id);
     const kinds = [];
     if (role === 'coder')
         kinds.push('implementation');
-    if (['repository-explorer', 'architect'].includes(role) || role === 'coder' && m.intent.taskKind === 'bug-fix')
+    if (['repository-explorer', 'architect'].includes(role) || role === 'coder' && ['bug-fix', 'performance'].includes(m.intent.taskKind))
         kinds.push('analysis');
-    if (READ_ONLY.has(role))
+    if (isHiReviewerRole(role))
         kinds.push('review');
     if (requiredEvidence.length)
         kinds.push('verification');
     const out = [];
-    for (const kind of [...new Set(kinds)]) {
+    for (const kind of [...new Set(kinds)].filter(k => roleCanOwnObligation(role, k))) {
         const candidates = m.obligations.filter(o => o.kind === kind && o.status === 'open');
         if (candidates.length === 1)
             out.push(candidates[0].id);
@@ -174,7 +178,7 @@ export class TaskRuntime {
             task.diff_cleanliness = { collateral: [...(task.diff_cleanliness?.collateral ?? [])], accepted_expansions: [...(task.diff_cleanliness?.accepted_expansions ?? [])], native_verified_reverts: [...previousCollateral] };
             appendLedger(m, 'diff.cleanup.verified', { task_id: task.id, worker_id: worker.id, payload: { reverted: previousCollateral.slice(0, 40), source: 'native-session-diff-baseline' } });
         }
-        const activeWriters = m.workers.filter(w => !READ_ONLY.has(w.role) && ['starting', 'busy'].includes(w.status));
+        const activeWriters = m.workers.filter(w => !isHiReadOnlyChildRole(w.role) && ['starting', 'busy'].includes(w.status));
         const soleWriter = activeWriters.length <= 1 || activeWriters.every(w => w.id === worker.id);
         const attributedNative = nativeDelta.filter(file => observed.includes(file) || task.scope.map(normFile).includes(file) || (soleWriter && !reported.includes(file)));
         const actual = [...new Set([...observed, ...attributedNative])];
@@ -306,7 +310,7 @@ export class TaskRuntime {
             throw new Error('Hi semantic assessment is pending; assess mission intent before starting a worker');
         const objective = input.objective?.trim() || m.objective;
         const taskIntent = m.intent;
-        const cfg = this.getConfig(), routingProfile = cfg.executionPolicy === 'minimal' ? cfg.profile.minimal : cfg.executionPolicy === 'thorough' ? cfg.profile.thorough : cfg.profile.balanced, routed = routeCapabilities(taskIntent, { specialistThreshold: routingProfile.specialistThreshold, reviewThreshold: routingProfile.reviewThreshold }), defaultCategory = resolveCategory(taskIntent), category = (CATEGORIES.has(String(input.category)) ? input.category : (routed.category ?? defaultCategory)), defaultRole = CHILD_ROLES.has(routed.role) ? routed.role : 'coder', role = CHILD_ROLES.has(String(input.role)) ? String(input.role) : defaultRole;
+        const cfg = this.getConfig(), routingProfile = cfg.executionPolicy === 'minimal' ? cfg.profile.minimal : cfg.executionPolicy === 'thorough' ? cfg.profile.thorough : cfg.profile.balanced, routed = routeCapabilities(taskIntent, { specialistThreshold: routingProfile.specialistThreshold, reviewThreshold: routingProfile.reviewThreshold }), defaultCategory = resolveCategory(taskIntent), category = (CATEGORIES.has(String(input.category)) ? input.category : (routed.category ?? defaultCategory)), defaultRole = isHiChildRole(routed.role) ? routed.role : 'coder', role = isHiChildRole(String(input.role)) ? String(input.role) : defaultRole;
         const hostConfig = this.getHostConfig();
         applyAdmittedProjectMethodologyPermissions(hostConfig, this.projectRoot);
         const feedback = missionModelFeedback(m), selected = resolveModel(category, this.getModels(), this.getConfig(), input.model, role, hostConfig, feedback);
@@ -319,7 +323,7 @@ export class TaskRuntime {
         void this.events?.(runtimeSignal('skill.resolved', m.mission_id, { payload: { role, requested: skillPlan.requested, outcomes: skillPlan.outcomes } }));
         if (skillPlan.missing.length)
             appendLedger(m, 'skill.fallback', { payload: { missing: skillPlan.missing, requested: skillPlan.requested, skillToolEnabled } });
-        const scope = input.scope ?? (READ_ONLY.has(role) && m.changed_files.length ? m.changed_files : taskIntent.likelyTargets ?? []), dependencies = [...new Set(input.dependencies ?? [])];
+        const scope = input.scope ?? (isHiReadOnlyChildRole(role) && m.changed_files.length ? m.changed_files : taskIntent.likelyTargets ?? []), dependencies = [...new Set(input.dependencies ?? [])];
         const unknownDependencies = dependencies.filter(id => !m.tasks.some(t => t.id === id)), unavailableDependencies = this.failedDeps(m, dependencies), incompleteDependencies = dependencies.filter(id => { const t = m.tasks.find(x => x.id === id); return Boolean(t) && t.status !== 'completed' && !unavailableDependencies.includes(id); });
         const requiredEvidence = input.requiredEvidence ?? m.verification_policy.requiredKinds, obligationIds = inferObligationIds(m, role, requiredEvidence, input.obligationIds), constraints = [...new Set([...(m.constraints ?? []), ...(input.constraints ?? [])])], desiredFingerprint = workerFingerprint(role, category, selected.primary, taskIntent.taskKind, objective, { scope, constraints, dependencies, requiredEvidence, obligationIds }), existing = m.workers.find(w => w.fingerprint === desiredFingerprint && !['completed', 'failed', 'cancelled'].includes(w.status));
         const native = new NativeOpenCodeAdapter(this.client), resumeCapable = Boolean(existing?.session_id), preflight = evaluateTaskPreconditions({ role, implementation: role === 'coder', dependencies: { unknown: unknownDependencies, failed: unavailableDependencies, incomplete: incompleteDependencies }, modelAvailable: Boolean(selected.primary), native: { childSession: resumeCapable || native.has('session-create'), prompt: native.has('prompt-async') || native.has('prompt-sync') }, hostConfig, contractCriticalAmbiguity: m.intent.ambiguity === 'contract-critical', authorityRequired: false });
@@ -341,7 +345,7 @@ export class TaskRuntime {
                 existing.started_at = Date.now();
                 oldTask.status = 'running';
                 this.registry.set(existing);
-                const issues = oldTask.result.open_issues.join(' | '), missing = oldTask.result.needs_context.join(' | '), reviewScope = READ_ONLY.has(existing.role) ? `Scoped rereview only: previous findings=${issues || 'none'}; changed scope=${m.changed_files.slice(-20).join(',') || 'none'}; affected evidence=${m.evidence.items.filter(e => !e.invalidated_at).slice(-8).map(e => e.summary).join(' | ') || 'none'}.` : '', resumeExitRequirements = existing.selected_methodologies.flatMap(name => { const item = catalog.find(x => x.name === name); return item ? [`${name}: ${item.exitRequirements.join(', ')}`] : []; });
+                const issues = oldTask.result.open_issues.join(' | '), missing = oldTask.result.needs_context.join(' | '), reviewScope = isHiReadOnlyChildRole(existing.role) ? `Scoped rereview only: previous findings=${issues || 'none'}; changed scope=${m.changed_files.slice(-20).join(',') || 'none'}; affected evidence=${m.evidence.items.filter(e => !e.invalidated_at).slice(-8).map(e => e.summary).join(' | ') || 'none'}.` : '', resumeExitRequirements = existing.selected_methodologies.flatMap(name => { const item = catalog.find(x => x.name === name); return item ? [`${name}: ${item.exitRequirements.join(', ')}`] : []; });
                 const resumeVariant = nextModel === selected.primary ? selected.primaryVariant : selected.fallbackVariants[nextModel];
                 const protectedBaseline = Object.keys(existing.native_diff_baseline ?? {}).slice(0, 60);
                 await this.sendProviderPrompt(existing.session_id, clipText([`Hi corrective resume for existing task ${oldTask.id}.`, `Previous status: ${oldTask.result.status}.`, `Missing context: ${missing || 'none'}.`, `Open issues: ${issues || 'none'}.`, `Current user constraints: ${(oldTask.constraints ?? []).join(' | ') || 'none'}.`, `METHODOLOGY EXIT REQUIREMENTS: ${resumeExitRequirements.join(' | ') || 'none'}.`, protectedBaseline.length ? `PRE-EXISTING USER DIRTY BASELINE: ${protectedBaseline.join(', ')}. Cleanup means restore these paths to their exact worker-start baseline, NOT to HEAD. Never discard user-owned edits with git checkout/reset/restore.` : 'Pre-existing user dirty baseline: none observed.', reviewScope, 'Resume from current session context. Apply the smallest correction. Do not restart planning or create sub-orchestrators. Return the structured WorkerResult again.'].filter(Boolean).join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), existing.role, nextModel === 'host-default' ? undefined : nextModel, resumeVariant, promptToolOverrides(oldTask.execution_profile?.tools ?? []));
@@ -642,10 +646,10 @@ export class TaskRuntime {
         if (stateHash)
             worker.native_state_hash = stateHash;
         markMutation(m, files, source);
-        if (READ_ONLY.has(worker.role))
+        if (isHiReadOnlyChildRole(worker.role))
             return;
         for (const other of m.workers) {
-            if (other.id === worker.id || READ_ONLY.has(other.role) || !(other.write_set ?? []).length || !['starting', 'busy'].includes(other.status) || !['starting', 'busy'].includes(worker.status))
+            if (other.id === worker.id || isHiReadOnlyChildRole(other.role) || !(other.write_set ?? []).length || !['starting', 'busy'].includes(other.status) || !['starting', 'busy'].includes(worker.status))
                 continue;
             const overlap = (worker.write_set ?? []).filter(x => (other.write_set ?? []).includes(x));
             if (!overlap.length)
@@ -715,7 +719,7 @@ export class TaskRuntime {
         if (previousIssues.length)
             m.blockers = m.blockers.filter(b => !previousIssues.includes(b) || m.tasks.some(other => other.id !== task.id && (other.result?.open_issues ?? []).includes(b)));
         const previousCollateral = [...(task.diff_cleanliness?.collateral ?? [])];
-        const ownership = READ_ONLY.has(worker.role) && result.changed_files.length
+        const ownership = isHiReadOnlyChildRole(worker.role) && result.changed_files.length
             ? { outside: [...result.changed_files], accepted: [], collateral: [...result.changed_files] }
             : assessDiffOwnership(task, result);
         if (ownership.accepted.length) {
@@ -766,9 +770,9 @@ export class TaskRuntime {
         const fallbackMutation = effectiveResult.changed_files.length > 0 && !observedMutationDuringWorker;
         if (fallbackMutation)
             markMutation(m, effectiveResult.changed_files, 'worker-result-fallback');
-        const evidenceSource = READ_ONLY.has(worker.role) ? `worker:${worker.id}:reviewer` : `worker:${worker.id}`;
+        const evidenceSource = isHiReadOnlyChildRole(worker.role) ? `worker:${worker.id}:reviewer` : `worker:${worker.id}`;
         for (const e of effectiveResult.evidence)
-            addEvidence(m, { kind: e.kind, summary: e.summary, scope: e.scope ?? effectiveResult.changed_files, source: evidenceSource, source_session_id: worker.session_id, source_state_hash: worker.native_state_hash, task_id: task.id, obligation_ids: task.obligation_ids, pass: e.pass, outcome: e.outcome, reason: e.reason, invalidated_at: (cleanlinessMarker || fallbackMutation && !READ_ONLY.has(worker.role)) ? (m.evidence.last_mutation_at ?? Date.now()) : undefined });
+            addEvidence(m, { kind: e.kind, summary: e.summary, scope: e.scope ?? effectiveResult.changed_files, source: evidenceSource, source_session_id: worker.session_id, source_state_hash: worker.native_state_hash, task_id: task.id, obligation_ids: task.obligation_ids, pass: e.pass, outcome: e.outcome, reason: e.reason, invalidated_at: (cleanlinessMarker || fallbackMutation && !isHiReadOnlyChildRole(worker.role)) ? (m.evidence.last_mutation_at ?? Date.now()) : undefined });
         if (effectiveResult.status === 'DONE' && (worker.loaded_methodologies?.length ?? 0) > 0) {
             const missingExit = [...new Set((worker.loaded_methodologies ?? []).flatMap(name => methodologyExitCheck(m, name, { task, worker, result: effectiveResult, projectRoot: this.projectRoot, scope: 'worker' }).missing))];
             if (missingExit.length) {
@@ -810,7 +814,7 @@ export class TaskRuntime {
                 this.#methodologyLearning.observe(m, worker, observation, evidenceRefs);
         }
         const ownsReviewObligation = task.obligation_ids.some(id => m.obligations.some(o => o.id === id && o.kind === 'review'));
-        if (effectiveResult.status === 'DONE' && READ_ONLY.has(worker.role) && ownsReviewObligation && !effectiveResult.evidence.some(e => e.kind === 'review-evidence'))
+        if (effectiveResult.status === 'DONE' && isHiReadOnlyChildRole(worker.role) && ownsReviewObligation && !effectiveResult.evidence.some(e => e.kind === 'review-evidence'))
             addEvidence(m, { kind: 'review-evidence', summary: effectiveResult.summary || `Independent ${worker.role} completed owned review task`, scope: effectiveResult.changed_files, source: evidenceSource, source_session_id: worker.session_id, source_state_hash: worker.native_state_hash, task_id: task.id, obligation_ids: task.obligation_ids, pass: true, outcome: 'passed' });
         if (effectiveResult.status === 'DONE') {
             const now = Date.now();

@@ -12,7 +12,7 @@ function projectConfig(root){
     schema:1,type:'hi-routing',primaryMode:'manager',
     teamMode:{enabled:true,auto:false,maxMembers:3,maxMessages:9,maxTurns:5,maxWallMinutes:7},
     parallel:{enabled:false,max:1,providers:{},models:{}},
-    profile:{balanced:{specialistThreshold:'low',parallelThreshold:'high',reviewThreshold:'high',costSensitivity:'medium',qualityFloor:'high'}},
+    profile:{balanced:{specialistThreshold:'low',reviewThreshold:'high'}},
     routing:{modelPolicy:'manual',strategy:'quality',maxFallbacks:1,roleModels:{coder:['openai/local']},roleVariants:{},adaptiveRoles:[]}
   },null,2))
 }

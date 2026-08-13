@@ -14,7 +14,7 @@ test('recommended setup persists all 8 canonical roles when curated inventory is
  const p=project();try{
   const r=ensureProjectRoutingConfig(p,ALL);assert.equal(r.created,true);assert.equal(r.configuredRoles,8)
   const raw=JSON.parse(readFileSync(r.path,'utf8'));assert.equal(raw.routing.modelPolicy,'recommended');assert.deepEqual(raw.routing.adaptiveRoles,[]);assert.equal(Object.keys(raw.routing.roleModels).length,8)
-  const first=resolveHiConfig({},p),second=resolveHiConfig({},p);assert.deepEqual(second.routing.roleModels,first.routing.roleModels);assert.equal(second.routing.modelPolicy,'recommended')
+  const first=resolveHiConfig({},p),second=resolveHiConfig({},p);assert.deepEqual(second.routing.roleModels,first.routing.roleModels);assert.equal('modelPolicy' in second.routing,false);assert.equal('adaptiveRoles' in second.routing,false)
  }finally{rmSync(p,{recursive:true,force:true})}
 })
 
@@ -31,7 +31,7 @@ test('recommended setup marks only unavailable roles for smart select without re
 test('manual role mapping persists ordered fallback chain and per-model variants into runtime',()=>{
  const p=project();try{
   mkdirSync(join(p,'.opencode','hi','policy'),{recursive:true});writeFileSync(join(p,'.opencode','hi','policy','routing.json'),JSON.stringify({schema:1,type:'hi-routing',routing:{strategy:'quality',modelPolicy:'manual',adaptiveRoles:[],roleModels:{coder:['p/code','p/fallback']},roleVariants:{coder:{'p/code':'high','p/fallback':'medium'}}}},null,2))
-  const cfg=resolveHiConfig({},p);assert.deepEqual(cfg.routing.roleModels.coder,['p/code','p/fallback']);assert.equal(cfg.routing.roleVariants.coder['p/code'],'high');assert.equal(cfg.routing.modelPolicy,'manual')
+  const cfg=resolveHiConfig({},p);assert.deepEqual(cfg.routing.roleModels.coder,['p/code','p/fallback']);assert.equal(cfg.routing.roleVariants.coder['p/code'],'high');assert.equal('modelPolicy' in cfg.routing,false);assert.equal('adaptiveRoles' in cfg.routing,false)
   const r=resolveModel('standard',[{id:'p/code',quality:8,variants:['low','high']},{id:'p/fallback',quality:7,variants:['low','medium']}],cfg,undefined,'coder')
   assert.equal(r.primary,'p/code');assert.equal(r.primaryVariant,'high');assert.deepEqual(r.fallbacks,['p/fallback']);assert.equal(r.fallbackVariants['p/fallback'],'medium')
  }finally{rmSync(p,{recursive:true,force:true})}

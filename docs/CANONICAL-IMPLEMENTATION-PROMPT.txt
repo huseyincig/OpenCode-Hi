@@ -4320,8 +4320,8 @@ Canonical OpenCode-Hi configuration and terminology must stand on their own.
 For 0.1.0 this includes:
 
 executionPolicy: minimal | balanced | thorough | adaptive | manual
-routing.modelPolicy: recommended | adaptive | manual
-routing.adaptiveRoles
+role-model setup metadata: recommended | adaptive | manual plus roles left unmapped for adaptive scoring
+These setup metadata fields are NOT runtime HiConfig routing decisions; runtime consumes concrete role/category mappings and adaptive scoring.
 CLI: --execution-policy
 
 The former-product names `autonomy`, `basic`, `powerful`, `smart`,

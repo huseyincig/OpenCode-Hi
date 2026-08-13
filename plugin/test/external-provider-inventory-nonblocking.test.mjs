@@ -15,7 +15,7 @@ test('chat.message does not block on unresolved native provider inventory', asyn
     session:{create:async()=>({data:{id:'child'}}),promptAsync:async()=>({}),abort:async()=>({}),messages:async()=>({data:[]}),status:async()=>({data:{}}),children:async()=>({data:[]}),diff:async()=>({data:[]}),todo:async()=>({data:[]}),revert:async()=>({}),unrevert:async()=>({})}
   }
   const hooks=await HiPlugin({directory:root,worktree:root,project:{},client})
-  const cfg={hi:{routing:{modelPolicy:'manual',roleModels:{coder:['openai/local']}}}}
+  const cfg={hi:{routing:{roleModels:{coder:['openai/local']}}}}
   await hooks.config(cfg)
   const output={message:{role:'user'},parts:[{type:'text',text:'fix the bug in src/parser.ts'}]}
   const start=Date.now()

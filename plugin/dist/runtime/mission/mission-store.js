@@ -210,7 +210,6 @@ export class MissionStore {
         return m;
     }
     restore(missions, uncleanShutdown = false) { for (const m of missions) {
-        m.primary_mode = minimumTeamFor(m.intent, m.verification_policy, this.#getPrimaryMode()).primary;
         m.continuation_active = false;
         m.active_action_id = undefined;
         m.continuation_failure_count = 0;

@@ -1,5 +1,6 @@
 import { MissionStore } from '../runtime/mission/mission-store.js'
 import { approvePendingAuthority,resolveUncertainAuthority } from '../runtime/safety/authority.js'
+import { isHiPrimaryRole } from '../runtime/roles/catalog.js'
 function isHiInternal(output:any):boolean{const parts=output?.parts??output?.message?.parts??[];return parts.some((p:any)=>p?.type==='text'&&(p?.metadata?.hiInternalContinuation===true||(p?.synthetic===true&&p?.metadata?.hiInternalContinuation))) }
 function extractText(value:any):string{const parts=value?.parts??value?.message?.parts??[];return parts.filter((p:any)=>p?.type==='text'&&typeof p.text==='string').map((p:any)=>p.text).join('\n').trim()}
 function normalizeNativeUserText(text:string):string{
@@ -24,7 +25,7 @@ export function createChatMessageHook(store:MissionStore,onFollowupPending?: (se
   if(isHiInternal(output))return
   const userText=extractNativeUserText(input,output);if(!userText)return
   const agent=typeof input?.agent==='string'?input.agent:''
-  const observedPrimary=agent==='manager'||agent==='working-manager'?agent:undefined
+  const observedPrimary=isHiPrimaryRole(agent)?agent:undefined
   if(agent&&!observedPrimary)return
   const existing=store.get(sid)
   if(existing&&observedPrimary)store.bindObservedPrimary(sid,observedPrimary)

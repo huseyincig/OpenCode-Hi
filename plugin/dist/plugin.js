@@ -112,7 +112,7 @@ export const HiPlugin = async (ctx) => {
             const raw = await listProviders(ctx.client);
             const next = providerModels(raw);
             models = next;
-            await log('info', 'Hi runtime inventory refreshed', { reason, models: models.length, routing_policy: config.routing.modelPolicy });
+            await log('info', 'Hi runtime inventory refreshed', { reason, models: models.length });
             return models.length;
         }
         catch (error) {

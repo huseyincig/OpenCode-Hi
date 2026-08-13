@@ -55,8 +55,6 @@ export function loadProjectRoutingConfig(projectRoot) {
             strategy: r.strategy ?? 'cost-quality',
             roleModels,
             roleVariants,
-            modelPolicy: r.modelPolicy === 'recommended' || r.modelPolicy === 'manual' ? 'recommended' === r.modelPolicy ? 'recommended' : 'manual' : 'adaptive',
-            adaptiveRoles: Array.isArray(r.adaptiveRoles) ? r.adaptiveRoles.filter(x => typeof x === 'string') : [],
             categoryModels,
             categoryVariants,
             allowedProviders: Array.isArray(r.allowedProviders) ? r.allowedProviders.filter(x => typeof x === 'string') : [],

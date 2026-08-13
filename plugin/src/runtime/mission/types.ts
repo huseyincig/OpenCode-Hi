@@ -1,7 +1,8 @@
+import type { HiPrimaryRole } from '../roles/catalog.js'
 export type MissionStatus = 'active' | 'waiting-user' | 'completed' | 'stopped' | 'failed'
 export type Risk = 'low' | 'medium' | 'high' | 'authority-boundary'
 export type ExecutionMode = 'single' | 'parallel' | 'team'
-export type PrimaryMode = 'working-manager' | 'manager'
+export type PrimaryMode = HiPrimaryRole
 export type ObligationStatus = 'open' | 'closed' | 'blocked'
 export type ObligationKind = 'analysis' | 'implementation' | 'verification' | 'review' | 'authority'
 export type TaskStatus = 'created' | 'queued' | 'running' | 'waiting' | 'completed' | 'failed' | 'cancelled' | 'blocked'

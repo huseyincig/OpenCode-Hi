@@ -20,7 +20,7 @@ OpenCode-Hi 0.1.0 performs a terminology audit before final architecture freeze.
 | Obligation | Obligation | KEEP | same | Precise representation of required unfinished work. |
 | Task | MissionTask / TaskStatus | KEEP | same | Bounded executable work unit. |
 | Worker | WorkerState / worker | KEEP | same | Runtime execution instance, deliberately distinct from role, agent template, and model. |
-| Role | architect / coder / repository-explorer / qa-reviewer / security-reviewer / visual-qa | KEEP | same | Clear specialist responsibilities. |
+| Role | architect / coder / repository-explorer / qa-reviewer / security-reviewer / visual-qa | KEEP | same | Clear specialist responsibilities. Hi Core owns role identity/authority; `roles/*.md` bind those roles to OpenCode-native agent templates. |
 | Primary role | working-manager | KEEP | working-manager | Distinguishes a write-capable primary from the read-only coordinating manager; rename would add churn without clearer semantics. |
 | Primary role | manager | KEEP | manager | Familiar coordinating role name. |
 | Team | Team Mode / hi_team_* | KEEP | same | Familiar developer concept; bounded multi-agent execution, not a separate control plane. |

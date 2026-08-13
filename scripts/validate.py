@@ -114,4 +114,4 @@ for p in (ROOT/'data').rglob('*.json'):
     except Exception as e:err(f'bad json {p.name}: {e}')
 if ERR:
     print('VALIDATION FAIL'); [print('- '+x) for x in ERR]; sys.exit(1)
-print('VALIDATION PASS'); print(f'version={version} roles={len(roles)} skills={len(skills)} product=HI docs={len(actual_docs)}')
+print('VALIDATION PASS'); print(f'version={version} roles={len(roles)} methodologies={len(skills)} product=HI docs={len(actual_docs)}')

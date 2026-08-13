@@ -9,10 +9,7 @@ export type ModelSelectionMode = 'adaptive'|'fixed'|'role-mapped'
 
 export interface ProfileSettings {
   specialistThreshold: 'low' | 'medium' | 'high'
-  parallelThreshold: 'low' | 'medium' | 'high'
   reviewThreshold: 'low' | 'medium' | 'high'
-  costSensitivity: 'low' | 'medium' | 'high'
-  qualityFloor: 'standard' | 'high'
 }
 
 export interface HiConfig {
@@ -26,8 +23,6 @@ export interface HiConfig {
     categoryVariants: Partial<Record<CategoryName,string[]>>
     roleModels: Record<string,string[]>
     roleVariants: Record<string,Record<string,string>>
-    modelPolicy: 'recommended'|'adaptive'|'manual'
-    adaptiveRoles: string[]
     maxFallbacks: number
     allowedProviders: string[]
     deniedModels: string[]
@@ -35,7 +30,7 @@ export interface HiConfig {
   execution: { topology: TopologyMode; maxAgents: number; parallelism: number; allowMultiRoleAgent: boolean }
   models: { mode: ModelSelectionMode; default: string; roles: Record<string,string> }
   parallel: { enabled: boolean; max: number; providers: Record<string,number>; models: Record<string,number> }
-  teamMode: { enabled: boolean; auto: boolean; maxMembers: number; maxMessages: number; maxTurns: number; maxWallMinutes: number }
+  teamMode: { enabled: boolean; maxMembers: number; maxMessages: number; maxTurns: number; maxWallMinutes: number }
   profile: { minimal: ProfileSettings; balanced: ProfileSettings; thorough: ProfileSettings }
 }
 

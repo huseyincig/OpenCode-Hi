@@ -1,6 +1,5 @@
-import type { NormalizedMissionIntent, VerificationPolicy } from '../mission/types.js'
+import type { NormalizedMissionIntent, VerificationPolicy, PrimaryMode } from '../mission/types.js'
 
-export type PrimaryMode = 'working-manager'|'manager'
 export interface MinimumTeamDecision { primary:PrimaryMode; direct:boolean; roles:string[]; reason:string[] }
 
 export function minimumTeamFor(intent:NormalizedMissionIntent, verification?:VerificationPolicy, primaryMode:'auto'|PrimaryMode='auto'):MinimumTeamDecision{

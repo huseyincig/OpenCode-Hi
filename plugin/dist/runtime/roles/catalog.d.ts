@@ -1,0 +1,13 @@
+export declare const HI_PRIMARY_ROLES: readonly ["working-manager", "manager"];
+export declare const HI_CHILD_ROLES: readonly ["coder", "architect", "repository-explorer", "qa-reviewer", "security-reviewer", "visual-qa"];
+export declare const HI_ROLES: readonly ["working-manager", "manager", "coder", "architect", "repository-explorer", "qa-reviewer", "security-reviewer", "visual-qa"];
+export declare const HI_READ_ONLY_CHILD_ROLES: readonly ["architect", "repository-explorer", "qa-reviewer", "security-reviewer", "visual-qa"];
+export declare const HI_REVIEWER_ROLES: readonly ["qa-reviewer", "security-reviewer", "visual-qa"];
+export type HiPrimaryRole = typeof HI_PRIMARY_ROLES[number];
+export type HiChildRole = typeof HI_CHILD_ROLES[number];
+export type HiRole = typeof HI_ROLES[number];
+export declare function isHiPrimaryRole(v: unknown): v is HiPrimaryRole;
+export declare function isHiChildRole(v: unknown): v is HiChildRole;
+export declare function isHiReadOnlyChildRole(v: unknown): boolean;
+export declare function isHiReviewerRole(v: unknown): boolean;
+export declare function roleCanOwnObligation(role: string, kind: string): boolean;

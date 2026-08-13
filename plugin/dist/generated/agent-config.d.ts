@@ -93,7 +93,6 @@ export declare const PACKAGED_HI_AGENTS: {
         readonly permission: {
             readonly bash: {
                 readonly "*": "deny";
-                readonly "hi-release-guardrails": "allow";
             };
             readonly edit: "deny";
             readonly external_directory: "deny";

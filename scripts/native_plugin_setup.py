@@ -331,7 +331,7 @@ def _kv_limits(items:list[str]|None)->dict[str,int]:
         if key and value>0:out[key]=min(32,value)
     return out
 
-def reconfigure(project:Path,*,print_only:bool=False,execution_policy:str|None=None,primary_mode:str|None=None,routing_strategy:str|None=None,model_policy:str|None=None,allow_providers:list[str]|None=None,deny_models:list[str]|None=None,max_fallbacks:int|None=None,parallel_state:str|None=None,parallel_max:int|None=None,provider_limits:list[str]|None=None,model_limits:list[str]|None=None,profile_target:str='balanced',specialist_threshold:str|None=None,parallel_threshold:str|None=None,review_threshold:str|None=None,cost_sensitivity:str|None=None,quality_floor:str|None=None,team_state:str|None=None,team_auto:str|None=None,team_max_members:int|None=None,team_max_messages:int|None=None,team_max_turns:int|None=None,team_wall_minutes:int|None=None)->dict:
+def reconfigure(project:Path,*,print_only:bool=False,execution_policy:str|None=None,primary_mode:str|None=None,routing_strategy:str|None=None,allow_providers:list[str]|None=None,deny_models:list[str]|None=None,max_fallbacks:int|None=None,parallel_state:str|None=None,parallel_max:int|None=None,provider_limits:list[str]|None=None,model_limits:list[str]|None=None,profile_target:str='balanced',specialist_threshold:str|None=None,review_threshold:str|None=None,team_state:str|None=None,team_max_members:int|None=None,team_max_messages:int|None=None,team_max_turns:int|None=None,team_wall_minutes:int|None=None)->dict:
     """Ownership-safe project reconfiguration for main-prompt runtime knobs.
 
     OpenCode 1.18.x canonical config strips unknown top-level `hi` fields before
@@ -365,19 +365,17 @@ def reconfigure(project:Path,*,print_only:bool=False,execution_policy:str|None=N
     profiles=dict(merged.get('profile',{})) if isinstance(merged.get('profile'),dict) else {}
     if profile_target not in PROFILE_NAMES: profile_target='balanced'
     target=dict(profiles.get(profile_target,{})) if isinstance(profiles.get(profile_target),dict) else {}
-    for key,val in [('specialistThreshold',specialist_threshold),('parallelThreshold',parallel_threshold),('reviewThreshold',review_threshold),('costSensitivity',cost_sensitivity),('qualityFloor',quality_floor)]:
+    for key,val in [('specialistThreshold',specialist_threshold),('reviewThreshold',review_threshold)]:
         if val is not None:target[key]=val;changed.append(f'profile.{profile_target}.{key}')
     if target:profiles[profile_target]=target;merged['profile']=profiles
     team=dict(merged.get('teamMode',{})) if isinstance(merged.get('teamMode'),dict) else {}
     if team_state is not None:team['enabled']=_bool_arg(team_state);changed.append('teamMode.enabled')
-    if team_auto is not None:team['auto']=_bool_arg(team_auto);changed.append('teamMode.auto')
     for key,val,lo,hi in [('maxMembers',team_max_members,2,8),('maxMessages',team_max_messages,1,100),('maxTurns',team_max_turns,1,50),('maxWallMinutes',team_wall_minutes,1,240)]:
         if val is not None:team[key]=max(lo,min(hi,int(val)));changed.append(f'teamMode.{key}')
     if team:merged['teamMode']=team
     rr=dict(merged.get('routing',{})) if isinstance(merged.get('routing'),dict) else {}
     if max_fallbacks is not None:rr['maxFallbacks']=max(0,min(6,int(max_fallbacks)));changed.append('routing.maxFallbacks')
     if routing_strategy is not None:rr['strategy']=routing_strategy;changed.append('routing.strategy')
-    if model_policy is not None:rr['modelPolicy']=model_policy;changed.append('routing.modelPolicy')
     if allow_providers is not None:rr['allowedProviders']=[x for x in allow_providers if x];changed.append('routing.allowedProviders')
     if deny_models is not None:rr['deniedModels']=[x for x in deny_models if x];changed.append('routing.deniedModels')
     if rr:merged['routing']=rr
@@ -398,7 +396,6 @@ def main()->int:
     ap.add_argument('--execution-policy',choices=['minimal','balanced','thorough','adaptive','manual'])
     ap.add_argument('--primary-mode',choices=['auto','working-manager','manager'])
     ap.add_argument('--routing-strategy',choices=['cost-quality','quality','cost'])
-    ap.add_argument('--model-policy',choices=['recommended','adaptive','manual'])
     ap.add_argument('--allow-provider',dest='allow_providers',action='append')
     ap.add_argument('--deny-model',dest='deny_models',action='append')
     ap.add_argument('--max-fallbacks',type=int)
@@ -408,12 +405,8 @@ def main()->int:
     ap.add_argument('--model-limit',action='append',default=[])
     ap.add_argument('--profile-target',choices=['minimal','balanced','thorough'],default='balanced')
     ap.add_argument('--specialist-threshold',choices=['low','medium','high'])
-    ap.add_argument('--parallel-threshold',choices=['low','medium','high'])
     ap.add_argument('--review-threshold',choices=['low','medium','high'])
-    ap.add_argument('--cost-sensitivity',choices=['low','medium','high'])
-    ap.add_argument('--quality-floor',choices=['standard','high'])
     ap.add_argument('--team-mode',dest='team_state',choices=['enabled','disabled'])
-    ap.add_argument('--team-auto',choices=['true','false'])
     ap.add_argument('--team-max-members',type=int)
     ap.add_argument('--team-max-messages',type=int)
     ap.add_argument('--team-max-turns',type=int)
@@ -425,7 +418,7 @@ def main()->int:
       'doctor':lambda:doctor(project),
       'uninstall':lambda:uninstall(project),
       'role-models':lambda:role_models(project,list_available=a.list_available,defaults=a.defaults,print_only=a.print,sets=a.sets,variants=a.variants,policy=a.policy),
-      'reconfigure':lambda:reconfigure(project,print_only=a.print,execution_policy=a.execution_policy,primary_mode=a.primary_mode,routing_strategy=a.routing_strategy,model_policy=a.model_policy,allow_providers=a.allow_providers,deny_models=a.deny_models,max_fallbacks=a.max_fallbacks,parallel_state=a.parallel_state,parallel_max=a.parallel_max,provider_limits=a.provider_limit,model_limits=a.model_limit,profile_target=a.profile_target,specialist_threshold=a.specialist_threshold,parallel_threshold=a.parallel_threshold,review_threshold=a.review_threshold,cost_sensitivity=a.cost_sensitivity,quality_floor=a.quality_floor,team_state=a.team_state,team_auto=a.team_auto,team_max_members=a.team_max_members,team_max_messages=a.team_max_messages,team_max_turns=a.team_max_turns,team_wall_minutes=a.team_wall_minutes),
+      'reconfigure':lambda:reconfigure(project,print_only=a.print,execution_policy=a.execution_policy,primary_mode=a.primary_mode,routing_strategy=a.routing_strategy,allow_providers=a.allow_providers,deny_models=a.deny_models,max_fallbacks=a.max_fallbacks,parallel_state=a.parallel_state,parallel_max=a.parallel_max,provider_limits=a.provider_limit,model_limits=a.model_limit,profile_target=a.profile_target,specialist_threshold=a.specialist_threshold,review_threshold=a.review_threshold,team_state=a.team_state,team_max_members=a.team_max_members,team_max_messages=a.team_max_messages,team_max_turns=a.team_max_turns,team_wall_minutes=a.team_wall_minutes),
     }
     out=cmds[a.command]()
     out.pop('rendered',None);print(dump(out),end='');return 2 if out.get('status') in ('BLOCKED','FAIL') else 0

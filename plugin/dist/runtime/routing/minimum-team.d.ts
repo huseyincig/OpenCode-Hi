@@ -1,5 +1,4 @@
-import type { NormalizedMissionIntent, VerificationPolicy } from '../mission/types.js';
-export type PrimaryMode = 'working-manager' | 'manager';
+import type { NormalizedMissionIntent, VerificationPolicy, PrimaryMode } from '../mission/types.js';
 export interface MinimumTeamDecision {
     primary: PrimaryMode;
     direct: boolean;

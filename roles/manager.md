@@ -4,7 +4,6 @@ mode: primary
 permission:
   edit: deny
   bash:
-    hi-release-guardrails: allow
     "*": deny
   external_directory: deny
   task: deny

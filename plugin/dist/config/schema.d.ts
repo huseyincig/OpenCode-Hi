@@ -8,10 +8,7 @@ export type TopologyMode = 'adaptive' | 'single-agent' | 'multi-agent';
 export type ModelSelectionMode = 'adaptive' | 'fixed' | 'role-mapped';
 export interface ProfileSettings {
     specialistThreshold: 'low' | 'medium' | 'high';
-    parallelThreshold: 'low' | 'medium' | 'high';
     reviewThreshold: 'low' | 'medium' | 'high';
-    costSensitivity: 'low' | 'medium' | 'high';
-    qualityFloor: 'standard' | 'high';
 }
 export interface HiConfig {
     schemaVersion: typeof HI_CONFIG_SCHEMA;
@@ -27,8 +24,6 @@ export interface HiConfig {
         categoryVariants: Partial<Record<CategoryName, string[]>>;
         roleModels: Record<string, string[]>;
         roleVariants: Record<string, Record<string, string>>;
-        modelPolicy: 'recommended' | 'adaptive' | 'manual';
-        adaptiveRoles: string[];
         maxFallbacks: number;
         allowedProviders: string[];
         deniedModels: string[];
@@ -52,7 +47,6 @@ export interface HiConfig {
     };
     teamMode: {
         enabled: boolean;
-        auto: boolean;
         maxMembers: number;
         maxMessages: number;
         maxTurns: number;

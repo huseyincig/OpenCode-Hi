@@ -1,4 +1,4 @@
-const READ_ONLY_ROLES = new Set(['repository-explorer', 'qa-reviewer', 'security-reviewer', 'visual-qa', 'architect']);
+import { isHiReadOnlyChildRole } from '../roles/catalog.js';
 function norm(x) { return x.trim().replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+$/, ''); }
 function sameSurface(a, b) { const x = norm(a), y = norm(b); if (!x || !y)
     return false; if (x === y)
@@ -9,8 +9,8 @@ function overlap(a, b) { const out = []; for (const x of a)
             out.push(norm(x) === norm(y) ? norm(x) : `${norm(x)}~${norm(y)}`);
             break;
         } return [...new Set(out)]; }
-export function parallelSafety(existing, candidate) { const reasons = []; const candidateRead = READ_ONLY_ROLES.has(candidate.role ?? ''); for (const task of existing.filter(t => ['created', 'queued', 'running', 'waiting'].includes(t.status))) {
-    const directDependency = candidate.dependencies.includes(task.id), same = overlap(task.scope, candidate.scope), taskRead = READ_ONLY_ROLES.has(task.role);
+export function parallelSafety(existing, candidate) { const reasons = []; const candidateRead = isHiReadOnlyChildRole(candidate.role ?? ''); for (const task of existing.filter(t => ['created', 'queued', 'running', 'waiting'].includes(t.status))) {
+    const directDependency = candidate.dependencies.includes(task.id), same = overlap(task.scope, candidate.scope), taskRead = isHiReadOnlyChildRole(task.role);
     if (directDependency) {
         reasons.push(`dependency:${task.id}`);
         continue;

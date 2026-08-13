@@ -1,7 +1,7 @@
 import { appendLedger } from '../ledger/ledger.js';
-const TEAM_ROLES = new Set(['coder', 'architect', 'repository-explorer', 'qa-reviewer', 'security-reviewer', 'visual-qa']);
+import { isHiChildRole, isHiReadOnlyChildRole } from '../roles/catalog.js';
 function uid(p) { return `${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`; }
-function validTeamRole(role) { return TEAM_ROLES.has(role); }
+function validTeamRole(role) { return isHiChildRole(role); }
 export class TeamRuntime {
     tasks;
     enabled;
@@ -21,7 +21,7 @@ export class TeamRuntime {
         throw new Error('Team belongs to a different mission'); }
     assertCurrentMission(m, t) { this.assertMissionOwner(m, t); if (t.mission_generation !== m.generation)
         throw new Error('Stale team generation; shutdown/reconcile the old team before continuing'); }
-    async startMember(m, t, role, overrideModel, overrideVariant) { const readOnly = new Set(['architect', 'repository-explorer', 'qa-reviewer', 'security-reviewer', 'visual-qa']).has(role), started = await this.tasks.start(m, { objective: `${t.objective}\nTeam perspective: ${role}. Report findings to parent; do not create another team.`, role, category: m.risk === 'high' ? 'critical' : 'deep', scope: readOnly ? [] : m.intent.likelyTargets, constraints: ['parent-mediated team', 'no nested team', 'bounded scope', 'compact evidence'], model: overrideModel, modelVariant: overrideVariant }); t.worker_ids.push(started.worker_id); t.member_workers[role] = started.worker_id; return started.worker_id; }
+    async startMember(m, t, role, overrideModel, overrideVariant) { const readOnly = isHiReadOnlyChildRole(role), started = await this.tasks.start(m, { objective: `${t.objective}\nTeam perspective: ${role}. Report findings to parent; do not create another team.`, role, category: m.risk === 'high' ? 'critical' : 'deep', scope: readOnly ? [] : m.intent.likelyTargets, constraints: ['parent-mediated team', 'no nested team', 'bounded scope', 'compact evidence'], model: overrideModel, modelVariant: overrideVariant }); t.worker_ids.push(started.worker_id); t.member_workers[role] = started.worker_id; return started.worker_id; }
     async create(m, objective, members, memberModels) { if (!this.enabled())
         throw new Error('Team Mode disabled'); if (this.list(m.mission_id).some(t => t.status === 'active'))
         throw new Error('Nested or second active team is not allowed'); const l = this.limits(), requested = [...new Set(members.map(x => x.trim()).filter(Boolean))]; const invalid = requested.filter(x => !validTeamRole(x)); if (invalid.length)
