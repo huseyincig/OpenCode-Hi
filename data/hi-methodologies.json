@@ -19,9 +19,7 @@
         "hi-visual-qa"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "visual-qa"
       ],
@@ -54,9 +52,7 @@
         "hi-code-review"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "qa-reviewer",
         "security-reviewer",
@@ -90,9 +86,7 @@
         "hi-api-interface-design"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "qa-reviewer",
         "coder"
@@ -126,9 +120,7 @@
         "hi-architecture-decisions"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "architect",
         "coder"
@@ -161,9 +153,7 @@
         "hi-implementation-planning"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "architect"
       ],
@@ -195,9 +185,7 @@
         "hi-accessibility-review"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "visual-qa"
       ],
@@ -228,9 +216,7 @@
         "hi-release-guardrails"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "working-manager",
         "coder"
@@ -263,9 +249,7 @@
         "hi-test-strategy"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "coder"
       ],
@@ -298,9 +282,7 @@
         "hi-security-review"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "qa-reviewer",
         "security-reviewer"
@@ -334,9 +316,7 @@
         "hi-architecture-decisions"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "coder"
       ],
@@ -369,9 +349,7 @@
         "hi-ci-build-recovery"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "coder"
       ],
@@ -404,9 +382,7 @@
         "hi-test-strategy"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "coder",
         "security-reviewer"
@@ -440,9 +416,7 @@
         "hi-implementation-planning"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "architect",
         "visual-qa"
@@ -476,9 +450,7 @@
         "hi-test-strategy"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "architect",
         "coder"
@@ -511,9 +483,7 @@
         "hi-repository-analysis"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "repository-explorer",
         "architect"
@@ -545,9 +515,7 @@
         "hi-test-strategy"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "qa-reviewer",
         "coder"
@@ -580,9 +548,7 @@
         "hi-test-strategy"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "qa-reviewer"
       ],
@@ -615,9 +581,7 @@
         "hi-security-review"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "working-manager",
         "manager"
@@ -650,9 +614,7 @@
         "hi-iterative-retrieval"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "repository-explorer",
         "architect"
@@ -685,9 +647,7 @@
         "hi-code-review"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "coder",
         "qa-reviewer",
@@ -721,9 +681,7 @@
         "hi-test-strategy"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "coder",
         "working-manager"
@@ -755,9 +713,7 @@
         "hi-adversarial-validation"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "security-reviewer"
       ],
@@ -790,9 +746,7 @@
         "hi-source-driven-development"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "coder"
       ],
@@ -825,9 +779,7 @@
         "hi-security-review"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "repository-explorer",
         "architect",
@@ -860,9 +812,7 @@
         "hi-test-strategy"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "coder"
       ],
@@ -893,9 +843,7 @@
         "hi-regression-review"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "qa-reviewer",
         "working-manager",
@@ -930,9 +878,7 @@
         "hi-accessibility-review"
       ],
       "conflicts": [],
-      "escalation_relation": "Escalate only when risk, uncertainty, or failed evidence materially requires more capability.",
       "resource_requirements": [],
-      "verification_relation": "Contributes methodology; runtime verification ownership remains in the control plane.",
       "compatible_roles": [
         "visual-qa"
       ],

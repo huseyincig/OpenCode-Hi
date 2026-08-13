@@ -47,8 +47,8 @@ Rows below are intentionally `PENDING` until code exists.
 | M0 | constitution documentation foundation | constitution lint PASS; validator PASS; diff check clean | T0 | `e03aefd` | PASS |
 | M1 | common contract/provenance primitives | focused contract tests 6/6 PASS; controlled full suite 464/464 PASS; validator PASS; diff check clean; build generation idempotent | T0/T1 | `3809cd1` | PASS |
 | M2 | RoleContract owner/generator | role identity/mode/description/runtime catalog and methodology permission contribution are canonical-data driven; focused projection suite 24/24 PASS; controlled full suite 467/467 PASS; validator PASS | T1/T2 | pending | ACTIVE — GENERAL PERMISSION PROFILE NEXT |
-| M3 | PermissionProfile | safety monotonicity negatives + projection parity | T1/T2 | — | PENDING |
-| M4 | MethodologyContract normalization | BA02 + 27-methodology parity + admission/load/exit tests | T1/T2 | — | PENDING |
+| M3 | PermissionProfile | safety monotonicity negatives + projection parity | T1/T2 | — | BLOCKED — SENTINELX POLICY PREVENTED PERMISSION-CATALOG MUTATION |
+| M4 | MethodologyContract normalization | mechanical SKILL contract sections compiled from canonical JSON; inert duplicated fields removed; focused 37/37 PASS; controlled full suite 469/469 PASS; validator PASS | T1/T2 | pending | ACTIVE — MECHANICAL OWNER MIGRATED |
 | M5 | ConfigOption catalog | BA03 + config executor lint | T1/T2 | — | PENDING |
 | M6 | Model capability/identity | BA04 + resolver/observed identity tests | T1/T2 | — | PENDING |
 | M7 | Host capability registry | BA05 + doctor/degraded/unsupported tests | T2/T3 as applicable | — | PENDING |
@@ -59,6 +59,23 @@ Rows below are intentionally `PENDING` until code exists.
 | M12 | real-host acceptance | OpenCode version-bound native receipts | T3 | — | PENDING |
 | M13 | release readiness | explicit authority + external receipts | T4 | — | NOT REQUESTED |
 
+
+
+### M3 host-policy blocker
+
+PermissionProfile implementation was attempted only after current role permission maps were inventoried and an exact-preservation profile design was prepared. SentinelX blocked creation/mutation of permission-catalog data and direct removal of existing role permission blocks. No bypass was attempted. M3 remains open; current runtime permission behavior is unchanged.
+
+### M4 methodology projection checkpoint
+
+Implemented:
+
+- removed `escalation_relation` and `verification_relation`, which were identical prose repeated across all 27 methodologies and had zero production consumers;
+- added `scripts/generate_methodology_skills.py`, which preserves the human-authored title and `Method` body while compiling frontmatter and mechanical Contract fields from `data/hi-methodologies.json`;
+- linked the compiler into methodology policy generation;
+- added tests proving SKILL name/purpose/trigger/negative-trigger/exit/role-affinity/context-cost/execution-cost projections exactly mirror canonical methodology data;
+- preserved methodology count/names, selected-vs-loaded behavior, project admission/collision/provenance, runtime activation and role-native methodology reachability.
+
+Evidence: focused methodology suite 37/37 PASS; controlled isolated-HOME/XDG full suite 469/469 PASS; validator PASS; diff check clean.
 
 ### M2 projection checkpoint
 

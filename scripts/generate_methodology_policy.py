@@ -2,6 +2,7 @@
 from __future__ import annotations
 import json,re
 from pathlib import Path
+from generate_methodology_skills import main as generate_skill_projections
 
 ROOT=Path(__file__).resolve().parents[1]
 PROFILES=ROOT/'data'/'hi-methodologies.json'
@@ -34,6 +35,7 @@ def contract(path:Path):
     }
 
 def main():
+    generate_skill_projections()
     raw=json.loads(PROFILES.read_text(encoding='utf-8'))
     if raw.get('schema')!=2: raise ValueError('hi-methodologies schema must be 2')
     profiles=raw.get('profiles',[])
@@ -124,7 +126,7 @@ def main():
     signal_payload=json.dumps(signal_catalog,ensure_ascii=False,sort_keys=True,separators=(',',':'))
     OUT.parent.mkdir(parents=True,exist_ok=True)
     OUT.write_text(
-        '/* generated from data/hi-methodologies.json and validated against skills/<name>/SKILL.md + roles/*.md; do not hand edit */\n'
+        '/* generated from data/hi-methodologies.json; SKILL.md mechanical sections are generated projections; do not hand edit */\n'
         + f'export const HI_METHODOLOGY_SIGNAL_CATALOG = {signal_payload} as const\n'
         + "export type HiMethodologySignalName = keyof typeof HI_METHODOLOGY_SIGNAL_CATALOG\n"
         + f'export const HI_METHODOLOGY_TRIGGER_SOURCES = {trigger_payload} as const\n'

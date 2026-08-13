@@ -19,6 +19,29 @@ test('packaged native methodology inventory exactly matches the canonical Hi cat
   assert.deepEqual(found,canonicalNames)
 })
 
+
+test('generated SKILL mechanical contract sections mirror canonical methodology data',()=>{
+  const field=(text,label)=>text.match(new RegExp(`^- \\*\\*${label}:\\*\\*\\s*(.+)$`,'m'))?.[1]?.trim()
+  for(const profile of canonical.profiles){
+    const text=readFileSync(join(root,'skills',profile.name,'SKILL.md'),'utf8')
+    assert.equal(text.match(/^name:\s*(.+)$/m)?.[1]?.trim(),profile.name,`${profile.name}: name projection drift`)
+    assert.equal(text.match(/^description:\s*(.+)$/m)?.[1]?.trim(),profile.purpose,`${profile.name}: purpose projection drift`)
+    assert.equal(field(text,'Trigger'),profile.trigger,`${profile.name}: trigger projection drift`)
+    assert.equal(field(text,'Do not trigger'),profile.do_not_trigger,`${profile.name}: negative-trigger projection drift`)
+    assert.equal(field(text,'Exit condition'),profile.exit_condition,`${profile.name}: exit projection drift`)
+    assert.equal(field(text,'Role affinity'),profile.role_affinity.join(', '),`${profile.name}: role-affinity projection drift`)
+    assert.equal(field(text,'Context cost'),profile.context_cost,`${profile.name}: context-cost projection drift`)
+    assert.equal(field(text,'Execution cost'),profile.execution_cost,`${profile.name}: execution-cost projection drift`)
+  }
+})
+
+test('methodology catalog contains no repeated inert prose relation fields',()=>{
+  for(const profile of canonical.profiles){
+    assert.equal('escalation_relation' in profile,false,`${profile.name}: inert escalation relation must not be canonical data`)
+    assert.equal('verification_relation' in profile,false,`${profile.name}: inert verification relation must not be canonical data`)
+  }
+})
+
 test('retired control-plane concepts are not packaged as methodologies',()=>{
   assert.ok(!canonicalNames.includes('hi-task-classification'))
   assert.ok(!canonicalNames.includes('hi-workspace-isolation'))

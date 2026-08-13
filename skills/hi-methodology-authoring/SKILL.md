@@ -27,4 +27,4 @@ description: Create or evolve reusable Hi methodologies from explicit demand or 
 
 ## Ownership boundary
 
-This methodology may author methodology artifacts. It does not decide mission topology, models, authority, obligation completion, continuation, or STOP. It does not promote project facts into methodology without reusable procedural evidence.
+This skill owns methodology only. It does not select models, spawn agents, choose topology, expand authority, continue the mission, adjudicate completion, or issue STOP.
