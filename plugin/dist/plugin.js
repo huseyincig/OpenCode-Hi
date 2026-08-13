@@ -138,7 +138,7 @@ export const HiPlugin = async (ctx) => {
             if (w.session_id && w.status === 'ready')
                 background.set(w);
     const experimental = new ExperimentalOpenCodeAdapter(store, background);
-    const teams = new TeamRuntime(tasks, () => config.teamMode.enabled, () => ({ maxMembers: config.teamMode.maxMembers, maxMessages: config.teamMode.maxMessages, maxWallMs: config.teamMode.maxWallMinutes * 60 * 1000, maxTurns: config.teamMode.maxTurns }));
+    const teams = new TeamRuntime(tasks, () => config.teamMode.enabled, () => ({ maxMembers: config.teamMode.maxMembers, maxWallMs: config.teamMode.maxWallMinutes * 60 * 1000 }));
     void log('info', 'OpenCode-Hi plugin initialized', { directory: ctx.directory, models: models.length, restored: store.all().length, uncleanShutdown: persistence.lastLoadReport.uncleanShutdown === true, capabilities });
     const doctorTool = tool({ description: 'Run OpenCode-Hi runtime/configuration health checks', args: {}, execute: async () => formatDoctor(runDoctor(config, store, projectRoot, { models, resolution: configResolution, capabilities, hostConfig, openCodeVersion })) });
     const statusTool = tool({ description: 'Show compact user-facing Hi mission status. This intentionally excludes diagnostic logs and ledger payloads.', args: {}, execute: async (_args, c) => { const m = store.get(c?.sessionID); return m ? formatUserMissionStatus(m) : 'Hi: no active mission'; } });
@@ -276,14 +276,9 @@ export const HiPlugin = async (ctx) => {
                 return `Invalid member_models JSON: ${e?.message ?? String(e)}`;
             }
         } return JSON.stringify(await teams.create(m, a.objective, String(a.members).split(','), memberModels)); } });
-    const teamMessageTool = tool({ description: 'Write one bounded Team Mode mailbox message.', args: { team_id: tool.schema.string(), from: tool.schema.string(), to: tool.schema.string(), text: tool.schema.string(), dedupe_key: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(teams.message(m, a.team_id, a.from, a.to, a.text, a.dedupe_key)) : 'No active Hi mission'; } });
-    const teamAckTool = tool({ description: 'Acknowledge or release one reserved Team Mode mailbox message.', args: { team_id: tool.schema.string(), member: tool.schema.string(), message_id: tool.schema.string(), processed: tool.schema.boolean().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? String(teams.messageAck(m, a.team_id, a.member, a.message_id, a.processed !== false)) : 'No active Hi mission'; } });
     const teamStatusTool = tool({ description: 'Show Team Mode state for the current Hi mission.', args: {}, execute: async (_a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(teams.list(m.mission_id)) : 'No active Hi mission'; } });
-    const teamInboxTool = tool({ description: 'Read a bounded Team Mode mailbox view for one member or the parent.', args: { team_id: tool.schema.string(), member: tool.schema.string(), since: tool.schema.number().optional(), limit: tool.schema.number().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(teams.inbox(m, a.team_id, a.member, a.since, a.limit ?? 12)) : 'No active Hi mission'; } });
     const teamMemberAddTool = tool({ description: 'Add one bounded Team Mode member and start its worker.', args: { team_id: tool.schema.string(), role: tool.schema.string(), model: tool.schema.string().optional(), variant: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(await teams.addMember(m, a.team_id, a.role, a.model, a.variant)) : 'No active Hi mission'; } });
     const teamMemberRemoveTool = tool({ description: 'Remove one Team Mode member and cancel its worker.', args: { team_id: tool.schema.string(), role: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? String(await teams.removeMember(m, a.team_id, a.role)) : 'false'; } });
-    const teamBoardTool = tool({ description: 'Create or update one bounded Team Mode task-board item.', args: { team_id: tool.schema.string(), title: tool.schema.string(), item_id: tool.schema.string().optional(), owner: tool.schema.string().optional(), status: tool.schema.string().optional(), evidence: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
-            return 'No active Hi mission'; return JSON.stringify(teams.boardUpsert(m, a.team_id, { id: a.item_id, title: a.title, owner: a.owner, status: ['open', 'in-progress', 'done', 'blocked'].includes(a.status) ? a.status : undefined, evidence: a.evidence ? String(a.evidence).split('|').map((x) => x.trim()).filter(Boolean) : undefined })); } });
     const teamShutdownTool = tool({ description: 'Shutdown one bounded Hi team and cancel its member workers.', args: { team_id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? String(await teams.shutdown(m, a.team_id)) : 'false'; } });
     const onEvent = async ({ event }) => {
         const ev = normalizeOpenCodeEvent(event);
@@ -545,10 +540,10 @@ export const HiPlugin = async (ctx) => {
         persistence.save(store.all());
     };
     const toolSurface = { hi_doctor: doctorTool, hi_status: statusTool, hi_metrics: metricsTool, hi_ledger: ledgerTool, hi_readiness: readinessTool, hi_intent_assess: intentAssessTool, hi_context_artifact_add: artifactAddTool, hi_context_artifacts: artifactsTool, hi_temporary_mutation_register: mutationTool, hi_temporary_mutation_revert: nativeRollbackTool, hi_direct_progress: directProgressTool, hi_task_start: startTool, hi_task_await: awaitTool, hi_task_peek: peekTool, hi_task_list: listTool, hi_task_cancel: cancelTool };
-    assertHiToolNamespace([...Object.keys(toolSurface), 'hi_team_create', 'hi_team_message', 'hi_team_inbox', 'hi_team_message_ack', 'hi_team_member_add', 'hi_team_member_remove', 'hi_team_status', 'hi_team_board', 'hi_team_shutdown']);
+    assertHiToolNamespace([...Object.keys(toolSurface), 'hi_team_create', 'hi_team_member_add', 'hi_team_member_remove', 'hi_team_status', 'hi_team_shutdown']);
     // Team tools are intentionally feature-gated. The default tool surface remains small.
     if (config.teamMode.enabled && capabilities.workerRuntime) {
-        Object.assign(toolSurface, { hi_team_create: teamCreateTool, hi_team_message: teamMessageTool, hi_team_inbox: teamInboxTool, hi_team_message_ack: teamAckTool, hi_team_member_add: teamMemberAddTool, hi_team_member_remove: teamMemberRemoveTool, hi_team_status: teamStatusTool, hi_team_board: teamBoardTool, hi_team_shutdown: teamShutdownTool });
+        Object.assign(toolSurface, { hi_team_create: teamCreateTool, hi_team_member_add: teamMemberAddTool, hi_team_member_remove: teamMemberRemoveTool, hi_team_status: teamStatusTool, hi_team_shutdown: teamShutdownTool });
     }
     // Acquire only after initialization succeeds so a failed init cannot leave a stale process-global lease.
     const instanceLease = acquireHiRuntimeInstance(String(projectRoot));
@@ -585,9 +580,9 @@ export const HiPlugin = async (ctx) => {
             applyAdmittedProjectMethodologyPermissions(opencodeConfig, projectRoot);
             applyProjectAuthorityPermissions(opencodeConfig, projectAuthority);
             if (config.teamMode.enabled && capabilities.workerRuntime)
-                Object.assign(toolSurface, { hi_team_create: teamCreateTool, hi_team_message: teamMessageTool, hi_team_inbox: teamInboxTool, hi_team_message_ack: teamAckTool, hi_team_member_add: teamMemberAddTool, hi_team_member_remove: teamMemberRemoveTool, hi_team_status: teamStatusTool, hi_team_board: teamBoardTool, hi_team_shutdown: teamShutdownTool });
+                Object.assign(toolSurface, { hi_team_create: teamCreateTool, hi_team_member_add: teamMemberAddTool, hi_team_member_remove: teamMemberRemoveTool, hi_team_status: teamStatusTool, hi_team_shutdown: teamShutdownTool });
             else
-                for (const k of ['hi_team_create', 'hi_team_message', 'hi_team_inbox', 'hi_team_message_ack', 'hi_team_member_add', 'hi_team_member_remove', 'hi_team_status', 'hi_team_board', 'hi_team_shutdown'])
+                for (const k of ['hi_team_create', 'hi_team_member_add', 'hi_team_member_remove', 'hi_team_status', 'hi_team_shutdown'])
                     delete toolSurface[k];
         },
         'chat.message': async (input, output) => { try {

@@ -1,27 +1,5 @@
 import type { MissionState } from '../mission/types.js';
 import { TaskRuntime } from '../task/task-runtime.js';
-export interface TeamMessage {
-    id: string;
-    at: number;
-    from: string;
-    to: string;
-    text: string;
-    dedupe_key?: string;
-    delivered_to: string[];
-    processed_by: string[];
-    reservations: Record<string, {
-        reserved_at: number;
-        expires_at: number;
-    }>;
-}
-export interface TeamBoardItem {
-    id: string;
-    title: string;
-    owner?: string;
-    status: 'open' | 'in-progress' | 'done' | 'blocked';
-    evidence?: string[];
-    updated_at: number;
-}
 export interface TeamState {
     id: string;
     mission_id: string;
@@ -32,17 +10,12 @@ export interface TeamState {
     members: string[];
     worker_ids: string[];
     member_workers: Record<string, string>;
-    messages: TeamMessage[];
-    board: TeamBoardItem[];
     created_at: number;
     expires_at: number;
-    turn_count: number;
 }
 export interface TeamLimits {
     maxMembers: number;
-    maxMessages: number;
     maxWallMs: number;
-    maxTurns: number;
 }
 export declare class TeamRuntime {
     #private;
@@ -65,16 +38,6 @@ export declare class TeamRuntime {
         worker_id: string;
     }>;
     removeMember(m: MissionState, teamID: string, role: string): Promise<boolean>;
-    message(m: MissionState, teamID: string, from: string, to: string, text: string, dedupeKey?: string): TeamMessage;
-    inbox(m: MissionState, teamID: string, member: string, since?: number, limit?: number, replay?: boolean): TeamMessage[];
-    messageAck(m: MissionState, teamID: string, member: string, messageID: string, processed?: boolean): boolean;
-    boardUpsert(m: MissionState, teamID: string, input: {
-        id?: string;
-        title: string;
-        owner?: string;
-        status?: TeamBoardItem['status'];
-        evidence?: string[];
-    }): TeamBoardItem;
     adoptSemanticGeneration(m: MissionState): number;
     shutdown(m: MissionState, teamID: string, reason?: string): Promise<boolean>;
     expireMission(m: MissionState, now?: number): Promise<void>;

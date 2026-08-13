@@ -37,7 +37,7 @@ function defaultHiConfig() {
       deniedModels: [],
     },
     parallel: { enabled: true, max: 3, providers: {}, models: {} },
-    teamMode: { enabled: false, auto: false, maxMembers: 4, maxMessages: 24, maxTurns: 12, maxWallMinutes: 45 },
+    teamMode: { enabled: false, maxMembers: 4, maxWallMinutes: 45 },
   }
 }
 

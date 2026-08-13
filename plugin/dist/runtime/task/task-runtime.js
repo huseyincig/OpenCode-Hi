@@ -933,10 +933,19 @@ export class TaskRuntime {
             try {
                 this.scheduler.acquire(worker.id, provider, model === 'host-default' ? undefined : model);
                 const variant = task.execution_profile?.fallback_variants?.[model], previous = worker.model, fallbackReason = task.execution_profile?.fallback_reasons?.find(x => x.model === model)?.reason ?? `runtime fallback after ${failure.kind}`;
+                let stopped = false;
                 try {
-                    await this.abortNativeSession(m, failedSession, 'terminal-runtime-fallback', worker.id, task.id);
+                    stopped = await this.abortNativeSession(m, failedSession, 'terminal-runtime-fallback', worker.id, task.id);
                 }
                 catch { }
+                ;
+                if (!stopped) {
+                    const marker = `runtime-fallback-abort-unavailable:${task.id}:${worker.id}`;
+                    m.blockers = [...new Set([...m.blockers, marker])];
+                    worker.runtime_fallback_exhausted = true;
+                    appendLedger(m, 'worker.runtime-fallback.abort-blocked', { task_id: task.id, worker_id: worker.id, payload: { session_id: failedSession, failure_class: failure.kind, marker } });
+                    return false;
+                }
                 const child = await createChildSession(this.client, m.session_id, `Hi · ${worker.role} · runtime recovery · ${task.objective.slice(0, 45)}`, worker.role, model === 'host-default' ? undefined : model, variant);
                 if (!child?.id)
                     throw new Error('Runtime fallback child session id missing');

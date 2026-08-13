@@ -7,9 +7,9 @@ import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {startAssessedMission} from './helpers/semantic.mjs'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 
-function setup(promptImpl=async()=>{}){
+function setup(promptImpl=async()=>{},withAbort=true){
   const calls=[]
-  let seq=0;const client={session:{promptAsync:async arg=>{calls.push(arg);return promptImpl(arg)},abort:async()=>{},create:async()=>({data:{id:`recovery-${++seq}`}}),diff:async()=>({data:[]})}}
+  let seq=0;const session={promptAsync:async arg=>{calls.push(arg);return promptImpl(arg)},create:async()=>({data:{id:`recovery-${++seq}`}}),diff:async()=>({data:[]})};if(withAbort)session.abort=async()=>{};const client={session}
   const scheduler=new ConcurrencyScheduler(()=>({global:4,providers:{},models:{}}))
   const runtime=new TaskRuntime(client,new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
   const store=new MissionStore(process.cwd())
@@ -43,6 +43,16 @@ test('second provider failure advances to next fallback rather than returning to
   assert.equal(m.workers[0].session_id,'recovery-2')
   assert.equal(m.workers[0].runtime_recovery_attempt,2)
   assert.deepEqual(calls.map(x=>x.body.model.modelID),['fallback1','fallback2'])
+})
+
+test('runtime fallback never spawns a replacement child when failed session abort is unavailable',async()=>{
+  const {runtime,m,calls}=setup(async()=>{},false)
+  const beforeSession=m.workers[0].session_id
+  assert.equal(await runtime.recoverRuntimeFailure(m,'w1','429 upstream rate limit'),false)
+  assert.equal(m.workers[0].session_id,beforeSession)
+  assert.equal(calls.length,0)
+  assert.ok(m.blockers.some(x=>x.startsWith('runtime-fallback-abort-unavailable:')))
+  assert.ok(m.ledger.some(x=>x.type==='worker.runtime-fallback.abort-blocked'))
 })
 
 test('exhausted fallback chain becomes provider-failure blocker and resets stagnation',async()=>{

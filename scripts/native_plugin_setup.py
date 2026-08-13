@@ -331,7 +331,7 @@ def _kv_limits(items:list[str]|None)->dict[str,int]:
         if key and value>0:out[key]=min(32,value)
     return out
 
-def reconfigure(project:Path,*,print_only:bool=False,execution_policy:str|None=None,primary_mode:str|None=None,routing_strategy:str|None=None,allow_providers:list[str]|None=None,deny_models:list[str]|None=None,max_fallbacks:int|None=None,parallel_state:str|None=None,parallel_max:int|None=None,provider_limits:list[str]|None=None,model_limits:list[str]|None=None,profile_target:str='balanced',specialist_threshold:str|None=None,review_threshold:str|None=None,team_state:str|None=None,team_max_members:int|None=None,team_max_messages:int|None=None,team_max_turns:int|None=None,team_wall_minutes:int|None=None)->dict:
+def reconfigure(project:Path,*,print_only:bool=False,execution_policy:str|None=None,primary_mode:str|None=None,routing_strategy:str|None=None,allow_providers:list[str]|None=None,deny_models:list[str]|None=None,max_fallbacks:int|None=None,parallel_state:str|None=None,parallel_max:int|None=None,provider_limits:list[str]|None=None,model_limits:list[str]|None=None,profile_target:str='balanced',specialist_threshold:str|None=None,review_threshold:str|None=None,team_state:str|None=None,team_max_members:int|None=None,team_wall_minutes:int|None=None)->dict:
     """Ownership-safe project reconfiguration for main-prompt runtime knobs.
 
     OpenCode 1.18.x canonical config strips unknown top-level `hi` fields before
@@ -370,7 +370,7 @@ def reconfigure(project:Path,*,print_only:bool=False,execution_policy:str|None=N
     if target:profiles[profile_target]=target;merged['profile']=profiles
     team=dict(merged.get('teamMode',{})) if isinstance(merged.get('teamMode'),dict) else {}
     if team_state is not None:team['enabled']=_bool_arg(team_state);changed.append('teamMode.enabled')
-    for key,val,lo,hi in [('maxMembers',team_max_members,2,8),('maxMessages',team_max_messages,1,100),('maxTurns',team_max_turns,1,50),('maxWallMinutes',team_wall_minutes,1,240)]:
+    for key,val,lo,hi in [('maxMembers',team_max_members,2,8),('maxWallMinutes',team_wall_minutes,1,240)]:
         if val is not None:team[key]=max(lo,min(hi,int(val)));changed.append(f'teamMode.{key}')
     if team:merged['teamMode']=team
     rr=dict(merged.get('routing',{})) if isinstance(merged.get('routing'),dict) else {}
@@ -408,8 +408,6 @@ def main()->int:
     ap.add_argument('--review-threshold',choices=['low','medium','high'])
     ap.add_argument('--team-mode',dest='team_state',choices=['enabled','disabled'])
     ap.add_argument('--team-max-members',type=int)
-    ap.add_argument('--team-max-messages',type=int)
-    ap.add_argument('--team-max-turns',type=int)
     ap.add_argument('--team-wall-minutes',type=int)
     a=ap.parse_args();project=Path(a.project).expanduser().resolve()
     cmds={
@@ -418,7 +416,7 @@ def main()->int:
       'doctor':lambda:doctor(project),
       'uninstall':lambda:uninstall(project),
       'role-models':lambda:role_models(project,list_available=a.list_available,defaults=a.defaults,print_only=a.print,sets=a.sets,variants=a.variants,policy=a.policy),
-      'reconfigure':lambda:reconfigure(project,print_only=a.print,execution_policy=a.execution_policy,primary_mode=a.primary_mode,routing_strategy=a.routing_strategy,allow_providers=a.allow_providers,deny_models=a.deny_models,max_fallbacks=a.max_fallbacks,parallel_state=a.parallel_state,parallel_max=a.parallel_max,provider_limits=a.provider_limit,model_limits=a.model_limit,profile_target=a.profile_target,specialist_threshold=a.specialist_threshold,review_threshold=a.review_threshold,team_state=a.team_state,team_max_members=a.team_max_members,team_max_messages=a.team_max_messages,team_max_turns=a.team_max_turns,team_wall_minutes=a.team_wall_minutes),
+      'reconfigure':lambda:reconfigure(project,print_only=a.print,execution_policy=a.execution_policy,primary_mode=a.primary_mode,routing_strategy=a.routing_strategy,allow_providers=a.allow_providers,deny_models=a.deny_models,max_fallbacks=a.max_fallbacks,parallel_state=a.parallel_state,parallel_max=a.parallel_max,provider_limits=a.provider_limit,model_limits=a.model_limit,profile_target=a.profile_target,specialist_threshold=a.specialist_threshold,review_threshold=a.review_threshold,team_state=a.team_state,team_max_members=a.team_max_members,team_wall_minutes=a.team_wall_minutes),
     }
     out=cmds[a.command]()
     out.pop('rendered',None);print(dump(out),end='');return 2 if out.get('status') in ('BLOCKED','FAIL') else 0

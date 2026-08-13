@@ -47,8 +47,6 @@ export interface HiConfig {
     teamMode: {
         enabled: boolean;
         maxMembers: number;
-        maxMessages: number;
-        maxTurns: number;
         maxWallMinutes: number;
     };
     profile: {
