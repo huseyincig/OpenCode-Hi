@@ -1,6 +1,6 @@
 # Adaptive Execution Policy
 
-Hi evaluates six independent axes: role, skill, model/tool, execution depth, context depth, and isolation depth. Complexity never automatically means strongest model, more agents, broader context, or more skills. Fixed presets use fixed role/review profiles; adaptive mode selects a profile from structured mission state; manual mode uses the balanced role baseline.
+Hi resolves role, methodology, model/tool, topology, context, and isolation through separate owners rather than one synthetic execution object. The adaptive execution policy owns only the executable path decision; role routing, model routing, topology, context, and isolation remain independently owned. Complexity never automatically means strongest model, more agents, broader context, or more methodologies. Fixed presets use fixed role/review profiles; adaptive mode selects a profile from structured mission state; manual mode uses the balanced role baseline.
 
 Execution paths are `DIRECT`, `EVIDENCE`, `PLANNED`, and `ESCALATED`. DIRECT is the default for clear local reversible work. EVIDENCE retrieves only information that can change the next decision. PLANNED is used for genuine dependency/sequencing work. ESCALATED records a material reason before increasing model strength, specialists, context, review, verification, or isolation.
 

@@ -22,7 +22,7 @@ The existing continuation runtime remains first-class. It evaluates mission stat
 
 ## Adaptive execution
 
-The adaptive policy implements separate role, methodology, model/tool, execution-depth, context-depth, and isolation-depth decisions. Execution paths are `DIRECT`, `EVIDENCE`, `PLANNED`, and `ESCALATED`. Topology is a decision layer only; native host execution remains behind the OpenCode adapter boundary. Direct local work is benchmarked as single-agent/default-zero-methodology without planning/review fan-out.
+Execution concerns are independently owned: role routing, methodology selection, model/tool routing, topology, context, and isolation do not share a synthetic decision owner. The adaptive execution policy owns only the executable path `DIRECT | EVIDENCE | PLANNED | ESCALATED`; topology parallelism is consumed by TaskRuntime, while context and isolation remain owned by their dedicated subsystems. Direct local work is benchmarked as single-agent/default-zero-methodology without planning/review fan-out.
 
 ## Agents and models
 
@@ -72,7 +72,7 @@ Current local acceptance consists of the complete Node suite, Python suite, sour
 
 ## Release
 
-Local release engineering produces deterministic source/distributable ZIPs, release manifest, dependency SBOM, supply-chain digest and hash binding. Two independent builds must be byte-identical after the final source change. Commit, push, tag and release publication are user-owned in this development session and were not performed. Exact Git-ref and external-host receipts can only be bound after the user creates the corresponding local Git identity and runs the required host lab.
+Local release engineering produces deterministic source/distributable ZIPs, release manifest, dependency SBOM, supply-chain digest and hash binding. Two independent builds must be byte-identical after the final source change. Local checkpoint commits are used as development provenance. Push, tag and release publication remain user-owned external actions and were not performed. Exact Git-ref and external-host receipts can only be bound after the user creates the corresponding local Git identity and runs the required host lab.
 
 ## Remaining gaps
 

@@ -2,7 +2,7 @@ import { resolveExecutionMode } from '../routing/execution-mode.js';
 export const DEFAULT_TOPOLOGY_POLICY = { mode: 'adaptive', maxAgents: 4, parallelism: 2 };
 export function decideTopology(intent, config = DEFAULT_TOPOLOGY_POLICY, m) {
     if (m?.execution_mode === 'team')
-        return { mode: 'multi-agent', executionMode: 'team', agentCount: Math.max(2, m.topology?.agentCount ?? 2), parallelism: Math.max(1, m.topology?.parallelism ?? 2), reason: ['existing bounded Team Mode remains authoritative'] };
+        return { mode: 'multi-agent', executionMode: 'team', agentCount: Math.max(2, m.topology?.parallelism ?? 2), parallelism: Math.max(1, m.topology?.parallelism ?? 2), reason: ['existing bounded Team Mode remains authoritative'] };
     if (config.maxAgents <= 1)
         return { mode: 'single-agent', executionMode: 'single', agentCount: 1, parallelism: 1, reason: ['maxAgents=1 is an executable topology ceiling'] };
     if (config.mode === 'single-agent')

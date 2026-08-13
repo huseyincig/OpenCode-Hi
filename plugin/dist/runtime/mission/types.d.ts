@@ -291,14 +291,10 @@ export interface MissionState {
     verification_policy: VerificationPolicy;
     adaptive_execution?: {
         path: 'DIRECT' | 'EVIDENCE' | 'PLANNED' | 'ESCALATED';
-        executionDepth: string;
-        contextDepth: string;
-        isolationDepth: string;
         reasons: string[];
     };
     topology?: {
         mode: 'single-agent' | 'multi-agent';
-        agentCount: number;
         parallelism: number;
         reason: string[];
     };
