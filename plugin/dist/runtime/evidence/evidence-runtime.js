@@ -1,7 +1,9 @@
 import { appendLedger } from '../ledger/ledger.js';
 function id() { return `ev_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`; }
 const WRITE_TOOLS = new Set(['write', 'edit', 'patch', 'apply_patch', 'multiedit']);
-const SHELL_MUTATION = /(?:^|[;&|]\s*)(?:rm|mv|cp|touch|mkdir|sed\s+-i|perl\s+-pi|python[^\n]*\bwrite|tee\b|cat\s+[^|>]*>|echo\s+.*>|git\s+(?:checkout|switch|merge|rebase|cherry-pick|restore|reset|clean)|npm\s+(?:install|uninstall)|pnpm\s+(?:add|remove|install)|yarn\s+(?:add|remove|install))\b/i;
+const SHELL_MUTATION_COMMAND = /(?:^|[;&|]\s*)(?:rm|mv|cp|touch|mkdir|rmdir|chmod|chown|chgrp|ln|truncate|dd|install|patch|rsync|tee|sed\s+-i|perl\s+-pi|python[^\n]*(?:\bwrite\b|\bopen\s*\([^)]*,\s*['"]?[wa+])|node[^\n]*(?:writeFileSync|writeFile|appendFileSync|appendFile|renameSync|rename|unlinkSync|unlink|mkdirSync|mkdir|rmSync|chmodSync|chmod)|git\s+(?:apply|am|checkout|switch|merge|rebase|cherry-pick|restore|reset|clean|stash)|npm\s+(?:install|uninstall|update|run\s+build)|pnpm\s+(?:add|remove|install|update|build)|yarn\s+(?:add|remove|install|build)|bun\s+(?:add|remove|install|build)|make(?:\s|$)|cmake\s+--build)\b/i;
+const SHELL_REDIRECTION = /(?:^|[^<>])(?:>>?|2>>?|1>>?)\s*[^&|]/;
+function shellMayMutate(command) { return SHELL_MUTATION_COMMAND.test(command) || SHELL_REDIRECTION.test(command); }
 const VERIFY_HINT = /(test|pytest|vitest|jest|npm\s+test|pnpm\s+test|bun\s+test|cargo\s+test|go\s+test|lint|build|typecheck|check)/i;
 function verificationKind(command) { if (/test|pytest|vitest|jest|spec|go\s+test|cargo\s+test/i.test(command))
     return 'targeted-tests'; if (/typecheck|tsc\b|mypy|pyright/i.test(command))
@@ -28,14 +30,22 @@ export function observeToolBefore(mission, tool, args) { if (WRITE_TOOLS.has(too
     const files = [args?.filePath, args?.path, args?.file].filter((x) => typeof x === 'string');
     markMutation(mission, files, tool);
     return;
-} const command = typeof args?.command === 'string' ? args.command : ''; if (tool === 'bash' && SHELL_MUTATION.test(command))
+} const command = typeof args?.command === 'string' ? args.command : ''; if (tool === 'bash' && shellMayMutate(command))
     markMutation(mission, [], 'bash-mutation'); }
 export function observeToolAfter(mission, tool, args, output) { if (WRITE_TOOLS.has(tool))
     return; const command = typeof args?.command === 'string' ? args.command : ''; if (tool === 'read' && mission.intent.taskKind === 'review') {
     const path = typeof args?.filePath === 'string' ? args.filePath : typeof args?.path === 'string' ? args.path : undefined;
     const text = typeof output === 'string' ? output : JSON.stringify(output ?? '');
-    if (text.trim() && !/(^|\n)\s*(error|failed)\b/i.test(text))
-        addEvidence(mission, { kind: 'review-evidence', summary: path ? `Read ${path}` : 'Read-only review evidence', scope: path ? [path] : [], source: 'read', pass: true, outcome: 'passed' });
+    if (text.trim() && !/(error|failed)/i.test(text))
+        addEvidence(mission, { kind: 'review-input', summary: path ? ('Read ' + path) : 'Read-only review input', scope: path ? [path] : [], source: 'read', pass: true, outcome: 'passed' });
+} if (tool === 'skill' && mission.intent.taskKind === 'review') {
+    const text = typeof output === 'string' ? output : JSON.stringify(output ?? '');
+    if (text.trim() && !/(error|failed)/i.test(text))
+        addEvidence(mission, { kind: 'review-input', summary: 'Native skill content loaded', scope: [], source: 'skill', pass: true, outcome: 'passed' });
+} if (tool === 'bash' && mission.intent.taskKind === 'review' && !shellMayMutate(command)) {
+    const text = typeof output === 'string' ? output : JSON.stringify(output ?? ''), exit = numericExit(output);
+    if (text.trim() && (exit === undefined || exit === 0) && !/(error|failed)/i.test(text))
+        addEvidence(mission, { kind: 'review-input', summary: 'Read-only command: ' + command.slice(0, 180), scope: [], source: 'bash', pass: true, outcome: 'passed' });
 } if (tool === 'bash' && VERIFY_HINT.test(command)) {
     const text = typeof output === 'string' ? output : JSON.stringify(output ?? ''), out = outcomeOf(output, text);
     addEvidence(mission, { kind: verificationKind(command), summary: command.slice(0, 180), scope: mission.changed_files, source: 'bash', pass: out.outcome === 'passed' ? true : out.outcome === 'failed' ? false : undefined, outcome: out.outcome, reason: out.reason });

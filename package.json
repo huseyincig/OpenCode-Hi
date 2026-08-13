@@ -40,8 +40,5 @@
     "test": "npm --prefix plugin test",
     "check": "npm run build && npm --prefix plugin test",
     "prepack": "npm run build"
-  },
-  "dependencies": {
-    "@opencode-ai/plugin": ">=1.18.0 <2"
   }
 }

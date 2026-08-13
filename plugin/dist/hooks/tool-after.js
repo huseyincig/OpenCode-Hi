@@ -39,14 +39,6 @@ export function createToolAfterHook(store, background, events, projectRoot) {
             return;
         const tool = String(input?.tool ?? ''), args = input?.args ?? {}, text = outputText(output);
         observeToolAfter(m, tool, args, output);
-        if (!m.verification_policy.requireReview) {
-            for (const o of m.obligations.filter(x => x.kind === 'review' && x.status === 'open')) {
-                if (verificationSatisfied(m, o.id).ok) {
-                    o.status = 'closed';
-                    o.closedAt = Date.now();
-                }
-            }
-        }
         if (tool === 'bash' && typeof args?.command === 'string') {
             recordRemoteReleaseVerification(m, args.command, output, projectRoot);
             recordStagingInspection(m, args.command, output);
@@ -62,8 +54,13 @@ export function createToolAfterHook(store, background, events, projectRoot) {
             }
             noteLocalReleaseMutation(m, args.command, numericExit(output) === 0);
             const rollback = matchRollback(m, args.command);
-            if (rollback)
-                resolveRollback(m, rollback, successOf(text), text);
+            if (rollback) {
+                const exit = numericExit(output);
+                if (exit !== undefined)
+                    resolveRollback(m, rollback, exit === 0, text);
+                else if (!successOf(text))
+                    resolveRollback(m, rollback, false, text);
+            }
             if (privilegedAction(args.command) && !child) {
                 const ao = authorityOutcome(output, text);
                 notePrivilegedReleaseOutcome(m, args.command, ao);

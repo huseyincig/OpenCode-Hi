@@ -7,6 +7,7 @@ export interface NormalizedOpenCodeEvent {
     raw: any;
 }
 export declare function normalizeOpenCodeEvent(event: any): NormalizedOpenCodeEvent;
+export declare function eventStatus(event: NormalizedOpenCodeEvent): string;
 export declare function eventFilePaths(event: NormalizedOpenCodeEvent): string[];
 export declare function permissionReply(event: NormalizedOpenCodeEvent): 'once' | 'always' | 'reject' | 'unknown';
 export declare function permissionDecision(event: NormalizedOpenCodeEvent): 'allow' | 'deny' | 'unknown';

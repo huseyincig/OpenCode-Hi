@@ -49,6 +49,28 @@ def load(path:Path)->dict:
     try:return json.loads(path.read_text(encoding='utf-8'))
     except Exception:return {}
 def dump(d:dict)->str:return json.dumps(d,ensure_ascii=False,indent=2)+'\n'
+
+def managed_path_safe(project:Path,path:Path)->bool:
+    root=project.resolve()
+    try:
+        rel=path.relative_to(project)
+    except ValueError:
+        return False
+    cur=project
+    for part in rel.parts:
+        cur=cur/part
+        if cur.is_symlink():
+            return False
+    try:
+        target=path.resolve(strict=False)
+        return os.path.commonpath([str(root),str(target)])==str(root)
+    except (OSError,ValueError):
+        return False
+
+def assert_managed_paths(project:Path,*paths:Path)->dict|None:
+    unsafe=[str(p) for p in paths if not managed_path_safe(project,p)]
+    return {'status':'BLOCKED','product':PRODUCT,'reason':'managed-path-escapes-project-or-uses-symlink','unsafe_paths':unsafe} if unsafe else None
+
 def config_path(project:Path)->Path:
     j=project/'opencode.json'; jc=project/'opencode.jsonc'
     return j if j.exists() or not jc.exists() else jc
@@ -72,15 +94,19 @@ def plan(project:Path,version:str|None=None)->dict:
 def install(project:Path,version:str|None=None)->dict:
     p=plan(project,version)
     if p['status']!='READY':p.pop('rendered',None);return p
-    project.mkdir(parents=True,exist_ok=True);cfg=Path(p['config']);cfg.parent.mkdir(parents=True,exist_ok=True)
+    project.mkdir(parents=True,exist_ok=True);cfg=Path(p['config']);own=project/OWNERSHIP;guard=assert_managed_paths(project,cfg,own);
+    if guard:return guard
+    cfg.parent.mkdir(parents=True,exist_ok=True)
     before=cfg.read_text(encoding='utf-8') if cfg.exists() else ''
     cfg.write_text(p['rendered'],encoding='utf-8')
-    own=project/OWNERSHIP;own.parent.mkdir(parents=True,exist_ok=True)
+    own.parent.mkdir(parents=True,exist_ok=True)
     own.write_text(dump({'schema':OWNERSHIP_SCHEMA,'product':PRODUCT,'short':SHORT,'plugin_spec':p['plugin_spec'],'managed':{'config':{'path':str(cfg.relative_to(project)),'before_sha256':sha_text(before),'after_sha256':sha_text(p['rendered']),'plugin_spec':p['plugin_spec']}},'preserved':{'user_plugins':True},'installed_at':int(time.time())}),encoding='utf-8')
     return {'status':'APPLIED','config':str(cfg),'plugin_spec':p['plugin_spec'],'restart_required':True,'next':'Restart OpenCode, then verify HI tools, agents, native skills and role-model routing in the runtime.'}
 
 def uninstall(project:Path)->dict:
-    cfg=config_path(project);data=load(cfg);plugins=_plugins(data);own_path=project/OWNERSHIP;own=load(own_path) if own_path.exists() else {}
+    cfg=config_path(project);own_path=project/OWNERSHIP;guard=assert_managed_paths(project,cfg,own_path)
+    if guard:return guard
+    data=load(cfg);plugins=_plugins(data);own=load(own_path) if own_path.exists() else {}
     managed=(own.get('managed') or {}).get('config') or {}
     owned_spec=managed.get('plugin_spec')
     if cfg.suffix=='.jsonc':return {'status':'BLOCKED','product':PRODUCT,'reason':'jsonc-safe-mutation-not-supported','config':str(cfg)}
@@ -185,6 +211,8 @@ def role_models(project:Path,list_available:bool=False,defaults:bool=False,print
     file at startup and merges roleModels into HiConfig.routing.
     """
     cfg=project/ROUTING_CONFIG
+    guard=assert_managed_paths(project,cfg)
+    if guard:return guard
     existing=load(cfg) if cfg.exists() else {}
     existing_routing=existing.get('routing',{}) if isinstance(existing.get('routing'),dict) else {}
     existing_models=existing_routing.get('roleModels',{}) or {}
@@ -313,6 +341,8 @@ def reconfigure(project:Path,*,print_only:bool=False,execution_policy:str|None=N
     """
     cfg=config_path(project)
     routing_path=project/ROUTING_CONFIG
+    guard=assert_managed_paths(project,routing_path)
+    if guard:return guard
     routing_doc=load(routing_path) if routing_path.exists() else {}
     merged=dict(routing_doc) if isinstance(routing_doc,dict) else {}
     merged['schema']=ROUTING_SCHEMA;merged.setdefault('type','hi-routing')

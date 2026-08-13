@@ -43,3 +43,16 @@ test('worker evidence is scoped to its owned verification obligation',()=>{
   assert.deepEqual(verificationSatisfied(m,v1.id),{ok:true,missing:[]})
   assert.deepEqual(verificationSatisfied(m,'o-verification-followup'),{ok:false,missing:['targeted-tests']})
 })
+
+
+test('owned reviewer DONE synthesizes canonical review evidence for its verification obligation',()=>{
+  const store=new MissionStore(); const m=store.start('ownership-review','Perform an independent review of src/a.ts')
+  m.verification_policy={requiredKinds:['review-evidence'],requireFresh:true,requireReview:true,allowWorkerReportedEvidence:true}
+  const review=m.obligations.find(o=>o.kind==='review'); const verification=m.obligations.find(o=>o.kind==='verification'); assert.ok(review); assert.ok(verification)
+  verification.requiredEvidence=['review-evidence']
+  const task=createTask(m,{objective:'independently review src/a.ts',role:'qa-reviewer',category:'standard',requiredEvidence:['review-evidence'],obligationIds:[review.id,verification.id]})
+  const worker=createWorker(m,task,'host-default'); worker.status='busy'; worker.started_at=Date.now()-5
+  runtime().applyResult(m,worker.id,{status:'DONE',summary:'reviewed src/a.ts with no findings',changed_files:[],evidence:[],open_issues:[],needs_context:[]})
+  assert.deepEqual(verificationSatisfied(m,verification.id),{ok:true,missing:[]})
+  assert.equal(review.status,'closed'); assert.equal(verification.status,'closed')
+})

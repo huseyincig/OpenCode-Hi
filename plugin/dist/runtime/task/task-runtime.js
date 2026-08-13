@@ -611,7 +611,7 @@ export class TaskRuntime {
         const observedMutationDuringWorker = Boolean(worker.started_at && m.evidence.last_mutation_at && m.evidence.last_mutation_at >= worker.started_at);
         const previousIssues = task.result?.open_issues ?? [];
         if (previousIssues.length)
-            m.blockers = m.blockers.filter(b => !previousIssues.includes(b));
+            m.blockers = m.blockers.filter(b => !previousIssues.includes(b) || m.tasks.some(other => other.id !== task.id && (other.result?.open_issues ?? []).includes(b)));
         const previousCollateral = [...(task.diff_cleanliness?.collateral ?? [])];
         const ownership = READ_ONLY.has(worker.role) && result.changed_files.length
             ? { outside: [...result.changed_files], accepted: [], collateral: [...result.changed_files] }
@@ -675,6 +675,9 @@ export class TaskRuntime {
         const evidenceSource = READ_ONLY.has(worker.role) ? `worker:${worker.id}:reviewer` : `worker:${worker.id}`;
         for (const e of effectiveResult.evidence)
             addEvidence(m, { kind: e.kind, summary: e.summary, scope: e.scope ?? effectiveResult.changed_files, source: evidenceSource, source_session_id: worker.session_id, source_state_hash: worker.native_state_hash, task_id: task.id, obligation_ids: task.obligation_ids, pass: e.pass, outcome: e.outcome, reason: e.reason, invalidated_at: (cleanlinessMarker || fallbackMutation && !READ_ONLY.has(worker.role)) ? (m.evidence.last_mutation_at ?? Date.now()) : undefined });
+        const ownsReviewObligation = task.obligation_ids.some(id => m.obligations.some(o => o.id === id && o.kind === 'review'));
+        if (effectiveResult.status === 'DONE' && READ_ONLY.has(worker.role) && ownsReviewObligation && !effectiveResult.evidence.some(e => e.kind === 'review-evidence'))
+            addEvidence(m, { kind: 'review-evidence', summary: effectiveResult.summary || `Independent ${worker.role} completed owned review task`, scope: effectiveResult.changed_files, source: evidenceSource, source_session_id: worker.session_id, source_state_hash: worker.native_state_hash, task_id: task.id, obligation_ids: task.obligation_ids, pass: true, outcome: 'passed' });
         if (effectiveResult.status === 'DONE') {
             const now = Date.now();
             if (worker.role === 'repository-explorer' && m.intent.ambiguity !== 'none') {

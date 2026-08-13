@@ -59,3 +59,20 @@ test('team degrades when fewer than two active peers remain without cancelling t
   assert.equal(second.status,'busy','surviving worker should continue as an ordinary bounded worker')
   assert.equal(h.calls.cancel.length,0)
 })
+
+test('team mailbox ack and shutdown are mission-owned and reject cross-mission access',async()=>{
+  const h=harness();const t=await h.teams.create(h.m,'review',['architect','repository-explorer'])
+  const msg=h.teams.message(h.m,t.id,'parent','architect','secret bounded context')
+  const other=new MissionStore().start('other-session','other mission')
+  assert.throws(()=>h.teams.inbox(other,t.id,'architect'),/different mission/)
+  assert.throws(()=>h.teams.messageAck(other,t.id,'architect',msg.id),/different mission/)
+  await assert.rejects(()=>h.teams.shutdown(other,t.id),/different mission/)
+  assert.equal(t.status,'active')
+})
+
+test('team mode rejects unknown roles instead of diverging team identity from normalized worker role',async()=>{
+  const h=harness()
+  await assert.rejects(()=>h.teams.create(h.m,'review',['architect','not-a-role']),/Unknown Team Mode role/)
+  const t=await h.teams.create(h.m,'review',['architect','repository-explorer'])
+  await assert.rejects(()=>h.teams.addMember(h.m,t.id,'not-a-role'),/Unknown Team Mode role/)
+})

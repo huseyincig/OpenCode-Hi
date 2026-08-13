@@ -13,10 +13,12 @@ import { evaluateIdle, shouldCountStagnation } from './runtime/continuation/eval
 import { dispatchContinuation } from './runtime/continuation/dispatcher.js';
 import { lastAssistantText, lastAssistantModel, listMessages, listProviders } from './opencode/client-adapter.js';
 import { NativeOpenCodeAdapter } from './opencode/native-adapter.js';
-import { normalizeOpenCodeEvent, eventFilePaths, permissionDecision, permissionEventID, permissionPatterns, permissionReply } from './opencode/event-adapter.js';
+import { normalizeOpenCodeEvent, eventFilePaths, permissionDecision, permissionEventID, permissionPatterns, permissionReply, eventStatus } from './opencode/event-adapter.js';
 import { ExperimentalOpenCodeAdapter } from './opencode/experimental-adapter.js';
 import { parseWorkerResult } from './runtime/task/result-parser.js';
 import { evaluateCompletion } from './runtime/completion/evaluator.js';
+import { replanVerificationForChangedSurface, verificationSatisfied } from './runtime/verification/policy.js';
+import { syncMissionGates } from './runtime/gates/gates.js';
 import { appendLedger } from './runtime/ledger/ledger.js';
 import { ConcurrencyScheduler } from './runtime/scheduler/concurrency.js';
 import { TeamRuntime } from './runtime/team/team-runtime.js';
@@ -37,8 +39,10 @@ import { PACKAGED_HI_AGENTS } from './generated/agent-config.js';
 import { existsSync } from 'node:fs';
 import { ProjectAuthorityStore, applyProjectAuthorityPermissions, authorityClassForPatterns } from './runtime/safety/project-authority.js';
 import { dirname, resolve } from 'node:path';
-import { resolveNativeProjectRoot } from './runtime/intent/repo-context.js';
+import { collectRepoContext, resolveNativeProjectRoot } from './runtime/intent/repo-context.js';
+import { assessChangedFileOwnership } from './runtime/task/diff-ownership.js';
 import { fileURLToPath } from 'node:url';
+function nativeDiffFiles(raw) { const items = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : []; return [...new Set(items.map((x) => typeof x?.file === 'string' ? x.file : typeof x?.path === 'string' ? x.path : '').filter((x) => Boolean(x)).map((x) => x.replace(/\\/g, '/').replace(/^\.\//, '')))]; }
 function providerModels(raw) {
     const root = raw?.all ?? raw?.providers ?? raw ?? [];
     const providers = Array.isArray(root) ? root : Object.values(root ?? {});
@@ -81,6 +85,8 @@ export const HiPlugin = async (ctx) => {
     const background = new BackgroundRegistry();
     const persistence = new RuntimePersistence(projectRoot);
     const restored = persistence.load();
+    if (persistence.lastLoadReport.error)
+        throw new Error(`OpenCode-Hi runtime state is invalid and was not discarded: ${persistence.lastLoadReport.error}. Reconcile or remove the invalid runtime-state file explicitly before restarting Hi.`);
     store.restore(restored, persistence.lastLoadReport.uncleanShutdown === true);
     for (const m of store.all())
         for (const w of m.workers)
@@ -101,8 +107,7 @@ export const HiPlugin = async (ctx) => {
         inventoryRefresh = (async () => { try {
             const raw = await listProviders(ctx.client);
             const next = providerModels(raw);
-            if (next.length)
-                models = next;
+            models = next;
             await log('info', 'Hi runtime inventory refreshed', { reason, models: models.length, routing_policy: config.routing.modelPolicy });
             return models.length;
         }
@@ -153,10 +158,59 @@ export const HiPlugin = async (ctx) => {
             resolveRollback(m, item, false, String(error));
             return `Native revert failed: ${String(error)}`;
         } } });
-    const directProgressTool = tool({ description: 'Record parent/Working-Manager direct implementation progress after an observed local mutation. Does not bypass verification or review gates.', args: { summary: tool.schema.string(), obligation_id: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
-            return 'No active Hi mission'; if (!m.changed_files.length && !m.evidence.last_mutation_at)
-            return 'BLOCKED: no observed mutation for direct progress'; const open = m.obligations.filter(x => x.kind === 'implementation' && x.status === 'open'), o = a.obligation_id ? open.find(x => x.id === String(a.obligation_id)) : open.length === 1 ? open[0] : undefined; if (!o)
-            return open.length > 1 ? 'BLOCKED: multiple implementation obligations are open; specify obligation_id' : 'No open implementation obligation'; o.status = 'closed'; o.closedAt = Date.now(); appendLedger(m, 'implementation.direct-progress', { payload: { summary: String(a.summary).slice(0, 500), obligation: o.id, changed_files: m.changed_files.slice(-30) } }); return JSON.stringify({ status: 'RECORDED', verification_required: !evaluateCompletion(m).complete, changed_files: m.changed_files.slice(-30) }); } });
+    const directProgressTool = tool({ description: 'Record bounded parent/Working-Manager direct progress. Implementation requires an owned observed mutation; direct review requires fresh review input and records explicit review-completion evidence. Does not bypass verification or review gates.', args: { summary: tool.schema.string(), obligation_id: tool.schema.string().optional(), scope_expansions: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+            return 'No active Hi mission'; const rawArgs = a?.input && typeof a.input === 'object' && !Array.isArray(a.input) ? { ...a, ...a.input } : a, candidates = m.obligations.filter(x => ['implementation', 'review'].includes(x.kind) && x.status === 'open'), requested = rawArgs?.obligation_id ? String(rawArgs.obligation_id) : undefined, exact = requested ? candidates.find(x => x.id === requested) : undefined, o = exact ?? (candidates.length === 1 ? candidates[0] : undefined); if (!o)
+            return candidates.length > 1 ? 'BLOCKED: multiple direct-progress obligations are open; specify obligation_id' : 'No open direct-progress obligation'; if (o.kind === 'review' && m.verification_policy.requireReview)
+            return 'BLOCKED: independent reviewer required; direct parent progress cannot close this review obligation'; let directFiles = [...m.changed_files]; if (o.kind === 'implementation') {
+            if (!m.evidence.last_mutation_at)
+                return 'BLOCKED: no observed mutation for direct implementation progress';
+            if (!m.changed_files.length)
+                return 'BLOCKED: mutation observed but changed-file surface is unknown; use file-aware native tools or wait for native file/diff evidence before recording direct progress';
+            let expansions = [];
+            if (rawArgs.scope_expansions) {
+                try {
+                    const parsed = JSON.parse(String(rawArgs.scope_expansions));
+                    if (!Array.isArray(parsed))
+                        throw new Error('scope_expansions must be a JSON array');
+                    expansions = parsed.filter(x => x && typeof x === 'object').map(x => ({ file: String(x.file ?? ''), reason: String(x.reason ?? ''), necessary: x.necessary === true })).filter(x => x.file);
+                }
+                catch (e) {
+                    return `BLOCKED: invalid scope_expansions: ${String(e)}`;
+                }
+            }
+            if (capabilities.sessionDiff && directFiles.length)
+                try {
+                    const current = new Set(nativeDiffFiles(await native.diff(m.session_id)));
+                    if (current.size)
+                        directFiles = directFiles.filter(file => current.has(file.replace(/\\/g, '/').replace(/^\.\//, '')));
+                }
+                catch { }
+            ;
+            const ownership = assessChangedFileOwnership(m.intent.likelyTargets ?? [], directFiles, expansions);
+            if (m.intent.scope === 'local' && ownership.collateral.length) {
+                const marker = `direct-diff-cleanliness:${ownership.collateral.slice(0, 12).sort().join(',')}`;
+                m.blockers = [...new Set([...m.blockers, marker])];
+                appendLedger(m, 'implementation.direct-progress-blocked', { payload: { reason: 'changed-files-outside-requested-scope', collateral: ownership.collateral.slice(0, 30), expected: (m.intent.likelyTargets ?? []).slice(0, 30) } });
+                syncMissionGates(m);
+                return JSON.stringify({ status: 'BLOCKED', reason: 'changed-files-outside-requested-scope', collateral: ownership.collateral, expected: m.intent.likelyTargets ?? [] });
+            }
+            if (ownership.accepted.length)
+                appendLedger(m, 'scope.expansion.accepted', { payload: { owner: 'parent-direct', files: ownership.accepted.slice(0, 30) } });
+            const pseudo = { id: 'parent-direct', scope: [...(m.intent.likelyTargets ?? [])], requiredEvidence: [...m.verification_policy.requiredKinds] };
+            const replan = replanVerificationForChangedSurface(m, pseudo, directFiles, collectRepoContext(projectRoot));
+            if (replan.changed)
+                appendLedger(m, 'verification.replanned', { payload: { owner: 'parent-direct', changed_files: m.changed_files.slice(0, 30), added_kinds: replan.addedKinds, scope_expanded: replan.scopeExpanded, risk_escalated: replan.riskEscalated, reason: replan.reason } });
+            m.blockers = m.blockers.filter(b => !b.startsWith('direct-diff-cleanliness:'));
+        }
+        else {
+            const mutation = m.evidence.last_mutation_at ?? 0, freshInput = m.evidence.items.filter(e => e.kind === 'review-input' && !e.invalidated_at && e.observed_at >= mutation);
+            if (!freshInput.length)
+                return 'BLOCKED: no fresh review input observed';
+            addEvidence(m, { kind: 'review-evidence', summary: String(rawArgs.summary ?? '').slice(0, 1000), scope: [...new Set(freshInput.flatMap(e => e.scope ?? []))].slice(0, 50), source: 'parent:direct-review', obligation_ids: [o.id], pass: true, outcome: 'passed' });
+        } o.status = 'closed'; o.closedAt = Date.now(); appendLedger(m, o.kind === 'review' ? 'review.direct-progress' : 'implementation.direct-progress', { payload: { summary: String(rawArgs.summary ?? '').slice(0, 500), obligation: o.id, changed_files: directFiles.slice(-30) } }); const verify = m.obligations.find(x => x.kind === 'verification' && x.status === 'open'); if (verify && verificationSatisfied(m, verify.id).ok) {
+            verify.status = 'closed';
+            verify.closedAt = Date.now();
+        } syncMissionGates(m); return JSON.stringify({ status: 'RECORDED', verification_required: !evaluateCompletion(m).complete, changed_files: o.kind === 'implementation' ? directFiles.slice(-30) : m.changed_files.slice(-30) }); } });
     const startTool = tool({ description: 'Start one bounded Hi worker task. Use only when delegation is actually beneficial.', args: { objective: tool.schema.string().optional(), role: tool.schema.string().optional(), category: tool.schema.string().optional(), model: tool.schema.string().optional(), model_variant: tool.schema.string().optional(), scope: tool.schema.string().optional(), constraints: tool.schema.string().optional(), dependencies: tool.schema.string().optional(), required_evidence: tool.schema.string().optional(), obligation_ids: tool.schema.string().optional(), fork_from_session: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
             return 'No active Hi mission'; try {
             const input = { ...a, forkFromSession: a.fork_from_session ? String(a.fork_from_session) : undefined, modelVariant: a.model_variant ? String(a.model_variant) : undefined, scope: a.scope ? String(a.scope).split(',').map((x) => x.trim()).filter(Boolean) : undefined, constraints: a.constraints ? [String(a.constraints)] : undefined, dependencies: a.dependencies ? String(a.dependencies).split(',').map((x) => x.trim()).filter(Boolean) : undefined, requiredEvidence: a.required_evidence ? String(a.required_evidence).split(',').map((x) => x.trim()).filter(Boolean) : undefined, obligationIds: a.obligation_ids ? String(a.obligation_ids).split(',').map((x) => x.trim()).filter(Boolean) : undefined };
@@ -192,7 +246,7 @@ export const HiPlugin = async (ctx) => {
     const teamMessageTool = tool({ description: 'Write one bounded Team Mode mailbox message.', args: { team_id: tool.schema.string(), from: tool.schema.string(), to: tool.schema.string(), text: tool.schema.string(), dedupe_key: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(teams.message(m, a.team_id, a.from, a.to, a.text, a.dedupe_key)) : 'No active Hi mission'; } });
     const teamAckTool = tool({ description: 'Acknowledge or release one reserved Team Mode mailbox message.', args: { team_id: tool.schema.string(), member: tool.schema.string(), message_id: tool.schema.string(), processed: tool.schema.boolean().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? String(teams.messageAck(m, a.team_id, a.member, a.message_id, a.processed !== false)) : 'No active Hi mission'; } });
     const teamStatusTool = tool({ description: 'Show Team Mode state for the current Hi mission.', args: {}, execute: async (_a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(teams.list(m.mission_id)) : 'No active Hi mission'; } });
-    const teamInboxTool = tool({ description: 'Read a bounded Team Mode mailbox view for one member or the parent.', args: { team_id: tool.schema.string(), member: tool.schema.string(), since: tool.schema.number().optional(), limit: tool.schema.number().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(teams.inbox(a.team_id, a.member, a.since, a.limit ?? 12)) : 'No active Hi mission'; } });
+    const teamInboxTool = tool({ description: 'Read a bounded Team Mode mailbox view for one member or the parent.', args: { team_id: tool.schema.string(), member: tool.schema.string(), since: tool.schema.number().optional(), limit: tool.schema.number().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(teams.inbox(m, a.team_id, a.member, a.since, a.limit ?? 12)) : 'No active Hi mission'; } });
     const teamMemberAddTool = tool({ description: 'Add one bounded Team Mode member and start its worker.', args: { team_id: tool.schema.string(), role: tool.schema.string(), model: tool.schema.string().optional(), variant: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(await teams.addMember(m, a.team_id, a.role, a.model, a.variant)) : 'No active Hi mission'; } });
     const teamMemberRemoveTool = tool({ description: 'Remove one Team Mode member and cancel its worker.', args: { team_id: tool.schema.string(), role: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? String(await teams.removeMember(m, a.team_id, a.role)) : 'false'; } });
     const teamBoardTool = tool({ description: 'Create or update one bounded Team Mode task-board item.', args: { team_id: tool.schema.string(), title: tool.schema.string(), item_id: tool.schema.string().optional(), owner: tool.schema.string().optional(), status: tool.schema.string().optional(), evidence: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
@@ -296,7 +350,7 @@ export const HiPlugin = async (ctx) => {
                 return;
             }
             if (ev.kind === 'session-status') {
-                const nativeStatus = String(ev.properties?.status ?? ev.properties?.state ?? 'unknown');
+                const nativeStatus = eventStatus(ev);
                 tasks.noteNativeStatus(m, child.id, nativeStatus);
                 if (child.runtime_recovery_pending && !/idle|completed|stopped/i.test(nativeStatus)) {
                     child.runtime_recovery_pending = false;

@@ -53,6 +53,7 @@ export declare class TeamRuntime {
     get(id: string): TeamState | undefined;
     list(missionID: string): TeamState[];
     private active;
+    private assertMissionOwner;
     private assertCurrentMission;
     private startMember;
     create(m: MissionState, objective: string, members: string[], memberModels?: Record<string, {
@@ -65,7 +66,7 @@ export declare class TeamRuntime {
     }>;
     removeMember(m: MissionState, teamID: string, role: string): Promise<boolean>;
     message(m: MissionState, teamID: string, from: string, to: string, text: string, dedupeKey?: string): TeamMessage;
-    inbox(teamID: string, member: string, since?: number, limit?: number, replay?: boolean): TeamMessage[];
+    inbox(m: MissionState, teamID: string, member: string, since?: number, limit?: number, replay?: boolean): TeamMessage[];
     messageAck(m: MissionState, teamID: string, member: string, messageID: string, processed?: boolean): boolean;
     boardUpsert(m: MissionState, teamID: string, input: {
         id?: string;

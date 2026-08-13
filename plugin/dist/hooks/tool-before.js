@@ -1,5 +1,6 @@
 import { observeToolBefore } from '../runtime/evidence/evidence-runtime.js';
 import { beginAuthorizedAction, claimAuthorizedAction, privilegedAction } from '../runtime/safety/authority.js';
+import { canonicalExternalCommand } from '../runtime/safety/command-classifier.js';
 import { matchRollback } from '../runtime/mutations/temporary-mutations.js';
 import { assertSafeGitMutation, invalidateStagingProof, invalidateGitTopologyProof, beginGitTopologyMutation, mutatesGitIndex, isGitTopologyMutation } from '../runtime/safety/staging-safety.js';
 import { assertReleaseChainPrecondition } from '../runtime/safety/release-chain.js';
@@ -41,6 +42,8 @@ export function createToolBeforeHook(store, background, projectRoot) {
             }
         }
         if (tool === 'bash' && typeof args?.command === 'string' && privilegedAction(args.command)) {
+            if (!canonicalExternalCommand(args.command))
+                throw new Error('Hi authority boundary: external-effect commands must use canonical command form so OpenCode native permission patterns remain authoritative. Use the bash tool cwd field instead of git -C/wrappers, and place supported CLI options after the privileged subcommand.');
             assertReleaseChainPrecondition(m, args.command, projectRoot ?? args?.cwd);
             if (child)
                 throw new Error('Hi authority boundary: child workers may not execute publish/push/deploy or other privileged external effects. Parent Hi must own the exact authority contract.');

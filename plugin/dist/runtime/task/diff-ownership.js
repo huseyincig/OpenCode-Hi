@@ -12,13 +12,12 @@ function autoRelated(file, scope) {
         return true;
     return false;
 }
-export function assessDiffOwnership(task, result) {
-    const changed = [...new Set(result.changed_files.map(norm).filter(Boolean))], scope = [...new Set((task.scope ?? []).map(norm).filter(Boolean))];
+export function assessChangedFileOwnership(scopeInput, changedInput, scopeExpansions = []) {
+    const changed = [...new Set(changedInput.map(norm).filter(Boolean))], scope = [...new Set(scopeInput.map(norm).filter(Boolean))];
     if (!scope.length)
         return { outside: [], accepted: [], collateral: [] };
     const outside = changed.filter(file => !scope.some(s => within(file, s)));
-    const declared = new Map((result.scope_expansions ?? []).map(x => [norm(x.file), x]));
-    const accepted = [], collateral = [];
+    const declared = new Map(scopeExpansions.map(x => [norm(x.file), x])), accepted = [], collateral = [];
     for (const file of outside) {
         const claim = declared.get(file);
         if (autoRelated(file, scope) || (claim?.necessary === true && String(claim.reason ?? '').trim().length >= 8))
@@ -28,3 +27,4 @@ export function assessDiffOwnership(task, result) {
     }
     return { outside, accepted, collateral };
 }
+export function assessDiffOwnership(task, result) { return assessChangedFileOwnership(task.scope ?? [], result.changed_files, result.scope_expansions ?? []); }

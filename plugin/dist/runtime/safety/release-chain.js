@@ -2,9 +2,10 @@ import { appendLedger } from '../ledger/ledger.js';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
+import { classifyExternalCommand, commandTokens, gitCommandParts, ghCommandParts, npmLikeCommandParts } from './command-classifier.js';
 function norm(command) { return command.trim().replace(/\s+/g, ' '); }
 function trimQuotes(s) { return s.replace(/^['"]|['"]$/g, ''); }
-function tokens(command) { return norm(command).split(' ').filter(Boolean).map(trimQuotes); }
+function tokens(command) { return commandTokens(command).map(trimQuotes); }
 function hex40(s) { return /^[0-9a-f]{40}$/i.test(s); }
 function releaseVersion(tag) { if (!tag)
     return undefined; const v = tag.replace(/^v/i, ''); return /^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(v) ? v : undefined; }
@@ -185,24 +186,21 @@ function inspectReleaseQuality(root, command) {
     }
     return { ok: issues.length === 0, version, issues, assets };
 }
-export function isGitPush(command) { return /^git push(?:\s|$)/i.test(norm(command)); }
-export function isReleaseCreate(command) { return /^gh release create(?:\s|$)/i.test(norm(command)); }
-export function isPackagePublish(command) { return /^(?:npm|pnpm|bun) publish(?:\s|$)|^yarn npm publish(?:\s|$)/i.test(norm(command)); }
+export function isGitPush(command) { return classifyExternalCommand(command).kind === 'git-push'; }
+export function isReleaseCreate(command) { return classifyExternalCommand(command).kind === 'gh-release-create'; }
+export function isPackagePublish(command) { return classifyExternalCommand(command).kind === 'package-publish'; }
 export function missionRequiresPackagePublish(objective) { return /(?:\bnpm\s+publish\b|\bpnpm\s+publish\b|\byarn\s+npm\s+publish\b|\bbun\s+publish\b|\bpublish\s+(?:the\s+)?package\b)/i.test(objective); }
 export function missionRequiresReleaseCreate(objective) { return /(?:\bgh\s+release\s+create\b|\bcreate\s+(?:a\s+)?release\b|\brelease\s+it\b)/i.test(objective); }
-export function isLocalReleaseMutation(command) { return /^git (?:commit|merge|rebase|cherry-pick)(?:\s|$)/i.test(norm(command)); }
+export function isLocalReleaseMutation(command) { return ['commit', 'merge', 'rebase', 'cherry-pick'].includes(gitCommandParts(command).sub ?? ''); }
 function parsePushExpectation(command) {
-    const t = tokens(command);
-    if (t[0] !== 'git' || t[1] !== 'push')
+    const p = gitCommandParts(command);
+    if (p.sub !== 'push')
         return undefined;
-    const args = t.slice(2).filter(x => !x.startsWith('-'));
-    const remote = args[0] ?? 'origin', spec = args[1];
+    const args = p.rest.filter(x => !x.startsWith('-')), remote = args[0] ?? 'origin', spec = args[1];
     if (!spec || spec === '--tags' || spec === 'tag')
         return undefined;
     const rhs = (spec.includes(':') ? spec.split(':').pop() : spec) ?? '';
-    if (!rhs)
-        return undefined;
-    if (rhs.startsWith('refs/tags/') || /^v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(rhs))
+    if (!rhs || rhs.startsWith('refs/tags/') || /^v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(rhs))
         return undefined;
     const ref = rhs.startsWith('refs/') ? rhs : `refs/heads/${rhs.replace(/^HEAD$/, '')}`;
     if (ref.endsWith('/'))
@@ -210,11 +208,10 @@ function parsePushExpectation(command) {
     return { remote, ref };
 }
 function parseTagPushExpectation(command) {
-    const t = tokens(command);
-    if (t[0] !== 'git' || t[1] !== 'push')
+    const p = gitCommandParts(command);
+    if (p.sub !== 'push')
         return undefined;
-    const args = t.slice(2).filter(x => !x.startsWith('-'));
-    const remote = args[0] ?? 'origin';
+    const args = p.rest.filter(x => !x.startsWith('-')), remote = args[0] ?? 'origin';
     if (args[1] === 'tag' && args[2])
         return { remote, tag: args[2].replace(/^refs\/tags\//, '') };
     const spec = args[1];
@@ -227,8 +224,8 @@ function parseTagPushExpectation(command) {
         return { remote, tag: rhs };
     return undefined;
 }
-function ghReleasePositional(command, verb) { const t = tokens(command); if (t[0] !== 'gh' || t[1] !== 'release' || t[2] !== verb)
-    return undefined; const valueFlags = new Set(['--target', '--title', '--notes', '--notes-file', '--repo', '-R', '--discussion-category', '--json', '--jq', '--template']); for (let i = 3; i < t.length; i++) {
+function ghReleasePositional(command, verb) { const p = ghCommandParts(command); if (p.sub !== 'release' || p.rest[0] !== verb)
+    return undefined; const t = p.rest.slice(1), valueFlags = new Set(['--target', '--title', '--notes', '--notes-file', '--repo', '-R', '--discussion-category', '--json', '--jq', '--template']); for (let i = 0; i < t.length; i++) {
     const x = t[i];
     if (valueFlags.has(x)) {
         i++;
@@ -248,10 +245,10 @@ function parseReleaseTarget(command) { const t = tokens(command); for (let i = 0
         return t[i].slice('--target='.length);
 } return undefined; }
 function parseLsRemote(command, output) {
-    const t = tokens(command);
-    if (t[0] !== 'git' || t[1] !== 'ls-remote')
+    const p = gitCommandParts(command);
+    if (p.sub !== 'ls-remote')
         return undefined;
-    const args = t.slice(2).filter(x => !x.startsWith('-'));
+    const args = p.rest.filter(x => !x.startsWith('-'));
     const remote = args[0], requested = args[1];
     const text = typeof output?.stdout === 'string' ? output.stdout : typeof output?.output === 'string' ? output.output : '';
     for (const line of text.split(/\r?\n/)) {
@@ -261,10 +258,11 @@ function parseLsRemote(command, output) {
     }
     return { remote, ref: requested };
 }
-function parseHead(command, output) { if (norm(command) !== 'git rev-parse HEAD')
+function parseHead(command, output) { const p = gitCommandParts(command); if (p.sub !== 'rev-parse' || p.rest.join(' ') !== 'HEAD')
     return undefined; const text = typeof output?.stdout === 'string' ? output.stdout : typeof output?.output === 'string' ? output.output : ''; const h = text.trim().split(/\s+/)[0]; return hex40(h) ? h : undefined; }
 function parseUpstream(command, output) {
-    if (norm(command) !== 'git rev-parse --abbrev-ref --symbolic-full-name @{u}')
+    const p = gitCommandParts(command);
+    if (p.sub !== 'rev-parse' || p.rest.join(' ') !== '--abbrev-ref --symbolic-full-name @{u}')
         return undefined;
     const text = typeof output?.stdout === 'string' ? output.stdout : typeof output?.output === 'string' ? output.output : '';
     const v = text.trim().split(/\s+/)[0];
@@ -274,10 +272,10 @@ function parseUpstream(command, output) {
     return { remote: v.slice(0, i), ref: `refs/heads/${v.slice(i + 1)}` };
 }
 function parseRemoteTagProbe(command, output) {
-    const t = tokens(command);
-    if (t[0] !== 'git' || t[1] !== 'ls-remote')
+    const p = gitCommandParts(command);
+    if (p.sub !== 'ls-remote')
         return undefined;
-    const args = t.slice(2).filter(x => !x.startsWith('-'));
+    const args = p.rest.filter(x => !x.startsWith('-'));
     const remote = args[0];
     const refs = args.slice(1);
     const requested = refs.find(x => /^refs\/tags\//.test(x));
@@ -313,7 +311,7 @@ function parseReleaseView(command, output) {
         return undefined;
     }
 }
-function parsePackDryRun(command, output, root) { const c = norm(command); if (!/^(?:npm|pnpm) pack(?:\s|$)/i.test(c) || !/--dry-run(?:\s|$|=)/i.test(c) || !/--json(?:\s|$|=)/i.test(c))
+function parsePackDryRun(command, output, root) { const p = npmLikeCommandParts(command), all = p.invocation?.args ?? []; if (!['npm', 'pnpm'].includes(p.exe ?? '') || p.sub !== 'pack' || !all.some(x => x === '--dry-run' || x.startsWith('--dry-run=')) || !all.some(x => x === '--json' || x.startsWith('--json=')))
     return undefined; const text = typeof output?.stdout === 'string' ? output.stdout : typeof output?.output === 'string' ? output.output : ''; try {
     const j = JSON.parse(text), x = Array.isArray(j) ? j[0] : j;
     if (!x || typeof x !== 'object')
@@ -324,8 +322,8 @@ function parsePackDryRun(command, output, root) { const c = norm(command); if (!
 catch {
     return undefined;
 } }
-function parseRegistryView(command, output) { const t = tokens(command); if (!((t[0] === 'npm' || t[0] === 'pnpm') && t[1] === 'view'))
-    return undefined; const spec = t[2]; if (!spec)
+function parseRegistryView(command, output) { const p = npmLikeCommandParts(command); if (!['npm', 'pnpm'].includes(p.exe ?? '') || p.sub !== 'view')
+    return undefined; const spec = p.rest[0]; if (!spec)
     return undefined; const text = typeof output?.stdout === 'string' ? output.stdout : typeof output?.output === 'string' ? output.output : ''; try {
     const j = JSON.parse(text);
     const dist = j?.dist ?? {};

@@ -56,3 +56,22 @@ test('runtime inventory preserves host shapes that do not expose a connected-pro
   await hooks.dispose?.()
   rmSync(root,{recursive:true,force:true})
 })
+
+
+test('successful refresh to zero connected models clears stale inventory',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-provider-zero-refresh-'))
+  let raw={connected:['p'],all:[{id:'p',models:[{id:'m'}]}]}
+  const client=clientWithProviderShape(raw)
+  client.provider.list=async()=>({data:raw})
+  const hooks=await HiPlugin({directory:root,worktree:root,project:{},client})
+  await hooks.config({})
+  await hooks.event({event:{type:'server.connected',properties:{}}})
+  let doctor=String(await hooks.tool.hi_doctor.execute({},{}))
+  assert.match(doctor,/model-inventory: 1 runtime model\(s\)/)
+  raw={connected:[],all:[{id:'p',models:[{id:'m'}]}]}
+  await hooks.event({event:{type:'installation.updated',properties:{}}})
+  doctor=String(await hooks.tool.hi_doctor.execute({},{}))
+  assert.match(doctor,/model-inventory: 0 runtime model\(s\)/)
+  assert.doesNotMatch(doctor,/p\/m/)
+  await hooks.dispose?.();rmSync(root,{recursive:true,force:true})
+})

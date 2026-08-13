@@ -12,6 +12,7 @@ const MAP:Record<string,HiNativeEventKind>={
   'lsp.client.diagnostics':'lsp-diagnostics','installation.updated':'installation-updated',
 }
 export function normalizeOpenCodeEvent(event:any):NormalizedOpenCodeEvent{const rawType=String(event?.type??'');return{kind:MAP[rawType]??'unknown',rawType,sessionID:eventSessionID(event),properties:event?.properties??{},raw:event}}
+export function eventStatus(event:NormalizedOpenCodeEvent):string{const raw=event.properties?.status??event.properties?.state;if(typeof raw==='string')return raw;if(raw&&typeof raw==='object'){const nested=raw.type??raw.status??raw.state;if(typeof nested==='string')return nested}return'unknown'}
 
 function collectStrings(value:any,out:Set<string>,depth=0):void{
   if(depth>5||value==null)return

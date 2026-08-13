@@ -1,20 +1,18 @@
 import type { MissionState } from '../mission/types.js'
 import { appendLedger } from '../ledger/ledger.js'
+import { gitCommandParts } from './command-classifier.js'
 
 function normFile(v:string):string{return v.trim().replace(/\\/g,'/').replace(/^\.\//,'')}
 function splitLines(text:string):string[]{return [...new Set(text.split(/\r?\n/).map(normFile).filter(Boolean))]}
 function commandText(output:any):string{if(typeof output==='string')return output;if(typeof output?.output==='string')return output.output;if(typeof output?.stdout==='string')return output.stdout;if(typeof output?.data==='string')return output.data;return''}
-export function isStagingInspection(command:string):boolean{return /^\s*git\s+diff\s+(?:--cached|--staged)\s+--name-only(?:\s|$)/i.test(command)}
-export function isGitStatusInspection(command:string):boolean{return /^\s*git\s+status\s+(?:--porcelain(?:=v?1)?|-s|--short)(?:\s|$)/i.test(command)}
-export function isGitCommit(command:string):boolean{return /^\s*git\s+(?:-[^\s]+\s+)*commit(?:\s|$)/i.test(command)}
-export function isGitTopologyMutation(command:string):boolean{return /^\s*git\s+(?:switch|checkout|merge|rebase|cherry-pick)(?:\s|$)/i.test(command)}
-export function broadGitStage(command:string):boolean{
-  const c=command.trim();if(!/^git\s+add(?:\s|$)/i.test(c))return false
-  return /(?:^|\s)(?:-A|--all|-u|--update|\.|\.\/|\*|:\/)(?:\s|$)/i.test(c)||/git\s+add\s+--?\s*\.\s*$/i.test(c)
-}
-export function commitStagesTrackedChanges(command:string):boolean{return isGitCommit(command)&&(/(?:^|\s)--all(?:\s|$)/i.test(command)||/(?:^|\s)-[a-z]*a[a-z]*(?:\s|$)/i.test(command))}
-export function commitHasDirectPathspec(command:string):boolean{return isGitCommit(command)&&(/(?:^|\s)(?:-o|--only|-i|--include)(?:\s|$)/i.test(command)||/\s--\s+\S/.test(command))}
-export function mutatesGitIndex(command:string):boolean{return /^\s*git\s+(?:add|reset|rm|mv)(?:\s|$)/i.test(command)||/^\s*git\s+restore\b[^\n]*\s--staged(?:\s|$)/i.test(command)}
+export function isStagingInspection(command:string):boolean{const p=gitCommandParts(command);if(p.sub!=='diff')return false;const a=p.rest;return a.includes('--name-only')&&(a.includes('--cached')||a.includes('--staged'))}
+export function isGitStatusInspection(command:string):boolean{const p=gitCommandParts(command);if(p.sub!=='status')return false;return p.rest.some(x=>x==='-s'||x==='--short'||x==='--porcelain'||x==='--porcelain=v1'||x==='--porcelain=1')}
+export function isGitCommit(command:string):boolean{return gitCommandParts(command).sub==='commit'}
+export function isGitTopologyMutation(command:string):boolean{return ['switch','checkout','merge','rebase','cherry-pick'].includes(gitCommandParts(command).sub??'')}
+export function broadGitStage(command:string):boolean{const p=gitCommandParts(command);if(p.sub!=='add')return false;return p.rest.some(x=>['-A','--all','-u','--update','.','./','*',':/'].includes(x))}
+export function commitStagesTrackedChanges(command:string):boolean{const p=gitCommandParts(command);return p.sub==='commit'&&p.rest.some(x=>x==='--all'||/^-[a-zA-Z]*a[a-zA-Z]*$/.test(x))}
+export function commitHasDirectPathspec(command:string):boolean{const p=gitCommandParts(command);if(p.sub!=='commit')return false;return p.rest.some(x=>['-o','--only','-i','--include'].includes(x))||p.rest.includes('--')}
+export function mutatesGitIndex(command:string):boolean{const p=gitCommandParts(command);if(['add','reset','rm','mv'].includes(p.sub??''))return true;return p.sub==='restore'&&p.rest.includes('--staged')}
 export function recordPreexistingUserBaseline(m:MissionState,baseline:Record<string,string>|undefined):void{
   if(!baseline||m.preexisting_user_baseline_captured)return;m.preexisting_user_changes={...baseline};m.preexisting_user_baseline_captured=true;appendLedger(m,'user-diff.baseline-captured',{payload:{files:Object.keys(baseline).slice(0,80),count:Object.keys(baseline).length,policy:'first-mission-native-baseline'}})
 }

@@ -98,11 +98,11 @@ export class RuntimePersistence {
         }
     }
     save(missions, cleanShutdown = false) {
-        mkdirSync(dirname(this.path), { recursive: true });
+        mkdirSync(dirname(this.path), { recursive: true, mode: 0o700 });
         const now = Date.now();
         const payload = { schema: RUNTIME_STATE_SCHEMA, updated_at: now, runtime: { boot_id: this.bootId, started_at: this.startedAt, clean_shutdown: cleanShutdown, last_saved_at: now, previous_boot_id: this.previousBootId }, missions };
         const tmp = `${this.path}.tmp`;
-        writeFileSync(tmp, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+        writeFileSync(tmp, `${JSON.stringify(payload, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
         renameSync(tmp, this.path);
     }
     markRunning(missions) { this.save(missions, false); }

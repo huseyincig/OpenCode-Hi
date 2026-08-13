@@ -2,11 +2,11 @@ import type { MissionState } from '../mission/types.js'
 import { payloadHash } from './idempotency.js'
 import { appendLedger } from '../ledger/ledger.js'
 import { notePrivilegedReleaseOutcome } from './release-chain.js'
-const PRIVILEGED=/\b(git\s+push|npm\s+publish|pnpm\s+publish|yarn\s+publish|bun\s+publish|docker\s+push|kubectl\s+(apply|delete)|terraform\s+apply|gh\s+release\s+create|deploy|vercel\s+deploy|netlify\s+deploy)\b/i
+import { externalEffectCommand } from './command-classifier.js'
 const APPROVE=/^\s*(approve|approved|I approve|approve this action)\s*[.!]?\s*$/i
 const CONFIRM_SUCCESS=/^\s*(confirm action succeeded|action succeeded|I confirm the action succeeded)\s*[.!]?\s*$/i
 const CONFIRM_FAILURE=/^\s*(confirm action failed|action failed|I confirm the action failed)\s*[.!]?\s*$/i
-export function privilegedAction(command:string):boolean{return PRIVILEGED.test(command)}
+export function privilegedAction(command:string):boolean{return externalEffectCommand(command)}
 export function actionContract(command:string,cwd?:string):{action:string;hash:string}{const action=`cwd=${cwd??''}\ncommand=${command.trim()}`;return{action,hash:payloadHash(action)}}
 function authorityObligation(m:MissionState,hash:string){return m.obligations.find(x=>x.id===`o-authority-${hash.slice(0,10)}`&&x.kind==='authority'&&x.status==='open')}
 export function isAuthorized(m:MissionState,command:string,cwd?:string):boolean{const c=actionContract(command,cwd);return m.authority?.approved?.hash===c.hash}

@@ -207,7 +207,7 @@ export class TaskRuntime{
     const digest=resultDigest(result);if(worker.last_result_digest===digest){appendLedger(m,'worker.result.duplicate-ignored',{task_id:task.id,worker_id:worker.id,payload:{digest}});return}
     worker.last_result_digest=digest;worker.last_result_at=Date.now()
     const observedMutationDuringWorker=Boolean(worker.started_at&&m.evidence.last_mutation_at&&m.evidence.last_mutation_at>=worker.started_at)
-    const previousIssues=task.result?.open_issues??[];if(previousIssues.length)m.blockers=m.blockers.filter(b=>!previousIssues.includes(b))
+    const previousIssues=task.result?.open_issues??[];if(previousIssues.length)m.blockers=m.blockers.filter(b=>!previousIssues.includes(b)||m.tasks.some(other=>other.id!==task.id&&(other.result?.open_issues??[]).includes(b)))
 
     const previousCollateral=[...(task.diff_cleanliness?.collateral??[])]
     const ownership=READ_ONLY.has(worker.role)&&result.changed_files.length
@@ -257,6 +257,8 @@ export class TaskRuntime{
     if(ownership.accepted.length){task.scope=[...new Set([...task.scope,...ownership.accepted])];appendLedger(m,'task.scope-expanded',{task_id:task.id,worker_id:worker.id,payload:{files:ownership.accepted.slice(0,40),policy:'bounded-explicit-ownership'}})}
     const evidenceSource=READ_ONLY.has(worker.role)?`worker:${worker.id}:reviewer`:`worker:${worker.id}`
     for(const e of effectiveResult.evidence)addEvidence(m,{kind:e.kind,summary:e.summary,scope:e.scope??effectiveResult.changed_files,source:evidenceSource,source_session_id:worker.session_id,source_state_hash:worker.native_state_hash,task_id:task.id,obligation_ids:task.obligation_ids,pass:e.pass,outcome:e.outcome,reason:e.reason,invalidated_at:(cleanlinessMarker||fallbackMutation&&!READ_ONLY.has(worker.role))?(m.evidence.last_mutation_at??Date.now()):undefined})
+    const ownsReviewObligation=task.obligation_ids.some(id=>m.obligations.some(o=>o.id===id&&o.kind==='review'))
+    if(effectiveResult.status==='DONE'&&READ_ONLY.has(worker.role)&&ownsReviewObligation&&!effectiveResult.evidence.some(e=>e.kind==='review-evidence'))addEvidence(m,{kind:'review-evidence',summary:effectiveResult.summary||`Independent ${worker.role} completed owned review task`,scope:effectiveResult.changed_files,source:evidenceSource,source_session_id:worker.session_id,source_state_hash:worker.native_state_hash,task_id:task.id,obligation_ids:task.obligation_ids,pass:true,outcome:'passed'})
     if(effectiveResult.status==='DONE'){
       const now=Date.now();if(worker.role==='repository-explorer'&&m.intent.ambiguity!=='none'){m.intent.ambiguity='none';appendLedger(m,'intent.ambiguity.resolved',{task_id:task.id,worker_id:worker.id,payload:{source:'repository-explorer-result'}})}
       for(const id of task.obligation_ids){const owned=m.obligations.find(o=>o.id===id&&o.status==='open');if(!owned)continue;if(owned.kind==='verification'){if(verificationSatisfied(m,owned.id).ok){owned.status='closed';owned.closedAt=now}}else{owned.status='closed';owned.closedAt=now}if(owned.status==='closed')appendLedger(m,'obligation.closed',{task_id:task.id,worker_id:worker.id,payload:{obligation:owned.id,owner:'task'}})}

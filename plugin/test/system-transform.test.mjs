@@ -83,3 +83,19 @@ test('system-transform skips child whose generation is stale', async () => {
   await hook({ sessionID: 'w1_session' }, output)
   assert.equal(output.system.length, 0)
 })
+
+
+test('system-transform requires child delegation for an independent review obligation', async () => {
+  const store = new MissionStore()
+  store.start('s-independent', 'Perform an independent review of src/a.ts for correctness')
+  const m = store.get('s-independent')
+  assert.equal(m.verification_policy.requireReview, true)
+  const hook = createSystemTransformHook(store)
+  const output = { system: [] }
+  await hook({ sessionID: 's-independent' }, output)
+  const text = output.system[0]
+  assert.match(text, /Independent reviewer required/)
+  assert.match(text, /hi_task_start/)
+  assert.match(text, /parent evidence cannot close the review obligation/)
+  assert.match(text, /Do not substitute parent self-review/)
+})

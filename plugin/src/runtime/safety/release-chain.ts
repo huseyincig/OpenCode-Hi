@@ -3,10 +3,11 @@ import { appendLedger } from '../ledger/ledger.js'
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { basename, join, resolve } from 'node:path'
+import { classifyExternalCommand, commandTokens, gitCommandParts, ghCommandParts, npmLikeCommandParts } from './command-classifier.js'
 
 function norm(command:string):string{return command.trim().replace(/\s+/g,' ')}
 function trimQuotes(s:string):string{return s.replace(/^['"]|['"]$/g,'')}
-function tokens(command:string):string[]{return norm(command).split(' ').filter(Boolean).map(trimQuotes)}
+function tokens(command:string):string[]{return commandTokens(command).map(trimQuotes)}
 function hex40(s:string):boolean{return /^[0-9a-f]{40}$/i.test(s)}
 
 function releaseVersion(tag:string|undefined):string|undefined{if(!tag)return undefined;const v=tag.replace(/^v/i,'');return /^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(v)?v:undefined}
@@ -34,29 +35,25 @@ function inspectReleaseQuality(root:string,command:string):{ok:boolean;version?:
   return{ok:issues.length===0,version,issues,assets}
 }
 
-export function isGitPush(command:string):boolean{return /^git push(?:\s|$)/i.test(norm(command))}
-export function isReleaseCreate(command:string):boolean{return /^gh release create(?:\s|$)/i.test(norm(command))}
-export function isPackagePublish(command:string):boolean{return /^(?:npm|pnpm|bun) publish(?:\s|$)|^yarn npm publish(?:\s|$)/i.test(norm(command))}
+export function isGitPush(command:string):boolean{return classifyExternalCommand(command).kind==='git-push'}
+export function isReleaseCreate(command:string):boolean{return classifyExternalCommand(command).kind==='gh-release-create'}
+export function isPackagePublish(command:string):boolean{return classifyExternalCommand(command).kind==='package-publish'}
 export function missionRequiresPackagePublish(objective:string):boolean{return /(?:\bnpm\s+publish\b|\bpnpm\s+publish\b|\byarn\s+npm\s+publish\b|\bbun\s+publish\b|\bpublish\s+(?:the\s+)?package\b)/i.test(objective)}
 export function missionRequiresReleaseCreate(objective:string):boolean{return /(?:\bgh\s+release\s+create\b|\bcreate\s+(?:a\s+)?release\b|\brelease\s+it\b)/i.test(objective)}
-export function isLocalReleaseMutation(command:string):boolean{return /^git (?:commit|merge|rebase|cherry-pick)(?:\s|$)/i.test(norm(command))}
+export function isLocalReleaseMutation(command:string):boolean{return ['commit','merge','rebase','cherry-pick'].includes(gitCommandParts(command).sub??'')}
 
 function parsePushExpectation(command:string):{remote:string;ref:string}|undefined{
-  const t=tokens(command);if(t[0]!=='git'||t[1]!=='push')return undefined
-  const args=t.slice(2).filter(x=>!x.startsWith('-'))
-  const remote=args[0]??'origin',spec=args[1]
+  const p=gitCommandParts(command);if(p.sub!=='push')return undefined
+  const args=p.rest.filter(x=>!x.startsWith('-')),remote=args[0]??'origin',spec=args[1]
   if(!spec||spec==='--tags'||spec==='tag')return undefined
   const rhs=(spec.includes(':')?spec.split(':').pop():spec)??''
-  if(!rhs)return undefined
-  if(rhs.startsWith('refs/tags/')||/^v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(rhs))return undefined
-  const ref=rhs.startsWith('refs/')?rhs:`refs/heads/${rhs.replace(/^HEAD$/,'')}`
-  if(ref.endsWith('/'))return undefined
+  if(!rhs||rhs.startsWith('refs/tags/')||/^v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(rhs))return undefined
+  const ref=rhs.startsWith('refs/')?rhs:`refs/heads/${rhs.replace(/^HEAD$/,'')}`;if(ref.endsWith('/'))return undefined
   return{remote,ref}
 }
 function parseTagPushExpectation(command:string):{remote:string;tag:string}|undefined{
-  const t=tokens(command);if(t[0]!=='git'||t[1]!=='push')return undefined
-  const args=t.slice(2).filter(x=>!x.startsWith('-'))
-  const remote=args[0]??'origin'
+  const p=gitCommandParts(command);if(p.sub!=='push')return undefined
+  const args=p.rest.filter(x=>!x.startsWith('-')),remote=args[0]??'origin'
   if(args[1]==='tag'&&args[2])return{remote,tag:args[2].replace(/^refs\/tags\//,'')}
   const spec=args[1];if(!spec)return undefined
   const rhs=(spec.includes(':')?spec.split(':').pop():spec)??''
@@ -64,24 +61,24 @@ function parseTagPushExpectation(command:string):{remote:string;tag:string}|unde
   if(/^v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(rhs))return{remote,tag:rhs}
   return undefined
 }
-function ghReleasePositional(command:string,verb:'create'|'view'):string|undefined{const t=tokens(command);if(t[0]!=='gh'||t[1]!=='release'||t[2]!==verb)return undefined;const valueFlags=new Set(['--target','--title','--notes','--notes-file','--repo','-R','--discussion-category','--json','--jq','--template']);for(let i=3;i<t.length;i++){const x=t[i];if(valueFlags.has(x)){i++;continue}if(x.startsWith('--')||x==='--latest'||x==='--web')continue;if(x.startsWith('-'))continue;return x}return undefined}
+function ghReleasePositional(command:string,verb:'create'|'view'):string|undefined{const p=ghCommandParts(command);if(p.sub!=='release'||p.rest[0]!==verb)return undefined;const t=p.rest.slice(1),valueFlags=new Set(['--target','--title','--notes','--notes-file','--repo','-R','--discussion-category','--json','--jq','--template']);for(let i=0;i<t.length;i++){const x=t[i];if(valueFlags.has(x)){i++;continue}if(x.startsWith('--')||x==='--latest'||x==='--web')continue;if(x.startsWith('-'))continue;return x}return undefined}
 function parseReleaseTag(command:string):string|undefined{return ghReleasePositional(command,'create')}
 function parseReleaseTarget(command:string):string|undefined{const t=tokens(command);for(let i=0;i<t.length;i++){if(t[i]==='--target'&&t[i+1])return t[i+1];if(t[i].startsWith('--target='))return t[i].slice('--target='.length)}return undefined}
 function parseLsRemote(command:string,output:any):{remote?:string;ref?:string;hash?:string}|undefined{
-  const t=tokens(command);if(t[0]!=='git'||t[1]!=='ls-remote')return undefined
-  const args=t.slice(2).filter(x=>!x.startsWith('-'));const remote=args[0],requested=args[1]
+  const p=gitCommandParts(command);if(p.sub!=='ls-remote')return undefined
+  const args=p.rest.filter(x=>!x.startsWith('-'));const remote=args[0],requested=args[1]
   const text=typeof output?.stdout==='string'?output.stdout:typeof output?.output==='string'?output.output:''
   for(const line of text.split(/\r?\n/)){const m=line.trim().match(/^([0-9a-f]{40})\s+(.+)$/i);if(m)return{remote,ref:m[2],hash:m[1]}}
   return{remote,ref:requested}
 }
-function parseHead(command:string,output:any):string|undefined{if(norm(command)!=='git rev-parse HEAD')return undefined;const text=typeof output?.stdout==='string'?output.stdout:typeof output?.output==='string'?output.output:'';const h=text.trim().split(/\s+/)[0];return hex40(h)?h:undefined}
+function parseHead(command:string,output:any):string|undefined{const p=gitCommandParts(command);if(p.sub!=='rev-parse'||p.rest.join(' ')!=='HEAD')return undefined;const text=typeof output?.stdout==='string'?output.stdout:typeof output?.output==='string'?output.output:'';const h=text.trim().split(/\s+/)[0];return hex40(h)?h:undefined}
 function parseUpstream(command:string,output:any):{remote:string;ref:string}|undefined{
-  if(norm(command)!=='git rev-parse --abbrev-ref --symbolic-full-name @{u}')return undefined
+  const p=gitCommandParts(command);if(p.sub!=='rev-parse'||p.rest.join(' ')!=='--abbrev-ref --symbolic-full-name @{u}')return undefined
   const text=typeof output?.stdout==='string'?output.stdout:typeof output?.output==='string'?output.output:'';const v=text.trim().split(/\s+/)[0];const i=v.indexOf('/');if(i<=0||i===v.length-1)return undefined;return{remote:v.slice(0,i),ref:`refs/heads/${v.slice(i+1)}`}
 }
 function parseRemoteTagProbe(command:string,output:any):{remote?:string;tag?:string;direct_hash?:string;peeled_hash?:string}|undefined{
-  const t=tokens(command);if(t[0]!=='git'||t[1]!=='ls-remote')return undefined
-  const args=t.slice(2).filter(x=>!x.startsWith('-'));const remote=args[0];const refs=args.slice(1);const requested=refs.find(x=>/^refs\/tags\//.test(x));if(!requested)return undefined
+  const p=gitCommandParts(command);if(p.sub!=='ls-remote')return undefined
+  const args=p.rest.filter(x=>!x.startsWith('-'));const remote=args[0];const refs=args.slice(1);const requested=refs.find(x=>/^refs\/tags\//.test(x));if(!requested)return undefined
   const base=requested.replace(/\^\{\}$/,'');const tag=base.replace(/^refs\/tags\//,'');if(!tag)return undefined
   const text=typeof output?.stdout==='string'?output.stdout:typeof output?.output==='string'?output.output:'';let direct_hash:string|undefined,peeled_hash:string|undefined
   for(const line of text.split(/\r?\n/)){const m=line.trim().match(/^([0-9a-f]{40})\s+(.+)$/i);if(!m)continue;if(m[2]===base)direct_hash=m[1];else if(m[2]===`${base}^{}`)peeled_hash=m[1]}
@@ -92,8 +89,8 @@ function parseReleaseView(command:string,output:any):{tag?:string;target?:string
   const text=typeof output?.stdout==='string'?output.stdout:typeof output?.output==='string'?output.output:''
   try{const j=JSON.parse(text);return{tag:typeof j?.tagName==='string'?j.tagName:tag,target:typeof j?.targetCommitish==='string'?j.targetCommitish:undefined,assets:Array.isArray(j?.assets)?j.assets.map((a:any)=>({name:String(a?.name??a?.label??''),size:typeof a?.size==='number'?a.size:undefined})).filter((a:any)=>a.name):undefined}}catch{return undefined}
 }
-function parsePackDryRun(command:string,output:any,root?:string):{name?:string;version?:string;integrity?:string;shasum?:string;filename?:string;files:string[];state_hash?:string}|undefined{const c=norm(command);if(!/^(?:npm|pnpm) pack(?:\s|$)/i.test(c)||!/--dry-run(?:\s|$|=)/i.test(c)||!/--json(?:\s|$|=)/i.test(c))return undefined;const text=typeof output?.stdout==='string'?output.stdout:typeof output?.output==='string'?output.output:'';try{const j=JSON.parse(text),x=Array.isArray(j)?j[0]:j;if(!x||typeof x!=='object')return undefined;const files=Array.isArray(x.files)?x.files.map((f:any)=>typeof f==='string'?f:f?.path).filter((v:any)=>typeof v==='string'):[];return{name:typeof x.name==='string'?x.name:typeof x.id==='string'?String(x.id).replace(/@[^@]+$/,''):undefined,version:typeof x.version==='string'?x.version:undefined,integrity:typeof x.integrity==='string'?x.integrity:undefined,shasum:typeof x.shasum==='string'?x.shasum:undefined,filename:typeof x.filename==='string'?x.filename:undefined,files,state_hash:root&&files.length?packageStateHash(root,files):undefined}}catch{return undefined}}
-function parseRegistryView(command:string,output:any):{name?:string;version?:string;integrity?:string;shasum?:string}|undefined{const t=tokens(command);if(!((t[0]==='npm'||t[0]==='pnpm')&&t[1]==='view'))return undefined;const spec=t[2];if(!spec)return undefined;const text=typeof output?.stdout==='string'?output.stdout:typeof output?.output==='string'?output.output:'';try{const j=JSON.parse(text);const dist=j?.dist??{};let name=typeof j?.name==='string'?j.name:undefined,version=typeof j?.version==='string'?j.version:undefined;if(!name||!version){const m=spec.match(/^(@[^/]+\/[^@]+|[^@]+)@(.+)$/);if(m){name??=m[1];version??=m[2]}}return{name,version,integrity:typeof dist?.integrity==='string'?dist.integrity:typeof j?.['dist.integrity']==='string'?j['dist.integrity']:undefined,shasum:typeof dist?.shasum==='string'?dist.shasum:typeof j?.['dist.shasum']==='string'?j['dist.shasum']:undefined}}catch{return undefined}}
+function parsePackDryRun(command:string,output:any,root?:string):{name?:string;version?:string;integrity?:string;shasum?:string;filename?:string;files:string[];state_hash?:string}|undefined{const p=npmLikeCommandParts(command),all=p.invocation?.args??[];if(!['npm','pnpm'].includes(p.exe??'')||p.sub!=='pack'||!all.some(x=>x==='--dry-run'||x.startsWith('--dry-run='))||!all.some(x=>x==='--json'||x.startsWith('--json=')))return undefined;const text=typeof output?.stdout==='string'?output.stdout:typeof output?.output==='string'?output.output:'';try{const j=JSON.parse(text),x=Array.isArray(j)?j[0]:j;if(!x||typeof x!=='object')return undefined;const files=Array.isArray(x.files)?x.files.map((f:any)=>typeof f==='string'?f:f?.path).filter((v:any)=>typeof v==='string'):[];return{name:typeof x.name==='string'?x.name:typeof x.id==='string'?String(x.id).replace(/@[^@]+$/,''):undefined,version:typeof x.version==='string'?x.version:undefined,integrity:typeof x.integrity==='string'?x.integrity:undefined,shasum:typeof x.shasum==='string'?x.shasum:undefined,filename:typeof x.filename==='string'?x.filename:undefined,files,state_hash:root&&files.length?packageStateHash(root,files):undefined}}catch{return undefined}}
+function parseRegistryView(command:string,output:any):{name?:string;version?:string;integrity?:string;shasum?:string}|undefined{const p=npmLikeCommandParts(command);if(!['npm','pnpm'].includes(p.exe??'')||p.sub!=='view')return undefined;const spec=p.rest[0];if(!spec)return undefined;const text=typeof output?.stdout==='string'?output.stdout:typeof output?.output==='string'?output.output:'';try{const j=JSON.parse(text);const dist=j?.dist??{};let name=typeof j?.name==='string'?j.name:undefined,version=typeof j?.version==='string'?j.version:undefined;if(!name||!version){const m=spec.match(/^(@[^/]+\/[^@]+|[^@]+)@(.+)$/);if(m){name??=m[1];version??=m[2]}}return{name,version,integrity:typeof dist?.integrity==='string'?dist.integrity:typeof j?.['dist.integrity']==='string'?j['dist.integrity']:undefined,shasum:typeof dist?.shasum==='string'?dist.shasum:typeof j?.['dist.shasum']==='string'?j['dist.shasum']:undefined}}catch{return undefined}}
 function clearReleaseBlockers(m:MissionState,prefix?:string):void{m.blockers=m.blockers.filter(b=>!b.startsWith(prefix??'release-chain:'))}
 function addBlocker(m:MissionState,reason:string):void{const b=`release-chain:${reason}`;if(!m.blockers.includes(b))m.blockers.push(b)}
 function reevaluatePushRemote(m:MissionState):void{

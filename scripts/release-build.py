@@ -37,11 +37,12 @@ def collect(dirs, files):
         if not base.exists():
             continue
         for p in base.rglob('*'):
-            if not p.is_file():
-                continue
             rel=p.relative_to(KIT)
             if any(part in excluded_dirs for part in rel.parts): continue
             if p.name in excluded_files: continue
+            if p.is_symlink(): raise SystemExit(f'release source symlink is not allowed: {rel}')
+            if not p.is_file():
+                continue
             if rel.parts and rel.parts[0] in FORBIDDEN_ROOTS:
                 continue
             out[_norm(rel)]=p
@@ -49,6 +50,7 @@ def collect(dirs, files):
         if n in FORBIDDEN_ROOTS:
             continue
         p=KIT/n
+        if p.is_symlink(): raise SystemExit(f'release source symlink is not allowed: {n}')
         if p.is_file(): out[_norm(n)]=p
     return out
 

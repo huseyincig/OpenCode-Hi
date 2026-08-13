@@ -17,7 +17,7 @@ def test_identity_is_hi():
 def test_root_git_package_contract():
     d=json.loads((ROOT/'package.json').read_text()); assert d['name']=='opencode-hi' and d['version']==V
     assert d['main']=='plugin/dist/plugin.js' and (ROOT/d['main']).is_file() and 'skills' in d['files']
-    assert d['dependencies']['@opencode-ai/plugin']=='>=1.18.0 <2' and 'README.tr.md' in d['files']
+    assert 'dependencies' not in d and 'README.tr.md' in d['files']
 
 def test_root_is_product_clean():
     assert not any((ROOT/x).exists() for x in ['KURULUM.md','RELEASE-READINESS.md','WORK-STATE.md','work-state.json','HI.cmd','HI.sh','HI-VALIDATE.cmd','HI-RELEASE-PREP.cmd'])
@@ -476,3 +476,40 @@ def test_skill_artifact_ownership_audit_covers_all_29_skills():
     assert len(d['skills'])==29
     assert all(row['skill_specific_hi_directory'] is False for row in d['skills'])
     assert '.opencode/skills/<project-created-skill>/' in d['canonical_project_families']
+
+def test_setup_blocks_symlinked_managed_config_escape(tmp_path):
+    if os.name=='nt':pytest.skip('symlink privilege varies on Windows')
+    outside=tmp_path.parent/f'{tmp_path.name}-outside.json';outside.write_text(json.dumps({'plugin':['outside']}))
+    (tmp_path/'opencode.json').symlink_to(outside)
+    before=outside.read_text()
+    r=run(ROOT/'scripts/native_plugin_setup.py','install',tmp_path);out=json.loads(r.stdout)
+    assert r.returncode==2 and out['status']=='BLOCKED' and out['reason']=='managed-path-escapes-project-or-uses-symlink'
+    assert outside.read_text()==before
+
+def test_reconfigure_blocks_symlinked_opencode_directory_escape(tmp_path):
+    if os.name=='nt':pytest.skip('symlink privilege varies on Windows')
+    outside=tmp_path.parent/f'{tmp_path.name}-outside-dir';outside.mkdir()
+    (tmp_path/'.opencode').symlink_to(outside,target_is_directory=True)
+    r=run(ROOT/'scripts/native_plugin_setup.py','reconfigure',tmp_path,'--primary-mode','manager');out=json.loads(r.stdout)
+    assert r.returncode==2 and out['status']=='BLOCKED' and out['reason']=='managed-path-escapes-project-or-uses-symlink'
+    assert not (outside/'hi'/'policy'/'routing.json').exists()
+
+def test_uninstall_blocks_symlinked_managed_config_escape(tmp_path):
+    if os.name=='nt':pytest.skip('symlink privilege varies on Windows')
+    outside=tmp_path.parent/f'{tmp_path.name}-outside-uninstall.json';outside.write_text(json.dumps({'plugin':['opencode-hi@0.1.0']}))
+    (tmp_path/'opencode.json').symlink_to(outside)
+    before=outside.read_text()
+    r=run(ROOT/'scripts/native_plugin_setup.py','uninstall',tmp_path);out=json.loads(r.stdout)
+    assert r.returncode==2 and out['status']=='BLOCKED'
+    assert outside.read_text()==before
+
+def test_release_builder_rejects_source_symlink(tmp_path):
+    import importlib.util
+    spec=importlib.util.spec_from_file_location('hi_release_symlink',ROOT/'scripts/release-build.py');mod=importlib.util.module_from_spec(spec);spec.loader.exec_module(mod)
+    fake=tmp_path/'repo';(fake/'skills').mkdir(parents=True);outside=tmp_path/'outside.txt';outside.write_text('outside-secret')
+    if os.name=='nt':pytest.skip('symlink privilege varies on Windows')
+    (fake/'skills'/'escape.txt').symlink_to(outside)
+    old=mod.KIT;mod.KIT=fake
+    try:
+        with pytest.raises(SystemExit,match='release source symlink is not allowed'):mod.collect(['skills'],[])
+    finally:mod.KIT=old

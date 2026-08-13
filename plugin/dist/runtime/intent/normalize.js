@@ -1,13 +1,16 @@
 const AUTHORITY = /\b(publish|deploy|push|release\s+it|merge\s+and\s+push)\b/i;
 const SECURITY = /\b(auth|authentication|authorization|security|permission|token|secret|credential|password|oauth|session|cookie)\b/i;
 const BUG = /\b(bug|fix|broken|error|crash|500|repair|resolve|regression)\b/i;
+const BUG_ACTION = /\b(fix|repair|resolve|correct)\b/i;
 const DOC_TINY = /\b(readme|docs?|documentation|markdown|typo|spelling|document)\b/i;
 const TEST = /\b(test|verify|verification|check|qa|lint|build)\b/i;
 const TDD = /\b(tdd|test[- ]driven|test driven|test-first)\b/i;
 const PLAN = /\b(plan|planning|roadmap|tasarla|planla|mimari plan)\b/i;
 const DESIGN = /\b(design|architecture|trade[- ]?off|approach)\b/i;
 const REVIEW = /\b(review|audit|inspect|security review|code review)\b/i;
-const INDEPENDENT_REVIEW = /\b(?:independent|separate|second[- ]?pass|second opinion)\s+(?:review|audit|verification)\b/i;
+const READ_ONLY_ACTION = /\b(read|inspect|examine|check|show|report|summari[sz]e|describe)\b/i;
+const READ_ONLY_CONSTRAINT = /\b(read[- ]?only|do not modify|don't modify|do not edit|don't edit|no changes?|without changes?|without modifying)\b/i;
+const INDEPENDENT_REVIEW = /\b(?:(?:independent|separate|second[- ]?pass|second opinion)\s+(?:(?:qa|security)\s*[- ]?)?(?:reviewer|review|audit|verification)|(?:delegate|assign|spawn|use)\s+(?:exactly\s+)?(?:one|1|an?)\s+(?:independent\s+)?(?:(?:qa|security)\s*[- ]?)?reviewer)\b/i;
 const VISUAL = /\b(ui|ux|visual|css|layout|responsive|frontend|interface)\b/i;
 const PERF = /\b(performance|speed|slow|optimi[sz]e|profile)\b/i;
 const RELEASE = /\b(release|changelog|version|publish preparation)\b/i;
@@ -21,7 +24,7 @@ const EXPLICIT_TARGET = /\b(endpoint|table|column|field|route|file|dosya|class|f
 const SEQUENTIAL = /\b(after|before|then|depends|dependency)\b/i;
 const EXTERNAL_GATE = /\b(oauth|mfa|credential|secret|paid|payment|approval|production|prod|deploy|publish)\b/i;
 const REPO_WIDE = /\b(repo|repository|entire|all|overall|codebase)\b/i;
-const MULTI = /\b(files|modules|packages|multiple|several)\b/i;
+const MULTI = /\b(?:(?:multiple|several)\s+(?:files?|modules?|packages?)|multiple|several)\b/i;
 // Bounded structural detection of multiple independent workstreams in the objective.
 // These are NOT keyword hacks: each pattern requires a numeric/quantifier + a
 // work-unit noun or a numbered list, so plain prose containing "independent"
@@ -35,16 +38,25 @@ const NUMBERED_WORKUNITS = /(?<![a-zA-Z0-9_])(\d+|two|three|four|five|six|seven|
 const NUMBERED_LIST = /(?:^|\n)\s*\d+[\.\)]\s+\S[\s\S]*?\n\s*\d+[\.\)]\s+\S/m;
 const ENUMERATED_MULTI = /(?<![a-zA-Z0-9_])(two|three|four|five|six|seven|eight|nine|ten|\d+)\s+(?:independent|separate)\s+\S[\s\S]{0,60}?\s+(?:and|or)\s+\S(?![a-zA-Z0-9_])/i;
 const PATH = /(?:^|\s)([\w@.-]+\/(?:[\w@./-]+)|[\w@.-]+\.(?:ts|tsx|js|jsx|py|go|rs|php|json|md|css|scss|html))(?:\s|$)/g;
+const NEGATION_PREFIX = /\b(?:no|not|without|avoid|never)\b(?:\s+[a-z-]+){0,4}\s*$/i;
+function hasNonNegated(text, re) { const flags = re.flags.includes('g') ? re.flags : re.flags + 'g', scan = new RegExp(re.source, flags); for (const match of text.matchAll(scan)) {
+    const prefix = text.slice(Math.max(0, (match.index ?? 0) - 64), match.index);
+    if (!NEGATION_PREFIX.test(prefix))
+        return true;
+} return false; }
 export function normalizeIntent(text, repo) {
     const raw = text.trim();
     const objective = raw.replace(/\s+/g, ' ');
-    const risk = AUTHORITY.test(objective) ? 'authority-boundary' : SECURITY.test(objective) ? 'high' : RELEASE.test(objective) ? 'medium' : 'low';
-    const taskKind = DOC_TINY.test(objective) && !SECURITY.test(objective) ? 'implementation' : BUG.test(objective) ? 'bug-fix' : REVIEW.test(objective) ? 'review' : PERF.test(objective) ? 'performance' : RELEASE.test(objective) ? 'release-readiness' : 'implementation';
+    const authority = hasNonNegated(objective, AUTHORITY), security = hasNonNegated(objective, SECURITY), release = hasNonNegated(objective, RELEASE);
+    const risk = authority ? 'authority-boundary' : security ? 'high' : release ? 'medium' : 'low';
+    const reviewIntent = (REVIEW.test(objective) || READ_ONLY_ACTION.test(objective) && READ_ONLY_CONSTRAINT.test(objective)) && !BUG_ACTION.test(objective);
+    const taskKind = reviewIntent ? 'review' : DOC_TINY.test(objective) && !security ? 'implementation' : BUG.test(objective) ? 'bug-fix' : PERF.test(objective) ? 'performance' : release ? 'release-readiness' : 'implementation';
     // Numbered list detection must run on raw text — whitespace normalization
     // collapses newlines into single spaces, so by the time we test `objective`
     // the multiline structure is gone.
     const isMultiStream = NUMBERED_WORKUNITS.test(objective) || NUMBERED_LIST.test(raw) || ENUMERATED_MULTI.test(objective);
-    const scope = AUTHORITY.test(objective) ? 'external' : REPO_WIDE.test(objective) ? 'repo-wide' : isMultiStream ? 'multi-stream' : MULTI.test(objective) ? 'multi-file' : 'local';
+    const likelyTargets = [...objective.matchAll(PATH)].map(m => m[1]).filter(Boolean).slice(0, 8);
+    const scope = authority ? 'external' : REPO_WIDE.test(objective) ? 'repo-wide' : isMultiStream ? 'multi-stream' : likelyTargets.length > 1 || MULTI.test(objective) ? 'multi-file' : 'local';
     const requiredCapabilities = [];
     if (taskKind === 'bug-fix')
         requiredCapabilities.push('repository-analysis', 'debugging', 'implementation');
@@ -74,7 +86,7 @@ export function normalizeIntent(text, repo) {
         requiredCapabilities.push('workspace-isolation');
     if (SKILL_AUTHORING.test(objective))
         requiredCapabilities.push('skill-authoring');
-    if (SECURITY.test(objective)) {
+    if (security) {
         requiredCapabilities.push('security-review', 'critical-validation');
     }
     else if (risk === 'high')
@@ -116,7 +128,6 @@ export function normalizeIntent(text, repo) {
                 likelyVerification.push(buildKind);
         }
     }
-    const likelyTargets = [...objective.matchAll(PATH)].map(m => m[1]).filter(Boolean).slice(0, 8);
     const ambiguity = CONTRACT.test(objective) && !EXPLICIT_TARGET.test(objective) && !likelyTargets.length ? 'contract-critical' : 'none';
     const dependencyClass = EXTERNAL_GATE.test(objective) ? 'external-gated' : SEQUENTIAL.test(objective) ? 'sequential' : scope === 'multi-stream' ? 'independent-multi' : scope === 'local' ? 'independent' : 'unknown';
     const avoid = ['unnecessary-agents', 'unnecessary-skills', 'full-chat-child-context', 'unrequested-external-effects'];

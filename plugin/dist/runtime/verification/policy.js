@@ -62,7 +62,7 @@ function kindMatches(required, actual) { const r = canonical(required), a = cano
     return true; if (r === 'changed-surface-sanity')
     return /build|lint|type|check|test|sanity|compile/.test(a); if (r === 'visual-check')
     return /visual|screenshot|browser|ui/.test(a); if (r === 'review-evidence')
-    return /review|audit|security|finding/.test(a); return false; }
+    return a === 'review-evidence' || /^(?:code-review|security-review|regression-review|audit-findings?|review-findings?)$/.test(a); return false; }
 export function verificationSatisfied(m, obligationID) { const p = m.verification_policy; if (p.requireFresh && !m.evidence.fresh)
     return { ok: false, missing: ['fresh-evidence'] }; const obligation = obligationID ? m.obligations.find(o => o.id === obligationID) : undefined, requiredKinds = [...new Set((obligation?.requiredEvidence?.length ? obligation.requiredEvidence : p.requiredKinds).map(canonical))]; const valid = m.evidence.items.filter(e => { if (e.invalidated_at || e.pass === false || e.outcome === 'failed' || e.outcome === 'environment-issue' || e.outcome === 'pending')
     return false; const workerSource = String(e.source ?? '').startsWith('worker:'); if (workerSource && !p.allowWorkerReportedEvidence && !String(e.source ?? '').includes(':reviewer'))

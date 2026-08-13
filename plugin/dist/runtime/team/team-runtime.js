@@ -1,5 +1,7 @@
 import { appendLedger } from '../ledger/ledger.js';
+const TEAM_ROLES = new Set(['coder', 'architect', 'repository-explorer', 'qa-reviewer', 'security-reviewer', 'visual-qa']);
 function uid(p) { return `${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`; }
+function validTeamRole(role) { return TEAM_ROLES.has(role); }
 export class TeamRuntime {
     tasks;
     enabled;
@@ -15,12 +17,15 @@ export class TeamRuntime {
     active(teamID) { const t = this.#teams.get(teamID); if (!t || t.status !== 'active')
         throw new Error('Active team not found'); if (Date.now() >= t.expires_at)
         throw new Error('Team wall-time expired; parent must shutdown/reconcile team'); return t; }
-    assertCurrentMission(m, t) { if (t.mission_id !== m.mission_id || t.mission_generation !== m.generation)
+    assertMissionOwner(m, t) { if (t.mission_id !== m.mission_id)
+        throw new Error('Team belongs to a different mission'); }
+    assertCurrentMission(m, t) { this.assertMissionOwner(m, t); if (t.mission_generation !== m.generation)
         throw new Error('Stale team generation; shutdown/reconcile the old team before continuing'); }
     async startMember(m, t, role, overrideModel, overrideVariant) { const readOnly = new Set(['architect', 'repository-explorer', 'qa-reviewer', 'security-reviewer', 'visual-qa']).has(role), started = await this.tasks.start(m, { objective: `${t.objective}\nTeam perspective: ${role}. Report findings to parent; do not create another team.`, role, category: m.risk === 'high' ? 'critical' : 'deep', scope: readOnly ? [] : m.intent.likelyTargets, constraints: ['parent-mediated team', 'no nested team', 'bounded scope', 'compact evidence'], model: overrideModel, modelVariant: overrideVariant }); t.worker_ids.push(started.worker_id); t.member_workers[role] = started.worker_id; return started.worker_id; }
     async create(m, objective, members, memberModels) { if (!this.enabled())
         throw new Error('Team Mode disabled'); if (this.list(m.mission_id).some(t => t.status === 'active'))
-        throw new Error('Nested or second active team is not allowed'); const l = this.limits(), unique = [...new Set(members.map(x => x.trim()).filter(Boolean))].slice(0, l.maxMembers); if (unique.length < 2)
+        throw new Error('Nested or second active team is not allowed'); const l = this.limits(), requested = [...new Set(members.map(x => x.trim()).filter(Boolean))]; const invalid = requested.filter(x => !validTeamRole(x)); if (invalid.length)
+        throw new Error(`Unknown Team Mode role(s): ${invalid.join(', ')}`); const unique = requested.slice(0, l.maxMembers); if (unique.length < 2)
         throw new Error('Team Mode requires at least two distinct members'); const now = Date.now(), team = { id: uid('team'), mission_id: m.mission_id, mission_generation: m.generation, objective, status: 'active', members: unique, worker_ids: [], member_workers: {}, messages: [], board: [], created_at: now, expires_at: now + l.maxWallMs, turn_count: 0 }; this.#teams.set(team.id, team); m.execution_mode = 'team'; appendLedger(m, 'team.created', { payload: { team_id: team.id, members: unique, expires_at: team.expires_at, member_models: memberModels ? Object.keys(memberModels).length : 0 } }); try {
         for (const role of unique) {
             const override = memberModels?.[role];
@@ -40,7 +45,8 @@ export class TeamRuntime {
         throw error;
     } }
     async addMember(m, teamID, role, overrideModel, overrideVariant) { const t = this.active(teamID); this.assertCurrentMission(m, t); const clean = role.trim(); if (!clean)
-        throw new Error('Member role required'); if (t.members.includes(clean))
+        throw new Error('Member role required'); if (!validTeamRole(clean))
+        throw new Error(`Unknown Team Mode role: ${clean}`); if (t.members.includes(clean))
         throw new Error('Member already exists'); if (t.members.length >= this.limits().maxMembers)
         throw new Error('Team member limit reached'); t.members.push(clean); try {
         const worker_id = await this.startMember(m, t, clean, overrideModel, overrideVariant);
@@ -66,7 +72,7 @@ export class TeamRuntime {
     } if (t.messages.length >= l.maxMessages)
         throw new Error('Team mailbox limit reached'); if (t.turn_count >= l.maxTurns)
         throw new Error('Team turn limit reached'); const msg = { id: uid('msg'), at: Date.now(), from, to, text: text.slice(0, 2000), dedupe_key: key || undefined, delivered_to: [], processed_by: [], reservations: {} }; t.messages.push(msg); t.turn_count++; appendLedger(m, 'team.message', { payload: { team_id: teamID, from, to, turn: t.turn_count } }); return msg; }
-    inbox(teamID, member, since, limit = 12, replay = false) { const t = this.active(teamID); if (member !== 'parent' && !t.members.includes(member))
+    inbox(m, teamID, member, since, limit = 12, replay = false) { const t = this.active(teamID); this.assertCurrentMission(m, t); if (member !== 'parent' && !t.members.includes(member))
         throw new Error('Unknown team member'); const now = Date.now(), after = Number.isFinite(since) ? Number(since) : 0, cap = Math.max(1, Math.min(24, Math.floor(limit))), ttl = 120000; for (const msg of t.messages) {
         const r = msg.reservations?.[member];
         if (r && r.expires_at <= now && !msg.processed_by?.includes(member))
@@ -77,7 +83,7 @@ export class TeamRuntime {
             msg.reservations[member] = { reserved_at: now, expires_at: now + ttl };
             msg.delivered_to = [...new Set([...(msg.delivered_to ?? []), member])];
         } return eligible; }
-    messageAck(m, teamID, member, messageID, processed = true) { const t = this.active(teamID); if (member !== 'parent' && !t.members.includes(member))
+    messageAck(m, teamID, member, messageID, processed = true) { const t = this.active(teamID); this.assertCurrentMission(m, t); if (member !== 'parent' && !t.members.includes(member))
         throw new Error('Unknown team member'); const msg = t.messages.find(x => x.id === messageID); if (!msg)
         return false; msg.reservations ??= {}; msg.processed_by ??= []; if (processed) {
         msg.processed_by = [...new Set([...msg.processed_by, member])];
@@ -101,7 +107,7 @@ export class TeamRuntime {
         item.updated_at = now;
     } appendLedger(m, 'team.board.updated', { payload: { team_id: teamID, item_id: item.id, status: item.status, owner: item.owner } }); return item; }
     async shutdown(m, teamID, reason = 'explicit') { const t = this.#teams.get(teamID); if (!t)
-        return false; if (t.status === 'shutdown')
+        return false; this.assertMissionOwner(m, t); if (t.status === 'shutdown')
         return true; t.status = 'shutdown'; t.shutdown_reason = reason; const workers = [...t.worker_ids]; t.worker_ids = []; t.member_workers = {}; if (m.mission_id === t.mission_id && m.execution_mode === 'team')
         m.execution_mode = 'single'; appendLedger(m, reason === 'expired' ? 'team.expired' : 'team.shutdown', { payload: { team_id: teamID, reason, workers: workers.length } }); for (const worker of workers)
         try {

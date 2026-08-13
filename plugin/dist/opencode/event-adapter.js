@@ -5,6 +5,12 @@ const MAP = {
     'lsp.client.diagnostics': 'lsp-diagnostics', 'installation.updated': 'installation-updated',
 };
 export function normalizeOpenCodeEvent(event) { const rawType = String(event?.type ?? ''); return { kind: MAP[rawType] ?? 'unknown', rawType, sessionID: eventSessionID(event), properties: event?.properties ?? {}, raw: event }; }
+export function eventStatus(event) { const raw = event.properties?.status ?? event.properties?.state; if (typeof raw === 'string')
+    return raw; if (raw && typeof raw === 'object') {
+    const nested = raw.type ?? raw.status ?? raw.state;
+    if (typeof nested === 'string')
+        return nested;
+} return 'unknown'; }
 function collectStrings(value, out, depth = 0) {
     if (depth > 5 || value == null)
         return;
