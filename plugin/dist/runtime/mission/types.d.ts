@@ -30,7 +30,6 @@ export interface ContextArtifact {
     title?: string;
     summary?: string;
     sha256?: string;
-    approved?: boolean;
     added_at: number;
 }
 export interface MissionGate {

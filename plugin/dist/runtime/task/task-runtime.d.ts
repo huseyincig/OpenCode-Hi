@@ -16,6 +16,7 @@ export interface StartTaskInput {
     model?: string;
     modelVariant?: string;
     relevantContext?: string[];
+    contextArtifactIds?: string[];
     constraints?: string[];
     forkFromSession?: string;
 }

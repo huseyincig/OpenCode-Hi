@@ -11,3 +11,4 @@ export interface SemanticContextResult {
     contextChars: number;
 }
 export declare function extractTypeScriptSemanticContext(source: string, names?: string[], maxChars?: number): SemanticContextResult;
+export declare function typescriptSemanticContextForTargets(projectRoot: string, targets: string[], maxChars?: number): string[];

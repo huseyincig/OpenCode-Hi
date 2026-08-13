@@ -16,7 +16,7 @@ export const WORKER_EVIDENCE_KINDS=['targeted-tests','typecheck','lint','build',
 export type WorkerEvidenceKind = typeof WORKER_EVIDENCE_KINDS[number]
 
 export interface Obligation { id:string; status:ObligationStatus; kind:ObligationKind; summary:string; requiredEvidence?:string[]; blocker?:string; closedAt?:number }
-export interface ContextArtifact { id:string; kind:string; uri?:string; title?:string; summary?:string; sha256?:string; approved?:boolean; added_at:number }
+export interface ContextArtifact { id:string; kind:string; uri?:string; title?:string; summary?:string; sha256?:string; added_at:number }
 export interface MissionGate { id:string; kind:GateKind; summary:string; status:GateStatus; reason?:string; updated_at:number }
 export interface RuntimeNudge { id:string; reason:string; instruction:string; created_at:number; generation:number; task_id?:string; worker_id?:string }
 export interface TemporaryMutation { id:string; kind:string; description:string; rollback_command:string; rollback_hash:string; rollback_mode?:'command'|'native-revert'; session_id?:string; message_id?:string; status:'active'|'rolled-back'|'failed'; created_at:number; resolved_at?:number; detail?:string }

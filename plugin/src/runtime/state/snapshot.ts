@@ -1,5 +1,6 @@
 import type { MissionState,WorkerState } from '../mission/types.js'
 import { clipList,clipText,DEFAULT_CONTEXT_BUDGET } from '../context/budget.js'
+import { governContext, type ContextEntry } from '../context/governor.js'
 
 function rowList(values:string[],maxChars:number,maxItems:number):string{
   return clipList(values,maxChars,maxItems).join(' | ')||'none'
@@ -36,18 +37,21 @@ export function compactMissionContext(m:MissionState,worker?:WorkerState):string
     `USER INTERRUPTED: ${String(m.user_interrupted)}`,
   ]
 
-  const boundedState=[
-    `ACTIVE OBLIGATIONS: ${rowList(open.map(o=>`${o.id}:${o.status}:${clipText(o.summary,500)}`),2600,12)}`,
-    `OPEN GATES: ${rowList(gates.map(g=>`${g.id}:${g.status}:${clipText(g.reason??g.summary,400)}`),1800,8)}`,
-    `CURRENT TASKS: ${rowList(m.tasks.map(t=>`${t.id}:${t.status}:${clipText(t.objective,420)}`),3000,14)}`,
-    `UNRECONCILED RESULTS: ${rowList(unreconciled.map(t=>`${t.id}:${t.result?.status}:${clipText(t.result?.summary,350)}`),1600,8)}`,
-    `ACTIVE/PENDING WORKERS: ${rowList(active.map(w=>`${w.id}:${w.status}:${w.role}:g${w.generation_at_spawn??'?'}`),1800,12)}`,
-    `LATEST RELEVANT EVIDENCE: ${rowList(latest.map(e=>`${e.kind}:${e.outcome??e.pass}:${e.invalidated_at?'stale':'fresh'}:${e.source_session_id??e.source??'unknown'}:${clipText(e.summary,420)}`),2600,8)}`,
-    `CONTEXT ARTIFACTS: ${rowList(artifacts.map(a=>`${a.kind}:${clipText(a.title??a.id,300)}:${a.sha256??''}`),1500,DEFAULT_CONTEXT_BUDGET.max_artifacts)}`,
-    `TEMP ROLLBACKS: ${rowList(rollbacks.map(x=>`${x.id}:${x.status}:${clipText(x.description,400)}`),1400,6)}`,
-    worker?`CURRENT CHILD: ${worker.id}:${worker.role}; session=${worker.session_id??'none'}; forked_from=${worker.forked_from_session_id??'none'}; methodologies=${rowList(worker.methodologies.map(x=>`${x.name}@${x.source_sha256?.slice(0,12)??'nohash'}`),900,3)}`:'',
-    'Do not create duplicate tasks or restart planning unless runtime state requires it.',
-  ].filter(Boolean)
+  const boundedState:ContextEntry[]=[
+    {id:'unreconciled',kind:'mission-state',contextClass:'COMPRESSIBLE',createdAt:m.updated_at,text:`UNRECONCILED RESULTS: ${rowList(unreconciled.map(t=>`${t.id}:${t.result?.status}:${clipText(t.result?.summary,350)}`),1600,8)}`},
+    {id:'gates',kind:'mission-state',contextClass:'COMPRESSIBLE',createdAt:m.updated_at,text:`OPEN GATES: ${rowList(gates.map(g=>`${g.id}:${g.status}:${clipText(g.reason??g.summary,400)}`),1800,8)}`},
+    {id:'rollbacks',kind:'mission-state',contextClass:'COMPRESSIBLE',createdAt:m.updated_at,text:`TEMP ROLLBACKS: ${rowList(rollbacks.map(x=>`${x.id}:${x.status}:${clipText(x.description,400)}`),1400,6)}`},
+    {id:'workers',kind:'runtime-state',contextClass:'COMPRESSIBLE',createdAt:m.updated_at,text:`ACTIVE/PENDING WORKERS: ${rowList(active.map(w=>`${w.id}:${w.status}:${w.role}:g${w.generation_at_spawn??'?'}`),1800,12)}`},
+    {id:'obligations',kind:'mission-state',contextClass:'COMPRESSIBLE',createdAt:m.updated_at,text:`ACTIVE OBLIGATIONS: ${rowList(open.map(o=>`${o.id}:${o.status}:${clipText(o.summary,500)}`),2600,12)}`},
+    {id:'tasks',kind:'runtime-state',contextClass:'COMPRESSIBLE',createdAt:m.updated_at,text:`CURRENT TASKS: ${rowList(m.tasks.map(t=>`${t.id}:${t.status}:${clipText(t.objective,420)}`),3000,14)}`},
+    {id:'evidence',kind:'evidence',contextClass:'COMPRESSIBLE',createdAt:m.updated_at,text:`LATEST RELEVANT EVIDENCE: ${rowList(latest.map(e=>`${e.kind}:${e.outcome??e.pass}:${e.invalidated_at?'stale':'fresh'}:${e.source_session_id??e.source??'unknown'}:${clipText(e.summary,420)}`),2600,8)}`},
+    {id:'artifacts',kind:'artifact',contextClass:'COMPRESSIBLE',createdAt:m.updated_at,text:`CONTEXT ARTIFACTS: ${rowList(artifacts.map(a=>`${a.kind}:${clipText(a.title??a.id,300)}:${a.sha256??''}`),1500,DEFAULT_CONTEXT_BUDGET.max_artifacts)}`},
+    ...(worker?[{id:'current-child',kind:'runtime-state',contextClass:'COMPRESSIBLE' as const,createdAt:m.updated_at,text:`CURRENT CHILD: ${worker.id}:${worker.role}; session=${worker.session_id??'none'}; forked_from=${worker.forked_from_session_id??'none'}; methodologies=${rowList(worker.methodologies.map(x=>`${x.name}@${x.source_sha256?.slice(0,12)??'nohash'}`),900,3)}`}]:[]),
+    {id:'dedupe-reminder',kind:'instruction',contextClass:'PURGEABLE',createdAt:m.updated_at,text:'Do not create duplicate tasks or restart planning unless runtime state requires it.'},
+  ]
+  const protectedEntries:ContextEntry[]=essential.map((text,i)=>({id:`essential-${i}`,kind:'mission-survival',text,contextClass:'PROTECTED',createdAt:m.updated_at}))
+  const governed=governContext([...protectedEntries,...boundedState],{maxChars:DEFAULT_CONTEXT_BUDGET.max_context_chars,compressToChars:600})
 
-  return clipText([...essential,...boundedState].join('\n'),DEFAULT_CONTEXT_BUDGET.max_context_chars)
+
+  return clipText(governed.entries.map(e=>e.text).join('\n'),DEFAULT_CONTEXT_BUDGET.max_context_chars)
 }

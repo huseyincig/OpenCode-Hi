@@ -55,7 +55,7 @@ function validContextArtifact(value) {
     for (const field of ['uri', 'title', 'summary', 'sha256'])
         if (value[field] !== undefined && typeof value[field] !== 'string')
             return false;
-    return value.approved === undefined || typeof value.approved === 'boolean';
+    return true;
 }
 function validTemporaryMutation(value) {
     if (!isRecord(value) || typeof value.id !== 'string' || typeof value.kind !== 'string' || typeof value.description !== 'string' || typeof value.rollback_command !== 'string' || typeof value.rollback_hash !== 'string' || !['active', 'rolled-back', 'failed'].includes(String(value.status)) || typeof value.created_at !== 'number')

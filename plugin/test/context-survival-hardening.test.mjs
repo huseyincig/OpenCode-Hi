@@ -8,6 +8,11 @@ import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
 import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
 import { DEFAULT_HI_CONFIG } from '../dist/config/defaults.js'
 import { DEFAULT_CONTEXT_BUDGET } from '../dist/runtime/context/budget.js'
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
+import {ProjectIntelligenceStore} from '../dist/runtime/project-intelligence/store.js'
+import {ContextArtifactStore} from '../dist/runtime/context/artifact-store.js'
 
 function addLargeState(m){
   for(let i=0;i<80;i++)m.obligations.push({id:`o-${i}`,kind:'implementation',status:'open',summary:`obligation ${i} ${'x'.repeat(180)}`})
@@ -60,4 +65,79 @@ test('handoff remains within total budget when native summarization is unavailab
   const text=prompts[0].body.parts[0].text
   assert.ok(text.length<=DEFAULT_CONTEXT_BUDGET.max_handoff_chars)
   assert.match(text,/Hi WORKER HANDOFF/)
+})
+
+
+test('task handoff includes only explicitly selected mission context artifacts',async()=>{
+  const prompts=[]
+  const client={session:{create:async()=>({data:{id:'child-artifacts'}}),promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async()=>({data:{}})}}
+  const store=new MissionStore(),m=startAssessedMission(store,'parent-artifacts','opaque bounded context task')
+  m.context_artifacts.push(
+    {id:'ca-selected',kind:'research',title:'Selected',summary:'SELECTED_ARTIFACT_MARKER',sha256:'a'.repeat(64),added_at:1},
+    {id:'ca-unselected',kind:'research',title:'Unselected',summary:'UNSELECTED_ARTIFACT_MARKER',sha256:'b'.repeat(64),added_at:2},
+  )
+  const rt=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
+  await rt.start(m,{objective:'small fix',role:'coder',category:'quick',contextArtifactIds:['ca-selected']})
+  const text=prompts[0].body.parts[0].text
+  assert.match(text,/SELECTED_ARTIFACT_MARKER/)
+  assert.doesNotMatch(text,/UNSELECTED_ARTIFACT_MARKER/)
+  assert.deepEqual(m.tasks.at(-1).context_artifacts.map(a=>a.id),['ca-selected'])
+})
+
+test('unknown task context artifact id fails closed instead of widening context',async()=>{
+  const client={session:{create:async()=>({data:{id:'child-artifact-unknown'}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:{}})}}
+  const store=new MissionStore(),m=startAssessedMission(store,'parent-artifact-unknown','opaque bounded context task')
+  const rt=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
+  await assert.rejects(()=>rt.start(m,{objective:'small fix',role:'coder',category:'quick',contextArtifactIds:['ca-missing']}),/Unknown context artifact/)
+  assert.equal(m.tasks.length,0)
+})
+
+
+test('scoped TypeScript semantic context and fresh project intelligence reach the child handoff',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-runtime-context-'))
+  try{
+    mkdirSync(join(root,'src'),{recursive:true})
+    writeFileSync(join(root,'src','a.ts'),"export interface PublicContract { id:string }\nconst noise='do-not-inject'\n")
+    const pi=new ProjectIntelligenceStore(root)
+    pi.upsert({id:'p-relevant',statement:'PublicContract IDs are stable project identifiers',sourceFiles:['src/a.ts'],sourceHashes:{'src/a.ts':'old'},confidence:.9,freshness:'FRESH',lifecycle:'ACTIVE',updatedAt:1})
+    pi.upsert({id:'p-unrelated',statement:'Unrelated subsystem rule',sourceFiles:['src/other.ts'],sourceHashes:{'src/other.ts':'x'},confidence:.99,freshness:'FRESH',lifecycle:'ACTIVE',updatedAt:2})
+    const prompts=[]
+    const client={session:{create:async()=>({data:{id:'child-semantic-pi'}}),promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async()=>({data:{}})}}
+    const store=new MissionStore(root),m=startAssessedMission(store,'parent-semantic-pi','opaque TypeScript task',{likely_targets:['src/a.ts']})
+    const rt=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2})),root,process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
+    const started=await rt.start(m,{objective:'small fix',role:'coder',category:'quick',scope:['src/a.ts']})
+    const text=prompts[0].body.parts[0].text
+    assert.match(text,/semantic-typescript:src\/a\.ts/)
+    assert.match(text,/interface PublicContract/)
+    assert.match(text,/project-intelligence:p-relevant:PublicContract IDs are stable project identifiers/)
+    assert.doesNotMatch(text,/p-unrelated/)
+    await rt.noteNativeWriteSet(m,started.worker_id,['src/a.ts'])
+    assert.equal(new ProjectIntelligenceStore(root).get('p-relevant').freshness,'POTENTIALLY_STALE')
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+
+test('fresh durable context artifact content is loaded only while source-bound freshness holds',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-durable-context-'))
+  try{
+    const durable=new ContextArtifactStore(root).add('research','bounded durable research','DURABLE_ARTIFACT_CONTENT_MARKER',['src/a.ts'])
+    const ref={id:durable.id,kind:'research',uri:`hi-artifact:${durable.id}`,summary:durable.summary,sha256:durable.sha256,added_at:1}
+    const prompts=[]
+    let seq=0
+    const client={session:{create:async()=>({data:{id:`child-durable-${++seq}`}}),promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async()=>({data:{}})}}
+    const m1=startAssessedMission(new MissionStore(root),'parent-durable-1','opaque durable context task')
+    m1.context_artifacts.push(ref)
+    const rt1=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2})),root,process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
+    const started=await rt1.start(m1,{objective:'first fix',role:'coder',category:'quick',contextArtifactIds:[durable.id]})
+    assert.match(prompts[0].body.parts[0].text,/DURABLE_ARTIFACT_CONTENT_MARKER/)
+    await rt1.noteNativeWriteSet(m1,started.worker_id,['src/a.ts'])
+    assert.equal(new ContextArtifactStore(root).get(durable.id).freshness,'POTENTIALLY_STALE')
+
+    const m2=startAssessedMission(new MissionStore(root),'parent-durable-2','opaque second durable context task')
+    m2.context_artifacts.push(ref)
+    const rt2=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2})),root,process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
+    await rt2.start(m2,{objective:'second fix',role:'coder',category:'quick',contextArtifactIds:[durable.id]})
+    assert.match(prompts[1].body.parts[0].text,new RegExp(`artifact-stale:${durable.id}`))
+    assert.doesNotMatch(prompts[1].body.parts[0].text,/DURABLE_ARTIFACT_CONTENT_MARKER/)
+  }finally{rmSync(root,{recursive:true,force:true})}
 })

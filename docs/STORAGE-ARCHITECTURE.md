@@ -48,7 +48,7 @@ The project hash is derived from the resolved project root. Raw project paths ar
 
 ## Canonical vs derived
 
-Project policy is canonical user/project intent. Setup provenance is canonical ownership metadata. Project Intelligence and durable ArtifactStore support lazy project persistence when a project root is explicitly supplied. Project Intelligence records remain source-hash linked and can become `POTENTIALLY_STALE`; ArtifactStore records carry content hashes and optional source hashes. Without a project root, both stores remain in-memory. Semantic extraction is derived and disposable. Context compaction output is session context, not project knowledge. Memory is optional and provider-owned; it never satisfies verification.
+Project policy is canonical user/project intent. Setup provenance is canonical ownership metadata. Project Intelligence and durable ContextArtifactStore support lazy project persistence when a project root is explicitly supplied. Project Intelligence records remain source-hash linked and can become `POTENTIALLY_STALE`; ContextArtifactStore records carry content hashes and source-file bindings. Without a project root, both stores remain in-memory. Semantic extraction is derived and disposable. Context compaction output is session context, not project knowledge. Memory is optional and provider-owned; it never satisfies verification.
 
 ## Skill resources
 

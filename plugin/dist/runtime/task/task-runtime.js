@@ -33,6 +33,9 @@ import { ProjectMethodologyLearningStore } from '../project-intelligence/methodo
 import { executionProfileFor } from '../../config/execution-policy.js';
 import { applyAdmittedProjectMethodologyPermissions } from '../methodology/host-permissions.js';
 import { isHiChildRole, isHiReadOnlyChildRole, isHiReviewerRole, roleCanOwnObligation } from '../roles/catalog.js';
+import { typescriptSemanticContextForTargets } from '../semantic/typescript-context.js';
+import { ProjectIntelligenceStore } from '../project-intelligence/store.js';
+import { ContextArtifactStore } from '../context/artifact-store.js';
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
 const MAX_QUEUE = 32;
 function missionModelFeedback(m) {
@@ -359,15 +362,21 @@ export class TaskRuntime {
         const safety = parallelSafety(m.tasks, { scope, dependencies, role }), hardParallelConflicts = safety.reasons.filter(reason => !reason.startsWith('dependency:'));
         if (hardParallelConflicts.length && m.tasks.some(t => ['queued', 'running'].includes(t.status)))
             throw new Error(`Unsafe parallel dispatch: ${hardParallelConflicts.join('; ')}`);
+        const requestedArtifactIds = [...new Set(input.contextArtifactIds ?? [])].slice(0, DEFAULT_CONTEXT_BUDGET.max_artifacts), unknownArtifactIds = requestedArtifactIds.filter(id => !m.context_artifacts.some(a => a.id === id));
+        if (unknownArtifactIds.length)
+            throw new Error(`Unknown context artifact id(s): ${unknownArtifactIds.join(', ')}`);
+        const selectedContextArtifacts = requestedArtifactIds.map(id => m.context_artifacts.find(a => a.id === id)).filter(Boolean);
         const approvalGated = skillPlan.selected.filter(s => s.permission === 'ask').map(s => s.name), taskTools = surface.tools.filter(t => t !== 'skill' || methodologies.length > 0);
         const profile = { role, category, task: { objective, scope: [...scope], dependencies: [...dependencies], required_evidence: [...requiredEvidence] }, tools: taskTools, model: selected.primary, model_variant: input.modelVariant ?? selected.primaryVariant, fallback_models: selected.fallbacks, fallback_variants: selected.fallbackVariants, fallback_reasons: selected.fallbackReasons, methodologies, permission_profile: { skill_tool_enabled: skillToolEnabled, skill_permissions: permissionMap ?? {}, external_effects: 'parent-only', recursive_task: 'deny', native: surface.permissions }, verification_policy: { ...m.verification_policy, requiredKinds: [...m.verification_policy.requiredKinds] }, max_context_chars: DEFAULT_CONTEXT_BUDGET.max_context_chars, max_handoff_chars: DEFAULT_CONTEXT_BUDGET.max_handoff_chars, max_result_chars: DEFAULT_CONTEXT_BUDGET.max_result_chars, max_artifacts: DEFAULT_CONTEXT_BUDGET.max_artifacts };
-        const task = createTask(m, { objective, role, category, scope, constraints, dependencies, requiredEvidence, obligationIds, contextArtifacts: m.context_artifacts.slice(-DEFAULT_CONTEXT_BUDGET.max_artifacts), executionProfile: profile });
+        const task = createTask(m, { objective, role, category, scope, constraints, dependencies, requiredEvidence, obligationIds, contextArtifacts: selectedContextArtifacts, executionProfile: profile });
         bindMethodologyNeeds(m, methodologies, { taskId: task.id, obligationIds: task.obligation_ids });
         const provenance = methodologyProvenance(skillPlan.selected), worker = createWorker(m, task, selected.primary, selected.fallbacks, methodologies, provenance);
         worker.model_selection_reason = [...selected.reason];
         worker.fallback_history = [];
         const quirks = modelQuirks(selected.primary);
-        const artifactContext = task.context_artifacts.map(a => `${a.kind}:${a.title ?? a.id}${a.summary ? ` — ${a.summary}` : ''}`), verificationHint = targetedVerificationHint(this.projectRoot, task.scope.length ? task.scope : (m.changed_files.length ? m.changed_files : m.intent.likelyTargets ?? [])), explicitRelevant = input.relevantContext ?? [], boundedRuntimeRelevant = [...(verificationHint ? [verificationHint] : []), ...artifactContext];
+        const contextArtifactStore = new ContextArtifactStore(this.projectRoot), artifactContext = task.context_artifacts.map(a => { const id = a.uri?.startsWith('hi-artifact:') ? a.uri.slice('hi-artifact:'.length) : undefined, stored = id ? contextArtifactStore.get(id) : undefined; if (stored?.freshness === 'FRESH')
+            return `artifact:${stored.id}:${stored.summary}\n${clipText(stored.content, 3000)}`; if (stored)
+            return `artifact-stale:${stored.id}:${stored.summary}`; return `${a.kind}:${a.title ?? a.id}${a.summary ? ` — ${a.summary}` : ''}`; }), verificationHint = targetedVerificationHint(this.projectRoot, task.scope.length ? task.scope : (m.changed_files.length ? m.changed_files : m.intent.likelyTargets ?? [])), semanticContext = typescriptSemanticContextForTargets(this.projectRoot, task.scope, 3000), projectContext = new ProjectIntelligenceStore(this.projectRoot).relevantToFiles(task.scope, 4).map(p => `project-intelligence:${p.id}:${p.statement} [${p.sourceFiles.join(', ')}]`), explicitRelevant = input.relevantContext ?? [], boundedRuntimeRelevant = [...(verificationHint ? [verificationHint] : []), ...semanticContext, ...projectContext, ...artifactContext];
         let nativeSummary, relevantForHandoff = [...explicitRelevant, ...boundedRuntimeRelevant];
         if (relevantForHandoff.join('\n').length > profile.max_context_chars) {
             const native = new NativeOpenCodeAdapter(this.client);
@@ -647,6 +656,8 @@ export class TaskRuntime {
         if (stateHash)
             worker.native_state_hash = stateHash;
         markMutation(m, files, source);
+        new ProjectIntelligenceStore(this.projectRoot).invalidateChanged(files);
+        new ContextArtifactStore(this.projectRoot).invalidateChanged(files);
         if (isHiReadOnlyChildRole(worker.role))
             return;
         for (const other of m.workers) {
