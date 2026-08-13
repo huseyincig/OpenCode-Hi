@@ -32,7 +32,6 @@ export interface HiConfig {
         topology: TopologyMode;
         maxAgents: number;
         parallelism: number;
-        allowMultiRoleAgent: boolean;
     };
     models: {
         mode: ModelSelectionMode;

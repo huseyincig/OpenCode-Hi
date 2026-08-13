@@ -4,7 +4,7 @@ export const DEFAULT_HI_CONFIG = {
     executionPolicy: 'adaptive',
     primaryMode: 'auto',
     compatibility: { mode: 'compatible', validatedOpenCodeVersions: [] },
-    execution: { topology: 'adaptive', maxAgents: 4, parallelism: 2, allowMultiRoleAgent: true },
+    execution: { topology: 'adaptive', maxAgents: 4, parallelism: 2 },
     models: { mode: 'adaptive', default: 'auto', roles: {} },
     routing: { strategy: 'cost-quality', categoryModels: {}, categoryVariants: {}, roleModels: {}, roleVariants: {}, maxFallbacks: 3, allowedProviders: [], deniedModels: [] },
     parallel: { enabled: true, max: 3, providers: {}, models: {} },

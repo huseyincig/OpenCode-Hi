@@ -1,6 +1,7 @@
 import type { HiConfig, ConfigResolutionReport } from '../config/schema.js'
 import { MissionStore } from '../runtime/mission/mission-store.js'
 import type { AvailableModel } from '../runtime/routing/model-resolver.js'
+import { automaticContinuationEnabled, adaptiveIdleEvaluatorEnabled } from '../config/execution-policy.js'
 import { inspectProject } from './project-inspection.js'
 import type { OpenCodeCapabilities } from '../opencode/capabilities.js'
 import { configuredPluginSpecs, configuredRemoteInstructions, configuredShareMode, configuredSubagentDepth, providerPolicyView } from '../opencode/native-adapter.js'
@@ -66,7 +67,7 @@ export function runDoctor(config:HiConfig,store:MissionStore,directory?:string,i
     {id:'interrupted-transaction',status:project.interruptedTransaction?'fail':'pass',detail:project.interruptedTransaction?'lifecycle transaction journal present; run recover':'none'},
     {id:'completion-owner',status:'pass',detail:'runtime-owned completion, required evidence kinds and freshness enabled'},
     {id:'user-interrupt-guard',status:'pass',detail:'continuation dispatcher rejects stopped/user-interrupted missions; only a new user message can resume'},
-    {id:'continuation-controller',status:config.executionPolicy==='adaptive'?'pass':'warn',detail:`mode=${config.executionPolicy}; event-driven native session events are primary trigger`},
+    {id:'continuation-controller',status:config.executionPolicy==='manual'?'info':'pass',detail:`mode=${config.executionPolicy}; child-wake=${automaticContinuationEnabled(config.executionPolicy)?'automatic':'manual'}; idle-evaluator=${adaptiveIdleEvaluatorEnabled(config.executionPolicy)?'adaptive':'disabled'}`},
   ]
   for(const warning of project.warnings)checks.push({id:'project-warning',status:'warn',detail:warning})
   for(const check of checks)if(!check.machine_status)check.machine_status=check.status==='pass'?'pass':check.status==='fail'?'action-required':'info'

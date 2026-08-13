@@ -30,6 +30,7 @@ import { evaluateTaskPreconditions, TaskPreconditionError } from '../readiness/p
 import { effectiveExecutionSurface, promptToolOverrides } from '../routing/execution-profile.js';
 import { redactProviderContext } from '../privacy/boundary.js';
 import { ProjectMethodologyLearningStore } from '../project-intelligence/methodology-learning.js';
+import { executionProfileFor } from '../../config/execution-policy.js';
 import { applyAdmittedProjectMethodologyPermissions } from '../methodology/host-permissions.js';
 import { isHiChildRole, isHiReadOnlyChildRole, isHiReviewerRole, roleCanOwnObligation } from '../roles/catalog.js';
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
@@ -310,7 +311,7 @@ export class TaskRuntime {
             throw new Error('Hi semantic assessment is pending; assess mission intent before starting a worker');
         const objective = input.objective?.trim() || m.objective;
         const taskIntent = m.intent;
-        const cfg = this.getConfig(), routingProfile = cfg.executionPolicy === 'minimal' ? cfg.profile.minimal : cfg.executionPolicy === 'thorough' ? cfg.profile.thorough : cfg.profile.balanced, routed = routeCapabilities(taskIntent, { specialistThreshold: routingProfile.specialistThreshold, reviewThreshold: routingProfile.reviewThreshold }), defaultCategory = resolveCategory(taskIntent), category = (CATEGORIES.has(String(input.category)) ? input.category : (routed.category ?? defaultCategory)), defaultRole = isHiChildRole(routed.role) ? routed.role : 'coder', role = isHiChildRole(String(input.role)) ? String(input.role) : defaultRole;
+        const cfg = this.getConfig(), routingProfile = cfg.profile[executionProfileFor(cfg.executionPolicy, taskIntent)], routed = routeCapabilities(taskIntent, { specialistThreshold: routingProfile.specialistThreshold, reviewThreshold: routingProfile.reviewThreshold }), defaultCategory = resolveCategory(taskIntent), category = (CATEGORIES.has(String(input.category)) ? input.category : (routed.category ?? defaultCategory)), defaultRole = isHiChildRole(routed.role) ? routed.role : 'coder', role = isHiChildRole(String(input.role)) ? String(input.role) : defaultRole;
         const hostConfig = this.getHostConfig();
         applyAdmittedProjectMethodologyPermissions(hostConfig, this.projectRoot);
         const feedback = missionModelFeedback(m), selected = resolveModel(category, this.getModels(), this.getConfig(), input.model, role, hostConfig, feedback);

@@ -278,19 +278,6 @@ test('Native-06: native-revert rolls back tracked file edits', () => {
   assert.equal(m.temporary_mutations[0].rollback_mode, 'native-revert')
 })
 
-test('Native-09: config-precedence — raw input overrides project file when both set', () => {
-  // Simulate the precedence: when raw input sets roleModels, the
-  // raw input wins; project file is consulted only when raw is missing.
-  // We exercise this via the resolver's roleModels shape.
-  const raw = { routing: { roleModels: { coder: ['raw-model'] } } }
-  const project = { routing: { roleModels: { coder: ['project-model'] } } }
-  // The resolver path applies project overlay first, then raw overlay.
-  // When raw is set, raw wins. We assert the same precedence at the
-  // shape level.
-  const merged = { ...project.routing.roleModels, ...raw.routing.roleModels }
-  assert.deepEqual(merged, { coder: ['raw-model'] })
-})
-
 test('Native-15: plugin-order-variation — explicit order preserved in config', () => {
   // The plugin spec array preserves its order. The first occurrence
   // is the canonical HI plugin entry.

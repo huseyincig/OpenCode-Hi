@@ -140,3 +140,28 @@ test('native_plugin_setup.py role-models --defaults produces valid schema 1 file
     } finally { rmSync(bad, { recursive: true, force: true }) }
   } finally { rmSync(project, { recursive: true, force: true }) }
 })
+
+
+test('project routing strategy is authoritative over raw/native input', () => {
+  const project = makeProject()
+  try {
+    writeRouting(project, { schema: 1, type: 'hi-routing', routing: { strategy: 'quality' } })
+    const cfg = resolveHiConfig({ routing: { strategy: 'cost' } }, project)
+    assert.equal(cfg.routing.strategy, 'quality')
+  } finally { rmSync(project, { recursive: true, force: true }) }
+})
+
+
+test('project routing constraints narrow but never weaken raw/native Hi constraints', () => {
+  const project = makeProject()
+  try {
+    writeRouting(project, {
+      schema: 1,
+      type: 'hi-routing',
+      routing: { allowedProviders: ['p','q'], deniedModels: ['q/bad'] },
+    })
+    const cfg = resolveHiConfig({ routing: { allowedProviders: ['q','r'], deniedModels: ['p/bad'] } }, project)
+    assert.deepEqual(cfg.routing.allowedProviders, ['q'])
+    assert.deepEqual(new Set(cfg.routing.deniedModels), new Set(['p/bad','q/bad']))
+  } finally { rmSync(project, { recursive: true, force: true }) }
+})

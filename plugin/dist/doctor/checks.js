@@ -1,3 +1,4 @@
+import { automaticContinuationEnabled, adaptiveIdleEvaluatorEnabled } from '../config/execution-policy.js';
 import { inspectProject } from './project-inspection.js';
 import { configuredPluginSpecs, configuredRemoteInstructions, configuredShareMode, configuredSubagentDepth, providerPolicyView } from '../opencode/native-adapter.js';
 import { auditHiToolNamespace } from '../opencode/tool-namespace.js';
@@ -60,7 +61,7 @@ export function runDoctor(config, store, directory, info = {}) {
         { id: 'interrupted-transaction', status: project.interruptedTransaction ? 'fail' : 'pass', detail: project.interruptedTransaction ? 'lifecycle transaction journal present; run recover' : 'none' },
         { id: 'completion-owner', status: 'pass', detail: 'runtime-owned completion, required evidence kinds and freshness enabled' },
         { id: 'user-interrupt-guard', status: 'pass', detail: 'continuation dispatcher rejects stopped/user-interrupted missions; only a new user message can resume' },
-        { id: 'continuation-controller', status: config.executionPolicy === 'adaptive' ? 'pass' : 'warn', detail: `mode=${config.executionPolicy}; event-driven native session events are primary trigger` },
+        { id: 'continuation-controller', status: config.executionPolicy === 'manual' ? 'info' : 'pass', detail: `mode=${config.executionPolicy}; child-wake=${automaticContinuationEnabled(config.executionPolicy) ? 'automatic' : 'manual'}; idle-evaluator=${adaptiveIdleEvaluatorEnabled(config.executionPolicy) ? 'adaptive' : 'disabled'}` },
     ];
     for (const warning of project.warnings)
         checks.push({ id: 'project-warning', status: 'warn', detail: warning });

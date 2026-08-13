@@ -37,6 +37,7 @@ import { acquireHiRuntimeInstance } from './opencode/instance-guard.js';
 import { nativeTool as tool } from './opencode/plugin-tool.js';
 import { PACKAGED_HI_AGENTS } from './generated/agent-config.js';
 import { bindHiOpenCodeAgents } from './opencode/agent-binding.js';
+import { automaticContinuationEnabled, adaptiveIdleEvaluatorEnabled } from './config/execution-policy.js';
 import { existsSync } from 'node:fs';
 import { ProjectAuthorityStore, applyProjectAuthorityPermissions, authorityClassForPatterns } from './runtime/safety/project-authority.js';
 import { dirname, resolve } from 'node:path';
@@ -85,7 +86,7 @@ export const HiPlugin = async (ctx) => {
     let hostConfig = {};
     const capabilities = detectOpenCodeCapabilities(ctx.client);
     const native = new NativeOpenCodeAdapter(ctx.client);
-    const store = new MissionStore(projectRoot, { project: ctx.project, directory: ctx.directory, worktree: ctx.worktree }, () => config.primaryMode, () => ({ mode: config.execution.topology, maxAgents: config.execution.maxAgents, parallelism: config.execution.parallelism, allowMultiRoleAgent: config.execution.allowMultiRoleAgent }));
+    const store = new MissionStore(projectRoot, { project: ctx.project, directory: ctx.directory, worktree: ctx.worktree }, () => config.primaryMode, () => ({ mode: config.execution.topology, maxAgents: config.execution.maxAgents, parallelism: config.execution.parallelism }));
     const background = new BackgroundRegistry();
     const persistence = new RuntimePersistence(projectRoot);
     const restored = persistence.load();
@@ -413,7 +414,7 @@ export const HiPlugin = async (ctx) => {
                     m.stagnation_count = 0;
                     appendLedger(m, 'user.action.required', { worker_id: child.id, payload: { reason: 'permission-failure', detail } });
                 }
-                else if (config.executionPolicy === 'adaptive' && !m.user_interrupted && !siblingPending.length)
+                else if (automaticContinuationEnabled(config.executionPolicy) && !m.user_interrupted && !siblingPending.length)
                     await dispatchContinuation(ctx.client, m, 'Hi child worker failed. Reconcile the failure, preserve completed work, and choose the minimum safe recovery. Do not duplicate completed tasks.', 'child-failed');
                 else if (siblingPending.length)
                     appendLedger(m, 'parent.wake.deferred', { worker_id: child.id, payload: { reason: 'sibling-workers-pending', pending: siblingPending.map(w => w.id).slice(0, 20) } });
@@ -449,7 +450,7 @@ export const HiPlugin = async (ctx) => {
                     background.set(child);
                 store.updateProgress(m);
                 appendLedger(m, 'parent.wake', { worker_id: child.id, payload: { result: result.status } });
-                if (config.executionPolicy === 'adaptive' && !m.user_interrupted && !background.pendingFor(m.session_id).length)
+                if (automaticContinuationEnabled(config.executionPolicy) && !m.user_interrupted && !background.pendingFor(m.session_id).length)
                     await dispatchContinuation(ctx.client, m, 'Hi child result is ready. Reconcile it against current obligations. Prefer same-session corrective resume for NEEDS_CONTEXT/FIX_REQUIRED. Do not create duplicate tasks.', 'child-result-ready');
             }
             catch (e) {
@@ -501,7 +502,7 @@ export const HiPlugin = async (ctx) => {
         if (ev.kind !== 'session-idle')
             return;
         const m = store.get(sid);
-        if (!m || config.executionPolicy !== 'adaptive')
+        if (!m || !adaptiveIdleEvaluatorEnabled(config.executionPolicy))
             return;
         const progressed = store.updateProgress(m, false);
         void eventSink(runtimeSignal('mission.idle', m.mission_id));

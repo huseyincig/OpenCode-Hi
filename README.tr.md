@@ -34,7 +34,7 @@ Helper yalnız Hi-owned registration alanını yönetir ve kullanıcıya ait ilg
 
 Altı eksen birbirinden ayrıdır: **rol, methodology, model/araç, execution depth, context depth, isolation depth**. Yürütme yolları `DIRECT`, `EVIDENCE`, `PLANNED`, `ESCALATED`’dır. Açık ve düşük riskli lokal işte varsayılan yol assess → execute → targeted verify → STOP’tur; gerekli değilse planner, reviewer, memory, broad scan, ikinci model veya child agent kullanılmaz.
 
-Topology adaptive/single-agent/multi-agent modlarını destekler. Açık task override → project policy → Hi adaptive selection → host/provider default önceliği geçerlidir. Host permission denial hiçbir zaman aşılmaz.
+Topology adaptive/single-agent/multi-agent modlarını destekler. Açık task override → project policy → raw/native Hi-compatible input → Hi adaptive selection → host/provider default önceliği geçerlidir. Host permission denial hiçbir zaman aşılmaz.
 
 ## Methodologies ve OpenCode skills
 

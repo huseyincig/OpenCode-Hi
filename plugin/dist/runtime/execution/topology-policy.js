@@ -1,16 +1,18 @@
 import { resolveExecutionMode } from '../routing/execution-mode.js';
-export const DEFAULT_TOPOLOGY_POLICY = { mode: 'adaptive', maxAgents: 4, parallelism: 2, allowMultiRoleAgent: true };
+export const DEFAULT_TOPOLOGY_POLICY = { mode: 'adaptive', maxAgents: 4, parallelism: 2 };
 export function decideTopology(intent, config = DEFAULT_TOPOLOGY_POLICY, m) {
     if (m?.execution_mode === 'team')
-        return { mode: 'multi-agent', executionMode: 'team', agentCount: Math.max(2, m.topology?.agentCount ?? 2), parallelism: Math.max(1, m.topology?.parallelism ?? 2), roleReuse: false, reason: ['existing bounded Team Mode remains authoritative'] };
+        return { mode: 'multi-agent', executionMode: 'team', agentCount: Math.max(2, m.topology?.agentCount ?? 2), parallelism: Math.max(1, m.topology?.parallelism ?? 2), reason: ['existing bounded Team Mode remains authoritative'] };
+    if (config.maxAgents <= 1)
+        return { mode: 'single-agent', executionMode: 'single', agentCount: 1, parallelism: 1, reason: ['maxAgents=1 is an executable topology ceiling'] };
     if (config.mode === 'single-agent')
-        return { mode: 'single-agent', executionMode: 'single', agentCount: 1, parallelism: 1, roleReuse: true, reason: ['explicit user/project single-agent override'] };
+        return { mode: 'single-agent', executionMode: 'single', agentCount: 1, parallelism: 1, reason: ['explicit user/project single-agent override'] };
     if (config.mode === 'multi-agent')
-        return { mode: 'multi-agent', executionMode: 'parallel', agentCount: Math.max(2, Math.min(config.maxAgents, 2)), parallelism: Math.max(1, Math.min(config.parallelism, 2)), roleReuse: false, reason: ['explicit user/project multi-agent override'] };
+        return { mode: 'multi-agent', executionMode: 'parallel', agentCount: Math.max(2, Math.min(config.maxAgents, 2)), parallelism: Math.max(1, Math.min(config.parallelism, 2)), reason: ['explicit user/project multi-agent override'] };
     const base = resolveExecutionMode(intent);
     const benefit = base.mode === 'parallel';
     if (!benefit)
-        return { mode: 'single-agent', executionMode: 'single', agentCount: 1, parallelism: 1, roleReuse: config.allowMultiRoleAgent, reason: ['adaptive policy found no material fan-out benefit', ...base.reason] };
+        return { mode: 'single-agent', executionMode: 'single', agentCount: 1, parallelism: 1, reason: ['adaptive policy found no material fan-out benefit', ...base.reason] };
     const count = Math.max(2, Math.min(config.maxAgents, intent.scope === 'multi-stream' ? 3 : 2));
-    return { mode: 'multi-agent', executionMode: 'parallel', agentCount: count, parallelism: Math.min(count, Math.max(1, config.parallelism)), roleReuse: false, reason: ['independent work/review streams justify bounded fan-out', ...base.reason] };
+    return { mode: 'multi-agent', executionMode: 'parallel', agentCount: count, parallelism: Math.min(count, Math.max(1, config.parallelism)), reason: ['independent work/review streams justify bounded fan-out', ...base.reason] };
 }

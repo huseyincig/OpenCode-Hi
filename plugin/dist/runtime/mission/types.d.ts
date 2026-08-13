@@ -300,7 +300,6 @@ export interface MissionState {
         mode: 'single-agent' | 'multi-agent';
         agentCount: number;
         parallelism: number;
-        roleReuse: boolean;
         reason: string[];
     };
     generation: number;

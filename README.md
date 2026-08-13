@@ -26,8 +26,9 @@ OpenCode-Hi supports bounded adaptive policy with explicit override precedence:
 
 1. task/user override
 2. project policy
-3. OpenCode-Hi adaptive selection
-4. host/provider default
+3. raw/native Hi-compatible input
+4. OpenCode-Hi adaptive selection
+5. host/provider default
 
 Execution topology may remain adaptive, be constrained to one agent, or explicitly permit multi-agent execution. Model selection may remain adaptive, fixed, or role-mapped. Capability availability never implies activation.
 

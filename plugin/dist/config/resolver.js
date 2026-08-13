@@ -67,19 +67,23 @@ export function resolveHiConfigWithReport(raw, projectRoot) {
     const projectRV = fromProject?.routing?.roleVariants ?? {};
     const projectCM = fromProject?.routing?.categoryModels ?? {};
     const projectCV = fromProject?.routing?.categoryVariants ?? {};
-    const projectAllowed = fromProject?.routing?.allowedProviders;
-    const projectDenied = fromProject?.routing?.deniedModels;
+    const rawAllowed = modelList(routing.allowedProviders);
+    const rawDenied = modelList(routing.deniedModels);
+    const projectAllowed = modelList(fromProject?.routing?.allowedProviders);
+    const projectDenied = modelList(fromProject?.routing?.deniedModels);
+    const allowedProviders = rawAllowed.length && projectAllowed.length ? rawAllowed.filter(x => projectAllowed.includes(x)) : projectAllowed.length ? projectAllowed : rawAllowed;
+    const deniedModels = [...new Set([...rawDenied, ...projectDenied])];
     const rawStrategy = routing.strategy;
     const projectStrategy = fromProject?.routing?.strategy;
-    const strategy = (rawStrategy === 'quality' || rawStrategy === 'cost') ? rawStrategy : (projectStrategy === 'quality' || projectStrategy === 'cost') ? projectStrategy : 'cost-quality';
+    const strategy = (projectStrategy === 'quality' || projectStrategy === 'cost') ? projectStrategy : (rawStrategy === 'quality' || rawStrategy === 'cost') ? rawStrategy : 'cost-quality';
     const config = {
         schemaVersion: HI_CONFIG_SCHEMA,
         executionPolicy: executionPolicy(fromProject?.executionPolicy) ?? executionPolicy(input.executionPolicy) ?? 'adaptive',
         primaryMode: ['auto', 'working-manager', 'manager'].includes(fromProject?.primaryMode) ? fromProject.primaryMode : (['auto', 'working-manager', 'manager'].includes(input.primaryMode) ? input.primaryMode : 'auto'),
         compatibility: { mode: compatibility.mode === 'strict' ? 'strict' : 'compatible', validatedOpenCodeVersions: modelList(compatibility.validatedOpenCodeVersions) },
-        execution: { topology: ['single-agent', 'multi-agent'].includes(String(execution.topology)) ? execution.topology : 'adaptive', maxAgents: bounded(execution.maxAgents, DEFAULT_HI_CONFIG.execution.maxAgents, 1, 8), parallelism: bounded(execution.parallelism, DEFAULT_HI_CONFIG.execution.parallelism, 1, 8), allowMultiRoleAgent: execution.allowMultiRoleAgent !== false },
+        execution: { topology: ['single-agent', 'multi-agent'].includes(String(execution.topology)) ? execution.topology : 'adaptive', maxAgents: bounded(execution.maxAgents, DEFAULT_HI_CONFIG.execution.maxAgents, 1, 8), parallelism: bounded(execution.parallelism, DEFAULT_HI_CONFIG.execution.parallelism, 1, 8) },
         models: { mode: ['fixed', 'role-mapped'].includes(String(modelsCfg.mode)) ? modelsCfg.mode : 'adaptive', default: typeof modelsCfg.default === 'string' && modelsCfg.default.trim() ? modelsCfg.default.trim() : 'auto', roles: isRecord(modelsCfg.roles) ? Object.fromEntries(Object.entries(modelsCfg.roles).filter(([, v]) => typeof v === 'string' && v.trim()).map(([k, v]) => [k, String(v).trim()])) : {} },
-        routing: { strategy, categoryModels: { ...categoryModels(routing.categoryModels), ...categoryModels(projectCM) }, categoryVariants: { ...categoryModels(routing.categoryVariants), ...categoryModels(projectCV) }, roleModels: { ...roleModels(routing.roleModels), ...roleModels(projectRM) }, roleVariants: { ...roleVariants(routing.roleVariants), ...roleVariants(projectRV) }, maxFallbacks: bounded(projectRouting.maxFallbacks ?? routing.maxFallbacks, DEFAULT_HI_CONFIG.routing.maxFallbacks, 0, 6), allowedProviders: projectAllowed && projectAllowed.length ? projectAllowed : modelList(routing.allowedProviders), deniedModels: projectDenied && projectDenied.length ? projectDenied : modelList(routing.deniedModels) },
+        routing: { strategy, categoryModels: { ...categoryModels(routing.categoryModels), ...categoryModels(projectCM) }, categoryVariants: { ...categoryModels(routing.categoryVariants), ...categoryModels(projectCV) }, roleModels: { ...roleModels(routing.roleModels), ...roleModels(projectRM) }, roleVariants: { ...roleVariants(routing.roleVariants), ...roleVariants(projectRV) }, maxFallbacks: bounded(projectRouting.maxFallbacks ?? routing.maxFallbacks, DEFAULT_HI_CONFIG.routing.maxFallbacks, 0, 6), allowedProviders, deniedModels },
         parallel: { enabled: parallel.enabled !== false, max: bounded(parallel.max, DEFAULT_HI_CONFIG.parallel.max, 1, 8), providers: limits(parallel.providers), models: limits(parallel.models) },
         teamMode: { enabled: teamMode.enabled === true, maxMembers: bounded(teamMode.maxMembers, 4, 2, 8), maxMessages: bounded(teamMode.maxMessages, 24, 1, 100), maxTurns: bounded(teamMode.maxTurns, 12, 1, 50), maxWallMinutes: bounded(teamMode.maxWallMinutes, 45, 1, 240) },
         profile: profileBlock(fromProject?.profile) ?? profileBlock(input.profile) ?? DEFAULT_HI_CONFIG.profile,

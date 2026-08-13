@@ -27,7 +27,7 @@ export interface HiConfig {
     allowedProviders: string[]
     deniedModels: string[]
   }
-  execution: { topology: TopologyMode; maxAgents: number; parallelism: number; allowMultiRoleAgent: boolean }
+  execution: { topology: TopologyMode; maxAgents: number; parallelism: number }
   models: { mode: ModelSelectionMode; default: string; roles: Record<string,string> }
   parallel: { enabled: boolean; max: number; providers: Record<string,number>; models: Record<string,number> }
   teamMode: { enabled: boolean; maxMembers: number; maxMessages: number; maxTurns: number; maxWallMinutes: number }
