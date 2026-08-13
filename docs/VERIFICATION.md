@@ -2,7 +2,7 @@
 
 Verification is risk-proportional and evidence-aware. Low risk uses targeted checks; medium risk adds dependency-aware verification; high risk adds broader integration/review only when materially justified. Verification stops when sufficient evidence-based confidence exists and does not spiral toward maximum possible certainty.
 
-Current local acceptance includes adaptive execution/topology, mission completion/continuation regressions, context protection, Project Intelligence freshness, TypeScript semantic reduction, privacy redaction, knowledge assimilation, human decision routing, materially different retry, process lifecycle, standard Git worktree isolation, safe skill resources, host capability semantics, and telemetry metrics.
+Current local acceptance covers adaptive execution/topology, mission completion/continuation, context protection, file-scoped Project Intelligence, operational TypeScript Semantic Context, privacy redaction, structured human-decision/authority gates, materially different retry, shell-policy enforcement, host capability truthfulness, safe methodology resources, and telemetry metrics. Native process-control and workspace-isolation execution are not claimed where the OpenCode adapter lacks equivalent primitives.
 
 
 ## Current 0.1.0 receipts

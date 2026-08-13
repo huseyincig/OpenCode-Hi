@@ -6,6 +6,8 @@ import { assertSafeGitMutation, invalidateStagingProof, invalidateGitTopologyPro
 import { assertReleaseChainPrecondition, isPackagePublish, isReleaseCreate } from '../runtime/safety/release-chain.js';
 import { activateMethodologySignal } from '../runtime/methodology/activation.js';
 import { assertChildMethodologyLoad, assertParentMethodologyLoad, requestedMethodologyName } from '../runtime/methodology/native-loading.js';
+import { evaluateShellCommand } from '../runtime/process/shell-policy.js';
+import { appendLedger } from '../runtime/ledger/ledger.js';
 export function createToolBeforeHook(store, background, projectRoot) {
     return async (input, output) => {
         const sid = input?.sessionID ?? input?.sessionId, child = sid && background ? background.list().find(w => w.session_id === sid) : undefined, m = child ? store.get(child.parent_session_id) : store.get(sid);
@@ -27,6 +29,22 @@ export function createToolBeforeHook(store, background, projectRoot) {
                 assertChildMethodologyLoad(m.workers.find(worker => worker.id === child.id), name);
             else if (name)
                 assertParentMethodologyLoad(m, name, projectRoot);
+        }
+        if (tool === 'bash' && typeof args?.command === 'string') {
+            const shell = evaluateShellCommand(args.command);
+            if (shell.decision === 'DENY')
+                throw new Error(`Hi shell policy: ${shell.reason}`);
+            if (shell.decision === 'USER_ACTION_REQUIRED') {
+                m.status = 'waiting-user';
+                appendLedger(m, 'user.action.required', { worker_id: child?.id, payload: { kind: 'interactive-shell', reason: shell.reason } });
+                throw new Error(`Hi shell policy: ${shell.reason}`);
+            }
+            if (shell.decision === 'REWRITE') {
+                args.command = shell.command;
+                if (output?.args)
+                    output.args.command = shell.command;
+                appendLedger(m, 'shell.command.rewritten', { worker_id: child?.id, payload: { reason: shell.reason } });
+            }
         }
         if (tool === 'bash' && typeof args?.command === 'string') {
             assertSafeGitMutation(m, args.command);

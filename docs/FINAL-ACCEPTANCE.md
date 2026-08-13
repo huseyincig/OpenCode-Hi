@@ -4,15 +4,15 @@ This document binds the current acceptance state for OpenCode-Hi 0.1.0. It disti
 
 ## Status
 
-**HOST ACCEPTED CURRENT WORKTREE — RELEASE BLOCKED UNTIL EXACT-CANDIDATE BINDING AND REMAINING EXTERNAL GATES**
+**LOCAL SOURCE/TEST ACCEPTED — EXACT-CANDIDATE REAL-HOST REBIND AND REMAINING EXTERNAL GATES PENDING**
 
 There are zero known blocking internal findings after the current repository-wide architecture, security, storage, identity, runtime, packaging, and documentation audit.
 
-Real OpenCode 1.18.16 host acceptance has now been executed against the current worktree. These observations are valid host evidence, but the host-tested fixes are not yet bound to a new user-created Git commit/ref. Release readiness therefore remains false.
+Historical/current-worktree OpenCode host receipts are source-bound evidence only. Subsequent source changes require exact-candidate host revalidation before release readiness can be claimed.
 
 ## Current regression gates
 
-- TypeScript build and complete Node runtime/acceptance suite: **388/388 PASS**.
+- TypeScript build and complete Node runtime/acceptance suite: **457/457 PASS** at the latest controlled run.
 - Python validation suite: **47/47 PASS**.
 - Source validator: **PASS**.
 - Nine deterministic execution-policy benchmark scenarios: **9/9 PASS**.
@@ -20,11 +20,11 @@ Real OpenCode 1.18.16 host acceptance has now been executed against the current 
 - Terminology and naming gate: **PASS**.
 - Filesystem hygiene and ownership-aware lifecycle: **PASS**.
 - Capability-driven storage ownership: **PASS**.
-- 29/29 skill artifact/ownership audit: **PASS**.
+- 27-methodology artifact/ownership audit: **PASS**.
 - Context Governor / Project Intelligence / Semantic Context: **PASS_LOCAL**.
 - Privacy Boundary and synthetic-secret leak protections: **PASS_LOCAL**.
 - Authority, evidence freshness, deterministic Completion/STOP: **PASS_LOCAL + PASS_HOST_CURRENT_WORKTREE**.
-- Process Governor / worktree isolation / non-interactive shell safety: **PASS_LOCAL**.
+- Non-interactive shell safety: **PASS_LOCAL**. Native process-control is **DEGRADED** and workspace-isolation execution is **UNSUPPORTED** on the current OpenCode adapter; Hi does not fake these capabilities.
 - Source reuse/license matrix and attribution review: **PASS_LOCAL**.
 
 ## Real OpenCode host acceptance

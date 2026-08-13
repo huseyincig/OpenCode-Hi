@@ -52,7 +52,7 @@ Natural-language user meaning is handled by the host primary model and submitted
 
 Filesystem hygiene is enforced: durable project-local Hi data is confined to `.opencode/hi/`, OpenCode-native capability directories remain OpenCode-owned, package installation does not unpack Hi source into consumer repository roots, and transient lifecycle journals use OS temporary/runtime locations. Uninstall removes the Hi plugin registration and setup-owned policy/provenance surfaces while preserving durable Project Intelligence, retained artifacts, project-created OpenCode skills, unrelated `.opencode` content, and unrelated project files/configuration. Mission-survival state is project-keyed but stored in the OS/OpenCode state area because it is runtime data with restart-survival requirements, not durable project knowledge.
 
-Mission budgets bound turns/model/tool/delegation/context/planning/verification/review dimensions. Failure classes and materially-different retry prevent generic retry loops. The Process Governor tracks long-running process lifecycle and cleanup. Adaptive isolation can remain in the current workspace or use a standard Git worktree when justified. Shell policy prefers safe non-interactive execution and does not fake OAuth/credential approval.
+Mission budgets bound turns/model/tool/delegation/context/planning/verification/review dimensions. Failure classes and materially-different retry prevent generic retry loops. OpenCode process lifecycle is currently degraded and alternate-workspace child execution is unsupported, so Hi does not fake either capability. Shell policy remains operational and non-interactive.
 
 ## Memory
 
@@ -76,7 +76,7 @@ Local release engineering produces deterministic source/distributable ZIPs, rele
 
 ## Remaining gaps
 
-There are no known blocking internal source findings in the current architecture audit. Release readiness is still blocked by external evidence: exact OpenCode-Hi Git-ref native plugin loading, native child-session/provider/model/permission runtime verification, Windows runtime smoke, and external clean-consumer/supply-chain installation verification. Optional remote memory, additional semantic-language adapters, remote telemetry, external sandbox backends, full alternate-host adapters, MCP gateway expansion, and per-model methodology rendering are deferred and do not block the coherent 0.1.0 core.
+There are no known blocking internal source findings in the current architecture audit. Release readiness still depends on exact-candidate external evidence. Optional remote memory, additional semantic-language adapters, remote telemetry, native process-control/workspace-isolation support, external sandbox backends, alternate-host adapters, MCP expansion, and per-model methodology rendering remain deferred; unsupported host capabilities are reported instead of faked.
 
 
 ## Storage Ownership

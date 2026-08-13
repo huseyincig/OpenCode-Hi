@@ -1,10 +1,10 @@
 # OpenCode-Hi Architecture
 
-OpenCode-Hi is a thin execution-control plane over OpenCode native runtime primitives. It preserves the proven mission/evidence/authority/completion semantics of the v58 baseline while adding adaptive execution, bounded context intelligence, privacy, process/isolation policy, human decision routing, and a host semantic boundary.
+OpenCode-Hi is a thin execution-control plane over OpenCode native runtime primitives. It preserves mission/evidence/authority/completion semantics while adding adaptive execution, bounded context intelligence, privacy, structured human-decision semantics, shell safety, and a host semantic boundary.
 
 ## Ownership
 
-Hi owns mission interpretation, obligations, task/worker state, execution path, role/skill/topology/model/tool policy, context and isolation policy, evidence requirements/freshness, bounded retry/recovery, continuation, human-decision routing, completion adjudication, and STOP.
+Hi owns mission interpretation, obligations, task/worker state, execution path, role/methodology/topology/model/tool policy, context policy, evidence requirements/freshness, bounded retry/recovery, continuation, structured human-decision state, completion adjudication, and STOP. Unsupported host process-control or workspace-isolation capabilities are reported rather than faked.
 
 OpenCode owns native sessions, child sessions, agent/model/provider execution, permissions/approvals, tools, filesystem and shell primitives, events, diffs, and compaction primitives. Skills own methodology only.
 
@@ -21,7 +21,7 @@ OpenCode owns native sessions, child sessions, agent/model/provider execution, p
 - Context Governor, Project Intelligence, Semantic Context, Privacy Boundary
 - Human Decision semantics
 - Mission Budget and Failure Classification
-- Process Governor and Isolation Policy
+- Shell safety and host process/isolation capability boundary
 - Artifact model and optional Memory boundary
 - Execution telemetry
 - Host capability contract and OpenCode adapter
