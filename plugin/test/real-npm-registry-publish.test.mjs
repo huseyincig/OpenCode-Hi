@@ -13,8 +13,11 @@ import {createToolAfterHook} from '../dist/hooks/tool-after.js'
 import {requireAuthority,approvePendingAuthority} from '../dist/runtime/safety/authority.js'
 import {assertReleaseChainPrecondition,recordRemoteReleaseVerification} from '../dist/runtime/safety/release-chain.js'
 
-const NPM=process.platform==='win32'?'npm.cmd':'npm'
 function run(cmd,args,{cwd,env}={}){return new Promise((resolveRun,reject)=>{const p=spawn(cmd,args,{cwd,env:{...process.env,...env}});let stdout='',stderr='';p.stdout.on('data',d=>stdout+=d);p.stderr.on('data',d=>stderr+=d);p.on('error',reject);p.on('close',code=>resolveRun({code,stdout,stderr}))})}
+function runNpm(args,opts){
+  const npmExec=process.env.npm_execpath
+  return npmExec?run(process.execPath,[npmExec,...args],opts):run(process.platform==='win32'?'npm.cmd':'npm',args,opts)
+}
 
 async function registry(){
   let published
@@ -42,7 +45,7 @@ test('real npm registry publish/view round-trip is bound to Hi pack proof, autho
   const cfg=mkdtempSync(join(tmpdir(),'hi-npmrc-'));t.after(()=>rmSync(cfg,{recursive:true,force:true}))
   const npmrc=join(cfg,'.npmrc');writeFileSync(npmrc,`registry=${reg.url}\n//${new URL(reg.url).host}/:_authToken=hi-local-test\n`)
   const env={NPM_CONFIG_USERCONFIG:npmrc,NPM_CONFIG_CACHE:join(cfg,'cache')}
-  const pack=await run(NPM,['pack','--dry-run','--json','--ignore-scripts'],{cwd:root,env});assert.equal(pack.code,0,pack.stderr)
+  const pack=await runNpm(['pack','--dry-run','--json','--ignore-scripts'],{cwd:root,env});assert.equal(pack.code,0,pack.stderr)
   const packJson=JSON.parse(pack.stdout);assert.equal(packJson[0].name,'opencode-hi');assert.equal(packJson[0].version,'0.1.0');assert.ok(packJson[0].integrity);assert.ok(packJson[0].shasum)
 
   const store=new MissionStore(root),m=startAssessedMission(store,'real-npm','publish package',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',requested_external_actions:['package-publish']});recordRemoteReleaseVerification(m,'npm pack --dry-run --json',{stdout:pack.stdout,metadata:{exit:0}},root)
@@ -50,12 +53,12 @@ test('real npm registry publish/view round-trip is bound to Hi pack proof, autho
   try{requireAuthority(m,'npm publish',root)}catch{};assert.equal(approvePendingAuthority(m,'approve'),true)
   const before=createToolBeforeHook(store),after=createToolAfterHook(store)
   await before({sessionID:'real-npm',tool:'bash',args:{command:'npm publish',cwd:root}},{args:{command:'npm publish',cwd:root}})
-  const pub=await run(NPM,['publish','--ignore-scripts','--access','public'],{cwd:root,env});assert.equal(pub.code,0,pub.stderr)
+  const pub=await runNpm(['publish','--ignore-scripts','--access','public'],{cwd:root,env});assert.equal(pub.code,0,pub.stderr)
   await after({sessionID:'real-npm',tool:'bash',args:{command:'npm publish',cwd:root}},{title:'publish',output:pub.stdout+pub.stderr,metadata:{exit:0}})
   assert.equal(m.release_chain?.package?.outcome,'success');assert.equal(m.release_chain?.package?.remote_verified,false)
 
   const uploaded=reg.get();assert.equal(uploaded?.versions?.['0.1.0']?.dist?.integrity,packJson[0].integrity);assert.equal(uploaded?.versions?.['0.1.0']?.dist?.shasum,packJson[0].shasum)
-  const view=await run(NPM,['view','opencode-hi@0.1.0','--json'],{cwd:root,env});assert.equal(view.code,0,view.stderr)
+  const view=await runNpm(['view','opencode-hi@0.1.0','--json'],{cwd:root,env});assert.equal(view.code,0,view.stderr)
   const seen=JSON.parse(view.stdout);assert.equal(seen.version,'0.1.0');assert.equal(seen.dist.integrity,packJson[0].integrity);assert.equal(seen.dist.shasum,packJson[0].shasum)
   recordRemoteReleaseVerification(m,'npm view opencode-hi@0.1.0 --json',{stdout:view.stdout,metadata:{exit:0}},root)
   assert.equal(m.release_chain?.package?.remote_verified,true)
