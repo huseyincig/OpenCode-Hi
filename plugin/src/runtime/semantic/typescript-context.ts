@@ -2,11 +2,10 @@ import { createHash } from 'node:crypto'
 import { existsSync,readFileSync,statSync } from 'node:fs'
 import { relative,resolve,sep } from 'node:path'
 import { semanticContextId,type SemanticContextContract,type SemanticContextSymbol } from '../../contracts/semantic-context.js'
-
-export interface SemanticContextResult { symbols:SemanticContextSymbol[]; text:string; sourceChars:number; contextChars:number }
+import type { SemanticContextAdapter,SemanticContextAdapterInput,SemanticContextResult } from './adapter.js'
 const DECL=/(?:^|\n)\s*(?:export\s+)?(?:declare\s+)?(interface|type|class|function|enum)\s+([A-Za-z_$][\w$]*)[^\n{=]*(?:=\s*[^\n;]+;?|\{)?/g
 
-export function extractTypeScriptSemanticContext(source:string,names:string[]=[],maxChars=5000):SemanticContextResult{
+function extractTypeScript(source:string,names:string[]=[],maxChars=5000):SemanticContextResult{
   const wanted=new Set(names),symbols:SemanticContextSymbol[]=[]
   let used=0
   for(const match of source.matchAll(DECL)){
@@ -32,15 +31,26 @@ export function extractTypeScriptSemanticContext(source:string,names:string[]=[]
   return{symbols,text,sourceChars:source.length,contextChars:text.length}
 }
 
-export function typescriptSemanticContextsForTargets(projectRoot:string,targets:string[],consumerTaskRef:string,maxChars=3000):SemanticContextContract[]{
+export class TypeScriptSemanticContextAdapter implements SemanticContextAdapter{
+  languageIds():string[]{return['typescript','typescriptreact']}
+  supports(file:string):boolean{return/\.tsx?$/i.test(file)}
+  extract(input:SemanticContextAdapterInput):SemanticContextResult{return extractTypeScript(input.source,input.names??[],input.maxChars)}
+}
+
+export const TYPE_SCRIPT_SEMANTIC_CONTEXT_ADAPTER=new TypeScriptSemanticContextAdapter()
+export const SEMANTIC_CONTEXT_ADAPTERS:readonly SemanticContextAdapter[]=[TYPE_SCRIPT_SEMANTIC_CONTEXT_ADAPTER]
+export function extractTypeScriptSemanticContext(source:string,names:string[]=[],maxChars=5000):SemanticContextResult{return TYPE_SCRIPT_SEMANTIC_CONTEXT_ADAPTER.extract({source,file:'inline.ts',names,maxChars})}
+
+export function semanticContextsForTargets(projectRoot:string,targets:string[],consumerTaskRef:string,maxChars=3000,adapters:readonly SemanticContextAdapter[]=SEMANTIC_CONTEXT_ADAPTERS):SemanticContextContract[]{
   const root=resolve(projectRoot),out:SemanticContextContract[]=[];let used=0
   for(const target of [...new Set(targets)].slice(0,6)){
-    if(!/\.tsx?$/i.test(target))continue
+    const adapter=adapters.find(candidate=>candidate.supports(target));if(!adapter)continue
     const full=resolve(root,target);if(full!==root&&!full.startsWith(root+sep))continue
     try{
       if(!existsSync(full)||!statSync(full).isFile()||statSync(full).size>524288)continue
       const source=readFileSync(full,'utf8'),left=Math.max(0,maxChars-used);if(left<128)break
-      const maxText=Math.min(1400,Math.max(0,left-96)),r=extractTypeScriptSemanticContext(source,[],maxText);if(!r.text)continue
+      const maxText=Math.min(1400,Math.max(0,left-96)),r=adapter.extract({source,file:target,names:[],maxChars:maxText});if(!r.text)continue
+      const languageIds=adapter.languageIds();if(!languageIds.includes('typescript')&&!languageIds.includes('typescriptreact'))continue
       const rel=relative(root,full).replace(/\\/g,'/'),source_ref=`file:${rel}`,source_hash=createHash('sha256').update(source).digest('hex'),selected_ranges=r.symbols.map(s=>({start:s.start,end:s.end}))
       const contract:SemanticContextContract={id:semanticContextId({consumer_task_ref:consumerTaskRef,source_ref,source_hash,selected_ranges}),source_ref,source_hash,language_adapter:'typescript',symbols:r.symbols,relationships:[],selected_ranges,consumer_task_ref:consumerTaskRef,budget:{max_chars:maxText,used_chars:r.text.length},created_at:Date.now(),text:r.text}
       out.push(contract);used+=renderSemanticContext(contract).length
@@ -48,5 +58,7 @@ export function typescriptSemanticContextsForTargets(projectRoot:string,targets:
   }
   return out
 }
+
+export function typescriptSemanticContextsForTargets(projectRoot:string,targets:string[],consumerTaskRef:string,maxChars=3000):SemanticContextContract[]{return semanticContextsForTargets(projectRoot,targets,consumerTaskRef,maxChars,[TYPE_SCRIPT_SEMANTIC_CONTEXT_ADAPTER])}
 
 export function renderSemanticContext(contract:SemanticContextContract):string{return`semantic-typescript:${contract.source_ref.slice('file:'.length)}\n${contract.text}`}
