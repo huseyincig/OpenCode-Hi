@@ -1,7 +1,8 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {existsSync,mkdtempSync,rmSync} from 'node:fs'
-import {join} from 'node:path'
+import {join,dirname} from 'node:path'
+import {fileURLToPath} from 'node:url'
 import {tmpdir} from 'node:os'
 import {openCodeHostCapabilityContracts,hostCapabilityByID} from '../dist/contracts/host-capability.js'
 import {detectOpenCodeCapabilities} from '../dist/opencode/capabilities.js'
@@ -34,10 +35,10 @@ test('prompt and worker capabilities fail closed when required native ownership 
 })
 
 test('every host capability contract points at a real controlled acceptance source',()=>{
-  const root=join(process.cwd(),'..')
+  const testDir=dirname(fileURLToPath(import.meta.url))
   for(const item of openCodeHostCapabilityContracts(all)){
     assert.ok(item.acceptance_ref,`${item.id}: acceptance_ref missing`)
-    assert.ok(existsSync(join(root,'plugin','test',item.acceptance_ref)),`${item.id}: missing ${item.acceptance_ref}`)
+    assert.ok(existsSync(join(testDir,item.acceptance_ref)),`${item.id}: missing ${item.acceptance_ref}`)
     if(item.status==='UNSUPPORTED'){
       assert.equal(item.native_primitive,undefined,`${item.id}: unsupported capability carries native primitive`)
       assert.equal(item.adapter_entrypoint,undefined,`${item.id}: unsupported capability carries adapter entrypoint`)
