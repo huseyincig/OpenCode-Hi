@@ -133,13 +133,14 @@ test('assistant passage without user keyword does NOT trigger approval', async (
 })
 
 test('createSystemTransformHook co-exists with chat-message hook (no regression)', async () => {
-  // Sanity: the system transform hook still injects scope + execution mode.
+  // Sanity: the system transform hook emits stable policy + bounded runtime projection.
   const store = new MissionStore()
   const bg = new BackgroundRegistry()
   startAssessedMission(store,'s1','opaque multi-stream',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation']})
   const sysHook = createSystemTransformHook(store, bg)
   const sysOut = { system: [] }
   await sysHook({ sessionID: 's1' }, sysOut)
-  assert.match(sysOut.system[0], /Scope: multi-stream/)
-  assert.match(sysOut.system[0], /Execution mode: parallel/)
+  assert.equal(sysOut.system.length,1)
+  assert.match(sysOut.system[0], /Hi MISSION RUNTIME PROJECTION/)
+  assert.match(sysOut.system[0], /Objective: opaque multi-stream/)
 })

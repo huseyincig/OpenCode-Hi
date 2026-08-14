@@ -42,6 +42,26 @@ def parse_frontmatter(text:str):
     return root,body
 
 
+
+def stable_control_policy(contract:dict,permission:dict)->str:
+    if contract['role_class']=='primary':
+        return (
+            '## Hi Stable Control Policy\n\n'
+            'Hi owns Mission decomposition, TaskRuntime dispatch, model routing, continuation, completion and STOP. '
+            'Use only the Hi task/team control plane for delegation; methodologies provide engineering method and never own orchestration or authority.\n\n'
+            'OpenCode session, permission, tool, provider and other host primitives remain host mechanisms behind Hi boundaries. '
+            'Never perform unrequested external effects. Required independent review must come from a bounded reviewer worker; parent self-review is not independent evidence. '
+            'Do not claim completion while obligations, blockers, authority gates or required fresh verification remain open.\n\n'
+        )
+    mutation='write-capable' if permission.get('edit')=='allow' else 'read-only'
+    return (
+        '## Hi Stable Worker Policy\n\n'
+        f'This is a {mutation} bounded Hi worker projection. Execute the assigned Task; do not become the top-level orchestrator or spawn/coordinate additional agents. '
+        'Hi owns TaskRuntime, model routing, continuation, authority and STOP.\n\n'
+        'Load only methodologies selected by the current Hi runtime projection through the OpenCode native skill primitive. '
+        'Preserve user-owned pre-existing changes, stay within assigned scope, return the structured WorkerResult, and never perform unrequested external effects.\n\n'
+    )
+
 def main():
     generate_permissions()
     generate_roles()
@@ -71,7 +91,7 @@ def main():
         fm['description']=contract['purpose']
         fm['mode']='primary' if contract['role_class']=='primary' else 'subagent'
         role_contract='## Role Contract\n\nPurpose: '+contract['purpose']+'\n\nUse when:\n'+'\n'.join('- '+x for x in contract['use_when'])+'\n\nDo not use when:\n'+'\n'.join('- '+x for x in contract['do_not_use_when'])+'\n\n'
-        fm['prompt']=role_contract+body
+        fm['prompt']=role_contract+stable_control_policy(contract,permission)+body
         agents[path.stem]=fm
     OUT.parent.mkdir(parents=True,exist_ok=True)
     payload=json.dumps(agents,ensure_ascii=False,sort_keys=True,separators=(',',':'))

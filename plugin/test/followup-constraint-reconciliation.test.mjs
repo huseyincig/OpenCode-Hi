@@ -63,6 +63,6 @@ test('parent system contract exposes semantic gate while pending and structured 
   assert.match(pending.system[0],/SEMANTIC ASSESSMENT GATE/)
   store.applyFollowupSemanticAssessment('direct-constraint',{material:true,message_kind:'constraint',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]})
   const output={system:[]};await createSystemTransformHook(store,background)({sessionID:'direct-constraint'},output)
-  assert.match(output.system[0],/Current user constraints: opaque constraint/)
+  assert.match(output.system.join('\n'),/constraints: opaque constraint/)
   assert.equal(m.execution.tasks.length,0)
 })

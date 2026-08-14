@@ -14,7 +14,7 @@ function makeWorker(loadedSkills = []) {
   }
 }
 
-test('system-transform injects planning directive when hi-architecture-decisions methodology is selected', async () => {
+test('system-transform projects selected architecture methodology without duplicating methodology body', async () => {
   const store = new MissionStore()
   const bg = new BackgroundRegistry()
   startAssessedMission(store,'s1','opaque multi-stream architecture task',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['design-exploration','multi-stream-delegation'],intent_signals:['intent.architecture-decision']})
@@ -26,15 +26,13 @@ test('system-transform injects planning directive when hi-architecture-decisions
   await hook({ sessionID: 'w1_session' }, output)
   assert.equal(output.system.length, 1)
   const text = output.system[0]
-  assert.match(text, /Architecture decision methodology active/)
-  assert.match(text, /durable context\/decision\/alternatives\/consequences/)
+  assert.match(text, /Active methodologies: hi-architecture-decisions/)
+  assert.doesNotMatch(text, /durable context\/decision\/alternatives\/consequences/)
   assert.doesNotMatch(text, /superpowers/i)
-  assert.match(text, /Scope: multi-stream/)
-  assert.match(text, /Execution mode: parallel/)
-  assert.match(text, /structured multi-stream scope proves independent workstreams/)
+  assert.match(text, /Current task\/worker: task=t1:/)
 })
 
-test('system-transform omits planning directive when hi-architecture-decisions is not loaded', async () => {
+test('system-transform omits unselected architecture methodology from runtime projection', async () => {
   const store = new MissionStore()
   const bg = new BackgroundRegistry()
   startAssessedMission(store,'s1','opaque local task')
@@ -44,20 +42,21 @@ test('system-transform omits planning directive when hi-architecture-decisions i
   const hook = createSystemTransformHook(store, bg)
   const output = { system: [] }
   await hook({ sessionID: 'w1_session' }, output)
-  const text = output.system[0]
-  assert.doesNotMatch(text, /Architecture decision methodology active/)
+  const text = output.system.join('\n')
+  assert.doesNotMatch(text, /Active methodologies: hi-architecture-decisions/)
   assert.doesNotMatch(text, /superpowers/i)
 })
 
-test('system-transform injects scope and execution mode reason (parent session)', async () => {
+test('system-transform injects stable policy plus bounded parent runtime projection', async () => {
   const store = new MissionStore()
   startAssessedMission(store,'s1','opaque local task')
   const hook = createSystemTransformHook(store)
   const output = { system: [] }
   await hook({ sessionID: 's1' }, output)
-  const text = output.system[0]
-  assert.match(text, /Scope: local/)
-  assert.match(text, /Execution mode: single \(minimum sufficient execution\)/)
+  assert.equal(output.system.length,1)
+  assert.match(output.system[0],/Hi MISSION RUNTIME PROJECTION/)
+  assert.match(output.system[0],/Objective: opaque local task/)
+  assert.match(output.system[0],/Obligations:/)
 })
 
 test('system-transform is no-op for inactive missions', async () => {
@@ -94,9 +93,7 @@ test('system-transform requires child delegation for an independent review oblig
   const hook = createSystemTransformHook(store)
   const output = { system: [] }
   await hook({ sessionID: 's-independent' }, output)
-  const text = output.system[0]
-  assert.match(text, /Independent reviewer required/)
-  assert.match(text, /hi_task_start/)
-  assert.match(text, /parent evidence cannot close the review obligation/)
-  assert.match(text, /Do not substitute parent self-review/)
+  const text = output.system.join('\n')
+  assert.match(text, /independent-review-required/)
+  assert.match(text, /gate-reviewer:open/)
 })

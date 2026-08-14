@@ -80,7 +80,7 @@ test('working-manager still receives Hi system transform', async()=>{
   const out={system:['native']}
   await createSystemTransformHook(store,new BackgroundRegistry())({sessionID:'parent',agent:'working-manager'},out)
   assert.equal(out.system.length,2)
-  assert.match(out.system[1],/Hi CONTROL-PLANE CONTRACT/)
+  assert.match(out.system[1],/Hi MISSION RUNTIME PROJECTION/)
 })
 
 
