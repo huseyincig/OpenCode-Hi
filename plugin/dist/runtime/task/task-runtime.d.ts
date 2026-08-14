@@ -5,6 +5,7 @@ import { BackgroundRegistry } from '../background/registry.js';
 import type { OpenCodeLifecycleEndpoint } from '../../opencode/client-adapter.js';
 import { ConcurrencyScheduler } from '../scheduler/concurrency.js';
 import type { RuntimeSignalSink } from '../events/event-sink.js';
+import { type RuntimeScopedStores } from '../application/runtime-scoped-stores.js';
 export interface StartTaskInput {
     objective?: string;
     role?: string;
@@ -26,12 +27,11 @@ export declare class TaskRuntime {
     private registry;
     private scheduler;
     private projectRoot;
-    private hiRoot;
     private getConfig;
     private getModels;
     private getHostConfig;
     private events?;
-    constructor(client: any, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined, lifecycle?: OpenCodeLifecycleEndpoint);
+    constructor(client: any, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined, lifecycle?: OpenCodeLifecycleEndpoint, scopedStores?: RuntimeScopedStores);
     private sendProviderPrompt;
     private recordModelProjection;
     private abortNativeSession;

@@ -1,6 +1,6 @@
 import { resolveCategory } from '../routing/category.js';
 import { resolveModel, runtimeModelCandidateStatus } from '../routing/model-resolver.js';
-import { configuredSkillPaths, discoverSkills, resolveSkillPlan } from '../skills/registry.js';
+import { resolveSkillPlan } from '../skills/registry.js';
 import { resolveSkillPermissionMap, resolveSkillToolEnabled } from '../skills/permissions.js';
 import { createTask, createWorker, beginWorkerAttempt, workerFingerprint } from '../worker/worker-runtime.js';
 import { workerHandoffText } from './contracts.js';
@@ -26,8 +26,7 @@ import { executionProfileFor } from '../../config/execution-policy.js';
 import { applyAdmittedProjectMethodologyPermissions } from '../methodology/host-permissions.js';
 import { isHiChildRole, isHiReadOnlyChildRole, isHiReviewerRole, roleCanOwnObligation } from '../roles/catalog.js';
 import { renderSemanticContext, typescriptSemanticContextsForTargets } from '../semantic/typescript-context.js';
-import { ProjectIntelligenceStore } from '../project-intelligence/store.js';
-import { ContextArtifactStore } from '../context/artifact-store.js';
+import { createRuntimeScopedStores } from '../application/runtime-scoped-stores.js';
 import { ChildExecutionCoordinator } from './child-execution-coordinator.js';
 import { TaskResultReconciler } from './task-result-reconciler.js';
 import { TaskRecoveryCoordinator } from './task-recovery-coordinator.js';
@@ -83,7 +82,6 @@ export class TaskRuntime {
     registry;
     scheduler;
     projectRoot;
-    hiRoot;
     getConfig;
     getModels;
     getHostConfig;
@@ -94,19 +92,20 @@ export class TaskRuntime {
     #child;
     #results;
     #recovery;
-    constructor(client, registry, scheduler, projectRoot, hiRoot, getConfig, getModels, getHostConfig, events, lifecycle = {}) {
+    #scopedStores;
+    constructor(client, registry, scheduler, projectRoot, hiRoot, getConfig, getModels, getHostConfig, events, lifecycle = {}, scopedStores) {
         this.client = client;
         this.registry = registry;
         this.scheduler = scheduler;
         this.projectRoot = projectRoot;
-        this.hiRoot = hiRoot;
         this.getConfig = getConfig;
         this.getModels = getModels;
         this.getHostConfig = getHostConfig;
         this.events = events;
+        this.#scopedStores = scopedStores ?? createRuntimeScopedStores(projectRoot, hiRoot);
         this.#methodologyLearning = new ProjectMethodologyLearningStore(projectRoot);
         this.#child = new ChildExecutionCoordinator(client, lifecycle, registry);
-        this.#results = new TaskResultReconciler(scheduler, registry, projectRoot, events, this.#methodologyLearning, this.#child, (m, w, run) => this.queueTask(m, w, run), () => this.drainQueue());
+        this.#results = new TaskResultReconciler(scheduler, registry, projectRoot, events, this.#methodologyLearning, this.#child, (m, w, run) => this.queueTask(m, w, run), () => this.drainQueue(), this.#scopedStores);
         this.#recovery = new TaskRecoveryCoordinator(scheduler, registry, projectRoot, getConfig, getModels, getHostConfig, events, this.#child, () => this.drainQueue());
     }
     async sendProviderPrompt(sessionID, text, role, model, variant, tools) { return this.#child.sendProviderPrompt(sessionID, text, role, model, variant, tools); }
@@ -189,7 +188,7 @@ export class TaskRuntime {
             appendLedger(m, 'model.policy.rejected', { payload: { items: selected.rejected.slice(0, 20) } });
         if (selected.scores?.length)
             appendLedger(m, 'model.scored', { payload: { role, category, top: selected.scores.slice(0, 6), feedback } });
-        const taskMethodologyNeeds = m.methodology.methodology_needs.filter(need => (!need.task_id && !need.obligation_id) || (need.obligation_id && input.obligationIds?.includes(need.obligation_id))), catalog = methodologyCatalog(this.projectRoot), candidates = discoverSkills(this.projectRoot, this.hiRoot, configuredSkillPaths(hostConfig)), permissionMap = resolveSkillPermissionMap(hostConfig, role), skillToolEnabled = resolveSkillToolEnabled(hostConfig, role), surface = effectiveExecutionSurface(hostConfig, role, skillToolEnabled), hostCapabilities = detectOpenCodeCapabilities(this.client).contracts, availableResources = new Set(hostCapabilities.filter(item => item.status === 'SUPPORTED').map(item => `host-capability:${item.id}`)), skillPlan = resolveSkillPlan(methodologyNames(taskMethodologyNeeds), candidates, permissionMap, skillToolEnabled, role, catalog, availableResources), methodologies = skillPlan.selected.map(s => s.name), methodologyResourceFailures = skillPlan.outcomes.filter(item => item.outcome === 'resource-unavailable').map(item => item.name);
+        const taskMethodologyNeeds = m.methodology.methodology_needs.filter(need => (!need.task_id && !need.obligation_id) || (need.obligation_id && input.obligationIds?.includes(need.obligation_id))), catalog = methodologyCatalog(this.projectRoot), candidates = this.#scopedStores.skillCatalog.candidates(hostConfig), permissionMap = resolveSkillPermissionMap(hostConfig, role), skillToolEnabled = resolveSkillToolEnabled(hostConfig, role), surface = effectiveExecutionSurface(hostConfig, role, skillToolEnabled), hostCapabilities = detectOpenCodeCapabilities(this.client).contracts, availableResources = new Set(hostCapabilities.filter(item => item.status === 'SUPPORTED').map(item => `host-capability:${item.id}`)), skillPlan = resolveSkillPlan(methodologyNames(taskMethodologyNeeds), candidates, permissionMap, skillToolEnabled, role, catalog, availableResources), methodologies = skillPlan.selected.map(s => s.name), methodologyResourceFailures = skillPlan.outcomes.filter(item => item.outcome === 'resource-unavailable').map(item => item.name);
         appendLedger(m, 'skill.resolved', { payload: { role, requested: skillPlan.requested, outcomes: skillPlan.outcomes } });
         void this.events?.(runtimeSignal('skill.resolved', m.identity.mission_id, { payload: { role, requested: skillPlan.requested, outcomes: skillPlan.outcomes } }));
         if (skillPlan.missing.length)
@@ -234,7 +233,7 @@ export class TaskRuntime {
         const requestedArtifactIds = [...new Set(input.contextArtifactIds ?? [])].slice(0, DEFAULT_CONTEXT_BUDGET.max_artifacts), unknownArtifactIds = requestedArtifactIds.filter(id => !m.context.context_artifacts.some(a => a.id === id));
         if (unknownArtifactIds.length)
             throw new Error(`Unknown context artifact id(s): ${unknownArtifactIds.join(', ')}`);
-        const contextArtifactStore = new ContextArtifactStore(this.projectRoot), selectedContextHandles = requestedArtifactIds.map(id => m.context.context_artifacts.find(a => a.id === id)).filter(Boolean), selectedContextReferences = selectedContextHandles.map(a => { const durableId = a.uri?.startsWith('hi-artifact:') ? a.uri.slice('hi-artifact:'.length) : undefined, stored = durableId ? contextArtifactStore.get(durableId) : undefined; return { source_ref: a.uri ?? `mission-context:${a.id}`, reason: 'explicit-task-selection', priority: 'normal', protection: 'COMPRESSIBLE', budget_cost: stored ? Math.min(stored.content.length, 3000) : Math.min((a.summary ?? a.title ?? a.kind).length, 3000), freshness: stored?.freshness ?? 'UNKNOWN', retention: 'task', privacy_class: stored?.privacy_class ?? 'project-private', kind: a.kind, title: a.title, summary: a.summary, content_hash: stored?.content_hash ?? a.sha256, source_handle_id: a.id }; });
+        const contextArtifactStore = this.#scopedStores.contextArtifacts, selectedContextHandles = requestedArtifactIds.map(id => m.context.context_artifacts.find(a => a.id === id)).filter(Boolean), selectedContextReferences = selectedContextHandles.map(a => { const durableId = a.uri?.startsWith('hi-artifact:') ? a.uri.slice('hi-artifact:'.length) : undefined, stored = durableId ? contextArtifactStore.get(durableId) : undefined; return { source_ref: a.uri ?? `mission-context:${a.id}`, reason: 'explicit-task-selection', priority: 'normal', protection: 'COMPRESSIBLE', budget_cost: stored ? Math.min(stored.content.length, 3000) : Math.min((a.summary ?? a.title ?? a.kind).length, 3000), freshness: stored?.freshness ?? 'UNKNOWN', retention: 'task', privacy_class: stored?.privacy_class ?? 'project-private', kind: a.kind, title: a.title, summary: a.summary, content_hash: stored?.content_hash ?? a.sha256, source_handle_id: a.id }; });
         const approvalGated = skillPlan.selected.filter(s => s.permission === 'ask').map(s => s.name), taskTools = surface.tools.filter(t => t !== 'skill' || methodologies.length > 0);
         const profile = { role, category, task: { objective, scope: [...scope], dependencies: [...dependencies], required_evidence: [...requiredEvidence] }, tools: taskTools, model: selected.primary, model_variant: input.modelVariant ?? selected.primaryVariant, fallback_models: selected.fallbacks, fallback_variants: selected.fallbackVariants, fallback_reasons: selected.fallbackReasons, methodologies, permission_profile: { skill_tool_enabled: skillToolEnabled, skill_permissions: permissionMap ?? {}, external_effects: 'parent-only', recursive_task: 'deny', native: surface.permissions }, verification_policy: { ...m.execution.verification_policy, requiredKinds: [...m.execution.verification_policy.requiredKinds] }, max_context_chars: DEFAULT_CONTEXT_BUDGET.max_context_chars, max_handoff_chars: DEFAULT_CONTEXT_BUDGET.max_handoff_chars, max_result_chars: DEFAULT_CONTEXT_BUDGET.max_result_chars, max_artifacts: DEFAULT_CONTEXT_BUDGET.max_artifacts };
         const task = createTask(m, { objective, role, category, scope, constraints, dependencies, requiredEvidence, obligationIds, contextReferences: selectedContextReferences, executionProfile: profile });
@@ -250,7 +249,7 @@ export class TaskRuntime {
         const quirks = modelQuirks(selected.primary, this.getModels().find(x => x.id === selected.primary));
         const artifactContext = task.context_artifacts.map(a => { const id = a.source_ref.startsWith('hi-artifact:') ? a.source_ref.slice('hi-artifact:'.length) : undefined, stored = id ? contextArtifactStore.get(id) : undefined; if (stored?.freshness === 'FRESH')
             return `artifact:${stored.artifact_id}:${stored.summary}\n${clipText(stored.content, 3000)}`; if (stored)
-            return `artifact-stale:${stored.artifact_id}:${stored.summary}`; return `${a.kind}:${a.title ?? a.source_handle_id ?? a.id}${a.summary ? ` — ${a.summary}` : ''}`; }), verificationHint = targetedVerificationHint(this.projectRoot, task.scope.length ? task.scope : (m.vcs.changed_files.length ? m.vcs.changed_files : m.identity.intent.likelyTargets ?? [])), semanticContexts = typescriptSemanticContextsForTargets(this.projectRoot, task.scope, task.id, 3000), semanticContext = semanticContexts.map(renderSemanticContext), projectIntelligence = new ProjectIntelligenceStore(this.projectRoot).relevantToFiles(task.scope, 'task-context', 4), projectContext = projectIntelligence.map(p => `project-intelligence:${p.id}:${p.statement} [${p.source_refs.map(x => x.ref.slice(5)).join(', ')}]`), explicitRelevant = input.relevantContext ?? [], boundedRuntimeRelevant = [...(verificationHint ? [verificationHint] : []), ...semanticContext, ...projectContext, ...artifactContext];
+            return `artifact-stale:${stored.artifact_id}:${stored.summary}`; return `${a.kind}:${a.title ?? a.source_handle_id ?? a.id}${a.summary ? ` — ${a.summary}` : ''}`; }), verificationHint = targetedVerificationHint(this.projectRoot, task.scope.length ? task.scope : (m.vcs.changed_files.length ? m.vcs.changed_files : m.identity.intent.likelyTargets ?? [])), semanticContexts = typescriptSemanticContextsForTargets(this.projectRoot, task.scope, task.id, 3000), semanticContext = semanticContexts.map(renderSemanticContext), projectIntelligence = this.#scopedStores.projectIntelligence.relevantToFiles(task.scope, 'task-context', 4), projectContext = projectIntelligence.map(p => `project-intelligence:${p.id}:${p.statement} [${p.source_refs.map(x => x.ref.slice(5)).join(', ')}]`), explicitRelevant = input.relevantContext ?? [], boundedRuntimeRelevant = [...(verificationHint ? [verificationHint] : []), ...semanticContext, ...projectContext, ...artifactContext];
         if (semanticContexts.length)
             appendLedger(m, 'context.semantic-selected', { task_id: task.id, payload: { items: semanticContexts.slice(0, 6).map(x => ({ id: x.id, source_ref: x.source_ref, source_hash: x.source_hash.slice(0, 16), symbols: x.symbols.length, chars: x.budget.used_chars })), total_chars: semanticContexts.reduce((n, x) => n + x.budget.used_chars, 0) } });
         if (projectIntelligence.length)

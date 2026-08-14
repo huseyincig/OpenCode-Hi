@@ -3,8 +3,6 @@ import { normalizeOpenCodeEvent, eventFilePaths, permissionDecision, permissionE
 import { authorityClassForPatterns } from '../safety/project-authority.js'
 import { appendLedger } from '../ledger/ledger.js'
 import { addEvidence, markMutation, normalizeProjectPath } from '../evidence/evidence-runtime.js'
-import { ProjectIntelligenceStore } from '../project-intelligence/store.js'
-import { ContextArtifactStore } from '../context/artifact-store.js'
 import { lastAssistantText, lastAssistantModel, listMessages } from '../../opencode/client-adapter.js'
 import { parseWorkerResult } from '../task/result-parser.js'
 import { automaticContinuationEnabled, adaptiveIdleEvaluatorEnabled } from '../../config/execution-policy.js'
@@ -22,7 +20,7 @@ export class RuntimeEventController{
   constructor(private readonly deps:{state:PluginRuntimeState;host:ReturnType<typeof createHostPort>;services:ReturnType<typeof createRuntimeServices>;projectAuthority:ProjectAuthorityStore;pendingNativePermissions:Map<string,string[]>;projectRoot:string}){}
   async handle({event}:any){
     const {state,host,services,projectAuthority,pendingNativePermissions,projectRoot}=this.deps
-    const {store,background,persistence,tasks,teams,eventSink}=services
+    const {store,background,persistence,tasks,teams,eventSink,scopedStores}=services
 
     const ev=normalizeOpenCodeEvent(event)
     if(ev.kind==='installation-updated'){await host.refreshRuntimeInventory('installation-updated');return}
@@ -65,7 +63,7 @@ export class RuntimeEventController{
     }
     if(ev.kind==='session-deleted'){const parent=store.get(sid);if(parent){await tasks.cancelAll(parent);store.stop(sid);persistence.save(store.all())}return}
     if(ev.kind==='todo-updated'){const m=store.get(sid);if(m){const todos=ev.properties?.todos??ev.properties?.items??[];if(Array.isArray(todos))m.execution.native_todos_incomplete=todos.filter((t:any)=>!['completed','cancelled','done'].includes(String(t?.status??'').toLowerCase())).length;store.updateProgress(m);persistence.save(store.all())}return}
-    if((ev.kind==='file-edited'||ev.kind==='file-watcher-updated'||ev.kind==='session-diff')&&mission){const files=eventFilePaths(ev).map(file=>normalizeProjectPath(file,projectRoot)).filter(Boolean);if(files.length){markMutation(mission,files,ev.rawType);new ProjectIntelligenceStore(projectRoot).invalidateChanged(files);new ContextArtifactStore(projectRoot).invalidateChanged(files)}persistence.save(store.all());return}
+    if((ev.kind==='file-edited'||ev.kind==='file-watcher-updated'||ev.kind==='session-diff')&&mission){const files=eventFilePaths(ev).map(file=>normalizeProjectPath(file,projectRoot)).filter(Boolean);if(files.length){markMutation(mission,files,ev.rawType);scopedStores.projectIntelligence.invalidateChanged(files);scopedStores.contextArtifacts.invalidateChanged(files);scopedStores.skillCatalog.invalidateChanged(files)}persistence.save(store.all());return}
     if(ev.kind==='lsp-diagnostics'&&mission){const diagnostics=Array.isArray(ev.properties?.diagnostics)?ev.properties.diagnostics:[];const errors=diagnostics.filter((d:any)=>['error',1].includes(d?.severity)).length;addEvidence(mission,{kind:'lsp-diagnostics',summary:`native LSP diagnostics: ${errors} error(s), ${diagnostics.length} total`,scope:mission.vcs.changed_files,source:`session:${sid}:lsp`,pass:errors===0,outcome:errors===0?'passed':'failed',reason:errors?`${errors} error diagnostic(s)`:undefined});persistence.save(store.all());return}
     if(ev.kind==='session-compacted'&&mission){appendLedger(mission,'session.compacted',{payload:{source:'native-event'}});persistence.save(store.all());return}
     if(ev.kind!=='session-idle')return

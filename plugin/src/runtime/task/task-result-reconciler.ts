@@ -2,8 +2,7 @@ import { createHash } from 'node:crypto'
 import type { MissionState,WorkerResult,WorkerState } from '../mission/types.js'
 import { appendLedger } from '../ledger/ledger.js'
 import { addEvidence,markMutation } from '../evidence/evidence-runtime.js'
-import { ProjectIntelligenceStore } from '../project-intelligence/store.js'
-import { ContextArtifactStore } from '../context/artifact-store.js'
+import type { RuntimeScopedStores } from '../application/runtime-scoped-stores.js'
 import { isHiReadOnlyChildRole,isHiReviewerRole } from '../roles/catalog.js'
 import { assessDiffOwnership } from './diff-ownership.js'
 import { applyWorkerResult,beginWorkerAttempt } from '../worker/worker-runtime.js'
@@ -28,7 +27,7 @@ function resultDigest(result:WorkerResult):string{return createHash('sha256').up
 
 type QueueTask=(m:MissionState,worker:WorkerState,run:()=>Promise<WorkerState>)=>void
 export class TaskResultReconciler{
-  constructor(private readonly scheduler:ConcurrencyScheduler,private readonly registry:BackgroundRegistry,private readonly projectRoot:string,private readonly events:RuntimeSignalSink|undefined,private readonly methodologyLearning:ProjectMethodologyLearningStore,private readonly child:ChildExecutionCoordinator,private readonly queueTaskCallback:QueueTask,private readonly drainQueueCallback:()=>void){}
+  constructor(private readonly scheduler:ConcurrencyScheduler,private readonly registry:BackgroundRegistry,private readonly projectRoot:string,private readonly events:RuntimeSignalSink|undefined,private readonly methodologyLearning:ProjectMethodologyLearningStore,private readonly child:ChildExecutionCoordinator,private readonly queueTaskCallback:QueueTask,private readonly drainQueueCallback:()=>void,private readonly scopedStores:RuntimeScopedStores){}
   private queueTask(m:MissionState,worker:WorkerState,run:()=>Promise<WorkerState>):void{this.queueTaskCallback(m,worker,run)}
   private drainQueue():void{this.drainQueueCallback()}
   async reconcileNativeResult(m:MissionState,workerID:string,result:WorkerResult):Promise<WorkerResult>{
@@ -65,7 +64,7 @@ export class TaskResultReconciler{
   }
   async noteNativeWriteSet(m:MissionState,workerID:string,files:string[],source='session-diff',stateHash?:string):Promise<void>{
     const worker=m.execution.workers.find(w=>w.id===workerID);if(!worker||!files.length)return
-    worker.write_set=[...new Set([...(worker.write_set??[]),...files])].slice(0,300);if(stateHash)worker.native_state_hash=stateHash;markMutation(m,files,source);new ProjectIntelligenceStore(this.projectRoot).invalidateChanged(files);new ContextArtifactStore(this.projectRoot).invalidateChanged(files);if(isHiReadOnlyChildRole(worker.role))return
+    worker.write_set=[...new Set([...(worker.write_set??[]),...files])].slice(0,300);if(stateHash)worker.native_state_hash=stateHash;markMutation(m,files,source);this.scopedStores.projectIntelligence.invalidateChanged(files);this.scopedStores.contextArtifacts.invalidateChanged(files);this.scopedStores.skillCatalog.invalidateChanged(files);if(isHiReadOnlyChildRole(worker.role))return
     for(const other of m.execution.workers){
       if(other.id===worker.id||isHiReadOnlyChildRole(other.role)||!(other.write_set??[]).length||!['starting','busy'].includes(other.status)||!['starting','busy'].includes(worker.status))continue
       const overlap=(worker.write_set??[]).filter(x=>(other.write_set??[]).includes(x));if(!overlap.length)continue

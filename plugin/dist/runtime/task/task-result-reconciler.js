@@ -1,8 +1,6 @@
 import { createHash } from 'node:crypto';
 import { appendLedger } from '../ledger/ledger.js';
 import { addEvidence, markMutation } from '../evidence/evidence-runtime.js';
-import { ProjectIntelligenceStore } from '../project-intelligence/store.js';
-import { ContextArtifactStore } from '../context/artifact-store.js';
 import { isHiReadOnlyChildRole, isHiReviewerRole } from '../roles/catalog.js';
 import { assessDiffOwnership } from './diff-ownership.js';
 import { applyWorkerResult, beginWorkerAttempt } from '../worker/worker-runtime.js';
@@ -29,7 +27,8 @@ export class TaskResultReconciler {
     child;
     queueTaskCallback;
     drainQueueCallback;
-    constructor(scheduler, registry, projectRoot, events, methodologyLearning, child, queueTaskCallback, drainQueueCallback) {
+    scopedStores;
+    constructor(scheduler, registry, projectRoot, events, methodologyLearning, child, queueTaskCallback, drainQueueCallback, scopedStores) {
         this.scheduler = scheduler;
         this.registry = registry;
         this.projectRoot = projectRoot;
@@ -38,6 +37,7 @@ export class TaskResultReconciler {
         this.child = child;
         this.queueTaskCallback = queueTaskCallback;
         this.drainQueueCallback = drainQueueCallback;
+        this.scopedStores = scopedStores;
     }
     queueTask(m, worker, run) { this.queueTaskCallback(m, worker, run); }
     drainQueue() { this.drainQueueCallback(); }
@@ -100,8 +100,9 @@ export class TaskResultReconciler {
         if (stateHash)
             worker.native_state_hash = stateHash;
         markMutation(m, files, source);
-        new ProjectIntelligenceStore(this.projectRoot).invalidateChanged(files);
-        new ContextArtifactStore(this.projectRoot).invalidateChanged(files);
+        this.scopedStores.projectIntelligence.invalidateChanged(files);
+        this.scopedStores.contextArtifacts.invalidateChanged(files);
+        this.scopedStores.skillCatalog.invalidateChanged(files);
         if (isHiReadOnlyChildRole(worker.role))
             return;
         for (const other of m.execution.workers) {

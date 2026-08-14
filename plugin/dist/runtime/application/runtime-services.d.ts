@@ -24,4 +24,5 @@ export declare function createRuntimeServices(input: {
     tasks: TaskRuntime;
     experimental: ExperimentalOpenCodeAdapter;
     teams: TeamRuntime;
+    scopedStores: import("./runtime-scoped-stores.js").RuntimeScopedStores;
 };

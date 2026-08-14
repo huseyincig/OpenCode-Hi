@@ -1,4 +1,5 @@
 import type { MissionState, WorkerResult, WorkerState } from '../mission/types.js';
+import type { RuntimeScopedStores } from '../application/runtime-scoped-stores.js';
 import { type RuntimeSignalSink } from '../events/event-sink.js';
 import type { BackgroundRegistry } from '../background/registry.js';
 import type { ConcurrencyScheduler } from '../scheduler/concurrency.js';
@@ -14,7 +15,8 @@ export declare class TaskResultReconciler {
     private readonly child;
     private readonly queueTaskCallback;
     private readonly drainQueueCallback;
-    constructor(scheduler: ConcurrencyScheduler, registry: BackgroundRegistry, projectRoot: string, events: RuntimeSignalSink | undefined, methodologyLearning: ProjectMethodologyLearningStore, child: ChildExecutionCoordinator, queueTaskCallback: QueueTask, drainQueueCallback: () => void);
+    private readonly scopedStores;
+    constructor(scheduler: ConcurrencyScheduler, registry: BackgroundRegistry, projectRoot: string, events: RuntimeSignalSink | undefined, methodologyLearning: ProjectMethodologyLearningStore, child: ChildExecutionCoordinator, queueTaskCallback: QueueTask, drainQueueCallback: () => void, scopedStores: RuntimeScopedStores);
     private queueTask;
     private drainQueue;
     reconcileNativeResult(m: MissionState, workerID: string, result: WorkerResult): Promise<WorkerResult>;

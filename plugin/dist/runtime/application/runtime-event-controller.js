@@ -3,8 +3,6 @@ import { normalizeOpenCodeEvent, eventFilePaths, permissionDecision, permissionE
 import { authorityClassForPatterns } from '../safety/project-authority.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { addEvidence, markMutation, normalizeProjectPath } from '../evidence/evidence-runtime.js';
-import { ProjectIntelligenceStore } from '../project-intelligence/store.js';
-import { ContextArtifactStore } from '../context/artifact-store.js';
 import { lastAssistantText, lastAssistantModel, listMessages } from '../../opencode/client-adapter.js';
 import { parseWorkerResult } from '../task/result-parser.js';
 import { automaticContinuationEnabled, adaptiveIdleEvaluatorEnabled } from '../../config/execution-policy.js';
@@ -20,7 +18,7 @@ export class RuntimeEventController {
     }
     async handle({ event }) {
         const { state, host, services, projectAuthority, pendingNativePermissions, projectRoot } = this.deps;
-        const { store, background, persistence, tasks, teams, eventSink } = services;
+        const { store, background, persistence, tasks, teams, eventSink, scopedStores } = services;
         const ev = normalizeOpenCodeEvent(event);
         if (ev.kind === 'installation-updated') {
             await host.refreshRuntimeInventory('installation-updated');
@@ -220,8 +218,9 @@ export class RuntimeEventController {
             const files = eventFilePaths(ev).map(file => normalizeProjectPath(file, projectRoot)).filter(Boolean);
             if (files.length) {
                 markMutation(mission, files, ev.rawType);
-                new ProjectIntelligenceStore(projectRoot).invalidateChanged(files);
-                new ContextArtifactStore(projectRoot).invalidateChanged(files);
+                scopedStores.projectIntelligence.invalidateChanged(files);
+                scopedStores.contextArtifacts.invalidateChanged(files);
+                scopedStores.skillCatalog.invalidateChanged(files);
             }
             persistence.save(store.all());
             return;
