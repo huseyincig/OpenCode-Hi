@@ -121,23 +121,23 @@ test('fresh durable context artifact content is loaded only while source-bound f
   const root=mkdtempSync(join(tmpdir(),'hi-durable-context-'))
   try{
     const durable=new ContextArtifactStore(root).add('research','bounded durable research','DURABLE_ARTIFACT_CONTENT_MARKER',['src/a.ts'])
-    const ref={id:durable.id,kind:'research',uri:`hi-artifact:${durable.id}`,summary:durable.summary,sha256:durable.sha256,added_at:1}
+    const ref={id:durable.artifact_id,kind:'research',uri:`hi-artifact:${durable.artifact_id}`,summary:durable.summary,sha256:durable.content_hash,added_at:1}
     const prompts=[]
     let seq=0
     const client={session:{create:async()=>({data:{id:`child-durable-${++seq}`}}),promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async()=>({data:{}})}}
     const m1=startAssessedMission(new MissionStore(root),'parent-durable-1','opaque durable context task')
     m1.context_artifacts.push(ref)
     const rt1=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2})),root,process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
-    const started=await rt1.start(m1,{objective:'first fix',role:'coder',category:'quick',contextArtifactIds:[durable.id]})
+    const started=await rt1.start(m1,{objective:'first fix',role:'coder',category:'quick',contextArtifactIds:[durable.artifact_id]})
     assert.match(prompts[0].body.parts[0].text,/DURABLE_ARTIFACT_CONTENT_MARKER/)
     await rt1.noteNativeWriteSet(m1,started.worker_id,['src/a.ts'])
-    assert.equal(new ContextArtifactStore(root).get(durable.id).freshness,'POTENTIALLY_STALE')
+    assert.equal(new ContextArtifactStore(root).get(durable.artifact_id).freshness,'POTENTIALLY_STALE')
 
     const m2=startAssessedMission(new MissionStore(root),'parent-durable-2','opaque second durable context task')
     m2.context_artifacts.push(ref)
     const rt2=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2})),root,process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
-    await rt2.start(m2,{objective:'second fix',role:'coder',category:'quick',contextArtifactIds:[durable.id]})
-    assert.match(prompts[1].body.parts[0].text,new RegExp(`artifact-stale:${durable.id}`))
+    await rt2.start(m2,{objective:'second fix',role:'coder',category:'quick',contextArtifactIds:[durable.artifact_id]})
+    assert.match(prompts[1].body.parts[0].text,new RegExp(`artifact-stale:${durable.artifact_id}`))
     assert.doesNotMatch(prompts[1].body.parts[0].text,/DURABLE_ARTIFACT_CONTENT_MARKER/)
   }finally{rmSync(root,{recursive:true,force:true})}
 })

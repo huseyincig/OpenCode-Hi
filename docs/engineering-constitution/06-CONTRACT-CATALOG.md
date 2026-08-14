@@ -479,6 +479,8 @@ consumer_refs[]
 
 **Invariant:** artifact ID != content hash; metadata generation cannot change identity.
 
+**Current runtime mapping:** durable `ContextArtifactStore` persists the canonical ArtifactContract. `artifact_id` is generated independently from content/provenance; `content_hash` verifies the inline body; source-file linkage is provenance and freshness metadata, not identity. Mission `context_artifacts` are context references/snapshots and are not the ArtifactContract itself.
+
 ### C19 — ContextReferenceContract
 
 **Required fields:**
