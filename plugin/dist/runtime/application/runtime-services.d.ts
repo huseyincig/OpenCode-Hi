@@ -13,6 +13,7 @@ import { OpenCodePtyAdapter } from '../../opencode/open-code-pty-adapter.js';
 import { ProcessRuntime } from '../process/runtime.js';
 import { OpenCodeWorkspaceAdapter } from '../../opencode/open-code-workspace-adapter.js';
 import { WorkspaceRuntime } from '../workspace/runtime.js';
+import { ChatHumanDecisionTransport } from '../human-decision/transport.js';
 export declare function createRuntimeServices(input: {
     ctx: OpenCodePluginContext;
     projectRoot: string;
@@ -23,6 +24,7 @@ export declare function createRuntimeServices(input: {
 }): {
     store: MissionStore;
     background: BackgroundRegistry;
+    humanDecisionTransport: ChatHumanDecisionTransport;
     persistence: RuntimePersistence;
     scheduler: ConcurrencyScheduler;
     eventSink: RuntimeSignalSink;

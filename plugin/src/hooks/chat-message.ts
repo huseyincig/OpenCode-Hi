@@ -1,6 +1,8 @@
 import { MissionStore } from '../runtime/mission/mission-store.js'
 import { approvePendingAuthority,resolveUncertainAuthority } from '../runtime/safety/authority.js'
 import { isHiPrimaryRole } from '../runtime/roles/catalog.js'
+import type { ChatHumanDecisionTransport } from '../runtime/human-decision/transport.js'
+import { syncHumanDecisionTransport } from '../runtime/human-decision/transport.js'
 function isHiInternal(output:any):boolean{const parts=output?.parts??output?.message?.parts??[];return parts.some((p:any)=>p?.type==='text'&&(p?.metadata?.hiInternalContinuation===true||(p?.synthetic===true&&p?.metadata?.hiInternalContinuation))) }
 function extractText(value:any):string{const parts=value?.parts??value?.message?.parts??[];return parts.filter((p:any)=>p?.type==='text'&&typeof p.text==='string').map((p:any)=>p.text).join('\n').trim()}
 function normalizeNativeUserText(text:string):string{
@@ -20,7 +22,7 @@ function extractNativeUserText(input:any,output:any):string{
   if(legacy?.role==='user'||legacy?.role===undefined)return normalizeNativeUserText(extractText(legacy))
   return ''
 }
-export function createChatMessageHook(store:MissionStore,onFollowupPending?: (sessionID:string,text:string)=>Promise<void>){return async(input:any,output:any)=>{
+export function createChatMessageHook(store:MissionStore,onFollowupPending?: (sessionID:string,text:string)=>Promise<void>,humanDecisionTransport?:ChatHumanDecisionTransport){return async(input:any,output:any)=>{
   const sid=input?.sessionID;if(!sid)return
   if(isHiInternal(output))return
   const userText=extractNativeUserText(input,output);if(!userText)return
@@ -29,15 +31,22 @@ export function createChatMessageHook(store:MissionStore,onFollowupPending?: (se
   if(agent&&!observedPrimary)return
   const existing=store.get(sid)
   if(existing&&observedPrimary)store.bindObservedPrimary(sid,observedPrimary)
-  // Exact authority-response tokens remain a separate deterministic safety protocol.
-  if(existing&&resolveUncertainAuthority(existing,userText))return
-  if(existing&&approvePendingAuthority(existing,userText)){store.resume(sid,'authority-approved');return}
+  const openDecision=existing?.authority.human_decision?.status==='OPEN'?existing.authority.human_decision:undefined
+  if(openDecision&&humanDecisionTransport)syncHumanDecisionTransport(openDecision,humanDecisionTransport)
+  // Exact authority-response tokens remain a separate deterministic safety protocol. The transport observes
+  // a response only after the canonical Authority runtime has accepted the exact protocol; it never grants authority.
+  if(existing&&resolveUncertainAuthority(existing,userText)){if(openDecision&&humanDecisionTransport)humanDecisionTransport.respond(openDecision.decision_id,userText);return}
+  if(existing&&approvePendingAuthority(existing,userText)){if(openDecision&&humanDecisionTransport)humanDecisionTransport.respond(openDecision.decision_id,userText);store.resume(sid,'authority-approved');return}
   if(!existing||existing.identity.status==='completed'||existing.identity.status==='failed'){store.start(sid,userText,observedPrimary);return}
   // A previously stopped mission does not infer "resume" from prose here. Start a new provisional
   // mission; Human Decision/authority controls own explicit resurrection semantics.
   if(existing.identity.status==='stopped'||existing.continuation.user_interrupted){store.start(sid,userText,observedPrimary);return}
   if(existing.identity.semantic_assessment.status==='pending')return
   if(['active','waiting-user'].includes(existing.identity.status)){
+    if(openDecision&&openDecision.semantic_type!=='authority_request'&&humanDecisionTransport){
+      const accepted=humanDecisionTransport.respond(openDecision.decision_id,userText)
+      if(!accepted&&openDecision.response_schema.kind==='choice')return
+    }
     store.beginFollowupSemanticAssessment(sid,userText)
     await onFollowupPending?.(sid,userText)
   }

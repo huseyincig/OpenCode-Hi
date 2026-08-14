@@ -11,10 +11,12 @@ import { OpenCodePtyAdapter } from '../../opencode/open-code-pty-adapter.js';
 import { ProcessRuntime } from '../process/runtime.js';
 import { OpenCodeWorkspaceAdapter } from '../../opencode/open-code-workspace-adapter.js';
 import { WorkspaceRuntime } from '../workspace/runtime.js';
+import { ChatHumanDecisionTransport } from '../human-decision/transport.js';
 export function createRuntimeServices(input) {
     const { ctx, projectRoot, packageRoot, getConfig, getModels, getHostConfig } = input;
     const store = new MissionStore(projectRoot, { project: ctx.project, directory: ctx.directory, worktree: ctx.worktree }, () => getConfig().primaryMode, () => ({ mode: getConfig().execution.topology, maxAgents: getConfig().execution.maxAgents, parallelism: getConfig().execution.parallelism }));
     const background = new BackgroundRegistry();
+    const humanDecisionTransport = new ChatHumanDecisionTransport();
     const scopedStores = createRuntimeScopedStores(projectRoot, packageRoot);
     const persistence = new RuntimePersistence(projectRoot);
     const restored = persistence.load();
@@ -40,5 +42,5 @@ export function createRuntimeServices(input) {
     const processRuntime = new ProcessRuntime(processExecutor, projectRoot, getHostConfig);
     const experimental = new ExperimentalOpenCodeAdapter(store, background);
     const teams = new TeamRuntime(tasks, () => getConfig().teamMode.enabled, () => ({ maxMembers: getConfig().teamMode.maxMembers, maxWallMs: getConfig().teamMode.maxWallMinutes * 60 * 1000 }));
-    return { store, background, persistence, scheduler, eventSink, tasks, processExecutor, processRuntime, workspaceExecutor, workspaceRuntime, experimental, teams, scopedStores };
+    return { store, background, humanDecisionTransport, persistence, scheduler, eventSink, tasks, processExecutor, processRuntime, workspaceExecutor, workspaceRuntime, experimental, teams, scopedStores };
 }

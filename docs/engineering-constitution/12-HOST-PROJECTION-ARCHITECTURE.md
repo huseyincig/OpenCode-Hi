@@ -141,7 +141,7 @@ This is an intersection/narrowing model for safety. Host/user permission may mak
 
 ## Structured human interaction
 
-If the host supports a structured question primitive, HumanDecisionContract may project to it. The adapter returns the structured response to the Human Decision owner. The host UI does not decide whether the response constitutes Authority.
+HumanDecision semantics remain owned by the canonical contract/runtime. `HumanDecisionTransport` is a projection-only port: current chat uses one runtime-scoped ephemeral exact-ID transport; future structured host/browser UI may implement the same port. Timeout/cancel are transport lifecycle only. A host/UI response never decides Authority; exact-action approval/reconciliation must first succeed in the canonical Authority runtime before a transport may record the response.
 
 ## Shell/process boundary
 

@@ -10,9 +10,10 @@ import { createSystemTransformHook } from '../hooks/system-transform.js';
 import { createToolBeforeHook } from '../hooks/tool-before.js';
 import { createToolAfterHook } from '../hooks/tool-after.js';
 import { appendLedger } from '../runtime/ledger/ledger.js';
+import { syncHumanDecisionTransport } from '../runtime/human-decision/transport.js';
 export function createOpenCodeHooks(input) {
     const { state, host, services, projectRoot, packagedSkillsDir, projectAuthority, toolSurface, reconfigureToolSurface, eventController, instanceLease } = input;
-    const { store, background, persistence, tasks, teams, processRuntime, experimental, eventSink } = services;
+    const { store, background, humanDecisionTransport, persistence, tasks, teams, processRuntime, experimental, eventSink } = services;
     return {
         name: 'opencode-hi',
         tool: toolSurface,
@@ -54,9 +55,11 @@ export function createOpenCodeHooks(input) {
             if (!host.getModels().length)
                 void host.refreshRuntimeInventory('chat-message');
             await createChatMessageHook(store, async (sid, text) => { const m = store.get(sid); if (!m)
-                return; const teamsPaused = teams.adoptSemanticGeneration(m), workersPaused = await tasks.pauseForSemanticAssessment(m); appendLedger(m, 'semantic.execution-quarantined', { payload: { revision: m.identity.semantic_assessment.revision, workers: workersPaused, teams: teamsPaused, preview: text.slice(0, 180) } }); })(input, output);
+                return; const teamsPaused = teams.adoptSemanticGeneration(m), workersPaused = await tasks.pauseForSemanticAssessment(m); appendLedger(m, 'semantic.execution-quarantined', { payload: { revision: m.identity.semantic_assessment.revision, workers: workersPaused, teams: teamsPaused, preview: text.slice(0, 180) } }); }, humanDecisionTransport)(input, output);
         }
         finally {
+            for (const m of store.all())
+                syncHumanDecisionTransport(m.authority.human_decision, humanDecisionTransport);
             persistence.save(store.all());
         } },
         'experimental.chat.messages.transform': createMessagesTransformHook(store, background),
@@ -71,12 +74,16 @@ export function createOpenCodeHooks(input) {
             await createToolBeforeHook(store, background, projectRoot)(input, output);
         }
         finally {
+            for (const m of store.all())
+                syncHumanDecisionTransport(m.authority.human_decision, humanDecisionTransport);
             persistence.save(store.all());
         } },
         'tool.execute.after': async (input, output) => { try {
             await createToolAfterHook(store, background, eventSink, projectRoot)(input, output);
         }
         finally {
+            for (const m of store.all())
+                syncHumanDecisionTransport(m.authority.human_decision, humanDecisionTransport);
             persistence.save(store.all());
         } },
         dispose: async () => { try {
@@ -92,6 +99,12 @@ export function createOpenCodeHooks(input) {
         finally {
             instanceLease.release();
         } },
-        event: (input) => eventController.handle(input),
+        event: async (input) => { try {
+            await eventController.handle(input);
+        }
+        finally {
+            for (const m of store.all())
+                syncHumanDecisionTransport(m.authority.human_decision, humanDecisionTransport);
+        } },
     };
 }
