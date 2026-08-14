@@ -29,6 +29,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           cache: pip
+          cache-dependency-path: requirements-dev.txt
       - name: Install Python verification dependencies
         run: python -m pip install -r requirements-dev.txt
       - name: Install plugin dependencies
