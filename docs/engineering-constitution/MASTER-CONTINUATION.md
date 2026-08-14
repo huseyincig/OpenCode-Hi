@@ -12,8 +12,8 @@ repository: OpenCode-Hi
 repository_root: /workspace/OpenCode-Hi
 coverage_reconciliation_baseline_head: 8ba9eb561332eebc3b6bded90a1c0d2da501d1ed
 active_program: OpenCode-Hi Product Closure after Constitution Migration
-active_phase: P5
-active_phase_name: Host-limited capability release and support decision
+active_phase: P6
+active_phase_name: Deterministic closure after product gaps
 phase_status: OPEN
 working_tree_expectation: clean
 last_verified_full_suite:
@@ -24,7 +24,7 @@ last_verified_architecture_lint: "PASS rules=21 deferred=0 linked=8"
 last_verified_validator: PASS
 current_projection_receipts: 32
 external_release_actions_authorized: false
-next_contract_owner: HostCapability -> supported OpenCode primitive -> doctor/docs support boundary
+next_contract_owner: canonical source -> generators -> architecture lint -> full controlled proof
 ```
 
 ---
@@ -433,15 +433,15 @@ These are current product truths, not reasons to manufacture PASS:
 
 ### Process lifecycle — DEGRADED
 
-Current OpenCode adapter does not expose full ordinary-shell PID/job ownership, wait, kill and process-exit lifecycle. Hi has shell safety policy and bounded runtime recovery, but must not claim a richer process governor than the host exposes.
+Exact OpenCode 1.18.16 exposes a separate PTY lifecycle, but Hi does not route ordinary model-facing bash through that executor. Ordinary bash therefore still lacks Hi-owned PID/job wait/kill/process-exit lifecycle; shell safety and bounded runtime recovery must not be represented as a richer process governor.
 
 ### Workspace isolation binding — UNSUPPORTED
 
-Creating a git worktree directory is not enough. Hi cannot claim workspace isolation until subsequent child execution is provably bound to that isolated workspace.
+Exact OpenCode 1.18.16 exposes workspace/session `workspaceID`, warp and worktree primitives, but current Hi has no canonical isolation selection/provisioning/cleanup executor and no T3 proof that subsequent child/tool execution is bound to an alternate workspace. Related host primitives are therefore not promoted to product support.
 
 ### Browser / visual — HOST-LIMITED / contract-bound
 
-`browser-execution` is an explicit HostCapability and is currently `UNSUPPORTED`; browser/visual methodologies require it and fail deterministic preflight before child spawn when unavailable. Do not infer support from MCP/tool naming or prompts.
+`browser-execution` is an explicit HostCapability and remains `UNSUPPORTED`. OpenCode 1.18.16 exposes MCP/tool discovery, but current Hi has no deterministic browser executor/evidence adapter; browser/visual methodologies therefore fail deterministic preflight before child spawn. Do not infer support from MCP/tool naming, prompts, screenshots, or inventory alone.
 
 ### Semantic Context adapters
 
@@ -449,7 +449,7 @@ Current first-class semantic extraction is TypeScript. Do not claim language-gen
 
 ### Telemetry
 
-Current efficiency telemetry is deterministic in-process metric/benchmark tooling. It is not yet a first-class privacy-classified runtime TelemetryEvent stream.
+Current efficiency metrics are deliberately derived from bounded Mission ledger/state; benchmark telemetry is deterministic offline simulation. There is no separate first-class TelemetryEvent store because no product consumer requires one.
 
 ---
 
@@ -532,21 +532,20 @@ Proof: focused trajectory/topology set 44/44 PASS; full controlled suite **563/5
 
 Exit satisfied: every C01–C29/S00–S27 responsibility is executable, deliberately derived/subsumed, documentary, host-limited, or explicitly unsupported — none remains missing by accident.
 
-### P5 — Host-limited capability release/support decision
+### P5 — Host-limited capability release/support decision — **CLOSED at `e789e92`**
 
-After P0–P4 source closure, reassess:
+Exact OpenCode 1.18.16 source/type and controlled-host audit established:
 
-- process lifecycle DEGRADED;
-- workspace isolation binding UNSUPPORTED;
-- any remaining browser/visual limitation after P2.
+- **process lifecycle remains DEGRADED**: OpenCode exposes a separate PTY lifecycle, but ordinary model-facing bash is not routed through an Hi-owned PTY executor, so PID/job wait/kill/exit ownership is not claimed;
+- **workspace isolation binding remains UNSUPPORTED**: OpenCode exposes workspace/session `workspaceID`, warp and worktree primitives, but current Hi has no canonical isolation selection/provisioning/cleanup executor and no real-host proof that child/tool execution is bound to an alternate workspace;
+- **browser execution remains UNSUPPORTED**: MCP/tool discovery exists, but no deterministic browser executor/evidence adapter binds arbitrary host tools to browser/visual proof semantics;
+- doctor now reports all three product-level limitations explicitly;
+- README/HOSTS/verification/implementation/host-projection docs distinguish related host primitive presence from actual Hi product ownership rather than saying the SDK lacks every related primitive;
+- no PTY, workspace or browser capability was emulated or promoted merely to remove a limitation.
 
-Do not automatically implement unsupported host features. Choose based on product requirement and supported OpenCode reality:
+Proof: focused host-capability set 21/21 PASS; full controlled suite **563/563 PASS**; architecture lint 21 rules / deferred=0; validator PASS; diff check clean; backup count 0.
 
-- implement a truthful adapter if a native primitive exists and is worth supporting;
-- retain DEGRADED/UNSUPPORTED with doctor/docs and precise semantic loss if not;
-- never emulate in a way that loses the Hi safety contract.
-
-Exit: supported-feature/release claims exactly match host reality.
+Exit satisfied: supported-feature and support/release claims match the exact supported-host reality without fake capability promotion.
 
 ### P6 — Deterministic closure after product gaps
 
@@ -673,10 +672,10 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**Start P5 only.**
+**Start P6 only.**
 
-Re-check real HEAD/status, then reassess the remaining host-limited capability claims against the exact supported OpenCode 1.18.16 primitive surface: process lifecycle (`DEGRADED`), workspace isolation binding (`UNSUPPORTED`), and browser execution (`UNSUPPORTED`). Do not implement or emulate a capability merely to remove a limitation; first prove a real native primitive + deterministic adapter path and verify that it preserves Hi ownership/safety semantics. Otherwise retain the limitation and ensure doctor/docs/support claims precisely describe semantic loss.
+Re-check real HEAD/status, then perform deterministic closure from committed canonical sources: regenerate/build, architecture lint, projection receipt parity/idempotence, standalone validator, full controlled suite under writable HOME/XDG, diff check, generated-artifact cleanliness and backup hygiene. Treat a clean post-generation tree as required proof that committed canonical owners deterministically reproduce every generated projection.
 
-Do **not** start P6–P8 in parallel unless P5 investigation proves a narrowly scoped prerequisite. Do not enter real M13/release work without explicit user request.
+Do **not** start P7–P8 until P6 is clean. Do not enter real M13/release work without explicit user request.
 
-When P5 is coherently closed, run focused + justified controlled verification, create a local commit, update this MASTER’s status/next action, and continue to P6.
+When P6 is coherently closed, create the local proof/MASTER checkpoint and continue to P7 only for the OpenCode-bound surfaces actually changed by P0–P5.
