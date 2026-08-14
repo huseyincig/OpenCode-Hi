@@ -20,7 +20,7 @@ test('browser execution is an explicit unsupported host capability until Hi owns
   const cap=hostCapabilityByID(openCodeHostCapabilityContracts(all),'browser-execution')
   assert.equal(cap?.status,'UNSUPPORTED')
   assert.equal(cap?.native_primitive,undefined)
-  assert.match(cap?.forbidden_fake_behavior??'',/OpenCode 1\.18\.16.*MCP\/tool discovery.*no deterministic browser executor\/evidence adapter/i)
+  assert.match(cap?.forbidden_fake_behavior??'',/audited OpenCode host surface.*MCP\/tool discovery.*no deterministic browser executor\/evidence adapter/i)
 })
 
 test('browser and visual methodologies require canonical browser-execution host capability',()=>{
