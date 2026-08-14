@@ -1,10 +1,10 @@
 # 08 — Machine Schema Catalog
 
-Status: SCHEMA ARCHITECTURE V1 CANDIDATE — IMPLEMENTATION PENDING
+Status: ACTIVE SCHEMA RESPONSIBILITY CATALOG — CURRENT IMPLEMENTATION CLASSIFIED
 
 ## Purpose
 
-Define the machine-readable schema architecture that will become the canonical validation layer for component contracts. This document does **not** claim the schemas are implemented yet. It fixes ownership, composition and validation rules before code generation begins.
+Define the machine-readable validation responsibilities for component contracts and derived runtime projections. The original target module tree was architectural guidance, **not a requirement for one file/schema per catalog number**. Current product reality may satisfy a responsibility through an existing strict contract plus referential validation, or classify it as documentary when no machine consumer exists.
 
 ## Schema principles
 
@@ -21,43 +21,7 @@ Define the machine-readable schema architecture that will become the canonical v
 
 ## Target schema modules
 
-Suggested implementation location:
-
-```text
-plugin/src/contracts/
-  common.ts
-  role.ts
-  permission-profile.ts
-  methodology.ts
-  model-capability.ts
-  host-capability.ts
-  config-option.ts
-  task.ts
-  worker.ts
-  execution-plan.ts
-  topology.ts
-  team.ts
-  recovery.ts
-  worker-result.ts
-  evidence.ts
-  verification-envelope.ts
-  review-finding.ts
-  artifact.ts
-  context.ts
-  semantic-context.ts
-  project-intelligence.ts
-  human-decision.ts
-  authority.ts
-  external-action.ts
-  provenance.ts
-  storage-ownership.ts
-  telemetry.ts
-  adr.ts
-  host/
-    opencode-agent-projection.ts
-```
-
-Exact path may change by ADR, but semantic ownership must not collapse back into `mission/types.ts` merely for convenience.
+The original suggested module tree included one file per conceptual responsibility. P4 classification makes that non-prescriptive: standalone files exist only where an independent machine owner/consumer is real. Execution-plan/topology/recovery responsibilities remain validated projections over Mission/Task/Worker runtime state; telemetry is derived diagnostics; architecture decisions remain ADR/process artifacts. Exact path may change by ADR, but semantic ownership must still remain singular and explicit.
 
 ## S00 — common primitives
 
@@ -154,15 +118,15 @@ Current-only runtime validation is owned by canonical TaskContract/WorkerContrac
 
 ## S09 — ExecutionPlanSchema / S10 — TopologySchema / S11 — TeamSchema
 
-- dependency graph references known Task IDs;
-- cycles are invalid unless explicitly modeled as retry/recovery transitions outside the task DAG;
-- topology parallelism is a positive bounded integer;
-- single execution mode implies parallelism 1;
-- Team members reference canonical TaskRuntime tasks/workers rather than defining second-class tasks.
+Current classification is **derived runtime validation**, except S11's strict `TeamContract` projection:
+
+- Mission Task DAG is the ExecutionPlan source; persistence rejects duplicate Task identity, unknown/self dependencies and cycles rather than persisting a second plan object;
+- topology decision is owned by `decideTopology`; MissionState stores the continuation-relevant snapshot; persistence requires positive bounded parallelism and `single => parallelism 1`;
+- TeamContract is strict and process-ephemeral; Team members reference canonical TaskRuntime tasks/workers rather than defining second-class tasks.
 
 ## S12 — RecoverySchema
 
-Old executor reconciliation is mandatory for replacement paths capable of overlapping mutation. Terminal states are explicit. Retry budget is bounded.
+Current classification is **subsumed runtime contract**: WorkerContract recovery/fallback fields plus TaskRuntime/continuation recovery own the machine state. Old executor reconciliation is mandatory for replacement paths capable of overlapping mutation. Terminal states are explicit. Retry budget is bounded. No parallel Recovery persistence schema is required by a current consumer.
 
 ## S13 — WorkerResultSchema
 
@@ -234,9 +198,9 @@ Supports source/revision/hash plus optional per-file hashes. Hash algorithm is e
 
 Every data class has one canonical write owner. `plugin/src/contracts/storage-ownership.ts` is the current machine owner and rejects overlapping `scope + data_class` entries. Path placement is capability/lifecycle based: Hi project policy/provenance/PI/artifacts stay under `.opencode/hi`, project-created methodology capability stays OpenCode-native under `.opencode/skills/hi-project-*`, and Mission survival remains project-keyed OS runtime state. Cleanup does not transfer ownership to the installer.
 
-## S26 — TelemetryEventSchema
+## S26 — TelemetryEventSchema — **NO FIRST-CLASS CURRENT EVENT STORE**
 
-Event payloads are bounded and privacy-classified. Telemetry schemas are append/observation contracts; they do not expose control-authority fields.
+The schema responsibility remains a constraint on any future telemetry event stream: event payloads must be bounded and privacy-classified, append/observation-only, and must not expose control-authority fields. Current Hi does not persist a separate TelemetryEvent entity. Runtime diagnostics derive from bounded Mission ledger/state, and benchmark telemetry is explicitly offline deterministic simulation. This is a deliberate **SUBSUMED / DERIVED DIAGNOSTICS** classification, not an implementation omission.
 
 ## S27 — OpenCodeAgentProjectionSchema
 

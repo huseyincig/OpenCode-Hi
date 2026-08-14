@@ -1,10 +1,10 @@
 # 06 — Component Contract Catalog
 
-Status: CONTRACT SET V1 CANDIDATE — OWNER/EXECUTOR/PROOF DEFINED
+Status: ACTIVE CONTRACT RESPONSIBILITY CATALOG — CURRENT OWNERSHIP CLASSIFIED
 
 ## Purpose
 
-Translate the domain ontology and component metamodel into explicit component contracts. This document defines **what must exist semantically** before machine schemas, generators and host projections can be considered valid.
+Translate the domain ontology and component metamodel into explicit semantic responsibilities. A catalog entry may be implemented as a standalone machine contract, a validated runtime projection over existing canonical state, or a documentary/process owner when no machine consumer exists. This document does **not** require one source file or persisted entity per catalog number.
 
 A contract entry must answer:
 
@@ -298,6 +298,8 @@ completion_gate
 
 This is an actual mission trajectory graph, not a mandatory static workflow catalog.
 
+**Current implementation classification:** **DERIVED / SUBSUMED.** MissionState Task refs/dependencies plus gates, authority/evidence obligations and completion policy are the executable trajectory owner. `RuntimePersistence` validates task identity, same-mission refs, dependency existence/uniqueness and DAG acyclicity fail-closed. A second persisted ExecutionPlan object would duplicate canonical Task/Gate state and is not required by a current consumer.
+
 ### C10 — TopologyContract
 
 **Canonical owner:** topology policy.
@@ -317,6 +319,8 @@ reason
 **Executor:** TaskRuntime scheduler/capacity gates.
 
 **Proof:** actual concurrent dispatch never exceeds topology bound and explicit single-agent cannot produce parallel child dispatch.
+
+**Current implementation classification:** **DERIVED RUNTIME DECISION + SNAPSHOT.** `decideTopology()` owns the full decision (`mode`, execution mode, agent count, parallelism, reason); MissionState persists only the fields needed for continuation/execution, while TaskRuntime/scheduler enforce the decision. Persistence validates bounded positive parallelism and `single => parallelism 1`. `independence_evidence` and `write_safety` remain executable decision/proof inputs from semantic dependency class and parallel-safety checks rather than duplicated stored fields.
 
 ### C11 — TeamContract
 
@@ -357,6 +361,8 @@ created_at
 
 Retry attempts cannot own final failure classification or completion.
 
+**Current implementation classification:** **SUBSUMED by WorkerContract + runtime ledger.** Worker `attempt`, `fallback_history`, recovery counters and failure-classified ledger events preserve the retry trajectory without a second RetryAttempt store.
+
 ### C13 — RecoveryContract
 
 **Canonical owner:** recovery runtime/policy.
@@ -379,6 +385,8 @@ human_escalation_conditions
 ```
 
 **Critical invariant:** replacement execution cannot begin while prior execution ownership remains unresolved when both could mutate the same task scope.
+
+**Current implementation classification:** **SUBSUMED by TaskRuntime/continuation recovery + WorkerContract recovery state.** Failure classifier, bounded recovery policy, abort-confirmed replacement, same-worker identity preservation, terminal blockers and human escalation are executable. No independent Recovery record is needed while these natural owners remain singular.
 
 ### C14 — WorkerResultContract
 
@@ -643,6 +651,8 @@ options?
 
 Hi-only metadata must not leak into host frontmatter.
 
+**Current implementation classification:** **DERIVED / CLOSED.** Canonical role, permission and methodology owners generate `PACKAGED_HI_AGENTS`; `agent-binding.ts` rejects canonical-name semantic drift, and ProjectionReceipts bind generated output to exact source contracts/hashes. No handwritten HostAgentProjection truth is permitted.
+
 ### C26 — ProvenanceRecord
 
 ```text
@@ -679,7 +689,9 @@ The current catalog covers implemented project/runtime durable classes: routing 
 
 Two canonical owners for the same `scope + data_class` are invalid. Project-created methodology skills remain in OpenCode-native `.opencode/skills/hi-project-*`; they are not mirrored under `.opencode/hi`.
 
-### C28 — TelemetryEventContract
+### C28 — TelemetryEventContract — **CURRENTLY SUBSUMED / DERIVED DIAGNOSTICS**
+
+The constitutional responsibility remains: telemetry is observation, never authority, and any future first-class telemetry event stream must use bounded privacy-classified records such as:
 
 ```text
 event_type
@@ -691,9 +703,11 @@ source
 privacy_class
 ```
 
-Telemetry is observation, never authority.
+**Current product reality:** Hi has no independent TelemetryEvent append/store consumer. Operational transitions already live in the bounded Mission ledger; `runtime/ledger/metrics.ts` derives read-only aggregate diagnostics from that canonical state, while `runtime/telemetry/benchmarks.ts` is explicitly deterministic offline policy simulation. Creating a parallel telemetry event store now would duplicate observations without a product consumer. Token/cost telemetry remains unclaimed when the host does not provide it.
 
-### C29 — ArchitectureDecisionContract
+### C29 — ArchitectureDecisionContract — **DOCUMENTARY / PROCESS OWNER**
+
+The durable architecture-decision responsibility is owned by the repository/project ADR convention and the `hi-architecture-decisions` methodology. The conceptual decision shape remains:
 
 ```text
 adr_id
@@ -707,6 +721,8 @@ supersedes/superseded_by
 source_evidence_refs[]
 implementation_refs[]
 ```
+
+**Current product reality:** there is no runtime consumer that requires an ArchitectureDecision machine entity or persistence store. Accepted ADR files/index are human-owned durable rationale; the methodology requires recording decisions in the project's existing convention. A machine `ArchitectureDecisionContract` must not be invented until a real producer/consumer boundary requires one.
 
 ## Referential integrity rules
 

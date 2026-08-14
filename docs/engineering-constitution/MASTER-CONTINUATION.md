@@ -12,19 +12,19 @@ repository: OpenCode-Hi
 repository_root: /workspace/OpenCode-Hi
 coverage_reconciliation_baseline_head: 8ba9eb561332eebc3b6bded90a1c0d2da501d1ed
 active_program: OpenCode-Hi Product Closure after Constitution Migration
-active_phase: P4
-active_phase_name: Residual contract and schema reality closure
+active_phase: P5
+active_phase_name: Host-limited capability release and support decision
 phase_status: OPEN
 working_tree_expectation: clean
 last_verified_full_suite:
-  total: 561
-  pass: 561
+  total: 563
+  pass: 563
   fail: 0
 last_verified_architecture_lint: "PASS rules=21 deferred=0 linked=8"
 last_verified_validator: PASS
 current_projection_receipts: 32
 external_release_actions_authorized: false
-next_contract_owner: residual C/S responsibility audit -> natural owner/consumer classification
+next_contract_owner: HostCapability -> supported OpenCode primitive -> doctor/docs support boundary
 ```
 
 ---
@@ -192,7 +192,7 @@ dc8c59c  test: lock primary model as host-selected
 Current deterministic baseline before this coverage-ledger rewrite:
 
 ```text
-controlled full suite: 561/561 PASS
+controlled full suite: 563/563 PASS
 architecture lint: PASS rules=21 deferred=0 linked=8
 validator: PASS
 projection receipts: 32
@@ -215,8 +215,8 @@ The old schema catalog listed suggested filenames. **Filename parity is not the 
 | C06 / S06 ConfigOption | `data/hi-config-options.json`, `contracts/config-option.ts`, generated defaults | **CLOSED** | 32 leaves, real effect/diagnostic classification, HI003 fatal. |
 | C07 / S07 TaskContract | `contracts/task.ts`, TaskRuntime | **CLOSED** | Task identity/obligations/context/external-action snapshots current-only. |
 | C08 / S08 WorkerContract | `contracts/worker.ts`, TaskRuntime, persistence | **CLOSED for workers** | Includes attempts/recovery/model identity/native diff state. |
-| C09 / S09 ExecutionPlan | Mission tasks + dependencies + gates + obligations + topology form the live trajectory | **SUBSUMED / DERIVED** | Do not create a static workflow catalog. P4 will confirm no missing graph invariant needs a first-class validator. |
-| C10 / S10 Topology | `runtime/execution/topology-policy.ts`, MissionState topology, TaskRuntime scheduler | **CLOSED current execution path** | Explicit single/multi and capacity intersection affect actual dispatch. Permanent invariant. |
+| C09 / S09 ExecutionPlan | Mission Task DAG + dependencies + gates + obligations + topology form the live trajectory | **SUBSUMED / DERIVED — CLOSED** | Persistence now rejects duplicate/unknown/self/cyclic task dependencies; no second plan store is required. |
+| C10 / S10 Topology | `runtime/execution/topology-policy.ts`, MissionState topology, TaskRuntime scheduler | **DERIVED / CLOSED current execution path** | Decision owns agent count/parallelism/reason; persisted snapshot validates bounded parallelism and `single => 1`; scheduler executes it. |
 | C11 / S11 TeamContract | `contracts/team.ts` + `runtime/team/team-runtime.ts` bounded projection over TaskRuntime | **CLOSED current semantics** | Team projection is intentionally process-ephemeral; strict contract binds generation/member Task/role/capacity/terminal state while durable Task/Worker/obligation/evidence identity owns restart continuity. |
 | C12 RetryAttempt | Worker `attempt`, `fallback_history`, recovery ledger/events | **SUBSUMED** | No second RetryAttempt store needed unless a real independent consumer appears. |
 | C13 / S12 RecoveryContract | TaskRuntime provider/stagnation/restart recovery + continuation recovery | **CLOSED operationally / SUBSUMED** | Old-executor abort/reconciliation and bounded fallback are executable; keep role/task identity invariant. |
@@ -231,17 +231,17 @@ The old schema catalog listed suggested filenames. **Filename parity is not the 
 | C22 / S21 HumanDecision | `contracts/human-decision.ts`, runtime owner, persistence | **CLOSED** | Operational/user/authority decisions remain distinct. |
 | C23 / S22 Authority | `contracts/authority.ts`, authority runtime/hooks | **CLOSED** | Exact action hash/scope; generic continuation cannot grant authority. |
 | C24 / S23 ExternalAction | `contracts/external-action.ts`, release/authority command boundary | **CLOSED local architecture** | Real external execution remains authority-bound; T4 not requested. |
-| C25 / S27 HostAgentProjection | role/permission/methodology generators + `opencode/agent-binding.ts` + receipts | **SUBSUMED / CLOSED projection** | No independent handwritten projection truth; P2 still audits `scout` tool-surface drift. |
+| C25 / S27 HostAgentProjection | role/permission/methodology generators + `opencode/agent-binding.ts` + receipts | **SUBSUMED / CLOSED projection** | Generated host surface is source-bound and collision-checked; no independent handwritten projection truth. |
 | C26 / S24 Provenance | `contracts/provenance.ts`, projection/project-methodology/release provenance | **CLOSED** | Provenance does not imply admission. |
 | C27 / S25 StorageOwnership | `data/hi-storage-ownership.json`, contract/resolver/doctor | **CLOSED** | One canonical writer per class; host-native project skills remain outside internal Hi store. |
-| C28 / S26 TelemetryEvent | `runtime/telemetry/execution.ts` + deterministic benchmark simulation | **PARTIAL / OFFLINE** | Metrics library exists, but there is no first-class bounded runtime TelemetryEvent owner/append pipeline. P4 must either add a real consumer/event contract or explicitly reclassify telemetry as offline diagnostics and remove false runtime expectations. |
-| C29 ArchitectureDecision | Engineering Constitution/ADR documentation and `hi-architecture-decisions` methodology | **PARTIAL / DOCUMENTARY** | No machine `ArchitectureDecisionContract` owner exists. P4 decides whether machine-readable ADR state has a real product consumer; if not, classify as documentation/process rather than inventing runtime state. |
+| C28 / S26 TelemetryEvent | bounded Mission ledger/state + `runtime/ledger/metrics.ts`; deterministic benchmarks remain offline simulation | **SUBSUMED / DERIVED DIAGNOSTICS** | No independent event-store consumer exists; metrics are read-only projections and telemetry never owns authority. |
+| C29 ArchitectureDecision | Engineering Constitution/ADR convention + `hi-architecture-decisions` methodology | **DOCUMENTARY / PROCESS — CLOSED classification** | No runtime machine consumer exists; durable rationale stays in project ADR convention rather than invented runtime state. |
 | S00 common primitives | `contracts/common.ts` + shared strict validators | **CLOSED current primitives** | Do not create aliases merely to mirror an old type list. |
-| S26/S27 note | See C28/C25 above | **mixed** | Telemetry remains partial; OpenCode projection is operationally subsumed. |
+| S26/S27 note | See C28/C25 above | **CLOSED classification** | S26 is deliberately derived diagnostics; S27 is generated/receipt-bound host projection. |
 
 ### Important status-banner note
 
-`06-CONTRACT-CATALOG.md` and especially `08-SCHEMA-CATALOG.md` still contain historical headings such as `CANDIDATE` / `IMPLEMENTATION PENDING`. Those headings are **not current implementation status** after M0–M12. This MASTER and the executable proof ledger carry current status. Do not rewrite runtime to match stale banners.
+P4 reconciled the historical `06-CONTRACT-CATALOG.md` / `08-SCHEMA-CATALOG.md` candidate/pending banners to current responsibility classification. The catalogs now distinguish standalone machine contracts from derived/subsumed runtime validation and documentary/process owners; executable repo proof still wins over explanatory text.
 
 ---
 
@@ -279,7 +279,7 @@ This section exists so no requirement from the broad working checkpoint disappea
 | 71–73 | historical checkpoint/local commit discipline/Stage-1 closure | **HISTORICAL + COMMIT DISCIPLINE PERMANENT**. |
 | 74–89 | Stage-2 role/topology/model/host rules and generated/release test boundaries | **mostly CLOSED; remaining items are explicitly enumerated in Section 7 below**. |
 | 90 | explicit blind spots A–N | **mixed** — all A–N are individually classified with source evidence and closure requirements in Section 7 below. |
-| 91–92 | old validation baseline and continuation order | **HISTORICAL**, superseded by 561/561 baseline and current roadmap. |
+| 91–92 | old validation baseline and continuation order | **HISTORICAL**, superseded by 563/563 baseline and current roadmap. |
 | 93 | anti-drift rules | **PERMANENT INVARIANT**, absorbed into Sections 1–3 and verification protocol here. |
 
 ---
@@ -421,7 +421,7 @@ The old stage order remains useful as a product-coverage lens, but later Constit
 | Stage 5 — Human Decision / process / shell / isolation | **PARTIAL / HOST-LIMITED** | HumanDecision and shell policy operational. Process lifecycle DEGRADED; workspace isolation binding UNSUPPORTED. These must remain explicit release/support limitations unless future host support closes them. |
 | Stage 6 — Team / concurrency / crash recovery / fallback | **CLOSED current semantics** | Team is a strict process-ephemeral projection over durable Task/Worker state; restart reconciliation, concurrency, fallback and semantic generation behavior are deterministic. |
 | Stage 7 — Storage / setup / docs / packaging / release architecture | **CLOSED local architecture, docs-status residue** | Storage/provenance/release guards operational locally. Historical 06/08 status banners are stale. No real release authority. |
-| Stage 8 — independent subsystem/integration tests | **CLOSED current T1/T2 baseline** | 561/561 controlled suite plus architecture lint/validator. Tests remain evidence, not sole product proof. |
+| Stage 8 — independent subsystem/integration tests | **CLOSED current T1/T2 baseline** | 563/563 controlled suite plus architecture lint/validator. Tests remain evidence, not sole product proof. |
 | Stage 9 — Linux/OpenCode representative real-host acceptance | **PASS_MATERIAL_WITH_LIMITATIONS** | M12 OpenCode 1.18.16/aarch64 verified material primitives; process DEGRADED, workspace UNSUPPORTED, one independent-review terminal scenario was harness/model-behavior incomplete. Re-run targeted T3 after host-bound changes. |
 | Stage 10 — real release/publication acceptance | **NOT REQUESTED** | Requires explicit user authority and T4 receipts. |
 
@@ -514,23 +514,23 @@ Closure:
 
 Exit satisfied: restart does not silently recreate a weaker unrelated Team trajectory and does not leave old executor ownership unquarantined.
 
-### P4 — Residual contract/schema reality closure
+### P4 — Residual contract/schema reality closure — **CLOSED at `b2a097a` + classification checkpoint**
 
-This is **not** “create every missing file from the old suggested tree.” For each residual C/S class, first prove whether it has a material independent owner/consumer.
+Closure classification:
 
-Audit explicitly:
+- C09/S09 ExecutionPlan is the live Mission Task DAG/gates/authority/evidence trajectory, not a second workflow object; P4 added fail-closed persisted Task identity/dependency/DAG validation;
+- C10/S10 Topology is a derived `decideTopology()` decision plus continuation-relevant Mission snapshot; persistence now validates bounded parallelism and `single => 1`;
+- C11/S11 Team remains the strict ephemeral TaskRuntime projection closed in P3;
+- C12 RetryAttempt is subsumed by Worker attempt/fallback/recovery state plus ledger;
+- C13/S12 Recovery is subsumed by TaskRuntime/continuation recovery and Worker recovery fields with abort/reconciliation invariants;
+- C25/S27 HostAgentProjection is generated, source-receipt-bound and collision-checked; no handwritten host truth exists;
+- C28/S26 TelemetryEvent is deliberately **SUBSUMED / DERIVED DIAGNOSTICS**: bounded Mission ledger/state is canonical operational history and `hi_metrics` derives read-only metrics; benchmark telemetry remains explicitly offline simulation;
+- C29 ArchitectureDecision is deliberately **DOCUMENTARY / PROCESS**: ADR/project convention plus `hi-architecture-decisions` methodology owns durable rationale; no runtime machine consumer justifies a second persisted entity;
+- stale `06`/`08` candidate/implementation-pending banners and target-file-tree implications were reconciled to current ownership classification.
 
-- C09/S09 ExecutionPlan — confirm dynamic Mission Task DAG/gates is sufficient derived owner;
-- C10/S10 Topology — confirm current snapshot/validator boundary is sufficient;
-- C11/S11 Team — closed by P3; confirm residual catalog/banner classification only, do not reopen runtime semantics without contradictory evidence;
-- C12 RetryAttempt — confirm Worker attempt/fallback ledger remains natural owner;
-- C13/S12 Recovery — confirm TaskRuntime/continuation recovery has no duplicate/missing owner;
-- C25/S27 HostAgentProjection — confirm generator/receipt/agent-binding fully covers host projection schema;
-- C28/S26 TelemetryEvent — either build a real bounded privacy-classified runtime event owner/consumer or explicitly reclassify telemetry as offline diagnostics and update constitutional expectations;
-- C29 ArchitectureDecision — either define a real machine consumer/storage contract or classify ADR as documentation/process + methodology output instead of inventing state;
-- stale `06`/`08` implementation-status banners — update explanatory docs only after the above classifications are settled.
+Proof: focused trajectory/topology set 44/44 PASS; full controlled suite **563/563 PASS**; architecture lint 21 rules / deferred=0; validator PASS; diff check clean; backup count 0.
 
-Exit: every C01–C29/S00–S27 responsibility is either executable, deliberately derived/subsumed, documentary, host-limited, or explicitly unsupported — none is “missing by accident.”
+Exit satisfied: every C01–C29/S00–S27 responsibility is executable, deliberately derived/subsumed, documentary, host-limited, or explicitly unsupported — none remains missing by accident.
 
 ### P5 — Host-limited capability release/support decision
 
@@ -673,10 +673,10 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**Start P4 only.**
+**Start P5 only.**
 
-Re-check real HEAD/status, then audit the residual C/S responsibility set from Section 10 against current canonical owners and real consumers before creating any new state or module. Confirm derived/subsumed responsibilities where the existing owner is sufficient; implement only a responsibility that has a proven missing producer/consumer/executor chain. Explicitly classify C28/S26 TelemetryEvent and C29 ArchitectureDecision rather than inventing machine state without a product consumer.
+Re-check real HEAD/status, then reassess the remaining host-limited capability claims against the exact supported OpenCode 1.18.16 primitive surface: process lifecycle (`DEGRADED`), workspace isolation binding (`UNSUPPORTED`), and browser execution (`UNSUPPORTED`). Do not implement or emulate a capability merely to remove a limitation; first prove a real native primitive + deterministic adapter path and verify that it preserves Hi ownership/safety semantics. Otherwise retain the limitation and ensure doctor/docs/support claims precisely describe semantic loss.
 
-Do **not** start P5–P8 in parallel unless P4 investigation proves a narrowly scoped prerequisite. Do not enter real M13/release work without explicit user request.
+Do **not** start P6–P8 in parallel unless P5 investigation proves a narrowly scoped prerequisite. Do not enter real M13/release work without explicit user request.
 
-When P4 is coherently closed, run focused + justified controlled verification, create a local commit, update this MASTER’s status/next action, and continue to P5.
+When P5 is coherently closed, run focused + justified controlled verification, create a local commit, update this MASTER’s status/next action, and continue to P6.

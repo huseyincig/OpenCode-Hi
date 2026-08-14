@@ -71,8 +71,8 @@ Not every class needs a generated Markdown file. Every class does need a clearly
 - `HostAgentProjectionContract`
 - `ProvenanceRecord`
 - `StorageOwnershipContract`
-- `TelemetryEventContract`
-- `ArchitectureDecisionContract`
+- telemetry/metrics observation responsibility — currently derived from bounded Mission ledger/state; no independent event store
+- architecture-decision responsibility — currently durable ADR/project-convention process, not runtime state
 
 ## Core legal dependency graph
 

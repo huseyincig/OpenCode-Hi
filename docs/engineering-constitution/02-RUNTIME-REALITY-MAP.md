@@ -62,7 +62,7 @@ This makes `MissionState` the runtime aggregate, but it should **not** become th
 | Team | `runtime/team/team-runtime.ts` | parent explicit team create/member ops | canonical TaskRuntime workers | RUNTIME_WIRED; bounded worker group only |
 | Team messaging/board | removed | none | none | RETIRED because no executor |
 | Recovery | TaskRuntime continuation/fallback/recovery | failure classification + evidence | same worker/session or confirmed-abort fresh child | HOST_BOUND; fallback now abort-confirmed |
-| Telemetry/ledger | runtime ledger/events/telemetry | all major policy/runtime transitions | diagnostics/recovery/tests | RUNTIME_WIRED |
+| Ledger / derived metrics | bounded Mission ledger/state + `runtime/ledger/metrics.ts`; deterministic benchmark helpers are offline simulation | runtime policy transitions / canonical Mission state | diagnostics/recovery/tests/`hi_metrics` | RUNTIME_WIRED as derived diagnostics; no independent TelemetryEvent store or authority |
 | Persistence | `runtime/state/persistence.ts` + MissionStore restore | MissionState | restart/resume | RUNTIME_WIRED, exact current schema |
 | Doctor | `plugin/src/doctor/*` | config/runtime/host inspection | user diagnostics | RUNTIME_WIRED but not execution owner |
 | Setup CLI | `scripts/native_plugin_setup.py` | user setup choices | writes materialized policy/config | setup owner only; must not impersonate runtime decision owner |
