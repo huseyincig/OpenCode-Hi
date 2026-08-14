@@ -55,6 +55,6 @@ def main():
             if a in x:y[b]=x[a]
         norm.append(y)
     OUT.parent.mkdir(parents=True,exist_ok=True)
-    OUT.write_text('/* generated from data/hi-config-options.json; do not hand edit */\n'+f'export const HI_CONFIG_OPTIONS = {json.dumps(norm,separators=(",",":"),ensure_ascii=False)} as const\n'+f'export const HI_CONFIG_DEFAULTS = {json.dumps(defaults,separators=(",",":"),ensure_ascii=False)} as const\n',encoding='utf8')
+    OUT.write_bytes(('/* generated from data/hi-config-options.json; do not hand edit */\n'+f'export const HI_CONFIG_OPTIONS = {json.dumps(norm,separators=(",",":"),ensure_ascii=False)} as const\n'+f'export const HI_CONFIG_DEFAULTS = {json.dumps(defaults,separators=(",",":"),ensure_ascii=False)} as const\n').encode('utf-8'))
     print(f'generated {len(items)} config options -> {OUT.relative_to(ROOT)}')
 if __name__=='__main__':main()

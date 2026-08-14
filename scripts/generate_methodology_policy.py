@@ -127,7 +127,7 @@ def main():
     exit_catalog_payload=json.dumps(exit_requirement_catalog,ensure_ascii=False,sort_keys=True,separators=(',',':'))
     signal_payload=json.dumps(signal_catalog,ensure_ascii=False,sort_keys=True,separators=(',',':'))
     OUT.parent.mkdir(parents=True,exist_ok=True)
-    OUT.write_text(
+    output_text=(
         '/* generated from data/hi-methodologies.json; SKILL.md mechanical sections are generated projections; do not hand edit */\n'
         + f'export const HI_METHODOLOGY_SIGNAL_CATALOG = {signal_payload} as const\n'
         + "export type HiMethodologySignalName = keyof typeof HI_METHODOLOGY_SIGNAL_CATALOG\n"
@@ -140,9 +140,9 @@ def main():
         + f'export const HI_METHODOLOGY_EXIT_REQUIREMENTS = {exit_payload} as const\n'
         + "export type HiMethodologyExitRequirement = typeof HI_METHODOLOGY_EXIT_REQUIREMENTS[number]\n"
         + f'export const HI_METHODOLOGY_POLICY = {payload} as const\n'
-        + "export type HiMethodologyName = typeof HI_METHODOLOGY_POLICY[number]['name']\n",
-        encoding='utf-8',
+        + "export type HiMethodologyName = typeof HI_METHODOLOGY_POLICY[number]['name']\n"
     )
+    OUT.write_bytes(output_text.encode('utf-8'))
     print(f'generated {len(normalized)} methodologies -> {OUT.relative_to(ROOT)}')
 
 if __name__=='__main__': main()

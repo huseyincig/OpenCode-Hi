@@ -75,8 +75,8 @@ def main():
         agents[path.stem]=fm
     OUT.parent.mkdir(parents=True,exist_ok=True)
     payload=json.dumps(agents,ensure_ascii=False,sort_keys=True,separators=(',',':'))
-    OUT.write_text('/* generated from data/hi-roles.json + data/hi-permission-profiles.json + data/hi-methodologies.json + roles/*.md by scripts/generate_plugin_agents.py; do not hand edit */\n'
-                   f'export const PACKAGED_HI_AGENTS = {payload} as const\n',encoding='utf-8')
+    OUT.write_bytes(('/* generated from data/hi-roles.json + data/hi-permission-profiles.json + data/hi-methodologies.json + roles/*.md by scripts/generate_plugin_agents.py; do not hand edit */\n'
+                   f'export const PACKAGED_HI_AGENTS = {payload} as const\n').encode('utf-8'))
     print(f'generated {len(agents)} agents -> {OUT.relative_to(ROOT)}')
 
 if __name__=='__main__': main()

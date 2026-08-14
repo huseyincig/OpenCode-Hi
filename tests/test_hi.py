@@ -105,6 +105,15 @@ def _build(tmp_path):
     out=tmp_path/'dist';src=tmp_path/'source';r=run(ROOT/'scripts/release-build.py','--out',out,'--source-out',src);assert r.returncode==0,r.stderr
     return out/f'OpenCode-Hi-{V}-DISTRIBUTABLE.zip',src/f'OpenCode-Hi-{V}-SOURCE.zip'
 
+def test_canonical_generators_write_platform_stable_lf_bytes():
+    generators=['generate_config_policy.py','generate_methodology_policy.py','generate_methodology_skills.py','generate_permission_policy.py','generate_plugin_agents.py','generate_role_policy.py']
+    for name in generators:
+        text=(ROOT/'scripts'/name).read_text()
+        assert '.write_bytes(' in text, name
+        assert '.write_text(' not in text, name
+    receipt=(ROOT/'scripts/projection_receipts.mjs').read_text()
+    assert "replace(/\\r\\n?/g,'\\n')" in receipt
+
 def test_node_release_scripts_use_platform_safe_file_url_paths():
     for rel in ['scripts/generate_projection_receipts.mjs','scripts/architecture_lint.mjs']:
         text=(ROOT/rel).read_text()

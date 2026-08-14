@@ -51,7 +51,7 @@ def main():
         key=re.sub(r'\s+',' ',method).strip().lower()
         if key in methods: fail(f'duplicate Method body: {methods[key]} and {profile["name"]}')
         methods[key]=profile['name']
-        path.write_text(render(profile,title,method),encoding='utf-8')
+        path.write_bytes(render(profile,title,method).encode('utf-8'))
     print(f'generated {len(profiles)} methodology skill projections')
 
 if __name__=='__main__': main()

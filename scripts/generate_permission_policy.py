@@ -62,6 +62,6 @@ def main():
     } for p in profiles]
     payload=json.dumps(normalized,ensure_ascii=False,separators=(',',':'))
     OUT.parent.mkdir(parents=True,exist_ok=True)
-    OUT.write_text('/* generated from data/hi-permission-profiles.json; do not hand edit */\n'+f'export const HI_PERMISSION_PROFILES = {payload} as const\n'+"export type HiPermissionProfileID = typeof HI_PERMISSION_PROFILES[number]['id']\n",encoding='utf-8')
+    OUT.write_bytes(('/* generated from data/hi-permission-profiles.json; do not hand edit */\n'+f'export const HI_PERMISSION_PROFILES = {payload} as const\n'+"export type HiPermissionProfileID = typeof HI_PERMISSION_PROFILES[number]['id']\n").encode('utf-8'))
     print(f'generated {len(profiles)} permission profiles -> {OUT.relative_to(ROOT)}')
 if __name__=='__main__': main()

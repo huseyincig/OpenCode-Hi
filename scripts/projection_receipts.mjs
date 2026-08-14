@@ -3,7 +3,7 @@ import {join,relative} from 'node:path'
 import {createProjectionReceipt} from '../plugin/dist/contracts/provenance.js'
 
 const json=p=>JSON.parse(readFileSync(p,'utf8'))
-const text=p=>readFileSync(p,'utf8')
+const text=p=>readFileSync(p,'utf8').replace(/\r\n?/g,'\n')
 const rel=(root,p)=>relative(root,p).replaceAll('\\','/')
 
 function skillAuthored(path){

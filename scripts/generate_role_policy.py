@@ -78,6 +78,6 @@ def main():
       "export type HiRoleContract = typeof HI_ROLE_CONTRACTS[number]",
       ''
     ]
-    OUT.parent.mkdir(parents=True,exist_ok=True);OUT.write_text('\n'.join(lines),encoding='utf-8')
+    OUT.parent.mkdir(parents=True,exist_ok=True);OUT.write_bytes('\n'.join(lines).encode('utf-8'))
     print(f'generated {len(roles)} role contracts -> {OUT.relative_to(ROOT)}')
 if __name__=='__main__': main()
