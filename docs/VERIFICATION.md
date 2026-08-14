@@ -7,6 +7,8 @@ Current local acceptance covers adaptive execution/topology, mission completion/
 
 ## Current 0.1.0 receipts
 
+- `data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-bc85854.json`: exact-source OpenCode 1.18.18 P3 process lifecycle T3 receipt bound to `bc8585496e93b294d43f1a25a66117faa28524f0`; workspace/browser remain unsupported.
+
 - `data/validation/benchmarks-0.1.0.json`: nine deterministic execution-policy scenarios.
 - `data/validation/install-lifecycle-0.1.0.json`: local plan/install/doctor/reconfigure/uninstall lifecycle with unrelated user configuration preserved.
 - `data/validation/architecture-audit-0.1.0.json`: final architecture-invariant audit.

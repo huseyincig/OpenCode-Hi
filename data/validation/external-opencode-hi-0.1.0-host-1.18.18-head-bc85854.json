@@ -1,0 +1,148 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "generated_at": "2026-08-15",
+  "status": "PASS_EXACT_SOURCE_PROCESS_LIFECYCLE_T3",
+  "source_binding": {
+    "tested_git_commit": "bc8585496e93b294d43f1a25a66117faa28524f0",
+    "tested_git_tree": "9e9ff04be720cf452845dd84346c04dfd9d4f311",
+    "worktree": "/workspace/OpenCode-Hi",
+    "state": "CLEAN_COMMITTED_SOURCE",
+    "exact_candidate": true,
+    "runtime_hashes": {
+      "plugin/dist/plugin.js": "88317655682fcad7e83348b2a1b085661f9bdcec3da74f0791fe53ec5e0049f7",
+      "plugin/dist/opencode/open-code-pty-adapter.js": "d0b2dff9fe1a192bae8e1e6a6fd2de71b44bea4378e95dde919049179734138f",
+      "plugin/src/plugin.ts": "49503b7d332abfb0b7cf77d264055c8da8c131273ff5bb2821eb9103eb80a583",
+      "plugin/src/opencode/open-code-pty-adapter.ts": "9deaf81f8a56cafed198f91f05d5f0a7478402198de7b52e941d7797b9804247",
+      "plugin/src/runtime/process/executor.ts": "5aae50e989d6a047afcc1a33b04aaefbff669a8f4b191e60bc7975885cca4ecd",
+      "plugin/src/runtime/process/runtime.ts": "a0e48e9de3595a858517688afd742ce93bc65b07f7a52edfb301d555b1c9cb4f",
+      "plugin/src/runtime/process/authority.ts": "c9e47bee821cced0ae282f388e0561e0b06c6eddc34ffc9ad5ec9f8c1249714f",
+      "plugin/src/contracts/process.ts": "baa22ab538d5b0e16c09d2f5234d8fa13253881a608e3fbb6102833adff963fd",
+      "plugin/src/contracts/host-capability.ts": "35e5697e2c082f5e1ccfd5f92d0d603f027d508f1db55297ca324f2d579a59ff",
+      "plugin/src/runtime/host/capability-manifest.ts": "600b31a04e746a44021519e3a07fa8faee33af27f892d2f60aec36433bfc83d9"
+    },
+    "note": "Receipt is committed after the tested runtime source. Evidence is bound only to tested_git_commit/tree above; receipt/MASTER-only commits do not promote evidence across later runtime source changes."
+  },
+  "host": {
+    "os": "linux",
+    "arch": "aarch64",
+    "opencode_version": "1.18.18",
+    "plugin_package_version": "1.18.18",
+    "sdk_package_version": "1.18.18",
+    "fixture_project": "/tmp/hi-p3-t3/project",
+    "plugin_spec": "file:///workspace/OpenCode-Hi/plugin/dist/plugin.js",
+    "provider_used": "opencode-go"
+  },
+  "gates": {
+    "native_plugin_loader": "PASS_T3",
+    "process_spawn_pid": "PASS_T3",
+    "process_stdin_write": "PASS_T3",
+    "process_bounded_read": "PASS_T3",
+    "process_wait_native_exit": "PASS_T3",
+    "process_exit_zero": "PASS_T3",
+    "process_exit_nonzero": "PASS_T3",
+    "process_timeout": "PASS_T3",
+    "process_kill": "PASS_T3",
+    "process_cleanup_separate": "PASS_T3",
+    "process_restart_adoption": "PASS_T3",
+    "process_orphan_quarantine": "PASS_T3",
+    "process_stale_pid_protection": "PASS_T3",
+    "native_permission_once": "PASS_T3",
+    "native_permission_ephemeral": "PASS_T3",
+    "semantic_user_stop": "PASS_T3",
+    "process_lifecycle": "SUPPORTED_T3",
+    "workspace_isolation_binding": "UNSUPPORTED",
+    "browser_execution": "UNSUPPORTED"
+  },
+  "evidence": {
+    "deterministic_source_baseline": {
+      "full_suite": "684/684 PASS",
+      "architecture_lint": "PASS rules=22 deferred=0 linked=8",
+      "validator": "PASS product=HI docs=26",
+      "naming_namespace": "PASS",
+      "generated_idempotency": "clean",
+      "backup_count": 0,
+      "checkpoint_commit": "bc8585496e93b294d43f1a25a66117faa28524f0"
+    },
+    "direct_process_lifecycle": {
+      "spawn": {
+        "status": "RUNNING",
+        "pid_observed": true
+      },
+      "stdin_wait_exit": {
+        "status": "EXITED",
+        "exit_code": 0,
+        "observed_text": "IN:hello"
+      },
+      "nonzero": {
+        "status": "EXITED",
+        "exit_code": 7,
+        "observed_text": "boom"
+      },
+      "timeout": {
+        "status": "TIMED_OUT",
+        "termination_reason": "timeout-policy"
+      },
+      "kill_cleanup": {
+        "status": "TERMINATED",
+        "pre_cleanup": "ACTIVE",
+        "before_cleanup": "CLEANUP_PENDING",
+        "listed_after_cleanup": false
+      },
+      "bounded_read": {
+        "chars": 64,
+        "truncated": true,
+        "available_end_cursor": 5002,
+        "end_cursor": 64
+      }
+    },
+    "restart_reconciliation": {
+      "disposition": "ADOPTED",
+      "same_pid": true,
+      "write_read_after_adoption": true,
+      "status_after_kill": "TERMINATED",
+      "cleanup_pending_before_cleanup": "CLEANUP_PENDING",
+      "listed_after_cleanup": 0,
+      "identity": "PID + cwd + native command identity"
+    },
+    "permission_runtime": {
+      "permission": "bash",
+      "pattern": "sh -lc 'sleep 120'",
+      "metadata_source": "hi-process-executor",
+      "permission_asked_observed": true,
+      "response": "once",
+      "response_body": true,
+      "spawn_status_after_once": "RUNNING",
+      "persistent_widening_observed": false
+    },
+    "semantic_stop": {
+      "mission_id": "m_msthl8uq_wy7vk6tc",
+      "session_id": "ses_ffdb95b88ffeug9bHN6zYTUV1o",
+      "mission_status": "stopped",
+      "user_interrupted": true,
+      "interrupted_reason": "semantic-user-stop",
+      "process_id": "proc_1b932caf32664fa7d9ca2591",
+      "pid": 23815,
+      "process_status": "TERMINATED",
+      "cleanup_state": "CLEANED",
+      "termination_reason": "signal:SIGTERM",
+      "worker_status": "cancelled",
+      "task_status": "cancelled",
+      "canonical_api_pty_list_after_stop": []
+    }
+  },
+  "limitations": [
+    "Support applies to the Hi-owned process lifecycle surface; arbitrary native model-facing bash jobs outside Hi ProcessContract ownership are not retroactively owned.",
+    "workspace-isolation-binding remains UNSUPPORTED until W1/W2/W3 provide canonical isolation ownership, adapter binding and exact T3 proof.",
+    "browser-execution remains UNSUPPORTED until B1/B2/B3 provide deterministic executor/evidence ownership and exact T3 proof."
+  ],
+  "release_authority": {
+    "push": false,
+    "tag": false,
+    "release": false,
+    "publish": false,
+    "deploy": false,
+    "p8_m13": "NOT_REQUESTED"
+  },
+  "rule": "This receipt is T3 host evidence for the exact tested source bc8585496e93b294d43f1a25a66117faa28524f0 and OpenCode 1.18.18 only. A later OpenCode host or runtime-source change requires reacceptance before equivalent claims are promoted."
+}

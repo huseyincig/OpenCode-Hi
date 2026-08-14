@@ -214,8 +214,8 @@
       "evidence": [
         {
           "tier": "T3",
-          "receipt": "data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-c5d8287.json",
-          "contains": "process-lifecycle"
+          "receipt": "data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-bc85854.json",
+          "contains": "process_orphan_quarantine"
         }
       ]
     },
