@@ -1,19 +1,12 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { hiProjectRoot, projectIntelligencePath } from '../storage/ownership.js'
+import { existsSync,mkdirSync,readFileSync,readdirSync,writeFileSync } from 'node:fs'
+import { dirname,join } from 'node:path'
+import { isProjectIntelligenceContract,projectIntelligenceFiles,type ProjectIntelligenceConsumer,type ProjectIntelligenceContract } from '../../contracts/project-intelligence.js'
+import { hiProjectRoot,projectIntelligencePath } from '../storage/ownership.js'
 
-export type ProjectPatternLifecycle='ACTIVE'|'SUPERSEDED'|'ARCHIVED'
-export type ProjectPatternFreshness='FRESH'|'POTENTIALLY_STALE'
-export interface ProjectPattern{id:string;statement:string;sourceFiles:string[];sourceHashes:Record<string,string>;observedCommit?:string;confidence:number;freshness:ProjectPatternFreshness;lifecycle:ProjectPatternLifecycle;updatedAt:number}
-
-function validPattern(raw:unknown):raw is ProjectPattern{
-  if(!raw||typeof raw!=='object'||Array.isArray(raw))return false
-  const v=raw as Record<string,unknown>
-  return typeof v.id==='string'&&typeof v.statement==='string'&&Array.isArray(v.sourceFiles)&&v.sourceFiles.every(x=>typeof x==='string')&&Boolean(v.sourceHashes)&&typeof v.sourceHashes==='object'&&!Array.isArray(v.sourceHashes)&&Object.values(v.sourceHashes as Record<string,unknown>).every(x=>typeof x==='string')&&typeof v.confidence==='number'&&['FRESH','POTENTIALLY_STALE'].includes(String(v.freshness))&&['ACTIVE','SUPERSEDED','ARCHIVED'].includes(String(v.lifecycle))&&typeof v.updatedAt==='number'
-}
+function clone(item:ProjectIntelligenceContract):ProjectIntelligenceContract{return{...item,source_refs:item.source_refs.map(x=>({...x})),consumer_domains:[...item.consumer_domains]}}
 
 export class ProjectIntelligenceStore{
-  readonly #patterns=new Map<string,ProjectPattern>()
+  readonly #patterns=new Map<string,ProjectIntelligenceContract>()
   constructor(readonly projectRoot?:string){this.#load()}
   #load():void{
     if(!this.projectRoot)return
@@ -21,13 +14,23 @@ export class ProjectIntelligenceStore{
     if(!existsSync(dir))return
     for(const entry of readdirSync(dir,{withFileTypes:true})){
       if(!entry.isFile()||!entry.name.endsWith('.json'))continue
-      try{const raw=JSON.parse(readFileSync(join(dir,entry.name),'utf8'));if(validPattern(raw)&&entry.name===`${raw.id}.json`)this.#patterns.set(raw.id,{...raw,sourceFiles:[...raw.sourceFiles],sourceHashes:{...raw.sourceHashes}})}catch{}
+      try{const raw=JSON.parse(readFileSync(join(dir,entry.name),'utf8'));if(isProjectIntelligenceContract(raw)&&entry.name===`${raw.id}.json`)this.#patterns.set(raw.id,clone(raw))}catch{}
     }
   }
-  #persist(pattern:ProjectPattern):void{if(!this.projectRoot)return;const path=projectIntelligencePath(this.projectRoot,pattern.id);mkdirSync(dirname(path),{recursive:true});writeFileSync(path,JSON.stringify(pattern,null,2)+'\n','utf8')}
-  upsert(pattern:ProjectPattern):void{const copy={...pattern,sourceFiles:[...pattern.sourceFiles],sourceHashes:{...pattern.sourceHashes}};this.#patterns.set(pattern.id,copy);this.#persist(copy)}
-  get(id:string):ProjectPattern|undefined{const p=this.#patterns.get(id);return p?{...p,sourceFiles:[...p.sourceFiles],sourceHashes:{...p.sourceHashes}}:undefined}
-  relevantToFiles(files:string[],limit=6):ProjectPattern[]{const wanted=new Set(files);return[...this.#patterns.values()].filter(p=>p.lifecycle==='ACTIVE'&&p.freshness==='FRESH'&&p.sourceFiles.some(f=>wanted.has(f))).sort((a,b)=>b.confidence-a.confidence||b.updatedAt-a.updatedAt).slice(0,limit).map(p=>({...p,sourceFiles:[...p.sourceFiles],sourceHashes:{...p.sourceHashes}}))}
-  invalidateChanged(changedFiles:string[],currentHashes:Record<string,string>={}):string[]{const changed=new Set(changedFiles),invalidated:string[]=[];for(const p of this.#patterns.values()){const touched=p.sourceFiles.some(f=>changed.has(f)||currentHashes[f]!==undefined&&p.sourceHashes[f]!==currentHashes[f]);if(touched&&p.freshness==='FRESH'){p.freshness='POTENTIALLY_STALE';p.updatedAt=Date.now();this.#persist(p);invalidated.push(p.id)}}return invalidated}
-  all():ProjectPattern[]{return[...this.#patterns.values()].map(p=>({...p,sourceFiles:[...p.sourceFiles],sourceHashes:{...p.sourceHashes}}))}
+  #persist(item:ProjectIntelligenceContract):void{if(!this.projectRoot)return;const path=projectIntelligencePath(this.projectRoot,item.id);mkdirSync(dirname(path),{recursive:true});writeFileSync(path,JSON.stringify(item,null,2)+'\n','utf8')}
+  upsert(item:ProjectIntelligenceContract):void{if(!isProjectIntelligenceContract(item))throw new Error('Invalid ProjectIntelligenceContract');const copy=clone(item);this.#patterns.set(item.id,copy);this.#persist(copy)}
+  get(id:string):ProjectIntelligenceContract|undefined{const item=this.#patterns.get(id);return item?clone(item):undefined}
+  relevantToFiles(files:string[],consumer:ProjectIntelligenceConsumer='task-context',limit=6):ProjectIntelligenceContract[]{
+    const wanted=new Set(files)
+    return[...this.#patterns.values()].filter(item=>item.lifecycle==='ACTIVE'&&item.freshness==='FRESH'&&item.consumer_domains.includes(consumer)&&projectIntelligenceFiles(item).some(file=>wanted.has(file))).sort((a,b)=>b.confidence-a.confidence||b.updated_at-a.updated_at).slice(0,limit).map(clone)
+  }
+  invalidateChanged(changedFiles:string[],currentHashes:Record<string,string>={}):string[]{
+    const changed=new Set(changedFiles),invalidated:string[]=[]
+    for(const item of this.#patterns.values()){
+      const touched=item.source_refs.some(source=>{const file=source.ref.slice(5);return changed.has(file)||(currentHashes[file]!==undefined&&source.hash!==currentHashes[file])})
+      if(touched&&item.freshness==='FRESH'){item.freshness='POTENTIALLY_STALE';item.updated_at=Date.now();this.#persist(item);invalidated.push(item.id)}
+    }
+    return invalidated
+  }
+  all():ProjectIntelligenceContract[]{return[...this.#patterns.values()].map(clone)}
 }

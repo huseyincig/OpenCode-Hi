@@ -53,7 +53,7 @@ Rows below are intentionally `PENDING` until code exists.
 | M6 | Model capability/identity | ModelCapabilityProfile host-inventory normalization + identity reconciler + effective-model evidence; focused 17/17 PASS; controlled full suite 475/475 PASS; validator PASS | T1/T2 | `e7c3c96`; requested/projected WorkerState snapshot wiring blocked by SentinelX mutation policy; no unwired state committed | PARTIAL_PASS |
 | M7 | Host capability registry | 16 contract-backed OpenCode capabilities; product runtime gates consume worker-runtime/session-revert contracts; doctor reports status/verification/semantic loss; focused 43/43 PASS; controlled full suite 480/480 PASS; validator PASS | T1/T2 local; T3 still pending | `390cc2b` | PASS_LOCAL — REAL-HOST ACCEPTANCE PENDING |
 | M8 | Task/Worker/Result/Evidence contracts | WorkerResult, EvidenceItem, ReviewFinding, derived VerificationEnvelope, TaskContract and WorkerContract now have canonical runtime owners; persistence consumes canonical validators; task mission/external-action identity is explicit; worker attempt/recovery/effective-model lifecycle is fail-closed; latest focused Task/Worker set 21/21 PASS and controlled full suite 507/507 PASS; validator PASS | T1/T2 | WorkerResult `4ea320d`; Evidence `3044b94`; ReviewFinding `b120f49`; VerificationEnvelope `a4b1105`; Task/Worker `77f9dc1` | PASS — CONTRACT OWNERSHIP CLOSED |
-| M9 | Context/Artifact/PI/Human/Authority/Storage | ArtifactContract + ContextReferenceContract + derived SemanticContextContract operational; SemanticContext binds safe live source ref/hash, exact Task consumer, exact source ranges and bounded handoff projection; focused semantic/context/core set 31/31 PASS; controlled full suite 517/517 PASS; validator PASS | T1/T2 | Artifact `811ee7f`; ContextReference `3e8ab72`; SemanticContext `b7e51cc` | PARTIAL_PASS — PI/HUMAN/AUTHORITY/STORAGE REMAIN |
+| M9 | Context/Artifact/PI/Human/Authority/Storage | ArtifactContract + ContextReferenceContract + derived SemanticContextContract + ProjectIntelligenceContract operational; PI is strict source-linked fact/pattern state with explicit consumer domain and no evidence/methodology/control conflation; focused PI/SemanticContext/methodology set 59/59 PASS; controlled full suite 521/521 PASS; validator PASS | T1/T2 | Artifact `811ee7f`; ContextReference `3e8ab72`; SemanticContext `b7e51cc`; PI commit pending | PARTIAL_PASS — HUMAN/AUTHORITY/STORAGE REMAIN |
 | M10 | common generator/lint closure | BA12 + HI001–HI020 migrated rules | T0/T1/T2 | — | PENDING |
 | M11 | deterministic full closure | build + validator + full controlled suite | T0/T1/T2 | — | PENDING |
 | M12 | real-host acceptance | OpenCode version-bound native receipts | T3 | — | PENDING |
@@ -107,6 +107,22 @@ Implemented and verified:
 - forged IDs, forged ranges, unknown fields, unsafe source refs, unresolved relationship symbols and budget drift fail closed.
 
 Evidence: focused SemanticContext/context/core suite 31/31 PASS; controlled isolated-HOME/XDG full suite 517/517 PASS; validator PASS; diff check clean; backup count 0. ProjectIntelligence/HumanDecision/Authority/Storage remain open under M9.
+
+
+### M9 ProjectIntelligenceContract checkpoint
+
+Implemented and verified:
+
+- added canonical `ProjectIntelligenceContract` owning project fact/pattern state rather than a generic memory union;
+- replaced parallel `sourceFiles[] + sourceHashes{}` truth with bounded `source_refs[]` records containing safe project-relative `file:` refs and exact SHA-256 hashes;
+- centralized safe project-file source-ref syntax in the common contract primitive consumed by both SemanticContext and Project Intelligence;
+- confidence is bounded to `[0,1]`; freshness, lifecycle, consumer domains and update time are explicit; unknown fields, duplicate refs, unsafe paths and malformed hashes fail closed;
+- `ProjectIntelligenceStore` persists/loads only the canonical current contract and rejects invalid upserts instead of silently accepting malformed state;
+- TaskRuntime requests PI specifically for the `task-context` consumer domain and emits bounded selection observations; stale, archived, unrelated or consumer-ineligible PI is excluded;
+- source-file mutation/hash drift marks PI `POTENTIALLY_STALE` without converting PI into Evidence;
+- repeated independent reusable-HOW observations remain owned by the separate `ProjectMethodologyCandidate` lifecycle; `observation_count`, `independence` and generic admission fields were not fabricated on the PI contract because no production fact-observation producer owns them.
+
+Evidence: focused PI/SemanticContext/methodology/context suite 59/59 PASS; controlled isolated-HOME/XDG full suite 521/521 PASS; validator PASS; diff check clean; backup count 0. HumanDecision/Authority/Storage remain open under M9.
 
 ### M8 Task / Worker contract checkpoint
 

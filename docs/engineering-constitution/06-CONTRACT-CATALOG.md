@@ -524,21 +524,25 @@ It is context, never proof.
 
 ### C21 — ProjectIntelligenceContract
 
+**Canonical owner:** `plugin/src/contracts/project-intelligence.ts` + `ProjectIntelligenceStore`.
+
 **Required fields:**
 
 ```text
 id
-fact/pattern
-source_refs[]
-observation_count
-independence
+statement
+source_refs[]: { ref:file:<project-relative-path>, hash:sha256 }
+observed_commit?
 confidence
 freshness
-admission_status
+lifecycle
 consumer_domains[]
+updated_at
 ```
 
-Reusable HOW is promoted to Methodology; proof is stored as Evidence; control decisions remain Runtime Policy.
+Project Intelligence stores admitted project facts/patterns only. Runtime task-context selection requires `consumer_domains` to contain `task-context`, `lifecycle=ACTIVE`, `freshness=FRESH`, and exact file intersection. Source hash drift or file mutation invalidates freshness without converting PI into Evidence.
+
+`observation_count`, `independence` and reusable-HOW admission are intentionally **not** fields of this fact/pattern contract because the current production PI store has no repeated-observation producer. Repeated independent evidence for reusable HOW remains owned by the separate `ProjectMethodologyCandidate` lifecycle. Proof remains Evidence; control decisions remain Runtime Policy.
 
 ### C22 — HumanDecisionContract
 

@@ -50,6 +50,14 @@ export function assertPositiveInteger(value:unknown,field:string):number{
 
 export function compareTechnicalId(a:string,b:string):number{return a<b?-1:a>b?1:0}
 
+export function isSafeProjectFileSourceRef(value:unknown):value is string{
+  if(typeof value!=='string'||!value.startsWith('file:'))return false
+  const rel=value.slice(5);if(!rel||rel.startsWith('/')||rel.includes('\\')||rel.includes('\0'))return false
+  const segments=rel.split('/');if(segments.some(segment=>!segment||segment==='.'||segment==='..'))return false
+  if(/^[A-Za-z]:$/.test(segments[0]))return false
+  return true
+}
+
 export function contentHash(value:string):ContentHash{
   return{algorithm:'sha256',value:createHash('sha256').update(value).digest('hex')}
 }

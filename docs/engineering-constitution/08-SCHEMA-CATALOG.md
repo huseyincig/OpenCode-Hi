@@ -194,16 +194,18 @@ Consumer reference is required. ContextReference is strict/current-only: Task sn
 
 ## S20 — ProjectIntelligenceSchema
 
-Admission requires source observations/provenance. Promotion destinations are typed:
+Project Intelligence is a strict current-only fact/pattern contract. It requires one or more safe project-relative `file:` source refs with lowercase SHA-256 hashes, confidence in `[0,1]`, explicit freshness/lifecycle, at least one consumer domain, and a finite positive update timestamp. Unknown fields, duplicate source refs, unsafe paths, invalid hashes and invalid confidence fail closed. Runtime `task-context` retrieval admits only `ACTIVE + FRESH + task-context` records whose source files intersect the requested Task scope.
+
+Promotion destinations remain typed and separate:
 
 ```text
 proof -> Evidence (separate admission)
-reusable HOW -> Methodology candidate
+reusable HOW + repeated independent observations -> ProjectMethodologyCandidate
 control decision -> Runtime Policy
 fact/pattern -> Project Intelligence
 ```
 
-Schema must not encode these as interchangeable variants of one generic `memory` object.
+The PI schema deliberately does not invent `observation_count`, `independence` or generic `admission_status` when no production fact-observation producer owns those semantics. Schema must not encode these domains as interchangeable variants of one generic `memory` object.
 
 ## S21 — HumanDecisionSchema / S22 — AuthoritySchema
 

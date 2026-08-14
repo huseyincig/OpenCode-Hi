@@ -99,8 +99,8 @@ test('scoped TypeScript semantic context and fresh project intelligence reach th
     mkdirSync(join(root,'src'),{recursive:true})
     writeFileSync(join(root,'src','a.ts'),"export interface PublicContract { id:string }\nconst noise='do-not-inject'\n")
     const pi=new ProjectIntelligenceStore(root)
-    pi.upsert({id:'p-relevant',statement:'PublicContract IDs are stable project identifiers',sourceFiles:['src/a.ts'],sourceHashes:{'src/a.ts':'old'},confidence:.9,freshness:'FRESH',lifecycle:'ACTIVE',updatedAt:1})
-    pi.upsert({id:'p-unrelated',statement:'Unrelated subsystem rule',sourceFiles:['src/other.ts'],sourceHashes:{'src/other.ts':'x'},confidence:.99,freshness:'FRESH',lifecycle:'ACTIVE',updatedAt:2})
+    pi.upsert({id:'p-relevant',statement:'PublicContract IDs are stable project identifiers',source_refs:[{ref:'file:src/a.ts',hash:'a'.repeat(64)}],confidence:.9,freshness:'FRESH',lifecycle:'ACTIVE',consumer_domains:['task-context'],updated_at:1})
+    pi.upsert({id:'p-unrelated',statement:'Unrelated subsystem rule',source_refs:[{ref:'file:src/other.ts',hash:'b'.repeat(64)}],confidence:.99,freshness:'FRESH',lifecycle:'ACTIVE',consumer_domains:['task-context'],updated_at:2})
     const prompts=[]
     const client={session:{create:async()=>({data:{id:'child-semantic-pi'}}),promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async()=>({data:{}})}}
     const store=new MissionStore(root),m=startAssessedMission(store,'parent-semantic-pi','opaque TypeScript task',{likely_targets:['src/a.ts']})
@@ -112,7 +112,7 @@ test('scoped TypeScript semantic context and fresh project intelligence reach th
     assert.match(text,/semantic-typescript:src\/a\.ts/)
     assert.match(text,/interface PublicContract/)
     assert.match(text,/project-intelligence:p-relevant:PublicContract IDs are stable project identifiers/)
-    assert.doesNotMatch(text,/p-unrelated/)
+    assert.doesNotMatch(text,/p-unrelated/);const piEvent=m.ledger.find(e=>e.type==='context.project-intelligence-selected'&&e.task_id===started.task_id);assert.ok(piEvent);assert.equal(piEvent.payload.consumer,'task-context');assert.deepEqual(piEvent.payload.items.map(x=>x.id),['p-relevant'])
     await rt.noteNativeWriteSet(m,started.worker_id,['src/a.ts'])
     assert.equal(new ProjectIntelligenceStore(root).get('p-relevant').freshness,'POTENTIALLY_STALE')
   }finally{rmSync(root,{recursive:true,force:true})}
