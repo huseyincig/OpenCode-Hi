@@ -19,3 +19,7 @@ Current OpenCode chat/tool/event ingress synchronizes an OPEN canonical decision
 Authority remains stricter: `authority_request` text is evaluated first by the canonical exact-action Authority runtime. Only after that runtime accepts the exact approval/reconciliation protocol may the transport record that a response was observed. Generic `yes`, `continue`, UI “Approve”, timeout, or transport cancellation cannot grant future or unrelated authority.
 
 A future host/browser UI may implement the same port and project typed question controls without changing HumanDecision semantics. External mechanism provenance for exact question identity, waiter cleanup, timeout/cancel, and typed responses remains isolated in the source-reuse register; no external browser/session/branch control plane is adopted as Hi ownership.
+
+## Structured host UI support boundary
+
+OpenCode 1.18.18 exposes pending-question events plus public `question.list`, `question.reply`, and `question.reject` APIs. Its actual question-opening service is internal to the host and is reached by OpenCode's model-facing `question` tool; the public plugin/HTTP SDK does not expose a direct `ask/open` operation. Hi therefore reports `structured-human-decision-transport` as `UNSUPPORTED` for this host version rather than triggering a model prompt and pretending that model-mediated tool selection is a deterministic transport. H1 chat transport remains the current supported HumanDecision interaction path. This limitation is independent from `browser-execution`, which also remains `UNSUPPORTED`.
