@@ -11,17 +11,17 @@ repository: OpenCode-Hi
 repository_root: /workspace/OpenCode-Hi
 baseline_before_this_ledger_commit: baca9f7
 active_program: Engineering Constitution / Metamodel Migration
-active_phase: M6
-active_phase_name: ModelCapabilityProfile requested/projected snapshot re-audit
-phase_status: PARTIAL_REAUDIT_REQUIRED
+active_phase: M13
+active_phase_name: Release readiness boundary
+phase_status: NOT_REQUESTED
 working_tree_expectation: clean
 last_verified_full_suite:
-  total: 548
-  pass: 548
+  total: 549
+  pass: 549
   fail: 0
 last_verified_validator: PASS
 external_release_actions_authorized: false
-next_contract_owner: ModelCapabilityProfile / WorkerState model-selection snapshot
+next_contract_owner: Release boundary — no open pre-release migration blocker
 ```
 
 ## Continuation protocol
@@ -73,6 +73,7 @@ ea6c236  StorageOwnershipContract
 4602907  M10 common generator / architecture lint graph
 9801382  M3 PermissionProfile canonical owner migration
 d53fe31  M5 ConfigOptionContract executable ownership migration
+ec2bdd3  M6 model execution identity closure
 ```
 
 Earlier M8/M7/M6/M4/M2/M1/M0 checkpoints remain recorded in `17-IMPLEMENTATION-PROOF.md`.
@@ -99,6 +100,17 @@ M5 status: **PASS — EXECUTABLE CONFIG OWNERSHIP CLOSED** at `d53fe31`.
 - BA03 proves representative topology, scheduler, model-policy and role-routing effects;
 - HI003 is now fatal PASS, so architecture lint has `deferred=0`;
 - current ProjectionReceipt inventory is 32 and controlled full suite is 548/548 PASS.
+
+## M6 current truth after release-boundary re-audit
+
+M6 status: **PASS — MODEL EXECUTION IDENTITY CLOSED** at `ec2bdd3`.
+
+- `plugin/src/contracts/model.ts` is the canonical model capability/execution-identity owner;
+- WorkerState now records real requested, selected, projected and observed/effective phases without producerless aliases;
+- every native child/prompt execution path records the actual projected model/variant before the host request;
+- effective-model completion consumes canonical `reconcileModelExecutionIdentity()` and projection/model/variant mismatches fail closed;
+- requested/projected identity survives persistence and malformed snapshot state fails current-only WorkerContract validation;
+- focused M6 set is 27/27 PASS and the current controlled full suite is 549/549 PASS.
 
 ## M9 current truth
 
@@ -249,7 +261,7 @@ Do not silently declare these closed:
 
 - **M3 PermissionProfile — CLOSED at `9801382`**. The former host-policy blocker no longer reproduced on re-audit. Seven canonical profiles now own general native permissions; RoleContract references them; role Markdown no longer owns mechanical permission maps; M4 remains the sole built-in methodology skill-permission owner. Current projection graph has 31 receipts and the controlled full suite is 543/543 PASS.
 - **M5 ConfigOptionContract — CLOSED at `d53fe31`**. The former blocker no longer reproduced. All current HiConfig leaves are classified; 29 runtime options have explicit consumers/executor effects, two compatibility options remain diagnostic-only, one schema marker remains current-only, defaults are catalog-generated, and HI003 is fatal PASS.
-- **M6 ModelCapabilityProfile** — host inventory normalization/identity contract is operational; requested/projected WorkerState snapshot wiring remains previously deferred/blocked.
+- **M6 ModelCapabilityProfile — CLOSED at `ec2bdd3`**. Canonical `contracts/model.ts` identity reconciliation is production-wired; WorkerState records real requested/selected/projected/observed-effective phases, projection mismatch is fail-closed, and no producerless model state was added.
 - **M7 HostCapability** — local contract registry PASS and material OpenCode 1.18.16 T3 acceptance completed in M12; future host-version changes still require revalidation.
 
 ## Core invariants that remain binding
@@ -276,8 +288,8 @@ The sequential M0–M12 migration/acceptance track has reached its release bound
 ```text
 M3 PermissionProfile        PASS at 9801382
 M5 ConfigOptionContract    PASS at d53fe31; HI003 fatal PASS
-M6 ModelCapabilityProfile  partial / requested-projected WorkerState snapshot wiring deferred
+M6 ModelCapabilityProfile  PASS at ec2bdd3
 M13 Release readiness      NOT REQUESTED
 ```
 
-On continuation, first re-check real HEAD/status. Unless the user explicitly asks for release work, re-audit the remaining **M6 ModelCapabilityProfile** partial next. The current host-inventory normalization and execution-identity reconciliation already exist; inspect the previously deferred requested/selected/projected/observed/effective WorkerState snapshot path and add only fields that have real producers/consumers. If the remaining snapshot is redundant or producerless, reclassify/remove the requirement rather than manufacturing state. M13 remains NOT REQUESTED.
+On continuation, first re-check real HEAD/status. The previously open M3, M5 and M6 migration residues are now closed and the sequential M0–M12 acceptance track is at the release boundary. **Do not execute M13** unless the user explicitly requests release-readiness work. Push/tag/publish/release/deploy remain external Authority actions and `external_release_actions_authorized` is false. If no release work is requested, preserve the clean checkpoint rather than inventing another migration phase.

@@ -50,7 +50,7 @@ Rows below are intentionally `PENDING` until code exists.
 | M3 | PermissionProfile | canonical 7-profile catalog + RoleContract references; exact 8-agent native permission semantic parity to pre-M3 HEAD; read-only edit-deny/lower-layer-widening/unknown-ref/methodology-owner negatives; focused 10/10 PASS; controlled full suite 543/543 PASS; architecture lint PASS; validator PASS | T1/T2 | `9801382` | PASS — CANONICAL PERMISSION OWNER MIGRATED |
 | M4 | MethodologyContract normalization | mechanical SKILL contract sections compiled from canonical JSON; inert duplicated fields removed; focused 37/37 PASS; controlled full suite 469/469 PASS; validator PASS | T1/T2 | `c152f98` | PASS — MECHANICAL OWNER MIGRATED |
 | M5 | ConfigOption catalog | 32-option canonical catalog (29 runtime, 2 diagnostic, 1 schema marker); generated default ownership; BA03 executor-effect coverage; HI003 fatal PASS with no deferred config rule; focused config/generator set 22/22 PASS; controlled full suite 548/548 PASS; validator PASS | T1/T2 | `d53fe31` | PASS — EXECUTABLE CONFIG OWNERSHIP CLOSED |
-| M6 | Model capability/identity | ModelCapabilityProfile host-inventory normalization + identity reconciler + effective-model evidence; focused 17/17 PASS; controlled full suite 475/475 PASS; validator PASS | T1/T2 | `e7c3c96`; requested/projected WorkerState snapshot wiring blocked by SentinelX mutation policy; no unwired state committed | PARTIAL_PASS |
+| M6 | Model capability/identity | canonical model capability normalization + production-wired requested/selected/projected/observed/effective execution identity; WorkerState snapshots persist real request/projection producers; projection/model/variant mismatch gates fail closed; focused M6 set 27/27 PASS; controlled full suite 549/549 PASS; validator PASS | T1/T2 | foundation `e7c3c96`; closure `ec2bdd3` | PASS — MODEL EXECUTION IDENTITY CLOSED |
 | M7 | Host capability registry | 16 contract-backed OpenCode capabilities; product runtime gates consume worker-runtime/session-revert contracts; doctor reports status/verification/semantic loss; focused 43/43 PASS; controlled full suite 480/480 PASS; validator PASS | T1/T2 local; T3 still pending | `390cc2b` | PASS_LOCAL — REAL-HOST ACCEPTANCE PENDING |
 | M8 | Task/Worker/Result/Evidence contracts | WorkerResult, EvidenceItem, ReviewFinding, derived VerificationEnvelope, TaskContract and WorkerContract now have canonical runtime owners; persistence consumes canonical validators; task mission/external-action identity is explicit; worker attempt/recovery/effective-model lifecycle is fail-closed; latest focused Task/Worker set 21/21 PASS and controlled full suite 507/507 PASS; validator PASS | T1/T2 | WorkerResult `4ea320d`; Evidence `3044b94`; ReviewFinding `b120f49`; VerificationEnvelope `a4b1105`; Task/Worker `77f9dc1` | PASS — CONTRACT OWNERSHIP CLOSED |
 | M9 | Context/Artifact/PI/Human/Authority/Storage | Artifact + ContextReference + derived SemanticContext + ProjectIntelligence + HumanDecision + Authority + ExternalAction + StorageOwnership operational; machine storage catalog enforces one canonical owner per scope/data class, canonical path providers cover current project/runtime durable classes, OpenCode-native project skills remain outside Hi internal storage, uninstall preserves independently-owned policy/knowledge/skills, and doctor consumes the current runtime-state schema; focused storage/ownership set 66/66 PASS; controlled full suite 538/538 PASS; validator PASS | T1/T2 | Artifact `811ee7f`; ContextReference `3e8ab72`; SemanticContext `b7e51cc`; PI `e2d021b`; HumanDecision `46fc7b7`; Authority/ExternalAction `da67329`; StorageOwnership `ea6c236` | PASS — CONTRACT OWNERSHIP CLOSED |
@@ -403,12 +403,18 @@ Implemented and verified after release-boundary re-audit:
 
 Evidence: focused config/BA03/generator set 22/22 PASS; controlled isolated-HOME/XDG full plugin suite 548/548 PASS; architecture lint PASS (`rules=20`, `deferred=0`, `linked=8`); standalone validator PASS; `git diff --check` clean; backup count 0. M5 code checkpoint: `d53fe31`. No real external action was performed.
 
-### M6 checkpoint evidence
+### M6 ModelCapabilityProfile / execution-identity closure
 
-- Runtime provider inventory is normalized through `ModelCapabilityProfile` before routing.
-- Explicit model capability quirk metadata overrides technical model-ID fallback heuristics.
-- `ModelExecutionIdentity` distinguishes requested, selected, projected, observed, effective, and verified phases without persisting producerless runtime fields.
-- Focused controlled model suite: **17/17 PASS**.
-- Controlled full suite: **475/475 PASS**.
-- Standalone validator: **PASS**.
-- Remaining runtime snapshot wiring is explicitly deferred because the connected host policy rejected that mutation.
+Implemented and verified:
+
+- canonical model owner is `plugin/src/contracts/model.ts`; runtime provider inventory is normalized through `ModelCapabilityProfile` before routing and explicit quirk metadata still overrides technical model-ID fallback heuristics;
+- the former requested/projected WorkerState deferral was re-audited and normal repository mutation is now available; no host-policy bypass was used;
+- WorkerState now persists only model identity phases with real producers: `requested_model[_variant]` from an explicit Task override, current `model[_variant]` as resolver/worker selection, `projected_model[_variant]` immediately before the actual OpenCode child/prompt request, and existing `effective_model*` fields from assistant runtime metadata;
+- every material child/prompt execution path records the projection snapshot before native execution: initial dispatch, same-session correction, semantic resume, constraint rebase, serialized write-conflict resume, stagnation recovery and runtime fallback;
+- production `TaskRuntime.noteEffectiveModel()` now consumes the canonical `reconcileModelExecutionIdentity()` contract instead of maintaining a parallel interpretation of selected/observed identity;
+- projection mismatch is first-class and fail-closed: a selected model that was projected as a different model blocks completion even when assistant metadata later matches the selection;
+- model/variant unverified and mismatch behavior remains fail-closed, while host-default remains explicitly unconstrained rather than fabricating a selected model;
+- requested/projected snapshots survive RuntimePersistence and malformed snapshot types or a projected variant without a projected model fail WorkerContract validation;
+- the existing selected/effective fields remain because they have active runtime/persistence consumers; no producerless alias state was added.
+
+Evidence: focused model/Worker/persistence/fallback set 27/27 PASS under isolated HOME/XDG; controlled isolated-HOME/XDG full plugin suite 549/549 PASS; architecture lint PASS (`rules=20`, `deferred=0`, `linked=8`); standalone validator PASS; `git diff --check` clean; backup count 0. M6 closure checkpoint: `ec2bdd3` (foundation `e7c3c96`). No real external action was performed.
