@@ -9,11 +9,11 @@ Status: ACTIVE REPOSITORY CONTINUATION ENTRYPOINT
 continuation_schema: 1
 repository: OpenCode-Hi
 repository_root: /workspace/OpenCode-Hi
-baseline_before_this_ledger_commit: 52c6be4
+baseline_before_this_ledger_commit: baca9f7
 active_program: Engineering Constitution / Metamodel Migration
-active_phase: M12
-active_phase_name: Real-host acceptance
-phase_status: PENDING
+active_phase: M13
+active_phase_name: Release readiness
+phase_status: NOT_REQUESTED
 working_tree_expectation: clean
 last_verified_full_suite:
   total: 540
@@ -21,7 +21,7 @@ last_verified_full_suite:
   fail: 0
 last_verified_validator: PASS
 external_release_actions_authorized: false
-next_contract_owner: Real-host acceptance receipts
+next_contract_owner: Release boundary / earlier open migration blockers
 ```
 
 ## Continuation protocol
@@ -204,6 +204,20 @@ M11 status: **PASS — DETERMINISTIC CLOSURE COMPLETE**.
 - M11 found one cwd-dependent host-capability acceptance test assumption; checkpoint `52c6be4` makes acceptance source resolution test-file-relative and invocation-location independent;
 - no real external release action was executed.
 
+## M12 current truth
+
+M12 status: **PASS — MATERIAL REAL-HOST PRIMITIVES VERIFIED**.
+
+- exact tested source HEAD: `753043d0f6c9d421e236dff0bf2c9f5ebe1a9c1b`;
+- receipt checkpoint: `baca9f7`;
+- real host: OpenCode `1.18.16`, Linux aarch64, Bun `1.3.14`;
+- local file-spec loader, eight Hi agents, native skill discovery/load, connected provider inventory, prompt/model observation, worker child identity, native permission once/reject, session create/abort/status/children/todo/diff/fork/summarize/revert/unrevert and structured logs all have T3 evidence;
+- `process-lifecycle` remains DEGRADED; `workspace-isolation-binding` remains UNSUPPORTED;
+- one independent-review terminal scenario is `HARNESS_MODEL_BEHAVIOR_INCOMPLETE`, not product FAIL, because material primitives were independently proven and the model repeatedly chose additional optional sanity checks;
+- no real push/tag/release/publish/deploy/external project mutation occurred.
+
+Canonical receipt: `data/validation/external-opencode-hi-0.1.0-host-1.18.16-head-753043d.json`.
+
 ## Open earlier migration blockers / partials
 
 Do not silently declare these closed:
@@ -211,7 +225,7 @@ Do not silently declare these closed:
 - **M3 PermissionProfile** — prior SentinelX policy blocked direct permission-catalog mutation. Current runtime permissions remain operational but full canonical PermissionProfile migration is open.
 - **M5 ConfigOptionContract** — prior host policy blocked direct config-catalog mutation.
 - **M6 ModelCapabilityProfile** — host inventory normalization/identity contract is operational; requested/projected WorkerState snapshot wiring remains previously deferred/blocked.
-- **M7 HostCapability** — local contract registry PASS; real-host T3 acceptance remains M12 work.
+- **M7 HostCapability** — local contract registry PASS and material OpenCode 1.18.16 T3 acceptance completed in M12; future host-version changes still require revalidation.
 
 ## Core invariants that remain binding
 
@@ -230,31 +244,15 @@ Do not silently declare these closed:
 
 ## Next action
 
-Start **M12 real-host acceptance** only at T3 boundaries described by `13-MIGRATION-MATRIX.md` and the host projection/behavioral acceptance documents.
+**Do not execute M13 release readiness unless the user explicitly requests it.** Push/tag/publish/release/deploy remain external Authority actions and `external_release_actions_authorized` is still false.
 
-Before any host exercise:
-
-```text
-git status --short
-git log -5 --oneline
-```
-
-Read the minimum canonical host acceptance surfaces:
+The sequential M0–M12 migration/acceptance track has reached its release boundary, but earlier partial/blocker work remains explicit:
 
 ```text
-docs/engineering-constitution/12-HOST-PROJECTION-ARCHITECTURE.md
-docs/engineering-constitution/11-BEHAVIORAL-ACCEPTANCE.md
-docs/engineering-constitution/13-MIGRATION-MATRIX.md   # M12
-plugin/src/contracts/host-capability.ts
-plugin/src/opencode/capabilities.ts
-existing real-host/OpenCode CLI harnesses and receipts
+M3 PermissionProfile        open / previously blocked by host policy
+M5 ConfigOptionContract    open / previously blocked by host policy; HI003 deferred
+M6 ModelCapabilityProfile  partial / requested-projected WorkerState snapshot wiring deferred
+M13 Release readiness      NOT REQUESTED
 ```
 
-Requirements:
-
-1. bind every T3 claim to the actual OpenCode version/identity and captured artifact/receipt;
-2. exercise only material native primitives needed to validate current HostCapability claims;
-3. classify harness timeout/transport failure separately from product failure and inspect produced artifacts before verdict;
-4. do not infer T3 support from local mocks/bare remotes/fixtures;
-5. **do not push/tag/release/publish/deploy** and do not perform any other real external mutation without explicit user authorization;
-6. keep M3/M5/M6 partial/blocker state explicit.
+On continuation, first re-check real HEAD/status. Unless the user explicitly asks for release work, the next engineering decision is to re-audit whether the current environment now permits one of M3/M5/M6 to be completed without bypassing host policy. Do not manufacture a closure: choose the earliest dependency-safe open owner that can actually be mutated and proven, otherwise leave the blocker recorded.

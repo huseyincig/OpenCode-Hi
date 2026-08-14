@@ -56,7 +56,7 @@ Rows below are intentionally `PENDING` until code exists.
 | M9 | Context/Artifact/PI/Human/Authority/Storage | Artifact + ContextReference + derived SemanticContext + ProjectIntelligence + HumanDecision + Authority + ExternalAction + StorageOwnership operational; machine storage catalog enforces one canonical owner per scope/data class, canonical path providers cover current project/runtime durable classes, OpenCode-native project skills remain outside Hi internal storage, uninstall preserves independently-owned policy/knowledge/skills, and doctor consumes the current runtime-state schema; focused storage/ownership set 66/66 PASS; controlled full suite 538/538 PASS; validator PASS | T1/T2 | Artifact `811ee7f`; ContextReference `3e8ab72`; SemanticContext `b7e51cc`; PI `e2d021b`; HumanDecision `46fc7b7`; Authority/ExternalAction `da67329`; StorageOwnership `ea6c236` | PASS — CONTRACT OWNERSHIP CLOSED |
 | M10 | common generator/lint closure | 30 deterministic ProjectionReceipts; BA12 unchanged-input idempotence + declared dependency-scope mutation 2/2 PASS; executable HI001–HI020 architecture lint with migrated-class fatal checks, behavioral proof links and explicit HI003/M5 deferral; controlled full suite 540/540 PASS; validator PASS | T0/T1/T2 | `4602907` | PASS — MIGRATED CLASSES CLOSED; HI003 DEFERRED WITH M5 |
 | M11 | deterministic full closure | committed-state integrated check 540/540 PASS; targeted BA12/contract/authority/storage/host-capability negative set 62/62 PASS; architecture lint HI001–HI020 PASS with HI003 explicitly deferred to M5; standalone validator PASS; diff check clean; backup count 0; M11 exposed and fixed one cwd-dependent host-capability acceptance harness defect | T0/T1/T2 | `52c6be4` | PASS — DETERMINISTIC CLOSURE COMPLETE |
-| M12 | real-host acceptance | OpenCode version-bound native receipts | T3 | — | PENDING |
+| M12 | real-host acceptance | exact-HEAD OpenCode 1.18.16/aarch64 receipt verifies local plugin loader, 8 agent projection, native skill discovery/load, provider inventory, session create/prompt/abort/status/children/todo/diff/fork/summarize/revert/unrevert, worker child agent/model/variant, native permission once/reject and structured logging; process lifecycle remains DEGRADED and workspace-isolation binding remains UNSUPPORTED; one independent-review terminal scenario classified HARNESS_MODEL_BEHAVIOR_INCOMPLETE rather than product FAIL | T3 | `baca9f7` (tested source HEAD `753043d`) | PASS — MATERIAL REAL-HOST PRIMITIVES VERIFIED |
 | M13 | release readiness | explicit authority + external receipts | T4 | — | NOT REQUESTED |
 
 
@@ -330,6 +330,24 @@ Implemented and verified:
 - no real external push/tag/release/publish/deploy action was performed; release-oriented tests used only deterministic local fixtures.
 
 Evidence: M11 harness-fix checkpoint `52c6be4`; full suite 540/540 PASS; targeted closure 62/62 PASS; architecture lint PASS (`rules=20`, `deferred=1`, `linked=8`); validator PASS; backup count 0. This closes M11 at T0/T1/T2. M12 real-host acceptance remains separate and must produce version/identity-bound host receipts before any T3 claim.
+
+### M12 exact-head real-host acceptance
+
+Implemented and verified against real OpenCode 1.18.16:
+
+- loaded exact committed runtime source from Git HEAD `753043d0f6c9d421e236dff0bf2c9f5ebe1a9c1b` using local `file:///workspace/OpenCode-Hi/plugin/dist/plugin.js`; recorded SHA-256 and Git blob identity for the plugin, HostCapability contract projection and OpenCode capability detector and proved worktree bytes matched HEAD before the receipt mutation;
+- real OpenCode config projected all eight canonical Hi agents and native skill discovery exposed `hi-code-review` at the packaged source path;
+- real OpenCode server health reported version `1.18.16`; isolated host provider inventory exposed connected `opencode` and seven current models to Hi after chat refresh;
+- exercised real session create, prompt, abort, status, children, todo, diff, fork, summarize, revert and unrevert primitives; prompt metadata observed `working-manager` + `opencode/deepseek-v4-flash-free` and the Hi semantic-assessment tool executed in the real message loop;
+- exercised real Hi worker delegation: parent control-plane tools `hi_task_start/await/list` reached OpenCode, creating a real `qa-reviewer` child session with observed `opencode/laguna-s-2.1-free`, variant `medium`, parent identity and read-only/control-plane-deny permission projection;
+- exercised native permission semantics: `once` remained call-scoped and did not silently persist, while an unnecessary parent polling `sleep 20` request was explicitly rejected; no persistent approval was used;
+- separately exercised native methodology load on a real `qa-reviewer` session: OpenCode `skill` loaded exactly `hi-code-review` with state `completed` before terminal `M12_SKILL_OK`;
+- real summarize produced a `compaction` agent response using `opencode/deepseek-v4-flash-free`; revert/unrevert state transitions were observed directly through the host API;
+- retained truthful negative capability status: ordinary shell `process-lifecycle` remains `DEGRADED` because no Hi-owned PID/job wait/kill identity was observed; `workspace-isolation-binding` remains `UNSUPPORTED` because the real child shared the parent fixture directory and `workspaceID` was absent;
+- an independent-review end-to-end scenario did not reach terminal WorkerResult because the selected model repeatedly requested extra bash sanity checks. It is recorded as `HARNESS_MODEL_BEHAVIOR_INCOMPLETE`, not product FAIL; the material worker/session/model/methodology primitives were independently proven by successful bounded scenarios;
+- all active fixture sessions were explicitly aborted and the local server/temp project were cleaned. No push/tag/release/publish/deploy or real external project mutation occurred.
+
+Receipt: `data/validation/external-opencode-hi-0.1.0-host-1.18.16-head-753043d.json`, committed as `baca9f7`. This closes M12 for the material HostCapability T3 scope without making an M13 release-readiness or T4 claim.
 
 ## Proof record format
 
