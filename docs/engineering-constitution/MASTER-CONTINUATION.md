@@ -12,19 +12,19 @@ repository: OpenCode-Hi
 repository_root: /workspace/OpenCode-Hi
 coverage_reconciliation_baseline_head: 8ba9eb561332eebc3b6bded90a1c0d2da501d1ed
 active_program: OpenCode-Hi Product Closure after Constitution Migration
-active_phase: P0
-active_phase_name: Primary authority and execution-truth closure
+active_phase: P1
+active_phase_name: Primary model execution-truth closure
 phase_status: OPEN
 working_tree_expectation: clean
 last_verified_full_suite:
-  total: 549
-  pass: 549
+  total: 551
+  pass: 551
   fail: 0
 last_verified_architecture_lint: "PASS rules=20 deferred=0 linked=8"
 last_verified_validator: PASS
 current_projection_receipts: 32
 external_release_actions_authorized: false
-next_contract_owner: Primary RoleContract authority -> hi_direct_progress control-plane gate
+next_contract_owner: Primary host session/message model truth -> model execution identity contract
 ```
 
 ---
@@ -184,12 +184,13 @@ d53fe31  refactor: formalize executable config option contracts
 318d1cc  docs: record M5 config option closure
 ec2bdd3  refactor: persist model execution identity snapshots
 8ba9eb5  docs: record M6 model identity closure
+f8c9f24  fix: enforce primary direct implementation authority
 ```
 
 Current deterministic baseline before this coverage-ledger rewrite:
 
 ```text
-controlled full suite: 549/549 PASS
+controlled full suite: 551/551 PASS
 architecture lint: PASS rules=20 deferred=0 linked=8
 validator: PASS
 projection receipts: 32
@@ -204,7 +205,7 @@ The old schema catalog listed suggested filenames. **Filename parity is not the 
 
 | Contract / schema | Live owner / implementation | Status | Remaining truth |
 |---|---|---|---|
-| C01 / S01 RoleContract | `data/hi-roles.json`, `contracts/role.ts`, generated role/agent projections | **CLOSED except P0 primary direct-authority consumer gap** | Role write authority exists canonically, but `hi_direct_progress` does not yet enforce primary RoleContract authority. |
+| C01 / S01 RoleContract | `data/hi-roles.json`, `contracts/role.ts`, generated role/agent projections | **CLOSED** | Primary direct implementation authority is now enforced from canonical `repositoryWriteAuthority` at the `hi_direct_progress` control-plane boundary. |
 | C02 / S02 PermissionProfile | `data/hi-permission-profiles.json`, `contracts/permission-profile.ts` | **CLOSED** | Safety monotonicity and read-only edit denial executable. |
 | C03 / S03 MethodologyContract | `data/hi-methodologies.json`, generated policy/SKILL projections, runtime catalog | **PARTIAL only at host-capability eligibility edge** | Core lifecycle closed; P2 must bind mandatory host/resource capability to actual executable eligibility. |
 | C04 / S04 ModelCapabilityProfile | `contracts/model.ts`, model resolver, WorkerContract snapshots | **PARTIAL at primary-agent identity only** | Child/worker execution identity closed; P1 audits parent/primary model truth. |
@@ -256,7 +257,7 @@ This section exists so no requirement from the broad working checkpoint disappea
 | 11–13 | language-agnostic semantics, assessment gate, follow-up quarantine | **CLOSED current runtime** — structured semantic state; fresh-session constraint rebase; no language dictionary authority. |
 | 14 | authority semantics | **CLOSED / PERMANENT INVARIANT**. |
 | 15–17 | repository reality audit, executable graph, owner map | **PERMANENT DEVELOPMENT STANDARD** — this reconciliation is the current full pass. |
-| 18 | role system | **PARTIAL** only because P0 primary direct authority and P1 primary model truth remain. |
+| 18 | role system | **PARTIAL** only because P1 primary model truth remains; P0 direct implementation authority is closed. |
 | 19–36 | methodology terminology/catalog/signals/selection/load/exit/learning/admission/authoring | **CLOSED core lifecycle; PARTIAL capability eligibility** — P2 closes role/host-capability executability for mandatory methodology exits. |
 | 37 | Project Intelligence | **CLOSED current scope**. |
 | 38–40 | evidence, completion/STOP, tests-not-product | **CLOSED current architecture / PERMANENT STANDARD**. |
@@ -276,7 +277,7 @@ This section exists so no requirement from the broad working checkpoint disappea
 | 71–73 | historical checkpoint/local commit discipline/Stage-1 closure | **HISTORICAL + COMMIT DISCIPLINE PERMANENT**. |
 | 74–89 | Stage-2 role/topology/model/host rules and generated/release test boundaries | **mostly CLOSED; remaining items are explicitly enumerated in Section 7 below**. |
 | 90 | explicit blind spots A–N | **mixed** — all A–N are individually classified with source evidence and closure requirements in Section 7 below. |
-| 91–92 | old validation baseline and continuation order | **HISTORICAL**, superseded by 549/549 baseline and current roadmap. |
+| 91–92 | old validation baseline and continuation order | **HISTORICAL**, superseded by 551/551 baseline and current roadmap. |
 | 93 | anti-drift rules | **PERMANENT INVARIANT**, absorbed into Sections 1–3 and verification protocol here. |
 
 ---
@@ -285,7 +286,7 @@ This section exists so no requirement from the broad working checkpoint disappea
 
 This is the key correction to the previous narrow MASTER. **Do not declare product completion while an OPEN/PARTIAL item below remains unresolved or deliberately reclassified with evidence.**
 
-### A. Primary direct-action authority — **OPEN, P0 / FIRST**
+### A. Primary direct-action authority — **CLOSED at `f8c9f24`**
 
 Proven facts:
 
@@ -295,13 +296,13 @@ Proven facts:
 - OpenCode manager native permissions deny `edit` and `bash`;
 - however `plugin/src/plugin.ts` `hi_direct_progress` can close an implementation obligation after mutation/diff checks **without consulting `MissionState.primary_mode` / canonical primary RoleContract write authority**.
 
-Required closure:
+Closure proof:
 
-1. derive primary direct-progress authority from the canonical role contract, not a duplicated role-name check;
-2. implementation direct progress must fail closed for `manager` or any primary without scoped write authority;
-3. direct review authority must remain separately bounded by review policy/evidence;
-4. prove positive working-manager + negative manager behavior through the actual tool path;
-5. preserve existing mutation ownership/freshness safeguards.
+1. `primaryRoleCanDirectImplementation()` derives direct implementation authority from the generated canonical RoleContract fields (`roleClass`, `readOnly`, `repositoryWriteAuthority`) rather than a duplicated role-name rule;
+2. `hi_direct_progress` now rejects implementation closure before mutation/evidence processing when the active primary lacks canonical write authority;
+3. direct review behavior remains separately governed by review policy and fresh review evidence;
+4. actual tool-path acceptance proves forced read-only `manager` cannot close implementation even when mutation evidence is injected, while existing working-manager direct paths remain green;
+5. full controlled suite after the change: **551/551 PASS**, architecture lint PASS (20 rules, deferred=0), validator PASS, backup count 0.
 
 ### B. Primary effective-model evidence — **OPEN, P1**
 
@@ -425,13 +426,13 @@ The old stage order remains useful as a product-coverage lens, but later Constit
 | Stage | Current status | Meaning |
 |---|---|---|
 | Stage 1 — Methodology + semantic prerequisite ownership | **CLOSED** | 27 methodologies, structured semantics, activation/selection/load/exit/learning/admission lifecycle operational. P2 is a Stage-2 host-capability eligibility edge, not a reopening of semantic Stage 1. |
-| Stage 2 — Role/topology/generated agents/model/host policy | **PARTIAL** | Main architecture operational; open P0 primary direct authority, P1 primary model truth, P2 methodology/host capability + visual/browser + scout drift. |
+| Stage 2 — Role/topology/generated agents/model/host policy | **PARTIAL** | Main architecture operational; P0 primary direct authority is closed. Open P1 primary model truth and P2 methodology/host capability + visual/browser + scout drift remain. |
 | Stage 3 — Context Governor | **CLOSED current scope** | `governContext` is consumed by mission compaction snapshot; TaskRuntime has bounded context/artifact/PI/SemanticContext/native-summary paths. |
 | Stage 4 — Project Intelligence / Semantic Context / knowledge lifecycle | **CLOSED current implemented scope** | Durable PI reload/invalidation, SemanticContext contract/consumer, methodology learning/admission separation operational. |
 | Stage 5 — Human Decision / process / shell / isolation | **PARTIAL / HOST-LIMITED** | HumanDecision and shell policy operational. Process lifecycle DEGRADED; workspace isolation binding UNSUPPORTED. These must remain explicit release/support limitations unless future host support closes them. |
 | Stage 6 — Team / concurrency / crash recovery / fallback | **PARTIAL** | Concurrency/fallback/recovery operational; P3 Team restart contract requires explicit reconciliation. |
 | Stage 7 — Storage / setup / docs / packaging / release architecture | **CLOSED local architecture, docs-status residue** | Storage/provenance/release guards operational locally. Historical 06/08 status banners are stale. No real release authority. |
-| Stage 8 — independent subsystem/integration tests | **CLOSED current T1/T2 baseline** | 549/549 controlled suite plus architecture lint/validator. Tests remain evidence, not sole product proof. |
+| Stage 8 — independent subsystem/integration tests | **CLOSED current T1/T2 baseline** | 551/551 controlled suite plus architecture lint/validator. Tests remain evidence, not sole product proof. |
 | Stage 9 — Linux/OpenCode representative real-host acceptance | **PASS_MATERIAL_WITH_LIMITATIONS** | M12 OpenCode 1.18.16/aarch64 verified material primitives; process DEGRADED, workspace UNSUPPORTED, one independent-review terminal scenario was harness/model-behavior incomplete. Re-run targeted T3 after host-bound changes. |
 | Stage 10 — real release/publication acceptance | **NOT REQUESTED** | Requires explicit user authority and T4 receipts. |
 
@@ -467,20 +468,18 @@ Current efficiency telemetry is deterministic in-process metric/benchmark toolin
 
 This is now the authoritative work queue. **Do not skip ahead because a later change is easier to test.**
 
-### P0 — Primary direct-action authority closure
+### P0 — Primary direct-action authority closure — **CLOSED at `f8c9f24`**
 
 Owner: `RoleContract -> primary runtime -> hi_direct_progress`.
 
-Deliverables:
+Closure:
 
-- canonical helper/query for primary role write/direct-obligation authority;
-- `hi_direct_progress` fail-closed implementation gate for read-only manager;
-- positive working-manager and negative manager actual-tool-path acceptance;
-- no regression to direct review/evidence/freshness/diff-ownership gates;
-- focused + justified full controlled verification;
-- local commit + proof update in this MASTER.
+- canonical helper derives implementation-direct authority from RoleContract write semantics;
+- read-only manager is fail-closed at the control-plane tool even if mutation evidence exists;
+- working-manager direct implementation and direct review behavior remain intact;
+- focused P0 set 23/23 PASS; full controlled suite 551/551 PASS; architecture lint and validator PASS.
 
-Exit: a primary control-plane API cannot close work that the actual primary RoleContract is forbidden to own.
+Exit satisfied: a primary control-plane API cannot close implementation work that the actual primary RoleContract is forbidden to own.
 
 ### P1 — Primary model truth closure
 
@@ -687,10 +686,10 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**Start P0 only.**
+**Start P1 only.**
 
-Re-check real HEAD/status, then trace canonical primary RoleContract authority into `hi_direct_progress` and close Section 90-A without weakening existing mutation/diff/review/evidence safeguards.
+Re-check real HEAD/status, then audit the actual OpenCode primary-session/message model metadata producer before adding any state. Determine whether Hi makes a constrained primary model/variant claim or whether the primary is intentionally host-default/unconstrained; only add requested/projected/observed/effective primary identity when a real producer and consumer require it.
 
-Do **not** start P1–P8 in parallel unless P0 investigation proves a dependency requires a narrowly scoped prerequisite. Do not enter real M13/release work without explicit user request.
+Do **not** start P2–P8 in parallel unless P1 source investigation proves a dependency requires a narrowly scoped prerequisite. Do not enter real M13/release work without explicit user request.
 
-When P0 is coherently closed, run focused + justified controlled verification, create a local commit, update this MASTER’s status/next action, and continue to P1.
+When P1 is coherently closed or truthfully classified as unconstrained with sufficient proof, run focused + justified controlled verification, create a local commit, update this MASTER’s status/next action, and continue to P2.
