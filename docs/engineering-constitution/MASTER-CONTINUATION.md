@@ -12,19 +12,19 @@ repository: OpenCode-Hi
 repository_root: /workspace/OpenCode-Hi
 coverage_reconciliation_baseline_head: 8ba9eb561332eebc3b6bded90a1c0d2da501d1ed
 active_program: OpenCode-Hi Product Closure after Constitution Migration
-active_phase: P1
-active_phase_name: Primary model execution-truth closure
+active_phase: P2
+active_phase_name: Methodology and host execution-surface closure
 phase_status: OPEN
 working_tree_expectation: clean
 last_verified_full_suite:
-  total: 551
-  pass: 551
+  total: 553
+  pass: 553
   fail: 0
 last_verified_architecture_lint: "PASS rules=20 deferred=0 linked=8"
 last_verified_validator: PASS
 current_projection_receipts: 32
 external_release_actions_authorized: false
-next_contract_owner: Primary host session/message model truth -> model execution identity contract
+next_contract_owner: MethodologyContract -> HostCapability -> effective execution surface
 ```
 
 ---
@@ -185,12 +185,13 @@ d53fe31  refactor: formalize executable config option contracts
 ec2bdd3  refactor: persist model execution identity snapshots
 8ba9eb5  docs: record M6 model identity closure
 f8c9f24  fix: enforce primary direct implementation authority
+dc8c59c  test: lock primary model as host-selected
 ```
 
 Current deterministic baseline before this coverage-ledger rewrite:
 
 ```text
-controlled full suite: 551/551 PASS
+controlled full suite: 553/553 PASS
 architecture lint: PASS rules=20 deferred=0 linked=8
 validator: PASS
 projection receipts: 32
@@ -208,7 +209,7 @@ The old schema catalog listed suggested filenames. **Filename parity is not the 
 | C01 / S01 RoleContract | `data/hi-roles.json`, `contracts/role.ts`, generated role/agent projections | **CLOSED** | Primary direct implementation authority is now enforced from canonical `repositoryWriteAuthority` at the `hi_direct_progress` control-plane boundary. |
 | C02 / S02 PermissionProfile | `data/hi-permission-profiles.json`, `contracts/permission-profile.ts` | **CLOSED** | Safety monotonicity and read-only edit denial executable. |
 | C03 / S03 MethodologyContract | `data/hi-methodologies.json`, generated policy/SKILL projections, runtime catalog | **PARTIAL only at host-capability eligibility edge** | Core lifecycle closed; P2 must bind mandatory host/resource capability to actual executable eligibility. |
-| C04 / S04 ModelCapabilityProfile | `contracts/model.ts`, model resolver, WorkerContract snapshots | **PARTIAL at primary-agent identity only** | Child/worker execution identity closed; P1 audits parent/primary model truth. |
+| C04 / S04 ModelCapabilityProfile | `contracts/model.ts`, model resolver, WorkerContract snapshots | **CLOSED current claims** | Child/worker constrained identity is reconciled; primary Hi agents intentionally do not constrain model/variant, leaving primary selection host-owned and preventing fake primary model state. |
 | C05 / S05 HostCapability | `contracts/host-capability.ts`, OpenCode detector/doctor | **CLOSED registry / HOST-LIMITED capabilities** | Process lifecycle DEGRADED; workspace isolation UNSUPPORTED; browser/visual capability is not yet modeled as an executable preflight truth. |
 | C06 / S06 ConfigOption | `data/hi-config-options.json`, `contracts/config-option.ts`, generated defaults | **CLOSED** | 32 leaves, real effect/diagnostic classification, HI003 fatal. |
 | C07 / S07 TaskContract | `contracts/task.ts`, TaskRuntime | **CLOSED** | Task identity/obligations/context/external-action snapshots current-only. |
@@ -257,7 +258,7 @@ This section exists so no requirement from the broad working checkpoint disappea
 | 11–13 | language-agnostic semantics, assessment gate, follow-up quarantine | **CLOSED current runtime** — structured semantic state; fresh-session constraint rebase; no language dictionary authority. |
 | 14 | authority semantics | **CLOSED / PERMANENT INVARIANT**. |
 | 15–17 | repository reality audit, executable graph, owner map | **PERMANENT DEVELOPMENT STANDARD** — this reconciliation is the current full pass. |
-| 18 | role system | **PARTIAL** only because P1 primary model truth remains; P0 direct implementation authority is closed. |
+| 18 | role system | **CLOSED current role/model claims** — P0 direct authority and P1 primary host-selected model truth are closed; P2 remains a host capability/tool-surface concern. |
 | 19–36 | methodology terminology/catalog/signals/selection/load/exit/learning/admission/authoring | **CLOSED core lifecycle; PARTIAL capability eligibility** — P2 closes role/host-capability executability for mandatory methodology exits. |
 | 37 | Project Intelligence | **CLOSED current scope**. |
 | 38–40 | evidence, completion/STOP, tests-not-product | **CLOSED current architecture / PERMANENT STANDARD**. |
@@ -277,7 +278,7 @@ This section exists so no requirement from the broad working checkpoint disappea
 | 71–73 | historical checkpoint/local commit discipline/Stage-1 closure | **HISTORICAL + COMMIT DISCIPLINE PERMANENT**. |
 | 74–89 | Stage-2 role/topology/model/host rules and generated/release test boundaries | **mostly CLOSED; remaining items are explicitly enumerated in Section 7 below**. |
 | 90 | explicit blind spots A–N | **mixed** — all A–N are individually classified with source evidence and closure requirements in Section 7 below. |
-| 91–92 | old validation baseline and continuation order | **HISTORICAL**, superseded by 551/551 baseline and current roadmap. |
+| 91–92 | old validation baseline and continuation order | **HISTORICAL**, superseded by 553/553 baseline and current roadmap. |
 | 93 | anti-drift rules | **PERMANENT INVARIANT**, absorbed into Sections 1–3 and verification protocol here. |
 
 ---
@@ -304,7 +305,7 @@ Closure proof:
 4. actual tool-path acceptance proves forced read-only `manager` cannot close implementation even when mutation evidence is injected, while existing working-manager direct paths remain green;
 5. full controlled suite after the change: **551/551 PASS**, architecture lint PASS (20 rules, deferred=0), validator PASS, backup count 0.
 
-### B. Primary effective-model evidence — **OPEN, P1**
+### B. Primary effective-model evidence — **CLOSED at `dc8c59c` as host-selected/unconstrained**
 
 Child/worker model truth is now strong after M6, but primary model truth is not equivalent:
 
@@ -312,13 +313,14 @@ Child/worker model truth is now strong after M6, but primary model truth is not 
 - WorkerState model identity fields apply to child workers;
 - no current production state proves a constrained primary model/variant from host metadata.
 
-Required closure is source-first, not field-first:
+Closure proof:
 
-1. determine whether current product ever makes a constrained primary-model claim;
-2. inspect actual OpenCode primary message/session metadata producer;
-3. if primary model is intentionally host-default/unconstrained, encode that classification and avoid fake verification fields;
-4. if any config/runtime path constrains it, record requested/projected/observed/effective identity with a real completion/doctor consumer;
-5. never reuse child proof to claim primary proof.
+1. OpenCode plugin/sdk/binary are all exact supported version 1.18.16 in the controlled environment;
+2. OpenCode `chat.message` exposes host-selected primary `model`/`variant` metadata, but canonical Hi primary agent projections contain no `model` or `variant`;
+3. Hi model routing/config consumers are child TaskRuntime/model-resolver paths, not primary-agent projection;
+4. canonical Hi agent binding fails closed if a host/user injects a model constraint into a canonical primary agent definition;
+5. primary chat model metadata therefore remains host-selected observation and is not manufactured into Mission/Worker primary model state or a completion claim;
+6. focused P1 set 13/13 PASS; full controlled suite **553/553 PASS**, architecture lint PASS, validator PASS, backup count 0.
 
 ### C. Methodology compatibility vs executable capability — **PARTIAL, P2**
 
@@ -426,13 +428,13 @@ The old stage order remains useful as a product-coverage lens, but later Constit
 | Stage | Current status | Meaning |
 |---|---|---|
 | Stage 1 — Methodology + semantic prerequisite ownership | **CLOSED** | 27 methodologies, structured semantics, activation/selection/load/exit/learning/admission lifecycle operational. P2 is a Stage-2 host-capability eligibility edge, not a reopening of semantic Stage 1. |
-| Stage 2 — Role/topology/generated agents/model/host policy | **PARTIAL** | Main architecture operational; P0 primary direct authority is closed. Open P1 primary model truth and P2 methodology/host capability + visual/browser + scout drift remain. |
+| Stage 2 — Role/topology/generated agents/model/host policy | **PARTIAL** | P0 primary direct authority and P1 primary host-selected model truth are closed. Open P2 methodology/host capability + visual/browser + scout drift remains. |
 | Stage 3 — Context Governor | **CLOSED current scope** | `governContext` is consumed by mission compaction snapshot; TaskRuntime has bounded context/artifact/PI/SemanticContext/native-summary paths. |
 | Stage 4 — Project Intelligence / Semantic Context / knowledge lifecycle | **CLOSED current implemented scope** | Durable PI reload/invalidation, SemanticContext contract/consumer, methodology learning/admission separation operational. |
 | Stage 5 — Human Decision / process / shell / isolation | **PARTIAL / HOST-LIMITED** | HumanDecision and shell policy operational. Process lifecycle DEGRADED; workspace isolation binding UNSUPPORTED. These must remain explicit release/support limitations unless future host support closes them. |
 | Stage 6 — Team / concurrency / crash recovery / fallback | **PARTIAL** | Concurrency/fallback/recovery operational; P3 Team restart contract requires explicit reconciliation. |
 | Stage 7 — Storage / setup / docs / packaging / release architecture | **CLOSED local architecture, docs-status residue** | Storage/provenance/release guards operational locally. Historical 06/08 status banners are stale. No real release authority. |
-| Stage 8 — independent subsystem/integration tests | **CLOSED current T1/T2 baseline** | 551/551 controlled suite plus architecture lint/validator. Tests remain evidence, not sole product proof. |
+| Stage 8 — independent subsystem/integration tests | **CLOSED current T1/T2 baseline** | 553/553 controlled suite plus architecture lint/validator. Tests remain evidence, not sole product proof. |
 | Stage 9 — Linux/OpenCode representative real-host acceptance | **PASS_MATERIAL_WITH_LIMITATIONS** | M12 OpenCode 1.18.16/aarch64 verified material primitives; process DEGRADED, workspace UNSUPPORTED, one independent-review terminal scenario was harness/model-behavior incomplete. Re-run targeted T3 after host-bound changes. |
 | Stage 10 — real release/publication acceptance | **NOT REQUESTED** | Requires explicit user authority and T4 receipts. |
 
@@ -481,20 +483,19 @@ Closure:
 
 Exit satisfied: a primary control-plane API cannot close implementation work that the actual primary RoleContract is forbidden to own.
 
-### P1 — Primary model truth closure
+### P1 — Primary model truth closure — **CLOSED at `dc8c59c`**
 
 Owner: primary host session/message observation boundary + model contract.
 
-Deliverables:
+Closure:
 
-- source audit of actual OpenCode primary model/variant metadata;
-- explicit classification: constrained-and-verifiable vs host-default/unconstrained;
-- only if real producers/consumers exist, bounded primary requested/projected/observed/effective state;
-- doctor/completion consumer where a constrained claim matters;
-- no duplicate child-model state or producerless fields;
-- exact tests and, if host-bound behavior changes, targeted T3 acceptance.
+- exact OpenCode 1.18.16 source/type surface exposes primary model/variant metadata at the host chat boundary;
+- canonical Hi primary agents intentionally omit model/variant constraints;
+- host-side model injection into a canonical Hi primary agent fails binding as a collision;
+- no producerless primary model fields were added to Mission/Worker state;
+- focused P1 set 13/13 PASS; full controlled suite 553/553 PASS.
 
-Exit: Hi never claims a primary model/variant it cannot prove, and it does not invent unnecessary state when the host is intentionally unconstrained.
+Exit satisfied: Hi makes no constrained primary model/variant claim and does not invent verification state for a host-selected primary model.
 
 ### P2 — Methodology/host capability and execution-surface closure
 
@@ -686,10 +687,10 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**Start P1 only.**
+**Start P2 only.**
 
-Re-check real HEAD/status, then audit the actual OpenCode primary-session/message model metadata producer before adding any state. Determine whether Hi makes a constrained primary model/variant claim or whether the primary is intentionally host-default/unconstrained; only add requested/projected/observed/effective primary identity when a real producer and consumer require it.
+Re-check real HEAD/status, then close the methodology/host execution-capability boundary as one coherent slice: establish the minimal canonical host/resource requirement representation, bind methodology eligibility to actual role execution surface + HostCapability, make mandatory browser/visual evidence fail deterministically when unavailable, and resolve the `scout` permission/tool drift against exact supported OpenCode 1.18.16 reality.
 
-Do **not** start P2–P8 in parallel unless P1 source investigation proves a dependency requires a narrowly scoped prerequisite. Do not enter real M13/release work without explicit user request.
+Do **not** start P3–P8 in parallel unless P2 investigation proves a dependency requires a narrowly scoped prerequisite. Do not enter real M13/release work without explicit user request.
 
-When P1 is coherently closed or truthfully classified as unconstrained with sufficient proof, run focused + justified controlled verification, create a local commit, update this MASTER’s status/next action, and continue to P2.
+When P2 is coherently closed, run focused + justified controlled verification, create a local commit, update this MASTER’s status/next action, and continue to P3.
