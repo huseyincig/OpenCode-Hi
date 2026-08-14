@@ -44,9 +44,20 @@ export class OpenCodeWorkspaceAdapter implements WorkspaceExecutor{
     if(!workspace.worktrees.includes(workspacePath))throw new Error('Workspace Git view does not contain its own canonical worktree path')
     return{host_workspace_id:native.id,workspace_path:workspacePath,...(native.branch?{branch:String(native.branch)}:{})}
   }
+  async #listNative():Promise<NativeWorkspace[]>{const raw=await this.#workspace().list({directory:this.directory}),items=nativeData<NativeWorkspace[]>(raw)??[];return Array.isArray(items)?items:[]}
+  async #recoverLostCreate(beforeIDs:Set<string>,request:WorkspaceProvisionRequest,cause:unknown):Promise<WorkspaceProvisioned>{
+    const after=await this.#listNative(),newItems=after.filter(x=>x?.id&&!beforeIDs.has(x.id)),valid:WorkspaceProvisioned[]=[]
+    for(const item of newItems)try{valid.push(this.#validate(item,{...request,require_baseline:true}))}catch{}
+    if(valid.length===1)return valid[0]
+    throw new Error(`OpenCode workspace create failed and lost-ack reconciliation was ${valid.length?'ambiguous':'unproven'}: ${String(cause)}`)
+  }
   async provision(request:WorkspaceProvisionRequest):Promise<WorkspaceProvisioned>{
     const before=this.inspector(request.repository_root);if(before.head!==request.source_baseline)throw new Error('Source baseline changed before OpenCode workspace provisioning')
-    const raw=await this.#workspace().create({directory:this.directory,type:'worktree'}),native=nativeData<NativeWorkspace>(raw)
+    const beforeIDs=new Set((await this.#listNative()).map(x=>x?.id).filter((x):x is string=>typeof x==='string'&&Boolean(x)))
+    let raw:any
+    try{raw=await this.#workspace().create({directory:this.directory,type:'worktree'})}catch(createError){return this.#recoverLostCreate(beforeIDs,request,createError)}
+    const native=nativeData<NativeWorkspace>(raw)
+    if(!native||typeof native.id!=='string'||native.type!=='worktree'||typeof native.directory!=='string')return this.#recoverLostCreate(beforeIDs,request,raw?.error??'invalid create response')
     try{return this.#validate(native,{...request,require_baseline:true})}catch(error){if(native?.id)try{await this.#workspace().remove({id:native.id,directory:this.directory})}catch{};throw error}
   }
   async reconcile(lease:WorkspaceLeaseContract):Promise<WorkspaceReconcileResult>{

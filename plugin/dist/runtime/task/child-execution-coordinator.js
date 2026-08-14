@@ -37,7 +37,7 @@ export class ChildExecutionCoordinator {
         this.registry = registry;
     }
     resolveCallbackWorker(sessionID) { return this.registry?.list().find(w => w.session_id === sessionID); }
-    async create(parentSessionID, title, role, model, variant, workspace) { const child = await createChildSession(this.client, parentSessionID, title, role, model, variant, workspace?.workspaceID); if (workspace) {
+    async create(parentSessionID, title, role, model, variant, workspace) { const child = await createChildSession(this.client, parentSessionID, title, role, model, variant, workspace?.workspaceID, this.lifecycle); if (workspace) {
         if (child?.workspaceID !== workspace.workspaceID || typeof child?.directory !== 'string' || !samePath(child.directory, workspace.directory)) {
             if (child?.id)
                 try {

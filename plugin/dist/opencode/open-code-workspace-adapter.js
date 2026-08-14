@@ -60,11 +60,33 @@ export class OpenCodeWorkspaceAdapter {
             throw new Error('Workspace Git view does not contain its own canonical worktree path');
         return { host_workspace_id: native.id, workspace_path: workspacePath, ...(native.branch ? { branch: String(native.branch) } : {}) };
     }
+    async #listNative() { const raw = await this.#workspace().list({ directory: this.directory }), items = nativeData(raw) ?? []; return Array.isArray(items) ? items : []; }
+    async #recoverLostCreate(beforeIDs, request, cause) {
+        const after = await this.#listNative(), newItems = after.filter(x => x?.id && !beforeIDs.has(x.id)), valid = [];
+        for (const item of newItems)
+            try {
+                valid.push(this.#validate(item, { ...request, require_baseline: true }));
+            }
+            catch { }
+        if (valid.length === 1)
+            return valid[0];
+        throw new Error(`OpenCode workspace create failed and lost-ack reconciliation was ${valid.length ? 'ambiguous' : 'unproven'}: ${String(cause)}`);
+    }
     async provision(request) {
         const before = this.inspector(request.repository_root);
         if (before.head !== request.source_baseline)
             throw new Error('Source baseline changed before OpenCode workspace provisioning');
-        const raw = await this.#workspace().create({ directory: this.directory, type: 'worktree' }), native = nativeData(raw);
+        const beforeIDs = new Set((await this.#listNative()).map(x => x?.id).filter((x) => typeof x === 'string' && Boolean(x)));
+        let raw;
+        try {
+            raw = await this.#workspace().create({ directory: this.directory, type: 'worktree' });
+        }
+        catch (createError) {
+            return this.#recoverLostCreate(beforeIDs, request, createError);
+        }
+        const native = nativeData(raw);
+        if (!native || typeof native.id !== 'string' || native.type !== 'worktree' || typeof native.directory !== 'string')
+            return this.#recoverLostCreate(beforeIDs, request, raw?.error ?? 'invalid create response');
         try {
             return this.#validate(native, { ...request, require_baseline: true });
         }

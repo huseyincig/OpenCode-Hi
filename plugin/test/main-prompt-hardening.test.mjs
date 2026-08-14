@@ -34,11 +34,13 @@ test('doctor reports primary-model drift separately when fallback is still avail
   assert.match(drift?.detail??'',/fallback=p\/live/)
 })
 
-test('runtime instance guard prevents duplicate hooks per project but permits distinct projects and reacquire',()=>{
-  const a=acquireHiRuntimeInstance('/tmp/hi-project-a')
-  assert.throws(()=>acquireHiRuntimeInstance('/tmp/hi-project-a'),/Duplicate OpenCode-Hi runtime/)
-  const b=acquireHiRuntimeInstance('/tmp/hi-project-b')
-  b.release();a.release()
-  const c=acquireHiRuntimeInstance('/tmp/hi-project-a')
+test('runtime instance guard prevents duplicate hooks per host context while permitting distinct OpenCode instance contexts and reacquire',()=>{
+  const ownerA={},ownerB={}
+  const a=acquireHiRuntimeInstance('/tmp/hi-project-a',ownerA)
+  assert.throws(()=>acquireHiRuntimeInstance('/tmp/hi-project-a',ownerA),/Duplicate OpenCode-Hi runtime/)
+  const distinctContext=acquireHiRuntimeInstance('/tmp/hi-project-a',ownerB)
+  const otherProject=acquireHiRuntimeInstance('/tmp/hi-project-b',ownerA)
+  distinctContext.release();otherProject.release();a.release()
+  const c=acquireHiRuntimeInstance('/tmp/hi-project-a',ownerA)
   c.release()
 })

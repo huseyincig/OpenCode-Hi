@@ -1,6 +1,6 @@
 import type { OpenCodeClient } from './types.js';
 export declare function dataOf<T = any>(value: any): T;
-export declare function createChildSession(client: OpenCodeClient, parentID: string, title: string, agent?: string, model?: string, variant?: string, workspaceID?: string): Promise<any>;
+export declare function createChildSession(client: OpenCodeClient, parentID: string, title: string, agent?: string, model?: string, variant?: string, workspaceID?: string, endpoint?: OpenCodeLifecycleEndpoint): Promise<any>;
 export declare function modelIdentity(model?: string): {
     providerID: string;
     modelID: string;

@@ -1,10 +1,18 @@
 import type { OpenCodeClient } from './types.js'
+import { createOpencodeClient as createOpenCodeV2Client } from '@opencode-ai/sdk/v2/client'
 export function dataOf<T=any>(value:any):T { return (value && typeof value==='object' && 'data' in value) ? value.data as T : value as T }
 
-export async function createChildSession(client:OpenCodeClient,parentID:string,title:string,agent?:string,model?:string,variant?:string,workspaceID?:string):Promise<any>{
+export async function createChildSession(client:OpenCodeClient,parentID:string,title:string,agent?:string,model?:string,variant?:string,workspaceID?:string,endpoint:OpenCodeLifecycleEndpoint={}):Promise<any>{
+  const identity=modelIdentity(model)
+  if(workspaceID&&endpoint.serverUrl&&endpoint.directory){
+    const v2=createOpenCodeV2Client({baseUrl:endpoint.serverUrl,directory:endpoint.directory}),session=v2?.session
+    if(!session||typeof session.create!=='function')throw new Error('OpenCode canonical v2 session.create unavailable for workspace binding')
+    const params:any={parentID,title,workspace:workspaceID,workspaceID};if(agent)params.agent=agent;if(identity)params.model={id:identity.modelID,providerID:identity.providerID,...(variant?{variant}:{})}
+    return dataOf(await session.create(params))
+  }
   const edge=client as any
   if(typeof edge?.session?.create!=='function') throw new Error('OpenCode session.create unavailable')
-  const body:any={parentID,title};if(agent)body.agent=agent;if(workspaceID)body.workspaceID=workspaceID;const identity=modelIdentity(model);if(identity)body.model={id:identity.modelID,providerID:identity.providerID,...(variant?{variant}: {})}
+  const body:any={parentID,title};if(agent)body.agent=agent;if(workspaceID)body.workspaceID=workspaceID;if(identity)body.model={id:identity.modelID,providerID:identity.providerID,...(variant?{variant}: {})}
   return dataOf(await edge.session.create({body}))
 }
 

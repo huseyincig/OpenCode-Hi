@@ -46,6 +46,27 @@ test('W2 OpenCode adapter provisions only the builtin worktree type and binds ex
 })
 
 
+test('W3 real-host lost ACK on workspace create is reconciled only from one new exact workspace identity',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-w3-lostack-primary-')),work=mkdtempSync(join(tmpdir(),'hi-w3-lostack-work-')),common=mkdtempSync(join(tmpdir(),'hi-w3-lostack-common-'));let listed=0
+  try{
+    const workspace={create:async()=>{throw new Error('Timed out waiting for global event')},list:async()=>({data:listed++===0?[]:[{id:'wrk_lostack',type:'worktree',directory:work}]}),remove:async()=>({data:{}})}
+    const inspect=()=>({head:BASE,common_dir:resolve(common),worktrees:[resolve(root),resolve(work)]})
+    const adapter=new OpenCodeWorkspaceAdapter({v2:{experimental:{workspace}}},new URL('http://127.0.0.1:1'),root,inspect)
+    const out=await adapter.provision({mission_id:'m',task_id:'t',repository_root:root,source_baseline:BASE})
+    assert.equal(out.host_workspace_id,'wrk_lostack');assert.equal(out.workspace_path,resolve(work))
+  }finally{rmSync(root,{recursive:true,force:true});rmSync(work,{recursive:true,force:true});rmSync(common,{recursive:true,force:true})}
+})
+
+test('W3 lost ACK reconciliation fails closed when more than one new valid workspace appears',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-w3-amb-primary-')),a=mkdtempSync(join(tmpdir(),'hi-w3-amb-a-')),b=mkdtempSync(join(tmpdir(),'hi-w3-amb-b-')),common=mkdtempSync(join(tmpdir(),'hi-w3-amb-common-'));let listed=0
+  try{
+    const workspace={create:async()=>{throw new Error('Timed out waiting for global event')},list:async()=>({data:listed++===0?[]:[{id:'wrk_a',type:'worktree',directory:a},{id:'wrk_b',type:'worktree',directory:b}]}),remove:async()=>({data:{}})}
+    const inspect=()=>({head:BASE,common_dir:resolve(common),worktrees:[resolve(root),resolve(a),resolve(b)]})
+    const adapter=new OpenCodeWorkspaceAdapter({v2:{experimental:{workspace}}},new URL('http://127.0.0.1:1'),root,inspect)
+    await assert.rejects(()=>adapter.provision({mission_id:'m',task_id:'t',repository_root:root,source_baseline:BASE}),/lost-ack reconciliation was ambiguous/)
+  }finally{for(const x of [root,a,b,common])rmSync(x,{recursive:true,force:true})}
+})
+
 test('W2 default Git inspector accepts an actual detached registered worktree without staging or snapshot mutation',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-w2-real-git-')),work=join(root,'..',`${root.split('/').at(-1)}-work`)
   const run=(args,cwd=root)=>{const r=spawnSync('git',args,{cwd,encoding:'utf8'});assert.equal(r.status,0,String(r.stderr??r.stdout));return String(r.stdout??'').trim()}

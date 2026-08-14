@@ -25,7 +25,7 @@ export const HiPlugin = async (ctx) => {
     const { toolSurface, reconfigure } = createHiToolSurface({ state, store: services.store, tasks: services.tasks, teams: services.teams, processRuntime: services.processRuntime, workspaceRuntime: services.workspaceRuntime, projectRoot, capabilities: host.capabilities, native: host.native, getModels: host.getModels, scopedStores: services.scopedStores });
     void host.log('info', 'OpenCode-Hi plugin initialized', { directory: ctx.directory, models: host.getModels().length, restored: services.store.all().length, uncleanShutdown: services.persistence.lastLoadReport.uncleanShutdown === true, capabilities: host.capabilities });
     // Acquire only after initialization succeeds so a failed init cannot leave a stale process-global lease.
-    const instanceLease = acquireHiRuntimeInstance(String(projectRoot));
+    const instanceLease = acquireHiRuntimeInstance(String(projectRoot), ctx.client);
     return createOpenCodeHooks({ state, host, services, projectRoot, packagedSkillsDir, projectAuthority, toolSurface, reconfigureToolSurface: reconfigure, eventController, instanceLease });
 };
 export default HiPlugin;

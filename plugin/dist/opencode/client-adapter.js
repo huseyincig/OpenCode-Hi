@@ -1,5 +1,18 @@
+import { createOpencodeClient as createOpenCodeV2Client } from '@opencode-ai/sdk/v2/client';
 export function dataOf(value) { return (value && typeof value === 'object' && 'data' in value) ? value.data : value; }
-export async function createChildSession(client, parentID, title, agent, model, variant, workspaceID) {
+export async function createChildSession(client, parentID, title, agent, model, variant, workspaceID, endpoint = {}) {
+    const identity = modelIdentity(model);
+    if (workspaceID && endpoint.serverUrl && endpoint.directory) {
+        const v2 = createOpenCodeV2Client({ baseUrl: endpoint.serverUrl, directory: endpoint.directory }), session = v2?.session;
+        if (!session || typeof session.create !== 'function')
+            throw new Error('OpenCode canonical v2 session.create unavailable for workspace binding');
+        const params = { parentID, title, workspace: workspaceID, workspaceID };
+        if (agent)
+            params.agent = agent;
+        if (identity)
+            params.model = { id: identity.modelID, providerID: identity.providerID, ...(variant ? { variant } : {}) };
+        return dataOf(await session.create(params));
+    }
     const edge = client;
     if (typeof edge?.session?.create !== 'function')
         throw new Error('OpenCode session.create unavailable');
@@ -8,7 +21,6 @@ export async function createChildSession(client, parentID, title, agent, model, 
         body.agent = agent;
     if (workspaceID)
         body.workspaceID = workspaceID;
-    const identity = modelIdentity(model);
     if (identity)
         body.model = { id: identity.modelID, providerID: identity.providerID, ...(variant ? { variant } : {}) };
     return dataOf(await edge.session.create({ body }));
