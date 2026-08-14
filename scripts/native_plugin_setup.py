@@ -100,7 +100,7 @@ def install(project:Path,version:str|None=None)->dict:
     before=cfg.read_text(encoding='utf-8') if cfg.exists() else ''
     cfg.write_text(p['rendered'],encoding='utf-8')
     own.parent.mkdir(parents=True,exist_ok=True)
-    own.write_text(dump({'schema':OWNERSHIP_SCHEMA,'product':PRODUCT,'short':SHORT,'plugin_spec':p['plugin_spec'],'managed':{'config':{'path':str(cfg.relative_to(project)),'before_sha256':sha_text(before),'after_sha256':sha_text(p['rendered']),'plugin_spec':p['plugin_spec']}},'preserved':{'user_plugins':True},'installed_at':int(time.time())}),encoding='utf-8')
+    own.write_text(dump({'schema':OWNERSHIP_SCHEMA,'product':PRODUCT,'short':SHORT,'plugin_spec':p['plugin_spec'],'managed':{'config':{'path':cfg.relative_to(project).as_posix(),'before_sha256':sha_text(before),'after_sha256':sha_text(p['rendered']),'plugin_spec':p['plugin_spec']}},'preserved':{'user_plugins':True},'installed_at':int(time.time())}),encoding='utf-8')
     return {'status':'APPLIED','config':str(cfg),'plugin_spec':p['plugin_spec'],'restart_required':True,'next':'Restart OpenCode, then verify HI tools, agents, native skills and role-model routing in the runtime.'}
 
 def uninstall(project:Path)->dict:
@@ -126,7 +126,7 @@ def uninstall(project:Path)->dict:
     removed_paths=[]
     for rel in (OWNERSHIP,):
         path=project/rel
-        if path.exists() and path.is_file():path.unlink();removed_paths.append(str(rel))
+        if path.exists() and path.is_file():path.unlink();removed_paths.append(rel.as_posix())
     for rel in (HI_PROJECT_DIR/'provenance', HI_PROJECT_DIR):
         path=project/rel
         try:path.rmdir()
@@ -136,7 +136,7 @@ def uninstall(project:Path)->dict:
     except OSError:pass
     preserved=[]
     for rel in (HI_PROJECT_DIR/'policy',HI_PROJECT_DIR/'project-intelligence',HI_PROJECT_DIR/'artifacts',Path('.opencode/skills')):
-        if (project/rel).exists():preserved.append(str(rel))
+        if (project/rel).exists():preserved.append(rel.as_posix())
     return {'status':'APPLIED','product':PRODUCT,'config':str(cfg),'removed':[owned_spec],'removed_owned_paths':removed_paths,'preserved_project_data':preserved,'restart_required':True}
 
 def doctor(project:Path)->dict:

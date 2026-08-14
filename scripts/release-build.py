@@ -132,8 +132,8 @@ def release_identity(root:Path, version:str):
         if not lock.is_file(): continue
         try:
             lj=json.loads(lock.read_text()); lv=((lj.get('packages') or {}).get('') or {}).get('version') or lj.get('version')
-            if lv and lv!=version: issues.append(f'{lock.relative_to(root)} version mismatch')
-        except Exception: issues.append(f'{lock.relative_to(root)} unreadable')
+            if lv and lv!=version: issues.append(f'{lock.relative_to(root).as_posix()} version mismatch')
+        except Exception: issues.append(f'{lock.relative_to(root).as_posix()} unreadable')
     return issues
 
 def main():

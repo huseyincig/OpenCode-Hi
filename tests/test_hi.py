@@ -235,6 +235,13 @@ def test_release_build_identity_detects_plugin_license_drift(tmp_path):
     (tmp_path/'CHANGELOG.md').write_text('# Changelog\n\n## 2.0.10\n')
     assert 'plugin package license mismatch' in mod.release_identity(tmp_path,'2.0.10')
 
+def test_release_and_setup_technical_paths_are_posix_canonical():
+    release=(ROOT/'scripts/release-build.py').read_text(encoding='utf-8')
+    setup=(ROOT/'scripts/native_plugin_setup.py').read_text(encoding='utf-8')
+    assert "lock.relative_to(root).as_posix()" in release
+    assert "cfg.relative_to(project).as_posix()" in setup
+    assert "preserved.append(rel.as_posix())" in setup
+
 def test_release_build_identity_detects_package_lock_drift(tmp_path):
     import importlib.util
     spec=importlib.util.spec_from_file_location('hi_release_build3',ROOT/'scripts/release-build.py'); mod=importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
