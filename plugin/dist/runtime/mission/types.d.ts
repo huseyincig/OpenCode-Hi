@@ -1,5 +1,7 @@
 import type { HiPrimaryRole } from '../roles/catalog.js';
-import type { EvidenceOutcome, WorkerResult } from '../../contracts/worker-result.js';
+import type { WorkerResult } from '../../contracts/worker-result.js';
+import type { EvidenceItem } from '../../contracts/evidence.js';
+export type { EvidenceItem } from '../../contracts/evidence.js';
 export { WORKER_EVIDENCE_KINDS } from '../../contracts/worker-result.js';
 export type { EvidenceOutcome, MethodologyObservation, WorkerEvidenceKind, WorkerResult, WorkerResultStatus } from '../../contracts/worker-result.js';
 export type MissionStatus = 'active' | 'waiting-user' | 'completed' | 'stopped' | 'failed';
@@ -182,22 +184,6 @@ export interface WorkerState {
     effective_model_source?: string;
     effective_model_observed_at?: number;
     semantic_pause_revision?: number;
-}
-export interface EvidenceItem {
-    id: string;
-    kind: string;
-    summary: string;
-    scope: string[];
-    source?: string;
-    source_session_id?: string;
-    source_state_hash?: string;
-    task_id?: string;
-    obligation_ids?: string[];
-    observed_at: number;
-    invalidated_at?: number;
-    pass?: boolean;
-    outcome?: EvidenceOutcome;
-    reason?: string;
 }
 export interface LedgerEvent {
     id: string;

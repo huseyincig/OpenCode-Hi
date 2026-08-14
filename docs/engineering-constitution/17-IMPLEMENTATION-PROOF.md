@@ -51,14 +51,28 @@ Rows below are intentionally `PENDING` until code exists.
 | M4 | MethodologyContract normalization | mechanical SKILL contract sections compiled from canonical JSON; inert duplicated fields removed; focused 37/37 PASS; controlled full suite 469/469 PASS; validator PASS | T1/T2 | `c152f98` | PASS — MECHANICAL OWNER MIGRATED |
 | M5 | ConfigOption catalog | BA03 + config executor lint | T1/T2 | SentinelX blocks direct config-catalog mutation in this environment | BLOCKED_BY_HOST_POLICY |
 | M6 | Model capability/identity | ModelCapabilityProfile host-inventory normalization + identity reconciler + effective-model evidence; focused 17/17 PASS; controlled full suite 475/475 PASS; validator PASS | T1/T2 | `e7c3c96`; requested/projected WorkerState snapshot wiring blocked by SentinelX mutation policy; no unwired state committed | PARTIAL_PASS |
-| M7 | Host capability registry | 16 contract-backed OpenCode capabilities; product runtime gates consume worker-runtime/session-revert contracts; doctor reports status/verification/semantic loss; focused 43/43 PASS; controlled full suite 480/480 PASS; validator PASS | T1/T2 local; T3 still pending | commit pending | PASS_LOCAL — REAL-HOST ACCEPTANCE PENDING |
-| M8 | Task/Worker/Result/Evidence contracts | WorkerResult canonical type/normalizer/strict validator extracted; persistence and parser share one owner; focused 57/57 PASS; controlled full suite 485/485 PASS; validator PASS | T1/T2 | commit pending | PARTIAL_PASS — EVIDENCE/TASK/WORKER EXTRACTION REMAINS |
+| M7 | Host capability registry | 16 contract-backed OpenCode capabilities; product runtime gates consume worker-runtime/session-revert contracts; doctor reports status/verification/semantic loss; focused 43/43 PASS; controlled full suite 480/480 PASS; validator PASS | T1/T2 local; T3 still pending | `390cc2b` | PASS_LOCAL — REAL-HOST ACCEPTANCE PENDING |
+| M8 | Task/Worker/Result/Evidence contracts | WorkerResult and mission EvidenceItem canonical contracts extracted; parser/persistence share canonical validators; WorkerResult focused 57/57 + Evidence focused 32/32 PASS; latest controlled full suite 489/489 PASS; validator PASS | T1/T2 | WorkerResult `4ea320d`; Evidence commit pending | PARTIAL_PASS — REVIEW/TASK/WORKER EXTRACTION REMAINS |
 | M9 | Context/Artifact/PI/Human/Authority/Storage | BA06/10/11 + storage lint | T1/T2 | — | PENDING |
 | M10 | common generator/lint closure | BA12 + HI001–HI020 migrated rules | T0/T1/T2 | — | PENDING |
 | M11 | deterministic full closure | build + validator + full controlled suite | T0/T1/T2 | — | PENDING |
 | M12 | real-host acceptance | OpenCode version-bound native receipts | T3 | — | PENDING |
 | M13 | release readiness | explicit authority + external receipts | T4 | — | NOT REQUESTED |
 
+
+
+### M8 Evidence contract checkpoint
+
+Implemented:
+
+- added canonical `plugin/src/contracts/evidence.ts` owning the mission EvidenceItem shape and the exact mission evidence-kind catalog;
+- mission evidence is explicitly the worker proof catalog plus control-plane/host-only `review-input` and `lsp-diagnostics`; workers cannot self-produce those control-plane evidence classes through WorkerResult;
+- `mission/types.ts` re-exports the canonical EvidenceItem instead of defining a second shape;
+- runtime persistence now validates mission evidence through `isEvidenceItemContract()` and no longer owns a duplicate evidence-kind/outcome schema;
+- evidence runtime narrows verification command classification to the canonical MissionEvidenceKind union;
+- strict negative tests reject unknown fields/kinds/outcomes and non-finite freshness timestamps while preserving source/session/state/task/obligation provenance.
+
+Evidence: focused evidence/result/obligation/review suite 32/32 PASS; controlled isolated-HOME/XDG full suite 489/489 PASS; validator PASS; diff check clean. `VerificationEnvelope` and `ReviewFinding` are not claimed implemented: neither is first-class runtime state yet, so the next M8 work must wire a real consumer before adding either contract.
 
 
 ### M8 WorkerResult contract checkpoint

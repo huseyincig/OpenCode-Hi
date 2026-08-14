@@ -1,8 +1,8 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { runtimeStatePath } from '../storage/locations.js';
-import { WORKER_EVIDENCE_KINDS } from '../mission/types.js';
 import { isWorkerResultContract } from '../../contracts/worker-result.js';
+import { isEvidenceItemContract } from '../../contracts/evidence.js';
 import { HI_METHODOLOGY_PRODUCERS, HI_METHODOLOGY_SIGNAL_CATALOG, HI_METHODOLOGY_TRIGGER_SOURCES } from '../../generated/methodology-policy.js';
 import { SEMANTIC_CAPABILITIES, SEMANTIC_VERIFICATION_KINDS } from '../intent/semantic-assessment.js';
 export const RUNTIME_STATE_SCHEMA = 7;
@@ -12,8 +12,6 @@ function recordArray(value) { return Array.isArray(value) && value.every(isRecor
 const TASK_STATUSES = new Set(['created', 'queued', 'running', 'waiting', 'completed', 'failed', 'cancelled', 'blocked']);
 const WORKER_STATUSES = new Set(['created', 'queued', 'starting', 'ready', 'busy', 'completed', 'failed', 'cancelled']);
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
-const EVIDENCE_OUTCOMES = new Set(['pending', 'passed', 'failed', 'environment-issue']);
-const MISSION_EVIDENCE_KINDS = new Set([...WORKER_EVIDENCE_KINDS, 'review-input', 'lsp-diagnostics']);
 const OBLIGATION_KINDS = new Set(['analysis', 'implementation', 'verification', 'review', 'authority']);
 const OBLIGATION_STATUSES = new Set(['open', 'closed', 'blocked']);
 const GATE_KINDS = new Set(['verification', 'user-authority', 'reviewer', 'prerequisite-task', 'precondition', 'rollback']);
@@ -26,22 +24,6 @@ function validObligation(value) {
     if (value.blocker !== undefined && typeof value.blocker !== 'string')
         return false;
     if (value.closedAt !== undefined && typeof value.closedAt !== 'number')
-        return false;
-    return true;
-}
-function validMissionEvidence(value) {
-    if (!isRecord(value) || typeof value.id !== 'string' || typeof value.kind !== 'string' || !MISSION_EVIDENCE_KINDS.has(value.kind) || typeof value.summary !== 'string' || !stringArray(value.scope) || typeof value.observed_at !== 'number')
-        return false;
-    for (const field of ['source', 'source_session_id', 'source_state_hash', 'task_id', 'reason'])
-        if (value[field] !== undefined && typeof value[field] !== 'string')
-            return false;
-    if (value.obligation_ids !== undefined && !stringArray(value.obligation_ids))
-        return false;
-    if (value.invalidated_at !== undefined && typeof value.invalidated_at !== 'number')
-        return false;
-    if (value.pass !== undefined && typeof value.pass !== 'boolean')
-        return false;
-    if (value.outcome !== undefined && (typeof value.outcome !== 'string' || !EVIDENCE_OUTCOMES.has(value.outcome)))
         return false;
     return true;
 }
@@ -152,7 +134,7 @@ function validMission(value) {
         return false;
     if (!stringArray(value.changed_files) || !stringArray(value.blockers) || !stringArray(value.constraints) || !stringArray(value.parent_loaded_methodologies))
         return false;
-    if (!isRecord(value.evidence) || typeof value.evidence.fresh !== 'boolean' || !Array.isArray(value.evidence.items) || !value.evidence.items.every(validMissionEvidence) || (value.evidence.last_mutation_at !== undefined && typeof value.evidence.last_mutation_at !== 'number'))
+    if (!isRecord(value.evidence) || typeof value.evidence.fresh !== 'boolean' || !Array.isArray(value.evidence.items) || !value.evidence.items.every(isEvidenceItemContract) || (value.evidence.last_mutation_at !== undefined && typeof value.evidence.last_mutation_at !== 'number'))
         return false;
     if (typeof value.generation !== 'number' || typeof value.iteration !== 'number' || typeof value.continuation_budget !== 'number' || typeof value.continuation_active !== 'boolean')
         return false;

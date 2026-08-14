@@ -1,4 +1,5 @@
 import type { EvidenceItem,EvidenceOutcome,MissionState } from '../mission/types.js'
+import type { MissionEvidenceKind } from '../../contracts/evidence.js'
 import { appendLedger } from '../ledger/ledger.js'
 function id():string{return`ev_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 const WRITE_TOOLS=new Set(['write','edit','patch','apply_patch','multiedit'])
@@ -6,7 +7,7 @@ const SHELL_MUTATION_COMMAND=/(?:^|[;&|]\s*)(?:rm|mv|cp|touch|mkdir|rmdir|chmod|
 const SHELL_REDIRECTION=/(?:^|[^<>])(?:>>?|2>>?|1>>?)\s*[^&|]/
 function shellMayMutate(command:string):boolean{return SHELL_MUTATION_COMMAND.test(command)||SHELL_REDIRECTION.test(command)}
 const VERIFY_HINT=/(test|pytest|vitest|jest|npm\s+test|pnpm\s+test|bun\s+test|cargo\s+test|go\s+test|lint|build|typecheck|check)/i
-function verificationKind(command:string):string{if(/test|pytest|vitest|jest|spec|go\s+test|cargo\s+test/i.test(command))return'targeted-tests';if(/typecheck|tsc\b|mypy|pyright/i.test(command))return'typecheck';if(/lint|eslint|ruff/i.test(command))return'lint';if(/build|compile|cargo\s+check/i.test(command))return'build';return'changed-surface-sanity'}
+function verificationKind(command:string):MissionEvidenceKind{if(/test|pytest|vitest|jest|spec|go\s+test|cargo\s+test/i.test(command))return'targeted-tests';if(/typecheck|tsc\b|mypy|pyright/i.test(command))return'typecheck';if(/lint|eslint|ruff/i.test(command))return'lint';if(/build|compile|cargo\s+check/i.test(command))return'build';return'changed-surface-sanity'}
 function numericExit(output:any):number|undefined{for(const v of [output?.metadata?.exit,output?.metadata?.exitCode,output?.metadata?.exit_code,output?.exit,output?.exitCode,output?.exit_code]){if(typeof v==='number'&&Number.isFinite(v))return v;if(typeof v==='string'&&/^-?\d+$/.test(v.trim()))return Number(v)}return undefined}
 const ENVIRONMENT_FAILURE=/(command not found|not recognized as an internal|no module named|cannot find module|module not found|missing dependency|enoent|spawn .* (?:not found|failed)|executable .* not found|permission denied|eacces|network.*unreachable|temporary failure in name resolution|connection refused|connection reset|socket hang|timed?\s*out|timeout|unable to resolve host|could not resolve host|certificate (?:verify|verification)|tls handshake)/i
 function outcomeOf(output:any,text:string):{outcome:EvidenceOutcome;reason?:string}{const exit=numericExit(output);if(ENVIRONMENT_FAILURE.test(text))return{outcome:'environment-issue',reason:'verification-environment-unavailable'};if(exit!==undefined)return{outcome:exit===0?'passed':'failed',reason:exit===0?undefined:`verification-exit-${exit}`};if(/(^|\n)\s*(fail|failed|error)|exit\s*code\s*[1-9]/i.test(text))return{outcome:'failed',reason:'verification-reported-failure'};return{outcome:'pending',reason:'verification-exit-unknown'}}
