@@ -26,3 +26,15 @@ test('canonical Hi agent names fail binding on prompt mode or permission collisi
     assert.deepEqual(bindHiOpenCodeAgents(cfg,PACKAGED_HI_AGENTS),['coder'])
   }
 })
+
+
+test('canonical primary Hi agents remain host-selected for model and reject host-side model constraints',()=>{
+  for(const role of ['manager','working-manager']){
+    const expected=PACKAGED_HI_AGENTS[role]
+    assert.equal(Object.hasOwn(expected,'model'),false,`${role}: Hi must not constrain the primary model`)
+    assert.equal(Object.hasOwn(expected,'variant'),false,`${role}: Hi must not constrain the primary variant`)
+    const cfg={agent:clone(PACKAGED_HI_AGENTS)}
+    cfg.agent[role].model='p/forced-primary'
+    assert.deepEqual(bindHiOpenCodeAgents(cfg,PACKAGED_HI_AGENTS),[role])
+  }
+})

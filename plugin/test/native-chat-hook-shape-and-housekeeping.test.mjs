@@ -82,3 +82,15 @@ test('working-manager still receives Hi system transform', async()=>{
   assert.equal(out.system.length,2)
   assert.match(out.system[1],/Hi CONTROL-PLANE CONTRACT/)
 })
+
+
+test('primary chat model metadata stays host-selected and does not manufacture Hi primary model state',async()=>{
+  const store=new MissionStore(),hook=createChatMessageHook(store)
+  await hook({sessionID:'primary-host-model',agent:'working-manager',model:{providerID:'p',modelID:'host-choice'},variant:'high'},nativeUser('opaque primary task'))
+  const m=store.get('primary-host-model')
+  assert.ok(m)
+  assert.equal(m.primary_mode,'working-manager')
+  assert.equal(m.workers.length,0)
+  assert.equal(Object.hasOwn(m,'primary_model'),false)
+  assert.equal(Object.hasOwn(m,'primary_model_variant'),false)
+})
