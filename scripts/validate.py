@@ -53,7 +53,7 @@ for p in ROOT.rglob('*'):
     for pattern in legacy:
         if re.search(pattern,t,re.I):err(f'legacy/prototype identity in current path: {rel} / {pattern}')
 # Living data contract names.
-required_data={'data/product.json','data/validation/implementation-coverage.json','data/validation/native-coverage.json','data/validation/flow-coverage.json','data/validation/flow-acceptance.json','data/validation/source-gates.json','data/validation/release-gates.json','data/validation/source-contracts.json','data/validation/final-dod-audit.json','data/hi-methodologies.json','data/hi-roles.json','data/validation/benchmarks-0.1.0.json','data/validation/install-lifecycle-0.1.0.json','data/validation/terminology-audit-0.1.0.json','data/validation/projection-receipts.json'}
+required_data={'data/product.json','data/validation/implementation-coverage.json','data/validation/native-coverage.json','data/validation/flow-coverage.json','data/validation/flow-acceptance.json','data/validation/source-gates.json','data/validation/release-gates.json','data/validation/source-contracts.json','data/validation/final-dod-audit.json','data/hi-methodologies.json','data/hi-roles.json','data/hi-permission-profiles.json','data/validation/benchmarks-0.1.0.json','data/validation/install-lifecycle-0.1.0.json','data/validation/terminology-audit-0.1.0.json','data/validation/projection-receipts.json'}
 for rel in required_data:
     if not (ROOT/rel).is_file():err(f'required data contract missing: {rel}')
 for old in ('feature-ledger-09-coverage.json','native-first-10-coverage.json','flow-11-coverage.json','flow-11-acceptance.json','roadmap-source-gates.json','observed-runtime-smoke-1.18.16.json'):
@@ -75,12 +75,24 @@ if not any(str(v).startswith('PENDING_EXTERNAL') for v in rg.get('gates',{}).val
 roles=sorted((ROOT/'roles').glob('*.md')); skills=sorted((ROOT/'skills').glob('*/SKILL.md'))
 try:
     role_catalog=json.loads((ROOT/'data/hi-roles.json').read_text())
-    if role_catalog.get('schema')!=1 or role_catalog.get('type')!='hi-role-contract-catalog':err('Hi role contract catalog header invalid')
+    if role_catalog.get('schema')!=2 or role_catalog.get('type')!='hi-role-contract-catalog':err('Hi role contract catalog header invalid')
     role_entries=role_catalog.get('roles',[])
     role_ids=[x.get('id') for x in role_entries if isinstance(x,dict)]
     expected_role_ids=sorted(['architect','coder','manager','qa-reviewer','repository-explorer','security-reviewer','visual-qa','working-manager'])
     if sorted(role_ids)!=expected_role_ids or len(role_ids)!=len(set(role_ids)):err('Hi role contract inventory != canonical 8 unique roles')
     known=set(role_ids)
+    permission_catalog=json.loads((ROOT/'data/hi-permission-profiles.json').read_text())
+    if permission_catalog.get('schema')!=1 or permission_catalog.get('type')!='hi-permission-profile-catalog':err('Hi permission profile catalog header invalid')
+    permission_entries=permission_catalog.get('profiles',[])
+    permission_ids=[x.get('id') for x in permission_entries if isinstance(x,dict)]
+    if len(permission_ids)!=len(set(permission_ids)):err('duplicate Hi permission profile IDs')
+    permission_known=set(permission_ids)
+    for profile in permission_entries:
+        if not isinstance(profile,dict):err('Hi permission profile entry must be object');continue
+        pid=profile.get('id','')
+        if profile.get('may_be_widened_by_lower_layer') is not False:err(f'{pid}: permission profile may widen at lower layer')
+        rules=profile.get('rules',[])
+        if any(r.get('capability')=='skill' for r in rules if isinstance(r,dict)):err(f'{pid}: skill permission must remain Methodology-owned')
     for item in role_entries:
         if not isinstance(item,dict):err('Hi role contract entry must be object');continue
         rid=item.get('id','')
@@ -93,7 +105,16 @@ try:
         delegation=item.get('delegation',{})
         refs=delegation.get('allowed_role_refs',[]) if isinstance(delegation,dict) else []
         if any(ref not in known for ref in refs):err(f'{rid}: delegation references unknown role')
+        pref=item.get('permission_profile_ref')
+        if pref not in permission_known:err(f'{rid}: unknown permission_profile_ref {pref}')
+        if item.get('read_only'):
+            profile=next((x for x in permission_entries if isinstance(x,dict) and x.get('id')==pref),{})
+            edit=[r for r in profile.get('rules',[]) if isinstance(r,dict) and r.get('capability')=='edit' and 'pattern' not in r]
+            if len(edit)!=1 or edit[0].get('action')!='deny':err(f'{rid}: read-only permission profile must explicitly deny edit')
 except Exception as e:err(f'bad Hi role contract catalog: {e}')
+for rp in roles:
+    fm=rp.read_text().split('\n---\n',1)[0]
+    if re.search(r'^permission:\s*$',fm,re.M):err(f'{rp.name}: mechanical permission must not remain in role Markdown after M3')
 if [p.stem for p in roles]!=sorted(['architect','coder','manager','qa-reviewer','repository-explorer','security-reviewer','visual-qa','working-manager']):err('agent role inventory != canonical 8')
 if not skills:err('packaged Hi methodologies missing')
 try:
@@ -105,11 +126,6 @@ try:
     if sorted(profile_names)!=sorted(skill_names):err('Hi methodology policy != packaged SKILL.md inventory')
     if methodology.get('policy',{}).get('activation_owner')!='Hi methodology activation':err('Hi methodology activation owner mismatch')
     if methodology.get('policy',{}).get('selection_scope')!='mission-task-or-obligation':err('Hi methodology selection scope mismatch')
-    role_permissions={}
-    for rp in roles:
-        text=rp.read_text()
-        fm=text.split('\n---\n',1)[0]
-        role_permissions[rp.stem]={m.group(1):m.group(2) for m in re.finditer(r'^\s{4}(hi-[\w-]+):\s*(allow|ask|deny)\s*$',fm,re.M)}
     signal_catalog=methodology.get('signal_catalog',{})
     exit_catalog=methodology.get('exit_requirement_catalog',{})
     if not isinstance(signal_catalog,dict) or not signal_catalog:err('Hi methodology signal catalog missing')
@@ -127,8 +143,7 @@ try:
         if not exits:err(f'{name}: methodology exit_requirements missing')
         unknown_exits=[item for item in exits if item not in exit_catalog]
         if unknown_exits:err(f'{name}: unknown methodology exit requirements {unknown_exits}')
-        for role in compatible:
-            if role_permissions.get(role,{}).get(name)!='allow':err(f'{name}: compatible role {role} does not allow methodology')
+        if any(role not in known for role in compatible):err(f'{name}: compatible role reference unknown')
 except Exception as e:err(f'bad Hi methodology policy: {e}')
 for p in (ROOT/'data').rglob('*.json'):
     try:json.loads(p.read_text())

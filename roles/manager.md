@@ -1,19 +1,4 @@
 ---
-permission:
-  edit: deny
-  bash:
-    "*": deny
-  external_directory: deny
-  task: deny
-  todowrite: allow
-  lsp: deny
-  question: allow
-  webfetch: allow
-  websearch: allow
-  scout: allow
-  skill:
-    hi-release-guardrails: allow
-    "*": deny
 ---
 
 # Manager

@@ -18,7 +18,7 @@ def string_list(value,field,allow_empty=False):
     return value
 
 def validate_role(raw,index):
-    required={'id','purpose','role_class','use_when','do_not_use_when','read_only','reviewer','repository_write_authority','obligation_authority','delegation'}
+    required={'id','purpose','role_class','use_when','do_not_use_when','read_only','reviewer','repository_write_authority','obligation_authority','delegation','permission_profile_ref'}
     if not isinstance(raw,dict): fail(f'roles[{index}]: must be object')
     extra=set(raw)-required; missing=required-set(raw)
     if extra: fail(f'roles[{index}]: unknown fields {sorted(extra)}')
@@ -35,6 +35,8 @@ def validate_role(raw,index):
     if len(obligations)!=len(set(obligations)): fail(f'{rid}: duplicate obligation authority')
     if any(x not in OBLIGATIONS for x in obligations): fail(f'{rid}: unknown obligation authority')
     if raw['reviewer'] and 'review' not in obligations: fail(f'{rid}: reviewer must own review obligation')
+    pref=raw['permission_profile_ref']
+    if not isinstance(pref,str) or not ID_RE.fullmatch(pref): fail(f'{rid}: invalid permission_profile_ref')
     d=raw['delegation']
     if not isinstance(d,dict) or set(d)!={'may_delegate','allowed_role_refs'}: fail(f'{rid}: invalid delegation contract')
     if not isinstance(d['may_delegate'],bool): fail(f'{rid}: may_delegate must be boolean')
@@ -45,7 +47,7 @@ def validate_role(raw,index):
 
 def main():
     raw=json.loads(CATALOG.read_text(encoding='utf-8'))
-    if raw.get('schema')!=1 or raw.get('type')!='hi-role-contract-catalog': fail('hi-roles catalog header invalid')
+    if raw.get('schema')!=2 or raw.get('type')!='hi-role-contract-catalog': fail('hi-roles catalog header invalid')
     roles=[validate_role(x,i) for i,x in enumerate(raw.get('roles',[]))]
     if len(roles)!=8: fail(f'canonical role inventory must remain 8 during M2: {len(roles)}')
     ids=[r['id'] for r in roles]
@@ -60,7 +62,7 @@ def main():
     normalized=[{
       'id':r['id'],'purpose':r['purpose'],'roleClass':r['role_class'],'useWhen':r['use_when'],'doNotUseWhen':r['do_not_use_when'],
       'readOnly':r['read_only'],'reviewer':r['reviewer'],'repositoryWriteAuthority':r['repository_write_authority'],
-      'obligationAuthority':r['obligation_authority'],'delegation':{'mayDelegate':r['delegation']['may_delegate'],'allowedRoleRefs':r['delegation']['allowed_role_refs']}
+      'obligationAuthority':r['obligation_authority'],'delegation':{'mayDelegate':r['delegation']['may_delegate'],'allowedRoleRefs':r['delegation']['allowed_role_refs']},'permissionProfileRef':r['permission_profile_ref']
     } for r in roles]
     lines=[
       '/* generated from data/hi-roles.json; roles/*.md inventory is validated separately; do not hand edit */',

@@ -9,7 +9,7 @@ function stringList(value, field, allowEmpty = false) {
 }
 export function validateRoleContract(value, field = 'role') {
     const record = assertRecord(value, field);
-    assertStrictKeys(record, ['id', 'purpose', 'roleClass', 'useWhen', 'doNotUseWhen', 'readOnly', 'reviewer', 'repositoryWriteAuthority', 'obligationAuthority', 'delegation'], ['id', 'purpose', 'roleClass', 'useWhen', 'doNotUseWhen', 'readOnly', 'reviewer', 'repositoryWriteAuthority', 'obligationAuthority', 'delegation'], field);
+    assertStrictKeys(record, ['id', 'purpose', 'roleClass', 'useWhen', 'doNotUseWhen', 'readOnly', 'reviewer', 'repositoryWriteAuthority', 'obligationAuthority', 'delegation', 'permissionProfileRef'], ['id', 'purpose', 'roleClass', 'useWhen', 'doNotUseWhen', 'readOnly', 'reviewer', 'repositoryWriteAuthority', 'obligationAuthority', 'delegation', 'permissionProfileRef'], field);
     const id = assertCanonicalId(record.id, `${field}.id`);
     const purpose = assertNonEmptyString(record.purpose, `${field}.purpose`);
     if (typeof record.roleClass !== 'string' || !ROLE_CLASSES.has(record.roleClass))
@@ -37,7 +37,8 @@ export function validateRoleContract(value, field = 'role') {
     const allowedRoleRefs = stringList(delegation.allowedRoleRefs, `${field}.delegation.allowedRoleRefs`, true).map((ref, index) => assertCanonicalId(ref, `${field}.delegation.allowedRoleRefs[${index}]`));
     if (!delegation.mayDelegate && allowedRoleRefs.length)
         throw new ContractValidationError(`${field}.delegation`, 'non-delegating role cannot list allowed roles');
-    return { id, purpose, roleClass: record.roleClass, useWhen: stringList(record.useWhen, `${field}.useWhen`), doNotUseWhen: stringList(record.doNotUseWhen, `${field}.doNotUseWhen`), readOnly: record.readOnly, reviewer: record.reviewer, repositoryWriteAuthority: record.repositoryWriteAuthority, obligationAuthority: obligations, delegation: { mayDelegate: delegation.mayDelegate, allowedRoleRefs } };
+    const permissionProfileRef = assertCanonicalId(record.permissionProfileRef, `${field}.permissionProfileRef`);
+    return { id, purpose, roleClass: record.roleClass, useWhen: stringList(record.useWhen, `${field}.useWhen`), doNotUseWhen: stringList(record.doNotUseWhen, `${field}.doNotUseWhen`), readOnly: record.readOnly, reviewer: record.reviewer, repositoryWriteAuthority: record.repositoryWriteAuthority, obligationAuthority: obligations, delegation: { mayDelegate: delegation.mayDelegate, allowedRoleRefs }, permissionProfileRef };
 }
 export function validateRoleCatalog(roles) {
     const normalized = roles.map((role, index) => validateRoleContract(role, `roles[${index}]`));

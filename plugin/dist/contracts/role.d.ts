@@ -16,6 +16,7 @@ export interface RoleContract {
     repositoryWriteAuthority: RepositoryWriteAuthority;
     obligationAuthority: RoleObligationAuthority[];
     delegation: RoleDelegationContract;
+    permissionProfileRef: string;
 }
 export declare function validateRoleContract(value: unknown, field?: string): RoleContract;
 export declare function validateRoleCatalog(roles: unknown[]): RoleContract[];

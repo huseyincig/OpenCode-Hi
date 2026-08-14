@@ -7,6 +7,8 @@ import {contentHash} from '../plugin/dist/contracts/common.js'
 import {validateProjectionReceipt} from '../plugin/dist/contracts/provenance.js'
 import {STORAGE_OWNERSHIP_CATALOG,assertStorageOwnershipCatalog} from '../plugin/dist/contracts/storage-ownership.js'
 import {HI_ROLE_CONTRACTS,HI_ROLE_IDS} from '../plugin/dist/generated/role-policy.js'
+import {HI_PERMISSION_PROFILES} from '../plugin/dist/generated/permission-policy.js'
+import {validatePermissionProfileCatalog,validateRolePermissionBindings} from '../plugin/dist/contracts/permission-profile.js'
 import {PACKAGED_HI_AGENTS} from '../plugin/dist/generated/agent-config.js'
 import {HI_METHODOLOGY_POLICY} from '../plugin/dist/generated/methodology-policy.js'
 import {openCodeHostCapabilityContracts} from '../plugin/dist/contracts/host-capability.js'
@@ -24,17 +26,18 @@ const testExists=name=>existsSync(join(ROOT,'plugin/test',name))
 function guard(id,name,fn){try{fn();pass(id,name,'fatal check passed for migrated classes')}catch(e){fail(id,name,String(e?.message??e))}}
 function assert(cond,msg){if(!cond)throw new Error(msg)}
 
-// HI001 — migrated owner uniqueness. PermissionProfile remains explicitly outside this closure (M3 blocker).
+// HI001 — migrated owner uniqueness, including M3 PermissionProfile.
 guard('HI001','DUPLICATE_CANONICAL_OWNER',()=>{
   assert(new Set(HI_ROLE_IDS).size===HI_ROLE_IDS.length,'duplicate canonical role identity')
   assertStorageOwnershipCatalog(STORAGE_OWNERSHIP_CATALOG)
+  validateRolePermissionBindings(HI_ROLE_CONTRACTS,validatePermissionProfileCatalog(structuredClone(HI_PERMISSION_PROFILES)))
   assert(source('plugin/src/runtime/roles/catalog.ts').includes("from '../../generated/role-policy.js'"),'runtime role catalog is not generated-contract derived')
 })
 
 // HI002 — canonical role/methodology references.
 guard('HI002','UNKNOWN_CONTRACT_REFERENCE',()=>{
-  const roles=json('data/hi-roles.json').roles, known=new Set(roles.map(r=>r.id))
-  for(const role of roles)for(const ref of role.delegation.allowed_role_refs)assert(known.has(ref),`${role.id}: unknown delegation ${ref}`)
+  const roles=json('data/hi-roles.json').roles, known=new Set(roles.map(r=>r.id)), permissionIds=new Set(json('data/hi-permission-profiles.json').profiles.map(p=>p.id))
+  for(const role of roles){for(const ref of role.delegation.allowed_role_refs)assert(known.has(ref),`${role.id}: unknown delegation ${ref}`);assert(permissionIds.has(role.permission_profile_ref),`${role.id}: unknown permission profile ${role.permission_profile_ref}`)}
   for(const m of json('data/hi-methodologies.json').profiles)for(const ref of [...m.compatible_roles,...m.role_affinity])assert(known.has(ref),`${m.name}: unknown role ${ref}`)
 })
 
@@ -79,7 +82,7 @@ guard('HI006','HOST_PROJECTION_DRIFT',()=>{
 guard('HI010','STORAGE_OWNER_CONFLICT',()=>assertStorageOwnershipCatalog(STORAGE_OWNERSHIP_CATALOG))
 
 function generatedPaths(root){
-  const paths=['plugin/src/generated/role-policy.ts','plugin/src/generated/agent-config.ts','plugin/src/generated/methodology-policy.ts']
+  const paths=['plugin/src/generated/permission-policy.ts','plugin/src/generated/role-policy.ts','plugin/src/generated/agent-config.ts','plugin/src/generated/methodology-policy.ts']
   const skills=readdirSync(join(root,'skills')).filter(n=>n.startsWith('hi-')&&existsSync(join(root,'skills',n,'SKILL.md'))).sort().map(n=>`skills/${n}/SKILL.md`)
   return [...paths,...skills]
 }
@@ -88,7 +91,7 @@ function tempGeneratedComparison(){
   try{
     for(const rel of ['data','roles','skills','scripts'])cpSync(join(ROOT,rel),join(temp,rel),{recursive:true})
     cpSync(join(ROOT,'plugin/src/generated'),join(temp,'plugin/src/generated'),{recursive:true})
-    for(const script of ['generate_plugin_agents.py','generate_methodology_policy.py']){
+    for(const script of ['generate_permission_policy.py','generate_plugin_agents.py','generate_methodology_policy.py']){
       const r=spawnSync('python3',[join(temp,'scripts',script)],{encoding:'utf8'})
       if(r.status!==0)throw new Error(`${script}: ${r.stderr||r.stdout}`)
     }
@@ -100,7 +103,7 @@ guard('HI011','GENERATED_ARTIFACT_DIRTY',tempGeneratedComparison)
 guard('HI012','GENERATED_ARTIFACT_HAND_EDIT',()=>{
   const receipts=normalizedReceipts(json('data/validation/projection-receipts.json'))
   for(const r of receipts)assert(contentHash(readFileSync(join(ROOT,r.outputPath),'utf8')).value===r.outputHash.value,`${r.outputPath}: output hash differs from receipt`)
-  for(const rel of ['plugin/src/generated/role-policy.ts','plugin/src/generated/agent-config.ts','plugin/src/generated/methodology-policy.ts'])assert(/do not hand edit/i.test(source(rel)),`${rel}: generated marker missing`)
+  for(const rel of ['plugin/src/generated/permission-policy.ts','plugin/src/generated/role-policy.ts','plugin/src/generated/agent-config.ts','plugin/src/generated/methodology-policy.ts'])assert(/do not hand edit/i.test(source(rel)),`${rel}: generated marker missing`)
 })
 
 guard('HI013','ROLE_AGENT_IDENTITY_UNVERIFIED',()=>{
@@ -124,7 +127,7 @@ guard('HI016','LEGACY_CURRENT_ONLY_VIOLATION',()=>{
 
 guard('HI017','BEHAVIORAL_PROOF_MISSING',()=>{
   for(const [id,[,files]] of Object.entries(proofLinks))for(const file of files)assert(testExists(file),`${id}: missing ${file}`)
-  for(const file of ['role-contract-catalog.test.mjs','role-skill-permission-sync.test.mjs','host-capability-contract.test.mjs','storage-ownership-contract.test.mjs','agent-binding-contract.test.mjs'])assert(testExists(file),`missing migrated-class acceptance ${file}`)
+  for(const file of ['permission-profile-contract.test.mjs','role-contract-catalog.test.mjs','role-skill-permission-sync.test.mjs','host-capability-contract.test.mjs','storage-ownership-contract.test.mjs','agent-binding-contract.test.mjs'])assert(testExists(file),`missing migrated-class acceptance ${file}`)
 })
 
 for(const r of results.sort((a,b)=>a.id.localeCompare(b.id)))console.log(`${r.id} ${r.status} ${r.name} — ${r.detail}`)

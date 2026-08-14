@@ -12,6 +12,7 @@ export declare const HI_ROLE_CONTRACTS: readonly [{
         readonly mayDelegate: true;
         readonly allowedRoleRefs: readonly ["coder", "architect", "repository-explorer", "qa-reviewer", "security-reviewer", "visual-qa"];
     };
+    readonly permissionProfileRef: "primary-manager";
 }, {
     readonly id: "working-manager";
     readonly purpose: "Directly completes small and medium work, delegating only when material";
@@ -26,6 +27,7 @@ export declare const HI_ROLE_CONTRACTS: readonly [{
         readonly mayDelegate: true;
         readonly allowedRoleRefs: readonly ["coder", "architect", "repository-explorer", "qa-reviewer", "security-reviewer", "visual-qa"];
     };
+    readonly permissionProfileRef: "primary-working-manager";
 }, {
     readonly id: "coder";
     readonly purpose: "Implements scoped changes and produces test and behavior evidence";
@@ -40,6 +42,7 @@ export declare const HI_ROLE_CONTRACTS: readonly [{
         readonly mayDelegate: false;
         readonly allowedRoleRefs: readonly [];
     };
+    readonly permissionProfileRef: "child-coder";
 }, {
     readonly id: "architect";
     readonly purpose: "Read-only architecture, contract, and data-model design specialist";
@@ -54,6 +57,7 @@ export declare const HI_ROLE_CONTRACTS: readonly [{
         readonly mayDelegate: false;
         readonly allowedRoleRefs: readonly [];
     };
+    readonly permissionProfileRef: "child-readonly-web";
 }, {
     readonly id: "repository-explorer";
     readonly purpose: "Maps only the repository context needed for the current decision";
@@ -68,6 +72,7 @@ export declare const HI_ROLE_CONTRACTS: readonly [{
         readonly mayDelegate: false;
         readonly allowedRoleRefs: readonly [];
     };
+    readonly permissionProfileRef: "child-repository-explorer";
 }, {
     readonly id: "qa-reviewer";
     readonly purpose: "Independently reviews diffs, tests, and acceptance criteria for regressions";
@@ -82,6 +87,7 @@ export declare const HI_ROLE_CONTRACTS: readonly [{
         readonly mayDelegate: false;
         readonly allowedRoleRefs: readonly [];
     };
+    readonly permissionProfileRef: "child-readonly-offline";
 }, {
     readonly id: "security-reviewer";
     readonly purpose: "Reviews real security-boundary changes through data flow and authority";
@@ -96,6 +102,7 @@ export declare const HI_ROLE_CONTRACTS: readonly [{
         readonly mayDelegate: false;
         readonly allowedRoleRefs: readonly [];
     };
+    readonly permissionProfileRef: "child-readonly-web";
 }, {
     readonly id: "visual-qa";
     readonly purpose: "Verifies UI changes with browser, responsive, console, and network evidence";
@@ -110,6 +117,7 @@ export declare const HI_ROLE_CONTRACTS: readonly [{
         readonly mayDelegate: false;
         readonly allowedRoleRefs: readonly [];
     };
+    readonly permissionProfileRef: "child-visual";
 }];
 export declare const HI_ROLE_IDS: readonly ["manager", "working-manager", "coder", "architect", "repository-explorer", "qa-reviewer", "security-reviewer", "visual-qa"];
 export declare const HI_ROLE_PRIMARY_IDS: readonly ["manager", "working-manager"];

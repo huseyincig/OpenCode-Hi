@@ -14,13 +14,13 @@ function fixture(){
   return root
 }
 function run(root){
-  for(const script of ['generate_plugin_agents.py','generate_methodology_policy.py']){
+  for(const script of ['generate_permission_policy.py','generate_plugin_agents.py','generate_methodology_policy.py']){
     const r=spawnSync('python3',[join(root,'scripts',script)],{encoding:'utf8'})
     assert.equal(r.status,0,r.stderr||r.stdout)
   }
 }
 function generated(root){
-  const rels=['plugin/src/generated/role-policy.ts','plugin/src/generated/agent-config.ts','plugin/src/generated/methodology-policy.ts']
+  const rels=['plugin/src/generated/permission-policy.ts','plugin/src/generated/role-policy.ts','plugin/src/generated/agent-config.ts','plugin/src/generated/methodology-policy.ts']
   for(const name of readdirSync(join(root,'skills')).filter(x=>x.startsWith('hi-')).sort())rels.push(`skills/${name}/SKILL.md`)
   return Object.fromEntries(rels.map(rel=>[rel,createHash('sha256').update(readFileSync(join(root,rel))).digest('hex')]))
 }

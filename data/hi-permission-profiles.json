@@ -1,0 +1,586 @@
+{
+  "schema": 1,
+  "type": "hi-permission-profile-catalog",
+  "profiles": [
+    {
+      "id": "primary-manager",
+      "safety_class": "primary-readonly",
+      "may_be_widened_by_lower_layer": false,
+      "host_mapping_requirements": [
+        "opencode.permission"
+      ],
+      "rules": [
+        {
+          "capability": "edit",
+          "action": "deny"
+        },
+        {
+          "capability": "bash",
+          "action": "deny",
+          "pattern": "*"
+        },
+        {
+          "capability": "external_directory",
+          "action": "deny"
+        },
+        {
+          "capability": "task",
+          "action": "deny"
+        },
+        {
+          "capability": "todowrite",
+          "action": "allow"
+        },
+        {
+          "capability": "lsp",
+          "action": "deny"
+        },
+        {
+          "capability": "question",
+          "action": "allow"
+        },
+        {
+          "capability": "webfetch",
+          "action": "allow"
+        },
+        {
+          "capability": "websearch",
+          "action": "allow"
+        },
+        {
+          "capability": "scout",
+          "action": "allow"
+        }
+      ]
+    },
+    {
+      "id": "primary-working-manager",
+      "safety_class": "scoped-write",
+      "may_be_widened_by_lower_layer": false,
+      "host_mapping_requirements": [
+        "opencode.permission"
+      ],
+      "rules": [
+        {
+          "capability": "read",
+          "action": "allow",
+          "pattern": "*"
+        },
+        {
+          "capability": "read",
+          "action": "deny",
+          "pattern": "*.env"
+        },
+        {
+          "capability": "read",
+          "action": "deny",
+          "pattern": "*.env.*"
+        },
+        {
+          "capability": "read",
+          "action": "allow",
+          "pattern": "*.env.example"
+        },
+        {
+          "capability": "edit",
+          "action": "allow"
+        },
+        {
+          "capability": "glob",
+          "action": "allow"
+        },
+        {
+          "capability": "grep",
+          "action": "allow"
+        },
+        {
+          "capability": "lsp",
+          "action": "allow"
+        },
+        {
+          "capability": "bash",
+          "action": "ask",
+          "pattern": "*"
+        },
+        {
+          "capability": "bash",
+          "action": "allow",
+          "pattern": "git status*"
+        },
+        {
+          "capability": "bash",
+          "action": "allow",
+          "pattern": "git diff*"
+        },
+        {
+          "capability": "bash",
+          "action": "allow",
+          "pattern": "git log*"
+        },
+        {
+          "capability": "external_directory",
+          "action": "deny"
+        },
+        {
+          "capability": "task",
+          "action": "deny"
+        },
+        {
+          "capability": "todowrite",
+          "action": "allow"
+        },
+        {
+          "capability": "question",
+          "action": "allow"
+        },
+        {
+          "capability": "webfetch",
+          "action": "allow"
+        },
+        {
+          "capability": "websearch",
+          "action": "allow"
+        },
+        {
+          "capability": "scout",
+          "action": "allow"
+        }
+      ]
+    },
+    {
+      "id": "child-coder",
+      "safety_class": "scoped-write",
+      "may_be_widened_by_lower_layer": false,
+      "host_mapping_requirements": [
+        "opencode.permission"
+      ],
+      "rules": [
+        {
+          "capability": "read",
+          "action": "allow",
+          "pattern": "*"
+        },
+        {
+          "capability": "read",
+          "action": "deny",
+          "pattern": "*.env"
+        },
+        {
+          "capability": "read",
+          "action": "deny",
+          "pattern": "*.env.*"
+        },
+        {
+          "capability": "read",
+          "action": "allow",
+          "pattern": "*.env.example"
+        },
+        {
+          "capability": "edit",
+          "action": "allow"
+        },
+        {
+          "capability": "glob",
+          "action": "allow"
+        },
+        {
+          "capability": "grep",
+          "action": "allow"
+        },
+        {
+          "capability": "lsp",
+          "action": "allow"
+        },
+        {
+          "capability": "bash",
+          "action": "ask",
+          "pattern": "*"
+        },
+        {
+          "capability": "bash",
+          "action": "allow",
+          "pattern": "git status*"
+        },
+        {
+          "capability": "bash",
+          "action": "allow",
+          "pattern": "git diff*"
+        },
+        {
+          "capability": "bash",
+          "action": "allow",
+          "pattern": "git log*"
+        },
+        {
+          "capability": "task",
+          "action": "deny"
+        },
+        {
+          "capability": "question",
+          "action": "deny"
+        },
+        {
+          "capability": "external_directory",
+          "action": "deny"
+        },
+        {
+          "capability": "webfetch",
+          "action": "deny"
+        },
+        {
+          "capability": "websearch",
+          "action": "deny"
+        }
+      ]
+    },
+    {
+      "id": "child-readonly-web",
+      "safety_class": "child-readonly",
+      "may_be_widened_by_lower_layer": false,
+      "host_mapping_requirements": [
+        "opencode.permission"
+      ],
+      "rules": [
+        {
+          "capability": "read",
+          "action": "allow",
+          "pattern": "*"
+        },
+        {
+          "capability": "read",
+          "action": "deny",
+          "pattern": "*.env"
+        },
+        {
+          "capability": "read",
+          "action": "deny",
+          "pattern": "*.env.*"
+        },
+        {
+          "capability": "read",
+          "action": "allow",
+          "pattern": "*.env.example"
+        },
+        {
+          "capability": "edit",
+          "action": "deny"
+        },
+        {
+          "capability": "glob",
+          "action": "allow"
+        },
+        {
+          "capability": "grep",
+          "action": "allow"
+        },
+        {
+          "capability": "lsp",
+          "action": "allow"
+        },
+        {
+          "capability": "bash",
+          "action": "ask",
+          "pattern": "*"
+        },
+        {
+          "capability": "bash",
+          "action": "allow",
+          "pattern": "git status*"
+        },
+        {
+          "capability": "bash",
+          "action": "allow",
+          "pattern": "git diff*"
+        },
+        {
+          "capability": "bash",
+          "action": "allow",
+          "pattern": "git log*"
+        },
+        {
+          "capability": "task",
+          "action": "deny"
+        },
+        {
+          "capability": "question",
+          "action": "deny"
+        },
+        {
+          "capability": "external_directory",
+          "action": "deny"
+        },
+        {
+          "capability": "webfetch",
+          "action": "allow"
+        },
+        {
+          "capability": "websearch",
+          "action": "allow"
+        }
+      ]
+    },
+    {
+      "id": "child-readonly-offline",
+      "safety_class": "child-readonly",
+      "may_be_widened_by_lower_layer": false,
+      "host_mapping_requirements": [
+        "opencode.permission"
+      ],
+      "rules": [
+        {
+          "capability": "read",
+          "action": "allow",
+          "pattern": "*"
+        },
+        {
+          "capability": "read",
+          "action": "deny",
+          "pattern": "*.env"
+        },
+        {
+          "capability": "read",
+          "action": "deny",
+          "pattern": "*.env.*"
+        },
+        {
+          "capability": "read",
+          "action": "allow",
+          "pattern": "*.env.example"
+        },
+        {
+          "capability": "edit",
+          "action": "deny"
+        },
+        {
+          "capability": "glob",
+          "action": "allow"
+        },
+        {
+          "capability": "grep",
+          "action": "allow"
+        },
+        {
+          "capability": "lsp",
+          "action": "allow"
+        },
+        {
+          "capability": "bash",
+          "action": "ask",
+          "pattern": "*"
+        },
+        {
+          "capability": "bash",
+          "action": "allow",
+          "pattern": "git status*"
+        },
+        {
+          "capability": "bash",
+          "action": "allow",
+          "pattern": "git diff*"
+        },
+        {
+          "capability": "bash",
+          "action": "allow",
+          "pattern": "git log*"
+        },
+        {
+          "capability": "task",
+          "action": "deny"
+        },
+        {
+          "capability": "question",
+          "action": "deny"
+        },
+        {
+          "capability": "external_directory",
+          "action": "deny"
+        },
+        {
+          "capability": "webfetch",
+          "action": "deny"
+        },
+        {
+          "capability": "websearch",
+          "action": "deny"
+        }
+      ]
+    },
+    {
+      "id": "child-repository-explorer",
+      "safety_class": "child-readonly",
+      "may_be_widened_by_lower_layer": false,
+      "host_mapping_requirements": [
+        "opencode.permission"
+      ],
+      "rules": [
+        {
+          "capability": "read",
+          "action": "allow",
+          "pattern": "*"
+        },
+        {
+          "capability": "read",
+          "action": "deny",
+          "pattern": "*.env"
+        },
+        {
+          "capability": "read",
+          "action": "deny",
+          "pattern": "*.env.*"
+        },
+        {
+          "capability": "read",
+          "action": "allow",
+          "pattern": "*.env.example"
+        },
+        {
+          "capability": "edit",
+          "action": "deny"
+        },
+        {
+          "capability": "glob",
+          "action": "allow"
+        },
+        {
+          "capability": "grep",
+          "action": "allow"
+        },
+        {
+          "capability": "lsp",
+          "action": "allow"
+        },
+        {
+          "capability": "bash",
+          "action": "ask",
+          "pattern": "*"
+        },
+        {
+          "capability": "bash",
+          "action": "allow",
+          "pattern": "git status*"
+        },
+        {
+          "capability": "bash",
+          "action": "allow",
+          "pattern": "git diff*"
+        },
+        {
+          "capability": "bash",
+          "action": "allow",
+          "pattern": "git log*"
+        },
+        {
+          "capability": "bash",
+          "action": "allow",
+          "pattern": "git ls-files*"
+        },
+        {
+          "capability": "bash",
+          "action": "allow",
+          "pattern": "rg *"
+        },
+        {
+          "capability": "task",
+          "action": "deny"
+        },
+        {
+          "capability": "question",
+          "action": "deny"
+        },
+        {
+          "capability": "external_directory",
+          "action": "deny"
+        },
+        {
+          "capability": "webfetch",
+          "action": "deny"
+        },
+        {
+          "capability": "websearch",
+          "action": "deny"
+        }
+      ]
+    },
+    {
+      "id": "child-visual",
+      "safety_class": "child-readonly",
+      "may_be_widened_by_lower_layer": false,
+      "host_mapping_requirements": [
+        "opencode.permission"
+      ],
+      "rules": [
+        {
+          "capability": "read",
+          "action": "allow",
+          "pattern": "*"
+        },
+        {
+          "capability": "read",
+          "action": "deny",
+          "pattern": "*.env"
+        },
+        {
+          "capability": "read",
+          "action": "deny",
+          "pattern": "*.env.*"
+        },
+        {
+          "capability": "read",
+          "action": "allow",
+          "pattern": "*.env.example"
+        },
+        {
+          "capability": "edit",
+          "action": "deny"
+        },
+        {
+          "capability": "glob",
+          "action": "allow"
+        },
+        {
+          "capability": "grep",
+          "action": "allow"
+        },
+        {
+          "capability": "bash",
+          "action": "ask",
+          "pattern": "*"
+        },
+        {
+          "capability": "bash",
+          "action": "allow",
+          "pattern": "git status*"
+        },
+        {
+          "capability": "bash",
+          "action": "allow",
+          "pattern": "git diff*"
+        },
+        {
+          "capability": "task",
+          "action": "deny"
+        },
+        {
+          "capability": "question",
+          "action": "deny"
+        },
+        {
+          "capability": "external_directory",
+          "action": "deny"
+        },
+        {
+          "capability": "lsp",
+          "action": "deny"
+        },
+        {
+          "capability": "webfetch",
+          "action": "deny"
+        },
+        {
+          "capability": "websearch",
+          "action": "deny"
+        }
+      ]
+    }
+  ]
+}

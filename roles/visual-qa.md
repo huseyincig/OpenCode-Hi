@@ -1,30 +1,5 @@
 ---
 steps: 16
-permission:
-  read:
-    "*": allow
-    "*.env": deny
-    "*.env.*": deny
-    "*.env.example": allow
-  edit: deny
-  glob: allow
-  grep: allow
-  bash:
-    "*": ask
-    "git status*": allow
-    "git diff*": allow
-  task: deny
-  question: deny
-  external_directory: deny
-  lsp: deny
-  webfetch: deny
-  websearch: deny
-  skill:
-    hi-visual-qa: allow
-    hi-accessibility-review: allow
-    hi-browser-testing: allow
-    hi-design-discovery: allow
-    "*": deny
 ---
 
 # Visual QA

@@ -1,5 +1,5 @@
 {
-  "schema": 1,
+  "schema": 2,
   "type": "hi-role-contract-catalog",
   "roles": [
     {
@@ -26,7 +26,8 @@
           "security-reviewer",
           "visual-qa"
         ]
-      }
+      },
+      "permission_profile_ref": "primary-manager"
     },
     {
       "id": "working-manager",
@@ -52,7 +53,8 @@
           "security-reviewer",
           "visual-qa"
         ]
-      }
+      },
+      "permission_profile_ref": "primary-working-manager"
     },
     {
       "id": "coder",
@@ -75,7 +77,8 @@
       "delegation": {
         "may_delegate": false,
         "allowed_role_refs": []
-      }
+      },
+      "permission_profile_ref": "child-coder"
     },
     {
       "id": "architect",
@@ -97,7 +100,8 @@
       "delegation": {
         "may_delegate": false,
         "allowed_role_refs": []
-      }
+      },
+      "permission_profile_ref": "child-readonly-web"
     },
     {
       "id": "repository-explorer",
@@ -119,7 +123,8 @@
       "delegation": {
         "may_delegate": false,
         "allowed_role_refs": []
-      }
+      },
+      "permission_profile_ref": "child-repository-explorer"
     },
     {
       "id": "qa-reviewer",
@@ -141,7 +146,8 @@
       "delegation": {
         "may_delegate": false,
         "allowed_role_refs": []
-      }
+      },
+      "permission_profile_ref": "child-readonly-offline"
     },
     {
       "id": "security-reviewer",
@@ -163,7 +169,8 @@
       "delegation": {
         "may_delegate": false,
         "allowed_role_refs": []
-      }
+      },
+      "permission_profile_ref": "child-readonly-web"
     },
     {
       "id": "visual-qa",
@@ -185,7 +192,8 @@
       "delegation": {
         "may_delegate": false,
         "allowed_role_refs": []
-      }
+      },
+      "permission_profile_ref": "child-visual"
     }
   ]
 }

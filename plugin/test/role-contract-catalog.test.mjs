@@ -6,8 +6,8 @@ import {HI_ROLE_CONTRACTS,HI_ROLE_IDS,HI_ROLE_PRIMARY_IDS,HI_ROLE_CHILD_IDS} fro
 
 function sourceCatalog(){
   const raw=JSON.parse(readFileSync(new URL('../../data/hi-roles.json',import.meta.url),'utf8'))
-  assert.equal(raw.schema,1);assert.equal(raw.type,'hi-role-contract-catalog')
-  return raw.roles.map(role=>({id:role.id,purpose:role.purpose,roleClass:role.role_class,useWhen:role.use_when,doNotUseWhen:role.do_not_use_when,readOnly:role.read_only,reviewer:role.reviewer,repositoryWriteAuthority:role.repository_write_authority,obligationAuthority:role.obligation_authority,delegation:{mayDelegate:role.delegation.may_delegate,allowedRoleRefs:role.delegation.allowed_role_refs}}))
+  assert.equal(raw.schema,2);assert.equal(raw.type,'hi-role-contract-catalog')
+  return raw.roles.map(role=>({id:role.id,purpose:role.purpose,roleClass:role.role_class,useWhen:role.use_when,doNotUseWhen:role.do_not_use_when,readOnly:role.read_only,reviewer:role.reviewer,repositoryWriteAuthority:role.repository_write_authority,obligationAuthority:role.obligation_authority,delegation:{mayDelegate:role.delegation.may_delegate,allowedRoleRefs:role.delegation.allowed_role_refs},permissionProfileRef:role.permission_profile_ref}))
 }
 
 test('canonical role JSON validates and exactly drives generated runtime role policy',()=>{

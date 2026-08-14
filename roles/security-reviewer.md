@@ -1,32 +1,5 @@
 ---
 steps: 14
-permission:
-  read:
-    "*": allow
-    "*.env": deny
-    "*.env.*": deny
-    "*.env.example": allow
-  edit: deny
-  glob: allow
-  grep: allow
-  lsp: allow
-  bash:
-    "*": ask
-    "git status*": allow
-    "git diff*": allow
-    "git log*": allow
-  task: deny
-  question: deny
-  external_directory: deny
-  webfetch: allow
-  websearch: allow
-  skill:
-    hi-security-review: allow
-    hi-code-review: allow
-    hi-review-feedback: allow
-    hi-adversarial-validation: allow
-    hi-dependency-change: allow
-    "*": deny
 ---
 
 # Security Reviewer

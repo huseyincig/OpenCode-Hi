@@ -1,35 +1,5 @@
 ---
 steps: 12
-permission:
-  read:
-    "*": allow
-    "*.env": deny
-    "*.env.*": deny
-    "*.env.example": allow
-  edit: deny
-  glob: allow
-  grep: allow
-  lsp: allow
-  bash:
-    "*": ask
-    "git status*": allow
-    "git diff*": allow
-    "git log*": allow
-  task: deny
-  question: deny
-  external_directory: deny
-  webfetch: allow
-  websearch: allow
-  skill:
-    hi-design-discovery: allow
-    hi-architecture-decisions: allow
-    hi-implementation-planning: allow
-    hi-iterative-retrieval: allow
-    hi-repository-analysis: allow
-    hi-api-interface-design: allow
-    hi-source-driven-development: allow
-    hi-adversarial-validation: allow
-    "*": deny
 ---
 
 # Architect
