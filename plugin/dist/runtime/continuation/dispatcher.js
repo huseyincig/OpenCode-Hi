@@ -1,3 +1,4 @@
+import { sendSyntheticContinuation } from '../../opencode/client-adapter.js';
 import { appendLedger } from '../ledger/ledger.js';
 export async function dispatchContinuation(client, mission, prompt, reason) {
     const now = Date.now(), generation = mission.continuation.generation;
@@ -7,11 +8,6 @@ export async function dispatchContinuation(client, mission, prompt, reason) {
     }
     if (mission.continuation.continuation_active || mission.continuation.active_action_id || (mission.continuation.suppress_until ?? 0) > now || (mission.continuation.continuation_lock_until ?? 0) > now)
         return false;
-    const fn = typeof client?.session?.promptAsync === 'function' ? client.session.promptAsync.bind(client.session) : typeof client?.session?.prompt_async === 'function' ? client.session.prompt_async.bind(client.session) : typeof client?.session?.prompt === 'function' ? client.session.prompt.bind(client.session) : undefined;
-    if (!fn) {
-        appendLedger(mission, 'continuation.unavailable', { payload: { reason: 'host-continuation-api-missing' } });
-        return false;
-    }
     const iteration = mission.continuation.iteration + 1, actionID = `continue:${mission.identity.mission_id}:${generation}:${iteration}:${now.toString(36)}`;
     mission.continuation.continuation_active = true;
     mission.continuation.active_action_id = actionID;
@@ -23,7 +19,11 @@ export async function dispatchContinuation(client, mission, prompt, reason) {
     mission.continuation.last_action_id = actionID;
     appendLedger(mission, 'continuation', { payload: { reason, iteration, generation, action_id: actionID } });
     try {
-        await fn({ path: { id: mission.identity.session_id }, body: { parts: [{ type: 'text', text: prompt, synthetic: true, metadata: { hiInternalContinuation: true, reason, generation, actionID } }], noReply: false } });
+        const sent = await sendSyntheticContinuation(client, mission.identity.session_id, prompt, { hiInternalContinuation: true, reason, generation, actionID });
+        if (!sent) {
+            appendLedger(mission, 'continuation.unavailable', { payload: { reason: 'host-continuation-api-missing' } });
+            return false;
+        }
         if (mission.continuation.generation !== generation) {
             appendLedger(mission, 'continuation.stale-completion', { payload: { started_generation: generation, current_generation: mission.continuation.generation, action_id: actionID } });
             return false;

@@ -1,3 +1,4 @@
+import type { OpenCodePluginContext } from '../../opencode/types.js';
 import type { HiConfig } from '../../config/schema.js';
 import type { AvailableModel } from '../routing/model-resolver.js';
 import type { RuntimeSignalSink } from '../events/event-sink.js';
@@ -9,7 +10,7 @@ import { TaskRuntime } from '../task/task-runtime.js';
 import { TeamRuntime } from '../team/team-runtime.js';
 import { ExperimentalOpenCodeAdapter } from '../../opencode/experimental-adapter.js';
 export declare function createRuntimeServices(input: {
-    ctx: any;
+    ctx: OpenCodePluginContext;
     projectRoot: string;
     packageRoot: string;
     getConfig: () => HiConfig;

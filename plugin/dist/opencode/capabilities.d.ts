@@ -1,3 +1,4 @@
+import type { OpenCodeClient } from './types.js';
 import { type HostCapabilityContract } from '../contracts/host-capability.js';
 export interface OpenCodeCapabilities {
     childSessions: boolean;
@@ -18,4 +19,4 @@ export interface OpenCodeCapabilities {
     degraded: string[];
     contracts: HostCapabilityContract[];
 }
-export declare function detectOpenCodeCapabilities(client: any): OpenCodeCapabilities;
+export declare function detectOpenCodeCapabilities(client: OpenCodeClient): OpenCodeCapabilities;

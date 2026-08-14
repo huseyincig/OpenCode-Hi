@@ -11,8 +11,12 @@ import { createToolBeforeHook } from '../hooks/tool-before.js'
 import { createToolAfterHook } from '../hooks/tool-after.js'
 import { appendLedger } from '../runtime/ledger/ledger.js'
 import type { PluginRuntimeState } from '../runtime/application/hi-tool-surface.js'
+import type { HostPort } from './host-port.js'
+import type { createRuntimeServices } from '../runtime/application/runtime-services.js'
+import type { ProjectAuthorityStore } from '../runtime/safety/project-authority.js'
+import type { RuntimeEventController } from '../runtime/application/runtime-event-controller.js'
 
-export function createOpenCodeHooks(input:{state:PluginRuntimeState;host:any;services:any;projectRoot:string;packagedSkillsDir:string;projectAuthority:any;toolSurface:Record<string,unknown>;reconfigureToolSurface:()=>void;eventController:any;instanceLease:{release:()=>void}}){
+export function createOpenCodeHooks(input:{state:PluginRuntimeState;host:HostPort;services:ReturnType<typeof createRuntimeServices>;projectRoot:string;packagedSkillsDir:string;projectAuthority:ProjectAuthorityStore;toolSurface:Record<string,unknown>;reconfigureToolSurface:()=>void;eventController:RuntimeEventController;instanceLease:{release:()=>void}}){
   const {state,host,services,projectRoot,packagedSkillsDir,projectAuthority,toolSurface,reconfigureToolSurface,eventController,instanceLease}=input
   const {store,background,persistence,tasks,teams,experimental,eventSink}=services
   return {

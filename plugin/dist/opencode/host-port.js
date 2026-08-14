@@ -3,9 +3,10 @@ import { detectOpenCodeCapabilities } from './capabilities.js';
 import { NativeOpenCodeAdapter } from './native-adapter.js';
 import { listProviders } from './client-adapter.js';
 function providerModels(raw) {
-    const root = raw?.all ?? raw?.providers ?? raw ?? [];
+    const edge = raw;
+    const root = edge?.all ?? edge?.providers ?? edge ?? [];
     const providers = Array.isArray(root) ? root : Object.values(root ?? {});
-    const connectedRaw = Array.isArray(raw?.connected) ? raw.connected : undefined;
+    const connectedRaw = Array.isArray(edge?.connected) ? edge.connected : undefined;
     const connected = connectedRaw ? new Set(connectedRaw.map((x) => typeof x === 'string' ? x : String(x?.id ?? x?.providerID ?? x?.name ?? '')).filter(Boolean)) : undefined;
     const out = [];
     for (const p of providers) {

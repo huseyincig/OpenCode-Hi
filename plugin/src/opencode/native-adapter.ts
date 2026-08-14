@@ -1,3 +1,4 @@
+import type { OpenCodeClient } from './types.js'
 import { dataOf, modelIdentity } from './client-adapter.js'
 
 export type NativeCapabilityName =
@@ -17,7 +18,7 @@ function fn(root:any,...names:string[]):((arg:any)=>Promise<any>)|undefined{
 }
 
 export class NativeOpenCodeAdapter {
-  constructor(readonly client:any){}
+  constructor(readonly client:OpenCodeClient){}
   has(name:NativeCapabilityName):boolean{
     const s=this.client?.session
     switch(name){

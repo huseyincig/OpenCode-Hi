@@ -1,3 +1,4 @@
+import type { OpenCodeClient } from '../../opencode/types.js'
 import { createHash } from 'node:crypto'
 import type { MissionState,WorkerState } from '../mission/types.js'
 import type { BackgroundRegistry } from '../background/registry.js'
@@ -18,7 +19,7 @@ export function diffDelta(before:Record<string,string>|undefined,after:Record<st
 export { normFile }
 
 export class ChildExecutionCoordinator{
-  constructor(private readonly client:any,private readonly lifecycle:OpenCodeLifecycleEndpoint={},private readonly registry?:BackgroundRegistry){}
+  constructor(private readonly client:OpenCodeClient,private readonly lifecycle:OpenCodeLifecycleEndpoint={},private readonly registry?:BackgroundRegistry){}
 
   resolveCallbackWorker(sessionID:string):WorkerState|undefined{return this.registry?.list().find(w=>w.session_id===sessionID)}
   async create(parentSessionID:string,title:string,role:string,model?:string,variant?:string):Promise<{id?:string}>{return createChildSession(this.client,parentSessionID,title,role,model,variant)}

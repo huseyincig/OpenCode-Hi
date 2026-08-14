@@ -1,3 +1,4 @@
+import type { OpenCodeClient } from './types.js';
 export type NativeCapabilityName = 'session-create' | 'prompt-async' | 'prompt-sync' | 'abort' | 'status' | 'children' | 'todo' | 'diff' | 'fork' | 'summarize' | 'revert' | 'unrevert' | 'provider-inventory' | 'structured-log';
 export interface NativeSessionSnapshot {
     status?: unknown;
@@ -6,8 +7,8 @@ export interface NativeSessionSnapshot {
     diff?: unknown;
 }
 export declare class NativeOpenCodeAdapter {
-    readonly client: any;
-    constructor(client: any);
+    readonly client: OpenCodeClient;
+    constructor(client: OpenCodeClient);
     has(name: NativeCapabilityName): boolean;
     status(sessionID: string): Promise<any>;
     children(sessionID: string): Promise<any[]>;

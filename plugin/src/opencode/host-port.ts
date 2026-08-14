@@ -1,13 +1,15 @@
+import type { OpenCodePluginContext,OpenCodeClient } from './types.js'
 import type { AvailableModel } from '../runtime/routing/model-resolver.js'
 import { normalizeModelCapabilityProfile } from '../contracts/model.js'
 import { detectOpenCodeCapabilities } from './capabilities.js'
 import { NativeOpenCodeAdapter } from './native-adapter.js'
 import { listProviders } from './client-adapter.js'
 
-function providerModels(raw:any):AvailableModel[]{
-  const root=raw?.all??raw?.providers??raw??[]
+function providerModels(raw:unknown):AvailableModel[]{
+  const edge=raw as any
+  const root=edge?.all??edge?.providers??edge??[]
   const providers=Array.isArray(root)?root:Object.values(root??{})
-  const connectedRaw=Array.isArray(raw?.connected)?raw.connected:undefined
+  const connectedRaw=Array.isArray(edge?.connected)?edge.connected:undefined
   const connected=connectedRaw?new Set(connectedRaw.map((x:any)=>typeof x==='string'?x:String(x?.id??x?.providerID??x?.name??'')).filter(Boolean)):undefined
   const out:AvailableModel[]=[]
   for(const p of providers as any[]){
@@ -29,7 +31,16 @@ function providerModels(raw:any):AvailableModel[]{
   return out
 }
 
-export function createHostPort(ctx:any){
+export interface HostPort{
+  client:OpenCodeClient
+  capabilities:ReturnType<typeof detectOpenCodeCapabilities>
+  native:NativeOpenCodeAdapter
+  log:(level:'debug'|'info'|'warn'|'error',message:string,extra?:Record<string,unknown>)=>Promise<void>
+  refreshRuntimeInventory:(reason:string)=>Promise<number>
+  getModels:()=>AvailableModel[]
+}
+
+export function createHostPort(ctx:OpenCodePluginContext):HostPort{
   const capabilities=detectOpenCodeCapabilities(ctx.client)
   const native=new NativeOpenCodeAdapter(ctx.client)
   let models:AvailableModel[]=[]

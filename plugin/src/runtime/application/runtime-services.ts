@@ -1,3 +1,4 @@
+import type { OpenCodePluginContext } from '../../opencode/types.js'
 import type { HiConfig } from '../../config/schema.js'
 import type { AvailableModel } from '../routing/model-resolver.js'
 import type { RuntimeSignalSink } from '../events/event-sink.js'
@@ -11,7 +12,7 @@ import { ExperimentalOpenCodeAdapter } from '../../opencode/experimental-adapter
 import { appendLedger } from '../ledger/ledger.js'
 import { createRuntimeScopedStores } from './runtime-scoped-stores.js'
 
-export function createRuntimeServices(input:{ctx:any;projectRoot:string;packageRoot:string;getConfig:()=>HiConfig;getModels:()=>AvailableModel[];getHostConfig:()=>Record<string,unknown>}){
+export function createRuntimeServices(input:{ctx:OpenCodePluginContext;projectRoot:string;packageRoot:string;getConfig:()=>HiConfig;getModels:()=>AvailableModel[];getHostConfig:()=>Record<string,unknown>}){
   const {ctx,projectRoot,packageRoot,getConfig,getModels,getHostConfig}=input
   const store=new MissionStore(projectRoot,{project:ctx.project,directory:ctx.directory,worktree:ctx.worktree},()=>getConfig().primaryMode,()=>({mode:getConfig().execution.topology,maxAgents:getConfig().execution.maxAgents,parallelism:getConfig().execution.parallelism}))
   const background=new BackgroundRegistry()

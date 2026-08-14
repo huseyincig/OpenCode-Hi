@@ -11,7 +11,7 @@ import { createOpenCodeHooks } from './opencode/open-code-hooks.js'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-export const HiPlugin:Plugin=async(ctx:any)=>{
+export const HiPlugin:Plugin=async(ctx)=>{
   const packageRoot=resolve(dirname(fileURLToPath(import.meta.url)),'../..')
   const packagedSkillsDir=resolve(packageRoot,'skills')
   const projectRoot=resolveNativeProjectRoot(process.cwd(),{project:ctx.project,directory:ctx.directory,worktree:ctx.worktree})

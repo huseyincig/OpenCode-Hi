@@ -1,3 +1,4 @@
+import type { OpenCodeClient } from './types.js'
 import { NativeOpenCodeAdapter } from './native-adapter.js'
 import { openCodeHostCapabilityContracts,type HostCapabilityContract } from '../contracts/host-capability.js'
 
@@ -20,7 +21,7 @@ export interface OpenCodeCapabilities {
   degraded:string[]
   contracts:HostCapabilityContract[]
 }
-export function detectOpenCodeCapabilities(client:any):OpenCodeCapabilities{
+export function detectOpenCodeCapabilities(client:OpenCodeClient):OpenCodeCapabilities{
   const n=new NativeOpenCodeAdapter(client)
   const childSessions=n.has('session-create')
   const asyncPrompt=n.has('prompt-async')

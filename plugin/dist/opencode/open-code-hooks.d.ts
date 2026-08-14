@@ -1,14 +1,18 @@
 import type { PluginRuntimeState } from '../runtime/application/hi-tool-surface.js';
+import type { HostPort } from './host-port.js';
+import type { createRuntimeServices } from '../runtime/application/runtime-services.js';
+import type { ProjectAuthorityStore } from '../runtime/safety/project-authority.js';
+import type { RuntimeEventController } from '../runtime/application/runtime-event-controller.js';
 export declare function createOpenCodeHooks(input: {
     state: PluginRuntimeState;
-    host: any;
-    services: any;
+    host: HostPort;
+    services: ReturnType<typeof createRuntimeServices>;
     projectRoot: string;
     packagedSkillsDir: string;
-    projectAuthority: any;
+    projectAuthority: ProjectAuthorityStore;
     toolSurface: Record<string, unknown>;
     reconfigureToolSurface: () => void;
-    eventController: any;
+    eventController: RuntimeEventController;
     instanceLease: {
         release: () => void;
     };
@@ -23,5 +27,5 @@ export declare function createOpenCodeHooks(input: {
     'tool.execute.before': (input: any, output: any) => Promise<void>;
     'tool.execute.after': (input: any, output: any) => Promise<void>;
     dispose: () => Promise<void>;
-    event: (input: any) => any;
+    event: (input: any) => Promise<void>;
 };

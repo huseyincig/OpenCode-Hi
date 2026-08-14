@@ -1,3 +1,4 @@
+import type { OpenCodeClient } from '../../opencode/types.js';
 import type { HiConfig } from '../../config/schema.js';
 import type { Category, MissionState, WorkerResult, WorkerState } from '../mission/types.js';
 import { type AvailableModel } from '../routing/model-resolver.js';
@@ -31,7 +32,7 @@ export declare class TaskRuntime {
     private getModels;
     private getHostConfig;
     private events?;
-    constructor(client: any, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined, lifecycle?: OpenCodeLifecycleEndpoint, scopedStores?: RuntimeScopedStores);
+    constructor(client: OpenCodeClient, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined, lifecycle?: OpenCodeLifecycleEndpoint, scopedStores?: RuntimeScopedStores);
     private sendProviderPrompt;
     private recordModelProjection;
     private abortNativeSession;

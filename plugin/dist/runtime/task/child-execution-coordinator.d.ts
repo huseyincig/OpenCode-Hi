@@ -1,3 +1,4 @@
+import type { OpenCodeClient } from '../../opencode/types.js';
 import type { MissionState, WorkerState } from '../mission/types.js';
 import type { BackgroundRegistry } from '../background/registry.js';
 import { type OpenCodeLifecycleEndpoint } from '../../opencode/client-adapter.js';
@@ -8,7 +9,7 @@ export declare class ChildExecutionCoordinator {
     private readonly client;
     private readonly lifecycle;
     private readonly registry?;
-    constructor(client: any, lifecycle?: OpenCodeLifecycleEndpoint, registry?: BackgroundRegistry | undefined);
+    constructor(client: OpenCodeClient, lifecycle?: OpenCodeLifecycleEndpoint, registry?: BackgroundRegistry | undefined);
     resolveCallbackWorker(sessionID: string): WorkerState | undefined;
     create(parentSessionID: string, title: string, role: string, model?: string, variant?: string): Promise<{
         id?: string;
