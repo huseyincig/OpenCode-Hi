@@ -47,6 +47,10 @@ Legacy compatibility mappings are intentionally absent. Source ancestry is recor
 
 OpenCode-Hi does not normalize former-product configuration. `autonomy`, `--autonomy`, `basic`, `powerful`, `smart`, `smart-select`, and `smartSelectRoles` are not supported inputs. Historical occurrences may exist only in provenance, attribution, license records, immutable receipts, or negative tests that prove rejection.
 
+## N0 / N1 namespace policy
+
+`docs/HI-NAMING-NAMESPACE.md` is the executable naming boundary for development after A5. N0 prevents new semantic ownership drift without mass-renaming compatibility-sensitive identifiers. Final source-driven normalization is reserved for `N1 — Final Hi Namespace Normalization` after the engineering work-package program completes.
+
 ## Audit Rule
 
 A rename is accepted only when it improves technical clarity, removes legacy branding, or prevents conceptual confusion. Familiar names such as `doctor`, `MissionState`, `WorkerState`, `Team Mode`, and `STOP` remain unchanged because renaming them would create churn without a material usability or architecture benefit.

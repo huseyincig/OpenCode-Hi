@@ -17,6 +17,7 @@ import {HI_METHODOLOGY_POLICY} from '../plugin/dist/generated/methodology-policy
 import {openCodeHostCapabilityContracts} from '../plugin/dist/contracts/host-capability.js'
 import {unaccountedExecutionPermissionKeys} from '../plugin/dist/runtime/routing/execution-profile.js'
 import {buildProjectionReceipts} from './projection_receipts.mjs'
+import {scanCanonicalNaming} from './naming_namespace_guard.mjs'
 
 const ROOT=resolve(fileURLToPath(new URL('..',import.meta.url)))
 const results=[]
@@ -158,6 +159,11 @@ guard('HI021','EXECUTION_SURFACE_PERMISSION_DRIFT',()=>{
     const drift=unaccountedExecutionPermissionKeys(host,role)
     assert(drift.length===0,`${role}: permission keys not represented by Core execution surface: ${drift.join(', ')}`)
   }
+})
+
+guard('HI022','NAMING_NAMESPACE_DRIFT',()=>{
+  const violations=scanCanonicalNaming(ROOT)
+  assert(violations.length===0,violations.map(v=>`${v.path}:${v.brand}:${v.where}`).join('; '))
 })
 
 for(const r of results.sort((a,b)=>a.id.localeCompare(b.id)))console.log(`${r.id} ${r.status} ${r.name} — ${r.detail}`)
