@@ -1,16 +1,7 @@
 import type { Category } from '../mission/types.js';
 import type { HiConfig } from '../../config/schema.js';
-export interface AvailableModel {
-    id: string;
-    provider?: string;
-    cost?: number;
-    quality?: number;
-    writeCapable?: boolean;
-    tags?: string[];
-    expectedTurns?: number;
-    contextOverhead?: number;
-    variants?: string[];
-}
+import type { ModelCapabilityProfile } from '../../contracts/model.js';
+export type AvailableModel = ModelCapabilityProfile;
 export interface ModelFallbackReason {
     model: string;
     variant?: string;

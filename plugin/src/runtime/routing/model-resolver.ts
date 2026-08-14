@@ -1,8 +1,9 @@
 import type { Category } from '../mission/types.js'
 import type { HiConfig } from '../../config/schema.js'
 import { providerPolicyView } from '../../opencode/native-adapter.js'
+import type { ModelCapabilityProfile } from '../../contracts/model.js'
 
-export interface AvailableModel{id:string;provider?:string;cost?:number;quality?:number;writeCapable?:boolean;tags?:string[];expectedTurns?:number;contextOverhead?:number;variants?:string[]}
+export type AvailableModel=ModelCapabilityProfile
 export interface ModelFallbackReason{model:string;variant?:string;reason:string}
 export interface ModelResolution{primary?:string;primaryVariant?:string;fallbacks:string[];fallbackVariants:Record<string,string|undefined>;reason:string[];fallbackReasons:ModelFallbackReason[];rejected:Array<{id:string;reason:string}>;scores?:Array<{model:string;score:number;expected_completion_cost:number;failure_penalty:number;success_credit:number}>}
 export interface MissionModelFeedback{failures?:Record<string,number>;successes?:Record<string,number>;retries?:Record<string,number>}

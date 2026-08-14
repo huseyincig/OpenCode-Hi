@@ -19,6 +19,7 @@ import { parseWorkerResult } from './runtime/task/result-parser.js';
 import { evaluateCompletion } from './runtime/completion/evaluator.js';
 import { replanVerificationForChangedSurface, verificationSatisfied } from './runtime/verification/policy.js';
 import { syncMissionGates } from './runtime/gates/gates.js';
+import { normalizeModelCapabilityProfile } from './contracts/model.js';
 import { appendLedger } from './runtime/ledger/ledger.js';
 import { ConcurrencyScheduler } from './runtime/scheduler/concurrency.js';
 import { TeamRuntime } from './runtime/team/team-runtime.js';
@@ -73,7 +74,7 @@ function providerModels(raw) {
             const canonical = provider && !rawID.startsWith(`${provider}/`) ? `${provider}/${rawID}` : rawID;
             const variantsRaw = model?.variants ?? model?.variant;
             const variants = Array.isArray(variantsRaw) ? variantsRaw.map(String) : (variantsRaw && typeof variantsRaw === 'object' ? Object.keys(variantsRaw) : []);
-            out.push({ id: canonical, provider, cost: Number(model?.cost?.input ?? model?.cost ?? 0) || 0, quality: Number(model?.quality ?? 0) || 0, writeCapable: model?.write !== false, tags: Array.isArray(model?.tags) ? model.tags.map(String) : [], variants });
+            out.push(normalizeModelCapabilityProfile({ id: canonical, provider, cost: Number(model?.cost?.input ?? model?.cost ?? 0) || 0, quality: Number(model?.quality ?? 0) || 0, writeCapable: model?.write !== false, tags: Array.isArray(model?.tags) ? model.tags.map(String) : [], variants }, 'runtime-inventory', `provider:${provider ?? 'unknown'}/${canonical}`));
         }
     }
     return out;

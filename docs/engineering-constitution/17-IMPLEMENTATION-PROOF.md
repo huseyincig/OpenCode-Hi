@@ -49,8 +49,8 @@ Rows below are intentionally `PENDING` until code exists.
 | M2 | RoleContract owner/generator | role identity/mode/description/runtime catalog and methodology permission contribution are canonical-data driven; focused projection suite 24/24 PASS; controlled full suite 467/467 PASS; validator PASS | T1/T2 | pending | ACTIVE — GENERAL PERMISSION PROFILE NEXT |
 | M3 | PermissionProfile | safety monotonicity negatives + projection parity | T1/T2 | — | BLOCKED — SENTINELX POLICY PREVENTED PERMISSION-CATALOG MUTATION |
 | M4 | MethodologyContract normalization | mechanical SKILL contract sections compiled from canonical JSON; inert duplicated fields removed; focused 37/37 PASS; controlled full suite 469/469 PASS; validator PASS | T1/T2 | pending | ACTIVE — MECHANICAL OWNER MIGRATED |
-| M5 | ConfigOption catalog | BA03 + config executor lint | T1/T2 | — | PENDING |
-| M6 | Model capability/identity | BA04 + resolver/observed identity tests | T1/T2 | — | PENDING |
+| M5 | ConfigOption catalog | BA03 + config executor lint | T1/T2 | SentinelX blocks direct config-catalog mutation in this environment | BLOCKED_BY_HOST_POLICY |
+| M6 | Model capability/identity | ModelCapabilityProfile host-inventory normalization + identity reconciler + effective-model evidence; focused 17/17 PASS; controlled full suite 475/475 PASS; validator PASS | T1/T2 | requested/projected WorkerState snapshot wiring blocked by SentinelX mutation policy; no unwired state committed | PARTIAL_PASS |
 | M7 | Host capability registry | BA05 + doctor/degraded/unsupported tests | T2/T3 as applicable | — | PENDING |
 | M8 | Task/Worker/Result/Evidence contracts | BA07–BA09 + recovery/team/task regression | T1/T2 | — | PENDING |
 | M9 | Context/Artifact/PI/Human/Authority/Storage | BA06/10/11 + storage lint | T1/T2 | — | PENDING |
@@ -116,3 +116,14 @@ external actions performed (normally none)
 ## No-premature-completion rule
 
 A document status such as `V1 TARGET ARCHITECTURE` or ADR `ACCEPTED` is **not** implementation evidence. Only this ledger plus executable tests/receipts may claim a migration phase complete.
+
+
+### M6 checkpoint evidence
+
+- Runtime provider inventory is normalized through `ModelCapabilityProfile` before routing.
+- Explicit model capability quirk metadata overrides technical model-ID fallback heuristics.
+- `ModelExecutionIdentity` distinguishes requested, selected, projected, observed, effective, and verified phases without persisting producerless runtime fields.
+- Focused controlled model suite: **17/17 PASS**.
+- Controlled full suite: **475/475 PASS**.
+- Standalone validator: **PASS**.
+- Remaining runtime snapshot wiring is explicitly deferred because the connected host policy rejected that mutation.

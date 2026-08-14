@@ -373,7 +373,7 @@ export class TaskRuntime {
         const provenance = methodologyProvenance(skillPlan.selected), worker = createWorker(m, task, selected.primary, selected.fallbacks, methodologies, provenance);
         worker.model_selection_reason = [...selected.reason];
         worker.fallback_history = [];
-        const quirks = modelQuirks(selected.primary);
+        const quirks = modelQuirks(selected.primary, this.getModels().find(x => x.id === selected.primary));
         const contextArtifactStore = new ContextArtifactStore(this.projectRoot), artifactContext = task.context_artifacts.map(a => { const id = a.uri?.startsWith('hi-artifact:') ? a.uri.slice('hi-artifact:'.length) : undefined, stored = id ? contextArtifactStore.get(id) : undefined; if (stored?.freshness === 'FRESH')
             return `artifact:${stored.id}:${stored.summary}\n${clipText(stored.content, 3000)}`; if (stored)
             return `artifact-stale:${stored.id}:${stored.summary}`; return `${a.kind}:${a.title ?? a.id}${a.summary ? ` — ${a.summary}` : ''}`; }), verificationHint = targetedVerificationHint(this.projectRoot, task.scope.length ? task.scope : (m.changed_files.length ? m.changed_files : m.intent.likelyTargets ?? [])), semanticContext = typescriptSemanticContextForTargets(this.projectRoot, task.scope, 3000), projectContext = new ProjectIntelligenceStore(this.projectRoot).relevantToFiles(task.scope, 4).map(p => `project-intelligence:${p.id}:${p.statement} [${p.sourceFiles.join(', ')}]`), explicitRelevant = input.relevantContext ?? [], boundedRuntimeRelevant = [...(verificationHint ? [verificationHint] : []), ...semanticContext, ...projectContext, ...artifactContext];
