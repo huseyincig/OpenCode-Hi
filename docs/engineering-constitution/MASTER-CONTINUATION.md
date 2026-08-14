@@ -9,19 +9,19 @@ Status: ACTIVE REPOSITORY CONTINUATION ENTRYPOINT
 continuation_schema: 1
 repository: OpenCode-Hi
 repository_root: /workspace/OpenCode-Hi
-baseline_before_this_ledger_commit: ea6c236
+baseline_before_this_ledger_commit: 4602907
 active_program: Engineering Constitution / Metamodel Migration
-active_phase: M10
-active_phase_name: Common generator and architecture lint closure
+active_phase: M11
+active_phase_name: Deterministic full regression closure
 phase_status: PENDING
 working_tree_expectation: clean
 last_verified_full_suite:
-  total: 538
-  pass: 538
+  total: 540
+  pass: 540
   fail: 0
 last_verified_validator: PASS
 external_release_actions_authorized: false
-next_contract_owner: Common generator / architecture lint graph
+next_contract_owner: Deterministic closure proof
 ```
 
 ## Continuation protocol
@@ -70,6 +70,7 @@ e2d021b  ProjectIntelligenceContract
 6a481f7  HumanDecision proof provenance
 da67329  AuthorityContract / ExternalActionContract
 ea6c236  StorageOwnershipContract
+4602907  M10 common generator / architecture lint graph
 ```
 
 Earlier M8/M7/M6/M4/M2/M1/M0 checkpoints remain recorded in `17-IMPLEMENTATION-PROOF.md`.
@@ -178,6 +179,19 @@ Canonical code checkpoint: `ea6c236`.
 
 M9 is **PASS — CONTRACT OWNERSHIP CLOSED** at T1/T2. Artifact, ContextReference, SemanticContext, ProjectIntelligence, HumanDecision, Authority/ExternalAction and StorageOwnership all have canonical runtime/schema owners and current proof checkpoints.
 
+## M10 current truth
+
+Canonical code checkpoint: `4602907`.
+
+- build composes canonical role/agent/methodology projections and postbuild generates 30 deterministic ProjectionReceipts using the existing M1 receipt contract;
+- BA12 is executable: repeated identical generation is byte-identical, and one RoleContract purpose mutation changes only its declared role projections;
+- `architecture_lint.mjs` emits every HI001–HI020 rule ID and fails migrated-class ownership/reference/host projection/storage/generated artifact/role-agent/methodology/current-only/proof-link drift;
+- runtime-behavior rules are explicitly LINKED to controlled tests rather than represented as fake static proof;
+- HI003 remains explicitly DEFERRED with the existing M5 ConfigOptionContract host-policy blocker; this is not an M10 PASS claim for unmigrated config;
+- integrated deterministic check is 540/540 PASS + architecture lint PASS + standalone validator PASS.
+
+M10 status: **PASS — MIGRATED CLASSES CLOSED; HI003 DEFERRED WITH M5**.
+
 ## Open earlier migration blockers / partials
 
 Do not silently declare these closed:
@@ -204,34 +218,29 @@ Do not silently declare these closed:
 
 ## Next action
 
-Start **M10 common generator + architecture lint source-first audit**.
+Start **M11 deterministic full regression closure** against committed M10 state.
 
-Before mutation:
+Before any mutation:
 
 ```text
 git status --short
 git log -5 --oneline
 ```
 
-Read the M10 requirements and generator/lint canonical surfaces at minimum:
+Run the closure gates from `13-MIGRATION-MATRIX.md` without adding new architecture unless a gate exposes a real defect:
 
 ```text
-docs/engineering-constitution/09-GENERATOR-ARCHITECTURE.md
-docs/engineering-constitution/10-VALIDATION-ARCHITECTURE.md
-docs/engineering-constitution/11-BEHAVIORAL-ACCEPTANCE.md   # BA12
-docs/engineering-constitution/13-MIGRATION-MATRIX.md         # M10
-scripts/validate.py
-scripts/generate_plugin_agents.py
-scripts/generate_methodology_policy.py
-scripts/generate_methodology_skills.py
-scripts/generate_role_policy.py
-relevant generator/projection/architecture-lint tests
+controlled npm run check
+  -> build + deterministic projection generation
+  -> ProjectionReceipt refresh/parity
+  -> architecture lint HI001–HI020
+  -> full deterministic plugin suite
+  -> standalone validator
+
+BA12 targeted generator tests
+contract/authority/storage/generated-artifact negative tests
+git diff --check
+backup hygiene
 ```
 
-Audit before editing:
-
-1. map every current generator input -> projection -> validator edge;
-2. identify which HI001–HI020 rules already exist, which are duplicated/ad-hoc, and which migrated contract classes still lack fatal lint coverage;
-3. prove generator idempotence on an unchanged tree (BA12 first half) without leaving generated drift;
-4. identify the smallest coherent M10 closure graph; do not create a second generator framework beside working generators;
-5. keep earlier M3/M5/M6 host-policy blockers explicit rather than falsely declaring their unmigrated classes closed.
+If all gates remain green on committed `4602907` state, record M11 closure as proof-only; do not manufacture code changes merely to create an M11 implementation commit. Keep M3/M5/M6/M7-T3 blockers explicit. M12 real-host acceptance is a separate tier and must not be inferred from local fixtures.

@@ -54,7 +54,7 @@ Rows below are intentionally `PENDING` until code exists.
 | M7 | Host capability registry | 16 contract-backed OpenCode capabilities; product runtime gates consume worker-runtime/session-revert contracts; doctor reports status/verification/semantic loss; focused 43/43 PASS; controlled full suite 480/480 PASS; validator PASS | T1/T2 local; T3 still pending | `390cc2b` | PASS_LOCAL — REAL-HOST ACCEPTANCE PENDING |
 | M8 | Task/Worker/Result/Evidence contracts | WorkerResult, EvidenceItem, ReviewFinding, derived VerificationEnvelope, TaskContract and WorkerContract now have canonical runtime owners; persistence consumes canonical validators; task mission/external-action identity is explicit; worker attempt/recovery/effective-model lifecycle is fail-closed; latest focused Task/Worker set 21/21 PASS and controlled full suite 507/507 PASS; validator PASS | T1/T2 | WorkerResult `4ea320d`; Evidence `3044b94`; ReviewFinding `b120f49`; VerificationEnvelope `a4b1105`; Task/Worker `77f9dc1` | PASS — CONTRACT OWNERSHIP CLOSED |
 | M9 | Context/Artifact/PI/Human/Authority/Storage | Artifact + ContextReference + derived SemanticContext + ProjectIntelligence + HumanDecision + Authority + ExternalAction + StorageOwnership operational; machine storage catalog enforces one canonical owner per scope/data class, canonical path providers cover current project/runtime durable classes, OpenCode-native project skills remain outside Hi internal storage, uninstall preserves independently-owned policy/knowledge/skills, and doctor consumes the current runtime-state schema; focused storage/ownership set 66/66 PASS; controlled full suite 538/538 PASS; validator PASS | T1/T2 | Artifact `811ee7f`; ContextReference `3e8ab72`; SemanticContext `b7e51cc`; PI `e2d021b`; HumanDecision `46fc7b7`; Authority/ExternalAction `da67329`; StorageOwnership `ea6c236` | PASS — CONTRACT OWNERSHIP CLOSED |
-| M10 | common generator/lint closure | BA12 + HI001–HI020 migrated rules | T0/T1/T2 | — | PENDING |
+| M10 | common generator/lint closure | 30 deterministic ProjectionReceipts; BA12 unchanged-input idempotence + declared dependency-scope mutation 2/2 PASS; executable HI001–HI020 architecture lint with migrated-class fatal checks, behavioral proof links and explicit HI003/M5 deferral; controlled full suite 540/540 PASS; validator PASS | T0/T1/T2 | `4602907` | PASS — MIGRATED CLASSES CLOSED; HI003 DEFERRED WITH M5 |
 | M11 | deterministic full closure | build + validator + full controlled suite | T0/T1/T2 | — | PENDING |
 | M12 | real-host acceptance | OpenCode version-bound native receipts | T3 | — | PENDING |
 | M13 | release readiness | explicit authority + external receipts | T4 | — | NOT REQUESTED |
@@ -174,6 +174,22 @@ Implemented and verified:
 - updated storage architecture/ownership/layout docs to match the executable owner graph and cleanup boundary.
 
 Evidence: focused storage/doctor/methodology/authority/routing set 66/66 PASS; controlled isolated-HOME/XDG full plugin suite 538/538 PASS; direct setup install/uninstall ownership scenario PASS because host Python lacks the optional `pytest` module; Python source syntax compile PASS; standalone validator PASS; `git diff --check` clean; backup count 0. StorageOwnership code checkpoint: `ea6c236`. This closes M9 at T1/T2 while preserving BA06/BA10/BA11 behavior in the full regression suite.
+
+
+### M10 common generator / architecture lint checkpoint
+
+Implemented and verified:
+
+- composed the existing role/agent/methodology generators into one deterministic build/check graph rather than creating a parallel generator framework;
+- reused the M1 `ProjectionReceipt` contract and added a deterministic postbuild receipt catalog for 30 material generated outputs (role policy, agent config, methodology policy and 27 native methodology `SKILL.md` projections);
+- added `scripts/architecture_lint.mjs` as the executable HI001–HI020 constitutional rule entrypoint; migrated owner/reference/host projection/storage/generated-artifact/role-agent/methodology/current-only/proof-link violations are fatal;
+- linked safety/authority/evidence/completion/recovery/context/artifact rules to named controlled behavioral tests instead of pretending these properties are provable by text/AST checks alone; missing proof links are lint failures and the controlled suite executes the linked behavior;
+- preserved the earlier M5 blocker honestly: `HI003 CONFIG_EXECUTOR_MISSING` is emitted as `DEFERRED`, not PASS, because ConfigOptionContract has not been migrated under the host policy constraint; M10 only closes fatal lint for migrated classes;
+- made generated-artifact drift/hand-edit checks receipt-backed and regeneration-backed without mutating the active working tree during lint;
+- added executable BA12 acceptance: identical canonical inputs generate byte-identical projections on repeated runs, while a one-field `coder` RoleContract purpose mutation changes only the declared `role-policy.ts` and `agent-config.ts` dependents in an isolated fixture;
+- integrated root/plugin `architecture:lint`, `projections:check`, `behavior:accept`, `contracts:generate` and `check` commands so ordinary deterministic closure is build -> receipts -> architecture lint -> behavioral suite -> standalone validator.
+
+Evidence: BA12 generator acceptance 2/2 PASS; architecture lint reports all 20 rule IDs with 11 migrated-class fatal PASS, 8 behavioral LINKED and 1 explicit HI003/M5 DEFERRED; 30/30 material projection receipts current; controlled isolated-HOME/XDG full plugin suite 540/540 PASS; standalone validator PASS; `git diff --check` clean; backup count 0. M10 code checkpoint: `4602907`.
 
 ### M8 Task / Worker contract checkpoint
 
