@@ -56,6 +56,8 @@ test('fallback reason persists on worker lifecycle for dispatch and runtime fall
   const t=m.tasks.find(x=>x.id===out.task_id)
   assert.equal(w.model,'p/fallback')
   assert.equal(w.model_variant,'low')
+  assert.equal(w.projected_model,'p/fallback')
+  assert.equal(w.projected_model_variant,'low')
   assert.equal(w.fallback_history.length,1)
   assert.equal(w.fallback_history[0].phase,'dispatch')
   assert.match(w.fallback_history[0].reason,/role-configured alternative/)
@@ -65,6 +67,8 @@ test('fallback reason persists on worker lifecycle for dispatch and runtime fall
   w.model='p/primary';w.model_variant='medium';w.fallbacks=['p/fallback'];w.session_id='child-fallback';w.status='busy';w.fallback_history=[]
   assert.equal(await runtime.recoverRuntimeFailure(m,w.id,'429 provider rate limit'),true)
   assert.equal(w.model,'p/fallback')
+  assert.equal(w.projected_model,'p/fallback')
+  assert.equal(w.projected_model_variant,'low')
   assert.equal(w.fallback_history.length,1)
   assert.equal(w.fallback_history[0].phase,'runtime')
   assert.match(w.fallback_history[0].reason,/failure=provider-transport/)

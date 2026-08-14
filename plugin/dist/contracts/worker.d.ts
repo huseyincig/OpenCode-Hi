@@ -9,8 +9,12 @@ export interface WorkerContract {
     parent_session_id: string;
     parent_mission_id: string;
     forked_from_session_id?: string;
+    requested_model?: string;
+    requested_model_variant?: string;
     model?: string;
     model_variant?: string;
+    projected_model?: string;
+    projected_model_variant?: string;
     fallbacks: string[];
     selected_methodologies: string[];
     loaded_methodologies: string[];

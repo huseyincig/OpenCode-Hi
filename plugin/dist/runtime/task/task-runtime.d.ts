@@ -34,6 +34,7 @@ export declare class TaskRuntime {
     private lifecycle;
     constructor(client: any, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined, lifecycle?: OpenCodeLifecycleEndpoint);
     private sendProviderPrompt;
+    private recordModelProjection;
     private abortNativeSession;
     private captureNativeDiff;
     reconcileNativeResult(m: MissionState, workerID: string, result: WorkerResult): Promise<WorkerResult>;

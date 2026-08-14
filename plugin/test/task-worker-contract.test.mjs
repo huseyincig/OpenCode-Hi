@@ -56,6 +56,9 @@ test('WorkerContract rejects malformed recovery/effective-model state instead of
   assert.equal(isWorkerContract({...worker,attempt:-1}),false)
   assert.equal(isWorkerContract({...worker,updated_at:'now'}),false)
   assert.equal(isWorkerContract({...worker,effective_model_verified:'yes'}),false)
+  assert.equal(isWorkerContract({...worker,requested_model:7}),false)
+  assert.equal(isWorkerContract({...worker,projected_model_variant:{bad:true}}),false)
+  assert.equal(isWorkerContract({...worker,projected_model_variant:'high'}),false)
   assert.equal(isWorkerContract({...worker,native_diff_baseline:{'src/a.ts':7}}),false)
   assert.equal(isWorkerContract({...worker,fallback_history:[{to:'p/other',reason:'x',phase:'invalid',at:Date.now()}]}),false)
   assert.equal(isWorkerContract({...worker,unexpected:true}),false)
@@ -67,9 +70,11 @@ test('RuntimePersistence consumes canonical Task/Worker contracts and fails clos
     const store=new MissionStore(root),m=startAssessedMission(store,'persist-contract','verify',{task_kind:'bug-fix',likely_verification:[]})
     const task=createTask(m,{objective:'verify',role:'coder',category:'standard'})
     const worker=createWorker(m,task,'host-default')
+    worker.requested_model='p/requested';worker.model='p/selected';worker.projected_model='p/selected';worker.effective_model='p/selected';worker.effective_model_verified=true
     const persistence=new RuntimePersistence(root)
     persistence.save(store.all(),true)
-    assert.equal(persistence.load().length,1)
+    const loaded=persistence.load();assert.equal(loaded.length,1)
+    assert.equal(loaded[0].workers[0].requested_model,'p/requested');assert.equal(loaded[0].workers[0].projected_model,'p/selected')
     worker.attempt=-1
     persistence.save(store.all(),true)
     assert.equal(persistence.load().length,0)

@@ -76,6 +76,9 @@ async function pluginScenario(observedModel,includeModelMetadata=true){
 
 test('child assistant message metadata proves the effective model used by the native session',async()=>{
   const {state,ledger}=await pluginScenario('expected')
+  assert.equal(state.worker.requested_model,'p/expected')
+  assert.equal(state.worker.model,'p/expected')
+  assert.equal(state.worker.projected_model,'p/expected')
   assert.equal(state.worker.effective_model,'p/expected')
   assert.equal(state.worker.effective_model_verified,true)
   assert.ok(ledger.events.some(e=>e.type==='model.effective.verified'))
@@ -125,4 +128,17 @@ test('pre-assistant child idle is ignored until native assistant model evidence 
   assert.equal(second.worker.effective_model_verified,true)
   assert.equal(second.task.result.status,'DONE')
   await hooks.dispose?.();rmSync(dir,{recursive:true,force:true})
+})
+
+
+test('projected model mismatch is a first-class blocker even when observed model matches selection',()=>{
+  const runtime=new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>({}))
+  const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'projection-mismatch','opaque task')
+  m.tasks.push({id:'t',mission_id:m.mission_id,objective:'x',status:'running',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],external_action_requirements:[],worker_id:'w',created_at:Date.now(),updated_at:Date.now()})
+  m.workers.push({id:'w',task_id:'t',role:'coder',category:'standard',parent_session_id:'s',parent_mission_id:m.mission_id,requested_model:'p/expected',model:'p/expected',projected_model:'p/wrong',fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'busy',attempt:1,generation_at_spawn:m.generation,updated_at:Date.now()})
+  const out=runtime.noteEffectiveModel(m,'w',{model:'p/expected',source:'assistant-message-metadata'})
+  assert.equal(out.ok,false)
+  assert.match(out.reason,/^model-projection-mismatch:/)
+  assert.equal(m.workers[0].effective_model_verified,false)
+  assert.ok(m.ledger.some(e=>e.type==='model.projection.mismatch'))
 })

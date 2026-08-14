@@ -1,7 +1,7 @@
 export const WORKER_STATUSES = ['created', 'queued', 'starting', 'ready', 'busy', 'completed', 'failed', 'cancelled'];
 const STATUS = new Set(WORKER_STATUSES);
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
-const WORKER_KEYS = new Set(['id', 'task_id', 'role', 'category', 'session_id', 'parent_session_id', 'parent_mission_id', 'forked_from_session_id', 'model', 'model_variant', 'fallbacks', 'selected_methodologies', 'loaded_methodologies', 'methodologies', 'fingerprint', 'status', 'attempt', 'generation_at_spawn', 'started_at', 'updated_at', 'completed_at', 'last_result_digest', 'last_result_at', 'write_set', 'native_state_hash', 'native_diff_baseline', 'native_diff_final', 'restart_reconcile_pending', 'runtime_recovery_pending', 'runtime_recovery_attempt', 'last_runtime_failure_kind', 'runtime_fallback_exhausted', 'model_selection_reason', 'fallback_history', 'effective_model', 'effective_model_variant', 'effective_model_verified', 'effective_model_variant_verified', 'effective_model_source', 'effective_model_observed_at', 'semantic_pause_revision']);
+const WORKER_KEYS = new Set(['id', 'task_id', 'role', 'category', 'session_id', 'parent_session_id', 'parent_mission_id', 'forked_from_session_id', 'requested_model', 'requested_model_variant', 'model', 'model_variant', 'projected_model', 'projected_model_variant', 'fallbacks', 'selected_methodologies', 'loaded_methodologies', 'methodologies', 'fingerprint', 'status', 'attempt', 'generation_at_spawn', 'started_at', 'updated_at', 'completed_at', 'last_result_digest', 'last_result_at', 'write_set', 'native_state_hash', 'native_diff_baseline', 'native_diff_final', 'restart_reconcile_pending', 'runtime_recovery_pending', 'runtime_recovery_attempt', 'last_runtime_failure_kind', 'runtime_fallback_exhausted', 'model_selection_reason', 'fallback_history', 'effective_model', 'effective_model_variant', 'effective_model_verified', 'effective_model_variant_verified', 'effective_model_source', 'effective_model_observed_at', 'semantic_pause_revision']);
 function record(v) { return Boolean(v) && typeof v === 'object' && !Array.isArray(v); }
 function strings(v) { return Array.isArray(v) && v.every(x => typeof x === 'string'); }
 function finite(v) { return typeof v === 'number' && Number.isFinite(v); }
@@ -13,7 +13,7 @@ export function isWorkerContract(v) {
         return false;
     if (!strings(v.fallbacks) || !strings(v.selected_methodologies) || !strings(v.loaded_methodologies) || !Array.isArray(v.methodologies) || !v.methodologies.every(methodology) || !Number.isInteger(v.attempt) || Number(v.attempt) < 0 || !Number.isInteger(v.generation_at_spawn) || Number(v.generation_at_spawn) < 1 || !finite(v.updated_at))
         return false;
-    for (const k of ['session_id', 'forked_from_session_id', 'model', 'model_variant', 'last_result_digest', 'native_state_hash', 'last_runtime_failure_kind', 'effective_model', 'effective_model_variant', 'effective_model_source'])
+    for (const k of ['session_id', 'forked_from_session_id', 'requested_model', 'requested_model_variant', 'model', 'model_variant', 'projected_model', 'projected_model_variant', 'last_result_digest', 'native_state_hash', 'last_runtime_failure_kind', 'effective_model', 'effective_model_variant', 'effective_model_source'])
         if (v[k] !== undefined && typeof v[k] !== 'string')
             return false;
     for (const k of ['started_at', 'completed_at', 'last_result_at', 'runtime_recovery_attempt', 'effective_model_observed_at', 'semantic_pause_revision'])
@@ -31,6 +31,8 @@ export function isWorkerContract(v) {
     if (v.native_diff_final !== undefined && !stringRecord(v.native_diff_final))
         return false;
     if (v.fallback_history !== undefined && (!Array.isArray(v.fallback_history) || !v.fallback_history.every(fallback)))
+        return false;
+    if (v.projected_model_variant !== undefined && v.projected_model === undefined)
         return false;
     return true;
 }

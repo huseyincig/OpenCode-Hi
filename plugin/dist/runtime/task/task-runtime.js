@@ -38,6 +38,7 @@ import { ProjectIntelligenceStore } from '../project-intelligence/store.js';
 import { ContextArtifactStore } from '../context/artifact-store.js';
 import { reviewFindingMarker, reviewFindingNeedsCorrection } from '../../contracts/review-finding.js';
 import { openHumanDecision } from '../human-decision/runtime.js';
+import { reconcileModelExecutionIdentity } from '../../contracts/model.js';
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
 const MAX_QUEUE = 32;
 function missionModelFeedback(m) {
@@ -128,6 +129,7 @@ export class TaskRuntime {
         this.#methodologyLearning = new ProjectMethodologyLearningStore(projectRoot);
     }
     async sendProviderPrompt(sessionID, text, role, model, variant, tools) { const safe = redactProviderContext(text); return sendPromptAsync(this.client, sessionID, safe.providerText, role, model, variant, tools); }
+    recordModelProjection(worker, model, variant) { worker.projected_model = model ?? 'host-default'; worker.projected_model_variant = variant; worker.updated_at = Date.now(); }
     async abortNativeSession(m, sessionID, reason, workerID, taskID) { const transport = await abortSession(this.client, sessionID, this.lifecycle); appendLedger(m, 'worker.session-abort', { task_id: taskID, worker_id: workerID, payload: { session_id: sessionID, reason, transport } }); return transport !== 'unavailable'; }
     async captureNativeDiff(worker, phase) {
         if (!worker.session_id)
@@ -203,54 +205,60 @@ export class TaskRuntime {
         if (!worker)
             return { ok: false, reason: 'worker-not-found' };
         const task = m.tasks.find(t => t.id === worker.task_id), expected = worker.model, expectedVariant = worker.model_variant, taskID = task?.id ?? worker.task_id;
-        const clearModelMarkers = () => { m.blockers = m.blockers.filter(b => !b.startsWith(`model-effective-unverified:${taskID}:`) && !b.startsWith(`model-effective-mismatch:${taskID}:`) && !b.startsWith(`model-variant-unverified:${taskID}:`) && !b.startsWith(`model-variant-mismatch:${taskID}:`)); };
-        worker.effective_model = observed?.model;
-        worker.effective_model_variant = observed?.variant;
-        worker.effective_model_source = observed?.source ?? 'assistant-message-metadata';
+        const clearModelMarkers = () => { m.blockers = m.blockers.filter(b => !b.startsWith(`model-projection-mismatch:${taskID}:`) && !b.startsWith(`model-effective-unverified:${taskID}:`) && !b.startsWith(`model-effective-mismatch:${taskID}:`) && !b.startsWith(`model-variant-unverified:${taskID}:`) && !b.startsWith(`model-variant-mismatch:${taskID}:`)); };
+        const requested = (worker.requested_model || worker.requested_model_variant) ? { model: worker.requested_model, variant: worker.requested_model_variant, source: 'task-override' } : undefined;
+        const selected = (worker.model || worker.model_variant) ? { model: worker.model, variant: worker.model_variant, source: 'runtime-resolver/current-worker-selection' } : undefined;
+        const projected = (worker.projected_model || worker.projected_model_variant) ? { model: worker.projected_model, variant: worker.projected_model_variant, source: 'opencode-child-or-prompt' } : undefined;
+        const identity = reconcileModelExecutionIdentity({ requested, selected, projected, observed: observed ? { model: observed.model, variant: observed.variant, source: observed.source ?? 'assistant-message-metadata' } : undefined });
+        worker.effective_model = identity.effective?.model;
+        worker.effective_model_variant = identity.effective?.variant;
+        worker.effective_model_source = identity.effective?.source ?? observed?.source ?? 'assistant-message-metadata';
         worker.effective_model_observed_at = Date.now();
-        worker.effective_model_variant_verified = expectedVariant ? false : undefined;
-        if (!expected || expected === 'host-default') {
-            worker.effective_model_verified = Boolean(observed?.model);
-            appendLedger(m, 'model.effective.observed', { task_id: task?.id, worker_id: worker.id, payload: { expected: expected ?? 'host-default', observed: observed?.model ?? 'host-default/unreported', expected_variant: expectedVariant, variant: observed?.variant, source: worker.effective_model_source } });
+        worker.effective_model_verified = identity.modelVerified;
+        worker.effective_model_variant_verified = identity.variantVerified;
+        if (identity.status === 'host-default-or-unconstrained') {
+            clearModelMarkers();
+            appendLedger(m, 'model.effective.observed', { task_id: task?.id, worker_id: worker.id, payload: { requested: worker.requested_model, selected: expected ?? 'host-default', projected: worker.projected_model ?? 'host-default/unrecorded', observed: observed?.model ?? 'host-default/unreported', expected_variant: expectedVariant, projected_variant: worker.projected_model_variant, variant: observed?.variant, source: worker.effective_model_source } });
             return { ok: true, expected, observed: observed?.model, reason: 'host-default-or-unconstrained' };
         }
-        if (!observed?.model) {
-            worker.effective_model_verified = false;
+        if (identity.status === 'projection-mismatch') {
+            const marker = `model-projection-mismatch:${taskID}:${expected ?? 'unknown'}->${worker.projected_model ?? 'unrecorded'}`;
+            clearModelMarkers();
+            m.blockers.push(marker);
+            appendLedger(m, 'model.projection.mismatch', { task_id: task?.id, worker_id: worker.id, payload: { requested: worker.requested_model, selected: expected, projected: worker.projected_model, selected_variant: expectedVariant, projected_variant: worker.projected_model_variant } });
+            return { ok: false, expected, observed: observed?.model, reason: marker };
+        }
+        if (identity.status === 'model-unverified') {
             const marker = `model-effective-unverified:${taskID}:${expected}`;
             if (!m.blockers.includes(marker))
                 m.blockers.push(marker);
-            appendLedger(m, 'model.effective.unverified', { task_id: task?.id, worker_id: worker.id, payload: { expected, expected_variant: expectedVariant, source: worker.effective_model_source } });
+            appendLedger(m, 'model.effective.unverified', { task_id: task?.id, worker_id: worker.id, payload: { requested: worker.requested_model, selected: expected, projected: worker.projected_model, expected_variant: expectedVariant, source: worker.effective_model_source } });
             return { ok: false, expected, reason: marker };
         }
-        if (observed.model !== expected) {
-            worker.effective_model_verified = false;
-            const marker = `model-effective-mismatch:${taskID}:${expected}->${observed.model}`;
+        if (identity.status === 'model-mismatch') {
+            const marker = `model-effective-mismatch:${taskID}:${expected}->${observed?.model}`;
             clearModelMarkers();
             m.blockers.push(marker);
-            appendLedger(m, 'model.effective.mismatch', { task_id: task?.id, worker_id: worker.id, payload: { expected, observed: observed.model, expected_variant: expectedVariant, variant: observed.variant, source: worker.effective_model_source } });
-            return { ok: false, expected, observed: observed.model, reason: marker };
+            appendLedger(m, 'model.effective.mismatch', { task_id: task?.id, worker_id: worker.id, payload: { requested: worker.requested_model, selected: expected, projected: worker.projected_model, observed: observed?.model, expected_variant: expectedVariant, variant: observed?.variant, source: worker.effective_model_source } });
+            return { ok: false, expected, observed: observed?.model, reason: marker };
         }
-        worker.effective_model_verified = true;
-        if (expectedVariant) {
-            if (!observed?.variant) {
-                const marker = `model-variant-unverified:${taskID}:${expectedVariant}`;
-                clearModelMarkers();
-                m.blockers.push(marker);
-                appendLedger(m, 'model.variant.unverified', { task_id: task?.id, worker_id: worker.id, payload: { model: expected, expected_variant: expectedVariant, source: worker.effective_model_source } });
-                return { ok: false, expected, observed: observed.model, reason: marker };
-            }
-            if (observed.variant !== expectedVariant) {
-                const marker = `model-variant-mismatch:${taskID}:${expectedVariant}->${observed.variant}`;
-                clearModelMarkers();
-                m.blockers.push(marker);
-                appendLedger(m, 'model.variant.mismatch', { task_id: task?.id, worker_id: worker.id, payload: { model: expected, expected_variant: expectedVariant, observed_variant: observed.variant, source: worker.effective_model_source } });
-                return { ok: false, expected, observed: observed.model, reason: marker };
-            }
-            worker.effective_model_variant_verified = true;
+        if (identity.status === 'variant-unverified') {
+            const marker = `model-variant-unverified:${taskID}:${expectedVariant}`;
+            clearModelMarkers();
+            m.blockers.push(marker);
+            appendLedger(m, 'model.variant.unverified', { task_id: task?.id, worker_id: worker.id, payload: { model: expected, projected: worker.projected_model, expected_variant: expectedVariant, projected_variant: worker.projected_model_variant, source: worker.effective_model_source } });
+            return { ok: false, expected, observed: observed?.model, reason: marker };
+        }
+        if (identity.status === 'variant-mismatch') {
+            const marker = `model-variant-mismatch:${taskID}:${expectedVariant}->${observed?.variant}`;
+            clearModelMarkers();
+            m.blockers.push(marker);
+            appendLedger(m, 'model.variant.mismatch', { task_id: task?.id, worker_id: worker.id, payload: { model: expected, projected: worker.projected_model, expected_variant: expectedVariant, projected_variant: worker.projected_model_variant, observed_variant: observed?.variant, source: worker.effective_model_source } });
+            return { ok: false, expected, observed: observed?.model, reason: marker };
         }
         clearModelMarkers();
-        appendLedger(m, 'model.effective.verified', { task_id: task?.id, worker_id: worker.id, payload: { expected, observed: observed.model, expected_variant: expectedVariant, variant: observed.variant, variant_verified: expectedVariant ? true : undefined, source: worker.effective_model_source } });
-        return { ok: true, expected, observed: observed.model, reason: expectedVariant ? 'effective-model-and-variant-match-runtime-selection' : 'effective-model-matches-runtime-selection' };
+        appendLedger(m, 'model.effective.verified', { task_id: task?.id, worker_id: worker.id, payload: { requested: worker.requested_model, selected: expected, projected: worker.projected_model, observed: observed?.model, expected_variant: expectedVariant, projected_variant: worker.projected_model_variant, variant: observed?.variant, variant_verified: identity.variantVerified, source: worker.effective_model_source } });
+        return { ok: true, expected, observed: observed?.model, reason: expectedVariant ? 'effective-model-and-variant-match-runtime-selection' : 'effective-model-matches-runtime-selection' };
     }
     queueDepth() { return this.#queue.length; }
     depsReady(m, deps) { return deps.every(id => m.tasks.find(t => t.id === id)?.status === 'completed'); }
@@ -355,6 +363,7 @@ export class TaskRuntime {
                 const resumeVariant = nextModel === selected.primary ? selected.primaryVariant : selected.fallbackVariants[nextModel];
                 const protectedBaseline = Object.keys(existing.native_diff_baseline ?? {}).slice(0, 60);
                 beginWorkerAttempt(oldTask, existing);
+                this.recordModelProjection(existing, nextModel, resumeVariant);
                 await this.sendProviderPrompt(existing.session_id, clipText([`Hi corrective resume for existing task ${oldTask.id}.`, `Previous status: ${oldTask.result.status}.`, `Missing context: ${missing || 'none'}.`, `Open issues: ${issues || 'none'}.`, `Current user constraints: ${(oldTask.constraints ?? []).join(' | ') || 'none'}.`, `METHODOLOGY EXIT REQUIREMENTS: ${resumeExitRequirements.join(' | ') || 'none'}.`, protectedBaseline.length ? `PRE-EXISTING USER DIRTY BASELINE: ${protectedBaseline.join(', ')}. Cleanup means restore these paths to their exact worker-start baseline, NOT to HEAD. Never discard user-owned edits with git checkout/reset/restore.` : 'Pre-existing user dirty baseline: none observed.', reviewScope, 'Resume from current session context. Apply the smallest correction. Do not restart planning or create sub-orchestrators. Return the structured WorkerResult again.'].filter(Boolean).join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), existing.role, nextModel === 'host-default' ? undefined : nextModel, resumeVariant, promptToolOverrides(oldTask.execution_profile?.tools ?? []));
                 existing.model_variant = resumeVariant;
                 existing.restart_reconcile_pending = false;
@@ -374,6 +383,8 @@ export class TaskRuntime {
         const task = createTask(m, { objective, role, category, scope, constraints, dependencies, requiredEvidence, obligationIds, contextReferences: selectedContextReferences, executionProfile: profile });
         bindMethodologyNeeds(m, methodologies, { taskId: task.id, obligationIds: task.obligation_ids });
         const provenance = methodologyProvenance(skillPlan.selected), worker = createWorker(m, task, selected.primary, selected.fallbacks, methodologies, provenance);
+        worker.requested_model = input.model;
+        worker.requested_model_variant = input.modelVariant;
         worker.model_selection_reason = [...selected.reason];
         worker.fallback_history = [];
         for (const ref of task.context_artifacts)
@@ -432,6 +443,7 @@ export class TaskRuntime {
                 task.status = 'queued';
                 const native = new NativeOpenCodeAdapter(this.client);
                 const canFork = false;
+                this.recordModelProjection(worker, model, variant);
                 const child = input.forkFromSession && canFork && native.has('fork') ? await native.fork(input.forkFromSession, `Hi · ${role} · ${objective.slice(0, 60)}`) : await createChildSession(this.client, m.session_id, `Hi · ${role} · ${objective.slice(0, 60)}`, role, model === 'host-default' ? undefined : model, variant);
                 if (input.forkFromSession)
                     appendLedger(m, 'worker.session-fork', { task_id: task.id, worker_id: worker.id, payload: { source_session: input.forkFromSession, native: native.has('fork'), used: false, reason: 'native fork cannot set specialist agent; created isolated child instead' } });
@@ -573,6 +585,7 @@ export class TaskRuntime {
             task.status = 'running';
             this.registry.set(worker);
             beginWorkerAttempt(task, worker);
+            this.recordModelProjection(worker, model, worker.model_variant);
             await this.sendProviderPrompt(worker.session_id, clipText([`Hi semantic follow-up reconciliation for existing task ${task.id}.`, `Follow-up kind: ${messageKind}.`, `Current mission objective: ${m.objective}`, `Current user constraints: ${(task.constraints ?? []).join(' | ') || 'none'}.`, `Still-selected methodologies: ${worker.selected_methodologies.join(', ') || 'none'}.`, 'Continue the SAME task/session from current context. Preserve completed work and evidence. Do not restart planning. If the follow-up creates separate work outside this task, report it rather than silently expanding scope. Return the normal structured WorkerResult.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), worker.role, model === 'host-default' ? undefined : model, worker.model_variant, promptToolOverrides(task.execution_profile?.tools ?? []));
             appendLedger(m, 'worker.semantic-resumed', { task_id: task.id, worker_id: worker.id, payload: { revision: m.semantic_assessment.revision, message_kind: messageKind, session_id: worker.session_id } });
             resumed++;
@@ -628,6 +641,7 @@ export class TaskRuntime {
                 continue;
             }
             try {
+                this.recordModelProjection(worker, model, variant);
                 const child = await createChildSession(this.client, m.session_id, `Hi · ${worker.role} · constraint update · ${task.objective.slice(0, 45)}`, worker.role, model === 'host-default' ? undefined : model, variant);
                 if (!child?.id)
                     throw new Error('Constraint rebase child session id missing');
@@ -711,7 +725,7 @@ export class TaskRuntime {
             loser.status = 'queued';
             const resume = async () => { const model = loser.model, provider = providerOf(model), capacity = this.scheduler.canStart(loser.id, provider, model === 'host-default' ? undefined : model); if (!capacity.ok)
                 throw new Error(`Conflict resume capacity unavailable: ${capacity.reason}`); this.scheduler.acquire(loser.id, provider, model === 'host-default' ? undefined : model); loser.status = 'busy'; loser.started_at = Date.now(); loser.generation_at_spawn = m.generation; loser.parent_mission_id = m.mission_id; loserTask.status = 'running'; this.registry.set(loser); if (!loser.session_id)
-                throw new Error('Conflict resume child session missing'); beginWorkerAttempt(loserTask, loser); await this.sendProviderPrompt(loser.session_id, clipText([`Hi runtime write-conflict reconciliation for existing task ${loserTask.id}.`, `Conflicting task ${winnerTask.id} has completed before this resume gate opened.`, `Conflicting files: ${overlap.join(', ')}`, `Current task objective: ${loserTask.objective}`, `Current user constraints: ${(loserTask.constraints ?? []).join(' | ') || 'none'}.`, 'Inspect the current diff/state first. Preserve valid work from the completed task. Reconcile only this task sequentially; do not blindly overwrite or restart planning. Re-run the required scoped verification and return the structured WorkerResult.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), loser.role, model === 'host-default' ? undefined : model, loser.model_variant, promptToolOverrides(loserTask.execution_profile?.tools ?? [])); appendLedger(m, 'parallel.write-conflict.resumed', { task_id: loserTask.id, worker_id: loser.id, payload: { after_task: winnerTask.id, files: overlap.slice(0, 30) } }); return loser; };
+                throw new Error('Conflict resume child session missing'); beginWorkerAttempt(loserTask, loser); this.recordModelProjection(loser, model, loser.model_variant); await this.sendProviderPrompt(loser.session_id, clipText([`Hi runtime write-conflict reconciliation for existing task ${loserTask.id}.`, `Conflicting task ${winnerTask.id} has completed before this resume gate opened.`, `Conflicting files: ${overlap.join(', ')}`, `Current task objective: ${loserTask.objective}`, `Current user constraints: ${(loserTask.constraints ?? []).join(' | ') || 'none'}.`, 'Inspect the current diff/state first. Preserve valid work from the completed task. Reconcile only this task sequentially; do not blindly overwrite or restart planning. Re-run the required scoped verification and return the structured WorkerResult.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), loser.role, model === 'host-default' ? undefined : model, loser.model_variant, promptToolOverrides(loserTask.execution_profile?.tools ?? [])); appendLedger(m, 'parallel.write-conflict.resumed', { task_id: loserTask.id, worker_id: loser.id, payload: { after_task: winnerTask.id, files: overlap.slice(0, 30) } }); return loser; };
             this.queueTask(m, loser, resume);
             appendLedger(m, 'parallel.write-conflict.quarantined', { task_id: loserTask.id, worker_id: loser.id, payload: { winner_worker_id: winner.id, winner_task_id: winnerTask.id, files: overlap.slice(0, 30), policy: 'verified-abort-then-serialize' } });
             void this.events?.(runtimeSignal('parallel.write-conflict', m.mission_id, { task_id: loserTask.id, worker_id: loser.id, payload: { other_worker_id: winner.id, files: overlap.slice(0, 30), action: 'quarantined' } }));
@@ -930,6 +944,7 @@ export class TaskRuntime {
                 ? 'Hi stagnation recovery: continue the SAME task/session with one narrowly scoped corrective attempt. Preserve completed work and evidence. Do not restart planning.'
                 : `Hi stagnation recovery: continue the SAME task/session with policy escalation from ${previous ?? 'default'} to ${model ?? 'default'}. Preserve completed work and evidence. Do not restart planning.`;
             beginWorkerAttempt(task, worker);
+            this.recordModelProjection(worker, model, variant);
             await this.sendProviderPrompt(worker.session_id, clipText(`${instruction}\nReturn the normal structured WorkerResult.`, DEFAULT_CONTEXT_BUDGET.max_handoff_chars), worker.role, model === 'host-default' ? undefined : model, variant, promptToolOverrides(task.execution_profile?.tools ?? []));
             appendLedger(m, 'worker.stagnation-recovery', { task_id: task.id, worker_id: worker.id, payload: { level, action, from: previous, to: model, variant, generation: m.generation } });
             void this.events?.(runtimeSignal('worker.recovered', m.mission_id, { task_id: task.id, worker_id: worker.id, payload: { level, action, from: previous, to: model, variant } }));
@@ -983,6 +998,7 @@ export class TaskRuntime {
                     appendLedger(m, 'worker.runtime-fallback.abort-blocked', { task_id: task.id, worker_id: worker.id, payload: { session_id: failedSession, failure_class: failure.kind, marker } });
                     return false;
                 }
+                this.recordModelProjection(worker, model, variant);
                 const child = await createChildSession(this.client, m.session_id, `Hi · ${worker.role} · runtime recovery · ${task.objective.slice(0, 45)}`, worker.role, model === 'host-default' ? undefined : model, variant);
                 if (!child?.id)
                     throw new Error('Runtime fallback child session id missing');
