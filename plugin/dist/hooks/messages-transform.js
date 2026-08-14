@@ -1,4 +1,5 @@
 import { ownershipContract } from '../runtime/skills/methodology.js';
+import { pruneDuplicateProviderToolOutputs } from '../runtime/context/provider-duplicate-pruning.js';
 const NATIVE_HOUSEKEEPING_AGENTS = new Set(['title', 'summary', 'compaction']);
 function isNativeHousekeeping(input) { return NATIVE_HOUSEKEEPING_AGENTS.has(String(input?.agent ?? input?.agentName ?? '').toLowerCase()); }
 function sessionID(input) { return input?.sessionID ?? input?.sessionId ?? input?.session?.id; }
@@ -9,7 +10,8 @@ export function createMessagesTransformHook(store, background) {
         const sid = sessionID(input);
         if (!sid || isNativeHousekeeping(input) || !Array.isArray(output?.messages) || !output.messages.length)
             return;
-        const firstUser = output.messages.find((m) => m?.info?.role === 'user');
+        output.messages = pruneDuplicateProviderToolOutputs(output.messages).messages;
+        const firstUserIndex = output.messages.findIndex((m) => m?.info?.role === 'user'), firstUser = firstUserIndex >= 0 ? output.messages[firstUserIndex] : undefined;
         if (!firstUser || !Array.isArray(firstUser.parts))
             return;
         if (containsContract(firstUser.parts, 'Hi CONTROL-PLANE CONTRACT') || containsContract(firstUser.parts, 'Hi CHILD CONTROL-PLANE CONTRACT'))
@@ -22,7 +24,8 @@ export function createMessagesTransformHook(store, background) {
             return;
         const worker = child ? mission.execution.workers.find(w => w.id === child.id) : undefined;
         const contract = ownershipContract(child ? 'child' : 'parent', worker?.selected_methodologies ?? []);
-        const ref = firstUser.parts[firstUser.parts.length - 1] ?? firstUser.parts[0];
-        firstUser.parts.push(textPartLike(ref, contract));
+        const ref = firstUser.parts[firstUser.parts.length - 1] ?? firstUser.parts[0], projectedUser = { ...firstUser, parts: [...firstUser.parts, textPartLike(ref, contract)] };
+        output.messages = [...output.messages];
+        output.messages[firstUserIndex] = projectedUser;
     };
 }
