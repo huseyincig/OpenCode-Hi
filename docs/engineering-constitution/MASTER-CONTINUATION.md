@@ -24,7 +24,7 @@ last_verified_architecture_lint: "PASS rules=21 deferred=0 linked=8"
 last_verified_validator: PASS
 current_projection_receipts: 32
 external_release_actions_authorized: false
-next_contract_owner: exact OpenCode 1.18.16 host -> changed adapter/control surfaces -> T3 receipt
+next_contract_owner: registry-latest OpenCode host -> changed adapter/control surfaces -> exact-version T3 receipt
 ```
 
 ---
@@ -253,7 +253,7 @@ This section exists so no requirement from the broad working checkpoint disappea
 |---|---|---|
 | 1 | Git/release restriction | **CLOSED / PERMANENT INVARIANT** — local commits required by later override; real external mutations unauthorized. |
 | 2 | no legacy compatibility | **CLOSED / PERMANENT INVARIANT** — current-only schema/persistence policy. |
-| 3–5 | Hi/Core vs host-native boundary, portability, upstream reality | **CLOSED current architecture / PERMANENT REVALIDATION** — OpenCode 1.18.16 T3 bound; reverify host facts on supported-host change. |
+| 3–5 | Hi/Core vs host-native boundary, portability, upstream reality | **CLOSED current architecture / PERMANENT REVALIDATION** — historical M12 was bound to OpenCode 1.18.16; current host work must first resolve the registry `latest` version and revalidate against that exact version. |
 | 6–8 | minimum sufficient topology, independent axes, compute economics | **CLOSED current policy / PERMANENT INVARIANT**. |
 | 9–10 | documentation truth + English internal language | **PERMANENT INVARIANT**. |
 | 11–13 | language-agnostic semantics, assessment gate, follow-up quarantine | **CLOSED current runtime** — structured semantic state; fresh-session constraint rebase; no language dictionary authority. |
@@ -316,7 +316,7 @@ Child/worker model truth is now strong after M6, but primary model truth is not 
 
 Closure proof:
 
-1. OpenCode plugin/sdk/binary are all exact supported version 1.18.16 in the controlled environment;
+1. At P1 closure, OpenCode plugin/sdk/binary were exact version 1.18.16 in the controlled environment; that is historical proof, not a permanent supported-version pin;
 2. OpenCode `chat.message` exposes host-selected primary `model`/`variant` metadata, but canonical Hi primary agent projections contain no `model` or `variant`;
 3. Hi model routing/config consumers are child TaskRuntime/model-resolver paths, not primary-agent projection;
 4. canonical Hi agent binding fails closed if a host/user injects a model constraint into a canonical primary agent definition;
@@ -336,14 +336,14 @@ Closure proof:
 ### D. Visual/browser capability — **CLOSED current truth / HOST-LIMITED at `05724b1`**
 
 - `hi-browser-testing` and `hi-visual-qa` canonically require `host-capability:browser-execution`;
-- exact OpenCode 1.18.16 exposes dynamic tool inventory, but current Hi has no deterministic browser executor adapter that can bind arbitrary MCP/tool IDs to browser evidence semantics;
+- the then-current OpenCode 1.18.16 audit exposed dynamic tool inventory, but Hi had no deterministic browser executor adapter that could bind arbitrary MCP/tool IDs to browser evidence semantics; current/latest host behavior must be revalidated before changing this status;
 - `browser-execution` is therefore explicitly `UNSUPPORTED`, not inferred from prompts, screenshots, MCP naming or tool presence;
 - mandatory browser/visual methodology dispatch fails deterministically before native child creation;
 - no new host primitive was claimed, so P2 required no new T3 support-claim acceptance.
 
 ### E. Host-specific tool drift (`scout`) — **CLOSED at `05724b1`**
 
-- exact installed OpenCode plugin/sdk 1.18.16 source/type surface contains no native `scout` tool contract;
+- the then-current installed OpenCode plugin/sdk 1.18.16 source/type surface contained no native `scout` tool contract; later host versions must be re-audited rather than assumed identical;
 - stale `scout: allow` rules were removed from canonical primary PermissionProfiles and regenerated agent projections;
 - architecture lint `HI021 EXECUTION_SURFACE_PERMISSION_DRIFT` now fails if any canonical Hi agent permission key is not represented by Core execution-surface reasoning;
 - current architecture lint: **21 rules, deferred=0, linked=8**.
@@ -433,15 +433,15 @@ These are current product truths, not reasons to manufacture PASS:
 
 ### Process lifecycle — DEGRADED
 
-Exact OpenCode 1.18.16 exposes a separate PTY lifecycle, but Hi does not route ordinary model-facing bash through that executor. Ordinary bash therefore still lacks Hi-owned PID/job wait/kill/process-exit lifecycle; shell safety and bounded runtime recovery must not be represented as a richer process governor.
+The P5 audit on OpenCode 1.18.16 exposed a separate PTY lifecycle, but Hi did not route ordinary model-facing bash through that executor. Ordinary bash therefore still lacks Hi-owned PID/job wait/kill/process-exit lifecycle; shell safety and bounded runtime recovery must not be represented as a richer process governor.
 
 ### Workspace isolation binding — UNSUPPORTED
 
-Exact OpenCode 1.18.16 exposes workspace/session `workspaceID`, warp and worktree primitives, but current Hi has no canonical isolation selection/provisioning/cleanup executor and no T3 proof that subsequent child/tool execution is bound to an alternate workspace. Related host primitives are therefore not promoted to product support.
+The P5 audit on OpenCode 1.18.16 exposed workspace/session `workspaceID`, warp and worktree primitives, but Hi had no canonical isolation selection/provisioning/cleanup executor and no T3 proof that subsequent child/tool execution was bound to an alternate workspace. Related host primitives are therefore not promoted to product support.
 
 ### Browser / visual — HOST-LIMITED / contract-bound
 
-`browser-execution` is an explicit HostCapability and remains `UNSUPPORTED`. OpenCode 1.18.16 exposes MCP/tool discovery, but current Hi has no deterministic browser executor/evidence adapter; browser/visual methodologies therefore fail deterministic preflight before child spawn. Do not infer support from MCP/tool naming, prompts, screenshots, or inventory alone.
+`browser-execution` is an explicit HostCapability and remains `UNSUPPORTED` until current/latest-host T3 evidence disproves that claim. The P5 OpenCode 1.18.16 audit exposed MCP/tool discovery, but Hi had no deterministic browser executor/evidence adapter; browser/visual methodologies therefore fail deterministic preflight before child spawn. Do not infer support from MCP/tool naming, prompts, screenshots, or inventory alone.
 
 ### Semantic Context adapters
 
@@ -476,7 +476,7 @@ Owner: primary host session/message observation boundary + model contract.
 
 Closure:
 
-- exact OpenCode 1.18.16 source/type surface exposes primary model/variant metadata at the host chat boundary;
+- the P1 OpenCode 1.18.16 source/type surface exposed primary model/variant metadata at the host chat boundary; current/latest host reacceptance must reconfirm this before a new support claim;
 - canonical Hi primary agents intentionally omit model/variant constraints;
 - host-side model injection into a canonical Hi primary agent fails binding as a collision;
 - no producerless primary model fields were added to Mission/Worker state;
@@ -494,7 +494,7 @@ Closure:
 - selection consumes actual `SUPPORTED` HostCapability contracts, not prompt assumptions;
 - mandatory unavailable resource becomes `resource-unavailable` and TaskRuntime preflight `RESOLVE` before child spawn;
 - browser/visual execution is truthfully `UNSUPPORTED` until a deterministic OpenCode browser executor adapter exists;
-- stale unsupported `scout` permission was removed after exact OpenCode 1.18.16 source audit;
+- stale unsupported `scout` permission was removed after the then-current OpenCode 1.18.16 source audit; current/latest host reacceptance must reconfirm whether the host surface changed;
 - `HI021` generically rejects future permission/execution-surface drift;
 - focused P2 set 31/31 PASS; full controlled suite **556/556 PASS**; architecture lint **21 rules, deferred=0**; validator PASS; backup count 0.
 
@@ -534,7 +534,7 @@ Exit satisfied: every C01–C29/S00–S27 responsibility is executable, delibera
 
 ### P5 — Host-limited capability release/support decision — **CLOSED at `e789e92`**
 
-Exact OpenCode 1.18.16 source/type and controlled-host audit established:
+The historical P5 OpenCode 1.18.16 source/type and controlled-host audit established:
 
 - **process lifecycle remains DEGRADED**: OpenCode exposes a separate PTY lifecycle, but ordinary model-facing bash is not routed through an Hi-owned PTY executor, so PID/job wait/kill/exit ownership is not claimed;
 - **workspace isolation binding remains UNSUPPORTED**: OpenCode exposes workspace/session `workspaceID`, warp and worktree primitives, but current Hi has no canonical isolation selection/provisioning/cleanup executor and no real-host proof that child/tool execution is bound to an alternate workspace;
@@ -621,6 +621,18 @@ If a tool/safety boundary interrupts after mutation, do not begin another archit
 
 ---
 
+### Current-host version policy — **PERMANENT**
+
+OpenCode-Hi does **not** permanently pin host acceptance to 1.18.16 or any other historical host version. Before every host-bound compatibility/T3 checkpoint:
+
+1. resolve `opencode-ai` registry `dist-tags.latest`;
+2. update the controlled-host CLI to that version;
+3. compile/test the Hi adapter against the matching current plugin/SDK version;
+4. bind the new receipt to that exact tested version and Git/source hashes;
+5. retain older exact-version receipts only as immutable historical evidence.
+
+At the current P7 checkpoint on 2026-08-14, registry `latest` is **1.18.18**; CLI and development plugin/SDK have been refreshed to **1.18.18**.
+
 ## 12. Real-host acceptance truth retained from M12
 
 Canonical receipt:
@@ -673,7 +685,7 @@ Do not waste future turns reopening these without contradictory repository evide
 
 **Start P7 only.**
 
-Re-check real HEAD/status, then run exact-version T3 reacceptance against OpenCode 1.18.16 only for host-bound surfaces changed since M12/P0–P5: canonical agent/permission projection (including `scout` removal), primary direct-action authority at `hi_direct_progress`, primary host-selected model non-constraint, browser/visual resource preflight and HostCapability truth, and doctor exposure of process/workspace/browser limitations. Reconfirm native session/child/model/permission behavior needed by those paths and bind the receipt to the exact tested Git HEAD/source hashes.
+Re-check real HEAD/status, resolve the current `opencode-ai` registry `latest` version, update the installed CLI and development adapter SDK to that version when needed, then run exact-version T3 reacceptance against that current/latest OpenCode version for host-bound surfaces changed since M12/P0–P5: canonical agent/permission projection (including `scout` removal), primary direct-action authority at `hi_direct_progress`, primary host-selected model non-constraint, browser/visual resource preflight and HostCapability truth, and doctor exposure of process/workspace/browser limitations. Reconfirm native session/child/model/permission behavior needed by those paths and bind the receipt to the exact tested Git HEAD/source hashes.
 
 Do not broaden P7 into release publication or unrelated host feature development. Preserve process `DEGRADED`, workspace `UNSUPPORTED`, and browser `UNSUPPORTED` unless the real host execution evidence itself disproves those statuses. Do not enter real M13/release work without explicit user request.
 
