@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-export const BROWSER_OBSERVATION_ACTIONS = ['open', 'navigate', 'click', 'type', 'inspect', 'screenshot', 'wait'];
+export const BROWSER_OBSERVATION_ACTIONS = ['open', 'navigate', 'click', 'type', 'inspect', 'screenshot', 'wait', 'close'];
 export const BROWSER_OBSERVATION_RESULTS = ['OBSERVED', 'FAILED'];
 const KEYS = new Set(['observation_id', 'task_id', 'executor_version', 'url', 'action', 'timestamp', 'document_identity', 'dom_summary', 'console_errors', 'network_errors', 'screenshot_artifact_ref', 'result']);
 const ACTIONS = new Set(BROWSER_OBSERVATION_ACTIONS), RESULTS = new Set(BROWSER_OBSERVATION_RESULTS);

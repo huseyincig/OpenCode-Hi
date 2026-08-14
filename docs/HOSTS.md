@@ -26,3 +26,7 @@ Hi's H1 chat transport is host-independent and runtime-scoped. For an optional s
 ## Browser observation boundary
 
 B1 defines a strict host-independent `BrowserObservation` contract before any executor is admitted. An observation binds task, executor version, URL, action, timestamp and optional document identity/DOM/error/screenshot artifact reference into a deterministic observation ID. Raw screenshot bytes are not embedded in the contract, and an observation is never automatically Evidence or verification PASS. `browser-execution` therefore remains `UNSUPPORTED` until B2 supplies a deterministic executor and B3 closes exact browser/visual proof.
+
+## Browser executor boundary
+
+B1 defines strict `BrowserObservation` provenance. B2 now defines the host-independent `BrowserExecutor` port and an explicit local browser-CLI adapter with argv-only invocation, exact session identity, configured HTTP(S) origin allowlist, observed `@eN` element references, bounded output/type/wait limits, health probing, and screenshot success gated on a canonical Hi artifact reference. The adapter does not infer support from OpenCode MCP/tool discovery and is not activated as a supported host capability merely because its code exists. On the current acceptance host no browser executable/runtime is installed, and B3 real-host navigation/DOM/screenshot/failure/methodology proof has not run; therefore `browser-execution` remains `UNSUPPORTED`.

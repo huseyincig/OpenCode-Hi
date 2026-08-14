@@ -19,3 +19,5 @@ The current exact process-lifecycle and workspace-isolation acceptance host is O
 P1 ProcessContract validation remains the strict structural base. P2/P3 controlled tests plus the exact OpenCode 1.18.18 T3 receipt provide the executor/lifecycle proof required for the current `SUPPORTED` process-lifecycle claim; raw output remains excluded from durable ProcessContract state.
 
 B1 BrowserObservation contract validation is local/T1 contract evidence only. It does not satisfy browser/visual methodology evidence and does not change `browser-execution=UNSUPPORTED`; executor and real-host proof belong to B2/B3.
+
+B2 controlled acceptance covers the Hi `BrowserExecutor` port and local browser-CLI adapter command mapping, target-origin confinement, exact session binding, bounded element/type/wait/output handling, screenshot artifact binding, health failure, and the invariant that implementation alone does not promote `browser-execution`. B3 exact real-host browser proof is still required before support can change from `UNSUPPORTED`.

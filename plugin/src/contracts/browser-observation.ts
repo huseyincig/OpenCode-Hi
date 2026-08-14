@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 
-export const BROWSER_OBSERVATION_ACTIONS=['open','navigate','click','type','inspect','screenshot','wait'] as const
+export const BROWSER_OBSERVATION_ACTIONS=['open','navigate','click','type','inspect','screenshot','wait','close'] as const
 export type BrowserObservationAction=typeof BROWSER_OBSERVATION_ACTIONS[number]
 export const BROWSER_OBSERVATION_RESULTS=['OBSERVED','FAILED'] as const
 export type BrowserObservationResult=typeof BROWSER_OBSERVATION_RESULTS[number]
