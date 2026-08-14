@@ -1,295 +1,696 @@
-# OpenCode-Hi — Living Continuation Ledger
+# OpenCode-Hi — Canonical Continuation, Coverage, and Product-Closure Ledger
 
-Status: ACTIVE REPOSITORY CONTINUATION ENTRYPOINT
+Status: **ACTIVE SINGLE CONTINUATION ENTRYPOINT**
 
-> This file is a navigation/checkpoint ledger, **not** a second canonical architecture database.
-> Real repository state wins over this file. Component truth remains in its canonical contract/catalog/runtime owner.
+> This file is the canonical **work/navigation ledger** for continuing OpenCode-Hi.
+> It consolidates the two pre-MASTER working sources, the Engineering Constitution migration program, and the verified live repository state.
+> It is not a replacement for component-owned canonical data/contracts. **Live repository state always wins over this ledger when they conflict.**
 
 ```yaml
-continuation_schema: 1
+continuation_schema: 2
 repository: OpenCode-Hi
 repository_root: /workspace/OpenCode-Hi
-baseline_before_this_ledger_commit: baca9f7
-active_program: Engineering Constitution / Metamodel Migration
-active_phase: M13
-active_phase_name: Release readiness boundary
-phase_status: NOT_REQUESTED
+coverage_reconciliation_baseline_head: 8ba9eb561332eebc3b6bded90a1c0d2da501d1ed
+active_program: OpenCode-Hi Product Closure after Constitution Migration
+active_phase: P0
+active_phase_name: Primary authority and execution-truth closure
+phase_status: OPEN
 working_tree_expectation: clean
 last_verified_full_suite:
   total: 549
   pass: 549
   fail: 0
+last_verified_architecture_lint: "PASS rules=20 deferred=0 linked=8"
 last_verified_validator: PASS
+current_projection_receipts: 32
 external_release_actions_authorized: false
-next_contract_owner: Release boundary — no open pre-release migration blocker
+next_contract_owner: Primary RoleContract authority -> hi_direct_progress control-plane gate
 ```
 
-## Continuation protocol
+---
 
-When a new chat is told to continue OpenCode-Hi from this file:
+## 1. How to continue from this file
+
+Every future continuation MUST begin here and follow this exact discipline:
 
 1. Read this file completely.
 2. Inspect real repository truth before mutation:
-   - `git status --short`
-   - `git log -5 --oneline`
-3. If repository state conflicts with this ledger, **repository state wins**. Reconcile the ledger before new product mutation.
-4. Read the canonical documents listed below for the active phase.
-5. Preserve all existing uncommitted work; never blind-reset/stash/checkout user-owned changes.
-6. Continue from `Next action`, not from conversational memory.
-7. Every coherent mutation-bearing continuation ends in a **local commit** after verification.
-8. Do not push/tag/publish/release/deploy or mutate a real external project unless the user explicitly authorizes it.
-9. Test-local ephemeral git remotes/registries remain deterministic fixtures, not release authority.
-10. Update `17-IMPLEMENTATION-PROOF.md` and this ledger when the active checkpoint materially changes.
+   ```bash
+   cd /workspace/OpenCode-Hi
+   git rev-parse HEAD
+   git status --short --branch
+   ```
+3. If repository state conflicts with this file, **repository state wins**. Reconcile this ledger after the source truth is understood.
+4. Read only the canonical owners and proofs needed by the current `Next action`; do not flood context with every architecture document.
+5. Trace every material change as:
+   `declaration -> canonical owner -> producer -> consumer -> executor/host action -> observed result -> state/evidence -> completion effect`.
+6. Do not call a capability complete because a file, interface, generated artifact, prompt, or green unit test exists.
+7. Preserve user work. Never blind reset/stash/checkout/restore an unknown dirty tree.
+8. Use isolated writable `HOME`/XDG paths for controlled plugin suites. `/root/.local/state` EACCES is known harness noise, not product evidence.
+9. End every coherent mutation-bearing checkpoint with verification and a **local commit**.
+10. Never push, tag, create a real release, publish a real package, or deploy without explicit user authorization. Test-local ephemeral remotes/registries remain valid deterministic fixtures.
 
-## Canonical reading order
+### Evidence tiers
 
-For continuation, read only what is needed in this order:
+- **T0** — static/schema/validator proof.
+- **T1** — deterministic unit/contract proof.
+- **T2** — in-process integration/runtime wiring proof.
+- **T3** — exact-version real-host acceptance.
+- **T4** — real external publication/release proof; requires explicit authority.
 
-1. `docs/engineering-constitution/MASTER-CONTINUATION.md` — current checkpoint/navigation only.
-2. `docs/engineering-constitution/17-IMPLEMENTATION-PROOF.md` — implementation/proof truth.
-3. `docs/engineering-constitution/06-CONTRACT-CATALOG.md` — component semantic contracts.
-4. `docs/engineering-constitution/08-SCHEMA-CATALOG.md` — machine-schema rules.
-5. `docs/engineering-constitution/13-MIGRATION-MATRIX.md` — phase ordering/dependencies.
-6. Relevant ADR(s) and production source for the active component.
+### Completion vocabulary used in this ledger
 
-Do **not** load all constitution/source-study files into context unless the current decision actually requires them.
+- **CLOSED** — owner, producer, consumer/executor, and sufficient current proof exist.
+- **CLOSED / PERMANENT INVARIANT** — current implementation is closed, but the rule remains continuously binding as the product evolves.
+- **SUBSUMED** — the semantic requirement is implemented under another natural owner; no second standalone subsystem should be created merely to match an old filename suggestion.
+- **PARTIAL** — meaningful implementation exists but a required producer/consumer/proof link is still missing.
+- **OPEN** — a concrete product gap remains.
+- **HOST-LIMITED** — the product truthfully exposes a host capability as DEGRADED/UNSUPPORTED; do not manufacture support.
+- **NOT REQUESTED** — work is intentionally outside current authority/scope.
+- **HISTORICAL** — superseded checkpoint text retained only for provenance, not current work.
 
-## Current committed checkpoint chain
+---
 
-Recent architecture migration checkpoints:
+## 2. Source authority consolidated into this MASTER
+
+This ledger was rebuilt after a one-time full comparison of two pre-MASTER sources against the live repository.
+
+### Source A — Engineering Constitution Raw Recovery Appendix
+
+Historical source artifact: `OpenCode-Hi_ENGINEERING_CONSTITUTION_RAW_RECOVERY_2026-08-14.md`.
+
+It contains the recovered Constitution contract/schema/proof material, especially:
+
+- C01–C29 Component Contract Catalog;
+- S00–S27 Machine Schema Catalog;
+- the historical Implementation/Proof Ledger snapshot;
+- the rule that design/ADR/schema prose is **not** runtime implementation proof.
+
+This source remains authoritative for semantic intent where current canonical owners do not supersede it. Its old status banners such as `IMPLEMENTATION PENDING` are historical and must not override newer executable proof.
+
+### Source B — Canonical Checkpoint Override
+
+Historical source artifact: `OpenCode-Hi_Canonical_Checkpoint_OVERRIDE_2026-08-13_1918.md`.
+
+It contains the broader product-development contract:
+
+- product mission and no-legacy policy;
+- host-portable Core / OpenCode-primary adapter boundary;
+- language-agnostic structured semantic assessment;
+- methodology lifecycle/admission/learning/composition/exit rules;
+- role/agent/model/topology distinctions;
+- minimum-sufficient computation;
+- evidence, completion, STOP, authority, privacy and storage rules;
+- Stage 1–10 roadmap;
+- Section 90 blind spots A–N;
+- local commit discipline and no-real-release restriction.
+
+The append-only later override in that source supersedes its earlier conflicting `do not commit` statement: coherent mutation-bearing work now **must end in a local commit**. Push/tag/release/publish/deploy remain separately unauthorized.
+
+### Precedence after this reconciliation
 
 ```text
-811ee7f  ArtifactContract
-3e8ab72  ContextReferenceContract
-eb81d13  ContextReference proof provenance
-b7e51cc  SemanticContextContract
-d45b7ba  SemanticContext proof provenance
-e2d021b  ProjectIntelligenceContract
-961736a  ProjectIntelligence proof provenance
-46fc7b7  HumanDecisionContract
-6a481f7  HumanDecision proof provenance
-da67329  AuthorityContract / ExternalActionContract
-ea6c236  StorageOwnershipContract
-4602907  M10 common generator / architecture lint graph
-9801382  M3 PermissionProfile canonical owner migration
-d53fe31  M5 ConfigOptionContract executable ownership migration
-ec2bdd3  M6 model execution identity closure
+explicit new user instruction
+  > real current repository state
+  > current canonical component owners / executable contracts
+  > this MASTER continuation ledger
+  > live explanatory architecture documents
+  > historical Source A / Source B checkpoint wording
+  > conversational memory
 ```
 
-Earlier M8/M7/M6/M4/M2/M1/M0 checkpoints remain recorded in `17-IMPLEMENTATION-PROOF.md`.
+Do not use this precedence to silently weaken a permanent safety/product invariant. If a newer implementation appears to contradict one, trace the owner/executor chain and record the deliberate decision.
 
-## M3 current truth after release-boundary re-audit
+---
 
-M3 status: **PASS — CANONICAL PERMISSION OWNER MIGRATED** at `9801382`.
+## 3. Permanent product invariants — never mark these “finished and forgotten”
 
-- seven canonical PermissionProfiles own all general native role permissions;
-- all eight RoleContracts reference a profile through `permission_profile_ref`;
-- role Markdown no longer contains mechanical `permission:` ownership;
-- built-in `skill` permission remains exclusively methodology-derived;
-- pre-M3 HEAD vs new generated agent semantic parity is exact for permission, prompt and all other host fields;
-- read-only edit denial, lower-layer widening prohibition, unknown refs, duplicate rules and methodology-owner separation are executable negatives;
-- at the M3 checkpoint ProjectionReceipt inventory was 31 and the controlled suite was 543/543; M5 later raises current totals to 32 receipts and 548/548 PASS.
+These rules remain binding across every future phase:
 
-## M5 current truth after release-boundary re-audit
+- Hi decides product semantics; the host executes the richest correct native primitive.
+- OpenCode is the primary/reference host, not the Hi ontology.
+- Hi Core semantic contracts must remain host-portable; OpenCode-specific fields stay at adapter/projection boundaries.
+- `ROLE != AGENT != MODEL != METHODOLOGY != TASK != WORKER != TOPOLOGY != TEAM`.
+- Methodology is a reusable Hi HOW; OpenCode skill is the current host-native load primitive.
+- Available methodology != activated methodology; selected methodology != loaded methodology.
+- Natural-language user semantics are model-understood then submitted as bounded structured Hi state; no expanding per-language keyword/regex authority.
+- Technical command/path/protocol parsing may remain deterministic where it is genuinely language-neutral.
+- Read intent != mutation authority. Generic continuation != external-action approval.
+- Host/native permission may be narrowed by Hi but never silently widened by a lower layer.
+- No fake host capability. DEGRADED/UNSUPPORTED is preferable to fabricated support.
+- Config without a real consumer/executor effect is invalid runtime config.
+- State without a producer or consumer is a defect, not architecture.
+- Prompt-only safety/policy is insufficient when a deterministic control-plane gate is possible.
+- Evidence != Project Intelligence != Methodology != Policy != temporary context.
+- Model/worker prose saying DONE is not proof; green tests alone are not whole-system proof.
+- Completion requires current obligations, evidence freshness, methodology exits, review, authority, pending work, rollback and user-stop state to reconcile deterministically.
+- STOP is authoritative; do not continue speculative work after deterministic completion.
+- Use minimum sufficient model/context/topology/verification; optimization overhead must not exceed expected benefit.
+- Preserve user-owned dirty files and exact authority boundaries.
+- Repository/internal artifacts stay English; user conversation language is unrestricted.
+- README English is canonical user documentation; translations must not invent behavior.
+- No obsolete internal compatibility aliases/migrations unless a current product requirement explicitly needs them.
+- No real push/tag/release/package publish/deploy without explicit authority.
 
-M5 status: **PASS — EXECUTABLE CONFIG OWNERSHIP CLOSED** at `d53fe31`.
+---
 
-- canonical ConfigOption catalog covers all 32 current HiConfig leaves;
-- 29 runtime options identify a real consumer and executor effect; two compatibility options are diagnostic-only; `schemaVersion` is a schema marker;
-- default values derive from generated catalog policy rather than a second hand-written owner;
-- BA03 proves representative topology, scheduler, model-policy and role-routing effects;
-- HI003 is now fatal PASS, so architecture lint has `deferred=0`;
-- current ProjectionReceipt inventory is 32 and controlled full suite is 548/548 PASS.
+## 4. Verified constitution-migration history
 
-## M6 current truth after release-boundary re-audit
+The Constitution design plus its M0–M12 migration/acceptance track is materially implemented. This does **not** mean the broader Source-B product roadmap is fully closed.
 
-M6 status: **PASS — MODEL EXECUTION IDENTITY CLOSED** at `ec2bdd3`.
+| Track | Current truth | Key closure |
+|---|---|---|
+| M0 | Constitution documentation foundation | PASS |
+| M1 | common/provenance primitives | PASS |
+| M2 | RoleContract owner/generator | PASS; general permission residue later closed by M3 |
+| M3 | PermissionProfile | **CLOSED** at `9801382`; 7 profiles, exact native permission parity, Markdown no longer mechanical permission owner |
+| M4 | Methodology normalization | PASS; 27 built-ins, generated mechanical SKILL contract |
+| M5 | ConfigOptionContract | **CLOSED** at `d53fe31`; 32 exact leaves, 29 runtime + 2 diagnostic + 1 schema marker, HI003 fatal PASS |
+| M6 | Model capability / worker execution identity | **CLOSED for worker execution identity** at `ec2bdd3`; requested/selected/projected/observed-effective chain persisted and reconciled |
+| M7 | HostCapability registry | local PASS; real-host material verification completed by M12; process/workspace limitations remain truthful |
+| M8 | Task/Worker/Result/Evidence/Review/Verification contracts | PASS |
+| M9 | Context/Artifact/PI/Human/Authority/ExternalAction/Storage ownership | PASS for migrated owners |
+| M10 | common generator / architecture-lint closure | PASS |
+| M11 | deterministic full closure | PASS; cwd-dependent test harness defect fixed |
+| M12 | OpenCode real-host acceptance | **PASS_MATERIAL_WITH_LIMITATIONS** on OpenCode 1.18.16/aarch64 |
+| M13 | release readiness / T4 | **NOT REQUESTED** |
 
-- `plugin/src/contracts/model.ts` is the canonical model capability/execution-identity owner;
-- WorkerState now records real requested, selected, projected and observed/effective phases without producerless aliases;
-- every native child/prompt execution path records the actual projected model/variant before the host request;
-- effective-model completion consumes canonical `reconcileModelExecutionIdentity()` and projection/model/variant mismatches fail closed;
-- requested/projected identity survives persistence and malformed snapshot state fails current-only WorkerContract validation;
-- focused M6 set is 27/27 PASS and the current controlled full suite is 549/549 PASS.
-
-## M9 current truth
-
-### ArtifactContract — PASS
-
-Canonical code checkpoint: `811ee7f`.
-
-- artifact identity is independent from content hash/provenance;
-- content hash verifies content;
-- source linkage is provenance/freshness, not identity;
-- privacy/retention/consumer refs are explicit;
-- current-only storage validation is fail-closed.
-
-### ContextReferenceContract — PASS
-
-Canonical code checkpoint: `3e8ab72`.
-
-- Mission context inventory availability != Task selection;
-- selected references bind exact Task consumer;
-- durable Artifact consumer refs are updated;
-- non-durable freshness is `UNKNOWN`;
-- live Artifact freshness is checked again at consumption.
-
-### SemanticContextContract — PASS
-
-Canonical code checkpoint: `b7e51cc`.
-
-- derived/non-persisted;
-- safe `file:<project-relative-path>` source ref + source SHA-256;
-- exact Task consumer;
-- exact selected source ranges and rendered-character budget;
-- no fabricated dependency graph/relationships;
-- live source file is not wrapped in a fake Artifact.
-
-### ProjectIntelligenceContract — PASS
-
-Canonical code checkpoint: `e2d021b`.
-
-- PI is project FACT/PATTERN state, not generic memory;
-- strict `source_refs[]` combine safe file refs with exact SHA-256;
-- confidence/freshness/lifecycle/consumer domain explicit;
-- TaskRuntime consumes only `ACTIVE + FRESH + task-context + scope-intersecting` PI;
-- mutation/hash drift invalidates freshness;
-- PI never becomes Evidence;
-- repeated independent reusable-HOW evidence remains owned by `ProjectMethodologyCandidate`.
-
-### HumanDecisionContract — PASS
-
-Canonical code checkpoint: `46fc7b7`.
-
-- latest human decision is persisted/restart-safe;
-- all direct `waiting-user + user.action.required` producers route through one runtime owner;
-- semantic types include `operational_action` for provider/permission/runtime/precondition cases;
-- exact Mission/Task/Worker blocking scope and response protocol are structured;
-- duplicate open decisions preserve identity and do not duplicate interaction events;
-- non-authority follow-up may resolve a decision;
-- `authority_request` cannot be resolved by generic continuation;
-- HumanDecision is a completion/progress/status input;
-- HumanDecision does **not** grant Authority.
-
-### AuthorityContract / ExternalActionContract — PASS
-
-Canonical code checkpoint: `da67329`.
-
-- canonical ExternalAction vocabulary is exactly `git-push | release-create | package-publish | deploy`;
-- technical command kinds map into that vocabulary rather than becoming duplicate Core action types;
-- exact Authority identity binds semantic action + command + cwd target into one deterministic hash/ID;
-- persisted Authority state is strict/current-only and rejects malformed or ambiguous active lifecycle state;
-- HumanDecision remains interaction state only and generic continuation remains non-authoritative;
-- unknown execution outcome remains in-flight/reconciliation-gated and cannot be blindly replayed;
-- project-native persistent `always` grants use the same four semantic classes: `git-push` does not imply `release-create`;
-- current classifier/projection parity includes `yarn npm publish` and `kubectl delete`;
-- explicit deny monotonicity, force-push ask behavior, parent-only external effects and release-chain remote proof remain preserved.
-
-Last M9 verification after StorageOwnership:
+Recent closure checkpoints:
 
 ```text
-focused storage/doctor/methodology/authority/routing: 66/66 PASS
-controlled full plugin suite: 538/538 PASS
-standalone validator: PASS
-python storage-uninstall behavior scenario: PASS
-python source syntax compile: PASS
-pytest full Python harness: NOT RUN — pytest module absent on host
+9801382  refactor: migrate role permissions to canonical profiles
+13a546c  docs: record M3 permission profile closure
+d53fe31  refactor: formalize executable config option contracts
+318d1cc  docs: record M5 config option closure
+ec2bdd3  refactor: persist model execution identity snapshots
+8ba9eb5  docs: record M6 model identity closure
+```
 
-git diff --check: clean
+Current deterministic baseline before this coverage-ledger rewrite:
+
+```text
+controlled full suite: 549/549 PASS
+architecture lint: PASS rules=20 deferred=0 linked=8
+validator: PASS
+projection receipts: 32
 backup count: 0
-real external actions: none (test-local deterministic fixtures only)
 ```
 
-### StorageOwnershipContract — PASS
+---
 
-Canonical code checkpoint: `ea6c236`.
+## 5. Constitution C01–C29 / S00–S27 live coverage map
 
-- machine-readable catalog enforces one canonical `scope + data_class` owner;
-- current `.opencode/hi/**`, OS runtime state and `.opencode/skills/hi-project-*` classes have explicit owner/lifecycle/path/write/read/retention/privacy mapping;
-- routing command surfaces share one logical project-routing owner rather than becoming duplicate truths;
-- setup uninstall no longer deletes independently-owned routing/Authority policy or project knowledge/artifact/skill state;
-- project methodology skill storage remains OpenCode-native `.opencode/skills/hi-project-*`;
-- doctor validates runtime state against canonical `RUNTIME_STATE_SCHEMA` instead of stale schema `3`;
-- M9 BA06/BA10/BA11 behavior remains green in the 538-test controlled suite.
+The old schema catalog listed suggested filenames. **Filename parity is not the goal. Semantic owner/executor/proof parity is.** A missing suggested module is a defect only when its semantic responsibility lacks a real owner or validation boundary.
 
-## M9 closure
+| Contract / schema | Live owner / implementation | Status | Remaining truth |
+|---|---|---|---|
+| C01 / S01 RoleContract | `data/hi-roles.json`, `contracts/role.ts`, generated role/agent projections | **CLOSED except P0 primary direct-authority consumer gap** | Role write authority exists canonically, but `hi_direct_progress` does not yet enforce primary RoleContract authority. |
+| C02 / S02 PermissionProfile | `data/hi-permission-profiles.json`, `contracts/permission-profile.ts` | **CLOSED** | Safety monotonicity and read-only edit denial executable. |
+| C03 / S03 MethodologyContract | `data/hi-methodologies.json`, generated policy/SKILL projections, runtime catalog | **PARTIAL only at host-capability eligibility edge** | Core lifecycle closed; P2 must bind mandatory host/resource capability to actual executable eligibility. |
+| C04 / S04 ModelCapabilityProfile | `contracts/model.ts`, model resolver, WorkerContract snapshots | **PARTIAL at primary-agent identity only** | Child/worker execution identity closed; P1 audits parent/primary model truth. |
+| C05 / S05 HostCapability | `contracts/host-capability.ts`, OpenCode detector/doctor | **CLOSED registry / HOST-LIMITED capabilities** | Process lifecycle DEGRADED; workspace isolation UNSUPPORTED; browser/visual capability is not yet modeled as an executable preflight truth. |
+| C06 / S06 ConfigOption | `data/hi-config-options.json`, `contracts/config-option.ts`, generated defaults | **CLOSED** | 32 leaves, real effect/diagnostic classification, HI003 fatal. |
+| C07 / S07 TaskContract | `contracts/task.ts`, TaskRuntime | **CLOSED** | Task identity/obligations/context/external-action snapshots current-only. |
+| C08 / S08 WorkerContract | `contracts/worker.ts`, TaskRuntime, persistence | **CLOSED for workers** | Includes attempts/recovery/model identity/native diff state. |
+| C09 / S09 ExecutionPlan | Mission tasks + dependencies + gates + obligations + topology form the live trajectory | **SUBSUMED / DERIVED** | Do not create a static workflow catalog. P4 will confirm no missing graph invariant needs a first-class validator. |
+| C10 / S10 Topology | `runtime/execution/topology-policy.ts`, MissionState topology, TaskRuntime scheduler | **CLOSED current execution path** | Explicit single/multi and capacity intersection affect actual dispatch. Permanent invariant. |
+| C11 / S11 TeamContract | `runtime/team/team-runtime.ts` in-memory TeamState over TaskRuntime | **PARTIAL** | Runtime authority/delegation is bounded, but restart deliberately resets Team runtime to single; P3 must reconcile this with Source-B restart/generation requirement. |
+| C12 RetryAttempt | Worker `attempt`, `fallback_history`, recovery ledger/events | **SUBSUMED** | No second RetryAttempt store needed unless a real independent consumer appears. |
+| C13 / S12 RecoveryContract | TaskRuntime provider/stagnation/restart recovery + continuation recovery | **CLOSED operationally / SUBSUMED** | Old-executor abort/reconciliation and bounded fallback are executable; keep role/task identity invariant. |
+| C14 / S13 WorkerResult | `contracts/worker-result.ts` | **CLOSED** | Boundary-untrusted structured result. |
+| C15 / S14 Evidence | `contracts/evidence.ts`, evidence runtime | **CLOSED** | Freshness/ownership/obligation scope enforced. |
+| C16 / S15 VerificationEnvelope | `contracts/verification-envelope.ts`, derived verification policy | **CLOSED** | Derived, not second persisted truth. |
+| C17 / S16 ReviewFinding | `contracts/review-finding.ts`, TaskRuntime reviewer reconciliation | **CLOSED** | Structured finding authority/evidence. |
+| C18 / S17 Artifact | `contracts/artifact.ts`, ContextArtifactStore | **CLOSED** | Identity != content hash != provenance. |
+| C19 / S18 ContextReference | `contracts/context-reference.ts`, Task snapshots | **CLOSED** | Availability != selection. |
+| C20 / S19 SemanticContext | `contracts/semantic-context.ts`, TypeScript bounded extractor, TaskRuntime consumer | **CLOSED current TypeScript adapter** | Other language adapters are future capability, not fabricated current support. |
+| C21 / S20 ProjectIntelligence | `contracts/project-intelligence.ts`, durable store + invalidation + TaskRuntime consumer | **CLOSED current scope** | Reusable HOW remains methodology candidate, not PI. |
+| C22 / S21 HumanDecision | `contracts/human-decision.ts`, runtime owner, persistence | **CLOSED** | Operational/user/authority decisions remain distinct. |
+| C23 / S22 Authority | `contracts/authority.ts`, authority runtime/hooks | **CLOSED** | Exact action hash/scope; generic continuation cannot grant authority. |
+| C24 / S23 ExternalAction | `contracts/external-action.ts`, release/authority command boundary | **CLOSED local architecture** | Real external execution remains authority-bound; T4 not requested. |
+| C25 / S27 HostAgentProjection | role/permission/methodology generators + `opencode/agent-binding.ts` + receipts | **SUBSUMED / CLOSED projection** | No independent handwritten projection truth; P2 still audits `scout` tool-surface drift. |
+| C26 / S24 Provenance | `contracts/provenance.ts`, projection/project-methodology/release provenance | **CLOSED** | Provenance does not imply admission. |
+| C27 / S25 StorageOwnership | `data/hi-storage-ownership.json`, contract/resolver/doctor | **CLOSED** | One canonical writer per class; host-native project skills remain outside internal Hi store. |
+| C28 / S26 TelemetryEvent | `runtime/telemetry/execution.ts` + deterministic benchmark simulation | **PARTIAL / OFFLINE** | Metrics library exists, but there is no first-class bounded runtime TelemetryEvent owner/append pipeline. P4 must either add a real consumer/event contract or explicitly reclassify telemetry as offline diagnostics and remove false runtime expectations. |
+| C29 ArchitectureDecision | Engineering Constitution/ADR documentation and `hi-architecture-decisions` methodology | **PARTIAL / DOCUMENTARY** | No machine `ArchitectureDecisionContract` owner exists. P4 decides whether machine-readable ADR state has a real product consumer; if not, classify as documentation/process rather than inventing runtime state. |
+| S00 common primitives | `contracts/common.ts` + shared strict validators | **CLOSED current primitives** | Do not create aliases merely to mirror an old type list. |
+| S26/S27 note | See C28/C25 above | **mixed** | Telemetry remains partial; OpenCode projection is operationally subsumed. |
 
-M9 is **PASS — CONTRACT OWNERSHIP CLOSED** at T1/T2. Artifact, ContextReference, SemanticContext, ProjectIntelligence, HumanDecision, Authority/ExternalAction and StorageOwnership all have canonical runtime/schema owners and current proof checkpoints.
+### Important status-banner note
 
-## M10 current truth
+`06-CONTRACT-CATALOG.md` and especially `08-SCHEMA-CATALOG.md` still contain historical headings such as `CANDIDATE` / `IMPLEMENTATION PENDING`. Those headings are **not current implementation status** after M0–M12. This MASTER and the executable proof ledger carry current status. Do not rewrite runtime to match stale banners.
 
-Canonical code checkpoint: `4602907`.
+---
 
-- build composes canonical role/agent/methodology projections and postbuild generates 30 deterministic ProjectionReceipts using the existing M1 receipt contract;
-- BA12 is executable: repeated identical generation is byte-identical, and one RoleContract purpose mutation changes only its declared role projections;
-- `architecture_lint.mjs` emits every HI001–HI020 rule ID and fails migrated-class ownership/reference/host projection/storage/generated artifact/role-agent/methodology/current-only/proof-link drift;
-- runtime-behavior rules are explicitly LINKED to controlled tests rather than represented as fake static proof;
-- HI003 remains explicitly DEFERRED with the existing M5 ConfigOptionContract host-policy blocker; this is not an M10 PASS claim for unmigrated config;
-- integrated deterministic check is 540/540 PASS + architecture lint PASS + standalone validator PASS.
+## 6. Source-B Sections 1–93 coverage map
 
-M10 status: **PASS — MIGRATED CLASSES CLOSED; HI003 DEFERRED WITH M5**.
+This section exists so no requirement from the broad working checkpoint disappears merely because the Constitution migration finished.
 
-## M11 current truth
+| Source-B section(s) | Requirement family | Current status |
+|---|---|---|
+| 1 | Git/release restriction | **CLOSED / PERMANENT INVARIANT** — local commits required by later override; real external mutations unauthorized. |
+| 2 | no legacy compatibility | **CLOSED / PERMANENT INVARIANT** — current-only schema/persistence policy. |
+| 3–5 | Hi/Core vs host-native boundary, portability, upstream reality | **CLOSED current architecture / PERMANENT REVALIDATION** — OpenCode 1.18.16 T3 bound; reverify host facts on supported-host change. |
+| 6–8 | minimum sufficient topology, independent axes, compute economics | **CLOSED current policy / PERMANENT INVARIANT**. |
+| 9–10 | documentation truth + English internal language | **PERMANENT INVARIANT**. |
+| 11–13 | language-agnostic semantics, assessment gate, follow-up quarantine | **CLOSED current runtime** — structured semantic state; fresh-session constraint rebase; no language dictionary authority. |
+| 14 | authority semantics | **CLOSED / PERMANENT INVARIANT**. |
+| 15–17 | repository reality audit, executable graph, owner map | **PERMANENT DEVELOPMENT STANDARD** — this reconciliation is the current full pass. |
+| 18 | role system | **PARTIAL** only because P0 primary direct authority and P1 primary model truth remain. |
+| 19–36 | methodology terminology/catalog/signals/selection/load/exit/learning/admission/authoring | **CLOSED core lifecycle; PARTIAL capability eligibility** — P2 closes role/host-capability executability for mandatory methodology exits. |
+| 37 | Project Intelligence | **CLOSED current scope**. |
+| 38–40 | evidence, completion/STOP, tests-not-product | **CLOSED current architecture / PERMANENT STANDARD**. |
+| 41 | source-first/zero-debug audit | **PERMANENT DEVELOPMENT STANDARD**. |
+| 42 | configuration reality | **CLOSED by M5 / PERMANENT INVARIANT**. |
+| 43–44 | adaptive topology; role/agent/model separation | **CLOSED current path / PERMANENT INVARIANT**. |
+| 45 | context | **CLOSED current Stage-3 implementation** — governor is consumed by mission compaction snapshot; TaskRuntime uses bounded artifact/SemanticContext/PI/native-summary paths. |
+| 46 | storage ownership | **CLOSED**. |
+| 47 | privacy/provider boundary | **CLOSED current boundary / PERMANENT INVARIANT**. |
+| 48 | process/shell/isolation | **PARTIAL / HOST-LIMITED** — shell policy operational; process lifecycle DEGRADED; workspace isolation binding UNSUPPORTED. |
+| 49 | release safety | **CLOSED local architecture / NOT AUTHORIZED externally**. |
+| 50–55 | historical stage order, Stage-1 work, validation model | **HISTORICAL + CURRENT STANDARD** — Stage 1 later closed; declaration->host-bound proof taxonomy remains binding. |
+| 56 | upstream/third-party source use | **PERMANENT INVARIANT**. |
+| 57–59 | no-false-pass + final invariants + optimization target | **PERMANENT INVARIANT**. |
+| 60 | old continuation directive | **HISTORICAL**, superseded by later append-only updates and this MASTER. |
+| 61–70 | semantic contract hardening updates | **CLOSED current Stage-1 implementation**, except any future contradictory source evidence. |
+| 71–73 | historical checkpoint/local commit discipline/Stage-1 closure | **HISTORICAL + COMMIT DISCIPLINE PERMANENT**. |
+| 74–89 | Stage-2 role/topology/model/host rules and generated/release test boundaries | **mostly CLOSED; remaining items are explicitly enumerated in Section 7 below**. |
+| 90 | explicit blind spots A–N | **mixed** — all A–N are individually classified with source evidence and closure requirements in Section 7 below. |
+| 91–92 | old validation baseline and continuation order | **HISTORICAL**, superseded by 549/549 baseline and current roadmap. |
+| 93 | anti-drift rules | **PERMANENT INVARIANT**, absorbed into Sections 1–3 and verification protocol here. |
 
-M11 status: **PASS — DETERMINISTIC CLOSURE COMPLETE**.
+---
 
-- integrated committed-state closure: 540/540 PASS;
-- targeted BA12/contract/authority/storage/host-capability negative set: 62/62 PASS;
-- architecture lint: PASS, 20 rule IDs, HI003 explicitly deferred with M5;
-- standalone validator: PASS;
-- `git diff --check`: clean; backup count: 0;
-- M11 found one cwd-dependent host-capability acceptance test assumption; checkpoint `52c6be4` makes acceptance source resolution test-file-relative and invocation-location independent;
-- no real external release action was executed.
+## 7. Section 90 blind spots A–N — exact current truth
 
-## M12 current truth
+This is the key correction to the previous narrow MASTER. **Do not declare product completion while an OPEN/PARTIAL item below remains unresolved or deliberately reclassified with evidence.**
 
-M12 status: **PASS — MATERIAL REAL-HOST PRIMITIVES VERIFIED**.
+### A. Primary direct-action authority — **OPEN, P0 / FIRST**
 
-- exact tested source HEAD: `753043d0f6c9d421e236dff0bf2c9f5ebe1a9c1b`;
-- receipt checkpoint: `baca9f7`;
-- real host: OpenCode `1.18.16`, Linux aarch64, Bun `1.3.14`;
-- local file-spec loader, eight Hi agents, native skill discovery/load, connected provider inventory, prompt/model observation, worker child identity, native permission once/reject, session create/abort/status/children/todo/diff/fork/summarize/revert/unrevert and structured logs all have T3 evidence;
-- `process-lifecycle` remains DEGRADED; `workspace-isolation-binding` remains UNSUPPORTED;
-- one independent-review terminal scenario is `HARNESS_MODEL_BEHAVIOR_INCOMPLETE`, not product FAIL, because material primitives were independently proven and the model repeatedly chose additional optional sanity checks;
-- no real push/tag/release/publish/deploy/external project mutation occurred.
+Proven facts:
 
-Canonical receipt: `data/validation/external-opencode-hi-0.1.0-host-1.18.16-head-753043d.json`.
+- canonical RoleContract says `manager` is read-only with `repositoryWriteAuthority=none`;
+- `working-manager` has scoped write authority;
+- routing/minimum-team correctly sets forced manager `direct=false`;
+- OpenCode manager native permissions deny `edit` and `bash`;
+- however `plugin/src/plugin.ts` `hi_direct_progress` can close an implementation obligation after mutation/diff checks **without consulting `MissionState.primary_mode` / canonical primary RoleContract write authority**.
 
-## Open earlier migration blockers / partials
+Required closure:
 
-Do not silently declare these closed:
+1. derive primary direct-progress authority from the canonical role contract, not a duplicated role-name check;
+2. implementation direct progress must fail closed for `manager` or any primary without scoped write authority;
+3. direct review authority must remain separately bounded by review policy/evidence;
+4. prove positive working-manager + negative manager behavior through the actual tool path;
+5. preserve existing mutation ownership/freshness safeguards.
 
-- **M3 PermissionProfile — CLOSED at `9801382`**. The former host-policy blocker no longer reproduced on re-audit. Seven canonical profiles now own general native permissions; RoleContract references them; role Markdown no longer owns mechanical permission maps; M4 remains the sole built-in methodology skill-permission owner. Current projection graph has 31 receipts and the controlled full suite is 543/543 PASS.
-- **M5 ConfigOptionContract — CLOSED at `d53fe31`**. The former blocker no longer reproduced. All current HiConfig leaves are classified; 29 runtime options have explicit consumers/executor effects, two compatibility options remain diagnostic-only, one schema marker remains current-only, defaults are catalog-generated, and HI003 is fatal PASS.
-- **M6 ModelCapabilityProfile — CLOSED at `ec2bdd3`**. Canonical `contracts/model.ts` identity reconciliation is production-wired; WorkerState records real requested/selected/projected/observed-effective phases, projection mismatch is fail-closed, and no producerless model state was added.
-- **M7 HostCapability** — local contract registry PASS and material OpenCode 1.18.16 T3 acceptance completed in M12; future host-version changes still require revalidation.
+### B. Primary effective-model evidence — **OPEN, P1**
 
-## Core invariants that remain binding
+Child/worker model truth is now strong after M6, but primary model truth is not equivalent:
 
-- Hi decides; host executes the richest valid native primitive.
-- Prompt text/frontmatter/generated config are projections, not canonical semantic truth.
-- ROLE != AGENT != MODEL != METHODOLOGY != TASK != WORKER != TOPOLOGY != WORKFLOW != HOST PRIMITIVE.
-- PROOF -> Evidence; FACT/PATTERN -> Project Intelligence; reusable HOW -> Methodology; control decision -> Runtime Policy.
-- Natural-language semantic routing belongs to structured host-primary semantic assessment, not regex/keyword dictionaries.
-- Exact safety protocol tokens remain a separate deterministic Authority boundary.
-- Config/state fields without a real producer/consumer/executor are defects, not architecture.
-- No fake host capability, no fake visual/browser/process/isolation PASS.
-- Completion remains deterministic and evidence/authority/freshness scoped.
-- Selected methodology != loaded methodology.
-- Minimum sufficient compute/context/topology is preferred over agent/prompt proliferation.
-- Current working tree is truth; never blind rollback.
+- `bindObservedPrimary()` records host-observed **agent role**, not model/variant;
+- WorkerState model identity fields apply to child workers;
+- no current production state proves a constrained primary model/variant from host metadata.
 
-## Next action
+Required closure is source-first, not field-first:
 
-**Do not execute M13 release readiness unless the user explicitly requests it.** Push/tag/publish/release/deploy remain external Authority actions and `external_release_actions_authorized` is still false.
+1. determine whether current product ever makes a constrained primary-model claim;
+2. inspect actual OpenCode primary message/session metadata producer;
+3. if primary model is intentionally host-default/unconstrained, encode that classification and avoid fake verification fields;
+4. if any config/runtime path constrains it, record requested/projected/observed/effective identity with a real completion/doctor consumer;
+5. never reuse child proof to claim primary proof.
 
-The sequential M0–M12 migration/acceptance track has reached its release boundary, but earlier partial/blocker work remains explicit:
+### C. Methodology compatibility vs executable capability — **PARTIAL, P2**
+
+Role compatibility and native skill permission are operational, but they do not prove the selected role/host can satisfy every mandatory methodology exit. Current built-in `resourceRequirements` are effectively empty, including browser testing.
+
+Required closure:
+
+- define the smallest truthful host/resource capability requirement representation needed by methodologies that actually require one;
+- preflight methodology eligibility against actual role execution surface + HostCapability;
+- when the methodology can be coordinated by one role but proof must be produced by another executor, make that delegation/mission-scope ownership explicit;
+- never strand an active methodology with an impossible exit requirement.
+
+### D. Visual/browser capability — **OPEN, P2**
+
+`hi-browser-testing` / `hi-visual-qa` require structured browser/visual evidence, and the visual-qa prompt truthfully says not to fake unavailable tooling. But that is currently **prompt guidance, not a deterministic host-capability preflight**.
+
+Required closure:
+
+- model browser/visual primitive availability in HostCapability or an equally canonical host executor surface;
+- mandatory browser/visual evidence + unavailable capability -> deterministic `BLOCKED`/precise degraded state before false execution;
+- optional visual evidence may remain not-run with explicit limitation;
+- do not claim Playwright/MCP/browser support merely because a methodology or role exists.
+
+### E. Host-specific tool drift (`scout`) — **OPEN, P2**
+
+Real drift:
+
+- `scout` is allowed in manager and working-manager PermissionProfiles/OpenCode agents;
+- `runtime/routing/execution-profile.ts` does **not** include `scout` in `TOOL_KEYS`, permission-to-tool mapping, or known builtin prompt override IDs.
+
+Required closure:
+
+- verify `scout` against the supported OpenCode host surface/source;
+- if it is a real supported native tool, include it in execution-surface reasoning and prompt minimization with correct permission semantics;
+- if not a supported/portable surface, remove or reclassify the permission rather than leaving an untracked tool;
+- add drift detection so future host-specific permissions cannot bypass execution-profile reasoning.
+
+### F. Team Mode role/obligation/model/evidence authority — **CLOSED current in-process chain**
+
+- TeamRuntime accepts only canonical child roles;
+- every member delegates through the single TaskRuntime;
+- TaskRuntime owns role/obligation authority, permission surface, model selection, WorkerResult and Evidence reconciliation;
+- Team membership does not define a second task/authority system.
+
+Do not add a second Team authority layer. Keep this as a permanent regression invariant.
+
+### G. Retry/fallback role identity — **CLOSED**
+
+Provider/model fallback and recovery preserve semantic Task/Worker role identity; only model/session/attempt state changes. Fresh-session recovery resets loaded methodology state. Keep as permanent invariant.
+
+### H. Project methodology hot admission — **CLOSED**
+
+TaskRuntime refreshes admitted project methodology permissions before same-process task selection. Admission remains policy+skill+hash-provenance coherent; explicit deny and collision safety are preserved.
+
+### I. Foreign OpenCode agent coexistence — **CLOSED**
+
+Canonical Hi name collision fails closed through `bindHiOpenCodeAgents`; unrelated foreign agents coexist. Only bounded admitted `hi-project-*` skill permission extension is tolerated on canonical agents.
+
+### J. Config field reality matrix — **CLOSED by M5**
+
+All 32 current leaves are classified and generated; every runtime option names a real consumer/effect, diagnostic fields do not claim fake runtime effect, and HI003 is fatal.
+
+### K. Role prompt vs Core contract drift — **CLOSED mechanical owner / PERMANENT semantic invariant**
+
+Canonical role identity/authority/permission relationships drive generated policy/agent preamble and are tested. Human prompt prose still requires review whenever role semantics change; do not create a second prose-derived authority parser.
+
+### L. Restore / compaction / follow-up — **PARTIAL, P3**
+
+Closed parts:
+
+- observed primary role survives restore rather than being recomputed from config;
+- Task/Worker identity and current-only contract validation survive persistence;
+- structured follow-up preserves task identity;
+- constraint rebase uses a fresh child and clears `loaded_methodologies`;
+- compaction survival preserves blockers/next action/STOP state;
+- in-process Team semantic generation is adopted deliberately.
+
+Open/reconciliation point:
+
+- TeamState is process-memory-only;
+- `MissionStore.restore()` explicitly changes persisted `execution_mode='team'` to `single` and logs `team_runtime: ephemeral-reset-to-single-if-needed`;
+- Source B required Team generation/state not be silently recomputed from a weaker default across restart/compaction/follow-up.
+
+Required closure:
+
+- decide constitutionally whether Team runtime is intentionally ephemeral across restart;
+- if ephemeral reset is correct, make the contract explicit and prove all member Workers/tasks are safely reconciled without losing semantic obligations/evidence;
+- if Team identity must survive restart, add canonical persisted TeamContract state and recovery semantics;
+- do not blindly persist stale native sessions merely to satisfy wording.
+
+### M. Role cost / minimum-sufficient computation — **CLOSED current policy / PERMANENT INVARIANT**
+
+Minimum-team routing, topology benefit gating, context governor, expected-completion-cost-aware model selection and deterministic benchmarks exist. Continue measuring without optimizing for raw test/agent/token count.
+
+### N. OpenCode host source verification — **VERSION-BOUND CLOSED / PERMANENT REVALIDATION**
+
+M12 binds material acceptance to OpenCode 1.18.16/aarch64 and exact tested source artifacts. Revalidate host semantics whenever the supported OpenCode version or relevant primitive behavior changes. Do not infer a new host version from old receipts.
+
+---
+
+## 8. Stage 1–10 roadmap after full source/repo reconciliation
+
+The old stage order remains useful as a product-coverage lens, but later Constitution work subsumed several stages out of sequence. Current truth:
+
+| Stage | Current status | Meaning |
+|---|---|---|
+| Stage 1 — Methodology + semantic prerequisite ownership | **CLOSED** | 27 methodologies, structured semantics, activation/selection/load/exit/learning/admission lifecycle operational. P2 is a Stage-2 host-capability eligibility edge, not a reopening of semantic Stage 1. |
+| Stage 2 — Role/topology/generated agents/model/host policy | **PARTIAL** | Main architecture operational; open P0 primary direct authority, P1 primary model truth, P2 methodology/host capability + visual/browser + scout drift. |
+| Stage 3 — Context Governor | **CLOSED current scope** | `governContext` is consumed by mission compaction snapshot; TaskRuntime has bounded context/artifact/PI/SemanticContext/native-summary paths. |
+| Stage 4 — Project Intelligence / Semantic Context / knowledge lifecycle | **CLOSED current implemented scope** | Durable PI reload/invalidation, SemanticContext contract/consumer, methodology learning/admission separation operational. |
+| Stage 5 — Human Decision / process / shell / isolation | **PARTIAL / HOST-LIMITED** | HumanDecision and shell policy operational. Process lifecycle DEGRADED; workspace isolation binding UNSUPPORTED. These must remain explicit release/support limitations unless future host support closes them. |
+| Stage 6 — Team / concurrency / crash recovery / fallback | **PARTIAL** | Concurrency/fallback/recovery operational; P3 Team restart contract requires explicit reconciliation. |
+| Stage 7 — Storage / setup / docs / packaging / release architecture | **CLOSED local architecture, docs-status residue** | Storage/provenance/release guards operational locally. Historical 06/08 status banners are stale. No real release authority. |
+| Stage 8 — independent subsystem/integration tests | **CLOSED current T1/T2 baseline** | 549/549 controlled suite plus architecture lint/validator. Tests remain evidence, not sole product proof. |
+| Stage 9 — Linux/OpenCode representative real-host acceptance | **PASS_MATERIAL_WITH_LIMITATIONS** | M12 OpenCode 1.18.16/aarch64 verified material primitives; process DEGRADED, workspace UNSUPPORTED, one independent-review terminal scenario was harness/model-behavior incomplete. Re-run targeted T3 after host-bound changes. |
+| Stage 10 — real release/publication acceptance | **NOT REQUESTED** | Requires explicit user authority and T4 receipts. |
+
+---
+
+## 9. Truthful host limitations and non-fake capability policy
+
+These are current product truths, not reasons to manufacture PASS:
+
+### Process lifecycle — DEGRADED
+
+Current OpenCode adapter does not expose full ordinary-shell PID/job ownership, wait, kill and process-exit lifecycle. Hi has shell safety policy and bounded runtime recovery, but must not claim a richer process governor than the host exposes.
+
+### Workspace isolation binding — UNSUPPORTED
+
+Creating a git worktree directory is not enough. Hi cannot claim workspace isolation until subsequent child execution is provably bound to that isolated workspace.
+
+### Browser / visual — not yet contract-bound
+
+The methodology/evidence vocabulary exists, but host primitive availability is not yet an executable HostCapability/preflight truth. This is P2, not a PASS.
+
+### Semantic Context adapters
+
+Current first-class semantic extraction is TypeScript. Do not claim language-generic semantic AST support until a real adapter exists. Normal bounded file/context retrieval remains available for other languages.
+
+### Telemetry
+
+Current efficiency telemetry is deterministic in-process metric/benchmark tooling. It is not yet a first-class privacy-classified runtime TelemetryEvent stream.
+
+---
+
+## 10. Remaining product roadmap — dependency-safe order
+
+This is now the authoritative work queue. **Do not skip ahead because a later change is easier to test.**
+
+### P0 — Primary direct-action authority closure
+
+Owner: `RoleContract -> primary runtime -> hi_direct_progress`.
+
+Deliverables:
+
+- canonical helper/query for primary role write/direct-obligation authority;
+- `hi_direct_progress` fail-closed implementation gate for read-only manager;
+- positive working-manager and negative manager actual-tool-path acceptance;
+- no regression to direct review/evidence/freshness/diff-ownership gates;
+- focused + justified full controlled verification;
+- local commit + proof update in this MASTER.
+
+Exit: a primary control-plane API cannot close work that the actual primary RoleContract is forbidden to own.
+
+### P1 — Primary model truth closure
+
+Owner: primary host session/message observation boundary + model contract.
+
+Deliverables:
+
+- source audit of actual OpenCode primary model/variant metadata;
+- explicit classification: constrained-and-verifiable vs host-default/unconstrained;
+- only if real producers/consumers exist, bounded primary requested/projected/observed/effective state;
+- doctor/completion consumer where a constrained claim matters;
+- no duplicate child-model state or producerless fields;
+- exact tests and, if host-bound behavior changes, targeted T3 acceptance.
+
+Exit: Hi never claims a primary model/variant it cannot prove, and it does not invent unnecessary state when the host is intentionally unconstrained.
+
+### P2 — Methodology/host capability and execution-surface closure
+
+Owners: MethodologyContract + HostCapability + effective execution surface.
+
+Work as one coherent capability boundary, in this order:
+
+1. determine the minimal canonical representation of mandatory host/resource requirements;
+2. bind methodology eligibility to role execution surface + host capability;
+3. add truthful browser/visual capability status and deterministic mandatory-evidence preflight;
+4. audit/fix `scout` against current supported OpenCode source and execution-profile tool reasoning;
+5. add generic drift detection for host permissions/tools that Core execution-profile logic cannot account for;
+6. verify compatible-role coordination vs delegated proof ownership so methodology exits cannot become impossible;
+7. targeted T3 acceptance for any newly claimed host primitive.
+
+Exit: permission/compatibility/methodology selection cannot expose an execution or exit-proof surface that Hi cannot reason about and the host cannot execute.
+
+### P3 — Team restart / semantic identity closure
+
+Owner: TeamContract semantics + Mission/Worker persistence/recovery.
+
+Deliverables:
+
+- decide and document whether TeamState is intentionally process-ephemeral or persistable;
+- if ephemeral, prove restart safely degrades to single while preserving Task/Worker/obligation/evidence identity and reconciling old child ownership;
+- if persistent, define strict current TeamContract state, generation/expiry/member/worker refs and restart reconciliation;
+- maintain no-second-runtime invariant;
+- preserve in-process semantic follow-up generation behavior;
+- controlled crash/restart/compaction/follow-up tests.
+
+Exit: restart never silently replaces a Team semantic trajectory with a weaker unrelated default or leaves old executor ownership unresolved.
+
+### P4 — Residual contract/schema reality closure
+
+This is **not** “create every missing file from the old suggested tree.” For each residual C/S class, first prove whether it has a material independent owner/consumer.
+
+Audit explicitly:
+
+- C09/S09 ExecutionPlan — confirm dynamic Mission Task DAG/gates is sufficient derived owner;
+- C10/S10 Topology — confirm current snapshot/validator boundary is sufficient;
+- C11/S11 Team — resolve via P3;
+- C12 RetryAttempt — confirm Worker attempt/fallback ledger remains natural owner;
+- C13/S12 Recovery — confirm TaskRuntime/continuation recovery has no duplicate/missing owner;
+- C25/S27 HostAgentProjection — confirm generator/receipt/agent-binding fully covers host projection schema;
+- C28/S26 TelemetryEvent — either build a real bounded privacy-classified runtime event owner/consumer or explicitly reclassify telemetry as offline diagnostics and update constitutional expectations;
+- C29 ArchitectureDecision — either define a real machine consumer/storage contract or classify ADR as documentation/process + methodology output instead of inventing state;
+- stale `06`/`08` implementation-status banners — update explanatory docs only after the above classifications are settled.
+
+Exit: every C01–C29/S00–S27 responsibility is either executable, deliberately derived/subsumed, documentary, host-limited, or explicitly unsupported — none is “missing by accident.”
+
+### P5 — Host-limited capability release/support decision
+
+After P0–P4 source closure, reassess:
+
+- process lifecycle DEGRADED;
+- workspace isolation binding UNSUPPORTED;
+- any remaining browser/visual limitation after P2.
+
+Do not automatically implement unsupported host features. Choose based on product requirement and supported OpenCode reality:
+
+- implement a truthful adapter if a native primitive exists and is worth supporting;
+- retain DEGRADED/UNSUPPORTED with doctor/docs and precise semantic loss if not;
+- never emulate in a way that loses the Hi safety contract.
+
+Exit: supported-feature/release claims exactly match host reality.
+
+### P6 — Deterministic closure after product gaps
+
+After P0–P5 mutations:
+
+- build/generate from canonical sources;
+- architecture lint all fatal/link rules;
+- projection receipt parity/idempotence;
+- standalone validator;
+- full controlled suite under writable HOME/XDG;
+- diff check + backup hygiene;
+- no stale generated artifacts;
+- local closure commit(s).
+
+Do not use the test count itself as the closure argument; record the owner/executor/proof chain for each resolved gap.
+
+### P7 — Real-host reacceptance for changed host-bound surfaces
+
+Only where P0–P5 changed OpenCode-bound behavior, run exact-version T3 acceptance against the supported OpenCode host. At minimum revalidate agent/tool/capability/model/session behaviors touched by the changes. Preserve DEGRADED/UNSUPPORTED truth.
+
+### P8 / M13 / Stage 10 — Release readiness and real publication
+
+**NOT REQUESTED.**
+
+Do not execute real push/tag/GitHub release/npm publish/deploy until the user explicitly requests release work. When requested, treat it as a separate authority-bound T4 phase with exact remote/integrity receipts.
+
+---
+
+## 11. Verification protocol for future checkpoints
+
+### Focused verification first
+
+Run the smallest deterministic tests that prove the changed owner/consumer/executor chain. Add tests only after the architecture is understood.
+
+### Controlled full verification when justified
+
+Use a writable isolated environment, e.g.:
+
+```bash
+set -e
+TMPROOT=$(mktemp -d)
+trap 'rm -rf "$TMPROOT"' EXIT
+export HOME="$TMPROOT/home"
+export XDG_STATE_HOME="$TMPROOT/state"
+export XDG_DATA_HOME="$TMPROOT/data"
+export XDG_CONFIG_HOME="$TMPROOT/config"
+export XDG_CACHE_HOME="$TMPROOT/cache"
+mkdir -p "$HOME" "$XDG_STATE_HOME" "$XDG_DATA_HOME" "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME"
+npm run check
+git diff --check
+printf 'backup_count='
+find . \( -name '*.bak' -o -name '*.bak.*' -o -name '*~' \) -print | wc -l
+git status --short
+```
+
+Do not install missing tools/dependencies merely to make a check green without a real requirement.
+
+### Commit protocol
+
+For each coherent mutation-bearing checkpoint:
 
 ```text
-M3 PermissionProfile        PASS at 9801382
-M5 ConfigOptionContract    PASS at d53fe31; HI003 fatal PASS
-M6 ModelCapabilityProfile  PASS at ec2bdd3
-M13 Release readiness      NOT REQUESTED
+source audit
+-> smallest coherent implementation
+-> focused proof
+-> broader proof as justified
+-> generated-artifact/hygiene check
+-> local commit
+-> verify HEAD/status
+-> update this MASTER if roadmap/status changed
 ```
 
-On continuation, first re-check real HEAD/status. The previously open M3, M5 and M6 migration residues are now closed and the sequential M0–M12 acceptance track is at the release boundary. **Do not execute M13** unless the user explicitly requests release-readiness work. Push/tag/publish/release/deploy remain external Authority actions and `external_release_actions_authorized` is false. If no release work is requested, preserve the clean checkpoint rather than inventing another migration phase.
+If a tool/safety boundary interrupts after mutation, do not begin another architectural slice. Resume by reconciling and committing/completing that same slice first.
+
+---
+
+## 12. Real-host acceptance truth retained from M12
+
+Canonical receipt:
+
+`data/validation/external-opencode-hi-0.1.0-host-1.18.16-head-753043d.json`
+
+Materially verified on OpenCode 1.18.16 / Linux aarch64:
+
+- local plugin load from exact tested source;
+- all 8 canonical Hi agent projections;
+- native Hi methodology discovery/load;
+- provider/model inventory;
+- parent/child sessions and parent relation;
+- prompt, abort, status, children, todo, diff, fork, summarize, revert/unrevert;
+- child agent/model/variant observation;
+- native permission once/reject semantics;
+- structured runtime logging;
+- native skill load proof.
+
+Truthful limitations:
+
+- process lifecycle: **DEGRADED**;
+- workspace isolation binding: **UNSUPPORTED**;
+- one independent-review terminal scenario: `HARNESS_MODEL_BEHAVIOR_INCOMPLETE`, not falsely classified as product PASS/FAIL.
+
+A future host/version change invalidates assumptions that depend on that exact host behavior until revalidated.
+
+---
+
+## 13. What is explicitly NOT open anymore
+
+Do not waste future turns reopening these without contradictory repository evidence:
+
+- 27-vs-29 methodology count dispute;
+- language-specific user-intent keyword dictionaries;
+- separate skill-policy/native-skills duplicate methodology owners;
+- selected==loaded methodology conflation;
+- general role permission ownership in Markdown;
+- decorative runtime config fields removed by the current config contract;
+- worker requested/selected/projected/observed model identity gap;
+- duplicate Task/Worker/Evidence/Verification schema owners already extracted;
+- generic continuation as external authority;
+- Team as a second task runtime;
+- role-name collision silently binding a foreign canonical agent;
+- test-local ephemeral push/tag/publish fixtures being mistaken for real release authority.
+
+---
+
+## 14. Next action
+
+**Start P0 only.**
+
+Re-check real HEAD/status, then trace canonical primary RoleContract authority into `hi_direct_progress` and close Section 90-A without weakening existing mutation/diff/review/evidence safeguards.
+
+Do **not** start P1–P8 in parallel unless P0 investigation proves a dependency requires a narrowly scoped prerequisite. Do not enter real M13/release work without explicit user request.
+
+When P0 is coherently closed, run focused + justified controlled verification, create a local commit, update this MASTER’s status/next action, and continue to P1.
