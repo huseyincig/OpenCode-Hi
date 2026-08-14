@@ -12,19 +12,19 @@ repository: OpenCode-Hi
 repository_root: /workspace/OpenCode-Hi
 coverage_reconciliation_baseline_head: 8ba9eb561332eebc3b6bded90a1c0d2da501d1ed
 active_program: OpenCode-Hi Product Closure after Constitution Migration
-active_phase: P2
-active_phase_name: Methodology and host execution-surface closure
+active_phase: P3
+active_phase_name: Team restart and semantic identity closure
 phase_status: OPEN
 working_tree_expectation: clean
 last_verified_full_suite:
-  total: 553
-  pass: 553
+  total: 556
+  pass: 556
   fail: 0
-last_verified_architecture_lint: "PASS rules=20 deferred=0 linked=8"
+last_verified_architecture_lint: "PASS rules=21 deferred=0 linked=8"
 last_verified_validator: PASS
 current_projection_receipts: 32
 external_release_actions_authorized: false
-next_contract_owner: MethodologyContract -> HostCapability -> effective execution surface
+next_contract_owner: TeamContract semantics -> Mission/Worker persistence and restart reconciliation
 ```
 
 ---
@@ -186,13 +186,14 @@ ec2bdd3  refactor: persist model execution identity snapshots
 8ba9eb5  docs: record M6 model identity closure
 f8c9f24  fix: enforce primary direct implementation authority
 dc8c59c  test: lock primary model as host-selected
+05724b1  fix: bind methodologies to host execution capability
 ```
 
 Current deterministic baseline before this coverage-ledger rewrite:
 
 ```text
-controlled full suite: 553/553 PASS
-architecture lint: PASS rules=20 deferred=0 linked=8
+controlled full suite: 556/556 PASS
+architecture lint: PASS rules=21 deferred=0 linked=8
 validator: PASS
 projection receipts: 32
 backup count: 0
@@ -278,7 +279,7 @@ This section exists so no requirement from the broad working checkpoint disappea
 | 71–73 | historical checkpoint/local commit discipline/Stage-1 closure | **HISTORICAL + COMMIT DISCIPLINE PERMANENT**. |
 | 74–89 | Stage-2 role/topology/model/host rules and generated/release test boundaries | **mostly CLOSED; remaining items are explicitly enumerated in Section 7 below**. |
 | 90 | explicit blind spots A–N | **mixed** — all A–N are individually classified with source evidence and closure requirements in Section 7 below. |
-| 91–92 | old validation baseline and continuation order | **HISTORICAL**, superseded by 553/553 baseline and current roadmap. |
+| 91–92 | old validation baseline and continuation order | **HISTORICAL**, superseded by 556/556 baseline and current roadmap. |
 | 93 | anti-drift rules | **PERMANENT INVARIANT**, absorbed into Sections 1–3 and verification protocol here. |
 
 ---
@@ -322,41 +323,30 @@ Closure proof:
 5. primary chat model metadata therefore remains host-selected observation and is not manufactured into Mission/Worker primary model state or a completion claim;
 6. focused P1 set 13/13 PASS; full controlled suite **553/553 PASS**, architecture lint PASS, validator PASS, backup count 0.
 
-### C. Methodology compatibility vs executable capability — **PARTIAL, P2**
+### C. Methodology compatibility vs executable capability — **CLOSED at `05724b1`**
 
-Role compatibility and native skill permission are operational, but they do not prove the selected role/host can satisfy every mandatory methodology exit. Current built-in `resourceRequirements` are effectively empty, including browser testing.
+Closure proof:
 
-Required closure:
+- `resource_requirements` is now a strict technical `host-capability:<id>` reference surface for built-in and admitted project methodologies;
+- `resolveSkillPlan()` rejects a role-compatible methodology as `resource-unavailable` when its required HostCapability is not `SUPPORTED`;
+- TaskRuntime converts completion-relevant resource failure into deterministic `RESOLVE` before native child spawn;
+- role compatibility, native skill permission and host/resource availability are therefore separate executable conditions;
+- methodology exits are no longer allowed to become active merely from role compatibility when their mandatory executor resource is absent.
 
-- define the smallest truthful host/resource capability requirement representation needed by methodologies that actually require one;
-- preflight methodology eligibility against actual role execution surface + HostCapability;
-- when the methodology can be coordinated by one role but proof must be produced by another executor, make that delegation/mission-scope ownership explicit;
-- never strand an active methodology with an impossible exit requirement.
+### D. Visual/browser capability — **CLOSED current truth / HOST-LIMITED at `05724b1`**
 
-### D. Visual/browser capability — **OPEN, P2**
+- `hi-browser-testing` and `hi-visual-qa` canonically require `host-capability:browser-execution`;
+- exact OpenCode 1.18.16 exposes dynamic tool inventory, but current Hi has no deterministic browser executor adapter that can bind arbitrary MCP/tool IDs to browser evidence semantics;
+- `browser-execution` is therefore explicitly `UNSUPPORTED`, not inferred from prompts, screenshots, MCP naming or tool presence;
+- mandatory browser/visual methodology dispatch fails deterministically before native child creation;
+- no new host primitive was claimed, so P2 required no new T3 support-claim acceptance.
 
-`hi-browser-testing` / `hi-visual-qa` require structured browser/visual evidence, and the visual-qa prompt truthfully says not to fake unavailable tooling. But that is currently **prompt guidance, not a deterministic host-capability preflight**.
+### E. Host-specific tool drift (`scout`) — **CLOSED at `05724b1`**
 
-Required closure:
-
-- model browser/visual primitive availability in HostCapability or an equally canonical host executor surface;
-- mandatory browser/visual evidence + unavailable capability -> deterministic `BLOCKED`/precise degraded state before false execution;
-- optional visual evidence may remain not-run with explicit limitation;
-- do not claim Playwright/MCP/browser support merely because a methodology or role exists.
-
-### E. Host-specific tool drift (`scout`) — **OPEN, P2**
-
-Real drift:
-
-- `scout` is allowed in manager and working-manager PermissionProfiles/OpenCode agents;
-- `runtime/routing/execution-profile.ts` does **not** include `scout` in `TOOL_KEYS`, permission-to-tool mapping, or known builtin prompt override IDs.
-
-Required closure:
-
-- verify `scout` against the supported OpenCode host surface/source;
-- if it is a real supported native tool, include it in execution-surface reasoning and prompt minimization with correct permission semantics;
-- if not a supported/portable surface, remove or reclassify the permission rather than leaving an untracked tool;
-- add drift detection so future host-specific permissions cannot bypass execution-profile reasoning.
+- exact installed OpenCode plugin/sdk 1.18.16 source/type surface contains no native `scout` tool contract;
+- stale `scout: allow` rules were removed from canonical primary PermissionProfiles and regenerated agent projections;
+- architecture lint `HI021 EXECUTION_SURFACE_PERMISSION_DRIFT` now fails if any canonical Hi agent permission key is not represented by Core execution-surface reasoning;
+- current architecture lint: **21 rules, deferred=0, linked=8**.
 
 ### F. Team Mode role/obligation/model/evidence authority — **CLOSED current in-process chain**
 
@@ -428,13 +418,13 @@ The old stage order remains useful as a product-coverage lens, but later Constit
 | Stage | Current status | Meaning |
 |---|---|---|
 | Stage 1 — Methodology + semantic prerequisite ownership | **CLOSED** | 27 methodologies, structured semantics, activation/selection/load/exit/learning/admission lifecycle operational. P2 is a Stage-2 host-capability eligibility edge, not a reopening of semantic Stage 1. |
-| Stage 2 — Role/topology/generated agents/model/host policy | **PARTIAL** | P0 primary direct authority and P1 primary host-selected model truth are closed. Open P2 methodology/host capability + visual/browser + scout drift remains. |
+| Stage 2 — Role/topology/generated agents/model/host policy | **CLOSED current supported claims** | P0 authority, P1 primary host-selected model truth and P2 methodology/host execution-surface truth are closed; browser execution remains explicitly host-limited/UNSUPPORTED rather than falsely supported. |
 | Stage 3 — Context Governor | **CLOSED current scope** | `governContext` is consumed by mission compaction snapshot; TaskRuntime has bounded context/artifact/PI/SemanticContext/native-summary paths. |
 | Stage 4 — Project Intelligence / Semantic Context / knowledge lifecycle | **CLOSED current implemented scope** | Durable PI reload/invalidation, SemanticContext contract/consumer, methodology learning/admission separation operational. |
 | Stage 5 — Human Decision / process / shell / isolation | **PARTIAL / HOST-LIMITED** | HumanDecision and shell policy operational. Process lifecycle DEGRADED; workspace isolation binding UNSUPPORTED. These must remain explicit release/support limitations unless future host support closes them. |
 | Stage 6 — Team / concurrency / crash recovery / fallback | **PARTIAL** | Concurrency/fallback/recovery operational; P3 Team restart contract requires explicit reconciliation. |
 | Stage 7 — Storage / setup / docs / packaging / release architecture | **CLOSED local architecture, docs-status residue** | Storage/provenance/release guards operational locally. Historical 06/08 status banners are stale. No real release authority. |
-| Stage 8 — independent subsystem/integration tests | **CLOSED current T1/T2 baseline** | 553/553 controlled suite plus architecture lint/validator. Tests remain evidence, not sole product proof. |
+| Stage 8 — independent subsystem/integration tests | **CLOSED current T1/T2 baseline** | 556/556 controlled suite plus architecture lint/validator. Tests remain evidence, not sole product proof. |
 | Stage 9 — Linux/OpenCode representative real-host acceptance | **PASS_MATERIAL_WITH_LIMITATIONS** | M12 OpenCode 1.18.16/aarch64 verified material primitives; process DEGRADED, workspace UNSUPPORTED, one independent-review terminal scenario was harness/model-behavior incomplete. Re-run targeted T3 after host-bound changes. |
 | Stage 10 — real release/publication acceptance | **NOT REQUESTED** | Requires explicit user authority and T4 receipts. |
 
@@ -497,21 +487,21 @@ Closure:
 
 Exit satisfied: Hi makes no constrained primary model/variant claim and does not invent verification state for a host-selected primary model.
 
-### P2 — Methodology/host capability and execution-surface closure
+### P2 — Methodology/host capability and execution-surface closure — **CLOSED at `05724b1`**
 
 Owners: MethodologyContract + HostCapability + effective execution surface.
 
-Work as one coherent capability boundary, in this order:
+Closure:
 
-1. determine the minimal canonical representation of mandatory host/resource requirements;
-2. bind methodology eligibility to role execution surface + host capability;
-3. add truthful browser/visual capability status and deterministic mandatory-evidence preflight;
-4. audit/fix `scout` against current supported OpenCode source and execution-profile tool reasoning;
-5. add generic drift detection for host permissions/tools that Core execution-profile logic cannot account for;
-6. verify compatible-role coordination vs delegated proof ownership so methodology exits cannot become impossible;
-7. targeted T3 acceptance for any newly claimed host primitive.
+- mandatory methodology resource references use the strict `host-capability:<id>` vocabulary;
+- selection consumes actual `SUPPORTED` HostCapability contracts, not prompt assumptions;
+- mandatory unavailable resource becomes `resource-unavailable` and TaskRuntime preflight `RESOLVE` before child spawn;
+- browser/visual execution is truthfully `UNSUPPORTED` until a deterministic OpenCode browser executor adapter exists;
+- stale unsupported `scout` permission was removed after exact OpenCode 1.18.16 source audit;
+- `HI021` generically rejects future permission/execution-surface drift;
+- focused P2 set 31/31 PASS; full controlled suite **556/556 PASS**; architecture lint **21 rules, deferred=0**; validator PASS; backup count 0.
 
-Exit: permission/compatibility/methodology selection cannot expose an execution or exit-proof surface that Hi cannot reason about and the host cannot execute.
+Exit satisfied: permission/compatibility/methodology selection cannot expose an execution or exit-proof surface that Core cannot reason about or the host cannot execute.
 
 ### P3 — Team restart / semantic identity closure
 
@@ -687,10 +677,10 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**Start P2 only.**
+**Start P3 only.**
 
-Re-check real HEAD/status, then close the methodology/host execution-capability boundary as one coherent slice: establish the minimal canonical host/resource requirement representation, bind methodology eligibility to actual role execution surface + HostCapability, make mandatory browser/visual evidence fail deterministically when unavailable, and resolve the `scout` permission/tool drift against exact supported OpenCode 1.18.16 reality.
+Re-check real HEAD/status, then audit TeamState ownership across in-process TeamRuntime, MissionState persistence, worker/session restart reconciliation and semantic generation changes. Decide from existing contract intent whether TeamState is intentionally process-ephemeral or requires canonical persistence; do not persist it merely because the old schema suggested a TeamContract.
 
-Do **not** start P3–P8 in parallel unless P2 investigation proves a dependency requires a narrowly scoped prerequisite. Do not enter real M13/release work without explicit user request.
+Do **not** start P4–P8 in parallel unless P3 investigation proves a dependency requires a narrowly scoped prerequisite. Do not enter real M13/release work without explicit user request.
 
-When P2 is coherently closed, run focused + justified controlled verification, create a local commit, update this MASTER’s status/next action, and continue to P3.
+When P3 is coherently closed, run controlled crash/restart/compaction/follow-up verification, create a local commit, update this MASTER’s status/next action, and continue to P4.
