@@ -12,19 +12,19 @@ repository: OpenCode-Hi
 repository_root: /workspace/OpenCode-Hi
 coverage_reconciliation_baseline_head: 8ba9eb561332eebc3b6bded90a1c0d2da501d1ed
 active_program: OpenCode-Hi Product Closure after Constitution Migration
-active_phase: P3
-active_phase_name: Team restart and semantic identity closure
+active_phase: P4
+active_phase_name: Residual contract and schema reality closure
 phase_status: OPEN
 working_tree_expectation: clean
 last_verified_full_suite:
-  total: 556
-  pass: 556
+  total: 561
+  pass: 561
   fail: 0
 last_verified_architecture_lint: "PASS rules=21 deferred=0 linked=8"
 last_verified_validator: PASS
 current_projection_receipts: 32
 external_release_actions_authorized: false
-next_contract_owner: TeamContract semantics -> Mission/Worker persistence and restart reconciliation
+next_contract_owner: residual C/S responsibility audit -> natural owner/consumer classification
 ```
 
 ---
@@ -192,7 +192,7 @@ dc8c59c  test: lock primary model as host-selected
 Current deterministic baseline before this coverage-ledger rewrite:
 
 ```text
-controlled full suite: 556/556 PASS
+controlled full suite: 561/561 PASS
 architecture lint: PASS rules=21 deferred=0 linked=8
 validator: PASS
 projection receipts: 32
@@ -209,15 +209,15 @@ The old schema catalog listed suggested filenames. **Filename parity is not the 
 |---|---|---|---|
 | C01 / S01 RoleContract | `data/hi-roles.json`, `contracts/role.ts`, generated role/agent projections | **CLOSED** | Primary direct implementation authority is now enforced from canonical `repositoryWriteAuthority` at the `hi_direct_progress` control-plane boundary. |
 | C02 / S02 PermissionProfile | `data/hi-permission-profiles.json`, `contracts/permission-profile.ts` | **CLOSED** | Safety monotonicity and read-only edit denial executable. |
-| C03 / S03 MethodologyContract | `data/hi-methodologies.json`, generated policy/SKILL projections, runtime catalog | **PARTIAL only at host-capability eligibility edge** | Core lifecycle closed; P2 must bind mandatory host/resource capability to actual executable eligibility. |
+| C03 / S03 MethodologyContract | `data/hi-methodologies.json`, generated policy/SKILL projections, runtime catalog | **CLOSED current scope** | Mandatory resource requirements are canonical `host-capability:<id>` references consumed by selection/preflight; unsupported executor resources fail closed. |
 | C04 / S04 ModelCapabilityProfile | `contracts/model.ts`, model resolver, WorkerContract snapshots | **CLOSED current claims** | Child/worker constrained identity is reconciled; primary Hi agents intentionally do not constrain model/variant, leaving primary selection host-owned and preventing fake primary model state. |
-| C05 / S05 HostCapability | `contracts/host-capability.ts`, OpenCode detector/doctor | **CLOSED registry / HOST-LIMITED capabilities** | Process lifecycle DEGRADED; workspace isolation UNSUPPORTED; browser/visual capability is not yet modeled as an executable preflight truth. |
+| C05 / S05 HostCapability | `contracts/host-capability.ts`, OpenCode detector/doctor | **CLOSED registry / HOST-LIMITED capabilities** | Process lifecycle DEGRADED; workspace isolation UNSUPPORTED; browser execution explicitly UNSUPPORTED until a deterministic executor adapter exists. |
 | C06 / S06 ConfigOption | `data/hi-config-options.json`, `contracts/config-option.ts`, generated defaults | **CLOSED** | 32 leaves, real effect/diagnostic classification, HI003 fatal. |
 | C07 / S07 TaskContract | `contracts/task.ts`, TaskRuntime | **CLOSED** | Task identity/obligations/context/external-action snapshots current-only. |
 | C08 / S08 WorkerContract | `contracts/worker.ts`, TaskRuntime, persistence | **CLOSED for workers** | Includes attempts/recovery/model identity/native diff state. |
 | C09 / S09 ExecutionPlan | Mission tasks + dependencies + gates + obligations + topology form the live trajectory | **SUBSUMED / DERIVED** | Do not create a static workflow catalog. P4 will confirm no missing graph invariant needs a first-class validator. |
 | C10 / S10 Topology | `runtime/execution/topology-policy.ts`, MissionState topology, TaskRuntime scheduler | **CLOSED current execution path** | Explicit single/multi and capacity intersection affect actual dispatch. Permanent invariant. |
-| C11 / S11 TeamContract | `runtime/team/team-runtime.ts` in-memory TeamState over TaskRuntime | **PARTIAL** | Runtime authority/delegation is bounded, but restart deliberately resets Team runtime to single; P3 must reconcile this with Source-B restart/generation requirement. |
+| C11 / S11 TeamContract | `contracts/team.ts` + `runtime/team/team-runtime.ts` bounded projection over TaskRuntime | **CLOSED current semantics** | Team projection is intentionally process-ephemeral; strict contract binds generation/member Task/role/capacity/terminal state while durable Task/Worker/obligation/evidence identity owns restart continuity. |
 | C12 RetryAttempt | Worker `attempt`, `fallback_history`, recovery ledger/events | **SUBSUMED** | No second RetryAttempt store needed unless a real independent consumer appears. |
 | C13 / S12 RecoveryContract | TaskRuntime provider/stagnation/restart recovery + continuation recovery | **CLOSED operationally / SUBSUMED** | Old-executor abort/reconciliation and bounded fallback are executable; keep role/task identity invariant. |
 | C14 / S13 WorkerResult | `contracts/worker-result.ts` | **CLOSED** | Boundary-untrusted structured result. |
@@ -279,7 +279,7 @@ This section exists so no requirement from the broad working checkpoint disappea
 | 71–73 | historical checkpoint/local commit discipline/Stage-1 closure | **HISTORICAL + COMMIT DISCIPLINE PERMANENT**. |
 | 74–89 | Stage-2 role/topology/model/host rules and generated/release test boundaries | **mostly CLOSED; remaining items are explicitly enumerated in Section 7 below**. |
 | 90 | explicit blind spots A–N | **mixed** — all A–N are individually classified with source evidence and closure requirements in Section 7 below. |
-| 91–92 | old validation baseline and continuation order | **HISTORICAL**, superseded by 556/556 baseline and current roadmap. |
+| 91–92 | old validation baseline and continuation order | **HISTORICAL**, superseded by 561/561 baseline and current roadmap. |
 | 93 | anti-drift rules | **PERMANENT INVARIANT**, absorbed into Sections 1–3 and verification protocol here. |
 
 ---
@@ -377,7 +377,7 @@ All 32 current leaves are classified and generated; every runtime option names a
 
 Canonical role identity/authority/permission relationships drive generated policy/agent preamble and are tested. Human prompt prose still requires review whenever role semantics change; do not create a second prose-derived authority parser.
 
-### L. Restore / compaction / follow-up — **PARTIAL, P3**
+### L. Restore / compaction / follow-up — **CLOSED current semantics at `3837318`**
 
 Closed parts:
 
@@ -388,18 +388,15 @@ Closed parts:
 - compaction survival preserves blockers/next action/STOP state;
 - in-process Team semantic generation is adopted deliberately.
 
-Open/reconciliation point:
+Closure proof:
 
-- TeamState is process-memory-only;
-- `MissionStore.restore()` explicitly changes persisted `execution_mode='team'` to `single` and logs `team_runtime: ephemeral-reset-to-single-if-needed`;
-- Source B required Team generation/state not be silently recomputed from a weaker default across restart/compaction/follow-up.
-
-Required closure:
-
-- decide constitutionally whether Team runtime is intentionally ephemeral across restart;
-- if ephemeral reset is correct, make the contract explicit and prove all member Workers/tasks are safely reconciled without losing semantic obligations/evidence;
-- if Team identity must survive restart, add canonical persisted TeamContract state and recovery semantics;
-- do not blindly persist stale native sessions merely to satisfy wording.
+- C11 defines TeamRuntime as a bounded projection over the single canonical TaskRuntime; no second mailbox/task runtime exists;
+- strict current TeamContract now carries `team_id`, `mission_id`, generation, member Task/role refs, capacity, status and terminal timestamp semantics;
+- TeamRuntime validates member Task/role/Worker bindings against MissionState after projection mutations;
+- Team projection is intentionally process-ephemeral: restore emits `team.projection-reset`, degrades execution mode to single, and preserves durable Task/Worker/obligation/evidence identities;
+- in-flight native child sessions are quarantined with `restart_reconcile_pending` and cannot callback before explicit reconciliation;
+- in-process semantic follow-up adopts the new TeamContract generation without replacing member Task/Worker identity;
+- focused P3 set 21/21 PASS; full controlled suite **561/561 PASS**, architecture lint 21 rules / deferred=0, validator PASS, backup count 0.
 
 ### M. Role cost / minimum-sufficient computation — **CLOSED current policy / PERMANENT INVARIANT**
 
@@ -422,9 +419,9 @@ The old stage order remains useful as a product-coverage lens, but later Constit
 | Stage 3 — Context Governor | **CLOSED current scope** | `governContext` is consumed by mission compaction snapshot; TaskRuntime has bounded context/artifact/PI/SemanticContext/native-summary paths. |
 | Stage 4 — Project Intelligence / Semantic Context / knowledge lifecycle | **CLOSED current implemented scope** | Durable PI reload/invalidation, SemanticContext contract/consumer, methodology learning/admission separation operational. |
 | Stage 5 — Human Decision / process / shell / isolation | **PARTIAL / HOST-LIMITED** | HumanDecision and shell policy operational. Process lifecycle DEGRADED; workspace isolation binding UNSUPPORTED. These must remain explicit release/support limitations unless future host support closes them. |
-| Stage 6 — Team / concurrency / crash recovery / fallback | **PARTIAL** | Concurrency/fallback/recovery operational; P3 Team restart contract requires explicit reconciliation. |
+| Stage 6 — Team / concurrency / crash recovery / fallback | **CLOSED current semantics** | Team is a strict process-ephemeral projection over durable Task/Worker state; restart reconciliation, concurrency, fallback and semantic generation behavior are deterministic. |
 | Stage 7 — Storage / setup / docs / packaging / release architecture | **CLOSED local architecture, docs-status residue** | Storage/provenance/release guards operational locally. Historical 06/08 status banners are stale. No real release authority. |
-| Stage 8 — independent subsystem/integration tests | **CLOSED current T1/T2 baseline** | 556/556 controlled suite plus architecture lint/validator. Tests remain evidence, not sole product proof. |
+| Stage 8 — independent subsystem/integration tests | **CLOSED current T1/T2 baseline** | 561/561 controlled suite plus architecture lint/validator. Tests remain evidence, not sole product proof. |
 | Stage 9 — Linux/OpenCode representative real-host acceptance | **PASS_MATERIAL_WITH_LIMITATIONS** | M12 OpenCode 1.18.16/aarch64 verified material primitives; process DEGRADED, workspace UNSUPPORTED, one independent-review terminal scenario was harness/model-behavior incomplete. Re-run targeted T3 after host-bound changes. |
 | Stage 10 — real release/publication acceptance | **NOT REQUESTED** | Requires explicit user authority and T4 receipts. |
 
@@ -442,9 +439,9 @@ Current OpenCode adapter does not expose full ordinary-shell PID/job ownership, 
 
 Creating a git worktree directory is not enough. Hi cannot claim workspace isolation until subsequent child execution is provably bound to that isolated workspace.
 
-### Browser / visual — not yet contract-bound
+### Browser / visual — HOST-LIMITED / contract-bound
 
-The methodology/evidence vocabulary exists, but host primitive availability is not yet an executable HostCapability/preflight truth. This is P2, not a PASS.
+`browser-execution` is an explicit HostCapability and is currently `UNSUPPORTED`; browser/visual methodologies require it and fail deterministic preflight before child spawn when unavailable. Do not infer support from MCP/tool naming or prompts.
 
 ### Semantic Context adapters
 
@@ -503,20 +500,19 @@ Closure:
 
 Exit satisfied: permission/compatibility/methodology selection cannot expose an execution or exit-proof surface that Core cannot reason about or the host cannot execute.
 
-### P3 — Team restart / semantic identity closure
+### P3 — Team restart / semantic identity closure — **CLOSED at `3837318`**
 
 Owner: TeamContract semantics + Mission/Worker persistence/recovery.
 
-Deliverables:
+Closure:
 
-- decide and document whether TeamState is intentionally process-ephemeral or persistable;
-- if ephemeral, prove restart safely degrades to single while preserving Task/Worker/obligation/evidence identity and reconciling old child ownership;
-- if persistent, define strict current TeamContract state, generation/expiry/member/worker refs and restart reconciliation;
-- maintain no-second-runtime invariant;
-- preserve in-process semantic follow-up generation behavior;
-- controlled crash/restart/compaction/follow-up tests.
+- TeamContract is a strict bounded projection over canonical TaskRuntime, not a second runtime;
+- Team projection is intentionally process-ephemeral while Task/Worker/obligation/evidence identity remains durable;
+- restart explicitly emits `team.projection-reset`, degrades to single, quarantines in-flight child ownership, and preserves durable semantic identity;
+- semantic follow-up adopts Team generation without replacing member Task/Worker refs;
+- focused P3 set 21/21 PASS; full controlled suite **561/561 PASS**; architecture lint 21 rules / deferred=0; validator PASS; backup count 0.
 
-Exit: restart never silently replaces a Team semantic trajectory with a weaker unrelated default or leaves old executor ownership unresolved.
+Exit satisfied: restart does not silently recreate a weaker unrelated Team trajectory and does not leave old executor ownership unquarantined.
 
 ### P4 — Residual contract/schema reality closure
 
@@ -526,7 +522,7 @@ Audit explicitly:
 
 - C09/S09 ExecutionPlan — confirm dynamic Mission Task DAG/gates is sufficient derived owner;
 - C10/S10 Topology — confirm current snapshot/validator boundary is sufficient;
-- C11/S11 Team — resolve via P3;
+- C11/S11 Team — closed by P3; confirm residual catalog/banner classification only, do not reopen runtime semantics without contradictory evidence;
 - C12 RetryAttempt — confirm Worker attempt/fallback ledger remains natural owner;
 - C13/S12 Recovery — confirm TaskRuntime/continuation recovery has no duplicate/missing owner;
 - C25/S27 HostAgentProjection — confirm generator/receipt/agent-binding fully covers host projection schema;
@@ -677,10 +673,10 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**Start P3 only.**
+**Start P4 only.**
 
-Re-check real HEAD/status, then audit TeamState ownership across in-process TeamRuntime, MissionState persistence, worker/session restart reconciliation and semantic generation changes. Decide from existing contract intent whether TeamState is intentionally process-ephemeral or requires canonical persistence; do not persist it merely because the old schema suggested a TeamContract.
+Re-check real HEAD/status, then audit the residual C/S responsibility set from Section 10 against current canonical owners and real consumers before creating any new state or module. Confirm derived/subsumed responsibilities where the existing owner is sufficient; implement only a responsibility that has a proven missing producer/consumer/executor chain. Explicitly classify C28/S26 TelemetryEvent and C29 ArchitectureDecision rather than inventing machine state without a product consumer.
 
-Do **not** start P4–P8 in parallel unless P3 investigation proves a dependency requires a narrowly scoped prerequisite. Do not enter real M13/release work without explicit user request.
+Do **not** start P5–P8 in parallel unless P4 investigation proves a narrowly scoped prerequisite. Do not enter real M13/release work without explicit user request.
 
-When P3 is coherently closed, run controlled crash/restart/compaction/follow-up verification, create a local commit, update this MASTER’s status/next action, and continue to P4.
+When P4 is coherently closed, run focused + justified controlled verification, create a local commit, update this MASTER’s status/next action, and continue to P5.
