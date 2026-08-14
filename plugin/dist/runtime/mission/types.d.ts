@@ -1,4 +1,7 @@
 import type { HiPrimaryRole } from '../roles/catalog.js';
+import type { EvidenceOutcome, WorkerResult } from '../../contracts/worker-result.js';
+export { WORKER_EVIDENCE_KINDS } from '../../contracts/worker-result.js';
+export type { EvidenceOutcome, MethodologyObservation, WorkerEvidenceKind, WorkerResult, WorkerResultStatus } from '../../contracts/worker-result.js';
 export type MissionStatus = 'active' | 'waiting-user' | 'completed' | 'stopped' | 'failed';
 export type Risk = 'low' | 'medium' | 'high' | 'authority-boundary';
 export type ExecutionMode = 'single' | 'parallel' | 'team';
@@ -7,13 +10,9 @@ export type ObligationStatus = 'open' | 'closed' | 'blocked';
 export type ObligationKind = 'analysis' | 'implementation' | 'verification' | 'review' | 'authority';
 export type TaskStatus = 'created' | 'queued' | 'running' | 'waiting' | 'completed' | 'failed' | 'cancelled' | 'blocked';
 export type WorkerStatus = 'created' | 'queued' | 'starting' | 'ready' | 'busy' | 'completed' | 'failed' | 'cancelled';
-export type WorkerResultStatus = 'DONE' | 'FIX_REQUIRED' | 'NEEDS_CONTEXT' | 'BLOCKED' | 'FAILED';
 export type Category = 'quick' | 'standard' | 'deep' | 'visual' | 'critical';
 export type GateStatus = 'open' | 'ready' | 'blocked' | 'closed';
 export type GateKind = 'verification' | 'user-authority' | 'reviewer' | 'prerequisite-task' | 'precondition' | 'rollback';
-export type EvidenceOutcome = 'pending' | 'passed' | 'failed' | 'environment-issue';
-export declare const WORKER_EVIDENCE_KINDS: readonly ["targeted-tests", "typecheck", "lint", "build", "changed-surface-sanity", "review-evidence", "decision-evidence", "diagnostic-evidence", "measurement-evidence", "browser-evidence", "visual-evidence", "accessibility-evidence", "source-provenance-evidence"];
-export type WorkerEvidenceKind = typeof WORKER_EVIDENCE_KINDS[number];
 export interface Obligation {
     id: string;
     status: ObligationStatus;
@@ -208,37 +207,6 @@ export interface LedgerEvent {
     task_id?: string;
     worker_id?: string;
     payload?: Record<string, unknown>;
-}
-export interface MethodologyObservation {
-    key: string;
-    procedure: string;
-    trigger: string;
-    do_not_trigger: string;
-    exit_condition: string;
-    evidence: string[];
-}
-export interface WorkerResult {
-    status: WorkerResultStatus;
-    summary: string;
-    changed_files: string[];
-    scope_expansions?: Array<{
-        file: string;
-        reason: string;
-        necessary: boolean;
-    }>;
-    evidence: Array<{
-        kind: WorkerEvidenceKind;
-        summary: string;
-        scope?: string[];
-        pass?: boolean;
-        outcome?: EvidenceOutcome;
-        reason?: string;
-    }>;
-    open_issues: string[];
-    needs_context: string[];
-    context_gap?: 'scope' | 'iterative' | 'none';
-    failure_finding?: 'ci-build' | 'unknown-root-cause' | 'none';
-    methodology_observations?: MethodologyObservation[];
 }
 export interface VerificationPolicy {
     requiredKinds: string[];

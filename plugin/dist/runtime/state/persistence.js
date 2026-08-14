@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from '
 import { dirname } from 'node:path';
 import { runtimeStatePath } from '../storage/locations.js';
 import { WORKER_EVIDENCE_KINDS } from '../mission/types.js';
+import { isWorkerResultContract } from '../../contracts/worker-result.js';
 import { HI_METHODOLOGY_PRODUCERS, HI_METHODOLOGY_SIGNAL_CATALOG, HI_METHODOLOGY_TRIGGER_SOURCES } from '../../generated/methodology-policy.js';
 import { SEMANTIC_CAPABILITIES, SEMANTIC_VERIFICATION_KINDS } from '../intent/semantic-assessment.js';
 export const RUNTIME_STATE_SCHEMA = 7;
@@ -11,8 +12,6 @@ function recordArray(value) { return Array.isArray(value) && value.every(isRecor
 const TASK_STATUSES = new Set(['created', 'queued', 'running', 'waiting', 'completed', 'failed', 'cancelled', 'blocked']);
 const WORKER_STATUSES = new Set(['created', 'queued', 'starting', 'ready', 'busy', 'completed', 'failed', 'cancelled']);
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
-const WORKER_RESULT_STATUSES = new Set(['DONE', 'FIX_REQUIRED', 'NEEDS_CONTEXT', 'BLOCKED', 'FAILED']);
-const WORKER_EVIDENCE_KIND_SET = new Set(WORKER_EVIDENCE_KINDS);
 const EVIDENCE_OUTCOMES = new Set(['pending', 'passed', 'failed', 'environment-issue']);
 const MISSION_EVIDENCE_KINDS = new Set([...WORKER_EVIDENCE_KINDS, 'review-input', 'lsp-diagnostics']);
 const OBLIGATION_KINDS = new Set(['analysis', 'implementation', 'verification', 'review', 'authority']);
@@ -67,37 +66,6 @@ function validTemporaryMutation(value) {
             return false;
     return value.resolved_at === undefined || typeof value.resolved_at === 'number';
 }
-function validWorkerEvidence(value) {
-    if (!isRecord(value) || typeof value.kind !== 'string' || !WORKER_EVIDENCE_KIND_SET.has(value.kind) || typeof value.summary !== 'string')
-        return false;
-    if (value.scope !== undefined && !stringArray(value.scope))
-        return false;
-    if (value.pass !== undefined && typeof value.pass !== 'boolean')
-        return false;
-    if (value.outcome !== undefined && (typeof value.outcome !== 'string' || !EVIDENCE_OUTCOMES.has(value.outcome)))
-        return false;
-    if (value.reason !== undefined && typeof value.reason !== 'string')
-        return false;
-    return true;
-}
-function validMethodologyObservation(value) {
-    return isRecord(value) && typeof value.key === 'string' && typeof value.procedure === 'string' && typeof value.trigger === 'string' && typeof value.do_not_trigger === 'string' && typeof value.exit_condition === 'string' && stringArray(value.evidence) && value.evidence.every(kind => WORKER_EVIDENCE_KIND_SET.has(kind));
-}
-function validWorkerResult(value) {
-    if (!isRecord(value) || typeof value.status !== 'string' || !WORKER_RESULT_STATUSES.has(value.status) || typeof value.summary !== 'string')
-        return false;
-    if (!stringArray(value.changed_files) || !Array.isArray(value.evidence) || !value.evidence.every(validWorkerEvidence) || !stringArray(value.open_issues) || !stringArray(value.needs_context))
-        return false;
-    if (value.scope_expansions !== undefined && (!Array.isArray(value.scope_expansions) || !value.scope_expansions.every(item => isRecord(item) && typeof item.file === 'string' && typeof item.reason === 'string' && typeof item.necessary === 'boolean')))
-        return false;
-    if (value.context_gap !== undefined && !['scope', 'iterative', 'none'].includes(String(value.context_gap)))
-        return false;
-    if (value.failure_finding !== undefined && !['ci-build', 'unknown-root-cause', 'none'].includes(String(value.failure_finding)))
-        return false;
-    if (value.methodology_observations !== undefined && (!Array.isArray(value.methodology_observations) || !value.methodology_observations.every(validMethodologyObservation)))
-        return false;
-    return true;
-}
 function validMethodologyNeed(value) {
     if (!isRecord(value) || typeof value.name !== 'string' || !/^hi-[a-z0-9-]+$/.test(value.name))
         return false;
@@ -126,7 +94,7 @@ function validTask(value) {
         return false;
     if (!stringArray(value.scope) || !stringArray(value.constraints) || !stringArray(value.dependencies) || !stringArray(value.requiredEvidence) || !stringArray(value.obligation_ids) || !recordArray(value.context_artifacts) || !stringArray(value.gate_ids))
         return false;
-    if (value.result !== undefined && !validWorkerResult(value.result))
+    if (value.result !== undefined && !isWorkerResultContract(value.result))
         return false;
     if (value.worker_id !== undefined && typeof value.worker_id !== 'string')
         return false;

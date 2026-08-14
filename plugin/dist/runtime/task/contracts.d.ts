@@ -1,4 +1,4 @@
-import { type WorkerResult } from '../mission/types.js';
+export { normalizeWorkerResult } from '../../contracts/worker-result.js';
 export interface WorkerHandoff {
     objective: string;
     scope: string[];
@@ -18,4 +18,3 @@ export interface WorkerHandoff {
     };
 }
 export declare function workerHandoffText(h: WorkerHandoff, maxChars?: number): string;
-export declare function normalizeWorkerResult(raw: unknown): WorkerResult;

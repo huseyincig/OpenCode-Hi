@@ -1,4 +1,7 @@
 import type { HiPrimaryRole } from '../roles/catalog.js'
+import type { EvidenceOutcome,WorkerResult } from '../../contracts/worker-result.js'
+export { WORKER_EVIDENCE_KINDS } from '../../contracts/worker-result.js'
+export type { EvidenceOutcome,MethodologyObservation,WorkerEvidenceKind,WorkerResult,WorkerResultStatus } from '../../contracts/worker-result.js'
 export type MissionStatus = 'active' | 'waiting-user' | 'completed' | 'stopped' | 'failed'
 export type Risk = 'low' | 'medium' | 'high' | 'authority-boundary'
 export type ExecutionMode = 'single' | 'parallel' | 'team'
@@ -7,13 +10,9 @@ export type ObligationStatus = 'open' | 'closed' | 'blocked'
 export type ObligationKind = 'analysis' | 'implementation' | 'verification' | 'review' | 'authority'
 export type TaskStatus = 'created' | 'queued' | 'running' | 'waiting' | 'completed' | 'failed' | 'cancelled' | 'blocked'
 export type WorkerStatus = 'created' | 'queued' | 'starting' | 'ready' | 'busy' | 'completed' | 'failed' | 'cancelled'
-export type WorkerResultStatus = 'DONE' | 'FIX_REQUIRED' | 'NEEDS_CONTEXT' | 'BLOCKED' | 'FAILED'
 export type Category = 'quick' | 'standard' | 'deep' | 'visual' | 'critical'
 export type GateStatus = 'open'|'ready'|'blocked'|'closed'
 export type GateKind = 'verification'|'user-authority'|'reviewer'|'prerequisite-task'|'precondition'|'rollback'
-export type EvidenceOutcome = 'pending'|'passed'|'failed'|'environment-issue'
-export const WORKER_EVIDENCE_KINDS=['targeted-tests','typecheck','lint','build','changed-surface-sanity','review-evidence','decision-evidence','diagnostic-evidence','measurement-evidence','browser-evidence','visual-evidence','accessibility-evidence','source-provenance-evidence'] as const
-export type WorkerEvidenceKind = typeof WORKER_EVIDENCE_KINDS[number]
 
 export interface Obligation { id:string; status:ObligationStatus; kind:ObligationKind; summary:string; requiredEvidence?:string[]; blocker?:string; closedAt?:number }
 export interface ContextArtifact { id:string; kind:string; uri?:string; title?:string; summary?:string; sha256?:string; added_at:number }
@@ -28,8 +27,6 @@ export interface MethodologyProvenance { name:string; provider:'project'|'person
 export interface WorkerState { id:string; task_id:string; role:string; category:Category; session_id?:string; parent_session_id:string; parent_mission_id?:string; forked_from_session_id?:string; model?:string; model_variant?:string; fallbacks:string[]; selected_methodologies:string[]; loaded_methodologies:string[]; methodologies:MethodologyProvenance[]; fingerprint:string; status:WorkerStatus; generation_at_spawn?:number; started_at?:number; completed_at?:number; last_result_digest?:string; last_result_at?:number; write_set?:string[]; native_state_hash?:string; native_diff_baseline?:Record<string,string>; native_diff_final?:Record<string,string>; restart_reconcile_pending?:boolean; runtime_recovery_pending?:boolean; runtime_recovery_attempt?:number; last_runtime_failure_kind?:string; runtime_fallback_exhausted?:boolean; model_selection_reason?:string[]; fallback_history?:Array<{from?:string;to:string;variant?:string;reason:string;phase:'dispatch'|'runtime';at:number}>; effective_model?:string; effective_model_variant?:string; effective_model_verified?:boolean; effective_model_variant_verified?:boolean; effective_model_source?:string; effective_model_observed_at?:number; semantic_pause_revision?:number }
 export interface EvidenceItem { id:string; kind:string; summary:string; scope:string[]; source?:string; source_session_id?:string; source_state_hash?:string; task_id?:string; obligation_ids?:string[]; observed_at:number; invalidated_at?:number; pass?:boolean; outcome?:EvidenceOutcome; reason?:string }
 export interface LedgerEvent { id:string; at:number; mission_id:string; type:string; task_id?:string; worker_id?:string; payload?:Record<string,unknown> }
-export interface MethodologyObservation { key:string; procedure:string; trigger:string; do_not_trigger:string; exit_condition:string; evidence:string[] }
-export interface WorkerResult { status:WorkerResultStatus; summary:string; changed_files:string[]; scope_expansions?:Array<{file:string;reason:string;necessary:boolean}>; evidence:Array<{kind:WorkerEvidenceKind;summary:string;scope?:string[];pass?:boolean;outcome?:EvidenceOutcome;reason?:string}>; open_issues:string[]; needs_context:string[]; context_gap?:'scope'|'iterative'|'none'; failure_finding?:'ci-build'|'unknown-root-cause'|'none'; methodology_observations?:MethodologyObservation[] }
 export interface VerificationPolicy { requiredKinds:string[]; requireFresh:boolean; requireReview:boolean; allowWorkerReportedEvidence:boolean }
 export interface HiMethodologyNeed { name:string; signal:string; trigger_source:string; producer:string; reason:string; created_at:number; task_id?:string; obligation_id?:string }
 export interface SemanticAssessmentState { status:'pending'|'assessed'; phase:'initial'|'followup'; revision:number; source:'host-primary'; pending_text:string; assessed_at?:number }

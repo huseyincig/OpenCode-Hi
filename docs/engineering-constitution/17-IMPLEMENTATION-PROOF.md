@@ -52,13 +52,27 @@ Rows below are intentionally `PENDING` until code exists.
 | M5 | ConfigOption catalog | BA03 + config executor lint | T1/T2 | SentinelX blocks direct config-catalog mutation in this environment | BLOCKED_BY_HOST_POLICY |
 | M6 | Model capability/identity | ModelCapabilityProfile host-inventory normalization + identity reconciler + effective-model evidence; focused 17/17 PASS; controlled full suite 475/475 PASS; validator PASS | T1/T2 | `e7c3c96`; requested/projected WorkerState snapshot wiring blocked by SentinelX mutation policy; no unwired state committed | PARTIAL_PASS |
 | M7 | Host capability registry | 16 contract-backed OpenCode capabilities; product runtime gates consume worker-runtime/session-revert contracts; doctor reports status/verification/semantic loss; focused 43/43 PASS; controlled full suite 480/480 PASS; validator PASS | T1/T2 local; T3 still pending | commit pending | PASS_LOCAL — REAL-HOST ACCEPTANCE PENDING |
-| M8 | Task/Worker/Result/Evidence contracts | BA07–BA09 + recovery/team/task regression | T1/T2 | — | PENDING |
+| M8 | Task/Worker/Result/Evidence contracts | WorkerResult canonical type/normalizer/strict validator extracted; persistence and parser share one owner; focused 57/57 PASS; controlled full suite 485/485 PASS; validator PASS | T1/T2 | commit pending | PARTIAL_PASS — EVIDENCE/TASK/WORKER EXTRACTION REMAINS |
 | M9 | Context/Artifact/PI/Human/Authority/Storage | BA06/10/11 + storage lint | T1/T2 | — | PENDING |
 | M10 | common generator/lint closure | BA12 + HI001–HI020 migrated rules | T0/T1/T2 | — | PENDING |
 | M11 | deterministic full closure | build + validator + full controlled suite | T0/T1/T2 | — | PENDING |
 | M12 | real-host acceptance | OpenCode version-bound native receipts | T3 | — | PENDING |
 | M13 | release readiness | explicit authority + external receipts | T4 | — | NOT REQUESTED |
 
+
+
+### M8 WorkerResult contract checkpoint
+
+Implemented:
+
+- added canonical `plugin/src/contracts/worker-result.ts` owning WorkerResult status, evidence kinds, evidence/outcome types, methodology observations, scope expansions, bounded normalization and strict validation;
+- `mission/types.ts` now re-exports WorkerResult contract types instead of defining a second shape;
+- `runtime/task/contracts.ts` retains handoff construction only and re-exports the canonical WorkerResult normalizer;
+- persistence now validates persisted task results through `isWorkerResultContract()` instead of maintaining a separate WorkerResult/evidence schema;
+- strict negative tests reject unknown result fields, unknown evidence kinds/outcomes and methodology observations that do not cite exact canonical evidence kinds;
+- compatibility aliases such as `PASS` and `USER_ACTION_REQUIRED` normalize at the parser boundary but canonical stored status remains `DONE` / `BLOCKED`.
+
+Evidence: focused WorkerResult/persistence/recovery suite 57/57 PASS; controlled isolated-HOME/XDG full suite 485/485 PASS; validator PASS; diff check clean. Remaining M8 work is Evidence/VerificationEnvelope/ReviewFinding ownership, followed by Task/Worker state extraction.
 
 
 ### M7 host capability registry checkpoint

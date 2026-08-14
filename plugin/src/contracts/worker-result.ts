@@ -1,0 +1,65 @@
+export type WorkerResultStatus = 'DONE'|'FIX_REQUIRED'|'NEEDS_CONTEXT'|'BLOCKED'|'FAILED'
+export type EvidenceOutcome = 'pending'|'passed'|'failed'|'environment-issue'
+export const WORKER_EVIDENCE_KINDS=['targeted-tests','typecheck','lint','build','changed-surface-sanity','review-evidence','decision-evidence','diagnostic-evidence','measurement-evidence','browser-evidence','visual-evidence','accessibility-evidence','source-provenance-evidence'] as const
+export type WorkerEvidenceKind = typeof WORKER_EVIDENCE_KINDS[number]
+export interface WorkerEvidence { kind:WorkerEvidenceKind; summary:string; scope?:string[]; pass?:boolean; outcome?:EvidenceOutcome; reason?:string }
+export interface MethodologyObservation { key:string; procedure:string; trigger:string; do_not_trigger:string; exit_condition:string; evidence:WorkerEvidenceKind[] }
+export interface ScopeExpansion { file:string; reason:string; necessary:boolean }
+export interface WorkerResult { status:WorkerResultStatus; summary:string; changed_files:string[]; scope_expansions?:ScopeExpansion[]; evidence:WorkerEvidence[]; open_issues:string[]; needs_context:string[]; context_gap?:'scope'|'iterative'|'none'; failure_finding?:'ci-build'|'unknown-root-cause'|'none'; methodology_observations?:MethodologyObservation[] }
+
+const STATUS_ALIAS:Record<string,WorkerResultStatus>={DONE:'DONE',PASS:'DONE',SUCCESS:'DONE',SUCCEEDED:'DONE',DONE_WITH_CONCERNS:'DONE',FIX_REQUIRED:'FIX_REQUIRED',NEEDS_CONTEXT:'NEEDS_CONTEXT',USER_ACTION_REQUIRED:'BLOCKED',BLOCKED:'BLOCKED',NO_PROGRESS:'FIX_REQUIRED',FAILED:'FAILED',FAIL:'FAILED'}
+const KIND_SET=new Set<string>(WORKER_EVIDENCE_KINDS)
+const OUTCOME_SET=new Set<string>(['pending','passed','failed','environment-issue'])
+const RESULT_KEYS=new Set(['status','summary','changed_files','scope_expansions','evidence','open_issues','needs_context','context_gap','failure_finding','methodology_observations'])
+const EVIDENCE_KEYS=new Set(['kind','summary','scope','pass','outcome','reason'])
+const OBS_KEYS=new Set(['key','procedure','trigger','do_not_trigger','exit_condition','evidence'])
+const EXPANSION_KEYS=new Set(['file','reason','necessary'])
+function record(v:unknown):v is Record<string,unknown>{return Boolean(v)&&typeof v==='object'&&!Array.isArray(v)}
+function stringArray(v:unknown):v is string[]{return Array.isArray(v)&&v.every(x=>typeof x==='string')}
+function onlyKeys(v:Record<string,unknown>,allowed:Set<string>):boolean{return Object.keys(v).every(k=>allowed.has(k))}
+function clip(v:unknown,max:number):string{return String(v??'').slice(0,max)}
+function cleanKey(v:unknown):string{return String(v??'').trim().toLowerCase().replace(/[^a-z0-9-]+/g,'-').replace(/^-+|-+$/g,'')}
+
+export function isWorkerEvidenceContract(v:unknown):v is WorkerEvidence{
+  if(!record(v)||!onlyKeys(v,EVIDENCE_KEYS)||typeof v.kind!=='string'||!KIND_SET.has(v.kind)||typeof v.summary!=='string')return false
+  if(v.scope!==undefined&&!stringArray(v.scope))return false
+  if(v.pass!==undefined&&typeof v.pass!=='boolean')return false
+  if(v.outcome!==undefined&&(typeof v.outcome!=='string'||!OUTCOME_SET.has(v.outcome)))return false
+  return v.reason===undefined||typeof v.reason==='string'
+}
+export function isMethodologyObservationContract(v:unknown):v is MethodologyObservation{
+  return record(v)&&onlyKeys(v,OBS_KEYS)&&typeof v.key==='string'&&Boolean(v.key)&&typeof v.procedure==='string'&&Boolean(v.procedure)&&typeof v.trigger==='string'&&Boolean(v.trigger)&&typeof v.do_not_trigger==='string'&&Boolean(v.do_not_trigger)&&typeof v.exit_condition==='string'&&Boolean(v.exit_condition)&&Array.isArray(v.evidence)&&v.evidence.length>0&&v.evidence.every(x=>typeof x==='string'&&KIND_SET.has(x))
+}
+export function isWorkerResultContract(v:unknown):v is WorkerResult{
+  if(!record(v)||!onlyKeys(v,RESULT_KEYS)||typeof v.status!=='string'||!Object.values(STATUS_ALIAS).includes(v.status as WorkerResultStatus)||typeof v.summary!=='string')return false
+  if(!stringArray(v.changed_files)||!Array.isArray(v.evidence)||!v.evidence.every(isWorkerEvidenceContract)||!stringArray(v.open_issues)||!stringArray(v.needs_context))return false
+  if(v.scope_expansions!==undefined&&(!Array.isArray(v.scope_expansions)||!v.scope_expansions.every(x=>record(x)&&onlyKeys(x,EXPANSION_KEYS)&&typeof x.file==='string'&&typeof x.reason==='string'&&typeof x.necessary==='boolean')))return false
+  if(v.context_gap!==undefined&&!['scope','iterative','none'].includes(String(v.context_gap)))return false
+  if(v.failure_finding!==undefined&&!['ci-build','unknown-root-cause','none'].includes(String(v.failure_finding)))return false
+  return v.methodology_observations===undefined||(Array.isArray(v.methodology_observations)&&v.methodology_observations.every(isMethodologyObservationContract))
+}
+
+function normalizeEvidence(raw:unknown):WorkerEvidence[]{
+  const values=Array.isArray(raw)?raw:(record(raw)?Object.entries(raw).map(([kind,value])=>({kind,summary:typeof value==='string'?value:JSON.stringify(value)})):[])
+  return values.slice(0,40).flatMap((v:any)=>{if(!record(v))return[];const kind=String(v.kind??'') as WorkerEvidenceKind;if(!KIND_SET.has(kind))return[];const outcome=typeof v.outcome==='string'&&OUTCOME_SET.has(v.outcome)?v.outcome as EvidenceOutcome:undefined;return[{kind,summary:clip(v.summary,1000),scope:Array.isArray(v.scope)?v.scope.map(String).slice(0,50):undefined,pass:typeof v.pass==='boolean'?v.pass:undefined,outcome,reason:typeof v.reason==='string'?clip(v.reason,1000):undefined}]})
+}
+function normalizeMethodologyObservations(raw:unknown):MethodologyObservation[]|undefined{
+  if(!Array.isArray(raw))return undefined
+  const out=raw.slice(0,8).flatMap((v:any)=>{if(!record(v))return[];const key=cleanKey(v.key),procedure=clip(v.procedure,1600),trigger=clip(v.trigger,600),doNotTrigger=clip(v.do_not_trigger,600),exitCondition=clip(v.exit_condition,600),evidence=Array.isArray(v.evidence)?v.evidence.map(String).filter(x=>KIND_SET.has(x)).slice(0,12) as WorkerEvidenceKind[]:[];if(!key||!procedure||!trigger||!doNotTrigger||!exitCondition||!evidence.length)return[];return[{key,procedure,trigger,do_not_trigger:doNotTrigger,exit_condition:exitCondition,evidence}]})
+  return out.length?out:undefined
+}
+function evidenceFailed(e:WorkerEvidence):boolean{return e.outcome==='failed'||e.pass===false}
+function evidencePassed(e:WorkerEvidence):boolean{return e.outcome==='passed'||e.pass===true}
+function reconcileFailureFinding(finding:WorkerResult['failure_finding'],evidence:WorkerEvidence[]):WorkerResult['failure_finding']{
+  if(finding==='ci-build')return evidence.some(e=>e.kind==='build'&&evidenceFailed(e))?'ci-build':undefined
+  if(finding==='unknown-root-cause')return evidence.some(e=>e.kind==='diagnostic-evidence'&&evidencePassed(e))?undefined:'unknown-root-cause'
+  return finding
+}
+export function normalizeWorkerResult(raw:unknown):WorkerResult{
+  const x=record(raw)?raw:{},status=STATUS_ALIAS[String(x.status??'').toUpperCase()]??'FAILED',open=Array.isArray(x.open_issues)?x.open_issues.map(String):[]
+  if(String(x.status??'').toUpperCase()==='USER_ACTION_REQUIRED'&&!open.some(v=>v.includes('USER_ACTION_REQUIRED')))open.unshift('USER_ACTION_REQUIRED')
+  const contextGap=['scope','iterative','none'].includes(String(x.context_gap))?String(x.context_gap) as WorkerResult['context_gap']:undefined
+  const rawFinding=['ci-build','unknown-root-cause','none'].includes(String(x.failure_finding))?String(x.failure_finding) as WorkerResult['failure_finding']:undefined
+  const evidence=normalizeEvidence(x.evidence)
+  return{status,summary:typeof x.summary==='string'?clip(x.summary,4000):'',changed_files:Array.isArray(x.changed_files)?x.changed_files.filter(v=>typeof v==='string').map(String).slice(0,200):[],scope_expansions:Array.isArray(x.scope_expansions)?x.scope_expansions.filter(record).slice(0,80).map(v=>({file:String(v.file??''),reason:clip(v.reason,600),necessary:v.necessary===true})).filter(v=>v.file):[],evidence,open_issues:open.slice(0,30),needs_context:Array.isArray(x.needs_context)?x.needs_context.map(String).slice(0,30):[],context_gap:contextGap,failure_finding:reconcileFailureFinding(rawFinding,evidence),methodology_observations:normalizeMethodologyObservations(x.methodology_observations)}
+}
