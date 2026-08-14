@@ -1,0 +1,247 @@
+{
+  "schema": 1,
+  "type": "opencode-hi-real-host-acceptance",
+  "release": "0.1.0",
+  "captured_at": "2026-08-14",
+  "status": "PASS_MATERIAL_T3_WITH_INDEPENDENT_REVIEW_HARNESS_INCOMPLETE",
+  "source_binding": {
+    "git_head": "753043d0f6c9d421e236dff0bf2c9f5ebe1a9c1b",
+    "branch": "main",
+    "worktree": "/workspace/OpenCode-Hi",
+    "worktree_clean_before_receipt": true,
+    "exact_head": true,
+    "plugin_spec": "file:///workspace/OpenCode-Hi/plugin/dist/plugin.js",
+    "runtime_files": {
+      "plugin/dist/plugin.js": {
+        "sha256": "5506333381cca19395cd920282a5a4fb01ac7410d18372b36f03e6ac87bf0c84",
+        "git_blob": "61eae55181777a7d0728e51347cc3252e5ea0cf3",
+        "matches_head": true
+      },
+      "plugin/dist/contracts/host-capability.js": {
+        "sha256": "b1febb43fc23d42e475d68fc0c1b92211da198b17ace21697dc19f2c15ed0e5d",
+        "git_blob": "e424945dceba170cf594c6cb9b99055180a94ee5",
+        "matches_head": true
+      },
+      "plugin/dist/opencode/capabilities.js": {
+        "sha256": "f050f97c667e3b47df4cd54820fac4fcc42feb1ca15277f7be7a03dc769d07b3",
+        "git_blob": "ee981482cb3a1abbbd2170db1a61a10439d5ef4a",
+        "matches_head": true
+      }
+    }
+  },
+  "host": {
+    "product": "OpenCode CLI/server",
+    "version": "1.18.16",
+    "os": "Linux",
+    "kernel": "6.1.141",
+    "arch": "aarch64",
+    "runtime": "bun-1.3.14",
+    "isolated_environment": {
+      "home": "/tmp/opencode-hi-m12-home",
+      "xdg_state": "/tmp/opencode-hi-m12-state",
+      "xdg_data": "/tmp/opencode-hi-m12-data",
+      "xdg_config": "/tmp/opencode-hi-m12-config",
+      "xdg_cache": "/tmp/opencode-hi-m12-cache"
+    },
+    "provider_connected": [
+      "opencode"
+    ],
+    "provider_models_observed": [
+      "laguna-s-2.1-free",
+      "nemotron-3.5-lightning-free",
+      "deepseek-v4-flash-free",
+      "nemotron-3-ultra-free",
+      "hy3-free",
+      "mimo-v2.5-free",
+      "big-pickle"
+    ]
+  },
+  "gates": {
+    "native_plugin_loader": "PASS_T3",
+    "generated_hi_agent_projection": "PASS_T3",
+    "native_skill_discovery": "PASS_T3",
+    "server_health_version_identity": "PASS_T3",
+    "provider_inventory": "PASS_T3",
+    "session_create": "PASS_T3",
+    "session_prompt": "PASS_T3",
+    "session_abort": "PASS_T3",
+    "session_status": "PASS_T3",
+    "child_session_list": "PASS_T3",
+    "session_todo": "PASS_T3",
+    "session_diff": "PASS_T3",
+    "session_fork": "PASS_T3",
+    "session_summarize": "PASS_T3",
+    "session_revert": "PASS_T3",
+    "session_unrevert": "PASS_T3",
+    "worker_runtime_child_create_agent_model": "PASS_T3",
+    "native_permission_once_scope": "PASS_T3",
+    "native_permission_reject": "PASS_T3",
+    "native_methodology_load": "PASS_T3",
+    "structured_log": "PASS_T3",
+    "process_lifecycle": "DEGRADED_CONFIRMED_T3",
+    "workspace_isolation_binding": "UNSUPPORTED_CONFIRMED_T3",
+    "independent_review_terminal_worker_result": "HARNESS_MODEL_BEHAVIOR_INCOMPLETE"
+  },
+  "evidence": {
+    "loader": {
+      "resolved_plugin_origin": "file:///workspace/OpenCode-Hi/plugin/dist/plugin.js",
+      "agents": [
+        "architect",
+        "coder",
+        "manager",
+        "qa-reviewer",
+        "repository-explorer",
+        "security-reviewer",
+        "visual-qa",
+        "working-manager"
+      ],
+      "skill_sample": {
+        "name": "hi-code-review",
+        "location": "/workspace/OpenCode-Hi/skills/hi-code-review/SKILL.md"
+      }
+    },
+    "server": {
+      "health": {
+        "healthy": true,
+        "version": "1.18.16"
+      },
+      "provider_connected": [
+        "opencode"
+      ],
+      "provider_catalog_count": 185,
+      "runtime_inventory_after_chat": 7
+    },
+    "session_primitives": {
+      "parent_session": "ses_000dddd90ffea63kyhW2jlcO5B",
+      "child_session": "ses_000dddd22ffeKcAtaO4xPcvE8n",
+      "child_parent_id_matches": true,
+      "todo": [],
+      "diff": [],
+      "fork_session": "ses_000dddbf6ffe7Dijqh3VdCZ2uE",
+      "child_abort": true
+    },
+    "prompt_round_trip": {
+      "session": "ses_000dd58d5ffebauE6xfH3mYviK",
+      "agent": "working-manager",
+      "provider": "opencode",
+      "model": "deepseek-v4-flash-free",
+      "semantic_assessment_tool": "hi_intent_assess",
+      "finish": "stop",
+      "text": "M12_OK",
+      "mission_status": "completed"
+    },
+    "worker_runtime": {
+      "parent_session": "ses_000dcd80affeZ9T9BskJsQShaO",
+      "child_session": "ses_000da3f7fffeC7B1n3721xNhIu",
+      "agent": "qa-reviewer",
+      "provider": "opencode",
+      "model": "laguna-s-2.1-free",
+      "variant": "medium",
+      "directory": "/tmp/hi-m12-server2-IIz9JR",
+      "workspace_id": null,
+      "child_permission_denials": [
+        "edit",
+        "write",
+        "apply_patch",
+        "task",
+        "webfetch",
+        "websearch",
+        "question",
+        "hi-control-plane-tools"
+      ],
+      "parent_control_plane_tools_observed": [
+        "hi_task_start",
+        "hi_task_await",
+        "hi_task_list"
+      ],
+      "methodology_allowlist": [
+        "hi-regression-review",
+        "hi-code-review"
+      ]
+    },
+    "permission_runtime": {
+      "first_bash_once": "per_fff234766001V6oLDIIxsmDR23",
+      "second_bash_once": "per_fff24bbc6001wanWMmc5cIM3Wb",
+      "parent_polling_sleep_rejected": "per_fff25def50012Fz3yzQTMWa3Tv",
+      "child_env_check_once": "per_fff25df2b001lRSYa0Fn1ZMFud",
+      "child_skill_path_check_once": "per_fff26c253001NhweiBOaJyQpFm",
+      "child_sanity_check_once": "per_fff2824d2001VGF0ulBKTAjTSH",
+      "once_did_not_persist_to_next_bash": true,
+      "persistent_approval_used": false
+    },
+    "native_skill_load": {
+      "session": "ses_000d72f10ffeEnCE5QFyzMVqvP",
+      "agent": "qa-reviewer",
+      "provider": "opencode",
+      "model": "deepseek-v4-flash-free",
+      "tool": "skill",
+      "input": {
+        "name": "hi-code-review"
+      },
+      "state": "completed",
+      "title": "Loaded skill: hi-code-review",
+      "terminal_text": "M12_SKILL_OK"
+    },
+    "revert_unrevert_summarize": {
+      "session": "ses_000d6bc70ffeTpBT6Kpzwq9SJG",
+      "marker_message": "msg_fff2943f6001E8K1xl6Bt7dfbb",
+      "revert_bound_message": true,
+      "unrevert_removed_revert_state": true,
+      "summarize_http": 200,
+      "summarize_return": true,
+      "compaction_agent": "compaction",
+      "compaction_provider": "opencode",
+      "compaction_model": "deepseek-v4-flash-free",
+      "compaction_finish": "stop"
+    },
+    "negative_capability_truth": {
+      "process_lifecycle": {
+        "status": "DEGRADED",
+        "observed": "shell safety/permission lifecycle without Hi-owned PID/job wait/kill identity",
+        "semantic_loss": "no native PID/job ownership, wait, kill, or process-exit lifecycle for ordinary shell execution"
+      },
+      "workspace_isolation_binding": {
+        "status": "UNSUPPORTED",
+        "observed_child_directory": "same as parent fixture directory",
+        "observed_workspace_id": null,
+        "reason": "no proof that child execution is bound to an isolated workspace"
+      }
+    },
+    "incomplete_scenario": {
+      "scenario": "independent review terminal WorkerResult",
+      "classification": "HARNESS_MODEL_BEHAVIOR_INCOMPLETE",
+      "not_product_fail": true,
+      "observed_before_abort": [
+        "semantic assessment completed",
+        "parent native permission once/reject behavior observed",
+        "parent hi_task_start/await/list control-plane tools completed",
+        "real qa-reviewer child created with observed model/variant",
+        "child read source and executed bounded environment checks",
+        "model repeatedly chose additional bash sanity checks instead of reaching terminal WorkerResult"
+      ],
+      "cleanup": "child and parent explicitly aborted; server status returned empty"
+    }
+  },
+  "external_effects": {
+    "real_push": false,
+    "real_tag": false,
+    "real_release": false,
+    "real_publish": false,
+    "real_deploy": false,
+    "real_external_project_mutation": false,
+    "network_model_calls": "OpenCode connected opencode provider only; no publish/release side effect",
+    "temporary_fixture_cleanup": "PASS"
+  },
+  "verdict": {
+    "tier": "T3 REAL HOST",
+    "material_host_primitives_verified": true,
+    "host_integration_complete_for_material_m12_scope": true,
+    "release_readiness_claim": false,
+    "m13_authority": false,
+    "notes": [
+      "This receipt is bound to exact Git HEAD and exact runtime file hashes.",
+      "Historical worktree receipts are not promoted across source changes.",
+      "The non-terminal independent-review scenario is recorded separately from the independently successful worker-runtime and native-skill-load primitive proofs."
+    ]
+  }
+}
