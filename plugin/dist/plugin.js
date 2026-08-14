@@ -37,7 +37,7 @@ import { runtimeSignal } from './runtime/events/event-sink.js';
 import { evaluatePreconditions, TaskPreconditionError } from './runtime/readiness/preconditions.js';
 import { registerTemporaryMutation, resolveRollback } from './runtime/mutations/temporary-mutations.js';
 import { createHash } from 'node:crypto';
-import { addEvidence, markMutation } from './runtime/evidence/evidence-runtime.js';
+import { addEvidence, markMutation, normalizeProjectPath } from './runtime/evidence/evidence-runtime.js';
 import { assertHiToolNamespace } from './opencode/tool-namespace.js';
 import { acquireHiRuntimeInstance } from './opencode/instance-guard.js';
 import { nativeTool as tool } from './opencode/plugin-tool.js';
@@ -55,7 +55,7 @@ import { bindParentMethodologyNeeds } from './runtime/methodology/activation.js'
 import { reconcileMethodologyExits } from './runtime/methodology/exit.js';
 import { applyAdmittedProjectMethodologyPermissions } from './runtime/methodology/host-permissions.js';
 import { primaryRoleCanDirectImplementation } from './runtime/roles/catalog.js';
-function nativeDiffFiles(raw) { const items = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : []; return [...new Set(items.map((x) => typeof x?.file === 'string' ? x.file : typeof x?.path === 'string' ? x.path : '').filter((x) => Boolean(x)).map((x) => x.replace(/\\/g, '/').replace(/^\.\//, '')))]; }
+function nativeDiffFiles(raw, projectRoot) { const items = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : []; return [...new Set(items.map((x) => typeof x?.file === 'string' ? x.file : typeof x?.path === 'string' ? x.path : '').filter((x) => Boolean(x)).map((x) => normalizeProjectPath(x, projectRoot)).filter(Boolean))]; }
 function providerModels(raw) {
     const root = raw?.all ?? raw?.providers ?? raw ?? [];
     const providers = Array.isArray(root) ? root : Object.values(root ?? {});
@@ -217,7 +217,7 @@ export const HiPlugin = async (ctx) => {
             }
             if (capabilities.sessionDiff && directFiles.length)
                 try {
-                    const current = new Set(nativeDiffFiles(await native.diff(m.session_id)));
+                    const current = new Set(nativeDiffFiles(await native.diff(m.session_id), projectRoot));
                     if (current.size)
                         directFiles = directFiles.filter(file => current.has(file.replace(/\\/g, '/').replace(/^\.\//, '')));
                 }
@@ -484,7 +484,7 @@ export const HiPlugin = async (ctx) => {
             return;
         }
         if ((ev.kind === 'file-edited' || ev.kind === 'file-watcher-updated' || ev.kind === 'session-diff') && mission) {
-            const files = eventFilePaths(ev);
+            const files = eventFilePaths(ev).map(file => normalizeProjectPath(file, projectRoot)).filter(Boolean);
             if (files.length) {
                 markMutation(mission, files, ev.rawType);
                 new ProjectIntelligenceStore(projectRoot).invalidateChanged(files);

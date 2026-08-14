@@ -40,7 +40,7 @@ export function createToolAfterHook(store, background, events, projectRoot) {
         if (child && ((child.parent_mission_id !== undefined && child.parent_mission_id !== m.mission_id) || (child.generation_at_spawn !== undefined && child.generation_at_spawn !== m.generation)))
             return;
         const tool = String(input?.tool ?? ''), args = input?.args ?? {}, text = outputText(output);
-        observeToolAfter(m, tool, args, output);
+        observeToolAfter(m, tool, args, output, projectRoot);
         if (tool === 'skill') {
             const name = requestedMethodologyName(args);
             if (name) {

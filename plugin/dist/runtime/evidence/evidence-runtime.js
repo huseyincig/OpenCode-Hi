@@ -1,3 +1,4 @@
+import { relative, resolve, sep } from 'node:path';
 import { appendLedger } from '../ledger/ledger.js';
 function id() { return `ev_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`; }
 const WRITE_TOOLS = new Set(['write', 'edit', 'patch', 'apply_patch', 'multiedit']);
@@ -21,20 +22,25 @@ function outcomeOf(output, text) { const exit = numericExit(output); if (ENVIRON
     return { outcome: 'environment-issue', reason: 'verification-environment-unavailable' }; if (exit !== undefined)
     return { outcome: exit === 0 ? 'passed' : 'failed', reason: exit === 0 ? undefined : `verification-exit-${exit}` }; if (/(^|\n)\s*(fail|failed|error)|exit\s*code\s*[1-9]/i.test(text))
     return { outcome: 'failed', reason: 'verification-reported-failure' }; return { outcome: 'pending', reason: 'verification-exit-unknown' }; }
+function absolutePath(value) { return value.startsWith('/') || /^[A-Za-z]:[\\/]/.test(value); }
+export function normalizeProjectPath(value, projectRoot) { const clean = value.trim().replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+$/, ''); if (!clean || !projectRoot || !absolutePath(clean))
+    return clean; const root = resolve(projectRoot), abs = resolve(clean), rel = relative(root, abs); if (!rel)
+    return '.'; if (rel === '..' || rel.startsWith(`..${sep}`) || absolutePath(rel))
+    return clean; return rel.replace(/\\/g, '/'); }
 export function markMutation(mission, files = [], source = 'tool') { const now = Date.now(); mission.evidence.last_mutation_at = now; mission.evidence.fresh = false; for (const item of mission.evidence.items)
     if (!item.invalidated_at)
         item.invalidated_at = now; mission.changed_files = [...new Set([...mission.changed_files, ...files])]; appendLedger(mission, 'file.changed', { payload: { source, files } }); }
 export function addEvidence(mission, input) { const item = { id: id(), observed_at: input.observed_at ?? Date.now(), kind: input.kind, summary: input.summary, scope: input.scope, source: input.source, source_session_id: input.source_session_id, source_state_hash: input.source_state_hash, task_id: input.task_id, obligation_ids: input.obligation_ids, pass: input.pass, outcome: input.outcome ?? (input.pass === true ? 'passed' : input.pass === false ? 'failed' : undefined), reason: input.reason, invalidated_at: input.invalidated_at }; mission.evidence.items.push(item); if (mission.evidence.items.length > 100)
     mission.evidence.items.splice(0, mission.evidence.items.length - 100); const mutation = mission.evidence.last_mutation_at ?? 0; mission.evidence.fresh = mission.evidence.items.some(e => (e.outcome === 'passed' || e.pass === true) && !e.invalidated_at && e.observed_at >= mutation); appendLedger(mission, item.outcome === 'failed' ? 'verification.fail' : item.outcome === 'environment-issue' ? 'verification.environment-issue' : 'verification.pass', { payload: { kind: item.kind, summary: item.summary, reason: item.reason, source_session_id: item.source_session_id, source_state_hash: item.source_state_hash, task_id: item.task_id, obligation_ids: item.obligation_ids } }); return item; }
-export function observeToolBefore(mission, tool, args) { if (WRITE_TOOLS.has(tool)) {
-    const files = [args?.filePath, args?.path, args?.file].filter((x) => typeof x === 'string');
+export function observeToolBefore(mission, tool, args, projectRoot) { if (WRITE_TOOLS.has(tool)) {
+    const files = [args?.filePath, args?.path, args?.file].filter((x) => typeof x === 'string').map(x => normalizeProjectPath(x, projectRoot)).filter(Boolean);
     markMutation(mission, files, tool);
     return;
 } const command = typeof args?.command === 'string' ? args.command : ''; if (tool === 'bash' && shellMayMutate(command))
     markMutation(mission, [], 'bash-mutation'); }
-export function observeToolAfter(mission, tool, args, output) { if (WRITE_TOOLS.has(tool))
+export function observeToolAfter(mission, tool, args, output, projectRoot) { if (WRITE_TOOLS.has(tool))
     return; const command = typeof args?.command === 'string' ? args.command : ''; if (tool === 'read' && mission.intent.taskKind === 'review') {
-    const path = typeof args?.filePath === 'string' ? args.filePath : typeof args?.path === 'string' ? args.path : undefined;
+    const rawPath = typeof args?.filePath === 'string' ? args.filePath : typeof args?.path === 'string' ? args.path : undefined, path = rawPath ? normalizeProjectPath(rawPath, projectRoot) : undefined;
     const text = typeof output === 'string' ? output : JSON.stringify(output ?? '');
     if (text.trim() && !/(error|failed)/i.test(text))
         addEvidence(mission, { kind: 'review-input', summary: path ? ('Read ' + path) : 'Read-only review input', scope: path ? [path] : [], source: 'read', pass: true, outcome: 'passed' });

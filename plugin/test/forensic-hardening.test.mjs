@@ -114,6 +114,21 @@ test('parent direct progress cannot close implementation from an unrelated chang
 })
 
 
+test('parent direct progress normalizes native absolute project paths before ownership comparison',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-direct-absolute-path-'))
+  try{
+    const absolute=join(root,'src','a.ts'),c=client();c.session.diff=async()=>({data:[{file:absolute}]})
+    const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:c});await hooks.config({})
+    await hooks['chat.message']({sessionID:'s-absolute',message:{role:'user',parts:[{type:'text',text:'Update src/a.ts to add a greeting'}]}},{parts:[]});await assessPluginMission(hooks,'s-absolute',{likely_targets:['src/a.ts']})
+    await hooks['tool.execute.before']({sessionID:'s-absolute',tool:'write'},{args:{filePath:absolute}})
+    const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'done'},{sessionID:'s-absolute'}))
+    assert.equal(result.status,'RECORDED');assert.deepEqual(result.changed_files,['src/a.ts'])
+    const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:'s-absolute'}))
+    assert.ok(!ledger.events.some(e=>e.type==='implementation.direct-progress-blocked'))
+    await hooks.dispose?.()
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
 test('read-only manager cannot close implementation through hi_direct_progress even if mutation evidence is observed',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-direct-manager-authority-'))
   try{

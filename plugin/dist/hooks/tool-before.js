@@ -70,7 +70,7 @@ export function createToolBeforeHook(store, background, projectRoot) {
         }
         if (m.status !== 'active' && !matchRollback(m, String(args?.command ?? '')))
             return;
-        observeToolBefore(m, tool, args);
+        observeToolBefore(m, tool, args, projectRoot);
         store.updateProgress(m);
     };
 }
