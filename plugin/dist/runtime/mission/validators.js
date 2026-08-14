@@ -6,6 +6,7 @@ import { isAuthorityStateContract } from '../../contracts/authority.js';
 import { isExternalActionType } from '../../contracts/external-action.js';
 import { HI_METHODOLOGY_PRODUCERS, HI_METHODOLOGY_SIGNAL_CATALOG, HI_METHODOLOGY_TRIGGER_SOURCES } from '../../generated/methodology-policy.js';
 import { SEMANTIC_CAPABILITIES, SEMANTIC_VERIFICATION_KINDS } from '../intent/semantic-assessment.js';
+import { isProcessContract } from '../../contracts/process.js';
 function isRecord(value) { return Boolean(value) && typeof value === 'object' && !Array.isArray(value); }
 function stringArray(value) { return Array.isArray(value) && value.every(item => typeof item === 'string'); }
 function recordArray(value) { return Array.isArray(value) && value.every(isRecord); }
@@ -155,12 +156,23 @@ export function validateMissionExecutionState(identity, execution, methodology) 
         return false;
     if (identity.semantic_assessment?.status === 'assessed' && identity.intent?.taskKind === 'unclassified')
         return false;
-    if (identity.semantic_assessment?.status === 'pending' && identity.semantic_assessment?.phase === 'initial' && ((execution.obligations?.length ?? 0) > 0 || (execution.tasks?.length ?? 0) > 0 || (execution.workers?.length ?? 0) > 0 || (methodology.methodology_needs?.length ?? 0) > 0))
+    if (identity.semantic_assessment?.status === 'pending' && identity.semantic_assessment?.phase === 'initial' && ((execution.obligations?.length ?? 0) > 0 || (execution.tasks?.length ?? 0) > 0 || (execution.workers?.length ?? 0) > 0 || (execution.processes?.length ?? 0) > 0 || (methodology.methodology_needs?.length ?? 0) > 0))
         return false;
-    if ((!Array.isArray(execution.obligations) || !execution.obligations.every(validObligation)) || !Array.isArray(execution.tasks) || !execution.tasks.every(isTaskContract) || !Array.isArray(execution.workers) || !execution.workers.every(isWorkerContract) || !recordArray(execution.ledger))
+    if ((!Array.isArray(execution.obligations) || !execution.obligations.every(validObligation)) || !Array.isArray(execution.tasks) || !execution.tasks.every(isTaskContract) || !Array.isArray(execution.workers) || !execution.workers.every(isWorkerContract) || !Array.isArray(execution.processes) || !execution.processes.every(isProcessContract) || !recordArray(execution.ledger))
         return false;
     if (!stringArray(execution.blockers) || !stringArray(execution.constraints) || typeof execution.native_todos_incomplete !== 'number' || !Array.isArray(execution.gates) || !execution.gates.every(validGate))
         return false;
+    const processIDs = new Set();
+    for (const process of execution.processes) {
+        if (processIDs.has(process.process_id))
+            return false;
+        processIDs.add(process.process_id);
+        if (process.mission_id !== identity.mission_id)
+            return false;
+        const task = execution.tasks.find(t => t.id === process.task_id), worker = execution.workers.find(w => w.id === process.worker_id);
+        if (!task || !worker || worker.task_id !== task.id)
+            return false;
+    }
     return isRecord(execution.evidence) && typeof execution.evidence.fresh === 'boolean' && Array.isArray(execution.evidence.items) && execution.evidence.items.every(isEvidenceItemContract) && (execution.evidence.last_mutation_at === undefined || typeof execution.evidence.last_mutation_at === 'number');
 }
 export function validateContinuationState(continuation) {

@@ -7,6 +7,7 @@ import type { ContextReferenceContract } from '../../contracts/context-reference
 import type { HumanDecisionContract } from '../../contracts/human-decision.js';
 import type { AuthorityStateContract } from '../../contracts/authority.js';
 import type { ExternalActionType } from '../../contracts/external-action.js';
+import type { ProcessContract } from '../../contracts/process.js';
 export type { EvidenceItem } from '../../contracts/evidence.js';
 export { WORKER_EVIDENCE_KINDS } from '../../contracts/worker-result.js';
 export type { EvidenceOutcome, MethodologyObservation, WorkerEvidenceKind, WorkerResult, WorkerResultStatus } from '../../contracts/worker-result.js';
@@ -204,6 +205,7 @@ export interface MissionExecutionState {
     obligations: Obligation[];
     tasks: MissionTask[];
     workers: WorkerState[];
+    processes: ProcessContract[];
     evidence: {
         fresh: boolean;
         items: EvidenceItem[];

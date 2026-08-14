@@ -23,6 +23,7 @@ function harness({permission,signal}={}){
   let nextPid=4100
   const sessions=new Map(),removed=[],sockets=[]
   const pty={
+    async list(){return{data:{data:[...sessions.values()].map(x=>({...x}))}}},
     async create(input){const info={id:`pty-${nextPid}`,title:input.title??'x',command:input.command,args:input.args??[],cwd:input.cwd,status:'running',pid:nextPid++};sessions.set(info.id,info);return{data:{data:{...info}}}},
     async get({ptyID}){const info=sessions.get(ptyID);if(!info)throw new Error('missing pty');return{data:{data:{...info}}}},
     async remove({ptyID}){removed.push(ptyID);sessions.delete(ptyID);return{data:undefined}},
@@ -163,4 +164,33 @@ test('P2 timeout also refuses stale PID before signalling',async()=>{
   setTimeout(()=>{h.sessions.get(handle.host_process_id).pid=99999},20)
   await assert.rejects(()=>pending,/PID identity changed|stale PID timeout/)
   assert.equal(signals,0)
+})
+
+
+test('P3 restart reconcile adopts exact native PTY identity and restores live write/read transport',async()=>{
+  const h=harness(),handle=await spawned(h),persisted=structuredClone(handle.contract)
+  // Simulate a fresh plugin runtime while the OpenCode host retains the PTY.
+  const fresh=new OpenCodePtyAdapter({v2:{pty:{
+    list:async()=>({data:{data:[...h.sessions.values()].map(x=>({...x}))}}),
+    get:async({ptyID})=>({data:{data:{...h.sessions.get(ptyID)}}}),
+    remove:async({ptyID})=>{h.removed.push(ptyID);h.sessions.delete(ptyID);return{data:undefined}},
+    connectToken:async({ptyID})=>({data:{data:{ticket:`ticket-${ptyID}`,expires_in:10}}}),
+    create:async()=>{throw new Error('must not create during reconcile')},
+  }}},new URL('http://127.0.0.1:4096'),'/repo','/repo',()=>host(),url=>{const ws=new FakeSocket(url);h.sockets.push(ws);return ws},()=>{},32,8)
+  const result=await fresh.reconcile(persisted);assert.equal(result.disposition,'ADOPTED');assert.equal(result.contract.pid,persisted.pid);assert.equal(fresh.list().length,1)
+  await fresh.write(persisted.process_id,'after-restart\n');assert.deepEqual(h.sockets.at(-1).sent,['after-restart\n'])
+})
+
+test('P3 restart reconcile quarantines same PID with changed command identity and never signals it',async()=>{
+  let signals=0
+  const h=harness({signal:()=>{signals++}}),handle=await spawned(h),persisted=structuredClone(handle.contract)
+  const native=h.sessions.get(handle.host_process_id);native.command='python3';native.args=['-c','print(1)']
+  const result=await h.adapter.reconcile(persisted);assert.equal(result.disposition,'ORPHANED');assert.equal(result.contract.status,'ORPHANED');assert.equal(result.contract.cleanup_state,'QUARANTINED');assert.equal(result.contract.termination_reason,'restart-owner-identity-mismatch');assert.equal(signals,0)
+})
+
+test('P3 restart reconcile quarantines missing live owner and treats missing terminal host record as cleaned',async()=>{
+  const h=harness(),handle=await spawned(h),running=structuredClone(handle.contract);h.sessions.clear()
+  const missing=await h.adapter.reconcile(running);assert.equal(missing.disposition,'ORPHANED');assert.equal(missing.contract.termination_reason,'restart-owner-missing')
+  const terminal={...running,status:'EXITED',ended_at:Date.now(),exit_code:0,cleanup_state:'CLEANUP_PENDING'}
+  const cleaned=await h.adapter.reconcile(terminal);assert.equal(cleaned.disposition,'TERMINAL');assert.equal(cleaned.contract.cleanup_state,'CLEANED')
 })

@@ -22,7 +22,7 @@ import { nativeTool as tool } from '../../opencode/plugin-tool.js';
 import { assertHiToolNamespace } from '../../opencode/tool-namespace.js';
 function nativeDiffFiles(raw, projectRoot) { const items = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : []; return [...new Set(items.map((x) => typeof x?.file === 'string' ? x.file : typeof x?.path === 'string' ? x.path : '').filter((x) => Boolean(x)).map((x) => normalizeProjectPath(x, projectRoot)).filter(Boolean))]; }
 export function createHiToolSurface(input) {
-    const { state, store, tasks, teams, projectRoot, capabilities, native, getModels, scopedStores } = input;
+    const { state, store, tasks, teams, processRuntime, projectRoot, capabilities, native, getModels, scopedStores } = input;
     const doctorTool = tool({ description: 'Run OpenCode-Hi runtime/configuration health checks', args: {}, execute: async () => formatDoctor(runDoctor(state.config, store, projectRoot, { models: getModels(), resolution: state.configResolution, capabilities, hostConfig: state.hostConfig, openCodeVersion: state.openCodeVersion })) });
     const statusTool = tool({ description: 'Show compact user-facing Hi mission status. This intentionally excludes diagnostic logs and ledger payloads.', args: {}, execute: async (_args, c) => { const m = store.get(c?.sessionID); return m ? formatUserMissionStatus(m) : 'Hi: no active mission'; } });
     const metricsTool = tool({ description: 'Show aggregate Hi runtime metrics derived from bounded mission state. Token/cost telemetry is omitted unless the host provides it.', args: {}, execute: async () => JSON.stringify(aggregateMissionMetrics(store.all())) });
@@ -37,6 +37,7 @@ export function createHiToolSurface(input) {
             let reconciledWorkers = 0;
             if (phase === 'followup') {
                 if (assessment.message_kind === 'stop') {
+                    await processRuntime.stopMission(next);
                     await teams.shutdownMission(next);
                     reconciledWorkers = await tasks.cancelAll(next);
                 }
@@ -149,6 +150,62 @@ export function createHiToolSurface(input) {
     const awaitTool = tool({ description: 'Check whether an Hi task has reached terminal state. Hi uses event-driven wakeups; do not call repeatedly.', args: { id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
             return 'No active Hi mission'; const x = tasks.peek(m, a.id); const status = x?.task?.status ?? x?.worker?.status ?? 'unknown'; return JSON.stringify({ status, terminal: ['completed', 'failed', 'cancelled', 'blocked'].includes(status), result: x?.task?.result }); } });
     const cancelTool = tool({ description: 'Cancel one Hi task/worker.', args: { id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? String(await tasks.cancel(m, a.id)) : 'false'; } });
+    const processSpawnTool = tool({ description: 'Spawn one owned long-running process for an existing Hi worker/task through the native OpenCode PTY lifecycle. Native permission ask remains a real OpenCode permission request.', args: { worker_id: tool.schema.string(), command: tool.schema.string(), args_json: tool.schema.string().optional(), cwd: tool.schema.string().optional(), timeout_ms: tool.schema.number().optional(), title: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+            return 'No active Hi mission'; let args; if (a.args_json) {
+            try {
+                const parsed = JSON.parse(String(a.args_json));
+                if (!Array.isArray(parsed) || !parsed.every(x => typeof x === 'string'))
+                    throw new Error('args_json must be a JSON string array');
+                args = parsed;
+            }
+            catch (error) {
+                return `BLOCKED: invalid args_json: ${String(error)}`;
+            }
+        } try {
+            return JSON.stringify(await processRuntime.spawn(m, { worker_id: String(a.worker_id), command: String(a.command), args, cwd: String(a.cwd ?? c?.directory ?? projectRoot), timeout_ms: a.timeout_ms === undefined ? undefined : Number(a.timeout_ms), title: a.title ? String(a.title) : undefined, ask: async (request) => c.ask({ permission: request.permission, patterns: request.patterns, always: request.always, metadata: request.metadata }) }));
+        }
+        catch (error) {
+            return `Process spawn blocked: ${String(error)}`;
+        } } });
+    const processReadTool = tool({ description: 'Read one bounded cursor window from an owned Hi process. Output observation is hash-bound Evidence input, never implicit verification PASS.', args: { id: tool.schema.string(), cursor: tool.schema.number().optional(), max_chars: tool.schema.number().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+            return 'No active Hi mission'; try {
+            return JSON.stringify(await processRuntime.read(m, String(a.id), a.cursor === undefined ? undefined : Number(a.cursor), a.max_chars === undefined ? undefined : Number(a.max_chars)));
+        }
+        catch (error) {
+            return `Process read failed: ${String(error)}`;
+        } } });
+    const processWriteTool = tool({ description: 'Write bounded stdin to one owned running Hi process.', args: { id: tool.schema.string(), input: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+            return 'No active Hi mission'; try {
+            await processRuntime.write(m, String(a.id), String(a.input));
+            return 'OK';
+        }
+        catch (error) {
+            return `Process write failed: ${String(error)}`;
+        } } });
+    const processWaitTool = tool({ description: 'Await the native exit promise for one owned Hi process. This is event-driven and must not be used as a polling loop.', args: { id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+            return 'No active Hi mission'; try {
+            return JSON.stringify(await processRuntime.wait(m, String(a.id)));
+        }
+        catch (error) {
+            return `Process wait failed: ${String(error)}`;
+        } } });
+    const processKillTool = tool({ description: 'Terminate one owned running Hi process after native PID identity revalidation.', args: { id: tool.schema.string(), signal: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+            return 'No active Hi mission'; const signal = String(a.signal ?? 'SIGTERM'); if (!['SIGTERM', 'SIGINT'].includes(signal))
+            return 'BLOCKED: signal must be SIGTERM or SIGINT'; try {
+            return JSON.stringify(await processRuntime.kill(m, String(a.id), signal));
+        }
+        catch (error) {
+            return `Process kill failed: ${String(error)}`;
+        } } });
+    const processCleanupTool = tool({ description: 'Cleanup one owned terminal Hi process. Cleanup cannot terminate a running process.', args: { id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+            return 'No active Hi mission'; try {
+            await processRuntime.cleanup(m, String(a.id));
+            return 'OK';
+        }
+        catch (error) {
+            return `Process cleanup failed: ${String(error)}`;
+        } } });
+    const processListTool = tool({ description: 'List bounded durable Hi process contracts for the current mission.', args: {}, execute: async (_a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(processRuntime.list(m)) : 'No active Hi mission'; } });
     const teamCreateTool = tool({ description: 'Create a bounded Hi Team Mode group only for work requiring interacting specialist perspectives.', args: { objective: tool.schema.string(), members: tool.schema.string(), member_models: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
             return 'No active Hi mission'; if (!state.config.teamMode.enabled)
             return 'Team Mode disabled'; let memberModels; if (a.member_models && typeof a.member_models === 'string' && a.member_models.trim()) {
@@ -165,7 +222,7 @@ export function createHiToolSurface(input) {
     const teamMemberAddTool = tool({ description: 'Add one bounded Team Mode member and start its worker.', args: { team_id: tool.schema.string(), role: tool.schema.string(), model: tool.schema.string().optional(), variant: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(await teams.addMember(m, a.team_id, a.role, a.model, a.variant)) : 'No active Hi mission'; } });
     const teamMemberRemoveTool = tool({ description: 'Remove one Team Mode member and cancel its worker.', args: { team_id: tool.schema.string(), role: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? String(await teams.removeMember(m, a.team_id, a.role)) : 'false'; } });
     const teamShutdownTool = tool({ description: 'Shutdown one bounded Hi team and cancel its member workers.', args: { team_id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? String(await teams.shutdown(m, a.team_id)) : 'false'; } });
-    const toolSurface = { hi_doctor: doctorTool, hi_status: statusTool, hi_metrics: metricsTool, hi_ledger: ledgerTool, hi_readiness: readinessTool, hi_intent_assess: intentAssessTool, hi_context_artifact_add: artifactAddTool, hi_context_artifacts: artifactsTool, hi_temporary_mutation_register: mutationTool, hi_temporary_mutation_revert: nativeRollbackTool, hi_direct_progress: directProgressTool, hi_task_start: startTool, hi_task_await: awaitTool, hi_task_peek: peekTool, hi_task_list: listTool, hi_task_cancel: cancelTool };
+    const toolSurface = { hi_doctor: doctorTool, hi_status: statusTool, hi_metrics: metricsTool, hi_ledger: ledgerTool, hi_readiness: readinessTool, hi_intent_assess: intentAssessTool, hi_context_artifact_add: artifactAddTool, hi_context_artifacts: artifactsTool, hi_temporary_mutation_register: mutationTool, hi_temporary_mutation_revert: nativeRollbackTool, hi_direct_progress: directProgressTool, hi_task_start: startTool, hi_task_await: awaitTool, hi_task_peek: peekTool, hi_task_list: listTool, hi_task_cancel: cancelTool, hi_process_spawn: processSpawnTool, hi_process_read: processReadTool, hi_process_write: processWriteTool, hi_process_wait: processWaitTool, hi_process_kill: processKillTool, hi_process_cleanup: processCleanupTool, hi_process_list: processListTool };
     const teamTools = { hi_team_create: teamCreateTool, hi_team_member_add: teamMemberAddTool, hi_team_member_remove: teamMemberRemoveTool, hi_team_status: teamStatusTool, hi_team_shutdown: teamShutdownTool };
     assertHiToolNamespace([...Object.keys(toolSurface), ...Object.keys(teamTools)]);
     const reconfigure = () => { if (state.config.teamMode.enabled && hostCapabilityByID(capabilities.contracts, 'worker-runtime')?.status === 'SUPPORTED')

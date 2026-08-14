@@ -12,7 +12,7 @@ import { createToolAfterHook } from '../hooks/tool-after.js';
 import { appendLedger } from '../runtime/ledger/ledger.js';
 export function createOpenCodeHooks(input) {
     const { state, host, services, projectRoot, packagedSkillsDir, projectAuthority, toolSurface, reconfigureToolSurface, eventController, instanceLease } = input;
-    const { store, background, persistence, tasks, teams, experimental, eventSink } = services;
+    const { store, background, persistence, tasks, teams, processRuntime, experimental, eventSink } = services;
     return {
         name: 'opencode-hi',
         tool: toolSurface,
@@ -82,6 +82,8 @@ export function createOpenCodeHooks(input) {
         dispose: async () => { try {
             for (const m of store.all())
                 if (m.identity.status === 'active') {
+                    store.stop(m.identity.session_id, 'plugin-dispose');
+                    await processRuntime.stopMission(m);
                     await teams.shutdownMission(m);
                     await tasks.cancelAll(m);
                 }

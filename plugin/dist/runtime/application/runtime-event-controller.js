@@ -18,7 +18,7 @@ export class RuntimeEventController {
     }
     async handle({ event }) {
         const { state, host, services, projectAuthority, pendingNativePermissions, projectRoot } = this.deps;
-        const { store, background, persistence, tasks, teams, eventSink, scopedStores } = services;
+        const { store, background, persistence, tasks, teams, processRuntime, eventSink, scopedStores } = services;
         const ev = normalizeOpenCodeEvent(event);
         if (ev.kind === 'installation-updated') {
             await host.refreshRuntimeInventory('installation-updated');
@@ -197,8 +197,9 @@ export class RuntimeEventController {
         if (ev.kind === 'session-deleted') {
             const parent = store.get(sid);
             if (parent) {
+                store.stop(sid, 'parent-session-deleted');
+                await processRuntime.stopMission(parent);
                 await tasks.cancelAll(parent);
-                store.stop(sid);
                 persistence.save(store.all());
             }
             return;

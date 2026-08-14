@@ -20,6 +20,13 @@ export function evaluateIdle(m, now = Date.now()) {
         return { decision: 'WAIT', reason: 'waiting-permission', reason_code: 'waiting-permission' };
     if (m.execution.workers.some(w => ['created', 'queued', 'starting', 'busy'].includes(w.status)))
         return { decision: 'WAIT', reason: 'waiting-worker', reason_code: 'waiting-worker' };
+    if (m.execution.processes.some(p => p.status === 'RUNNING'))
+        return { decision: 'WAIT', reason: 'waiting-process', reason_code: 'waiting-process' };
+    const orphan = m.execution.processes.find(p => p.status === 'ORPHANED');
+    if (orphan) {
+        m.continuation.stagnation_count = 0;
+        return { decision: 'USER_ACTION_REQUIRED', reason: `process-orphan:${orphan.process_id}`, reason_code: 'process-orphan-blocked' };
+    }
     const continuationFailures = m.continuation.continuation_failure_count ?? 0;
     if (continuationFailures >= 3)
         return { decision: 'USER_ACTION_REQUIRED', reason: `continuation-runtime-failures:${continuationFailures}`, reason_code: 'continuation-runtime-exhausted' };

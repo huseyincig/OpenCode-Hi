@@ -29,6 +29,7 @@ function permissionDecision(hostConfig, role, permission, pattern) {
 }
 function quoted(value) { return /^[A-Za-z0-9_./:@%+=,-]+$/.test(value) ? value : `'${value.replaceAll("'", `'\\''`)}'`; }
 export function processCommandLine(request) { return [request.command, ...request.args ?? []].map(quoted).join(' '); }
+function exactGrant(request, permission, pattern) { return (request.native_permission_grants ?? []).some(grant => grant.permission === permission && grant.pattern === pattern); }
 function canonical(path) { try {
     return realpathSync(path);
 }
@@ -43,12 +44,16 @@ export function evaluateProcessSpawnAuthority(request, projectRoot, hostConfig) 
     if (shell.decision === 'USER_ACTION_REQUIRED' || shell.decision === 'REWRITE')
         return { decision: 'ASK', reason: `shell-policy:${shell.reason}`, command_line: commandLine, external_cwd: externalCwd };
     const bash = permissionDecision(hostConfig, request.role, 'bash', commandLine);
-    if (bash !== 'allow')
-        return { decision: bash === 'ask' ? 'ASK' : 'DENY', reason: `bash-permission:${bash}`, command_line: commandLine, external_cwd: externalCwd };
+    if (bash === 'deny')
+        return { decision: 'DENY', reason: 'bash-permission:deny', command_line: commandLine, external_cwd: externalCwd };
+    if (bash === 'ask' && !exactGrant(request, 'bash', commandLine))
+        return { decision: 'ASK', reason: 'bash-permission:ask', command_line: commandLine, external_cwd: externalCwd, permission_request: { permission: 'bash', pattern: commandLine, patterns: [commandLine], always: [commandLine], metadata: { command: commandLine, source: 'hi-process-executor' } } };
     if (externalCwd) {
         const pattern = canonical(request.cwd).replace(/[\\/]$/, '') + sep + '*', decision = permissionDecision(hostConfig, request.role, 'external_directory', pattern);
-        if (decision !== 'allow')
-            return { decision: decision === 'ask' ? 'ASK' : 'DENY', reason: `external-directory-permission:${decision}`, command_line: commandLine, external_cwd: true };
+        if (decision === 'deny')
+            return { decision: 'DENY', reason: 'external-directory-permission:deny', command_line: commandLine, external_cwd: true };
+        if (decision === 'ask' && !exactGrant(request, 'external_directory', pattern))
+            return { decision: 'ASK', reason: 'external-directory-permission:ask', command_line: commandLine, external_cwd: true, permission_request: { permission: 'external_directory', pattern, patterns: [pattern], always: [pattern], metadata: { command: commandLine, directories: [canonical(request.cwd)], patterns: [pattern], source: 'hi-process-executor' } } };
     }
     const actionType = externalActionType(commandLine);
     if (actionType) {

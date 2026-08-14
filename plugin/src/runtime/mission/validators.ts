@@ -7,6 +7,7 @@ import { isAuthorityStateContract } from '../../contracts/authority.js'
 import { isExternalActionType } from '../../contracts/external-action.js'
 import { HI_METHODOLOGY_PRODUCERS, HI_METHODOLOGY_SIGNAL_CATALOG, HI_METHODOLOGY_TRIGGER_SOURCES } from '../../generated/methodology-policy.js'
 import { SEMANTIC_CAPABILITIES, SEMANTIC_VERIFICATION_KINDS } from '../intent/semantic-assessment.js'
+import { isProcessContract } from '../../contracts/process.js'
 
 function isRecord(value:unknown):value is Record<string,unknown>{return Boolean(value)&&typeof value==='object'&&!Array.isArray(value)}
 function stringArray(value:unknown):value is string[]{return Array.isArray(value)&&value.every(item=>typeof item==='string')}
@@ -118,9 +119,10 @@ export function validateMissionIdentityState(identity:unknown):boolean{
 export function validateMissionExecutionState(identity:unknown,execution:unknown,methodology:unknown):boolean{
   if(!isRecord(identity)||!isRecord(execution)||!isRecord(methodology)||!validVerificationPolicy(execution.verification_policy))return false
   if((identity.semantic_assessment as any)?.status==='assessed'&&(identity.intent as any)?.taskKind==='unclassified')return false
-  if((identity.semantic_assessment as any)?.status==='pending'&&(identity.semantic_assessment as any)?.phase==='initial'&&(((execution.obligations as unknown[])?.length??0)>0||((execution.tasks as unknown[])?.length??0)>0||((execution.workers as unknown[])?.length??0)>0||((methodology.methodology_needs as unknown[])?.length??0)>0))return false
-  if((!Array.isArray(execution.obligations)||!execution.obligations.every(validObligation))||!Array.isArray(execution.tasks)||!execution.tasks.every(isTaskContract)||!Array.isArray(execution.workers)||!execution.workers.every(isWorkerContract)||!recordArray(execution.ledger))return false
+  if((identity.semantic_assessment as any)?.status==='pending'&&(identity.semantic_assessment as any)?.phase==='initial'&&(((execution.obligations as unknown[])?.length??0)>0||((execution.tasks as unknown[])?.length??0)>0||((execution.workers as unknown[])?.length??0)>0||((execution.processes as unknown[])?.length??0)>0||((methodology.methodology_needs as unknown[])?.length??0)>0))return false
+  if((!Array.isArray(execution.obligations)||!execution.obligations.every(validObligation))||!Array.isArray(execution.tasks)||!execution.tasks.every(isTaskContract)||!Array.isArray(execution.workers)||!execution.workers.every(isWorkerContract)||!Array.isArray(execution.processes)||!execution.processes.every(isProcessContract)||!recordArray(execution.ledger))return false
   if(!stringArray(execution.blockers)||!stringArray(execution.constraints)||typeof execution.native_todos_incomplete!=='number'||!Array.isArray(execution.gates)||!execution.gates.every(validGate))return false
+  const processIDs=new Set<string>();for(const process of execution.processes as any[]){if(processIDs.has(process.process_id))return false;processIDs.add(process.process_id);if(process.mission_id!==identity.mission_id)return false;const task=(execution.tasks as any[]).find(t=>t.id===process.task_id),worker=(execution.workers as any[]).find(w=>w.id===process.worker_id);if(!task||!worker||worker.task_id!==task.id)return false}
   return isRecord(execution.evidence)&&typeof execution.evidence.fresh==='boolean'&&Array.isArray(execution.evidence.items)&&execution.evidence.items.every(isEvidenceItemContract)&&(execution.evidence.last_mutation_at===undefined||typeof execution.evidence.last_mutation_at==='number')
 }
 

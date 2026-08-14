@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { isProcessContract, processCommandIdentity } from '../contracts/process.js';
-import { evaluateProcessSpawnAuthority } from '../runtime/process/authority.js';
+import { evaluateProcessSpawnAuthority, processCommandLine } from '../runtime/process/authority.js';
 export class ProcessSpawnPermissionError extends Error {
     decision;
     reason;
@@ -237,6 +237,49 @@ export class OpenCodePtyAdapter {
     async cleanup(processId) { const state = this.#state(processId); await this.#refresh(state); if (state.contract.status === 'RUNNING')
         throw new Error(`Refusing cleanup of running process ${processId}; kill/exit must occur first`); await this.#pty().remove({ ptyID: state.ptyID, location: this.#location() }); state.socket?.close(1000, 'Hi cleanup'); state.contract.cleanup_state = 'CLEANED'; if (!isProcessContract(state.contract))
         throw new Error(`Invalid cleanup state for ${processId}`); this.#states.delete(processId); }
+    async reconcile(contract) {
+        const persisted = structuredClone(contract);
+        if (!isProcessContract(persisted) || persisted.host !== 'opencode')
+            throw new Error('Hi ProcessExecutor reconcile requires a valid OpenCode ProcessContract');
+        const raw = await this.#pty().list({ location: this.#location() }), items = nativeData(raw) ?? [];
+        const samePid = Array.isArray(items) ? items.filter(info => info && info.pid === persisted.pid) : [];
+        const exact = samePid.find(info => info.cwd === persisted.cwd && processCommandIdentity({ host: 'opencode', command: processCommandLine({ command: info.command, args: info.args }), cwd: info.cwd }) === persisted.command_identity);
+        if (!exact) {
+            if (persisted.status !== 'RUNNING' && samePid.length === 0) {
+                persisted.cleanup_state = 'CLEANED';
+                return { disposition: 'TERMINAL', contract: persisted };
+            }
+            persisted.status = 'ORPHANED';
+            persisted.cleanup_state = 'QUARANTINED';
+            persisted.termination_reason = samePid.length ? 'restart-owner-identity-mismatch' : 'restart-owner-missing';
+            delete persisted.exit_code;
+            return { disposition: 'ORPHANED', contract: persisted };
+        }
+        if (persisted.status !== 'RUNNING' && exact.status === 'running') {
+            persisted.status = 'ORPHANED';
+            persisted.cleanup_state = 'QUARANTINED';
+            persisted.termination_reason = 'restart-terminal-contract-host-running';
+            delete persisted.exit_code;
+            return { disposition: 'ORPHANED', contract: persisted };
+        }
+        let resolveExit, rejectExit;
+        const exitPromise = new Promise((resolve, reject) => { resolveExit = resolve; rejectExit = reject; });
+        const state = { contract: persisted, ptyID: exact.id, buffer: '', availableStart: 0, availableEnd: 0, cursorKnown: false, beforeMetaChars: 0, timeoutRequested: false, exitPromise, resolveExit, rejectExit, exitSettled: false, reconnects: 0 };
+        this.#states.set(persisted.process_id, state);
+        if (exact.status === 'exited') {
+            if (persisted.status === 'RUNNING') {
+                persisted.status = 'EXITED';
+                persisted.ended_at = Date.now();
+                persisted.exit_code = Number.isInteger(exact.exitCode) ? exact.exitCode : 0;
+                persisted.cleanup_state = 'CLEANUP_PENDING';
+            }
+            state.contract = persisted;
+            this.#settleExit(state);
+            return { disposition: 'TERMINAL', contract: cloneContract(persisted) };
+        }
+        await this.#connect(state, 0);
+        return { disposition: 'ADOPTED', contract: cloneContract(persisted) };
+    }
     snapshot(processId) { return cloneContract(this.#state(processId).contract); }
     list() { return [...this.#states.values()].map(state => cloneContract(state.contract)); }
 }

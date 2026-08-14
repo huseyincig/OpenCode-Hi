@@ -8,6 +8,7 @@ import { ExperimentalOpenCodeAdapter } from '../../opencode/experimental-adapter
 import { appendLedger } from '../ledger/ledger.js';
 import { createRuntimeScopedStores } from './runtime-scoped-stores.js';
 import { OpenCodePtyAdapter } from '../../opencode/open-code-pty-adapter.js';
+import { ProcessRuntime } from '../process/runtime.js';
 export function createRuntimeServices(input) {
     const { ctx, projectRoot, packageRoot, getConfig, getModels, getHostConfig } = input;
     const store = new MissionStore(projectRoot, { project: ctx.project, directory: ctx.directory, worktree: ctx.worktree }, () => getConfig().primaryMode, () => ({ mode: getConfig().execution.topology, maxAgents: getConfig().execution.maxAgents, parallelism: getConfig().execution.parallelism }));
@@ -32,7 +33,8 @@ export function createRuntimeServices(input) {
             if (w.session_id && w.status === 'ready')
                 background.set(w);
     const processExecutor = new OpenCodePtyAdapter(ctx.client, ctx.serverUrl, ctx.directory, projectRoot, getHostConfig);
+    const processRuntime = new ProcessRuntime(processExecutor, projectRoot, getHostConfig);
     const experimental = new ExperimentalOpenCodeAdapter(store, background);
     const teams = new TeamRuntime(tasks, () => getConfig().teamMode.enabled, () => ({ maxMembers: getConfig().teamMode.maxMembers, maxWallMs: getConfig().teamMode.maxWallMinutes * 60 * 1000 }));
-    return { store, background, persistence, scheduler, eventSink, tasks, processExecutor, experimental, teams, scopedStores };
+    return { store, background, persistence, scheduler, eventSink, tasks, processExecutor, processRuntime, experimental, teams, scopedStores };
 }

@@ -18,7 +18,7 @@ import type { RuntimeEventController } from '../runtime/application/runtime-even
 
 export function createOpenCodeHooks(input:{state:PluginRuntimeState;host:HostPort;services:ReturnType<typeof createRuntimeServices>;projectRoot:string;packagedSkillsDir:string;projectAuthority:ProjectAuthorityStore;toolSurface:Record<string,unknown>;reconfigureToolSurface:()=>void;eventController:RuntimeEventController;instanceLease:{release:()=>void}}){
   const {state,host,services,projectRoot,packagedSkillsDir,projectAuthority,toolSurface,reconfigureToolSurface,eventController,instanceLease}=input
-  const {store,background,persistence,tasks,teams,experimental,eventSink}=services
+  const {store,background,persistence,tasks,teams,processRuntime,experimental,eventSink}=services
   return {
     name:'opencode-hi',
     tool:toolSurface,
@@ -36,7 +36,7 @@ export function createOpenCodeHooks(input:{state:PluginRuntimeState;host:HostPor
     'experimental.session.compacting':async(input:any,output:any)=>{try{await experimental.compacting()(input,output)}finally{persistence.save(store.all())}},
     'tool.execute.before':async(input:any,output:any)=>{try{await createToolBeforeHook(store,background,projectRoot)(input,output)}finally{persistence.save(store.all())}},
     'tool.execute.after':async(input:any,output:any)=>{try{await createToolAfterHook(store,background,eventSink,projectRoot)(input,output)}finally{persistence.save(store.all())}},
-    dispose:async()=>{try{for(const m of store.all())if(m.identity.status==='active'){await teams.shutdownMission(m);await tasks.cancelAll(m)}persistence.markCleanShutdown(store.all())}finally{instanceLease.release()}},
+    dispose:async()=>{try{for(const m of store.all())if(m.identity.status==='active'){store.stop(m.identity.session_id,'plugin-dispose');await processRuntime.stopMission(m);await teams.shutdownMission(m);await tasks.cancelAll(m)}persistence.markCleanShutdown(store.all())}finally{instanceLease.release()}},
     event:(input:any)=>eventController.handle(input),
   }
 }

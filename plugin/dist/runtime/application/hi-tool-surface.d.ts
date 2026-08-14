@@ -3,6 +3,7 @@ import type { AvailableModel } from '../routing/model-resolver.js';
 import type { MissionStore } from '../mission/mission-store.js';
 import type { TaskRuntime } from '../task/task-runtime.js';
 import type { TeamRuntime } from '../team/team-runtime.js';
+import type { ProcessRuntime } from '../process/runtime.js';
 import type { NativeOpenCodeAdapter } from '../../opencode/native-adapter.js';
 import type { detectOpenCodeCapabilities } from '../../opencode/capabilities.js';
 import type { RuntimeScopedStores } from './runtime-scoped-stores.js';
@@ -18,6 +19,7 @@ export declare function createHiToolSurface(input: {
     store: MissionStore;
     tasks: TaskRuntime;
     teams: TeamRuntime;
+    processRuntime: ProcessRuntime;
     projectRoot: string;
     capabilities: Capabilities;
     native: NativeOpenCodeAdapter;
