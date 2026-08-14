@@ -1,0 +1,778 @@
+{
+  "schema": 1,
+  "type": "hi-config-option-catalog",
+  "options": [
+    {
+      "id": "config.schema-version",
+      "path": "schemaVersion",
+      "classification": "schema-marker",
+      "type": "integer",
+      "default": 2,
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config"
+      ],
+      "precedence_order": [
+        "built-in-current-schema",
+        "host-supplied-version:diagnostic-only"
+      ],
+      "validator": "current-schema-marker",
+      "safety_semantics": "constraint",
+      "diagnostic_consumer": "config/resolver.resolveHiConfigWithReport",
+      "diagnostic_effect": "reports noncanonical supplied schema while runtime remains current-only",
+      "behavioral_acceptance_refs": [
+        "config.test.mjs"
+      ]
+    },
+    {
+      "id": "config.execution-policy",
+      "path": "executionPolicy",
+      "classification": "runtime",
+      "type": "enum",
+      "default": "adaptive",
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "execution-policy-enum",
+      "safety_semantics": "preference",
+      "runtime_consumer": "config/execution-policy + plugin continuation controller",
+      "executor_effect": "selects minimal/balanced/thorough routing profile and automatic/adaptive continuation behavior",
+      "behavioral_acceptance_refs": [
+        "stage2-role-contract.test.mjs",
+        "profile-system.test.mjs"
+      ]
+    },
+    {
+      "id": "config.primary-mode",
+      "path": "primaryMode",
+      "classification": "runtime",
+      "type": "enum",
+      "default": "auto",
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "primary-mode-enum",
+      "safety_semantics": "preference",
+      "runtime_consumer": "plugin agent binding + runtime/routing/minimum-team",
+      "executor_effect": "selects/forces primary agent and direct-vs-delegated minimum-team behavior",
+      "behavioral_acceptance_refs": [
+        "main-prompt-final-reconfigure.test.mjs"
+      ]
+    },
+    {
+      "id": "config.compatibility-mode",
+      "path": "compatibility.mode",
+      "classification": "diagnostic",
+      "type": "enum",
+      "default": "compatible",
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config"
+      ],
+      "validator": "compatibility-mode-enum",
+      "safety_semantics": "constraint",
+      "diagnostic_consumer": "doctor/checks.runDoctor",
+      "diagnostic_effect": "changes unsupported/unvalidated host compatibility findings from warning to failure under strict mode",
+      "behavioral_acceptance_refs": [
+        "doctor-deepening.test.mjs"
+      ],
+      "doctor_projection": "opencode-version,native-capabilities"
+    },
+    {
+      "id": "config.compatibility-validated-versions",
+      "path": "compatibility.validatedOpenCodeVersions",
+      "classification": "diagnostic",
+      "type": "string-list",
+      "default": [],
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config"
+      ],
+      "validator": "bounded-model-list",
+      "safety_semantics": "constraint",
+      "diagnostic_consumer": "doctor/checks.runDoctor",
+      "diagnostic_effect": "matches observed OpenCode version against the validated-version inventory",
+      "behavioral_acceptance_refs": [
+        "doctor-deepening.test.mjs"
+      ],
+      "doctor_projection": "opencode-version"
+    },
+    {
+      "id": "config.execution-topology",
+      "path": "execution.topology",
+      "classification": "runtime",
+      "type": "enum",
+      "default": "adaptive",
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "topology-mode-enum",
+      "safety_semantics": "constraint",
+      "runtime_consumer": "runtime/mission/MissionStore -> runtime/execution/decideTopology",
+      "executor_effect": "forces/adapts single-agent versus multi-agent mission topology",
+      "behavioral_acceptance_refs": [
+        "hi-acceptance-evolution.test.mjs"
+      ]
+    },
+    {
+      "id": "config.execution-max-agents",
+      "path": "execution.maxAgents",
+      "classification": "runtime",
+      "type": "integer",
+      "default": 4,
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "bounded-integer:1..8",
+      "safety_semantics": "capacity",
+      "runtime_consumer": "runtime/execution/decideTopology",
+      "executor_effect": "caps topology agent count; value 1 is an executable single-agent ceiling",
+      "behavioral_acceptance_refs": [
+        "hi-core-evolution.test.mjs"
+      ]
+    },
+    {
+      "id": "config.execution-parallelism",
+      "path": "execution.parallelism",
+      "classification": "runtime",
+      "type": "integer",
+      "default": 2,
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "bounded-integer:1..8",
+      "safety_semantics": "capacity",
+      "runtime_consumer": "runtime/execution/decideTopology -> TaskRuntime.canRun",
+      "executor_effect": "caps parallel streams inside selected mission topology",
+      "behavioral_acceptance_refs": [
+        "hi-core-evolution.test.mjs"
+      ]
+    },
+    {
+      "id": "config.models-mode",
+      "path": "models.mode",
+      "classification": "runtime",
+      "type": "enum",
+      "default": "adaptive",
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "model-selection-mode-enum",
+      "safety_semantics": "preference",
+      "runtime_consumer": "runtime/routing/model-resolver.resolveModel",
+      "executor_effect": "switches adaptive scoring versus fixed or role-mapped model preference",
+      "behavioral_acceptance_refs": [
+        "hi-acceptance-evolution.test.mjs"
+      ]
+    },
+    {
+      "id": "config.models-default",
+      "path": "models.default",
+      "classification": "runtime",
+      "type": "string",
+      "default": "auto",
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "non-empty-model-id-or-auto",
+      "safety_semantics": "preference",
+      "runtime_consumer": "runtime/routing/model-resolver.resolveModel",
+      "executor_effect": "provides fixed project model when models.mode=fixed",
+      "behavioral_acceptance_refs": [
+        "hi-acceptance-evolution.test.mjs"
+      ]
+    },
+    {
+      "id": "config.models-roles",
+      "path": "models.roles",
+      "classification": "runtime",
+      "type": "string-map",
+      "default": {},
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "model-id-map",
+      "safety_semantics": "preference",
+      "runtime_consumer": "runtime/routing/model-resolver.resolveModel",
+      "executor_effect": "provides project role-specific model when models.mode=role-mapped",
+      "behavioral_acceptance_refs": [
+        "per-role-routing-runtime.test.mjs"
+      ]
+    },
+    {
+      "id": "config.routing-strategy",
+      "path": "routing.strategy",
+      "classification": "runtime",
+      "type": "enum",
+      "default": "cost-quality",
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "routing-strategy-enum",
+      "safety_semantics": "preference",
+      "runtime_consumer": "runtime/routing/model-resolver.resolveModel",
+      "executor_effect": "changes model scoring between quality, cost, and cost-quality",
+      "behavioral_acceptance_refs": [
+        "main-prompt-adaptive-selection-completion-cost.test.mjs"
+      ]
+    },
+    {
+      "id": "config.routing-category-models",
+      "path": "routing.categoryModels",
+      "classification": "runtime",
+      "type": "string-list-map",
+      "default": {},
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "category-model-map",
+      "safety_semantics": "preference",
+      "runtime_consumer": "runtime/routing/model-resolver.resolveModel",
+      "executor_effect": "prepends configured category candidates before scored models",
+      "behavioral_acceptance_refs": [
+        "per-role-routing-runtime.test.mjs"
+      ]
+    },
+    {
+      "id": "config.routing-category-variants",
+      "path": "routing.categoryVariants",
+      "classification": "runtime",
+      "type": "string-list-map",
+      "default": {},
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "category-variant-map",
+      "safety_semantics": "preference",
+      "runtime_consumer": "runtime/routing/model-resolver.chooseVariant",
+      "executor_effect": "changes selected native model variant by task category",
+      "behavioral_acceptance_refs": [
+        "routing-config-discovery.test.mjs"
+      ]
+    },
+    {
+      "id": "config.routing-role-models",
+      "path": "routing.roleModels",
+      "classification": "runtime",
+      "type": "string-list-map",
+      "default": {},
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "role-model-map",
+      "safety_semantics": "preference",
+      "runtime_consumer": "runtime/routing/model-resolver.resolveModel",
+      "executor_effect": "prepends configured role candidates before category/scored models",
+      "behavioral_acceptance_refs": [
+        "per-role-routing-runtime.test.mjs"
+      ]
+    },
+    {
+      "id": "config.routing-role-variants",
+      "path": "routing.roleVariants",
+      "classification": "runtime",
+      "type": "nested-string-map",
+      "default": {},
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "role-variant-map",
+      "safety_semantics": "preference",
+      "runtime_consumer": "runtime/routing/model-resolver.chooseVariant",
+      "executor_effect": "changes selected native variant for a specific role/model pair",
+      "behavioral_acceptance_refs": [
+        "main-prompt-model-setup-persistence.test.mjs"
+      ]
+    },
+    {
+      "id": "config.routing-max-fallbacks",
+      "path": "routing.maxFallbacks",
+      "classification": "runtime",
+      "type": "integer",
+      "default": 3,
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "bounded-integer:0..6",
+      "safety_semantics": "capacity",
+      "runtime_consumer": "runtime/routing/model-resolver.resolveModel",
+      "executor_effect": "bounds fallback candidate count",
+      "behavioral_acceptance_refs": [
+        "main-prompt-variant-fallback-concurrency.test.mjs"
+      ]
+    },
+    {
+      "id": "config.routing-allowed-providers",
+      "path": "routing.allowedProviders",
+      "classification": "runtime",
+      "type": "string-list",
+      "default": [],
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy:narrowing-compose"
+      ],
+      "validator": "bounded-model-list",
+      "safety_semantics": "constraint",
+      "runtime_consumer": "runtime/routing/model-resolver.policyFilter/runtimeModelCandidateStatus",
+      "executor_effect": "narrows eligible providers and disables unconstrained host-default fallback when nonempty",
+      "behavioral_acceptance_refs": [
+        "routing-config-discovery.test.mjs",
+        "main-prompt-hardening.test.mjs"
+      ]
+    },
+    {
+      "id": "config.routing-denied-models",
+      "path": "routing.deniedModels",
+      "classification": "runtime",
+      "type": "string-list",
+      "default": [],
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy:narrowing-compose"
+      ],
+      "validator": "bounded-model-list",
+      "safety_semantics": "constraint",
+      "runtime_consumer": "runtime/routing/model-resolver.policyFilter/runtimeModelCandidateStatus",
+      "executor_effect": "denies exact models and composes project/raw denies monotonically",
+      "behavioral_acceptance_refs": [
+        "routing-config-discovery.test.mjs",
+        "main-prompt-hardening.test.mjs"
+      ]
+    },
+    {
+      "id": "config.parallel-enabled",
+      "path": "parallel.enabled",
+      "classification": "runtime",
+      "type": "boolean",
+      "default": true,
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "boolean",
+      "safety_semantics": "capacity",
+      "runtime_consumer": "plugin ConcurrencyScheduler policy",
+      "executor_effect": "sets global scheduler capacity to one when disabled",
+      "behavioral_acceptance_refs": [
+        "config-executable-effect.test.mjs"
+      ]
+    },
+    {
+      "id": "config.parallel-max",
+      "path": "parallel.max",
+      "classification": "runtime",
+      "type": "integer",
+      "default": 3,
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "bounded-integer:1..8",
+      "safety_semantics": "capacity",
+      "runtime_consumer": "plugin ConcurrencyScheduler policy",
+      "executor_effect": "caps total concurrently acquired workers",
+      "behavioral_acceptance_refs": [
+        "config.test.mjs",
+        "config-executable-effect.test.mjs"
+      ]
+    },
+    {
+      "id": "config.parallel-providers",
+      "path": "parallel.providers",
+      "classification": "runtime",
+      "type": "integer-map",
+      "default": {},
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "positive-integer-limit-map",
+      "safety_semantics": "capacity",
+      "runtime_consumer": "runtime/scheduler/ConcurrencyScheduler.canStart",
+      "executor_effect": "caps concurrent workers per provider",
+      "behavioral_acceptance_refs": [
+        "config-executable-effect.test.mjs"
+      ]
+    },
+    {
+      "id": "config.parallel-models",
+      "path": "parallel.models",
+      "classification": "runtime",
+      "type": "integer-map",
+      "default": {},
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "positive-integer-limit-map",
+      "safety_semantics": "capacity",
+      "runtime_consumer": "runtime/scheduler/ConcurrencyScheduler.canStart",
+      "executor_effect": "caps concurrent workers per model",
+      "behavioral_acceptance_refs": [
+        "main-prompt-variant-fallback-concurrency.test.mjs",
+        "config-executable-effect.test.mjs"
+      ]
+    },
+    {
+      "id": "config.team-enabled",
+      "path": "teamMode.enabled",
+      "classification": "runtime",
+      "type": "boolean",
+      "default": false,
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "boolean",
+      "safety_semantics": "constraint",
+      "runtime_consumer": "plugin tool-surface gate + runtime/team/TeamRuntime",
+      "executor_effect": "enables Team Mode tools only when host worker-runtime is supported and permits team creation",
+      "behavioral_acceptance_refs": [
+        "project-routing-config.test.mjs"
+      ]
+    },
+    {
+      "id": "config.team-max-members",
+      "path": "teamMode.maxMembers",
+      "classification": "runtime",
+      "type": "integer",
+      "default": 4,
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "bounded-integer:2..8",
+      "safety_semantics": "capacity",
+      "runtime_consumer": "runtime/team/TeamRuntime.create/addMember",
+      "executor_effect": "caps distinct Team Mode members",
+      "behavioral_acceptance_refs": [
+        "team-mode-hardening.test.mjs"
+      ]
+    },
+    {
+      "id": "config.team-max-wall-minutes",
+      "path": "teamMode.maxWallMinutes",
+      "classification": "runtime",
+      "type": "integer",
+      "default": 45,
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "bounded-integer:1..240",
+      "safety_semantics": "capacity",
+      "runtime_consumer": "runtime/team/TeamRuntime.create/expireMission",
+      "executor_effect": "sets team expiry deadline and terminal expiration gate",
+      "behavioral_acceptance_refs": [
+        "team-mode-hardening.test.mjs"
+      ]
+    },
+    {
+      "id": "config.profile-minimal-specialist-threshold",
+      "path": "profile.minimal.specialistThreshold",
+      "classification": "runtime",
+      "type": "enum",
+      "default": "high",
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "threshold-enum",
+      "safety_semantics": "preference",
+      "runtime_consumer": "TaskRuntime executionProfileFor -> runtime/routing/routeCapabilities",
+      "executor_effect": "changes specialist dispatch threshold for the selected execution profile",
+      "behavioral_acceptance_refs": [
+        "profile-aware-router.test.mjs",
+        "stage2-role-contract.test.mjs"
+      ]
+    },
+    {
+      "id": "config.profile-minimal-review-threshold",
+      "path": "profile.minimal.reviewThreshold",
+      "classification": "runtime",
+      "type": "enum",
+      "default": "low",
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "threshold-enum",
+      "safety_semantics": "preference",
+      "runtime_consumer": "TaskRuntime executionProfileFor -> runtime/routing/routeCapabilities",
+      "executor_effect": "changes reviewer dispatch threshold for the selected execution profile",
+      "behavioral_acceptance_refs": [
+        "profile-aware-router.test.mjs"
+      ]
+    },
+    {
+      "id": "config.profile-balanced-specialist-threshold",
+      "path": "profile.balanced.specialistThreshold",
+      "classification": "runtime",
+      "type": "enum",
+      "default": "medium",
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "threshold-enum",
+      "safety_semantics": "preference",
+      "runtime_consumer": "TaskRuntime executionProfileFor -> runtime/routing/routeCapabilities",
+      "executor_effect": "changes specialist dispatch threshold for the selected execution profile",
+      "behavioral_acceptance_refs": [
+        "profile-aware-router.test.mjs",
+        "stage2-role-contract.test.mjs"
+      ]
+    },
+    {
+      "id": "config.profile-balanced-review-threshold",
+      "path": "profile.balanced.reviewThreshold",
+      "classification": "runtime",
+      "type": "enum",
+      "default": "medium",
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "threshold-enum",
+      "safety_semantics": "preference",
+      "runtime_consumer": "TaskRuntime executionProfileFor -> runtime/routing/routeCapabilities",
+      "executor_effect": "changes reviewer dispatch threshold for the selected execution profile",
+      "behavioral_acceptance_refs": [
+        "profile-aware-router.test.mjs"
+      ]
+    },
+    {
+      "id": "config.profile-thorough-specialist-threshold",
+      "path": "profile.thorough.specialistThreshold",
+      "classification": "runtime",
+      "type": "enum",
+      "default": "low",
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "threshold-enum",
+      "safety_semantics": "preference",
+      "runtime_consumer": "TaskRuntime executionProfileFor -> runtime/routing/routeCapabilities",
+      "executor_effect": "changes specialist dispatch threshold for the selected execution profile",
+      "behavioral_acceptance_refs": [
+        "profile-aware-router.test.mjs",
+        "stage2-role-contract.test.mjs"
+      ]
+    },
+    {
+      "id": "config.profile-thorough-review-threshold",
+      "path": "profile.thorough.reviewThreshold",
+      "classification": "runtime",
+      "type": "enum",
+      "default": "high",
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "validator": "threshold-enum",
+      "safety_semantics": "preference",
+      "runtime_consumer": "TaskRuntime executionProfileFor -> runtime/routing/routeCapabilities",
+      "executor_effect": "changes reviewer dispatch threshold for the selected execution profile",
+      "behavioral_acceptance_refs": [
+        "profile-aware-router.test.mjs"
+      ]
+    }
+  ]
+}

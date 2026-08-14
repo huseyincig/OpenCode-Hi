@@ -14,13 +14,13 @@ function fixture(){
   return root
 }
 function run(root){
-  for(const script of ['generate_permission_policy.py','generate_plugin_agents.py','generate_methodology_policy.py']){
+  for(const script of ['generate_config_policy.py','generate_permission_policy.py','generate_plugin_agents.py','generate_methodology_policy.py']){
     const r=spawnSync('python3',[join(root,'scripts',script)],{encoding:'utf8'})
     assert.equal(r.status,0,r.stderr||r.stdout)
   }
 }
 function generated(root){
-  const rels=['plugin/src/generated/permission-policy.ts','plugin/src/generated/role-policy.ts','plugin/src/generated/agent-config.ts','plugin/src/generated/methodology-policy.ts']
+  const rels=['plugin/src/generated/config-policy.ts','plugin/src/generated/permission-policy.ts','plugin/src/generated/role-policy.ts','plugin/src/generated/agent-config.ts','plugin/src/generated/methodology-policy.ts']
   for(const name of readdirSync(join(root,'skills')).filter(x=>x.startsWith('hi-')).sort())rels.push(`skills/${name}/SKILL.md`)
   return Object.fromEntries(rels.map(rel=>[rel,createHash('sha256').update(readFileSync(join(root,rel))).digest('hex')]))
 }
@@ -35,5 +35,15 @@ test('BA12 dependency scope: one RoleContract purpose mutation changes only decl
     const path=join(root,'data/hi-roles.json'),catalog=JSON.parse(readFileSync(path,'utf8'));catalog.roles.find(r=>r.id==='coder').purpose+=' [BA12 mutation]';writeFileSync(path,JSON.stringify(catalog,null,2)+'\n')
     run(root);const after=generated(root);const changed=Object.keys(before).filter(k=>before[k]!==after[k]).sort()
     assert.deepEqual(changed,['plugin/src/generated/agent-config.ts','plugin/src/generated/role-policy.ts'])
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+
+test('BA12 dependency scope: one ConfigOption default mutation changes only config policy projection',()=>{
+  const root=fixture();try{
+    run(root);const before=generated(root)
+    const path=join(root,'data/hi-config-options.json'),catalog=JSON.parse(readFileSync(path,'utf8'));catalog.options.find(x=>x.path==='parallel.max').default=4;writeFileSync(path,JSON.stringify(catalog,null,2)+'\n')
+    run(root);const after=generated(root);const changed=Object.keys(before).filter(k=>before[k]!==after[k]).sort()
+    assert.deepEqual(changed,['plugin/src/generated/config-policy.ts'])
   }finally{rmSync(root,{recursive:true,force:true})}
 })

@@ -9,6 +9,8 @@ import {STORAGE_OWNERSHIP_CATALOG,assertStorageOwnershipCatalog} from '../plugin
 import {HI_ROLE_CONTRACTS,HI_ROLE_IDS} from '../plugin/dist/generated/role-policy.js'
 import {HI_PERMISSION_PROFILES} from '../plugin/dist/generated/permission-policy.js'
 import {validatePermissionProfileCatalog,validateRolePermissionBindings} from '../plugin/dist/contracts/permission-profile.js'
+import {validateConfigOptionCatalog} from '../plugin/dist/contracts/config-option.js'
+import {HI_CONFIG_OPTIONS,HI_CONFIG_DEFAULTS} from '../plugin/dist/generated/config-policy.js'
 import {PACKAGED_HI_AGENTS} from '../plugin/dist/generated/agent-config.js'
 import {HI_METHODOLOGY_POLICY} from '../plugin/dist/generated/methodology-policy.js'
 import {openCodeHostCapabilityContracts} from '../plugin/dist/contracts/host-capability.js'
@@ -41,7 +43,25 @@ guard('HI002','UNKNOWN_CONTRACT_REFERENCE',()=>{
   for(const m of json('data/hi-methodologies.json').profiles)for(const ref of [...m.compatible_roles,...m.role_affinity])assert(known.has(ref),`${m.name}: unknown role ${ref}`)
 })
 
-deferred('HI003','CONFIG_EXECUTOR_MISSING','M5 ConfigOptionContract migration is BLOCKED_BY_HOST_POLICY; unmigrated config fields are not falsely admitted by M10')
+function leafPaths(value,prefix='',out=[]){
+  if(Array.isArray(value)||value===null||typeof value!=='object'||Object.keys(value).length===0){out.push(prefix);return out}
+  for(const [k,v] of Object.entries(value))leafPaths(v,prefix?`${prefix}.${k}`:k,out)
+  return out
+}
+guard('HI003','CONFIG_EXECUTOR_MISSING',()=>{
+  const options=validateConfigOptionCatalog(structuredClone(HI_CONFIG_OPTIONS))
+  const catalogPaths=[...new Set(options.map(x=>x.path))].sort(), defaultPaths=leafPaths(structuredClone(HI_CONFIG_DEFAULTS)).sort()
+  assert(JSON.stringify(catalogPaths)===JSON.stringify(defaultPaths),'HiConfig leaf/default catalog coverage drift')
+  assert(options.filter(x=>x.classification==='runtime').length===29,'runtime option inventory must remain explicit (29)')
+  assert(options.filter(x=>x.classification==='diagnostic').length===2,'diagnostic option inventory must remain explicit (2)')
+  assert(options.filter(x=>x.classification==='schema-marker').length===1,'schema marker inventory must remain explicit (1)')
+  for(const x of options){
+    if(x.classification==='runtime')assert(Boolean(x.runtimeConsumer&&x.executorEffect),`${x.path}: runtime option has no executable effect`)
+    else assert(!x.runtimeConsumer&&!x.executorEffect,`${x.path}: non-runtime option falsely claims executor effect`)
+    for(const ref of x.behavioralAcceptanceRefs)assert(testExists(ref),`${x.path}: missing config behavioral proof ${ref}`)
+  }
+  const defaults=source('plugin/src/config/defaults.ts');assert(defaults.includes("from '../generated/config-policy.js'"),'DEFAULT_HI_CONFIG is not generated-catalog derived')
+})
 
 const proofLinks={
   HI004:['DECISION_EXECUTOR_MISSING',['stage2-role-contract.test.mjs','authority-side-effect-idempotency.test.mjs']],
@@ -82,7 +102,7 @@ guard('HI006','HOST_PROJECTION_DRIFT',()=>{
 guard('HI010','STORAGE_OWNER_CONFLICT',()=>assertStorageOwnershipCatalog(STORAGE_OWNERSHIP_CATALOG))
 
 function generatedPaths(root){
-  const paths=['plugin/src/generated/permission-policy.ts','plugin/src/generated/role-policy.ts','plugin/src/generated/agent-config.ts','plugin/src/generated/methodology-policy.ts']
+  const paths=['plugin/src/generated/config-policy.ts','plugin/src/generated/permission-policy.ts','plugin/src/generated/role-policy.ts','plugin/src/generated/agent-config.ts','plugin/src/generated/methodology-policy.ts']
   const skills=readdirSync(join(root,'skills')).filter(n=>n.startsWith('hi-')&&existsSync(join(root,'skills',n,'SKILL.md'))).sort().map(n=>`skills/${n}/SKILL.md`)
   return [...paths,...skills]
 }
@@ -91,7 +111,7 @@ function tempGeneratedComparison(){
   try{
     for(const rel of ['data','roles','skills','scripts'])cpSync(join(ROOT,rel),join(temp,rel),{recursive:true})
     cpSync(join(ROOT,'plugin/src/generated'),join(temp,'plugin/src/generated'),{recursive:true})
-    for(const script of ['generate_permission_policy.py','generate_plugin_agents.py','generate_methodology_policy.py']){
+    for(const script of ['generate_config_policy.py','generate_permission_policy.py','generate_plugin_agents.py','generate_methodology_policy.py']){
       const r=spawnSync('python3',[join(temp,'scripts',script)],{encoding:'utf8'})
       if(r.status!==0)throw new Error(`${script}: ${r.stderr||r.stdout}`)
     }
@@ -103,7 +123,7 @@ guard('HI011','GENERATED_ARTIFACT_DIRTY',tempGeneratedComparison)
 guard('HI012','GENERATED_ARTIFACT_HAND_EDIT',()=>{
   const receipts=normalizedReceipts(json('data/validation/projection-receipts.json'))
   for(const r of receipts)assert(contentHash(readFileSync(join(ROOT,r.outputPath),'utf8')).value===r.outputHash.value,`${r.outputPath}: output hash differs from receipt`)
-  for(const rel of ['plugin/src/generated/permission-policy.ts','plugin/src/generated/role-policy.ts','plugin/src/generated/agent-config.ts','plugin/src/generated/methodology-policy.ts'])assert(/do not hand edit/i.test(source(rel)),`${rel}: generated marker missing`)
+  for(const rel of ['plugin/src/generated/config-policy.ts','plugin/src/generated/permission-policy.ts','plugin/src/generated/role-policy.ts','plugin/src/generated/agent-config.ts','plugin/src/generated/methodology-policy.ts'])assert(/do not hand edit/i.test(source(rel)),`${rel}: generated marker missing`)
 })
 
 guard('HI013','ROLE_AGENT_IDENTITY_UNVERIFIED',()=>{
@@ -127,7 +147,7 @@ guard('HI016','LEGACY_CURRENT_ONLY_VIOLATION',()=>{
 
 guard('HI017','BEHAVIORAL_PROOF_MISSING',()=>{
   for(const [id,[,files]] of Object.entries(proofLinks))for(const file of files)assert(testExists(file),`${id}: missing ${file}`)
-  for(const file of ['permission-profile-contract.test.mjs','role-contract-catalog.test.mjs','role-skill-permission-sync.test.mjs','host-capability-contract.test.mjs','storage-ownership-contract.test.mjs','agent-binding-contract.test.mjs'])assert(testExists(file),`missing migrated-class acceptance ${file}`)
+  for(const file of ['config-option-contract.test.mjs','config-executable-effect.test.mjs','permission-profile-contract.test.mjs','role-contract-catalog.test.mjs','role-skill-permission-sync.test.mjs','host-capability-contract.test.mjs','storage-ownership-contract.test.mjs','agent-binding-contract.test.mjs'])assert(testExists(file),`missing migrated-class acceptance ${file}`)
 })
 
 for(const r of results.sort((a,b)=>a.id.localeCompare(b.id)))console.log(`${r.id} ${r.status} ${r.name} — ${r.detail}`)

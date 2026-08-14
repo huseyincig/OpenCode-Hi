@@ -18,12 +18,14 @@ export function buildProjectionReceipts(root){
   const roleCatalog=json(join(root,'data','hi-roles.json'))
   const methodologyCatalog=json(join(root,'data','hi-methodologies.json'))
   const permissionCatalog=json(join(root,'data','hi-permission-profiles.json'))
+  const configCatalog=json(join(root,'data','hi-config-options.json'))
   const roleGuidance={}
   for(const name of readdirSync(join(root,'roles')).filter(x=>x.endsWith('.md')).sort())roleGuidance[name.slice(0,-3)]=text(join(root,'roles',name))
   const receipts=[]
   const add=(projectionSchema,sourceContracts,generatorId,outputPath)=>receipts.push(createProjectionReceipt({
     projectionSchema,sourceContracts,generatorId,generatorVersion:'1',outputPath,outputContent:text(join(root,outputPath))
   }))
+  add('hi.config-policy.v1',[{id:'hi.config.catalog',contract:configCatalog}],'hi.config-policy.generator','plugin/src/generated/config-policy.ts')
   add('hi.permission-policy.v1',[{id:'hi.permission.catalog',contract:permissionCatalog}],'hi.permission-policy.generator','plugin/src/generated/permission-policy.ts')
   add('hi.role-policy.v1',[{id:'hi.role.catalog',contract:roleCatalog}],'hi.role-policy.generator','plugin/src/generated/role-policy.ts')
   add('hi.agent-config.v1',[{id:'hi.role.catalog',contract:roleCatalog},{id:'hi.permission.catalog',contract:permissionCatalog},{id:'hi.methodology.catalog',contract:methodologyCatalog},{id:'hi.role.guidance',contract:roleGuidance}],'hi.agent-config.generator','plugin/src/generated/agent-config.ts')

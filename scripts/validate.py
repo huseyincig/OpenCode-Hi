@@ -53,7 +53,7 @@ for p in ROOT.rglob('*'):
     for pattern in legacy:
         if re.search(pattern,t,re.I):err(f'legacy/prototype identity in current path: {rel} / {pattern}')
 # Living data contract names.
-required_data={'data/product.json','data/validation/implementation-coverage.json','data/validation/native-coverage.json','data/validation/flow-coverage.json','data/validation/flow-acceptance.json','data/validation/source-gates.json','data/validation/release-gates.json','data/validation/source-contracts.json','data/validation/final-dod-audit.json','data/hi-methodologies.json','data/hi-roles.json','data/hi-permission-profiles.json','data/validation/benchmarks-0.1.0.json','data/validation/install-lifecycle-0.1.0.json','data/validation/terminology-audit-0.1.0.json','data/validation/projection-receipts.json'}
+required_data={'data/product.json','data/validation/implementation-coverage.json','data/validation/native-coverage.json','data/validation/flow-coverage.json','data/validation/flow-acceptance.json','data/validation/source-gates.json','data/validation/release-gates.json','data/validation/source-contracts.json','data/validation/final-dod-audit.json','data/hi-methodologies.json','data/hi-roles.json','data/hi-permission-profiles.json','data/hi-config-options.json','data/validation/benchmarks-0.1.0.json','data/validation/install-lifecycle-0.1.0.json','data/validation/terminology-audit-0.1.0.json','data/validation/projection-receipts.json'}
 for rel in required_data:
     if not (ROOT/rel).is_file():err(f'required data contract missing: {rel}')
 for old in ('feature-ledger-09-coverage.json','native-first-10-coverage.json','flow-11-coverage.json','flow-11-acceptance.json','roadmap-source-gates.json','observed-runtime-smoke-1.18.16.json'):
@@ -72,6 +72,27 @@ if final_audit.get('source_checklist',{}).get('internal_missing')!=[]:err('final
 if final_audit.get('release_blocked') is not True:err('final DoD audit must remain release-blocked until external receipts exist')
 rg=json.loads((ROOT/'data/validation/release-gates.json').read_text())
 if not any(str(v).startswith('PENDING_EXTERNAL') for v in rg.get('gates',{}).values()):err('external runtime gates unexpectedly have no pending evidence')
+# M5 canonical ConfigOption catalog: every HiConfig leaf is classified and runtime entries must name an executable consumer/effect.
+try:
+    cc=json.loads((ROOT/'data/hi-config-options.json').read_text())
+    if cc.get('schema')!=1 or cc.get('type')!='hi-config-option-catalog':err('Hi config option catalog header invalid')
+    options=cc.get('options',[]); ids=[]; paths=[]
+    for x in options:
+        if not isinstance(x,dict):err('Hi config option entry must be object');continue
+        oid=x.get('id'); path=x.get('path'); cls=x.get('classification');ids.append(oid);paths.append(path)
+        if x.get('owner')!='hi-config':err(f'{oid}: config option owner invalid')
+        if cls=='runtime':
+            if not x.get('runtime_consumer') or not x.get('executor_effect'):err(f'{oid}: CONFIG_WITHOUT_EXECUTABLE_EFFECT')
+            if x.get('diagnostic_consumer') or x.get('diagnostic_effect'):err(f'{oid}: runtime config falsely classified diagnostic-only')
+        elif cls in ('diagnostic','schema-marker'):
+            if x.get('runtime_consumer') or x.get('executor_effect'):err(f'{oid}: non-runtime config falsely claims executor effect')
+            if not x.get('diagnostic_consumer') or not x.get('diagnostic_effect'):err(f'{oid}: diagnostic/schema config missing diagnostic effect')
+        else:err(f'{oid}: unknown config option classification {cls}')
+        for ref in x.get('behavioral_acceptance_refs',[]):
+            if not (ROOT/'plugin/test'/ref).is_file():err(f'{oid}: missing config acceptance {ref}')
+    if len(ids)!=len(set(ids)) or len(paths)!=len(set(paths)):err('duplicate Hi config option id/path')
+    if (sum(1 for x in options if x.get('classification')=='runtime'),sum(1 for x in options if x.get('classification')=='diagnostic'),sum(1 for x in options if x.get('classification')=='schema-marker'))!=(29,2,1):err('Hi config option classification inventory drift')
+except Exception as e:err(f'bad Hi config option catalog: {e}')
 roles=sorted((ROOT/'roles').glob('*.md')); skills=sorted((ROOT/'skills').glob('*/SKILL.md'))
 try:
     role_catalog=json.loads((ROOT/'data/hi-roles.json').read_text())

@@ -42,6 +42,26 @@
   },
   {
     "schemaVersion": 1,
+    "projectionSchema": "hi.config-policy.v1",
+    "sourceContracts": [
+      {
+        "id": "hi.config.catalog",
+        "hash": {
+          "algorithm": "sha256",
+          "value": "6c8d5401bc9c86d8bc286e52d1044c9ac1db3a71e8537d4b247246af6c95a33e"
+        }
+      }
+    ],
+    "generatorId": "hi.config-policy.generator",
+    "generatorVersion": "1",
+    "outputPath": "plugin/src/generated/config-policy.ts",
+    "outputHash": {
+      "algorithm": "sha256",
+      "value": "92588e9e83e9ac679d2117d73294962ce3db2b604f49e033e46ba8fd475582ed"
+    }
+  },
+  {
+    "schemaVersion": 1,
     "projectionSchema": "hi.methodology-policy.v1",
     "sourceContracts": [
       {
