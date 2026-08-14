@@ -1,7 +1,8 @@
-declare const process: { cwd(): string; env: Record<string,string|undefined> }
+declare const process: { cwd(): string; env: Record<string,string|undefined>; platform:string; kill(pid:number,signal?:string):boolean }
 declare module 'node:crypto' {
   export interface Hash { update(data:any): Hash; digest(encoding:'hex'): string }
   export function createHash(algorithm:string): Hash
+  export function randomUUID(): string
 }
 declare module 'node:fs' {
   export function existsSync(path:any): boolean

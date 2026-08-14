@@ -55,17 +55,18 @@ test('P1 ProcessContract enforces lifecycle timestamp exit and cleanup coherence
   assert.equal(isProcessContract({...base,cleanup_state:'CLEANED'}),false,'running process cannot be cleaned')
 })
 
-test('P1 remains contract-only: process lifecycle host capability is still DEGRADED and no executor is claimed',()=>{
+test('P1 contract invariants remain strict while P2 executor exists and host capability stays DEGRADED until P3',()=>{
   const all={childSessions:true,asyncPrompt:true,syncPrompt:true,abort:true,providerInventory:true,appLog:true,sessionStatus:true,childSessionList:true,sessionTodo:true,sessionDiff:true,sessionFork:true,sessionSummarize:true,sessionRevert:true,sessionUnrevert:true}
   const capability=hostCapabilityByID(openCodeHostCapabilityContracts(all),'process-lifecycle')
   assert.equal(capability?.status,'DEGRADED')
   assert.match(capability?.semantic_loss.join(' ')??'',/PID|process-exit/i)
   const hosts=readFileSync(new URL('../../docs/HOSTS.md',import.meta.url),'utf8')
   const architecture=readFileSync(new URL('../../docs/ARCHITECTURE.md',import.meta.url),'utf8')
-  assert.match(hosts,/no Hi `ProcessExecutor` is wired/i)
+  assert.match(hosts,/ProcessExecutor/i)
   assert.match(hosts,/remains `DEGRADED`/)
   assert.match(architecture,/contains no raw stdout\/stderr buffer/)
   const roots=[fileURLToPath(new URL('../src/runtime',import.meta.url)),fileURLToPath(new URL('../src/opencode',import.meta.url))]
   const source=roots.flatMap(root=>readdirSync(root,{recursive:true}).filter(x=>typeof x==='string'&&x.endsWith('.ts')).map(x=>readFileSync(join(root,String(x)),'utf8'))).join('\n')
-  assert.doesNotMatch(source,/interface\s+ProcessExecutor|class\s+.*ProcessExecutor/)
+  assert.match(source,/interface\s+ProcessExecutor/)
+  assert.match(source,/class\s+OpenCodePtyAdapter/)
 })

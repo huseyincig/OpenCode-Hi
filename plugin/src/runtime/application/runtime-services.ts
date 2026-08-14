@@ -11,6 +11,7 @@ import { TeamRuntime } from '../team/team-runtime.js'
 import { ExperimentalOpenCodeAdapter } from '../../opencode/experimental-adapter.js'
 import { appendLedger } from '../ledger/ledger.js'
 import { createRuntimeScopedStores } from './runtime-scoped-stores.js'
+import { OpenCodePtyAdapter } from '../../opencode/open-code-pty-adapter.js'
 
 export function createRuntimeServices(input:{ctx:OpenCodePluginContext;projectRoot:string;packageRoot:string;getConfig:()=>HiConfig;getModels:()=>AvailableModel[];getHostConfig:()=>Record<string,unknown>}){
   const {ctx,projectRoot,packageRoot,getConfig,getModels,getHostConfig}=input
@@ -27,7 +28,8 @@ export function createRuntimeServices(input:{ctx:OpenCodePluginContext;projectRo
   const eventSink:RuntimeSignalSink=ev=>{const m=store.all().find(x=>x.identity.mission_id===ev.mission_id);if(m)appendLedger(m,`event.${ev.type}`,{task_id:ev.task_id,worker_id:ev.worker_id,payload:ev.payload})}
   const tasks=new TaskRuntime(ctx.client,background,scheduler,projectRoot,packageRoot,getConfig,getModels,getHostConfig,eventSink,{serverUrl:ctx.serverUrl?.toString?.(),directory:ctx.directory},scopedStores)
   for(const m of store.all())for(const w of m.execution.workers)if(w.session_id&&w.status==='ready')background.set(w)
+  const processExecutor=new OpenCodePtyAdapter(ctx.client,ctx.serverUrl,ctx.directory,projectRoot,getHostConfig)
   const experimental=new ExperimentalOpenCodeAdapter(store,background)
   const teams=new TeamRuntime(tasks,()=>getConfig().teamMode.enabled,()=>({maxMembers:getConfig().teamMode.maxMembers,maxWallMs:getConfig().teamMode.maxWallMinutes*60*1000}))
-  return {store,background,persistence,scheduler,eventSink,tasks,experimental,teams,scopedStores}
+  return {store,background,persistence,scheduler,eventSink,tasks,processExecutor,experimental,teams,scopedStores}
 }

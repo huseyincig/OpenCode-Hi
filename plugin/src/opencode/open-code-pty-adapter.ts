@@ -1,0 +1,118 @@
+import { createHash,randomUUID } from 'node:crypto'
+import type { OpenCodeClient } from './types.js'
+import { isProcessContract,processCommandIdentity,type ProcessContract } from '../contracts/process.js'
+import type { ProcessExecutor,ProcessExit,ProcessHandle,ProcessOutput,ProcessOutputWindow,ProcessSpawnRequest } from '../runtime/process/executor.js'
+import { evaluateProcessSpawnAuthority } from '../runtime/process/authority.js'
+
+interface NativePtyInfo{id:string;title:string;command:string;args:string[];cwd:string;status:'running'|'exited';pid:number;exitCode?:number}
+interface ProcessSocket{readyState:number;send(data:string):void;close(code?:number,reason?:string):void;addEventListener(type:'open'|'message'|'close'|'error',listener:(event:any)=>void,options?:{once?:boolean}):void}
+export type ProcessSocketFactory=(url:string)=>ProcessSocket
+export type ProcessSignal=(pid:number,signal:'SIGTERM'|'SIGINT')=>void
+interface RuntimeProcessState{
+  contract:ProcessContract
+  ptyID:string
+  socket?:ProcessSocket
+  buffer:string
+  availableStart:number
+  availableEnd:number
+  cursorKnown:boolean
+  beforeMetaChars:number
+  timeoutTimer?:ReturnType<typeof setTimeout>
+  timeoutRequested:boolean
+  killRequested?:'SIGTERM'|'SIGINT'
+  exitPromise:Promise<ProcessExit>
+  resolveExit:(value:ProcessExit)=>void
+  rejectExit:(error:unknown)=>void
+  exitSettled:boolean
+  reconnects:number
+}
+
+export class ProcessSpawnPermissionError extends Error{constructor(readonly decision:'ASK'|'DENY',readonly reason:string){super(`Hi ProcessExecutor spawn ${decision.toLowerCase()}: ${reason}`);this.name='ProcessSpawnPermissionError'}}
+function nativeData<T>(value:any):T{const first=value&&typeof value==='object'&&'data'in value?value.data:value;return(first&&typeof first==='object'&&'data'in first?first.data:first) as T}
+function cloneContract(value:ProcessContract):ProcessContract{return structuredClone(value)}
+function processID():string{return`proc_${createHash('sha256').update(randomUUID()).digest('hex').slice(0,24)}`}
+function wsUrl(serverUrl:URL,ptyID:string,directory:string,ticket:string,cursor:number):string{const url=new URL(`/api/pty/${encodeURIComponent(ptyID)}/connect`,serverUrl);url.protocol=url.protocol==='https:'?'wss:':'ws:';url.searchParams.set('location[directory]',directory);url.searchParams.set('cursor',String(cursor));url.searchParams.set('ticket',ticket);return url.toString()}
+async function bytes(value:unknown):Promise<Uint8Array|undefined>{if(value instanceof ArrayBuffer)return new Uint8Array(value);if(ArrayBuffer.isView(value))return new Uint8Array(value.buffer,value.byteOffset,value.byteLength);if(typeof Blob!=='undefined'&&value instanceof Blob)return new Uint8Array(await value.arrayBuffer());return undefined}
+
+export class OpenCodePtyAdapter implements ProcessExecutor{
+  readonly #states=new Map<string,RuntimeProcessState>()
+  constructor(
+    readonly client:OpenCodeClient,
+    readonly serverUrl:URL,
+    readonly directory:string,
+    readonly projectRoot:string,
+    readonly getHostConfig:()=>Record<string,unknown>,
+    readonly socketFactory:ProcessSocketFactory=(url)=>new WebSocket(url) as unknown as ProcessSocket,
+    readonly signalProcess:ProcessSignal=(pid,signal)=>process.kill(pid,signal),
+    readonly maxBufferedChars=256*1024,
+    readonly maxReadChars=64*1024,
+  ){}
+  #edge():any{return this.client as any}
+  #pty():any{const pty=this.#edge()?.v2?.pty;if(!pty||typeof pty.create!=='function'||typeof pty.get!=='function'||typeof pty.remove!=='function'||typeof pty.connectToken!=='function')throw new Error('OpenCode canonical v2 PTY API unavailable');return pty}
+  #location(){return{directory:this.directory}}
+  #state(id:string):RuntimeProcessState{const state=this.#states.get(id);if(!state)throw new Error(`Hi ProcessExecutor process not found: ${id}`);return state}
+  #append(state:RuntimeProcessState,text:string,beforeMeta=false):void{
+    if(!text)return
+    if(beforeMeta){state.beforeMetaChars+=text.length;state.buffer=(state.buffer+text).slice(-this.maxBufferedChars);return}
+    const end=state.availableEnd+text.length;state.buffer=(state.buffer+text).slice(-this.maxBufferedChars);state.availableEnd=end;state.availableStart=Math.max(0,end-state.buffer.length)
+  }
+  #settleExit(state:RuntimeProcessState):void{if(state.exitSettled)return;state.exitSettled=true;if(state.timeoutTimer)clearTimeout(state.timeoutTimer);state.resolveExit({contract:cloneContract(state.contract)})}
+  #failExit(state:RuntimeProcessState,error:unknown):void{if(state.exitSettled)return;state.exitSettled=true;if(state.timeoutTimer)clearTimeout(state.timeoutTimer);state.rejectExit(error)}
+  #applyInfo(state:RuntimeProcessState,info:NativePtyInfo):void{
+    if(info.pid!==state.contract.pid)throw new Error(`OpenCode PTY PID identity changed for ${state.contract.process_id}: expected ${state.contract.pid}, observed ${info.pid}`)
+    if(info.status!=='exited'||state.contract.status!=='RUNNING')return
+    const now=Date.now();state.contract.ended_at=now;state.contract.cleanup_state='CLEANUP_PENDING'
+    if(state.timeoutRequested){state.contract.status='TIMED_OUT';state.contract.termination_reason='timeout-policy';state.contract.timeout_at=state.contract.timeout_at??now}
+    else if(state.killRequested){state.contract.status='TERMINATED';state.contract.termination_reason=`signal:${state.killRequested}`}
+    else{state.contract.status='EXITED';state.contract.exit_code=Number.isInteger(info.exitCode)?info.exitCode:0}
+    const candidate=structuredClone(state.contract);if(!isProcessContract(candidate))throw new Error(`OpenCode PTY produced invalid Hi ProcessContract state for ${state.contract.process_id}`)
+    this.#settleExit(state)
+  }
+  async #nativeInfo(state:RuntimeProcessState):Promise<NativePtyInfo>{const raw=await this.#pty().get({ptyID:state.ptyID,location:this.#location()});const info=nativeData<NativePtyInfo>(raw);if(!info||typeof info.id!=='string')throw new Error(`OpenCode PTY get returned invalid data for ${state.ptyID}`);return info}
+  async #refresh(state:RuntimeProcessState):Promise<void>{this.#applyInfo(state,await this.#nativeInfo(state))}
+  async #ticket(state:RuntimeProcessState):Promise<string>{const raw=await this.#pty().connectToken({ptyID:state.ptyID,location:this.#location()},{headers:{'x-opencode-ticket':'1'}});const token=nativeData<{ticket:string;expires_in:number}>(raw);if(!token?.ticket)throw new Error(`OpenCode PTY connect token unavailable for ${state.ptyID}`);return token.ticket}
+  async #onFrame(state:RuntimeProcessState,data:unknown):Promise<void>{
+    const raw=await bytes(data)
+    if(raw?.length&&raw[0]===0){try{const meta=JSON.parse(new TextDecoder().decode(raw.slice(1)));if(!Number.isSafeInteger(meta?.cursor)||meta.cursor<0)throw new Error('invalid cursor');state.availableEnd=meta.cursor;state.availableStart=Math.max(0,meta.cursor-state.buffer.length);state.cursorKnown=true;return}catch(error){this.#failExit(state,new Error(`Invalid OpenCode PTY cursor frame: ${String(error)}`));return}}
+    if(typeof data==='string'){this.#append(state,data,!state.cursorKnown);return}
+    if(raw){try{const text=new TextDecoder('utf-8',{fatal:true}).decode(raw);this.#append(state,text,!state.cursorKnown)}catch{}}
+  }
+  async #connect(state:RuntimeProcessState,cursor:number):Promise<void>{
+    const ticket=await this.#ticket(state),socket=this.socketFactory(wsUrl(this.serverUrl,state.ptyID,this.directory,ticket,cursor));state.socket=socket;state.cursorKnown=false;state.beforeMetaChars=0
+    await new Promise<void>((resolve,reject)=>{
+      let opened=false
+      socket.addEventListener('message',(event)=>{void this.#onFrame(state,event.data)})
+      socket.addEventListener('open',()=>{opened=true;resolve()},{once:true})
+      socket.addEventListener('error',()=>{if(!opened)reject(new Error(`OpenCode PTY websocket failed for ${state.ptyID}`))},{once:true})
+      socket.addEventListener('close',()=>{void this.#onSocketClose(state)},{once:true})
+    })
+  }
+  async #onSocketClose(state:RuntimeProcessState):Promise<void>{
+    try{await this.#refresh(state);if(state.contract.status!=='RUNNING')return;if(state.reconnects>=1){this.#failExit(state,new Error(`OpenCode PTY transport lost while process ${state.contract.process_id} remains running`));return}state.reconnects++;await this.#connect(state,state.availableEnd)}catch(error){try{await this.#refresh(state);if(state.contract.status!=='RUNNING')return}catch{}this.#failExit(state,error)}
+  }
+  async #requestTimeout(state:RuntimeProcessState):Promise<void>{
+    if(state.contract.status!=='RUNNING')return
+    try{const info=await this.#nativeInfo(state);if(info.pid!==state.contract.pid)throw new Error(`Refusing stale PID timeout signal for ${state.contract.process_id}`);if(info.status==='exited'){this.#applyInfo(state,info);return}state.timeoutRequested=true;this.signalProcess(state.contract.pid,'SIGTERM')}catch(error){this.#failExit(state,error)}
+  }
+  async spawn(request:ProcessSpawnRequest):Promise<ProcessHandle>{
+    const auth=evaluateProcessSpawnAuthority(request,this.projectRoot,this.getHostConfig());if(auth.decision!=='ALLOW')throw new ProcessSpawnPermissionError(auth.decision,auth.reason)
+    if(!request.command.trim()||!request.cwd.trim()||!request.authority_ref.trim())throw new Error('Hi ProcessExecutor requires command, cwd and authority_ref')
+    if(request.timeout_ms!==undefined&&(!Number.isFinite(request.timeout_ms)||request.timeout_ms<50||request.timeout_ms>24*60*60*1000))throw new Error('Hi ProcessExecutor timeout_ms must be between 50ms and 24h')
+    const raw=await this.#pty().create({location:this.#location(),command:request.command,args:request.args??[],cwd:request.cwd,title:request.title,env:request.env}),info=nativeData<NativePtyInfo>(raw)
+    if(!info||info.status!=='running'||!Number.isInteger(info.pid)||info.pid<=0||typeof info.id!=='string')throw new Error('OpenCode PTY create did not return a running PID-bound session')
+    const started=Date.now(),contract:ProcessContract={process_id:processID(),mission_id:request.mission_id,task_id:request.task_id,worker_id:request.worker_id,host:'opencode',command_identity:processCommandIdentity({host:'opencode',command:auth.command_line,cwd:request.cwd}),cwd:request.cwd,pid:info.pid,status:'RUNNING',started_at:started,...(request.timeout_ms?{timeout_at:started+request.timeout_ms}:{}),output_artifact_refs:[],authority_ref:request.authority_ref,cleanup_state:'ACTIVE'}
+    if(!isProcessContract(contract)){try{await this.#pty().remove({ptyID:info.id,location:this.#location()})}catch{}throw new Error('Hi ProcessExecutor created invalid ProcessContract')}
+    let resolveExit!:(value:ProcessExit)=>void,rejectExit!:(error:unknown)=>void;const exitPromise=new Promise<ProcessExit>((resolve,reject)=>{resolveExit=resolve;rejectExit=reject})
+    const state:RuntimeProcessState={contract,ptyID:info.id,buffer:'',availableStart:0,availableEnd:0,cursorKnown:false,beforeMetaChars:0,timeoutRequested:false,exitPromise,resolveExit,rejectExit,exitSettled:false,reconnects:0};this.#states.set(contract.process_id,state)
+    try{await this.#connect(state,0)}catch(error){try{await this.#refresh(state)}catch{}if(state.contract.status==='RUNNING'){try{await this.#pty().remove({ptyID:state.ptyID,location:this.#location()})}catch{}this.#states.delete(contract.process_id);throw error}}
+    if(request.timeout_ms)state.timeoutTimer=setTimeout(()=>{void this.#requestTimeout(state)},request.timeout_ms)
+    return{contract:cloneContract(state.contract),host_process_id:state.ptyID}
+  }
+  async write(processId:string,input:string):Promise<void>{const state=this.#state(processId);await this.#refresh(state);if(state.contract.status!=='RUNNING')throw new Error(`Cannot write to terminal process ${processId}`);if(typeof input!=='string'||input.length>64*1024)throw new Error('Process input exceeds 64KiB bound');if(!state.socket||state.socket.readyState!==1)await this.#connect(state,state.availableEnd);state.socket?.send(input)}
+  async read(processId:string,window:ProcessOutputWindow={}):Promise<ProcessOutput>{const state=this.#state(processId);await this.#refresh(state);const requested=Number.isSafeInteger(window.cursor)?Math.max(0,window.cursor as number):state.availableStart,max=Math.max(1,Math.min(this.maxReadChars,Number.isFinite(window.max_chars)?Math.floor(window.max_chars as number):8192)),start=Math.min(state.availableEnd,Math.max(state.availableStart,requested)),offset=start-state.availableStart,text=state.buffer.slice(offset,offset+max),end=start+text.length;return{text,start_cursor:start,end_cursor:end,available_start_cursor:state.availableStart,available_end_cursor:state.availableEnd,truncated:requested<state.availableStart||end<state.availableEnd,status:state.contract.status}}
+  async wait(processId:string):Promise<ProcessExit>{const state=this.#state(processId);await this.#refresh(state);if(state.contract.status!=='RUNNING')return{contract:cloneContract(state.contract)};return state.exitPromise}
+  async kill(processId:string,signal:'SIGTERM'|'SIGINT'='SIGTERM'):Promise<ProcessExit>{const state=this.#state(processId);await this.#refresh(state);if(state.contract.status!=='RUNNING')return{contract:cloneContract(state.contract)};const info=await this.#nativeInfo(state);if(info.pid!==state.contract.pid)throw new Error(`Refusing stale PID kill for ${processId}`);state.killRequested=signal;this.signalProcess(state.contract.pid,signal);return this.wait(processId)}
+  async cleanup(processId:string):Promise<void>{const state=this.#state(processId);await this.#refresh(state);if(state.contract.status==='RUNNING')throw new Error(`Refusing cleanup of running process ${processId}; kill/exit must occur first`);await this.#pty().remove({ptyID:state.ptyID,location:this.#location()});state.socket?.close(1000,'Hi cleanup');state.contract.cleanup_state='CLEANED';if(!isProcessContract(state.contract))throw new Error(`Invalid cleanup state for ${processId}`);this.#states.delete(processId)}
+  snapshot(processId:string):ProcessContract{return cloneContract(this.#state(processId).contract)}
+  list():ProcessContract[]{return[...this.#states.values()].map(state=>cloneContract(state.contract))}
+}

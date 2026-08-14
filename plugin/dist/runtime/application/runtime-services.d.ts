@@ -9,6 +9,7 @@ import { ConcurrencyScheduler } from '../scheduler/concurrency.js';
 import { TaskRuntime } from '../task/task-runtime.js';
 import { TeamRuntime } from '../team/team-runtime.js';
 import { ExperimentalOpenCodeAdapter } from '../../opencode/experimental-adapter.js';
+import { OpenCodePtyAdapter } from '../../opencode/open-code-pty-adapter.js';
 export declare function createRuntimeServices(input: {
     ctx: OpenCodePluginContext;
     projectRoot: string;
@@ -23,6 +24,7 @@ export declare function createRuntimeServices(input: {
     scheduler: ConcurrencyScheduler;
     eventSink: RuntimeSignalSink;
     tasks: TaskRuntime;
+    processExecutor: OpenCodePtyAdapter;
     experimental: ExperimentalOpenCodeAdapter;
     teams: TeamRuntime;
     scopedStores: import("./runtime-scoped-stores.js").RuntimeScopedStores;
