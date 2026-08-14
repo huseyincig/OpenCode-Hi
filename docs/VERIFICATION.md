@@ -12,3 +12,5 @@ Current local acceptance covers adaptive execution/topology, mission completion/
 - `data/validation/architecture-audit-0.1.0.json`: final architecture-invariant audit.
 
 The current controlled environment exposes OpenCode `1.18.16`; historical and current-worktree real-host receipts remain source-bound and are never promoted across source changes. Local policy tests are not substitutes for exact-candidate T3 acceptance where host-bound behavior changed.
+
+P1 ProcessContract validation covers strict lifecycle/timestamp/PID/cleanup coherence and rejects raw output fields. It is contract evidence only; it is not PTY executor or process-lifecycle T3 proof, so the host capability remains `DEGRADED`.

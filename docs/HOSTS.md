@@ -14,3 +14,7 @@ Hi Core role identity and authority live in `plugin/src/runtime/roles/catalog.ts
 ## Semantic context capability boundary
 
 Semantic Context is Hi Core context capability, not an OpenCode-native host capability. The current explicit adapter surface contains only `TypeScriptSemanticContextAdapter` for `.ts`/`.tsx` (`typescript`, `typescriptreact`). No LSP semantic adapter, Tree-sitter adapter, or JavaScript adapter is currently claimed. A future host-backed semantic adapter must be added behind `SemanticContextAdapter` and separately proven before documentation may advertise it.
+
+## Process lifecycle capability boundary
+
+`ProcessContract` is now a Hi Core semantic contract, but no Hi `ProcessExecutor` is wired in this stage. OpenCode exposes native PTY primitives with PID, input, bounded reads, timeout, exit, kill and cleanup mechanics; Hi does not yet route ordinary model-facing shell execution through an owned PTY adapter. Therefore `process-lifecycle` remains `DEGRADED` until P2/P3 establish executor ownership plus exact WAIT/STOP/restart/T3 evidence.

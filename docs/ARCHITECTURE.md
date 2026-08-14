@@ -31,3 +31,9 @@ These are separate responsibilities; no mega orchestrator or mega context manage
 ## Completion
 
 STOP is allowed only when requested outcome and obligations are satisfied, required evidence is fresh, no blocking evidence or authority decision remains, no required task/worker/child/process/rollback remains pending, and CompletionAdjudicator approves. Agent idle and model “done” messages are not completion evidence.
+
+## Process lifecycle contract boundary
+
+Hi defines a host-independent `ProcessContract` for owned long-running process identity and lifecycle: mission/task/worker ownership, host, SHA-256 command identity, cwd, PID/process-group identity, lifecycle timestamps/status, bounded output artifact references, authority reference, and cleanup state. The contract deliberately contains no raw stdout/stderr buffer.
+
+This contract does **not** make process lifecycle operational by itself. OpenCode PTY remains a native host primitive; `ProcessExecutor`/PTY binding, WAIT/STOP/restart ownership and exact T3 receipts are separate work. Until those are implemented and proven, the reference-host `process-lifecycle` capability remains `DEGRADED`.
