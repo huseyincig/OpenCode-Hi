@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { dirname, join } from 'node:path';
 import { isProjectIntelligenceContract, projectIntelligenceFiles } from '../../contracts/project-intelligence.js';
 import { hiProjectRoot, projectIntelligencePath } from '../storage/ownership.js';
+import { retrieveProjectIntelligence } from './retrieval.js';
 function clone(item) { return { ...item, source_refs: item.source_refs.map(x => ({ ...x })), consumer_domains: [...item.consumer_domains] }; }
 export class ProjectIntelligenceStore {
     projectRoot;
@@ -32,6 +33,7 @@ export class ProjectIntelligenceStore {
     upsert(item) { if (!isProjectIntelligenceContract(item))
         throw new Error('Invalid ProjectIntelligenceContract'); const copy = clone(item); this.#patterns.set(item.id, copy); this.#persist(copy); }
     get(id) { const item = this.#patterns.get(id); return item ? clone(item) : undefined; }
+    retrieve(query, files, consumer = 'task-context', limit = 6) { return retrieveProjectIntelligence([...this.#patterns.values()], { query, files, consumer, limit }); }
     relevantToFiles(files, consumer = 'task-context', limit = 6) {
         const wanted = new Set(files);
         return [...this.#patterns.values()].filter(item => item.lifecycle === 'ACTIVE' && item.freshness === 'FRESH' && item.consumer_domains.includes(consumer) && projectIntelligenceFiles(item).some(file => wanted.has(file))).sort((a, b) => b.confidence - a.confidence || b.updated_at - a.updated_at).slice(0, limit).map(clone);
