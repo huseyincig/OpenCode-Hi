@@ -148,14 +148,12 @@ If the host supports a structured question primitive, HumanDecisionContract may 
 Ordinary OpenCode bash may be a valid command executor without exposing durable process identity. Therefore:
 
 - shell execution capability can be SUPPORTED;
-- `process.lifecycle` may remain DEGRADED/UNSUPPORTED unless a real process primitive (e.g. PTY adapter) is bound;
-- retries/cleanup cannot claim PID-level guarantees without that primitive.
+- OpenCode 1.18.16 exposes a separate PTY lifecycle, but `process.lifecycle` for ordinary model-facing bash remains DEGRADED unless Hi explicitly routes that execution through an owned PTY adapter;
+- retries/cleanup cannot claim PID-level guarantees for ordinary bash merely because the host also exposes PTY primitives.
 
 ## Workspace isolation boundary
 
-Creating a git worktree is insufficient. `workspace.isolation-binding` becomes SUPPORTED only if subsequent child/tool execution is demonstrably launched/bound inside the isolated workspace and cleanup/identity are owned.
-
-Until then, workspace-isolation methodology may describe HOW to obtain/verify isolation where capability exists, but control plane cannot claim isolation operationally.
+Creating a git worktree is insufficient. OpenCode 1.18.16 also exposes workspace/session `workspaceID` and warp primitives, but `workspace.isolation-binding` becomes SUPPORTED only when Hi owns the selection/provisioning/cleanup path and subsequent child/tool execution is demonstrably bound inside the isolated workspace. The retired `hi-workspace-isolation` methodology is not a substitute for that control-plane capability.
 
 ## Team boundary
 

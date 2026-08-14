@@ -55,7 +55,7 @@ This makes `MissionState` the runtime aggregate, but it should **not** become th
 | Project Intelligence | `runtime/project-intelligence/store.ts` | source-bound observations | file-intersection task handoff | RUNTIME_WIRED; not Evidence |
 | Privacy boundary | `runtime/privacy/privacy-boundary.ts` | provider/retention content | child prompt/artifact store | RUNTIME_WIRED at provider/storage boundary |
 | Shell safety | `runtime/process/shell-policy.ts` | bash args in tool-before | actual OpenCode bash invocation | HOST_BOUND: allow/rewrite/deny/user-action |
-| Process lifecycle | host capability manifest | OpenCode currently lacks ordinary bash PID lifecycle in adapter | no fake ProcessGovernor | DEGRADED, intentionally not claimed operational |
+| Process lifecycle | host capability manifest | OpenCode 1.18.16 exposes a separate PTY lifecycle, but ordinary model-facing bash is not routed through an Hi-owned PID/job lifecycle adapter | no fake ProcessGovernor / no PTY equivalence claim | DEGRADED, intentionally not claimed operational |
 | Workspace isolation execution | host capability manifest | no verified alternate-workspace child binding | no fake WorktreeRuntime | UNSUPPORTED on current adapter |
 | Authority | `runtime/safety/authority.ts`, project/release authority owners | exact structured approval state | external-action gates | RUNTIME_WIRED |
 | Release chain | `runtime/safety/release-chain.ts` | explicit external-action authority | release/external controls | RUNTIME_WIRED; no implicit release authority |

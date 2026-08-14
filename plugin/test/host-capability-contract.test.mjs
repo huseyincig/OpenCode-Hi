@@ -22,7 +22,11 @@ test('host capability registry separates primitive presence from product capabil
   assert.equal(workspace?.status,'UNSUPPORTED')
   assert.equal(workspace?.native_primitive,undefined)
   assert.equal(workspace?.adapter_entrypoint,undefined)
-  assert.match(workspace?.forbidden_fake_behavior??'',/worktree directory/i)
+  assert.match(workspace?.forbidden_fake_behavior??'',/workspaceID|alternate workspace/i)
+  const browser=hostCapabilityByID(items,'browser-execution')
+  assert.equal(browser?.status,'UNSUPPORTED')
+  assert.match(browser?.forbidden_fake_behavior??'',/MCP\/tool discovery|browser executor/i)
+  assert.match(hostCapabilityByID(items,'process-lifecycle')?.semantic_loss.join(' ')??'',/separate PTY lifecycle/i)
 })
 
 test('prompt and worker capabilities fail closed when required native ownership primitives are absent',()=>{
@@ -60,11 +64,13 @@ test('doctor reports degraded process lifecycle and unsupported workspace bindin
   try{
     const capabilities=detectOpenCodeCapabilities({session:{create:async()=>({}),promptAsync:async()=>({}),abort:async()=>({})}})
     const checks=runDoctor(DEFAULT_HI_CONFIG,new MissionStore(),d,{capabilities})
-    const process=checks.find(x=>x.id==='process-lifecycle'),workspace=checks.find(x=>x.id==='workspace-isolation-binding'),registry=checks.find(x=>x.id==='host-capability-contracts')
+    const process=checks.find(x=>x.id==='process-lifecycle'),workspace=checks.find(x=>x.id==='workspace-isolation-binding'),browser=checks.find(x=>x.id==='browser-execution'),registry=checks.find(x=>x.id==='host-capability-contracts')
     assert.equal(registry?.status,'pass')
     assert.match(process?.detail??'',/status=DEGRADED/)
     assert.match(process?.detail??'',/semantic-loss=/)
     assert.match(workspace?.detail??'',/status=UNSUPPORTED/)
     assert.match(workspace?.detail??'',/verification=OBSERVED/)
+    assert.match(browser?.detail??'',/status=UNSUPPORTED/)
+    assert.match(browser?.detail??'',/verification=OBSERVED/)
   }finally{rmSync(d,{recursive:true,force:true})}
 })

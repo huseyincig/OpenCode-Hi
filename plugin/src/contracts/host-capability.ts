@@ -63,9 +63,9 @@ export function openCodeHostCapabilityContracts(o:OpenCodeCapabilityObservation)
     o.sessionRevert?supported('session-revert','session.revert','NativeOpenCodeAdapter.revert','forensic-hardening.test.mjs'):degraded('session-revert','exact rollback command only for native-coverage gaps',['native session-aware revert and evidence invalidation coupling are unavailable'],'forensic-hardening.test.mjs'),
     o.sessionUnrevert?supported('session-unrevert','session.unrevert','NativeOpenCodeAdapter.unrevert','forensic-hardening.test.mjs'):unsupported('session-unrevert','forensic-hardening.test.mjs','Do not claim reversible native unrevert when the host primitive is absent.'),
     worker,
-    unsupported('browser-execution','methodology-host-capability.test.mjs','Do not claim browser/visual execution from MCP naming, prompts, screenshots, or tool inventory alone; Hi has no deterministic OpenCode 1.18.16 browser executor adapter.'),
-    degraded('process-lifecycle','OpenCode tool.execute.before/after shell safety boundary',['no native PID/job ownership, wait, kill, or process-exit lifecycle for ordinary shell execution'],'hi-acceptance-evolution.test.mjs'),
-    unsupported('workspace-isolation-binding','main-prompt-coexistence-platform-batch.test.mjs','Do not claim workspace isolation merely because a git worktree directory can be created; subsequent child execution must be provably bound to that workspace.')
+    unsupported('browser-execution','methodology-host-capability.test.mjs','Do not claim browser/visual execution from MCP naming, prompts, screenshots, or tool inventory alone; OpenCode 1.18.16 exposes MCP/tool discovery but Hi has no deterministic browser executor/evidence adapter.'),
+    degraded('process-lifecycle','OpenCode tool.execute.before/after shell safety boundary',['OpenCode 1.18.16 exposes a separate PTY lifecycle, but Hi does not route ordinary model-facing bash through that executor; ordinary shell PID/job wait/kill/exit ownership remains unavailable'],'hi-acceptance-evolution.test.mjs'),
+    unsupported('workspace-isolation-binding','main-prompt-coexistence-platform-batch.test.mjs','OpenCode 1.18.16 exposes workspace/session workspaceID primitives, but Hi has no canonical isolation selection/provisioning/cleanup adapter or real-host proof that child tool execution is bound to an alternate workspace; do not claim isolation from workspace/worktree creation alone.')
   ]
 }
 

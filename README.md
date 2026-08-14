@@ -34,7 +34,7 @@ Execution topology may remain adaptive, be constrained to one agent, or explicit
 
 ## Architecture
 
-OpenCode-Hi owns mission interpretation, obligations, execution policy, topology decisions, model/tool policy, context depth, isolation depth, evidence requirements, retry/recovery, human-decision routing, continuation, completion adjudication, and authoritative STOP.
+OpenCode-Hi owns mission interpretation, obligations, execution policy, topology decisions, model/tool policy, context policy, host-capability gating, evidence requirements, retry/recovery, human-decision routing, continuation, completion adjudication, and authoritative STOP. Workspace isolation is not an operational 0.1.x capability unless a task can be bound to an isolated host workspace with owned provisioning and cleanup.
 
 OpenCode owns native host primitives: sessions, child sessions, model/provider execution, tools, permissions, shell, events, edits, and host lifecycle.
 

@@ -2,7 +2,7 @@
 
 OpenCode is the reference host for 0.1.x. Core mission, evidence, authority, completion, execution policy, context policy, topology, failure, and human-decision semantics do not require OpenCode SDK types.
 
-A capability manifest resolves host features as `NATIVE`, `SAFE_EMULATION`, `DEGRADED`, or `UNSUPPORTED`; compatibility is never faked. On the current OpenCode adapter, `process_events` is `DEGRADED` and `workspace_isolation` is `UNSUPPORTED`; local helper code is not treated as equivalent host execution. Future Codex, Claude Code, Cursor, or MCP adapters may be added at the semantic boundary without replacing OpenCode-native behavior.
+A capability manifest resolves host features as `NATIVE`, `SAFE_EMULATION`, `DEGRADED`, or `UNSUPPORTED`; compatibility is never faked. For exact OpenCode 1.18.16, the SDK exposes a separate PTY lifecycle and workspace/session `workspaceID` primitives, but those primitives are not equivalent to current Hi product ownership. Ordinary model-facing bash still has no Hi-owned PID/job wait/kill/exit lifecycle, so `process_events` remains `DEGRADED`. Hi has no canonical isolation selection/provisioning/cleanup executor or real-host proof that child tool execution is bound to an alternate workspace, so `workspace_isolation` remains `UNSUPPORTED`. MCP/tool discovery likewise does not provide a deterministic browser-evidence executor, so `browser-execution` remains `UNSUPPORTED`. Doctor reports all three limitations. Future adapters may add support only with an owned executor and acceptance proof.
 
 
 ## Role boundary
