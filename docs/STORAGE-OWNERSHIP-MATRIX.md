@@ -26,7 +26,7 @@
 | Benchmarks | benchmark script | release audit | deterministic summary | BUILD | Hi validation | derived evidence | durable build receipt | yes if curated validation data | no | source/candidate change | validation/release workspace | validation |
 | Release ZIP/manifest/SBOM | release-build | release audit/user | build artifacts | RELEASE | Hi release | derived candidate | durable release | no in consumer project | no secrets | source candidate change invalidates | release output workspace | release owner |
 | Human decision state | mission/authority | continuation | authority/preference/interrupt state | MISSION | Hi mission | canonical runtime decision | mission survival only | no | may be sensitive | user message/decision | runtime state, privacy filtered | runtime |
-| Worktree isolation | git/OpenCode | task runtime | isolated workspace | TASK | Git/OpenCode + Hi policy | runtime capability | temporary git worktree | no separate Hi metadata | project code | task/mission cleanup | configured worktree location, never Hi project data | isolation owner |
+| Worktree isolation | Hi Mission execution + future Git/OpenCode adapter | task runtime | isolated workspace | TASK | Hi IsolationDecision/WorkspaceLease policy + Git/OpenCode mechanism | runtime capability | temporary git worktree | WorkspaceLease metadata in existing runtime-state only; no second worktree DB | project code | task/mission cleanup | configured worktree location, never Hi project data | isolation owner |
 | External docs/repositories | user/tools | assimilation/retrieval | source evidence | MISSION/PROJECT | source/tool | canonical external source | source-location owned | no implicit copy | source-dependent | source hash/version | original source or explicit artifact; never generic dump | source/artifact owner |
 
 ## Supplied reference storage behavior audit
@@ -46,7 +46,7 @@ The supplied reference repositories were reviewed for storage behavior as part o
 | Goal plugins | goal/checkpoint persistence | useful budget semantics integrated into MissionState; no duplicate goal-state store |
 | Background Agents | long-result/artifact handoff | use Hi artifact references; no second artifact database |
 | PTY | process/session state | ProcessGovernor state stays memory/runtime-owned, not project durable data |
-| Worktree | worktree directories | Git/OpenCode isolation capability owns the workspace; no `.opencode/hi/worktrees/` mirror |
+| Worktree | worktree directories | Git/OpenCode mechanism owns directory bytes; Hi persists only `WorkspaceLease` metadata in the existing Mission runtime-state and creates no `.opencode/hi/worktrees/` mirror/store |
 | Shell Strategy | no required durable data | methodology/policy only |
 | OCX | profiles/config/integrity data | bounded Hi capability policy only; no imported foreign config hierarchy |
 | Plugin Template | build/release files | release workspace only; never consumer project runtime storage |

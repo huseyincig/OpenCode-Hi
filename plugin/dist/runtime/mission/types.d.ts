@@ -8,6 +8,7 @@ import type { HumanDecisionContract } from '../../contracts/human-decision.js';
 import type { AuthorityStateContract } from '../../contracts/authority.js';
 import type { ExternalActionType } from '../../contracts/external-action.js';
 import type { ProcessContract } from '../../contracts/process.js';
+import type { IsolationDecisionContract, WorkspaceLeaseContract } from '../../contracts/workspace.js';
 export type { EvidenceItem } from '../../contracts/evidence.js';
 export { WORKER_EVIDENCE_KINDS } from '../../contracts/worker-result.js';
 export type { EvidenceOutcome, MethodologyObservation, WorkerEvidenceKind, WorkerResult, WorkerResultStatus } from '../../contracts/worker-result.js';
@@ -206,6 +207,8 @@ export interface MissionExecutionState {
     tasks: MissionTask[];
     workers: WorkerState[];
     processes: ProcessContract[];
+    isolation_decisions: IsolationDecisionContract[];
+    workspace_leases: WorkspaceLeaseContract[];
     evidence: {
         fresh: boolean;
         items: EvidenceItem[];

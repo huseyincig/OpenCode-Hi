@@ -222,8 +222,8 @@
     {
       "id": "Q3-ADV-013",
       "threat": "workspace-cleanup-loss",
-      "owner": "HostCapability contract / future isolation owner",
-      "control": "Workspace isolation remains UNSUPPORTED until Hi owns selection/provisioning/cleanup and proves child execution binding; no cleanup claim is fabricated.",
+      "owner": "IsolationDecision / WorkspaceLease contracts + HostCapability; W2 adapter pending",
+      "control": "W1 strictly owns isolation decision and lease lifecycle/cleanup metadata without provisioning anything; workspace isolation remains UNSUPPORTED until W2 binds execution and W3 proves create/bind/write/verify/cleanup on a real host.",
       "proof_tests": [
         {
           "file": "plugin/test/hi-acceptance-evolution.test.mjs",

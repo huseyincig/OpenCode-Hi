@@ -32,6 +32,10 @@ These are separate responsibilities; no mega orchestrator or mega context manage
 
 STOP is allowed only when requested outcome and obligations are satisfied, required evidence is fresh, no blocking evidence or authority decision remains, no required task/worker/child/process/rollback remains pending, and CompletionAdjudicator approves. Agent idle and model “done” messages are not completion evidence.
 
+## Workspace isolation contract boundary
+
+W1 defines strict Hi `IsolationDecision` and `WorkspaceLease` contracts as durable fields of the existing Mission execution slice. `IsolationDecision` records only required/reason/strategy/scope/requested-by policy output; `WorkspaceLease` binds lease/mission/task identity, repository root, base ref, workspace path, optional host workspace/branch identity, exact source baseline, lifecycle status, and separate cleanup state. This is contract ownership only: W1 creates no Git worktree, no OpenCode workspace, no child binding, and does not promote `workspace-isolation-binding`; W2/W3 must provide the executor chain and exact T3 proof.
+
 ## Process lifecycle contract boundary
 
 Hi defines a host-independent `ProcessContract` for owned long-running process identity and lifecycle: mission/task/worker ownership, host, SHA-256 command identity, cwd, PID/process-group identity, lifecycle timestamps/status, bounded output artifact references, authority reference, and cleanup state. The contract deliberately contains no raw stdout/stderr buffer.

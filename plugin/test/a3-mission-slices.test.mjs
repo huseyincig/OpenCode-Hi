@@ -28,7 +28,7 @@ test('A3 RuntimePersistence round-trips only the nested current schema',()=>{
     const store=new MissionStore(root),m=store.start('persisted','opaque request')
     const persistence=new RuntimePersistence(root);persistence.save([m],true)
     const raw=JSON.parse(readFileSync(persistence.path,'utf8'))
-    assert.equal(RUNTIME_STATE_SCHEMA,9)
+    assert.equal(RUNTIME_STATE_SCHEMA,10)
     assert.equal(raw.schema,RUNTIME_STATE_SCHEMA)
     assert.deepEqual(Object.keys(raw.missions[0]).sort(),SLICES)
     const loaded=persistence.load();assert.equal(loaded.length,1);assert.equal(loaded[0].identity.session_id,'persisted')

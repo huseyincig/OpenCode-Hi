@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from '
 import { dirname } from 'node:path';
 import { runtimeStatePath } from '../storage/locations.js';
 import { validateMissionEnvelope } from '../mission/validators.js';
-export const RUNTIME_STATE_SCHEMA = 9;
+export const RUNTIME_STATE_SCHEMA = 10;
 function isRecord(value) { return Boolean(value) && typeof value === 'object' && !Array.isArray(value); }
 function bootID() { return `boot_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`; }
 export class RuntimePersistence {

@@ -4,7 +4,7 @@ import { runtimeStatePath } from '../storage/locations.js'
 import type { MissionState } from '../mission/types.js'
 import { validateMissionEnvelope } from '../mission/validators.js'
 
-export const RUNTIME_STATE_SCHEMA = 9 as const
+export const RUNTIME_STATE_SCHEMA = 10 as const
 
 interface RuntimeEnvelope {
   boot_id:string

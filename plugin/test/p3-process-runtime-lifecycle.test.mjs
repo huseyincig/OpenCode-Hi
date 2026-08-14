@@ -37,11 +37,11 @@ class FakeExecutor{
   list(){return[...this.states.values()].map(x=>structuredClone(x))}
 }
 
-test('P3 Mission execution owns durable ProcessContract registry and schema 9 round-trips it current-only',()=>{
+test('P3 Mission execution owns durable ProcessContract registry and schema 10 round-trips it current-only',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-p3-state-')),{m,worker}=mission(root),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,root,()=>host())
   return runtime.spawn(m,{worker_id:worker.id,command:'node',args:['-e','1'],cwd:root}).then(process=>{
     assert.equal(m.execution.processes.length,1);assert.equal(m.execution.processes[0].process_id,process.process_id);assert.equal(validateMissionEnvelope(m),true)
-    const persistence=new RuntimePersistence(root);persistence.save([m]);const raw=JSON.parse(readFileSync(persistence.path,'utf8'));assert.equal(raw.schema,9);assert.equal(RUNTIME_STATE_SCHEMA,9);assert.equal(raw.missions[0].execution.processes.length,1)
+    const persistence=new RuntimePersistence(root);persistence.save([m]);const raw=JSON.parse(readFileSync(persistence.path,'utf8'));assert.equal(raw.schema,10);assert.equal(RUNTIME_STATE_SCHEMA,10);assert.equal(raw.missions[0].execution.processes.length,1)
     const reload=new RuntimePersistence(root),loaded=reload.load();assert.equal(loaded.length,1);assert.equal(loaded[0].execution.processes[0].pid,process.pid)
     raw.schema=8;writeFileSync(persistence.path,JSON.stringify(raw));const rejected=new RuntimePersistence(root);assert.deepEqual(rejected.load(),[]);assert.match(rejected.lastLoadReport.error,/unsupported runtime-state schema 8/)
   })
