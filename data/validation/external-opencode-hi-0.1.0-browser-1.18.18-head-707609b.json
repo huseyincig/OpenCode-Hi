@@ -1,0 +1,77 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "generated_at": "2026-08-15",
+  "status": "BLOCKED_EXACT_SOURCE_BROWSER_RUNTIME_UNAVAILABLE_T3",
+  "source_binding": {
+    "tested_git_commit": "707609b856a5ffb9b2e6868d552aa878a92d8e9a",
+    "tested_git_tree": "516eaf05a7749fbf1771e28a826aff487aead3ca",
+    "worktree": "/workspace/OpenCode-Hi",
+    "state": "CLEAN_COMMITTED_SOURCE",
+    "exact_candidate": true,
+    "runtime_hashes": {
+      "plugin/dist/plugin.js": "23da4bf4a5be95a8adb53945da2af10f389b2e05042c38ef5c599ca2da607b7b",
+      "plugin/src/contracts/browser-observation.ts": "bdaa9047f895999a62039c17906bb8214c9af98394a0f68c1a311abc5f258624",
+      "plugin/src/runtime/browser/executor.ts": "3a7383f3497010e8a2deb09a1561aeca571a32742aab8a0e0f6c45fb4a24d52b",
+      "plugin/src/opencode/browser-cli-adapter.ts": "7da906c819b0b52bdeda7a159a1047cebb1601249bdc856262927ab4c5a8606b",
+      "plugin/src/contracts/host-capability.ts": "7c067ce1b5b98237887ff4341dd4ef5a19741a2aae953461cdcd0eaaa1965650",
+      "plugin/src/runtime/host/capability-manifest.ts": "f21c6869ad7545d1b8e205a1f8917e7278dddb47c6193d8febe5612c3e4653f8"
+    },
+    "note": "Negative T3 receipt: exact committed executor source was audited on the acceptance host, but no browser CLI/engine executable was present. No browser operation was simulated and no support claim is promoted."
+  },
+  "host": {
+    "os": "linux",
+    "arch": "aarch64",
+    "opencode_version": "1.18.18",
+    "plugin_package_version": "1.18.18",
+    "sdk_package_version": "1.18.18"
+  },
+  "gates": {
+    "browser_executor_contract": "PASS_T2",
+    "browser_cli_adapter_controlled_acceptance": "PASS_T2",
+    "browser_runtime_available": "BLOCKED_T3_RUNTIME",
+    "navigation": "NOT_RUN",
+    "dom_observation": "NOT_RUN",
+    "screenshot": "NOT_RUN",
+    "deterministic_failure": "PASS_T2",
+    "methodology_preflight_fail_closed": "PASS_T3_NEGATIVE",
+    "browser_execution": "UNSUPPORTED"
+  },
+  "evidence": {
+    "deterministic_source_baseline": {
+      "full_suite": "722/722 PASS",
+      "architecture_lint": "PASS rules=22 deferred=0 linked=8",
+      "validator": "PASS product=HI docs=26",
+      "naming_namespace": "PASS",
+      "generated_idempotency": "clean",
+      "diff_check": "clean",
+      "backup_count": 0,
+      "checkpoint_commit": "707609b856a5ffb9b2e6868d552aa878a92d8e9a"
+    },
+    "runtime_inventory": {
+      "agent-browser": "MISSING",
+      "chromium": "MISSING",
+      "chromium-browser": "MISSING",
+      "google-chrome": "MISSING",
+      "google-chrome-stable": "MISSING",
+      "lightpanda": "MISSING",
+      "playwright": "MISSING"
+    },
+    "negative_acceptance": {
+      "no_model_mediated_browser_fallback": true,
+      "no_mcp_name_inference": true,
+      "visual_methodology_preflight_blocks_before_child_spawn": true,
+      "browser_observation_not_auto_evidence": true
+    }
+  },
+  "limitations": [
+    "No local browser CLI or engine executable is installed on this acceptance host.",
+    "B3 positive navigation/DOM/screenshot T3 cannot run until an explicit browser runtime is available.",
+    "This receipt must be re-audited before final readiness if host/runtime availability changes."
+  ],
+  "authority": {
+    "external_install_authorized": false,
+    "network_download_performed": false,
+    "push_tag_release_publish_performed": false
+  }
+}

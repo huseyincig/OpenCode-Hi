@@ -246,7 +246,7 @@
       "id": "Q3-ADV-014",
       "threat": "browser-observation-forgery",
       "owner": "HostCapability + methodology preflight/Evidence",
-      "control": "Browser execution is UNSUPPORTED without a deterministic executor/evidence adapter; tool names, prompts or screenshots cannot promote support.",
+      "control": "BrowserObservation is strict and BrowserExecutor is bounded, but browser execution remains UNSUPPORTED without an available real runtime and positive T3; tool names, prompts, screenshots, or model-mediated calls cannot promote support.",
       "proof_tests": [
         {
           "file": "plugin/test/methodology-host-capability.test.mjs",
@@ -260,7 +260,7 @@
       "evidence": [
         {
           "tier": "T3",
-          "receipt": "data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-c5d8287.json",
+          "receipt": "data/validation/external-opencode-hi-0.1.0-browser-1.18.18-head-707609b.json",
           "contains": "browser_execution"
         }
       ]
