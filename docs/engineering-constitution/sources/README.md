@@ -26,3 +26,18 @@ Each source receives a separate record so study coverage cannot be implied by a 
 | 19 | obra/superpowers | VERIFIED STUDY PASS 1 | `19-superpowers.md` |
 | 20 | opencode-agent-orchestration-kit | VERIFIED STUDY PASS 1 | `20-agent-orchestration-kit.md` |
 | 21 | OpenCode upstream | VERIFIED STUDY PASS 1 | `21-opencode-upstream.md` |
+
+
+## Post-v0.1 source-driven engineering research
+
+The current post-v0.1 mechanism-reference review is intentionally kept outside product runtime state. Its external research authority is:
+
+- `/workspace/arastirma/MASTER-ENGINEERING-PLAN.md` — engineering program/control document;
+- `/workspace/arastirma/HHC_external_source_review_COMPLETE.zip` — consolidated supplied review artifact;
+- `/workspace/arastirma/OpenCode_Hi_Source_Driven_Pre_Engineering_Assessment.md` — pre-engineering synthesis;
+- `/workspace/arastirma/repos/REFERENCE-REPOS.tsv` — pinned local reference clone manifest;
+- `/workspace/arastirma/repos/` — exact local source clones used for implementation-time source inspection.
+
+The current primary reference set is FlowDeck, OpenCode Goal Plugin, opencode-worktree, opencode-pty, octto, opencode-shell-strategy, opencode-plugin-template, opencode-supermemory, opencode-skillful, agentic, opencode-md-table-formatter, DCP, orchestra, opencode-orchestrator, opencode-autopilot-plugin, opencode-agent-orchestration-kit, hiai-opencode, ForLoop, and OpenCode upstream. ManageSkills remains report-only until an authoritative upstream URL is established.
+
+These records are research/provenance inputs only. They do not create runtime configuration, Mission/Task state, methodology admission, authority, evidence, or a competing control plane. Reuse and license decisions are recorded in `docs/SOURCE-REUSE-MATRIX.md`.

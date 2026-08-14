@@ -29,3 +29,39 @@ This matrix is the mandatory source-level reuse gate for OpenCode-Hi 0.1.x. It r
 - AGPL DCP code and tests are behavioral references only. OpenCode-Hi implementations are independently authored.
 - `type-inject` and the supplied `opencode-supermemory` archive do not include a standalone license file. Even though README/package metadata claim MIT, OpenCode-Hi does not copy their source in 0.1.0 without stronger license evidence.
 - Permissively licensed references are adapted only where a concrete primitive fits an existing Hi owner. Whole foreign control planes are rejected.
+
+
+## Post-v0.1 source-driven engineering reference set
+
+The post-v0.1 engineering program uses the pinned local clones in `/workspace/arastirma/repos/REFERENCE-REPOS.tsv` as a mechanism reference library. These repositories are not runtime dependencies and do not acquire HHC semantic ownership. Exact implementation checkpoints must re-read the referenced clone at its recorded commit before adapting any mechanism.
+
+| Reference | Pinned commit | License evidence at pinned clone | Intended mechanism reference | Reuse policy | Canonical HHC owner boundary |
+|---|---|---|---|---|---|
+| FlowDeck | `9aa4da7ff74f87c156c0e918123278d25fef3078` | MIT `LICENSE` | lazy rules, preflight exploration, structural context/FDX, guardrails | ADAPT | Context/PI/Methodology owners remain HHC-owned |
+| OpenCode Goal Plugin | `36879d7cfd02047f2bc7941392006b028acfa46d` | MIT `LICENSE` | persistence leases, control-turn quarantine, compaction/restart failure cases | ADAPT | Mission/Completion/continuation state remains HHC-owned |
+| opencode-worktree | `77c2262f1c2c71077284643232cc85f6d05e06c0` | MIT `LICENSE` | worktree lifecycle, realpath/path containment, session fork | ADAPT | IsolationDecision/WorkspaceLease policy remains HHC-owned |
+| opencode-pty | `cc12a2bef39cdbf2a7e945b13a0ed423e4f104ee` | MIT `LICENSE` | PID/PTY/read/write/wait/kill/cleanup lifecycle | ADAPT | ProcessContract and authority remain HHC-owned |
+| octto | `80a6fd8d21e384e9ef2943ae2e0b6e915f9b0b2b` | MIT `LICENSE` | typed HumanDecision transport/UI mechanics | ADAPT | HumanDecision/Authority truth remains HHC-owned |
+| opencode-shell-strategy | `1303f24df1649202834e052f1d66560ed186e413` | MIT `LICENSE` | non-interactive shell strategy corpus | ADAPT | Shell/authority policy remains HHC-owned |
+| opencode-plugin-template | `9e002a4ed996a8c858913278cb8b216686ba6cbd` | MIT `template/LICENSE` | Trusted Publishing/OIDC and package/release mechanics | ADAPT | HHC release gates/receipts remain canonical |
+| opencode-supermemory | `e9ef0f12048edb0a88a4725dcd0b8c2e38cc114b` | package metadata says MIT; no standalone root license file found | optional external-memory provider mechanics | IDEA_ONLY | Memory may only produce Context/PI candidates, never Evidence/Authority/Mission truth |
+| opencode-skillful | `9ee443f5d61f1783cdbf6e01acb3a587b3c3b4f8` | MIT `LICENSE` | lazy skill metadata/resource indexing | ADAPT | MethodologyContract/admission remains HHC-owned |
+| agentic | `3a3915310d3d03d4a45114b7b0c0a17c34bf0e8b` | MIT `LICENSE` | artifact-mediated phase handoff | ADAPT | Task/Worker/plan authority remains HHC-owned |
+| opencode-md-table-formatter | `1c6d9ec3ecaf45f5ecc3afa71fc16c2625a60d4c` | MIT `LICENSE` | presentation-only deterministic formatting | REJECT_CORE | No semantic/runtime mutation |
+| opencode-dynamic-context-pruning | `85b6f5ceba144fee9e65eb28dc36cab1b960e418` | AGPL-3.0-or-later `LICENSE` | provider-bound pruning/compression behavior | CLEAN_ROOM / BEHAVIOR_ONLY | Context Governor/ArtifactStore remain HHC-owned; no AGPL code reuse without explicit license decision |
+| orchestra | `9b8790697d57f0219fbfad1f66450d29a67b0763` | no repository license file or package license declaration found in pinned clone | process groups/device registry/observability mechanics | IDEA_ONLY | No WorkerPool/WorkflowRun ontology import |
+| opencode-orchestrator | `e6ac4dbfce91df096d6b55bac5136bf98d94c370` | MIT `LICENSE` | local PI retrieval/RRF, concurrency/background command mechanisms | ADAPT | Mission/Task/PI semantic ownership remains HHC-owned |
+| opencode-autopilot-plugin | `e849aba30950096dae7eddc73a1416df5bfaf661` | package metadata says MIT; no standalone root license file found | idle/readiness/TODO/question continuation gates | IDEA_ONLY | HHC Continuation/Completion remains canonical |
+| opencode-agent-orchestration-kit | `c5824da575fb3b7cee30a3d1b889b7bf3328521a` | Apache-2.0 `LICENSE` | replay, threat model, install lifecycle, evidence harness | ADAPT | Test harness only; no prompt-routing/control-plane authority |
+| hiai-opencode | `c89cbe24145b3a77b1bfa7972a39cc8a5cb44435` | MIT `LICENSE.md` for original project code unless subcomponent states otherwise | LSP/browser/workspace adapter mechanics and hostile cases | ADAPT_WITH_FILE_LICENSE_CHECK | Host adapters only; no foreign role ontology |
+| forloop-opencode-plugin-planner | `193a6087ebd265d08509ced727dc442c09332c54` | MIT `LICENSE` | typed external connector/retry/token-storage patterns | ADAPT | ExternalAction/Authority remains HHC-owned |
+| opencode-host-upstream (OpenCode upstream) | `e23586af2623f1bc2e8e6965d2d7acf7bd03d5c3` | MIT `LICENSE` | exact host primitive/type/source verification | SOURCE_OF_HOST_TRUTH | Host semantics only; never HHC domain ownership |
+| ManageSkills supplied source | report-only; authoritative upstream URL unresolved | source report only; do not guess upstream/license | project/global skill install UX | IDEA_ONLY | No auto-admission and no MethodologyContract replacement |
+
+### Program license gate
+
+- DCP remains clean-room behavioral/reference-only unless an explicit compatible license decision is made.
+- `orchestra` is idea-only at the pinned clone because no license grant was found.
+- `opencode-supermemory` and `opencode-autopilot-plugin` are idea-only for source copying because only package metadata supplied the MIT claim at this checkpoint; a file-level reuse decision must revalidate licensing first.
+- `hiai-opencode` requires file/subcomponent-level license revalidation before adapting code because its root notice scopes MIT to original project code unless a subcomponent states otherwise.
+- Every future code reuse records exact source commit, file/function, adaptation class, and attribution before implementation.

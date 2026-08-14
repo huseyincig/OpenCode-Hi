@@ -708,6 +708,8 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**Continue P8 / M13 only. External release actions are explicitly authorized.**
+**P8 / M13 remains externally blocked on npm authentication; post-v0.1 engineering execution is separately authorized.**
 
 GitHub `v0.1.0` publication is closed and exact-source verified. The only remaining P8 action is npm registry publication, currently **BLOCKED_T4_AUTH**. Do not retry or fabricate npm publication while `npm whoami` returns `ENEEDAUTH`. If registry authentication becomes available, publish the exact `opencode-hi@0.1.0` package, verify registry version/integrity and fresh install, then write the final npm T4 receipt and close P8. Until then, preserve the GitHub release as complete and report P8 as PARTIAL_EXTERNAL solely for npm.
+
+The user has explicitly authorized the post-v0.1 source-driven engineering program controlled by `/workspace/arastirma/MASTER-ENGINEERING-PLAN.md`. That program proceeds in its stable work-package order without weakening the P8 publication truth above. Live repository state and canonical component owners still win on conflict; each coherent mutation-bearing packet requires verification and a local commit.
