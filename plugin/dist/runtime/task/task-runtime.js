@@ -37,6 +37,7 @@ import { renderSemanticContext, typescriptSemanticContextsForTargets } from '../
 import { ProjectIntelligenceStore } from '../project-intelligence/store.js';
 import { ContextArtifactStore } from '../context/artifact-store.js';
 import { reviewFindingMarker, reviewFindingNeedsCorrection } from '../../contracts/review-finding.js';
+import { openHumanDecision } from '../human-decision/runtime.js';
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
 const MAX_QUEUE = 32;
 function missionModelFeedback(m) {
@@ -840,8 +841,7 @@ export class TaskRuntime {
         }
         void this.events?.(runtimeSignal('worker.completed', m.mission_id, { task_id: task.id, worker_id: worker.id, payload: { status: effectiveResult.status } }));
         if (effectiveResult.open_issues.some(x => String(x).toUpperCase().includes('USER_ACTION_REQUIRED'))) {
-            m.status = 'waiting-user';
-            appendLedger(m, 'user.action.required', { task_id: task.id, worker_id: worker.id, payload: { kind: 'worker-gate', summary: effectiveResult.summary.slice(0, 500) } });
+            openHumanDecision(m, { semantic_type: 'operational_action', reason_code: 'worker-user-action-required', summary: effectiveResult.summary.slice(0, 500) || 'Worker requires external user action before this task can continue.', task_id: task.id, worker_id: worker.id, response_schema: { kind: 'external-action' } });
         }
         const replan = replanVerificationForChangedSurface(m, task, effectiveResult.changed_files, collectRepoContext(this.projectRoot));
         if (replan.changed) {

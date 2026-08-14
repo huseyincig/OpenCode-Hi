@@ -8,6 +8,7 @@ import { activateMethodologySignal } from '../runtime/methodology/activation.js'
 import { assertChildMethodologyLoad, assertParentMethodologyLoad, requestedMethodologyName } from '../runtime/methodology/native-loading.js';
 import { evaluateShellCommand } from '../runtime/process/shell-policy.js';
 import { appendLedger } from '../runtime/ledger/ledger.js';
+import { openHumanDecision } from '../runtime/human-decision/runtime.js';
 export function createToolBeforeHook(store, background, projectRoot) {
     return async (input, output) => {
         const sid = input?.sessionID ?? input?.sessionId, child = sid && background ? background.list().find(w => w.session_id === sid) : undefined, m = child ? store.get(child.parent_session_id) : store.get(sid);
@@ -35,8 +36,7 @@ export function createToolBeforeHook(store, background, projectRoot) {
             if (shell.decision === 'DENY')
                 throw new Error(`Hi shell policy: ${shell.reason}`);
             if (shell.decision === 'USER_ACTION_REQUIRED') {
-                m.status = 'waiting-user';
-                appendLedger(m, 'user.action.required', { worker_id: child?.id, payload: { kind: 'interactive-shell', reason: shell.reason } });
+                openHumanDecision(m, { semantic_type: 'credential_action', reason_code: 'interactive-shell', summary: shell.reason, worker_id: child?.id, response_schema: { kind: 'external-action' } });
                 throw new Error(`Hi shell policy: ${shell.reason}`);
             }
             if (shell.decision === 'REWRITE') {

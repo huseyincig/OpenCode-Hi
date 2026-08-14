@@ -4,6 +4,7 @@ import type { EvidenceItem } from '../../contracts/evidence.js';
 import type { TaskContract, TaskContractStatus } from '../../contracts/task.js';
 import type { WorkerContract, WorkerContractStatus } from '../../contracts/worker.js';
 import type { ContextReferenceContract } from '../../contracts/context-reference.js';
+import type { HumanDecisionContract } from '../../contracts/human-decision.js';
 export type { EvidenceItem } from '../../contracts/evidence.js';
 export { WORKER_EVIDENCE_KINDS } from '../../contracts/worker-result.js';
 export type { EvidenceOutcome, MethodologyObservation, WorkerEvidenceKind, WorkerResult, WorkerResultStatus } from '../../contracts/worker-result.js';
@@ -255,6 +256,7 @@ export interface MissionState {
     resumed_at?: number;
     resume_count?: number;
     last_user_message_at?: number;
+    human_decision?: HumanDecisionContract;
     authority?: {
         pending?: {
             hash: string;

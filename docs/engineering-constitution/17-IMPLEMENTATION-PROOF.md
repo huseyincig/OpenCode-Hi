@@ -53,7 +53,7 @@ Rows below are intentionally `PENDING` until code exists.
 | M6 | Model capability/identity | ModelCapabilityProfile host-inventory normalization + identity reconciler + effective-model evidence; focused 17/17 PASS; controlled full suite 475/475 PASS; validator PASS | T1/T2 | `e7c3c96`; requested/projected WorkerState snapshot wiring blocked by SentinelX mutation policy; no unwired state committed | PARTIAL_PASS |
 | M7 | Host capability registry | 16 contract-backed OpenCode capabilities; product runtime gates consume worker-runtime/session-revert contracts; doctor reports status/verification/semantic loss; focused 43/43 PASS; controlled full suite 480/480 PASS; validator PASS | T1/T2 local; T3 still pending | `390cc2b` | PASS_LOCAL — REAL-HOST ACCEPTANCE PENDING |
 | M8 | Task/Worker/Result/Evidence contracts | WorkerResult, EvidenceItem, ReviewFinding, derived VerificationEnvelope, TaskContract and WorkerContract now have canonical runtime owners; persistence consumes canonical validators; task mission/external-action identity is explicit; worker attempt/recovery/effective-model lifecycle is fail-closed; latest focused Task/Worker set 21/21 PASS and controlled full suite 507/507 PASS; validator PASS | T1/T2 | WorkerResult `4ea320d`; Evidence `3044b94`; ReviewFinding `b120f49`; VerificationEnvelope `a4b1105`; Task/Worker `77f9dc1` | PASS — CONTRACT OWNERSHIP CLOSED |
-| M9 | Context/Artifact/PI/Human/Authority/Storage | ArtifactContract + ContextReferenceContract + derived SemanticContextContract + ProjectIntelligenceContract operational; PI is strict source-linked fact/pattern state with explicit consumer domain and no evidence/methodology/control conflation; focused PI/SemanticContext/methodology set 59/59 PASS; controlled full suite 521/521 PASS; validator PASS | T1/T2 | Artifact `811ee7f`; ContextReference `3e8ab72`; SemanticContext `b7e51cc`; PI `e2d021b` | PARTIAL_PASS — HUMAN/AUTHORITY/STORAGE REMAIN |
+| M9 | Context/Artifact/PI/Human/Authority/Storage | Artifact + ContextReference + derived SemanticContext + ProjectIntelligence + HumanDecision operational; HumanDecision is persisted latest-decision state with strict semantic type/reason/scope/response protocol and remains separate from exact Authority; focused human/authority/continuation set 36/36 PASS; controlled full suite 528/528 PASS; validator PASS | T1/T2 | Artifact `811ee7f`; ContextReference `3e8ab72`; SemanticContext `b7e51cc`; PI `e2d021b`; HumanDecision commit pending | PARTIAL_PASS — AUTHORITY/STORAGE REMAIN |
 | M10 | common generator/lint closure | BA12 + HI001–HI020 migrated rules | T0/T1/T2 | — | PENDING |
 | M11 | deterministic full closure | build + validator + full controlled suite | T0/T1/T2 | — | PENDING |
 | M12 | real-host acceptance | OpenCode version-bound native receipts | T3 | — | PENDING |
@@ -123,6 +123,24 @@ Implemented and verified:
 - repeated independent reusable-HOW observations remain owned by the separate `ProjectMethodologyCandidate` lifecycle; `observation_count`, `independence` and generic admission fields were not fabricated on the PI contract because no production fact-observation producer owns them.
 
 Evidence: focused PI/SemanticContext/methodology/context suite 59/59 PASS; controlled isolated-HOME/XDG full suite 521/521 PASS; validator PASS; diff check clean; backup count 0. ProjectIntelligence code checkpoint: `e2d021b`. HumanDecision/Authority/Storage remain open under M9.
+
+
+### M9 HumanDecisionContract checkpoint
+
+Implemented and verified:
+
+- added canonical strict `HumanDecisionContract` plus one runtime open/resolve owner; all direct `waiting-user + user.action.required` producers now route through that owner rather than writing ad-hoc reason payloads;
+- persisted latest HumanDecision state records semantic type, technical reason code, exact Mission/Task/Worker blocking scope, response protocol, lifecycle timestamps and optional authority reference;
+- added `operational_action` for provider/permission/runtime-budget/precondition classes so they are not mislabeled as credential or authority decisions;
+- shell interactive credential flows, worker user-action gates, permission failures and idle-evaluator user-action decisions now create canonical HumanDecision state;
+- exact external-action approval and uncertain-outcome reconciliation create `authority_request` HumanDecision projections but Authority action hash/state remains separately owned by the Authority subsystem;
+- generic semantic follow-up may resolve an open non-authority HumanDecision, while authority requests survive generic continuation and close only through the deterministic exact Authority protocol;
+- duplicate attempts to open the same decision preserve identity/creation time and do not emit duplicate `user.action.required` ledger interactions;
+- HumanDecision survives RuntimePersistence restart validation, participates in progress signature and deterministic completion, and is visible through bounded user status;
+- malformed/forged decision IDs, response protocols, lifecycle states and unknown fields fail closed;
+- an existing semantic conflation was avoided: temporary rollback remains a `precondition-blocked` operational user action rather than being reclassified as authority simply because completion can also return `USER_ACTION_REQUIRED`.
+
+Evidence: focused HumanDecision/authority/continuation/persistence set 36/36 PASS; controlled isolated-HOME/XDG full suite 528/528 PASS; validator PASS; diff check clean; backup count 0. AuthorityContract/ExternalAction/Storage remain open under M9.
 
 ### M8 Task / Worker contract checkpoint
 

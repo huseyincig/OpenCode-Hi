@@ -546,20 +546,25 @@ Project Intelligence stores admitted project facts/patterns only. Runtime task-c
 
 ### C22 — HumanDecisionContract
 
+**Canonical owner:** `plugin/src/contracts/human-decision.ts` plus the runtime open/resolve owner in `runtime/human-decision/runtime.ts`.
+
 **Required fields:**
 
 ```text
 decision_id
-semantic_type: preference | ambiguity | value_judgment | credential_action | authority_request
-question
-options/response_schema
-reason
-blocking_scope
-host_ui_projection?
-status
-response
-created_at/resolved_at?
+semantic_type: preference | ambiguity | value_judgment | credential_action | authority_request | operational_action
+reason_code
+summary
+blocking_scope: { mission_id, task_id?, worker_id? }
+response_schema: { kind, protocol?, choices? }
+authority_ref?
+status: OPEN | RESOLVED
+created_at
+resolved_at?
+resolution?
 ```
+
+HumanDecision is the bounded persisted record of **why human interaction is required and what response protocol is expected**. It is not a free-form question database and it never grants Authority. `operational_action` covers provider/permission/runtime-budget/precondition classes that are neither preferences nor credentials nor authority. Exact authority approval/reconciliation remains a separate deterministic Authority protocol; generic semantic follow-up may resolve non-authority decisions but cannot resolve `authority_request`. The latest HumanDecision survives restart, participates in progress/completion state, and is projected into bounded user status.
 
 ### C23 — AuthorityContract
 

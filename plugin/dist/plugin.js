@@ -22,6 +22,7 @@ import { syncMissionGates } from './runtime/gates/gates.js';
 import { normalizeModelCapabilityProfile } from './contracts/model.js';
 import { hostCapabilityByID } from './contracts/host-capability.js';
 import { appendLedger } from './runtime/ledger/ledger.js';
+import { classifyRuntimeHumanDecision, openHumanDecision } from './runtime/human-decision/runtime.js';
 import { ConcurrencyScheduler } from './runtime/scheduler/concurrency.js';
 import { TeamRuntime } from './runtime/team/team-runtime.js';
 import { RuntimePersistence } from './runtime/state/persistence.js';
@@ -410,9 +411,8 @@ export const HiPlugin = async (ctx) => {
                 appendLedger(m, 'parent.wake', { worker_id: child.id, payload: { result: 'FAILED', event: ev.rawType } });
                 const siblingPending = background.pendingFor(m.session_id).filter(w => w.id !== child.id), permissionFailure = child.last_runtime_failure_kind === 'permission';
                 if (permissionFailure) {
-                    m.status = 'waiting-user';
                     m.stagnation_count = 0;
-                    appendLedger(m, 'user.action.required', { worker_id: child.id, payload: { reason: 'permission-failure', detail } });
+                    openHumanDecision(m, { semantic_type: 'operational_action', reason_code: 'permission-failure', summary: `Native child permission failure requires user/runtime intervention before retry. ${detail.slice(0, 240)}`, task_id: child.task_id, worker_id: child.id, response_schema: { kind: 'external-action' } });
                 }
                 else if (automaticContinuationEnabled(config.executionPolicy) && !m.user_interrupted && !siblingPending.length)
                     await dispatchContinuation(ctx.client, m, 'Hi child worker failed. Reconcile the failure, preserve completed work, and choose the minimum safe recovery. Do not duplicate completed tasks.', 'child-failed');
@@ -523,8 +523,8 @@ export const HiPlugin = async (ctx) => {
             return;
         }
         if (decision.decision === 'USER_ACTION_REQUIRED') {
-            m.status = 'waiting-user';
-            appendLedger(m, 'user.action.required', { payload: { reason: decision.reason } });
+            const human = classifyRuntimeHumanDecision(decision.reason_code);
+            openHumanDecision(m, { ...human, reason_code: decision.reason_code, summary: decision.reason });
             persistence.save(store.all());
             return;
         }

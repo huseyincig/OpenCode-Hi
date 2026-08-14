@@ -12,7 +12,8 @@ export function evaluateCompletion(m) { const reasons = []; syncMissionGates(m);
     else if (!m.release_chain?.package?.remote_verified)
         reasons.push('release-chain:package-remote-unverified');
 } if (m.user_interrupted || m.status === 'stopped')
-    return { complete: false, reasons: ['user-stopped'] }; if (m.workers.some(w => ['created', 'queued', 'starting', 'busy'].includes(w.status)))
+    return { complete: false, reasons: ['user-stopped'] }; if (m.human_decision?.status === 'OPEN' && m.human_decision.semantic_type !== 'authority_request')
+    return { complete: false, reasons: [`human-decision:${m.human_decision.reason_code}`], next: 'USER_ACTION_REQUIRED' }; if (m.workers.some(w => ['created', 'queued', 'starting', 'busy'].includes(w.status)))
     reasons.push('active-worker'); if (m.tasks.some(t => ['created', 'queued', 'running', 'waiting'].includes(t.status)))
     reasons.push('pending-task'); if (m.native_todos_incomplete > 0)
     reasons.push(`native-todos-incomplete:${m.native_todos_incomplete}`); if (m.blockers.length)

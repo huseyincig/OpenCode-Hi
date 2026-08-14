@@ -7,6 +7,7 @@ export interface UserMissionStatus{
   evidence:'fresh'|'stale'
   blockers:number
   next_action:'wait'|'verify'|'recover'|'continue'|'user-action'|'complete'
+  human_decision?:{type:string;reason_code:string}
 }
 
 export function userMissionStatus(m:MissionState):UserMissionStatus{
@@ -18,10 +19,10 @@ export function userMissionStatus(m:MissionState):UserMissionStatus{
   else if(open===0&&m.evidence.fresh&&!m.blockers.length)next='complete'
   else if(!m.evidence.fresh&&m.verification_policy.requiredKinds.length)next='verify'
   else if(m.blockers.length||m.stagnation_count>0)next='recover'
-  return{status:m.status,active_workers:active,open_obligations:open,evidence:m.evidence.fresh?'fresh':'stale',blockers:m.blockers.length,next_action:next}
+  const human=m.human_decision?.status==='OPEN'?{type:m.human_decision.semantic_type,reason_code:m.human_decision.reason_code}:undefined;return{status:m.status,active_workers:active,open_obligations:open,evidence:m.evidence.fresh?'fresh':'stale',blockers:m.blockers.length,next_action:next,human_decision:human}
 }
 
 export function formatUserMissionStatus(m:MissionState):string{
   const s=userMissionStatus(m)
-  return `Hi: ${s.status} · ${s.active_workers} worker active · ${s.open_obligations} obligation open · evidence ${s.evidence} · next ${s.next_action}`
+  return `Hi: ${s.status} · ${s.active_workers} worker active · ${s.open_obligations} obligation open · evidence ${s.evidence} · next ${s.next_action}${s.human_decision?` · human ${s.human_decision.type}:${s.human_decision.reason_code}`:''}`
 }

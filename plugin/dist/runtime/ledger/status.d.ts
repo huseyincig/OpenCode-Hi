@@ -6,6 +6,10 @@ export interface UserMissionStatus {
     evidence: 'fresh' | 'stale';
     blockers: number;
     next_action: 'wait' | 'verify' | 'recover' | 'continue' | 'user-action' | 'complete';
+    human_decision?: {
+        type: string;
+        reason_code: string;
+    };
 }
 export declare function userMissionStatus(m: MissionState): UserMissionStatus;
 export declare function formatUserMissionStatus(m: MissionState): string;

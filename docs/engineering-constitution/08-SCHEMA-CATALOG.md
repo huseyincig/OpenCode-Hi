@@ -209,11 +209,9 @@ The PI schema deliberately does not invent `observation_count`, `independence` o
 
 ## S21 — HumanDecisionSchema / S22 — AuthoritySchema
 
-HumanDecision semantic type is a closed union. UI type is optional projection metadata.
+HumanDecision is strict/current-only. Semantic type is the closed union `preference | ambiguity | value_judgment | credential_action | authority_request | operational_action`. Decision identity is derived from semantic type + technical reason code + exact blocking Mission/Task/Worker scope + optional authority ref. Response kind is closed (`free-text | choice | external-action | authority-protocol`); authority protocols are closed technical protocol IDs rather than natural-language interpretation. `OPEN` decisions cannot carry resolution fields; `RESOLVED` decisions require bounded resolution + resolved timestamp. Unknown fields and forged IDs fail closed. Persistence consumes the canonical validator.
 
-Authority is a separate schema with exact `action_type + target/scope`. Only an Authority record matching an ExternalAction may authorize execution.
-
-No schema accepts natural-language yes/no strings as an authority token unless they are already wrapped in a host/user event that the authority boundary has explicitly bound to the exact action.
+HumanDecision is not Authority. Authority remains a separate exact `action_type + target/scope`/action-contract safety state. A HumanDecision with `semantic_type=authority_request` only projects the interaction required by an already-bound Authority state; it does not authorize execution. Generic follow-up resolves only non-authority HumanDecision state. Exact approval/outcome-reconciliation tokens remain deterministic safety-protocol parsing at the Authority boundary.
 
 ## S23 — ExternalActionSchema
 

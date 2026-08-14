@@ -42,6 +42,7 @@ import { renderSemanticContext,typescriptSemanticContextsForTargets } from '../s
 import { ProjectIntelligenceStore } from '../project-intelligence/store.js'
 import { ContextArtifactStore } from '../context/artifact-store.js'
 import { reviewFindingMarker,reviewFindingNeedsCorrection } from '../../contracts/review-finding.js'
+import { openHumanDecision } from '../human-decision/runtime.js'
 
 export interface StartTaskInput{objective?:string;role?:string;category?:Category;scope?:string[];dependencies?:string[];requiredEvidence?:string[];obligationIds?:string[];model?:string;modelVariant?:string;relevantContext?:string[];contextArtifactIds?:string[];constraints?:string[];forkFromSession?:string}
 const CATEGORIES=new Set(['quick','standard','deep','visual','critical'])
@@ -346,7 +347,7 @@ export class TaskRuntime{
       activateMethodologySignal(m,this.projectRoot,{signal:signal.name,producer,reason:signal.reason})
     }
     void this.events?.(runtimeSignal('worker.completed',m.mission_id,{task_id:task.id,worker_id:worker.id,payload:{status:effectiveResult.status}}))
-    if(effectiveResult.open_issues.some(x=>String(x).toUpperCase().includes('USER_ACTION_REQUIRED'))){m.status='waiting-user';appendLedger(m,'user.action.required',{task_id:task.id,worker_id:worker.id,payload:{kind:'worker-gate',summary:effectiveResult.summary.slice(0,500)}})}
+    if(effectiveResult.open_issues.some(x=>String(x).toUpperCase().includes('USER_ACTION_REQUIRED'))){openHumanDecision(m,{semantic_type:'operational_action',reason_code:'worker-user-action-required',summary:effectiveResult.summary.slice(0,500)||'Worker requires external user action before this task can continue.',task_id:task.id,worker_id:worker.id,response_schema:{kind:'external-action'}})}
     const replan=replanVerificationForChangedSurface(m,task,effectiveResult.changed_files,collectRepoContext(this.projectRoot));if(replan.changed){appendLedger(m,'verification.replanned',{task_id:task.id,worker_id:worker.id,payload:{changed_files:effectiveResult.changed_files.slice(0,30),added_kinds:replan.addedKinds,scope_expanded:replan.scopeExpanded,risk_escalated:replan.riskEscalated,reason:replan.reason}});void this.events?.(runtimeSignal('verification.replanned',m.mission_id,{task_id:task.id,worker_id:worker.id,payload:{added_kinds:replan.addedKinds,scope_expanded:replan.scopeExpanded,risk_escalated:replan.riskEscalated}}))}
     for(const signal of verificationMethodologySignals({changed:replan.changed,scopeExpanded:replan.scopeExpanded,riskEscalated:replan.riskEscalated,requireReview:m.verification_policy.requireReview,changedFiles:effectiveResult.changed_files})){
       const producer=signal.name.startsWith('risk.')?'risk':'verification'

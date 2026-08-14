@@ -209,7 +209,7 @@ test('child permission session-error becomes explicit user action and never pare
   assert.equal(row.task.status,'failed')
   assert.ok(row.task.result.open_issues.some(x=>x.startsWith('permission-failure:')))
   const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:120},{sessionID:'parent-perm'}))
-  assert.ok(ledger.events.some(e=>e.type==='user.action.required'&&e.payload.reason==='permission-failure'))
+  assert.ok(ledger.events.some(e=>e.type==='user.action.required'&&e.payload.reason_code==='permission-failure'&&e.payload.semantic_type==='operational_action'))
   assert.equal(ledger.stagnation_count,0)
   await hooks.dispose?.();rmSync(dir,{recursive:true,force:true})
 })

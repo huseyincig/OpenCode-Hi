@@ -9,6 +9,7 @@ import { decideAdaptiveExecution } from '../execution/adaptive-policy.js';
 import { decideTopology } from '../execution/topology-policy.js';
 import { activateMethodologySignal, suppressIntentMethodologySignals } from '../methodology/activation.js';
 import { architectureMethodologySignals } from '../methodology/signals.js';
+import { resolveHumanDecision } from '../human-decision/runtime.js';
 function obligation(id, kind, summary, requiredEvidence = []) { return { id, kind, summary, status: 'open', requiredEvidence }; }
 export class MissionStore {
     #bySession = new Map();
@@ -95,6 +96,8 @@ export class MissionStore {
         const text = userText.trim();
         if (!text)
             throw new Error('Empty follow-up cannot be assessed');
+        if (m.human_decision?.status === 'OPEN' && m.human_decision.semantic_type !== 'authority_request')
+            resolveHumanDecision(m, 'user-followup-received');
         m.generation += 1;
         m.semantic_assessment = { status: 'pending', phase: 'followup', revision: m.semantic_assessment.revision + 1, source: 'host-primary', pending_text: text.slice(0, 12000) };
         m.status = 'active';
@@ -278,14 +281,17 @@ export class MissionStore {
     } }
     remove(sessionID) { this.#bySession.delete(sessionID); }
     stop(sessionID, reason = 'user-stop') { const m = this.get(sessionID); if (!m)
-        return; m.generation += 1; m.user_interrupted = true; m.interrupted_at = Date.now(); m.interrupted_reason = reason; m.status = 'stopped'; m.continuation_active = false; m.active_action_id = undefined; m.continuation_lock_until = undefined; m.suppress_until = undefined; m.pending_nudge = undefined; appendLedger(m, 'mission.stopped', { payload: { reason, generation: m.generation } }); syncMissionGates(m); }
+        return; if (m.human_decision?.status === 'OPEN')
+        resolveHumanDecision(m, 'mission-stopped'); m.generation += 1; m.user_interrupted = true; m.interrupted_at = Date.now(); m.interrupted_reason = reason; m.status = 'stopped'; m.continuation_active = false; m.active_action_id = undefined; m.continuation_lock_until = undefined; m.suppress_until = undefined; m.pending_nudge = undefined; appendLedger(m, 'mission.stopped', { payload: { reason, generation: m.generation } }); syncMissionGates(m); }
     noteUserMessage(sessionID) { const m = this.get(sessionID); if (!m)
         return; m.last_user_message_at = Date.now(); }
     resume(sessionID, reason = 'explicit-user-resume') { const m = this.get(sessionID); if (!m)
-        return; const wasInterrupted = m.user_interrupted || m.status === 'stopped'; m.generation += 1; m.user_interrupted = false; m.interrupted_reason = undefined; m.resumed_at = Date.now(); m.resume_count = (m.resume_count ?? 0) + (wasInterrupted ? 1 : 0); m.continuation_active = false; m.active_action_id = undefined; m.continuation_lock_until = undefined; m.suppress_until = undefined; m.pending_nudge = undefined; if (['stopped', 'waiting-user'].includes(m.status))
+        return; if (m.human_decision?.status === 'OPEN' && m.human_decision.semantic_type !== 'authority_request')
+        resolveHumanDecision(m, reason); const wasInterrupted = m.user_interrupted || m.status === 'stopped'; m.generation += 1; m.user_interrupted = false; m.interrupted_reason = undefined; m.resumed_at = Date.now(); m.resume_count = (m.resume_count ?? 0) + (wasInterrupted ? 1 : 0); m.continuation_active = false; m.active_action_id = undefined; m.continuation_lock_until = undefined; m.suppress_until = undefined; m.pending_nudge = undefined; if (['stopped', 'waiting-user'].includes(m.status))
         m.status = 'active'; appendLedger(m, 'mission.resumed', { payload: { reason, resume_count: m.resume_count, generation: m.generation } }); syncMissionGates(m); }
     complete(sessionID) { const m = this.get(sessionID); if (!m)
-        return; m.status = 'completed'; syncMissionGates(m); appendLedger(m, 'mission.completed'); }
+        return; if (m.human_decision?.status === 'OPEN')
+        resolveHumanDecision(m, 'mission-completed'); m.status = 'completed'; syncMissionGates(m); appendLedger(m, 'mission.completed'); }
     all() { return [...this.#bySession.values()]; }
     updateProgress(m, countStagnation = false) { syncMissionGates(m); const next = this.signature(m), progressed = next !== m.last_progress_signature; if (progressed)
         m.stagnation_count = 0;
@@ -293,7 +299,7 @@ export class MissionStore {
         m.stagnation_count += 1; m.last_progress_signature = next; m.updated_at = Date.now(); return progressed; }
     closeObligation(m, id) { const o = m.obligations.find(x => x.id === id); if (!o)
         return; o.status = 'closed'; o.closedAt = Date.now(); syncMissionGates(m); appendLedger(m, 'obligation.closed', { payload: { obligation: id } }); }
-    signature(m) { const data = JSON.stringify({ obligations: m.obligations.map(o => [o.id, o.status]), tasks: m.tasks.map(t => [t.id, t.status, t.result?.status, t.result?.open_issues, t.result?.needs_context]), workers: m.workers.map(w => [w.id, w.status, w.model, w.model_variant, w.runtime_recovery_attempt]), evidence: m.evidence.items.map(e => [e.kind, e.outcome, e.invalidated_at, e.task_id, e.obligation_ids]), files: m.changed_files, blockers: m.blockers, constraints: m.constraints, tasks_constraints: m.tasks.map(t => [t.id, t.constraints]), gates: m.gates.map(g => [g.id, g.status, g.reason]), temporary: m.temporary_mutations.map(x => [x.id, x.status]) }); let h = 2166136261; for (let i = 0; i < data.length; i++) {
+    signature(m) { const data = JSON.stringify({ obligations: m.obligations.map(o => [o.id, o.status]), tasks: m.tasks.map(t => [t.id, t.status, t.result?.status, t.result?.open_issues, t.result?.needs_context]), workers: m.workers.map(w => [w.id, w.status, w.model, w.model_variant, w.runtime_recovery_attempt]), evidence: m.evidence.items.map(e => [e.kind, e.outcome, e.invalidated_at, e.task_id, e.obligation_ids]), files: m.changed_files, blockers: m.blockers, constraints: m.constraints, tasks_constraints: m.tasks.map(t => [t.id, t.constraints]), gates: m.gates.map(g => [g.id, g.status, g.reason]), temporary: m.temporary_mutations.map(x => [x.id, x.status]), human_decision: m.human_decision ? [m.human_decision.decision_id, m.human_decision.status, m.human_decision.reason_code, m.human_decision.resolved_at] : undefined }); let h = 2166136261; for (let i = 0; i < data.length; i++) {
         h ^= data.charCodeAt(i);
         h = Math.imul(h, 16777619);
     } return (h >>> 0).toString(16).padStart(8, '0'); }

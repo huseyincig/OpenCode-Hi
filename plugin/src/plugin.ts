@@ -25,6 +25,7 @@ import type { AvailableModel } from './runtime/routing/model-resolver.js'
 import { normalizeModelCapabilityProfile } from './contracts/model.js'
 import { hostCapabilityByID } from './contracts/host-capability.js'
 import { appendLedger } from './runtime/ledger/ledger.js'
+import { classifyRuntimeHumanDecision,openHumanDecision } from './runtime/human-decision/runtime.js'
 import { ConcurrencyScheduler } from './runtime/scheduler/concurrency.js'
 import { TeamRuntime } from './runtime/team/team-runtime.js'
 import { RuntimePersistence } from './runtime/state/persistence.js'
@@ -162,7 +163,7 @@ export const HiPlugin:Plugin=async(ctx:any)=>{
         const detail=String(ev.properties?.error?.message??ev.properties?.error??ev.rawType)
         if(ev.kind==='session-error'&&await tasks.recoverRuntimeFailure(m,child.id,detail)){store.updateProgress(m);appendLedger(m,'parent.wake',{worker_id:child.id,payload:{result:'RUNTIME_FALLBACK',event:ev.rawType}});persistence.save(store.all());return}
         tasks.fail(m,child.id,detail);await teams.reconcileMission(m);store.updateProgress(m);appendLedger(m,'parent.wake',{worker_id:child.id,payload:{result:'FAILED',event:ev.rawType}})
-        const siblingPending=background.pendingFor(m.session_id).filter(w=>w.id!==child.id),permissionFailure=child.last_runtime_failure_kind==='permission';if(permissionFailure){m.status='waiting-user';m.stagnation_count=0;appendLedger(m,'user.action.required',{worker_id:child.id,payload:{reason:'permission-failure',detail}})}else if(automaticContinuationEnabled(config.executionPolicy)&&!m.user_interrupted&&!siblingPending.length)await dispatchContinuation(ctx.client,m,'Hi child worker failed. Reconcile the failure, preserve completed work, and choose the minimum safe recovery. Do not duplicate completed tasks.','child-failed');else if(siblingPending.length)appendLedger(m,'parent.wake.deferred',{worker_id:child.id,payload:{reason:'sibling-workers-pending',pending:siblingPending.map(w=>w.id).slice(0,20)}})
+        const siblingPending=background.pendingFor(m.session_id).filter(w=>w.id!==child.id),permissionFailure=child.last_runtime_failure_kind==='permission';if(permissionFailure){m.stagnation_count=0;openHumanDecision(m,{semantic_type:'operational_action',reason_code:'permission-failure',summary:`Native child permission failure requires user/runtime intervention before retry. ${detail.slice(0,240)}`,task_id:child.task_id,worker_id:child.id,response_schema:{kind:'external-action'}})}else if(automaticContinuationEnabled(config.executionPolicy)&&!m.user_interrupted&&!siblingPending.length)await dispatchContinuation(ctx.client,m,'Hi child worker failed. Reconcile the failure, preserve completed work, and choose the minimum safe recovery. Do not duplicate completed tasks.','child-failed');else if(siblingPending.length)appendLedger(m,'parent.wake.deferred',{worker_id:child.id,payload:{reason:'sibling-workers-pending',pending:siblingPending.map(w=>w.id).slice(0,20)}})
         persistence.save(store.all());return
       }
       if(ev.kind!=='session-idle')return
@@ -180,7 +181,7 @@ export const HiPlugin:Plugin=async(ctx:any)=>{
     const m=store.get(sid);if(!m||!adaptiveIdleEvaluatorEnabled(config.executionPolicy))return
     const progressed=store.updateProgress(m,false);void eventSink(runtimeSignal('mission.idle',m.mission_id));let decision=evaluateIdle(m);if(!progressed&&shouldCountStagnation(decision)){store.updateProgress(m,true);decision=evaluateIdle(m)}appendLedger(m,'runtime.decision',{payload:{decision:decision.decision,reason:decision.reason,reason_code:decision.reason_code,progressed,stagnation_count:m.stagnation_count}})
     if(decision.decision==='STOP'){const c=evaluateCompletion(m);if(c.complete)store.complete(sid);persistence.save(store.all());return}
-    if(decision.decision==='USER_ACTION_REQUIRED'){m.status='waiting-user';appendLedger(m,'user.action.required',{payload:{reason:decision.reason}});persistence.save(store.all());return}
+    if(decision.decision==='USER_ACTION_REQUIRED'){const human=classifyRuntimeHumanDecision(decision.reason_code);openHumanDecision(m,{...human,reason_code:decision.reason_code,summary:decision.reason});persistence.save(store.all());return}
     if(decision.decision==='RECOVER'&&decision.reason_code==='stagnation-recovery'){const match=/^stagnation-level-(\d+):/.exec(decision.reason);const level=match?Number(match[1]):0;if(level&&await tasks.recoverStagnation(m,level)){store.updateProgress(m);persistence.save(store.all());return}}
     if(decision.prompt&&['CONTINUE','RECONCILE','VERIFY','RECOVER'].includes(decision.decision))await dispatchContinuation(ctx.client,m,decision.prompt,decision.reason)
     persistence.save(store.all())
