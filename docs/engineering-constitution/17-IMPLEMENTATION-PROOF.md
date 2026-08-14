@@ -49,7 +49,7 @@ Rows below are intentionally `PENDING` until code exists.
 | M2 | RoleContract owner/generator | role identity/mode/description/runtime catalog and methodology permission contribution are canonical-data driven; focused projection suite 24/24 PASS; controlled full suite 467/467 PASS; validator PASS | T1/T2 | `443bfd5` (owner foundation `b06d281`) | PASS — GENERAL PERMISSION RESIDUE CLOSED BY M3 `9801382` |
 | M3 | PermissionProfile | canonical 7-profile catalog + RoleContract references; exact 8-agent native permission semantic parity to pre-M3 HEAD; read-only edit-deny/lower-layer-widening/unknown-ref/methodology-owner negatives; focused 10/10 PASS; controlled full suite 543/543 PASS; architecture lint PASS; validator PASS | T1/T2 | `9801382` | PASS — CANONICAL PERMISSION OWNER MIGRATED |
 | M4 | MethodologyContract normalization | mechanical SKILL contract sections compiled from canonical JSON; inert duplicated fields removed; focused 37/37 PASS; controlled full suite 469/469 PASS; validator PASS | T1/T2 | `c152f98` | PASS — MECHANICAL OWNER MIGRATED |
-| M5 | ConfigOption catalog | BA03 + config executor lint | T1/T2 | SentinelX blocks direct config-catalog mutation in this environment | BLOCKED_BY_HOST_POLICY |
+| M5 | ConfigOption catalog | 32-option canonical catalog (29 runtime, 2 diagnostic, 1 schema marker); generated default ownership; BA03 executor-effect coverage; HI003 fatal PASS with no deferred config rule; focused config/generator set 22/22 PASS; controlled full suite 548/548 PASS; validator PASS | T1/T2 | `d53fe31` | PASS — EXECUTABLE CONFIG OWNERSHIP CLOSED |
 | M6 | Model capability/identity | ModelCapabilityProfile host-inventory normalization + identity reconciler + effective-model evidence; focused 17/17 PASS; controlled full suite 475/475 PASS; validator PASS | T1/T2 | `e7c3c96`; requested/projected WorkerState snapshot wiring blocked by SentinelX mutation policy; no unwired state committed | PARTIAL_PASS |
 | M7 | Host capability registry | 16 contract-backed OpenCode capabilities; product runtime gates consume worker-runtime/session-revert contracts; doctor reports status/verification/semantic loss; focused 43/43 PASS; controlled full suite 480/480 PASS; validator PASS | T1/T2 local; T3 still pending | `390cc2b` | PASS_LOCAL — REAL-HOST ACCEPTANCE PENDING |
 | M8 | Task/Worker/Result/Evidence contracts | WorkerResult, EvidenceItem, ReviewFinding, derived VerificationEnvelope, TaskContract and WorkerContract now have canonical runtime owners; persistence consumes canonical validators; task mission/external-action identity is explicit; worker attempt/recovery/effective-model lifecycle is fail-closed; latest focused Task/Worker set 21/21 PASS and controlled full suite 507/507 PASS; validator PASS | T1/T2 | WorkerResult `4ea320d`; Evidence `3044b94`; ReviewFinding `b120f49`; VerificationEnvelope `a4b1105`; Task/Worker `77f9dc1` | PASS — CONTRACT OWNERSHIP CLOSED |
@@ -296,7 +296,7 @@ Implemented and verified:
 - read-only roles must resolve to a profile with explicit scalar `edit: deny`; `may_be_widened_by_lower_layer` must remain false; duplicate capability/pattern rules and unknown profile refs fail validation;
 - one-time semantic parity against pre-M3 HEAD proved all eight generated agents retain identical `permission`, `prompt`, and other host fields; the migration changes ownership, not runtime agent behavior;
 - runtime execution-profile permission snapshots continue to derive from the effective packaged OpenCode agent projection, so the new canonical owner reaches the existing pre-execution consumer path;
-- generated PermissionProfile policy is included in the projection graph, increasing the current material ProjectionReceipt inventory from the historical M10/M11 count of 30 to 31.
+- generated PermissionProfile policy entered the projection graph at M3, increasing the material ProjectionReceipt inventory from the historical M10/M11 count of 30 to 31; M5 later adds ConfigOption policy for a current total of 32.
 
 Evidence: focused M3/Role/Methodology/BA12 set 10/10 PASS; controlled isolated-HOME/XDG full plugin suite 543/543 PASS; architecture lint PASS (`rules=20`, `deferred=1`, `linked=8`); standalone validator PASS; `git diff --check` clean; backup count 0. M3 code checkpoint: `9801382`. No real external action was performed.
 
@@ -384,6 +384,24 @@ external actions performed (normally none)
 
 A document status such as `V1 TARGET ARCHITECTURE` or ADR `ACCEPTED` is **not** implementation evidence. Only this ledger plus executable tests/receipts may claim a migration phase complete.
 
+
+
+### M5 ConfigOptionContract checkpoint
+
+Implemented and verified after release-boundary re-audit:
+
+- the former SentinelX config-catalog mutation blocker no longer reproduced; normal repository mutation succeeded without bypass;
+- added canonical `data/hi-config-options.json` with 32 exact current `HiConfig` leaves: 29 executable runtime options, two diagnostic compatibility options, and one current-schema marker;
+- runtime entries require explicit source surfaces, precedence, validator, safety semantics, production consumer, executor effect and behavioral acceptance refs; `CONFIG_WITHOUT_EXECUTABLE_EFFECT` is now a fatal contract/lint condition;
+- `compatibility.mode` and `compatibility.validatedOpenCodeVersions` are truthfully classified as doctor/diagnostic policy because current production code does not use them to execute mission behavior; they are forbidden from claiming a fake runtime executor;
+- `schemaVersion` is explicitly a current-only schema marker: it can report noncanonical supplied input but does not masquerade as a runtime behavior option;
+- generated `HI_CONFIG_DEFAULTS` now owns the default value tree, and `plugin/src/config/defaults.ts` consumes that generated projection instead of maintaining a second hand-written default truth;
+- representative BA03 effect tests prove config changes alter real executor decisions: topology/max-agent ceilings, scheduler global/provider/model capacity, provider eligibility/model selection, and execution-profile specialist routing;
+- existing behavioral refs preserve project-policy precedence/narrowing, Team Mode limits, model/fallback/variant behavior, primary-mode behavior and doctor compatibility diagnostics;
+- `HI003 CONFIG_EXECUTOR_MISSING` is now a fatal PASS rule: generated default leaves must exactly equal catalog paths, all runtime options must identify executable effect, non-runtime options cannot claim one, and every behavioral proof ref must resolve;
+- ConfigOption policy joins deterministic generation/BA12 scope checks and ProjectionReceipt tracking, increasing the current material receipt count from 31 to 32.
+
+Evidence: focused config/BA03/generator set 22/22 PASS; controlled isolated-HOME/XDG full plugin suite 548/548 PASS; architecture lint PASS (`rules=20`, `deferred=0`, `linked=8`); standalone validator PASS; `git diff --check` clean; backup count 0. M5 code checkpoint: `d53fe31`. No real external action was performed.
 
 ### M6 checkpoint evidence
 

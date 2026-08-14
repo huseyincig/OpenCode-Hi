@@ -11,17 +11,17 @@ repository: OpenCode-Hi
 repository_root: /workspace/OpenCode-Hi
 baseline_before_this_ledger_commit: baca9f7
 active_program: Engineering Constitution / Metamodel Migration
-active_phase: M5
-active_phase_name: ConfigOptionContract re-audit
-phase_status: REAUDIT_REQUIRED
+active_phase: M6
+active_phase_name: ModelCapabilityProfile requested/projected snapshot re-audit
+phase_status: PARTIAL_REAUDIT_REQUIRED
 working_tree_expectation: clean
 last_verified_full_suite:
-  total: 543
-  pass: 543
+  total: 548
+  pass: 548
   fail: 0
 last_verified_validator: PASS
 external_release_actions_authorized: false
-next_contract_owner: ConfigOptionContract
+next_contract_owner: ModelCapabilityProfile / WorkerState model-selection snapshot
 ```
 
 ## Continuation protocol
@@ -72,6 +72,7 @@ da67329  AuthorityContract / ExternalActionContract
 ea6c236  StorageOwnershipContract
 4602907  M10 common generator / architecture lint graph
 9801382  M3 PermissionProfile canonical owner migration
+d53fe31  M5 ConfigOptionContract executable ownership migration
 ```
 
 Earlier M8/M7/M6/M4/M2/M1/M0 checkpoints remain recorded in `17-IMPLEMENTATION-PROOF.md`.
@@ -86,7 +87,18 @@ M3 status: **PASS — CANONICAL PERMISSION OWNER MIGRATED** at `9801382`.
 - built-in `skill` permission remains exclusively methodology-derived;
 - pre-M3 HEAD vs new generated agent semantic parity is exact for permission, prompt and all other host fields;
 - read-only edit denial, lower-layer widening prohibition, unknown refs, duplicate rules and methodology-owner separation are executable negatives;
-- current ProjectionReceipt inventory is 31; controlled full suite is 543/543 PASS; architecture lint and validator PASS.
+- at the M3 checkpoint ProjectionReceipt inventory was 31 and the controlled suite was 543/543; M5 later raises current totals to 32 receipts and 548/548 PASS.
+
+## M5 current truth after release-boundary re-audit
+
+M5 status: **PASS — EXECUTABLE CONFIG OWNERSHIP CLOSED** at `d53fe31`.
+
+- canonical ConfigOption catalog covers all 32 current HiConfig leaves;
+- 29 runtime options identify a real consumer and executor effect; two compatibility options are diagnostic-only; `schemaVersion` is a schema marker;
+- default values derive from generated catalog policy rather than a second hand-written owner;
+- BA03 proves representative topology, scheduler, model-policy and role-routing effects;
+- HI003 is now fatal PASS, so architecture lint has `deferred=0`;
+- current ProjectionReceipt inventory is 32 and controlled full suite is 548/548 PASS.
 
 ## M9 current truth
 
@@ -236,7 +248,7 @@ Canonical receipt: `data/validation/external-opencode-hi-0.1.0-host-1.18.16-head
 Do not silently declare these closed:
 
 - **M3 PermissionProfile — CLOSED at `9801382`**. The former host-policy blocker no longer reproduced on re-audit. Seven canonical profiles now own general native permissions; RoleContract references them; role Markdown no longer owns mechanical permission maps; M4 remains the sole built-in methodology skill-permission owner. Current projection graph has 31 receipts and the controlled full suite is 543/543 PASS.
-- **M5 ConfigOptionContract** — prior host policy blocked direct config-catalog mutation.
+- **M5 ConfigOptionContract — CLOSED at `d53fe31`**. The former blocker no longer reproduced. All current HiConfig leaves are classified; 29 runtime options have explicit consumers/executor effects, two compatibility options remain diagnostic-only, one schema marker remains current-only, defaults are catalog-generated, and HI003 is fatal PASS.
 - **M6 ModelCapabilityProfile** — host inventory normalization/identity contract is operational; requested/projected WorkerState snapshot wiring remains previously deferred/blocked.
 - **M7 HostCapability** — local contract registry PASS and material OpenCode 1.18.16 T3 acceptance completed in M12; future host-version changes still require revalidation.
 
@@ -263,9 +275,9 @@ The sequential M0–M12 migration/acceptance track has reached its release bound
 
 ```text
 M3 PermissionProfile        PASS at 9801382
-M5 ConfigOptionContract    open / previously blocked by host policy; HI003 deferred
+M5 ConfigOptionContract    PASS at d53fe31; HI003 fatal PASS
 M6 ModelCapabilityProfile  partial / requested-projected WorkerState snapshot wiring deferred
 M13 Release readiness      NOT REQUESTED
 ```
 
-On continuation, first re-check real HEAD/status. Unless the user explicitly asks for release work, re-audit **M5 ConfigOptionContract** next because it is now the earliest dependency-safe open owner. Determine from current production config surfaces/consumers whether the environment permits a canonical config catalog and executable-effect proof without bypassing host policy. If it remains blocked, preserve the blocker and then assess M6; do not manufacture closure.
+On continuation, first re-check real HEAD/status. Unless the user explicitly asks for release work, re-audit the remaining **M6 ModelCapabilityProfile** partial next. The current host-inventory normalization and execution-identity reconciliation already exist; inspect the previously deferred requested/selected/projected/observed/effective WorkerState snapshot path and add only fields that have real producers/consumers. If the remaining snapshot is redundant or producerless, reclassify/remove the requirement rather than manufacturing state. M13 remains NOT REQUESTED.
