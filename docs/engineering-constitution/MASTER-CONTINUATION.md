@@ -12,19 +12,19 @@ repository: OpenCode-Hi
 repository_root: /workspace/OpenCode-Hi
 coverage_reconciliation_baseline_head: 8ba9eb561332eebc3b6bded90a1c0d2da501d1ed
 active_program: OpenCode-Hi Product Closure after Constitution Migration
-active_phase: P7
-active_phase_name: Real-host reacceptance for changed host-bound surfaces
-phase_status: OPEN
+active_phase: P8
+active_phase_name: Release readiness and real publication
+phase_status: NOT REQUESTED
 working_tree_expectation: clean
 last_verified_full_suite:
-  total: 563
-  pass: 563
+  total: 564
+  pass: 564
   fail: 0
 last_verified_architecture_lint: "PASS rules=21 deferred=0 linked=8"
 last_verified_validator: PASS
 current_projection_receipts: 32
 external_release_actions_authorized: false
-next_contract_owner: registry-latest OpenCode host -> changed adapter/control surfaces -> exact-version T3 receipt
+next_contract_owner: none until explicit user authority requests P8/M13 release work
 ```
 
 ---
@@ -192,7 +192,7 @@ dc8c59c  test: lock primary model as host-selected
 Current deterministic baseline before this coverage-ledger rewrite:
 
 ```text
-controlled full suite: 563/563 PASS
+controlled full suite: 564/564 PASS
 architecture lint: PASS rules=21 deferred=0 linked=8
 validator: PASS
 projection receipts: 32
@@ -279,7 +279,7 @@ This section exists so no requirement from the broad working checkpoint disappea
 | 71–73 | historical checkpoint/local commit discipline/Stage-1 closure | **HISTORICAL + COMMIT DISCIPLINE PERMANENT**. |
 | 74–89 | Stage-2 role/topology/model/host rules and generated/release test boundaries | **mostly CLOSED; remaining items are explicitly enumerated in Section 7 below**. |
 | 90 | explicit blind spots A–N | **mixed** — all A–N are individually classified with source evidence and closure requirements in Section 7 below. |
-| 91–92 | old validation baseline and continuation order | **HISTORICAL**, superseded by 563/563 baseline and current roadmap. |
+| 91–92 | old validation baseline and continuation order | **HISTORICAL**, superseded by the current 564/564 baseline and current roadmap. |
 | 93 | anti-drift rules | **PERMANENT INVARIANT**, absorbed into Sections 1–3 and verification protocol here. |
 
 ---
@@ -421,8 +421,8 @@ The old stage order remains useful as a product-coverage lens, but later Constit
 | Stage 5 — Human Decision / process / shell / isolation | **PARTIAL / HOST-LIMITED** | HumanDecision and shell policy operational. Process lifecycle DEGRADED; workspace isolation binding UNSUPPORTED. These must remain explicit release/support limitations unless future host support closes them. |
 | Stage 6 — Team / concurrency / crash recovery / fallback | **CLOSED current semantics** | Team is a strict process-ephemeral projection over durable Task/Worker state; restart reconciliation, concurrency, fallback and semantic generation behavior are deterministic. |
 | Stage 7 — Storage / setup / docs / packaging / release architecture | **CLOSED local architecture, docs-status residue** | Storage/provenance/release guards operational locally. Historical 06/08 status banners are stale. No real release authority. |
-| Stage 8 — independent subsystem/integration tests | **CLOSED current T1/T2 baseline** | 563/563 controlled suite plus architecture lint/validator. Tests remain evidence, not sole product proof. |
-| Stage 9 — Linux/OpenCode representative real-host acceptance | **PASS_MATERIAL_WITH_LIMITATIONS** | M12 OpenCode 1.18.16/aarch64 verified material primitives; process DEGRADED, workspace UNSUPPORTED, one independent-review terminal scenario was harness/model-behavior incomplete. Re-run targeted T3 after host-bound changes. |
+| Stage 8 — independent subsystem/integration tests | **CLOSED current T1/T2 baseline** | 564/564 controlled suite plus architecture lint/validator. Tests remain evidence, not sole product proof. |
+| Stage 9 — Linux/OpenCode representative real-host acceptance | **PASS_EXACT_SOURCE_WITH_LIMITATIONS** | P7 reaccepted changed host-bound surfaces on registry-latest OpenCode 1.18.18 against exact runtime source `c5d8287`; process remains DEGRADED, workspace UNSUPPORTED, browser UNSUPPORTED. Historical M12 1.18.16 remains provenance only. |
 | Stage 10 — real release/publication acceptance | **NOT REQUESTED** | Requires explicit user authority and T4 receipts. |
 
 ---
@@ -561,9 +561,24 @@ Deterministic proof from committed canonical sources:
 
 Closure is not based on test count alone: P0–P5 owner/consumer/executor gaps are individually recorded above, while P6 proves their committed canonical sources reproduce the generated host/runtime projections without drift.
 
-### P7 — Real-host reacceptance for changed host-bound surfaces
+### P7 — Real-host reacceptance for changed host-bound surfaces — **CLOSED on exact runtime source `c5d8287`**
 
-Only where P0–P5 changed OpenCode-bound behavior, run exact-version T3 acceptance against the supported OpenCode host. At minimum revalidate agent/tool/capability/model/session behaviors touched by the changes. Preserve DEGRADED/UNSUPPORTED truth.
+Canonical receipt: `data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-c5d8287.json`.
+
+Exact-host T3 reacceptance on OpenCode/plugin/SDK **1.18.18** proved the changed host-bound surfaces without promoting known limitations:
+
+- all 8 canonical Hi agents loaded from `file:///workspace/OpenCode-Hi/plugin/dist/plugin.js`; `scout` is absent, manager is read-only, working-manager/coder remain write-capable, and primary manager/working-manager carry no Hi model/variant constraint;
+- four requested OpenCode Go model/role bindings were observed in assistant metadata: working-manager→MiMo V2.5, coder→DeepSeek V4 Flash, architect→DeepSeek V4 Pro, qa-reviewer→MiMo V2.5 Pro;
+- working-manager + MiMo V2.5 performed a real file mutation and `hi_direct_progress` returned `RECORDED` with canonical project-relative `p7-direct.txt`; the P7-discovered absolute-vs-relative native path bug was fixed at the host path producer boundary and deterministically closed by 564/564 full-suite proof;
+- manager + MiMo V2.5, after a real implementation semantic assessment, was rejected by `hi_direct_progress` with canonical repository-write-authority enforcement;
+- Hi `hi_task_start` created a real repository-explorer child with correct parentID, OpenCode 1.18.18 identity, MiMo V2.5 effective model, read-only edit permission, and all Hi control-plane tools denied in the child;
+- native permission `once` allowed an asked `pwd` bash call to complete with exit 0; native permission `reject` emitted asked/replied events and the bash tool ended with the host rejection error without retry;
+- `hi-visual-qa` real-host task start returned `RESOLVE` before child creation because its canonical `host-capability:browser-execution` resource is unavailable;
+- live `hi_doctor` reported process-lifecycle **DEGRADED**, workspace-isolation-binding **UNSUPPORTED**, browser-execution **UNSUPPORTED**, with no stale 1.18.16 runtime wording.
+
+Deterministic source checkpoint before T3: **564/564 PASS**, architecture lint 21/21 with deferred=0, validator PASS, backup count 0.
+
+P7 exit satisfied: changed OpenCode-bound behavior is reaccepted against the current registry-latest host and exact runtime source hashes, while unsupported/degraded features remain truthfully limited.
 
 ### P8 / M13 / Stage 10 — Release readiness and real publication
 
@@ -631,7 +646,7 @@ OpenCode-Hi does **not** permanently pin host acceptance to 1.18.16 or any other
 4. bind the new receipt to that exact tested version and Git/source hashes;
 5. retain older exact-version receipts only as immutable historical evidence.
 
-At the current P7 checkpoint on 2026-08-14, registry `latest` is **1.18.18**; CLI and development plugin/SDK have been refreshed to **1.18.18**.
+At the latest completed P7 checkpoint on 2026-08-14, registry `latest` was **1.18.18**; CLI and development plugin/SDK were tested at **1.18.18** against exact runtime source `c5d8287`. Future host-bound checkpoints must resolve registry latest again rather than assuming this version remains current.
 
 ## 12. Real-host acceptance truth retained from M12
 
@@ -683,10 +698,8 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**Start P7 only.**
+**No autonomous product-closure phase is open. P8 / M13 / Stage 10 remains NOT REQUESTED.**
 
-Re-check real HEAD/status, resolve the current `opencode-ai` registry `latest` version, update the installed CLI and development adapter SDK to that version when needed, then run exact-version T3 reacceptance against that current/latest OpenCode version for host-bound surfaces changed since M12/P0–P5: canonical agent/permission projection (including `scout` removal), primary direct-action authority at `hi_direct_progress`, primary host-selected model non-constraint, browser/visual resource preflight and HostCapability truth, and doctor exposure of process/workspace/browser limitations. Reconfirm native session/child/model/permission behavior needed by those paths and bind the receipt to the exact tested Git HEAD/source hashes.
+Preserve the P0–P7 closed invariants and current host-limitation truth. Do not push, tag, create a GitHub release, publish a package, or deploy unless the user explicitly requests release/publication work.
 
-Do not broaden P7 into release publication or unrelated host feature development. Preserve process `DEGRADED`, workspace `UNSUPPORTED`, and browser `UNSUPPORTED` unless the real host execution evidence itself disproves those statuses. Do not enter real M13/release work without explicit user request.
-
-When P7 is coherently closed, create a local exact-source receipt/proof checkpoint and update this MASTER. P8/M13 remains NOT REQUESTED.
+If the user explicitly requests P8/M13, begin by re-checking real HEAD/status and resolving registry-latest OpenCode again, because the completed P7 receipt is exact to OpenCode 1.18.18 and runtime source `c5d8287`, not a permanent host-version pin. Then run the authority-bound T4 release-readiness/publication protocol.

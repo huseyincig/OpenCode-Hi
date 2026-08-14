@@ -1,0 +1,189 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "generated_at": "2026-08-14",
+  "status": "PASS_EXACT_SOURCE_WITH_LIMITATIONS",
+  "source_binding": {
+    "tested_git_commit": "c5d8287a909b778b628bfdd20f84fb921e38b0e8",
+    "tested_git_tree": "e0fa15f4462746d375ec41bba9c732651a0edc71",
+    "worktree": "/workspace/OpenCode-Hi",
+    "state": "CLEAN_COMMITTED_SOURCE",
+    "exact_candidate": true,
+    "runtime_hashes": {
+      "plugin/dist/plugin.js": "f483c62b0257ccc62cc38e13e3c2a2a9038986c51e9b669cd157d9edf074d197",
+      "plugin/src/plugin.ts": "150d29a99a54143522a3d905326a071a2d42797d7bdcc215757e9a418652073c",
+      "plugin/src/runtime/evidence/evidence-runtime.ts": "b606523c7dfde8135df60406be0b52dff3003c9a36bfe9049b03f8e50cd56ae8",
+      "plugin/src/hooks/tool-before.ts": "a8b65e06be30f5b613bd904ebd2c44e426c2bd3703473060fe2a334f1e93ca4f",
+      "plugin/src/hooks/tool-after.ts": "4b525d8cf830208ca14bad83b438b06439d2cc8eeba3b71a77251f1b93a64499"
+    },
+    "note": "Receipt is committed after the tested runtime source. Its evidence is bound to tested_git_commit/tree above; receipt/MASTER-only commits do not promote evidence across later runtime source changes."
+  },
+  "host": {
+    "os": "linux",
+    "arch": "aarch64",
+    "opencode_version": "1.18.18",
+    "plugin_package_version": "1.18.18",
+    "sdk_package_version": "1.18.18",
+    "fixture_project": "/tmp/hi-p7-current/project",
+    "plugin_spec": "file:///workspace/OpenCode-Hi/plugin/dist/plugin.js",
+    "provider_used": "opencode-go"
+  },
+  "gates": {
+    "native_plugin_loader": "PASS_T3",
+    "canonical_agent_projection": "PASS_T3",
+    "scout_permission_removed": "PASS_T3",
+    "primary_model_host_selected": "PASS_T3",
+    "working_manager_direct_progress": "PASS_T3",
+    "manager_direct_authority_rejection": "PASS_T3",
+    "four_go_model_role_matrix": "PASS_T3",
+    "native_child_session_parent_binding": "PASS_T3",
+    "child_effective_model_binding": "PASS_T3",
+    "child_control_plane_permission_denial": "PASS_T3",
+    "native_permission_once": "PASS_T3",
+    "native_permission_reject": "PASS_T3",
+    "visual_methodology_resource_preflight": "PASS_T3",
+    "doctor_host_capability_truth": "PASS_T3",
+    "process_lifecycle": "DEGRADED",
+    "workspace_isolation_binding": "UNSUPPORTED",
+    "browser_execution": "UNSUPPORTED"
+  },
+  "evidence": {
+    "deterministic_source_baseline": {
+      "full_suite": "564/564 PASS",
+      "architecture_lint": "PASS rules=21 deferred=0 linked=8",
+      "validator": "PASS",
+      "backup_count": 0,
+      "checkpoint_commit": "c5d8287a909b778b628bfdd20f84fb921e38b0e8"
+    },
+    "canonical_agents": {
+      "count": 8,
+      "names": [
+        "architect",
+        "coder",
+        "manager",
+        "qa-reviewer",
+        "repository-explorer",
+        "security-reviewer",
+        "visual-qa",
+        "working-manager"
+      ],
+      "manager_edit": "deny",
+      "working_manager_edit": "allow",
+      "scout_entries": 0,
+      "manager_model": null,
+      "manager_variant": null,
+      "working_manager_model": null,
+      "working_manager_variant": null
+    },
+    "go_role_matrix": [
+      {
+        "role": "working-manager",
+        "model": "opencode-go/mimo-v2.5",
+        "observed": "PASS"
+      },
+      {
+        "role": "coder",
+        "model": "opencode-go/deepseek-v4-flash",
+        "observed": "PASS"
+      },
+      {
+        "role": "architect",
+        "model": "opencode-go/deepseek-v4-pro",
+        "observed": "PASS"
+      },
+      {
+        "role": "qa-reviewer",
+        "model": "opencode-go/mimo-v2.5-pro",
+        "observed": "PASS"
+      }
+    ],
+    "direct_progress": {
+      "positive": {
+        "agent": "working-manager",
+        "model": "opencode-go/mimo-v2.5",
+        "file": "p7-direct.txt",
+        "file_content": "P7_DIRECT_WRITE_OK\\n",
+        "tool_result": {
+          "status": "RECORDED",
+          "verification_required": true,
+          "changed_files": [
+            "p7-direct.txt"
+          ]
+        },
+        "absolute_relative_path_mismatch_observed": false
+      },
+      "negative": {
+        "agent": "manager",
+        "model": "opencode-go/mimo-v2.5",
+        "semantic_task_kind": "implementation",
+        "tool_result": "BLOCKED: primary role manager lacks canonical repository write authority for direct implementation progress"
+      }
+    },
+    "child_runtime": {
+      "parent_agent": "working-manager",
+      "child_agent": "repository-explorer",
+      "selected_model": "opencode-go/mimo-v2.5",
+      "parent_relation_verified": true,
+      "child_version": "1.18.18",
+      "child_hi_control_plane_tools": "deny",
+      "child_edit": "deny"
+    },
+    "permission_runtime": {
+      "once": {
+        "permission": "bash",
+        "pattern": "pwd",
+        "permission_asked_observed": true,
+        "response_http": 200,
+        "response_body": true,
+        "tool_status": "completed",
+        "tool_exit": 0,
+        "output": "/tmp/hi-p7-current/project"
+      },
+      "reject": {
+        "permission": "bash",
+        "pattern": "pwd",
+        "permission_asked_observed": true,
+        "permission_replied_observed": true,
+        "response_body": true,
+        "tool_status": "error",
+        "tool_error": "The user rejected permission to use this specific tool call.",
+        "retry_observed": false
+      }
+    },
+    "visual_preflight": {
+      "methodology": "hi-visual-qa",
+      "task_start_status": "RESOLVE",
+      "reason": "Required methodology host/resource capability is unavailable: hi-visual-qa",
+      "child_sessions_created": 0,
+      "canonical_resource_requirement": "host-capability:browser-execution"
+    },
+    "doctor": {
+      "tool_status": "completed",
+      "model": "opencode-go/mimo-v2.5",
+      "token": "P7_DOCTOR_OK",
+      "process_lifecycle": "DEGRADED",
+      "workspace_isolation_binding": "UNSUPPORTED",
+      "browser_execution": "UNSUPPORTED",
+      "supported_contracts": 14,
+      "degraded_contracts": 1,
+      "unsupported_contracts": 2,
+      "runtime_models": 26,
+      "runtime_providers": 2,
+      "stale_1_18_16_live_text": false
+    }
+  },
+  "limitations": [
+    "process-lifecycle remains DEGRADED because Hi does not own ordinary model-facing bash through OpenCode PTY lifecycle",
+    "workspace-isolation-binding remains UNSUPPORTED because Hi has no canonical isolation selection/provisioning/cleanup binding with real child-execution proof",
+    "browser-execution remains UNSUPPORTED because Hi has no deterministic browser executor/evidence adapter"
+  ],
+  "release_authority": {
+    "push": false,
+    "tag": false,
+    "release": false,
+    "publish": false,
+    "deploy": false,
+    "p8_m13": "NOT_REQUESTED"
+  },
+  "rule": "This receipt is T3 host evidence for the exact tested source and OpenCode 1.18.18 only. A later OpenCode host or runtime-source change requires reacceptance before equivalent claims are promoted."
+}
