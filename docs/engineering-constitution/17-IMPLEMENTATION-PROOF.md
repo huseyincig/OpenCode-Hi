@@ -53,7 +53,7 @@ Rows below are intentionally `PENDING` until code exists.
 | M6 | Model capability/identity | ModelCapabilityProfile host-inventory normalization + identity reconciler + effective-model evidence; focused 17/17 PASS; controlled full suite 475/475 PASS; validator PASS | T1/T2 | `e7c3c96`; requested/projected WorkerState snapshot wiring blocked by SentinelX mutation policy; no unwired state committed | PARTIAL_PASS |
 | M7 | Host capability registry | 16 contract-backed OpenCode capabilities; product runtime gates consume worker-runtime/session-revert contracts; doctor reports status/verification/semantic loss; focused 43/43 PASS; controlled full suite 480/480 PASS; validator PASS | T1/T2 local; T3 still pending | `390cc2b` | PASS_LOCAL — REAL-HOST ACCEPTANCE PENDING |
 | M8 | Task/Worker/Result/Evidence contracts | WorkerResult, EvidenceItem, ReviewFinding, derived VerificationEnvelope, TaskContract and WorkerContract now have canonical runtime owners; persistence consumes canonical validators; task mission/external-action identity is explicit; worker attempt/recovery/effective-model lifecycle is fail-closed; latest focused Task/Worker set 21/21 PASS and controlled full suite 507/507 PASS; validator PASS | T1/T2 | WorkerResult `4ea320d`; Evidence `3044b94`; ReviewFinding `b120f49`; VerificationEnvelope `a4b1105`; Task/Worker `77f9dc1` | PASS — CONTRACT OWNERSHIP CLOSED |
-| M9 | Context/Artifact/PI/Human/Authority/Storage | Artifact + ContextReference + derived SemanticContext + ProjectIntelligence + HumanDecision operational; HumanDecision is persisted latest-decision state with strict semantic type/reason/scope/response protocol and remains separate from exact Authority; focused human/authority/continuation set 36/36 PASS; controlled full suite 528/528 PASS; validator PASS | T1/T2 | Artifact `811ee7f`; ContextReference `3e8ab72`; SemanticContext `b7e51cc`; PI `e2d021b`; HumanDecision `46fc7b7` | PARTIAL_PASS — AUTHORITY/STORAGE REMAIN |
+| M9 | Context/Artifact/PI/Human/Authority/Storage | Artifact + ContextReference + derived SemanticContext + ProjectIntelligence + HumanDecision + Authority + ExternalAction operational; exact Authority is canonical action/target/hash state, ExternalAction is a closed four-value semantic vocabulary, project-native persistent grants use the same action classes, and malformed authority persistence fails closed; focused authority/external-action set 59/59 PASS; controlled full suite 534/534 PASS; validator PASS | T1/T2 | Artifact `811ee7f`; ContextReference `3e8ab72`; SemanticContext `b7e51cc`; PI `e2d021b`; HumanDecision `46fc7b7`; Authority/ExternalAction `da67329` | PARTIAL_PASS — STORAGE REMAINS |
 | M10 | common generator/lint closure | BA12 + HI001–HI020 migrated rules | T0/T1/T2 | — | PENDING |
 | M11 | deterministic full closure | build + validator + full controlled suite | T0/T1/T2 | — | PENDING |
 | M12 | real-host acceptance | OpenCode version-bound native receipts | T3 | — | PENDING |
@@ -141,6 +141,23 @@ Implemented and verified:
 - an existing semantic conflation was avoided: temporary rollback remains a `precondition-blocked` operational user action rather than being reclassified as authority simply because completion can also return `USER_ACTION_REQUIRED`.
 
 Evidence: focused HumanDecision/authority/continuation/persistence set 36/36 PASS; controlled isolated-HOME/XDG full suite 528/528 PASS; validator PASS; diff check clean; backup count 0. HumanDecision code checkpoint: `46fc7b7`. AuthorityContract/ExternalAction/Storage remain open under M9.
+
+
+### M9 AuthorityContract / ExternalActionContract checkpoint
+
+Implemented and verified:
+
+- added canonical `ExternalActionContract` with the closed semantic vocabulary `git-push | release-create | package-publish | deploy`; Task and Mission intent snapshots consume that canonical type instead of duplicating the action union;
+- kept executor-specific command kinds (`gh-release-create`, Docker/Kubernetes/Terraform/Vercel/Netlify command classes) as technical classifier facts and mapped each privileged command deterministically into exactly one canonical ExternalAction type;
+- added canonical exact `AuthorityContract` construction binding semantic action type + exact command + cwd target into the existing deterministic action hash and auditable authority ID, while preserving the proven one-shot lifecycle and HumanDecision separation;
+- added a strict current-only `AuthorityStateContract` for Mission persistence; malformed hashes/action payloads, unknown fields, duplicate completed hashes, and simultaneous `pending`/`approved`/`executing` active slots fail closed during RuntimePersistence load;
+- preserved the existing fail-closed uncertain-outcome protocol: unknown host execution ACK remains `executing`, blocks replay through exact-action idempotency, opens an `authority_request` HumanDecision, and requires explicit outcome reconciliation before retry;
+- corrected project-persistent OpenCode `always` authority to use the same four semantic action classes rather than widening `git-push` into `release-create`; a persistent push grant no longer authorizes GitHub release creation;
+- closed native permission projection gaps for classifier-admitted `yarn npm publish` and `kubectl delete` forms so every current privileged command form receives an explicit ask/allow boundary without falling through a broader shell default;
+- preserved explicit user/native deny monotonicity and force-push `ask` behavior; child workers remain unable to execute privileged external effects;
+- no real push/tag/release/publish/deploy was performed. Full-suite external-effect coverage used only deterministic test-local bare Git remotes, hosted-release fixtures and local registry fixtures permitted by the continuation protocol.
+
+Evidence: focused Authority/ExternalAction/project-authority/release/HumanDecision/threat set 59/59 PASS; controlled isolated-HOME/XDG full plugin suite 534/534 PASS; standalone validator PASS; `git diff --check` clean; backup count 0. Authority/ExternalAction code checkpoint: `da67329`. StorageOwnershipContract remains open under M9.
 
 ### M8 Task / Worker contract checkpoint
 

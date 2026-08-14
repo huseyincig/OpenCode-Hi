@@ -9,19 +9,19 @@ Status: ACTIVE REPOSITORY CONTINUATION ENTRYPOINT
 continuation_schema: 1
 repository: OpenCode-Hi
 repository_root: /workspace/OpenCode-Hi
-baseline_before_this_ledger_commit: 6a481f7
+baseline_before_this_ledger_commit: da67329
 active_program: Engineering Constitution / Metamodel Migration
 active_phase: M9
 active_phase_name: Context / Artifact / Project Intelligence / Human Decision / Authority / Storage
 phase_status: PARTIAL_PASS
 working_tree_expectation: clean
 last_verified_full_suite:
-  total: 528
-  pass: 528
+  total: 534
+  pass: 534
   fail: 0
 last_verified_validator: PASS
 external_release_actions_authorized: false
-next_contract_owner: AuthorityContract / ExternalActionContract
+next_contract_owner: StorageOwnershipContract
 ```
 
 ## Continuation protocol
@@ -68,6 +68,7 @@ e2d021b  ProjectIntelligenceContract
 961736a  ProjectIntelligence proof provenance
 46fc7b7  HumanDecisionContract
 6a481f7  HumanDecision proof provenance
+da67329  AuthorityContract / ExternalActionContract
 ```
 
 Earlier M8/M7/M6/M4/M2/M1/M0 checkpoints remain recorded in `17-IMPLEMENTATION-PROOF.md`.
@@ -131,32 +132,38 @@ Canonical code checkpoint: `46fc7b7`.
 - HumanDecision is a completion/progress/status input;
 - HumanDecision does **not** grant Authority.
 
-Last M9 verification after HumanDecision:
+### AuthorityContract / ExternalActionContract — PASS
+
+Canonical code checkpoint: `da67329`.
+
+- canonical ExternalAction vocabulary is exactly `git-push | release-create | package-publish | deploy`;
+- technical command kinds map into that vocabulary rather than becoming duplicate Core action types;
+- exact Authority identity binds semantic action + command + cwd target into one deterministic hash/ID;
+- persisted Authority state is strict/current-only and rejects malformed or ambiguous active lifecycle state;
+- HumanDecision remains interaction state only and generic continuation remains non-authoritative;
+- unknown execution outcome remains in-flight/reconciliation-gated and cannot be blindly replayed;
+- project-native persistent `always` grants use the same four semantic classes: `git-push` does not imply `release-create`;
+- current classifier/projection parity includes `yarn npm publish` and `kubectl delete`;
+- explicit deny monotonicity, force-push ask behavior, parent-only external effects and release-chain remote proof remain preserved.
+
+Last M9 verification after Authority/ExternalAction:
 
 ```text
-focused HumanDecision/authority/continuation/persistence: 36/36 PASS
-controlled full plugin suite: 528/528 PASS
+focused Authority/ExternalAction/project-authority/release/HumanDecision/threat: 59/59 PASS
+controlled full plugin suite: 534/534 PASS
 standalone validator: PASS
 git diff --check: clean
 backup count: 0
+real external actions: none (test-local deterministic fixtures only)
 ```
 
 ## Still-open M9 work
 
-In order:
-
-1. **AuthorityContract / ExternalActionContract**
-   - audit current `runtime/safety/authority.ts`, command classifier, release-chain and project-authority state;
-   - keep exact action-hash protocol separate from HumanDecision;
-   - remove duplicate authority/external-action truth only after real owner/executor mapping is proven;
-   - generic user continuation must never authorize a privileged action;
-   - unknown execution outcome must remain reconciliation-gated;
-   - ExternalAction vocabulary remains current-only (`git-push`, `release-create`, `package-publish`, `deploy`) unless source/runtime evidence proves another canonical action.
-2. **StorageOwnershipContract**
+1. **StorageOwnershipContract**
    - audit `.opencode/hi` and host-native `.opencode/skills/hi-project-*` ownership;
-   - one canonical writer per data class;
+   - prove one canonical writer per data class and remove/reclassify overlapping ownership only from real producer/consumer evidence;
    - do not relocate host-native skills into Hi internal storage for directory neatness.
-3. Close M9 only after both are contract-backed and proven.
+2. Close M9 only after StorageOwnership is contract-backed and proven.
 
 ## Open earlier migration blockers / partials
 
@@ -184,7 +191,7 @@ Do not silently declare these closed:
 
 ## Next action
 
-Start **AuthorityContract / ExternalActionContract source-first audit**.
+Start **StorageOwnershipContract source-first audit**.
 
 Before mutation:
 
@@ -193,18 +200,17 @@ git status --short
 git log -5 --oneline
 ```
 
-Then inspect at minimum:
+Inspect the canonical/storage owner surfaces at minimum:
 
 ```text
-plugin/src/runtime/safety/authority.ts
-plugin/src/runtime/safety/command-classifier.ts
+plugin/src/runtime/storage/locations.ts
+plugin/src/runtime/storage/ownership.ts (if present)
+plugin/src/runtime/project-intelligence/store.ts
+plugin/src/runtime/context/artifact-store.ts
+plugin/src/runtime/methodology/project-policy.ts
 plugin/src/runtime/safety/project-authority.ts
-plugin/src/runtime/safety/release-chain.ts
-plugin/src/runtime/gates/gates.ts
-plugin/src/runtime/mission/types.ts
-plugin/src/hooks/tool-before.ts
-plugin/src/hooks/tool-after.ts
-relevant authority/release tests
+scripts/native_plugin_setup.py
+relevant storage/ownership/project-methodology tests
 ```
 
-Do not redesign Authority from the HumanDecision schema. HumanDecision tells the system **why/how human interaction is needed**; Authority owns **what exact privileged action is permitted**.
+Map every current `.opencode/hi/**` and `.opencode/skills/hi-project-*` data class to exactly one producer/writer, validator, consumer and lifecycle. Host-native project skills remain host-native skill storage; directory neatness is not a reason to move them under Hi internal storage.
