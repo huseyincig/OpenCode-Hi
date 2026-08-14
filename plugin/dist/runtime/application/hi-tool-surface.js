@@ -1,0 +1,179 @@
+import { runDoctor, formatDoctor } from '../../doctor/checks.js';
+import { compactLedgerReport } from '../ledger/report.js';
+import { aggregateMissionMetrics } from '../ledger/metrics.js';
+import { formatUserMissionStatus } from '../ledger/status.js';
+import { evaluatePreconditions, TaskPreconditionError } from '../readiness/preconditions.js';
+import { parseSemanticIntentAssessment } from '../intent/semantic-assessment.js';
+import { syncMissionGates } from '../gates/gates.js';
+import { appendLedger } from '../ledger/ledger.js';
+import { ContextArtifactStore } from '../context/artifact-store.js';
+import { redactProviderContext } from '../privacy/boundary.js';
+import { createHash } from 'node:crypto';
+import { hostCapabilityByID } from '../../contracts/host-capability.js';
+import { registerTemporaryMutation, resolveRollback } from '../mutations/temporary-mutations.js';
+import { markMutation, normalizeProjectPath, addEvidence } from '../evidence/evidence-runtime.js';
+import { assessChangedFileOwnership } from '../task/diff-ownership.js';
+import { replanVerificationForChangedSurface, verificationSatisfied } from '../verification/policy.js';
+import { collectRepoContext } from '../intent/repo-context.js';
+import { bindParentMethodologyNeeds } from '../methodology/activation.js';
+import { reconcileMethodologyExits } from '../methodology/exit.js';
+import { evaluateCompletion } from '../completion/evaluator.js';
+import { primaryRoleCanDirectImplementation } from '../roles/catalog.js';
+import { nativeTool as tool } from '../../opencode/plugin-tool.js';
+import { assertHiToolNamespace } from '../../opencode/tool-namespace.js';
+function nativeDiffFiles(raw, projectRoot) { const items = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : []; return [...new Set(items.map((x) => typeof x?.file === 'string' ? x.file : typeof x?.path === 'string' ? x.path : '').filter((x) => Boolean(x)).map((x) => normalizeProjectPath(x, projectRoot)).filter(Boolean))]; }
+export function createHiToolSurface(input) {
+    const { state, store, tasks, teams, projectRoot, capabilities, native, getModels } = input;
+    const doctorTool = tool({ description: 'Run OpenCode-Hi runtime/configuration health checks', args: {}, execute: async () => formatDoctor(runDoctor(state.config, store, projectRoot, { models: getModels(), resolution: state.configResolution, capabilities, hostConfig: state.hostConfig, openCodeVersion: state.openCodeVersion })) });
+    const statusTool = tool({ description: 'Show compact user-facing Hi mission status. This intentionally excludes diagnostic logs and ledger payloads.', args: {}, execute: async (_args, c) => { const m = store.get(c?.sessionID); return m ? formatUserMissionStatus(m) : 'Hi: no active mission'; } });
+    const metricsTool = tool({ description: 'Show aggregate Hi runtime metrics derived from bounded mission state. Token/cost telemetry is omitted unless the host provides it.', args: {}, execute: async () => JSON.stringify(aggregateMissionMetrics(store.all())) });
+    const ledgerTool = tool({ description: 'Show a bounded Hi execution ledger/report on demand.', args: { limit: tool.schema.number().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(compactLedgerReport(m, a?.limit ?? 40)) : 'No active Hi mission'; } });
+    const readinessTool = tool({ description: 'Show machine-readable Hi mission readiness/preconditions and gates.', args: {}, execute: async (_a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(evaluatePreconditions(m)) : 'No active Hi mission'; } });
+    const intentAssessTool = tool({ description: 'Submit the host-primary semantic interpretation of the current user message to the host-agnostic Hi Core intent contract. Natural-language semantics belong here, not in language-specific runtime regexes.', args: { revision: tool.schema.number(), assessment_json: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+            return 'No active Hi mission'; if (m.semantic_assessment.status !== 'pending')
+            return JSON.stringify({ status: 'ALREADY_ASSESSED', revision: m.semantic_assessment.revision }); if (Number(a.revision) !== m.semantic_assessment.revision)
+            return JSON.stringify({ status: 'STALE_ASSESSMENT', expected_revision: m.semantic_assessment.revision }); try {
+            const assessment = parseSemanticIntentAssessment(String(a.assessment_json)), phase = m.semantic_assessment.phase, pendingText = m.semantic_assessment.pending_text;
+            const next = phase === 'initial' ? store.applyInitialSemanticAssessment(c.sessionID, assessment) : store.applyFollowupSemanticAssessment(c.sessionID, assessment);
+            let reconciledWorkers = 0;
+            if (phase === 'followup') {
+                if (assessment.message_kind === 'stop') {
+                    await teams.shutdownMission(next);
+                    reconciledWorkers = await tasks.cancelAll(next);
+                }
+                else if (assessment.message_kind === 'constraint')
+                    reconciledWorkers = await tasks.reconcileUserConstraint(next, pendingText);
+                else
+                    reconciledWorkers = await tasks.resumeAfterSemanticAssessment(next, assessment.message_kind);
+            }
+            return JSON.stringify({ status: assessment.material ? 'ASSESSED' : 'NON_MATERIAL', phase, revision: next.semantic_assessment.revision, message_kind: assessment.message_kind, task_kind: next.intent.taskKind, scope: next.intent.scope, risk: next.risk, methodologies: next.methodology_needs.map(x => x.name), reconciled_workers: reconciledWorkers, gates: syncMissionGates(next).filter(g => g.status !== 'closed').map(g => ({ id: g.id, status: g.status, reason: g.reason })) });
+        }
+        catch (error) {
+            appendLedger(m, 'semantic.assessment-rejected', { payload: { revision: m.semantic_assessment.revision, error: String(error) } });
+            return JSON.stringify({ status: 'INVALID_ASSESSMENT', error: String(error) });
+        } } });
+    const artifactAddTool = tool({ description: 'Attach one bounded context artifact reference to the current Hi mission. Optional long content is retained by the Context owner and referenced by hash/handle.', args: { kind: tool.schema.string(), title: tool.schema.string().optional(), uri: tool.schema.string().optional(), summary: tool.schema.string().optional(), sha256: tool.schema.string().optional(), content: tool.schema.string().optional(), source_files: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+            return 'No active Hi mission'; const kind = String(a.kind).slice(0, 80), summary = a.summary ? String(a.summary).slice(0, 2000) : a.title ? String(a.title).slice(0, 300) : kind, sourceFiles = a.source_files ? String(a.source_files).split(',').map((x) => x.trim()).filter(Boolean).slice(0, 32) : [], content = typeof a.content === 'string' && a.content.length ? redactProviderContext(String(a.content)).providerText : undefined, stored = content ? new ContextArtifactStore(projectRoot).add(kind, summary, content, sourceFiles, { producer: 'hi-context-artifact-add', privacyClass: 'redacted' }) : undefined, raw = String(a.uri ?? summary ?? kind), item = { id: stored?.artifact_id ?? `ca_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`, kind, title: a.title ? String(a.title).slice(0, 300) : undefined, uri: stored ? `hi-artifact:${stored.artifact_id}` : a.uri ? String(a.uri).slice(0, 1200) : undefined, summary, sha256: stored?.content_hash ?? (a.sha256 ? String(a.sha256) : createHash('sha256').update(raw).digest('hex')), added_at: Date.now() }; m.context_artifacts.push(item); if (m.context_artifacts.length > 8)
+            m.context_artifacts.splice(0, m.context_artifacts.length - 8); appendLedger(m, 'context-artifact.added', { payload: { id: item.id, kind: item.kind, sha256: item.sha256, durable: Boolean(stored), source_files: sourceFiles.slice(0, 16) } }); return JSON.stringify(item); } });
+    const artifactsTool = tool({ description: 'List bounded Hi context artifact references.', args: {}, execute: async (_a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(m.context_artifacts) : 'No active Hi mission'; } });
+    const mutationTool = tool({ description: 'Register a temporary execution mutation. Prefer native session revert for project-local tracked experiments; use an exact rollback command only for native-coverage gaps.', args: { kind: tool.schema.string(), description: tool.schema.string(), rollback_command: tool.schema.string().optional(), native_revert: tool.schema.boolean().optional(), session_id: tool.schema.string().optional(), message_id: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+            return 'No active Hi mission'; const mode = a.native_revert ? 'native-revert' : 'command'; if (mode === 'native-revert' && hostCapabilityByID(capabilities.contracts, 'session-revert')?.status !== 'SUPPORTED')
+            return 'BLOCKED: OpenCode native session revert is unavailable'; return JSON.stringify(registerTemporaryMutation(m, { kind: String(a.kind), description: String(a.description), rollback_command: a.rollback_command ? String(a.rollback_command) : undefined, rollback_mode: mode, session_id: a.session_id ? String(a.session_id) : c?.sessionID, message_id: a.message_id ? String(a.message_id) : undefined })); } });
+    const nativeRollbackTool = tool({ description: 'Resolve a registered native-revert temporary mutation through OpenCode session.revert. Evidence remains stale until reverified.', args: { id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+            return 'No active Hi mission'; const item = m.temporary_mutations.find(x => x.id === String(a.id)); if (!item)
+            return 'Unknown temporary mutation'; if (item.rollback_mode !== 'native-revert')
+            return 'BLOCKED: mutation uses command rollback'; const target = item.session_id ?? m.session_id; const belongs = target === m.session_id || m.workers.some(w => w.session_id === target); if (!belongs)
+            return 'BLOCKED: target session is outside this mission'; try {
+            await native.revert(target, item.message_id);
+            resolveRollback(m, item, true, 'native session revert completed; verification must be refreshed');
+            markMutation(m, m.changed_files, 'native-session-revert');
+            return JSON.stringify({ status: 'ROLLED_BACK', id: item.id, session_id: target, evidence_fresh: false });
+        }
+        catch (error) {
+            resolveRollback(m, item, false, String(error));
+            return `Native revert failed: ${String(error)}`;
+        } } });
+    const directProgressTool = tool({ description: 'Record bounded parent/Working-Manager direct progress. Implementation requires an owned observed mutation; direct review requires fresh review input and records explicit review-completion evidence. Does not bypass verification or review gates.', args: { summary: tool.schema.string(), obligation_id: tool.schema.string().optional(), scope_expansions: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+            return 'No active Hi mission'; const rawArgs = a?.input && typeof a.input === 'object' && !Array.isArray(a.input) ? { ...a, ...a.input } : a, candidates = m.obligations.filter(x => ['implementation', 'review'].includes(x.kind) && x.status === 'open'), requested = rawArgs?.obligation_id ? String(rawArgs.obligation_id) : undefined, exact = requested ? candidates.find(x => x.id === requested) : undefined, o = exact ?? (candidates.length === 1 ? candidates[0] : undefined); if (!o)
+            return candidates.length > 1 ? 'BLOCKED: multiple direct-progress obligations are open; specify obligation_id' : 'No open direct-progress obligation'; if (o.kind === 'review' && m.verification_policy.requireReview)
+            return 'BLOCKED: independent reviewer required; direct parent progress cannot close this review obligation'; let directFiles = [...m.changed_files]; if (o.kind === 'implementation') {
+            if (!primaryRoleCanDirectImplementation(m.primary_mode))
+                return `BLOCKED: primary role ${m.primary_mode} lacks canonical repository write authority for direct implementation progress`;
+            if (!m.evidence.last_mutation_at)
+                return 'BLOCKED: no observed mutation for direct implementation progress';
+            if (!m.changed_files.length)
+                return 'BLOCKED: mutation observed but changed-file surface is unknown; use file-aware native tools or wait for native file/diff evidence before recording direct progress';
+            let expansions = [];
+            if (rawArgs.scope_expansions) {
+                try {
+                    const parsed = JSON.parse(String(rawArgs.scope_expansions));
+                    if (!Array.isArray(parsed))
+                        throw new Error('scope_expansions must be a JSON array');
+                    expansions = parsed.filter(x => x && typeof x === 'object').map(x => ({ file: String(x.file ?? ''), reason: String(x.reason ?? ''), necessary: x.necessary === true })).filter(x => x.file);
+                }
+                catch (e) {
+                    return `BLOCKED: invalid scope_expansions: ${String(e)}`;
+                }
+            }
+            if (capabilities.sessionDiff && directFiles.length)
+                try {
+                    const current = new Set(nativeDiffFiles(await native.diff(m.session_id), projectRoot));
+                    if (current.size)
+                        directFiles = directFiles.filter(file => current.has(file.replace(/\\/g, '/').replace(/^\.\//, '')));
+                }
+                catch { }
+            ;
+            const ownership = assessChangedFileOwnership(m.intent.likelyTargets ?? [], directFiles, expansions, 'control-plane');
+            if (m.intent.scope === 'local' && ownership.collateral.length) {
+                const marker = `direct-diff-cleanliness:${ownership.collateral.slice(0, 12).sort().join(',')}`;
+                m.blockers = [...new Set([...m.blockers, marker])];
+                appendLedger(m, 'implementation.direct-progress-blocked', { payload: { reason: 'changed-files-outside-requested-scope', collateral: ownership.collateral.slice(0, 30), expected: (m.intent.likelyTargets ?? []).slice(0, 30) } });
+                syncMissionGates(m);
+                return JSON.stringify({ status: 'BLOCKED', reason: 'changed-files-outside-requested-scope', collateral: ownership.collateral, expected: m.intent.likelyTargets ?? [] });
+            }
+            if (ownership.accepted.length)
+                appendLedger(m, 'scope.expansion.accepted', { payload: { owner: 'parent-direct', files: ownership.accepted.slice(0, 30) } });
+            const pseudo = { id: 'parent-direct', scope: [...(m.intent.likelyTargets ?? [])], requiredEvidence: [...m.verification_policy.requiredKinds] };
+            const replan = replanVerificationForChangedSurface(m, pseudo, directFiles, collectRepoContext(projectRoot));
+            if (replan.changed)
+                appendLedger(m, 'verification.replanned', { payload: { owner: 'parent-direct', changed_files: m.changed_files.slice(0, 30), added_kinds: replan.addedKinds, scope_expanded: replan.scopeExpanded, risk_escalated: replan.riskEscalated, reason: replan.reason } });
+            m.blockers = m.blockers.filter(b => !b.startsWith('direct-diff-cleanliness:'));
+        }
+        else {
+            const mutation = m.evidence.last_mutation_at ?? 0, freshInput = m.evidence.items.filter(e => e.kind === 'review-input' && !e.invalidated_at && e.observed_at >= mutation);
+            if (!freshInput.length)
+                return 'BLOCKED: no fresh review input observed';
+            const reviewVerification = m.obligations.find(x => x.kind === 'verification' && x.status === 'open');
+            addEvidence(m, { kind: 'review-evidence', summary: String(rawArgs.summary ?? '').slice(0, 1000), scope: [...new Set(freshInput.flatMap(e => e.scope ?? []))].slice(0, 50), source: 'parent:direct-review', obligation_ids: [o.id, ...(reviewVerification ? [reviewVerification.id] : [])], pass: true, outcome: 'passed' });
+        } o.status = 'closed'; o.closedAt = Date.now(); appendLedger(m, o.kind === 'review' ? 'review.direct-progress' : 'implementation.direct-progress', { payload: { summary: String(rawArgs.summary ?? '').slice(0, 500), obligation: o.id, changed_files: directFiles.slice(-30) } }); if (m.parent_loaded_methodologies.length)
+            bindParentMethodologyNeeds(m, m.parent_loaded_methodologies, o.id); const verify = m.obligations.find(x => x.kind === 'verification' && x.status === 'open'); if (verify && verificationSatisfied(m, verify.id).ok) {
+            verify.status = 'closed';
+            verify.closedAt = Date.now();
+        } reconcileMethodologyExits(m, projectRoot); syncMissionGates(m); return JSON.stringify({ status: 'RECORDED', verification_required: !evaluateCompletion(m).complete, changed_files: o.kind === 'implementation' ? directFiles.slice(-30) : m.changed_files.slice(-30) }); } });
+    const startTool = tool({ description: 'Start one bounded Hi worker task. Use only when delegation is actually beneficial.', args: { objective: tool.schema.string().optional(), role: tool.schema.string().optional(), category: tool.schema.string().optional(), model: tool.schema.string().optional(), model_variant: tool.schema.string().optional(), scope: tool.schema.string().optional(), constraints: tool.schema.string().optional(), dependencies: tool.schema.string().optional(), required_evidence: tool.schema.string().optional(), obligation_ids: tool.schema.string().optional(), context_artifact_ids: tool.schema.string().optional(), fork_from_session: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+            return 'No active Hi mission'; try {
+            const input = { ...a, forkFromSession: a.fork_from_session ? String(a.fork_from_session) : undefined, modelVariant: a.model_variant ? String(a.model_variant) : undefined, scope: a.scope ? String(a.scope).split(',').map((x) => x.trim()).filter(Boolean) : undefined, constraints: a.constraints ? [String(a.constraints)] : undefined, dependencies: a.dependencies ? String(a.dependencies).split(',').map((x) => x.trim()).filter(Boolean) : undefined, requiredEvidence: a.required_evidence ? String(a.required_evidence).split(',').map((x) => x.trim()).filter(Boolean) : undefined, obligationIds: a.obligation_ids ? String(a.obligation_ids).split(',').map((x) => x.trim()).filter(Boolean) : undefined, contextArtifactIds: a.context_artifact_ids ? String(a.context_artifact_ids).split(',').map((x) => x.trim()).filter(Boolean) : undefined };
+            if (m.adaptive_execution?.path === 'DIRECT' && !m.verification_policy.requireReview && ['qa-reviewer', 'security-reviewer'].includes(String(input.role ?? '')))
+                return JSON.stringify({ status: 'SKIPPED', reason: 'minimum-sufficient-direct-path: independent reviewer is not required' });
+            return JSON.stringify(await tasks.start(m, input));
+        }
+        catch (e) {
+            if (e instanceof TaskPreconditionError) {
+                appendLedger(m, 'worker.start.precondition', { payload: { decision: e.result.decision, items: e.result.items.slice(0, 12) } });
+                return JSON.stringify({ status: e.result.decision, preconditions: e.result.items });
+            }
+            appendLedger(m, 'worker.start.failed', { payload: { error: String(e) } });
+            return `Task start failed: ${String(e)}`;
+        } } });
+    const peekTool = tool({ description: 'Inspect one Hi task/worker without polling loops.', args: { id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(tasks.peek(m, a.id)) : 'No active Hi mission'; } });
+    const listTool = tool({ description: 'List bounded Hi task and worker state.', args: {}, execute: async (_a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(tasks.list(m)) : 'No active Hi mission'; } });
+    const awaitTool = tool({ description: 'Check whether an Hi task has reached terminal state. Hi uses event-driven wakeups; do not call repeatedly.', args: { id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+            return 'No active Hi mission'; const x = tasks.peek(m, a.id); const status = x?.task?.status ?? x?.worker?.status ?? 'unknown'; return JSON.stringify({ status, terminal: ['completed', 'failed', 'cancelled', 'blocked'].includes(status), result: x?.task?.result }); } });
+    const cancelTool = tool({ description: 'Cancel one Hi task/worker.', args: { id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? String(await tasks.cancel(m, a.id)) : 'false'; } });
+    const teamCreateTool = tool({ description: 'Create a bounded Hi Team Mode group only for work requiring interacting specialist perspectives.', args: { objective: tool.schema.string(), members: tool.schema.string(), member_models: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+            return 'No active Hi mission'; if (!state.config.teamMode.enabled)
+            return 'Team Mode disabled'; let memberModels; if (a.member_models && typeof a.member_models === 'string' && a.member_models.trim()) {
+            try {
+                memberModels = JSON.parse(a.member_models);
+                if (typeof memberModels !== 'object' || memberModels === null || Array.isArray(memberModels))
+                    throw new Error('member_models must be a JSON object mapping role -> {model, variant}');
+            }
+            catch (e) {
+                return `Invalid member_models JSON: ${e?.message ?? String(e)}`;
+            }
+        } return JSON.stringify(await teams.create(m, a.objective, String(a.members).split(','), memberModels)); } });
+    const teamStatusTool = tool({ description: 'Show Team Mode state for the current Hi mission.', args: {}, execute: async (_a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(teams.list(m.mission_id)) : 'No active Hi mission'; } });
+    const teamMemberAddTool = tool({ description: 'Add one bounded Team Mode member and start its worker.', args: { team_id: tool.schema.string(), role: tool.schema.string(), model: tool.schema.string().optional(), variant: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(await teams.addMember(m, a.team_id, a.role, a.model, a.variant)) : 'No active Hi mission'; } });
+    const teamMemberRemoveTool = tool({ description: 'Remove one Team Mode member and cancel its worker.', args: { team_id: tool.schema.string(), role: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? String(await teams.removeMember(m, a.team_id, a.role)) : 'false'; } });
+    const teamShutdownTool = tool({ description: 'Shutdown one bounded Hi team and cancel its member workers.', args: { team_id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? String(await teams.shutdown(m, a.team_id)) : 'false'; } });
+    const toolSurface = { hi_doctor: doctorTool, hi_status: statusTool, hi_metrics: metricsTool, hi_ledger: ledgerTool, hi_readiness: readinessTool, hi_intent_assess: intentAssessTool, hi_context_artifact_add: artifactAddTool, hi_context_artifacts: artifactsTool, hi_temporary_mutation_register: mutationTool, hi_temporary_mutation_revert: nativeRollbackTool, hi_direct_progress: directProgressTool, hi_task_start: startTool, hi_task_await: awaitTool, hi_task_peek: peekTool, hi_task_list: listTool, hi_task_cancel: cancelTool };
+    const teamTools = { hi_team_create: teamCreateTool, hi_team_member_add: teamMemberAddTool, hi_team_member_remove: teamMemberRemoveTool, hi_team_status: teamStatusTool, hi_team_shutdown: teamShutdownTool };
+    assertHiToolNamespace([...Object.keys(toolSurface), ...Object.keys(teamTools)]);
+    const reconfigure = () => { if (state.config.teamMode.enabled && hostCapabilityByID(capabilities.contracts, 'worker-runtime')?.status === 'SUPPORTED')
+        Object.assign(toolSurface, teamTools);
+    else
+        for (const k of Object.keys(teamTools))
+            delete toolSurface[k]; };
+    reconfigure();
+    return { toolSurface, reconfigure };
+}
