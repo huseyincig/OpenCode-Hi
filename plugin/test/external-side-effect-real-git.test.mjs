@@ -24,14 +24,14 @@ test('real bare-remote push with lost ACK is not blindly retried and is reconcil
   const store=new MissionStore(root), m=startAssessedMission(store,'real-remote-session','push release',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',requested_external_actions:['git-push']})
   const before=createToolBeforeHook(store,undefined,work), after=createToolAfterHook(store,undefined,undefined,work)
   const cmd='git push origin main'
-  await before({sessionID:m.session_id,tool:'bash',args:{command:cmd,cwd:work}},{args:{command:cmd,cwd:work}})
+  await before({sessionID:m.identity.session_id,tool:'bash',args:{command:cmd,cwd:work}},{args:{command:cmd,cwd:work}})
 
   // The side effect really happens on a Git remote, but the host ACK is intentionally lost.
   const pushOut=git(work,'push','origin','main')
-  await after({sessionID:m.session_id,tool:'bash',args:{command:cmd,cwd:work}},{stdout:pushOut,metadata:{}})
-  assert.equal(m.status,'waiting-user')
-  assert.equal(m.release_chain?.push?.outcome,'unknown')
-  await assert.rejects(()=>before({sessionID:m.session_id,tool:'bash',args:{command:cmd,cwd:work}},{args:{command:cmd,cwd:work}}),/already in-flight or completed/)
+  await after({sessionID:m.identity.session_id,tool:'bash',args:{command:cmd,cwd:work}},{stdout:pushOut,metadata:{}})
+  assert.equal(m.identity.status,'waiting-user')
+  assert.equal(m.release.release_chain?.push?.outcome,'unknown')
+  await assert.rejects(()=>before({sessionID:m.identity.session_id,tool:'bash',args:{command:cmd,cwd:work}},{args:{command:cmd,cwd:work}}),/already in-flight or completed/)
 
   const head=git(work,'rev-parse','HEAD')
   const remoteLine=git(work,'ls-remote','origin','refs/heads/main')
@@ -40,11 +40,11 @@ test('real bare-remote push with lost ACK is not blindly retried and is reconcil
   // Explicit user reconciliation closes the uncertain authority action; fresh native probes
   // then prove the exact remote ref rather than trusting the user's statement alone.
   assert.equal(resolveUncertainAuthority(m,'confirm action succeeded'),true)
-  await after({sessionID:m.session_id,tool:'bash',args:{command:'git rev-parse HEAD',cwd:work}},{stdout:head+'\n',metadata:{exit:0}})
-  await after({sessionID:m.session_id,tool:'bash',args:{command:'git ls-remote origin refs/heads/main',cwd:work}},{stdout:remoteLine+'\n',metadata:{exit:0}})
-  assert.equal(m.release_chain?.push?.outcome,'success')
-  assert.equal(m.release_chain?.push?.remote_verified,true)
-  assert.equal(m.release_chain?.push?.remote_hash,head)
+  await after({sessionID:m.identity.session_id,tool:'bash',args:{command:'git rev-parse HEAD',cwd:work}},{stdout:head+'\n',metadata:{exit:0}})
+  await after({sessionID:m.identity.session_id,tool:'bash',args:{command:'git ls-remote origin refs/heads/main',cwd:work}},{stdout:remoteLine+'\n',metadata:{exit:0}})
+  assert.equal(m.release.release_chain?.push?.outcome,'success')
+  assert.equal(m.release.release_chain?.push?.remote_verified,true)
+  assert.equal(m.release.release_chain?.push?.remote_hash,head)
 })
 
 test('real bare-remote annotated tag exposes direct tag object and peeled commit hashes', ()=>{

@@ -17,11 +17,11 @@ import { startAssessedMission, applyStructuredFollowup } from './helpers/semanti
 test('Gap #8: USER STOP sets user_interrupted=true and stops active mission', () => {
   const store = new MissionStore()
   const m = store.start('s1', 'fix the login bug')
-  assert.equal(m.status, 'active')
-  assert.equal(m.user_interrupted, false)
+  assert.equal(m.identity.status, 'active')
+  assert.equal(m.continuation.user_interrupted, false)
   store.stop('s1', 'user-stop-via-ESC')
-  assert.equal(m.status, 'stopped')
-  assert.equal(m.user_interrupted, true)
+  assert.equal(m.identity.status, 'stopped')
+  assert.equal(m.continuation.user_interrupted, true)
 })
 
 test('Gap #8: late idle event after user stop does NOT auto-resurrect mission', () => {
@@ -29,7 +29,7 @@ test('Gap #8: late idle event after user stop does NOT auto-resurrect mission', 
   const m = store.start('s1', 'demo')
   store.stop('s1', 'user-stop')
   store.noteUserMessage('s1') // simulate a late user-msg
-  assert.equal(m.status, 'stopped', 'mission must stay stopped; only new user message creates a new mission')
+  assert.equal(m.identity.status, 'stopped', 'mission must stay stopped; only new user message creates a new mission')
   // The stopped mission is preserved until the user issues an explicit resume or a new mission.
 })
 
@@ -42,17 +42,17 @@ test('Gap #9: updateProgress increments stagnation only when countStagnation=tru
   const m = store.start('s1', 'demo')
   // First updateProgress establishes the baseline signature.
   store.updateProgress(m, false)
-  assert.equal(m.stagnation_count, 0)
+  assert.equal(m.continuation.stagnation_count, 0)
   // Same signature again with countStagnation=false → no increment.
   store.updateProgress(m, false)
-  assert.equal(m.stagnation_count, 0)
+  assert.equal(m.continuation.stagnation_count, 0)
   // Same signature again with countStagnation=true → +1.
   store.updateProgress(m, true)
-  assert.equal(m.stagnation_count, 1)
+  assert.equal(m.continuation.stagnation_count, 1)
   // After a real change, the signature differs and stagnation resets.
-  m.changed_files = ['src/x.ts']
+  m.vcs.changed_files = ['src/x.ts']
   store.updateProgress(m, true)
-  assert.equal(m.stagnation_count, 0)
+  assert.equal(m.continuation.stagnation_count, 0)
 })
 
 test('Gap #9: countStagnation=false skips increment even when signature is unchanged', () => {
@@ -62,7 +62,7 @@ test('Gap #9: countStagnation=false skips increment even when signature is uncha
   store.updateProgress(m, false)
   store.updateProgress(m, false)
   // countStagnation=false throughout → no increment.
-  assert.equal(m.stagnation_count, 0)
+  assert.equal(m.continuation.stagnation_count, 0)
 })
 
 // ---------------------------------------------------------------------------
@@ -72,21 +72,21 @@ test('Gap #9: countStagnation=false skips increment even when signature is uncha
 test('Gap #10: structured follow-up updates intent without rebuilding task identity', () => {
   const store = new MissionStore()
   const m = startAssessedMission(store,'s1','opaque')
-  const before = m.intent.scope
+  const before = m.identity.intent.scope
   applyStructuredFollowup(store,'s1','opaque multi-stream',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation']})
-  assert.notEqual(m.intent.scope, before)
-  assert.equal(m.continuation_active, false)
+  assert.notEqual(m.identity.intent.scope, before)
+  assert.equal(m.continuation.continuation_active, false)
 })
 
 test('Gap #10: structured risk-raising follow-up escalates risk and verification', () => {
   const store = new MissionStore()
   const m = startAssessedMission(store,'s1','opaque',{risk:'low'})
-  assert.equal(m.intent.risk, 'low')
+  assert.equal(m.identity.intent.risk, 'low')
   applyStructuredFollowup(store,'s1','opaque security change',{risk:'high',required_capabilities:['implementation','security-review','independent-review'],likely_verification:['targeted-tests','review-evidence']})
-  assert.equal(m.intent.risk, 'high')
+  assert.equal(m.identity.intent.risk, 'high')
   // Verification policy opens up — the high-risk follow-up widens it.
-  assert.ok(m.verification_policy.requireFresh, 'requireFresh must be set')
-  assert.ok(m.verification_policy.requireReview, 'requireReview must be set for high risk')
+  assert.ok(m.execution.verification_policy.requireFresh, 'requireFresh must be set')
+  assert.ok(m.execution.verification_policy.requireReview, 'requireReview must be set for high risk')
 })
 
 // ---------------------------------------------------------------------------
@@ -96,9 +96,9 @@ test('Gap #10: structured risk-raising follow-up escalates risk and verification
 test('Gap #11: repeated high-risk structured follow-up does not duplicate high-assurance obligation', () => {
   const store = new MissionStore()
   const m = startAssessedMission(store,'s1','opaque',{risk:'high',required_capabilities:['implementation','security-review','independent-review']})
-  const before = m.obligations.filter(o => o.id === 'o-high-assurance').length
+  const before = m.execution.obligations.filter(o => o.id === 'o-high-assurance').length
   applyStructuredFollowup(store,'s1','opaque security extension',{risk:'high',required_capabilities:['implementation','security-review','independent-review']})
-  const after = m.obligations.filter(o => o.id === 'o-high-assurance').length
+  const after = m.execution.obligations.filter(o => o.id === 'o-high-assurance').length
   assert.equal(after, before, 'amend() must not create duplicate high-assurance obligations')
 })
 
@@ -110,16 +110,16 @@ test('Gap #12: permission pending is a runtime event tracked separately', () => 
   const store = new MissionStore()
   const m = store.start('s1', 'demo')
   // pending_permissions is an axis separate from stagnation_count.
-  m.pending_permissions = 1
-  assert.equal(m.stagnation_count, 0)
-  assert.equal(m.pending_permissions, 1)
+  m.authority.pending_permissions = 1
+  assert.equal(m.continuation.stagnation_count, 0)
+  assert.equal(m.authority.pending_permissions, 1)
   // Progress ticks may increment stagnation (signature unchanged) but
   // do not clear pending_permissions.
   store.updateProgress(m, true)
-  assert.equal(m.pending_permissions, 1, 'progress ticks do not clear permission pending state')
+  assert.equal(m.authority.pending_permissions, 1, 'progress ticks do not clear permission pending state')
   // stagnation may have advanced because signature is unchanged and
   // countStagnation=true. The two counters are independent.
-  assert.ok(m.stagnation_count >= 0)
+  assert.ok(m.continuation.stagnation_count >= 0)
 })
 
 // ---------------------------------------------------------------------------
@@ -131,14 +131,14 @@ test('Gap #13: provider failure is isolated from stagnation accounting', () => {
   const m = store.start('s1', 'demo')
   // Provider failure is handled by recoverRuntimeFailure in task-runtime.
   // It does not touch m.stagnation_count in mission-store.
-  const before = m.stagnation_count
+  const before = m.continuation.stagnation_count
   // Even after a normal progress tick, provider-failure handling does
   // not increase the count. The only thing that increments is repeated
   // unchanged signature with countStagnation=true.
-  m.changed_files = ['provider-failed']
+  m.vcs.changed_files = ['provider-failed']
   store.updateProgress(m, true)
-  assert.equal(m.stagnation_count, 0, 'progressed resets the count to zero')
-  assert.equal(m.stagnation_count, before, 'signature change resets the count')
+  assert.equal(m.continuation.stagnation_count, 0, 'progressed resets the count to zero')
+  assert.equal(m.continuation.stagnation_count, before, 'signature change resets the count')
 })
 
 // ---------------------------------------------------------------------------
@@ -163,9 +163,9 @@ test('Gap #14: nested active team is forbidden', async () => {
 test('Gap #15: structured follow-up does not delete current task identity', async () => {
   const store = new MissionStore()
   const m = startAssessedMission(store,'s1','opaque')
-  const before = m.tasks.length
+  const before = m.execution.tasks.length
   applyStructuredFollowup(store,'s1','opaque clarification',{message_kind:'amendment'})
-  assert.equal(m.tasks.length, before, 'amend() must not delete existing tasks')
+  assert.equal(m.execution.tasks.length, before, 'amend() must not delete existing tasks')
 })
 
 test('Gap #mission-identity: workers bind to spawning mission even when generation collides', async () => {
@@ -174,12 +174,12 @@ test('Gap #mission-identity: workers bind to spawning mission even when generati
   const first = store.start('same-session-mission-id', 'fix bug')
   const task = createTask(first,{objective:'fix bug',role:'coder',category:'standard'})
   const worker = createWorker(first,task,'host-default')
-  assert.equal(worker.parent_mission_id, first.mission_id)
+  assert.equal(worker.parent_mission_id, first.identity.mission_id)
   store.stop('same-session-mission-id')
   const second = store.start('same-session-mission-id', 'different task')
-  assert.equal(second.generation, 1)
+  assert.equal(second.continuation.generation, 1)
   assert.equal(worker.generation_at_spawn, 1)
-  assert.notEqual(worker.parent_mission_id, second.mission_id)
+  assert.notEqual(worker.parent_mission_id, second.identity.mission_id)
 })
 
 test('Gap #recovery-runtime: level-2 escalation resumes same child session with a different stronger-category model', async () => {

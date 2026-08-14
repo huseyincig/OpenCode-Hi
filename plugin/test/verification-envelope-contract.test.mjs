@@ -10,7 +10,7 @@ import { startAssessedMission } from './helpers/semantic.mjs'
 function mission(id='verification-envelope'){
   const store=new MissionStore(process.cwd())
   const m=startAssessedMission(store,id,'verify src/a.ts',{task_kind:'bug-fix',likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
-  m.evidence.last_mutation_at=Date.now()-100
+  m.execution.evidence.last_mutation_at=Date.now()-100
   return m
 }
 
@@ -30,7 +30,7 @@ test('outcome-less evidence is pending and cannot silently satisfy verification'
   const m=mission('ve-implicit')
   addEvidence(m,{kind:'targeted-tests',summary:'claim without explicit outcome',scope:['src/a.ts'],source:'test-fixture'})
   // Freshness is intentionally forced here so this test isolates explicit outcome authority.
-  m.evidence.fresh=true
+  m.execution.evidence.fresh=true
   const env=verificationEnvelopeFor(m)
   assert.equal(env.checks[0].result,'pending')
   assert.match(env.checks[0].explanation,/no explicit verification outcome/i)
@@ -39,7 +39,7 @@ test('outcome-less evidence is pending and cannot silently satisfy verification'
 
 test('missing required check is not_run with explanation and never a pass',()=>{
   const m=mission('ve-not-run')
-  m.evidence.fresh=true
+  m.execution.evidence.fresh=true
   const env=verificationEnvelopeFor(m)
   assert.equal(env.checks[0].result,'not_run')
   assert.match(env.checks[0].explanation,/No admissible evidence/i)
@@ -50,19 +50,19 @@ test('missing required check is not_run with explanation and never a pass',()=>{
 test('failed and environment-issue remain distinct verification results',()=>{
   const failed=mission('ve-failed')
   addEvidence(failed,{kind:'targeted-tests',summary:'tests failed',scope:['src/a.ts'],source:'bash',pass:false,outcome:'failed',reason:'exit-1'})
-  failed.evidence.fresh=true
+  failed.execution.evidence.fresh=true
   assert.equal(verificationEnvelopeFor(failed).checks[0].result,'failed')
   const unavailable=mission('ve-env')
   addEvidence(unavailable,{kind:'targeted-tests',summary:'runner unavailable',scope:['src/a.ts'],source:'bash',outcome:'environment-issue',reason:'tool-missing'})
-  unavailable.evidence.fresh=true
+  unavailable.execution.evidence.fresh=true
   assert.equal(verificationEnvelopeFor(unavailable).checks[0].result,'environment-issue')
 })
 
 test('obligation-scoped worker evidence cannot satisfy a different verification obligation',()=>{
   const m=mission('ve-scope')
-  const first=m.obligations.find(o=>o.kind==='verification'); assert.ok(first)
+  const first=m.execution.obligations.find(o=>o.kind==='verification'); assert.ok(first)
   first.requiredEvidence=['targeted-tests']
-  m.obligations.push({id:'o-other-verification',kind:'verification',summary:'other verification',status:'open',requiredEvidence:['targeted-tests']})
+  m.execution.obligations.push({id:'o-other-verification',kind:'verification',summary:'other verification',status:'open',requiredEvidence:['targeted-tests']})
   addEvidence(m,{kind:'targeted-tests',summary:'first only',scope:['src/a.ts'],source:'worker:w1',task_id:'t1',obligation_ids:[first.id],pass:true,outcome:'passed'})
   assert.equal(verificationEnvelopeFor(m,first.id).checks[0].result,'passed')
   assert.equal(verificationEnvelopeFor(m,'o-other-verification').checks[0].result,'not_run')
@@ -71,7 +71,7 @@ test('obligation-scoped worker evidence cannot satisfy a different verification 
 test('required independent review is represented in envelope and report rather than inferred separately',()=>{
   const store=new MissionStore(process.cwd())
   const m=startAssessedMission(store,'ve-review','review src/a.ts',{task_kind:'review',risk:'high',required_capabilities:['review','independent-review'],likely_verification:['review-evidence'],likely_targets:['src/a.ts']})
-  m.evidence.fresh=true
+  m.execution.evidence.fresh=true
   const env=verificationEnvelopeFor(m)
   assert.equal(env.independent_review,false)
   assert.ok(env.limitations.includes('independent-review-required'))

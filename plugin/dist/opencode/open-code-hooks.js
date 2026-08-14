@@ -53,7 +53,7 @@ export function createOpenCodeHooks(input) {
             if (!host.getModels().length)
                 void host.refreshRuntimeInventory('chat-message');
             await createChatMessageHook(store, async (sid, text) => { const m = store.get(sid); if (!m)
-                return; const teamsPaused = teams.adoptSemanticGeneration(m), workersPaused = await tasks.pauseForSemanticAssessment(m); appendLedger(m, 'semantic.execution-quarantined', { payload: { revision: m.semantic_assessment.revision, workers: workersPaused, teams: teamsPaused, preview: text.slice(0, 180) } }); })(input, output);
+                return; const teamsPaused = teams.adoptSemanticGeneration(m), workersPaused = await tasks.pauseForSemanticAssessment(m); appendLedger(m, 'semantic.execution-quarantined', { payload: { revision: m.identity.semantic_assessment.revision, workers: workersPaused, teams: teamsPaused, preview: text.slice(0, 180) } }); })(input, output);
         }
         finally {
             persistence.save(store.all());
@@ -80,7 +80,7 @@ export function createOpenCodeHooks(input) {
         } },
         dispose: async () => { try {
             for (const m of store.all())
-                if (m.status === 'active') {
+                if (m.identity.status === 'active') {
                     await teams.shutdownMission(m);
                     await tasks.cancelAll(m);
                 }

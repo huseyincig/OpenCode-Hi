@@ -53,11 +53,11 @@ export class ChildExecutionCoordinator {
         }
     }
     noteEffectiveModel(m, workerID, observed) {
-        const worker = m.workers.find(w => w.id === workerID);
+        const worker = m.execution.workers.find(w => w.id === workerID);
         if (!worker)
             return { ok: false, reason: 'worker-not-found' };
-        const task = m.tasks.find(t => t.id === worker.task_id), expected = worker.model, expectedVariant = worker.model_variant, taskID = task?.id ?? worker.task_id;
-        const clearModelMarkers = () => { m.blockers = m.blockers.filter(b => !b.startsWith(`model-projection-mismatch:${taskID}:`) && !b.startsWith(`model-effective-unverified:${taskID}:`) && !b.startsWith(`model-effective-mismatch:${taskID}:`) && !b.startsWith(`model-variant-unverified:${taskID}:`) && !b.startsWith(`model-variant-mismatch:${taskID}:`)); };
+        const task = m.execution.tasks.find(t => t.id === worker.task_id), expected = worker.model, expectedVariant = worker.model_variant, taskID = task?.id ?? worker.task_id;
+        const clearModelMarkers = () => { m.execution.blockers = m.execution.blockers.filter(b => !b.startsWith(`model-projection-mismatch:${taskID}:`) && !b.startsWith(`model-effective-unverified:${taskID}:`) && !b.startsWith(`model-effective-mismatch:${taskID}:`) && !b.startsWith(`model-variant-unverified:${taskID}:`) && !b.startsWith(`model-variant-mismatch:${taskID}:`)); };
         const requested = (worker.requested_model || worker.requested_model_variant) ? { model: worker.requested_model, variant: worker.requested_model_variant, source: 'task-override' } : undefined;
         const selected = (worker.model || worker.model_variant) ? { model: worker.model, variant: worker.model_variant, source: 'runtime-resolver/current-worker-selection' } : undefined;
         const projected = (worker.projected_model || worker.projected_model_variant) ? { model: worker.projected_model, variant: worker.projected_model_variant, source: 'opencode-child-or-prompt' } : undefined;
@@ -76,35 +76,35 @@ export class ChildExecutionCoordinator {
         if (identity.status === 'projection-mismatch') {
             const marker = `model-projection-mismatch:${taskID}:${expected ?? 'unknown'}->${worker.projected_model ?? 'unrecorded'}`;
             clearModelMarkers();
-            m.blockers.push(marker);
+            m.execution.blockers.push(marker);
             appendLedger(m, 'model.projection.mismatch', { task_id: task?.id, worker_id: worker.id, payload: { requested: worker.requested_model, selected: expected, projected: worker.projected_model, selected_variant: expectedVariant, projected_variant: worker.projected_model_variant } });
             return { ok: false, expected, observed: observed?.model, reason: marker };
         }
         if (identity.status === 'model-unverified') {
             const marker = `model-effective-unverified:${taskID}:${expected}`;
-            if (!m.blockers.includes(marker))
-                m.blockers.push(marker);
+            if (!m.execution.blockers.includes(marker))
+                m.execution.blockers.push(marker);
             appendLedger(m, 'model.effective.unverified', { task_id: task?.id, worker_id: worker.id, payload: { requested: worker.requested_model, selected: expected, projected: worker.projected_model, expected_variant: expectedVariant, source: worker.effective_model_source } });
             return { ok: false, expected, reason: marker };
         }
         if (identity.status === 'model-mismatch') {
             const marker = `model-effective-mismatch:${taskID}:${expected}->${observed?.model}`;
             clearModelMarkers();
-            m.blockers.push(marker);
+            m.execution.blockers.push(marker);
             appendLedger(m, 'model.effective.mismatch', { task_id: task?.id, worker_id: worker.id, payload: { requested: worker.requested_model, selected: expected, projected: worker.projected_model, observed: observed?.model, expected_variant: expectedVariant, variant: observed?.variant, source: worker.effective_model_source } });
             return { ok: false, expected, observed: observed?.model, reason: marker };
         }
         if (identity.status === 'variant-unverified') {
             const marker = `model-variant-unverified:${taskID}:${expectedVariant}`;
             clearModelMarkers();
-            m.blockers.push(marker);
+            m.execution.blockers.push(marker);
             appendLedger(m, 'model.variant.unverified', { task_id: task?.id, worker_id: worker.id, payload: { model: expected, projected: worker.projected_model, expected_variant: expectedVariant, projected_variant: worker.projected_model_variant, source: worker.effective_model_source } });
             return { ok: false, expected, observed: observed?.model, reason: marker };
         }
         if (identity.status === 'variant-mismatch') {
             const marker = `model-variant-mismatch:${taskID}:${expectedVariant}->${observed?.variant}`;
             clearModelMarkers();
-            m.blockers.push(marker);
+            m.execution.blockers.push(marker);
             appendLedger(m, 'model.variant.mismatch', { task_id: task?.id, worker_id: worker.id, payload: { model: expected, projected: worker.projected_model, expected_variant: expectedVariant, projected_variant: worker.projected_model_variant, observed_variant: observed?.variant, source: worker.effective_model_source } });
             return { ok: false, expected, observed: observed?.model, reason: marker };
         }

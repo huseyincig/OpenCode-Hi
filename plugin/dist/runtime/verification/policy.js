@@ -12,7 +12,7 @@ export function replanVerificationForChangedSurface(m, task, files, repo) {
     if (!actual.length)
         return { changed: false, addedKinds: [], scopeExpanded: false, riskEscalated: false, reason: 'no-changed-files' };
     const repoKinds = repo?.likelyVerification ?? [], staticKind = repoKinds.find(x => ['typecheck', 'check', 'lint'].includes(x.toLowerCase().trim())), buildKind = repoKinds.find(x => x.toLowerCase().trim() === 'build');
-    if (sensitive || m.risk === 'high') {
+    if (sensitive || m.identity.risk === 'high') {
         if (staticKind)
             added.push(canonical(staticKind));
         if (buildKind)
@@ -20,38 +20,38 @@ export function replanVerificationForChangedSurface(m, task, files, repo) {
     }
     else if (expanded && actual.length > 1 && staticKind)
         added.push(canonical(staticKind));
-    const before = new Set(m.verification_policy.requiredKinds.map(canonical));
+    const before = new Set(m.execution.verification_policy.requiredKinds.map(canonical));
     for (const k of added)
         before.add(k);
-    const next = [...before], addedKinds = next.filter(k => !m.verification_policy.requiredKinds.map(canonical).includes(k));
-    const riskEscalated = sensitive && m.risk !== 'high' && m.risk !== 'authority-boundary';
+    const next = [...before], addedKinds = next.filter(k => !m.execution.verification_policy.requiredKinds.map(canonical).includes(k));
+    const riskEscalated = sensitive && m.identity.risk !== 'high' && m.identity.risk !== 'authority-boundary';
     if (riskEscalated) {
-        m.risk = 'high';
-        m.intent.risk = 'high';
-        m.verification_policy.requireReview = true;
+        m.identity.risk = 'high';
+        m.identity.intent.risk = 'high';
+        m.execution.verification_policy.requireReview = true;
     }
     if (dependencyChanged) {
-        m.intent.requiredCapabilities = [...new Set([...m.intent.requiredCapabilities, 'dependency-change', 'security-review'])];
-        m.verification_policy.requireReview = true;
-        if (!m.obligations.some(o => o.kind === 'review' && o.status === 'open' && o.summary.includes('Dependency graph changed')))
-            m.obligations.push({ id: `o-dependency-review-${Date.now().toString(36)}`, kind: 'review', summary: 'Dependency graph changed; independent supply-chain/security review required', status: 'open' });
+        m.identity.intent.requiredCapabilities = [...new Set([...m.identity.intent.requiredCapabilities, 'dependency-change', 'security-review'])];
+        m.execution.verification_policy.requireReview = true;
+        if (!m.execution.obligations.some(o => o.kind === 'review' && o.status === 'open' && o.summary.includes('Dependency graph changed')))
+            m.execution.obligations.push({ id: `o-dependency-review-${Date.now().toString(36)}`, kind: 'review', summary: 'Dependency graph changed; independent supply-chain/security review required', status: 'open' });
     }
-    else if (riskEscalated && !m.obligations.some(o => o.kind === 'review' && o.status === 'open'))
-        m.obligations.push({ id: `o-high-assurance-${Date.now().toString(36)}`, kind: 'review', summary: 'Changed surface entered a security/configuration-sensitive area; independent review required', status: 'open' });
+    else if (riskEscalated && !m.execution.obligations.some(o => o.kind === 'review' && o.status === 'open'))
+        m.execution.obligations.push({ id: `o-high-assurance-${Date.now().toString(36)}`, kind: 'review', summary: 'Changed surface entered a security/configuration-sensitive area; independent review required', status: 'open' });
     const changed = addedKinds.length > 0 || expanded || riskEscalated;
     if (changed) {
-        m.verification_policy.requiredKinds = next;
-        for (const o of m.obligations.filter(o => o.kind === 'verification' && o.status === 'open'))
+        m.execution.verification_policy.requiredKinds = next;
+        for (const o of m.execution.obligations.filter(o => o.kind === 'verification' && o.status === 'open'))
             o.requiredEvidence = [...new Set([...(o.requiredEvidence ?? []).map(canonical), ...next])];
     }
     return { changed, addedKinds, scopeExpanded: expanded, riskEscalated, reason: dependencyChanged ? 'dependency-changed-surface' : sensitive ? 'sensitive-changed-surface' : expanded ? 'changed-surface-expanded' : 'verification-policy-unchanged' };
 }
 export function verificationEconomyInstruction(m) {
-    const kinds = [...new Set(m.verification_policy.requiredKinds.map(canonical))];
+    const kinds = [...new Set(m.execution.verification_policy.requiredKinds.map(canonical))];
     const required = kinds.join(', ') || 'changed-surface-sanity';
-    if (m.intent.taskKind === 'release-readiness' || m.risk === 'high')
+    if (m.identity.intent.taskKind === 'release-readiness' || m.identity.risk === 'high')
         return `Verification contract: ${required}. Use repo-native commands and satisfy these required kinds; prefer targeted tests first, then the required static/build checks. Do not substitute a cheap unrelated PASS for a missing required kind.`;
-    if (m.intent.scope === 'local' && m.risk === 'low')
+    if (m.identity.intent.scope === 'local' && m.identity.risk === 'low')
         return `Verification contract: ${required}. Use the smallest repo-native check that covers the changed surface. Prefer a targeted test or changed-surface sanity; do not run a full repository suite unless targeted verification is unavailable or the change proves broader than expected.`;
     return `Verification contract: ${required}. Use repo-native commands with minimum sufficient scope; broaden only when changed surface, dependency impact, or a failed targeted check justifies it.`;
 }
@@ -60,7 +60,7 @@ function kindMatches(required, actual) { const r = canonical(required), a = cano
     return true; return Boolean(STRONGER_EVIDENCE[r]?.includes(a)); }
 function evidenceAllowedForVerification(m, e, obligationID) {
     const workerSource = String(e.source ?? '').startsWith('worker:');
-    if (workerSource && !m.verification_policy.allowWorkerReportedEvidence && !String(e.source ?? '').includes(':reviewer'))
+    if (workerSource && !m.execution.verification_policy.allowWorkerReportedEvidence && !String(e.source ?? '').includes(':reviewer'))
         return false;
     if (obligationID && canonical(e.kind) === 'review-evidence' && !e.obligation_ids?.includes(obligationID))
         return false;
@@ -78,28 +78,28 @@ function verificationResult(e) {
     return 'pending';
 }
 export function verificationEnvelopeFor(m, obligationID) {
-    const p = m.verification_policy, obligation = obligationID ? m.obligations.find(o => o.id === obligationID) : undefined;
+    const p = m.execution.verification_policy, obligation = obligationID ? m.execution.obligations.find(o => o.id === obligationID) : undefined;
     const requiredKinds = [...new Set((obligation?.requiredEvidence?.length ? obligation.requiredEvidence : p.requiredKinds).map(canonical))];
-    const candidates = m.evidence.items.filter(e => evidenceAllowedForVerification(m, e, obligationID));
+    const candidates = m.execution.evidence.items.filter(e => evidenceAllowedForVerification(m, e, obligationID));
     const checks = requiredKinds.map(kind => {
         const matching = candidates.filter(e => kindMatches(kind, e.kind)).sort((a, b) => b.observed_at - a.observed_at);
         if (!matching.length)
-            return { kind, subject: obligation?.summary ?? m.objective, result: 'not_run', evidence_refs: [], explanation: `No admissible evidence recorded for required verification kind: ${kind}` };
+            return { kind, subject: obligation?.summary ?? m.identity.objective, result: 'not_run', evidence_refs: [], explanation: `No admissible evidence recorded for required verification kind: ${kind}` };
         const explicit = matching.find(e => e.outcome !== undefined || e.pass !== undefined);
         if (!explicit)
-            return { kind, subject: obligation?.summary ?? m.objective, result: 'pending', evidence_refs: matching.map(e => e.id).slice(0, 12), explanation: 'Evidence exists but no explicit verification outcome was recorded' };
+            return { kind, subject: obligation?.summary ?? m.identity.objective, result: 'pending', evidence_refs: matching.map(e => e.id).slice(0, 12), explanation: 'Evidence exists but no explicit verification outcome was recorded' };
         const result = verificationResult(explicit);
-        return { kind, subject: obligation?.summary ?? m.objective, result, evidence_refs: [explicit.id], explanation: result === 'passed' ? undefined : (explicit.reason ?? explicit.summary) };
+        return { kind, subject: obligation?.summary ?? m.identity.objective, result, evidence_refs: [explicit.id], explanation: result === 'passed' ? undefined : (explicit.reason ?? explicit.summary) };
     });
-    const referencedEvidence = checks.flatMap(check => check.evidence_refs.map(ref => m.evidence.items.find(e => e.id === ref)).filter((e) => Boolean(e)));
+    const referencedEvidence = checks.flatMap(check => check.evidence_refs.map(ref => m.execution.evidence.items.find(e => e.id === ref)).filter((e) => Boolean(e)));
     const scope = [...new Set(referencedEvidence.flatMap(e => e.scope ?? []))].slice(0, 100);
-    const requiredEvidenceFresh = checks.length === 0 ? m.evidence.fresh : checks.every(check => {
+    const requiredEvidenceFresh = checks.length === 0 ? m.execution.evidence.fresh : checks.every(check => {
         if (check.result !== 'passed' || check.evidence_refs.length === 0)
             return false;
-        return check.evidence_refs.some(ref => { const e = m.evidence.items.find(item => item.id === ref); return Boolean(e && !e.invalidated_at); });
+        return check.evidence_refs.some(ref => { const e = m.execution.evidence.items.find(item => item.id === ref); return Boolean(e && !e.invalidated_at); });
     });
     const freshness = p.requireFresh && !requiredEvidenceFresh ? 'stale' : 'fresh';
-    const review = m.obligations.find(o => o.kind === 'review'), independentReview = !p.requireReview || review?.status === 'closed';
+    const review = m.execution.obligations.find(o => o.kind === 'review'), independentReview = !p.requireReview || review?.status === 'closed';
     const limitations = [];
     if (freshness === 'stale')
         limitations.push('fresh-evidence-required');
@@ -121,7 +121,7 @@ export function verificationSatisfied(m, obligationID) {
         missing.push('review-obligation');
     return { ok: missing.length === 0, missing: [...new Set(missing)] };
 }
-export function latestBlockingVerificationEvidence(m, obligationID) { const obligation = obligationID ? m.obligations.find(o => o.id === obligationID) : undefined, requiredKinds = [...new Set((obligation?.requiredEvidence?.length ? obligation.requiredEvidence : m.verification_policy.requiredKinds).map(canonical))], mutation = m.evidence.last_mutation_at ?? 0, current = [...m.evidence.items].filter(e => !e.invalidated_at && e.observed_at >= mutation).sort((a, b) => b.observed_at - a.observed_at); for (const e of current) {
+export function latestBlockingVerificationEvidence(m, obligationID) { const obligation = obligationID ? m.execution.obligations.find(o => o.id === obligationID) : undefined, requiredKinds = [...new Set((obligation?.requiredEvidence?.length ? obligation.requiredEvidence : m.execution.verification_policy.requiredKinds).map(canonical))], mutation = m.execution.evidence.last_mutation_at ?? 0, current = [...m.execution.evidence.items].filter(e => !e.invalidated_at && e.observed_at >= mutation).sort((a, b) => b.observed_at - a.observed_at); for (const e of current) {
     if (e.outcome !== 'environment-issue' && e.outcome !== 'failed')
         continue;
     const matched = requiredKinds.filter(r => kindMatches(r, e.kind));

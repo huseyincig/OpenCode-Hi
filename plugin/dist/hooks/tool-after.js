@@ -37,7 +37,7 @@ export function createToolAfterHook(store, background, events, projectRoot) {
         const sid = input?.sessionID ?? input?.sessionId, child = sid && background ? background.list().find(w => w.session_id === sid) : undefined, m = child ? store.get(child.parent_session_id) : store.get(sid);
         if (!m)
             return;
-        if (child && ((child.parent_mission_id !== undefined && child.parent_mission_id !== m.mission_id) || (child.generation_at_spawn !== undefined && child.generation_at_spawn !== m.generation)))
+        if (child && ((child.parent_mission_id !== undefined && child.parent_mission_id !== m.identity.mission_id) || (child.generation_at_spawn !== undefined && child.generation_at_spawn !== m.continuation.generation)))
             return;
         const tool = String(input?.tool ?? ''), args = input?.args ?? {}, text = outputText(output);
         observeToolAfter(m, tool, args, output, projectRoot);
@@ -45,7 +45,7 @@ export function createToolAfterHook(store, background, events, projectRoot) {
             const name = requestedMethodologyName(args);
             if (name) {
                 if (child)
-                    recordChildMethodologyLoad(m.workers.find(worker => worker.id === child.id), name);
+                    recordChildMethodologyLoad(m.execution.workers.find(worker => worker.id === child.id), name);
                 else
                     recordParentMethodologyLoad(m, name);
             }
@@ -80,7 +80,7 @@ export function createToolAfterHook(store, background, events, projectRoot) {
         }
         const check = verificationSatisfied(m);
         if (check.ok) {
-            const o = m.obligations.find(x => x.kind === 'verification' && x.status === 'open');
+            const o = m.execution.obligations.find(x => x.kind === 'verification' && x.status === 'open');
             if (o) {
                 o.status = 'closed';
                 o.closedAt = Date.now();
@@ -89,6 +89,6 @@ export function createToolAfterHook(store, background, events, projectRoot) {
         reconcileMethodologyExits(m, projectRoot);
         syncMissionGates(m);
         store.updateProgress(m);
-        void events?.(runtimeSignal('evidence.updated', m.mission_id, { worker_id: child?.id, payload: { fresh: m.evidence.fresh, items: m.evidence.items.length } }));
+        void events?.(runtimeSignal('evidence.updated', m.identity.mission_id, { worker_id: child?.id, payload: { fresh: m.execution.evidence.fresh, items: m.execution.evidence.items.length } }));
     };
 }

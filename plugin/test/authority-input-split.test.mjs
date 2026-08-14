@@ -29,14 +29,14 @@ test('user "approve" matches pending authority and advances state', async () => 
   // Manually plant a pending authority that maps to a known command hash.
   store.start('s1', 'demo')
   const m = store.get('s1')
-  m.authority = {
+  m.authority.authority = {
     pending: { hash: 'a'.repeat(64), action: 'cwd=\ncommand=git push', created_at: Date.now() },
     approved: undefined, executing: undefined, completed_hashes: [],
   }
   await callHook(hook, 's1', 'approve', '')
-  assert.ok(!m.authority?.pending, 'pending must be cleared')
-  assert.equal(m.authority?.approved?.hash, 'a'.repeat(64), 'approved.hash must match pending.hash')
-  assert.equal(m.status, 'active', 'mission must resume to active after approval')
+  assert.ok(!m.authority.authority?.pending, 'pending must be cleared')
+  assert.equal(m.authority.authority?.approved?.hash, 'a'.repeat(64), 'approved.hash must match pending.hash')
+  assert.equal(m.identity.status, 'active', 'mission must resume to active after approval')
 })
 
 test('user "approve" matches pending authority (English phrase)', async () => {
@@ -44,13 +44,13 @@ test('user "approve" matches pending authority (English phrase)', async () => {
   const hook = createChatMessageHook(store)
   store.start('s1', 'demo')
   const m = store.get('s1')
-  m.authority = {
+  m.authority.authority = {
     pending: { hash: 'b'.repeat(64), action: 'cwd=\ncommand=git push', created_at: Date.now() },
     approved: undefined, executing: undefined, completed_hashes: [],
   }
   await callHook(hook, 's1', 'approve', '')
-  assert.equal(m.authority?.approved?.hash, 'b'.repeat(64))
-  assert.equal(m.status, 'active')
+  assert.equal(m.authority.authority?.approved?.hash, 'b'.repeat(64))
+  assert.equal(m.identity.status, 'active')
 })
 
 test('user "approve" does NOT match if assistant text contains "approve" but user text does not', async () => {
@@ -60,19 +60,19 @@ test('user "approve" does NOT match if assistant text contains "approve" but use
   const hook = createChatMessageHook(store)
   store.start('s1', 'demo')
   const m = store.get('s1')
-  m.authority = {
+  m.authority.authority = {
     pending: { hash: 'c'.repeat(64), action: 'cwd=\ncommand=git push', created_at: Date.now() },
     approved: undefined, executing: undefined, completed_hashes: [],
   }
   await callHook(hook, 's1', 'tamam devam et', 'approve')
-  assert.ok(m.authority?.pending, 'pending must remain unless USER text says approve')
-  assert.equal(m.authority?.approved, undefined)
+  assert.ok(m.authority.authority?.pending, 'pending must remain unless USER text says approve')
+  assert.equal(m.authority.authority?.approved, undefined)
 })
 
 test('user stop request opens semantic follow-up; structured stop assessment stops the mission', async () => {
   const store=new MissionStore(),hook=createChatMessageHook(store);startAssessedMission(store,'s1','opaque task')
-  await callHook(hook,'s1','opaque stop request','');assert.equal(store.get('s1').semantic_assessment.status,'pending')
-  applyStructuredFollowup(store,'s1','opaque stop request',{message_kind:'stop'});assert.equal(store.get('s1').status,'stopped')
+  await callHook(hook,'s1','opaque stop request','');assert.equal(store.get('s1').identity.semantic_assessment.status,'pending')
+  applyStructuredFollowup(store,'s1','opaque stop request',{message_kind:'stop'});assert.equal(store.get('s1').identity.status,'stopped')
 })
 
 test('user "resume" against pending authority is rejected (must use exact approve)', async () => {
@@ -80,13 +80,13 @@ test('user "resume" against pending authority is rejected (must use exact approv
   const hook = createChatMessageHook(store)
   store.start('s1', 'demo')
   const m = store.get('s1')
-  m.authority = {
+  m.authority.authority = {
     pending: { hash: 'd'.repeat(64), action: 'cwd=\ncommand=git push', created_at: Date.now() },
     approved: undefined, executing: undefined, completed_hashes: [],
   }
   await callHook(hook, 's1', 'resume', '')
-  assert.ok(m.authority?.pending, 'pending must remain; generic resume does not authorize')
-  assert.equal(m.authority?.approved, undefined)
+  assert.ok(m.authority.authority?.pending, 'pending must remain; generic resume does not authorize')
+  assert.equal(m.authority.authority?.approved, undefined)
 })
 
 test('uncertain authority requires explicit USER reconciliation; assistant self-report is ignored', async () => {
@@ -94,22 +94,22 @@ test('uncertain authority requires explicit USER reconciliation; assistant self-
   const hook = createChatMessageHook(store)
   store.start('s1', 'demo')
   const m = store.get('s1')
-  m.authority = {
+  m.authority.authority = {
     executing: { hash: 'e'.repeat(64), action: 'cwd=\ncommand=git push', started_at: Date.now() },
     approved: undefined, completed_hashes: [],
   }
   await callHook(hook, 's1', 'tamam', 'action succeeded')
-  assert.ok(m.authority?.executing, 'assistant text must not settle an uncertain external action')
-  assert.ok(!(m.authority?.completed_hashes ?? []).includes('e'.repeat(64)))
+  assert.ok(m.authority.authority?.executing, 'assistant text must not settle an uncertain external action')
+  assert.ok(!(m.authority.authority?.completed_hashes ?? []).includes('e'.repeat(64)))
   await callHook(hook, 's1', 'confirm action succeeded', '')
-  assert.equal(m.authority?.executing, undefined)
-  assert.ok((m.authority?.completed_hashes ?? []).includes('e'.repeat(64)))
+  assert.equal(m.authority.authority?.executing, undefined)
+  assert.ok((m.authority.authority?.completed_hashes ?? []).includes('e'.repeat(64)))
 })
 
 test('user amendment opens semantic follow-up and structured assessment updates execution state', async () => {
   const store=new MissionStore(),hook=createChatMessageHook(store),m=startAssessedMission(store,'s1','opaque task')
   await callHook(hook,'s1','opaque amendment','');applyStructuredFollowup(store,'s1','opaque amendment',{message_kind:'amendment',scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation']})
-  assert.equal(m.intent.scope,'multi-stream');assert.equal(m.execution_mode,'parallel')
+  assert.equal(m.identity.intent.scope,'multi-stream');assert.equal(m.execution.execution_mode,'parallel')
 })
 
 test('assistant passage without user keyword does NOT trigger approval', async () => {
@@ -117,7 +117,7 @@ test('assistant passage without user keyword does NOT trigger approval', async (
   const hook = createChatMessageHook(store)
   store.start('s1', 'demo')
   const m = store.get('s1')
-  m.authority = {
+  m.authority.authority = {
     pending: { hash: 'f'.repeat(64), action: 'cwd=\ncommand=git push', created_at: Date.now() },
     approved: undefined, executing: undefined, completed_hashes: [],
   }
@@ -128,8 +128,8 @@ test('assistant passage without user keyword does NOT trigger approval', async (
     'devam et',
     'Hi authority boundary: explicit approval required for exact action contract ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff. Reply with approve ile onay verin',
   )
-  assert.ok(m.authority?.pending, 'user "devam et" must not match approve pattern')
-  assert.equal(m.authority?.approved, undefined)
+  assert.ok(m.authority.authority?.pending, 'user "devam et" must not match approve pattern')
+  assert.equal(m.authority.authority?.approved, undefined)
 })
 
 test('createSystemTransformHook co-exists with chat-message hook (no regression)', async () => {

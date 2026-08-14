@@ -24,18 +24,18 @@ export interface MissionMetrics {
 }
 
 export function missionMetrics(m: MissionState): MissionMetrics {
-  const events=m.ledger
+  const events=m.execution.ledger
   const count=(pred:(type:string,payload:Record<string,unknown>|undefined)=>boolean)=>events.filter(e=>pred(e.type,e.payload)).length
   const recovery=count((t,p)=>t==='runtime.decision'&&p?.decision==='RECOVER')
   const recoverySuccess=count((t,p)=>t==='runtime.decision'&&p?.decision==='RECOVER'&&String(p?.reason??'').includes('level-1'))
   const handoffs=events.filter(e=>e.type==='worker.handoff').map(e=>Number(e.payload?.chars??0)).filter(n=>Number.isFinite(n)&&n>=0)
-  const methodologyCounts=m.workers.map(w=>w.selected_methodologies.length)
+  const methodologyCounts=m.execution.workers.map(w=>w.selected_methodologies.length)
   const avg=(xs:number[])=>xs.length?Math.round(xs.reduce((a,b)=>a+b,0)/xs.length):0
   return {
-    completed:m.status==='completed',
-    duration_ms:Math.max(0,m.updated_at-m.created_at),
-    agents_spawned:m.workers.length,
-    tasks_created:m.tasks.length,
+    completed:m.identity.status==='completed',
+    duration_ms:Math.max(0,m.identity.updated_at-m.identity.created_at),
+    agents_spawned:m.execution.workers.length,
+    tasks_created:m.execution.tasks.length,
     zero_methodology_workers:methodologyCounts.filter(n=>n===0).length,
     methodologies_loaded_total:methodologyCounts.reduce((a,b)=>a+b,0),
     average_methodologies_per_worker:avg(methodologyCounts),
@@ -45,13 +45,13 @@ export function missionMetrics(m: MissionState): MissionMetrics {
     same_session_resumes:count(t=>t==='worker.resumed'||t==='worker.model-escalated'),
     team_mode_used:events.some(e=>e.type==='team.created'),
     duplicate_work_events:count(t=>t.includes('duplicate')||t.includes('dedup')),
-    user_interruptions:m.resume_count??(m.user_interrupted?1:0),
+    user_interruptions:m.continuation.resume_count??(m.continuation.user_interrupted?1:0),
     premature_stop_blocks:count((t,p)=>t==='runtime.decision'&&p?.decision==='STOP_BLOCKED'),
     stale_verification_blocks:count((t,p)=>t==='runtime.decision'&&String(p?.reason??'').includes('stale')),
     continuation_recovery_events:recovery,
     continuation_recovery_success:recoverySuccess,
-    evidence_items:m.evidence.items.length,
-    failed_workers:m.workers.filter(w=>w.status==='failed').length,
+    evidence_items:m.execution.evidence.items.length,
+    failed_workers:m.execution.workers.filter(w=>w.status==='failed').length,
   }
 }
 

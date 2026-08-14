@@ -53,19 +53,19 @@ export function createChatMessageHook(store, onFollowupPending) {
             store.resume(sid, 'authority-approved');
             return;
         }
-        if (!existing || existing.status === 'completed' || existing.status === 'failed') {
+        if (!existing || existing.identity.status === 'completed' || existing.identity.status === 'failed') {
             store.start(sid, userText, observedPrimary);
             return;
         }
         // A previously stopped mission does not infer "resume" from prose here. Start a new provisional
         // mission; Human Decision/authority controls own explicit resurrection semantics.
-        if (existing.status === 'stopped' || existing.user_interrupted) {
+        if (existing.identity.status === 'stopped' || existing.continuation.user_interrupted) {
             store.start(sid, userText, observedPrimary);
             return;
         }
-        if (existing.semantic_assessment.status === 'pending')
+        if (existing.identity.semantic_assessment.status === 'pending')
             return;
-        if (['active', 'waiting-user'].includes(existing.status)) {
+        if (['active', 'waiting-user'].includes(existing.identity.status)) {
             store.beginFollowupSemanticAssessment(sid, userText);
             await onFollowupPending?.(sid, userText);
         }

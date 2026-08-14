@@ -34,9 +34,9 @@ function trimLedger(events) {
 }
 export function appendLedger(mission, type, detail = {}) {
     const payload = detail.payload === undefined ? undefined : bounded(detail.payload);
-    const event = { id: id(), at: Date.now(), mission_id: mission.mission_id, type: type.slice(0, 160), task_id: detail.task_id?.slice(0, 160), worker_id: detail.worker_id?.slice(0, 160), payload };
-    mission.ledger.push(event);
-    trimLedger(mission.ledger);
-    mission.updated_at = event.at;
+    const event = { id: id(), at: Date.now(), mission_id: mission.identity.mission_id, type: type.slice(0, 160), task_id: detail.task_id?.slice(0, 160), worker_id: detail.worker_id?.slice(0, 160), payload };
+    mission.execution.ledger.push(event);
+    trimLedger(mission.execution.ledger);
+    mission.identity.updated_at = event.at;
     return event;
 }

@@ -1,5 +1,5 @@
 import { type MissionState } from '../mission/types.js';
-export declare const RUNTIME_STATE_SCHEMA: 7;
+export declare const RUNTIME_STATE_SCHEMA: 8;
 export interface PersistenceLoadReport {
     sourceSchema?: number;
     targetSchema: typeof RUNTIME_STATE_SCHEMA;

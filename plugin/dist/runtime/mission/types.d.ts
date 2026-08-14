@@ -177,7 +177,7 @@ export interface NormalizedMissionIntent {
     likelyVerification: string[];
     avoid: string[];
 }
-export interface MissionState {
+export interface MissionIdentityState {
     mission_id: string;
     session_id: string;
     objective: string;
@@ -185,6 +185,10 @@ export interface MissionState {
     semantic_assessment: SemanticAssessmentState;
     status: MissionStatus;
     risk: Risk;
+    created_at: number;
+    updated_at: number;
+}
+export interface MissionExecutionState {
     execution_mode: ExecutionMode;
     primary_mode: PrimaryMode;
     verification_policy: VerificationPolicy;
@@ -197,11 +201,6 @@ export interface MissionState {
         parallelism: number;
         reason: string[];
     };
-    generation: number;
-    iteration: number;
-    continuation_budget: number;
-    continuation_active: boolean;
-    suppress_until?: number;
     obligations: Obligation[];
     tasks: MissionTask[];
     workers: WorkerState[];
@@ -211,9 +210,39 @@ export interface MissionState {
         last_mutation_at?: number;
     };
     ledger: LedgerEvent[];
-    changed_files: string[];
     blockers: string[];
     constraints: string[];
+    native_todos_incomplete: number;
+    gates: MissionGate[];
+}
+export interface MissionContinuationState {
+    generation: number;
+    iteration: number;
+    continuation_budget: number;
+    continuation_active: boolean;
+    suppress_until?: number;
+    last_progress_signature: string;
+    stagnation_count: number;
+    continuation_reason?: string;
+    continuation_lock_until?: number;
+    last_continuation_at?: number;
+    last_action_id?: string;
+    active_action_id?: string;
+    continuation_failure_count?: number;
+    last_continuation_failure_at?: number;
+    pending_nudge?: RuntimeNudge;
+    user_interrupted: boolean;
+    interrupted_at?: number;
+    interrupted_reason?: string;
+    resumed_at?: number;
+    resume_count?: number;
+    last_user_message_at?: number;
+}
+export interface MissionContextState {
+    context_artifacts: ContextArtifact[];
+}
+export interface MissionVcsSafetyState {
+    changed_files: string[];
     preexisting_user_changes?: Record<string, string>;
     preexisting_user_baseline_captured?: boolean;
     staging_safety?: {
@@ -234,32 +263,16 @@ export interface MissionState {
         conflict_files?: string[];
     };
     git_topology_owned_files?: string[];
-    native_todos_incomplete: number;
-    last_progress_signature: string;
-    stagnation_count: number;
-    continuation_reason?: string;
-    continuation_lock_until?: number;
-    last_continuation_at?: number;
-    last_action_id?: string;
-    active_action_id?: string;
-    continuation_failure_count?: number;
-    last_continuation_failure_at?: number;
-    pending_nudge?: RuntimeNudge;
-    context_artifacts: ContextArtifact[];
-    gates: MissionGate[];
     temporary_mutations: TemporaryMutation[];
-    methodology_needs: HiMethodologyNeed[];
-    parent_loaded_methodologies: string[];
+}
+export interface MissionAuthorityState {
     pending_permissions: number;
     pending_permission_ids?: string[];
-    user_interrupted: boolean;
-    interrupted_at?: number;
-    interrupted_reason?: string;
-    resumed_at?: number;
-    resume_count?: number;
-    last_user_message_at?: number;
     human_decision?: HumanDecisionContract;
     authority?: AuthorityStateContract;
+    applied_actions?: Record<string, string>;
+}
+export interface MissionReleaseState {
     release_chain?: {
         local_revision_at?: number;
         last_local_command?: string;
@@ -340,7 +353,18 @@ export interface MissionState {
         };
         blocked_reason?: string;
     };
-    applied_actions?: Record<string, string>;
-    created_at: number;
-    updated_at: number;
+}
+export interface MissionMethodologyState {
+    methodology_needs: HiMethodologyNeed[];
+    parent_loaded_methodologies: string[];
+}
+export interface MissionState {
+    identity: MissionIdentityState;
+    execution: MissionExecutionState;
+    continuation: MissionContinuationState;
+    context: MissionContextState;
+    vcs: MissionVcsSafetyState;
+    authority: MissionAuthorityState;
+    release: MissionReleaseState;
+    methodology: MissionMethodologyState;
 }

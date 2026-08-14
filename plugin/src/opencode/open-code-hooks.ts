@@ -25,13 +25,13 @@ export function createOpenCodeHooks(input:{state:PluginRuntimeState;host:any;ser
       applyProjectAuthorityPermissions(opencodeConfig,projectAuthority)
       reconfigureToolSurface()
     },
-    'chat.message':async(input:any,output:any)=>{try{const messageSession=String(input?.sessionID??input?.sessionId??'');if(messageSession&&background.list().some((w:any)=>w.session_id===messageSession)){await host.log('debug','Hi child chat message ignored by parent intent hook',{session_id:messageSession});return}if(!host.getModels().length)void host.refreshRuntimeInventory('chat-message');await createChatMessageHook(store,async(sid,text)=>{const m=store.get(sid);if(!m)return;const teamsPaused=teams.adoptSemanticGeneration(m),workersPaused=await tasks.pauseForSemanticAssessment(m);appendLedger(m,'semantic.execution-quarantined',{payload:{revision:m.semantic_assessment.revision,workers:workersPaused,teams:teamsPaused,preview:text.slice(0,180)}})})(input,output)}finally{persistence.save(store.all())}},
+    'chat.message':async(input:any,output:any)=>{try{const messageSession=String(input?.sessionID??input?.sessionId??'');if(messageSession&&background.list().some((w:any)=>w.session_id===messageSession)){await host.log('debug','Hi child chat message ignored by parent intent hook',{session_id:messageSession});return}if(!host.getModels().length)void host.refreshRuntimeInventory('chat-message');await createChatMessageHook(store,async(sid,text)=>{const m=store.get(sid);if(!m)return;const teamsPaused=teams.adoptSemanticGeneration(m),workersPaused=await tasks.pauseForSemanticAssessment(m);appendLedger(m,'semantic.execution-quarantined',{payload:{revision:m.identity.semantic_assessment.revision,workers:workersPaused,teams:teamsPaused,preview:text.slice(0,180)}})})(input,output)}finally{persistence.save(store.all())}},
     'experimental.chat.messages.transform':createMessagesTransformHook(store,background),
     'experimental.chat.system.transform':createSystemTransformHook(store,background,projectRoot),
     'experimental.session.compacting':async(input:any,output:any)=>{try{await experimental.compacting()(input,output)}finally{persistence.save(store.all())}},
     'tool.execute.before':async(input:any,output:any)=>{try{await createToolBeforeHook(store,background,projectRoot)(input,output)}finally{persistence.save(store.all())}},
     'tool.execute.after':async(input:any,output:any)=>{try{await createToolAfterHook(store,background,eventSink,projectRoot)(input,output)}finally{persistence.save(store.all())}},
-    dispose:async()=>{try{for(const m of store.all())if(m.status==='active'){await teams.shutdownMission(m);await tasks.cancelAll(m)}persistence.markCleanShutdown(store.all())}finally{instanceLease.release()}},
+    dispose:async()=>{try{for(const m of store.all())if(m.identity.status==='active'){await teams.shutdownMission(m);await tasks.cancelAll(m)}persistence.markCleanShutdown(store.all())}finally{instanceLease.release()}},
     event:(input:any)=>eventController.handle(input),
   }
 }

@@ -27,11 +27,11 @@ export function normalizeProjectPath(value, projectRoot) { const clean = value.t
     return clean; const root = resolve(projectRoot), abs = resolve(clean), rel = relative(root, abs); if (!rel)
     return '.'; if (rel === '..' || rel.startsWith(`..${sep}`) || absolutePath(rel))
     return clean; return rel.replace(/\\/g, '/'); }
-export function markMutation(mission, files = [], source = 'tool') { const now = Date.now(); mission.evidence.last_mutation_at = now; mission.evidence.fresh = false; for (const item of mission.evidence.items)
+export function markMutation(mission, files = [], source = 'tool') { const now = Date.now(); mission.execution.evidence.last_mutation_at = now; mission.execution.evidence.fresh = false; for (const item of mission.execution.evidence.items)
     if (!item.invalidated_at)
-        item.invalidated_at = now; mission.changed_files = [...new Set([...mission.changed_files, ...files])]; appendLedger(mission, 'file.changed', { payload: { source, files } }); }
-export function addEvidence(mission, input) { const item = { id: id(), observed_at: input.observed_at ?? Date.now(), kind: input.kind, summary: input.summary, scope: input.scope, source: input.source, source_session_id: input.source_session_id, source_state_hash: input.source_state_hash, task_id: input.task_id, obligation_ids: input.obligation_ids, pass: input.pass, outcome: input.outcome ?? (input.pass === true ? 'passed' : input.pass === false ? 'failed' : undefined), reason: input.reason, invalidated_at: input.invalidated_at }; mission.evidence.items.push(item); if (mission.evidence.items.length > 100)
-    mission.evidence.items.splice(0, mission.evidence.items.length - 100); const mutation = mission.evidence.last_mutation_at ?? 0; mission.evidence.fresh = mission.evidence.items.some(e => (e.outcome === 'passed' || e.pass === true) && !e.invalidated_at && e.observed_at >= mutation); appendLedger(mission, item.outcome === 'failed' ? 'verification.fail' : item.outcome === 'environment-issue' ? 'verification.environment-issue' : 'verification.pass', { payload: { kind: item.kind, summary: item.summary, reason: item.reason, source_session_id: item.source_session_id, source_state_hash: item.source_state_hash, task_id: item.task_id, obligation_ids: item.obligation_ids } }); return item; }
+        item.invalidated_at = now; mission.vcs.changed_files = [...new Set([...mission.vcs.changed_files, ...files])]; appendLedger(mission, 'file.changed', { payload: { source, files } }); }
+export function addEvidence(mission, input) { const item = { id: id(), observed_at: input.observed_at ?? Date.now(), kind: input.kind, summary: input.summary, scope: input.scope, source: input.source, source_session_id: input.source_session_id, source_state_hash: input.source_state_hash, task_id: input.task_id, obligation_ids: input.obligation_ids, pass: input.pass, outcome: input.outcome ?? (input.pass === true ? 'passed' : input.pass === false ? 'failed' : undefined), reason: input.reason, invalidated_at: input.invalidated_at }; mission.execution.evidence.items.push(item); if (mission.execution.evidence.items.length > 100)
+    mission.execution.evidence.items.splice(0, mission.execution.evidence.items.length - 100); const mutation = mission.execution.evidence.last_mutation_at ?? 0; mission.execution.evidence.fresh = mission.execution.evidence.items.some(e => (e.outcome === 'passed' || e.pass === true) && !e.invalidated_at && e.observed_at >= mutation); appendLedger(mission, item.outcome === 'failed' ? 'verification.fail' : item.outcome === 'environment-issue' ? 'verification.environment-issue' : 'verification.pass', { payload: { kind: item.kind, summary: item.summary, reason: item.reason, source_session_id: item.source_session_id, source_state_hash: item.source_state_hash, task_id: item.task_id, obligation_ids: item.obligation_ids } }); return item; }
 export function observeToolBefore(mission, tool, args, projectRoot) { if (WRITE_TOOLS.has(tool)) {
     const files = [args?.filePath, args?.path, args?.file].filter((x) => typeof x === 'string').map(x => normalizeProjectPath(x, projectRoot)).filter(Boolean);
     markMutation(mission, files, tool);
@@ -39,20 +39,20 @@ export function observeToolBefore(mission, tool, args, projectRoot) { if (WRITE_
 } const command = typeof args?.command === 'string' ? args.command : ''; if (tool === 'bash' && shellMayMutate(command))
     markMutation(mission, [], 'bash-mutation'); }
 export function observeToolAfter(mission, tool, args, output, projectRoot) { if (WRITE_TOOLS.has(tool))
-    return; const command = typeof args?.command === 'string' ? args.command : ''; if (tool === 'read' && mission.intent.taskKind === 'review') {
+    return; const command = typeof args?.command === 'string' ? args.command : ''; if (tool === 'read' && mission.identity.intent.taskKind === 'review') {
     const rawPath = typeof args?.filePath === 'string' ? args.filePath : typeof args?.path === 'string' ? args.path : undefined, path = rawPath ? normalizeProjectPath(rawPath, projectRoot) : undefined;
     const text = typeof output === 'string' ? output : JSON.stringify(output ?? '');
     if (text.trim() && !/(error|failed)/i.test(text))
         addEvidence(mission, { kind: 'review-input', summary: path ? ('Read ' + path) : 'Read-only review input', scope: path ? [path] : [], source: 'read', pass: true, outcome: 'passed' });
-} if (tool === 'skill' && mission.intent.taskKind === 'review') {
+} if (tool === 'skill' && mission.identity.intent.taskKind === 'review') {
     const text = typeof output === 'string' ? output : JSON.stringify(output ?? '');
     if (text.trim() && !/(error|failed)/i.test(text))
         addEvidence(mission, { kind: 'review-input', summary: 'Native skill content loaded', scope: [], source: 'skill', pass: true, outcome: 'passed' });
-} if (tool === 'bash' && mission.intent.taskKind === 'review' && !shellMayMutate(command)) {
+} if (tool === 'bash' && mission.identity.intent.taskKind === 'review' && !shellMayMutate(command)) {
     const text = typeof output === 'string' ? output : JSON.stringify(output ?? ''), exit = numericExit(output);
     if (text.trim() && (exit === undefined || exit === 0) && !/(error|failed)/i.test(text))
         addEvidence(mission, { kind: 'review-input', summary: 'Read-only command: ' + command.slice(0, 180), scope: [], source: 'bash', pass: true, outcome: 'passed' });
 } if (tool === 'bash' && VERIFY_HINT.test(command)) {
     const text = typeof output === 'string' ? output : JSON.stringify(output ?? ''), out = outcomeOf(output, text);
-    addEvidence(mission, { kind: verificationKind(command), summary: command.slice(0, 180), scope: mission.changed_files, source: 'bash', pass: out.outcome === 'passed' ? true : out.outcome === 'failed' ? false : undefined, outcome: out.outcome, reason: out.reason });
+    addEvidence(mission, { kind: verificationKind(command), summary: command.slice(0, 180), scope: mission.vcs.changed_files, source: 'bash', pass: out.outcome === 'passed' ? true : out.outcome === 'failed' ? false : undefined, outcome: out.outcome, reason: out.reason });
 } }

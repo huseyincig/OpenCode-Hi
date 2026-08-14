@@ -40,8 +40,8 @@ test('without persistent grant, risky external effects use native OpenCode ask i
     assert.equal(cfg.permission.bash['kubectl delete *'],'ask')
     const store=new MissionStore(root),m=startAssessedMission(store,'s','push the release',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',requested_external_actions:['git-push']})
     await createToolBeforeHook(store)({sessionID:'s',tool:'bash',args:{command:'git push origin main',cwd:root}},{args:{command:'git push origin main',cwd:root}})
-    assert.ok(m.authority?.executing,'reaching tool-before means OpenCode native permission resolution already completed')
-    assert.equal(m.authority?.pending,undefined,'Hi must not create a second text approval gate')
+    assert.ok(m.authority.authority?.executing,'reaching tool-before means OpenCode native permission resolution already completed')
+    assert.equal(m.authority.authority?.pending,undefined,'Hi must not create a second text approval gate')
   } finally { rmSync(root,{recursive:true,force:true}) }
 })
 

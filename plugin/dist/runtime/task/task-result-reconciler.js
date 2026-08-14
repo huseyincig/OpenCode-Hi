@@ -42,10 +42,10 @@ export class TaskResultReconciler {
     queueTask(m, worker, run) { this.queueTaskCallback(m, worker, run); }
     drainQueue() { this.drainQueueCallback(); }
     async reconcileNativeResult(m, workerID, result) {
-        const worker = m.workers.find(w => w.id === workerID);
+        const worker = m.execution.workers.find(w => w.id === workerID);
         if (!worker)
             return result;
-        const task = m.tasks.find(t => t.id === worker.task_id);
+        const task = m.execution.tasks.find(t => t.id === worker.task_id);
         if (!task)
             return result;
         const final = await this.child.captureNativeDiff(worker, 'final');
@@ -78,7 +78,7 @@ export class TaskResultReconciler {
             task.diff_cleanliness = { collateral: [...(task.diff_cleanliness?.collateral ?? [])], accepted_expansions: [...(task.diff_cleanliness?.accepted_expansions ?? [])], native_verified_reverts: [...previousCollateral] };
             appendLedger(m, 'diff.cleanup.verified', { task_id: task.id, worker_id: worker.id, payload: { reverted: previousCollateral.slice(0, 40), source: 'native-session-diff-baseline' } });
         }
-        const activeWriters = m.workers.filter(w => !isHiReadOnlyChildRole(w.role) && ['starting', 'busy'].includes(w.status));
+        const activeWriters = m.execution.workers.filter(w => !isHiReadOnlyChildRole(w.role) && ['starting', 'busy'].includes(w.status));
         const soleWriter = activeWriters.length <= 1 || activeWriters.every(w => w.id === worker.id);
         const attributedNative = nativeDelta.filter(file => observed.includes(file) || task.scope.map(normFile).includes(file) || (soleWriter && !reported.includes(file)));
         const actual = [...new Set([...observed, ...attributedNative])];
@@ -93,7 +93,7 @@ export class TaskResultReconciler {
         return { ...result, status: 'FIX_REQUIRED', summary: `Native/session write evidence disagrees with WorkerResult changed_files. Reconcile before completion: ${missing.slice(0, 12).join(', ')}.`, changed_files: [...new Set([...reported, ...actual])], open_issues: [...new Set([...(result.open_issues ?? []), marker])], needs_context: [...new Set([...(result.needs_context ?? []), 'native-diff-reconcile: inspect the current native/session diff and return a complete changed_files list; do not conceal or silently discard writes'])] };
     }
     async noteNativeWriteSet(m, workerID, files, source = 'session-diff', stateHash) {
-        const worker = m.workers.find(w => w.id === workerID);
+        const worker = m.execution.workers.find(w => w.id === workerID);
         if (!worker || !files.length)
             return;
         worker.write_set = [...new Set([...(worker.write_set ?? []), ...files])].slice(0, 300);
@@ -104,7 +104,7 @@ export class TaskResultReconciler {
         new ContextArtifactStore(this.projectRoot).invalidateChanged(files);
         if (isHiReadOnlyChildRole(worker.role))
             return;
-        for (const other of m.workers) {
+        for (const other of m.execution.workers) {
             if (other.id === worker.id || isHiReadOnlyChildRole(other.role) || !(other.write_set ?? []).length || !['starting', 'busy'].includes(other.status) || !['starting', 'busy'].includes(worker.status))
                 continue;
             const overlap = (worker.write_set ?? []).filter(x => (other.write_set ?? []).includes(x));
@@ -114,13 +114,13 @@ export class TaskResultReconciler {
             // writer is allowed to finish, then the quarantined task resumes in the SAME child session
             // after an explicit dependency gate. This prevents blind concurrent merging while preserving
             // task/worker identity and context.
-            const winner = other, loser = worker, winnerTask = m.tasks.find(t => t.id === winner.task_id), loserTask = m.tasks.find(t => t.id === loser.task_id);
+            const winner = other, loser = worker, winnerTask = m.execution.tasks.find(t => t.id === winner.task_id), loserTask = m.execution.tasks.find(t => t.id === loser.task_id);
             if (!winnerTask || !loserTask)
                 continue;
             const pair = [winner.id, loser.id].sort().join(':');
             const marker = `parallel-write-conflict:${pair}:${overlap.slice(0, 8).sort().join(',')}`;
-            if (!m.blockers.includes(marker))
-                m.blockers.push(marker);
+            if (!m.execution.blockers.includes(marker))
+                m.execution.blockers.push(marker);
             if (!loserTask.dependencies.includes(winnerTask.id))
                 loserTask.dependencies.push(winnerTask.id);
             loserTask.result = { status: 'FIX_REQUIRED', summary: `Runtime write conflict detected with ${winner.id}; serialized reconciliation required.`, changed_files: [...new Set(loser.write_set ?? [])], evidence: [], open_issues: [marker], needs_context: [] };
@@ -131,7 +131,7 @@ export class TaskResultReconciler {
             const stopped = loser.session_id ? await this.child.abortNativeSession(m, loser.session_id, 'parallel-write-conflict', loser.id, loserTask.id) : false;
             if (!stopped) {
                 const abortMarker = `parallel-conflict-abort-unavailable:${loserTask.id}:${loser.id}`;
-                m.blockers = [...new Set([...m.blockers, abortMarker])];
+                m.execution.blockers = [...new Set([...m.execution.blockers, abortMarker])];
                 loser.status = 'ready';
                 loserTask.status = 'blocked';
                 loserTask.result = { ...loserTask.result, status: 'BLOCKED', open_issues: [...new Set([...loserTask.result.open_issues, abortMarker])], needs_context: [...new Set([...loserTask.result.needs_context, 'OpenCode lifecycle abort is unavailable; do not assume the conflicting writer is quarantined'])] };
@@ -141,26 +141,26 @@ export class TaskResultReconciler {
             }
             loser.status = 'queued';
             const resume = async () => { const model = loser.model, provider = providerOf(model), capacity = this.scheduler.canStart(loser.id, provider, model === 'host-default' ? undefined : model); if (!capacity.ok)
-                throw new Error(`Conflict resume capacity unavailable: ${capacity.reason}`); this.scheduler.acquire(loser.id, provider, model === 'host-default' ? undefined : model); loser.status = 'busy'; loser.started_at = Date.now(); loser.generation_at_spawn = m.generation; loser.parent_mission_id = m.mission_id; loserTask.status = 'running'; this.registry.set(loser); if (!loser.session_id)
+                throw new Error(`Conflict resume capacity unavailable: ${capacity.reason}`); this.scheduler.acquire(loser.id, provider, model === 'host-default' ? undefined : model); loser.status = 'busy'; loser.started_at = Date.now(); loser.generation_at_spawn = m.continuation.generation; loser.parent_mission_id = m.identity.mission_id; loserTask.status = 'running'; this.registry.set(loser); if (!loser.session_id)
                 throw new Error('Conflict resume child session missing'); beginWorkerAttempt(loserTask, loser); this.child.recordModelProjection(loser, model, loser.model_variant); await this.child.sendProviderPrompt(loser.session_id, clipText([`Hi runtime write-conflict reconciliation for existing task ${loserTask.id}.`, `Conflicting task ${winnerTask.id} has completed before this resume gate opened.`, `Conflicting files: ${overlap.join(', ')}`, `Current task objective: ${loserTask.objective}`, `Current user constraints: ${(loserTask.constraints ?? []).join(' | ') || 'none'}.`, 'Inspect the current diff/state first. Preserve valid work from the completed task. Reconcile only this task sequentially; do not blindly overwrite or restart planning. Re-run the required scoped verification and return the structured WorkerResult.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), loser.role, model === 'host-default' ? undefined : model, loser.model_variant, promptToolOverrides(loserTask.execution_profile?.tools ?? [])); appendLedger(m, 'parallel.write-conflict.resumed', { task_id: loserTask.id, worker_id: loser.id, payload: { after_task: winnerTask.id, files: overlap.slice(0, 30) } }); return loser; };
             this.queueTask(m, loser, resume);
             appendLedger(m, 'parallel.write-conflict.quarantined', { task_id: loserTask.id, worker_id: loser.id, payload: { winner_worker_id: winner.id, winner_task_id: winnerTask.id, files: overlap.slice(0, 30), policy: 'verified-abort-then-serialize' } });
-            void this.events?.(runtimeSignal('parallel.write-conflict', m.mission_id, { task_id: loserTask.id, worker_id: loser.id, payload: { other_worker_id: winner.id, files: overlap.slice(0, 30), action: 'quarantined' } }));
+            void this.events?.(runtimeSignal('parallel.write-conflict', m.identity.mission_id, { task_id: loserTask.id, worker_id: loser.id, payload: { other_worker_id: winner.id, files: overlap.slice(0, 30), action: 'quarantined' } }));
             break;
         }
         syncMissionGates(m);
     }
-    noteNativeStatus(m, workerID, status) { const worker = m.workers.find(w => w.id === workerID); if (!worker)
+    noteNativeStatus(m, workerID, status) { const worker = m.execution.workers.find(w => w.id === workerID); if (!worker)
         return; appendLedger(m, 'worker.native-status', { worker_id: worker.id, payload: { status } }); }
     applyResult(m, workerID, result) {
-        const worker = m.workers.find(w => w.id === workerID);
+        const worker = m.execution.workers.find(w => w.id === workerID);
         if (!worker)
             return;
-        if (worker.generation_at_spawn !== undefined && worker.generation_at_spawn !== m.generation) {
-            appendLedger(m, 'worker.result.stale-generation-ignored', { worker_id: worker.id, payload: { worker_generation: worker.generation_at_spawn, mission_generation: m.generation } });
+        if (worker.generation_at_spawn !== undefined && worker.generation_at_spawn !== m.continuation.generation) {
+            appendLedger(m, 'worker.result.stale-generation-ignored', { worker_id: worker.id, payload: { worker_generation: worker.generation_at_spawn, mission_generation: m.continuation.generation } });
             return;
         }
-        const task = m.tasks.find(t => t.id === worker.task_id);
+        const task = m.execution.tasks.find(t => t.id === worker.task_id);
         if (!task)
             return;
         const digest = resultDigest(result);
@@ -170,10 +170,10 @@ export class TaskResultReconciler {
         }
         worker.last_result_digest = digest;
         worker.last_result_at = Date.now();
-        const observedMutationDuringWorker = Boolean(worker.started_at && m.evidence.last_mutation_at && m.evidence.last_mutation_at >= worker.started_at);
+        const observedMutationDuringWorker = Boolean(worker.started_at && m.execution.evidence.last_mutation_at && m.execution.evidence.last_mutation_at >= worker.started_at);
         const previousIssues = task.result?.open_issues ?? [];
         if (previousIssues.length)
-            m.blockers = m.blockers.filter(b => !previousIssues.includes(b) || m.tasks.some(other => other.id !== task.id && (other.result?.open_issues ?? []).includes(b)));
+            m.execution.blockers = m.execution.blockers.filter(b => !previousIssues.includes(b) || m.execution.tasks.some(other => other.id !== task.id && (other.result?.open_issues ?? []).includes(b)));
         const previousCollateral = [...(task.diff_cleanliness?.collateral ?? [])];
         const ownership = isHiReadOnlyChildRole(worker.role) && result.changed_files.length
             ? { outside: [...result.changed_files], accepted: [], collateral: [...result.changed_files] }
@@ -208,13 +208,13 @@ export class TaskResultReconciler {
         if (cleanlinessMarker) {
             task.diff_cleanliness = { collateral: [...ownership.collateral], accepted_expansions: [...(task.diff_cleanliness?.accepted_expansions ?? [])] };
             appendLedger(m, 'diff.cleanliness.blocked', { task_id: task.id, worker_id: worker.id, payload: { collateral: ownership.collateral.slice(0, 40), outside: ownership.outside.slice(0, 40), role: worker.role } });
-            void this.events?.(runtimeSignal('diff.cleanliness.blocked', m.mission_id, { task_id: task.id, worker_id: worker.id, payload: { collateral: ownership.collateral.slice(0, 40) } }));
+            void this.events?.(runtimeSignal('diff.cleanliness.blocked', m.identity.mission_id, { task_id: task.id, worker_id: worker.id, payload: { collateral: ownership.collateral.slice(0, 40) } }));
         }
         else if (previousCollateral.length && !cleanupMarker) {
             const stillChanged = new Set(result.changed_files.map(normFile));
             const reverted = previousCollateral.filter(file => !stillChanged.has(normFile(file)) && verifiedReverts.has(normFile(file)));
             if (reverted.length) {
-                m.changed_files = m.changed_files.filter(file => !reverted.includes(file) || m.tasks.some(t => t.id !== task.id && (t.result?.changed_files ?? []).includes(file)));
+                m.vcs.changed_files = m.vcs.changed_files.filter(file => !reverted.includes(file) || m.execution.tasks.some(t => t.id !== task.id && (t.result?.changed_files ?? []).includes(file)));
                 appendLedger(m, 'diff.cleanliness.resolved', { task_id: task.id, worker_id: worker.id, payload: { reverted: reverted.slice(0, 40), source: 'native-session-diff' } });
             }
             const unresolved = previousCollateral.filter(file => !reverted.includes(file));
@@ -252,7 +252,7 @@ export class TaskResultReconciler {
             markMutation(m, effectiveResult.changed_files, 'worker-result-fallback');
         const evidenceSource = isHiReadOnlyChildRole(worker.role) ? `worker:${worker.id}:reviewer` : `worker:${worker.id}`;
         for (const e of effectiveResult.evidence)
-            addEvidence(m, { kind: e.kind, summary: e.summary, scope: e.scope ?? effectiveResult.changed_files, source: evidenceSource, source_session_id: worker.session_id, source_state_hash: worker.native_state_hash, task_id: task.id, obligation_ids: task.obligation_ids, pass: e.pass, outcome: e.outcome, reason: e.reason, invalidated_at: (cleanlinessMarker || fallbackMutation && !isHiReadOnlyChildRole(worker.role)) ? (m.evidence.last_mutation_at ?? Date.now()) : undefined });
+            addEvidence(m, { kind: e.kind, summary: e.summary, scope: e.scope ?? effectiveResult.changed_files, source: evidenceSource, source_session_id: worker.session_id, source_state_hash: worker.native_state_hash, task_id: task.id, obligation_ids: task.obligation_ids, pass: e.pass, outcome: e.outcome, reason: e.reason, invalidated_at: (cleanlinessMarker || fallbackMutation && !isHiReadOnlyChildRole(worker.role)) ? (m.execution.evidence.last_mutation_at ?? Date.now()) : undefined });
         if (effectiveResult.status === 'DONE' && (worker.loaded_methodologies?.length ?? 0) > 0) {
             const missingExit = [...new Set((worker.loaded_methodologies ?? []).flatMap(name => methodologyExitCheck(m, name, { task, worker, result: effectiveResult, projectRoot: this.projectRoot, scope: 'worker' }).missing))];
             if (missingExit.length) {
@@ -270,16 +270,16 @@ export class TaskResultReconciler {
             const producer = signal.name.startsWith('context.') ? 'context' : 'runtime-failure';
             activateMethodologySignal(m, this.projectRoot, { signal: signal.name, producer, reason: signal.reason });
         }
-        void this.events?.(runtimeSignal('worker.completed', m.mission_id, { task_id: task.id, worker_id: worker.id, payload: { status: effectiveResult.status } }));
+        void this.events?.(runtimeSignal('worker.completed', m.identity.mission_id, { task_id: task.id, worker_id: worker.id, payload: { status: effectiveResult.status } }));
         if (effectiveResult.open_issues.some(x => String(x).toUpperCase().includes('USER_ACTION_REQUIRED'))) {
             openHumanDecision(m, { semantic_type: 'operational_action', reason_code: 'worker-user-action-required', summary: effectiveResult.summary.slice(0, 500) || 'Worker requires external user action before this task can continue.', task_id: task.id, worker_id: worker.id, response_schema: { kind: 'external-action' } });
         }
         const replan = replanVerificationForChangedSurface(m, task, effectiveResult.changed_files, collectRepoContext(this.projectRoot));
         if (replan.changed) {
             appendLedger(m, 'verification.replanned', { task_id: task.id, worker_id: worker.id, payload: { changed_files: effectiveResult.changed_files.slice(0, 30), added_kinds: replan.addedKinds, scope_expanded: replan.scopeExpanded, risk_escalated: replan.riskEscalated, reason: replan.reason } });
-            void this.events?.(runtimeSignal('verification.replanned', m.mission_id, { task_id: task.id, worker_id: worker.id, payload: { added_kinds: replan.addedKinds, scope_expanded: replan.scopeExpanded, risk_escalated: replan.riskEscalated } }));
+            void this.events?.(runtimeSignal('verification.replanned', m.identity.mission_id, { task_id: task.id, worker_id: worker.id, payload: { added_kinds: replan.addedKinds, scope_expanded: replan.scopeExpanded, risk_escalated: replan.riskEscalated } }));
         }
-        for (const signal of verificationMethodologySignals({ changed: replan.changed, scopeExpanded: replan.scopeExpanded, riskEscalated: replan.riskEscalated, requireReview: m.verification_policy.requireReview, changedFiles: effectiveResult.changed_files })) {
+        for (const signal of verificationMethodologySignals({ changed: replan.changed, scopeExpanded: replan.scopeExpanded, riskEscalated: replan.riskEscalated, requireReview: m.execution.verification_policy.requireReview, changedFiles: effectiveResult.changed_files })) {
             const producer = signal.name.startsWith('risk.') ? 'risk' : 'verification';
             activateMethodologySignal(m, this.projectRoot, { signal: signal.name, producer, reason: signal.reason });
         }
@@ -288,21 +288,21 @@ export class TaskResultReconciler {
             appendLedger(m, 'task.scope-expanded', { task_id: task.id, worker_id: worker.id, payload: { files: ownership.accepted.slice(0, 40), policy: 'bounded-explicit-ownership' } });
         }
         if (effectiveResult.status === 'DONE' && effectiveResult.methodology_observations?.length) {
-            const mutation = m.evidence.last_mutation_at ?? 0, evidenceRefs = m.evidence.items.filter(e => e.task_id === task.id && !e.invalidated_at && (e.outcome === 'passed' || e.pass === true) && e.observed_at >= mutation).map(e => e.kind);
+            const mutation = m.execution.evidence.last_mutation_at ?? 0, evidenceRefs = m.execution.evidence.items.filter(e => e.task_id === task.id && !e.invalidated_at && (e.outcome === 'passed' || e.pass === true) && e.observed_at >= mutation).map(e => e.kind);
             for (const observation of effectiveResult.methodology_observations)
                 this.methodologyLearning.observe(m, worker, observation, evidenceRefs);
         }
-        const ownsReviewObligation = task.obligation_ids.some(id => m.obligations.some(o => o.id === id && o.kind === 'review'));
+        const ownsReviewObligation = task.obligation_ids.some(id => m.execution.obligations.some(o => o.id === id && o.kind === 'review'));
         if (effectiveResult.status === 'DONE' && isHiReadOnlyChildRole(worker.role) && ownsReviewObligation && !effectiveResult.evidence.some(e => e.kind === 'review-evidence'))
             addEvidence(m, { kind: 'review-evidence', summary: effectiveResult.summary || `Independent ${worker.role} completed owned review task`, scope: effectiveResult.changed_files, source: evidenceSource, source_session_id: worker.session_id, source_state_hash: worker.native_state_hash, task_id: task.id, obligation_ids: task.obligation_ids, pass: true, outcome: 'passed' });
         if (effectiveResult.status === 'DONE') {
             const now = Date.now();
-            if (worker.role === 'repository-explorer' && m.intent.ambiguity !== 'none') {
-                m.intent.ambiguity = 'none';
+            if (worker.role === 'repository-explorer' && m.identity.intent.ambiguity !== 'none') {
+                m.identity.intent.ambiguity = 'none';
                 appendLedger(m, 'intent.ambiguity.resolved', { task_id: task.id, worker_id: worker.id, payload: { source: 'repository-explorer-result' } });
             }
             for (const id of task.obligation_ids) {
-                const owned = m.obligations.find(o => o.id === id && o.status === 'open');
+                const owned = m.execution.obligations.find(o => o.id === id && o.status === 'open');
                 if (!owned)
                     continue;
                 if (owned.kind === 'verification') {

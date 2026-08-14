@@ -43,7 +43,7 @@ test('TaskRuntime fails visual methodology preflight before native child spawn w
   const runtime=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[],()=>({agent:PACKAGED_HI_AGENTS}))
   const store=new MissionStore(repoRoot),m=store.start('visual-resource','verify visual rendering')
   store.applyInitialSemanticAssessment('visual-resource',{material:true,message_kind:'mission',task_kind:'review',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['visual-review'],requested_external_actions:[],likely_verification:['visual-evidence'],likely_targets:['src/view.tsx'],intent_signals:['intent.visual-qa'],suppressed_intent_signals:[]})
-  m.methodology_needs.push({name:'hi-visual-qa',signal:'intent.visual-qa',trigger_source:'task-intent',producer:'intent',reason:'explicit visual QA',created_at:Date.now()})
+  m.methodology.methodology_needs.push({name:'hi-visual-qa',signal:'intent.visual-qa',trigger_source:'task-intent',producer:'intent',reason:'explicit visual QA',created_at:Date.now()})
   await assert.rejects(()=>runtime.start(m,{objective:'verify visual rendering',role:'visual-qa',category:'visual',scope:['src/view.tsx']}),error=>{
     assert.ok(error instanceof TaskPreconditionError)
     assert.equal(error.result.decision,'RESOLVE')

@@ -14,28 +14,30 @@ export const DEFAULT_ASSESSMENT={
   suppressed_intent_signals:[],
 }
 
+/** @param {import('../../dist/runtime/mission/mission-store.js').MissionStore} store @returns {import('../../dist/runtime/mission/types.js').MissionState} */
 export function startAssessedMission(store,sessionID,text='opaque request',overrides={}){
   const m=store.start(sessionID,text)
   store.applyInitialSemanticAssessment(sessionID,{...DEFAULT_ASSESSMENT,...overrides})
   return m
 }
 
+/** @param {import('../../dist/runtime/mission/mission-store.js').MissionStore} store @returns {import('../../dist/runtime/mission/types.js').MissionState} */
 export function applyStructuredFollowup(store,sessionID,text='opaque follow-up',overrides={}){
   const m=store.get(sessionID)
   if(!m)throw new Error('No mission for structured follow-up fixture')
-  if(m.semantic_assessment.status!=='pending')store.beginFollowupSemanticAssessment(sessionID,text)
+  if(m.identity.semantic_assessment.status!=='pending')store.beginFollowupSemanticAssessment(sessionID,text)
   const base={
     material:true,
     message_kind:'amendment',
-    task_kind:m.intent.taskKind==='unclassified'?'implementation':m.intent.taskKind,
-    scope:m.intent.scope,
-    risk:m.intent.risk,
-    ambiguity:m.intent.ambiguity,
-    dependency_class:m.intent.dependencyClass,
-    required_capabilities:[...m.intent.requiredCapabilities],
-    requested_external_actions:[...(m.intent.requestedExternalActions??[])],
-    likely_verification:[...m.intent.likelyVerification],
-    likely_targets:[...(m.intent.likelyTargets??[])],
+    task_kind:m.identity.intent.taskKind==='unclassified'?'implementation':m.identity.intent.taskKind,
+    scope:m.identity.intent.scope,
+    risk:m.identity.intent.risk,
+    ambiguity:m.identity.intent.ambiguity,
+    dependency_class:m.identity.intent.dependencyClass,
+    required_capabilities:[...m.identity.intent.requiredCapabilities],
+    requested_external_actions:[...(m.identity.intent.requestedExternalActions??[])],
+    likely_verification:[...m.identity.intent.likelyVerification],
+    likely_targets:[...(m.identity.intent.likelyTargets??[])],
     intent_signals:[],
     suppressed_intent_signals:[],
   }

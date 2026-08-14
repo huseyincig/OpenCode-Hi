@@ -18,10 +18,10 @@ function names(items){return items.map(x=>x.name).sort()}
 function runtime(){return new TaskRuntime({}, {delete(){}}, {release(){}}, root, root, ()=>({}), ()=>[], ()=>({}))}
 function missionWithWorker(objective='Implement a bounded internal change',scope=['plugin/src/internal.ts']){
   const m=new MissionStore(root).start(`s-${Math.random()}`,objective)
-  m.methodology_needs=[]
+  m.methodology.methodology_needs=[]
   const task={id:'t1',objective,status:'running',role:'coder',category:'standard',scope:[...scope],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],created_at:Date.now(),updated_at:Date.now()}
-  const worker={id:'w1',task_id:'t1',role:'coder',category:'standard',parent_session_id:m.session_id,parent_mission_id:m.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f1',status:'busy',generation_at_spawn:m.generation}
-  m.tasks=[task];m.workers=[worker]
+  const worker={id:'w1',task_id:'t1',role:'coder',category:'standard',parent_session_id:m.identity.session_id,parent_mission_id:m.identity.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f1',status:'busy',generation_at_spawn:m.continuation.generation}
+  m.execution.tasks=[task];m.execution.workers=[worker]
   return m
 }
 
@@ -48,59 +48,59 @@ test('worker-result producer requires structured context/failure findings rather
 
 test('central activation rejects producer/signal mismatches and records admitted activation provenance',()=>{
   const m=new MissionStore(root).start('s-activation','Implement a bounded internal change')
-  m.methodology_needs=[]
+  m.methodology.methodology_needs=[]
   assert.throws(()=>activateMethodologySignal(m,root,{signal:'surface.dependency',producer:'intent',reason:'wrong producer'}),/producer not allowed/)
   const activated=activateMethodologySignal(m,root,{signal:'surface.dependency',producer:'changed-surface',reason:'package manifest changed'})
   assert.deepEqual(activated,['hi-dependency-change'])
-  assert.equal(m.methodology_needs[0].signal,'surface.dependency')
-  assert.equal(m.methodology_needs[0].producer,'changed-surface')
+  assert.equal(m.methodology.methodology_needs[0].signal,'surface.dependency')
+  assert.equal(m.methodology.methodology_needs[0].producer,'changed-surface')
 })
 
 test('TaskRuntime result reconciliation wires changed-surface and risk signals into methodology needs',()=>{
   const m=missionWithWorker('Update dependency behavior',['package.json'])
   runtime().applyResult(m,'w1',{status:'DONE',summary:'Dependency manifest updated.',changed_files:['package.json'],evidence:[],open_issues:[],needs_context:[]})
-  const activated=new Set(m.methodology_needs.map(x=>x.name))
+  const activated=new Set(m.methodology.methodology_needs.map(x=>x.name))
   assert.ok(activated.has('hi-dependency-change'))
   assert.ok(activated.has('hi-security-review'))
   assert.ok(activated.has('hi-test-strategy'))
-  assert.ok(m.ledger.some(x=>x.type==='methodology.activated'&&x.payload?.signal==='surface.dependency'))
+  assert.ok(m.execution.ledger.some(x=>x.type==='methodology.activated'&&x.payload?.signal==='surface.dependency'))
 })
 
 test('TaskRuntime does not auto-activate surface methodology for a bounded internal file change',()=>{
   const m=missionWithWorker('Implement a bounded internal helper',['plugin/src/internal.ts'])
   runtime().applyResult(m,'w1',{status:'DONE',summary:'Internal helper changed.',changed_files:['plugin/src/internal.ts'],evidence:[],open_issues:[],needs_context:[]})
-  assert.deepEqual(m.methodology_needs,[])
+  assert.deepEqual(m.methodology.methodology_needs,[])
 })
 
 test('TaskRuntime wires NEEDS_CONTEXT into retrieval methodologies instead of relying on initial intent',()=>{
   const m=missionWithWorker('Implement a bounded internal helper',['plugin/src/internal.ts'])
   runtime().applyResult(m,'w1',{status:'NEEDS_CONTEXT',summary:'Unknown symbol ownership blocks the task.',changed_files:[],evidence:[],open_issues:[],needs_context:['locate symbol owner and defining path'],context_gap:'scope'})
-  const activated=new Set(m.methodology_needs.map(x=>x.name))
+  const activated=new Set(m.methodology.methodology_needs.map(x=>x.name))
   assert.ok(activated.has('hi-iterative-retrieval'))
   assert.ok(activated.has('hi-repository-analysis'))
-  assert.ok(m.methodology_needs.some(x=>x.producer==='context'))
+  assert.ok(m.methodology.methodology_needs.some(x=>x.producer==='context'))
 })
 
 
 test('selected child methodology must be actually native-loaded before DONE can be accepted',()=>{
   const m=missionWithWorker('Implement behavior with TDD',['plugin/src/internal.ts'])
   activateMethodologySignal(m,root,{signal:'intent.tdd',producer:'intent',reason:'TDD explicitly required'})
-  m.workers[0].selected_methodologies=['hi-test-driven-development']
+  m.execution.workers[0].selected_methodologies=['hi-test-driven-development']
   runtime().applyResult(m,'w1',{status:'DONE',summary:'Implemented without loading selected methodology.',changed_files:[],evidence:[],open_issues:[],needs_context:[]})
-  assert.equal(m.tasks[0].result.status,'FIX_REQUIRED')
-  assert.ok(m.tasks[0].result.open_issues.some(x=>x.startsWith('methodology-not-loaded:')))
-  assert.ok(m.methodology_needs.some(x=>x.name==='hi-test-driven-development'))
+  assert.equal(m.execution.tasks[0].result.status,'FIX_REQUIRED')
+  assert.ok(m.execution.tasks[0].result.open_issues.some(x=>x.startsWith('methodology-not-loaded:')))
+  assert.ok(m.methodology.methodology_needs.some(x=>x.name==='hi-test-driven-development'))
 })
 
 test('loaded methodology need resolves after the bounded worker completes successfully',()=>{
   const m=missionWithWorker('Implement behavior with TDD',['plugin/src/internal.ts'])
   activateMethodologySignal(m,root,{signal:'intent.tdd',producer:'intent',reason:'TDD explicitly required'})
-  m.workers[0].selected_methodologies=['hi-test-driven-development']
-  m.workers[0].loaded_methodologies=['hi-test-driven-development']
+  m.execution.workers[0].selected_methodologies=['hi-test-driven-development']
+  m.execution.workers[0].loaded_methodologies=['hi-test-driven-development']
   runtime().applyResult(m,'w1',{status:'DONE',summary:'TDD loop completed.',changed_files:[],evidence:[{kind:'targeted-tests',summary:'focused TDD test passed',pass:true}],open_issues:[],needs_context:[]})
-  assert.equal(m.tasks[0].result.status,'DONE')
-  assert.ok(!m.methodology_needs.some(x=>x.name==='hi-test-driven-development'))
-  assert.ok(m.ledger.some(x=>x.type==='methodology.resolved'&&x.payload?.name==='hi-test-driven-development'))
+  assert.equal(m.execution.tasks[0].result.status,'DONE')
+  assert.ok(!m.methodology.methodology_needs.some(x=>x.name==='hi-test-driven-development'))
+  assert.ok(m.execution.ledger.some(x=>x.type==='methodology.resolved'&&x.payload?.name==='hi-test-driven-development'))
 })
 
 
@@ -108,10 +108,10 @@ test('architecture runtime producer owns only structured architecture state whil
   const store=new MissionStore(root)
   const m=store.start('s-architecture-producer','Plan an architecture decision then update dependent API modules sequentially')
   store.applyInitialSemanticAssessment('s-architecture-producer',{material:true,message_kind:'mission',task_kind:'implementation',scope:'multi-file',risk:'medium',ambiguity:'none',dependency_class:'sequential',required_capabilities:[],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:['intent.architecture-decision'],suppressed_intent_signals:[]})
-  const signals=architectureMethodologySignals(m.intent).map(x=>x.name)
+  const signals=architectureMethodologySignals(m.identity.intent).map(x=>x.name)
   assert.deepEqual(signals,['architecture.dependency-structure'])
-  assert.ok(m.methodology_needs.some(x=>x.producer==='architecture'&&x.signal==='architecture.dependency-structure'))
-  assert.ok(m.methodology_needs.some(x=>x.producer==='intent'&&x.signal==='intent.architecture-decision'))
+  assert.ok(m.methodology.methodology_needs.some(x=>x.producer==='architecture'&&x.signal==='architecture.dependency-structure'))
+  assert.ok(m.methodology.methodology_needs.some(x=>x.producer==='intent'&&x.signal==='intent.architecture-decision'))
 })
 
 test('review feedback remains a single structured intent-owned methodology activation',()=>{
@@ -120,7 +120,7 @@ test('review feedback remains a single structured intent-owned methodology activ
   store.applyInitialSemanticAssessment('s-human-feedback',{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]})
   store.beginFollowupSemanticAssessment('s-human-feedback','Reviewer found the parser still rejects valid input')
   const m=store.applyFollowupSemanticAssessment('s-human-feedback',{material:true,message_kind:'amendment',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:[],intent_signals:['intent.review-feedback'],suppressed_intent_signals:[]})
-  const needs=m.methodology_needs.filter(x=>x.name==='hi-review-feedback')
+  const needs=m.methodology.methodology_needs.filter(x=>x.name==='hi-review-feedback')
   assert.equal(needs.length,1)
   assert.equal(needs[0].signal,'intent.review-feedback')
   assert.equal(needs[0].producer,'intent')
@@ -130,10 +130,10 @@ test('release producer activates only when a concrete publish/release command re
   const store=new MissionStore(root)
   const m=store.start('s-release-producer','Prepare package changes')
   store.applyInitialSemanticAssessment('s-release-producer',{material:true,message_kind:'mission',task_kind:'release-readiness',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:[],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]})
-  m.methodology_needs=[]
+  m.methodology.methodology_needs=[]
   const hook=createToolBeforeHook(store,undefined,root)
   await assert.rejects(()=>hook({sessionID:'s-release-producer',tool:'bash',args:{command:'npm publish'}},{args:{command:'npm publish'}}))
-  assert.ok(m.methodology_needs.some(x=>x.name==='hi-release-guardrails'&&x.signal==='release.boundary'&&x.producer==='release'))
+  assert.ok(m.methodology.methodology_needs.some(x=>x.name==='hi-release-guardrails'&&x.signal==='release.boundary'&&x.producer==='release'))
 })
 
 
@@ -141,30 +141,30 @@ test('project methodology learning requires repeated independent evidence and su
   const project=mkdtempSync(join(tmpdir(),'hi-methodology-learning-'))
   const observation={key:'generated-client-contract-check',procedure:'After regenerating the project client, compare generated contract outputs and run the project contract verifier before accepting the change.',trigger:'Generated project client or schema output changes.',do_not_trigger:'No generated client/schema contract changed.',exit_condition:'Generated output and project contract verification agree.',evidence:['contract-verifier']}
   const m1=new MissionStore(project).start('s-learn-1','Update generated client contract')
-  m1.methodology_needs=[]
-  const w1={id:'w-learn-1',task_id:'t-learn-1',role:'coder',category:'standard',parent_session_id:m1.session_id,parent_mission_id:m1.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'learn-1',status:'completed',generation_at_spawn:m1.generation}
+  m1.methodology.methodology_needs=[]
+  const w1={id:'w-learn-1',task_id:'t-learn-1',role:'coder',category:'standard',parent_session_id:m1.identity.session_id,parent_mission_id:m1.identity.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'learn-1',status:'completed',generation_at_spawn:m1.continuation.generation}
   const first=new ProjectMethodologyLearningStore(project).observe(m1,w1,observation,['contract-verifier','contract verifier passed'])
   assert.equal(first?.state,'CANDIDATE')
-  assert.ok(!m1.methodology_needs.some(x=>x.signal==='project.methodology-gap'))
+  assert.ok(!m1.methodology.methodology_needs.some(x=>x.signal==='project.methodology-gap'))
 
   const m2=new MissionStore(project).start('s-learn-2','Regenerate the project client after schema update')
-  m2.methodology_needs=[]
-  const w2={...w1,id:'w-learn-2',task_id:'t-learn-2',parent_session_id:m2.session_id,parent_mission_id:m2.mission_id,fingerprint:'learn-2',generation_at_spawn:m2.generation}
+  m2.methodology.methodology_needs=[]
+  const w2={...w1,id:'w-learn-2',task_id:'t-learn-2',parent_session_id:m2.identity.session_id,parent_mission_id:m2.identity.mission_id,fingerprint:'learn-2',generation_at_spawn:m2.continuation.generation}
   const second=new ProjectMethodologyLearningStore(project).observe(m2,w2,observation,['contract-verifier','contract verifier passed again'])
   assert.equal(second?.state,'READY')
   assert.equal(second?.observations.length,2)
-  assert.ok(m2.methodology_needs.some(x=>x.name==='hi-methodology-authoring'&&x.signal==='project.methodology-gap'&&x.producer==='project-intelligence'))
+  assert.ok(m2.methodology.methodology_needs.some(x=>x.name==='hi-methodology-authoring'&&x.signal==='project.methodology-gap'&&x.producer==='project-intelligence'))
 })
 
 test('project methodology learning rejects an observation whose claimed evidence is not in worker result evidence',()=>{
   const project=mkdtempSync(join(tmpdir(),'hi-methodology-learning-reject-'))
   const m=new MissionStore(project).start('s-learn-reject','Update internal helper')
-  m.methodology_needs=[]
-  const w={id:'w-reject',task_id:'t-reject',role:'coder',category:'standard',parent_session_id:m.session_id,parent_mission_id:m.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'reject',status:'completed',generation_at_spawn:m.generation}
+  m.methodology.methodology_needs=[]
+  const w={id:'w-reject',task_id:'t-reject',role:'coder',category:'standard',parent_session_id:m.identity.session_id,parent_mission_id:m.identity.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'reject',status:'completed',generation_at_spawn:m.continuation.generation}
   const result=new ProjectMethodologyLearningStore(project).observe(m,w,{key:'fake-how',procedure:'Always run the special project workflow after editing this surface.',trigger:'Surface changes.',do_not_trigger:'Surface does not change.',exit_condition:'Special workflow passes.',evidence:['special-proof']},['ordinary-test'])
   assert.equal(result,undefined)
-  assert.ok(m.ledger.some(x=>x.type==='project-methodology.observation-rejected'))
-  assert.ok(!m.methodology_needs.some(x=>x.signal==='project.methodology-gap'))
+  assert.ok(m.execution.ledger.some(x=>x.type==='project-methodology.observation-rejected'))
+  assert.ok(!m.methodology.methodology_needs.some(x=>x.signal==='project.methodology-gap'))
 })
 
 
@@ -176,10 +176,10 @@ test('intent suppression preserves a runtime-emergent need for the same methodol
   const store=new MissionStore(process.cwd()),m=store.start('s-suppression-owner','Review security-sensitive change')
   store.applyInitialSemanticAssessment('s-suppression-owner',{material:true,message_kind:'mission',task_kind:'review',scope:'local',risk:'high',ambiguity:'none',dependency_class:'independent',required_capabilities:['security-review'],requested_external_actions:[],likely_verification:['review-evidence'],likely_targets:['src/auth.ts'],intent_signals:['intent.security-review'],suppressed_intent_signals:[]})
   activateMethodologySignal(m,process.cwd(),{signal:'surface.security',producer:'changed-surface',reason:'Observed security-sensitive changed surface'})
-  assert.equal(m.methodology_needs.filter(n=>n.name==='hi-security-review').length,2)
+  assert.equal(m.methodology.methodology_needs.filter(n=>n.name==='hi-security-review').length,2)
   store.beginFollowupSemanticAssessment('s-suppression-owner','constraint update')
   store.applyFollowupSemanticAssessment('s-suppression-owner',{material:true,message_kind:'constraint',task_kind:'review',scope:'local',risk:'high',ambiguity:'none',dependency_class:'independent',required_capabilities:['security-review'],requested_external_actions:[],likely_verification:['review-evidence'],likely_targets:['src/auth.ts'],intent_signals:[],suppressed_intent_signals:['intent.security-review']})
-  const remaining=m.methodology_needs.filter(n=>n.name==='hi-security-review')
+  const remaining=m.methodology.methodology_needs.filter(n=>n.name==='hi-security-review')
   assert.equal(remaining.length,1)
   assert.equal(remaining[0].producer,'changed-surface')
   assert.equal(remaining[0].signal,'surface.security')

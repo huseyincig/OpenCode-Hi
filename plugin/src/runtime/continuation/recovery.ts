@@ -8,7 +8,7 @@ export interface RecoveryPlan{
 
 /** Bounded reasoning-stagnation recovery. Provider/tool/permission failures are classified elsewhere. */
 export function recoveryPlan(m:MissionState):RecoveryPlan{
-  const n=m.stagnation_count
+  const n=m.continuation.stagnation_count
   if(n<=0)return{level:0,action:'continue',prompt:'Continue the next open obligation from current state.'}
   if(n===1)return{level:1,action:'same-worker-resume',prompt:'Resume the latest reusable worker session with a narrowly scoped corrective instruction.'}
   if(n===2)return{level:2,action:'model-escalation',prompt:'Keep the same task/session when possible, but escalate to the next policy-allowed stronger category/model. Preserve current context and evidence.'}

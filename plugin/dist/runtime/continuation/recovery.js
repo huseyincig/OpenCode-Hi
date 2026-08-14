@@ -1,6 +1,6 @@
 /** Bounded reasoning-stagnation recovery. Provider/tool/permission failures are classified elsewhere. */
 export function recoveryPlan(m) {
-    const n = m.stagnation_count;
+    const n = m.continuation.stagnation_count;
     if (n <= 0)
         return { level: 0, action: 'continue', prompt: 'Continue the next open obligation from current state.' };
     if (n === 1)

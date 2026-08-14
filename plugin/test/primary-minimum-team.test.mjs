@@ -12,7 +12,7 @@ test('small local low-risk implementation uses Working Manager direct path with 
   assert.equal(d.primary,'working-manager');assert.equal(d.direct,true);assert.deepEqual(d.roles,[])
   const store=new MissionStore();const m=store.start('s-direct','opaque request')
   store.applyInitialSemanticAssessment('s-direct',{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]})
-  assert.equal(m.primary_mode,'working-manager');assert.equal(m.workers.length,0)
+  assert.equal(m.execution.primary_mode,'working-manager');assert.equal(m.execution.workers.length,0)
 })
 
 test('security-sensitive implementation remains write-capable and adds independent security assurance',()=>{

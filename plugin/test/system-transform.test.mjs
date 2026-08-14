@@ -19,8 +19,8 @@ test('system-transform injects planning directive when hi-architecture-decisions
   const bg = new BackgroundRegistry()
   startAssessedMission(store,'s1','opaque multi-stream architecture task',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['design-exploration','multi-stream-delegation'],intent_signals:['intent.architecture-decision']})
   const m = store.get('s1')
-  m.workers.push(makeWorker(['hi-architecture-decisions']))
-  bg.set(m.workers[0])
+  m.execution.workers.push(makeWorker(['hi-architecture-decisions']))
+  bg.set(m.execution.workers[0])
   const hook = createSystemTransformHook(store, bg)
   const output = { system: [] }
   await hook({ sessionID: 'w1_session' }, output)
@@ -39,8 +39,8 @@ test('system-transform omits planning directive when hi-architecture-decisions i
   const bg = new BackgroundRegistry()
   startAssessedMission(store,'s1','opaque local task')
   const m = store.get('s1')
-  m.workers.push(makeWorker(['hi-test-strategy']))
-  bg.set(m.workers[0])
+  m.execution.workers.push(makeWorker(['hi-test-strategy']))
+  bg.set(m.execution.workers[0])
   const hook = createSystemTransformHook(store, bg)
   const output = { system: [] }
   await hook({ sessionID: 'w1_session' }, output)
@@ -77,7 +77,7 @@ test('system-transform skips child whose generation is stale', async () => {
   const m = store.get('s1')
   const w = makeWorker(['hi-architecture-decisions'])
   w.generation_at_spawn = 99 // stale
-  m.workers.push(w)
+  m.execution.workers.push(w)
   bg.set(w)
   const hook = createSystemTransformHook(store, bg)
   const output = { system: [] }
@@ -90,7 +90,7 @@ test('system-transform requires child delegation for an independent review oblig
   const store = new MissionStore()
   startAssessedMission(store,'s-independent','opaque independent review',{task_kind:'review',required_capabilities:['review','independent-review'],likely_verification:['review-evidence'],likely_targets:['src/a.ts']})
   const m = store.get('s-independent')
-  assert.equal(m.verification_policy.requireReview, true)
+  assert.equal(m.execution.verification_policy.requireReview, true)
   const hook = createSystemTransformHook(store)
   const output = { system: [] }
   await hook({ sessionID: 's-independent' }, output)

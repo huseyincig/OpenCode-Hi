@@ -119,11 +119,11 @@ test('TaskRuntime hot-refreshes an admitted project methodology permission befor
     const runtime=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),f.root,hiRoot,()=>DEFAULT_HI_CONFIG,()=>[],()=>host)
     const store=new MissionStore(f.root),m=store.start('s-hot-project-methodology','Update dependency metadata')
     store.applyInitialSemanticAssessment('s-hot-project-methodology',{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:['package.json'],intent_signals:[],suppressed_intent_signals:[]})
-    m.methodology_needs=[]
+    m.methodology.methodology_needs=[]
     activateMethodologySignal(m,f.root,{signal:'surface.dependency',producer:'changed-surface',reason:'dependency surface changed in prior bounded work'})
     const started=await runtime.start(m,{objective:'Reconcile the dependency metadata',role:'coder',scope:['package.json']})
     assert.equal(host.agent.coder.permission.skill[f.name],'allow')
     assert.ok(started.methodologies.includes(f.name))
-    assert.ok(m.workers.find(w=>w.id===started.worker_id)?.selected_methodologies.includes(f.name))
+    assert.ok(m.execution.workers.find(w=>w.id===started.worker_id)?.selected_methodologies.includes(f.name))
   }finally{rmSync(f.root,{recursive:true,force:true})}
 })

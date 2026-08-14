@@ -25,36 +25,36 @@ function idleTick(store,m){
 test('permission WAIT and pending-worker WAIT never accumulate reasoning stagnation',()=>{
   const store=new MissionStore(process.cwd())
   const p=store.start('perm','fix bug')
-  p.pending_permissions=1
+  p.authority.pending_permissions=1
   for(let i=0;i<4;i++)assert.equal(idleTick(store,p).decision.reason_code,'waiting-permission')
-  assert.equal(p.stagnation_count,0)
+  assert.equal(p.continuation.stagnation_count,0)
 
   const w=store.start('worker','fix bug')
-  w.workers.push({id:'w1',task_id:'t1',role:'coder',category:'standard',parent_session_id:'worker',parent_mission_id:w.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'x',status:'busy',generation_at_spawn:w.generation})
+  w.execution.workers.push({id:'w1',task_id:'t1',role:'coder',category:'standard',parent_session_id:'worker',parent_mission_id:w.identity.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'x',status:'busy',generation_at_spawn:w.continuation.generation})
   for(let i=0;i<4;i++)assert.equal(idleTick(store,w).decision.reason_code,'waiting-worker')
-  assert.equal(w.stagnation_count,0)
+  assert.equal(w.continuation.stagnation_count,0)
 })
 
 test('open-obligation idles do advance the bounded reasoning recovery ladder',()=>{
   const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'s','opaque implementation')
-  m.obligations=m.obligations.filter(o=>o.kind!=='verification');store.updateProgress(m,false)
+  m.execution.obligations=m.execution.obligations.filter(o=>o.kind!=='verification');store.updateProgress(m,false)
   let d=idleTick(store,m).decision
   assert.equal(d.reason_code,'stagnation-recovery')
   assert.match(d.reason,/stagnation-level-1/)
-  assert.equal(m.stagnation_count,1)
+  assert.equal(m.continuation.stagnation_count,1)
   d=idleTick(store,m).decision
   assert.match(d.reason,/stagnation-level-2/)
-  assert.equal(m.stagnation_count,2)
+  assert.equal(m.continuation.stagnation_count,2)
 })
 
 test('exhausted provider fallback is user-action/provider availability blocker, not reasoning stagnation',()=>{
   const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'p','opaque bug',{task_kind:'bug-fix'})
-  m.blockers.push('provider-failure:provider-transport:p/model')
-  m.stagnation_count=5
+  m.execution.blockers.push('provider-failure:provider-transport:p/model')
+  m.continuation.stagnation_count=5
   const d=evaluateIdle(m)
   assert.equal(d.decision,'USER_ACTION_REQUIRED')
   assert.equal(d.reason_code,'provider-failure-blocked')
-  assert.equal(m.stagnation_count,0)
+  assert.equal(m.continuation.stagnation_count,0)
 })
 
 test('semantic generation guard prevents an old continuation from clearing a newer continuation',async()=>{
@@ -63,23 +63,23 @@ test('semantic generation guard prevents an old continuation from clearing a new
   const calls=[]
   const client={session:{promptAsync:req=>{calls.push(req);return new Promise(r=>{if(calls.length===1)resolve1=r;else resolve2=r})}}}
   const first=dispatchContinuation(client,m,'first','first')
-  const firstID=m.active_action_id
+  const firstID=m.continuation.active_action_id
   assert.ok(firstID)
   // A semantic follow-up invalidates the previous continuation action.
   applyStructuredFollowup(store,'s','opaque verification follow-up',{message_kind:'verification',likely_verification:['targeted-tests']})
-  assert.equal(m.active_action_id,undefined)
+  assert.equal(m.continuation.active_action_id,undefined)
   const second=dispatchContinuation(client,m,'second','second')
-  const secondID=m.active_action_id
+  const secondID=m.continuation.active_action_id
   assert.ok(secondID&&secondID!==firstID)
   resolve1({data:{}})
   assert.equal(await first,false)
-  assert.equal(m.active_action_id,secondID)
-  assert.equal(m.continuation_active,true)
+  assert.equal(m.continuation.active_action_id,secondID)
+  assert.equal(m.continuation.continuation_active,true)
   resolve2({data:{}})
   assert.equal(await second,true)
-  assert.equal(m.active_action_id,undefined)
-  assert.equal(m.continuation_active,false)
-  assert.ok(m.ledger.some(e=>e.type==='continuation.stale-completion'))
+  assert.equal(m.continuation.active_action_id,undefined)
+  assert.equal(m.continuation.continuation_active,false)
+  assert.ok(m.execution.ledger.some(e=>e.type==='continuation.stale-completion'))
 })
 
 function baseClient(createIDs=[]){
@@ -153,46 +153,46 @@ test('canonical runtime decision includes NOTHING when no active mission exists'
 
 test('progress signature ignores paraphrased result text and counts only semantic state changes',()=>{
   const store=new MissionStore(process.cwd()),m=store.start('sig','fix bug')
-  m.tasks.push({id:'t1',objective:'x',status:'blocked',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],result:{status:'FAILED',summary:'first wording',changed_files:[],evidence:[],open_issues:['same-blocker'],needs_context:[]},created_at:1,updated_at:1})
-  m.workers.push({id:'w1',task_id:'t1',role:'coder',category:'standard',parent_session_id:'sig',parent_mission_id:m.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'failed',last_result_digest:'digest-a',generation_at_spawn:m.generation})
+  m.execution.tasks.push({id:'t1',objective:'x',status:'blocked',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],result:{status:'FAILED',summary:'first wording',changed_files:[],evidence:[],open_issues:['same-blocker'],needs_context:[]},created_at:1,updated_at:1})
+  m.execution.workers.push({id:'w1',task_id:'t1',role:'coder',category:'standard',parent_session_id:'sig',parent_mission_id:m.identity.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'failed',last_result_digest:'digest-a',generation_at_spawn:m.continuation.generation})
   store.updateProgress(m,false)
-  m.tasks[0].result.summary='same failure, different prose';m.workers[0].last_result_digest='digest-b'
+  m.execution.tasks[0].result.summary='same failure, different prose';m.execution.workers[0].last_result_digest='digest-b'
   const progressed=store.updateProgress(m,true)
   assert.equal(progressed,false)
-  assert.equal(m.stagnation_count,1)
-  m.blockers.push('new-real-blocker')
+  assert.equal(m.continuation.stagnation_count,1)
+  m.execution.blockers.push('new-real-blocker')
   assert.equal(store.updateProgress(m,true),true)
-  assert.equal(m.stagnation_count,0)
+  assert.equal(m.continuation.stagnation_count,0)
 })
 
 test('continuation transport failures use a separate bounded runtime retry budget, not reasoning stagnation',async()=>{
   const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'cont-fail','opaque implementation')
   const failing={session:{promptAsync:async()=>{throw new Error('transport unavailable')}}}
   for(let i=1;i<=2;i++){
-    m.continuation_lock_until=undefined;m.suppress_until=undefined
+    m.continuation.continuation_lock_until=undefined;m.continuation.suppress_until=undefined
     assert.equal(await dispatchContinuation(failing,m,'continue','runtime-retry'),false)
-    assert.equal(m.continuation_failure_count,i)
-    assert.equal(m.iteration,0,'failed transport delivery does not consume reasoning/continuation turn budget')
-    assert.equal(m.stagnation_count,0)
+    assert.equal(m.continuation.continuation_failure_count,i)
+    assert.equal(m.continuation.iteration,0,'failed transport delivery does not consume reasoning/continuation turn budget')
+    assert.equal(m.continuation.stagnation_count,0)
     const d=evaluateIdle(m,Date.now()+5000)
     assert.equal(d.reason_code,'continuation-runtime-retry')
     assert.equal(shouldCountStagnation(d),false)
   }
-  m.continuation_lock_until=undefined;m.suppress_until=undefined
+  m.continuation.continuation_lock_until=undefined;m.continuation.suppress_until=undefined
   assert.equal(await dispatchContinuation(failing,m,'continue','runtime-retry'),false)
   const exhausted=evaluateIdle(m,Date.now()+5000)
   assert.equal(exhausted.decision,'USER_ACTION_REQUIRED')
   assert.equal(exhausted.reason_code,'continuation-runtime-exhausted')
-  assert.equal(m.stagnation_count,0)
+  assert.equal(m.continuation.stagnation_count,0)
 })
 
 test('successful continuation delivery resets the runtime-failure counter',async()=>{
   const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'cont-reset','opaque implementation')
-  m.continuation_failure_count=2;m.continuation_lock_until=undefined;m.suppress_until=undefined
+  m.continuation.continuation_failure_count=2;m.continuation.continuation_lock_until=undefined;m.continuation.suppress_until=undefined
   const ok=await dispatchContinuation({session:{promptAsync:async()=>({data:{}})}},m,'continue','retry-success')
   assert.equal(ok,true)
-  assert.equal(m.continuation_failure_count,0)
-  assert.equal(m.iteration,1)
+  assert.equal(m.continuation.continuation_failure_count,0)
+  assert.equal(m.continuation.iteration,1)
 })
 
 test('child permission session-error becomes explicit user action and never parent reasoning recovery',async()=>{

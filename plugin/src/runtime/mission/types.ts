@@ -38,17 +38,39 @@ export interface VerificationPolicy { requiredKinds:string[]; requireFresh:boole
 export interface HiMethodologyNeed { name:string; signal:string; trigger_source:string; producer:string; reason:string; created_at:number; task_id?:string; obligation_id?:string }
 export interface SemanticAssessmentState { status:'pending'|'assessed'; phase:'initial'|'followup'; revision:number; source:'host-primary'; pending_text:string; assessed_at?:number }
 export interface NormalizedMissionIntent { objective:string; likelyTargets?:string[]; taskKind:string; scope:'local'|'multi-file'|'repo-wide'|'external'|'multi-stream'; risk:Risk; ambiguity:'none'|'resolvable'|'contract-critical'; dependencyClass:'independent'|'sequential'|'external-gated'|'unknown'|'independent-multi'; requiredCapabilities:string[]; requestedExternalActions:ExternalActionType[]; likelyVerification:string[]; avoid:string[] }
-export interface MissionState {
-  mission_id:string; session_id:string; objective:string; intent:NormalizedMissionIntent; semantic_assessment:SemanticAssessmentState; status:MissionStatus; risk:Risk; execution_mode:ExecutionMode; primary_mode:PrimaryMode; verification_policy:VerificationPolicy;
+export interface MissionIdentityState {
+  mission_id:string; session_id:string; objective:string; intent:NormalizedMissionIntent; semantic_assessment:SemanticAssessmentState; status:MissionStatus; risk:Risk; created_at:number; updated_at:number
+}
+export interface MissionExecutionState {
+  execution_mode:ExecutionMode; primary_mode:PrimaryMode; verification_policy:VerificationPolicy;
   adaptive_execution?:{path:'DIRECT'|'EVIDENCE'|'PLANNED'|'ESCALATED';reasons:string[]}; topology?:{mode:'single-agent'|'multi-agent';parallelism:number;reason:string[]};
-  generation:number; iteration:number; continuation_budget:number; continuation_active:boolean; suppress_until?:number;
   obligations:Obligation[]; tasks:MissionTask[]; workers:WorkerState[]; evidence:{fresh:boolean;items:EvidenceItem[];last_mutation_at?:number}; ledger:LedgerEvent[];
-  changed_files:string[]; blockers:string[]; constraints:string[]; preexisting_user_changes?:Record<string,string>; preexisting_user_baseline_captured?:boolean; staging_safety?:{verified_files:string[];verified_at:number;source:string}; git_topology_safety?:{clean:boolean;verified_files:string[];verified_at:number;source:string}; git_topology_pending?:{command:string;started_at:number;ownership_captured?:boolean;conflict_files?:string[]}; git_topology_owned_files?:string[]; native_todos_incomplete:number; last_progress_signature:string; stagnation_count:number;
-  continuation_reason?:string; continuation_lock_until?:number; last_continuation_at?:number; last_action_id?:string; active_action_id?:string; continuation_failure_count?:number; last_continuation_failure_at?:number; pending_nudge?:RuntimeNudge;
-  context_artifacts:ContextArtifact[]; gates:MissionGate[]; temporary_mutations:TemporaryMutation[]; methodology_needs:HiMethodologyNeed[]; parent_loaded_methodologies:string[]; pending_permissions:number; pending_permission_ids?:string[];
-  user_interrupted:boolean; interrupted_at?:number; interrupted_reason?:string; resumed_at?:number; resume_count?:number; last_user_message_at?:number;
-  human_decision?:HumanDecisionContract;
-  authority?:AuthorityStateContract;
-  release_chain?:{ local_revision_at?:number; last_local_command?:string; quality?:{version?:string;verified:boolean;verified_at:number;assets:Array<{path:string;sha256?:string;manifest_match?:boolean}>}; push?:{outcome:'success'|'failure'|'unknown';at:number;command:string;expected_remote?:string;expected_ref?:string;local_head?:string;observed_remote?:string;observed_ref?:string;remote_hash?:string;remote_verified?:boolean;remote_verified_at?:number}; tag_push?:{outcome:'success'|'failure'|'unknown';at:number;command:string;expected_remote?:string;expected_tag?:string;expected_commit?:string;observed_remote?:string;direct_tag_hash?:string;peeled_tag_hash?:string;remote_verified?:boolean;remote_verified_at?:number}; release?:{outcome:'success'|'failure'|'unknown';at:number;command:string;expected_tag?:string;expected_target?:string;expected_commit?:string;expected_remote?:string;observed_tag?:string;observed_target?:string;observed_remote?:string;direct_tag_hash?:string;peeled_tag_hash?:string;view_verified?:boolean;assets_verified?:boolean;observed_assets?:Array<{name:string;size?:number}>;remote_verified?:boolean;remote_verified_at?:number}; package?:{name?:string;version?:string;pack_integrity?:string;pack_shasum?:string;pack_filename?:string;pack_files?:string[];pack_state_hash?:string;pack_verified_at?:number;outcome?:'success'|'failure'|'unknown';published_at?:number;registry_version?:string;registry_integrity?:string;registry_shasum?:string;remote_verified?:boolean;remote_verified_at?:number}; blocked_reason?:string };
-  applied_actions?:Record<string,string>; created_at:number; updated_at:number
+  blockers:string[]; constraints:string[]; native_todos_incomplete:number; gates:MissionGate[]
+}
+export interface MissionContinuationState {
+  generation:number; iteration:number; continuation_budget:number; continuation_active:boolean; suppress_until?:number;
+  last_progress_signature:string; stagnation_count:number; continuation_reason?:string; continuation_lock_until?:number; last_continuation_at?:number; last_action_id?:string; active_action_id?:string; continuation_failure_count?:number; last_continuation_failure_at?:number; pending_nudge?:RuntimeNudge;
+  user_interrupted:boolean; interrupted_at?:number; interrupted_reason?:string; resumed_at?:number; resume_count?:number; last_user_message_at?:number
+}
+export interface MissionContextState { context_artifacts:ContextArtifact[] }
+export interface MissionVcsSafetyState {
+  changed_files:string[]; preexisting_user_changes?:Record<string,string>; preexisting_user_baseline_captured?:boolean;
+  staging_safety?:{verified_files:string[];verified_at:number;source:string}; git_topology_safety?:{clean:boolean;verified_files:string[];verified_at:number;source:string}; git_topology_pending?:{command:string;started_at:number;ownership_captured?:boolean;conflict_files?:string[]}; git_topology_owned_files?:string[]; temporary_mutations:TemporaryMutation[]
+}
+export interface MissionAuthorityState {
+  pending_permissions:number; pending_permission_ids?:string[]; human_decision?:HumanDecisionContract; authority?:AuthorityStateContract; applied_actions?:Record<string,string>
+}
+export interface MissionReleaseState {
+  release_chain?:{ local_revision_at?:number; last_local_command?:string; quality?:{version?:string;verified:boolean;verified_at:number;assets:Array<{path:string;sha256?:string;manifest_match?:boolean}>}; push?:{outcome:'success'|'failure'|'unknown';at:number;command:string;expected_remote?:string;expected_ref?:string;local_head?:string;observed_remote?:string;observed_ref?:string;remote_hash?:string;remote_verified?:boolean;remote_verified_at?:number}; tag_push?:{outcome:'success'|'failure'|'unknown';at:number;command:string;expected_remote?:string;expected_tag?:string;expected_commit?:string;observed_remote?:string;direct_tag_hash?:string;peeled_tag_hash?:string;remote_verified?:boolean;remote_verified_at?:number}; release?:{outcome:'success'|'failure'|'unknown';at:number;command:string;expected_tag?:string;expected_target?:string;expected_commit?:string;expected_remote?:string;observed_tag?:string;observed_target?:string;observed_remote?:string;direct_tag_hash?:string;peeled_tag_hash?:string;view_verified?:boolean;assets_verified?:boolean;observed_assets?:Array<{name:string;size?:number}>;remote_verified?:boolean;remote_verified_at?:number}; package?:{name?:string;version?:string;pack_integrity?:string;pack_shasum?:string;pack_filename?:string;pack_files?:string[];pack_state_hash?:string;pack_verified_at?:number;outcome?:'success'|'failure'|'unknown';published_at?:number;registry_version?:string;registry_integrity?:string;registry_shasum?:string;remote_verified?:boolean;remote_verified_at?:number}; blocked_reason?:string }
+}
+export interface MissionMethodologyState { methodology_needs:HiMethodologyNeed[]; parent_loaded_methodologies:string[] }
+export interface MissionState {
+  identity:MissionIdentityState
+  execution:MissionExecutionState
+  continuation:MissionContinuationState
+  context:MissionContextState
+  vcs:MissionVcsSafetyState
+  authority:MissionAuthorityState
+  release:MissionReleaseState
+  methodology:MissionMethodologyState
 }

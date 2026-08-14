@@ -189,8 +189,8 @@ function inspectReleaseQuality(root, command) {
 export function isGitPush(command) { return classifyExternalCommand(command).kind === 'git-push'; }
 export function isReleaseCreate(command) { return classifyExternalCommand(command).kind === 'gh-release-create'; }
 export function isPackagePublish(command) { return classifyExternalCommand(command).kind === 'package-publish'; }
-export function missionRequiresPackagePublish(m) { return m.intent.requestedExternalActions.includes('package-publish'); }
-export function missionRequiresReleaseCreate(m) { return m.intent.requestedExternalActions.includes('release-create'); }
+export function missionRequiresPackagePublish(m) { return m.identity.intent.requestedExternalActions.includes('package-publish'); }
+export function missionRequiresReleaseCreate(m) { return m.identity.intent.requestedExternalActions.includes('release-create'); }
 export function isLocalReleaseMutation(command) { return ['commit', 'merge', 'rebase', 'cherry-pick'].includes(gitCommandParts(command).sub ?? ''); }
 function parsePushExpectation(command) {
     const p = gitCommandParts(command);
@@ -340,11 +340,11 @@ function parseRegistryView(command, output) { const p = npmLikeCommandParts(comm
 catch {
     return undefined;
 } }
-function clearReleaseBlockers(m, prefix) { m.blockers = m.blockers.filter(b => !b.startsWith(prefix ?? 'release-chain:')); }
-function addBlocker(m, reason) { const b = `release-chain:${reason}`; if (!m.blockers.includes(b))
-    m.blockers.push(b); }
+function clearReleaseBlockers(m, prefix) { m.execution.blockers = m.execution.blockers.filter(b => !b.startsWith(prefix ?? 'release-chain:')); }
+function addBlocker(m, reason) { const b = `release-chain:${reason}`; if (!m.execution.blockers.includes(b))
+    m.execution.blockers.push(b); }
 function reevaluatePushRemote(m) {
-    const p = m.release_chain?.push;
+    const p = m.release.release_chain?.push;
     if (!p || p.outcome !== 'success' || !p.expected_remote || !p.expected_ref || !p.local_head || !p.remote_hash)
         return;
     if (!p.expected_remote && p.observed_remote)
@@ -364,7 +364,7 @@ function reevaluatePushRemote(m) {
     }
 }
 function reevaluateTagPushRemote(m) {
-    const t = m.release_chain?.tag_push;
+    const t = m.release.release_chain?.tag_push;
     if (!t || t.outcome !== 'success' || !t.expected_tag || !t.expected_commit)
         return;
     const tagHash = t.peeled_tag_hash ?? t.direct_tag_hash;
@@ -380,7 +380,7 @@ function reevaluateTagPushRemote(m) {
         appendLedger(m, 'release-chain.tag-push.remote-drift', { payload: { expected_remote: t.expected_remote, expected_tag: t.expected_tag, expected_commit: t.expected_commit, observed_remote: t.observed_remote, direct_tag_hash: t.direct_tag_hash, peeled_tag_hash: t.peeled_tag_hash } });
     }
 }
-function reevaluatePackageRemote(m) { const p = m.release_chain?.package; if (!p || p.outcome !== 'success' || !p.name || !p.version || !p.registry_version)
+function reevaluatePackageRemote(m) { const p = m.release.release_chain?.package; if (!p || p.outcome !== 'success' || !p.name || !p.version || !p.registry_version)
     return; const versionOk = p.registry_version === p.version; const integrityOk = !p.pack_integrity || p.registry_integrity === p.pack_integrity; const shasumOk = !p.pack_shasum || p.registry_shasum === p.pack_shasum; const ok = versionOk && integrityOk && shasumOk; p.remote_verified = ok; p.remote_verified_at = ok ? Date.now() : undefined; if (ok) {
     clearReleaseBlockers(m, 'release-chain:package-remote-');
     appendLedger(m, 'release-chain.package.remote-verified', { payload: { name: p.name, version: p.version, integrity: p.registry_integrity, shasum: p.registry_shasum } });
@@ -390,7 +390,7 @@ else {
     appendLedger(m, 'release-chain.package.remote-drift', { payload: { name: p.name, expected_version: p.version, registry_version: p.registry_version, expected_integrity: p.pack_integrity, registry_integrity: p.registry_integrity, expected_shasum: p.pack_shasum, registry_shasum: p.registry_shasum } });
 } }
 function reevaluateReleaseRemote(m) {
-    const r = m.release_chain?.release, p = m.release_chain?.push;
+    const r = m.release.release_chain?.release, p = m.release.release_chain?.push;
     if (!r || r.outcome !== 'success' || !r.expected_tag || !r.expected_commit)
         return;
     const viewOk = r.view_verified === true;
@@ -398,7 +398,7 @@ function reevaluateReleaseRemote(m) {
     const tagOk = !!tagHash && tagHash.toLowerCase() === r.expected_commit.toLowerCase();
     const targetOk = !r.expected_target || !r.observed_target || (hex40(r.expected_target) ? r.observed_target.toLowerCase() === r.expected_target.toLowerCase() : r.observed_target === r.expected_target);
     const remoteOk = !r.expected_remote || !r.observed_remote || r.expected_remote === r.observed_remote;
-    const expectedAssets = m.release_chain?.quality?.assets?.map(a => a.path) ?? [];
+    const expectedAssets = m.release.release_chain?.quality?.assets?.map(a => a.path) ?? [];
     const observed = new Set(r.observed_assets?.map(a => a.name) ?? []);
     const assetsOk = expectedAssets.length === 0 || expectedAssets.every(x => observed.has(x));
     r.assets_verified = assetsOk;
@@ -418,7 +418,7 @@ export function noteLocalReleaseMutation(m, command, success) {
     if (!success || !isLocalReleaseMutation(command))
         return;
     const at = Date.now();
-    m.release_chain = { ...(m.release_chain ?? {}), local_revision_at: at, last_local_command: norm(command).slice(0, 240), push: undefined, release: undefined, package: m.release_chain?.package ? { ...m.release_chain.package, remote_verified: false } : undefined, blocked_reason: undefined };
+    m.release.release_chain = { ...(m.release.release_chain ?? {}), local_revision_at: at, last_local_command: norm(command).slice(0, 240), push: undefined, release: undefined, package: m.release.release_chain?.package ? { ...m.release.release_chain.package, remote_verified: false } : undefined, blocked_reason: undefined };
     clearReleaseBlockers(m);
     appendLedger(m, 'release-chain.local-revision', { payload: { command: norm(command).slice(0, 180), downstream: 'push-and-release-invalidated' } });
 }
@@ -426,7 +426,7 @@ export function assertReleaseChainPrecondition(m, command, projectRoot) {
     if (isPackagePublish(command)) {
         if (!projectRoot)
             throw new Error('Hi package publish integrity: project root is required.');
-        const pkg = packageJson(projectRoot), version = typeof pkg?.version === 'string' ? pkg.version : undefined, name = typeof pkg?.name === 'string' ? pkg.name : undefined, versionFile = existsSync(join(projectRoot, 'VERSION')) ? readFileSync(join(projectRoot, 'VERSION'), 'utf8').trim() : version, lockVersion = packageLockVersion(projectRoot), pp = m.release_chain?.package;
+        const pkg = packageJson(projectRoot), version = typeof pkg?.version === 'string' ? pkg.version : undefined, name = typeof pkg?.name === 'string' ? pkg.name : undefined, versionFile = existsSync(join(projectRoot, 'VERSION')) ? readFileSync(join(projectRoot, 'VERSION'), 'utf8').trim() : version, lockVersion = packageLockVersion(projectRoot), pp = m.release.release_chain?.package;
         const issues = [];
         if (!name || !version)
             issues.push('package-identity-missing');
@@ -454,7 +454,7 @@ export function assertReleaseChainPrecondition(m, command, projectRoot) {
     }
     if (!isReleaseCreate(command))
         return;
-    const requestedTag = parseReleaseTag(command), tagPush = m.release_chain?.tag_push;
+    const requestedTag = parseReleaseTag(command), tagPush = m.release.release_chain?.tag_push;
     if (tagPush?.expected_tag && requestedTag && tagPush.expected_tag === requestedTag) {
         let tr;
         if (tagPush.outcome !== 'success')
@@ -462,7 +462,7 @@ export function assertReleaseChainPrecondition(m, command, projectRoot) {
         else if (!tagPush.remote_verified)
             tr = 'tag-push-remote-unverified';
         if (tr) {
-            m.release_chain = { ...(m.release_chain ?? {}), blocked_reason: tr };
+            m.release.release_chain = { ...(m.release.release_chain ?? {}), blocked_reason: tr };
             addBlocker(m, tr);
             appendLedger(m, 'release-chain.blocked', { payload: { reason: tr, command: norm(command).slice(0, 180), policy: 'release-create-requires-remotely-verified-explicit-tag-push' } });
             throw new Error(`Hi release-chain safety: release creation is blocked (${tr}). The explicit release tag push must be remotely verified before creating the release.`);
@@ -476,18 +476,18 @@ export function assertReleaseChainPrecondition(m, command, projectRoot) {
             appendLedger(m, 'release-chain.quality.failed', { payload: { version: q.version, issues: q.issues, assets: q.assets.map(a => ({ path: basename(a.path), sha256: a.sha256, manifest_match: a.manifest_match })) } });
             throw new Error(`Hi release quality: release creation is blocked (${q.issues.join(', ')}). VERSION/package/plugin package/CHANGELOG and any supplied release asset must match the release tag and manifest.`);
         }
-        m.release_chain = { ...(m.release_chain ?? {}), quality: { version: q.version, verified: true, verified_at: Date.now(), assets: q.assets.map(a => ({ path: basename(a.path), sha256: a.sha256, manifest_match: a.manifest_match })) } };
+        m.release.release_chain = { ...(m.release.release_chain ?? {}), quality: { version: q.version, verified: true, verified_at: Date.now(), assets: q.assets.map(a => ({ path: basename(a.path), sha256: a.sha256, manifest_match: a.manifest_match })) } };
         clearReleaseBlockers(m, 'release-chain:quality-');
         appendLedger(m, 'release-chain.quality.verified', { payload: { version: q.version, assets: q.assets.map(a => ({ path: basename(a.path), sha256: a.sha256, manifest_match: a.manifest_match })) } });
     }
-    const chain = m.release_chain, push = chain?.push;
+    const chain = m.release.release_chain, push = chain?.push;
     let reason;
     if (!push || push.outcome !== 'success' || (chain?.local_revision_at && push.at < chain.local_revision_at))
         reason = push?.outcome === 'failure' ? 'push-failed' : push?.outcome === 'unknown' ? 'push-unknown' : 'push-not-proven-after-local-revision';
     else if (!push.remote_verified)
         reason = 'push-remote-unverified';
     if (reason) {
-        m.release_chain = { ...(chain ?? {}), blocked_reason: reason };
+        m.release.release_chain = { ...(chain ?? {}), blocked_reason: reason };
         addBlocker(m, reason);
         appendLedger(m, 'release-chain.blocked', { payload: { reason, command: norm(command).slice(0, 180), policy: 'release-create-requires-current-remotely-verified-push' } });
         throw new Error(`Hi release-chain safety: release creation is blocked (${reason}). A successful git push for the current local revision must be proven and remote state must be verified before creating the release.`);
@@ -498,8 +498,8 @@ export function notePrivilegedReleaseOutcome(m, command, outcome) {
     if (isGitPush(command)) {
         const tagExp = parseTagPushExpectation(command);
         if (tagExp) {
-            const commit = m.release_chain?.push?.local_head;
-            m.release_chain = { ...(m.release_chain ?? {}), tag_push: { outcome, at, command: c.slice(0, 240), expected_remote: tagExp.remote, expected_tag: tagExp.tag, expected_commit: commit, remote_verified: outcome === 'success' ? false : undefined }, release: undefined, blocked_reason: outcome === 'success' ? undefined : `tag-push-${outcome}` };
+            const commit = m.release.release_chain?.push?.local_head;
+            m.release.release_chain = { ...(m.release.release_chain ?? {}), tag_push: { outcome, at, command: c.slice(0, 240), expected_remote: tagExp.remote, expected_tag: tagExp.tag, expected_commit: commit, remote_verified: outcome === 'success' ? false : undefined }, release: undefined, blocked_reason: outcome === 'success' ? undefined : `tag-push-${outcome}` };
             clearReleaseBlockers(m, 'release-chain:tag-push-');
             if (outcome !== 'success')
                 addBlocker(m, `tag-push-${outcome}`);
@@ -509,7 +509,7 @@ export function notePrivilegedReleaseOutcome(m, command, outcome) {
             return;
         }
         const exp = parsePushExpectation(command);
-        m.release_chain = { ...(m.release_chain ?? {}), push: { outcome, at, command: c.slice(0, 240), expected_remote: exp?.remote, expected_ref: exp?.ref, remote_verified: outcome === 'success' ? false : undefined }, release: undefined, blocked_reason: outcome === 'success' ? undefined : `push-${outcome}` };
+        m.release.release_chain = { ...(m.release.release_chain ?? {}), push: { outcome, at, command: c.slice(0, 240), expected_remote: exp?.remote, expected_ref: exp?.ref, remote_verified: outcome === 'success' ? false : undefined }, release: undefined, blocked_reason: outcome === 'success' ? undefined : `push-${outcome}` };
         clearReleaseBlockers(m);
         if (outcome !== 'success')
             addBlocker(m, `push-${outcome}`);
@@ -519,8 +519,8 @@ export function notePrivilegedReleaseOutcome(m, command, outcome) {
         return;
     }
     if (isPackagePublish(command)) {
-        const pkg = m.release_chain?.package;
-        m.release_chain = { ...(m.release_chain ?? {}), package: { ...(pkg ?? {}), outcome, published_at: at, remote_verified: outcome === 'success' ? false : undefined }, blocked_reason: outcome === 'success' ? undefined : `package-${outcome}` };
+        const pkg = m.release.release_chain?.package;
+        m.release.release_chain = { ...(m.release.release_chain ?? {}), package: { ...(pkg ?? {}), outcome, published_at: at, remote_verified: outcome === 'success' ? false : undefined }, blocked_reason: outcome === 'success' ? undefined : `package-${outcome}` };
         clearReleaseBlockers(m, 'release-chain:package-');
         if (outcome !== 'success')
             addBlocker(m, `package-${outcome}`);
@@ -530,8 +530,8 @@ export function notePrivilegedReleaseOutcome(m, command, outcome) {
         return;
     }
     if (isReleaseCreate(command)) {
-        const tag = parseReleaseTag(command), target = parseReleaseTarget(command), push = m.release_chain?.push;
-        m.release_chain = { ...(m.release_chain ?? {}), release: { outcome, at, command: c.slice(0, 240), expected_tag: tag, expected_target: target, expected_commit: push?.local_head, expected_remote: push?.expected_remote, remote_verified: outcome === 'success' ? false : undefined }, blocked_reason: outcome === 'success' ? undefined : `release-${outcome}` };
+        const tag = parseReleaseTag(command), target = parseReleaseTarget(command), push = m.release.release_chain?.push;
+        m.release.release_chain = { ...(m.release.release_chain ?? {}), release: { outcome, at, command: c.slice(0, 240), expected_tag: tag, expected_target: target, expected_commit: push?.local_head, expected_remote: push?.expected_remote, remote_verified: outcome === 'success' ? false : undefined }, blocked_reason: outcome === 'success' ? undefined : `release-${outcome}` };
         clearReleaseBlockers(m);
         if (outcome !== 'success')
             addBlocker(m, `release-${outcome}`);
@@ -552,15 +552,15 @@ export function recordRemoteReleaseVerification(m, command, output, projectRoot)
     const pack = parsePackDryRun(command, output, projectRoot);
     if (pack) {
         const current = projectRoot ? packageJson(projectRoot) : undefined;
-        m.release_chain = { ...(m.release_chain ?? {}), package: { ...(m.release_chain?.package ?? {}), name: pack.name ?? current?.name, version: pack.version ?? current?.version, pack_integrity: pack.integrity, pack_shasum: pack.shasum, pack_filename: pack.filename, pack_files: pack.files, pack_state_hash: pack.state_hash, pack_verified_at: Date.now(), remote_verified: false } };
+        m.release.release_chain = { ...(m.release.release_chain ?? {}), package: { ...(m.release.release_chain?.package ?? {}), name: pack.name ?? current?.name, version: pack.version ?? current?.version, pack_integrity: pack.integrity, pack_shasum: pack.shasum, pack_filename: pack.filename, pack_files: pack.files, pack_state_hash: pack.state_hash, pack_verified_at: Date.now(), remote_verified: false } };
         clearReleaseBlockers(m, 'release-chain:package-pack-');
         clearReleaseBlockers(m, 'release-chain:package-surface-');
         appendLedger(m, 'release-chain.package.pack-verified', { payload: { name: pack.name, version: pack.version, integrity: pack.integrity, shasum: pack.shasum, filename: pack.filename, file_count: pack.files.length, state_hash: pack.state_hash } });
         return;
     }
     const registry = parseRegistryView(command, output);
-    if (registry && m.release_chain?.package) {
-        const p = m.release_chain.package;
+    if (registry && m.release.release_chain?.package) {
+        const p = m.release.release_chain.package;
         p.registry_version = registry.version;
         p.registry_integrity = registry.integrity;
         p.registry_shasum = registry.shasum;
@@ -569,16 +569,16 @@ export function recordRemoteReleaseVerification(m, command, output, projectRoot)
         return;
     }
     const upstream = parseUpstream(command, output);
-    if (upstream && m.release_chain?.push) {
-        m.release_chain.push.expected_remote = upstream.remote;
-        m.release_chain.push.expected_ref = upstream.ref;
+    if (upstream && m.release.release_chain?.push) {
+        m.release.release_chain.push.expected_remote = upstream.remote;
+        m.release.release_chain.push.expected_ref = upstream.ref;
         appendLedger(m, 'release-chain.push.upstream', { payload: upstream });
         reevaluatePushRemote(m);
         return;
     }
     const head = parseHead(command, output);
-    if (head && m.release_chain?.push) {
-        m.release_chain.push.local_head = head;
+    if (head && m.release.release_chain?.push) {
+        m.release.release_chain.push.local_head = head;
         appendLedger(m, 'release-chain.push.local-head', { payload: { hash: head } });
         reevaluatePushRemote(m);
         return;
@@ -586,7 +586,7 @@ export function recordRemoteReleaseVerification(m, command, output, projectRoot)
     const tagProbe = parseRemoteTagProbe(command, output);
     if (tagProbe) {
         let handled = false;
-        const tp = m.release_chain?.tag_push;
+        const tp = m.release.release_chain?.tag_push;
         if (tp && (!tp.expected_tag || tp.expected_tag === tagProbe.tag)) {
             tp.observed_remote = tagProbe.remote;
             tp.direct_tag_hash = tagProbe.direct_hash;
@@ -595,8 +595,8 @@ export function recordRemoteReleaseVerification(m, command, output, projectRoot)
             reevaluateTagPushRemote(m);
             handled = true;
         }
-        if (m.release_chain?.release) {
-            const r = m.release_chain.release;
+        if (m.release.release_chain?.release) {
+            const r = m.release.release_chain.release;
             r.observed_remote = tagProbe.remote;
             r.direct_tag_hash = tagProbe.direct_hash;
             r.peeled_tag_hash = tagProbe.peeled_hash;
@@ -608,8 +608,8 @@ export function recordRemoteReleaseVerification(m, command, output, projectRoot)
             return;
     }
     const remote = parseLsRemote(command, output);
-    if (remote && m.release_chain?.push) {
-        const p = m.release_chain.push;
+    if (remote && m.release.release_chain?.push) {
+        const p = m.release.release_chain.push;
         p.observed_remote = remote.remote;
         p.observed_ref = remote.ref;
         p.remote_hash = remote.hash;
@@ -618,8 +618,8 @@ export function recordRemoteReleaseVerification(m, command, output, projectRoot)
         return;
     }
     const rv = parseReleaseView(command, output);
-    if (rv && m.release_chain?.release) {
-        const r = m.release_chain.release;
+    if (rv && m.release.release_chain?.release) {
+        const r = m.release.release_chain.release;
         r.observed_tag = rv.tag;
         r.observed_target = rv.target;
         r.observed_assets = rv.assets;

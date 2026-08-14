@@ -58,9 +58,9 @@ test('RuntimePersistence rejects malformed authority state instead of silently r
   const root=mkdtempSync(join(tmpdir(),'hi-authority-contract-'))
   try{
     const store=new MissionStore(root),m=startAssessedMission(store,'authority-persist','release',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',requested_external_actions:['git-push']})
-    const a=actionContract('git push origin main',root);m.authority={executing:{hash:a.hash,action:a.action,started_at:Date.now()},completed_hashes:[]}
+    const a=actionContract('git push origin main',root);m.authority.authority={executing:{hash:a.hash,action:a.action,started_at:Date.now()},completed_hashes:[]}
     new RuntimePersistence(root).save(store.all(),true);assert.equal(new RuntimePersistence(root).load().length,1)
-    m.authority={executing:{hash:'bad',action:a.action,started_at:Date.now()},completed_hashes:[]}
+    m.authority.authority={executing:{hash:'bad',action:a.action,started_at:Date.now()},completed_hashes:[]}
     new RuntimePersistence(root).save(store.all(),true);const invalid=new RuntimePersistence(root);assert.deepEqual(invalid.load(),[]);assert.match(invalid.lastLoadReport.error,/invalid mission state/)
   } finally { rmSync(root,{recursive:true,force:true}) }
 })

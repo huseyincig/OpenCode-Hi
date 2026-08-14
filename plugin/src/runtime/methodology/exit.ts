@@ -10,8 +10,8 @@ export interface MethodologyExitCheck { ok:boolean; missing:HiMethodologyExitReq
 
 function normScope(value:string):string{return value.trim().replace(/\\/g,'/').replace(/^\.\//,'')}
 function passedEvidence(m:MissionState,task?:MissionTask,obligationId?:string){
-  const mutation=m.evidence.last_mutation_at??0,taskScope=new Set((task?.scope??[]).map(normScope).filter(Boolean))
-  return m.evidence.items.filter(e=>{
+  const mutation=m.execution.evidence.last_mutation_at??0,taskScope=new Set((task?.scope??[]).map(normScope).filter(Boolean))
+  return m.execution.evidence.items.filter(e=>{
     if(e.invalidated_at||!((e.outcome==='passed')||e.pass===true)||e.observed_at<mutation)return false
     if(!task&&!obligationId)return true
     if(task&&e.task_id===task.id)return true
@@ -29,9 +29,9 @@ function hasEvidenceKind(m:MissionState,task:MissionTask|undefined,kinds:readonl
   return kinds.some(kind=>actual.has(kind))
 }
 function releaseEvidence(m:MissionState):boolean{
-  if(missionRequiresPackagePublish(m))return m.release_chain?.package?.outcome==='success'&&m.release_chain.package.remote_verified===true
-  if(missionRequiresReleaseCreate(m))return m.release_chain?.release?.outcome==='success'&&m.release_chain.release.remote_verified===true
-  return m.release_chain?.quality?.verified===true
+  if(missionRequiresPackagePublish(m))return m.release.release_chain?.package?.outcome==='success'&&m.release.release_chain.package.remote_verified===true
+  if(missionRequiresReleaseCreate(m))return m.release.release_chain?.release?.outcome==='success'&&m.release.release_chain.release.remote_verified===true
+  return m.release.release_chain?.quality?.verified===true
 }
 function projectMethodologyNameFromArtifact(file:string):string|undefined{
   const path=file.split('\\').join('/').replace(/^\.\//,'')
@@ -54,7 +54,7 @@ export function methodologyExitCheck(m:MissionState,name:string,input:{task?:Mis
     if(input.scope&&spec.scope!==input.scope)continue
     let ok=false
     switch(requirement){
-      case'task-success':ok=result?.status==='DONE'||Boolean(!task&&input.obligationId&&m.obligations.some(o=>o.id===input.obligationId&&o.status==='closed'));break
+      case'task-success':ok=result?.status==='DONE'||Boolean(!task&&input.obligationId&&m.execution.obligations.some(o=>o.id===input.obligationId&&o.status==='closed'));break
       case'no-open-issues':ok=(result?.open_issues?.length??0)===0;break
       case'context-resolved':ok=result?.status==='DONE'&&(result.needs_context?.length??0)===0;break
       case'decision-evidence':ok=hasEvidenceKind(m,task,['decision-evidence']);break
@@ -76,19 +76,19 @@ export function methodologyExitCheck(m:MissionState,name:string,input:{task?:Mis
 }
 
 export function reconcileMethodologyExits(m:MissionState,projectRoot?:string):string[]{
-  const resolved:string[]=[],remaining:typeof m.methodology_needs=[]
-  for(const need of m.methodology_needs){
-    let task=need.task_id?m.tasks.find(t=>t.id===need.task_id):undefined
+  const resolved:string[]=[],remaining:typeof m.methodology.methodology_needs=[]
+  for(const need of m.methodology.methodology_needs){
+    let task=need.task_id?m.execution.tasks.find(t=>t.id===need.task_id):undefined
     const taskWorkerId=task?.worker_id
-    let worker=taskWorkerId?m.workers.find(w=>w.id===taskWorkerId):undefined
-    if(!task){worker=[...m.workers].reverse().find(w=>w.loaded_methodologies.includes(need.name)&&w.status==='completed');task=worker?m.tasks.find(t=>t.id===worker!.task_id):undefined}
-    const childLoaded=Boolean(worker?.loaded_methodologies.includes(need.name)),parentLoaded=m.parent_loaded_methodologies.includes(need.name)
+    let worker=taskWorkerId?m.execution.workers.find(w=>w.id===taskWorkerId):undefined
+    if(!task){worker=[...m.execution.workers].reverse().find(w=>w.loaded_methodologies.includes(need.name)&&w.status==='completed');task=worker?m.execution.tasks.find(t=>t.id===worker!.task_id):undefined}
+    const childLoaded=Boolean(worker?.loaded_methodologies.includes(need.name)),parentLoaded=m.methodology.parent_loaded_methodologies.includes(need.name)
     if(!childLoaded&&!parentLoaded){remaining.push(need);continue}
     const check=methodologyExitCheck(m,need.name,{task,worker,result:task?.result,projectRoot,obligationId:need.obligation_id})
     if(!check.ok){remaining.push(need);continue}
     resolved.push(need.name)
     appendLedger(m,'methodology.resolved',{task_id:task?.id,payload:{name:need.name,signal:need.signal,trigger_source:need.trigger_source,producer:need.producer,obligation_id:need.obligation_id,reason:'canonical exit requirements satisfied'}})
   }
-  m.methodology_needs=remaining
+  m.methodology.methodology_needs=remaining
   return [...new Set(resolved)]
 }

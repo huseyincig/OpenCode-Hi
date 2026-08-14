@@ -16,10 +16,10 @@ test('privileged bash success requires explicit exit=0 metadata', async()=>{
   const before=createToolBeforeHook(store), after=createToolAfterHook(store)
   authorize(m,'git push','/repo')
   await before({sessionID:'s',tool:'bash',args:{command:'git push',cwd:'/repo'}},{args:{command:'git push',cwd:'/repo'}})
-  assert.ok(m.authority?.executing)
+  assert.ok(m.authority.authority?.executing)
   await after({sessionID:'s',tool:'bash',args:{command:'git push',cwd:'/repo'}},{title:'push',output:'Everything up-to-date',metadata:{exit:0}})
-  assert.equal(m.authority?.executing,undefined)
-  assert.ok(m.authority?.completed_hashes?.includes(actionContract('git push','/repo').hash))
+  assert.equal(m.authority.authority?.executing,undefined)
+  assert.ok(m.authority.authority?.completed_hashes?.includes(actionContract('git push','/repo').hash))
 })
 
 test('empty or unstructured privileged output is UNKNOWN, never implicit success', async()=>{
@@ -28,9 +28,9 @@ test('empty or unstructured privileged output is UNKNOWN, never implicit success
   authorize(m,'git push','/repo')
   await before({sessionID:'s',tool:'bash',args:{command:'git push',cwd:'/repo'}},{args:{command:'git push',cwd:'/repo'}})
   await after({sessionID:'s',tool:'bash',args:{command:'git push',cwd:'/repo'}},{title:'push',output:'',metadata:{}})
-  assert.ok(m.authority?.executing,'unknown ACK must keep action in-flight/uncertain')
-  assert.equal(m.status,'waiting-user')
-  assert.ok(!(m.authority?.completed_hashes??[]).includes(actionContract('git push','/repo').hash))
+  assert.ok(m.authority.authority?.executing,'unknown ACK must keep action in-flight/uncertain')
+  assert.equal(m.identity.status,'waiting-user')
+  assert.ok(!(m.authority.authority?.completed_hashes??[]).includes(actionContract('git push','/repo').hash))
   await assert.rejects(()=>before({sessionID:'s',tool:'bash',args:{command:'git push',cwd:'/repo'}},{args:{command:'git push',cwd:'/repo'}}),/already in-flight or completed/)
 })
 
@@ -40,10 +40,10 @@ test('nonzero exit is deterministic failure but persistent/native authority may 
   authorize(m,'git push','/repo')
   await before({sessionID:'s',tool:'bash',args:{command:'git push',cwd:'/repo'}},{args:{command:'git push',cwd:'/repo'}})
   await after({sessionID:'s',tool:'bash',args:{command:'git push',cwd:'/repo'}},{title:'push',output:'rejected',metadata:{exit:1}})
-  assert.equal(m.authority?.executing,undefined)
-  assert.equal(m.status,'waiting-user')
+  assert.equal(m.authority.authority?.executing,undefined)
+  assert.equal(m.identity.status,'waiting-user')
   await before({sessionID:'s',tool:'bash',args:{command:'git push',cwd:'/repo'}},{args:{command:'git push',cwd:'/repo'}})
-  assert.ok(m.authority?.executing,'retry may proceed after host permission resolution; Hi must not add a second approval gate')
+  assert.ok(m.authority.authority?.executing,'retry may proceed after host permission resolution; Hi must not add a second approval gate')
 })
 
 test('authority outcome uses OpenCode bash metadata.exit and treats no exit signal as unknown',()=>{
@@ -59,6 +59,6 @@ test('separate privileged action hashes own separate authority obligations',()=>
   try{requireAuthority(m,'git push','/repo')}catch{}
   const a=actionContract('npm publish','/repo').hash.slice(0,10)
   const b=actionContract('git push','/repo').hash.slice(0,10)
-  assert.ok(m.obligations.some(o=>o.id===`o-authority-${a}`&&o.status==='open'))
-  assert.ok(m.obligations.some(o=>o.id===`o-authority-${b}`&&o.status==='open'))
+  assert.ok(m.execution.obligations.some(o=>o.id===`o-authority-${a}`&&o.status==='open'))
+  assert.ok(m.execution.obligations.some(o=>o.id===`o-authority-${b}`&&o.status==='open'))
 })

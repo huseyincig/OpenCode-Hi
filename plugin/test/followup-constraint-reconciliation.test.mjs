@@ -18,22 +18,22 @@ function callHook(hook,sessionID,userText){return hook({sessionID,message:{role:
 
 test('chat hook opens a semantic follow-up revision without classifying prose',async()=>{
   const store=new MissionStore(),m=initial(store,'followup-pending')
-  const before=m.semantic_assessment.revision
+  const before=m.identity.semantic_assessment.revision
   await callHook(createChatMessageHook(store),'followup-pending','Beliebige Folgeanweisung')
-  assert.equal(m.semantic_assessment.status,'pending')
-  assert.equal(m.semantic_assessment.phase,'followup')
-  assert.equal(m.semantic_assessment.revision,before+1)
-  assert.equal(m.semantic_assessment.pending_text,'Beliebige Folgeanweisung')
+  assert.equal(m.identity.semantic_assessment.status,'pending')
+  assert.equal(m.identity.semantic_assessment.phase,'followup')
+  assert.equal(m.identity.semantic_assessment.revision,before+1)
+  assert.equal(m.identity.semantic_assessment.pending_text,'Beliebige Folgeanweisung')
 })
 
 test('structured verification follow-up updates verification state without creating implementation work',async()=>{
   const store=new MissionStore(),m=initial(store,'verify-followup')
-  const implementationBefore=m.obligations.filter(o=>o.kind==='implementation').length
+  const implementationBefore=m.execution.obligations.filter(o=>o.kind==='implementation').length
   await callHook(createChatMessageHook(store),'verify-followup','opaque verification follow-up')
   store.applyFollowupSemanticAssessment('verify-followup',{material:true,message_kind:'verification',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification'],requested_external_actions:[],likely_verification:['targeted-tests','typecheck'],likely_targets:['src/auth.ts'],intent_signals:[],suppressed_intent_signals:[]})
-  assert.equal(m.obligations.filter(o=>o.kind==='implementation').length,implementationBefore)
-  assert.equal(m.obligations.find(o=>o.kind==='verification')?.status,'open')
-  assert.deepEqual(m.verification_policy.requiredKinds,['targeted-tests','typecheck'])
+  assert.equal(m.execution.obligations.filter(o=>o.kind==='implementation').length,implementationBefore)
+  assert.equal(m.execution.obligations.find(o=>o.kind==='verification')?.status,'open')
+  assert.deepEqual(m.execution.verification_policy.requiredKinds,['targeted-tests','typecheck'])
 })
 
 test('structured constraint follow-up rebases a busy worker onto a fresh session without duplicate identity',async()=>{
@@ -44,13 +44,13 @@ test('structured constraint follow-up rebases a busy worker onto a fresh session
   const calls={aborts:0,creates:0,prompts:0}
   const client={session:{abort:async()=>{calls.aborts++},create:async()=>{calls.creates++;return{data:{id:'child-new'}}},promptAsync:async()=>{calls.prompts++}}}
   const runtime=new TaskRuntime(client,background,new ConcurrencyScheduler(()=>({global:4,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:5,cost:1,tags:['coding']}],()=>({}))
-  const taskCount=m.tasks.length,workerCount=m.workers.length
+  const taskCount=m.execution.tasks.length,workerCount=m.execution.workers.length
   await callHook(createChatMessageHook(store),'constraint-runtime','任意の制約テキスト')
   store.applyFollowupSemanticAssessment('constraint-runtime',{material:true,message_kind:'constraint',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:['src/auth.ts'],intent_signals:[],suppressed_intent_signals:[]})
   const reconciled=await runtime.reconcileUserConstraint(m,'任意の制約テキスト')
   assert.equal(reconciled,1)
-  assert.equal(m.tasks.length,taskCount);assert.equal(m.workers.length,workerCount)
-  assert.equal(worker.session_id,'child-new');assert.equal(worker.generation_at_spawn,m.generation)
+  assert.equal(m.execution.tasks.length,taskCount);assert.equal(m.execution.workers.length,workerCount)
+  assert.equal(worker.session_id,'child-new');assert.equal(worker.generation_at_spawn,m.continuation.generation)
   assert.deepEqual(worker.loaded_methodologies,[])
   assert.equal(calls.aborts,1);assert.equal(calls.creates,1);assert.equal(calls.prompts,1)
   assert.ok(task.constraints.includes('任意の制約テキスト'))
@@ -64,5 +64,5 @@ test('parent system contract exposes semantic gate while pending and structured 
   store.applyFollowupSemanticAssessment('direct-constraint',{material:true,message_kind:'constraint',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]})
   const output={system:[]};await createSystemTransformHook(store,background)({sessionID:'direct-constraint'},output)
   assert.match(output.system[0],/Current user constraints: opaque constraint/)
-  assert.equal(m.tasks.length,0)
+  assert.equal(m.execution.tasks.length,0)
 })

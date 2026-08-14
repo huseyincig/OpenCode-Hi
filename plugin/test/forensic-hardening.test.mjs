@@ -57,13 +57,13 @@ test('resolving one task issue does not clear the same blocker still owned by an
   const m=new MissionStore().start('s','fix two things')
   const rt=new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:4,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
   const issue={status:'FIX_REQUIRED',summary:'shared issue',changed_files:[],evidence:[],open_issues:['shared:blocker'],needs_context:[]}
-  m.tasks.push({id:'t1',objective:'t1',status:'waiting',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],result:issue,worker_id:'w1',created_at:1,updated_at:1})
-  m.tasks.push({id:'t2',objective:'t2',status:'completed',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],result:{status:'DONE',summary:'done with concern',changed_files:[],evidence:[],open_issues:['shared:blocker'],needs_context:[]},worker_id:'w2',created_at:1,updated_at:1})
-  m.workers.push({id:'w1',task_id:'t1',role:'coder',category:'standard',parent_session_id:'s',parent_mission_id:m.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'w1',status:'ready',generation_at_spawn:m.generation})
-  m.workers.push({id:'w2',task_id:'t2',role:'coder',category:'standard',parent_session_id:'s',parent_mission_id:m.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'w2',status:'completed',generation_at_spawn:m.generation})
-  m.blockers=['shared:blocker']
+  m.execution.tasks.push({id:'t1',objective:'t1',status:'waiting',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],result:issue,worker_id:'w1',created_at:1,updated_at:1})
+  m.execution.tasks.push({id:'t2',objective:'t2',status:'completed',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],result:{status:'DONE',summary:'done with concern',changed_files:[],evidence:[],open_issues:['shared:blocker'],needs_context:[]},worker_id:'w2',created_at:1,updated_at:1})
+  m.execution.workers.push({id:'w1',task_id:'t1',role:'coder',category:'standard',parent_session_id:'s',parent_mission_id:m.identity.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'w1',status:'ready',generation_at_spawn:m.continuation.generation})
+  m.execution.workers.push({id:'w2',task_id:'t2',role:'coder',category:'standard',parent_session_id:'s',parent_mission_id:m.identity.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'w2',status:'completed',generation_at_spawn:m.continuation.generation})
+  m.execution.blockers=['shared:blocker']
   rt.applyResult(m,'w1',{status:'DONE',summary:'fixed',changed_files:[],evidence:[],open_issues:[],needs_context:[]})
-  assert.ok(m.blockers.includes('shared:blocker'))
+  assert.ok(m.execution.blockers.includes('shared:blocker'))
 })
 
 import {mkdirSync,writeFileSync,statSync} from 'node:fs'
@@ -174,8 +174,8 @@ import {addEvidence,observeToolBefore} from '../dist/runtime/evidence/evidence-r
 
 test('bash mutation variants invalidate prior fresh evidence while read-only git status does not',()=>{
   const mutators=['printf x > src/a.ts',`node -e "require('fs').writeFileSync('src/a.ts','x')"`,'git apply fix.patch','chmod 600 src/a.ts','patch -p1 < fix.patch','echo x > src/a.ts']
-  for(const command of mutators){const m=new MissionStore().start(command,'Update src/a.ts');addEvidence(m,{kind:'changed-surface-sanity',summary:'old proof',source:'test',pass:true,outcome:'passed'});assert.equal(m.evidence.fresh,true);observeToolBefore(m,'bash',{command});assert.equal(m.evidence.fresh,false,command)}
-  const readOnly=new MissionStore().start('read-only','Update src/a.ts');addEvidence(readOnly,{kind:'changed-surface-sanity',summary:'old proof',source:'test',pass:true,outcome:'passed'});observeToolBefore(readOnly,'bash',{command:'git status --porcelain'});assert.equal(readOnly.evidence.fresh,true)
+  for(const command of mutators){const m=new MissionStore().start(command,'Update src/a.ts');addEvidence(m,{kind:'changed-surface-sanity',summary:'old proof',source:'test',pass:true,outcome:'passed'});assert.equal(m.execution.evidence.fresh,true);observeToolBefore(m,'bash',{command});assert.equal(m.execution.evidence.fresh,false,command)}
+  const readOnly=new MissionStore().start('read-only','Update src/a.ts');addEvidence(readOnly,{kind:'changed-surface-sanity',summary:'old proof',source:'test',pass:true,outcome:'passed'});observeToolBefore(readOnly,'bash',{command:'git status --porcelain'});assert.equal(readOnly.execution.evidence.fresh,true)
 })
 
 test('path-unknown bash mutation cannot be used as direct implementation ownership proof',async()=>{

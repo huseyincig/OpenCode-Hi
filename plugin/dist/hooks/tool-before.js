@@ -14,12 +14,12 @@ export function createToolBeforeHook(store, background, projectRoot) {
         const sid = input?.sessionID ?? input?.sessionId, child = sid && background ? background.list().find(w => w.session_id === sid) : undefined, m = child ? store.get(child.parent_session_id) : store.get(sid);
         if (!m)
             return;
-        if (child && ((child.parent_mission_id !== undefined && child.parent_mission_id !== m.mission_id) || (child.generation_at_spawn !== undefined && child.generation_at_spawn !== m.generation)))
+        if (child && ((child.parent_mission_id !== undefined && child.parent_mission_id !== m.identity.mission_id) || (child.generation_at_spawn !== undefined && child.generation_at_spawn !== m.continuation.generation)))
             return;
         const tool = String(input?.tool ?? ''), args = output?.args ?? input?.args ?? {};
         if (child && tool.startsWith('hi_'))
             throw new Error(`Hi ownership guard: child workers cannot invoke Hi control-plane tool '${tool}'.`);
-        if (m.semantic_assessment.status === 'pending') {
+        if (m.identity.semantic_assessment.status === 'pending') {
             const allowed = new Set(['hi_intent_assess', 'hi_status', 'hi_ledger', 'hi_readiness']);
             if (!allowed.has(tool))
                 throw new Error(`Hi semantic gate: '${tool}' is blocked until the host primary submits the structured semantic assessment.`);
@@ -27,7 +27,7 @@ export function createToolBeforeHook(store, background, projectRoot) {
         if (tool === 'skill') {
             const name = requestedMethodologyName(args);
             if (name && child)
-                assertChildMethodologyLoad(m.workers.find(worker => worker.id === child.id), name);
+                assertChildMethodologyLoad(m.execution.workers.find(worker => worker.id === child.id), name);
             else if (name)
                 assertParentMethodologyLoad(m, name, projectRoot);
         }
@@ -68,7 +68,7 @@ export function createToolBeforeHook(store, background, projectRoot) {
                 throw new Error('Hi idempotency guard: this exact privileged action is already in-flight or completed.');
             beginAuthorizedAction(m, args.command, args?.cwd);
         }
-        if (m.status !== 'active' && !matchRollback(m, String(args?.command ?? '')))
+        if (m.identity.status !== 'active' && !matchRollback(m, String(args?.command ?? '')))
             return;
         observeToolBefore(m, tool, args, projectRoot);
         store.updateProgress(m);

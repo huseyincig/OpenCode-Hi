@@ -65,22 +65,22 @@ export class RuntimeEventController {
             return;
         }
         if (child && mission && tasks.childCallbackDisposition(mission, child) === 'stale-mission') {
-            appendLedger(mission, 'worker.callback.stale-mission-ignored', { worker_id: child?.id, payload: { worker_mission_id: child?.parent_mission_id, mission_id: mission.mission_id, worker_generation: child?.generation_at_spawn, mission_generation: mission.generation, event: ev.rawType } });
+            appendLedger(mission, 'worker.callback.stale-mission-ignored', { worker_id: child?.id, payload: { worker_mission_id: child?.parent_mission_id, mission_id: mission.identity.mission_id, worker_generation: child?.generation_at_spawn, mission_generation: mission.continuation.generation, event: ev.rawType } });
             persistence.save(store.all());
             return;
         }
-        if (mission && (mission.user_interrupted || mission.status === 'stopped')) {
+        if (mission && (mission.continuation.user_interrupted || mission.identity.status === 'stopped')) {
             appendLedger(mission, 'runtime.event.after-user-stop-ignored', { worker_id: child?.id, payload: { session_id: sid, event: ev.rawType } });
             persistence.save(store.all());
             return;
         }
         if (ev.kind === 'permission-asked' && mission) {
             const pid = permissionEventID(ev);
-            mission.pending_permission_ids ??= [];
-            if (!pid || !mission.pending_permission_ids.includes(pid)) {
+            mission.authority.pending_permission_ids ??= [];
+            if (!pid || !mission.authority.pending_permission_ids.includes(pid)) {
                 if (pid)
-                    mission.pending_permission_ids.push(pid);
-                mission.pending_permissions = (mission.pending_permissions ?? 0) + 1;
+                    mission.authority.pending_permission_ids.push(pid);
+                mission.authority.pending_permissions = (mission.authority.pending_permissions ?? 0) + 1;
                 appendLedger(mission, 'permission.asked', { worker_id: child?.id, payload: { session_id: sid, permission_id: pid } });
             }
             else
@@ -90,15 +90,15 @@ export class RuntimeEventController {
         }
         if (ev.kind === 'permission-replied' && mission) {
             const pid = permissionEventID(ev);
-            mission.pending_permission_ids ??= [];
-            const idx = pid ? mission.pending_permission_ids.indexOf(pid) : -1;
+            mission.authority.pending_permission_ids ??= [];
+            const idx = pid ? mission.authority.pending_permission_ids.indexOf(pid) : -1;
             if (pid && idx < 0) {
                 appendLedger(mission, 'permission.duplicate-ignored', { worker_id: child?.id, payload: { session_id: sid, permission_id: pid, event: 'replied' } });
             }
             else {
                 if (idx >= 0)
-                    mission.pending_permission_ids.splice(idx, 1);
-                mission.pending_permissions = Math.max(0, (mission.pending_permissions ?? 0) - 1);
+                    mission.authority.pending_permission_ids.splice(idx, 1);
+                mission.authority.pending_permissions = Math.max(0, (mission.authority.pending_permissions ?? 0) - 1);
                 appendLedger(mission, 'permission.replied', { worker_id: child?.id, payload: { session_id: sid, permission_id: pid, decision: permissionDecision(ev) } });
             }
             persistence.save(store.all());
@@ -145,12 +145,12 @@ export class RuntimeEventController {
                 await teams.reconcileMission(m);
                 store.updateProgress(m);
                 appendLedger(m, 'parent.wake', { worker_id: child.id, payload: { result: 'FAILED', event: ev.rawType } });
-                const siblingPending = background.pendingFor(m.session_id).filter(w => w.id !== child.id), permissionFailure = child.last_runtime_failure_kind === 'permission';
+                const siblingPending = background.pendingFor(m.identity.session_id).filter(w => w.id !== child.id), permissionFailure = child.last_runtime_failure_kind === 'permission';
                 if (permissionFailure) {
-                    m.stagnation_count = 0;
+                    m.continuation.stagnation_count = 0;
                     openHumanDecision(m, { semantic_type: 'operational_action', reason_code: 'permission-failure', summary: `Native child permission failure requires user/runtime intervention before retry. ${detail.slice(0, 240)}`, task_id: child.task_id, worker_id: child.id, response_schema: { kind: 'external-action' } });
                 }
-                else if (automaticContinuationEnabled(state.config.executionPolicy) && !m.user_interrupted && !siblingPending.length)
+                else if (automaticContinuationEnabled(state.config.executionPolicy) && !m.continuation.user_interrupted && !siblingPending.length)
                     await dispatchContinuation(host.client, m, 'Hi child worker failed. Reconcile the failure, preserve completed work, and choose the minimum safe recovery. Do not duplicate completed tasks.', 'child-failed');
                 else if (siblingPending.length)
                     appendLedger(m, 'parent.wake.deferred', { worker_id: child.id, payload: { reason: 'sibling-workers-pending', pending: siblingPending.map(w => w.id).slice(0, 20) } });
@@ -186,7 +186,7 @@ export class RuntimeEventController {
                     background.set(child);
                 store.updateProgress(m);
                 appendLedger(m, 'parent.wake', { worker_id: child.id, payload: { result: result.status } });
-                if (automaticContinuationEnabled(state.config.executionPolicy) && !m.user_interrupted && !background.pendingFor(m.session_id).length)
+                if (automaticContinuationEnabled(state.config.executionPolicy) && !m.continuation.user_interrupted && !background.pendingFor(m.identity.session_id).length)
                     await dispatchContinuation(host.client, m, 'Hi child result is ready. Reconcile it against current obligations. Prefer same-session corrective resume for NEEDS_CONTEXT/FIX_REQUIRED. Do not create duplicate tasks.', 'child-result-ready');
             }
             catch (e) {
@@ -210,7 +210,7 @@ export class RuntimeEventController {
             if (m) {
                 const todos = ev.properties?.todos ?? ev.properties?.items ?? [];
                 if (Array.isArray(todos))
-                    m.native_todos_incomplete = todos.filter((t) => !['completed', 'cancelled', 'done'].includes(String(t?.status ?? '').toLowerCase())).length;
+                    m.execution.native_todos_incomplete = todos.filter((t) => !['completed', 'cancelled', 'done'].includes(String(t?.status ?? '').toLowerCase())).length;
                 store.updateProgress(m);
                 persistence.save(store.all());
             }
@@ -229,7 +229,7 @@ export class RuntimeEventController {
         if (ev.kind === 'lsp-diagnostics' && mission) {
             const diagnostics = Array.isArray(ev.properties?.diagnostics) ? ev.properties.diagnostics : [];
             const errors = diagnostics.filter((d) => ['error', 1].includes(d?.severity)).length;
-            addEvidence(mission, { kind: 'lsp-diagnostics', summary: `native LSP diagnostics: ${errors} error(s), ${diagnostics.length} total`, scope: mission.changed_files, source: `session:${sid}:lsp`, pass: errors === 0, outcome: errors === 0 ? 'passed' : 'failed', reason: errors ? `${errors} error diagnostic(s)` : undefined });
+            addEvidence(mission, { kind: 'lsp-diagnostics', summary: `native LSP diagnostics: ${errors} error(s), ${diagnostics.length} total`, scope: mission.vcs.changed_files, source: `session:${sid}:lsp`, pass: errors === 0, outcome: errors === 0 ? 'passed' : 'failed', reason: errors ? `${errors} error diagnostic(s)` : undefined });
             persistence.save(store.all());
             return;
         }
@@ -244,13 +244,13 @@ export class RuntimeEventController {
         if (!m || !adaptiveIdleEvaluatorEnabled(state.config.executionPolicy))
             return;
         const progressed = store.updateProgress(m, false);
-        void eventSink(runtimeSignal('mission.idle', m.mission_id));
+        void eventSink(runtimeSignal('mission.idle', m.identity.mission_id));
         let decision = evaluateIdle(m);
         if (!progressed && shouldCountStagnation(decision)) {
             store.updateProgress(m, true);
             decision = evaluateIdle(m);
         }
-        appendLedger(m, 'runtime.decision', { payload: { decision: decision.decision, reason: decision.reason, reason_code: decision.reason_code, progressed, stagnation_count: m.stagnation_count } });
+        appendLedger(m, 'runtime.decision', { payload: { decision: decision.decision, reason: decision.reason, reason_code: decision.reason_code, progressed, stagnation_count: m.continuation.stagnation_count } });
         if (decision.decision === 'STOP') {
             const c = evaluateCompletion(m);
             if (c.complete)

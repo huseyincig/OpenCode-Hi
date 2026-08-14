@@ -36,7 +36,7 @@ test('zero-skill task gets a complete bounded execution profile and per-message 
   const store=new MissionStore(process.cwd()),m=store.start('s','fix the README typo')
   assess(store,'s',{likely_targets:['README.md']})
   const out=await runtime.start(m,{objective:'fix the README typo',role:'coder',category:'quick',scope:['README.md']})
-  const task=m.tasks.find(t=>t.id===out.task_id),profile=task.execution_profile
+  const task=m.execution.tasks.find(t=>t.id===out.task_id),profile=task.execution_profile
   assert.equal(profile.role,'coder');assert.equal(profile.category,'quick')
   assert.equal(profile.task.objective,'fix the README typo');assert.deepEqual(profile.task.scope,['README.md'])
   assert.deepEqual(profile.task.dependencies,[]);assert.ok(Array.isArray(profile.task.required_evidence))
@@ -59,7 +59,7 @@ test('same-session corrective resume preserves the original execution tool surfa
   assess(store,'s',{task_kind:'bug-fix',likely_targets:['src/parser.ts'],likely_verification:['targeted-tests']})
   const first=await runtime.start(m,{objective:'fix parser bug',role:'coder',category:'standard',scope:['src/parser.ts']})
   runtime.applyResult(m,first.worker_id,{status:'FIX_REQUIRED',summary:'one correction remains',changed_files:['src/parser.ts'],evidence:[],open_issues:['fix:x'],needs_context:[]})
-  m.workers.find(w=>w.id===first.worker_id).selected_methodologies=['hi-test-driven-development'];m.workers.find(w=>w.id===first.worker_id).loaded_methodologies=['hi-test-driven-development']
+  m.execution.workers.find(w=>w.id===first.worker_id).selected_methodologies=['hi-test-driven-development'];m.execution.workers.find(w=>w.id===first.worker_id).loaded_methodologies=['hi-test-driven-development']
   const second=await runtime.start(m,{objective:'fix parser bug',role:'coder',category:'standard',scope:['src/parser.ts']})
   assert.equal(second.worker_id,first.worker_id);assert.equal(second.session_id,first.session_id);assert.equal(created.length,1);assert.equal(prompts.length,2)
   const resumeTools=prompts[1].body.tools
@@ -70,9 +70,9 @@ test('same-session corrective resume preserves the original execution tool surfa
 
 test('child workers cannot invoke any Hi control-plane custom tool, including completion and cancellation surfaces',async()=>{
   const store=new MissionStore(process.cwd()),m=store.start('parent','implement')
-  m.tasks.push({id:'t',objective:'x',status:'running',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],worker_id:'w',created_at:Date.now(),updated_at:Date.now()})
-  const worker={id:'w',task_id:'t',role:'coder',category:'standard',session_id:'child',parent_session_id:'parent',parent_mission_id:m.mission_id,model:'host-default',fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'busy',generation_at_spawn:m.generation}
-  m.workers.push(worker)
+  m.execution.tasks.push({id:'t',objective:'x',status:'running',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],worker_id:'w',created_at:Date.now(),updated_at:Date.now()})
+  const worker={id:'w',task_id:'t',role:'coder',category:'standard',session_id:'child',parent_session_id:'parent',parent_mission_id:m.identity.mission_id,model:'host-default',fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'busy',generation_at_spawn:m.continuation.generation}
+  m.execution.workers.push(worker)
   const bg=new BackgroundRegistry();bg.set(worker)
   const hook=createToolBeforeHook(store,bg,()=>resolveHiConfig({}),process.cwd())
   for(const tool of ['hi_direct_progress','hi_task_cancel','hi_ledger','hi_status','hi_context_artifact_add']){

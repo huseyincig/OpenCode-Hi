@@ -1,4 +1,4 @@
-export function resolveExecutionMode(intent, m) { if (m?.execution_mode === 'team')
+export function resolveExecutionMode(intent, m) { if (m?.execution.execution_mode === 'team')
     return { mode: 'team', reason: ['existing bounded team remains authoritative'] }; if (intent.risk === 'authority-boundary')
     return { mode: 'single', reason: ['authority boundary forbids speculative parallel work'] }; if (intent.scope === 'multi-stream')
     return { mode: 'parallel', reason: ['structured multi-stream scope proves independent workstreams'] }; if (intent.scope === 'local' || intent.requiredCapabilities.length <= 1)

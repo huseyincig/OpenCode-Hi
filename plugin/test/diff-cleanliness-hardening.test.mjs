@@ -9,7 +9,7 @@ import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {assessChangedFileOwnership} from '../dist/runtime/task/diff-ownership.js'
 
 function runtime(){return new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
-function implementation(m){return m.obligations.find(o=>o.kind==='implementation')}
+function implementation(m){return m.execution.obligations.find(o=>o.kind==='implementation')}
 function assessedMission(id,objective,overrides={}){
   const store=new MissionStore(),m=store.start(id,objective)
   store.applyInitialSemanticAssessment(id,{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[],...overrides})
@@ -28,8 +28,8 @@ test('undeclared out-of-scope change converts DONE to FIX_REQUIRED and blocks co
   assert.equal(w.status,'ready')
   assert.equal(impl.status,'open')
   assert.deepEqual(t.diff_cleanliness?.collateral,['docs/random.md'])
-  assert.ok(m.blockers.some(x=>x.startsWith(`diff-cleanliness:${t.id}:`)))
-  assert.ok(m.ledger.some(e=>e.type==='diff.cleanliness.blocked'))
+  assert.ok(m.execution.blockers.some(x=>x.startsWith(`diff-cleanliness:${t.id}:`)))
+  assert.ok(m.execution.ledger.some(e=>e.type==='diff.cleanliness.blocked'))
 })
 
 test('worker necessary=true proposal cannot self-authorize an unrelated scope expansion',()=>{
@@ -78,12 +78,12 @@ test('worker cleanup claim alone cannot remove collateral without native diff ve
   const w=createWorker(m,t,'host-default');w.status='busy';w.started_at=Date.now()-5
   const rt=runtime()
   rt.applyResult(m,w.id,result({changed_files:['src/a.ts','docs/random.md']}))
-  assert.ok(m.changed_files.includes('docs/random.md'))
+  assert.ok(m.vcs.changed_files.includes('docs/random.md'))
   w.status='busy';w.started_at=Date.now()-2
   rt.applyResult(m,w.id,result({summary:'cleaned collateral and kept scoped fix',changed_files:['src/a.ts']}))
   assert.equal(t.result?.status,'FIX_REQUIRED')
   assert.equal(impl.status,'open')
-  assert.ok(m.changed_files.includes('docs/random.md'))
+  assert.ok(m.vcs.changed_files.includes('docs/random.md'))
   assert.ok(t.result?.open_issues.some(x=>x.startsWith(`cleanup-unverified:${t.id}:`)))
-  assert.equal(m.ledger.some(e=>e.type==='diff.cleanliness.resolved'),false)
+  assert.equal(m.execution.ledger.some(e=>e.type==='diff.cleanliness.resolved'),false)
 })

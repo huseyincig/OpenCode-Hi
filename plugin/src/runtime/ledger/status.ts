@@ -11,15 +11,15 @@ export interface UserMissionStatus{
 }
 
 export function userMissionStatus(m:MissionState):UserMissionStatus{
-  const active=m.workers.filter(w=>['created','queued','starting','busy'].includes(w.status)).length
-  const open=m.obligations.filter(o=>o.status==='open').length
+  const active=m.execution.workers.filter(w=>['created','queued','starting','busy'].includes(w.status)).length
+  const open=m.execution.obligations.filter(o=>o.status==='open').length
   let next:UserMissionStatus['next_action']='continue'
-  if(m.status==='waiting-user'||m.pending_permissions>0||m.authority?.pending||m.authority?.executing)next='user-action'
+  if(m.identity.status==='waiting-user'||m.authority.pending_permissions>0||m.authority.authority?.pending||m.authority.authority?.executing)next='user-action'
   else if(active>0)next='wait'
-  else if(open===0&&m.evidence.fresh&&!m.blockers.length)next='complete'
-  else if(!m.evidence.fresh&&m.verification_policy.requiredKinds.length)next='verify'
-  else if(m.blockers.length||m.stagnation_count>0)next='recover'
-  const human=m.human_decision?.status==='OPEN'?{type:m.human_decision.semantic_type,reason_code:m.human_decision.reason_code}:undefined;return{status:m.status,active_workers:active,open_obligations:open,evidence:m.evidence.fresh?'fresh':'stale',blockers:m.blockers.length,next_action:next,human_decision:human}
+  else if(open===0&&m.execution.evidence.fresh&&!m.execution.blockers.length)next='complete'
+  else if(!m.execution.evidence.fresh&&m.execution.verification_policy.requiredKinds.length)next='verify'
+  else if(m.execution.blockers.length||m.continuation.stagnation_count>0)next='recover'
+  const human=m.authority.human_decision?.status==='OPEN'?{type:m.authority.human_decision.semantic_type,reason_code:m.authority.human_decision.reason_code}:undefined;return{status:m.identity.status,active_workers:active,open_obligations:open,evidence:m.execution.evidence.fresh?'fresh':'stale',blockers:m.execution.blockers.length,next_action:next,human_decision:human}
 }
 
 export function formatUserMissionStatus(m:MissionState):string{

@@ -9,11 +9,11 @@ function assertTeam(t) { if (!isTeamContract(contractView(t)))
 function assertTeamMissionBindings(m, t) {
     assertTeam(t);
     for (let i = 0; i < t.member_task_refs.length; i++) {
-        const taskID = t.member_task_refs[i], role = t.member_role_refs[i], task = m.tasks.find(x => x.id === taskID);
-        if (!task || task.mission_id !== m.mission_id || task.role !== role)
+        const taskID = t.member_task_refs[i], role = t.member_role_refs[i], task = m.execution.tasks.find(x => x.id === taskID);
+        if (!task || task.mission_id !== m.identity.mission_id || task.role !== role)
             throw new Error(`Invalid TeamContract member binding: ${role}:${taskID}`);
-        const worker = t.worker_ids[i], runtimeWorker = worker ? m.workers.find(x => x.id === worker) : undefined;
-        if (!runtimeWorker || runtimeWorker.task_id !== taskID || runtimeWorker.parent_mission_id !== m.mission_id || runtimeWorker.role !== role)
+        const worker = t.worker_ids[i], runtimeWorker = worker ? m.execution.workers.find(x => x.id === worker) : undefined;
+        if (!runtimeWorker || runtimeWorker.task_id !== taskID || runtimeWorker.parent_mission_id !== m.identity.mission_id || runtimeWorker.role !== role)
             throw new Error(`Invalid TeamContract worker projection: ${role}:${taskID}`);
     }
 }
@@ -37,13 +37,13 @@ export class TeamRuntime {
             throw new Error('Team wall-time expired; parent must shutdown/reconcile team');
         return t;
     }
-    assertMissionOwner(m, t) { if (t.mission_id !== m.mission_id)
+    assertMissionOwner(m, t) { if (t.mission_id !== m.identity.mission_id)
         throw new Error('Team belongs to a different mission'); }
-    assertCurrentMission(m, t) { this.assertMissionOwner(m, t); if (t.generation !== m.generation)
+    assertCurrentMission(m, t) { this.assertMissionOwner(m, t); if (t.generation !== m.continuation.generation)
         throw new Error('Stale team generation; shutdown/reconcile the old team before continuing'); }
     async startMember(m, t, role, overrideModel, overrideVariant) {
-        const readOnly = isHiReadOnlyChildRole(role), reviewScope = m.changed_files.length ? m.changed_files : (m.intent.likelyTargets ?? []);
-        const started = await this.tasks.start(m, { objective: `${t.objective}\nTeam perspective: ${role}. Report findings to parent; do not create another team.`, role, category: m.risk === 'high' ? 'critical' : 'deep', scope: readOnly ? reviewScope : (m.intent.likelyTargets ?? []), constraints: ['parent-mediated team', 'no nested team', 'bounded scope', 'compact evidence'], model: overrideModel, modelVariant: overrideVariant });
+        const readOnly = isHiReadOnlyChildRole(role), reviewScope = m.vcs.changed_files.length ? m.vcs.changed_files : (m.identity.intent.likelyTargets ?? []);
+        const started = await this.tasks.start(m, { objective: `${t.objective}\nTeam perspective: ${role}. Report findings to parent; do not create another team.`, role, category: m.identity.risk === 'high' ? 'critical' : 'deep', scope: readOnly ? reviewScope : (m.identity.intent.likelyTargets ?? []), constraints: ['parent-mediated team', 'no nested team', 'bounded scope', 'compact evidence'], model: overrideModel, modelVariant: overrideVariant });
         t.worker_ids.push(started.worker_id);
         t.member_workers[role] = started.worker_id;
         t.member_task_refs.push(started.task_id);
@@ -52,7 +52,7 @@ export class TeamRuntime {
     async create(m, objective, members, memberModels) {
         if (!this.enabled())
             throw new Error('Team Mode disabled');
-        if (this.list(m.mission_id).some(t => t.status === 'active'))
+        if (this.list(m.identity.mission_id).some(t => t.status === 'active'))
             throw new Error('Nested or second active team is not allowed');
         const l = this.limits(), requested = [...new Set(members.map(x => x.trim()).filter(Boolean))], invalid = requested.filter(x => !validTeamRole(x));
         if (invalid.length)
@@ -60,9 +60,9 @@ export class TeamRuntime {
         const unique = requested.slice(0, l.maxMembers);
         if (unique.length < 2)
             throw new Error('Team Mode requires at least two distinct members');
-        const now = Date.now(), team = { team_id: uid('team'), mission_id: m.mission_id, generation: m.generation, objective, status: 'active', member_role_refs: unique, member_task_refs: [], capacity: l.maxMembers, worker_ids: [], member_workers: {}, created_at: now, expires_at: now + l.maxWallMs };
+        const now = Date.now(), team = { team_id: uid('team'), mission_id: m.identity.mission_id, generation: m.continuation.generation, objective, status: 'active', member_role_refs: unique, member_task_refs: [], capacity: l.maxMembers, worker_ids: [], member_workers: {}, created_at: now, expires_at: now + l.maxWallMs };
         this.#teams.set(team.team_id, team);
-        m.execution_mode = 'team';
+        m.execution.execution_mode = 'team';
         appendLedger(m, 'team.created', { payload: { team_id: team.team_id, members: unique, capacity: team.capacity, expires_at: team.expires_at, member_models: memberModels ? Object.keys(memberModels).length : 0 } });
         try {
             for (const role of unique) {
@@ -79,7 +79,7 @@ export class TeamRuntime {
                 }
                 catch { }
             this.#teams.delete(team.team_id);
-            m.execution_mode = 'single';
+            m.execution.execution_mode = 'single';
             appendLedger(m, 'team.create.rolled-back', { payload: { team_id: team.team_id, error: String(error) } });
             throw error;
         }
@@ -116,7 +116,7 @@ export class TeamRuntime {
             return false;
         if (t.member_role_refs.length <= 2)
             throw new Error('Team Mode requires at least two members; shutdown the team instead');
-        const worker = t.member_workers[role], taskID = worker ? m.workers.find(w => w.id === worker)?.task_id : undefined;
+        const worker = t.member_workers[role], taskID = worker ? m.execution.workers.find(w => w.id === worker)?.task_id : undefined;
         if (worker)
             await this.tasks.cancel(m, worker);
         t.member_role_refs = t.member_role_refs.filter(x => x !== role);
@@ -130,12 +130,12 @@ export class TeamRuntime {
     }
     adoptSemanticGeneration(m) {
         let n = 0;
-        for (const t of this.list(m.mission_id)) {
+        for (const t of this.list(m.identity.mission_id)) {
             if (t.status !== 'active')
                 continue;
-            t.generation = m.generation;
+            t.generation = m.continuation.generation;
             assertTeamMissionBindings(m, t);
-            appendLedger(m, 'team.semantic-paused', { payload: { team_id: t.team_id, generation: m.generation } });
+            appendLedger(m, 'team.semantic-paused', { payload: { team_id: t.team_id, generation: m.continuation.generation } });
             n++;
         }
         return n;
@@ -154,8 +154,8 @@ export class TeamRuntime {
         const workers = [...t.worker_ids];
         t.worker_ids = [];
         t.member_workers = {};
-        if (m.mission_id === t.mission_id && m.execution_mode === 'team')
-            m.execution_mode = 'single';
+        if (m.identity.mission_id === t.mission_id && m.execution.execution_mode === 'team')
+            m.execution.execution_mode = 'single';
         appendLedger(m, reason === 'expired' ? 'team.expired' : 'team.shutdown', { payload: { team_id: teamID, reason, workers: workers.length } });
         for (const worker of workers)
             try {
@@ -166,18 +166,18 @@ export class TeamRuntime {
             }
         return true;
     }
-    async expireMission(m, now = Date.now()) { for (const t of this.list(m.mission_id))
-        if (t.status === 'active' && (t.generation !== m.generation || now >= t.expires_at))
-            await this.shutdown(m, t.team_id, t.generation !== m.generation ? 'stale-generation' : 'expired'); }
+    async expireMission(m, now = Date.now()) { for (const t of this.list(m.identity.mission_id))
+        if (t.status === 'active' && (t.generation !== m.continuation.generation || now >= t.expires_at))
+            await this.shutdown(m, t.team_id, t.generation !== m.continuation.generation ? 'stale-generation' : 'expired'); }
     async reconcileMission(m) {
-        for (const t of this.list(m.mission_id)) {
+        for (const t of this.list(m.identity.mission_id)) {
             if (t.status !== 'active')
                 continue;
-            if (t.generation !== m.generation) {
+            if (t.generation !== m.continuation.generation) {
                 await this.shutdown(m, t.team_id, 'stale-generation');
                 continue;
             }
-            const activeWorkers = t.worker_ids.map(id => m.workers.find(w => w.id === id)).filter(Boolean).filter((w) => !['completed', 'failed', 'cancelled'].includes(w.status));
+            const activeWorkers = t.worker_ids.map(id => m.execution.workers.find(w => w.id === id)).filter(Boolean).filter((w) => !['completed', 'failed', 'cancelled'].includes(w.status));
             if (activeWorkers.length >= 2)
                 continue;
             if (activeWorkers.length === 0) {
@@ -191,12 +191,12 @@ export class TeamRuntime {
             assertTeamMissionBindings(m, t);
             t.worker_ids = [];
             t.member_workers = {};
-            if (m.execution_mode === 'team')
-                m.execution_mode = 'single';
+            if (m.execution.execution_mode === 'team')
+                m.execution.execution_mode = 'single';
             appendLedger(m, 'team.degraded', { payload: { team_id: t.team_id, reason: 'insufficient-active-members', remaining_workers: remaining } });
         }
     }
-    async shutdownMission(m) { for (const t of this.list(m.mission_id))
+    async shutdownMission(m) { for (const t of this.list(m.identity.mission_id))
         if (t.status === 'active')
             await this.shutdown(m, t.team_id); }
 }

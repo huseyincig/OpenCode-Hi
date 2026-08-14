@@ -37,9 +37,9 @@ export class ProjectMethodologyLearningStore {
         const item = existing ?? { schema: 1, id, key: observation.key, contract_sha256: contractSha, procedure: observation.procedure, trigger: observation.trigger, do_not_trigger: observation.do_not_trigger, exit_condition: observation.exit_condition, state: 'CANDIDATE', observations: [], created_at: now, updated_at: now };
         if (item.state === 'ARCHIVED')
             return item;
-        const taskKey = `${mission.mission_id}:${worker.task_id}`;
+        const taskKey = `${mission.identity.mission_id}:${worker.task_id}`;
         if (!item.observations.some(o => `${o.mission_id}:${o.task_id}` === taskKey))
-            item.observations.push({ mission_id: mission.mission_id, task_id: worker.task_id, worker_id: worker.id, evidence: referenced, observed_at: now });
+            item.observations.push({ mission_id: mission.identity.mission_id, task_id: worker.task_id, worker_id: worker.id, evidence: referenced, observed_at: now });
         const independentTasks = new Set(item.observations.map(o => `${o.mission_id}:${o.task_id}`)).size;
         if (independentTasks >= 2)
             item.state = 'READY';

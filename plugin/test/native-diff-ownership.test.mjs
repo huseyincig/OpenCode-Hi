@@ -28,7 +28,7 @@ test('session-scoped observed native write omitted from WorkerResult forces reco
   assert.equal(reconciled.status,'FIX_REQUIRED')
   assert.ok(reconciled.changed_files.includes('src/hidden.ts'))
   assert.ok(reconciled.open_issues.some(x=>x.startsWith(`native-diff-mismatch:${t.id}:`)))
-  assert.ok(m.ledger.some(e=>e.type==='native.diff.mismatch'))
+  assert.ok(m.execution.ledger.some(e=>e.type==='native.diff.mismatch'))
 })
 
 test('native diff baseline-to-idle delta catches an undeclared write when this is the sole writer',async()=>{
@@ -42,14 +42,14 @@ test('native diff baseline-to-idle delta catches an undeclared write when this i
 })
 
 test('worktree-global-looking native delta is not attributed to one worker while multiple writers are active',async()=>{
-  const s=new MissionStore(),m=startAssessedMission(s,'native-diff-3','opaque parallel task');m.execution_mode='parallel'
+  const s=new MissionStore(),m=startAssessedMission(s,'native-diff-3','opaque parallel task');m.execution.execution_mode='parallel'
   const ta=createTask(m,{objective:'a',role:'coder',category:'quick',scope:['src/a.ts'],requiredEvidence:[]}),tb=createTask(m,{objective:'b',role:'coder',category:'quick',scope:['src/b.ts'],requiredEvidence:[]})
   const wa=createWorker(m,ta,'host-default'),wb=createWorker(m,tb,'host-default');wa.status='busy';wb.status='busy';wa.session_id='child-a';wb.session_id='child-b';wa.native_diff_baseline={}
   const {rt,setDiffs}=harness();setDiffs([{file:'src/unrelated.ts',before:'old',after:'new',additions:1,deletions:1}])
   const reconciled=await rt.reconcileNativeResult(m,wa.id,done([]))
   assert.equal(reconciled.status,'DONE')
   assert.deepEqual(reconciled.changed_files,[])
-  assert.ok(m.ledger.some(e=>e.type==='native.diff.reconciled'))
+  assert.ok(m.execution.ledger.some(e=>e.type==='native.diff.reconciled'))
 })
 
 test('plugin session.idle path converts DONE to FIX_REQUIRED when native diff exposes an undeclared file',async()=>{
@@ -77,7 +77,7 @@ test('plugin session.idle path converts DONE to FIX_REQUIRED when native diff ex
 
 test('native diff must prove collateral reverted before cleanup blocker can close',async()=>{
   const s=new MissionStore(),m=startAssessedMission(s,'native-cleanup-1','opaque change',{likely_targets:['src/a.ts']})
-  const impl=m.obligations.find(o=>o.kind==='implementation');assert.ok(impl)
+  const impl=m.execution.obligations.find(o=>o.kind==='implementation');assert.ok(impl)
   const t=createTask(m,{objective:'change a',role:'coder',category:'quick',scope:['src/a.ts'],requiredEvidence:[],obligationIds:[impl.id]})
   const w=createWorker(m,t,'host-default');w.status='busy';w.session_id='child-clean';w.native_diff_baseline={}
   const {rt,setDiffs}=harness()
@@ -89,9 +89,9 @@ test('native diff must prove collateral reverted before cleanup blocker can clos
   rt.applyResult(m,w.id,reconciled)
   assert.equal(t.result.status,'DONE')
   assert.equal(impl.status,'closed')
-  assert.equal(m.changed_files.includes('docs/random.md'),false)
-  assert.ok(m.ledger.some(e=>e.type==='diff.cleanup.verified'))
-  assert.ok(m.ledger.some(e=>e.type==='diff.cleanliness.resolved'))
+  assert.equal(m.vcs.changed_files.includes('docs/random.md'),false)
+  assert.ok(m.execution.ledger.some(e=>e.type==='diff.cleanup.verified'))
+  assert.ok(m.execution.ledger.some(e=>e.type==='diff.cleanliness.resolved'))
 })
 
 test('cleanup claim remains FIX_REQUIRED while native diff still contains collateral',async()=>{
@@ -130,12 +130,12 @@ test('pre-existing user dirty file unchanged from worker baseline is not attribu
   const reconciled=await rt.reconcileNativeResult(m,w.id,done(['notes/user.md']))
   assert.equal(reconciled.status,'DONE')
   assert.deepEqual(reconciled.changed_files,[])
-  assert.ok(m.ledger.some(e=>e.type==='user-diff.preserved'))
+  assert.ok(m.execution.ledger.some(e=>e.type==='user-diff.preserved'))
 })
 
 test('cleanup restores a collateral pre-existing user file to worker-start baseline rather than HEAD',async()=>{
   const s=new MissionStore(),m=startAssessedMission(s,'native-user-dirty-2','opaque change',{likely_targets:['src/a.ts']})
-  const impl=m.obligations.find(o=>o.kind==='implementation');assert.ok(impl)
+  const impl=m.execution.obligations.find(o=>o.kind==='implementation');assert.ok(impl)
   const t=createTask(m,{objective:'change a',role:'coder',category:'quick',scope:['src/a.ts'],requiredEvidence:[],obligationIds:[impl.id]})
   const w=createWorker(m,t,'host-default');w.status='busy';w.session_id='child-user-clean';
   const {rt,setDiffs}=harness()
@@ -150,8 +150,8 @@ test('cleanup restores a collateral pre-existing user file to worker-start basel
   w.status='busy';t.status='running';setDiffs([{file:'notes/user.md',before:'HEAD text',after:'USER EDIT',additions:1,deletions:0},{file:'src/a.ts',before:'a',after:'b',additions:1,deletions:1}])
   const cleaned=await rt.reconcileNativeResult(m,w.id,done(['src/a.ts']));rt.applyResult(m,w.id,cleaned)
   assert.equal(t.result.status,'DONE')
-  assert.equal(m.changed_files.includes('notes/user.md'),false)
-  assert.ok(m.ledger.some(e=>e.type==='diff.cleanup.verified'))
+  assert.equal(m.vcs.changed_files.includes('notes/user.md'),false)
+  assert.ok(m.execution.ledger.some(e=>e.type==='diff.cleanup.verified'))
 })
 
 test('initial child handoff warns that pre-existing dirty paths are user-owned and must not be reset',async()=>{

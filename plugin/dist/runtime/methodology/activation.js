@@ -22,10 +22,10 @@ export function createMethodologyNeed(name, signal, producer, reason, extra = {}
     return { name, signal, trigger_source: spec.trigger_source, producer, reason: reason.slice(0, 600), created_at: Date.now(), ...extra };
 }
 function addNeed(mission, need) {
-    const duplicate = mission.methodology_needs.some(existing => existing.name === need.name && existing.signal === need.signal && existing.producer === need.producer && existing.task_id === need.task_id && existing.obligation_id === need.obligation_id);
+    const duplicate = mission.methodology.methodology_needs.some(existing => existing.name === need.name && existing.signal === need.signal && existing.producer === need.producer && existing.task_id === need.task_id && existing.obligation_id === need.obligation_id);
     if (duplicate)
         return false;
-    mission.methodology_needs.push(need);
+    mission.methodology.methodology_needs.push(need);
     appendLedger(mission, 'methodology.activated', { task_id: need.task_id, payload: { name: need.name, signal: need.signal, trigger_source: need.trigger_source, producer: need.producer, obligation_id: need.obligation_id, reason: need.reason } });
     return true;
 }
@@ -53,7 +53,7 @@ export function methodologyNames(needs) {
 }
 export function bindMethodologyNeeds(mission, names, input) {
     const selected = new Set(names), obligations = [...new Set(input.obligationIds ?? [])];
-    for (const need of mission.methodology_needs) {
+    for (const need of mission.methodology.methodology_needs) {
         if (!selected.has(need.name) || need.task_id)
             continue;
         if (need.obligation_id && obligations.length && !obligations.includes(need.obligation_id))
@@ -66,7 +66,7 @@ export function bindMethodologyNeeds(mission, names, input) {
 }
 export function bindParentMethodologyNeeds(mission, names, obligationId) {
     const selected = new Set(names);
-    for (const need of mission.methodology_needs) {
+    for (const need of mission.methodology.methodology_needs) {
         if (!selected.has(need.name) || need.task_id || need.obligation_id)
             continue;
         need.obligation_id = obligationId;
@@ -75,7 +75,7 @@ export function bindParentMethodologyNeeds(mission, names, obligationId) {
 }
 export function suppressIntentMethodologySignals(mission, signals, reason) {
     const suppressed = new Set(signals), removed = [];
-    mission.methodology_needs = mission.methodology_needs.filter(need => {
+    mission.methodology.methodology_needs = mission.methodology.methodology_needs.filter(need => {
         if (need.producer !== 'intent' || !suppressed.has(need.signal))
             return true;
         removed.push(need);

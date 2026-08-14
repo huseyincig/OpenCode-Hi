@@ -23,15 +23,15 @@ test('Q2 manager remains denied direct repository write authority',()=>{
 test('Q2 invalidated pre-mutation evidence cannot satisfy freshness',()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'q2-fresh','fix',{likely_verification:['targeted-tests']})
   addEvidence(m,{kind:'targeted-tests',summary:'old pass',source:'bash',pass:true,outcome:'passed'})
-  assert.equal(m.evidence.fresh,true)
+  assert.equal(m.execution.evidence.fresh,true)
   markMutation(m,['src/a.ts'],'q2')
-  assert.equal(m.evidence.fresh,false)
+  assert.equal(m.execution.evidence.fresh,false)
   assert.deepEqual(verificationSatisfied(m),{ok:false,missing:['fresh-evidence']})
 })
 
 test('Q2 explicit user stop dominates idle continuation',()=>{
   const store=new MissionStore(),m=store.start('q2-stop','fix')
-  m.semantic_assessment.status='assessed';m.user_interrupted=true
+  m.identity.semantic_assessment.status='assessed';m.continuation.user_interrupted=true
   const d=evaluateIdle(m,Date.now()+1000)
   assert.equal(d.decision,'STOP');assert.equal(d.reason_code,'user-stop')
 })
@@ -39,7 +39,7 @@ test('Q2 explicit user stop dominates idle continuation',()=>{
 test('Q2 authority approval is bound to the exact action hash',()=>{
   const store=new MissionStore(),m=store.start('q2-auth','push')
   const approved=actionContract('git push','/repo/a')
-  m.authority={approved:{hash:approved.hash,approved_at:Date.now()},completed_hashes:[]}
+  m.authority.authority={approved:{hash:approved.hash,approved_at:Date.now()},completed_hashes:[]}
   assert.equal(isAuthorized(m,'git push','/repo/a'),true)
   assert.equal(isAuthorized(m,'git push','/repo/b'),false)
   assert.equal(isAuthorized(m,'npm publish','/repo/a'),false)
@@ -47,7 +47,7 @@ test('Q2 authority approval is bound to the exact action hash',()=>{
 
 test('Q2 open independent-review obligation cannot be represented as independently reviewed',()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'q2-review','review',{task_kind:'review',risk:'high',required_capabilities:['review','independent-review'],likely_verification:['review-evidence']})
-  m.evidence.fresh=true
+  m.execution.evidence.fresh=true
   const env=verificationEnvelopeFor(m)
   assert.equal(env.independent_review,false)
   assert.ok(verificationSatisfied(m).missing.includes('review-obligation'))
@@ -55,9 +55,9 @@ test('Q2 open independent-review obligation cannot be represented as independent
 
 test('Q2 child session cannot invoke Hi control-plane tools',async()=>{
   const store=new MissionStore(),m=store.start('q2-parent','implement')
-  m.tasks.push({id:'t',mission_id:m.mission_id,objective:'x',status:'running',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],external_action_requirements:[],worker_id:'w',created_at:Date.now(),updated_at:Date.now()})
-  const worker={id:'w',task_id:'t',role:'coder',category:'standard',session_id:'q2-child',parent_session_id:'q2-parent',parent_mission_id:m.mission_id,model:'host-default',fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'busy',generation_at_spawn:m.generation}
-  m.workers.push(worker)
+  m.execution.tasks.push({id:'t',mission_id:m.identity.mission_id,objective:'x',status:'running',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],external_action_requirements:[],worker_id:'w',created_at:Date.now(),updated_at:Date.now()})
+  const worker={id:'w',task_id:'t',role:'coder',category:'standard',session_id:'q2-child',parent_session_id:'q2-parent',parent_mission_id:m.identity.mission_id,model:'host-default',fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'busy',generation_at_spawn:m.continuation.generation}
+  m.execution.workers.push(worker)
   const bg=new BackgroundRegistry();bg.set(worker)
   const hook=createToolBeforeHook(store,bg,()=>resolveHiConfig({}),process.cwd())
   await assert.rejects(()=>hook({sessionID:'q2-child',tool:'hi_status'},{args:{}}),/child workers cannot invoke Hi control-plane tool/)

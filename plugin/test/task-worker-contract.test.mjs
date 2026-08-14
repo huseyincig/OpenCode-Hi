@@ -18,7 +18,7 @@ function mission(id='contract-task-worker'){
 test('TaskContract snapshots mission identity and external action requirements at creation',()=>{
   const m=mission('task-contract-snapshot')
   const task=createTask(m,{objective:'verify candidate',role:'coder',category:'standard',scope:['src/a.ts'],requiredEvidence:['changed-surface-sanity']})
-  assert.equal(task.mission_id,m.mission_id)
+  assert.equal(task.mission_id,m.identity.mission_id)
   assert.deepEqual(task.external_action_requirements,['git-push'])
   assert.equal(isTaskContract(task),true)
 })
@@ -74,7 +74,7 @@ test('RuntimePersistence consumes canonical Task/Worker contracts and fails clos
     const persistence=new RuntimePersistence(root)
     persistence.save(store.all(),true)
     const loaded=persistence.load();assert.equal(loaded.length,1)
-    assert.equal(loaded[0].workers[0].requested_model,'p/requested');assert.equal(loaded[0].workers[0].projected_model,'p/selected')
+    assert.equal(loaded[0].execution.workers[0].requested_model,'p/requested');assert.equal(loaded[0].execution.workers[0].projected_model,'p/selected')
     worker.attempt=-1
     persistence.save(store.all(),true)
     assert.equal(persistence.load().length,0)
@@ -103,9 +103,9 @@ test('RuntimePersistence rejects invalid persisted topology shape and single exe
   try{
     const store=new MissionStore(root),m=startAssessedMission(store,'topology-contract','verify',{task_kind:'implementation',likely_verification:[]})
     const persistence=new RuntimePersistence(root)
-    m.execution_mode='single';m.topology={mode:'single-agent',parallelism:1,reason:['minimum sufficient execution']}
+    m.execution.execution_mode='single';m.execution.topology={mode:'single-agent',parallelism:1,reason:['minimum sufficient execution']}
     persistence.save(store.all(),true);assert.equal(persistence.load().length,1)
-    m.topology.parallelism=2;persistence.save(store.all(),true);assert.equal(persistence.load().length,0)
-    m.execution_mode='parallel';m.topology={mode:'multi-agent',parallelism:0,reason:['invalid']};persistence.save(store.all(),true);assert.equal(persistence.load().length,0)
+    m.execution.topology.parallelism=2;persistence.save(store.all(),true);assert.equal(persistence.load().length,0)
+    m.execution.execution_mode='parallel';m.execution.topology={mode:'multi-agent',parallelism:0,reason:['invalid']};persistence.save(store.all(),true);assert.equal(persistence.load().length,0)
   }finally{rmSync(root,{recursive:true,force:true})}
 })

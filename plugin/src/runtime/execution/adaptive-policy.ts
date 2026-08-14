@@ -11,7 +11,7 @@ export function decideAdaptiveExecution(intent:NormalizedMissionIntent,m?:Missio
   const reasons:string[]=[]
   const coordination=intent.scope==='repo-wide'||intent.scope==='multi-stream'||intent.dependencyClass==='sequential'
   const materialUncertainty=intent.ambiguity!=='none'||intent.requiredCapabilities.includes('source-verification')
-  const escalated=riskRank(intent.risk)>=2||Boolean(m&&m.stagnation_count>=2)||Boolean(m?.blockers.length)
+  const escalated=riskRank(intent.risk)>=2||Boolean(m&&m.continuation.stagnation_count>=2)||Boolean(m?.execution.blockers.length)
   let path:ExecutionPath
   if(escalated){path='ESCALATED';reasons.push('risk/failure evidence justifies escalation')}
   else if(coordination){path='PLANNED';reasons.push('real sequencing or cross-surface coordination is required')}

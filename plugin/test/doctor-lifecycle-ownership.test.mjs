@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { createHash } from 'node:crypto'
 import { inspectProject } from '../dist/doctor/project-inspection.js'
-import { RuntimePersistence } from '../dist/runtime/state/persistence.js'
+import { RuntimePersistence,RUNTIME_STATE_SCHEMA } from '../dist/runtime/state/persistence.js'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { runtimeStatePath } from '../dist/runtime/storage/locations.js'
 
@@ -31,8 +31,8 @@ test('runtime persistence loads and saves only the current canonical schema',()=
     const mission=new MissionStore(root).start('s1','current mission')
     p.save([mission],true)
     const loaded=p.load()
-    assert.equal(loaded.length,1);assert.equal(p.lastLoadReport.sourceSchema,7);assert.equal('migrated' in p.lastLoadReport,false)
-    assert.equal(JSON.parse(readFileSync(p.path,'utf8')).schema,7)
+    assert.equal(loaded.length,1);assert.equal(p.lastLoadReport.sourceSchema,RUNTIME_STATE_SCHEMA);assert.equal('migrated' in p.lastLoadReport,false)
+    assert.equal(JSON.parse(readFileSync(p.path,'utf8')).schema,RUNTIME_STATE_SCHEMA)
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 

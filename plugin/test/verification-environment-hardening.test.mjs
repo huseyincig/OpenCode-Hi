@@ -9,14 +9,14 @@ import {startAssessedMission} from './helpers/semantic.mjs'
 function mission(){
   const s=new MissionStore(process.cwd())
   const m=startAssessedMission(s,`s-${Math.random()}`,'opaque bug',{task_kind:'bug-fix',likely_verification:['targeted-tests']})
-  m.evidence.last_mutation_at=Date.now()-10
+  m.execution.evidence.last_mutation_at=Date.now()-10
   return m
 }
 
 test('structured nonzero verifier exit is FAILED even when stdout looks benign',()=>{
   const m=mission()
   observeToolAfter(m,'bash',{command:'npm test'},{output:'Test run completed',metadata:{exit:1}})
-  const e=m.evidence.items.at(-1)
+  const e=m.execution.evidence.items.at(-1)
   assert.equal(e.outcome,'failed')
   assert.equal(e.pass,false)
   assert.equal(e.reason,'verification-exit-1')
@@ -25,25 +25,25 @@ test('structured nonzero verifier exit is FAILED even when stdout looks benign',
 
 test('missing verifier/toolchain is environment-issue, not product test failure',()=>{
   const m=mission()
-  m.stagnation_count=4
+  m.continuation.stagnation_count=4
   observeToolAfter(m,'bash',{command:'npm test'},{output:'sh: vitest: command not found',metadata:{exit:127}})
-  const e=m.evidence.items.at(-1)
+  const e=m.execution.evidence.items.at(-1)
   assert.equal(e.outcome,'environment-issue')
   assert.equal(e.pass,undefined)
   const decision=evaluateIdle(m)
   assert.equal(decision.reason_code,'verification-environment-issue')
   assert.equal(decision.decision,'RECOVER')
-  assert.equal(m.stagnation_count,0)
+  assert.equal(m.continuation.stagnation_count,0)
   assert.match(decision.prompt,/do not modify product code merely to make an unavailable verifier run/i)
 })
 
 test('unstructured verification output with no exit signal is pending, never implicit PASS',()=>{
   const m=mission()
   observeToolAfter(m,'bash',{command:'npm test'},'all done')
-  const e=m.evidence.items.at(-1)
+  const e=m.execution.evidence.items.at(-1)
   assert.equal(e.outcome,'pending')
   assert.equal(e.pass,undefined)
-  assert.equal(m.evidence.fresh,false)
+  assert.equal(m.execution.evidence.fresh,false)
   assert.equal(verificationSatisfied(m).ok,false)
 })
 

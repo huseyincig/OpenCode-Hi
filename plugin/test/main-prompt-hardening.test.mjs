@@ -12,14 +12,14 @@ test('dependency graph changes create explicit security/review obligation and ca
   const store=new MissionStore(); const m=store.start('s-dep','opaque parser change')
   store.applyInitialSemanticAssessment('s-dep',{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:['src/parser.ts'],intent_signals:[],suppressed_intent_signals:[]})
   const task={id:'t1',objective:'fix parser',scope:['src/parser.ts'],dependencies:[],role:'coder',category:'standard',status:'running',obligation_ids:[],required_evidence:[],constraints:[],created_at:1,updated_at:1}
-  m.tasks.push(task)
+  m.execution.tasks.push(task)
   const r=replanVerificationForChangedSurface(m,task,['src/parser.ts','plugin/package-lock.json'],repo())
   assert.equal(r.changed,true)
   assert.equal(r.reason,'dependency-changed-surface')
-  assert.equal(m.risk,'high')
-  assert.ok(m.intent.requiredCapabilities.includes('dependency-change'))
-  assert.ok(m.intent.requiredCapabilities.includes('security-review'))
-  assert.ok(m.obligations.some(o=>o.kind==='review'&&o.status==='open'&&/Dependency graph changed/.test(o.summary)))
+  assert.equal(m.identity.risk,'high')
+  assert.ok(m.identity.intent.requiredCapabilities.includes('dependency-change'))
+  assert.ok(m.identity.intent.requiredCapabilities.includes('security-review'))
+  assert.ok(m.execution.obligations.some(o=>o.kind==='review'&&o.status==='open'&&/Dependency graph changed/.test(o.summary)))
 })
 
 test('doctor reports primary-model drift separately when fallback is still available',()=>{

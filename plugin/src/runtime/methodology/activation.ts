@@ -31,9 +31,9 @@ export function createMethodologyNeed(
 }
 
 function addNeed(mission:MissionState,need:HiMethodologyNeed):boolean{
-  const duplicate=mission.methodology_needs.some(existing=>existing.name===need.name&&existing.signal===need.signal&&existing.producer===need.producer&&existing.task_id===need.task_id&&existing.obligation_id===need.obligation_id)
+  const duplicate=mission.methodology.methodology_needs.some(existing=>existing.name===need.name&&existing.signal===need.signal&&existing.producer===need.producer&&existing.task_id===need.task_id&&existing.obligation_id===need.obligation_id)
   if(duplicate)return false
-  mission.methodology_needs.push(need)
+  mission.methodology.methodology_needs.push(need)
   appendLedger(mission,'methodology.activated',{task_id:need.task_id,payload:{name:need.name,signal:need.signal,trigger_source:need.trigger_source,producer:need.producer,obligation_id:need.obligation_id,reason:need.reason}})
   return true
 }
@@ -69,7 +69,7 @@ export function bindMethodologyNeeds(
   input:{taskId:string;obligationIds?:readonly string[]},
 ):void{
   const selected=new Set(names),obligations=[...new Set(input.obligationIds??[])]
-  for(const need of mission.methodology_needs){
+  for(const need of mission.methodology.methodology_needs){
     if(!selected.has(need.name)||need.task_id)continue
     if(need.obligation_id&&obligations.length&&!obligations.includes(need.obligation_id))continue
     need.task_id=input.taskId
@@ -80,7 +80,7 @@ export function bindMethodologyNeeds(
 
 export function bindParentMethodologyNeeds(mission:MissionState,names:readonly string[],obligationId:string):void{
   const selected=new Set(names)
-  for(const need of mission.methodology_needs){
+  for(const need of mission.methodology.methodology_needs){
     if(!selected.has(need.name)||need.task_id||need.obligation_id)continue
     need.obligation_id=obligationId
     appendLedger(mission,'methodology.bound',{payload:{name:need.name,signal:need.signal,producer:need.producer,obligation_id:obligationId,owner:'parent-direct'}})
@@ -90,7 +90,7 @@ export function bindParentMethodologyNeeds(mission:MissionState,names:readonly s
 
 export function suppressIntentMethodologySignals(mission:MissionState,signals:readonly HiMethodologySignalName[],reason:string):string[]{
   const suppressed=new Set<string>(signals),removed:HiMethodologyNeed[]=[]
-  mission.methodology_needs=mission.methodology_needs.filter(need=>{
+  mission.methodology.methodology_needs=mission.methodology.methodology_needs.filter(need=>{
     if(need.producer!=='intent'||!suppressed.has(need.signal))return true
     removed.push(need);return false
   })

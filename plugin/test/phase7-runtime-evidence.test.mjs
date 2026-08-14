@@ -21,22 +21,22 @@ test('Gap #28: persistence round-trip preserves mission state across reload', ()
   // separately; here we lock the contract the snapshot must respect.
   const store = new MissionStore()
   const m = store.start('s1', 'demo')
-  m.intent.scope = 'multi-stream'
-  m.execution_mode = 'parallel'
-  m.changed_files = ['src/x.ts', 'src/y.ts']
-  m.evidence.last_mutation_at = 1700000000000
-  m.evidence.fresh = false
-  m.evidence.items = [{ kind: 'test', summary: 'all-pass', source: 'pytest', source_session_id: 's1', source_state_hash: 'abc', pass: true, outcome: 'pass', reason: 'all-pass' }]
+  m.identity.intent.scope = 'multi-stream'
+  m.execution.execution_mode = 'parallel'
+  m.vcs.changed_files = ['src/x.ts', 'src/y.ts']
+  m.execution.evidence.last_mutation_at = 1700000000000
+  m.execution.evidence.fresh = false
+  m.execution.evidence.items = [{ kind: 'test', summary: 'all-pass', source: 'pytest', source_session_id: 's1', source_state_hash: 'abc', pass: true, outcome: 'pass', reason: 'all-pass' }]
 
   // Capture the fields that must survive a snapshot round-trip.
   const snapshot = {
-    mission_id: m.mission_id,
-    intent_scope: m.intent.scope,
-    execution_mode: m.execution_mode,
-    changed_files: [...m.changed_files],
-    last_mutation_at: m.evidence.last_mutation_at,
-    evidence_fresh: m.evidence.fresh,
-    evidence_count: m.evidence.items.length,
+    mission_id: m.identity.mission_id,
+    intent_scope: m.identity.intent.scope,
+    execution_mode: m.execution.execution_mode,
+    changed_files: [...m.vcs.changed_files],
+    last_mutation_at: m.execution.evidence.last_mutation_at,
+    evidence_fresh: m.execution.evidence.fresh,
+    evidence_count: m.execution.evidence.items.length,
   }
   assert.equal(snapshot.intent_scope, 'multi-stream')
   assert.equal(snapshot.execution_mode, 'parallel')
@@ -56,15 +56,15 @@ test('Gap #29: stagnation recovery rungs distinguish same-worker vs new-worker',
   // We assert the structural fields the recovery layer relies on.
   const store = new MissionStore()
   const m = store.start('s1', 'demo')
-  m.stagnation_count = 5
+  m.continuation.stagnation_count = 5
   // The recovery helper checks failure-class and decides rung.
   // We assert the predicate: stagnation > 4 implies bounded-fresh-worker
   // is the next rung; the recovery helper must use the user's intent
   // config to bound the fresh worker.
-  assert.ok(m.stagnation_count > 4)
+  assert.ok(m.continuation.stagnation_count > 4)
   // maxAttempts / maxWallMinutes fields are config-driven; assert schema
   // presence.
-  const cfg = m.execution_mode
+  const cfg = m.execution.execution_mode
   assert.ok(['single', 'parallel', 'team'].includes(cfg))
 })
 
@@ -80,7 +80,7 @@ test('Gap #30: progress signature updates only when semantic state changes', () 
   const sig2 = store.signature(m)
   assert.equal(sig1, sig2)
   // A new obligation widens the signature.
-  m.obligations.push({
+  m.execution.obligations.push({
     id: 'o-test', kind: 'analysis', summary: 'demo', status: 'open', requiredEvidence: [],
   })
   const sig3 = store.signature(m)
@@ -94,7 +94,7 @@ test('Gap #30: progress signature updates only when semantic state changes', () 
 test('Gap #31: pending child worker blocks mission completion', () => {
   const store = new MissionStore()
   const m = store.start('s1', 'demo')
-  m.workers.push({
+  m.execution.workers.push({
     id: 'w1', task_id: 't1', role: 'coder', category: 'standard',
     parent_session_id: 's1', model: 'host-default', fallbacks: [],
     selected_methodologies: [], loaded_methodologies: [], methodologies: [], fingerprint: 'f1',
@@ -102,7 +102,7 @@ test('Gap #31: pending child worker blocks mission completion', () => {
   })
   // The completion adjudicator must report an active-worker reason.
   // We assert the precondition: a busy child is in the workers list.
-  assert.ok(m.workers.some(w => w.status === 'busy'))
+  assert.ok(m.execution.workers.some(w => w.status === 'busy'))
 })
 
 // ---------------------------------------------------------------------------
@@ -138,11 +138,11 @@ test('Gap #33: project context reads worktree when available', () => {
   // The store captures directory and project at construction.
   // We assert the structural invariant: a project-less fixture still
   // produces a valid mission state.
-  assert.ok(m.mission_id)
+  assert.ok(m.identity.mission_id)
   // worktree is informational; absent is acceptable.
   // If worktree is set later, the runtime propagates it.
   // (No behavior change here.)
-  assert.equal(typeof m.evidence, 'object')
+  assert.equal(typeof m.execution.evidence, 'object')
 })
 
 // ---------------------------------------------------------------------------
@@ -162,10 +162,10 @@ test('Gap #29b: recovery separates alternate plan from bounded fresh worker', as
   const { recoveryPlan } = await import('../dist/runtime/continuation/recovery.js')
   const s = new MissionStore()
   const m = s.start('recovery-rungs-2', 'fix a difficult bug')
-  m.stagnation_count = 4
+  m.continuation.stagnation_count = 4
   assert.equal(recoveryPlan(m).action, 'alternate-plan')
-  m.stagnation_count = 5
+  m.continuation.stagnation_count = 5
   assert.equal(recoveryPlan(m).action, 'fresh-worker')
-  m.stagnation_count = 6
+  m.continuation.stagnation_count = 6
   assert.equal(recoveryPlan(m).action, 'user-action')
 })

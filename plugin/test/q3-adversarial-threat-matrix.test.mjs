@@ -42,10 +42,10 @@ test('Q3 duplicate child result callback is idempotently ignored by canonical Ta
   const worker=createWorker(mission,task,'host-default',[],[],[]);worker.status='busy';worker.started_at=Date.now()-10
   const result={status:'DONE',summary:'bounded result',changed_files:[],evidence:[],open_issues:[],needs_context:[]}
   const rt=runtime();rt.applyResult(mission,worker.id,result)
-  const firstUpdated=task.updated_at,firstEvidence=mission.evidence.items.length
+  const firstUpdated=task.updated_at,firstEvidence=mission.execution.evidence.items.length
   rt.applyResult(mission,worker.id,result)
-  assert.equal(task.updated_at,firstUpdated);assert.equal(mission.evidence.items.length,firstEvidence)
-  assert.ok(mission.ledger.some(e=>e.type==='worker.result.duplicate-ignored'&&e.worker_id===worker.id))
+  assert.equal(task.updated_at,firstUpdated);assert.equal(mission.execution.evidence.items.length,firstEvidence)
+  assert.ok(mission.execution.ledger.some(e=>e.type==='worker.result.duplicate-ignored'&&e.worker_id===worker.id))
 })
 
 test('Q3 pinned threat/process/path reference revisions are recorded exactly',()=>{

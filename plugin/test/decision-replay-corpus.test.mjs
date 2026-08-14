@@ -96,15 +96,15 @@ function buildContinuationState(row) {
   store.applyInitialSemanticAssessment(row.id, normalizedAssessmentFromIntent({
     objective: 'opaque replay continuation', likelyTargets: [], taskKind: 'implementation', scope: 'local', risk: 'low', ambiguity: 'none', dependencyClass: 'independent', requiredCapabilities: ['implementation'], requestedExternalActions: [], likelyVerification: [], avoid: [],
   }))
-  mission.user_interrupted = row.state.user_interrupted
-  mission.pending_permissions = row.state.pending_permissions
-  mission.continuation_failure_count = row.state.continuation_failures
-  mission.blockers = [...row.state.blockers]
+  mission.continuation.user_interrupted = row.state.user_interrupted
+  mission.authority.pending_permissions = row.state.pending_permissions
+  mission.continuation.continuation_failure_count = row.state.continuation_failures
+  mission.execution.blockers = [...row.state.blockers]
   if (row.state.worker_status !== 'none') {
-    mission.workers.push({
+    mission.execution.workers.push({
       id: `worker-${row.id}`, task_id: `task-${row.id}`, role: 'coder', category: 'standard', parent_session_id: row.id,
-      parent_mission_id: mission.mission_id, fallbacks: [], selected_methodologies: [], loaded_methodologies: [], methodologies: [],
-      fingerprint: row.id, status: row.state.worker_status, generation_at_spawn: mission.generation,
+      parent_mission_id: mission.identity.mission_id, fallbacks: [], selected_methodologies: [], loaded_methodologies: [], methodologies: [],
+      fingerprint: row.id, status: row.state.worker_status, generation_at_spawn: mission.continuation.generation,
     })
   }
   return mission

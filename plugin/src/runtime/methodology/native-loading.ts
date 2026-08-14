@@ -18,14 +18,14 @@ export function assertChildMethodologyLoad(worker:WorkerState|undefined,name:str
 
 export function assertParentMethodologyLoad(mission:MissionState,name:string,projectRoot?:string):void{
   if(!methodologyCatalogEntry(name,projectRoot))throw new Error(`Hi methodology guard: '${name}' is not in the admitted methodology catalog.`)
-  if(!mission.methodology_needs.some(need=>need.name===name))throw new Error(`Hi methodology guard: '${name}' was not selected by Hi for this mission.`)
-  if(!mission.parent_loaded_methodologies.includes(name)&&mission.parent_loaded_methodologies.length>=methodologyLimits.hardMax){
+  if(!mission.methodology.methodology_needs.some(need=>need.name===name))throw new Error(`Hi methodology guard: '${name}' was not selected by Hi for this mission.`)
+  if(!mission.methodology.parent_loaded_methodologies.includes(name)&&mission.methodology.parent_loaded_methodologies.length>=methodologyLimits.hardMax){
     throw new Error(`Hi methodology budget: parent session may load at most ${methodologyLimits.hardMax} distinct methodologies for one mission.`)
   }
 }
 
 export function recordParentMethodologyLoad(mission:MissionState,name:string):void{
-  if(!mission.parent_loaded_methodologies.includes(name))mission.parent_loaded_methodologies.push(name)
+  if(!mission.methodology.parent_loaded_methodologies.includes(name))mission.methodology.parent_loaded_methodologies.push(name)
 }
 
 export function recordChildMethodologyLoad(worker:WorkerState|undefined,name:string):void{

@@ -15,16 +15,16 @@ test('OpenCode 1.18 chat.message output.parts is the authoritative user text sou
   await hook({sessionID:'native-shape',agent:'working-manager'},nativeUser('fix the bug in src/parser.ts'))
   const m=store.get('native-shape')
   assert.ok(m)
-  assert.match(m.objective,/parser/i)
-  assert.notEqual(m.objective,'')
+  assert.match(m.identity.objective,/parser/i)
+  assert.notEqual(m.identity.objective,'')
 })
 
 test('pure greeting becomes provisional until semantic assessment marks it non-material', async()=>{
   const store=new MissionStore(process.cwd());const hook=createChatMessageHook(store)
   await hook({sessionID:'casual',agent:'working-manager'},nativeUser('opaque greeting'))
-  const m=store.get('casual');assert.ok(m);assert.equal(m.semantic_assessment.status,'pending')
+  const m=store.get('casual');assert.ok(m);assert.equal(m.identity.semantic_assessment.status,'pending')
   store.applyInitialSemanticAssessment('casual',{material:false,message_kind:'non-material',task_kind:'review',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:[],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]})
-  assert.equal(m.status,'completed')
+  assert.equal(m.identity.status,'completed')
 })
 
 test('legacy input.message fixture remains supported for older hosts/tests', async()=>{
@@ -38,8 +38,8 @@ test('legacy input.message fixture remains supported for older hosts/tests', asy
 test('native output.parts opens semantic follow-up revisions; structured assessment drives verification and stop', async()=>{
   const store=new MissionStore(process.cwd()),hook=createChatMessageHook(store)
   await hook({sessionID:'follow',agent:'working-manager'},nativeUser('opaque task'));store.applyInitialSemanticAssessment('follow',{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[]})
-  const m=store.get('follow');await hook({sessionID:'follow',agent:'working-manager'},nativeUser('opaque verification follow-up'));applyStructuredFollowup(store,'follow','opaque verification follow-up',{message_kind:'verification',likely_verification:['targeted-tests']});assert.equal(m.obligations.find(x=>x.kind==='verification')?.status,'open')
-  await hook({sessionID:'follow',agent:'working-manager'},nativeUser('opaque stop request'));applyStructuredFollowup(store,'follow','opaque stop request',{message_kind:'stop'});assert.equal(m.status,'stopped')
+  const m=store.get('follow');await hook({sessionID:'follow',agent:'working-manager'},nativeUser('opaque verification follow-up'));applyStructuredFollowup(store,'follow','opaque verification follow-up',{message_kind:'verification',likely_verification:['targeted-tests']});assert.equal(m.execution.obligations.find(x=>x.kind==='verification')?.status,'open')
+  await hook({sessionID:'follow',agent:'working-manager'},nativeUser('opaque stop request'));applyStructuredFollowup(store,'follow','opaque stop request',{message_kind:'stop'});assert.equal(m.identity.status,'stopped')
 })
 
 test('native title/summary/compaction agents do not receive Hi control-plane transforms', async()=>{
@@ -62,7 +62,7 @@ test('native title/summary/compaction agents do not receive Hi control-plane tra
 test('OpenCode CLI quoted chat text normalizes before provisional semantic assessment', async()=>{
   const store=new MissionStore(process.cwd()),hook=createChatMessageHook(store)
   await hook({sessionID:'cli-quoted',agent:'working-manager'},nativeUser('\"opaque quoted request\"'))
-  const m=store.get('cli-quoted');assert.ok(m);assert.equal(m.objective,'opaque quoted request');assert.equal(m.semantic_assessment.status,'pending')
+  const m=store.get('cli-quoted');assert.ok(m);assert.equal(m.identity.objective,'opaque quoted request');assert.equal(m.identity.semantic_assessment.status,'pending')
 })
 
 test('OpenCode 1.18 agentless title system transform is recognized from native prompt fingerprint', async()=>{
@@ -89,8 +89,8 @@ test('primary chat model metadata stays host-selected and does not manufacture H
   await hook({sessionID:'primary-host-model',agent:'working-manager',model:{providerID:'p',modelID:'host-choice'},variant:'high'},nativeUser('opaque primary task'))
   const m=store.get('primary-host-model')
   assert.ok(m)
-  assert.equal(m.primary_mode,'working-manager')
-  assert.equal(m.workers.length,0)
+  assert.equal(m.execution.primary_mode,'working-manager')
+  assert.equal(m.execution.workers.length,0)
   assert.equal(Object.hasOwn(m,'primary_model'),false)
   assert.equal(Object.hasOwn(m,'primary_model_variant'),false)
 })
