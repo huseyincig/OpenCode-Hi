@@ -18,7 +18,7 @@ export class RuntimeEventController {
     }
     async handle({ event }) {
         const { state, host, services, projectAuthority, pendingNativePermissions, projectRoot } = this.deps;
-        const { store, background, persistence, tasks, teams, processRuntime, eventSink, scopedStores } = services;
+        const { store, background, persistence, tasks, teams, processRuntime, workspaceRuntime, eventSink, scopedStores } = services;
         const ev = normalizeOpenCodeEvent(event);
         if (ev.kind === 'installation-updated') {
             await host.refreshRuntimeInventory('installation-updated');
@@ -140,6 +140,7 @@ export class RuntimeEventController {
                     return;
                 }
                 tasks.fail(m, child.id, detail);
+                await tasks.cleanupWorkspaceForTask(m, child.task_id);
                 await teams.reconcileMission(m);
                 store.updateProgress(m);
                 appendLedger(m, 'parent.wake', { worker_id: child.id, payload: { result: 'FAILED', event: ev.rawType } });
@@ -177,6 +178,8 @@ export class RuntimeEventController {
                     result = { ...result, status: 'BLOCKED', summary: `Effective child model could not be verified against the selected execution model. ${effective.reason}`, open_issues: [...new Set([...(result.open_issues ?? []), effective.reason])], needs_context: [...new Set([...(result.needs_context ?? []), 'effective-model-reconcile: refresh runtime inventory/provider policy and resume with a verified role-selected model'])] };
                 result = await tasks.reconcileNativeResult(m, child.id, result);
                 tasks.applyResult(m, child.id, result);
+                if (['completed', 'failed', 'cancelled'].includes(child.status))
+                    await tasks.cleanupWorkspaceForTask(m, child.task_id);
                 await teams.reconcileMission(m);
                 if (['completed', 'failed', 'cancelled'].includes(child.status))
                     background.delete(child.id);
@@ -200,6 +203,8 @@ export class RuntimeEventController {
                 store.stop(sid, 'parent-session-deleted');
                 await processRuntime.stopMission(parent);
                 await tasks.cancelAll(parent);
+                if (workspaceRuntime)
+                    await workspaceRuntime.cleanupMission(parent);
                 persistence.save(store.all());
             }
             return;

@@ -1,0 +1,114 @@
+import { spawnSync } from 'node:child_process';
+import { realpathSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { createOpencodeClient as createOpenCodeV2Client } from '@opencode-ai/sdk/v2/client';
+function nativeData(value) { const first = value && typeof value === 'object' && 'data' in value ? value.data : value; return (first && typeof first === 'object' && 'data' in first ? first.data : first); }
+function git(directory, args) { const r = spawnSync('git', ['-C', directory, ...args], { encoding: 'utf8' }); if (r.status !== 0)
+    throw new Error(`Git workspace inspection failed: ${String(r.stderr ?? r.stdout ?? 'unknown error')}`); return String(r.stdout ?? '').trim(); }
+function canonicalExisting(path) { return realpathSync(resolve(path)); }
+function defaultInspect(directory) {
+    const root = canonicalExisting(directory), head = git(root, ['rev-parse', 'HEAD']), rawCommon = git(root, ['rev-parse', '--git-common-dir']), common_dir = canonicalExisting(resolve(root, rawCommon)), raw = git(root, ['worktree', 'list', '--porcelain']), worktrees = raw.split(/\r?\n/).filter(x => x.startsWith('worktree ')).map(x => canonicalExisting(x.slice('worktree '.length).trim()));
+    return { head, common_dir, worktrees };
+}
+function sameRepository(primary, workspace) { return primary.common_dir === workspace.common_dir; }
+export class OpenCodeWorkspaceAdapter {
+    client;
+    serverUrl;
+    directory;
+    inspector;
+    #v2Client;
+    constructor(client, serverUrl, directory, inspector = defaultInspect) {
+        this.client = client;
+        this.serverUrl = serverUrl;
+        this.directory = directory;
+        this.inspector = inspector;
+    }
+    #edge() { return this.client; }
+    #workspace() {
+        const injected = this.#edge()?.v2?.experimental?.workspace ?? this.#edge()?.experimental?.workspace;
+        if (injected)
+            return injected;
+        if (!this.#v2Client && this.serverUrl)
+            this.#v2Client = createOpenCodeV2Client({ baseUrl: this.serverUrl.toString(), directory: this.directory });
+        const api = this.#v2Client?.experimental?.workspace;
+        if (!api || typeof api.create !== 'function' || typeof api.list !== 'function' || typeof api.remove !== 'function')
+            throw new Error('OpenCode experimental workspace API unavailable');
+        return api;
+    }
+    async sourceBaseline(repositoryRoot) { const observed = this.inspector(repositoryRoot).head; if (!/^[a-f0-9]{40}(?:[a-f0-9]{24})?$/.test(observed))
+        throw new Error('Git source baseline is not an exact object id'); return observed; }
+    #validate(native, request) {
+        if (!native || typeof native.id !== 'string' || !native.id.trim() || native.type !== 'worktree' || typeof native.directory !== 'string' || !native.directory.trim())
+            throw new Error('OpenCode workspace response is not a bounded worktree identity');
+        if (request.expected_id && native.id !== request.expected_id)
+            throw new Error(`OpenCode workspace identity mismatch: expected ${request.expected_id}, observed ${native.id}`);
+        const primaryPath = canonicalExisting(request.repository_root), workspacePath = canonicalExisting(native.directory);
+        if (primaryPath === workspacePath)
+            throw new Error('Refusing workspace lease that resolves to the primary repository path');
+        if (request.expected_path && workspacePath !== canonicalExisting(request.expected_path))
+            throw new Error(`OpenCode workspace path mismatch: expected ${request.expected_path}, observed ${workspacePath}`);
+        const primary = this.inspector(primaryPath), workspace = this.inspector(workspacePath);
+        if (request.require_baseline && primary.head !== request.source_baseline)
+            throw new Error(`Primary source baseline drifted before workspace binding: expected ${request.source_baseline}, observed ${primary.head}`);
+        if (request.require_baseline && workspace.head !== request.source_baseline)
+            throw new Error(`Workspace source baseline mismatch: expected ${request.source_baseline}, observed ${workspace.head}`);
+        if (!sameRepository(primary, workspace))
+            throw new Error('OpenCode workspace is not registered to the same Git common repository');
+        if (!primary.worktrees.includes(workspacePath))
+            throw new Error('OpenCode workspace path is not present in the primary Git worktree registry');
+        if (!workspace.worktrees.includes(workspacePath))
+            throw new Error('Workspace Git view does not contain its own canonical worktree path');
+        return { host_workspace_id: native.id, workspace_path: workspacePath, ...(native.branch ? { branch: String(native.branch) } : {}) };
+    }
+    async provision(request) {
+        const before = this.inspector(request.repository_root);
+        if (before.head !== request.source_baseline)
+            throw new Error('Source baseline changed before OpenCode workspace provisioning');
+        const raw = await this.#workspace().create({ directory: this.directory, type: 'worktree' }), native = nativeData(raw);
+        try {
+            return this.#validate(native, { ...request, require_baseline: true });
+        }
+        catch (error) {
+            if (native?.id)
+                try {
+                    await this.#workspace().remove({ id: native.id, directory: this.directory });
+                }
+                catch { }
+            ;
+            throw error;
+        }
+    }
+    async reconcile(lease) {
+        const raw = await this.#workspace().list({ directory: this.directory }), items = nativeData(raw) ?? [], native = Array.isArray(items) ? items.find(x => x?.id === lease.host_workspace_id) : undefined;
+        if (!native) {
+            const primary = this.inspector(lease.repository_root), target = resolve(lease.workspace_path);
+            const stillRegistered = primary.worktrees.some(x => resolve(x) === target);
+            if (!stillRegistered && (lease.status === 'CLOSED' || lease.cleanup_state === 'CLEANUP_PENDING' || lease.cleanup_state === 'CLEANED'))
+                return { disposition: 'CLOSED', lease: { ...lease, status: 'CLOSED', cleanup_state: 'CLEANED' } };
+            return { disposition: 'ORPHANED', lease: { ...lease, status: 'ORPHANED', cleanup_state: 'QUARANTINED' } };
+        }
+        try {
+            this.#validate(native, { repository_root: lease.repository_root, source_baseline: lease.source_baseline, expected_path: lease.workspace_path, expected_id: lease.host_workspace_id, require_baseline: false });
+            return { disposition: 'ADOPTED', lease: { ...lease, status: 'ACTIVE', cleanup_state: 'ACTIVE' } };
+        }
+        catch {
+            return { disposition: 'ORPHANED', lease: { ...lease, status: 'ORPHANED', cleanup_state: 'QUARANTINED' } };
+        }
+    }
+    async cleanup(lease) {
+        if (!lease.host_workspace_id)
+            throw new Error('Workspace cleanup requires host_workspace_id');
+        const primary = this.inspector(lease.repository_root), target = canonicalExisting(lease.workspace_path);
+        if (target === canonicalExisting(lease.repository_root))
+            throw new Error('Refusing cleanup of primary repository path');
+        if (!primary.worktrees.includes(target))
+            throw new Error('Refusing workspace cleanup for path outside the registered Git worktree set');
+        await this.#workspace().remove({ id: lease.host_workspace_id, directory: this.directory });
+        const raw = await this.#workspace().list({ directory: this.directory }), items = nativeData(raw) ?? [];
+        if (Array.isArray(items) && items.some(x => x?.id === lease.host_workspace_id))
+            throw new Error('OpenCode workspace still exists after cleanup');
+        const after = this.inspector(lease.repository_root);
+        if (after.worktrees.some(x => resolve(x) === target))
+            throw new Error('Git worktree registry still contains workspace after cleanup');
+    }
+}

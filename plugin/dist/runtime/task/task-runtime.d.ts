@@ -7,6 +7,7 @@ import type { OpenCodeLifecycleEndpoint } from '../../opencode/client-adapter.js
 import { ConcurrencyScheduler } from '../scheduler/concurrency.js';
 import type { RuntimeSignalSink } from '../events/event-sink.js';
 import { type RuntimeScopedStores } from '../application/runtime-scoped-stores.js';
+import type { WorkspaceRuntime } from '../workspace/runtime.js';
 export interface StartTaskInput {
     objective?: string;
     role?: string;
@@ -21,6 +22,8 @@ export interface StartTaskInput {
     contextArtifactIds?: string[];
     constraints?: string[];
     forkFromSession?: string;
+    isolationRequired?: boolean;
+    isolationReason?: string;
 }
 export declare class TaskRuntime {
     #private;
@@ -32,7 +35,8 @@ export declare class TaskRuntime {
     private getModels;
     private getHostConfig;
     private events?;
-    constructor(client: OpenCodeClient, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined, lifecycle?: OpenCodeLifecycleEndpoint, scopedStores?: RuntimeScopedStores);
+    private readonly workspaceRuntime?;
+    constructor(client: OpenCodeClient, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined, lifecycle?: OpenCodeLifecycleEndpoint, scopedStores?: RuntimeScopedStores, workspaceRuntime?: WorkspaceRuntime | undefined);
     private sendProviderPrompt;
     private recordModelProjection;
     private abortNativeSession;
@@ -51,6 +55,8 @@ export declare class TaskRuntime {
     resolveChildCallback(sessionID: string): WorkerState | undefined;
     childCallbackDisposition(m: MissionState, worker: WorkerState): import("./task-recovery-coordinator.js").ChildCallbackDisposition;
     queueDepth(): number;
+    private workspaceBinding;
+    cleanupWorkspaceForTask(m: MissionState, taskID: string): Promise<boolean>;
     private depsReady;
     private failedDeps;
     private canRun;

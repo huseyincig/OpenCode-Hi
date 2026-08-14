@@ -222,16 +222,12 @@
     {
       "id": "Q3-ADV-013",
       "threat": "workspace-cleanup-loss",
-      "owner": "IsolationDecision / WorkspaceLease contracts + HostCapability; W2 adapter pending",
-      "control": "W1 strictly owns isolation decision and lease lifecycle/cleanup metadata without provisioning anything; workspace isolation remains UNSUPPORTED until W2 binds execution and W3 proves create/bind/write/verify/cleanup on a real host.",
+      "owner": "IsolationDecision / WorkspaceLease / WorkspaceRuntime / OpenCodeWorkspaceAdapter",
+      "control": "W2 provisions only OpenCode builtin worktree workspaces, validates canonical registered Git repository identity, binds every fresh child by exact workspaceID+directory, keeps cleanup separate from child abort, and restart adopts/quarantines without recreation. Capability remains UNSUPPORTED until W3 exact-host create/bind/write/verify/cleanup proof.",
       "proof_tests": [
         {
-          "file": "plugin/test/hi-acceptance-evolution.test.mjs",
-          "contains": "reference host exposes owned native process events while workspace isolation remains unsupported"
-        },
-        {
-          "file": "plugin/test/host-capability-contract.test.mjs",
-          "contains": "prompt and worker capabilities fail closed when required native ownership primitives are absent"
+          "file": "plugin/test/w2-workspace-executor.test.mjs",
+          "contains": "W2 restart adopts exact lease, quarantines missing owner without recreation"
         }
       ],
       "evidence": [

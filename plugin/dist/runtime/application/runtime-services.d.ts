@@ -11,6 +11,8 @@ import { TeamRuntime } from '../team/team-runtime.js';
 import { ExperimentalOpenCodeAdapter } from '../../opencode/experimental-adapter.js';
 import { OpenCodePtyAdapter } from '../../opencode/open-code-pty-adapter.js';
 import { ProcessRuntime } from '../process/runtime.js';
+import { OpenCodeWorkspaceAdapter } from '../../opencode/open-code-workspace-adapter.js';
+import { WorkspaceRuntime } from '../workspace/runtime.js';
 export declare function createRuntimeServices(input: {
     ctx: OpenCodePluginContext;
     projectRoot: string;
@@ -27,6 +29,8 @@ export declare function createRuntimeServices(input: {
     tasks: TaskRuntime;
     processExecutor: OpenCodePtyAdapter;
     processRuntime: ProcessRuntime;
+    workspaceExecutor: OpenCodeWorkspaceAdapter;
+    workspaceRuntime: WorkspaceRuntime;
     experimental: ExperimentalOpenCodeAdapter;
     teams: TeamRuntime;
     scopedStores: import("./runtime-scoped-stores.js").RuntimeScopedStores;

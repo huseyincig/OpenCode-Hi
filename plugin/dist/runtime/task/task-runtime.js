@@ -86,6 +86,7 @@ export class TaskRuntime {
     getModels;
     getHostConfig;
     events;
+    workspaceRuntime;
     #queue = [];
     #draining = false;
     #methodologyLearning;
@@ -93,7 +94,7 @@ export class TaskRuntime {
     #results;
     #recovery;
     #scopedStores;
-    constructor(client, registry, scheduler, projectRoot, hiRoot, getConfig, getModels, getHostConfig, events, lifecycle = {}, scopedStores) {
+    constructor(client, registry, scheduler, projectRoot, hiRoot, getConfig, getModels, getHostConfig, events, lifecycle = {}, scopedStores, workspaceRuntime) {
         this.client = client;
         this.registry = registry;
         this.scheduler = scheduler;
@@ -102,11 +103,12 @@ export class TaskRuntime {
         this.getModels = getModels;
         this.getHostConfig = getHostConfig;
         this.events = events;
+        this.workspaceRuntime = workspaceRuntime;
         this.#scopedStores = scopedStores ?? createRuntimeScopedStores(projectRoot, hiRoot);
         this.#methodologyLearning = new ProjectMethodologyLearningStore(projectRoot);
         this.#child = new ChildExecutionCoordinator(client, lifecycle, registry);
         this.#results = new TaskResultReconciler(scheduler, registry, projectRoot, events, this.#methodologyLearning, this.#child, (m, w, run) => this.queueTask(m, w, run), () => this.drainQueue(), this.#scopedStores);
-        this.#recovery = new TaskRecoveryCoordinator(scheduler, registry, projectRoot, getConfig, getModels, getHostConfig, events, this.#child, () => this.drainQueue());
+        this.#recovery = new TaskRecoveryCoordinator(scheduler, registry, projectRoot, getConfig, getModels, getHostConfig, events, this.#child, () => this.drainQueue(), (m, taskID) => this.workspaceBinding(m, taskID));
     }
     async sendProviderPrompt(sessionID, text, role, model, variant, tools) { return this.#child.sendProviderPrompt(sessionID, text, role, model, variant, tools); }
     recordModelProjection(worker, model, variant) { this.#child.recordModelProjection(worker, model, variant); }
@@ -117,6 +119,9 @@ export class TaskRuntime {
     resolveChildCallback(sessionID) { return this.#child.resolveCallbackWorker(sessionID); }
     childCallbackDisposition(m, worker) { return this.#recovery.callbackDisposition(m, worker); }
     queueDepth() { return this.#queue.length; }
+    workspaceBinding(m, taskID) { const required = m.execution.isolation_decisions.some(d => d.required && d.requested_by === `task:${taskID}`), lease = this.workspaceRuntime?.forTask(m, taskID); if (required && (!lease || lease.status !== 'ACTIVE' || lease.cleanup_state !== 'ACTIVE' || !lease.host_workspace_id))
+        throw new Error(`Required workspace lease is not active for task ${taskID}`); return lease?.host_workspace_id && lease.status === 'ACTIVE' && lease.cleanup_state === 'ACTIVE' ? { workspaceID: lease.host_workspace_id, directory: lease.workspace_path } : undefined; }
+    async cleanupWorkspaceForTask(m, taskID) { return this.workspaceRuntime ? this.workspaceRuntime.cleanupTask(m, taskID) : true; }
     depsReady(m, deps) { return deps.every(id => m.execution.tasks.find(t => t.id === id)?.status === 'completed'); }
     failedDeps(m, deps) { return deps.filter(id => { const status = m.execution.tasks.find(t => t.id === id)?.status; return status === 'failed' || status === 'cancelled'; }); }
     canRun(m, worker, chain) { if (m.identity.status !== 'active' || m.continuation.user_interrupted || m.identity.semantic_assessment.status !== 'assessed' || worker.status === 'cancelled')
@@ -153,6 +158,7 @@ export class TaskRuntime {
                     t.result = { status: 'BLOCKED', summary: 'Required dependency did not complete successfully.', changed_files: [], evidence: [], open_issues: [reason], needs_context: [] };
                     e.mission.execution.blockers = [...new Set([...e.mission.execution.blockers, reason])];
                     this.registry.delete(e.worker.id);
+                    await this.cleanupWorkspaceForTask(e.mission, t.id);
                     appendLedger(e.mission, 'worker.dependency-blocked', { task_id: t.id, worker_id: e.worker.id, payload: { dependencies: failed } });
                     void this.events?.(runtimeSignal('worker.dependency-blocked', e.mission.identity.mission_id, { task_id: t.id, worker_id: e.worker.id, payload: { dependencies: failed } }));
                     syncMissionGates(e.mission);
@@ -195,13 +201,17 @@ export class TaskRuntime {
             appendLedger(m, 'skill.fallback', { payload: { missing: skillPlan.missing, requested: skillPlan.requested, skillToolEnabled } });
         const scope = input.scope ?? (isHiReadOnlyChildRole(role) && m.vcs.changed_files.length ? m.vcs.changed_files : taskIntent.likelyTargets ?? []), dependencies = [...new Set(input.dependencies ?? [])];
         const unknownDependencies = dependencies.filter(id => !m.execution.tasks.some(t => t.id === id)), unavailableDependencies = this.failedDeps(m, dependencies), incompleteDependencies = dependencies.filter(id => { const t = m.execution.tasks.find(x => x.id === id); return Boolean(t) && t.status !== 'completed' && !unavailableDependencies.includes(id); });
-        const requiredEvidence = input.requiredEvidence ?? m.execution.verification_policy.requiredKinds, obligationIds = inferObligationIds(m, role, requiredEvidence, input.obligationIds), constraints = [...new Set([...(m.execution.constraints ?? []), ...(input.constraints ?? [])])], desiredFingerprint = workerFingerprint(role, category, selected.primary, taskIntent.taskKind, objective, { scope, constraints, dependencies, requiredEvidence, obligationIds }), existing = m.execution.workers.find(w => w.fingerprint === desiredFingerprint && !['completed', 'failed', 'cancelled'].includes(w.status));
+        const requiredEvidence = input.requiredEvidence ?? m.execution.verification_policy.requiredKinds, obligationIds = inferObligationIds(m, role, requiredEvidence, input.obligationIds), isolationRequired = input.isolationRequired === true, isolationReason = String(input.isolationReason ?? '').trim();
+        if (isolationRequired && !isolationReason)
+            throw new Error('Hi isolated task requires a bounded isolation reason');
+        const constraints = [...new Set([...(m.execution.constraints ?? []), ...(input.constraints ?? []), ...(isolationRequired ? ['hi-isolation:git-worktree'] : [])])], desiredFingerprint = workerFingerprint(role, category, selected.primary, taskIntent.taskKind, objective, { scope, constraints, dependencies, requiredEvidence, obligationIds }), existing = m.execution.workers.find(w => w.fingerprint === desiredFingerprint && !['completed', 'failed', 'cancelled'].includes(w.status));
         const native = new NativeOpenCodeAdapter(this.client), resumeCapable = Boolean(existing?.session_id), preflight = evaluateTaskPreconditions({ role, implementation: role === 'coder', dependencies: { unknown: unknownDependencies, failed: unavailableDependencies, incomplete: incompleteDependencies }, modelAvailable: Boolean(selected.primary), native: { childSession: resumeCapable || native.has('session-create'), prompt: native.has('prompt-async') || native.has('prompt-sync') }, hostConfig, methodologyResourceFailures, contractCriticalAmbiguity: m.identity.intent.ambiguity === 'contract-critical', authorityRequired: false });
         appendLedger(m, 'task.preflight', { payload: { role, decision: preflight.decision, resume_capable: resumeCapable, items: preflight.items.slice(0, 12) } });
         void this.events?.(runtimeSignal('task.preflight', m.identity.mission_id, { payload: { role, decision: preflight.decision, resume_capable: resumeCapable, items: preflight.items.slice(0, 12) } }));
         if (preflight.decision === 'RESOLVE' || preflight.decision === 'USER_ACTION_REQUIRED')
             throw new TaskPreconditionError(preflight);
         if (existing) {
+            this.workspaceBinding(m, existing.task_id);
             const oldTask = m.execution.tasks.find(t => t.id === existing.task_id);
             if (existing.status === 'ready' && existing.session_id && oldTask?.result && ['FIX_REQUIRED', 'NEEDS_CONTEXT', 'BLOCKED'].includes(oldTask.result.status)) {
                 const chain = [selected.primary, ...selected.fallbacks].filter((x) => Boolean(x)), nextModel = chain.find(model => this.scheduler.canStart(existing.id, providerOf(model), model === 'host-default' ? undefined : model).ok) ?? existing.model;
@@ -238,6 +248,26 @@ export class TaskRuntime {
         const profile = { role, category, task: { objective, scope: [...scope], dependencies: [...dependencies], required_evidence: [...requiredEvidence] }, tools: taskTools, model: selected.primary, model_variant: input.modelVariant ?? selected.primaryVariant, fallback_models: selected.fallbacks, fallback_variants: selected.fallbackVariants, fallback_reasons: selected.fallbackReasons, methodologies, permission_profile: { skill_tool_enabled: skillToolEnabled, skill_permissions: permissionMap ?? {}, external_effects: 'parent-only', recursive_task: 'deny', native: surface.permissions }, verification_policy: { ...m.execution.verification_policy, requiredKinds: [...m.execution.verification_policy.requiredKinds] }, max_context_chars: DEFAULT_CONTEXT_BUDGET.max_context_chars, max_handoff_chars: DEFAULT_CONTEXT_BUDGET.max_handoff_chars, max_result_chars: DEFAULT_CONTEXT_BUDGET.max_result_chars, max_artifacts: DEFAULT_CONTEXT_BUDGET.max_artifacts };
         const task = createTask(m, { objective, role, category, scope, constraints, dependencies, requiredEvidence, obligationIds, contextReferences: selectedContextReferences, executionProfile: profile });
         bindMethodologyNeeds(m, methodologies, { taskId: task.id, obligationIds: task.obligation_ids });
+        if (isolationRequired) {
+            if (!this.workspaceRuntime) {
+                task.status = 'blocked';
+                const marker = `workspace-executor-unavailable:${task.id}`;
+                m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+                throw new Error('Hi WorkspaceExecutor is unavailable for required isolation');
+            }
+            const decision = this.workspaceRuntime.decision(m, task, { required: true, reason: isolationReason });
+            try {
+                await this.workspaceRuntime.provision(m, task, decision);
+            }
+            catch (error) {
+                task.status = 'blocked';
+                task.updated_at = Date.now();
+                const marker = `workspace-provision-failed:${task.id}`;
+                m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+                appendLedger(m, 'workspace.provision-failed', { task_id: task.id, payload: { error: String(error) } });
+                throw error;
+            }
+        }
         const provenance = methodologyProvenance(skillPlan.selected), worker = createWorker(m, task, selected.primary, selected.fallbacks, methodologies, provenance);
         worker.requested_model = input.model;
         worker.requested_model_variant = input.modelVariant;
@@ -298,7 +328,7 @@ export class TaskRuntime {
                 worker.status = 'starting';
                 task.status = 'queued';
                 this.recordModelProjection(worker, model, variant);
-                const spawned = await this.#child.createForTask(m.identity.session_id, `Hi · ${role} · ${objective.slice(0, 60)}`, role, model === 'host-default' ? undefined : model, variant, input.forkFromSession), child = spawned.child;
+                const spawned = await this.#child.createForTask(m.identity.session_id, `Hi · ${role} · ${objective.slice(0, 60)}`, role, model === 'host-default' ? undefined : model, variant, input.forkFromSession, this.workspaceBinding(m, task.id)), child = spawned.child;
                 if (input.forkFromSession)
                     appendLedger(m, 'worker.session-fork', { task_id: task.id, worker_id: worker.id, payload: { source_session: input.forkFromSession, native: spawned.fork.nativeAvailable, used: spawned.fork.used, reason: spawned.fork.reason } });
                 if (m.identity.status !== 'active' || m.continuation.user_interrupted || worker.status === 'cancelled') {
@@ -360,7 +390,7 @@ export class TaskRuntime {
             appendLedger(m, 'worker.start.model-unavailable', { task_id: task.id, worker_id: worker.id, payload: { attempted: liveStatuses } });
         }
         else
-            task.status = 'failed'; appendLedger(m, 'worker.start.failed', { task_id: task.id, worker_id: worker.id, payload: { error: String(lastError), attempted_models: chain } }); throw lastError; });
+            task.status = 'failed'; await this.cleanupWorkspaceForTask(m, task.id); appendLedger(m, 'worker.start.failed', { task_id: task.id, worker_id: worker.id, payload: { error: String(lastError), attempted_models: chain } }); throw lastError; });
         syncMissionGates(m);
         if (!this.canRun(m, worker, chain)) {
             this.queueTask(m, worker, run);
@@ -372,6 +402,7 @@ export class TaskRuntime {
             if (duplicateTask && ['created', 'queued'].includes(duplicateTask.status))
                 m.execution.tasks = m.execution.tasks.filter(t => t.id !== duplicateTask.id);
             m.execution.workers = m.execution.workers.filter(w => w.id !== worker.id);
+            await this.cleanupWorkspaceForTask(m, task.id);
             appendLedger(m, 'worker.spawn.deduped', { worker_id: spawned.id, payload: { discarded_worker_id: worker.id, fingerprint: worker.fingerprint } });
             const spawnedTask = m.execution.tasks.find(t => t.id === spawned.task_id);
             return { task_id: spawnedTask?.id ?? spawned.task_id, worker_id: spawned.id, session_id: spawned.session_id, model: spawned.model, methodologies: spawned.selected_methodologies, selection_reason: [...routed.reason, ...selected.reason, 'deduped:existing-spawn', ...selected.fallbackReasons.map(x => `${x.model}:${x.reason}`), ...skillPlan.reason], readiness: 'READY', preconditions: preflight.items };
@@ -393,6 +424,7 @@ export class TaskRuntime {
                 this.scheduler.release(worker.id);
                 this.registry.delete(worker.id);
                 this.#queue = this.#queue.filter(q => q.worker.id !== worker.id);
+                await this.cleanupWorkspaceForTask(m, task.id);
                 appendLedger(m, 'worker.semantic-cancelled-before-start', { task_id: task.id, worker_id: worker.id, payload: { revision: m.identity.semantic_assessment.revision } });
                 paused++;
                 continue;
@@ -425,6 +457,15 @@ export class TaskRuntime {
             const task = m.execution.tasks.find(t => t.id === worker.task_id);
             if (!task || !worker.session_id)
                 continue;
+            try {
+                this.workspaceBinding(m, task.id);
+            }
+            catch (error) {
+                const marker = `workspace-orphan:${task.id}`;
+                m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+                appendLedger(m, 'worker.semantic-resume-blocked', { task_id: task.id, worker_id: worker.id, payload: { reason: String(error) } });
+                continue;
+            }
             const model = worker.model, provider = providerOf(model), capacity = this.scheduler.canStart(worker.id, provider, model === 'host-default' ? undefined : model);
             if (!capacity.ok) {
                 appendLedger(m, 'worker.semantic-resume-deferred', { task_id: task.id, worker_id: worker.id, payload: { revision: m.identity.semantic_assessment.revision, reason: capacity.reason } });
@@ -454,6 +495,15 @@ export class TaskRuntime {
             const task = m.execution.tasks.find(t => t.id === worker.task_id);
             if (!task)
                 continue;
+            try {
+                this.workspaceBinding(m, task.id);
+            }
+            catch (error) {
+                const marker = `workspace-orphan:${task.id}`;
+                m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+                appendLedger(m, 'worker.constraint-rebase.blocked', { task_id: task.id, worker_id: worker.id, payload: { reason: String(error) } });
+                continue;
+            }
             const beforeMethodologies = [...worker.selected_methodologies];
             const stillRequired = (name) => m.methodology.methodology_needs.some(need => need.name === name && (!need.task_id || need.task_id === task.id));
             worker.selected_methodologies = worker.selected_methodologies.filter(stillRequired);
@@ -496,7 +546,7 @@ export class TaskRuntime {
             }
             try {
                 this.recordModelProjection(worker, model, variant);
-                const child = await this.#child.create(m.identity.session_id, `Hi · ${worker.role} · constraint update · ${task.objective.slice(0, 45)}`, worker.role, model === 'host-default' ? undefined : model, variant);
+                const child = await this.#child.create(m.identity.session_id, `Hi · ${worker.role} · constraint update · ${task.objective.slice(0, 45)}`, worker.role, model === 'host-default' ? undefined : model, variant, this.workspaceBinding(m, task.id));
                 if (!child?.id)
                     throw new Error('Constraint rebase child session id missing');
                 const recoverySessionID = String(child.id);
@@ -549,5 +599,5 @@ export class TaskRuntime {
             return false;
         }
     } worker.status = 'cancelled'; this.scheduler.release(worker.id); const t = m.execution.tasks.find(x => x.id === worker.task_id); if (t)
-        t.status = 'cancelled'; this.registry.delete(worker.id); this.#queue = this.#queue.filter(q => q.worker.id !== worker.id); appendLedger(m, 'worker.cancelled', { task_id: t?.id, worker_id: worker.id }); syncMissionGates(m); this.drainQueue(); return true; }
+        t.status = 'cancelled'; this.registry.delete(worker.id); this.#queue = this.#queue.filter(q => q.worker.id !== worker.id); await this.cleanupWorkspaceForTask(m, worker.task_id); appendLedger(m, 'worker.cancelled', { task_id: t?.id, worker_id: worker.id }); syncMissionGates(m); this.drainQueue(); return true; }
 }

@@ -68,7 +68,7 @@ export function openCodeHostCapabilityContracts(o:OpenCodeCapabilityObservation)
     worker,
     unsupported('browser-execution','methodology-host-capability.test.mjs','Do not claim browser/visual execution from MCP naming, prompts, screenshots, or tool inventory alone; the audited OpenCode host surface exposes MCP/tool discovery but Hi has no deterministic browser executor/evidence adapter.'),
     realHostSupported('process-lifecycle','OpenCode v2 PTY create/get/list/remove/connect-token + ticketed WebSocket','ProcessRuntime + OpenCodePtyAdapter','p3-process-runtime-lifecycle.test.mjs',['OpenCode role bash permission','external_directory when cwd is outside the project','Hi ExternalAction/Authority for classified external effects']),
-    unsupported('workspace-isolation-binding','main-prompt-coexistence-platform-batch.test.mjs','The audited OpenCode host surface exposes workspace/session workspaceID primitives and W1 defines Hi IsolationDecision/WorkspaceLease contracts, but no W2 provisioning/binding adapter or W3 real-host child-execution proof exists; do not claim isolation from contract/worktree existence alone.')
+    unsupported('workspace-isolation-binding','w2-workspace-executor.test.mjs','W1 contracts and the W2 OpenCode/Git adapter now exist, but exact OpenCode child `workspaceID + directory` binding, isolated-write/main-workspace separation, verification-in-lease and cleanup are not promoted until W3 real-host acceptance; do not claim support from local adapter tests alone.')
   ]
 }
 

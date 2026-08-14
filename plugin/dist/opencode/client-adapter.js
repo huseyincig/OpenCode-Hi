@@ -1,11 +1,13 @@
 export function dataOf(value) { return (value && typeof value === 'object' && 'data' in value) ? value.data : value; }
-export async function createChildSession(client, parentID, title, agent, model, variant) {
+export async function createChildSession(client, parentID, title, agent, model, variant, workspaceID) {
     const edge = client;
     if (typeof edge?.session?.create !== 'function')
         throw new Error('OpenCode session.create unavailable');
     const body = { parentID, title };
     if (agent)
         body.agent = agent;
+    if (workspaceID)
+        body.workspaceID = workspaceID;
     const identity = modelIdentity(model);
     if (identity)
         body.model = { id: identity.modelID, providerID: identity.providerID, ...(variant ? { variant } : {}) };

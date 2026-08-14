@@ -1,4 +1,6 @@
 import { createHash } from 'node:crypto';
+import { realpathSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createChildSession, sendPromptAsync, abortSession } from '../../opencode/client-adapter.js';
 import { NativeOpenCodeAdapter } from '../../opencode/native-adapter.js';
 import { redactProviderContext } from '../privacy/boundary.js';
@@ -19,6 +21,12 @@ function nativeDiffMap(raw) {
 }
 export function diffDelta(before, after) { const b = before ?? {}; return Object.keys(after).filter(file => b[file] !== after[file]); }
 export { normFile };
+function samePath(a, b) { try {
+    return realpathSync(resolve(a)) === realpathSync(resolve(b));
+}
+catch {
+    return resolve(a) === resolve(b);
+} }
 export class ChildExecutionCoordinator {
     client;
     lifecycle;
@@ -29,8 +37,18 @@ export class ChildExecutionCoordinator {
         this.registry = registry;
     }
     resolveCallbackWorker(sessionID) { return this.registry?.list().find(w => w.session_id === sessionID); }
-    async create(parentSessionID, title, role, model, variant) { return createChildSession(this.client, parentSessionID, title, role, model, variant); }
-    async createForTask(parentSessionID, title, role, model, variant, forkFromSession) { const native = new NativeOpenCodeAdapter(this.client), requested = Boolean(forkFromSession), nativeAvailable = requested && native.has('fork'); const child = await this.create(parentSessionID, title, role, model, variant); return { child, fork: { requested, nativeAvailable, used: false, reason: requested ? 'native fork cannot set specialist agent; created isolated child instead' : undefined } }; }
+    async create(parentSessionID, title, role, model, variant, workspace) { const child = await createChildSession(this.client, parentSessionID, title, role, model, variant, workspace?.workspaceID); if (workspace) {
+        if (child?.workspaceID !== workspace.workspaceID || typeof child?.directory !== 'string' || !samePath(child.directory, workspace.directory)) {
+            if (child?.id)
+                try {
+                    await abortSession(this.client, String(child.id), this.lifecycle);
+                }
+                catch { }
+            ;
+            throw new Error(`OpenCode child workspace binding mismatch: expected ${workspace.workspaceID} @ ${workspace.directory}, observed ${String(child?.workspaceID)} @ ${String(child?.directory)}`);
+        }
+    } return child; }
+    async createForTask(parentSessionID, title, role, model, variant, forkFromSession, workspace) { const native = new NativeOpenCodeAdapter(this.client), requested = Boolean(forkFromSession), nativeAvailable = requested && native.has('fork'); const child = await this.create(parentSessionID, title, role, model, variant, workspace); return { child, fork: { requested, nativeAvailable, used: false, reason: requested ? 'native fork cannot set specialist agent; created isolated child instead' : undefined } }; }
     async sendProviderPrompt(sessionID, text, role, model, variant, tools) { const safe = redactProviderContext(text); return sendPromptAsync(this.client, sessionID, safe.providerText, role, model, variant, tools); }
     recordModelProjection(worker, model, variant) { worker.projected_model = model ?? 'host-default'; worker.projected_model_variant = variant; worker.updated_at = Date.now(); }
     async abortNativeSession(m, sessionID, reason, workerID, taskID) { const transport = await abortSession(this.client, sessionID, this.lifecycle); appendLedger(m, 'worker.session-abort', { task_id: taskID, worker_id: workerID, payload: { session_id: sessionID, reason, transport } }); return transport !== 'unavailable'; }

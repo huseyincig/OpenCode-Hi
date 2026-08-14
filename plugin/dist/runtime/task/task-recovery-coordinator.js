@@ -40,10 +40,11 @@ export class TaskRecoveryCoordinator {
     events;
     child;
     drainQueueCallback;
+    workspaceBinding;
     callbackDisposition(m, worker) { if (worker.restart_reconcile_pending)
         return 'restart-reconcile-pending'; if ((worker.parent_mission_id !== undefined && worker.parent_mission_id !== m.identity.mission_id) || (worker.generation_at_spawn !== undefined && worker.generation_at_spawn !== m.continuation.generation))
         return 'stale-mission'; return 'accept'; }
-    constructor(scheduler, registry, projectRoot, getConfig, getModels, getHostConfig, events, child, drainQueueCallback) {
+    constructor(scheduler, registry, projectRoot, getConfig, getModels, getHostConfig, events, child, drainQueueCallback, workspaceBinding) {
         this.scheduler = scheduler;
         this.registry = registry;
         this.projectRoot = projectRoot;
@@ -53,6 +54,7 @@ export class TaskRecoveryCoordinator {
         this.events = events;
         this.child = child;
         this.drainQueueCallback = drainQueueCallback;
+        this.workspaceBinding = workspaceBinding;
     }
     async recoverStagnation(m, level) {
         if (![1, 2].includes(level) || m.identity.status !== 'active' || m.continuation.user_interrupted)
@@ -63,6 +65,15 @@ export class TaskRecoveryCoordinator {
         const task = m.execution.tasks.find(t => t.id === worker.task_id);
         if (!task)
             return false;
+        try {
+            this.workspaceBinding?.(m, task.id);
+        }
+        catch (error) {
+            const marker = `workspace-orphan:${task.id}`;
+            m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+            appendLedger(m, 'worker.recovery.workspace-blocked', { task_id: task.id, worker_id: worker.id, payload: { error: String(error) } });
+            return false;
+        }
         let model = worker.model, variant = worker.model_variant, action = 'same-worker-resume';
         if (level === 2) {
             const stronger = { quick: 'standard', standard: 'deep', visual: 'deep', deep: 'critical', critical: 'critical' };
@@ -147,7 +158,7 @@ export class TaskRecoveryCoordinator {
                     return false;
                 }
                 this.child.recordModelProjection(worker, model, variant);
-                const child = await this.child.create(m.identity.session_id, `Hi · ${worker.role} · runtime recovery · ${task.objective.slice(0, 45)}`, worker.role, model === 'host-default' ? undefined : model, variant);
+                const child = await this.child.create(m.identity.session_id, `Hi · ${worker.role} · runtime recovery · ${task.objective.slice(0, 45)}`, worker.role, model === 'host-default' ? undefined : model, variant, this.workspaceBinding?.(m, task.id));
                 if (!child?.id)
                     throw new Error('Runtime fallback child session id missing');
                 const recoverySessionID = String(child.id);

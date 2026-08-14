@@ -14,7 +14,7 @@ import { runtimeSignal,type RuntimeSignalSink } from '../events/event-sink.js'
 import { syncMissionGates } from '../gates/gates.js'
 import type { BackgroundRegistry } from '../background/registry.js'
 import type { ConcurrencyScheduler } from '../scheduler/concurrency.js'
-import { ChildExecutionCoordinator } from './child-execution-coordinator.js'
+import { ChildExecutionCoordinator,type ChildWorkspaceBinding } from './child-execution-coordinator.js'
 
 function providerOf(model:string|undefined):string|undefined{return model&&model!=='host-default'&&model.includes('/')?model.slice(0,model.indexOf('/')):undefined}
 function missionModelFeedback(m:MissionState){
@@ -27,12 +27,13 @@ function missionModelFeedback(m:MissionState){
 export type ChildCallbackDisposition='accept'|'restart-reconcile-pending'|'stale-mission'
 export class TaskRecoveryCoordinator{
   callbackDisposition(m:MissionState,worker:{parent_mission_id?:string;generation_at_spawn?:number;restart_reconcile_pending?:boolean}):ChildCallbackDisposition{if(worker.restart_reconcile_pending)return'restart-reconcile-pending';if((worker.parent_mission_id!==undefined&&worker.parent_mission_id!==m.identity.mission_id)||(worker.generation_at_spawn!==undefined&&worker.generation_at_spawn!==m.continuation.generation))return'stale-mission';return'accept'}
-  constructor(private readonly scheduler:ConcurrencyScheduler,private readonly registry:BackgroundRegistry,private readonly projectRoot:string,private readonly getConfig:()=>HiConfig,private readonly getModels:()=>AvailableModel[],private readonly getHostConfig:()=>Record<string,unknown>,private readonly events:RuntimeSignalSink|undefined,private readonly child:ChildExecutionCoordinator,private readonly drainQueueCallback:()=>void){}
+  constructor(private readonly scheduler:ConcurrencyScheduler,private readonly registry:BackgroundRegistry,private readonly projectRoot:string,private readonly getConfig:()=>HiConfig,private readonly getModels:()=>AvailableModel[],private readonly getHostConfig:()=>Record<string,unknown>,private readonly events:RuntimeSignalSink|undefined,private readonly child:ChildExecutionCoordinator,private readonly drainQueueCallback:()=>void,private readonly workspaceBinding?:(m:MissionState,taskID:string)=>ChildWorkspaceBinding|undefined){}
   async recoverStagnation(m:MissionState,level:number):Promise<boolean>{
     if(![1,2].includes(level)||m.identity.status!=='active'||m.continuation.user_interrupted)return false
     const worker=[...m.execution.workers].reverse().find(w=>Boolean(w.session_id)&&!['failed','cancelled','busy','starting','queued'].includes(w.status))
     if(!worker?.session_id)return false
     const task=m.execution.tasks.find(t=>t.id===worker.task_id);if(!task)return false
+    try{this.workspaceBinding?.(m,task.id)}catch(error){const marker=`workspace-orphan:${task.id}`;m.execution.blockers=[...new Set([...m.execution.blockers,marker])];appendLedger(m,'worker.recovery.workspace-blocked',{task_id:task.id,worker_id:worker.id,payload:{error:String(error)}});return false}
     let model=worker.model,variant=worker.model_variant,action='same-worker-resume'
     if(level===2){
       const stronger:Record<Category,Category>={quick:'standard',standard:'deep',visual:'deep',deep:'critical',critical:'critical'}
@@ -75,7 +76,7 @@ export class TaskRecoveryCoordinator{
         this.scheduler.acquire(worker.id,provider,model==='host-default'?undefined:model)
         const variant=task.execution_profile?.fallback_variants?.[model],previous=worker.model,fallbackReason=task.execution_profile?.fallback_reasons?.find(x=>x.model===model)?.reason??`runtime fallback after ${failure.kind}`
         let stopped=false;try{stopped=await this.child.abortNativeSession(m,failedSession,'terminal-runtime-fallback',worker.id,task.id)}catch{};if(!stopped){const marker=`runtime-fallback-abort-unavailable:${task.id}:${worker.id}`;m.execution.blockers=[...new Set([...m.execution.blockers,marker])];worker.runtime_fallback_exhausted=true;appendLedger(m,'worker.runtime-fallback.abort-blocked',{task_id:task.id,worker_id:worker.id,payload:{session_id:failedSession,failure_class:failure.kind,marker}});return false}
-        this.child.recordModelProjection(worker,model,variant);const child=await this.child.create(m.identity.session_id,`Hi · ${worker.role} · runtime recovery · ${task.objective.slice(0,45)}`,worker.role,model==='host-default'?undefined:model,variant)
+        this.child.recordModelProjection(worker,model,variant);const child=await this.child.create(m.identity.session_id,`Hi · ${worker.role} · runtime recovery · ${task.objective.slice(0,45)}`,worker.role,model==='host-default'?undefined:model,variant,this.workspaceBinding?.(m,task.id))
         if(!child?.id)throw new Error('Runtime fallback child session id missing')
         const recoverySessionID=String(child.id);worker.session_id=recoverySessionID;worker.loaded_methodologies=[];worker.model=model;worker.model_variant=variant;worker.fallback_history=[...(worker.fallback_history??[]),{from:previous,to:model,variant,reason:`${fallbackReason}; failure=${failure.kind}`,phase:'runtime',at:Date.now()}];worker.status='busy';worker.runtime_recovery_pending=true;worker.runtime_recovery_attempt=(worker.runtime_recovery_attempt??0)+1;worker.generation_at_spawn=m.continuation.generation;worker.parent_mission_id=m.identity.mission_id;worker.started_at=Date.now();task.status='running';this.registry.set(worker)
         recordPreexistingUserBaseline(m,await this.child.captureNativeDiff(worker,'baseline'))

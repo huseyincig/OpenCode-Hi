@@ -5,18 +5,26 @@ import { type OpenCodeLifecycleEndpoint } from '../../opencode/client-adapter.js
 declare function normFile(value: string): string;
 export declare function diffDelta(before: Record<string, string> | undefined, after: Record<string, string>): string[];
 export { normFile };
+export interface ChildWorkspaceBinding {
+    workspaceID: string;
+    directory: string;
+}
 export declare class ChildExecutionCoordinator {
     private readonly client;
     private readonly lifecycle;
     private readonly registry?;
     constructor(client: OpenCodeClient, lifecycle?: OpenCodeLifecycleEndpoint, registry?: BackgroundRegistry | undefined);
     resolveCallbackWorker(sessionID: string): WorkerState | undefined;
-    create(parentSessionID: string, title: string, role: string, model?: string, variant?: string): Promise<{
+    create(parentSessionID: string, title: string, role: string, model?: string, variant?: string, workspace?: ChildWorkspaceBinding): Promise<{
         id?: string;
+        workspaceID?: string;
+        directory?: string;
     }>;
-    createForTask(parentSessionID: string, title: string, role: string, model?: string, variant?: string, forkFromSession?: string): Promise<{
+    createForTask(parentSessionID: string, title: string, role: string, model?: string, variant?: string, forkFromSession?: string, workspace?: ChildWorkspaceBinding): Promise<{
         child: {
             id?: string;
+            workspaceID?: string;
+            directory?: string;
         };
         fork: {
             requested: boolean;

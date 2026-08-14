@@ -1,5 +1,7 @@
 import type { OpenCodeClient } from '../../opencode/types.js'
 import { createHash } from 'node:crypto'
+import { realpathSync } from 'node:fs'
+import { resolve } from 'node:path'
 import type { MissionState,WorkerState } from '../mission/types.js'
 import type { BackgroundRegistry } from '../background/registry.js'
 import { createChildSession,sendPromptAsync,abortSession,type OpenCodeLifecycleEndpoint } from '../../opencode/client-adapter.js'
@@ -18,12 +20,15 @@ function nativeDiffMap(raw:any):Record<string,string>{
 export function diffDelta(before:Record<string,string>|undefined,after:Record<string,string>):string[]{const b=before??{};return Object.keys(after).filter(file=>b[file]!==after[file])}
 export { normFile }
 
+export interface ChildWorkspaceBinding{workspaceID:string;directory:string}
+function samePath(a:string,b:string):boolean{try{return realpathSync(resolve(a))===realpathSync(resolve(b))}catch{return resolve(a)===resolve(b)}}
+
 export class ChildExecutionCoordinator{
   constructor(private readonly client:OpenCodeClient,private readonly lifecycle:OpenCodeLifecycleEndpoint={},private readonly registry?:BackgroundRegistry){}
 
   resolveCallbackWorker(sessionID:string):WorkerState|undefined{return this.registry?.list().find(w=>w.session_id===sessionID)}
-  async create(parentSessionID:string,title:string,role:string,model?:string,variant?:string):Promise<{id?:string}>{return createChildSession(this.client,parentSessionID,title,role,model,variant)}
-  async createForTask(parentSessionID:string,title:string,role:string,model?:string,variant?:string,forkFromSession?:string):Promise<{child:{id?:string};fork:{requested:boolean;nativeAvailable:boolean;used:false;reason?:string}}>{const native=new NativeOpenCodeAdapter(this.client),requested=Boolean(forkFromSession),nativeAvailable=requested&&native.has('fork');const child=await this.create(parentSessionID,title,role,model,variant);return{child,fork:{requested,nativeAvailable,used:false,reason:requested?'native fork cannot set specialist agent; created isolated child instead':undefined}}}
+  async create(parentSessionID:string,title:string,role:string,model?:string,variant?:string,workspace?:ChildWorkspaceBinding):Promise<{id?:string;workspaceID?:string;directory?:string}>{const child=await createChildSession(this.client,parentSessionID,title,role,model,variant,workspace?.workspaceID);if(workspace){if(child?.workspaceID!==workspace.workspaceID||typeof child?.directory!=='string'||!samePath(child.directory,workspace.directory)){if(child?.id)try{await abortSession(this.client,String(child.id),this.lifecycle)}catch{};throw new Error(`OpenCode child workspace binding mismatch: expected ${workspace.workspaceID} @ ${workspace.directory}, observed ${String(child?.workspaceID)} @ ${String(child?.directory)}`)}}return child}
+  async createForTask(parentSessionID:string,title:string,role:string,model?:string,variant?:string,forkFromSession?:string,workspace?:ChildWorkspaceBinding):Promise<{child:{id?:string;workspaceID?:string;directory?:string};fork:{requested:boolean;nativeAvailable:boolean;used:false;reason?:string}}>{const native=new NativeOpenCodeAdapter(this.client),requested=Boolean(forkFromSession),nativeAvailable=requested&&native.has('fork');const child=await this.create(parentSessionID,title,role,model,variant,workspace);return{child,fork:{requested,nativeAvailable,used:false,reason:requested?'native fork cannot set specialist agent; created isolated child instead':undefined}}}
   async sendProviderPrompt(sessionID:string,text:string,role?:string,model?:string,variant?:string,tools?:Record<string,boolean>):Promise<unknown>{const safe=redactProviderContext(text);return sendPromptAsync(this.client,sessionID,safe.providerText,role,model,variant,tools)}
   recordModelProjection(worker:WorkerState,model?:string,variant?:string):void{worker.projected_model=model??'host-default';worker.projected_model_variant=variant;worker.updated_at=Date.now()}
   async abortNativeSession(m:MissionState,sessionID:string,reason:string,workerID?:string,taskID?:string):Promise<boolean>{const transport=await abortSession(this.client,sessionID,this.lifecycle);appendLedger(m,'worker.session-abort',{task_id:taskID,worker_id:workerID,payload:{session_id:sessionID,reason,transport}});return transport!=='unavailable'}
