@@ -4,27 +4,27 @@ import json,re,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]; ERR=[]
 def err(x):ERR.append(x)
-version=(ROOT/'VERSION').read_text().strip()
+version=(ROOT/'VERSION').read_text(encoding='utf-8').strip()
 if version!='0.1.0':err(f'VERSION must be 0.1.0: {version}')
-identity=json.loads((ROOT/'data/product.json').read_text())
+identity=json.loads((ROOT/'data/product.json').read_text(encoding='utf-8'))
 expected={'product_name':'OpenCode-Hi','short_name':'HI','version':version,'repository':'https://github.com/huseyincig/OpenCode-Hi','plugin_package':'opencode-hi','runtime_entrypoint':'plugin/dist/plugin.js'}
 for k,v in expected.items():
     if identity.get(k)!=v:err(f'product identity {k}: {identity.get(k)!r} != {v!r}')
-pkg=json.loads((ROOT/'package.json').read_text())
+pkg=json.loads((ROOT/'package.json').read_text(encoding='utf-8'))
 if pkg.get('name')!='opencode-hi' or pkg.get('version')!=version:err('root package identity/version mismatch')
 if pkg.get('main')!='plugin/dist/plugin.js' or not (ROOT/pkg['main']).is_file():err('root plugin entrypoint missing')
-pp=json.loads((ROOT/'plugin/package.json').read_text())
+pp=json.loads((ROOT/'plugin/package.json').read_text(encoding='utf-8'))
 if pp.get('version')!=version:err('plugin workspace version mismatch')
 if pp.get('allowScripts')!={'msgpackr-extract@3.0.4':True}:err('plugin install-script allowlist mismatch')
 lock_path=ROOT/'plugin/package-lock.json'
 try:
-    lock=json.loads(lock_path.read_text())
+    lock=json.loads(lock_path.read_text(encoding='utf-8'))
     for rel,meta in (lock.get('packages') or {}).items():
         if not rel or meta.get('link'):continue
         if not meta.get('version'):err(f'package-lock entry missing version: {rel}')
         if not meta.get('resolved') or not meta.get('integrity'):err(f'package-lock entry missing resolved/integrity: {rel}')
 except Exception as e:err(f'bad plugin package-lock: {e}')
-if not re.search(rf'^##\s+(?:\[)?v?{re.escape(version)}(?:\])?(?:\s|$)',(ROOT/'CHANGELOG.md').read_text(),re.M|re.I):err('CHANGELOG current version entry missing')
+if not re.search(rf'^##\s+(?:\[)?v?{re.escape(version)}(?:\])?(?:\s|$)',(ROOT/'CHANGELOG.md').read_text(encoding='utf-8'),re.M|re.I):err('CHANGELOG current version entry missing')
 # Root must remain product-repository clean.
 required_root={'README.md','CHANGELOG.md','CONTRIBUTING.md','SECURITY.md','THIRD_PARTY_NOTICES.md','LICENSE','VERSION','package.json'}
 for name in required_root:
@@ -58,23 +58,23 @@ for rel in required_data:
     if not (ROOT/rel).is_file():err(f'required data contract missing: {rel}')
 for old in ('feature-ledger-09-coverage.json','native-first-10-coverage.json','flow-11-coverage.json','flow-11-acceptance.json','roadmap-source-gates.json','observed-runtime-smoke-1.18.16.json'):
     if any(p.name==old for p in (ROOT/'data').rglob('*')):err(f'old data contract name present: {old}')
-sc=json.loads((ROOT/'data/validation/source-contracts.json').read_text())
+sc=json.loads((ROOT/'data/validation/source-contracts.json').read_text(encoding='utf-8'))
 if sc.get('release')!=version:err('source-contracts release stale')
 for cid,c in sc.get('contracts',{}).items():
     for evidence in c.get('evidence',[]):
         evidence=evidence.split('#',1)[0]
         if evidence and not (ROOT/evidence).exists():err(f'source-contract {cid} stale evidence: {evidence}')
 
-final_audit=json.loads((ROOT/'data/validation/final-dod-audit.json').read_text())
+final_audit=json.loads((ROOT/'data/validation/final-dod-audit.json').read_text(encoding='utf-8'))
 if final_audit.get('release')!=version:err('final DoD audit release stale')
 if final_audit.get('internal_status')!='LOCAL_IMPLEMENTATION_AND_IN_PROCESS_ACCEPTANCE_COMPLETE':err('final DoD internal audit not complete')
 if final_audit.get('source_checklist',{}).get('internal_missing')!=[]:err('final DoD audit reports internal missing requirements')
 if final_audit.get('release_blocked') is not True:err('final DoD audit must remain release-blocked until external receipts exist')
-rg=json.loads((ROOT/'data/validation/release-gates.json').read_text())
+rg=json.loads((ROOT/'data/validation/release-gates.json').read_text(encoding='utf-8'))
 if not any(str(v).startswith('PENDING_') for v in rg.get('gates',{}).values()):err('release gates unexpectedly have no explicit pending evidence while release is blocked')
 # M5 canonical ConfigOption catalog: every HiConfig leaf is classified and runtime entries must name an executable consumer/effect.
 try:
-    cc=json.loads((ROOT/'data/hi-config-options.json').read_text())
+    cc=json.loads((ROOT/'data/hi-config-options.json').read_text(encoding='utf-8'))
     if cc.get('schema')!=1 or cc.get('type')!='hi-config-option-catalog':err('Hi config option catalog header invalid')
     options=cc.get('options',[]); ids=[]; paths=[]
     for x in options:
@@ -95,14 +95,14 @@ try:
 except Exception as e:err(f'bad Hi config option catalog: {e}')
 roles=sorted((ROOT/'roles').glob('*.md')); skills=sorted((ROOT/'skills').glob('*/SKILL.md'))
 try:
-    role_catalog=json.loads((ROOT/'data/hi-roles.json').read_text())
+    role_catalog=json.loads((ROOT/'data/hi-roles.json').read_text(encoding='utf-8'))
     if role_catalog.get('schema')!=2 or role_catalog.get('type')!='hi-role-contract-catalog':err('Hi role contract catalog header invalid')
     role_entries=role_catalog.get('roles',[])
     role_ids=[x.get('id') for x in role_entries if isinstance(x,dict)]
     expected_role_ids=sorted(['architect','coder','manager','qa-reviewer','repository-explorer','security-reviewer','visual-qa','working-manager'])
     if sorted(role_ids)!=expected_role_ids or len(role_ids)!=len(set(role_ids)):err('Hi role contract inventory != canonical 8 unique roles')
     known=set(role_ids)
-    permission_catalog=json.loads((ROOT/'data/hi-permission-profiles.json').read_text())
+    permission_catalog=json.loads((ROOT/'data/hi-permission-profiles.json').read_text(encoding='utf-8'))
     if permission_catalog.get('schema')!=1 or permission_catalog.get('type')!='hi-permission-profile-catalog':err('Hi permission profile catalog header invalid')
     permission_entries=permission_catalog.get('profiles',[])
     permission_ids=[x.get('id') for x in permission_entries if isinstance(x,dict)]
@@ -134,12 +134,12 @@ try:
             if len(edit)!=1 or edit[0].get('action')!='deny':err(f'{rid}: read-only permission profile must explicitly deny edit')
 except Exception as e:err(f'bad Hi role contract catalog: {e}')
 for rp in roles:
-    fm=rp.read_text().split('\n---\n',1)[0]
+    fm=rp.read_text(encoding='utf-8').split('\n---\n',1)[0]
     if re.search(r'^permission:\s*$',fm,re.M):err(f'{rp.name}: mechanical permission must not remain in role Markdown after M3')
 if [p.stem for p in roles]!=sorted(['architect','coder','manager','qa-reviewer','repository-explorer','security-reviewer','visual-qa','working-manager']):err('agent role inventory != canonical 8')
 if not skills:err('packaged Hi methodologies missing')
 try:
-    methodology=json.loads((ROOT/'data/hi-methodologies.json').read_text())
+    methodology=json.loads((ROOT/'data/hi-methodologies.json').read_text(encoding='utf-8'))
     profiles=methodology.get('profiles',[])
     profile_names=[x.get('name') for x in profiles]
     skill_names=[p.parent.name for p in skills]
@@ -167,7 +167,7 @@ try:
         if any(role not in known for role in compatible):err(f'{name}: compatible role reference unknown')
 except Exception as e:err(f'bad Hi methodology policy: {e}')
 for p in (ROOT/'data').rglob('*.json'):
-    try:json.loads(p.read_text())
+    try:json.loads(p.read_text(encoding='utf-8'))
     except Exception as e:err(f'bad json {p.name}: {e}')
 if ERR:
     print('VALIDATION FAIL'); [print('- '+x) for x in ERR]; sys.exit(1)

@@ -8,7 +8,7 @@ if (!args.length) {
   process.exit(2)
 }
 const candidates = process.platform === 'win32'
-  ? [['py', ['-3']], ['python', []], ['python3', []]]
+  ? [['python', []], ['py', ['-3']], ['python3', []]]
   : [['python3', []], ['python', []]]
 let last
 for (const [cmd, prefix] of candidates) {

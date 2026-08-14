@@ -274,6 +274,13 @@ def test_release_manifest_contains_dependency_sbom_and_supply_chain_digest(tmp_p
     assert any(c['name']=='@opencode-ai/plugin' and c['relation']=='direct-peer' for c in sbom['components'])
     assert any(c['name']=='typescript' and c['relation']=='direct-dev' for c in sbom['components'])
 
+def test_cross_platform_python_launcher_prefers_setup_python_and_validator_reads_utf8():
+    launcher=(ROOT/'scripts/run-python.mjs').read_text(encoding='utf-8')
+    assert "? [['python', []], ['py', ['-3']], ['python3', []]]" in launcher
+    validator=(ROOT/'scripts/validate.py').read_text(encoding='utf-8')
+    bare=[line for line in validator.splitlines() if '.read_text()' in line]
+    assert bare==[], bare
+
 def test_release_build_notices_cover_direct_dependency_names_and_licenses():
     import importlib.util
     spec=importlib.util.spec_from_file_location('hi_release_build4',ROOT/'scripts/release-build.py'); mod=importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
