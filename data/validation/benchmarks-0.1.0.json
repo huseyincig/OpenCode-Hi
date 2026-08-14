@@ -409,5 +409,66 @@
         "bounded fan-out is used only for independent streams"
       ]
     }
+  ],
+  "schedulerEconomics": [
+    {
+      "id": "capacity-saturation",
+      "kind": "DETERMINISTIC_SCHEDULER_SIMULATION",
+      "claimBoundary": "Deterministic in-process scheduler units/events; not wall-clock provider latency, provider billing, or external OpenCode host telemetry.",
+      "metrics": {
+        "queueWaitUnits": 2,
+        "providerSaturationEvents": 1,
+        "modelSaturationEvents": 1,
+        "taskDurationUnits": 4,
+        "retries": 0,
+        "contextChars": 0,
+        "sessionReuseSavedUnits": 0,
+        "writeConflictEvents": 0
+      },
+      "evidence": [
+        "provider=provider-capacity:alpha",
+        "model=model-capacity:alpha/m1",
+        "after-release=capacity-available"
+      ]
+    },
+    {
+      "id": "session-reuse",
+      "kind": "DETERMINISTIC_SCHEDULER_SIMULATION",
+      "claimBoundary": "Deterministic in-process scheduler units/events; not wall-clock provider latency, provider billing, or external OpenCode host telemetry.",
+      "metrics": {
+        "queueWaitUnits": 0,
+        "providerSaturationEvents": 0,
+        "modelSaturationEvents": 0,
+        "taskDurationUnits": 2,
+        "retries": 1,
+        "contextChars": 1200,
+        "sessionReuseSavedUnits": 2,
+        "writeConflictEvents": 0
+      },
+      "evidence": [
+        "level1=same-worker-resume",
+        "level2=model-escalation",
+        "reuse benefit is expressed as avoided fresh-session/handoff units, not token billing"
+      ]
+    },
+    {
+      "id": "write-conflict",
+      "kind": "DETERMINISTIC_SCHEDULER_SIMULATION",
+      "claimBoundary": "Deterministic in-process scheduler units/events; not wall-clock provider latency, provider billing, or external OpenCode host telemetry.",
+      "metrics": {
+        "queueWaitUnits": 1,
+        "providerSaturationEvents": 0,
+        "modelSaturationEvents": 0,
+        "taskDurationUnits": 2,
+        "retries": 0,
+        "contextChars": 0,
+        "sessionReuseSavedUnits": 0,
+        "writeConflictEvents": 1
+      },
+      "evidence": [
+        "conflict=write-scope-overlap:writer-a:src/shared~src/shared/file.ts",
+        "independent-safe=true"
+      ]
+    }
   ]
 }

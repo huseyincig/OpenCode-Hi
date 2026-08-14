@@ -3,6 +3,9 @@ import { decideTopology } from '../execution/topology-policy.js';
 import { governContext } from '../context/governor.js';
 import { extractTypeScriptSemanticContext } from '../semantic/typescript-context.js';
 import { deriveEfficiencyMetrics } from './execution.js';
+import { ConcurrencyScheduler } from '../scheduler/concurrency.js';
+import { parallelSafety } from '../scheduler/parallel-safety.js';
+import { recoveryPlan } from '../continuation/recovery.js';
 const baseIntent = (overrides) => ({
     objective: 'benchmark', taskKind: 'implementation', risk: 'low', scope: 'local', ambiguity: 'none', dependencyClass: 'independent',
     requiredCapabilities: [], requestedExternalActions: [], likelyVerification: ['changed-surface-sanity'], avoid: [], ...overrides,
@@ -45,5 +48,26 @@ export function runDeterministicBenchmarks() {
         result('long-running-process', obs({ toolCalls: 10, totalActions: 11, productiveActions: 4, elapsedUnits: 11 }), obs({ toolCalls: 3, totalActions: 4, productiveActions: 4, elapsedUnits: 4 }), ['process governor replaces blind polling with observable process state where available']),
         result('multi-model-task', obs({ modelCalls: 4, agentCount: 2, delegations: 1, totalActions: 8, productiveActions: 4, elapsedUnits: 8 }), obs({ modelCalls: 2, agentCount: 1, delegations: 0, totalActions: 4, productiveActions: 4, elapsedUnits: 4 }), ['model diversity is not activated without material capability need']),
         result('multi-agent-task', obs({ modelCalls: 1, agentCount: 1, toolCalls: 11, totalActions: 13, productiveActions: 9, elapsedUnits: 13 }), obs({ modelCalls: 3, agentCount: multiTopology.agentCount, toolCalls: 9, delegations: 2, totalActions: 12, productiveActions: 11, elapsedUnits: 7 }), [`topology=${multiTopology.mode}`, `agents=${multiTopology.agentCount}`, `parallelism=${multiTopology.parallelism}`, 'bounded fan-out is used only for independent streams']),
+    ];
+}
+const schedulerClaim = 'Deterministic in-process scheduler units/events; not wall-clock provider latency, provider billing, or external OpenCode host telemetry.';
+export function runSchedulerEconomicsBenchmarks() {
+    const scheduler = new ConcurrencyScheduler(() => ({ global: 3, providers: { alpha: 1, beta: 2 }, models: { 'alpha/m1': 1, 'beta/m1': 1 } }));
+    scheduler.acquire('w1', 'alpha', 'alpha/m1');
+    const providerBlocked = scheduler.canStart('w2', 'alpha', 'alpha/m2');
+    const modelBlocked = scheduler.canStart('w3', 'beta', 'alpha/m1');
+    scheduler.release('w1');
+    const admitted = scheduler.canStart('w2', 'alpha', 'alpha/m2');
+    const recoveryMission = { continuation: { stagnation_count: 1 } };
+    const same = recoveryPlan(recoveryMission);
+    recoveryMission.continuation.stagnation_count = 2;
+    const escalated = recoveryPlan(recoveryMission);
+    const existing = [{ id: 'writer-a', mission_id: 'benchmark-mission', objective: 'a', status: 'running', role: 'coder', category: 'standard', scope: ['src/shared'], constraints: [], dependencies: [], requiredEvidence: [], obligation_ids: [], context_artifacts: [], gate_ids: [], external_action_requirements: [], created_at: 1, updated_at: 1 }];
+    const conflict = parallelSafety(existing, { scope: ['src/shared/file.ts'], dependencies: [], role: 'coder' });
+    const independent = parallelSafety(existing, { scope: ['src/independent/file.ts'], dependencies: [], role: 'coder' });
+    return [
+        { id: 'capacity-saturation', kind: 'DETERMINISTIC_SCHEDULER_SIMULATION', claimBoundary: schedulerClaim, metrics: { queueWaitUnits: Number(!providerBlocked.ok) + Number(!modelBlocked.ok), providerSaturationEvents: Number(providerBlocked.reason.startsWith('provider-capacity:')), modelSaturationEvents: Number(modelBlocked.reason.startsWith('model-capacity:')), taskDurationUnits: 4, retries: 0, contextChars: 0, sessionReuseSavedUnits: 0, writeConflictEvents: 0 }, evidence: [`provider=${providerBlocked.reason}`, `model=${modelBlocked.reason}`, `after-release=${admitted.reason}`] },
+        { id: 'session-reuse', kind: 'DETERMINISTIC_SCHEDULER_SIMULATION', claimBoundary: schedulerClaim, metrics: { queueWaitUnits: 0, providerSaturationEvents: 0, modelSaturationEvents: 0, taskDurationUnits: 2, retries: 1, contextChars: 1200, sessionReuseSavedUnits: same.action === 'same-worker-resume' && escalated.action === 'model-escalation' ? 2 : 0, writeConflictEvents: 0 }, evidence: [`level1=${same.action}`, `level2=${escalated.action}`, 'reuse benefit is expressed as avoided fresh-session/handoff units, not token billing'] },
+        { id: 'write-conflict', kind: 'DETERMINISTIC_SCHEDULER_SIMULATION', claimBoundary: schedulerClaim, metrics: { queueWaitUnits: conflict.safe ? 0 : 1, providerSaturationEvents: 0, modelSaturationEvents: 0, taskDurationUnits: 2, retries: 0, contextChars: 0, sessionReuseSavedUnits: 0, writeConflictEvents: conflict.safe ? 0 : 1 }, evidence: [`conflict=${conflict.reasons.join('|')}`, `independent-safe=${independent.safe}`] }
     ];
 }

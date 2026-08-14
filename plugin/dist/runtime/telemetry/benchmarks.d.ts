@@ -30,3 +30,22 @@ export interface BenchmarkScenarioResult {
     evidence: string[];
 }
 export declare function runDeterministicBenchmarks(): BenchmarkScenarioResult[];
+export type SchedulerEconomicsScenarioId = 'capacity-saturation' | 'session-reuse' | 'write-conflict';
+export interface SchedulerEconomicsMetrics {
+    queueWaitUnits: number;
+    providerSaturationEvents: number;
+    modelSaturationEvents: number;
+    taskDurationUnits: number;
+    retries: number;
+    contextChars: number;
+    sessionReuseSavedUnits: number;
+    writeConflictEvents: number;
+}
+export interface SchedulerEconomicsResult {
+    id: SchedulerEconomicsScenarioId;
+    kind: 'DETERMINISTIC_SCHEDULER_SIMULATION';
+    claimBoundary: string;
+    metrics: SchedulerEconomicsMetrics;
+    evidence: string[];
+}
+export declare function runSchedulerEconomicsBenchmarks(): SchedulerEconomicsResult[];

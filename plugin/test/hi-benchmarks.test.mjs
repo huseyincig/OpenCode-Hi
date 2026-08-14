@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { runDeterministicBenchmarks } from '../dist/runtime/telemetry/benchmarks.js'
+import { runDeterministicBenchmarks,runSchedulerEconomicsBenchmarks } from '../dist/runtime/telemetry/benchmarks.js'
 
 test('0.1.0 benchmark set covers every required representative scenario without pretending to be host telemetry',()=>{
   const rows=runDeterministicBenchmarks();assert.equal(rows.length,9)
@@ -18,4 +18,21 @@ test('minimum-sufficient scenarios reduce waste while multi-agent fan-out remain
   assert.ok(by['long-session'].after.contextChars<by['long-session'].before.contextChars)
   assert.ok(by['multi-agent-task'].after.agentCount>1)
   assert.ok(by['multi-agent-task'].after.elapsedUnits<by['multi-agent-task'].before.elapsedUnits)
+})
+
+
+test('O1 scheduler economics baseline measures every G9 dimension without claiming host latency',()=>{
+  const rows=runSchedulerEconomicsBenchmarks()
+  assert.deepEqual(rows.map(x=>x.id),['capacity-saturation','session-reuse','write-conflict'])
+  for(const row of rows){assert.equal(row.kind,'DETERMINISTIC_SCHEDULER_SIMULATION');assert.match(row.claimBoundary,/not wall-clock provider latency/);for(const value of Object.values(row.metrics))assert.ok(Number.isFinite(value)&&value>=0)}
+  const by=Object.fromEntries(rows.map(x=>[x.id,x]))
+  assert.equal(by['capacity-saturation'].metrics.providerSaturationEvents,1)
+  assert.equal(by['capacity-saturation'].metrics.modelSaturationEvents,1)
+  assert.equal(by['capacity-saturation'].metrics.queueWaitUnits,2)
+  assert.ok(by['capacity-saturation'].metrics.taskDurationUnits>0)
+  assert.equal(by['session-reuse'].metrics.retries,1)
+  assert.ok(by['session-reuse'].metrics.contextChars>0)
+  assert.equal(by['session-reuse'].metrics.sessionReuseSavedUnits,2)
+  assert.equal(by['write-conflict'].metrics.writeConflictEvents,1)
+  assert.equal(by['write-conflict'].metrics.queueWaitUnits,1)
 })
