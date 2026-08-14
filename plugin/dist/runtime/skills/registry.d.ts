@@ -10,6 +10,10 @@ export interface SkillCandidate {
     orchestrationRisk: boolean;
     permission?: SkillPermission;
 }
+export interface SkillDiscoveryRoot {
+    path: string;
+    provider: SkillProvider;
+}
 export type SkillPreflightOutcome = 'allow' | 'ask' | 'deny' | 'disabled' | 'missing' | 'invalid' | 'incompatible' | 'resource-unavailable' | 'unknown-policy' | 'budget-exceeded' | 'composition-deferred';
 export interface SkillPreflightResult {
     name: string;
@@ -24,7 +28,9 @@ export interface SkillPlan {
     outcomes: SkillPreflightResult[];
     reason: string[];
 }
+export declare function parseSkillFrontmatter(text: string): Record<string, string>;
 export declare function configuredSkillPaths(hostConfig: Record<string, unknown>): string[];
+export declare function skillDiscoveryRoots(projectRoot: string, hiRoot?: string, extraPaths?: string[]): SkillDiscoveryRoot[];
 export declare function discoverSkills(projectRoot: string, hiRoot?: string, extraPaths?: string[]): SkillCandidate[];
 export declare function resolveSkillPlan(methodologyNeeds: string[], candidates: SkillCandidate[], permissionMap?: Record<string, SkillPermission>, skillToolEnabled?: boolean, role?: string, catalog?: HiMethodologyCatalogEntry[], availableResources?: ReadonlySet<string>): SkillPlan;
 export declare function selectMethodologies(methodologyNeeds: string[], candidates: SkillCandidate[], role?: string, catalog?: HiMethodologyCatalogEntry[]): SkillCandidate[];

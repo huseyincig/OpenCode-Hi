@@ -32,20 +32,19 @@ test('A5 runtime-scoped stores are created once by the application composition s
   assert.match(tools,/scopedStores\.contextArtifacts\.add/)
 })
 
-test('A5 SkillCatalogIndex reuses discovery until an explicit relevant invalidation',()=>{
+test('A5 SkillCatalogIndex remains runtime-scoped while later filesystem fingerprints can refresh it',()=>{
   const project=mkdtempSync(join(tmpdir(),'hi-a5-project-'))
   const hiRoot=mkdtempSync(join(tmpdir(),'hi-a5-package-'))
   try{
     const index=new SkillCatalogIndex(project,hiRoot)
     const before=index.candidates({})
+    const scans=index.diagnostics().full_scans
+    assert.equal(index.invalidateChanged(['src/unrelated.ts']),false)
+    index.candidates({});assert.equal(index.diagnostics().full_scans,scans,'unrelated source mutation does not force skill discovery')
     const name='hi-a5-cache-proof',dir=join(hiRoot,'skills',name)
     mkdirSync(dir,{recursive:true})
     writeFileSync(join(dir,'SKILL.md'),`---\nname: ${name}\ndescription: A5 cache proof\n---\nbody\n`)
     assert.equal(before.some(x=>x.name===name),false)
-    assert.equal(index.candidates({}).some(x=>x.name===name),false,'no operation-time rescan before invalidation')
-    assert.equal(index.invalidateChanged(['src/unrelated.ts']),false)
-    assert.equal(index.candidates({}).some(x=>x.name===name),false,'unrelated source mutation does not rescan skills')
-    assert.equal(index.invalidateChanged([`skills/${name}/SKILL.md`]),true)
     const refreshed=index.candidates({})
     const hit=refreshed.find(x=>x.name===name)
     assert.ok(hit);assert.equal(hit.provider,'hi');assert.equal(hit.valid,true)

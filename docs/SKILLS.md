@@ -23,3 +23,9 @@ The OpenCode skill file contains methodology and bounded resources. The Hi polic
 OpenCode may discover other project or personal skills, but discovery does not grant Hi auto-selection authority. Hi auto-selects only built-in methodologies or valid `hi-project-*` methodologies with a complete admission contract and provenance. Same-name provider collisions fail closed; project files do not silently override built-in Hi methodologies.
 
 `hi-methodology-authoring` is used only when a reusable procedure is explicitly requested or repeated project evidence demonstrates a genuine methodology gap. One-off facts belong in Project Intelligence or evidence, not in a new methodology.
+
+## Skill catalog indexing
+
+`SkillCatalogIndex` is the single runtime-scoped discovery cache used by Hi. On plugin configuration/startup it builds a bounded record for each discovered OpenCode skill containing the skill id/name, provider, `SKILL.md` path and realpath, mtime and SHA-256, parsed top-level frontmatter, pre-indexed bounded resource map, and validity state. This index does not replace OpenCode skill loading and does not change `MethodologyContract` ownership.
+
+Normal task starts reuse the index instead of repeating full directory/resource discovery. The index refreshes when configured skill paths change, tracked skill/root/resource fingerprints drift, a relevant project methodology policy/provenance or skill surface changes, or the OpenCode config hook explicitly refreshes it. Resource reads remain constrained to the pre-indexed resource map; unrelated repository edits do not invalidate the skill catalog.

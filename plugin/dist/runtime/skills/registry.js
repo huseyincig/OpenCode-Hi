@@ -3,8 +3,19 @@ import { join, resolve } from 'node:path';
 import { resolveSkillPermission } from './permissions.js';
 import { builtinMethodologyCatalog, methodologyLimits } from '../methodology/catalog.js';
 function requestedMethodologies(methodologyNeeds) { return [...new Set(methodologyNeeds)]; }
-function validSkillFrontmatter(text, name) { const m = text.match(/^---\s*\n([\s\S]*?)\n---\s*\n/); if (!m)
-    return false; const fm = m[1], n = fm.match(/^name:\s*["']?([^"'\n]+)["']?\s*$/m)?.[1]?.trim(), d = fm.match(/^description:\s*(.+)$/m)?.[1]?.trim(); return n === name && Boolean(d); }
+export function parseSkillFrontmatter(text) { const m = text.match(/^---\s*\n([\s\S]*?)\n---\s*\n/); if (!m)
+    return {}; const out = {}; for (const raw of m[1].split(/\r?\n/)) {
+    if (/^\s/.test(raw))
+        continue;
+    const hit = raw.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
+    if (!hit)
+        continue;
+    let value = hit[2].trim();
+    if (value.length >= 2 && ((value.startsWith('\"') && value.endsWith('\"')) || (value.startsWith("'") && value.endsWith("'"))))
+        value = value.slice(1, -1);
+    out[hit[1]] = value;
+} return out; }
+function validSkillFrontmatter(text, name) { const fm = parseSkillFrontmatter(text); return fm.name === name && Boolean(fm.description); }
 function inspectDir(path, provider) { if (!existsSync(path))
     return []; const out = []; for (const name of readdirSync(path)) {
     const file = join(path, name, 'SKILL.md');
@@ -24,13 +35,15 @@ catch {
     return resolve(path);
 } }
 export function configuredSkillPaths(hostConfig) { const skills = (hostConfig.skills && typeof hostConfig.skills === 'object') ? hostConfig.skills : {}; const paths = Array.isArray(skills.paths) ? skills.paths : []; return [...new Set(paths.filter((x) => typeof x === 'string' && x.trim().length > 0).map(x => canonical(x.trim())))]; }
-export function discoverSkills(projectRoot, hiRoot, extraPaths = []) { const home = process.env.HOME ?? process.env.USERPROFILE ?? '', opencodeConfigDir = process.env.OPENCODE_CONFIG_DIR ? resolve(process.env.OPENCODE_CONFIG_DIR) : join(home, '.config', 'opencode'), roots = [[join(projectRoot, '.opencode', 'skills'), 'project'], [join(projectRoot, '.claude', 'skills'), 'project'], [join(projectRoot, '.agents', 'skills'), 'project'], ...(hiRoot ? [[join(hiRoot, 'skills'), 'hi']] : []), [join(opencodeConfigDir, 'skills'), 'personal'], [join(home, '.claude', 'skills'), 'personal'], [join(home, '.agents', 'skills'), 'personal'], ...extraPaths.map(x => [x, 'personal'])]; const out = [], seenRoots = new Set(); for (const [root, provider] of roots) {
-    const key = canonical(root);
-    if (seenRoots.has(key))
+export function skillDiscoveryRoots(projectRoot, hiRoot, extraPaths = []) { const home = process.env.HOME ?? process.env.USERPROFILE ?? '', opencodeConfigDir = process.env.OPENCODE_CONFIG_DIR ? resolve(process.env.OPENCODE_CONFIG_DIR) : join(home, '.config', 'opencode'), raw = [[join(projectRoot, '.opencode', 'skills'), 'project'], [join(projectRoot, '.claude', 'skills'), 'project'], [join(projectRoot, '.agents', 'skills'), 'project'], ...(hiRoot ? [[join(hiRoot, 'skills'), 'hi']] : []), [join(opencodeConfigDir, 'skills'), 'personal'], [join(home, '.claude', 'skills'), 'personal'], [join(home, '.agents', 'skills'), 'personal'], ...extraPaths.map(x => [x, 'personal'])], out = [], seen = new Set(); for (const [path, provider] of raw) {
+    const real = canonical(path);
+    if (seen.has(real))
         continue;
-    seenRoots.add(key);
-    out.push(...inspectDir(root, provider));
+    seen.add(real);
+    out.push({ path: real, provider });
 } return out; }
+export function discoverSkills(projectRoot, hiRoot, extraPaths = []) { const out = []; for (const root of skillDiscoveryRoots(projectRoot, hiRoot, extraPaths))
+    out.push(...inspectDir(root.path, root.provider)); return out; }
 export function resolveSkillPlan(methodologyNeeds, candidates, permissionMap, skillToolEnabled = true, role = 'coder', catalog = builtinMethodologyCatalog(), availableResources = new Set()) {
     const requested = requestedMethodologies(methodologyNeeds), selected = [], missing = [], outcomeByName = new Map();
     const eligible = [];

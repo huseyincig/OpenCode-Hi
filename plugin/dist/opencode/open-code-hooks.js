@@ -42,7 +42,7 @@ export function createOpenCodeHooks(input) {
                 opencodeConfig.subagent_depth = 1;
             applyAdmittedProjectMethodologyPermissions(opencodeConfig, projectRoot);
             applyProjectAuthorityPermissions(opencodeConfig, projectAuthority);
-            services.scopedStores.skillCatalog.invalidate();
+            services.scopedStores.skillCatalog.refresh(opencodeConfig);
             reconfigureToolSurface();
         },
         'chat.message': async (input, output) => { try {
