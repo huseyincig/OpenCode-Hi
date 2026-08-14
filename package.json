@@ -38,7 +38,11 @@
   "scripts": {
     "build": "npm --prefix plugin run build",
     "test": "npm --prefix plugin test",
-    "check": "npm run build && npm --prefix plugin test",
-    "prepack": "npm run build"
+    "check": "npm --prefix plugin run check && python3 scripts/validate.py",
+    "prepack": "npm run build",
+    "contracts:generate": "npm --prefix plugin run build",
+    "architecture:lint": "npm --prefix plugin run architecture:lint",
+    "projections:check": "npm --prefix plugin run projections:check",
+    "behavior:accept": "npm --prefix plugin test"
   }
 }

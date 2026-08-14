@@ -1,14 +1,39 @@
 # 09 — Generator / Projection Architecture
 
-Status: V1 TARGET ARCHITECTURE — CURRENT GENERATOR GAP MAPPED
+Status: V1 OPERATIONAL FOR MIGRATED PROJECTIONS — M3/M5/M6 RESIDUE REMAINS EXPLICIT
 
 ## Purpose
 
 Define how canonical Hi contracts become generated runtime/host artifacts without allowing generated files, prompts or host frontmatter to become a second semantic owner.
 
+## M10 operational generator graph
+
+The local deterministic build now uses one composed projection/check graph rather than treating the existing generators as unrelated utilities:
+
+```text
+data/hi-roles.json + roles/*.md guidance
+        -> generate_role_policy.py
+        -> generate_plugin_agents.py
+
+data/hi-methodologies.json + authored SKILL Method bodies
+        -> generate_methodology_skills.py
+        -> generate_methodology_policy.py
+
+all material generated outputs
+        -> postbuild generate_projection_receipts.mjs
+        -> data/validation/projection-receipts.json
+        -> architecture_lint.mjs projection/source/output parity
+```
+
+`plugin/package.json` owns the deterministic order: prebuild projections -> TypeScript build -> postbuild receipts. Root/plugin `check` then runs architecture lint before the controlled behavioral suite. The receipt catalog contains one canonical `ProjectionReceipt` per material generated runtime TS projection and native methodology `SKILL.md` projection; it reuses the M1 `ProjectionReceipt` contract rather than introducing a second receipt schema.
+
+BA12 is executable in `plugin/test/generator-idempotence.test.mjs`: identical input produces byte-identical output on a second generation pass, and a one-field RoleContract purpose mutation changes only the declared role-policy + agent-config dependent projections in an isolated fixture.
+
+The generator graph intentionally does **not** claim M3 PermissionProfile or M5 ConfigOption ownership. Existing role Markdown permission residue remains an explicitly reclassified M3 parity surface until the prior host-policy blocker can be removed safely.
+
 ## Current verified generator reality
 
-### Methodology path — partially correct direction
+### Methodology path — canonical mechanical projection operational
 
 Current chain:
 
@@ -40,7 +65,7 @@ The generator already validates:
 
 This is a strong base but still has **multiple authored surfaces** (`data`, `SKILL.md`, `roles/*.md`) that the generator reconciles rather than deriving all mechanical projections from one contract.
 
-### Role/agent path — wrong canonical direction
+### Role/agent path — Role identity migrated; M3 permission residue remains
 
 Current chain:
 

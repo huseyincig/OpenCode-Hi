@@ -1,10 +1,33 @@
 # 10 — Validation and Architectural Linting
 
-Status: V1 TARGET ARCHITECTURE — VALIDATOR CLASSES DEFINED
+Status: V1 OPERATIONAL RULE GRAPH FOR MIGRATED CLASSES — HI003 DEFERRED WITH M5
 
 ## Purpose
 
 Make wrong architecture mechanically difficult. Validation must cover more than schema syntax: ownership, references, executor reachability, projection parity, state/storage ownership and behavioral evidence.
+
+## M10 executable architecture lint
+
+`scripts/architecture_lint.mjs` is the common local constitutional rule entrypoint. It emits every `HI001`–`HI020` rule ID with an explicit status and exits non-zero on a migrated-class violation. It does not pretend every architectural property is a static-text property:
+
+- **fatal static/parity checks** cover migrated owner/reference/host projection/storage/generated-artifact/role-agent/methodology/current-only/proof-link surfaces;
+- **LINKED** rules identify safety/authority/evidence/completion/recovery/context/artifact behavior whose actual proof is executed by the controlled plugin suite; missing proof links are lint failures;
+- **HI003 is DEFERRED**, not PASS, because M5 ConfigOptionContract remains `BLOCKED_BY_HOST_POLICY`. Unmigrated config is therefore not silently admitted by M10.
+
+The current deterministic command graph is:
+
+```text
+npm run check
+  -> plugin build
+       -> prebuild canonical projections
+       -> TypeScript build
+       -> postbuild ProjectionReceipt catalog
+  -> architecture:lint
+  -> controlled plugin behavioral tests
+  -> scripts/validate.py
+```
+
+Projection lint recomputes current receipts from canonical/authored inputs and output bytes, verifies tracked generated output against isolated regeneration, and checks generated markers/hashes. This makes HI006/HI011/HI012 fatal without rewriting the working tree during lint.
 
 ## Existing verified validation assets
 
@@ -149,7 +172,7 @@ An ADMITTED material contract that claims executable behavior must reference at 
 
 ## Validator command architecture
 
-Target commands:
+Operational local commands (real-host/release acceptance remains separately gated):
 
 ```text
 npm run contracts:validate
