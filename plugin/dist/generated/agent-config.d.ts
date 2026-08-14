@@ -98,7 +98,6 @@ export declare const PACKAGED_HI_AGENTS: {
             readonly external_directory: "deny";
             readonly lsp: "deny";
             readonly question: "allow";
-            readonly scout: "allow";
             readonly skill: {
                 readonly "*": "deny";
                 readonly "hi-release-guardrails": "allow";
@@ -280,7 +279,6 @@ export declare const PACKAGED_HI_AGENTS: {
                 readonly "*.env.*": "deny";
                 readonly "*.env.example": "allow";
             };
-            readonly scout: "allow";
             readonly skill: {
                 readonly "*": "deny";
                 readonly "hi-changelog-and-documentation": "allow";

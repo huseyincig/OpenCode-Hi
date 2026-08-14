@@ -1,4 +1,6 @@
 export type NativePermissionDecision = 'allow' | 'ask' | 'deny' | 'unknown';
+export declare const HI_ACCOUNTED_PERMISSION_KEYS: readonly ["read", "glob", "grep", "list", "lsp", "bash", "edit", "skill", "todowrite", "webfetch", "websearch", "question", "task", "external_directory"];
+export declare function unaccountedExecutionPermissionKeys(hostConfig: Record<string, unknown>, role: string): string[];
 export interface NativePermissionSnapshot {
     mode?: string;
     decisions: Record<string, NativePermissionDecision>;

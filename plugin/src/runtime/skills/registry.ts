@@ -4,7 +4,7 @@ import { resolveSkillPermission,type SkillPermission } from './permissions.js'
 import { builtinMethodologyCatalog, methodologyLimits, type HiMethodologyCatalogEntry } from '../methodology/catalog.js'
 export type SkillProvider='project'|'personal'|'hi'
 export interface SkillCandidate{name:string;provider:SkillProvider;path:string;valid:boolean;enabled:boolean;orchestrationRisk:boolean;permission?:SkillPermission}
-export type SkillPreflightOutcome='allow'|'ask'|'deny'|'disabled'|'missing'|'invalid'|'incompatible'|'unknown-policy'|'budget-exceeded'|'composition-deferred'
+export type SkillPreflightOutcome='allow'|'ask'|'deny'|'disabled'|'missing'|'invalid'|'incompatible'|'resource-unavailable'|'unknown-policy'|'budget-exceeded'|'composition-deferred'
 export interface SkillPreflightResult{name:string;outcome:SkillPreflightOutcome;provider?:SkillProvider;path?:string}
 export interface SkillPlan{selected:SkillCandidate[];requested:string[];missing:string[];outcomes:SkillPreflightResult[];reason:string[]}
 
@@ -22,6 +22,7 @@ export function resolveSkillPlan(
   skillToolEnabled=true,
   role='coder',
   catalog:HiMethodologyCatalogEntry[]=builtinMethodologyCatalog(),
+  availableResources:ReadonlySet<string>=new Set<string>(),
 ):SkillPlan{
   const requested=requestedMethodologies(methodologyNeeds),selected:SkillCandidate[]=[],missing:string[]=[],outcomeByName=new Map<string,SkillPreflightResult>()
   const eligible:Array<{name:string;candidate:SkillCandidate;permission:SkillPermission;policy:HiMethodologyCatalogEntry;index:number}>=[]
@@ -29,6 +30,7 @@ export function resolveSkillPlan(
     const policy=catalog.find(item=>item.name===name)
     if(!policy){outcomeByName.set(name,{name,outcome:'unknown-policy'});missing.push(name);continue}
     if(!policy.compatibleRoles.includes(role)){outcomeByName.set(name,{name,outcome:'incompatible'});missing.push(name);continue}
+    if(policy.resourceRequirements.some(resource=>!availableResources.has(resource))){outcomeByName.set(name,{name,outcome:'resource-unavailable'});missing.push(name);continue}
     const expectedProvider:SkillProvider=policy.provider
     const all=candidates.filter(candidate=>candidate.name===name)
     const foreign=all.filter(candidate=>candidate.provider!==expectedProvider)

@@ -16,8 +16,16 @@ function decision(raw) {
     }
     return 'unknown';
 }
-const TOOL_KEYS = ['read', 'glob', 'grep', 'list', 'lsp', 'bash', 'edit', 'skill', 'todowrite', 'webfetch', 'websearch', 'question', 'task', 'external_directory'];
+export const HI_ACCOUNTED_PERMISSION_KEYS = ['read', 'glob', 'grep', 'list', 'lsp', 'bash', 'edit', 'skill', 'todowrite', 'webfetch', 'websearch', 'question', 'task', 'external_directory'];
+const TOOL_KEYS = HI_ACCOUNTED_PERMISSION_KEYS;
 const PERMISSION_TO_TOOLS = { read: ['read'], glob: ['glob'], grep: ['grep'], list: ['list'], lsp: ['lsp'], bash: ['bash'], edit: ['edit', 'write', 'apply_patch'], skill: ['skill'], todowrite: ['todowrite', 'todoread'], webfetch: ['webfetch'], websearch: ['websearch'], question: ['question'], task: ['task'] };
+export function unaccountedExecutionPermissionKeys(hostConfig, role) {
+    const agents = isRecord(hostConfig.agent) ? hostConfig.agent : {};
+    const def = isRecord(agents[role]) ? agents[role] : undefined;
+    const permission = def && isRecord(def.permission) ? def.permission : {};
+    const known = new Set(HI_ACCOUNTED_PERMISSION_KEYS);
+    return Object.keys(permission).filter(key => !known.has(key)).sort();
+}
 export function effectiveExecutionSurface(hostConfig, role, skillToolEnabled) {
     const agents = isRecord(hostConfig.agent) ? hostConfig.agent : {};
     const def = isRecord(agents[role]) ? agents[role] : undefined;

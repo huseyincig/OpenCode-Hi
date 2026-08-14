@@ -185,7 +185,9 @@
         "hi-accessibility-review"
       ],
       "conflicts": [],
-      "resource_requirements": [],
+      "resource_requirements": [
+        "host-capability:browser-execution"
+      ],
       "compatible_roles": [
         "visual-qa"
       ],
@@ -878,7 +880,9 @@
         "hi-accessibility-review"
       ],
       "conflicts": [],
-      "resource_requirements": [],
+      "resource_requirements": [
+        "host-capability:browser-execution"
+      ],
       "compatible_roles": [
         "visual-qa"
       ],

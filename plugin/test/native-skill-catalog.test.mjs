@@ -104,7 +104,8 @@ test('every built-in methodology has an activation edge and an executable compat
     const agent=PACKAGED_HI_AGENTS[role]
     assert.ok(agent,`${policy.name}: generated role ${role} missing`)
     const permissions=agent.permission?.skill??{}
-    const plan=resolveSkillPlan([policy.name],found,permissions,true,role,catalog)
-    assert.deepEqual(plan.selected.map(x=>x.name),[policy.name],`${policy.name}: native lazy selection is not executable for ${role}`)
+    const resources=new Set(policy.resourceRequirements)
+    const plan=resolveSkillPlan([policy.name],found,permissions,true,role,catalog,resources)
+    assert.deepEqual(plan.selected.map(x=>x.name),[policy.name],`${policy.name}: native lazy selection is not executable for ${role} when declared resources are available`)
   }
 })

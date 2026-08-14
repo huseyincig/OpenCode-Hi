@@ -31,7 +31,7 @@ export function discoverSkills(projectRoot, hiRoot, extraPaths = []) { const hom
     seenRoots.add(key);
     out.push(...inspectDir(root, provider));
 } return out; }
-export function resolveSkillPlan(methodologyNeeds, candidates, permissionMap, skillToolEnabled = true, role = 'coder', catalog = builtinMethodologyCatalog()) {
+export function resolveSkillPlan(methodologyNeeds, candidates, permissionMap, skillToolEnabled = true, role = 'coder', catalog = builtinMethodologyCatalog(), availableResources = new Set()) {
     const requested = requestedMethodologies(methodologyNeeds), selected = [], missing = [], outcomeByName = new Map();
     const eligible = [];
     for (const [index, name] of requested.entries()) {
@@ -43,6 +43,11 @@ export function resolveSkillPlan(methodologyNeeds, candidates, permissionMap, sk
         }
         if (!policy.compatibleRoles.includes(role)) {
             outcomeByName.set(name, { name, outcome: 'incompatible' });
+            missing.push(name);
+            continue;
+        }
+        if (policy.resourceRequirements.some(resource => !availableResources.has(resource))) {
+            outcomeByName.set(name, { name, outcome: 'resource-unavailable' });
             missing.push(name);
             continue;
         }

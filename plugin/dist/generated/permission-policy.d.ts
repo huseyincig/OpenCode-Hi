@@ -28,9 +28,6 @@ export declare const HI_PERMISSION_PROFILES: readonly [{
     }, {
         readonly capability: "websearch";
         readonly action: "allow";
-    }, {
-        readonly capability: "scout";
-        readonly action: "allow";
     }];
     readonly safetyClass: "primary-readonly";
     readonly mayBeWidenedByLowerLayer: false;
@@ -98,9 +95,6 @@ export declare const HI_PERMISSION_PROFILES: readonly [{
         readonly action: "allow";
     }, {
         readonly capability: "websearch";
-        readonly action: "allow";
-    }, {
-        readonly capability: "scout";
         readonly action: "allow";
     }];
     readonly safetyClass: "scoped-write";

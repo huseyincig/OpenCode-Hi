@@ -14,6 +14,7 @@ export interface TaskPreconditionInput{
   modelAvailable:boolean
   native:{childSession:boolean;prompt:boolean}
   hostConfig?:Record<string,unknown>
+  methodologyResourceFailures?:string[]
   contractCriticalAmbiguity?:boolean
   authorityRequired?:boolean
 }
@@ -48,6 +49,7 @@ export function evaluateTaskPreconditions(input:TaskPreconditionInput):TaskPreco
   if(input.dependencies.incomplete.length)add('dependency-wait','WAIT',`Waiting for prerequisite task(s): ${input.dependencies.incomplete.join(',')}`)
   if(input.contractCriticalAmbiguity&&input.implementation)add('contract-ambiguity','RESOLVE','Contract-critical ambiguity must be resolved by evidence/exploration before implementation starts')
   if(input.authorityRequired)add('user-authority','USER_ACTION_REQUIRED','Required user authority must be resolved before this task starts')
+  if(input.methodologyResourceFailures?.length)add('methodology-resource','RESOLVE',`Required methodology host/resource capability is unavailable: ${input.methodologyResourceFailures.join(', ')}`)
 
   const def=roleDefinition(input.hostConfig,input.role)
   // When the live config exposes an agent table, an Hi specialist must exist there as a native subagent.

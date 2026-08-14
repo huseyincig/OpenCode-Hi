@@ -363,7 +363,7 @@ export declare const HI_METHODOLOGY_POLICY: readonly [{
     readonly preferredRoles: readonly ["visual-qa"];
     readonly priority: "normal";
     readonly purpose: "Perform targeted browser validation using an authorized browser capability.";
-    readonly resourceRequirements: readonly [];
+    readonly resourceRequirements: readonly ["host-capability:browser-execution"];
     readonly trigger: "Changed behavior requires real browser interaction or rendering evidence.";
     readonly triggerSources: readonly ["task-intent"];
     readonly usefulCoexistence: readonly ["hi-visual-qa", "hi-accessibility-review"];
@@ -762,7 +762,7 @@ export declare const HI_METHODOLOGY_POLICY: readonly [{
     readonly preferredRoles: readonly ["visual-qa"];
     readonly priority: "normal";
     readonly purpose: "Validate changed visual output for layout, clipping, state, and responsive regressions.";
-    readonly resourceRequirements: readonly [];
+    readonly resourceRequirements: readonly ["host-capability:browser-execution"];
     readonly trigger: "Visual UI rendering/styling changed materially, or visual QA is explicitly requested.";
     readonly triggerSources: readonly ["task-intent", "changed-surface", "verification-need"];
     readonly usefulCoexistence: readonly ["hi-browser-testing", "hi-accessibility-review"];

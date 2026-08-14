@@ -7,14 +7,14 @@
         "id": "hi.methodology.catalog",
         "hash": {
           "algorithm": "sha256",
-          "value": "9683b141a3bc2175f6029b7f1c606ec145d2a10a7bf4c0dd9b67b770e010001c"
+          "value": "a448b29e63b0491445ad15cf62357c1f99167fd21daed2940c5da86ecd7bf0fe"
         }
       },
       {
         "id": "hi.permission.catalog",
         "hash": {
           "algorithm": "sha256",
-          "value": "a0ef6ee1def65cf9c47dd7a929fec093bf7094064ba8ec05284ff7a50950c609"
+          "value": "9b504aa1682ff1616e386eca33f7ff0babc09bf113e71d9b1476ce4eef45b0fc"
         }
       },
       {
@@ -37,7 +37,7 @@
     "outputPath": "plugin/src/generated/agent-config.ts",
     "outputHash": {
       "algorithm": "sha256",
-      "value": "604ae97864d41b8976b33e430e708291f33f08ef0e615a4872ccf1af9abb229c"
+      "value": "d4683e76073c35b99138a3c6afc27ca44ea6f6ff91e6c0776bca8ba035bb32ca"
     }
   },
   {
@@ -68,7 +68,7 @@
         "id": "hi.methodology.catalog",
         "hash": {
           "algorithm": "sha256",
-          "value": "9683b141a3bc2175f6029b7f1c606ec145d2a10a7bf4c0dd9b67b770e010001c"
+          "value": "a448b29e63b0491445ad15cf62357c1f99167fd21daed2940c5da86ecd7bf0fe"
         }
       },
       {
@@ -84,7 +84,7 @@
     "outputPath": "plugin/src/generated/methodology-policy.ts",
     "outputHash": {
       "algorithm": "sha256",
-      "value": "a00ba0c97b0b39b94ed9cabadb6c3bcb925834d73c1043abb1c8a71a7865b70a"
+      "value": "974b52523bf554acb400e037076a14821995da19781f7d2c0d7c3dae26458fe4"
     }
   },
   {
@@ -95,7 +95,7 @@
         "id": "hi.permission.catalog",
         "hash": {
           "algorithm": "sha256",
-          "value": "a0ef6ee1def65cf9c47dd7a929fec093bf7094064ba8ec05284ff7a50950c609"
+          "value": "9b504aa1682ff1616e386eca33f7ff0babc09bf113e71d9b1476ce4eef45b0fc"
         }
       }
     ],
@@ -104,7 +104,7 @@
     "outputPath": "plugin/src/generated/permission-policy.ts",
     "outputHash": {
       "algorithm": "sha256",
-      "value": "c03697e47c878594388d76f3211b36fadc4896f587c67fd01b0366b5691caf06"
+      "value": "ceb7f062d58fdcacafceef5bf479b17d3efdacf473423b8d2cbca8c694c3a2b9"
     }
   },
   {
@@ -277,7 +277,7 @@
         "id": "hi.methodology.hi-browser-testing",
         "hash": {
           "algorithm": "sha256",
-          "value": "db400d3f8d304b3596e54d993fe438ad0fc7c7114f3edb16b60451bb3ef6de94"
+          "value": "b16426a62db570dca64c4f669127800eed532cd3fb7e459c7ff29c4fa4acc0d9"
         }
       }
     ],
@@ -844,7 +844,7 @@
         "id": "hi.methodology.hi-visual-qa",
         "hash": {
           "algorithm": "sha256",
-          "value": "6ab3aa155f6bc3a79ca90a5b4227f990b83de6de04ae59edcdae2eea872c64fc"
+          "value": "b1fbf1ffe5035cbfd1cf5938cd2ba7025c7222cde1d52ebfa772e5b93cbf89ab"
         }
       }
     ],

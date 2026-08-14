@@ -13,8 +13,17 @@ function decision(raw:unknown):NativePermissionDecision{
   return'unknown'
 }
 
-const TOOL_KEYS=['read','glob','grep','list','lsp','bash','edit','skill','todowrite','webfetch','websearch','question','task','external_directory'] as const
+export const HI_ACCOUNTED_PERMISSION_KEYS=['read','glob','grep','list','lsp','bash','edit','skill','todowrite','webfetch','websearch','question','task','external_directory'] as const
+const TOOL_KEYS=HI_ACCOUNTED_PERMISSION_KEYS
 const PERMISSION_TO_TOOLS:Record<string,string[]>={read:['read'],glob:['glob'],grep:['grep'],list:['list'],lsp:['lsp'],bash:['bash'],edit:['edit','write','apply_patch'],skill:['skill'],todowrite:['todowrite','todoread'],webfetch:['webfetch'],websearch:['websearch'],question:['question'],task:['task']}
+
+export function unaccountedExecutionPermissionKeys(hostConfig:Record<string,unknown>,role:string):string[]{
+  const agents=isRecord(hostConfig.agent)?hostConfig.agent:{}
+  const def=isRecord(agents[role])?agents[role] as Record<string,unknown>:undefined
+  const permission=def&&isRecord(def.permission)?def.permission:{}
+  const known=new Set<string>(HI_ACCOUNTED_PERMISSION_KEYS)
+  return Object.keys(permission).filter(key=>!known.has(key)).sort()
+}
 
 export interface NativePermissionSnapshot{mode?:string;decisions:Record<string,NativePermissionDecision>;source:'effective-opencode-agent'|'hi-default-invariants'}
 export interface EffectiveExecutionSurface{tools:string[];permissions:NativePermissionSnapshot}

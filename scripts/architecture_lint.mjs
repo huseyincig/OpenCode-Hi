@@ -14,6 +14,7 @@ import {HI_CONFIG_OPTIONS,HI_CONFIG_DEFAULTS} from '../plugin/dist/generated/con
 import {PACKAGED_HI_AGENTS} from '../plugin/dist/generated/agent-config.js'
 import {HI_METHODOLOGY_POLICY} from '../plugin/dist/generated/methodology-policy.js'
 import {openCodeHostCapabilityContracts} from '../plugin/dist/contracts/host-capability.js'
+import {unaccountedExecutionPermissionKeys} from '../plugin/dist/runtime/routing/execution-profile.js'
 import {buildProjectionReceipts} from './projection_receipts.mjs'
 
 const ROOT=resolve(new URL('..',import.meta.url).pathname)
@@ -147,7 +148,15 @@ guard('HI016','LEGACY_CURRENT_ONLY_VIOLATION',()=>{
 
 guard('HI017','BEHAVIORAL_PROOF_MISSING',()=>{
   for(const [id,[,files]] of Object.entries(proofLinks))for(const file of files)assert(testExists(file),`${id}: missing ${file}`)
-  for(const file of ['config-option-contract.test.mjs','config-executable-effect.test.mjs','permission-profile-contract.test.mjs','role-contract-catalog.test.mjs','role-skill-permission-sync.test.mjs','host-capability-contract.test.mjs','storage-ownership-contract.test.mjs','agent-binding-contract.test.mjs'])assert(testExists(file),`missing migrated-class acceptance ${file}`)
+  for(const file of ['config-option-contract.test.mjs','config-executable-effect.test.mjs','permission-profile-contract.test.mjs','role-contract-catalog.test.mjs','role-skill-permission-sync.test.mjs','host-capability-contract.test.mjs','storage-ownership-contract.test.mjs','agent-binding-contract.test.mjs','methodology-host-capability.test.mjs'])assert(testExists(file),`missing migrated-class acceptance ${file}`)
+})
+
+guard('HI021','EXECUTION_SURFACE_PERMISSION_DRIFT',()=>{
+  const host={agent:PACKAGED_HI_AGENTS}
+  for(const role of Object.keys(PACKAGED_HI_AGENTS)){
+    const drift=unaccountedExecutionPermissionKeys(host,role)
+    assert(drift.length===0,`${role}: permission keys not represented by Core execution surface: ${drift.join(', ')}`)
+  }
 })
 
 for(const r of results.sort((a,b)=>a.id.localeCompare(b.id)))console.log(`${r.id} ${r.status} ${r.name} — ${r.detail}`)

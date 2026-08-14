@@ -46,10 +46,6 @@
         {
           "capability": "websearch",
           "action": "allow"
-        },
-        {
-          "capability": "scout",
-          "action": "allow"
         }
       ]
     },
@@ -139,10 +135,6 @@
         },
         {
           "capability": "websearch",
-          "action": "allow"
-        },
-        {
-          "capability": "scout",
           "action": "allow"
         }
       ]
