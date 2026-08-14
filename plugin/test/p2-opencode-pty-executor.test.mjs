@@ -146,14 +146,14 @@ test('P2 spawn never silently executes native permission ask/deny',async()=>{
 })
 
 
-test('P2 production runtime services own exactly one OpenCodePtyAdapter instance while capability remains gated for P3',async()=>{
+test('P2/P3 production runtime services own exactly one OpenCodePtyAdapter and docs bind the completed lifecycle claim',async()=>{
   const {readFileSync}=await import('node:fs')
   const services=readFileSync(new URL('../src/runtime/application/runtime-services.ts',import.meta.url),'utf8')
   const hosts=readFileSync(new URL('../../docs/HOSTS.md',import.meta.url),'utf8')
   assert.match(services,/const processExecutor=new OpenCodePtyAdapter\(/)
   assert.match(services,/return \{[^}]*processExecutor/)
-  assert.match(hosts,/P3 must bind WAIT\/STOP\/restart\/orphan reconciliation/)
-  assert.match(hosts,/remains `DEGRADED`/)
+  assert.match(hosts,/event-driven WAIT/)
+  assert.match(hosts,/`process-lifecycle` is `SUPPORTED`/)
 })
 
 

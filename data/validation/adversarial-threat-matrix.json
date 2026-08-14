@@ -199,16 +199,16 @@
     {
       "id": "Q3-ADV-012",
       "threat": "process-orphan",
-      "owner": "HostCapability contract / future ProcessContract owner",
-      "control": "Current ordinary bash process lifecycle is truthfully DEGRADED; Hi does not fabricate PID/orphan cleanup guarantees until an owned executor exists.",
+      "owner": "ProcessContract + ProcessRuntime + OpenCodePtyAdapter",
+      "control": "Hi owns PID/cwd/native-command identity, bounded WAIT/read, fail-closed restart reconciliation, explicit STOP termination and separate cleanup; owner mismatch is quarantined and never signalled.",
       "proof_tests": [
         {
-          "file": "plugin/test/hi-acceptance-evolution.test.mjs",
-          "contains": "reference host does not fake unavailable process-control or workspace-isolation executors"
+          "file": "plugin/test/p3-process-runtime-lifecycle.test.mjs",
+          "contains": "P3 restart reconciliation adopts exact owner identity and quarantines orphan without signalling it"
         },
         {
-          "file": "plugin/test/host-capability-contract.test.mjs",
-          "contains": "prompt and worker capabilities fail closed when required native ownership primitives are absent"
+          "file": "plugin/test/p2-opencode-pty-executor.test.mjs",
+          "contains": "P3 restart reconcile quarantines same PID with changed command identity and never signals it"
         }
       ],
       "evidence": [
@@ -227,7 +227,7 @@
       "proof_tests": [
         {
           "file": "plugin/test/hi-acceptance-evolution.test.mjs",
-          "contains": "reference host does not fake unavailable process-control or workspace-isolation executors"
+          "contains": "reference host exposes owned native process events while workspace isolation remains unsupported"
         },
         {
           "file": "plugin/test/host-capability-contract.test.mjs",

@@ -41,6 +41,9 @@ function degraded(id:string,fallback:string,semantic_loss:string[],acceptance_re
 function unsupported(id:string,acceptance_ref:string,forbidden_fake_behavior:string):HostCapabilityContract{return{
   id,host_id:'opencode',status:'UNSUPPORTED',verification_level:'OBSERVED',semantic_loss:[],required_permissions:[],acceptance_ref,forbidden_fake_behavior
 }}
+function realHostSupported(id:string,native_primitive:string,adapter_entrypoint:string,acceptance_ref:string,required_permissions:string[]=[]):HostCapabilityContract{return{
+  id,host_id:'opencode',status:'SUPPORTED',verification_level:'REAL_HOST_ACCEPTANCE',native_primitive,adapter_entrypoint,semantic_loss:[],required_permissions,acceptance_ref,forbidden_fake_behavior:`Do not claim ${id} beyond the exact source/host behavior proven by the real-host acceptance receipt.`
+}}
 
 export function openCodeHostCapabilityContracts(o:OpenCodeCapabilityObservation):HostCapabilityContract[]{
   const prompt=o.asyncPrompt?supported('session-prompt','session.promptAsync','NativeOpenCodeAdapter.prompt','main-prompt-hardening.test.mjs'):
@@ -64,7 +67,7 @@ export function openCodeHostCapabilityContracts(o:OpenCodeCapabilityObservation)
     o.sessionUnrevert?supported('session-unrevert','session.unrevert','NativeOpenCodeAdapter.unrevert','forensic-hardening.test.mjs'):unsupported('session-unrevert','forensic-hardening.test.mjs','Do not claim reversible native unrevert when the host primitive is absent.'),
     worker,
     unsupported('browser-execution','methodology-host-capability.test.mjs','Do not claim browser/visual execution from MCP naming, prompts, screenshots, or tool inventory alone; the audited OpenCode host surface exposes MCP/tool discovery but Hi has no deterministic browser executor/evidence adapter.'),
-    degraded('process-lifecycle','OpenCode tool.execute.before/after shell safety boundary',['The audited OpenCode host surface exposes a separate PTY lifecycle, but Hi does not route ordinary model-facing bash through that executor; ordinary shell PID/job wait/kill/exit ownership remains unavailable'],'hi-acceptance-evolution.test.mjs'),
+    realHostSupported('process-lifecycle','OpenCode v2 PTY create/get/list/remove/connect-token + ticketed WebSocket','ProcessRuntime + OpenCodePtyAdapter','p3-process-runtime-lifecycle.test.mjs',['OpenCode role bash permission','external_directory when cwd is outside the project','Hi ExternalAction/Authority for classified external effects']),
     unsupported('workspace-isolation-binding','main-prompt-coexistence-platform-batch.test.mjs','The audited OpenCode host surface exposes workspace/session workspaceID primitives, but Hi has no canonical isolation selection/provisioning/cleanup adapter or real-host proof that child tool execution is bound to an alternate workspace; do not claim isolation from workspace/worktree creation alone.')
   ]
 }
