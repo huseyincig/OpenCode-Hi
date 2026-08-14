@@ -1,16 +1,11 @@
 import type { MissionState } from '../mission/types.js';
 import { TaskRuntime } from '../task/task-runtime.js';
-export interface TeamState {
-    id: string;
-    mission_id: string;
-    mission_generation: number;
+import { type TeamContract } from '../../contracts/team.js';
+export interface TeamState extends TeamContract {
     objective: string;
-    status: 'active' | 'shutdown';
     shutdown_reason?: string;
-    members: string[];
     worker_ids: string[];
     member_workers: Record<string, string>;
-    created_at: number;
     expires_at: number;
 }
 export interface TeamLimits {

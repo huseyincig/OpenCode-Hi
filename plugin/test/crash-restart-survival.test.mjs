@@ -67,3 +67,27 @@ test('explicit task restart reuses the quarantined child session and only then u
   assert.equal(calls.length,1)
   assert.match(JSON.stringify(calls[0]),/corrective resume|runtime-restart-reconcile/i)
 })
+
+
+test('process-ephemeral team projection resets to single without replacing durable task worker obligation or evidence identity',()=>{
+  const source=persistedBusy(),task2=structuredClone(source.tasks[0]),worker2=structuredClone(source.workers[0])
+  task2.id='team-task-2';task2.worker_id='team-worker-2';task2.objective='second team perspective'
+  worker2.id='team-worker-2';worker2.task_id=task2.id;worker2.fingerprint='team-worker-2';worker2.session_id='child-team-2'
+  source.tasks.push(task2);source.workers.push(worker2);source.execution_mode='team'
+  const taskIDs=source.tasks.map(x=>x.id),workerIDs=source.workers.map(x=>x.id),obligationIDs=source.obligations.map(x=>x.id),evidenceIDs=source.evidence.items.map(x=>x.id)
+  const restored=new MissionStore();restored.restore([source],false)
+  const m=restored.get('parent-1');assert.ok(m)
+  assert.equal(m.execution_mode,'single')
+  assert.deepEqual(m.tasks.map(x=>x.id),taskIDs)
+  assert.deepEqual(m.workers.map(x=>x.id),workerIDs)
+  assert.deepEqual(m.obligations.map(x=>x.id),obligationIDs)
+  assert.deepEqual(m.evidence.items.map(x=>x.id),evidenceIDs)
+  assert.equal(m.evidence.fresh,true)
+  assert.ok(m.workers.every(x=>x.status==='ready'&&x.restart_reconcile_pending===true))
+  assert.ok(m.tasks.every(x=>x.status==='waiting'&&x.result?.status==='NEEDS_CONTEXT'))
+  const reset=m.ledger.find(x=>x.type==='team.projection-reset')
+  assert.ok(reset)
+  assert.equal(reset.payload.reason,'process-ephemeral-team-runtime')
+  assert.deepEqual(reset.payload.durable_tasks,taskIDs)
+  assert.deepEqual(reset.payload.durable_workers,workerIDs)
+})

@@ -148,7 +148,7 @@ guard('HI016','LEGACY_CURRENT_ONLY_VIOLATION',()=>{
 
 guard('HI017','BEHAVIORAL_PROOF_MISSING',()=>{
   for(const [id,[,files]] of Object.entries(proofLinks))for(const file of files)assert(testExists(file),`${id}: missing ${file}`)
-  for(const file of ['config-option-contract.test.mjs','config-executable-effect.test.mjs','permission-profile-contract.test.mjs','role-contract-catalog.test.mjs','role-skill-permission-sync.test.mjs','host-capability-contract.test.mjs','storage-ownership-contract.test.mjs','agent-binding-contract.test.mjs','methodology-host-capability.test.mjs'])assert(testExists(file),`missing migrated-class acceptance ${file}`)
+  for(const file of ['config-option-contract.test.mjs','config-executable-effect.test.mjs','permission-profile-contract.test.mjs','role-contract-catalog.test.mjs','role-skill-permission-sync.test.mjs','host-capability-contract.test.mjs','storage-ownership-contract.test.mjs','agent-binding-contract.test.mjs','methodology-host-capability.test.mjs','team-contract.test.mjs','team-mode-hardening.test.mjs'])assert(testExists(file),`missing migrated-class acceptance ${file}`)
 })
 
 guard('HI021','EXECUTION_SURFACE_PERMISSION_DRIFT',()=>{

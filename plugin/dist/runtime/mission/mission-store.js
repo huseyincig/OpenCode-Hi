@@ -220,8 +220,10 @@ export class MissionStore {
         m.suppress_until = undefined;
         if (m.status === 'active') {
             const restoredTeam = m.execution_mode === 'team';
-            if (restoredTeam)
+            if (restoredTeam) {
                 m.execution_mode = 'single';
+                appendLedger(m, 'team.projection-reset', { payload: { reason: 'process-ephemeral-team-runtime', durable_tasks: m.tasks.map(t => t.id), durable_workers: m.workers.map(w => w.id), generation: m.generation } });
+            }
             const now = Date.now();
             for (const w of m.workers) {
                 if (['created', 'queued', 'starting', 'busy'].includes(w.status)) {
