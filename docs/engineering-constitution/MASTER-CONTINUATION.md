@@ -9,10 +9,10 @@ Status: ACTIVE REPOSITORY CONTINUATION ENTRYPOINT
 continuation_schema: 1
 repository: OpenCode-Hi
 repository_root: /workspace/OpenCode-Hi
-baseline_before_this_ledger_commit: 4602907
+baseline_before_this_ledger_commit: 52c6be4
 active_program: Engineering Constitution / Metamodel Migration
-active_phase: M11
-active_phase_name: Deterministic full regression closure
+active_phase: M12
+active_phase_name: Real-host acceptance
 phase_status: PENDING
 working_tree_expectation: clean
 last_verified_full_suite:
@@ -21,7 +21,7 @@ last_verified_full_suite:
   fail: 0
 last_verified_validator: PASS
 external_release_actions_authorized: false
-next_contract_owner: Deterministic closure proof
+next_contract_owner: Real-host acceptance receipts
 ```
 
 ## Continuation protocol
@@ -192,6 +192,18 @@ Canonical code checkpoint: `4602907`.
 
 M10 status: **PASS — MIGRATED CLASSES CLOSED; HI003 DEFERRED WITH M5**.
 
+## M11 current truth
+
+M11 status: **PASS — DETERMINISTIC CLOSURE COMPLETE**.
+
+- integrated committed-state closure: 540/540 PASS;
+- targeted BA12/contract/authority/storage/host-capability negative set: 62/62 PASS;
+- architecture lint: PASS, 20 rule IDs, HI003 explicitly deferred with M5;
+- standalone validator: PASS;
+- `git diff --check`: clean; backup count: 0;
+- M11 found one cwd-dependent host-capability acceptance test assumption; checkpoint `52c6be4` makes acceptance source resolution test-file-relative and invocation-location independent;
+- no real external release action was executed.
+
 ## Open earlier migration blockers / partials
 
 Do not silently declare these closed:
@@ -218,29 +230,31 @@ Do not silently declare these closed:
 
 ## Next action
 
-Start **M11 deterministic full regression closure** against committed M10 state.
+Start **M12 real-host acceptance** only at T3 boundaries described by `13-MIGRATION-MATRIX.md` and the host projection/behavioral acceptance documents.
 
-Before any mutation:
+Before any host exercise:
 
 ```text
 git status --short
 git log -5 --oneline
 ```
 
-Run the closure gates from `13-MIGRATION-MATRIX.md` without adding new architecture unless a gate exposes a real defect:
+Read the minimum canonical host acceptance surfaces:
 
 ```text
-controlled npm run check
-  -> build + deterministic projection generation
-  -> ProjectionReceipt refresh/parity
-  -> architecture lint HI001–HI020
-  -> full deterministic plugin suite
-  -> standalone validator
-
-BA12 targeted generator tests
-contract/authority/storage/generated-artifact negative tests
-git diff --check
-backup hygiene
+docs/engineering-constitution/12-HOST-PROJECTION-ARCHITECTURE.md
+docs/engineering-constitution/11-BEHAVIORAL-ACCEPTANCE.md
+docs/engineering-constitution/13-MIGRATION-MATRIX.md   # M12
+plugin/src/contracts/host-capability.ts
+plugin/src/opencode/capabilities.ts
+existing real-host/OpenCode CLI harnesses and receipts
 ```
 
-If all gates remain green on committed `4602907` state, record M11 closure as proof-only; do not manufacture code changes merely to create an M11 implementation commit. Keep M3/M5/M6/M7-T3 blockers explicit. M12 real-host acceptance is a separate tier and must not be inferred from local fixtures.
+Requirements:
+
+1. bind every T3 claim to the actual OpenCode version/identity and captured artifact/receipt;
+2. exercise only material native primitives needed to validate current HostCapability claims;
+3. classify harness timeout/transport failure separately from product failure and inspect produced artifacts before verdict;
+4. do not infer T3 support from local mocks/bare remotes/fixtures;
+5. **do not push/tag/release/publish/deploy** and do not perform any other real external mutation without explicit user authorization;
+6. keep M3/M5/M6 partial/blocker state explicit.

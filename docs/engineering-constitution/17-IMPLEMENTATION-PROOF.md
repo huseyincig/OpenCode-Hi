@@ -55,7 +55,7 @@ Rows below are intentionally `PENDING` until code exists.
 | M8 | Task/Worker/Result/Evidence contracts | WorkerResult, EvidenceItem, ReviewFinding, derived VerificationEnvelope, TaskContract and WorkerContract now have canonical runtime owners; persistence consumes canonical validators; task mission/external-action identity is explicit; worker attempt/recovery/effective-model lifecycle is fail-closed; latest focused Task/Worker set 21/21 PASS and controlled full suite 507/507 PASS; validator PASS | T1/T2 | WorkerResult `4ea320d`; Evidence `3044b94`; ReviewFinding `b120f49`; VerificationEnvelope `a4b1105`; Task/Worker `77f9dc1` | PASS — CONTRACT OWNERSHIP CLOSED |
 | M9 | Context/Artifact/PI/Human/Authority/Storage | Artifact + ContextReference + derived SemanticContext + ProjectIntelligence + HumanDecision + Authority + ExternalAction + StorageOwnership operational; machine storage catalog enforces one canonical owner per scope/data class, canonical path providers cover current project/runtime durable classes, OpenCode-native project skills remain outside Hi internal storage, uninstall preserves independently-owned policy/knowledge/skills, and doctor consumes the current runtime-state schema; focused storage/ownership set 66/66 PASS; controlled full suite 538/538 PASS; validator PASS | T1/T2 | Artifact `811ee7f`; ContextReference `3e8ab72`; SemanticContext `b7e51cc`; PI `e2d021b`; HumanDecision `46fc7b7`; Authority/ExternalAction `da67329`; StorageOwnership `ea6c236` | PASS — CONTRACT OWNERSHIP CLOSED |
 | M10 | common generator/lint closure | 30 deterministic ProjectionReceipts; BA12 unchanged-input idempotence + declared dependency-scope mutation 2/2 PASS; executable HI001–HI020 architecture lint with migrated-class fatal checks, behavioral proof links and explicit HI003/M5 deferral; controlled full suite 540/540 PASS; validator PASS | T0/T1/T2 | `4602907` | PASS — MIGRATED CLASSES CLOSED; HI003 DEFERRED WITH M5 |
-| M11 | deterministic full closure | build + validator + full controlled suite | T0/T1/T2 | — | PENDING |
+| M11 | deterministic full closure | committed-state integrated check 540/540 PASS; targeted BA12/contract/authority/storage/host-capability negative set 62/62 PASS; architecture lint HI001–HI020 PASS with HI003 explicitly deferred to M5; standalone validator PASS; diff check clean; backup count 0; M11 exposed and fixed one cwd-dependent host-capability acceptance harness defect | T0/T1/T2 | `52c6be4` | PASS — DETERMINISTIC CLOSURE COMPLETE |
 | M12 | real-host acceptance | OpenCode version-bound native receipts | T3 | — | PENDING |
 | M13 | release readiness | explicit authority + external receipts | T4 | — | NOT REQUESTED |
 
@@ -316,6 +316,20 @@ Current implemented files:
 - `plugin/test/contract-primitives.test.mjs` — deterministic ordering/hash and negative boundary tests.
 
 Controlled full-suite environment explicitly uses isolated writable `HOME`, `XDG_STATE_HOME`, `XDG_DATA_HOME`, `XDG_CONFIG_HOME`, and `XDG_CACHE_HOME`. A direct server-default `/root` run produced permission-denied harness failures and is not product evidence. Under the controlled environment the suite is 464/464 PASS.
+
+### M11 deterministic full regression closure
+
+Implemented and verified:
+
+- started from clean committed `6055d39` state and re-ran the M11 closure gates under isolated writable HOME/XDG state;
+- integrated `npm run check` passed build, deterministic generation, 30 ProjectionReceipt refresh/parity, architecture lint, the complete controlled plugin suite and standalone validator;
+- the complete deterministic plugin suite remained **540/540 PASS**;
+- targeted BA12 plus contract/authority/storage/host-capability negative coverage was run independently from repository root; that extra gate exposed one cwd-dependent test harness assumption in `host-capability-contract.test.mjs`;
+- corrected the acceptance-source lookup to resolve relative to the test module rather than `process.cwd()`, so the same acceptance contract now works under both plugin-local and repository-root test invocation;
+- after the fix, the targeted closure set passed **62/62**, architecture lint passed all 20 rule IDs with HI003 still explicitly DEFERRED to the pre-existing M5 blocker, validator passed, `git diff --check` was clean and backup count was 0;
+- no real external push/tag/release/publish/deploy action was performed; release-oriented tests used only deterministic local fixtures.
+
+Evidence: M11 harness-fix checkpoint `52c6be4`; full suite 540/540 PASS; targeted closure 62/62 PASS; architecture lint PASS (`rules=20`, `deferred=1`, `linked=8`); validator PASS; backup count 0. This closes M11 at T0/T1/T2. M12 real-host acceptance remains separate and must produce version/identity-bound host receipts before any T3 claim.
 
 ## Proof record format
 
