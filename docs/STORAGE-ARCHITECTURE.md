@@ -23,12 +23,18 @@ Only implemented durable responsibilities are permitted:
       policy/
         routing.json             # only after explicit project-policy configuration
         authority.json           # explicit native-always authority projection; never contains credentials
+        methodologies/           # admitted project-methodology policy; project-authoring owned
       provenance/
         setup.json               # installer ownership/source binding
-      project-intelligence/      # lazily created only when durable PI is written
+        methodologies/           # hash-bound project-methodology provenance; project-authoring owned
+      project-intelligence/      # lazily created only when durable PI/learning state is written
         patterns/
+        methodology-candidates/
       artifacts/                 # lazily created only when a durable artifact is retained
         <semantic-kind>/
+    skills/
+      hi-project-<purpose>/      # OpenCode-native project methodology; NOT Hi internal storage
+        SKILL.md
 ```
 
 No runtime directory is required inside `.opencode/hi/`. Mission survival state is stored outside the repository in a project-keyed OS state path.
@@ -56,6 +62,6 @@ Reusable methodology stays with its skill, for example `skills/hi-*/references/`
 
 ## Cleanup
 
-Uninstall removes only setup-owned plugin/config/provenance surfaces. Durable Project Intelligence and retained artifacts are preserved by default because their lifecycle is independent from plugin registration; project-created skills under `.opencode/skills/` are OpenCode-native/user-project content and are also preserved. OS runtime state is cleaned by the runtime state owner when obsolete; diagnostics may report orphan state.
+Uninstall removes only the setup-owned plugin registration and `provenance/setup.json`. Project routing policy, native-always Authority projection, durable Project Intelligence, methodology learning/admission state, retained artifacts, and project-created skills under `.opencode/skills/` are preserved because their owners/lifecycles are independent from plugin registration. Removing those requires an explicit owner/purge operation, not installer cleanup. OS runtime state is cleaned by the runtime state owner when obsolete; diagnostics may report orphan state.
 
 Legacy HHC/OHO layouts are **not migrated**. They are historical provenance only and are not accepted as OpenCode-Hi input.

@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
-const FILE = '.opencode/hi/policy/authority.json';
+import { dirname } from 'node:path';
+import { projectPolicyPath } from '../storage/ownership.js';
 const CLASS_PATTERNS = {
     'git-push': ['git push *'],
     'release-create': ['gh release create *'],
@@ -11,7 +11,7 @@ function empty() { return { schema: 1, grants: {} }; }
 export class ProjectAuthorityStore {
     path;
     #state;
-    constructor(root) { this.path = join(resolve(root), FILE); this.#state = this.#load(); }
+    constructor(root) { this.path = projectPolicyPath(root, 'authority'); this.#state = this.#load(); }
     #load() { try {
         if (!existsSync(this.path))
             return empty();

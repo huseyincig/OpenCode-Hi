@@ -61,6 +61,6 @@ Global registration must use OpenCode's global configuration hierarchy. Persiste
 
 ## Uninstall ownership
 
-Uninstall removes only the OpenCode-Hi plugin registration plus setup-owned policy/provenance files. It preserves retained `.opencode/hi/project-intelligence/`, `.opencode/hi/artifacts/`, project-created `.opencode/skills/`, unrelated `opencode.json` fields, foreign plugins, MCP configuration, themes, OpenCode-native `.opencode/*` directories, and unrelated project-root files. Durable project knowledge/artifacts require an explicit purge/delete operation rather than being coupled to plugin uninstall.
+Uninstall removes only the OpenCode-Hi plugin registration plus setup-owned `.opencode/hi/provenance/setup.json`. It preserves independently-owned `.opencode/hi/policy/` (including routing and Authority projection), methodology policy/provenance, retained `.opencode/hi/project-intelligence/`, `.opencode/hi/artifacts/`, project-created `.opencode/skills/`, unrelated `opencode.json` fields, foreign plugins, MCP configuration, themes, OpenCode-native `.opencode/*` directories, and unrelated project-root files. Durable project knowledge/artifacts require an explicit purge/delete operation rather than being coupled to plugin uninstall.
 
 Filesystem hygiene is a release gate and is covered by install, doctor, reconfigure, and uninstall tests.

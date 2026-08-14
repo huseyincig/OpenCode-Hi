@@ -1,10 +1,10 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { dirname, join, resolve } from 'node:path'
+import { dirname } from 'node:path'
+import { projectPolicyPath } from '../storage/ownership.js'
 import type { ExternalActionType } from '../../contracts/external-action.js'
 
 export type PersistentAuthorityClass=ExternalActionType
 interface AuthorityFile{schema:1;grants:Partial<Record<PersistentAuthorityClass,{approved_at:number;source:'native-always'}>>}
-const FILE='.opencode/hi/policy/authority.json'
 const CLASS_PATTERNS:Record<PersistentAuthorityClass,string[]>={
   'git-push':['git push *'],
   'release-create':['gh release create *'],
@@ -15,7 +15,7 @@ function empty():AuthorityFile{return{schema:1,grants:{}}}
 export class ProjectAuthorityStore{
   readonly path:string
   #state:AuthorityFile
-  constructor(root:string){this.path=join(resolve(root),FILE);this.#state=this.#load()}
+  constructor(root:string){this.path=projectPolicyPath(root,'authority');this.#state=this.#load()}
   #load():AuthorityFile{try{if(!existsSync(this.path))return empty();const raw=JSON.parse(readFileSync(this.path,'utf8'));if(raw?.schema!==1||!raw?.grants||typeof raw.grants!=='object')return empty();return raw}catch{return empty()}}
   has(cls:PersistentAuthorityClass):boolean{return Boolean(this.#state.grants[cls])}
   grant(cls:PersistentAuthorityClass):void{this.#state.grants[cls]={approved_at:Date.now(),source:'native-always'};mkdirSync(dirname(this.path),{recursive:true});writeFileSync(this.path,JSON.stringify(this.#state,null,2)+'\n','utf8')}

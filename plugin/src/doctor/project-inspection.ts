@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { runtimeStatePath } from '../runtime/storage/locations.js'
+import { RUNTIME_STATE_SCHEMA } from '../runtime/state/persistence.js'
 
 export interface ProjectInspection {
   configPath?: string
@@ -58,7 +59,7 @@ export function inspectProject(directory:string):ProjectInspection{
   const config=configPath?readJson(configPath):undefined
   const plugins=Array.isArray(config?.plugin)?config.plugin:[]
   const ownershipPath=join(directory,'.opencode','hi','provenance','setup.json');const ownershipExists=existsSync(ownershipPath);const ownership=ownershipExists?readJson(ownershipPath):undefined;const ownershipSchema=typeof ownership?.schema==='number'?Number(ownership.schema):undefined;const ownershipSchemaValid=!ownershipExists||(ownership!==undefined&&Number(ownership.schema)===2)
-  const runtimePath=runtimeStatePath(directory);const runtimeExists=existsSync(runtimePath);const runtime=runtimeExists?readJson(runtimePath):undefined;const runtimeSchema=typeof runtime?.schema==='number'?Number(runtime.schema):undefined;const runtimeSchemaValid=!runtimeExists||(runtime!==undefined&&Number(runtime.schema)===3)
+  const runtimePath=runtimeStatePath(directory);const runtimeExists=existsSync(runtimePath);const runtime=runtimeExists?readJson(runtimePath):undefined;const runtimeSchema=typeof runtime?.schema==='number'?Number(runtime.schema):undefined;const runtimeSchemaValid=!runtimeExists||(runtime!==undefined&&Number(runtime.schema)===RUNTIME_STATE_SCHEMA)
   const routingPath=join(directory,'.opencode','hi','policy','routing.json');const routing=existsSync(routingPath)?readJson(routingPath):undefined
   const routingSchema=typeof routing?.schema==='number'?routing.schema:undefined
   const routingStrategy=routingSchema===1&&(routing.routing?.strategy==='cost-quality'||routing.routing?.strategy==='quality'||routing.routing?.strategy==='cost')?routing.routing.strategy:undefined
@@ -79,7 +80,7 @@ export function inspectProject(directory:string):ProjectInspection{
   if(ownership&&typeof ownership.schema!=='number')warnings.push('Ownership state has no numeric schema')
   if(ownership&&ownershipSchemaValid===false)warnings.push(`Ownership schema ${String(ownership.schema)} is not supported by this runtime`)
   if(runtimeExists&&!runtime)warnings.push('Runtime-state exists but could not be parsed')
-  if(runtime&&Number(runtime.schema)!==3)warnings.push(`Runtime-state schema ${String(runtime.schema)} is not supported by this runtime`)
+  if(runtime&&Number(runtime.schema)!==RUNTIME_STATE_SCHEMA)warnings.push(`Runtime-state schema ${String(runtime.schema)} is not supported by this runtime`)
   return {
     configPath,
     pluginRegistered:config?plugins.some(hiPluginSpec):undefined,

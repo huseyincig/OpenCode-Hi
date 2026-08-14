@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { runtimeStatePath } from '../runtime/storage/locations.js';
+import { RUNTIME_STATE_SCHEMA } from '../runtime/state/persistence.js';
 function stripJsonc(text) {
     let out = '';
     let i = 0;
@@ -89,7 +90,7 @@ export function inspectProject(directory) {
     const runtimeExists = existsSync(runtimePath);
     const runtime = runtimeExists ? readJson(runtimePath) : undefined;
     const runtimeSchema = typeof runtime?.schema === 'number' ? Number(runtime.schema) : undefined;
-    const runtimeSchemaValid = !runtimeExists || (runtime !== undefined && Number(runtime.schema) === 3);
+    const runtimeSchemaValid = !runtimeExists || (runtime !== undefined && Number(runtime.schema) === RUNTIME_STATE_SCHEMA);
     const routingPath = join(directory, '.opencode', 'hi', 'policy', 'routing.json');
     const routing = existsSync(routingPath) ? readJson(routingPath) : undefined;
     const routingSchema = typeof routing?.schema === 'number' ? routing.schema : undefined;
@@ -125,7 +126,7 @@ export function inspectProject(directory) {
         warnings.push(`Ownership schema ${String(ownership.schema)} is not supported by this runtime`);
     if (runtimeExists && !runtime)
         warnings.push('Runtime-state exists but could not be parsed');
-    if (runtime && Number(runtime.schema) !== 3)
+    if (runtime && Number(runtime.schema) !== RUNTIME_STATE_SCHEMA)
         warnings.push(`Runtime-state schema ${String(runtime.schema)} is not supported by this runtime`);
     return {
         configPath,

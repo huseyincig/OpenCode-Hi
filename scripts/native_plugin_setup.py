@@ -124,10 +124,10 @@ def uninstall(project:Path)->dict:
     # artifacts, and project-created skills are separate ownership classes and
     # are intentionally preserved unless a future explicit purge operation owns them.
     removed_paths=[]
-    for rel in (ROUTING_CONFIG, HI_PROJECT_DIR/'policy'/'authority.json', OWNERSHIP):
+    for rel in (OWNERSHIP,):
         path=project/rel
         if path.exists() and path.is_file():path.unlink();removed_paths.append(str(rel))
-    for rel in (HI_PROJECT_DIR/'policy', HI_PROJECT_DIR/'provenance', HI_PROJECT_DIR):
+    for rel in (HI_PROJECT_DIR/'provenance', HI_PROJECT_DIR):
         path=project/rel
         try:path.rmdir()
         except OSError:pass
@@ -135,7 +135,7 @@ def uninstall(project:Path)->dict:
     try:opencode_dir.rmdir()
     except OSError:pass
     preserved=[]
-    for rel in (HI_PROJECT_DIR/'project-intelligence',HI_PROJECT_DIR/'artifacts',Path('.opencode/skills')):
+    for rel in (HI_PROJECT_DIR/'policy',HI_PROJECT_DIR/'project-intelligence',HI_PROJECT_DIR/'artifacts',Path('.opencode/skills')):
         if (project/rel).exists():preserved.append(str(rel))
     return {'status':'APPLIED','product':PRODUCT,'config':str(cfg),'removed':[owned_spec],'removed_owned_paths':removed_paths,'preserved_project_data':preserved,'restart_required':True}
 

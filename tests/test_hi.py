@@ -454,18 +454,20 @@ def test_legacy_product_config_does_not_change_canonical_execution_policy(tmp_pa
     project=json.loads((tmp_path/'.opencode'/'hi'/'policy'/'routing.json').read_text())
     assert project.get('executionPolicy','adaptive')!='thorough'
 
-def test_uninstall_preserves_durable_project_knowledge_artifacts_and_project_skills(tmp_path):
+def test_uninstall_preserves_independently_owned_project_policy_knowledge_artifacts_and_project_skills(tmp_path):
     assert run(ROOT/'scripts/native_plugin_setup.py','install',tmp_path).returncode==0
+    routing=tmp_path/'.opencode'/'hi'/'policy'/'routing.json'
+    authority=tmp_path/'.opencode'/'hi'/'policy'/'authority.json'
     pi=tmp_path/'.opencode'/'hi'/'project-intelligence'/'patterns'/'p1.json'
     artifact=tmp_path/'.opencode'/'hi'/'artifacts'/'review'/'a1.json'
-    skill=tmp_path/'.opencode'/'skills'/'project-release-check'/'SKILL.md'
-    for p,content in ((pi,'{}'),(artifact,'{}'),(skill,'---\nname: project-release-check\n---\n')):
+    skill=tmp_path/'.opencode'/'skills'/'hi-project-release-check'/'SKILL.md'
+    for p,content in ((routing,json.dumps({'schema':1,'type':'hi-routing','routing':{}})),(authority,json.dumps({'schema':1,'grants':{}})),(pi,'{}'),(artifact,'{}'),(skill,'---\nname: hi-project-release-check\n---\n')):
         p.parent.mkdir(parents=True,exist_ok=True);p.write_text(content)
     r=run(ROOT/'scripts/native_plugin_setup.py','uninstall',tmp_path);out=json.loads(r.stdout)
     assert r.returncode==0 and out['status']=='APPLIED'
-    assert pi.exists() and artifact.exists() and skill.exists()
-    assert not (tmp_path/'.opencode'/'hi'/'policy'/'routing.json').exists()
+    assert routing.exists() and authority.exists() and pi.exists() and artifact.exists() and skill.exists()
     assert not (tmp_path/'.opencode'/'hi'/'provenance'/'setup.json').exists()
+    assert '.opencode/hi/policy' in out['preserved_project_data']
     assert '.opencode/hi/project-intelligence' in out['preserved_project_data']
     assert '.opencode/hi/artifacts' in out['preserved_project_data']
     assert '.opencode/skills' in out['preserved_project_data']

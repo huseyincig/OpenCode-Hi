@@ -232,7 +232,7 @@ Supports source/revision/hash plus optional per-file hashes. Hash algorithm is e
 
 ## S25 — StorageOwnershipSchema
 
-Every data class has one canonical write owner. Validator rejects overlapping canonical owners for the same scope/data class.
+Every data class has one canonical write owner. `plugin/src/contracts/storage-ownership.ts` is the current machine owner and rejects overlapping `scope + data_class` entries. Path placement is capability/lifecycle based: Hi project policy/provenance/PI/artifacts stay under `.opencode/hi`, project-created methodology capability stays OpenCode-native under `.opencode/skills/hi-project-*`, and Mission survival remains project-keyed OS runtime state. Cleanup does not transfer ownership to the installer.
 
 ## S26 — TelemetryEventSchema
 

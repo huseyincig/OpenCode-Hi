@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { projectMethodologyProvenancePath as storageProjectMethodologyProvenancePath } from '../storage/ownership.js';
 function isRecord(value) { return Boolean(value) && typeof value === 'object' && !Array.isArray(value); }
 function stringArray(value) { return Array.isArray(value) && value.every(item => typeof item === 'string' && item.trim().length > 0); }
 function sha(value) { return typeof value === 'string' && /^[a-f0-9]{64}$/.test(value); }
@@ -22,9 +22,7 @@ function parse(raw) {
         return undefined;
     return raw;
 }
-export function projectMethodologyProvenancePath(projectRoot, name) {
-    return join(projectRoot, '.opencode', 'hi', 'provenance', 'methodologies', `${name}.json`);
-}
+export function projectMethodologyProvenancePath(projectRoot, name) { return storageProjectMethodologyProvenancePath(projectRoot, name); }
 export function readProjectMethodologyProvenance(projectRoot, name) {
     const path = projectMethodologyProvenancePath(projectRoot, name);
     if (!existsSync(path))

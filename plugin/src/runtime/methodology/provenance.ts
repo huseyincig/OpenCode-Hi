@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { projectMethodologyProvenancePath as storageProjectMethodologyProvenancePath } from '../storage/ownership.js'
 
 export interface ProjectMethodologyProvenance {
   schema: 1
@@ -30,9 +30,7 @@ function parse(raw:unknown):ProjectMethodologyProvenance|undefined{
   return raw as unknown as ProjectMethodologyProvenance
 }
 
-export function projectMethodologyProvenancePath(projectRoot:string,name:string):string{
-  return join(projectRoot,'.opencode','hi','provenance','methodologies',`${name}.json`)
-}
+export function projectMethodologyProvenancePath(projectRoot:string,name:string):string{return storageProjectMethodologyProvenancePath(projectRoot,name)}
 
 export function readProjectMethodologyProvenance(projectRoot:string,name:string):ProjectMethodologyProvenance|undefined{
   const path=projectMethodologyProvenancePath(projectRoot,name)

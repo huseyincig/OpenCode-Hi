@@ -660,12 +660,14 @@ Used by project methodologies, generated projections, artifacts and imported/der
 
 ### C27 — StorageOwnershipContract
 
+**Canonical owner:** `plugin/src/contracts/storage-ownership.ts`; concrete path providers remain in `runtime/storage/ownership.ts` and `runtime/storage/locations.ts`.
+
 ```text
 data_class
 canonical_owner
 scope: project|global|runtime
 lifecycle: canonical|derived|cache|ephemeral
-path/provider
+path_provider
 schema_ref
 write_owner
 readers[]
@@ -673,7 +675,9 @@ retention
 privacy
 ```
 
-Two canonical writers for the same data class are invalid.
+The current catalog covers implemented project/runtime durable classes: routing policy, authority projection, setup provenance, Project Intelligence patterns, project-methodology candidates/policy/provenance/native skill, durable Context Artifacts and OS-state Mission survival. A logical `write_owner` may expose more than one authorized command/UI executor, but there is still exactly one semantic owner for a data class/scope. Cleanup is mutation and must respect the same owner boundary: installer uninstall cannot delete independently-owned Authority, routing, PI, Artifact or OpenCode-native project-skill state without a separate explicit purge/owner operation.
+
+Two canonical owners for the same `scope + data_class` are invalid. Project-created methodology skills remain in OpenCode-native `.opencode/skills/hi-project-*`; they are not mirrored under `.opencode/hi`.
 
 ### C28 — TelemetryEventContract
 

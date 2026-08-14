@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { projectMethodologyPolicyDir as methodologyPolicyDir } from '../storage/ownership.js';
 import { PACKAGED_HI_AGENTS } from '../../generated/agent-config.js';
 import { HI_METHODOLOGY_EXIT_REQUIREMENTS, HI_METHODOLOGY_SIGNAL_CATALOG } from '../../generated/methodology-policy.js';
 import { readProjectMethodologyProvenance } from './provenance.js';
@@ -65,7 +66,7 @@ function skillContract(text) {
         return undefined;
     return { name, description, trigger, doNotTrigger, exitCondition };
 }
-export function projectMethodologyPolicyDir(projectRoot) { return join(projectRoot, '.opencode', 'hi', 'policy', 'methodologies'); }
+export function projectMethodologyPolicyDir(projectRoot) { return methodologyPolicyDir(projectRoot); }
 export function discoverProjectMethodologyPolicies(projectRoot) {
     const dir = projectMethodologyPolicyDir(projectRoot);
     if (!existsSync(dir))
