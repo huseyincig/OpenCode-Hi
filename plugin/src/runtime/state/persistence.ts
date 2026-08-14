@@ -101,12 +101,48 @@ function validIntent(value:unknown):value is NormalizedMissionIntent{
     &&(value.likelyTargets===undefined||stringArray(value.likelyTargets))
 }
 
+function validMissionTrajectory(value:Record<string,unknown>):boolean{
+  if(!Array.isArray(value.tasks)||!Array.isArray(value.workers))return false
+  const tasks=value.tasks as Array<Record<string,unknown>>,workers=value.workers as Array<Record<string,unknown>>
+  const missionID=String(value.mission_id??''),taskIDs=tasks.map(t=>String(t.id??'')),workerIDs=workers.map(w=>String(w.id??''))
+  if(new Set(taskIDs).size!==taskIDs.length||new Set(workerIDs).size!==workerIDs.length)return false
+  const knownTasks=new Set(taskIDs),knownWorkers=new Set(workerIDs)
+  for(const task of tasks){
+    if(task.mission_id!==missionID)return false
+    const id=String(task.id),dependencies=task.dependencies as unknown[]
+    if(!Array.isArray(dependencies)||dependencies.some(dep=>typeof dep!=='string'||dep===id||!knownTasks.has(dep)))return false
+    if(task.worker_id!==undefined){
+      if(typeof task.worker_id!=='string'||!knownWorkers.has(task.worker_id))return false
+      const worker=workers.find(w=>w.id===task.worker_id)
+      if(!worker||worker.task_id!==id)return false
+    }
+  }
+  const visiting=new Set<string>(),visited=new Set<string>(),byID=new Map(tasks.map(t=>[String(t.id),t]))
+  const cyclic=(id:string):boolean=>{
+    if(visiting.has(id))return true
+    if(visited.has(id))return false
+    visiting.add(id)
+    const task=byID.get(id)!,dependencies=task.dependencies as string[]
+    for(const dep of dependencies)if(cyclic(dep))return true
+    visiting.delete(id);visited.add(id);return false
+  }
+  for(const id of taskIDs)if(cyclic(id))return false
+  for(const worker of workers){
+    if(worker.parent_mission_id!==missionID||typeof worker.task_id!=='string'||!knownTasks.has(worker.task_id))return false
+  }
+  if(!['single','parallel','team'].includes(String(value.execution_mode)))return false
+  if(!isRecord(value.topology)||!['single-agent','multi-agent'].includes(String(value.topology.mode))||!Number.isInteger(value.topology.parallelism)||Number(value.topology.parallelism)<1||Number(value.topology.parallelism)>8||!stringArray(value.topology.reason))return false
+  if(value.execution_mode==='single'&&value.topology.parallelism!==1)return false
+  return true
+}
+
 function validMission(value:unknown):value is MissionState{
   if(!isRecord(value)||typeof value.mission_id!=='string'||typeof value.session_id!=='string'||typeof value.objective!=='string')return false
   if(!validIntent(value.intent)||!validSemanticAssessment(value.semantic_assessment)||!validVerificationPolicy(value.verification_policy))return false
   if((value.semantic_assessment as any).status==='assessed'&&(value.intent as any).taskKind==='unclassified')return false
   if((value.semantic_assessment as any).status==='pending'&&(value.semantic_assessment as any).phase==='initial'&&(((value.obligations as unknown[])?.length??0)>0||((value.tasks as unknown[])?.length??0)>0||((value.workers as unknown[])?.length??0)>0||((value.methodology_needs as unknown[])?.length??0)>0))return false
   if((!Array.isArray(value.obligations)||!value.obligations.every(validObligation))||!Array.isArray(value.tasks)||!value.tasks.every(isTaskContract)||!Array.isArray(value.workers)||!value.workers.every(isWorkerContract)||!recordArray(value.ledger))return false
+  if(!validMissionTrajectory(value))return false
   if((!Array.isArray(value.context_artifacts)||!value.context_artifacts.every(validContextArtifact))||(!Array.isArray(value.gates)||!value.gates.every(validGate))||(!Array.isArray(value.temporary_mutations)||!value.temporary_mutations.every(validTemporaryMutation))||!Array.isArray(value.methodology_needs)||!value.methodology_needs.every(validMethodologyNeed))return false
   if(!stringArray(value.changed_files)||!stringArray(value.blockers)||!stringArray(value.constraints)||!stringArray(value.parent_loaded_methodologies))return false
   if(!isRecord(value.evidence)||typeof value.evidence.fresh!=='boolean'||!Array.isArray(value.evidence.items)||!value.evidence.items.every(isEvidenceItemContract)||(value.evidence.last_mutation_at!==undefined&&typeof value.evidence.last_mutation_at!=='number'))return false

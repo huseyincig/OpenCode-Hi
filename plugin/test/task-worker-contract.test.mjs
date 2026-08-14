@@ -81,3 +81,31 @@ test('RuntimePersistence consumes canonical Task/Worker contracts and fails clos
     assert.match(String(persistence.lastLoadReport.error),/invalid mission state/i)
   }finally{rmSync(root,{recursive:true,force:true})}
 })
+
+
+test('RuntimePersistence rejects persisted mission graphs with unknown duplicate or cyclic Task dependencies',()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-trajectory-contract-'))
+  try{
+    const store=new MissionStore(root),m=startAssessedMission(store,'trajectory-contract','verify',{task_kind:'implementation',likely_verification:[]})
+    const a=createTask(m,{objective:'a',role:'coder',category:'standard'})
+    const b=createTask(m,{objective:'b',role:'coder',category:'standard',dependencies:[a.id]})
+    const persistence=new RuntimePersistence(root)
+    persistence.save(store.all(),true);assert.equal(persistence.load().length,1)
+
+    b.dependencies=['missing-task'];persistence.save(store.all(),true);assert.equal(persistence.load().length,0);assert.match(String(persistence.lastLoadReport.error),/invalid mission state/i)
+    b.dependencies=[a.id];a.dependencies=[b.id];persistence.save(store.all(),true);assert.equal(persistence.load().length,0)
+    a.dependencies=[];b.id=a.id;persistence.save(store.all(),true);assert.equal(persistence.load().length,0)
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+test('RuntimePersistence rejects invalid persisted topology shape and single execution with parallelism above one',()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-topology-contract-'))
+  try{
+    const store=new MissionStore(root),m=startAssessedMission(store,'topology-contract','verify',{task_kind:'implementation',likely_verification:[]})
+    const persistence=new RuntimePersistence(root)
+    m.execution_mode='single';m.topology={mode:'single-agent',parallelism:1,reason:['minimum sufficient execution']}
+    persistence.save(store.all(),true);assert.equal(persistence.load().length,1)
+    m.topology.parallelism=2;persistence.save(store.all(),true);assert.equal(persistence.load().length,0)
+    m.execution_mode='parallel';m.topology={mode:'multi-agent',parallelism:0,reason:['invalid']};persistence.save(store.all(),true);assert.equal(persistence.load().length,0)
+  }finally{rmSync(root,{recursive:true,force:true})}
+})

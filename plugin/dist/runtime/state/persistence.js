@@ -91,6 +91,58 @@ function validIntent(value) {
         && stringArray(value.avoid)
         && (value.likelyTargets === undefined || stringArray(value.likelyTargets));
 }
+function validMissionTrajectory(value) {
+    if (!Array.isArray(value.tasks) || !Array.isArray(value.workers))
+        return false;
+    const tasks = value.tasks, workers = value.workers;
+    const missionID = String(value.mission_id ?? ''), taskIDs = tasks.map(t => String(t.id ?? '')), workerIDs = workers.map(w => String(w.id ?? ''));
+    if (new Set(taskIDs).size !== taskIDs.length || new Set(workerIDs).size !== workerIDs.length)
+        return false;
+    const knownTasks = new Set(taskIDs), knownWorkers = new Set(workerIDs);
+    for (const task of tasks) {
+        if (task.mission_id !== missionID)
+            return false;
+        const id = String(task.id), dependencies = task.dependencies;
+        if (!Array.isArray(dependencies) || dependencies.some(dep => typeof dep !== 'string' || dep === id || !knownTasks.has(dep)))
+            return false;
+        if (task.worker_id !== undefined) {
+            if (typeof task.worker_id !== 'string' || !knownWorkers.has(task.worker_id))
+                return false;
+            const worker = workers.find(w => w.id === task.worker_id);
+            if (!worker || worker.task_id !== id)
+                return false;
+        }
+    }
+    const visiting = new Set(), visited = new Set(), byID = new Map(tasks.map(t => [String(t.id), t]));
+    const cyclic = (id) => {
+        if (visiting.has(id))
+            return true;
+        if (visited.has(id))
+            return false;
+        visiting.add(id);
+        const task = byID.get(id), dependencies = task.dependencies;
+        for (const dep of dependencies)
+            if (cyclic(dep))
+                return true;
+        visiting.delete(id);
+        visited.add(id);
+        return false;
+    };
+    for (const id of taskIDs)
+        if (cyclic(id))
+            return false;
+    for (const worker of workers) {
+        if (worker.parent_mission_id !== missionID || typeof worker.task_id !== 'string' || !knownTasks.has(worker.task_id))
+            return false;
+    }
+    if (!['single', 'parallel', 'team'].includes(String(value.execution_mode)))
+        return false;
+    if (!isRecord(value.topology) || !['single-agent', 'multi-agent'].includes(String(value.topology.mode)) || !Number.isInteger(value.topology.parallelism) || Number(value.topology.parallelism) < 1 || Number(value.topology.parallelism) > 8 || !stringArray(value.topology.reason))
+        return false;
+    if (value.execution_mode === 'single' && value.topology.parallelism !== 1)
+        return false;
+    return true;
+}
 function validMission(value) {
     if (!isRecord(value) || typeof value.mission_id !== 'string' || typeof value.session_id !== 'string' || typeof value.objective !== 'string')
         return false;
@@ -101,6 +153,8 @@ function validMission(value) {
     if (value.semantic_assessment.status === 'pending' && value.semantic_assessment.phase === 'initial' && ((value.obligations?.length ?? 0) > 0 || (value.tasks?.length ?? 0) > 0 || (value.workers?.length ?? 0) > 0 || (value.methodology_needs?.length ?? 0) > 0))
         return false;
     if ((!Array.isArray(value.obligations) || !value.obligations.every(validObligation)) || !Array.isArray(value.tasks) || !value.tasks.every(isTaskContract) || !Array.isArray(value.workers) || !value.workers.every(isWorkerContract) || !recordArray(value.ledger))
+        return false;
+    if (!validMissionTrajectory(value))
         return false;
     if ((!Array.isArray(value.context_artifacts) || !value.context_artifacts.every(validContextArtifact)) || (!Array.isArray(value.gates) || !value.gates.every(validGate)) || (!Array.isArray(value.temporary_mutations) || !value.temporary_mutations.every(validTemporaryMutation)) || !Array.isArray(value.methodology_needs) || !value.methodology_needs.every(validMethodologyNeed))
         return false;
