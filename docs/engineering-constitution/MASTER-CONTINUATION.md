@@ -14,7 +14,7 @@ coverage_reconciliation_baseline_head: 8ba9eb561332eebc3b6bded90a1c0d2da501d1ed
 active_program: OpenCode-Hi Product Closure after Constitution Migration
 active_phase: P8
 active_phase_name: Release readiness and real publication
-phase_status: OPEN
+phase_status: PARTIAL_EXTERNAL
 working_tree_expectation: clean
 last_verified_full_suite:
   total: 564
@@ -24,7 +24,7 @@ last_verified_architecture_lint: "PASS rules=21 deferred=0 linked=8"
 last_verified_validator: PASS
 current_projection_receipts: 32
 external_release_actions_authorized: true
-next_contract_owner: P8 release source freeze -> cross-platform CI/Windows -> clean-consumer/supply-chain -> deterministic artifacts -> push/tag/release/package publication receipts
+next_contract_owner: P8 npm registry T4 publication blocker only; GitHub v0.1.0 release is closed and exact-source verified
 ```
 
 ---
@@ -580,7 +580,7 @@ Deterministic source checkpoint before T3: **564/564 PASS**, architecture lint 2
 
 P7 exit satisfied: changed OpenCode-bound behavior is reaccepted against the current registry-latest host and exact runtime source hashes, while unsupported/degraded features remain truthfully limited.
 
-### P8 / M13 / Stage 10 — Release readiness and real publication — **OPEN / EXPLICITLY AUTHORIZED 2026-08-14**
+### P8 / M13 / Stage 10 — Release readiness and real publication — **PARTIAL_EXTERNAL: GITHUB RELEASE CLOSED / NPM T4 BLOCKED_AUTH**
 
 The user explicitly authorized the complete release/publication phase. External actions are now permitted only through the canonical release chain and must remain exact-action, exact-ref and receipt-bound. npm publication remains environment-blocked until registry authentication exists; do not fake it.
 
@@ -592,7 +592,9 @@ P8 pre-freeze progress on exact pushed source `9f3a1a9025f73f0da46dcd88da31a6f5e
 - canonical receipt: `data/validation/external-clean-consumer-0.1.0-head-9f3a1a9.json`;
 - these are **pre-freeze exact-source** proofs only. They do not satisfy the final exact-ref gate after this receipt/documentation checkpoint changes Git identity.
 
-Release remains blocked until this checkpoint is committed/pushed as the final release-source ref, the same cross-platform CI and clean-consumer gates pass on that exact ref, deterministic post-freeze artifacts are bound, and the exact annotated tag/GitHub release/assets are remotely verified. npm publication remains conditional on registry authentication.
+That pre-freeze checkpoint has now advanced to real publication. Final release source `f1a2c1c4358e5a63656da7a585b6b5793d1ed3be` passed GitHub Actions run `31814631919` on both Ubuntu and Windows, fresh-clone clean-consumer/dependency/supply-chain and OpenCode 1.18.18 loader checks, and two byte-identical post-freeze release builds. Annotated tag `v0.1.0` peels remotely to the exact source commit. GitHub Release `v0.1.0` is published with five assets whose GitHub-reported SHA-256 digests match the locally built artifacts. Canonical publication receipt: `data/validation/release-publication-0.1.0.json`.
+
+npm registry publication remains the only open P8/T4 edge: `npm whoami` returned `ENEEDAUTH`; registry lookup did not find `opencode-hi@0.1.0`; no publish was attempted. This does not weaken or retract the verified GitHub release.
 
 ---
 
@@ -708,4 +710,4 @@ Do not waste future turns reopening these without contradictory repository evide
 
 **Continue P8 / M13 only. External release actions are explicitly authorized.**
 
-The pre-freeze external gates are green on `9f3a1a9`. Verify this living-receipt/documentation checkpoint locally, commit it as the final release-source checkpoint, push that exact ref, and require the mandatory Windows/Linux workflow to pass on it. Then rerun clean-consumer/dependency/supply-chain installation against that exact final ref, rebuild deterministic post-freeze SOURCE/DISTRIBUTABLE/MANIFEST/SBOM artifacts, create an annotated `v0.1.0` tag on that exact commit, and remotely verify the tag/GitHub release/assets. Publish to npm only if registry authentication becomes available; otherwise record the T4 package-publication blocker without weakening GitHub release truth.
+GitHub `v0.1.0` publication is closed and exact-source verified. The only remaining P8 action is npm registry publication, currently **BLOCKED_T4_AUTH**. Do not retry or fabricate npm publication while `npm whoami` returns `ENEEDAUTH`. If registry authentication becomes available, publish the exact `opencode-hi@0.1.0` package, verify registry version/integrity and fresh install, then write the final npm T4 receipt and close P8. Until then, preserve the GitHub release as complete and report P8 as PARTIAL_EXTERNAL solely for npm.

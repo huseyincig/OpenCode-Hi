@@ -170,9 +170,9 @@ def test_release_gate_stays_blocked_until_exact_candidate_external_completion():
     assert d['gates']['python_acceptance'].startswith('PASS_LOCAL_')
     for gate in ('plain_opencode_smoke','packaged_agents_skills','opencode_native_child_sessions','opencode_model_provider_binding','permission_denial_runtime'):
         assert d['gates'][gate]=='PASS_EXACT_SOURCE_HOST_1_18_18'
-    assert d['gates']['native_package_plugin_install_exact_candidate'].startswith('PENDING_FINAL_RELEASE_REF')
-    assert d['gates']['windows_runtime_smoke']=='PASS_GITHUB_ACTIONS_EXACT_SOURCE_9F3A1A9'
-    assert d['gates']['dependency_supply_chain_external']=='PASS_CLEAN_CONSUMER_EXACT_SOURCE_9F3A1A9'
+    assert d['gates']['native_package_plugin_install_exact_candidate']=='PASS_EXACT_FINAL_SOURCE_F1A2C1C_OPENCODE_1_18_18'
+    assert d['gates']['windows_runtime_smoke']=='PASS_GITHUB_ACTIONS_EXACT_FINAL_SOURCE_F1A2C1C'
+    assert d['gates']['dependency_supply_chain_external']=='PASS_CLEAN_CONSUMER_EXACT_FINAL_SOURCE_F1A2C1C'
     pre=d['current_local_evidence']['pre_freeze_external']
     assert pre['status']=='PASS_EXACT_SOURCE_9F3A1A9' and pre['github_actions_run']==31813070875
     rr=ROOT/pre['receipt']; assert rr.is_file()
@@ -182,6 +182,15 @@ def test_release_gate_stays_blocked_until_exact_candidate_external_completion():
     assert {j['name']:j['conclusion'] for j in receipt['github_actions']['jobs']}=={'ubuntu-latest / node-22 / python-3.11':'success','windows-latest / node-22 / python-3.11':'success'}
     assert receipt['clean_consumer']['dependency_audit']['total']==0 and receipt['clean_consumer']['fresh_consumer_install']['esm_import']=='PASS'
     assert receipt['opencode_loader']['host_version']=='1.18.18' and receipt['opencode_loader']['plugin_initialized_log'] is True
+    assert d['gates']['github_release_publication']=='PASS_T4_V0_1_0_EXACT_SOURCE_F1A2C1C'
+    assert d['gates']['npm_registry_publication'].startswith('PENDING_AUTH_T4_')
+    pub=d['current_local_evidence']['final_publication']; assert pub['released_source']=='f1a2c1c4358e5a63656da7a585b6b5793d1ed3be'
+    pr=ROOT/pub['receipt']; assert pr.is_file(); publication=json.loads(pr.read_text())
+    assert publication['github_release']['status']=='PASS_T4' and publication['github_release']['asset_digest_match'] is True
+    assert publication['released_source']['peeled_commit']=='f1a2c1c4358e5a63656da7a585b6b5793d1ed3be'
+    assert publication['final_exact_ref_ci']['conclusion']=='success'
+    assert publication['final_clean_consumer']['dependency_audit']['total']==0
+    assert publication['npm_registry']['status']=='BLOCKED_T4_AUTH' and publication['npm_registry']['publish_attempted'] is False
     assert d['release_blocked'] is True
     assert d['external_blockers']
     assert d['current_local_evidence']['host_acceptance']['receipt']=='data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-c5d8287.json'
@@ -470,7 +479,7 @@ def test_living_validation_contracts_are_bound_to_hi_0_1_0():
 
 def test_current_0_1_0_receipts_are_not_historical_v58_claims():
     gates=json.loads((ROOT/'data/validation/release-gates.json').read_text())
-    assert gates['candidate_status']=='P8_SOURCE_FREEZE_CHECKPOINT_READY'
+    assert gates['candidate_status']=='P8_GITHUB_RELEASE_PUBLISHED_NPM_T4_BLOCKED'
     assert gates['current_local_evidence']['benchmarks']['receipt']=='data/validation/benchmarks-0.1.0.json'
     assert gates['current_local_evidence']['install_lifecycle']['receipt']=='data/validation/install-lifecycle-0.1.0.json'
     assert gates['historical_receipts_not_valid_for_current_candidate']['release']=='2.0.10-v58'

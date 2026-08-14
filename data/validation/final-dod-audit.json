@@ -44,16 +44,10 @@
     }
   },
   "external_only_pending": [
-    "final release-source commit/ref push",
-    "final exact-ref GitHub Actions Windows/Linux receipt",
-    "final exact-ref clean-consumer package/supply-chain receipt",
-    "post-freeze deterministic artifact/hash binding",
-    "real Git tag/GitHub release/asset remote verification",
-    "npm registry publish/install verification only if npm distribution is performed"
+    "npm registry publish/install/integrity verification for opencode-hi@0.1.0"
   ],
   "external_blockers": [
-    "final release-source checkpoint not yet committed/pushed",
-    "npm registry authentication unavailable if npm distribution is required"
+    "npm registry authentication unavailable (npm whoami -> ENEEDAUTH)"
   ],
   "release_blocked": true,
   "known_internal_blocking_findings": [],
@@ -67,5 +61,11 @@
     "status": "PASS_EXACT_SOURCE_9F3A1A9",
     "receipt": "data/validation/external-clean-consumer-0.1.0-head-9f3a1a9.json",
     "claim": "Windows/Linux CI, clean-consumer supply-chain, package install/import, and OpenCode 1.18.18 loader passed on exact pushed source 9f3a1a9; final exact-ref rerun remains pending."
+  },
+  "final_publication": {
+    "status": "GITHUB_RELEASE_PASS_NPM_BLOCKED_AUTH",
+    "receipt": "data/validation/release-publication-0.1.0.json",
+    "released_source": "f1a2c1c4358e5a63656da7a585b6b5793d1ed3be",
+    "tag": "v0.1.0"
   }
 }

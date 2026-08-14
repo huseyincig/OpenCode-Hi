@@ -1,0 +1,151 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "generated_at": "2026-08-14",
+  "status": "GITHUB_RELEASE_PASS_NPM_PUBLICATION_BLOCKED_AUTH",
+  "released_source": {
+    "git_commit": "f1a2c1c4358e5a63656da7a585b6b5793d1ed3be",
+    "git_tree": "a9e600b985b77c800408a81529183c85210bacf4",
+    "tag": "v0.1.0",
+    "annotated_tag_object": "6fd352dd367109d27ceff82d49b6d91be1fc9cfb",
+    "peeled_commit": "f1a2c1c4358e5a63656da7a585b6b5793d1ed3be",
+    "remote_main": "f1a2c1c4358e5a63656da7a585b6b5793d1ed3be",
+    "remote_tag_peeled": "f1a2c1c4358e5a63656da7a585b6b5793d1ed3be"
+  },
+  "final_exact_ref_ci": {
+    "workflow": "Release Readiness",
+    "run_id": 31814631919,
+    "head_sha": "f1a2c1c4358e5a63656da7a585b6b5793d1ed3be",
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-08-14T15:28:07Z",
+    "updated_at": "2026-08-14T15:30:15Z",
+    "url": "https://github.com/huseyincig/OpenCode-Hi/actions/runs/31814631919",
+    "jobs": [
+      {
+        "job_id": 94813232101,
+        "name": "ubuntu-latest / node-22 / python-3.11",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-08-14T15:28:10Z",
+        "completed_at": "2026-08-14T15:30:14Z"
+      },
+      {
+        "job_id": 94813232234,
+        "name": "windows-latest / node-22 / python-3.11",
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-08-14T15:28:10Z",
+        "completed_at": "2026-08-14T15:30:14Z"
+      }
+    ]
+  },
+  "final_clean_consumer": {
+    "exact_git_commit": "f1a2c1c4358e5a63656da7a585b6b5793d1ed3be",
+    "fresh_clone": true,
+    "dependency_install": "PASS",
+    "dependency_audit": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "package": {
+      "id": "opencode-hi@0.1.0",
+      "name": "opencode-hi",
+      "version": "0.1.0",
+      "filename": "opencode-hi-0.1.0.tgz",
+      "size": 242182,
+      "unpackedSize": 1040362,
+      "shasum": "8ad423f3142d984465ddfc87206bbf79734f5d4b",
+      "integrity": "sha512-yQqKsi1BWT/btounEr3/5AvGLVkyIj+gtGAsr/10H+Tsja3B9RKRc4BPgodX5cfm4SQv+vT+ZmWLi9pnw/9bnA==",
+      "entryCount": 294
+    },
+    "fresh_consumer_install": "PASS",
+    "installed_esm_import": "PASS",
+    "node_teardown_note": "One first import process printed PASS and then hit a host libuv teardown assertion; the exact same installed package was rerun with explicit process.exit(0) and passed. The package import itself was observed successful in both runs.",
+    "opencode_1_18_18_loader": "PASS",
+    "opencode_health_http": 200,
+    "opencode_agent_http": 200,
+    "opencode_config_http": 200,
+    "canonical_agents_observed": 8,
+    "default_agent_observed": "working-manager"
+  },
+  "deterministic_release": {
+    "two_independent_builds_byte_identical": true,
+    "assets_sha256": {
+      "OpenCode-Hi-0.1.0-DISTRIBUTABLE.zip": "228b64306e7be7ef2856e7cfd77c049f053b08267de97ff4e6a0309de14119b3",
+      "OpenCode-Hi-0.1.0-SOURCE.zip": "1b61dabe46debab8fdba8b55839c0fec8eb955c62629f71c3a0cc8568e6be10c",
+      "RELEASE-MANIFEST-0.1.0.json": "c68fa1e7fe62800aca283f27b31ac69e89d8a8097c6e291decb977b5d7ee39a8",
+      "SBOM-0.1.0.json": "6e1435bb6ec5c433cecd4533684f803548f6823458a5c0aec5b5b19ec851e646",
+      "opencode-hi-0.1.0.tgz": "903b9886ea3e8fa2b600276f8421396419b90147a7796090a58bdbd18ca5d88f"
+    }
+  },
+  "github_release": {
+    "status": "PASS_T4",
+    "release_id": 370666032,
+    "tag_name": "v0.1.0",
+    "target_commitish": "f1a2c1c4358e5a63656da7a585b6b5793d1ed3be",
+    "name": "OpenCode-Hi 0.1.0",
+    "draft": false,
+    "prerelease": false,
+    "created_at": "2026-08-14T15:32:51Z",
+    "published_at": "2026-08-14T15:33:23Z",
+    "html_url": "https://github.com/huseyincig/OpenCode-Hi/releases/tag/v0.1.0",
+    "assets": {
+      "OpenCode-Hi-0.1.0-DISTRIBUTABLE.zip": {
+        "asset_id": 514582950,
+        "size": 337417,
+        "state": "uploaded",
+        "digest": "sha256:228b64306e7be7ef2856e7cfd77c049f053b08267de97ff4e6a0309de14119b3",
+        "browser_download_url": "https://github.com/huseyincig/OpenCode-Hi/releases/download/v0.1.0/OpenCode-Hi-0.1.0-DISTRIBUTABLE.zip"
+      },
+      "OpenCode-Hi-0.1.0-SOURCE.zip": {
+        "asset_id": 514582953,
+        "size": 1078754,
+        "state": "uploaded",
+        "digest": "sha256:1b61dabe46debab8fdba8b55839c0fec8eb955c62629f71c3a0cc8568e6be10c",
+        "browser_download_url": "https://github.com/huseyincig/OpenCode-Hi/releases/download/v0.1.0/OpenCode-Hi-0.1.0-SOURCE.zip"
+      },
+      "opencode-hi-0.1.0.tgz": {
+        "asset_id": 514582946,
+        "size": 242182,
+        "state": "uploaded",
+        "digest": "sha256:903b9886ea3e8fa2b600276f8421396419b90147a7796090a58bdbd18ca5d88f",
+        "browser_download_url": "https://github.com/huseyincig/OpenCode-Hi/releases/download/v0.1.0/opencode-hi-0.1.0.tgz"
+      },
+      "RELEASE-MANIFEST-0.1.0.json": {
+        "asset_id": 514582952,
+        "size": 35790,
+        "state": "uploaded",
+        "digest": "sha256:c68fa1e7fe62800aca283f27b31ac69e89d8a8097c6e291decb977b5d7ee39a8",
+        "browser_download_url": "https://github.com/huseyincig/OpenCode-Hi/releases/download/v0.1.0/RELEASE-MANIFEST-0.1.0.json"
+      },
+      "SBOM-0.1.0.json": {
+        "asset_id": 514582947,
+        "size": 6239,
+        "state": "uploaded",
+        "digest": "sha256:6e1435bb6ec5c433cecd4533684f803548f6823458a5c0aec5b5b19ec851e646",
+        "browser_download_url": "https://github.com/huseyincig/OpenCode-Hi/releases/download/v0.1.0/SBOM-0.1.0.json"
+      }
+    },
+    "asset_digest_match": true
+  },
+  "npm_registry": {
+    "status": "BLOCKED_T4_AUTH",
+    "whoami_exit": 1,
+    "whoami_error": "ENEEDAUTH",
+    "package_lookup_exit": 1,
+    "package_lookup": "E404 opencode-hi@0.1.0 not present at registry check time",
+    "publish_attempted": false,
+    "rule": "Do not attempt npm publish until registry authentication is explicitly available; once authenticated, publish the exact 0.1.0 package and verify registry version, integrity, and fresh install."
+  },
+  "known_capability_limits": [
+    "process-lifecycle DEGRADED",
+    "workspace-isolation-binding UNSUPPORTED",
+    "browser-execution UNSUPPORTED"
+  ],
+  "rule": "GitHub release publication is complete and exact-source verified. Overall P8 remains PARTIAL_EXTERNAL solely because npm registry publication is environment-blocked by missing authentication."
+}

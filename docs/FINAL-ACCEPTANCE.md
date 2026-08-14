@@ -68,19 +68,12 @@ Storage is derived from semantic ownership, scope, lifecycle, sensitivity, and r
 
 Real filesystem lifecycle acceptance verified that uninstall removes setup-owned registration/provenance while preserving `$schema`, unrelated plugins, theme, MCP configuration, Project Intelligence, retained artifacts, and project-created skills.
 
-## Remaining release blockers
+## Publication state
 
-Pre-freeze external acceptance passed on exact pushed source `9f3a1a9025f73f0da46dcd88da31a6f5ef44c545`: the mandatory GitHub Actions Ubuntu/Windows matrix succeeded, a fresh clone completed dependency installation with zero audited vulnerabilities, `opencode-hi@0.1.0` packed and installed into a fresh consumer with a successful ESM import, and OpenCode `1.18.18` loaded the clean-clone plugin with `/agent` and `/config` runtime projections observable. The canonical receipt is `data/validation/external-clean-consumer-0.1.0-head-9f3a1a9.json`.
+GitHub release **v0.1.0 is published** from exact source `f1a2c1c4358e5a63656da7a585b6b5793d1ed3be`. Final GitHub Actions run `31814631919` passed on both Ubuntu and Windows. A fresh clone of the same commit passed dependency installation/audit (zero vulnerabilities), package install/import, and OpenCode `1.18.18` loader checks. Two post-freeze release builds were byte-identical. The annotated `v0.1.0` tag peels to the exact source commit, and GitHub reports SHA-256 digests for all five uploaded assets that exactly match the local release artifacts. The canonical publication receipt is `data/validation/release-publication-0.1.0.json`.
 
-Release is still blocked until:
-
-- this living-receipt/documentation checkpoint is committed and pushed as the **final release-source ref**;
-- the mandatory GitHub Actions Ubuntu/Windows matrix passes again on that exact final ref;
-- clean-consumer package/dependency/supply-chain verification passes again on that exact final ref;
-- SOURCE/DISTRIBUTABLE/MANIFEST/SBOM are rebuilt deterministically after the source freeze and their hashes are bound;
-- the annotated Git tag and GitHub Release/assets are remotely verified against the exact release-source commit;
-- if 0.1.0 is distributed through npm, the exact npm registry publish/install/integrity path is verified. npm registry publication is conditional and is not allowed to be fabricated when authentication is unavailable.
+The only remaining publication blocker is the npm registry channel: `npm whoami` returns `ENEEDAUTH`, and `opencode-hi@0.1.0` was not present in the registry at verification time. No npm publish was attempted. When registry authentication is available, publish the exact 0.1.0 package and verify registry version, integrity, and a fresh install before closing the remaining T4 package-publication gate.
 
 ## Candidate binding rule
 
-External evidence is never silently promoted across source changes. The `9f3a1a9` receipt is a pre-freeze proof only. The next committed/pushed checkpoint becomes the final release-source identity, and all final-ref external gates named above must bind that exact commit before the release tag is created. Post-publication receipts may be committed after the tagged source as immutable evidence without pretending that the receipt commit itself was the released runtime source.
+External evidence is never silently promoted across source changes. The released runtime source is exactly `f1a2c1c4358e5a63656da7a585b6b5793d1ed3be`; post-publication receipt/ledger commits are evidence only and must never be represented as the released runtime source. Any future runtime-source change requires a new release identity and fresh exact-ref acceptance.

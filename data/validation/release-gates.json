@@ -2,7 +2,7 @@
   "schema": 6,
   "release": "0.1.0",
   "generated_at": "2026-08-14",
-  "candidate_status": "P8_SOURCE_FREEZE_CHECKPOINT_READY",
+  "candidate_status": "P8_GITHUB_RELEASE_PUBLISHED_NPM_T4_BLOCKED",
   "gates": {
     "source_integrity": "PASS_LOCAL_CURRENT_SOURCE",
     "deterministic_release": "PASS_LOCAL_CURRENT_WORKTREE",
@@ -21,19 +21,17 @@
     "opencode_native_child_sessions": "PASS_EXACT_SOURCE_HOST_1_18_18",
     "opencode_model_provider_binding": "PASS_EXACT_SOURCE_HOST_1_18_18",
     "permission_denial_runtime": "PASS_EXACT_SOURCE_HOST_1_18_18",
-    "windows_runtime_smoke": "PASS_GITHUB_ACTIONS_EXACT_SOURCE_9F3A1A9",
-    "dependency_supply_chain_external": "PASS_CLEAN_CONSUMER_EXACT_SOURCE_9F3A1A9",
+    "windows_runtime_smoke": "PASS_GITHUB_ACTIONS_EXACT_FINAL_SOURCE_F1A2C1C",
+    "dependency_supply_chain_external": "PASS_CLEAN_CONSUMER_EXACT_FINAL_SOURCE_F1A2C1C",
     "filesystem_hygiene": "PASS_LOCAL_CURRENT_SOURCE",
-    "native_package_plugin_install_exact_candidate": "PENDING_FINAL_RELEASE_REF_CLEAN_CONSUMER_0_1_0"
+    "native_package_plugin_install_exact_candidate": "PASS_EXACT_FINAL_SOURCE_F1A2C1C_OPENCODE_1_18_18",
+    "github_release_publication": "PASS_T4_V0_1_0_EXACT_SOURCE_F1A2C1C",
+    "npm_registry_publication": "PENDING_AUTH_T4_OPENCODE_HI_0_1_0"
   },
   "release_blocked": true,
-  "reason": "P7 exact-host acceptance is complete. P8 pre-freeze cross-platform CI, Windows smoke, clean-consumer package installation, dependency audit, and OpenCode 1.18.18 loader verification passed on exact pushed source 9f3a1a9. Release remains blocked until the new final release-source checkpoint is committed/pushed and those exact-ref gates are rerun against that final source, followed by post-freeze deterministic artifacts and remote tag/release verification.",
+  "reason": "OpenCode-Hi 0.1.0 GitHub release is published and remotely verified against exact final source f1a2c1c: final Windows/Linux CI passed, clean-consumer/dependency/supply-chain and OpenCode 1.18.18 loader checks passed, deterministic artifacts were byte-identical, annotated tag v0.1.0 peels to f1a2c1c, and all five GitHub release asset digests match local SHA-256. Overall P8 remains release-blocked only for npm registry publication because npm authentication is unavailable.",
   "external_blockers": [
-    "final-release-source-ref-not-yet-pushed",
-    "exact-final-ref-github-actions-not-yet-passed",
-    "exact-final-ref-clean-consumer-package-install-not-run",
-    "post-freeze-release-artifacts-not-yet-bound",
-    "npm-registry-auth-unavailable-if-npm-distribution-is-required"
+    "npm-registry-auth-unavailable-for-opencode-hi-0.1.0-publication"
   ],
   "current_local_evidence": {
     "node": {
@@ -91,6 +89,16 @@
       "clean_consumer_package": "PASS",
       "dependency_vulnerabilities_total": 0,
       "opencode_loader_1_18_18": "PASS"
+    },
+    "final_publication": {
+      "status": "GITHUB_RELEASE_PASS_NPM_BLOCKED_AUTH",
+      "receipt": "data/validation/release-publication-0.1.0.json",
+      "released_source": "f1a2c1c4358e5a63656da7a585b6b5793d1ed3be",
+      "github_actions_run": 31814631919,
+      "tag": "v0.1.0",
+      "release_id": 370666032,
+      "github_release_url": "https://github.com/huseyincig/OpenCode-Hi/releases/tag/v0.1.0",
+      "npm_publication": "BLOCKED_T4_AUTH"
     }
   },
   "historical_receipts_not_valid_for_current_candidate": {
