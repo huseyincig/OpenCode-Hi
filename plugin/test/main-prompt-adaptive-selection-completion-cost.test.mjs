@@ -32,7 +32,7 @@ test('current-mission failure/retry history penalizes a cheap repeatedly failing
   assert.equal(r.primary,'p/robust')
   const cheap=r.scores.find(x=>x.model==='p/cheap')
   assert.ok(cheap.failure_penalty>0)
-  assert.ok(r.reason.includes('current-mission-failure-history-aware'))
+  assert.ok(r.reason.includes('bounded-window-model-feedback-aware'))
 })
 
 test('TaskRuntime feeds current mission worker failure history into the next Smart Select decision',async()=>{

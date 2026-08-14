@@ -2,6 +2,7 @@ import type { HiConfig } from '../../config/schema.js'
 import type { Category,MissionState } from '../mission/types.js'
 import type { AvailableModel } from '../routing/model-resolver.js'
 import { resolveModel,runtimeModelCandidateStatus } from '../routing/model-resolver.js'
+import { deriveMissionModelFeedback } from '../routing/model-feedback.js'
 import { classifyWorkerFailure } from '../worker/failure-classifier.js'
 import { methodologyCatalog } from '../methodology/catalog.js'
 import { ownershipContract } from '../skills/methodology.js'
@@ -17,13 +18,6 @@ import type { ConcurrencyScheduler } from '../scheduler/concurrency.js'
 import { ChildExecutionCoordinator,type ChildWorkspaceBinding } from './child-execution-coordinator.js'
 
 function providerOf(model:string|undefined):string|undefined{return model&&model!=='host-default'&&model.includes('/')?model.slice(0,model.indexOf('/')):undefined}
-function missionModelFeedback(m:MissionState){
-  const failures:Record<string,number>={},successes:Record<string,number>={},retries:Record<string,number>={}
-  const inc=(r:Record<string,number>,id?:string,n=1)=>{if(id)r[id]=(r[id]??0)+n}
-  for(const w of m.execution.workers){const observed=w.effective_model??w.model;if(w.status==='completed')inc(successes,observed);if(w.status==='failed')inc(failures,observed);if(w.last_runtime_failure_kind&&w.model)inc(failures,w.model);for(const h of w.fallback_history??[]){inc(retries,h.from);if(/failure=|provider|transport|tool|context/i.test(h.reason))inc(failures,h.from)}}
-  return{failures,successes,retries}
-}
-
 export type ChildCallbackDisposition='accept'|'restart-reconcile-pending'|'stale-mission'
 export class TaskRecoveryCoordinator{
   callbackDisposition(m:MissionState,worker:{parent_mission_id?:string;generation_at_spawn?:number;restart_reconcile_pending?:boolean}):ChildCallbackDisposition{if(worker.restart_reconcile_pending)return'restart-reconcile-pending';if((worker.parent_mission_id!==undefined&&worker.parent_mission_id!==m.identity.mission_id)||(worker.generation_at_spawn!==undefined&&worker.generation_at_spawn!==m.continuation.generation))return'stale-mission';return'accept'}
@@ -38,7 +32,7 @@ export class TaskRecoveryCoordinator{
     if(level===2){
       const stronger:Record<Category,Category>={quick:'standard',standard:'deep',visual:'deep',deep:'critical',critical:'critical'}
       const target=stronger[worker.category]
-      const selected=resolveModel(target,this.getModels(),this.getConfig(),undefined,worker.role,this.getHostConfig(),missionModelFeedback(m))
+      const selected=resolveModel(target,this.getModels(),this.getConfig(),undefined,worker.role,this.getHostConfig(),deriveMissionModelFeedback(m,worker.role,target))
       const next=[selected.primary,...selected.fallbacks].find(x=>Boolean(x)&&x!==worker.model)
       if(!next)return false
       model=next;variant=next===selected.primary?selected.primaryVariant:selected.fallbackVariants[next];action='model-escalation'

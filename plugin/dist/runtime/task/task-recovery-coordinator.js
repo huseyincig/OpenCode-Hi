@@ -1,4 +1,5 @@
 import { resolveModel, runtimeModelCandidateStatus } from '../routing/model-resolver.js';
+import { deriveMissionModelFeedback } from '../routing/model-feedback.js';
 import { classifyWorkerFailure } from '../worker/failure-classifier.js';
 import { methodologyCatalog } from '../methodology/catalog.js';
 import { ownershipContract } from '../skills/methodology.js';
@@ -10,26 +11,6 @@ import { appendLedger } from '../ledger/ledger.js';
 import { runtimeSignal } from '../events/event-sink.js';
 import { syncMissionGates } from '../gates/gates.js';
 function providerOf(model) { return model && model !== 'host-default' && model.includes('/') ? model.slice(0, model.indexOf('/')) : undefined; }
-function missionModelFeedback(m) {
-    const failures = {}, successes = {}, retries = {};
-    const inc = (r, id, n = 1) => { if (id)
-        r[id] = (r[id] ?? 0) + n; };
-    for (const w of m.execution.workers) {
-        const observed = w.effective_model ?? w.model;
-        if (w.status === 'completed')
-            inc(successes, observed);
-        if (w.status === 'failed')
-            inc(failures, observed);
-        if (w.last_runtime_failure_kind && w.model)
-            inc(failures, w.model);
-        for (const h of w.fallback_history ?? []) {
-            inc(retries, h.from);
-            if (/failure=|provider|transport|tool|context/i.test(h.reason))
-                inc(failures, h.from);
-        }
-    }
-    return { failures, successes, retries };
-}
 export class TaskRecoveryCoordinator {
     scheduler;
     registry;
@@ -78,7 +59,7 @@ export class TaskRecoveryCoordinator {
         if (level === 2) {
             const stronger = { quick: 'standard', standard: 'deep', visual: 'deep', deep: 'critical', critical: 'critical' };
             const target = stronger[worker.category];
-            const selected = resolveModel(target, this.getModels(), this.getConfig(), undefined, worker.role, this.getHostConfig(), missionModelFeedback(m));
+            const selected = resolveModel(target, this.getModels(), this.getConfig(), undefined, worker.role, this.getHostConfig(), deriveMissionModelFeedback(m, worker.role, target));
             const next = [selected.primary, ...selected.fallbacks].find(x => Boolean(x) && x !== worker.model);
             if (!next)
                 return false;

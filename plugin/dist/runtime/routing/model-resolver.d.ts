@@ -24,12 +24,21 @@ export interface ModelResolution {
         expected_completion_cost: number;
         failure_penalty: number;
         success_credit: number;
+        verification_adjustment: number;
+        feedback_confidence: string;
+        observed_latency_ms?: number;
     }>;
 }
 export interface MissionModelFeedback {
     failures?: Record<string, number>;
     successes?: Record<string, number>;
     retries?: Record<string, number>;
+    samples?: Record<string, number>;
+    confidence?: Record<string, 'insufficient' | 'low' | 'medium' | 'high'>;
+    average_latency_ms?: Record<string, number>;
+    verification_passes?: Record<string, number>;
+    verification_failures?: Record<string, number>;
+    window_size?: number;
 }
 export interface RuntimeModelCandidateStatus {
     ok: boolean;

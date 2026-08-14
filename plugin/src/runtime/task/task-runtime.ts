@@ -3,6 +3,7 @@ import type { HiConfig } from '../../config/schema.js'
 import type { Category,ExecutionProfile,MissionState,WorkerResult,WorkerState } from '../mission/types.js'
 import { resolveCategory } from '../routing/category.js'
 import { resolveModel,runtimeModelCandidateStatus,type AvailableModel } from '../routing/model-resolver.js'
+import { deriveMissionModelFeedback } from '../routing/model-feedback.js'
 import { resolveSkillPlan } from '../skills/registry.js'
 import { resolveSkillPermissionMap,resolveSkillToolEnabled } from '../skills/permissions.js'
 import { createTask,createWorker,beginWorkerAttempt,workerFingerprint } from '../worker/worker-runtime.js'
@@ -43,19 +44,6 @@ import type { ChildWorkspaceBinding } from './child-execution-coordinator.js'
 export interface StartTaskInput{objective?:string;role?:string;category?:Category;scope?:string[];dependencies?:string[];requiredEvidence?:string[];obligationIds?:string[];model?:string;modelVariant?:string;relevantContext?:string[];contextArtifactIds?:string[];constraints?:string[];forkFromSession?:string;isolationRequired?:boolean;isolationReason?:string}
 const CATEGORIES=new Set(['quick','standard','deep','visual','critical'])
 const MAX_QUEUE=32
-function missionModelFeedback(m:MissionState){
-  const failures:Record<string,number>={},successes:Record<string,number>={},retries:Record<string,number>={}
-  const inc=(r:Record<string,number>,id?:string,n=1)=>{if(id)r[id]=(r[id]??0)+n}
-  for(const w of m.execution.workers){
-    const observed=w.effective_model??w.model
-    if(w.status==='completed')inc(successes,observed)
-    if(w.status==='failed')inc(failures,observed)
-    if(w.last_runtime_failure_kind&&w.model)inc(failures,w.model)
-    for(const h of w.fallback_history??[]){inc(retries,h.from);if(/failure=|provider|transport|tool|context/i.test(h.reason))inc(failures,h.from)}
-  }
-  return{failures,successes,retries}
-}
-
 function inferObligationIds(m:MissionState,role:string,requiredEvidence:string[],explicit:string[]=[]):string[]{
   const requested=[...new Set(explicit)].map(id=>m.execution.obligations.find(o=>o.id===id&&o.status==='open')).filter(Boolean) as MissionState['execution']['obligations']
   const disallowed=requested.filter(o=>!roleCanOwnObligation(role,o.kind));if(disallowed.length)throw new Error(`Role ${role} cannot own obligation(s): ${disallowed.map(o=>`${o.id}:${o.kind}`).join(', ')}`)
@@ -97,7 +85,7 @@ export class TaskRuntime{
     const objective=input.objective?.trim()||m.identity.objective
     const taskIntent=m.identity.intent
     const cfg=this.getConfig(),routingProfile=cfg.profile[executionProfileFor(cfg.executionPolicy,taskIntent)],routed=routeCapabilities(taskIntent,{specialistThreshold:routingProfile.specialistThreshold,reviewThreshold:routingProfile.reviewThreshold}),defaultCategory=resolveCategory(taskIntent),category=(CATEGORIES.has(String(input.category))?input.category:(routed.category??defaultCategory)) as Category,defaultRole=isHiChildRole(routed.role)?routed.role:'coder',role=isHiChildRole(String(input.role))?String(input.role):defaultRole
-    const hostConfig=this.getHostConfig();applyAdmittedProjectMethodologyPermissions(hostConfig,this.projectRoot);const feedback=missionModelFeedback(m),selected=resolveModel(category,this.getModels(),this.getConfig(),input.model,role,hostConfig,feedback);if(selected.rejected.length)appendLedger(m,'model.policy.rejected',{payload:{items:selected.rejected.slice(0,20)}});if(selected.scores?.length)appendLedger(m,'model.scored',{payload:{role,category,top:selected.scores.slice(0,6),feedback}})
+    const hostConfig=this.getHostConfig();applyAdmittedProjectMethodologyPermissions(hostConfig,this.projectRoot);const feedback=deriveMissionModelFeedback(m,role,category),selected=resolveModel(category,this.getModels(),this.getConfig(),input.model,role,hostConfig,feedback);if(selected.rejected.length)appendLedger(m,'model.policy.rejected',{payload:{items:selected.rejected.slice(0,20)}});if(selected.scores?.length)appendLedger(m,'model.scored',{payload:{role,category,top:selected.scores.slice(0,6),feedback}})
     const taskMethodologyNeeds=m.methodology.methodology_needs.filter(need=>(!need.task_id&&!need.obligation_id)||(need.obligation_id&&input.obligationIds?.includes(need.obligation_id))),catalog=methodologyCatalog(this.projectRoot),candidates=this.#scopedStores.skillCatalog.candidates(hostConfig),permissionMap=resolveSkillPermissionMap(hostConfig,role),skillToolEnabled=resolveSkillToolEnabled(hostConfig,role),surface=effectiveExecutionSurface(hostConfig,role,skillToolEnabled),hostCapabilities=detectOpenCodeCapabilities(this.client).contracts,availableResources=new Set(hostCapabilities.filter(item=>item.status==='SUPPORTED').map(item=>`host-capability:${item.id}`)),skillPlan=resolveSkillPlan(methodologyNames(taskMethodologyNeeds),candidates,permissionMap,skillToolEnabled,role,catalog,availableResources),methodologies=skillPlan.selected.map(s=>s.name),methodologyResourceFailures=skillPlan.outcomes.filter(item=>item.outcome==='resource-unavailable').map(item=>item.name)
     appendLedger(m,'skill.resolved',{payload:{role,requested:skillPlan.requested,outcomes:skillPlan.outcomes}});void this.events?.(runtimeSignal('skill.resolved',m.identity.mission_id,{payload:{role,requested:skillPlan.requested,outcomes:skillPlan.outcomes}}));if(skillPlan.missing.length)appendLedger(m,'skill.fallback',{payload:{missing:skillPlan.missing,requested:skillPlan.requested,skillToolEnabled}})
     const scope=input.scope??(isHiReadOnlyChildRole(role)&&m.vcs.changed_files.length?m.vcs.changed_files:taskIntent.likelyTargets??[]),dependencies=[...new Set(input.dependencies??[])];const unknownDependencies=dependencies.filter(id=>!m.execution.tasks.some(t=>t.id===id)),unavailableDependencies=this.failedDeps(m,dependencies),incompleteDependencies=dependencies.filter(id=>{const t=m.execution.tasks.find(x=>x.id===id);return Boolean(t)&&t!.status!=='completed'&&!unavailableDependencies.includes(id)})

@@ -82,3 +82,5 @@ There are no known blocking internal source findings in the current architecture
 ## Storage Ownership
 
 A capability-driven storage audit is recorded in `STORAGE-ARCHITECTURE.md`, `STORAGE-OWNERSHIP-MATRIX.md`, and `SKILL-ARTIFACT-OWNERSHIP.md`. Canonical project policy and setup provenance are durable Hi-owned stores. Project Intelligence and long-form artifacts persist lazily only when retention is materially useful and a project root is supplied. Project-created skills use OpenCode-native `.opencode/skills/<skill>/`. Runtime state, redaction mappings, process state, caches, and transient context transforms do not become project-visible durable storage.
+
+Model routing feedback is bounded to the current Mission and current role/category. The runtime derives a newest-12 terminal-worker window with confidence thresholds, observed success/failure/retries, structured verification outcome, and timestamp-derived latency when available. Sparse feedback cannot manufacture routing credit, and no permanent global model reputation is persisted.

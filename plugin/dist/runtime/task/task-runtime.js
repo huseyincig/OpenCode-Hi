@@ -1,5 +1,6 @@
 import { resolveCategory } from '../routing/category.js';
 import { resolveModel, runtimeModelCandidateStatus } from '../routing/model-resolver.js';
+import { deriveMissionModelFeedback } from '../routing/model-feedback.js';
 import { resolveSkillPlan } from '../skills/registry.js';
 import { resolveSkillPermissionMap, resolveSkillToolEnabled } from '../skills/permissions.js';
 import { createTask, createWorker, beginWorkerAttempt, workerFingerprint } from '../worker/worker-runtime.js';
@@ -32,26 +33,6 @@ import { TaskResultReconciler } from './task-result-reconciler.js';
 import { TaskRecoveryCoordinator } from './task-recovery-coordinator.js';
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
 const MAX_QUEUE = 32;
-function missionModelFeedback(m) {
-    const failures = {}, successes = {}, retries = {};
-    const inc = (r, id, n = 1) => { if (id)
-        r[id] = (r[id] ?? 0) + n; };
-    for (const w of m.execution.workers) {
-        const observed = w.effective_model ?? w.model;
-        if (w.status === 'completed')
-            inc(successes, observed);
-        if (w.status === 'failed')
-            inc(failures, observed);
-        if (w.last_runtime_failure_kind && w.model)
-            inc(failures, w.model);
-        for (const h of w.fallback_history ?? []) {
-            inc(retries, h.from);
-            if (/failure=|provider|transport|tool|context/i.test(h.reason))
-                inc(failures, h.from);
-        }
-    }
-    return { failures, successes, retries };
-}
 function inferObligationIds(m, role, requiredEvidence, explicit = []) {
     const requested = [...new Set(explicit)].map(id => m.execution.obligations.find(o => o.id === id && o.status === 'open')).filter(Boolean);
     const disallowed = requested.filter(o => !roleCanOwnObligation(role, o.kind));
@@ -189,7 +170,7 @@ export class TaskRuntime {
         const cfg = this.getConfig(), routingProfile = cfg.profile[executionProfileFor(cfg.executionPolicy, taskIntent)], routed = routeCapabilities(taskIntent, { specialistThreshold: routingProfile.specialistThreshold, reviewThreshold: routingProfile.reviewThreshold }), defaultCategory = resolveCategory(taskIntent), category = (CATEGORIES.has(String(input.category)) ? input.category : (routed.category ?? defaultCategory)), defaultRole = isHiChildRole(routed.role) ? routed.role : 'coder', role = isHiChildRole(String(input.role)) ? String(input.role) : defaultRole;
         const hostConfig = this.getHostConfig();
         applyAdmittedProjectMethodologyPermissions(hostConfig, this.projectRoot);
-        const feedback = missionModelFeedback(m), selected = resolveModel(category, this.getModels(), this.getConfig(), input.model, role, hostConfig, feedback);
+        const feedback = deriveMissionModelFeedback(m, role, category), selected = resolveModel(category, this.getModels(), this.getConfig(), input.model, role, hostConfig, feedback);
         if (selected.rejected.length)
             appendLedger(m, 'model.policy.rejected', { payload: { items: selected.rejected.slice(0, 20) } });
         if (selected.scores?.length)
