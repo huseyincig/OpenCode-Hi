@@ -1,7 +1,7 @@
 {
   "schema": 2,
   "release": "0.1.0",
-  "generated_at": "2026-08-12",
+  "generated_at": "2026-08-14",
   "basis": "OPENCODE-HI 0.1.x canonical source-driven implementation prompt",
   "internal_status": "LOCAL_IMPLEMENTATION_AND_IN_PROCESS_ACCEPTANCE_COMPLETE",
   "source_checklist": {
@@ -44,16 +44,16 @@
     }
   },
   "external_only_pending": [
-    "exact OpenCode-Hi Git-ref native plugin loader receipt",
-    "native OpenCode child-session/model-provider/permission runtime receipt",
-    "Windows runtime smoke",
-    "external clean-consumer/supply-chain install receipt"
+    "final release-source commit/ref push",
+    "final exact-ref GitHub Actions Windows/Linux receipt",
+    "final exact-ref clean-consumer package/supply-chain receipt",
+    "post-freeze deterministic artifact/hash binding",
+    "real Git tag/GitHub release/asset remote verification",
+    "npm registry publish/install verification only if npm distribution is performed"
   ],
   "external_blockers": [
-    "opencode binary unavailable in current execution environment",
-    "commit/tag creation is explicitly user-owned and was not performed",
-    "Windows host unavailable",
-    "external clean-consumer registry/network lab unavailable"
+    "final release-source checkpoint not yet committed/pushed",
+    "npm registry authentication unavailable if npm distribution is required"
   ],
   "release_blocked": true,
   "known_internal_blocking_findings": [],
@@ -62,5 +62,10 @@
     "data/validation/external-blockers-v58.json",
     "data/validation/external-opencode-cli-1.18.16.json"
   ],
-  "rule": "Historical v58 receipts demonstrate provenance and proven baseline behavior only. They do not certify the changed OpenCode-Hi 0.1.0 candidate."
+  "rule": "Historical v58 receipts demonstrate provenance and proven baseline behavior only. They do not certify the changed OpenCode-Hi 0.1.0 candidate.",
+  "pre_freeze_external": {
+    "status": "PASS_EXACT_SOURCE_9F3A1A9",
+    "receipt": "data/validation/external-clean-consumer-0.1.0-head-9f3a1a9.json",
+    "claim": "Windows/Linux CI, clean-consumer supply-chain, package install/import, and OpenCode 1.18.18 loader passed on exact pushed source 9f3a1a9; final exact-ref rerun remains pending."
+  }
 }

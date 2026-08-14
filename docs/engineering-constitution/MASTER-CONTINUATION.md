@@ -584,6 +584,16 @@ P7 exit satisfied: changed OpenCode-bound behavior is reaccepted against the cur
 
 The user explicitly authorized the complete release/publication phase. External actions are now permitted only through the canonical release chain and must remain exact-action, exact-ref and receipt-bound. npm publication remains environment-blocked until registry authentication exists; do not fake it.
 
+P8 pre-freeze progress on exact pushed source `9f3a1a9025f73f0da46dcd88da31a6f5ef44c545`:
+
+- GitHub Actions `Release Readiness` run `31813070875` completed **SUCCESS** with both required jobs green: Ubuntu `94808107636` and Windows `94808107727`;
+- a fresh remote clone asserted exact HEAD `9f3a1a9`, completed `npm ci`, reported zero audited dependency vulnerabilities, packed `opencode-hi@0.1.0`, installed that package into a fresh consumer, and imported the installed ESM entrypoint successfully;
+- the same clean clone was loaded by real OpenCode **1.18.18**; `/global/health`, `/agent`, and `/config` returned HTTP 200, the runtime log recorded `OpenCode-Hi plugin initialized`, the canonical agents/default working-manager/configured skills projection was observable, and the probe process was cleaned afterward;
+- canonical receipt: `data/validation/external-clean-consumer-0.1.0-head-9f3a1a9.json`;
+- these are **pre-freeze exact-source** proofs only. They do not satisfy the final exact-ref gate after this receipt/documentation checkpoint changes Git identity.
+
+Release remains blocked until this checkpoint is committed/pushed as the final release-source ref, the same cross-platform CI and clean-consumer gates pass on that exact ref, deterministic post-freeze artifacts are bound, and the exact annotated tag/GitHub release/assets are remotely verified. npm publication remains conditional on registry authentication.
+
 ---
 
 ## 11. Verification protocol for future checkpoints
@@ -698,4 +708,4 @@ Do not waste future turns reopening these without contradictory repository evide
 
 **Continue P8 / M13 only. External release actions are explicitly authorized.**
 
-Freeze a truthful release source first: cross-platform Python invocation, current release/user documentation, living release receipts and the GitHub Actions Windows/Linux readiness gate must be coherent and green locally. Commit that checkpoint, then push the exact source ref and require the cross-platform workflow to pass before tagging/releasing. Run clean-consumer and external dependency/supply-chain installation against the exact pushed ref, rebuild deterministic post-freeze SOURCE/DISTRIBUTABLE/MANIFEST/SBOM artifacts, then create and remotely verify the exact tag/GitHub release. Publish to npm only if registry authentication becomes available; otherwise record the T4 package-publication blocker without weakening GitHub release truth.
+The pre-freeze external gates are green on `9f3a1a9`. Verify this living-receipt/documentation checkpoint locally, commit it as the final release-source checkpoint, push that exact ref, and require the mandatory Windows/Linux workflow to pass on it. Then rerun clean-consumer/dependency/supply-chain installation against that exact final ref, rebuild deterministic post-freeze SOURCE/DISTRIBUTABLE/MANIFEST/SBOM artifacts, create an annotated `v0.1.0` tag on that exact commit, and remotely verify the tag/GitHub release/assets. Publish to npm only if registry authentication becomes available; otherwise record the T4 package-publication blocker without weakening GitHub release truth.

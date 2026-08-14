@@ -2,7 +2,7 @@
   "schema": 1,
   "release": "0.1.0",
   "generated_at": "2026-08-14",
-  "status": "EXACT_HOST_ACCEPTED_PRE_RELEASE_EXTERNALS_PENDING",
+  "status": "PRE_FREEZE_EXTERNALS_PASS_FINAL_EXACT_REF_PENDING",
   "known_blocking_internal_findings": [],
   "local_gates": {
     "node_runtime_acceptance": "PASS",
@@ -20,14 +20,15 @@
     "skill_artifact_ownership_27_of_27": "PASS"
   },
   "pending_external": [
-    "exact_git_ref_clean_install",
+    "final_release_source_commit_and_push",
+    "final_exact_ref_cross_platform_ci",
+    "final_exact_ref_clean_consumer_install",
     "post_freeze_deterministic_release_rebuild",
-    "external_dependency_supply_chain_receipt",
-    "windows_runtime_smoke",
+    "github_tag_release_asset_remote_verification",
     "npm_registry_publish_install_verification_if_distributed_through_npm"
   ],
   "release_ready": false,
-  "rule": "Exact-host behavior is bound to OpenCode 1.18.18 and runtime source c5d8287. Release still requires a final release-source commit/ref, clean consumer/supply-chain verification, Windows CI smoke, deterministic post-freeze artifacts, and publication receipts.",
+  "rule": "Exact-host P7 behavior remains bound to OpenCode 1.18.18/runtime source c5d8287. Pre-freeze P8 Windows/Linux CI, clean-consumer package/supply-chain installation, and exact-source OpenCode loader passed on 9f3a1a9. A new final release-source commit must now be created/pushed and the final exact-ref external gates rerun before tag/release publication.",
   "host_gates": {
     "native_opencode_plugin_loader": "PASS_EXACT_SOURCE_HOST_1_18_18",
     "native_child_sessions": "PASS_EXACT_SOURCE_HOST_1_18_18",
@@ -37,5 +38,11 @@
     "native_skill_discovery": "PASS_EXACT_SOURCE_HOST_1_18_18",
     "deterministic_completion_stop": "PASS_EXACT_SOURCE_HOST_1_18_18",
     "receipt": "data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-c5d8287.json"
+  },
+  "pre_freeze_external": {
+    "status": "PASS_EXACT_SOURCE_9F3A1A9",
+    "receipt": "data/validation/external-clean-consumer-0.1.0-head-9f3a1a9.json",
+    "source_commit": "9f3a1a9025f73f0da46dcd88da31a6f5ef44c545",
+    "github_actions_run": 31813070875
   }
 }

@@ -1,0 +1,103 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "generated_at": "2026-08-14",
+  "status": "PASS_PRE_FREEZE_EXACT_SOURCE",
+  "claim_boundary": "Pre-freeze external evidence for exact pushed source 9f3a1a9. This proves cross-platform CI, clean-consumer package/supply-chain installation, and a real OpenCode 1.18.18 loader on that source. It does not certify the later final release-source ref until the same gates are rerun against that ref.",
+  "source_binding": {
+    "tested_git_commit": "9f3a1a9025f73f0da46dcd88da31a6f5ef44c545",
+    "tested_git_tree": "65e5ace1b7ca9fadd14063cac51f380a8e9a6b83",
+    "remote": "origin/main",
+    "clean_clone": true,
+    "clean_clone_head": "9f3a1a9025f73f0da46dcd88da31a6f5ef44c545",
+    "clean_clone_worktree_clean": true,
+    "runtime_hashes": {
+      "plugin/dist/plugin.js": "f483c62b0257ccc62cc38e13e3c2a2a9038986c51e9b669cd157d9edf074d197",
+      "plugin/src/plugin.ts": "150d29a99a54143522a3d905326a071a2d42797d7bdcc215757e9a418652073c"
+    }
+  },
+  "github_actions": {
+    "workflow": "Release Readiness",
+    "run_id": 31813070875,
+    "run_number": 8,
+    "head_sha": "9f3a1a9025f73f0da46dcd88da31a6f5ef44c545",
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-08-14T15:09:18Z",
+    "updated_at": "2026-08-14T15:11:26Z",
+    "jobs": [
+      {
+        "job_id": 94808107636,
+        "name": "ubuntu-latest / node-22 / python-3.11",
+        "conclusion": "success",
+        "required_steps": "all-success"
+      },
+      {
+        "job_id": 94808107727,
+        "name": "windows-latest / node-22 / python-3.11",
+        "conclusion": "success",
+        "required_steps": "all-success"
+      }
+    ]
+  },
+  "clean_consumer": {
+    "source_acquisition": "fresh git clone of remote main, exact HEAD asserted",
+    "dependency_install": {
+      "command": "npm ci --prefix plugin",
+      "status": "PASS"
+    },
+    "dependency_audit": {
+      "critical": 0,
+      "high": 0,
+      "moderate": 0,
+      "low": 0,
+      "info": 0,
+      "total": 0
+    },
+    "package": {
+      "name": "opencode-hi",
+      "version": "0.1.0",
+      "filename": "opencode-hi-0.1.0.tgz",
+      "size": 242182,
+      "unpacked_size": 1040362,
+      "entry_count": 294,
+      "shasum": "8ad423f3142d984465ddfc87206bbf79734f5d4b",
+      "integrity": "sha512-yQqKsi1BWT/btounEr3/5AvGLVkyIj+gtGAsr/10H+Tsja3B9RKRc4BPgodX5cfm4SQv+vT+ZmWLi9pnw/9bnA==",
+      "tarball_sha256": "903b9886ea3e8fa2b600276f8421396419b90147a7796090a58bdbd18ca5d88f"
+    },
+    "fresh_consumer_install": {
+      "status": "PASS",
+      "installed_name": "opencode-hi",
+      "installed_version": "0.1.0",
+      "esm_import": "PASS"
+    }
+  },
+  "opencode_loader": {
+    "host_version": "1.18.18",
+    "fixture_plugin_spec": "file:///tmp/hi-clean-consumer-fsPBO6/source/plugin/dist/plugin.js",
+    "global_health_http": 200,
+    "agent_endpoint_http": 200,
+    "config_endpoint_http": 200,
+    "plugin_initialized_log": true,
+    "plugin_initialized_directory": "/tmp/hi-clean-consumer-fsPBO6/opencode-fixture/project",
+    "canonical_agents_observed": 8,
+    "default_agent_observed": "working-manager",
+    "skills_path_observed": "/tmp/hi-clean-consumer-fsPBO6/source/skills",
+    "probe_process_cleaned": true
+  },
+  "gates": {
+    "windows_runtime_smoke": "PASS_T3_CI",
+    "ubuntu_release_readiness": "PASS_T3_CI",
+    "dependency_supply_chain_external": "PASS_T3_CLEAN_CONSUMER",
+    "clean_consumer_package_install": "PASS_T3",
+    "native_package_plugin_loader": "PASS_T3",
+    "final_release_source_ref": "PENDING_NEW_FREEZE_COMMIT"
+  },
+  "limitations": [
+    "Evidence is exact for 9f3a1a9 and must not be silently promoted to the final release-source ref.",
+    "npm registry publication/install is not claimed; clean-consumer verification used the locally packed exact-source artifact.",
+    "Known product capability limitations from P7 remain unchanged: process-lifecycle DEGRADED; workspace-isolation-binding and browser-execution UNSUPPORTED."
+  ],
+  "rule": "Create the final source-freeze checkpoint next. After it is pushed, rerun cross-platform CI and clean-consumer/supply-chain installation against that exact commit before tag/release creation."
+}

@@ -2,7 +2,7 @@
   "schema": 6,
   "release": "0.1.0",
   "generated_at": "2026-08-14",
-  "candidate_status": "P8_PRE_RELEASE_EXTERNAL_GATES_PENDING",
+  "candidate_status": "P8_SOURCE_FREEZE_CHECKPOINT_READY",
   "gates": {
     "source_integrity": "PASS_LOCAL_CURRENT_SOURCE",
     "deterministic_release": "PASS_LOCAL_CURRENT_WORKTREE",
@@ -21,18 +21,17 @@
     "opencode_native_child_sessions": "PASS_EXACT_SOURCE_HOST_1_18_18",
     "opencode_model_provider_binding": "PASS_EXACT_SOURCE_HOST_1_18_18",
     "permission_denial_runtime": "PASS_EXACT_SOURCE_HOST_1_18_18",
-    "windows_runtime_smoke": "PENDING_GITHUB_ACTIONS_WINDOWS_0_1_0",
-    "dependency_supply_chain_external": "PENDING_CLEAN_CONSUMER_0_1_0",
+    "windows_runtime_smoke": "PASS_GITHUB_ACTIONS_EXACT_SOURCE_9F3A1A9",
+    "dependency_supply_chain_external": "PASS_CLEAN_CONSUMER_EXACT_SOURCE_9F3A1A9",
     "filesystem_hygiene": "PASS_LOCAL_CURRENT_SOURCE",
     "native_package_plugin_install_exact_candidate": "PENDING_FINAL_RELEASE_REF_CLEAN_CONSUMER_0_1_0"
   },
   "release_blocked": true,
-  "reason": "P7 exact-host acceptance is complete on OpenCode 1.18.18. P8 is authorized but release remains blocked until the final release-source ref is created and pushed, cross-platform CI/Windows smoke passes, clean-consumer/supply-chain installation is verified, and post-freeze release artifacts/publication receipts are exact-bound.",
+  "reason": "P7 exact-host acceptance is complete. P8 pre-freeze cross-platform CI, Windows smoke, clean-consumer package installation, dependency audit, and OpenCode 1.18.18 loader verification passed on exact pushed source 9f3a1a9. Release remains blocked until the new final release-source checkpoint is committed/pushed and those exact-ref gates are rerun against that final source, followed by post-freeze deterministic artifacts and remote tag/release verification.",
   "external_blockers": [
     "final-release-source-ref-not-yet-pushed",
-    "github-actions-windows-smoke-not-yet-passed",
-    "exact-ref-clean-consumer-package-install-not-run",
-    "external-supply-chain-install-receipt-not-run",
+    "exact-final-ref-github-actions-not-yet-passed",
+    "exact-final-ref-clean-consumer-package-install-not-run",
     "post-freeze-release-artifacts-not-yet-bound",
     "npm-registry-auth-unavailable-if-npm-distribution-is-required"
   ],
@@ -81,6 +80,17 @@
       "status": "PASS",
       "method": "two independent release-build runs with byte-for-byte identical outputs",
       "hash_binding": "Artifact hashes are emitted by the post-freeze release build/manifest and are intentionally not embedded in this source-owned living receipt to avoid self-referential archive hashes."
+    },
+    "pre_freeze_external": {
+      "status": "PASS_EXACT_SOURCE_9F3A1A9",
+      "receipt": "data/validation/external-clean-consumer-0.1.0-head-9f3a1a9.json",
+      "source_commit": "9f3a1a9025f73f0da46dcd88da31a6f5ef44c545",
+      "github_actions_run": 31813070875,
+      "ubuntu_job": 94808107636,
+      "windows_job": 94808107727,
+      "clean_consumer_package": "PASS",
+      "dependency_vulnerabilities_total": 0,
+      "opencode_loader_1_18_18": "PASS"
     }
   },
   "historical_receipts_not_valid_for_current_candidate": {

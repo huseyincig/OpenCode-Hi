@@ -70,17 +70,17 @@ Real filesystem lifecycle acceptance verified that uninstall removes setup-owned
 
 ## Remaining release blockers
 
-The following remain release blockers:
+Pre-freeze external acceptance passed on exact pushed source `9f3a1a9025f73f0da46dcd88da31a6f5ef44c545`: the mandatory GitHub Actions Ubuntu/Windows matrix succeeded, a fresh clone completed dependency installation with zero audited vulnerabilities, `opencode-hi@0.1.0` packed and installed into a fresh consumer with a successful ESM import, and OpenCode `1.18.18` loaded the clean-clone plugin with `/agent` and `/config` runtime projections observable. The canonical receipt is `data/validation/external-clean-consumer-0.1.0-head-9f3a1a9.json`.
 
-- the current host-tested fixes must be committed by the user and bound to a new exact Git commit/ref;
-- SOURCE/DISTRIBUTABLE/MANIFEST/SBOM must be rebuilt deterministically after that source freeze;
-- the exact ref must pass a clean-consumer package installation receipt;
-- external dependency/supply-chain installation must be verified;
-- Windows runtime smoke must pass;
-- if 0.1.0 is distributed through npm, the exact npm registry publish/install/integrity path must be verified.
+Release is still blocked until:
 
-The previous Git commit `e24f0d6455f36c4b020885c5b098e95237efc9e6` is the base of the current worktree but does not contain the real-host fixes discovered during acceptance. It must not be represented as the final exact candidate.
+- this living-receipt/documentation checkpoint is committed and pushed as the **final release-source ref**;
+- the mandatory GitHub Actions Ubuntu/Windows matrix passes again on that exact final ref;
+- clean-consumer package/dependency/supply-chain verification passes again on that exact final ref;
+- SOURCE/DISTRIBUTABLE/MANIFEST/SBOM are rebuilt deterministically after the source freeze and their hashes are bound;
+- the annotated Git tag and GitHub Release/assets are remotely verified against the exact release-source commit;
+- if 0.1.0 is distributed through npm, the exact npm registry publish/install/integrity path is verified. npm registry publication is conditional and is not allowed to be fabricated when authentication is unavailable.
 
 ## Candidate binding rule
 
-Real-host evidence is never promoted across source changes. Once the user commits the current fixes, the resulting exact Git ref becomes the candidate identity. Host binding and deterministic release artifacts must then be regenerated or revalidated against that exact ref before release readiness can be declared.
+External evidence is never silently promoted across source changes. The `9f3a1a9` receipt is a pre-freeze proof only. The next committed/pushed checkpoint becomes the final release-source identity, and all final-ref external gates named above must bind that exact commit before the release tag is created. Post-publication receipts may be committed after the tagged source as immutable evidence without pretending that the receipt commit itself was the released runtime source.
