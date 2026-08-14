@@ -12,8 +12,8 @@ repository: OpenCode-Hi
 repository_root: /workspace/OpenCode-Hi
 coverage_reconciliation_baseline_head: 8ba9eb561332eebc3b6bded90a1c0d2da501d1ed
 active_program: OpenCode-Hi Product Closure after Constitution Migration
-active_phase: P6
-active_phase_name: Deterministic closure after product gaps
+active_phase: P7
+active_phase_name: Real-host reacceptance for changed host-bound surfaces
 phase_status: OPEN
 working_tree_expectation: clean
 last_verified_full_suite:
@@ -24,7 +24,7 @@ last_verified_architecture_lint: "PASS rules=21 deferred=0 linked=8"
 last_verified_validator: PASS
 current_projection_receipts: 32
 external_release_actions_authorized: false
-next_contract_owner: canonical source -> generators -> architecture lint -> full controlled proof
+next_contract_owner: exact OpenCode 1.18.16 host -> changed adapter/control surfaces -> T3 receipt
 ```
 
 ---
@@ -547,20 +547,19 @@ Proof: focused host-capability set 21/21 PASS; full controlled suite **563/563 P
 
 Exit satisfied: supported-feature and support/release claims match the exact supported-host reality without fake capability promotion.
 
-### P6 — Deterministic closure after product gaps
+### P6 — Deterministic closure after product gaps — **CLOSED on exact source HEAD `ebd49d9`**
 
-After P0–P5 mutations:
+Deterministic proof from committed canonical sources:
 
-- build/generate from canonical sources;
-- architecture lint all fatal/link rules;
-- projection receipt parity/idempotence;
-- standalone validator;
-- full controlled suite under writable HOME/XDG;
-- diff check + backup hygiene;
-- no stale generated artifacts;
-- local closure commit(s).
+- pre-check tree clean at exact HEAD `ebd49d988caa6f394d11ca295d3681e418d46905`;
+- canonical generators rebuilt 32 config options, 7 permission profiles, 8 role contracts, 8 OpenCode agent projections and 27 methodology projections;
+- 32 ProjectionReceipts regenerated and matched committed source/output identity;
+- architecture lint **21 rules / deferred=0 / linked=8 PASS**;
+- full controlled suite **563/563 PASS** under isolated writable HOME/XDG;
+- a second full build/generation pass remained byte-idempotent and left the Git tree clean;
+- standalone validator PASS, `git diff --check` clean, backup count 0.
 
-Do not use the test count itself as the closure argument; record the owner/executor/proof chain for each resolved gap.
+Closure is not based on test count alone: P0–P5 owner/consumer/executor gaps are individually recorded above, while P6 proves their committed canonical sources reproduce the generated host/runtime projections without drift.
 
 ### P7 — Real-host reacceptance for changed host-bound surfaces
 
@@ -672,10 +671,10 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**Start P6 only.**
+**Start P7 only.**
 
-Re-check real HEAD/status, then perform deterministic closure from committed canonical sources: regenerate/build, architecture lint, projection receipt parity/idempotence, standalone validator, full controlled suite under writable HOME/XDG, diff check, generated-artifact cleanliness and backup hygiene. Treat a clean post-generation tree as required proof that committed canonical owners deterministically reproduce every generated projection.
+Re-check real HEAD/status, then run exact-version T3 reacceptance against OpenCode 1.18.16 only for host-bound surfaces changed since M12/P0–P5: canonical agent/permission projection (including `scout` removal), primary direct-action authority at `hi_direct_progress`, primary host-selected model non-constraint, browser/visual resource preflight and HostCapability truth, and doctor exposure of process/workspace/browser limitations. Reconfirm native session/child/model/permission behavior needed by those paths and bind the receipt to the exact tested Git HEAD/source hashes.
 
-Do **not** start P7–P8 until P6 is clean. Do not enter real M13/release work without explicit user request.
+Do not broaden P7 into release publication or unrelated host feature development. Preserve process `DEGRADED`, workspace `UNSUPPORTED`, and browser `UNSUPPORTED` unless the real host execution evidence itself disproves those statuses. Do not enter real M13/release work without explicit user request.
 
-When P6 is coherently closed, create the local proof/MASTER checkpoint and continue to P7 only for the OpenCode-bound surfaces actually changed by P0–P5.
+When P7 is coherently closed, create a local exact-source receipt/proof checkpoint and update this MASTER. P8/M13 remains NOT REQUESTED.
