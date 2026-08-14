@@ -1,8 +1,8 @@
 import type { HiConfig } from '../../config/schema.js';
-import type { Category, MissionState, WorkerResult } from '../mission/types.js';
+import type { Category, MissionState, WorkerResult, WorkerState } from '../mission/types.js';
 import { type AvailableModel } from '../routing/model-resolver.js';
 import { BackgroundRegistry } from '../background/registry.js';
-import { type OpenCodeLifecycleEndpoint } from '../../opencode/client-adapter.js';
+import type { OpenCodeLifecycleEndpoint } from '../../opencode/client-adapter.js';
 import { ConcurrencyScheduler } from '../scheduler/concurrency.js';
 import type { RuntimeSignalSink } from '../events/event-sink.js';
 export interface StartTaskInput {
@@ -31,7 +31,6 @@ export declare class TaskRuntime {
     private getModels;
     private getHostConfig;
     private events?;
-    private lifecycle;
     constructor(client: any, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined, lifecycle?: OpenCodeLifecycleEndpoint);
     private sendProviderPrompt;
     private recordModelProjection;
@@ -48,6 +47,8 @@ export declare class TaskRuntime {
         observed?: string;
         reason: string;
     };
+    resolveChildCallback(sessionID: string): WorkerState | undefined;
+    childCallbackDisposition(m: MissionState, worker: WorkerState): import("./task-recovery-coordinator.js").ChildCallbackDisposition;
     queueDepth(): number;
     private depsReady;
     private failedDeps;

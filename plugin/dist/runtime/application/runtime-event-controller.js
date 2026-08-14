@@ -47,10 +47,9 @@ export class RuntimeEventController {
             }
             pendingNativePermissions.delete(nativePermissionID);
         }
-        const child = background.list().find(w => w.session_id === sid);
+        const child = tasks.resolveChildCallback(sid);
         const childMission = child ? store.get(child.parent_session_id) : undefined;
         const mission = childMission ?? store.get(sid);
-        const staleChild = Boolean(child && mission && ((child.parent_mission_id !== undefined && child.parent_mission_id !== mission.mission_id) || (child.generation_at_spawn !== undefined && child.generation_at_spawn !== mission.generation)));
         if (mission) {
             await teams.expireMission(mission);
             await teams.reconcileMission(mission);
@@ -60,12 +59,12 @@ export class RuntimeEventController {
                 return;
             }
         }
-        if (child?.restart_reconcile_pending && mission) {
+        if (child && mission && tasks.childCallbackDisposition(mission, child) === 'restart-reconcile-pending') {
             appendLedger(mission, 'worker.callback.pre-reconcile-ignored', { worker_id: child.id, payload: { session_id: sid, event: ev.rawType, reason: 'runtime-restart-reconcile-pending' } });
             persistence.save(store.all());
             return;
         }
-        if (staleChild && mission) {
+        if (child && mission && tasks.childCallbackDisposition(mission, child) === 'stale-mission') {
             appendLedger(mission, 'worker.callback.stale-mission-ignored', { worker_id: child?.id, payload: { worker_mission_id: child?.parent_mission_id, mission_id: mission.mission_id, worker_generation: child?.generation_at_spawn, mission_generation: mission.generation, event: ev.rawType } });
             persistence.save(store.all());
             return;
