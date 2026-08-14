@@ -53,7 +53,7 @@ Rows below are intentionally `PENDING` until code exists.
 | M6 | Model capability/identity | ModelCapabilityProfile host-inventory normalization + identity reconciler + effective-model evidence; focused 17/17 PASS; controlled full suite 475/475 PASS; validator PASS | T1/T2 | `e7c3c96`; requested/projected WorkerState snapshot wiring blocked by SentinelX mutation policy; no unwired state committed | PARTIAL_PASS |
 | M7 | Host capability registry | 16 contract-backed OpenCode capabilities; product runtime gates consume worker-runtime/session-revert contracts; doctor reports status/verification/semantic loss; focused 43/43 PASS; controlled full suite 480/480 PASS; validator PASS | T1/T2 local; T3 still pending | `390cc2b` | PASS_LOCAL — REAL-HOST ACCEPTANCE PENDING |
 | M8 | Task/Worker/Result/Evidence contracts | WorkerResult, EvidenceItem, ReviewFinding, derived VerificationEnvelope, TaskContract and WorkerContract now have canonical runtime owners; persistence consumes canonical validators; task mission/external-action identity is explicit; worker attempt/recovery/effective-model lifecycle is fail-closed; latest focused Task/Worker set 21/21 PASS and controlled full suite 507/507 PASS; validator PASS | T1/T2 | WorkerResult `4ea320d`; Evidence `3044b94`; ReviewFinding `b120f49`; VerificationEnvelope `a4b1105`; Task/Worker `77f9dc1` | PASS — CONTRACT OWNERSHIP CLOSED |
-| M9 | Context/Artifact/PI/Human/Authority/Storage | Artifact + ContextReference + derived SemanticContext + ProjectIntelligence + HumanDecision + Authority + ExternalAction operational; exact Authority is canonical action/target/hash state, ExternalAction is a closed four-value semantic vocabulary, project-native persistent grants use the same action classes, and malformed authority persistence fails closed; focused authority/external-action set 59/59 PASS; controlled full suite 534/534 PASS; validator PASS | T1/T2 | Artifact `811ee7f`; ContextReference `3e8ab72`; SemanticContext `b7e51cc`; PI `e2d021b`; HumanDecision `46fc7b7`; Authority/ExternalAction `da67329` | PARTIAL_PASS — STORAGE REMAINS |
+| M9 | Context/Artifact/PI/Human/Authority/Storage | Artifact + ContextReference + derived SemanticContext + ProjectIntelligence + HumanDecision + Authority + ExternalAction + StorageOwnership operational; machine storage catalog enforces one canonical owner per scope/data class, canonical path providers cover current project/runtime durable classes, OpenCode-native project skills remain outside Hi internal storage, uninstall preserves independently-owned policy/knowledge/skills, and doctor consumes the current runtime-state schema; focused storage/ownership set 66/66 PASS; controlled full suite 538/538 PASS; validator PASS | T1/T2 | Artifact `811ee7f`; ContextReference `3e8ab72`; SemanticContext `b7e51cc`; PI `e2d021b`; HumanDecision `46fc7b7`; Authority/ExternalAction `da67329`; StorageOwnership `ea6c236` | PASS — CONTRACT OWNERSHIP CLOSED |
 | M10 | common generator/lint closure | BA12 + HI001–HI020 migrated rules | T0/T1/T2 | — | PENDING |
 | M11 | deterministic full closure | build + validator + full controlled suite | T0/T1/T2 | — | PENDING |
 | M12 | real-host acceptance | OpenCode version-bound native receipts | T3 | — | PENDING |
@@ -158,6 +158,22 @@ Implemented and verified:
 - no real push/tag/release/publish/deploy was performed. Full-suite external-effect coverage used only deterministic test-local bare Git remotes, hosted-release fixtures and local registry fixtures permitted by the continuation protocol.
 
 Evidence: focused Authority/ExternalAction/project-authority/release/HumanDecision/threat set 59/59 PASS; controlled isolated-HOME/XDG full plugin suite 534/534 PASS; standalone validator PASS; `git diff --check` clean; backup count 0. Authority/ExternalAction code checkpoint: `da67329`. StorageOwnershipContract remains open under M9.
+
+
+### M9 StorageOwnershipContract checkpoint
+
+Implemented and verified:
+
+- added canonical machine-readable `StorageOwnershipContract` + catalog with strict `scope + data_class` uniqueness; overlapping canonical ownership now fails contract validation instead of existing only as a documentation rule;
+- mapped current implemented project/runtime durable classes to explicit canonical owner, scope, lifecycle, path provider, schema ref, write owner, readers, retention and privacy semantics;
+- centralized project methodology policy/provenance path providers with the existing Hi storage resolver while keeping project-created reusable methodology in OpenCode-native `.opencode/skills/hi-project-*` storage rather than mirroring it under `.opencode/hi`;
+- distinguished one logical write owner from multiple authorized executor surfaces: project routing policy may be created/updated through runtime auto-init or explicit project reconfiguration without becoming two semantic owners;
+- corrected uninstall ownership: setup uninstall removes plugin registration plus setup-owned `provenance/setup.json`, but preserves independently-owned routing policy, native-always Authority projection, Project Intelligence, methodology state, retained Artifacts and OpenCode-native project skills;
+- corrected doctor/runtime schema drift by consuming canonical `RUNTIME_STATE_SCHEMA` instead of a stale hard-coded schema `3`; doctor now describes incompatible runtime state as current-only rather than claiming an obsolete migration-on-load path;
+- preserved OS/project boundary: Mission survival remains project-keyed OS state, not `.opencode/hi/runtime`, and host-native project methodologies remain host-native skill capability storage;
+- updated storage architecture/ownership/layout docs to match the executable owner graph and cleanup boundary.
+
+Evidence: focused storage/doctor/methodology/authority/routing set 66/66 PASS; controlled isolated-HOME/XDG full plugin suite 538/538 PASS; direct setup install/uninstall ownership scenario PASS because host Python lacks the optional `pytest` module; Python source syntax compile PASS; standalone validator PASS; `git diff --check` clean; backup count 0. StorageOwnership code checkpoint: `ea6c236`. This closes M9 at T1/T2 while preserving BA06/BA10/BA11 behavior in the full regression suite.
 
 ### M8 Task / Worker contract checkpoint
 

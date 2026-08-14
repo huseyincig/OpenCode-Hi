@@ -9,19 +9,19 @@ Status: ACTIVE REPOSITORY CONTINUATION ENTRYPOINT
 continuation_schema: 1
 repository: OpenCode-Hi
 repository_root: /workspace/OpenCode-Hi
-baseline_before_this_ledger_commit: da67329
+baseline_before_this_ledger_commit: ea6c236
 active_program: Engineering Constitution / Metamodel Migration
-active_phase: M9
-active_phase_name: Context / Artifact / Project Intelligence / Human Decision / Authority / Storage
-phase_status: PARTIAL_PASS
+active_phase: M10
+active_phase_name: Common generator and architecture lint closure
+phase_status: PENDING
 working_tree_expectation: clean
 last_verified_full_suite:
-  total: 534
-  pass: 534
+  total: 538
+  pass: 538
   fail: 0
 last_verified_validator: PASS
 external_release_actions_authorized: false
-next_contract_owner: StorageOwnershipContract
+next_contract_owner: Common generator / architecture lint graph
 ```
 
 ## Continuation protocol
@@ -69,6 +69,7 @@ e2d021b  ProjectIntelligenceContract
 46fc7b7  HumanDecisionContract
 6a481f7  HumanDecision proof provenance
 da67329  AuthorityContract / ExternalActionContract
+ea6c236  StorageOwnershipContract
 ```
 
 Earlier M8/M7/M6/M4/M2/M1/M0 checkpoints remain recorded in `17-IMPLEMENTATION-PROOF.md`.
@@ -146,24 +147,36 @@ Canonical code checkpoint: `da67329`.
 - current classifier/projection parity includes `yarn npm publish` and `kubectl delete`;
 - explicit deny monotonicity, force-push ask behavior, parent-only external effects and release-chain remote proof remain preserved.
 
-Last M9 verification after Authority/ExternalAction:
+Last M9 verification after StorageOwnership:
 
 ```text
-focused Authority/ExternalAction/project-authority/release/HumanDecision/threat: 59/59 PASS
-controlled full plugin suite: 534/534 PASS
+focused storage/doctor/methodology/authority/routing: 66/66 PASS
+controlled full plugin suite: 538/538 PASS
 standalone validator: PASS
+python storage-uninstall behavior scenario: PASS
+python source syntax compile: PASS
+pytest full Python harness: NOT RUN — pytest module absent on host
+
 git diff --check: clean
 backup count: 0
 real external actions: none (test-local deterministic fixtures only)
 ```
 
-## Still-open M9 work
+### StorageOwnershipContract — PASS
 
-1. **StorageOwnershipContract**
-   - audit `.opencode/hi` and host-native `.opencode/skills/hi-project-*` ownership;
-   - prove one canonical writer per data class and remove/reclassify overlapping ownership only from real producer/consumer evidence;
-   - do not relocate host-native skills into Hi internal storage for directory neatness.
-2. Close M9 only after StorageOwnership is contract-backed and proven.
+Canonical code checkpoint: `ea6c236`.
+
+- machine-readable catalog enforces one canonical `scope + data_class` owner;
+- current `.opencode/hi/**`, OS runtime state and `.opencode/skills/hi-project-*` classes have explicit owner/lifecycle/path/write/read/retention/privacy mapping;
+- routing command surfaces share one logical project-routing owner rather than becoming duplicate truths;
+- setup uninstall no longer deletes independently-owned routing/Authority policy or project knowledge/artifact/skill state;
+- project methodology skill storage remains OpenCode-native `.opencode/skills/hi-project-*`;
+- doctor validates runtime state against canonical `RUNTIME_STATE_SCHEMA` instead of stale schema `3`;
+- M9 BA06/BA10/BA11 behavior remains green in the 538-test controlled suite.
+
+## M9 closure
+
+M9 is **PASS — CONTRACT OWNERSHIP CLOSED** at T1/T2. Artifact, ContextReference, SemanticContext, ProjectIntelligence, HumanDecision, Authority/ExternalAction and StorageOwnership all have canonical runtime/schema owners and current proof checkpoints.
 
 ## Open earlier migration blockers / partials
 
@@ -191,7 +204,7 @@ Do not silently declare these closed:
 
 ## Next action
 
-Start **StorageOwnershipContract source-first audit**.
+Start **M10 common generator + architecture lint source-first audit**.
 
 Before mutation:
 
@@ -200,17 +213,25 @@ git status --short
 git log -5 --oneline
 ```
 
-Inspect the canonical/storage owner surfaces at minimum:
+Read the M10 requirements and generator/lint canonical surfaces at minimum:
 
 ```text
-plugin/src/runtime/storage/locations.ts
-plugin/src/runtime/storage/ownership.ts (if present)
-plugin/src/runtime/project-intelligence/store.ts
-plugin/src/runtime/context/artifact-store.ts
-plugin/src/runtime/methodology/project-policy.ts
-plugin/src/runtime/safety/project-authority.ts
-scripts/native_plugin_setup.py
-relevant storage/ownership/project-methodology tests
+docs/engineering-constitution/09-GENERATOR-ARCHITECTURE.md
+docs/engineering-constitution/10-VALIDATION-ARCHITECTURE.md
+docs/engineering-constitution/11-BEHAVIORAL-ACCEPTANCE.md   # BA12
+docs/engineering-constitution/13-MIGRATION-MATRIX.md         # M10
+scripts/validate.py
+scripts/generate_plugin_agents.py
+scripts/generate_methodology_policy.py
+scripts/generate_methodology_skills.py
+scripts/generate_role_policy.py
+relevant generator/projection/architecture-lint tests
 ```
 
-Map every current `.opencode/hi/**` and `.opencode/skills/hi-project-*` data class to exactly one producer/writer, validator, consumer and lifecycle. Host-native project skills remain host-native skill storage; directory neatness is not a reason to move them under Hi internal storage.
+Audit before editing:
+
+1. map every current generator input -> projection -> validator edge;
+2. identify which HI001–HI020 rules already exist, which are duplicated/ad-hoc, and which migrated contract classes still lack fatal lint coverage;
+3. prove generator idempotence on an unchanged tree (BA12 first half) without leaving generated drift;
+4. identify the smallest coherent M10 closure graph; do not create a second generator framework beside working generators;
+5. keep earlier M3/M5/M6 host-policy blockers explicit rather than falsely declaring their unmigrated classes closed.
