@@ -19,12 +19,12 @@ class FakeSocket {
 function meta(cursor){const body=new TextEncoder().encode(JSON.stringify({cursor}));const out=new Uint8Array(body.length+1);out[0]=0;out.set(body,1);return out}
 function host(permission={bash:{'*':'allow'},external_directory:{'*':'ask'}}){return{agent:{coder:{permission}}}}
 function baseRequest(extra={}){return{mission_id:'m_1',task_id:'t_1',worker_id:'w_1',role:'coder',command:'node',args:['-e','console.log(1)'],cwd:'/repo',authority_ref:'auth:unit',...extra}}
-function harness({permission,signal}={}){
+function harness({permission,signal,nativeArgsSuffix=[]}={}){
   let nextPid=4100
   const sessions=new Map(),removed=[],sockets=[]
   const pty={
     async list(){return{data:{data:[...sessions.values()].map(x=>({...x}))}}},
-    async create(input){const info={id:`pty-${nextPid}`,title:input.title??'x',command:input.command,args:input.args??[],cwd:input.cwd,status:'running',pid:nextPid++};sessions.set(info.id,info);return{data:{data:{...info}}}},
+    async create(input){const info={id:`pty-${nextPid}`,title:input.title??'x',command:input.command,args:[...(input.args??[]),...nativeArgsSuffix],cwd:input.cwd,status:'running',pid:nextPid++};sessions.set(info.id,info);return{data:{data:{...info}}}},
     async get({ptyID}){const info=sessions.get(ptyID);if(!info)throw new Error('missing pty');return{data:{data:{...info}}}},
     async remove({ptyID}){removed.push(ptyID);sessions.delete(ptyID);return{data:undefined}},
     async connectToken({ptyID}){assert.ok(sessions.has(ptyID));return{data:{data:{ticket:`ticket-${ptyID}`,expires_in:10}}}},
@@ -167,6 +167,24 @@ test('P2 timeout also refuses stale PID before signalling',async()=>{
 })
 
 
+
+
+test('P3 spawn binds restart identity to native PTY command normalization rather than the pre-create request',async()=>{
+  const h=harness({nativeArgsSuffix:['-l']}),handle=await spawned(h)
+  const fresh=harness();fresh.sessions.set(handle.host_process_id,{...h.sessions.get(handle.host_process_id)})
+  // Reuse the same native PTY seam with a fresh adapter to simulate plugin restart.
+  const pty={
+    async list(){return{data:{data:[...h.sessions.values()].map(x=>({...x}))}}},
+    async create(){throw new Error('must not create during reconcile')},
+    async get({ptyID}){return{data:{data:{...h.sessions.get(ptyID)}}}},
+    async remove({ptyID}){h.sessions.delete(ptyID);return{data:undefined}},
+    async connectToken({ptyID}){return{data:{data:{ticket:`ticket-${ptyID}`,expires_in:10}}}},
+  }
+  const adapter=new OpenCodePtyAdapter({v2:{pty}},new URL('http://127.0.0.1:4096'),'/repo','/repo',()=>host(),url=>new FakeSocket(url),()=>{},32,8)
+  const result=await adapter.reconcile(handle.contract)
+  assert.equal(result.disposition,'ADOPTED')
+  assert.equal(result.contract.pid,handle.contract.pid)
+})
 test('P3 restart reconcile adopts exact native PTY identity and restores live write/read transport',async()=>{
   const h=harness(),handle=await spawned(h),persisted=structuredClone(handle.contract)
   // Simulate a fresh plugin runtime while the OpenCode host retains the PTY.

@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
+import { createOpencodeClient as createOpenCodeV2Client } from '@opencode-ai/sdk/v2/client';
 import { isProcessContract, processCommandIdentity } from '../contracts/process.js';
 import { evaluateProcessSpawnAuthority, processCommandLine } from '../runtime/process/authority.js';
 export class ProcessSpawnPermissionError extends Error {
@@ -30,6 +31,7 @@ export class OpenCodePtyAdapter {
     maxBufferedChars;
     maxReadChars;
     #states = new Map();
+    #v2Client;
     constructor(client, serverUrl, directory, projectRoot, getHostConfig, socketFactory = (url) => new WebSocket(url), signalProcess = (pid, signal) => process.kill(pid, signal), maxBufferedChars = 256 * 1024, maxReadChars = 64 * 1024) {
         this.client = client;
         this.serverUrl = serverUrl;
@@ -42,7 +44,9 @@ export class OpenCodePtyAdapter {
         this.maxReadChars = maxReadChars;
     }
     #edge() { return this.client; }
-    #pty() { const pty = this.#edge()?.v2?.pty; if (!pty || typeof pty.create !== 'function' || typeof pty.get !== 'function' || typeof pty.remove !== 'function' || typeof pty.connectToken !== 'function')
+    #pty() { const injected = this.#edge()?.v2?.pty; if (injected)
+        return injected; if (!this.#v2Client && this.serverUrl)
+        this.#v2Client = createOpenCodeV2Client({ baseUrl: this.serverUrl.toString(), directory: this.directory }); const pty = this.#v2Client?.v2?.pty ?? this.#v2Client?.pty; if (!pty || typeof pty.create !== 'function' || typeof pty.get !== 'function' || typeof pty.remove !== 'function' || typeof pty.connectToken !== 'function')
         throw new Error('OpenCode canonical v2 PTY API unavailable'); return pty; }
     #location() { return { directory: this.directory }; }
     #state(id) { const state = this.#states.get(id); if (!state)
@@ -191,7 +195,7 @@ export class OpenCodePtyAdapter {
         const raw = await this.#pty().create({ location: this.#location(), command: request.command, args: request.args ?? [], cwd: request.cwd, title: request.title, env: request.env }), info = nativeData(raw);
         if (!info || info.status !== 'running' || !Number.isInteger(info.pid) || info.pid <= 0 || typeof info.id !== 'string')
             throw new Error('OpenCode PTY create did not return a running PID-bound session');
-        const started = Date.now(), contract = { process_id: processID(), mission_id: request.mission_id, task_id: request.task_id, worker_id: request.worker_id, host: 'opencode', command_identity: processCommandIdentity({ host: 'opencode', command: auth.command_line, cwd: request.cwd }), cwd: request.cwd, pid: info.pid, status: 'RUNNING', started_at: started, ...(request.timeout_ms ? { timeout_at: started + request.timeout_ms } : {}), output_artifact_refs: [], authority_ref: request.authority_ref, cleanup_state: 'ACTIVE' };
+        const started = Date.now(), contract = { process_id: processID(), mission_id: request.mission_id, task_id: request.task_id, worker_id: request.worker_id, host: 'opencode', command_identity: processCommandIdentity({ host: 'opencode', command: processCommandLine({ command: info.command, args: info.args }), cwd: info.cwd }), cwd: info.cwd, pid: info.pid, status: 'RUNNING', started_at: started, ...(request.timeout_ms ? { timeout_at: started + request.timeout_ms } : {}), output_artifact_refs: [], authority_ref: request.authority_ref, cleanup_state: 'ACTIVE' };
         if (!isProcessContract(contract)) {
             try {
                 await this.#pty().remove({ ptyID: info.id, location: this.#location() });

@@ -1,5 +1,6 @@
 import { createHash,randomUUID } from 'node:crypto'
 import type { OpenCodeClient } from './types.js'
+import { createOpencodeClient as createOpenCodeV2Client } from '@opencode-ai/sdk/v2/client'
 import { isProcessContract,processCommandIdentity,type ProcessContract } from '../contracts/process.js'
 import type { ProcessExecutor,ProcessExit,ProcessHandle,ProcessOutput,ProcessOutputWindow,ProcessSpawnRequest,ProcessReconcileResult } from '../runtime/process/executor.js'
 import { evaluateProcessSpawnAuthority,processCommandLine } from '../runtime/process/authority.js'
@@ -36,6 +37,7 @@ async function bytes(value:unknown):Promise<Uint8Array|undefined>{if(value insta
 
 export class OpenCodePtyAdapter implements ProcessExecutor{
   readonly #states=new Map<string,RuntimeProcessState>()
+  #v2Client:any
   constructor(
     readonly client:OpenCodeClient,
     readonly serverUrl:URL,
@@ -48,7 +50,7 @@ export class OpenCodePtyAdapter implements ProcessExecutor{
     readonly maxReadChars=64*1024,
   ){}
   #edge():any{return this.client as any}
-  #pty():any{const pty=this.#edge()?.v2?.pty;if(!pty||typeof pty.create!=='function'||typeof pty.get!=='function'||typeof pty.remove!=='function'||typeof pty.connectToken!=='function')throw new Error('OpenCode canonical v2 PTY API unavailable');return pty}
+  #pty():any{const injected=this.#edge()?.v2?.pty;if(injected)return injected;if(!this.#v2Client&&this.serverUrl)this.#v2Client=createOpenCodeV2Client({baseUrl:this.serverUrl.toString(),directory:this.directory});const pty=this.#v2Client?.v2?.pty??this.#v2Client?.pty;if(!pty||typeof pty.create!=='function'||typeof pty.get!=='function'||typeof pty.remove!=='function'||typeof pty.connectToken!=='function')throw new Error('OpenCode canonical v2 PTY API unavailable');return pty}
   #location(){return{directory:this.directory}}
   #state(id:string):RuntimeProcessState{const state=this.#states.get(id);if(!state)throw new Error(`Hi ProcessExecutor process not found: ${id}`);return state}
   #append(state:RuntimeProcessState,text:string,beforeMeta=false):void{
@@ -100,7 +102,7 @@ export class OpenCodePtyAdapter implements ProcessExecutor{
     if(request.timeout_ms!==undefined&&(!Number.isFinite(request.timeout_ms)||request.timeout_ms<50||request.timeout_ms>24*60*60*1000))throw new Error('Hi ProcessExecutor timeout_ms must be between 50ms and 24h')
     const raw=await this.#pty().create({location:this.#location(),command:request.command,args:request.args??[],cwd:request.cwd,title:request.title,env:request.env}),info=nativeData<NativePtyInfo>(raw)
     if(!info||info.status!=='running'||!Number.isInteger(info.pid)||info.pid<=0||typeof info.id!=='string')throw new Error('OpenCode PTY create did not return a running PID-bound session')
-    const started=Date.now(),contract:ProcessContract={process_id:processID(),mission_id:request.mission_id,task_id:request.task_id,worker_id:request.worker_id,host:'opencode',command_identity:processCommandIdentity({host:'opencode',command:auth.command_line,cwd:request.cwd}),cwd:request.cwd,pid:info.pid,status:'RUNNING',started_at:started,...(request.timeout_ms?{timeout_at:started+request.timeout_ms}:{}),output_artifact_refs:[],authority_ref:request.authority_ref,cleanup_state:'ACTIVE'}
+    const started=Date.now(),contract:ProcessContract={process_id:processID(),mission_id:request.mission_id,task_id:request.task_id,worker_id:request.worker_id,host:'opencode',command_identity:processCommandIdentity({host:'opencode',command:processCommandLine({command:info.command,args:info.args}),cwd:info.cwd}),cwd:info.cwd,pid:info.pid,status:'RUNNING',started_at:started,...(request.timeout_ms?{timeout_at:started+request.timeout_ms}:{}),output_artifact_refs:[],authority_ref:request.authority_ref,cleanup_state:'ACTIVE'}
     if(!isProcessContract(contract)){try{await this.#pty().remove({ptyID:info.id,location:this.#location()})}catch{}throw new Error('Hi ProcessExecutor created invalid ProcessContract')}
     let resolveExit!:(value:ProcessExit)=>void,rejectExit!:(error:unknown)=>void;const exitPromise=new Promise<ProcessExit>((resolve,reject)=>{resolveExit=resolve;rejectExit=reject})
     const state:RuntimeProcessState={contract,ptyID:info.id,buffer:'',availableStart:0,availableEnd:0,cursorKnown:false,beforeMetaChars:0,timeoutRequested:false,exitPromise,resolveExit,rejectExit,exitSettled:false,reconnects:0};this.#states.set(contract.process_id,state)
