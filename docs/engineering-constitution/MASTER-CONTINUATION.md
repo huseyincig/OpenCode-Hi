@@ -580,6 +580,15 @@ Deterministic source checkpoint before T3: **564/564 PASS**, architecture lint 2
 
 P7 exit satisfied: changed OpenCode-bound behavior is reaccepted against the current registry-latest host and exact runtime source hashes, while unsupported/degraded features remain truthfully limited.
 
+
+### W3 — Workspace-isolation real-host promotion — **CLOSED on exact runtime source `92812a1`**
+
+Canonical receipt: `data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-92812a1.json`.
+
+Exact OpenCode/plugin/SDK **1.18.18** T3 acceptance on Linux/aarch64 proves the Hi-owned workspace chain end to end: source-bound builtin-worktree provisioning; exact child `workspaceID + directory`; real `coder` model/tool write confined to the lease; deterministic content + `git diff --check` verification executed from the leased worktree; primary workspace isolation and byte-identical preservation of a pre-existing dirty user file; cleanup removing host record/worktree path; real OpenCode server restart followed by `ADOPTED` reconciliation; external workspace loss followed by `ORPHANED + QUARANTINED`; and no silent recreation. `workspace_isolation=NATIVE` at the reference-host primitive layer and `workspace-isolation-binding=SUPPORTED` at `REAL_HOST_ACCEPTANCE` only for Hi-owned IsolationDecision/WorkspaceLease/WorkspaceRuntime execution. Browser execution remains `UNSUPPORTED`.
+
+Deterministic promoted-source checkpoint: **701/701 PASS**, architecture lint `rules=22 deferred=0 linked=8`, validator PASS (`product=HI docs=26`), naming namespace visibly PASS, generated/idempotency clean, diff-check clean, backup count 0. Host-hardening checkpoint `6ba15d0`; promoted exact runtime source `92812a13b7388387b11096a74a26bdb13fc4dffb`. No push/tag/release/npm publish action is implied by W3.
+
 ### P8 / M13 / Stage 10 — Release readiness and real publication — **PARTIAL_EXTERNAL: GITHUB RELEASE CLOSED / NPM T4 BLOCKED_AUTH**
 
 The user explicitly authorized the complete release/publication phase. External actions are now permitted only through the canonical release chain and must remain exact-action, exact-ref and receipt-bound. npm publication remains environment-blocked until registry authentication exists; do not fake it.
@@ -656,7 +665,7 @@ OpenCode-Hi does **not** permanently pin host acceptance to 1.18.16 or any other
 4. bind the new receipt to that exact tested version and Git/source hashes;
 5. retain older exact-version receipts only as immutable historical evidence.
 
-At the latest completed P7 checkpoint on 2026-08-14, registry `latest` was **1.18.18**; CLI and development plugin/SDK were tested at **1.18.18** against exact runtime source `c5d8287`. Future host-bound checkpoints must resolve registry latest again rather than assuming this version remains current.
+At the latest completed W3 host-bound checkpoint on 2026-08-15, the controlled CLI and development plugin/SDK are **1.18.18** and workspace isolation was reaccepted against exact runtime source `92812a13b7388387b11096a74a26bdb13fc4dffb`. Future host-bound checkpoints must resolve registry latest again rather than assuming this version remains current.
 
 ## 12. Real-host acceptance truth retained from M12
 

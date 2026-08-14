@@ -223,18 +223,22 @@
       "id": "Q3-ADV-013",
       "threat": "workspace-cleanup-loss",
       "owner": "IsolationDecision / WorkspaceLease / WorkspaceRuntime / OpenCodeWorkspaceAdapter",
-      "control": "W2 provisions only OpenCode builtin worktree workspaces, validates canonical registered Git repository identity, binds every fresh child by exact workspaceID+directory, keeps cleanup separate from child abort, and restart adopts/quarantines without recreation. Capability remains UNSUPPORTED until W3 exact-host create/bind/write/verify/cleanup proof.",
+      "control": "W2/W3 provision only OpenCode builtin worktree workspaces, validate canonical same-repository Git identity, bind every fresh child by exact workspaceID+directory, preserve primary/user-dirty state, verify inside the lease, keep cleanup separate from child abort, and restart adopts or quarantines without recreation. Exact OpenCode 1.18.18 T3 now promotes only the Hi-owned workspace-isolation surface.",
       "proof_tests": [
         {
           "file": "plugin/test/w2-workspace-executor.test.mjs",
           "contains": "W2 restart adopts exact lease, quarantines missing owner without recreation"
+        },
+        {
+          "file": "plugin/test/w3-workspace-real-host-acceptance.test.mjs",
+          "contains": "W3 workspace capability is promoted only as real-host accepted Hi-owned isolation"
         }
       ],
       "evidence": [
         {
           "tier": "T3",
-          "receipt": "data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-c5d8287.json",
-          "contains": "workspace_isolation_binding"
+          "receipt": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-92812a1.json",
+          "contains": "SUPPORTED_T3"
         }
       ]
     },

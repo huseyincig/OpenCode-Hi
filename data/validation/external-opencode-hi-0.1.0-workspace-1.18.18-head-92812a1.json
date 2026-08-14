@@ -1,0 +1,140 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "generated_at": "2026-08-15",
+  "status": "PASS_EXACT_SOURCE_WORKSPACE_ISOLATION_T3",
+  "source_binding": {
+    "tested_git_commit": "92812a13b7388387b11096a74a26bdb13fc4dffb",
+    "tested_git_tree": "850bee62c89baf0235fa8a165aa4ce17123c08b4",
+    "worktree": "/workspace/OpenCode-Hi",
+    "state": "CLEAN_COMMITTED_SOURCE",
+    "exact_candidate": true,
+    "runtime_hashes": {
+      "plugin/dist/plugin.js": "23da4bf4a5be95a8adb53945da2af10f389b2e05042c38ef5c599ca2da607b7b",
+      "plugin/src/plugin.ts": "d048c43d995d9d55127c8cc941a1125f4dcd17a6662d62279f55f971682c0dcd",
+      "plugin/src/contracts/workspace.ts": "d2ed1d517537201302344aa3061f149b044ad85b6909fe85ec876904ea9b496a",
+      "plugin/src/contracts/host-capability.ts": "c20017b9b9786c48fc0b4581593bc2f1697b14adf4e0d7fd1249eb20be8152e5",
+      "plugin/src/runtime/host/capability-manifest.ts": "f21c6869ad7545d1b8e205a1f8917e7278dddb47c6193d8febe5612c3e4653f8",
+      "plugin/src/runtime/workspace/executor.ts": "f6129bfab5c20641a144030b7357be598d4fd77dcde9ecdf664a390398d2e12b",
+      "plugin/src/runtime/workspace/runtime.ts": "5e4c9412d97c99071af044b443d7befe9b0ae6c767878c0db5c2ec797b671f5e",
+      "plugin/src/opencode/open-code-workspace-adapter.ts": "fb00575bcad4c6679bc5f173732514745b30bd53057b30eb6ad91a5f636f6003",
+      "plugin/src/opencode/client-adapter.ts": "8509951b3ce97234c2d89440710ea7164584ed7a8c1b299952f2aa9e8b96083a",
+      "plugin/src/opencode/instance-guard.ts": "3f398318ce062614949cf0ddb349ff3ece18bb1cacb10d856b5b19164233f95e",
+      "plugin/src/runtime/task/child-execution-coordinator.ts": "f2137acc4b9c1dc4a61a876f87cc4f024795c916bf094c48b3e32d99bc568a23"
+    },
+    "note": "Receipt is committed after the tested runtime source. Evidence is bound only to tested_git_commit/tree above; receipt/documentation/MASTER-only commits do not promote evidence across later runtime source changes."
+  },
+  "host": {
+    "os": "linux",
+    "arch": "aarch64",
+    "opencode_version": "1.18.18",
+    "plugin_package_version": "1.18.18",
+    "sdk_package_version": "1.18.18",
+    "fixture_project": "/tmp/hi-w3-exact-92812a1/project",
+    "plugin_spec": "file:///workspace/OpenCode-Hi/plugin/dist/plugin.js",
+    "provider_used": "opencode/laguna-s-2.1-free"
+  },
+  "gates": {
+    "native_plugin_loader": "PASS_T3",
+    "workspace_create": "PASS_T3",
+    "workspace_source_baseline": "PASS_T3",
+    "child_workspace_id_binding": "PASS_T3",
+    "child_workspace_directory_binding": "PASS_T3",
+    "isolated_model_tool_write": "PASS_T3",
+    "leased_workspace_verification": "PASS_T3",
+    "primary_workspace_preservation": "PASS_T3",
+    "workspace_cleanup": "PASS_T3",
+    "workspace_restart_adoption": "PASS_T3",
+    "workspace_orphan_quarantine": "PASS_T3",
+    "workspace_no_recreation": "PASS_T3",
+    "workspace_isolation_binding": "SUPPORTED_T3",
+    "browser_execution": "UNSUPPORTED"
+  },
+  "evidence": {
+    "deterministic_source_baseline": {
+      "full_suite": "701/701 PASS",
+      "architecture_lint": "PASS rules=22 deferred=0 linked=8",
+      "validator": "PASS product=HI docs=26",
+      "naming_namespace": "PASS",
+      "generated_idempotency": "clean",
+      "diff_check": "clean",
+      "backup_count": 0,
+      "checkpoint_commit": "92812a13b7388387b11096a74a26bdb13fc4dffb"
+    },
+    "workspace_execution": {
+      "fixture_source_baseline": "862e6f3bfabc83dac42d8be10811b7ab395e0e05",
+      "host_workspace_id": "wrk_002817e64001DhN70vw9iDzDBr",
+      "workspace_path": "/tmp/hi-w3-exact-92812a1/xdg-data/opencode/worktree/d515c1e087084c76f09055aef89b2b8460323064/tidy-meadow",
+      "parent_directory": "/tmp/hi-w3-exact-92812a1/project",
+      "child_workspace_id": "wrk_002817e64001DhN70vw9iDzDBr",
+      "child_directory": "/tmp/hi-w3-exact-92812a1/xdg-data/opencode/worktree/d515c1e087084c76f09055aef89b2b8460323064/tidy-meadow",
+      "child_agent": "coder",
+      "child_model": {
+        "id": "laguna-s-2.1-free",
+        "providerID": "opencode"
+      },
+      "child_host_version": "1.18.18",
+      "assistant_paths": [
+        {
+          "cwd": "/tmp/hi-w3-exact-92812a1/xdg-data/opencode/worktree/d515c1e087084c76f09055aef89b2b8460323064/tidy-meadow",
+          "root": "/tmp/hi-w3-exact-92812a1/xdg-data/opencode/worktree/d515c1e087084c76f09055aef89b2b8460323064/tidy-meadow"
+        },
+        {
+          "cwd": "/tmp/hi-w3-exact-92812a1/xdg-data/opencode/worktree/d515c1e087084c76f09055aef89b2b8460323064/tidy-meadow",
+          "root": "/tmp/hi-w3-exact-92812a1/xdg-data/opencode/worktree/d515c1e087084c76f09055aef89b2b8460323064/tidy-meadow"
+        }
+      ],
+      "write_tools": [
+        {
+          "status": "completed",
+          "filePath": "/tmp/hi-w3-exact-92812a1/xdg-data/opencode/worktree/d515c1e087084c76f09055aef89b2b8460323064/tidy-meadow/isolated-w3.txt",
+          "output": "Wrote file successfully."
+        }
+      ],
+      "isolated_file_content": "W3_ISOLATED_OK\n"
+    },
+    "leased_workspace_verification": {
+      "content_check_exit": 0,
+      "git_diff_check_exit": 0,
+      "git_status": "?? isolated-w3.txt\n",
+      "verification_cwd": "/tmp/hi-w3-exact-92812a1/xdg-data/opencode/worktree/d515c1e087084c76f09055aef89b2b8460323064/tidy-meadow"
+    },
+    "primary_preservation": {
+      "primary_isolated_file_exists": false,
+      "user_dirty_sha256_before": "d4698c5d41eae1b2e953da5b5d0eb3c79314600e5033b03ea2df7ef7c6cacbfe",
+      "user_dirty_sha256_after_write": "d4698c5d41eae1b2e953da5b5d0eb3c79314600e5033b03ea2df7ef7c6cacbfe",
+      "user_dirty_sha256_after_cleanup": "d4698c5d41eae1b2e953da5b5d0eb3c79314600e5033b03ea2df7ef7c6cacbfe"
+    },
+    "cleanup": {
+      "workspace_path_exists_after_cleanup": false,
+      "primary_isolated_file_exists_after_cleanup": false
+    },
+    "restart_reconciliation": {
+      "server_pid_before_restart": 5815,
+      "server_pid_after_restart": 6067,
+      "disposition_after_restart": "ADOPTED",
+      "workspace_present_before_external_remove": true,
+      "removed_from_host": true,
+      "workspace_path_exists_after_host_remove": false,
+      "disposition_after_host_remove": "ORPHANED",
+      "orphan_status": "ORPHANED",
+      "orphan_cleanup_state": "QUARANTINED",
+      "recreated": false,
+      "primary_dirty_sha256": "d4698c5d41eae1b2e953da5b5d0eb3c79314600e5033b03ea2df7ef7c6cacbfe"
+    }
+  },
+  "limitations": [
+    "Support applies only to Hi-owned IsolationDecision/WorkspaceLease/WorkspaceRuntime execution; arbitrary user-created worktrees or foreign workspace sessions are not retroactively owned by Hi.",
+    "The exact support claim is bound to OpenCode 1.18.18 and tested runtime source 92812a13b7388387b11096a74a26bdb13fc4dffb; later host/runtime-source changes require reacceptance.",
+    "browser-execution remains UNSUPPORTED until B1/B2/B3 provide deterministic browser executor/evidence ownership and exact T3 proof."
+  ],
+  "release_authority": {
+    "push": false,
+    "tag": false,
+    "release": false,
+    "publish": false,
+    "deploy": false,
+    "p8_m13": "UNCHANGED_BLOCKED_NPM_AUTH"
+  },
+  "rule": "This receipt is T3 host evidence for workspace-isolation-binding on exact tested source 92812a13b7388387b11096a74a26bdb13fc4dffb and OpenCode 1.18.18 only. A later OpenCode host or runtime-source change requires reacceptance before equivalent claims are promoted."
+}
