@@ -424,14 +424,14 @@ limitations[]
 **Required fields:**
 
 ```text
-checks[]: { kind, subject, result: passed|failed|not_run, evidence_refs[], explanation? }
+checks[]: { kind, subject, result: passed|failed|pending|environment-issue|not_run, evidence_refs[], explanation? }
 scope
 freshness
 limitations[]
 independent_review?
 ```
 
-No omitted check may be represented as passed.
+No omitted check may be represented as passed. VerificationEnvelope is deterministically derived from canonical Evidence + VerificationPolicy + obligation state; it is not a second persisted verification truth. Stale evidence may preserve an executed check result while freshness independently prevents completion.
 
 ### C17 — ReviewFindingContract
 

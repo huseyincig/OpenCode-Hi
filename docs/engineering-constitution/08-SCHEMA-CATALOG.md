@@ -172,10 +172,10 @@ Use discriminated evidence kinds. Every kind defines its required subject/result
 ## S15 — VerificationEnvelopeSchema
 
 ```text
-result: passed | failed | not_run
+result: passed | failed | pending | environment-issue | not_run
 ```
 
-`not_run` requires an explanation/limitation. Empty check arrays cannot satisfy nonempty verification requirements.
+`not_run` requires an explanation/limitation. `pending` and `environment-issue` remain distinct from product failure. A `passed` check requires an explicit canonical Evidence result and evidence reference; omitted/outcome-less evidence cannot silently become PASS. Freshness is derived separately so an executed-but-stale check is not misreported as `not_run`. Empty check arrays cannot satisfy nonempty verification requirements.
 
 ## S16 — ReviewFindingSchema
 

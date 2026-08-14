@@ -52,13 +52,29 @@ Rows below are intentionally `PENDING` until code exists.
 | M5 | ConfigOption catalog | BA03 + config executor lint | T1/T2 | SentinelX blocks direct config-catalog mutation in this environment | BLOCKED_BY_HOST_POLICY |
 | M6 | Model capability/identity | ModelCapabilityProfile host-inventory normalization + identity reconciler + effective-model evidence; focused 17/17 PASS; controlled full suite 475/475 PASS; validator PASS | T1/T2 | `e7c3c96`; requested/projected WorkerState snapshot wiring blocked by SentinelX mutation policy; no unwired state committed | PARTIAL_PASS |
 | M7 | Host capability registry | 16 contract-backed OpenCode capabilities; product runtime gates consume worker-runtime/session-revert contracts; doctor reports status/verification/semantic loss; focused 43/43 PASS; controlled full suite 480/480 PASS; validator PASS | T1/T2 local; T3 still pending | `390cc2b` | PASS_LOCAL — REAL-HOST ACCEPTANCE PENDING |
-| M8 | Task/Worker/Result/Evidence contracts | WorkerResult, mission EvidenceItem, shared evidence-kind primitives, and executable ReviewFinding lifecycle extracted; introduced/worsened findings drive correction, pre-existing debt does not gain unrelated blocker authority, reviewer-role/evidence-ref/causality checks fail closed; latest focused 45/45 PASS and controlled full suite 495/495 PASS; validator PASS | T1/T2 | WorkerResult `4ea320d`; Evidence `3044b94`; ReviewFinding commit pending | PARTIAL_PASS — VERIFICATION-ENVELOPE/TASK/WORKER EXTRACTION REMAINS |
+| M8 | Task/Worker/Result/Evidence contracts | WorkerResult, mission EvidenceItem, shared evidence-kind primitives, executable ReviewFinding lifecycle, and derived VerificationEnvelope extracted; verification completion/reporting consume the same envelope, explicit PASS is required, stale vs not-run and environment issues remain distinct; latest focused freshness/envelope suite 17/17 PASS and controlled full suite 502/502 PASS; validator PASS | T1/T2 | WorkerResult `4ea320d`; Evidence `3044b94`; ReviewFinding `b120f49`; VerificationEnvelope commit pending | PARTIAL_PASS — TASK/WORKER EXTRACTION REMAINS |
 | M9 | Context/Artifact/PI/Human/Authority/Storage | BA06/10/11 + storage lint | T1/T2 | — | PENDING |
 | M10 | common generator/lint closure | BA12 + HI001–HI020 migrated rules | T0/T1/T2 | — | PENDING |
 | M11 | deterministic full closure | build + validator + full controlled suite | T0/T1/T2 | — | PENDING |
 | M12 | real-host acceptance | OpenCode version-bound native receipts | T3 | — | PENDING |
 | M13 | release readiness | explicit authority + external receipts | T4 | — | NOT REQUESTED |
 
+
+
+### M8 VerificationEnvelope contract checkpoint
+
+Implemented:
+
+- added canonical derived `VerificationEnvelopeContract`; it is computed from canonical Evidence, VerificationPolicy and obligation/review state rather than persisted as a second truth;
+- verification checks distinguish `passed`, `failed`, `pending`, `environment-issue` and `not_run`;
+- `passed` requires explicit evidence outcome/pass authority plus an evidence reference; outcome-less evidence remains pending and cannot silently satisfy completion;
+- missing required checks become `not_run` with explanation; stale executed checks retain their result while envelope freshness independently blocks completion;
+- obligation-scoped worker evidence cannot satisfy another verification obligation;
+- independent-review completion is represented in the same envelope used by verification completion;
+- `verificationSatisfied()` now consumes the derived envelope, and compact ledger reporting projects that same envelope instead of reinterpreting verification state;
+- freshness reporting is non-redundant at completion: incomplete checks report their missing kind; `fresh-evidence` is the blocker when all required checks passed but their evidence is stale.
+
+Evidence: focused freshness/envelope/verification/ownership suite 17/17 PASS; controlled isolated-HOME/XDG full suite 502/502 PASS; validator PASS. Task/Worker contract extraction remains.
 
 
 ### M8 ReviewFinding contract checkpoint
@@ -75,7 +91,7 @@ Implemented:
 - blocking findings with unknown causality cannot gain blocker authority and instead require explicit causality reconciliation;
 - the handoff projection was rewritten from a dense single-line string builder into an equivalent readable structured projection while preserving bounded context/output semantics.
 
-Evidence: focused ReviewFinding/result/evidence/ownership/role suite 45/45 PASS; controlled isolated-HOME/XDG full suite 495/495 PASS; validator PASS; diff check clean. VerificationEnvelope remains deliberately unimplemented until a real command/result consumer is identified; Task/Worker state extraction also remains.
+Evidence: focused ReviewFinding/result/evidence/ownership/role suite 45/45 PASS; controlled isolated-HOME/XDG full suite 495/495 PASS; validator PASS; diff check clean. ReviewFinding checkpoint commit: `b120f49`. Task/Worker state extraction remains.
 
 
 ### M8 Evidence contract checkpoint

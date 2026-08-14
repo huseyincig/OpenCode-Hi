@@ -58,16 +58,69 @@ export function verificationEconomyInstruction(m) {
 const STRONGER_EVIDENCE = { 'changed-surface-sanity': ['changed-surface-sanity', 'targeted-tests', 'typecheck', 'lint', 'build'], 'visual-check': ['visual-check', 'visual-evidence'], 'review-evidence': ['review-evidence'] };
 function kindMatches(required, actual) { const r = canonical(required), a = canonical(actual); if (r === a)
     return true; return Boolean(STRONGER_EVIDENCE[r]?.includes(a)); }
-export function verificationSatisfied(m, obligationID) { const p = m.verification_policy; if (p.requireFresh && !m.evidence.fresh)
-    return { ok: false, missing: ['fresh-evidence'] }; const obligation = obligationID ? m.obligations.find(o => o.id === obligationID) : undefined, requiredKinds = [...new Set((obligation?.requiredEvidence?.length ? obligation.requiredEvidence : p.requiredKinds).map(canonical))]; const valid = m.evidence.items.filter(e => { if (e.invalidated_at || e.pass === false || e.outcome === 'failed' || e.outcome === 'environment-issue' || e.outcome === 'pending')
-    return false; const workerSource = String(e.source ?? '').startsWith('worker:'); if (workerSource && !p.allowWorkerReportedEvidence && !String(e.source ?? '').includes(':reviewer'))
-    return false; if (obligationID && canonical(e.kind) === 'review-evidence' && !e.obligation_ids?.includes(obligationID))
-    return false; if (obligationID && workerSource && !e.obligation_ids?.includes(obligationID))
-    return false; return true; }); const missing = requiredKinds.filter(required => !valid.some(e => kindMatches(required, e.kind))); if (p.requireReview) {
-    const review = m.obligations.find(o => o.kind === 'review');
-    if (!review || review.status !== 'closed')
+function evidenceAllowedForVerification(m, e, obligationID) {
+    const workerSource = String(e.source ?? '').startsWith('worker:');
+    if (workerSource && !m.verification_policy.allowWorkerReportedEvidence && !String(e.source ?? '').includes(':reviewer'))
+        return false;
+    if (obligationID && canonical(e.kind) === 'review-evidence' && !e.obligation_ids?.includes(obligationID))
+        return false;
+    if (obligationID && workerSource && !e.obligation_ids?.includes(obligationID))
+        return false;
+    return true;
+}
+function verificationResult(e) {
+    if (e.outcome === 'passed' || e.pass === true)
+        return 'passed';
+    if (e.outcome === 'failed' || e.pass === false)
+        return 'failed';
+    if (e.outcome === 'environment-issue')
+        return 'environment-issue';
+    return 'pending';
+}
+export function verificationEnvelopeFor(m, obligationID) {
+    const p = m.verification_policy, obligation = obligationID ? m.obligations.find(o => o.id === obligationID) : undefined;
+    const requiredKinds = [...new Set((obligation?.requiredEvidence?.length ? obligation.requiredEvidence : p.requiredKinds).map(canonical))];
+    const candidates = m.evidence.items.filter(e => evidenceAllowedForVerification(m, e, obligationID));
+    const checks = requiredKinds.map(kind => {
+        const matching = candidates.filter(e => kindMatches(kind, e.kind)).sort((a, b) => b.observed_at - a.observed_at);
+        if (!matching.length)
+            return { kind, subject: obligation?.summary ?? m.objective, result: 'not_run', evidence_refs: [], explanation: `No admissible evidence recorded for required verification kind: ${kind}` };
+        const explicit = matching.find(e => e.outcome !== undefined || e.pass !== undefined);
+        if (!explicit)
+            return { kind, subject: obligation?.summary ?? m.objective, result: 'pending', evidence_refs: matching.map(e => e.id).slice(0, 12), explanation: 'Evidence exists but no explicit verification outcome was recorded' };
+        const result = verificationResult(explicit);
+        return { kind, subject: obligation?.summary ?? m.objective, result, evidence_refs: [explicit.id], explanation: result === 'passed' ? undefined : (explicit.reason ?? explicit.summary) };
+    });
+    const referencedEvidence = checks.flatMap(check => check.evidence_refs.map(ref => m.evidence.items.find(e => e.id === ref)).filter((e) => Boolean(e)));
+    const scope = [...new Set(referencedEvidence.flatMap(e => e.scope ?? []))].slice(0, 100);
+    const requiredEvidenceFresh = checks.length === 0 ? m.evidence.fresh : checks.every(check => {
+        if (check.result !== 'passed' || check.evidence_refs.length === 0)
+            return false;
+        return check.evidence_refs.some(ref => { const e = m.evidence.items.find(item => item.id === ref); return Boolean(e && !e.invalidated_at); });
+    });
+    const freshness = p.requireFresh && !requiredEvidenceFresh ? 'stale' : 'fresh';
+    const review = m.obligations.find(o => o.kind === 'review'), independentReview = !p.requireReview || review?.status === 'closed';
+    const limitations = [];
+    if (freshness === 'stale')
+        limitations.push('fresh-evidence-required');
+    if (p.requireReview && !independentReview)
+        limitations.push('independent-review-required');
+    for (const check of checks)
+        if (check.result !== 'passed')
+            limitations.push(`${check.kind}:${check.result}`);
+    return { checks, scope, freshness, limitations: [...new Set(limitations)], independent_review: independentReview };
+}
+export function verificationSatisfied(m, obligationID) {
+    const envelope = verificationEnvelopeFor(m, obligationID), missing = [];
+    const incompleteChecks = envelope.checks.filter(check => check.result !== 'passed');
+    for (const check of incompleteChecks)
+        missing.push(check.kind);
+    if (!incompleteChecks.length && envelope.freshness === 'stale')
+        missing.push('fresh-evidence');
+    if (!envelope.independent_review)
         missing.push('review-obligation');
-} return { ok: missing.length === 0, missing }; }
+    return { ok: missing.length === 0, missing: [...new Set(missing)] };
+}
 export function latestBlockingVerificationEvidence(m, obligationID) { const obligation = obligationID ? m.obligations.find(o => o.id === obligationID) : undefined, requiredKinds = [...new Set((obligation?.requiredEvidence?.length ? obligation.requiredEvidence : m.verification_policy.requiredKinds).map(canonical))], mutation = m.evidence.last_mutation_at ?? 0, current = [...m.evidence.items].filter(e => !e.invalidated_at && e.observed_at >= mutation).sort((a, b) => b.observed_at - a.observed_at); for (const e of current) {
     if (e.outcome !== 'environment-issue' && e.outcome !== 'failed')
         continue;

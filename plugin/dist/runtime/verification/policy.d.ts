@@ -1,5 +1,6 @@
 import type { EvidenceItem, MissionState, MissionTask, NormalizedMissionIntent, VerificationPolicy } from '../mission/types.js';
 import type { RepoContext } from '../intent/repo-context.js';
+import type { VerificationEnvelope } from '../../contracts/verification-envelope.js';
 export declare function verificationPolicyFor(intent: NormalizedMissionIntent): VerificationPolicy;
 export interface VerificationReplan {
     changed: boolean;
@@ -10,6 +11,7 @@ export interface VerificationReplan {
 }
 export declare function replanVerificationForChangedSurface(m: MissionState, task: MissionTask, files: string[], repo?: RepoContext): VerificationReplan;
 export declare function verificationEconomyInstruction(m: MissionState): string;
+export declare function verificationEnvelopeFor(m: MissionState, obligationID?: string): VerificationEnvelope;
 export declare function verificationSatisfied(m: MissionState, obligationID?: string): {
     ok: boolean;
     missing: string[];
