@@ -17,3 +17,5 @@ Current local acceptance covers adaptive execution/topology, mission completion/
 The current exact process-lifecycle and workspace-isolation acceptance host is OpenCode `1.18.18`; each capability remains bound to its own exact tested source receipt, and older receipts are never promoted across source changes. Local policy tests are not substitutes for exact-candidate T3 acceptance where host-bound behavior changed.
 
 P1 ProcessContract validation remains the strict structural base. P2/P3 controlled tests plus the exact OpenCode 1.18.18 T3 receipt provide the executor/lifecycle proof required for the current `SUPPORTED` process-lifecycle claim; raw output remains excluded from durable ProcessContract state.
+
+B1 BrowserObservation contract validation is local/T1 contract evidence only. It does not satisfy browser/visual methodology evidence and does not change `browser-execution=UNSUPPORTED`; executor and real-host proof belong to B2/B3.

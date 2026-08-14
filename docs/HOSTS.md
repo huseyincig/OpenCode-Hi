@@ -22,3 +22,7 @@ Semantic Context is Hi Core context capability, not an OpenCode-native host capa
 ## HumanDecision transport surface
 
 Hi's H1 chat transport is host-independent and runtime-scoped. For an optional structured OpenCode UI adapter, the required primitive is stronger than question event visibility: the plugin must be able to directly open a typed request bound to the exact canonical `decision_id`, then receive/reject that same request without model mediation. OpenCode 1.18.18 public SDK exposes `question.list/reply/reject` but no plugin-callable `question.ask/open`, so `structured-human-decision-transport` remains `UNSUPPORTED`. The internal model `question` tool is not treated as an adapter seam, and this question/UI limitation does not change the separate `browser-execution=UNSUPPORTED` capability.
+
+## Browser observation boundary
+
+B1 defines a strict host-independent `BrowserObservation` contract before any executor is admitted. An observation binds task, executor version, URL, action, timestamp and optional document identity/DOM/error/screenshot artifact reference into a deterministic observation ID. Raw screenshot bytes are not embedded in the contract, and an observation is never automatically Evidence or verification PASS. `browser-execution` therefore remains `UNSUPPORTED` until B2 supplies a deterministic executor and B3 closes exact browser/visual proof.
