@@ -250,6 +250,9 @@ external_action_requirements[]
 
 **Proof:** task launch uses the selected execution profile and completion reconciles exactly its obligations/evidence.
 
+
+**Current runtime mapping:** `MissionTask.id` is the Task ID; `mission_id` is explicit rather than inferred only from the containing mission; `role` is `selected_role_ref`; `requiredEvidence` is `evidence_requirements`; `obligation_ids` are `obligation_refs`; `context_artifacts` are bounded selected context snapshots/refs; selected methodologies are snapshot inside `execution_profile.methodologies`; `external_action_requirements` is a task-time snapshot of the mission's requested external actions. These are mappings, not duplicate alias fields.
+
 ### C08 — WorkerContract / WorkerState
 
 **Canonical owner:** TaskRuntime worker state.
@@ -272,6 +275,9 @@ write_claims[]
 ```
 
 **Invariant:** recovery preserves worker identity when safe; a new host session does not silently become a new semantic Task.
+
+
+**Current runtime mapping:** `WorkerState.id` is `worker_id`; `role` is `role_ref`; `model`, `model_variant`, fallbacks/reasons and effective-model evidence form `model_selection`; `selected_methodologies`/provenance form `methodology_refs`; `session_id` is `host_session_id`; `write_set` is `write_claims`; effective model fields are observed execution identity. `attempt` increments at every actual worker execution/resume prompt boundary while the same semantic worker/task identity is preserved. `updated_at` is a required lifecycle field.
 
 ### C09 — ExecutionPlanContract
 

@@ -149,6 +149,9 @@ Task is canonical mission work intent; WorkerState is runtime execution state. T
 
 Task stores selected refs/snapshots needed for reproducibility. WorkerState stores observed/effective execution identity and attempt/session lifecycle.
 
+
+Current-only runtime validation is owned by canonical TaskContract/WorkerContract validators. Persistence consumes those validators rather than maintaining a second task/worker schema. Task mission identity and external-action requirements are explicit snapshots. Worker `attempt`, generation, lifecycle timestamps, native diff snapshots, fallback history, recovery flags and effective-model evidence are validated fail-closed; unknown top-level task/worker fields are rejected.
+
 ## S09 — ExecutionPlanSchema / S10 — TopologySchema / S11 — TeamSchema
 
 - dependency graph references known Task IDs;

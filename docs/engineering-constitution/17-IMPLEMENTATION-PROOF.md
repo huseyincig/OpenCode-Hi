@@ -52,13 +52,28 @@ Rows below are intentionally `PENDING` until code exists.
 | M5 | ConfigOption catalog | BA03 + config executor lint | T1/T2 | SentinelX blocks direct config-catalog mutation in this environment | BLOCKED_BY_HOST_POLICY |
 | M6 | Model capability/identity | ModelCapabilityProfile host-inventory normalization + identity reconciler + effective-model evidence; focused 17/17 PASS; controlled full suite 475/475 PASS; validator PASS | T1/T2 | `e7c3c96`; requested/projected WorkerState snapshot wiring blocked by SentinelX mutation policy; no unwired state committed | PARTIAL_PASS |
 | M7 | Host capability registry | 16 contract-backed OpenCode capabilities; product runtime gates consume worker-runtime/session-revert contracts; doctor reports status/verification/semantic loss; focused 43/43 PASS; controlled full suite 480/480 PASS; validator PASS | T1/T2 local; T3 still pending | `390cc2b` | PASS_LOCAL — REAL-HOST ACCEPTANCE PENDING |
-| M8 | Task/Worker/Result/Evidence contracts | WorkerResult, mission EvidenceItem, shared evidence-kind primitives, executable ReviewFinding lifecycle, and derived VerificationEnvelope extracted; verification completion/reporting consume the same envelope, explicit PASS is required, stale vs not-run and environment issues remain distinct; latest focused freshness/envelope suite 17/17 PASS and controlled full suite 502/502 PASS; validator PASS | T1/T2 | WorkerResult `4ea320d`; Evidence `3044b94`; ReviewFinding `b120f49`; VerificationEnvelope commit pending | PARTIAL_PASS — TASK/WORKER EXTRACTION REMAINS |
+| M8 | Task/Worker/Result/Evidence contracts | WorkerResult, EvidenceItem, ReviewFinding, derived VerificationEnvelope, TaskContract and WorkerContract now have canonical runtime owners; persistence consumes canonical validators; task mission/external-action identity is explicit; worker attempt/recovery/effective-model lifecycle is fail-closed; latest focused Task/Worker set 21/21 PASS and controlled full suite 507/507 PASS; validator PASS | T1/T2 | WorkerResult `4ea320d`; Evidence `3044b94`; ReviewFinding `b120f49`; VerificationEnvelope `a4b1105`; Task/Worker commit pending | PASS — CONTRACT OWNERSHIP CLOSED |
 | M9 | Context/Artifact/PI/Human/Authority/Storage | BA06/10/11 + storage lint | T1/T2 | — | PENDING |
 | M10 | common generator/lint closure | BA12 + HI001–HI020 migrated rules | T0/T1/T2 | — | PENDING |
 | M11 | deterministic full closure | build + validator + full controlled suite | T0/T1/T2 | — | PENDING |
 | M12 | real-host acceptance | OpenCode version-bound native receipts | T3 | — | PENDING |
 | M13 | release readiness | explicit authority + external receipts | T4 | — | NOT REQUESTED |
 
+
+
+### M8 Task / Worker contract checkpoint
+
+Implemented:
+
+- added canonical `TaskContract` and `WorkerContract` status/schema owners and removed duplicate task/worker persistence validators;
+- Task creation now records explicit `mission_id` and a bounded `external_action_requirements` snapshot; existing runtime fields map directly to the constitution contract rather than creating duplicate alias fields;
+- Worker creation now records required `attempt` and `updated_at`; every actual child execution/resume prompt advances `attempt` while preserving semantic Worker/Task identity, including corrective resume, semantic follow-up, constraint rebase, write-conflict reconciliation, stagnation recovery and provider/model fallback;
+- WorkerContract validates current lifecycle and evidence-bearing state that persistence previously ignored: session/model/variant fields, native diff snapshots, recovery flags/counters, fallback history, model selection reason and effective-model evidence;
+- TaskContract validates mission identity, scope/dependency/obligation/evidence/context snapshots, execution profile, WorkerResult, diff cleanliness and external-action requirements; unknown top-level contract fields fail closed;
+- provider fallback fixtures were aligned from stale `skills` terminology to the current `methodologies` execution profile and now prove same-worker attempt 1 -> 2 across fresh fallback sessions;
+- RuntimePersistence round-trip accepts current canonical Task/Worker state and rejects a corrupted WorkerContract instead of silently loading it.
+
+Evidence: focused Task/Worker/persistence/provider-recovery/role suite 21/21 PASS; controlled isolated-HOME/XDG full suite 507/507 PASS; validator PASS. This closes M8 Task/Worker/Result/Evidence contract ownership at T1/T2.
 
 
 ### M8 VerificationEnvelope contract checkpoint

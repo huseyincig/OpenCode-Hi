@@ -2,8 +2,9 @@ import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from '
 import { dirname } from 'node:path'
 import { runtimeStatePath } from '../storage/locations.js'
 import { type MissionState, type NormalizedMissionIntent } from '../mission/types.js'
-import { isWorkerResultContract } from '../../contracts/worker-result.js'
 import { isEvidenceItemContract } from '../../contracts/evidence.js'
+import { isTaskContract } from '../../contracts/task.js'
+import { isWorkerContract } from '../../contracts/worker.js'
 import { HI_METHODOLOGY_PRODUCERS, HI_METHODOLOGY_SIGNAL_CATALOG, HI_METHODOLOGY_TRIGGER_SOURCES } from '../../generated/methodology-policy.js'
 import { SEMANTIC_CAPABILITIES, SEMANTIC_VERIFICATION_KINDS } from '../intent/semantic-assessment.js'
 
@@ -36,9 +37,6 @@ export interface PersistenceLoadReport {
 function isRecord(value:unknown):value is Record<string,unknown>{return Boolean(value)&&typeof value==='object'&&!Array.isArray(value)}
 function stringArray(value:unknown):value is string[]{return Array.isArray(value)&&value.every(item=>typeof item==='string')}
 function recordArray(value:unknown):value is Record<string,unknown>[]{return Array.isArray(value)&&value.every(isRecord)}
-const TASK_STATUSES=new Set(['created','queued','running','waiting','completed','failed','cancelled','blocked'])
-const WORKER_STATUSES=new Set(['created','queued','starting','ready','busy','completed','failed','cancelled'])
-const CATEGORIES=new Set(['quick','standard','deep','visual','critical'])
 const OBLIGATION_KINDS=new Set(['analysis','implementation','verification','review','authority'])
 const OBLIGATION_STATUSES=new Set(['open','closed','blocked'])
 const GATE_KINDS=new Set(['verification','user-authority','reviewer','prerequisite-task','precondition','rollback'])
@@ -74,26 +72,6 @@ function validMethodologyNeed(value:unknown):boolean{
   if(value.obligation_id!==undefined&&typeof value.obligation_id!=='string')return false
   return typeof value.reason==='string'&&typeof value.created_at==='number'
 }
-function validMethodologyProvenance(value:unknown):boolean{
-  if(!isRecord(value)||typeof value.name!=='string'||!/^hi-[a-z0-9-]+$/.test(value.name)||!['project','personal','hi'].includes(String(value.provider))||typeof value.source_path!=='string')return false
-  if(value.source_sha256!==undefined&&typeof value.source_sha256!=='string')return false
-  return ['allow','ask','deny'].includes(String(value.permission))&&['native-skill-tool','none'].includes(String(value.injection))&&typeof value.selected_at==='number'
-}
-function validTask(value:unknown):boolean{
-  if(!isRecord(value)||typeof value.id!=='string'||typeof value.objective!=='string'||typeof value.role!=='string'||typeof value.category!=='string'||!CATEGORIES.has(value.category)||typeof value.status!=='string'||!TASK_STATUSES.has(value.status))return false
-  if(!stringArray(value.scope)||!stringArray(value.constraints)||!stringArray(value.dependencies)||!stringArray(value.requiredEvidence)||!stringArray(value.obligation_ids)||!recordArray(value.context_artifacts)||!stringArray(value.gate_ids))return false
-  if(value.result!==undefined&&!isWorkerResultContract(value.result))return false
-  if(value.worker_id!==undefined&&typeof value.worker_id!=='string')return false
-  return typeof value.created_at==='number'&&typeof value.updated_at==='number'
-}
-function validWorker(value:unknown):boolean{
-  if(!isRecord(value)||typeof value.id!=='string'||typeof value.task_id!=='string'||typeof value.role!=='string'||typeof value.category!=='string'||!CATEGORIES.has(value.category)||typeof value.parent_session_id!=='string'||typeof value.parent_mission_id!=='string')return false
-  if(!stringArray(value.selected_methodologies)||!stringArray(value.loaded_methodologies)||(!Array.isArray(value.methodologies)||!value.methodologies.every(validMethodologyProvenance))||!stringArray(value.fallbacks))return false
-  if(typeof value.status!=='string'||!WORKER_STATUSES.has(value.status)||typeof value.fingerprint!=='string'||typeof value.generation_at_spawn!=='number')return false
-  if(value.semantic_pause_revision!==undefined&&typeof value.semantic_pause_revision!=='number')return false
-  return true
-}
-
 function validVerificationPolicy(value:unknown):boolean{
   if(!isRecord(value)||!stringArray(value.requiredKinds)||typeof value.requireFresh!=='boolean'||typeof value.requireReview!=='boolean'||typeof value.allowWorkerReportedEvidence!=='boolean')return false
   const allowed=new Set<string>(SEMANTIC_VERIFICATION_KINDS)
@@ -125,7 +103,7 @@ function validMission(value:unknown):value is MissionState{
   if(!validIntent(value.intent)||!validSemanticAssessment(value.semantic_assessment)||!validVerificationPolicy(value.verification_policy))return false
   if((value.semantic_assessment as any).status==='assessed'&&(value.intent as any).taskKind==='unclassified')return false
   if((value.semantic_assessment as any).status==='pending'&&(value.semantic_assessment as any).phase==='initial'&&(((value.obligations as unknown[])?.length??0)>0||((value.tasks as unknown[])?.length??0)>0||((value.workers as unknown[])?.length??0)>0||((value.methodology_needs as unknown[])?.length??0)>0))return false
-  if((!Array.isArray(value.obligations)||!value.obligations.every(validObligation))||!Array.isArray(value.tasks)||!value.tasks.every(validTask)||!Array.isArray(value.workers)||!value.workers.every(validWorker)||!recordArray(value.ledger))return false
+  if((!Array.isArray(value.obligations)||!value.obligations.every(validObligation))||!Array.isArray(value.tasks)||!value.tasks.every(isTaskContract)||!Array.isArray(value.workers)||!value.workers.every(isWorkerContract)||!recordArray(value.ledger))return false
   if((!Array.isArray(value.context_artifacts)||!value.context_artifacts.every(validContextArtifact))||(!Array.isArray(value.gates)||!value.gates.every(validGate))||(!Array.isArray(value.temporary_mutations)||!value.temporary_mutations.every(validTemporaryMutation))||!Array.isArray(value.methodology_needs)||!value.methodology_needs.every(validMethodologyNeed))return false
   if(!stringArray(value.changed_files)||!stringArray(value.blockers)||!stringArray(value.constraints)||!stringArray(value.parent_loaded_methodologies))return false
   if(!isRecord(value.evidence)||typeof value.evidence.fresh!=='boolean'||!Array.isArray(value.evidence.items)||!value.evidence.items.every(isEvidenceItemContract)||(value.evidence.last_mutation_at!==undefined&&typeof value.evidence.last_mutation_at!=='number'))return false

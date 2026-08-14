@@ -1,0 +1,78 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { mkdtempSync,rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { MissionStore } from '../dist/runtime/mission/mission-store.js'
+import { createTask,createWorker,beginWorkerAttempt } from '../dist/runtime/worker/worker-runtime.js'
+import { isTaskContract } from '../dist/contracts/task.js'
+import { isWorkerContract } from '../dist/contracts/worker.js'
+import { RuntimePersistence } from '../dist/runtime/state/persistence.js'
+import { startAssessedMission } from './helpers/semantic.mjs'
+
+function mission(id='contract-task-worker'){
+  const store=new MissionStore(process.cwd())
+  return startAssessedMission(store,id,'prepare release verification',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',requested_external_actions:['git-push'],required_capabilities:['verification'],likely_verification:['changed-surface-sanity']})
+}
+
+test('TaskContract snapshots mission identity and external action requirements at creation',()=>{
+  const m=mission('task-contract-snapshot')
+  const task=createTask(m,{objective:'verify candidate',role:'coder',category:'standard',scope:['src/a.ts'],requiredEvidence:['changed-surface-sanity']})
+  assert.equal(task.mission_id,m.mission_id)
+  assert.deepEqual(task.external_action_requirements,['git-push'])
+  assert.equal(isTaskContract(task),true)
+})
+
+test('TaskContract rejects missing mission identity, unknown fields and malformed execution snapshots',()=>{
+  const m=mission('task-contract-negative')
+  const task=createTask(m,{objective:'verify candidate',role:'coder',category:'standard'})
+  const {mission_id,...withoutMission}=task
+  assert.equal(isTaskContract(withoutMission),false)
+  assert.equal(isTaskContract({...task,unexpected:true}),false)
+  assert.equal(isTaskContract({...task,execution_profile:{role:'coder'}}),false)
+})
+
+test('WorkerContract starts at attempt zero and beginWorkerAttempt preserves identity while advancing lifecycle',()=>{
+  const m=mission('worker-contract-attempt')
+  const task=createTask(m,{objective:'verify candidate',role:'coder',category:'standard'})
+  const worker=createWorker(m,task,'host-default')
+  assert.equal(worker.attempt,0)
+  assert.equal(isWorkerContract(worker),true)
+  const id=worker.id,taskID=worker.task_id,before=worker.updated_at
+  beginWorkerAttempt(task,worker,before+10)
+  assert.equal(worker.id,id);assert.equal(worker.task_id,taskID)
+  assert.equal(worker.attempt,1)
+  assert.equal(worker.started_at,before+10)
+  assert.equal(worker.updated_at,before+10)
+  beginWorkerAttempt(task,worker,before+20)
+  assert.equal(worker.attempt,2)
+  assert.equal(worker.id,id)
+})
+
+test('WorkerContract rejects malformed recovery/effective-model state instead of persistence ignoring it',()=>{
+  const m=mission('worker-contract-negative')
+  const task=createTask(m,{objective:'verify candidate',role:'coder',category:'standard'})
+  const worker=createWorker(m,task,'p/model')
+  assert.equal(isWorkerContract({...worker,attempt:-1}),false)
+  assert.equal(isWorkerContract({...worker,updated_at:'now'}),false)
+  assert.equal(isWorkerContract({...worker,effective_model_verified:'yes'}),false)
+  assert.equal(isWorkerContract({...worker,native_diff_baseline:{'src/a.ts':7}}),false)
+  assert.equal(isWorkerContract({...worker,fallback_history:[{to:'p/other',reason:'x',phase:'invalid',at:Date.now()}]}),false)
+  assert.equal(isWorkerContract({...worker,unexpected:true}),false)
+})
+
+test('RuntimePersistence consumes canonical Task/Worker contracts and fails closed on corrupted worker state',()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-task-worker-contract-'))
+  try{
+    const store=new MissionStore(root),m=startAssessedMission(store,'persist-contract','verify',{task_kind:'bug-fix',likely_verification:[]})
+    const task=createTask(m,{objective:'verify',role:'coder',category:'standard'})
+    const worker=createWorker(m,task,'host-default')
+    const persistence=new RuntimePersistence(root)
+    persistence.save(store.all(),true)
+    assert.equal(persistence.load().length,1)
+    worker.attempt=-1
+    persistence.save(store.all(),true)
+    assert.equal(persistence.load().length,0)
+    assert.match(String(persistence.lastLoadReport.error),/invalid mission state/i)
+  }finally{rmSync(root,{recursive:true,force:true})}
+})

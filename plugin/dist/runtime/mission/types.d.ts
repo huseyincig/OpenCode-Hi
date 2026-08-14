@@ -1,6 +1,8 @@
 import type { HiPrimaryRole } from '../roles/catalog.js';
 import type { WorkerResult } from '../../contracts/worker-result.js';
 import type { EvidenceItem } from '../../contracts/evidence.js';
+import type { TaskContract, TaskContractStatus } from '../../contracts/task.js';
+import type { WorkerContract, WorkerContractStatus } from '../../contracts/worker.js';
 export type { EvidenceItem } from '../../contracts/evidence.js';
 export { WORKER_EVIDENCE_KINDS } from '../../contracts/worker-result.js';
 export type { EvidenceOutcome, MethodologyObservation, WorkerEvidenceKind, WorkerResult, WorkerResultStatus } from '../../contracts/worker-result.js';
@@ -10,8 +12,8 @@ export type ExecutionMode = 'single' | 'parallel' | 'team';
 export type PrimaryMode = HiPrimaryRole;
 export type ObligationStatus = 'open' | 'closed' | 'blocked';
 export type ObligationKind = 'analysis' | 'implementation' | 'verification' | 'review' | 'authority';
-export type TaskStatus = 'created' | 'queued' | 'running' | 'waiting' | 'completed' | 'failed' | 'cancelled' | 'blocked';
-export type WorkerStatus = 'created' | 'queued' | 'starting' | 'ready' | 'busy' | 'completed' | 'failed' | 'cancelled';
+export type TaskStatus = TaskContractStatus;
+export type WorkerStatus = WorkerContractStatus;
 export type Category = 'quick' | 'standard' | 'deep' | 'visual' | 'critical';
 export type GateStatus = 'open' | 'ready' | 'blocked' | 'closed';
 export type GateKind = 'verification' | 'user-authority' | 'reviewer' | 'prerequisite-task' | 'precondition' | 'rollback';
@@ -104,29 +106,12 @@ export interface ExecutionProfile {
     expected_turns?: number;
     context_overhead?: number;
 }
-export interface MissionTask {
-    id: string;
-    objective: string;
+export interface MissionTask extends TaskContract {
     status: TaskStatus;
-    role: string;
     category: Category;
-    scope: string[];
-    constraints: string[];
-    dependencies: string[];
-    requiredEvidence: string[];
-    obligation_ids: string[];
     context_artifacts: ContextArtifact[];
     execution_profile?: ExecutionProfile;
-    gate_ids: string[];
-    worker_id?: string;
     result?: WorkerResult;
-    diff_cleanliness?: {
-        collateral: string[];
-        accepted_expansions: string[];
-        native_verified_reverts?: string[];
-    };
-    created_at: number;
-    updated_at: number;
 }
 export interface MethodologyProvenance {
     name: string;
@@ -137,53 +122,10 @@ export interface MethodologyProvenance {
     injection: 'native-skill-tool' | 'none';
     selected_at: number;
 }
-export interface WorkerState {
-    id: string;
-    task_id: string;
-    role: string;
-    category: Category;
-    session_id?: string;
-    parent_session_id: string;
-    parent_mission_id?: string;
-    forked_from_session_id?: string;
-    model?: string;
-    model_variant?: string;
-    fallbacks: string[];
-    selected_methodologies: string[];
-    loaded_methodologies: string[];
-    methodologies: MethodologyProvenance[];
-    fingerprint: string;
+export interface WorkerState extends WorkerContract {
     status: WorkerStatus;
-    generation_at_spawn?: number;
-    started_at?: number;
-    completed_at?: number;
-    last_result_digest?: string;
-    last_result_at?: number;
-    write_set?: string[];
-    native_state_hash?: string;
-    native_diff_baseline?: Record<string, string>;
-    native_diff_final?: Record<string, string>;
-    restart_reconcile_pending?: boolean;
-    runtime_recovery_pending?: boolean;
-    runtime_recovery_attempt?: number;
-    last_runtime_failure_kind?: string;
-    runtime_fallback_exhausted?: boolean;
-    model_selection_reason?: string[];
-    fallback_history?: Array<{
-        from?: string;
-        to: string;
-        variant?: string;
-        reason: string;
-        phase: 'dispatch' | 'runtime';
-        at: number;
-    }>;
-    effective_model?: string;
-    effective_model_variant?: string;
-    effective_model_verified?: boolean;
-    effective_model_variant_verified?: boolean;
-    effective_model_source?: string;
-    effective_model_observed_at?: number;
-    semantic_pause_revision?: number;
+    category: Category;
+    methodologies: MethodologyProvenance[];
 }
 export interface LedgerEvent {
     id: string;
