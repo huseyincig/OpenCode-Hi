@@ -20,6 +20,7 @@ import { evaluateCompletion } from './runtime/completion/evaluator.js';
 import { replanVerificationForChangedSurface, verificationSatisfied } from './runtime/verification/policy.js';
 import { syncMissionGates } from './runtime/gates/gates.js';
 import { normalizeModelCapabilityProfile } from './contracts/model.js';
+import { hostCapabilityByID } from './contracts/host-capability.js';
 import { appendLedger } from './runtime/ledger/ledger.js';
 import { ConcurrencyScheduler } from './runtime/scheduler/concurrency.js';
 import { TeamRuntime } from './runtime/team/team-runtime.js';
@@ -174,7 +175,7 @@ export const HiPlugin = async (ctx) => {
             m.context_artifacts.splice(0, m.context_artifacts.length - 8); appendLedger(m, 'context-artifact.added', { payload: { id: item.id, kind: item.kind, sha256: item.sha256, durable: Boolean(stored), source_files: sourceFiles.slice(0, 16) } }); return JSON.stringify(item); } });
     const artifactsTool = tool({ description: 'List bounded Hi context artifact references.', args: {}, execute: async (_a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(m.context_artifacts) : 'No active Hi mission'; } });
     const mutationTool = tool({ description: 'Register a temporary execution mutation. Prefer native session revert for project-local tracked experiments; use an exact rollback command only for native-coverage gaps.', args: { kind: tool.schema.string(), description: tool.schema.string(), rollback_command: tool.schema.string().optional(), native_revert: tool.schema.boolean().optional(), session_id: tool.schema.string().optional(), message_id: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
-            return 'No active Hi mission'; const mode = a.native_revert ? 'native-revert' : 'command'; if (mode === 'native-revert' && !capabilities.sessionRevert)
+            return 'No active Hi mission'; const mode = a.native_revert ? 'native-revert' : 'command'; if (mode === 'native-revert' && hostCapabilityByID(capabilities.contracts, 'session-revert')?.status !== 'SUPPORTED')
             return 'BLOCKED: OpenCode native session revert is unavailable'; return JSON.stringify(registerTemporaryMutation(m, { kind: String(a.kind), description: String(a.description), rollback_command: a.rollback_command ? String(a.rollback_command) : undefined, rollback_mode: mode, session_id: a.session_id ? String(a.session_id) : c?.sessionID, message_id: a.message_id ? String(a.message_id) : undefined })); } });
     const nativeRollbackTool = tool({ description: 'Resolve a registered native-revert temporary mutation through OpenCode session.revert. Evidence remains stale until reverified.', args: { id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
             return 'No active Hi mission'; const item = m.temporary_mutations.find(x => x.id === String(a.id)); if (!item)
@@ -543,7 +544,7 @@ export const HiPlugin = async (ctx) => {
     const toolSurface = { hi_doctor: doctorTool, hi_status: statusTool, hi_metrics: metricsTool, hi_ledger: ledgerTool, hi_readiness: readinessTool, hi_intent_assess: intentAssessTool, hi_context_artifact_add: artifactAddTool, hi_context_artifacts: artifactsTool, hi_temporary_mutation_register: mutationTool, hi_temporary_mutation_revert: nativeRollbackTool, hi_direct_progress: directProgressTool, hi_task_start: startTool, hi_task_await: awaitTool, hi_task_peek: peekTool, hi_task_list: listTool, hi_task_cancel: cancelTool };
     assertHiToolNamespace([...Object.keys(toolSurface), 'hi_team_create', 'hi_team_member_add', 'hi_team_member_remove', 'hi_team_status', 'hi_team_shutdown']);
     // Team tools are intentionally feature-gated. The default tool surface remains small.
-    if (config.teamMode.enabled && capabilities.workerRuntime) {
+    if (config.teamMode.enabled && hostCapabilityByID(capabilities.contracts, 'worker-runtime')?.status === 'SUPPORTED') {
         Object.assign(toolSurface, { hi_team_create: teamCreateTool, hi_team_member_add: teamMemberAddTool, hi_team_member_remove: teamMemberRemoveTool, hi_team_status: teamStatusTool, hi_team_shutdown: teamShutdownTool });
     }
     // Acquire only after initialization succeeds so a failed init cannot leave a stale process-global lease.
@@ -580,7 +581,7 @@ export const HiPlugin = async (ctx) => {
                 opencodeConfig.subagent_depth = 1;
             applyAdmittedProjectMethodologyPermissions(opencodeConfig, projectRoot);
             applyProjectAuthorityPermissions(opencodeConfig, projectAuthority);
-            if (config.teamMode.enabled && capabilities.workerRuntime)
+            if (config.teamMode.enabled && hostCapabilityByID(capabilities.contracts, 'worker-runtime')?.status === 'SUPPORTED')
                 Object.assign(toolSurface, { hi_team_create: teamCreateTool, hi_team_member_add: teamMemberAddTool, hi_team_member_remove: teamMemberRemoveTool, hi_team_status: teamStatusTool, hi_team_shutdown: teamShutdownTool });
             else
                 for (const k of ['hi_team_create', 'hi_team_member_add', 'hi_team_member_remove', 'hi_team_status', 'hi_team_shutdown'])

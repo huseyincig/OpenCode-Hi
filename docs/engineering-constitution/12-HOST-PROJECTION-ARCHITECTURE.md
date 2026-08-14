@@ -33,7 +33,7 @@ From current runtime/upstream study, the adapter uses or can detect native primi
 - native agent config with mode/permission/model/variant/prompt/options/steps;
 - native skill/methodology loading/permissions.
 
-`detectOpenCodeCapabilities()` currently exposes booleans and a degraded-reason list. This is runtime-useful but not yet a full HostCapabilityContract registry.
+`detectOpenCodeCapabilities()` now preserves its boolean observation snapshot for compatibility and also projects the same observations into the canonical `HostCapabilityContract` registry. Product-level capability decisions must use the contract registry where migrated; boolean method-presence fields are observations, not behavioral proof.
 
 ## Capability status model
 
@@ -41,7 +41,7 @@ Every material host capability is one of:
 
 ### SUPPORTED
 
-A real native primitive exists, adapter reaches it, semantics are sufficient, and acceptance proves the effect.
+A real native primitive is observable and the adapter can reach it with sufficient semantics. Runtime detection records `verification_level=OBSERVED`; controlled or real-host acceptance is tracked separately and must never be inferred from method presence.
 
 ### DEGRADED
 
@@ -53,7 +53,7 @@ Examples can include lack of PID/process lifecycle visibility for ordinary shell
 
 No safe primitive/fallback exists. Hi refuses to fake it.
 
-Examples until proven otherwise may include real execution-bound worktree isolation or persistent process control on a host lacking the required primitive.
+Current OpenCode-Hi reference-host truth explicitly includes `workspace-isolation-binding=UNSUPPORTED`. Ordinary shell `process-lifecycle` is `DEGRADED`, not supported, because the adapter does not own PID/job wait/kill/exit lifecycle even though shell safety hooks exist.
 
 ## Capability contract candidates for OpenCode
 
@@ -198,3 +198,9 @@ Host projection architecture is complete only when:
 - methodology native load is tested;
 - degraded/unsupported capabilities have negative acceptance tests;
 - real-host acceptance exists for material primitives before release claims.
+
+## Implemented registry invariants
+
+The M7 registry currently maps 16 product-level OpenCode capabilities. Each entry carries status, observation verification level, acceptance reference, semantic loss/fallback when degraded, and a forbidden-fake-behavior statement. Unsupported capabilities cannot carry a native primitive or adapter entrypoint.
+
+Two runtime gates already consume the registry directly: Team tool exposure requires `worker-runtime=SUPPORTED`, and native temporary-mutation revert requires `session-revert=SUPPORTED`. Doctor exposes capability counts and the explicit process/workspace limitations. M12 remains responsible for upgrading proof from local controlled evidence to exact-version real-host receipts.

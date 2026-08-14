@@ -1,3 +1,4 @@
+import { type HostCapabilityContract } from '../contracts/host-capability.js';
 export interface OpenCodeCapabilities {
     childSessions: boolean;
     asyncPrompt: boolean;
@@ -15,5 +16,6 @@ export interface OpenCodeCapabilities {
     sessionUnrevert: boolean;
     workerRuntime: boolean;
     degraded: string[];
+    contracts: HostCapabilityContract[];
 }
 export declare function detectOpenCodeCapabilities(client: any): OpenCodeCapabilities;

@@ -32,7 +32,7 @@ This proves the starting runtime state only.
 | Generator Architecture | current generator gap + target G01–G06 | implementation pending |
 | Validation Architecture | V1–V10 + HI001–HI020 rules | implementation pending |
 | Behavioral Acceptance | BA01–BA12 | executable scenarios pending |
-| Host Projection | OpenCode boundary/capability target mapped | contract-backed registry pending |
+| Host Projection | OpenCode boundary/capability target mapped | contract-backed runtime registry implemented at M7; real-host T3 verification still pending |
 | Migration Matrix | M0–M13 ordered plan | migration execution pending |
 | Source Semantics | ADOPT/ADAPT/REJECT/HOLD register | architecture decision evidence |
 | Engineering Constitution | V1 candidate | migration pending |
@@ -46,12 +46,12 @@ Rows below are intentionally `PENDING` until code exists.
 |---|---|---|---|---|---|
 | M0 | constitution documentation foundation | constitution lint PASS; validator PASS; diff check clean | T0 | `e03aefd` | PASS |
 | M1 | common contract/provenance primitives | focused contract tests 6/6 PASS; controlled full suite 464/464 PASS; validator PASS; diff check clean; build generation idempotent | T0/T1 | `3809cd1` | PASS |
-| M2 | RoleContract owner/generator | role identity/mode/description/runtime catalog and methodology permission contribution are canonical-data driven; focused projection suite 24/24 PASS; controlled full suite 467/467 PASS; validator PASS | T1/T2 | pending | ACTIVE — GENERAL PERMISSION PROFILE NEXT |
+| M2 | RoleContract owner/generator | role identity/mode/description/runtime catalog and methodology permission contribution are canonical-data driven; focused projection suite 24/24 PASS; controlled full suite 467/467 PASS; validator PASS | T1/T2 | `443bfd5` (owner foundation `b06d281`) | PARTIAL_PASS — GENERAL PERMISSION PROFILE REMAINS M3 |
 | M3 | PermissionProfile | safety monotonicity negatives + projection parity | T1/T2 | — | BLOCKED — SENTINELX POLICY PREVENTED PERMISSION-CATALOG MUTATION |
-| M4 | MethodologyContract normalization | mechanical SKILL contract sections compiled from canonical JSON; inert duplicated fields removed; focused 37/37 PASS; controlled full suite 469/469 PASS; validator PASS | T1/T2 | pending | ACTIVE — MECHANICAL OWNER MIGRATED |
+| M4 | MethodologyContract normalization | mechanical SKILL contract sections compiled from canonical JSON; inert duplicated fields removed; focused 37/37 PASS; controlled full suite 469/469 PASS; validator PASS | T1/T2 | `c152f98` | PASS — MECHANICAL OWNER MIGRATED |
 | M5 | ConfigOption catalog | BA03 + config executor lint | T1/T2 | SentinelX blocks direct config-catalog mutation in this environment | BLOCKED_BY_HOST_POLICY |
-| M6 | Model capability/identity | ModelCapabilityProfile host-inventory normalization + identity reconciler + effective-model evidence; focused 17/17 PASS; controlled full suite 475/475 PASS; validator PASS | T1/T2 | requested/projected WorkerState snapshot wiring blocked by SentinelX mutation policy; no unwired state committed | PARTIAL_PASS |
-| M7 | Host capability registry | BA05 + doctor/degraded/unsupported tests | T2/T3 as applicable | — | PENDING |
+| M6 | Model capability/identity | ModelCapabilityProfile host-inventory normalization + identity reconciler + effective-model evidence; focused 17/17 PASS; controlled full suite 475/475 PASS; validator PASS | T1/T2 | `e7c3c96`; requested/projected WorkerState snapshot wiring blocked by SentinelX mutation policy; no unwired state committed | PARTIAL_PASS |
+| M7 | Host capability registry | 16 contract-backed OpenCode capabilities; product runtime gates consume worker-runtime/session-revert contracts; doctor reports status/verification/semantic loss; focused 43/43 PASS; controlled full suite 480/480 PASS; validator PASS | T1/T2 local; T3 still pending | commit pending | PASS_LOCAL — REAL-HOST ACCEPTANCE PENDING |
 | M8 | Task/Worker/Result/Evidence contracts | BA07–BA09 + recovery/team/task regression | T1/T2 | — | PENDING |
 | M9 | Context/Artifact/PI/Human/Authority/Storage | BA06/10/11 + storage lint | T1/T2 | — | PENDING |
 | M10 | common generator/lint closure | BA12 + HI001–HI020 migrated rules | T0/T1/T2 | — | PENDING |
@@ -59,6 +59,22 @@ Rows below are intentionally `PENDING` until code exists.
 | M12 | real-host acceptance | OpenCode version-bound native receipts | T3 | — | PENDING |
 | M13 | release readiness | explicit authority + external receipts | T4 | — | NOT REQUESTED |
 
+
+
+### M7 host capability registry checkpoint
+
+Implemented:
+
+- added `HostCapabilityContract` with separate `status` and `verification_level` so native method observation cannot masquerade as behavioral/real-host verification;
+- mapped 16 OpenCode product capabilities with `SUPPORTED | DEGRADED | UNSUPPORTED`, native primitive/adapter, fallback, semantic loss, acceptance reference and forbidden fake behavior;
+- kept low-level booleans as compatibility observations while making the registry the product-level decision surface;
+- moved Team tool exposure to the `worker-runtime` capability contract and native temporary-mutation revert admission to the `session-revert` contract;
+- permanently classifies ordinary shell `process-lifecycle` as `DEGRADED` under the current adapter because PID/job wait/kill/exit ownership is not exposed;
+- classifies `workspace-isolation-binding` as `UNSUPPORTED`; creating a git worktree directory is explicitly insufficient unless subsequent child execution is provably bound to it;
+- doctor reports registry counts plus process/workspace status, observation verification level and semantic loss;
+- every `acceptance_ref` is mechanically checked against a real repository test file.
+
+Evidence: focused host-capability/runtime/doctor suite 43/43 PASS; controlled isolated-HOME/XDG full suite 480/480 PASS; validator PASS; diff check clean. `verification_level=OBSERVED` remains deliberate until M12 real-host acceptance binds an exact OpenCode version.
 
 
 ### M3 host-policy blocker

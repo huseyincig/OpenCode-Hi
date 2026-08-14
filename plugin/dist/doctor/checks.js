@@ -14,8 +14,10 @@ export function runDoctor(config, store, directory, info = {}) {
     const inventoryIds = new Set(models.map(m => m.id));
     const invalidMappings = models.length ? configuredModelLists.filter(([, ids]) => ids.length > 0 && !ids.some(id => inventoryIds.has(id))) : [];
     const primaryDrift = models.length ? configuredModelLists.filter(([, ids]) => ids.length > 1 && !inventoryIds.has(ids[0]) && ids.slice(1).some(id => inventoryIds.has(id))) : [];
-    const c = info.capabilities;
-    const nativeDetail = c ? `workerRuntime=${c.workerRuntime}; asyncPrompt=${c.asyncPrompt}; abort=${c.abort}; status=${c.sessionStatus}; children=${c.childSessionList}; todo=${c.sessionTodo}; diff=${c.sessionDiff}; fork=${c.sessionFork}; summarize=${c.sessionSummarize}; revert=${c.sessionRevert}; providerInventory=${c.providerInventory}; appLog=${c.appLog}; degraded=${c.degraded.join(',') || 'none'}` : 'capability snapshot unavailable';
+    const c = info.capabilities, hostContracts = c?.contracts ?? [], processCapability = hostContracts.find(x => x.id === 'process-lifecycle'), workspaceCapability = hostContracts.find(x => x.id === 'workspace-isolation-binding');
+    const capabilityCounts = hostContracts.reduce((acc, x) => { acc[x.status] = (acc[x.status] ?? 0) + 1; return acc; }, {});
+    const capabilityDetail = (x) => x ? `status=${x.status}; verification=${x.verification_level}; fallback=${x.fallback ?? 'none'}; semantic-loss=${x.semantic_loss.join(' | ') || 'none'}; acceptance=${x.acceptance_ref}` : 'contract unavailable';
+    const nativeDetail = c ? `workerRuntime=${c.workerRuntime}; asyncPrompt=${c.asyncPrompt}; abort=${c.abort}; status=${c.sessionStatus}; children=${c.childSessionList}; todo=${c.sessionTodo}; diff=${c.sessionDiff}; fork=${c.sessionFork}; summarize=${c.sessionSummarize}; revert=${c.sessionRevert}; providerInventory=${c.providerInventory}; appLog=${c.appLog}; contracts=${hostContracts.length}; degraded=${c.degraded.join(',') || 'none'}` : 'capability snapshot unavailable';
     const effectiveObserved = Object.keys(host).length > 0;
     const effectiveHiPresent = hiPlugins.length > 0 || localHi;
     const projectRegistrationSatisfied = project.pluginRegistered !== false || effectiveHiPresent;
@@ -38,6 +40,9 @@ export function runDoctor(config, store, directory, info = {}) {
         { id: 'subagent-depth', status: depth === undefined ? 'warn' : depth <= 1 ? 'pass' : 'warn', detail: depth === undefined ? 'effective subagent_depth not exposed; Hi child roles still deny task recursion' : `effective subagent_depth=${depth}; Hi target/default is 1` },
         { id: 'experimental-adapter', status: 'pass', detail: 'experimental.session.compacting is isolated behind ExperimentalOpenCodeAdapter/CompactionBridge boundary' },
         { id: 'native-capabilities', status: c?.workerRuntime ? 'pass' : (config.compatibility.mode === 'strict' ? 'fail' : 'warn'), detail: nativeDetail },
+        { id: 'host-capability-contracts', status: hostContracts.length ? 'pass' : 'warn', detail: hostContracts.length ? `contracts=${hostContracts.length}; SUPPORTED=${capabilityCounts.SUPPORTED ?? 0}; DEGRADED=${capabilityCounts.DEGRADED ?? 0}; UNSUPPORTED=${capabilityCounts.UNSUPPORTED ?? 0}; runtime verification remains ${[...new Set(hostContracts.map(x => x.verification_level))].join(',')}` : 'host capability registry unavailable' },
+        { id: 'process-lifecycle', status: processCapability?.status === 'SUPPORTED' ? 'pass' : 'warn', detail: capabilityDetail(processCapability) },
+        { id: 'workspace-isolation-binding', status: workspaceCapability?.status === 'SUPPORTED' ? 'pass' : 'warn', detail: capabilityDetail(workspaceCapability) },
         { id: 'native-session-diff-revert', status: c?.sessionDiff && c?.sessionRevert ? 'pass' : 'warn', detail: c ? `diff=${c.sessionDiff}; revert=${c.sessionRevert}; unrevert=${c.sessionUnrevert}; fork=${c.sessionFork}; summarize=${c.sessionSummarize}` : 'native session capability snapshot unavailable' },
         { id: 'structured-logging', status: c?.appLog ? 'pass' : 'warn', detail: c?.appLog ? 'OpenCode client.app.log available' : 'structured OpenCode logging unavailable; no custom log framework will be substituted' },
         { id: 'permission-surface', status: project.permissionConfigured ? 'pass' : 'warn', detail: project.permissionConfigured ? `OpenCode permission config detected; skill-specific=${project.skillPermissionConfigured}` : 'No explicit OpenCode permission config detected; host defaults apply' },

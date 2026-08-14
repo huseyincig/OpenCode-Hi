@@ -1,4 +1,5 @@
 import { NativeOpenCodeAdapter } from './native-adapter.js';
+import { openCodeHostCapabilityContracts } from '../contracts/host-capability.js';
 export function detectOpenCodeCapabilities(client) {
     const n = new NativeOpenCodeAdapter(client);
     const childSessions = n.has('session-create');
@@ -30,5 +31,6 @@ export function detectOpenCodeCapabilities(client) {
         degraded.push('session-diff-unavailable');
     if (!sessionRevert)
         degraded.push('session-revert-unavailable');
-    return { childSessions, asyncPrompt, syncPrompt, abort, providerInventory, appLog, sessionStatus, childSessionList, sessionTodo, sessionDiff, sessionFork, sessionSummarize, sessionRevert, sessionUnrevert, workerRuntime: childSessions && (asyncPrompt || syncPrompt) && abort, degraded };
+    const contracts = openCodeHostCapabilityContracts({ childSessions, asyncPrompt, syncPrompt, abort, providerInventory, appLog, sessionStatus, childSessionList, sessionTodo, sessionDiff, sessionFork, sessionSummarize, sessionRevert, sessionUnrevert });
+    return { childSessions, asyncPrompt, syncPrompt, abort, providerInventory, appLog, sessionStatus, childSessionList, sessionTodo, sessionDiff, sessionFork, sessionSummarize, sessionRevert, sessionUnrevert, workerRuntime: childSessions && (asyncPrompt || syncPrompt) && abort, degraded, contracts };
 }
