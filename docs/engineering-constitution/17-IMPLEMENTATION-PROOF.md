@@ -46,8 +46,8 @@ Rows below are intentionally `PENDING` until code exists.
 |---|---|---|---|---|---|
 | M0 | constitution documentation foundation | constitution lint PASS; validator PASS; diff check clean | T0 | `e03aefd` | PASS |
 | M1 | common contract/provenance primitives | focused contract tests 6/6 PASS; controlled full suite 464/464 PASS; validator PASS; diff check clean; build generation idempotent | T0/T1 | `3809cd1` | PASS |
-| M2 | RoleContract owner/generator | role identity/mode/description/runtime catalog and methodology permission contribution are canonical-data driven; focused projection suite 24/24 PASS; controlled full suite 467/467 PASS; validator PASS | T1/T2 | `443bfd5` (owner foundation `b06d281`) | PARTIAL_PASS — GENERAL PERMISSION PROFILE REMAINS M3 |
-| M3 | PermissionProfile | safety monotonicity negatives + projection parity | T1/T2 | — | BLOCKED — SENTINELX POLICY PREVENTED PERMISSION-CATALOG MUTATION |
+| M2 | RoleContract owner/generator | role identity/mode/description/runtime catalog and methodology permission contribution are canonical-data driven; focused projection suite 24/24 PASS; controlled full suite 467/467 PASS; validator PASS | T1/T2 | `443bfd5` (owner foundation `b06d281`) | PASS — GENERAL PERMISSION RESIDUE CLOSED BY M3 `9801382` |
+| M3 | PermissionProfile | canonical 7-profile catalog + RoleContract references; exact 8-agent native permission semantic parity to pre-M3 HEAD; read-only edit-deny/lower-layer-widening/unknown-ref/methodology-owner negatives; focused 10/10 PASS; controlled full suite 543/543 PASS; architecture lint PASS; validator PASS | T1/T2 | `9801382` | PASS — CANONICAL PERMISSION OWNER MIGRATED |
 | M4 | MethodologyContract normalization | mechanical SKILL contract sections compiled from canonical JSON; inert duplicated fields removed; focused 37/37 PASS; controlled full suite 469/469 PASS; validator PASS | T1/T2 | `c152f98` | PASS — MECHANICAL OWNER MIGRATED |
 | M5 | ConfigOption catalog | BA03 + config executor lint | T1/T2 | SentinelX blocks direct config-catalog mutation in this environment | BLOCKED_BY_HOST_POLICY |
 | M6 | Model capability/identity | ModelCapabilityProfile host-inventory normalization + identity reconciler + effective-model evidence; focused 17/17 PASS; controlled full suite 475/475 PASS; validator PASS | T1/T2 | `e7c3c96`; requested/projected WorkerState snapshot wiring blocked by SentinelX mutation policy; no unwired state committed | PARTIAL_PASS |
@@ -283,9 +283,22 @@ Implemented:
 Evidence: focused host-capability/runtime/doctor suite 43/43 PASS; controlled isolated-HOME/XDG full suite 480/480 PASS; validator PASS; diff check clean. `verification_level=OBSERVED` remains deliberate until M12 real-host acceptance binds an exact OpenCode version.
 
 
-### M3 host-policy blocker
+### M3 PermissionProfile checkpoint
 
-PermissionProfile implementation was attempted only after current role permission maps were inventoried and an exact-preservation profile design was prepared. SentinelX blocked creation/mutation of permission-catalog data and direct removal of existing role permission blocks. No bypass was attempted. M3 remains open; current runtime permission behavior is unchanged.
+Implemented and verified:
+
+- current environment was re-audited after M12 and the former SentinelX mutation-policy blocker no longer reproduced; the migration proceeded through normal repository writes with no bypass;
+- added canonical `data/hi-permission-profiles.json` with seven reusable profiles and strict `PermissionProfileContract` validation;
+- `data/hi-roles.json` schema 2 now binds every canonical RoleContract to exactly one `permission_profile_ref`;
+- removed general mechanical OpenCode `permission:` ownership from all eight `roles/*.md`; Markdown remains human guidance/host projection input only;
+- preserved M4 ownership: methodology `skill` permissions are not legal inside PermissionProfile and continue to derive exclusively from `data/hi-methodologies.json` compatible-role relationships;
+- agent generation now resolves Role -> PermissionProfile -> native OpenCode permission and then composes the methodology-owned skill map; unknown profile refs, Markdown permission reintroduction and PermissionProfile skill ownership fail closed;
+- read-only roles must resolve to a profile with explicit scalar `edit: deny`; `may_be_widened_by_lower_layer` must remain false; duplicate capability/pattern rules and unknown profile refs fail validation;
+- one-time semantic parity against pre-M3 HEAD proved all eight generated agents retain identical `permission`, `prompt`, and other host fields; the migration changes ownership, not runtime agent behavior;
+- runtime execution-profile permission snapshots continue to derive from the effective packaged OpenCode agent projection, so the new canonical owner reaches the existing pre-execution consumer path;
+- generated PermissionProfile policy is included in the projection graph, increasing the current material ProjectionReceipt inventory from the historical M10/M11 count of 30 to 31.
+
+Evidence: focused M3/Role/Methodology/BA12 set 10/10 PASS; controlled isolated-HOME/XDG full plugin suite 543/543 PASS; architecture lint PASS (`rules=20`, `deferred=1`, `linked=8`); standalone validator PASS; `git diff --check` clean; backup count 0. M3 code checkpoint: `9801382`. No real external action was performed.
 
 ### M4 methodology projection checkpoint
 
@@ -303,7 +316,7 @@ Evidence: focused methodology suite 37/37 PASS; controlled isolated-HOME/XDG ful
 
 The OpenCode agent projection now derives `description` and `mode` from `data/hi-roles.json`, injects a generated RoleContract purpose/use/do-not-use preamble into the agent prompt, and derives native methodology skill permissions from `data/hi-methodologies.json` compatible-role relationships. `scripts/generate_methodology_policy.py` validates compatible role references against the canonical role catalog rather than treating Markdown skill permissions as an owner.
 
-The remaining mechanical role frontmatter surface is the general OpenCode permission/prompt guidance projection that M3 will normalize through PermissionProfile. Existing `permission.skill` text remains physically present in `roles/*.md` because SentinelX blocked direct edits to those blocks; it is not consumed as runtime truth by the generator. This residue must not be mistaken for a second canonical owner.
+The former general OpenCode permission frontmatter residue was removed by M3 checkpoint `9801382`. Role Markdown now carries human guidance/host fields only; general native permissions derive from PermissionProfile and methodology skill permissions derive from MethodologyContract.
 
 Evidence: focused role/methodology/agent projection suite 24/24 PASS; controlled full suite 467/467 PASS; validator PASS; diff check clean.
 

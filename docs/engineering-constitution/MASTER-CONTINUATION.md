@@ -11,17 +11,17 @@ repository: OpenCode-Hi
 repository_root: /workspace/OpenCode-Hi
 baseline_before_this_ledger_commit: baca9f7
 active_program: Engineering Constitution / Metamodel Migration
-active_phase: M13
-active_phase_name: Release readiness
-phase_status: NOT_REQUESTED
+active_phase: M5
+active_phase_name: ConfigOptionContract re-audit
+phase_status: REAUDIT_REQUIRED
 working_tree_expectation: clean
 last_verified_full_suite:
-  total: 540
-  pass: 540
+  total: 543
+  pass: 543
   fail: 0
 last_verified_validator: PASS
 external_release_actions_authorized: false
-next_contract_owner: Release boundary / earlier open migration blockers
+next_contract_owner: ConfigOptionContract
 ```
 
 ## Continuation protocol
@@ -71,9 +71,22 @@ e2d021b  ProjectIntelligenceContract
 da67329  AuthorityContract / ExternalActionContract
 ea6c236  StorageOwnershipContract
 4602907  M10 common generator / architecture lint graph
+9801382  M3 PermissionProfile canonical owner migration
 ```
 
 Earlier M8/M7/M6/M4/M2/M1/M0 checkpoints remain recorded in `17-IMPLEMENTATION-PROOF.md`.
+
+## M3 current truth after release-boundary re-audit
+
+M3 status: **PASS — CANONICAL PERMISSION OWNER MIGRATED** at `9801382`.
+
+- seven canonical PermissionProfiles own all general native role permissions;
+- all eight RoleContracts reference a profile through `permission_profile_ref`;
+- role Markdown no longer contains mechanical `permission:` ownership;
+- built-in `skill` permission remains exclusively methodology-derived;
+- pre-M3 HEAD vs new generated agent semantic parity is exact for permission, prompt and all other host fields;
+- read-only edit denial, lower-layer widening prohibition, unknown refs, duplicate rules and methodology-owner separation are executable negatives;
+- current ProjectionReceipt inventory is 31; controlled full suite is 543/543 PASS; architecture lint and validator PASS.
 
 ## M9 current truth
 
@@ -222,7 +235,7 @@ Canonical receipt: `data/validation/external-opencode-hi-0.1.0-host-1.18.16-head
 
 Do not silently declare these closed:
 
-- **M3 PermissionProfile** — prior SentinelX policy blocked direct permission-catalog mutation. Current runtime permissions remain operational but full canonical PermissionProfile migration is open.
+- **M3 PermissionProfile — CLOSED at `9801382`**. The former host-policy blocker no longer reproduced on re-audit. Seven canonical profiles now own general native permissions; RoleContract references them; role Markdown no longer owns mechanical permission maps; M4 remains the sole built-in methodology skill-permission owner. Current projection graph has 31 receipts and the controlled full suite is 543/543 PASS.
 - **M5 ConfigOptionContract** — prior host policy blocked direct config-catalog mutation.
 - **M6 ModelCapabilityProfile** — host inventory normalization/identity contract is operational; requested/projected WorkerState snapshot wiring remains previously deferred/blocked.
 - **M7 HostCapability** — local contract registry PASS and material OpenCode 1.18.16 T3 acceptance completed in M12; future host-version changes still require revalidation.
@@ -249,10 +262,10 @@ Do not silently declare these closed:
 The sequential M0–M12 migration/acceptance track has reached its release boundary, but earlier partial/blocker work remains explicit:
 
 ```text
-M3 PermissionProfile        open / previously blocked by host policy
+M3 PermissionProfile        PASS at 9801382
 M5 ConfigOptionContract    open / previously blocked by host policy; HI003 deferred
 M6 ModelCapabilityProfile  partial / requested-projected WorkerState snapshot wiring deferred
 M13 Release readiness      NOT REQUESTED
 ```
 
-On continuation, first re-check real HEAD/status. Unless the user explicitly asks for release work, the next engineering decision is to re-audit whether the current environment now permits one of M3/M5/M6 to be completed without bypassing host policy. Do not manufacture a closure: choose the earliest dependency-safe open owner that can actually be mutated and proven, otherwise leave the blocker recorded.
+On continuation, first re-check real HEAD/status. Unless the user explicitly asks for release work, re-audit **M5 ConfigOptionContract** next because it is now the earliest dependency-safe open owner. Determine from current production config surfaces/consumers whether the environment permits a canonical config catalog and executable-effect proof without bypassing host policy. If it remains blocked, preserve the blocker and then assess M6; do not manufacture closure.
