@@ -21,16 +21,16 @@ test('StorageOwnership catalog is strict and has one canonical owner per scope/d
 })
 
 test('catalog path providers match the real project storage resolvers',()=>{
-  const root='/tmp/project-root',name='hi-project-check'
-  assert.equal(projectPolicyPath(root,'routing').endsWith('/.opencode/hi/policy/routing.json'),true)
-  assert.equal(projectPolicyPath(root,'authority').endsWith('/.opencode/hi/policy/authority.json'),true)
-  assert.equal(projectIntelligencePath(root,'pi_1').endsWith('/.opencode/hi/project-intelligence/patterns/pi_1.json'),true)
-  assert.equal(projectMethodologyCandidatePath(root,'mc_1').endsWith('/.opencode/hi/project-intelligence/methodology-candidates/mc_1.json'),true)
-  assert.equal(durableArtifactPath(root,'review','a_1').endsWith('/.opencode/hi/artifacts/review/a_1.json'),true)
-  assert.equal(projectMethodologyPolicyPath(root,name).endsWith(`/.opencode/hi/policy/methodologies/${name}.json`),true)
-  assert.equal(projectMethodologyProvenancePath(root,name).endsWith(`/.opencode/hi/provenance/methodologies/${name}.json`),true)
-  assert.equal(projectSkillRoot(root,name).endsWith(`/.opencode/skills/${name}`),true)
-  assert.equal(projectSkillRoot(root,name).includes('/.opencode/hi/'),false)
+  const root=join(tmpdir(),'project-root'),name='hi-project-check'
+  assert.equal(projectPolicyPath(root,'routing'),join(root,'.opencode','hi','policy','routing.json'))
+  assert.equal(projectPolicyPath(root,'authority'),join(root,'.opencode','hi','policy','authority.json'))
+  assert.equal(projectIntelligencePath(root,'pi_1'),join(root,'.opencode','hi','project-intelligence','patterns','pi_1.json'))
+  assert.equal(projectMethodologyCandidatePath(root,'mc_1'),join(root,'.opencode','hi','project-intelligence','methodology-candidates','mc_1.json'))
+  assert.equal(durableArtifactPath(root,'review','a_1'),join(root,'.opencode','hi','artifacts','review','a_1.json'))
+  assert.equal(projectMethodologyPolicyPath(root,name),join(root,'.opencode','hi','policy','methodologies',`${name}.json`))
+  assert.equal(projectMethodologyProvenancePath(root,name),join(root,'.opencode','hi','provenance','methodologies',`${name}.json`))
+  assert.equal(projectSkillRoot(root,name),join(root,'.opencode','skills',name))
+  assert.equal(projectSkillRoot(root,name).includes(join('.opencode','hi')),false)
   assert.throws(()=>projectSkillRoot(root,'../escape'),/Unsafe storage segment/)
 })
 

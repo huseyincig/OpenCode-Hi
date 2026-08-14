@@ -84,7 +84,7 @@ function dependencyGraph(root) { try {
     for (const [path0, meta0] of Object.entries(packages)) {
         if (!path0)
             continue;
-        const meta = meta0 ?? {}, path = String(path0).replace(/\\/g, '/'), name = String(meta.name ?? (path.includes('node_modules/') ? path.split('node_modules/').pop() : path) ?? path), relation = dev.has(name) ? 'direct-dev' : peer.has(name) ? 'direct-peer' : 'transitive';
+        const meta = meta0 ?? {}, path = String(path0).replace(/\\/g, '/'), name = String(meta.name ?? (path.includes('node_modules/') ? path.split('node_modules/').pop() : path) ?? path), relation = peer.has(name) ? 'direct-peer' : dev.has(name) ? 'direct-dev' : 'transitive';
         rows.push({ path, name, version: String(meta.version ?? ''), license: String(meta.license ?? 'UNKNOWN'), relation });
     }
     rows.sort((a, b) => a.path.localeCompare(b.path));

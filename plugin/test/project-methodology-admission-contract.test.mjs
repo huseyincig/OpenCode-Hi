@@ -15,8 +15,9 @@ import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
 import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {activateMethodologySignal} from '../dist/runtime/methodology/activation.js'
+import {fileURLToPath} from 'node:url'
 
-const hiRoot=new URL('../../',import.meta.url).pathname.replace(/\/$/,'')
+const hiRoot=fileURLToPath(new URL('../../',import.meta.url)).replace(/[\\/]$/,'')
 const sha=text=>createHash('sha256').update(text).digest('hex')
 
 function fixture(){

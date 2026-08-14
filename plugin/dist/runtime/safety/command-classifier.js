@@ -14,6 +14,12 @@ function shellWords(command) {
             continue;
         }
         if (ch === '\\' && quote !== "'") {
+            // A host command may contain a native Windows drive path (C:\dir\file).
+            // Treat its separators as path syntax rather than POSIX shell escapes.
+            if (/^[A-Za-z]:/.test(cur)) {
+                cur += ch;
+                continue;
+            }
             escape = true;
             continue;
         }

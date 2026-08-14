@@ -10,8 +10,9 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { activateMethodologySignal } from '../dist/runtime/methodology/activation.js'
 import { parseSemanticIntentAssessment } from '../dist/runtime/intent/semantic-assessment.js'
+import {fileURLToPath} from 'node:url'
 
-const root=new URL('../../',import.meta.url).pathname.replace(/\/$/,'')
+const root=fileURLToPath(new URL('../../',import.meta.url)).replace(/[\\/]$/,'')
 
 function names(items){return items.map(x=>x.name).sort()}
 function runtime(){return new TaskRuntime({}, {delete(){}}, {release(){}}, root, root, ()=>({}), ()=>[], ()=>({}))}

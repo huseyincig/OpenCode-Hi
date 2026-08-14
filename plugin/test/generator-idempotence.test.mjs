@@ -3,10 +3,11 @@ import assert from 'node:assert/strict'
 import {cpSync,mkdtempSync,readFileSync,readdirSync,rmSync,writeFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join,resolve} from 'node:path'
+import {fileURLToPath} from 'node:url'
 import {spawnSync} from 'node:child_process'
 import {createHash} from 'node:crypto'
 
-const ROOT=resolve(new URL('../..',import.meta.url).pathname)
+const ROOT=resolve(fileURLToPath(new URL('../..',import.meta.url)))
 function fixture(){
   const root=mkdtempSync(join(tmpdir(),'hi-generator-ba12-'))
   for(const rel of ['data','roles','skills','scripts'])cpSync(join(ROOT,rel),join(root,rel),{recursive:true})
@@ -15,7 +16,7 @@ function fixture(){
 }
 function run(root){
   for(const script of ['generate_config_policy.py','generate_permission_policy.py','generate_plugin_agents.py','generate_methodology_policy.py']){
-    const r=spawnSync('python3',[join(root,'scripts',script)],{encoding:'utf8'})
+    const r=spawnSync(process.execPath,[join(root,'scripts','run-python.mjs'),join(root,'scripts',script)],{encoding:'utf8'})
     assert.equal(r.status,0,r.stderr||r.stdout)
   }
 }

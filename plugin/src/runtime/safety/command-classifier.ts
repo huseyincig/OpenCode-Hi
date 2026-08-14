@@ -8,7 +8,12 @@ function shellWords(command:string):string[]{
   for(let i=0;i<command.length;i++){
     const ch=command[i],next=command[i+1]
     if(escape){cur+=ch;escape=false;continue}
-    if(ch==='\\'&&quote!=="'"){escape=true;continue}
+    if(ch==='\\'&&quote!=="'"){
+      // A host command may contain a native Windows drive path (C:\dir\file).
+      // Treat its separators as path syntax rather than POSIX shell escapes.
+      if(/^[A-Za-z]:/.test(cur)){cur+=ch;continue}
+      escape=true;continue
+    }
     if(quote){if(ch===quote)quote=undefined;else cur+=ch;continue}
     if(ch==='"'||ch==="'"){quote=ch;continue}
     if(ch==='&'&&next==='&'){flush();out.push('&&');i++;continue}

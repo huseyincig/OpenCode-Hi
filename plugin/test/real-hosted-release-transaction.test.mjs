@@ -25,7 +25,7 @@ function req(method,path,body){return new Promise((resolve,reject)=>{const data=
 (async()=>{if(a[0]!=='release')throw new Error('unsupported');if(a[1]==='create'){let target;const pos=[];for(let i=2;i<a.length;i++){if(a[i]==='--target'){target=a[++i];continue}if(a[i].startsWith('-'))continue;pos.push(a[i])}const tag=pos.shift(),assets=pos.filter(x=>fs.existsSync(x)).map(x=>({name:x.split(/[\\\\/]/).pop(),size:fs.statSync(x).size}));process.stdout.write(await req('POST','/releases',{tagName:tag,targetCommitish:target,assets}));return}if(a[1]==='view'){let tag;for(let i=2;i<a.length;i++){if(a[i]==='--json'||a[i]==='--repo'||a[i]==='-R'){i++;continue}if(a[i].startsWith('-'))continue;tag=a[i];break}process.stdout.write(await req('GET','/releases/'+encodeURIComponent(tag)));return}throw new Error('unsupported')})().catch(e=>{console.error(e.message);process.exit(1)})
 `);chmodSync(path,0o755)}
 
-test('real branch+annotated-tag push and hosted release HTTP transaction are remotely verified end to end', async()=>{
+test('real branch+annotated-tag push and hosted release HTTP transaction are remotely verified end to end',{skip:process.platform==='win32'?'POSIX executable shim is exercised by the mandatory Ubuntu release-readiness job':false},async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-hosted-release-')), remote=join(root,'remote.git'), work=join(root,'work'), bin=join(root,'gh')
   execFileSync('git',['init','--bare','--initial-branch=main',remote]);execFileSync('git',['init','-b','main',work])
   git(work,'config','user.name','Hi Test');git(work,'config','user.email','hi@example.invalid')
