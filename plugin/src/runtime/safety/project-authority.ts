@@ -1,13 +1,15 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
+import type { ExternalActionType } from '../../contracts/external-action.js'
 
-export type PersistentAuthorityClass='git-push'|'package-publish'|'deploy'
+export type PersistentAuthorityClass=ExternalActionType
 interface AuthorityFile{schema:1;grants:Partial<Record<PersistentAuthorityClass,{approved_at:number;source:'native-always'}>>}
 const FILE='.opencode/hi/policy/authority.json'
 const CLASS_PATTERNS:Record<PersistentAuthorityClass,string[]>={
-  'git-push':['git push *','gh release create *'],
-  'package-publish':['npm publish*','pnpm publish*','yarn publish*','bun publish*'],
-  'deploy':['docker push *','kubectl apply *','terraform apply *','vercel deploy*','netlify deploy*'],
+  'git-push':['git push *'],
+  'release-create':['gh release create *'],
+  'package-publish':['npm publish*','pnpm publish*','bun publish*','yarn npm publish*'],
+  'deploy':['docker push *','kubectl apply *','kubectl delete *','terraform apply *','vercel deploy*','netlify deploy*'],
 }
 function empty():AuthorityFile{return{schema:1,grants:{}}}
 export class ProjectAuthorityStore{
@@ -20,7 +22,7 @@ export class ProjectAuthorityStore{
   grants():PersistentAuthorityClass[]{return(Object.keys(this.#state.grants) as PersistentAuthorityClass[]).filter(x=>this.has(x))}
 }
 function norm(s:string):string{return s.trim().toLowerCase().replace(/\s+/g,' ')}
-export function authorityClassForPatterns(patterns:string[]):PersistentAuthorityClass|undefined{const p=patterns.map(norm);if(p.some(x=>/^git push(?:\s|\*)/.test(x)))return'git-push';if(p.some(x=>/^gh release create(?:\s|\*)/.test(x)))return'git-push';if(p.some(x=>/^(npm|pnpm|yarn|bun) publish(?:\s|\*)?/.test(x)))return'package-publish';if(p.some(x=>/^(docker push|kubectl apply|terraform apply|vercel deploy|netlify deploy)(?:\s|\*)?/.test(x)))return'deploy';return undefined}
+export function authorityClassForPatterns(patterns:string[]):PersistentAuthorityClass|undefined{const p=patterns.map(norm);if(p.some(x=>/^git push(?:\s|\*)/.test(x)))return'git-push';if(p.some(x=>/^gh release create(?:\s|\*)/.test(x)))return'release-create';if(p.some(x=>/^(npm|pnpm|bun) publish(?:\s|\*)?/.test(x)||/^yarn npm publish(?:\s|\*)?/.test(x)))return'package-publish';if(p.some(x=>/^(docker push|kubectl apply|kubectl delete|terraform apply|vercel deploy|netlify deploy)(?:\s|\*)?/.test(x)))return'deploy';return undefined}
 export function authorityPatterns(cls:PersistentAuthorityClass):string[]{return CLASS_PATTERNS[cls]}
 function wildcard(pattern:string,value:string):boolean{const esc=pattern.replace(/[.+^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*').replace(/\?/g,'.');return new RegExp(`^${esc}$`,'i').test(value)}
 function explicitDecision(bash:any,pattern:string):'allow'|'ask'|'deny'|undefined{if(typeof bash==='string')return bash==='deny'?'deny':undefined;if(!bash||typeof bash!=='object')return undefined;let decision: any;for(const [k,v] of Object.entries(bash)){if(k==='*')continue;if(wildcard(k,pattern.replace(/\*$/,''))||wildcard(k,pattern))decision=v}return['allow','ask','deny'].includes(decision)?decision:undefined}

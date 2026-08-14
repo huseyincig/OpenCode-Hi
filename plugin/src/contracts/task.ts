@@ -1,10 +1,11 @@
 import { isWorkerResultContract } from './worker-result.js'
 import { isContextReferenceContract } from './context-reference.js'
+import { EXTERNAL_ACTION_TYPES,type ExternalActionType } from './external-action.js'
 
 export const TASK_STATUSES=['created','queued','running','waiting','completed','failed','cancelled','blocked'] as const
 export type TaskContractStatus=typeof TASK_STATUSES[number]
-export const TASK_EXTERNAL_ACTIONS=['git-push','release-create','package-publish','deploy'] as const
-export type TaskExternalAction=typeof TASK_EXTERNAL_ACTIONS[number]
+export const TASK_EXTERNAL_ACTIONS=EXTERNAL_ACTION_TYPES
+export type TaskExternalAction=ExternalActionType
 
 export interface TaskContract {
   id:string

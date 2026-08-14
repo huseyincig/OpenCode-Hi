@@ -1,3 +1,4 @@
+import { externalActionTypeFromTechnicalKind } from '../../contracts/external-action.js';
 function shellWords(command) {
     const out = [];
     let cur = '', quote, escape = false;
@@ -172,6 +173,7 @@ export function classifyExternalCommand(command) { for (const inv of commandInvo
         return { kind, tokens: inv.tokens, exe: inv.exe, args: inv.args };
 } return { kind: 'other', tokens: commandTokens(command), exe: commandInvocations(command)[0]?.exe, args: commandInvocations(command)[0]?.args ?? [] }; }
 export function externalEffectCommand(command) { return commandInvocations(command).some(inv => classifyInvocation(inv) !== 'other'); }
+export function externalActionType(command) { return externalActionTypeFromTechnicalKind(classifyExternalCommand(command).kind); }
 export function canonicalExternalCommand(command) {
     const invs = commandInvocations(command), hit = invs.find(inv => classifyInvocation(inv) !== 'other');
     if (!hit || invs.length !== 1)

@@ -1,7 +1,8 @@
 import { isWorkerResultContract } from './worker-result.js';
 import { isContextReferenceContract } from './context-reference.js';
+import { EXTERNAL_ACTION_TYPES } from './external-action.js';
 export const TASK_STATUSES = ['created', 'queued', 'running', 'waiting', 'completed', 'failed', 'cancelled', 'blocked'];
-export const TASK_EXTERNAL_ACTIONS = ['git-push', 'release-create', 'package-publish', 'deploy'];
+export const TASK_EXTERNAL_ACTIONS = EXTERNAL_ACTION_TYPES;
 const STATUS = new Set(TASK_STATUSES);
 const EXTERNAL = new Set(TASK_EXTERNAL_ACTIONS);
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);

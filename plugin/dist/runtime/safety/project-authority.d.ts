@@ -1,4 +1,5 @@
-export type PersistentAuthorityClass = 'git-push' | 'package-publish' | 'deploy';
+import type { ExternalActionType } from '../../contracts/external-action.js';
+export type PersistentAuthorityClass = ExternalActionType;
 export declare class ProjectAuthorityStore {
     #private;
     readonly path: string;

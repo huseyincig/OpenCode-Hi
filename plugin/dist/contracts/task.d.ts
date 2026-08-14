@@ -1,7 +1,8 @@
+import { type ExternalActionType } from './external-action.js';
 export declare const TASK_STATUSES: readonly ["created", "queued", "running", "waiting", "completed", "failed", "cancelled", "blocked"];
 export type TaskContractStatus = typeof TASK_STATUSES[number];
 export declare const TASK_EXTERNAL_ACTIONS: readonly ["git-push", "release-create", "package-publish", "deploy"];
-export type TaskExternalAction = typeof TASK_EXTERNAL_ACTIONS[number];
+export type TaskExternalAction = ExternalActionType;
 export interface TaskContract {
     id: string;
     mission_id: string;

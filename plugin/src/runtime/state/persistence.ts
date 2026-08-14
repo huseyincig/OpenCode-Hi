@@ -6,6 +6,8 @@ import { isEvidenceItemContract } from '../../contracts/evidence.js'
 import { isTaskContract } from '../../contracts/task.js'
 import { isWorkerContract } from '../../contracts/worker.js'
 import { isHumanDecisionContract } from '../../contracts/human-decision.js'
+import { isAuthorityStateContract } from '../../contracts/authority.js'
+import { isExternalActionType } from '../../contracts/external-action.js'
 import { HI_METHODOLOGY_PRODUCERS, HI_METHODOLOGY_SIGNAL_CATALOG, HI_METHODOLOGY_TRIGGER_SOURCES } from '../../generated/methodology-policy.js'
 import { SEMANTIC_CAPABILITIES, SEMANTIC_VERIFICATION_KINDS } from '../intent/semantic-assessment.js'
 
@@ -93,7 +95,7 @@ function validIntent(value:unknown):value is NormalizedMissionIntent{
     &&['none','resolvable','contract-critical'].includes(String(value.ambiguity))
     &&['independent','sequential','external-gated','unknown','independent-multi'].includes(String(value.dependencyClass))
     &&stringArray(value.requiredCapabilities)&&value.requiredCapabilities.every(x=>(SEMANTIC_CAPABILITIES as readonly string[]).includes(x))
-    &&Array.isArray(value.requestedExternalActions)&&value.requestedExternalActions.every(x=>['git-push','release-create','package-publish','deploy'].includes(String(x)))
+    &&Array.isArray(value.requestedExternalActions)&&value.requestedExternalActions.every(isExternalActionType)
     &&stringArray(value.likelyVerification)&&value.likelyVerification.every(x=>(SEMANTIC_VERIFICATION_KINDS as readonly string[]).includes(x))
     &&stringArray(value.avoid)
     &&(value.likelyTargets===undefined||stringArray(value.likelyTargets))
@@ -111,6 +113,7 @@ function validMission(value:unknown):value is MissionState{
   if(typeof value.generation!=='number'||typeof value.iteration!=='number'||typeof value.continuation_budget!=='number'||typeof value.continuation_active!=='boolean')return false
   if(typeof value.pending_permissions!=='number'||!stringArray(value.pending_permission_ids)||typeof value.user_interrupted!=='boolean'||typeof value.resume_count!=='number'||typeof value.created_at!=='number'||typeof value.updated_at!=='number')return false
   if(value.human_decision!==undefined&&!isHumanDecisionContract(value.human_decision))return false
+  if(value.authority!==undefined&&!isAuthorityStateContract(value.authority))return false
   return true
 }
 

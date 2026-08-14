@@ -5,6 +5,8 @@ import type { TaskContract,TaskContractStatus } from '../../contracts/task.js'
 import type { WorkerContract,WorkerContractStatus } from '../../contracts/worker.js'
 import type { ContextReferenceContract } from '../../contracts/context-reference.js'
 import type { HumanDecisionContract } from '../../contracts/human-decision.js'
+import type { AuthorityStateContract } from '../../contracts/authority.js'
+import type { ExternalActionType } from '../../contracts/external-action.js'
 export type { EvidenceItem } from '../../contracts/evidence.js'
 export { WORKER_EVIDENCE_KINDS } from '../../contracts/worker-result.js'
 export type { EvidenceOutcome,MethodologyObservation,WorkerEvidenceKind,WorkerResult,WorkerResultStatus } from '../../contracts/worker-result.js'
@@ -35,7 +37,7 @@ export interface LedgerEvent { id:string; at:number; mission_id:string; type:str
 export interface VerificationPolicy { requiredKinds:string[]; requireFresh:boolean; requireReview:boolean; allowWorkerReportedEvidence:boolean }
 export interface HiMethodologyNeed { name:string; signal:string; trigger_source:string; producer:string; reason:string; created_at:number; task_id?:string; obligation_id?:string }
 export interface SemanticAssessmentState { status:'pending'|'assessed'; phase:'initial'|'followup'; revision:number; source:'host-primary'; pending_text:string; assessed_at?:number }
-export interface NormalizedMissionIntent { objective:string; likelyTargets?:string[]; taskKind:string; scope:'local'|'multi-file'|'repo-wide'|'external'|'multi-stream'; risk:Risk; ambiguity:'none'|'resolvable'|'contract-critical'; dependencyClass:'independent'|'sequential'|'external-gated'|'unknown'|'independent-multi'; requiredCapabilities:string[]; requestedExternalActions:Array<'git-push'|'release-create'|'package-publish'|'deploy'>; likelyVerification:string[]; avoid:string[] }
+export interface NormalizedMissionIntent { objective:string; likelyTargets?:string[]; taskKind:string; scope:'local'|'multi-file'|'repo-wide'|'external'|'multi-stream'; risk:Risk; ambiguity:'none'|'resolvable'|'contract-critical'; dependencyClass:'independent'|'sequential'|'external-gated'|'unknown'|'independent-multi'; requiredCapabilities:string[]; requestedExternalActions:ExternalActionType[]; likelyVerification:string[]; avoid:string[] }
 export interface MissionState {
   mission_id:string; session_id:string; objective:string; intent:NormalizedMissionIntent; semantic_assessment:SemanticAssessmentState; status:MissionStatus; risk:Risk; execution_mode:ExecutionMode; primary_mode:PrimaryMode; verification_policy:VerificationPolicy;
   adaptive_execution?:{path:'DIRECT'|'EVIDENCE'|'PLANNED'|'ESCALATED';reasons:string[]}; topology?:{mode:'single-agent'|'multi-agent';parallelism:number;reason:string[]};
@@ -46,7 +48,7 @@ export interface MissionState {
   context_artifacts:ContextArtifact[]; gates:MissionGate[]; temporary_mutations:TemporaryMutation[]; methodology_needs:HiMethodologyNeed[]; parent_loaded_methodologies:string[]; pending_permissions:number; pending_permission_ids?:string[];
   user_interrupted:boolean; interrupted_at?:number; interrupted_reason?:string; resumed_at?:number; resume_count?:number; last_user_message_at?:number;
   human_decision?:HumanDecisionContract;
-  authority?:{ pending?:{hash:string;action:string;created_at:number}; approved?:{hash:string;approved_at:number}; executing?:{hash:string;action:string;started_at:number}; completed_hashes?:string[] };
+  authority?:AuthorityStateContract;
   release_chain?:{ local_revision_at?:number; last_local_command?:string; quality?:{version?:string;verified:boolean;verified_at:number;assets:Array<{path:string;sha256?:string;manifest_match?:boolean}>}; push?:{outcome:'success'|'failure'|'unknown';at:number;command:string;expected_remote?:string;expected_ref?:string;local_head?:string;observed_remote?:string;observed_ref?:string;remote_hash?:string;remote_verified?:boolean;remote_verified_at?:number}; tag_push?:{outcome:'success'|'failure'|'unknown';at:number;command:string;expected_remote?:string;expected_tag?:string;expected_commit?:string;observed_remote?:string;direct_tag_hash?:string;peeled_tag_hash?:string;remote_verified?:boolean;remote_verified_at?:number}; release?:{outcome:'success'|'failure'|'unknown';at:number;command:string;expected_tag?:string;expected_target?:string;expected_commit?:string;expected_remote?:string;observed_tag?:string;observed_target?:string;observed_remote?:string;direct_tag_hash?:string;peeled_tag_hash?:string;view_verified?:boolean;assets_verified?:boolean;observed_assets?:Array<{name:string;size?:number}>;remote_verified?:boolean;remote_verified_at?:number}; package?:{name?:string;version?:string;pack_integrity?:string;pack_shasum?:string;pack_filename?:string;pack_files?:string[];pack_state_hash?:string;pack_verified_at?:number;outcome?:'success'|'failure'|'unknown';published_at?:number;registry_version?:string;registry_integrity?:string;registry_shasum?:string;remote_verified?:boolean;remote_verified_at?:number}; blocked_reason?:string };
   applied_actions?:Record<string,string>; created_at:number; updated_at:number
 }

@@ -2,13 +2,14 @@ import type { MissionState } from '../mission/types.js'
 import { payloadHash } from './idempotency.js'
 import { appendLedger } from '../ledger/ledger.js'
 import { notePrivilegedReleaseOutcome } from './release-chain.js'
-import { externalEffectCommand } from './command-classifier.js'
+import { externalActionType,externalEffectCommand } from './command-classifier.js'
+import type { ExactAuthorityActionContract } from '../../contracts/authority.js'
 import { openHumanDecision,resolveHumanDecision } from '../human-decision/runtime.js'
 const APPROVE=/^\s*(approve|approved|I approve|approve this action)\s*[.!]?\s*$/i
 const CONFIRM_SUCCESS=/^\s*(confirm action succeeded|action succeeded|I confirm the action succeeded)\s*[.!]?\s*$/i
 const CONFIRM_FAILURE=/^\s*(confirm action failed|action failed|I confirm the action failed)\s*[.!]?\s*$/i
 export function privilegedAction(command:string):boolean{return externalEffectCommand(command)}
-export function actionContract(command:string,cwd?:string):{action:string;hash:string}{const action=`cwd=${cwd??''}\ncommand=${command.trim()}`;return{action,hash:payloadHash(action)}}
+export function actionContract(command:string,cwd?:string):ExactAuthorityActionContract{const action_type=externalActionType(command);if(!action_type)throw new Error('Hi authority contract: command is not a canonical external action.');const target={cwd:cwd??'',command:command.trim()},action=`cwd=${target.cwd}\ncommand=${target.command}`,hash=payloadHash(action);return{authority_id:`auth_${hash.slice(0,20)}`,action_type,target,action,hash,requested_by:'mission-parent',required_reason:'privileged-external-effect',one_shot:true}}
 function authorityObligation(m:MissionState,hash:string){return m.obligations.find(x=>x.id===`o-authority-${hash.slice(0,10)}`&&x.kind==='authority'&&x.status==='open')}
 export function isAuthorized(m:MissionState,command:string,cwd?:string):boolean{const c=actionContract(command,cwd);return m.authority?.approved?.hash===c.hash}
 export function claimAuthorizedAction(m:MissionState,command:string,cwd?:string):'new'|'duplicate'|'conflict'{const c=actionContract(command,cwd);if(m.authority?.executing?.hash===c.hash)return'duplicate';if((m.authority?.completed_hashes??[]).includes(c.hash))return'duplicate';return'new'}

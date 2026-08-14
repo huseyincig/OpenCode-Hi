@@ -1,3 +1,4 @@
+import { type ExternalActionType } from '../../contracts/external-action.js';
 export type ExternalCommandKind = 'git-push' | 'package-publish' | 'gh-release-create' | 'docker-push' | 'kubectl-mutate' | 'terraform-apply' | 'vercel-deploy' | 'netlify-deploy' | 'other';
 export interface CommandInvocation {
     exe?: string;
@@ -30,4 +31,5 @@ export declare function classifyExternalCommand(command: string): {
     args: string[];
 };
 export declare function externalEffectCommand(command: string): boolean;
+export declare function externalActionType(command: string): ExternalActionType | undefined;
 export declare function canonicalExternalCommand(command: string): boolean;

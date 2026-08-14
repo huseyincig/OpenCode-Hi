@@ -5,6 +5,8 @@ import type { TaskContract, TaskContractStatus } from '../../contracts/task.js';
 import type { WorkerContract, WorkerContractStatus } from '../../contracts/worker.js';
 import type { ContextReferenceContract } from '../../contracts/context-reference.js';
 import type { HumanDecisionContract } from '../../contracts/human-decision.js';
+import type { AuthorityStateContract } from '../../contracts/authority.js';
+import type { ExternalActionType } from '../../contracts/external-action.js';
 export type { EvidenceItem } from '../../contracts/evidence.js';
 export { WORKER_EVIDENCE_KINDS } from '../../contracts/worker-result.js';
 export type { EvidenceOutcome, MethodologyObservation, WorkerEvidenceKind, WorkerResult, WorkerResultStatus } from '../../contracts/worker-result.js';
@@ -171,7 +173,7 @@ export interface NormalizedMissionIntent {
     ambiguity: 'none' | 'resolvable' | 'contract-critical';
     dependencyClass: 'independent' | 'sequential' | 'external-gated' | 'unknown' | 'independent-multi';
     requiredCapabilities: string[];
-    requestedExternalActions: Array<'git-push' | 'release-create' | 'package-publish' | 'deploy'>;
+    requestedExternalActions: ExternalActionType[];
     likelyVerification: string[];
     avoid: string[];
 }
@@ -257,23 +259,7 @@ export interface MissionState {
     resume_count?: number;
     last_user_message_at?: number;
     human_decision?: HumanDecisionContract;
-    authority?: {
-        pending?: {
-            hash: string;
-            action: string;
-            created_at: number;
-        };
-        approved?: {
-            hash: string;
-            approved_at: number;
-        };
-        executing?: {
-            hash: string;
-            action: string;
-            started_at: number;
-        };
-        completed_hashes?: string[];
-    };
+    authority?: AuthorityStateContract;
     release_chain?: {
         local_revision_at?: number;
         last_local_command?: string;

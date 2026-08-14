@@ -568,25 +568,46 @@ HumanDecision is the bounded persisted record of **why human interaction is requ
 
 ### C23 — AuthorityContract
 
-**Required fields:**
+**Canonical owner:** `plugin/src/contracts/authority.ts`; exact-action construction/lifecycle executor remains `runtime/safety/authority.ts`.
+
+The runtime contract has two intentionally separate layers:
 
 ```text
-authority_id
-action_type
-target/scope
-requested_by
-required_reason
-grant_source
-exact_grant_token_or_structured_event
-expires/one_shot
-consumed_at?
+ExactAuthorityActionContract:
+  authority_id
+  action_type -> ExternalActionType
+  target: { cwd, command }
+  canonical action text
+  exact action hash
+  requested_by = mission-parent
+  required_reason = privileged-external-effect
+  one_shot = true
+
+AuthorityStateContract:
+  pending?: { hash, action, created_at }
+  approved?: { hash, approved_at }
+  executing?: { hash, action, started_at }
+  completed_hashes?: bounded unique hash set
 ```
 
-**Invariant:** generic yes/continue/confirm does not grant unrelated authority.
+`AuthorityStateContract` is strict/current-only in persistence. At most one pending/approved/executing slot may be active. The exact action hash binds command + cwd; a different target or command is a different Authority identity. Host-native permission resolution and project-persistent `always` permission are grant/executor projections, not a second Mission authority schema.
+
+**Invariant:** generic yes/continue/confirm does not grant unrelated authority; unknown execution outcome remains `executing` until explicit reconciliation and may not be blindly replayed.
 
 ### C24 — ExternalActionContract
 
-Current action values include material external effects such as git push, release creation, package publish and deploy.
+**Canonical owner:** `plugin/src/contracts/external-action.ts`.
+
+The closed semantic vocabulary is exactly:
+
+```text
+git-push
+release-create
+package-publish
+deploy
+```
+
+Technical command kinds such as `gh-release-create`, `docker-push`, `kubectl-mutate`, `terraform-apply`, `vercel-deploy` and `netlify-deploy` are executor/classifier facts and project into one of those four semantic values; they are not additional Core action types.
 
 Required semantics:
 
@@ -596,8 +617,10 @@ target
 requested_explicitly
 required_authority_ref
 executor
-result_evidence_ref
+result_evidence_ref?   # only when canonical Evidence is actually admitted
 ```
+
+Project-persistent native `always` grants use the same four classes. `git-push` authority does not imply `release-create`; package/deploy permission patterns must cover every technical command form admitted by the command classifier without widening another class.
 
 ### C25 — HostAgentProjectionContract
 

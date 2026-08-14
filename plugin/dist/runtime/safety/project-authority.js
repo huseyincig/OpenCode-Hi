@@ -2,9 +2,10 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 const FILE = '.opencode/hi/policy/authority.json';
 const CLASS_PATTERNS = {
-    'git-push': ['git push *', 'gh release create *'],
-    'package-publish': ['npm publish*', 'pnpm publish*', 'yarn publish*', 'bun publish*'],
-    'deploy': ['docker push *', 'kubectl apply *', 'terraform apply *', 'vercel deploy*', 'netlify deploy*'],
+    'git-push': ['git push *'],
+    'release-create': ['gh release create *'],
+    'package-publish': ['npm publish*', 'pnpm publish*', 'bun publish*', 'yarn npm publish*'],
+    'deploy': ['docker push *', 'kubectl apply *', 'kubectl delete *', 'terraform apply *', 'vercel deploy*', 'netlify deploy*'],
 };
 function empty() { return { schema: 1, grants: {} }; }
 export class ProjectAuthorityStore {
@@ -29,8 +30,8 @@ export class ProjectAuthorityStore {
 function norm(s) { return s.trim().toLowerCase().replace(/\s+/g, ' '); }
 export function authorityClassForPatterns(patterns) { const p = patterns.map(norm); if (p.some(x => /^git push(?:\s|\*)/.test(x)))
     return 'git-push'; if (p.some(x => /^gh release create(?:\s|\*)/.test(x)))
-    return 'git-push'; if (p.some(x => /^(npm|pnpm|yarn|bun) publish(?:\s|\*)?/.test(x)))
-    return 'package-publish'; if (p.some(x => /^(docker push|kubectl apply|terraform apply|vercel deploy|netlify deploy)(?:\s|\*)?/.test(x)))
+    return 'release-create'; if (p.some(x => /^(npm|pnpm|bun) publish(?:\s|\*)?/.test(x) || /^yarn npm publish(?:\s|\*)?/.test(x)))
+    return 'package-publish'; if (p.some(x => /^(docker push|kubectl apply|kubectl delete|terraform apply|vercel deploy|netlify deploy)(?:\s|\*)?/.test(x)))
     return 'deploy'; return undefined; }
 export function authorityPatterns(cls) { return CLASS_PATTERNS[cls]; }
 function wildcard(pattern, value) { const esc = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.'); return new RegExp(`^${esc}$`, 'i').test(value); }

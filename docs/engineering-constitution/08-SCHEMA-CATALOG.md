@@ -211,11 +211,11 @@ The PI schema deliberately does not invent `observation_count`, `independence` o
 
 HumanDecision is strict/current-only. Semantic type is the closed union `preference | ambiguity | value_judgment | credential_action | authority_request | operational_action`. Decision identity is derived from semantic type + technical reason code + exact blocking Mission/Task/Worker scope + optional authority ref. Response kind is closed (`free-text | choice | external-action | authority-protocol`); authority protocols are closed technical protocol IDs rather than natural-language interpretation. `OPEN` decisions cannot carry resolution fields; `RESOLVED` decisions require bounded resolution + resolved timestamp. Unknown fields and forged IDs fail closed. Persistence consumes the canonical validator.
 
-HumanDecision is not Authority. Authority remains a separate exact `action_type + target/scope`/action-contract safety state. A HumanDecision with `semantic_type=authority_request` only projects the interaction required by an already-bound Authority state; it does not authorize execution. Generic follow-up resolves only non-authority HumanDecision state. Exact approval/outcome-reconciliation tokens remain deterministic safety-protocol parsing at the Authority boundary.
+HumanDecision is not Authority. Authority has a canonical exact-action value contract plus a strict Mission runtime state contract. Exact action identity binds semantic ExternalAction type + command + cwd into a deterministic hash/authority ID. Persisted `pending`, `approved` and `executing` slots are mutually exclusive; completed hashes are bounded and unique. Unknown authority fields, malformed hashes/actions and ambiguous simultaneous active slots fail closed at RuntimePersistence. A HumanDecision with `semantic_type=authority_request` only projects the interaction required by Authority state; generic continuation cannot resolve it. Unknown execution outcome remains executing/reconciliation-gated.
 
 ## S23 — ExternalActionSchema
 
-Action types remain closed/current-only. The current set includes:
+Action types remain closed/current-only. The current semantic set is:
 
 ```text
 git-push
@@ -224,7 +224,7 @@ package-publish
 deploy
 ```
 
-Adding an action type requires Authority handling, executor mapping and acceptance coverage.
+The technical shell classifier may have more executor-specific kinds, but every privileged kind must map to exactly one of these values. Project-native permission persistence uses the same semantic classes; a grant for one class cannot widen another class. Adding an action type requires Authority handling, executor mapping, native permission projection and acceptance coverage.
 
 ## S24 — ProvenanceSchema
 

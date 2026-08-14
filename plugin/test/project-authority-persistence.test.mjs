@@ -19,7 +19,7 @@ test('native always approval persists normal release-chain permission across pro
     const cfg={permission:{bash:{'*':'allow'}}}
     applyProjectAuthorityPermissions(cfg,b)
     assert.equal(cfg.permission.bash['git push *'],'allow')
-    assert.equal(cfg.permission.bash['gh release create *'],'allow')
+    assert.equal(cfg.permission.bash['gh release create *'],'ask')
     assert.equal(cfg.permission.bash['git push --force*'],'ask')
     assert.equal(cfg.permission.bash['git push -f *'],'ask')
     const saved=JSON.parse(readFileSync(join(root,'.opencode','hi','policy','authority.json'),'utf8'))
@@ -36,6 +36,8 @@ test('without persistent grant, risky external effects use native OpenCode ask i
     assert.equal(cfg.permission.bash['git push *'],'ask')
     assert.equal(cfg.permission.bash['gh release create *'],'ask')
     assert.equal(cfg.permission.bash['npm publish*'],'ask')
+    assert.equal(cfg.permission.bash['yarn npm publish*'],'ask')
+    assert.equal(cfg.permission.bash['kubectl delete *'],'ask')
     const store=new MissionStore(root),m=startAssessedMission(store,'s','push the release',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',requested_external_actions:['git-push']})
     await createToolBeforeHook(store)({sessionID:'s',tool:'bash',args:{command:'git push origin main',cwd:root}},{args:{command:'git push origin main',cwd:root}})
     assert.ok(m.authority?.executing,'reaching tool-before means OpenCode native permission resolution already completed')
@@ -50,13 +52,15 @@ test('user explicit deny is never weakened by persistent Hi grant',()=>{
     const cfg={permission:{bash:{'*':'allow','git *':'deny'}}}
     applyProjectAuthorityPermissions(cfg,st)
     assert.equal(cfg.permission.bash['git push *'],undefined)
-    assert.equal(cfg.permission.bash['gh release create *'],'allow')
+    assert.equal(cfg.permission.bash['gh release create *'],'ask')
   } finally { rmSync(root,{recursive:true,force:true}) }
 })
 
 test('native permission patterns map to bounded project authority classes',()=>{
   assert.equal(authorityClassForPatterns(['git push origin *']),'git-push')
-  assert.equal(authorityClassForPatterns(['gh release create *']),'git-push')
+  assert.equal(authorityClassForPatterns(['gh release create *']),'release-create')
+  assert.equal(authorityClassForPatterns(['yarn npm publish *']),'package-publish')
+  assert.equal(authorityClassForPatterns(['kubectl delete *']),'deploy')
   assert.equal(authorityClassForPatterns(['npm publish*']),'package-publish')
   assert.equal(authorityClassForPatterns(['rm -rf *']),undefined)
 })
@@ -79,7 +83,7 @@ test('plugin persists native always reply and applies it on the next project boo
     const second={permission:{bash:{'*':'allow'}}}
     await hooks.config(second)
     assert.equal(second.permission.bash['git push *'],'allow')
-    assert.equal(second.permission.bash['gh release create *'],'allow')
+    assert.equal(second.permission.bash['gh release create *'],'ask')
     assert.equal(second.permission.bash['git push --force*'],'ask')
     await hooks.dispose?.()
   } finally { rmSync(root,{recursive:true,force:true}) }
@@ -101,7 +105,18 @@ test('global ask does not spam autonomous local commit/merge steps; external pus
     assert.equal(next.permission.bash['git commit *'],'allow')
     assert.equal(next.permission.bash['git merge *'],'allow')
     assert.equal(next.permission.bash['git push *'],'allow')
-    assert.equal(next.permission.bash['gh release create *'],'allow')
+    assert.equal(next.permission.bash['gh release create *'],'ask')
     assert.equal(next.permission.bash['git push --force*'],'ask')
+  } finally { rmSync(root,{recursive:true,force:true}) }
+})
+
+
+test('release-create persistent authority is distinct from git-push authority',()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-auth-'))
+  try{
+    const st=new ProjectAuthorityStore(root);st.grant('release-create')
+    const cfg={permission:{bash:{'*':'allow'}}};applyProjectAuthorityPermissions(cfg,st)
+    assert.equal(cfg.permission.bash['gh release create *'],'allow')
+    assert.equal(cfg.permission.bash['git push *'],'ask')
   } finally { rmSync(root,{recursive:true,force:true}) }
 })

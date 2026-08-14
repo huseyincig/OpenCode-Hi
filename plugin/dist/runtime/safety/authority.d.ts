@@ -1,9 +1,7 @@
 import type { MissionState } from '../mission/types.js';
+import type { ExactAuthorityActionContract } from '../../contracts/authority.js';
 export declare function privilegedAction(command: string): boolean;
-export declare function actionContract(command: string, cwd?: string): {
-    action: string;
-    hash: string;
-};
+export declare function actionContract(command: string, cwd?: string): ExactAuthorityActionContract;
 export declare function isAuthorized(m: MissionState, command: string, cwd?: string): boolean;
 export declare function claimAuthorizedAction(m: MissionState, command: string, cwd?: string): 'new' | 'duplicate' | 'conflict';
 export declare function consumeAuthority(m: MissionState, command: string, cwd?: string): void;

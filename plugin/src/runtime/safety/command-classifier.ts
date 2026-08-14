@@ -1,3 +1,4 @@
+import { externalActionTypeFromTechnicalKind,type ExternalActionType } from '../../contracts/external-action.js'
 export type ExternalCommandKind='git-push'|'package-publish'|'gh-release-create'|'docker-push'|'kubectl-mutate'|'terraform-apply'|'vercel-deploy'|'netlify-deploy'|'other'
 export interface CommandInvocation{exe?:string;args:string[];tokens:string[]}
 
@@ -61,6 +62,7 @@ function classifyInvocation(inv:CommandInvocation):ExternalCommandKind{
 }
 export function classifyExternalCommand(command:string):{kind:ExternalCommandKind;tokens:string[];exe?:string;args:string[]}{for(const inv of commandInvocations(command)){const kind=classifyInvocation(inv);if(kind!=='other')return{kind,tokens:inv.tokens,exe:inv.exe,args:inv.args}}return{kind:'other',tokens:commandTokens(command),exe:commandInvocations(command)[0]?.exe,args:commandInvocations(command)[0]?.args??[]}}
 export function externalEffectCommand(command:string):boolean{return commandInvocations(command).some(inv=>classifyInvocation(inv)!=='other')}
+export function externalActionType(command:string):ExternalActionType|undefined{return externalActionTypeFromTechnicalKind(classifyExternalCommand(command).kind)}
 
 export function canonicalExternalCommand(command:string):boolean{
   const invs=commandInvocations(command),hit=invs.find(inv=>classifyInvocation(inv)!=='other');if(!hit||invs.length!==1)return false
