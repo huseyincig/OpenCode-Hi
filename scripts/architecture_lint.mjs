@@ -2,6 +2,7 @@
 import {existsSync,mkdtempSync,readFileSync,readdirSync,rmSync,cpSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join,resolve} from 'node:path'
+import {fileURLToPath} from 'node:url'
 import {spawnSync} from 'node:child_process'
 import {contentHash} from '../plugin/dist/contracts/common.js'
 import {validateProjectionReceipt} from '../plugin/dist/contracts/provenance.js'
@@ -17,7 +18,7 @@ import {openCodeHostCapabilityContracts} from '../plugin/dist/contracts/host-cap
 import {unaccountedExecutionPermissionKeys} from '../plugin/dist/runtime/routing/execution-profile.js'
 import {buildProjectionReceipts} from './projection_receipts.mjs'
 
-const ROOT=resolve(new URL('..',import.meta.url).pathname)
+const ROOT=resolve(fileURLToPath(new URL('..',import.meta.url)))
 const results=[]
 const fail=(id,name,detail)=>results.push({id,name,status:'FAIL',detail})
 const pass=(id,name,detail)=>results.push({id,name,status:'PASS',detail})

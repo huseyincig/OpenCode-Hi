@@ -105,6 +105,12 @@ def _build(tmp_path):
     out=tmp_path/'dist';src=tmp_path/'source';r=run(ROOT/'scripts/release-build.py','--out',out,'--source-out',src);assert r.returncode==0,r.stderr
     return out/f'OpenCode-Hi-{V}-DISTRIBUTABLE.zip',src/f'OpenCode-Hi-{V}-SOURCE.zip'
 
+def test_node_release_scripts_use_platform_safe_file_url_paths():
+    for rel in ['scripts/generate_projection_receipts.mjs','scripts/architecture_lint.mjs']:
+        text=(ROOT/rel).read_text()
+        assert 'fileURLToPath' in text
+        assert "import.meta.url).pathname" not in text
+
 def test_release_names_and_source_integrity(tmp_path):
     dist,src=_build(tmp_path); assert dist.is_file() and src.is_file()
     with zipfile.ZipFile(src) as z:n=set(z.namelist())
