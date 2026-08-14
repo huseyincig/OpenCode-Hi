@@ -41,7 +41,7 @@ export function openCodeHostCapabilityContracts(o) {
         worker,
         unsupported('browser-execution', 'methodology-host-capability.test.mjs', 'Do not claim browser/visual execution from MCP naming, prompts, screenshots, or tool inventory alone; the audited OpenCode host surface exposes MCP/tool discovery but Hi has no deterministic browser executor/evidence adapter.'),
         realHostSupported('process-lifecycle', 'OpenCode v2 PTY create/get/list/remove/connect-token + ticketed WebSocket', 'ProcessRuntime + OpenCodePtyAdapter', 'p3-process-runtime-lifecycle.test.mjs', ['OpenCode role bash permission', 'external_directory when cwd is outside the project', 'Hi ExternalAction/Authority for classified external effects']),
-        unsupported('workspace-isolation-binding', 'w2-workspace-executor.test.mjs', 'W1 contracts and the W2 OpenCode/Git adapter now exist, but exact OpenCode child `workspaceID + directory` binding, isolated-write/main-workspace separation, verification-in-lease and cleanup are not promoted until W3 real-host acceptance; do not claim support from local adapter tests alone.')
+        realHostSupported('workspace-isolation-binding', 'experimental.workspace create/list/remove + v2 session.create workspace/workspaceID routing', 'WorkspaceRuntime + OpenCodeWorkspaceAdapter + ChildExecutionCoordinator', 'w3-workspace-real-host-acceptance.test.mjs', ['OpenCode child role edit/write permission; isolation never widens external_directory authority'])
     ];
 }
 export function hostCapabilityByID(items, id) { return items.find(x => x.id === id); }

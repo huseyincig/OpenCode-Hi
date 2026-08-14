@@ -24,7 +24,7 @@ This map records actual v58 owners before OpenCode-Hi adds new responsibilities.
 | Release / package verification | `scripts/release-build.py`, `scripts/validate.py`, Python release tests |
 | OpenCode host integration | `plugin/src/opencode/**`, `plugin/src/plugin.ts` |
 | Runtime process handling | Ordinary bash uses shell/tool lifecycle only; OpenCode 1.18.18 PTY is a separate native executor and is not currently adopted as Hi process ownership |
-| Workspace isolation | OpenCode 1.18.18 exposes workspace/session binding primitives, but Hi has no canonical isolation selection/provisioning/cleanup executor or T3-bound alternate-workspace child execution |
+| Workspace isolation | Hi owns IsolationDecision/WorkspaceLease + WorkspaceRuntime/OpenCodeWorkspaceAdapter and exact OpenCode 1.18.18 T3 proves source-bound worktree provisioning, child workspace routing, isolated write/verification, primary preservation, cleanup, restart adoption and orphan quarantine |
 | Telemetry | Bounded Mission ledger/state is canonical operational history; metrics/report/status are derived diagnostics, not a second telemetry event store |
 
 Architecture freeze consequence: OpenCode-Hi should evolve these owners instead of introducing duplicate orchestration layers. New modules are justified only for responsibilities that are genuinely absent (for example first-class Process Governor, Project Intelligence, Semantic Context, Privacy Boundary, and Human Decision semantics).

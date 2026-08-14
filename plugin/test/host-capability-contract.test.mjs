@@ -21,10 +21,11 @@ test('host capability registry separates primitive presence from product capabil
   assert.equal(hostCapabilityByID(items,'process-lifecycle')?.semantic_loss.length,0)
   assert.match(hostCapabilityByID(items,'process-lifecycle')?.native_primitive??'',/v2 PTY|WebSocket/i)
   const workspace=hostCapabilityByID(items,'workspace-isolation-binding')
-  assert.equal(workspace?.status,'UNSUPPORTED')
-  assert.equal(workspace?.native_primitive,undefined)
-  assert.equal(workspace?.adapter_entrypoint,undefined)
-  assert.match(workspace?.forbidden_fake_behavior??'',/workspaceID|alternate workspace/i)
+  assert.equal(workspace?.status,'SUPPORTED')
+  assert.equal(workspace?.verification_level,'REAL_HOST_ACCEPTANCE')
+  assert.match(workspace?.native_primitive??'',/workspace.*session|session.*workspace/i)
+  assert.match(workspace?.adapter_entrypoint??'',/WorkspaceRuntime|OpenCodeWorkspaceAdapter/)
+  assert.match(workspace?.forbidden_fake_behavior??'',/real-host acceptance receipt/i)
   const browser=hostCapabilityByID(items,'browser-execution')
   assert.equal(browser?.status,'UNSUPPORTED')
   assert.match(browser?.forbidden_fake_behavior??'',/MCP\/tool discovery|browser executor/i)
@@ -56,12 +57,13 @@ test('OpenCode detector projects boolean observations into capability contracts 
   const detected=detectOpenCodeCapabilities(client)
   assert.ok(detected.contracts.length>=16)
   assert.equal(hostCapabilityByID(detected.contracts,'worker-runtime')?.status,'SUPPORTED')
-  assert.ok(detected.contracts.filter(x=>x.id!=='process-lifecycle').every(x=>x.verification_level==='OBSERVED'))
+  assert.ok(detected.contracts.filter(x=>!['process-lifecycle','workspace-isolation-binding'].includes(x.id)).every(x=>x.verification_level==='OBSERVED'))
   assert.equal(hostCapabilityByID(detected.contracts,'process-lifecycle')?.verification_level,'REAL_HOST_ACCEPTANCE')
-  assert.equal(hostCapabilityByID(detected.contracts,'workspace-isolation-binding')?.status,'UNSUPPORTED')
+  assert.equal(hostCapabilityByID(detected.contracts,'workspace-isolation-binding')?.status,'SUPPORTED')
+  assert.equal(hostCapabilityByID(detected.contracts,'workspace-isolation-binding')?.verification_level,'REAL_HOST_ACCEPTANCE')
 })
 
-test('doctor reports supported process lifecycle and unsupported workspace/browser boundaries',()=>{
+test('doctor reports real-host supported process/workspace lifecycle and unsupported browser boundary',()=>{
   const d=mkdtempSync(join(tmpdir(),'hi-host-cap-'))
   try{
     const capabilities=detectOpenCodeCapabilities({session:{create:async()=>({}),promptAsync:async()=>({}),abort:async()=>({})}})
@@ -71,8 +73,8 @@ test('doctor reports supported process lifecycle and unsupported workspace/brows
     assert.equal(process?.status,'pass')
     assert.match(process?.detail??'',/status=SUPPORTED/)
     assert.match(process?.detail??'',/verification=REAL_HOST_ACCEPTANCE/)
-    assert.match(workspace?.detail??'',/status=UNSUPPORTED/)
-    assert.match(workspace?.detail??'',/verification=OBSERVED/)
+    assert.match(workspace?.detail??'',/status=SUPPORTED/)
+    assert.match(workspace?.detail??'',/verification=REAL_HOST_ACCEPTANCE/)
     assert.match(browser?.detail??'',/status=UNSUPPORTED/)
     assert.match(browser?.detail??'',/verification=OBSERVED/)
   }finally{rmSync(d,{recursive:true,force:true})}

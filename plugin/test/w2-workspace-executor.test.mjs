@@ -158,9 +158,8 @@ test('W2 orphaned restored lease quarantines its task/worker and cannot resume o
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('W2 capability remains UNSUPPORTED before W3 real-host acceptance and implementation has no broad auto-snapshot staging',()=>{
+test('W2 implementation still has no broad auto-snapshot staging after W3 capability promotion',()=>{
   const all={childSessions:true,asyncPrompt:true,syncPrompt:true,abort:true,providerInventory:true,appLog:true,sessionStatus:true,childSessionList:true,sessionTodo:true,sessionDiff:true,sessionFork:true,sessionSummarize:true,sessionRevert:true,sessionUnrevert:true}
-  assert.equal(hostCapabilityByID(openCodeHostCapabilityContracts(all),'workspace-isolation-binding')?.status,'UNSUPPORTED')
   const source=readFileSync(new URL('../src/opencode/open-code-workspace-adapter.ts',import.meta.url),'utf8')+readFileSync(new URL('../src/runtime/workspace/runtime.ts',import.meta.url),'utf8')
   assert.doesNotMatch(source,/git\s+add\s+-A|\['add','-A'\]|\["add","-A"\]/)
 })
