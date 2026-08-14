@@ -1,0 +1,336 @@
+{
+  "schema": 1,
+  "type": "hi-adversarial-threat-matrix",
+  "reference_pins": {
+    "opencode-agent-orchestration-kit": "c5824da575fb3b7cee30a3d1b889b7bf3328521a",
+    "opencode-pty": "cc12a2bef39cdbf2a7e945b13a0ed423e4f104ee",
+    "opencode-worktree": "77c2262f1c2c71077284643232cc85f6d05e06c0"
+  },
+  "threats": [
+    {
+      "id": "Q3-ADV-001",
+      "threat": "prompt-injection",
+      "owner": "Authority + structured semantic/WorkerResult contracts",
+      "control": "Untrusted prose cannot directly grant external authority or replace structured proof; generic resume/confirmation is not approval.",
+      "proof_tests": [
+        {
+          "file": "plugin/test/authority-input-split.test.mjs",
+          "contains": "user \"resume\" against pending authority is rejected (must use exact approve)"
+        },
+        {
+          "file": "plugin/test/worker-result-contract.test.mjs",
+          "contains": "WorkerResult evidence rejects unknown proof kinds and malformed evidence metadata"
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "Q3-ADV-002",
+      "threat": "role-prompt-drift",
+      "owner": "RoleContract/PermissionProfile generators + OpenCode agent binding",
+      "control": "Canonical agent prompt/mode/permission projection is generated and canonical-name drift fails closed.",
+      "proof_tests": [
+        {
+          "file": "plugin/test/agent-binding-contract.test.mjs",
+          "contains": "canonical Hi agent names fail binding on prompt mode or permission collisions"
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "Q3-ADV-003",
+      "threat": "host-permission-widening",
+      "owner": "PermissionProfile + host execution-surface binding",
+      "control": "Lower layers may narrow but cannot widen canonical Hi permissions; denied child/control-plane surfaces remain denied.",
+      "proof_tests": [
+        {
+          "file": "plugin/test/permission-profile-contract.test.mjs",
+          "contains": "PermissionProfile safety is fail-closed for widening, duplicate rules, methodology ownership and read-only edit"
+        },
+        {
+          "file": "plugin/test/main-prompt-execution-profile-tools.test.mjs",
+          "contains": "prompt tool overrides only disable tools; they never turn a denied native permission into allow"
+        }
+      ],
+      "evidence": [
+        {
+          "tier": "T3",
+          "receipt": "data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-c5d8287.json",
+          "contains": "native_permission_reject"
+        }
+      ]
+    },
+    {
+      "id": "Q3-ADV-004",
+      "threat": "path-traversal",
+      "owner": "Skill resource resolver + provenance/archive validators",
+      "control": "Resource/provenance/archive paths are normalized and traversal/symlink escape is rejected.",
+      "proof_tests": [
+        {
+          "file": "plugin/test/hi-acceptance-evolution.test.mjs",
+          "contains": "skill resource API rejects traversal"
+        },
+        {
+          "file": "plugin/test/contract-primitives.test.mjs",
+          "contains": "provenance is strict, normalized and rejects path escape/duplicates"
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "Q3-ADV-005",
+      "threat": "external-directory-escape",
+      "owner": "PermissionProfile/OpenCode host projection",
+      "control": "Canonical agents default external_directory to deny; project resource access uses admitted bounded paths instead of arbitrary external-directory widening.",
+      "proof_tests": [
+        {
+          "file": "plugin/test/permission-profile-contract.test.mjs",
+          "contains": "canonical PermissionProfile catalog validates and exactly drives non-methodology native permissions"
+        },
+        {
+          "file": "plugin/test/agent-binding-contract.test.mjs",
+          "contains": "canonical Hi agent names fail binding on prompt mode or permission collisions"
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "Q3-ADV-006",
+      "threat": "stale-child-callback",
+      "owner": "Mission generation + TaskRuntime/plugin callback gate",
+      "control": "Child callbacks are accepted only for the current mission/generation/reconcile state; stale generation callbacks are ignored.",
+      "proof_tests": [
+        {
+          "file": "plugin/test/system-transform.test.mjs",
+          "contains": "system-transform skips child whose generation is stale"
+        },
+        {
+          "file": "plugin/test/continuation-evaluator-wide-batch.test.mjs",
+          "contains": "late parent-session events after explicit STOP are ignored and cannot recreate permission wait"
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "Q3-ADV-007",
+      "threat": "duplicate-child-callback",
+      "owner": "TaskRuntime result reconciliation + permission event idempotency",
+      "control": "Duplicate worker result digests and repeated permission event IDs are idempotently ignored instead of reapplying state.",
+      "proof_tests": [
+        {
+          "file": "plugin/test/q3-adversarial-threat-matrix.test.mjs",
+          "contains": "Q3 duplicate child result callback is idempotently ignored by canonical TaskRuntime"
+        },
+        {
+          "file": "plugin/test/permission-event-idempotency.test.mjs",
+          "contains": "permission event id is stable across asked/replied payload shapes"
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "Q3-ADV-008",
+      "threat": "user-dirty-file-ownership",
+      "owner": "Native diff ownership + staging safety",
+      "control": "Pre-existing dirty baselines remain user-owned; staging/topology mutations require fresh ownership/cleanliness proof and cleanup restores baseline, not HEAD.",
+      "proof_tests": [
+        {
+          "file": "plugin/test/native-diff-ownership.test.mjs",
+          "contains": "pre-existing user dirty file unchanged from worker baseline is not attributed to the worker"
+        },
+        {
+          "file": "plugin/test/staging-safety.test.mjs",
+          "contains": "broad staging is blocked when pre-existing user-owned dirty files exist"
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "Q3-ADV-009",
+      "threat": "context-poisoning",
+      "owner": "ContextReference/ContextArtifact/SemanticContext selection",
+      "control": "Task context is explicit consumer-bound minimum context; unknown artifacts fail closed and durable content is consumed only while live freshness holds.",
+      "proof_tests": [
+        {
+          "file": "plugin/test/context-survival-hardening.test.mjs",
+          "contains": "unknown task context artifact id fails closed instead of widening context"
+        },
+        {
+          "file": "plugin/test/context-survival-hardening.test.mjs",
+          "contains": "fresh durable context artifact content is loaded only while source-bound freshness holds"
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "Q3-ADV-010",
+      "threat": "pi-poisoning",
+      "owner": "ProjectIntelligence contract/store",
+      "control": "PI requires provenance/freshness/consumer eligibility, becomes stale on source drift, and never converts into Evidence.",
+      "proof_tests": [
+        {
+          "file": "plugin/test/project-intelligence-contract.test.mjs",
+          "contains": "Project Intelligence is excluded from task context when stale, retired, unrelated or consumer-ineligible"
+        },
+        {
+          "file": "plugin/test/project-intelligence-contract.test.mjs",
+          "contains": "source hash drift invalidates Project Intelligence without converting it into Evidence"
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "Q3-ADV-011",
+      "threat": "summary-poisoning",
+      "owner": "WorkerResult/Evidence contracts + context compaction",
+      "control": "Free-form summary remains bounded context only; completion proof must be structured admissible Evidence and oversized context uses bounded native summary without appending the original bulk.",
+      "proof_tests": [
+        {
+          "file": "plugin/test/worker-result-contract.test.mjs",
+          "contains": "WorkerResult evidence rejects unknown proof kinds and malformed evidence metadata"
+        },
+        {
+          "file": "plugin/test/context-survival-hardening.test.mjs",
+          "contains": "oversized relevant context is replaced by native summary instead of being appended to it"
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "Q3-ADV-012",
+      "threat": "process-orphan",
+      "owner": "HostCapability contract / future ProcessContract owner",
+      "control": "Current ordinary bash process lifecycle is truthfully DEGRADED; Hi does not fabricate PID/orphan cleanup guarantees until an owned executor exists.",
+      "proof_tests": [
+        {
+          "file": "plugin/test/hi-acceptance-evolution.test.mjs",
+          "contains": "reference host does not fake unavailable process-control or workspace-isolation executors"
+        },
+        {
+          "file": "plugin/test/host-capability-contract.test.mjs",
+          "contains": "prompt and worker capabilities fail closed when required native ownership primitives are absent"
+        }
+      ],
+      "evidence": [
+        {
+          "tier": "T3",
+          "receipt": "data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-c5d8287.json",
+          "contains": "process-lifecycle"
+        }
+      ]
+    },
+    {
+      "id": "Q3-ADV-013",
+      "threat": "workspace-cleanup-loss",
+      "owner": "HostCapability contract / future isolation owner",
+      "control": "Workspace isolation remains UNSUPPORTED until Hi owns selection/provisioning/cleanup and proves child execution binding; no cleanup claim is fabricated.",
+      "proof_tests": [
+        {
+          "file": "plugin/test/hi-acceptance-evolution.test.mjs",
+          "contains": "reference host does not fake unavailable process-control or workspace-isolation executors"
+        },
+        {
+          "file": "plugin/test/host-capability-contract.test.mjs",
+          "contains": "prompt and worker capabilities fail closed when required native ownership primitives are absent"
+        }
+      ],
+      "evidence": [
+        {
+          "tier": "T3",
+          "receipt": "data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-c5d8287.json",
+          "contains": "workspace_isolation_binding"
+        }
+      ]
+    },
+    {
+      "id": "Q3-ADV-014",
+      "threat": "browser-observation-forgery",
+      "owner": "HostCapability + methodology preflight/Evidence",
+      "control": "Browser execution is UNSUPPORTED without a deterministic executor/evidence adapter; tool names, prompts or screenshots cannot promote support.",
+      "proof_tests": [
+        {
+          "file": "plugin/test/methodology-host-capability.test.mjs",
+          "contains": "browser execution is an explicit unsupported host capability until Hi owns a deterministic executor adapter"
+        },
+        {
+          "file": "plugin/test/methodology-host-capability.test.mjs",
+          "contains": "TaskRuntime fails visual methodology preflight before native child spawn when browser execution is unsupported"
+        }
+      ],
+      "evidence": [
+        {
+          "tier": "T3",
+          "receipt": "data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-c5d8287.json",
+          "contains": "browser_execution"
+        }
+      ]
+    },
+    {
+      "id": "Q3-ADV-015",
+      "threat": "external-action-replay",
+      "owner": "Authority exact action state + side-effect idempotency",
+      "control": "Exact command/cwd hash owns authority; executing/completed hashes reject duplicate replay and unknown ACK requires reconciliation rather than blind retry.",
+      "proof_tests": [
+        {
+          "file": "plugin/test/authority-side-effect-idempotency.test.mjs",
+          "contains": "authority outcome uses OpenCode bash metadata.exit and treats no exit signal as unknown"
+        },
+        {
+          "file": "plugin/test/external-side-effect-real-git.test.mjs",
+          "contains": "real bare-remote push with lost ACK is not blindly retried and is reconciled by remote proof"
+        }
+      ],
+      "evidence": []
+    },
+    {
+      "id": "Q3-ADV-016",
+      "threat": "release-substitution",
+      "owner": "Release-chain remote verification",
+      "control": "Local exit=0 is insufficient; pushed ref, peeled annotated tag, release target and remote release metadata must resolve to the exact candidate commit.",
+      "proof_tests": [
+        {
+          "file": "plugin/test/release-chain-remote-verification.test.mjs",
+          "contains": "push exit=0 is not sufficient; release waits for matching remote ref hash"
+        },
+        {
+          "file": "plugin/test/release-chain-remote-verification.test.mjs",
+          "contains": "annotated release tag is verified against peeled commit, not tag object sha"
+        }
+      ],
+      "evidence": [
+        {
+          "tier": "T4",
+          "receipt": "data/validation/release-publication-0.1.0.json",
+          "contains": "f1a2c1c4358e5a63656da7a585b6b5793d1ed3be"
+        }
+      ]
+    },
+    {
+      "id": "Q3-ADV-017",
+      "threat": "supply-chain-artifact-substitution",
+      "owner": "Release quality/build manifest/SBOM provenance",
+      "control": "Release asset SHA-256, build-input provenance, dependency graph, SBOM and third-party notices are exact-bound and drift blocks release.",
+      "proof_tests": [
+        {
+          "file": "plugin/test/release-quality-batch.test.mjs",
+          "contains": "tampered distributable asset is rejected against release manifest sha256"
+        },
+        {
+          "file": "plugin/test/release-quality-batch.test.mjs",
+          "contains": "dependency lock graph drift after build blocks release even when distributable bytes are unchanged"
+        },
+        {
+          "file": "plugin/test/release-quality-batch.test.mjs",
+          "contains": "SBOM drift is detected independently from archive provenance"
+        }
+      ],
+      "evidence": [
+        {
+          "tier": "T4",
+          "receipt": "data/validation/release-publication-0.1.0.json",
+          "contains": "browser_download_url"
+        }
+      ]
+    }
+  ]
+}
