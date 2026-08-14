@@ -81,7 +81,7 @@ test('task handoff includes only explicitly selected mission context artifacts',
   const text=prompts[0].body.parts[0].text
   assert.match(text,/SELECTED_ARTIFACT_MARKER/)
   assert.doesNotMatch(text,/UNSELECTED_ARTIFACT_MARKER/)
-  assert.deepEqual(m.tasks.at(-1).context_artifacts.map(a=>a.id),['ca-selected'])
+  assert.deepEqual(m.tasks.at(-1).context_artifacts.map(a=>a.source_handle_id),['ca-selected']);assert.ok(m.tasks.at(-1).context_artifacts.every(a=>a.consumer_ref===m.tasks.at(-1).id))
 })
 
 test('unknown task context artifact id fails closed instead of widening context',async()=>{
@@ -130,6 +130,7 @@ test('fresh durable context artifact content is loaded only while source-bound f
     const rt1=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2})),root,process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
     const started=await rt1.start(m1,{objective:'first fix',role:'coder',category:'quick',contextArtifactIds:[durable.artifact_id]})
     assert.match(prompts[0].body.parts[0].text,/DURABLE_ARTIFACT_CONTENT_MARKER/)
+    assert.ok(new ContextArtifactStore(root).get(durable.artifact_id).consumer_refs.includes(started.task_id))
     await rt1.noteNativeWriteSet(m1,started.worker_id,['src/a.ts'])
     assert.equal(new ContextArtifactStore(root).get(durable.artifact_id).freshness,'POTENTIALLY_STALE')
 

@@ -3,6 +3,7 @@ import type { WorkerResult } from '../../contracts/worker-result.js'
 import type { EvidenceItem } from '../../contracts/evidence.js'
 import type { TaskContract,TaskContractStatus } from '../../contracts/task.js'
 import type { WorkerContract,WorkerContractStatus } from '../../contracts/worker.js'
+import type { ContextReferenceContract } from '../../contracts/context-reference.js'
 export type { EvidenceItem } from '../../contracts/evidence.js'
 export { WORKER_EVIDENCE_KINDS } from '../../contracts/worker-result.js'
 export type { EvidenceOutcome,MethodologyObservation,WorkerEvidenceKind,WorkerResult,WorkerResultStatus } from '../../contracts/worker-result.js'
@@ -26,7 +27,7 @@ export interface TemporaryMutation { id:string; kind:string; description:string;
 export interface PermissionProfileSnapshot { skill_tool_enabled:boolean; skill_permissions:Record<string,'allow'|'ask'|'deny'>; external_effects:'parent-only'; recursive_task:'deny'; native?:{mode?:string;decisions:Record<string,'allow'|'ask'|'deny'|'unknown'>;source:'effective-opencode-agent'|'hi-default-invariants'} }
 export interface ExecutionProfile { role:string; category:Category; task:{objective:string;scope:string[];dependencies:string[];required_evidence:string[]}; tools:string[]; model?:string; model_variant?:string; fallback_models:string[]; fallback_variants?:Record<string,string|undefined>; fallback_reasons?:Array<{model:string;variant?:string;reason:string}>; methodologies:string[]; permission_profile:PermissionProfileSnapshot; verification_policy:VerificationPolicy; max_context_chars:number; max_handoff_chars:number; max_result_chars:number; max_artifacts:number; expected_turns?:number; context_overhead?:number }
 
-export interface MissionTask extends TaskContract { status:TaskStatus; category:Category; context_artifacts:ContextArtifact[]; execution_profile?:ExecutionProfile; result?:WorkerResult }
+export interface MissionTask extends TaskContract { status:TaskStatus; category:Category; context_artifacts:ContextReferenceContract[]; execution_profile?:ExecutionProfile; result?:WorkerResult }
 export interface MethodologyProvenance { name:string; provider:'project'|'personal'|'hi'; source_path:string; source_sha256?:string; permission:'allow'|'ask'|'deny'; injection:'native-skill-tool'|'none'; selected_at:number }
 export interface WorkerState extends WorkerContract { status:WorkerStatus; category:Category; methodologies:MethodologyProvenance[] }
 export interface LedgerEvent { id:string; at:number; mission_id:string; type:string; task_id?:string; worker_id?:string; payload?:Record<string,unknown> }

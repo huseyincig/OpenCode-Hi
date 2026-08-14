@@ -53,7 +53,7 @@ Rows below are intentionally `PENDING` until code exists.
 | M6 | Model capability/identity | ModelCapabilityProfile host-inventory normalization + identity reconciler + effective-model evidence; focused 17/17 PASS; controlled full suite 475/475 PASS; validator PASS | T1/T2 | `e7c3c96`; requested/projected WorkerState snapshot wiring blocked by SentinelX mutation policy; no unwired state committed | PARTIAL_PASS |
 | M7 | Host capability registry | 16 contract-backed OpenCode capabilities; product runtime gates consume worker-runtime/session-revert contracts; doctor reports status/verification/semantic loss; focused 43/43 PASS; controlled full suite 480/480 PASS; validator PASS | T1/T2 local; T3 still pending | `390cc2b` | PASS_LOCAL — REAL-HOST ACCEPTANCE PENDING |
 | M8 | Task/Worker/Result/Evidence contracts | WorkerResult, EvidenceItem, ReviewFinding, derived VerificationEnvelope, TaskContract and WorkerContract now have canonical runtime owners; persistence consumes canonical validators; task mission/external-action identity is explicit; worker attempt/recovery/effective-model lifecycle is fail-closed; latest focused Task/Worker set 21/21 PASS and controlled full suite 507/507 PASS; validator PASS | T1/T2 | WorkerResult `4ea320d`; Evidence `3044b94`; ReviewFinding `b120f49`; VerificationEnvelope `a4b1105`; Task/Worker `77f9dc1` | PASS — CONTRACT OWNERSHIP CLOSED |
-| M9 | Context/Artifact/PI/Human/Authority/Storage | ArtifactContract canonical owner implemented; durable artifact identity separated from content hash/provenance, strict hash/provenance/privacy/retention validation; focused artifact/context suite 30/30 PASS; controlled full suite 510/510 PASS; validator PASS | T1/T2 | Artifact commit pending | PARTIAL_PASS — CONTEXT/PI/HUMAN/AUTHORITY/STORAGE REMAIN |
+| M9 | Context/Artifact/PI/Human/Authority/Storage | ArtifactContract canonical owner committed; ContextReferenceContract implemented and verified with consumer-bound task selection; focused ContextReference/Artifact/Task/Persistence set 23/23 PASS; controlled full suite 513/513 PASS; validator PASS | T1/T2 | Artifact `811ee7f`; ContextReference `f10ed8d` | PARTIAL_PASS — SEMANTIC CONTEXT/PI/HUMAN/AUTHORITY/STORAGE REMAIN |
 | M10 | common generator/lint closure | BA12 + HI001–HI020 migrated rules | T0/T1/T2 | — | PENDING |
 | M11 | deterministic full closure | build + validator + full controlled suite | T0/T1/T2 | — | PENDING |
 | M12 | real-host acceptance | OpenCode version-bound native receipts | T3 | — | PENDING |
@@ -73,8 +73,23 @@ Implemented:
 - stale legacy artifact storage shape has no silent compatibility owner in current-only runtime;
 - ArtifactContract rejects hash drift, malformed provenance and unknown fields.
 
-Evidence: focused artifact/context/core suite 30/30 PASS; controlled isolated-HOME/XDG full suite 510/510 PASS; validator PASS. ContextReference/SemanticContext/ProjectIntelligence/HumanDecision/Authority/Storage ownership remain open under M9.
+Evidence: focused artifact/context/core suite 30/30 PASS; controlled isolated-HOME/XDG full suite 510/510 PASS; validator PASS. Artifact checkpoint commit: `811ee7f`. ContextReference/SemanticContext/ProjectIntelligence/HumanDecision/Authority/Storage ownership remain open under M9.
 
+
+### M9 ContextReferenceContract checkpoint
+
+Implemented and verified:
+
+- added canonical `ContextReferenceContract` separating mission-level context availability from explicit per-Task selection;
+- TaskContract now stores consumer-bound ContextReference items rather than raw mission context handles;
+- every selected reference binds `consumer_ref` to the exact Task ID;
+- unknown requested mission context handles fail closed;
+- durable ArtifactContract selection projects live artifact freshness/privacy/content hash into the selected reference and records the Task ID in Artifact `consumer_refs`;
+- non-durable context handles use `UNKNOWN` freshness rather than fabricating freshness evidence;
+- handoff dereferences durable artifacts through `source_ref`; stale durable content remains excluded by the live Artifact freshness check;
+- availability remains distinct from selection: unselected mission handles never enter Task context.
+
+Evidence: focused ContextReference/Artifact/Task/Persistence suite 23/23 PASS; controlled isolated-HOME/XDG full suite 513/513 PASS; validator PASS; diff check clean. SemanticContext/ProjectIntelligence/HumanDecision/Authority/Storage remain open under M9.
 
 ### M8 Task / Worker contract checkpoint
 

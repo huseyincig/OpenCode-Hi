@@ -49,6 +49,8 @@ export class ContextArtifactStore {
         return structuredClone(item);
     }
     get(id) { const a = this.#items.get(id); return a ? structuredClone(a) : undefined; }
+    bindConsumer(id, consumerRef) { const a = this.#items.get(id); if (!a)
+        return undefined; a.consumer_refs = [...new Set([...a.consumer_refs, consumerRef])].slice(0, 64); this.#persist(a); return structuredClone(a); }
     invalidateChanged(files) {
         const changed = new Set(files);
         let n = 0;

@@ -10,5 +10,6 @@ export declare class ContextArtifactStore {
         consumerRefs?: string[];
     }): ArtifactContract;
     get(id: string): ArtifactContract | undefined;
+    bindConsumer(id: string, consumerRef: string): ArtifactContract | undefined;
     invalidateChanged(files: string[]): number;
 }

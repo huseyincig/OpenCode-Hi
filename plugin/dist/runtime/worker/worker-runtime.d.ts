@@ -1,4 +1,5 @@
-import type { Category, ContextArtifact, ExecutionProfile, MethodologyProvenance, MissionState, MissionTask, WorkerResult, WorkerState } from '../mission/types.js';
+import type { Category, ExecutionProfile, MethodologyProvenance, MissionState, MissionTask, WorkerResult, WorkerState } from '../mission/types.js';
+import { type ContextReferenceDraft } from '../../contracts/context-reference.js';
 export declare function workerFingerprint(role: string, category: Category, model: string | undefined, taskFamily: string, objective?: string, contract?: {
     scope?: string[];
     constraints?: string[];
@@ -15,7 +16,7 @@ export declare function createTask(m: MissionState, input: {
     dependencies?: string[];
     requiredEvidence?: string[];
     obligationIds?: string[];
-    contextArtifacts?: ContextArtifact[];
+    contextReferences?: ContextReferenceDraft[];
     executionProfile?: ExecutionProfile;
 }): MissionTask;
 export declare function createWorker(m: MissionState, task: MissionTask, model?: string, fallbacks?: string[], selectedMethodologies?: string[], methodologyProvenanceItems?: MethodologyProvenance[]): WorkerState;

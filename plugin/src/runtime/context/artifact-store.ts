@@ -33,6 +33,7 @@ export class ContextArtifactStore{
     this.#items.set(item.artifact_id,item);this.#persist(item);return structuredClone(item)
   }
   get(id:string):ArtifactContract|undefined{const a=this.#items.get(id);return a?structuredClone(a):undefined}
+  bindConsumer(id:string,consumerRef:string):ArtifactContract|undefined{const a=this.#items.get(id);if(!a)return undefined;a.consumer_refs=[...new Set([...a.consumer_refs,consumerRef])].slice(0,64);this.#persist(a);return structuredClone(a)}
   invalidateChanged(files:string[]):number{
     const changed=new Set(files);let n=0
     for(const a of this.#items.values())if(a.freshness==='FRESH'&&a.provenance.source_files.some(f=>changed.has(f))){a.freshness='POTENTIALLY_STALE';this.#persist(a);n++}

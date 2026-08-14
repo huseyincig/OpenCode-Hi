@@ -500,6 +500,8 @@ privacy_class
 
 Context is selected per consumer; availability is not selection.
 
+**Current runtime mapping:** Mission `context_artifacts` remain bounded available handles. Task `context_artifacts` are canonical consumer-bound ContextReference snapshots created only from explicit Task selection. `consumer_ref` is the exact Task ID; durable Artifact selection records that Task in Artifact `consumer_refs`. Non-durable sources use `UNKNOWN` freshness rather than inventing proof. Live Artifact freshness is checked again when durable content is consumed.
+
 ### C20 — SemanticContextContract
 
 **Required fields:**

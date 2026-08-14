@@ -1,0 +1,30 @@
+export declare const CONTEXT_PRIORITIES: readonly ["low", "normal", "high"];
+export declare const CONTEXT_PROTECTIONS: readonly ["PROTECTED", "COMPRESSIBLE", "PURGEABLE"];
+export declare const CONTEXT_FRESHNESS: readonly ["FRESH", "POTENTIALLY_STALE", "UNKNOWN"];
+export declare const CONTEXT_RETENTION: readonly ["task", "mission"];
+export declare const CONTEXT_PRIVACY: readonly ["project-private", "redacted"];
+export type ContextPriority = typeof CONTEXT_PRIORITIES[number];
+export type ContextProtection = typeof CONTEXT_PROTECTIONS[number];
+export type ContextFreshness = typeof CONTEXT_FRESHNESS[number];
+export type ContextRetention = typeof CONTEXT_RETENTION[number];
+export type ContextPrivacyClass = typeof CONTEXT_PRIVACY[number];
+export interface ContextReferenceContract {
+    id: string;
+    source_ref: string;
+    consumer_ref: string;
+    reason: string;
+    priority: ContextPriority;
+    protection: ContextProtection;
+    budget_cost: number;
+    freshness: ContextFreshness;
+    retention: ContextRetention;
+    privacy_class: ContextPrivacyClass;
+    kind: string;
+    title?: string;
+    summary?: string;
+    content_hash?: string;
+    source_handle_id?: string;
+}
+export type ContextReferenceDraft = Omit<ContextReferenceContract, 'id' | 'consumer_ref'>;
+export declare function bindContextReference(draft: ContextReferenceDraft, consumerRef: string): ContextReferenceContract;
+export declare function isContextReferenceContract(v: unknown): v is ContextReferenceContract;

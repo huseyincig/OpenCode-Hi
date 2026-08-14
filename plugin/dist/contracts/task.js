@@ -1,4 +1,5 @@
 import { isWorkerResultContract } from './worker-result.js';
+import { isContextReferenceContract } from './context-reference.js';
 export const TASK_STATUSES = ['created', 'queued', 'running', 'waiting', 'completed', 'failed', 'cancelled', 'blocked'];
 export const TASK_EXTERNAL_ACTIONS = ['git-push', 'release-create', 'package-publish', 'deploy'];
 const STATUS = new Set(TASK_STATUSES);
@@ -9,10 +10,6 @@ const PROFILE_KEYS = new Set(['role', 'category', 'task', 'tools', 'model', 'mod
 function record(v) { return Boolean(v) && typeof v === 'object' && !Array.isArray(v); }
 function strings(v) { return Array.isArray(v) && v.every(x => typeof x === 'string'); }
 function finite(v) { return typeof v === 'number' && Number.isFinite(v); }
-function validContextArtifact(v) { if (!record(v) || typeof v.id !== 'string' || typeof v.kind !== 'string' || !finite(v.added_at))
-    return false; for (const k of ['uri', 'title', 'summary', 'sha256'])
-    if (v[k] !== undefined && typeof v[k] !== 'string')
-        return false; return true; }
 function validDiff(v) { return record(v) && strings(v.collateral) && strings(v.accepted_expansions) && (v.native_verified_reverts === undefined || strings(v.native_verified_reverts)); }
 function validProfile(v) {
     if (!record(v) || !Object.keys(v).every(k => PROFILE_KEYS.has(k)) || typeof v.role !== 'string' || typeof v.category !== 'string' || !CATEGORIES.has(v.category) || !record(v.task) || !strings(v.tools) || !strings(v.fallback_models) || !strings(v.methodologies))
@@ -42,7 +39,7 @@ function validProfile(v) {
 export function isTaskContract(v) {
     if (!record(v) || !Object.keys(v).every(k => TASK_KEYS.has(k)) || typeof v.id !== 'string' || typeof v.mission_id !== 'string' || typeof v.objective !== 'string' || typeof v.status !== 'string' || !STATUS.has(v.status) || typeof v.role !== 'string' || typeof v.category !== 'string' || !CATEGORIES.has(v.category))
         return false;
-    if (!strings(v.scope) || !strings(v.constraints) || !strings(v.dependencies) || !strings(v.requiredEvidence) || !strings(v.obligation_ids) || !Array.isArray(v.context_artifacts) || !v.context_artifacts.every(validContextArtifact) || !strings(v.gate_ids) || !Array.isArray(v.external_action_requirements) || !v.external_action_requirements.every(x => typeof x === 'string' && EXTERNAL.has(x)))
+    if (!strings(v.scope) || !strings(v.constraints) || !strings(v.dependencies) || !strings(v.requiredEvidence) || !strings(v.obligation_ids) || !Array.isArray(v.context_artifacts) || !v.context_artifacts.every(isContextReferenceContract) || !strings(v.gate_ids) || !Array.isArray(v.external_action_requirements) || !v.external_action_requirements.every(x => typeof x === 'string' && EXTERNAL.has(x)))
         return false;
     if (v.execution_profile !== undefined && !validProfile(v.execution_profile))
         return false;
