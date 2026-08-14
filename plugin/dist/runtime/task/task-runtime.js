@@ -33,7 +33,7 @@ import { ProjectMethodologyLearningStore } from '../project-intelligence/methodo
 import { executionProfileFor } from '../../config/execution-policy.js';
 import { applyAdmittedProjectMethodologyPermissions } from '../methodology/host-permissions.js';
 import { isHiChildRole, isHiReadOnlyChildRole, isHiReviewerRole, roleCanOwnObligation } from '../roles/catalog.js';
-import { typescriptSemanticContextForTargets } from '../semantic/typescript-context.js';
+import { renderSemanticContext, typescriptSemanticContextsForTargets } from '../semantic/typescript-context.js';
 import { ProjectIntelligenceStore } from '../project-intelligence/store.js';
 import { ContextArtifactStore } from '../context/artifact-store.js';
 import { reviewFindingMarker, reviewFindingNeedsCorrection } from '../../contracts/review-finding.js';
@@ -381,7 +381,9 @@ export class TaskRuntime {
         const quirks = modelQuirks(selected.primary, this.getModels().find(x => x.id === selected.primary));
         const artifactContext = task.context_artifacts.map(a => { const id = a.source_ref.startsWith('hi-artifact:') ? a.source_ref.slice('hi-artifact:'.length) : undefined, stored = id ? contextArtifactStore.get(id) : undefined; if (stored?.freshness === 'FRESH')
             return `artifact:${stored.artifact_id}:${stored.summary}\n${clipText(stored.content, 3000)}`; if (stored)
-            return `artifact-stale:${stored.artifact_id}:${stored.summary}`; return `${a.kind}:${a.title ?? a.source_handle_id ?? a.id}${a.summary ? ` — ${a.summary}` : ''}`; }), verificationHint = targetedVerificationHint(this.projectRoot, task.scope.length ? task.scope : (m.changed_files.length ? m.changed_files : m.intent.likelyTargets ?? [])), semanticContext = typescriptSemanticContextForTargets(this.projectRoot, task.scope, 3000), projectContext = new ProjectIntelligenceStore(this.projectRoot).relevantToFiles(task.scope, 4).map(p => `project-intelligence:${p.id}:${p.statement} [${p.sourceFiles.join(', ')}]`), explicitRelevant = input.relevantContext ?? [], boundedRuntimeRelevant = [...(verificationHint ? [verificationHint] : []), ...semanticContext, ...projectContext, ...artifactContext];
+            return `artifact-stale:${stored.artifact_id}:${stored.summary}`; return `${a.kind}:${a.title ?? a.source_handle_id ?? a.id}${a.summary ? ` — ${a.summary}` : ''}`; }), verificationHint = targetedVerificationHint(this.projectRoot, task.scope.length ? task.scope : (m.changed_files.length ? m.changed_files : m.intent.likelyTargets ?? [])), semanticContexts = typescriptSemanticContextsForTargets(this.projectRoot, task.scope, task.id, 3000), semanticContext = semanticContexts.map(renderSemanticContext), projectContext = new ProjectIntelligenceStore(this.projectRoot).relevantToFiles(task.scope, 4).map(p => `project-intelligence:${p.id}:${p.statement} [${p.sourceFiles.join(', ')}]`), explicitRelevant = input.relevantContext ?? [], boundedRuntimeRelevant = [...(verificationHint ? [verificationHint] : []), ...semanticContext, ...projectContext, ...artifactContext];
+        if (semanticContexts.length)
+            appendLedger(m, 'context.semantic-selected', { task_id: task.id, payload: { items: semanticContexts.slice(0, 6).map(x => ({ id: x.id, source_ref: x.source_ref, source_hash: x.source_hash.slice(0, 16), symbols: x.symbols.length, chars: x.budget.used_chars })), total_chars: semanticContexts.reduce((n, x) => n + x.budget.used_chars, 0) } });
         let nativeSummary, relevantForHandoff = [...explicitRelevant, ...boundedRuntimeRelevant];
         if (relevantForHandoff.join('\n').length > profile.max_context_chars) {
             const native = new NativeOpenCodeAdapter(this.client);

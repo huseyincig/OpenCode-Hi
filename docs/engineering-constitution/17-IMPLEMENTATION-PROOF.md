@@ -53,7 +53,7 @@ Rows below are intentionally `PENDING` until code exists.
 | M6 | Model capability/identity | ModelCapabilityProfile host-inventory normalization + identity reconciler + effective-model evidence; focused 17/17 PASS; controlled full suite 475/475 PASS; validator PASS | T1/T2 | `e7c3c96`; requested/projected WorkerState snapshot wiring blocked by SentinelX mutation policy; no unwired state committed | PARTIAL_PASS |
 | M7 | Host capability registry | 16 contract-backed OpenCode capabilities; product runtime gates consume worker-runtime/session-revert contracts; doctor reports status/verification/semantic loss; focused 43/43 PASS; controlled full suite 480/480 PASS; validator PASS | T1/T2 local; T3 still pending | `390cc2b` | PASS_LOCAL — REAL-HOST ACCEPTANCE PENDING |
 | M8 | Task/Worker/Result/Evidence contracts | WorkerResult, EvidenceItem, ReviewFinding, derived VerificationEnvelope, TaskContract and WorkerContract now have canonical runtime owners; persistence consumes canonical validators; task mission/external-action identity is explicit; worker attempt/recovery/effective-model lifecycle is fail-closed; latest focused Task/Worker set 21/21 PASS and controlled full suite 507/507 PASS; validator PASS | T1/T2 | WorkerResult `4ea320d`; Evidence `3044b94`; ReviewFinding `b120f49`; VerificationEnvelope `a4b1105`; Task/Worker `77f9dc1` | PASS — CONTRACT OWNERSHIP CLOSED |
-| M9 | Context/Artifact/PI/Human/Authority/Storage | ArtifactContract canonical owner committed; ContextReferenceContract implemented and verified with consumer-bound task selection; focused ContextReference/Artifact/Task/Persistence set 23/23 PASS; controlled full suite 513/513 PASS; validator PASS | T1/T2 | Artifact `811ee7f`; ContextReference `3e8ab72` | PARTIAL_PASS — SEMANTIC CONTEXT/PI/HUMAN/AUTHORITY/STORAGE REMAIN |
+| M9 | Context/Artifact/PI/Human/Authority/Storage | ArtifactContract + ContextReferenceContract + derived SemanticContextContract operational; SemanticContext binds safe live source ref/hash, exact Task consumer, exact source ranges and bounded handoff projection; focused semantic/context/core set 31/31 PASS; controlled full suite 517/517 PASS; validator PASS | T1/T2 | Artifact `811ee7f`; ContextReference `3e8ab72`; SemanticContext commit pending | PARTIAL_PASS — PI/HUMAN/AUTHORITY/STORAGE REMAIN |
 | M10 | common generator/lint closure | BA12 + HI001–HI020 migrated rules | T0/T1/T2 | — | PENDING |
 | M11 | deterministic full closure | build + validator + full controlled suite | T0/T1/T2 | — | PENDING |
 | M12 | real-host acceptance | OpenCode version-bound native receipts | T3 | — | PENDING |
@@ -90,6 +90,23 @@ Implemented and verified:
 - availability remains distinct from selection: unselected mission handles never enter Task context.
 
 Evidence: focused ContextReference/Artifact/Task/Persistence suite 23/23 PASS; controlled isolated-HOME/XDG full suite 513/513 PASS; validator PASS; diff check clean. SemanticContext/ProjectIntelligence/HumanDecision/Authority/Storage remain open under M9.
+
+### M9 SemanticContextContract checkpoint
+
+Implemented and verified, commit pending at this ledger revision:
+
+- added canonical `SemanticContextContract` with technical source ref, source hash, language adapter, structured symbols, relationships, exact selected ranges, Task consumer, exact character budget, creation timestamp and rendered text;
+- corrected the constitution from mandatory `source_artifact_ref` to `source_ref`: live project source files remain live source files and are not wrapped in fake Artifacts;
+- SemanticContext is DERIVED and non-persisted; source hash + Task consumer + selected ranges form deterministic semantic-context identity while `created_at` remains observation metadata;
+- TypeScript source refs are safe project-relative `file:` refs; traversal/backslash/absolute-path forms fail contract validation;
+- exact selected ranges correspond to the actual trimmed source slice used as each declaration signature;
+- extraction budget counts rendered separators as well as signatures, so contract `used_chars` equals the exact rendered text length;
+- `relationships[]` is legal and empty because the current bounded extractor observes declarations only; no dependency graph is fabricated;
+- TaskRuntime consumes SemanticContextContract records, emits bounded `context.semantic-selected` observation metadata and renders only their bounded text into child handoff;
+- source mutation changes `source_hash` and derived SemanticContext identity;
+- forged IDs, forged ranges, unknown fields, unsafe source refs, unresolved relationship symbols and budget drift fail closed.
+
+Evidence: focused SemanticContext/context/core suite 31/31 PASS; controlled isolated-HOME/XDG full suite 517/517 PASS; validator PASS; diff check clean; backup count 0. ProjectIntelligence/HumanDecision/Authority/Storage remain open under M9.
 
 ### M8 Task / Worker contract checkpoint
 

@@ -1,18 +1,52 @@
-import { existsSync, readFileSync, statSync } from 'node:fs'
-import { relative, resolve, sep } from 'node:path'
-export interface SemanticSymbol{kind:'interface'|'type'|'class'|'function'|'enum';name:string;signature:string;start:number}
-export interface SemanticContextResult{symbols:SemanticSymbol[];text:string;sourceChars:number;contextChars:number}
-const DECL=/(?:^|\n)\s*(?:export\s+)?(?:declare\s+)?(interface|type|class|function|enum)\s+([A-Za-z_$][\w$]*)[^\n{=]*(?:=\s*[^\n;]+;?|\{)?/g
-export function extractTypeScriptSemanticContext(source:string,names:string[]=[],maxChars=5000):SemanticContextResult{
-  const wanted=new Set(names),symbols:SemanticSymbol[]=[];for(const match of source.matchAll(DECL)){const kind=match[1] as SemanticSymbol['kind'],name=match[2],rawStart=match.index??0,start=source[rawStart]==='\n'?rawStart+1:rawStart;if(wanted.size&&!wanted.has(name))continue;let end=source.indexOf('\n',start);if(kind==='interface'||kind==='class'||kind==='enum'){let depth=0,seen=false;for(let i=start;i<source.length;i++){if(source[i]==='{'){depth++;seen=true}else if(source[i]==='}'&&seen){depth--;if(depth===0){end=i+1;break}}}}if(end<0)end=Math.min(source.length,start+600);const signature=source.slice(start,end).trim();symbols.push({kind,name,signature,start});if(symbols.reduce((n,s)=>n+s.signature.length,0)>=maxChars)break}
-  const text=symbols.map(s=>s.signature).join('\n\n').slice(0,maxChars);return{symbols,text,sourceChars:source.length,contextChars:text.length}}
+import { createHash } from 'node:crypto'
+import { existsSync,readFileSync,statSync } from 'node:fs'
+import { relative,resolve,sep } from 'node:path'
+import { semanticContextId,type SemanticContextContract,type SemanticContextSymbol } from '../../contracts/semantic-context.js'
 
-export function typescriptSemanticContextForTargets(projectRoot:string,targets:string[],maxChars=3000):string[]{
-  const root=resolve(projectRoot),out:string[]=[];let used=0
+export interface SemanticContextResult { symbols:SemanticContextSymbol[]; text:string; sourceChars:number; contextChars:number }
+const DECL=/(?:^|\n)\s*(?:export\s+)?(?:declare\s+)?(interface|type|class|function|enum)\s+([A-Za-z_$][\w$]*)[^\n{=]*(?:=\s*[^\n;]+;?|\{)?/g
+
+export function extractTypeScriptSemanticContext(source:string,names:string[]=[],maxChars=5000):SemanticContextResult{
+  const wanted=new Set(names),symbols:SemanticContextSymbol[]=[]
+  let used=0
+  for(const match of source.matchAll(DECL)){
+    const kind=match[1] as SemanticContextSymbol['kind'],name=match[2],rawStart=match.index??0,start=source[rawStart]==='\n'?rawStart+1:rawStart
+    if(wanted.size&&!wanted.has(name))continue
+    let end=source.indexOf('\n',start)
+    if(kind==='interface'||kind==='class'||kind==='enum'){
+      let depth=0,seen=false
+      for(let i=start;i<source.length;i++){
+        if(source[i]==='{'){depth++;seen=true}
+        else if(source[i]==='}'&&seen){depth--;if(depth===0){end=i+1;break}}
+      }
+    }
+    if(end<0)end=Math.min(source.length,start+600)
+    const raw=source.slice(start,end),leading=raw.length-raw.trimStart().length,trimmedStart=start+leading,full=raw.trim();if(!full)continue
+    const separator=symbols.length?2:0,remaining=Math.max(0,maxChars-used-separator);if(remaining<=0)break
+    const signature=full.slice(0,remaining);if(!signature)break
+    const actualEnd=Math.min(end,trimmedStart+signature.length)
+    symbols.push({kind,name,signature,start:trimmedStart,end:actualEnd});used+=separator+signature.length
+    if(used>=maxChars)break
+  }
+  const text=symbols.map(s=>s.signature).join('\n\n')
+  return{symbols,text,sourceChars:source.length,contextChars:text.length}
+}
+
+export function typescriptSemanticContextsForTargets(projectRoot:string,targets:string[],consumerTaskRef:string,maxChars=3000):SemanticContextContract[]{
+  const root=resolve(projectRoot),out:SemanticContextContract[]=[];let used=0
   for(const target of [...new Set(targets)].slice(0,6)){
     if(!/\.tsx?$/i.test(target))continue
     const full=resolve(root,target);if(full!==root&&!full.startsWith(root+sep))continue
-    try{if(!existsSync(full)||!statSync(full).isFile()||statSync(full).size>524288)continue;const source=readFileSync(full,'utf8'),left=Math.max(0,maxChars-used);if(left<128)break;const r=extractTypeScriptSemanticContext(source,[],Math.min(1400,left));if(!r.text)continue;const rel=relative(root,full).replace(/\\/g,'/'),entry=`semantic-typescript:${rel}\n${r.text}`;out.push(entry);used+=entry.length}catch{}
+    try{
+      if(!existsSync(full)||!statSync(full).isFile()||statSync(full).size>524288)continue
+      const source=readFileSync(full,'utf8'),left=Math.max(0,maxChars-used);if(left<128)break
+      const maxText=Math.min(1400,Math.max(0,left-96)),r=extractTypeScriptSemanticContext(source,[],maxText);if(!r.text)continue
+      const rel=relative(root,full).replace(/\\/g,'/'),source_ref=`file:${rel}`,source_hash=createHash('sha256').update(source).digest('hex'),selected_ranges=r.symbols.map(s=>({start:s.start,end:s.end}))
+      const contract:SemanticContextContract={id:semanticContextId({consumer_task_ref:consumerTaskRef,source_ref,source_hash,selected_ranges}),source_ref,source_hash,language_adapter:'typescript',symbols:r.symbols,relationships:[],selected_ranges,consumer_task_ref:consumerTaskRef,budget:{max_chars:maxText,used_chars:r.text.length},created_at:Date.now(),text:r.text}
+      out.push(contract);used+=renderSemanticContext(contract).length
+    }catch{}
   }
   return out
 }
+
+export function renderSemanticContext(contract:SemanticContextContract):string{return`semantic-typescript:${contract.source_ref.slice('file:'.length)}\n${contract.text}`}

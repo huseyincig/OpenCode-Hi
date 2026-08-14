@@ -107,6 +107,8 @@ test('scoped TypeScript semantic context and fresh project intelligence reach th
     const rt=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2})),root,process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
     const started=await rt.start(m,{objective:'small fix',role:'coder',category:'quick',scope:['src/a.ts']})
     const text=prompts[0].body.parts[0].text
+    const semanticEvent=m.ledger.find(e=>e.type==='context.semantic-selected'&&e.task_id===started.task_id)
+    assert.ok(semanticEvent);assert.equal(semanticEvent.payload.items[0].source_ref,'file:src/a.ts');assert.equal(typeof semanticEvent.payload.items[0].source_hash,'string')
     assert.match(text,/semantic-typescript:src\/a\.ts/)
     assert.match(text,/interface PublicContract/)
     assert.match(text,/project-intelligence:p-relevant:PublicContract IDs are stable project identifiers/)

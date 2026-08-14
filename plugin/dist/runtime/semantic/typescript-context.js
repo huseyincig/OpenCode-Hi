@@ -1,8 +1,11 @@
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { relative, resolve, sep } from 'node:path';
+import { semanticContextId } from '../../contracts/semantic-context.js';
 const DECL = /(?:^|\n)\s*(?:export\s+)?(?:declare\s+)?(interface|type|class|function|enum)\s+([A-Za-z_$][\w$]*)[^\n{=]*(?:=\s*[^\n;]+;?|\{)?/g;
 export function extractTypeScriptSemanticContext(source, names = [], maxChars = 5000) {
     const wanted = new Set(names), symbols = [];
+    let used = 0;
     for (const match of source.matchAll(DECL)) {
         const kind = match[1], name = match[2], rawStart = match.index ?? 0, start = source[rawStart] === '\n' ? rawStart + 1 : rawStart;
         if (wanted.size && !wanted.has(name))
@@ -26,15 +29,25 @@ export function extractTypeScriptSemanticContext(source, names = [], maxChars = 
         }
         if (end < 0)
             end = Math.min(source.length, start + 600);
-        const signature = source.slice(start, end).trim();
-        symbols.push({ kind, name, signature, start });
-        if (symbols.reduce((n, s) => n + s.signature.length, 0) >= maxChars)
+        const raw = source.slice(start, end), leading = raw.length - raw.trimStart().length, trimmedStart = start + leading, full = raw.trim();
+        if (!full)
+            continue;
+        const separator = symbols.length ? 2 : 0, remaining = Math.max(0, maxChars - used - separator);
+        if (remaining <= 0)
+            break;
+        const signature = full.slice(0, remaining);
+        if (!signature)
+            break;
+        const actualEnd = Math.min(end, trimmedStart + signature.length);
+        symbols.push({ kind, name, signature, start: trimmedStart, end: actualEnd });
+        used += separator + signature.length;
+        if (used >= maxChars)
             break;
     }
-    const text = symbols.map(s => s.signature).join('\n\n').slice(0, maxChars);
+    const text = symbols.map(s => s.signature).join('\n\n');
     return { symbols, text, sourceChars: source.length, contextChars: text.length };
 }
-export function typescriptSemanticContextForTargets(projectRoot, targets, maxChars = 3000) {
+export function typescriptSemanticContextsForTargets(projectRoot, targets, consumerTaskRef, maxChars = 3000) {
     const root = resolve(projectRoot), out = [];
     let used = 0;
     for (const target of [...new Set(targets)].slice(0, 6)) {
@@ -49,14 +62,16 @@ export function typescriptSemanticContextForTargets(projectRoot, targets, maxCha
             const source = readFileSync(full, 'utf8'), left = Math.max(0, maxChars - used);
             if (left < 128)
                 break;
-            const r = extractTypeScriptSemanticContext(source, [], Math.min(1400, left));
+            const maxText = Math.min(1400, Math.max(0, left - 96)), r = extractTypeScriptSemanticContext(source, [], maxText);
             if (!r.text)
                 continue;
-            const rel = relative(root, full).replace(/\\/g, '/'), entry = `semantic-typescript:${rel}\n${r.text}`;
-            out.push(entry);
-            used += entry.length;
+            const rel = relative(root, full).replace(/\\/g, '/'), source_ref = `file:${rel}`, source_hash = createHash('sha256').update(source).digest('hex'), selected_ranges = r.symbols.map(s => ({ start: s.start, end: s.end }));
+            const contract = { id: semanticContextId({ consumer_task_ref: consumerTaskRef, source_ref, source_hash, selected_ranges }), source_ref, source_hash, language_adapter: 'typescript', symbols: r.symbols, relationships: [], selected_ranges, consumer_task_ref: consumerTaskRef, budget: { max_chars: maxText, used_chars: r.text.length }, created_at: Date.now(), text: r.text };
+            out.push(contract);
+            used += renderSemanticContext(contract).length;
         }
         catch { }
     }
     return out;
 }
+export function renderSemanticContext(contract) { return `semantic-typescript:${contract.source_ref.slice('file:'.length)}\n${contract.text}`; }

@@ -190,7 +190,7 @@ Severity/disposition/blocking are closed enums. `blocking=true` requires evidenc
 
 ## S18 — ContextReferenceSchema / S19 — SemanticContextSchema
 
-Consumer reference is required. ContextReference is strict/current-only: Task snapshots accept canonical consumer-bound references, not raw mission availability handles. Durable sources may snapshot Artifact freshness/privacy/content hash at selection, while live Artifact freshness remains authoritative at consumption; non-durable freshness is `UNKNOWN`. SemanticContext source hash ties extraction to source freshness. Context items do not have Evidence-compatible discriminators.
+Consumer reference is required. ContextReference is strict/current-only: Task snapshots accept canonical consumer-bound references, not raw mission availability handles. Durable sources may snapshot Artifact freshness/privacy/content hash at selection, while live Artifact freshness remains authoritative at consumption; non-durable freshness is `UNKNOWN`. SemanticContext uses a safe technical `source_ref` (currently `file:<project-relative-path>` for TypeScript) plus source hash to tie extraction to source freshness. It is derived/non-persisted, binds the exact consumer Task, validates exact selected source ranges and budget usage, and may keep `relationships[]` empty when no relationship extractor exists. A live source file is not converted into a fake Artifact merely to satisfy schema shape. Context items do not have Evidence-compatible discriminators.
 
 ## S20 — ProjectIntelligenceSchema
 

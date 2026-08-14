@@ -507,7 +507,7 @@ Context is selected per consumer; availability is not selection.
 **Required fields:**
 
 ```text
-source_artifact_ref
+source_ref
 source_hash
 language_adapter
 symbols[]
@@ -519,6 +519,8 @@ created_at
 ```
 
 It is context, never proof.
+
+**Current runtime mapping:** SemanticContext is a DERIVED, non-persisted Task projection. TypeScript sources use a safe `file:<project-relative-path>` source ref plus SHA-256 source hash; selected ranges are exact source offsets for extracted declarations, consumer is the exact Task ID, and the bounded rendered text is the only payload handed to the child. `relationships[]` remains empty until a real extractor observes relationships; no dependency graph is invented. A live project file is not wrapped in a fake Artifact merely to satisfy the contract.
 
 ### C21 — ProjectIntelligenceContract
 

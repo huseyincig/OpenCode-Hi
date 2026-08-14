@@ -1,14 +1,10 @@
-export interface SemanticSymbol {
-    kind: 'interface' | 'type' | 'class' | 'function' | 'enum';
-    name: string;
-    signature: string;
-    start: number;
-}
+import { type SemanticContextContract, type SemanticContextSymbol } from '../../contracts/semantic-context.js';
 export interface SemanticContextResult {
-    symbols: SemanticSymbol[];
+    symbols: SemanticContextSymbol[];
     text: string;
     sourceChars: number;
     contextChars: number;
 }
 export declare function extractTypeScriptSemanticContext(source: string, names?: string[], maxChars?: number): SemanticContextResult;
-export declare function typescriptSemanticContextForTargets(projectRoot: string, targets: string[], maxChars?: number): string[];
+export declare function typescriptSemanticContextsForTargets(projectRoot: string, targets: string[], consumerTaskRef: string, maxChars?: number): SemanticContextContract[];
+export declare function renderSemanticContext(contract: SemanticContextContract): string;
