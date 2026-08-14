@@ -1,0 +1,11 @@
+import type { MissionState } from './types.js';
+export declare function validateTaskDAG(identity: Record<string, unknown>, execution: Record<string, unknown>): boolean;
+export declare function validateMissionIdentityState(identity: unknown): boolean;
+export declare function validateMissionExecutionState(identity: unknown, execution: unknown, methodology: unknown): boolean;
+export declare function validateContinuationState(continuation: unknown): boolean;
+export declare function validateContextState(context: unknown): boolean;
+export declare function validateVcsSafetyState(vcs: unknown): boolean;
+export declare function validateAuthorityState(authority: unknown): boolean;
+export declare function validateReleaseState(release: unknown): boolean;
+export declare function validateMethodologyState(methodology: unknown): boolean;
+export declare function validateMissionEnvelope(value: unknown): value is MissionState;
