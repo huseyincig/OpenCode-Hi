@@ -71,7 +71,7 @@ if final_audit.get('internal_status')!='LOCAL_IMPLEMENTATION_AND_IN_PROCESS_ACCE
 if final_audit.get('source_checklist',{}).get('internal_missing')!=[]:err('final DoD audit reports internal missing requirements')
 if final_audit.get('release_blocked') is not True:err('final DoD audit must remain release-blocked until external receipts exist')
 rg=json.loads((ROOT/'data/validation/release-gates.json').read_text())
-if not any(str(v).startswith('PENDING_EXTERNAL') for v in rg.get('gates',{}).values()):err('external runtime gates unexpectedly have no pending evidence')
+if not any(str(v).startswith('PENDING_') for v in rg.get('gates',{}).values()):err('release gates unexpectedly have no explicit pending evidence while release is blocked')
 # M5 canonical ConfigOption catalog: every HiConfig leaf is classified and runtime entries must name an executable consumer/effect.
 try:
     cc=json.loads((ROOT/'data/hi-config-options.json').read_text())

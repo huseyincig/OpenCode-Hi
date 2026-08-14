@@ -1,8 +1,8 @@
 {
   "schema": 6,
   "release": "0.1.0",
-  "generated_at": "2026-08-13",
-  "candidate_status": "HOST_ACCEPTED_CURRENT_WORKTREE_EXACT_CANDIDATE_PENDING",
+  "generated_at": "2026-08-14",
+  "candidate_status": "P8_PRE_RELEASE_EXTERNAL_GATES_PENDING",
   "gates": {
     "source_integrity": "PASS_LOCAL_CURRENT_SOURCE",
     "deterministic_release": "PASS_LOCAL_CURRENT_WORKTREE",
@@ -15,25 +15,26 @@
     "native_methodology_ownership": "PASS_LOCAL",
     "benchmark_policy_scenarios": "PASS_LOCAL",
     "install_config_lifecycle": "PASS_HOST_CURRENT_WORKTREE",
-    "architecture_audit": "PASS_HOST_CURRENT_WORKTREE_EXACT_REF_PENDING",
-    "plain_opencode_smoke": "PASS_HOST_CURRENT_WORKTREE",
-    "packaged_agents_skills": "PASS_HOST_CURRENT_WORKTREE",
-    "opencode_native_child_sessions": "PASS_HOST_CURRENT_WORKTREE",
-    "opencode_model_provider_binding": "PASS_HOST_CURRENT_WORKTREE",
-    "permission_denial_runtime": "PASS_HOST_CURRENT_WORKTREE",
-    "windows_runtime_smoke": "PENDING_EXTERNAL_WINDOWS_0_1_0",
-    "dependency_supply_chain_external": "PENDING_EXTERNAL_0_1_0",
+    "architecture_audit": "PASS_EXACT_SOURCE_HOST_1_18_18",
+    "plain_opencode_smoke": "PASS_EXACT_SOURCE_HOST_1_18_18",
+    "packaged_agents_skills": "PASS_EXACT_SOURCE_HOST_1_18_18",
+    "opencode_native_child_sessions": "PASS_EXACT_SOURCE_HOST_1_18_18",
+    "opencode_model_provider_binding": "PASS_EXACT_SOURCE_HOST_1_18_18",
+    "permission_denial_runtime": "PASS_EXACT_SOURCE_HOST_1_18_18",
+    "windows_runtime_smoke": "PENDING_GITHUB_ACTIONS_WINDOWS_0_1_0",
+    "dependency_supply_chain_external": "PENDING_CLEAN_CONSUMER_0_1_0",
     "filesystem_hygiene": "PASS_LOCAL_CURRENT_SOURCE",
-    "native_package_plugin_install_exact_candidate": "PENDING_EXACT_REF_AND_REGISTRY_0_1_0"
+    "native_package_plugin_install_exact_candidate": "PENDING_FINAL_RELEASE_REF_CLEAN_CONSUMER_0_1_0"
   },
   "release_blocked": true,
-  "reason": "Real OpenCode 1.18.16 host acceptance and deterministic release rebuild pass for the current uncommitted worktree. Release remains blocked until these fixes are bound to a new exact Git ref, exact-ref clean package/supply-chain installation is verified, and Windows smoke is complete.",
+  "reason": "P7 exact-host acceptance is complete on OpenCode 1.18.18. P8 is authorized but release remains blocked until the final release-source ref is created and pushed, cross-platform CI/Windows smoke passes, clean-consumer/supply-chain installation is verified, and post-freeze release artifacts/publication receipts are exact-bound.",
   "external_blockers": [
-    "current-host-tested-fixes-not-yet-bound-to-user-created-exact-git-ref",
+    "final-release-source-ref-not-yet-pushed",
+    "github-actions-windows-smoke-not-yet-passed",
     "exact-ref-clean-consumer-package-install-not-run",
     "external-supply-chain-install-receipt-not-run",
-    "windows-runtime-smoke-not-run",
-    "npm-registry-publish-install-verification-not-run-if-0.1.0-is-distributed-through-npm"
+    "post-freeze-release-artifacts-not-yet-bound",
+    "npm-registry-auth-unavailable-if-npm-distribution-is-required"
   ],
   "current_local_evidence": {
     "node": {
@@ -71,9 +72,10 @@
       "receipt": "data/validation/final-acceptance-0.1.0.json"
     },
     "host_acceptance": {
-      "status": "PASS_HOST_CURRENT_WORKTREE_EXACT_REF_PENDING",
-      "receipt": "data/validation/external-opencode-hi-0.1.0-host-current-worktree.json",
-      "opencode_version": "1.18.16"
+      "status": "PASS_EXACT_SOURCE_HOST_1_18_18",
+      "receipt": "data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-c5d8287.json",
+      "opencode_version": "1.18.18",
+      "runtime_source": "c5d8287a909b778b628bfdd20f84fb921e38b0e8"
     },
     "deterministic_release": {
       "status": "PASS",
@@ -90,5 +92,5 @@
       "data/validation/forensic-61-progress.json"
     ]
   },
-  "rule": "Current-worktree host PASS is real host evidence but is not exact-candidate release evidence until the tested fixes are committed by the user and the exact ref is revalidated. Historical v58 receipts never satisfy OpenCode-Hi gates."
+  "rule": "P7 exact-host evidence is immutable provenance. P8 release evidence must bind the final release-source commit/ref, CI/Windows result, clean-consumer installation, deterministic artifacts, and every real remote publication action."
 }

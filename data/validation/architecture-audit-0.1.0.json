@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "release": "0.1.0",
-  "generated_at": "2026-08-12",
-  "status": "PASS_HOST_CURRENT_WORKTREE_EXACT_REF_PENDING",
+  "generated_at": "2026-08-14",
+  "status": "PASS_EXACT_SOURCE_HOST_ACCEPTED_RELEASE_EXTERNALS_PENDING",
   "checks": {
     "direct_path": {
       "status": "PASS_LOCAL",
@@ -78,11 +78,11 @@
     },
     "process": {
       "status": "PASS_LOCAL",
-      "finding": "Long-running process state and cleanup are first-class runtime concerns."
+      "finding": "Ordinary model-facing bash remains DEGRADED: the host exposes a separate PTY lifecycle, but Hi does not claim PID/job lifecycle ownership for ordinary bash."
     },
     "isolation": {
       "status": "PASS_LOCAL",
-      "finding": "Isolation is adaptive; low-risk work stays in current workspace while worktree capability is available."
+      "finding": "Workspace isolation remains UNSUPPORTED until Hi owns selection/provisioning/cleanup and real child/tool execution binding to an alternate workspace."
     },
     "verification": {
       "status": "PASS_LOCAL",
@@ -97,8 +97,8 @@
       "finding": "STOP remains authoritative; model completion statements do not own STOP."
     },
     "opencode_native_behavior": {
-      "status": "PASS_HOST_CURRENT_WORKTREE",
-      "finding": "OpenCode 1.18.16 real-host acceptance passed for loader, connected-provider routing, DIRECT zero-child behavior, native child sessions, effective model/variant evidence, native permissions, native skill discovery, bounded retry and deterministic STOP. Exact-ref rebinding remains required after the user commits the tested fixes."
+      "status": "PASS_EXACT_SOURCE_HOST_1_18_18",
+      "finding": "OpenCode 1.18.18 real-host acceptance passed against exact runtime source c5d8287 for loader/agent projections, four Go model-role bindings, direct authority, native child sessions, native permission once/reject, visual resource fail-closed behavior, and truthful process/workspace/browser capability reporting."
     },
     "portability": {
       "status": "PASS_LOCAL",

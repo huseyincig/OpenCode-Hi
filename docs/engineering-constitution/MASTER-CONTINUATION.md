@@ -14,7 +14,7 @@ coverage_reconciliation_baseline_head: 8ba9eb561332eebc3b6bded90a1c0d2da501d1ed
 active_program: OpenCode-Hi Product Closure after Constitution Migration
 active_phase: P8
 active_phase_name: Release readiness and real publication
-phase_status: NOT REQUESTED
+phase_status: OPEN
 working_tree_expectation: clean
 last_verified_full_suite:
   total: 564
@@ -23,8 +23,8 @@ last_verified_full_suite:
 last_verified_architecture_lint: "PASS rules=21 deferred=0 linked=8"
 last_verified_validator: PASS
 current_projection_receipts: 32
-external_release_actions_authorized: false
-next_contract_owner: none until explicit user authority requests P8/M13 release work
+external_release_actions_authorized: true
+next_contract_owner: P8 release source freeze -> cross-platform CI/Windows -> clean-consumer/supply-chain -> deterministic artifacts -> push/tag/release/package publication receipts
 ```
 
 ---
@@ -580,11 +580,9 @@ Deterministic source checkpoint before T3: **564/564 PASS**, architecture lint 2
 
 P7 exit satisfied: changed OpenCode-bound behavior is reaccepted against the current registry-latest host and exact runtime source hashes, while unsupported/degraded features remain truthfully limited.
 
-### P8 / M13 / Stage 10 — Release readiness and real publication
+### P8 / M13 / Stage 10 — Release readiness and real publication — **OPEN / EXPLICITLY AUTHORIZED 2026-08-14**
 
-**NOT REQUESTED.**
-
-Do not execute real push/tag/GitHub release/npm publish/deploy until the user explicitly requests release work. When requested, treat it as a separate authority-bound T4 phase with exact remote/integrity receipts.
+The user explicitly authorized the complete release/publication phase. External actions are now permitted only through the canonical release chain and must remain exact-action, exact-ref and receipt-bound. npm publication remains environment-blocked until registry authentication exists; do not fake it.
 
 ---
 
@@ -698,8 +696,6 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**No autonomous product-closure phase is open. P8 / M13 / Stage 10 remains NOT REQUESTED.**
+**Continue P8 / M13 only. External release actions are explicitly authorized.**
 
-Preserve the P0–P7 closed invariants and current host-limitation truth. Do not push, tag, create a GitHub release, publish a package, or deploy unless the user explicitly requests release/publication work.
-
-If the user explicitly requests P8/M13, begin by re-checking real HEAD/status and resolving registry-latest OpenCode again, because the completed P7 receipt is exact to OpenCode 1.18.18 and runtime source `c5d8287`, not a permanent host-version pin. Then run the authority-bound T4 release-readiness/publication protocol.
+Freeze a truthful release source first: cross-platform Python invocation, current release/user documentation, living release receipts and the GitHub Actions Windows/Linux readiness gate must be coherent and green locally. Commit that checkpoint, then push the exact source ref and require the cross-platform workflow to pass before tagging/releasing. Run clean-consumer and external dependency/supply-chain installation against the exact pushed ref, rebuild deterministic post-freeze SOURCE/DISTRIBUTABLE/MANIFEST/SBOM artifacts, then create and remotely verify the exact tag/GitHub release. Publish to npm only if registry authentication becomes available; otherwise record the T4 package-publication blocker without weakening GitHub release truth.

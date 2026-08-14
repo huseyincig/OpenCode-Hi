@@ -29,9 +29,9 @@ Historical/current-worktree OpenCode host receipts are source-bound evidence onl
 
 ## Real OpenCode host acceptance
 
-The host receipt is `data/validation/external-opencode-hi-0.1.0-host-current-worktree.json`.
+The host receipt is `data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-c5d8287.json`.
 
-The following passed on OpenCode 1.18.16:
+The following passed on OpenCode 1.18.18 against exact runtime source `c5d8287`:
 
 - native local plugin loading through `.opencode/plugins/`;
 - Hi config hook registration of eight canonical native agents;

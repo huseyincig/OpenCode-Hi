@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "release": "0.1.0",
-  "generated_at": "2026-08-13",
-  "status": "HOST_ACCEPTED_CURRENT_WORKTREE_EXACT_CANDIDATE_PENDING",
+  "generated_at": "2026-08-14",
+  "status": "EXACT_HOST_ACCEPTED_PRE_RELEASE_EXTERNALS_PENDING",
   "known_blocking_internal_findings": [],
   "local_gates": {
     "node_runtime_acceptance": "PASS",
@@ -13,11 +13,11 @@
     "terminology": "PASS",
     "filesystem_hygiene": "PASS",
     "storage_ownership": "PASS",
-    "skill_artifact_ownership_29_of_29": "PASS",
     "architecture": "PASS_LOCAL",
     "security_privacy": "PASS_LOCAL",
     "source_reuse_license": "PASS_LOCAL",
-    "deterministic_release": "PASS_LOCAL_REQUIRES_POST_FREEZE_HASH_RECEIPT"
+    "deterministic_release": "PASS_LOCAL_REQUIRES_POST_FREEZE_HASH_RECEIPT",
+    "skill_artifact_ownership_27_of_27": "PASS"
   },
   "pending_external": [
     "exact_git_ref_clean_install",
@@ -27,16 +27,15 @@
     "npm_registry_publish_install_verification_if_distributed_through_npm"
   ],
   "release_ready": false,
-  "rule": "Real-host current-worktree evidence is valid for host behavior but does not become exact-candidate release evidence until the user commits the tested fixes and that exact ref is revalidated.",
+  "rule": "Exact-host behavior is bound to OpenCode 1.18.18 and runtime source c5d8287. Release still requires a final release-source commit/ref, clean consumer/supply-chain verification, Windows CI smoke, deterministic post-freeze artifacts, and publication receipts.",
   "host_gates": {
-    "native_opencode_plugin_loader": "PASS_HOST_CURRENT_WORKTREE",
-    "native_child_sessions": "PASS_HOST_CURRENT_WORKTREE",
-    "model_provider_binding": "PASS_HOST_CURRENT_WORKTREE",
-    "permission_denial_runtime": "PASS_HOST_CURRENT_WORKTREE",
-    "packaged_agents": "PASS_HOST_CURRENT_WORKTREE",
-    "native_skill_discovery": "PASS_HOST_CURRENT_WORKTREE",
-    "install_doctor_uninstall_hygiene": "PASS_HOST_CURRENT_WORKTREE",
-    "deterministic_completion_stop": "PASS_HOST_CURRENT_WORKTREE",
-    "receipt": "data/validation/external-opencode-hi-0.1.0-host-current-worktree.json"
+    "native_opencode_plugin_loader": "PASS_EXACT_SOURCE_HOST_1_18_18",
+    "native_child_sessions": "PASS_EXACT_SOURCE_HOST_1_18_18",
+    "model_provider_binding": "PASS_EXACT_SOURCE_HOST_1_18_18",
+    "permission_denial_runtime": "PASS_EXACT_SOURCE_HOST_1_18_18",
+    "packaged_agents": "PASS_EXACT_SOURCE_HOST_1_18_18",
+    "native_skill_discovery": "PASS_EXACT_SOURCE_HOST_1_18_18",
+    "deterministic_completion_stop": "PASS_EXACT_SOURCE_HOST_1_18_18",
+    "receipt": "data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-c5d8287.json"
   }
 }

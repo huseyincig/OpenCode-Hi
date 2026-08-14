@@ -84,7 +84,7 @@ def dependency_components(root:Path):
         if not pkg_path: continue
         marker='node_modules/'
         name=meta.get('name') or (pkg_path.split(marker)[-1] if marker in pkg_path else pkg_path)
-        relation='direct-dev' if name in direct_dev else ('direct-peer' if name in direct_peer else 'transitive')
+        relation='direct-peer' if name in direct_peer else ('direct-dev' if name in direct_dev else 'transitive')
         out.append({'path':pkg_path.replace('\\','/'),'name':name,'version':str(meta.get('version') or ''),'license':str(meta.get('license') or 'UNKNOWN'),'relation':relation})
     out.sort(key=lambda x:x['path'])
     h=hashlib.sha256()

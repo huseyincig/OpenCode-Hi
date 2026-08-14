@@ -154,13 +154,14 @@ def test_release_gate_stays_blocked_until_exact_candidate_external_completion():
     assert d['gates']['node_runtime_acceptance'].startswith('PASS_LOCAL_')
     assert d['gates']['python_acceptance'].startswith('PASS_LOCAL_')
     for gate in ('plain_opencode_smoke','packaged_agents_skills','opencode_native_child_sessions','opencode_model_provider_binding','permission_denial_runtime'):
-        assert d['gates'][gate]=='PASS_HOST_CURRENT_WORKTREE'
-    assert d['gates']['native_package_plugin_install_exact_candidate'].startswith('PENDING_EXACT_REF')
-    assert d['gates']['windows_runtime_smoke'].startswith('PENDING_EXTERNAL_WINDOWS')
-    assert d['gates']['dependency_supply_chain_external'].startswith('PENDING_EXTERNAL')
+        assert d['gates'][gate]=='PASS_EXACT_SOURCE_HOST_1_18_18'
+    assert d['gates']['native_package_plugin_install_exact_candidate'].startswith('PENDING_FINAL_RELEASE_REF')
+    assert d['gates']['windows_runtime_smoke'].startswith('PENDING_GITHUB_ACTIONS_WINDOWS')
+    assert d['gates']['dependency_supply_chain_external'].startswith('PENDING_CLEAN_CONSUMER')
     assert d['release_blocked'] is True
     assert d['external_blockers']
-    assert d['current_local_evidence']['host_acceptance']['receipt']=='data/validation/external-opencode-hi-0.1.0-host-current-worktree.json'
+    assert d['current_local_evidence']['host_acceptance']['receipt']=='data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-c5d8287.json'
+    assert d['current_local_evidence']['host_acceptance']['runtime_source'].startswith('c5d8287')
     progress=json.loads((ROOT/'data/validation/forensic-61-progress.json').read_text())
     assert progress['summary']['total']==61
     assert progress['summary']['complete_local']+progress['summary']['partial_external']==61
@@ -343,9 +344,9 @@ def test_reconfigure_preserves_user_owned_config_and_updates_main_prompt_runtime
     r=run(ROOT/'scripts/native_plugin_setup.py','reconfigure',tmp_path,
           '--execution-policy','thorough','--primary-mode','manager',
           '--parallel','enabled','--parallel-max','4',
-          '--profile-target','balanced','--specialist-threshold','low','--parallel-threshold','low','--review-threshold','high',
-          '--team-mode','enabled','--team-auto','false','--team-max-members','3',
-          '--routing-strategy','quality','--model-policy','manual','--allow-provider','p1','--deny-model','p/bad','--max-fallbacks','2')
+          '--profile-target','balanced','--specialist-threshold','low','--review-threshold','high',
+          '--team-mode','enabled','--team-max-members','3',
+          '--routing-strategy','quality','--allow-provider','p1','--deny-model','p/bad','--max-fallbacks','2')
     out=json.loads(r.stdout); assert r.returncode==0 and out['status']=='APPLIED'
     # Native OpenCode config is user-owned and is no longer mutated with private Hi keys.
     after=json.loads(cfg.read_text()); assert after==original
@@ -353,11 +354,10 @@ def test_reconfigure_preserves_user_owned_config_and_updates_main_prompt_runtime
     assert project_cfg['executionPolicy']=='thorough' and project_cfg['primaryMode']=='manager'
     assert project_cfg['parallel']['enabled'] is True and project_cfg['parallel']['max']==4
     assert project_cfg['profile']['balanced']['specialistThreshold']=='low'
-    assert project_cfg['profile']['balanced']['parallelThreshold']=='low'
     assert project_cfg['profile']['balanced']['reviewThreshold']=='high'
-    assert project_cfg['teamMode']['enabled'] is True and project_cfg['teamMode']['auto'] is False and project_cfg['teamMode']['maxMembers']==3
+    assert project_cfg['teamMode']['enabled'] is True and project_cfg['teamMode']['maxMembers']==3 and 'auto' not in project_cfg['teamMode']
     routing=project_cfg['routing']
-    assert routing['maxFallbacks']==2 and routing['strategy']=='quality' and routing['modelPolicy']=='manual' and routing['allowedProviders']==['p1'] and routing['deniedModels']==['p/bad']
+    assert routing['maxFallbacks']==2 and routing['strategy']=='quality' and routing['allowedProviders']==['p1'] and routing['deniedModels']==['p/bad']
     assert after['hi']['userCustom']=={'preserve':'yes'}
 
 
@@ -432,13 +432,13 @@ def test_living_validation_contracts_are_bound_to_hi_0_1_0():
 
 def test_current_0_1_0_receipts_are_not_historical_v58_claims():
     gates=json.loads((ROOT/'data/validation/release-gates.json').read_text())
-    assert gates['candidate_status']=='HOST_ACCEPTED_CURRENT_WORKTREE_EXACT_CANDIDATE_PENDING'
+    assert gates['candidate_status']=='P8_PRE_RELEASE_EXTERNAL_GATES_PENDING'
     assert gates['current_local_evidence']['benchmarks']['receipt']=='data/validation/benchmarks-0.1.0.json'
     assert gates['current_local_evidence']['install_lifecycle']['receipt']=='data/validation/install-lifecycle-0.1.0.json'
     assert gates['historical_receipts_not_valid_for_current_candidate']['release']=='2.0.10-v58'
     audit=json.loads((ROOT/'data/validation/architecture-audit-0.1.0.json').read_text())
     assert audit['known_internal_blocking_findings']==[]
-    assert audit['checks']['opencode_native_behavior']['status']=='PASS_HOST_CURRENT_WORKTREE'
+    assert audit['checks']['opencode_native_behavior']['status']=='PASS_EXACT_SOURCE_HOST_1_18_18'
 
 def test_legacy_product_cli_alias_is_rejected(tmp_path):
     r=run(ROOT/'scripts/native_plugin_setup.py','reconfigure',tmp_path,'--autonomy','smart')
@@ -472,10 +472,10 @@ def test_uninstall_preserves_independently_owned_project_policy_knowledge_artifa
     assert '.opencode/hi/artifacts' in out['preserved_project_data']
     assert '.opencode/skills' in out['preserved_project_data']
 
-def test_skill_artifact_ownership_audit_covers_all_29_skills():
+def test_skill_artifact_ownership_audit_covers_all_27_skills():
     d=json.loads((ROOT/'data/validation/skill-artifact-ownership-0.1.0.json').read_text())
-    assert d['skills_audited']==29
-    assert len(d['skills'])==29
+    assert d['skills_audited']==27
+    assert len(d['skills'])==27
     assert all(row['skill_specific_hi_directory'] is False for row in d['skills'])
     assert '.opencode/skills/<project-created-skill>/' in d['canonical_project_families']
 
