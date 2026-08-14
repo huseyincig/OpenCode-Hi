@@ -18,4 +18,5 @@ export function isHiChildRole(value:unknown):value is HiChildRole{return typeof 
 export function isHiReadOnlyChildRole(value:unknown):boolean{return typeof value==='string'&&READ_ONLY.has(value)}
 export function isHiReviewerRole(value:unknown):boolean{return typeof value==='string'&&REVIEWER.has(value)}
 export function roleCanOwnObligation(role:string,kind:string):boolean{const contract=BY_ID.get(role as HiRole);return Boolean(contract&&contract.roleClass==='child'&&(contract.obligationAuthority as readonly string[]).includes(kind))}
+export function primaryRoleCanDirectImplementation(role:string):boolean{const contract=BY_ID.get(role as HiRole);if(!contract||contract.roleClass!=='primary')return false;const writeAuthority:string=contract.repositoryWriteAuthority;return !contract.readOnly&&writeAuthority!=='none'}
 export function roleContract(role:string):HiRoleContract|undefined{return BY_ID.get(role as HiRole)}

@@ -54,6 +54,7 @@ import { fileURLToPath } from 'node:url';
 import { bindParentMethodologyNeeds } from './runtime/methodology/activation.js';
 import { reconcileMethodologyExits } from './runtime/methodology/exit.js';
 import { applyAdmittedProjectMethodologyPermissions } from './runtime/methodology/host-permissions.js';
+import { primaryRoleCanDirectImplementation } from './runtime/roles/catalog.js';
 function nativeDiffFiles(raw) { const items = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : []; return [...new Set(items.map((x) => typeof x?.file === 'string' ? x.file : typeof x?.path === 'string' ? x.path : '').filter((x) => Boolean(x)).map((x) => x.replace(/\\/g, '/').replace(/^\.\//, '')))]; }
 function providerModels(raw) {
     const root = raw?.all ?? raw?.providers ?? raw ?? [];
@@ -196,6 +197,8 @@ export const HiPlugin = async (ctx) => {
             return 'No active Hi mission'; const rawArgs = a?.input && typeof a.input === 'object' && !Array.isArray(a.input) ? { ...a, ...a.input } : a, candidates = m.obligations.filter(x => ['implementation', 'review'].includes(x.kind) && x.status === 'open'), requested = rawArgs?.obligation_id ? String(rawArgs.obligation_id) : undefined, exact = requested ? candidates.find(x => x.id === requested) : undefined, o = exact ?? (candidates.length === 1 ? candidates[0] : undefined); if (!o)
             return candidates.length > 1 ? 'BLOCKED: multiple direct-progress obligations are open; specify obligation_id' : 'No open direct-progress obligation'; if (o.kind === 'review' && m.verification_policy.requireReview)
             return 'BLOCKED: independent reviewer required; direct parent progress cannot close this review obligation'; let directFiles = [...m.changed_files]; if (o.kind === 'implementation') {
+            if (!primaryRoleCanDirectImplementation(m.primary_mode))
+                return `BLOCKED: primary role ${m.primary_mode} lacks canonical repository write authority for direct implementation progress`;
             if (!m.evidence.last_mutation_at)
                 return 'BLOCKED: no observed mutation for direct implementation progress';
             if (!m.changed_files.length)

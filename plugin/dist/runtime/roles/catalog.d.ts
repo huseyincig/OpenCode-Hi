@@ -10,4 +10,5 @@ export declare function isHiChildRole(value: unknown): value is HiChildRole;
 export declare function isHiReadOnlyChildRole(value: unknown): boolean;
 export declare function isHiReviewerRole(value: unknown): boolean;
 export declare function roleCanOwnObligation(role: string, kind: string): boolean;
+export declare function primaryRoleCanDirectImplementation(role: string): boolean;
 export declare function roleContract(role: string): HiRoleContract | undefined;

@@ -113,6 +113,22 @@ test('parent direct progress cannot close implementation from an unrelated chang
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
+
+test('read-only manager cannot close implementation through hi_direct_progress even if mutation evidence is observed',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-direct-manager-authority-'))
+  try{
+    const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({hi:{primaryMode:'manager'}})
+    await hooks['chat.message']({sessionID:'s-manager-direct',agent:'manager',message:{role:'user',parts:[{type:'text',text:'Update src/a.ts to add a greeting'}]}},{parts:[]});await assessPluginMission(hooks,'s-manager-direct',{likely_targets:['src/a.ts']})
+    await hooks['tool.execute.before']({sessionID:'s-manager-direct',tool:'write'},{args:{filePath:'src/a.ts'}})
+    const result=String(await hooks.tool.hi_direct_progress.execute({summary:'done'},{sessionID:'s-manager-direct'}))
+    assert.match(result,/primary role manager lacks canonical repository write authority/)
+    assert.match(String(await hooks.tool.hi_status.execute({},{sessionID:'s-manager-direct'})),/[1-9] obligation open/)
+    const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:'s-manager-direct'}))
+    assert.ok(!ledger.events.some(e=>e.type==='implementation.direct-progress'))
+    await hooks.dispose?.()
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
 test('parent direct ownership accepts an automatically related sibling test file',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-direct-related-'))
   try{

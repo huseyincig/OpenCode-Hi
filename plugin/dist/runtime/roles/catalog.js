@@ -14,4 +14,6 @@ export function isHiChildRole(value) { return typeof value === 'string' && CHILD
 export function isHiReadOnlyChildRole(value) { return typeof value === 'string' && READ_ONLY.has(value); }
 export function isHiReviewerRole(value) { return typeof value === 'string' && REVIEWER.has(value); }
 export function roleCanOwnObligation(role, kind) { const contract = BY_ID.get(role); return Boolean(contract && contract.roleClass === 'child' && contract.obligationAuthority.includes(kind)); }
+export function primaryRoleCanDirectImplementation(role) { const contract = BY_ID.get(role); if (!contract || contract.roleClass !== 'primary')
+    return false; const writeAuthority = contract.repositoryWriteAuthority; return !contract.readOnly && writeAuthority !== 'none'; }
 export function roleContract(role) { return BY_ID.get(role); }

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 import {validateRoleCatalog,validateRoleContract} from '../dist/contracts/role.js'
 import {HI_ROLE_CONTRACTS,HI_ROLE_IDS,HI_ROLE_PRIMARY_IDS,HI_ROLE_CHILD_IDS} from '../dist/generated/role-policy.js'
+import {primaryRoleCanDirectImplementation} from '../dist/runtime/roles/catalog.js'
 
 function sourceCatalog(){
   const raw=JSON.parse(readFileSync(new URL('../../data/hi-roles.json',import.meta.url),'utf8'))
@@ -31,4 +32,12 @@ test('RoleContract catalog rejects unknown delegation and duplicate identity',()
   wm.delegation.allowedRoleRefs=[...wm.delegation.allowedRoleRefs,'missing-role']
   assert.throws(()=>validateRoleCatalog(all),/unknown role missing-role/)
   assert.throws(()=>validateRoleCatalog([...structuredClone(HI_ROLE_CONTRACTS),structuredClone(HI_ROLE_CONTRACTS[0])]),/duplicate canonical role id/)
+})
+
+
+test('primary direct implementation authority is derived from canonical RoleContract write authority',()=>{
+  assert.equal(primaryRoleCanDirectImplementation('working-manager'),true)
+  assert.equal(primaryRoleCanDirectImplementation('manager'),false)
+  assert.equal(primaryRoleCanDirectImplementation('coder'),false)
+  assert.equal(primaryRoleCanDirectImplementation('foreign-role'),false)
 })
