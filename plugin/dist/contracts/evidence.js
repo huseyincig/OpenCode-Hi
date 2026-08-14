@@ -1,4 +1,4 @@
-import { WORKER_EVIDENCE_KINDS } from './worker-result.js';
+import { WORKER_EVIDENCE_KINDS } from './evidence-kinds.js';
 export const MISSION_EVIDENCE_KINDS = [...WORKER_EVIDENCE_KINDS, 'review-input', 'lsp-diagnostics'];
 const KIND_SET = new Set(MISSION_EVIDENCE_KINDS);
 const OUTCOME_SET = new Set(['pending', 'passed', 'failed', 'environment-issue']);

@@ -52,13 +52,30 @@ Rows below are intentionally `PENDING` until code exists.
 | M5 | ConfigOption catalog | BA03 + config executor lint | T1/T2 | SentinelX blocks direct config-catalog mutation in this environment | BLOCKED_BY_HOST_POLICY |
 | M6 | Model capability/identity | ModelCapabilityProfile host-inventory normalization + identity reconciler + effective-model evidence; focused 17/17 PASS; controlled full suite 475/475 PASS; validator PASS | T1/T2 | `e7c3c96`; requested/projected WorkerState snapshot wiring blocked by SentinelX mutation policy; no unwired state committed | PARTIAL_PASS |
 | M7 | Host capability registry | 16 contract-backed OpenCode capabilities; product runtime gates consume worker-runtime/session-revert contracts; doctor reports status/verification/semantic loss; focused 43/43 PASS; controlled full suite 480/480 PASS; validator PASS | T1/T2 local; T3 still pending | `390cc2b` | PASS_LOCAL — REAL-HOST ACCEPTANCE PENDING |
-| M8 | Task/Worker/Result/Evidence contracts | WorkerResult and mission EvidenceItem canonical contracts extracted; parser/persistence share canonical validators; WorkerResult focused 57/57 + Evidence focused 32/32 PASS; latest controlled full suite 489/489 PASS; validator PASS | T1/T2 | WorkerResult `4ea320d`; Evidence commit pending | PARTIAL_PASS — REVIEW/TASK/WORKER EXTRACTION REMAINS |
+| M8 | Task/Worker/Result/Evidence contracts | WorkerResult, mission EvidenceItem, shared evidence-kind primitives, and executable ReviewFinding lifecycle extracted; introduced/worsened findings drive correction, pre-existing debt does not gain unrelated blocker authority, reviewer-role/evidence-ref/causality checks fail closed; latest focused 45/45 PASS and controlled full suite 495/495 PASS; validator PASS | T1/T2 | WorkerResult `4ea320d`; Evidence `3044b94`; ReviewFinding commit pending | PARTIAL_PASS — VERIFICATION-ENVELOPE/TASK/WORKER EXTRACTION REMAINS |
 | M9 | Context/Artifact/PI/Human/Authority/Storage | BA06/10/11 + storage lint | T1/T2 | — | PENDING |
 | M10 | common generator/lint closure | BA12 + HI001–HI020 migrated rules | T0/T1/T2 | — | PENDING |
 | M11 | deterministic full closure | build + validator + full controlled suite | T0/T1/T2 | — | PENDING |
 | M12 | real-host acceptance | OpenCode version-bound native receipts | T3 | — | PENDING |
 | M13 | release readiness | explicit authority + external receipts | T4 | — | NOT REQUESTED |
 
+
+
+### M8 ReviewFinding contract checkpoint
+
+Implemented:
+
+- extracted shared evidence-kind/outcome primitives so WorkerResult, mission Evidence and ReviewFinding consume one proof vocabulary without circular ownership;
+- added canonical `ReviewFindingContract` with technical finding ID, reviewer role, subject, severity, causality, scope, evidence refs, confidence, disposition and blocking semantics;
+- blocking findings require evidence refs, and WorkerResult validation requires every finding evidence ref to resolve to an evidence.kind returned by that same result;
+- reviewer handoffs request `findings[]` only for canonical reviewer roles; QA/security/visual reviewer prompt projections now instruct structured findings rather than burying findings in summary/open_issues;
+- TaskRuntime requires finding reviewer_role to match the actual canonical reviewer worker; spoofed/mismatched roles become FIX_REQUIRED;
+- open introduced/worsened findings force FIX_REQUIRED even when reviewer prose/status claims DONE;
+- open pre-existing findings remain recorded in the task result but do not become unrelated mission blockers;
+- blocking findings with unknown causality cannot gain blocker authority and instead require explicit causality reconciliation;
+- the handoff projection was rewritten from a dense single-line string builder into an equivalent readable structured projection while preserving bounded context/output semantics.
+
+Evidence: focused ReviewFinding/result/evidence/ownership/role suite 45/45 PASS; controlled isolated-HOME/XDG full suite 495/495 PASS; validator PASS; diff check clean. VerificationEnvelope remains deliberately unimplemented until a real command/result consumer is identified; Task/Worker state extraction also remains.
 
 
 ### M8 Evidence contract checkpoint

@@ -1,4 +1,4 @@
-import { type EvidenceOutcome } from './worker-result.js';
+import { type EvidenceOutcome } from './evidence-kinds.js';
 export declare const MISSION_EVIDENCE_KINDS: readonly ["targeted-tests", "typecheck", "lint", "build", "changed-surface-sanity", "review-evidence", "decision-evidence", "diagnostic-evidence", "measurement-evidence", "browser-evidence", "visual-evidence", "accessibility-evidence", "source-provenance-evidence", "review-input", "lsp-diagnostics"];
 export type MissionEvidenceKind = typeof MISSION_EVIDENCE_KINDS[number];
 export interface EvidenceItem {

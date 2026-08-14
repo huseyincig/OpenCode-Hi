@@ -1,8 +1,10 @@
-export const WORKER_EVIDENCE_KINDS = ['targeted-tests', 'typecheck', 'lint', 'build', 'changed-surface-sanity', 'review-evidence', 'decision-evidence', 'diagnostic-evidence', 'measurement-evidence', 'browser-evidence', 'visual-evidence', 'accessibility-evidence', 'source-provenance-evidence'];
+import { WORKER_EVIDENCE_KINDS } from './evidence-kinds.js';
+import { isReviewFindingContract } from './review-finding.js';
+export { WORKER_EVIDENCE_KINDS } from './evidence-kinds.js';
 const STATUS_ALIAS = { DONE: 'DONE', PASS: 'DONE', SUCCESS: 'DONE', SUCCEEDED: 'DONE', DONE_WITH_CONCERNS: 'DONE', FIX_REQUIRED: 'FIX_REQUIRED', NEEDS_CONTEXT: 'NEEDS_CONTEXT', USER_ACTION_REQUIRED: 'BLOCKED', BLOCKED: 'BLOCKED', NO_PROGRESS: 'FIX_REQUIRED', FAILED: 'FAILED', FAIL: 'FAILED' };
 const KIND_SET = new Set(WORKER_EVIDENCE_KINDS);
 const OUTCOME_SET = new Set(['pending', 'passed', 'failed', 'environment-issue']);
-const RESULT_KEYS = new Set(['status', 'summary', 'changed_files', 'scope_expansions', 'evidence', 'open_issues', 'needs_context', 'context_gap', 'failure_finding', 'methodology_observations']);
+const RESULT_KEYS = new Set(['status', 'summary', 'changed_files', 'scope_expansions', 'evidence', 'findings', 'open_issues', 'needs_context', 'context_gap', 'failure_finding', 'methodology_observations']);
 const EVIDENCE_KEYS = new Set(['kind', 'summary', 'scope', 'pass', 'outcome', 'reason']);
 const OBS_KEYS = new Set(['key', 'procedure', 'trigger', 'do_not_trigger', 'exit_condition', 'evidence']);
 const EXPANSION_KEYS = new Set(['file', 'reason', 'necessary']);
@@ -32,6 +34,13 @@ export function isWorkerResultContract(v) {
         return false;
     if (v.scope_expansions !== undefined && (!Array.isArray(v.scope_expansions) || !v.scope_expansions.every(x => record(x) && onlyKeys(x, EXPANSION_KEYS) && typeof x.file === 'string' && typeof x.reason === 'string' && typeof x.necessary === 'boolean')))
         return false;
+    if (v.findings !== undefined && (!Array.isArray(v.findings) || !v.findings.every(isReviewFindingContract)))
+        return false;
+    if (Array.isArray(v.findings)) {
+        const evidenceKinds = new Set(v.evidence.map(x => x.kind));
+        if (v.findings.some(f => f.evidence_refs.some(ref => !evidenceKinds.has(ref))))
+            return false;
+    }
     if (v.context_gap !== undefined && !['scope', 'iterative', 'none'].includes(String(v.context_gap)))
         return false;
     if (v.failure_finding !== undefined && !['ci-build', 'unknown-root-cause', 'none'].includes(String(v.failure_finding)))
@@ -52,6 +61,9 @@ function normalizeMethodologyObservations(raw) {
         return []; return [{ key, procedure, trigger, do_not_trigger: doNotTrigger, exit_condition: exitCondition, evidence }]; });
     return out.length ? out : undefined;
 }
+function normalizeFindings(raw, evidence) { if (!Array.isArray(raw))
+    return undefined; const evidenceKinds = new Set(evidence.map(x => x.kind)); const out = raw.slice(0, 40).flatMap((v) => { if (!record(v))
+    return []; const candidate = { id: clip(v.id, 80), reviewer_role: clip(v.reviewer_role, 64), subject: clip(v.subject, 1200), severity: String(v.severity ?? ''), causality: String(v.causality ?? ''), scope: Array.isArray(v.scope) ? v.scope.map(String).slice(0, 50) : [], evidence_refs: Array.isArray(v.evidence_refs) ? v.evidence_refs.map(String).filter(x => evidenceKinds.has(x)).slice(0, 20) : [], confidence: String(v.confidence ?? ''), disposition: String(v.disposition ?? ''), blocking: v.blocking === true }; return isReviewFindingContract(candidate) ? [candidate] : []; }); return out.length ? out : undefined; }
 function evidenceFailed(e) { return e.outcome === 'failed' || e.pass === false; }
 function evidencePassed(e) { return e.outcome === 'passed' || e.pass === true; }
 function reconcileFailureFinding(finding, evidence) {
@@ -68,5 +80,5 @@ export function normalizeWorkerResult(raw) {
     const contextGap = ['scope', 'iterative', 'none'].includes(String(x.context_gap)) ? String(x.context_gap) : undefined;
     const rawFinding = ['ci-build', 'unknown-root-cause', 'none'].includes(String(x.failure_finding)) ? String(x.failure_finding) : undefined;
     const evidence = normalizeEvidence(x.evidence);
-    return { status, summary: typeof x.summary === 'string' ? clip(x.summary, 4000) : '', changed_files: Array.isArray(x.changed_files) ? x.changed_files.filter(v => typeof v === 'string').map(String).slice(0, 200) : [], scope_expansions: Array.isArray(x.scope_expansions) ? x.scope_expansions.filter(record).slice(0, 80).map(v => ({ file: String(v.file ?? ''), reason: clip(v.reason, 600), necessary: v.necessary === true })).filter(v => v.file) : [], evidence, open_issues: open.slice(0, 30), needs_context: Array.isArray(x.needs_context) ? x.needs_context.map(String).slice(0, 30) : [], context_gap: contextGap, failure_finding: reconcileFailureFinding(rawFinding, evidence), methodology_observations: normalizeMethodologyObservations(x.methodology_observations) };
+    return { status, summary: typeof x.summary === 'string' ? clip(x.summary, 4000) : '', changed_files: Array.isArray(x.changed_files) ? x.changed_files.filter(v => typeof v === 'string').map(String).slice(0, 200) : [], scope_expansions: Array.isArray(x.scope_expansions) ? x.scope_expansions.filter(record).slice(0, 80).map(v => ({ file: String(v.file ?? ''), reason: clip(v.reason, 600), necessary: v.necessary === true })).filter(v => v.file) : [], evidence, findings: normalizeFindings(x.findings, evidence), open_issues: open.slice(0, 30), needs_context: Array.isArray(x.needs_context) ? x.needs_context.map(String).slice(0, 30) : [], context_gap: contextGap, failure_finding: reconcileFailureFinding(rawFinding, evidence), methodology_observations: normalizeMethodologyObservations(x.methodology_observations) };
 }

@@ -1,7 +1,8 @@
+import { type EvidenceOutcome, type WorkerEvidenceKind } from './evidence-kinds.js';
+import { type ReviewFinding } from './review-finding.js';
+export { WORKER_EVIDENCE_KINDS } from './evidence-kinds.js';
+export type { EvidenceOutcome, WorkerEvidenceKind } from './evidence-kinds.js';
 export type WorkerResultStatus = 'DONE' | 'FIX_REQUIRED' | 'NEEDS_CONTEXT' | 'BLOCKED' | 'FAILED';
-export type EvidenceOutcome = 'pending' | 'passed' | 'failed' | 'environment-issue';
-export declare const WORKER_EVIDENCE_KINDS: readonly ["targeted-tests", "typecheck", "lint", "build", "changed-surface-sanity", "review-evidence", "decision-evidence", "diagnostic-evidence", "measurement-evidence", "browser-evidence", "visual-evidence", "accessibility-evidence", "source-provenance-evidence"];
-export type WorkerEvidenceKind = typeof WORKER_EVIDENCE_KINDS[number];
 export interface WorkerEvidence {
     kind: WorkerEvidenceKind;
     summary: string;
@@ -29,6 +30,7 @@ export interface WorkerResult {
     changed_files: string[];
     scope_expansions?: ScopeExpansion[];
     evidence: WorkerEvidence[];
+    findings?: ReviewFinding[];
     open_issues: string[];
     needs_context: string[];
     context_gap?: 'scope' | 'iterative' | 'none';

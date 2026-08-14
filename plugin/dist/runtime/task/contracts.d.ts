@@ -14,6 +14,7 @@ export interface WorkerHandoff {
         changed_files: true;
         scope_expansions: true;
         evidence: true;
+        findings?: true;
         open_issues: true;
     };
 }

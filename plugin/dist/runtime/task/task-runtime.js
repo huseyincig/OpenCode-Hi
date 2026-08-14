@@ -36,6 +36,7 @@ import { isHiChildRole, isHiReadOnlyChildRole, isHiReviewerRole, roleCanOwnOblig
 import { typescriptSemanticContextForTargets } from '../semantic/typescript-context.js';
 import { ProjectIntelligenceStore } from '../project-intelligence/store.js';
 import { ContextArtifactStore } from '../context/artifact-store.js';
+import { reviewFindingMarker, reviewFindingNeedsCorrection } from '../../contracts/review-finding.js';
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
 const MAX_QUEUE = 32;
 function missionModelFeedback(m) {
@@ -394,7 +395,7 @@ export class TaskRuntime {
             if (!nativeSummary)
                 relevantForHandoff = clipList(relevantForHandoff, profile.max_context_chars);
         }
-        const buildHandoff = () => { const preexisting = Object.keys(worker.native_diff_baseline ?? {}).slice(0, 60), core = workerHandoffText({ objective, scope: task.scope, constraints: clipList([...(task.constraints ?? []), 'minimum sufficient change', 'no unrequested publish/push/deploy', 'return compact evidence', preexisting.length ? `pre-existing user dirty paths at worker start: ${preexisting.join(', ')}; preserve their exact baseline state unless the task explicitly requires changing them; never use git checkout/reset/restore in a way that discards user-owned edits` : 'no pre-existing native dirty paths were observed at worker start', verificationEconomyInstruction(m), `model-quirks:${JSON.stringify(quirks)}`], 5000), required_evidence: task.requiredEvidence, relevant_context: clipList(relevantForHandoff, profile.max_context_chars), methodologies: worker.selected_methodologies, methodology_exit_requirements: worker.selected_methodologies.flatMap(name => { const item = catalog.find(x => x.name === name); return item ? [`${name}: ${item.exitRequirements.join(', ')}`] : []; }), approval_gated_methodologies: approvalGated, expected_output: { status: true, summary: true, changed_files: true, scope_expansions: true, evidence: true, open_issues: true } }, profile.max_handoff_chars), full = [ownershipContract('child', worker.selected_methodologies), core].filter(Boolean).join('\n\n'); return clipText(full, profile.max_handoff_chars); };
+        const buildHandoff = () => { const preexisting = Object.keys(worker.native_diff_baseline ?? {}).slice(0, 60), core = workerHandoffText({ objective, scope: task.scope, constraints: clipList([...(task.constraints ?? []), 'minimum sufficient change', 'no unrequested publish/push/deploy', 'return compact evidence', preexisting.length ? `pre-existing user dirty paths at worker start: ${preexisting.join(', ')}; preserve their exact baseline state unless the task explicitly requires changing them; never use git checkout/reset/restore in a way that discards user-owned edits` : 'no pre-existing native dirty paths were observed at worker start', verificationEconomyInstruction(m), `model-quirks:${JSON.stringify(quirks)}`], 5000), required_evidence: task.requiredEvidence, relevant_context: clipList(relevantForHandoff, profile.max_context_chars), methodologies: worker.selected_methodologies, methodology_exit_requirements: worker.selected_methodologies.flatMap(name => { const item = catalog.find(x => x.name === name); return item ? [`${name}: ${item.exitRequirements.join(', ')}`] : []; }), approval_gated_methodologies: approvalGated, expected_output: { status: true, summary: true, changed_files: true, scope_expansions: true, evidence: true, findings: isHiReviewerRole(worker.role) ? true : undefined, open_issues: true } }, profile.max_handoff_chars), full = [ownershipContract('child', worker.selected_methodologies), core].filter(Boolean).join('\n\n'); return clipText(full, profile.max_handoff_chars); };
         const chain = [selected.primary, ...selected.fallbacks].filter((x) => Boolean(x)), toolOverrides = promptToolOverrides(profile.tools);
         const run = () => this.registry.dedupeSpawn(worker.fingerprint, async () => { let lastError = new Error('No runtime model available'); for (let i = 0; i < chain.length; i++) {
             if (m.status !== 'active' || m.user_interrupted || worker.status === 'cancelled') {
@@ -775,6 +776,30 @@ export class TaskRuntime {
             }
             const unresolved = previousCollateral.filter(file => !reverted.includes(file));
             task.diff_cleanliness = { collateral: unresolved, accepted_expansions: [...(task.diff_cleanliness?.accepted_expansions ?? [])], native_verified_reverts: [] };
+        }
+        if (effectiveResult.findings?.length) {
+            const findings = effectiveResult.findings;
+            const invalidRole = findings.filter(f => !isHiReviewerRole(worker.role) || f.reviewer_role !== worker.role);
+            const actionable = findings.filter(f => f.reviewer_role === worker.role && reviewFindingNeedsCorrection(f));
+            const unresolvedCausality = findings.filter(f => f.reviewer_role === worker.role && f.disposition === 'open' && f.blocking && f.causality === 'unknown');
+            const roleMarkers = invalidRole.map(f => `review-finding-role-mismatch:${f.id}:${worker.role}->${f.reviewer_role}`);
+            const actionableMarkers = actionable.map(reviewFindingMarker);
+            const causalityMarkers = unresolvedCausality.map(f => `review-finding-causality-unresolved:${f.id}`);
+            if (roleMarkers.length) {
+                effectiveResult = { ...effectiveResult, status: 'FIX_REQUIRED', open_issues: [...new Set([...effectiveResult.open_issues, ...roleMarkers])], needs_context: [...new Set([...effectiveResult.needs_context, 'review-finding-role-reconcile: structured findings must be emitted by the actual canonical reviewer role'])] };
+                appendLedger(m, 'review.finding-role-rejected', { task_id: task.id, worker_id: worker.id, payload: { findings: invalidRole.map(f => f.id), worker_role: worker.role } });
+            }
+            if (actionableMarkers.length) {
+                effectiveResult = { ...effectiveResult, status: 'FIX_REQUIRED', open_issues: [...new Set([...effectiveResult.open_issues, ...actionableMarkers])] };
+                appendLedger(m, 'review.finding-actionable', { task_id: task.id, worker_id: worker.id, payload: { findings: actionable.map(f => ({ id: f.id, severity: f.severity, causality: f.causality, blocking: f.blocking, scope: f.scope.slice(0, 20) })) } });
+            }
+            if (causalityMarkers.length) {
+                effectiveResult = { ...effectiveResult, status: 'FIX_REQUIRED', open_issues: [...new Set([...effectiveResult.open_issues, ...causalityMarkers])], needs_context: [...new Set([...effectiveResult.needs_context, 'review-finding-causality-reconcile: blocking findings with unknown causality cannot become mission blockers until introduced/worsened/pre-existing ownership is established'])] };
+                appendLedger(m, 'review.finding-causality-unresolved', { task_id: task.id, worker_id: worker.id, payload: { findings: unresolvedCausality.map(f => f.id) } });
+            }
+            const preExisting = findings.filter(f => f.causality === 'pre-existing' && f.disposition === 'open');
+            if (preExisting.length)
+                appendLedger(m, 'review.finding-pre-existing', { task_id: task.id, worker_id: worker.id, payload: { findings: preExisting.map(f => ({ id: f.id, severity: f.severity, scope: f.scope.slice(0, 20) })), policy: 'record-without-unrelated-mission-blocker' } });
         }
         // Proof ownership: ingest worker-reported proof into the canonical Evidence owner before
         // methodology exit evaluation. A WorkerResult is not itself proof. If changed files were
