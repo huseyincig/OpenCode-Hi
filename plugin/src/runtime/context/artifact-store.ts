@@ -6,8 +6,6 @@ import { artifactContentHash,isArtifactContract,newArtifactId,type ArtifactContr
 import { buildCompressionArtifact,isCompressionArtifact,type CompressionArtifact } from '../../contracts/compression-artifact.js'
 import type { ContextReferenceContract } from '../../contracts/context-reference.js'
 
-export type DurableContextArtifact=ArtifactContract
-
 export class ContextArtifactStore{
   readonly #items=new Map<string,ArtifactContract>()
   constructor(readonly projectRoot?:string){this.#load()}

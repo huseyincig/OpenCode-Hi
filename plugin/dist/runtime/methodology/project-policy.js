@@ -101,6 +101,3 @@ export function discoverProjectMethodologyPolicies(projectRoot) {
     }
     return out.sort((a, b) => a.name.localeCompare(b.name));
 }
-export function projectMethodologyPolicy(projectRoot, name) {
-    return discoverProjectMethodologyPolicies(projectRoot).find((item) => item.name === name);
-}

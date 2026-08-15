@@ -42,9 +42,6 @@ function projectEntry(item) {
 }
 const BUILTIN_ENTRIES = HI_METHODOLOGY_POLICY.map(builtinEntry);
 const BUILTIN_BY_NAME = new Map(BUILTIN_ENTRIES.map(item => [item.name, item]));
-export function isBuiltinHiMethodologyName(value) {
-    return BUILTIN_BY_NAME.has(value);
-}
 export function builtinMethodologyCatalog() {
     return BUILTIN_ENTRIES.map(item => ({ ...item, preferredRoles: [...item.preferredRoles], compatibleRoles: [...item.compatibleRoles], activationSignals: [...item.activationSignals], triggerSources: [...item.triggerSources], exitRequirements: [...item.exitRequirements], usefulCoexistence: [...item.usefulCoexistence], conflicts: [...item.conflicts], resourceRequirements: [...item.resourceRequirements] }));
 }
@@ -69,9 +66,6 @@ export function methodologyCatalogEntry(name, projectRoot) {
     return project ? projectEntry(project) : undefined;
 }
 export const methodologyLimits = HI_METHODOLOGY_LIMITS;
-export function methodologySignalSpec(signal) {
-    return HI_METHODOLOGY_SIGNAL_CATALOG[signal];
-}
 export function methodologiesForSignal(signal, projectRoot) {
     return methodologyCatalog(projectRoot).filter(item => item.activationSignals.includes(signal));
 }

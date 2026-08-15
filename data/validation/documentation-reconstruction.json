@@ -177,5 +177,10 @@
       "path": "docs/engineering-constitution/README.md",
       "sha256": "d73a3a25ccd08c1fd9846e38b8df9e5d31ac6d9e9ed2a0bcc10038ec8cf2188d"
     }
+  },
+  "completion_record": {
+    "commit": "9f0624383db038f55e280ab7834b7dd12bc281ca",
+    "tree": "b39dd548b1ceba28ff6fc67575ad9389ccf4f5b2",
+    "role": "immutable certification metadata commit; input hashes are validated against blobs in this commit"
   }
 }

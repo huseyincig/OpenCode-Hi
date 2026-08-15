@@ -78,9 +78,6 @@ export function resolveSkillPlan(
   return{selected,requested,missing,outcomes,reason}
 }
 
-export function selectMethodologies(methodologyNeeds:string[],candidates:SkillCandidate[],role='coder',catalog:HiMethodologyCatalogEntry[]=builtinMethodologyCatalog()):SkillCandidate[]{
-  return resolveSkillPlan(methodologyNeeds,candidates,undefined,true,role,catalog).selected
-}
 
 export type SkillResourceKind='references'|'scripts'|'assets'|'examples'
 export interface SkillResource{name:string;kind:SkillResourceKind;relativePath:string;absolutePath:string}

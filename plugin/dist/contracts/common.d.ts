@@ -1,9 +1,4 @@
-export type ContractStatus = 'DRAFT' | 'VALIDATED' | 'ADMITTED' | 'RETIRED';
-export type LifecycleClass = 'CANONICAL' | 'DERIVED' | 'CACHE' | 'EPHEMERAL';
 export type StorageScope = 'PROJECT' | 'GLOBAL' | 'RUNTIME';
-export type Confidence = 'unknown' | 'low' | 'medium' | 'high';
-export type CapabilityLevel = 'unknown' | 'low' | 'medium' | 'high';
-export type TriStateCapability = 'unknown' | false | true;
 export type HashAlgorithm = 'sha256';
 export interface ContentHash {
     algorithm: HashAlgorithm;
@@ -25,4 +20,3 @@ export declare function contentHash(value: string): ContentHash;
 export declare function assertContentHash(value: unknown, field: string): ContentHash;
 export declare function stableJson(value: unknown): string;
 export declare function canonicalHash(value: unknown): ContentHash;
-export declare function hashesEqual(a: ContentHash, b: ContentHash): boolean;

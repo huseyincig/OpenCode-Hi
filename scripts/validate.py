@@ -280,29 +280,35 @@ try:
         if unknown_exits:err(f'{name}: unknown methodology exit requirements {unknown_exits}')
         if any(role not in known for role in compatible):err(f'{name}: compatible role reference unknown')
 except Exception as e:err(f'bad Hi methodology policy: {e}')
-# PROMPT A immutable reconstruction certification receipt.
+# PROMPT A immutable reconstruction certification receipt. Historical evidence must not pin future current docs.
 try:
     dr=json.loads((ROOT/'data/validation/documentation-reconstruction.json').read_text(encoding='utf-8'))
     if dr.get('schema')!=1 or dr.get('kind')!='FINAL_PRODUCT_TRUTH_RECONSTRUCTION' or dr.get('program')!='PROMPT_A' or dr.get('status')!='COMPLETED':err('PROMPT A reconstruction receipt header/status invalid')
-    if dr.get('version')!=version:err('PROMPT A reconstruction receipt version drift')
+    if dr.get('version')!='0.1.0':err('PROMPT A historical reconstruction receipt version drift')
     source=dr.get('certified_source') or {}; head=source.get('head'); tree=source.get('tree')
-    if head!='5ced215ed57f28f8d963376ca702efc0dac75503' or tree!='b22db990942ad291997a8ad564ac1235283036bb':err('PROMPT A certified source identity drift')
+    if head!='5ced215ed57f28f8d963376ca702efc0dac75503' or tree!='b22db990942ad291997a8ad564ac1235283036bb':err('PROMPT A certified product source identity drift')
+    record=dr.get('completion_record') or {}; record_commit=record.get('commit'); record_tree=record.get('tree')
+    if record_commit!='9f0624383db038f55e280ab7834b7dd12bc281ca' or record_tree!='b39dd548b1ceba28ff6fc67575ad9389ccf4f5b2':err('PROMPT A completion-record identity drift')
     import hashlib,subprocess
     try:
         actual_tree=subprocess.check_output(['git','rev-parse',f'{head}^{{tree}}'],cwd=ROOT,text=True,stderr=subprocess.DEVNULL).strip()
-        if actual_tree!=tree:err('PROMPT A certified source tree does not resolve from recorded HEAD')
-    except Exception as e:err(f'PROMPT A certified source commit unavailable: {e}')
+        actual_record_tree=subprocess.check_output(['git','rev-parse',f'{record_commit}^{{tree}}'],cwd=ROOT,text=True,stderr=subprocess.DEVNULL).strip()
+        if actual_tree!=tree:err('PROMPT A certified product source tree does not resolve from recorded HEAD')
+        if actual_record_tree!=record_tree:err('PROMPT A completion-record tree does not resolve from recorded commit')
+    except Exception as e:err(f'PROMPT A certification commits unavailable: {e}')
     if not all(v is True for v in (dr.get('exit_gate') or {}).values()) or len(dr.get('exit_gate') or {})!=16:err('PROMPT A exit gate incomplete')
     parity=dr.get('source_doc_parity') or {}
-    if parity.get('status')!='PASS' or parity.get('product_trace_missing_paths')!=[] or parity.get('documentation_violations')!=[]:err('PROMPT A source/docs parity is not closed')
+    if parity.get('status')!='PASS' or parity.get('product_trace_missing_paths')!=[] or parity.get('documentation_violations')!=[]:err('PROMPT A source/docs parity receipt is not closed')
     gen=dr.get('generated_or_parity_validated') or {}
     if (gen.get('config_options'),gen.get('exact_t3_capabilities'),gen.get('product_areas'),gen.get('documentation_parity_violations'),gen.get('broken_links'))!=(32,3,24,0,0):err('PROMPT A generated/parity evidence drift')
     for name,meta in (dr.get('inputs') or {}).items():
         rel=meta.get('path') if isinstance(meta,dict) else None; expected=meta.get('sha256') if isinstance(meta,dict) else None
-        if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT A receipt input missing: {name}');continue
-        if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT A receipt input hash drift: {rel}')
+        if not isinstance(rel,str):err(f'PROMPT A receipt input path invalid: {name}');continue
+        try: blob=subprocess.check_output(['git','show',f'{record_commit}:{rel}'],cwd=ROOT,stderr=subprocess.DEVNULL)
+        except Exception:err(f'PROMPT A historical receipt input missing from completion commit: {rel}');continue
+        if hashlib.sha256(blob).hexdigest()!=expected:err(f'PROMPT A historical receipt input hash drift: {rel}')
     master=(ROOT/'docs/engineering-constitution/MASTER-CONTINUATION.md').read_text(encoding='utf-8')
-    if 'PROMPT A final exit gate — **COMPLETED**' not in master or 'Begin PROMPT B — Zero-Defect Engineering Hardening & Final System Certification' not in master:err('PROMPT A completion/next-action ledger drift')
+    if 'PROMPT A final exit gate — **COMPLETED**' not in master:err('PROMPT A completed status lost from current continuation ledger')
 except Exception as e:err(f'bad PROMPT A reconstruction receipt: {e}')
 
 for p in (ROOT/'data').rglob('*.json'):

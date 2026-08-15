@@ -270,7 +270,7 @@
     },
     {
       "path": "docs/ARCHITECTURE-REALITY-MAP.md",
-      "sha256": "d7f9440f20c472159b7682e19420a7ba1558320ba2fd4e6cba5d2e764b67f69b",
+      "sha256": "15bd8e0d77ec1b893dda66f48e56028dcf258b7944234d4f5c2b8a54ff48ba8f",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
@@ -550,7 +550,7 @@
     },
     {
       "path": "docs/engineering-constitution/MASTER-CONTINUATION.md",
-      "sha256": "b17f4b8c1bb4b11853a91ea895623d1e4363bb2ecca5fa21baa05d3432e8dd36",
+      "sha256": "670183b678cc697acca2b0952ea06cfcc31188820782efc406798da7176e26d2",
       "audience": "INTERNAL_ENGINEERING",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "HUMAN_OWNED"

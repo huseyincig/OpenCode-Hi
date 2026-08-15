@@ -334,8 +334,8 @@
       ],
       "proof_paths": [
         "plugin/test/b1-browser-observation-contract.test.mjs",
-        "plugin/test/b2-browser-executor.test.mjs",
-        "plugin/test/b3-playwright-browser-runtime.test.mjs"
+        "plugin/test/b3-playwright-browser-runtime.test.mjs",
+        "plugin/test/b3-methodology-exit-evidence.test.mjs"
       ],
       "canonical_doc": "docs/HOSTS.md"
     },

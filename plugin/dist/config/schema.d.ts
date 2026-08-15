@@ -55,9 +55,6 @@ export interface HiConfig {
         thorough: ProfileSettings;
     };
 }
-export interface HiRuntimeConfig {
-    hi: HiConfig;
-}
 export interface ConfigResolutionReport {
     schema: typeof HI_CONFIG_SCHEMA;
     canonical: boolean;

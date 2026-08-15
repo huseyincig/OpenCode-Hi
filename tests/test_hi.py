@@ -824,15 +824,59 @@ def test_prompt_a_current_storage_terminology_and_identity_docs_have_no_preimple
 def test_prompt_a_final_reconstruction_receipt_is_hash_bound_to_certified_source():
     d=json.loads((ROOT/'data/validation/documentation-reconstruction.json').read_text())
     assert d['schema']==1 and d['kind']=='FINAL_PRODUCT_TRUTH_RECONSTRUCTION' and d['program']=='PROMPT_A' and d['status']=='COMPLETED'
-    assert d['version']==V
+    assert d['version']=='0.1.0'
     assert d['certified_source']['head']=='5ced215ed57f28f8d963376ca702efc0dac75503'
     assert d['certified_source']['tree']=='b22db990942ad291997a8ad564ac1235283036bb' and d['certified_source']['working_tree']=='CLEAN'
+    record=d['completion_record']; assert record['commit']=='9f0624383db038f55e280ab7834b7dd12bc281ca' and record['tree']=='b39dd548b1ceba28ff6fc67575ad9389ccf4f5b2'
     assert d['documentation_inventory']['canonical_meanings']==36 and d['canonical_ownership']['meaning_count']==36
     assert d['generated_or_parity_validated']=={'config_options':32,'exact_t3_capabilities':3,'product_areas':24,'documentation_parity_violations':0,'broken_links':0}
     assert d['source_doc_parity']['product_trace_missing_paths']==[] and d['source_doc_parity']['documentation_violations']==[]
     assert all(d['exit_gate'].values())
     for meta in d['inputs'].values():
-        path=ROOT/meta['path']; assert path.is_file(); assert hashlib.sha256(path.read_bytes()).hexdigest()==meta['sha256']
+        blob=subprocess.check_output(['git','show',f"{record['commit']}:{meta['path']}"])
+        assert hashlib.sha256(blob).hexdigest()==meta['sha256']
     continuation=(ROOT/'docs/engineering-constitution/MASTER-CONTINUATION.md').read_text()
     assert 'PROMPT A final exit gate — **COMPLETED**' in continuation
-    assert 'Begin PROMPT B — Zero-Defect Engineering Hardening & Final System Certification' in continuation
+def test_prompt_b_removes_dead_browser_cli_executor_from_living_product_surface():
+    assert not (ROOT/'plugin/src/opencode/browser-cli-adapter.ts').exists()
+    assert not (ROOT/'plugin/test/b2-browser-executor.test.mjs').exists()
+    services=(ROOT/'plugin/src/runtime/application/runtime-services.ts').read_text()
+    assert 'PlaywrightBrowserAdapter' in services and 'BrowserCliAdapter' not in services
+    for rel in ['plugin/src','plugin/test']:
+        for path in (ROOT/rel).rglob('*'):
+            if path.is_file() and path.suffix in {'.ts','.mjs'}:
+                text=path.read_text(errors='ignore')
+                assert 'agent-browser' not in text and 'BrowserCliAdapter' not in text
+
+
+def test_prompt_b_baseline_is_bound_to_exact_starting_commit_and_hashes():
+    d=json.loads((ROOT/'data/validation/zero-defect-baseline.json').read_text())
+    assert d['schema']==1 and d['kind']=='ZERO_DEFECT_CERTIFICATION_BASELINE' and d['program']=='PROMPT_B' and d['status']=='BASELINE_CAPTURED'
+    assert d['source']=={'head':'9f0624383db038f55e280ab7834b7dd12bc281ca','tree':'b39dd548b1ceba28ff6fc67575ad9389ccf4f5b2','branch':'main','working_tree':'CLEAN'}
+    assert d['host']['opencode_installed']=='1.18.18' and d['host']['opencode_registry_latest']=='1.18.18' and d['host']['architecture']=='aarch64'
+    assert d['schemas']['hi_config']==2 and d['schemas']['runtime_state']==10 and d['schemas']['setup_ownership']==2 and d['schemas']['setup_state']==1 and d['schemas']['project_routing']==1
+    assert d['initial_architecture_scan']=={'typescript_source_files':168,'relative_import_edges':507,'import_cycles':0}
+    commit=d['source']['head']
+    for rel,expected in d['dependency_lock_hashes'].items():
+        blob=subprocess.check_output(['git','show',f'{commit}:{rel}']); assert hashlib.sha256(blob).hexdigest()==expected
+    for rel,expected in d['generated_artifact_hashes'].items():
+        blob=subprocess.check_output(['git','show',f'{commit}:{rel}']); assert hashlib.sha256(blob).hexdigest()==expected
+
+
+def test_prompt_b_internal_exports_have_a_repository_consumer():
+    source_files=list((ROOT/'plugin/src').rglob('*.ts'))
+    source={path:path.read_text(errors='ignore') for path in source_files}
+    support=[]
+    for base in [ROOT/'plugin/test',ROOT/'tests',ROOT/'scripts']:
+        for path in base.rglob('*'):
+            if path.is_file() and path.suffix in {'.mjs','.js','.ts','.py'}: support.append(path.read_text(errors='ignore'))
+    all_support='\n'.join(support)
+    combined='\n'.join(source.values())
+    dead=[]
+    decl=re.compile(r'export\s+(?:class|function|interface|type)\s+([A-Za-z_][A-Za-z0-9_]*)')
+    for path,text in source.items():
+        if '/generated/' in path.as_posix(): continue
+        for name in decl.findall(text):
+            count=len(re.findall(rf'\b{re.escape(name)}\b',combined))+len(re.findall(rf'\b{re.escape(name)}\b',all_support))
+            if count<=1: dead.append(f'{path.relative_to(ROOT)}::{name}')
+    assert dead==[]

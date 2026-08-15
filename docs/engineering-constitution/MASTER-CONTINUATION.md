@@ -672,6 +672,18 @@ Certified product-source HEAD `5ced215ed57f28f8d963376ca702efc0dac75503` / tree 
 
 The completion-record commit may be newer than the certified product-source HEAD because the receipt and this ledger are certification metadata only. npm publication remains externally blocked and is not represented as an available first-use registry install.
 
+### PROMPT B B0 — exact certification baseline — **CLOSED**
+
+Starting clean HEAD `9f0624383db038f55e280ab7834b7dd12bc281ca` / tree `b39dd548b1ceba28ff6fc67575ad9389ccf4f5b2` on `main`. OpenCode installed and npm registry latest both resolve `1.18.18`; platform Linux/aarch64; Node `v24.19.0`, npm `11.17.0`, Python `Python 3.11.2`. Canonical schema baseline: Hi config 2, runtime-state 10, setup ownership 2, setup lifecycle 1, routing 1. `data/validation/zero-defect-baseline.json` binds dependency-lock and generated-artifact hashes. Initial TypeScript import graph scan: 168 source files / 507 relative edges / 0 cycles. This is baseline evidence only, not certification.
+
+### PROMPT B B1 — architecture defect hunt — **CLOSED**
+
+Initial import-graph audit found 168 TypeScript source files / 507 relative import edges / 0 cycles. B1 checkpoint verification: Python 78/78 PASS; canonical Node 734/734 PASS after removal of the obsolete seven-test B2 CLI-only browser suite; architecture lint 22/22 PASS with deferred=0; documentation parity violations=0; zero-consumer internal exports=0; validator PASS; generated docs/product trace PASS; backup files=0. Module-scope mutable-state review found only immutable contract lookup sets/maps plus the intentional OpenCode runtime instance guard. `instance-guard.ts` uses an owner-scoped `WeakMap`, exact project key, duplicate-registration rejection and explicit lease release; controlled tests exercise distinct host instances/reacquire, so it is retained as a justified process-global duplicate-hook guard.
+
+A second architecture/governance defect was confirmed during B1: the initial PROMPT A validator incorrectly compared immutable certification input hashes to mutable current documentation, which would make legitimate future engineering impossible. The guard now validates Prompt A blobs against its exact completion-record commit and only requires the current ledger to retain the historical completed status.
+
+One real dead-abstraction defect was confirmed: `BrowserCliAdapter`/`agent-browser` remained as living source but had no production consumer after B3 moved runtime composition to `PlaywrightBrowserAdapter`; its only consumer was its own obsolete B2 test. The living adapter/test are removed. Historical negative browser receipts remain immutable provenance. Product-truth proof mapping now points only at the current BrowserObservation + Playwright/runtime/methodology evidence chain.
+
 ---
 
 ## 11. Verification protocol for future checkpoints
@@ -784,7 +796,7 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**PROMPT A — COMPLETED. Begin PROMPT B — Zero-Defect Engineering Hardening & Final System Certification.**
+**PROMPT B — IN PROGRESS. Next: section 5 exact-current OpenCode native re-evaluation.**
 
 PROMPT A certified product-source baseline: `5ced215ed57f28f8d963376ca702efc0dac75503` (tree `b22db990942ad291997a8ad564ac1235283036bb`). Canonical reconstruction receipt: `data/validation/documentation-reconstruction.json`.
 

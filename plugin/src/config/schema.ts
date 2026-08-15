@@ -34,6 +34,5 @@ export interface HiConfig {
   profile: { minimal: ProfileSettings; balanced: ProfileSettings; thorough: ProfileSettings }
 }
 
-export interface HiRuntimeConfig { hi: HiConfig }
 export interface ConfigResolutionReport { schema: typeof HI_CONFIG_SCHEMA; canonical: boolean; notes: string[] }
 export function isRecord(value: unknown): value is Record<string, unknown> { return typeof value === 'object' && value !== null && !Array.isArray(value) }

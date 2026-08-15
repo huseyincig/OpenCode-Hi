@@ -2,12 +2,6 @@ import { HI_METHODOLOGY_SIGNAL_CATALOG } from '../../generated/methodology-polic
 import { appendLedger } from '../ledger/ledger.js';
 import { methodologyCatalogEntry, methodologiesForSignal } from './catalog.js';
 function signalSpec(signal) { return HI_METHODOLOGY_SIGNAL_CATALOG[signal]; }
-export function isHiMethodologyName(value, projectRoot) {
-    return Boolean(methodologyCatalogEntry(value, projectRoot));
-}
-export function methodologyPolicy(name, projectRoot) {
-    return methodologyCatalogEntry(name, projectRoot);
-}
 export function createMethodologyNeed(name, signal, producer, reason, extra = {}, projectRoot) {
     const policy = methodologyCatalogEntry(name, projectRoot);
     if (!policy)
@@ -28,13 +22,6 @@ function addNeed(mission, need) {
     mission.methodology.methodology_needs.push(need);
     appendLedger(mission, 'methodology.activated', { task_id: need.task_id, payload: { name: need.name, signal: need.signal, trigger_source: need.trigger_source, producer: need.producer, obligation_id: need.obligation_id, reason: need.reason } });
     return true;
-}
-export function mergeMethodologyNeeds(mission, needs) {
-    const added = [];
-    for (const need of needs)
-        if (addNeed(mission, need))
-            added.push(need.name);
-    return [...new Set(added)];
 }
 export function activateMethodologySignal(mission, projectRoot, input) {
     const spec = signalSpec(input.signal);

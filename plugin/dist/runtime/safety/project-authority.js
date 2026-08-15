@@ -33,7 +33,6 @@ export function authorityClassForPatterns(patterns) { const p = patterns.map(nor
     return 'release-create'; if (p.some(x => /^(npm|pnpm|bun) publish(?:\s|\*)?/.test(x) || /^yarn npm publish(?:\s|\*)?/.test(x)))
     return 'package-publish'; if (p.some(x => /^(docker push|kubectl apply|kubectl delete|terraform apply|vercel deploy|netlify deploy)(?:\s|\*)?/.test(x)))
     return 'deploy'; return undefined; }
-export function authorityPatterns(cls) { return CLASS_PATTERNS[cls]; }
 function wildcard(pattern, value) { const esc = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.'); return new RegExp(`^${esc}$`, 'i').test(value); }
 function explicitDecision(bash, pattern) { if (typeof bash === 'string')
     return bash === 'deny' ? 'deny' : undefined; if (!bash || typeof bash !== 'object')

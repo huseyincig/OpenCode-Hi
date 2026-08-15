@@ -66,10 +66,6 @@ function projectEntry(item:ProjectMethodologyPolicy):HiMethodologyCatalogEntry{
 const BUILTIN_ENTRIES=HI_METHODOLOGY_POLICY.map(builtinEntry)
 const BUILTIN_BY_NAME=new Map(BUILTIN_ENTRIES.map(item=>[item.name,item]))
 
-export function isBuiltinHiMethodologyName(value:string):value is HiMethodologyName{
-  return BUILTIN_BY_NAME.has(value as HiMethodologyName)
-}
-
 export function builtinMethodologyCatalog():HiMethodologyCatalogEntry[]{
   return BUILTIN_ENTRIES.map(item=>({...item,preferredRoles:[...item.preferredRoles],compatibleRoles:[...item.compatibleRoles],activationSignals:[...item.activationSignals],triggerSources:[...item.triggerSources],exitRequirements:[...item.exitRequirements],usefulCoexistence:[...item.usefulCoexistence],conflicts:[...item.conflicts],resourceRequirements:[...item.resourceRequirements]}))
 }
@@ -95,9 +91,6 @@ export function methodologyCatalogEntry(name:string,projectRoot?:string):HiMetho
 
 export const methodologyLimits=HI_METHODOLOGY_LIMITS
 
-export function methodologySignalSpec(signal:HiMethodologySignalName){
-  return HI_METHODOLOGY_SIGNAL_CATALOG[signal]
-}
 
 export function methodologiesForSignal(signal:HiMethodologySignalName,projectRoot?:string):HiMethodologyCatalogEntry[]{
   return methodologyCatalog(projectRoot).filter(item=>item.activationSignals.includes(signal))

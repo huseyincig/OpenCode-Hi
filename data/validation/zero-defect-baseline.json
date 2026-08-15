@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "kind": "ZERO_DEFECT_CERTIFICATION_BASELINE",
+  "program": "PROMPT_B",
+  "status": "BASELINE_CAPTURED",
+  "source": {
+    "head": "9f0624383db038f55e280ab7834b7dd12bc281ca",
+    "tree": "b39dd548b1ceba28ff6fc67575ad9389ccf4f5b2",
+    "branch": "main",
+    "working_tree": "CLEAN"
+  },
+  "package_version": "0.1.0",
+  "schemas": {
+    "product": 2,
+    "hi_config": 2,
+    "runtime_state": 10,
+    "setup_ownership": 2,
+    "setup_state": 1,
+    "project_routing": 1,
+    "roles": 2,
+    "methodologies": 2,
+    "permission_profiles": 1,
+    "config_options": 1,
+    "documentation_ownership": 1
+  },
+  "host": {
+    "opencode_installed": "1.18.18",
+    "opencode_registry_latest": "1.18.18",
+    "platform": "Linux",
+    "kernel": "6.1.141",
+    "architecture": "aarch64"
+  },
+  "runtimes": {
+    "node": "v24.19.0",
+    "npm": "11.17.0",
+    "python": "Python 3.11.2"
+  },
+  "dependency_lock_hashes": {
+    "plugin/package-lock.json": "78f4aa59a5ca3be4c7b5ae1960c3c298a034cb00624a9efe76b75b3d89b71281",
+    "requirements-dev.txt": "26db60f3749b2d582ef13e54530725d1038086c5b72953678670871c2b85e15a",
+    "package.json": "68fcb15755b90b0da221d4afdbffca1c1d4089db11e0881831ef47c77cbd27c8",
+    "plugin/package.json": "f0787037b61a5617c295880577ca243b44cb9eecbc853514c10095c9503acd64"
+  },
+  "generated_artifact_hashes": {
+    "plugin/src/generated/config-policy.ts": "92588e9e83e9ac679d2117d73294962ce3db2b604f49e033e46ba8fd475582ed",
+    "plugin/src/generated/permission-policy.ts": "ceb7f062d58fdcacafceef5bf479b17d3efdacf473423b8d2cbca8c694c3a2b9",
+    "plugin/src/generated/role-policy.ts": "4684499cbb8abe09b38085b7df53e66e0e0d2f4fb54ef085d4f3b087584f52b7",
+    "plugin/src/generated/agent-config.ts": "48482f76621c540338f323798b1d7667cd062a8061af66819f063d1149697c39",
+    "plugin/src/generated/methodology-policy.ts": "974b52523bf554acb400e037076a14821995da19781f7d2c0d7c3dae26458fe4",
+    "data/validation/projection-receipts.json": "aff313279a75c18850fe28b40a972ab6639b80724c96df84d247d864a5b0c128",
+    "data/validation/documentation-inventory.json": "b9a2658ad44304293a4baf1634bf15f9ce399e892c529256d1711bc9f5924d21",
+    "data/validation/documentation-parity.json": "d5213430f21cd2cf75b1aa8190efc2dcf7c65570ebe57751335b592968100a47",
+    "data/validation/product-truth-inventory.json": "0753188aaadc10eb239fa30925fdd04cc94adb7f7f902527e486b114dc3311cf"
+  },
+  "initial_architecture_scan": {
+    "typescript_source_files": 168,
+    "relative_import_edges": 507,
+    "import_cycles": 0
+  },
+  "claim_boundary": "Exact PROMPT B starting baseline only. It is not final certification and does not inherit previous PASS labels."
+}

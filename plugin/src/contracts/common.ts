@@ -1,11 +1,6 @@
 import { createHash } from 'node:crypto'
 
-export type ContractStatus='DRAFT'|'VALIDATED'|'ADMITTED'|'RETIRED'
-export type LifecycleClass='CANONICAL'|'DERIVED'|'CACHE'|'EPHEMERAL'
 export type StorageScope='PROJECT'|'GLOBAL'|'RUNTIME'
-export type Confidence='unknown'|'low'|'medium'|'high'
-export type CapabilityLevel='unknown'|'low'|'medium'|'high'
-export type TriStateCapability='unknown'|false|true
 export type HashAlgorithm='sha256'
 
 export interface ContentHash { algorithm:HashAlgorithm; value:string }
@@ -91,4 +86,3 @@ function normalizeCanonical(value:unknown,path:string):unknown{
 
 export function stableJson(value:unknown):string{return JSON.stringify(normalizeCanonical(value,'$'))}
 export function canonicalHash(value:unknown):ContentHash{return contentHash(stableJson(value))}
-export function hashesEqual(a:ContentHash,b:ContentHash):boolean{return a.algorithm===b.algorithm&&a.value===b.value}

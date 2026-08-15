@@ -33,7 +33,6 @@ export declare function configuredSkillPaths(hostConfig: Record<string, unknown>
 export declare function skillDiscoveryRoots(projectRoot: string, hiRoot?: string, extraPaths?: string[]): SkillDiscoveryRoot[];
 export declare function discoverSkills(projectRoot: string, hiRoot?: string, extraPaths?: string[]): SkillCandidate[];
 export declare function resolveSkillPlan(methodologyNeeds: string[], candidates: SkillCandidate[], permissionMap?: Record<string, SkillPermission>, skillToolEnabled?: boolean, role?: string, catalog?: HiMethodologyCatalogEntry[], availableResources?: ReadonlySet<string>): SkillPlan;
-export declare function selectMethodologies(methodologyNeeds: string[], candidates: SkillCandidate[], role?: string, catalog?: HiMethodologyCatalogEntry[]): SkillCandidate[];
 export type SkillResourceKind = 'references' | 'scripts' | 'assets' | 'examples';
 export interface SkillResource {
     name: string;

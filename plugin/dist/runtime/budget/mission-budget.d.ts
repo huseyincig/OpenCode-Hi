@@ -11,18 +11,7 @@ export interface MissionBudget {
     verificationBudget: number;
     reviewBudget: number;
 }
-export interface BudgetUsage {
-    turns: number;
-    modelCalls: number;
-    toolCalls: number;
-    delegations: number;
-    contextChars: number;
-    planning: number;
-    verification: number;
-    review: number;
-}
 export declare const DEFAULT_MISSION_BUDGET: MissionBudget;
-export declare function budgetExceeded(b: MissionBudget, u: BudgetUsage): string[];
 export declare function materiallyDifferentRetry(previous: {
     failure: FailureClass;
     strategy: string;

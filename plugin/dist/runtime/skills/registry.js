@@ -128,9 +128,6 @@ export function resolveSkillPlan(methodologyNeeds, candidates, permissionMap, sk
     ];
     return { selected, requested, missing, outcomes, reason };
 }
-export function selectMethodologies(methodologyNeeds, candidates, role = 'coder', catalog = builtinMethodologyCatalog()) {
-    return resolveSkillPlan(methodologyNeeds, candidates, undefined, true, role, catalog).selected;
-}
 export function indexSkillResources(skill) {
     if (!skill.valid)
         return [];

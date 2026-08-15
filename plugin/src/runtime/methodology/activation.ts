@@ -5,14 +5,6 @@ import { methodologyCatalogEntry, methodologiesForSignal } from './catalog.js'
 
 function signalSpec(signal:HiMethodologySignalName){return HI_METHODOLOGY_SIGNAL_CATALOG[signal]}
 
-export function isHiMethodologyName(value:string,projectRoot?:string):boolean{
-  return Boolean(methodologyCatalogEntry(value,projectRoot))
-}
-
-export function methodologyPolicy(name:string,projectRoot?:string){
-  return methodologyCatalogEntry(name,projectRoot)
-}
-
 export function createMethodologyNeed(
   name:string,
   signal:HiMethodologySignalName,
@@ -36,12 +28,6 @@ function addNeed(mission:MissionState,need:HiMethodologyNeed):boolean{
   mission.methodology.methodology_needs.push(need)
   appendLedger(mission,'methodology.activated',{task_id:need.task_id,payload:{name:need.name,signal:need.signal,trigger_source:need.trigger_source,producer:need.producer,obligation_id:need.obligation_id,reason:need.reason}})
   return true
-}
-
-export function mergeMethodologyNeeds(mission:MissionState,needs:readonly HiMethodologyNeed[]):string[]{
-  const added:string[]=[]
-  for(const need of needs)if(addNeed(mission,need))added.push(need.name)
-  return [...new Set(added)]
 }
 
 export function activateMethodologySignal(

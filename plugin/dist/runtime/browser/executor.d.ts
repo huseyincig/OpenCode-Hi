@@ -28,16 +28,4 @@ export interface BrowserExecutor {
     wait(context: BrowserExecutionContext, request: BrowserWaitRequest): Promise<BrowserObservationContract>;
     close(context: BrowserExecutionContext): Promise<BrowserObservationContract>;
 }
-export interface BrowserCommandResult {
-    exit_code: number;
-    stdout: string;
-    stderr: string;
-}
-export interface BrowserCommandRunner {
-    run(argv: readonly string[], options: {
-        cwd: string;
-        timeout_ms: number;
-        env?: Readonly<Record<string, string>>;
-    }): Promise<BrowserCommandResult>;
-}
 export declare const HI_BROWSER_EXECUTION_TOOL_IDS: readonly ["hi_browser_open", "hi_browser_navigate", "hi_browser_click", "hi_browser_type", "hi_browser_inspect", "hi_browser_screenshot", "hi_browser_wait", "hi_browser_close"];

@@ -14,8 +14,6 @@ export function isAuthorized(m, command, cwd) { const c = actionContract(command
 export function claimAuthorizedAction(m, command, cwd) { const c = actionContract(command, cwd); if (m.authority.authority?.executing?.hash === c.hash)
     return 'duplicate'; if ((m.authority.authority?.completed_hashes ?? []).includes(c.hash))
     return 'duplicate'; return 'new'; }
-export function consumeAuthority(m, command, cwd) { const c = actionContract(command, cwd); if (m.authority.authority?.approved?.hash === c.hash)
-    m.authority.authority = { ...m.authority.authority, approved: undefined }; }
 export function beginAuthorizedAction(m, command, cwd) { const c = actionContract(command, cwd); let o = authorityObligation(m, c.hash); if (!o) {
     const generic = m.execution.obligations.find(x => x.id === 'o-authority' && x.kind === 'authority' && x.status === 'open');
     if (generic) {

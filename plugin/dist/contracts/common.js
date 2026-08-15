@@ -94,4 +94,3 @@ function normalizeCanonical(value, path) {
 }
 export function stableJson(value) { return JSON.stringify(normalizeCanonical(value, '$')); }
 export function canonicalHash(value) { return contentHash(stableJson(value)); }
-export function hashesEqual(a, b) { return a.algorithm === b.algorithm && a.value === b.value; }

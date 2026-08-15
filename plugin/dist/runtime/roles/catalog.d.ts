@@ -1,4 +1,4 @@
-import { type HiRole, type HiPrimaryRole, type HiChildRole, type HiRoleContract } from '../../generated/role-policy.js';
+import { type HiRole, type HiPrimaryRole, type HiChildRole } from '../../generated/role-policy.js';
 export declare const HI_ROLES: readonly ["manager", "working-manager", "coder", "architect", "repository-explorer", "qa-reviewer", "security-reviewer", "visual-qa"];
 export declare const HI_PRIMARY_ROLES: readonly ["manager", "working-manager"];
 export declare const HI_CHILD_ROLES: readonly ["coder", "architect", "repository-explorer", "qa-reviewer", "security-reviewer", "visual-qa"];
@@ -11,4 +11,3 @@ export declare function isHiReadOnlyChildRole(value: unknown): boolean;
 export declare function isHiReviewerRole(value: unknown): boolean;
 export declare function roleCanOwnObligation(role: string, kind: string): boolean;
 export declare function primaryRoleCanDirectImplementation(role: string): boolean;
-export declare function roleContract(role: string): HiRoleContract | undefined;

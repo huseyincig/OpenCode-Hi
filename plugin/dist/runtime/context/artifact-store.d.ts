@@ -1,7 +1,6 @@
 import { type ArtifactContract, type ArtifactPrivacyClass } from '../../contracts/artifact.js';
 import { type CompressionArtifact } from '../../contracts/compression-artifact.js';
 import type { ContextReferenceContract } from '../../contracts/context-reference.js';
-export type DurableContextArtifact = ArtifactContract;
 export declare class ContextArtifactStore {
     #private;
     readonly projectRoot?: string | undefined;

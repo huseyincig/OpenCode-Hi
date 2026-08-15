@@ -16,4 +16,3 @@ export function isHiReviewerRole(value) { return typeof value === 'string' && RE
 export function roleCanOwnObligation(role, kind) { const contract = BY_ID.get(role); return Boolean(contract && contract.roleClass === 'child' && contract.obligationAuthority.includes(kind)); }
 export function primaryRoleCanDirectImplementation(role) { const contract = BY_ID.get(role); if (!contract || contract.roleClass !== 'primary')
     return false; const writeAuthority = contract.repositoryWriteAuthority; return !contract.readOnly && writeAuthority !== 'none'; }
-export function roleContract(role) { return BY_ID.get(role); }

@@ -24,4 +24,3 @@ export interface ProjectMethodologyPolicy {
 }
 export declare function projectMethodologyPolicyDir(projectRoot: string): string;
 export declare function discoverProjectMethodologyPolicies(projectRoot: string): ProjectMethodologyPolicy[];
-export declare function projectMethodologyPolicy(projectRoot: string, name: string): ProjectMethodologyPolicy | undefined;

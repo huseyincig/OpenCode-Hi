@@ -23,7 +23,6 @@ export class ProjectAuthorityStore{
 }
 function norm(s:string):string{return s.trim().toLowerCase().replace(/\s+/g,' ')}
 export function authorityClassForPatterns(patterns:string[]):PersistentAuthorityClass|undefined{const p=patterns.map(norm);if(p.some(x=>/^git push(?:\s|\*)/.test(x)))return'git-push';if(p.some(x=>/^gh release create(?:\s|\*)/.test(x)))return'release-create';if(p.some(x=>/^(npm|pnpm|bun) publish(?:\s|\*)?/.test(x)||/^yarn npm publish(?:\s|\*)?/.test(x)))return'package-publish';if(p.some(x=>/^(docker push|kubectl apply|kubectl delete|terraform apply|vercel deploy|netlify deploy)(?:\s|\*)?/.test(x)))return'deploy';return undefined}
-export function authorityPatterns(cls:PersistentAuthorityClass):string[]{return CLASS_PATTERNS[cls]}
 function wildcard(pattern:string,value:string):boolean{const esc=pattern.replace(/[.+^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*').replace(/\?/g,'.');return new RegExp(`^${esc}$`,'i').test(value)}
 function explicitDecision(bash:any,pattern:string):'allow'|'ask'|'deny'|undefined{if(typeof bash==='string')return bash==='deny'?'deny':undefined;if(!bash||typeof bash!=='object')return undefined;let decision: any;for(const [k,v] of Object.entries(bash)){if(k==='*')continue;if(wildcard(k,pattern.replace(/\*$/,''))||wildcard(k,pattern))decision=v}return['allow','ask','deny'].includes(decision)?decision:undefined}
 /** Merge Hi's authority prompt/persistent grants without ever weakening a user/native explicit deny. */
