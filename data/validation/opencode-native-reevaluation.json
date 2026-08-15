@@ -1,0 +1,198 @@
+{
+  "schema": 1,
+  "kind": "EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION",
+  "program": "PROMPT_B",
+  "status": "PASS",
+  "opencode": {
+    "version": "1.18.18",
+    "source_commit": "e23586af2623f1bc2e8e6965d2d7acf7bd03d5c3",
+    "source_worktree_used": false,
+    "source_read_mode": "git-blob"
+  },
+  "upstream_blob_sha256": {
+    "plugin-hooks": {
+      "path": "packages/plugin/src/index.ts",
+      "sha256": "7ce98ddab759903e6618b40a1c8beb1b621f0691f8f508ad2c07dba2041744e1"
+    },
+    "session": {
+      "path": "packages/opencode/src/session/session.ts",
+      "sha256": "c1bbe9a25346de0a8bde38b2384123b3cb3dd06e47f934a53db4eba82dbae264"
+    },
+    "task": {
+      "path": "packages/opencode/src/tool/task.ts",
+      "sha256": "15d4c367f3e5373375ca6a7ea8ff8f650cb0f95f914f5886760559526add31ac"
+    },
+    "permission": {
+      "path": "packages/opencode/src/permission/index.ts",
+      "sha256": "5b9e4aa65290a39363722b9fae4c68080188d8ed76896afa0d96cd9dbfd2821d"
+    },
+    "pty": {
+      "path": "packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts",
+      "sha256": "685c16df022fe44333d77f59c1a91574aaad47f759ee8a0d0b6904897f85aa1b"
+    },
+    "workspace": {
+      "path": "packages/opencode/src/control-plane/workspace.ts",
+      "sha256": "087058224b0833b7df8382dd9f5ff0800303090fb4b7df8b07dacb12d63e243c"
+    },
+    "workspace-adapter": {
+      "path": "packages/opencode/src/control-plane/adapters/worktree.ts",
+      "sha256": "df8c4ae2b7b5655cfcfbdcb1b549b22702d8692cada4c1c58a716d4736ae6b41"
+    },
+    "skill": {
+      "path": "packages/opencode/src/skill/index.ts",
+      "sha256": "91dce57f590e1ad3103e0555b893500e098a95cde2739422b699233889b205e6"
+    },
+    "lsp": {
+      "path": "packages/opencode/src/lsp/lsp.ts",
+      "sha256": "cc2857fe8a8d3503288591d489c1c1294a2175a684226ade81ae1167482678ea"
+    },
+    "sdk": {
+      "path": "packages/sdk/js/src/gen/sdk.gen.ts",
+      "sha256": "fb802a6eb8e60b5e79df08f8c4c610715a4e52c511faff50bc825a96c686ecc1"
+    },
+    "sdk-v2": {
+      "path": "packages/sdk/js/src/v2/gen/sdk.gen.ts",
+      "sha256": "a9e01ec182be0a9c2bd8eb220c65eaef5f3f308bd3298406666624f5abe41cb5"
+    },
+    "sdk-types": {
+      "path": "packages/sdk/js/src/gen/types.gen.ts",
+      "sha256": "2010a219eb0e506fa07f6b0a8373bdd0d47968c0f07f1de0eb454e1a3897bf7a"
+    },
+    "package": {
+      "path": "packages/opencode/package.json",
+      "sha256": "bd2f7313b59402fe6389f3ebe41f035dba0fa214a51427b9a5d382337d1f0627"
+    }
+  },
+  "decisions": [
+    {
+      "surface": "sessions",
+      "native": "session.create/prompt/abort/status/children/fork/summarize/revert/unrevert",
+      "hi_decision": "KEEP_THIN_ADAPTER",
+      "reason": "Hi owns Mission/Task/Worker/evidence/recovery semantics, not native session mechanics.",
+      "hi_paths": [
+        "plugin/src/opencode/native-adapter.ts",
+        "plugin/src/opencode/client-adapter.ts",
+        "plugin/src/runtime/task/child-execution-coordinator.ts"
+      ]
+    },
+    {
+      "surface": "task-delegation",
+      "native": "TaskTool + child session + background jobs + permission inheritance",
+      "hi_decision": "KEEP_STRONGER_SEMANTIC_CONTROL",
+      "reason": "Native TaskTool does not own Hi obligation/evidence/completion, exact selected-model proof, WorkspaceLease ownership, or deterministic Mission recovery.",
+      "hi_paths": [
+        "plugin/src/runtime/task/task-runtime.ts",
+        "plugin/src/runtime/task/child-execution-coordinator.ts"
+      ]
+    },
+    {
+      "surface": "permission",
+      "native": "permission.ask hook + Permission.ask/reply",
+      "hi_decision": "KEEP_THIN_AUTHORITY_BINDING",
+      "reason": "Native permission remains execution authority substrate; Hi adds exact ExternalAction contracts, one-shot/replay semantics, and never widens denial.",
+      "hi_paths": [
+        "plugin/src/runtime/safety/authority.ts",
+        "plugin/src/runtime/safety/project-authority.ts",
+        "plugin/src/opencode/event-adapter.ts"
+      ]
+    },
+    {
+      "surface": "tool-events",
+      "native": "tool.execute.before/after + event hook",
+      "hi_decision": "KEEP_THIN_EVENT_ADAPTER",
+      "reason": "Hi uses native hooks as observations and maintains evidence/freshness/ownership semantics separately.",
+      "hi_paths": [
+        "plugin/src/opencode/open-code-hooks.ts",
+        "plugin/src/opencode/event-adapter.ts"
+      ]
+    },
+    {
+      "surface": "lsp",
+      "native": "find.symbols -> /find/symbol backed by LSP.workspaceSymbol; internal documentSymbol also exists",
+      "hi_decision": "KEEP_LOCAL_SEMANTIC_ADAPTER; NATIVE_DISCOVERY_OPTIONAL",
+      "reason": "Public symbol response is name/kind/location only and workspaceSymbol is bounded; it does not by itself satisfy source hash, signature/text, relationship, consumer-bound budget, and freshness requirements of SemanticContextContract.",
+      "hi_paths": [
+        "plugin/src/runtime/semantic/adapter.ts",
+        "plugin/src/runtime/semantic/typescript-context.ts"
+      ]
+    },
+    {
+      "surface": "pty",
+      "native": "v2 PTY create/get/remove/connect-token + events",
+      "hi_decision": "KEEP_THIN_PROCESS_ADAPTER",
+      "reason": "OpenCode owns PTY mechanics; Hi adds ProcessContract ownership, command identity, bounded output evidence, authority binding, restart adoption/quarantine, STOP cleanup.",
+      "hi_paths": [
+        "plugin/src/opencode/open-code-pty-adapter.ts",
+        "plugin/src/runtime/process/runtime.ts"
+      ]
+    },
+    {
+      "surface": "workspace",
+      "native": "experimental workspace create/list/remove + builtin worktree adapter + workspace-bound sessions",
+      "hi_decision": "KEEP_THIN_WORKSPACE_ADAPTER",
+      "reason": "OpenCode owns workspace bytes/lifecycle primitive; Hi adds IsolationDecision/WorkspaceLease source identity, exact child binding, cleanup/restart/orphan semantics.",
+      "hi_paths": [
+        "plugin/src/opencode/open-code-workspace-adapter.ts",
+        "plugin/src/runtime/workspace/runtime.ts"
+      ]
+    },
+    {
+      "surface": "provider-model-observation",
+      "native": "provider inventory + assistant message provider/model metadata",
+      "hi_decision": "KEEP_NORMALIZATION_ONLY",
+      "reason": "Hi routing policy consumes native inventory and verifies effective selected model; it does not own provider execution.",
+      "hi_paths": [
+        "plugin/src/opencode/host-port.ts",
+        "plugin/src/opencode/client-adapter.ts",
+        "plugin/src/runtime/routing/model-resolver.ts"
+      ]
+    },
+    {
+      "surface": "skill-loading",
+      "native": "OpenCode Skill service/discovery + native skill tool",
+      "hi_decision": "KEEP_POLICY_INDEX_ONLY",
+      "reason": "OpenCode owns skill discovery/loading; Hi owns methodology admission/selection and bounded catalog cache, not a second loader.",
+      "hi_paths": [
+        "plugin/src/runtime/skills/catalog-index.ts",
+        "plugin/src/runtime/methodology/native-loading.ts"
+      ]
+    },
+    {
+      "surface": "lifecycle-events",
+      "native": "plugin dispose/event + session/file/permission/tool/compaction events",
+      "hi_decision": "KEEP_THIN_EVENT_CONTROLLER",
+      "reason": "Hi maps native events into Mission ownership/freshness/recovery and persists only Hi semantic state.",
+      "hi_paths": [
+        "plugin/src/opencode/open-code-hooks.ts",
+        "plugin/src/runtime/application/runtime-event-controller.ts"
+      ]
+    },
+    {
+      "surface": "human-decision-structured-open",
+      "native": "question.list/reply/reject public SDK; host-internal Question.ask exists",
+      "hi_decision": "UNSUPPORTED_STRUCTURED_OPEN_KEEP_CHAT_TRANSPORT",
+      "reason": "Plugin/public SDK cannot deterministically open a question bound to an exact Hi decision_id; model-facing question tool is not a deterministic transport seam.",
+      "hi_paths": [
+        "plugin/src/runtime/human-decision/transport.ts"
+      ]
+    },
+    {
+      "surface": "compaction",
+      "native": "experimental.session.compacting hook",
+      "hi_decision": "KEEP_THIN_EXPERIMENTAL_BOUNDARY",
+      "reason": "Hi Context Governor supplies protected/compressible semantic context while OpenCode owns compaction primitive.",
+      "hi_paths": [
+        "plugin/src/opencode/experimental-adapter.ts",
+        "plugin/src/hooks/session-compacting.ts"
+      ]
+    }
+  ],
+  "missing_hi_paths": [],
+  "summary": {
+    "surfaces": 12,
+    "remove_custom_mechanism": 0,
+    "keep_thin_or_stronger": 11,
+    "unsupported": 1
+  },
+  "claim_boundary": "Exact source re-evaluation for OpenCode 1.18.18 at the recorded commit. Native availability does not transfer Hi semantic ownership."
+}

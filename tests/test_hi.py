@@ -880,3 +880,21 @@ def test_prompt_b_internal_exports_have_a_repository_consumer():
             count=len(re.findall(rf'\b{re.escape(name)}\b',combined))+len(re.findall(rf'\b{re.escape(name)}\b',all_support))
             if count<=1: dead.append(f'{path.relative_to(ROOT)}::{name}')
     assert dead==[]
+
+def test_prompt_b_exact_current_opencode_native_reevaluation_is_source_bound_and_fail_closed():
+    d=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text())
+    assert d['schema']==1 and d['kind']=='EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION' and d['program']=='PROMPT_B' and d['status']=='PASS'
+    assert d['opencode']=={'version':'1.18.18','source_commit':'e23586af2623f1bc2e8e6965d2d7acf7bd03d5c3','source_worktree_used':False,'source_read_mode':'git-blob'}
+    assert d['missing_hi_paths']==[]
+    assert d['summary']=={'surfaces':12,'remove_custom_mechanism':0,'keep_thin_or_stronger':11,'unsupported':1}
+    decisions={x['surface']:x for x in d['decisions']}
+    assert set(decisions)=={'sessions','task-delegation','permission','tool-events','lsp','pty','workspace','provider-model-observation','skill-loading','lifecycle-events','human-decision-structured-open','compaction'}
+    assert decisions['lsp']['hi_decision']=='KEEP_LOCAL_SEMANTIC_ADAPTER; NATIVE_DISCOVERY_OPTIONAL'
+    assert 'source hash' in decisions['lsp']['reason'] and 'freshness' in decisions['lsp']['reason']
+    assert decisions['human-decision-structured-open']['hi_decision']=='UNSUPPORTED_STRUCTURED_OPEN_KEEP_CHAT_TRANSPORT'
+    assert 'cannot deterministically open a question' in decisions['human-decision-structured-open']['reason']
+    assert decisions['task-delegation']['hi_decision']=='KEEP_STRONGER_SEMANTIC_CONTROL'
+    assert decisions['permission']['hi_decision']=='KEEP_THIN_AUTHORITY_BINDING'
+    for item in decisions.values():
+        assert item['hi_paths'] and all((ROOT/p).is_file() for p in item['hi_paths'])
+    assert (ROOT/'scripts/audit-opencode-native.py').is_file()

@@ -282,6 +282,30 @@ try:
 except Exception as e:err(f'bad Hi methodology policy: {e}')
 # PROMPT A immutable reconstruction certification receipt. Historical evidence must not pin future current docs.
 try:
+    nr=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text(encoding='utf-8'))
+    if nr.get('schema')!=1 or nr.get('kind')!='EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION' or nr.get('program')!='PROMPT_B' or nr.get('status')!='PASS':err('bad PROMPT B native reevaluation receipt identity/status')
+    oc=nr.get('opencode',{})
+    if oc.get('version')!='1.18.18' or oc.get('source_commit')!='e23586af2623f1bc2e8e6965d2d7acf7bd03d5c3' or oc.get('source_worktree_used') is not False or oc.get('source_read_mode')!='git-blob':err('PROMPT B native reevaluation exact-source identity drift')
+    decisions=nr.get('decisions',[])
+    expected={'sessions','task-delegation','permission','tool-events','lsp','pty','workspace','provider-model-observation','skill-loading','lifecycle-events','human-decision-structured-open','compaction'}
+    surfaces={x.get('surface') for x in decisions if isinstance(x,dict)}
+    if surfaces!=expected or len(decisions)!=12:err('PROMPT B native reevaluation surface inventory drift')
+    if nr.get('missing_hi_paths')!=[]:err('PROMPT B native reevaluation has missing Hi paths')
+    summary=nr.get('summary',{})
+    if summary!={'surfaces':12,'remove_custom_mechanism':0,'keep_thin_or_stronger':11,'unsupported':1}:err('PROMPT B native reevaluation summary drift')
+    by={x.get('surface'):x for x in decisions if isinstance(x,dict)}
+    if by.get('lsp',{}).get('hi_decision')!='KEEP_LOCAL_SEMANTIC_ADAPTER; NATIVE_DISCOVERY_OPTIONAL':err('PROMPT B LSP boundary drift')
+    if by.get('human-decision-structured-open',{}).get('hi_decision')!='UNSUPPORTED_STRUCTURED_OPEN_KEEP_CHAT_TRANSPORT':err('PROMPT B HumanDecision boundary drift')
+    for x in decisions:
+        for rel in x.get('hi_paths',[]):
+            if not (ROOT/rel).is_file():err(f'PROMPT B native reevaluation Hi path missing: {rel}')
+    blobs=nr.get('upstream_blob_sha256',{})
+    if set(blobs)!={'plugin-hooks','session','task','permission','pty','workspace','workspace-adapter','skill','lsp','sdk','sdk-v2','sdk-types','package'}:err('PROMPT B upstream blob inventory drift')
+    for meta in blobs.values():
+        if not isinstance(meta,dict) or not isinstance(meta.get('path'),str) or not re.fullmatch(r'[a-f0-9]{64}',str(meta.get('sha256',''))):err('PROMPT B upstream blob metadata invalid')
+except Exception as e:err(f'bad PROMPT B native reevaluation receipt: {e}')
+
+try:
     dr=json.loads((ROOT/'data/validation/documentation-reconstruction.json').read_text(encoding='utf-8'))
     if dr.get('schema')!=1 or dr.get('kind')!='FINAL_PRODUCT_TRUTH_RECONSTRUCTION' or dr.get('program')!='PROMPT_A' or dr.get('status')!='COMPLETED':err('PROMPT A reconstruction receipt header/status invalid')
     if dr.get('version')!='0.1.0':err('PROMPT A historical reconstruction receipt version drift')

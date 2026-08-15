@@ -686,6 +686,11 @@ One real dead-abstraction defect was confirmed: `BrowserCliAdapter`/`agent-brows
 
 ---
 
+
+### PROMPT B B2 — exact-current OpenCode native re-evaluation — **CLOSED**
+
+Exact OpenCode 1.18.18 source was re-evaluated from Git blobs at upstream commit `e23586af2623f1bc2e8e6965d2d7acf7bd03d5c3`, explicitly ignoring the dirty upstream worktree. `scripts/audit-opencode-native.py` and `data/validation/opencode-native-reevaluation.json` bind 13 upstream source blobs and 12 material host surfaces. Sessions, TaskTool delegation, permission, tool events, PTY, workspace/worktree, provider/model observation, skill loading, lifecycle events and compaction are native substrate; Hi retains only the stronger Mission/Task/Worker, authority, evidence, ownership, recovery and policy semantics. Native `find.symbols`/LSP is real but insufficient by itself for `SemanticContextContract` source-hash/signature/relationship/freshness/budget guarantees, so the local TypeScript semantic adapter remains justified while native discovery is optional. Public plugin SDK does not expose deterministic Question open; v2 exposes question list/reply/reject but no ask/open, so structured `HumanDecision` host UI remains unsupported rather than fabricated.
+
 ## 11. Verification protocol for future checkpoints
 
 ### Focused verification first
@@ -796,7 +801,7 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**PROMPT B — IN PROGRESS. Next: section 5 exact-current OpenCode native re-evaluation.**
+**PROMPT B — IN PROGRESS. Next: adversarial Mission / Task / Worker state-machine verification and defect hunt.**
 
 PROMPT A certified product-source baseline: `5ced215ed57f28f8d963376ca702efc0dac75503` (tree `b22db990942ad291997a8ad564ac1235283036bb`). Canonical reconstruction receipt: `data/validation/documentation-reconstruction.json`.
 
