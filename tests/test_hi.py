@@ -1386,3 +1386,14 @@ def test_prompt_b_developer_journey_acceptance_has_obvious_single_owners():
     assert a['status']=='PASS' and a['source_binding']=={'tested_git_commit':'07fbec3160f0bacb0ece896ac36358a50894ee25','tested_git_tree':'2a3375a247fc43239de6ee6c7cc204aeb9595015'}
     assert a['terminal']=={'tests':4,'pass':4,'fail':0,'cancelled':0,'skipped':0,'todo':0}
     assert hashlib.sha256((ROOT/a['proof']).read_bytes()).hexdigest()==a['proof_sha256']
+
+
+def test_prompt_b_cross_platform_acceptance_is_truthful_about_windows_current_source():
+    d=json.loads((ROOT/'data/validation/prompt-b-cross-platform-acceptance.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_CROSS_PLATFORM_ACCEPTANCE_AUDIT' and d['program']=='PROMPT_B' and d['section']==38 and d['status']=='PASS'
+    assert d['summary']=={'required_surfaces':7,'covered_surfaces':7,'violations':0} and d['violations']==[]
+    assert d['linux_current_certified'] is True and d['windows_current_certified'] is False and d['windows_historical_release_evidence'] is True
+    a=json.loads((ROOT/d['acceptance_receipt']).read_text())
+    assert a['status']=='PASS_WITH_TRUTHFUL_WINDOWS_CURRENT_SOURCE_LIMITATION'
+    assert a['source_binding']=={'tested_git_commit':'edb83cc89157ac86f4ed05d2b318a5cb840425dd','tested_git_tree':'cc1ec0fa3abee41e1366d229cef7104997ac4f59'}
+    assert a['linux_current']['status']=='PASS' and a['windows']['current_source_tested'] is False

@@ -713,6 +713,20 @@ try:
     if case.get('kind')!='PROPERTY_FUZZ_HISTORICAL_REGRESSION_CASE' or case.get('observed_before_fix')!='accepted-malformed-persisted-mission':err('PROMPT B property/fuzz historical regression case drift')
 except Exception as e:err(f'bad PROMPT B property/fuzz testing receipt: {e}')
 
+# PROMPT B §38 cross-platform acceptance certification
+try:
+    c38=json.loads((ROOT/'data/validation/prompt-b-cross-platform-acceptance.json').read_text(encoding='utf-8'))
+    if c38.get('schema')!=1 or c38.get('kind')!='PROMPT_B_CROSS_PLATFORM_ACCEPTANCE_AUDIT' or c38.get('program')!='PROMPT_B' or c38.get('section')!=38 or c38.get('status')!='PASS':err('bad PROMPT B cross-platform audit identity/status')
+    if c38.get('summary')!={'required_surfaces':7,'covered_surfaces':7,'violations':0} or c38.get('violations')!=[]:err('PROMPT B cross-platform summary drift')
+    if c38.get('linux_current_certified') is not True or c38.get('windows_current_certified') is not False or c38.get('windows_historical_release_evidence') is not True:err('PROMPT B cross-platform certification boundary drift')
+    a=json.loads((ROOT/c38['acceptance_receipt']).read_text(encoding='utf-8'))
+    if a.get('status')!='PASS_WITH_TRUTHFUL_WINDOWS_CURRENT_SOURCE_LIMITATION' or a.get('source_binding')!={'tested_git_commit':'edb83cc89157ac86f4ed05d2b318a5cb840425dd','tested_git_tree':'cc1ec0fa3abee41e1366d229cef7104997ac4f59'}:err('PROMPT B cross-platform source binding drift')
+    if (a.get('linux_current') or {}).get('status')!='PASS' or (a.get('windows') or {}).get('current_source_tested') is not False:err('PROMPT B cross-platform platform status drift')
+    for row in c38.get('surfaces',[]):
+        rel=row.get('proof');expected=row.get('proof_sha256')
+        if not isinstance(rel,str) or not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B cross-platform proof hash drift: '+str(rel))
+except Exception as e:err(f'bad PROMPT B cross-platform acceptance receipt: {e}')
+
 # PROMPT B §37 developer journey acceptance certification
 try:
     d37=json.loads((ROOT/'data/validation/prompt-b-developer-journey-acceptance.json').read_text(encoding='utf-8'))

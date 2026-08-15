@@ -1,0 +1,36 @@
+{
+  "claim_boundary": "Current Prompt B source is certified on Linux only. Windows remains a validation target with historical v0.1.0 release evidence; equal current-source Windows certification is not claimed.",
+  "kind": "PROMPT_B_CROSS_PLATFORM_ACCEPTANCE",
+  "linux_current": {
+    "architecture": "aarch64",
+    "node_check_rc": 0,
+    "platform": "linux",
+    "python_rc": 0,
+    "release_build_rc": 0,
+    "status": "PASS"
+  },
+  "portability_surfaces": [
+    "shell-command-policy",
+    "path-semantics",
+    "executable-discovery",
+    "newline",
+    "process-handling",
+    "filesystem",
+    "packaging"
+  ],
+  "program": "PROMPT_B",
+  "schema": 1,
+  "section": 38,
+  "source_binding": {
+    "tested_git_commit": "edb83cc89157ac86f4ed05d2b318a5cb840425dd",
+    "tested_git_tree": "cc1ec0fa3abee41e1366d229cef7104997ac4f59"
+  },
+  "status": "PASS_WITH_TRUTHFUL_WINDOWS_CURRENT_SOURCE_LIMITATION",
+  "windows": {
+    "current_source_tested": false,
+    "historical_actions_run": 31814631919,
+    "historical_release_commit": "f1a2c1c4358e5a63656da7a585b6b5793d1ed3be",
+    "reason": "current Prompt B source is local/unpushed and no Windows executor is attached; no push/workflow dispatch is authorized",
+    "status": "HISTORICAL_RELEASE_CERTIFIED_CURRENT_SOURCE_UNTESTED"
+  }
+}
