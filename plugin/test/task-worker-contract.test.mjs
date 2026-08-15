@@ -109,3 +109,24 @@ test('RuntimePersistence rejects invalid persisted topology shape and single exe
     m.execution.execution_mode='parallel';m.execution.topology={mode:'multi-agent',parallelism:0,reason:['invalid']};persistence.save(store.all(),true);assert.equal(persistence.load().length,0)
   }finally{rmSync(root,{recursive:true,force:true})}
 })
+
+test('PROMPT B Mission validator rejects ghost workers, cross-session worker binding and duplicate native session ownership',()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-pb-worker-binding-'))
+  try{
+    const store=new MissionStore(root),m=startAssessedMission(store,'pb-worker-binding','verify',{task_kind:'implementation',likely_verification:[]})
+    const a=createTask(m,{objective:'a',role:'coder',category:'standard'}),wa=createWorker(m,a,'host-default')
+    const b=createTask(m,{objective:'b',role:'coder',category:'standard'}),wb=createWorker(m,b,'host-default')
+    wa.session_id='native-a';wb.session_id='native-b'
+    const persistence=new RuntimePersistence(root)
+    persistence.save(store.all(),true);assert.equal(persistence.load().length,1)
+
+    const ghost=structuredClone(wb);ghost.id='w-ghost';ghost.session_id='native-ghost';m.execution.workers.push(ghost)
+    persistence.save(store.all(),true);assert.equal(persistence.load().length,0,'extra worker not owned by task.worker_id must fail closed')
+    m.execution.workers.pop()
+
+    wb.parent_session_id='foreign-parent';persistence.save(store.all(),true);assert.equal(persistence.load().length,0,'worker parent_session_id must bind exact Mission session')
+    wb.parent_session_id=m.identity.session_id
+
+    wb.session_id=wa.session_id;persistence.save(store.all(),true);assert.equal(persistence.load().length,0,'two workers cannot own one native child session')
+  }finally{rmSync(root,{recursive:true,force:true})}
+})

@@ -129,10 +129,21 @@ export function validateTaskDAG(identity, execution) {
     for (const id of taskIDs)
         if (cyclic(id))
             return false;
+    const missionSessionID = String(identity.session_id ?? ''), nativeSessionIDs = [];
     for (const worker of workers) {
-        if (worker.parent_mission_id !== missionID || typeof worker.task_id !== 'string' || !knownTasks.has(worker.task_id))
+        if (worker.parent_mission_id !== missionID || worker.parent_session_id !== missionSessionID || typeof worker.task_id !== 'string' || !knownTasks.has(worker.task_id))
             return false;
+        const ownerTask = byID.get(worker.task_id);
+        if (!ownerTask || ownerTask.worker_id !== worker.id)
+            return false;
+        if (worker.session_id !== undefined) {
+            if (typeof worker.session_id !== 'string' || !worker.session_id)
+                return false;
+            nativeSessionIDs.push(worker.session_id);
+        }
     }
+    if (new Set(nativeSessionIDs).size !== nativeSessionIDs.length)
+        return false;
     if (!['single', 'parallel', 'team'].includes(String(execution.execution_mode)))
         return false;
     if (!isRecord(execution.topology) || !['single-agent', 'multi-agent'].includes(String(execution.topology.mode)) || !Number.isInteger(execution.topology.parallelism) || Number(execution.topology.parallelism) < 1 || Number(execution.topology.parallelism) > 8 || !stringArray(execution.topology.reason))

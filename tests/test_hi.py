@@ -898,3 +898,18 @@ def test_prompt_b_exact_current_opencode_native_reevaluation_is_source_bound_and
     for item in decisions.values():
         assert item['hi_paths'] and all((ROOT/p).is_file() for p in item['hi_paths'])
     assert (ROOT/'scripts/audit-opencode-native.py').is_file()
+
+def test_prompt_b_mission_task_worker_adversarial_audit_covers_all_section_6_invariants():
+    d=json.loads((ROOT/'data/validation/prompt-b-mission-task-worker.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_MISSION_TASK_WORKER_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['section']==6 and d['status']=='PASS'
+    assert d['violations']==[] and d['summary']=={'required':15,'covered':15,'violations':0}
+    expected={'unique-identities','mission-ownership','task-dag-validity','worker-binding','no-ghost-workers','no-orphan-tasks','no-duplicate-completion','out-of-order-callback','stale-worker-result','task-cancellation','task-recovery','dependency-unblock','concurrent-write-safety','restart-reconstruction','terminal-state-correctness'}
+    assert {x['invariant'] for x in d['invariants']}==expected
+    for row in d['invariants']:
+        owner=ROOT/row['owner']; proof=ROOT/row['proof']
+        assert owner.is_file() and proof.is_file()
+        assert hashlib.sha256(owner.read_bytes()).hexdigest()==row['owner_sha256']
+        assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
+        assert row['owner_anchor'] in owner.read_text(errors='ignore') and row['proof_anchor'] in proof.read_text(errors='ignore')
+    assert any(x['id']=='ambiguous-native-session-callback-ownership' for x in d['closed_defects'])
+    assert (ROOT/'scripts/audit-mission-task-worker.py').is_file()

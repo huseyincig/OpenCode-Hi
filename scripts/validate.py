@@ -282,6 +282,26 @@ try:
 except Exception as e:err(f'bad Hi methodology policy: {e}')
 # PROMPT A immutable reconstruction certification receipt. Historical evidence must not pin future current docs.
 try:
+    mtw=json.loads((ROOT/'data/validation/prompt-b-mission-task-worker.json').read_text(encoding='utf-8'))
+    if mtw.get('schema')!=1 or mtw.get('kind')!='PROMPT_B_MISSION_TASK_WORKER_ADVERSARIAL_AUDIT' or mtw.get('program')!='PROMPT_B' or mtw.get('section')!=6 or mtw.get('status')!='PASS':err('bad PROMPT B Mission/Task/Worker audit receipt')
+    if mtw.get('violations')!=[] or mtw.get('summary')!={'required':15,'covered':15,'violations':0}:err('PROMPT B Mission/Task/Worker coverage drift')
+    expected={'unique-identities','mission-ownership','task-dag-validity','worker-binding','no-ghost-workers','no-orphan-tasks','no-duplicate-completion','out-of-order-callback','stale-worker-result','task-cancellation','task-recovery','dependency-unblock','concurrent-write-safety','restart-reconstruction','terminal-state-correctness'}
+    rows=mtw.get('invariants',[])
+    if {x.get('invariant') for x in rows if isinstance(x,dict)}!=expected or len(rows)!=15:err('PROMPT B Mission/Task/Worker invariant inventory drift')
+    for row in rows:
+        for key in ['owner','proof']:
+            rel=row.get(key); expected_hash=row.get(f'{key}_sha256')
+            if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B Mission/Task/Worker missing {key}: {rel}')
+            elif hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected_hash:err(f'PROMPT B Mission/Task/Worker {key} hash drift: {rel}')
+        owner=(ROOT/row['owner']).read_text(encoding='utf-8',errors='ignore') if isinstance(row.get('owner'),str) and (ROOT/row['owner']).is_file() else ''
+        proof=(ROOT/row['proof']).read_text(encoding='utf-8',errors='ignore') if isinstance(row.get('proof'),str) and (ROOT/row['proof']).is_file() else ''
+        if row.get('owner_anchor') not in owner:err(f"PROMPT B Mission/Task/Worker owner anchor drift: {row.get('invariant')}")
+        if row.get('proof_anchor') not in proof:err(f"PROMPT B Mission/Task/Worker proof anchor drift: {row.get('invariant')}")
+    closed=mtw.get('closed_defects',[])
+    if not any(x.get('id')=='ambiguous-native-session-callback-ownership' for x in closed if isinstance(x,dict)):err('PROMPT B Mission/Task/Worker closed defect receipt missing')
+except Exception as e:err(f'bad PROMPT B Mission/Task/Worker receipt: {e}')
+
+try:
     nr=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text(encoding='utf-8'))
     if nr.get('schema')!=1 or nr.get('kind')!='EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION' or nr.get('program')!='PROMPT_B' or nr.get('status')!='PASS':err('bad PROMPT B native reevaluation receipt identity/status')
     oc=nr.get('opencode',{})
