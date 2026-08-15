@@ -1,3 +1,4 @@
+import { normalizeBoundedProjectPath } from './common.js'
 import { isWorkerResultContract } from './worker-result.js'
 import { isContextReferenceContract } from './context-reference.js'
 import { EXTERNAL_ACTION_TYPES,type ExternalActionType } from './external-action.js'
@@ -38,7 +39,7 @@ const PROFILE_KEYS=new Set(['role','category','task','tools','model','model_vari
 function record(v:unknown):v is Record<string,unknown>{return Boolean(v)&&typeof v==='object'&&!Array.isArray(v)}
 function strings(v:unknown):v is string[]{return Array.isArray(v)&&v.every(x=>typeof x==='string')}
 function finite(v:unknown):v is number{return typeof v==='number'&&Number.isFinite(v)}
-function validDiff(v:unknown):boolean{return record(v)&&strings(v.collateral)&&strings(v.accepted_expansions)&&(v.native_verified_reverts===undefined||strings(v.native_verified_reverts))}
+function validDiff(v:unknown):boolean{return record(v)&&strings(v.collateral)&&v.collateral.every(x=>normalizeBoundedProjectPath(x)!==undefined)&&strings(v.accepted_expansions)&&v.accepted_expansions.every(x=>normalizeBoundedProjectPath(x)!==undefined)&&(v.native_verified_reverts===undefined||strings(v.native_verified_reverts)&&v.native_verified_reverts.every(x=>normalizeBoundedProjectPath(x)!==undefined))}
 function validProfile(v:unknown):boolean{
   if(!record(v)||!Object.keys(v).every(k=>PROFILE_KEYS.has(k))||typeof v.role!=='string'||typeof v.category!=='string'||!CATEGORIES.has(v.category)||!record(v.task)||!strings(v.tools)||!strings(v.fallback_models)||!strings(v.methodologies))return false
   const task=v.task;if(typeof task.objective!=='string'||!strings(task.scope)||!strings(task.dependencies)||!strings(task.required_evidence))return false

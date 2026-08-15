@@ -31,4 +31,4 @@ declare module 'node:child_process' {
   export function spawn(command:string,args:string[],options?:any):ChildProcess
   export function spawnSync(command:string,args:string[],options?:any):{status:number|null;stdout?:string|Buffer;stderr?:string|Buffer}
 }
-declare module 'node:os' { export function tmpdir(): string; export function homedir(): string }
+declare module 'node:os' { export function tmpdir(): string; export function homedir(): string; export function platform(): string }

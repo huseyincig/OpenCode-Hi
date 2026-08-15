@@ -201,7 +201,7 @@ test('PROMPT B real Git workspace provisioning preserves pre-staged and unstaged
   const run=(args,cwd=root)=>{const r=spawnSync('git',args,{cwd,encoding:'utf8'});assert.equal(r.status,0,String(r.stderr??r.stdout));return String(r.stdout??'').trim()}
   try{
     const {writeFileSync}=await import('node:fs');run(['init']);run(['config','user.email','hi@example.invalid']);run(['config','user.name','Hi Test']);writeFileSync(join(root,'tracked.txt'),'base\n');writeFileSync(join(root,'staged.txt'),'base\n');run(['add','.']);run(['commit','-m','base']);const head=run(['rev-parse','HEAD'])
-    writeFileSync(join(root,'tracked.txt'),'user-unstaged\n');writeFileSync(join(root,'staged.txt'),'user-staged\n');run(['add','staged.txt']);const before=run(['status','--porcelain=v1']);run(['worktree','add','--detach',work,'HEAD'])
+    writeFileSync(join(root,'tracked.txt'),'user-unstaged\n');writeFileSync(join(root,'staged.txt'),'user-staged\n');writeFileSync(join(root,'untracked user.txt'),'user-untracked\n');run(['add','staged.txt']);const before=run(['status','--porcelain=v1']);assert.match(before,/\?\? (?:\"untracked user\.txt\"|untracked user\.txt)/);run(['worktree','add','--detach',work,'HEAD'])
     const workspace={create:async p=>({data:{id:'ws_staged',type:p.type,directory:work}}),list:async()=>({data:[{id:'ws_staged',type:'worktree',directory:work}]}),remove:async()=>({data:{}})}
     const adapter=new OpenCodeWorkspaceAdapter({v2:{experimental:{workspace}}},new URL('http://127.0.0.1:1'),root);await adapter.provision({mission_id:'m',task_id:'t',repository_root:root,source_baseline:head})
     assert.equal(run(['status','--porcelain=v1']),before);assert.match(before,/ M tracked\.txt/);assert.match(before,/M  staged\.txt/)

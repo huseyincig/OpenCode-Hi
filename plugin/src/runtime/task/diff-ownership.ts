@@ -1,6 +1,7 @@
+import { normalizeBoundedProjectPath } from '../../contracts/common.js'
 import type { MissionTask,WorkerResult } from '../mission/types.js'
 
-function norm(path:string):string{return path.trim().replace(/\\/g,'/').replace(/^\.\//,'').replace(/\/+$/,'')}
+function norm(path:string):string{return normalizeBoundedProjectPath(path)??''}
 function hasExt(path:string):boolean{return /\.[a-z0-9]+$/i.test(path.split('/').pop()??'')}
 function within(file:string,target:string):boolean{const f=norm(file),t=norm(target);if(!f||!t)return false;if(f===t)return true;return !hasExt(t)&&f.startsWith(`${t}/`)}
 function stem(path:string):string{return norm(path).replace(/\.(?:test|spec)\.[^.\/]+$/i,'').replace(/\.[^.\/]+$/,'')}

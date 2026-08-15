@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readdirSync } from 'node:fs';
-import { homedir } from 'node:os';
+import { homedir, platform } from 'node:os';
 import { join } from 'node:path';
 import { browserObservationId } from '../contracts/browser-observation.js';
 const MAX_SUMMARY = 4000, MAX_ERRORS = 64;
@@ -19,12 +19,26 @@ function targetRef(value) { const m = /^@e(\d{1,6})$/.exec(value); if (!m)
     throw new Error('Browser target must be an observed @eN reference'); return Number(m[1]); }
 function sha(text) { return createHash('sha256').update(text).digest('hex'); }
 function cacheCandidates(root) { try {
-    return readdirSync(root, { withFileTypes: true }).filter((x) => x.isDirectory() && /^chromium-/.test(x.name)).flatMap((x) => [join(root, x.name, 'chrome-linux', 'chrome'), join(root, x.name, 'chrome-linux64', 'chrome')]);
+    return readdirSync(root, { withFileTypes: true }).filter((x) => x.isDirectory() && /^chromium-/.test(x.name)).flatMap((x) => [join(root, x.name, 'chrome-linux', 'chrome'), join(root, x.name, 'chrome-linux64', 'chrome'), join(root, x.name, 'chrome-win', 'chrome.exe'), join(root, x.name, 'chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium')]);
 }
 catch {
     return [];
 } }
-function executableCandidates() { const explicit = process.env.HI_BROWSER_EXECUTABLE?.trim(), home = homedir(), roots = [join(home, '.cache', 'ms-playwright'), '/home/node/.cache/ms-playwright', '/root/.cache/ms-playwright'], out = roots.flatMap(cacheCandidates); return [...new Set([...(explicit ? [explicit] : []), ...out])]; }
+function executableCandidates() {
+    const explicit = process.env.HI_BROWSER_EXECUTABLE?.trim(), playwrightRoot = process.env.PLAYWRIGHT_BROWSERS_PATH?.trim(), home = homedir(), os = platform(), roots = [];
+    if (playwrightRoot && playwrightRoot !== '0')
+        roots.push(playwrightRoot);
+    if (process.env.XDG_CACHE_HOME?.trim())
+        roots.push(join(process.env.XDG_CACHE_HOME.trim(), 'ms-playwright'));
+    if (process.env.LOCALAPPDATA?.trim())
+        roots.push(join(process.env.LOCALAPPDATA.trim(), 'ms-playwright'));
+    if (os === 'darwin')
+        roots.push(join(home, 'Library', 'Caches', 'ms-playwright'));
+    else if (os !== 'win32')
+        roots.push(join(home, '.cache', 'ms-playwright'));
+    const out = [...new Set(roots)].flatMap(cacheCandidates);
+    return [...new Set([...(explicit ? [explicit] : []), ...out])];
+}
 export function discoverPlaywrightChromium(exists = existsSync) { return executableCandidates().find(exists); }
 export class PlaywrightBrowserAdapter {
     executablePath;

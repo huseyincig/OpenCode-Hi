@@ -6,7 +6,8 @@ import { NativeOpenCodeAdapter } from '../../opencode/native-adapter.js';
 import { redactProviderContext } from '../privacy/boundary.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { reconcileModelExecutionIdentity } from '../../contracts/model.js';
-function normFile(value) { return value.trim().replace(/\\/g, '/').replace(/^\.\//, ''); }
+import { normalizeBoundedProjectPath } from '../../contracts/common.js';
+function normFile(value) { return normalizeBoundedProjectPath(value) ?? ''; }
 function nativeDiffMap(raw) {
     const items = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : [];
     const out = {};

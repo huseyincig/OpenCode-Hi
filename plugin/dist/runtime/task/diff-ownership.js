@@ -1,4 +1,5 @@
-function norm(path) { return path.trim().replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+$/, ''); }
+import { normalizeBoundedProjectPath } from '../../contracts/common.js';
+function norm(path) { return normalizeBoundedProjectPath(path) ?? ''; }
 function hasExt(path) { return /\.[a-z0-9]+$/i.test(path.split('/').pop() ?? ''); }
 function within(file, target) { const f = norm(file), t = norm(target); if (!f || !t)
     return false; if (f === t)

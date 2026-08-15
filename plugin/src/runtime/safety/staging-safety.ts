@@ -1,9 +1,10 @@
 import type { MissionState } from '../mission/types.js'
 import { appendLedger } from '../ledger/ledger.js'
 import { gitCommandParts } from './command-classifier.js'
+import { normalizeBoundedProjectPath } from '../../contracts/common.js'
 
-function normFile(v:string):string{return v.trim().replace(/\\/g,'/').replace(/^\.\//,'')}
-function splitLines(text:string):string[]{return [...new Set(text.split(/\r?\n/).map(normFile).filter(Boolean))]}
+function normFile(v:string):string{return normalizeBoundedProjectPath(v)??''}
+function splitLines(text:string):string[]{const raw=text.split(/\r?\n/).map(x=>x.trim()).filter(Boolean),files=raw.map(normFile);if(files.some(x=>!x))throw new Error('Hi staging safety: Git staged-set output contained an unbounded repository path');return[...new Set(files)]}
 function commandText(output:any):string{if(typeof output==='string')return output;if(typeof output?.output==='string')return output.output;if(typeof output?.stdout==='string')return output.stdout;if(typeof output?.data==='string')return output.data;return''}
 export function isStagingInspection(command:string):boolean{const p=gitCommandParts(command);if(p.sub!=='diff')return false;const a=p.rest;return a.includes('--name-only')&&(a.includes('--cached')||a.includes('--staged'))}
 export function isGitStatusInspection(command:string):boolean{const p=gitCommandParts(command);if(p.sub!=='status')return false;return p.rest.some(x=>x==='-s'||x==='--short'||x==='--porcelain'||x==='--porcelain=v1'||x==='--porcelain=1')}
@@ -21,7 +22,7 @@ export function recordStagingInspection(m:MissionState,command:string,output:any
 }
 function porcelainPaths(text:string):string[]{
   const out:string[]=[]
-  for(const raw of text.split(/\r?\n/)){if(!raw.trim())continue;const body=raw.length>=3?raw.slice(3).trim():raw.trim();const target=body.includes(' -> ')?body.split(' -> ').pop()!:body;if(target)out.push(normFile(target.replace(/^"|"$/g,'')))}
+  for(const raw of text.split(/\r?\n/)){if(!raw.trim())continue;const body=raw.length>=3?raw.slice(3).trim():raw.trim();const target=body.includes(' -> ')?body.split(' -> ').pop()!:body;if(target){const file=normFile(target.replace(/^"|"$/g,''));out.push(file||'__INVALID_GIT_PATH__')}}
   return [...new Set(out.filter(Boolean))]
 }
 export function recordGitStatusInspection(m:MissionState,command:string,output:any):void{

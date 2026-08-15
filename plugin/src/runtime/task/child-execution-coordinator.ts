@@ -9,8 +9,9 @@ import { NativeOpenCodeAdapter } from '../../opencode/native-adapter.js'
 import { redactProviderContext } from '../privacy/boundary.js'
 import { appendLedger } from '../ledger/ledger.js'
 import { reconcileModelExecutionIdentity } from '../../contracts/model.js'
+import { normalizeBoundedProjectPath } from '../../contracts/common.js'
 
-function normFile(value:string):string{return value.trim().replace(/\\/g,'/').replace(/^\.\//,'')}
+function normFile(value:string):string{return normalizeBoundedProjectPath(value)??''}
 function nativeDiffMap(raw:any):Record<string,string>{
   const items=Array.isArray(raw)?raw:Array.isArray(raw?.data)?raw.data:[];const out:Record<string,string>={}
   for(const item of items){const file=typeof item?.file==='string'?normFile(item.file):'';if(!file)continue;const signature=createHash('sha256').update(JSON.stringify({file,additions:item?.additions??null,deletions:item?.deletions??null,status:item?.status??null,before:item?.before??null,after:item?.after??null,patch:item?.patch??null})).digest('hex');out[file]=signature}

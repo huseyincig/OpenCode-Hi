@@ -45,12 +45,19 @@ export function assertPositiveInteger(value:unknown,field:string):number{
 
 export function compareTechnicalId(a:string,b:string):number{return a<b?-1:a>b?1:0}
 
+export function normalizeBoundedProjectPath(value:unknown):string|undefined{
+  if(typeof value!=='string')return undefined
+  const raw=value.trim();if(!raw||raw.includes('\0'))return undefined
+  const rel=raw.replace(/\\/g,'/').replace(/^\.\//,'')
+  if(!rel||rel.startsWith('/')||rel.startsWith('//')||/^[A-Za-z]:\//.test(rel))return undefined
+  const segments=rel.split('/');if(segments.some(segment=>!segment||segment==='.'||segment==='..'))return undefined
+  return rel
+}
+export function isBoundedProjectPath(value:unknown):value is string{return normalizeBoundedProjectPath(value)!==undefined}
+
 export function isSafeProjectFileSourceRef(value:unknown):value is string{
   if(typeof value!=='string'||!value.startsWith('file:'))return false
-  const rel=value.slice(5);if(!rel||rel.startsWith('/')||rel.includes('\\')||rel.includes('\0'))return false
-  const segments=rel.split('/');if(segments.some(segment=>!segment||segment==='.'||segment==='..'))return false
-  if(/^[A-Za-z]:$/.test(segments[0]))return false
-  return true
+  const rel=value.slice(5);return normalizeBoundedProjectPath(rel)===rel
 }
 
 export function contentHash(value:string):ContentHash{

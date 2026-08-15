@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto'
 import {existsSync,readdirSync} from 'node:fs'
-import {homedir} from 'node:os'
+import {homedir,platform} from 'node:os'
 import {join} from 'node:path'
 import {browserObservationId,type BrowserObservationAction,type BrowserObservationContract} from '../contracts/browser-observation.js'
 import type {BrowserExecutionContext,BrowserExecutor,BrowserInspectRequest,BrowserTarget,BrowserWaitRequest} from '../runtime/browser/executor.js'
@@ -20,8 +20,15 @@ function localHost(hostname:string):boolean{return hostname==='localhost'||hostn
 function safeLocalUrl(value:string):string{let u:URL;try{u=new URL(value)}catch{throw new Error('Browser URL must be absolute http(s)')}if(!['http:','https:'].includes(u.protocol))throw new Error('Browser URL must use http(s)');if(u.username||u.password)throw new Error('Browser credentials in URL are forbidden');if(!localHost(u.hostname))throw new Error(`Browser target is outside supported local scope: ${u.origin}`);return u.toString()}
 function targetRef(value:string):number{const m=/^@e(\d{1,6})$/.exec(value);if(!m)throw new Error('Browser target must be an observed @eN reference');return Number(m[1])}
 function sha(text:string):string{return createHash('sha256').update(text).digest('hex')}
-function cacheCandidates(root:string):string[]{try{return readdirSync(root,{withFileTypes:true}).filter((x:any)=>x.isDirectory()&&/^chromium-/.test(x.name)).flatMap((x:any)=>[join(root,x.name,'chrome-linux','chrome'),join(root,x.name,'chrome-linux64','chrome')])}catch{return[]}}
-function executableCandidates():string[]{const explicit=process.env.HI_BROWSER_EXECUTABLE?.trim(),home=homedir(),roots=[join(home,'.cache','ms-playwright'),'/home/node/.cache/ms-playwright','/root/.cache/ms-playwright'],out=roots.flatMap(cacheCandidates);return[...new Set([...(explicit?[explicit]:[]),...out])]}
+function cacheCandidates(root:string):string[]{try{return readdirSync(root,{withFileTypes:true}).filter((x:any)=>x.isDirectory()&&/^chromium-/.test(x.name)).flatMap((x:any)=>[join(root,x.name,'chrome-linux','chrome'),join(root,x.name,'chrome-linux64','chrome'),join(root,x.name,'chrome-win','chrome.exe'),join(root,x.name,'chrome-mac','Chromium.app','Contents','MacOS','Chromium')])}catch{return[]}}
+function executableCandidates():string[]{
+  const explicit=process.env.HI_BROWSER_EXECUTABLE?.trim(),playwrightRoot=process.env.PLAYWRIGHT_BROWSERS_PATH?.trim(),home=homedir(),os=platform(),roots:string[]=[]
+  if(playwrightRoot&&playwrightRoot!=='0')roots.push(playwrightRoot)
+  if(process.env.XDG_CACHE_HOME?.trim())roots.push(join(process.env.XDG_CACHE_HOME.trim(),'ms-playwright'))
+  if(process.env.LOCALAPPDATA?.trim())roots.push(join(process.env.LOCALAPPDATA.trim(),'ms-playwright'))
+  if(os==='darwin')roots.push(join(home,'Library','Caches','ms-playwright'));else if(os!=='win32')roots.push(join(home,'.cache','ms-playwright'))
+  const out=[...new Set(roots)].flatMap(cacheCandidates);return[...new Set([...(explicit?[explicit]:[]),...out])]
+}
 export function discoverPlaywrightChromium(exists:(path:string)=>boolean=existsSync):string|undefined{return executableCandidates().find(exists)}
 
 export class PlaywrightBrowserAdapter implements BrowserExecutor{

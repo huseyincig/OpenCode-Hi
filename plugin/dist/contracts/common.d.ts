@@ -15,6 +15,8 @@ export declare function assertNonEmptyString(value: unknown, field: string): str
 export declare function assertCanonicalId(value: unknown, field?: string): string;
 export declare function assertPositiveInteger(value: unknown, field: string): number;
 export declare function compareTechnicalId(a: string, b: string): number;
+export declare function normalizeBoundedProjectPath(value: unknown): string | undefined;
+export declare function isBoundedProjectPath(value: unknown): value is string;
 export declare function isSafeProjectFileSourceRef(value: unknown): value is string;
 export declare function contentHash(value: string): ContentHash;
 export declare function assertContentHash(value: unknown, field: string): ContentHash;

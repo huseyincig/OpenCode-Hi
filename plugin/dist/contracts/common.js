@@ -45,18 +45,26 @@ export function assertPositiveInteger(value, field) {
     return Number(value);
 }
 export function compareTechnicalId(a, b) { return a < b ? -1 : a > b ? 1 : 0; }
+export function normalizeBoundedProjectPath(value) {
+    if (typeof value !== 'string')
+        return undefined;
+    const raw = value.trim();
+    if (!raw || raw.includes('\0'))
+        return undefined;
+    const rel = raw.replace(/\\/g, '/').replace(/^\.\//, '');
+    if (!rel || rel.startsWith('/') || rel.startsWith('//') || /^[A-Za-z]:\//.test(rel))
+        return undefined;
+    const segments = rel.split('/');
+    if (segments.some(segment => !segment || segment === '.' || segment === '..'))
+        return undefined;
+    return rel;
+}
+export function isBoundedProjectPath(value) { return normalizeBoundedProjectPath(value) !== undefined; }
 export function isSafeProjectFileSourceRef(value) {
     if (typeof value !== 'string' || !value.startsWith('file:'))
         return false;
     const rel = value.slice(5);
-    if (!rel || rel.startsWith('/') || rel.includes('\\') || rel.includes('\0'))
-        return false;
-    const segments = rel.split('/');
-    if (segments.some(segment => !segment || segment === '.' || segment === '..'))
-        return false;
-    if (/^[A-Za-z]:$/.test(segments[0]))
-        return false;
-    return true;
+    return normalizeBoundedProjectPath(rel) === rel;
 }
 export function contentHash(value) {
     return { algorithm: 'sha256', value: createHash('sha256').update(value).digest('hex') };

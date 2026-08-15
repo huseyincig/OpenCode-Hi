@@ -1,3 +1,4 @@
+import { normalizeBoundedProjectPath } from './common.js';
 import { WORKER_EVIDENCE_KINDS } from './evidence-kinds.js';
 import { isReviewFindingContract } from './review-finding.js';
 export { WORKER_EVIDENCE_KINDS } from './evidence-kinds.js';
@@ -30,9 +31,9 @@ export function isMethodologyObservationContract(v) {
 export function isWorkerResultContract(v) {
     if (!record(v) || !onlyKeys(v, RESULT_KEYS) || typeof v.status !== 'string' || !Object.values(STATUS_ALIAS).includes(v.status) || typeof v.summary !== 'string')
         return false;
-    if (!stringArray(v.changed_files) || !Array.isArray(v.evidence) || !v.evidence.every(isWorkerEvidenceContract) || !stringArray(v.open_issues) || !stringArray(v.needs_context))
+    if (!stringArray(v.changed_files) || !v.changed_files.every(x => normalizeBoundedProjectPath(x) === x.replace(/\\/g, '/').replace(/^\.\//, '')) || !Array.isArray(v.evidence) || !v.evidence.every(isWorkerEvidenceContract) || !stringArray(v.open_issues) || !stringArray(v.needs_context))
         return false;
-    if (v.scope_expansions !== undefined && (!Array.isArray(v.scope_expansions) || !v.scope_expansions.every(x => record(x) && onlyKeys(x, EXPANSION_KEYS) && typeof x.file === 'string' && typeof x.reason === 'string' && typeof x.necessary === 'boolean')))
+    if (v.scope_expansions !== undefined && (!Array.isArray(v.scope_expansions) || !v.scope_expansions.every(x => record(x) && onlyKeys(x, EXPANSION_KEYS) && typeof x.file === 'string' && normalizeBoundedProjectPath(x.file) !== undefined && typeof x.reason === 'string' && typeof x.necessary === 'boolean')))
         return false;
     if (v.findings !== undefined && (!Array.isArray(v.findings) || !v.findings.every(isReviewFindingContract)))
         return false;
@@ -80,5 +81,5 @@ export function normalizeWorkerResult(raw) {
     const contextGap = ['scope', 'iterative', 'none'].includes(String(x.context_gap)) ? String(x.context_gap) : undefined;
     const rawFinding = ['ci-build', 'unknown-root-cause', 'none'].includes(String(x.failure_finding)) ? String(x.failure_finding) : undefined;
     const evidence = normalizeEvidence(x.evidence);
-    return { status, summary: typeof x.summary === 'string' ? clip(x.summary, 4000) : '', changed_files: Array.isArray(x.changed_files) ? x.changed_files.filter(v => typeof v === 'string').map(String).slice(0, 200) : [], scope_expansions: Array.isArray(x.scope_expansions) ? x.scope_expansions.filter(record).slice(0, 80).map(v => ({ file: String(v.file ?? ''), reason: clip(v.reason, 600), necessary: v.necessary === true })).filter(v => v.file) : [], evidence, findings: normalizeFindings(x.findings, evidence), open_issues: open.slice(0, 30), needs_context: Array.isArray(x.needs_context) ? x.needs_context.map(String).slice(0, 30) : [], context_gap: contextGap, failure_finding: reconcileFailureFinding(rawFinding, evidence), methodology_observations: normalizeMethodologyObservations(x.methodology_observations) };
+    return { status, summary: typeof x.summary === 'string' ? clip(x.summary, 4000) : '', changed_files: Array.isArray(x.changed_files) ? x.changed_files.flatMap(v => { const p = normalizeBoundedProjectPath(v); return p ? [p] : []; }).slice(0, 200) : [], scope_expansions: Array.isArray(x.scope_expansions) ? x.scope_expansions.filter(record).slice(0, 80).flatMap(v => { const file = normalizeBoundedProjectPath(v.file); return file ? [{ file, reason: clip(v.reason, 600), necessary: v.necessary === true }] : []; }) : [], evidence, findings: normalizeFindings(x.findings, evidence), open_issues: open.slice(0, 30), needs_context: Array.isArray(x.needs_context) ? x.needs_context.map(String).slice(0, 30) : [], context_gap: contextGap, failure_finding: reconcileFailureFinding(rawFinding, evidence), methodology_observations: normalizeMethodologyObservations(x.methodology_observations) };
 }

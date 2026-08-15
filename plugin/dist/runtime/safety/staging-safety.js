@@ -1,7 +1,9 @@
 import { appendLedger } from '../ledger/ledger.js';
 import { gitCommandParts } from './command-classifier.js';
-function normFile(v) { return v.trim().replace(/\\/g, '/').replace(/^\.\//, ''); }
-function splitLines(text) { return [...new Set(text.split(/\r?\n/).map(normFile).filter(Boolean))]; }
+import { normalizeBoundedProjectPath } from '../../contracts/common.js';
+function normFile(v) { return normalizeBoundedProjectPath(v) ?? ''; }
+function splitLines(text) { const raw = text.split(/\r?\n/).map(x => x.trim()).filter(Boolean), files = raw.map(normFile); if (files.some(x => !x))
+    throw new Error('Hi staging safety: Git staged-set output contained an unbounded repository path'); return [...new Set(files)]; }
 function commandText(output) { if (typeof output === 'string')
     return output; if (typeof output?.output === 'string')
     return output.output; if (typeof output?.stdout === 'string')
@@ -47,8 +49,10 @@ function porcelainPaths(text) {
             continue;
         const body = raw.length >= 3 ? raw.slice(3).trim() : raw.trim();
         const target = body.includes(' -> ') ? body.split(' -> ').pop() : body;
-        if (target)
-            out.push(normFile(target.replace(/^"|"$/g, '')));
+        if (target) {
+            const file = normFile(target.replace(/^"|"$/g, ''));
+            out.push(file || '__INVALID_GIT_PATH__');
+        }
     }
     return [...new Set(out.filter(Boolean))];
 }

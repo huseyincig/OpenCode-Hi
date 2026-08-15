@@ -1,3 +1,4 @@
+import { normalizeBoundedProjectPath } from './common.js';
 import { isWorkerResultContract } from './worker-result.js';
 import { isContextReferenceContract } from './context-reference.js';
 import { EXTERNAL_ACTION_TYPES } from './external-action.js';
@@ -11,7 +12,7 @@ const PROFILE_KEYS = new Set(['role', 'category', 'task', 'tools', 'model', 'mod
 function record(v) { return Boolean(v) && typeof v === 'object' && !Array.isArray(v); }
 function strings(v) { return Array.isArray(v) && v.every(x => typeof x === 'string'); }
 function finite(v) { return typeof v === 'number' && Number.isFinite(v); }
-function validDiff(v) { return record(v) && strings(v.collateral) && strings(v.accepted_expansions) && (v.native_verified_reverts === undefined || strings(v.native_verified_reverts)); }
+function validDiff(v) { return record(v) && strings(v.collateral) && v.collateral.every(x => normalizeBoundedProjectPath(x) !== undefined) && strings(v.accepted_expansions) && v.accepted_expansions.every(x => normalizeBoundedProjectPath(x) !== undefined) && (v.native_verified_reverts === undefined || strings(v.native_verified_reverts) && v.native_verified_reverts.every(x => normalizeBoundedProjectPath(x) !== undefined)); }
 function validProfile(v) {
     if (!record(v) || !Object.keys(v).every(k => PROFILE_KEYS.has(k)) || typeof v.role !== 'string' || typeof v.category !== 'string' || !CATEGORIES.has(v.category) || !record(v.task) || !strings(v.tools) || !strings(v.fallback_models) || !strings(v.methodologies))
         return false;

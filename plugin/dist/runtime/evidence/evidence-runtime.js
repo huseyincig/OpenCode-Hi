@@ -1,5 +1,6 @@
 import { relative, resolve, sep } from 'node:path';
 import { appendLedger } from '../ledger/ledger.js';
+import { normalizeBoundedProjectPath } from '../../contracts/common.js';
 function id() { return `ev_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`; }
 const WRITE_TOOLS = new Set(['write', 'edit', 'patch', 'apply_patch', 'multiedit']);
 const SHELL_MUTATION_COMMAND = /(?:^|[;&|]\s*)(?:rm|mv|cp|touch|mkdir|rmdir|chmod|chown|chgrp|ln|truncate|dd|install|patch|rsync|tee|sed\s+-i|perl\s+-pi|python[^\n]*(?:\bwrite\b|\bopen\s*\([^)]*,\s*['"]?[wa+])|node[^\n]*(?:writeFileSync|writeFile|appendFileSync|appendFile|renameSync|rename|unlinkSync|unlink|mkdirSync|mkdir|rmSync|chmodSync|chmod)|git\s+(?:apply|am|checkout|switch|merge|rebase|cherry-pick|restore|reset|clean|stash)|npm\s+(?:install|uninstall|update|run\s+build)|pnpm\s+(?:add|remove|install|update|build)|yarn\s+(?:add|remove|install|build)|bun\s+(?:add|remove|install|build)|make(?:\s|$)|cmake\s+--build)\b/i;
@@ -23,10 +24,12 @@ function outcomeOf(output, text) { const exit = numericExit(output); if (ENVIRON
     return { outcome: exit === 0 ? 'passed' : 'failed', reason: exit === 0 ? undefined : `verification-exit-${exit}` }; if (/(^|\n)\s*(fail|failed|error)|exit\s*code\s*[1-9]/i.test(text))
     return { outcome: 'failed', reason: 'verification-reported-failure' }; return { outcome: 'pending', reason: 'verification-exit-unknown' }; }
 function absolutePath(value) { return value.startsWith('/') || /^[A-Za-z]:[\\/]/.test(value); }
-export function normalizeProjectPath(value, projectRoot) { const clean = value.trim().replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+$/, ''); if (!clean || !projectRoot || !absolutePath(clean))
-    return clean; const root = resolve(projectRoot), abs = resolve(clean), rel = relative(root, abs); if (!rel)
-    return '.'; if (rel === '..' || rel.startsWith(`..${sep}`) || absolutePath(rel))
-    return clean; return rel.replace(/\\/g, '/'); }
+export function normalizeProjectPath(value, projectRoot) { const raw = value.trim(); if (!raw)
+    return ''; if (!absolutePath(raw))
+    return normalizeBoundedProjectPath(raw) ?? ''; if (!projectRoot)
+    return ''; const root = resolve(projectRoot), abs = resolve(raw), rel = relative(root, abs); if (!rel)
+    return ''; if (rel === '..' || rel.startsWith(`..${sep}`) || absolutePath(rel))
+    return ''; return normalizeBoundedProjectPath(rel.replace(/\\/g, '/')) ?? ''; }
 export function markMutation(mission, files = [], source = 'tool') { const now = Date.now(); mission.execution.evidence.last_mutation_at = now; mission.execution.evidence.fresh = false; for (const item of mission.execution.evidence.items)
     if (!item.invalidated_at)
         item.invalidated_at = now; mission.vcs.changed_files = [...new Set([...mission.vcs.changed_files, ...files])]; appendLedger(mission, 'file.changed', { payload: { source, files } }); }
