@@ -52,7 +52,7 @@ Natural-language user meaning is handled by the host primary model and submitted
 
 Filesystem hygiene is enforced: durable project-local Hi data is confined to `.opencode/hi/`, OpenCode-native capability directories remain OpenCode-owned, package installation does not unpack Hi source into consumer repository roots, and transient lifecycle journals use OS temporary/runtime locations. Uninstall removes the Hi plugin registration and setup-owned policy/provenance surfaces while preserving durable Project Intelligence, retained artifacts, project-created OpenCode skills, unrelated `.opencode` content, and unrelated project files/configuration. Mission-survival state is project-keyed but stored in the OS/OpenCode state area because it is runtime data with restart-survival requirements, not durable project knowledge.
 
-Mission budgets bound turns/model/tool/delegation/context/planning/verification/review dimensions. Failure classes and materially-different retry prevent generic retry loops. OpenCode process lifecycle for ordinary model-facing bash is currently degraded and alternate-workspace child execution is unsupported. OpenCode 1.18.16 does expose a separate PTY lifecycle and workspace/session binding primitives, but Hi does not promote those primitives to product support without owned routing/provisioning/cleanup and execution-binding proof. Browser execution is likewise unsupported despite MCP/tool discovery. Shell policy remains operational and non-interactive.
+Mission budgets bound turns/model/tool/delegation/context/planning/verification/review dimensions. Failure classes and materially-different retry prevent generic retry loops. Hi-owned OpenCode process lifecycle, alternate-workspace binding, and browser execution now each have explicit owned adapters plus exact OpenCode 1.18.18 T3 receipts. These support claims remain narrower than arbitrary native bash/worktree/browser behavior: process identity, workspace source/binding, and browser worker/session/runtime-health boundaries all fail closed outside their accepted contracts. Browser support is provided by Hi's Playwright adapter for configured local HTTP(S) targets and never inferred from MCP/tool discovery. Shell policy remains operational and non-interactive.
 
 ## Memory
 
@@ -60,7 +60,7 @@ Memory is optional behind a provider boundary. Core correctness does not depend 
 
 ## Host
 
-OpenCode is the 0.1.x reference host. Core semantic types are separated from the host capability manifest. The adapter uses native host primitives where available and Hi may restrict but must not expand host authority. The current controlled host exposes OpenCode `1.18.16`. Real-host receipts remain exact-source-bound: earlier M12/current-worktree observations prove only the source they actually tested and must be refreshed for a changed host-bound candidate. Full Codex/Claude Code/Cursor adapters are intentionally deferred.
+OpenCode is the 0.1.x reference host. Core semantic types are separated from the host capability manifest. The adapter uses native host primitives where available and Hi may restrict but must not expand host authority. The current exact acceptance host is OpenCode `1.18.18`. Process, workspace, and browser receipts remain independently exact-source-bound; an older host/source receipt is historical evidence only and cannot promote a changed runtime candidate. Full Codex/Claude Code/Cursor adapters are intentionally deferred.
 
 ## Telemetry and efficiency
 
@@ -76,7 +76,7 @@ Local release engineering produces deterministic source/distributable ZIPs, rele
 
 ## Remaining gaps
 
-There are no known blocking internal source findings in the current architecture audit. Release readiness still depends on exact-candidate external evidence. Optional remote memory, additional semantic-language adapters, remote telemetry, adoption of a distinct PTY process-control executor, first-class workspace-isolation policy/binding, deterministic browser execution, external sandbox backends, alternate-host adapters, MCP expansion, and per-model methodology rendering remain deferred; unsupported host capabilities are reported instead of faked.
+There are no known blocking internal source findings in the current architecture audit. Release readiness still depends on exact-candidate external evidence. Optional remote memory, additional semantic-language adapters, remote telemetry, external sandbox backends, alternate-host adapters, MCP expansion, and per-model methodology rendering remain deferred. Hi-owned PTY process control, workspace isolation binding, and deterministic browser execution are now closed at their exact accepted OpenCode 1.18.18 boundaries; unavailable or unaccepted capability variants are still reported rather than faked.
 
 
 ## Storage Ownership

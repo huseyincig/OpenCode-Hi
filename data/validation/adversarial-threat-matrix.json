@@ -264,8 +264,8 @@
       "evidence": [
         {
           "tier": "T3",
-          "receipt": "data/validation/external-opencode-hi-0.1.0-browser-1.18.18-head-707609b.json",
-          "contains": "browser_execution"
+          "receipt": "data/validation/external-opencode-hi-0.1.0-browser-1.18.18-head-476590e.json",
+          "contains": "SUPPORTED_T3"
         }
       ]
     },

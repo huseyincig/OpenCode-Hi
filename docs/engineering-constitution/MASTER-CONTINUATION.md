@@ -17,14 +17,14 @@ active_phase_name: Release readiness and real publication
 phase_status: PARTIAL_EXTERNAL
 working_tree_expectation: clean
 last_verified_full_suite:
-  total: 564
-  pass: 564
+  total: 736
+  pass: 736
   fail: 0
-last_verified_architecture_lint: "PASS rules=21 deferred=0 linked=8"
+last_verified_architecture_lint: "PASS rules=22 deferred=0 linked=8"
 last_verified_validator: PASS
 current_projection_receipts: 32
 external_release_actions_authorized: true
-next_contract_owner: P8 npm registry T4 publication blocker only; GitHub v0.1.0 release is closed and exact-source verified
+next_contract_owner: G10/R-series product closure; B3 browser T3 is closed, npm T4 remains externally blocked on authentication
 ```
 
 ---
@@ -192,8 +192,8 @@ dc8c59c  test: lock primary model as host-selected
 Current deterministic baseline before this coverage-ledger rewrite:
 
 ```text
-controlled full suite: 564/564 PASS
-architecture lint: PASS rules=21 deferred=0 linked=8
+controlled full suite: 736/736 PASS
+architecture lint: PASS rules=22 deferred=0 linked=8
 validator: PASS
 projection receipts: 32
 backup count: 0
@@ -211,7 +211,7 @@ The old schema catalog listed suggested filenames. **Filename parity is not the 
 | C02 / S02 PermissionProfile | `data/hi-permission-profiles.json`, `contracts/permission-profile.ts` | **CLOSED** | Safety monotonicity and read-only edit denial executable. |
 | C03 / S03 MethodologyContract | `data/hi-methodologies.json`, generated policy/SKILL projections, runtime catalog | **CLOSED current scope** | Mandatory resource requirements are canonical `host-capability:<id>` references consumed by selection/preflight; unsupported executor resources fail closed. |
 | C04 / S04 ModelCapabilityProfile | `contracts/model.ts`, model resolver, WorkerContract snapshots | **CLOSED current claims** | Child/worker constrained identity is reconciled; primary Hi agents intentionally do not constrain model/variant, leaving primary selection host-owned and preventing fake primary model state. |
-| C05 / S05 HostCapability | `contracts/host-capability.ts`, OpenCode detector/doctor | **CLOSED registry / HOST-LIMITED capabilities** | Process lifecycle DEGRADED; workspace isolation UNSUPPORTED; browser execution explicitly UNSUPPORTED until a deterministic executor adapter exists. |
+| C05 / S05 HostCapability | `contracts/host-capability.ts`, OpenCode detector/doctor | **CLOSED registry / EXACT-BOUND capabilities** | Hi-owned process lifecycle, workspace isolation binding, and browser execution each have exact OpenCode 1.18.18 T3 acceptance. Browser support additionally requires live BrowserRuntime health; unsupported variants remain fail-closed. |
 | C06 / S06 ConfigOption | `data/hi-config-options.json`, `contracts/config-option.ts`, generated defaults | **CLOSED** | 32 leaves, real effect/diagnostic classification, HI003 fatal. |
 | C07 / S07 TaskContract | `contracts/task.ts`, TaskRuntime | **CLOSED** | Task identity/obligations/context/external-action snapshots current-only. |
 | C08 / S08 WorkerContract | `contracts/worker.ts`, TaskRuntime, persistence | **CLOSED for workers** | Includes attempts/recovery/model identity/native diff state. |
@@ -415,14 +415,14 @@ The old stage order remains useful as a product-coverage lens, but later Constit
 | Stage | Current status | Meaning |
 |---|---|---|
 | Stage 1 — Methodology + semantic prerequisite ownership | **CLOSED** | 27 methodologies, structured semantics, activation/selection/load/exit/learning/admission lifecycle operational. P2 is a Stage-2 host-capability eligibility edge, not a reopening of semantic Stage 1. |
-| Stage 2 — Role/topology/generated agents/model/host policy | **CLOSED current supported claims** | P0 authority, P1 primary host-selected model truth and P2 methodology/host execution-surface truth are closed; browser execution remains explicitly host-limited/UNSUPPORTED rather than falsely supported. |
+| Stage 2 — Role/topology/generated agents/model/host policy | **CLOSED current supported claims** | P0 authority, P1 primary host-selected model truth and P2 methodology/host execution-surface truth are closed; browser execution is now exact-source/host accepted and live-health-gated rather than inferred from host tool inventory. |
 | Stage 3 — Context Governor | **CLOSED current scope** | `governContext` is consumed by mission compaction snapshot; TaskRuntime has bounded context/artifact/PI/SemanticContext/native-summary paths. |
 | Stage 4 — Project Intelligence / Semantic Context / knowledge lifecycle | **CLOSED current implemented scope** | Durable PI reload/invalidation, SemanticContext contract/consumer, methodology learning/admission separation operational. |
-| Stage 5 — Human Decision / process / shell / isolation | **PARTIAL / HOST-LIMITED** | HumanDecision and shell policy operational. Process lifecycle DEGRADED; workspace isolation binding UNSUPPORTED. These must remain explicit release/support limitations unless future host support closes them. |
+| Stage 5 — Human Decision / process / shell / isolation | **CLOSED current implemented surfaces / H2 HOST-LIMITED** | H1 HumanDecision chat transport and shell policy are operational; Hi-owned process lifecycle and workspace isolation binding have exact OpenCode 1.18.18 T3 support. Structured host question-opening transport (H2) remains unsupported on the public OpenCode 1.18.18 API. |
 | Stage 6 — Team / concurrency / crash recovery / fallback | **CLOSED current semantics** | Team is a strict process-ephemeral projection over durable Task/Worker state; restart reconciliation, concurrency, fallback and semantic generation behavior are deterministic. |
 | Stage 7 — Storage / setup / docs / packaging / release architecture | **CLOSED local architecture, docs-status residue** | Storage/provenance/release guards operational locally. Historical 06/08 status banners are stale. No real release authority. |
-| Stage 8 — independent subsystem/integration tests | **CLOSED current T1/T2 baseline** | 564/564 controlled suite plus architecture lint/validator. Tests remain evidence, not sole product proof. |
-| Stage 9 — Linux/OpenCode representative real-host acceptance | **PASS_EXACT_SOURCE_WITH_LIMITATIONS** | P7 reaccepted changed host-bound surfaces on registry-latest OpenCode 1.18.18 against exact runtime source `c5d8287`; process remains DEGRADED, workspace UNSUPPORTED, browser UNSUPPORTED. Historical M12 1.18.16 remains provenance only. |
+| Stage 8 — independent subsystem/integration tests | **CLOSED current T1/T2 baseline** | 736/736 controlled suite plus architecture lint/validator. Tests remain evidence, not sole product proof. |
+| Stage 9 — Linux/OpenCode representative real-host acceptance | **PASS_EXACT_SOURCE_WITH_LIMITATIONS** | OpenCode 1.18.18 exact-source receipts now close Hi-owned process lifecycle, workspace isolation binding, and browser execution on their respective tested runtime commits. H2 structured question opening and npm T4 remain separate limitations. Historical 1.18.16/P7 negative capability observations remain provenance only. |
 | Stage 10 — real release/publication acceptance | **NOT REQUESTED** | Requires explicit user authority and T4 receipts. |
 
 ---
@@ -431,17 +431,17 @@ The old stage order remains useful as a product-coverage lens, but later Constit
 
 These are current product truths, not reasons to manufacture PASS:
 
-### Process lifecycle — DEGRADED
+### Process lifecycle — SUPPORTED exact owned surface
 
-The P5 audit on OpenCode 1.18.16 exposed a separate PTY lifecycle, but Hi did not route ordinary model-facing bash through that executor. Ordinary bash therefore still lacks Hi-owned PID/job wait/kill/process-exit lifecycle; shell safety and bounded runtime recovery must not be represented as a richer process governor.
+The historical P5 negative/degraded observation remains provenance for that source state. P3 later added the Hi-owned PTY runtime and exact OpenCode 1.18.18 T3 acceptance. Support applies to the canonical Hi process surface only; arbitrary model-facing/native jobs are not retroactively owned.
 
-### Workspace isolation binding — UNSUPPORTED
+### Workspace isolation binding — SUPPORTED exact owned surface
 
-The P5 audit on OpenCode 1.18.16 exposed workspace/session `workspaceID`, warp and worktree primitives, but Hi had no canonical isolation selection/provisioning/cleanup executor and no T3 proof that subsequent child/tool execution was bound to an alternate workspace. Related host primitives are therefore not promoted to product support.
+The historical P5 unsupported observation remains provenance. W3 later proved source-bound provisioning, child workspace binding, isolation, cleanup, restart adoption and orphan quarantine on OpenCode 1.18.18. Support applies only to Hi-owned IsolationDecision/WorkspaceLease/WorkspaceRuntime execution.
 
-### Browser / visual — HOST-LIMITED / contract-bound
+### Browser / visual — SUPPORTED exact owned + live-health-gated surface
 
-`browser-execution` is an explicit HostCapability and remains `UNSUPPORTED` until current/latest-host T3 evidence disproves that claim. The P5 OpenCode 1.18.16 audit exposed MCP/tool discovery, but Hi had no deterministic browser executor/evidence adapter; browser/visual methodologies therefore fail deterministic preflight before child spawn. Do not infer support from MCP/tool naming, prompts, screenshots, or inventory alone.
+B3 exact-source T3 on `476590e500949ec6c2416c1502beaa9be4217d9f` proves the Hi-owned Playwright BrowserRuntime, exact visual child ownership, navigation/DOM/click/type/screenshot/close, deterministic invalid-target failure, explicit passed browser/visual Evidence, methodology exits and Mission completion. `browser-execution` remains contingent on live runtime health; MCP/tool inventory, prompts, BrowserObservation or screenshot artifacts alone never create support or verification PASS.
 
 ### Semantic Context adapters
 
@@ -532,7 +532,7 @@ Proof: focused trajectory/topology set 44/44 PASS; full controlled suite **563/5
 
 Exit satisfied: every C01–C29/S00–S27 responsibility is executable, deliberately derived/subsumed, documentary, host-limited, or explicitly unsupported — none remains missing by accident.
 
-### P5 — Host-limited capability release/support decision — **CLOSED at `e789e92`**
+### P5 — Host-limited capability release/support decision — **HISTORICAL / CLOSED at `e789e92`**
 
 The historical P5 OpenCode 1.18.16 source/type and controlled-host audit established:
 
@@ -561,7 +561,7 @@ Deterministic proof from committed canonical sources:
 
 Closure is not based on test count alone: P0–P5 owner/consumer/executor gaps are individually recorded above, while P6 proves their committed canonical sources reproduce the generated host/runtime projections without drift.
 
-### P7 — Real-host reacceptance for changed host-bound surfaces — **CLOSED on exact runtime source `c5d8287`**
+### P7 — Real-host reacceptance for changed host-bound surfaces — **HISTORICAL / CLOSED on exact runtime source `c5d8287`**
 
 Canonical receipt: `data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-c5d8287.json`.
 
@@ -581,13 +581,21 @@ Deterministic source checkpoint before T3: **564/564 PASS**, architecture lint 2
 P7 exit satisfied: changed OpenCode-bound behavior is reaccepted against the current registry-latest host and exact runtime source hashes, while unsupported/degraded features remain truthfully limited.
 
 
-### W3 — Workspace-isolation real-host promotion — **CLOSED on exact runtime source `92812a1`**
+### W3 — Workspace-isolation real-host promotion — **CLOSED on exact runtime source `92812a1` / browser statement historical**
 
 Canonical receipt: `data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-92812a1.json`.
 
 Exact OpenCode/plugin/SDK **1.18.18** T3 acceptance on Linux/aarch64 proves the Hi-owned workspace chain end to end: source-bound builtin-worktree provisioning; exact child `workspaceID + directory`; real `coder` model/tool write confined to the lease; deterministic content + `git diff --check` verification executed from the leased worktree; primary workspace isolation and byte-identical preservation of a pre-existing dirty user file; cleanup removing host record/worktree path; real OpenCode server restart followed by `ADOPTED` reconciliation; external workspace loss followed by `ORPHANED + QUARANTINED`; and no silent recreation. `workspace_isolation=NATIVE` at the reference-host primitive layer and `workspace-isolation-binding=SUPPORTED` at `REAL_HOST_ACCEPTANCE` only for Hi-owned IsolationDecision/WorkspaceLease/WorkspaceRuntime execution. Browser execution remains `UNSUPPORTED`.
 
 Deterministic promoted-source checkpoint: **701/701 PASS**, architecture lint `rules=22 deferred=0 linked=8`, validator PASS (`product=HI docs=26`), naming namespace visibly PASS, generated/idempotency clean, diff-check clean, backup count 0. Host-hardening checkpoint `6ba15d0`; promoted exact runtime source `92812a13b7388387b11096a74a26bdb13fc4dffb`. No push/tag/release/npm publish action is implied by W3.
+
+### B3 — Browser/visual real-host promotion — **CLOSED on exact runtime source `476590e`**
+
+Canonical receipt: `data/validation/external-opencode-hi-0.1.0-browser-1.18.18-head-476590e.json`.
+
+Exact OpenCode/plugin/SDK **1.18.18** T3 acceptance on Linux/aarch64 proves the Hi-owned browser chain end to end: live Playwright/Chromium health; configured local HTTP target confinement; open/inspect/click/type/screenshot/close observations; deterministic invalid observed-target failure; canonical screenshot artifact persistence; default review routing from structured `visual-qa` capability to the `visual-qa` role; READY visual-task preflight; native loading of `hi-browser-testing` and `hi-visual-qa`; exact child session/task/generation browser ownership; terminal raw WorkerResult `DONE`; explicit `browser-evidence` and `visual-evidence` with `outcome=passed`; both methodology exits resolved; review/verification obligations closed; and Mission status `completed`. Child attempts to invoke a Hi control-plane tool were correctly denied by the ownership guard. Static HostCapability support does not manufacture runtime availability: the browser resource is admitted only when live BrowserRuntime health succeeds.
+
+Deterministic exact-source checkpoint: **736/736 PASS**, architecture lint `rules=22 deferred=0 linked=8`, validator PASS (`product=HI docs=26`), generated/idempotency clean, diff-check clean, backup count 0. Ownership/race hardening commit `9306854`; support/health-gating commit `83daf2f`; visual default-routing fix and exact accepted runtime source `476590e500949ec6c2416c1502beaa9be4217d9f`. Direct T3 screenshot SHA-256 `5b09dcef8453330730fdc6a231af3a47381d301fa6912ac46d06317bc6cefacb`; real visual-child screenshot SHA-256 `952980690bb6add6d45577f77e2700e17e98f5e7d0b6c6035d1410aad606a5ef`. Historical negative B3 receipt `707609b...` is retained as provenance for the earlier no-browser-runtime host state and is not rewritten.
 
 ### P8 / M13 / Stage 10 — Release readiness and real publication — **PARTIAL_EXTERNAL: GITHUB RELEASE CLOSED / NPM T4 BLOCKED_AUTH**
 

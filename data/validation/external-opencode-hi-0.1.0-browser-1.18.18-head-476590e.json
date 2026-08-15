@@ -1,0 +1,186 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "generated_at": "2026-08-15",
+  "status": "PASS_EXACT_SOURCE_BROWSER_T3",
+  "source_binding": {
+    "tested_git_commit": "476590e500949ec6c2416c1502beaa9be4217d9f",
+    "tested_git_tree": "7e573acfbb0bbe120935e7998b08669238006c4e",
+    "worktree": "/workspace/OpenCode-Hi",
+    "state": "CLEAN_COMMITTED_SOURCE",
+    "exact_candidate": true,
+    "runtime_hashes": {
+      "plugin/dist/plugin.js": "4ba3d1992736992f788a4d1814c33f68f585f19065802157babb398f647e3c20",
+      "plugin/src/plugin.ts": "3b1f608f0d8512f7510a5cd8e680f3879f181ee7490d649f9e5b0656d03030e8",
+      "plugin/src/contracts/host-capability.ts": "d7b8f2abe1733f49ab71ad9d043c27a58ef48acd179f8c6687ae475eb5204d1f",
+      "plugin/src/contracts/browser-observation.ts": "bdaa9047f895999a62039c17906bb8214c9af98394a0f68c1a311abc5f258624",
+      "plugin/src/runtime/browser/executor.ts": "218f33b76ef0d8842b970bf03fb7f1ee707cdeeb3776b5566075ba439a7a362d",
+      "plugin/src/runtime/browser/runtime.ts": "8d50a48b4d872117e1f79ddeab1d325060491101c3e3c0baf3dd99dd92541014",
+      "plugin/src/runtime/browser/ownership.ts": "605391f7a3260b4f9e277d48cd720883f5f45f44322a9708367a6b5af8aeecb2",
+      "plugin/src/opencode/playwright-browser-adapter.ts": "83690c9c0549ceb59d66aaade233c2f08823008c2443e8b1885062f4b8bab1f0",
+      "plugin/src/runtime/application/runtime-services.ts": "fd9693c7a80d233b1cd7bdf89f5a76e1050fa2ecb6e68d9afc51bbccd54500bc",
+      "plugin/src/runtime/application/hi-tool-surface.ts": "cac6a3dd315fe8d930b33bf51b29ca997fae155e183b16f0bfcd7df5b66f43b0",
+      "plugin/src/hooks/tool-before.ts": "d9be7c199b2e814729460d80c6b64e32c194dd388e10a47737e90aed23dd54c4",
+      "plugin/src/runtime/task/task-runtime.ts": "fbb0e0dad347abfd5026b547239b3f00e952ddd5d1ef09df01507206726bf9ed",
+      "plugin/src/runtime/routing/capability-router.ts": "49a261988bd451157c2d16d73a20591083cc2ed75be8b8c345a0f31d3eea08ab",
+      "plugin/src/doctor/checks.ts": "580d4a8299a5dbbbce8865afc4320bcfda68b17f38cd2c587450284508d1cdc4"
+    },
+    "note": "Receipt is committed after the tested runtime source. Evidence is bound only to tested_git_commit/tree above; receipt/documentation/MASTER-only commits do not promote evidence across later runtime source changes."
+  },
+  "host": {
+    "os": "linux",
+    "arch": "aarch64",
+    "opencode_version": "1.18.18",
+    "plugin_package_version": "1.18.18",
+    "sdk_package_version": "1.18.18",
+    "fixture_project": "/tmp/hi-b3-final-476590e-rest/project",
+    "plugin_spec": "file:///workspace/OpenCode-Hi/plugin/dist/plugin.js",
+    "provider_used": "opencode/laguna-s-2.1-free",
+    "provider_variant": "high",
+    "browser_engine": "playwright-core Chromium",
+    "browser_executable": "/home/node/.cache/ms-playwright/chromium-1234/chrome-linux/chrome"
+  },
+  "gates": {
+    "deterministic_executor_health": "PASS_T3",
+    "direct_navigation": "PASS_T3",
+    "direct_dom_observation": "PASS_T3",
+    "direct_click": "PASS_T3",
+    "direct_type": "PASS_T3",
+    "direct_screenshot": "PASS_T3",
+    "deterministic_invalid_target_failure": "PASS_T3",
+    "direct_close": "PASS_T3",
+    "native_plugin_loader": "PASS_T3",
+    "task_preflight": "PASS_T3",
+    "canonical_visual_role_routing": "PASS_T3",
+    "native_skill_load_hi_browser_testing": "PASS_T3",
+    "native_skill_load_hi_visual_qa": "PASS_T3",
+    "visual_child_browser_tools": "PASS_T3",
+    "explicit_passed_browser_evidence": "PASS_T3",
+    "explicit_passed_visual_evidence": "PASS_T3",
+    "methodology_exits": "PASS_T3",
+    "verification_gate": "PASS_T3",
+    "mission_completion": "PASS_T3",
+    "runtime_health_gating": "PASS_T3",
+    "browser_execution": "SUPPORTED_T3"
+  },
+  "evidence": {
+    "deterministic_source_baseline": {
+      "full_suite": "736/736 PASS",
+      "architecture_lint": "PASS rules=22 deferred=0 linked=8",
+      "validator": "PASS product=HI docs=26",
+      "naming_namespace": "PASS",
+      "generated_idempotency": "clean",
+      "diff_check": "clean",
+      "backup_count": 0,
+      "checkpoint_commit": "476590e500949ec6c2416c1502beaa9be4217d9f"
+    },
+    "direct_browser_execution": {
+      "fixture": "/tmp/hi-b3-476590e-direct",
+      "target": "http://127.0.0.1:47842/",
+      "executor_version": "hi-playwright-browser@1",
+      "health_available": true,
+      "operations": [
+        "open:OBSERVED",
+        "inspect:OBSERVED",
+        "click:@e1:OBSERVED",
+        "type:@e2:OBSERVED",
+        "screenshot:OBSERVED",
+        "close:OBSERVED"
+      ],
+      "typed_value": "Hi B3 direct 476590e",
+      "deterministic_failure": "Browser target was not present in the latest bounded observation",
+      "screenshot_artifact": "hi-artifact:a_bc175efdfe39811b5c106edb",
+      "screenshot_file": "/tmp/hi-b3-476590e-direct/artifacts/.opencode/hi/artifacts/browser-screenshot/a_bc175efdfe39811b5c106edb.png",
+      "screenshot_bytes": 7637,
+      "screenshot_sha256": "5b09dcef8453330730fdc6a231af3a47381d301fa6912ac46d06317bc6cefacb",
+      "teardown_note": "Node emitted the known host libuv EEXIST teardown assertion only after the complete result document and screenshot were persisted; browser operation results above were already terminal."
+    },
+    "visual_child_execution": {
+      "fixture": "/tmp/hi-b3-final-476590e-rest",
+      "target": "http://127.0.0.1:47844/",
+      "mission_id": "m_mstuqs6f_6tcnglep",
+      "parent_session_id": "ses_ffc686fc3ffeIhqbKXIOMX0Do4",
+      "task_id": "t_mstuss39_mha8ys",
+      "worker_id": "w_mstuss3a_pcsb6u",
+      "child_session_id": "ses_ffc66d0baffeBwsZNWn32cf2n5",
+      "role": "visual-qa",
+      "category": "visual",
+      "effective_model": "opencode/laguna-s-2.1-free",
+      "effective_model_variant": "high",
+      "effective_model_verified": true,
+      "selected_methodologies": [
+        "hi-browser-testing",
+        "hi-visual-qa"
+      ],
+      "loaded_methodologies": [
+        "hi-visual-qa",
+        "hi-browser-testing"
+      ],
+      "preflight": "READY",
+      "browser_operations": [
+        "open:OBSERVED",
+        "inspect:OBSERVED",
+        "click:@e1:OBSERVED",
+        "type:@e2:OBSERVED",
+        "screenshot:OBSERVED",
+        "inspect:OBSERVED",
+        "close:OBSERVED"
+      ],
+      "typed_value": "Hi B3 final 476590e",
+      "screenshot_artifact": "hi-artifact:a_1523398f52247ebe482a1d86",
+      "screenshot_file": "/tmp/hi-b3-final-476590e-rest/project/.opencode/hi/artifacts/browser-screenshot/a_1523398f52247ebe482a1d86.png",
+      "screenshot_bytes": 9222,
+      "screenshot_sha256": "952980690bb6add6d45577f77e2700e17e98f5e7d0b6c6035d1410aad606a5ef",
+      "worker_result_status": "DONE",
+      "evidence": [
+        {
+          "kind": "browser-evidence",
+          "outcome": "passed"
+        },
+        {
+          "kind": "visual-evidence",
+          "outcome": "passed"
+        },
+        {
+          "kind": "review-evidence",
+          "outcome": "passed"
+        }
+      ],
+      "obligations": {
+        "o-review": "closed",
+        "o-verification": "closed"
+      },
+      "methodology_needs_remaining": [],
+      "mission_status": "completed",
+      "blockers": []
+    },
+    "guard_and_routing": {
+      "child_control_plane_attempt": "hi_intent_assess denied by Hi ownership guard",
+      "browser_ownership": "exact canonical visual worker/task/session/generation with terminal-state exclusion",
+      "default_role_routing": "required capability visual-qa + review routed to visual-qa without explicit role",
+      "runtime_health": "static support does not inject browser resource; live BrowserRuntime health must supply host-capability:browser-execution"
+    },
+    "acceptance_audit": {
+      "historical_negative_receipt": "data/validation/external-opencode-hi-0.1.0-browser-1.18.18-head-707609b.json",
+      "historical_negative_preserved": true,
+      "first_parent_task_start": "RESOLVE before task creation because model supplied a prose dependency instead of a Task ID",
+      "accepted_dispatch": "subsequent corrected start had no task dependencies, preflight READY, created exactly one accepted browser task/worker; failed preflight created no task, worker, evidence, or capability claim"
+    }
+  },
+  "limitations": [
+    "Support is limited to the Hi-owned BrowserRuntime + PlaywrightBrowserAdapter surface for configured local HTTP(S) targets; it does not authorize arbitrary network targets, credential injection, downloads, or foreign browser sessions.",
+    "Static HostCapability support does not bypass live runtime health. If the browser engine/executor is unavailable, visual/browser methodology preflight remains fail-closed before child spawn.",
+    "BrowserObservation and screenshot artifacts remain observations/artifacts only and never become verification PASS without explicit admissible passed Evidence.",
+    "The fixture emitted a non-blocking pre-existing 404 console resource error; the worker recorded it as informational and browser state/evidence remained valid.",
+    "The exact support claim is bound to OpenCode 1.18.18 and tested runtime source 476590e500949ec6c2416c1502beaa9be4217d9f; later host/runtime-source changes require reacceptance."
+  ],
+  "release_authority": {
+    "push": false,
+    "tag": false,
+    "release": false,
+    "publish": false,
+    "deploy": false,
+    "p8_m13": "UNCHANGED_BLOCKED_NPM_AUTH"
+  },
+  "rule": "This receipt is T3 host evidence for browser-execution on exact tested source 476590e500949ec6c2416c1502beaa9be4217d9f and OpenCode 1.18.18 only. Later runtime-source or host changes require reacceptance before an equivalent support claim is promoted."
+}
