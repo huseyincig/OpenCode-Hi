@@ -53,11 +53,32 @@ for p in ROOT.rglob('*'):
     for pattern in legacy:
         if re.search(pattern,t,re.I):err(f'legacy/prototype identity in current path: {rel} / {pattern}')
 # Living data contract names.
-required_data={'data/product.json','data/validation/implementation-coverage.json','data/validation/native-coverage.json','data/validation/flow-coverage.json','data/validation/flow-acceptance.json','data/validation/source-gates.json','data/validation/release-gates.json','data/validation/source-contracts.json','data/validation/final-dod-audit.json','data/hi-methodologies.json','data/hi-roles.json','data/hi-permission-profiles.json','data/hi-config-options.json','data/validation/benchmarks-0.1.0.json','data/validation/install-lifecycle-0.1.0.json','data/validation/terminology-audit-0.1.0.json','data/validation/projection-receipts.json'}
+required_data={'data/product.json','data/validation/implementation-coverage.json','data/validation/native-coverage.json','data/validation/flow-coverage.json','data/validation/flow-acceptance.json','data/validation/source-gates.json','data/validation/release-gates.json','data/validation/source-contracts.json','data/validation/final-dod-audit.json','data/hi-methodologies.json','data/hi-roles.json','data/hi-permission-profiles.json','data/hi-config-options.json','data/validation/benchmarks-0.1.0.json','data/validation/install-lifecycle-0.1.0.json','data/validation/compatibility-matrix-0.1.0.json','data/validation/terminology-audit-0.1.0.json','data/validation/projection-receipts.json'}
 for rel in required_data:
     if not (ROOT/rel).is_file():err(f'required data contract missing: {rel}')
 for old in ('feature-ledger-09-coverage.json','native-first-10-coverage.json','flow-11-coverage.json','flow-11-acceptance.json','roadmap-source-gates.json','observed-runtime-smoke-1.18.16.json'):
     if any(p.name==old for p in (ROOT/'data').rglob('*')):err(f'old data contract name present: {old}')
+
+try:
+    cm=json.loads((ROOT/'data/validation/compatibility-matrix-0.1.0.json').read_text(encoding='utf-8'))
+    if cm.get('schema')!=1 or cm.get('kind')!='GENERATED_RECEIPT_COMPATIBILITY_PROJECTION':err('compatibility projection header invalid')
+    cur=cm.get('current_reference_host') or {}
+    if cur.get('opencode_version')!='1.18.18' or cur.get('platform')!='linux' or cur.get('architecture')!='aarch64':err('compatibility current reference host drift')
+    expected_caps={'process-lifecycle','workspace-isolation-binding','browser-execution'}
+    caps=cur.get('capabilities') or {}
+    if set(caps)!=expected_caps:err('compatibility current capability set drift')
+    for cap in expected_caps:
+        entry=caps.get(cap) or {}
+        if entry.get('status')!='SUPPORTED_T3':err(f'compatibility {cap} not exact supported T3')
+        receipt=entry.get('receipt')
+        if not isinstance(receipt,str) or not (ROOT/receipt).is_file():err(f'compatibility {cap} receipt missing')
+    for row in cm.get('history',[]):
+        receipt=row.get('receipt');digest=row.get('receipt_sha256')
+        if not isinstance(receipt,str) or not (ROOT/receipt).is_file():err(f'compatibility history receipt missing: {receipt}');continue
+        import hashlib
+        actual=hashlib.sha256((ROOT/receipt).read_bytes()).hexdigest()
+        if actual!=digest:err(f'compatibility history receipt hash drift: {receipt}')
+except Exception as e:err(f'bad compatibility projection: {e}')
 sc=json.loads((ROOT/'data/validation/source-contracts.json').read_text(encoding='utf-8'))
 if sc.get('release')!=version:err('source-contracts release stale')
 for cid,c in sc.get('contracts',{}).items():

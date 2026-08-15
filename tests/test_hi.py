@@ -660,3 +660,22 @@ def test_r2_install_lifecycle_receipt_covers_full_local_recovery_contract():
     assert d['state_security']['setup_json_mode']=='0o600' and d['state_security']['rollback_mode_after_install']=='0o600'
     assert d['state_security']['transaction_contains_config_body'] is False and d['state_security']['rollback_contains_config_body'] is False
     assert (ROOT/'scripts/run-install-lifecycle.py').is_file()
+
+
+def test_r3_generated_compatibility_projection_selects_latest_exact_capability_proofs_without_erasing_history():
+    d=json.loads((ROOT/'data/validation/compatibility-matrix-0.1.0.json').read_text())
+    assert d['schema']==1 and d['kind']=='GENERATED_RECEIPT_COMPATIBILITY_PROJECTION'
+    cur=d['current_reference_host'];assert (cur['opencode_version'],cur['platform'],cur['architecture'])==('1.18.18','linux','aarch64')
+    caps=cur['capabilities']
+    assert caps['process-lifecycle']['receipt'].endswith('head-bc85854.json') and caps['process-lifecycle']['status']=='SUPPORTED_T3'
+    assert caps['workspace-isolation-binding']['receipt'].endswith('head-92812a1.json') and caps['workspace-isolation-binding']['status']=='SUPPORTED_T3'
+    assert caps['browser-execution']['receipt'].endswith('head-476590e.json') and caps['browser-execution']['status']=='SUPPORTED_T3'
+    negative=next(x for x in d['history'] if x['receipt'].endswith('browser-1.18.18-head-707609b.json'))
+    assert negative['classification']=='HISTORICAL_EXACT_PROOF' and negative['current_for_capabilities']==[] and negative['gates']['browser-execution']=='UNSUPPORTED'
+    old=next(x for x in d['history'] if x['opencode_version']=='1.18.16' and x['exact_source'])
+    assert old['classification']=='HISTORICAL_EXACT_PROOF'
+    nonexact=next(x for x in d['history'] if x['receipt'].endswith('host-current-worktree.json'))
+    assert nonexact['classification']=='NON_EXACT_WORKTREE' and nonexact['current_for_capabilities']==[]
+    for row in d['history']:
+        path=ROOT/row['receipt'];assert path.is_file();assert hashlib.sha256(path.read_bytes()).hexdigest()==row['receipt_sha256']
+    assert (ROOT/'scripts/generate-compatibility-matrix.py').is_file()
