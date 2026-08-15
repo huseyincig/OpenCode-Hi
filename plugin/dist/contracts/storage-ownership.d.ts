@@ -76,7 +76,7 @@ export declare const STORAGE_OWNERSHIP_CATALOG: readonly [{
     readonly canonical_owner: "hi-context-artifact";
     readonly scope: "project";
     readonly lifecycle: "derived";
-    readonly path_provider: ".opencode/hi/artifacts/<kind>/<artifact_id>.json";
+    readonly path_provider: ".opencode/hi/artifacts/<kind>/<artifact_id>.json + optional hash-bound binary sibling";
     readonly schema_ref: "ArtifactContract";
     readonly write_owner: "ContextArtifactStore";
     readonly readers: readonly ["ContextArtifactStore", "TaskRuntime"];
