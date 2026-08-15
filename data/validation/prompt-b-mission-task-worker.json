@@ -64,16 +64,16 @@
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
       "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
       "proof": "plugin/test/q3-adversarial-threat-matrix.test.mjs",
-      "proof_sha256": "94257eb5e5ed94473f6f6676370304a0d504abc1facc274d4eb4106354a96a5d",
+      "proof_sha256": "d2a3478267f374594c90a29a458ed2938a343826be6e79d621e8430e66f274d2",
       "owner_anchor": "worker.result.duplicate-ignored",
       "proof_anchor": "Q3 duplicate child result callback is idempotently ignored by canonical TaskRuntime"
     },
     {
       "invariant": "out-of-order-callback",
       "owner": "plugin/src/runtime/task/child-execution-coordinator.ts",
-      "owner_sha256": "1f9178df13fa1e09f8efc239ecf872116c5d6635f5fed76855f0d121839507fc",
+      "owner_sha256": "819e27671224e9f7bca8e70b7a2638d74c79164f04bcc5e5e647c0d5818d9817",
       "proof": "plugin/test/prompt-b-mission-task-worker-adversarial.test.mjs",
-      "proof_sha256": "58147e750b024a3d482f0bee20ce4c5b1e3f13bf6d26add8c30741265107aeff",
+      "proof_sha256": "551721963314f48940e8877b89d9f99f793931167015d6a104b173bde8c16cb5",
       "owner_anchor": "matches.length===1",
       "proof_anchor": "PROMPT B reordered callback from superseded child session cannot bind the current worker"
     },
@@ -82,16 +82,16 @@
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
       "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
       "proof": "plugin/test/prompt-b-mission-task-worker-adversarial.test.mjs",
-      "proof_sha256": "58147e750b024a3d482f0bee20ce4c5b1e3f13bf6d26add8c30741265107aeff",
+      "proof_sha256": "551721963314f48940e8877b89d9f99f793931167015d6a104b173bde8c16cb5",
       "owner_anchor": "worker.result.stale-generation-ignored",
       "proof_anchor": "PROMPT B callback disposition rejects stale mission generation and restart-pending worker before accepting current owner"
     },
     {
       "invariant": "task-cancellation",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "fbb0e0dad347abfd5026b547239b3f00e952ddd5d1ef09df01507206726bf9ed",
+      "owner_sha256": "4aefdeea9a786314ac380d757ffcc17b9355dd29b22e0a8e892399ce4e04e0e7",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "2911ea2503a7fc523c187e75f9e96d7b45d75be5c30cc1aef9d245d708ac3f21",
+      "proof_sha256": "ef05d013e9680f665fd4802ca8f626ac824afa7b09f851645116ebefdf2541d2",
       "owner_anchor": "async cancel(m:MissionState",
       "proof_anchor": "W2 explicit isolated task provisions one lease, binds child workspace, preserves deny permission, and cleanup follows child abort"
     },
@@ -100,16 +100,16 @@
       "owner": "plugin/src/runtime/task/task-recovery-coordinator.ts",
       "owner_sha256": "330a83fd6dfc14e2a3fb0a145f176a1bd5fe5b84a3af6e30ee5ec75fbd82e4d3",
       "proof": "plugin/test/crash-restart-survival.test.mjs",
-      "proof_sha256": "159cd2863a6b39d464f7abcfd2e35876d03d0fad6351db2e425e7c8ac56a2c3b",
+      "proof_sha256": "02607af55a9529c1b70ee52db3d0e31d4bce4c5202c4de9acebf6d79459d212b",
       "owner_anchor": "recoverRuntimeFailure",
       "proof_anchor": "explicit task restart reuses the quarantined child session and only then unlocks its callbacks"
     },
     {
       "invariant": "dependency-unblock",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "fbb0e0dad347abfd5026b547239b3f00e952ddd5d1ef09df01507206726bf9ed",
+      "owner_sha256": "4aefdeea9a786314ac380d757ffcc17b9355dd29b22e0a8e892399ce4e04e0e7",
       "proof": "plugin/test/scheduler-hardening.test.mjs",
-      "proof_sha256": "acf3befc6809e991ceb0ff08567313146b6952f42e39ebcc66927d2c77827090",
+      "proof_sha256": "4f34d1dee8001c1434d403ce0fae27f4a23972af70f3f2eae17bb683cfbfcd52",
       "owner_anchor": "drainQueue",
       "proof_anchor": "queued dependent is removed from queue when prerequisite fails"
     },
@@ -118,7 +118,7 @@
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
       "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
       "proof": "plugin/test/runtime-write-conflict.test.mjs",
-      "proof_sha256": "1ceae748c74bda866791482d0bb32ba46d1d056e5881d92ba6dd365135728f50",
+      "proof_sha256": "c623ccf629a7401e01bc505ee4987712204d390534b5cf98100feb4323735f3f",
       "owner_anchor": "parallel.write-conflict.quarantined",
       "proof_anchor": "runtime-discovered overlapping writes quarantine the later writer and serialize its resume"
     },
@@ -127,7 +127,7 @@
       "owner": "plugin/src/runtime/state/persistence.ts",
       "owner_sha256": "df655ecc93d395864046621ef31ae66882817fad34e7478e0be8b65b7376491d",
       "proof": "plugin/test/crash-restart-survival.test.mjs",
-      "proof_sha256": "159cd2863a6b39d464f7abcfd2e35876d03d0fad6351db2e425e7c8ac56a2c3b",
+      "proof_sha256": "02607af55a9529c1b70ee52db3d0e31d4bce4c5202c4de9acebf6d79459d212b",
       "owner_anchor": "RUNTIME_STATE_SCHEMA = 10",
       "proof_anchor": "unclean restart quarantines in-flight child, resets ephemeral permission wait, and invalidates evidence"
     },

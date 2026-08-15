@@ -15,7 +15,7 @@
       "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
       "owner_anchor": "user-diff.preserved",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
-      "proof_sha256": "80715d317bd431ce5c3ed8c3b6dbe4caf3baeac487c50d1ce7615ecb309ee3e4",
+      "proof_sha256": "5852e6f963942e284c3e4d1fa418a75367c7e418e9ebe6ed51176371774a4f8a",
       "proof_anchor": "pre-existing user dirty file unchanged from worker baseline"
     },
     {
@@ -25,7 +25,7 @@
       "owner_sha256": "241585c04b86244704b9ce7484b9b3510c05fb99377fef43f11b0ecd00732867",
       "owner_anchor": "recordStagingInspection",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "2911ea2503a7fc523c187e75f9e96d7b45d75be5c30cc1aef9d245d708ac3f21",
+      "proof_sha256": "ef05d013e9680f665fd4802ca8f626ac824afa7b09f851645116ebefdf2541d2",
       "proof_anchor": "preserves pre-staged and unstaged user changes exactly"
     },
     {
@@ -35,7 +35,7 @@
       "owner_sha256": "fb00575bcad4c6679bc5f173732514745b30bd53057b30eb6ad91a5f636f6003",
       "owner_anchor": "defaultInspect",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "2911ea2503a7fc523c187e75f9e96d7b45d75be5c30cc1aef9d245d708ac3f21",
+      "proof_sha256": "ef05d013e9680f665fd4802ca8f626ac824afa7b09f851645116ebefdf2541d2",
       "proof_anchor": "untracked user"
     },
     {
@@ -45,7 +45,7 @@
       "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
       "owner_anchor": "native.diff.reconciled",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
-      "proof_sha256": "80715d317bd431ce5c3ed8c3b6dbe4caf3baeac487c50d1ce7615ecb309ee3e4",
+      "proof_sha256": "5852e6f963942e284c3e4d1fa418a75367c7e418e9ebe6ed51176371774a4f8a",
       "proof_anchor": "observed native write omitted from WorkerResult forces reconciliation"
     },
     {
@@ -55,7 +55,7 @@
       "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
       "owner_anchor": "parallel.write-conflict.quarantined",
       "proof": "plugin/test/runtime-write-conflict.test.mjs",
-      "proof_sha256": "1ceae748c74bda866791482d0bb32ba46d1d056e5881d92ba6dd365135728f50",
+      "proof_sha256": "c623ccf629a7401e01bc505ee4987712204d390534b5cf98100feb4323735f3f",
       "proof_anchor": "overlapping writes quarantine the later writer"
     },
     {
@@ -65,7 +65,7 @@
       "owner_sha256": "e48c410c0b8e575306e711578beb762ac8849cce5b679eca495751798b9b7112",
       "owner_anchor": "shellMayMutate(command)",
       "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
-      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_sha256": "cd9db87fa287d03c7ea993726674bb186de9f0cb4e69f301b14b8fa0812657a1",
       "proof_anchor": "verification command that may mutate files invalidates earlier Evidence"
     },
     {
@@ -75,7 +75,7 @@
       "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
       "owner_anchor": "FIX_REQUIRED",
       "proof": "plugin/test/diff-cleanliness-hardening.test.mjs",
-      "proof_sha256": "825a76461744c2e999eb4ba4b291aafc784268a12e84913d8321559daa6e6b23",
+      "proof_sha256": "c93d22065705dd835351a418b7598089f6b8d5ec6f9431b332c6d36bb5e5275f",
       "proof_anchor": "undeclared out-of-scope change converts DONE to FIX_REQUIRED"
     },
     {
@@ -85,7 +85,7 @@
       "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
       "owner_anchor": "diff.cleanup.verified",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
-      "proof_sha256": "80715d317bd431ce5c3ed8c3b6dbe4caf3baeac487c50d1ce7615ecb309ee3e4",
+      "proof_sha256": "5852e6f963942e284c3e4d1fa418a75367c7e418e9ebe6ed51176371774a4f8a",
       "proof_anchor": "native diff must prove collateral reverted before cleanup blocker can close"
     },
     {
@@ -95,7 +95,7 @@
       "owner_sha256": "bf299f887e618d824b9099281cd6e9e6321ff942faec9bba95d548d3e27c964b",
       "owner_anchor": "rollback",
       "proof": "plugin/test/forensic-hardening.test.mjs",
-      "proof_sha256": "496210535aeea920852c6654bbafca8a50cbcf723a770b78d65cff275999792f",
+      "proof_sha256": "7aedc7c9590ed12a0163f0a9e90ddf5872de3e2baa3547479d8521492861efda",
       "proof_anchor": "command rollback with unknown exit cannot close rollback gate"
     },
     {
@@ -105,7 +105,7 @@
       "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
       "owner_anchor": "reconcileRestored",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "2911ea2503a7fc523c187e75f9e96d7b45d75be5c30cc1aef9d245d708ac3f21",
+      "proof_sha256": "ef05d013e9680f665fd4802ca8f626ac824afa7b09f851645116ebefdf2541d2",
       "proof_anchor": "restart adopts exact lease, quarantines missing owner without recreation"
     },
     {
@@ -132,10 +132,10 @@
       "section": 18,
       "invariant": "no-blind-reset-stash-restore",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "fbb0e0dad347abfd5026b547239b3f00e952ddd5d1ef09df01507206726bf9ed",
+      "owner_sha256": "4aefdeea9a786314ac380d757ffcc17b9355dd29b22e0a8e892399ce4e04e0e7",
       "owner_anchor": "never use git checkout/reset/restore",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
-      "proof_sha256": "80715d317bd431ce5c3ed8c3b6dbe4caf3baeac487c50d1ce7615ecb309ee3e4",
+      "proof_sha256": "5852e6f963942e284c3e4d1fa418a75367c7e418e9ebe6ed51176371774a4f8a",
       "proof_anchor": "never use git checkout\\/reset\\/restore"
     },
     {
@@ -145,7 +145,7 @@
       "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
       "owner_anchor": "normalizeBoundedProjectPath",
       "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
-      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_sha256": "cd9db87fa287d03c7ea993726674bb186de9f0cb4e69f301b14b8fa0812657a1",
       "proof_anchor": "project path normalization drops absolute paths outside repository"
     },
     {
@@ -165,7 +165,7 @@
       "owner_sha256": "fb00575bcad4c6679bc5f173732514745b30bd53057b30eb6ad91a5f636f6003",
       "owner_anchor": "realpathSync",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "2911ea2503a7fc523c187e75f9e96d7b45d75be5c30cc1aef9d245d708ac3f21",
+      "proof_sha256": "ef05d013e9680f665fd4802ca8f626ac824afa7b09f851645116ebefdf2541d2",
       "proof_anchor": "symlinked workspace escape is canonicalized and rejected"
     },
     {
@@ -175,7 +175,7 @@
       "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
       "owner_anchor": "segment==='..'",
       "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
-      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_sha256": "cd9db87fa287d03c7ea993726674bb186de9f0cb4e69f301b14b8fa0812657a1",
       "proof_anchor": "WorkerResult cannot persist absolute or traversal changed-file ownership"
     },
     {
@@ -185,7 +185,7 @@
       "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
       "owner_anchor": "replace(/\\\\/g,'/')",
       "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
-      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_sha256": "cd9db87fa287d03c7ea993726674bb186de9f0cb4e69f301b14b8fa0812657a1",
       "proof_anchor": "normalizes relative Windows separators"
     },
     {
@@ -195,7 +195,7 @@
       "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
       "owner_anchor": "/^[A-Za-z]:\\//",
       "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
-      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_sha256": "cd9db87fa287d03c7ea993726674bb186de9f0cb4e69f301b14b8fa0812657a1",
       "proof_anchor": "C:\\\\Windows"
     },
     {
@@ -205,7 +205,7 @@
       "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
       "owner_anchor": "rel.startsWith('/')",
       "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
-      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_sha256": "cd9db87fa287d03c7ea993726674bb186de9f0cb4e69f301b14b8fa0812657a1",
       "proof_anchor": "/etc/passwd"
     },
     {
@@ -215,7 +215,7 @@
       "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
       "owner_anchor": "return rel",
       "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
-      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_sha256": "cd9db87fa287d03c7ea993726674bb186de9f0cb4e69f301b14b8fa0812657a1",
       "proof_anchor": "path identity preserves case"
     },
     {
@@ -225,7 +225,7 @@
       "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
       "owner_anchor": "return rel",
       "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
-      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_sha256": "cd9db87fa287d03c7ea993726674bb186de9f0cb4e69f301b14b8fa0812657a1",
       "proof_anchor": "UTF-8 spaces and long names"
     },
     {
@@ -235,7 +235,7 @@
       "owner_sha256": "241585c04b86244704b9ce7484b9b3510c05fb99377fef43f11b0ecd00732867",
       "owner_anchor": "split(/\\r?\\n/)",
       "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
-      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_sha256": "cd9db87fa287d03c7ea993726674bb186de9f0cb4e69f301b14b8fa0812657a1",
       "proof_anchor": "CRLF-separated staged names"
     },
     {
@@ -245,7 +245,7 @@
       "owner_sha256": "241585c04b86244704b9ce7484b9b3510c05fb99377fef43f11b0ecd00732867",
       "owner_anchor": "porcelainPaths",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "2911ea2503a7fc523c187e75f9e96d7b45d75be5c30cc1aef9d245d708ac3f21",
+      "proof_sha256": "ef05d013e9680f665fd4802ca8f626ac824afa7b09f851645116ebefdf2541d2",
       "proof_anchor": "untracked user.txt"
     },
     {
@@ -255,7 +255,7 @@
       "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
       "owner_anchor": "return rel",
       "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
-      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_sha256": "cd9db87fa287d03c7ea993726674bb186de9f0cb4e69f301b14b8fa0812657a1",
       "proof_anchor": "Unicode"
     },
     {
@@ -265,7 +265,7 @@
       "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
       "owner_anchor": "return rel",
       "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
-      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_sha256": "cd9db87fa287d03c7ea993726674bb186de9f0cb4e69f301b14b8fa0812657a1",
       "proof_anchor": "'a/'.repeat(120)"
     },
     {
@@ -275,7 +275,7 @@
       "owner_sha256": "df655ecc93d395864046621ef31ae66882817fad34e7478e0be8b65b7376491d",
       "owner_anchor": "mkdirSync(dirname(this.path)",
       "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
-      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_sha256": "cd9db87fa287d03c7ea993726674bb186de9f0cb4e69f301b14b8fa0812657a1",
       "proof_anchor": "unusable runtime state root fails visibly"
     },
     {
@@ -285,7 +285,7 @@
       "owner_sha256": "df655ecc93d395864046621ef31ae66882817fad34e7478e0be8b65b7376491d",
       "owner_anchor": "writeFileSync(tmp",
       "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
-      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_sha256": "cd9db87fa287d03c7ea993726674bb186de9f0cb4e69f301b14b8fa0812657a1",
       "proof_anchor": "ENOTDIR"
     },
     {
@@ -295,7 +295,7 @@
       "owner_sha256": "863617a6ee01a66bbbcb04e4eae07c7ab3fdf565d6e02ace05817adc45aea470",
       "owner_anchor": "XDG_STATE_HOME",
       "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
-      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_sha256": "cd9db87fa287d03c7ea993726674bb186de9f0cb4e69f301b14b8fa0812657a1",
       "proof_anchor": "runtime state location honors explicit then XDG then LOCALAPPDATA"
     },
     {
@@ -305,7 +305,7 @@
       "owner_sha256": "ba78d27cf2e74758ec82f2228e505f87ccef2725ccd2a53b57677dc81cf61284",
       "owner_anchor": "PLAYWRIGHT_BROWSERS_PATH",
       "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
-      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_sha256": "cd9db87fa287d03c7ea993726674bb186de9f0cb4e69f301b14b8fa0812657a1",
       "proof_anchor": "browser executable discovery uses env/platform cache roots"
     },
     {
@@ -315,7 +315,7 @@
       "owner_sha256": "ba78d27cf2e74758ec82f2228e505f87ccef2725ccd2a53b57677dc81cf61284",
       "owner_anchor": "homedir()",
       "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
-      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_sha256": "cd9db87fa287d03c7ea993726674bb186de9f0cb4e69f301b14b8fa0812657a1",
       "proof_anchor": "contains no host-user literal dependency"
     }
   ],

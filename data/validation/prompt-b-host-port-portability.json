@@ -1,0 +1,165 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_HOST_PORT_PORTABILITY_ADVERSARIAL_AUDIT",
+  "program": "PROMPT_B",
+  "section": 22,
+  "status": "PASS",
+  "invariants": [
+    {
+      "invariant": "host-port-hi-needs-not-sdk",
+      "owner": "plugin/src/runtime/host/port.ts",
+      "owner_sha256": "20571b8c87069a7e2bb9bfb7afa4ff346c691d0741f03aaf76467ead1f71aea9",
+      "owner_anchor": "export interface HostPort",
+      "proof": "plugin/test/a6-host-port-typing.test.mjs",
+      "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",
+      "proof_anchor": "generic HostPort expresses Hi host needs without importing OpenCode SDK types"
+    },
+    {
+      "invariant": "semantic-core-sdk-confinement",
+      "owner": "plugin/src/runtime/application/runtime-event-controller.ts",
+      "owner_sha256": "5094345ed540a745c73cca7022d082f07690b05180006be922883baf24f7b7cc",
+      "owner_anchor": "import type { HostEvent,HostPort } from '../host/port.js'",
+      "proof": "plugin/test/a6-host-port-typing.test.mjs",
+      "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",
+      "proof_anchor": "semantic runtime core has no raw OpenCode SDK/client lifecycle dependency"
+    },
+    {
+      "invariant": "normalized-event-boundary",
+      "owner": "plugin/src/opencode/open-code-hooks.ts",
+      "owner_sha256": "6389ee4526cece74dff463bc3f461fcbc8e9ebe0489bed4408285bf5dbd703a8",
+      "owner_anchor": "eventController.handle(normalizeOpenCodeEvent(input?.event??input))",
+      "proof": "plugin/test/a6-host-port-typing.test.mjs",
+      "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",
+      "proof_anchor": "raw host event normalization occurs at OpenCode hook boundary"
+    },
+    {
+      "invariant": "continuation-port",
+      "owner": "plugin/src/runtime/continuation/dispatcher.ts",
+      "owner_sha256": "5b4f989fac4670f38bb264b068116b296260ca44a8a6a0267baeb5ec59b3e3ef",
+      "owner_anchor": "Pick<HostPort,'continueSession'>",
+      "proof": "plugin/test/a6-host-port-typing.test.mjs",
+      "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",
+      "proof_anchor": "alternate host continuation port preserves Mission continuation semantics without OpenCode shapes"
+    },
+    {
+      "invariant": "child-session-port",
+      "owner": "plugin/src/runtime/task/child-execution-coordinator.ts",
+      "owner_sha256": "819e27671224e9f7bca8e70b7a2638d74c79164f04bcc5e5e647c0d5818d9817",
+      "owner_anchor": "constructor(private readonly host:ChildSessionPort",
+      "proof": "plugin/test/a6-host-port-typing.test.mjs",
+      "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",
+      "proof_anchor": "alternate host child-session port can execute a Hi task without OpenCode client structure"
+    },
+    {
+      "invariant": "runtime-service-injection",
+      "owner": "plugin/src/runtime/application/runtime-services.ts",
+      "owner_sha256": "9217ac66e7a59c514002057b0f8154b08bef9b79b77b9dc7cbac83580538e8fa",
+      "owner_anchor": "export interface RuntimeServicePorts",
+      "proof": "plugin/test/a6-host-port-typing.test.mjs",
+      "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",
+      "proof_anchor": "runtime composition accepts injected host-semantic executors instead of constructing OpenCode adapters"
+    },
+    {
+      "invariant": "process-error-semantic-owner",
+      "owner": "plugin/src/runtime/process/executor.ts",
+      "owner_sha256": "3a0f63b69b47b429b578489f1433a4170cf6fbd4c1a64c1ecd009f60bd2756b1",
+      "owner_anchor": "export class ProcessSpawnPermissionError",
+      "proof": "plugin/test/p2-opencode-pty-executor.test.mjs",
+      "proof_sha256": "f902d91d712fe128a9fe71124f661b00696dcc9382ee0e81867529e6a239b001",
+      "proof_anchor": "P2 spawn never silently executes native permission ask/deny"
+    },
+    {
+      "invariant": "provider-policy-host-generic",
+      "owner": "plugin/src/runtime/host/provider-policy.ts",
+      "owner_sha256": "a28e8c3bc100d7e8e56fe00196013ec96e1ed0d1d56013b6391af25fb01d3594",
+      "owner_anchor": "export function providerPolicyView",
+      "proof": "plugin/test/native-first.test.mjs",
+      "proof_sha256": "b348159633b57ebd2e0b395e7eca882aea338ae540ea7f5b46c8777178a7634f",
+      "proof_anchor": "Native-10 provider policy deny removes an otherwise available model"
+    },
+    {
+      "invariant": "missing-capability-fail-closed",
+      "owner": "plugin/src/runtime/task/task-runtime.ts",
+      "owner_sha256": "4aefdeea9a786314ac380d757ffcc17b9355dd29b22e0a8e892399ce4e04e0e7",
+      "owner_anchor": "hostCapabilitySource:(()=>readonly HostCapabilityContract[])|readonly HostCapabilityContract[]=[]",
+      "proof": "plugin/test/methodology-host-capability.test.mjs",
+      "proof_sha256": "db59699e58d1f73d80f1da0d8021babfc472d62ad4b145f9fb05aedec8e2d421",
+      "proof_anchor": "browser and visual methodologies require canonical browser-execution host capability"
+    },
+    {
+      "invariant": "alternate-host-continuation-feasible",
+      "owner": "plugin/src/runtime/host/port.ts",
+      "owner_sha256": "20571b8c87069a7e2bb9bfb7afa4ff346c691d0741f03aaf76467ead1f71aea9",
+      "owner_anchor": "continueSession(sessionID:string,text:string,metadata:Record<string,unknown>):Promise<boolean>",
+      "proof": "plugin/test/a6-host-port-typing.test.mjs",
+      "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",
+      "proof_anchor": "alternate host continuation port preserves Mission continuation semantics without OpenCode shapes"
+    },
+    {
+      "invariant": "alternate-host-task-feasible",
+      "owner": "plugin/src/runtime/host/port.ts",
+      "owner_sha256": "20571b8c87069a7e2bb9bfb7afa4ff346c691d0741f03aaf76467ead1f71aea9",
+      "owner_anchor": "export interface ChildSessionPort",
+      "proof": "plugin/test/a6-host-port-typing.test.mjs",
+      "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",
+      "proof_anchor": "alternate host child-session port can execute a Hi task without OpenCode client structure"
+    }
+  ],
+  "static_guards": {
+    "generic_port_has_no_opencode_brand": true,
+    "runtime_services_construct_no_opencode_adapters": true,
+    "opencode_adapters_constructed_at_plugin_boundary": true,
+    "capability_absence_defaults_empty": true,
+    "event_controller_has_no_raw_event_adapter": true,
+    "continuation_has_no_raw_client_adapter": true,
+    "child_coordinator_has_no_raw_client_adapter": true
+  },
+  "violations": [],
+  "summary": {
+    "required": 11,
+    "covered": 11,
+    "violations": 0
+  },
+  "closed_defects": [
+    {
+      "id": "host-port-renamed-sdk-interface",
+      "fix": "HostPort now exposes Hi-semantic operations/capabilities rather than raw OpenCodeClient or NativeOpenCodeAdapter."
+    },
+    {
+      "id": "runtime-event-controller-opencode-lifecycle-leak",
+      "fix": "Raw OpenCode event/message shapes are normalized/read at the OpenCode adapter boundary; RuntimeEventController consumes HostEvent and HostPort."
+    },
+    {
+      "id": "task-runtime-opencode-client-leak",
+      "fix": "TaskRuntime and ChildExecutionCoordinator consume ChildSessionPort plus host capability contracts; OpenCode child lifecycle is implemented by createOpenCodeChildSessionPort."
+    },
+    {
+      "id": "runtime-service-opencode-construction-leak",
+      "fix": "Runtime services accept injected process/workspace/browser/child ports; OpenCode adapter construction lives in plugin.ts composition boundary."
+    },
+    {
+      "id": "process-error-opencode-owner-leak",
+      "fix": "ProcessSpawnPermissionError is owned by the generic ProcessExecutor contract, not the OpenCode PTY adapter."
+    },
+    {
+      "id": "routing-provider-policy-opencode-owner-leak",
+      "fix": "Provider policy parsing moved to runtime/host/provider-policy and model decisions use host-generic reason codes."
+    }
+  ],
+  "alternate_host_feasibility": {
+    "status": "FEASIBLE_BY_PORT_CONTRACT_NOT_IMPLEMENTED",
+    "assessed_host_example": "Claude Code or another session-capable coding host",
+    "required_adapter_work": [
+      "HostPort",
+      "ChildSessionPort",
+      "ProcessExecutor",
+      "WorkspaceExecutor",
+      "BrowserExecutor",
+      "raw-event to HostEvent projection",
+      "host config/permission projection"
+    ],
+    "semantic_core_changes_required": false,
+    "constraint": "No alternate host implementation is claimed or shipped by this receipt."
+  },
+  "claim_boundary": "OpenCode remains the only implemented host adapter. Section 22 certifies that Mission/Task/Authority/Evidence and the main continuation/task/process routing core no longer require OpenCode SDK types or lifecycle shapes; it does not certify another host implementation."
+}

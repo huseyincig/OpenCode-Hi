@@ -1,0 +1,114 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "generated_at": "2026-08-15",
+  "source_binding": {
+    "tested_git_commit": "8c3f029bf3503f80bde7e1aaa44efe9530260d50",
+    "tested_git_tree": "fe04f38db425f6c698533e6ab31685ece35c1c32",
+    "worktree": "/workspace/OpenCode-Hi",
+    "state": "CLEAN_COMMITTED_SOURCE",
+    "exact_candidate": true,
+    "runtime_hashes": {
+      "plugin/src/contracts/browser-observation.ts": "bdaa9047f895999a62039c17906bb8214c9af98394a0f68c1a311abc5f258624",
+      "plugin/src/runtime/browser/executor.ts": "fa85d1de99be5c07699b34253088d7eec6f1a5f88846dd0401d7bcdb3db522f3",
+      "plugin/src/runtime/browser/runtime.ts": "8d50a48b4d872117e1f79ddeab1d325060491101c3e3c0baf3dd99dd92541014",
+      "plugin/src/runtime/browser/ownership.ts": "605391f7a3260b4f9e277d48cd720883f5f45f44322a9708367a6b5af8aeecb2",
+      "plugin/src/opencode/playwright-browser-adapter.ts": "ba78d27cf2e74758ec82f2228e505f87ccef2725ccd2a53b57677dc81cf61284",
+      "plugin/src/runtime/application/hi-tool-surface.ts": "965cb1a7143df74e2d5467742196740e8b2cbcf9f24c0c4c44ac74f0ee587221"
+    },
+    "note": "Fresh real-Chromium reacceptance after host-port/tool composition refactor touched current browser surface."
+  },
+  "host": {
+    "os": "linux",
+    "arch": "aarch64",
+    "opencode_version": "1.18.18",
+    "fixture_project": "/tmp/hi-b14-browser-8c3f029",
+    "browser_engine": "playwright-core Chromium",
+    "browser_executable": "/home/node/.cache/ms-playwright/chromium-1234/chrome-linux/chrome"
+  },
+  "release_authority": {
+    "push": false,
+    "tag": false,
+    "release": false,
+    "publish": false,
+    "deploy": false
+  },
+  "status": "PASS_EXACT_SOURCE_BROWSER_EXECUTION_T3_PROMPT_B22",
+  "gates": {
+    "browser_executor_health": "PASS_T3",
+    "browser_dynamic_route_state": "PASS_T3",
+    "browser_stale_element_rejection": "PASS_T3",
+    "browser_auth_state_reset": "PASS_T3",
+    "browser_execution_owner_isolation": "PASS_T3",
+    "browser_screenshot_artifact": "PASS_T3",
+    "browser_external_target_rejection": "PASS_T3",
+    "browser_credential_url_rejection": "PASS_T3",
+    "browser_arbitrary_selector_rejection": "PASS_T3",
+    "browser_observation_not_evidence": "PASS_CONTROLLED",
+    "browser_execution": "SUPPORTED_T3"
+  },
+  "evidence": {
+    "real_host_browser": {
+      "health": {
+        "available": true,
+        "version": "playwright-core:/home/node/.cache/ms-playwright/chromium-1234/chrome-linux/chrome"
+      },
+      "open": {
+        "result": "OBSERVED",
+        "url": "http://127.0.0.1:47852/",
+        "dom": "Route\nroute-a\nauth:anonymous\nGo\n@e1 <button> Go\n@e2 <input> auth"
+      },
+      "type": {
+        "result": "OBSERVED",
+        "dom": "Route\nroute-a\nauth:AUTH_OWNER_A\nGo\n@e1 <button> Go\n@e2 <input> AUTH_OWNER_A"
+      },
+      "click": {
+        "result": "OBSERVED",
+        "url": "http://127.0.0.1:47852/",
+        "dom": "Route\nroute-b\nauth:AUTH_OWNER_A\nGo\n@e1 <button> Go"
+      },
+      "stale_element_rejected": true,
+      "stale_element_error": "Error: Browser target was not present in the latest bounded observation",
+      "screenshot": {
+        "result": "OBSERVED",
+        "ref": "hi-artifact:a_a34a35f58aff4d1bb45e311e"
+      },
+      "external_target_rejected": true,
+      "external_target_error": "Error: Browser target is outside supported local scope: https://example.com",
+      "credential_url_rejected": true,
+      "credential_url_error": "Error: Browser credentials in URL are forbidden",
+      "arbitrary_selector_rejected": true,
+      "arbitrary_selector_error": "Error: Playwright browser adapter does not expose arbitrary selector inspection",
+      "new_owner_preopen_rejected": true,
+      "new_owner_preopen_error": "Error: Browser session is not owned by the current execution identity",
+      "fresh_owner": {
+        "result": "OBSERVED",
+        "url": "http://127.0.0.1:47852/",
+        "dom": "Route\nroute-a\nauth:anonymous\nGo\n@e1 <button> Go\n@e2 <input> auth",
+        "has_old_auth": false
+      },
+      "old_owner_after_replace_rejected": true,
+      "old_owner_after_replace_error": "Error: Browser session is not owned by the current execution identity",
+      "close": {
+        "result": "OBSERVED"
+      }
+    },
+    "screenshot_file": "/tmp/hi-b14-browser-8c3f029/artifacts/a_a34a35f58aff4d1bb45e311e.png",
+    "host_teardown_classification": {
+      "node_version": "v24.19.0",
+      "observed": "libuv EEXIST assertion only after complete terminal JSON was persisted",
+      "classification": "HOST_TEARDOWN_NOISE_AFTER_TERMINAL_PASS"
+    }
+  },
+  "limitations": [
+    "Browser execution remains local-http(s) scoped and rejects credential-bearing URLs and arbitrary selectors.",
+    "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 with real Chromium and current execution-owner isolation bytes."
+  ],
+  "capability_limitations": {
+    "browser-execution": [
+      "Browser execution remains local-http(s) scoped and rejects credential-bearing URLs and arbitrary selectors.",
+      "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 with real Chromium and current execution-owner isolation bytes."
+    ]
+  },
+  "rule": "This receipt promotes only browser-execution for the exact tested source/host bytes; later relevant owner/executor drift requires reacceptance."
+}

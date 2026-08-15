@@ -519,6 +519,29 @@ try:
 except Exception as e:err(f'bad PROMPT B Skills/Methodology Security receipt: {e}')
 
 try:
+    hp=json.loads((ROOT/'data/validation/prompt-b-host-port-portability.json').read_text(encoding='utf-8'))
+    if hp.get('schema')!=1 or hp.get('kind')!='PROMPT_B_HOST_PORT_PORTABILITY_ADVERSARIAL_AUDIT' or hp.get('program')!='PROMPT_B' or hp.get('section')!=22 or hp.get('status')!='PASS':err('bad PROMPT B HostPort portability audit receipt')
+    if hp.get('violations')!=[] or hp.get('summary')!={'required':11,'covered':11,'violations':0}:err('PROMPT B HostPort portability coverage drift')
+    rows=hp.get('invariants') or []
+    if len(rows)!=11 or len({x.get('invariant') for x in rows if isinstance(x,dict)})!=11:err('PROMPT B HostPort portability invariant inventory drift')
+    import hashlib
+    for row in rows:
+        for key in ('owner','proof'):
+            rel=row.get(key);expected=row.get(f'{key}_sha256')
+            if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B HostPort portability missing {key}: {rel}');continue
+            if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B HostPort portability {key} hash drift: {rel}')
+        try:
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B HostPort portability owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B HostPort portability proof anchor drift: {row.get('invariant')}")
+        except Exception as e:err(f'PROMPT B HostPort portability row invalid: {e}')
+    if not all((hp.get('static_guards') or {}).values()):err('PROMPT B HostPort portability static guard drift')
+    alt=hp.get('alternate_host_feasibility') or {}
+    if alt.get('status')!='FEASIBLE_BY_PORT_CONTRACT_NOT_IMPLEMENTED' or alt.get('semantic_core_changes_required') is not False:err('PROMPT B HostPort alternate-host feasibility boundary drift')
+    closed={x.get('id') for x in hp.get('closed_defects',[]) if isinstance(x,dict)}
+    if not {'host-port-renamed-sdk-interface','runtime-event-controller-opencode-lifecycle-leak','task-runtime-opencode-client-leak','runtime-service-opencode-construction-leak','process-error-opencode-owner-leak','routing-provider-policy-opencode-owner-leak'}<=closed:err('PROMPT B HostPort portability closed defect receipt drift')
+except Exception as e:err(f'bad PROMPT B HostPort portability receipt: {e}')
+
+try:
     nr=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text(encoding='utf-8'))
     if nr.get('schema')!=1 or nr.get('kind')!='EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION' or nr.get('program')!='PROMPT_B' or nr.get('status')!='PASS':err('bad PROMPT B native reevaluation receipt identity/status')
     oc=nr.get('opencode',{})

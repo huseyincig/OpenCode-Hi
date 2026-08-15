@@ -1,0 +1,126 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "generated_at": "2026-08-15",
+  "source_binding": {
+    "tested_git_commit": "8c3f029bf3503f80bde7e1aaa44efe9530260d50",
+    "tested_git_tree": "fe04f38db425f6c698533e6ab31685ece35c1c32",
+    "worktree": "/workspace/OpenCode-Hi",
+    "state": "CLEAN_COMMITTED_SOURCE",
+    "exact_candidate": true,
+    "runtime_hashes": {
+      "plugin/src/contracts/workspace.ts": "d2ed1d517537201302344aa3061f149b044ad85b6909fe85ec876904ea9b496a",
+      "plugin/src/runtime/workspace/executor.ts": "f6129bfab5c20641a144030b7357be598d4fd77dcde9ecdf664a390398d2e12b",
+      "plugin/src/runtime/workspace/runtime.ts": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "plugin/src/runtime/mission/validators.ts": "0a534c906ebd71f44b3f91cfb2f346cdbfee1ecf4ffd917b04f4b848784ed49b",
+      "plugin/src/opencode/open-code-workspace-adapter.ts": "fb00575bcad4c6679bc5f173732514745b30bd53057b30eb6ad91a5f636f6003",
+      "plugin/src/runtime/task/child-execution-coordinator.ts": "819e27671224e9f7bca8e70b7a2638d74c79164f04bcc5e5e647c0d5818d9817"
+    },
+    "note": "Fresh exact-host workspace reacceptance after ChildExecutionCoordinator moved to generic ChildSessionPort."
+  },
+  "host": {
+    "os": "linux",
+    "arch": "aarch64",
+    "opencode_version": "1.18.18",
+    "server": "http://127.0.0.1:42022",
+    "fixture_project": "/tmp/hi-b14-8c3f029/project"
+  },
+  "release_authority": {
+    "push": false,
+    "tag": false,
+    "release": false,
+    "publish": false,
+    "deploy": false
+  },
+  "status": "PASS_EXACT_SOURCE_WORKSPACE_ISOLATION_T3_PROMPT_B22",
+  "gates": {
+    "workspace_runtime_canonical_decision": "PASS_CONTROLLED",
+    "workspace_create": "PASS_T3",
+    "workspace_source_baseline": "PASS_T3",
+    "workspace_child_id_directory_binding": "PASS_T3",
+    "workspace_observed_cwd_identity": "PASS_T3",
+    "workspace_write_isolation": "PASS_T3",
+    "workspace_primary_preservation": "PASS_T3",
+    "workspace_cleanup": "PASS_T3",
+    "workspace_host_cleanup_empty": "PASS_T3",
+    "workspace_verification": "PASS_T3",
+    "workspace_restart_adoption": "PASS_T3",
+    "workspace_orphan_quarantine": "PASS_T3",
+    "workspace_no_recreation": "PASS_T3",
+    "workspace_isolation_binding": "SUPPORTED_T3"
+  },
+  "evidence": {
+    "real_host": {
+      "direct": {
+        "health": {
+          "healthy": true,
+          "version": "1.18.18"
+        },
+        "baseline": "80f019cbeef16d7271aa336ae283b76c8b2d2d02",
+        "host_workspace_id": "wrk_006144cb3001HnmAetMITc5jef",
+        "workspace_path": "/tmp/hi-b14-8c3f029/xdg-data/opencode/worktree/80f019cbeef16d7271aa336ae283b76c8b2d2d02/shiny-circuit",
+        "workspace_head": "80f019cbeef16d7271aa336ae283b76c8b2d2d02",
+        "child": {
+          "id": "ses_ff9eb9ea7ffeZG908YLtoETl8e",
+          "slug": "misty-orchid",
+          "projectID": "80f019cbeef16d7271aa336ae283b76c8b2d2d02",
+          "workspaceID": "wrk_006144cb3001HnmAetMITc5jef",
+          "directory": "/tmp/hi-b14-8c3f029/xdg-data/opencode/worktree/80f019cbeef16d7271aa336ae283b76c8b2d2d02/shiny-circuit",
+          "path": "",
+          "parentID": "ses_ff9eb9f37ffeELrQvs7f1mO8oP",
+          "cost": 0,
+          "tokens": {
+            "input": 0,
+            "output": 0,
+            "reasoning": 0,
+            "cache": {
+              "read": 0,
+              "write": 0
+            }
+          },
+          "title": "Hi B14 child",
+          "agent": "coder",
+          "version": "1.18.18",
+          "time": {
+            "created": 1786808394072,
+            "updated": 1786808394072
+          }
+        },
+        "child_binding_exact": true,
+        "isolated_content": "ISOLATED_B14_OK\n",
+        "primary_has_isolated": false,
+        "dirty_before": "?? user-dirty.txt",
+        "workspace_removed": true,
+        "dirty_after": "?? user-dirty.txt",
+        "user_dirty": "USER_DIRTY\n",
+        "user_state_preserved": true,
+        "host_cleanup_count": 0
+      },
+      "restart": {
+        "status_after_reconcile": "ACTIVE",
+        "cleanup_after_reconcile": "ACTIVE",
+        "content": "RESTART_WORKSPACE_B14_OK\n",
+        "path_after_external_remove": false,
+        "status_after_external_remove": "ORPHANED",
+        "cleanup_after_external_remove": "QUARANTINED",
+        "recreated": false
+      }
+    },
+    "host_teardown_classification": {
+      "node_version": "v24.19.0",
+      "observed": "libuv EEXIST assertion only after complete terminal JSON was persisted",
+      "classification": "HOST_TEARDOWN_NOISE_AFTER_TERMINAL_PASS"
+    }
+  },
+  "limitations": [
+    "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution.",
+    "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 and generic ChildSessionPort binding remained exact."
+  ],
+  "capability_limitations": {
+    "workspace-isolation-binding": [
+      "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution.",
+      "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 and generic ChildSessionPort binding remained exact."
+    ]
+  },
+  "rule": "This receipt promotes only workspace-isolation-binding for the exact tested source/host bytes; later relevant owner/executor drift requires reacceptance."
+}

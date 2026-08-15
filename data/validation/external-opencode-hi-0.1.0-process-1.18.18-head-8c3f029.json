@@ -1,0 +1,121 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "generated_at": "2026-08-15",
+  "source_binding": {
+    "tested_git_commit": "8c3f029bf3503f80bde7e1aaa44efe9530260d50",
+    "tested_git_tree": "fe04f38db425f6c698533e6ab31685ece35c1c32",
+    "worktree": "/workspace/OpenCode-Hi",
+    "state": "CLEAN_COMMITTED_SOURCE",
+    "exact_candidate": true,
+    "runtime_hashes": {
+      "plugin/src/contracts/process.ts": "baa22ab538d5b0e16c09d2f5234d8fa13253881a608e3fbb6102833adff963fd",
+      "plugin/src/runtime/process/executor.ts": "3a0f63b69b47b429b578489f1433a4170cf6fbd4c1a64c1ecd009f60bd2756b1",
+      "plugin/src/runtime/process/runtime.ts": "3e93c1f1c717b9b1414710a19d711b807192d24c3e7030767f2d2573676c3ae7",
+      "plugin/src/opencode/open-code-pty-adapter.ts": "340090ef2d90b8e7d0525dc70a935e3f9f27581c2ebffbc9d42fef8bef0463eb"
+    },
+    "note": "Fresh exact-host Process lifecycle reacceptance after HostPort portability refactor changed generic process ownership/import boundaries."
+  },
+  "host": {
+    "os": "linux",
+    "arch": "aarch64",
+    "opencode_version": "1.18.18",
+    "server": "http://127.0.0.1:42022",
+    "fixture_project": "/tmp/hi-b14-8c3f029/project"
+  },
+  "release_authority": {
+    "push": false,
+    "tag": false,
+    "release": false,
+    "publish": false,
+    "deploy": false
+  },
+  "status": "PASS_EXACT_SOURCE_PROCESS_LIFECYCLE_T3_PROMPT_B22",
+  "gates": {
+    "process_runtime_mission_owned": "PASS_T3",
+    "process_spawn_pid": "PASS_T3",
+    "process_quick_exit_before_observation": "PASS_T3",
+    "process_nonzero_exit": "PASS_T3",
+    "process_huge_unread_output_bounded": "PASS_T3",
+    "process_concurrent_isolation": "PASS_T3",
+    "process_group_identity": "PASS_T3",
+    "process_timeout_group_signal": "PASS_T3",
+    "process_kill_cleanup": "PASS_T3",
+    "process_restart_adoption": "PASS_T3",
+    "process_host_cleanup_empty": "PASS_T3",
+    "process_lifecycle": "SUPPORTED_T3"
+  },
+  "evidence": {
+    "real_host": {
+      "health": {
+        "healthy": true,
+        "version": "1.18.18"
+      },
+      "runtime": {
+        "spawned": "RUNNING",
+        "pid": 19212,
+        "process_group_id": 19212,
+        "status": "EXITED",
+        "exit_code": 0,
+        "output": "RUNTIME_B14_OK",
+        "ledger_spawn": true,
+        "cleanup": "CLEANED",
+        "durable_count": 1
+      },
+      "quick_exit": {
+        "status": "EXITED",
+        "exit_code": 0
+      },
+      "nonzero": {
+        "status": "EXITED",
+        "exit_code": 7,
+        "text": "boom"
+      },
+      "huge": {
+        "status": "EXITED",
+        "read_chars": 64,
+        "available_start": 737856,
+        "available_end": 1000000,
+        "truncated": true
+      },
+      "timeout": {
+        "status": "TIMED_OUT",
+        "reason": "timeout-policy",
+        "pid": 19232,
+        "group": 19232
+      },
+      "concurrent": {
+        "a": "ALPHA",
+        "b": "BETA",
+        "a_status": "EXITED",
+        "b_status": "EXITED",
+        "distinct": true
+      },
+      "restart": {
+        "disposition": "ADOPTED",
+        "pid": 19247,
+        "process_group_id": 19247,
+        "group_isolated": true,
+        "text": "RESTART_READY",
+        "status_after_kill": "TERMINATED"
+      },
+      "host_cleanup_count": 0
+    },
+    "host_teardown_classification": {
+      "node_version": "v24.19.0",
+      "observed": "libuv EEXIST assertion only after complete terminal JSON was persisted",
+      "classification": "HOST_TEARDOWN_NOISE_AFTER_TERMINAL_PASS"
+    }
+  },
+  "limitations": [
+    "Exact T3 applies to OpenCode 1.18.18 on linux/aarch64 and source 8c3f029bf3503f80bde7e1aaa44efe9530260d50.",
+    "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted; foreign processes are not adopted by PID alone."
+  ],
+  "capability_limitations": {
+    "process-lifecycle": [
+      "Exact T3 applies to OpenCode 1.18.18 on linux/aarch64 and source 8c3f029bf3503f80bde7e1aaa44efe9530260d50.",
+      "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted; foreign processes are not adopted by PID alone."
+    ]
+  },
+  "rule": "This receipt promotes only process-lifecycle for the exact tested source/host bytes; later relevant owner/executor drift requires reacceptance."
+}

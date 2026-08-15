@@ -12,7 +12,7 @@
       "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
       "owner_anchor": "normalizeBoundedProjectPath",
       "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
-      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_sha256": "cd9db87fa287d03c7ea993726674bb186de9f0cb4e69f301b14b8fa0812657a1",
       "proof_anchor": "WorkerResult cannot persist absolute or traversal changed-file ownership"
     },
     {
@@ -22,7 +22,7 @@
       "owner_sha256": "fb00575bcad4c6679bc5f173732514745b30bd53057b30eb6ad91a5f636f6003",
       "owner_anchor": "realpathSync",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "2911ea2503a7fc523c187e75f9e96d7b45d75be5c30cc1aef9d245d708ac3f21",
+      "proof_sha256": "ef05d013e9680f665fd4802ca8f626ac824afa7b09f851645116ebefdf2541d2",
       "proof_anchor": "symlinked workspace escape is canonicalized and rejected"
     },
     {
@@ -39,10 +39,10 @@
       "section": 20,
       "invariant": "shell-interpolation",
       "owner": "plugin/src/runtime/process/runtime.ts",
-      "owner_sha256": "28d1762ab948374f8b08ba2b843a24fe034401cc42f4e742bf5c07793bec7f29",
+      "owner_sha256": "3e93c1f1c717b9b1414710a19d711b807192d24c3e7030767f2d2573676c3ae7",
       "owner_anchor": "evaluateShellCommand(commandLine)",
       "proof": "plugin/test/prompt-b-security-privacy-hostile.test.mjs",
-      "proof_sha256": "4115ee0df3915cec808a0be57a4e4aba173d7efe4d20d451eef8c786eb7eb393",
+      "proof_sha256": "744849eabce0cf22a0fce3d7ad3a0a37d7e90a7100e7166670eadf6dac1f7d47",
       "proof_anchor": "blocks secret-sensitive external action before Authority state mutation"
     },
     {
@@ -62,7 +62,7 @@
       "owner_sha256": "ab91a9e8c45b8c86ff7b1f570c197584c84c9eb2c28ee885c8eee7299cadb022",
       "owner_anchor": "verificationSatisfied",
       "proof": "plugin/test/prompt-b-evidence-verification-completion-hostile.test.mjs",
-      "proof_sha256": "62b46683653f6efe5a8abcb55820bae4011d05fcada874a6cc8c14d1fb903ed7",
+      "proof_sha256": "08fb268ae6d71d3d927103924e1c7238d61584dfded08cc4871d17858a9dfbe9",
       "proof_anchor": "DONE. all tests passed. safe to release."
     },
     {
@@ -72,7 +72,7 @@
       "owner_sha256": "19db11dd2dfca1d0c818c7b9d0cb226540483c35088052791777247c428f7ce2",
       "owner_anchor": "readProjectMethodologyProvenance",
       "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
-      "proof_sha256": "7ac66efa74d982b9d606cfc2c61b8617340d011138a7f16ac9936d6497ceadf9",
+      "proof_sha256": "12ad8467fc327afc552309149bf329b3108a7a04c16f5220609e3636b0a8cb2a",
       "proof_anchor": "update requires fresh provenance hash before re-admission"
     },
     {
@@ -82,7 +82,7 @@
       "owner_sha256": "6565652a24b08df9e7ecdd73a4adb4b561abb855cdf99dde4a491c5154627ba8",
       "owner_anchor": "redactDurableText",
       "proof": "plugin/test/prompt-b-security-privacy-hostile.test.mjs",
-      "proof_sha256": "4115ee0df3915cec808a0be57a4e4aba173d7efe4d20d451eef8c786eb7eb393",
+      "proof_sha256": "744849eabce0cf22a0fce3d7ad3a0a37d7e90a7100e7166670eadf6dac1f7d47",
       "proof_anchor": "durable Authority descriptors preserve raw hash identity without persisting secret values"
     },
     {
@@ -92,7 +92,7 @@
       "owner_sha256": "baa22ab538d5b0e16c09d2f5234d8fa13253881a608e3fbb6102833adff963fd",
       "owner_anchor": "ProcessContract",
       "proof": "plugin/test/prompt-b-security-privacy-hostile.test.mjs",
-      "proof_sha256": "4115ee0df3915cec808a0be57a4e4aba173d7efe4d20d451eef8c786eb7eb393",
+      "proof_sha256": "744849eabce0cf22a0fce3d7ad3a0a37d7e90a7100e7166670eadf6dac1f7d47",
       "proof_anchor": "process environment is execution-ephemeral"
     },
     {
@@ -102,7 +102,7 @@
       "owner_sha256": "774f4651d830b5ead4dc9b23e9d5b23cb5b006bcb840eb28ca19d04131191694",
       "owner_anchor": "redactDurableText",
       "proof": "plugin/test/prompt-b-security-privacy-hostile.test.mjs",
-      "proof_sha256": "4115ee0df3915cec808a0be57a4e4aba173d7efe4d20d451eef8c786eb7eb393",
+      "proof_sha256": "744849eabce0cf22a0fce3d7ad3a0a37d7e90a7100e7166670eadf6dac1f7d47",
       "proof_anchor": "durable ledger redacts nested tokens"
     },
     {
@@ -142,14 +142,14 @@
       "owner_sha256": "ba78d27cf2e74758ec82f2228e505f87ccef2725ccd2a53b57677dc81cf61284",
       "owner_anchor": "safeLocalUrl",
       "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
-      "proof_sha256": "e53a6bdcae83bac5d80e70481380a7911a7690af26922eeec1a7c7f5acb32db9",
+      "proof_sha256": "e990f0c1b25096ef27e3604c02f8f825306ba00b21766577d2a2cca281ce5674",
       "proof_anchor": "outside supported local scope"
     },
     {
       "section": 20,
       "invariant": "subprocess",
       "owner": "plugin/src/runtime/process/runtime.ts",
-      "owner_sha256": "28d1762ab948374f8b08ba2b843a24fe034401cc42f4e742bf5c07793bec7f29",
+      "owner_sha256": "3e93c1f1c717b9b1414710a19d711b807192d24c3e7030767f2d2573676c3ae7",
       "owner_anchor": "evaluateProcessSpawnAuthority",
       "proof": "plugin/test/p3-process-runtime-lifecycle.test.mjs",
       "proof_sha256": "70b85c069b9cb7ccd92f541a35390e2f628e873b76b043c70f1ffe83ac99e157",

@@ -92,7 +92,7 @@
       "owner_sha256": "f5ceeb9028f2a745eecebed682fa0ee7b503c285adf411f21e6ea36cf8e5b57d",
       "owner_anchor": "provenance.skill_sha256!==digest(skillText)",
       "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
-      "proof_sha256": "7ac66efa74d982b9d606cfc2c61b8617340d011138a7f16ac9936d6497ceadf9",
+      "proof_sha256": "12ad8467fc327afc552309149bf329b3108a7a04c16f5220609e3636b0a8cb2a",
       "proof_anchor": "project methodology is admitted only when skill, policy and hash-bound provenance are coherent"
     },
     {
@@ -110,7 +110,7 @@
       "owner_sha256": "f5ceeb9028f2a745eecebed682fa0ee7b503c285adf411f21e6ea36cf8e5b57d",
       "owner_anchor": "provenance.policy_sha256!==digest(policyText)",
       "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
-      "proof_sha256": "7ac66efa74d982b9d606cfc2c61b8617340d011138a7f16ac9936d6497ceadf9",
+      "proof_sha256": "12ad8467fc327afc552309149bf329b3108a7a04c16f5220609e3636b0a8cb2a",
       "proof_anchor": "project methodology update requires fresh provenance hash before re-admission"
     },
     {

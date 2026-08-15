@@ -277,7 +277,7 @@
     },
     {
       "path": "docs/ARCHITECTURE.md",
-      "sha256": "161a175025e0c6834ad4c596636bb262003abf423e2f53c5370dfd79600e5e1e",
+      "sha256": "c7e7085e1016093f70bdc8698f8b2afa6504a639863579da089c5012b8630525",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
@@ -340,7 +340,7 @@
     },
     {
       "path": "docs/HOSTS.md",
-      "sha256": "8546822e39434d8ceebf9984acbf4775583177a2760d0b08e866ef1e0fb4501f",
+      "sha256": "b07a7ec55280ea8e1ac37de2fe2e456802dfc781a2c0c5f26f266bfa8d083ebd",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
@@ -550,7 +550,7 @@
     },
     {
       "path": "docs/engineering-constitution/MASTER-CONTINUATION.md",
-      "sha256": "1016f32385f316bbfd6608e247c20286910a009cad454462d9cead9bb3b503e7",
+      "sha256": "9e8b19a9ddd4c1b92b35cc066ce38829e00debd1bbda4986b3504131b3451f54",
       "audience": "INTERNAL_ENGINEERING",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "HUMAN_OWNED"

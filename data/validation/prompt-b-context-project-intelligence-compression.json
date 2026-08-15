@@ -17,19 +17,19 @@
     {
       "invariant": "unknown-context-handle-fail-close",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "fbb0e0dad347abfd5026b547239b3f00e952ddd5d1ef09df01507206726bf9ed",
+      "owner_sha256": "4aefdeea9a786314ac380d757ffcc17b9355dd29b22e0a8e892399ce4e04e0e7",
       "owner_anchor": "Unknown context artifact id(s)",
       "proof": "plugin/test/context-survival-hardening.test.mjs",
-      "proof_sha256": "2e043ae0eb0d5145da07f86233631ec086d10b2b3c7a8210129f76cfea94ad97",
+      "proof_sha256": "04694429641e9fd79d6e3898156ed8301bf185e68dbe0c668166c77ec854b9a6",
       "proof_anchor": "unknown task context artifact id fails closed instead of widening context"
     },
     {
       "invariant": "stale-context-exclusion",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "fbb0e0dad347abfd5026b547239b3f00e952ddd5d1ef09df01507206726bf9ed",
+      "owner_sha256": "4aefdeea9a786314ac380d757ffcc17b9355dd29b22e0a8e892399ce4e04e0e7",
       "owner_anchor": "stored?.freshness==='FRESH'",
       "proof": "plugin/test/context-survival-hardening.test.mjs",
-      "proof_sha256": "2e043ae0eb0d5145da07f86233631ec086d10b2b3c7a8210129f76cfea94ad97",
+      "proof_sha256": "04694429641e9fd79d6e3898156ed8301bf185e68dbe0c668166c77ec854b9a6",
       "proof_anchor": "fresh durable context artifact content is loaded only while source-bound freshness holds"
     },
     {
@@ -101,7 +101,7 @@
       "owner_sha256": "51da0d19f1997c522702849f6d6270f76dbdef1d1d4830253d49353a94cae8fd",
       "owner_anchor": "PROTECTED",
       "proof": "plugin/test/context-survival-hardening.test.mjs",
-      "proof_sha256": "2e043ae0eb0d5145da07f86233631ec086d10b2b3c7a8210129f76cfea94ad97",
+      "proof_sha256": "04694429641e9fd79d6e3898156ed8301bf185e68dbe0c668166c77ec854b9a6",
       "proof_anchor": "compaction survival keeps blockers, next action and stop contract under very large mission state"
     },
     {

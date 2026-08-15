@@ -182,6 +182,8 @@ Generated artifacts are projections, not semantic owners. Current host compatibi
 
 ## Host portability
 
-Core receives normalized Hi-compatible structures; OpenCode SDK uncertainty stays under `plugin/src/opencode/**` and explicit host ports. A future host adapter should be able to replace the execution substrate without changing Mission/Task/Authority/Evidence semantics.
+Core receives normalized Hi-compatible structures; OpenCode SDK uncertainty stays under `plugin/src/opencode/**` and explicit host adapter boundaries. The canonical semantic seams are `HostPort`, `ChildSessionPort`, `ProcessExecutor`, `WorkspaceExecutor`, and `BrowserExecutor`. Raw OpenCode events are projected to `HostEvent` before they enter the runtime controller, and runtime service assembly receives executors/ports by injection rather than constructing OpenCode adapters itself.
+
+`TaskRuntime`, `ChildExecutionCoordinator`, `RuntimeEventController`, continuation dispatch, process control, and model/provider-policy resolution therefore do not require OpenCode SDK client types or lifecycle shapes. OpenCode remains the only implemented and real-host-certified adapter. A future session-capable host (for example Claude Code) is architecturally feasible by implementing the host ports and host-specific event/config/permission projections; that feasibility does **not** claim that such an adapter currently exists or is supported.
 
 Portability is an architecture property, not a claim that alternate hosts are currently implemented or certified.

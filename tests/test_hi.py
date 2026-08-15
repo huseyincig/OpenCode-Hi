@@ -667,11 +667,10 @@ def test_r3_generated_compatibility_projection_selects_latest_exact_capability_p
     assert d['schema']==1 and d['kind']=='GENERATED_RECEIPT_COMPATIBILITY_PROJECTION'
     cur=d['current_reference_host'];assert (cur['opencode_version'],cur['platform'],cur['architecture'])==('1.18.18','linux','aarch64')
     caps=cur['capabilities']
-    assert caps['process-lifecycle']['receipt'].endswith('process-1.18.18-head-ca6490e.json') and caps['process-lifecycle']['status']=='SUPPORTED_T3'
-    assert caps['workspace-isolation-binding']['receipt'].endswith('workspace-1.18.18-head-814acc4.json') and caps['workspace-isolation-binding']['status']=='SUPPORTED_T3'
-    assert caps['browser-execution']['receipt'].endswith('browser-1.18.18-head-5928845.json') and caps['browser-execution']['status']=='SUPPORTED_T3'
-    assert caps['process-lifecycle']['tested_git_commit'].startswith('ca6490e') and caps['browser-execution']['tested_git_commit'].startswith('5928845')
-    assert caps['workspace-isolation-binding']['tested_git_commit'].startswith('814acc4')
+    assert caps['process-lifecycle']['receipt'].endswith('process-1.18.18-head-8c3f029.json') and caps['process-lifecycle']['status']=='SUPPORTED_T3'
+    assert caps['workspace-isolation-binding']['receipt'].endswith('workspace-1.18.18-head-8c3f029.json') and caps['workspace-isolation-binding']['status']=='SUPPORTED_T3'
+    assert caps['browser-execution']['receipt'].endswith('browser-1.18.18-head-8c3f029.json') and caps['browser-execution']['status']=='SUPPORTED_T3'
+    assert {caps[k]['tested_git_commit'] for k in ('process-lifecycle','workspace-isolation-binding','browser-execution')}=={'8c3f029bf3503f80bde7e1aaa44efe9530260d50'}
     superseded={x['receipt']:x for x in d['history']}
     assert superseded['data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-bc85854.json']['classification']=='HISTORICAL_EXACT_PROOF'
     assert superseded['data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-92812a1.json']['classification']=='HISTORICAL_EXACT_PROOF'
@@ -849,7 +848,9 @@ def test_prompt_b_removes_dead_browser_cli_executor_from_living_product_surface(
     assert not (ROOT/'plugin/src/opencode/browser-cli-adapter.ts').exists()
     assert not (ROOT/'plugin/test/b2-browser-executor.test.mjs').exists()
     services=(ROOT/'plugin/src/runtime/application/runtime-services.ts').read_text()
-    assert 'PlaywrightBrowserAdapter' in services and 'BrowserCliAdapter' not in services
+    plugin=(ROOT/'plugin/src/plugin.ts').read_text()
+    assert 'PlaywrightBrowserAdapter' not in services and 'BrowserCliAdapter' not in services
+    assert 'createBrowser:' in services and 'new PlaywrightBrowserAdapter' in plugin
     for rel in ['plugin/src','plugin/test']:
         for path in (ROOT/rel).rglob('*'):
             if path.is_file() and path.suffix in {'.ts','.mjs'}:
@@ -1076,3 +1077,20 @@ def test_prompt_b_skills_methodology_security_audit_is_confined_trust_bounded_an
     assert d['state_separation']==['installed skill','admitted methodology','selected methodology','loaded methodology']
     assert {'skill-discovery-symlink-escape','repo-provenance-silent-skill-trust','project-methodology-artifact-symlink-escape'}<={x['id'] for x in d['closed_defects']}
     assert (ROOT/'scripts/audit-skills-methodology-security.py').is_file()
+
+
+def test_prompt_b_host_port_portability_audit_is_host_agnostic_source_bound_and_complete():
+    d=json.loads((ROOT/'data/validation/prompt-b-host-port-portability.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_HOST_PORT_PORTABILITY_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['section']==22 and d['status']=='PASS'
+    assert d['violations']==[] and d['summary']=={'required':11,'covered':11,'violations':0}
+    assert len(d['invariants'])==11 and len({x['invariant'] for x in d['invariants']})==11
+    for row in d['invariants']:
+        owner=ROOT/row['owner'];proof=ROOT/row['proof'];assert owner.is_file() and proof.is_file()
+        assert hashlib.sha256(owner.read_bytes()).hexdigest()==row['owner_sha256']
+        assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
+        assert row['owner_anchor'] in owner.read_text(errors='replace') and row['proof_anchor'] in proof.read_text(errors='replace')
+    assert all(d['static_guards'].values())
+    assert d['alternate_host_feasibility']['status']=='FEASIBLE_BY_PORT_CONTRACT_NOT_IMPLEMENTED'
+    assert d['alternate_host_feasibility']['semantic_core_changes_required'] is False
+    assert {'host-port-renamed-sdk-interface','runtime-event-controller-opencode-lifecycle-leak','task-runtime-opencode-client-leak','runtime-service-opencode-construction-leak','process-error-opencode-owner-leak','routing-provider-policy-opencode-owner-leak'}<={x['id'] for x in d['closed_defects']}
+    assert (ROOT/'scripts/audit-host-port-portability.py').is_file()

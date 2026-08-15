@@ -14,32 +14,32 @@
     "capabilities": {
       "process-lifecycle": {
         "status": "SUPPORTED_T3",
-        "tested_git_commit": "ca6490e13fbee33614c32fab4aa84722fa9f7276",
-        "receipt": "data/validation/external-opencode-hi-0.1.0-process-1.18.18-head-ca6490e.json",
-        "source_rank": 150,
+        "tested_git_commit": "8c3f029bf3503f80bde7e1aaa44efe9530260d50",
+        "receipt": "data/validation/external-opencode-hi-0.1.0-process-1.18.18-head-8c3f029.json",
+        "source_rank": 153,
         "scope_limitations": [
-          "Exact T3: OpenCode 1.18.18 linux/aarch64, source ca6490e13fbee33614c32fab4aa84722fa9f7276.",
-          "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted; foreign host processes are not adopted by PID alone."
+          "Exact T3 applies to OpenCode 1.18.18 on linux/aarch64 and source 8c3f029bf3503f80bde7e1aaa44efe9530260d50.",
+          "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted; foreign processes are not adopted by PID alone."
         ]
       },
       "workspace-isolation-binding": {
         "status": "SUPPORTED_T3",
-        "tested_git_commit": "814acc48675ffa0d84fdb124ca315b403b922ec8",
-        "receipt": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-814acc4.json",
-        "source_rank": 147,
+        "tested_git_commit": "8c3f029bf3503f80bde7e1aaa44efe9530260d50",
+        "receipt": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-8c3f029.json",
+        "source_rank": 153,
         "scope_limitations": [
           "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution.",
-          "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64."
+          "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 and generic ChildSessionPort binding remained exact."
         ]
       },
       "browser-execution": {
         "status": "SUPPORTED_T3",
-        "tested_git_commit": "59288454a1a03fceba2cd76dbdf59efecb41aa21",
-        "receipt": "data/validation/external-opencode-hi-0.1.0-browser-1.18.18-head-5928845.json",
-        "source_rank": 148,
+        "tested_git_commit": "8c3f029bf3503f80bde7e1aaa44efe9530260d50",
+        "receipt": "data/validation/external-opencode-hi-0.1.0-browser-1.18.18-head-8c3f029.json",
+        "source_rank": 153,
         "scope_limitations": [
           "Browser execution remains local-http(s) scoped and rejects credential-bearing URLs and arbitrary selectors.",
-          "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 with real Chromium."
+          "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 with real Chromium and current execution-owner isolation bytes."
         ]
       }
     }
@@ -262,10 +262,8 @@
         "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64."
       ],
       "source_rank": 147,
-      "current_for_capabilities": [
-        "workspace-isolation-binding"
-      ],
-      "classification": "CURRENT_CAPABILITY_PROOF"
+      "current_for_capabilities": [],
+      "classification": "HISTORICAL_EXACT_PROOF"
     },
     {
       "receipt": "data/validation/external-opencode-hi-0.1.0-browser-1.18.18-head-5928845.json",
@@ -285,10 +283,8 @@
         "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 with real Chromium."
       ],
       "source_rank": 148,
-      "current_for_capabilities": [
-        "browser-execution"
-      ],
-      "classification": "CURRENT_CAPABILITY_PROOF"
+      "current_for_capabilities": [],
+      "classification": "HISTORICAL_EXACT_PROOF"
     },
     {
       "receipt": "data/validation/external-opencode-hi-0.1.0-process-1.18.18-head-ca6490e.json",
@@ -308,8 +304,75 @@
         "Environment values are execution-ephemeral native spawn input and are not part of durable ProcessContract or this receipt."
       ],
       "source_rank": 150,
+      "current_for_capabilities": [],
+      "classification": "HISTORICAL_EXACT_PROOF"
+    },
+    {
+      "receipt": "data/validation/external-opencode-hi-0.1.0-browser-1.18.18-head-8c3f029.json",
+      "receipt_sha256": "9a7ab17d73a52e27efb343302bb2fd1da6647bd72e781d3429e7d74556a8970d",
+      "status": "PASS_EXACT_SOURCE_BROWSER_EXECUTION_T3_PROMPT_B22",
+      "opencode_version": "1.18.18",
+      "platform": "linux",
+      "architecture": "aarch64",
+      "tested_git_commit": "8c3f029bf3503f80bde7e1aaa44efe9530260d50",
+      "exact_source": true,
+      "generated_at": "2026-08-15",
+      "gates": {
+        "browser-execution": "SUPPORTED_T3"
+      },
+      "limitations": [
+        "Browser execution remains local-http(s) scoped and rejects credential-bearing URLs and arbitrary selectors.",
+        "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 with real Chromium and current execution-owner isolation bytes."
+      ],
+      "source_rank": 153,
+      "current_for_capabilities": [
+        "browser-execution"
+      ],
+      "classification": "CURRENT_CAPABILITY_PROOF"
+    },
+    {
+      "receipt": "data/validation/external-opencode-hi-0.1.0-process-1.18.18-head-8c3f029.json",
+      "receipt_sha256": "cd4272db4d26419ab13831200d05586f28daf1d00a55897ff617eebafa228c3e",
+      "status": "PASS_EXACT_SOURCE_PROCESS_LIFECYCLE_T3_PROMPT_B22",
+      "opencode_version": "1.18.18",
+      "platform": "linux",
+      "architecture": "aarch64",
+      "tested_git_commit": "8c3f029bf3503f80bde7e1aaa44efe9530260d50",
+      "exact_source": true,
+      "generated_at": "2026-08-15",
+      "gates": {
+        "process-lifecycle": "SUPPORTED_T3"
+      },
+      "limitations": [
+        "Exact T3 applies to OpenCode 1.18.18 on linux/aarch64 and source 8c3f029bf3503f80bde7e1aaa44efe9530260d50.",
+        "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted; foreign processes are not adopted by PID alone."
+      ],
+      "source_rank": 153,
       "current_for_capabilities": [
         "process-lifecycle"
+      ],
+      "classification": "CURRENT_CAPABILITY_PROOF"
+    },
+    {
+      "receipt": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-8c3f029.json",
+      "receipt_sha256": "e6a60d4a9c96911e89596fd7172194ae18ab63dd3e1a6559cd43388f35461f7e",
+      "status": "PASS_EXACT_SOURCE_WORKSPACE_ISOLATION_T3_PROMPT_B22",
+      "opencode_version": "1.18.18",
+      "platform": "linux",
+      "architecture": "aarch64",
+      "tested_git_commit": "8c3f029bf3503f80bde7e1aaa44efe9530260d50",
+      "exact_source": true,
+      "generated_at": "2026-08-15",
+      "gates": {
+        "workspace-isolation-binding": "SUPPORTED_T3"
+      },
+      "limitations": [
+        "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution.",
+        "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 and generic ChildSessionPort binding remained exact."
+      ],
+      "source_rank": 153,
+      "current_for_capabilities": [
+        "workspace-isolation-binding"
       ],
       "classification": "CURRENT_CAPABILITY_PROOF"
     }
