@@ -30,6 +30,16 @@ export class WorkspaceRuntime {
         if (m.execution.workspace_leases.some(x => x.task_id === task.id && x.status !== 'CLOSED'))
             throw new Error(`Task ${task.id} already owns an active workspace lease`);
         const sourceBaseline = await this.executor.sourceBaseline(this.projectRoot), native = await this.executor.provision({ mission_id: m.identity.mission_id, task_id: task.id, repository_root: this.projectRoot, source_baseline: sourceBaseline });
+        const identityConflict = m.execution.workspace_leases.find(x => x.status !== 'CLOSED' && (x.workspace_path === native.workspace_path || (Boolean(native.host_workspace_id) && x.host_workspace_id === native.host_workspace_id)));
+        if (identityConflict) {
+            const candidate = { lease_id: leaseID(), mission_id: m.identity.mission_id, task_id: task.id, repository_root: this.projectRoot, base_ref: sourceBaseline, workspace_path: native.workspace_path, host_workspace_id: native.host_workspace_id, ...(native.branch ? { branch: native.branch } : {}), created_at: Date.now(), status: 'RECONCILING', cleanup_state: 'CLEANUP_PENDING', source_baseline: sourceBaseline };
+            try {
+                await this.executor.cleanup(candidate);
+            }
+            catch { }
+            ;
+            throw new Error(`Workspace identity is already owned by another active lease: ${identityConflict.lease_id}`);
+        }
         const lease = { lease_id: leaseID(), mission_id: m.identity.mission_id, task_id: task.id, repository_root: this.projectRoot, base_ref: sourceBaseline, workspace_path: native.workspace_path, host_workspace_id: native.host_workspace_id, ...(native.branch ? { branch: native.branch } : {}), created_at: Date.now(), status: 'ACTIVE', cleanup_state: 'ACTIVE', source_baseline: sourceBaseline };
         if (!isWorkspaceLeaseContract(lease)) {
             try {

@@ -185,7 +185,7 @@ export function validateMissionExecutionState(identity, execution, methodology) 
         if (!task || !worker || worker.task_id !== task.id)
             return false;
     }
-    const leaseIDs = new Set();
+    const leaseIDs = new Set(), activeWorkspacePaths = new Set(), activeHostWorkspaceIDs = new Set();
     for (const lease of execution.workspace_leases) {
         if (leaseIDs.has(lease.lease_id))
             return false;
@@ -194,6 +194,16 @@ export function validateMissionExecutionState(identity, execution, methodology) 
             return false;
         if (!execution.tasks.some(t => t.id === lease.task_id))
             return false;
+        if (lease.status !== 'CLOSED') {
+            if (activeWorkspacePaths.has(lease.workspace_path))
+                return false;
+            activeWorkspacePaths.add(lease.workspace_path);
+            if (lease.host_workspace_id) {
+                if (activeHostWorkspaceIDs.has(lease.host_workspace_id))
+                    return false;
+                activeHostWorkspaceIDs.add(lease.host_workspace_id);
+            }
+        }
     }
     return isRecord(execution.evidence) && typeof execution.evidence.fresh === 'boolean' && Array.isArray(execution.evidence.items) && execution.evidence.items.every(isEvidenceItemContract) && (execution.evidence.last_mutation_at === undefined || typeof execution.evidence.last_mutation_at === 'number');
 }

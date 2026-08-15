@@ -176,3 +176,34 @@ test('W2 implementation still has no broad auto-snapshot staging after W3 capabi
   const source=readFileSync(new URL('../src/opencode/open-code-workspace-adapter.ts',import.meta.url),'utf8')+readFileSync(new URL('../src/runtime/workspace/runtime.ts',import.meta.url),'utf8')
   assert.doesNotMatch(source,/git\s+add\s+-A|\['add','-A'\]|\["add","-A"\]/)
 })
+
+
+test('PROMPT B concurrent lease identity collision is cleaned and rejected before duplicate ownership enters Mission state',async()=>{
+  const fake=new FakeWorkspaceExecutor('/shared/work'),wr=new WorkspaceRuntime(fake,'/repo'),store=new MissionStore('/repo'),m=store.start('workspace-concurrency','two isolated tasks');assess(store,'workspace-concurrency')
+  const mk=(id,scope)=>({id,mission_id:m.identity.mission_id,objective:id,status:'created',role:'coder',category:'quick',scope:[scope],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],external_action_requirements:[],created_at:1,updated_at:1})
+  const a=mk('t_a','a'),b=mk('t_b','b');m.execution.tasks.push(a,b)
+  const da=wr.decision(m,a,{required:true,reason:'parallel a'}),db=wr.decision(m,b,{required:true,reason:'parallel b'})
+  const first=await wr.provision(m,a,da);assert.equal(first.workspace_path,'/shared/work')
+  await assert.rejects(()=>wr.provision(m,b,db),/already owned by another active lease/)
+  assert.equal(m.execution.workspace_leases.length,1);assert.equal(m.execution.workspace_leases[0].task_id,'t_a');assert.equal(fake.cleaned.length,1,'colliding native workspace must be cleaned')
+})
+
+test('PROMPT B workspace cleanup failure quarantines lease and records an explicit blocker',async()=>{
+  const fake=new FakeWorkspaceExecutor('/work');fake.cleanup=async()=>{throw new Error('remove-denied')}
+  const wr=new WorkspaceRuntime(fake,'/repo'),store=new MissionStore('/repo'),m=store.start('workspace-cleanup-fail','cleanup fail');assess(store,'workspace-cleanup-fail')
+  const task={id:'t_cleanup',mission_id:m.identity.mission_id,objective:'x',status:'created',role:'coder',category:'quick',scope:['a'],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],external_action_requirements:[],created_at:1,updated_at:1};m.execution.tasks.push(task)
+  const lease=await wr.provision(m,task,wr.decision(m,task,{required:true,reason:'cleanup proof'}));assert.equal(await wr.cleanup(m,lease.lease_id),false)
+  assert.equal(lease.status,'ORPHANED');assert.equal(lease.cleanup_state,'QUARANTINED');assert.ok(m.execution.blockers.includes(`workspace-orphan:${lease.lease_id}`))
+})
+
+test('PROMPT B real Git workspace provisioning preserves pre-staged and unstaged user changes exactly',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-pb-staged-primary-')),work=join(root,'..',`${root.split('/').at(-1)}-work`)
+  const run=(args,cwd=root)=>{const r=spawnSync('git',args,{cwd,encoding:'utf8'});assert.equal(r.status,0,String(r.stderr??r.stdout));return String(r.stdout??'').trim()}
+  try{
+    const {writeFileSync}=await import('node:fs');run(['init']);run(['config','user.email','hi@example.invalid']);run(['config','user.name','Hi Test']);writeFileSync(join(root,'tracked.txt'),'base\n');writeFileSync(join(root,'staged.txt'),'base\n');run(['add','.']);run(['commit','-m','base']);const head=run(['rev-parse','HEAD'])
+    writeFileSync(join(root,'tracked.txt'),'user-unstaged\n');writeFileSync(join(root,'staged.txt'),'user-staged\n');run(['add','staged.txt']);const before=run(['status','--porcelain=v1']);run(['worktree','add','--detach',work,'HEAD'])
+    const workspace={create:async p=>({data:{id:'ws_staged',type:p.type,directory:work}}),list:async()=>({data:[{id:'ws_staged',type:'worktree',directory:work}]}),remove:async()=>({data:{}})}
+    const adapter=new OpenCodeWorkspaceAdapter({v2:{experimental:{workspace}}},new URL('http://127.0.0.1:1'),root);await adapter.provision({mission_id:'m',task_id:'t',repository_root:root,source_baseline:head})
+    assert.equal(run(['status','--porcelain=v1']),before);assert.match(before,/ M tracked\.txt/);assert.match(before,/M  staged\.txt/)
+  }finally{spawnSync('git',['worktree','remove','--force',work],{cwd:root,encoding:'utf8'});rmSync(work,{recursive:true,force:true});rmSync(root,{recursive:true,force:true})}
+})
