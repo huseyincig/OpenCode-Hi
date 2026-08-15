@@ -806,6 +806,15 @@ try:
     if b.get('optimization_decision')!='NO_NEW_SCHEDULER_OR_WORK_STEALING_COMPLEXITY_WITHOUT_MEASURED_BENEFIT':err('PROMPT B benchmark optimization decision drift')
 except Exception as e:err(f'bad PROMPT B performance/resource benchmark receipt: {e}')
 
+# PROMPT B §41 hygiene certification
+try:
+    h41=json.loads((ROOT/'data/validation/prompt-b-hygiene.json').read_text(encoding='utf-8'))
+    if h41.get('schema')!=1 or h41.get('kind')!='PROMPT_B_HYGIENE_AUDIT' or h41.get('section')!=41 or h41.get('status')!='PASS':err('bad PROMPT B hygiene audit identity/status')
+    if not all((h41.get('checks') or {}).values()) or len(h41.get('checks') or {})!=12 or h41.get('violations')!=[]:err('PROMPT B hygiene checks incomplete')
+    for rel,expected in (h41.get('proof_hashes') or {}).items():
+        if not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B hygiene proof drift: '+str(rel))
+except Exception as e:err(f'bad PROMPT B hygiene audit: {e}')
+
 # PROMPT B §40 zero-known-defect closure loop
 try:
     z40=json.loads((ROOT/'data/validation/prompt-b-zero-known-defect-loop.json').read_text(encoding='utf-8'))

@@ -872,7 +872,7 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**PROMPT B — IN PROGRESS. Sections 20–40 are CLOSED. Next: Hygiene audit (section 41).**
+**PROMPT B — IN PROGRESS. Sections 20–41 are CLOSED. Next: Final documentation re-audit (section 42).**
 
 
 
@@ -932,3 +932,6 @@ Section 39 Exact-current OpenCode T3 is closed by `data/validation/prompt-b-exac
 
 
 Section 40 Zero-known-defect closure loop is closed by `data/validation/prompt-b-zero-known-defect-loop.json`: all 62 recorded product/architecture/harness findings have a canonical owner, resolution and regression receipt; adjacent high-risk re-audit is 93/93 PASS, full Python 115/115, Node 848/848, architecture 22/22, docs parity 0, exact-current T3 3/3 and lifecycle 61/61. Unresolved known defects in the audited scope: **0**.
+
+
+Section 41 Hygiene audit is closed by `data/validation/prompt-b-hygiene.json`: 12/12 hygiene checks PASS, including clean worktree at audited source, zero backup/temp/runtime-state/log leakage, no debug/TODO/secret findings in living source, dist/source parity, deterministic documentation generation, and clean package dry-run inventory.

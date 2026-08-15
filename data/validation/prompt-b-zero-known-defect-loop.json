@@ -81,7 +81,7 @@
       "root_cause_record": "malformed-opencode-config-silent-overwrite-risk",
       "resolution": "Existing malformed JSON now blocks setup with bounded structured repair guidance and is never treated as an empty config.",
       "regression_receipt": "data/validation/prompt-b-cli-developer-tooling-ux.json",
-      "regression_receipt_sha256": "b9319de9966b5b3318e4a27c74292d31d8e5a9d34cbfca584f82a166a8cffd2a",
+      "regression_receipt_sha256": "41bbdc2da599f973897d684fd7e2aff0a90b09408d1ee9a4f0b108a4601db598",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -104,7 +104,7 @@
       "root_cause_record": "reconfigure-invalid-limit-accepted",
       "resolution": "Scalar and keyed concurrency/config limits are validated at the CLI boundary before persistence.",
       "regression_receipt": "data/validation/prompt-b-cli-developer-tooling-ux.json",
-      "regression_receipt_sha256": "b9319de9966b5b3318e4a27c74292d31d8e5a9d34cbfca584f82a166a8cffd2a",
+      "regression_receipt_sha256": "41bbdc2da599f973897d684fd7e2aff0a90b09408d1ee9a4f0b108a4601db598",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -127,7 +127,7 @@
       "root_cause_record": "blocked-plan-missing-recovery-guidance",
       "resolution": "Plan/doctor blocked states now carry truthful reason/action guidance; JSONC is classified as unsupported safe mutation rather than malformed JSON.",
       "regression_receipt": "data/validation/prompt-b-cli-developer-tooling-ux.json",
-      "regression_receipt_sha256": "b9319de9966b5b3318e4a27c74292d31d8e5a9d34cbfca584f82a166a8cffd2a",
+      "regression_receipt_sha256": "41bbdc2da599f973897d684fd7e2aff0a90b09408d1ee9a4f0b108a4601db598",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -242,7 +242,7 @@
       "root_cause_record": "publishable-root-lock-missing",
       "resolution": "Publishable distribution dependency graph now has canonical root package-lock.json v3 with exact accepted runtime versions and registry integrity.",
       "regression_receipt": "data/validation/prompt-b-dependency-supply-chain-license.json",
-      "regression_receipt_sha256": "443ad61b1093fc9cf266f658f86232a01584e1c86842359445f13fee15f838dc",
+      "regression_receipt_sha256": "c59c8833daf7a04cd2bc2df17930cbecb376f1b9b96b8b368d3fbb2ffccad362",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -265,7 +265,7 @@
       "root_cause_record": "third-party-notices-runtime-drift",
       "resolution": "Notices now enumerate direct runtime SDK, host peer, optional Playwright, build TypeScript, and the audited optional msgpackr-extract install-script boundary.",
       "regression_receipt": "data/validation/prompt-b-dependency-supply-chain-license.json",
-      "regression_receipt_sha256": "443ad61b1093fc9cf266f658f86232a01584e1c86842359445f13fee15f838dc",
+      "regression_receipt_sha256": "c59c8833daf7a04cd2bc2df17930cbecb376f1b9b96b8b368d3fbb2ffccad362",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -288,7 +288,7 @@
       "root_cause_record": "release-pack-proof-prepack-output-corruption",
       "resolution": "Canonical check/build runs before a scripts-disabled pack proof; publish also uses --ignore-scripts against the same built tree.",
       "regression_receipt": "data/validation/prompt-b-dependency-supply-chain-license.json",
-      "regression_receipt_sha256": "443ad61b1093fc9cf266f658f86232a01584e1c86842359445f13fee15f838dc",
+      "regression_receipt_sha256": "c59c8833daf7a04cd2bc2df17930cbecb376f1b9b96b8b368d3fbb2ffccad362",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -311,7 +311,7 @@
       "root_cause_record": "single-lock-sbom-omitted-distribution-runtime",
       "resolution": "Release SBOM and release-chain verification deterministically bind both root distribution and plugin build/test lock graphs.",
       "regression_receipt": "data/validation/prompt-b-dependency-supply-chain-license.json",
-      "regression_receipt_sha256": "443ad61b1093fc9cf266f658f86232a01584e1c86842359445f13fee15f838dc",
+      "regression_receipt_sha256": "c59c8833daf7a04cd2bc2df17930cbecb376f1b9b96b8b368d3fbb2ffccad362",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -587,7 +587,7 @@
       "root_cause_record": "lifecycle-missing-reinstall",
       "resolution": "Local lifecycle receipt now exercises reinstall, doctor and final clean uninstall.",
       "regression_receipt": "data/validation/prompt-b-install-update-lifecycle.json",
-      "regression_receipt_sha256": "4fde1b5f634e045a97650265b208503e259ba0f9c1838f6190cda421a92c7c97",
+      "regression_receipt_sha256": "1df067063c431aa98950796b3f0917d35a7a803cca30762a6f12d70ffac2f810",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -610,7 +610,7 @@
       "root_cause_record": "packed-setup-cli-missing",
       "resolution": "Publishable package now carries executable opencode-hi-setup plus VERSION.",
       "regression_receipt": "data/validation/prompt-b-install-update-lifecycle.json",
-      "regression_receipt_sha256": "4fde1b5f634e045a97650265b208503e259ba0f9c1838f6190cda421a92c7c97",
+      "regression_receipt_sha256": "1df067063c431aa98950796b3f0917d35a7a803cca30762a6f12d70ffac2f810",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -633,7 +633,7 @@
       "root_cause_record": "root-runtime-dependency-contract-missing",
       "resolution": "Root package explicitly declares host peer, direct SDK dependency and optional playwright-core runtime dependency.",
       "regression_receipt": "data/validation/prompt-b-install-update-lifecycle.json",
-      "regression_receipt_sha256": "4fde1b5f634e045a97650265b208503e259ba0f9c1838f6190cda421a92c7c97",
+      "regression_receipt_sha256": "1df067063c431aa98950796b3f0917d35a7a803cca30762a6f12d70ffac2f810",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1116,7 +1116,7 @@
       "root_cause_record": "cwd-sensitive-test-root",
       "resolution": "Repository fixture roots are derived from import.meta.url rather than process.cwd(); exact same 17 tests pass from plugin cwd and repository root.",
       "regression_receipt": "data/validation/prompt-b-test-suite-audit.json",
-      "regression_receipt_sha256": "fe32aee6f3674a0b929d56e3cc6bf4848359414f797c62d00117f23642fea7bc",
+      "regression_receipt_sha256": "0dcfba66e1e0e1534144db44d017069cf006dd7c014ac0e9e1be4e7f61ac3b0d",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1139,7 +1139,7 @@
       "root_cause_record": "test-suite-real-home-state-pollution",
       "resolution": "Canonical Node harness redirects Hi/XDG state and cache roots to a temporary suite sandbox and removes it; measured HOME Hi-state delta is zero.",
       "regression_receipt": "data/validation/prompt-b-test-suite-audit.json",
-      "regression_receipt_sha256": "fe32aee6f3674a0b929d56e3cc6bf4848359414f797c62d00117f23642fea7bc",
+      "regression_receipt_sha256": "0dcfba66e1e0e1534144db44d017069cf006dd7c014ac0e9e1be4e7f61ac3b0d",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1162,7 +1162,7 @@
       "root_cause_record": "unbounded-test-runner-timeout",
       "resolution": "Native per-test timeout is 120s and suite process timeout is 300s; hangs cannot block CI indefinitely.",
       "regression_receipt": "data/validation/prompt-b-test-suite-audit.json",
-      "regression_receipt_sha256": "fe32aee6f3674a0b929d56e3cc6bf4848359414f797c62d00117f23642fea7bc",
+      "regression_receipt_sha256": "0dcfba66e1e0e1534144db44d017069cf006dd7c014ac0e9e1be4e7f61ac3b0d",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1185,7 +1185,7 @@
       "root_cause_record": "mock-runtime-self-promoted-t3",
       "resolution": "Owned runtime capabilities require active-host health and report OBSERVED only; REAL_HOST_ACCEPTANCE/T3 remains external exact-receipt truth.",
       "regression_receipt": "data/validation/prompt-b-test-suite-audit.json",
-      "regression_receipt_sha256": "fe32aee6f3674a0b929d56e3cc6bf4848359414f797c62d00117f23642fea7bc",
+      "regression_receipt_sha256": "0dcfba66e1e0e1534144db44d017069cf006dd7c014ac0e9e1be4e7f61ac3b0d",
       "closure_pipeline": [
         "discover",
         "classify",

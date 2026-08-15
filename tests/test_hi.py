@@ -1419,3 +1419,10 @@ def test_prompt_b_zero_known_defect_loop_closes_every_recorded_finding_and_reaud
     assert d['violations']==[] and len({x['id'] for x in d['defects']})==62
     for row in d['defects']:
         assert len(row['closure_pipeline'])==12 and hashlib.sha256((ROOT/row['regression_receipt']).read_bytes()).hexdigest()==row['regression_receipt_sha256']
+
+
+def test_prompt_b_hygiene_audit_has_no_source_package_or_generated_artifact_leakage():
+    d=json.loads((ROOT/'data/validation/prompt-b-hygiene.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_HYGIENE_AUDIT' and d['section']==41 and d['status']=='PASS'
+    assert len(d['checks'])==12 and all(d['checks'].values()) and d['violations']==[]
+    for rel,digest in d['proof_hashes'].items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
