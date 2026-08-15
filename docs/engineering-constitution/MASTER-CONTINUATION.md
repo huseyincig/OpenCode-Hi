@@ -872,7 +872,7 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**PROMPT B — IN PROGRESS. Sections 20–24 are CLOSED. Next: Install / update / reconfigure / uninstall / rollback audit (section 25).**
+**PROMPT B — IN PROGRESS. Sections 20–27 are CLOSED. Next: Release engineering (section 28).**
 
 
 
@@ -899,3 +899,5 @@ Because ProcessRuntime changed, the prior Process T3 proof was not inherited. Ex
 PROMPT A certified product-source baseline: `5ced215ed57f28f8d963376ca702efc0dac75503` (tree `b22db990942ad291997a8ad564ac1235283036bb`). Canonical reconstruction receipt: `data/validation/documentation-reconstruction.json`.
 
 PROMPT B must distrust previous completion labels, establish a fresh exact baseline on its current clean HEAD, and perform the full-system defect hunt → hardening → certification sequence. The npm `0.1.0` T4 bootstrap remains an external publication blocker and must not be fabricated.
+
+Section 27 Dependency / supply-chain / license is closed by `data/validation/prompt-b-dependency-supply-chain-license.json`: **8/8 invariants PASS, 0 violations**. The publishable distribution graph is exact-pinned and lockfile-v3 bound in root `package-lock.json`, while the plugin build/test graph remains separately bound in `plugin/package-lock.json`. Release SBOM/provenance and release-chain verification deterministically combine both canonical locks. Root and plugin npm audit observed zero vulnerabilities at this checkpoint. The only install-script dependency is optional MIT `msgpackr-extract@3.0.4`, explicitly recorded rather than hidden. `THIRD_PARTY_NOTICES.md` now enumerates direct runtime SDK, host peer, optional Playwright and build TypeScript; restrictive-license and missing-license source reuse remains CLEAN_ROOM/BEHAVIOR_ONLY or IDEA_ONLY as required by `SOURCE-REUSE-MATRIX.md`. OIDC release permissions remain `contents: read` plus job-scoped `id-token: write` with no npm token secret. Release pack proof and publish both use `--ignore-scripts` against the already checked built tree, preventing prepack stdout/artifact drift between proof and publish. No push, tag, GitHub release, npm publication or T4 claim was performed.

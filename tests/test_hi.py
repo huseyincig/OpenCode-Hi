@@ -18,9 +18,9 @@ def test_root_git_package_contract():
     d=json.loads((ROOT/'package.json').read_text()); assert d['name']=='opencode-hi' and d['version']==V
     assert d['main']=='plugin/dist/plugin.js' and (ROOT/d['main']).is_file() and {'skills','scripts/native_plugin_setup.py','VERSION','README.tr.md'}<=set(d['files'])
     assert d['bin']=={'opencode-hi-setup':'scripts/native_plugin_setup.py'}
-    assert d['peerDependencies']['@opencode-ai/plugin'].startswith('>=1.18.18')
+    assert d['peerDependencies']['@opencode-ai/plugin']=='1.18.18'
     assert d['dependencies']=={'@opencode-ai/sdk':'1.18.18'}
-    assert d['optionalDependencies']['playwright-core'].startswith('^1.62.')
+    assert d['optionalDependencies']['playwright-core']=='1.62.1'
 
 def test_root_is_product_clean():
     assert not any((ROOT/x).exists() for x in ['KURULUM.md','RELEASE-READINESS.md','WORK-STATE.md','work-state.json','HI.cmd','HI.sh','HI-VALIDATE.cmd','HI-RELEASE-PREP.cmd'])
@@ -263,6 +263,13 @@ def test_release_and_setup_technical_paths_are_posix_canonical():
     assert "cfg.relative_to(project).as_posix()" in setup
     assert "preserved.append(rel.as_posix())" in setup
 
+def test_release_build_identity_detects_root_package_lock_drift(tmp_path):
+    import importlib.util
+    spec=importlib.util.spec_from_file_location('hi_release_build_rootlock',ROOT/'scripts/release-build.py'); mod=importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+    (tmp_path/'plugin').mkdir(); (tmp_path/'VERSION').write_text('2.0.10\n'); (tmp_path/'package.json').write_text(json.dumps({'version':'2.0.10','dependencies':{'x':'1.0.0'}})); (tmp_path/'plugin'/'package.json').write_text(json.dumps({'version':'2.0.10'})); (tmp_path/'package-lock.json').write_text(json.dumps({'version':'2.0.9','packages':{'':{'version':'2.0.9'}}})); (tmp_path/'CHANGELOG.md').write_text('# Changelog\n\n## 2.0.10\n')
+    assert 'package-lock.json version mismatch' in mod.release_identity(tmp_path,'2.0.10')
+
+
 def test_release_build_identity_detects_package_lock_drift(tmp_path):
     import importlib.util
     spec=importlib.util.spec_from_file_location('hi_release_build3',ROOT/'scripts/release-build.py'); mod=importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
@@ -294,13 +301,18 @@ def test_release_rebuild_is_byte_for_byte_reproducible(tmp_path):
 
 def test_release_manifest_contains_dependency_sbom_and_supply_chain_digest(tmp_path):
     dist,_=_build(tmp_path); manifest=json.loads((dist.parent/f'RELEASE-MANIFEST-{V}.json').read_text())
-    sc=manifest['supply_chain']; assert sc['schema']==1 and sc['dependency_lock']=='plugin/package-lock.json'
+    sc=manifest['supply_chain']; assert sc['schema']==2 and sc['dependency_locks']==['package-lock.json','plugin/package-lock.json']
     sbom_path=dist.parent/sc['sbom']; sbom=json.loads(sbom_path.read_text())
     assert hashlib.sha256(sbom_path.read_bytes()).hexdigest()==sc['sbom_sha256']
     assert sbom['dependency_graph_sha256']==sc['dependency_graph_sha256']
     assert sbom['component_count']==sc['component_count'] and sbom['component_count']>0
     assert any(c['name']=='@opencode-ai/plugin' and c['relation']=='direct-peer' for c in sbom['components'])
     assert any(c['name']=='typescript' and c['relation']=='direct-dev' for c in sbom['components'])
+    assert any(c['name']=='@opencode-ai/sdk' and c['relation']=='direct-runtime' for c in sbom['components'])
+    assert any(c['name']=='playwright-core' and c['relation']=='direct-optional' for c in sbom['components'])
+    assert sbom['schema']==2 and sbom['dependency_locks']==['package-lock.json','plugin/package-lock.json']
+    assert sbom['dependency_lock_sha256']==sc['dependency_lock_sha256']
+    for rel,digest in sc['dependency_lock_sha256'].items(): assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
 
 def test_cross_platform_python_launcher_prefers_setup_python_and_validator_reads_utf8():
     launcher=(ROOT/'scripts/run-python.mjs').read_text(encoding='utf-8')
@@ -1167,9 +1179,9 @@ def test_prompt_b_publishable_package_carries_setup_cli_and_direct_runtime_depen
     pkg=json.loads((ROOT/'package.json').read_text())
     assert pkg['bin']=={'opencode-hi-setup':'scripts/native_plugin_setup.py'}
     assert {'plugin/dist','skills','scripts/native_plugin_setup.py','VERSION'}<=set(pkg['files'])
-    assert pkg['peerDependencies']['@opencode-ai/plugin'].startswith('>=')
+    assert pkg['peerDependencies']['@opencode-ai/plugin']=='1.18.18'
     assert pkg['dependencies']['@opencode-ai/sdk']=='1.18.18'
-    assert pkg['optionalDependencies']['playwright-core'].startswith('^1.62.')
+    assert pkg['optionalDependencies']['playwright-core']=='1.62.1'
     setup=ROOT/'scripts/native_plugin_setup.py';assert setup.stat().st_mode & 0o111
 
 
@@ -1212,3 +1224,18 @@ def test_prompt_b_packaging_fresh_consumer_audit_is_exact_host_and_source_tree_i
     assert a['checks']['consumer_resolution'] is True and a['checks']['no_source_tree_in_server_log'] is True
     assert a['material_runtime']['hi_tool_count']>=10 and {'hi_doctor','hi_status','hi_task_start'}<=set(a['material_runtime']['hi_tools'])
     assert a['material_runtime']['provider_run']['attempted'] is False
+
+
+def test_prompt_b_dependency_supply_chain_license_audit_is_dual_lock_integrity_and_license_bound():
+    d=json.loads((ROOT/'data/validation/prompt-b-dependency-supply-chain-license.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_DEPENDENCY_SUPPLY_CHAIN_LICENSE_AUDIT' and d['program']=='PROMPT_B' and d['section']==27 and d['status']=='PASS'
+    assert d['violations']==[] and d['summary']=={'required':8,'covered':8,'violations':0}
+    for row in d['invariants']:
+        owner=ROOT/row['owner'];proof=ROOT/row['proof'];assert owner.is_file() and proof.is_file()
+        assert hashlib.sha256(owner.read_bytes()).hexdigest()==row['owner_sha256']
+        assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
+        assert row['owner_anchor'] in owner.read_text(errors='replace') and row['proof_anchor'] in proof.read_text(errors='replace')
+    assert all(d['static_guards'].values())
+    assert {'publishable-root-lock-missing','third-party-notices-runtime-drift','release-pack-proof-prepack-output-corruption','single-lock-sbom-omitted-distribution-runtime'}<={x['id'] for x in d['closed_defects']}
+    root_lock=json.loads((ROOT/'package-lock.json').read_text());plugin_lock=json.loads((ROOT/'plugin/package-lock.json').read_text())
+    assert root_lock['lockfileVersion']==3 and plugin_lock['lockfileVersion']==3

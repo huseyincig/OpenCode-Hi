@@ -79,33 +79,53 @@ function packageLockVersion(root) { for (const path of [join(root, 'package-lock
         return undefined;
     }
 } return undefined; }
-function dependencyGraph(root) { try {
-    const lock = JSON.parse(readFileSync(join(root, 'plugin', 'package-lock.json'), 'utf8')), packages = lock?.packages ?? {}, rm = packages[''] ?? {}, dev = new Set(Object.keys(rm.devDependencies ?? {})), peer = new Set(Object.keys(rm.peerDependencies ?? {})), rows = [];
-    for (const [path0, meta0] of Object.entries(packages)) {
-        if (!path0)
-            continue;
-        const meta = meta0 ?? {}, path = String(path0).replace(/\\/g, '/'), name = String(meta.name ?? (path.includes('node_modules/') ? path.split('node_modules/').pop() : path) ?? path), relation = peer.has(name) ? 'direct-peer' : dev.has(name) ? 'direct-dev' : 'transitive';
-        rows.push({ path, name, version: String(meta.version ?? ''), license: String(meta.license ?? 'UNKNOWN'), relation });
-    }
-    rows.sort((a, b) => a.path.localeCompare(b.path));
-    const h = createHash('sha256');
-    for (const r of rows) {
-        for (const k of ['path', 'name', 'version', 'license', 'relation']) {
-            h.update(r[k]);
-            h.update('\0');
+function dependencyGraph(root) {
+    try {
+        const lockPaths = ['package-lock.json', 'plugin/package-lock.json'].filter(rel => existsSync(join(root, ...rel.split('/'))));
+        if (!lockPaths.length)
+            return undefined;
+        const multi = lockPaths.length > 1, rows = [];
+        for (const rel of lockPaths) {
+            const lock = JSON.parse(readFileSync(join(root, ...rel.split('/')), 'utf8')), packages = lock?.packages ?? {}, rm = packages[''] ?? {}, runtime = new Set(Object.keys(rm.dependencies ?? {})), optional = new Set(Object.keys(rm.optionalDependencies ?? {})), dev = new Set(Object.keys(rm.devDependencies ?? {})), peer = new Set(Object.keys(rm.peerDependencies ?? {})), prefix = rel === 'package-lock.json' ? 'root' : 'plugin';
+            for (const [path0, meta0] of Object.entries(packages)) {
+                if (!path0)
+                    continue;
+                const meta = meta0 ?? {}, basePath = String(path0).replace(/\\/g, '/'), name = String(meta.name ?? (basePath.includes('node_modules/') ? basePath.split('node_modules/').pop() : basePath) ?? basePath), relation = runtime.has(name) ? 'direct-runtime' : optional.has(name) ? 'direct-optional' : peer.has(name) ? 'direct-peer' : dev.has(name) ? 'direct-dev' : 'transitive', path = multi ? `${prefix}:${basePath}` : basePath;
+                rows.push({ path, name, version: String(meta.version ?? ''), license: String(meta.license ?? 'UNKNOWN'), relation });
+            }
         }
-        h.update('\n');
+        rows.sort((a, b) => a.path.localeCompare(b.path));
+        const h = createHash('sha256');
+        for (const r of rows) {
+            for (const k of ['path', 'name', 'version', 'license', 'relation']) {
+                h.update(r[k]);
+                h.update('\0');
+            }
+            h.update('\n');
+        }
+        return { digest: h.digest('hex'), count: rows.length, direct: rows.filter(r => r.relation !== 'transitive').map(r => ({ name: r.name, license: r.license })), locks: lockPaths };
     }
-    return { digest: h.digest('hex'), count: rows.length, direct: rows.filter(r => r.relation !== 'transitive').map(r => ({ name: r.name, license: r.license })) };
+    catch {
+        return undefined;
+    }
 }
-catch {
-    return undefined;
-} }
-function validateSupplyChain(root, manifest) { const issues = [], sc = manifest?.supply_chain, g = dependencyGraph(root); if (manifest?.schema < 5 || sc?.schema !== 1 || typeof sc?.dependency_graph_sha256 !== 'string' || typeof sc?.sbom !== 'string' || typeof sc?.third_party_notices_sha256 !== 'string')
-    return ['release-supply-chain-missing']; if (!g || g.digest !== sc.dependency_graph_sha256 || g.count !== sc.component_count)
-    issues.push('dependency-graph-drift'); const sbomPath = join(root, 'dist', sc.sbom); try {
+function validateSupplyChain(root, manifest) { const issues = [], sc = manifest?.supply_chain, g = dependencyGraph(root); if (manifest?.schema < 5 || ![1, 2].includes(sc?.schema) || typeof sc?.dependency_graph_sha256 !== 'string' || typeof sc?.sbom !== 'string' || typeof sc?.third_party_notices_sha256 !== 'string')
+    return ['release-supply-chain-missing']; const declaredLocks = Array.isArray(sc?.dependency_locks) ? sc.dependency_locks : typeof sc?.dependency_lock === 'string' ? [sc.dependency_lock] : []; if (!g || g.digest !== sc.dependency_graph_sha256 || g.count !== sc.component_count)
+    issues.push('dependency-graph-drift'); if (g && JSON.stringify(declaredLocks) !== JSON.stringify(g.locks))
+    issues.push('dependency-lock-set-drift'); if (sc?.schema === 2) {
+    const hashes = sc?.dependency_lock_sha256 && typeof sc.dependency_lock_sha256 === 'object' ? sc.dependency_lock_sha256 : {};
+    for (const rel of declaredLocks) {
+        const actual = sha256File(join(root, String(rel)));
+        if (!actual || hashes[String(rel)] !== actual)
+            issues.push('dependency-lock-sha256-drift:' + String(rel));
+    }
+} const sbomPath = join(root, 'dist', sc.sbom); try {
     const sb = JSON.parse(readFileSync(sbomPath, 'utf8'));
-    if (sb?.dependency_graph_sha256 !== g?.digest || sb?.component_count !== g?.count || sha256File(sbomPath) !== sc.sbom_sha256)
+    const sbLocks = Array.isArray(sb?.dependency_locks) ? sb.dependency_locks : typeof sb?.dependency_lock === 'string' ? [sb.dependency_lock] : [];
+    let sbomOk = sb?.dependency_graph_sha256 === g?.digest && sb?.component_count === g?.count && JSON.stringify(sbLocks) === JSON.stringify(g?.locks ?? []) && sha256File(sbomPath) === sc.sbom_sha256;
+    if (sc?.schema === 2)
+        sbomOk = sbomOk && sb?.schema === 2 && JSON.stringify(sb?.dependency_lock_sha256 ?? {}) === JSON.stringify(sc?.dependency_lock_sha256 ?? {});
+    if (!sbomOk)
         issues.push('sbom-drift');
 }
 catch {

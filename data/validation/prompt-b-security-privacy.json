@@ -162,7 +162,7 @@
       "owner_sha256": "f0787037b61a5617c295880577ca243b44cb9eecbc853514c10095c9503acd64",
       "owner_anchor": "\"scripts\"",
       "proof": "package.json",
-      "proof_sha256": "9dfabfab64ed1da8881d5887c43ec8e3bf2496d88370ba64923cd20934eb6533",
+      "proof_sha256": "bacad4fb690ab88db0da4021960a9651ad0b27f625ca14c5abcc30493b0bfff4",
       "proof_anchor": "\"prepack\": \"npm run build\""
     },
     {
@@ -202,7 +202,7 @@
       "owner_sha256": "b40f802de7ad285bcba3f696ac1c646c0bcb0595a4249539566b2ce689f56181",
       "owner_anchor": "Program license gate",
       "proof": "THIRD_PARTY_NOTICES.md",
-      "proof_sha256": "89e80492580d0adf6e561305f5e61ff8e48c6aa144cdc29c42630ffba3ff4e02",
+      "proof_sha256": "9cde8180060abe8d81fd0a8c4c977d5fa2ddfdf2bd54a396257dcee84993bf51",
       "proof_anchor": "AGPL, missing-license, unclear-license"
     }
   ],

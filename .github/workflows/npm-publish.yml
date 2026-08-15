@@ -43,17 +43,20 @@ jobs:
           npm --version
           node -e "const v=require('child_process').execFileSync('npm',['--version'],{encoding:'utf8'}).trim().split('.').map(Number); if (v[0] < 11 || (v[0] === 11 && v[1] < 5) || (v[0] === 11 && v[1] === 5 && v[2] < 1)) process.exit(1)"
 
-      - name: Install runtime dependencies
-        run: npm ci --prefix plugin
+      - name: Install locked distribution dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Install locked build/runtime-workspace dependencies
+        run: npm ci --prefix plugin --ignore-scripts --no-audit --no-fund
 
       - name: Canonical source verification
         run: npm run check
 
       - name: Capture fresh package proof
-        run: npm pack --dry-run --json > npm-pack-proof.json
+        run: npm pack --dry-run --json --ignore-scripts > npm-pack-proof.json
 
       - name: Publish public package with npm Trusted Publishing OIDC
-        run: npm publish --access public
+        run: npm publish --ignore-scripts --access public
 
       - name: Verify registry identity and integrity
         shell: bash

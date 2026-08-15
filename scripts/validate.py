@@ -687,6 +687,25 @@ try:
     if 'PROMPT A final exit gate — **COMPLETED**' not in master:err('PROMPT A completed status lost from current continuation ledger')
 except Exception as e:err(f'bad PROMPT A reconstruction receipt: {e}')
 
+
+# PROMPT B §27 dependency / supply-chain / license certification
+try:
+    d27=json.loads((ROOT/'data/validation/prompt-b-dependency-supply-chain-license.json').read_text(encoding='utf-8'))
+    if d27.get('schema')!=1 or d27.get('kind')!='PROMPT_B_DEPENDENCY_SUPPLY_CHAIN_LICENSE_AUDIT' or d27.get('program')!='PROMPT_B' or d27.get('section')!=27 or d27.get('status')!='PASS':err('bad PROMPT B dependency/supply-chain/license receipt identity/status')
+    if d27.get('summary')!={'required':8,'covered':8,'violations':0} or d27.get('violations')!=[]:err('PROMPT B dependency/supply-chain/license summary drift')
+    import hashlib
+    for row in d27.get('invariants',[]):
+        for key in ('owner','proof'):
+            rel=row.get(key); expected=row.get(f'{key}_sha256')
+            if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B dependency/supply-chain/license missing {key}: {rel}');continue
+            if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B dependency/supply-chain/license {key} hash drift: {rel}')
+        try:
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B dependency/supply-chain/license owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B dependency/supply-chain/license proof anchor drift: {row.get('invariant')}")
+        except Exception as e:err(f'PROMPT B dependency/supply-chain/license row invalid: {e}')
+    if not all((d27.get('static_guards') or {}).values()):err('PROMPT B dependency/supply-chain/license static guard drift')
+except Exception as e:err(f'bad PROMPT B dependency/supply-chain/license receipt: {e}')
+
 for p in (ROOT/'data').rglob('*.json'):
     try:json.loads(p.read_text(encoding='utf-8'))
     except Exception as e:err(f'bad json {p.name}: {e}')
