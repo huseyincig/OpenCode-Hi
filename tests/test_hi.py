@@ -3,7 +3,7 @@ import hashlib, importlib.util, json, os, subprocess, sys, zipfile,re
 from pathlib import Path
 import pytest
 ROOT=Path(__file__).resolve().parents[1]
-V='0.1.0'
+V=(ROOT/'VERSION').read_text().strip()
 
 def run(*args):return subprocess.run([sys.executable,*map(str,args)],text=True,capture_output=True)
 def load_module(name,path):
@@ -819,3 +819,20 @@ def test_prompt_a_current_storage_terminology_and_identity_docs_have_no_preimple
     assert 'N1 completed the final source-driven normalization' in terminology
     assert 'OpenCode-Hi 0.1.0 is a new product identity' not in identity
     assert 'application version is owned by `VERSION`' in identity
+
+
+def test_prompt_a_final_reconstruction_receipt_is_hash_bound_to_certified_source():
+    d=json.loads((ROOT/'data/validation/documentation-reconstruction.json').read_text())
+    assert d['schema']==1 and d['kind']=='FINAL_PRODUCT_TRUTH_RECONSTRUCTION' and d['program']=='PROMPT_A' and d['status']=='COMPLETED'
+    assert d['version']==V
+    assert d['certified_source']['head']=='5ced215ed57f28f8d963376ca702efc0dac75503'
+    assert d['certified_source']['tree']=='b22db990942ad291997a8ad564ac1235283036bb' and d['certified_source']['working_tree']=='CLEAN'
+    assert d['documentation_inventory']['canonical_meanings']==36 and d['canonical_ownership']['meaning_count']==36
+    assert d['generated_or_parity_validated']=={'config_options':32,'exact_t3_capabilities':3,'product_areas':24,'documentation_parity_violations':0,'broken_links':0}
+    assert d['source_doc_parity']['product_trace_missing_paths']==[] and d['source_doc_parity']['documentation_violations']==[]
+    assert all(d['exit_gate'].values())
+    for meta in d['inputs'].values():
+        path=ROOT/meta['path']; assert path.is_file(); assert hashlib.sha256(path.read_bytes()).hexdigest()==meta['sha256']
+    continuation=(ROOT/'docs/engineering-constitution/MASTER-CONTINUATION.md').read_text()
+    assert 'PROMPT A final exit gate — **COMPLETED**' in continuation
+    assert 'Begin PROMPT B — Zero-Defect Engineering Hardening & Final System Certification' in continuation
