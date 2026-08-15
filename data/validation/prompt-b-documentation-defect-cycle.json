@@ -37,7 +37,7 @@
       "owner_sha256": "e1fc392a9d49080eed2b7e855ad6099b87211c33fbf898600326680285e621ef",
       "owner_anchor": "one-meaning-one-canonical-documentation-owner",
       "proof": "data/validation/documentation-inventory.json",
-      "proof_sha256": "901823b5f29ba4db1494e938b20adba5a11dafbe38b0ff61bea772d18a369464",
+      "proof_sha256": "65314c68ffab5bdbd7725e0093075e93299330822a50f2c9486e7f6943286edf",
       "proof_anchor": "\"canonical_ownership\""
     },
     {
