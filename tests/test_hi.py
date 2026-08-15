@@ -997,3 +997,17 @@ def test_prompt_b_process_workspace_browser_lifecycle_audit_is_complete_and_sour
     assert all(x['status']=='SUPPORTED_T3' and x['equivalent'] is True and x['runtime_hash_drift']==[] for x in eq.values())
     closed={x['id'] for x in d['closed_defects']}
     assert {'browser-cross-execution-owner-state-leak','workspace-forged-isolation-decision','process-kill-failure-false-termination','process-group-unverified-signal','duplicate-active-workspace-identity'}<=closed
+
+
+def test_prompt_b_human_decision_adversarial_audit_is_complete_and_hash_bound():
+    d=json.loads((ROOT/'data/validation/prompt-b-human-decision.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_HUMAN_DECISION_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['section']==15 and d['status']=='PASS'
+    assert d['violations']==[] and d['summary']=={'required':15,'covered':15,'violations':0}
+    assert len(d['invariants'])==15 and len({x['invariant'] for x in d['invariants']})==15
+    for row in d['invariants']:
+        owner=ROOT/row['owner'];proof=ROOT/row['proof'];assert owner.is_file() and proof.is_file()
+        assert hashlib.sha256(owner.read_bytes()).hexdigest()==row['owner_sha256']
+        assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
+        assert row['owner_anchor'] in owner.read_text(errors='replace') and row['proof_anchor'] in proof.read_text(errors='replace')
+    closed={x['id'] for x in d['closed_defects']}
+    assert {'idle-human-decision-authority-reclassification','authority-request-semantic-coherence','reason-label-authority-inference'}<=closed

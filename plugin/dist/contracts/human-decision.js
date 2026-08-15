@@ -36,6 +36,11 @@ export function isHumanDecisionContract(v) {
         return false;
     if (v.authority_ref !== undefined && !nonempty(v.authority_ref))
         return false;
+    const authorityDecision = v.semantic_type === 'authority_request', response = v.response_schema;
+    if (authorityDecision && (!nonempty(v.authority_ref) || response.kind !== 'authority-protocol'))
+        return false;
+    if (!authorityDecision && (v.authority_ref !== undefined || response.kind === 'authority-protocol'))
+        return false;
     if (v.resolved_at !== undefined && (!finite(v.resolved_at) || v.resolved_at < v.created_at))
         return false;
     if (v.resolution !== undefined && !nonempty(v.resolution))

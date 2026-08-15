@@ -58,9 +58,9 @@ test('preflight RESOLVE prevents specialist recursion when colliding host agent 
 test('contract-critical ambiguity blocks implementation but permits repository exploration to resolve it',async()=>{
   const {client,creates}=nativeClient(),store=new MissionStore(),m=startAssessedMission(store,'ambiguity-preflight','opaque contract task',{ambiguity:'contract-critical'})
   await assert.rejects(()=>runtime(client).start(m,{role:'coder',objective:'implement ambiguous auth contract'}),/contract-critical ambiguity/i)
-  assert.equal(creates.length,0)
+  assert.equal(creates.length,0);assert.equal(m.authority.human_decision,undefined,'source-resolvable ambiguity must not ask the user before repository exploration')
   const out=await runtime(client).start(m,{role:'repository-explorer',objective:'resolve auth contract from repository evidence',requiredEvidence:[]})
-  assert.ok(out.session_id);assert.equal(creates.length,1);assert.equal(creates[0].body.agent,'repository-explorer')
+  assert.ok(out.session_id);assert.equal(creates.length,1);assert.equal(creates[0].body.agent,'repository-explorer');assert.equal(m.authority.human_decision,undefined)
 })
 
 test('incomplete prerequisite is WAIT and queues without native child spawn',async()=>{

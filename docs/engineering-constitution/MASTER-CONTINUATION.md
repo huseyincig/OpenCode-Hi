@@ -735,6 +735,21 @@ Exact-host truth was re-established rather than inherited optimistically. `data/
 
 The source-hardening checkpoint `47a3502ab7176d9e008ed7b68ad0a3eb93803783` / tree `4501bd61c4fd7600568220062b53bb3a92eb493a` passed exact committed-tree gates before T3 promotion: Python 84/84, Node 767/767, architecture lint 22/22 deferred=0, documentation parity violations=0, validator PASS, diff-check clean, backup count 0. Node 24.19.0 may still emit the known libuv `EEXIST` teardown assertion only after complete terminal PASS/result output; such teardown is never accepted without independently persisted terminal evidence and cleanup reconciliation.
 
+
+### PROMPT B B9 — HumanDecision semantic / transport / Authority separation — **CLOSED**
+
+PROMPT B section 15 is covered by `data/validation/prompt-b-human-decision.json`: **15/15 adversarial invariants PASS, 0 violations**. The audit mechanically binds semantic HumanDecision state, chat transport behavior, persistence/restart behavior, source-resolvable ambiguity handling and the exact Authority boundary.
+
+Three material semantic-state defects were closed:
+
+- Parent idle previously could take an already-open operational HumanDecision, collapse `USER_ACTION_REQUIRED` into the historical `waiting-user-authority` label, and overwrite the canonical decision with a fabricated authority-shaped decision. `RuntimeEventController` now preserves an existing OPEN canonical HumanDecision instead of reclassifying it.
+- `HumanDecisionContract` previously allowed `semantic_type=authority_request` without an exact `authority_ref` or authority-protocol response schema, and allowed non-authority decisions to carry authority-shaped fields. Authority requests now require exact `authority_ref + authority-protocol`; non-authority decisions cannot carry either. `openHumanDecision()` validates the constructed contract before mutating Mission state.
+- Runtime reason labels can no longer manufacture Authority semantics. `classifyRuntimeHumanDecision()` keeps generic runtime/user-action reasons in the operational semantic plane; exact `authority_request` state is created only by canonical Authority owners that already possess the exact action hash and protocol.
+
+Host/UI separation remains truthful: ChatHumanDecisionTransport is ephemeral and transport-only; timeout/cancel/reply do not resolve semantic state or grant Authority by themselves. Duplicate/conflicting replies are inert after the first accepted response, stale answers cannot resolve replacement decisions, and restart reopens the persisted semantic decision in a fresh transport without replaying stale transport responses. OpenCode 1.18.18 structured host HumanDecision UI remains **UNSUPPORTED** rather than being synthesized through model mediation.
+
+Source-resolvable contract ambiguity remains repo-first: repository exploration is permitted while implementation is blocked, and no HumanDecision is opened merely because repository evidence can still resolve the question.
+
 ## 11. Verification protocol for future checkpoints
 
 ### Focused verification first
@@ -845,7 +860,7 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**PROMPT B — IN PROGRESS. Next: HumanDecision adversarial audit (section 15), then persistence/restart and concurrency/race sections in sequence.**
+**PROMPT B — IN PROGRESS. Next: persistence/restart adversarial audit (section 16), then concurrency/race testing (section 17).**
 
 PROMPT A certified product-source baseline: `5ced215ed57f28f8d963376ca702efc0dac75503` (tree `b22db990942ad291997a8ad564ac1235283036bb`). Canonical reconstruction receipt: `data/validation/documentation-reconstruction.json`.
 

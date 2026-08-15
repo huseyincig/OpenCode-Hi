@@ -48,6 +48,9 @@ export function humanDecisionId(input:{semantic_type:HumanDecisionType;reason_co
 export function isHumanDecisionContract(v:unknown):v is HumanDecisionContract{
   if(!record(v)||!Object.keys(v).every(k=>KEYS.has(k))||typeof v.decision_id!=='string'||!/^hd_[a-f0-9]{20}$/.test(v.decision_id)||typeof v.semantic_type!=='string'||!TYPES.has(v.semantic_type)||!nonempty(v.reason_code)||!nonempty(v.summary)||!validScope(v.blocking_scope)||!validResponse(v.response_schema)||typeof v.status!=='string'||!STATUSES.has(v.status)||!finite(v.created_at)||(v.created_at as number)<=0)return false
   if(v.authority_ref!==undefined&&!nonempty(v.authority_ref))return false
+  const authorityDecision=v.semantic_type==='authority_request',response=v.response_schema as HumanDecisionResponseSchema
+  if(authorityDecision&&(!nonempty(v.authority_ref)||response.kind!=='authority-protocol'))return false
+  if(!authorityDecision&&(v.authority_ref!==undefined||response.kind==='authority-protocol'))return false
   if(v.resolved_at!==undefined&&(!finite(v.resolved_at)||(v.resolved_at as number)<(v.created_at as number)))return false
   if(v.resolution!==undefined&&!nonempty(v.resolution))return false
   if(v.status==='OPEN'&&(v.resolved_at!==undefined||v.resolution!==undefined))return false

@@ -193,7 +193,7 @@
       "owner_sha256": "a0e48e9de3595a858517688afd742ce93bc65b07f7a52edfb301d555b1c9cb4f",
       "owner_anchor": "stopMission",
       "proof": "plugin/test/p3-process-control-integration.test.mjs",
-      "proof_sha256": "f6bddf441c2334d8b9e3e582f1889fa3db096093af07ce64211b773b0558b307",
+      "proof_sha256": "293c483912aa3f19256dd7324610a169704d588f9e65ed28d88d0d03a676bcce",
       "proof_anchor": "parent session deletion stops mission and process runtime"
     },
     {

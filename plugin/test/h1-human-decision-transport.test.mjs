@@ -1,9 +1,12 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { readFileSync,mkdtempSync,rmSync } from 'node:fs'
 import { ChatHumanDecisionTransport } from '../dist/runtime/human-decision/transport.js'
 import { createChatMessageHook } from '../dist/hooks/chat-message.js'
 import { openHumanDecision } from '../dist/runtime/human-decision/runtime.js'
+import { RuntimePersistence } from '../dist/runtime/state/persistence.js'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { requireAuthority } from '../dist/runtime/safety/authority.js'
 import { startAssessedMission } from './helpers/semantic.mjs'
@@ -73,4 +76,36 @@ test('H1 runtime composition owns one ephemeral chat transport and does not pers
   const transportSource=readFileSync(new URL('../src/runtime/human-decision/transport.ts',import.meta.url),'utf8')
   assert.equal((source.match(/new ChatHumanDecisionTransport\(/g)??[]).length,1)
   assert.doesNotMatch(transportSource,/writeFile|readFile|RuntimePersistence|\.opencode\/hi/)
+})
+
+
+test('PROMPT B first HumanDecision transport response wins and duplicate/conflicting replies are inert',async()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'h1-conflict','small task'),transport=new ChatHumanDecisionTransport(100)
+  const decision=openHumanDecision(m,{semantic_type:'preference',reason_code:'pick',summary:'pick',response_schema:{kind:'choice',choices:['safe','fast']}});transport.open(decision)
+  const first=transport.respond(decision.decision_id,'safe');assert.equal(first?.value,'safe')
+  assert.equal(transport.respond(decision.decision_id,'safe'),undefined);assert.equal(transport.respond(decision.decision_id,'fast'),undefined)
+  const awaited=await transport.await(decision.decision_id);assert.equal(awaited.status,'RESPONDED');assert.equal(awaited.response.value,'safe')
+  assert.equal(m.authority.human_decision.status,'OPEN','transport response alone never resolves semantic decision')
+})
+
+test('PROMPT B restart reopens persisted semantic decision but never replays stale ephemeral transport response',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-hd-restart-'))
+  try{
+    const store=new MissionStore(root),m=startAssessedMission(store,'h1-restart','small task'),oldTransport=new ChatHumanDecisionTransport(100)
+    const decision=openHumanDecision(m,{semantic_type:'preference',reason_code:'restart-choice',summary:'pick',response_schema:{kind:'choice',choices:['safe','fast']}});oldTransport.open(decision)
+    assert.equal(oldTransport.respond(decision.decision_id,'safe')?.value,'safe')
+    new RuntimePersistence(root).save(store.all(),true)
+    const restoredMission=new RuntimePersistence(root).load()[0];assert.equal(restoredMission.authority.human_decision.status,'OPEN')
+    const freshTransport=new ChatHumanDecisionTransport(100);freshTransport.open(restoredMission.authority.human_decision)
+    assert.equal(freshTransport.handle(decision.decision_id)?.state,'OPEN');assert.equal(oldTransport.handle(decision.decision_id)?.state,'RESPONDED')
+    const waiting=freshTransport.await(decision.decision_id);const response=freshTransport.respond(decision.decision_id,'fast');assert.equal(response?.value,'fast');assert.equal((await waiting).status,'RESPONDED')
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+test('PROMPT B stale answer to a replaced HumanDecision cannot resolve the replacement',async()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'h1-stale-answer','small task'),transport=new ChatHumanDecisionTransport(100)
+  const old=openHumanDecision(m,{semantic_type:'preference',reason_code:'old',summary:'old',response_schema:{kind:'choice',choices:['a','b']}});transport.open(old)
+  const fresh=openHumanDecision(m,{semantic_type:'preference',reason_code:'fresh',summary:'fresh',response_schema:{kind:'choice',choices:['x','y']}});transport.open(fresh)
+  assert.equal(transport.respond(old.decision_id,'a'),undefined);assert.equal(transport.handle(old.decision_id)?.state,'CANCELLED');assert.equal(transport.handle(fresh.decision_id)?.state,'OPEN')
+  assert.equal(transport.respond(fresh.decision_id,'x')?.value,'x')
 })

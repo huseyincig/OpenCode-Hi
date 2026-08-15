@@ -70,7 +70,7 @@ export class RuntimeEventController{
     const m=store.get(sid);if(!m||!adaptiveIdleEvaluatorEnabled(state.config.executionPolicy))return
     const progressed=store.updateProgress(m,false);void eventSink(runtimeSignal('mission.idle',m.identity.mission_id));let decision=evaluateIdle(m);if(!progressed&&shouldCountStagnation(decision)){store.updateProgress(m,true);decision=evaluateIdle(m)}appendLedger(m,'runtime.decision',{payload:{decision:decision.decision,reason:decision.reason,reason_code:decision.reason_code,progressed,stagnation_count:m.continuation.stagnation_count}})
     if(decision.decision==='STOP'){const c=evaluateCompletion(m);if(c.complete)store.complete(sid);persistence.save(store.all());return}
-    if(decision.decision==='USER_ACTION_REQUIRED'){const human=classifyRuntimeHumanDecision(decision.reason_code);openHumanDecision(m,{...human,reason_code:decision.reason_code,summary:decision.reason});persistence.save(store.all());return}
+    if(decision.decision==='USER_ACTION_REQUIRED'){if(m.authority.human_decision?.status!=='OPEN'){const human=classifyRuntimeHumanDecision(decision.reason_code);openHumanDecision(m,{...human,reason_code:decision.reason_code,summary:decision.reason})}persistence.save(store.all());return}
     if(decision.decision==='RECOVER'&&decision.reason_code==='stagnation-recovery'){const match=/^stagnation-level-(\d+):/.exec(decision.reason);const level=match?Number(match[1]):0;if(level&&await tasks.recoverStagnation(m,level)){store.updateProgress(m);persistence.save(store.all());return}}
     if(decision.prompt&&['CONTINUE','RECONCILE','VERIFY','RECOVER'].includes(decision.decision))await dispatchContinuation(host.client,m,decision.prompt,decision.reason)
     persistence.save(store.all())

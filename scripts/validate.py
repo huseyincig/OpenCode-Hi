@@ -410,6 +410,26 @@ try:
 except Exception as e:err(f'bad PROMPT B Process/Workspace/Browser lifecycle receipt: {e}')
 
 try:
+    hd=json.loads((ROOT/'data/validation/prompt-b-human-decision.json').read_text(encoding='utf-8'))
+    if hd.get('schema')!=1 or hd.get('kind')!='PROMPT_B_HUMAN_DECISION_ADVERSARIAL_AUDIT' or hd.get('program')!='PROMPT_B' or hd.get('section')!=15 or hd.get('status')!='PASS':err('bad PROMPT B HumanDecision audit receipt')
+    if hd.get('violations')!=[] or hd.get('summary')!={'required':15,'covered':15,'violations':0}:err('PROMPT B HumanDecision audit coverage drift')
+    rows=hd.get('invariants') or []
+    if len(rows)!=15 or len({x.get('invariant') for x in rows})!=15:err('PROMPT B HumanDecision invariant inventory drift')
+    import hashlib
+    for row in rows:
+        for key in ('owner','proof'):
+            rel=row.get(key);expected=row.get(f'{key}_sha256')
+            if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B HumanDecision missing {key}: {rel}')
+            elif hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B HumanDecision {key} hash drift: {rel}')
+        try:
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B HumanDecision owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B HumanDecision proof anchor drift: {row.get('invariant')}")
+        except Exception as e:err(f'PROMPT B HumanDecision row invalid: {e}')
+    closed={x.get('id') for x in hd.get('closed_defects',[]) if isinstance(x,dict)}
+    if not {'idle-human-decision-authority-reclassification','authority-request-semantic-coherence','reason-label-authority-inference'}<=closed:err('PROMPT B HumanDecision closed defect drift')
+except Exception as e:err(f'bad PROMPT B HumanDecision audit receipt: {e}')
+
+try:
     nr=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text(encoding='utf-8'))
     if nr.get('schema')!=1 or nr.get('kind')!='EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION' or nr.get('program')!='PROMPT_B' or nr.get('status')!='PASS':err('bad PROMPT B native reevaluation receipt identity/status')
     oc=nr.get('opencode',{})

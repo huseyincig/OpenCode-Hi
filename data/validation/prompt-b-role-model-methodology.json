@@ -38,7 +38,7 @@
       "owner_sha256": "0e846c0d3180a25c386cca8a6569d045bdfd7cb5bccb4bf0cf1b2882f8ef20be",
       "owner_anchor": "No permitted/available runtime model satisfies this task",
       "proof": "plugin/test/main-prompt-delegation-preconditions.test.mjs",
-      "proof_sha256": "857a6341105fc3e3b5b1ff6e858aff381e41135536dc2bacc10780a2347c2120",
+      "proof_sha256": "5a3dac55672be8a1d8cf515634a69471ad76a79afe95db0607e9ca63680c462e",
       "proof_anchor": "missing native worker capability is RESOLVE before creating task or trying model fallbacks"
     },
     {

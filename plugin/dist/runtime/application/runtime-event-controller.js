@@ -264,8 +264,10 @@ export class RuntimeEventController {
             return;
         }
         if (decision.decision === 'USER_ACTION_REQUIRED') {
-            const human = classifyRuntimeHumanDecision(decision.reason_code);
-            openHumanDecision(m, { ...human, reason_code: decision.reason_code, summary: decision.reason });
+            if (m.authority.human_decision?.status !== 'OPEN') {
+                const human = classifyRuntimeHumanDecision(decision.reason_code);
+                openHumanDecision(m, { ...human, reason_code: decision.reason_code, summary: decision.reason });
+            }
             persistence.save(store.all());
             return;
         }

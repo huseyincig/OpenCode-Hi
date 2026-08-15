@@ -35,7 +35,7 @@ test('open operational HumanDecision blocks deterministic completion and is visi
 })
 
 test('runtime HumanDecision classifier keeps rollback/provider/permission separate from exact authority',()=>{
-  assert.equal(classifyRuntimeHumanDecision('waiting-user-authority').semantic_type,'authority_request')
+  assert.equal(classifyRuntimeHumanDecision('waiting-user-authority').semantic_type,'operational_action')
   assert.equal(classifyRuntimeHumanDecision('rollback-user-action').semantic_type,'operational_action')
   assert.equal(classifyRuntimeHumanDecision('provider-failure-blocked').semantic_type,'operational_action')
   assert.equal(classifyRuntimeHumanDecision('permission-failure-blocked').semantic_type,'operational_action')
@@ -77,4 +77,30 @@ test('temporary rollback USER_ACTION_REQUIRED is operational, not authority',()=
   const store=new MissionStore(),m=startAssessedMission(store,'human-rollback','small task')
   m.vcs.temporary_mutations.push({id:'tm1',kind:'test',description:'temporary',rollback_command:'echo rollback',rollback_hash:'x',status:'active',created_at:1})
   const decision=evaluateIdle(m);assert.equal(decision.decision,'USER_ACTION_REQUIRED');assert.equal(decision.reason_code,'precondition-blocked');assert.equal(classifyRuntimeHumanDecision(decision.reason_code).semantic_type,'operational_action')
+})
+
+
+test('PROMPT B authority HumanDecision requires exact authority semantics and non-authority decisions cannot impersonate Authority',()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'human-coherence','small task')
+  assert.throws(()=>openHumanDecision(m,{semantic_type:'authority_request',reason_code:'authority-generic',summary:'bad',response_schema:{kind:'authority-protocol',protocol:'approve-exact-action'}}),/semantically incoherent/)
+  assert.throws(()=>openHumanDecision(m,{semantic_type:'authority_request',reason_code:'authority-generic',summary:'bad',response_schema:{kind:'external-action'},authority_ref:'abc'}),/semantically incoherent/)
+  assert.throws(()=>openHumanDecision(m,{semantic_type:'operational_action',reason_code:'not-authority',summary:'bad',response_schema:{kind:'authority-protocol',protocol:'approve-exact-action'},authority_ref:'abc'}),/semantically incoherent/)
+  assert.equal(m.authority.human_decision,undefined)
+  assert.equal(classifyRuntimeHumanDecision('authority-looking-runtime-label').semantic_type,'operational_action')
+})
+
+test('PROMPT B HumanDecision identity and provenance bind exact blocked task/worker scope',()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'human-scope','small task')
+  const a=openHumanDecision(m,{semantic_type:'ambiguity',reason_code:'choose-contract',summary:'choose',task_id:'t_a',worker_id:'w_a',response_schema:{kind:'choice',choices:['one','two']}})
+  assert.deepEqual(a.blocking_scope,{mission_id:m.identity.mission_id,task_id:'t_a',worker_id:'w_a'})
+  const b=openHumanDecision(m,{semantic_type:'ambiguity',reason_code:'choose-contract',summary:'choose',task_id:'t_b',worker_id:'w_b',response_schema:{kind:'choice',choices:['one','two']}})
+  assert.notEqual(b.decision_id,a.decision_id);assert.deepEqual(b.blocking_scope,{mission_id:m.identity.mission_id,task_id:'t_b',worker_id:'w_b'})
+})
+
+test('PROMPT B operational HumanDecision response never creates or approves Authority state',()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'human-no-authority','small task')
+  openHumanDecision(m,{semantic_type:'operational_action',reason_code:'repair-env',summary:'repair',response_schema:{kind:'external-action'}})
+  assert.equal(m.authority.authority,undefined)
+  store.beginFollowupSemanticAssessment(m.identity.session_id,'done')
+  assert.equal(m.authority.human_decision.status,'RESOLVED');assert.equal(m.authority.authority,undefined)
 })

@@ -176,7 +176,7 @@
       "area": "human-decisions",
       "canonical_owner": "HumanDecisionContract/runtime",
       "owner_path": "plugin/src/contracts/human-decision.ts",
-      "owner_sha256": "b53d122b7a63be735f700b6e9009e08aa7e6a9a1c2c9d21f830a80ffca5890e6",
+      "owner_sha256": "421fe3628b950f0ca2165a87dd1d49cfb41ea96e51e1fca12e627b1e3aaa7ca7",
       "producer_or_contract_paths": [
         "plugin/src/runtime/human-decision/runtime.ts",
         "plugin/src/runtime/human-decision/transport.ts"

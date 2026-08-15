@@ -1,0 +1,165 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_HUMAN_DECISION_ADVERSARIAL_AUDIT",
+  "program": "PROMPT_B",
+  "section": 15,
+  "status": "PASS",
+  "invariants": [
+    {
+      "invariant": "semantic-decision-not-transport",
+      "owner": "plugin/src/runtime/human-decision/runtime.ts",
+      "owner_sha256": "637bbdc5cdb04b534066ba85a58d2113f5678506ae5e99045220d52a1005c9b1",
+      "owner_anchor": "m.authority.human_decision=decision",
+      "proof": "plugin/test/h1-human-decision-transport.test.mjs",
+      "proof_sha256": "9567c851068b6472e0a704d561143bcfdfa11860d8367b01527d729cdd8e6250",
+      "proof_anchor": "transport-only and never resolve canonical HumanDecision state"
+    },
+    {
+      "invariant": "typed-choice",
+      "owner": "plugin/src/runtime/human-decision/transport.ts",
+      "owner_sha256": "2db615c4592412e6a6aaf91356007746c339530711bf053208940ef2b043a44e",
+      "owner_anchor": "if(kind==='choice')",
+      "proof": "plugin/test/h1-human-decision-transport.test.mjs",
+      "proof_sha256": "9567c851068b6472e0a704d561143bcfdfa11860d8367b01527d729cdd8e6250",
+      "proof_anchor": "typed choice rejects invalid chat input"
+    },
+    {
+      "invariant": "freeform-bounded-to-semantic-plane",
+      "owner": "plugin/src/runtime/human-decision/runtime.ts",
+      "owner_sha256": "637bbdc5cdb04b534066ba85a58d2113f5678506ae5e99045220d52a1005c9b1",
+      "owner_anchor": "return{semantic_type:'value_judgment',response_schema:{kind:'free-text'}}",
+      "proof": "plugin/test/human-decision-contract.test.mjs",
+      "proof_sha256": "100a489a620042989458fdcee59a10eb57780f92ac3f54d4429df2f192dc9607",
+      "proof_anchor": "authority HumanDecision requires exact authority semantics"
+    },
+    {
+      "invariant": "timeout-is-transport-only",
+      "owner": "plugin/src/runtime/human-decision/transport.ts",
+      "owner_sha256": "2db615c4592412e6a6aaf91356007746c339530711bf053208940ef2b043a44e",
+      "owner_anchor": "status:'TIMEOUT'",
+      "proof": "plugin/test/h1-human-decision-transport.test.mjs",
+      "proof_sha256": "9567c851068b6472e0a704d561143bcfdfa11860d8367b01527d729cdd8e6250",
+      "proof_anchor": "timeout and cancel are transport-only"
+    },
+    {
+      "invariant": "cancellation-is-transport-only",
+      "owner": "plugin/src/runtime/human-decision/transport.ts",
+      "owner_sha256": "2db615c4592412e6a6aaf91356007746c339530711bf053208940ef2b043a44e",
+      "owner_anchor": "cancel(decisionId:string)",
+      "proof": "plugin/test/h1-human-decision-transport.test.mjs",
+      "proof_sha256": "9567c851068b6472e0a704d561143bcfdfa11860d8367b01527d729cdd8e6250",
+      "proof_anchor": "timeout and cancel are transport-only"
+    },
+    {
+      "invariant": "stale-answer-rejected",
+      "owner": "plugin/src/runtime/human-decision/transport.ts",
+      "owner_sha256": "2db615c4592412e6a6aaf91356007746c339530711bf053208940ef2b043a44e",
+      "owner_anchor": "entry.handle.state!=='OPEN'",
+      "proof": "plugin/test/h1-human-decision-transport.test.mjs",
+      "proof_sha256": "9567c851068b6472e0a704d561143bcfdfa11860d8367b01527d729cdd8e6250",
+      "proof_anchor": "stale answer to a replaced HumanDecision"
+    },
+    {
+      "invariant": "duplicate-answer-idempotency",
+      "owner": "plugin/src/runtime/human-decision/transport.ts",
+      "owner_sha256": "2db615c4592412e6a6aaf91356007746c339530711bf053208940ef2b043a44e",
+      "owner_anchor": "state:'RESPONDED'",
+      "proof": "plugin/test/h1-human-decision-transport.test.mjs",
+      "proof_sha256": "9567c851068b6472e0a704d561143bcfdfa11860d8367b01527d729cdd8e6250",
+      "proof_anchor": "duplicate/conflicting replies are inert"
+    },
+    {
+      "invariant": "conflicting-answer-first-wins",
+      "owner": "plugin/src/runtime/human-decision/transport.ts",
+      "owner_sha256": "2db615c4592412e6a6aaf91356007746c339530711bf053208940ef2b043a44e",
+      "owner_anchor": "entry.response=response",
+      "proof": "plugin/test/h1-human-decision-transport.test.mjs",
+      "proof_sha256": "9567c851068b6472e0a704d561143bcfdfa11860d8367b01527d729cdd8e6250",
+      "proof_anchor": "duplicate/conflicting replies are inert"
+    },
+    {
+      "invariant": "restart-no-transport-replay",
+      "owner": "plugin/src/runtime/application/runtime-services.ts",
+      "owner_sha256": "fd9693c7a80d233b1cd7bdf89f5a76e1050fa2ecb6e68d9afc51bbccd54500bc",
+      "owner_anchor": "new ChatHumanDecisionTransport()",
+      "proof": "plugin/test/h1-human-decision-transport.test.mjs",
+      "proof_sha256": "9567c851068b6472e0a704d561143bcfdfa11860d8367b01527d729cdd8e6250",
+      "proof_anchor": "restart reopens persisted semantic decision but never replays stale ephemeral transport response"
+    },
+    {
+      "invariant": "question-provenance",
+      "owner": "plugin/src/contracts/human-decision.ts",
+      "owner_sha256": "421fe3628b950f0ca2165a87dd1d49cfb41ea96e51e1fca12e627b1e3aaa7ca7",
+      "owner_anchor": "blocking_scope:HumanDecisionScope",
+      "proof": "plugin/test/human-decision-contract.test.mjs",
+      "proof_sha256": "100a489a620042989458fdcee59a10eb57780f92ac3f54d4429df2f192dc9607",
+      "proof_anchor": "identity and provenance bind exact blocked task/worker scope"
+    },
+    {
+      "invariant": "exact-blocked-decision-relation",
+      "owner": "plugin/src/runtime/completion/evaluator.ts",
+      "owner_sha256": "72182965f77468244b1e3ea63749d2324008da60635e79dcce58e4f0740b4c10",
+      "owner_anchor": "human-decision:",
+      "proof": "plugin/test/human-decision-contract.test.mjs",
+      "proof_sha256": "100a489a620042989458fdcee59a10eb57780f92ac3f54d4429df2f192dc9607",
+      "proof_anchor": "open operational HumanDecision blocks deterministic completion"
+    },
+    {
+      "invariant": "source-resolvable-not-asked",
+      "owner": "plugin/src/runtime/continuation/evaluator.ts",
+      "owner_sha256": "9a0cd389595fe1579d843b04e48d03c625441ee656c9d1c7aa632c0d5163a03e",
+      "owner_anchor": "Resolve the contract-critical ambiguity from repository structure",
+      "proof": "plugin/test/main-prompt-delegation-preconditions.test.mjs",
+      "proof_sha256": "5a3dac55672be8a1d8cf515634a69471ad76a79afe95db0607e9ca63680c462e",
+      "proof_anchor": "source-resolvable ambiguity must not ask the user"
+    },
+    {
+      "invariant": "no-accidental-authority-grant",
+      "owner": "plugin/src/contracts/human-decision.ts",
+      "owner_sha256": "421fe3628b950f0ca2165a87dd1d49cfb41ea96e51e1fca12e627b1e3aaa7ca7",
+      "owner_anchor": "authorityDecision=v.semantic_type==='authority_request'",
+      "proof": "plugin/test/human-decision-contract.test.mjs",
+      "proof_sha256": "100a489a620042989458fdcee59a10eb57780f92ac3f54d4429df2f192dc9607",
+      "proof_anchor": "operational HumanDecision response never creates or approves Authority state"
+    },
+    {
+      "invariant": "idle-does-not-reclassify-open-decision",
+      "owner": "plugin/src/runtime/application/runtime-event-controller.ts",
+      "owner_sha256": "0712f2d175a8b1f5b9d7f49312fef3abca749cc38d06aeab60afca0c12c3a594",
+      "owner_anchor": "m.authority.human_decision?.status!=='OPEN'",
+      "proof": "plugin/test/p3-process-control-integration.test.mjs",
+      "proof_sha256": "293c483912aa3f19256dd7324610a169704d588f9e65ed28d88d0d03a676bcce",
+      "proof_anchor": "parent idle preserves an existing canonical operational HumanDecision"
+    },
+    {
+      "invariant": "structured-host-ui-truthful-unsupported",
+      "owner": "plugin/src/contracts/host-capability.ts",
+      "owner_sha256": "d7b8f2abe1733f49ab71ad9d043c27a58ef48acd179f8c6687ae475eb5204d1f",
+      "owner_anchor": "unsupported('structured-human-decision-transport'",
+      "proof": "plugin/test/h2-structured-human-decision-host.test.mjs",
+      "proof_sha256": "09f015d57371602f838754cb2d315d20bbaa1f2f7b69d924717dc2bf6d8c50c8",
+      "proof_anchor": "structured host UI remains unsupported"
+    }
+  ],
+  "violations": [],
+  "summary": {
+    "required": 15,
+    "covered": 15,
+    "violations": 0
+  },
+  "closed_defects": [
+    {
+      "id": "idle-human-decision-authority-reclassification",
+      "fix": "RuntimeEventController preserves an already-open canonical HumanDecision instead of classifying USER_ACTION_REQUIRED again."
+    },
+    {
+      "id": "authority-request-semantic-coherence",
+      "fix": "authority_request requires exact authority_ref + authority-protocol; non-authority decisions cannot carry either."
+    },
+    {
+      "id": "reason-label-authority-inference",
+      "fix": "Runtime reason labels can no longer manufacture authority_request; exact Authority owners create protocol-bound decisions directly."
+    }
+  ],
+  "claim_boundary": "HumanDecision owns semantic blocked-decision state; chat/host UI is transport only. Transport timeout/cancel/reply never grants Authority by itself, and OpenCode structured host UI remains explicitly unsupported."
+}
