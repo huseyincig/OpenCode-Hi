@@ -207,3 +207,14 @@ test('PROMPT B real Git workspace provisioning preserves pre-staged and unstaged
     assert.equal(run(['status','--porcelain=v1']),before);assert.match(before,/ M tracked\.txt/);assert.match(before,/M  staged\.txt/)
   }finally{spawnSync('git',['worktree','remove','--force',work],{cwd:root,encoding:'utf8'});rmSync(work,{recursive:true,force:true});rmSync(root,{recursive:true,force:true})}
 })
+
+
+test('PROMPT B symlinked workspace escape is canonicalized and rejected when it leaves the Git common repository',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-pb-link-primary-')),evil=mkdtempSync(join(tmpdir(),'hi-pb-link-evil-')),link=join(root,'linked-workspace'),common=mkdtempSync(join(tmpdir(),'hi-pb-link-common-'))
+  try{
+    const {symlinkSync}=await import('node:fs');symlinkSync(evil,link,'dir');const workspace={create:async()=>({data:{id:'ws_link',type:'worktree',directory:link}}),list:async()=>({data:[]}),remove:async()=>({data:{}})}
+    const inspect=dir=>({head:BASE,common_dir:resolve(dir)===resolve(root)?resolve(common):resolve(common,'foreign'),worktrees:[resolve(root),resolve(evil)]})
+    const adapter=new OpenCodeWorkspaceAdapter({v2:{experimental:{workspace}}},new URL('http://127.0.0.1:1'),root,inspect)
+    await assert.rejects(()=>adapter.provision({mission_id:'m',task_id:'t',repository_root:root,source_baseline:BASE}),/same Git common repository/)
+  }finally{rmSync(root,{recursive:true,force:true});rmSync(evil,{recursive:true,force:true});rmSync(common,{recursive:true,force:true})}
+})

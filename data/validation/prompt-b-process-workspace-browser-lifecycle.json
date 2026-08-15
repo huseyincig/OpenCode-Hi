@@ -1,0 +1,750 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_PROCESS_WORKSPACE_BROWSER_LIFECYCLE_ADVERSARIAL_AUDIT",
+  "program": "PROMPT_B",
+  "sections": [
+    12,
+    13,
+    14
+  ],
+  "status": "PASS",
+  "invariants": [
+    {
+      "section": 12,
+      "invariant": "spawn",
+      "level": "T3",
+      "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
+      "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
+      "owner_anchor": "async spawn(",
+      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
+      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof_anchor": "process_spawn_pid"
+    },
+    {
+      "section": 12,
+      "invariant": "pid",
+      "level": "T3",
+      "owner": "plugin/src/contracts/process.ts",
+      "owner_sha256": "baa22ab538d5b0e16c09d2f5234d8fa13253881a608e3fbb6102833adff963fd",
+      "owner_anchor": "pid:number",
+      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
+      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof_anchor": "process_spawn_pid"
+    },
+    {
+      "section": 12,
+      "invariant": "process-group",
+      "level": "T3",
+      "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
+      "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
+      "owner_anchor": "process_group_id",
+      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
+      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof_anchor": "process_group_identity"
+    },
+    {
+      "section": 12,
+      "invariant": "cwd",
+      "level": "T3",
+      "owner": "plugin/src/contracts/process.ts",
+      "owner_sha256": "baa22ab538d5b0e16c09d2f5234d8fa13253881a608e3fbb6102833adff963fd",
+      "owner_anchor": "cwd:string",
+      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
+      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof_anchor": "process_spawn_pid"
+    },
+    {
+      "section": 12,
+      "invariant": "task-worker-owner",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/contracts/process.ts",
+      "owner_sha256": "baa22ab538d5b0e16c09d2f5234d8fa13253881a608e3fbb6102833adff963fd",
+      "owner_anchor": "worker_id:string",
+      "proof": "plugin/test/p3-process-runtime-lifecycle.test.mjs",
+      "proof_sha256": "70b85c069b9cb7ccd92f541a35390e2f628e873b76b043c70f1ffe83ac99e157",
+      "proof_anchor": "Mission execution owns durable ProcessContract registry"
+    },
+    {
+      "section": 12,
+      "invariant": "bounded-output",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
+      "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
+      "owner_anchor": "maxBufferedChars",
+      "proof": "plugin/test/p2-opencode-pty-executor.test.mjs",
+      "proof_sha256": "7ea13f3c57dbb652953f128501bac03c8b0d826f31f217ca9b5a11e2ae25f7b3",
+      "proof_anchor": "huge unread PTY output remains bounded"
+    },
+    {
+      "section": 12,
+      "invariant": "stdin",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
+      "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
+      "owner_anchor": "async write(",
+      "proof": "plugin/test/p2-opencode-pty-executor.test.mjs",
+      "proof_sha256": "7ea13f3c57dbb652953f128501bac03c8b0d826f31f217ca9b5a11e2ae25f7b3",
+      "proof_anchor": "stdin write uses the live websocket"
+    },
+    {
+      "section": 12,
+      "invariant": "wait",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/runtime/continuation/evaluator.ts",
+      "owner_sha256": "9a0cd389595fe1579d843b04e48d03c625441ee656c9d1c7aa632c0d5163a03e",
+      "owner_anchor": "waiting-process",
+      "proof": "plugin/test/p3-process-runtime-lifecycle.test.mjs",
+      "proof_sha256": "70b85c069b9cb7ccd92f541a35390e2f628e873b76b043c70f1ffe83ac99e157",
+      "proof_anchor": "running process makes continuation WAIT"
+    },
+    {
+      "section": 12,
+      "invariant": "exit",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
+      "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
+      "owner_anchor": "status='EXITED'",
+      "proof": "plugin/test/p2-opencode-pty-executor.test.mjs",
+      "proof_sha256": "7ea13f3c57dbb652953f128501bac03c8b0d826f31f217ca9b5a11e2ae25f7b3",
+      "proof_anchor": "natural exit records nonzero exit code"
+    },
+    {
+      "section": 12,
+      "invariant": "timeout",
+      "level": "T3",
+      "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
+      "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
+      "owner_anchor": "#requestTimeout",
+      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
+      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof_anchor": "process_timeout_group_signal"
+    },
+    {
+      "section": 12,
+      "invariant": "kill",
+      "level": "T3",
+      "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
+      "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
+      "owner_anchor": "async kill(",
+      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
+      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof_anchor": "process_kill_cleanup"
+    },
+    {
+      "section": 12,
+      "invariant": "cleanup",
+      "level": "T3",
+      "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
+      "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
+      "owner_anchor": "async cleanup(",
+      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
+      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof_anchor": "process_host_cleanup_empty"
+    },
+    {
+      "section": 12,
+      "invariant": "restart",
+      "level": "T3",
+      "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
+      "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
+      "owner_anchor": "async reconcile(",
+      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
+      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof_anchor": "process_restart_adoption"
+    },
+    {
+      "section": 12,
+      "invariant": "orphan-reconciliation",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
+      "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
+      "owner_anchor": "status='ORPHANED'",
+      "proof": "plugin/test/p3-process-runtime-lifecycle.test.mjs",
+      "proof_sha256": "70b85c069b9cb7ccd92f541a35390e2f628e873b76b043c70f1ffe83ac99e157",
+      "proof_anchor": "quarantines orphan without signalling it"
+    },
+    {
+      "section": 12,
+      "invariant": "evidence",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/runtime/process/runtime.ts",
+      "owner_sha256": "a0e48e9de3595a858517688afd742ce93bc65b07f7a52edfb301d555b1c9cb4f",
+      "owner_anchor": "kind:'diagnostic-evidence'",
+      "proof": "plugin/test/p3-process-runtime-lifecycle.test.mjs",
+      "proof_sha256": "70b85c069b9cb7ccd92f541a35390e2f628e873b76b043c70f1ffe83ac99e157",
+      "proof_anchor": "records hash-bound pending Evidence"
+    },
+    {
+      "section": 12,
+      "invariant": "quick-exit-before-observation",
+      "level": "T3",
+      "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
+      "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
+      "owner_anchor": "#applyInfo",
+      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
+      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof_anchor": "process_quick_exit_before_observation"
+    },
+    {
+      "section": 12,
+      "invariant": "parent-death",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/runtime/process/runtime.ts",
+      "owner_sha256": "a0e48e9de3595a858517688afd742ce93bc65b07f7a52edfb301d555b1c9cb4f",
+      "owner_anchor": "stopMission",
+      "proof": "plugin/test/p3-process-control-integration.test.mjs",
+      "proof_sha256": "f6bddf441c2334d8b9e3e582f1889fa3db096093af07ce64211b773b0558b307",
+      "proof_anchor": "parent session deletion stops mission and process runtime"
+    },
+    {
+      "section": 12,
+      "invariant": "stale-reused-pid",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
+      "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
+      "owner_anchor": "PID identity changed",
+      "proof": "plugin/test/p2-opencode-pty-executor.test.mjs",
+      "proof_sha256": "7ea13f3c57dbb652953f128501bac03c8b0d826f31f217ca9b5a11e2ae25f7b3",
+      "proof_anchor": "stale PID mismatch is fail-closed"
+    },
+    {
+      "section": 12,
+      "invariant": "surviving-process-group",
+      "level": "T3",
+      "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
+      "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
+      "owner_anchor": "#signalTarget",
+      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
+      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof_anchor": "process_group_identity"
+    },
+    {
+      "section": 12,
+      "invariant": "kill-failure",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
+      "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
+      "owner_anchor": "this.signalProcess(target,signal)",
+      "proof": "plugin/test/p2-opencode-pty-executor.test.mjs",
+      "proof_sha256": "7ea13f3c57dbb652953f128501bac03c8b0d826f31f217ca9b5a11e2ae25f7b3",
+      "proof_anchor": "kill signalling failure does not fabricate TERMINATED"
+    },
+    {
+      "section": 12,
+      "invariant": "permission-denied",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/runtime/process/authority.ts",
+      "owner_sha256": "c9e47bee821cced0ae282f388e0561e0b06c6eddc34ffc9ad5ec9f8c1249714f",
+      "owner_anchor": "DENY",
+      "proof": "plugin/test/p3-process-runtime-lifecycle.test.mjs",
+      "proof_sha256": "70b85c069b9cb7ccd92f541a35390e2f628e873b76b043c70f1ffe83ac99e157",
+      "proof_anchor": "explicit permission deny never asks and never spawns"
+    },
+    {
+      "section": 12,
+      "invariant": "nonzero-exit",
+      "level": "T3",
+      "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
+      "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
+      "owner_anchor": "exit_code",
+      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
+      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof_anchor": "process_nonzero_exit"
+    },
+    {
+      "section": 12,
+      "invariant": "long-running-and-concurrent",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/runtime/continuation/evaluator.ts",
+      "owner_sha256": "9a0cd389595fe1579d843b04e48d03c625441ee656c9d1c7aa632c0d5163a03e",
+      "owner_anchor": "waiting-process",
+      "proof": "plugin/test/p2-opencode-pty-executor.test.mjs",
+      "proof_sha256": "7ea13f3c57dbb652953f128501bac03c8b0d826f31f217ca9b5a11e2ae25f7b3",
+      "proof_anchor": "concurrent owned PTYs keep output cursors and buffers isolated"
+    },
+    {
+      "section": 13,
+      "invariant": "isolation-decision",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/runtime/workspace/runtime.ts",
+      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_anchor": "decision(",
+      "proof": "plugin/test/w1-workspace-contract.test.mjs",
+      "proof_sha256": "954b7fce272007e14bd42c7897a049c8dc8abcbbccdb29e7cf2d281c725771c3",
+      "proof_anchor": "IsolationDecision is strict"
+    },
+    {
+      "section": 13,
+      "invariant": "workspace-lease",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/contracts/workspace.ts",
+      "owner_sha256": "d2ed1d517537201302344aa3061f149b044ad85b6909fe85ec876904ea9b496a",
+      "owner_anchor": "WorkspaceLeaseContract",
+      "proof": "plugin/test/w1-workspace-contract.test.mjs",
+      "proof_sha256": "954b7fce272007e14bd42c7897a049c8dc8abcbbccdb29e7cf2d281c725771c3",
+      "proof_anchor": "WorkspaceLease separates lifecycle"
+    },
+    {
+      "section": 13,
+      "invariant": "provision",
+      "level": "T3",
+      "owner": "plugin/src/runtime/workspace/runtime.ts",
+      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_anchor": "async provision(",
+      "proof": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-47a3502.json",
+      "proof_sha256": "978ebc81b2a00e404c5c3b4229ae770b6eebb5f21239380572b76bfc89ac4e2c",
+      "proof_anchor": "workspace_create"
+    },
+    {
+      "section": 13,
+      "invariant": "task-worker-binding",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/runtime/workspace/runtime.ts",
+      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_anchor": "task_id:task.id",
+      "proof": "plugin/test/w2-workspace-executor.test.mjs",
+      "proof_sha256": "f149d9bde62f3f73685915628f5a20e6e9f55a6f640675a3441b3610757398f2",
+      "proof_anchor": "explicit isolated task provisions one lease"
+    },
+    {
+      "section": 13,
+      "invariant": "host-session-binding",
+      "level": "T3",
+      "owner": "plugin/src/runtime/task/child-execution-coordinator.ts",
+      "owner_sha256": "d2f76e60c8f9517731603b962cfb2bac5745602119ff1348e73a5d798493964b",
+      "owner_anchor": "workspaceID",
+      "proof": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-47a3502.json",
+      "proof_sha256": "978ebc81b2a00e404c5c3b4229ae770b6eebb5f21239380572b76bfc89ac4e2c",
+      "proof_anchor": "workspace_child_id_directory_binding"
+    },
+    {
+      "section": 13,
+      "invariant": "observed-cwd-workspace-identity",
+      "level": "T3",
+      "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
+      "owner_sha256": "fb00575bcad4c6679bc5f173732514745b30bd53057b30eb6ad91a5f636f6003",
+      "owner_anchor": "workspacePath",
+      "proof": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-47a3502.json",
+      "proof_sha256": "978ebc81b2a00e404c5c3b4229ae770b6eebb5f21239380572b76bfc89ac4e2c",
+      "proof_anchor": "workspace_observed_cwd_identity"
+    },
+    {
+      "section": 13,
+      "invariant": "isolated-writes",
+      "level": "T3",
+      "owner": "plugin/src/runtime/workspace/runtime.ts",
+      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_anchor": "workspace_path",
+      "proof": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-47a3502.json",
+      "proof_sha256": "978ebc81b2a00e404c5c3b4229ae770b6eebb5f21239380572b76bfc89ac4e2c",
+      "proof_anchor": "workspace_write_isolation"
+    },
+    {
+      "section": 13,
+      "invariant": "leased-verification",
+      "level": "T3",
+      "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
+      "owner_sha256": "fb00575bcad4c6679bc5f173732514745b30bd53057b30eb6ad91a5f636f6003",
+      "owner_anchor": "sourceBaseline",
+      "proof": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-47a3502.json",
+      "proof_sha256": "978ebc81b2a00e404c5c3b4229ae770b6eebb5f21239380572b76bfc89ac4e2c",
+      "proof_anchor": "workspace_verification"
+    },
+    {
+      "section": 13,
+      "invariant": "reconcile",
+      "level": "T3",
+      "owner": "plugin/src/runtime/workspace/runtime.ts",
+      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_anchor": "reconcileRestored",
+      "proof": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-47a3502.json",
+      "proof_sha256": "978ebc81b2a00e404c5c3b4229ae770b6eebb5f21239380572b76bfc89ac4e2c",
+      "proof_anchor": "workspace_restart_adoption"
+    },
+    {
+      "section": 13,
+      "invariant": "cleanup",
+      "level": "T3",
+      "owner": "plugin/src/runtime/workspace/runtime.ts",
+      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_anchor": "async cleanup(",
+      "proof": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-47a3502.json",
+      "proof_sha256": "978ebc81b2a00e404c5c3b4229ae770b6eebb5f21239380572b76bfc89ac4e2c",
+      "proof_anchor": "workspace_cleanup"
+    },
+    {
+      "section": 13,
+      "invariant": "symlink-traversal",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
+      "owner_sha256": "fb00575bcad4c6679bc5f173732514745b30bd53057b30eb6ad91a5f636f6003",
+      "owner_anchor": "realpathSync",
+      "proof": "plugin/test/w2-workspace-executor.test.mjs",
+      "proof_sha256": "f149d9bde62f3f73685915628f5a20e6e9f55a6f640675a3441b3610757398f2",
+      "proof_anchor": "symlinked workspace escape is canonicalized and rejected"
+    },
+    {
+      "section": 13,
+      "invariant": "realpath",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
+      "owner_sha256": "fb00575bcad4c6679bc5f173732514745b30bd53057b30eb6ad91a5f636f6003",
+      "owner_anchor": "canonicalExisting",
+      "proof": "plugin/test/w2-workspace-executor.test.mjs",
+      "proof_sha256": "f149d9bde62f3f73685915628f5a20e6e9f55a6f640675a3441b3610757398f2",
+      "proof_anchor": "default Git inspector accepts an actual detached registered worktree"
+    },
+    {
+      "section": 13,
+      "invariant": "branch-collision",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
+      "owner_sha256": "fb00575bcad4c6679bc5f173732514745b30bd53057b30eb6ad91a5f636f6003",
+      "owner_anchor": "type:'worktree'",
+      "proof": "plugin/test/w2-workspace-executor.test.mjs",
+      "proof_sha256": "f149d9bde62f3f73685915628f5a20e6e9f55a6f640675a3441b3610757398f2",
+      "proof_anchor": "branch,undefined"
+    },
+    {
+      "section": 13,
+      "invariant": "nested-repository",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
+      "owner_sha256": "fb00575bcad4c6679bc5f173732514745b30bd53057b30eb6ad91a5f636f6003",
+      "owner_anchor": "sameRepository",
+      "proof": "plugin/test/w2-workspace-executor.test.mjs",
+      "proof_sha256": "f149d9bde62f3f73685915628f5a20e6e9f55a6f640675a3441b3610757398f2",
+      "proof_anchor": "same Git common repository"
+    },
+    {
+      "section": 13,
+      "invariant": "dirty-user-tree",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
+      "owner_sha256": "fb00575bcad4c6679bc5f173732514745b30bd53057b30eb6ad91a5f636f6003",
+      "owner_anchor": "defaultInspect",
+      "proof": "plugin/test/w2-workspace-executor.test.mjs",
+      "proof_sha256": "f149d9bde62f3f73685915628f5a20e6e9f55a6f640675a3441b3610757398f2",
+      "proof_anchor": "preserves pre-staged and unstaged user changes exactly"
+    },
+    {
+      "section": 13,
+      "invariant": "staged-user-files",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
+      "owner_sha256": "fb00575bcad4c6679bc5f173732514745b30bd53057b30eb6ad91a5f636f6003",
+      "owner_anchor": "defaultInspect",
+      "proof": "plugin/test/w2-workspace-executor.test.mjs",
+      "proof_sha256": "f149d9bde62f3f73685915628f5a20e6e9f55a6f640675a3441b3610757398f2",
+      "proof_anchor": "pre-staged and unstaged user changes exactly"
+    },
+    {
+      "section": 13,
+      "invariant": "concurrent-leases",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/runtime/workspace/runtime.ts",
+      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_anchor": "identityConflict",
+      "proof": "plugin/test/w2-workspace-executor.test.mjs",
+      "proof_sha256": "f149d9bde62f3f73685915628f5a20e6e9f55a6f640675a3441b3610757398f2",
+      "proof_anchor": "concurrent lease identity collision is cleaned and rejected"
+    },
+    {
+      "section": 13,
+      "invariant": "persisted-duplicate-lease-identity",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/runtime/mission/validators.ts",
+      "owner_sha256": "0a534c906ebd71f44b3f91cfb2f346cdbfee1ecf4ffd917b04f4b848784ed49b",
+      "owner_anchor": "activeWorkspacePaths",
+      "proof": "plugin/test/w1-workspace-contract.test.mjs",
+      "proof_sha256": "954b7fce272007e14bd42c7897a049c8dc8abcbbccdb29e7cf2d281c725771c3",
+      "proof_anchor": "cannot share host or filesystem identity across tasks"
+    },
+    {
+      "section": 13,
+      "invariant": "stale-lease",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/runtime/workspace/runtime.ts",
+      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_anchor": "status:'ORPHANED'",
+      "proof": "plugin/test/w2-workspace-executor.test.mjs",
+      "proof_sha256": "f149d9bde62f3f73685915628f5a20e6e9f55a6f640675a3441b3610757398f2",
+      "proof_anchor": "restart adopts exact lease, quarantines missing owner"
+    },
+    {
+      "section": 13,
+      "invariant": "crash-restart",
+      "level": "T3",
+      "owner": "plugin/src/runtime/workspace/runtime.ts",
+      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_anchor": "reconcileRestored",
+      "proof": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-47a3502.json",
+      "proof_sha256": "978ebc81b2a00e404c5c3b4229ae770b6eebb5f21239380572b76bfc89ac4e2c",
+      "proof_anchor": "workspace_restart_adoption"
+    },
+    {
+      "section": 13,
+      "invariant": "cleanup-failure",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/runtime/workspace/runtime.ts",
+      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_anchor": "workspace.cleanup-failed",
+      "proof": "plugin/test/w2-workspace-executor.test.mjs",
+      "proof_sha256": "f149d9bde62f3f73685915628f5a20e6e9f55a6f640675a3441b3610757398f2",
+      "proof_anchor": "workspace cleanup failure quarantines lease"
+    },
+    {
+      "section": 13,
+      "invariant": "merge-reconcile-conflict",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
+      "owner_sha256": "fb00575bcad4c6679bc5f173732514745b30bd53057b30eb6ad91a5f636f6003",
+      "owner_anchor": "Source baseline changed",
+      "proof": "plugin/test/w2-workspace-executor.test.mjs",
+      "proof_sha256": "f149d9bde62f3f73685915628f5a20e6e9f55a6f640675a3441b3610757398f2",
+      "proof_anchor": "source-baseline substitution"
+    },
+    {
+      "section": 13,
+      "invariant": "user-owned-changes",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
+      "owner_sha256": "fb00575bcad4c6679bc5f173732514745b30bd53057b30eb6ad91a5f636f6003",
+      "owner_anchor": "worktree",
+      "proof": "plugin/test/w2-workspace-executor.test.mjs",
+      "proof_sha256": "f149d9bde62f3f73685915628f5a20e6e9f55a6f640675a3441b3610757398f2",
+      "proof_anchor": "preserves pre-staged and unstaged user changes exactly"
+    },
+    {
+      "section": 13,
+      "invariant": "no-broad-staging-autocommit",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/runtime/workspace/runtime.ts",
+      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_anchor": "WorkspaceRuntime",
+      "proof": "plugin/test/w2-workspace-executor.test.mjs",
+      "proof_sha256": "f149d9bde62f3f73685915628f5a20e6e9f55a6f640675a3441b3610757398f2",
+      "proof_anchor": "no broad auto-snapshot staging"
+    },
+    {
+      "section": 14,
+      "invariant": "navigation",
+      "level": "T3",
+      "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
+      "owner_sha256": "ea5a3c13fa5db65e5c682573e12adb1857a8d91e1d4fe0c3a01c6f79208a09cc",
+      "owner_anchor": "async navigate(",
+      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
+      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof_anchor": "browser_dynamic_route_state"
+    },
+    {
+      "section": 14,
+      "invariant": "dom-observation",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
+      "owner_sha256": "ea5a3c13fa5db65e5c682573e12adb1857a8d91e1d4fe0c3a01c6f79208a09cc",
+      "owner_anchor": "dom_summary",
+      "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
+      "proof_sha256": "5f2e793ce8ed8594412f9accf17a2dbdc06ed63564010a69bf5f23ff6ea6b3c9",
+      "proof_anchor": "emits bounded observations"
+    },
+    {
+      "section": 14,
+      "invariant": "selectors",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
+      "owner_sha256": "ea5a3c13fa5db65e5c682573e12adb1857a8d91e1d4fe0c3a01c6f79208a09cc",
+      "owner_anchor": "targetRef",
+      "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
+      "proof_sha256": "5f2e793ce8ed8594412f9accf17a2dbdc06ed63564010a69bf5f23ff6ea6b3c9",
+      "proof_anchor": "local-scope, task-isolated"
+    },
+    {
+      "section": 14,
+      "invariant": "console",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
+      "owner_sha256": "ea5a3c13fa5db65e5c682573e12adb1857a8d91e1d4fe0c3a01c6f79208a09cc",
+      "owner_anchor": "consoleErrors",
+      "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
+      "proof_sha256": "5f2e793ce8ed8594412f9accf17a2dbdc06ed63564010a69bf5f23ff6ea6b3c9",
+      "proof_anchor": "capture bounded console and network failures"
+    },
+    {
+      "section": 14,
+      "invariant": "network",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
+      "owner_sha256": "ea5a3c13fa5db65e5c682573e12adb1857a8d91e1d4fe0c3a01c6f79208a09cc",
+      "owner_anchor": "networkErrors",
+      "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
+      "proof_sha256": "5f2e793ce8ed8594412f9accf17a2dbdc06ed63564010a69bf5f23ff6ea6b3c9",
+      "proof_anchor": "capture bounded console and network failures"
+    },
+    {
+      "section": 14,
+      "invariant": "screenshot-artifact",
+      "level": "T3",
+      "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
+      "owner_sha256": "ea5a3c13fa5db65e5c682573e12adb1857a8d91e1d4fe0c3a01c6f79208a09cc",
+      "owner_anchor": "persistScreenshot",
+      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
+      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof_anchor": "browser_screenshot_artifact"
+    },
+    {
+      "section": 14,
+      "invariant": "timeout",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
+      "owner_sha256": "ea5a3c13fa5db65e5c682573e12adb1857a8d91e1d4fe0c3a01c6f79208a09cc",
+      "owner_anchor": "timeoutMs",
+      "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
+      "proof_sha256": "5f2e793ce8ed8594412f9accf17a2dbdc06ed63564010a69bf5f23ff6ea6b3c9",
+      "proof_anchor": "navigation timeout and browser crash become explicit FAILED"
+    },
+    {
+      "section": 14,
+      "invariant": "browser-crash",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
+      "owner_sha256": "ea5a3c13fa5db65e5c682573e12adb1857a8d91e1d4fe0c3a01c6f79208a09cc",
+      "owner_anchor": "result:'OBSERVED'|'FAILED'",
+      "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
+      "proof_sha256": "5f2e793ce8ed8594412f9accf17a2dbdc06ed63564010a69bf5f23ff6ea6b3c9",
+      "proof_anchor": "browser crash become explicit FAILED observations"
+    },
+    {
+      "section": 14,
+      "invariant": "stale-element",
+      "level": "T3",
+      "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
+      "owner_sha256": "ea5a3c13fa5db65e5c682573e12adb1857a8d91e1d4fe0c3a01c6f79208a09cc",
+      "owner_anchor": "latest bounded observation",
+      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
+      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof_anchor": "browser_stale_element_rejection"
+    },
+    {
+      "section": 14,
+      "invariant": "auth-state",
+      "level": "T3",
+      "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
+      "owner_sha256": "ea5a3c13fa5db65e5c682573e12adb1857a8d91e1d4fe0c3a01c6f79208a09cc",
+      "owner_anchor": "executionOwnerRef",
+      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
+      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof_anchor": "browser_auth_state_reset"
+    },
+    {
+      "section": 14,
+      "invariant": "dangerous-external-action",
+      "level": "T3",
+      "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
+      "owner_sha256": "ea5a3c13fa5db65e5c682573e12adb1857a8d91e1d4fe0c3a01c6f79208a09cc",
+      "owner_anchor": "outside supported local scope",
+      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
+      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof_anchor": "browser_external_target_rejection"
+    },
+    {
+      "section": 14,
+      "invariant": "evidence-chain",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/contracts/browser-observation.ts",
+      "owner_sha256": "bdaa9047f895999a62039c17906bb8214c9af98394a0f68c1a311abc5f258624",
+      "owner_anchor": "BrowserObservationContract",
+      "proof": "plugin/test/b1-browser-observation-contract.test.mjs",
+      "proof_sha256": "9a67430f24cc16983bcf788f6454e620f00a06fa30a38fbe36fafb5fce347e78",
+      "proof_anchor": "observation remains non-Evidence"
+    },
+    {
+      "section": 14,
+      "invariant": "methodology-interpretation",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/runtime/methodology/exit.ts",
+      "owner_sha256": "e16430921a8e8e94654407294491df93af1f359a5e5b3d9568ee82a22cea78f3",
+      "owner_anchor": "methodologyExitCheck",
+      "proof": "plugin/test/b3-methodology-exit-evidence.test.mjs",
+      "proof_sha256": "92949a6c267de22bc5929897a6e61650f222bffad42dacf929e373c6cd6f680c",
+      "proof_anchor": "outcome-less browser/visual evidence pending rather than implicit PASS"
+    },
+    {
+      "section": 14,
+      "invariant": "model-prose-not-visual-verification",
+      "level": "CONTROLLED",
+      "owner": "plugin/src/runtime/completion/evaluator.ts",
+      "owner_sha256": "72182965f77468244b1e3ea63749d2324008da60635e79dcce58e4f0740b4c10",
+      "owner_anchor": "open-obligations",
+      "proof": "plugin/test/prompt-b-evidence-verification-completion-hostile.test.mjs",
+      "proof_sha256": "62b46683653f6efe5a8abcb55820bae4011d05fcada874a6cc8c14d1fb903ed7",
+      "proof_anchor": "DONE. all tests passed. safe to release."
+    }
+  ],
+  "capability_source_equivalence": {
+    "process-lifecycle": {
+      "receipt": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
+      "status": "SUPPORTED_T3",
+      "tested_git_commit": "2e7813f218c54de44073d1c851d180960e3d0911",
+      "runtime_hash_drift": [],
+      "equivalent": true
+    },
+    "workspace-isolation-binding": {
+      "receipt": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-47a3502.json",
+      "status": "SUPPORTED_T3",
+      "tested_git_commit": "47a3502ab7176d9e008ed7b68ad0a3eb93803783",
+      "runtime_hash_drift": [],
+      "equivalent": true
+    },
+    "browser-execution": {
+      "receipt": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
+      "status": "SUPPORTED_T3",
+      "tested_git_commit": "2e7813f218c54de44073d1c851d180960e3d0911",
+      "runtime_hash_drift": [],
+      "equivalent": true
+    }
+  },
+  "violations": [],
+  "summary": {
+    "required": 61,
+    "covered": 61,
+    "violations": 0,
+    "by_section": {
+      "12": {
+        "required": 23,
+        "covered": 23
+      },
+      "13": {
+        "required": 24,
+        "covered": 24
+      },
+      "14": {
+        "required": 14,
+        "covered": 14
+      }
+    }
+  },
+  "closed_defects": [
+    {
+      "id": "browser-cross-execution-owner-state-leak",
+      "fix": "Browser sessions are bound to exact execution_owner_ref and stale owners are rejected/reset."
+    },
+    {
+      "id": "workspace-forged-isolation-decision",
+      "fix": "Workspace provision requires canonical Mission-owned exact-Task IsolationDecision."
+    },
+    {
+      "id": "process-kill-failure-false-termination",
+      "fix": "Kill/timeout semantic flags are committed only after successful signal delivery."
+    },
+    {
+      "id": "process-group-unverified-signal",
+      "fix": "Linux process-group signalling requires independently observed isolated pgrp==owned PID and fails closed on drift."
+    },
+    {
+      "id": "duplicate-active-workspace-identity",
+      "fix": "Different Tasks cannot own the same active workspace path or host workspace ID; collision is cleaned/rejected and persisted duplicates fail validation."
+    }
+  ],
+  "claim_boundary": "SUPPORTED_T3 is accepted only with exact OpenCode 1.18.18 receipt evidence and byte-identical current capability owner/executor hashes. Controlled hostile tests close deterministic local semantics that do not require a live host."
+}

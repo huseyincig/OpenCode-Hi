@@ -387,6 +387,29 @@ try:
 except Exception as e:err(f'bad PROMPT B Mission/Task/Worker receipt: {e}')
 
 try:
+    life=json.loads((ROOT/'data/validation/prompt-b-process-workspace-browser-lifecycle.json').read_text(encoding='utf-8'))
+    if life.get('schema')!=1 or life.get('kind')!='PROMPT_B_PROCESS_WORKSPACE_BROWSER_LIFECYCLE_ADVERSARIAL_AUDIT' or life.get('program')!='PROMPT_B' or life.get('sections')!=[12,13,14] or life.get('status')!='PASS':err('bad PROMPT B Process/Workspace/Browser lifecycle audit receipt')
+    expected_summary={'required':61,'covered':61,'violations':0,'by_section':{'12':{'required':23,'covered':23},'13':{'required':24,'covered':24},'14':{'required':14,'covered':14}}}
+    if life.get('violations')!=[] or life.get('summary')!=expected_summary:err('PROMPT B Process/Workspace/Browser lifecycle coverage drift')
+    rows=life.get('invariants') or []
+    if len(rows)!=61 or {12:sum(1 for x in rows if x.get('section')==12),13:sum(1 for x in rows if x.get('section')==13),14:sum(1 for x in rows if x.get('section')==14)}!={12:23,13:24,14:14}:err('PROMPT B Process/Workspace/Browser invariant inventory drift')
+    import hashlib
+    for row in rows:
+        for key in ('owner','proof'):
+            rel=row.get(key); expected_hash=row.get(f'{key}_sha256')
+            if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B lifecycle missing {key}: {rel}')
+            elif hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected_hash:err(f'PROMPT B lifecycle {key} hash drift: {rel}')
+        try:
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B lifecycle owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B lifecycle proof anchor drift: {row.get('invariant')}")
+        except Exception as e:err(f'PROMPT B lifecycle row invalid: {e}')
+    eq=life.get('capability_source_equivalence') or {}
+    if set(eq)!={'process-lifecycle','workspace-isolation-binding','browser-execution'} or not all(x.get('status')=='SUPPORTED_T3' and x.get('equivalent') is True and x.get('runtime_hash_drift')==[] for x in eq.values() if isinstance(x,dict)):err('PROMPT B lifecycle capability source equivalence drift')
+    closed={x.get('id') for x in life.get('closed_defects',[]) if isinstance(x,dict)}
+    if not {'browser-cross-execution-owner-state-leak','workspace-forged-isolation-decision','process-kill-failure-false-termination','process-group-unverified-signal','duplicate-active-workspace-identity'}<=closed:err('PROMPT B lifecycle closed defect receipt drift')
+except Exception as e:err(f'bad PROMPT B Process/Workspace/Browser lifecycle receipt: {e}')
+
+try:
     nr=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text(encoding='utf-8'))
     if nr.get('schema')!=1 or nr.get('kind')!='EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION' or nr.get('program')!='PROMPT_B' or nr.get('status')!='PASS':err('bad PROMPT B native reevaluation receipt identity/status')
     oc=nr.get('opencode',{})

@@ -716,6 +716,25 @@ PROMPT B section 9 was re-audited with model/worker claims treated as untrusted.
 
 PROMPT B section 10 was re-audited across explicit context consumer binding, stale/unknown exclusion, ProjectIntelligence retrieval eligibility, compression source/hash/freshness/privacy, context budget survival and Evidence ownership separation. One real isolation defect was closed: `CompressionArtifact` could previously derive a `task:B` compression from source `ContextReference`s bound to `task:A`/another consumer. Compression sources must now already be bound to the exact `consumer_scope`; re-use across consumers requires an explicit canonical `bindContextReference` rebind first. Durable artifact selection still requires Mission handle membership, stale artifact content is not loaded, PI remains consumer-domain/freshness gated, and Context/PI remain outside Evidence ownership. `scripts/audit-context-project-intelligence-compression.py` generates `data/validation/prompt-b-context-project-intelligence-compression.json`; current receipt coverage is 12/12 with zero violations.
 
+
+### PROMPT B B8 — Process / Workspace / Browser lifecycle adversarial hardening — **CLOSED**
+
+PROMPT B sections 12–14 were re-audited as **61 executable invariants**: Process 23/23, Workspace 24/24, Browser/Visual 14/14, with zero audit violations in `data/validation/prompt-b-process-workspace-browser-lifecycle.json`.
+
+Five material correctness/ownership defects were closed across the lifecycle slice:
+
+- Browser Playwright sessions are now bound to exact `execution_owner_ref`; a new worker/session/generation for the same Task closes/replaces stale browser state, and stale owners cannot read or mutate the replacement session.
+- `WorkspaceRuntime.provision()` accepts only the canonical Mission-owned `IsolationDecision` for the exact Task scope/requester; forged/cross-task decisions fail before host provisioning.
+- Process kill/timeout semantics no longer mark an operation requested before native signal delivery succeeds; signal failure cannot later misclassify a natural process exit as Hi termination.
+- Linux process-group signalling is supported only after independent `/proc` observation proves the exact OpenCode-owned PID is an isolated process-group leader (`pgrp == pid`); process-group identity drift fails closed.
+- Different Tasks can no longer own the same active workspace path or host workspace ID. A colliding newly provisioned native lease is cleaned/rejected, and persisted duplicate active workspace identities fail Mission validation.
+
+Additional hostile coverage now includes 1 MiB unread PTY output, concurrent owned PTYs, quick exit, non-zero exit, timeout/group kill, restart adoption/orphan quarantine, staged+unstaged user workspace state, symlink escape, concurrent lease collision, cleanup failure, browser console/network errors, browser timeout/crash, stale elements, auth-state reset, external/credential target rejection and visual-Evidence separation.
+
+Exact-host truth was re-established rather than inherited optimistically. `data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json` proves current-equivalent Process and Browser behavior on OpenCode 1.18.18 / Linux aarch64; every capability-relevant Process/Browser owner/executor hash remains byte-identical to current source. Workspace runtime ownership changed later and therefore received fresh exact T3 acceptance at source `47a3502ab7176d9e008ed7b68ad0a3eb93803783` in `data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-47a3502.json`. Compatibility projection selects Process=`2e7813f`, Workspace=`47a3502`, Browser=`2e7813f`, and the lifecycle audit independently rejects any selected receipt whose capability-relevant runtime hashes drift from current source.
+
+The source-hardening checkpoint `47a3502ab7176d9e008ed7b68ad0a3eb93803783` / tree `4501bd61c4fd7600568220062b53bb3a92eb493a` passed exact committed-tree gates before T3 promotion: Python 84/84, Node 767/767, architecture lint 22/22 deferred=0, documentation parity violations=0, validator PASS, diff-check clean, backup count 0. Node 24.19.0 may still emit the known libuv `EEXIST` teardown assertion only after complete terminal PASS/result output; such teardown is never accepted without independently persisted terminal evidence and cleanup reconciliation.
+
 ## 11. Verification protocol for future checkpoints
 
 ### Focused verification first
@@ -774,7 +793,7 @@ OpenCode-Hi does **not** permanently pin host acceptance to 1.18.16 or any other
 4. bind the new receipt to that exact tested version and Git/source hashes;
 5. retain older exact-version receipts only as immutable historical evidence.
 
-The current reference-host projection is generated from exact receipts in `data/validation/compatibility-matrix-0.1.0.json`; on the current source it resolves OpenCode **1.18.18** / Linux / aarch64 and selects capability-specific exact T3 proofs for process lifecycle (`bc85854...`), workspace isolation (`92812a1...`), and browser execution (`476590e...`). Future host-bound checkpoints must resolve registry latest again rather than assuming 1.18.18 remains current.
+The current reference-host projection is generated from exact receipts in `data/validation/compatibility-matrix-0.1.0.json`; on the current source it resolves OpenCode **1.18.18** / Linux / aarch64 and selects capability-specific exact T3 proofs for process lifecycle (`2e7813f...`, source-equivalent current owner/executor hashes), workspace isolation (`47a3502...`), and browser execution (`2e7813f...`, source-equivalent current owner/executor hashes). Future host-bound checkpoints must resolve registry latest again rather than assuming 1.18.18 remains current.
 
 ## 12. Historical real-host acceptance truth retained from M12
 
@@ -826,7 +845,7 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**PROMPT B — IN PROGRESS. Next: Process / Workspace / Browser lifecycle adversarial audit.**
+**PROMPT B — IN PROGRESS. Next: HumanDecision adversarial audit (section 15), then persistence/restart and concurrency/race sections in sequence.**
 
 PROMPT A certified product-source baseline: `5ced215ed57f28f8d963376ca702efc0dac75503` (tree `b22db990942ad291997a8ad564ac1235283036bb`). Canonical reconstruction receipt: `data/validation/documentation-reconstruction.json`.
 

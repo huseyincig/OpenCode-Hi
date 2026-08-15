@@ -1,0 +1,162 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "generated_at": "2026-08-15",
+  "status": "PASS_EXACT_SOURCE_WORKSPACE_ISOLATION_T3_PROMPT_B",
+  "source_binding": {
+    "tested_git_commit": "47a3502ab7176d9e008ed7b68ad0a3eb93803783",
+    "tested_git_tree": "4501bd61c4fd7600568220062b53bb3a92eb493a",
+    "worktree": "/workspace/OpenCode-Hi",
+    "state": "CLEAN_COMMITTED_SOURCE",
+    "exact_candidate": true,
+    "runtime_hashes": {
+      "plugin/dist/plugin.js": "4ba3d1992736992f788a4d1814c33f68f585f19065802157babb398f647e3c20",
+      "plugin/src/plugin.ts": "3b1f608f0d8512f7510a5cd8e680f3879f181ee7490d649f9e5b0656d03030e8",
+      "plugin/src/contracts/workspace.ts": "d2ed1d517537201302344aa3061f149b044ad85b6909fe85ec876904ea9b496a",
+      "plugin/src/runtime/workspace/executor.ts": "f6129bfab5c20641a144030b7357be598d4fd77dcde9ecdf664a390398d2e12b",
+      "plugin/src/runtime/workspace/runtime.ts": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "plugin/src/runtime/mission/validators.ts": "0a534c906ebd71f44b3f91cfb2f346cdbfee1ecf4ffd917b04f4b848784ed49b",
+      "plugin/src/opencode/open-code-workspace-adapter.ts": "fb00575bcad4c6679bc5f173732514745b30bd53057b30eb6ad91a5f636f6003",
+      "plugin/src/runtime/task/child-execution-coordinator.ts": "d2f76e60c8f9517731603b962cfb2bac5745602119ff1348e73a5d798493964b",
+      "plugin/src/opencode/client-adapter.ts": "8509951b3ce97234c2d89440710ea7164584ed7a8c1b299952f2aa9e8b96083a"
+    },
+    "note": "Workspace capability reaccepted after WorkspaceRuntime/Mission validation hardening. Process and browser runtime owner/executor hashes were byte-identical to their 2e7813f exact T3 receipt and remain separately selected by compatibility projection."
+  },
+  "host": {
+    "os": "linux",
+    "arch": "aarch64",
+    "opencode_version": "1.18.18",
+    "fixture_project": "/tmp/hi-pb-ws-47a3502/project",
+    "server": "http://127.0.0.1:41987"
+  },
+  "gates": {
+    "workspace_runtime_canonical_decision": "PASS_T3",
+    "workspace_create": "PASS_T3",
+    "workspace_source_baseline": "PASS_T3",
+    "workspace_child_id_directory_binding": "PASS_T3",
+    "workspace_observed_cwd_identity": "PASS_T3",
+    "workspace_write_isolation": "PASS_T3",
+    "workspace_primary_preservation": "PASS_T3",
+    "workspace_restart_adoption": "PASS_T3",
+    "workspace_cleanup": "PASS_T3",
+    "workspace_host_cleanup_empty": "PASS_T3",
+    "workspace_duplicate_active_identity": "PASS_CONTROLLED",
+    "workspace_cleanup_failure_quarantine": "PASS_CONTROLLED",
+    "workspace_staged_user_preservation": "PASS_CONTROLLED",
+    "workspace_forged_decision_rejection": "PASS_CONTROLLED",
+    "workspace_no_broad_staging": "PASS_CONTROLLED",
+    "workspace_isolation_binding": "SUPPORTED_T3",
+    "workspace_verification": "PASS_T3"
+  },
+  "evidence": {
+    "exact_source_gate": {
+      "python": "84/84 PASS",
+      "node": "767/767 PASS",
+      "architecture_lint": "PASS rules=22 deferred=0 linked=8",
+      "documentation_parity": "PASS violations=0",
+      "validator": "PASS",
+      "diff_check": "clean",
+      "backup_count": 0,
+      "checkpoint_commit": "47a3502ab7176d9e008ed7b68ad0a3eb93803783"
+    },
+    "real_host_workspace": {
+      "baseline": "e5d40001e825ceca45db66d65da9bcce14c95c29",
+      "beforeCleanup": {
+        "lease": {
+          "lease_id": "lease_ead6249352725aa544c5ee49",
+          "mission_id": "m_msud23u0_pxm0bc81",
+          "task_id": "t_msud23u1_zs3j3r",
+          "repository_root": "/tmp/hi-pb-ws-47a3502/project",
+          "base_ref": "e5d40001e825ceca45db66d65da9bcce14c95c29",
+          "workspace_path": "/tmp/hi-pb-lifecycle-2e7813f/xdg-data/opencode/worktree/315b6bcbafe1d81f2fb235c8dd975740c78c2d2c/jolly-comet",
+          "host_workspace_id": "wrk_0056d2539001945sbnX3weKJ8a",
+          "created_at": 1786797439253,
+          "status": "ACTIVE",
+          "cleanup_state": "ACTIVE",
+          "source_baseline": "e5d40001e825ceca45db66d65da9bcce14c95c29"
+        },
+        "child": {
+          "id": "ses_ffa92c64affejFMFRyNZ20gEqR",
+          "workspaceID": "wrk_0056d2539001945sbnX3weKJ8a",
+          "directory": "/tmp/hi-pb-lifecycle-2e7813f/xdg-data/opencode/worktree/315b6bcbafe1d81f2fb235c8dd975740c78c2d2c/jolly-comet",
+          "version": "1.18.18"
+        },
+        "workspace_head": "e5d40001e825ceca45db66d65da9bcce14c95c29",
+        "primary_has_isolated": false,
+        "user_dirty": "USER_DIRTY\n",
+        "workspace_content": "WS_47A_OK\n"
+      },
+      "adopted": {
+        "lease_id": "lease_ead6249352725aa544c5ee49",
+        "mission_id": "m_msud23u0_pxm0bc81",
+        "task_id": "t_msud23u1_zs3j3r",
+        "repository_root": "/tmp/hi-pb-ws-47a3502/project",
+        "base_ref": "e5d40001e825ceca45db66d65da9bcce14c95c29",
+        "workspace_path": "/tmp/hi-pb-lifecycle-2e7813f/xdg-data/opencode/worktree/315b6bcbafe1d81f2fb235c8dd975740c78c2d2c/jolly-comet",
+        "host_workspace_id": "wrk_0056d2539001945sbnX3weKJ8a",
+        "created_at": 1786797439253,
+        "status": "ACTIVE",
+        "cleanup_state": "ACTIVE",
+        "source_baseline": "e5d40001e825ceca45db66d65da9bcce14c95c29"
+      },
+      "afterCleanup": {
+        "cleaned": true,
+        "lease": {
+          "lease_id": "lease_ead6249352725aa544c5ee49",
+          "mission_id": "m_msud23u0_pxm0bc81",
+          "task_id": "t_msud23u1_zs3j3r",
+          "repository_root": "/tmp/hi-pb-ws-47a3502/project",
+          "base_ref": "e5d40001e825ceca45db66d65da9bcce14c95c29",
+          "workspace_path": "/tmp/hi-pb-lifecycle-2e7813f/xdg-data/opencode/worktree/315b6bcbafe1d81f2fb235c8dd975740c78c2d2c/jolly-comet",
+          "host_workspace_id": "wrk_0056d2539001945sbnX3weKJ8a",
+          "created_at": 1786797439253,
+          "status": "CLOSED",
+          "cleanup_state": "CLEANED",
+          "source_baseline": "e5d40001e825ceca45db66d65da9bcce14c95c29"
+        },
+        "workspace_exists": false,
+        "primary_has_isolated": false,
+        "user_dirty": "USER_DIRTY\n"
+      },
+      "verification": {
+        "workspace_head_matches_source_baseline": true,
+        "isolated_content_matches_expected": true,
+        "verification_cwd": "/tmp/hi-pb-lifecycle-2e7813f/xdg-data/opencode/worktree/315b6bcbafe1d81f2fb235c8dd975740c78c2d2c/jolly-comet"
+      }
+    },
+    "controlled_adversarial": {
+      "duplicate_active_workspace_identity": "runtime cleans/rejects second colliding native lease; persisted duplicate host/path identity rejected",
+      "cleanup_failure": "lease becomes ORPHANED/QUARANTINED with explicit blocker",
+      "staged_and_unstaged_user_changes": "git status preserved byte-for-byte across provisioning",
+      "forged_decision": "cross-task/forged IsolationDecision rejected before host provision",
+      "branch_collision": "adapter requests builtin detached worktree type without creating or naming a branch",
+      "nested_repository": "different Git common-dir rejected before lease acceptance",
+      "realpath": "canonicalExisting(realpath) is required for primary/workspace identity and registry validation",
+      "broad_staging": "no git add -A/auto-commit implementation surface"
+    },
+    "teardown": {
+      "node_version": "v24.19.0",
+      "observed": "libuv EEXIST assertion after complete terminal JSON",
+      "classification": "HOST_TEARDOWN_NOISE_AFTER_TERMINAL_PASS",
+      "cleanup_rechecked": true
+    }
+  },
+  "limitations": [
+    "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution; foreign or user-created worktrees are not retroactively owned by Hi.",
+    "Exact T3 applies to OpenCode 1.18.18 on linux/aarch64 and tested Workspace runtime source 47a3502ab7176d9e008ed7b68ad0a3eb93803783."
+  ],
+  "release_authority": {
+    "push": false,
+    "tag": false,
+    "release": false,
+    "publish": false,
+    "deploy": false
+  },
+  "rule": "This receipt promotes only workspace-isolation-binding for the exact tested source and host. Later Workspace owner/executor/validation changes require reacceptance.",
+  "capability_limitations": {
+    "workspace-isolation-binding": [
+      "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution; foreign or user-created worktrees are not retroactively owned by Hi.",
+      "Exact T3 applies to OpenCode 1.18.18 on linux/aarch64 and tested Workspace runtime source 47a3502ab7176d9e008ed7b68ad0a3eb93803783."
+    ]
+  }
+}

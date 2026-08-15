@@ -49,7 +49,9 @@ def main():
   if not candidates:continue
   candidates.sort(key=lambda r:(r['source_rank'],r['receipt']))
   chosen=candidates[-1]
-  selected[cap]={'status':chosen['gates'][cap],'tested_git_commit':chosen['tested_git_commit'],'receipt':chosen['receipt'],'source_rank':chosen['source_rank'],'scope_limitations':[x for x in chosen['limitations'] if relevant(cap,x)]}
+  receipt_json=read(ROOT/chosen['receipt']);structured=(receipt_json.get('capability_limitations') or {}).get(cap)
+  limits=list(structured) if isinstance(structured,list) else [x for x in chosen['limitations'] if relevant(cap,x)]
+  selected[cap]={'status':chosen['gates'][cap],'tested_git_commit':chosen['tested_git_commit'],'receipt':chosen['receipt'],'source_rank':chosen['source_rank'],'scope_limitations':limits}
  selected_receipts={v['receipt'] for v in selected.values()}
  history=[]
  for r in sorted(receipts,key=lambda x:(semver(x.get('opencode_version')),x.get('source_rank',-1),x['receipt'])):

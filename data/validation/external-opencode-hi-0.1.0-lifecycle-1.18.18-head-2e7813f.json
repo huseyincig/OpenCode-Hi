@@ -1,0 +1,332 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "generated_at": "2026-08-15",
+  "status": "PASS_EXACT_SOURCE_PROCESS_WORKSPACE_BROWSER_T3",
+  "source_binding": {
+    "tested_git_commit": "2e7813f218c54de44073d1c851d180960e3d0911",
+    "tested_git_tree": "6ab93b8967dae29ddf55414b0cc019742a8429c7",
+    "worktree": "/workspace/OpenCode-Hi",
+    "state": "CLEAN_COMMITTED_SOURCE",
+    "exact_candidate": true,
+    "runtime_hashes": {
+      "plugin/dist/plugin.js": "4ba3d1992736992f788a4d1814c33f68f585f19065802157babb398f647e3c20",
+      "plugin/src/plugin.ts": "3b1f608f0d8512f7510a5cd8e680f3879f181ee7490d649f9e5b0656d03030e8",
+      "plugin/src/contracts/process.ts": "baa22ab538d5b0e16c09d2f5234d8fa13253881a608e3fbb6102833adff963fd",
+      "plugin/src/runtime/process/executor.ts": "5aae50e989d6a047afcc1a33b04aaefbff669a8f4b191e60bc7975885cca4ecd",
+      "plugin/src/runtime/process/runtime.ts": "a0e48e9de3595a858517688afd742ce93bc65b07f7a52edfb301d555b1c9cb4f",
+      "plugin/src/opencode/open-code-pty-adapter.ts": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
+      "plugin/src/contracts/workspace.ts": "d2ed1d517537201302344aa3061f149b044ad85b6909fe85ec876904ea9b496a",
+      "plugin/src/runtime/workspace/executor.ts": "f6129bfab5c20641a144030b7357be598d4fd77dcde9ecdf664a390398d2e12b",
+      "plugin/src/runtime/workspace/runtime.ts": "1c280766ea12b735628755fc991130ea3e128205782097a226459d72f39558a4",
+      "plugin/src/opencode/open-code-workspace-adapter.ts": "fb00575bcad4c6679bc5f173732514745b30bd53057b30eb6ad91a5f636f6003",
+      "plugin/src/runtime/task/child-execution-coordinator.ts": "d2f76e60c8f9517731603b962cfb2bac5745602119ff1348e73a5d798493964b",
+      "plugin/src/opencode/client-adapter.ts": "8509951b3ce97234c2d89440710ea7164584ed7a8c1b299952f2aa9e8b96083a",
+      "plugin/src/contracts/browser-observation.ts": "bdaa9047f895999a62039c17906bb8214c9af98394a0f68c1a311abc5f258624",
+      "plugin/src/runtime/browser/executor.ts": "fa85d1de99be5c07699b34253088d7eec6f1a5f88846dd0401d7bcdb3db522f3",
+      "plugin/src/runtime/browser/runtime.ts": "8d50a48b4d872117e1f79ddeab1d325060491101c3e3c0baf3dd99dd92541014",
+      "plugin/src/runtime/browser/ownership.ts": "605391f7a3260b4f9e277d48cd720883f5f45f44322a9708367a6b5af8aeecb2",
+      "plugin/src/opencode/playwright-browser-adapter.ts": "ea5a3c13fa5db65e5c682573e12adb1857a8d91e1d4fe0c3a01c6f79208a09cc",
+      "plugin/src/runtime/application/hi-tool-surface.ts": "52a0b4ba556ded2dee6f7704e9bf169c816b818bca40300861efa4fa88e70673",
+      "plugin/src/runtime/application/runtime-services.ts": "fd9693c7a80d233b1cd7bdf89f5a76e1050fa2ecb6e68d9afc51bbccd54500bc",
+      "plugin/src/contracts/host-capability.ts": "d7b8f2abe1733f49ab71ad9d043c27a58ef48acd179f8c6687ae475eb5204d1f"
+    },
+    "note": "Real-host execution was performed only after this exact source commit was clean. This receipt is evidence for that commit/tree; receipt/documentation-only follow-up commits do not widen it."
+  },
+  "host": {
+    "os": "linux",
+    "arch": "aarch64",
+    "opencode_version": "1.18.18",
+    "fixture_project": "/tmp/hi-pb-lifecycle-2e7813f/project",
+    "plugin_loader_fixture": "/tmp/hi-pb-plugin-loader-2e7813f/project",
+    "plugin_spec": "file:///workspace/OpenCode-Hi/plugin/dist/plugin.js",
+    "server_urls": [
+      "http://127.0.0.1:41987",
+      "http://127.0.0.1:41988"
+    ],
+    "browser_engine": "playwright-core Chromium",
+    "browser_executable": "/home/node/.cache/ms-playwright/chromium-1234/chrome-linux/chrome"
+  },
+  "gates": {
+    "native_plugin_loader": "PASS_T3",
+    "process_spawn_pid": "PASS_T3",
+    "process_quick_exit_before_observation": "PASS_T3",
+    "process_nonzero_exit": "PASS_T3",
+    "process_huge_unread_output_bounded": "PASS_T3",
+    "process_concurrent_isolation": "PASS_T3",
+    "process_group_identity": "PASS_T3",
+    "process_timeout_group_signal": "PASS_T3",
+    "process_kill_cleanup": "PASS_T3",
+    "process_restart_adoption": "PASS_T3",
+    "process_host_cleanup_empty": "PASS_T3",
+    "process_kill_failure_semantics": "PASS_CONTROLLED",
+    "process_lifecycle": "SUPPORTED_T3",
+    "workspace_create": "PASS_T3",
+    "workspace_source_baseline": "PASS_T3",
+    "workspace_child_id_directory_binding": "PASS_T3",
+    "workspace_primary_preservation": "PASS_T3",
+    "workspace_cleanup": "PASS_T3",
+    "workspace_restart_adoption": "PASS_T3",
+    "workspace_orphan_quarantine": "PASS_T3",
+    "workspace_no_recreation": "PASS_T3",
+    "workspace_forged_decision_rejection": "PASS_CONTROLLED",
+    "workspace_isolation_binding": "SUPPORTED_T3",
+    "browser_executor_health": "PASS_T3",
+    "browser_dynamic_route_state": "PASS_T3",
+    "browser_stale_element_rejection": "PASS_T3",
+    "browser_auth_state_reset": "PASS_T3",
+    "browser_execution_owner_isolation": "PASS_T3",
+    "browser_screenshot_artifact": "PASS_T3",
+    "browser_external_target_rejection": "PASS_T3",
+    "browser_credential_url_rejection": "PASS_T3",
+    "browser_arbitrary_selector_rejection": "PASS_T3",
+    "browser_observation_not_evidence": "PASS_CONTROLLED",
+    "browser_execution": "SUPPORTED_T3"
+  },
+  "evidence": {
+    "deterministic_source_baseline": {
+      "full_python": "84/84 PASS",
+      "full_node": "760/760 PASS",
+      "architecture_lint": "PASS rules=22 deferred=0 linked=8",
+      "documentation_parity": "PASS",
+      "validator": "PASS",
+      "diff_check": "clean",
+      "backup_count": 0,
+      "checkpoint_commit": "2e7813f218c54de44073d1c851d180960e3d0911",
+      "checkpoint_tree": "6ab93b8967dae29ddf55414b0cc019742a8429c7"
+    },
+    "native_plugin_loader": {
+      "health": {
+        "healthy": true,
+        "version": "1.18.18"
+      },
+      "initialized": true,
+      "init_log_sha256": "bd3fa615608e0ca38c9c0f395c4caa7fd86e40b8515ae1af3f231c0b30ec760b",
+      "browser_available": true,
+      "process_contract_real_host_acceptance": true,
+      "workspace_contract_real_host_acceptance": true,
+      "browser_contract_real_host_acceptance": true
+    },
+    "process_real_host": {
+      "quick_exit": {
+        "spawned": true,
+        "status": "EXITED",
+        "exit_code": 0,
+        "cleanup_state": "CLEANUP_PENDING"
+      },
+      "nonzero": {
+        "status": "EXITED",
+        "exit_code": 7,
+        "text": "boom"
+      },
+      "huge_unread": {
+        "status": "EXITED",
+        "read_chars": 64,
+        "available_start": 737856,
+        "available_end": 1000000,
+        "truncated": true,
+        "durable_has_raw_output": false
+      },
+      "timeout": {
+        "status": "TIMED_OUT",
+        "reason": "timeout-policy",
+        "group": 5639,
+        "pid": 5639
+      },
+      "concurrent": {
+        "a": "ALPHA",
+        "b": "BETA",
+        "a_status": "EXITED",
+        "b_status": "EXITED",
+        "distinct_processes": true
+      },
+      "restart": {
+        "disposition": "ADOPTED",
+        "pid": 5660,
+        "process_group_id": 5660,
+        "linux_pgrp": 5660,
+        "group_isolated": true,
+        "text": "RESTART_READY",
+        "status_after_kill": "TERMINATED",
+        "cleanup_list_after": 0
+      }
+    },
+    "process_group_direct_confirmation": {
+      "before": {
+        "contract": {
+          "process_id": "proc_9b9b05b076d6c42974762038",
+          "mission_id": "m_t3_current",
+          "task_id": "t_process",
+          "worker_id": "w_process",
+          "host": "opencode",
+          "command_identity": "4442172a83065fa86f120c4ba9fabc82652425ddb6180bfd9b15b7811af28f2f",
+          "cwd": "/tmp/hi-pb-lifecycle-2e7813f/project",
+          "pid": 4354,
+          "process_group_id": 4354,
+          "status": "RUNNING",
+          "started_at": 1786796308550,
+          "output_artifact_refs": [],
+          "authority_ref": "auth:t3-current",
+          "cleanup_state": "ACTIVE"
+        },
+        "linux_pgrp": 4354,
+        "group_isolated": true,
+        "output": {
+          "text": "READY",
+          "start_cursor": 0,
+          "end_cursor": 5,
+          "available_start_cursor": 0,
+          "available_end_cursor": 5,
+          "truncated": false,
+          "status": "RUNNING"
+        }
+      },
+      "killed": {
+        "process_id": "proc_9b9b05b076d6c42974762038",
+        "mission_id": "m_t3_current",
+        "task_id": "t_process",
+        "worker_id": "w_process",
+        "host": "opencode",
+        "command_identity": "4442172a83065fa86f120c4ba9fabc82652425ddb6180bfd9b15b7811af28f2f",
+        "cwd": "/tmp/hi-pb-lifecycle-2e7813f/project",
+        "pid": 4354,
+        "process_group_id": 4354,
+        "status": "TERMINATED",
+        "started_at": 1786796308550,
+        "output_artifact_refs": [],
+        "authority_ref": "auth:t3-current",
+        "cleanup_state": "CLEANUP_PENDING",
+        "ended_at": 1786796308978,
+        "termination_reason": "signal:SIGTERM"
+      },
+      "pre_cleanup": "CLEANUP_PENDING",
+      "listed_after_cleanup": 0
+    },
+    "workspace_real_host": {
+      "baseline": "e14cbfebff0ba8350ad12cffc5bc40f0a088513d",
+      "provisioned": {
+        "host_workspace_id": "wrk_0055de030001ikGm8hIcpwNvYS",
+        "workspace_path": "/tmp/hi-pb-lifecycle-2e7813f/xdg-data/opencode/worktree/e14cbfebff0ba8350ad12cffc5bc40f0a088513d/mighty-cactus"
+      },
+      "workspace_head": "e14cbfebff0ba8350ad12cffc5bc40f0a088513d",
+      "same_baseline": true,
+      "primary_common": ".git",
+      "workspace_common": "/tmp/hi-pb-lifecycle-2e7813f/project/.git",
+      "child": {
+        "id": "ses_ffaa20ad9ffepkpHWk9WOM2C64",
+        "slug": "stellar-tiger",
+        "projectID": "e14cbfebff0ba8350ad12cffc5bc40f0a088513d",
+        "workspaceID": "wrk_0055de030001ikGm8hIcpwNvYS",
+        "directory": "/tmp/hi-pb-lifecycle-2e7813f/xdg-data/opencode/worktree/e14cbfebff0ba8350ad12cffc5bc40f0a088513d/mighty-cactus",
+        "path": "",
+        "parentID": "ses_ffaa20b79ffegCzLuqM2XvSu8z",
+        "cost": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache": {
+            "read": 0,
+            "write": 0
+          }
+        },
+        "title": "PB workspace child",
+        "agent": "coder",
+        "version": "1.18.18",
+        "time": {
+          "created": 1786796438822,
+          "updated": 1786796438822
+        }
+      },
+      "isolated_content": "ISOLATED_CURRENT_OK\n",
+      "primary_has_isolated_before_cleanup": false,
+      "dirty_unchanged_before_cleanup": true,
+      "after": {
+        "workspace_path_exists": false,
+        "primary_has_isolated": false,
+        "dirty_unchanged": true
+      }
+    },
+    "workspace_restart_real_host": {
+      "baseline": "e14cbfebff0ba8350ad12cffc5bc40f0a088513d",
+      "provisioned": {
+        "host_workspace_id": "wrk_005621ebf001YpPKa800dckRcN",
+        "workspace_path": "/tmp/hi-pb-lifecycle-2e7813f/xdg-data/opencode/worktree/e14cbfebff0ba8350ad12cffc5bc40f0a088513d/mighty-rocket"
+      },
+      "adopted_disposition": "ADOPTED",
+      "adopted_status": "ACTIVE",
+      "content_after_restart": "RESTART_WORKSPACE_OK\n",
+      "path_after_external_remove": false,
+      "orphan_disposition": "ORPHANED",
+      "orphan_status": "ORPHANED",
+      "orphan_cleanup_state": "QUARANTINED",
+      "recreated": false
+    },
+    "browser_real_host": {
+      "health": {
+        "available": true,
+        "version": "playwright-core:/home/node/.cache/ms-playwright/chromium-1234/chrome-linux/chrome"
+      },
+      "before_dom": "Route \nroute-a\nauth:anonymous\n@e1 <button> Route\n@e2 <input> ",
+      "typed_dom": "Route \nroute-a\nauth:anonymous\n@e1 <button> Route\n@e2 <input> AUTH_OWNER_A",
+      "routed_dom": "Route\nroute-b\nauth:anonymous\n@e1 <button> Route",
+      "route_state": true,
+      "stale_element_rejected": true,
+      "screenshot_result": "OBSERVED",
+      "screenshot_ref": "hi-artifact:a_2af88053e27a4251f7cb02e1",
+      "external_target_rejected": true,
+      "credential_url_rejected": true,
+      "arbitrary_selector_rejected": true,
+      "new_owner_rejected_before_open": true,
+      "fresh_owner_dom": "Route \nroute-a\nauth:anonymous\n@e1 <button> Route\n@e2 <input> ",
+      "fresh_auth_anonymous": true,
+      "fresh_does_not_contain_old_auth": true,
+      "old_owner_rejected_after_replacement": true,
+      "screenshot_file": "/tmp/hi-pb-browser-2e7813f/hostile-artifacts/.opencode/hi/artifacts/browser-screenshot/a_2af88053e27a4251f7cb02e1.png",
+      "screenshot_bytes": 7538,
+      "screenshot_sha256": "86b500061a883095a37eb75b7d723f1409b24c021616ff18f38dd9eb07ab975e",
+      "artifact_manifest_sha256": "9bdd2e23da45caeedc2318deec7e9b867a8f7993bf47a117a1541ceb00b90902"
+    },
+    "controlled_hostile_proofs": {
+      "process": "plugin/test/p2-opencode-pty-executor.test.mjs",
+      "workspace": "plugin/test/w2-workspace-executor.test.mjs",
+      "browser": "plugin/test/b3-playwright-browser-runtime.test.mjs",
+      "targeted_lifecycle_set": "50/50 PASS"
+    },
+    "host_teardown_classification": {
+      "node_version": "24.19.0",
+      "known_libuv_assertion": "uv__io_poll errno == EEXIST",
+      "classification": "POST_TERMINAL_HOST_TEARDOWN_NOISE_ONLY",
+      "acceptance_rule": "Classified only when terminal JSON was persisted and independent host cleanup/state checks were complete."
+    }
+  },
+  "limitations": [
+    "Support is limited to Hi-owned ProcessContract/ProcessRuntime/OpenCodePtyAdapter execution; arbitrary model-facing bash is not retroactively owned.",
+    "Process-group support on the reference Linux host is based on exact OpenCode-owned PID plus independent /proc pgrp observation. Group signalling is used only when the observed isolated pgrp equals the owned PID; identity drift fails closed.",
+    "Kill-signal failure semantics are controlled-tested with an injected failing signal seam rather than intentionally sabotaging the host kernel signal path.",
+    "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution. Foreign/user worktrees are not adopted as Hi-owned work.",
+    "Browser support is limited to health-gated Hi-owned Playwright execution for local HTTP(S) targets. External targets, URL credentials, arbitrary selectors, downloads, and stale execution owners remain rejected.",
+    "BrowserObservation and screenshot artifacts remain observations/artifacts only; they are not Verification Evidence without explicit admissible passed Evidence."
+  ],
+  "release_authority": {
+    "push": false,
+    "tag": false,
+    "release": false,
+    "publish": false,
+    "deploy": false
+  },
+  "rule": "This receipt is T3 host evidence for process-lifecycle, workspace-isolation-binding and browser-execution on exact tested source 2e7813f218c54de44073d1c851d180960e3d0911 / tree 6ab93b8967dae29ddf55414b0cc019742a8429c7 and OpenCode 1.18.18 linux/aarch64 only. Later relevant runtime-source or host changes require reacceptance.",
+  "capability_limitations": {
+    "process-lifecycle": [
+      "Support is limited to Hi-owned ProcessContract/ProcessRuntime/OpenCodePtyAdapter execution; arbitrary model-facing bash is not retroactively owned.",
+      "Process-group support on the reference Linux host is based on exact OpenCode-owned PID plus independent /proc pgrp observation. Group signalling is used only when the observed isolated pgrp equals the owned PID; identity drift fails closed."
+    ],
+    "workspace-isolation-binding": [
+      "Workspace support in this historical combined receipt applies only to canonical Hi-owned isolation execution and is superseded by the later 47a3502 workspace receipt."
+    ],
+    "browser-execution": [
+      "Browser support is limited to health-gated Hi-owned Playwright execution for local HTTP(S) targets. External targets, URL credentials, arbitrary selectors, downloads, and stale execution owners remain rejected.",
+      "BrowserObservation and screenshot artifacts remain observations/artifacts only; they are not Verification Evidence without explicit admissible passed Evidence."
+    ]
+  }
+}
