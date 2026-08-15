@@ -1,0 +1,133 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_RELEASE_ENGINEERING_AUDIT",
+  "program": "PROMPT_B",
+  "section": 28,
+  "status": "CLOSED_LOCAL_T4_BLOCKED",
+  "current_source": {
+    "commit": "a27463a0586bb65598eae9aaee0e066faa34fcc8",
+    "tree": "716b33c0a5431309eaf24a90eae9739fb3bd5c27",
+    "version": "0.1.0"
+  },
+  "historical_release": {
+    "tag": "v0.1.0",
+    "source_commit": "f1a2c1c4358e5a63656da7a585b6b5793d1ed3be",
+    "github_status": "PASS_T4",
+    "release_id": 370666032
+  },
+  "registry_observation": {
+    "date": "2026-08-15",
+    "package": "opencode-hi@0.1.0",
+    "view": "E404_NOT_FOUND",
+    "whoami": "huseyincig",
+    "publish_attempted": false,
+    "authority_granted": false
+  },
+  "stages": [
+    {
+      "stage": "source-commit",
+      "status": "PASS",
+      "detail": "a27463a0586bb65598eae9aaee0e066faa34fcc8",
+      "proof": "git HEAD"
+    },
+    {
+      "stage": "version",
+      "status": "PASS_LOCAL_BLOCK_RELEASE_IDENTITY",
+      "detail": "0.1.0",
+      "proof": "VERSION/package/lock identity; current HEAD is not historical v0.1.0 released source"
+    },
+    {
+      "stage": "build",
+      "status": "PASS",
+      "detail": "canonical npm/plugin build green",
+      "proof": "npm run check / release-build deterministic gate"
+    },
+    {
+      "stage": "tests",
+      "status": "PASS",
+      "detail": "current canonical suites green",
+      "proof": "validator + Python/Node/architecture gates"
+    },
+    {
+      "stage": "packed-artifact",
+      "status": "PASS",
+      "detail": "deterministic pack/release artifacts",
+      "proof": "\u00a725/\u00a727 deterministic pack and dual-lock SBOM"
+    },
+    {
+      "stage": "fresh-install",
+      "status": "PASS",
+      "detail": "fresh temp consumer tarball install",
+      "proof": "data/validation/fresh-consumer-opencode-1.18.18.json"
+    },
+    {
+      "stage": "T3",
+      "status": "PASS",
+      "detail": "exact OpenCode 1.18.18 packed consumer runtime",
+      "proof": "31 Hi tools + agent projection + session; current source checkpoint"
+    },
+    {
+      "stage": "tag",
+      "status": "BLOCKED_RELEASE_IDENTITY",
+      "detail": "v0.1.0 already targets f1a2c1c4358e5a63656da7a585b6b5793d1ed3be; current source a27463a0586bb65598eae9aaee0e066faa34fcc8 must not rewrite it",
+      "proof": "local annotated tag"
+    },
+    {
+      "stage": "github-release",
+      "status": "HISTORICAL_PASS_CURRENT_BLOCKED",
+      "detail": "existing v0.1.0 release belongs to historical source; no current release mutation authorized",
+      "proof": "release-status + read-only GitHub verification"
+    },
+    {
+      "stage": "registry-publication",
+      "status": "BLOCKED_AUTHORITY",
+      "detail": "registry package absent; npm credential is currently available but user has not authorized publish",
+      "proof": "read-only npm view/whoami on 2026-08-15"
+    },
+    {
+      "stage": "registry-integrity",
+      "status": "BLOCKED_UPSTREAM_PUBLICATION",
+      "detail": "cannot verify registry integrity before publication",
+      "proof": "npm view opencode-hi@0.1.0 => E404"
+    },
+    {
+      "stage": "fresh-registry-install",
+      "status": "BLOCKED_UPSTREAM_PUBLICATION",
+      "detail": "registry package absent",
+      "proof": "npm view E404"
+    },
+    {
+      "stage": "T4-receipt",
+      "status": "BLOCKED_AUTHORITY_AND_RELEASE_IDENTITY",
+      "detail": "no fabricated T4; current dev HEAD is not released/published",
+      "proof": "explicit authority + new release identity required"
+    }
+  ],
+  "checks": {
+    "fresh_source_binding": true,
+    "fresh_exact_host": true,
+    "historical_tag_distinct": true,
+    "historical_release_source": true,
+    "registry_still_unpublished": true,
+    "publish_not_attempted": true,
+    "no_current_tag_rewrite": true
+  },
+  "violations": [],
+  "summary": {
+    "stages": 13,
+    "local_pass_or_historical": 8,
+    "blocked_external_or_identity": 5,
+    "violations": 0
+  },
+  "proof_hashes": {
+    "VERSION": "e9dd8507f4bf0c6f42458e41aea833ad0bd3f6127272335eee9bf4d58541ed67",
+    "package.json": "bacad4fb690ab88db0da4021960a9651ad0b27f625ca14c5abcc30493b0bfff4",
+    "package-lock.json": "5d09284a57a7dd2faa3f0c31c24817d45fcdc03ca2b4f58fa765f99bef8ddc76",
+    "plugin/package-lock.json": "78f4aa59a5ca3be4c7b5ae1960c3c298a034cb00624a9efe76b75b3d89b71281",
+    "data/validation/fresh-consumer-opencode-1.18.18.json": "4abb14ac0885b4d07255c02b125bed6f2ddc710b8931f9185b55f6743c0cbbe0",
+    "data/validation/release-status-0.1.0.json": "7d9655c734f213de434164b13d25ec1a039d52f94d7ecce6a2ff0d0ec77661c6",
+    ".github/workflows/npm-publish.yml": "3f5cd8e209624aa44ba48fe14bdc8899e75a5c773a624ab1ceaa2a6b5301c7a0",
+    "scripts/verify-npm-oidc-release.mjs": "afa20a3a77053dff1918d4e98ff13131a92cfbccd39d44a3adbec6918afba067"
+  },
+  "claim_boundary": "Release-engineering truth for current development source. Existing GitHub v0.1.0 remains historical and must not be rewritten. Registry publication/T4 is blocked without explicit user authority and, for current dev source, a new version/tag/release identity. Read-only npm/GitHub checks do not authorize mutation."
+}

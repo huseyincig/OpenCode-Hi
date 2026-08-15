@@ -4,6 +4,10 @@
   "program": "PROMPT_B",
   "section": 26,
   "status": "PASS",
+  "source": {
+    "commit": "a27463a0586bb65598eae9aaee0e066faa34fcc8",
+    "tree": "716b33c0a5431309eaf24a90eae9739fb3bd5c27"
+  },
   "host": {
     "opencode": "1.18.18",
     "platform": "linux",

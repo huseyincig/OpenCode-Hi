@@ -1239,3 +1239,16 @@ def test_prompt_b_dependency_supply_chain_license_audit_is_dual_lock_integrity_a
     assert {'publishable-root-lock-missing','third-party-notices-runtime-drift','release-pack-proof-prepack-output-corruption','single-lock-sbom-omitted-distribution-runtime'}<={x['id'] for x in d['closed_defects']}
     root_lock=json.loads((ROOT/'package-lock.json').read_text());plugin_lock=json.loads((ROOT/'plugin/package-lock.json').read_text())
     assert root_lock['lockfileVersion']==3 and plugin_lock['lockfileVersion']==3
+
+
+def test_prompt_b_release_engineering_separates_current_dev_source_from_historical_release_and_blocks_t4_truthfully():
+    d=json.loads((ROOT/'data/validation/prompt-b-release-engineering.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_RELEASE_ENGINEERING_AUDIT' and d['section']==28 and d['status']=='CLOSED_LOCAL_T4_BLOCKED'
+    assert d['violations']==[] and d['summary']=={'stages':13,'local_pass_or_historical':8,'blocked_external_or_identity':5,'violations':0}
+    assert all(d['checks'].values())
+    assert d['current_source']['commit']!=d['historical_release']['source_commit']
+    assert d['historical_release']['tag']=='v0.1.0' and d['historical_release']['github_status']=='PASS_T4'
+    assert d['registry_observation']['view']=='E404_NOT_FOUND' and d['registry_observation']['publish_attempted'] is False and d['registry_observation']['authority_granted'] is False
+    by={x['stage']:x['status'] for x in d['stages']}
+    assert by['T3']=='PASS' and by['tag']=='BLOCKED_RELEASE_IDENTITY' and by['registry-publication']=='BLOCKED_AUTHORITY' and by['T4-receipt']=='BLOCKED_AUTHORITY_AND_RELEASE_IDENTITY'
+    for rel,digest in d['proof_hashes'].items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest

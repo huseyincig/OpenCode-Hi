@@ -706,6 +706,18 @@ try:
     if not all((d27.get('static_guards') or {}).values()):err('PROMPT B dependency/supply-chain/license static guard drift')
 except Exception as e:err(f'bad PROMPT B dependency/supply-chain/license receipt: {e}')
 
+
+# PROMPT B §28 release engineering certification
+try:
+    r28=json.loads((ROOT/'data/validation/prompt-b-release-engineering.json').read_text(encoding='utf-8'))
+    if r28.get('schema')!=1 or r28.get('kind')!='PROMPT_B_RELEASE_ENGINEERING_AUDIT' or r28.get('program')!='PROMPT_B' or r28.get('section')!=28 or r28.get('status')!='CLOSED_LOCAL_T4_BLOCKED':err('bad PROMPT B release engineering receipt identity/status')
+    if r28.get('summary')!={'stages':13,'local_pass_or_historical':8,'blocked_external_or_identity':5,'violations':0} or r28.get('violations')!=[]:err('PROMPT B release engineering summary drift')
+    if not all((r28.get('checks') or {}).values()):err('PROMPT B release engineering check drift')
+    for rel,expected in (r28.get('proof_hashes') or {}).items():
+        if not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B release engineering proof hash drift: '+str(rel))
+    if r28.get('registry_observation',{}).get('publish_attempted') is not False or r28.get('registry_observation',{}).get('authority_granted') is not False:err('PROMPT B release engineering authority boundary drift')
+except Exception as e:err(f'bad PROMPT B release engineering receipt: {e}')
+
 for p in (ROOT/'data').rglob('*.json'):
     try:json.loads(p.read_text(encoding='utf-8'))
     except Exception as e:err(f'bad json {p.name}: {e}')
