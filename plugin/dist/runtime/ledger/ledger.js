@@ -1,3 +1,4 @@
+import { redactDurableText } from '../privacy/boundary.js';
 const MAX_EVENTS = 200;
 const MAX_STRING = 600;
 const MAX_ARRAY = 24;
@@ -8,8 +9,10 @@ function id() { return `e_${Date.now().toString(36)}_${Math.random().toString(36
 function bounded(value, depth = 0) {
     if (value === null || value === undefined || typeof value === 'number' || typeof value === 'boolean')
         return value;
-    if (typeof value === 'string')
-        return value.length <= MAX_STRING ? value : `${value.slice(0, MAX_STRING)}…[truncated]`;
+    if (typeof value === 'string') {
+        const safe = redactDurableText(value);
+        return safe.length <= MAX_STRING ? safe : `${safe.slice(0, MAX_STRING)}…[truncated]`;
+    }
     if (depth >= MAX_DEPTH)
         return '[bounded]';
     if (Array.isArray(value))
@@ -24,7 +27,7 @@ function bounded(value, depth = 0) {
         }
         return out;
     }
-    return String(value).slice(0, MAX_STRING);
+    return redactDurableText(String(value)).slice(0, MAX_STRING);
 }
 function trimLedger(events) {
     while (events.length > MAX_EVENTS) {

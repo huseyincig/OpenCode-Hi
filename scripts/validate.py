@@ -472,6 +472,30 @@ try:
     if not {'unbounded-repository-path-identity','browser-host-user-cache-literal','browser-stale-spa-route-observation'}<=closed:err('PROMPT B VCS/Path closed defect receipt drift')
 except Exception as e:err(f'bad PROMPT B VCS/Path receipt: {e}')
 
+
+try:
+    sp=json.loads((ROOT/'data/validation/prompt-b-security-privacy.json').read_text(encoding='utf-8'))
+    if sp.get('schema')!=1 or sp.get('kind')!='PROMPT_B_SECURITY_PRIVACY_ADVERSARIAL_AUDIT' or sp.get('program')!='PROMPT_B' or sp.get('section')!=20 or sp.get('status')!='PASS':err('bad PROMPT B Security/Privacy audit receipt')
+    if sp.get('violations')!=[] or sp.get('summary')!={'required':20,'covered':20,'violations':0}:err('PROMPT B Security/Privacy coverage drift')
+    rows=sp.get('invariants') or []
+    expected={'path-traversal','symlink-escape','command-injection','shell-interpolation','prompt-injection','malicious-repo-content','malicious-methodology-resource','secret-exfiltration','environment-leaks','logs','telemetry','external-memory','mcp','browser','subprocess','package-scripts','dependency-confusion','permission-widening','approval-spoofing','source-reuse-license'}
+    if len(rows)!=20 or {x.get('invariant') for x in rows if isinstance(x,dict)}!=expected:err('PROMPT B Security/Privacy invariant inventory drift')
+    import hashlib
+    for row in rows:
+        for key in ('owner','proof'):
+            rel=row.get(key);expected_hash=row.get(f'{key}_sha256')
+            if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B Security/Privacy missing {key}: {rel}');continue
+            if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected_hash:err(f'PROMPT B Security/Privacy {key} hash drift: {rel}')
+        try:
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B Security/Privacy owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B Security/Privacy proof anchor drift: {row.get('invariant')}")
+        except Exception as e:err(f'PROMPT B Security/Privacy row invalid: {e}')
+    if not all((sp.get('static_guards') or {}).values()):err('PROMPT B Security/Privacy static guard drift')
+    closed={x.get('id') for x in sp.get('closed_defects',[]) if isinstance(x,dict)}
+    if not {'process-secret-before-authority-persistence','durable-authority-secret-command','durable-ledger-secret-leak','temporary-rollback-secret-persistence','system-projection-secret-reexposure'}<=closed:err('PROMPT B Security/Privacy closed defect receipt drift')
+    if 'PROMPT B §20 current-architecture security/privacy closure' not in (ROOT/'docs/THREAT-MODEL.md').read_text(errors='replace'):err('PROMPT B Security/Privacy threat model projection missing')
+except Exception as e:err(f'bad PROMPT B Security/Privacy receipt: {e}')
+
 try:
     nr=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text(encoding='utf-8'))
     if nr.get('schema')!=1 or nr.get('kind')!='EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION' or nr.get('program')!='PROMPT_B' or nr.get('status')!='PASS':err('bad PROMPT B native reevaluation receipt identity/status')

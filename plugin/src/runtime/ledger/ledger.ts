@@ -1,4 +1,5 @@
 import type { LedgerEvent, MissionState } from '../mission/types.js'
+import { redactDurableText } from '../privacy/boundary.js'
 
 const MAX_EVENTS=200
 const MAX_STRING=600
@@ -11,7 +12,7 @@ function id(): string { return `e_${Date.now().toString(36)}_${Math.random().toS
 
 function bounded(value:unknown,depth=0):unknown{
   if(value===null||value===undefined||typeof value==='number'||typeof value==='boolean')return value
-  if(typeof value==='string')return value.length<=MAX_STRING?value:`${value.slice(0,MAX_STRING)}…[truncated]`
+  if(typeof value==='string'){const safe=redactDurableText(value);return safe.length<=MAX_STRING?safe:`${safe.slice(0,MAX_STRING)}…[truncated]`}
   if(depth>=MAX_DEPTH)return '[bounded]'
   if(Array.isArray(value))return value.slice(0,MAX_ARRAY).map(v=>bounded(v,depth+1))
   if(typeof value==='object'){
@@ -19,7 +20,7 @@ function bounded(value:unknown,depth=0):unknown{
     for(const [k,v] of Object.entries(value as Record<string,unknown>)){if(n++>=MAX_KEYS)break;out[k.slice(0,120)]=bounded(v,depth+1)}
     return out
   }
-  return String(value).slice(0,MAX_STRING)
+  return redactDurableText(String(value)).slice(0,MAX_STRING)
 }
 
 function trimLedger(events:LedgerEvent[]):void{

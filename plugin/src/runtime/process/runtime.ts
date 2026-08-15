@@ -6,7 +6,8 @@ import { ProcessSpawnPermissionError } from '../../opencode/open-code-pty-adapte
 import { evaluateProcessSpawnAuthority,type ProcessPermissionRequest } from './authority.js'
 import { appendLedger } from '../ledger/ledger.js'
 import { addEvidence } from '../evidence/evidence-runtime.js'
-import { actionContract,beginAuthorizedAction,completeAuthorizedAction,isAuthorized,requireAuthority } from '../safety/authority.js'
+import { actionContract,beginAuthorizedAction,completeAuthorizedAction,completeAuthorizedActionByHash,isAuthorized,requireAuthority } from '../safety/authority.js'
+import { evaluateShellCommand } from './shell-policy.js'
 import { externalActionType } from '../safety/command-classifier.js'
 
 export type NativePermissionPrompter=(request:ProcessPermissionRequest)=>Promise<void>
@@ -32,14 +33,16 @@ export class ProcessRuntime{
     const worker=workerFor(m,input.worker_id),task=m.execution.tasks.find(t=>t.id===worker.task_id)!
     if(['completed','failed','cancelled'].includes(worker.status)||['completed','failed','cancelled','blocked'].includes(task.status))throw new Error('Process owner task/worker is terminal')
     const ordinaryAuthority=`native-permission:${worker.id}:bash`
-    const actionType=externalActionType([input.command,...input.args??[]].join(' '))
+    const commandLine=[input.command,...input.args??[]].join(' '),shell=evaluateShellCommand(commandLine)
+    if(shell.decision==='DENY'||shell.decision==='USER_ACTION_REQUIRED'||shell.decision==='REWRITE')throw new ProcessSpawnPermissionError(shell.decision==='DENY'?'DENY':'ASK',`shell-policy:${shell.reason}`)
+    const actionType=externalActionType(commandLine)
     let authorityRef=ordinaryAuthority
     if(actionType){
       if(!m.identity.intent.requestedExternalActions.includes(actionType))throw new Error(`Hi process external action ${actionType} was not requested by the mission`)
-      const exact=actionContract([input.command,...input.args??[]].join(' '),input.cwd);authorityRef=exact.hash
-      if(!isAuthorized(m,[input.command,...input.args??[]].join(' '),input.cwd))requireAuthority(m,[input.command,...input.args??[]].join(' '),input.cwd)
+      const exact=actionContract(commandLine,input.cwd);authorityRef=exact.hash
+      if(!isAuthorized(m,commandLine,input.cwd))requireAuthority(m,commandLine,input.cwd)
     }
-    let request:ProcessSpawnRequest={mission_id:m.identity.mission_id,task_id:task.id,worker_id:worker.id,role:worker.role,command:input.command,args:input.args,cwd:input.cwd,env:input.env,title:input.title,timeout_ms:input.timeout_ms,authority_ref:authorityRef,...(actionType?{external_action:{action_type:actionType,target:[input.command,...input.args??[]].join(' '),requested_explicitly:true,required_authority_ref:authorityRef,executor:'hi-process-executor'}}:{})}
+    let request:ProcessSpawnRequest={mission_id:m.identity.mission_id,task_id:task.id,worker_id:worker.id,role:worker.role,command:input.command,args:input.args,cwd:input.cwd,env:input.env,title:input.title,timeout_ms:input.timeout_ms,authority_ref:authorityRef,...(actionType?{external_action:{action_type:actionType,target:commandLine,requested_explicitly:true,required_authority_ref:authorityRef,executor:'hi-process-executor'}}:{})}
     for(let attempts=0;attempts<3;attempts++){
       const auth=evaluateProcessSpawnAuthority(request,this.projectRoot,this.getHostConfig())
       if(auth.decision==='DENY')throw new ProcessSpawnPermissionError('DENY',auth.reason)
@@ -50,18 +53,18 @@ export class ProcessRuntime{
         continue
       }
       let privilegedStarted=false
-      if(actionType){beginAuthorizedAction(m,[input.command,...input.args??[]].join(' '),input.cwd);privilegedStarted=true}
+      if(actionType){beginAuthorizedAction(m,commandLine,input.cwd);privilegedStarted=true}
       try{
         const handle=await this.executor.spawn(request);replaceProcess(m,handle.contract);appendLedger(m,'process.spawned',{task_id:task.id,worker_id:worker.id,payload:{process_id:handle.contract.process_id,pid:handle.contract.pid,host:handle.contract.host,timeout_at:handle.contract.timeout_at}});return structuredClone(handle.contract)
-      }catch(error){if(privilegedStarted)completeAuthorizedAction(m,[input.command,...input.args??[]].join(' '),input.cwd,'unknown',String(error));throw error}
+      }catch(error){if(privilegedStarted)completeAuthorizedAction(m,commandLine,input.cwd,'unknown',String(error));throw error}
     }
     throw new Error('Hi process native permission resolution exceeded bounded attempts')
   }
   async write(m:MissionState,id:string,input:string):Promise<void>{this.contract(m,id);await this.executor.write(id,input);appendLedger(m,'process.stdin',{payload:{process_id:id,chars:input.length}})}
   async read(m:MissionState,id:string,cursor?:number,maxChars?:number):Promise<ProcessOutput>{const current=this.contract(m,id),out=await this.executor.read(id,{cursor,max_chars:maxChars});const source=`process:${id}:${out.start_cursor}-${out.end_cursor}`,stateHash=hash(out.text);addEvidence(m,{kind:'diagnostic-evidence',summary:`Bounded process output observed (${out.text.length} chars${out.truncated?', truncated':''})`,scope:m.execution.tasks.find(t=>t.id===current.task_id)?.scope??[],source,source_state_hash:stateHash,task_id:current.task_id,outcome:'pending',reason:'process-output-observation'});appendLedger(m,'process.output-observed',{task_id:current.task_id,worker_id:current.worker_id,payload:{process_id:id,start_cursor:out.start_cursor,end_cursor:out.end_cursor,available_start:out.available_start_cursor,available_end:out.available_end_cursor,truncated:out.truncated,state_hash:stateHash}});return out}
   private noteExit(m:MissionState,contract:ProcessContract):void{replaceProcess(m,contract);appendLedger(m,'process.exited',{task_id:contract.task_id,worker_id:contract.worker_id,payload:{process_id:contract.process_id,status:contract.status,exit_code:contract.exit_code,cleanup_state:contract.cleanup_state}})}
-  async wait(m:MissionState,id:string):Promise<ProcessContract>{const before=this.contract(m,id);try{const result=await this.executor.wait(id);this.noteExit(m,result.contract);const action=m.authority.authority?.executing;if(action?.hash===result.contract.authority_ref){completeAuthorizedAction(m,action.action.match(/(?:^|\n)command=([^\n]*)/)?.[1]??'',result.contract.cwd,result.contract.status==='EXITED'&&result.contract.exit_code===0?'success':'failure',`process ${result.contract.status}${result.contract.exit_code!==undefined?` exit=${result.contract.exit_code}`:''}`)}return structuredClone(result.contract)}catch(error){if(m.authority.authority?.executing?.hash===before.authority_ref){const command=m.authority.authority.executing.action.match(/(?:^|\n)command=([^\n]*)/)?.[1]??'';if(command)completeAuthorizedAction(m,command,before.cwd,'unknown',String(error))}throw error}}
-  async kill(m:MissionState,id:string,signal:'SIGTERM'|'SIGINT'='SIGTERM'):Promise<ProcessContract>{const before=this.contract(m,id),result=await this.executor.kill(id,signal);this.noteExit(m,result.contract);if(m.identity.status==='active'&&m.authority.authority?.executing?.hash===before.authority_ref){const command=m.authority.authority.executing.action.match(/(?:^|\n)command=([^\n]*)/)?.[1]??'';if(command)completeAuthorizedAction(m,command,before.cwd,'failure',`process terminated by ${signal}`)}return structuredClone(result.contract)}
+  async wait(m:MissionState,id:string):Promise<ProcessContract>{const before=this.contract(m,id);try{const result=await this.executor.wait(id);this.noteExit(m,result.contract);const action=m.authority.authority?.executing;if(action?.hash===result.contract.authority_ref){completeAuthorizedActionByHash(m,action.hash,result.contract.status==='EXITED'&&result.contract.exit_code===0?'success':'failure',`process ${result.contract.status}${result.contract.exit_code!==undefined?` exit=${result.contract.exit_code}`:''}`,action.action.match(/(?:^|\n)command=([^\n]*)/)?.[1]??'')}return structuredClone(result.contract)}catch(error){if(m.authority.authority?.executing?.hash===before.authority_ref){const command=m.authority.authority.executing.action.match(/(?:^|\n)command=([^\n]*)/)?.[1]??'';if(command)completeAuthorizedActionByHash(m,m.authority.authority!.executing!.hash,'unknown',String(error),command)}throw error}}
+  async kill(m:MissionState,id:string,signal:'SIGTERM'|'SIGINT'='SIGTERM'):Promise<ProcessContract>{const before=this.contract(m,id),result=await this.executor.kill(id,signal);this.noteExit(m,result.contract);if(m.identity.status==='active'&&m.authority.authority?.executing?.hash===before.authority_ref){const command=m.authority.authority.executing.action.match(/(?:^|\n)command=([^\n]*)/)?.[1]??'';if(command)completeAuthorizedActionByHash(m,m.authority.authority!.executing!.hash,'failure',`process terminated by ${signal}`,command)}return structuredClone(result.contract)}
   async cleanup(m:MissionState,id:string):Promise<void>{const current=this.contract(m,id);await this.executor.cleanup(id);replaceProcess(m,{...current,cleanup_state:'CLEANED'});appendLedger(m,'process.cleaned',{task_id:current.task_id,worker_id:current.worker_id,payload:{process_id:id}})}
   list(m:MissionState):ProcessContract[]{return m.execution.processes.map(item=>structuredClone(item))}
   async stopMission(m:MissionState):Promise<number>{let stopped=0;for(const process of [...m.execution.processes]){if(process.status==='RUNNING'){try{await this.kill(m,process.process_id,'SIGTERM');stopped++}catch(error){const latest=m.execution.processes.find(p=>p.process_id===process.process_id);if(latest){latest.status='ORPHANED';latest.cleanup_state='QUARANTINED';latest.termination_reason='stop-termination-unverified'}m.execution.blockers=[...new Set([...m.execution.blockers,`process-orphan:${process.process_id}`])];appendLedger(m,'process.stop-failed',{task_id:process.task_id,worker_id:process.worker_id,payload:{process_id:process.process_id,error:String(error)}});continue}}const latest=m.execution.processes.find(p=>p.process_id===process.process_id);if(latest&&latest.status!=='RUNNING'&&latest.status!=='ORPHANED'&&latest.cleanup_state!=='CLEANED'){try{await this.cleanup(m,process.process_id)}catch(error){m.execution.blockers=[...new Set([...m.execution.blockers,`process-cleanup:${process.process_id}`])];appendLedger(m,'process.cleanup-failed',{task_id:process.task_id,worker_id:process.worker_id,payload:{process_id:process.process_id,error:String(error)}})}}}return stopped}

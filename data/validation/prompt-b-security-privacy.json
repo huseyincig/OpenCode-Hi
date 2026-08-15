@@ -1,0 +1,254 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_SECURITY_PRIVACY_ADVERSARIAL_AUDIT",
+  "program": "PROMPT_B",
+  "section": 20,
+  "status": "PASS",
+  "invariants": [
+    {
+      "section": 20,
+      "invariant": "path-traversal",
+      "owner": "plugin/src/contracts/common.ts",
+      "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
+      "owner_anchor": "normalizeBoundedProjectPath",
+      "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
+      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_anchor": "WorkerResult cannot persist absolute or traversal changed-file ownership"
+    },
+    {
+      "section": 20,
+      "invariant": "symlink-escape",
+      "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
+      "owner_sha256": "fb00575bcad4c6679bc5f173732514745b30bd53057b30eb6ad91a5f636f6003",
+      "owner_anchor": "realpathSync",
+      "proof": "plugin/test/w2-workspace-executor.test.mjs",
+      "proof_sha256": "2911ea2503a7fc523c187e75f9e96d7b45d75be5c30cc1aef9d245d708ac3f21",
+      "proof_anchor": "symlinked workspace escape is canonicalized and rejected"
+    },
+    {
+      "section": 20,
+      "invariant": "command-injection",
+      "owner": "plugin/src/runtime/process/shell-policy.ts",
+      "owner_sha256": "29542ce82a0849afb32e3a3b483a8c03af02733dd3b5b20526c5db922f8065fe",
+      "owner_anchor": "evaluateShellCommand",
+      "proof": "plugin/test/prompt-b-authority-destructive-boundary.test.mjs",
+      "proof_sha256": "70903fc68efe2119a6e8708c85e272ccda3d9a0cc7d9696e7750364f78da5b90",
+      "proof_anchor": "credential and destructive shell boundaries use distinct HumanDecision types"
+    },
+    {
+      "section": 20,
+      "invariant": "shell-interpolation",
+      "owner": "plugin/src/runtime/process/runtime.ts",
+      "owner_sha256": "28d1762ab948374f8b08ba2b843a24fe034401cc42f4e742bf5c07793bec7f29",
+      "owner_anchor": "evaluateShellCommand(commandLine)",
+      "proof": "plugin/test/prompt-b-security-privacy-hostile.test.mjs",
+      "proof_sha256": "4115ee0df3915cec808a0be57a4e4aba173d7efe4d20d451eef8c786eb7eb393",
+      "proof_anchor": "blocks secret-sensitive external action before Authority state mutation"
+    },
+    {
+      "section": 20,
+      "invariant": "prompt-injection",
+      "owner": "plugin/src/runtime/safety/authority.ts",
+      "owner_sha256": "e81c16ad08a0392b4cb5094500dd046a2ef0d9bf731159817fc67d0a4c4c6378",
+      "owner_anchor": "authorityProtocolMatches",
+      "proof": "plugin/test/authority-input-split.test.mjs",
+      "proof_sha256": "d3eb04a2e2646f8d86b54422b0afed4a8b07e9e53c8c181ffe8e38a195c6c5fa",
+      "proof_anchor": "plain approval prose is not an authority response"
+    },
+    {
+      "section": 20,
+      "invariant": "malicious-repo-content",
+      "owner": "plugin/src/runtime/verification/policy.ts",
+      "owner_sha256": "ab91a9e8c45b8c86ff7b1f570c197584c84c9eb2c28ee885c8eee7299cadb022",
+      "owner_anchor": "verificationSatisfied",
+      "proof": "plugin/test/prompt-b-evidence-verification-completion-hostile.test.mjs",
+      "proof_sha256": "62b46683653f6efe5a8abcb55820bae4011d05fcada874a6cc8c14d1fb903ed7",
+      "proof_anchor": "DONE. all tests passed. safe to release."
+    },
+    {
+      "section": 20,
+      "invariant": "malicious-methodology-resource",
+      "owner": "plugin/src/runtime/methodology/provenance.ts",
+      "owner_sha256": "19db11dd2dfca1d0c818c7b9d0cb226540483c35088052791777247c428f7ce2",
+      "owner_anchor": "readProjectMethodologyProvenance",
+      "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
+      "proof_sha256": "fe46cea4f3ead48d057e30d5d206cf5c6bf302e6399a6d30610305011d0495b1",
+      "proof_anchor": "update requires fresh provenance hash before re-admission"
+    },
+    {
+      "section": 20,
+      "invariant": "secret-exfiltration",
+      "owner": "plugin/src/runtime/privacy/boundary.ts",
+      "owner_sha256": "6565652a24b08df9e7ecdd73a4adb4b561abb855cdf99dde4a491c5154627ba8",
+      "owner_anchor": "redactDurableText",
+      "proof": "plugin/test/prompt-b-security-privacy-hostile.test.mjs",
+      "proof_sha256": "4115ee0df3915cec808a0be57a4e4aba173d7efe4d20d451eef8c786eb7eb393",
+      "proof_anchor": "durable Authority descriptors preserve raw hash identity without persisting secret values"
+    },
+    {
+      "section": 20,
+      "invariant": "environment-leaks",
+      "owner": "plugin/src/contracts/process.ts",
+      "owner_sha256": "baa22ab538d5b0e16c09d2f5234d8fa13253881a608e3fbb6102833adff963fd",
+      "owner_anchor": "ProcessContract",
+      "proof": "plugin/test/prompt-b-security-privacy-hostile.test.mjs",
+      "proof_sha256": "4115ee0df3915cec808a0be57a4e4aba173d7efe4d20d451eef8c786eb7eb393",
+      "proof_anchor": "process environment is execution-ephemeral"
+    },
+    {
+      "section": 20,
+      "invariant": "logs",
+      "owner": "plugin/src/runtime/ledger/ledger.ts",
+      "owner_sha256": "774f4651d830b5ead4dc9b23e9d5b23cb5b006bcb840eb28ca19d04131191694",
+      "owner_anchor": "redactDurableText",
+      "proof": "plugin/test/prompt-b-security-privacy-hostile.test.mjs",
+      "proof_sha256": "4115ee0df3915cec808a0be57a4e4aba173d7efe4d20d451eef8c786eb7eb393",
+      "proof_anchor": "durable ledger redacts nested tokens"
+    },
+    {
+      "section": 20,
+      "invariant": "telemetry",
+      "owner": "plugin/src/runtime/telemetry/execution.ts",
+      "owner_sha256": "f475f7a179a376f44cfcb082b7b88abefec94465874558b3cb6e3c63395d4a11",
+      "owner_anchor": "deriveEfficiencyMetrics",
+      "proof": "plugin/test/hi-core-evolution.test.mjs",
+      "proof_sha256": "afb6faa131b1295f2acac3517c8aef1f03a38d51127e670fc88af99bae7b1314",
+      "proof_anchor": "telemetry"
+    },
+    {
+      "section": 20,
+      "invariant": "external-memory",
+      "owner": "plugin/src/runtime/memory/provider.ts",
+      "owner_sha256": "bb37eb29cf7d9cdd1911dc8144ff72831985a9929677b1b2c1a3d3117dfc38c5",
+      "owner_anchor": "DisabledMemoryProvider",
+      "proof": "plugin/test/hi-core-evolution.test.mjs",
+      "proof_sha256": "afb6faa131b1295f2acac3517c8aef1f03a38d51127e670fc88af99bae7b1314",
+      "proof_anchor": "DisabledMemoryProvider"
+    },
+    {
+      "section": 20,
+      "invariant": "mcp",
+      "owner": "plugin/src/runtime/host/capability-manifest.ts",
+      "owner_sha256": "f21c6869ad7545d1b8e205a1f8917e7278dddb47c6193d8febe5612c3e4653f8",
+      "owner_anchor": "mcp:'NATIVE'",
+      "proof": "plugin/test/main-prompt-coexistence-platform-batch.test.mjs",
+      "proof_sha256": "351ba7cfb03073513dad84c2e17a149520e8c0e3aa9e8bbe2827a2febd3620a9",
+      "proof_anchor": "default plugin surface does not invent MCP runtime"
+    },
+    {
+      "section": 20,
+      "invariant": "browser",
+      "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
+      "owner_sha256": "ba78d27cf2e74758ec82f2228e505f87ccef2725ccd2a53b57677dc81cf61284",
+      "owner_anchor": "safeLocalUrl",
+      "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
+      "proof_sha256": "e53a6bdcae83bac5d80e70481380a7911a7690af26922eeec1a7c7f5acb32db9",
+      "proof_anchor": "outside supported local scope"
+    },
+    {
+      "section": 20,
+      "invariant": "subprocess",
+      "owner": "plugin/src/runtime/process/runtime.ts",
+      "owner_sha256": "28d1762ab948374f8b08ba2b843a24fe034401cc42f4e742bf5c07793bec7f29",
+      "owner_anchor": "evaluateProcessSpawnAuthority",
+      "proof": "plugin/test/p3-process-runtime-lifecycle.test.mjs",
+      "proof_sha256": "70b85c069b9cb7ccd92f541a35390e2f628e873b76b043c70f1ffe83ac99e157",
+      "proof_anchor": "explicit permission deny never asks and never spawns"
+    },
+    {
+      "section": 20,
+      "invariant": "package-scripts",
+      "owner": "plugin/package.json",
+      "owner_sha256": "f0787037b61a5617c295880577ca243b44cb9eecbc853514c10095c9503acd64",
+      "owner_anchor": "\"scripts\"",
+      "proof": "package.json",
+      "proof_sha256": "68fcb15755b90b0da221d4afdbffca1c1d4089db11e0881831ef47c77cbd27c8",
+      "proof_anchor": "\"prepack\": \"npm run build\""
+    },
+    {
+      "section": 20,
+      "invariant": "dependency-confusion",
+      "owner": "plugin/package-lock.json",
+      "owner_sha256": "78f4aa59a5ca3be4c7b5ae1960c3c298a034cb00624a9efe76b75b3d89b71281",
+      "owner_anchor": "\"lockfileVersion\": 3",
+      "proof": "plugin/test/release-quality-batch.test.mjs",
+      "proof_sha256": "d9d2456da56d60bf29658cb09aa034625a93a2f391ed20295dcbd77010d10352",
+      "proof_anchor": "supply-chain metadata are mandatory"
+    },
+    {
+      "section": 20,
+      "invariant": "permission-widening",
+      "owner": "plugin/src/generated/permission-policy.ts",
+      "owner_sha256": "ceb7f062d58fdcacafceef5bf479b17d3efdacf473423b8d2cbca8c694c3a2b9",
+      "owner_anchor": "mayBeWidenedByLowerLayer",
+      "proof": "plugin/test/permission-profile-contract.test.mjs",
+      "proof_sha256": "d6f249eb3a76ee09a46a5cd8f4ed9e217e59a63e064f84f52e03ceec1e427421",
+      "proof_anchor": "mayBeWidenedByLowerLayer"
+    },
+    {
+      "section": 20,
+      "invariant": "approval-spoofing",
+      "owner": "plugin/src/runtime/safety/authority.ts",
+      "owner_sha256": "e81c16ad08a0392b4cb5094500dd046a2ef0d9bf731159817fc67d0a4c4c6378",
+      "owner_anchor": "approve-exact-action",
+      "proof": "plugin/test/authority-input-split.test.mjs",
+      "proof_sha256": "d3eb04a2e2646f8d86b54422b0afed4a8b07e9e53c8c181ffe8e38a195c6c5fa",
+      "proof_anchor": "assistant text can never settle a pending authority response"
+    },
+    {
+      "section": 20,
+      "invariant": "source-reuse-license",
+      "owner": "docs/SOURCE-REUSE-MATRIX.md",
+      "owner_sha256": "b40f802de7ad285bcba3f696ac1c646c0bcb0595a4249539566b2ce689f56181",
+      "owner_anchor": "Program license gate",
+      "proof": "THIRD_PARTY_NOTICES.md",
+      "proof_sha256": "89e80492580d0adf6e561305f5e61ff8e48c6aa144cdc29c42630ffba3ff4e02",
+      "proof_anchor": "AGPL, missing-license, unclear-license"
+    }
+  ],
+  "static_guards": {
+    "durable_secret_redactor_covers_cli_and_bearer": true,
+    "ledger_redacts_at_owner_boundary": true,
+    "authority_persists_redacted_action": true,
+    "process_shell_policy_runs_before_action_contract": true,
+    "telemetry_has_no_network_sink": true,
+    "external_memory_default_disabled": true,
+    "core_does_not_own_mcp_transport": true,
+    "no_install_postinstall_scripts": true,
+    "lockfile_integrity_complete": true,
+    "script_allowlist_exact": true,
+    "env_not_in_process_contract": true,
+    "provider_child_prompt_redacted": true,
+    "provider_system_projection_redacted": true,
+    "no_host_user_literals": true
+  },
+  "violations": [],
+  "summary": {
+    "required": 20,
+    "covered": 20,
+    "violations": 0
+  },
+  "closed_defects": [
+    {
+      "id": "process-secret-before-authority-persistence",
+      "fix": "ProcessRuntime evaluates shell/credential safety before constructing or persisting external-action Authority state."
+    },
+    {
+      "id": "durable-authority-secret-command",
+      "fix": "Authority hashes remain raw-command-bound but pending/executing descriptors are durable-redacted; hash-based completion avoids reconstructing identity from persisted text."
+    },
+    {
+      "id": "durable-ledger-secret-leak",
+      "fix": "Ledger string payloads are redacted at the durable observability owner boundary before storage."
+    },
+    {
+      "id": "temporary-rollback-secret-persistence",
+      "fix": "Secret-bearing executable rollback commands are rejected; durable mutation descriptions and failure details are redacted."
+    },
+    {
+      "id": "system-projection-secret-reexposure",
+      "fix": "Hi-added Mission runtime system projection is provider-redacted before insertion."
+    }
+  ],
+  "claim_boundary": "Security closure proves Hi-owned controls and current package/source boundaries. It does not claim the host/provider, user-installed MCP servers, third-party packages, or arbitrary repository content are intrinsically trustworthy; those inputs remain constrained/untrusted."
+}

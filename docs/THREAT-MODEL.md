@@ -31,3 +31,35 @@ The machine-readable authority for this matrix is `data/validation/adversarial-t
 ## Reference mechanisms
 
 Q3 re-read the pinned local references before adapting the matrix mechanism: `opencode-agent-orchestration-kit` for a structurally checked threat model, `opencode-pty` for explicit process lifecycle/cleanup semantics, and `opencode-worktree` for realpath/path-containment and cleanup failure semantics. Their test/control-plane ontologies are not imported; Hi canonical ownership remains unchanged.
+
+
+## PROMPT B §20 current-architecture security/privacy closure
+
+The Q3 matrix above remains the stable adversarial baseline. PROMPT B §20 adds a current-source audit in `data/validation/prompt-b-security-privacy.json`; it does not replace the Q3 IDs. The §20 audit treats repository text, model prose, methodology resources, host events, environment values, browser content, subprocess output, package metadata, and external services as untrusted inputs rather than control-plane authority.
+
+| Threat surface | Current owner / boundary | Current fail-closed rule |
+|---|---|---|
+| Secret-bearing external process requests | `ProcessRuntime` + shell policy + Authority | Shell/credential policy runs **before** external-action Authority state is created. Secret-sensitive commands cannot create pending approval state or spawn a process. |
+| Durable Authority state | Authority exact-action hash + privacy boundary | Exact identity is hashed from the raw ephemeral command/cwd, while persisted pending/executing action descriptors are redacted. Completion uses the stored exact hash, not reconstructed redacted text. |
+| Ledger/log persistence | Ledger owner + privacy boundary | Every durable string payload is bounded and secret-redacted at the ledger owner boundary; callers cannot bypass it by nesting an error/command inside payload objects. |
+| Temporary rollback state | TemporaryMutation owner | Executable rollback commands containing detected secret material are rejected. Durable descriptions and rollback failure details are redacted. |
+| Provider-facing Hi system projection | system transform + privacy boundary | Hi-added Mission runtime projection is redacted before provider insertion. Child task prompts are independently redacted at `ChildExecutionCoordinator`. |
+| Process environment | Process executor boundary | Env values are execution-ephemeral and may reach the exact native PTY spawn only; they are absent from durable `ProcessContract`, Evidence, and ledger state. |
+| Malicious repository/model prose | structured Authority/Evidence/Completion owners | Text may inform context but cannot grant Authority, manufacture Evidence/PASS, or close obligations. Generic prose such as “approve”, “DONE”, or “safe to release” has no control-plane effect. |
+| Malicious methodology resource | project methodology provenance/admission | A project methodology must remain hash/provenance coherent and admitted before selection/loading. Methodology content never owns Authority or Completion; detailed skill/resource security is re-audited in PROMPT B §21. |
+| External memory | `DisabledMemoryProvider` default | No external memory backend is enabled by default. Memory cannot own Mission/Evidence/Authority even if a future provider is added. |
+| MCP | OpenCode host capability only | Hi recognizes native host capability but does not invent, configure, or own an MCP transport/runtime. Existing user MCP config is preserved rather than rewritten. |
+| Telemetry | in-process deterministic metrics | Current telemetry computes bounded numeric/structural metrics only; there is no outbound telemetry sink. Token/cost data is not fabricated when host usage data is absent. |
+| Browser | Playwright adapter + BrowserRuntime | Local http(s) only, credential-bearing URLs and arbitrary selectors rejected, state is exact execution-owner scoped, observations are not Evidence by themselves. |
+| Package scripts / dependencies | package manifests + lock + release provenance | No install/preinstall/postinstall lifecycle script exists in Hi manifests. The canonical plugin lock is lockfile v3 with registry resolution+integrity for locked packages; the only native script allowlist is exact `msgpackr-extract@3.0.4`. Release gates separately bind SBOM/dependency graph. |
+| Source reuse / license | Source Reuse Matrix + Third-Party Notices | Missing/unclear/AGPL-incompatible source is IDEA_ONLY or CLEAN_ROOM/BEHAVIOR_ONLY. Future reuse must record exact commit/file, adaptation class, license evidence, and attribution before implementation. |
+
+### Closed defects found by §20
+
+- `process-secret-before-authority-persistence`: Process external-action classification used to run before secret-sensitive shell policy, so a later-blocked command could already have placed a raw credential in pending Authority state.
+- `durable-authority-secret-command`: pending/executing Authority descriptors used to persist the raw exact command. Exact hash identity is now preserved without plaintext credential persistence.
+- `durable-ledger-secret-leak`: ledger bounding previously truncated strings but did not redact them. Redaction is now enforced at the durable ledger owner.
+- `temporary-rollback-secret-persistence`: command rollback state could persist credentials and failure output could persist them in `detail`.
+- `system-projection-secret-reexposure`: Hi-added Mission runtime system projection previously bypassed the provider redaction boundary.
+
+The claim boundary is deliberately narrow: these controls protect **Hi-owned state and execution surfaces**. They do not claim that the OpenCode host/provider, user-installed MCP servers, arbitrary dependencies, external websites, or repository content are trustworthy. Those remain external/untrusted surfaces constrained by Hi policy and host permissions.

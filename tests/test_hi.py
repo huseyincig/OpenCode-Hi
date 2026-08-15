@@ -1040,3 +1040,21 @@ def test_prompt_b_vcs_path_portability_audit_is_bounded_and_source_bound():
     assert all(d['static_guards'].values())
     assert {'unbounded-repository-path-identity','browser-host-user-cache-literal','browser-stale-spa-route-observation'}<={x['id'] for x in d['closed_defects']}
     assert (ROOT/'scripts/audit-vcs-path-portability.py').is_file()
+
+
+def test_prompt_b_security_privacy_audit_is_fail_closed_source_bound_and_complete():
+    d=json.loads((ROOT/'data/validation/prompt-b-security-privacy.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_SECURITY_PRIVACY_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['section']==20 and d['status']=='PASS'
+    assert d['violations']==[] and d['summary']=={'required':20,'covered':20,'violations':0}
+    expected={'path-traversal','symlink-escape','command-injection','shell-interpolation','prompt-injection','malicious-repo-content','malicious-methodology-resource','secret-exfiltration','environment-leaks','logs','telemetry','external-memory','mcp','browser','subprocess','package-scripts','dependency-confusion','permission-widening','approval-spoofing','source-reuse-license'}
+    assert {x['invariant'] for x in d['invariants']}==expected
+    for row in d['invariants']:
+        owner=ROOT/row['owner'];proof=ROOT/row['proof'];assert owner.is_file() and proof.is_file()
+        assert hashlib.sha256(owner.read_bytes()).hexdigest()==row['owner_sha256']
+        assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
+        assert row['owner_anchor'] in owner.read_text(errors='replace') and row['proof_anchor'] in proof.read_text(errors='replace')
+    assert all(d['static_guards'].values())
+    assert {'process-secret-before-authority-persistence','durable-authority-secret-command','durable-ledger-secret-leak','temporary-rollback-secret-persistence','system-projection-secret-reexposure'}<={x['id'] for x in d['closed_defects']}
+    assert (ROOT/'scripts/audit-security-privacy.py').is_file()
+    threat=(ROOT/'docs/THREAT-MODEL.md').read_text()
+    assert 'PROMPT B §20 current-architecture security/privacy closure' in threat

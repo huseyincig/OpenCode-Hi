@@ -3,11 +3,13 @@ import { appendLedger } from '../ledger/ledger.js';
 import { notePrivilegedReleaseOutcome } from './release-chain.js';
 import { externalActionType, externalEffectCommand } from './command-classifier.js';
 import { openHumanDecision, resolveHumanDecision } from '../human-decision/runtime.js';
+import { redactDurableText } from '../privacy/boundary.js';
 export const AUTHORITY_APPROVAL_TTL_MS = 5 * 60_000;
 function freshAuthorityTimestamp(value, now = Date.now()) { return Number.isFinite(value) && value > 0 && now >= value && now - value <= AUTHORITY_APPROVAL_TTL_MS; }
 export function privilegedAction(command) { return externalEffectCommand(command); }
 export function actionContract(command, cwd) { const action_type = externalActionType(command); if (!action_type)
     throw new Error('Hi authority contract: command is not a canonical external action.'); const target = { cwd: cwd ?? '', command: command.trim() }, action = `cwd=${target.cwd}\ncommand=${target.command}`, hash = payloadHash(action); return { authority_id: `auth_${hash.slice(0, 20)}`, action_type, target, action, hash, requested_by: 'mission-parent', required_reason: 'privileged-external-effect', one_shot: true }; }
+function durableAction(action) { return redactDurableText(action); }
 function authorityObligation(m, hash) { return m.execution.obligations.find(x => x.id === `o-authority-${hash.slice(0, 10)}` && x.kind === 'authority' && x.status === 'open'); }
 export function isAuthorized(m, command, cwd) { const c = actionContract(command, cwd), a = m.authority.authority?.approved; return Boolean(a && a.hash === c.hash && freshAuthorityTimestamp(a.approved_at)); }
 export function claimAuthorizedAction(m, command, cwd) { const c = actionContract(command, cwd); if (m.authority.authority?.executing?.hash === c.hash)
@@ -25,29 +27,33 @@ export function beginAuthorizedAction(m, command, cwd) { const c = actionContrac
         m.execution.obligations.push(o);
     }
     appendLedger(m, 'authority.bound-to-native-permission', { payload: { obligation: o.id, hash: c.hash } });
-} m.authority.authority = { ...(m.authority.authority ?? {}), executing: { hash: c.hash, action: c.action, started_at: Date.now() }, approved: undefined }; m.identity.status = 'active'; appendLedger(m, 'authority.execution.started', { payload: { hash: c.hash, authority: 'opencode-native-permission' } }); }
-export function completeAuthorizedAction(m, command, cwd, outcome, detail) { const c = actionContract(command, cwd), executing = m.authority.authority?.executing; if (!executing || executing.hash !== c.hash)
+} m.authority.authority = { ...(m.authority.authority ?? {}), executing: { hash: c.hash, action: durableAction(c.action), started_at: Date.now() }, approved: undefined }; m.identity.status = 'active'; appendLedger(m, 'authority.execution.started', { payload: { hash: c.hash, authority: 'opencode-native-permission' } }); }
+export function completeAuthorizedActionByHash(m, hash, outcome, detail, commandForRelease) { const executing = m.authority.authority?.executing; if (!executing || executing.hash !== hash)
     return false; if (outcome === 'unknown') {
-    appendLedger(m, 'authority.execution.uncertain', { payload: { hash: c.hash, detail: detail?.slice(0, 240), retry: 'forbidden-until-user-reconciliation' } });
-    openHumanDecision(m, { semantic_type: 'authority_request', reason_code: 'authority-execution-uncertain', summary: 'The exact privileged action has an unknown execution outcome and must be reconciled before any retry.', response_schema: { kind: 'authority-protocol', protocol: 'reconcile-action-outcome' }, authority_ref: c.hash });
+    appendLedger(m, 'authority.execution.uncertain', { payload: { hash, detail: detail?.slice(0, 240), retry: 'forbidden-until-user-reconciliation' } });
+    openHumanDecision(m, { semantic_type: 'authority_request', reason_code: 'authority-execution-uncertain', summary: 'The exact privileged action has an unknown execution outcome and must be reconciled before any retry.', response_schema: { kind: 'authority-protocol', protocol: 'reconcile-action-outcome' }, authority_ref: hash });
     return false;
 } m.authority.authority = { ...m.authority.authority, executing: undefined }; if (outcome === 'success') {
     const completed = m.authority.authority.completed_hashes ?? [];
-    m.authority.authority.completed_hashes = [...new Set([...completed, c.hash])].slice(-64);
-    const o = authorityObligation(m, c.hash);
+    m.authority.authority.completed_hashes = [...new Set([...completed, hash])].slice(-64);
+    const o = authorityObligation(m, hash);
     if (o) {
         o.status = 'closed';
         o.closedAt = Date.now();
     }
-    appendLedger(m, 'authority.execution.completed', { payload: { hash: c.hash, detail: detail?.slice(0, 240) } });
+    if (commandForRelease)
+        notePrivilegedReleaseOutcome(m, commandForRelease, 'success');
+    appendLedger(m, 'authority.execution.completed', { payload: { hash, detail: detail?.slice(0, 240) } });
     return true;
-} appendLedger(m, 'authority.execution.failed', { payload: { hash: c.hash, detail: detail?.slice(0, 240), retry: 'new-explicit-action-contract-required' } }); openHumanDecision(m, { semantic_type: 'authority_request', reason_code: 'authority-execution-failed', summary: 'The privileged action failed; any retry requires a new exact action contract.', response_schema: { kind: 'authority-protocol', protocol: 'new-exact-action-contract' }, authority_ref: c.hash }); return false; }
+} if (commandForRelease)
+    notePrivilegedReleaseOutcome(m, commandForRelease, 'failure'); appendLedger(m, 'authority.execution.failed', { payload: { hash, detail: detail?.slice(0, 240), retry: 'new-explicit-action-contract-required' } }); openHumanDecision(m, { semantic_type: 'authority_request', reason_code: 'authority-execution-failed', summary: 'The privileged action failed; any retry requires a new exact action contract.', response_schema: { kind: 'authority-protocol', protocol: 'new-exact-action-contract' }, authority_ref: hash }); return false; }
+export function completeAuthorizedAction(m, command, cwd, outcome, detail) { const c = actionContract(command, cwd); return completeAuthorizedActionByHash(m, c.hash, outcome, detail); }
 export function requireAuthority(m, command, cwd) { const c = actionContract(command, cwd); if (m.authority.authority?.executing)
     throw new Error('Hi authority boundary: another privileged external action has an unresolved execution outcome. Reconcile it before requesting a new action.'); let o = authorityObligation(m, c.hash); if (!o) {
     o = { id: `o-authority-${c.hash.slice(0, 10)}`, kind: 'authority', summary: `External privileged action ${c.hash.slice(0, 10)} explicitly authorized and completed`, status: 'open' };
     m.execution.obligations.push(o);
     appendLedger(m, 'obligation.opened', { payload: { obligation: o.id, kind: 'authority', hash: c.hash } });
-} m.authority.authority = { ...(m.authority.authority ?? {}), approved: undefined, pending: { hash: c.hash, action: c.action, created_at: Date.now() } }; const d = openHumanDecision(m, { semantic_type: 'authority_request', reason_code: 'authority-approval-required', summary: `Exact privileged action ${c.hash.slice(0, 12)} requires explicit authority before execution.`, response_schema: { kind: 'authority-protocol', protocol: 'approve-exact-action' }, authority_ref: c.hash }); throw new Error(`Hi authority boundary: explicit approval required for exact action contract ${c.hash}. Submit the structured authority response ${JSON.stringify({ decision_id: d.decision_id, authority_ref: c.hash, response: 'approve' })}. Generic continuation or approval prose does not authorize privileged actions. Action was not executed.`); }
+} m.authority.authority = { ...(m.authority.authority ?? {}), approved: undefined, pending: { hash: c.hash, action: durableAction(c.action), created_at: Date.now() } }; const d = openHumanDecision(m, { semantic_type: 'authority_request', reason_code: 'authority-approval-required', summary: `Exact privileged action ${c.hash.slice(0, 12)} requires explicit authority before execution.`, response_schema: { kind: 'authority-protocol', protocol: 'approve-exact-action' }, authority_ref: c.hash }); throw new Error(`Hi authority boundary: explicit approval required for exact action contract ${c.hash}. Submit the structured authority response ${JSON.stringify({ decision_id: d.decision_id, authority_ref: c.hash, response: 'approve' })}. Generic continuation or approval prose does not authorize privileged actions. Action was not executed.`); }
 function authorityProtocolMatches(m, input, protocol) { const d = m.authority.human_decision; return Boolean(d && d.status === 'OPEN' && d.semantic_type === 'authority_request' && d.response_schema.kind === 'authority-protocol' && d.response_schema.protocol === protocol && d.decision_id === input.decision_id && d.authority_ref === input.authority_ref); }
 export function approvePendingAuthority(m, input) { if (!input || typeof input !== 'object' || Array.isArray(input))
     return false; const r = input, p = m.authority.authority?.pending; if (r.response !== 'approve' || !p || p.hash !== r.authority_ref || !authorityProtocolMatches(m, r, 'approve-exact-action'))

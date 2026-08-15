@@ -3,7 +3,8 @@ import { ProcessSpawnPermissionError } from '../../opencode/open-code-pty-adapte
 import { evaluateProcessSpawnAuthority } from './authority.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { addEvidence } from '../evidence/evidence-runtime.js';
-import { actionContract, beginAuthorizedAction, completeAuthorizedAction, isAuthorized, requireAuthority } from '../safety/authority.js';
+import { actionContract, beginAuthorizedAction, completeAuthorizedAction, completeAuthorizedActionByHash, isAuthorized, requireAuthority } from '../safety/authority.js';
+import { evaluateShellCommand } from './shell-policy.js';
 import { externalActionType } from '../safety/command-classifier.js';
 function replaceProcess(m, contract) {
     const index = m.execution.processes.findIndex(p => p.process_id === contract.process_id);
@@ -42,17 +43,20 @@ export class ProcessRuntime {
         if (['completed', 'failed', 'cancelled'].includes(worker.status) || ['completed', 'failed', 'cancelled', 'blocked'].includes(task.status))
             throw new Error('Process owner task/worker is terminal');
         const ordinaryAuthority = `native-permission:${worker.id}:bash`;
-        const actionType = externalActionType([input.command, ...input.args ?? []].join(' '));
+        const commandLine = [input.command, ...input.args ?? []].join(' '), shell = evaluateShellCommand(commandLine);
+        if (shell.decision === 'DENY' || shell.decision === 'USER_ACTION_REQUIRED' || shell.decision === 'REWRITE')
+            throw new ProcessSpawnPermissionError(shell.decision === 'DENY' ? 'DENY' : 'ASK', `shell-policy:${shell.reason}`);
+        const actionType = externalActionType(commandLine);
         let authorityRef = ordinaryAuthority;
         if (actionType) {
             if (!m.identity.intent.requestedExternalActions.includes(actionType))
                 throw new Error(`Hi process external action ${actionType} was not requested by the mission`);
-            const exact = actionContract([input.command, ...input.args ?? []].join(' '), input.cwd);
+            const exact = actionContract(commandLine, input.cwd);
             authorityRef = exact.hash;
-            if (!isAuthorized(m, [input.command, ...input.args ?? []].join(' '), input.cwd))
-                requireAuthority(m, [input.command, ...input.args ?? []].join(' '), input.cwd);
+            if (!isAuthorized(m, commandLine, input.cwd))
+                requireAuthority(m, commandLine, input.cwd);
         }
-        let request = { mission_id: m.identity.mission_id, task_id: task.id, worker_id: worker.id, role: worker.role, command: input.command, args: input.args, cwd: input.cwd, env: input.env, title: input.title, timeout_ms: input.timeout_ms, authority_ref: authorityRef, ...(actionType ? { external_action: { action_type: actionType, target: [input.command, ...input.args ?? []].join(' '), requested_explicitly: true, required_authority_ref: authorityRef, executor: 'hi-process-executor' } } : {}) };
+        let request = { mission_id: m.identity.mission_id, task_id: task.id, worker_id: worker.id, role: worker.role, command: input.command, args: input.args, cwd: input.cwd, env: input.env, title: input.title, timeout_ms: input.timeout_ms, authority_ref: authorityRef, ...(actionType ? { external_action: { action_type: actionType, target: commandLine, requested_explicitly: true, required_authority_ref: authorityRef, executor: 'hi-process-executor' } } : {}) };
         for (let attempts = 0; attempts < 3; attempts++) {
             const auth = evaluateProcessSpawnAuthority(request, this.projectRoot, this.getHostConfig());
             if (auth.decision === 'DENY')
@@ -66,7 +70,7 @@ export class ProcessRuntime {
             }
             let privilegedStarted = false;
             if (actionType) {
-                beginAuthorizedAction(m, [input.command, ...input.args ?? []].join(' '), input.cwd);
+                beginAuthorizedAction(m, commandLine, input.cwd);
                 privilegedStarted = true;
             }
             try {
@@ -77,7 +81,7 @@ export class ProcessRuntime {
             }
             catch (error) {
                 if (privilegedStarted)
-                    completeAuthorizedAction(m, [input.command, ...input.args ?? []].join(' '), input.cwd, 'unknown', String(error));
+                    completeAuthorizedAction(m, commandLine, input.cwd, 'unknown', String(error));
                 throw error;
             }
         }
@@ -91,7 +95,7 @@ export class ProcessRuntime {
         this.noteExit(m, result.contract);
         const action = m.authority.authority?.executing;
         if (action?.hash === result.contract.authority_ref) {
-            completeAuthorizedAction(m, action.action.match(/(?:^|\n)command=([^\n]*)/)?.[1] ?? '', result.contract.cwd, result.contract.status === 'EXITED' && result.contract.exit_code === 0 ? 'success' : 'failure', `process ${result.contract.status}${result.contract.exit_code !== undefined ? ` exit=${result.contract.exit_code}` : ''}`);
+            completeAuthorizedActionByHash(m, action.hash, result.contract.status === 'EXITED' && result.contract.exit_code === 0 ? 'success' : 'failure', `process ${result.contract.status}${result.contract.exit_code !== undefined ? ` exit=${result.contract.exit_code}` : ''}`, action.action.match(/(?:^|\n)command=([^\n]*)/)?.[1] ?? '');
         }
         return structuredClone(result.contract);
     }
@@ -99,14 +103,14 @@ export class ProcessRuntime {
         if (m.authority.authority?.executing?.hash === before.authority_ref) {
             const command = m.authority.authority.executing.action.match(/(?:^|\n)command=([^\n]*)/)?.[1] ?? '';
             if (command)
-                completeAuthorizedAction(m, command, before.cwd, 'unknown', String(error));
+                completeAuthorizedActionByHash(m, m.authority.authority.executing.hash, 'unknown', String(error), command);
         }
         throw error;
     } }
     async kill(m, id, signal = 'SIGTERM') { const before = this.contract(m, id), result = await this.executor.kill(id, signal); this.noteExit(m, result.contract); if (m.identity.status === 'active' && m.authority.authority?.executing?.hash === before.authority_ref) {
         const command = m.authority.authority.executing.action.match(/(?:^|\n)command=([^\n]*)/)?.[1] ?? '';
         if (command)
-            completeAuthorizedAction(m, command, before.cwd, 'failure', `process terminated by ${signal}`);
+            completeAuthorizedActionByHash(m, m.authority.authority.executing.hash, 'failure', `process terminated by ${signal}`, command);
     } return structuredClone(result.contract); }
     async cleanup(m, id) { const current = this.contract(m, id); await this.executor.cleanup(id); replaceProcess(m, { ...current, cleanup_state: 'CLEANED' }); appendLedger(m, 'process.cleaned', { task_id: current.task_id, worker_id: current.worker_id, payload: { process_id: id } }); }
     list(m) { return m.execution.processes.map(item => structuredClone(item)); }

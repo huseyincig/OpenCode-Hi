@@ -8,5 +8,6 @@ export interface PrivacyResult {
     redactions: Redaction[];
 }
 export declare function redactProviderContext(text: string): PrivacyResult;
+export declare function redactDurableText(text: string): string;
 export declare function restoreLocalText(text: string, redactions: Redaction[]): string;
 export declare function containsPlaintextSecret(text: string, redactions: Redaction[]): boolean;

@@ -7,6 +7,7 @@ export declare function isAuthorized(m: MissionState, command: string, cwd?: str
 export declare function claimAuthorizedAction(m: MissionState, command: string, cwd?: string): 'new' | 'duplicate' | 'conflict';
 export declare function beginAuthorizedAction(m: MissionState, command: string, cwd?: string): void;
 export type AuthorityExecutionOutcome = 'success' | 'failure' | 'unknown';
+export declare function completeAuthorizedActionByHash(m: MissionState, hash: string, outcome: AuthorityExecutionOutcome, detail?: string, commandForRelease?: string): boolean;
 export declare function completeAuthorizedAction(m: MissionState, command: string, cwd: string | undefined, outcome: AuthorityExecutionOutcome, detail?: string): boolean;
 export declare function requireAuthority(m: MissionState, command: string, cwd?: string): never;
 export interface AuthorityProtocolResponse {
