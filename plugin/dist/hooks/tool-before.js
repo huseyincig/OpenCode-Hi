@@ -10,6 +10,7 @@ import { evaluateShellCommand } from '../runtime/process/shell-policy.js';
 import { appendLedger } from '../runtime/ledger/ledger.js';
 import { openHumanDecision } from '../runtime/human-decision/runtime.js';
 import { HI_BROWSER_EXECUTION_TOOL_IDS } from '../runtime/browser/executor.js';
+import { resolveBrowserExecutionOwner } from '../runtime/browser/ownership.js';
 export function createToolBeforeHook(store, background, projectRoot) {
     return async (input, output) => {
         const sid = input?.sessionID ?? input?.sessionId, child = sid && background ? background.list().find(w => w.session_id === sid) : undefined, m = child ? store.get(child.parent_session_id) : store.get(sid);
@@ -21,8 +22,8 @@ export function createToolBeforeHook(store, background, projectRoot) {
         if (child && tool.startsWith('hi_')) {
             const browserTool = HI_BROWSER_EXECUTION_TOOL_IDS.includes(tool);
             if (browserTool) {
-                const task = m.execution.tasks.find(t => t.id === child.task_id), allowed = child.role === 'visual-qa' && task?.status === 'running' && child.selected_methodologies.some(name => ['hi-browser-testing', 'hi-visual-qa', 'hi-accessibility-review'].includes(name));
-                if (!allowed)
+                const owner = resolveBrowserExecutionOwner(m, { sessionID: String(sid), workerID: child.id, taskID: child.task_id });
+                if (!owner)
                     throw new Error(`Hi browser execution guard: child '${child.id}' cannot invoke '${tool}' outside its active visual task/methodology.`);
             }
             else

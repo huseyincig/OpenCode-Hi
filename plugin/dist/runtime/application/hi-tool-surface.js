@@ -20,6 +20,7 @@ import { evaluateCompletion } from '../completion/evaluator.js';
 import { primaryRoleCanDirectImplementation } from '../roles/catalog.js';
 import { nativeTool as tool } from '../../opencode/plugin-tool.js';
 import { assertHiToolNamespace } from '../../opencode/tool-namespace.js';
+import { resolveBrowserExecutionOwner } from '../browser/ownership.js';
 function nativeDiffFiles(raw, projectRoot) { const items = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : []; return [...new Set(items.map((x) => typeof x?.file === 'string' ? x.file : typeof x?.path === 'string' ? x.path : '').filter((x) => Boolean(x)).map((x) => normalizeProjectPath(x, projectRoot)).filter(Boolean))]; }
 export function createHiToolSurface(input) {
     const { state, store, tasks, teams, processRuntime, workspaceRuntime, browserRuntime, projectRoot, capabilities, native, getModels, scopedStores } = input;
@@ -153,9 +154,9 @@ export function createHiToolSurface(input) {
             return 'No active Hi mission'; const x = tasks.peek(m, a.id); const status = x?.task?.status ?? x?.worker?.status ?? 'unknown'; return JSON.stringify({ status, terminal: ['completed', 'failed', 'cancelled', 'blocked'].includes(status), result: x?.task?.result }); } });
     const cancelTool = tool({ description: 'Cancel one Hi task/worker.', args: { id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? String(await tasks.cancel(m, a.id)) : 'false'; } });
     const browserContext = (taskID, c) => { const sid = String(c?.sessionID ?? ''); for (const m of store.all()) {
-        const w = m.execution.workers.find(x => x.session_id === sid && x.task_id === taskID);
-        if (w && w.role === 'visual-qa' && w.status === 'busy' && w.selected_methodologies.some(x => ['hi-browser-testing', 'hi-visual-qa', 'hi-accessibility-review'].includes(x)))
-            return { m, w, cx: { task_id: taskID, executor_version: 'hi-playwright-browser@1' } };
+        const owner = resolveBrowserExecutionOwner(m, { sessionID: sid, taskID });
+        if (owner)
+            return { m, w: owner.worker, cx: { task_id: taskID, executor_version: 'hi-playwright-browser@1' } };
     } throw new Error('Browser execution is allowed only for the active visual-qa worker/task with a selected browser/visual methodology'); };
     const browserOpenTool = tool({ description: 'Open a local HTTP(S) target through the bounded Hi browser executor.', args: { task_id: tool.schema.string(), url: tool.schema.string() }, execute: async (a, c) => { try {
             if (!browserRuntime)

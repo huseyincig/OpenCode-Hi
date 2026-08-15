@@ -70,7 +70,12 @@ test('B3 browser execution custom tools are default-off and only active visual w
   m.execution.workers.push(visual);const bg=new BackgroundRegistry();bg.set(visual);const hook=createToolBeforeHook(store,bg,process.cwd())
   await hook({sessionID:'child-visual',tool:'hi_browser_inspect'},{args:{task_id:'t_visual'}})
   await assert.rejects(()=>hook({sessionID:'child-visual',tool:'hi_status'},{args:{}}),/control-plane tool/)
-  visual.role='coder';await assert.rejects(()=>hook({sessionID:'child-visual',tool:'hi_browser_inspect'},{args:{task_id:'t_visual'}}),/browser execution guard/)
+  visual.status='ready';m.execution.tasks[0].status='waiting'
+  await hook({sessionID:'child-visual',tool:'hi_browser_inspect'},{args:{task_id:'t_visual'}})
+  visual.restart_reconcile_pending=true;await assert.rejects(()=>hook({sessionID:'child-visual',tool:'hi_browser_inspect'},{args:{task_id:'t_visual'}}),/browser execution guard/)
+  visual.restart_reconcile_pending=false;visual.generation_at_spawn=m.continuation.generation+1;assert.equal(await hook({sessionID:'child-visual',tool:'hi_browser_inspect'},{args:{task_id:'t_visual'}}),undefined)
+  visual.generation_at_spawn=m.continuation.generation;visual.status='completed';m.execution.tasks[0].status='completed';await assert.rejects(()=>hook({sessionID:'child-visual',tool:'hi_browser_inspect'},{args:{task_id:'t_visual'}}),/browser execution guard/)
+  visual.status='busy';m.execution.tasks[0].status='running';visual.role='coder';await assert.rejects(()=>hook({sessionID:'child-visual',tool:'hi_browser_inspect'},{args:{task_id:'t_visual'}}),/browser execution guard/)
 })
 
 
