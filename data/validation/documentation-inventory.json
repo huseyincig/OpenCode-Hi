@@ -550,7 +550,7 @@
     },
     {
       "path": "docs/engineering-constitution/MASTER-CONTINUATION.md",
-      "sha256": "b6cd28ce979784d62b6434557f46b2160a9be8ad3039b208896650590327d752",
+      "sha256": "895b5a06218553ab75e248659e70116f552bf372b93e654ff6f1f403538e5d71",
       "audience": "INTERNAL_ENGINEERING",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "HUMAN_OWNED"

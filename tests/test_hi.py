@@ -1375,3 +1375,14 @@ def test_prompt_b_user_journey_acceptance_covers_all_required_scenarios():
     assert a['status']=='PASS' and a['source_binding']=={'tested_git_commit':'69fa226d9df0dc44010d7ba69d58b0f5ab477175','tested_git_tree':'36e99a925d25c19c65dff8cfba8ed17dc414a9df'}
     assert a['terminal']=={'tests':7,'pass':7,'fail':0,'cancelled':0,'skipped':0,'todo':0}
     assert hashlib.sha256((ROOT/a['proof']).read_bytes()).hexdigest()==a['proof_sha256']
+
+
+def test_prompt_b_developer_journey_acceptance_has_obvious_single_owners():
+    d=json.loads((ROOT/'data/validation/prompt-b-developer-journey-acceptance.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_DEVELOPER_JOURNEY_ACCEPTANCE_AUDIT' and d['program']=='PROMPT_B' and d['section']==37 and d['status']=='PASS'
+    assert d['summary']=={'required':4,'covered':4,'violations':0} and d['violations']==[]
+    assert d['required_journeys']==['add-config','add-methodology','add-host-adapter-behavior','add-validation-rule']
+    a=json.loads((ROOT/d['acceptance_receipt']).read_text())
+    assert a['status']=='PASS' and a['source_binding']=={'tested_git_commit':'07fbec3160f0bacb0ece896ac36358a50894ee25','tested_git_tree':'2a3375a247fc43239de6ee6c7cc204aeb9595015'}
+    assert a['terminal']=={'tests':4,'pass':4,'fail':0,'cancelled':0,'skipped':0,'todo':0}
+    assert hashlib.sha256((ROOT/a['proof']).read_bytes()).hexdigest()==a['proof_sha256']

@@ -713,6 +713,19 @@ try:
     if case.get('kind')!='PROPERTY_FUZZ_HISTORICAL_REGRESSION_CASE' or case.get('observed_before_fix')!='accepted-malformed-persisted-mission':err('PROMPT B property/fuzz historical regression case drift')
 except Exception as e:err(f'bad PROMPT B property/fuzz testing receipt: {e}')
 
+# PROMPT B §37 developer journey acceptance certification
+try:
+    d37=json.loads((ROOT/'data/validation/prompt-b-developer-journey-acceptance.json').read_text(encoding='utf-8'))
+    if d37.get('schema')!=1 or d37.get('kind')!='PROMPT_B_DEVELOPER_JOURNEY_ACCEPTANCE_AUDIT' or d37.get('program')!='PROMPT_B' or d37.get('section')!=37 or d37.get('status')!='PASS':err('bad PROMPT B developer journey audit receipt identity/status')
+    if d37.get('summary')!={'required':4,'covered':4,'violations':0} or d37.get('violations')!=[]:err('PROMPT B developer journey summary drift')
+    if d37.get('required_journeys')!=['add-config','add-methodology','add-host-adapter-behavior','add-validation-rule']:err('PROMPT B developer journey inventory drift')
+    a=json.loads((ROOT/d37['acceptance_receipt']).read_text(encoding='utf-8'))
+    if a.get('status')!='PASS' or a.get('source_binding')!={'tested_git_commit':'07fbec3160f0bacb0ece896ac36358a50894ee25','tested_git_tree':'2a3375a247fc43239de6ee6c7cc204aeb9595015'}:err('PROMPT B developer journey source binding drift')
+    if a.get('terminal')!={'tests':4,'pass':4,'fail':0,'cancelled':0,'skipped':0,'todo':0}:err('PROMPT B developer journey terminal drift')
+    rel=a.get('proof');expected=a.get('proof_sha256')
+    if not isinstance(rel,str) or not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B developer journey proof hash drift')
+except Exception as e:err(f'bad PROMPT B developer journey acceptance receipt: {e}')
+
 # PROMPT B §36 user journey acceptance certification
 try:
     u36=json.loads((ROOT/'data/validation/prompt-b-user-journey-acceptance.json').read_text(encoding='utf-8'))
