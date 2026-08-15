@@ -196,8 +196,9 @@ test('P2/P3 production runtime services own exactly one OpenCodePtyAdapter and d
   assert.match(services,/process:ProcessExecutor/)
   assert.match(plugin,/const processExecutor=new OpenCodePtyAdapter\(/)
   assert.match(services,/processExecutor:ports\.process/)
-  assert.match(hosts,/event-driven WAIT/)
-  assert.match(hosts,/`process-lifecycle` is `SUPPORTED`/)
+  assert.match(hosts,/ProcessRuntime remains PID\/process-group\/cwd\/command-identity bound/)
+  assert.match(hosts,/runtime capability contracts report only what the active host actually exposes/i)
+  assert.match(hosts,/`process-lifecycle` \| \*\*SUPPORTED_T3\*\*/)
 })
 
 

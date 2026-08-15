@@ -682,10 +682,10 @@ def test_r3_generated_compatibility_projection_selects_latest_exact_capability_p
     assert d['schema']==1 and d['kind']=='GENERATED_RECEIPT_COMPATIBILITY_PROJECTION'
     cur=d['current_reference_host'];assert (cur['opencode_version'],cur['platform'],cur['architecture'])==('1.18.18','linux','aarch64')
     caps=cur['capabilities']
-    assert caps['process-lifecycle']['receipt'].endswith('process-1.18.18-head-8c3f029.json') and caps['process-lifecycle']['status']=='SUPPORTED_T3'
-    assert caps['workspace-isolation-binding']['receipt'].endswith('workspace-1.18.18-head-8c3f029.json') and caps['workspace-isolation-binding']['status']=='SUPPORTED_T3'
-    assert caps['browser-execution']['receipt'].endswith('browser-1.18.18-head-8c3f029.json') and caps['browser-execution']['status']=='SUPPORTED_T3'
-    assert {caps[k]['tested_git_commit'] for k in ('process-lifecycle','workspace-isolation-binding','browser-execution')}=={'8c3f029bf3503f80bde7e1aaa44efe9530260d50'}
+    assert caps['process-lifecycle']['receipt'].endswith('process-1.18.18-head-5210a12.json') and caps['process-lifecycle']['status']=='SUPPORTED_T3'
+    assert caps['workspace-isolation-binding']['receipt'].endswith('workspace-1.18.18-head-5210a12.json') and caps['workspace-isolation-binding']['status']=='SUPPORTED_T3'
+    assert caps['browser-execution']['receipt'].endswith('browser-1.18.18-head-5210a12.json') and caps['browser-execution']['status']=='SUPPORTED_T3'
+    assert {caps[k]['tested_git_commit'] for k in ('process-lifecycle','workspace-isolation-binding','browser-execution')}=={'5210a12a7b607e0c9048749fa74a4c8b801cd924'}
     superseded={x['receipt']:x for x in d['history']}
     assert superseded['data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-bc85854.json']['classification']=='HISTORICAL_EXACT_PROOF'
     assert superseded['data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-92812a1.json']['classification']=='HISTORICAL_EXACT_PROOF'
@@ -1263,3 +1263,21 @@ def test_prompt_b_documentation_defect_cycle_requires_owner_impact_projection_an
         owner=ROOT/row['owner'];proof=ROOT/row['proof'];assert hashlib.sha256(owner.read_bytes()).hexdigest()==row['owner_sha256'];assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
         assert row['owner_anchor'] in owner.read_text(errors='replace') and row['proof_anchor'] in proof.read_text(errors='replace')
     assert all(d['static_guards'].values())
+
+
+def test_prompt_b_test_suite_audit_is_isolated_bounded_and_never_promotes_mock_t3():
+    d=json.loads((ROOT/'data/validation/prompt-b-test-suite-audit.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_TEST_SUITE_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['section']==30 and d['status']=='PASS'
+    assert d['violations']==[] and d['summary']=={'required':11,'covered':11,'violations':0}
+    assert all(d['static_guards'].values())
+    assert d['conditional_skips']=={'python_windows_symlink_privilege':4,'node_windows_posix_hosted_release':1,'silent_only_or_todo':0}
+    assert {'cwd-sensitive-test-root','test-suite-real-home-state-pollution','unbounded-test-runner-timeout','mock-runtime-self-promoted-t3'}<={x['id'] for x in d['closed_defects']}
+    for row in d['invariants']:
+        owner=ROOT/row['owner'];proof=ROOT/row['proof'];assert owner.is_file() and proof.is_file()
+        assert hashlib.sha256(owner.read_bytes()).hexdigest()==row['owner_sha256']
+        assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
+        assert row['owner_anchor'] in owner.read_text(errors='replace') and row['proof_anchor'] in proof.read_text(errors='replace')
+    h=json.loads((ROOT/d['harness_acceptance']).read_text())
+    assert h['status']=='PASS' and h['source_binding']['tested_git_commit']=='5210a12a7b607e0c9048749fa74a4c8b801cd924'
+    assert h['canonical_suite_observation']=={'tests':816,'pass':816,'fail':0,'cancelled':0,'home_hi_state_before':5301,'home_hi_state_after':5301,'home_hi_state_delta':0}
+    assert all(h['cwd_dual_run'][k]['tests']==17 and h['cwd_dual_run'][k]['pass']==17 and h['cwd_dual_run'][k]['fail']==0 for k in ('plugin_cwd','repo_root_cwd'))

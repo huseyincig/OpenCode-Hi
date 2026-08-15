@@ -64,7 +64,7 @@ test('P1 runtime capability requires live process observation while T3 remains e
   const hosts=readFileSync(new URL('../../docs/HOSTS.md',import.meta.url),'utf8')
   const architecture=readFileSync(new URL('../../docs/ARCHITECTURE.md',import.meta.url),'utf8')
   assert.match(hosts,/ProcessExecutor/i)
-  assert.match(hosts,/`process-lifecycle` is `SUPPORTED`/)
+  assert.match(hosts,/`process-lifecycle` \| \*\*SUPPORTED_T3\*\*/)
   assert.match(architecture,/contains no raw stdout\/stderr buffer/)
   const roots=[fileURLToPath(new URL('../src/runtime',import.meta.url)),fileURLToPath(new URL('../src/opencode',import.meta.url))]
   const source=roots.flatMap(root=>readdirSync(root,{recursive:true}).filter(x=>typeof x==='string'&&x.endsWith('.ts')).map(x=>readFileSync(join(root,String(x)),'utf8'))).join('\n')

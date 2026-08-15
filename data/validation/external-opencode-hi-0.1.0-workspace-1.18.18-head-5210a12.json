@@ -1,0 +1,120 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "generated_at": "2026-08-15",
+  "host": {
+    "os": "linux",
+    "arch": "aarch64",
+    "opencode_version": "1.18.18",
+    "server": "http://127.0.0.1:42022"
+  },
+  "release_authority": {
+    "push": false,
+    "tag": false,
+    "release": false,
+    "publish": false,
+    "deploy": false
+  },
+  "source_binding": {
+    "tested_git_commit": "5210a12a7b607e0c9048749fa74a4c8b801cd924",
+    "tested_git_tree": "0fe616e8c21da30addb0a01807b0185fa0556c4e",
+    "worktree": "/workspace/OpenCode-Hi",
+    "state": "CLEAN_COMMITTED_SOURCE",
+    "exact_candidate": true,
+    "runtime_hashes": {
+      "plugin/src/contracts/workspace.ts": "d2ed1d517537201302344aa3061f149b044ad85b6909fe85ec876904ea9b496a",
+      "plugin/src/runtime/workspace/executor.ts": "f6129bfab5c20641a144030b7357be598d4fd77dcde9ecdf664a390398d2e12b",
+      "plugin/src/runtime/workspace/runtime.ts": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "plugin/src/runtime/mission/validators.ts": "0a534c906ebd71f44b3f91cfb2f346cdbfee1ecf4ffd917b04f4b848784ed49b",
+      "plugin/src/opencode/open-code-workspace-adapter.ts": "533a76ebf72a49a9254e5af02d13b09b045ed8011b4e9d0209cb9896dcdd04d8",
+      "plugin/src/runtime/task/child-execution-coordinator.ts": "819e27671224e9f7bca8e70b7a2638d74c79164f04bcc5e5e647c0d5818d9817",
+      "plugin/src/contracts/host-capability.ts": "d0f7a502606323871c69d23f53cc4f4eea9634636985d8ef5e63f85bb7af01d6"
+    },
+    "note": "Fresh exact-host workspace reacceptance after test-suite audit added live workspace health observation and removed runtime T3 self-promotion."
+  },
+  "status": "PASS_EXACT_SOURCE_WORKSPACE_ISOLATION_T3_PROMPT_B30",
+  "gates": {
+    "workspace_runtime_canonical_decision": "PASS_CONTROLLED",
+    "workspace_create": "PASS_T3",
+    "workspace_source_baseline": "PASS_T3",
+    "workspace_child_id_directory_binding": "PASS_T3",
+    "workspace_observed_cwd_identity": "PASS_T3",
+    "workspace_write_isolation": "PASS_T3",
+    "workspace_primary_preservation": "PASS_T3",
+    "workspace_cleanup": "PASS_T3",
+    "workspace_host_cleanup_empty": "PASS_T3",
+    "workspace_verification": "PASS_T3",
+    "workspace_restart_adoption": "PASS_T3",
+    "workspace_orphan_quarantine": "PASS_T3",
+    "workspace_no_recreation": "PASS_T3",
+    "workspace_isolation_binding": "SUPPORTED_T3"
+  },
+  "evidence": {
+    "real_host": {
+      "health": {
+        "available": true,
+        "detail": "OpenCode experimental workspace list observed"
+      },
+      "baseline": "649592a95027b5e652028574b3b75d2e0e192efd",
+      "host_workspace_id": "wrk_0071f91eb001b8IBKH9BBTTs6b",
+      "path": "/tmp/hi-b14-8c3f029/xdg-data/opencode/worktree/649592a95027b5e652028574b3b75d2e0e192efd/mighty-sailor",
+      "child": {
+        "id": "ses_ff8e059dfffedMt48J4NT723DA",
+        "slug": "hidden-garden",
+        "projectID": "649592a95027b5e652028574b3b75d2e0e192efd",
+        "workspaceID": "wrk_0071f91eb001b8IBKH9BBTTs6b",
+        "directory": "/tmp/hi-b14-8c3f029/xdg-data/opencode/worktree/649592a95027b5e652028574b3b75d2e0e192efd/mighty-sailor",
+        "path": "",
+        "parentID": "ses_ff8e05a4dffedIsExnPRaRfqXa",
+        "cost": 0,
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "reasoning": 0,
+          "cache": {
+            "read": 0,
+            "write": 0
+          }
+        },
+        "title": "Hi B30 child",
+        "agent": "coder",
+        "version": "1.18.18",
+        "time": {
+          "created": 1786825909792,
+          "updated": 1786825909792
+        }
+      },
+      "child_exact": true,
+      "isolated": "ISOLATED_B30_OK\n",
+      "primary_has_isolated": false,
+      "dirty_before": "?? user-dirty.txt",
+      "dirty_after": "?? user-dirty.txt",
+      "user_preserved": true,
+      "cleanup": true,
+      "host_cleanup_count": 0,
+      "restart": {
+        "adopted_status": "ACTIVE",
+        "adopted_cleanup": "ACTIVE",
+        "orphan_status": "ORPHANED",
+        "orphan_cleanup": "QUARANTINED",
+        "recreated": false
+      }
+    },
+    "host_teardown_classification": {
+      "node_version": "v24.19.0",
+      "observed": "libuv EEXIST assertion only after complete terminal JSON was persisted",
+      "classification": "HOST_TEARDOWN_NOISE_AFTER_TERMINAL_PASS"
+    }
+  },
+  "limitations": [
+    "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution.",
+    "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 and source 5210a12a7b607e0c9048749fa74a4c8b801cd924; runtime mocks cannot promote T3."
+  ],
+  "capability_limitations": {
+    "workspace-isolation-binding": [
+      "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution.",
+      "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 and source 5210a12a7b607e0c9048749fa74a4c8b801cd924."
+    ]
+  },
+  "rule": "This receipt promotes only workspace-isolation-binding for the exact tested source/host bytes; later relevant owner/executor/capability-truth drift requires reacceptance."
+}

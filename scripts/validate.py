@@ -633,6 +633,35 @@ try:
         if not all((a.get('checks') or {}).values()):err('PROMPT B fresh consumer acceptance check drift')
 except Exception as e:err(f'bad PROMPT B packaging/fresh consumer receipt: {e}')
 
+# PROMPT B §30 test-suite certification
+try:
+    t30=json.loads((ROOT/'data/validation/prompt-b-test-suite-audit.json').read_text(encoding='utf-8'))
+    if t30.get('schema')!=1 or t30.get('kind')!='PROMPT_B_TEST_SUITE_ADVERSARIAL_AUDIT' or t30.get('program')!='PROMPT_B' or t30.get('section')!=30 or t30.get('status')!='PASS':err('bad PROMPT B test-suite audit receipt identity/status')
+    if t30.get('summary')!={'required':11,'covered':11,'violations':0} or t30.get('violations')!=[]:err('PROMPT B test-suite audit summary drift')
+    if not all((t30.get('static_guards') or {}).values()):err('PROMPT B test-suite static guard drift')
+    for row in t30.get('invariants',[]):
+        for key in ('owner','proof'):
+            rel=row.get(key);expected=row.get(f'{key}_sha256')
+            if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B test-suite missing {key}: {rel}');continue
+            if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B test-suite {key} hash drift: {rel}')
+        try:
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B test-suite owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B test-suite proof anchor drift: {row.get('invariant')}")
+        except Exception as e:err(f'PROMPT B test-suite row invalid: {e}')
+    ha=json.loads((ROOT/'data/validation/test-harness-isolation-0.1.0.json').read_text(encoding='utf-8'))
+    if ha.get('status')!='PASS' or ha.get('section')!=30:err('PROMPT B test harness acceptance drift')
+    obs=ha.get('canonical_suite_observation') or {}
+    if obs.get('tests')!=816 or obs.get('pass')!=816 or obs.get('fail')!=0 or obs.get('cancelled')!=0 or obs.get('home_hi_state_delta')!=0:err('PROMPT B canonical test harness observation drift')
+    for k in ('plugin_cwd','repo_root_cwd'):
+        x=(ha.get('cwd_dual_run') or {}).get(k) or {}
+        if x.get('tests')!=17 or x.get('pass')!=17 or x.get('fail')!=0:err(f'PROMPT B cwd dual-run drift: {k}')
+    cm30=json.loads((ROOT/'data/validation/compatibility-matrix-0.1.0.json').read_text(encoding='utf-8'))
+    caps30=cm30.get('current_reference_host',{}).get('capabilities',{})
+    for cap in ('process-lifecycle','workspace-isolation-binding','browser-execution'):
+        x=caps30.get(cap) or {}
+        if x.get('status')!='SUPPORTED_T3' or x.get('tested_git_commit')!='5210a12a7b607e0c9048749fa74a4c8b801cd924':err(f'PROMPT B §30 exact T3 selection drift: {cap}')
+except Exception as e:err(f'bad PROMPT B test-suite receipt: {e}')
+
 try:
     nr=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text(encoding='utf-8'))
     if nr.get('schema')!=1 or nr.get('kind')!='EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION' or nr.get('program')!='PROMPT_B' or nr.get('status')!='PASS':err('bad PROMPT B native reevaluation receipt identity/status')

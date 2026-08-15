@@ -5,8 +5,8 @@
   "section": 26,
   "status": "PASS",
   "source": {
-    "commit": "a27463a0586bb65598eae9aaee0e066faa34fcc8",
-    "tree": "716b33c0a5431309eaf24a90eae9739fb3bd5c27"
+    "commit": "cf830f15a5ca6792ad52bb963752b67b5e38de5b",
+    "tree": "3f42734195e52e5d9dc435273486d0a645677162"
   },
   "host": {
     "opencode": "1.18.18",
@@ -59,7 +59,15 @@
       "hi_temporary_mutation_register",
       "hi_temporary_mutation_revert"
     ],
-    "agent_debug_rc": 0,
+    "agent_endpoint_count": 15,
+    "coder_agent_observed": true,
+    "coder_projection": {
+      "name": "coder",
+      "mode": "subagent",
+      "description": "Implements scoped changes and produces test and behavior evidence",
+      "native": false,
+      "hidden": null
+    },
     "session": {
       "created": true,
       "version": "1.18.18",
@@ -67,7 +75,7 @@
     },
     "provider_run": {
       "attempted": false,
-      "reason": "no isolated-home opencode-go model inventory"
+      "reason": "provider-backed chat is outside fresh package/runtime acceptance and isolated HOME does not borrow user provider credentials"
     }
   },
   "checks": {

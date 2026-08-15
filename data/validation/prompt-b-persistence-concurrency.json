@@ -302,10 +302,10 @@
       "section": 17,
       "invariant": "process-lifecycle-races",
       "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
-      "owner_sha256": "340090ef2d90b8e7d0525dc70a935e3f9f27581c2ebffbc9d42fef8bef0463eb",
+      "owner_sha256": "92ee5dbfa993900b7cc4164c9f4ebaed608f0dc6dffb70bd2111544f2a9cf2d2",
       "owner_anchor": "Refusing process-group signal",
       "proof": "plugin/test/p2-opencode-pty-executor.test.mjs",
-      "proof_sha256": "f902d91d712fe128a9fe71124f661b00696dcc9382ee0e81867529e6a239b001",
+      "proof_sha256": "6957fad0977a186b9c1f2efab1ae9487899ce338edc9c5dbce8d58a5be4d610a",
       "proof_anchor": "kill signalling failure does not fabricate TERMINATED semantics"
     },
     {

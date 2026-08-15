@@ -64,8 +64,8 @@ def main():
     if release.get('npm',{}).get('status')=='BLOCKED_T4_AUTH':
         if not re.search(r'npm[^\n]{0,160}(?:not currently available|not yet|blocked)',readme,re.I|re.S):errors.append({'code':'DOC_NPM_AVAILABILITY_DRIFT','path':'README.md'})
         if not re.search(r'npm[^\n]{0,180}(?:blocked|not yet)',install,re.I|re.S):errors.append({'code':'DOC_NPM_INSTALL_DRIFT','path':'docs/INSTALLATION.md'})
-    for phrase in ('`process-lifecycle` is `SUPPORTED`','workspace-isolation-binding` is `SUPPORTED`','browser-execution` is `SUPPORTED`'):
-        if phrase not in hosts:errors.append({'code':'DOC_HOST_CAPABILITY_OMITTED','path':'docs/HOSTS.md','detail':phrase})
+    observed_boundary=('Runtime capability contracts report only what the active host actually exposes' in hosts and '`SUPPORTED` or `UNSUPPORTED` at verification level `OBSERVED`' in hosts and 'cannot promote `REAL_HOST_ACCEPTANCE` or T3' in hosts)
+    if not observed_boundary:errors.append({'code':'DOC_HOST_OBSERVED_T3_BOUNDARY','path':'docs/HOSTS.md','detail':'runtime OBSERVED capability health must remain distinct from external T3 certification'})
     if 'only `TypeScriptSemanticContextAdapter`' not in hosts or 'JavaScript, LSP-backed and Tree-sitter-backed semantic adapters are not implemented or advertised' not in context:
         errors.append({'code':'DOC_SEMANTIC_ADAPTER_DRIFT','detail':'semantic adapter support boundary missing'})
     if 'contains no raw stdout/stderr buffer' not in (ROOT/'docs/ARCHITECTURE.md').read_text():errors.append({'code':'DOC_PROCESS_CONTRACT_DRIFT','path':'docs/ARCHITECTURE.md'})

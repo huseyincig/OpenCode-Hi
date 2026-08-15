@@ -74,7 +74,7 @@
       "owner_sha256": "ad2da40fc07e254656a256071daea5d803e4de070cbf0df2168f08550de1c24b",
       "owner_anchor": "foreign.length",
       "proof": "plugin/test/native-skill-catalog.test.mjs",
-      "proof_sha256": "1a02729738eda2debd76e802889ea5b9b2e2fbd6ad2d2585e56b6abac78f12af",
+      "proof_sha256": "90a533b40a0d9ffff37fc5141bb1b8ec3abcd6538f59f465f3c7a3a2849159f1",
       "proof_anchor": "native configured Hi skill path does not duplicate the same physical root as a personal provider"
     },
     {
@@ -92,7 +92,7 @@
       "owner_sha256": "a8c4f649030d93a1a8e92b7db76c23742a5e18d1a9d3dabfcb98111e0c027bf2",
       "owner_anchor": "never own orchestration, worker spawning, model selection, authority",
       "proof": "plugin/test/native-skill-catalog.test.mjs",
-      "proof_sha256": "1a02729738eda2debd76e802889ea5b9b2e2fbd6ad2d2585e56b6abac78f12af",
+      "proof_sha256": "90a533b40a0d9ffff37fc5141bb1b8ec3abcd6538f59f465f3c7a3a2849159f1",
       "proof_anchor": "Hi methodology documents do not claim control-plane tool ownership"
     },
     {

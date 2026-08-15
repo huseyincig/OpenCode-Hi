@@ -1,0 +1,111 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "generated_at": "2026-08-15",
+  "host": {
+    "os": "linux",
+    "arch": "aarch64",
+    "opencode_version": "1.18.18",
+    "server": "http://127.0.0.1:42022"
+  },
+  "release_authority": {
+    "push": false,
+    "tag": false,
+    "release": false,
+    "publish": false,
+    "deploy": false
+  },
+  "source_binding": {
+    "tested_git_commit": "5210a12a7b607e0c9048749fa74a4c8b801cd924",
+    "tested_git_tree": "0fe616e8c21da30addb0a01807b0185fa0556c4e",
+    "worktree": "/workspace/OpenCode-Hi",
+    "state": "CLEAN_COMMITTED_SOURCE",
+    "exact_candidate": true,
+    "runtime_hashes": {
+      "plugin/src/contracts/process.ts": "baa22ab538d5b0e16c09d2f5234d8fa13253881a608e3fbb6102833adff963fd",
+      "plugin/src/runtime/process/executor.ts": "3a0f63b69b47b429b578489f1433a4170cf6fbd4c1a64c1ecd009f60bd2756b1",
+      "plugin/src/runtime/process/runtime.ts": "3e93c1f1c717b9b1414710a19d711b807192d24c3e7030767f2d2573676c3ae7",
+      "plugin/src/opencode/open-code-pty-adapter.ts": "92ee5dbfa993900b7cc4164c9f4ebaed608f0dc6dffb70bd2111544f2a9cf2d2",
+      "plugin/src/contracts/host-capability.ts": "d0f7a502606323871c69d23f53cc4f4eea9634636985d8ef5e63f85bb7af01d6"
+    },
+    "note": "Fresh exact-host Process lifecycle reacceptance after test-suite audit added live capability observation and removed runtime T3 self-promotion."
+  },
+  "status": "PASS_EXACT_SOURCE_PROCESS_LIFECYCLE_T3_PROMPT_B30",
+  "gates": {
+    "process_runtime_mission_owned": "PASS_T3",
+    "process_spawn_pid": "PASS_T3",
+    "process_quick_exit_before_observation": "PASS_T3",
+    "process_nonzero_exit": "PASS_T3",
+    "process_huge_unread_output_bounded": "PASS_T3",
+    "process_concurrent_isolation": "PASS_T3",
+    "process_group_identity": "PASS_T3",
+    "process_timeout_group_signal": "PASS_T3",
+    "process_kill_cleanup": "PASS_T3",
+    "process_restart_adoption": "PASS_T3",
+    "process_host_cleanup_empty": "PASS_T3",
+    "process_lifecycle": "SUPPORTED_T3"
+  },
+  "evidence": {
+    "real_host": {
+      "health": {
+        "available": true,
+        "detail": "OpenCode canonical v2 PTY list observed"
+      },
+      "main": {
+        "status": "EXITED",
+        "exit": 0,
+        "text": "RUNTIME_B30_OK"
+      },
+      "nonzero": {
+        "status": "EXITED",
+        "exit": 7,
+        "text": "boom"
+      },
+      "huge": {
+        "status": "EXITED",
+        "chars": 64,
+        "start": 737856,
+        "end": 1000000,
+        "truncated": true
+      },
+      "timeout": {
+        "status": "TIMED_OUT",
+        "reason": "timeout-policy",
+        "pid": 29615,
+        "group": 29615
+      },
+      "concurrent": {
+        "a": "ALPHA",
+        "b": "BETA",
+        "a_status": "EXITED",
+        "b_status": "EXITED",
+        "distinct": true
+      },
+      "restart": {
+        "disposition": "ADOPTED",
+        "status": "RUNNING",
+        "text": "RESTART_READY",
+        "pid": 29630,
+        "group": 29630,
+        "killed": "TERMINATED"
+      },
+      "host_cleanup_count": 0
+    },
+    "host_teardown_classification": {
+      "node_version": "v24.19.0",
+      "observed": "libuv EEXIST assertion only after complete terminal JSON was persisted",
+      "classification": "HOST_TEARDOWN_NOISE_AFTER_TERMINAL_PASS"
+    }
+  },
+  "limitations": [
+    "Exact T3 applies to OpenCode 1.18.18 on linux/aarch64 and source 5210a12a7b607e0c9048749fa74a4c8b801cd924.",
+    "Runtime HostCapability remains OBSERVED-only; this external receipt owns T3 certification."
+  ],
+  "capability_limitations": {
+    "process-lifecycle": [
+      "Exact T3 applies to OpenCode 1.18.18 on linux/aarch64 and source 5210a12a7b607e0c9048749fa74a4c8b801cd924.",
+      "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted; runtime mocks cannot promote T3."
+    ]
+  },
+  "rule": "This receipt promotes only process-lifecycle for the exact tested source/host bytes; later relevant owner/executor/capability-truth drift requires reacceptance."
+}

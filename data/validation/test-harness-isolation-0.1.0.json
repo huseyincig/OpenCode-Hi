@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_TEST_HARNESS_ISOLATION_ACCEPTANCE",
+  "program": "PROMPT_B",
+  "section": 30,
+  "status": "PASS",
+  "source_binding": {
+    "tested_git_commit": "5210a12a7b607e0c9048749fa74a4c8b801cd924",
+    "tested_git_tree": "0fe616e8c21da30addb0a01807b0185fa0556c4e",
+    "runner": "scripts/run-node-test-suite.mjs",
+    "runner_sha256": "e47e13b1234d75c21addec94ecc183039c8ea3b044a9527c1bdde24bd86670df"
+  },
+  "canonical_suite_observation": {
+    "tests": 816,
+    "pass": 816,
+    "fail": 0,
+    "cancelled": 0,
+    "home_hi_state_before": 5301,
+    "home_hi_state_after": 5301,
+    "home_hi_state_delta": 0
+  },
+  "cwd_dual_run": {
+    "plugin_cwd": {
+      "tests": 17,
+      "pass": 17,
+      "fail": 0,
+      "cancelled": 0,
+      "teardown_noise": true
+    },
+    "repo_root_cwd": {
+      "tests": 17,
+      "pass": 17,
+      "fail": 0,
+      "cancelled": 0,
+      "teardown_noise": true
+    }
+  },
+  "isolation_env": [
+    "OPENCODE_HI_STATE_DIR",
+    "XDG_STATE_HOME",
+    "XDG_CACHE_HOME",
+    "XDG_CONFIG_HOME",
+    "LOCALAPPDATA(win32)"
+  ],
+  "timeouts": {
+    "per_test_ms": 120000,
+    "suite_ms": 300000
+  },
+  "host_teardown_rule": "SIGABRT is normalized only with exact uv__io_poll EEXIST signature plus terminal fail=0 and cancelled=0; all other signals/nonzero remain failures.",
+  "claim_boundary": "Controlled test-harness acceptance only. Mock/fake tests do not own T3; exact host capability certification remains in external OpenCode receipts."
+}

@@ -11,7 +11,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "'install':lambda:install",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "950325a257644c7cb3ecad162e1792e6bd1cd4f8e80a131e8fcf68be40bb54c4",
+      "proof_sha256": "b92cf8187f7d228b34a1ca0adad696301997d3bcb29ef7a50206ec5318a8547d",
       "proof_anchor": "test_prompt_b_cli_malformed_config_fails_closed_without_overwrite"
     },
     {
@@ -20,7 +20,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "'action':action",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "950325a257644c7cb3ecad162e1792e6bd1cd4f8e80a131e8fcf68be40bb54c4",
+      "proof_sha256": "b92cf8187f7d228b34a1ca0adad696301997d3bcb29ef7a50206ec5318a8547d",
       "proof_anchor": "test_prompt_b_cli_first_run_doctor_supplies_recovery_action"
     },
     {
@@ -29,7 +29,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "def doctor(project:Path)",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "950325a257644c7cb3ecad162e1792e6bd1cd4f8e80a131e8fcf68be40bb54c4",
+      "proof_sha256": "b92cf8187f7d228b34a1ca0adad696301997d3bcb29ef7a50206ec5318a8547d",
       "proof_anchor": "test_prompt_b_cli_first_run_doctor_supplies_recovery_action"
     },
     {
@@ -38,7 +38,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "argparse.ArgumentParser",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "950325a257644c7cb3ecad162e1792e6bd1cd4f8e80a131e8fcf68be40bb54c4",
+      "proof_sha256": "b92cf8187f7d228b34a1ca0adad696301997d3bcb29ef7a50206ec5318a8547d",
       "proof_anchor": "native_plugin_setup.py"
     },
     {
@@ -56,7 +56,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "e.detail[:500]",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "950325a257644c7cb3ecad162e1792e6bd1cd4f8e80a131e8fcf68be40bb54c4",
+      "proof_sha256": "b92cf8187f7d228b34a1ca0adad696301997d3bcb29ef7a50206ec5318a8547d",
       "proof_anchor": "'Traceback' not in r.stdout"
     },
     {
@@ -65,7 +65,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "actions.append('Run the recover command",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "950325a257644c7cb3ecad162e1792e6bd1cd4f8e80a131e8fcf68be40bb54c4",
+      "proof_sha256": "b92cf8187f7d228b34a1ca0adad696301997d3bcb29ef7a50206ec5318a8547d",
       "proof_anchor": "any('plan' in x and 'install' in x for x in out['actions'])"
     },
     {
@@ -74,7 +74,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "_bounded_cli_int('parallel-max',1,8)",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "950325a257644c7cb3ecad162e1792e6bd1cd4f8e80a131e8fcf68be40bb54c4",
+      "proof_sha256": "b92cf8187f7d228b34a1ca0adad696301997d3bcb29ef7a50206ec5318a8547d",
       "proof_anchor": "test_prompt_b_cli_reconfigure_rejects_out_of_range_and_malformed_limits"
     },
     {
@@ -92,7 +92,7 @@
       "owner_sha256": "0e846c0d3180a25c386cca8a6569d045bdfd7cb5bccb4bf0cf1b2882f8ef20be",
       "owner_anchor": "OpenCode session.create is unavailable",
       "proof": "plugin/test/methodology-host-capability.test.mjs",
-      "proof_sha256": "db59699e58d1f73d80f1da0d8021babfc472d62ad4b145f9fb05aedec8e2d421",
+      "proof_sha256": "cb9d608b1b8dc4a91e4e32eb1749a30213b7b507e82dbc9e2c6615a5fb3135c8",
       "proof_anchor": "browser and visual methodologies require canonical browser-execution host capability"
     },
     {
@@ -101,7 +101,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "jsonc-safe-mutation-not-supported",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "950325a257644c7cb3ecad162e1792e6bd1cd4f8e80a131e8fcf68be40bb54c4",
+      "proof_sha256": "b92cf8187f7d228b34a1ca0adad696301997d3bcb29ef7a50206ec5318a8547d",
       "proof_anchor": "test_prompt_b_cli_jsonc_plan_is_truthful_actionable_and_non_mutating"
     }
   ],

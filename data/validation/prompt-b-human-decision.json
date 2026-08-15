@@ -134,10 +134,10 @@
     {
       "invariant": "structured-host-ui-truthful-unsupported",
       "owner": "plugin/src/contracts/host-capability.ts",
-      "owner_sha256": "d7b8f2abe1733f49ab71ad9d043c27a58ef48acd179f8c6687ae475eb5204d1f",
+      "owner_sha256": "d0f7a502606323871c69d23f53cc4f4eea9634636985d8ef5e63f85bb7af01d6",
       "owner_anchor": "unsupported('structured-human-decision-transport'",
       "proof": "plugin/test/h2-structured-human-decision-host.test.mjs",
-      "proof_sha256": "09f015d57371602f838754cb2d315d20bbaa1f2f7b69d924717dc2bf6d8c50c8",
+      "proof_sha256": "2d4584d3e994c00a350107ac3ad4bd066e93bb6c208f3eada7c0c97550f3d259",
       "proof_anchor": "structured host UI remains unsupported"
     }
   ],

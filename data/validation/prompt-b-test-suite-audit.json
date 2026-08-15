@@ -1,0 +1,151 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_TEST_SUITE_ADVERSARIAL_AUDIT",
+  "program": "PROMPT_B",
+  "section": 30,
+  "status": "PASS",
+  "invariants": [
+    {
+      "invariant": "harness-invocation",
+      "owner": "plugin/package.json",
+      "owner_sha256": "5a3b1539de474d8fa9dc407686d67c61f900f591c3109a1ed904b4f224645f74",
+      "owner_anchor": "node ../scripts/run-node-test-suite.mjs",
+      "proof": "scripts/run-node-test-suite.mjs",
+      "proof_sha256": "e47e13b1234d75c21addec94ecc183039c8ea3b044a9527c1bdde24bd86670df",
+      "proof_anchor": "filter(x=>x.endsWith('.test.mjs')).sort()"
+    },
+    {
+      "invariant": "mocks-do-not-own-t3",
+      "owner": "plugin/src/contracts/host-capability.ts",
+      "owner_sha256": "d0f7a502606323871c69d23f53cc4f4eea9634636985d8ef5e63f85bb7af01d6",
+      "owner_anchor": "Runtime support requires an active-host observation; T3/REAL_HOST_ACCEPTANCE belongs only",
+      "proof": "plugin/test/host-capability-contract.test.mjs",
+      "proof_sha256": "2c278ad0c53a4326ebe441a185a06c14f968f1421927914ebe6d6ee3dafe6e70",
+      "proof_anchor": "without upgrading verification"
+    },
+    {
+      "invariant": "fixture-realism",
+      "owner": "scripts/generate-compatibility-matrix.py",
+      "owner_sha256": "afd758b103c9e66d2a01237a54ae877071e854ce8bcabbade24f366b2b2c7ede",
+      "owner_anchor": "External receipts remain canonical evidence",
+      "proof": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
+      "proof_sha256": "ffd21bb3f6293e72cf86759d9c77ffcd0b18fd8dda56f361acc2acb524418d94",
+      "proof_anchor": "\"covered\": 61"
+    },
+    {
+      "invariant": "false-positive-resistance",
+      "owner": "scripts/run-node-test-suite.mjs",
+      "owner_sha256": "e47e13b1234d75c21addec94ecc183039c8ea3b044a9527c1bdde24bd86670df",
+      "owner_anchor": "const knownLibuvTeardown=",
+      "proof": "data/validation/test-harness-isolation-0.1.0.json",
+      "proof_sha256": "de82193472c8da3b415675cdfb9b157bf860ab36ae8382f45b03393c9ee175ba",
+      "proof_anchor": "SIGABRT is normalized only with exact uv__io_poll EEXIST signature"
+    },
+    {
+      "invariant": "skipped-tests-audited",
+      "owner": ".github/workflows/release-readiness.yml",
+      "owner_sha256": "d95f41f8d88a1ccb2693d95a780713ac2284fcea90165ca7e61e298ce1093256",
+      "owner_anchor": "os: [ubuntu-latest, windows-latest]",
+      "proof": "tests/test_hi.py",
+      "proof_sha256": "b92cf8187f7d228b34a1ca0adad696301997d3bcb29ef7a50206ec5318a8547d",
+      "proof_anchor": "pytest.skip('symlink privilege varies on Windows')"
+    },
+    {
+      "invariant": "timeout-handling",
+      "owner": "scripts/run-node-test-suite.mjs",
+      "owner_sha256": "e47e13b1234d75c21addec94ecc183039c8ea3b044a9527c1bdde24bd86670df",
+      "owner_anchor": "'--test-timeout=120000'",
+      "proof": "scripts/run-node-test-suite.mjs",
+      "proof_sha256": "e47e13b1234d75c21addec94ecc183039c8ea3b044a9527c1bdde24bd86670df",
+      "proof_anchor": "timeout:300000"
+    },
+    {
+      "invariant": "test-isolation",
+      "owner": "scripts/run-node-test-suite.mjs",
+      "owner_sha256": "e47e13b1234d75c21addec94ecc183039c8ea3b044a9527c1bdde24bd86670df",
+      "owner_anchor": "OPENCODE_HI_STATE_DIR",
+      "proof": "data/validation/test-harness-isolation-0.1.0.json",
+      "proof_sha256": "de82193472c8da3b415675cdfb9b157bf860ab36ae8382f45b03393c9ee175ba",
+      "proof_anchor": "\"home_hi_state_delta\": 0"
+    },
+    {
+      "invariant": "cwd-independence",
+      "owner": "plugin/test/native-skill-catalog.test.mjs",
+      "owner_sha256": "90a533b40a0d9ffff37fc5141bb1b8ec3abcd6538f59f465f3c7a3a2849159f1",
+      "owner_anchor": "fileURLToPath(import.meta.url)",
+      "proof": "data/validation/test-harness-isolation-0.1.0.json",
+      "proof_sha256": "de82193472c8da3b415675cdfb9b157bf860ab36ae8382f45b03393c9ee175ba",
+      "proof_anchor": "\"repo_root_cwd\""
+    },
+    {
+      "invariant": "home-xdg-isolation",
+      "owner": "scripts/run-node-test-suite.mjs",
+      "owner_sha256": "e47e13b1234d75c21addec94ecc183039c8ea3b044a9527c1bdde24bd86670df",
+      "owner_anchor": "XDG_STATE_HOME",
+      "proof": "data/validation/test-harness-isolation-0.1.0.json",
+      "proof_sha256": "de82193472c8da3b415675cdfb9b157bf860ab36ae8382f45b03393c9ee175ba",
+      "proof_anchor": "\"isolation_env\""
+    },
+    {
+      "invariant": "platform-assumptions",
+      "owner": ".github/workflows/release-readiness.yml",
+      "owner_sha256": "d95f41f8d88a1ccb2693d95a780713ac2284fcea90165ca7e61e298ce1093256",
+      "owner_anchor": "windows-latest",
+      "proof": "plugin/test/real-hosted-release-transaction.test.mjs",
+      "proof_sha256": "720c37ed824c2344b342ca580fd74ea3658bd4cf538848b631ce22e52ed62502",
+      "proof_anchor": "mandatory Ubuntu release-readiness job"
+    },
+    {
+      "invariant": "deterministic-behavior",
+      "owner": "scripts/run-node-test-suite.mjs",
+      "owner_sha256": "e47e13b1234d75c21addec94ecc183039c8ea3b044a9527c1bdde24bd86670df",
+      "owner_anchor": ".sort().map",
+      "proof": "plugin/test/decision-replay-corpus.test.mjs",
+      "proof_sha256": "0bb92635964dfe49d1412f4198de3472b794fadca26a41ee919873d0b44a84b8",
+      "proof_anchor": "Q1 decision replay corpora are tests-only inputs, not runtime configuration"
+    }
+  ],
+  "violations": [],
+  "summary": {
+    "required": 11,
+    "covered": 11,
+    "violations": 0
+  },
+  "static_guards": {
+    "no_test_only_or_todo": true,
+    "conditional_skips_explicit": true,
+    "runner_sorted_inventory": true,
+    "runner_bounded_timeout": true,
+    "runner_temp_state_cleanup": true,
+    "libuv_exception_strict": true,
+    "runtime_never_assigns_real_host_acceptance": true,
+    "current_t3_receipt_backed": true,
+    "home_pollution_delta_zero": true,
+    "cwd_dual_run_green": true
+  },
+  "conditional_skips": {
+    "python_windows_symlink_privilege": 4,
+    "node_windows_posix_hosted_release": 1,
+    "silent_only_or_todo": 0
+  },
+  "harness_acceptance": "data/validation/test-harness-isolation-0.1.0.json",
+  "closed_defects": [
+    {
+      "id": "cwd-sensitive-test-root",
+      "fix": "Repository fixture roots are derived from import.meta.url rather than process.cwd(); exact same 17 tests pass from plugin cwd and repository root."
+    },
+    {
+      "id": "test-suite-real-home-state-pollution",
+      "fix": "Canonical Node harness redirects Hi/XDG state and cache roots to a temporary suite sandbox and removes it; measured HOME Hi-state delta is zero."
+    },
+    {
+      "id": "unbounded-test-runner-timeout",
+      "fix": "Native per-test timeout is 120s and suite process timeout is 300s; hangs cannot block CI indefinitely."
+    },
+    {
+      "id": "mock-runtime-self-promoted-t3",
+      "fix": "Owned runtime capabilities require active-host health and report OBSERVED only; REAL_HOST_ACCEPTANCE/T3 remains external exact-receipt truth."
+    }
+  ],
+  "claim_boundary": "Controlled unit/integration tests prove local semantics only. A green mock is never T3. Exact host support is promoted solely by external exact-source OpenCode acceptance receipts selected through the compatibility projection."
+}

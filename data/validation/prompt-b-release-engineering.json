@@ -5,13 +5,13 @@
   "section": 28,
   "status": "CLOSED_LOCAL_T4_BLOCKED",
   "current_source": {
-    "commit": "a27463a0586bb65598eae9aaee0e066faa34fcc8",
-    "tree": "716b33c0a5431309eaf24a90eae9739fb3bd5c27",
+    "commit": "cf830f15a5ca6792ad52bb963752b67b5e38de5b",
+    "tree": "3f42734195e52e5d9dc435273486d0a645677162",
     "version": "0.1.0"
   },
   "certification_head": {
-    "commit": "f5c226a8633712283cdee725d5f8053804807c10",
-    "tree": "672cfdf03d31203a70c8a8705e928cee43da2708"
+    "commit": "cf830f15a5ca6792ad52bb963752b67b5e38de5b",
+    "tree": "3f42734195e52e5d9dc435273486d0a645677162"
   },
   "historical_release": {
     "tag": "v0.1.0",
@@ -31,7 +31,7 @@
     {
       "stage": "source-commit",
       "status": "PASS",
-      "detail": "a27463a0586bb65598eae9aaee0e066faa34fcc8",
+      "detail": "cf830f15a5ca6792ad52bb963752b67b5e38de5b",
       "proof": "git HEAD"
     },
     {
@@ -73,7 +73,7 @@
     {
       "stage": "tag",
       "status": "BLOCKED_RELEASE_IDENTITY",
-      "detail": "v0.1.0 already targets f1a2c1c4358e5a63656da7a585b6b5793d1ed3be; current source a27463a0586bb65598eae9aaee0e066faa34fcc8 must not rewrite it",
+      "detail": "v0.1.0 already targets f1a2c1c4358e5a63656da7a585b6b5793d1ed3be; current source cf830f15a5ca6792ad52bb963752b67b5e38de5b must not rewrite it",
       "proof": "local annotated tag"
     },
     {
@@ -129,8 +129,8 @@
     "package.json": "bacad4fb690ab88db0da4021960a9651ad0b27f625ca14c5abcc30493b0bfff4",
     "package-lock.json": "5d09284a57a7dd2faa3f0c31c24817d45fcdc03ca2b4f58fa765f99bef8ddc76",
     "plugin/package-lock.json": "78f4aa59a5ca3be4c7b5ae1960c3c298a034cb00624a9efe76b75b3d89b71281",
-    "data/validation/fresh-consumer-opencode-1.18.18.json": "4abb14ac0885b4d07255c02b125bed6f2ddc710b8931f9185b55f6743c0cbbe0",
-    "data/validation/release-status-0.1.0.json": "7d9655c734f213de434164b13d25ec1a039d52f94d7ecce6a2ff0d0ec77661c6",
+    "data/validation/fresh-consumer-opencode-1.18.18.json": "f435e05f9705cac4c83332e77ebcc78acc48f69e93b95f0ebd6fae3648379d84",
+    "data/validation/release-status-0.1.0.json": "dcf963d504bf84cb2aa01f13caab6c8e1a3c5db5103fa3bcde6625d4407e1fc7",
     ".github/workflows/npm-publish.yml": "3f5cd8e209624aa44ba48fe14bdc8899e75a5c773a624ab1ceaa2a6b5301c7a0",
     "scripts/verify-npm-oidc-release.mjs": "afa20a3a77053dff1918d4e98ff13131a92cfbccd39d44a3adbec6918afba067"
   },

@@ -65,7 +65,7 @@
       "owner_sha256": "3a0f63b69b47b429b578489f1433a4170cf6fbd4c1a64c1ecd009f60bd2756b1",
       "owner_anchor": "export class ProcessSpawnPermissionError",
       "proof": "plugin/test/p2-opencode-pty-executor.test.mjs",
-      "proof_sha256": "f902d91d712fe128a9fe71124f661b00696dcc9382ee0e81867529e6a239b001",
+      "proof_sha256": "6957fad0977a186b9c1f2efab1ae9487899ce338edc9c5dbce8d58a5be4d610a",
       "proof_anchor": "P2 spawn never silently executes native permission ask/deny"
     },
     {
@@ -83,7 +83,7 @@
       "owner_sha256": "4aefdeea9a786314ac380d757ffcc17b9355dd29b22e0a8e892399ce4e04e0e7",
       "owner_anchor": "hostCapabilitySource:(()=>readonly HostCapabilityContract[])|readonly HostCapabilityContract[]=[]",
       "proof": "plugin/test/methodology-host-capability.test.mjs",
-      "proof_sha256": "db59699e58d1f73d80f1da0d8021babfc472d62ad4b145f9fb05aedec8e2d421",
+      "proof_sha256": "cb9d608b1b8dc4a91e4e32eb1749a30213b7b507e82dbc9e2c6615a5fb3135c8",
       "proof_anchor": "browser and visual methodologies require canonical browser-execution host capability"
     },
     {
