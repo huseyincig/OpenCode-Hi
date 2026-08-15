@@ -22,7 +22,7 @@ import { nativeTool as tool } from '../../opencode/plugin-tool.js';
 import { assertHiToolNamespace } from '../../opencode/tool-namespace.js';
 function nativeDiffFiles(raw, projectRoot) { const items = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : []; return [...new Set(items.map((x) => typeof x?.file === 'string' ? x.file : typeof x?.path === 'string' ? x.path : '').filter((x) => Boolean(x)).map((x) => normalizeProjectPath(x, projectRoot)).filter(Boolean))]; }
 export function createHiToolSurface(input) {
-    const { state, store, tasks, teams, processRuntime, workspaceRuntime, projectRoot, capabilities, native, getModels, scopedStores } = input;
+    const { state, store, tasks, teams, processRuntime, workspaceRuntime, browserRuntime, projectRoot, capabilities, native, getModels, scopedStores } = input;
     const doctorTool = tool({ description: 'Run OpenCode-Hi runtime/configuration health checks', args: {}, execute: async () => formatDoctor(runDoctor(state.config, store, projectRoot, { models: getModels(), resolution: state.configResolution, capabilities, hostConfig: state.hostConfig, openCodeVersion: state.openCodeVersion })) });
     const statusTool = tool({ description: 'Show compact user-facing Hi mission status. This intentionally excludes diagnostic logs and ledger payloads.', args: {}, execute: async (_args, c) => { const m = store.get(c?.sessionID); return m ? formatUserMissionStatus(m) : 'Hi: no active mission'; } });
     const metricsTool = tool({ description: 'Show aggregate Hi runtime metrics derived from bounded mission state. Token/cost telemetry is omitted unless the host provides it.', args: {}, execute: async () => JSON.stringify(aggregateMissionMetrics(store.all())) });
@@ -152,6 +152,83 @@ export function createHiToolSurface(input) {
     const awaitTool = tool({ description: 'Check whether an Hi task has reached terminal state. Hi uses event-driven wakeups; do not call repeatedly.', args: { id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
             return 'No active Hi mission'; const x = tasks.peek(m, a.id); const status = x?.task?.status ?? x?.worker?.status ?? 'unknown'; return JSON.stringify({ status, terminal: ['completed', 'failed', 'cancelled', 'blocked'].includes(status), result: x?.task?.result }); } });
     const cancelTool = tool({ description: 'Cancel one Hi task/worker.', args: { id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? String(await tasks.cancel(m, a.id)) : 'false'; } });
+    const browserContext = (taskID, c) => { const sid = String(c?.sessionID ?? ''); for (const m of store.all()) {
+        const w = m.execution.workers.find(x => x.session_id === sid && x.task_id === taskID);
+        if (w && w.role === 'visual-qa' && w.status === 'busy' && w.selected_methodologies.some(x => ['hi-browser-testing', 'hi-visual-qa', 'hi-accessibility-review'].includes(x)))
+            return { m, w, cx: { task_id: taskID, executor_version: 'hi-playwright-browser@1' } };
+    } throw new Error('Browser execution is allowed only for the active visual-qa worker/task with a selected browser/visual methodology'); };
+    const browserOpenTool = tool({ description: 'Open a local HTTP(S) target through the bounded Hi browser executor.', args: { task_id: tool.schema.string(), url: tool.schema.string() }, execute: async (a, c) => { try {
+            if (!browserRuntime)
+                return 'BLOCKED: browser runtime unavailable';
+            const x = browserContext(String(a.task_id), c);
+            return JSON.stringify(await browserRuntime.open(x.cx, String(a.url)));
+        }
+        catch (e) {
+            return `Browser open blocked: ${String(e)}`;
+        } } });
+    const browserNavigateTool = tool({ description: 'Navigate the active bounded Hi browser session to another local HTTP(S) URL.', args: { task_id: tool.schema.string(), url: tool.schema.string() }, execute: async (a, c) => { try {
+            if (!browserRuntime)
+                return 'BLOCKED: browser runtime unavailable';
+            const x = browserContext(String(a.task_id), c);
+            return JSON.stringify(await browserRuntime.navigate(x.cx, String(a.url)));
+        }
+        catch (e) {
+            return `Browser navigate blocked: ${String(e)}`;
+        } } });
+    const browserClickTool = tool({ description: 'Click one element reference from the latest bounded browser observation.', args: { task_id: tool.schema.string(), target: tool.schema.string() }, execute: async (a, c) => { try {
+            if (!browserRuntime)
+                return 'BLOCKED: browser runtime unavailable';
+            const x = browserContext(String(a.task_id), c);
+            return JSON.stringify(await browserRuntime.click(x.cx, { value: String(a.target) }));
+        }
+        catch (e) {
+            return `Browser click blocked: ${String(e)}`;
+        } } });
+    const browserTypeTool = tool({ description: 'Type bounded text into one element reference from the latest browser observation.', args: { task_id: tool.schema.string(), target: tool.schema.string(), value: tool.schema.string() }, execute: async (a, c) => { try {
+            if (!browserRuntime)
+                return 'BLOCKED: browser runtime unavailable';
+            const x = browserContext(String(a.task_id), c);
+            return JSON.stringify(await browserRuntime.type(x.cx, { value: String(a.target) }, String(a.value)));
+        }
+        catch (e) {
+            return `Browser type blocked: ${String(e)}`;
+        } } });
+    const browserInspectTool = tool({ description: 'Inspect the current page as a bounded DOM/text observation.', args: { task_id: tool.schema.string() }, execute: async (a, c) => { try {
+            if (!browserRuntime)
+                return 'BLOCKED: browser runtime unavailable';
+            const x = browserContext(String(a.task_id), c);
+            return JSON.stringify(await browserRuntime.inspect(x.cx));
+        }
+        catch (e) {
+            return `Browser inspect blocked: ${String(e)}`;
+        } } });
+    const browserScreenshotTool = tool({ description: 'Capture the current page into the canonical Hi artifact owner and return a BrowserObservation reference.', args: { task_id: tool.schema.string() }, execute: async (a, c) => { try {
+            if (!browserRuntime)
+                return 'BLOCKED: browser runtime unavailable';
+            const x = browserContext(String(a.task_id), c);
+            return JSON.stringify(await browserRuntime.screenshot(x.cx));
+        }
+        catch (e) {
+            return `Browser screenshot blocked: ${String(e)}`;
+        } } });
+    const browserWaitTool = tool({ description: 'Wait a bounded number of milliseconds in the active browser session.', args: { task_id: tool.schema.string(), milliseconds: tool.schema.number() }, execute: async (a, c) => { try {
+            if (!browserRuntime)
+                return 'BLOCKED: browser runtime unavailable';
+            const x = browserContext(String(a.task_id), c);
+            return JSON.stringify(await browserRuntime.wait(x.cx, { milliseconds: Number(a.milliseconds) }));
+        }
+        catch (e) {
+            return `Browser wait blocked: ${String(e)}`;
+        } } });
+    const browserCloseTool = tool({ description: 'Close the active bounded Hi browser session.', args: { task_id: tool.schema.string() }, execute: async (a, c) => { try {
+            if (!browserRuntime)
+                return 'BLOCKED: browser runtime unavailable';
+            const x = browserContext(String(a.task_id), c);
+            return JSON.stringify(await browserRuntime.close(x.cx));
+        }
+        catch (e) {
+            return `Browser close blocked: ${String(e)}`;
+        } } });
     const processSpawnTool = tool({ description: 'Spawn one owned long-running process for an existing Hi worker/task through the native OpenCode PTY lifecycle. Native permission ask remains a real OpenCode permission request.', args: { worker_id: tool.schema.string(), command: tool.schema.string(), args_json: tool.schema.string().optional(), cwd: tool.schema.string().optional(), timeout_ms: tool.schema.number().optional(), title: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
             return 'No active Hi mission'; let args; if (a.args_json) {
             try {
@@ -224,7 +301,7 @@ export function createHiToolSurface(input) {
     const teamMemberAddTool = tool({ description: 'Add one bounded Team Mode member and start its worker.', args: { team_id: tool.schema.string(), role: tool.schema.string(), model: tool.schema.string().optional(), variant: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(await teams.addMember(m, a.team_id, a.role, a.model, a.variant)) : 'No active Hi mission'; } });
     const teamMemberRemoveTool = tool({ description: 'Remove one Team Mode member and cancel its worker.', args: { team_id: tool.schema.string(), role: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? String(await teams.removeMember(m, a.team_id, a.role)) : 'false'; } });
     const teamShutdownTool = tool({ description: 'Shutdown one bounded Hi team and cancel its member workers.', args: { team_id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? String(await teams.shutdown(m, a.team_id)) : 'false'; } });
-    const toolSurface = { hi_doctor: doctorTool, hi_status: statusTool, hi_metrics: metricsTool, hi_ledger: ledgerTool, hi_readiness: readinessTool, hi_intent_assess: intentAssessTool, hi_context_artifact_add: artifactAddTool, hi_context_artifacts: artifactsTool, hi_temporary_mutation_register: mutationTool, hi_temporary_mutation_revert: nativeRollbackTool, hi_direct_progress: directProgressTool, hi_task_start: startTool, hi_task_await: awaitTool, hi_task_peek: peekTool, hi_task_list: listTool, hi_task_cancel: cancelTool, hi_process_spawn: processSpawnTool, hi_process_read: processReadTool, hi_process_write: processWriteTool, hi_process_wait: processWaitTool, hi_process_kill: processKillTool, hi_process_cleanup: processCleanupTool, hi_process_list: processListTool };
+    const toolSurface = { hi_doctor: doctorTool, hi_status: statusTool, hi_metrics: metricsTool, hi_ledger: ledgerTool, hi_readiness: readinessTool, hi_intent_assess: intentAssessTool, hi_context_artifact_add: artifactAddTool, hi_context_artifacts: artifactsTool, hi_temporary_mutation_register: mutationTool, hi_temporary_mutation_revert: nativeRollbackTool, hi_direct_progress: directProgressTool, hi_task_start: startTool, hi_task_await: awaitTool, hi_task_peek: peekTool, hi_task_list: listTool, hi_task_cancel: cancelTool, hi_process_spawn: processSpawnTool, hi_process_read: processReadTool, hi_process_write: processWriteTool, hi_process_wait: processWaitTool, hi_process_kill: processKillTool, hi_process_cleanup: processCleanupTool, hi_process_list: processListTool, hi_browser_open: browserOpenTool, hi_browser_navigate: browserNavigateTool, hi_browser_click: browserClickTool, hi_browser_type: browserTypeTool, hi_browser_inspect: browserInspectTool, hi_browser_screenshot: browserScreenshotTool, hi_browser_wait: browserWaitTool, hi_browser_close: browserCloseTool };
     const teamTools = { hi_team_create: teamCreateTool, hi_team_member_add: teamMemberAddTool, hi_team_member_remove: teamMemberRemoveTool, hi_team_status: teamStatusTool, hi_team_shutdown: teamShutdownTool };
     assertHiToolNamespace([...Object.keys(toolSurface), ...Object.keys(teamTools)]);
     const reconfigure = () => { if (state.config.teamMode.enabled && hostCapabilityByID(capabilities.contracts, 'worker-runtime')?.status === 'SUPPORTED')

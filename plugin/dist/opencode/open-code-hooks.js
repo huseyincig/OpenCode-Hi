@@ -13,7 +13,7 @@ import { appendLedger } from '../runtime/ledger/ledger.js';
 import { syncHumanDecisionTransport } from '../runtime/human-decision/transport.js';
 export function createOpenCodeHooks(input) {
     const { state, host, services, projectRoot, packagedSkillsDir, projectAuthority, toolSurface, reconfigureToolSurface, eventController, instanceLease } = input;
-    const { store, background, humanDecisionTransport, persistence, tasks, teams, processRuntime, experimental, eventSink } = services;
+    const { store, background, humanDecisionTransport, persistence, tasks, teams, processRuntime, browserRuntime, experimental, eventSink } = services;
     return {
         name: 'opencode-hi',
         tool: toolSurface,
@@ -94,6 +94,7 @@ export function createOpenCodeHooks(input) {
                     await teams.shutdownMission(m);
                     await tasks.cancelAll(m);
                 }
+            await browserRuntime.dispose();
             persistence.markCleanShutdown(store.all());
         }
         finally {

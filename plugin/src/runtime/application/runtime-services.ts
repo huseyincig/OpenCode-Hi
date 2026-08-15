@@ -16,6 +16,8 @@ import { ProcessRuntime } from '../process/runtime.js'
 import { OpenCodeWorkspaceAdapter } from '../../opencode/open-code-workspace-adapter.js'
 import { WorkspaceRuntime } from '../workspace/runtime.js'
 import { ChatHumanDecisionTransport } from '../human-decision/transport.js'
+import { PlaywrightBrowserAdapter } from '../../opencode/playwright-browser-adapter.js'
+import { BrowserRuntime } from '../browser/runtime.js'
 
 export function createRuntimeServices(input:{ctx:OpenCodePluginContext;projectRoot:string;packageRoot:string;getConfig:()=>HiConfig;getModels:()=>AvailableModel[];getHostConfig:()=>Record<string,unknown>}){
   const {ctx,projectRoot,packageRoot,getConfig,getModels,getHostConfig}=input
@@ -31,13 +33,17 @@ export function createRuntimeServices(input:{ctx:OpenCodePluginContext;projectRo
   persistence.markRunning(store.all())
   const scheduler=new ConcurrencyScheduler(()=>({global:getConfig().parallel.enabled?getConfig().parallel.max:1,providers:getConfig().parallel.providers,models:getConfig().parallel.models}))
   const eventSink:RuntimeSignalSink=ev=>{const m=store.all().find(x=>x.identity.mission_id===ev.mission_id);if(m)appendLedger(m,`event.${ev.type}`,{task_id:ev.task_id,worker_id:ev.worker_id,payload:ev.payload})}
+  const browserExecutor=new PlaywrightBrowserAdapter({persist_screenshot:(bytes,c)=>{const a=scopedStores.contextArtifacts.addBinary('browser-screenshot',`Browser screenshot for ${c.task_id}`,bytes,{extension:'png',mediaType:'image/png',producer:'hi-browser-executor',consumerRefs:[`task:${c.task_id}`]});return `hi-artifact:${a.artifact_id}`}})
+  const browserRuntime=new BrowserRuntime(browserExecutor)
+  let browserAvailable=false
+  const setBrowserAvailable=(value:boolean)=>{browserAvailable=value}
   const workspaceExecutor=new OpenCodeWorkspaceAdapter(ctx.client,ctx.serverUrl,ctx.directory)
   const workspaceRuntime=new WorkspaceRuntime(workspaceExecutor,projectRoot)
-  const tasks=new TaskRuntime(ctx.client,background,scheduler,projectRoot,packageRoot,getConfig,getModels,getHostConfig,eventSink,{serverUrl:ctx.serverUrl?.toString?.(),directory:ctx.directory},scopedStores,workspaceRuntime)
+  const tasks=new TaskRuntime(ctx.client,background,scheduler,projectRoot,packageRoot,getConfig,getModels,getHostConfig,eventSink,{serverUrl:ctx.serverUrl?.toString?.(),directory:ctx.directory},scopedStores,workspaceRuntime,()=>browserAvailable?new Set(['host-capability:browser-execution']):new Set())
   for(const m of store.all())for(const w of m.execution.workers)if(w.session_id&&w.status==='ready')background.set(w)
   const processExecutor=new OpenCodePtyAdapter(ctx.client,ctx.serverUrl,ctx.directory,projectRoot,getHostConfig)
   const processRuntime=new ProcessRuntime(processExecutor,projectRoot,getHostConfig)
   const experimental=new ExperimentalOpenCodeAdapter(store,background)
   const teams=new TeamRuntime(tasks,()=>getConfig().teamMode.enabled,()=>({maxMembers:getConfig().teamMode.maxMembers,maxWallMs:getConfig().teamMode.maxWallMinutes*60*1000}))
-  return {store,background,humanDecisionTransport,persistence,scheduler,eventSink,tasks,processExecutor,processRuntime,workspaceExecutor,workspaceRuntime,experimental,teams,scopedStores}
+  return {store,background,humanDecisionTransport,persistence,scheduler,eventSink,tasks,processExecutor,processRuntime,workspaceExecutor,workspaceRuntime,browserExecutor,browserRuntime,setBrowserAvailable,experimental,teams,scopedStores}
 }

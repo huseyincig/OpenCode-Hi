@@ -1,6 +1,7 @@
+import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { durableArtifactPath, hiProjectRoot } from '../storage/ownership.js'
+import { durableArtifactBinaryPath, durableArtifactPath, hiProjectRoot } from '../storage/ownership.js'
 import { artifactContentHash,isArtifactContract,newArtifactId,type ArtifactContract,type ArtifactPrivacyClass } from '../../contracts/artifact.js'
 import { buildCompressionArtifact,isCompressionArtifact,type CompressionArtifact } from '../../contracts/compression-artifact.js'
 import type { ContextReferenceContract } from '../../contracts/context-reference.js'
@@ -33,6 +34,17 @@ export class ContextArtifactStore{
     const privacy:ArtifactPrivacyClass=sources.every(s=>s.privacy_class==='redacted')?'redacted':'project-private'
     const item:ArtifactContract={artifact_id:id,kind:'context-compression',content_ref:'inline-body',content,content_hash:artifactContentHash(content),summary:compression.summary,producer:'hi-context-compression',provenance:{source_files:this.#sourceFilesForCompression(sources)},created_at:compression.created_at,retention_class:this.projectRoot?'project':'session',privacy_class:privacy,consumer_refs:[options.consumerScope],freshness:compression.freshness}
     this.#put(item);return structuredClone(compression)
+  }
+  addBinary(kind:string,summary:string,bytes:Uint8Array,options:{extension:string;mediaType:string;producer?:string;privacyClass?:ArtifactPrivacyClass;consumerRefs?:string[]}):ArtifactContract{
+    if(!this.projectRoot)throw new Error('Binary artifact persistence requires a project root')
+    if(!bytes.byteLength||bytes.byteLength>10*1024*1024)throw new Error('Binary artifact must be 1 byte..10 MiB')
+    if(!/^[A-Za-z0-9]{1,12}$/.test(options.extension))throw new Error('Binary artifact extension is invalid')
+    if(!options.mediaType||options.mediaType.length>120)throw new Error('Binary artifact media type is invalid')
+    const id=newArtifactId(),path=durableArtifactBinaryPath(this.projectRoot,kind,id,options.extension),sha=createHash('sha256').update(bytes).digest('hex')
+    mkdirSync(dirname(path),{recursive:true});writeFileSync(path,bytes)
+    const manifest=JSON.stringify({media_type:options.mediaType,byte_sha256:sha,byte_size:bytes.byteLength,file:`${id}.${options.extension}`})
+    const item:ArtifactContract={artifact_id:id,kind,content_ref:'inline-body',content:manifest,content_hash:artifactContentHash(manifest),summary,producer:options.producer??'context-artifact-store',provenance:{source_files:[]},created_at:Date.now(),retention_class:'project',privacy_class:options.privacyClass??'project-private',consumer_refs:[...new Set(options.consumerRefs??[])].slice(0,32),freshness:'FRESH'}
+    return this.#put(item)
   }
   getCompression(id:string):CompressionArtifact|undefined{const item=this.#items.get(id);if(!item||item.kind!=='context-compression')return undefined;try{const parsed=JSON.parse(item.content);if(!isCompressionArtifact(parsed)||parsed.id!==item.artifact_id||parsed.summary!==item.summary||parsed.created_at!==item.created_at)return undefined;const view={...parsed,freshness:item.freshness};return isCompressionArtifact(view)?structuredClone(view):undefined}catch{return undefined}}
   add(kind:string,summary:string,content:string,sourceFiles:string[]=[],options:{producer?:string;privacyClass?:ArtifactPrivacyClass;consumerRefs?:string[]}={}):ArtifactContract{

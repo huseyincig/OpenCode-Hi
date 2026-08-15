@@ -1,3 +1,4 @@
+import { HI_BROWSER_EXECUTION_TOOL_IDS } from '../browser/executor.js'
 export type NativePermissionDecision='allow'|'ask'|'deny'|'unknown'
 
 function isRecord(v:unknown):v is Record<string,unknown>{return Boolean(v)&&typeof v==='object'&&!Array.isArray(v)}
@@ -53,4 +54,4 @@ export function effectiveExecutionSurface(hostConfig:Record<string,unknown>,role
 
 export const HI_CONTROL_TOOL_IDS=['hi_doctor','hi_status','hi_metrics','hi_ledger','hi_readiness','hi_context_artifact_add','hi_context_artifacts','hi_temporary_mutation_register','hi_temporary_mutation_revert','hi_direct_progress','hi_task_start','hi_task_await','hi_task_peek','hi_task_list','hi_task_cancel','hi_team_create','hi_team_member_add','hi_team_member_remove','hi_team_status','hi_team_shutdown','hi_process_spawn','hi_process_read','hi_process_write','hi_process_wait','hi_process_kill','hi_process_cleanup','hi_process_list'] as const
 export const KNOWN_BUILTIN_TOOL_IDS=['bash','edit','write','apply_patch','read','grep','glob','list','lsp','skill','todowrite','todoread','webfetch','websearch','question','task'] as const
-export function promptToolOverrides(allowed:string[],hiToolNames:string[]=[...HI_CONTROL_TOOL_IDS]):Record<string,boolean>{const keep=new Set(allowed);const out:Record<string,boolean>={};for(const id of KNOWN_BUILTIN_TOOL_IDS)if(!keep.has(id))out[id]=false;for(const id of hiToolNames)out[id]=false;return out}
+export function promptToolOverrides(allowed:string[],hiToolNames:string[]=[...HI_CONTROL_TOOL_IDS]):Record<string,boolean>{const keep=new Set(allowed);const out:Record<string,boolean>={};for(const id of KNOWN_BUILTIN_TOOL_IDS)if(!keep.has(id))out[id]=false;for(const id of hiToolNames)out[id]=false;for(const id of HI_BROWSER_EXECUTION_TOOL_IDS)if(!keep.has(id))out[id]=false;return out}

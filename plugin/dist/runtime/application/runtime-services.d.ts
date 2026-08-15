@@ -14,6 +14,8 @@ import { ProcessRuntime } from '../process/runtime.js';
 import { OpenCodeWorkspaceAdapter } from '../../opencode/open-code-workspace-adapter.js';
 import { WorkspaceRuntime } from '../workspace/runtime.js';
 import { ChatHumanDecisionTransport } from '../human-decision/transport.js';
+import { PlaywrightBrowserAdapter } from '../../opencode/playwright-browser-adapter.js';
+import { BrowserRuntime } from '../browser/runtime.js';
 export declare function createRuntimeServices(input: {
     ctx: OpenCodePluginContext;
     projectRoot: string;
@@ -33,6 +35,9 @@ export declare function createRuntimeServices(input: {
     processRuntime: ProcessRuntime;
     workspaceExecutor: OpenCodeWorkspaceAdapter;
     workspaceRuntime: WorkspaceRuntime;
+    browserExecutor: PlaywrightBrowserAdapter;
+    browserRuntime: BrowserRuntime;
+    setBrowserAvailable: (value: boolean) => void;
     experimental: ExperimentalOpenCodeAdapter;
     teams: TeamRuntime;
     scopedStores: import("./runtime-scoped-stores.js").RuntimeScopedStores;

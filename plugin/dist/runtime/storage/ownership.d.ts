@@ -5,6 +5,7 @@ export declare function projectProvenancePath(projectRoot: string, name: string)
 export declare function projectIntelligencePath(projectRoot: string, id: string): string;
 export declare function projectMethodologyCandidatePath(projectRoot: string, id: string): string;
 export declare function durableArtifactPath(projectRoot: string, kind: string, id: string): string;
+export declare function durableArtifactBinaryPath(projectRoot: string, kind: string, id: string, extension: string): string;
 export declare function projectMethodologyPolicyDir(projectRoot: string): string;
 export declare function projectMethodologyPolicyPath(projectRoot: string, name: string): string;
 export declare function projectMethodologyProvenanceDir(projectRoot: string): string;

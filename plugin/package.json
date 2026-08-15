@@ -43,5 +43,8 @@
   "private": true,
   "allowScripts": {
     "msgpackr-extract@3.0.4": true
+  },
+  "optionalDependencies": {
+    "playwright-core": "^1.62.1"
   }
 }

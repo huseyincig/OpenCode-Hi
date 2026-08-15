@@ -11,6 +11,7 @@ export function projectProvenancePath(projectRoot, name) { return join(hiProject
 export function projectIntelligencePath(projectRoot, id) { return join(hiProjectRoot(projectRoot), 'project-intelligence', 'patterns', `${safeSegment(id)}.json`); }
 export function projectMethodologyCandidatePath(projectRoot, id) { return join(hiProjectRoot(projectRoot), 'project-intelligence', 'methodology-candidates', `${safeSegment(id)}.json`); }
 export function durableArtifactPath(projectRoot, kind, id) { return join(hiProjectRoot(projectRoot), 'artifacts', safeSegment(kind), `${safeSegment(id)}.json`); }
+export function durableArtifactBinaryPath(projectRoot, kind, id, extension) { return join(hiProjectRoot(projectRoot), 'artifacts', safeSegment(kind), `${safeSegment(id)}.${safeSegment(extension).replace(/^\.+/, '')}`); }
 export function projectMethodologyPolicyDir(projectRoot) { return join(hiProjectRoot(projectRoot), 'policy', 'methodologies'); }
 export function projectMethodologyPolicyPath(projectRoot, name) { return join(projectMethodologyPolicyDir(projectRoot), `${safeSegment(name)}.json`); }
 export function projectMethodologyProvenanceDir(projectRoot) { return join(hiProjectRoot(projectRoot), 'provenance', 'methodologies'); }

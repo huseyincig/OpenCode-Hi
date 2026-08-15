@@ -36,7 +36,8 @@ export declare class TaskRuntime {
     private getHostConfig;
     private events?;
     private readonly workspaceRuntime?;
-    constructor(client: OpenCodeClient, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined, lifecycle?: OpenCodeLifecycleEndpoint, scopedStores?: RuntimeScopedStores, workspaceRuntime?: WorkspaceRuntime | undefined);
+    private readonly extraHostResources;
+    constructor(client: OpenCodeClient, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined, lifecycle?: OpenCodeLifecycleEndpoint, scopedStores?: RuntimeScopedStores, workspaceRuntime?: WorkspaceRuntime | undefined, extraHostResources?: () => ReadonlySet<string>);
     private sendProviderPrompt;
     private recordModelProjection;
     private abortNativeSession;

@@ -22,6 +22,7 @@ import { syncMissionGates } from '../gates/gates.js';
 import { recordPreexistingUserBaseline } from '../safety/staging-safety.js';
 import { evaluateTaskPreconditions, TaskPreconditionError } from '../readiness/preconditions.js';
 import { effectiveExecutionSurface, promptToolOverrides } from '../routing/execution-profile.js';
+import { HI_BROWSER_EXECUTION_TOOL_IDS } from '../browser/executor.js';
 import { ProjectMethodologyLearningStore } from '../project-intelligence/methodology-learning.js';
 import { executionProfileFor } from '../../config/execution-policy.js';
 import { applyAdmittedProjectMethodologyPermissions } from '../methodology/host-permissions.js';
@@ -68,6 +69,7 @@ export class TaskRuntime {
     getHostConfig;
     events;
     workspaceRuntime;
+    extraHostResources;
     #queue = [];
     #draining = false;
     #methodologyLearning;
@@ -75,7 +77,7 @@ export class TaskRuntime {
     #results;
     #recovery;
     #scopedStores;
-    constructor(client, registry, scheduler, projectRoot, hiRoot, getConfig, getModels, getHostConfig, events, lifecycle = {}, scopedStores, workspaceRuntime) {
+    constructor(client, registry, scheduler, projectRoot, hiRoot, getConfig, getModels, getHostConfig, events, lifecycle = {}, scopedStores, workspaceRuntime, extraHostResources = () => new Set()) {
         this.client = client;
         this.registry = registry;
         this.scheduler = scheduler;
@@ -85,6 +87,7 @@ export class TaskRuntime {
         this.getHostConfig = getHostConfig;
         this.events = events;
         this.workspaceRuntime = workspaceRuntime;
+        this.extraHostResources = extraHostResources;
         this.#scopedStores = scopedStores ?? createRuntimeScopedStores(projectRoot, hiRoot);
         this.#methodologyLearning = new ProjectMethodologyLearningStore(projectRoot);
         this.#child = new ChildExecutionCoordinator(client, lifecycle, registry);
@@ -175,7 +178,7 @@ export class TaskRuntime {
             appendLedger(m, 'model.policy.rejected', { payload: { items: selected.rejected.slice(0, 20) } });
         if (selected.scores?.length)
             appendLedger(m, 'model.scored', { payload: { role, category, top: selected.scores.slice(0, 6), feedback } });
-        const taskMethodologyNeeds = m.methodology.methodology_needs.filter(need => (!need.task_id && !need.obligation_id) || (need.obligation_id && input.obligationIds?.includes(need.obligation_id))), catalog = methodologyCatalog(this.projectRoot), candidates = this.#scopedStores.skillCatalog.candidates(hostConfig), permissionMap = resolveSkillPermissionMap(hostConfig, role), skillToolEnabled = resolveSkillToolEnabled(hostConfig, role), surface = effectiveExecutionSurface(hostConfig, role, skillToolEnabled), hostCapabilities = detectOpenCodeCapabilities(this.client).contracts, availableResources = new Set(hostCapabilities.filter(item => item.status === 'SUPPORTED').map(item => `host-capability:${item.id}`)), skillPlan = resolveSkillPlan(methodologyNames(taskMethodologyNeeds), candidates, permissionMap, skillToolEnabled, role, catalog, availableResources), methodologies = skillPlan.selected.map(s => s.name), methodologyResourceFailures = skillPlan.outcomes.filter(item => item.outcome === 'resource-unavailable').map(item => item.name);
+        const taskMethodologyNeeds = m.methodology.methodology_needs.filter(need => (!need.task_id && !need.obligation_id) || (need.obligation_id && input.obligationIds?.includes(need.obligation_id))), catalog = methodologyCatalog(this.projectRoot), candidates = this.#scopedStores.skillCatalog.candidates(hostConfig), permissionMap = resolveSkillPermissionMap(hostConfig, role), skillToolEnabled = resolveSkillToolEnabled(hostConfig, role), surface = effectiveExecutionSurface(hostConfig, role, skillToolEnabled), hostCapabilities = detectOpenCodeCapabilities(this.client).contracts, availableResources = new Set([...hostCapabilities.filter(item => item.status === 'SUPPORTED').map(item => `host-capability:${item.id}`), ...this.extraHostResources()]), skillPlan = resolveSkillPlan(methodologyNames(taskMethodologyNeeds), candidates, permissionMap, skillToolEnabled, role, catalog, availableResources), methodologies = skillPlan.selected.map(s => s.name), methodologyResourceFailures = skillPlan.outcomes.filter(item => item.outcome === 'resource-unavailable').map(item => item.name);
         appendLedger(m, 'skill.resolved', { payload: { role, requested: skillPlan.requested, outcomes: skillPlan.outcomes } });
         void this.events?.(runtimeSignal('skill.resolved', m.identity.mission_id, { payload: { role, requested: skillPlan.requested, outcomes: skillPlan.outcomes } }));
         if (skillPlan.missing.length)
@@ -225,7 +228,7 @@ export class TaskRuntime {
         if (unknownArtifactIds.length)
             throw new Error(`Unknown context artifact id(s): ${unknownArtifactIds.join(', ')}`);
         const contextArtifactStore = this.#scopedStores.contextArtifacts, selectedContextHandles = requestedArtifactIds.map(id => m.context.context_artifacts.find(a => a.id === id)).filter(Boolean), selectedContextReferences = selectedContextHandles.map(a => { const durableId = a.uri?.startsWith('hi-artifact:') ? a.uri.slice('hi-artifact:'.length) : undefined, stored = durableId ? contextArtifactStore.get(durableId) : undefined; return { source_ref: a.uri ?? `mission-context:${a.id}`, reason: 'explicit-task-selection', priority: 'normal', protection: 'COMPRESSIBLE', budget_cost: stored ? Math.min(stored.content.length, 3000) : Math.min((a.summary ?? a.title ?? a.kind).length, 3000), freshness: stored?.freshness ?? 'UNKNOWN', retention: 'task', privacy_class: stored?.privacy_class ?? 'project-private', kind: a.kind, title: a.title, summary: a.summary, content_hash: stored?.content_hash ?? a.sha256, source_handle_id: a.id }; });
-        const approvalGated = skillPlan.selected.filter(s => s.permission === 'ask').map(s => s.name), taskTools = surface.tools.filter(t => t !== 'skill' || methodologies.length > 0);
+        const approvalGated = skillPlan.selected.filter(s => s.permission === 'ask').map(s => s.name), browserTools = role === 'visual-qa' && methodologies.some(name => ['hi-browser-testing', 'hi-visual-qa', 'hi-accessibility-review'].includes(name)) ? [...HI_BROWSER_EXECUTION_TOOL_IDS] : [], taskTools = [...surface.tools.filter(t => t !== 'skill' || methodologies.length > 0), ...browserTools];
         const profile = { role, category, task: { objective, scope: [...scope], dependencies: [...dependencies], required_evidence: [...requiredEvidence] }, tools: taskTools, model: selected.primary, model_variant: input.modelVariant ?? selected.primaryVariant, fallback_models: selected.fallbacks, fallback_variants: selected.fallbackVariants, fallback_reasons: selected.fallbackReasons, methodologies, permission_profile: { skill_tool_enabled: skillToolEnabled, skill_permissions: permissionMap ?? {}, external_effects: 'parent-only', recursive_task: 'deny', native: surface.permissions }, verification_policy: { ...m.execution.verification_policy, requiredKinds: [...m.execution.verification_policy.requiredKinds] }, max_context_chars: DEFAULT_CONTEXT_BUDGET.max_context_chars, max_handoff_chars: DEFAULT_CONTEXT_BUDGET.max_handoff_chars, max_result_chars: DEFAULT_CONTEXT_BUDGET.max_result_chars, max_artifacts: DEFAULT_CONTEXT_BUDGET.max_artifacts };
         const task = createTask(m, { objective, role, category, scope, constraints, dependencies, requiredEvidence, obligationIds, contextReferences: selectedContextReferences, executionProfile: profile });
         bindMethodologyNeeds(m, methodologies, { taskId: task.id, obligationIds: task.obligation_ids });

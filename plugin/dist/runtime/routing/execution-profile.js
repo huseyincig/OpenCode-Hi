@@ -1,3 +1,4 @@
+import { HI_BROWSER_EXECUTION_TOOL_IDS } from '../browser/executor.js';
 function isRecord(v) { return Boolean(v) && typeof v === 'object' && !Array.isArray(v); }
 function decision(raw) {
     if (raw === 'allow' || raw === 'ask' || raw === 'deny')
@@ -59,4 +60,6 @@ export const KNOWN_BUILTIN_TOOL_IDS = ['bash', 'edit', 'write', 'apply_patch', '
 export function promptToolOverrides(allowed, hiToolNames = [...HI_CONTROL_TOOL_IDS]) { const keep = new Set(allowed); const out = {}; for (const id of KNOWN_BUILTIN_TOOL_IDS)
     if (!keep.has(id))
         out[id] = false; for (const id of hiToolNames)
-    out[id] = false; return out; }
+    out[id] = false; for (const id of HI_BROWSER_EXECUTION_TOOL_IDS)
+    if (!keep.has(id))
+        out[id] = false; return out; }

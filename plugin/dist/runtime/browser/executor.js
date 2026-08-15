@@ -1,1 +1,1 @@
-export {};
+export const HI_BROWSER_EXECUTION_TOOL_IDS = ['hi_browser_open', 'hi_browser_navigate', 'hi_browser_click', 'hi_browser_type', 'hi_browser_inspect', 'hi_browser_screenshot', 'hi_browser_wait', 'hi_browser_close'];

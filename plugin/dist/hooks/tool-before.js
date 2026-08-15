@@ -9,6 +9,7 @@ import { assertChildMethodologyLoad, assertParentMethodologyLoad, requestedMetho
 import { evaluateShellCommand } from '../runtime/process/shell-policy.js';
 import { appendLedger } from '../runtime/ledger/ledger.js';
 import { openHumanDecision } from '../runtime/human-decision/runtime.js';
+import { HI_BROWSER_EXECUTION_TOOL_IDS } from '../runtime/browser/executor.js';
 export function createToolBeforeHook(store, background, projectRoot) {
     return async (input, output) => {
         const sid = input?.sessionID ?? input?.sessionId, child = sid && background ? background.list().find(w => w.session_id === sid) : undefined, m = child ? store.get(child.parent_session_id) : store.get(sid);
@@ -17,8 +18,16 @@ export function createToolBeforeHook(store, background, projectRoot) {
         if (child && ((child.parent_mission_id !== undefined && child.parent_mission_id !== m.identity.mission_id) || (child.generation_at_spawn !== undefined && child.generation_at_spawn !== m.continuation.generation)))
             return;
         const tool = String(input?.tool ?? ''), args = output?.args ?? input?.args ?? {};
-        if (child && tool.startsWith('hi_'))
-            throw new Error(`Hi ownership guard: child workers cannot invoke Hi control-plane tool '${tool}'.`);
+        if (child && tool.startsWith('hi_')) {
+            const browserTool = HI_BROWSER_EXECUTION_TOOL_IDS.includes(tool);
+            if (browserTool) {
+                const task = m.execution.tasks.find(t => t.id === child.task_id), allowed = child.role === 'visual-qa' && task?.status === 'running' && child.selected_methodologies.some(name => ['hi-browser-testing', 'hi-visual-qa', 'hi-accessibility-review'].includes(name));
+                if (!allowed)
+                    throw new Error(`Hi browser execution guard: child '${child.id}' cannot invoke '${tool}' outside its active visual task/methodology.`);
+            }
+            else
+                throw new Error(`Hi ownership guard: child workers cannot invoke Hi control-plane tool '${tool}'.`);
+        }
         if (m.identity.semantic_assessment.status === 'pending') {
             const allowed = new Set(['hi_intent_assess', 'hi_status', 'hi_ledger', 'hi_readiness']);
             if (!allowed.has(tool))

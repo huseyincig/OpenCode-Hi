@@ -75,6 +75,7 @@ Directories are created lazily by the owning capability. File format never deter
 - Markdown cleanup used only for the current model handoff -> **ephemeral runtime/context**, no project file.
 - A cleaned document distilled into a reusable project convention -> **Project Intelligence**, source-hash linked and invalidatable.
 - A long repository audit explicitly retained for later use -> **ContextArtifactStore**, with hash/provenance and semantic artifact kind.
+- A retained browser screenshot -> **ContextArtifactStore**, with the ArtifactContract JSON manifest as canonical metadata plus one bounded hash-bound PNG sibling; raw image bytes never enter BrowserObservation or Evidence automatically.
 - Reusable methodology derived from an external document -> merge an existing skill or create `.opencode/skills/<skill>/`; its references stay with that skill.
 - Sensitive local text/redaction mappings -> **memory only**, never project-visible durable storage.
 

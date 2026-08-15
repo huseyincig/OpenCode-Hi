@@ -11,6 +11,13 @@ export declare class ContextArtifactStore {
         modelIdentity: string;
         policyVersion?: string;
     }): CompressionArtifact;
+    addBinary(kind: string, summary: string, bytes: Uint8Array, options: {
+        extension: string;
+        mediaType: string;
+        producer?: string;
+        privacyClass?: ArtifactPrivacyClass;
+        consumerRefs?: string[];
+    }): ArtifactContract;
     getCompression(id: string): CompressionArtifact | undefined;
     add(kind: string, summary: string, content: string, sourceFiles?: string[], options?: {
         producer?: string;
