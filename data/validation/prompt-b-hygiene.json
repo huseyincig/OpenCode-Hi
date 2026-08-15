@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_HYGIENE_AUDIT",
+  "program": "PROMPT_B",
+  "section": 41,
+  "status": "PASS",
+  "audited_source_commit": "f4684d5cd2792d9aec4d4f433a6cf65a83dff071",
+  "checks": {
+    "clean_working_tree_outside_audit_artifacts": true,
+    "accidental_backups": true,
+    "stale_temp_files": true,
+    "nested_runtime_state_leakage": true,
+    "stray_logs": true,
+    "debug_prints": true,
+    "dead_fixture_guard": true,
+    "obsolete_todo_fixme": true,
+    "committed_secrets": true,
+    "generated_outputs_idempotent": true,
+    "dist_source_match": true,
+    "package_artifacts_clean": true
+  },
+  "external_acceptance": {
+    "documentation_projection_two_pass_sha256": "e801af1e78b371219651246dc5deda7c894d2706bf2dc14db116b5f593b8ef69",
+    "package_dry_run_files": 370,
+    "package_dry_run_status": "PASS"
+  },
+  "proof_hashes": {
+    "scripts/run-node-test-suite.mjs": "e47e13b1234d75c21addec94ecc183039c8ea3b044a9527c1bdde24bd86670df",
+    "data/validation/prompt-b-test-suite-audit.json": "0dcfba66e1e0e1534144db44d017069cf006dd7c014ac0e9e1be4e7f61ac3b0d",
+    "package.json": "bacad4fb690ab88db0da4021960a9651ad0b27f625ca14c5abcc30493b0bfff4",
+    "plugin/package.json": "5a3b1539de474d8fa9dc407686d67c61f900f591c3109a1ed904b4f224645f74"
+  },
+  "violations": []
+}
