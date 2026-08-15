@@ -104,6 +104,19 @@ test('W2 ChildExecutionCoordinator binds workspaceID and exact returned director
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
+
+
+test('PROMPT B WorkspaceRuntime rejects forged or cross-task isolation decisions before host provision',async()=>{
+  const fake=new FakeWorkspaceExecutor('/work'),wr=new WorkspaceRuntime(fake,'/repo'),store=new MissionStore('/repo'),m=store.start('workspace-owner','isolate exact task');assess(store,'workspace-owner')
+  const task={id:'t_owner',mission_id:m.identity.mission_id,objective:'x',status:'created',role:'coder',category:'quick',scope:['src/a.ts'],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],external_action_requirements:[],created_at:1,updated_at:1};m.execution.tasks.push(task)
+  const canonical=wr.decision(m,task,{required:true,reason:'exact owner'})
+  await assert.rejects(()=>wr.provision(m,task,{...canonical,reason:'forged copy'}),/canonical Mission-owned isolation decision/)
+  await assert.rejects(()=>wr.provision(m,task,{...canonical,requested_by:'task:t_other'}),/canonical Mission-owned isolation decision/)
+  await assert.rejects(()=>wr.provision(m,task,{...canonical,scope:['src/other.ts']}),/canonical Mission-owned isolation decision/)
+  assert.equal(fake.provisions.length,0)
+  const lease=await wr.provision(m,task,canonical);assert.equal(fake.provisions.length,1);assert.equal(lease.task_id,task.id)
+})
+
 test('W2 explicit isolated task provisions one lease, binds child workspace, preserves deny permission, and cleanup follows child abort',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-w2-task-')),work=join(root,'work');mkdirSync(work);const created=[],prompts=[],aborted=[],fake=new FakeWorkspaceExecutor(work),workspaceRuntime=new WorkspaceRuntime(fake,root),c=client(created,prompts,aborted,work),rt=runtimeWithWorkspace(c,workspaceRuntime,root),store=new MissionStore(root),m=store.start('w2','isolated implementation')
   try{

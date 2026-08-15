@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { createOpencodeClient as createOpenCodeV2Client } from '@opencode-ai/sdk/v2/client';
 import { isProcessContract, processCommandIdentity } from '../contracts/process.js';
 import { evaluateProcessSpawnAuthority, processCommandLine } from '../runtime/process/authority.js';
@@ -20,6 +21,21 @@ async function bytes(value) { if (value instanceof ArrayBuffer)
     return new Uint8Array(value); if (ArrayBuffer.isView(value))
     return new Uint8Array(value.buffer, value.byteOffset, value.byteLength); if (typeof Blob !== 'undefined' && value instanceof Blob)
     return new Uint8Array(await value.arrayBuffer()); return undefined; }
+export function linuxProcessGroup(pid) {
+    if (process.platform !== 'linux' || !Number.isInteger(pid) || pid <= 0)
+        return undefined;
+    try {
+        const raw = readFileSync(`/proc/${pid}/stat`, 'utf8'), end = raw.lastIndexOf(')');
+        if (end < 0)
+            return undefined;
+        const fields = raw.slice(end + 2).trim().split(/\s+/);
+        const pgrp = Number(fields[2]);
+        return Number.isInteger(pgrp) && pgrp > 0 ? pgrp : undefined;
+    }
+    catch {
+        return undefined;
+    }
+}
 export class OpenCodePtyAdapter {
     client;
     serverUrl;
@@ -30,9 +46,10 @@ export class OpenCodePtyAdapter {
     signalProcess;
     maxBufferedChars;
     maxReadChars;
+    resolveProcessGroup;
     #states = new Map();
     #v2Client;
-    constructor(client, serverUrl, directory, projectRoot, getHostConfig, socketFactory = (url) => new WebSocket(url), signalProcess = (pid, signal) => process.kill(pid, signal), maxBufferedChars = 256 * 1024, maxReadChars = 64 * 1024) {
+    constructor(client, serverUrl, directory, projectRoot, getHostConfig, socketFactory = (url) => new WebSocket(url), signalProcess = (pid, signal) => process.kill(pid, signal), maxBufferedChars = 256 * 1024, maxReadChars = 64 * 1024, resolveProcessGroup = linuxProcessGroup) {
         this.client = client;
         this.serverUrl = serverUrl;
         this.directory = directory;
@@ -42,6 +59,7 @@ export class OpenCodePtyAdapter {
         this.signalProcess = signalProcess;
         this.maxBufferedChars = maxBufferedChars;
         this.maxReadChars = maxReadChars;
+        this.resolveProcessGroup = resolveProcessGroup;
     }
     #edge() { return this.client; }
     #pty() { const injected = this.#edge()?.v2?.pty; if (injected)
@@ -51,6 +69,15 @@ export class OpenCodePtyAdapter {
     #location() { return { directory: this.directory }; }
     #state(id) { const state = this.#states.get(id); if (!state)
         throw new Error(`Hi ProcessExecutor process not found: ${id}`); return state; }
+    #signalTarget(state) {
+        const expected = state.contract.process_group_id, observed = this.resolveProcessGroup(state.contract.pid);
+        if (expected !== undefined) {
+            if (observed !== expected)
+                throw new Error(`Refusing process-group signal for ${state.contract.process_id}: expected ${expected}, observed ${String(observed)}`);
+            return expected === state.contract.pid ? -expected : state.contract.pid;
+        }
+        return state.contract.pid;
+    }
     #append(state, text, beforeMeta = false) {
         if (!text)
             return;
@@ -177,8 +204,9 @@ export class OpenCodePtyAdapter {
                 this.#applyInfo(state, info);
                 return;
             }
+            const target = this.#signalTarget(state);
+            this.signalProcess(target, 'SIGTERM');
             state.timeoutRequested = true;
-            this.signalProcess(state.contract.pid, 'SIGTERM');
         }
         catch (error) {
             this.#failExit(state, error);
@@ -195,7 +223,7 @@ export class OpenCodePtyAdapter {
         const raw = await this.#pty().create({ location: this.#location(), command: request.command, args: request.args ?? [], cwd: request.cwd, title: request.title, env: request.env }), info = nativeData(raw);
         if (!info || info.status !== 'running' || !Number.isInteger(info.pid) || info.pid <= 0 || typeof info.id !== 'string')
             throw new Error('OpenCode PTY create did not return a running PID-bound session');
-        const started = Date.now(), contract = { process_id: processID(), mission_id: request.mission_id, task_id: request.task_id, worker_id: request.worker_id, host: 'opencode', command_identity: processCommandIdentity({ host: 'opencode', command: processCommandLine({ command: info.command, args: info.args }), cwd: info.cwd }), cwd: info.cwd, pid: info.pid, status: 'RUNNING', started_at: started, ...(request.timeout_ms ? { timeout_at: started + request.timeout_ms } : {}), output_artifact_refs: [], authority_ref: request.authority_ref, cleanup_state: 'ACTIVE' };
+        const started = Date.now(), processGroup = this.resolveProcessGroup(info.pid), contract = { process_id: processID(), mission_id: request.mission_id, task_id: request.task_id, worker_id: request.worker_id, host: 'opencode', command_identity: processCommandIdentity({ host: 'opencode', command: processCommandLine({ command: info.command, args: info.args }), cwd: info.cwd }), cwd: info.cwd, pid: info.pid, ...(processGroup ? { process_group_id: processGroup } : {}), status: 'RUNNING', started_at: started, ...(request.timeout_ms ? { timeout_at: started + request.timeout_ms } : {}), output_artifact_refs: [], authority_ref: request.authority_ref, cleanup_state: 'ACTIVE' };
         if (!isProcessContract(contract)) {
             try {
                 await this.#pty().remove({ ptyID: info.id, location: this.#location() });
@@ -237,7 +265,7 @@ export class OpenCodePtyAdapter {
         return { contract: cloneContract(state.contract) }; return state.exitPromise; }
     async kill(processId, signal = 'SIGTERM') { const state = this.#state(processId); await this.#refresh(state); if (state.contract.status !== 'RUNNING')
         return { contract: cloneContract(state.contract) }; const info = await this.#nativeInfo(state); if (info.pid !== state.contract.pid)
-        throw new Error(`Refusing stale PID kill for ${processId}`); state.killRequested = signal; this.signalProcess(state.contract.pid, signal); return this.wait(processId); }
+        throw new Error(`Refusing stale PID kill for ${processId}`); const target = this.#signalTarget(state); this.signalProcess(target, signal); state.killRequested = signal; return this.wait(processId); }
     async cleanup(processId) { const state = this.#state(processId); await this.#refresh(state); if (state.contract.status === 'RUNNING')
         throw new Error(`Refusing cleanup of running process ${processId}; kill/exit must occur first`); await this.#pty().remove({ ptyID: state.ptyID, location: this.#location() }); state.socket?.close(1000, 'Hi cleanup'); state.contract.cleanup_state = 'CLEANED'; if (!isProcessContract(state.contract))
         throw new Error(`Invalid cleanup state for ${processId}`); this.#states.delete(processId); }
@@ -265,6 +293,16 @@ export class OpenCodePtyAdapter {
             persisted.termination_reason = 'restart-terminal-contract-host-running';
             delete persisted.exit_code;
             return { disposition: 'ORPHANED', contract: persisted };
+        }
+        if (persisted.process_group_id !== undefined) {
+            const observedGroup = this.resolveProcessGroup(persisted.pid);
+            if (observedGroup !== persisted.process_group_id) {
+                persisted.status = 'ORPHANED';
+                persisted.cleanup_state = 'QUARANTINED';
+                persisted.termination_reason = 'restart-process-group-identity-mismatch';
+                delete persisted.exit_code;
+                return { disposition: 'ORPHANED', contract: persisted };
+            }
         }
         let resolveExit, rejectExit;
         const exitPromise = new Promise((resolve, reject) => { resolveExit = resolve; rejectExit = reject; });

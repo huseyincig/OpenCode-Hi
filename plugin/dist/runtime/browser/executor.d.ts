@@ -1,6 +1,7 @@
 import type { BrowserObservationContract } from '../../contracts/browser-observation.js';
 export interface BrowserExecutionContext {
     task_id: string;
+    execution_owner_ref: string;
     executor_version: string;
     screenshot_artifact_ref?: string;
 }

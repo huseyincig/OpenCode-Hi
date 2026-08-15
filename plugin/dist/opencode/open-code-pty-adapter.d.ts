@@ -11,11 +11,13 @@ interface ProcessSocket {
 }
 export type ProcessSocketFactory = (url: string) => ProcessSocket;
 export type ProcessSignal = (pid: number, signal: 'SIGTERM' | 'SIGINT') => void;
+export type ProcessGroupResolver = (pid: number) => number | undefined;
 export declare class ProcessSpawnPermissionError extends Error {
     readonly decision: 'ASK' | 'DENY';
     readonly reason: string;
     constructor(decision: 'ASK' | 'DENY', reason: string);
 }
+export declare function linuxProcessGroup(pid: number): number | undefined;
 export declare class OpenCodePtyAdapter implements ProcessExecutor {
     #private;
     readonly client: OpenCodeClient;
@@ -27,7 +29,8 @@ export declare class OpenCodePtyAdapter implements ProcessExecutor {
     readonly signalProcess: ProcessSignal;
     readonly maxBufferedChars: number;
     readonly maxReadChars: number;
-    constructor(client: OpenCodeClient, serverUrl: URL, directory: string, projectRoot: string, getHostConfig: () => Record<string, unknown>, socketFactory?: ProcessSocketFactory, signalProcess?: ProcessSignal, maxBufferedChars?: number, maxReadChars?: number);
+    readonly resolveProcessGroup: ProcessGroupResolver;
+    constructor(client: OpenCodeClient, serverUrl: URL, directory: string, projectRoot: string, getHostConfig: () => Record<string, unknown>, socketFactory?: ProcessSocketFactory, signalProcess?: ProcessSignal, maxBufferedChars?: number, maxReadChars?: number, resolveProcessGroup?: ProcessGroupResolver);
     spawn(request: ProcessSpawnRequest): Promise<ProcessHandle>;
     write(processId: string, input: string): Promise<void>;
     read(processId: string, window?: ProcessOutputWindow): Promise<ProcessOutput>;

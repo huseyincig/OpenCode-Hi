@@ -24,6 +24,9 @@ export class WorkspaceRuntime {
     async provision(m, task, decision) {
         if (!decision.required || decision.strategy !== 'git-worktree')
             throw new Error('Hi WorkspaceRuntime provision requires a git-worktree isolation decision');
+        const canonical = m.execution.isolation_decisions.find(d => d === decision || JSON.stringify(d) === JSON.stringify(decision));
+        if (!canonical || canonical.requested_by !== `task:${task.id}` || JSON.stringify(canonical.scope) !== JSON.stringify(task.scope))
+            throw new Error('Hi WorkspaceRuntime provision requires the canonical Mission-owned isolation decision for this exact Task scope');
         if (m.execution.workspace_leases.some(x => x.task_id === task.id && x.status !== 'CLOSED'))
             throw new Error(`Task ${task.id} already owns an active workspace lease`);
         const sourceBaseline = await this.executor.sourceBaseline(this.projectRoot), native = await this.executor.provision({ mission_id: m.identity.mission_id, task_id: task.id, repository_root: this.projectRoot, source_baseline: sourceBaseline });

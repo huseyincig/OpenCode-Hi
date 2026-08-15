@@ -2,6 +2,7 @@ import type {BrowserObservationContract} from '../../contracts/browser-observati
 
 export interface BrowserExecutionContext {
   task_id:string
+  execution_owner_ref:string
   executor_version:string
   screenshot_artifact_ref?:string
 }

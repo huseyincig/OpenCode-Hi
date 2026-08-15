@@ -156,7 +156,7 @@ export function createHiToolSurface(input) {
     const browserContext = (taskID, c) => { const sid = String(c?.sessionID ?? ''); for (const m of store.all()) {
         const owner = resolveBrowserExecutionOwner(m, { sessionID: sid, taskID });
         if (owner)
-            return { m, w: owner.worker, cx: { task_id: taskID, executor_version: 'hi-playwright-browser@1' } };
+            return { m, w: owner.worker, cx: { task_id: taskID, execution_owner_ref: `${m.identity.mission_id}:${owner.worker.id}:${owner.worker.session_id}:${owner.worker.generation_at_spawn}`, executor_version: 'hi-playwright-browser@1' } };
     } throw new Error('Browser execution is allowed only for the active visual-qa worker/task with a selected browser/visual methodology'); };
     const browserOpenTool = tool({ description: 'Open a local HTTP(S) target through the bounded Hi browser executor.', args: { task_id: tool.schema.string(), url: tool.schema.string() }, execute: async (a, c) => { try {
             if (!browserRuntime)

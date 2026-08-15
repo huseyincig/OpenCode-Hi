@@ -91,7 +91,7 @@
       "owner": "plugin/src/runtime/task/task-runtime.ts",
       "owner_sha256": "fbb0e0dad347abfd5026b547239b3f00e952ddd5d1ef09df01507206726bf9ed",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "514416c27583f7fd4b01af1ccd167d07604e05cd5397e76af4566ba12264a7cb",
+      "proof_sha256": "06807f3bea0020aa0d029a5d28b251451c18fa581abef85668273624b6eda319",
       "owner_anchor": "async cancel(m:MissionState",
       "proof_anchor": "W2 explicit isolated task provisions one lease, binds child workspace, preserves deny permission, and cleanup follows child abort"
     },

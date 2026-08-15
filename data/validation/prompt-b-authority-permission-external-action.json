@@ -101,7 +101,7 @@
       "owner_sha256": "c9e47bee821cced0ae282f388e0561e0b06c6eddc34ffc9ad5ec9f8c1249714f",
       "owner_anchor": "external_directory",
       "proof": "plugin/test/p2-opencode-pty-executor.test.mjs",
-      "proof_sha256": "362632ce8a752a1907df2aa7617b5de0e2f8e1eb62cb327b24c75379becf36d3",
+      "proof_sha256": "7ea13f3c57dbb652953f128501bac03c8b0d826f31f217ca9b5a11e2ae25f7b3",
       "proof_anchor": "P2 external cwd requires explicit external_directory allow and external effects require matching ExternalAction authority"
     },
     {

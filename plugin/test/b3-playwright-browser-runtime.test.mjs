@@ -32,7 +32,7 @@ function fakePlaywright(){
   return{module:{chromium},launches,sessions}
 }
 const repoRoot=resolve(dirname(fileURLToPath(import.meta.url)),'../..')
-const ctx=id=>({task_id:id,executor_version:'hi-playwright-test'})
+const ctx=(id,owner=`owner:${id}:1`)=>({task_id:id,execution_owner_ref:owner,executor_version:'hi-playwright-test'})
 
 test('B3 Playwright adapter is local-scope, task-isolated and emits bounded observations',async()=>{
   const pw=fakePlaywright(),adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module})
@@ -46,6 +46,22 @@ test('B3 Playwright adapter is local-scope, task-isolated and emits bounded obse
   await assert.rejects(()=>adapter.navigate(ctx('t1'),'https://example.com/'),/outside supported local scope/)
   await adapter.close(ctx('t1'));assert.equal(pw.sessions[0].page.closed,true);assert.equal(pw.sessions[1].page.closed,false)
   await adapter.dispose();assert.equal(pw.sessions[1].page.closed,true)
+})
+
+
+
+test('PROMPT B browser session state cannot cross execution-owner identity for the same Task',async()=>{
+  const pw=fakePlaywright(),adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module})
+  const first=ctx('t-owner','m:w:child-a:g1'),second=ctx('t-owner','m:w:child-b:g2')
+  await adapter.open(first,'http://127.0.0.1:4173/')
+  await adapter.type(first,{value:'@e2'},'first-owner')
+  assert.equal(pw.sessions.length,1);assert.equal(pw.sessions[0].page.lastFill,'first-owner')
+  await assert.rejects(()=>adapter.inspect(second),/not owned by the current execution identity/)
+  await adapter.open(second,'http://127.0.0.1:4173/')
+  assert.equal(pw.sessions.length,2);assert.equal(pw.sessions[0].page.closed,true,'stale browser owner must be closed before replacement')
+  assert.equal(pw.sessions[1].page.lastFill,undefined,'new execution owner must not inherit stale DOM/auth/input state')
+  await assert.rejects(()=>adapter.inspect(first),/not owned by the current execution identity/)
+  await adapter.close(second)
 })
 
 test('B3 screenshot bytes are retained by the existing canonical artifact owner before observation succeeds',async()=>{
