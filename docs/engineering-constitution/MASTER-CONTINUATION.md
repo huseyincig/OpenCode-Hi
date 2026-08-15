@@ -872,7 +872,7 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**PROMPT B — IN PROGRESS. Sections 20–35 are CLOSED. Next: User journey acceptance (section 36).**
+**PROMPT B — IN PROGRESS. Sections 20–39 are CLOSED. Next: Zero-known-defect closure loop (section 40).**
 
 
 
@@ -926,3 +926,6 @@ Section 37 Developer journey acceptance is closed by `data/validation/prompt-b-d
 Section 36 User journey acceptance is closed by `data/validation/prompt-b-user-journey-acceptance.json`: **7/7 scenarios PASS, 0 violations**. Small, medium, complex, failure, authority, unsupported and restart journeys execute against canonical runtime contracts without requiring the user to understand internal orchestration.
 
 Section 35 Performance / token / resource benchmarks is closed by `data/validation/prompt-b-performance-resource-benchmarks.json`: **10/10 required measured paths PASS, 0 violations**, backed by `data/validation/performance-resource-benchmarks-0.1.0.json` on source `317a0922c0c51f766a0d6bf22036e5d027330835` (tree `a9223da1ecf23426bb8a919e4cf058ccbd6a122a`). Measurements cover cold packaged-plugin import startup, Mission/Task initialization, skill discovery plus fingerprint-cache reuse, Project Intelligence retrieval, context reduction, atomic persistence save/load, scheduler capacity checks, Process output buffer/read bounds, bounded local heap growth, and token accounting. Local timing is retained only as broad pass thresholds so canonical receipts remain deterministic; exact token claims come only from provider usage observations while heuristic token estimates remain explicitly estimated. Existing deterministic policy benchmarks remain 9 representative scenarios plus 3 scheduler-economics scenarios. No scheduler, priority, or work-stealing complexity was added because no measured benefit justified it.
+
+
+Section 39 Exact-current OpenCode T3 is closed by `data/validation/prompt-b-exact-current-opencode-t3.json`: installed OpenCode, npm registry latest, SDK registry latest, and locked SDK all resolved **1.18.18** on 2026-08-16. Process lifecycle, workspace isolation binding, and browser execution were each rerun against real OpenCode/Chromium on exact source `aa9a402f04fc40d53823c3e1b5e0190362dc5e75` (tree `50cd33f1454193685e92dab2fd5dd339aef6b902`) rather than inherited from historical receipts. Compatibility selects all three fresh `head-aa9a402` receipts and lifecycle audit remains **61/61 PASS, 0 violations** with zero capability-owner hash drift. API presence alone is not accepted as T3 evidence.

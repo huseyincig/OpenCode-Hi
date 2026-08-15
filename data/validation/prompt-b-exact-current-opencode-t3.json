@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_EXACT_CURRENT_OPENCODE_T3_AUDIT",
+  "program": "PROMPT_B",
+  "section": 39,
+  "status": "PASS",
+  "current_version_observation": {
+    "installed": "1.18.18",
+    "npm_registry_latest": "1.18.18",
+    "sdk_registry_latest": "1.18.18",
+    "locked_sdk": "1.18.18",
+    "captured_at": "2026-08-16"
+  },
+  "exact_source_commit": "aa9a402f04fc40d53823c3e1b5e0190362dc5e75",
+  "exact_source_tree": "50cd33f1454193685e92dab2fd5dd339aef6b902",
+  "compatibility_projection": "data/validation/compatibility-matrix-0.1.0.json",
+  "compatibility_sha256": "a2956811ac2be2266199c60dab5573df2ac5825f2a5f05b08078043b067e7981",
+  "lifecycle_audit": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
+  "lifecycle_sha256": "9894c752d413198b2b340daf6a39c58e03bfa95802ef1f9395b3649027380ab1",
+  "capabilities": {
+    "process-lifecycle": {
+      "receipt": "data/validation/external-opencode-hi-0.1.0-process-1.18.18-head-aa9a402.json",
+      "receipt_sha256": "8fd597230c58e7cf2eff0d9293aa9763dd893cb91b22fbd44cd77fcb0cf31895",
+      "status": "SUPPORTED_T3",
+      "tested_git_commit": "aa9a402f04fc40d53823c3e1b5e0190362dc5e75"
+    },
+    "workspace-isolation-binding": {
+      "receipt": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-aa9a402.json",
+      "receipt_sha256": "4e78f0db38070e29f06d05840a1d291a2c5dc5acef8d7ccf3101b7bc43b1192a",
+      "status": "SUPPORTED_T3",
+      "tested_git_commit": "aa9a402f04fc40d53823c3e1b5e0190362dc5e75"
+    },
+    "browser-execution": {
+      "receipt": "data/validation/external-opencode-hi-0.1.0-browser-1.18.18-head-aa9a402.json",
+      "receipt_sha256": "2574b3a916b7c9f4a439b398a4b0279eb4185fbd2c475e45510966d8e1ed97cd",
+      "status": "SUPPORTED_T3",
+      "tested_git_commit": "aa9a402f04fc40d53823c3e1b5e0190362dc5e75"
+    }
+  },
+  "summary": {
+    "required_capabilities": 3,
+    "exact_current_capabilities": 3,
+    "lifecycle_invariants": 61,
+    "violations": 0
+  },
+  "violations": [],
+  "claim_boundary": "Section 39 requires fresh exact-current host invocation. API presence and historical receipts are insufficient; all three material Hi-owned capabilities were rerun on OpenCode 1.18.18 Linux/aarch64 against the exact section-39 source."
+}

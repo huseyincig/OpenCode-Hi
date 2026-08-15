@@ -681,11 +681,10 @@ def test_r3_generated_compatibility_projection_selects_latest_exact_capability_p
     d=json.loads((ROOT/'data/validation/compatibility-matrix-0.1.0.json').read_text())
     assert d['schema']==1 and d['kind']=='GENERATED_RECEIPT_COMPATIBILITY_PROJECTION'
     cur=d['current_reference_host'];assert (cur['opencode_version'],cur['platform'],cur['architecture'])==('1.18.18','linux','aarch64')
-    caps=cur['capabilities']
-    assert caps['process-lifecycle']['receipt'].endswith('process-1.18.18-head-5210a12.json') and caps['process-lifecycle']['status']=='SUPPORTED_T3'
-    assert caps['workspace-isolation-binding']['receipt'].endswith('workspace-1.18.18-head-6fe74d7.json') and caps['workspace-isolation-binding']['status']=='SUPPORTED_T3'
-    assert caps['browser-execution']['receipt'].endswith('browser-1.18.18-head-5210a12.json') and caps['browser-execution']['status']=='SUPPORTED_T3'
-    assert caps['process-lifecycle']['tested_git_commit']=='5210a12a7b607e0c9048749fa74a4c8b801cd924' and caps['browser-execution']['tested_git_commit']=='5210a12a7b607e0c9048749fa74a4c8b801cd924' and caps['workspace-isolation-binding']['tested_git_commit']=='6fe74d7786e25cb6894ddca7d4408a17220cc936'
+    caps=cur['capabilities'];q39=json.loads((ROOT/'data/validation/prompt-b-exact-current-opencode-t3.json').read_text());exact=q39['exact_source_commit'];short=exact[:7]
+    for cap,kind in [('process-lifecycle','process'),('workspace-isolation-binding','workspace'),('browser-execution','browser')]:
+        assert caps[cap]['status']=='SUPPORTED_T3' and caps[cap]['tested_git_commit']==exact
+        assert caps[cap]['receipt'].endswith(f'{kind}-1.18.18-head-{short}.json')
     superseded={x['receipt']:x for x in d['history']}
     assert superseded['data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-bc85854.json']['classification']=='HISTORICAL_EXACT_PROOF'
     assert superseded['data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-92812a1.json']['classification']=='HISTORICAL_EXACT_PROOF'
@@ -1397,3 +1396,16 @@ def test_prompt_b_cross_platform_acceptance_is_truthful_about_windows_current_so
     assert a['status']=='PASS_WITH_TRUTHFUL_WINDOWS_CURRENT_SOURCE_LIMITATION'
     assert a['source_binding']=={'tested_git_commit':'edb83cc89157ac86f4ed05d2b318a5cb840425dd','tested_git_tree':'cc1ec0fa3abee41e1366d229cef7104997ac4f59'}
     assert a['linux_current']['status']=='PASS' and a['windows']['current_source_tested'] is False
+
+
+def test_prompt_b_exact_current_opencode_t3_is_fresh_source_bound_and_not_inferred_from_api_presence():
+    d=json.loads((ROOT/'data/validation/prompt-b-exact-current-opencode-t3.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_EXACT_CURRENT_OPENCODE_T3_AUDIT' and d['program']=='PROMPT_B' and d['section']==39 and d['status']=='PASS'
+    assert d['summary']=={'required_capabilities':3,'exact_current_capabilities':3,'lifecycle_invariants':61,'violations':0} and d['violations']==[]
+    assert d['exact_source_commit']=='aa9a402f04fc40d53823c3e1b5e0190362dc5e75' and d['exact_source_tree']=='50cd33f1454193685e92dab2fd5dd339aef6b902'
+    assert {x['status'] for x in d['capabilities'].values()}=={'SUPPORTED_T3'}
+    assert {x['tested_git_commit'] for x in d['capabilities'].values()}=={d['exact_source_commit']}
+    for row in d['capabilities'].values():assert hashlib.sha256((ROOT/row['receipt']).read_bytes()).hexdigest()==row['receipt_sha256']
+    assert hashlib.sha256((ROOT/d['compatibility_projection']).read_bytes()).hexdigest()==d['compatibility_sha256']
+    assert hashlib.sha256((ROOT/d['lifecycle_audit']).read_bytes()).hexdigest()==d['lifecycle_sha256']
+    assert 'API presence and historical receipts are insufficient' in d['claim_boundary']

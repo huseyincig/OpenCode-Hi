@@ -806,6 +806,24 @@ try:
     if b.get('optimization_decision')!='NO_NEW_SCHEDULER_OR_WORK_STEALING_COMPLEXITY_WITHOUT_MEASURED_BENEFIT':err('PROMPT B benchmark optimization decision drift')
 except Exception as e:err(f'bad PROMPT B performance/resource benchmark receipt: {e}')
 
+# PROMPT B §39 exact-current OpenCode T3 certification
+try:
+    q39=json.loads((ROOT/'data/validation/prompt-b-exact-current-opencode-t3.json').read_text(encoding='utf-8'))
+    if q39.get('schema')!=1 or q39.get('kind')!='PROMPT_B_EXACT_CURRENT_OPENCODE_T3_AUDIT' or q39.get('program')!='PROMPT_B' or q39.get('section')!=39 or q39.get('status')!='PASS':err('bad PROMPT B exact-current OpenCode T3 receipt identity/status')
+    if q39.get('summary')!={'required_capabilities':3,'exact_current_capabilities':3,'lifecycle_invariants':61,'violations':0} or q39.get('violations')!=[]:err('PROMPT B exact-current OpenCode T3 summary drift')
+    obs=q39.get('current_version_observation') or {}
+    if [obs.get(k) for k in ['installed','npm_registry_latest','sdk_registry_latest','locked_sdk']]!=['1.18.18']*4:err('PROMPT B exact-current OpenCode version observation drift')
+    if q39.get('exact_source_commit')!='aa9a402f04fc40d53823c3e1b5e0190362dc5e75' or q39.get('exact_source_tree')!='50cd33f1454193685e92dab2fd5dd339aef6b902':err('PROMPT B exact-current source binding drift')
+    for cap,row in (q39.get('capabilities') or {}).items():
+        rel=row.get('receipt');expected=row.get('receipt_sha256')
+        if row.get('status')!='SUPPORTED_T3' or row.get('tested_git_commit')!=q39.get('exact_source_commit'):err('PROMPT B exact-current capability source/status drift: '+str(cap))
+        if not isinstance(rel,str) or not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B exact-current receipt hash drift: '+str(rel))
+    for key in ['compatibility_projection','lifecycle_audit']:
+        rel=q39.get(key); expected=q39.get(key.replace('_projection','').replace('_audit','')+'_sha256') if False else None
+    if hashlib.sha256((ROOT/q39['compatibility_projection']).read_bytes()).hexdigest()!=q39.get('compatibility_sha256'):err('PROMPT B exact-current compatibility hash drift')
+    if hashlib.sha256((ROOT/q39['lifecycle_audit']).read_bytes()).hexdigest()!=q39.get('lifecycle_sha256'):err('PROMPT B exact-current lifecycle hash drift')
+except Exception as e:err(f'bad PROMPT B exact-current OpenCode T3 receipt: {e}')
+
 try:
     nr=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text(encoding='utf-8'))
     if nr.get('schema')!=1 or nr.get('kind')!='EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION' or nr.get('program')!='PROMPT_B' or nr.get('status')!='PASS':err('bad PROMPT B native reevaluation receipt identity/status')
