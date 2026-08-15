@@ -38,12 +38,13 @@
   "scripts": {
     "build": "npm --prefix plugin run build",
     "test": "npm --prefix plugin test",
-    "check": "npm --prefix plugin run check && node scripts/run-python.mjs scripts/validate.py",
+    "check": "npm --prefix plugin run check && npm run docs:check && node scripts/run-python.mjs scripts/validate.py",
     "prepack": "npm run build",
     "contracts:generate": "npm --prefix plugin run build",
     "architecture:lint": "npm --prefix plugin run architecture:lint",
     "projections:check": "npm --prefix plugin run projections:check",
-    "behavior:accept": "npm --prefix plugin test"
+    "behavior:accept": "npm --prefix plugin test",
+    "docs:check": "node scripts/run-python.mjs scripts/generate-documentation-inventory.py && node scripts/run-python.mjs scripts/validate-documentation.py"
   },
   "publishConfig": {
     "access": "public"

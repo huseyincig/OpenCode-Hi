@@ -535,9 +535,9 @@ Exit satisfied: every C01–C29/S00–S27 responsibility is executable, delibera
 
 The historical P5 OpenCode 1.18.16 source/type and controlled-host audit established:
 
-- **process lifecycle remains DEGRADED**: OpenCode exposes a separate PTY lifecycle, but ordinary model-facing bash is not routed through an Hi-owned PTY executor, so PID/job wait/kill/exit ownership is not claimed;
-- **workspace isolation binding remains UNSUPPORTED**: OpenCode exposes workspace/session `workspaceID`, warp and worktree primitives, but current Hi has no canonical isolation selection/provisioning/cleanup executor and no real-host proof that child/tool execution is bound to an alternate workspace;
-- **browser execution remains UNSUPPORTED**: MCP/tool discovery exists, but no deterministic browser executor/evidence adapter binds arbitrary host tools to browser/visual proof semantics;
+- **process lifecycle was `DEGRADED` at this historical P5 source**: OpenCode exposed a separate PTY lifecycle, but ordinary model-facing bash is not routed through an Hi-owned PTY executor, so PID/job wait/kill/exit ownership is not claimed;
+- **workspace isolation binding was `UNSUPPORTED` at this historical P5 source**: OpenCode exposed workspace/session `workspaceID`, warp and worktree primitives, but current Hi has no canonical isolation selection/provisioning/cleanup executor and no real-host proof that child/tool execution is bound to an alternate workspace;
+- **browser execution was `UNSUPPORTED` at this historical P5 source**: MCP/tool discovery existed, but no deterministic browser executor/evidence adapter binds arbitrary host tools to browser/visual proof semantics;
 - doctor now reports all three product-level limitations explicitly;
 - README/HOSTS/verification/implementation/host-projection docs distinguish related host primitive presence from actual Hi product ownership rather than saying the SDK lacks every related primitive;
 - no PTY, workspace or browser capability was emulated or promoted merely to remove a limitation.

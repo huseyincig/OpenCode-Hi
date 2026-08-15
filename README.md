@@ -2,92 +2,197 @@
 
 [Türkçe README](README.tr.md)
 
-OpenCode-Hi is an evidence-aware adaptive execution and Hybrid Intelligence control plane for AI-assisted software engineering on OpenCode. It keeps OpenCode native execution primitives authoritative while OpenCode-Hi owns evidence-aware execution-control semantics, decision routing, verification, and deterministic completion.
+OpenCode-Hi is the semantic and execution-control plane for evidence-aware AI software engineering on OpenCode. Hi owns the meaning of the work—Mission, Task, Worker, Role, Methodology, Authority, Evidence, Verification, recovery and completion—while OpenCode remains the primary native execution host for sessions, models, tools, permissions, PTY, workspace and other host primitives.
 
-Its operating principle is **minimum sufficient computation with maximum relevant judgment**: use the cheapest sufficient model/tool trajectory, the smallest useful context and topology, risk-proportional verification, and human judgment only when authority, preference, ambiguity, or irreversible impact materially requires it.
+The core rule is simple:
 
-## Status
+> **Hi decides product semantics; OpenCode executes the richest correct native primitive.**
 
-The repository is on the `0.1.x` development line. `0.1.0` is the first coherent OpenCode-Hi candidate and is considered ready only when the repository's verification and candidate-binding gates pass. Historical v58 validation receipts remain provenance and are not treated as fresh 0.1.0 evidence.
+Hi is designed to use the minimum sufficient topology, model, context and verification for the task instead of maximizing agents, tokens or ceremony.
 
-## Installation
+## Current product truth
 
-Project-local OpenCode configuration is:
+The source tree currently reports application version `0.1.0`. Version identity is owned by `VERSION` and parity-validated against package metadata; it is not a statement that the current development HEAD equals the already-published GitHub `v0.1.0` source.
 
-`<project-root>/opencode.json`
+The GitHub `v0.1.0` release is immutable and source-bound to its release commit. The npm package bootstrap is still externally blocked: `opencode-hi@0.1.0` is not currently available from the npm registry. **Do not treat the package registration examples below as proof that registry installation is available today.** Current release state is machine-derived in `data/validation/release-status-0.1.0.json` and projected in [Release Engineering](docs/RELEASE.md).
 
-If the file already exists, preserve unrelated settings and merge the OpenCode-Hi plugin entry. If it does not exist, create it. OpenCode-Hi does not unpack product source into the repository root; all Hi-owned project data lives under `<project-root>/.opencode/hi/`. See [Filesystem Layout](docs/FILESYSTEM-LAYOUT.md). The canonical package name is `opencode-hi`. Register it in the OpenCode project configuration as a package plugin; OpenCode installs package plugins into its own cache rather than unpacking product source into the repository. See [Installation](docs/INSTALLATION.md).
+Current host capability truth is generated from exact receipts rather than hand-maintained here. See [Host Support](docs/HOSTS.md) and `data/validation/compatibility-matrix-0.1.0.json`.
 
-A restart of the OpenCode host is required after plugin configuration changes when the host does not hot-reload plugin configuration.
+## What Hi adds
+
+Hi adds deterministic semantics around native AI execution:
+
+- one canonical Mission/Task/Worker ownership model;
+- adaptive direct, delegated and bounded multi-agent execution;
+- independent Role, model, Methodology and topology decisions;
+- exact Authority and monotonic host Permission boundaries;
+- source-aware Context Governor, Project Intelligence and TypeScript Semantic Context;
+- lazy methodology/skill discovery and loading;
+- structured Evidence, VerificationEnvelope and deterministic completion;
+- bounded recovery, WAIT and authoritative STOP;
+- Hi-owned process, isolated-workspace and browser executor surfaces backed by exact-host acceptance;
+- restart-safe durable state for lifecycle-significant Hi semantics;
+- ownership-aware install, upgrade, reconfigure, uninstall, rollback and crash recovery.
+
+A model saying “done”, a screenshot existing, a skill being installed, or a host API merely existing is never enough to manufacture product support or completion.
+
+## Hi and OpenCode
+
+```text
+User intent
+   |
+   v
+Hi semantic assessment
+   |
+   v
+Mission -> TaskRuntime -> Worker
+   |          |             |
+   |          +--> Role / model / Methodology
+   |          +--> Authority / Permission
+   |          +--> Context / Project Intelligence
+   |          |
+   |          v
+   |       Hi HostPort
+   |          |
+   |          v
+   |       OpenCode native execution
+   |          |
+   |          v
+   +<-- observed result / Evidence / Verification
+              |
+              v
+        recovery / WAIT / STOP
+              |
+              v
+         deterministic completion
+```
+
+Hi semantics are host-portable; OpenCode-specific types and uncertain host behavior stay at adapter boundaries. OpenCode-native concepts keep their real names instead of being cosmetically renamed as Hi concepts.
+
+## Capability summary
+
+The machine-readable compatibility projection is the canonical mutable support view. At the current recorded exact-host acceptance boundary:
+
+- **Process lifecycle:** supported on the Hi-owned `ProcessContract` / `ProcessExecutor` surface. It covers PID-bound spawn, bounded IO, event-driven WAIT, timeout, kill, separate cleanup, restart adoption and STOP reconciliation. Arbitrary native/model-facing bash is not retroactively owned by Hi.
+- **Workspace isolation:** supported on the Hi-owned `IsolationDecision` / `WorkspaceLease` / `WorkspaceRuntime` surface. Required isolation provisions and binds an alternate workspace, verifies execution there, preserves the primary/user-dirty worktree and reconciles cleanup/restart fail-closed.
+- **Browser execution:** supported on the Hi-owned, runtime-health-gated browser surface. Browser observations and screenshots are not automatically Evidence or PASS.
+- **HumanDecision:** the chat transport is supported. A deterministic structured OpenCode question-opening UI transport is currently unsupported because the required public host opener is not exposed on the accepted host API.
+- **Semantic Context:** the explicit first-class adapter currently supports TypeScript/TSX only. JavaScript, LSP and Tree-sitter semantic adapters are not claimed.
+
+Exact version/platform/architecture and receipt links belong to [Host Support](docs/HOSTS.md), not duplicated prose here.
+
+## Installation status and first use
+
+### Registry distribution
+
+The canonical package name is `opencode-hi`, but npm bootstrap publication is not yet complete. Until the registry package exists, a normal fresh-user `npm` package installation path is **not** advertised as available.
+
+Once the registry package exists, the ownership-aware setup lifecycle can register an exact package version in a project without replacing unrelated OpenCode configuration:
+
+```bash
+python3 scripts/native_plugin_setup.py plan /path/to/project --version <version>
+python3 scripts/native_plugin_setup.py install /path/to/project --version <version>
+python3 scripts/native_plugin_setup.py doctor /path/to/project
+```
+
+These commands are repository tooling and the lifecycle itself is deterministically tested; successful registration is still distinct from runtime package availability/loading.
+
+### Development/source loading
+
+For source development, build the runtime first:
+
+```bash
+npm ci --prefix plugin
+npm run build
+```
+
+OpenCode supports project-local plugins under `.opencode/plugins/` and local/file plugin loading on the accepted host. Use the host-supported local-plugin mechanism for the exact OpenCode version being tested; do not pretend a Git URL is an npm registry package.
+
+After plugin configuration changes, restart OpenCode when the host does not hot-reload them. Runtime verification must confirm the plugin, Hi agents, tools and native skills actually load.
+
+See [Installation and Lifecycle](docs/INSTALLATION.md) for install, upgrade, reconfigure, doctor, uninstall, rollback and recovery behavior.
 
 ## Configuration
 
-OpenCode-Hi supports bounded adaptive policy with explicit override precedence:
+Hi configuration is current-only and fail-closed. The canonical machine inventory is `data/hi-config-options.json`; each runtime option must have a validator, precedence, consumer, executable effect, documentation and tests. Unknown or stale configuration is not silently accepted as a compatibility feature.
 
-1. task/user override
-2. project policy
-3. raw/native Hi-compatible input
-4. OpenCode-Hi adaptive selection
-5. host/provider default
+Major control surfaces include execution policy/topology, primary mode, model routing, concurrency limits, context policy, methodology policy and compatibility diagnostics. Safety constraints cannot be widened by a lower-precedence layer.
 
-Execution topology may remain adaptive, be constrained to one agent, or explicitly permit multi-agent execution. Model selection may remain adaptive, fixed, or role-mapped. Capability availability never implies activation.
+See [Installation and Configuration](docs/INSTALLATION.md) and [Execution Policy](docs/EXECUTION-POLICY.md).
 
-## Architecture
+## Roles, models, Methodologies and skills
 
-OpenCode-Hi owns mission interpretation, obligations, execution policy, topology decisions, model/tool policy, context policy, host-capability gating, evidence requirements, retry/recovery, human-decision routing, continuation, completion adjudication, and authoritative STOP. Workspace isolation is not an operational 0.1.x capability unless a task can be bound to an isolated host workspace with owned provisioning and cleanup.
+`ROLE != AGENT != MODEL != METHODOLOGY != TASK != WORKER != TOPOLOGY`.
 
-OpenCode owns native host primitives: sessions, child sessions, model/provider execution, tools, permissions, shell, events, edits, and host lifecycle.
+Hi ships 27 built-in Methodologies under the `hi-*` namespace. A Methodology is reusable **HOW**; an OpenCode skill is the primary-host primitive used to discover/load its content. Installed skill != admitted Methodology != selected Methodology != loaded Methodology.
 
-Hi methodologies own reusable HOW only. OpenCode native skills are the lazy-loading host primitive for methodology content; neither methodologies nor native skills own routing, topology, models, authority, continuation, completion, or STOP.
+Role selection does not itself select a model, and a Methodology cannot grant Authority or own completion. See [Methodologies and Skills](docs/SKILLS.md).
 
-See [Architecture](docs/ARCHITECTURE.md), [Execution Policy](docs/EXECUTION-POLICY.md), [Context](docs/CONTEXT.md), and [Hosts](docs/HOSTS.md).
+## Safety and control
 
-## Agents and models
+**Permission and Authority are different.** OpenCode Permission governs what the host may execute; Hi Authority binds sensitive or external effects to the exact action/target/parameters/scope that were approved. Hi may narrow host permission but cannot silently widen a denial.
 
-Role, agent instance, model, and topology are independent concepts. The adaptive path defaults to one agent and one sufficient model when that is enough. Multi-role single-agent, multi-agent shared-model, role-mapped models, and repeated role instances are supported only when policy and host capability justify them.
+User dirty, staged and unrelated files remain user-owned. Hi never treats a broad reset/stash/checkout/restore or `git add -A` snapshot as a safe ownership shortcut.
 
-## Methodologies and OpenCode skills
+**Evidence is also different from prose.** Worker/model output, Context, Project Intelligence, Methodology content and browser observations do not become Evidence merely because they look convincing. Completion requires current obligations and fresh admissible proof to reconcile deterministically.
 
-The canonical methodology namespace is `hi-*`. OpenCode-Hi ships **27 built-in methodologies** with default-zero activation, typical 0–1 composition, and a hard maximum of 3. On the primary OpenCode host, selected methodology content is loaded lazily through the native `skill` primitive; OpenCode-visible skills are not automatically Hi-selectable methodologies. Large methodology resources are accessed lazily and path-safely. See [Methodologies and OpenCode Skills](docs/SKILLS.md).
+See [Human Decisions and Authority](docs/HUMAN-DECISIONS.md), [Verification](docs/VERIFICATION.md), [Privacy](docs/PRIVACY.md), and [Threat Model](docs/THREAT-MODEL.md).
 
-## Authority and human decisions
+## State and recovery
 
-Hi may restrict host authority but never expand it. Read-only intent does not silently become mutation authority. Human interaction is reserved for decisions where authority, preference, contract ambiguity, security, or irreversible effects can materially change the outcome. See [Human Decisions](docs/HUMAN-DECISIONS.md).
+Hi-owned project state lives under `.opencode/hi/` according to explicit storage ownership. OpenCode-native plugin/skill directories remain OpenCode-owned. Durable state is current-schema only; restart reconciliation adopts exact owned resources or quarantines mismatches instead of inventing continuity.
 
-## Privacy
+See [Filesystem Layout](docs/FILESYSTEM-LAYOUT.md) and [Storage Architecture](docs/STORAGE-ARCHITECTURE.md).
 
-Local knowledge is not automatically provider knowledge. Provider-facing context passes through sensitivity filtering and redaction; plaintext secrets must not be written to telemetry, durable artifacts, mission state, or logs. See [Privacy](docs/PRIVACY.md).
+## Documentation map
 
-## Doctor, update, and uninstall
+### Start here
 
-Lifecycle behavior preserves unrelated user configuration. Doctor/diagnostic flows report product, configuration, and environment problems without converting environment blockers into product failures. Update/reinstall and uninstall must preserve foreign plugins and user-owned configuration. Exact commands and verified resolver syntax are maintained in [Installation](docs/INSTALLATION.md) and [Verification](docs/VERIFICATION.md).
+- [Product Identity](docs/PRODUCT-IDENTITY.md)
+- [Installation and Lifecycle](docs/INSTALLATION.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Host Support](docs/HOSTS.md)
 
-## Supported OpenCode version
+### How Hi works
 
-The v58 provenance includes real OpenCode CLI `1.18.16` receipts. Those historical receipts do not by themselves certify the 0.1.0 candidate. The exact 0.1.0 supported-host statement is bound only after fresh loader/runtime verification.
+- [Execution Policy](docs/EXECUTION-POLICY.md)
+- [Context Architecture](docs/CONTEXT.md)
+- [Project Intelligence](docs/PROJECT-INTELLIGENCE.md)
+- [Methodologies and Skills](docs/SKILLS.md)
+- [Verification](docs/VERIFICATION.md)
 
-## Portability
+### Safety and operations
 
-OpenCode is the reference host for `0.1.x`. Core mission, evidence, authority, completion, execution-policy, context-policy, topology, failure, and human-decision semantics are kept behind a host-capability boundary so future Codex, Claude Code, Cursor, or MCP-capable adapters are not architecturally blocked. Full alternate-host adapters are not required for `0.1.0`.
+- [Human Decisions and Authority](docs/HUMAN-DECISIONS.md)
+- [Privacy](docs/PRIVACY.md)
+- [Threat Model](docs/THREAT-MODEL.md)
+- [Filesystem Layout](docs/FILESYSTEM-LAYOUT.md)
+- [Release Engineering](docs/RELEASE.md)
 
-## Development and verification
+### Contributors and architects
 
-From `plugin/`:
+- [Contributing](CONTRIBUTING.md)
+- [Engineering Constitution](docs/engineering-constitution/15-ENGINEERING-CONSTITUTION.md)
+- [ADR Index](docs/engineering-constitution/16-ADR-INDEX.md)
+- [Documentation Ownership](data/documentation-ownership.json)
+- [Source Reuse Matrix](docs/SOURCE-REUSE-MATRIX.md)
 
-```sh
-npm run build
-npm test
-```
+Historical implementation reports, migration ledgers, old acceptance snapshots and source-study material are retained for provenance but are not current product truth owners.
 
-From the repository root:
+## Verification
 
-```sh
-python -m pytest -q
+Canonical repository checks are run from the repository root:
+
+```bash
+npm run check
+python -m pytest -q tests/test_hi.py
 python scripts/validate.py
 ```
 
-Release-candidate construction uses `scripts/release-build.py` only after the build and verification gates pass. See [Verification](docs/VERIFICATION.md) and [Release](docs/RELEASE.md).
+Fresh test counts belong to command output, not hand-maintained documentation. Host-bound capability claims require exact T3 receipts; real external publication claims require T4 evidence.
+
+See [Verification Strategy](docs/VERIFICATION.md).
 
 ## License
 
-OpenCode-Hi is licensed under Apache-2.0. Third-party dependencies, adapted concepts, clean-room decisions, and attribution requirements are documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [Source Reuse Matrix](docs/SOURCE-REUSE-MATRIX.md).
+OpenCode-Hi is Apache-2.0 licensed. External mechanisms, clean-room/reference-only decisions and attribution boundaries are recorded in [Third-Party Notices](THIRD_PARTY_NOTICES.md) and the [Source Reuse Matrix](docs/SOURCE-REUSE-MATRIX.md).

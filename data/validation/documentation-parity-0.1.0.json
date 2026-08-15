@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "kind": "DOCUMENTATION_PARITY",
+  "status": "PASS",
+  "inputs": {
+    "documentation_ownership": {
+      "path": "data/documentation-ownership.json",
+      "sha256": "3e7f4905b06e084a237a4016e02babce32d9ab75a2909bc04514f09fda70ef57"
+    },
+    "compatibility": {
+      "path": "data/validation/compatibility-matrix-0.1.0.json",
+      "sha256": "84a9c1c0181f7a8b24072f2c3a142505d25c9167eca1327ff7a4cd3e13591a85"
+    },
+    "release_status": {
+      "path": "data/validation/release-status-0.1.0.json",
+      "sha256": "55243b78d577e20d9755a03097fdb5e1b331d694384cd7d3cf3e24c006180574"
+    }
+  },
+  "checked_current_documents": [
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "README.md",
+    "README.tr.md",
+    "SECURITY.md",
+    "docs/ARCHITECTURE-REALITY-MAP.md",
+    "docs/ARCHITECTURE.md",
+    "docs/BENCHMARKS.md",
+    "docs/CONTEXT.md",
+    "docs/EXECUTION-POLICY.md",
+    "docs/FILESYSTEM-LAYOUT.md",
+    "docs/HI-NAMING-NAMESPACE.md",
+    "docs/HOSTS.md",
+    "docs/HUMAN-DECISIONS.md",
+    "docs/INSTALLATION.md",
+    "docs/PRIVACY.md",
+    "docs/PRODUCT-IDENTITY.md",
+    "docs/PROJECT-INTELLIGENCE.md",
+    "docs/RELEASE.md",
+    "docs/SKILL-ARTIFACT-OWNERSHIP.md",
+    "docs/SKILLS.md",
+    "docs/SOURCE-REUSE-MATRIX.md",
+    "docs/STORAGE-ARCHITECTURE.md",
+    "docs/STORAGE-OWNERSHIP-MATRIX.md",
+    "docs/TERMINOLOGY.md",
+    "docs/THREAT-MODEL.md",
+    "docs/VALIDATION.md",
+    "docs/VERIFICATION.md",
+    "docs/engineering-constitution/04-DOMAIN-ONTOLOGY.md",
+    "docs/engineering-constitution/15-ENGINEERING-CONSTITUTION.md",
+    "docs/engineering-constitution/16-ADR-INDEX.md",
+    "docs/engineering-constitution/MASTER-CONTINUATION.md",
+    "docs/engineering-constitution/README.md"
+  ],
+  "checks": {
+    "version_package_product_parity": true,
+    "local_markdown_links": true,
+    "stale_current_status_patterns": true,
+    "release_availability": true,
+    "host_capabilities": true,
+    "semantic_adapter_boundary": true
+  },
+  "violations": []
+}

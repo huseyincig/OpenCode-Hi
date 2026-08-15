@@ -740,3 +740,28 @@ def test_version_truth_is_semver_and_not_validator_hard_pinned_to_0_1_0():
     assert "VERSION must be 0.1.0" not in validator
     assert json.loads((ROOT/'package.json').read_text())['version']==version
     assert json.loads((ROOT/'plugin/package.json').read_text())['version']==version
+
+
+def test_prompt_a_documentation_parity_binds_current_docs_to_machine_truth_and_links():
+    d=json.loads((ROOT/'data/validation/documentation-parity-0.1.0.json').read_text())
+    assert d['schema']==1 and d['kind']=='DOCUMENTATION_PARITY' and d['status']=='PASS'
+    assert d['violations']==[]
+    assert {'version_package_product_parity','local_markdown_links','stale_current_status_patterns','release_availability','host_capabilities','semantic_adapter_boundary'}==set(d['checks'])
+    assert 'README.md' in d['checked_current_documents'] and 'docs/ARCHITECTURE.md' in d['checked_current_documents']
+    assert 'docs/engineering-constitution/MASTER-CONTINUATION.md' in d['checked_current_documents']
+    for meta in d['inputs'].values():
+        path=ROOT/meta['path']; assert path.is_file(); assert hashlib.sha256(path.read_bytes()).hexdigest()==meta['sha256']
+    pkg=json.loads((ROOT/'package.json').read_text())
+    assert 'docs:check' in pkg['scripts'] and 'npm run docs:check' in pkg['scripts']['check']
+
+
+def test_prompt_a_first_use_docs_do_not_advertise_unavailable_registry_or_stale_capabilities():
+    readme=(ROOT/'README.md').read_text(); tr=(ROOT/'README.tr.md').read_text(); arch=(ROOT/'docs/ARCHITECTURE.md').read_text(); install=(ROOT/'docs/INSTALLATION.md').read_text()
+    for text in (readme,tr):
+        assert 'first coherent OpenCode-Hi candidate' not in text
+        assert 'opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git#' not in text
+    assert 'not currently available from the npm registry' in readme
+    assert 'npm bootstrap publication is not yet complete' in readme
+    assert 'registry distribution availability' in install
+    assert 'ProcessContract' in arch and 'WorkspaceLease' in arch and 'BrowserObservation' in arch
+    assert 'contains no raw stdout/stderr buffer' in arch

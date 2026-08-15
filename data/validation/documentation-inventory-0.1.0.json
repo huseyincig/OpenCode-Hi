@@ -249,14 +249,14 @@
     },
     {
       "path": "README.md",
-      "sha256": "8383a908ace8fe83abf5f28becd8dbfeb8ab2579ad86032ed478fdba5b1b9407",
+      "sha256": "fcccd0084a836f523bea35e81bb92f2e933380edf5763eff12cb2e4dcac2e927",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "HUMAN_OWNED"
     },
     {
       "path": "README.tr.md",
-      "sha256": "935b1961cf7f8c989ab0f68553b4de929aa238872622c14026fae8c42eee8b79",
+      "sha256": "fba3a8da07183e417d37008654daadab33527b6d55400ed87f34622a224f50df",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",
       "update_mode": "HUMAN_OWNED"
@@ -277,7 +277,7 @@
     },
     {
       "path": "docs/ARCHITECTURE.md",
-      "sha256": "f0d46fb93f0827e91604664e1e9ef7fa6b99d7c5a64bfa06455547c93151ada7",
+      "sha256": "161a175025e0c6834ad4c596636bb262003abf423e2f53c5370dfd79600e5e1e",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
@@ -361,7 +361,7 @@
     },
     {
       "path": "docs/INSTALLATION.md",
-      "sha256": "f5eb895fabfa51b19db2b322d40eee27dfd5954726b8c8d0f003c355e1c9edf6",
+      "sha256": "8607d93cd77ccd3f0412778b9931e7b822cf6d29d38cbc8c6436c1e72e56f2a7",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
@@ -585,7 +585,7 @@
     },
     {
       "path": "docs/engineering-constitution/MASTER-CONTINUATION.md",
-      "sha256": "223a773eb82080393475a4f3d327144b1a6a1b72cd1b383e0fe5de9a8daea5d1",
+      "sha256": "4a6366664edeec8158c7fcd3f7e92924e475780170d6d57355db6d51d4375baf",
       "audience": "INTERNAL_ENGINEERING",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "HUMAN_OWNED"

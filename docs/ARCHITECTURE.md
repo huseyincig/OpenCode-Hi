@@ -1,43 +1,187 @@
 # OpenCode-Hi Architecture
 
-OpenCode-Hi is a thin execution-control plane over OpenCode native runtime primitives. It preserves mission/evidence/authority/completion semantics while adding adaptive execution, bounded context intelligence, privacy, structured human-decision semantics, shell safety, and a host semantic boundary.
+OpenCode-Hi is a host-portable semantic and execution-control plane. It does not replace OpenCode; it decides Hi product semantics and delegates native execution to OpenCode through normalized host boundaries.
 
-## Ownership
+## Architectural rule
 
-Hi owns mission interpretation, obligations, task/worker state, execution path, role/methodology/topology/model/tool policy, context policy, evidence requirements/freshness, bounded retry/recovery, continuation, structured human-decision state, completion adjudication, and STOP. Unsupported host process-control or workspace-isolation capabilities are reported rather than faked.
+```text
+Hi semantic contract
+   -> Hi application/runtime owner
+      -> Hi HostPort / executor port
+         -> OpenCode adapter
+            -> OpenCode native primitive
+               -> observed result
+                  -> Hi reconciliation / Evidence / completion
+```
 
-OpenCode owns native sessions, child sessions, agent/model/provider execution, permissions/approvals, tools, filesystem and shell primitives, events, diffs, and compaction primitives. Skills own methodology only.
+There is one semantic owner per concept. Generated files, UI projections, host primitives, model prose and historical receipts cannot become alternate owners.
 
-**HI decides; OpenCode executes native host primitives.** Hi may restrict host authority and never expands explicit host denial.
+## End-to-end execution
 
-## Core responsibility families
+```text
+User intent
+   |
+   v
+Semantic Assessment
+   |
+   v
+MissionStore ------------------------------+
+   |                                       |
+   v                                       |
+TaskRuntime                                |
+   |                                       |
+   +--> TaskContract / Task DAG            |
+   +--> RoleContract                       |
+   +--> model routing                      |
+   +--> Methodology selection/load         |
+   +--> Authority / Permission             |
+   +--> Context / ProjectIntelligence      |
+   |                                       |
+   +--> ChildExecutionCoordinator          |
+   |       |                               |
+   |       +--> native child session       |
+   |       +--> ProcessExecutor            |
+   |       +--> WorkspaceRuntime           |
+   |       +--> BrowserRuntime             |
+   |               |                       |
+   |               v                       |
+   |           OpenCodeHostPort            |
+   |               |                       |
+   |               v                       |
+   |          OpenCode primitives          |
+   |               |                       |
+   +<------ observed result ---------------+
+   |
+   +--> TaskResultReconciler
+   |       +--> WorkerResult validation
+   |       +--> changed-file ownership
+   |       +--> Evidence
+   |       +--> ReviewFinding
+   |       +--> VerificationEnvelope
+   |
+   +--> TaskRecoveryCoordinator
+   |       +--> retry/fallback
+   |       +--> stale callback quarantine
+   |       +--> restart reconciliation
+   |
+   v
+Continuation / WAIT / STOP
+   |
+   v
+Completion adjudication
+   |
+   v
+User-facing result
+```
 
-- Mission / Obligation / Task / Worker
-- Evidence and freshness
-- Authority and external-action transaction semantics
-- Completion and deterministic STOP
-- Autopilot / Continuation
-- Adaptive Execution and Topology Policy
-- Context Governor, Project Intelligence, Semantic Context, Privacy Boundary
-- Human Decision semantics
-- Mission Budget and Failure Classification
-- Shell safety and host process/isolation capability boundary
-- Artifact model and optional Memory boundary
-- Execution telemetry
-- Host capability contract and OpenCode adapter
+## Canonical ownership
 
-These are separate responsibilities; no mega orchestrator or mega context manager owns all of them.
+Hi owns:
 
-## Completion
+- Mission identity, obligations and durable execution state;
+- Task/Worker identity and lifecycle;
+- Role semantics and PermissionProfile projection rules;
+- Methodology admission/selection/exit semantics;
+- model routing policy for constrained child execution;
+- Context, Project Intelligence and Artifact semantics;
+- HumanDecision and exact-action Authority semantics;
+- ExternalAction classification and release transaction semantics;
+- ProcessContract, IsolationDecision/WorkspaceLease and BrowserObservation contracts;
+- Evidence, VerificationEnvelope, recovery, completion and authoritative STOP.
 
-STOP is allowed only when requested outcome and obligations are satisfied, required evidence is fresh, no blocking evidence or authority decision remains, no required task/worker/child/process/rollback remains pending, and CompletionAdjudicator approves. Agent idle and model “done” messages are not completion evidence.
+OpenCode owns native host primitives such as sessions, child sessions, provider/model execution, native permissions, tools, PTY, workspaces, events, diffs, LSP and host lifecycle.
 
-## Workspace isolation contract boundary
+**Hi may narrow host authority; it never converts host denial into permission.**
 
-W1 defines strict Hi `IsolationDecision` and `WorkspaceLease` contracts as durable fields of the existing Mission execution slice. `IsolationDecision` records only required/reason/strategy/scope/requested-by policy output; `WorkspaceLease` binds lease/mission/task identity, repository root, base ref, workspace path, optional host workspace/branch identity, exact source baseline, lifecycle status, and separate cleanup state. W2 adds a single `WorkspaceExecutor` port, `OpenCodeWorkspaceAdapter`, and `WorkspaceRuntime`. Provisioning uses OpenCode’s official workspace API with builtin type `worktree`; the adapter binds an exact creation-time Git object baseline, canonical registered worktree path and Git common-repository identity, while `ChildExecutionCoordinator` remains the sole child-session owner and passes/validates `workspaceID + directory` on every fresh child path including runtime fallback and constraint rebase. Terminal/cancel/STOP cleanup is separate from child abort, and restart reconciliation adopts or quarantines without recreation. W3 proves that complete create/bind/write/verify/cleanup/restart/orphan chain on exact OpenCode 1.18.18, so `workspace-isolation-binding` is promoted only for the Hi-owned isolation surface and remains receipt-bound to the exact tested source/host version.
+## Mission, Task, Worker and Team
 
-## Process lifecycle contract boundary
+`MissionStore` is the durable Mission owner. The persisted Mission envelope contains named slices for identity, execution, continuation, context, VCS safety, authority, release and methodology state.
 
-Hi defines a host-independent `ProcessContract` for owned long-running process identity and lifecycle: mission/task/worker ownership, host, SHA-256 command identity, cwd, PID/process-group identity, lifecycle timestamps/status, bounded output artifact references, authority reference, and cleanup state. The contract deliberately contains no raw stdout/stderr buffer.
+`TaskRuntime` is the canonical Task application facade. Mechanical child execution, result reconciliation and recovery are delegated to bounded collaborators; none owns a second Task store.
 
-P2 introduced the host-independent `ProcessExecutor` port; P3 completes the Hi-owned lifecycle through `ProcessRuntime` and `OpenCodePtyAdapter`. Raw PTY output remains outside `ProcessContract`; reads are bounded cursor windows and process observations become hash-bound pending Evidence rather than automatic verification PASS. Ownership binds the OpenCode-observed PID, cwd, and native command identity. WAIT is the native exit promise, STOP terminates and separately cleans all owned processes before worker reconciliation, restart re-adopts only exact owner identity, and mismatches become quarantined `ORPHANED` state without signalling. OpenCode native `ask` is preserved through `ToolContext.ask()` and one-shot exact grants never become persistent allow. Exact OpenCode 1.18.18 T3 acceptance closes `process-lifecycle` as `SUPPORTED` for this Hi-owned surface.
+A Worker is one execution attempt bound to a Task. `WorkerResult` is boundary-untrusted input and does not own completion.
+
+Team is a bounded process-ephemeral projection over the same TaskRuntime/Task/Worker semantics. It is not a second orchestration database. Restart preserves durable Task/Worker identity and can reset the Team projection without inventing a new trajectory.
+
+## Role, model and Methodology separation
+
+Role describes semantic responsibility and repository authority. Agent is the host projection/instance. Model is an execution resource. Methodology is reusable HOW. They are deliberately independent axes.
+
+A role cannot smuggle model identity, a Methodology cannot grant Authority, and selected Methodology is not equivalent to loaded OpenCode skill content.
+
+## Context and information plane
+
+The Context Governor classifies provider-bound material as `PROTECTED`, `COMPRESSIBLE`, or `PURGEABLE`. Canonical session/product truth is not destructively rewritten to save tokens; provider projection is bounded separately.
+
+Project Intelligence is repository-scoped reusable context with source provenance/freshness. It never becomes Evidence or Authority. Hybrid retrieval uses lexical, path and source-ref graph signals with deterministic reciprocal-rank fusion.
+
+Semantic Context is behind `SemanticContextAdapter`. The current explicit implementation is TypeScript/TSX only.
+
+Compression artifacts remain Context artifacts with source refs/hashes and freshness. They never become Evidence.
+
+## Authority and Permission
+
+OpenCode Permission answers whether the host can perform a native action. Hi Authority answers whether a sensitive/external action is approved for an exact semantic scope.
+
+```text
+user/semantic request
+   -> ExternalAction
+      -> exact action/target/parameter identity
+         -> Authority decision
+            -> host Permission projection/request
+               -> executor
+```
+
+Generic “yes”, continuation, a Methodology, a browser click, or a host permission grant cannot create reusable future Authority.
+
+## Evidence, verification and completion
+
+Model prose, WorkerResult, Project Intelligence, Context summaries and BrowserObservation are not proof by themselves.
+
+Evidence is typed, source/scoped and freshness-aware. `VerificationEnvelope` derives required check state from admissible Evidence. Mutation can invalidate affected proof.
+
+STOP is permitted only after obligations, required evidence, reviews, Methodology exits, Authority state, pending Tasks/Workers/processes/workspaces and user-stop state reconcile deterministically. Idle events and “DONE” text are not completion.
+
+## Process execution
+
+`ProcessContract` is host-independent and binds Mission/Task/Worker ownership, host, command identity, cwd, PID/process-group identity, lifecycle, timestamps, bounded output artifact refs, Authority reference and cleanup state. It **contains no raw stdout/stderr buffer**.
+
+`ProcessRuntime` uses the `ProcessExecutor` port and `OpenCodePtyAdapter`. Output reads are bounded cursor windows. WAIT is event/native-exit driven rather than model polling. Timeout/kill validate the owned PID, and kill is distinct from cleanup. Restart re-adopts only exact PID+cwd+native-command identity; mismatches become quarantined ORPHANED state.
+
+The process capability is supported only on this Hi-owned surface with exact-host T3 evidence. Ordinary native/model-facing bash remains outside that ownership claim.
+
+## Workspace isolation
+
+`IsolationDecision` decides whether a Task requires isolation. `WorkspaceLease` binds the exact repository/source baseline and workspace identity. `WorkspaceRuntime` provisions through `WorkspaceExecutor`; the OpenCode adapter uses the host workspace/worktree primitive.
+
+Required isolation never silently falls back to the primary workspace. Child creation must return the exact lease `workspaceID + directory`. Verification executes in the lease. Cleanup is separate from child abort. Restart adopts an exact existing lease or quarantines it; it does not silently create a replacement.
+
+The supported claim is limited to the Hi-owned isolation chain proven by exact-host T3 receipts. User dirty/staged files in the primary worktree are not claimed as Hi-owned mutation.
+
+## Browser execution
+
+`BrowserObservation` is observation provenance, not automatic Evidence. Production browser execution is behind `BrowserExecutor`/`BrowserRuntime` with target confinement, exact Task/Worker/session ownership, bounded observations and Artifact-backed screenshots.
+
+Support is runtime-health-gated. Missing health removes the executable resource and preflight fails closed. A screenshot existing or MCP/tool discovery never creates browser PASS by itself; methodology-specific evidence must still reconcile.
+
+## Human decisions
+
+`HumanDecisionContract` is the durable semantic owner. Transport/UI is separate. The supported chat transport binds responses to exact decision identity; timeout/cancel does not silently resolve the durable decision.
+
+The accepted OpenCode public API does not expose the deterministic question-opening primitive required for a structured host UI transport, so that specific transport remains unsupported instead of being faked through model mediation.
+
+## Persistence and restart
+
+Lifecycle-significant Hi state is persisted as one current-only Mission envelope with strict validation. Unknown/old schema is fail-closed unless a deliberate migration is separately designed. Writes use canonical storage owners and atomicity appropriate to each class.
+
+Restart reconciliation validates external native identities before adoption. Missing or mismatched process/workspace/child ownership is quarantined rather than guessed.
+
+## Generated projections
+
+Generated artifacts are projections, not semantic owners. Current host compatibility and release status are generated from exact receipts/status inputs. Role/permission/methodology host projections are generated from canonical catalogs. Hand editing a generated projection cannot amend the underlying product contract.
+
+## Host portability
+
+Core receives normalized Hi-compatible structures; OpenCode SDK uncertainty stays under `plugin/src/opencode/**` and explicit host ports. A future host adapter should be able to replace the execution substrate without changing Mission/Task/Authority/Evidence semantics.
+
+Portability is an architecture property, not a claim that alternate hosts are currently implemented or certified.
