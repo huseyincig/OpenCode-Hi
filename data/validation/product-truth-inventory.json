@@ -394,7 +394,7 @@
       "area": "privacy",
       "canonical_owner": "PrivacyBoundary",
       "owner_path": "plugin/src/runtime/privacy/boundary.ts",
-      "owner_sha256": "fda610aced55491b6559304d5a4aff29f8cf22fffa85a9d22a2395c4fe83655a",
+      "owner_sha256": "6565652a24b08df9e7ecdd73a4adb4b561abb855cdf99dde4a491c5154627ba8",
       "producer_or_contract_paths": [],
       "consumer_or_executor_paths": [
         "plugin/src/runtime/task/task-runtime.ts"
@@ -424,7 +424,7 @@
       "area": "telemetry",
       "canonical_owner": "Mission-derived ledger metrics",
       "owner_path": "plugin/src/runtime/ledger/ledger.ts",
-      "owner_sha256": "8bde7d12f0d3d51defecf7de674447f0c829d8704997873e700cee6475477e61",
+      "owner_sha256": "774f4651d830b5ead4dc9b23e9d5b23cb5b006bcb840eb28ca19d04131191694",
       "producer_or_contract_paths": [
         "plugin/src/runtime/ledger/metrics.ts",
         "plugin/src/runtime/ledger/report.ts",

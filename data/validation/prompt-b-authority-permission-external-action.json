@@ -8,7 +8,7 @@
     {
       "invariant": "generic-yes-not-authority",
       "owner": "plugin/src/runtime/safety/authority.ts",
-      "owner_sha256": "592495c2883f6b79df055366dc846404986788eb168f7ba05776d2372e62d7f1",
+      "owner_sha256": "e81c16ad08a0392b4cb5094500dd046a2ef0d9bf731159817fc67d0a4c4c6378",
       "owner_anchor": "approvePendingAuthority(m:MissionState,input:unknown)",
       "proof": "plugin/test/authority-input-split.test.mjs",
       "proof_sha256": "d3eb04a2e2646f8d86b54422b0afed4a8b07e9e53c8c181ffe8e38a195c6c5fa",
@@ -26,7 +26,7 @@
     {
       "invariant": "exact-action-scope",
       "owner": "plugin/src/runtime/safety/authority.ts",
-      "owner_sha256": "592495c2883f6b79df055366dc846404986788eb168f7ba05776d2372e62d7f1",
+      "owner_sha256": "e81c16ad08a0392b4cb5094500dd046a2ef0d9bf731159817fc67d0a4c4c6378",
       "owner_anchor": "actionContract(command:string,cwd?:string)",
       "proof": "plugin/test/authority-contract.test.mjs",
       "proof_sha256": "930613cf0b1ced29818aad138664ca728ce423029de2753f1bab6358810b5afc",
@@ -35,7 +35,7 @@
     {
       "invariant": "exact-target",
       "owner": "plugin/src/runtime/safety/authority.ts",
-      "owner_sha256": "592495c2883f6b79df055366dc846404986788eb168f7ba05776d2372e62d7f1",
+      "owner_sha256": "e81c16ad08a0392b4cb5094500dd046a2ef0d9bf731159817fc67d0a4c4c6378",
       "owner_anchor": "target={cwd:cwd??'',command:command.trim()}",
       "proof": "plugin/test/q2-critical-invariant-guards.test.mjs",
       "proof_sha256": "508f67cc3c24f105c6b9f7e95b8b019dfa8febfe420524cce47252bb358c0b9e",
@@ -44,7 +44,7 @@
     {
       "invariant": "exact-parameters",
       "owner": "plugin/src/runtime/safety/authority.ts",
-      "owner_sha256": "592495c2883f6b79df055366dc846404986788eb168f7ba05776d2372e62d7f1",
+      "owner_sha256": "e81c16ad08a0392b4cb5094500dd046a2ef0d9bf731159817fc67d0a4c4c6378",
       "owner_anchor": "payloadHash(action)",
       "proof": "plugin/test/authority-side-effect-idempotency.test.mjs",
       "proof_sha256": "d33e15d1dc65211c8759ad6da189376a1cc18c84703a8d23d60708f3c8acc8fe",
@@ -62,7 +62,7 @@
     {
       "invariant": "consumed-authority",
       "owner": "plugin/src/runtime/safety/authority.ts",
-      "owner_sha256": "592495c2883f6b79df055366dc846404986788eb168f7ba05776d2372e62d7f1",
+      "owner_sha256": "e81c16ad08a0392b4cb5094500dd046a2ef0d9bf731159817fc67d0a4c4c6378",
       "owner_anchor": "beginAuthorizedAction",
       "proof": "plugin/test/authority-side-effect-idempotency.test.mjs",
       "proof_sha256": "d33e15d1dc65211c8759ad6da189376a1cc18c84703a8d23d60708f3c8acc8fe",
@@ -71,7 +71,7 @@
     {
       "invariant": "replay-idempotency",
       "owner": "plugin/src/runtime/safety/authority.ts",
-      "owner_sha256": "592495c2883f6b79df055366dc846404986788eb168f7ba05776d2372e62d7f1",
+      "owner_sha256": "e81c16ad08a0392b4cb5094500dd046a2ef0d9bf731159817fc67d0a4c4c6378",
       "owner_anchor": "completed_hashes??[]",
       "proof": "plugin/test/external-side-effect-real-git.test.mjs",
       "proof_sha256": "07cf45bfcd355ee143426a1cc18e4a065f8ac7be6de441a5f52679bcc6f2129f",
@@ -107,7 +107,7 @@
     {
       "invariant": "stale-approvals-rejected",
       "owner": "plugin/src/runtime/safety/authority.ts",
-      "owner_sha256": "592495c2883f6b79df055366dc846404986788eb168f7ba05776d2372e62d7f1",
+      "owner_sha256": "e81c16ad08a0392b4cb5094500dd046a2ef0d9bf731159817fc67d0a4c4c6378",
       "owner_anchor": "AUTHORITY_APPROVAL_TTL_MS",
       "proof": "plugin/test/authority-input-split.test.mjs",
       "proof_sha256": "d3eb04a2e2646f8d86b54422b0afed4a8b07e9e53c8c181ffe8e38a195c6c5fa",

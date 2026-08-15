@@ -92,7 +92,7 @@
       "section": 16,
       "invariant": "process-restart-reconcile",
       "owner": "plugin/src/runtime/process/runtime.ts",
-      "owner_sha256": "a0e48e9de3595a858517688afd742ce93bc65b07f7a52edfb301d555b1c9cb4f",
+      "owner_sha256": "28d1762ab948374f8b08ba2b843a24fe034401cc42f4e742bf5c07793bec7f29",
       "owner_anchor": "reconcileRestored",
       "proof": "plugin/test/p3-process-runtime-lifecycle.test.mjs",
       "proof_sha256": "70b85c069b9cb7ccd92f541a35390e2f628e873b76b043c70f1ffe83ac99e157",

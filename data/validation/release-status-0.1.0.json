@@ -20,7 +20,7 @@
     },
     "compatibility": {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
-      "sha256": "cbbec132365ae0105268a8c7f68cca84c1bc60235036d16f42500b9a00678e3d"
+      "sha256": "08333c5562408a2d903c9f2493186888f8d00d1fa459c3858e5cec1536327c99"
     },
     "oidc_readiness": {
       "path": "data/validation/npm-oidc-readiness-0.1.0.json",
@@ -59,8 +59,8 @@
     "capabilities": {
       "process-lifecycle": {
         "status": "SUPPORTED_T3",
-        "receipt": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
-        "tested_git_commit": "2e7813f218c54de44073d1c851d180960e3d0911"
+        "receipt": "data/validation/external-opencode-hi-0.1.0-process-1.18.18-head-ca6490e.json",
+        "tested_git_commit": "ca6490e13fbee33614c32fab4aa84722fa9f7276"
       },
       "workspace-isolation-binding": {
         "status": "SUPPORTED_T3",

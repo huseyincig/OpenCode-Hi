@@ -1,0 +1,127 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "generated_at": "2026-08-15",
+  "status": "PASS_EXACT_SOURCE_PROCESS_LIFECYCLE_T3_PROMPT_B",
+  "source_binding": {
+    "tested_git_commit": "ca6490e13fbee33614c32fab4aa84722fa9f7276",
+    "tested_git_tree": "6b482784e6f27bf773ff8452057d48ba2e3d74c1",
+    "worktree": "/workspace/OpenCode-Hi",
+    "state": "CLEAN_COMMITTED_SOURCE",
+    "exact_candidate": true,
+    "runtime_hashes": {
+      "plugin/src/contracts/process.ts": "baa22ab538d5b0e16c09d2f5234d8fa13253881a608e3fbb6102833adff963fd",
+      "plugin/src/runtime/process/executor.ts": "5aae50e989d6a047afcc1a33b04aaefbff669a8f4b191e60bc7975885cca4ecd",
+      "plugin/src/runtime/process/runtime.ts": "28d1762ab948374f8b08ba2b843a24fe034401cc42f4e742bf5c07793bec7f29",
+      "plugin/src/opencode/open-code-pty-adapter.ts": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4"
+    },
+    "note": "Fresh exact-host ProcessRuntime/OpenCode PTY reacceptance after security/privacy ordering changed ProcessRuntime. Receipt promotes only current process-lifecycle bytes."
+  },
+  "host": {
+    "os": "linux",
+    "arch": "aarch64",
+    "opencode_version": "1.18.18",
+    "server": "http://127.0.0.1:41987",
+    "fixture_project": "/workspace/OpenCode-Hi"
+  },
+  "gates": {
+    "process_runtime_mission_owned": "PASS_T3",
+    "process_spawn_pid": "PASS_T3",
+    "process_quick_exit_before_observation": "PASS_T3",
+    "process_nonzero_exit": "PASS_T3",
+    "process_huge_unread_output_bounded": "PASS_T3",
+    "process_concurrent_isolation": "PASS_T3",
+    "process_group_identity": "PASS_T3",
+    "process_timeout_group_signal": "PASS_T3",
+    "process_kill_cleanup": "PASS_T3",
+    "process_restart_adoption": "PASS_T3",
+    "process_host_cleanup_empty": "PASS_T3",
+    "process_kill_failure_semantics": "PASS_CONTROLLED",
+    "process_secret_pre_authority_gate": "PASS_CONTROLLED",
+    "process_lifecycle": "SUPPORTED_T3"
+  },
+  "evidence": {
+    "real_process_runtime": {
+      "spawned": "RUNNING",
+      "pid": 3816,
+      "process_group_id": 3816,
+      "wait_status": "EXITED",
+      "exit_code": 0,
+      "output": "RUNTIME_B12_OK",
+      "durable_count": 1,
+      "durable_env_absent": true,
+      "ledger_has_spawn": true,
+      "cleanup_state": "CLEANED"
+    },
+    "real_host_matrix": {
+      "quick_exit": {
+        "spawned": true,
+        "status": "EXITED",
+        "exit_code": 0,
+        "cleanup_state": "CLEANUP_PENDING"
+      },
+      "nonzero": {
+        "status": "EXITED",
+        "exit_code": 7,
+        "text": ""
+      },
+      "huge_unread": {
+        "status": "EXITED",
+        "read_chars": 64,
+        "available_start": 737856,
+        "available_end": 1000000,
+        "truncated": true,
+        "durable_has_raw_output": false
+      },
+      "timeout": {
+        "status": "TIMED_OUT",
+        "reason": "timeout-policy",
+        "group": 3850,
+        "pid": 3850
+      },
+      "concurrent": {
+        "a": "ALPHA",
+        "b": "BETA",
+        "a_status": "EXITED",
+        "b_status": "EXITED",
+        "distinct_processes": true
+      },
+      "restart": {
+        "disposition": "ADOPTED",
+        "pid": 3871,
+        "process_group_id": 3871,
+        "linux_pgrp": 3871,
+        "group_isolated": true,
+        "text": "RESTART_READY",
+        "status_after_kill": "TERMINATED",
+        "cleanup_list_after": 0
+      }
+    },
+    "controlled_security": {
+      "secret_sensitive_process_request": "shell policy is evaluated before actionContract/Authority persistence and hostile test proves no state mutation"
+    },
+    "teardown": {
+      "node_version": "v24.19.0",
+      "observed": "libuv EEXIST assertion only after terminal JSON",
+      "classification": "HOST_TEARDOWN_NOISE_AFTER_TERMINAL_PASS"
+    }
+  },
+  "limitations": [
+    "Exact T3 applies to OpenCode 1.18.18 on linux/aarch64 and current process owner/executor source ca6490e13fbee33614c32fab4aa84722fa9f7276.",
+    "Environment values are execution-ephemeral native spawn input and are not part of durable ProcessContract or this receipt."
+  ],
+  "capability_limitations": {
+    "process-lifecycle": [
+      "Exact T3: OpenCode 1.18.18 linux/aarch64, source ca6490e13fbee33614c32fab4aa84722fa9f7276.",
+      "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted; foreign host processes are not adopted by PID alone."
+    ]
+  },
+  "release_authority": {
+    "push": false,
+    "tag": false,
+    "release": false,
+    "publish": false,
+    "deploy": false
+  },
+  "rule": "This receipt promotes only process-lifecycle for the exact tested source and host; later Process owner/executor changes require reacceptance."
+}

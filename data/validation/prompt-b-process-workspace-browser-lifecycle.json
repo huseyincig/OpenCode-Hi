@@ -16,8 +16,8 @@
       "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
       "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
       "owner_anchor": "async spawn(",
-      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
-      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof": "data/validation/external-opencode-hi-0.1.0-process-1.18.18-head-ca6490e.json",
+      "proof_sha256": "591396f44fba515058ab248615f563490e213fe9ad9129b7b5260e70c728af20",
       "proof_anchor": "process_spawn_pid"
     },
     {
@@ -27,8 +27,8 @@
       "owner": "plugin/src/contracts/process.ts",
       "owner_sha256": "baa22ab538d5b0e16c09d2f5234d8fa13253881a608e3fbb6102833adff963fd",
       "owner_anchor": "pid:number",
-      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
-      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof": "data/validation/external-opencode-hi-0.1.0-process-1.18.18-head-ca6490e.json",
+      "proof_sha256": "591396f44fba515058ab248615f563490e213fe9ad9129b7b5260e70c728af20",
       "proof_anchor": "process_spawn_pid"
     },
     {
@@ -38,8 +38,8 @@
       "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
       "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
       "owner_anchor": "process_group_id",
-      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
-      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof": "data/validation/external-opencode-hi-0.1.0-process-1.18.18-head-ca6490e.json",
+      "proof_sha256": "591396f44fba515058ab248615f563490e213fe9ad9129b7b5260e70c728af20",
       "proof_anchor": "process_group_identity"
     },
     {
@@ -49,8 +49,8 @@
       "owner": "plugin/src/contracts/process.ts",
       "owner_sha256": "baa22ab538d5b0e16c09d2f5234d8fa13253881a608e3fbb6102833adff963fd",
       "owner_anchor": "cwd:string",
-      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
-      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof": "data/validation/external-opencode-hi-0.1.0-process-1.18.18-head-ca6490e.json",
+      "proof_sha256": "591396f44fba515058ab248615f563490e213fe9ad9129b7b5260e70c728af20",
       "proof_anchor": "process_spawn_pid"
     },
     {
@@ -115,8 +115,8 @@
       "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
       "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
       "owner_anchor": "#requestTimeout",
-      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
-      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof": "data/validation/external-opencode-hi-0.1.0-process-1.18.18-head-ca6490e.json",
+      "proof_sha256": "591396f44fba515058ab248615f563490e213fe9ad9129b7b5260e70c728af20",
       "proof_anchor": "process_timeout_group_signal"
     },
     {
@@ -126,8 +126,8 @@
       "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
       "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
       "owner_anchor": "async kill(",
-      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
-      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof": "data/validation/external-opencode-hi-0.1.0-process-1.18.18-head-ca6490e.json",
+      "proof_sha256": "591396f44fba515058ab248615f563490e213fe9ad9129b7b5260e70c728af20",
       "proof_anchor": "process_kill_cleanup"
     },
     {
@@ -137,8 +137,8 @@
       "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
       "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
       "owner_anchor": "async cleanup(",
-      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
-      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof": "data/validation/external-opencode-hi-0.1.0-process-1.18.18-head-ca6490e.json",
+      "proof_sha256": "591396f44fba515058ab248615f563490e213fe9ad9129b7b5260e70c728af20",
       "proof_anchor": "process_host_cleanup_empty"
     },
     {
@@ -148,8 +148,8 @@
       "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
       "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
       "owner_anchor": "async reconcile(",
-      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
-      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof": "data/validation/external-opencode-hi-0.1.0-process-1.18.18-head-ca6490e.json",
+      "proof_sha256": "591396f44fba515058ab248615f563490e213fe9ad9129b7b5260e70c728af20",
       "proof_anchor": "process_restart_adoption"
     },
     {
@@ -168,7 +168,7 @@
       "invariant": "evidence",
       "level": "CONTROLLED",
       "owner": "plugin/src/runtime/process/runtime.ts",
-      "owner_sha256": "a0e48e9de3595a858517688afd742ce93bc65b07f7a52edfb301d555b1c9cb4f",
+      "owner_sha256": "28d1762ab948374f8b08ba2b843a24fe034401cc42f4e742bf5c07793bec7f29",
       "owner_anchor": "kind:'diagnostic-evidence'",
       "proof": "plugin/test/p3-process-runtime-lifecycle.test.mjs",
       "proof_sha256": "70b85c069b9cb7ccd92f541a35390e2f628e873b76b043c70f1ffe83ac99e157",
@@ -181,8 +181,8 @@
       "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
       "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
       "owner_anchor": "#applyInfo",
-      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
-      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof": "data/validation/external-opencode-hi-0.1.0-process-1.18.18-head-ca6490e.json",
+      "proof_sha256": "591396f44fba515058ab248615f563490e213fe9ad9129b7b5260e70c728af20",
       "proof_anchor": "process_quick_exit_before_observation"
     },
     {
@@ -190,7 +190,7 @@
       "invariant": "parent-death",
       "level": "CONTROLLED",
       "owner": "plugin/src/runtime/process/runtime.ts",
-      "owner_sha256": "a0e48e9de3595a858517688afd742ce93bc65b07f7a52edfb301d555b1c9cb4f",
+      "owner_sha256": "28d1762ab948374f8b08ba2b843a24fe034401cc42f4e742bf5c07793bec7f29",
       "owner_anchor": "stopMission",
       "proof": "plugin/test/p3-process-control-integration.test.mjs",
       "proof_sha256": "293c483912aa3f19256dd7324610a169704d588f9e65ed28d88d0d03a676bcce",
@@ -214,8 +214,8 @@
       "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
       "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
       "owner_anchor": "#signalTarget",
-      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
-      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof": "data/validation/external-opencode-hi-0.1.0-process-1.18.18-head-ca6490e.json",
+      "proof_sha256": "591396f44fba515058ab248615f563490e213fe9ad9129b7b5260e70c728af20",
       "proof_anchor": "process_group_identity"
     },
     {
@@ -247,8 +247,8 @@
       "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
       "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
       "owner_anchor": "exit_code",
-      "proof": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
-      "proof_sha256": "7158d957bc957308832785dc22422cb36633a415f0efa1f27506a30a7afaedc0",
+      "proof": "data/validation/external-opencode-hi-0.1.0-process-1.18.18-head-ca6490e.json",
+      "proof_sha256": "591396f44fba515058ab248615f563490e213fe9ad9129b7b5260e70c728af20",
       "proof_anchor": "process_nonzero_exit"
     },
     {
@@ -683,9 +683,9 @@
   ],
   "capability_source_equivalence": {
     "process-lifecycle": {
-      "receipt": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
+      "receipt": "data/validation/external-opencode-hi-0.1.0-process-1.18.18-head-ca6490e.json",
       "status": "SUPPORTED_T3",
-      "tested_git_commit": "2e7813f218c54de44073d1c851d180960e3d0911",
+      "tested_git_commit": "ca6490e13fbee33614c32fab4aa84722fa9f7276",
       "runtime_hash_drift": [],
       "equivalent": true
     },

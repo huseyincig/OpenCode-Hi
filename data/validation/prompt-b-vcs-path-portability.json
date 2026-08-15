@@ -92,7 +92,7 @@
       "section": 18,
       "invariant": "rollback",
       "owner": "plugin/src/runtime/mutations/temporary-mutations.ts",
-      "owner_sha256": "c9d094f994f65983dfe41cf06f8662fa16534b89fcd398a8be3e4c96f5907977",
+      "owner_sha256": "bf299f887e618d824b9099281cd6e9e6321ff942faec9bba95d548d3e27c964b",
       "owner_anchor": "rollback",
       "proof": "plugin/test/forensic-hardening.test.mjs",
       "proof_sha256": "496210535aeea920852c6654bbafca8a50cbcf723a770b78d65cff275999792f",

@@ -14,12 +14,12 @@
     "capabilities": {
       "process-lifecycle": {
         "status": "SUPPORTED_T3",
-        "tested_git_commit": "2e7813f218c54de44073d1c851d180960e3d0911",
-        "receipt": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
-        "source_rank": 142,
+        "tested_git_commit": "ca6490e13fbee33614c32fab4aa84722fa9f7276",
+        "receipt": "data/validation/external-opencode-hi-0.1.0-process-1.18.18-head-ca6490e.json",
+        "source_rank": 150,
         "scope_limitations": [
-          "Support is limited to Hi-owned ProcessContract/ProcessRuntime/OpenCodePtyAdapter execution; arbitrary model-facing bash is not retroactively owned.",
-          "Process-group support on the reference Linux host is based on exact OpenCode-owned PID plus independent /proc pgrp observation. Group signalling is used only when the observed isolated pgrp equals the owned PID; identity drift fails closed."
+          "Exact T3: OpenCode 1.18.18 linux/aarch64, source ca6490e13fbee33614c32fab4aa84722fa9f7276.",
+          "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted; foreign host processes are not adopted by PID alone."
         ]
       },
       "workspace-isolation-binding": {
@@ -220,10 +220,8 @@
         "BrowserObservation and screenshot artifacts remain observations/artifacts only; they are not Verification Evidence without explicit admissible passed Evidence."
       ],
       "source_rank": 142,
-      "current_for_capabilities": [
-        "process-lifecycle"
-      ],
-      "classification": "CURRENT_CAPABILITY_PROOF"
+      "current_for_capabilities": [],
+      "classification": "HISTORICAL_EXACT_PROOF"
     },
     {
       "receipt": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-47a3502.json",
@@ -289,6 +287,29 @@
       "source_rank": 148,
       "current_for_capabilities": [
         "browser-execution"
+      ],
+      "classification": "CURRENT_CAPABILITY_PROOF"
+    },
+    {
+      "receipt": "data/validation/external-opencode-hi-0.1.0-process-1.18.18-head-ca6490e.json",
+      "receipt_sha256": "591396f44fba515058ab248615f563490e213fe9ad9129b7b5260e70c728af20",
+      "status": "PASS_EXACT_SOURCE_PROCESS_LIFECYCLE_T3_PROMPT_B",
+      "opencode_version": "1.18.18",
+      "platform": "linux",
+      "architecture": "aarch64",
+      "tested_git_commit": "ca6490e13fbee33614c32fab4aa84722fa9f7276",
+      "exact_source": true,
+      "generated_at": "2026-08-15",
+      "gates": {
+        "process-lifecycle": "SUPPORTED_T3"
+      },
+      "limitations": [
+        "Exact T3 applies to OpenCode 1.18.18 on linux/aarch64 and current process owner/executor source ca6490e13fbee33614c32fab4aa84722fa9f7276.",
+        "Environment values are execution-ephemeral native spawn input and are not part of durable ProcessContract or this receipt."
+      ],
+      "source_rank": 150,
+      "current_for_capabilities": [
+        "process-lifecycle"
       ],
       "classification": "CURRENT_CAPABILITY_PROOF"
     }
