@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_FAILURE_INJECTION_AUDIT",
+  "program": "PROMPT_B",
+  "section": 34,
+  "status": "PASS",
+  "acceptance_receipt": "data/validation/failure-injection-0.1.0.json",
+  "acceptance_sha256": "ed2f7c0fa665e65f285db1122ca231e19fc6a1ad93a3f5d7bac7af72f8db00e3",
+  "required_injections": [
+    "provider-timeout",
+    "model-unavailable",
+    "rate-limit",
+    "tool-error",
+    "permission-deny",
+    "process-crash",
+    "workspace-failure",
+    "disk-write-failure",
+    "corrupt-state",
+    "child-session-failure",
+    "browser-failure",
+    "network-failure"
+  ],
+  "summary": {
+    "required": 12,
+    "covered": 12,
+    "violations": 0
+  },
+  "static_guards": {
+    "provider-fallback-bounded": true,
+    "continuation-transport-bounded-at-3": true,
+    "permission-failure-nonretryable": true,
+    "workspace-failure-quarantine": true,
+    "process-failure-quarantine": true,
+    "corrupt-state-fail-closed": true,
+    "browser-wait-bounded": true
+  },
+  "violations": [],
+  "claim_boundary": "Controlled failure injection certifies bounded failure semantics and terminal behavior; it does not fabricate live-provider or external T3 evidence."
+}

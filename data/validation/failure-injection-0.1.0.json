@@ -1,0 +1,119 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_FAILURE_INJECTION_ACCEPTANCE",
+  "program": "PROMPT_B",
+  "section": 34,
+  "status": "PASS",
+  "source_binding": {
+    "tested_git_commit": "29d3024fb3640a97f244185a393eb133542fb735",
+    "tested_git_tree": "e685a589dcd06e8a300421b84cbad8fedb616222"
+  },
+  "terminal": {
+    "tests": 54,
+    "pass": 54,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "known_node_teardown_normalized": true,
+  "injections": [
+    {
+      "injection": "provider-timeout",
+      "proof": "plugin/test/q5-failure-injection.test.mjs",
+      "proof_sha256": "9b05e678fe9e6984e5ffa72141efa696a3d68023f30c8075593cafba2f0240a0",
+      "proof_anchor": "Q5 injected provider timeout rate-limit and network failures",
+      "status": "PASS"
+    },
+    {
+      "injection": "model-unavailable",
+      "proof": "plugin/test/q5-failure-injection.test.mjs",
+      "proof_sha256": "9b05e678fe9e6984e5ffa72141efa696a3d68023f30c8075593cafba2f0240a0",
+      "proof_anchor": "Q5 injected model-unavailable observation",
+      "status": "PASS"
+    },
+    {
+      "injection": "rate-limit",
+      "proof": "plugin/test/provider-fallback-hardening.test.mjs",
+      "proof_sha256": "a25a8720db82be6d1e03c87a8747534ffb41041f63b3a71378d9ab922c546c87",
+      "proof_anchor": "provider failure creates a fresh child on first fallback without stagnation",
+      "status": "PASS"
+    },
+    {
+      "injection": "tool-error",
+      "proof": "plugin/test/q5-failure-injection.test.mjs",
+      "proof_sha256": "9b05e678fe9e6984e5ffa72141efa696a3d68023f30c8075593cafba2f0240a0",
+      "proof_anchor": "Q5 injected tool error and permission deny",
+      "status": "PASS"
+    },
+    {
+      "injection": "permission-deny",
+      "proof": "plugin/test/p3-process-runtime-lifecycle.test.mjs",
+      "proof_sha256": "70b85c069b9cb7ccd92f541a35390e2f628e873b76b043c70f1ffe83ac99e157",
+      "proof_anchor": "P3 explicit permission deny never asks and never spawns",
+      "status": "PASS"
+    },
+    {
+      "injection": "process-crash",
+      "proof": "plugin/test/p3-process-runtime-lifecycle.test.mjs",
+      "proof_sha256": "70b85c069b9cb7ccd92f541a35390e2f628e873b76b043c70f1ffe83ac99e157",
+      "proof_anchor": "P3 restart reconciliation adopts exact owner identity and quarantines orphan without signalling it",
+      "status": "PASS"
+    },
+    {
+      "injection": "workspace-failure",
+      "proof": "plugin/test/w2-workspace-executor.test.mjs",
+      "proof_sha256": "ef05d013e9680f665fd4802ca8f626ac824afa7b09f851645116ebefdf2541d2",
+      "proof_anchor": "PROMPT B workspace cleanup failure quarantines lease and records an explicit blocker",
+      "status": "PASS"
+    },
+    {
+      "injection": "disk-write-failure",
+      "proof": "plugin/test/q5-failure-injection.test.mjs",
+      "proof_sha256": "9b05e678fe9e6984e5ffa72141efa696a3d68023f30c8075593cafba2f0240a0",
+      "proof_anchor": "Q5 injected disk write failure throws synchronously",
+      "status": "PASS"
+    },
+    {
+      "injection": "corrupt-state",
+      "proof": "plugin/test/prompt-b-persistence-restart-hostile.test.mjs",
+      "proof_sha256": "d8011b04206f07c5952ea663735ac41acbc8839ec4ec459f427bcb2bf7d0a57e",
+      "proof_anchor": "PROMPT B persistence rejects corrupt partial old and unknown schema without silently loading data",
+      "status": "PASS"
+    },
+    {
+      "injection": "child-session-failure",
+      "proof": "plugin/test/main-prompt-delegation-preconditions.test.mjs",
+      "proof_sha256": "73f749171d427a7524b2b105002b786bce5d25a84085ba20d394a851395cb3db",
+      "proof_anchor": "missing native worker capability is RESOLVE before creating task or trying model fallbacks",
+      "status": "PASS"
+    },
+    {
+      "injection": "browser-failure",
+      "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
+      "proof_sha256": "e990f0c1b25096ef27e3604c02f8f825306ba00b21766577d2a2cca281ce5674",
+      "proof_anchor": "PROMPT B browser navigation timeout and browser crash become explicit FAILED observations",
+      "status": "PASS"
+    },
+    {
+      "injection": "network-failure",
+      "proof": "plugin/test/q5-failure-injection.test.mjs",
+      "proof_sha256": "9b05e678fe9e6984e5ffa72141efa696a3d68023f30c8075593cafba2f0240a0",
+      "proof_anchor": "Q5 injected provider timeout rate-limit and network failures",
+      "status": "PASS"
+    }
+  ],
+  "summary": {
+    "required": 12,
+    "covered": 12,
+    "violations": 0
+  },
+  "bounded_recovery": {
+    "provider_fallback_chain": "finite-configured-candidates",
+    "continuation_runtime_failures": "terminal-user-action-at-3",
+    "browser_wait_ms_max": 30000,
+    "no_infinite_retry": true
+  },
+  "violations": [],
+  "claim_boundary": "Deterministic controlled failure injection over canonical recovery/error paths. This is not provider/live-host T3 evidence."
+}

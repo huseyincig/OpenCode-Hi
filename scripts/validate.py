@@ -729,6 +729,24 @@ try:
         if not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B replay acceptance source/input drift: '+str(rel))
 except Exception as e:err(f'bad PROMPT B replay testing receipt: {e}')
 
+
+# PROMPT B §34 failure injection certification
+try:
+    f34=json.loads((ROOT/'data/validation/prompt-b-failure-injection.json').read_text(encoding='utf-8'))
+    if f34.get('schema')!=1 or f34.get('kind')!='PROMPT_B_FAILURE_INJECTION_AUDIT' or f34.get('program')!='PROMPT_B' or f34.get('section')!=34 or f34.get('status')!='PASS':err('bad PROMPT B failure injection audit receipt identity/status')
+    if f34.get('summary')!={'required':12,'covered':12,'violations':0} or f34.get('violations')!=[]:err('PROMPT B failure injection summary drift')
+    expected=['provider-timeout','model-unavailable','rate-limit','tool-error','permission-deny','process-crash','workspace-failure','disk-write-failure','corrupt-state','child-session-failure','browser-failure','network-failure']
+    if f34.get('required_injections')!=expected or not all((f34.get('static_guards') or {}).values()):err('PROMPT B failure injection inventory/static guard drift')
+    a=json.loads((ROOT/f34['acceptance_receipt']).read_text(encoding='utf-8'))
+    if a.get('status')!='PASS' or a.get('source_binding')!={'tested_git_commit':'29d3024fb3640a97f244185a393eb133542fb735','tested_git_tree':'e685a589dcd06e8a300421b84cbad8fedb616222'}:err('PROMPT B failure injection source binding drift')
+    if a.get('terminal')!={'tests':54,'pass':54,'fail':0,'cancelled':0,'skipped':0,'todo':0}:err('PROMPT B failure injection terminal drift')
+    if not (a.get('bounded_recovery') or {}).get('no_infinite_retry') or a.get('summary')!={'required':12,'covered':12,'violations':0} or a.get('violations')!=[]:err('PROMPT B failure injection bounded recovery drift')
+    for row in a.get('injections',[]):
+        rel=row.get('proof');expected_hash=row.get('proof_sha256');anchor=row.get('proof_anchor')
+        if not isinstance(rel,str) or not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected_hash:err('PROMPT B failure injection proof hash drift: '+str(rel));continue
+        if not isinstance(anchor,str) or anchor not in (ROOT/rel).read_text(errors='replace'):err('PROMPT B failure injection proof anchor drift: '+str(row.get('injection')))
+except Exception as e:err(f'bad PROMPT B failure injection receipt: {e}')
+
 try:
     nr=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text(encoding='utf-8'))
     if nr.get('schema')!=1 or nr.get('kind')!='EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION' or nr.get('program')!='PROMPT_B' or nr.get('status')!='PASS':err('bad PROMPT B native reevaluation receipt identity/status')

@@ -1331,3 +1331,19 @@ def test_prompt_b_replay_testing_detects_semantic_drift_across_all_required_surf
     assert a['nondeterministic_semantic_drift'] is False and a['first_pass_digest']==a['second_pass_digest'] and a['mismatches']==[] and a['total_cases']==28
     for rel,digest in {**a['inputs'],**a['owner_hashes']}.items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
     for rel,digest in d['proof_hashes'].items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
+
+
+
+def test_prompt_b_failure_injection_is_complete_bounded_and_terminal():
+    d=json.loads((ROOT/'data/validation/prompt-b-failure-injection.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_FAILURE_INJECTION_AUDIT' and d['program']=='PROMPT_B' and d['section']==34 and d['status']=='PASS'
+    assert d['violations']==[] and d['summary']=={'required':12,'covered':12,'violations':0} and all(d['static_guards'].values())
+    expected=['provider-timeout','model-unavailable','rate-limit','tool-error','permission-deny','process-crash','workspace-failure','disk-write-failure','corrupt-state','child-session-failure','browser-failure','network-failure']
+    assert d['required_injections']==expected
+    a=json.loads((ROOT/d['acceptance_receipt']).read_text())
+    assert a['status']=='PASS' and a['source_binding']=={'tested_git_commit':'29d3024fb3640a97f244185a393eb133542fb735','tested_git_tree':'e685a589dcd06e8a300421b84cbad8fedb616222'}
+    assert a['terminal']=={'tests':54,'pass':54,'fail':0,'cancelled':0,'skipped':0,'todo':0}
+    assert a['summary']=={'required':12,'covered':12,'violations':0} and a['violations']==[] and a['bounded_recovery']['no_infinite_retry'] is True
+    assert [x['injection'] for x in a['injections']]==expected and all(x['status']=='PASS' for x in a['injections'])
+    for row in a['injections']:
+        p=ROOT/row['proof'];assert p.is_file() and hashlib.sha256(p.read_bytes()).hexdigest()==row['proof_sha256'] and row['proof_anchor'] in p.read_text(errors='replace')
