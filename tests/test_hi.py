@@ -16,8 +16,11 @@ def test_identity_is_hi():
 
 def test_root_git_package_contract():
     d=json.loads((ROOT/'package.json').read_text()); assert d['name']=='opencode-hi' and d['version']==V
-    assert d['main']=='plugin/dist/plugin.js' and (ROOT/d['main']).is_file() and 'skills' in d['files']
-    assert 'dependencies' not in d and 'README.tr.md' in d['files']
+    assert d['main']=='plugin/dist/plugin.js' and (ROOT/d['main']).is_file() and {'skills','scripts/native_plugin_setup.py','VERSION','README.tr.md'}<=set(d['files'])
+    assert d['bin']=={'opencode-hi-setup':'scripts/native_plugin_setup.py'}
+    assert d['peerDependencies']['@opencode-ai/plugin'].startswith('>=1.18.18')
+    assert d['dependencies']=={'@opencode-ai/sdk':'1.18.18'}
+    assert d['optionalDependencies']['playwright-core'].startswith('^1.62.')
 
 def test_root_is_product_clean():
     assert not any((ROOT/x).exists() for x in ['KURULUM.md','RELEASE-READINESS.md','WORK-STATE.md','work-state.json','HI.cmd','HI.sh','HI-VALIDATE.cmd','HI-RELEASE-PREP.cmd'])
@@ -654,10 +657,10 @@ def test_r2_rollback_of_fresh_install_restores_absent_config_file(tmp_path):
 def test_r2_install_lifecycle_receipt_covers_full_local_recovery_contract():
     d=json.loads((ROOT/'data/validation/install-lifecycle-0.1.0.json').read_text())
     assert d['schema']==2 and d['kind']=='LOCAL_CONFIG_LIFECYCLE_R2'
-    required={'install':'APPLIED','idempotent_install':'NOOP','upgrade':'APPLIED','rollback_upgrade':'APPLIED','uninstall':'APPLIED','rollback_uninstall':'APPLIED','recover_interrupted_upgrade':'RECOVERED'}
+    required={'install':'APPLIED','idempotent_install':'NOOP','upgrade':'APPLIED','rollback_upgrade':'APPLIED','uninstall':'APPLIED','rollback_uninstall':'APPLIED','reinstall':'APPLIED','doctor_reinstalled':'OK','reinstall_cleanup':'APPLIED','recover_interrupted_upgrade':'RECOVERED'}
     assert all(d['operations'][k]==v for k,v in required.items())
     assert all(d['assertions'].values())
-    assert d['state_security']['setup_json_mode']=='0o600' and d['state_security']['rollback_mode_after_install']=='0o600'
+    assert d['state_security']['setup_json_mode']=='0o600' and d['state_security']['rollback_mode_after_install']=='0o600' and d['state_security']['reinstall_setup_json_mode']=='0o600'
     assert d['state_security']['transaction_contains_config_body'] is False and d['state_security']['rollback_contains_config_body'] is False
     assert (ROOT/'scripts/run-install-lifecycle.py').is_file()
 
@@ -1158,3 +1161,38 @@ def test_prompt_b_cli_developer_tooling_ux_audit_is_actionable_bounded_and_sourc
         assert row['owner_anchor'] in owner.read_text(errors='replace') and row['proof_anchor'] in proof.read_text(errors='replace')
     assert all(d['static_guards'].values())
     assert {'malformed-opencode-config-silent-overwrite-risk','reconfigure-invalid-limit-accepted','blocked-plan-missing-recovery-guidance'}<={x['id'] for x in d['closed_defects']}
+
+
+def test_prompt_b_publishable_package_carries_setup_cli_and_direct_runtime_dependency_contract():
+    pkg=json.loads((ROOT/'package.json').read_text())
+    assert pkg['bin']=={'opencode-hi-setup':'scripts/native_plugin_setup.py'}
+    assert {'plugin/dist','skills','scripts/native_plugin_setup.py','VERSION'}<=set(pkg['files'])
+    assert pkg['peerDependencies']['@opencode-ai/plugin'].startswith('>=')
+    assert pkg['dependencies']['@opencode-ai/sdk']=='1.18.18'
+    assert pkg['optionalDependencies']['playwright-core'].startswith('^1.62.')
+    setup=ROOT/'scripts/native_plugin_setup.py';assert setup.stat().st_mode & 0o111
+
+
+def test_prompt_b_install_update_lifecycle_audit_is_complete_source_bound_and_truthful():
+    d=json.loads((ROOT/'data/validation/prompt-b-install-update-lifecycle.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_INSTALL_UPDATE_LIFECYCLE_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['section']==25 and d['status']=='PASS'
+    assert d['violations']==[] and d['summary']=={'required':14,'covered':14,'violations':0}
+    for row in d['invariants']:
+        owner=ROOT/row['owner'];proof=ROOT/row['proof'];assert owner.is_file() and proof.is_file()
+        assert hashlib.sha256(owner.read_bytes()).hexdigest()==row['owner_sha256']
+        assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
+        assert row['owner_anchor'] in owner.read_text(errors='replace') and row['proof_anchor'] in proof.read_text(errors='replace')
+    assert all(d['static_guards'].values())
+    assert {'lifecycle-missing-reinstall','packed-setup-cli-missing','root-runtime-dependency-contract-missing'}<={x['id'] for x in d['closed_defects']}
+    assert 'does not claim npm publication' in d['claim_boundary']
+
+
+def test_prompt_b_packed_setup_fresh_consumer_smoke_is_real_tarball_bound():
+    d=json.loads((ROOT/'data/validation/packed-setup-smoke-0.1.0.json').read_text())
+    assert d['schema']==1 and d['kind']=='PACKED_SETUP_FRESH_CONSUMER_SMOKE' and d['release']=='0.1.0' and d['status']=='PASS'
+    assert d['tarball']['all_required_present'] is True and d['tarball']['setup_mode']=='0o755' and d['tarball']['file_count']>300
+    assert d['fresh_consumer']['install_rc']==0 and d['fresh_consumer']['setup_bin_present'] is True and d['fresh_consumer']['setup_help_rc']==0 and d['fresh_consumer']['setup_help_has_commands'] is True
+    assert d['fresh_consumer']['module_import_output']=='function'
+    assert d['fresh_consumer']['module_import_rc']==0 or d['fresh_consumer']['module_import_teardown_noise'] is True
+    assert 'exact OpenCode material runtime execution belongs to PROMPT B section 26' in d['claim_boundary']
+    assert (ROOT/'scripts/run-packed-setup-smoke.py').is_file()

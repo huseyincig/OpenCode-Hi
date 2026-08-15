@@ -37,6 +37,12 @@ def main()->int:
         doctor_restored=m.doctor(project)
         final_uninstall=m.uninstall(project)
         final_data=json.loads(cfg.read_text())
+        reinstall=m.install(project,'0.1.0')
+        doctor_reinstalled=m.doctor(project)
+        reinstalled_data=json.loads(cfg.read_text())
+        reinstall_setup_mode=mode(project/m.OWNERSHIP);rollback_mode_reinstall=mode(project/m.SETUP_ROLLBACK)
+        reinstall_cleanup=m.uninstall(project)
+        after_reinstall_cleanup=json.loads(cfg.read_text())
         transaction_clean=not (project/m.SETUP_TRANSACTION).exists()
         rollback_mode_final=mode(project/m.SETUP_ROLLBACK)
 
@@ -59,7 +65,7 @@ def main()->int:
           'schema':2,
           'release':'0.1.0',
           'kind':'LOCAL_CONFIG_LIFECYCLE_R2',
-          'claim_boundary':'Local project config/setup lifecycle only. This receipt proves install/reconfigure/owned upgrade/rollback/uninstall/interrupted-transaction recovery and preservation semantics; it is not npm publication or external OpenCode runtime acceptance.',
+          'claim_boundary':'Local project config/setup lifecycle only. This receipt proves fresh install/first static doctor/configure/owned update/reconfigure/uninstall/reinstall/rollback/interrupted-transaction recovery and preservation semantics; runtime execution remains a separate exact-host T3 boundary and npm publication is not claimed.',
           'operations':{
             'plan':plan['status'],
             'install':install['status'],
@@ -72,6 +78,9 @@ def main()->int:
             'rollback_uninstall':rollback_uninstall['status'],
             'doctor_restored':doctor_restored['status'],
             'final_uninstall':final_uninstall['status'],
+            'reinstall':reinstall['status'],
+            'doctor_reinstalled':doctor_reinstalled['status'],
+            'reinstall_cleanup':reinstall_cleanup['status'],
             'recover_interrupted_upgrade':recover['status'],
           },
           'assertions':{
@@ -82,7 +91,12 @@ def main()->int:
             'foreign_config_preserved_through_upgrade_rollback':preserved(after_upgrade_rollback),
             'foreign_config_preserved_through_uninstall':preserved(after_uninstall),
             'foreign_config_preserved_after_final_uninstall':preserved(final_data),
-            'final_hi_registration_absent':not any(x.startswith('opencode-hi@') for x in final_data['plugin']),
+            'reinstall_restored_exact_0_1_0':'opencode-hi@0.1.0' in reinstalled_data['plugin'],
+            'reinstall_doctor_ok':doctor_reinstalled['status']=='OK',
+            'foreign_config_preserved_through_reinstall':preserved(reinstalled_data),
+            'reinstall_cleanup_removed_only_hi':preserved(after_reinstall_cleanup) and not any(x.startswith('opencode-hi@') for x in after_reinstall_cleanup['plugin']),
+            'final_hi_registration_absent':not any(x.startswith('opencode-hi@') for x in after_reinstall_cleanup['plugin']),
+            'no_stale_setup_ownership_after_cleanup':not (project/m.OWNERSHIP).exists(),
             'normal_transaction_journal_cleaned':transaction_clean,
             'interrupted_upgrade_recovered_to_target':recover['disposition']=='completed-interrupted-operation' and recovered_ownership['plugin_spec']=='opencode-hi@0.2.0',
             'recovery_transaction_cleaned':not (recover_project/m.SETUP_TRANSACTION).exists(),
@@ -91,6 +105,8 @@ def main()->int:
           'state_security':{
             'setup_json_mode':setup_mode,
             'rollback_mode_after_install':rollback_mode_after_install,
+            'reinstall_setup_json_mode':reinstall_setup_mode,
+            'rollback_mode_after_reinstall':rollback_mode_reinstall,
             'rollback_mode_after_final_uninstall':rollback_mode_final,
             'transaction_contains_config_body':False,
             'rollback_contains_config_body':False,

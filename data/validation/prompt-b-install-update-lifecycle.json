@@ -1,0 +1,179 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_INSTALL_UPDATE_LIFECYCLE_ADVERSARIAL_AUDIT",
+  "program": "PROMPT_B",
+  "section": 25,
+  "status": "PASS",
+  "summary": {
+    "required": 14,
+    "covered": 14,
+    "violations": 0
+  },
+  "invariants": [
+    {
+      "invariant": "fresh-install",
+      "status": "PASS",
+      "owner": "scripts/native_plugin_setup.py",
+      "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
+      "owner_anchor": "def install(",
+      "proof": "data/validation/install-lifecycle-0.1.0.json",
+      "proof_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
+      "proof_anchor": "\"install\": \"APPLIED\""
+    },
+    {
+      "invariant": "first-run-doctor",
+      "status": "PASS",
+      "owner": "scripts/native_plugin_setup.py",
+      "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
+      "owner_anchor": "def doctor(",
+      "proof": "data/validation/install-lifecycle-0.1.0.json",
+      "proof_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
+      "proof_anchor": "\"doctor_installed\": \"OK\""
+    },
+    {
+      "invariant": "configure-reconfigure",
+      "status": "PASS",
+      "owner": "scripts/native_plugin_setup.py",
+      "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
+      "owner_anchor": "def reconfigure(",
+      "proof": "data/validation/install-lifecycle-0.1.0.json",
+      "proof_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
+      "proof_anchor": "\"reconfigure\": \"APPLIED\""
+    },
+    {
+      "invariant": "owned-update-version-detection",
+      "status": "PASS",
+      "owner": "scripts/native_plugin_setup.py",
+      "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
+      "owner_anchor": "def upgrade(",
+      "proof": "tests/test_hi.py",
+      "proof_sha256": "918fea7a8548a7282916c4b7dab8b49ef2c8eedcd5378f8494d09ebf0403da4e",
+      "proof_anchor": "test_r2_owned_upgrade_and_one_step_rollback_preserve_foreign_config"
+    },
+    {
+      "invariant": "uninstall",
+      "status": "PASS",
+      "owner": "scripts/native_plugin_setup.py",
+      "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
+      "owner_anchor": "def uninstall(",
+      "proof": "data/validation/install-lifecycle-0.1.0.json",
+      "proof_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
+      "proof_anchor": "\"uninstall\": \"APPLIED\""
+    },
+    {
+      "invariant": "reinstall",
+      "status": "PASS",
+      "owner": "scripts/run-install-lifecycle.py",
+      "owner_sha256": "4a3a60ac330f02d7425946a1fea3e3da0fb1040867b94a40ba0e176937973cc4",
+      "owner_anchor": "reinstall=m.install(project,'0.1.0')",
+      "proof": "data/validation/install-lifecycle-0.1.0.json",
+      "proof_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
+      "proof_anchor": "\"reinstall\": \"APPLIED\""
+    },
+    {
+      "invariant": "rollback-truth",
+      "status": "PASS",
+      "owner": "scripts/native_plugin_setup.py",
+      "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
+      "owner_anchor": "def rollback(",
+      "proof": "tests/test_hi.py",
+      "proof_sha256": "918fea7a8548a7282916c4b7dab8b49ef2c8eedcd5378f8494d09ebf0403da4e",
+      "proof_anchor": "test_r2_rollback_fails_closed_after_unrelated_post_operation_config_drift"
+    },
+    {
+      "invariant": "partial-install-recovery",
+      "status": "PASS",
+      "owner": "scripts/native_plugin_setup.py",
+      "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
+      "owner_anchor": "def recover(",
+      "proof": "tests/test_hi.py",
+      "proof_sha256": "918fea7a8548a7282916c4b7dab8b49ef2c8eedcd5378f8494d09ebf0403da4e",
+      "proof_anchor": "test_r2_recover_completes_interrupted_upgrade_when_config_matches_recorded_after_state"
+    },
+    {
+      "invariant": "user-config-preservation",
+      "status": "PASS",
+      "owner": "scripts/run-install-lifecycle.py",
+      "owner_sha256": "4a3a60ac330f02d7425946a1fea3e3da0fb1040867b94a40ba0e176937973cc4",
+      "owner_anchor": "foreign_config_preserved_through_reinstall",
+      "proof": "data/validation/install-lifecycle-0.1.0.json",
+      "proof_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
+      "proof_anchor": "\"foreign_config_preserved_through_reinstall\": true"
+    },
+    {
+      "invariant": "stale-state-cleanup",
+      "status": "PASS",
+      "owner": "scripts/run-install-lifecycle.py",
+      "owner_sha256": "4a3a60ac330f02d7425946a1fea3e3da0fb1040867b94a40ba0e176937973cc4",
+      "owner_anchor": "no_stale_setup_ownership_after_cleanup",
+      "proof": "data/validation/install-lifecycle-0.1.0.json",
+      "proof_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
+      "proof_anchor": "\"no_stale_setup_ownership_after_cleanup\": true"
+    },
+    {
+      "invariant": "setup-state-permissions",
+      "status": "PASS",
+      "owner": "scripts/native_plugin_setup.py",
+      "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
+      "owner_anchor": "def _write_state(",
+      "proof": "data/validation/install-lifecycle-0.1.0.json",
+      "proof_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
+      "proof_anchor": "\"reinstall_setup_json_mode\": \"0o600\""
+    },
+    {
+      "invariant": "publishable-setup-cli-contract",
+      "status": "PASS",
+      "owner": "package.json",
+      "owner_sha256": "9dfabfab64ed1da8881d5887c43ec8e3bf2496d88370ba64923cd20934eb6533",
+      "owner_anchor": "\"opencode-hi-setup\"",
+      "proof": "tests/test_hi.py",
+      "proof_sha256": "918fea7a8548a7282916c4b7dab8b49ef2c8eedcd5378f8494d09ebf0403da4e",
+      "proof_anchor": "test_prompt_b_publishable_package_carries_setup_cli_and_direct_runtime_dependency_contract"
+    },
+    {
+      "invariant": "no-source-tree-runtime-dependency",
+      "status": "PASS",
+      "owner": "package.json",
+      "owner_sha256": "9dfabfab64ed1da8881d5887c43ec8e3bf2496d88370ba64923cd20934eb6533",
+      "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.18\"",
+      "proof": "tests/test_hi.py",
+      "proof_sha256": "918fea7a8548a7282916c4b7dab8b49ef2c8eedcd5378f8494d09ebf0403da4e",
+      "proof_anchor": "test_prompt_b_publishable_package_carries_setup_cli_and_direct_runtime_dependency_contract"
+    },
+    {
+      "invariant": "runtime-run-is-separate-exact-host-boundary",
+      "status": "PASS",
+      "owner": "data/validation/install-lifecycle-0.1.0.json",
+      "owner_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
+      "owner_anchor": "\"external_host_status\": \"SEPARATE_T3_BOUNDARY\"",
+      "proof": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
+      "proof_sha256": "0ad30c18931cd6251d94c316df53fafb658dfc70596a91c61e7e494b648b323e",
+      "proof_anchor": "\"status\": \"PASS\""
+    }
+  ],
+  "static_guards": {
+    "all_lifecycle_ops_exact": true,
+    "all_lifecycle_assertions_true": true,
+    "state_files_restrictive": true,
+    "state_contains_no_config_body": true,
+    "package_setup_bin_declared": true,
+    "package_setup_script_executable": true,
+    "runtime_t3_separate": true
+  },
+  "closed_defects": [
+    {
+      "id": "lifecycle-missing-reinstall",
+      "resolution": "Local lifecycle receipt now exercises reinstall, doctor and final clean uninstall."
+    },
+    {
+      "id": "packed-setup-cli-missing",
+      "resolution": "Publishable package now carries executable opencode-hi-setup plus VERSION."
+    },
+    {
+      "id": "root-runtime-dependency-contract-missing",
+      "resolution": "Root package explicitly declares host peer, direct SDK dependency and optional playwright-core runtime dependency."
+    }
+  ],
+  "claim_boundary": "Local lifecycle/package-content contract plus exact-host runtime proof reference. This does not claim npm publication or replace §26 fresh-consumer exact-host acceptance.",
+  "violations": []
+}

@@ -10,7 +10,7 @@ A successful local registration test must not be presented as proof that a fresh
 ## Prerequisites
 
 - a supported OpenCode host for the path being tested;
-- Python 3 for the repository setup helper;
+- Python 3 for the setup CLI (the packed package exposes it as `opencode-hi-setup`; a source checkout may invoke the same script directly);
 - Node/npm only when building from source;
 - a project directory whose unrelated OpenCode/user configuration must be preserved.
 
@@ -26,13 +26,15 @@ When a registry package version is actually available, OpenCode package configur
 }
 ```
 
-The repository setup helper can plan and apply that registration without replacing unrelated configuration:
+The setup CLI can plan and apply that registration without replacing unrelated configuration. The publishable package includes `scripts/native_plugin_setup.py`, `VERSION`, and the executable npm bin `opencode-hi-setup`; this avoids requiring a repository checkout once a registry package exists. From a source checkout:
 
 ```bash
 python3 scripts/native_plugin_setup.py plan /path/to/project --version <version>
 python3 scripts/native_plugin_setup.py install /path/to/project --version <version>
 python3 scripts/native_plugin_setup.py doctor /path/to/project
 ```
+
+For an installed/available npm package, the same CLI surface is exposed as `opencode-hi-setup` (for example through the package's npm bin). The current npm bootstrap remains blocked, so this is a verified package-content contract rather than a claim that `npx` can fetch `opencode-hi@0.1.0` publicly today.
 
 `plan` is non-mutating. `install` is idempotent after Hi owns the exact registration. `doctor` validates registration/ownership/lifecycle state; it explicitly does **not** substitute for a real OpenCode runtime-load check.
 

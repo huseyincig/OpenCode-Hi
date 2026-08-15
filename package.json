@@ -13,6 +13,8 @@
   "files": [
     "plugin/dist",
     "skills",
+    "scripts/native_plugin_setup.py",
+    "VERSION",
     "README.md",
     "LICENSE",
     "THIRD_PARTY_NOTICES.md",
@@ -48,5 +50,17 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "bin": {
+    "opencode-hi-setup": "scripts/native_plugin_setup.py"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": ">=1.18.18"
+  },
+  "dependencies": {
+    "@opencode-ai/sdk": "1.18.18"
+  },
+  "optionalDependencies": {
+    "playwright-core": "^1.62.1"
   }
 }

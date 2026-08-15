@@ -162,7 +162,7 @@
       "owner_sha256": "f0787037b61a5617c295880577ca243b44cb9eecbc853514c10095c9503acd64",
       "owner_anchor": "\"scripts\"",
       "proof": "package.json",
-      "proof_sha256": "68fcb15755b90b0da221d4afdbffca1c1d4089db11e0881831ef47c77cbd27c8",
+      "proof_sha256": "9dfabfab64ed1da8881d5887c43ec8e3bf2496d88370ba64923cd20934eb6533",
       "proof_anchor": "\"prepack\": \"npm run build\""
     },
     {

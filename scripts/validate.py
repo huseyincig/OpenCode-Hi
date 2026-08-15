@@ -583,6 +583,32 @@ try:
 except Exception as e:err(f'bad PROMPT B CLI/developer tooling UX receipt: {e}')
 
 try:
+    iu=json.loads((ROOT/'data/validation/prompt-b-install-update-lifecycle.json').read_text(encoding='utf-8'))
+    if iu.get('schema')!=1 or iu.get('kind')!='PROMPT_B_INSTALL_UPDATE_LIFECYCLE_ADVERSARIAL_AUDIT' or iu.get('program')!='PROMPT_B' or iu.get('section')!=25 or iu.get('status')!='PASS':err('bad PROMPT B install/update lifecycle audit receipt')
+    if iu.get('violations')!=[] or iu.get('summary')!={'required':14,'covered':14,'violations':0}:err('PROMPT B install/update lifecycle coverage drift')
+    rows=iu.get('invariants') or []
+    if len(rows)!=14 or len({x.get('invariant') for x in rows if isinstance(x,dict)})!=14:err('PROMPT B install/update lifecycle invariant inventory drift')
+    import hashlib
+    for row in rows:
+        for key in ('owner','proof'):
+            rel=row.get(key);expected=row.get(f'{key}_sha256')
+            if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B install/update lifecycle missing {key}: {rel}');continue
+            if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B install/update lifecycle {key} hash drift: {rel}')
+        try:
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B install/update lifecycle owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B install/update lifecycle proof anchor drift: {row.get('invariant')}")
+        except Exception as e:err(f'PROMPT B install/update lifecycle row invalid: {e}')
+    if not all((iu.get('static_guards') or {}).values()):err('PROMPT B install/update lifecycle static guard drift')
+    closed={x.get('id') for x in iu.get('closed_defects',[]) if isinstance(x,dict)}
+    if not {'lifecycle-missing-reinstall','packed-setup-cli-missing','root-runtime-dependency-contract-missing'}<=closed:err('PROMPT B install/update lifecycle closed defect drift')
+    ps=json.loads((ROOT/'data/validation/packed-setup-smoke-0.1.0.json').read_text(encoding='utf-8'))
+    if ps.get('schema')!=1 or ps.get('kind')!='PACKED_SETUP_FRESH_CONSUMER_SMOKE' or ps.get('release')!='0.1.0' or ps.get('status')!='PASS':err('packed setup smoke receipt invalid')
+    if not (ps.get('tarball') or {}).get('all_required_present') or (ps.get('tarball') or {}).get('setup_mode')!='0o755':err('packed setup tarball membership/mode drift')
+    fc=ps.get('fresh_consumer') or {}
+    if fc.get('install_rc')!=0 or fc.get('setup_help_rc')!=0 or fc.get('module_import_output')!='function' or not (fc.get('module_import_rc')==0 or fc.get('module_import_teardown_noise') is True):err('packed setup fresh consumer smoke drift')
+except Exception as e:err(f'bad PROMPT B install/update lifecycle receipt: {e}')
+
+try:
     nr=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text(encoding='utf-8'))
     if nr.get('schema')!=1 or nr.get('kind')!='EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION' or nr.get('program')!='PROMPT_B' or nr.get('status')!='PASS':err('bad PROMPT B native reevaluation receipt identity/status')
     oc=nr.get('opencode',{})

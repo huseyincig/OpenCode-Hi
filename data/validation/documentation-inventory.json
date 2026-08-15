@@ -361,7 +361,7 @@
     },
     {
       "path": "docs/INSTALLATION.md",
-      "sha256": "f180825e98f9cbe58aa5f4fdd786feba03193fcecb349a38b765bbfa8842532c",
+      "sha256": "76c3fe123f16e120ebfcd99c35153ea40a1566db38c416d2989c10003524db92",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
@@ -550,7 +550,7 @@
     },
     {
       "path": "docs/engineering-constitution/MASTER-CONTINUATION.md",
-      "sha256": "7aa1da94d4651388f86f57de1d880a32a12b3fc12224f34fa6c3232384490297",
+      "sha256": "c3561a387cef88b65b33129d94fa981e9ad94c6ca16b1711a503264f2cf00ba5",
       "audience": "INTERNAL_ENGINEERING",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "HUMAN_OWNED"

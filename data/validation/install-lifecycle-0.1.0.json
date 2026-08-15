@@ -2,7 +2,7 @@
   "schema": 2,
   "release": "0.1.0",
   "kind": "LOCAL_CONFIG_LIFECYCLE_R2",
-  "claim_boundary": "Local project config/setup lifecycle only. This receipt proves install/reconfigure/owned upgrade/rollback/uninstall/interrupted-transaction recovery and preservation semantics; it is not npm publication or external OpenCode runtime acceptance.",
+  "claim_boundary": "Local project config/setup lifecycle only. This receipt proves fresh install/first static doctor/configure/owned update/reconfigure/uninstall/reinstall/rollback/interrupted-transaction recovery and preservation semantics; runtime execution remains a separate exact-host T3 boundary and npm publication is not claimed.",
   "operations": {
     "plan": "READY",
     "install": "APPLIED",
@@ -15,6 +15,9 @@
     "rollback_uninstall": "APPLIED",
     "doctor_restored": "OK",
     "final_uninstall": "APPLIED",
+    "reinstall": "APPLIED",
+    "doctor_reinstalled": "OK",
+    "reinstall_cleanup": "APPLIED",
     "recover_interrupted_upgrade": "RECOVERED"
   },
   "assertions": {
@@ -25,7 +28,12 @@
     "foreign_config_preserved_through_upgrade_rollback": true,
     "foreign_config_preserved_through_uninstall": true,
     "foreign_config_preserved_after_final_uninstall": true,
+    "reinstall_restored_exact_0_1_0": true,
+    "reinstall_doctor_ok": true,
+    "foreign_config_preserved_through_reinstall": true,
+    "reinstall_cleanup_removed_only_hi": true,
     "final_hi_registration_absent": true,
+    "no_stale_setup_ownership_after_cleanup": true,
     "normal_transaction_journal_cleaned": true,
     "interrupted_upgrade_recovered_to_target": true,
     "recovery_transaction_cleaned": true,
@@ -34,6 +42,8 @@
   "state_security": {
     "setup_json_mode": "0o600",
     "rollback_mode_after_install": "0o600",
+    "reinstall_setup_json_mode": "0o600",
+    "rollback_mode_after_reinstall": "0o600",
     "rollback_mode_after_final_uninstall": "0o600",
     "transaction_contains_config_body": false,
     "rollback_contains_config_body": false,

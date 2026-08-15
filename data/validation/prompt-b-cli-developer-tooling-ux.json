@@ -11,7 +11,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "'install':lambda:install",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "124652ae84b65c700537957c59fdda95bec6ffd06e58f88d10d4a6af5d513e14",
+      "proof_sha256": "918fea7a8548a7282916c4b7dab8b49ef2c8eedcd5378f8494d09ebf0403da4e",
       "proof_anchor": "test_prompt_b_cli_malformed_config_fails_closed_without_overwrite"
     },
     {
@@ -20,7 +20,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "'action':action",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "124652ae84b65c700537957c59fdda95bec6ffd06e58f88d10d4a6af5d513e14",
+      "proof_sha256": "918fea7a8548a7282916c4b7dab8b49ef2c8eedcd5378f8494d09ebf0403da4e",
       "proof_anchor": "test_prompt_b_cli_first_run_doctor_supplies_recovery_action"
     },
     {
@@ -29,7 +29,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "def doctor(project:Path)",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "124652ae84b65c700537957c59fdda95bec6ffd06e58f88d10d4a6af5d513e14",
+      "proof_sha256": "918fea7a8548a7282916c4b7dab8b49ef2c8eedcd5378f8494d09ebf0403da4e",
       "proof_anchor": "test_prompt_b_cli_first_run_doctor_supplies_recovery_action"
     },
     {
@@ -38,7 +38,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "argparse.ArgumentParser",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "124652ae84b65c700537957c59fdda95bec6ffd06e58f88d10d4a6af5d513e14",
+      "proof_sha256": "918fea7a8548a7282916c4b7dab8b49ef2c8eedcd5378f8494d09ebf0403da4e",
       "proof_anchor": "native_plugin_setup.py"
     },
     {
@@ -47,7 +47,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "choices=['plan','install','upgrade','doctor','uninstall','rollback','recover','role-models','reconfigure']",
       "proof": "scripts/run-install-lifecycle.py",
-      "proof_sha256": "b1068ed59e44a79cb775a20c69fa0e9d7c5bcbad9a285745a2e512124ca7271f",
+      "proof_sha256": "4a3a60ac330f02d7425946a1fea3e3da0fb1040867b94a40ba0e176937973cc4",
       "proof_anchor": "m.rollback(project)"
     },
     {
@@ -56,7 +56,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "e.detail[:500]",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "124652ae84b65c700537957c59fdda95bec6ffd06e58f88d10d4a6af5d513e14",
+      "proof_sha256": "918fea7a8548a7282916c4b7dab8b49ef2c8eedcd5378f8494d09ebf0403da4e",
       "proof_anchor": "'Traceback' not in r.stdout"
     },
     {
@@ -65,7 +65,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "actions.append('Run the recover command",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "124652ae84b65c700537957c59fdda95bec6ffd06e58f88d10d4a6af5d513e14",
+      "proof_sha256": "918fea7a8548a7282916c4b7dab8b49ef2c8eedcd5378f8494d09ebf0403da4e",
       "proof_anchor": "any('plan' in x and 'install' in x for x in out['actions'])"
     },
     {
@@ -74,7 +74,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "_bounded_cli_int('parallel-max',1,8)",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "124652ae84b65c700537957c59fdda95bec6ffd06e58f88d10d4a6af5d513e14",
+      "proof_sha256": "918fea7a8548a7282916c4b7dab8b49ef2c8eedcd5378f8494d09ebf0403da4e",
       "proof_anchor": "test_prompt_b_cli_reconfigure_rejects_out_of_range_and_malformed_limits"
     },
     {
@@ -101,7 +101,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "jsonc-safe-mutation-not-supported",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "124652ae84b65c700537957c59fdda95bec6ffd06e58f88d10d4a6af5d513e14",
+      "proof_sha256": "918fea7a8548a7282916c4b7dab8b49ef2c8eedcd5378f8494d09ebf0403da4e",
       "proof_anchor": "test_prompt_b_cli_jsonc_plan_is_truthful_actionable_and_non_mutating"
     }
   ],
