@@ -46,6 +46,7 @@ export function workerHandoffText(h:WorkerHandoff,maxChars:number=DEFAULT_CONTEX
     reviewFindingInstruction,
     'Use context_gap=scope|iterative|none and failure_finding=ci-build|unknown-root-cause|none only when directly supported by this bounded task.',
     'Evidence is structured proof, not prose classification: when a worker-scope methodology exit requires decision-evidence, diagnostic-evidence, measurement-evidence, browser-evidence, visual-evidence, accessibility-evidence, or source-provenance-evidence, return that exact evidence.kind with a concrete summary/scope; targeted-test-evidence may be satisfied by evidence.kind=targeted-tests.',
+    'Methodology-exit evidence is accepted only as fresh passed proof. Set evidence.outcome="passed" (or pass=true) only when the actual observation/check supports that claim; omit pass/outcome when evidence is merely observed, partial, uncertain, or pending. Never manufacture PASS from a BrowserObservation or screenshot alone.',
     'Do not rely on descriptive summary words to satisfy an exit.',
     'Optionally include methodology_observations only when this task produced a project-specific reusable HOW that is not already a selected methodology; each observation must contain key, procedure, trigger, do_not_trigger, exit_condition, evidence; observation.evidence must list exact evidence.kind values returned by this result, never summary fragments.',
     'Do not report project facts, one-off evidence, or control-plane policy as methodology observations.',
