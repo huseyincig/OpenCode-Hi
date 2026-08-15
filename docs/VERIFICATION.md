@@ -12,7 +12,7 @@ Current local acceptance covers adaptive execution/topology, mission completion/
 - `data/validation/external-opencode-hi-0.1.0-browser-1.18.18-head-476590e.json`: exact-source positive B3 T3 receipt bound to `476590e500949ec6c2416c1502beaa9be4217d9f`; `browser-execution=SUPPORTED_T3` for the health-gated Hi Playwright surface.
 
 - `data/validation/benchmarks-0.1.0.json`: nine deterministic execution-policy scenarios.
-- `data/validation/install-lifecycle-0.1.0.json`: local plan/install/doctor/reconfigure/uninstall lifecycle with unrelated user configuration preserved.
+- `data/validation/install-lifecycle-0.1.0.json`: replayable R2 local lifecycle covering plan/install/idempotence/owned upgrade/rollback/reconfigure/doctor/uninstall/uninstall rollback/interrupted-transaction recovery, restrictive setup-state permissions, and unrelated user configuration preservation.
 - `data/validation/architecture-audit-0.1.0.json`: final architecture-invariant audit.
 
 The current exact process-lifecycle and workspace-isolation acceptance host is OpenCode `1.18.18`; each capability remains bound to its own exact tested source receipt, and older receipts are never promoted across source changes. Local policy tests are not substitutes for exact-candidate T3 acceptance where host-bound behavior changed.

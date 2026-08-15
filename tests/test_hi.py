@@ -21,7 +21,7 @@ def test_root_git_package_contract():
 
 def test_root_is_product_clean():
     assert not any((ROOT/x).exists() for x in ['KURULUM.md','RELEASE-READINESS.md','WORK-STATE.md','work-state.json','HI.cmd','HI.sh','HI-VALIDATE.cmd','HI-RELEASE-PREP.cmd'])
-    assert {p.name for p in (ROOT/'docs').glob('*.md')}=={'ARCHITECTURE.md','INSTALLATION.md','SKILLS.md','VALIDATION.md','THREAT-MODEL.md','SOURCE-REUSE-MATRIX.md','BASELINE-RECEIPT.md','ARCHITECTURE-REALITY-MAP.md','CONTEXT.md','EXECUTION-POLICY.md','HOSTS.md','HUMAN-DECISIONS.md','PRIVACY.md','PROJECT-INTELLIGENCE.md','RELEASE.md','VERIFICATION.md','BENCHMARKS.md','IMPLEMENTATION-REPORT.md','TERMINOLOGY.md','PRODUCT-IDENTITY.md','FILESYSTEM-LAYOUT.md','STORAGE-ARCHITECTURE.md','STORAGE-OWNERSHIP-MATRIX.md','SKILL-ARTIFACT-OWNERSHIP.md','FINAL-ACCEPTANCE.md'}
+    assert {p.name for p in (ROOT/'docs').glob('*.md')}=={'ARCHITECTURE.md','INSTALLATION.md','SKILLS.md','VALIDATION.md','THREAT-MODEL.md','SOURCE-REUSE-MATRIX.md','BASELINE-RECEIPT.md','ARCHITECTURE-REALITY-MAP.md','CONTEXT.md','EXECUTION-POLICY.md','HOSTS.md','HUMAN-DECISIONS.md','PRIVACY.md','PROJECT-INTELLIGENCE.md','RELEASE.md','VERIFICATION.md','BENCHMARKS.md','IMPLEMENTATION-REPORT.md','TERMINOLOGY.md','PRODUCT-IDENTITY.md','FILESYSTEM-LAYOUT.md','STORAGE-ARCHITECTURE.md','STORAGE-OWNERSHIP-MATRIX.md','SKILL-ARTIFACT-OWNERSHIP.md','FINAL-ACCEPTANCE.md','HI-NAMING-NAMESPACE.md'}
 
 def test_semantic_contract_names_only():
     for rel in ['data/validation/implementation-coverage.json','data/validation/native-coverage.json','data/validation/flow-coverage.json','data/validation/flow-acceptance.json','data/validation/source-gates.json']:assert (ROOT/rel).is_file()
@@ -562,3 +562,101 @@ def test_release_builder_rejects_source_symlink(tmp_path):
     try:
         with pytest.raises(SystemExit,match='release source symlink is not allowed'):mod.collect(['skills'],[])
     finally:mod.KIT=old
+
+
+def test_r2_install_is_idempotent_once_setup_ownership_exists(tmp_path):
+    cfg=tmp_path/'opencode.json';cfg.write_text(json.dumps({'plugin':['foreign@1'],'theme':'mine'}))
+    first=run(ROOT/'scripts/native_plugin_setup.py','install',tmp_path);assert first.returncode==0
+    before=cfg.read_text()
+    second=run(ROOT/'scripts/native_plugin_setup.py','install',tmp_path);out=json.loads(second.stdout)
+    assert second.returncode==0 and out['status']=='NOOP' and out['reason']=='already-installed-owned'
+    assert cfg.read_text()==before
+    assert json.loads(cfg.read_text())['plugin']==['foreign@1','opencode-hi@0.1.0']
+
+
+def test_r2_owned_upgrade_and_one_step_rollback_preserve_foreign_config(tmp_path):
+    cfg=tmp_path/'opencode.json';cfg.write_text(json.dumps({'plugin':['foreign@1'],'mcp':{'x':{'type':'remote','url':'https://example.invalid'}}}))
+    assert run(ROOT/'scripts/native_plugin_setup.py','install',tmp_path,'--version','0.1.0').returncode==0
+    up=run(ROOT/'scripts/native_plugin_setup.py','upgrade',tmp_path,'--version','0.2.0');u=json.loads(up.stdout)
+    assert up.returncode==0 and u['status']=='APPLIED' and u['from_plugin_spec']=='opencode-hi@0.1.0' and u['to_plugin_spec']=='opencode-hi@0.2.0'
+    data=json.loads(cfg.read_text());assert data['plugin']==['foreign@1','opencode-hi@0.2.0'] and data['mcp']['x']['url']=='https://example.invalid'
+    assert (tmp_path/'.opencode/hi/provenance/setup-rollback.json').is_file()
+    rb=run(ROOT/'scripts/native_plugin_setup.py','rollback',tmp_path);r=json.loads(rb.stdout)
+    assert rb.returncode==0 and r['status']=='APPLIED' and r['rolled_back_operation']=='upgrade' and r['restored_plugin_spec']=='opencode-hi@0.1.0'
+    data=json.loads(cfg.read_text());assert data['plugin']==['foreign@1','opencode-hi@0.1.0'] and data['mcp']['x']['url']=='https://example.invalid'
+    own=json.loads((tmp_path/'.opencode/hi/provenance/setup.json').read_text());assert own['plugin_spec']=='opencode-hi@0.1.0'
+    assert not (tmp_path/'.opencode/hi/provenance/setup-rollback.json').exists()
+
+
+def test_r2_uninstall_rollback_restores_owned_registration_without_touching_foreign_state(tmp_path):
+    cfg=tmp_path/'opencode.json';cfg.write_text(json.dumps({'plugin':['a@1','b@1'],'theme':'user-theme','unknown':{'keep':True}}))
+    assert run(ROOT/'scripts/native_plugin_setup.py','install',tmp_path).returncode==0
+    un=run(ROOT/'scripts/native_plugin_setup.py','uninstall',tmp_path);u=json.loads(un.stdout)
+    assert un.returncode==0 and u['status']=='APPLIED' and u['rollback_available'] is True
+    assert json.loads(cfg.read_text())['plugin']==['a@1','b@1']
+    assert not (tmp_path/'.opencode/hi/provenance/setup.json').exists()
+    rb=run(ROOT/'scripts/native_plugin_setup.py','rollback',tmp_path);r=json.loads(rb.stdout)
+    assert rb.returncode==0 and r['rolled_back_operation']=='uninstall'
+    data=json.loads(cfg.read_text());assert data['plugin']==['a@1','b@1','opencode-hi@0.1.0']
+    assert data['theme']=='user-theme' and data['unknown']=={'keep':True}
+    assert (tmp_path/'.opencode/hi/provenance/setup.json').is_file()
+
+
+def test_r2_recover_completes_interrupted_upgrade_when_config_matches_recorded_after_state(tmp_path):
+    mod=load_module('native_plugin_setup_r2_recover',ROOT/'scripts/native_plugin_setup.py')
+    cfg=tmp_path/'opencode.json';cfg.write_text(json.dumps({'plugin':['foreign@1']}))
+    assert mod.install(tmp_path,'0.1.0')['status']=='APPLIED'
+    # consume the install rollback point so the synthetic interrupted upgrade is the only lifecycle edge under test
+    (tmp_path/mod.SETUP_ROLLBACK).unlink()
+    own=json.loads((tmp_path/mod.OWNERSHIP).read_text());before_text=cfg.read_text();data=json.loads(before_text);idx=data['plugin'].index('opencode-hi@0.1.0')
+    after=dict(data);after['plugin']=list(data['plugin']);after['plugin'][idx]='opencode-hi@0.2.0';after_text=mod.dump(after)
+    next_own=mod._ownership_doc(tmp_path,cfg,'opencode-hi@0.2.0',mod.sha_text(before_text),mod.sha_text(after_text),own.get('installed_at'))
+    tx=mod._lifecycle_record('upgrade',cfg,tmp_path,before_text,after_text,'opencode-hi@0.1.0','opencode-hi@0.2.0',idx,idx,own,next_own)
+    tx['status']='config-applied';mod._write_state(tmp_path/mod.SETUP_TRANSACTION,tx);mod._atomic_write_text(cfg,after_text)
+    # ownership is intentionally still old, modeling interruption after config replace
+    assert json.loads((tmp_path/mod.OWNERSHIP).read_text())['plugin_spec']=='opencode-hi@0.1.0'
+    rec=run(ROOT/'scripts/native_plugin_setup.py','recover',tmp_path);r=json.loads(rec.stdout)
+    assert rec.returncode==0 and r['status']=='RECOVERED' and r['disposition']=='completed-interrupted-operation'
+    assert json.loads((tmp_path/mod.OWNERSHIP).read_text())['plugin_spec']=='opencode-hi@0.2.0'
+    assert json.loads(cfg.read_text())['plugin']==['foreign@1','opencode-hi@0.2.0']
+    assert not (tmp_path/mod.SETUP_TRANSACTION).exists() and (tmp_path/mod.SETUP_ROLLBACK).exists()
+
+
+def test_r2_pending_transaction_blocks_new_mutation_until_recover(tmp_path):
+    mod=load_module('native_plugin_setup_r2_pending',ROOT/'scripts/native_plugin_setup.py')
+    assert mod.install(tmp_path,'0.1.0')['status']=='APPLIED'
+    cfg=tmp_path/'opencode.json';before=cfg.read_text();own=json.loads((tmp_path/mod.OWNERSHIP).read_text())
+    tx=mod._lifecycle_record('upgrade',cfg,tmp_path,before,before,'opencode-hi@0.1.0','opencode-hi@0.2.0',0,0,own,own);tx['status']='planned';mod._write_state(tmp_path/mod.SETUP_TRANSACTION,tx)
+    up=run(ROOT/'scripts/native_plugin_setup.py','upgrade',tmp_path,'--version','0.2.0');out=json.loads(up.stdout)
+    assert up.returncode==2 and out['status']=='BLOCKED' and out['reason']=='pending-setup-transaction-run-recover'
+    doc=run(ROOT/'scripts/native_plugin_setup.py','doctor',tmp_path);d=json.loads(doc.stdout)
+    assert doc.returncode==2 and d['status']=='FAIL' and d['lifecycle']['transaction_pending'] is True and 'pending-setup-transaction' in d['issues']
+
+
+def test_r2_rollback_fails_closed_after_unrelated_post_operation_config_drift(tmp_path):
+    cfg=tmp_path/'opencode.json';cfg.write_text(json.dumps({'plugin':['foreign@1'],'theme':'a'}))
+    assert run(ROOT/'scripts/native_plugin_setup.py','install',tmp_path).returncode==0
+    data=json.loads(cfg.read_text());data['theme']='user-changed-after-install';cfg.write_text(json.dumps(data))
+    rb=run(ROOT/'scripts/native_plugin_setup.py','rollback',tmp_path);out=json.loads(rb.stdout)
+    assert rb.returncode==2 and out['status']=='BLOCKED' and out['reason']=='setup-rollback-config-drift'
+    assert json.loads(cfg.read_text())['theme']=='user-changed-after-install'
+
+
+def test_r2_rollback_of_fresh_install_restores_absent_config_file(tmp_path):
+    cfg=tmp_path/'opencode.json';assert not cfg.exists()
+    ins=run(ROOT/'scripts/native_plugin_setup.py','install',tmp_path);assert ins.returncode==0 and cfg.exists()
+    rb=run(ROOT/'scripts/native_plugin_setup.py','rollback',tmp_path);out=json.loads(rb.stdout)
+    assert rb.returncode==0 and out['status']=='APPLIED' and out['rolled_back_operation']=='install'
+    assert not cfg.exists()
+    assert not (tmp_path/'.opencode/hi/provenance/setup.json').exists()
+
+
+def test_r2_install_lifecycle_receipt_covers_full_local_recovery_contract():
+    d=json.loads((ROOT/'data/validation/install-lifecycle-0.1.0.json').read_text())
+    assert d['schema']==2 and d['kind']=='LOCAL_CONFIG_LIFECYCLE_R2'
+    required={'install':'APPLIED','idempotent_install':'NOOP','upgrade':'APPLIED','rollback_upgrade':'APPLIED','uninstall':'APPLIED','rollback_uninstall':'APPLIED','recover_interrupted_upgrade':'RECOVERED'}
+    assert all(d['operations'][k]==v for k,v in required.items())
+    assert all(d['assertions'].values())
+    assert d['state_security']['setup_json_mode']=='0o600' and d['state_security']['rollback_mode_after_install']=='0o600'
+    assert d['state_security']['transaction_contains_config_body'] is False and d['state_security']['rollback_contains_config_body'] is False
+    assert (ROOT/'scripts/run-install-lifecycle.py').is_file()

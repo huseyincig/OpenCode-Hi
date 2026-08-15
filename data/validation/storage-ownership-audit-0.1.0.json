@@ -10,12 +10,15 @@
     "runtime_policy_auto_write": false,
     "skill_resources_skill_owned": true,
     "secrets_project_persisted": false,
-    "release_outputs_consumer_runtime": false
+    "release_outputs_consumer_runtime": false,
+    "setup_lifecycle_config_body_backups": false,
+    "setup_transaction_cleared_after_normal_completion": true
   },
   "implemented_project_durable_paths": [
     ".opencode/hi/policy/routing.json",
     ".opencode/hi/policy/authority.json",
-    ".opencode/hi/provenance/setup.json"
+    ".opencode/hi/provenance/setup.json",
+    ".opencode/hi/provenance/setup-rollback.json"
   ],
   "runtime_state_location": "project-keyed OS/OpenCode state directory",
   "deferred_persistence": [
@@ -23,5 +26,8 @@
     "ArtifactStore durable on-disk store",
     "Semantic Context persistent index"
   ],
-  "note": "Deferred stores remain in-memory in 0.1.0; no speculative empty hierarchy is created."
+  "note": "R2 setup lifecycle keeps active ownership plus one bounded rollback point under the existing setup owner. The transient project-local transaction contains only registration/hash/index/ownership metadata for crash recovery and is removed after normal completion; user config bodies/secrets are not copied into setup state.",
+  "implemented_project_transient_paths": [
+    ".opencode/hi/provenance/setup-transaction.json"
+  ]
 }

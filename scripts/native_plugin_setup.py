@@ -10,7 +10,10 @@ PACKAGE='opencode-hi'
 REPO='https://github.com/huseyincig/OpenCode-Hi.git'
 VERSION=(ROOT/'VERSION').read_text(encoding='utf-8').strip()
 OWNERSHIP=Path('.opencode/hi/provenance/setup.json')
+SETUP_TRANSACTION=Path('.opencode/hi/provenance/setup-transaction.json')
+SETUP_ROLLBACK=Path('.opencode/hi/provenance/setup-rollback.json')
 OWNERSHIP_SCHEMA=2
+SETUP_STATE_SCHEMA=1
 HI_PROJECT_DIR=Path('.opencode/hi')
 ROUTING_CONFIG=HI_PROJECT_DIR/'policy'/'routing.json'
 
@@ -49,6 +52,80 @@ def load(path:Path)->dict:
     try:return json.loads(path.read_text(encoding='utf-8'))
     except Exception:return {}
 def dump(d:dict)->str:return json.dumps(d,ensure_ascii=False,indent=2)+'\n'
+
+
+def _mode_for(path:Path,default:int)->int:
+    try:return path.stat().st_mode & 0o777
+    except OSError:return default
+
+def _atomic_write_text(path:Path,text:str,mode:int|None=None)->None:
+    path.parent.mkdir(parents=True,exist_ok=True)
+    chosen=_mode_for(path,0o644) if mode is None else mode
+    tmp=path.with_name(f'.{path.name}.tmp-{os.getpid()}-{time.time_ns()}')
+    try:
+        fd=os.open(tmp,os.O_WRONLY|os.O_CREAT|os.O_EXCL,chosen)
+        with os.fdopen(fd,'w',encoding='utf-8') as f:
+            f.write(text);f.flush();os.fsync(f.fileno())
+        os.chmod(tmp,chosen);os.replace(tmp,path)
+        try:
+            dfd=os.open(path.parent,os.O_RDONLY);os.fsync(dfd);os.close(dfd)
+        except OSError:pass
+    finally:
+        try:tmp.unlink()
+        except FileNotFoundError:pass
+
+def _write_state(path:Path,value:dict)->None:_atomic_write_text(path,dump(value),0o600)
+def _remove_state(path:Path)->None:
+    try:path.unlink()
+    except FileNotFoundError:pass
+
+def _hi_entries(plugins:list[str])->list[tuple[int,str]]:
+    return [(i,x) for i,x in enumerate(plugins) if is_hi(x)]
+
+def _set_hi_registration(data:dict,before_spec:str|None,after_spec:str|None,before_index:int|None)->dict:
+    out=dict(data);plugins=_plugins(out);hits=_hi_entries(plugins)
+    expected=[] if before_spec is None else [before_spec]
+    if [x for _,x in hits]!=expected:
+        raise ValueError(f'current Hi registration does not match expected lifecycle state: expected={expected} observed={[x for _,x in hits]}')
+    if before_spec is not None:
+        idx=hits[0][0]
+        if after_spec is None:plugins.pop(idx)
+        else:plugins[idx]=after_spec
+    elif after_spec is not None:
+        idx=len(plugins) if before_index is None else max(0,min(len(plugins),before_index))
+        plugins.insert(idx,after_spec)
+    out['plugin']=plugins
+    return out
+
+def _ownership_doc(project:Path,cfg:Path,plugin_spec:str,before_sha:str,after_sha:str,installed_at:int|None=None)->dict:
+    return {'schema':OWNERSHIP_SCHEMA,'product':PRODUCT,'short':SHORT,'plugin_spec':plugin_spec,'managed':{'config':{'path':cfg.relative_to(project).as_posix(),'before_sha256':before_sha,'after_sha256':after_sha,'plugin_spec':plugin_spec}},'preserved':{'user_plugins':True},'installed_at':installed_at or int(time.time())}
+
+def _lifecycle_record(operation:str,cfg:Path,project:Path,before_text:str,after_text:str,before_spec:str|None,after_spec:str|None,before_index:int|None,after_index:int|None,before_ownership:dict|None,next_ownership:dict|None,before_config_existed:bool=True)->dict:
+    return {'schema':SETUP_STATE_SCHEMA,'type':'hi-setup-lifecycle','operation':operation,'config_path':cfg.relative_to(project).as_posix(),'before_config_existed':before_config_existed,'after_config_existed':True,'before_config_sha256':sha_text(before_text),'after_config_sha256':sha_text(after_text),'before_plugin_spec':before_spec,'after_plugin_spec':after_spec,'before_index':before_index,'after_index':after_index,'before_ownership':before_ownership,'next_ownership':next_ownership,'created_at':int(time.time())}
+
+def _pending_transaction(project:Path)->dict|None:
+    path=project/SETUP_TRANSACTION
+    return load(path) if path.exists() else None
+
+def _mutation_guard(project:Path,*paths:Path)->dict|None:
+    guard=assert_managed_paths(project,*paths,project/SETUP_TRANSACTION,project/SETUP_ROLLBACK)
+    if guard:return guard
+    if (project/SETUP_TRANSACTION).exists():return {'status':'BLOCKED','product':PRODUCT,'reason':'pending-setup-transaction-run-recover','transaction':str(project/SETUP_TRANSACTION)}
+    return None
+
+def _apply_lifecycle(project:Path,operation:str,cfg:Path,before_text:str,after_doc:dict,before_spec:str|None,after_spec:str|None,before_index:int|None,after_index:int|None,before_ownership:dict|None,next_ownership:dict|None)->dict:
+    before_exists=cfg.exists()
+    after_text=dump(after_doc)
+    tx=_lifecycle_record(operation,cfg,project,before_text,after_text,before_spec,after_spec,before_index,after_index,before_ownership,next_ownership,before_exists)
+    tx['status']='planned';_write_state(project/SETUP_TRANSACTION,tx)
+    _atomic_write_text(cfg,after_text)
+    tx['status']='config-applied';_write_state(project/SETUP_TRANSACTION,tx)
+    if next_ownership is None:_remove_state(project/OWNERSHIP)
+    else:_write_state(project/OWNERSHIP,next_ownership)
+    tx['status']='ownership-applied';_write_state(project/SETUP_TRANSACTION,tx)
+    rollback=dict(tx);rollback['type']='hi-setup-rollback';rollback['status']='committed';rollback['committed_at']=int(time.time())
+    _write_state(project/SETUP_ROLLBACK,rollback);_remove_state(project/SETUP_TRANSACTION)
+    return {'status':'APPLIED','operation':operation,'config':str(cfg),'plugin_spec':after_spec,'rollback_available':True,'restart_required':True}
 
 def managed_path_safe(project:Path,path:Path)->bool:
     root=project.resolve()
@@ -92,56 +169,117 @@ def plan(project:Path,version:str|None=None)->dict:
     return {'status':status,'product':PRODUCT,'short':SHORT,'project':str(project),'config':str(cfg),'plugin_spec':target,'conflicting_hi_specs':foreign,'before_plugins':plugins,'after_plugins':next_plugins,'changed':plugins!=next_plugins,'rendered':dump(after)}
 
 def install(project:Path,version:str|None=None)->dict:
-    p=plan(project,version)
-    if p['status']!='READY':p.pop('rendered',None);return p
-    project.mkdir(parents=True,exist_ok=True);cfg=Path(p['config']);own=project/OWNERSHIP;guard=assert_managed_paths(project,cfg,own);
+    target=hi_spec(version);cfg=config_path(project);own_path=project/OWNERSHIP
+    guard=_mutation_guard(project,cfg,own_path)
     if guard:return guard
-    cfg.parent.mkdir(parents=True,exist_ok=True)
-    before=cfg.read_text(encoding='utf-8') if cfg.exists() else ''
-    cfg.write_text(p['rendered'],encoding='utf-8')
-    own.parent.mkdir(parents=True,exist_ok=True)
-    own.write_text(dump({'schema':OWNERSHIP_SCHEMA,'product':PRODUCT,'short':SHORT,'plugin_spec':p['plugin_spec'],'managed':{'config':{'path':cfg.relative_to(project).as_posix(),'before_sha256':sha_text(before),'after_sha256':sha_text(p['rendered']),'plugin_spec':p['plugin_spec']}},'preserved':{'user_plugins':True},'installed_at':int(time.time())}),encoding='utf-8')
-    return {'status':'APPLIED','config':str(cfg),'plugin_spec':p['plugin_spec'],'restart_required':True,'next':'Restart OpenCode, then verify HI tools, agents, native skills and role-model routing in the runtime.'}
+    if cfg.suffix=='.jsonc':return {'status':'BLOCKED','product':PRODUCT,'reason':'jsonc-safe-mutation-not-supported','config':str(cfg)}
+    data=load(cfg);plugins=_plugins(data);hits=_hi_entries(plugins);own=load(own_path) if own_path.exists() else {}
+    owned_spec=((own.get('managed') or {}).get('config') or {}).get('plugin_spec')
+    if owned_spec:
+        if [x for _,x in hits]==[owned_spec] and owned_spec==target:return {'status':'NOOP','product':PRODUCT,'config':str(cfg),'plugin_spec':target,'reason':'already-installed-owned'}
+        return {'status':'BLOCKED','product':PRODUCT,'reason':'existing-owned-install-use-upgrade','config':str(cfg),'owned_plugin_spec':owned_spec,'target_plugin_spec':target}
+    if len(hits)>1 or (hits and hits[0][1]!=target):return {'status':'BLOCKED','product':PRODUCT,'reason':'conflicting-hi-registration','config':str(cfg),'conflicting_hi_specs':[x for _,x in hits]}
+    project.mkdir(parents=True,exist_ok=True);cfg.parent.mkdir(parents=True,exist_ok=True)
+    before_text=cfg.read_text(encoding='utf-8') if cfg.exists() else ''
+    before_spec=hits[0][1] if hits else None;before_index=hits[0][0] if hits else None
+    after_doc=dict(data);after_plugins=list(plugins)
+    if not hits:after_plugins.append(target)
+    after_doc['plugin']=after_plugins;after_text=dump(after_doc)
+    after_index=next(i for i,x in enumerate(after_plugins) if x==target)
+    next_ownership=_ownership_doc(project,cfg,target,sha_text(before_text),sha_text(after_text))
+    out=_apply_lifecycle(project,'install',cfg,before_text,after_doc,before_spec,target,before_index,after_index,None,next_ownership)
+    out.update({'product':PRODUCT,'next':'Restart OpenCode, then verify HI tools, agents, native skills and role-model routing in the runtime.'})
+    return out
+
+def upgrade(project:Path,version:str|None=None)->dict:
+    cfg=config_path(project);own_path=project/OWNERSHIP;target=hi_spec(version)
+    guard=_mutation_guard(project,cfg,own_path)
+    if guard:return guard
+    if cfg.suffix=='.jsonc':return {'status':'BLOCKED','product':PRODUCT,'reason':'jsonc-safe-mutation-not-supported','config':str(cfg)}
+    if not own_path.exists():return {'status':'BLOCKED','product':PRODUCT,'reason':'ownership-proof-missing','config':str(cfg)}
+    own=load(own_path);managed=(own.get('managed') or {}).get('config') or {};owned_spec=managed.get('plugin_spec')
+    if not owned_spec:return {'status':'BLOCKED','product':PRODUCT,'reason':'ownership-proof-invalid','config':str(cfg)}
+    data=load(cfg);plugins=_plugins(data);hits=_hi_entries(plugins)
+    if [x for _,x in hits]!=[owned_spec]:return {'status':'BLOCKED','product':PRODUCT,'reason':'owned-plugin-drift','config':str(cfg),'owned_plugin_spec':owned_spec,'observed_hi_specs':[x for _,x in hits]}
+    if owned_spec==target:return {'status':'NOOP','product':PRODUCT,'config':str(cfg),'plugin_spec':target,'reason':'already-at-target'}
+    before_text=cfg.read_text(encoding='utf-8') if cfg.exists() else dump(data);idx=hits[0][0]
+    after_doc=dict(data);after_plugins=list(plugins);after_plugins[idx]=target;after_doc['plugin']=after_plugins;after_text=dump(after_doc)
+    next_ownership=_ownership_doc(project,cfg,target,sha_text(before_text),sha_text(after_text),own.get('installed_at'))
+    out=_apply_lifecycle(project,'upgrade',cfg,before_text,after_doc,owned_spec,target,idx,idx,own,next_ownership)
+    out.update({'product':PRODUCT,'from_plugin_spec':owned_spec,'to_plugin_spec':target})
+    return out
 
 def uninstall(project:Path)->dict:
-    cfg=config_path(project);own_path=project/OWNERSHIP;guard=assert_managed_paths(project,cfg,own_path)
+    cfg=config_path(project);own_path=project/OWNERSHIP
+    guard=_mutation_guard(project,cfg,own_path)
     if guard:return guard
-    data=load(cfg);plugins=_plugins(data);own=load(own_path) if own_path.exists() else {}
-    managed=(own.get('managed') or {}).get('config') or {}
-    owned_spec=managed.get('plugin_spec')
+    data=load(cfg);plugins=_plugins(data);own=load(own_path) if own_path.exists() else {};managed=(own.get('managed') or {}).get('config') or {};owned_spec=managed.get('plugin_spec')
     if cfg.suffix=='.jsonc':return {'status':'BLOCKED','product':PRODUCT,'reason':'jsonc-safe-mutation-not-supported','config':str(cfg)}
     if not owned_spec:
-        # No ownership proof: never delete an arbitrary Hi registration.
         found=[x for x in plugins if is_hi(x)]
         return {'status':'NOOP' if not found else 'BLOCKED','product':PRODUCT,'config':str(cfg),'reason':'ownership-proof-missing' if found else 'not-installed-by-hi','removed':[]}
-    if owned_spec not in plugins:
-        # User changed/adopted the registration after install. Preserve it.
-        if own_path.exists(): own_path.unlink()
+    hits=_hi_entries(plugins)
+    if [x for _,x in hits]!=[owned_spec]:
+        _remove_state(own_path)
         return {'status':'PRESERVED','product':PRODUCT,'config':str(cfg),'removed':[],'reason':'owned-plugin-spec-no-longer-present; current Hi registration treated as user-owned','restart_required':False}
-    data['plugin']=[x for x in plugins if x!=owned_spec]
-    cfg.write_text(dump(data),encoding='utf-8')
-    # Remove only setup-owned/configuration surfaces. Durable project knowledge,
-    # artifacts, and project-created skills are separate ownership classes and
-    # are intentionally preserved unless a future explicit purge operation owns them.
-    removed_paths=[]
-    for rel in (OWNERSHIP,):
-        path=project/rel
-        if path.exists() and path.is_file():path.unlink();removed_paths.append(rel.as_posix())
-    for rel in (HI_PROJECT_DIR/'provenance', HI_PROJECT_DIR):
-        path=project/rel
-        try:path.rmdir()
-        except OSError:pass
-    opencode_dir=project/'.opencode'
-    try:opencode_dir.rmdir()
-    except OSError:pass
+    before_text=cfg.read_text(encoding='utf-8') if cfg.exists() else dump(data);idx=hits[0][0]
+    after_doc=dict(data);after_plugins=list(plugins);after_plugins.pop(idx);after_doc['plugin']=after_plugins
+    out=_apply_lifecycle(project,'uninstall',cfg,before_text,after_doc,owned_spec,None,idx,None,own,None)
     preserved=[]
     for rel in (HI_PROJECT_DIR/'policy',HI_PROJECT_DIR/'project-intelligence',HI_PROJECT_DIR/'artifacts',Path('.opencode/skills')):
         if (project/rel).exists():preserved.append(rel.as_posix())
-    return {'status':'APPLIED','product':PRODUCT,'config':str(cfg),'removed':[owned_spec],'removed_owned_paths':removed_paths,'preserved_project_data':preserved,'restart_required':True}
+    out.update({'product':PRODUCT,'removed':[owned_spec],'removed_owned_paths':[OWNERSHIP.as_posix()],'preserved_project_data':preserved,'rollback_state':SETUP_ROLLBACK.as_posix()})
+    return out
+
+def rollback(project:Path)->dict:
+    cfg=config_path(project);own_path=project/OWNERSHIP;rb_path=project/SETUP_ROLLBACK
+    guard=_mutation_guard(project,cfg,own_path,rb_path)
+    if guard:return guard
+    if not rb_path.exists():return {'status':'NOOP','product':PRODUCT,'reason':'no-setup-rollback-point'}
+    rb=load(rb_path)
+    if rb.get('schema')!=SETUP_STATE_SCHEMA or rb.get('type')!='hi-setup-rollback' or rb.get('status')!='committed':return {'status':'BLOCKED','product':PRODUCT,'reason':'invalid-setup-rollback-state'}
+    current_exists=cfg.exists();current_text=cfg.read_text(encoding='utf-8') if current_exists else ''
+    if current_exists is not True or sha_text(current_text)!=rb.get('after_config_sha256'):return {'status':'BLOCKED','product':PRODUCT,'reason':'setup-rollback-config-drift','config':str(cfg)}
+    data=load(cfg)
+    try:before_doc=_set_hi_registration(data,rb.get('after_plugin_spec'),rb.get('before_plugin_spec'),rb.get('before_index'))
+    except ValueError as e:return {'status':'BLOCKED','product':PRODUCT,'reason':'setup-rollback-registration-drift','detail':str(e)}
+    if rb.get('before_config_existed') is False:
+        try:cfg.unlink()
+        except FileNotFoundError:pass
+    else:_atomic_write_text(cfg,dump(before_doc))
+    before_ownership=rb.get('before_ownership')
+    if before_ownership is None:_remove_state(own_path)
+    elif isinstance(before_ownership,dict):_write_state(own_path,before_ownership)
+    else:return {'status':'BLOCKED','product':PRODUCT,'reason':'invalid-setup-rollback-ownership'}
+    _remove_state(rb_path)
+    return {'status':'APPLIED','product':PRODUCT,'operation':'rollback','rolled_back_operation':rb.get('operation'),'config':str(cfg),'restored_plugin_spec':rb.get('before_plugin_spec'),'rollback_available':False,'restart_required':True}
+
+def recover(project:Path)->dict:
+    cfg=config_path(project);own_path=project/OWNERSHIP;tx_path=project/SETUP_TRANSACTION
+    guard=assert_managed_paths(project,cfg,own_path,tx_path,project/SETUP_ROLLBACK)
+    if guard:return guard
+    if not tx_path.exists():return {'status':'NOOP','product':PRODUCT,'reason':'no-pending-setup-transaction'}
+    tx=load(tx_path)
+    if tx.get('schema')!=SETUP_STATE_SCHEMA or tx.get('type')!='hi-setup-lifecycle' or tx.get('status') not in ('planned','config-applied','ownership-applied'):
+        return {'status':'BLOCKED','product':PRODUCT,'reason':'invalid-pending-setup-transaction'}
+    current_exists=cfg.exists();current_text=cfg.read_text(encoding='utf-8') if current_exists else ''
+    current_sha=sha_text(current_text);before_sha=tx.get('before_config_sha256');after_sha=tx.get('after_config_sha256')
+    if current_exists==bool(tx.get('before_config_existed')) and current_sha==before_sha:
+        # Nothing reached the config boundary. Preserve the original state and clear only the stale journal.
+        _remove_state(tx_path);return {'status':'RECOVERED','product':PRODUCT,'disposition':'rolled-back-before-config','operation':tx.get('operation')}
+    if current_exists is not True or current_sha!=after_sha:return {'status':'BLOCKED','product':PRODUCT,'reason':'pending-setup-transaction-config-drift','operation':tx.get('operation')}
+    next_ownership=tx.get('next_ownership')
+    if next_ownership is None:_remove_state(own_path)
+    elif isinstance(next_ownership,dict):_write_state(own_path,next_ownership)
+    else:return {'status':'BLOCKED','product':PRODUCT,'reason':'invalid-pending-setup-ownership'}
+    rollback_doc=dict(tx);rollback_doc['type']='hi-setup-rollback';rollback_doc['status']='committed';rollback_doc['committed_at']=int(time.time())
+    _write_state(project/SETUP_ROLLBACK,rollback_doc);_remove_state(tx_path)
+    return {'status':'RECOVERED','product':PRODUCT,'disposition':'completed-interrupted-operation','operation':tx.get('operation'),'rollback_available':True,'restart_required':True}
 
 def doctor(project:Path)->dict:
     cfg=config_path(project);data=load(cfg);plugins=_plugins(data);hi=[x for x in plugins if is_hi(x)]
     own_path=project/OWNERSHIP;own=load(own_path) if own_path.exists() else {}
+    transaction_path=project/SETUP_TRANSACTION;rollback_path=project/SETUP_ROLLBACK
     managed=(own.get('managed') or {}).get('config') or {}
     recorded_after=managed.get('after_sha256')
     config_drift=None
@@ -154,7 +292,8 @@ def doctor(project:Path)->dict:
     if hi and not own_path.exists():warnings.append('ownership-proof-missing')
     if config_drift is True:warnings.append('managed-config-drift')
     if routing_path.exists() and routing_schema!=ROUTING_SCHEMA:issues.append('unsupported-routing-schema')
-    return {'status':'FAIL' if issues else ('WARN' if warnings else 'OK'),'product':PRODUCT,'short':SHORT,'config':str(cfg),'hi_specs':hi,'ownership':{'state':'missing' if not own_path.exists() else ('healthy' if own else 'invalid'),'schema':own.get('schema'),'config_drift':config_drift},'routing':{'path':str(routing_path),'schema':routing_schema,'valid':not routing_path.exists() or routing_schema==ROUTING_SCHEMA},'issues':issues,'warnings':warnings,'note':'Registration/ownership doctor is static; actual plugin/agent/native-skill/model load must be verified in OpenCode runtime.'}
+    if transaction_path.exists():issues.append('pending-setup-transaction')
+    return {'status':'FAIL' if issues else ('WARN' if warnings else 'OK'),'product':PRODUCT,'short':SHORT,'config':str(cfg),'hi_specs':hi,'ownership':{'state':'missing' if not own_path.exists() else ('healthy' if own else 'invalid'),'schema':own.get('schema'),'config_drift':config_drift},'lifecycle':{'transaction_pending':transaction_path.exists(),'rollback_available':rollback_path.exists()},'routing':{'path':str(routing_path),'schema':routing_schema,'valid':not routing_path.exists() or routing_schema==ROUTING_SCHEMA},'issues':issues,'warnings':warnings,'note':'Registration/ownership doctor is static; actual plugin/agent/native-skill/model load must be verified in OpenCode runtime.'}
 
 def discover_available_models()->list[str]:
     """Best-effort enumeration of currently available models.
@@ -386,7 +525,7 @@ def reconfigure(project:Path,*,print_only:bool=False,execution_policy:str|None=N
 
 def main()->int:
     ap=argparse.ArgumentParser(description=f'{PRODUCT} native OpenCode plugin setup')
-    ap.add_argument('command',choices=['plan','install','doctor','uninstall','role-models','reconfigure']);ap.add_argument('project',nargs='?',default='.');ap.add_argument('--version')
+    ap.add_argument('command',choices=['plan','install','upgrade','doctor','uninstall','rollback','recover','role-models','reconfigure']);ap.add_argument('project',nargs='?',default='.');ap.add_argument('--version')
     ap.add_argument('--list-available',action='store_true',help='For role-models: list available models and exit')
     ap.add_argument('--defaults',action='store_true',help='For role-models: write sensible defaults without prompting')
     ap.add_argument('--print',action='store_true',help='For role-models: print current config and exit')
@@ -413,8 +552,11 @@ def main()->int:
     cmds={
       'plan':lambda:plan(project,a.version),
       'install':lambda:install(project,a.version),
+      'upgrade':lambda:upgrade(project,a.version),
       'doctor':lambda:doctor(project),
       'uninstall':lambda:uninstall(project),
+      'rollback':lambda:rollback(project),
+      'recover':lambda:recover(project),
       'role-models':lambda:role_models(project,list_available=a.list_available,defaults=a.defaults,print_only=a.print,sets=a.sets,variants=a.variants,policy=a.policy),
       'reconfigure':lambda:reconfigure(project,print_only=a.print,execution_policy=a.execution_policy,primary_mode=a.primary_mode,routing_strategy=a.routing_strategy,allow_providers=a.allow_providers,deny_models=a.deny_models,max_fallbacks=a.max_fallbacks,parallel_state=a.parallel_state,parallel_max=a.parallel_max,provider_limits=a.provider_limit,model_limits=a.model_limit,profile_target=a.profile_target,specialist_threshold=a.specialist_threshold,review_threshold=a.review_threshold,team_state=a.team_state,team_max_members=a.team_max_members,team_wall_minutes=a.team_wall_minutes),
     }

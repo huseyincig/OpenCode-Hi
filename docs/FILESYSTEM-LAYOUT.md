@@ -51,7 +51,7 @@ Package-based installation registers the plugin through OpenCode's package/plugi
 
 ## Runtime and transient data
 
-Secrets are never persisted in project files. Mission-survival state is correctness-required across compaction/restart but is runtime/session data, not project knowledge. It is stored in a project-keyed OS/OpenCode state location (see `STORAGE-ARCHITECTURE.md`), never under the consumer repository. Transient lifecycle journals and process metadata use memory or OS temporary/runtime locations. Caches and logs must use OpenCode/OS cache or data locations when introduced.
+Secrets are never persisted in project files. Mission-survival state is correctness-required across compaction/restart but is runtime/session data, not project knowledge. It is stored in a project-keyed OS/OpenCode state location (see `STORAGE-ARCHITECTURE.md`), never under the consumer repository. Runtime/process transient lifecycle journals use memory or OS temporary/runtime locations. The installer is the deliberate exception: `.opencode/hi/provenance/setup-transaction.json` is project-local only while a registration mutation needs cross-process crash recovery, contains no config body/secrets, and is removed on normal completion/recovery. Caches and logs must use OpenCode/OS cache or data locations when introduced.
 
 Projects that version `.opencode/` should explicitly decide whether durable Hi policy/provenance belongs in version control. Runtime/session state is outside the repository and secret material must never be committed.
 
@@ -61,6 +61,6 @@ Global registration must use OpenCode's global configuration hierarchy. Persiste
 
 ## Uninstall ownership
 
-Uninstall removes only the OpenCode-Hi plugin registration plus setup-owned `.opencode/hi/provenance/setup.json`. It preserves independently-owned `.opencode/hi/policy/` (including routing and Authority projection), methodology policy/provenance, retained `.opencode/hi/project-intelligence/`, `.opencode/hi/artifacts/`, project-created `.opencode/skills/`, unrelated `opencode.json` fields, foreign plugins, MCP configuration, themes, OpenCode-native `.opencode/*` directories, and unrelated project-root files. Durable project knowledge/artifacts require an explicit purge/delete operation rather than being coupled to plugin uninstall.
+Uninstall removes the OpenCode-Hi plugin registration plus active setup-owned `.opencode/hi/provenance/setup.json`; it retains one bounded `.opencode/hi/provenance/setup-rollback.json` registration rollback point and leaves no transaction journal after normal completion. The rollback metadata contains no copied config body or secrets. It preserves independently-owned `.opencode/hi/policy/` (including routing and Authority projection), methodology policy/provenance, retained `.opencode/hi/project-intelligence/`, `.opencode/hi/artifacts/`, project-created `.opencode/skills/`, unrelated `opencode.json` fields, foreign plugins, MCP configuration, themes, OpenCode-native `.opencode/*` directories, and unrelated project-root files. Durable project knowledge/artifacts require an explicit purge/delete operation rather than being coupled to plugin uninstall.
 
 Filesystem hygiene is a release gate and is covered by install, doctor, reconfigure, and uninstall tests.

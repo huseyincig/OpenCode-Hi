@@ -1,104 +1,50 @@
 {
-  "schema": 1,
+  "schema": 2,
   "release": "0.1.0",
-  "kind": "LOCAL_CONFIG_LIFECYCLE",
-  "claim_boundary": "Local filesystem/config lifecycle only. No OpenCode binary was available, so plugin-loader/runtime acceptance is not claimed.",
-  "steps": {
-    "doctor-reconfigured": {
-      "status": "OK",
-      "product": "OpenCode-Hi",
-      "short": "HI",
-      "config": "/tmp/tmp.fpphWd43Ij/project/opencode.json",
-      "hi_specs": [
-        "opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git#0123456789abcdef0123456789abcdef01234567"
-      ],
-      "ownership": {
-        "state": "healthy",
-        "schema": 2,
-        "config_drift": false
-      },
-      "routing": {
-        "path": "/tmp/tmp.fpphWd43Ij/project/.opencode/hi/policy/routing.json",
-        "schema": 1,
-        "valid": true
-      },
-      "issues": [],
-      "warnings": [],
-      "note": "Registration/ownership doctor is static; actual plugin/agent/native-skill/model load must be verified in OpenCode runtime."
-    },
-    "uninstall": {
-      "status": "APPLIED",
-      "product": "OpenCode-Hi",
-      "config": "/tmp/tmp.fpphWd43Ij/project/opencode.json",
-      "removed": [
-        "opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git#0123456789abcdef0123456789abcdef01234567"
-      ],
-      "restart_required": true
-    },
-    "reconfigure": {
-      "status": "APPLIED",
-      "product": "OpenCode-Hi",
-      "config": "/tmp/tmp.fpphWd43Ij/project/opencode.json",
-      "project_config": "/tmp/tmp.fpphWd43Ij/project/.opencode/hi/policy/routing.json",
-      "routing_config": "/tmp/tmp.fpphWd43Ij/project/.opencode/hi/policy/routing.json",
-      "changed": [
-        "primaryMode",
-        "parallel.enabled",
-        "parallel.max",
-        "routing.maxFallbacks"
-      ],
-      "primaryMode": "working-manager",
-      "restart_required": true,
-      "note": "Only explicitly supplied HI settings were changed in the project-owned HI config. Native OpenCode config, user plugins/MCP/unknown fields were not mutated."
-    },
-    "doctor-installed": {
-      "status": "OK",
-      "product": "OpenCode-Hi",
-      "short": "HI",
-      "config": "/tmp/tmp.fpphWd43Ij/project/opencode.json",
-      "hi_specs": [
-        "opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git#0123456789abcdef0123456789abcdef01234567"
-      ],
-      "ownership": {
-        "state": "healthy",
-        "schema": 2,
-        "config_drift": false
-      },
-      "routing": {
-        "path": "/tmp/tmp.fpphWd43Ij/project/.opencode/hi/policy/routing.json",
-        "schema": null,
-        "valid": true
-      },
-      "issues": [],
-      "warnings": [],
-      "note": "Registration/ownership doctor is static; actual plugin/agent/native-skill/model load must be verified in OpenCode runtime."
-    },
-    "plan": {
-      "status": "READY",
-      "product": "OpenCode-Hi",
-      "short": "HI",
-      "project": "/tmp/tmp.fpphWd43Ij/project",
-      "config": "/tmp/tmp.fpphWd43Ij/project/opencode.json",
-      "plugin_spec": "opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git#0123456789abcdef0123456789abcdef01234567",
-      "conflicting_hi_specs": [],
-      "before_plugins": [
-        "user-plugin@1"
-      ],
-      "after_plugins": [
-        "user-plugin@1",
-        "opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git#0123456789abcdef0123456789abcdef01234567"
-      ],
-      "changed": true
-    },
-    "install": {
-      "status": "APPLIED",
-      "config": "/tmp/tmp.fpphWd43Ij/project/opencode.json",
-      "plugin_spec": "opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git#0123456789abcdef0123456789abcdef01234567",
-      "restart_required": true,
-      "next": "Restart OpenCode, then verify HI tools, agents, native skills and role-model routing in the runtime."
-    }
+  "kind": "LOCAL_CONFIG_LIFECYCLE_R2",
+  "claim_boundary": "Local project config/setup lifecycle only. This receipt proves install/reconfigure/owned upgrade/rollback/uninstall/interrupted-transaction recovery and preservation semantics; it is not npm publication or external OpenCode runtime acceptance.",
+  "operations": {
+    "plan": "READY",
+    "install": "APPLIED",
+    "idempotent_install": "NOOP",
+    "upgrade": "APPLIED",
+    "rollback_upgrade": "APPLIED",
+    "reconfigure": "APPLIED",
+    "doctor_installed": "OK",
+    "uninstall": "APPLIED",
+    "rollback_uninstall": "APPLIED",
+    "doctor_restored": "OK",
+    "final_uninstall": "APPLIED",
+    "recover_interrupted_upgrade": "RECOVERED"
   },
-  "final_user_config_preserved": true,
-  "external_host_status": "PENDING_EXTERNAL",
-  "external_host_reason": "opencode binary unavailable in execution environment"
+  "assertions": {
+    "upgrade_target_observed": true,
+    "upgrade_rollback_restored_0_1_0": true,
+    "uninstall_removed_only_owned_registration": true,
+    "uninstall_rollback_restored_registration": true,
+    "foreign_config_preserved_through_upgrade_rollback": true,
+    "foreign_config_preserved_through_uninstall": true,
+    "foreign_config_preserved_after_final_uninstall": true,
+    "final_hi_registration_absent": true,
+    "normal_transaction_journal_cleaned": true,
+    "interrupted_upgrade_recovered_to_target": true,
+    "recovery_transaction_cleaned": true,
+    "recovery_published_one_rollback_point": true
+  },
+  "state_security": {
+    "setup_json_mode": "0o600",
+    "rollback_mode_after_install": "0o600",
+    "rollback_mode_after_final_uninstall": "0o600",
+    "transaction_contains_config_body": false,
+    "rollback_contains_config_body": false,
+    "state_contains_only_registration_identity_hash_index_and_setup_ownership_metadata": true
+  },
+  "ownership": {
+    "active_setup": ".opencode/hi/provenance/setup.json",
+    "transient_transaction": ".opencode/hi/provenance/setup-transaction.json",
+    "bounded_rollback": ".opencode/hi/provenance/setup-rollback.json",
+    "foreign_config_owner": "user/OpenCode",
+    "project_policy_owner": "independent Hi policy owners"
+  },
+  "external_host_status": "SEPARATE_T3_BOUNDARY"
 }
