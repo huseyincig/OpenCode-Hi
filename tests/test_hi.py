@@ -1196,3 +1196,19 @@ def test_prompt_b_packed_setup_fresh_consumer_smoke_is_real_tarball_bound():
     assert d['fresh_consumer']['module_import_rc']==0 or d['fresh_consumer']['module_import_teardown_noise'] is True
     assert 'exact OpenCode material runtime execution belongs to PROMPT B section 26' in d['claim_boundary']
     assert (ROOT/'scripts/run-packed-setup-smoke.py').is_file()
+
+
+def test_prompt_b_packaging_fresh_consumer_audit_is_exact_host_and_source_tree_independent():
+    d=json.loads((ROOT/'data/validation/prompt-b-packaging-fresh-consumer.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_PACKAGING_FRESH_CONSUMER_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['section']==26 and d['status']=='PASS'
+    assert d['violations']==[] and d['summary']=={'required':8,'covered':8,'violations':0}
+    for row in d['invariants']:
+        owner=ROOT/row['owner'];proof=ROOT/row['proof'];assert owner.is_file() and proof.is_file()
+        assert hashlib.sha256(owner.read_bytes()).hexdigest()==row['owner_sha256']
+        assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
+        assert row['owner_anchor'] in owner.read_text(errors='replace') and row['proof_anchor'] in proof.read_text(errors='replace')
+    assert all(d['static_guards'].values())
+    a=json.loads((ROOT/d['acceptance_receipt']).read_text());assert a['status']=='PASS' and a['host']=={'opencode':'1.18.18','platform':'linux','architecture':'aarch64'}
+    assert a['checks']['consumer_resolution'] is True and a['checks']['no_source_tree_in_server_log'] is True
+    assert a['material_runtime']['hi_tool_count']>=10 and {'hi_doctor','hi_status','hi_task_start'}<=set(a['material_runtime']['hi_tools'])
+    assert a['material_runtime']['provider_run']['attempted'] is False

@@ -609,6 +609,31 @@ try:
 except Exception as e:err(f'bad PROMPT B install/update lifecycle receipt: {e}')
 
 try:
+    pf=json.loads((ROOT/'data/validation/prompt-b-packaging-fresh-consumer.json').read_text(encoding='utf-8'))
+    if pf.get('schema')!=1 or pf.get('kind')!='PROMPT_B_PACKAGING_FRESH_CONSUMER_ADVERSARIAL_AUDIT' or pf.get('program')!='PROMPT_B' or pf.get('section')!=26 or pf.get('status')!='PASS':err('bad PROMPT B packaging/fresh consumer audit receipt')
+    if pf.get('violations')!=[] or pf.get('summary')!={'required':8,'covered':8,'violations':0}:err('PROMPT B packaging/fresh consumer coverage drift')
+    rows=pf.get('invariants') or []
+    if len(rows)!=8 or len({x.get('invariant') for x in rows if isinstance(x,dict)})!=8:err('PROMPT B packaging/fresh consumer invariant inventory drift')
+    import hashlib
+    for row in rows:
+        for key in ('owner','proof'):
+            rel=row.get(key);expected=row.get(f'{key}_sha256')
+            if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B packaging/fresh consumer missing {key}: {rel}');continue
+            if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B packaging/fresh consumer {key} hash drift: {rel}')
+        try:
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B packaging/fresh consumer owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B packaging/fresh consumer proof anchor drift: {row.get('invariant')}")
+        except Exception as e:err(f'PROMPT B packaging/fresh consumer row invalid: {e}')
+    if not all((pf.get('static_guards') or {}).values()):err('PROMPT B packaging/fresh consumer static guard drift')
+    ar=pf.get('acceptance_receipt')
+    if not isinstance(ar,str) or not (ROOT/ar).is_file():err('PROMPT B fresh consumer acceptance receipt missing')
+    else:
+        a=json.loads((ROOT/ar).read_text(encoding='utf-8'))
+        if a.get('status')!='PASS' or a.get('host')!={'opencode':'1.18.18','platform':'linux','architecture':'aarch64'}:err('PROMPT B fresh consumer exact-host acceptance drift')
+        if not all((a.get('checks') or {}).values()):err('PROMPT B fresh consumer acceptance check drift')
+except Exception as e:err(f'bad PROMPT B packaging/fresh consumer receipt: {e}')
+
+try:
     nr=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text(encoding='utf-8'))
     if nr.get('schema')!=1 or nr.get('kind')!='EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION' or nr.get('program')!='PROMPT_B' or nr.get('status')!='PASS':err('bad PROMPT B native reevaluation receipt identity/status')
     oc=nr.get('opencode',{})

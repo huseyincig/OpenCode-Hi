@@ -1,0 +1,80 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_FRESH_CONSUMER_EXACT_HOST_ACCEPTANCE",
+  "program": "PROMPT_B",
+  "section": 26,
+  "status": "PASS",
+  "host": {
+    "opencode": "1.18.18",
+    "platform": "linux",
+    "architecture": "aarch64"
+  },
+  "package": {
+    "release": "0.1.0",
+    "tarball_name": "opencode-hi-0.1.0.tgz",
+    "installed_from_tarball": true,
+    "resolved_entrypoint": "file://<temp>/consumer/node_modules/opencode-hi/plugin/dist/plugin.js"
+  },
+  "consumer": {
+    "project": "<temp>/consumer/project",
+    "wrapper": ".opencode/plugins/hi-packed.js",
+    "reconfigure_rc": 0
+  },
+  "material_runtime": {
+    "hi_tool_count": 31,
+    "hi_tools": [
+      "hi_browser_click",
+      "hi_browser_close",
+      "hi_browser_inspect",
+      "hi_browser_navigate",
+      "hi_browser_open",
+      "hi_browser_screenshot",
+      "hi_browser_type",
+      "hi_browser_wait",
+      "hi_context_artifact_add",
+      "hi_context_artifacts",
+      "hi_direct_progress",
+      "hi_doctor",
+      "hi_intent_assess",
+      "hi_ledger",
+      "hi_metrics",
+      "hi_process_cleanup",
+      "hi_process_kill",
+      "hi_process_list",
+      "hi_process_read",
+      "hi_process_spawn",
+      "hi_process_wait",
+      "hi_process_write",
+      "hi_readiness",
+      "hi_status",
+      "hi_task_await",
+      "hi_task_cancel",
+      "hi_task_list",
+      "hi_task_peek",
+      "hi_task_start",
+      "hi_temporary_mutation_register",
+      "hi_temporary_mutation_revert"
+    ],
+    "agent_debug_rc": 0,
+    "session": {
+      "created": true,
+      "version": "1.18.18",
+      "directory": "<temp>/consumer/project"
+    },
+    "provider_run": {
+      "attempted": false,
+      "reason": "no isolated-home opencode-go model inventory"
+    }
+  },
+  "checks": {
+    "pack_install": true,
+    "setup_reconfigure": true,
+    "consumer_resolution": true,
+    "server_tool_ids": true,
+    "agent_projection": true,
+    "session_create": true,
+    "no_source_tree_in_server_log": true,
+    "exact_host_version": true
+  },
+  "claim_boundary": "Fresh packed artifact installed outside source tree and loaded by exact OpenCode 1.18.18 through its native local-plugin seam. Provider-backed model execution is opportunistic and is not required for package/runtime acceptance; tool registration, config/agent projection and session material path are provider-independent."
+}

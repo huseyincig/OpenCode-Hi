@@ -1,0 +1,106 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_PACKAGING_FRESH_CONSUMER_ADVERSARIAL_AUDIT",
+  "program": "PROMPT_B",
+  "section": 26,
+  "status": "PASS",
+  "summary": {
+    "required": 8,
+    "covered": 8,
+    "violations": 0
+  },
+  "invariants": [
+    {
+      "invariant": "pack",
+      "status": "PASS",
+      "owner": "package.json",
+      "owner_sha256": "9dfabfab64ed1da8881d5887c43ec8e3bf2496d88370ba64923cd20934eb6533",
+      "owner_anchor": "\"prepack\": \"npm run build\"",
+      "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
+      "proof_sha256": "4e6b5f54121cf5d9b7b037be070a995187b089c7f9c8aafe2cee5a771f1748df",
+      "proof_anchor": "\"installed_from_tarball\": true"
+    },
+    {
+      "invariant": "fresh-temp-consumer",
+      "status": "PASS",
+      "owner": "scripts/run-fresh-consumer-acceptance.py",
+      "owner_sha256": "ab234779c39888aa9926168785216d9ff57b5e70655e7ec2ae0f28bd0ad99bbe",
+      "owner_anchor": "TemporaryDirectory(prefix='hi-b26-consumer-')",
+      "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
+      "proof_sha256": "4e6b5f54121cf5d9b7b037be070a995187b089c7f9c8aafe2cee5a771f1748df",
+      "proof_anchor": "\"project\": \"<temp>/consumer/project\""
+    },
+    {
+      "invariant": "install-packed-artifact",
+      "status": "PASS",
+      "owner": "scripts/run-fresh-consumer-acceptance.py",
+      "owner_sha256": "ab234779c39888aa9926168785216d9ff57b5e70655e7ec2ae0f28bd0ad99bbe",
+      "owner_anchor": "npm','install','--ignore-scripts'",
+      "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
+      "proof_sha256": "4e6b5f54121cf5d9b7b037be070a995187b089c7f9c8aafe2cee5a771f1748df",
+      "proof_anchor": "\"pack_install\": true"
+    },
+    {
+      "invariant": "configure-packed-artifact",
+      "status": "PASS",
+      "owner": "scripts/run-fresh-consumer-acceptance.py",
+      "owner_sha256": "ab234779c39888aa9926168785216d9ff57b5e70655e7ec2ae0f28bd0ad99bbe",
+      "owner_anchor": "'reconfigure',str(project),'--primary-mode','manager'",
+      "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
+      "proof_sha256": "4e6b5f54121cf5d9b7b037be070a995187b089c7f9c8aafe2cee5a771f1748df",
+      "proof_anchor": "\"setup_reconfigure\": true"
+    },
+    {
+      "invariant": "start-exact-opencode",
+      "status": "PASS",
+      "owner": "scripts/run-fresh-consumer-acceptance.py",
+      "owner_sha256": "ab234779c39888aa9926168785216d9ff57b5e70655e7ec2ae0f28bd0ad99bbe",
+      "owner_anchor": "'opencode','serve'",
+      "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
+      "proof_sha256": "4e6b5f54121cf5d9b7b037be070a995187b089c7f9c8aafe2cee5a771f1748df",
+      "proof_anchor": "\"exact_host_version\": true"
+    },
+    {
+      "invariant": "execute-material-hi-runtime",
+      "status": "PASS",
+      "owner": "scripts/run-fresh-consumer-acceptance.py",
+      "owner_sha256": "ab234779c39888aa9926168785216d9ff57b5e70655e7ec2ae0f28bd0ad99bbe",
+      "owner_anchor": "'/experimental/tool/ids?'",
+      "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
+      "proof_sha256": "4e6b5f54121cf5d9b7b037be070a995187b089c7f9c8aafe2cee5a771f1748df",
+      "proof_anchor": "\"hi_tool_count\": 31"
+    },
+    {
+      "invariant": "no-hidden-dev-dependency",
+      "status": "PASS",
+      "owner": "package.json",
+      "owner_sha256": "9dfabfab64ed1da8881d5887c43ec8e3bf2496d88370ba64923cd20934eb6533",
+      "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.18\"",
+      "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
+      "proof_sha256": "4e6b5f54121cf5d9b7b037be070a995187b089c7f9c8aafe2cee5a771f1748df",
+      "proof_anchor": "\"consumer_resolution\": true"
+    },
+    {
+      "invariant": "no-repository-relative-runtime-path",
+      "status": "PASS",
+      "owner": "scripts/run-fresh-consumer-acceptance.py",
+      "owner_sha256": "ab234779c39888aa9926168785216d9ff57b5e70655e7ec2ae0f28bd0ad99bbe",
+      "owner_anchor": "'no_source_tree_in_server_log'",
+      "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
+      "proof_sha256": "4e6b5f54121cf5d9b7b037be070a995187b089c7f9c8aafe2cee5a771f1748df",
+      "proof_anchor": "\"no_source_tree_in_server_log\": true"
+    }
+  ],
+  "static_guards": {
+    "acceptance_pass": true,
+    "exact_host": true,
+    "all_acceptance_checks": true,
+    "hi_material_surface": true,
+    "session_material_path": true,
+    "consumer_entrypoint": true,
+    "provider_boundary_truthful": true
+  },
+  "acceptance_receipt": "data/validation/fresh-consumer-opencode-1.18.18.json",
+  "claim_boundary": "Exact OpenCode 1.18.18 fresh-consumer package/runtime acceptance without source-tree resolution. Isolated HOME intentionally had no provider inventory, so provider-backed chat/model execution is not claimed by this receipt.",
+  "violations": []
+}
