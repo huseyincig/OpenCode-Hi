@@ -679,3 +679,23 @@ def test_r3_generated_compatibility_projection_selects_latest_exact_capability_p
     for row in d['history']:
         path=ROOT/row['receipt'];assert path.is_file();assert hashlib.sha256(path.read_bytes()).hexdigest()==row['receipt_sha256']
     assert (ROOT/'scripts/generate-compatibility-matrix.py').is_file()
+
+
+
+def test_r4_generated_release_status_is_hash_bound_and_docs_marker_owned():
+    d=json.loads((ROOT/'data/validation/release-status-0.1.0.json').read_text())
+    assert d['schema']==1 and d['kind']=='GENERATED_RELEASE_STATUS_PROJECTION' and d['release']=='0.1.0'
+    assert d['status']=='PARTIAL_EXTERNAL_NPM_BOOTSTRAP_AUTH' and d['release_blocked'] is True
+    assert d['github']['status']=='PASS_T4' and d['github']['tag']=='v0.1.0' and d['github']['asset_digest_match'] is True
+    assert d['npm']['status']=='BLOCKED_T4_AUTH' and d['npm']['publish_attempted'] is False and d['npm']['trusted_publisher_configurable_now'] is False
+    assert d['verification']['persisted_test_count'] is False
+    c=json.loads((ROOT/'data/validation/compatibility-matrix-0.1.0.json').read_text())['current_reference_host']
+    assert (d['reference_host']['opencode_version'],d['reference_host']['platform'],d['reference_host']['architecture'])==(c['opencode_version'],c['platform'],c['architecture'])
+    assert {k:v['status'] for k,v in d['reference_host']['capabilities'].items()}=={k:v['status'] for k,v in c['capabilities'].items()}
+    for meta in d['inputs'].values():
+        path=ROOT/meta['path'];assert path.is_file();assert hashlib.sha256(path.read_bytes()).hexdigest()==meta['sha256']
+    release=(ROOT/'docs/RELEASE.md').read_text()
+    assert release.count('<!-- BEGIN GENERATED RELEASE STATUS -->')==1 and release.count('<!-- END GENERATED RELEASE STATUS -->')==1
+    block=release.split('<!-- BEGIN GENERATED RELEASE STATUS -->',1)[1].split('<!-- END GENERATED RELEASE STATUS -->',1)[0]
+    assert 'PARTIAL_EXTERNAL_NPM_BOOTSTRAP_AUTH' in block and 'OpenCode `1.18.18`' in block and 'Test counts are intentionally not persisted' in block
+    assert (ROOT/'scripts/generate-release-status.py').is_file()

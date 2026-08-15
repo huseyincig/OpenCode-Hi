@@ -4,9 +4,21 @@ OpenCode-Hi preserves deterministic source/distributable artifacts, manifest, SB
 
 A 0.1.0 candidate may be called release-ready only when all mandatory internal gates are green and required external OpenCode/clean-install receipts are bound to the exact candidate. If the environment prevents an external receipt, status remains `PENDING_EXTERNAL`; the acceptance bar is not lowered.
 
-## 0.1.0 publication state
+## Current release status
 
-GitHub `v0.1.0` is published from exact commit `f1a2c1c4358e5a63656da7a585b6b5793d1ed3be` with deterministic source/distributable archives, manifest, SBOM, and package tarball. npm registry publication is not complete because the release environment has no npm authentication; do not claim registry availability until a registry receipt proves it.
+The block below is generator-owned. Do not hand-edit current release status, current reference-host version, or test counts here.
+
+<!-- BEGIN GENERATED RELEASE STATUS -->
+## Current release status — generated
+
+- Release: `0.1.0` — **PARTIAL_EXTERNAL_NPM_BOOTSTRAP_AUTH**.
+- GitHub: **PASS_T4** for `v0.1.0` at exact source `f1a2c1c4358e5a63656da7a585b6b5793d1ed3be`; remote asset digests match: `true`.
+- npm: **BLOCKED_T4_AUTH**; package is not yet present, no publish has been attempted, and Trusted Publisher binding remains unavailable until the package exists.
+- Trusted Publishing: local workflow readiness is `LOCAL_IMPLEMENTED_EXTERNAL_BOOTSTRAP_REQUIRED`; bootstrap publication/auth + registry proof + trust binding remain external.
+- Reference host: OpenCode `1.18.18` on `linux/aarch64`; process/workspace/browser owned surfaces are receipt-backed `SUPPORTED_T3`.
+- Test counts are intentionally not persisted here. Run the canonical verification commands for fresh counts/results.
+- Machine source: `data/validation/release-status-0.1.0.json` (generated from hash-bound receipts/status inputs).
+<!-- END GENERATED RELEASE STATUS -->
 
 
 ## npm Trusted Publishing / OIDC boundary

@@ -53,7 +53,7 @@ for p in ROOT.rglob('*'):
     for pattern in legacy:
         if re.search(pattern,t,re.I):err(f'legacy/prototype identity in current path: {rel} / {pattern}')
 # Living data contract names.
-required_data={'data/product.json','data/validation/implementation-coverage.json','data/validation/native-coverage.json','data/validation/flow-coverage.json','data/validation/flow-acceptance.json','data/validation/source-gates.json','data/validation/release-gates.json','data/validation/source-contracts.json','data/validation/final-dod-audit.json','data/hi-methodologies.json','data/hi-roles.json','data/hi-permission-profiles.json','data/hi-config-options.json','data/validation/benchmarks-0.1.0.json','data/validation/install-lifecycle-0.1.0.json','data/validation/compatibility-matrix-0.1.0.json','data/validation/terminology-audit-0.1.0.json','data/validation/projection-receipts.json'}
+required_data={'data/product.json','data/validation/implementation-coverage.json','data/validation/native-coverage.json','data/validation/flow-coverage.json','data/validation/flow-acceptance.json','data/validation/source-gates.json','data/validation/release-gates.json','data/validation/source-contracts.json','data/validation/final-dod-audit.json','data/hi-methodologies.json','data/hi-roles.json','data/hi-permission-profiles.json','data/hi-config-options.json','data/validation/benchmarks-0.1.0.json','data/validation/install-lifecycle-0.1.0.json','data/validation/compatibility-matrix-0.1.0.json','data/validation/release-status-0.1.0.json','data/validation/terminology-audit-0.1.0.json','data/validation/projection-receipts.json'}
 for rel in required_data:
     if not (ROOT/rel).is_file():err(f'required data contract missing: {rel}')
 for old in ('feature-ledger-09-coverage.json','native-first-10-coverage.json','flow-11-coverage.json','flow-11-acceptance.json','roadmap-source-gates.json','observed-runtime-smoke-1.18.16.json'):
@@ -79,6 +79,30 @@ try:
         actual=hashlib.sha256((ROOT/receipt).read_bytes()).hexdigest()
         if actual!=digest:err(f'compatibility history receipt hash drift: {receipt}')
 except Exception as e:err(f'bad compatibility projection: {e}')
+
+try:
+    rs=json.loads((ROOT/'data/validation/release-status-0.1.0.json').read_text(encoding='utf-8'))
+    if rs.get('schema')!=1 or rs.get('kind')!='GENERATED_RELEASE_STATUS_PROJECTION':err('release status projection header invalid')
+    if rs.get('release')!=version:err('release status projection release mismatch')
+    if rs.get('status')!='PARTIAL_EXTERNAL_NPM_BOOTSTRAP_AUTH' or rs.get('release_blocked') is not True:err('release status projection current state drift')
+    if (rs.get('github') or {}).get('status')!='PASS_T4' or (rs.get('github') or {}).get('tag')!='v0.1.0':err('release status GitHub T4 projection drift')
+    if (rs.get('npm') or {}).get('status')!='BLOCKED_T4_AUTH' or (rs.get('npm') or {}).get('publish_attempted') is not False:err('release status npm projection drift')
+    if (rs.get('verification') or {}).get('persisted_test_count') is not False:err('release status must not persist test counts')
+    host=rs.get('reference_host') or {}
+    if (host.get('opencode_version'),host.get('platform'),host.get('architecture'))!=('1.18.18','linux','aarch64'):err('release status reference host drift')
+    for cap in ('process-lifecycle','workspace-isolation-binding','browser-execution'):
+        if ((host.get('capabilities') or {}).get(cap) or {}).get('status')!='SUPPORTED_T3':err(f'release status {cap} drift')
+    import hashlib
+    for name,meta in (rs.get('inputs') or {}).items():
+        rel=meta.get('path') if isinstance(meta,dict) else None;expected_sha=meta.get('sha256') if isinstance(meta,dict) else None
+        if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'release status input missing: {name}');continue
+        actual=hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()
+        if actual!=expected_sha:err(f'release status input hash drift: {name} / {rel}')
+    release_doc=(ROOT/'docs/RELEASE.md').read_text(encoding='utf-8')
+    begin='<!-- BEGIN GENERATED RELEASE STATUS -->';end='<!-- END GENERATED RELEASE STATUS -->'
+    if release_doc.count(begin)!=1 or release_doc.count(end)!=1:err('release status generated marker count invalid')
+    if 'data/validation/release-status-0.1.0.json' not in release_doc or 'PARTIAL_EXTERNAL_NPM_BOOTSTRAP_AUTH' not in release_doc:err('release status generated docs block stale')
+except Exception as e:err(f'bad release status projection: {e}')
 sc=json.loads((ROOT/'data/validation/source-contracts.json').read_text(encoding='utf-8'))
 if sc.get('release')!=version:err('source-contracts release stale')
 for cid,c in sc.get('contracts',{}).items():
