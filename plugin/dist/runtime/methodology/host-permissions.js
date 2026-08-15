@@ -21,8 +21,11 @@ export function applyAdmittedProjectMethodologyPermissions(hostConfig, projectRo
                 applied.push({ name: policy.name, role, decision: exact });
                 continue;
             }
-            skill[policy.name] = 'allow';
-            applied.push({ name: policy.name, role, decision: 'allow' });
+            // Repository-local methodology provenance proves integrity, not user trust. A project
+            // cannot silently grant itself native skill execution permission merely by committing
+            // SKILL/policy/provenance files. Exact host/user allow may opt in; deny always wins.
+            skill[policy.name] = 'ask';
+            applied.push({ name: policy.name, role, decision: 'ask' });
         }
     }
     return applied;

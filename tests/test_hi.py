@@ -1060,3 +1060,19 @@ def test_prompt_b_security_privacy_audit_is_fail_closed_source_bound_and_complet
     assert (ROOT/'scripts/audit-security-privacy.py').is_file()
     threat=(ROOT/'docs/THREAT-MODEL.md').read_text()
     assert 'PROMPT B §20 current-architecture security/privacy closure' in threat
+
+
+def test_prompt_b_skills_methodology_security_audit_is_confined_trust_bounded_and_complete():
+    d=json.loads((ROOT/'data/validation/prompt-b-skills-methodology-security.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_SKILLS_METHODOLOGY_SECURITY_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['section']==21 and d['status']=='PASS'
+    assert d['violations']==[] and d['summary']=={'required':13,'covered':13,'violations':0}
+    assert len(d['invariants'])==13 and len({x['invariant'] for x in d['invariants']})==13
+    for row in d['invariants']:
+        owner=ROOT/row['owner'];proof=ROOT/row['proof'];assert owner.is_file() and proof.is_file()
+        assert hashlib.sha256(owner.read_bytes()).hexdigest()==row['owner_sha256']
+        assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
+        assert row['owner_anchor'] in owner.read_text(errors='replace') and row['proof_anchor'] in proof.read_text(errors='replace')
+    assert all(d['static_guards'].values())
+    assert d['state_separation']==['installed skill','admitted methodology','selected methodology','loaded methodology']
+    assert {'skill-discovery-symlink-escape','repo-provenance-silent-skill-trust','project-methodology-artifact-symlink-escape'}<={x['id'] for x in d['closed_defects']}
+    assert (ROOT/'scripts/audit-skills-methodology-security.py').is_file()

@@ -53,12 +53,12 @@ test('project-learning admission rejects an incoherent READY candidate contract 
   }finally{rmSync(f.root,{recursive:true,force:true})}
 })
 
-test('admitted project methodology derives an exact native allow only for compatible roles',()=>{
+test('admitted project methodology derives an exact native ask only for compatible roles unless host/user explicitly trusts it',()=>{
   const f=fixture();try{
     const config={agent:{coder:clone(PACKAGED_HI_AGENTS.coder),'qa-reviewer':clone(PACKAGED_HI_AGENTS['qa-reviewer'])}}
     const applied=applyAdmittedProjectMethodologyPermissions(config,f.root)
-    assert.ok(applied.some(x=>x.name===f.name&&x.role==='coder'&&x.decision==='allow'))
-    assert.equal(config.agent.coder.permission.skill[f.name],'allow')
+    assert.ok(applied.some(x=>x.name===f.name&&x.role==='coder'&&x.decision==='ask'))
+    assert.equal(config.agent.coder.permission.skill[f.name],'ask')
     assert.equal(config.agent['qa-reviewer'].permission.skill[f.name],undefined)
     assert.equal(config.agent.coder.permission.skill['*'],'deny')
   }finally{rmSync(f.root,{recursive:true,force:true})}
@@ -122,7 +122,7 @@ test('TaskRuntime hot-refreshes an admitted project methodology permission befor
     m.methodology.methodology_needs=[]
     activateMethodologySignal(m,f.root,{signal:'surface.dependency',producer:'changed-surface',reason:'dependency surface changed in prior bounded work'})
     const started=await runtime.start(m,{objective:'Reconcile the dependency metadata',role:'coder',scope:['package.json']})
-    assert.equal(host.agent.coder.permission.skill[f.name],'allow')
+    assert.equal(host.agent.coder.permission.skill[f.name],'ask')
     assert.ok(started.methodologies.includes(f.name))
     assert.ok(m.execution.workers.find(w=>w.id===started.worker_id)?.selected_methodologies.includes(f.name))
   }finally{rmSync(f.root,{recursive:true,force:true})}

@@ -63,3 +63,11 @@ The Q3 matrix above remains the stable adversarial baseline. PROMPT B §20 adds 
 - `system-projection-secret-reexposure`: Hi-added Mission runtime system projection previously bypassed the provider redaction boundary.
 
 The claim boundary is deliberately narrow: these controls protect **Hi-owned state and execution surfaces**. They do not claim that the OpenCode host/provider, user-installed MCP servers, arbitrary dependencies, external websites, or repository content are trustworthy. Those remain external/untrusted surfaces constrained by Hi policy and host permissions.
+
+## Skills / methodology trust boundary
+
+Project-local skill and methodology files are repository-controlled content. Their hashes/provenance establish integrity and admission coherence; they do **not** establish user trust or execution authority. A project methodology that is admitted without an existing exact host/user decision defaults to native `ask`, never silent `allow`; explicit host `deny` remains authoritative and an explicit host/user `allow` may opt in.
+
+Skill discovery and methodology admission are realpath-confined. A skill directory, `SKILL.md`, resource, methodology policy, provenance record, or learning candidate that resolves outside its canonical project/discovery root is rejected. Foreign provider ID collisions cannot shadow a built-in Hi methodology.
+
+The runtime keeps four distinct states and never collapses them: `installed skill != admitted methodology != selected methodology != loaded methodology`. Repository text, frontmatter, provenance, learning metadata, or methodology prose cannot grant Authority, widen native permissions, or satisfy Completion/Evidence.

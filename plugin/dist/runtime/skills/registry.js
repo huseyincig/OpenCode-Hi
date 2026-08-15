@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, readdirSync, realpathSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { resolveSkillPermission } from './permissions.js';
 import { builtinMethodologyCatalog, methodologyLimits } from '../methodology/catalog.js';
 function requestedMethodologies(methodologyNeeds) { return [...new Set(methodologyNeeds)]; }
@@ -16,24 +16,33 @@ export function parseSkillFrontmatter(text) { const m = text.match(/^---\s*\n([\
     out[hit[1]] = value;
 } return out; }
 function validSkillFrontmatter(text, name) { const fm = parseSkillFrontmatter(text); return fm.name === name && Boolean(fm.description); }
-function inspectDir(path, provider) { if (!existsSync(path))
-    return []; const out = []; for (const name of readdirSync(path)) {
-    const file = join(path, name, 'SKILL.md');
-    if (!existsSync(file))
-        continue;
-    let valid = false;
-    try {
-        valid = validSkillFrontmatter(readFileSync(file, 'utf8'), name);
-    }
-    catch { }
-    out.push({ name, provider, path: file, valid, enabled: true, orchestrationRisk: false });
-} return out; }
 function canonical(path) { try {
     return realpathSync(path);
 }
 catch {
     return resolve(path);
 } }
+function confined(root, target) { const r = canonical(root), t = canonical(target), rel = relative(r, t); return rel === '' || (rel !== '..' && !rel.startsWith('../') && !rel.startsWith('..\\')); }
+function inspectDir(path, provider) {
+    if (!existsSync(path))
+        return [];
+    const root = canonical(path), out = [];
+    for (const name of readdirSync(path)) {
+        const skillDir = join(path, name), file = join(skillDir, 'SKILL.md');
+        if (!existsSync(file))
+            continue;
+        let valid = false;
+        try {
+            const actualDir = canonical(skillDir), actualFile = canonical(file);
+            if (!confined(root, actualDir) || !confined(actualDir, actualFile) || dirname(actualFile) !== actualDir)
+                continue;
+            valid = validSkillFrontmatter(readFileSync(actualFile, 'utf8'), name);
+            out.push({ name, provider, path: actualFile, valid, enabled: true, orchestrationRisk: false });
+        }
+        catch { }
+    }
+    return out;
+}
 export function configuredSkillPaths(hostConfig) { const skills = (hostConfig.skills && typeof hostConfig.skills === 'object') ? hostConfig.skills : {}; const paths = Array.isArray(skills.paths) ? skills.paths : []; return [...new Set(paths.filter((x) => typeof x === 'string' && x.trim().length > 0).map(x => canonical(x.trim())))]; }
 export function skillDiscoveryRoots(projectRoot, hiRoot, extraPaths = []) { const home = process.env.HOME ?? process.env.USERPROFILE ?? '', opencodeConfigDir = process.env.OPENCODE_CONFIG_DIR ? resolve(process.env.OPENCODE_CONFIG_DIR) : join(home, '.config', 'opencode'), raw = [[join(projectRoot, '.opencode', 'skills'), 'project'], [join(projectRoot, '.claude', 'skills'), 'project'], [join(projectRoot, '.agents', 'skills'), 'project'], ...(hiRoot ? [[join(hiRoot, 'skills'), 'hi']] : []), [join(opencodeConfigDir, 'skills'), 'personal'], [join(home, '.claude', 'skills'), 'personal'], [join(home, '.agents', 'skills'), 'personal'], ...extraPaths.map(x => [x, 'personal'])], out = [], seen = new Set(); for (const [path, provider] of raw) {
     const real = canonical(path);

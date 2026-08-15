@@ -438,7 +438,7 @@
     },
     {
       "path": "docs/THREAT-MODEL.md",
-      "sha256": "9d0de7e24b7519a71be66600ccf650e107b143357ee898c28a25f3397b53acaa",
+      "sha256": "871af4a760439f3f0084e80105b86df2a738cc1a4c513667216749692ac6ed4b",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
@@ -550,7 +550,7 @@
     },
     {
       "path": "docs/engineering-constitution/MASTER-CONTINUATION.md",
-      "sha256": "38259f4150c301a43e9856fa2ac51b194c612dbd40c235cfef51a083f62a2f81",
+      "sha256": "1016f32385f316bbfd6608e247c20286910a009cad454462d9cead9bb3b503e7",
       "audience": "INTERNAL_ENGINEERING",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "HUMAN_OWNED"

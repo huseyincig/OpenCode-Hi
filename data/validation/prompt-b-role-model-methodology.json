@@ -53,10 +53,10 @@
     {
       "invariant": "methodology-available-admitted-selected-loaded",
       "owner": "plugin/src/runtime/skills/registry.ts",
-      "owner_sha256": "8ae42062c49709c4c74cc15d38e19abb935f1af88438a89739fc4bb53abc5296",
+      "owner_sha256": "ad2da40fc07e254656a256071daea5d803e4de070cbf0df2168f08550de1c24b",
       "owner_anchor": "resolveSkillPlan",
       "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
-      "proof_sha256": "fe46cea4f3ead48d057e30d5d206cf5c6bf302e6399a6d30610305011d0495b1",
+      "proof_sha256": "7ac66efa74d982b9d606cfc2c61b8617340d011138a7f16ac9936d6497ceadf9",
       "proof_anchor": "admitted project methodology reaches native lazy selection as project provider"
     },
     {
@@ -71,7 +71,7 @@
     {
       "invariant": "methodology-collision",
       "owner": "plugin/src/runtime/skills/registry.ts",
-      "owner_sha256": "8ae42062c49709c4c74cc15d38e19abb935f1af88438a89739fc4bb53abc5296",
+      "owner_sha256": "ad2da40fc07e254656a256071daea5d803e4de070cbf0df2168f08550de1c24b",
       "owner_anchor": "foreign.length",
       "proof": "plugin/test/native-skill-catalog.test.mjs",
       "proof_sha256": "1a02729738eda2debd76e802889ea5b9b2e2fbd6ad2d2585e56b6abac78f12af",

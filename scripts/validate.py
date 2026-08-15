@@ -497,6 +497,28 @@ try:
 except Exception as e:err(f'bad PROMPT B Security/Privacy receipt: {e}')
 
 try:
+    sm=json.loads((ROOT/'data/validation/prompt-b-skills-methodology-security.json').read_text(encoding='utf-8'))
+    if sm.get('schema')!=1 or sm.get('kind')!='PROMPT_B_SKILLS_METHODOLOGY_SECURITY_ADVERSARIAL_AUDIT' or sm.get('program')!='PROMPT_B' or sm.get('section')!=21 or sm.get('status')!='PASS':err('bad PROMPT B Skills/Methodology Security audit receipt')
+    if sm.get('violations')!=[] or sm.get('summary')!={'required':13,'covered':13,'violations':0}:err('PROMPT B Skills/Methodology Security coverage drift')
+    rows=sm.get('invariants') or []
+    if len(rows)!=13 or len({x.get('invariant') for x in rows if isinstance(x,dict)})!=13:err('PROMPT B Skills/Methodology Security invariant inventory drift')
+    import hashlib
+    for row in rows:
+        for key in ('owner','proof'):
+            rel=row.get(key);expected=row.get(f'{key}_sha256')
+            if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B Skills/Methodology Security missing {key}: {rel}');continue
+            if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B Skills/Methodology Security {key} hash drift: {rel}')
+        try:
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B Skills/Methodology Security owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B Skills/Methodology Security proof anchor drift: {row.get('invariant')}")
+        except Exception as e:err(f'PROMPT B Skills/Methodology Security row invalid: {e}')
+    if not all((sm.get('static_guards') or {}).values()):err('PROMPT B Skills/Methodology Security static guard drift')
+    if sm.get('state_separation')!=['installed skill','admitted methodology','selected methodology','loaded methodology']:err('PROMPT B Skills/Methodology state separation drift')
+    closed={x.get('id') for x in sm.get('closed_defects',[]) if isinstance(x,dict)}
+    if not {'skill-discovery-symlink-escape','repo-provenance-silent-skill-trust','project-methodology-artifact-symlink-escape'}<=closed:err('PROMPT B Skills/Methodology Security closed defect receipt drift')
+except Exception as e:err(f'bad PROMPT B Skills/Methodology Security receipt: {e}')
+
+try:
     nr=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text(encoding='utf-8'))
     if nr.get('schema')!=1 or nr.get('kind')!='EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION' or nr.get('program')!='PROMPT_B' or nr.get('status')!='PASS':err('bad PROMPT B native reevaluation receipt identity/status')
     oc=nr.get('opencode',{})

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
-import { existsSync, readFileSync, readdirSync } from 'node:fs'
-import { join } from 'node:path'
-import { projectMethodologyPolicyDir as methodologyPolicyDir } from '../storage/ownership.js'
+import { existsSync, readFileSync, readdirSync, realpathSync } from 'node:fs'
+import { dirname, join, relative, resolve } from 'node:path'
+import { projectMethodologyCandidatePath, projectMethodologyPolicyDir as methodologyPolicyDir, projectMethodologyProvenancePath, projectSkillRoot } from '../storage/ownership.js'
 import { PACKAGED_HI_AGENTS } from '../../generated/agent-config.js'
 import { HI_METHODOLOGY_EXIT_REQUIREMENTS, HI_METHODOLOGY_SIGNAL_CATALOG, type HiMethodologyExitRequirement, type HiMethodologySignalName } from '../../generated/methodology-policy.js'
 import { readProjectMethodologyProvenance } from './provenance.js'
@@ -32,6 +32,10 @@ export interface ProjectMethodologyPolicy {
 }
 
 const ROLE_IDS=new Set(Object.keys(PACKAGED_HI_AGENTS))
+
+function canonical(path:string):string{try{return realpathSync(path)}catch{return resolve(path)}}
+function confined(root:string,target:string):boolean{const rel=relative(canonical(root),canonical(target));return rel===''||(rel!=='..'&&!rel.startsWith('../')&&!rel.startsWith('..\\'))}
+function exactConfinedFile(projectRoot:string,path:string,parent:string):boolean{if(!existsSync(path))return false;const actual=canonical(path),base=canonical(parent);return confined(projectRoot,actual)&&confined(base,actual)&&dirname(actual)===base}
 function digest(text:string):string{return createHash('sha256').update(text).digest('hex')}
 function validString(value:unknown):value is string{return typeof value==='string'&&value.trim().length>0}
 function validStringList(value: unknown): value is string[] {return Array.isArray(value) && value.length>0 && value.every(validString)}
@@ -77,20 +81,26 @@ export function projectMethodologyPolicyDir(projectRoot: string): string {return
 
 export function discoverProjectMethodologyPolicies(projectRoot: string): ProjectMethodologyPolicy[] {
   const dir = projectMethodologyPolicyDir(projectRoot)
-  if (!existsSync(dir)) return []
+  if (!existsSync(dir)||!confined(projectRoot,dir)) return []
   const out: ProjectMethodologyPolicy[] = []
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     if (!entry.isFile() || !entry.name.endsWith('.json')) continue
     try {
-      const policyPath=join(dir,entry.name),policyText=readFileSync(policyPath,'utf8'),policy=parsePolicy(JSON.parse(policyText))
+      const policyPath=join(dir,entry.name)
+      if(!exactConfinedFile(projectRoot,policyPath,dir))continue
+      const policyText=readFileSync(canonical(policyPath),'utf8'),policy=parsePolicy(JSON.parse(policyText))
       if(!policy||entry.name!==`${policy.name}.json`||!policy.enabled)continue
-      const skillPath=join(projectRoot,'.opencode','skills',policy.name,'SKILL.md')
-      if(!existsSync(skillPath))continue
-      const skillText=readFileSync(skillPath,'utf8'),contract=skillContract(skillText)
+      const skillDir=projectSkillRoot(projectRoot,policy.name),skillPath=join(skillDir,'SKILL.md'),provenancePath=projectMethodologyProvenancePath(projectRoot,policy.name)
+      if(!exactConfinedFile(projectRoot,skillPath,skillDir)||!exactConfinedFile(projectRoot,provenancePath,dirname(provenancePath)))continue
+      const skillText=readFileSync(canonical(skillPath),'utf8'),contract=skillContract(skillText)
       if(!contract||contract.name!==policy.name||contract.description!==policy.purpose||contract.trigger!==policy.trigger||contract.doNotTrigger!==policy.do_not_trigger||contract.exitCondition!==policy.exit_condition)continue
       const provenance=readProjectMethodologyProvenance(projectRoot,policy.name)
       if(!provenance||provenance.name!==policy.name||provenance.skill_sha256!==digest(skillText)||provenance.policy_sha256!==digest(policyText))continue
-      if(provenance.origin==='project-learning'){const candidate=readProjectMethodologyCandidate(projectRoot,provenance.candidate_id!);if(!candidate||candidate.state!=='READY')continue}
+      if(provenance.origin==='project-learning'){
+        const candidatePath=projectMethodologyCandidatePath(projectRoot,provenance.candidate_id!)
+        if(!exactConfinedFile(projectRoot,candidatePath,dirname(candidatePath)))continue
+        const candidate=readProjectMethodologyCandidate(projectRoot,provenance.candidate_id!);if(!candidate||candidate.state!=='READY')continue
+      }
       out.push(policy)
     } catch {}
   }

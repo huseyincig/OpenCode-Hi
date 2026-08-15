@@ -72,7 +72,7 @@
       "owner_sha256": "19db11dd2dfca1d0c818c7b9d0cb226540483c35088052791777247c428f7ce2",
       "owner_anchor": "readProjectMethodologyProvenance",
       "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
-      "proof_sha256": "fe46cea4f3ead48d057e30d5d206cf5c6bf302e6399a6d30610305011d0495b1",
+      "proof_sha256": "7ac66efa74d982b9d606cfc2c61b8617340d011138a7f16ac9936d6497ceadf9",
       "proof_anchor": "update requires fresh provenance hash before re-admission"
     },
     {

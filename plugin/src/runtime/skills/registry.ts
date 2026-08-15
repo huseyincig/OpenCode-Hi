@@ -1,5 +1,5 @@
 import { existsSync,readFileSync,readdirSync,realpathSync } from 'node:fs'
-import { join,resolve } from 'node:path'
+import { dirname,join,relative,resolve } from 'node:path'
 import { resolveSkillPermission,type SkillPermission } from './permissions.js'
 import { builtinMethodologyCatalog, methodologyLimits, type HiMethodologyCatalogEntry } from '../methodology/catalog.js'
 export type SkillProvider='project'|'personal'|'hi'
@@ -13,8 +13,24 @@ function requestedMethodologies(methodologyNeeds:string[]):string[]{return [...n
 
 export function parseSkillFrontmatter(text:string):Record<string,string>{const m=text.match(/^---\s*\n([\s\S]*?)\n---\s*\n/);if(!m)return{};const out:Record<string,string>={};for(const raw of m[1].split(/\r?\n/)){if(/^\s/.test(raw))continue;const hit=raw.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);if(!hit)continue;let value=hit[2].trim();if(value.length>=2&&((value.startsWith('\"')&&value.endsWith('\"'))||(value.startsWith("'")&&value.endsWith("'"))))value=value.slice(1,-1);out[hit[1]]=value}return out}
 function validSkillFrontmatter(text:string,name:string):boolean{const fm=parseSkillFrontmatter(text);return fm.name===name&&Boolean(fm.description)}
-function inspectDir(path:string,provider:SkillProvider):SkillCandidate[]{if(!existsSync(path))return[];const out:SkillCandidate[]=[];for(const name of readdirSync(path)){const file=join(path,name,'SKILL.md');if(!existsSync(file))continue;let valid=false;try{valid=validSkillFrontmatter(readFileSync(file,'utf8'),name)}catch{}out.push({name,provider,path:file,valid,enabled:true,orchestrationRisk:false})}return out}
 function canonical(path:string):string{try{return realpathSync(path)}catch{return resolve(path)}}
+function confined(root:string,target:string):boolean{const r=canonical(root),t=canonical(target),rel=relative(r,t);return rel===''||(rel!=='..'&&!rel.startsWith('../')&&!rel.startsWith('..\\'))}
+function inspectDir(path:string,provider:SkillProvider):SkillCandidate[]{
+  if(!existsSync(path))return[]
+  const root=canonical(path),out:SkillCandidate[]=[]
+  for(const name of readdirSync(path)){
+    const skillDir=join(path,name),file=join(skillDir,'SKILL.md')
+    if(!existsSync(file))continue
+    let valid=false
+    try{
+      const actualDir=canonical(skillDir),actualFile=canonical(file)
+      if(!confined(root,actualDir)||!confined(actualDir,actualFile)||dirname(actualFile)!==actualDir)continue
+      valid=validSkillFrontmatter(readFileSync(actualFile,'utf8'),name)
+      out.push({name,provider,path:actualFile,valid,enabled:true,orchestrationRisk:false})
+    }catch{}
+  }
+  return out
+}
 export function configuredSkillPaths(hostConfig:Record<string,unknown>):string[]{const skills=(hostConfig.skills&&typeof hostConfig.skills==='object')?hostConfig.skills as Record<string,unknown>:{};const paths=Array.isArray(skills.paths)?skills.paths:[];return[...new Set(paths.filter((x):x is string=>typeof x==='string'&&x.trim().length>0).map(x=>canonical(x.trim())))]}
 export function skillDiscoveryRoots(projectRoot:string,hiRoot?:string,extraPaths:string[]=[]):SkillDiscoveryRoot[]{const home=process.env.HOME??process.env.USERPROFILE??'',opencodeConfigDir=process.env.OPENCODE_CONFIG_DIR?resolve(process.env.OPENCODE_CONFIG_DIR):join(home,'.config','opencode'),raw:[string,SkillProvider][]=[[join(projectRoot,'.opencode','skills'),'project'],[join(projectRoot,'.claude','skills'),'project'],[join(projectRoot,'.agents','skills'),'project'],...(hiRoot?[[join(hiRoot,'skills'),'hi'] as [string,SkillProvider]]:[]),[join(opencodeConfigDir,'skills'),'personal'],[join(home,'.claude','skills'),'personal'],[join(home,'.agents','skills'),'personal'],...extraPaths.map(x=>[x,'personal'] as [string,SkillProvider])],out:SkillDiscoveryRoot[]=[],seen=new Set<string>();for(const [path,provider] of raw){const real=canonical(path);if(seen.has(real))continue;seen.add(real);out.push({path:real,provider})}return out}
 export function discoverSkills(projectRoot:string,hiRoot?:string,extraPaths:string[]=[]):SkillCandidate[]{const out:SkillCandidate[]=[];for(const root of skillDiscoveryRoots(projectRoot,hiRoot,extraPaths))out.push(...inspectDir(root.path,root.provider));return out}
