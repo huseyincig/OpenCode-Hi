@@ -46,7 +46,7 @@ export function createToolBeforeHook(store, background, projectRoot) {
             if (shell.decision === 'DENY')
                 throw new Error(`Hi shell policy: ${shell.reason}`);
             if (shell.decision === 'USER_ACTION_REQUIRED') {
-                openHumanDecision(m, { semantic_type: 'credential_action', reason_code: 'interactive-shell', summary: shell.reason, worker_id: child?.id, response_schema: { kind: 'external-action' } });
+                openHumanDecision(m, { semantic_type: shell.human_decision_type ?? 'operational_action', reason_code: shell.reason_code ?? 'shell-user-action-required', summary: shell.reason, worker_id: child?.id, response_schema: { kind: 'external-action' } });
                 throw new Error(`Hi shell policy: ${shell.reason}`);
             }
             if (shell.decision === 'REWRITE') {

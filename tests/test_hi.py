@@ -927,3 +927,20 @@ def test_prompt_b_role_model_methodology_audit_keeps_semantic_planes_separate():
         assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
         assert row['owner_anchor'] in owner.read_text(errors='ignore') and row['proof_anchor'] in proof.read_text(errors='ignore')
     assert (ROOT/'scripts/audit-role-model-methodology.py').is_file()
+
+def test_prompt_b_authority_permission_external_action_audit_is_structured_fail_closed_and_complete():
+    d=json.loads((ROOT/'data/validation/prompt-b-authority-permission-external-action.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_AUTHORITY_PERMISSION_EXTERNAL_ACTION_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['section']==8 and d['status']=='PASS'
+    assert d['violations']==[] and d['summary']=={'required':18,'covered':18,'violations':0}
+    expected={'generic-yes-not-authority','continuation-not-approval','exact-action-scope','exact-target','exact-parameters','once-vs-reusable','consumed-authority','replay-idempotency','deny-precedence','lower-level-cannot-widen-safety','host-permission-cannot-widen-hi-authority','stale-approvals-rejected','credential-mfa-oauth-boundary','paid-irreversible-boundary','push-tag-release-publish-deploy-authority','destructive-filesystem-boundary','secret-sensitive-boundary','no-natural-language-regex-authority'}
+    assert {x['invariant'] for x in d['invariants']}==expected
+    assert d['static_guards']=={'natural_language_authority_regex_owner':False,'structured_authority_protocol':True,'persistent_authority_classes':['git-push','release-create','package-publish','deploy']}
+    for row in d['invariants']:
+        owner=ROOT/row['owner'];proof=ROOT/row['proof']
+        assert owner.is_file() and proof.is_file()
+        assert hashlib.sha256(owner.read_bytes()).hexdigest()==row['owner_sha256']
+        assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
+        assert row['owner_anchor'] in owner.read_text(errors='ignore') and row['proof_anchor'] in proof.read_text(errors='ignore')
+    closed={x['id'] for x in d['closed_defects']}
+    assert {'natural-language-regex-owned-authority','stale-one-shot-approval','destructive-irreversible-secret-boundaries'}<=closed
+    assert (ROOT/'scripts/audit-authority-permission-external-action.py').is_file()

@@ -4,11 +4,12 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { createToolBeforeHook } from '../dist/hooks/tool-before.js'
 import { createToolAfterHook, authorityOutcome } from '../dist/hooks/tool-after.js'
 import { actionContract, approvePendingAuthority, requireAuthority } from '../dist/runtime/safety/authority.js'
+import {authorityProtocolResponse} from './helpers/authority.mjs'
 import {startAssessedMission} from './helpers/semantic.mjs'
 
 function authorize(m,command,cwd){
   try{requireAuthority(m,command,cwd)}catch{}
-  assert.equal(approvePendingAuthority(m,'approve'),true)
+  assert.equal(approvePendingAuthority(m,authorityProtocolResponse(m,'approve')),true)
 }
 
 test('privileged bash success requires explicit exit=0 metadata', async()=>{

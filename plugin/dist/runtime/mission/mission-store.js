@@ -107,6 +107,13 @@ export class MissionStore {
             throw new Error('Empty follow-up cannot be assessed');
         if (m.authority.human_decision?.status === 'OPEN' && m.authority.human_decision.semantic_type !== 'authority_request')
             resolveHumanDecision(m, 'user-followup-received');
+        if (m.authority.authority?.approved)
+            m.authority.authority = { ...m.authority.authority, approved: undefined };
+        if (m.authority.authority?.pending) {
+            m.authority.authority = { ...m.authority.authority, pending: undefined };
+            if (m.authority.human_decision?.status === 'OPEN' && m.authority.human_decision.semantic_type === 'authority_request')
+                resolveHumanDecision(m, 'authority-invalidated-by-semantic-followup');
+        }
         m.continuation.generation += 1;
         m.identity.semantic_assessment = { status: 'pending', phase: 'followup', revision: m.identity.semantic_assessment.revision + 1, source: 'host-primary', pending_text: text.slice(0, 12000) };
         m.identity.status = 'active';
@@ -222,6 +229,10 @@ export class MissionStore {
         return m;
     }
     restore(missions, uncleanShutdown = false) { for (const m of missions) {
+        if (m.authority.authority?.approved) {
+            m.authority.authority = { ...m.authority.authority, approved: undefined };
+            appendLedger(m, 'authority.approval.invalidated', { payload: { reason: 'runtime-restart' } });
+        }
         m.continuation.continuation_active = false;
         m.continuation.active_action_id = undefined;
         m.continuation.continuation_failure_count = 0;
@@ -293,12 +304,14 @@ export class MissionStore {
     remove(sessionID) { this.#bySession.delete(sessionID); }
     stop(sessionID, reason = 'user-stop') { const m = this.get(sessionID); if (!m)
         return; if (m.authority.human_decision?.status === 'OPEN')
-        resolveHumanDecision(m, 'mission-stopped'); m.continuation.generation += 1; m.continuation.user_interrupted = true; m.continuation.interrupted_at = Date.now(); m.continuation.interrupted_reason = reason; m.identity.status = 'stopped'; m.continuation.continuation_active = false; m.continuation.active_action_id = undefined; m.continuation.continuation_lock_until = undefined; m.continuation.suppress_until = undefined; m.continuation.pending_nudge = undefined; appendLedger(m, 'mission.stopped', { payload: { reason, generation: m.continuation.generation } }); syncMissionGates(m); }
+        resolveHumanDecision(m, 'mission-stopped'); if (m.authority.authority?.pending || m.authority.authority?.approved)
+        m.authority.authority = { ...m.authority.authority, pending: undefined, approved: undefined }; m.continuation.generation += 1; m.continuation.user_interrupted = true; m.continuation.interrupted_at = Date.now(); m.continuation.interrupted_reason = reason; m.identity.status = 'stopped'; m.continuation.continuation_active = false; m.continuation.active_action_id = undefined; m.continuation.continuation_lock_until = undefined; m.continuation.suppress_until = undefined; m.continuation.pending_nudge = undefined; appendLedger(m, 'mission.stopped', { payload: { reason, generation: m.continuation.generation } }); syncMissionGates(m); }
     noteUserMessage(sessionID) { const m = this.get(sessionID); if (!m)
         return; m.continuation.last_user_message_at = Date.now(); }
     resume(sessionID, reason = 'explicit-user-resume') { const m = this.get(sessionID); if (!m)
         return; if (m.authority.human_decision?.status === 'OPEN' && m.authority.human_decision.semantic_type !== 'authority_request')
-        resolveHumanDecision(m, reason); const wasInterrupted = m.continuation.user_interrupted || m.identity.status === 'stopped'; m.continuation.generation += 1; m.continuation.user_interrupted = false; m.continuation.interrupted_reason = undefined; m.continuation.resumed_at = Date.now(); m.continuation.resume_count = (m.continuation.resume_count ?? 0) + (wasInterrupted ? 1 : 0); m.continuation.continuation_active = false; m.continuation.active_action_id = undefined; m.continuation.continuation_lock_until = undefined; m.continuation.suppress_until = undefined; m.continuation.pending_nudge = undefined; if (['stopped', 'waiting-user'].includes(m.identity.status))
+        resolveHumanDecision(m, reason); if (m.authority.authority?.approved)
+        m.authority.authority = { ...m.authority.authority, approved: undefined }; const wasInterrupted = m.continuation.user_interrupted || m.identity.status === 'stopped'; m.continuation.generation += 1; m.continuation.user_interrupted = false; m.continuation.interrupted_reason = undefined; m.continuation.resumed_at = Date.now(); m.continuation.resume_count = (m.continuation.resume_count ?? 0) + (wasInterrupted ? 1 : 0); m.continuation.continuation_active = false; m.continuation.active_action_id = undefined; m.continuation.continuation_lock_until = undefined; m.continuation.suppress_until = undefined; m.continuation.pending_nudge = undefined; if (['stopped', 'waiting-user'].includes(m.identity.status))
         m.identity.status = 'active'; appendLedger(m, 'mission.resumed', { payload: { reason, resume_count: m.continuation.resume_count, generation: m.continuation.generation } }); syncMissionGates(m); }
     complete(sessionID) { const m = this.get(sessionID); if (!m)
         return; if (m.authority.human_decision?.status === 'OPEN')

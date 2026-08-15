@@ -11,11 +11,11 @@
       "id": "Q3-ADV-001",
       "threat": "prompt-injection",
       "owner": "Authority + structured semantic/WorkerResult contracts",
-      "control": "Untrusted prose cannot directly grant external authority or replace structured proof; generic resume/confirmation is not approval.",
+      "control": "Untrusted prose cannot directly grant external authority or replace structured proof; generic yes/resume/confirmation is not an Authority protocol response.",
       "proof_tests": [
         {
           "file": "plugin/test/authority-input-split.test.mjs",
-          "contains": "user \"resume\" against pending authority is rejected (must use exact approve)"
+          "contains": "plain approval prose is not an authority response"
         },
         {
           "file": "plugin/test/worker-result-contract.test.mjs",

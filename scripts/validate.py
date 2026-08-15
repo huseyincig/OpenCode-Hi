@@ -302,6 +302,28 @@ try:
 except Exception as e:err(f'bad PROMPT B Role/Model/Methodology receipt: {e}')
 
 try:
+    apa=json.loads((ROOT/'data/validation/prompt-b-authority-permission-external-action.json').read_text(encoding='utf-8'))
+    if apa.get('schema')!=1 or apa.get('kind')!='PROMPT_B_AUTHORITY_PERMISSION_EXTERNAL_ACTION_ADVERSARIAL_AUDIT' or apa.get('program')!='PROMPT_B' or apa.get('section')!=8 or apa.get('status')!='PASS':err('bad PROMPT B Authority/Permission/ExternalAction audit receipt')
+    if apa.get('violations')!=[] or apa.get('summary')!={'required':18,'covered':18,'violations':0}:err('PROMPT B Authority/Permission/ExternalAction coverage drift')
+    expected={'generic-yes-not-authority','continuation-not-approval','exact-action-scope','exact-target','exact-parameters','once-vs-reusable','consumed-authority','replay-idempotency','deny-precedence','lower-level-cannot-widen-safety','host-permission-cannot-widen-hi-authority','stale-approvals-rejected','credential-mfa-oauth-boundary','paid-irreversible-boundary','push-tag-release-publish-deploy-authority','destructive-filesystem-boundary','secret-sensitive-boundary','no-natural-language-regex-authority'}
+    rows=apa.get('invariants',[])
+    if {x.get('invariant') for x in rows if isinstance(x,dict)}!=expected or len(rows)!=18:err('PROMPT B Authority/Permission/ExternalAction invariant inventory drift')
+    for row in rows:
+        for key in ['owner','proof']:
+            rel=row.get(key); expected_hash=row.get(f'{key}_sha256')
+            if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B Authority/Permission/ExternalAction missing {key}: {rel}')
+            elif hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected_hash:err(f'PROMPT B Authority/Permission/ExternalAction {key} hash drift: {rel}')
+        owner=(ROOT/row['owner']).read_text(encoding='utf-8',errors='ignore') if isinstance(row.get('owner'),str) and (ROOT/row['owner']).is_file() else ''
+        proof=(ROOT/row['proof']).read_text(encoding='utf-8',errors='ignore') if isinstance(row.get('proof'),str) and (ROOT/row['proof']).is_file() else ''
+        if row.get('owner_anchor') not in owner:err(f"PROMPT B Authority/Permission/ExternalAction owner anchor drift: {row.get('invariant')}")
+        if row.get('proof_anchor') not in proof:err(f"PROMPT B Authority/Permission/ExternalAction proof anchor drift: {row.get('invariant')}")
+    guards=apa.get('static_guards',{})
+    if guards.get('natural_language_authority_regex_owner') is not False or guards.get('structured_authority_protocol') is not True or guards.get('persistent_authority_classes')!=['git-push','release-create','package-publish','deploy']:err('PROMPT B Authority/Permission/ExternalAction static guard drift')
+    closed={x.get('id') for x in apa.get('closed_defects',[]) if isinstance(x,dict)}
+    if not {'natural-language-regex-owned-authority','stale-one-shot-approval','destructive-irreversible-secret-boundaries'}<=closed:err('PROMPT B Authority/Permission/ExternalAction closed defect receipt drift')
+except Exception as e:err(f'bad PROMPT B Authority/Permission/ExternalAction receipt: {e}')
+
+try:
     mtw=json.loads((ROOT/'data/validation/prompt-b-mission-task-worker.json').read_text(encoding='utf-8'))
     if mtw.get('schema')!=1 or mtw.get('kind')!='PROMPT_B_MISSION_TASK_WORKER_ADVERSARIAL_AUDIT' or mtw.get('program')!='PROMPT_B' or mtw.get('section')!=6 or mtw.get('status')!='PASS':err('bad PROMPT B Mission/Task/Worker audit receipt')
     if mtw.get('violations')!=[] or mtw.get('summary')!={'required':15,'covered':15,'violations':0}:err('PROMPT B Mission/Task/Worker coverage drift')

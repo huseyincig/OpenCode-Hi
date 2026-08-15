@@ -23,6 +23,16 @@ function responseFor(decision:HumanDecisionContract,value:string|string[]):Human
   }
   const text=boundedText(Array.isArray(value)?value.join(', '):String(value))
   if(!text)return undefined
+  if(kind==='authority-protocol'){
+    let parsed:unknown
+    try{parsed=JSON.parse(text)}catch{return undefined}
+    if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))return undefined
+    const obj=parsed as Record<string,unknown>,keys=Object.keys(obj).sort()
+    if(keys.join(',')!=='authority_ref,decision_id,response'||obj.decision_id!==decision.decision_id||obj.authority_ref!==decision.authority_ref)return undefined
+    const allowed=decision.response_schema.protocol==='approve-exact-action'?['approve']:decision.response_schema.protocol==='reconcile-action-outcome'?['success','failure']:[]
+    if(typeof obj.response!=='string'||!allowed.includes(obj.response))return undefined
+    return{decision_id:decision.decision_id,kind,value:obj.response,received_at:Date.now()}
+  }
   return{decision_id:decision.decision_id,kind,value:text,received_at:Date.now()}
 }
 

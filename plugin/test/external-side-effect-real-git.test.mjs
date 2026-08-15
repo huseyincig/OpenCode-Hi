@@ -9,6 +9,7 @@ import { startAssessedMission } from './helpers/semantic.mjs'
 import { createToolBeforeHook } from '../dist/hooks/tool-before.js'
 import { createToolAfterHook } from '../dist/hooks/tool-after.js'
 import { resolveUncertainAuthority } from '../dist/runtime/safety/authority.js'
+import {authorityProtocolResponse} from './helpers/authority.mjs'
 
 function git(cwd,...args){return execFileSync('git',args,{cwd,encoding:'utf8'}).trim()}
 
@@ -39,7 +40,7 @@ test('real bare-remote push with lost ACK is not blindly retried and is reconcil
 
   // Explicit user reconciliation closes the uncertain authority action; fresh native probes
   // then prove the exact remote ref rather than trusting the user's statement alone.
-  assert.equal(resolveUncertainAuthority(m,'confirm action succeeded'),true)
+  assert.equal(resolveUncertainAuthority(m,authorityProtocolResponse(m,'success')),true)
   await after({sessionID:m.identity.session_id,tool:'bash',args:{command:'git rev-parse HEAD',cwd:work}},{stdout:head+'\n',metadata:{exit:0}})
   await after({sessionID:m.identity.session_id,tool:'bash',args:{command:'git ls-remote origin refs/heads/main',cwd:work}},{stdout:remoteLine+'\n',metadata:{exit:0}})
   assert.equal(m.release.release_chain?.push?.outcome,'success')

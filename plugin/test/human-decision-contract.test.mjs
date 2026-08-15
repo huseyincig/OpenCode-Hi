@@ -11,6 +11,7 @@ import { evaluateCompletion } from '../dist/runtime/completion/evaluator.js'
 import { evaluateIdle } from '../dist/runtime/continuation/evaluator.js'
 import { formatUserMissionStatus } from '../dist/runtime/ledger/status.js'
 import { approvePendingAuthority,requireAuthority } from '../dist/runtime/safety/authority.js'
+import {authorityProtocolResponse} from './helpers/authority.mjs'
 import { startAssessedMission } from './helpers/semantic.mjs'
 
 test('HumanDecisionContract is strict and duplicate open requests preserve one decision identity',()=>{
@@ -57,7 +58,7 @@ test('exact authority approval resolves the matching HumanDecision without treat
   assert.throws(()=>requireAuthority(m,'git push origin main',process.cwd()),/explicit approval required/)
   assert.equal(m.authority.human_decision.semantic_type,'authority_request');assert.equal(m.authority.human_decision.response_schema.protocol,'approve-exact-action');assert.equal(m.authority.human_decision.status,'OPEN')
   assert.equal(approvePendingAuthority(m,'continue'),false);assert.equal(m.authority.human_decision.status,'OPEN')
-  assert.equal(approvePendingAuthority(m,'approve'),true);assert.equal(m.authority.human_decision.status,'RESOLVED');assert.equal(m.authority.human_decision.resolution,'authority-approved')
+  assert.equal(approvePendingAuthority(m,authorityProtocolResponse(m,'approve')),true);assert.equal(m.authority.human_decision.status,'RESOLVED');assert.equal(m.authority.human_decision.resolution,'authority-approved')
 })
 
 test('RuntimePersistence round-trip preserves canonical HumanDecision state and rejects malformed decision',()=>{

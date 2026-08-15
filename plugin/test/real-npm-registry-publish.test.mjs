@@ -11,6 +11,7 @@ import { startAssessedMission } from './helpers/semantic.mjs'
 import {createToolBeforeHook} from '../dist/hooks/tool-before.js'
 import {createToolAfterHook} from '../dist/hooks/tool-after.js'
 import {requireAuthority,approvePendingAuthority} from '../dist/runtime/safety/authority.js'
+import {authorityProtocolResponse} from './helpers/authority.mjs'
 import {assertReleaseChainPrecondition,recordRemoteReleaseVerification} from '../dist/runtime/safety/release-chain.js'
 
 function run(cmd,args,{cwd,env}={}){return new Promise((resolveRun,reject)=>{const p=spawn(cmd,args,{cwd,env:{...process.env,...env}});let stdout='',stderr='';p.stdout.on('data',d=>stdout+=d);p.stderr.on('data',d=>stderr+=d);p.on('error',reject);p.on('close',code=>resolveRun({code,stdout,stderr}))})}
@@ -50,7 +51,7 @@ test('real npm registry publish/view round-trip is bound to Hi pack proof, autho
 
   const store=new MissionStore(root),m=startAssessedMission(store,'real-npm','publish package',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',requested_external_actions:['package-publish']});recordRemoteReleaseVerification(m,'npm pack --dry-run --json',{stdout:pack.stdout,metadata:{exit:0}},root)
   assert.doesNotThrow(()=>assertReleaseChainPrecondition(m,'npm publish',root))
-  try{requireAuthority(m,'npm publish',root)}catch{};assert.equal(approvePendingAuthority(m,'approve'),true)
+  try{requireAuthority(m,'npm publish',root)}catch{};assert.equal(approvePendingAuthority(m,authorityProtocolResponse(m,'approve')),true)
   const before=createToolBeforeHook(store),after=createToolAfterHook(store)
   await before({sessionID:'real-npm',tool:'bash',args:{command:'npm publish',cwd:root}},{args:{command:'npm publish',cwd:root}})
   const pub=await runNpm(['publish','--ignore-scripts','--access','public'],{cwd:root,env});assert.equal(pub.code,0,pub.stderr)

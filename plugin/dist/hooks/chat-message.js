@@ -50,17 +50,17 @@ export function createChatMessageHook(store, onFollowupPending, humanDecisionTra
         const openDecision = existing?.authority.human_decision?.status === 'OPEN' ? existing.authority.human_decision : undefined;
         if (openDecision && humanDecisionTransport)
             syncHumanDecisionTransport(openDecision, humanDecisionTransport);
-        // Exact authority-response tokens remain a separate deterministic safety protocol. The transport observes
-        // a response only after the canonical Authority runtime has accepted the exact protocol; it never grants authority.
-        if (existing && resolveUncertainAuthority(existing, userText)) {
-            if (openDecision && humanDecisionTransport)
-                humanDecisionTransport.respond(openDecision.decision_id, userText);
-            return;
-        }
-        if (existing && approvePendingAuthority(existing, userText)) {
-            if (openDecision && humanDecisionTransport)
-                humanDecisionTransport.respond(openDecision.decision_id, userText);
-            store.resume(sid, 'authority-approved');
+        // Authority semantics accept only a structured HumanDecision authority-protocol response. Natural-language
+        // text, regexes, persona instructions and generic continuation commands cannot grant or reconcile Authority.
+        if (existing && openDecision?.semantic_type === 'authority_request' && openDecision.response_schema.kind === 'authority-protocol' && humanDecisionTransport) {
+            const response = humanDecisionTransport.respond(openDecision.decision_id, userText);
+            if (response && typeof response.value === 'string' && openDecision.authority_ref) {
+                const structured = { decision_id: openDecision.decision_id, authority_ref: openDecision.authority_ref, response: response.value };
+                if (resolveUncertainAuthority(existing, structured))
+                    return;
+                if (approvePendingAuthority(existing, structured))
+                    return;
+            }
             return;
         }
         if (!existing || existing.identity.status === 'completed' || existing.identity.status === 'failed') {

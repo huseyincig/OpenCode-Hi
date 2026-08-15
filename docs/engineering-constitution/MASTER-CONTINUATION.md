@@ -701,6 +701,11 @@ PROMPT B section 6 was re-audited as a 15-invariant state-machine surface. A rea
 
 PROMPT B section 7 was re-audited as 13 executable invariants enforcing `ROLE != AGENT != MODEL != METHODOLOGY`. The current model chain keeps requested, selected, projected, observed and effective identities distinct; host projection/effective-model contradictions fail closed; unavailable model/native capability resolves before worker execution; runtime fallback revalidates live provider/model policy. Methodology remains a method plane only: available/admitted/selected/loaded are distinct, selected methodology must be natively loaded before DONE, exit conditions require fresh matching Evidence, collision/foreign-provider cases fail closed, methodology runtime has no Authority/Completion owner imports, all 27 packaged skills carry the no-orchestration/no-authority/no-completion boundary, and role Markdown owns no mechanical model/tool/permission state. `scripts/audit-role-model-methodology.py` generates `data/validation/prompt-b-role-model-methodology.json` with current owner/proof hashes and static ownership guards. No new product defect was found in this slice.
 
+
+### PROMPT B B5 — Authority / Permission / ExternalAction adversarial hardening — **CLOSED**
+
+PROMPT B section 8 was re-audited against 18 fail-close invariants. Natural-language approval/outcome regex ownership was removed: Hi Authority now accepts only an exact structured HumanDecision authority protocol bound to `decision_id` + `authority_ref` + a closed response enum. One-shot requests/approvals are TTL-bound and invalidated across semantic revision, STOP, and runtime restart without erasing unresolved in-flight external effects. Native `always` remains a distinct bounded persistent authority class and explicit host/user deny remains dominant. Credential/OAuth/SSO flows, plaintext secret-sensitive shell commands, catastrophic filesystem mutations, irreversible external deletions/destruction, and supported potentially paid external effects are routed through deterministic user/authority boundaries. Bounded local cleanup is explicitly protected from catastrophic false positives. `scripts/audit-authority-permission-external-action.py` generates `data/validation/prompt-b-authority-permission-external-action.json`; current receipt coverage is 18/18 with zero violations.
+
 ## 11. Verification protocol for future checkpoints
 
 ### Focused verification first
@@ -811,7 +816,7 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**PROMPT B — IN PROGRESS. Next: Authority / Permission / ExternalAction escalation and replay audit.**
+**PROMPT B — IN PROGRESS. Next: Evidence / Verification / Completion hostile-claim audit.**
 
 PROMPT A certified product-source baseline: `5ced215ed57f28f8d963376ca702efc0dac75503` (tree `b22db990942ad291997a8ad564ac1235283036bb`). Canonical reconstruction receipt: `data/validation/documentation-reconstruction.json`.
 

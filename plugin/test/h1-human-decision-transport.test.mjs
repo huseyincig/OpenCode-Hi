@@ -7,6 +7,7 @@ import { openHumanDecision } from '../dist/runtime/human-decision/runtime.js'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { requireAuthority } from '../dist/runtime/safety/authority.js'
 import { startAssessedMission } from './helpers/semantic.mjs'
+import {authorityProtocolJson} from './helpers/authority.mjs'
 
 function userOutput(text){return{message:{role:'user',parts:[{type:'text',text}]}}}
 
@@ -53,7 +54,7 @@ test('H1 authority chat remains canonical hash-bound authority; generic prose ca
   const transport=new ChatHumanDecisionTransport(100),hook=createChatMessageHook(store,undefined,transport);transport.open(decision)
   await hook({sessionID:'h1-authority',agent:'working-manager'},userOutput('continue'))
   assert.equal(m.authority.authority.pending.hash,hash);assert.equal(m.authority.human_decision.status,'OPEN');assert.equal(transport.handle(decision.decision_id)?.state,'OPEN')
-  await hook({sessionID:'h1-authority',agent:'working-manager'},userOutput('approve'))
+  await hook({sessionID:'h1-authority',agent:'working-manager'},userOutput(authorityProtocolJson(m,'approve')))
   assert.equal(m.authority.authority.pending,undefined);assert.equal(m.authority.authority.approved.hash,hash);assert.equal(m.authority.human_decision.status,'RESOLVED');assert.equal(transport.handle(decision.decision_id)?.state,'RESPONDED')
 })
 

@@ -5,6 +5,7 @@ import { startAssessedMission } from './helpers/semantic.mjs'
 import { createToolBeforeHook } from '../dist/hooks/tool-before.js'
 import { createToolAfterHook } from '../dist/hooks/tool-after.js'
 import { recordStagingInspection } from '../dist/runtime/safety/staging-safety.js'
+import {authorityProtocolResponse} from './helpers/authority.mjs'
 
 
 const H='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
@@ -40,7 +41,7 @@ test('successful push permits release, but a later local commit invalidates that
 test('user-confirmed success for an unknown push ACK satisfies the release-chain push prerequisite',async()=>{
  const {m,before,after}=setup();await before({sessionID:m.identity.session_id,tool:'bash',args:{command:'git push origin main'}},{args:{command:'git push origin main'}});await after({sessionID:m.identity.session_id,tool:'bash',args:{command:'git push origin main'}},{stdout:'',metadata:{}})
  const { resolveUncertainAuthority }=await import('../dist/runtime/safety/authority.js')
- assert.equal(resolveUncertainAuthority(m,'confirm action succeeded'),true)
+ assert.equal(resolveUncertainAuthority(m,authorityProtocolResponse(m,'success')),true)
  assert.equal(m.release.release_chain?.push?.outcome,'success')
  await verifyRemote(m,after)
  await assert.doesNotReject(()=>before({sessionID:m.identity.session_id,tool:'bash',args:{command:'gh release create v1'}},{args:{command:'gh release create v1'}}))
