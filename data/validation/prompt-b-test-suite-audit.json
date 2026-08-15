@@ -29,7 +29,7 @@
       "owner_sha256": "afd758b103c9e66d2a01237a54ae877071e854ce8bcabbade24f366b2b2c7ede",
       "owner_anchor": "External receipts remain canonical evidence",
       "proof": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
-      "proof_sha256": "ffd21bb3f6293e72cf86759d9c77ffcd0b18fd8dda56f361acc2acb524418d94",
+      "proof_sha256": "edfefcdcbe035ea874e0b3c5f6dbe26e96a0bd9a72287a8b7f2b5ac51fb3c753",
       "proof_anchor": "\"covered\": 61"
     },
     {
@@ -47,7 +47,7 @@
       "owner_sha256": "d95f41f8d88a1ccb2693d95a780713ac2284fcea90165ca7e61e298ce1093256",
       "owner_anchor": "os: [ubuntu-latest, windows-latest]",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "173a3e06e3ece0875c5808c2ef05d6f3b7e0836fd7a0628dc0bcfbe0512346e5",
+      "proof_sha256": "58a4aad5afec78bbb9596c3da01f8480e3c871ac9483eb82661e1436fca3124b",
       "proof_anchor": "pytest.skip('symlink privilege varies on Windows')"
     },
     {

@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "kind": "PROPERTY_FUZZ_ACCEPTANCE",
+  "program": "PROMPT_B",
+  "section": 32,
+  "status": "PASS",
+  "source_binding": {
+    "tested_git_commit": "6fe74d7786e25cb6894ddca7d4408a17220cc936",
+    "tested_git_tree": "3bf72be8b22082a720f2fa6aa271d56b100e5528"
+  },
+  "configuration": {
+    "seeds": [
+      12648430,
+      1592594996,
+      659918
+    ],
+    "seeds_hex": [
+      "0x00c0ffee",
+      "0x5eed1234",
+      "0x000a11ce"
+    ],
+    "cases_per_seed": 32,
+    "areas": [
+      "ids",
+      "paths",
+      "schemas",
+      "event-ordering",
+      "host-observations",
+      "config",
+      "decision-payloads",
+      "tool-outputs",
+      "persistence-envelopes"
+    ],
+    "generated_cases": 864
+  },
+  "terminal": {
+    "tests": 9,
+    "pass": 9,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "known_node_teardown_normalized": false,
+  "test": {
+    "path": "plugin/test/q4-property-fuzz.test.mjs",
+    "sha256": "124af8a6be516d3171e89da6baf65e707421ac43c39e360a973b1ba5fc53b91c"
+  },
+  "historical_regression_case": {
+    "path": "data/validation/property-fuzz-failures/persistence-envelopes-seed-c0ffee-case-0.json",
+    "sha256": "0bfd4f1628102182a9b7ae67e9fb769e6da0324e4b3ecd37e9bfcc2d6d20fc42",
+    "status": "SAVED_AND_FIXED"
+  },
+  "failures": []
+}

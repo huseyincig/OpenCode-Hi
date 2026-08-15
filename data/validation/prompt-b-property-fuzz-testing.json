@@ -1,0 +1,113 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_PROPERTY_FUZZ_TESTING_AUDIT",
+  "program": "PROMPT_B",
+  "section": 32,
+  "status": "PASS",
+  "acceptance_receipt": "data/validation/property-fuzz-acceptance-0.1.0.json",
+  "summary": {
+    "required_areas": 9,
+    "covered_areas": 9,
+    "generated_cases": 864,
+    "violations": 0
+  },
+  "areas": [
+    {
+      "area": "ids",
+      "owner": "plugin/src/contracts/common.ts",
+      "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
+      "owner_anchor": "assertCanonicalId",
+      "proof": "plugin/test/q4-property-fuzz.test.mjs",
+      "proof_sha256": "124af8a6be516d3171e89da6baf65e707421ac43c39e360a973b1ba5fc53b91c",
+      "proof_anchor": "Q4 seeded property fuzz: canonical IDs accept valid syntax and reject malformed forms"
+    },
+    {
+      "area": "paths",
+      "owner": "plugin/src/contracts/common.ts",
+      "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
+      "owner_anchor": "normalizeBoundedProjectPath",
+      "proof": "plugin/test/q4-property-fuzz.test.mjs",
+      "proof_sha256": "124af8a6be516d3171e89da6baf65e707421ac43c39e360a973b1ba5fc53b91c",
+      "proof_anchor": "Q4 seeded property fuzz: paths remain project-bounded"
+    },
+    {
+      "area": "schemas",
+      "owner": "plugin/src/runtime/mission/validators.ts",
+      "owner_sha256": "113bfe4fc6e72a97f8078c57c784473cfa2ddd4f68b1a051da1f24f650934e97",
+      "owner_anchor": "validateMissionEnvelope",
+      "proof": "plugin/test/q4-property-fuzz.test.mjs",
+      "proof_sha256": "124af8a6be516d3171e89da6baf65e707421ac43c39e360a973b1ba5fc53b91c",
+      "proof_anchor": "Q4 seeded property fuzz: strict schemas reject widening unknown and malformed permission profiles"
+    },
+    {
+      "area": "event-ordering",
+      "owner": "plugin/src/runtime/application/runtime-event-controller.ts",
+      "owner_sha256": "5094345ed540a745c73cca7022d082f07690b05180006be922883baf24f7b7cc",
+      "owner_anchor": "ev.kind==='permission-asked'",
+      "proof": "plugin/test/q4-property-fuzz.test.mjs",
+      "proof_sha256": "124af8a6be516d3171e89da6baf65e707421ac43c39e360a973b1ba5fc53b91c",
+      "proof_anchor": "Q4 seeded property fuzz: permission event ordering and duplicates never leave phantom pending authority"
+    },
+    {
+      "area": "host-observations",
+      "owner": "plugin/src/opencode/event-adapter.ts",
+      "owner_sha256": "59ffd9afcdda8f293484bcd1b5ba9672e7687f1f431f1b19bfd2dac2f158aca4",
+      "owner_anchor": "normalizeOpenCodeEvent",
+      "proof": "plugin/test/q4-property-fuzz.test.mjs",
+      "proof_sha256": "124af8a6be516d3171e89da6baf65e707421ac43c39e360a973b1ba5fc53b91c",
+      "proof_anchor": "Q4 seeded property fuzz: malformed host observations normalize without unbounded output or fabricated permission decisions"
+    },
+    {
+      "area": "config",
+      "owner": "plugin/src/config/resolver.ts",
+      "owner_sha256": "1fd76677fea9c73dd80f7f8472a866de06fbc4992696fa474029a28ef8475851",
+      "owner_anchor": "resolveHiConfigWithReport",
+      "proof": "plugin/test/q4-property-fuzz.test.mjs",
+      "proof_sha256": "124af8a6be516d3171e89da6baf65e707421ac43c39e360a973b1ba5fc53b91c",
+      "proof_anchor": "Q4 seeded property fuzz: malformed config resolves to bounded canonical executable values"
+    },
+    {
+      "area": "decision-payloads",
+      "owner": "plugin/src/runtime/safety/authority.ts",
+      "owner_sha256": "e81c16ad08a0392b4cb5094500dd046a2ef0d9bf731159817fc67d0a4c4c6378",
+      "owner_anchor": "approvePendingAuthority",
+      "proof": "plugin/test/q4-property-fuzz.test.mjs",
+      "proof_sha256": "124af8a6be516d3171e89da6baf65e707421ac43c39e360a973b1ba5fc53b91c",
+      "proof_anchor": "Q4 seeded property fuzz: decision payloads cannot authorize without exact structured identity"
+    },
+    {
+      "area": "tool-outputs",
+      "owner": "plugin/src/runtime/task/result-parser.ts",
+      "owner_sha256": "e851ee7ad0011f57e350142161ce4873a046471c8510796f967d52ffd59e5d2f",
+      "owner_anchor": "parseWorkerResult",
+      "proof": "plugin/test/q4-property-fuzz.test.mjs",
+      "proof_sha256": "124af8a6be516d3171e89da6baf65e707421ac43c39e360a973b1ba5fc53b91c",
+      "proof_anchor": "Q4 seeded property fuzz: arbitrary tool/worker output parsing is bounded and canonical"
+    },
+    {
+      "area": "persistence-envelopes",
+      "owner": "plugin/src/runtime/state/persistence.ts",
+      "owner_sha256": "df655ecc93d395864046621ef31ae66882817fad34e7478e0be8b65b7376491d",
+      "owner_anchor": "validateMissionEnvelope",
+      "proof": "plugin/test/q4-property-fuzz.test.mjs",
+      "proof_sha256": "124af8a6be516d3171e89da6baf65e707421ac43c39e360a973b1ba5fc53b91c",
+      "proof_anchor": "Q4 seeded property fuzz: persistence envelopes reject malformed schema and shape while valid round-trips survive"
+    }
+  ],
+  "static_guards": {
+    "fixed-seeds": true,
+    "bounded-cases": true,
+    "failing-cases-saved": true,
+    "unknown-persisted-identity-rejected": true,
+    "acceptance-source-bound": true
+  },
+  "closed_defects": [
+    {
+      "id": "persisted-mission-unknown-identity-field-accepted",
+      "finding": "RuntimePersistence accepted a persisted Mission carrying an unknown identity field.",
+      "resolution": "Mission identity, intent, and semantic-assessment validators now reject unknown keys."
+    }
+  ],
+  "historical_failure_case": "data/validation/property-fuzz-failures/persistence-envelopes-seed-c0ffee-case-0.json",
+  "violations": []
+}

@@ -8,7 +8,7 @@
     {
       "invariant": "unique-identities",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "0a534c906ebd71f44b3f91cfb2f346cdbfee1ecf4ffd917b04f4b848784ed49b",
+      "owner_sha256": "113bfe4fc6e72a97f8078c57c784473cfa2ddd4f68b1a051da1f24f650934e97",
       "proof": "plugin/test/task-worker-contract.test.mjs",
       "proof_sha256": "879a15f054b4e7b78bd9e80c22239c71c07b9a635a7f09731fd19e66350288c0",
       "owner_anchor": "new Set(taskIDs).size",
@@ -17,7 +17,7 @@
     {
       "invariant": "mission-ownership",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "0a534c906ebd71f44b3f91cfb2f346cdbfee1ecf4ffd917b04f4b848784ed49b",
+      "owner_sha256": "113bfe4fc6e72a97f8078c57c784473cfa2ddd4f68b1a051da1f24f650934e97",
       "proof": "plugin/test/task-worker-contract.test.mjs",
       "proof_sha256": "879a15f054b4e7b78bd9e80c22239c71c07b9a635a7f09731fd19e66350288c0",
       "owner_anchor": "worker.parent_mission_id!==missionID",
@@ -26,7 +26,7 @@
     {
       "invariant": "task-dag-validity",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "0a534c906ebd71f44b3f91cfb2f346cdbfee1ecf4ffd917b04f4b848784ed49b",
+      "owner_sha256": "113bfe4fc6e72a97f8078c57c784473cfa2ddd4f68b1a051da1f24f650934e97",
       "proof": "plugin/test/task-worker-contract.test.mjs",
       "proof_sha256": "879a15f054b4e7b78bd9e80c22239c71c07b9a635a7f09731fd19e66350288c0",
       "owner_anchor": "const cyclic=",
@@ -35,7 +35,7 @@
     {
       "invariant": "worker-binding",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "0a534c906ebd71f44b3f91cfb2f346cdbfee1ecf4ffd917b04f4b848784ed49b",
+      "owner_sha256": "113bfe4fc6e72a97f8078c57c784473cfa2ddd4f68b1a051da1f24f650934e97",
       "proof": "plugin/test/task-worker-contract.test.mjs",
       "proof_sha256": "879a15f054b4e7b78bd9e80c22239c71c07b9a635a7f09731fd19e66350288c0",
       "owner_anchor": "ownerTask.worker_id!==worker.id",
@@ -44,7 +44,7 @@
     {
       "invariant": "no-ghost-workers",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "0a534c906ebd71f44b3f91cfb2f346cdbfee1ecf4ffd917b04f4b848784ed49b",
+      "owner_sha256": "113bfe4fc6e72a97f8078c57c784473cfa2ddd4f68b1a051da1f24f650934e97",
       "proof": "plugin/test/task-worker-contract.test.mjs",
       "proof_sha256": "879a15f054b4e7b78bd9e80c22239c71c07b9a635a7f09731fd19e66350288c0",
       "owner_anchor": "ownerTask.worker_id!==worker.id",
@@ -53,7 +53,7 @@
     {
       "invariant": "no-orphan-tasks",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "0a534c906ebd71f44b3f91cfb2f346cdbfee1ecf4ffd917b04f4b848784ed49b",
+      "owner_sha256": "113bfe4fc6e72a97f8078c57c784473cfa2ddd4f68b1a051da1f24f650934e97",
       "proof": "plugin/test/task-worker-contract.test.mjs",
       "proof_sha256": "879a15f054b4e7b78bd9e80c22239c71c07b9a635a7f09731fd19e66350288c0",
       "owner_anchor": "task.worker_id!==undefined",

@@ -872,10 +872,12 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**PROMPT B — IN PROGRESS. Sections 20–31 are CLOSED. Next: Property / fuzz testing (section 32).**
+**PROMPT B — IN PROGRESS. Sections 20–32 are CLOSED. Next: Replay testing (section 33).**
 
 
 
+
+Section 32 Property / fuzz testing is closed by `data/validation/prompt-b-property-fuzz-testing.json`: **9/9 required fuzz areas covered, 864 deterministic generated cases, 0 unresolved failures**. Fixed seeds are `0x00c0ffee`, `0x5eed1234`, and `0x000a11ce`, with 32 cases per seed across IDs, paths, schemas, event ordering, malformed host observations, config, decision payloads, tool outputs, and persistence envelopes. Fuzzing found and closed one real persistence defect: a persisted Mission with an unknown `identity.extra` field was accepted. Mission identity, intent, and semantic-assessment validation now rejects unknown keys fail-closed. The original failing seed/case is preserved as a concise deterministic historical regression record under `data/validation/property-fuzz-failures/`. Acceptance is source-bound to checkpoint `6fe74d7786e25cb6894ddca7d4408a17220cc936` (tree `3bf72be8b22082a720f2fa6aa271d56b100e5528`).
 
 Section 31 Mutation testing is closed by `data/validation/prompt-b-mutation-testing.json`: **9/9 required critical areas covered, 15/15 compiled mutants killed by their expected invariant guards, 0 survivors, 0 compile-only kills**. Coverage includes Authority deny/allow and exact-action binding, completion evidence, permission monotonicity, canonical owner uniqueness, stale evidence, path confinement, restart schema rejection, config executable effect, capability support truth, plus manager write authority, explicit STOP, reviewer independence and child control-plane isolation. `data/validation/selective-mutation-testing-0.1.0.json` is the machine-readable execution receipt. A mutant is not counted as killed merely because TypeScript compilation fails: every accepted mutant must compile and then cause the expected invariant guard to fail. No broad mutation-coverage percentage is claimed beyond this selective critical-invariant scope.
 

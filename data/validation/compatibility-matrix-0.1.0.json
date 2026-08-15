@@ -2,7 +2,7 @@
   "schema": 1,
   "release": "0.1.0",
   "kind": "GENERATED_RECEIPT_COMPATIBILITY_PROJECTION",
-  "generated_at": "2026-08-15",
+  "generated_at": "2026-08-16",
   "generator": "scripts/generate-compatibility-matrix.py",
   "generation_requires_full_git_history": true,
   "claim_boundary": "Projection only. External receipts remain canonical evidence; this file owns no host capability state and cannot promote support without an exact receipt.",
@@ -24,12 +24,12 @@
       },
       "workspace-isolation-binding": {
         "status": "SUPPORTED_T3",
-        "tested_git_commit": "5210a12a7b607e0c9048749fa74a4c8b801cd924",
-        "receipt": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-5210a12.json",
-        "source_rank": 162,
+        "tested_git_commit": "6fe74d7786e25cb6894ddca7d4408a17220cc936",
+        "receipt": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-6fe74d7.json",
+        "source_rank": 166,
         "scope_limitations": [
           "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution.",
-          "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 and source 5210a12a7b607e0c9048749fa74a4c8b801cd924."
+          "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 and source 6fe74d7786e25cb6894ddca7d4408a17220cc936."
         ]
       },
       "browser-execution": {
@@ -434,6 +434,27 @@
         "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 and source 5210a12a7b607e0c9048749fa74a4c8b801cd924; runtime mocks cannot promote T3."
       ],
       "source_rank": 162,
+      "current_for_capabilities": [],
+      "classification": "HISTORICAL_EXACT_PROOF"
+    },
+    {
+      "receipt": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-6fe74d7.json",
+      "receipt_sha256": "df0c478f8e6d1f1d63221b0781f026257e657f129194fb697d5825c0cb95bbcb",
+      "status": "PASS_EXACT_SOURCE_WORKSPACE_ISOLATION_T3_PROMPT_B32",
+      "opencode_version": "1.18.18",
+      "platform": "linux",
+      "architecture": "aarch64",
+      "tested_git_commit": "6fe74d7786e25cb6894ddca7d4408a17220cc936",
+      "exact_source": true,
+      "generated_at": "2026-08-16",
+      "gates": {
+        "workspace-isolation-binding": "SUPPORTED_T3"
+      },
+      "limitations": [
+        "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution.",
+        "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 and source 6fe74d7786e25cb6894ddca7d4408a17220cc936; runtime mocks cannot promote T3."
+      ],
+      "source_rank": 166,
       "current_for_capabilities": [
         "workspace-isolation-binding"
       ],

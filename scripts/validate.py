@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import json,re,sys
+import json,re,sys,subprocess
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]; ERR=[]
 def err(x):ERR.append(x)
@@ -658,8 +658,11 @@ try:
     cm30=json.loads((ROOT/'data/validation/compatibility-matrix-0.1.0.json').read_text(encoding='utf-8'))
     caps30=cm30.get('current_reference_host',{}).get('capabilities',{})
     for cap in ('process-lifecycle','workspace-isolation-binding','browser-execution'):
-        x=caps30.get(cap) or {}
-        if x.get('status')!='SUPPORTED_T3' or x.get('tested_git_commit')!='5210a12a7b607e0c9048749fa74a4c8b801cd924':err(f'PROMPT B §30 exact T3 selection drift: {cap}')
+        x=caps30.get(cap) or {}; selected=x.get('tested_git_commit')
+        if x.get('status')!='SUPPORTED_T3' or not isinstance(selected,str):err(f'PROMPT B §30 exact T3 selection drift: {cap}');continue
+        try:
+            if subprocess.run(['git','merge-base','--is-ancestor','5210a12a7b607e0c9048749fa74a4c8b801cd924',selected],cwd=ROOT,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode!=0:err(f'PROMPT B §30 T3 receipt predates certification checkpoint: {cap}')
+        except Exception as e:err(f'PROMPT B §30 T3 ancestry unavailable: {cap}: {e}')
 except Exception as e:err(f'bad PROMPT B test-suite receipt: {e}')
 
 
@@ -682,6 +685,33 @@ try:
         ma=json.loads((ROOT/ar).read_text(encoding='utf-8'))
         if ma.get('status')!='PASS' or ma.get('summary')!={'configured':15,'killed':15,'survived':0,'compile_only_kills':0}:err('PROMPT B mutation acceptance drift')
 except Exception as e:err(f'bad PROMPT B mutation testing receipt: {e}')
+
+# PROMPT B §32 property / fuzz testing certification
+try:
+    f32=json.loads((ROOT/'data/validation/prompt-b-property-fuzz-testing.json').read_text(encoding='utf-8'))
+    if f32.get('schema')!=1 or f32.get('kind')!='PROMPT_B_PROPERTY_FUZZ_TESTING_AUDIT' or f32.get('program')!='PROMPT_B' or f32.get('section')!=32 or f32.get('status')!='PASS':err('bad PROMPT B property/fuzz audit receipt identity/status')
+    if f32.get('summary')!={'required_areas':9,'covered_areas':9,'generated_cases':864,'violations':0} or f32.get('violations')!=[]:err('PROMPT B property/fuzz summary drift')
+    if not all((f32.get('static_guards') or {}).values()):err('PROMPT B property/fuzz static guard drift')
+    expected_areas={'ids','paths','schemas','event-ordering','host-observations','config','decision-payloads','tool-outputs','persistence-envelopes'}
+    rows=f32.get('areas') or []
+    if len(rows)!=9 or {x.get('area') for x in rows if isinstance(x,dict)}!=expected_areas:err('PROMPT B property/fuzz area inventory drift')
+    for row in rows:
+        for key in ('owner','proof'):
+            rel=row.get(key);expected=row.get(f'{key}_sha256')
+            if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B property/fuzz missing {key}: {rel}');continue
+            if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B property/fuzz {key} hash drift: {rel}')
+        try:
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B property/fuzz owner anchor drift: {row.get('area')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B property/fuzz proof anchor drift: {row.get('area')}")
+        except Exception as e:err(f'PROMPT B property/fuzz row invalid: {e}')
+    ar=json.loads((ROOT/f32['acceptance_receipt']).read_text(encoding='utf-8'))
+    if ar.get('status')!='PASS' or ar.get('source_binding')!={'tested_git_commit':'6fe74d7786e25cb6894ddca7d4408a17220cc936','tested_git_tree':'3bf72be8b22082a720f2fa6aa271d56b100e5528'}:err('PROMPT B property/fuzz source binding drift')
+    cfg=ar.get('configuration') or {}
+    if cfg.get('generated_cases')!=864 or cfg.get('cases_per_seed')!=32 or cfg.get('seeds_hex')!=['0x00c0ffee','0x5eed1234','0x000a11ce']:err('PROMPT B property/fuzz bounded seed configuration drift')
+    if ar.get('terminal')!={'tests':9,'pass':9,'fail':0,'cancelled':0,'skipped':0,'todo':0} or ar.get('failures')!=[]:err('PROMPT B property/fuzz acceptance terminal drift')
+    case=json.loads((ROOT/'data/validation/property-fuzz-failures/persistence-envelopes-seed-c0ffee-case-0.json').read_text(encoding='utf-8'))
+    if case.get('kind')!='PROPERTY_FUZZ_HISTORICAL_REGRESSION_CASE' or case.get('observed_before_fix')!='accepted-malformed-persisted-mission':err('PROMPT B property/fuzz historical regression case drift')
+except Exception as e:err(f'bad PROMPT B property/fuzz testing receipt: {e}')
 
 try:
     nr=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text(encoding='utf-8'))

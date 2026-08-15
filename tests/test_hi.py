@@ -683,9 +683,9 @@ def test_r3_generated_compatibility_projection_selects_latest_exact_capability_p
     cur=d['current_reference_host'];assert (cur['opencode_version'],cur['platform'],cur['architecture'])==('1.18.18','linux','aarch64')
     caps=cur['capabilities']
     assert caps['process-lifecycle']['receipt'].endswith('process-1.18.18-head-5210a12.json') and caps['process-lifecycle']['status']=='SUPPORTED_T3'
-    assert caps['workspace-isolation-binding']['receipt'].endswith('workspace-1.18.18-head-5210a12.json') and caps['workspace-isolation-binding']['status']=='SUPPORTED_T3'
+    assert caps['workspace-isolation-binding']['receipt'].endswith('workspace-1.18.18-head-6fe74d7.json') and caps['workspace-isolation-binding']['status']=='SUPPORTED_T3'
     assert caps['browser-execution']['receipt'].endswith('browser-1.18.18-head-5210a12.json') and caps['browser-execution']['status']=='SUPPORTED_T3'
-    assert {caps[k]['tested_git_commit'] for k in ('process-lifecycle','workspace-isolation-binding','browser-execution')}=={'5210a12a7b607e0c9048749fa74a4c8b801cd924'}
+    assert caps['process-lifecycle']['tested_git_commit']=='5210a12a7b607e0c9048749fa74a4c8b801cd924' and caps['browser-execution']['tested_git_commit']=='5210a12a7b607e0c9048749fa74a4c8b801cd924' and caps['workspace-isolation-binding']['tested_git_commit']=='6fe74d7786e25cb6894ddca7d4408a17220cc936'
     superseded={x['receipt']:x for x in d['history']}
     assert superseded['data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-bc85854.json']['classification']=='HISTORICAL_EXACT_PROOF'
     assert superseded['data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-92812a1.json']['classification']=='HISTORICAL_EXACT_PROOF'
@@ -1281,6 +1281,10 @@ def test_prompt_b_test_suite_audit_is_isolated_bounded_and_never_promotes_mock_t
     assert h['status']=='PASS' and h['source_binding']['tested_git_commit']=='5210a12a7b607e0c9048749fa74a4c8b801cd924'
     assert h['canonical_suite_observation']=={'tests':816,'pass':816,'fail':0,'cancelled':0,'home_hi_state_before':5301,'home_hi_state_after':5301,'home_hi_state_delta':0}
     assert all(h['cwd_dual_run'][k]['tests']==17 and h['cwd_dual_run'][k]['pass']==17 and h['cwd_dual_run'][k]['fail']==0 for k in ('plugin_cwd','repo_root_cwd'))
+    compat=json.loads((ROOT/'data/validation/compatibility-matrix-0.1.0.json').read_text())
+    for cap in ('process-lifecycle','workspace-isolation-binding','browser-execution'):
+        current=compat['current_reference_host']['capabilities'][cap];assert current['status']=='SUPPORTED_T3'
+        assert subprocess.run(['git','merge-base','--is-ancestor','5210a12a7b607e0c9048749fa74a4c8b801cd924',current['tested_git_commit']],cwd=ROOT).returncode==0
 
 
 
@@ -1295,3 +1299,23 @@ def test_prompt_b_mutation_testing_kills_all_critical_mutants_without_compile_on
     a=json.loads((ROOT/d['acceptance_receipt']).read_text())
     assert a['status']=='PASS' and a['summary']=={'configured':15,'killed':15,'survived':0,'compile_only_kills':0}
     for rel,digest in d['proof_hashes'].items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
+
+
+def test_prompt_b_property_fuzz_testing_is_bounded_reproducible_and_source_bound():
+    d=json.loads((ROOT/'data/validation/prompt-b-property-fuzz-testing.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_PROPERTY_FUZZ_TESTING_AUDIT' and d['program']=='PROMPT_B' and d['section']==32 and d['status']=='PASS'
+    assert d['violations']==[] and d['summary']=={'required_areas':9,'covered_areas':9,'generated_cases':864,'violations':0}
+    assert all(d['static_guards'].values())
+    expected={'ids','paths','schemas','event-ordering','host-observations','config','decision-payloads','tool-outputs','persistence-envelopes'}
+    assert {x['area'] for x in d['areas']}==expected and len(d['areas'])==9
+    for row in d['areas']:
+        owner=ROOT/row['owner'];proof=ROOT/row['proof'];assert owner.is_file() and proof.is_file()
+        assert hashlib.sha256(owner.read_bytes()).hexdigest()==row['owner_sha256']
+        assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
+        assert row['owner_anchor'] in owner.read_text(errors='replace') and row['proof_anchor'] in proof.read_text(errors='replace')
+    a=json.loads((ROOT/d['acceptance_receipt']).read_text())
+    assert a['status']=='PASS' and a['source_binding']=={'tested_git_commit':'6fe74d7786e25cb6894ddca7d4408a17220cc936','tested_git_tree':'3bf72be8b22082a720f2fa6aa271d56b100e5528'}
+    assert a['configuration']['seeds_hex']==['0x00c0ffee','0x5eed1234','0x000a11ce'] and a['configuration']['cases_per_seed']==32 and a['configuration']['generated_cases']==864
+    assert a['terminal']=={'tests':9,'pass':9,'fail':0,'cancelled':0,'skipped':0,'todo':0} and a['failures']==[]
+    case=json.loads((ROOT/'data/validation/property-fuzz-failures/persistence-envelopes-seed-c0ffee-case-0.json').read_text())
+    assert case['kind']=='PROPERTY_FUZZ_HISTORICAL_REGRESSION_CASE' and case['observed_before_fix']=='accepted-malformed-persisted-mission' and case['expected']=='reject-malformed-persisted-mission'

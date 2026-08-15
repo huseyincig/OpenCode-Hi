@@ -2,7 +2,7 @@
   "schema": 1,
   "release": "0.1.0",
   "kind": "GENERATED_RELEASE_STATUS_PROJECTION",
-  "generated_at": "2026-08-15",
+  "generated_at": "2026-08-16",
   "generator": "scripts/generate-release-status.py",
   "claim_boundary": "Projection only. Canonical release/publication/host receipts remain the evidence owners; this file owns no release, host capability, authority, or verification state.",
   "inputs": {
@@ -20,7 +20,7 @@
     },
     "compatibility": {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
-      "sha256": "cd6b28c5bc4c10cc92ecbd2d754939fc805ce8cdaeba8fc663b662da429c6880"
+      "sha256": "f22fe9645c346a953e42d69712efc8ebd13e1e4a4cf8d8bc0781d278d7322be2"
     },
     "oidc_readiness": {
       "path": "data/validation/npm-oidc-readiness-0.1.0.json",
@@ -64,8 +64,8 @@
       },
       "workspace-isolation-binding": {
         "status": "SUPPORTED_T3",
-        "receipt": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-5210a12.json",
-        "tested_git_commit": "5210a12a7b607e0c9048749fa74a4c8b801cd924"
+        "receipt": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-6fe74d7.json",
+        "tested_git_commit": "6fe74d7786e25cb6894ddca7d4408a17220cc936"
       },
       "browser-execution": {
         "status": "SUPPORTED_T3",

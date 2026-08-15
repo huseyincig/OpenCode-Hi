@@ -27,7 +27,7 @@
       "owner_sha256": "ce25a2114b4e2e615192d2d08099ec061684520af81be9324c6365194c8c4894",
       "owner_anchor": "def dependency_lock_paths(root:Path)",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "173a3e06e3ece0875c5808c2ef05d6f3b7e0836fd7a0628dc0bcfbe0512346e5",
+      "proof_sha256": "58a4aad5afec78bbb9596c3da01f8480e3c871ac9483eb82661e1436fca3124b",
       "proof_anchor": "dependency_locks']==['package-lock.json','plugin/package-lock.json']"
     },
     {
@@ -37,7 +37,7 @@
       "owner_sha256": "8509951b3ce97234c2d89440710ea7164584ed7a8c1b299952f2aa9e8b96083a",
       "owner_anchor": "@opencode-ai/sdk/v2/client",
       "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
-      "proof_sha256": "f435e05f9705cac4c83332e77ebcc78acc48f69e93b95f0ebd6fae3648379d84",
+      "proof_sha256": "b50664a7bab4a1efdc63ecf4eb86edf235d2d1fa48f3eeba04c200c2d5663089",
       "proof_anchor": "\"consumer_resolution\": true"
     },
     {
@@ -57,7 +57,7 @@
       "owner_sha256": "ce25a2114b4e2e615192d2d08099ec061684520af81be9324c6365194c8c4894",
       "owner_anchor": "dependency_graph_sha256",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "173a3e06e3ece0875c5808c2ef05d6f3b7e0836fd7a0628dc0bcfbe0512346e5",
+      "proof_sha256": "58a4aad5afec78bbb9596c3da01f8480e3c871ac9483eb82661e1436fca3124b",
       "proof_anchor": "release_manifest_contains_dependency_sbom_and_supply_chain_digest"
     },
     {
