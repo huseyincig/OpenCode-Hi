@@ -41,3 +41,11 @@ test('explicit independent review remains an independent reviewer decision',()=>
   const i=intent({taskKind:'review',requiredCapabilities:['review','independent-review'],likelyVerification:['review-evidence']});const policy=verificationPolicyFor(i),d=minimumTeamFor(i,policy)
   assert.equal(policy.requireReview,true);assert.ok(d.roles.includes('qa-reviewer'))
 })
+
+test('visual review capability routes to visual-qa even when the caller omits an explicit child role',()=>{
+  const i=intent({taskKind:'review',scope:'local',risk:'medium',requiredCapabilities:['visual-qa']})
+  const d=routeCapabilities(i)
+  assert.equal(d.role,'visual-qa')
+  assert.equal(d.category,'visual')
+  assert.match(d.reason.join(' '),/visual-qa capability dominates/)
+})

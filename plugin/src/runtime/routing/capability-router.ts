@@ -24,6 +24,10 @@ export function routeCapabilities(intent: NormalizedMissionIntent, profile: Prof
     return { role:'coder', category:'critical', capabilities:caps, reason:['security-sensitive implementation remains write-capable; independent security review is a separate obligation'] }
   }
 
+  if (has('visual-qa') && intent.taskKind === 'review') {
+    return { role:'visual-qa', category:'visual', capabilities:caps, reason:['structured visual-qa capability dominates this review task'] }
+  }
+
   const reviewDominant=intent.taskKind==='review'||has('review')||has('qa-review')||has('independent-review')
   const implementationDominant=intent.taskKind==='implementation'||intent.taskKind==='bug-fix'||has('implementation')
   if (reviewDominant && !implementationDominant) {
