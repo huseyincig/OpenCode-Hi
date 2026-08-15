@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_PERFORMANCE_RESOURCE_BENCHMARK_AUDIT",
+  "program": "PROMPT_B",
+  "section": 35,
+  "status": "PASS",
+  "benchmark_receipt": "data/validation/performance-resource-benchmarks-0.1.0.json",
+  "benchmark_sha256": "39055b8dec371344868cdf74715acfa451e81f8fcac9e182b9af7e6e732c26a5",
+  "required_metrics": [
+    "startup",
+    "task_initialization",
+    "skill_discovery_cache",
+    "pi_retrieval",
+    "context_build",
+    "persistence",
+    "scheduling",
+    "process_output",
+    "memory_growth",
+    "token_usage"
+  ],
+  "summary": {
+    "required": 10,
+    "covered": 10,
+    "violations": 0
+  },
+  "static_guards": {
+    "skill-cache-owner": true,
+    "pi-bounded-topk": true,
+    "context-governor-bounded": true,
+    "persistence-atomic-replace": true,
+    "scheduler-no-work-stealing": true,
+    "process-buffer-bounded": true,
+    "token-estimate-not-exact": true
+  },
+  "existing_policy_benchmark": {
+    "path": "data/validation/benchmarks-0.1.0.json",
+    "sha256": "59158dda17168f76afcbfc02f8a4ac1a9bb2480e1a7c2e2636dde388a58f548f",
+    "scenarios": 9,
+    "scheduler_economics": 3
+  },
+  "optimization_decision": "NO_NEW_SCHEDULER_OR_WORK_STEALING_COMPLEXITY_WITHOUT_MEASURED_BENEFIT",
+  "violations": [],
+  "claim_boundary": "Measured local paths use broad stable thresholds plus exact bounded resource/token semantics. No provider wall-clock latency, billing, or imaginary scheduler benefit is claimed."
+}

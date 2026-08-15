@@ -1347,3 +1347,20 @@ def test_prompt_b_failure_injection_is_complete_bounded_and_terminal():
     assert [x['injection'] for x in a['injections']]==expected and all(x['status']=='PASS' for x in a['injections'])
     for row in a['injections']:
         p=ROOT/row['proof'];assert p.is_file() and hashlib.sha256(p.read_bytes()).hexdigest()==row['proof_sha256'] and row['proof_anchor'] in p.read_text(errors='replace')
+
+
+
+def test_prompt_b_performance_resource_benchmarks_measure_all_required_paths_without_fake_token_truth():
+    d=json.loads((ROOT/'data/validation/prompt-b-performance-resource-benchmarks.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_PERFORMANCE_RESOURCE_BENCHMARK_AUDIT' and d['program']=='PROMPT_B' and d['section']==35 and d['status']=='PASS'
+    required=['startup','task_initialization','skill_discovery_cache','pi_retrieval','context_build','persistence','scheduling','process_output','memory_growth','token_usage']
+    assert d['required_metrics']==required and d['summary']=={'required':10,'covered':10,'violations':0} and d['violations']==[] and all(d['static_guards'].values())
+    b=json.loads((ROOT/d['benchmark_receipt']).read_text())
+    assert b['status']=='PASS' and b['source_binding']=={'tested_git_commit':'317a0922c0c51f766a0d6bf22036e5d027330835','tested_git_tree':'a9223da1ecf23426bb8a919e4cf058ccbd6a122a'}
+    assert list(b['metrics'])==required
+    assert all(b['metrics'][k]['status']=='PASS' for k in required if k!='skill_discovery_cache')
+    assert b['metrics']['skill_discovery_cache']['cold']['status']=='PASS' and b['metrics']['skill_discovery_cache']['cached']['status']=='PASS' and b['metrics']['skill_discovery_cache']['full_scans']==1
+    assert b['metrics']['process_output']['max_buffered_chars']==256*1024 and b['metrics']['process_output']['max_read_chars']==64*1024
+    assert b['metrics']['token_usage']['provider_observed']['confidence']=='exact' and b['metrics']['token_usage']['provider_observed']['source']=='provider-usage'
+    assert b['metrics']['token_usage']['estimated']['confidence']=='estimated' and b['metrics']['token_usage']['estimated']['source']=='estimated'
+    assert b['optimization_decision']=='NO_NEW_SCHEDULER_OR_WORK_STEALING_COMPLEXITY_WITHOUT_MEASURED_BENEFIT'

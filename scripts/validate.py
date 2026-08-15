@@ -747,6 +747,25 @@ try:
         if not isinstance(anchor,str) or anchor not in (ROOT/rel).read_text(errors='replace'):err('PROMPT B failure injection proof anchor drift: '+str(row.get('injection')))
 except Exception as e:err(f'bad PROMPT B failure injection receipt: {e}')
 
+
+# PROMPT B §35 performance/token/resource benchmark certification
+try:
+    p35=json.loads((ROOT/'data/validation/prompt-b-performance-resource-benchmarks.json').read_text(encoding='utf-8'))
+    if p35.get('schema')!=1 or p35.get('kind')!='PROMPT_B_PERFORMANCE_RESOURCE_BENCHMARK_AUDIT' or p35.get('program')!='PROMPT_B' or p35.get('section')!=35 or p35.get('status')!='PASS':err('bad PROMPT B performance/resource benchmark audit identity/status')
+    required=['startup','task_initialization','skill_discovery_cache','pi_retrieval','context_build','persistence','scheduling','process_output','memory_growth','token_usage']
+    if p35.get('required_metrics')!=required or p35.get('summary')!={'required':10,'covered':10,'violations':0} or p35.get('violations')!=[] or not all((p35.get('static_guards') or {}).values()):err('PROMPT B performance/resource benchmark summary drift')
+    b=json.loads((ROOT/p35['benchmark_receipt']).read_text(encoding='utf-8'))
+    if b.get('status')!='PASS' or b.get('source_binding')!={'tested_git_commit':'317a0922c0c51f766a0d6bf22036e5d027330835','tested_git_tree':'a9223da1ecf23426bb8a919e4cf058ccbd6a122a'}:err('PROMPT B performance/resource benchmark source binding drift')
+    if list((b.get('metrics') or {}).keys())!=required:err('PROMPT B performance/resource benchmark metric inventory drift')
+    metrics=b.get('metrics') or {}
+    if any((metrics.get(k) or {}).get('status')!='PASS' for k in required if k!='skill_discovery_cache'):err('PROMPT B performance/resource metric failure')
+    skill=metrics.get('skill_discovery_cache') or {}
+    if (skill.get('cold') or {}).get('status')!='PASS' or (skill.get('cached') or {}).get('status')!='PASS' or skill.get('full_scans')!=1:err('PROMPT B skill cache benchmark drift')
+    tok=metrics.get('token_usage') or {};obs=tok.get('provider_observed') or {};est=tok.get('estimated') or {}
+    if not (obs.get('confidence')=='exact' and obs.get('source')=='provider-usage' and est.get('confidence')=='estimated' and est.get('source')=='estimated'):err('PROMPT B token benchmark truth boundary drift')
+    if b.get('optimization_decision')!='NO_NEW_SCHEDULER_OR_WORK_STEALING_COMPLEXITY_WITHOUT_MEASURED_BENEFIT':err('PROMPT B benchmark optimization decision drift')
+except Exception as e:err(f'bad PROMPT B performance/resource benchmark receipt: {e}')
+
 try:
     nr=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text(encoding='utf-8'))
     if nr.get('schema')!=1 or nr.get('kind')!='EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION' or nr.get('program')!='PROMPT_B' or nr.get('status')!='PASS':err('bad PROMPT B native reevaluation receipt identity/status')
