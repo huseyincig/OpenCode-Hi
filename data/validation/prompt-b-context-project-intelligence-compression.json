@@ -1,0 +1,136 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_CONTEXT_PROJECT_INTELLIGENCE_COMPRESSION_ADVERSARIAL_AUDIT",
+  "program": "PROMPT_B",
+  "section": 10,
+  "status": "PASS",
+  "invariants": [
+    {
+      "invariant": "context-consumer-binding",
+      "owner": "plugin/src/contracts/context-reference.ts",
+      "owner_sha256": "3dc4f2783d59427c0b8cc5851344c4f4091f627057229505f509edd1d7a8c29f",
+      "owner_anchor": "consumer_ref",
+      "proof": "plugin/test/context-reference-contract.test.mjs",
+      "proof_sha256": "f420956f099fb8b55a91ea093ec19c786a6c5539e5e792215d82e6e777771e77",
+      "proof_anchor": "ContextReference binds one available source to an explicit consumer"
+    },
+    {
+      "invariant": "unknown-context-handle-fail-close",
+      "owner": "plugin/src/runtime/task/task-runtime.ts",
+      "owner_sha256": "fbb0e0dad347abfd5026b547239b3f00e952ddd5d1ef09df01507206726bf9ed",
+      "owner_anchor": "Unknown context artifact id(s)",
+      "proof": "plugin/test/context-survival-hardening.test.mjs",
+      "proof_sha256": "2e043ae0eb0d5145da07f86233631ec086d10b2b3c7a8210129f76cfea94ad97",
+      "proof_anchor": "unknown task context artifact id fails closed instead of widening context"
+    },
+    {
+      "invariant": "stale-context-exclusion",
+      "owner": "plugin/src/runtime/task/task-runtime.ts",
+      "owner_sha256": "fbb0e0dad347abfd5026b547239b3f00e952ddd5d1ef09df01507206726bf9ed",
+      "owner_anchor": "stored?.freshness==='FRESH'",
+      "proof": "plugin/test/context-survival-hardening.test.mjs",
+      "proof_sha256": "2e043ae0eb0d5145da07f86233631ec086d10b2b3c7a8210129f76cfea94ad97",
+      "proof_anchor": "fresh durable context artifact content is loaded only while source-bound freshness holds"
+    },
+    {
+      "invariant": "project-intelligence-retrieval-eligibility",
+      "owner": "plugin/src/runtime/project-intelligence/retrieval.ts",
+      "owner_sha256": "c43125f66ddc0f3eaf2be39f9efad6dbe7dfbae65bdcd71463f763a2d0c394a2",
+      "owner_anchor": "item.consumer_domains.includes(input.consumer)",
+      "proof": "plugin/test/c5-project-intelligence-hybrid-retrieval.test.mjs",
+      "proof_sha256": "de4e2e5b50948f1aec9a038543b20f94fac245856a49594aae0755da8687503e",
+      "proof_anchor": "C5 filters stale non-active and consumer-ineligible records before scoring regardless of confidence"
+    },
+    {
+      "invariant": "compression-source-hash-binding",
+      "owner": "plugin/src/contracts/compression-artifact.ts",
+      "owner_sha256": "d404139df0a81af21e28de88595b0df53eabfc140746980a8c5c73da4f24c0e2",
+      "owner_anchor": "source_hashes",
+      "proof": "plugin/test/c3-compression-artifact.test.mjs",
+      "proof_sha256": "74c30b45d6bc6a09c7a7b7d54b37dd811d3d16e772b3daa688a1466c24192f1e",
+      "proof_anchor": "C3 CompressionArtifact is strict, source/hash aligned and policy/model/scope bound"
+    },
+    {
+      "invariant": "compression-consumer-isolation",
+      "owner": "plugin/src/contracts/compression-artifact.ts",
+      "owner_sha256": "d404139df0a81af21e28de88595b0df53eabfc140746980a8c5c73da4f24c0e2",
+      "owner_anchor": "exact compression consumer scope",
+      "proof": "plugin/test/c3-compression-artifact.test.mjs",
+      "proof_sha256": "74c30b45d6bc6a09c7a7b7d54b37dd811d3d16e772b3daa688a1466c24192f1e",
+      "proof_anchor": "PROMPT B compression cannot re-scope context from one consumer to another without explicit rebind"
+    },
+    {
+      "invariant": "compression-freshness-propagation",
+      "owner": "plugin/src/runtime/context/artifact-store.ts",
+      "owner_sha256": "c5e3049777041901ebf3739e4ec3fb02d3826bf503fd75d3fba0482dd38f1049",
+      "owner_anchor": "invalidateChanged",
+      "proof": "plugin/test/c3-compression-artifact.test.mjs",
+      "proof_sha256": "74c30b45d6bc6a09c7a7b7d54b37dd811d3d16e772b3daa688a1466c24192f1e",
+      "proof_anchor": "C3 source invalidation propagates freshness through the compression envelope after restart"
+    },
+    {
+      "invariant": "privacy-monotonicity",
+      "owner": "plugin/src/runtime/context/artifact-store.ts",
+      "owner_sha256": "c5e3049777041901ebf3739e4ec3fb02d3826bf503fd75d3fba0482dd38f1049",
+      "owner_anchor": "sources.every(s=>s.privacy_class==='redacted')?'redacted':'project-private'",
+      "proof": "plugin/test/c3-compression-artifact.test.mjs",
+      "proof_sha256": "74c30b45d6bc6a09c7a7b7d54b37dd811d3d16e772b3daa688a1466c24192f1e",
+      "proof_anchor": "C3 compression privacy is monotonic and never widens project-private input to redacted"
+    },
+    {
+      "invariant": "project-intelligence-not-evidence",
+      "owner": "plugin/src/runtime/project-intelligence/store.ts",
+      "owner_sha256": "331da9d64a4d7ea75bfb507b9751fbbd4c9a8a0cc17e682a0163b97e9a96c439",
+      "owner_anchor": "ProjectIntelligenceStore",
+      "proof": "plugin/test/project-intelligence-contract.test.mjs",
+      "proof_sha256": "8e68a2516357773b9748055463ac23a96d48f5a707c7aa5c871c0f7d7311b37c",
+      "proof_anchor": "source hash drift invalidates Project Intelligence without converting it into Evidence"
+    },
+    {
+      "invariant": "context-compression-not-evidence",
+      "owner": "plugin/src/runtime/context/artifact-store.ts",
+      "owner_sha256": "c5e3049777041901ebf3739e4ec3fb02d3826bf503fd75d3fba0482dd38f1049",
+      "owner_anchor": "addCompression",
+      "proof": "plugin/test/c3-compression-artifact.test.mjs",
+      "proof_sha256": "74c30b45d6bc6a09c7a7b7d54b37dd811d3d16e772b3daa688a1466c24192f1e",
+      "proof_anchor": "C3 compression implementation remains Context-owned and does not enter Evidence ownership"
+    },
+    {
+      "invariant": "protected-state-budget-survival",
+      "owner": "plugin/src/runtime/context/governor.ts",
+      "owner_sha256": "51da0d19f1997c522702849f6d6270f76dbdef1d1d4830253d49353a94cae8fd",
+      "owner_anchor": "PROTECTED",
+      "proof": "plugin/test/context-survival-hardening.test.mjs",
+      "proof_sha256": "2e043ae0eb0d5145da07f86233631ec086d10b2b3c7a8210129f76cfea94ad97",
+      "proof_anchor": "compaction survival keeps blockers, next action and stop contract under very large mission state"
+    },
+    {
+      "invariant": "cache-source-invalidation",
+      "owner": "plugin/src/runtime/project-intelligence/store.ts",
+      "owner_sha256": "331da9d64a4d7ea75bfb507b9751fbbd4c9a8a0cc17e682a0163b97e9a96c439",
+      "owner_anchor": "invalidateChanged",
+      "proof": "plugin/test/project-intelligence-contract.test.mjs",
+      "proof_sha256": "8e68a2516357773b9748055463ac23a96d48f5a707c7aa5c871c0f7d7311b37c",
+      "proof_anchor": "source hash drift invalidates Project Intelligence without converting it into Evidence"
+    }
+  ],
+  "static_guards": {
+    "project_intelligence_evidence_owner_paths": [],
+    "context_evidence_owner_paths": [],
+    "compression_exact_consumer_binding": true,
+    "compression_unknown_freshness_rejected": true
+  },
+  "violations": [],
+  "summary": {
+    "required": 12,
+    "covered": 12,
+    "violations": 0
+  },
+  "closed_defects": [
+    {
+      "id": "compression-cross-consumer-rescope",
+      "fix": "CompressionArtifact sources must already be explicitly bound to the exact compression consumer scope; cross-task/consumer derivation requires canonical rebind first."
+    }
+  ],
+  "claim_boundary": "Context, ProjectIntelligence and Compression remain non-Evidence semantic planes; stale/unknown or consumer-ineligible material cannot silently widen task context."
+}

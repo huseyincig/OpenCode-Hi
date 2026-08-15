@@ -302,6 +302,27 @@ try:
 except Exception as e:err(f'bad PROMPT B Role/Model/Methodology receipt: {e}')
 
 try:
+    cpc=json.loads((ROOT/'data/validation/prompt-b-context-project-intelligence-compression.json').read_text(encoding='utf-8'))
+    if cpc.get('schema')!=1 or cpc.get('kind')!='PROMPT_B_CONTEXT_PROJECT_INTELLIGENCE_COMPRESSION_ADVERSARIAL_AUDIT' or cpc.get('program')!='PROMPT_B' or cpc.get('section')!=10 or cpc.get('status')!='PASS':err('bad PROMPT B Context/PI/Compression audit receipt')
+    if cpc.get('violations')!=[] or cpc.get('summary')!={'required':12,'covered':12,'violations':0}:err('PROMPT B Context/PI/Compression coverage drift')
+    expected={'context-consumer-binding','unknown-context-handle-fail-close','stale-context-exclusion','project-intelligence-retrieval-eligibility','compression-source-hash-binding','compression-consumer-isolation','compression-freshness-propagation','privacy-monotonicity','project-intelligence-not-evidence','context-compression-not-evidence','protected-state-budget-survival','cache-source-invalidation'}
+    rows=cpc.get('invariants',[])
+    if {x.get('invariant') for x in rows if isinstance(x,dict)}!=expected or len(rows)!=12:err('PROMPT B Context/PI/Compression invariant inventory drift')
+    for row in rows:
+        for key in ['owner','proof']:
+            rel=row.get(key); expected_hash=row.get(f'{key}_sha256')
+            if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B Context/PI/Compression missing {key}: {rel}')
+            elif hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected_hash:err(f'PROMPT B Context/PI/Compression {key} hash drift: {rel}')
+        owner=(ROOT/row['owner']).read_text(encoding='utf-8',errors='ignore') if isinstance(row.get('owner'),str) and (ROOT/row['owner']).is_file() else ''
+        proof=(ROOT/row['proof']).read_text(encoding='utf-8',errors='ignore') if isinstance(row.get('proof'),str) and (ROOT/row['proof']).is_file() else ''
+        if row.get('owner_anchor') not in owner:err(f"PROMPT B Context/PI/Compression owner anchor drift: {row.get('invariant')}")
+        if row.get('proof_anchor') not in proof:err(f"PROMPT B Context/PI/Compression proof anchor drift: {row.get('invariant')}")
+    guards=cpc.get('static_guards',{})
+    if guards.get('project_intelligence_evidence_owner_paths')!=[] or guards.get('context_evidence_owner_paths')!=[] or guards.get('compression_exact_consumer_binding') is not True or guards.get('compression_unknown_freshness_rejected') is not True:err('PROMPT B Context/PI/Compression static guard drift')
+    if 'compression-cross-consumer-rescope' not in {x.get('id') for x in cpc.get('closed_defects',[]) if isinstance(x,dict)}:err('PROMPT B Context/PI/Compression closed defect receipt drift')
+except Exception as e:err(f'bad PROMPT B Context/PI/Compression receipt: {e}')
+
+try:
     evc=json.loads((ROOT/'data/validation/prompt-b-evidence-verification-completion.json').read_text(encoding='utf-8'))
     if evc.get('schema')!=1 or evc.get('kind')!='PROMPT_B_EVIDENCE_VERIFICATION_COMPLETION_HOSTILE_AUDIT' or evc.get('program')!='PROMPT_B' or evc.get('section')!=9 or evc.get('status')!='PASS':err('bad PROMPT B Evidence/Verification/Completion audit receipt')
     if evc.get('violations')!=[] or evc.get('summary')!={'required':12,'covered':12,'violations':0}:err('PROMPT B Evidence/Verification/Completion coverage drift')

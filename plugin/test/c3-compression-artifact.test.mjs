@@ -8,8 +8,8 @@ import { buildCompressionArtifact,isCompressionArtifact,COMPRESSION_POLICY_VERSI
 import { ContextArtifactStore } from '../dist/runtime/context/artifact-store.js'
 import { durableArtifactPath } from '../dist/runtime/storage/ownership.js'
 
-function ref(overrides={}){
-  return bindContextReference({source_ref:'file:src/a.ts',reason:'compression-source',priority:'normal',protection:'COMPRESSIBLE',budget_cost:500,freshness:'FRESH',retention:'mission',privacy_class:'project-private',kind:'analysis',summary:'source summary',content_hash:'a'.repeat(64),...overrides},'mission:c3')
+function ref(overrides={},consumer='mission:c3'){
+  return bindContextReference({source_ref:'file:src/a.ts',reason:'compression-source',priority:'normal',protection:'COMPRESSIBLE',budget_cost:500,freshness:'FRESH',retention:'mission',privacy_class:'project-private',kind:'analysis',summary:'source summary',content_hash:'a'.repeat(64),...overrides},consumer)
 }
 
 test('C3 CompressionArtifact is strict, source/hash aligned and policy/model/scope bound',()=>{
@@ -22,16 +22,23 @@ test('C3 CompressionArtifact is strict, source/hash aligned and policy/model/sco
 })
 
 test('C3 accepts only valid COMPRESSIBLE sources with known freshness and content hashes',()=>{
-  for(const protection of ['PROTECTED','PURGEABLE'])assert.throws(()=>buildCompressionArtifact('a_'+'2'.repeat(24),[ref({protection})],'x',{consumerScope:'m',modelIdentity:'p/m'}),/COMPRESSIBLE/)
-  assert.throws(()=>buildCompressionArtifact('a_'+'3'.repeat(24),[ref({freshness:'UNKNOWN'})],'x',{consumerScope:'m',modelIdentity:'p/m'}),/UNKNOWN/)
-  const invalid={...ref(),content_hash:undefined}
+  for(const protection of ['PROTECTED','PURGEABLE'])assert.throws(()=>buildCompressionArtifact('a_'+'2'.repeat(24),[ref({protection},'m')],'x',{consumerScope:'m',modelIdentity:'p/m'}),/COMPRESSIBLE/)
+  assert.throws(()=>buildCompressionArtifact('a_'+'3'.repeat(24),[ref({freshness:'UNKNOWN'},'m')],'x',{consumerScope:'m',modelIdentity:'p/m'}),/UNKNOWN/)
+  const invalid={...ref({},'m'),content_hash:undefined}
   assert.throws(()=>buildCompressionArtifact('a_'+'4'.repeat(24),[invalid],'x',{consumerScope:'m',modelIdentity:'p/m'}),/valid ContextReference|content hashes/)
+})
+
+test('PROMPT B compression cannot re-scope context from one consumer to another without explicit rebind',()=>{
+  const source=ref({},'task:a')
+  assert.throws(()=>buildCompressionArtifact('a_'+'5'.repeat(24),[source],'cross-task summary',{consumerScope:'task:b',modelIdentity:'p/m'}),/exact compression consumer scope/)
+  const rebound=ref({},'task:b')
+  assert.doesNotThrow(()=>buildCompressionArtifact('a_'+'6'.repeat(24),[rebound],'bounded summary',{consumerScope:'task:b',modelIdentity:'p/m'}))
 })
 
 test('C3 ContextArtifactStore persists compression through the existing ArtifactContract owner and reloads it',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-c3-'))
   try{
-    const store=new ContextArtifactStore(root),compression=store.addCompression([ref()],'compressed analysis',{consumerScope:'task:t1',modelIdentity:'p/m'})
+    const store=new ContextArtifactStore(root),compression=store.addCompression([ref({},'task:t1')],'compressed analysis',{consumerScope:'task:t1',modelIdentity:'p/m'})
     const envelope=store.get(compression.id);assert.ok(envelope)
     assert.equal(envelope.kind,'context-compression');assert.equal(envelope.producer,'hi-context-compression');assert.equal(envelope.artifact_id,compression.id);assert.equal(envelope.freshness,'FRESH')
     assert.deepEqual(envelope.provenance.source_files,['src/a.ts']);assert.deepEqual(envelope.consumer_refs,['task:t1'])
@@ -43,7 +50,7 @@ test('C3 ContextArtifactStore persists compression through the existing Artifact
 test('C3 source invalidation propagates freshness through the compression envelope after restart',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-c3-stale-'))
   try{
-    const store=new ContextArtifactStore(root),compression=store.addCompression([ref()],'summary',{consumerScope:'mission:m',modelIdentity:'p/m'})
+    const store=new ContextArtifactStore(root),compression=store.addCompression([ref({},'mission:m')],'summary',{consumerScope:'mission:m',modelIdentity:'p/m'})
     assert.equal(store.invalidateChanged(['src/a.ts']),1)
     assert.equal(store.getCompression(compression.id)?.freshness,'POTENTIALLY_STALE')
     assert.equal(new ContextArtifactStore(root).getCompression(compression.id)?.freshness,'POTENTIALLY_STALE')
@@ -54,7 +61,7 @@ test('C3 compression sourced from a durable Hi artifact inherits its source-file
   const root=mkdtempSync(join(tmpdir(),'hi-c3-parent-'))
   try{
     const store=new ContextArtifactStore(root),parent=store.add('research','parent','long parent content',['src/a.ts'])
-    const source=ref({source_ref:`hi-artifact:${parent.artifact_id}`,content_hash:parent.content_hash,privacy_class:'redacted'})
+    const source=ref({source_ref:`hi-artifact:${parent.artifact_id}`,content_hash:parent.content_hash,privacy_class:'redacted'},'task:t1')
     const compression=store.addCompression([source],'derived summary',{consumerScope:'task:t1',modelIdentity:'p/m'})
     assert.deepEqual(store.get(compression.id)?.provenance.source_files,['src/a.ts'])
     assert.equal(store.invalidateChanged(['src/a.ts']),2,'parent and derived compression both become stale')
@@ -64,9 +71,9 @@ test('C3 compression sourced from a durable Hi artifact inherits its source-file
 
 test('C3 compression privacy is monotonic and never widens project-private input to redacted',()=>{
   const store=new ContextArtifactStore()
-  const allRedacted=store.addCompression([ref({privacy_class:'redacted'})],'r',{consumerScope:'m',modelIdentity:'p/m'})
+  const allRedacted=store.addCompression([ref({privacy_class:'redacted'},'m')],'r',{consumerScope:'m',modelIdentity:'p/m'})
   assert.equal(store.get(allRedacted.id)?.privacy_class,'redacted')
-  const mixed=store.addCompression([ref({source_ref:'file:src/a.ts',privacy_class:'redacted'}),ref({source_ref:'file:src/b.ts',content_hash:'b'.repeat(64),privacy_class:'project-private'})],'mixed',{consumerScope:'m',modelIdentity:'p/m'})
+  const mixed=store.addCompression([ref({source_ref:'file:src/a.ts',privacy_class:'redacted'},'m'),ref({source_ref:'file:src/b.ts',content_hash:'b'.repeat(64),privacy_class:'project-private'},'m')],'mixed',{consumerScope:'m',modelIdentity:'p/m'})
   assert.equal(store.get(mixed.id)?.privacy_class,'project-private')
 })
 

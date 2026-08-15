@@ -958,3 +958,17 @@ def test_prompt_b_evidence_verification_completion_audit_is_source_bound_and_com
         assert row['owner_anchor'] in owner.read_text(errors='ignore') and row['proof_anchor'] in proof.read_text(errors='ignore')
     assert {'reviewer-done-auto-pass-evidence','worker-pass-without-source-state'}<={x['id'] for x in d['closed_defects']}
     assert (ROOT/'scripts/audit-evidence-verification-completion.py').is_file()
+
+def test_prompt_b_context_project_intelligence_compression_audit_is_consumer_bound_and_complete():
+    d=json.loads((ROOT/'data/validation/prompt-b-context-project-intelligence-compression.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_CONTEXT_PROJECT_INTELLIGENCE_COMPRESSION_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['section']==10 and d['status']=='PASS'
+    assert d['violations']==[] and d['summary']=={'required':12,'covered':12,'violations':0}
+    expected={'context-consumer-binding','unknown-context-handle-fail-close','stale-context-exclusion','project-intelligence-retrieval-eligibility','compression-source-hash-binding','compression-consumer-isolation','compression-freshness-propagation','privacy-monotonicity','project-intelligence-not-evidence','context-compression-not-evidence','protected-state-budget-survival','cache-source-invalidation'}
+    assert {x['invariant'] for x in d['invariants']}==expected
+    assert d['static_guards']=={'project_intelligence_evidence_owner_paths':[],'context_evidence_owner_paths':[],'compression_exact_consumer_binding':True,'compression_unknown_freshness_rejected':True}
+    for row in d['invariants']:
+        owner=ROOT/row['owner'];proof=ROOT/row['proof'];assert owner.is_file() and proof.is_file()
+        assert hashlib.sha256(owner.read_bytes()).hexdigest()==row['owner_sha256'];assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
+        assert row['owner_anchor'] in owner.read_text(errors='ignore') and row['proof_anchor'] in proof.read_text(errors='ignore')
+    assert 'compression-cross-consumer-rescope' in {x['id'] for x in d['closed_defects']}
+    assert (ROOT/'scripts/audit-context-project-intelligence-compression.py').is_file()

@@ -80,10 +80,10 @@
     {
       "invariant": "context-summary-not-evidence",
       "owner": "plugin/src/contracts/compression-artifact.ts",
-      "owner_sha256": "bb51dbe750f3ae8f8e8d16880e2247dc1bce811a1de5ac08c786075a1933056f",
+      "owner_sha256": "d404139df0a81af21e28de88595b0df53eabfc140746980a8c5c73da4f24c0e2",
       "owner_anchor": "CompressionArtifact",
       "proof": "plugin/test/c3-compression-artifact.test.mjs",
-      "proof_sha256": "deddcf3ced52a09233439fc57c8da09e8fd2b789f4bf28c7541e1d40c6cbc498",
+      "proof_sha256": "74c30b45d6bc6a09c7a7b7d54b37dd811d3d16e772b3daa688a1466c24192f1e",
       "proof_anchor": "C3 compression implementation remains Context-owned and does not enter Evidence ownership"
     },
     {

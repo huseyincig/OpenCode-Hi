@@ -23,10 +23,15 @@ export function buildCompressionArtifact(id, sources, summary, input) {
         throw new Error('CompressionArtifact rejects UNKNOWN source freshness');
     if (sources.some(s => !s.content_hash || !/^[a-f0-9]{64}$/.test(s.content_hash)))
         throw new Error('CompressionArtifact requires source content hashes');
+    const consumerScope = input.consumerScope.trim();
+    if (!consumerScope)
+        throw new Error('CompressionArtifact requires consumer scope');
+    if (sources.some(s => s.consumer_ref !== consumerScope))
+        throw new Error('CompressionArtifact sources must be explicitly bound to the exact compression consumer scope');
     const refs = sources.map(s => s.source_ref), hashes = sources.map(s => s.content_hash);
     if (new Set(refs).size !== refs.length)
         throw new Error('CompressionArtifact source refs must be unique');
-    const artifact = { id, source_context_refs: refs, source_hashes: hashes, summary: summary.trim(), created_at: input.createdAt ?? Date.now(), freshness: sources.some(s => s.freshness === 'POTENTIALLY_STALE') ? 'POTENTIALLY_STALE' : 'FRESH', consumer_scope: input.consumerScope.trim(), model_identity: input.modelIdentity.trim(), compression_policy_version: (input.policyVersion ?? COMPRESSION_POLICY_VERSION).trim() };
+    const artifact = { id, source_context_refs: refs, source_hashes: hashes, summary: summary.trim(), created_at: input.createdAt ?? Date.now(), freshness: sources.some(s => s.freshness === 'POTENTIALLY_STALE') ? 'POTENTIALLY_STALE' : 'FRESH', consumer_scope: consumerScope, model_identity: input.modelIdentity.trim(), compression_policy_version: (input.policyVersion ?? COMPRESSION_POLICY_VERSION).trim() };
     if (!isCompressionArtifact(artifact))
         throw new Error('Invalid CompressionArtifact contract');
     return artifact;
