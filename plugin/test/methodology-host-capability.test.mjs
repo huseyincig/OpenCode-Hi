@@ -17,14 +17,14 @@ import {opencodeChildPort} from './helpers/host-port.mjs'
 const all={childSessions:true,asyncPrompt:true,syncPrompt:true,abort:true,providerInventory:true,appLog:true,sessionStatus:true,childSessionList:true,sessionTodo:true,sessionDiff:true,sessionFork:true,sessionSummarize:true,sessionRevert:true,sessionUnrevert:true}
 const repoRoot=resolve(dirname(fileURLToPath(import.meta.url)),'../..')
 
-test('browser execution is supported only at the exact Hi-owned real-host acceptance boundary',()=>{
-  const cap=hostCapabilityByID(openCodeHostCapabilityContracts(all),'browser-execution')
+test('browser runtime resource is supported only after live health observation; T3 remains external',()=>{
+  const cap=hostCapabilityByID(openCodeHostCapabilityContracts(all,{browserExecution:true}),'browser-execution')
   assert.equal(cap?.status,'SUPPORTED')
-  assert.equal(cap?.verification_level,'REAL_HOST_ACCEPTANCE')
+  assert.equal(cap?.verification_level,'OBSERVED')
   assert.match(cap?.native_primitive??'',/Playwright Chromium.*health/i)
   assert.match(cap?.adapter_entrypoint??'',/BrowserRuntime.*PlaywrightBrowserAdapter/i)
   assert.equal(cap?.runtime_health_required,true)
-  assert.match(cap?.forbidden_fake_behavior??'',/exact source\/host behavior.*real-host acceptance receipt/i)
+  assert.match(cap?.forbidden_fake_behavior??'',/mock client.*T3\/REAL_HOST_ACCEPTANCE/i)
 })
 
 test('browser and visual methodologies require canonical browser-execution host capability',()=>{

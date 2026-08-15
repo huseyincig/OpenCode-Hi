@@ -29,6 +29,7 @@ export class OpenCodeWorkspaceAdapter implements WorkspaceExecutor{
     if(!api||typeof api.create!=='function'||typeof api.list!=='function'||typeof api.remove!=='function')throw new Error('OpenCode experimental workspace API unavailable')
     return api
   }
+  async health():Promise<{available:boolean;detail:string}>{try{await this.#workspace().list({directory:this.directory});return{available:true,detail:'OpenCode experimental workspace list observed'}}catch(error){return{available:false,detail:String(error)}}}
   async sourceBaseline(repositoryRoot:string):Promise<string>{const observed=this.inspector(repositoryRoot).head;if(!/^[a-f0-9]{40}(?:[a-f0-9]{24})?$/.test(observed))throw new Error('Git source baseline is not an exact object id');return observed}
   #validate(native:NativeWorkspace,request:{repository_root:string;source_baseline:string;expected_path?:string;expected_id?:string;require_baseline?:boolean}):WorkspaceProvisioned{
     if(!native||typeof native.id!=='string'||!native.id.trim()||native.type!=='worktree'||typeof native.directory!=='string'||!native.directory.trim())throw new Error('OpenCode workspace response is not a bounded worktree identity')

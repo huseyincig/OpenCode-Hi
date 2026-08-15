@@ -18,8 +18,8 @@
   "scripts": {
     "prebuild": "node ../scripts/run-python.mjs ../scripts/generate_config_policy.py && node ../scripts/run-python.mjs ../scripts/generate_plugin_agents.py && node ../scripts/run-python.mjs ../scripts/generate_methodology_policy.py",
     "build": "npm run clean && tsc -p tsconfig.json",
-    "test": "npm run build && node --test test/*.test.mjs",
-    "check": "npm run build && npm run architecture:lint && node --test test/*.test.mjs",
+    "test": "npm run build && node ../scripts/run-node-test-suite.mjs",
+    "check": "npm run build && npm run architecture:lint && node ../scripts/run-node-test-suite.mjs",
     "bundle": "echo \"optional bundle step; canonical runtime is dist/\"",
     "prepare:local": "npm run build",
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",

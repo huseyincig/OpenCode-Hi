@@ -59,6 +59,14 @@ export class OpenCodePtyAdapter {
         this.#v2Client = createOpenCodeV2Client({ baseUrl: this.serverUrl.toString(), directory: this.directory }); const pty = this.#v2Client?.v2?.pty ?? this.#v2Client?.pty; if (!pty || typeof pty.create !== 'function' || typeof pty.get !== 'function' || typeof pty.remove !== 'function' || typeof pty.connectToken !== 'function')
         throw new Error('OpenCode canonical v2 PTY API unavailable'); return pty; }
     #location() { return { directory: this.directory }; }
+    async health() { try {
+        const pty = this.#pty();
+        await pty.list({ location: this.#location() });
+        return { available: true, detail: 'OpenCode canonical v2 PTY list observed' };
+    }
+    catch (error) {
+        return { available: false, detail: String(error) };
+    } }
     #state(id) { const state = this.#states.get(id); if (!state)
         throw new Error(`Hi ProcessExecutor process not found: ${id}`); return state; }
     #signalTarget(state) {

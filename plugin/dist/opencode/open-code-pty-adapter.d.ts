@@ -27,6 +27,10 @@ export declare class OpenCodePtyAdapter implements ProcessExecutor {
     readonly maxReadChars: number;
     readonly resolveProcessGroup: ProcessGroupResolver;
     constructor(client: OpenCodeClient, serverUrl: URL, directory: string, projectRoot: string, getHostConfig: () => Record<string, unknown>, socketFactory?: ProcessSocketFactory, signalProcess?: ProcessSignal, maxBufferedChars?: number, maxReadChars?: number, resolveProcessGroup?: ProcessGroupResolver);
+    health(): Promise<{
+        available: boolean;
+        detail: string;
+    }>;
     spawn(request: ProcessSpawnRequest): Promise<ProcessHandle>;
     write(processId: string, input: string): Promise<void>;
     read(processId: string, window?: ProcessOutputWindow): Promise<ProcessOutput>;

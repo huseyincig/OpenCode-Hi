@@ -5,10 +5,10 @@ import {OPENCODE_REFERENCE_CAPABILITIES,resolveHostCapability} from '../dist/run
 
 const all={childSessions:true,asyncPrompt:true,syncPrompt:true,abort:true,providerInventory:true,appLog:true,sessionStatus:true,childSessionList:true,sessionTodo:true,sessionDiff:true,sessionFork:true,sessionSummarize:true,sessionRevert:true,sessionUnrevert:true}
 
-test('W3 workspace capability is promoted only as real-host accepted Hi-owned isolation',()=>{
-  const capability=hostCapabilityByID(openCodeHostCapabilityContracts(all),'workspace-isolation-binding')
+test('W3 workspace runtime contract requires live observation and leaves T3 promotion to external receipts',()=>{
+  const capability=hostCapabilityByID(openCodeHostCapabilityContracts(all,{workspaceIsolation:true}),'workspace-isolation-binding')
   assert.equal(capability?.status,'SUPPORTED')
-  assert.equal(capability?.verification_level,'REAL_HOST_ACCEPTANCE')
+  assert.equal(capability?.verification_level,'OBSERVED')
   assert.match(capability?.native_primitive??'',/workspace.*session|session.*workspace/i)
   assert.match(capability?.adapter_entrypoint??'',/WorkspaceRuntime.*OpenCodeWorkspaceAdapter.*ChildExecutionCoordinator/)
   assert.equal(resolveHostCapability(OPENCODE_REFERENCE_CAPABILITIES,'workspace_isolation'),'NATIVE')

@@ -2,12 +2,15 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {mkdtempSync,mkdirSync,writeFileSync,existsSync,rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
-import {join} from 'node:path'
+import {join,resolve,dirname} from 'node:path'
+import {fileURLToPath} from 'node:url'
 import HiPlugin from '../dist/plugin.js'
 import { assessPluginMission } from './helpers/semantic.mjs'
 import {collectRepoContext} from '../dist/runtime/intent/repo-context.js'
 import {configuredSkillPaths,discoverSkills} from '../dist/runtime/skills/registry.js'
 import {runtimeStatePath} from '../dist/runtime/storage/locations.js'
+
+const repoRoot=resolve(dirname(fileURLToPath(import.meta.url)),'../..')
 
 function temp(prefix){return mkdtempSync(join(tmpdir(),prefix))}
 function client(){return {app:{log:async()=>{}},session:{},provider:{}}}
@@ -25,7 +28,7 @@ test('Hi config hook registers packaged native skill path without depending on a
 
 test('personal/project skill paths coexist without changing Hi-native provider ownership',async()=>{
   const root=temp('hi-skill-coexist-'),extra=join(root,'external-skills')
-  try{writeSkill(extra,'project-method');const cfg={skills:{paths:[extra]}};const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config(cfg);const found=discoverSkills(root,join(process.cwd(),'..'),configuredSkillPaths(cfg));assert.equal(found.find(x=>x.name==='project-method')?.provider,'personal');assert.ok(found.some(x=>x.name==='hi-source-driven-development'&&x.provider==='hi'));await hooks.dispose?.()}finally{rmSync(root,{recursive:true,force:true})}
+  try{writeSkill(extra,'project-method');const cfg={skills:{paths:[extra]}};const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config(cfg);const found=discoverSkills(root,repoRoot,configuredSkillPaths(cfg));assert.equal(found.find(x=>x.name==='project-method')?.provider,'personal');assert.ok(found.some(x=>x.name==='hi-source-driven-development'&&x.provider==='hi'));await hooks.dispose?.()}finally{rmSync(root,{recursive:true,force:true})}
 })
 
 test('default plugin surface does not invent MCP runtime and optional Team tools stay unregistered when disabled',async()=>{

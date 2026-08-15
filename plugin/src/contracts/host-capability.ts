@@ -18,6 +18,8 @@ export interface OpenCodeCapabilityObservation {
   sessionUnrevert:boolean
 }
 
+export interface OpenCodeOwnedCapabilityObservation { processLifecycle?:boolean; workspaceIsolation?:boolean; browserExecution?:boolean }
+
 export interface HostCapabilityContract {
   id:string
   host_id:'opencode'
@@ -42,11 +44,11 @@ function degraded(id:string,fallback:string,semantic_loss:string[],acceptance_re
 function unsupported(id:string,acceptance_ref:string,forbidden_fake_behavior:string):HostCapabilityContract{return{
   id,host_id:'opencode',status:'UNSUPPORTED',verification_level:'OBSERVED',semantic_loss:[],required_permissions:[],acceptance_ref,forbidden_fake_behavior
 }}
-function realHostSupported(id:string,native_primitive:string,adapter_entrypoint:string,acceptance_ref:string,required_permissions:string[]=[],runtime_health_required=false):HostCapabilityContract{return{
-  id,host_id:'opencode',status:'SUPPORTED',verification_level:'REAL_HOST_ACCEPTANCE',native_primitive,adapter_entrypoint,semantic_loss:[],required_permissions,...(runtime_health_required?{runtime_health_required:true}:{}),acceptance_ref,forbidden_fake_behavior:`Do not claim ${id} beyond the exact source/host behavior proven by the real-host acceptance receipt.`
+function observedOwned(id:string,available:boolean,native_primitive:string,adapter_entrypoint:string,acceptance_ref:string,required_permissions:string[]=[],runtime_health_required=false):HostCapabilityContract{return{
+  id,host_id:'opencode',status:available?'SUPPORTED':'UNSUPPORTED',verification_level:'OBSERVED',native_primitive,adapter_entrypoint,...(available?{semantic_loss:[]}:{semantic_loss:['active host primitive/runtime health was not observed']}),required_permissions,...(runtime_health_required?{runtime_health_required:true}:{}),acceptance_ref,forbidden_fake_behavior:`Do not claim ${id} from adapter presence, a mock client, or a unit test. Runtime support requires an active-host observation; T3/REAL_HOST_ACCEPTANCE belongs only to the exact external acceptance receipt/projection.`
 }}
 
-export function openCodeHostCapabilityContracts(o:OpenCodeCapabilityObservation):HostCapabilityContract[]{
+export function openCodeHostCapabilityContracts(o:OpenCodeCapabilityObservation,owned:OpenCodeOwnedCapabilityObservation={}):HostCapabilityContract[]{
   const prompt=o.asyncPrompt?supported('session-prompt','session.promptAsync','NativeOpenCodeAdapter.prompt','main-prompt-hardening.test.mjs'):
     o.syncPrompt?degraded('session-prompt','session.prompt synchronous fallback',['native async prompt primitive is unavailable'],'main-prompt-hardening.test.mjs','session.prompt','NativeOpenCodeAdapter.prompt'):
     unsupported('session-prompt','main-prompt-delegation-preconditions.test.mjs','Do not dispatch a worker when neither native async nor synchronous session prompt execution exists.')
@@ -68,9 +70,9 @@ export function openCodeHostCapabilityContracts(o:OpenCodeCapabilityObservation)
     o.sessionUnrevert?supported('session-unrevert','session.unrevert','NativeOpenCodeAdapter.unrevert','forensic-hardening.test.mjs'):unsupported('session-unrevert','forensic-hardening.test.mjs','Do not claim reversible native unrevert when the host primitive is absent.'),
     worker,
     unsupported('structured-human-decision-transport','h2-structured-human-decision-host.test.mjs','Do not claim a structured HumanDecision transport from question events, question list/reply/reject APIs, or the model-facing question tool. Hi requires a direct host/plugin open primitive that can bind the exact canonical decision ID without model mediation.'),
-    realHostSupported('browser-execution','Hi-owned Playwright Chromium runtime discovered by executor health','BrowserRuntime + PlaywrightBrowserAdapter + Hi browser tool surface','b3-playwright-browser-runtime.test.mjs',[],true),
-    realHostSupported('process-lifecycle','OpenCode v2 PTY create/get/list/remove/connect-token + ticketed WebSocket','ProcessRuntime + OpenCodePtyAdapter','p3-process-runtime-lifecycle.test.mjs',['OpenCode role bash permission','external_directory when cwd is outside the project','Hi ExternalAction/Authority for classified external effects']),
-    realHostSupported('workspace-isolation-binding','experimental.workspace create/list/remove + v2 session.create workspace/workspaceID routing','WorkspaceRuntime + OpenCodeWorkspaceAdapter + ChildExecutionCoordinator','w3-workspace-real-host-acceptance.test.mjs',['OpenCode child role edit/write permission; isolation never widens external_directory authority'])
+    observedOwned('browser-execution',owned.browserExecution===true,'Hi-owned Playwright Chromium runtime discovered by executor health','BrowserRuntime + PlaywrightBrowserAdapter + Hi browser tool surface','data/validation/compatibility-matrix-0.1.0.json',[],true),
+    observedOwned('process-lifecycle',owned.processLifecycle===true,'OpenCode v2 PTY create/get/list/remove/connect-token + ticketed WebSocket','ProcessRuntime + OpenCodePtyAdapter','data/validation/compatibility-matrix-0.1.0.json',['OpenCode role bash permission','external_directory when cwd is outside the project','Hi ExternalAction/Authority for classified external effects'],true),
+    observedOwned('workspace-isolation-binding',owned.workspaceIsolation===true,'experimental.workspace create/list/remove + v2 session.create workspace/workspaceID routing','WorkspaceRuntime + OpenCodeWorkspaceAdapter + ChildExecutionCoordinator','data/validation/compatibility-matrix-0.1.0.json',['OpenCode child role edit/write permission; isolation never widens external_directory authority'],true)
   ]
 }
 

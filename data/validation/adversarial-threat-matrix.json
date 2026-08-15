@@ -231,7 +231,7 @@
         },
         {
           "file": "plugin/test/w3-workspace-real-host-acceptance.test.mjs",
-          "contains": "W3 workspace capability is promoted only as real-host accepted Hi-owned isolation"
+          "contains": "W3 workspace runtime contract requires live observation and leaves T3 promotion to external receipts"
         }
       ],
       "evidence": [
@@ -250,7 +250,7 @@
       "proof_tests": [
         {
           "file": "plugin/test/methodology-host-capability.test.mjs",
-          "contains": "browser execution is supported only at the exact Hi-owned real-host acceptance boundary"
+          "contains": "browser runtime resource is supported only after live health observation; T3 remains external"
         },
         {
           "file": "plugin/test/methodology-host-capability.test.mjs",

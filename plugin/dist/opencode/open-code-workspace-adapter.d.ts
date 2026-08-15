@@ -14,6 +14,10 @@ export declare class OpenCodeWorkspaceAdapter implements WorkspaceExecutor {
     readonly directory: string;
     readonly inspector: GitWorkspaceInspector;
     constructor(client: OpenCodeClient, serverUrl: URL, directory: string, inspector?: GitWorkspaceInspector);
+    health(): Promise<{
+        available: boolean;
+        detail: string;
+    }>;
     sourceBaseline(repositoryRoot: string): Promise<string>;
     provision(request: WorkspaceProvisionRequest): Promise<WorkspaceProvisioned>;
     reconcile(lease: WorkspaceLeaseContract): Promise<WorkspaceReconcileResult>;

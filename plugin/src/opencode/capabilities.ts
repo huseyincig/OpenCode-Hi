@@ -1,6 +1,6 @@
 import type { OpenCodeClient } from './types.js'
 import { NativeOpenCodeAdapter } from './native-adapter.js'
-import { openCodeHostCapabilityContracts,type HostCapabilityContract } from '../contracts/host-capability.js'
+import { openCodeHostCapabilityContracts,type HostCapabilityContract,type OpenCodeOwnedCapabilityObservation } from '../contracts/host-capability.js'
 
 export interface OpenCodeCapabilities {
   childSessions:boolean
@@ -21,7 +21,7 @@ export interface OpenCodeCapabilities {
   degraded:string[]
   contracts:HostCapabilityContract[]
 }
-export function detectOpenCodeCapabilities(client:OpenCodeClient):OpenCodeCapabilities{
+export function detectOpenCodeCapabilities(client:OpenCodeClient,owned:OpenCodeOwnedCapabilityObservation={}):OpenCodeCapabilities{
   const n=new NativeOpenCodeAdapter(client)
   const childSessions=n.has('session-create')
   const asyncPrompt=n.has('prompt-async')
@@ -45,6 +45,6 @@ export function detectOpenCodeCapabilities(client:OpenCodeClient):OpenCodeCapabi
   if(!sessionStatus)degraded.push('session-status-unavailable')
   if(!sessionDiff)degraded.push('session-diff-unavailable')
   if(!sessionRevert)degraded.push('session-revert-unavailable')
-  const contracts=openCodeHostCapabilityContracts({childSessions,asyncPrompt,syncPrompt,abort,providerInventory,appLog,sessionStatus,childSessionList,sessionTodo,sessionDiff,sessionFork,sessionSummarize,sessionRevert,sessionUnrevert})
+  const contracts=openCodeHostCapabilityContracts({childSessions,asyncPrompt,syncPrompt,abort,providerInventory,appLog,sessionStatus,childSessionList,sessionTodo,sessionDiff,sessionFork,sessionSummarize,sessionRevert,sessionUnrevert},owned)
   return{childSessions,asyncPrompt,syncPrompt,abort,providerInventory,appLog,sessionStatus,childSessionList,sessionTodo,sessionDiff,sessionFork,sessionSummarize,sessionRevert,sessionUnrevert,workerRuntime:childSessions&&(asyncPrompt||syncPrompt)&&abort,degraded,contracts}
 }

@@ -55,11 +55,11 @@ test('P1 ProcessContract enforces lifecycle timestamp exit and cleanup coherence
   assert.equal(isProcessContract({...base,cleanup_state:'CLEANED'}),false,'running process cannot be cleaned')
 })
 
-test('P1 contract invariants remain strict after P3 real-host lifecycle promotion',()=>{
+test('P1 runtime capability requires live process observation while T3 remains external receipt truth',()=>{
   const all={childSessions:true,asyncPrompt:true,syncPrompt:true,abort:true,providerInventory:true,appLog:true,sessionStatus:true,childSessionList:true,sessionTodo:true,sessionDiff:true,sessionFork:true,sessionSummarize:true,sessionRevert:true,sessionUnrevert:true}
-  const capability=hostCapabilityByID(openCodeHostCapabilityContracts(all),'process-lifecycle')
+  const capability=hostCapabilityByID(openCodeHostCapabilityContracts(all,{processLifecycle:true}),'process-lifecycle')
   assert.equal(capability?.status,'SUPPORTED')
-  assert.equal(capability?.verification_level,'REAL_HOST_ACCEPTANCE')
+  assert.equal(capability?.verification_level,'OBSERVED')
   assert.equal(capability?.semantic_loss.length,0)
   const hosts=readFileSync(new URL('../../docs/HOSTS.md',import.meta.url),'utf8')
   const architecture=readFileSync(new URL('../../docs/ARCHITECTURE.md',import.meta.url),'utf8')

@@ -1,5 +1,5 @@
 import type { OpenCodeClient } from './types.js';
-import { type HostCapabilityContract } from '../contracts/host-capability.js';
+import { type HostCapabilityContract, type OpenCodeOwnedCapabilityObservation } from '../contracts/host-capability.js';
 export interface OpenCodeCapabilities {
     childSessions: boolean;
     asyncPrompt: boolean;
@@ -19,4 +19,4 @@ export interface OpenCodeCapabilities {
     degraded: string[];
     contracts: HostCapabilityContract[];
 }
-export declare function detectOpenCodeCapabilities(client: OpenCodeClient): OpenCodeCapabilities;
+export declare function detectOpenCodeCapabilities(client: OpenCodeClient, owned?: OpenCodeOwnedCapabilityObservation): OpenCodeCapabilities;

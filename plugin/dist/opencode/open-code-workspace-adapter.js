@@ -35,6 +35,13 @@ export class OpenCodeWorkspaceAdapter {
             throw new Error('OpenCode experimental workspace API unavailable');
         return api;
     }
+    async health() { try {
+        await this.#workspace().list({ directory: this.directory });
+        return { available: true, detail: 'OpenCode experimental workspace list observed' };
+    }
+    catch (error) {
+        return { available: false, detail: String(error) };
+    } }
     async sourceBaseline(repositoryRoot) { const observed = this.inspector(repositoryRoot).head; if (!/^[a-f0-9]{40}(?:[a-f0-9]{24})?$/.test(observed))
         throw new Error('Git source baseline is not an exact object id'); return observed; }
     #validate(native, request) {

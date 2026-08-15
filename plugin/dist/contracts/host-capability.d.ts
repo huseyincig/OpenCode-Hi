@@ -16,6 +16,11 @@ export interface OpenCodeCapabilityObservation {
     sessionRevert: boolean;
     sessionUnrevert: boolean;
 }
+export interface OpenCodeOwnedCapabilityObservation {
+    processLifecycle?: boolean;
+    workspaceIsolation?: boolean;
+    browserExecution?: boolean;
+}
 export interface HostCapabilityContract {
     id: string;
     host_id: 'opencode';
@@ -30,5 +35,5 @@ export interface HostCapabilityContract {
     acceptance_ref: string;
     forbidden_fake_behavior: string;
 }
-export declare function openCodeHostCapabilityContracts(o: OpenCodeCapabilityObservation): HostCapabilityContract[];
+export declare function openCodeHostCapabilityContracts(o: OpenCodeCapabilityObservation, owned?: OpenCodeOwnedCapabilityObservation): HostCapabilityContract[];
 export declare function hostCapabilityByID(items: readonly HostCapabilityContract[], id: string): HostCapabilityContract | undefined;

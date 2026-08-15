@@ -1,13 +1,14 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readdirSync,readFileSync} from 'node:fs'
-import {join} from 'node:path'
+import {join,resolve,dirname} from 'node:path'
+import {fileURLToPath} from 'node:url'
 import {discoverSkills,resolveSkillPlan} from '../dist/runtime/skills/registry.js'
 import {HI_METHODOLOGY_LIMITS,HI_METHODOLOGY_POLICY} from '../dist/generated/methodology-policy.js'
 import {PACKAGED_HI_AGENTS} from '../dist/generated/agent-config.js'
 import {builtinMethodologyCatalog} from '../dist/runtime/methodology/catalog.js'
 
-const root=join(process.cwd(),'..')
+const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..')
 const canonical=JSON.parse(readFileSync(join(root,'data','hi-methodologies.json'),'utf8'))
 const canonicalNames=canonical.profiles.map(x=>x.name).sort()
 
