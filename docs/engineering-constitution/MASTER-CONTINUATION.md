@@ -634,7 +634,7 @@ npm registry publication remains the only open P8/T4 edge: `npm whoami` returned
 
 ## 10A. Final reconstruction program — PROMPT A
 
-### A0 — Documentation truth ownership and inventory — **IN PROGRESS**
+### A0 — Documentation truth ownership and inventory — **CLOSED at `26dae54`**
 
 Authority: `/workspace/arastirma/OpenCode-Hi_FINAL_RECONSTRUCTION_ZERO_DEFECT_PROMPTS.md`.
 
@@ -647,6 +647,15 @@ The post-v0.1 engineering work-package program is complete through N1, so PROMPT
 - `scripts/validate.py` now consumes `VERSION` as the product-version owner and validates SemVer/parity instead of hard-pinning the application to literal `0.1.0`. No version bump is performed by this checkpoint.
 
 This does **not** certify PROMPT A. Current README/Constitution/architecture/install/release surfaces still require reconstruction and parity review. Historical engineering material remains available but may not own mutable current product truth.
+
+
+### A1 — Current product entry path and executable documentation parity — **CLOSED at `29f7ce0`**
+
+Rebuilt `README.md`, `README.tr.md`, `docs/ARCHITECTURE.md`, and `docs/INSTALLATION.md` from live contracts/runtime/receipts. Removed stale candidate/no-workspace/old-host language, separated runtime readiness from the externally blocked npm registry distribution edge, documented first-use/source-loading boundaries, and added `scripts/validate-documentation.py` plus generated `data/validation/documentation-parity-0.1.0.json`. `npm run check` now includes `docs:check`, so current docs fail on broken local links, stale capability/candidate language, version/package/product drift, npm availability drift, host capability omission, or semantic-adapter support drift. Checkpoint evidence: Python 70/70, Node 741/741, docs parity PASS/0 violations, validator PASS.
+
+### A2 — Constitution law/history separation — **CLOSED locally pending checkpoint commit**
+
+Rebuilt the current Engineering Constitution as durable LAW/WHY/ownership/proof rules and physically moved obsolete program/migration/runtime-snapshot/proof-ledger files under `docs/engineering-constitution/history/`. Constitution README now distinguishes current law, reference catalogs and historical provenance; ADRs no longer instruct engineers to execute the old migration matrix or append to the old implementation-proof ledger. Checkpoint evidence before commit: Python 71/71, Node 741/741, docs parity PASS/0 violations, validator PASS, diff-check clean, backup count 0.
 
 ---
 

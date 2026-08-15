@@ -1,39 +1,49 @@
-# OpenCode-Hi Engineering Constitution Workspace
+# OpenCode-Hi Engineering Constitution
 
-Status: ACTIVE
+This directory separates **current engineering law** from **reference architecture material** and **historical program/provenance**. A file being preserved here does not make it current product truth.
 
-This directory is the canonical working area for the Architecture Constitution / Component Metamodel program.
+## Current law and navigation
 
-## Rules
+| Purpose | Canonical current owner |
+|---|---|
+| Engineering law / non-negotiable invariants | [`15-ENGINEERING-CONSTITUTION.md`](15-ENGINEERING-CONSTITUTION.md) |
+| Domain ontology and semantic distinctions | [`04-DOMAIN-ONTOLOGY.md`](04-DOMAIN-ONTOLOGY.md) |
+| Durable architecture decisions | [`16-ADR-INDEX.md`](16-ADR-INDEX.md) + [`adrs/`](adrs/) |
+| Current continuation/program checkpoint | [`MASTER-CONTINUATION.md`](MASTER-CONTINUATION.md) |
+| User-facing architecture | [`../ARCHITECTURE.md`](../ARCHITECTURE.md) |
+| Machine documentation ownership | [`../../data/documentation-ownership.json`](../../data/documentation-ownership.json) |
 
-- Source facts, inference, and design decisions are labeled separately.
-- No component is considered operational without an executor/consumer path and behavioral proof.
-- Prompts and host artifacts are projections, not canonical product truth.
-- Every material component class must converge on: canonical contract -> human template -> runtime/host projection -> validator/behavioral acceptance.
-- Existing proven behavior is preserved unless a documented design decision supersedes it.
-- No push, tag, publish, release, or deploy is performed by this program.
+Current product/runtime truth still comes from live source/contracts/runtime evidence before prose. The Constitution constrains engineering behavior; it does not override executable reality.
 
-## Deliverable index
+## Reference material
 
-| # | Deliverable | File | Status |
-|---|---|---|---|
-| 00 | Program plan and gate ledger | `00-PROGRAM-PLAN.md` | ACTIVE |
-| 01 | Source architecture study | `01-SOURCE-ARCHITECTURE-STUDY.md` | PASS-1 COMPLETE / 1 HOLD |
-| 02 | Current runtime reality map | `02-RUNTIME-REALITY-MAP.md` | PRELIMINARY SOURCE-GROUNDED |
-| 03 | Engineering failure-pattern inventory | `03-FAILURE-PATTERN-INVENTORY.md` | PRELIMINARY CLASSIFIED |
-| 04 | Hi domain ontology | `04-DOMAIN-ONTOLOGY.md` | PRELIMINARY CONTRACT CANDIDATE |
-| 05 | Hi component metamodel | `05-COMPONENT-METAMODEL.md` | PRELIMINARY DESIGN |
-| 06 | Component contract catalog | `06-CONTRACT-CATALOG.md` | V1 CONTRACT CANDIDATE |
-| 07 | Human-readable component templates | `07-TEMPLATE-CATALOG.md` | V1 TEMPLATE CANDIDATE |
-| 08 | Machine schema architecture | `08-SCHEMA-CATALOG.md` | V1 SCHEMA ARCHITECTURE |
-| 09 | Generator/projection architecture | `09-GENERATOR-ARCHITECTURE.md` | V1 TARGET ARCHITECTURE |
-| 10 | Validation and architectural linting | `10-VALIDATION-ARCHITECTURE.md` | V1 TARGET ARCHITECTURE |
-| 11 | Behavioral acceptance architecture | `11-BEHAVIORAL-ACCEPTANCE.md` | V1 TARGET ARCHITECTURE |
-| 12 | Host projection/capability architecture | `12-HOST-PROJECTION-ARCHITECTURE.md` | V1 TARGET ARCHITECTURE |
-| 13 | Migration matrix/order | `13-MIGRATION-MATRIX.md` | V1 ORDERED MIGRATION PLAN |
-| 14 | Source adoption/rejection register | `14-SOURCE-SEMANTICS-REGISTER.md` | PASS-1 COMPLETE |
-| 15 | Engineering constitution | `15-ENGINEERING-CONSTITUTION.md` | V1 CONSTITUTION CANDIDATE |
-| 16 | Architecture decision records index | `16-ADR-INDEX.md` | V1 ADR SET ACTIVE |
-| 17 | Implementation and proof ledger | `17-IMPLEMENTATION-PROOF.md` | ACTIVE PROOF LEDGER |
+The following documents remain useful design/reference catalogs. They explain component contracts, schemas, generators, validation and acceptance patterns, but they are not independent runtime owners and must not be read as a current implementation-status ledger:
 
-A status may advance only when the document contains enough evidence to justify it. `PENDING` is preferable to invented completeness.
+- `03-FAILURE-PATTERN-INVENTORY.md`
+- `05-COMPONENT-METAMODEL.md`
+- `06-CONTRACT-CATALOG.md`
+- `07-TEMPLATE-CATALOG.md`
+- `08-SCHEMA-CATALOG.md`
+- `09-GENERATOR-ARCHITECTURE.md`
+- `10-VALIDATION-ARCHITECTURE.md`
+- `11-BEHAVIORAL-ACCEPTANCE.md`
+- `12-HOST-PROJECTION-ARCHITECTURE.md`
+- `14-SOURCE-SEMANTICS-REGISTER.md`
+
+Where a reference catalog conflicts with live source/contracts/receipts or current canonical docs, the live/current owner wins.
+
+## Historical program material
+
+Migration plans, old runtime snapshots, source-study pass ledgers and implementation-proof snapshots are physically segregated under [`history/`](history/). They are provenance only:
+
+- `history/00-PROGRAM-PLAN.md`
+- `history/01-SOURCE-ARCHITECTURE-STUDY.md`
+- `history/02-RUNTIME-REALITY-MAP.md`
+- `history/13-MIGRATION-MATRIX.md`
+- `history/17-IMPLEMENTATION-PROOF.md`
+
+External source-study notes live under [`sources/`](sources/) and are also historical/reference provenance. They do not confer semantic ownership on external project names.
+
+## Maintenance rule
+
+New durable engineering law belongs in the Constitution or an ADR. Current mutable facts such as supported host version, release status, test count or implementation progress belong to their machine/receipt owners and must not be copied here as hand-maintained truth.

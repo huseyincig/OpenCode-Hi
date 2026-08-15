@@ -284,11 +284,11 @@
       "14-SOURCE-SEMANTICS-REGISTER.md"
     ],
     "constitution_historical": [
-      "00-PROGRAM-PLAN.md",
-      "01-SOURCE-ARCHITECTURE-STUDY.md",
-      "02-RUNTIME-REALITY-MAP.md",
-      "13-MIGRATION-MATRIX.md",
-      "17-IMPLEMENTATION-PROOF.md"
+      "history/00-PROGRAM-PLAN.md",
+      "history/01-SOURCE-ARCHITECTURE-STUDY.md",
+      "history/02-RUNTIME-REALITY-MAP.md",
+      "history/13-MIGRATION-MATRIX.md",
+      "history/17-IMPLEMENTATION-PROOF.md"
     ],
     "constitution_adrs": "REFERENCE",
     "constitution_sources": "HISTORICAL",

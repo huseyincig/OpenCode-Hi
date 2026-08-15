@@ -726,7 +726,7 @@ def test_prompt_a_documentation_inventory_classifies_all_truth_surfaces_and_has_
     assert artifacts['README.tr.md']['lifecycle']=='DERIVED_CURRENT'
     assert artifacts['docs/FINAL-ACCEPTANCE.md']['lifecycle']=='HISTORICAL'
     assert artifacts['docs/engineering-constitution/15-ENGINEERING-CONSTITUTION.md']['lifecycle']=='CANONICAL_CURRENT'
-    assert artifacts['docs/engineering-constitution/17-IMPLEMENTATION-PROOF.md']['lifecycle']=='HISTORICAL'
+    assert artifacts['docs/engineering-constitution/history/17-IMPLEMENTATION-PROOF.md']['lifecycle']=='HISTORICAL'
     for m in meanings:
         assert (ROOT/m['owner']).is_file()
         if m['owner'] in artifacts: assert artifacts[m['owner']]['lifecycle']!='HISTORICAL'
@@ -765,3 +765,17 @@ def test_prompt_a_first_use_docs_do_not_advertise_unavailable_registry_or_stale_
     assert 'registry distribution availability' in install
     assert 'ProcessContract' in arch and 'WorkspaceLease' in arch and 'BrowserObservation' in arch
     assert 'contains no raw stdout/stderr buffer' in arch
+
+
+def test_prompt_a_constitution_separates_current_law_from_program_history():
+    root=ROOT/'docs/engineering-constitution'
+    historical=['00-PROGRAM-PLAN.md','01-SOURCE-ARCHITECTURE-STUDY.md','02-RUNTIME-REALITY-MAP.md','13-MIGRATION-MATRIX.md','17-IMPLEMENTATION-PROOF.md']
+    for name in historical:
+        assert not (root/name).exists()
+        assert (root/'history'/name).is_file()
+    readme=(root/'README.md').read_text(); law=(root/'15-ENGINEERING-CONSTITUTION.md').read_text()
+    assert 'Current law and navigation' in readme and 'Historical program material' in readme
+    assert 'Current mutable facts such as supported host version, release status, test count' in readme
+    assert 'one meaning -> one canonical documentation owner' in law
+    assert 'Development HEAD, application version and an existing immutable release tag are separate identities' in law
+    assert 'Historical migration plans/proof ledgers are retained under `history/`' in law

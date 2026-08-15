@@ -11,7 +11,7 @@ Status: VERIFIED LOCAL BASELINE
 
 - Current OpenCode-Hi history/docs that preserve the v58 port lineage.
 - `docs/SOURCE-REUSE-MATRIX.md` direct-port manifest.
-- Current runtime implementations descended from the baseline are mapped separately in `02-RUNTIME-REALITY-MAP.md`.
+- Current runtime implementations descended from the baseline are mapped separately in `history/02-RUNTIME-REALITY-MAP.md`.
 
 ## Verified source facts
 

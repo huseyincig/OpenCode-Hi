@@ -5,7 +5,7 @@
   "status": "PASS",
   "policy": {
     "path": "data/documentation-ownership.json",
-    "sha256": "3e7f4905b06e084a237a4016e02babce32d9ab75a2909bc04514f09fda70ef57"
+    "sha256": "e1fc392a9d49080eed2b7e855ad6099b87211c33fbf898600326680285e621ef"
   },
   "summary": {
     "artifacts": 122,
@@ -458,27 +458,6 @@
       "update_mode": "PARITY_VALIDATED"
     },
     {
-      "path": "docs/engineering-constitution/00-PROGRAM-PLAN.md",
-      "sha256": "3f5d913f239c2a0271fb1b4e4ce9e34c47eb00eec726f8ddc0e2c9d0adb946c7",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/01-SOURCE-ARCHITECTURE-STUDY.md",
-      "sha256": "cecfd23aa3bf8fdc602e20bd183a134ea8a9925285e5ee4533556295767e0fd0",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/02-RUNTIME-REALITY-MAP.md",
-      "sha256": "2072294e4af8777bdd6a3d1f289105e0d81fd29d76308955a51e898453992cdc",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
       "path": "docs/engineering-constitution/03-FAILURE-PATTERN-INVENTORY.md",
       "sha256": "5c4c50ad019fbf80ecbfb481e9004e158f8b3959ac007189552e3f3bfde80825",
       "audience": "ARCHITECT",
@@ -549,13 +528,6 @@
       "update_mode": "HUMAN_OWNED"
     },
     {
-      "path": "docs/engineering-constitution/13-MIGRATION-MATRIX.md",
-      "sha256": "2df119ca695c9f41856f03107c811e38f38ccb164a8d062bcedbf3b351460051",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
       "path": "docs/engineering-constitution/14-SOURCE-SEMANTICS-REGISTER.md",
       "sha256": "a77f586cde00f8c0a575ded8be33d60a49cd077a81f7fd0c21aac92924ca7fed",
       "audience": "ARCHITECT",
@@ -564,7 +536,7 @@
     },
     {
       "path": "docs/engineering-constitution/15-ENGINEERING-CONSTITUTION.md",
-      "sha256": "a57eb6e378dfefaa4345d30c9106bd2770fd6c24eb182c3b1af0f9d73050d235",
+      "sha256": "24dc095c3fd3cb2406186c091ce96f167c7cd3141c7b2372ff41a50f6b69bb17",
       "audience": "ARCHITECT",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "HUMAN_OWNED"
@@ -577,113 +549,141 @@
       "update_mode": "HUMAN_OWNED"
     },
     {
-      "path": "docs/engineering-constitution/17-IMPLEMENTATION-PROOF.md",
-      "sha256": "282ea51973597489f1695e27c04e4f493091cbac5993882be111fd2dbc985040",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
       "path": "docs/engineering-constitution/MASTER-CONTINUATION.md",
-      "sha256": "4a6366664edeec8158c7fcd3f7e92924e475780170d6d57355db6d51d4375baf",
+      "sha256": "c2c406641cfc22acfd0eaebfcbf7657600a103d1b47d925773200e24ef4cc806",
       "audience": "INTERNAL_ENGINEERING",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "HUMAN_OWNED"
     },
     {
       "path": "docs/engineering-constitution/README.md",
-      "sha256": "ccc68c0dad541ffcc761c473f070fb2f7defe9412cec5b8ab5c1d9a6a841ff5b",
+      "sha256": "d73a3a25ccd08c1fd9846e38b8df9e5d31ac6d9e9ed2a0bcc10038ec8cf2188d",
       "audience": "ARCHITECT",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "HUMAN_OWNED"
     },
     {
       "path": "docs/engineering-constitution/adrs/ADR-0001-canonical-contract-before-projection.md",
-      "sha256": "56e6e949a3c949a2767776c8aeae870f1baefa84465c1dea8fee35eb9444c777",
+      "sha256": "869eb82805e8c5d2062231571ad17803380f4b7c00223d6df3efe5f4aa28bef6",
       "audience": "ARCHITECT",
       "lifecycle": "REFERENCE",
       "update_mode": "HUMAN_OWNED"
     },
     {
       "path": "docs/engineering-constitution/adrs/ADR-0002-role-agent-separation.md",
-      "sha256": "0d35435bbd0ac483628e71438eea73b715925bef5bdd2734154713e1d18831a5",
+      "sha256": "27596692d9d0f3ed8234ce322afe83b73dfeea51d0ae0da231101f2ff4e10018",
       "audience": "ARCHITECT",
       "lifecycle": "REFERENCE",
       "update_mode": "HUMAN_OWNED"
     },
     {
       "path": "docs/engineering-constitution/adrs/ADR-0003-methodology-how-boundary.md",
-      "sha256": "1bcb0fb5c1341123e2a2d00fc85d9d3312cf887b81cc68b51b547b030ab6efe7",
+      "sha256": "e27ca0eca0da63b3f6fd89380deb6fb813c31f1a5b221982dd64edc6a7cbf262",
       "audience": "ARCHITECT",
       "lifecycle": "REFERENCE",
       "update_mode": "HUMAN_OWNED"
     },
     {
       "path": "docs/engineering-constitution/adrs/ADR-0004-authority-is-exact-action-bound.md",
-      "sha256": "663e501314a28ddb03e7156053284d5ff6dfa693bc0bc0f95aef9c4563738234",
+      "sha256": "f4e1c8c2af9928cf3635bd880ec753f12403cea04137138380e728b0e25969bc",
       "audience": "ARCHITECT",
       "lifecycle": "REFERENCE",
       "update_mode": "HUMAN_OWNED"
     },
     {
       "path": "docs/engineering-constitution/adrs/ADR-0005-capabilities-require-real-executors.md",
-      "sha256": "8ed01869386c6fb6d5e543e4c9edb6cf877cbcc4b66de58ccdc351a972b2e34b",
+      "sha256": "97c068a6e335e69e12acc4f36156b9c28bc2e324dcd3d838650f814c1ecb8ccb",
       "audience": "ARCHITECT",
       "lifecycle": "REFERENCE",
       "update_mode": "HUMAN_OWNED"
     },
     {
       "path": "docs/engineering-constitution/adrs/ADR-0006-worker-results-do-not-own-completion.md",
-      "sha256": "5db4d2352cdead77019eaaa85185d053c25bb6b3db46550f62ad27c4092213b6",
+      "sha256": "8fc7d603d249bc2d9da696ac31e361eeafe6aa9ba3941b13838b71c727bdd21d",
       "audience": "ARCHITECT",
       "lifecycle": "REFERENCE",
       "update_mode": "HUMAN_OWNED"
     },
     {
       "path": "docs/engineering-constitution/adrs/ADR-0007-team-is-taskruntime-projection.md",
-      "sha256": "aad248c093fbc31ed4ede4af62fc434bb1981fbf81ad3fe49e9f55d00c1c742d",
+      "sha256": "662d7b2d19d147fd918590c1e3caa1cd286e3bae12301df111fac9fc80d3cf17",
       "audience": "ARCHITECT",
       "lifecycle": "REFERENCE",
       "update_mode": "HUMAN_OWNED"
     },
     {
       "path": "docs/engineering-constitution/adrs/ADR-0008-current-only-schema-policy.md",
-      "sha256": "65141f48dd53f6ebd73da95b77385cdb813f8243665faad5e77180e427b4216a",
+      "sha256": "5754b32f0e0ae52a54f7eba0f50cfbc082d368962668a3f3ab93cfa47cd4172d",
       "audience": "ARCHITECT",
       "lifecycle": "REFERENCE",
       "update_mode": "HUMAN_OWNED"
     },
     {
       "path": "docs/engineering-constitution/adrs/ADR-0009-deterministic-generation.md",
-      "sha256": "48d692cfa06729a920148b12a1fb1fce730a59681d92131d90eb1565886fb3cb",
+      "sha256": "3509dd2bf5d68e8d874fa79bdfb39ca0b56a5554f3aa5b2360308265cfe4f49b",
       "audience": "ARCHITECT",
       "lifecycle": "REFERENCE",
       "update_mode": "HUMAN_OWNED"
     },
     {
       "path": "docs/engineering-constitution/adrs/ADR-0010-storage-owner-uniqueness.md",
-      "sha256": "a5049d8511a0338285f6d50fa17de02a31e34ef5c659825cacb7a376b1346403",
+      "sha256": "6264c84f031a27438f05ddc8cf29adcb34b78b853050111b8372d868c79606d7",
       "audience": "ARCHITECT",
       "lifecycle": "REFERENCE",
       "update_mode": "HUMAN_OWNED"
     },
     {
       "path": "docs/engineering-constitution/adrs/ADR-0011-evidence-tier-labeling.md",
-      "sha256": "79de550d28aa63b425bdcde227da55323a003fb7e4352d8f656e3f6426fa5c25",
+      "sha256": "5de4257e106d93e1f2e2130dab550fd99f9ca0a1cb1c0268afe18a089254d546",
       "audience": "ARCHITECT",
       "lifecycle": "REFERENCE",
       "update_mode": "HUMAN_OWNED"
     },
     {
       "path": "docs/engineering-constitution/adrs/ADR-0012-migration-by-owner-class.md",
-      "sha256": "1ff3228e17f15e5156431542c759d2a14cb9b60e1302eb2612e532127cbf0d1d",
+      "sha256": "199e5c4017f47d2544656c2a92425b0d472f5a412b4c0c98e30df44e6c42caf4",
       "audience": "ARCHITECT",
       "lifecycle": "REFERENCE",
       "update_mode": "HUMAN_OWNED"
     },
     {
+      "path": "docs/engineering-constitution/history/00-PROGRAM-PLAN.md",
+      "sha256": "3f5d913f239c2a0271fb1b4e4ce9e34c47eb00eec726f8ddc0e2c9d0adb946c7",
+      "audience": "HISTORICAL",
+      "lifecycle": "HISTORICAL",
+      "update_mode": "HUMAN_OWNED"
+    },
+    {
+      "path": "docs/engineering-constitution/history/01-SOURCE-ARCHITECTURE-STUDY.md",
+      "sha256": "cecfd23aa3bf8fdc602e20bd183a134ea8a9925285e5ee4533556295767e0fd0",
+      "audience": "HISTORICAL",
+      "lifecycle": "HISTORICAL",
+      "update_mode": "HUMAN_OWNED"
+    },
+    {
+      "path": "docs/engineering-constitution/history/02-RUNTIME-REALITY-MAP.md",
+      "sha256": "2072294e4af8777bdd6a3d1f289105e0d81fd29d76308955a51e898453992cdc",
+      "audience": "HISTORICAL",
+      "lifecycle": "HISTORICAL",
+      "update_mode": "HUMAN_OWNED"
+    },
+    {
+      "path": "docs/engineering-constitution/history/13-MIGRATION-MATRIX.md",
+      "sha256": "2df119ca695c9f41856f03107c811e38f38ccb164a8d062bcedbf3b351460051",
+      "audience": "HISTORICAL",
+      "lifecycle": "HISTORICAL",
+      "update_mode": "HUMAN_OWNED"
+    },
+    {
+      "path": "docs/engineering-constitution/history/17-IMPLEMENTATION-PROOF.md",
+      "sha256": "282ea51973597489f1695e27c04e4f493091cbac5993882be111fd2dbc985040",
+      "audience": "HISTORICAL",
+      "lifecycle": "HISTORICAL",
+      "update_mode": "HUMAN_OWNED"
+    },
+    {
       "path": "docs/engineering-constitution/sources/00-opencode-hhc-v58.md",
-      "sha256": "844978c63cc5b23670de20241cd5814ca51381c40810b0195d081bd654fe43aa",
+      "sha256": "b2d2140a409c708f0bf568a924a3ccb619c2cdd9a30e81d2c77bca7b3980316c",
       "audience": "HISTORICAL",
       "lifecycle": "HISTORICAL",
       "update_mode": "HUMAN_OWNED"

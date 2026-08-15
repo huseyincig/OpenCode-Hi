@@ -22,13 +22,13 @@ LLMs may assist DRAFT authoring but not canonical mechanical generation.
 
 ## Source evidence
 
-- `01-SOURCE-ARCHITECTURE-STUDY.md`
-- `02-RUNTIME-REALITY-MAP.md`
+- `history/01-SOURCE-ARCHITECTURE-STUDY.md`
+- `history/02-RUNTIME-REALITY-MAP.md`
 - `03-FAILURE-PATTERN-INVENTORY.md`
 - `14-SOURCE-SEMANTICS-REGISTER.md`
 
 ## Implementation obligations
 
-- Follow `13-MIGRATION-MATRIX.md`.
-- Record concrete code/tests in `17-IMPLEMENTATION-PROOF.md`.
+- Historical migration sequencing is preserved in `history/13-MIGRATION-MATRIX.md`; it is not a current execution queue.
+- Historical implementation proof is preserved in `history/17-IMPLEMENTATION-PROOF.md`; current proof belongs to executable tests/receipts and `MASTER-CONTINUATION.md`.
 - Do not claim implementation from this ADR alone.
