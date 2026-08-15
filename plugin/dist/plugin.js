@@ -24,18 +24,18 @@ export const HiPlugin = async (ctx) => {
     const childSession = createOpenCodeChildSessionPort(ctx.client, { serverUrl: ctx.serverUrl?.toString?.(), directory: ctx.directory });
     const processExecutor = new OpenCodePtyAdapter(ctx.client, ctx.serverUrl, ctx.directory, projectRoot, () => state.hostConfig);
     const workspaceExecutor = new OpenCodeWorkspaceAdapter(ctx.client, ctx.serverUrl, ctx.directory);
-    const [processHealth, workspaceHealth] = await Promise.all([processExecutor.health(), workspaceExecutor.health()]);
-    const hostCapabilities = host.capabilities.contracts, refreshOwnedCapabilities = (browserExecution = false) => {
-        const observed = detectOpenCodeCapabilities(ctx.client, { processLifecycle: processHealth.available, workspaceIsolation: workspaceHealth.available, browserExecution });
-        hostCapabilities.splice(0, hostCapabilities.length, ...observed.contracts);
-    };
-    refreshOwnedCapabilities(false);
+    const hostCapabilities = host.capabilities.contracts;
+    let processAvailable = false, workspaceAvailable = false, browserAvailable = false;
+    const refreshOwnedCapabilities = () => { const observed = detectOpenCodeCapabilities(ctx.client, { processLifecycle: processAvailable, workspaceIsolation: workspaceAvailable, browserExecution: browserAvailable }); hostCapabilities.splice(0, hostCapabilities.length, ...observed.contracts); };
+    refreshOwnedCapabilities();
     const services = createRuntimeServices({ ports: { nativeContext: { project: ctx.project, directory: ctx.directory, worktree: ctx.worktree }, childSession, hostCapabilities, process: processExecutor, workspace: workspaceExecutor, createBrowser: persist => new PlaywrightBrowserAdapter({ persist_screenshot: persist }) }, projectRoot, packageRoot, getConfig: () => state.config, getModels: host.getModels, getHostConfig: () => state.hostConfig });
     await services.workspaceRuntime.reconcileRestored(services.store.all());
     await services.processRuntime.reconcileRestored(services.store.all());
     const browserHealth = await services.browserRuntime.health();
-    services.setBrowserAvailable(browserHealth.available);
-    refreshOwnedCapabilities(browserHealth.available);
+    browserAvailable = browserHealth.available;
+    services.setBrowserAvailable(browserAvailable);
+    refreshOwnedCapabilities();
+    setTimeout(() => { void Promise.all([processExecutor.health(), workspaceExecutor.health()]).then(([processHealth, workspaceHealth]) => { processAvailable = processHealth.available; workspaceAvailable = workspaceHealth.available; refreshOwnedCapabilities(); }).catch(() => { }); }, 0);
     services.persistence.save(services.store.all());
     const pendingNativePermissions = new Map();
     const eventController = new RuntimeEventController({ state, host, services, projectAuthority, pendingNativePermissions, projectRoot });

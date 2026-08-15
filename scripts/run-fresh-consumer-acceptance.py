@@ -47,19 +47,15 @@ def main()->int:
         req=urllib.request.Request(base+'/session?directory='+urllib.parse.quote(str(project),safe=''),data=json.dumps({'title':'Hi packed consumer acceptance'}).encode(),headers={'content-type':'application/json'},method='POST')
         with urllib.request.urlopen(req,timeout=5) as r:session=json.loads(r.read().decode())
       except Exception as e: session={'error':str(e)}
-      # Debug agent command against same fresh project: config hook projection should expose Hi agent.
-      agent=run(['opencode','debug','agent','coder'],project,env,timeout=30)
-      # Optional provider-backed material run: attempted but never required for package PASS.
-      provider_run=None
-      models=run(['opencode','models','opencode-go'],project,env,timeout=30)
-      candidate=next((ln.strip() for ln in models.stdout.splitlines() if '/' in ln and not ln.startswith(' ')),None)
-      if candidate:
-        try:
-          rr=run(['opencode','run','-m',candidate,'Use the hi_doctor tool once and report only its top-level status.'],project,env,timeout=45)
-          provider_run={'attempted':True,'model':candidate,'rc':rr.returncode,'stdout':rr.stdout[-3000:],'stderr':rr.stderr[-1500:]}
-        except subprocess.TimeoutExpired:
-          provider_run={'attempted':True,'model':candidate,'timeout':True}
-      else:provider_run={'attempted':False,'reason':'no isolated-home opencode-go model inventory'}
+      # Read the same running host's native agent projection; do not spawn a second OpenCode CLI process.
+      agents=None
+      try:
+        q=urllib.parse.urlencode({'directory':str(project)})
+        agents=get_json(base+'/agent?'+q,5)
+      except Exception as e: agents={'error':str(e)}
+      # Provider-backed chat is intentionally outside the package/runtime acceptance requirement.
+      # The isolated HOME has no pre-authorized provider inventory and this harness never borrows user credentials.
+      provider_run={'attempted':False,'reason':'provider-backed chat is outside fresh package/runtime acceptance and isolated HOME does not borrow user provider credentials'}
     finally:
       try:proc.terminate();proc.wait(timeout=5)
       except Exception:
@@ -68,21 +64,23 @@ def main()->int:
     ids=tool_ids if isinstance(tool_ids,list) else (tool_ids.get('data') if isinstance(tool_ids,dict) else None)
     ids=ids if isinstance(ids,list) else []
     hi_ids=sorted(x for x in ids if isinstance(x,str) and x.startswith('hi_'))
-    agent_text=(agent.stdout+'\n'+agent.stderr)
+    agent_rows=agents if isinstance(agents,list) else (agents.get('data') if isinstance(agents,dict) else None)
+    agent_rows=agent_rows if isinstance(agent_rows,list) else []
+    coder=next((x for x in agent_rows if isinstance(x,dict) and x.get('name')=='coder'),None)
     log_text=log.read_text(errors='replace') if log.exists() else ''
     checks={
       'pack_install':install.returncode==0,
       'setup_reconfigure':reconfig.returncode==0 and 'APPLIED' in reconfig.stdout,
       'consumer_resolution':bool(resolved) and str(consumer/'node_modules/opencode-hi') in resolved and str(ROOT) not in resolved,
       'server_tool_ids':len(hi_ids)>=10 and 'hi_doctor' in hi_ids and 'hi_status' in hi_ids and 'hi_task_start' in hi_ids,
-      'agent_projection':agent.returncode==0 and ('coder' in agent_text.lower()) and ('permission' in agent_text.lower() or 'tools' in agent_text.lower()),
+      'agent_projection':isinstance(coder,dict) and coder.get('name')=='coder' and coder.get('mode')=='subagent' and coder.get('description')=='Implements scoped changes and produces test and behavior evidence',
       'session_create':isinstance(session,dict) and not session.get('error') and bool(session.get('id') or (session.get('data') or {}).get('id')),
       'no_source_tree_in_server_log':str(ROOT) not in log_text,
       'exact_host_version':run(['opencode','--version']).stdout.strip()=='1.18.18',
     }
     status='PASS' if all(checks.values()) else 'FAIL'
     head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip();tree=subprocess.check_output(['git','rev-parse','HEAD^{tree}'],cwd=ROOT,text=True).strip()
-    receipt={'schema':1,'kind':'PROMPT_B_FRESH_CONSUMER_EXACT_HOST_ACCEPTANCE','program':'PROMPT_B','section':26,'status':status,'source':{'commit':head,'tree':tree},'host':{'opencode':'1.18.18','platform':'linux','architecture':os.uname().machine},'package':{'release':'0.1.0','tarball_name':tgz.name,'installed_from_tarball':True,'resolved_entrypoint':resolved.replace(str(td),'<temp>')},'consumer':{'project':str(project).replace(str(td),'<temp>'),'wrapper':'.opencode/plugins/hi-packed.js','reconfigure_rc':reconfig.returncode},'material_runtime':{'hi_tool_count':len(hi_ids),'hi_tools':hi_ids,'agent_debug_rc':agent.returncode,'session':{'created':checks['session_create'],'version':(session.get('version') if isinstance(session,dict) else None),'directory':'<temp>/consumer/project'},'provider_run':provider_run},'checks':checks,'claim_boundary':'Fresh packed artifact installed outside source tree and loaded by exact OpenCode 1.18.18 through its native local-plugin seam. Provider-backed model execution is opportunistic and is not required for package/runtime acceptance; tool registration, config/agent projection and session material path are provider-independent.'}
+    receipt={'schema':1,'kind':'PROMPT_B_FRESH_CONSUMER_EXACT_HOST_ACCEPTANCE','program':'PROMPT_B','section':26,'status':status,'source':{'commit':head,'tree':tree},'host':{'opencode':'1.18.18','platform':'linux','architecture':os.uname().machine},'package':{'release':'0.1.0','tarball_name':tgz.name,'installed_from_tarball':True,'resolved_entrypoint':resolved.replace(str(td),'<temp>')},'consumer':{'project':str(project).replace(str(td),'<temp>'),'wrapper':'.opencode/plugins/hi-packed.js','reconfigure_rc':reconfig.returncode},'material_runtime':{'hi_tool_count':len(hi_ids),'hi_tools':hi_ids,'agent_endpoint_count':len(agent_rows),'coder_agent_observed':bool(coder),'coder_projection':({k:coder.get(k) for k in ('name','mode','description','native','hidden') if k in coder} if isinstance(coder,dict) else None),'session':{'created':checks['session_create'],'version':(session.get('version') if isinstance(session,dict) else None),'directory':'<temp>/consumer/project'},'provider_run':provider_run},'checks':checks,'claim_boundary':'Fresh packed artifact installed outside source tree and loaded by exact OpenCode 1.18.18 through its native local-plugin seam. Provider-backed model execution is opportunistic and is not required for package/runtime acceptance; tool registration, config/agent projection and session material path are provider-independent.'}
     OUT.write_text(json.dumps(receipt,indent=2,ensure_ascii=False)+'\n')
     print(f"fresh consumer acceptance {status}: hi_tools={len(hi_ids)} session={checks['session_create']} agent={checks['agent_projection']} provider_attempted={provider_run.get('attempted')}")
     if status!='PASS':

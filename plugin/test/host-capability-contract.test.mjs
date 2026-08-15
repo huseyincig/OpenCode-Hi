@@ -7,6 +7,7 @@ import {tmpdir} from 'node:os'
 import {openCodeHostCapabilityContracts,hostCapabilityByID} from '../dist/contracts/host-capability.js'
 import {detectOpenCodeCapabilities} from '../dist/opencode/capabilities.js'
 import {runDoctor} from '../dist/doctor/checks.js'
+import {HiPlugin} from '../dist/plugin.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 
@@ -69,6 +70,17 @@ test('OpenCode detector projects boolean observations into capability contracts 
   const observed=detectOpenCodeCapabilities(client,ownedObserved)
   for(const id of ['process-lifecycle','workspace-isolation-binding','browser-execution']){assert.equal(hostCapabilityByID(observed.contracts,id)?.status,'SUPPORTED');assert.equal(hostCapabilityByID(observed.contracts,id)?.verification_level,'OBSERVED')}
   assert.equal(observed.contracts.some(x=>x.verification_level==='REAL_HOST_ACCEPTANCE'),false)
+})
+
+test('plugin initialization never waits on same-server process/workspace health probes',async()=>{
+  const d=mkdtempSync(join(tmpdir(),'hi-host-init-'))
+  try{
+    const client={app:{log:async()=>{}},session:{create:async()=>({data:{id:'child'}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:true}),diff:async()=>({data:[]})}}
+    const init=HiPlugin({directory:d,worktree:d,project:{},client,serverUrl:new URL('http://127.0.0.1:1')})
+    const hooks=await Promise.race([init,new Promise((_,reject)=>setTimeout(()=>reject(new Error('plugin init waited on host health probe')),500))])
+    assert.ok(hooks?.tool?.hi_doctor)
+    await hooks.dispose?.()
+  }finally{rmSync(d,{recursive:true,force:true})}
 })
 
 test('doctor reports only live-observed owned capabilities and never self-promotes T3',()=>{
