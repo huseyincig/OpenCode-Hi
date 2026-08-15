@@ -1,0 +1,12 @@
+{
+  "area": "persistence-envelopes",
+  "case_kind": "mission",
+  "expected": "reject-malformed-persisted-mission",
+  "index": 0,
+  "kind": "PROPERTY_FUZZ_HISTORICAL_REGRESSION_CASE",
+  "mutation": "bad.missions[0].identity.extra='x'",
+  "observed_before_fix": "accepted-malformed-persisted-mission",
+  "resolution": "strict identity/intent/semantic-assessment key validation",
+  "schema": 1,
+  "seed": 12648430
+}

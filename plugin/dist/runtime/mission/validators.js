@@ -11,6 +11,10 @@ import { isIsolationDecisionContract, isWorkspaceLeaseContract } from '../../con
 function isRecord(value) { return Boolean(value) && typeof value === 'object' && !Array.isArray(value); }
 function stringArray(value) { return Array.isArray(value) && value.every(item => typeof item === 'string'); }
 function recordArray(value) { return Array.isArray(value) && value.every(isRecord); }
+function onlyKeys(value, keys) { const allowed = new Set(keys); return Object.keys(value).every(key => allowed.has(key)); }
+const IDENTITY_KEYS = ['mission_id', 'session_id', 'objective', 'intent', 'semantic_assessment', 'status', 'risk', 'created_at', 'updated_at'];
+const INTENT_KEYS = ['objective', 'likelyTargets', 'taskKind', 'scope', 'risk', 'ambiguity', 'dependencyClass', 'requiredCapabilities', 'requestedExternalActions', 'likelyVerification', 'avoid'];
+const SEMANTIC_ASSESSMENT_KEYS = ['status', 'phase', 'revision', 'source', 'pending_text', 'assessed_at'];
 const OBLIGATION_KINDS = new Set(['analysis', 'implementation', 'verification', 'review', 'authority']);
 const OBLIGATION_STATUSES = new Set(['open', 'closed', 'blocked']);
 const GATE_KINDS = new Set(['verification', 'user-authority', 'reviewer', 'prerequisite-task', 'precondition', 'rollback']);
@@ -70,12 +74,12 @@ function validVerificationPolicy(value) {
     return value.requiredKinds.every(kind => allowed.has(kind));
 }
 function validSemanticAssessment(value) {
-    if (!isRecord(value))
+    if (!isRecord(value) || !onlyKeys(value, SEMANTIC_ASSESSMENT_KEYS))
         return false;
     return ['pending', 'assessed'].includes(String(value.status)) && ['initial', 'followup'].includes(String(value.phase)) && typeof value.revision === 'number' && value.revision >= 1 && value.source === 'host-primary' && typeof value.pending_text === 'string' && (value.assessed_at === undefined || typeof value.assessed_at === 'number');
 }
 function validIntent(value) {
-    if (!isRecord(value))
+    if (!isRecord(value) || !onlyKeys(value, INTENT_KEYS))
         return false;
     return typeof value.objective === 'string'
         && ['unclassified', 'implementation', 'bug-fix', 'review', 'performance', 'release-readiness'].includes(String(value.taskKind))
@@ -153,7 +157,7 @@ export function validateTaskDAG(identity, execution) {
     return true;
 }
 export function validateMissionIdentityState(identity) {
-    if (!isRecord(identity) || typeof identity.mission_id !== 'string' || typeof identity.session_id !== 'string' || typeof identity.objective !== 'string')
+    if (!isRecord(identity) || !onlyKeys(identity, IDENTITY_KEYS) || typeof identity.mission_id !== 'string' || typeof identity.session_id !== 'string' || typeof identity.objective !== 'string')
         return false;
     if (!validIntent(identity.intent) || !validSemanticAssessment(identity.semantic_assessment))
         return false;
