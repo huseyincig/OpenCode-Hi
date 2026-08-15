@@ -542,6 +542,27 @@ try:
 except Exception as e:err(f'bad PROMPT B HostPort portability receipt: {e}')
 
 try:
+    cfg=json.loads((ROOT/'data/validation/prompt-b-configuration.json').read_text(encoding='utf-8'))
+    if cfg.get('schema')!=1 or cfg.get('kind')!='PROMPT_B_CONFIGURATION_ADVERSARIAL_AUDIT' or cfg.get('program')!='PROMPT_B' or cfg.get('section')!=23 or cfg.get('status')!='PASS':err('bad PROMPT B Configuration audit receipt')
+    if cfg.get('violations')!=[] or cfg.get('summary')!={'required':32,'covered':32,'violations':0,'runtime':29,'diagnostic':2,'schema_marker':1}:err('PROMPT B Configuration coverage drift')
+    rows=cfg.get('leaves') or []
+    if len(rows)!=32 or len({x.get('path') for x in rows if isinstance(x,dict)})!=32:err('PROMPT B Configuration leaf inventory drift')
+    import hashlib
+    for row in rows:
+        for key in ('schema','consumer','documentation','proof'):
+            rel=row.get(key);expected=row.get(f'{key}_sha256')
+            if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B Configuration missing {key}: {rel}');continue
+            if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B Configuration {key} hash drift: {rel}')
+        try:
+            if row.get('consumer_anchor') not in (ROOT/row['consumer']).read_text(errors='replace'):err(f"PROMPT B Configuration consumer anchor drift: {row.get('path')}")
+            if f"`{row.get('path')}`" not in (ROOT/row['documentation']).read_text(errors='replace'):err(f"PROMPT B Configuration documentation drift: {row.get('path')}")
+        except Exception as e:err(f'PROMPT B Configuration row invalid: {e}')
+    if not all((cfg.get('static_guards') or {}).values()):err('PROMPT B Configuration static guard drift')
+    closed={x.get('id') for x in cfg.get('closed_defects',[]) if isinstance(x,dict)}
+    if not {'profile-unknown-config-injection','block-level-precedence-widening','project-routing-synthetic-default-override'}<=closed:err('PROMPT B Configuration closed defect receipt drift')
+except Exception as e:err(f'bad PROMPT B Configuration receipt: {e}')
+
+try:
     nr=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text(encoding='utf-8'))
     if nr.get('schema')!=1 or nr.get('kind')!='EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION' or nr.get('program')!='PROMPT_B' or nr.get('status')!='PASS':err('bad PROMPT B native reevaluation receipt identity/status')
     oc=nr.get('opencode',{})

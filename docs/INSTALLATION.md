@@ -63,6 +63,8 @@ Additional bounded options include provider/model allow/deny rules, fallback lim
 
 Safety constraints are monotonic: a lower-precedence option cannot silently widen canonical Authority/Permission restrictions.
 
+Configuration precedence is resolved **per leaf**, not per object block: `default -> host Hi config -> explicit valid project routing leaf`. A project block that omits or supplies an invalid sibling leaf cannot erase a valid host value. Constraint collections compose monotonically where required: provider allowlists narrow by intersection and denied-model lists accumulate by union. Unknown keys are ignored rather than admitted to canonical `HiConfig`.
+
 ## Configuration reference
 
 <!-- BEGIN GENERATED CONFIG REFERENCE -->

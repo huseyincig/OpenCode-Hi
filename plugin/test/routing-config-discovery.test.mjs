@@ -165,3 +165,77 @@ test('project routing constraints narrow but never weaken raw/native Hi constrai
     assert.deepEqual(new Set(cfg.routing.deniedModels), new Set(['p/bad','q/bad']))
   } finally { rmSync(project, { recursive: true, force: true }) }
 })
+
+
+test('PROMPT B §23 project precedence is leaf-scoped and absent project siblings preserve host constraints', () => {
+  const project = makeProject()
+  try {
+    writeRouting(project, {
+      schema: 1,
+      type: 'hi-routing',
+      parallel: { enabled: true },
+      execution: { topology: 'multi-agent' },
+      teamMode: { enabled: true },
+      models: { mode: 'role-mapped' },
+      profile: { balanced: { reviewThreshold: 'high' } },
+      routing: { roleModels: { coder: ['project/coder'] } },
+    })
+    const cfg = resolveHiConfig({
+      parallel: { enabled: false, max: 1, providers: { p: 1 }, models: { 'p/m': 1 } },
+      execution: { topology: 'single-agent', maxAgents: 2, parallelism: 1 },
+      teamMode: { enabled: false, maxMembers: 2, maxWallMinutes: 5 },
+      models: { mode: 'fixed', default: 'host/default', roles: { reviewer: 'host/reviewer' } },
+      profile: { balanced: { specialistThreshold: 'high', reviewThreshold: 'low' } },
+      routing: { strategy: 'quality', maxFallbacks: 1, roleModels: { reviewer: ['host/reviewer'] } },
+    }, project)
+    assert.deepEqual(cfg.parallel,{enabled:true,max:1,providers:{p:1},models:{'p/m':1}})
+    assert.deepEqual(cfg.execution,{topology:'multi-agent',maxAgents:2,parallelism:1})
+    assert.deepEqual(cfg.teamMode,{enabled:true,maxMembers:2,maxWallMinutes:5})
+    assert.deepEqual(cfg.models,{mode:'role-mapped',default:'host/default',roles:{reviewer:'host/reviewer'}})
+    assert.deepEqual(cfg.profile.balanced,{specialistThreshold:'high',reviewThreshold:'high'})
+    assert.equal(cfg.routing.strategy,'quality')
+    assert.equal(cfg.routing.maxFallbacks,1)
+    assert.deepEqual(cfg.routing.roleModels,{reviewer:['host/reviewer'],coder:['project/coder']})
+  } finally { rmSync(project,{recursive:true,force:true}) }
+})
+
+test('PROMPT B §23 invalid or unknown project leaves cannot replace valid host config', () => {
+  const project = makeProject()
+  try {
+    writeRouting(project, {
+      schema: 1,
+      type: 'hi-routing',
+      execution: { topology: 'bogus', maxAgents: 'wide', surprise: true },
+      parallel: { enabled: 'yes', max: 'many', surprise: 99 },
+      teamMode: { maxMembers: 'all' },
+      profile: { balanced: { specialistThreshold: 'evil', surprise: 'accepted?' } },
+      routing: { strategy: 'bogus', surprise: 'ignored' },
+    })
+    const cfg=resolveHiConfig({
+      execution:{topology:'single-agent',maxAgents:2,parallelism:1},
+      parallel:{enabled:false,max:1,providers:{},models:{}},
+      teamMode:{enabled:false,maxMembers:2,maxWallMinutes:5},
+      profile:{balanced:{specialistThreshold:'low',reviewThreshold:'high'}},
+      routing:{strategy:'cost'},
+    },project)
+    assert.deepEqual(cfg.execution,{topology:'single-agent',maxAgents:2,parallelism:1})
+    assert.equal(cfg.parallel.enabled,false);assert.equal(cfg.parallel.max,1)
+    assert.equal(cfg.teamMode.maxMembers,2)
+    assert.deepEqual(cfg.profile.balanced,{specialistThreshold:'low',reviewThreshold:'high'})
+    assert.equal('surprise' in cfg.profile.balanced,false)
+    assert.equal(cfg.routing.strategy,'cost')
+  } finally { rmSync(project,{recursive:true,force:true}) }
+})
+
+test('PROMPT B §23 safety constraints compose monotonically across host and project layers', () => {
+  const project=makeProject()
+  try {
+    writeRouting(project,{schema:1,type:'hi-routing',routing:{allowedProviders:['q','r'],deniedModels:['q/bad']},parallel:{providers:{q:2}}})
+    const cfg=resolveHiConfig({routing:{allowedProviders:['p','q'],deniedModels:['p/bad']},parallel:{providers:{q:1},models:{'q/m':1}}},project)
+    assert.deepEqual(cfg.routing.allowedProviders,['q'])
+    assert.deepEqual(new Set(cfg.routing.deniedModels),new Set(['p/bad','q/bad']))
+    // Capacity maps are explicit per-key overrides, but an absent project key cannot erase the host constraint.
+    assert.deepEqual(cfg.parallel.providers,{q:2})
+    assert.deepEqual(cfg.parallel.models,{'q/m':1})
+  } finally { rmSync(project,{recursive:true,force:true}) }
+})

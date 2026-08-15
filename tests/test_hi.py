@@ -1094,3 +1094,19 @@ def test_prompt_b_host_port_portability_audit_is_host_agnostic_source_bound_and_
     assert d['alternate_host_feasibility']['semantic_core_changes_required'] is False
     assert {'host-port-renamed-sdk-interface','runtime-event-controller-opencode-lifecycle-leak','task-runtime-opencode-client-leak','runtime-service-opencode-construction-leak','process-error-opencode-owner-leak','routing-provider-policy-opencode-owner-leak'}<={x['id'] for x in d['closed_defects']}
     assert (ROOT/'scripts/audit-host-port-portability.py').is_file()
+
+
+def test_prompt_b_configuration_audit_covers_every_leaf_and_is_source_bound():
+    d=json.loads((ROOT/'data/validation/prompt-b-configuration.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_CONFIGURATION_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['section']==23 and d['status']=='PASS'
+    assert d['violations']==[] and d['summary']=={'required':32,'covered':32,'violations':0,'runtime':29,'diagnostic':2,'schema_marker':1}
+    assert len(d['leaves'])==32 and len({x['path'] for x in d['leaves']})==32
+    for row in d['leaves']:
+        for key in ('schema','consumer','documentation','proof'):
+            path=ROOT/row[key];assert path.is_file();assert hashlib.sha256(path.read_bytes()).hexdigest()==row[f'{key}_sha256']
+        assert row['consumer_anchor'] in (ROOT/row['consumer']).read_text(errors='replace')
+        assert f"`{row['path']}`" in (ROOT/row['documentation']).read_text(errors='replace')
+        assert row['validator'] and row['precedence_order'] and row['observable_effect']
+    assert all(d['static_guards'].values())
+    assert {'profile-unknown-config-injection','block-level-precedence-widening','project-routing-synthetic-default-override'}<={x['id'] for x in d['closed_defects']}
+    assert (ROOT/'scripts/audit-configuration.py').is_file()
