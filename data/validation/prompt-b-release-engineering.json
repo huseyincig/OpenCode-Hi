@@ -9,6 +9,10 @@
     "tree": "716b33c0a5431309eaf24a90eae9739fb3bd5c27",
     "version": "0.1.0"
   },
+  "certification_head": {
+    "commit": "f5c226a8633712283cdee725d5f8053804807c10",
+    "tree": "672cfdf03d31203a70c8a8705e928cee43da2708"
+  },
   "historical_release": {
     "tag": "v0.1.0",
     "source_commit": "f1a2c1c4358e5a63656da7a585b6b5793d1ed3be",
@@ -110,7 +114,8 @@
     "historical_release_source": true,
     "registry_still_unpublished": true,
     "publish_not_attempted": true,
-    "no_current_tag_rewrite": true
+    "no_current_tag_rewrite": true,
+    "package_surface_equivalent_to_checkpoint": true
   },
   "violations": [],
   "summary": {

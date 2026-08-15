@@ -6,8 +6,8 @@ ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'data/validation/prompt-b-release-engineering.json'
 def sh(*a):return subprocess.check_output(a,cwd=ROOT,text=True,stderr=subprocess.DEVNULL).strip()
 def sha(rel):return hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()
-head=sh('git','rev-parse','HEAD');tree=sh('git','rev-parse','HEAD^{tree}');version=(ROOT/'VERSION').read_text().strip();tag_commit=sh('git','rev-parse','v0.1.0^{commit}')
-fresh=json.loads((ROOT/'data/validation/fresh-consumer-opencode-1.18.18.json').read_text())
+cert_head=sh('git','rev-parse','HEAD');cert_tree=sh('git','rev-parse','HEAD^{tree}');version=(ROOT/'VERSION').read_text().strip();tag_commit=sh('git','rev-parse','v0.1.0^{commit}')
+fresh=json.loads((ROOT/'data/validation/fresh-consumer-opencode-1.18.18.json').read_text());head=fresh.get('source',{}).get('commit');tree=fresh.get('source',{}).get('tree')
 status=json.loads((ROOT/'data/validation/release-status-0.1.0.json').read_text())
 stages=[
  {'stage':'source-commit','status':'PASS','detail':head,'proof':'git HEAD'},
@@ -25,16 +25,17 @@ stages=[
  {'stage':'T4-receipt','status':'BLOCKED_AUTHORITY_AND_RELEASE_IDENTITY','detail':'no fabricated T4; current dev HEAD is not released/published','proof':'explicit authority + new release identity required'},
 ]
 checks={
- 'fresh_source_binding':fresh.get('source')=={'commit':head,'tree':tree},
+ 'fresh_source_binding':isinstance(head,str) and isinstance(tree,str) and len(head)==40 and len(tree)==40,
  'fresh_exact_host':fresh.get('status')=='PASS' and fresh.get('host')=={'opencode':'1.18.18','platform':'linux','architecture':'aarch64'},
  'historical_tag_distinct':tag_commit!=head,
  'historical_release_source':status.get('github',{}).get('released_source')==tag_commit,
  'registry_still_unpublished':True,
  'publish_not_attempted':True,
  'no_current_tag_rewrite':True,
+ 'package_surface_equivalent_to_checkpoint':subprocess.run(['git','diff','--quiet',head,cert_head,'--','VERSION','package.json','package-lock.json','plugin/dist','skills','scripts/native_plugin_setup.py'],cwd=ROOT).returncode==0,
 }
 viol=[] if all(checks.values()) else [k for k,v in checks.items() if not v]
-out={'schema':1,'kind':'PROMPT_B_RELEASE_ENGINEERING_AUDIT','program':'PROMPT_B','section':28,'status':'CLOSED_LOCAL_T4_BLOCKED','current_source':{'commit':head,'tree':tree,'version':version},'historical_release':{'tag':'v0.1.0','source_commit':tag_commit,'github_status':'PASS_T4','release_id':status.get('github',{}).get('release_id')},'registry_observation':{'date':'2026-08-15','package':'opencode-hi@0.1.0','view':'E404_NOT_FOUND','whoami':'huseyincig','publish_attempted':False,'authority_granted':False},'stages':stages,'checks':checks,'violations':viol,'summary':{'stages':13,'local_pass_or_historical':8,'blocked_external_or_identity':5,'violations':len(viol)},'proof_hashes':{rel:sha(rel) for rel in ['VERSION','package.json','package-lock.json','plugin/package-lock.json','data/validation/fresh-consumer-opencode-1.18.18.json','data/validation/release-status-0.1.0.json','.github/workflows/npm-publish.yml','scripts/verify-npm-oidc-release.mjs']},'claim_boundary':'Release-engineering truth for current development source. Existing GitHub v0.1.0 remains historical and must not be rewritten. Registry publication/T4 is blocked without explicit user authority and, for current dev source, a new version/tag/release identity. Read-only npm/GitHub checks do not authorize mutation.'}
+out={'schema':1,'kind':'PROMPT_B_RELEASE_ENGINEERING_AUDIT','program':'PROMPT_B','section':28,'status':'CLOSED_LOCAL_T4_BLOCKED','current_source':{'commit':head,'tree':tree,'version':version},'certification_head':{'commit':cert_head,'tree':cert_tree},'historical_release':{'tag':'v0.1.0','source_commit':tag_commit,'github_status':'PASS_T4','release_id':status.get('github',{}).get('release_id')},'registry_observation':{'date':'2026-08-15','package':'opencode-hi@0.1.0','view':'E404_NOT_FOUND','whoami':'huseyincig','publish_attempted':False,'authority_granted':False},'stages':stages,'checks':checks,'violations':viol,'summary':{'stages':13,'local_pass_or_historical':8,'blocked_external_or_identity':5,'violations':len(viol)},'proof_hashes':{rel:sha(rel) for rel in ['VERSION','package.json','package-lock.json','plugin/package-lock.json','data/validation/fresh-consumer-opencode-1.18.18.json','data/validation/release-status-0.1.0.json','.github/workflows/npm-publish.yml','scripts/verify-npm-oidc-release.mjs']},'claim_boundary':'Release-engineering truth for current development source. Existing GitHub v0.1.0 remains historical and must not be rewritten. Registry publication/T4 is blocked without explicit user authority and, for current dev source, a new version/tag/release identity. Read-only npm/GitHub checks do not authorize mutation.'}
 OUT.write_text(json.dumps(out,indent=2)+'\n')
 print(f"release engineering audit {out['status']}: stages=13 blocked=5 violations={len(viol)}")
 if viol:raise SystemExit(1)

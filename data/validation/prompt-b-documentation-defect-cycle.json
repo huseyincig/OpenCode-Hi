@@ -1,0 +1,75 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_DOCUMENTATION_DEFECT_CYCLE_AUDIT",
+  "program": "PROMPT_B",
+  "section": 29,
+  "status": "PASS",
+  "summary": {
+    "required": 5,
+    "covered": 5,
+    "violations": 0
+  },
+  "cycle": [
+    {
+      "step": "source-change",
+      "status": "PASS",
+      "owner": "scripts/generate-product-truth-inventory.py",
+      "owner_sha256": "bc13651efb35a80ba668a11a3a600fe7164152fe7a012c838a15c669e2cf8ffb",
+      "owner_anchor": "owner_sha256",
+      "proof": "data/validation/product-truth-inventory.json",
+      "proof_sha256": "29833ade4c55fc11d05ac48e7d6f9cb59f48eba079c03adad51e5e24b6e529b3",
+      "proof_anchor": "\"owner_sha256\""
+    },
+    {
+      "step": "tests",
+      "status": "PASS",
+      "owner": "scripts/generate-product-truth-inventory.py",
+      "owner_sha256": "bc13651efb35a80ba668a11a3a600fe7164152fe7a012c838a15c669e2cf8ffb",
+      "owner_anchor": "proof_paths",
+      "proof": "data/validation/product-truth-inventory.json",
+      "proof_sha256": "29833ade4c55fc11d05ac48e7d6f9cb59f48eba079c03adad51e5e24b6e529b3",
+      "proof_anchor": "\"proof_paths\""
+    },
+    {
+      "step": "docs-owner-impact-check",
+      "status": "PASS",
+      "owner": "data/documentation-ownership.json",
+      "owner_sha256": "e1fc392a9d49080eed2b7e855ad6099b87211c33fbf898600326680285e621ef",
+      "owner_anchor": "one-meaning-one-canonical-documentation-owner",
+      "proof": "data/validation/documentation-inventory.json",
+      "proof_sha256": "45939b42a770c2c7aa038dfbae91c765432328c36763685b06b05c43b5f3d21e",
+      "proof_anchor": "\"canonical_ownership\""
+    },
+    {
+      "step": "generated-parity-update",
+      "status": "PASS",
+      "owner": "scripts/generate-documentation-projections.py",
+      "owner_sha256": "2cb61d2f039d8aef14dd41018262c6121eeca944efd1dd6fcef34cdcd3b04227",
+      "owner_anchor": "Generated from",
+      "proof": "data/validation/documentation-parity.json",
+      "proof_sha256": "07d9a4e02497490ebca82ac0dc2e326f9eebf0ca3a012df23203aa49ebdd428b",
+      "proof_anchor": "\"status\": \"PASS\""
+    },
+    {
+      "step": "doc-lint",
+      "status": "PASS",
+      "owner": "scripts/validate-documentation.py",
+      "owner_sha256": "33b788a9c43a9479d22ad6e51e4d6c03ffc5dfb6618fc6543fcbb7ff20e7d9e9",
+      "owner_anchor": "documentation parity",
+      "proof": "data/validation/documentation-parity.json",
+      "proof_sha256": "07d9a4e02497490ebca82ac0dc2e326f9eebf0ca3a012df23203aa49ebdd428b",
+      "proof_anchor": "\"violations\": []"
+    }
+  ],
+  "static_guards": {
+    "product_truth_areas_24": true,
+    "each_area_has_doc_owner_and_proof": true,
+    "documentation_inventory_pass": true,
+    "parity_pass": true,
+    "generated_dirty_guard": true,
+    "generated_hand_edit_guard": true,
+    "prompt_a_docs_not_frozen": true
+  },
+  "violations": [],
+  "claim_boundary": "Documentation is evaluated in every material defect cycle. A source change does not require meaningless prose churn; it requires canonical documentation-owner impact evaluation, regenerated machine projections where applicable, and parity/lint PASS. Documentation never outranks live source/contracts/runtime evidence."
+}

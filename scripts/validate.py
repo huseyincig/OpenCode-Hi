@@ -718,6 +718,20 @@ try:
     if r28.get('registry_observation',{}).get('publish_attempted') is not False or r28.get('registry_observation',{}).get('authority_granted') is not False:err('PROMPT B release engineering authority boundary drift')
 except Exception as e:err(f'bad PROMPT B release engineering receipt: {e}')
 
+
+# PROMPT B §29 documentation defect-cycle certification
+try:
+    d29=json.loads((ROOT/'data/validation/prompt-b-documentation-defect-cycle.json').read_text(encoding='utf-8'))
+    if d29.get('schema')!=1 or d29.get('kind')!='PROMPT_B_DOCUMENTATION_DEFECT_CYCLE_AUDIT' or d29.get('program')!='PROMPT_B' or d29.get('section')!=29 or d29.get('status')!='PASS':err('bad PROMPT B documentation defect-cycle receipt identity/status')
+    if d29.get('summary')!={'required':5,'covered':5,'violations':0} or d29.get('violations')!=[]:err('PROMPT B documentation defect-cycle summary drift')
+    for row in d29.get('cycle',[]):
+        for key in ('owner','proof'):
+            rel=row.get(key);expected=row.get(f'{key}_sha256')
+            if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B documentation defect-cycle missing {key}: {rel}');continue
+            if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B documentation defect-cycle {key} hash drift: {rel}')
+    if not all((d29.get('static_guards') or {}).values()):err('PROMPT B documentation defect-cycle static guard drift')
+except Exception as e:err(f'bad PROMPT B documentation defect-cycle receipt: {e}')
+
 for p in (ROOT/'data').rglob('*.json'):
     try:json.loads(p.read_text(encoding='utf-8'))
     except Exception as e:err(f'bad json {p.name}: {e}')

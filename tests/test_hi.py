@@ -1252,3 +1252,14 @@ def test_prompt_b_release_engineering_separates_current_dev_source_from_historic
     by={x['stage']:x['status'] for x in d['stages']}
     assert by['T3']=='PASS' and by['tag']=='BLOCKED_RELEASE_IDENTITY' and by['registry-publication']=='BLOCKED_AUTHORITY' and by['T4-receipt']=='BLOCKED_AUTHORITY_AND_RELEASE_IDENTITY'
     for rel,digest in d['proof_hashes'].items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
+
+
+def test_prompt_b_documentation_defect_cycle_requires_owner_impact_projection_and_lint():
+    d=json.loads((ROOT/'data/validation/prompt-b-documentation-defect-cycle.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_DOCUMENTATION_DEFECT_CYCLE_AUDIT' and d['section']==29 and d['status']=='PASS'
+    assert d['violations']==[] and d['summary']=={'required':5,'covered':5,'violations':0}
+    assert [x['step'] for x in d['cycle']]==['source-change','tests','docs-owner-impact-check','generated-parity-update','doc-lint']
+    for row in d['cycle']:
+        owner=ROOT/row['owner'];proof=ROOT/row['proof'];assert hashlib.sha256(owner.read_bytes()).hexdigest()==row['owner_sha256'];assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
+        assert row['owner_anchor'] in owner.read_text(errors='replace') and row['proof_anchor'] in proof.read_text(errors='replace')
+    assert all(d['static_guards'].values())
