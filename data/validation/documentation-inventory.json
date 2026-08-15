@@ -242,7 +242,7 @@
     },
     {
       "path": "CONTRIBUTING.md",
-      "sha256": "873574a411dcc2ee9be14dbbb3d72577ea9a4939a9975bb5470b71dca911f53b",
+      "sha256": "e05dadba3ca2bb7e5b67714bb4c151985b49f6b9b69c02b82a2d2cd227441f4f",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "HUMAN_OWNED"
@@ -270,7 +270,7 @@
     },
     {
       "path": "docs/ARCHITECTURE-REALITY-MAP.md",
-      "sha256": "983e77b2add24ec790af8d834b40e134323b9ff81d5e041daa0ffc26ab0393f2",
+      "sha256": "d7f9440f20c472159b7682e19420a7ba1558320ba2fd4e6cba5d2e764b67f69b",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
@@ -291,7 +291,7 @@
     },
     {
       "path": "docs/BENCHMARKS.md",
-      "sha256": "808f3b10059ca9abb87d906080dd9142fa8aa1e8610c79bfcb3bc3329b85a91f",
+      "sha256": "1cc539c1ee959f48f313dfcbea470a9e6238c017e6e2fad6e45b2b5cbd1bdaf3",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
@@ -340,7 +340,7 @@
     },
     {
       "path": "docs/HOSTS.md",
-      "sha256": "aff1b8eb81c03763b2e33e682a0c3fe44aa9bc758784ecf74d311f27a3d30e06",
+      "sha256": "30ddfd5c1ad3da207d965c68762f34af35a6b0de333cd6c4a27fc96cc1ae6e50",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
@@ -361,7 +361,7 @@
     },
     {
       "path": "docs/INSTALLATION.md",
-      "sha256": "8607d93cd77ccd3f0412778b9931e7b822cf6d29d38cbc8c6436c1e72e56f2a7",
+      "sha256": "2573e90dca24b06388b3df679324efed498881327a555a82e15415639defb2fd",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
@@ -375,7 +375,7 @@
     },
     {
       "path": "docs/PRODUCT-IDENTITY.md",
-      "sha256": "ab572d0e7d6e9e42abeca9376be5c14235740d451318c7ebaec61428824920ce",
+      "sha256": "6a1ccb30f5c20ce412cd4ef2b8aaf421c7ef14c5161e742d3d8a84fe9a6d1459",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
@@ -424,14 +424,14 @@
     },
     {
       "path": "docs/STORAGE-OWNERSHIP-MATRIX.md",
-      "sha256": "30f4c58b72e955f3630e6c0d72d6852762f9a8b49cde62f023e14cb0948ef567",
+      "sha256": "73a6d68c08049c481aa19b6d12393a248c7e6987899e8f49d111ff3cd500a767",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
     },
     {
       "path": "docs/TERMINOLOGY.md",
-      "sha256": "57cbe040f1342ae2ad3c7a101a721ca7a5720a91e47188c96ba4f4912d74ad60",
+      "sha256": "b5518e742e1d84b3b3d4544f88cfdae0d8608a94c60c82d57e3be77394ac06a4",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
@@ -445,7 +445,7 @@
     },
     {
       "path": "docs/VALIDATION.md",
-      "sha256": "bead85fa27385d4436495439975dd4bdd0339eaa7ed7c64a2009c78ba2852d9d",
+      "sha256": "a749f74fb96b2bc792bf7173abb2f50828b461461908a77812ac7b91e4bf270a",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
@@ -550,7 +550,7 @@
     },
     {
       "path": "docs/engineering-constitution/MASTER-CONTINUATION.md",
-      "sha256": "c2c406641cfc22acfd0eaebfcbf7657600a103d1b47d925773200e24ef4cc806",
+      "sha256": "8320662bb695bf22937b9ab9461865ea0ed4edc378658082b02e02dbe814858e",
       "audience": "INTERNAL_ENGINEERING",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "HUMAN_OWNED"

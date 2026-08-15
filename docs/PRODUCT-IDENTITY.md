@@ -1,6 +1,6 @@
 # OpenCode-Hi Product Identity
 
-OpenCode-Hi 0.1.0 is a new product identity with its own public and internal contracts.
+OpenCode-Hi is an independent product identity with its own public and internal contracts. The mutable application version is owned by `VERSION` and package/product metadata is parity-validated against it.
 
 The implementation is source-derived from the verified OpenCode-HHC-Orchestrator v58 baseline for engineering continuity and regression provenance. That ancestry does **not** create a product-compatibility obligation.
 

@@ -63,6 +63,47 @@ Additional bounded options include provider/model allow/deny rules, fallback lim
 
 Safety constraints are monotonic: a lower-precedence option cannot silently widen canonical Authority/Permission restrictions.
 
+## Configuration reference
+
+<!-- BEGIN GENERATED CONFIG REFERENCE -->
+Generated from `data/hi-config-options.json`. Do not hand-edit this table.
+
+| Path | Class | Default | Safety | Executable/diagnostic effect |
+|---|---|---|---|---|
+| `schemaVersion` | schema-marker | `2` | constraint | reports noncanonical supplied schema while runtime remains current-only |
+| `executionPolicy` | runtime | `adaptive` | preference | selects minimal/balanced/thorough routing profile and automatic/adaptive continuation behavior |
+| `primaryMode` | runtime | `auto` | preference | selects/forces primary agent and direct-vs-delegated minimum-team behavior |
+| `compatibility.mode` | diagnostic | `compatible` | constraint | changes unsupported/unvalidated host compatibility findings from warning to failure under strict mode |
+| `compatibility.validatedOpenCodeVersions` | diagnostic | `[]` | constraint | matches observed OpenCode version against the validated-version inventory |
+| `execution.topology` | runtime | `adaptive` | constraint | forces/adapts single-agent versus multi-agent mission topology |
+| `execution.maxAgents` | runtime | `4` | capacity | caps topology agent count; value 1 is an executable single-agent ceiling |
+| `execution.parallelism` | runtime | `2` | capacity | caps parallel streams inside selected mission topology |
+| `models.mode` | runtime | `adaptive` | preference | switches adaptive scoring versus fixed or role-mapped model preference |
+| `models.default` | runtime | `auto` | preference | provides fixed project model when models.mode=fixed |
+| `models.roles` | runtime | `{}` | preference | provides project role-specific model when models.mode=role-mapped |
+| `routing.strategy` | runtime | `cost-quality` | preference | changes model scoring between quality, cost, and cost-quality |
+| `routing.categoryModels` | runtime | `{}` | preference | prepends configured category candidates before scored models |
+| `routing.categoryVariants` | runtime | `{}` | preference | changes selected native model variant by task category |
+| `routing.roleModels` | runtime | `{}` | preference | prepends configured role candidates before category/scored models |
+| `routing.roleVariants` | runtime | `{}` | preference | changes selected native variant for a specific role/model pair |
+| `routing.maxFallbacks` | runtime | `3` | capacity | bounds fallback candidate count |
+| `routing.allowedProviders` | runtime | `[]` | constraint | narrows eligible providers and disables unconstrained host-default fallback when nonempty |
+| `routing.deniedModels` | runtime | `[]` | constraint | denies exact models and composes project/raw denies monotonically |
+| `parallel.enabled` | runtime | `true` | capacity | sets global scheduler capacity to one when disabled |
+| `parallel.max` | runtime | `3` | capacity | caps total concurrently acquired workers |
+| `parallel.providers` | runtime | `{}` | capacity | caps concurrent workers per provider |
+| `parallel.models` | runtime | `{}` | capacity | caps concurrent workers per model |
+| `teamMode.enabled` | runtime | `false` | constraint | enables Team Mode tools only when host worker-runtime is supported and permits team creation |
+| `teamMode.maxMembers` | runtime | `4` | capacity | caps distinct Team Mode members |
+| `teamMode.maxWallMinutes` | runtime | `45` | capacity | sets team expiry deadline and terminal expiration gate |
+| `profile.minimal.specialistThreshold` | runtime | `high` | preference | changes specialist dispatch threshold for the selected execution profile |
+| `profile.minimal.reviewThreshold` | runtime | `low` | preference | changes reviewer dispatch threshold for the selected execution profile |
+| `profile.balanced.specialistThreshold` | runtime | `medium` | preference | changes specialist dispatch threshold for the selected execution profile |
+| `profile.balanced.reviewThreshold` | runtime | `medium` | preference | changes reviewer dispatch threshold for the selected execution profile |
+| `profile.thorough.specialistThreshold` | runtime | `low` | preference | changes specialist dispatch threshold for the selected execution profile |
+| `profile.thorough.reviewThreshold` | runtime | `high` | preference | changes reviewer dispatch threshold for the selected execution profile |
+<!-- END GENERATED CONFIG REFERENCE -->
+
 ## Role/model configuration
 
 Role/model routing can be inspected or changed through the dedicated command:

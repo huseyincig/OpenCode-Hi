@@ -1,0 +1,446 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "kind": "PRODUCT_TRUTH_TRACE_INVENTORY",
+  "status": "PASS",
+  "claim_boundary": "Derived documentation/reconstruction trace map only; listed runtime/contracts remain semantic owners.",
+  "areas": [
+    {
+      "area": "mission",
+      "canonical_owner": "MissionStore",
+      "owner_path": "plugin/src/runtime/mission/mission-store.ts",
+      "owner_sha256": "466d84df56a4063b4083eb7035e2669e1f2f6fa30fa7514e7f02759df3db1ce6",
+      "producer_or_contract_paths": [
+        "plugin/src/runtime/mission/types.ts",
+        "plugin/src/runtime/mission/validators.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/runtime/task/task-runtime.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/mission.test.mjs",
+        "plugin/test/a3-mission-slices.test.mjs"
+      ],
+      "canonical_doc": "docs/ARCHITECTURE.md"
+    },
+    {
+      "area": "task-runtime",
+      "canonical_owner": "TaskRuntime",
+      "owner_path": "plugin/src/runtime/task/task-runtime.ts",
+      "owner_sha256": "fbb0e0dad347abfd5026b547239b3f00e952ddd5d1ef09df01507206726bf9ed",
+      "producer_or_contract_paths": [
+        "plugin/src/runtime/task/contracts.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/runtime/task/child-execution-coordinator.ts",
+        "plugin/src/runtime/task/task-result-reconciler.ts",
+        "plugin/src/runtime/task/task-recovery-coordinator.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/task-worker-contract.test.mjs",
+        "plugin/test/a2-task-runtime-collaborators.test.mjs"
+      ],
+      "canonical_doc": "docs/ARCHITECTURE.md"
+    },
+    {
+      "area": "worker",
+      "canonical_owner": "WorkerRuntime",
+      "owner_path": "plugin/src/runtime/worker/worker-runtime.ts",
+      "owner_sha256": "c59e00d0f1d39831e07f3112350a5186b007bf8c67285d8f4708887b23fe7cd4",
+      "producer_or_contract_paths": [
+        "plugin/src/contracts/worker.ts",
+        "plugin/src/contracts/worker-result.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/runtime/task/task-result-reconciler.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/task-worker-contract.test.mjs",
+        "plugin/test/worker-result-contract.test.mjs"
+      ],
+      "canonical_doc": "docs/ARCHITECTURE.md"
+    },
+    {
+      "area": "roles-permissions",
+      "canonical_owner": "RoleContract + PermissionProfileContract",
+      "owner_path": "data/hi-roles.json",
+      "owner_sha256": "2f9dbd6559fc4974a8cf2201767767133dae3e407adc883b6a019e6feb61ea0a",
+      "producer_or_contract_paths": [
+        "data/hi-permission-profiles.json",
+        "plugin/src/runtime/roles/catalog.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/opencode/agent-binding.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/stage2-role-contract.test.mjs",
+        "plugin/test/agent-binding-contract.test.mjs"
+      ],
+      "canonical_doc": "docs/ARCHITECTURE.md"
+    },
+    {
+      "area": "methodologies-skills",
+      "canonical_owner": "MethodologyContract",
+      "owner_path": "data/hi-methodologies.json",
+      "owner_sha256": "17ef07947830e5497b6d3fda0f9568b041773d9f2903c0a623091a7939d3b4ca",
+      "producer_or_contract_paths": [
+        "plugin/src/runtime/methodology/catalog.ts",
+        "plugin/src/runtime/skills/catalog-index.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/runtime/methodology/activation.ts",
+        "plugin/src/runtime/methodology/native-loading.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/methodology-signal-contract.test.mjs",
+        "plugin/test/c7-skill-catalog-index.test.mjs"
+      ],
+      "canonical_doc": "docs/SKILLS.md"
+    },
+    {
+      "area": "routing-models",
+      "canonical_owner": "Hi routing/model resolver",
+      "owner_path": "plugin/src/runtime/routing/model-resolver.ts",
+      "owner_sha256": "7c5d7808b3d47a3a9e59c82e327b14e284434c6107c0d02816fa6dfe4b32cae3",
+      "producer_or_contract_paths": [
+        "plugin/src/runtime/routing/execution-profile.ts",
+        "plugin/src/runtime/routing/minimum-team.ts",
+        "plugin/src/runtime/routing/model-feedback.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/runtime/task/task-runtime.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/profile-system.test.mjs",
+        "plugin/test/per-role-routing-runtime.test.mjs"
+      ],
+      "canonical_doc": "docs/EXECUTION-POLICY.md"
+    },
+    {
+      "area": "configuration",
+      "canonical_owner": "Hi config catalog/resolver",
+      "owner_path": "data/hi-config-options.json",
+      "owner_sha256": "2d000aee52ea187a173ab8e068a1d5fb6e2cd14470e81a1e8684b33f57f35ddc",
+      "producer_or_contract_paths": [
+        "plugin/src/config/schema.ts",
+        "plugin/src/config/resolver.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/plugin.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/config.test.mjs",
+        "plugin/test/config-option-contract.test.mjs",
+        "plugin/test/config-executable-effect.test.mjs"
+      ],
+      "canonical_doc": "docs/INSTALLATION.md"
+    },
+    {
+      "area": "authority",
+      "canonical_owner": "AuthorityContract/runtime",
+      "owner_path": "plugin/src/contracts/authority.ts",
+      "owner_sha256": "5ae1d1ef1068099cf5b029879053d6719af0dcd9396c6afe54ce6cc1448bc92a",
+      "producer_or_contract_paths": [
+        "plugin/src/runtime/safety/authority.ts",
+        "plugin/src/runtime/safety/project-authority.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/runtime/application/hi-tool-surface.ts",
+        "plugin/src/runtime/process/authority.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/authority-contract.test.mjs",
+        "plugin/test/authority-side-effect-idempotency.test.mjs"
+      ],
+      "canonical_doc": "docs/HUMAN-DECISIONS.md"
+    },
+    {
+      "area": "external-actions-release",
+      "canonical_owner": "ExternalAction + release chain",
+      "owner_path": "plugin/src/contracts/external-action.ts",
+      "owner_sha256": "541aa133b3674c019931573401ca3bc6a6945ad35f02ba6ef9ad44c53dc03fd8",
+      "producer_or_contract_paths": [
+        "plugin/src/runtime/safety/release-chain.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "scripts/release-build.py",
+        ".github/workflows/npm-publish.yml"
+      ],
+      "proof_paths": [
+        "plugin/test/real-hosted-release-transaction.test.mjs",
+        "plugin/test/r1-npm-oidc-workflow.test.mjs"
+      ],
+      "canonical_doc": "docs/RELEASE.md"
+    },
+    {
+      "area": "human-decisions",
+      "canonical_owner": "HumanDecisionContract/runtime",
+      "owner_path": "plugin/src/contracts/human-decision.ts",
+      "owner_sha256": "b53d122b7a63be735f700b6e9009e08aa7e6a9a1c2c9d21f830a80ffca5890e6",
+      "producer_or_contract_paths": [
+        "plugin/src/runtime/human-decision/runtime.ts",
+        "plugin/src/runtime/human-decision/transport.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/plugin.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/human-decision-contract.test.mjs",
+        "plugin/test/h1-human-decision-transport.test.mjs"
+      ],
+      "canonical_doc": "docs/HUMAN-DECISIONS.md"
+    },
+    {
+      "area": "context",
+      "canonical_owner": "ContextGovernor",
+      "owner_path": "plugin/src/runtime/context/governor.ts",
+      "owner_sha256": "51da0d19f1997c522702849f6d6270f76dbdef1d1d4830253d49353a94cae8fd",
+      "producer_or_contract_paths": [
+        "plugin/src/runtime/context/mission-runtime-projection.ts",
+        "plugin/src/runtime/context/budget-estimator.ts",
+        "plugin/src/runtime/context/artifact-store.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/hooks/session-compacting.ts",
+        "plugin/src/runtime/task/task-runtime.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/context-survival-hardening.test.mjs",
+        "plugin/test/c4-context-budget-estimator.test.mjs"
+      ],
+      "canonical_doc": "docs/CONTEXT.md"
+    },
+    {
+      "area": "semantic-context",
+      "canonical_owner": "SemanticContextAdapter",
+      "owner_path": "plugin/src/runtime/semantic/adapter.ts",
+      "owner_sha256": "ac21e922abbea50bc0bdf07ca3f02de738d59ea1259d4362f5180d3f5c17dee5",
+      "producer_or_contract_paths": [
+        "plugin/src/runtime/semantic/typescript-context.ts",
+        "plugin/src/contracts/semantic-context.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/runtime/task/task-runtime.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/c6-semantic-context-adapter.test.mjs"
+      ],
+      "canonical_doc": "docs/CONTEXT.md"
+    },
+    {
+      "area": "project-intelligence",
+      "canonical_owner": "ProjectIntelligence store/retrieval",
+      "owner_path": "plugin/src/runtime/project-intelligence/store.ts",
+      "owner_sha256": "331da9d64a4d7ea75bfb507b9751fbbd4c9a8a0cc17e682a0163b97e9a96c439",
+      "producer_or_contract_paths": [
+        "plugin/src/runtime/project-intelligence/retrieval.ts",
+        "plugin/src/contracts/project-intelligence.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/runtime/task/task-runtime.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/c5-project-intelligence-hybrid-retrieval.test.mjs"
+      ],
+      "canonical_doc": "docs/PROJECT-INTELLIGENCE.md"
+    },
+    {
+      "area": "evidence-verification",
+      "canonical_owner": "EvidenceRuntime + VerificationEnvelope",
+      "owner_path": "plugin/src/runtime/evidence/evidence-runtime.ts",
+      "owner_sha256": "508a3939ac7c754b51f46fd86aa13fe69344dfd5f63c2332baf079c573fe9720",
+      "producer_or_contract_paths": [
+        "plugin/src/contracts/evidence.ts",
+        "plugin/src/contracts/verification-envelope.ts",
+        "plugin/src/runtime/verification/policy.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/runtime/task/task-result-reconciler.ts",
+        "plugin/src/runtime/completion/evaluator.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/verification-envelope-contract.test.mjs",
+        "plugin/test/evidence-freshness-ordering.test.mjs"
+      ],
+      "canonical_doc": "docs/VERIFICATION.md"
+    },
+    {
+      "area": "completion-continuation",
+      "canonical_owner": "Completion + continuation",
+      "owner_path": "plugin/src/runtime/completion/evaluator.ts",
+      "owner_sha256": "72182965f77468244b1e3ea63749d2324008da60635e79dcce58e4f0740b4c10",
+      "producer_or_contract_paths": [
+        "plugin/src/runtime/continuation/evaluator.ts",
+        "plugin/src/runtime/continuation/dispatcher.ts",
+        "plugin/src/runtime/continuation/recovery.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/runtime/application/runtime-event-controller.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/flow-consistency.test.mjs",
+        "plugin/test/continuation-evaluator-wide-batch.test.mjs"
+      ],
+      "canonical_doc": "docs/VERIFICATION.md"
+    },
+    {
+      "area": "process",
+      "canonical_owner": "ProcessContract/Runtime",
+      "owner_path": "plugin/src/contracts/process.ts",
+      "owner_sha256": "baa22ab538d5b0e16c09d2f5234d8fa13253881a608e3fbb6102833adff963fd",
+      "producer_or_contract_paths": [
+        "plugin/src/runtime/process/runtime.ts",
+        "plugin/src/runtime/process/executor.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/opencode/open-code-pty-adapter.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/p1-process-contract.test.mjs",
+        "plugin/test/p2-opencode-pty-executor.test.mjs"
+      ],
+      "canonical_doc": "docs/HOSTS.md"
+    },
+    {
+      "area": "workspace-isolation",
+      "canonical_owner": "IsolationDecision/WorkspaceLease/Runtime",
+      "owner_path": "plugin/src/contracts/workspace.ts",
+      "owner_sha256": "d2ed1d517537201302344aa3061f149b044ad85b6909fe85ec876904ea9b496a",
+      "producer_or_contract_paths": [
+        "plugin/src/runtime/workspace/runtime.ts",
+        "plugin/src/runtime/workspace/executor.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/opencode/open-code-workspace-adapter.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/w1-workspace-contract.test.mjs",
+        "plugin/test/w2-workspace-executor.test.mjs"
+      ],
+      "canonical_doc": "docs/HOSTS.md"
+    },
+    {
+      "area": "browser",
+      "canonical_owner": "BrowserObservation/Runtime",
+      "owner_path": "plugin/src/contracts/browser-observation.ts",
+      "owner_sha256": "bdaa9047f895999a62039c17906bb8214c9af98394a0f68c1a311abc5f258624",
+      "producer_or_contract_paths": [
+        "plugin/src/runtime/browser/runtime.ts",
+        "plugin/src/runtime/browser/executor.ts",
+        "plugin/src/runtime/browser/ownership.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/opencode/playwright-browser-adapter.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/b1-browser-observation-contract.test.mjs",
+        "plugin/test/b2-browser-executor.test.mjs",
+        "plugin/test/b3-playwright-browser-runtime.test.mjs"
+      ],
+      "canonical_doc": "docs/HOSTS.md"
+    },
+    {
+      "area": "host-port",
+      "canonical_owner": "OpenCodeHostPort",
+      "owner_path": "plugin/src/opencode/host-port.ts",
+      "owner_sha256": "d1271b6e5993f23e390ed293a54e90b49c42cd3ddfa33e3e6113071a6a3af10c",
+      "producer_or_contract_paths": [
+        "plugin/src/opencode/client-adapter.ts",
+        "plugin/src/opencode/event-adapter.ts",
+        "plugin/src/opencode/capabilities.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/plugin.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/a6-host-port-typing.test.mjs"
+      ],
+      "canonical_doc": "docs/HOSTS.md"
+    },
+    {
+      "area": "persistence-storage",
+      "canonical_owner": "Mission persistence + storage ownership",
+      "owner_path": "plugin/src/runtime/state/persistence.ts",
+      "owner_sha256": "12c19db1d85751878e0122b4cd7769dad215c24fa0e2e0a79d1391bda66a7e8e",
+      "producer_or_contract_paths": [
+        "plugin/src/runtime/state/snapshot.ts",
+        "plugin/src/runtime/storage/ownership.ts",
+        "plugin/src/contracts/storage-ownership.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/runtime/mission/mission-store.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/a4-persistence-validator-composition.test.mjs",
+        "plugin/test/storage-ownership-contract.test.mjs"
+      ],
+      "canonical_doc": "docs/STORAGE-ARCHITECTURE.md"
+    },
+    {
+      "area": "install-lifecycle",
+      "canonical_owner": "native_plugin_setup.py",
+      "owner_path": "scripts/native_plugin_setup.py",
+      "owner_sha256": "2f91dee1eb98b6319491277e33a210afa1864eef69d81527a5fbf8613ed4c182",
+      "producer_or_contract_paths": [],
+      "consumer_or_executor_paths": [
+        "project-opencode-config"
+      ],
+      "proof_paths": [
+        "tests/test_hi.py"
+      ],
+      "canonical_doc": "docs/INSTALLATION.md"
+    },
+    {
+      "area": "privacy",
+      "canonical_owner": "PrivacyBoundary",
+      "owner_path": "plugin/src/runtime/privacy/boundary.ts",
+      "owner_sha256": "fda610aced55491b6559304d5a4aff29f8cf22fffa85a9d22a2395c4fe83655a",
+      "producer_or_contract_paths": [],
+      "consumer_or_executor_paths": [
+        "plugin/src/runtime/task/task-runtime.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/hi-core-evolution.test.mjs"
+      ],
+      "canonical_doc": "docs/PRIVACY.md"
+    },
+    {
+      "area": "scheduler",
+      "canonical_owner": "ConcurrencyScheduler",
+      "owner_path": "plugin/src/runtime/scheduler/concurrency.ts",
+      "owner_sha256": "404b5c84f673eb79e83c6508b348a1615c8a3d8a3e25486da2ec571bc9406555",
+      "producer_or_contract_paths": [
+        "plugin/src/runtime/scheduler/parallel-safety.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/runtime/task/task-runtime.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/scheduler-hardening.test.mjs"
+      ],
+      "canonical_doc": "docs/BENCHMARKS.md"
+    },
+    {
+      "area": "telemetry",
+      "canonical_owner": "Mission-derived ledger metrics",
+      "owner_path": "plugin/src/runtime/ledger/ledger.ts",
+      "owner_sha256": "8bde7d12f0d3d51defecf7de674447f0c829d8704997873e700cee6475477e61",
+      "producer_or_contract_paths": [
+        "plugin/src/runtime/ledger/metrics.ts",
+        "plugin/src/runtime/ledger/report.ts",
+        "plugin/src/runtime/ledger/status.ts"
+      ],
+      "consumer_or_executor_paths": [
+        "plugin/src/runtime/telemetry/benchmarks.ts"
+      ],
+      "proof_paths": [
+        "plugin/test/ledger-status-metrics.test.mjs",
+        "plugin/test/hi-benchmarks.test.mjs"
+      ],
+      "canonical_doc": "docs/BENCHMARKS.md"
+    }
+  ],
+  "violations": {
+    "missing_paths": []
+  }
+}

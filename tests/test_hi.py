@@ -716,7 +716,7 @@ def test_n1_final_namespace_normalization_is_hash_bound_and_preserves_historical
 
 def test_prompt_a_documentation_inventory_classifies_all_truth_surfaces_and_has_unique_current_owners():
     policy=json.loads((ROOT/'data/documentation-ownership.json').read_text())
-    inv=json.loads((ROOT/'data/validation/documentation-inventory-0.1.0.json').read_text())
+    inv=json.loads((ROOT/'data/validation/documentation-inventory.json').read_text())
     assert policy['schema']==1 and policy['type']=='hi-documentation-ownership'
     assert inv['schema']==1 and inv['kind']=='DOCUMENTATION_TRUTH_INVENTORY' and inv['status']=='PASS'
     assert inv['violations']=={'unclassified':[],'duplicate_meaning_owner':[],'missing_owner':[],'historical_as_current_owner':[]}
@@ -743,7 +743,7 @@ def test_version_truth_is_semver_and_not_validator_hard_pinned_to_0_1_0():
 
 
 def test_prompt_a_documentation_parity_binds_current_docs_to_machine_truth_and_links():
-    d=json.loads((ROOT/'data/validation/documentation-parity-0.1.0.json').read_text())
+    d=json.loads((ROOT/'data/validation/documentation-parity.json').read_text())
     assert d['schema']==1 and d['kind']=='DOCUMENTATION_PARITY' and d['status']=='PASS'
     assert d['violations']==[]
     assert {'version_package_product_parity','local_markdown_links','stale_current_status_patterns','release_availability','host_capabilities','semantic_adapter_boundary'}==set(d['checks'])
@@ -779,3 +779,43 @@ def test_prompt_a_constitution_separates_current_law_from_program_history():
     assert 'one meaning -> one canonical documentation owner' in law
     assert 'Development HEAD, application version and an existing immutable release tag are separate identities' in law
     assert 'Historical migration plans/proof ledgers are retained under `history/`' in law
+
+
+def test_prompt_a_generated_config_and_host_tables_are_catalog_receipt_derived():
+    install=(ROOT/'docs/INSTALLATION.md').read_text(); hosts=(ROOT/'docs/HOSTS.md').read_text()
+    cfg=json.loads((ROOT/'data/hi-config-options.json').read_text())
+    compat=json.loads((ROOT/'data/validation/compatibility-matrix-0.1.0.json').read_text())['current_reference_host']
+    assert install.count('<!-- BEGIN GENERATED CONFIG REFERENCE -->')==1 and install.count('<!-- END GENERATED CONFIG REFERENCE -->')==1
+    assert all(f"`{x['path']}`" in install for x in cfg['options'])
+    assert hosts.count('<!-- BEGIN GENERATED HOST CAPABILITY MATRIX -->')==1 and hosts.count('<!-- END GENERATED HOST CAPABILITY MATRIX -->')==1
+    for cap,x in compat['capabilities'].items():
+        assert f'`{cap}`' in hosts and f"**{x['status']}**" in hosts and f"`{x['receipt']}`" in hosts
+    assert (ROOT/'scripts/generate-documentation-projections.py').is_file()
+    assert 'generate-documentation-projections.py' in json.loads((ROOT/'package.json').read_text())['scripts']['docs:check']
+
+
+def test_prompt_a_product_truth_inventory_traces_24_major_areas_to_owners_consumers_and_proof():
+    d=json.loads((ROOT/'data/validation/product-truth-inventory.json').read_text())
+    assert d['schema']==1 and d['kind']=='PRODUCT_TRUTH_TRACE_INVENTORY' and d['status']=='PASS'
+    assert d['violations']=={'missing_paths':[]}
+    areas={x['area']:x for x in d['areas']}; assert len(areas)==24
+    for key in ['mission','task-runtime','roles-permissions','methodologies-skills','authority','context','project-intelligence','evidence-verification','process','workspace-isolation','browser','host-port','persistence-storage','install-lifecycle','external-actions-release']:
+        assert key in areas
+    for x in areas.values():
+        assert (ROOT/x['owner_path']).exists() and (ROOT/x['canonical_doc']).is_file()
+        assert x['proof_paths']
+        assert all((ROOT/ref).is_file() for ref in x['proof_paths'])
+    reality=(ROOT/'docs/ARCHITECTURE-REALITY-MAP.md').read_text()
+    assert reality.count('<!-- BEGIN GENERATED PRODUCT TRUTH TRACE -->')==1
+    assert all(f"`{area}`" in reality for area in areas)
+
+
+def test_prompt_a_current_storage_terminology_and_identity_docs_have_no_preimplementation_language():
+    storage=(ROOT/'docs/STORAGE-OWNERSHIP-MATRIX.md').read_text(); terminology=(ROOT/'docs/TERMINOLOGY.md').read_text(); identity=(ROOT/'docs/PRODUCT-IDENTITY.md').read_text()
+    assert 'ProcessGovernor' not in storage
+    assert 'future Git/OpenCode adapter' not in storage
+    assert 'ProcessRuntime' in storage and 'OpenCodeWorkspaceAdapter' in storage
+    assert 'Final source-driven normalization is reserved for `N1' not in terminology
+    assert 'N1 completed the final source-driven normalization' in terminology
+    assert 'OpenCode-Hi 0.1.0 is a new product identity' not in identity
+    assert 'application version is owned by `VERSION`' in identity

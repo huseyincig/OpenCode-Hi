@@ -5,6 +5,21 @@ OpenCode is the reference host for 0.1.x. Core mission, evidence, authority, com
 A capability manifest resolves host features as `NATIVE`, `SAFE_EMULATION`, `DEGRADED`, or `UNSUPPORTED`; compatibility is never faked. The current reference-host version/status is generated from exact receipts in `data/validation/compatibility-matrix-0.1.0.json`; do not hand-maintain a second latest-host value here. Hi now owns a `ProcessExecutor` port and an OpenCode PTY adapter over the canonical v2 PTY surface, including PID-bound spawn, ticketed WebSocket input/output, bounded cursor reads, timeout signalling, exit observation, kill and separate cleanup. Ordinary model-facing bash is not silently replaced by this executor. Hi-owned process execution now has event-driven WAIT, explicit STOP termination/cleanup, restart re-adoption with PID+cwd+native-command identity, orphan quarantine, and exact OpenCode 1.18.18 T3 acceptance; `process_events` is `NATIVE` and `process-lifecycle` is `SUPPORTED` for the Hi-owned process surface. W1 defines strict Hi `IsolationDecision` and `WorkspaceLease` contracts, and W2 now owns an `OpenCodeWorkspaceAdapter`/`WorkspaceRuntime` over the official OpenCode 1.18.18 experimental workspace API using the builtin `worktree` adapter. Child creation passes `workspaceID` and fail-closes unless returned child `workspaceID + directory` exactly match the lease; restart adopts only an existing same-repository registered worktree and never silently recreates one. W3 exact OpenCode 1.18.18 real-host acceptance now proves the Hi-owned workspace chain end to end: source-bound worktree provisioning, exact child `workspaceID + directory` routing, real model/tool writes confined to the lease, verification executed from the leased worktree, primary/user-dirty preservation, cleanup, restart adoption, and orphan quarantine without recreation. Therefore `workspace_isolation` is `NATIVE` at the reference-host primitive layer and `workspace-isolation-binding` is `SUPPORTED` at `REAL_HOST_ACCEPTANCE` for the Hi-owned isolation surface. B3 now closes the browser boundary on exact OpenCode 1.18.18 source acceptance: Hi owns a health-gated `BrowserRuntime` backed by `PlaywrightBrowserAdapter`, exact visual worker/task/session/generation ownership, bounded local HTTP(S) targets, observed `@eN` interaction references, and canonical screenshot artifact persistence. The exact accepted source is `476590e500949ec6c2416c1502beaa9be4217d9f`; therefore `browser-execution` is `SUPPORTED` at `REAL_HOST_ACCEPTANCE` only while live executor health is present. MCP/tool discovery still grants nothing by itself. Doctor reports live health separately, and a missing browser runtime fails closed before visual/browser child execution.
 
 
+## Exact accepted capability matrix
+
+<!-- BEGIN GENERATED HOST CAPABILITY MATRIX -->
+Generated from `data/validation/compatibility-matrix-0.1.0.json`. Current recorded exact host: OpenCode `1.18.18` on `linux/aarch64`.
+
+| Hi capability | Status | Exact source | Receipt |
+|---|---|---|---|
+| `browser-execution` | **SUPPORTED_T3** | `476590e500949ec6c2416c1502beaa9be4217d9f` | `data/validation/external-opencode-hi-0.1.0-browser-1.18.18-head-476590e.json` |
+| `process-lifecycle` | **SUPPORTED_T3** | `bc8585496e93b294d43f1a25a66117faa28524f0` | `data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-bc85854.json` |
+| `workspace-isolation-binding` | **SUPPORTED_T3** | `92812a13b7388387b11096a74a26bdb13fc4dffb` | `data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-92812a1.json` |
+
+This table is a projection, not evidence ownership: the referenced exact receipts remain the capability proof. Historical negative/older receipts remain preserved in the generated compatibility history.
+<!-- END GENERATED HOST CAPABILITY MATRIX -->
+
+
 ## Role boundary
 
 Hi Core role identity and authority live in `plugin/src/runtime/roles/catalog.ts`: the canonical primary/child role family, read-only/reviewer classes, and child obligation ownership are host-independent product semantics.

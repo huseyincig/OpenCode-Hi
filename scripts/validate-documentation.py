@@ -4,7 +4,7 @@ from pathlib import Path
 import hashlib,json,re,sys
 ROOT=Path(__file__).resolve().parents[1]
 POLICY=ROOT/'data/documentation-ownership.json'
-OUT=ROOT/'data/validation/documentation-parity-0.1.0.json'
+OUT=ROOT/'data/validation/documentation-parity.json'
 
 def rel(p:Path)->str:return p.relative_to(ROOT).as_posix()
 def sha(p:Path)->str:return hashlib.sha256(p.read_bytes()).hexdigest()
@@ -46,6 +46,10 @@ def main():
       ('STALE_WORKSPACE_SUPPORT',r'workspace[- ]isolation(?: binding)? remains UNSUPPORTED'),
       ('STALE_BROWSER_SUPPORT',r'browser[- ]execution remains UNSUPPORTED'),
       ('STALE_GIT_PACKAGE_SPEC',r'opencode-hi@git[+]https://github[.]com/huseyincig/OpenCode-Hi[.]git#'),
+      ('STALE_PROCESS_GOVERNOR',r'ProcessGovernor'),
+      ('STALE_FUTURE_WORKSPACE_ADAPTER',r'future Git/OpenCode adapter'),
+      ('STALE_N1_FUTURE',r'Final source-driven normalization is reserved for `N1|N1[^\n]{0,100}after the engineering work-package program completes'),
+      ('STALE_PRODUCT_VERSION_IDENTITY',r'OpenCode-Hi 0[.]1[.]0 is a new product identity'),
     ]
     for p in docs:
         text=p.read_text(errors='replace')
@@ -65,6 +69,15 @@ def main():
     if 'only `TypeScriptSemanticContextAdapter`' not in hosts or 'JavaScript, LSP-backed and Tree-sitter-backed semantic adapters are not implemented or advertised' not in context:
         errors.append({'code':'DOC_SEMANTIC_ADAPTER_DRIFT','detail':'semantic adapter support boundary missing'})
     if 'contains no raw stdout/stderr buffer' not in (ROOT/'docs/ARCHITECTURE.md').read_text():errors.append({'code':'DOC_PROCESS_CONTRACT_DRIFT','path':'docs/ARCHITECTURE.md'})
+    config_doc=(ROOT/'docs/INSTALLATION.md').read_text(); host_doc=(ROOT/'docs/HOSTS.md').read_text()
+    if config_doc.count('<!-- BEGIN GENERATED CONFIG REFERENCE -->')!=1 or config_doc.count('<!-- END GENERATED CONFIG REFERENCE -->')!=1:errors.append({'code':'DOC_CONFIG_GENERATED_MARKER','path':'docs/INSTALLATION.md'})
+    for option in json.loads((ROOT/'data/hi-config-options.json').read_text()).get('options',[]):
+        if f"`{option.get('path')}`" not in config_doc:errors.append({'code':'DOC_CONFIG_OPTION_OMITTED','path':'docs/INSTALLATION.md','detail':option.get('path')})
+    if host_doc.count('<!-- BEGIN GENERATED HOST CAPABILITY MATRIX -->')!=1 or host_doc.count('<!-- END GENERATED HOST CAPABILITY MATRIX -->')!=1:errors.append({'code':'DOC_HOST_GENERATED_MARKER','path':'docs/HOSTS.md'})
+    for cap,entry in (compat.get('current_reference_host',{}).get('capabilities') or {}).items():
+        if f"`{cap}`" not in host_doc or f"**{entry.get('status')}**" not in host_doc or f"`{entry.get('receipt')}`" not in host_doc:errors.append({'code':'DOC_HOST_MATRIX_DRIFT','path':'docs/HOSTS.md','detail':cap})
+    if not (ROOT/'scripts/generate-documentation-projections.py').is_file():errors.append({'code':'DOC_PROJECTION_GENERATOR_MISSING'})
+
     status='PASS' if not errors else 'FAIL'
     out={'schema':1,'release':version,'kind':'DOCUMENTATION_PARITY','status':status,
          'inputs':{'documentation_ownership':{'path':rel(POLICY),'sha256':sha(POLICY)},'compatibility':{'path':'data/validation/compatibility-matrix-0.1.0.json','sha256':sha(ROOT/'data/validation/compatibility-matrix-0.1.0.json')},'release_status':{'path':'data/validation/release-status-0.1.0.json','sha256':sha(ROOT/'data/validation/release-status-0.1.0.json')}},

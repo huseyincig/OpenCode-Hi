@@ -1,6 +1,6 @@
 # Terminology and Naming Audit
 
-OpenCode-Hi 0.1.0 performs a terminology audit before final architecture freeze. The goal is clarity, technical accuracy, concise developer-facing naming, and removal of legacy HHC/OHO branding without creating cosmetic churn.
+This document records the current OpenCode-Hi terminology decisions. The goal is technical clarity and one coherent Hi product language without cosmetic churn or legacy HHC/OHO ownership on living product surfaces.
 
 ## Decisions
 
@@ -47,9 +47,9 @@ Legacy compatibility mappings are intentionally absent. Source ancestry is recor
 
 OpenCode-Hi does not normalize former-product configuration. `autonomy`, `--autonomy`, `basic`, `powerful`, `smart`, `smart-select`, and `smartSelectRoles` are not supported inputs. Historical occurrences may exist only in provenance, attribution, license records, immutable receipts, or negative tests that prove rejection.
 
-## N0 / N1 namespace policy
+## Namespace policy
 
-`docs/HI-NAMING-NAMESPACE.md` is the executable naming boundary for development after A5. N0 prevents new semantic ownership drift without mass-renaming compatibility-sensitive identifiers. Final source-driven normalization is reserved for `N1 — Final Hi Namespace Normalization` after the engineering work-package program completes.
+`docs/HI-NAMING-NAMESPACE.md` is the executable naming boundary. N0 established the guard and N1 completed the final source-driven normalization after the engineering work-package program. Historical/provenance identifiers remain exact where required; living Hi-owned semantic surfaces remain under canonical Hi terminology.
 
 ## Audit Rule
 

@@ -44,7 +44,7 @@
     "architecture:lint": "npm --prefix plugin run architecture:lint",
     "projections:check": "npm --prefix plugin run projections:check",
     "behavior:accept": "npm --prefix plugin test",
-    "docs:check": "node scripts/run-python.mjs scripts/generate-documentation-inventory.py && node scripts/run-python.mjs scripts/validate-documentation.py"
+    "docs:check": "node scripts/run-python.mjs scripts/generate-product-truth-inventory.py && node scripts/run-python.mjs scripts/generate-documentation-projections.py && node scripts/run-python.mjs scripts/generate-documentation-inventory.py && node scripts/run-python.mjs scripts/validate-documentation.py"
   },
   "publishConfig": {
     "access": "public"

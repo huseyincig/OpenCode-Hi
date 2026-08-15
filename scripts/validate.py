@@ -53,10 +53,27 @@ for p in ROOT.rglob('*'):
     for pattern in legacy:
         if re.search(pattern,t,re.I):err(f'legacy/prototype identity in current path: {rel} / {pattern}')
 
+
+try:
+    pti=json.loads((ROOT/'data/validation/product-truth-inventory.json').read_text(encoding='utf-8'))
+    if pti.get('schema')!=1 or pti.get('kind')!='PRODUCT_TRUTH_TRACE_INVENTORY' or pti.get('status')!='PASS':err('product truth inventory invalid')
+    if pti.get('release')!=version or pti.get('violations',{}).get('missing_paths')!=[]:err('product truth inventory drift')
+    areas=pti.get('areas') or []; ids=[x.get('area') for x in areas if isinstance(x,dict)]
+    if len(ids)!=24 or len(ids)!=len(set(ids)):err('product truth inventory area coverage/uniqueness drift')
+    for x in areas:
+        for key in ('owner_path','canonical_doc'):
+            rel=x.get(key)
+            if not isinstance(rel,str) or not (ROOT/rel).exists():err(f"product truth {x.get('area')} missing {key}: {rel}")
+        for key in ('producer_or_contract_paths','consumer_or_executor_paths','proof_paths'):
+            for rel in x.get(key,[]):
+                if '/' in str(rel) and not (ROOT/rel).exists():err(f"product truth {x.get('area')} missing {key}: {rel}")
+    if not (ROOT/'scripts/generate-product-truth-inventory.py').is_file():err('product truth inventory generator missing')
+except Exception as e:err(f'bad product truth inventory: {e}')
+
 # PROMPT A documentation ownership/inventory: one meaning -> one current owner, with historical separation.
 try:
     doc_policy=json.loads((ROOT/'data/documentation-ownership.json').read_text(encoding='utf-8'))
-    doc_inv=json.loads((ROOT/'data/validation/documentation-inventory-0.1.0.json').read_text(encoding='utf-8'))
+    doc_inv=json.loads((ROOT/'data/validation/documentation-inventory.json').read_text(encoding='utf-8'))
     if doc_policy.get('schema')!=1 or doc_policy.get('type')!='hi-documentation-ownership':err('documentation ownership policy header invalid')
     if doc_inv.get('schema')!=1 or doc_inv.get('kind')!='DOCUMENTATION_TRUTH_INVENTORY' or doc_inv.get('status')!='PASS':err('documentation inventory receipt invalid')
     if doc_inv.get('release')!=version:err('documentation inventory version drift')
@@ -79,7 +96,7 @@ except Exception as e:err(f'bad documentation ownership/inventory: {e}')
 
 
 try:
-    dp=json.loads((ROOT/'data/validation/documentation-parity-0.1.0.json').read_text(encoding='utf-8'))
+    dp=json.loads((ROOT/'data/validation/documentation-parity.json').read_text(encoding='utf-8'))
     if dp.get('schema')!=1 or dp.get('kind')!='DOCUMENTATION_PARITY' or dp.get('status')!='PASS':err('documentation parity receipt invalid')
     if dp.get('release')!=version:err('documentation parity version drift')
     if dp.get('violations')!=[]:err('documentation parity reports violations')
@@ -92,7 +109,7 @@ try:
 except Exception as e:err(f'bad documentation parity receipt: {e}')
 
 # Living data contract names.
-required_data={'data/documentation-ownership.json','data/validation/documentation-inventory-0.1.0.json','data/validation/documentation-parity-0.1.0.json','data/product.json','data/validation/implementation-coverage.json','data/validation/native-coverage.json','data/validation/flow-coverage.json','data/validation/flow-acceptance.json','data/validation/source-gates.json','data/validation/release-gates.json','data/validation/source-contracts.json','data/validation/final-dod-audit.json','data/hi-methodologies.json','data/hi-roles.json','data/hi-permission-profiles.json','data/hi-config-options.json','data/validation/benchmarks-0.1.0.json','data/validation/install-lifecycle-0.1.0.json','data/validation/compatibility-matrix-0.1.0.json','data/validation/release-status-0.1.0.json','data/validation/terminology-audit-0.1.0.json','data/validation/projection-receipts.json'}
+required_data={'data/documentation-ownership.json','data/validation/documentation-inventory.json','data/validation/documentation-parity.json','data/validation/product-truth-inventory.json','data/product.json','data/validation/implementation-coverage.json','data/validation/native-coverage.json','data/validation/flow-coverage.json','data/validation/flow-acceptance.json','data/validation/source-gates.json','data/validation/release-gates.json','data/validation/source-contracts.json','data/validation/final-dod-audit.json','data/hi-methodologies.json','data/hi-roles.json','data/hi-permission-profiles.json','data/hi-config-options.json','data/validation/benchmarks-0.1.0.json','data/validation/install-lifecycle-0.1.0.json','data/validation/compatibility-matrix-0.1.0.json','data/validation/release-status-0.1.0.json','data/validation/terminology-audit-0.1.0.json','data/validation/projection-receipts.json'}
 for rel in required_data:
     if not (ROOT/rel).is_file():err(f'required data contract missing: {rel}')
 for old in ('feature-ledger-09-coverage.json','native-first-10-coverage.json','flow-11-coverage.json','flow-11-acceptance.json','roadmap-source-gates.json','observed-runtime-smoke-1.18.16.json'):

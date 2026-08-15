@@ -4,7 +4,7 @@ from pathlib import Path
 import hashlib,json,sys
 ROOT=Path(__file__).resolve().parents[1]
 POLICY=ROOT/'data/documentation-ownership.json'
-OUT=ROOT/'data/validation/documentation-inventory-0.1.0.json'
+OUT=ROOT/'data/validation/documentation-inventory.json'
 
 def sha(p:Path)->str:return hashlib.sha256(p.read_bytes()).hexdigest()
 def rel(p:Path)->str:return p.relative_to(ROOT).as_posix()

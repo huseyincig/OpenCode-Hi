@@ -99,7 +99,7 @@
     },
     "architecture_reality": {
       "path": "docs/ARCHITECTURE-REALITY-MAP.md",
-      "sha256": "983e77b2add24ec790af8d834b40e134323b9ff81d5e041daa0ffc26ab0393f2"
+      "sha256": "d7f9440f20c472159b7682e19420a7ba1558320ba2fd4e6cba5d2e764b67f69b"
     }
   },
   "rules": [

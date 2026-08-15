@@ -1,28 +1,37 @@
 # Contributing
 
-Keep changes small, evidence-backed, and aligned with existing ownership. Do not reimplement OpenCode native primitives or add a new subsystem when an existing OpenCode-Hi owner can cleanly absorb the responsibility.
+Keep changes small, evidence-backed, and aligned with canonical ownership. Do not reimplement an OpenCode native primitive or create a second Hi subsystem when an existing owner/port can absorb the responsibility correctly.
 
-## Development rules
+## Engineering rules
 
-- Source code, identifiers, comments, prompts, tests, fixtures, errors, logs, schemas, and technical documentation are English. `README.tr.md` is the Turkish translation of the canonical English README.
-- Preserve mission, obligation, task, worker, evidence, authority, continuation, completion, and deterministic STOP semantics unless a deliberate change has regression coverage.
-- Role, agent, model, topology, execution depth, context depth, and isolation depth are independent decisions.
-- Skill activation defaults to zero. An available skill is not a checklist item.
-- Prefer targeted repository retrieval; widen only when decision-changing evidence remains missing.
-- Retry only when the next attempt is materially different.
-- External source reuse requires an explicit license and ownership decision before source is copied or adapted.
+- Source, identifiers, comments, prompts, tests, fixtures, errors, logs, schemas and canonical technical docs are English. `README.tr.md` is a translation and must not invent behavior.
+- Start from live source/contracts/runtime evidence, then update docs—not the reverse.
+- Preserve the distinctions in the Engineering Constitution: Mission/Task/Worker/Team; Role/Agent/Model/Methodology/Topology; Permission/Authority; Context/PI/Evidence/Verification.
+- Skill/Methodology activation defaults to zero; availability is not an instruction to load it.
+- Prefer minimum-sufficient repository/context retrieval and bounded execution topology.
+- Retry only when the next attempt is materially different and policy permits it.
+- Preserve user dirty/staged/unrelated work. Do not use broad reset/stash/restore or `git add -A` as ownership shortcuts.
+- External source reuse requires explicit source/license/ownership treatment before code is copied/adapted.
 - Never commit secrets or provider/private runtime state.
-- Push, tag, publish, deploy, and release remain explicit user-authority actions.
+- Push, tag, publish, deploy, paid actions and other external effects remain explicit authority-gated operations.
+- Historical migration/proof files under `docs/engineering-constitution/history/` are provenance, not an execution queue.
+
+## Documentation ownership
+
+Documentation follows `data/documentation-ownership.json`: one meaning has one canonical documentation owner. Mutable support/release/config facts should come from generated catalogs/receipts where available. Run `npm run docs:check` to regenerate and validate documentation projections.
 
 ## Verification
 
-Use risk-proportional verification during development. Before candidate construction run the complete repository gates:
+Use the smallest sufficient focused proof while editing. Before a coherent checkpoint, run the repository gates appropriate to the change; the canonical combined Node/documentation/source check is:
 
 ```sh
-cd plugin && npm run build && npm test
-cd ..
-python -m pytest -q
-python scripts/validate.py
+npm run check
 ```
 
-Release-candidate evidence must be generated from one exact unchanged candidate. If source changes after candidate verification, rerun the affected gates.
+Run the Python acceptance suite as well when the changed boundary is covered there:
+
+```sh
+python -m pytest -q tests/test_hi.py
+```
+
+Host-dependent support needs exact T3 evidence. A future release/publication must be proven against its exact unchanged source/ref; if source changes, affected proof must be rerun. Real publication requires T4 and explicit authority.
