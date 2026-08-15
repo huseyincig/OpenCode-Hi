@@ -62,7 +62,7 @@
     {
       "invariant": "no-duplicate-completion",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "b20afb9c75b9145acff682afc6ebf8dcbb0616f73b88075ed91f3be8d616f230",
+      "owner_sha256": "3588be6a97474be0606d26b0926d2cca413eaf947ebe9661fd7d535a0838bdcd",
       "proof": "plugin/test/q3-adversarial-threat-matrix.test.mjs",
       "proof_sha256": "94257eb5e5ed94473f6f6676370304a0d504abc1facc274d4eb4106354a96a5d",
       "owner_anchor": "worker.result.duplicate-ignored",
@@ -71,7 +71,7 @@
     {
       "invariant": "out-of-order-callback",
       "owner": "plugin/src/runtime/task/child-execution-coordinator.ts",
-      "owner_sha256": "2bad87bef617049c6647da63e4031f5aac7b52fa9550bb44c9bbbf936a129f8c",
+      "owner_sha256": "d2f76e60c8f9517731603b962cfb2bac5745602119ff1348e73a5d798493964b",
       "proof": "plugin/test/prompt-b-mission-task-worker-adversarial.test.mjs",
       "proof_sha256": "58147e750b024a3d482f0bee20ce4c5b1e3f13bf6d26add8c30741265107aeff",
       "owner_anchor": "matches.length===1",
@@ -80,7 +80,7 @@
     {
       "invariant": "stale-worker-result",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "b20afb9c75b9145acff682afc6ebf8dcbb0616f73b88075ed91f3be8d616f230",
+      "owner_sha256": "3588be6a97474be0606d26b0926d2cca413eaf947ebe9661fd7d535a0838bdcd",
       "proof": "plugin/test/prompt-b-mission-task-worker-adversarial.test.mjs",
       "proof_sha256": "58147e750b024a3d482f0bee20ce4c5b1e3f13bf6d26add8c30741265107aeff",
       "owner_anchor": "worker.result.stale-generation-ignored",
@@ -116,7 +116,7 @@
     {
       "invariant": "concurrent-write-safety",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "b20afb9c75b9145acff682afc6ebf8dcbb0616f73b88075ed91f3be8d616f230",
+      "owner_sha256": "3588be6a97474be0606d26b0926d2cca413eaf947ebe9661fd7d535a0838bdcd",
       "proof": "plugin/test/runtime-write-conflict.test.mjs",
       "proof_sha256": "b80ead52c269fafa13bc01415a9f981997458ea4e79ed1a75eb602b3cda96fee",
       "owner_anchor": "parallel.write-conflict.quarantined",

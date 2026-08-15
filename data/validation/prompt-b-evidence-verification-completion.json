@@ -1,0 +1,139 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_EVIDENCE_VERIFICATION_COMPLETION_HOSTILE_AUDIT",
+  "program": "PROMPT_B",
+  "section": 9,
+  "status": "PASS",
+  "invariants": [
+    {
+      "invariant": "evidence-scope",
+      "owner": "plugin/src/runtime/verification/policy.ts",
+      "owner_sha256": "ab91a9e8c45b8c86ff7b1f570c197584c84c9eb2c28ee885c8eee7299cadb022",
+      "owner_anchor": "evidenceAllowedForVerification",
+      "proof": "plugin/test/obligation-ownership.test.mjs",
+      "proof_sha256": "f099d90a8769508cb1c3d5358d838b06899681083719c163732c881d30f9a082",
+      "proof_anchor": "worker evidence is scoped to its owned verification obligation"
+    },
+    {
+      "invariant": "evidence-freshness",
+      "owner": "plugin/src/runtime/verification/policy.ts",
+      "owner_sha256": "ab91a9e8c45b8c86ff7b1f570c197584c84c9eb2c28ee885c8eee7299cadb022",
+      "owner_anchor": "freshness=p.requireFresh&&!requiredEvidenceFresh?'stale':'fresh'",
+      "proof": "plugin/test/q2-critical-invariant-guards.test.mjs",
+      "proof_sha256": "508f67cc3c24f105c6b9f7e95b8b019dfa8febfe420524cce47252bb358c0b9e",
+      "proof_anchor": "Q2 invalidated pre-mutation evidence cannot satisfy freshness"
+    },
+    {
+      "invariant": "source-revision",
+      "owner": "plugin/src/runtime/verification/policy.ts",
+      "owner_sha256": "ab91a9e8c45b8c86ff7b1f570c197584c84c9eb2c28ee885c8eee7299cadb022",
+      "owner_anchor": "source_state_hash",
+      "proof": "plugin/test/native-diff-ownership.test.mjs",
+      "proof_sha256": "80715d317bd431ce5c3ed8c3b6dbe4caf3baeac487c50d1ce7615ecb309ee3e4",
+      "proof_anchor": "PROMPT B final native diff deterministically binds worker evidence source-state identity"
+    },
+    {
+      "invariant": "changed-file-ownership",
+      "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
+      "owner_sha256": "3588be6a97474be0606d26b0926d2cca413eaf947ebe9661fd7d535a0838bdcd",
+      "owner_anchor": "native.diff.mismatch",
+      "proof": "plugin/test/native-diff-ownership.test.mjs",
+      "proof_sha256": "80715d317bd431ce5c3ed8c3b6dbe4caf3baeac487c50d1ce7615ecb309ee3e4",
+      "proof_anchor": "plugin session.idle path converts DONE to FIX_REQUIRED when native diff exposes an undeclared file"
+    },
+    {
+      "invariant": "mutation-invalidation",
+      "owner": "plugin/src/runtime/evidence/evidence-runtime.ts",
+      "owner_sha256": "508a3939ac7c754b51f46fd86aa13fe69344dfd5f63c2332baf079c573fe9720",
+      "owner_anchor": "markMutation",
+      "proof": "plugin/test/evidence-freshness-ordering.test.mjs",
+      "proof_sha256": "784d4d560bfe9ceea6bdecf2ae16b1b2872d551a6e96bbe44dd72f182b4233d4",
+      "proof_anchor": "worker-reported verification cannot become fresh when changed_files is only learned from the same result"
+    },
+    {
+      "invariant": "not-run-not-passed",
+      "owner": "plugin/src/runtime/verification/policy.ts",
+      "owner_sha256": "ab91a9e8c45b8c86ff7b1f570c197584c84c9eb2c28ee885c8eee7299cadb022",
+      "owner_anchor": "result:'not_run' as const",
+      "proof": "plugin/test/verification-envelope-contract.test.mjs",
+      "proof_sha256": "3cf85bd99908767cece3d435a9fe750ed011912a204a2a3ee3744dc5412b4e06",
+      "proof_anchor": "missing required check is not_run with explanation and never a pass"
+    },
+    {
+      "invariant": "worker-result-not-evidence",
+      "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
+      "owner_sha256": "3588be6a97474be0606d26b0926d2cca413eaf947ebe9661fd7d535a0838bdcd",
+      "owner_anchor": "A WorkerResult is not itself proof",
+      "proof": "plugin/test/prompt-b-evidence-verification-completion-hostile.test.mjs",
+      "proof_sha256": "62b46683653f6efe5a8abcb55820bae4011d05fcada874a6cc8c14d1fb903ed7",
+      "proof_anchor": "PROMPT B hostile DONE and all-tests-passed prose cannot replace verification Evidence"
+    },
+    {
+      "invariant": "project-intelligence-not-evidence",
+      "owner": "plugin/src/runtime/project-intelligence/store.ts",
+      "owner_sha256": "331da9d64a4d7ea75bfb507b9751fbbd4c9a8a0cc17e682a0163b97e9a96c439",
+      "owner_anchor": "ProjectIntelligence",
+      "proof": "plugin/test/project-intelligence-contract.test.mjs",
+      "proof_sha256": "8e68a2516357773b9748055463ac23a96d48f5a707c7aa5c871c0f7d7311b37c",
+      "proof_anchor": "source hash drift invalidates Project Intelligence without converting it into Evidence"
+    },
+    {
+      "invariant": "context-summary-not-evidence",
+      "owner": "plugin/src/contracts/compression-artifact.ts",
+      "owner_sha256": "bb51dbe750f3ae8f8e8d16880e2247dc1bce811a1de5ac08c786075a1933056f",
+      "owner_anchor": "CompressionArtifact",
+      "proof": "plugin/test/c3-compression-artifact.test.mjs",
+      "proof_sha256": "deddcf3ced52a09233439fc57c8da09e8fd2b789f4bf28c7541e1d40c6cbc498",
+      "proof_anchor": "C3 compression implementation remains Context-owned and does not enter Evidence ownership"
+    },
+    {
+      "invariant": "review-disposition",
+      "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
+      "owner_sha256": "3588be6a97474be0606d26b0926d2cca413eaf947ebe9661fd7d535a0838bdcd",
+      "owner_anchor": "review.claim-unproven",
+      "proof": "plugin/test/obligation-ownership.test.mjs",
+      "proof_sha256": "f099d90a8769508cb1c3d5358d838b06899681083719c163732c881d30f9a082",
+      "proof_anchor": "reviewer DONE prose without explicit source-bound review evidence cannot close review or verification"
+    },
+    {
+      "invariant": "required-evidence-coverage",
+      "owner": "plugin/src/runtime/verification/policy.ts",
+      "owner_sha256": "ab91a9e8c45b8c86ff7b1f570c197584c84c9eb2c28ee885c8eee7299cadb022",
+      "owner_anchor": "requiredKinds",
+      "proof": "plugin/test/verification-envelope-contract.test.mjs",
+      "proof_sha256": "3cf85bd99908767cece3d435a9fe750ed011912a204a2a3ee3744dc5412b4e06",
+      "proof_anchor": "VerificationEnvelope derives a passed check only from explicit passed evidence"
+    },
+    {
+      "invariant": "completion-obligation-reconciliation",
+      "owner": "plugin/src/runtime/completion/evaluator.ts",
+      "owner_sha256": "72182965f77468244b1e3ea63749d2324008da60635e79dcce58e4f0740b4c10",
+      "owner_anchor": "open-obligations",
+      "proof": "plugin/test/prompt-b-evidence-verification-completion-hostile.test.mjs",
+      "proof_sha256": "62b46683653f6efe5a8abcb55820bae4011d05fcada874a6cc8c14d1fb903ed7",
+      "proof_anchor": "PROMPT B hostile DONE and all-tests-passed prose cannot replace verification Evidence"
+    }
+  ],
+  "static_guards": {
+    "project_intelligence_evidence_owner_paths": [],
+    "context_evidence_owner_paths": [],
+    "worker_result_is_mission_evidence_owner": false
+  },
+  "violations": [],
+  "summary": {
+    "required": 12,
+    "covered": 12,
+    "violations": 0
+  },
+  "closed_defects": [
+    {
+      "id": "reviewer-done-auto-pass-evidence",
+      "fix": "Reviewer DONE/prose no longer synthesizes passed review Evidence or closes review/verification obligations without explicit fresh source-bound review evidence."
+    },
+    {
+      "id": "worker-pass-without-source-state",
+      "fix": "Passed worker-sourced verification Evidence requires exact worker session plus 64-hex source-state identity; final native diff deterministically binds worker.native_state_hash."
+    }
+  ],
+  "claim_boundary": "Treats WorkerResult/model prose as untrusted. Only canonical Evidence with scope, freshness, obligation and source-state constraints may satisfy Verification/Completion."
+}

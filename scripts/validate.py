@@ -302,6 +302,28 @@ try:
 except Exception as e:err(f'bad PROMPT B Role/Model/Methodology receipt: {e}')
 
 try:
+    evc=json.loads((ROOT/'data/validation/prompt-b-evidence-verification-completion.json').read_text(encoding='utf-8'))
+    if evc.get('schema')!=1 or evc.get('kind')!='PROMPT_B_EVIDENCE_VERIFICATION_COMPLETION_HOSTILE_AUDIT' or evc.get('program')!='PROMPT_B' or evc.get('section')!=9 or evc.get('status')!='PASS':err('bad PROMPT B Evidence/Verification/Completion audit receipt')
+    if evc.get('violations')!=[] or evc.get('summary')!={'required':12,'covered':12,'violations':0}:err('PROMPT B Evidence/Verification/Completion coverage drift')
+    expected={'evidence-scope','evidence-freshness','source-revision','changed-file-ownership','mutation-invalidation','not-run-not-passed','worker-result-not-evidence','project-intelligence-not-evidence','context-summary-not-evidence','review-disposition','required-evidence-coverage','completion-obligation-reconciliation'}
+    rows=evc.get('invariants',[])
+    if {x.get('invariant') for x in rows if isinstance(x,dict)}!=expected or len(rows)!=12:err('PROMPT B Evidence/Verification/Completion invariant inventory drift')
+    for row in rows:
+        for key in ['owner','proof']:
+            rel=row.get(key); expected_hash=row.get(f'{key}_sha256')
+            if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B Evidence/Verification/Completion missing {key}: {rel}')
+            elif hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected_hash:err(f'PROMPT B Evidence/Verification/Completion {key} hash drift: {rel}')
+        owner=(ROOT/row['owner']).read_text(encoding='utf-8',errors='ignore') if isinstance(row.get('owner'),str) and (ROOT/row['owner']).is_file() else ''
+        proof=(ROOT/row['proof']).read_text(encoding='utf-8',errors='ignore') if isinstance(row.get('proof'),str) and (ROOT/row['proof']).is_file() else ''
+        if row.get('owner_anchor') not in owner:err(f"PROMPT B Evidence/Verification/Completion owner anchor drift: {row.get('invariant')}")
+        if row.get('proof_anchor') not in proof:err(f"PROMPT B Evidence/Verification/Completion proof anchor drift: {row.get('invariant')}")
+    guards=evc.get('static_guards',{})
+    if guards.get('project_intelligence_evidence_owner_paths')!=[] or guards.get('context_evidence_owner_paths')!=[] or guards.get('worker_result_is_mission_evidence_owner') is not False:err('PROMPT B Evidence/Verification/Completion ownership guard drift')
+    closed={x.get('id') for x in evc.get('closed_defects',[]) if isinstance(x,dict)}
+    if not {'reviewer-done-auto-pass-evidence','worker-pass-without-source-state'}<=closed:err('PROMPT B Evidence/Verification/Completion closed defect receipt drift')
+except Exception as e:err(f'bad PROMPT B Evidence/Verification/Completion receipt: {e}')
+
+try:
     apa=json.loads((ROOT/'data/validation/prompt-b-authority-permission-external-action.json').read_text(encoding='utf-8'))
     if apa.get('schema')!=1 or apa.get('kind')!='PROMPT_B_AUTHORITY_PERMISSION_EXTERNAL_ACTION_ADVERSARIAL_AUDIT' or apa.get('program')!='PROMPT_B' or apa.get('section')!=8 or apa.get('status')!='PASS':err('bad PROMPT B Authority/Permission/ExternalAction audit receipt')
     if apa.get('violations')!=[] or apa.get('summary')!={'required':18,'covered':18,'violations':0}:err('PROMPT B Authority/Permission/ExternalAction coverage drift')

@@ -34,7 +34,11 @@ export class ChildExecutionCoordinator{
   async abortNativeSession(m:MissionState,sessionID:string,reason:string,workerID?:string,taskID?:string):Promise<boolean>{const transport=await abortSession(this.client,sessionID,this.lifecycle);appendLedger(m,'worker.session-abort',{task_id:taskID,worker_id:workerID,payload:{session_id:sessionID,reason,transport}});return transport!=='unavailable'}
   async captureNativeDiff(worker:WorkerState,phase:'baseline'|'final'):Promise<Record<string,string>|undefined>{
     if(!worker.session_id)return undefined;const native=new NativeOpenCodeAdapter(this.client);if(!native.has('diff'))return undefined
-    try{const map=nativeDiffMap(await native.diff(worker.session_id));if(phase==='baseline')worker.native_diff_baseline=map;else worker.native_diff_final=map;return map}catch{return undefined}
+    try{
+      const map=nativeDiffMap(await native.diff(worker.session_id)),stateHash=createHash('sha256').update(JSON.stringify(Object.entries(map).sort(([a],[b])=>a.localeCompare(b)))).digest('hex')
+      if(phase==='baseline')worker.native_diff_baseline=map;else{worker.native_diff_final=map;worker.native_state_hash=stateHash}
+      return map
+    }catch{return undefined}
   }
   noteEffectiveModel(m:MissionState,workerID:string,observed?:{model?:string;variant?:string;source?:string}):{ok:boolean;expected?:string;observed?:string;reason:string}{
     const worker=m.execution.workers.find(w=>w.id===workerID);if(!worker)return{ok:false,reason:'worker-not-found'}

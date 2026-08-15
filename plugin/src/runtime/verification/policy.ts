@@ -36,8 +36,9 @@ export function verificationEconomyInstruction(m:MissionState):string{
 const STRONGER_EVIDENCE:Readonly<Record<string,readonly string[]>>={'changed-surface-sanity':['changed-surface-sanity','targeted-tests','typecheck','lint','build'],'visual-check':['visual-check','visual-evidence'],'review-evidence':['review-evidence']}
 function kindMatches(required:string,actual:string):boolean{const r=canonical(required),a=canonical(actual);if(r===a)return true;return Boolean(STRONGER_EVIDENCE[r]?.includes(a))}
 function evidenceAllowedForVerification(m:MissionState,e:EvidenceItem,obligationID?:string):boolean{
-  const workerSource=String(e.source??'').startsWith('worker:')
+  const workerSource=String(e.source??'').startsWith('worker:'),passed=e.outcome==='passed'||e.pass===true
   if(workerSource&&!m.execution.verification_policy.allowWorkerReportedEvidence&&!String(e.source??'').includes(':reviewer'))return false
+  if(workerSource&&passed&&(!e.source_session_id||!e.source_state_hash||!/^[a-f0-9]{64}$/i.test(e.source_state_hash)))return false
   if(obligationID&&canonical(e.kind)==='review-evidence'&&!e.obligation_ids?.includes(obligationID))return false
   if(obligationID&&workerSource&&!e.obligation_ids?.includes(obligationID))return false
   return true

@@ -45,22 +45,44 @@ test('worker evidence is scoped to its owned verification obligation',()=>{
   const v1=m.execution.obligations.find(o=>o.kind==='verification'); assert.ok(v1)
   v1.requiredEvidence=['targeted-tests']
   m.execution.obligations.push({id:'o-verification-followup',kind:'verification',summary:'verify separate beta surface',status:'open',requiredEvidence:['targeted-tests']})
-  addEvidence(m,{kind:'targeted-tests',summary:'alpha tests pass',scope:['src/alpha.ts'],source:'worker:w1',task_id:'t1',obligation_ids:[v1.id],pass:true,outcome:'passed'})
+  addEvidence(m,{kind:'targeted-tests',summary:'alpha tests pass',scope:['src/alpha.ts'],source:'worker:w1',source_session_id:'s-worker',source_state_hash:'b'.repeat(64),task_id:'t1',obligation_ids:[v1.id],pass:true,outcome:'passed'})
   assert.deepEqual(verificationSatisfied(m,v1.id),{ok:true,missing:[]})
   assert.deepEqual(verificationSatisfied(m,'o-verification-followup'),{ok:false,missing:['targeted-tests']})
 })
 
 
-test('owned reviewer DONE synthesizes canonical review evidence for its verification obligation',()=>{
+test('reviewer DONE prose without explicit source-bound review evidence cannot close review or verification',()=>{
   const m=assessedMission('ownership-review','Perform an independent review of src/a.ts',{task_kind:'review',required_capabilities:['review','independent-review'],likely_verification:['review-evidence'],likely_targets:['src/a.ts']})
   m.execution.verification_policy={requiredKinds:['review-evidence'],requireFresh:true,requireReview:true,allowWorkerReportedEvidence:true}
   const review=m.execution.obligations.find(o=>o.kind==='review'); const verification=m.execution.obligations.find(o=>o.kind==='verification'); assert.ok(review); assert.ok(verification)
   verification.requiredEvidence=['review-evidence']
   const task=createTask(m,{objective:'independently review src/a.ts',role:'qa-reviewer',category:'standard',requiredEvidence:['review-evidence'],obligationIds:[review.id,verification.id]})
-  const worker=createWorker(m,task,'host-default'); worker.status='busy'; worker.started_at=Date.now()-5
-  runtime().applyResult(m,worker.id,{status:'DONE',summary:'reviewed src/a.ts with no findings',changed_files:[],evidence:[],open_issues:[],needs_context:[]})
-  assert.deepEqual(verificationSatisfied(m,verification.id),{ok:true,missing:[]})
-  assert.equal(review.status,'closed'); assert.equal(verification.status,'closed')
+  const worker=createWorker(m,task,'host-default'); worker.status='busy'; worker.started_at=Date.now()-5;worker.session_id='review-session'
+  runtime().applyResult(m,worker.id,{status:'DONE',summary:'review complete; safe to release',changed_files:[],evidence:[],open_issues:[],needs_context:[]})
+  assert.deepEqual(verificationSatisfied(m,verification.id),{ok:false,missing:['review-evidence','review-obligation']})
+  assert.equal(review.status,'open'); assert.equal(verification.status,'open')
+  assert.equal(m.execution.evidence.items.some(e=>e.kind==='review-evidence'),false,'DONE prose must not synthesize PASS Evidence')
+  assert.ok(m.execution.ledger.some(e=>e.type==='review.claim-unproven'))
+})
+
+test('reviewer explicit PASS without source-state identity remains inadmissible',()=>{
+  const m=assessedMission('ownership-review-no-state','Review src/a.ts',{task_kind:'review',required_capabilities:['review','independent-review'],likely_verification:['review-evidence'],likely_targets:['src/a.ts']})
+  m.execution.verification_policy={requiredKinds:['review-evidence'],requireFresh:true,requireReview:true,allowWorkerReportedEvidence:true}
+  const review=m.execution.obligations.find(o=>o.kind==='review'),verification=m.execution.obligations.find(o=>o.kind==='verification');verification.requiredEvidence=['review-evidence']
+  const task=createTask(m,{objective:'review src/a.ts',role:'qa-reviewer',category:'standard',requiredEvidence:['review-evidence'],obligationIds:[review.id,verification.id]})
+  const worker=createWorker(m,task,'host-default');worker.status='busy';worker.started_at=Date.now()-5;worker.session_id='review-session'
+  runtime().applyResult(m,worker.id,{status:'DONE',summary:'review complete',changed_files:[],evidence:[{kind:'review-evidence',summary:'reviewed target',scope:['src/a.ts'],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
+  assert.equal(review.status,'open');assert.equal(verification.status,'open');assert.deepEqual(verificationSatisfied(m,verification.id),{ok:false,missing:['review-evidence','review-obligation']})
+})
+
+test('source-bound explicit reviewer evidence can close its owned review and verification obligations',()=>{
+  const m=assessedMission('ownership-review-proof','Review src/a.ts',{task_kind:'review',required_capabilities:['review','independent-review'],likely_verification:['review-evidence'],likely_targets:['src/a.ts']})
+  m.execution.verification_policy={requiredKinds:['review-evidence'],requireFresh:true,requireReview:true,allowWorkerReportedEvidence:true}
+  const review=m.execution.obligations.find(o=>o.kind==='review'),verification=m.execution.obligations.find(o=>o.kind==='verification');verification.requiredEvidence=['review-evidence']
+  const task=createTask(m,{objective:'review src/a.ts',role:'qa-reviewer',category:'standard',requiredEvidence:['review-evidence'],obligationIds:[review.id,verification.id]})
+  const worker=createWorker(m,task,'host-default');worker.status='busy';worker.started_at=Date.now()-5;worker.session_id='review-session';worker.native_state_hash='a'.repeat(64)
+  runtime().applyResult(m,worker.id,{status:'DONE',summary:'bounded review complete',changed_files:[],evidence:[{kind:'review-evidence',summary:'reviewed target',scope:['src/a.ts'],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
+  assert.equal(review.status,'closed');assert.equal(verification.status,'closed');assert.deepEqual(verificationSatisfied(m,verification.id),{ok:true,missing:[]})
 })
 
 

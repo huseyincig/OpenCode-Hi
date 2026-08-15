@@ -59,11 +59,13 @@ export class ChildExecutionCoordinator {
         if (!native.has('diff'))
             return undefined;
         try {
-            const map = nativeDiffMap(await native.diff(worker.session_id));
+            const map = nativeDiffMap(await native.diff(worker.session_id)), stateHash = createHash('sha256').update(JSON.stringify(Object.entries(map).sort(([a], [b]) => a.localeCompare(b)))).digest('hex');
             if (phase === 'baseline')
                 worker.native_diff_baseline = map;
-            else
+            else {
                 worker.native_diff_final = map;
+                worker.native_state_hash = stateHash;
+            }
             return map;
         }
         catch {

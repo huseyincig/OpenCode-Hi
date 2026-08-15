@@ -706,6 +706,11 @@ PROMPT B section 7 was re-audited as 13 executable invariants enforcing `ROLE !=
 
 PROMPT B section 8 was re-audited against 18 fail-close invariants. Natural-language approval/outcome regex ownership was removed: Hi Authority now accepts only an exact structured HumanDecision authority protocol bound to `decision_id` + `authority_ref` + a closed response enum. One-shot requests/approvals are TTL-bound and invalidated across semantic revision, STOP, and runtime restart without erasing unresolved in-flight external effects. Native `always` remains a distinct bounded persistent authority class and explicit host/user deny remains dominant. Credential/OAuth/SSO flows, plaintext secret-sensitive shell commands, catastrophic filesystem mutations, irreversible external deletions/destruction, and supported potentially paid external effects are routed through deterministic user/authority boundaries. Bounded local cleanup is explicitly protected from catastrophic false positives. `scripts/audit-authority-permission-external-action.py` generates `data/validation/prompt-b-authority-permission-external-action.json`; current receipt coverage is 18/18 with zero violations.
 
+
+### PROMPT B B6 — Evidence / Verification / Completion hostile-claim hardening — **CLOSED**
+
+PROMPT B section 9 was re-audited with model/worker claims treated as untrusted. Two real correctness defects were closed. First, reviewer `DONE`/summary prose no longer synthesizes canonical passed `review-evidence` or closes review/verification obligations; an explicit fresh review proof is required. Second, passed worker-sourced verification/review Evidence is inadmissible without the exact worker session plus a 64-hex source-state identity. Final native session diff now deterministically derives `worker.native_state_hash`, including read-only/no-change review state. Hostile `DONE`, `all tests passed`, `review complete`, and `safe to release` prose cannot replace Evidence. ProjectIntelligence, Context/CompressionArtifact, and WorkerResult remain outside Mission Evidence ownership. `scripts/audit-evidence-verification-completion.py` generates `data/validation/prompt-b-evidence-verification-completion.json`; current receipt coverage is 12/12 with zero violations.
+
 ## 11. Verification protocol for future checkpoints
 
 ### Focused verification first
@@ -816,7 +821,7 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**PROMPT B — IN PROGRESS. Next: Evidence / Verification / Completion hostile-claim audit.**
+**PROMPT B — IN PROGRESS. Next: Context / ProjectIntelligence / Compression adversarial audit.**
 
 PROMPT A certified product-source baseline: `5ced215ed57f28f8d963376ca702efc0dac75503` (tree `b22db990942ad291997a8ad564ac1235283036bb`). Canonical reconstruction receipt: `data/validation/documentation-reconstruction.json`.
 

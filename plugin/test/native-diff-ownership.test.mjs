@@ -164,3 +164,14 @@ test('initial child handoff warns that pre-existing dirty paths are user-owned a
   assert.match(prompt,/notes\/user\.md/)
   assert.match(prompt,/never use git checkout\/reset\/restore/i)
 })
+
+test('PROMPT B final native diff deterministically binds worker evidence source-state identity',async()=>{
+  const client={session:{diff:async()=>({data:[{file:'src/b.ts',additions:1,deletions:0,status:'modified',patch:'b'},{file:'src/a.ts',additions:2,deletions:1,status:'modified',patch:'a'}]})}}
+  const {ChildExecutionCoordinator}=await import('../dist/runtime/task/child-execution-coordinator.js')
+  const worker={session_id:'s-native-state'}
+  const c=new ChildExecutionCoordinator(client)
+  const first=await c.captureNativeDiff(worker,'final'),hash1=worker.native_state_hash
+  client.session.diff=async()=>({data:[{file:'src/a.ts',additions:2,deletions:1,status:'modified',patch:'a'},{file:'src/b.ts',additions:1,deletions:0,status:'modified',patch:'b'}]})
+  const second=await c.captureNativeDiff(worker,'final'),hash2=worker.native_state_hash
+  assert.deepEqual(first,second);assert.match(hash1,/^[a-f0-9]{64}$/);assert.equal(hash1,hash2)
+})

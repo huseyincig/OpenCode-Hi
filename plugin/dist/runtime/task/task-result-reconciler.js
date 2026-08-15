@@ -293,9 +293,7 @@ export class TaskResultReconciler {
             for (const observation of effectiveResult.methodology_observations)
                 this.methodologyLearning.observe(m, worker, observation, evidenceRefs);
         }
-        const ownsReviewObligation = task.obligation_ids.some(id => m.execution.obligations.some(o => o.id === id && o.kind === 'review'));
-        if (effectiveResult.status === 'DONE' && isHiReadOnlyChildRole(worker.role) && ownsReviewObligation && !effectiveResult.evidence.some(e => e.kind === 'review-evidence'))
-            addEvidence(m, { kind: 'review-evidence', summary: effectiveResult.summary || `Independent ${worker.role} completed owned review task`, scope: effectiveResult.changed_files, source: evidenceSource, source_session_id: worker.session_id, source_state_hash: worker.native_state_hash, task_id: task.id, obligation_ids: task.obligation_ids, pass: true, outcome: 'passed' });
+        const reviewEvidenceSatisfied = (obligationID) => verificationSatisfied(m, obligationID).ok || m.execution.evidence.items.some(e => e.kind === 'review-evidence' && e.obligation_ids?.includes(obligationID) && String(e.source ?? '').startsWith(`worker:${worker.id}:reviewer`) && (e.outcome === 'passed' || e.pass === true) && !e.invalidated_at && Boolean(e.source_session_id) && Boolean(e.source_state_hash && /^[a-f0-9]{64}$/i.test(e.source_state_hash)));
         if (effectiveResult.status === 'DONE') {
             const now = Date.now();
             if (worker.role === 'repository-explorer' && m.identity.intent.ambiguity !== 'none') {
@@ -311,6 +309,14 @@ export class TaskResultReconciler {
                         owned.status = 'closed';
                         owned.closedAt = now;
                     }
+                }
+                else if (owned.kind === 'review') {
+                    if (reviewEvidenceSatisfied(owned.id)) {
+                        owned.status = 'closed';
+                        owned.closedAt = now;
+                    }
+                    else
+                        appendLedger(m, 'review.claim-unproven', { task_id: task.id, worker_id: worker.id, payload: { obligation: owned.id, reason: 'explicit-fresh-source-bound-review-evidence-required' } });
                 }
                 else {
                     owned.status = 'closed';

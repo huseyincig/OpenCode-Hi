@@ -59,8 +59,10 @@ const STRONGER_EVIDENCE = { 'changed-surface-sanity': ['changed-surface-sanity',
 function kindMatches(required, actual) { const r = canonical(required), a = canonical(actual); if (r === a)
     return true; return Boolean(STRONGER_EVIDENCE[r]?.includes(a)); }
 function evidenceAllowedForVerification(m, e, obligationID) {
-    const workerSource = String(e.source ?? '').startsWith('worker:');
+    const workerSource = String(e.source ?? '').startsWith('worker:'), passed = e.outcome === 'passed' || e.pass === true;
     if (workerSource && !m.execution.verification_policy.allowWorkerReportedEvidence && !String(e.source ?? '').includes(':reviewer'))
+        return false;
+    if (workerSource && passed && (!e.source_session_id || !e.source_state_hash || !/^[a-f0-9]{64}$/i.test(e.source_state_hash)))
         return false;
     if (obligationID && canonical(e.kind) === 'review-evidence' && !e.obligation_ids?.includes(obligationID))
         return false;

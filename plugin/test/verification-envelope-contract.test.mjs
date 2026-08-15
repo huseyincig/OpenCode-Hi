@@ -63,7 +63,7 @@ test('obligation-scoped worker evidence cannot satisfy a different verification 
   const first=m.execution.obligations.find(o=>o.kind==='verification'); assert.ok(first)
   first.requiredEvidence=['targeted-tests']
   m.execution.obligations.push({id:'o-other-verification',kind:'verification',summary:'other verification',status:'open',requiredEvidence:['targeted-tests']})
-  addEvidence(m,{kind:'targeted-tests',summary:'first only',scope:['src/a.ts'],source:'worker:w1',task_id:'t1',obligation_ids:[first.id],pass:true,outcome:'passed'})
+  addEvidence(m,{kind:'targeted-tests',summary:'first only',scope:['src/a.ts'],source:'worker:w1',source_session_id:'worker-session',source_state_hash:'d'.repeat(64),task_id:'t1',obligation_ids:[first.id],pass:true,outcome:'passed'})
   assert.equal(verificationEnvelopeFor(m,first.id).checks[0].result,'passed')
   assert.equal(verificationEnvelopeFor(m,'o-other-verification').checks[0].result,'not_run')
 })

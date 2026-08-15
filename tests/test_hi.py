@@ -944,3 +944,17 @@ def test_prompt_b_authority_permission_external_action_audit_is_structured_fail_
     closed={x['id'] for x in d['closed_defects']}
     assert {'natural-language-regex-owned-authority','stale-one-shot-approval','destructive-irreversible-secret-boundaries'}<=closed
     assert (ROOT/'scripts/audit-authority-permission-external-action.py').is_file()
+
+def test_prompt_b_evidence_verification_completion_audit_is_source_bound_and_complete():
+    d=json.loads((ROOT/'data/validation/prompt-b-evidence-verification-completion.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_EVIDENCE_VERIFICATION_COMPLETION_HOSTILE_AUDIT' and d['program']=='PROMPT_B' and d['section']==9 and d['status']=='PASS'
+    assert d['violations']==[] and d['summary']=={'required':12,'covered':12,'violations':0}
+    expected={'evidence-scope','evidence-freshness','source-revision','changed-file-ownership','mutation-invalidation','not-run-not-passed','worker-result-not-evidence','project-intelligence-not-evidence','context-summary-not-evidence','review-disposition','required-evidence-coverage','completion-obligation-reconciliation'}
+    assert {x['invariant'] for x in d['invariants']}==expected
+    assert d['static_guards']=={'project_intelligence_evidence_owner_paths':[],'context_evidence_owner_paths':[],'worker_result_is_mission_evidence_owner':False}
+    for row in d['invariants']:
+        owner=ROOT/row['owner'];proof=ROOT/row['proof'];assert owner.is_file() and proof.is_file()
+        assert hashlib.sha256(owner.read_bytes()).hexdigest()==row['owner_sha256'];assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
+        assert row['owner_anchor'] in owner.read_text(errors='ignore') and row['proof_anchor'] in proof.read_text(errors='ignore')
+    assert {'reviewer-done-auto-pass-evidence','worker-pass-without-source-state'}<={x['id'] for x in d['closed_defects']}
+    assert (ROOT/'scripts/audit-evidence-verification-completion.py').is_file()
