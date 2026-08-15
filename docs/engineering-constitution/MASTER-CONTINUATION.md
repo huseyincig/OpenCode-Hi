@@ -872,9 +872,12 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**PROMPT B — IN PROGRESS. Sections 20–30 are CLOSED. Next: Mutation testing (section 31).**
+**PROMPT B — IN PROGRESS. Sections 20–31 are CLOSED. Next: Property / fuzz testing (section 32).**
 
 
+
+
+Section 31 Mutation testing is closed by `data/validation/prompt-b-mutation-testing.json`: **9/9 required critical areas covered, 15/15 compiled mutants killed by their expected invariant guards, 0 survivors, 0 compile-only kills**. Coverage includes Authority deny/allow and exact-action binding, completion evidence, permission monotonicity, canonical owner uniqueness, stale evidence, path confinement, restart schema rejection, config executable effect, capability support truth, plus manager write authority, explicit STOP, reviewer independence and child control-plane isolation. `data/validation/selective-mutation-testing-0.1.0.json` is the machine-readable execution receipt. A mutant is not counted as killed merely because TypeScript compilation fails: every accepted mutant must compile and then cause the expected invariant guard to fail. No broad mutation-coverage percentage is claimed beyond this selective critical-invariant scope.
 
 Section 26 Packaging / fresh consumer is closed by `data/validation/prompt-b-packaging-fresh-consumer.json`: **8/8 invariants PASS, 0 violations**, backed by deterministic real-host receipt `data/validation/fresh-consumer-opencode-1.18.18.json`. A fresh tarball was built and installed outside the source tree; the package-provided `opencode-hi-setup` reconfigured the temp project; exact OpenCode **1.18.18** started against a consumer-local `.opencode/plugins/hi-packed.js` wrapper importing the installed package; the package resolved only under `<temp>/consumer/node_modules/opencode-hi/plugin/dist/plugin.js`; the exact host registered **31 Hi tools** including `hi_doctor`, `hi_status`, and `hi_task_start`; `coder` agent/config projection was visible; and provider-independent session creation succeeded. The server log contained no repository source-tree path. Isolated HOME intentionally had no `opencode-go` model inventory, so provider-backed chat/model execution was not claimed and is not required for this package/runtime acceptance boundary.
 

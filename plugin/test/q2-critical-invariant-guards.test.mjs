@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, rmSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
@@ -13,6 +13,12 @@ import { resolveHostCapability } from '../dist/runtime/host/capability-manifest.
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
 import { createToolBeforeHook } from '../dist/hooks/tool-before.js'
 import { resolveHiConfig } from '../dist/config/resolver.js'
+import { DEFAULT_HI_CONFIG } from '../dist/config/defaults.js'
+import { resolveModel } from '../dist/runtime/routing/model-resolver.js'
+import { evaluateProcessSpawnAuthority } from '../dist/runtime/process/authority.js'
+import { ProjectAuthorityStore, applyProjectAuthorityPermissions } from '../dist/runtime/safety/project-authority.js'
+import { STORAGE_OWNERSHIP_CATALOG, assertStorageOwnershipCatalog } from '../dist/contracts/storage-ownership.js'
+import { RuntimePersistence } from '../dist/runtime/state/persistence.js'
 import { startAssessedMission } from './helpers/semantic.mjs'
 
 test('Q2 manager remains denied direct repository write authority',()=>{
@@ -72,4 +78,57 @@ test('Q2 changed-file ownership path normalization binds absolute project paths 
 
 test('Q2 absent host capability is UNSUPPORTED, never optimistic support',()=>{
   assert.equal(resolveHostCapability({host:'mock',capabilities:{}},'workspace_isolation'),'UNSUPPORTED')
+})
+
+
+test('Q2 completion cannot pass without required evidence',()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'q2-completion','verify',{likely_verification:['targeted-tests']})
+  const result=verificationSatisfied(m)
+  assert.equal(result.ok,false)
+  assert.ok(result.missing.includes('targeted-tests'))
+})
+
+test('Q2 explicit native bash deny cannot become allow',()=>{
+  const result=evaluateProcessSpawnAuthority({mission_id:'m',task_id:'t',worker_id:'w',role:'coder',command:'echo',args:['ok'],cwd:'/repo',authority_ref:'a'},'/repo',{agent:{coder:{permission:{bash:'deny'}}}})
+  assert.equal(result.decision,'DENY')
+})
+
+test('Q2 project authority merge cannot widen a native top-level deny',()=>{
+  const root=mkdtempSync(join(tmpdir(),'q2-authority-monotonic-'))
+  try{
+    const store=new ProjectAuthorityStore(root);store.grant('git-push')
+    const config={permission:{bash:'deny'}}
+    applyProjectAuthorityPermissions(config,store)
+    assert.equal(config.permission.bash,'deny')
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+test('Q2 canonical storage owner uniqueness rejects duplicate scope/data-class ownership',()=>{
+  assert.throws(()=>assertStorageOwnershipCatalog([...STORAGE_OWNERSHIP_CATALOG,STORAGE_OWNERSHIP_CATALOG[0]]),/Duplicate canonical storage owner/)
+})
+
+test('Q2 restart persistence rejects unsupported schema instead of loading it',()=>{
+  const root=mkdtempSync(join(tmpdir(),'q2-schema-'))
+  try{
+    const persistence=new RuntimePersistence(root);persistence.save([])
+    const raw=JSON.parse(readFileSync(persistence.path,'utf8'));raw.schema=9;writeFileSync(persistence.path,JSON.stringify(raw))
+    assert.deepEqual(persistence.load(),[])
+    assert.match(persistence.lastLoadReport.error??'',/unsupported runtime-state schema 9/)
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+test('Q2 routing maxFallbacks has an executable effect',()=>{
+  const config=structuredClone(DEFAULT_HI_CONFIG);config.routing.maxFallbacks=0
+  const models=[
+    {id:'p/a',provider:'p',writeCapable:true,quality:8,cost:1,tags:['balanced']},
+    {id:'p/b',provider:'p',writeCapable:true,quality:7,cost:1,tags:['balanced']},
+    {id:'p/c',provider:'p',writeCapable:true,quality:6,cost:1,tags:['balanced']},
+  ]
+  const result=resolveModel('standard',models,config)
+  assert.equal(result.fallbacks.length,0)
+})
+
+test('Q2 absolute path confinement rejects paths outside the project root',()=>{
+  const root=mkdtempSync(join(tmpdir(),'q2-confine-'))
+  try{assert.equal(normalizeProjectPath(join(root,'..','escape.ts'),root),'')}finally{rmSync(root,{recursive:true,force:true})}
 })

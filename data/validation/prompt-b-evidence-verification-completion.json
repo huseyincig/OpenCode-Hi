@@ -20,7 +20,7 @@
       "owner_sha256": "ab91a9e8c45b8c86ff7b1f570c197584c84c9eb2c28ee885c8eee7299cadb022",
       "owner_anchor": "freshness=p.requireFresh&&!requiredEvidenceFresh?'stale':'fresh'",
       "proof": "plugin/test/q2-critical-invariant-guards.test.mjs",
-      "proof_sha256": "508f67cc3c24f105c6b9f7e95b8b019dfa8febfe420524cce47252bb358c0b9e",
+      "proof_sha256": "da74cbdd01a1498851ca49fa8a7d669d80e52970ec8b332c97f37da7e9107c9d",
       "proof_anchor": "Q2 invalidated pre-mutation evidence cannot satisfy freshness"
     },
     {

@@ -1281,3 +1281,17 @@ def test_prompt_b_test_suite_audit_is_isolated_bounded_and_never_promotes_mock_t
     assert h['status']=='PASS' and h['source_binding']['tested_git_commit']=='5210a12a7b607e0c9048749fa74a4c8b801cd924'
     assert h['canonical_suite_observation']=={'tests':816,'pass':816,'fail':0,'cancelled':0,'home_hi_state_before':5301,'home_hi_state_after':5301,'home_hi_state_delta':0}
     assert all(h['cwd_dual_run'][k]['tests']==17 and h['cwd_dual_run'][k]['pass']==17 and h['cwd_dual_run'][k]['fail']==0 for k in ('plugin_cwd','repo_root_cwd'))
+
+
+
+def test_prompt_b_mutation_testing_kills_all_critical_mutants_without_compile_only_credit():
+    d=json.loads((ROOT/'data/validation/prompt-b-mutation-testing.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_MUTATION_TESTING_AUDIT' and d['program']=='PROMPT_B' and d['section']==31 and d['status']=='PASS'
+    assert d['violations']==[] and d['summary']=={'required_areas':9,'configured_mutants':15,'killed_mutants':15,'survived_mutants':0,'compile_only_kills':0,'violations':0}
+    required={'authority_deny_allow','completion_evidence','permission_monotonicity','owner_uniqueness','stale_evidence','path_confinement','restart_schema_rejection','config_executable_effect','capability_support_truth'}
+    assert set(d['required_areas'])==required and all(d['static_guards'].values())
+    assert len(d['mutants'])==15 and len({x['id'] for x in d['mutants']})==15
+    assert all(x['status']=='KILLED_BY_INVARIANT_TEST' for x in d['mutants'])
+    a=json.loads((ROOT/d['acceptance_receipt']).read_text())
+    assert a['status']=='PASS' and a['summary']=={'configured':15,'killed':15,'survived':0,'compile_only_kills':0}
+    for rel,digest in d['proof_hashes'].items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest

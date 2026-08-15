@@ -38,7 +38,7 @@
       "owner_sha256": "e81c16ad08a0392b4cb5094500dd046a2ef0d9bf731159817fc67d0a4c4c6378",
       "owner_anchor": "target={cwd:cwd??'',command:command.trim()}",
       "proof": "plugin/test/q2-critical-invariant-guards.test.mjs",
-      "proof_sha256": "508f67cc3c24f105c6b9f7e95b8b019dfa8febfe420524cce47252bb358c0b9e",
+      "proof_sha256": "da74cbdd01a1498851ca49fa8a7d669d80e52970ec8b332c97f37da7e9107c9d",
       "proof_anchor": "Q2 authority approval is bound to the exact action hash"
     },
     {

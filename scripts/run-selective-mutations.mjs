@@ -11,6 +11,56 @@ const checkout=join(tempRoot,'checkout')
 const guard='plugin/test/q2-critical-invariant-guards.test.mjs'
 
 const mutants=[
+
+  {
+    id:'completion-required-evidence-bypass',
+    file:'plugin/src/runtime/verification/policy.ts',
+    from:"return{ok:missing.length===0,missing:[...new Set(missing)]}",
+    to:"return{ok:true,missing:[...new Set(missing)]}",
+    expected:/Q2 completion cannot pass without required evidence/,
+  },
+  {
+    id:'native-bash-deny-to-allow',
+    file:'plugin/src/runtime/process/authority.ts',
+    from:"if(bash==='deny')return{decision:'DENY',reason:'bash-permission:deny',command_line:commandLine,external_cwd:externalCwd}",
+    to:"if(false&&bash==='deny')return{decision:'DENY',reason:'bash-permission:deny',command_line:commandLine,external_cwd:externalCwd}",
+    expected:/Q2 explicit native bash deny cannot become allow/,
+  },
+  {
+    id:'project-authority-permission-widening',
+    file:'plugin/src/runtime/safety/project-authority.ts',
+    from:"if(existing==='deny'){config.permission=permission;return}",
+    to:"if(false&&existing==='deny'){config.permission=permission;return}",
+    expected:/Q2 project authority merge cannot widen a native top-level deny/,
+  },
+  {
+    id:'canonical-owner-uniqueness-bypass',
+    file:'plugin/src/contracts/storage-ownership.ts',
+    from:"if(seen.has(key))throw new Error(`Duplicate canonical storage owner: ${key}`)",
+    to:"if(false&&seen.has(key))throw new Error(`Duplicate canonical storage owner: ${key}`)",
+    expected:/Q2 canonical storage owner uniqueness rejects duplicate scope\/data-class ownership/,
+  },
+  {
+    id:'restart-schema-rejection-bypass',
+    file:'plugin/src/runtime/state/persistence.ts',
+    from:"if(schema!==RUNTIME_STATE_SCHEMA)throw new Error(`unsupported runtime-state schema ${String(parsed.schema)}`)",
+    to:"if(schema===RUNTIME_STATE_SCHEMA)throw new Error(`unsupported runtime-state schema ${String(parsed.schema)}`)",
+    expected:/Q2 restart persistence rejects unsupported schema instead of loading it/,
+  },
+  {
+    id:'config-max-fallbacks-executable-effect-bypass',
+    file:'plugin/src/runtime/routing/model-resolver.ts',
+    from:"fallbacks=ordered.slice(1,1+config.routing.maxFallbacks)",
+    to:"fallbacks=ordered.slice(1,1+6)",
+    expected:/Q2 routing maxFallbacks has an executable effect/,
+  },
+  {
+    id:'path-confinement-parent-segment-bypass',
+    file:'plugin/src/contracts/common.ts',
+    from:"segments.some(segment=>!segment||segment==='.'||segment==='..')",
+    to:"segments.some(segment=>!segment||segment==='.')",
+    expected:/Q2 absolute path confinement rejects paths outside the project root/,
+  },
   {
     id:'manager-write-deny-to-allow',
     file:'plugin/src/runtime/roles/catalog.ts',
@@ -28,43 +78,43 @@ const mutants=[
   {
     id:'stop-bypass',
     file:'plugin/src/runtime/continuation/evaluator.ts',
-    from:"if(m.user_interrupted||m.status==='stopped')return{decision:'STOP',reason:'user-stop',reason_code:'user-stop'}",
-    to:"if(false)return{decision:'STOP',reason:'user-stop',reason_code:'user-stop'}",
+    from:"if(m.continuation.user_interrupted||m.identity.status==='stopped')return{decision:'STOP',reason:'user-stop',reason_code:'user-stop'}",
+    to:"if(m.continuation.user_interrupted&&m.identity.status==='stopped')return{decision:'STOP',reason:'user-stop',reason_code:'user-stop'}",
     expected:/Q2 explicit user stop dominates idle continuation/,
   },
   {
     id:'external-action-exact-hash-bypass',
     file:'plugin/src/runtime/safety/authority.ts',
-    from:"export function isAuthorized(m:MissionState,command:string,cwd?:string):boolean{const c=actionContract(command,cwd);return m.authority?.approved?.hash===c.hash}",
-    to:"export function isAuthorized(m:MissionState,command:string,cwd?:string):boolean{actionContract(command,cwd);return Boolean(m.authority?.approved)}",
+    from:"export function isAuthorized(m:MissionState,command:string,cwd?:string):boolean{const c=actionContract(command,cwd),a=m.authority.authority?.approved;return Boolean(a&&a.hash===c.hash&&freshAuthorityTimestamp(a.approved_at))}",
+    to:"export function isAuthorized(m:MissionState,command:string,cwd?:string):boolean{actionContract(command,cwd);const a=m.authority.authority?.approved;return Boolean(a&&freshAuthorityTimestamp(a.approved_at))}",
     expected:/Q2 authority approval is bound to the exact action hash/,
   },
   {
     id:'reviewer-independence-bypass',
     file:'plugin/src/runtime/verification/policy.ts',
-    from:"const review=m.obligations.find(o=>o.kind==='review'),independentReview=!p.requireReview||review?.status==='closed'",
-    to:"const review=m.obligations.find(o=>o.kind==='review'),independentReview=Boolean(review)||true",
+    from:"const review=m.execution.obligations.find(o=>o.kind==='review'),independentReview=!p.requireReview||review?.status==='closed'",
+    to:"const review=m.execution.obligations.find(o=>o.kind==='review'),independentReview=!p.requireReview||Boolean(review)",
     expected:/Q2 open independent-review obligation cannot be represented as independently reviewed/,
   },
   {
     id:'child-control-plane-deny-bypass',
     file:'plugin/src/hooks/tool-before.ts',
-    from:"if(child&&tool.startsWith('hi_'))throw new Error(`Hi ownership guard: child workers cannot invoke Hi control-plane tool '${tool}'.`)",
-    to:"if(false&&child&&tool.startsWith('hi_'))throw new Error(`Hi ownership guard: child workers cannot invoke Hi control-plane tool '${tool}'.`)",
+    from:"else throw new Error(`Hi ownership guard: child workers cannot invoke Hi control-plane tool '${tool}'.`)",
+    to:"else if(tool==='__mutation_never__')throw new Error(`Hi ownership guard: child workers cannot invoke Hi control-plane tool '${tool}'.`)",
     expected:/Q2 child session cannot invoke Hi control-plane tools/,
   },
   {
     id:'changed-file-normalization-bypass',
     file:'plugin/src/runtime/evidence/evidence-runtime.ts',
-    from:"if(rel==='..'||rel.startsWith(`..${sep}`)||absolutePath(rel))return clean;",
-    to:"if(rel==='..'||rel.startsWith(`..${sep}`)||absolutePath(rel)||Boolean(root&&abs))return clean;",
+    from:"if(!rel)return'';if(rel==='..'",
+    to:"if(!rel)return'';return'';if(rel==='..'",
     expected:/Q2 changed-file ownership path normalization binds absolute project paths to relative scope/,
   },
   {
     id:'unsupported-host-capability-optimistic-support',
     file:'plugin/src/runtime/host/capability-manifest.ts',
-    from:"return manifest.capabilities[capability]??'UNSUPPORTED'",
-    to:"return manifest.capabilities[capability]??'NATIVE'",
+    from:"export function resolveHostCapability(manifest:CapabilityManifest,capability:HostCapability):CapabilityResolution{return manifest.capabilities[capability]??'UNSUPPORTED'}",
+    to:"export function resolveHostCapability(manifest:CapabilityManifest,capability:HostCapability):CapabilityResolution{return manifest.capabilities[capability]??'NATIVE'}",
     expected:/Q2 absent host capability is UNSUPPORTED, never optimistic support/,
   },
 ]
@@ -84,7 +134,7 @@ try{
   build()
   const baseline=testGuard()
   assert.equal(baseline.status,0,'Q2 mutation baseline guard must be green')
-  console.log('mutation baseline passed: 8/8 invariant guards green')
+  console.log(`mutation baseline passed: ${mutants.length} selective invariant guards configured`)
 
   for(const mutant of mutants){
     restore(mutant.file)
@@ -100,6 +150,10 @@ try{
     assert.match(combined,mutant.expected,`${mutant.id}: suite failed, but not at the expected invariant guard`)
     console.log(`killed mutant: ${mutant.id}`)
   }
+  const sourceCommit=spawnSync('git',['rev-parse','HEAD'],{cwd:repository,encoding:'utf8'}).stdout.trim()
+  const sourceTree=spawnSync('git',['rev-parse','HEAD^{tree}'],{cwd:repository,encoding:'utf8'}).stdout.trim()
+  const receipt={schema:1,kind:'PROMPT_B_SELECTIVE_MUTATION_ACCEPTANCE',program:'PROMPT_B',section:31,status:'PASS',source:{commit:sourceCommit,tree:sourceTree},summary:{configured:mutants.length,killed:mutants.length,survived:0,compile_only_kills:0},mutants:mutants.map(m=>({id:m.id,status:'KILLED_BY_INVARIANT_TEST',source:m.file})),coverage:{authority_deny_allow:['native-bash-deny-to-allow','external-action-exact-hash-bypass'],completion_evidence:['completion-required-evidence-bypass'],permission_monotonicity:['project-authority-permission-widening'],owner_uniqueness:['canonical-owner-uniqueness-bypass'],stale_evidence:['evidence-freshness-bypass'],path_confinement:['path-confinement-parent-segment-bypass','changed-file-normalization-bypass'],restart_schema_rejection:['restart-schema-rejection-bypass'],config_executable_effect:['config-max-fallbacks-executable-effect-bypass'],capability_support_truth:['unsupported-host-capability-optimistic-support'],additional_critical_guards:['manager-write-deny-to-allow','stop-bypass','reviewer-independence-bypass','child-control-plane-deny-bypass']},claim_boundary:'Selective mutation testing only. A mutant counts as killed only when the compiled mutant is rejected by the expected invariant guard; compile failures are not accepted as kills.'}
+  writeFileSync(join(repository,'data/validation/selective-mutation-testing-0.1.0.json'),JSON.stringify(receipt,null,2)+'\n')
   console.log(`selective mutation contract passed (${mutants.length}/${mutants.length} critical mutants killed)`)
 }finally{
   rmSync(tempRoot,{recursive:true,force:true})

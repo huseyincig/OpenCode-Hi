@@ -662,6 +662,27 @@ try:
         if x.get('status')!='SUPPORTED_T3' or x.get('tested_git_commit')!='5210a12a7b607e0c9048749fa74a4c8b801cd924':err(f'PROMPT B §30 exact T3 selection drift: {cap}')
 except Exception as e:err(f'bad PROMPT B test-suite receipt: {e}')
 
+
+# PROMPT B §31 mutation testing certification
+try:
+    m31=json.loads((ROOT/'data/validation/prompt-b-mutation-testing.json').read_text(encoding='utf-8'))
+    if m31.get('schema')!=1 or m31.get('kind')!='PROMPT_B_MUTATION_TESTING_AUDIT' or m31.get('program')!='PROMPT_B' or m31.get('section')!=31 or m31.get('status')!='PASS':err('bad PROMPT B mutation testing audit receipt identity/status')
+    expected_summary={'required_areas':9,'configured_mutants':15,'killed_mutants':15,'survived_mutants':0,'compile_only_kills':0,'violations':0}
+    if m31.get('summary')!=expected_summary or m31.get('violations')!=[]:err('PROMPT B mutation testing summary drift')
+    required={'authority_deny_allow','completion_evidence','permission_monotonicity','owner_uniqueness','stale_evidence','path_confinement','restart_schema_rejection','config_executable_effect','capability_support_truth'}
+    if set(m31.get('required_areas') or [])!=required:err('PROMPT B mutation testing required area drift')
+    if not all((m31.get('static_guards') or {}).values()):err('PROMPT B mutation testing static guard drift')
+    mutants=m31.get('mutants') or []
+    if len(mutants)!=15 or len({x.get('id') for x in mutants if isinstance(x,dict)})!=15 or any(x.get('status')!='KILLED_BY_INVARIANT_TEST' for x in mutants if isinstance(x,dict)):err('PROMPT B mutation inventory/kill drift')
+    for rel,expected in (m31.get('proof_hashes') or {}).items():
+        if not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B mutation proof hash drift: '+str(rel))
+    ar=m31.get('acceptance_receipt')
+    if not isinstance(ar,str) or not (ROOT/ar).is_file():err('PROMPT B mutation acceptance receipt missing')
+    else:
+        ma=json.loads((ROOT/ar).read_text(encoding='utf-8'))
+        if ma.get('status')!='PASS' or ma.get('summary')!={'configured':15,'killed':15,'survived':0,'compile_only_kills':0}:err('PROMPT B mutation acceptance drift')
+except Exception as e:err(f'bad PROMPT B mutation testing receipt: {e}')
+
 try:
     nr=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text(encoding='utf-8'))
     if nr.get('schema')!=1 or nr.get('kind')!='EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION' or nr.get('program')!='PROMPT_B' or nr.get('status')!='PASS':err('bad PROMPT B native reevaluation receipt identity/status')
