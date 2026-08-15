@@ -1,0 +1,393 @@
+{
+  "completion": [
+    {
+      "expected": {
+        "complete": true,
+        "next": null,
+        "reason_classes": [
+          "all-required-obligations-closed",
+          "no-pending-work",
+          "fresh-evidence",
+          "all-gates-closed"
+        ]
+      },
+      "id": "completion-clean",
+      "scenario": "clean"
+    },
+    {
+      "expected": {
+        "complete": false,
+        "next": null,
+        "reason_classes": [
+          "user-stopped"
+        ]
+      },
+      "id": "completion-stopped",
+      "scenario": "stopped"
+    },
+    {
+      "expected": {
+        "complete": false,
+        "next": "CONTINUE",
+        "reason_classes": [
+          "active-worker"
+        ]
+      },
+      "id": "completion-active-worker",
+      "scenario": "active-worker"
+    },
+    {
+      "expected": {
+        "complete": false,
+        "next": "VERIFY",
+        "reason_classes": [
+          "open-obligations",
+          "verification-missing"
+        ]
+      },
+      "id": "completion-verification-missing",
+      "scenario": "verification-missing"
+    },
+    {
+      "expected": {
+        "complete": false,
+        "next": "RECONCILE",
+        "reason_classes": [
+          "pending-task",
+          "worker-result-unreconciled"
+        ]
+      },
+      "id": "completion-reconcile",
+      "scenario": "reconcile"
+    }
+  ],
+  "host_events": [
+    {
+      "expected": {
+        "filePaths": [],
+        "kind": "session-status",
+        "permission": null,
+        "rawType": "session.status",
+        "sessionID": "s1",
+        "status": "busy"
+      },
+      "id": "host-session-status-object",
+      "raw": {
+        "properties": {
+          "sessionID": "s1",
+          "status": {
+            "type": "busy"
+          }
+        },
+        "type": "session.status"
+      }
+    },
+    {
+      "expected": {
+        "filePaths": [],
+        "kind": "permission-asked",
+        "permission": {
+          "decision": "unknown",
+          "id": "p1",
+          "patterns": [
+            "git push *"
+          ],
+          "reply": "unknown"
+        },
+        "rawType": "permission.asked",
+        "sessionID": "s2",
+        "status": "unknown"
+      },
+      "id": "host-permission-asked",
+      "raw": {
+        "properties": {
+          "id": "p1",
+          "patterns": [
+            "git push *"
+          ],
+          "sessionID": "s2"
+        },
+        "type": "permission.asked"
+      }
+    },
+    {
+      "expected": {
+        "filePaths": [],
+        "kind": "permission-replied",
+        "permission": {
+          "decision": "allow",
+          "id": "p1",
+          "patterns": [
+            "git push *"
+          ],
+          "reply": "always"
+        },
+        "rawType": "permission.replied",
+        "sessionID": "s2",
+        "status": "unknown"
+      },
+      "id": "host-permission-always",
+      "raw": {
+        "properties": {
+          "patterns": [
+            "git push *"
+          ],
+          "permissionID": "p1",
+          "response": "always",
+          "sessionID": "s2"
+        },
+        "type": "permission.replied"
+      }
+    },
+    {
+      "expected": {
+        "filePaths": [
+          "src/a.ts"
+        ],
+        "kind": "file-edited",
+        "permission": null,
+        "rawType": "file.edited",
+        "sessionID": "s3",
+        "status": "unknown"
+      },
+      "id": "host-file-edited",
+      "raw": {
+        "properties": {
+          "file": "src/a.ts",
+          "sessionID": "s3"
+        },
+        "type": "file.edited"
+      }
+    },
+    {
+      "expected": {
+        "filePaths": [],
+        "kind": "unknown",
+        "permission": null,
+        "rawType": "future.event",
+        "sessionID": "s4",
+        "status": "mystery"
+      },
+      "id": "host-unknown-event",
+      "raw": {
+        "properties": {
+          "sessionID": "s4",
+          "status": "mystery"
+        },
+        "type": "future.event"
+      }
+    }
+  ],
+  "kind": "PROMPT_B_REPLAY_CORPUS",
+  "recovery": [
+    {
+      "expected": {
+        "action": "continue",
+        "level": 0
+      },
+      "id": "recovery-0",
+      "stagnation_count": 0
+    },
+    {
+      "expected": {
+        "action": "same-worker-resume",
+        "level": 1
+      },
+      "id": "recovery-1",
+      "stagnation_count": 1
+    },
+    {
+      "expected": {
+        "action": "model-escalation",
+        "level": 2
+      },
+      "id": "recovery-2",
+      "stagnation_count": 2
+    },
+    {
+      "expected": {
+        "action": "narrow-task",
+        "level": 3
+      },
+      "id": "recovery-3",
+      "stagnation_count": 3
+    },
+    {
+      "expected": {
+        "action": "alternate-plan",
+        "level": 4
+      },
+      "id": "recovery-4",
+      "stagnation_count": 4
+    },
+    {
+      "expected": {
+        "action": "fresh-worker",
+        "level": 5
+      },
+      "id": "recovery-5",
+      "stagnation_count": 5
+    },
+    {
+      "expected": {
+        "action": "user-action",
+        "level": 6
+      },
+      "id": "recovery-6",
+      "stagnation_count": 6
+    },
+    {
+      "expected": {
+        "action": "user-action",
+        "level": 6
+      },
+      "id": "recovery-7-plus",
+      "stagnation_count": 9
+    }
+  ],
+  "schema": 1,
+  "section": 33,
+  "worker_scheduling": [
+    {
+      "expected": {
+        "ok": true,
+        "reason": "capacity-available"
+      },
+      "id": "scheduler-fresh-capacity",
+      "operations": [],
+      "policy": {
+        "global": 2,
+        "models": {
+          "alpha/m1": 1,
+          "beta/m1": 1
+        },
+        "providers": {
+          "alpha": 1,
+          "beta": 2
+        }
+      },
+      "query": {
+        "id": "w1",
+        "model": "alpha/m1",
+        "provider": "alpha"
+      }
+    },
+    {
+      "expected": {
+        "ok": false,
+        "reason": "provider-capacity:alpha"
+      },
+      "id": "scheduler-provider-saturated",
+      "operations": [
+        {
+          "id": "w1",
+          "model": "alpha/m1",
+          "op": "acquire",
+          "provider": "alpha"
+        }
+      ],
+      "policy": {
+        "global": 3,
+        "models": {},
+        "providers": {
+          "alpha": 1
+        }
+      },
+      "query": {
+        "id": "w2",
+        "model": "alpha/m2",
+        "provider": "alpha"
+      }
+    },
+    {
+      "expected": {
+        "ok": false,
+        "reason": "model-capacity:shared/m1"
+      },
+      "id": "scheduler-model-saturated",
+      "operations": [
+        {
+          "id": "w1",
+          "model": "shared/m1",
+          "op": "acquire",
+          "provider": "alpha"
+        }
+      ],
+      "policy": {
+        "global": 3,
+        "models": {
+          "shared/m1": 1
+        },
+        "providers": {
+          "alpha": 2,
+          "beta": 2
+        }
+      },
+      "query": {
+        "id": "w2",
+        "model": "shared/m1",
+        "provider": "beta"
+      }
+    },
+    {
+      "expected": {
+        "ok": true,
+        "reason": "capacity-available"
+      },
+      "id": "scheduler-release-readmits",
+      "operations": [
+        {
+          "id": "w1",
+          "model": "alpha/m1",
+          "op": "acquire",
+          "provider": "alpha"
+        },
+        {
+          "id": "w1",
+          "op": "release"
+        }
+      ],
+      "policy": {
+        "global": 2,
+        "models": {},
+        "providers": {
+          "alpha": 1
+        }
+      },
+      "query": {
+        "id": "w2",
+        "model": "alpha/m2",
+        "provider": "alpha"
+      }
+    },
+    {
+      "expected": {
+        "ok": true,
+        "reason": "already-acquired"
+      },
+      "id": "scheduler-idempotent-current-slot",
+      "operations": [
+        {
+          "id": "w1",
+          "model": "alpha/m1",
+          "op": "acquire",
+          "provider": "alpha"
+        }
+      ],
+      "policy": {
+        "global": 1,
+        "models": {
+          "alpha/m1": 1
+        },
+        "providers": {
+          "alpha": 1
+        }
+      },
+      "query": {
+        "id": "w1",
+        "model": "alpha/m1",
+        "provider": "alpha"
+      }
+    }
+  ]
+}

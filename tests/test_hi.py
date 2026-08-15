@@ -1319,3 +1319,15 @@ def test_prompt_b_property_fuzz_testing_is_bounded_reproducible_and_source_bound
     assert a['terminal']=={'tests':9,'pass':9,'fail':0,'cancelled':0,'skipped':0,'todo':0} and a['failures']==[]
     case=json.loads((ROOT/'data/validation/property-fuzz-failures/persistence-envelopes-seed-c0ffee-case-0.json').read_text())
     assert case['kind']=='PROPERTY_FUZZ_HISTORICAL_REGRESSION_CASE' and case['observed_before_fix']=='accepted-malformed-persisted-mission' and case['expected']=='reject-malformed-persisted-mission'
+
+
+def test_prompt_b_replay_testing_detects_semantic_drift_across_all_required_surfaces():
+    d=json.loads((ROOT/'data/validation/prompt-b-replay-testing.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_REPLAY_TESTING_AUDIT' and d['program']=='PROMPT_B' and d['section']==33 and d['status']=='PASS'
+    assert d['violations']==[] and d['summary']=={'required_surfaces':5,'covered_surfaces':5,'cases':28,'nondeterministic_drift':0,'violations':0}
+    assert d['surface_counts']=={'semantic_routing':5,'worker_scheduling':5,'host_events':5,'completion':5,'recovery':8} and all(d['static_guards'].values())
+    a=json.loads((ROOT/d['acceptance_receipt']).read_text())
+    assert a['status']=='PASS' and a['source_binding']=={'tested_git_commit':'bca552865d060d41a629199ae9552a000324a7b2','tested_git_tree':'5ada6731d3b0d15219eb5b37f0dbd44c6b4f21f1'}
+    assert a['nondeterministic_semantic_drift'] is False and a['first_pass_digest']==a['second_pass_digest'] and a['mismatches']==[] and a['total_cases']==28
+    for rel,digest in {**a['inputs'],**a['owner_hashes']}.items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
+    for rel,digest in d['proof_hashes'].items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest

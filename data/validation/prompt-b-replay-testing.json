@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_REPLAY_TESTING_AUDIT",
+  "program": "PROMPT_B",
+  "section": 33,
+  "status": "PASS",
+  "acceptance_receipt": "data/validation/replay-acceptance-0.1.0.json",
+  "summary": {
+    "required_surfaces": 5,
+    "covered_surfaces": 5,
+    "cases": 28,
+    "nondeterministic_drift": 0,
+    "violations": 0
+  },
+  "surface_counts": {
+    "semantic_routing": 5,
+    "worker_scheduling": 5,
+    "host_events": 5,
+    "completion": 5,
+    "recovery": 8
+  },
+  "proof_hashes": {
+    "scripts/run-replay-acceptance.mjs": "14dbcbee9ec5de34e967ed2e9ced9946fb093c0a1d535beb060e5ed7d110c13f",
+    "data/validation/replay-corpus.json": "6427ed31a0e5fdec1036eabd2d4dc8c66491b7bb26c73adc9fa31cbeb6a0acc8",
+    "data/validation/decision-replay/semantic-routing.jsonl": "07d461dc8b088db319ae2bb1816a875914f2db4a3aec1f4d8e0a71c1f8fd1bf0"
+  },
+  "static_guards": {
+    "machine-readable-corpus": true,
+    "semantic-routing": true,
+    "worker-scheduling": true,
+    "host-events": true,
+    "completion": true,
+    "recovery": true,
+    "two-pass-drift-detection": true
+  },
+  "violations": [],
+  "claim_boundary": "Replay certification covers deterministic semantic/routing decisions, worker scheduler decisions, host event normalization, completion decisions, and bounded recovery. Any replay output mismatch or two-pass digest drift fails the audit; this is not live-host/provider evidence."
+}

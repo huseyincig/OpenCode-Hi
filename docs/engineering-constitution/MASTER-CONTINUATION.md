@@ -872,10 +872,12 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**PROMPT B — IN PROGRESS. Sections 20–32 are CLOSED. Next: Replay testing (section 33).**
+**PROMPT B — IN PROGRESS. Sections 20–33 are CLOSED. Next: Failure injection (section 34).**
 
 
 
+
+Section 33 Replay testing is closed by `data/validation/prompt-b-replay-testing.json`: **5/5 required replay surfaces covered, 28 machine-readable cases, 0 mismatches, 0 nondeterministic semantic drift**. Replay executes canonical semantic/routing decisions, worker concurrency scheduling, OpenCode host-event normalization, Completion decisions, and bounded recovery twice and requires identical normalized digests. Existing semantic-routing JSONL remains a tests-only corpus; `data/validation/replay-corpus.json` adds scheduler, host-event, completion, and recovery cases. `data/validation/replay-acceptance-0.1.0.json` is source-bound to `bca552865d060d41a629199ae9552a000324a7b2` (tree `5ada6731d3b0d15219eb5b37f0dbd44c6b4f21f1`) and hashes every canonical replay owner/input. Any expected-output mismatch or two-pass digest difference fails replay rather than being normalized away.
 
 Section 32 Property / fuzz testing is closed by `data/validation/prompt-b-property-fuzz-testing.json`: **9/9 required fuzz areas covered, 864 deterministic generated cases, 0 unresolved failures**. Fixed seeds are `0x00c0ffee`, `0x5eed1234`, and `0x000a11ce`, with 32 cases per seed across IDs, paths, schemas, event ordering, malformed host observations, config, decision payloads, tool outputs, and persistence envelopes. Fuzzing found and closed one real persistence defect: a persisted Mission with an unknown `identity.extra` field was accepted. Mission identity, intent, and semantic-assessment validation now rejects unknown keys fail-closed. The original failing seed/case is preserved as a concise deterministic historical regression record under `data/validation/property-fuzz-failures/`. Acceptance is source-bound to checkpoint `6fe74d7786e25cb6894ddca7d4408a17220cc936` (tree `3bf72be8b22082a720f2fa6aa271d56b100e5528`).
 

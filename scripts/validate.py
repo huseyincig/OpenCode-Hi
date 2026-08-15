@@ -713,6 +713,22 @@ try:
     if case.get('kind')!='PROPERTY_FUZZ_HISTORICAL_REGRESSION_CASE' or case.get('observed_before_fix')!='accepted-malformed-persisted-mission':err('PROMPT B property/fuzz historical regression case drift')
 except Exception as e:err(f'bad PROMPT B property/fuzz testing receipt: {e}')
 
+# PROMPT B §33 replay testing certification
+try:
+    r33=json.loads((ROOT/'data/validation/prompt-b-replay-testing.json').read_text(encoding='utf-8'))
+    if r33.get('schema')!=1 or r33.get('kind')!='PROMPT_B_REPLAY_TESTING_AUDIT' or r33.get('program')!='PROMPT_B' or r33.get('section')!=33 or r33.get('status')!='PASS':err('bad PROMPT B replay testing audit receipt identity/status')
+    if r33.get('summary')!={'required_surfaces':5,'covered_surfaces':5,'cases':28,'nondeterministic_drift':0,'violations':0} or r33.get('violations')!=[]:err('PROMPT B replay testing summary drift')
+    if r33.get('surface_counts')!={'semantic_routing':5,'worker_scheduling':5,'host_events':5,'completion':5,'recovery':8}:err('PROMPT B replay surface inventory drift')
+    if not all((r33.get('static_guards') or {}).values()):err('PROMPT B replay static guard drift')
+    for rel,expected in (r33.get('proof_hashes') or {}).items():
+        if not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B replay proof hash drift: '+str(rel))
+    a=json.loads((ROOT/r33['acceptance_receipt']).read_text(encoding='utf-8'))
+    if a.get('status')!='PASS' or a.get('source_binding')!={'tested_git_commit':'bca552865d060d41a629199ae9552a000324a7b2','tested_git_tree':'5ada6731d3b0d15219eb5b37f0dbd44c6b4f21f1'}:err('PROMPT B replay source binding drift')
+    if a.get('nondeterministic_semantic_drift') is not False or a.get('first_pass_digest')!=a.get('second_pass_digest') or a.get('mismatches')!=[]:err('PROMPT B replay deterministic digest drift')
+    for rel,expected in {**(a.get('inputs') or {}),**(a.get('owner_hashes') or {})}.items():
+        if not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B replay acceptance source/input drift: '+str(rel))
+except Exception as e:err(f'bad PROMPT B replay testing receipt: {e}')
+
 try:
     nr=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text(encoding='utf-8'))
     if nr.get('schema')!=1 or nr.get('kind')!='EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION' or nr.get('program')!='PROMPT_B' or nr.get('status')!='PASS':err('bad PROMPT B native reevaluation receipt identity/status')
