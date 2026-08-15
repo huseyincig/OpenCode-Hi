@@ -71,7 +71,7 @@
     {
       "invariant": "out-of-order-callback",
       "owner": "plugin/src/runtime/task/child-execution-coordinator.ts",
-      "owner_sha256": "d2f76e60c8f9517731603b962cfb2bac5745602119ff1348e73a5d798493964b",
+      "owner_sha256": "1f9178df13fa1e09f8efc239ecf872116c5d6635f5fed76855f0d121839507fc",
       "proof": "plugin/test/prompt-b-mission-task-worker-adversarial.test.mjs",
       "proof_sha256": "58147e750b024a3d482f0bee20ce4c5b1e3f13bf6d26add8c30741265107aeff",
       "owner_anchor": "matches.length===1",
@@ -91,7 +91,7 @@
       "owner": "plugin/src/runtime/task/task-runtime.ts",
       "owner_sha256": "fbb0e0dad347abfd5026b547239b3f00e952ddd5d1ef09df01507206726bf9ed",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "f149d9bde62f3f73685915628f5a20e6e9f55a6f640675a3441b3610757398f2",
+      "proof_sha256": "2911ea2503a7fc523c187e75f9e96d7b45d75be5c30cc1aef9d245d708ac3f21",
       "owner_anchor": "async cancel(m:MissionState",
       "proof_anchor": "W2 explicit isolated task provisions one lease, binds child workspace, preserves deny permission, and cleanup follows child abort"
     },

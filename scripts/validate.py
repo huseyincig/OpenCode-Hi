@@ -452,6 +452,27 @@ try:
 except Exception as e:err(f'bad PROMPT B Persistence/Concurrency receipt: {e}')
 
 try:
+    vp=json.loads((ROOT/'data/validation/prompt-b-vcs-path-portability.json').read_text(encoding='utf-8'))
+    if vp.get('schema')!=1 or vp.get('kind')!='PROMPT_B_VCS_PATH_PORTABILITY_ADVERSARIAL_AUDIT' or vp.get('program')!='PROMPT_B' or vp.get('sections')!=[18,19] or vp.get('status')!='PASS':err('bad PROMPT B VCS/Path audit receipt')
+    if vp.get('violations')!=[] or vp.get('summary')!={'required':31,'covered':31,'violations':0,'by_section':{'18':{'required':13,'covered':13},'19':{'required':18,'covered':18}}}:err('PROMPT B VCS/Path coverage drift')
+    rows=vp.get('invariants') or []
+    if len(rows)!=31 or {x.get('section') for x in rows if isinstance(x,dict)}!={18,19}:err('PROMPT B VCS/Path invariant inventory drift')
+    import hashlib
+    for row in rows:
+        for key in ('owner','proof'):
+            rel=row.get(key);expected=row.get(f'{key}_sha256')
+            if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B VCS/Path missing {key}: {rel}');continue
+            if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B VCS/Path {key} hash drift: {rel}')
+        try:
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B VCS/Path owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B VCS/Path proof anchor drift: {row.get('invariant')}")
+        except Exception as e:err(f'PROMPT B VCS/Path row invalid: {e}')
+    if not all((vp.get('static_guards') or {}).values()):err('PROMPT B VCS/Path static guard drift')
+    closed={x.get('id') for x in vp.get('closed_defects',[]) if isinstance(x,dict)}
+    if not {'unbounded-repository-path-identity','browser-host-user-cache-literal','browser-stale-spa-route-observation'}<=closed:err('PROMPT B VCS/Path closed defect receipt drift')
+except Exception as e:err(f'bad PROMPT B VCS/Path receipt: {e}')
+
+try:
     nr=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text(encoding='utf-8'))
     if nr.get('schema')!=1 or nr.get('kind')!='EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION' or nr.get('program')!='PROMPT_B' or nr.get('status')!='PASS':err('bad PROMPT B native reevaluation receipt identity/status')
     oc=nr.get('opencode',{})

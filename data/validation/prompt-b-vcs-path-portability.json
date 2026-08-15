@@ -1,0 +1,361 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_VCS_PATH_PORTABILITY_ADVERSARIAL_AUDIT",
+  "program": "PROMPT_B",
+  "sections": [
+    18,
+    19
+  ],
+  "status": "PASS",
+  "invariants": [
+    {
+      "section": 18,
+      "invariant": "user-dirty-files",
+      "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
+      "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
+      "owner_anchor": "user-diff.preserved",
+      "proof": "plugin/test/native-diff-ownership.test.mjs",
+      "proof_sha256": "80715d317bd431ce5c3ed8c3b6dbe4caf3baeac487c50d1ce7615ecb309ee3e4",
+      "proof_anchor": "pre-existing user dirty file unchanged from worker baseline"
+    },
+    {
+      "section": 18,
+      "invariant": "pre-staged-files",
+      "owner": "plugin/src/runtime/safety/staging-safety.ts",
+      "owner_sha256": "241585c04b86244704b9ce7484b9b3510c05fb99377fef43f11b0ecd00732867",
+      "owner_anchor": "recordStagingInspection",
+      "proof": "plugin/test/w2-workspace-executor.test.mjs",
+      "proof_sha256": "2911ea2503a7fc523c187e75f9e96d7b45d75be5c30cc1aef9d245d708ac3f21",
+      "proof_anchor": "preserves pre-staged and unstaged user changes exactly"
+    },
+    {
+      "section": 18,
+      "invariant": "untracked-files",
+      "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
+      "owner_sha256": "fb00575bcad4c6679bc5f173732514745b30bd53057b30eb6ad91a5f636f6003",
+      "owner_anchor": "defaultInspect",
+      "proof": "plugin/test/w2-workspace-executor.test.mjs",
+      "proof_sha256": "2911ea2503a7fc523c187e75f9e96d7b45d75be5c30cc1aef9d245d708ac3f21",
+      "proof_anchor": "untracked user"
+    },
+    {
+      "section": 18,
+      "invariant": "worker-changes",
+      "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
+      "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
+      "owner_anchor": "native.diff.reconciled",
+      "proof": "plugin/test/native-diff-ownership.test.mjs",
+      "proof_sha256": "80715d317bd431ce5c3ed8c3b6dbe4caf3baeac487c50d1ce7615ecb309ee3e4",
+      "proof_anchor": "observed native write omitted from WorkerResult forces reconciliation"
+    },
+    {
+      "section": 18,
+      "invariant": "independent-worker-changes",
+      "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
+      "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
+      "owner_anchor": "parallel.write-conflict.quarantined",
+      "proof": "plugin/test/runtime-write-conflict.test.mjs",
+      "proof_sha256": "1ceae748c74bda866791482d0bb32ba46d1d056e5881d92ba6dd365135728f50",
+      "proof_anchor": "overlapping writes quarantine the later writer"
+    },
+    {
+      "section": 18,
+      "invariant": "verification-touching-files",
+      "owner": "plugin/src/runtime/evidence/evidence-runtime.ts",
+      "owner_sha256": "e48c410c0b8e575306e711578beb762ac8849cce5b679eca495751798b9b7112",
+      "owner_anchor": "shellMayMutate(command)",
+      "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
+      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_anchor": "verification command that may mutate files invalidates earlier Evidence"
+    },
+    {
+      "section": 18,
+      "invariant": "failed-task",
+      "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
+      "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
+      "owner_anchor": "FIX_REQUIRED",
+      "proof": "plugin/test/diff-cleanliness-hardening.test.mjs",
+      "proof_sha256": "825a76461744c2e999eb4ba4b291aafc784268a12e84913d8321559daa6e6b23",
+      "proof_anchor": "undeclared out-of-scope change converts DONE to FIX_REQUIRED"
+    },
+    {
+      "section": 18,
+      "invariant": "recovery",
+      "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
+      "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
+      "owner_anchor": "diff.cleanup.verified",
+      "proof": "plugin/test/native-diff-ownership.test.mjs",
+      "proof_sha256": "80715d317bd431ce5c3ed8c3b6dbe4caf3baeac487c50d1ce7615ecb309ee3e4",
+      "proof_anchor": "native diff must prove collateral reverted before cleanup blocker can close"
+    },
+    {
+      "section": 18,
+      "invariant": "rollback",
+      "owner": "plugin/src/runtime/mutations/temporary-mutations.ts",
+      "owner_sha256": "c9d094f994f65983dfe41cf06f8662fa16534b89fcd398a8be3e4c96f5907977",
+      "owner_anchor": "rollback",
+      "proof": "plugin/test/forensic-hardening.test.mjs",
+      "proof_sha256": "496210535aeea920852c6654bbafca8a50cbcf723a770b78d65cff275999792f",
+      "proof_anchor": "command rollback with unknown exit cannot close rollback gate"
+    },
+    {
+      "section": 18,
+      "invariant": "workspace-reconcile",
+      "owner": "plugin/src/runtime/workspace/runtime.ts",
+      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_anchor": "reconcileRestored",
+      "proof": "plugin/test/w2-workspace-executor.test.mjs",
+      "proof_sha256": "2911ea2503a7fc523c187e75f9e96d7b45d75be5c30cc1aef9d245d708ac3f21",
+      "proof_anchor": "restart adopts exact lease, quarantines missing owner without recreation"
+    },
+    {
+      "section": 18,
+      "invariant": "commit-boundary",
+      "owner": "plugin/src/runtime/safety/staging-safety.ts",
+      "owner_sha256": "241585c04b86244704b9ce7484b9b3510c05fb99377fef43f11b0ecd00732867",
+      "owner_anchor": "staged-files-not-hi-owned",
+      "proof": "plugin/test/staging-safety.test.mjs",
+      "proof_sha256": "8343b7141f83a9964144080c5b03fbd7304f0718c321033d335a235f88503525",
+      "proof_anchor": "commit requires a fresh staged-set proof"
+    },
+    {
+      "section": 18,
+      "invariant": "user-ownership-never-reclassified",
+      "owner": "plugin/src/runtime/safety/staging-safety.ts",
+      "owner_sha256": "241585c04b86244704b9ce7484b9b3510c05fb99377fef43f11b0ecd00732867",
+      "owner_anchor": "preexisting_user_baseline_captured",
+      "proof": "plugin/test/staging-safety.test.mjs",
+      "proof_sha256": "8343b7141f83a9964144080c5b03fbd7304f0718c321033d335a235f88503525",
+      "proof_anchor": "pre-existing user baseline is frozen once"
+    },
+    {
+      "section": 18,
+      "invariant": "no-blind-reset-stash-restore",
+      "owner": "plugin/src/runtime/task/task-runtime.ts",
+      "owner_sha256": "fbb0e0dad347abfd5026b547239b3f00e952ddd5d1ef09df01507206726bf9ed",
+      "owner_anchor": "never use git checkout/reset/restore",
+      "proof": "plugin/test/native-diff-ownership.test.mjs",
+      "proof_sha256": "80715d317bd431ce5c3ed8c3b6dbe4caf3baeac487c50d1ce7615ecb309ee3e4",
+      "proof_anchor": "never use git checkout\\/reset\\/restore"
+    },
+    {
+      "section": 19,
+      "invariant": "relative-vs-absolute",
+      "owner": "plugin/src/contracts/common.ts",
+      "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
+      "owner_anchor": "normalizeBoundedProjectPath",
+      "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
+      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_anchor": "project path normalization drops absolute paths outside repository"
+    },
+    {
+      "section": 19,
+      "invariant": "cwd-assumptions",
+      "owner": "plugin/src/runtime/storage/locations.ts",
+      "owner_sha256": "863617a6ee01a66bbbcb04e4eae07c7ab3fdf565d6e02ace05817adc45aea470",
+      "owner_anchor": "resolve(projectRoot)",
+      "proof": "plugin/test/main-prompt-coexistence-platform-batch.test.mjs",
+      "proof_sha256": "351ba7cfb03073513dad84c2e17a149520e8c0e3aa9e8bbe2827a2febd3620a9",
+      "proof_anchor": "worktree-first"
+    },
+    {
+      "section": 19,
+      "invariant": "symlinks",
+      "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
+      "owner_sha256": "fb00575bcad4c6679bc5f173732514745b30bd53057b30eb6ad91a5f636f6003",
+      "owner_anchor": "realpathSync",
+      "proof": "plugin/test/w2-workspace-executor.test.mjs",
+      "proof_sha256": "2911ea2503a7fc523c187e75f9e96d7b45d75be5c30cc1aef9d245d708ac3f21",
+      "proof_anchor": "symlinked workspace escape is canonicalized and rejected"
+    },
+    {
+      "section": 19,
+      "invariant": "traversal",
+      "owner": "plugin/src/contracts/common.ts",
+      "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
+      "owner_anchor": "segment==='..'",
+      "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
+      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_anchor": "WorkerResult cannot persist absolute or traversal changed-file ownership"
+    },
+    {
+      "section": 19,
+      "invariant": "path-separators",
+      "owner": "plugin/src/contracts/common.ts",
+      "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
+      "owner_anchor": "replace(/\\\\/g,'/')",
+      "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
+      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_anchor": "normalizes relative Windows separators"
+    },
+    {
+      "section": 19,
+      "invariant": "windows-paths",
+      "owner": "plugin/src/contracts/common.ts",
+      "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
+      "owner_anchor": "/^[A-Za-z]:\\//",
+      "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
+      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_anchor": "C:\\\\Windows"
+    },
+    {
+      "section": 19,
+      "invariant": "linux-paths",
+      "owner": "plugin/src/contracts/common.ts",
+      "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
+      "owner_anchor": "rel.startsWith('/')",
+      "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
+      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_anchor": "/etc/passwd"
+    },
+    {
+      "section": 19,
+      "invariant": "case-sensitivity-preserved",
+      "owner": "plugin/src/contracts/common.ts",
+      "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
+      "owner_anchor": "return rel",
+      "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
+      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_anchor": "path identity preserves case"
+    },
+    {
+      "section": 19,
+      "invariant": "utf8",
+      "owner": "plugin/src/contracts/common.ts",
+      "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
+      "owner_anchor": "return rel",
+      "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
+      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_anchor": "UTF-8 spaces and long names"
+    },
+    {
+      "section": 19,
+      "invariant": "newline-differences",
+      "owner": "plugin/src/runtime/safety/staging-safety.ts",
+      "owner_sha256": "241585c04b86244704b9ce7484b9b3510c05fb99377fef43f11b0ecd00732867",
+      "owner_anchor": "split(/\\r?\\n/)",
+      "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
+      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_anchor": "CRLF-separated staged names"
+    },
+    {
+      "section": 19,
+      "invariant": "spaces",
+      "owner": "plugin/src/runtime/safety/staging-safety.ts",
+      "owner_sha256": "241585c04b86244704b9ce7484b9b3510c05fb99377fef43f11b0ecd00732867",
+      "owner_anchor": "porcelainPaths",
+      "proof": "plugin/test/w2-workspace-executor.test.mjs",
+      "proof_sha256": "2911ea2503a7fc523c187e75f9e96d7b45d75be5c30cc1aef9d245d708ac3f21",
+      "proof_anchor": "untracked user.txt"
+    },
+    {
+      "section": 19,
+      "invariant": "non-ascii-paths",
+      "owner": "plugin/src/contracts/common.ts",
+      "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
+      "owner_anchor": "return rel",
+      "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
+      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_anchor": "Unicode"
+    },
+    {
+      "section": 19,
+      "invariant": "long-paths",
+      "owner": "plugin/src/contracts/common.ts",
+      "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
+      "owner_anchor": "return rel",
+      "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
+      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_anchor": "'a/'.repeat(120)"
+    },
+    {
+      "section": 19,
+      "invariant": "unusable-readonly-root",
+      "owner": "plugin/src/runtime/state/persistence.ts",
+      "owner_sha256": "df655ecc93d395864046621ef31ae66882817fad34e7478e0be8b65b7376491d",
+      "owner_anchor": "mkdirSync(dirname(this.path)",
+      "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
+      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_anchor": "unusable runtime state root fails visibly"
+    },
+    {
+      "section": 19,
+      "invariant": "permission-denied-visible",
+      "owner": "plugin/src/runtime/state/persistence.ts",
+      "owner_sha256": "df655ecc93d395864046621ef31ae66882817fad34e7478e0be8b65b7376491d",
+      "owner_anchor": "writeFileSync(tmp",
+      "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
+      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_anchor": "ENOTDIR"
+    },
+    {
+      "section": 19,
+      "invariant": "home-xdg-localappdata",
+      "owner": "plugin/src/runtime/storage/locations.ts",
+      "owner_sha256": "863617a6ee01a66bbbcb04e4eae07c7ab3fdf565d6e02ace05817adc45aea470",
+      "owner_anchor": "XDG_STATE_HOME",
+      "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
+      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_anchor": "runtime state location honors explicit then XDG then LOCALAPPDATA"
+    },
+    {
+      "section": 19,
+      "invariant": "browser-platform-cache",
+      "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
+      "owner_sha256": "ba78d27cf2e74758ec82f2228e505f87ccef2725ccd2a53b57677dc81cf61284",
+      "owner_anchor": "PLAYWRIGHT_BROWSERS_PATH",
+      "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
+      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_anchor": "browser executable discovery uses env/platform cache roots"
+    },
+    {
+      "section": 19,
+      "invariant": "no-hardcoded-root-home",
+      "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
+      "owner_sha256": "ba78d27cf2e74758ec82f2228e505f87ccef2725ccd2a53b57677dc81cf61284",
+      "owner_anchor": "homedir()",
+      "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
+      "proof_sha256": "8bf30c3529610ee02948c3a257c53f1dd30afa19392f2cdaa1a15a51bcc3a16d",
+      "proof_anchor": "contains no host-user literal dependency"
+    }
+  ],
+  "static_guards": {
+    "no_host_user_literal_dependency": true,
+    "worker_changed_files_use_bounded_path": true,
+    "bounded_path_rejects_parent_absolute_drive_unc": true,
+    "external_absolute_not_project_owned": true,
+    "browser_discovery_is_env_platform_based": true,
+    "staging_unbounded_path_fails_closed": true
+  },
+  "violations": [],
+  "summary": {
+    "required": 31,
+    "covered": 31,
+    "violations": 0,
+    "by_section": {
+      "18": {
+        "required": 13,
+        "covered": 13
+      },
+      "19": {
+        "required": 18,
+        "covered": 18
+      }
+    }
+  },
+  "closed_defects": [
+    {
+      "id": "unbounded-repository-path-identity",
+      "fix": "Repository-file identity is canonicalized through bounded relative path semantics; absolute, drive, UNC, traversal and NUL paths cannot enter changed-file ownership."
+    },
+    {
+      "id": "browser-host-user-cache-literal",
+      "fix": "Playwright executable discovery uses explicit/env/platform cache conventions rather than /root or /home/node literals."
+    },
+    {
+      "id": "browser-stale-spa-route-observation",
+      "fix": "Every browser snapshot refreshes and revalidates the actual page URL, preserving dynamic route state and failing closed on external client-side redirects."
+    }
+  ],
+  "claim_boundary": "VCS ownership is baseline- and staged-proof-bound; portability claims are path/storage/browser discovery semantics plus exact Linux/aarch64 Browser/Workspace host receipts, not an untested claim of full Windows runtime certification."
+}

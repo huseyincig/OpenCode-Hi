@@ -24,22 +24,22 @@
       },
       "workspace-isolation-binding": {
         "status": "SUPPORTED_T3",
-        "tested_git_commit": "47a3502ab7176d9e008ed7b68ad0a3eb93803783",
-        "receipt": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-47a3502.json",
-        "source_rank": 143,
+        "tested_git_commit": "814acc48675ffa0d84fdb124ca315b403b922ec8",
+        "receipt": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-814acc4.json",
+        "source_rank": 147,
         "scope_limitations": [
-          "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution; foreign or user-created worktrees are not retroactively owned by Hi.",
-          "Exact T3 applies to OpenCode 1.18.18 on linux/aarch64 and tested Workspace runtime source 47a3502ab7176d9e008ed7b68ad0a3eb93803783."
+          "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution.",
+          "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64."
         ]
       },
       "browser-execution": {
         "status": "SUPPORTED_T3",
-        "tested_git_commit": "2e7813f218c54de44073d1c851d180960e3d0911",
-        "receipt": "data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json",
-        "source_rank": 142,
+        "tested_git_commit": "59288454a1a03fceba2cd76dbdf59efecb41aa21",
+        "receipt": "data/validation/external-opencode-hi-0.1.0-browser-1.18.18-head-5928845.json",
+        "source_rank": 148,
         "scope_limitations": [
-          "Browser support is limited to health-gated Hi-owned Playwright execution for local HTTP(S) targets. External targets, URL credentials, arbitrary selectors, downloads, and stale execution owners remain rejected.",
-          "BrowserObservation and screenshot artifacts remain observations/artifacts only; they are not Verification Evidence without explicit admissible passed Evidence."
+          "Browser execution remains local-http(s) scoped and rejects credential-bearing URLs and arbitrary selectors.",
+          "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 with real Chromium."
         ]
       }
     }
@@ -221,8 +221,7 @@
       ],
       "source_rank": 142,
       "current_for_capabilities": [
-        "process-lifecycle",
-        "browser-execution"
+        "process-lifecycle"
       ],
       "classification": "CURRENT_CAPABILITY_PROOF"
     },
@@ -244,8 +243,52 @@
         "Exact T3 applies to OpenCode 1.18.18 on linux/aarch64 and tested Workspace runtime source 47a3502ab7176d9e008ed7b68ad0a3eb93803783."
       ],
       "source_rank": 143,
+      "current_for_capabilities": [],
+      "classification": "HISTORICAL_EXACT_PROOF"
+    },
+    {
+      "receipt": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-814acc4.json",
+      "receipt_sha256": "ef6fd01a5761b23d46f208e5e37ec8272c3d6973eccd1daabf15d87fe6129041",
+      "status": "PASS_EXACT_SOURCE_WORKSPACE_ISOLATION_T3_PROMPT_B11",
+      "opencode_version": "1.18.18",
+      "platform": "linux",
+      "architecture": "aarch64",
+      "tested_git_commit": "814acc48675ffa0d84fdb124ca315b403b922ec8",
+      "exact_source": true,
+      "generated_at": "2026-08-15",
+      "gates": {
+        "workspace-isolation-binding": "SUPPORTED_T3"
+      },
+      "limitations": [
+        "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution.",
+        "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64."
+      ],
+      "source_rank": 147,
       "current_for_capabilities": [
         "workspace-isolation-binding"
+      ],
+      "classification": "CURRENT_CAPABILITY_PROOF"
+    },
+    {
+      "receipt": "data/validation/external-opencode-hi-0.1.0-browser-1.18.18-head-5928845.json",
+      "receipt_sha256": "f098677bf5c1123b182312b3e200941f51b8f8aeb560709c1830f31257363643",
+      "status": "PASS_EXACT_SOURCE_BROWSER_EXECUTION_T3_PROMPT_B11",
+      "opencode_version": "1.18.18",
+      "platform": "linux",
+      "architecture": "aarch64",
+      "tested_git_commit": "59288454a1a03fceba2cd76dbdf59efecb41aa21",
+      "exact_source": true,
+      "generated_at": "2026-08-15",
+      "gates": {
+        "browser-execution": "SUPPORTED_T3"
+      },
+      "limitations": [
+        "Browser execution remains local-http(s) scoped and rejects credential-bearing URLs and arbitrary selectors.",
+        "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 with real Chromium."
+      ],
+      "source_rank": 148,
+      "current_for_capabilities": [
+        "browser-execution"
       ],
       "classification": "CURRENT_CAPABILITY_PROOF"
     }

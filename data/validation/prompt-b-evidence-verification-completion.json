@@ -44,7 +44,7 @@
     {
       "invariant": "mutation-invalidation",
       "owner": "plugin/src/runtime/evidence/evidence-runtime.ts",
-      "owner_sha256": "508a3939ac7c754b51f46fd86aa13fe69344dfd5f63c2332baf079c573fe9720",
+      "owner_sha256": "e48c410c0b8e575306e711578beb762ac8849cce5b679eca495751798b9b7112",
       "owner_anchor": "markMutation",
       "proof": "plugin/test/evidence-freshness-ordering.test.mjs",
       "proof_sha256": "784d4d560bfe9ceea6bdecf2ae16b1b2872d551a6e96bbe44dd72f182b4233d4",

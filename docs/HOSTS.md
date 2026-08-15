@@ -12,9 +12,9 @@ Generated from `data/validation/compatibility-matrix-0.1.0.json`. Current record
 
 | Hi capability | Status | Exact source | Receipt |
 |---|---|---|---|
-| `browser-execution` | **SUPPORTED_T3** | `2e7813f218c54de44073d1c851d180960e3d0911` | `data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json` |
+| `browser-execution` | **SUPPORTED_T3** | `59288454a1a03fceba2cd76dbdf59efecb41aa21` | `data/validation/external-opencode-hi-0.1.0-browser-1.18.18-head-5928845.json` |
 | `process-lifecycle` | **SUPPORTED_T3** | `2e7813f218c54de44073d1c851d180960e3d0911` | `data/validation/external-opencode-hi-0.1.0-lifecycle-1.18.18-head-2e7813f.json` |
-| `workspace-isolation-binding` | **SUPPORTED_T3** | `47a3502ab7176d9e008ed7b68ad0a3eb93803783` | `data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-47a3502.json` |
+| `workspace-isolation-binding` | **SUPPORTED_T3** | `814acc48675ffa0d84fdb124ca315b403b922ec8` | `data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-814acc4.json` |
 
 This table is a projection, not evidence ownership: the referenced exact receipts remain the capability proof. Historical negative/older receipts remain preserved in the generated compatibility history.
 <!-- END GENERATED HOST CAPABILITY MATRIX -->

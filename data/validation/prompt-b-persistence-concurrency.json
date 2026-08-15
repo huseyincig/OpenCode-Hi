@@ -105,7 +105,7 @@
       "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
       "owner_anchor": "reconcileRestored",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "f149d9bde62f3f73685915628f5a20e6e9f55a6f640675a3441b3610757398f2",
+      "proof_sha256": "2911ea2503a7fc523c187e75f9e96d7b45d75be5c30cc1aef9d245d708ac3f21",
       "proof_anchor": "restart adopts exact lease, quarantines missing owner without recreation"
     },
     {
@@ -212,7 +212,7 @@
       "section": 17,
       "invariant": "simultaneous-evidence-mutation",
       "owner": "plugin/src/runtime/evidence/evidence-runtime.ts",
-      "owner_sha256": "508a3939ac7c754b51f46fd86aa13fe69344dfd5f63c2332baf079c573fe9720",
+      "owner_sha256": "e48c410c0b8e575306e711578beb762ac8849cce5b679eca495751798b9b7112",
       "owner_anchor": "mission.execution.evidence.fresh=",
       "proof": "plugin/test/prompt-b-concurrency-races.test.mjs",
       "proof_sha256": "6beb09a514030620a08376315fd129a481f12e4d1e723e01d459558a02c9801e",
@@ -295,7 +295,7 @@
       "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
       "owner_anchor": "already owned by another active lease",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "f149d9bde62f3f73685915628f5a20e6e9f55a6f640675a3441b3610757398f2",
+      "proof_sha256": "2911ea2503a7fc523c187e75f9e96d7b45d75be5c30cc1aef9d245d708ac3f21",
       "proof_anchor": "concurrent lease identity collision is cleaned and rejected"
     },
     {

@@ -1,0 +1,110 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "generated_at": "2026-08-15",
+  "status": "PASS_EXACT_SOURCE_BROWSER_EXECUTION_T3_PROMPT_B11",
+  "source_binding": {
+    "tested_git_commit": "59288454a1a03fceba2cd76dbdf59efecb41aa21",
+    "tested_git_tree": "f28d342c9369e70ebc71bbf4751923b9c7aa7c44",
+    "worktree": "/workspace/OpenCode-Hi",
+    "state": "CLEAN_COMMITTED_SOURCE",
+    "exact_candidate": true,
+    "runtime_hashes": {
+      "plugin/dist/plugin.js": "4ba3d1992736992f788a4d1814c33f68f585f19065802157babb398f647e3c20",
+      "plugin/src/plugin.ts": "3b1f608f0d8512f7510a5cd8e680f3879f181ee7490d649f9e5b0656d03030e8",
+      "plugin/src/contracts/browser-observation.ts": "bdaa9047f895999a62039c17906bb8214c9af98394a0f68c1a311abc5f258624",
+      "plugin/src/runtime/browser/executor.ts": "fa85d1de99be5c07699b34253088d7eec6f1a5f88846dd0401d7bcdb3db522f3",
+      "plugin/src/runtime/browser/runtime.ts": "8d50a48b4d872117e1f79ddeab1d325060491101c3e3c0baf3dd99dd92541014",
+      "plugin/src/runtime/browser/ownership.ts": "605391f7a3260b4f9e277d48cd720883f5f45f44322a9708367a6b5af8aeecb2",
+      "plugin/src/opencode/playwright-browser-adapter.ts": "ba78d27cf2e74758ec82f2228e505f87ccef2725ccd2a53b57677dc81cf61284",
+      "plugin/src/runtime/application/hi-tool-surface.ts": "52a0b4ba556ded2dee6f7704e9bf169c816b818bca40300861efa4fa88e70673",
+      "plugin/src/runtime/application/runtime-services.ts": "fd9693c7a80d233b1cd7bdf89f5a76e1050fa2ecb6e68d9afc51bbccd54500bc",
+      "plugin/src/contracts/host-capability.ts": "d7b8f2abe1733f49ab71ad9d043c27a58ef48acd179f8c6687ae475eb5204d1f"
+    },
+    "note": "Browser reaccepted after portable executable discovery and dynamic SPA route-state observation hardening."
+  },
+  "host": {
+    "os": "linux",
+    "arch": "aarch64",
+    "opencode_version": "1.18.18",
+    "fixture_project": "/tmp/hi-b11-5928845",
+    "browser_engine": "playwright-core Chromium",
+    "browser_executable": "/home/node/.cache/ms-playwright/chromium-1234/chrome-linux/chrome"
+  },
+  "gates": {
+    "browser_executor_health": "PASS_T3",
+    "browser_dynamic_route_state": "PASS_T3",
+    "browser_stale_element_rejection": "PASS_T3",
+    "browser_auth_state_reset": "PASS_T3",
+    "browser_execution_owner_isolation": "PASS_T3",
+    "browser_screenshot_artifact": "PASS_T3",
+    "browser_external_target_rejection": "PASS_T3",
+    "browser_credential_url_rejection": "PASS_T3",
+    "browser_arbitrary_selector_rejection": "PASS_T3",
+    "browser_portable_executable_discovery": "PASS_T3",
+    "browser_observation_not_evidence": "PASS_CONTROLLED",
+    "browser_execution": "SUPPORTED_T3"
+  },
+  "evidence": {
+    "real_host_browser": {
+      "discovered": "/home/node/.cache/ms-playwright/chromium-1234/chrome-linux/chrome",
+      "health": {
+        "available": true,
+        "version": "playwright-core:/home/node/.cache/ms-playwright/chromium-1234/chrome-linux/chrome"
+      },
+      "opened": {
+        "result": "OBSERVED",
+        "url": "http://127.0.0.1:47862/"
+      },
+      "typed": {
+        "result": "OBSERVED"
+      },
+      "clicked": {
+        "result": "OBSERVED",
+        "url": "http://127.0.0.1:47862/done"
+      },
+      "after": {
+        "result": "OBSERVED",
+        "url": "http://127.0.0.1:47862/done",
+        "dom": "RESULT:AUTH_OWNER_A\n@e1 <input> AUTH_OWNER_A"
+      },
+      "dynamic_route_observed": true,
+      "stale_element_rejected": true,
+      "screenshot": {
+        "result": "OBSERVED",
+        "ref": "hi-artifact:b11:w_a:g1:s1",
+        "file_exists": true,
+        "bytes": 8456
+      },
+      "stale_owner_rejected": true,
+      "reset_dom": "Go\n@e1 <input> name\n@e2 <button> Go",
+      "auth_state_reset": true,
+      "external_rejected": true,
+      "credential_rejected": true,
+      "selector_rejected": true
+    },
+    "controlled_adversarial": {
+      "console_network_capture": "bounded console/network failure observations remain non-Evidence",
+      "timeout_crash": "navigation timeout/browser crash become FAILED observations",
+      "portable_discovery": "no /root or /home/node literal in production source; environment/platform cache roots are used"
+    }
+  },
+  "limitations": [
+    "Browser execution remains local-http(s) scoped and rejects credential-bearing URLs and arbitrary selectors.",
+    "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 with real Chromium."
+  ],
+  "capability_limitations": {
+    "browser-execution": [
+      "Browser execution remains local-http(s) scoped and rejects credential-bearing URLs and arbitrary selectors.",
+      "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 with real Chromium."
+    ]
+  },
+  "release_authority": {
+    "push": false,
+    "tag": false,
+    "release": false,
+    "publish": false,
+    "deploy": false
+  },
+  "rule": "This receipt promotes only browser-execution for the exact tested browser owner/executor hashes; later drift requires reacceptance."
+}

@@ -26,7 +26,7 @@
     {
       "invariant": "host-contradiction-handling",
       "owner": "plugin/src/runtime/task/child-execution-coordinator.ts",
-      "owner_sha256": "d2f76e60c8f9517731603b962cfb2bac5745602119ff1348e73a5d798493964b",
+      "owner_sha256": "1f9178df13fa1e09f8efc239ecf872116c5d6635f5fed76855f0d121839507fc",
       "owner_anchor": "identity.status==='model-mismatch'",
       "proof": "plugin/test/main-prompt-model-evidence.test.mjs",
       "proof_sha256": "61e546d739d945d17cf23067684a8663de4388135d0884cba576d95ebe14bb5a",

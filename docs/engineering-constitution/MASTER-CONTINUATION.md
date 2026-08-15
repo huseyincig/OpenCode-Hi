@@ -755,6 +755,13 @@ Source-resolvable contract ambiguity remains repo-first: repository exploration 
 
 PROMPT B sections 16–17 were re-audited as 31 executable invariants: 19 persistence/restart and 12 concurrency/race invariants. Five real defects were closed. RuntimePersistence now rejects duplicate persisted session/Mission identities on save/load and MissionStore restore rejects duplicate replay defensively; malformed current-schema top-level/runtime metadata is fail-closed; unclean restart reconciliation applies to both active and waiting-user Missions so HumanDecision remains durable while ephemeral permissions/workers and stale Evidence are reconciled; late results cannot resurrect terminal cancelled/completed/failed workers; and permission reply-before-ask reordering cannot recreate a phantom pending permission. Partial/corrupt/old/unknown state, orphan temp writes, atomic primary replacement, process/workspace restart, release/methodology/context/VCS/HumanDecision survival, queue fairness, retry circuit, duplicate delivery, write conflicts and process/workspace races are hash-bound in `data/validation/prompt-b-persistence-concurrency.json`.
 
+
+### PROMPT B B11 — Git/VCS safety + filesystem/path portability adversarial hardening — **CLOSED**
+
+PROMPT B sections 18–19 are covered by `data/validation/prompt-b-vcs-path-portability.json`: **31/31 invariants PASS, 0 violations** (Git/VCS 13/13; filesystem/path portability 18/18). Three material defects were closed. Repository-file identity is now canonicalized through a bounded relative path contract so absolute POSIX paths, Windows drive paths, UNC paths, traversal, empty segments and NUL-bearing paths cannot enter WorkerResult/native-diff/staging/changed-file ownership. Playwright executable discovery no longer contains `/root/...` or `/home/node/...` host-user literals and instead uses explicit browser configuration plus Playwright/XDG/LOCALAPPDATA/current-user platform cache conventions. Browser snapshots now refresh the actual `page.url()` every observation and re-run local-scope validation, so SPA/client-side route changes are observable and a client-side redirect outside supported local scope fails closed instead of reporting stale URL state.
+
+Exact host evidence was refreshed rather than inherited blindly. Workspace child binding was reaccepted on OpenCode 1.18.18 / Linux aarch64 at source `814acc48675ffa0d84fdb124ca315b403b922ec8` in `data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-814acc4.json`; final source remains workspace-hash-equivalent. Browser execution was freshly reaccepted with real Chromium at exact source `59288454a1a03fceba2cd76dbdf59efecb41aa21` in `data/validation/external-opencode-hi-0.1.0-browser-1.18.18-head-5928845.json`, including dynamic `/done` SPA route observation, stale-element rejection, screenshot persistence, execution-owner/auth-state isolation, and external/credential/arbitrary-selector rejection. Process T3 remains source-equivalent to `2e7813f...`. Compatibility projection therefore selects Process=`2e7813f`, Workspace=`814acc4`, Browser=`5928845`, and lifecycle audit remains 61/61 with zero source drift.
+
 ## 11. Verification protocol for future checkpoints
 
 ### Focused verification first
@@ -813,7 +820,7 @@ OpenCode-Hi does **not** permanently pin host acceptance to 1.18.16 or any other
 4. bind the new receipt to that exact tested version and Git/source hashes;
 5. retain older exact-version receipts only as immutable historical evidence.
 
-The current reference-host projection is generated from exact receipts in `data/validation/compatibility-matrix-0.1.0.json`; on the current source it resolves OpenCode **1.18.18** / Linux / aarch64 and selects capability-specific exact T3 proofs for process lifecycle (`2e7813f...`, source-equivalent current owner/executor hashes), workspace isolation (`47a3502...`), and browser execution (`2e7813f...`, source-equivalent current owner/executor hashes). Future host-bound checkpoints must resolve registry latest again rather than assuming 1.18.18 remains current.
+The current reference-host projection is generated from exact receipts in `data/validation/compatibility-matrix-0.1.0.json`; on the current source it resolves OpenCode **1.18.18** / Linux / aarch64 and selects capability-specific exact T3 proofs for process lifecycle (`2e7813f...`, source-equivalent current owner/executor hashes), workspace isolation (`814acc4...`, source-equivalent current owner/executor hashes), and browser execution (`5928845...`). Future host-bound checkpoints must resolve registry latest again rather than assuming 1.18.18 remains current.
 
 ## 12. Historical real-host acceptance truth retained from M12
 
@@ -865,7 +872,7 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**PROMPT B — IN PROGRESS. Next: persistence/restart adversarial audit (section 16), then concurrency/race testing (section 17).**
+**PROMPT B — IN PROGRESS. Next: security/privacy threat hunt (section 20), then skills/methodology security audit (section 21).**
 
 PROMPT A certified product-source baseline: `5ced215ed57f28f8d963376ca702efc0dac75503` (tree `b22db990942ad291997a8ad564ac1235283036bb`). Canonical reconstruction receipt: `data/validation/documentation-reconstruction.json`.
 

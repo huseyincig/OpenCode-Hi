@@ -1,0 +1,112 @@
+{
+  "schema": 1,
+  "release": "0.1.0",
+  "generated_at": "2026-08-15",
+  "status": "PASS_EXACT_SOURCE_WORKSPACE_ISOLATION_T3_PROMPT_B11",
+  "source_binding": {
+    "tested_git_commit": "814acc48675ffa0d84fdb124ca315b403b922ec8",
+    "tested_git_tree": "04ae6b99ea1b82f3486055c991de65753de05e92",
+    "worktree": "/workspace/OpenCode-Hi",
+    "state": "CLEAN_COMMITTED_SOURCE",
+    "exact_candidate": true,
+    "runtime_hashes": {
+      "plugin/dist/plugin.js": "4ba3d1992736992f788a4d1814c33f68f585f19065802157babb398f647e3c20",
+      "plugin/src/plugin.ts": "3b1f608f0d8512f7510a5cd8e680f3879f181ee7490d649f9e5b0656d03030e8",
+      "plugin/src/contracts/workspace.ts": "d2ed1d517537201302344aa3061f149b044ad85b6909fe85ec876904ea9b496a",
+      "plugin/src/runtime/workspace/executor.ts": "f6129bfab5c20641a144030b7357be598d4fd77dcde9ecdf664a390398d2e12b",
+      "plugin/src/runtime/workspace/runtime.ts": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "plugin/src/runtime/mission/validators.ts": "0a534c906ebd71f44b3f91cfb2f346cdbfee1ecf4ffd917b04f4b848784ed49b",
+      "plugin/src/opencode/open-code-workspace-adapter.ts": "fb00575bcad4c6679bc5f173732514745b30bd53057b30eb6ad91a5f636f6003",
+      "plugin/src/runtime/task/child-execution-coordinator.ts": "1f9178df13fa1e09f8efc239ecf872116c5d6635f5fed76855f0d121839507fc",
+      "plugin/src/opencode/client-adapter.ts": "8509951b3ce97234c2d89440710ea7164584ed7a8c1b299952f2aa9e8b96083a"
+    },
+    "note": "Workspace reaccepted after bounded repository-path changes touched ChildExecutionCoordinator. Later final Browser-only commit may reuse this receipt only when every workspace runtime hash remains byte-identical."
+  },
+  "host": {
+    "os": "linux",
+    "arch": "aarch64",
+    "opencode_version": "1.18.18",
+    "fixture_project": "/tmp/hi-b11-814acc4/project",
+    "server": "http://127.0.0.1:41989"
+  },
+  "gates": {
+    "workspace_runtime_canonical_decision": "PASS_CONTROLLED",
+    "workspace_create": "PASS_T3",
+    "workspace_source_baseline": "PASS_T3",
+    "workspace_child_id_directory_binding": "PASS_T3",
+    "workspace_observed_cwd_identity": "PASS_T3",
+    "workspace_write_isolation": "PASS_T3",
+    "workspace_primary_preservation": "PASS_T3",
+    "workspace_cleanup": "PASS_T3",
+    "workspace_host_cleanup_empty": "PASS_T3",
+    "workspace_staged_user_preservation": "PASS_CONTROLLED",
+    "workspace_symlink_traversal": "PASS_CONTROLLED",
+    "workspace_isolation_binding": "SUPPORTED_T3",
+    "workspace_verification": "PASS_T3",
+    "workspace_restart_adoption": "PASS_T3_SOURCE_EQUIVALENT",
+    "workspace_orphan_quarantine": "PASS_T3_SOURCE_EQUIVALENT",
+    "workspace_no_recreation": "PASS_T3_SOURCE_EQUIVALENT"
+  },
+  "evidence": {
+    "real_host_workspace": {
+      "health": {
+        "healthy": true,
+        "version": "1.18.18"
+      },
+      "baseline": "c3afb351a95db84a5a3f0315fd05396d6b69888d",
+      "provisioned": {
+        "host_workspace_id": "wrk_005c79d1e001F5cr3DB06eVIPq",
+        "workspace_path": "/tmp/hi-b11-814acc4/xdg-data/opencode/worktree/c3afb351a95db84a5a3f0315fd05396d6b69888d/witty-falcon"
+      },
+      "parent": {
+        "id": "ses_ffa384e25ffe3eKNov6eXLKa6x"
+      },
+      "child": {
+        "id": "ses_ffa384d40ffe2n4CoCm5Sbplz4",
+        "workspaceID": "wrk_005c79d1e001F5cr3DB06eVIPq",
+        "directory": "/tmp/hi-b11-814acc4/xdg-data/opencode/worktree/c3afb351a95db84a5a3f0315fd05396d6b69888d/witty-falcon"
+      },
+      "workspace_head": "c3afb351a95db84a5a3f0315fd05396d6b69888d",
+      "same_baseline": true,
+      "primary_has_isolated": false,
+      "user_dirty": "USER_DIRTY\n",
+      "before_status": "?? user-dirty.txt",
+      "after_status": "?? user-dirty.txt",
+      "user_state_preserved": true,
+      "list_before_count": 1,
+      "list_after_count": 0,
+      "workspace_removed": true,
+      "binding_exact": true
+    },
+    "controlled_adversarial": {
+      "bounded_repository_paths": "absolute/traversal repository path identities are dropped/rejected before VCS ownership",
+      "staged_and_untracked_user_changes": "controlled Git tests preserve user-owned staged, unstaged and untracked state",
+      "symlink_escape": "canonical realpath/same-Git-common-dir checks fail closed"
+    },
+    "inherited_exact_t3": {
+      "receipt": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-47a3502.json",
+      "workspace_restart_adoption": "PASS_T3",
+      "workspace_orphan_quarantine": "PASS_T3",
+      "workspace_no_recreation": "PASS_T3",
+      "reason": "WorkspaceRuntime/OpenCodeWorkspaceAdapter/validators hashes are byte-identical; only ChildExecutionCoordinator changed and its workspaceID+directory binding was freshly reaccepted at 814acc4."
+    }
+  },
+  "limitations": [
+    "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution.",
+    "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64."
+  ],
+  "capability_limitations": {
+    "workspace-isolation-binding": [
+      "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution.",
+      "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64."
+    ]
+  },
+  "release_authority": {
+    "push": false,
+    "tag": false,
+    "release": false,
+    "publish": false,
+    "deploy": false
+  },
+  "rule": "This receipt promotes only workspace-isolation-binding for the exact tested runtime hashes; any later workspace owner/executor hash drift requires reacceptance."
+}

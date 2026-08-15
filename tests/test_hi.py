@@ -668,10 +668,10 @@ def test_r3_generated_compatibility_projection_selects_latest_exact_capability_p
     cur=d['current_reference_host'];assert (cur['opencode_version'],cur['platform'],cur['architecture'])==('1.18.18','linux','aarch64')
     caps=cur['capabilities']
     assert caps['process-lifecycle']['receipt'].endswith('lifecycle-1.18.18-head-2e7813f.json') and caps['process-lifecycle']['status']=='SUPPORTED_T3'
-    assert caps['workspace-isolation-binding']['receipt'].endswith('workspace-1.18.18-head-47a3502.json') and caps['workspace-isolation-binding']['status']=='SUPPORTED_T3'
-    assert caps['browser-execution']['receipt'].endswith('lifecycle-1.18.18-head-2e7813f.json') and caps['browser-execution']['status']=='SUPPORTED_T3'
-    assert caps['process-lifecycle']['tested_git_commit'].startswith('2e7813f') and caps['browser-execution']['tested_git_commit'].startswith('2e7813f')
-    assert caps['workspace-isolation-binding']['tested_git_commit'].startswith('47a3502')
+    assert caps['workspace-isolation-binding']['receipt'].endswith('workspace-1.18.18-head-814acc4.json') and caps['workspace-isolation-binding']['status']=='SUPPORTED_T3'
+    assert caps['browser-execution']['receipt'].endswith('browser-1.18.18-head-5928845.json') and caps['browser-execution']['status']=='SUPPORTED_T3'
+    assert caps['process-lifecycle']['tested_git_commit'].startswith('2e7813f') and caps['browser-execution']['tested_git_commit'].startswith('5928845')
+    assert caps['workspace-isolation-binding']['tested_git_commit'].startswith('814acc4')
     superseded={x['receipt']:x for x in d['history']}
     assert superseded['data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-bc85854.json']['classification']=='HISTORICAL_EXACT_PROOF'
     assert superseded['data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-92812a1.json']['classification']=='HISTORICAL_EXACT_PROOF'
@@ -1026,3 +1026,17 @@ def test_prompt_b_persistence_concurrency_audit_is_strict_fail_closed_and_comple
     closed={x['id'] for x in d['closed_defects']}
     assert {'duplicate-persisted-mission-replay','waiting-user-unclean-restart-gap','malformed-current-runtime-envelope','cancelled-worker-late-result-resurrection','permission-reply-before-ask-phantom-wait'}<=closed
     assert (ROOT/'scripts/audit-persistence-concurrency.py').is_file()
+
+def test_prompt_b_vcs_path_portability_audit_is_bounded_and_source_bound():
+    d=json.loads((ROOT/'data/validation/prompt-b-vcs-path-portability.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_VCS_PATH_PORTABILITY_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['sections']==[18,19] and d['status']=='PASS'
+    assert d['violations']==[] and d['summary']=={'required':31,'covered':31,'violations':0,'by_section':{'18':{'required':13,'covered':13},'19':{'required':18,'covered':18}}}
+    assert len(d['invariants'])==31 and {x['section'] for x in d['invariants']}=={18,19}
+    for row in d['invariants']:
+        owner=ROOT/row['owner'];proof=ROOT/row['proof'];assert owner.is_file() and proof.is_file()
+        assert hashlib.sha256(owner.read_bytes()).hexdigest()==row['owner_sha256']
+        assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
+        assert row['owner_anchor'] in owner.read_text(errors='replace') and row['proof_anchor'] in proof.read_text(errors='replace')
+    assert all(d['static_guards'].values())
+    assert {'unbounded-repository-path-identity','browser-host-user-cache-literal','browser-stale-spa-route-observation'}<={x['id'] for x in d['closed_defects']}
+    assert (ROOT/'scripts/audit-vcs-path-portability.py').is_file()
