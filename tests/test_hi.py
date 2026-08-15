@@ -1,5 +1,5 @@
 from __future__ import annotations
-import hashlib, importlib.util, json, os, subprocess, sys, zipfile
+import hashlib, importlib.util, json, os, subprocess, sys, zipfile,re
 from pathlib import Path
 import pytest
 ROOT=Path(__file__).resolve().parents[1]
@@ -712,3 +712,31 @@ def test_n1_final_namespace_normalization_is_hash_bound_and_preserves_historical
     for meta in d['inputs'].values():
         path=ROOT/meta['path'];assert path.is_file();assert hashlib.sha256(path.read_bytes()).hexdigest()==meta['sha256']
     assert (ROOT/'scripts/generate-namespace-audit.mjs').is_file()
+
+
+def test_prompt_a_documentation_inventory_classifies_all_truth_surfaces_and_has_unique_current_owners():
+    policy=json.loads((ROOT/'data/documentation-ownership.json').read_text())
+    inv=json.loads((ROOT/'data/validation/documentation-inventory-0.1.0.json').read_text())
+    assert policy['schema']==1 and policy['type']=='hi-documentation-ownership'
+    assert inv['schema']==1 and inv['kind']=='DOCUMENTATION_TRUTH_INVENTORY' and inv['status']=='PASS'
+    assert inv['violations']=={'unclassified':[],'duplicate_meaning_owner':[],'missing_owner':[],'historical_as_current_owner':[]}
+    meanings=policy['meanings']; assert len(meanings)==len({x['meaning'] for x in meanings})==36
+    artifacts={x['path']:x for x in inv['artifacts']}
+    assert artifacts['README.md']['lifecycle']=='CANONICAL_CURRENT'
+    assert artifacts['README.tr.md']['lifecycle']=='DERIVED_CURRENT'
+    assert artifacts['docs/FINAL-ACCEPTANCE.md']['lifecycle']=='HISTORICAL'
+    assert artifacts['docs/engineering-constitution/15-ENGINEERING-CONSTITUTION.md']['lifecycle']=='CANONICAL_CURRENT'
+    assert artifacts['docs/engineering-constitution/17-IMPLEMENTATION-PROOF.md']['lifecycle']=='HISTORICAL'
+    for m in meanings:
+        assert (ROOT/m['owner']).is_file()
+        if m['owner'] in artifacts: assert artifacts[m['owner']]['lifecycle']!='HISTORICAL'
+    assert hashlib.sha256((ROOT/inv['policy']['path']).read_bytes()).hexdigest()==inv['policy']['sha256']
+
+
+def test_version_truth_is_semver_and_not_validator_hard_pinned_to_0_1_0():
+    version=(ROOT/'VERSION').read_text().strip()
+    assert re.fullmatch(r'(?:0|[1-9][0-9]*)[.](?:0|[1-9][0-9]*)[.](?:0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?(?:[+][0-9A-Za-z.-]+)?',version)
+    validator=(ROOT/'scripts/validate.py').read_text()
+    assert "VERSION must be 0.1.0" not in validator
+    assert json.loads((ROOT/'package.json').read_text())['version']==version
+    assert json.loads((ROOT/'plugin/package.json').read_text())['version']==version

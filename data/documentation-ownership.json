@@ -1,0 +1,298 @@
+{
+  "schema": 1,
+  "type": "hi-documentation-ownership",
+  "policy": {
+    "rule": "one-meaning-one-canonical-documentation-owner",
+    "truth_precedence": "live-source-contract-runtime-evidence-before-docs",
+    "historical_may_not_own_current_truth": true,
+    "generated_facts_must_name_machine_owner": true
+  },
+  "meanings": [
+    {
+      "meaning": "product-identity",
+      "owner": "docs/PRODUCT-IDENTITY.md",
+      "audience": "USER",
+      "update_mode": "HUMAN_OWNED"
+    },
+    {
+      "meaning": "product-purpose",
+      "owner": "README.md",
+      "audience": "USER",
+      "update_mode": "HUMAN_OWNED"
+    },
+    {
+      "meaning": "terminology",
+      "owner": "docs/TERMINOLOGY.md",
+      "audience": "CONTRIBUTOR",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "meaning": "engineering-constitution",
+      "owner": "docs/engineering-constitution/15-ENGINEERING-CONSTITUTION.md",
+      "audience": "ARCHITECT",
+      "update_mode": "HUMAN_OWNED"
+    },
+    {
+      "meaning": "domain-ontology",
+      "owner": "docs/engineering-constitution/04-DOMAIN-ONTOLOGY.md",
+      "audience": "ARCHITECT",
+      "update_mode": "HUMAN_OWNED"
+    },
+    {
+      "meaning": "current-architecture",
+      "owner": "docs/ARCHITECTURE.md",
+      "audience": "CONTRIBUTOR",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "meaning": "runtime-reality",
+      "owner": "docs/ARCHITECTURE-REALITY-MAP.md",
+      "audience": "ARCHITECT",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "meaning": "host-integration",
+      "owner": "docs/HOSTS.md",
+      "audience": "OPERATOR",
+      "update_mode": "RECEIPT_DERIVED"
+    },
+    {
+      "meaning": "host-portability",
+      "owner": "docs/HOSTS.md",
+      "audience": "ARCHITECT",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "meaning": "mission-task-worker",
+      "owner": "docs/ARCHITECTURE.md",
+      "audience": "CONTRIBUTOR",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "meaning": "roles",
+      "owner": "docs/ARCHITECTURE.md",
+      "audience": "CONTRIBUTOR",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "meaning": "permissions",
+      "owner": "docs/engineering-constitution/15-ENGINEERING-CONSTITUTION.md",
+      "audience": "CONTRIBUTOR",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "meaning": "authority",
+      "owner": "docs/HUMAN-DECISIONS.md",
+      "audience": "USER",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "meaning": "external-action",
+      "owner": "docs/HUMAN-DECISIONS.md",
+      "audience": "OPERATOR",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "meaning": "evidence",
+      "owner": "docs/VERIFICATION.md",
+      "audience": "USER",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "meaning": "verification",
+      "owner": "docs/VERIFICATION.md",
+      "audience": "CONTRIBUTOR",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "meaning": "completion",
+      "owner": "docs/VERIFICATION.md",
+      "audience": "USER",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "meaning": "context",
+      "owner": "docs/CONTEXT.md",
+      "audience": "CONTRIBUTOR",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "meaning": "project-intelligence",
+      "owner": "docs/PROJECT-INTELLIGENCE.md",
+      "audience": "CONTRIBUTOR",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "meaning": "methodologies-skills",
+      "owner": "docs/SKILLS.md",
+      "audience": "USER",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "meaning": "human-decisions",
+      "owner": "docs/HUMAN-DECISIONS.md",
+      "audience": "USER",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "meaning": "process-execution",
+      "owner": "docs/HOSTS.md",
+      "audience": "OPERATOR",
+      "update_mode": "RECEIPT_DERIVED"
+    },
+    {
+      "meaning": "workspace-isolation",
+      "owner": "docs/HOSTS.md",
+      "audience": "OPERATOR",
+      "update_mode": "RECEIPT_DERIVED"
+    },
+    {
+      "meaning": "browser-execution",
+      "owner": "docs/HOSTS.md",
+      "audience": "OPERATOR",
+      "update_mode": "RECEIPT_DERIVED"
+    },
+    {
+      "meaning": "storage-filesystem",
+      "owner": "docs/FILESYSTEM-LAYOUT.md",
+      "audience": "OPERATOR",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "meaning": "configuration",
+      "owner": "docs/INSTALLATION.md",
+      "audience": "USER",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "meaning": "privacy",
+      "owner": "docs/PRIVACY.md",
+      "audience": "USER",
+      "update_mode": "HUMAN_OWNED"
+    },
+    {
+      "meaning": "security-threat-model",
+      "owner": "docs/THREAT-MODEL.md",
+      "audience": "CONTRIBUTOR",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "meaning": "installation-lifecycle",
+      "owner": "docs/INSTALLATION.md",
+      "audience": "USER",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "meaning": "release",
+      "owner": "docs/RELEASE.md",
+      "audience": "RELEASE_ENGINEER",
+      "update_mode": "RECEIPT_DERIVED"
+    },
+    {
+      "meaning": "validation-testing",
+      "owner": "docs/VERIFICATION.md",
+      "audience": "CONTRIBUTOR",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "meaning": "supported-host-matrix",
+      "owner": "data/validation/compatibility-matrix-0.1.0.json",
+      "audience": "OPERATOR",
+      "update_mode": "GENERATED"
+    },
+    {
+      "meaning": "current-release-status",
+      "owner": "data/validation/release-status-0.1.0.json",
+      "audience": "RELEASE_ENGINEER",
+      "update_mode": "GENERATED"
+    },
+    {
+      "meaning": "continuation-state",
+      "owner": "docs/engineering-constitution/MASTER-CONTINUATION.md",
+      "audience": "INTERNAL_ENGINEERING",
+      "update_mode": "HUMAN_OWNED"
+    },
+    {
+      "meaning": "adr-rationale",
+      "owner": "docs/engineering-constitution/16-ADR-INDEX.md",
+      "audience": "ARCHITECT",
+      "update_mode": "HUMAN_OWNED"
+    },
+    {
+      "meaning": "research-source-reuse",
+      "owner": "docs/SOURCE-REUSE-MATRIX.md",
+      "audience": "CONTRIBUTOR",
+      "update_mode": "HUMAN_OWNED"
+    }
+  ],
+  "artifact_classification": {
+    "root_current": [
+      "README.md",
+      "README.tr.md",
+      "CONTRIBUTING.md",
+      "SECURITY.md",
+      "CHANGELOG.md"
+    ],
+    "docs_current": [
+      "ARCHITECTURE-REALITY-MAP.md",
+      "ARCHITECTURE.md",
+      "BENCHMARKS.md",
+      "CONTEXT.md",
+      "EXECUTION-POLICY.md",
+      "FILESYSTEM-LAYOUT.md",
+      "HI-NAMING-NAMESPACE.md",
+      "HOSTS.md",
+      "HUMAN-DECISIONS.md",
+      "INSTALLATION.md",
+      "PRIVACY.md",
+      "PRODUCT-IDENTITY.md",
+      "PROJECT-INTELLIGENCE.md",
+      "RELEASE.md",
+      "SKILL-ARTIFACT-OWNERSHIP.md",
+      "SKILLS.md",
+      "SOURCE-REUSE-MATRIX.md",
+      "STORAGE-ARCHITECTURE.md",
+      "STORAGE-OWNERSHIP-MATRIX.md",
+      "TERMINOLOGY.md",
+      "THREAT-MODEL.md",
+      "VALIDATION.md",
+      "VERIFICATION.md"
+    ],
+    "docs_historical": [
+      "BASELINE-RECEIPT.md",
+      "CANONICAL-IMPLEMENTATION-PROMPT.txt",
+      "FINAL-ACCEPTANCE.md",
+      "IMPLEMENTATION-REPORT.md"
+    ],
+    "constitution_current": [
+      "04-DOMAIN-ONTOLOGY.md",
+      "15-ENGINEERING-CONSTITUTION.md",
+      "16-ADR-INDEX.md",
+      "MASTER-CONTINUATION.md",
+      "README.md"
+    ],
+    "constitution_reference": [
+      "03-FAILURE-PATTERN-INVENTORY.md",
+      "05-COMPONENT-METAMODEL.md",
+      "06-CONTRACT-CATALOG.md",
+      "07-TEMPLATE-CATALOG.md",
+      "08-SCHEMA-CATALOG.md",
+      "09-GENERATOR-ARCHITECTURE.md",
+      "10-VALIDATION-ARCHITECTURE.md",
+      "11-BEHAVIORAL-ACCEPTANCE.md",
+      "12-HOST-PROJECTION-ARCHITECTURE.md",
+      "14-SOURCE-SEMANTICS-REGISTER.md"
+    ],
+    "constitution_historical": [
+      "00-PROGRAM-PLAN.md",
+      "01-SOURCE-ARCHITECTURE-STUDY.md",
+      "02-RUNTIME-REALITY-MAP.md",
+      "13-MIGRATION-MATRIX.md",
+      "17-IMPLEMENTATION-PROOF.md"
+    ],
+    "constitution_adrs": "REFERENCE",
+    "constitution_sources": "HISTORICAL",
+    "roles": "DERIVED_CURRENT",
+    "skills": "DERIVED_CURRENT"
+  }
+}

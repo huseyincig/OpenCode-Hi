@@ -7,24 +7,23 @@ Status: **ACTIVE SINGLE CONTINUATION ENTRYPOINT**
 > It is not a replacement for component-owned canonical data/contracts. **Live repository state always wins over this ledger when they conflict.**
 
 ```yaml
-continuation_schema: 2
+continuation_schema: 3
 repository: OpenCode-Hi
 repository_root: /workspace/OpenCode-Hi
-coverage_reconciliation_baseline_head: 8ba9eb561332eebc3b6bded90a1c0d2da501d1ed
-active_program: OpenCode-Hi Product Closure after Constitution Migration
-active_phase: P8
-active_phase_name: Release readiness and real publication
-phase_status: PARTIAL_EXTERNAL
-working_tree_expectation: clean
-last_verified_full_suite:
-  total: 736
-  pass: 736
-  fail: 0
-last_verified_architecture_lint: "PASS rules=22 deferred=0 linked=8"
-last_verified_validator: PASS
-current_projection_receipts: 32
-external_release_actions_authorized: true
-next_contract_owner: G10/R-series product closure; B3 browser T3 is closed, npm T4 remains externally blocked on authentication
+active_program: Final Product Truth Reconstruction & Documentation Rebuild
+active_authority: /workspace/arastirma/OpenCode-Hi_FINAL_RECONSTRUCTION_ZERO_DEFECT_PROMPTS.md
+active_phase: PROMPT_A
+active_phase_name: Documentation truth reconstruction
+phase_status: IN_PROGRESS
+working_tree_expectation: clean-at-checkpoint-boundaries
+current_source_head_at_program_start: 6c271d281dfd5c2819539e6ca1d3659c5c729a91
+current_product_version: 0.1.0
+current_release_status_projection: data/validation/release-status-0.1.0.json
+current_compatibility_projection: data/validation/compatibility-matrix-0.1.0.json
+documentation_ownership_policy: data/documentation-ownership.json
+documentation_inventory_receipt: data/validation/documentation-inventory-0.1.0.json
+external_release_actions_authorized: false
+next_contract_owner: documentation ownership/parity -> current docs rebuild -> Constitution/current-ledger reduction -> PROMPT A certification
 ```
 
 ---
@@ -633,6 +632,24 @@ npm registry publication remains the only open P8/T4 edge: `npm whoami` returned
 
 ---
 
+## 10A. Final reconstruction program — PROMPT A
+
+### A0 — Documentation truth ownership and inventory — **IN PROGRESS**
+
+Authority: `/workspace/arastirma/OpenCode-Hi_FINAL_RECONSTRUCTION_ZERO_DEFECT_PROMPTS.md`.
+
+The post-v0.1 engineering work-package program is complete through N1, so PROMPT A is now the active repository program. The first reconstruction checkpoint establishes a machine-readable documentation ownership boundary before rewriting current product docs:
+
+- `data/documentation-ownership.json` declares **one meaning -> one canonical documentation owner** for 36 product meanings;
+- `scripts/generate-documentation-inventory.py` inventories root docs, product docs, Constitution material, ADRs/source-study material, roles, and all 27 packaged methodology `SKILL.md` files;
+- `data/validation/documentation-inventory-0.1.0.json` classifies every inventoried surface as current/derived/reference/historical and rejects unclassified artifacts, duplicate meaning IDs, missing owners, or historical artifacts owning current truth;
+- initial inventory: 122 documentation-like artifacts, 68 current/derived, 32 historical, 22 reference, 36 canonical meanings, with zero classification/ownership violations;
+- `scripts/validate.py` now consumes `VERSION` as the product-version owner and validates SemVer/parity instead of hard-pinning the application to literal `0.1.0`. No version bump is performed by this checkpoint.
+
+This does **not** certify PROMPT A. Current README/Constitution/architecture/install/release surfaces still require reconstruction and parity review. Historical engineering material remains available but may not own mutable current product truth.
+
+---
+
 ## 11. Verification protocol for future checkpoints
 
 ### Focused verification first
@@ -743,10 +760,8 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**The authorized post-v0.1 engineering work-package program is locally complete through N1.**
+**Continue PROMPT A — Final Product Truth Reconstruction & Documentation Rebuild.**
 
-Do not reopen R1–R4/N1 or earlier closed packages without contradictory repository evidence. Current mutable release/host truth is generated from `data/validation/release-status-0.1.0.json` and `data/validation/compatibility-matrix-0.1.0.json`; fresh test counts remain command output, not hand-maintained documentation.
+A0 documentation ownership/inventory foundation is the current checkpoint. After it is verified and committed, reconstruct the current user/contributor navigation and canonical product docs from live source/contracts/runtime/receipts rather than historical prose. In parallel, reduce Constitution material to current LAW/WHY/ownership/proof rules and classify migration/proof/source-study artifacts explicitly as historical/reference.
 
-The sole remaining external release edge is npm: `opencode-hi@0.1.0` is absent and registry authentication is unavailable, so P8 remains **PARTIAL_EXTERNAL / NPM T4 BLOCKED_AUTH**. Do not rewrite immutable `v0.1.0` or fabricate Trusted Publishing/T4 evidence. When explicit npm registry authentication becomes available, bootstrap-publish the exact already-released `0.1.0` artifact, verify registry version/integrity/shasum and fresh install, configure `npm-publish.yml` as the trusted publisher, then use OIDC for subsequent releases.
-
-Until that external condition changes, repository engineering should remain in maintenance/new-explicit-scope mode rather than inventing another roadmap package.
+Do not begin PROMPT B until PROMPT A exit gates are evidence-backed. The npm `0.1.0` T4 bootstrap blocker remains external release history and must not be fabricated or confused with the current development HEAD.
