@@ -563,6 +563,26 @@ try:
 except Exception as e:err(f'bad PROMPT B Configuration receipt: {e}')
 
 try:
+    ux=json.loads((ROOT/'data/validation/prompt-b-cli-developer-tooling-ux.json').read_text(encoding='utf-8'))
+    if ux.get('schema')!=1 or ux.get('kind')!='PROMPT_B_CLI_DEVELOPER_TOOLING_UX_ADVERSARIAL_AUDIT' or ux.get('program')!='PROMPT_B' or ux.get('section')!=24 or ux.get('status')!='PASS':err('bad PROMPT B CLI/developer tooling UX audit receipt')
+    if ux.get('violations')!=[] or ux.get('summary')!={'required':11,'covered':11,'violations':0}:err('PROMPT B CLI/developer tooling UX coverage drift')
+    rows=ux.get('invariants') or []
+    if len(rows)!=11 or len({x.get('invariant') for x in rows if isinstance(x,dict)})!=11:err('PROMPT B CLI/developer tooling UX invariant inventory drift')
+    import hashlib
+    for row in rows:
+        for key in ('owner','proof'):
+            rel=row.get(key);expected=row.get(f'{key}_sha256')
+            if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B CLI/developer tooling UX missing {key}: {rel}');continue
+            if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B CLI/developer tooling UX {key} hash drift: {rel}')
+        try:
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B CLI/developer tooling UX owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B CLI/developer tooling UX proof anchor drift: {row.get('invariant')}")
+        except Exception as e:err(f'PROMPT B CLI/developer tooling UX row invalid: {e}')
+    if not all((ux.get('static_guards') or {}).values()):err('PROMPT B CLI/developer tooling UX static guard drift')
+    if ux.get('ux_contract')!=['specific','actionable','truthful','bounded']:err('PROMPT B CLI/developer tooling UX contract drift')
+except Exception as e:err(f'bad PROMPT B CLI/developer tooling UX receipt: {e}')
+
+try:
     nr=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text(encoding='utf-8'))
     if nr.get('schema')!=1 or nr.get('kind')!='EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION' or nr.get('program')!='PROMPT_B' or nr.get('status')!='PASS':err('bad PROMPT B native reevaluation receipt identity/status')
     oc=nr.get('opencode',{})

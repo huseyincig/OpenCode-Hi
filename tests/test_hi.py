@@ -1110,3 +1110,51 @@ def test_prompt_b_configuration_audit_covers_every_leaf_and_is_source_bound():
     assert all(d['static_guards'].values())
     assert {'profile-unknown-config-injection','block-level-precedence-widening','project-routing-synthetic-default-override'}<={x['id'] for x in d['closed_defects']}
     assert (ROOT/'scripts/audit-configuration.py').is_file()
+
+
+def test_prompt_b_cli_malformed_config_fails_closed_without_overwrite(tmp_path):
+    cfg=tmp_path/'opencode.json';original='{broken json\n';cfg.write_text(original)
+    for command in ('plan','install'):
+        r=run(ROOT/'scripts/native_plugin_setup.py',command,tmp_path)
+        assert r.returncode==2 and r.stderr==''
+        out=json.loads(r.stdout);assert out['status']=='BLOCKED' and out['reason']=='invalid-json-input'
+        assert out['path']==str(cfg) and out['action'] and 'will not overwrite' in out['action']
+        assert 'Traceback' not in r.stdout and cfg.read_text()==original
+
+
+def test_prompt_b_cli_jsonc_plan_is_truthful_actionable_and_non_mutating(tmp_path):
+    cfg=tmp_path/'opencode.jsonc';original='// comment\n{"plugin":[]}\n';cfg.write_text(original)
+    r=run(ROOT/'scripts/native_plugin_setup.py','plan',tmp_path);out=json.loads(r.stdout)
+    assert r.returncode==2 and r.stderr=='' and out['status']=='BLOCKED'
+    assert out['reason']=='jsonc-safe-mutation-not-supported' and 'JSONC' in out['action']
+    assert cfg.read_text()==original and 'Traceback' not in r.stdout
+
+
+def test_prompt_b_cli_reconfigure_rejects_out_of_range_and_malformed_limits(tmp_path):
+    bad=run(ROOT/'scripts/native_plugin_setup.py','reconfigure',tmp_path,'--parallel-max','-4')
+    assert bad.returncode==2 and bad.stdout=='' and 'parallel-max must be in 1..8' in bad.stderr and 'Traceback' not in bad.stderr
+    malformed=run(ROOT/'scripts/native_plugin_setup.py','reconfigure',tmp_path,'--provider-limit','nope')
+    out=json.loads(malformed.stdout);assert malformed.returncode==2 and malformed.stderr==''
+    assert out['status']=='BLOCKED' and out['reason']=='invalid-concurrency-limit' and out['action']
+    assert not (tmp_path/'.opencode/hi/policy/routing.json').exists()
+
+
+def test_prompt_b_cli_first_run_doctor_supplies_recovery_action(tmp_path):
+    r=run(ROOT/'scripts/native_plugin_setup.py','doctor',tmp_path);out=json.loads(r.stdout)
+    assert r.returncode==2 and out['status']=='FAIL' and 'hi-plugin-not-registered' in out['issues']
+    assert any('plan' in x and 'install' in x for x in out['actions'])
+    assert 'Traceback' not in r.stdout+r.stderr
+
+
+def test_prompt_b_cli_developer_tooling_ux_audit_is_actionable_bounded_and_source_bound():
+    d=json.loads((ROOT/'data/validation/prompt-b-cli-developer-tooling-ux.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_CLI_DEVELOPER_TOOLING_UX_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['section']==24 and d['status']=='PASS'
+    assert d['violations']==[] and d['summary']=={'required':11,'covered':11,'violations':0}
+    assert d['ux_contract']==['specific','actionable','truthful','bounded']
+    for row in d['invariants']:
+        owner=ROOT/row['owner'];proof=ROOT/row['proof'];assert owner.is_file() and proof.is_file()
+        assert hashlib.sha256(owner.read_bytes()).hexdigest()==row['owner_sha256']
+        assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
+        assert row['owner_anchor'] in owner.read_text(errors='replace') and row['proof_anchor'] in proof.read_text(errors='replace')
+    assert all(d['static_guards'].values())
+    assert {'malformed-opencode-config-silent-overwrite-risk','reconfigure-invalid-limit-accepted','blocked-plan-missing-recovery-guidance'}<={x['id'] for x in d['closed_defects']}

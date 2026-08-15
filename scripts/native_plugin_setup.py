@@ -48,9 +48,15 @@ EXECUTION_POLICIES={'minimal','balanced','thorough','adaptive','manual'}
 PROFILE_NAMES={'minimal','balanced','thorough'}
 
 def sha_text(s:str)->str:return hashlib.sha256(s.encode()).hexdigest()
+class SetupInputError(Exception):
+    def __init__(self,reason:str,*,path:Path|None=None,detail:str|None=None,action:str|None=None):
+        super().__init__(detail or reason);self.reason=reason;self.path=path;self.detail=detail;self.action=action
 def load(path:Path)->dict:
-    try:return json.loads(path.read_text(encoding='utf-8'))
-    except Exception:return {}
+    if not path.exists():return {}
+    try:raw=json.loads(path.read_text(encoding='utf-8'))
+    except (OSError,UnicodeError,json.JSONDecodeError) as e:raise SetupInputError('invalid-json-input',path=path,detail=str(e),action='Repair or restore this JSON file before running OpenCode-Hi setup; the helper will not overwrite malformed input.') from e
+    if not isinstance(raw,dict):raise SetupInputError('json-root-must-be-object',path=path,detail=f'observed {type(raw).__name__}',action='Change the JSON root to an object before retrying setup.')
+    return raw
 def dump(d:dict)->str:return json.dumps(d,ensure_ascii=False,indent=2)+'\n'
 
 
@@ -160,19 +166,23 @@ def _plugins(data:dict)->list[str]:
     return [x for x in raw if isinstance(x,str)] if isinstance(raw,list) else []
 
 def plan(project:Path,version:str|None=None)->dict:
-    cfg=config_path(project);data=load(cfg);plugins=_plugins(data);target=hi_spec(version)
+    cfg=config_path(project);target=hi_spec(version)
+    if cfg.suffix=='.jsonc':return {'status':'BLOCKED','product':PRODUCT,'short':SHORT,'project':str(project),'config':str(cfg),'plugin_spec':target,'reason':'jsonc-safe-mutation-not-supported','action':'Convert or maintain opencode.json explicitly; this helper will not parse/rewrite JSONC and risk losing comments.','changed':False,'rendered':''}
+    data=load(cfg);plugins=_plugins(data)
     hi=[x for x in plugins if is_hi(x)]
     foreign=[x for x in hi if x!=target]
     next_plugins=[x for x in plugins if not is_hi(x)]+[target]
     after=dict(data);after['plugin']=next_plugins
     status='BLOCKED' if foreign or cfg.suffix=='.jsonc' else 'READY'
-    return {'status':status,'product':PRODUCT,'short':SHORT,'project':str(project),'config':str(cfg),'plugin_spec':target,'conflicting_hi_specs':foreign,'before_plugins':plugins,'after_plugins':next_plugins,'changed':plugins!=next_plugins,'rendered':dump(after)}
+    reason='conflicting-hi-registration' if foreign else 'jsonc-safe-mutation-not-supported' if cfg.suffix=='.jsonc' else None
+    action='Remove/resolve the conflicting Hi registration before installation.' if foreign else 'Convert or maintain opencode.json explicitly; this helper does not rewrite JSONC safely.' if cfg.suffix=='.jsonc' else 'Run install to apply this exact registration plan.'
+    return {'status':status,'product':PRODUCT,'short':SHORT,'project':str(project),'config':str(cfg),'plugin_spec':target,'conflicting_hi_specs':foreign,'before_plugins':plugins,'after_plugins':next_plugins,'changed':plugins!=next_plugins,**({'reason':reason} if reason else {}),'action':action,'rendered':dump(after)}
 
 def install(project:Path,version:str|None=None)->dict:
     target=hi_spec(version);cfg=config_path(project);own_path=project/OWNERSHIP
     guard=_mutation_guard(project,cfg,own_path)
     if guard:return guard
-    if cfg.suffix=='.jsonc':return {'status':'BLOCKED','product':PRODUCT,'reason':'jsonc-safe-mutation-not-supported','config':str(cfg)}
+    if cfg.suffix=='.jsonc':return {'status':'BLOCKED','product':PRODUCT,'reason':'jsonc-safe-mutation-not-supported','config':str(cfg),'action':'Convert or maintain opencode.json explicitly; this helper will not rewrite JSONC and risk losing comments.'}
     data=load(cfg);plugins=_plugins(data);hits=_hi_entries(plugins);own=load(own_path) if own_path.exists() else {}
     owned_spec=((own.get('managed') or {}).get('config') or {}).get('plugin_spec')
     if owned_spec:
@@ -195,7 +205,7 @@ def upgrade(project:Path,version:str|None=None)->dict:
     cfg=config_path(project);own_path=project/OWNERSHIP;target=hi_spec(version)
     guard=_mutation_guard(project,cfg,own_path)
     if guard:return guard
-    if cfg.suffix=='.jsonc':return {'status':'BLOCKED','product':PRODUCT,'reason':'jsonc-safe-mutation-not-supported','config':str(cfg)}
+    if cfg.suffix=='.jsonc':return {'status':'BLOCKED','product':PRODUCT,'reason':'jsonc-safe-mutation-not-supported','config':str(cfg),'action':'Convert or maintain opencode.json explicitly; this helper will not rewrite JSONC and risk losing comments.'}
     if not own_path.exists():return {'status':'BLOCKED','product':PRODUCT,'reason':'ownership-proof-missing','config':str(cfg)}
     own=load(own_path);managed=(own.get('managed') or {}).get('config') or {};owned_spec=managed.get('plugin_spec')
     if not owned_spec:return {'status':'BLOCKED','product':PRODUCT,'reason':'ownership-proof-invalid','config':str(cfg)}
@@ -214,7 +224,7 @@ def uninstall(project:Path)->dict:
     guard=_mutation_guard(project,cfg,own_path)
     if guard:return guard
     data=load(cfg);plugins=_plugins(data);own=load(own_path) if own_path.exists() else {};managed=(own.get('managed') or {}).get('config') or {};owned_spec=managed.get('plugin_spec')
-    if cfg.suffix=='.jsonc':return {'status':'BLOCKED','product':PRODUCT,'reason':'jsonc-safe-mutation-not-supported','config':str(cfg)}
+    if cfg.suffix=='.jsonc':return {'status':'BLOCKED','product':PRODUCT,'reason':'jsonc-safe-mutation-not-supported','config':str(cfg),'action':'Convert or maintain opencode.json explicitly; this helper will not rewrite JSONC and risk losing comments.'}
     if not owned_spec:
         found=[x for x in plugins if is_hi(x)]
         return {'status':'NOOP' if not found else 'BLOCKED','product':PRODUCT,'config':str(cfg),'reason':'ownership-proof-missing' if found else 'not-installed-by-hi','removed':[]}
@@ -293,7 +303,14 @@ def doctor(project:Path)->dict:
     if config_drift is True:warnings.append('managed-config-drift')
     if routing_path.exists() and routing_schema!=ROUTING_SCHEMA:issues.append('unsupported-routing-schema')
     if transaction_path.exists():issues.append('pending-setup-transaction')
-    return {'status':'FAIL' if issues else ('WARN' if warnings else 'OK'),'product':PRODUCT,'short':SHORT,'config':str(cfg),'hi_specs':hi,'ownership':{'state':'missing' if not own_path.exists() else ('healthy' if own else 'invalid'),'schema':own.get('schema'),'config_drift':config_drift},'lifecycle':{'transaction_pending':transaction_path.exists(),'rollback_available':rollback_path.exists()},'routing':{'path':str(routing_path),'schema':routing_schema,'valid':not routing_path.exists() or routing_schema==ROUTING_SCHEMA},'issues':issues,'warnings':warnings,'note':'Registration/ownership doctor is static; actual plugin/agent/native-skill/model load must be verified in OpenCode runtime.'}
+    actions=[]
+    if 'hi-plugin-not-registered' in issues:actions.append('Run: python3 scripts/native_plugin_setup.py plan <project>, then install after reviewing the plan.')
+    if 'duplicate-hi-registration' in issues:actions.append('Remove the duplicate/conflicting Hi registration; keep one exact owned plugin entry.')
+    if 'unsupported-routing-schema' in issues:actions.append(f'Repair or regenerate {routing_path}; only routing schema {ROUTING_SCHEMA} is supported.')
+    if 'pending-setup-transaction' in issues:actions.append('Run the recover command before any further setup mutation.')
+    if 'ownership-proof-missing' in warnings:actions.append('Do not upgrade/uninstall as Hi-owned until ownership is re-established; inspect the existing registration first.')
+    if 'managed-config-drift' in warnings:actions.append('Review user changes before rollback/upgrade; setup will not overwrite drift blindly.')
+    return {'status':'FAIL' if issues else ('WARN' if warnings else 'OK'),'product':PRODUCT,'short':SHORT,'config':str(cfg),'hi_specs':hi,'ownership':{'state':'missing' if not own_path.exists() else ('healthy' if own else 'invalid'),'schema':own.get('schema'),'config_drift':config_drift},'lifecycle':{'transaction_pending':transaction_path.exists(),'rollback_available':rollback_path.exists()},'routing':{'path':str(routing_path),'schema':routing_schema,'valid':not routing_path.exists() or routing_schema==ROUTING_SCHEMA},'issues':issues,'warnings':warnings,'actions':actions,'note':'Registration/ownership doctor is static; actual plugin/agent/native-skill/model load must be verified in OpenCode runtime.'}
 
 def discover_available_models()->list[str]:
     """Best-effort enumeration of currently available models.
@@ -463,11 +480,12 @@ def _bool_arg(value:str|None)->bool|None:
 def _kv_limits(items:list[str]|None)->dict[str,int]:
     out={}
     for item in items or []:
-        if '=' not in item:continue
+        if '=' not in item:raise SetupInputError('invalid-concurrency-limit',detail=f'{item!r} must use NAME=POSITIVE_INTEGER',action='Use --provider-limit provider=2 or --model-limit provider/model=1.')
         key,raw=item.split('=',1);key=key.strip()
         try:value=int(raw.strip())
-        except ValueError:continue
-        if key and value>0:out[key]=min(32,value)
+        except ValueError as e:raise SetupInputError('invalid-concurrency-limit',detail=f'{item!r} has a non-integer limit',action='Use a positive integer between 1 and 32.') from e
+        if not key or value<1 or value>32:raise SetupInputError('invalid-concurrency-limit',detail=f'{item!r} must be within 1..32',action='Use a non-empty key and a limit between 1 and 32.')
+        out[key]=value
     return out
 
 def reconfigure(project:Path,*,print_only:bool=False,execution_policy:str|None=None,primary_mode:str|None=None,routing_strategy:str|None=None,allow_providers:list[str]|None=None,deny_models:list[str]|None=None,max_fallbacks:int|None=None,parallel_state:str|None=None,parallel_max:int|None=None,provider_limits:list[str]|None=None,model_limits:list[str]|None=None,profile_target:str='balanced',specialist_threshold:str|None=None,review_threshold:str|None=None,team_state:str|None=None,team_max_members:int|None=None,team_wall_minutes:int|None=None)->dict:
@@ -523,6 +541,14 @@ def reconfigure(project:Path,*,print_only:bool=False,execution_policy:str|None=N
     routing_path.parent.mkdir(parents=True,exist_ok=True);routing_path.write_text(dump(merged),encoding='utf-8')
     return {'status':'APPLIED','product':PRODUCT,'config':str(cfg),'project_config':str(routing_path),'routing_config':str(routing_path),'changed':changed,'primaryMode':merged.get('primaryMode','auto'),'restart_required':True,'note':'Only explicitly supplied HI settings were changed in the project-owned HI config. Native OpenCode config, user plugins/MCP/unknown fields were not mutated.'}
 
+def _bounded_cli_int(name:str,lo:int,hi:int):
+    def parse(value:str)->int:
+        try:n=int(value)
+        except ValueError as e:raise argparse.ArgumentTypeError(f'{name} must be an integer in {lo}..{hi}') from e
+        if n<lo or n>hi:raise argparse.ArgumentTypeError(f'{name} must be in {lo}..{hi}; got {n}')
+        return n
+    return parse
+
 def main()->int:
     ap=argparse.ArgumentParser(description=f'{PRODUCT} native OpenCode plugin setup')
     ap.add_argument('command',choices=['plan','install','upgrade','doctor','uninstall','rollback','recover','role-models','reconfigure']);ap.add_argument('project',nargs='?',default='.');ap.add_argument('--version')
@@ -537,17 +563,17 @@ def main()->int:
     ap.add_argument('--routing-strategy',choices=['cost-quality','quality','cost'])
     ap.add_argument('--allow-provider',dest='allow_providers',action='append')
     ap.add_argument('--deny-model',dest='deny_models',action='append')
-    ap.add_argument('--max-fallbacks',type=int)
+    ap.add_argument('--max-fallbacks',type=_bounded_cli_int('max-fallbacks',0,6))
     ap.add_argument('--parallel',dest='parallel_state',choices=['enabled','disabled'])
-    ap.add_argument('--parallel-max',type=int)
+    ap.add_argument('--parallel-max',type=_bounded_cli_int('parallel-max',1,8))
     ap.add_argument('--provider-limit',action='append',default=[])
     ap.add_argument('--model-limit',action='append',default=[])
     ap.add_argument('--profile-target',choices=['minimal','balanced','thorough'],default='balanced')
     ap.add_argument('--specialist-threshold',choices=['low','medium','high'])
     ap.add_argument('--review-threshold',choices=['low','medium','high'])
     ap.add_argument('--team-mode',dest='team_state',choices=['enabled','disabled'])
-    ap.add_argument('--team-max-members',type=int)
-    ap.add_argument('--team-wall-minutes',type=int)
+    ap.add_argument('--team-max-members',type=_bounded_cli_int('team-max-members',2,8))
+    ap.add_argument('--team-wall-minutes',type=_bounded_cli_int('team-wall-minutes',1,240))
     a=ap.parse_args();project=Path(a.project).expanduser().resolve()
     cmds={
       'plan':lambda:plan(project,a.version),
@@ -560,6 +586,10 @@ def main()->int:
       'role-models':lambda:role_models(project,list_available=a.list_available,defaults=a.defaults,print_only=a.print,sets=a.sets,variants=a.variants,policy=a.policy),
       'reconfigure':lambda:reconfigure(project,print_only=a.print,execution_policy=a.execution_policy,primary_mode=a.primary_mode,routing_strategy=a.routing_strategy,allow_providers=a.allow_providers,deny_models=a.deny_models,max_fallbacks=a.max_fallbacks,parallel_state=a.parallel_state,parallel_max=a.parallel_max,provider_limits=a.provider_limit,model_limits=a.model_limit,profile_target=a.profile_target,specialist_threshold=a.specialist_threshold,review_threshold=a.review_threshold,team_state=a.team_state,team_max_members=a.team_max_members,team_wall_minutes=a.team_wall_minutes),
     }
-    out=cmds[a.command]()
+    try:out=cmds[a.command]()
+    except SetupInputError as e:
+        out={'status':'BLOCKED','product':PRODUCT,'reason':e.reason,**({'path':str(e.path)} if e.path else {}),**({'detail':e.detail[:500]} if e.detail else {}),**({'action':e.action} if e.action else {})}
+    except OSError as e:
+        out={'status':'BLOCKED','product':PRODUCT,'reason':'filesystem-operation-failed','detail':str(e)[:500],'action':'Check project path permissions/ownership and retry; no successful setup mutation is claimed.'}
     out.pop('rendered',None);print(dump(out),end='');return 2 if out.get('status') in ('BLOCKED','FAIL') else 0
 if __name__=='__main__':raise SystemExit(main())

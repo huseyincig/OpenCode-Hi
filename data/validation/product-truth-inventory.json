@@ -380,7 +380,7 @@
       "area": "install-lifecycle",
       "canonical_owner": "native_plugin_setup.py",
       "owner_path": "scripts/native_plugin_setup.py",
-      "owner_sha256": "2f91dee1eb98b6319491277e33a210afa1864eef69d81527a5fbf8613ed4c182",
+      "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "producer_or_contract_paths": [],
       "consumer_or_executor_paths": [
         "project-opencode-config"
