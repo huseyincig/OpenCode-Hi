@@ -22,9 +22,9 @@ import {PACKAGED_HI_AGENTS} from '../dist/generated/agent-config.js'
 function fakePlaywright(){
   const launches=[],sessions=[]
   const chromium={launch:async options=>{launches.push(options);const page={
-    url:'',events:new Map(),lastFill:undefined,closed:false,
-    setDefaultTimeout(){},on(name,fn){this.events.set(name,fn)},
-    async goto(url){this.url=url},
+    _url:'about:blank',events:new Map(),lastFill:undefined,closed:false,
+    url(){return this._url},setDefaultTimeout(){},on(name,fn){this.events.set(name,fn)},
+    async goto(url){this._url=url},
     waitForTimeout:async()=>{},
     screenshot:async()=>new Uint8Array([137,80,78,71,1,2,3]),
     locator(selector){if(selector==='body')return{evaluate:async()=>({body:'Ready\nName',items:[{i:1,tag:'button',text:'Ready'},{i:2,tag:'input',text:'Name'}]})};return{click:async()=>{},fill:async value=>{page.lastFill=value}}},
@@ -62,6 +62,18 @@ test('PROMPT B browser session state cannot cross execution-owner identity for t
   assert.equal(pw.sessions[1].page.lastFill,undefined,'new execution owner must not inherit stale DOM/auth/input state')
   await assert.rejects(()=>adapter.inspect(first),/not owned by the current execution identity/)
   await adapter.close(second)
+})
+
+
+
+test('PROMPT B browser snapshot refreshes client-side route state and fails closed on external SPA redirect',async()=>{
+  const pw=fakePlaywright(),adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module}),c=ctx('t-spa')
+  await adapter.open(c,'http://127.0.0.1:4173/')
+  pw.sessions[0].page._url='http://127.0.0.1:4173/client-route?step=2'
+  const routed=await adapter.inspect(c);assert.equal(routed.result,'OBSERVED');assert.equal(routed.url,'http://127.0.0.1:4173/client-route?step=2')
+  pw.sessions[0].page._url='https://example.com/escaped'
+  const escaped=await adapter.inspect(c);assert.equal(escaped.result,'FAILED');assert.match(escaped.network_errors.join(' '),/outside supported local scope/)
+  await adapter.dispose()
 })
 
 test('B3 screenshot bytes are retained by the existing canonical artifact owner before observation succeeds',async()=>{
