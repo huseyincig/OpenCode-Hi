@@ -806,6 +806,19 @@ try:
     if b.get('optimization_decision')!='NO_NEW_SCHEDULER_OR_WORK_STEALING_COMPLEXITY_WITHOUT_MEASURED_BENEFIT':err('PROMPT B benchmark optimization decision drift')
 except Exception as e:err(f'bad PROMPT B performance/resource benchmark receipt: {e}')
 
+# PROMPT B §40 zero-known-defect closure loop
+try:
+    z40=json.loads((ROOT/'data/validation/prompt-b-zero-known-defect-loop.json').read_text(encoding='utf-8'))
+    if z40.get('schema')!=1 or z40.get('kind')!='PROMPT_B_ZERO_KNOWN_DEFECT_CLOSURE_LOOP' or z40.get('section')!=40 or z40.get('status')!='PASS':err('bad PROMPT B zero-known-defect loop identity/status')
+    zs=z40.get('summary') or {}
+    if zs.get('recorded_findings')!=62 or zs.get('unresolved_known_defects')!=0 or zs.get('adjacent_regression_pass')!=93 or zs.get('full_python_pass')!=115 or zs.get('full_node_pass')!=848 or zs.get('exact_t3_capabilities')!=3 or zs.get('lifecycle_invariants_pass')!=61:err('PROMPT B zero-known-defect summary drift')
+    if z40.get('violations')!=[] or len(z40.get('defects') or [])!=62:err('PROMPT B zero-known-defect ledger drift')
+    for row in z40.get('defects') or []:
+        rel=row.get('regression_receipt');expected=row.get('regression_receipt_sha256')
+        if not isinstance(rel,str) or not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B zero-known-defect proof drift: '+str(rel))
+        if len(row.get('closure_pipeline') or [])!=12:err('PROMPT B zero-known-defect closure pipeline incomplete: '+str(row.get('id')))
+except Exception as e:err(f'bad PROMPT B zero-known-defect loop: {e}')
+
 # PROMPT B §39 exact-current OpenCode T3 certification
 try:
     q39=json.loads((ROOT/'data/validation/prompt-b-exact-current-opencode-t3.json').read_text(encoding='utf-8'))

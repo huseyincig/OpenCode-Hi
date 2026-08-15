@@ -872,7 +872,7 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**PROMPT B — IN PROGRESS. Sections 20–39 are CLOSED. Next: Zero-known-defect closure loop (section 40).**
+**PROMPT B — IN PROGRESS. Sections 20–40 are CLOSED. Next: Hygiene audit (section 41).**
 
 
 
@@ -929,3 +929,6 @@ Section 35 Performance / token / resource benchmarks is closed by `data/validati
 
 
 Section 39 Exact-current OpenCode T3 is closed by `data/validation/prompt-b-exact-current-opencode-t3.json`: installed OpenCode, npm registry latest, SDK registry latest, and locked SDK all resolved **1.18.18** on 2026-08-16. Process lifecycle, workspace isolation binding, and browser execution were each rerun against real OpenCode/Chromium on exact source `aa9a402f04fc40d53823c3e1b5e0190362dc5e75` (tree `50cd33f1454193685e92dab2fd5dd339aef6b902`) rather than inherited from historical receipts. Compatibility selects all three fresh `head-aa9a402` receipts and lifecycle audit remains **61/61 PASS, 0 violations** with zero capability-owner hash drift. API presence alone is not accepted as T3 evidence.
+
+
+Section 40 Zero-known-defect closure loop is closed by `data/validation/prompt-b-zero-known-defect-loop.json`: all 62 recorded product/architecture/harness findings have a canonical owner, resolution and regression receipt; adjacent high-risk re-audit is 93/93 PASS, full Python 115/115, Node 848/848, architecture 22/22, docs parity 0, exact-current T3 3/3 and lifecycle 61/61. Unresolved known defects in the audited scope: **0**.
