@@ -9,7 +9,7 @@ import { auditHiToolNamespace } from '../opencode/tool-namespace.js'
 import { knownHiCustomRoles } from '../runtime/routing/agent-reuse.js'
 
 export interface DoctorCheck { id:string; status:'pass'|'warn'|'fail'; machine_status?:'pass'|'info'|'action-required'|'not-applicable'; detail:string }
-export interface DoctorRuntimeInfo { models?:AvailableModel[]; resolution?:ConfigResolutionReport; capabilities?:OpenCodeCapabilities; hostConfig?:Record<string,unknown>; openCodeVersion?:string }
+export interface DoctorRuntimeInfo { models?:AvailableModel[]; resolution?:ConfigResolutionReport; capabilities?:OpenCodeCapabilities; hostConfig?:Record<string,unknown>; openCodeVersion?:string; runtimeHostResources?:ReadonlySet<string> }
 function providerCount(models:AvailableModel[]):number{return new Set(models.map(m=>m.provider).filter(Boolean)).size}
 function hiSpec(x:string):boolean{return x==='opencode-hi'||x.startsWith('opencode-hi@')||/OpenCode-Hi/i.test(x)}
 
@@ -22,7 +22,7 @@ export function runDoctor(config:HiConfig,store:MissionStore,directory?:string,i
   const inventoryIds=new Set(models.map(m=>m.id));const invalidMappings=models.length?configuredModelLists.filter(([,ids])=>ids.length>0&&!ids.some(id=>inventoryIds.has(id))):[];const primaryDrift=models.length?configuredModelLists.filter(([,ids])=>ids.length>1&&!inventoryIds.has(ids[0])&&ids.slice(1).some(id=>inventoryIds.has(id))):[]
   const c=info.capabilities,hostContracts=c?.contracts??[],processCapability=hostContracts.find(x=>x.id==='process-lifecycle'),workspaceCapability=hostContracts.find(x=>x.id==='workspace-isolation-binding'),browserCapability=hostContracts.find(x=>x.id==='browser-execution')
   const capabilityCounts=hostContracts.reduce((acc,x)=>{acc[x.status]=(acc[x.status]??0)+1;return acc},{} as Record<string,number>)
-  const capabilityDetail=(x:typeof processCapability)=>x?`status=${x.status}; verification=${x.verification_level}; fallback=${x.fallback??'none'}; semantic-loss=${x.semantic_loss.join(' | ')||'none'}; acceptance=${x.acceptance_ref}`:'contract unavailable'
+  const capabilityDetail=(x:typeof processCapability)=>x?`status=${x.status}; verification=${x.verification_level}; runtime-health-required=${x.runtime_health_required===true}; fallback=${x.fallback??'none'}; semantic-loss=${x.semantic_loss.join(' | ')||'none'}; acceptance=${x.acceptance_ref}`:'contract unavailable'
   const nativeDetail=c?`workerRuntime=${c.workerRuntime}; asyncPrompt=${c.asyncPrompt}; abort=${c.abort}; status=${c.sessionStatus}; children=${c.childSessionList}; todo=${c.sessionTodo}; diff=${c.sessionDiff}; fork=${c.sessionFork}; summarize=${c.sessionSummarize}; revert=${c.sessionRevert}; providerInventory=${c.providerInventory}; appLog=${c.appLog}; contracts=${hostContracts.length}; degraded=${c.degraded.join(',')||'none'}`:'capability snapshot unavailable'
   const effectiveObserved=Object.keys(host).length>0
   const effectiveHiPresent=hiPlugins.length>0||localHi
@@ -49,7 +49,7 @@ export function runDoctor(config:HiConfig,store:MissionStore,directory?:string,i
     {id:'host-capability-contracts',status:hostContracts.length?'pass':'warn',detail:hostContracts.length?`contracts=${hostContracts.length}; SUPPORTED=${capabilityCounts.SUPPORTED??0}; DEGRADED=${capabilityCounts.DEGRADED??0}; UNSUPPORTED=${capabilityCounts.UNSUPPORTED??0}; runtime verification remains ${[...new Set(hostContracts.map(x=>x.verification_level))].join(',')}`:'host capability registry unavailable'},
     {id:'process-lifecycle',status:processCapability?.status==='SUPPORTED'?'pass':'warn',detail:capabilityDetail(processCapability)},
     {id:'workspace-isolation-binding',status:workspaceCapability?.status==='SUPPORTED'?'pass':'warn',detail:capabilityDetail(workspaceCapability)},
-    {id:'browser-execution',status:browserCapability?.status==='SUPPORTED'?'pass':'warn',detail:capabilityDetail(browserCapability)},
+    {id:'browser-execution',status:browserCapability?.status==='SUPPORTED'&&(!browserCapability.runtime_health_required||info.runtimeHostResources?.has('host-capability:browser-execution'))?'pass':'warn',detail:`${capabilityDetail(browserCapability)}; runtime-available=${Boolean(info.runtimeHostResources?.has('host-capability:browser-execution'))}`},
     {id:'native-session-diff-revert',status:c?.sessionDiff&&c?.sessionRevert?'pass':'warn',detail:c?`diff=${c.sessionDiff}; revert=${c.sessionRevert}; unrevert=${c.sessionUnrevert}; fork=${c.sessionFork}; summarize=${c.sessionSummarize}`:'native session capability snapshot unavailable'},
     {id:'structured-logging',status:c?.appLog?'pass':'warn',detail:c?.appLog?'OpenCode client.app.log available':'structured OpenCode logging unavailable; no custom log framework will be substituted'},
     {id:'permission-surface',status:project.permissionConfigured?'pass':'warn',detail:project.permissionConfigured?`OpenCode permission config detected; skill-specific=${project.skillPermissionConfigured}`:'No explicit OpenCode permission config detected; host defaults apply'},

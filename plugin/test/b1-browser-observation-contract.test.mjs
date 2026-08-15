@@ -36,12 +36,12 @@ test('B1 screenshot observations require an ArtifactContract reference and never
   assert.doesNotMatch(source,/base64|image_bytes|screenshot_bytes|Buffer</i)
 })
 
-test('B1 an observation is not Evidence and does not promote browser execution',()=>{
+test('B1 observation remains non-Evidence regardless of later B3 browser capability promotion',()=>{
   const source=readFileSync(resolve(root,'plugin/src/contracts/browser-observation.ts'),'utf8')
   assert.doesNotMatch(source,/EvidenceItem|addEvidence|verificationSatisfied/)
   const cap=hostCapabilityByID(openCodeHostCapabilityContracts(all),'browser-execution')
-  assert.equal(cap?.status,'UNSUPPORTED')
-  assert.equal(cap?.native_primitive,undefined)
+  assert.equal(cap?.status,'SUPPORTED')
+  assert.equal(cap?.verification_level,'REAL_HOST_ACCEPTANCE')
 })
 
 test('B1 failed observations may record bounded errors without fabricating DOM screenshot or PASS',()=>{

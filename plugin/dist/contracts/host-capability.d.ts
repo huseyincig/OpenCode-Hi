@@ -26,6 +26,7 @@ export interface HostCapabilityContract {
     fallback?: string;
     semantic_loss: string[];
     required_permissions: string[];
+    runtime_health_required?: boolean;
     acceptance_ref: string;
     forbidden_fake_behavior: string;
 }

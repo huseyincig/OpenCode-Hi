@@ -16,11 +16,14 @@ import {PACKAGED_HI_AGENTS} from '../dist/generated/agent-config.js'
 const all={childSessions:true,asyncPrompt:true,syncPrompt:true,abort:true,providerInventory:true,appLog:true,sessionStatus:true,childSessionList:true,sessionTodo:true,sessionDiff:true,sessionFork:true,sessionSummarize:true,sessionRevert:true,sessionUnrevert:true}
 const repoRoot=resolve(dirname(fileURLToPath(import.meta.url)),'../..')
 
-test('browser execution is an explicit unsupported host capability until Hi owns a deterministic executor adapter',()=>{
+test('browser execution is supported only at the exact Hi-owned real-host acceptance boundary',()=>{
   const cap=hostCapabilityByID(openCodeHostCapabilityContracts(all),'browser-execution')
-  assert.equal(cap?.status,'UNSUPPORTED')
-  assert.equal(cap?.native_primitive,undefined)
-  assert.match(cap?.forbidden_fake_behavior??'',/audited OpenCode host surface.*MCP\/tool discovery.*no deterministic browser executor\/evidence adapter/i)
+  assert.equal(cap?.status,'SUPPORTED')
+  assert.equal(cap?.verification_level,'REAL_HOST_ACCEPTANCE')
+  assert.match(cap?.native_primitive??'',/Playwright Chromium.*health/i)
+  assert.match(cap?.adapter_entrypoint??'',/BrowserRuntime.*PlaywrightBrowserAdapter/i)
+  assert.equal(cap?.runtime_health_required,true)
+  assert.match(cap?.forbidden_fake_behavior??'',/exact source\/host behavior.*real-host acceptance receipt/i)
 })
 
 test('browser and visual methodologies require canonical browser-execution host capability',()=>{
@@ -37,10 +40,10 @@ test('browser and visual methodologies require canonical browser-execution host 
   }
 })
 
-test('TaskRuntime fails visual methodology preflight before native child spawn when browser execution is unsupported',async()=>{
+test('TaskRuntime still fails visual methodology preflight before native child spawn when executor health resource is unavailable',async()=>{
   const created=[]
   const client={session:{create:async req=>{created.push(req);return{data:{id:'child'}}},promptAsync:async()=>({data:{}}),abort:async()=>({data:true}),diff:async()=>({data:[]})}}
-  const runtime=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[],()=>({agent:PACKAGED_HI_AGENTS}))
+  const runtime=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[],()=>({agent:PACKAGED_HI_AGENTS}),undefined,{},undefined,undefined,()=>new Set())
   const store=new MissionStore(repoRoot),m=store.start('visual-resource','verify visual rendering')
   store.applyInitialSemanticAssessment('visual-resource',{material:true,message_kind:'mission',task_kind:'review',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['visual-review'],requested_external_actions:[],likely_verification:['visual-evidence'],likely_targets:['src/view.tsx'],intent_signals:['intent.visual-qa'],suppressed_intent_signals:[]})
   m.methodology.methodology_needs.push({name:'hi-visual-qa',signal:'intent.visual-qa',trigger_source:'task-intent',producer:'intent',reason:'explicit visual QA',created_at:Date.now()})

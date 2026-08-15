@@ -66,7 +66,8 @@ test('B2 command failure creates FAILED observation and health does not fake ava
   assert.equal(o.result,'FAILED');assert.deepEqual(o.network_errors,['navigation failed']);assert.ok(isBrowserObservationContract(o))
 })
 
-test('B2 implementation does not promote browser-execution before B3 real-host proof',()=>{
+test('B2 controlled adapter contract remains distinct from the later B3 real-host capability promotion',()=>{
   const cap=hostCapabilityByID(openCodeHostCapabilityContracts(all),'browser-execution')
-  assert.equal(cap?.status,'UNSUPPORTED');assert.equal(cap?.verification_level,'OBSERVED')
+  assert.equal(cap?.status,'SUPPORTED');assert.equal(cap?.verification_level,'REAL_HOST_ACCEPTANCE')
+  assert.match(cap?.adapter_entrypoint??'',/PlaywrightBrowserAdapter/)
 })

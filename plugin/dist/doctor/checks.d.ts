@@ -14,6 +14,7 @@ export interface DoctorRuntimeInfo {
     capabilities?: OpenCodeCapabilities;
     hostConfig?: Record<string, unknown>;
     openCodeVersion?: string;
+    runtimeHostResources?: ReadonlySet<string>;
 }
 export declare function runDoctor(config: HiConfig, store: MissionStore, directory?: string, info?: DoctorRuntimeInfo): DoctorCheck[];
 export declare function formatDoctor(c: DoctorCheck[]): string;

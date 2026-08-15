@@ -246,15 +246,19 @@
       "id": "Q3-ADV-014",
       "threat": "browser-observation-forgery",
       "owner": "HostCapability + methodology preflight/Evidence",
-      "control": "BrowserObservation is strict and BrowserExecutor is bounded, but browser execution remains UNSUPPORTED without an available real runtime and positive T3; tool names, prompts, screenshots, or model-mediated calls cannot promote support.",
+      "control": "BrowserObservation is strict and never auto-PASS; browser execution is supported only for the exact real-host accepted Hi-owned runtime and remains runtime-health-gated, so unavailable executors fail methodology preflight before child spawn.",
       "proof_tests": [
         {
           "file": "plugin/test/methodology-host-capability.test.mjs",
-          "contains": "browser execution is an explicit unsupported host capability until Hi owns a deterministic executor adapter"
+          "contains": "browser execution is supported only at the exact Hi-owned real-host acceptance boundary"
         },
         {
           "file": "plugin/test/methodology-host-capability.test.mjs",
-          "contains": "TaskRuntime fails visual methodology preflight before native child spawn when browser execution is unsupported"
+          "contains": "TaskRuntime still fails visual methodology preflight before native child spawn when executor health resource is unavailable"
+        },
+        {
+          "file": "plugin/test/b1-browser-observation-contract.test.mjs",
+          "contains": "B1 observation remains non-Evidence regardless of later B3 browser capability promotion"
         }
       ],
       "evidence": [

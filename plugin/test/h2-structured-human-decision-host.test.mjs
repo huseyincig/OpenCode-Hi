@@ -28,7 +28,7 @@ test('H2 structured host UI remains unsupported rather than model-mediated or in
   assert.equal(capability?.native_primitive,undefined)
   assert.equal(capability?.adapter_entrypoint,undefined)
   assert.match(capability?.forbidden_fake_behavior??'',/list\/reply\/reject|model-facing question tool/i)
-  assert.equal(hostCapabilityByID(openCodeHostCapabilityContracts(all),'browser-execution')?.status,'UNSUPPORTED')
+  assert.equal(hostCapabilityByID(openCodeHostCapabilityContracts(all),'browser-execution')?.status,'SUPPORTED')
 })
 
 test('H2 source tree has no fake host UI transport that delegates HumanDecision opening to a model prompt',()=>{

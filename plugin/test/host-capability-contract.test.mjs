@@ -27,8 +27,12 @@ test('host capability registry separates primitive presence from product capabil
   assert.match(workspace?.adapter_entrypoint??'',/WorkspaceRuntime|OpenCodeWorkspaceAdapter/)
   assert.match(workspace?.forbidden_fake_behavior??'',/real-host acceptance receipt/i)
   const browser=hostCapabilityByID(items,'browser-execution')
-  assert.equal(browser?.status,'UNSUPPORTED')
-  assert.match(browser?.forbidden_fake_behavior??'',/MCP\/tool discovery|browser executor/i)
+  assert.equal(browser?.status,'SUPPORTED')
+  assert.equal(browser?.verification_level,'REAL_HOST_ACCEPTANCE')
+  assert.match(browser?.native_primitive??'',/Playwright Chromium.*health/i)
+  assert.match(browser?.adapter_entrypoint??'',/BrowserRuntime.*PlaywrightBrowserAdapter/i)
+  assert.equal(browser?.runtime_health_required,true)
+  assert.match(browser?.forbidden_fake_behavior??'',/real-host acceptance receipt/i)
 })
 
 test('prompt and worker capabilities fail closed when required native ownership primitives are absent',()=>{
@@ -57,17 +61,19 @@ test('OpenCode detector projects boolean observations into capability contracts 
   const detected=detectOpenCodeCapabilities(client)
   assert.ok(detected.contracts.length>=16)
   assert.equal(hostCapabilityByID(detected.contracts,'worker-runtime')?.status,'SUPPORTED')
-  assert.ok(detected.contracts.filter(x=>!['process-lifecycle','workspace-isolation-binding'].includes(x.id)).every(x=>x.verification_level==='OBSERVED'))
+  assert.ok(detected.contracts.filter(x=>!['process-lifecycle','workspace-isolation-binding','browser-execution'].includes(x.id)).every(x=>x.verification_level==='OBSERVED'))
   assert.equal(hostCapabilityByID(detected.contracts,'process-lifecycle')?.verification_level,'REAL_HOST_ACCEPTANCE')
   assert.equal(hostCapabilityByID(detected.contracts,'workspace-isolation-binding')?.status,'SUPPORTED')
   assert.equal(hostCapabilityByID(detected.contracts,'workspace-isolation-binding')?.verification_level,'REAL_HOST_ACCEPTANCE')
+  assert.equal(hostCapabilityByID(detected.contracts,'browser-execution')?.status,'SUPPORTED')
+  assert.equal(hostCapabilityByID(detected.contracts,'browser-execution')?.verification_level,'REAL_HOST_ACCEPTANCE')
 })
 
-test('doctor reports real-host supported process/workspace lifecycle and unsupported browser boundary',()=>{
+test('doctor reports real-host supported process/workspace/browser boundaries',()=>{
   const d=mkdtempSync(join(tmpdir(),'hi-host-cap-'))
   try{
     const capabilities=detectOpenCodeCapabilities({session:{create:async()=>({}),promptAsync:async()=>({}),abort:async()=>({})}})
-    const checks=runDoctor(DEFAULT_HI_CONFIG,new MissionStore(),d,{capabilities})
+    const checks=runDoctor(DEFAULT_HI_CONFIG,new MissionStore(),d,{capabilities,runtimeHostResources:new Set(['host-capability:browser-execution'])})
     const process=checks.find(x=>x.id==='process-lifecycle'),workspace=checks.find(x=>x.id==='workspace-isolation-binding'),browser=checks.find(x=>x.id==='browser-execution'),registry=checks.find(x=>x.id==='host-capability-contracts')
     assert.equal(registry?.status,'pass')
     assert.equal(process?.status,'pass')
@@ -75,7 +81,10 @@ test('doctor reports real-host supported process/workspace lifecycle and unsuppo
     assert.match(process?.detail??'',/verification=REAL_HOST_ACCEPTANCE/)
     assert.match(workspace?.detail??'',/status=SUPPORTED/)
     assert.match(workspace?.detail??'',/verification=REAL_HOST_ACCEPTANCE/)
-    assert.match(browser?.detail??'',/status=UNSUPPORTED/)
-    assert.match(browser?.detail??'',/verification=OBSERVED/)
+    assert.equal(browser?.status,'pass')
+    assert.match(browser?.detail??'',/status=SUPPORTED/)
+    assert.match(browser?.detail??'',/verification=REAL_HOST_ACCEPTANCE/)
+    assert.match(browser?.detail??'',/runtime-health-required=true/)
+    assert.match(browser?.detail??'',/runtime-available=true/)
   }finally{rmSync(d,{recursive:true,force:true})}
 })
