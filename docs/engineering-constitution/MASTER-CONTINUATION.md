@@ -603,6 +603,18 @@ R1 adds `.github/workflows/npm-publish.yml`, `scripts/verify-npm-oidc-release.mj
 
 The current external edge cannot be fabricated: `npm whoami` is `ENEEDAUTH` and `opencode-hi@0.1.0` is absent. npm Trusted Publisher configuration requires the package to already exist. Immutable `v0.1.0` points to released source `f1a2c1c...`, which predates the new workflow, so the tag will not be rewritten. Under future explicit npm authentication, bootstrap-publish the exact existing `0.1.0` release artifact, verify registry identity/integrity/fresh install, then configure trusted publisher for GitHub `huseyincig/OpenCode-Hi`, workflow `npm-publish.yml`, allowed action `npm publish`. Future releases can then publish tokenlessly through OIDC. Local readiness metadata: `data/validation/npm-oidc-readiness-0.1.0.json`. This is not T4 evidence.
 
+### R2–R4 + N1 — post-v0.1 engineering program closure — **CLOSED LOCALLY**
+
+R2 closes the setup lifecycle under the existing setup/provenance owner: idempotent install, ownership-safe upgrade, one-step rollback, uninstall rollback, atomic config/state writes, interrupted-operation recovery, drift fail-close, and preservation of unrelated OpenCode/user/project-owned state. Canonical receipt: `data/validation/install-lifecycle-0.1.0.json`; checkpoint `8f9e702d4be27aeb849d8e7d2a6f16ac36f1cd9c`.
+
+R3 generates the compatibility matrix from exact host receipts rather than hand-maintained claims. Current reference-host projection is OpenCode 1.18.18 / Linux / aarch64 with process, workspace-isolation binding, and browser execution each selected from their latest exact capability-specific T3 receipts; historical negative/older receipts remain provenance. Projection: `data/validation/compatibility-matrix-0.1.0.json`; checkpoint `580f1471f0c3c9f431b6d71848f204a6a873d21a`.
+
+R4 generates mutable current release status from hash-bound final acceptance, release gates, publication receipt, compatibility projection, and npm OIDC readiness. `docs/RELEASE.md` contains a generator-owned marker block and deliberately does not persist test counts. Projection: `data/validation/release-status-0.1.0.json`; checkpoint `a50bc7c0efec076e42f1810796dd274469499aad`.
+
+N1 performs final Hi namespace/status normalization after all engineering work packages: the naming guard now covers product/config catalogs plus living architecture-reality/install/release docs; stale pre-P3 process ownership language was removed; all 27 built-in skills remain `hi-*`, tool namespace remains `hi_*`, role/config identifiers contain no foreign canonical branding, and suspicious living namespace paths are absent. Historical provenance, source-study material, immutable receipts, OpenCode-native names, general technical primitives, and explicit negative rejection tests are intentionally preserved. Canonical receipt: `data/validation/namespace-normalization-0.1.0.json`.
+
+The post-v0.1 engineering work-package queue is therefore locally complete. The only remaining external program edge is npm bootstrap publication/trusted-publisher binding/T4 proof; it does not reopen completed engineering packages.
+
 ### P8 / M13 / Stage 10 — Release readiness and real publication — **PARTIAL_EXTERNAL: GITHUB RELEASE CLOSED / NPM T4 BLOCKED_AUTH**
 
 The user explicitly authorized the complete release/publication phase. External actions are now permitted only through the canonical release chain and must remain exact-action, exact-ref and receipt-bound. npm publication remains environment-blocked until registry authentication exists; do not fake it.
@@ -679,9 +691,9 @@ OpenCode-Hi does **not** permanently pin host acceptance to 1.18.16 or any other
 4. bind the new receipt to that exact tested version and Git/source hashes;
 5. retain older exact-version receipts only as immutable historical evidence.
 
-At the latest completed W3 host-bound checkpoint on 2026-08-15, the controlled CLI and development plugin/SDK are **1.18.18** and workspace isolation was reaccepted against exact runtime source `92812a13b7388387b11096a74a26bdb13fc4dffb`. Future host-bound checkpoints must resolve registry latest again rather than assuming this version remains current.
+The current reference-host projection is generated from exact receipts in `data/validation/compatibility-matrix-0.1.0.json`; on the current source it resolves OpenCode **1.18.18** / Linux / aarch64 and selects capability-specific exact T3 proofs for process lifecycle (`bc85854...`), workspace isolation (`92812a1...`), and browser execution (`476590e...`). Future host-bound checkpoints must resolve registry latest again rather than assuming 1.18.18 remains current.
 
-## 12. Real-host acceptance truth retained from M12
+## 12. Historical real-host acceptance truth retained from M12
 
 Canonical receipt:
 
@@ -731,8 +743,10 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**R1 local OIDC engineering is closed; npm bootstrap/trusted-publisher/T4 remain external, while post-v0.1 engineering proceeds to R2.**
+**The authorized post-v0.1 engineering work-package program is locally complete through N1.**
 
-GitHub `v0.1.0` publication is closed and exact-source verified. R1 now supplies the future Trusted Publishing/OIDC path, but the current npm edge remains **BLOCKED_T4_AUTH**: package `opencode-hi` is absent and cannot receive a trusted-publisher binding until it exists. Do not rewrite `v0.1.0` or fabricate an OIDC/T4 claim. When registry authentication becomes available, bootstrap-publish the exact released `0.1.0` artifact, verify registry version/integrity/shasum and fresh install, configure `npm-publish.yml` as the package trusted publisher, then use OIDC for subsequent releases. Meanwhile continue the authorized engineering queue at R2.
+Do not reopen R1–R4/N1 or earlier closed packages without contradictory repository evidence. Current mutable release/host truth is generated from `data/validation/release-status-0.1.0.json` and `data/validation/compatibility-matrix-0.1.0.json`; fresh test counts remain command output, not hand-maintained documentation.
 
-The user has explicitly authorized the post-v0.1 source-driven engineering program controlled by `/workspace/arastirma/MASTER-ENGINEERING-PLAN.md`. That program proceeds in its stable work-package order without weakening the P8 publication truth above. Live repository state and canonical component owners still win on conflict; each coherent mutation-bearing packet requires verification and a local commit.
+The sole remaining external release edge is npm: `opencode-hi@0.1.0` is absent and registry authentication is unavailable, so P8 remains **PARTIAL_EXTERNAL / NPM T4 BLOCKED_AUTH**. Do not rewrite immutable `v0.1.0` or fabricate Trusted Publishing/T4 evidence. When explicit npm registry authentication becomes available, bootstrap-publish the exact already-released `0.1.0` artifact, verify registry version/integrity/shasum and fresh install, configure `npm-publish.yml` as the trusted publisher, then use OIDC for subsequent releases.
+
+Until that external condition changes, repository engineering should remain in maintenance/new-explicit-scope mode rather than inventing another roadmap package.

@@ -22,11 +22,11 @@ const CANONICAL_DIRS=[
   'plugin/src/contracts','plugin/src/runtime','plugin/src/config','plugin/src/generated',
   'roles','skills',
 ]
-const CANONICAL_DATA=['data/hi-methodologies.json','data/hi-roles.json','data/hi-permission-profiles.json']
+const CANONICAL_DATA=['data/product.json','data/hi-config-options.json','data/hi-methodologies.json','data/hi-roles.json','data/hi-permission-profiles.json']
 const CANONICAL_DOCS=[
   'docs/ARCHITECTURE.md','docs/CONTEXT.md','docs/EXECUTION-POLICY.md','docs/HOSTS.md',
   'docs/HUMAN-DECISIONS.md','docs/PRIVACY.md','docs/PROJECT-INTELLIGENCE.md','docs/SKILLS.md',
-  'docs/VERIFICATION.md','docs/THREAT-MODEL.md',
+  'docs/VERIFICATION.md','docs/THREAT-MODEL.md','docs/ARCHITECTURE-REALITY-MAP.md','docs/INSTALLATION.md','docs/RELEASE.md',
 ]
 const TEXT_EXTENSIONS=new Set(['.ts','.js','.mjs','.json','.md','.txt','.yaml','.yml','.toml'])
 

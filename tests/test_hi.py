@@ -699,3 +699,16 @@ def test_r4_generated_release_status_is_hash_bound_and_docs_marker_owned():
     block=release.split('<!-- BEGIN GENERATED RELEASE STATUS -->',1)[1].split('<!-- END GENERATED RELEASE STATUS -->',1)[0]
     assert 'PARTIAL_EXTERNAL_NPM_BOOTSTRAP_AUTH' in block and 'OpenCode `1.18.18`' in block and 'Test counts are intentionally not persisted' in block
     assert (ROOT/'scripts/generate-release-status.py').is_file()
+
+
+def test_n1_final_namespace_normalization_is_hash_bound_and_preserves_historical_exclusions():
+    d=json.loads((ROOT/'data/validation/namespace-normalization-0.1.0.json').read_text())
+    assert d['schema']==1 and d['kind']=='FINAL_HI_NAMESPACE_NORMALIZATION' and d['status']=='PASS'
+    assert d['guard']['violations']==[] and d['path_audit']['violations']==[] and not any(d['stale_living_status'].values())
+    assert d['public_surface']['skill_namespace'] is True and d['public_surface']['skill_count']==27
+    assert d['public_surface']['tool_namespace_guard_present'] is True and d['public_surface']['config_option_count']==32
+    assert 'plugin/test/config-no-legacy-superpowers.test.mjs' in d['path_audit']['excluded_provenance_or_negative_surfaces']
+    assert 'docs/engineering-constitution/sources/' in d['path_audit']['excluded_prefixes']
+    for meta in d['inputs'].values():
+        path=ROOT/meta['path'];assert path.is_file();assert hashlib.sha256(path.read_bytes()).hexdigest()==meta['sha256']
+    assert (ROOT/'scripts/generate-namespace-audit.mjs').is_file()

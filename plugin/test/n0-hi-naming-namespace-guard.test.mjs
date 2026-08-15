@@ -42,3 +42,12 @@ test('N0 architecture and validator bind the naming policy',()=>{
   assert.match(lint,/scanCanonicalNaming\(ROOT\)/)
   assert.match(source('scripts/validate.py'),/HI-NAMING-NAMESPACE\.md/)
 })
+
+
+test('N1 final guard includes living reality/install/release docs and product/config catalogs',()=>{
+  const guard=source('scripts/naming_namespace_guard.mjs')
+  for(const rel of ['data/product.json','data/hi-config-options.json','docs/ARCHITECTURE-REALITY-MAP.md','docs/INSTALLATION.md','docs/RELEASE.md'])assert.match(guard,new RegExp(rel.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')))
+  const reality=source('docs/ARCHITECTURE-REALITY-MAP.md')
+  assert.match(reality,/Hi owns `ProcessContract` \+ `ProcessRuntime` \+ `OpenCodePtyAdapter`/)
+  assert.doesNotMatch(reality,/not currently adopted as Hi process ownership/i)
+})

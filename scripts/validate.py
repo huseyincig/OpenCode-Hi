@@ -80,6 +80,19 @@ try:
         if actual!=digest:err(f'compatibility history receipt hash drift: {receipt}')
 except Exception as e:err(f'bad compatibility projection: {e}')
 
+# N1 final naming/namespace normalization projection.
+try:
+    nn=json.loads((ROOT/'data/validation/namespace-normalization-0.1.0.json').read_text(encoding='utf-8'))
+    if nn.get('schema')!=1 or nn.get('kind')!='FINAL_HI_NAMESPACE_NORMALIZATION' or nn.get('status')!='PASS':err('N1 namespace normalization receipt invalid')
+    if nn.get('guard',{}).get('violations')!=[] or nn.get('path_audit',{}).get('violations')!=[]:err('N1 namespace normalization reports living violations')
+    if any(nn.get('stale_living_status',{}).values()):err('N1 namespace normalization reports stale living status')
+    if not all(v is True for k,v in nn.get('public_surface',{}).items() if isinstance(v,bool)):err('N1 public namespace surface check failed')
+    import hashlib
+    for meta in nn.get('inputs',{}).values():
+        path=ROOT/meta['path']
+        if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=meta['sha256']:err(f"N1 namespace input drift: {meta.get('path')}")
+except Exception as e:err(f'bad N1 namespace normalization receipt: {e}')
+
 try:
     rs=json.loads((ROOT/'data/validation/release-status-0.1.0.json').read_text(encoding='utf-8'))
     if rs.get('schema')!=1 or rs.get('kind')!='GENERATED_RELEASE_STATUS_PROJECTION':err('release status projection header invalid')
