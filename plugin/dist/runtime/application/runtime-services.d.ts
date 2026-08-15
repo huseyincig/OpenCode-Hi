@@ -1,23 +1,32 @@
-import type { OpenCodePluginContext } from '../../opencode/types.js';
 import type { HiConfig } from '../../config/schema.js';
 import type { AvailableModel } from '../routing/model-resolver.js';
 import type { RuntimeSignalSink } from '../events/event-sink.js';
+import type { NativeProjectContext } from '../intent/repo-context.js';
+import type { ChildSessionPort } from '../host/port.js';
+import type { HostCapabilityContract } from '../../contracts/host-capability.js';
+import type { ProcessExecutor } from '../process/executor.js';
+import type { WorkspaceExecutor } from '../workspace/executor.js';
+import type { BrowserExecutor, BrowserExecutionContext } from '../browser/executor.js';
 import { MissionStore } from '../mission/mission-store.js';
 import { BackgroundRegistry } from '../background/registry.js';
 import { RuntimePersistence } from '../state/persistence.js';
 import { ConcurrencyScheduler } from '../scheduler/concurrency.js';
 import { TaskRuntime } from '../task/task-runtime.js';
 import { TeamRuntime } from '../team/team-runtime.js';
-import { ExperimentalOpenCodeAdapter } from '../../opencode/experimental-adapter.js';
-import { OpenCodePtyAdapter } from '../../opencode/open-code-pty-adapter.js';
 import { ProcessRuntime } from '../process/runtime.js';
-import { OpenCodeWorkspaceAdapter } from '../../opencode/open-code-workspace-adapter.js';
 import { WorkspaceRuntime } from '../workspace/runtime.js';
 import { ChatHumanDecisionTransport } from '../human-decision/transport.js';
-import { PlaywrightBrowserAdapter } from '../../opencode/playwright-browser-adapter.js';
 import { BrowserRuntime } from '../browser/runtime.js';
+export interface RuntimeServicePorts {
+    nativeContext: NativeProjectContext;
+    childSession: ChildSessionPort;
+    hostCapabilities: readonly HostCapabilityContract[];
+    process: ProcessExecutor;
+    workspace: WorkspaceExecutor;
+    createBrowser: (persist: (bytes: Uint8Array, context: BrowserExecutionContext) => string) => BrowserExecutor;
+}
 export declare function createRuntimeServices(input: {
-    ctx: OpenCodePluginContext;
+    ports: RuntimeServicePorts;
     projectRoot: string;
     packageRoot: string;
     getConfig: () => HiConfig;
@@ -31,14 +40,13 @@ export declare function createRuntimeServices(input: {
     scheduler: ConcurrencyScheduler;
     eventSink: RuntimeSignalSink;
     tasks: TaskRuntime;
-    processExecutor: OpenCodePtyAdapter;
+    processExecutor: ProcessExecutor;
     processRuntime: ProcessRuntime;
-    workspaceExecutor: OpenCodeWorkspaceAdapter;
+    workspaceExecutor: WorkspaceExecutor;
     workspaceRuntime: WorkspaceRuntime;
-    browserExecutor: PlaywrightBrowserAdapter;
+    browserExecutor: BrowserExecutor;
     browserRuntime: BrowserRuntime;
     setBrowserAvailable: (value: boolean) => void;
-    experimental: ExperimentalOpenCodeAdapter;
     teams: TeamRuntime;
     scopedStores: import("./runtime-scoped-stores.js").RuntimeScopedStores;
 };

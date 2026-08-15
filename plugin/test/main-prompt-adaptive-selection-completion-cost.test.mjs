@@ -7,6 +7,7 @@ import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import { startAssessedMission } from './helpers/semantic.mjs'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
 import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {opencodeChildPort} from './helpers/host-port.mjs'
 
 const cfg=resolveHiConfig({routing:{strategy:'cost-quality',roleModels:{},categoryModels:{}}})
 
@@ -45,7 +46,7 @@ test('TaskRuntime feeds current mission worker failure history into the next Sma
     {id:'p/cheap',provider:'p',quality:5,cost:.1,expectedTurns:3,contextOverhead:1,tags:['balanced']},
     {id:'p/robust',provider:'p',quality:5,cost:1,expectedTurns:3,contextOverhead:1,tags:['balanced']},
   ]
-  const runtime=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:3,providers:{p:3},models:{}})),process.cwd(),process.cwd(),()=>cfg,()=>models,()=>({}))
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:3,providers:{p:3},models:{}})),process.cwd(),process.cwd(),()=>cfg,()=>models,()=>({}))
   const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'s','implement a standard change',{task_kind:'implementation',required_capabilities:['implementation']})
   m.execution.workers.push({id:'old',task_id:'old-task',role:'coder',category:'standard',parent_session_id:'s',parent_mission_id:m.identity.mission_id,model:'p/cheap',fallbacks:['p/robust'],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'old-f',status:'failed',last_runtime_failure_kind:'provider-transport',fallback_history:[{from:'p/cheap',to:'p/robust',reason:'runtime fallback after provider transport; failure=provider-transport',phase:'runtime',at:Date.now()}]})
   m.execution.tasks.push({id:'old-task',objective:'old attempt',status:'failed',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],worker_id:'old',created_at:Date.now(),updated_at:Date.now()})

@@ -8,6 +8,7 @@ import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
 import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
 import {resolveHiConfig} from '../dist/config/resolver.js'
+import {opencodeChildPort} from './helpers/host-port.mjs'
 
 function initial(store,id,overrides={}){
   const m=store.start(id,'opaque initial request')
@@ -43,7 +44,7 @@ test('structured constraint follow-up rebases a busy worker onto a fresh session
   const background=new BackgroundRegistry();background.set(worker)
   const calls={aborts:0,creates:0,prompts:0}
   const client={session:{abort:async()=>{calls.aborts++},create:async()=>{calls.creates++;return{data:{id:'child-new'}}},promptAsync:async()=>{calls.prompts++}}}
-  const runtime=new TaskRuntime(client,background,new ConcurrencyScheduler(()=>({global:4,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:5,cost:1,tags:['coding']}],()=>({}))
+  const runtime=new TaskRuntime(opencodeChildPort(client),background,new ConcurrencyScheduler(()=>({global:4,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:5,cost:1,tags:['coding']}],()=>({}))
   const taskCount=m.execution.tasks.length,workerCount=m.execution.workers.length
   await callHook(createChatMessageHook(store),'constraint-runtime','任意の制約テキスト')
   store.applyFollowupSemanticAssessment('constraint-runtime',{material:true,message_kind:'constraint',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:['src/auth.ts'],intent_signals:[],suppressed_intent_signals:[]})

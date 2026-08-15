@@ -11,11 +11,12 @@ import { join } from 'node:path'
 import { activateMethodologySignal } from '../dist/runtime/methodology/activation.js'
 import { parseSemanticIntentAssessment } from '../dist/runtime/intent/semantic-assessment.js'
 import {fileURLToPath} from 'node:url'
+import {opencodeChildPort} from './helpers/host-port.mjs'
 
 const root=fileURLToPath(new URL('../../',import.meta.url)).replace(/[\\/]$/,'')
 
 function names(items){return items.map(x=>x.name).sort()}
-function runtime(){return new TaskRuntime({}, {delete(){}}, {release(){}}, root, root, ()=>({}), ()=>[], ()=>({}))}
+function runtime(){return new TaskRuntime(opencodeChildPort({}), {delete(){}}, {release(){}}, root, root, ()=>({}), ()=>[], ()=>({}))}
 function missionWithWorker(objective='Implement a bounded internal change',scope=['plugin/src/internal.ts']){
   const m=new MissionStore(root).start(`s-${Math.random()}`,objective)
   m.methodology.methodology_needs=[]

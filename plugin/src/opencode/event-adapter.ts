@@ -1,17 +1,17 @@
 import { eventSessionID } from './client-adapter.js'
+import type { HostEvent } from '../runtime/host/port.js'
 
 export type HiNativeEventKind =
   | 'session-idle'|'session-error'|'session-deleted'|'session-status'|'session-diff'|'session-compacted'
   | 'todo-updated'|'permission-asked'|'permission-replied'|'file-edited'|'file-watcher-updated'
   | 'lsp-diagnostics'|'installation-updated'|'unknown'
 
-export interface NormalizedOpenCodeEvent {kind:HiNativeEventKind;rawType:string;sessionID?:string;properties:any;raw:any}
+export type NormalizedOpenCodeEvent=HostEvent
 const MAP:Record<string,HiNativeEventKind>={
   'session.idle':'session-idle','session.error':'session-error','session.deleted':'session-deleted','session.status':'session-status','session.diff':'session-diff','session.compacted':'session-compacted',
   'todo.updated':'todo-updated','permission.asked':'permission-asked','permission.replied':'permission-replied','file.edited':'file-edited','file.watcher.updated':'file-watcher-updated',
   'lsp.client.diagnostics':'lsp-diagnostics','installation.updated':'installation-updated',
 }
-export function normalizeOpenCodeEvent(event:any):NormalizedOpenCodeEvent{const rawType=String(event?.type??'');return{kind:MAP[rawType]??'unknown',rawType,sessionID:eventSessionID(event),properties:event?.properties??{},raw:event}}
 export function eventStatus(event:NormalizedOpenCodeEvent):string{const raw=event.properties?.status??event.properties?.state;if(typeof raw==='string')return raw;if(raw&&typeof raw==='object'){const nested=raw.type??raw.status??raw.state;if(typeof nested==='string')return nested}return'unknown'}
 
 function collectStrings(value:any,out:Set<string>,depth=0):void{
@@ -30,3 +30,5 @@ export function permissionDecision(event:NormalizedOpenCodeEvent):'allow'|'deny'
 export function permissionPatterns(event:NormalizedOpenCodeEvent):string[]{const p=event.properties??{};const raw=p.patterns??p.always??p.permission?.patterns??p.request?.patterns;return Array.isArray(raw)?raw.filter((x:any)=>typeof x==='string'):[]}
 
 export function permissionEventID(event:NormalizedOpenCodeEvent):string|undefined{const p=event.properties??{};const raw=p.id??p.permissionID??p.permissionId??p.requestID??p.requestId??p.permission?.id??p.request?.id;return typeof raw==='string'&&raw.trim()?raw.trim():undefined}
+
+export function normalizeOpenCodeEvent(event:any):NormalizedOpenCodeEvent{const rawType=String(event?.type??''),base:any={kind:MAP[rawType]??'unknown',rawType,sessionID:eventSessionID(event),properties:event?.properties??{},filePaths:[],status:'unknown'};base.filePaths=eventFilePaths(base);base.status=eventStatus(base);const id=permissionEventID(base),reply=permissionReply(base),decision=permissionDecision(base),patterns=permissionPatterns(base);if(id||patterns.length||base.kind==='permission-asked'||base.kind==='permission-replied')base.permission={id,reply,decision,patterns};return base}

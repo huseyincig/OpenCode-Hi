@@ -13,6 +13,7 @@ import {registerTemporaryMutation} from '../dist/runtime/mutations/temporary-mut
 import {syncMissionGates} from '../dist/runtime/gates/gates.js'
 import {parseWorkerResult} from '../dist/runtime/task/result-parser.js'
 import {assessPluginMission} from './helpers/semantic.mjs'
+import {opencodeChildPort} from './helpers/host-port.mjs'
 
 function client(){return {app:{log:async()=>{}},provider:{list:async()=>({data:{connected:[],all:[]}})},session:{status:async()=>({data:{}}),children:async()=>({data:[]}),diff:async()=>({data:[]}),todo:async()=>({data:[]}),revert:async()=>({data:{}}),unrevert:async()=>({data:{}})}}}
 
@@ -55,7 +56,7 @@ test('command rollback with unknown exit cannot close rollback gate',async()=>{
 
 test('resolving one task issue does not clear the same blocker still owned by another task',()=>{
   const m=new MissionStore().start('s','fix two things')
-  const rt=new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:4,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
+  const rt=new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:4,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
   const issue={status:'FIX_REQUIRED',summary:'shared issue',changed_files:[],evidence:[],open_issues:['shared:blocker'],needs_context:[]}
   m.execution.tasks.push({id:'t1',objective:'t1',status:'waiting',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],result:issue,worker_id:'w1',created_at:1,updated_at:1})
   m.execution.tasks.push({id:'t2',objective:'t2',status:'completed',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],result:{status:'DONE',summary:'done with concern',changed_files:[],evidence:[],open_issues:['shared:blocker'],needs_context:[]},worker_id:'w2',created_at:1,updated_at:1})

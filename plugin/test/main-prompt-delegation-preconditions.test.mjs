@@ -9,9 +9,10 @@ import { PACKAGED_HI_AGENTS } from '../dist/generated/agent-config.js'
 import { evaluateTaskPreconditions } from '../dist/runtime/readiness/preconditions.js'
 import { createTask } from '../dist/runtime/worker/worker-runtime.js'
 import { startAssessedMission } from './helpers/semantic.mjs'
+import {opencodeChildPort} from './helpers/host-port.mjs'
 
 function runtime(client,hostConfig={agent:structuredClone(PACKAGED_HI_AGENTS)}){
-  return new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:8})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>hostConfig)
+  return new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:8})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>hostConfig)
 }
 function nativeClient(){
   const creates=[],prompts=[];let n=0

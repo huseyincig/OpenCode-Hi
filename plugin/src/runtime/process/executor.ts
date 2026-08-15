@@ -2,6 +2,8 @@ import type { ProcessContract } from '../../contracts/process.js'
 import type { ExternalActionContract } from '../../contracts/external-action.js'
 
 export type ProcessPermissionDecision='allow'|'ask'|'deny'
+
+export class ProcessSpawnPermissionError extends Error{constructor(readonly decision:'ASK'|'DENY',readonly reason:string){super(`Hi ProcessExecutor spawn ${decision.toLowerCase()}: ${reason}`);this.name='ProcessSpawnPermissionError'}}
 export interface ProcessNativePermissionGrant{permission:'bash'|'external_directory';pattern:string}
 export interface ProcessSpawnRequest{
   mission_id:string

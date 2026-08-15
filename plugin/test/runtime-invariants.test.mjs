@@ -1,3 +1,4 @@
+import {opencodeChildPort} from './helpers/host-port.mjs'
 // Runtime regression guard for the 7 stop invariants (Section 47, 48, 49,
 // 51, 52, 56, 71 of the master transformation document).
 //
@@ -201,7 +202,7 @@ test('Gap #recovery-runtime: level-2 escalation resumes same child session with 
     {id:'p/cheap',provider:'p',quality:1,cost:1,tags:['balanced','cheap'],variants:['medium']},
     {id:'p/strong',provider:'p',quality:10,cost:3,tags:['reasoning','coding'],variants:['high']},
   ]
-  const runtime=new TaskRuntime(client,registry,scheduler,process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>models,()=>({}))
+  const runtime=new TaskRuntime(opencodeChildPort(client),registry,scheduler,process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>models,()=>({}))
   const ok=await runtime.recoverStagnation(m,2)
   assert.equal(ok,true)
   assert.equal(worker.session_id,'child-1','must preserve same child session')

@@ -14,6 +14,7 @@ import {hiStateRoot,runtimeStatePath} from '../dist/runtime/storage/locations.js
 import {RuntimePersistence} from '../dist/runtime/state/persistence.js'
 import {readFileSync} from 'node:fs'
 import {startAssessedMission} from './helpers/semantic.mjs'
+import {opencodeChildPort} from './helpers/host-port.mjs'
 
 test('PROMPT B bounded repository path identity normalizes relative Windows separators and preserves UTF-8 spaces and long names',()=>{
   assert.equal(normalizeBoundedProjectPath('src\\nested\\a.ts'),'src/nested/a.ts')
@@ -42,7 +43,7 @@ test('PROMPT B project path normalization drops absolute paths outside repositor
 
 test('PROMPT B native diff ignores unbounded host paths while retaining bounded repository paths',async()=>{
   const client={session:{diff:async()=>({data:[{file:'src\\a.ts',patch:'a'},{file:'../escape',patch:'b'},{file:'/abs/x',patch:'c'}]})}}
-  const worker={session_id:'child-path'};const c=new ChildExecutionCoordinator(client);const map=await c.captureNativeDiff(worker,'final')
+  const worker={session_id:'child-path'};const c=new ChildExecutionCoordinator(opencodeChildPort(client));const map=await c.captureNativeDiff(worker,'final')
   assert.deepEqual(Object.keys(map),['src/a.ts']);assert.match(worker.native_state_hash,/^[a-f0-9]{64}$/)
 })
 

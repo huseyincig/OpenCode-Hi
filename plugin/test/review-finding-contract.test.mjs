@@ -9,8 +9,9 @@ import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {createTask,createWorker} from '../dist/runtime/worker/worker-runtime.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {verificationSatisfied} from '../dist/runtime/verification/policy.js'
+import {opencodeChildPort} from './helpers/host-port.mjs'
 
-function runtime(){return new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
+function runtime(){return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
 function reviewMission(id){const store=new MissionStore();const m=store.start(id,'review src/a.ts');store.applyInitialSemanticAssessment(id,{material:true,message_kind:'mission',task_kind:'review',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['review','independent-review'],requested_external_actions:[],likely_verification:['review-evidence'],likely_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[]});m.execution.verification_policy={requiredKinds:['review-evidence'],requireFresh:true,requireReview:true,allowWorkerReportedEvidence:true};return m}
 function reviewerTask(m,role='qa-reviewer'){const review=m.execution.obligations.find(o=>o.kind==='review'),verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(review);assert.ok(verification);verification.requiredEvidence=['review-evidence'];const task=createTask(m,{objective:'review src/a.ts',role,category:'standard',scope:['src/a.ts'],requiredEvidence:['review-evidence'],obligationIds:[review.id,verification.id]});const worker=createWorker(m,task,'host-default');worker.status='busy';worker.started_at=Date.now()-5;worker.session_id='review-session';worker.native_state_hash='c'.repeat(64);return{task,worker,review,verification}}
 const proof={kind:'review-evidence',summary:'reviewed src/a.ts',scope:['src/a.ts'],pass:true,outcome:'passed'}

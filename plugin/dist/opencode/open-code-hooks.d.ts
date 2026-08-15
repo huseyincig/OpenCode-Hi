@@ -1,5 +1,5 @@
 import type { PluginRuntimeState } from '../runtime/application/hi-tool-surface.js';
-import type { HostPort } from './host-port.js';
+import type { HostPort } from '../runtime/host/port.js';
 import type { createRuntimeServices } from '../runtime/application/runtime-services.js';
 import type { ProjectAuthorityStore } from '../runtime/safety/project-authority.js';
 import type { RuntimeEventController } from '../runtime/application/runtime-event-controller.js';

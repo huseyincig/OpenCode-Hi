@@ -1,4 +1,4 @@
-import { providerPolicyView } from '../../opencode/native-adapter.js';
+import { providerPolicyView } from '../host/provider-policy.js';
 const CATEGORY_TAG = { quick: ['fast', 'cheap'], standard: ['balanced'], deep: ['reasoning', 'coding'], visual: ['vision', 'coding'], critical: ['reasoning', 'high-assurance'] };
 const EXPECTED = { quick: { turns: 2, context: .5 }, standard: { turns: 4, context: 1 }, deep: { turns: 7, context: 1.5 }, visual: { turns: 5, context: 1.2 }, critical: { turns: 8, context: 1.7 } };
 const VARIANT_PREFERENCE = { quick: ['low', 'minimal', 'none'], standard: ['medium', 'low', 'none'], deep: ['high', 'xhigh', 'medium'], visual: ['high', 'medium', 'xhigh'], critical: ['xhigh', 'max', 'high'] };
@@ -16,11 +16,11 @@ function policyFilter(available, config, hostConfig) {
             continue;
         }
         if (provider && native.denied.has(provider)) {
-            rejected.push({ id: m.id, reason: `opencode-provider-policy-deny:${provider}` });
+            rejected.push({ id: m.id, reason: `host-provider-policy-deny:${provider}` });
             continue;
         }
         if (native.allowed.size && provider && !native.allowed.has(provider)) {
-            rejected.push({ id: m.id, reason: `opencode-provider-not-enabled:${provider}` });
+            rejected.push({ id: m.id, reason: `host-provider-not-enabled:${provider}` });
             continue;
         }
         if (m.writeCapable === false) {
@@ -40,7 +40,7 @@ export function runtimeModelCandidateStatus(id, availableInput, config, hostConf
             return { ok: false, reason: 'host-default-disallowed-by-explicit-provider-allowlist' };
         const native = providerPolicyView(hostConfig);
         if (native.allowed.size)
-            return { ok: false, reason: 'host-default-disallowed-by-opencode-provider-allowlist' };
+            return { ok: false, reason: 'host-default-disallowed-by-host-provider-allowlist' };
         return { ok: true };
     }
     const found = availableInput.find(m => m.id === id);
@@ -109,7 +109,7 @@ export function resolveModel(category, availableInput, config, explicit, role, h
             reason.push(`${category} category`);
         reason.push('recommended-fast-path:role-override-available,skip-scoring', 'write-capable', 'runtime available', 'routing policy allowed', primaryVariant ? `variant:${primaryVariant}` : 'variant:host/default', `fallbacks=${fallbacks.length}`);
         if (nativePolicySources.length)
-            reason.push(`opencode-provider-policy:${nativePolicySources.join('+')}`);
+            reason.push(`host-provider-policy:${nativePolicySources.join('+')}`);
         const fallbackReasons = fallbacks.map((model, i) => ({ model, variant: fallbackVariants[model], reason: `fallback-${i + 1}: role-configured alternative${fallbackVariants[model] ? `; variant=${fallbackVariants[model]}` : ''}` }));
         return { primary, primaryVariant, fallbacks, fallbackVariants, reason, fallbackReasons, rejected };
     }
@@ -121,7 +121,7 @@ export function resolveModel(category, availableInput, config, explicit, role, h
         reason.push(`${category} category`);
     reason.push('write-capable', 'runtime available', 'routing policy allowed', `${config.routing.strategy} scoring`, `expected-completion-cost-aware`, `bounded-window-model-feedback-aware`, primaryVariant ? `variant:${primaryVariant}` : 'variant:host/default', `fallbacks=${fallbacks.length}`);
     if (nativePolicySources.length)
-        reason.push(`opencode-provider-policy:${nativePolicySources.join('+')}`);
+        reason.push(`host-provider-policy:${nativePolicySources.join('+')}`);
     const fallbackReasons = fallbacks.map((model, i) => ({ model, variant: fallbackVariants[model], reason: `fallback-${i + 1}: policy-allowed alternate preserving ${category} capability after higher-ranked model${fallbackVariants[model] ? `; variant=${fallbackVariants[model]}` : ''}` }));
     return { primary, primaryVariant, fallbacks, fallbackVariants, reason, fallbackReasons, rejected, scores: scored.slice(0, 12).map(x => ({ model: x.model.id, score: Number(x.score.toFixed(4)), expected_completion_cost: Number(x.expectedCompletionCost.toFixed(4)), failure_penalty: Number(x.failurePenalty.toFixed(4)), success_credit: Number(x.successCredit.toFixed(4)), verification_adjustment: Number(x.verificationAdjustment.toFixed(4)), feedback_confidence: x.feedbackConfidence, ...(x.observedLatencyMs !== undefined ? { observed_latency_ms: x.observedLatencyMs } : {}) })) };
 }

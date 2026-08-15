@@ -11,6 +11,7 @@ import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import HiPlugin from '../dist/plugin.js'
 import { startAssessedMission, assessPluginMission } from './helpers/semantic.mjs'
+import {opencodeChildPort} from './helpers/host-port.mjs'
 
 const inventory=[
   {id:'p/live',provider:'p',writeCapable:true,tags:['balanced']},
@@ -34,7 +35,7 @@ test('dispatch revalidates provider policy and skips a provider denied after ini
   }}
   const cfg=resolveHiConfig({routing:{roleModels:{coder:['p/live','q/other']}}})
   const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'s','opaque implementation')
-  const runtime=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:3,providers:{},models:{}})),process.cwd(),process.cwd(),()=>cfg,()=>inv,()=>{hostReads++;return hostReads===1?{}:{disabled_providers:['p']}})
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:3,providers:{},models:{}})),process.cwd(),process.cwd(),()=>cfg,()=>inv,()=>{hostReads++;return hostReads===1?{}:{disabled_providers:['p']}})
   const out=await runtime.start(m,{objective:'implement fix',role:'coder',category:'standard'})
   assert.equal(out.model,'q/other')
   assert.equal(created.length,1)
@@ -46,7 +47,7 @@ test('runtime provider fallback revalidates current model policy before sending 
   const calls=[]
   let cfg=resolveHiConfig({})
   const client={session:{promptAsync:async req=>{calls.push(req)},abort:async()=>{},create:async()=>({data:{id:'recovery-child'}}),diff:async()=>({data:[]})}}
-  const runtime=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:3,providers:{},models:{}})),process.cwd(),process.cwd(),()=>cfg,()=>[{id:'p/f1',provider:'p'},{id:'q/f2',provider:'q'}],()=>({}))
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:3,providers:{},models:{}})),process.cwd(),process.cwd(),()=>cfg,()=>[{id:'p/f1',provider:'p'},{id:'q/f2',provider:'q'}],()=>({}))
   const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'s','opaque fallback task')
   m.execution.tasks.push({id:'t',objective:'x',status:'running',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],worker_id:'w',created_at:Date.now(),updated_at:Date.now()})
   m.execution.workers.push({id:'w',task_id:'t',role:'coder',category:'standard',session_id:'child',parent_session_id:'s',parent_mission_id:m.identity.mission_id,model:'p/primary',fallbacks:['p/f1','q/f2'],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'busy',generation_at_spawn:m.continuation.generation})
@@ -132,7 +133,7 @@ test('pre-assistant child idle is ignored until native assistant model evidence 
 
 
 test('projected model mismatch is a first-class blocker even when observed model matches selection',()=>{
-  const runtime=new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>({}))
+  const runtime=new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>({}))
   const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'projection-mismatch','opaque task')
   m.execution.tasks.push({id:'t',mission_id:m.identity.mission_id,objective:'x',status:'running',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],external_action_requirements:[],worker_id:'w',created_at:Date.now(),updated_at:Date.now()})
   m.execution.workers.push({id:'w',task_id:'t',role:'coder',category:'standard',parent_session_id:'s',parent_mission_id:m.identity.mission_id,requested_model:'p/expected',model:'p/expected',projected_model:'p/wrong',fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'busy',attempt:1,generation_at_spawn:m.continuation.generation,updated_at:Date.now()})

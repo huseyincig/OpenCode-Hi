@@ -7,8 +7,9 @@ import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {createTask,createWorker} from '../dist/runtime/worker/worker-runtime.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {assessChangedFileOwnership} from '../dist/runtime/task/diff-ownership.js'
+import {opencodeChildPort} from './helpers/host-port.mjs'
 
-function runtime(){return new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
+function runtime(){return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
 function implementation(m){return m.execution.obligations.find(o=>o.kind==='implementation')}
 function assessedMission(id,objective,overrides={}){
   const store=new MissionStore(),m=store.start(id,objective)

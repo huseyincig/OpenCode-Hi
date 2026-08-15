@@ -8,6 +8,7 @@ import { resolveHiConfig } from '../dist/config/resolver.js'
 import { PACKAGED_HI_AGENTS } from '../dist/generated/agent-config.js'
 import { effectiveExecutionSurface,promptToolOverrides } from '../dist/runtime/routing/execution-profile.js'
 import { createToolBeforeHook } from '../dist/hooks/tool-before.js'
+import {opencodeChildPort} from './helpers/host-port.mjs'
 
 function client(created=[],prompts=[]){let n=0;return{session:{
   create:async req=>{const id=`child-${++n}`;created.push({id,req});return{data:{id}}},
@@ -40,7 +41,7 @@ test('deny-by-default skill map keeps native skill tool available when exact Hi 
 
 test('zero-skill task gets a complete bounded execution profile and per-message tool minimization',async()=>{
   const created=[],prompts=[],c=client(created,prompts)
-  const runtime=new TaskRuntime(c,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
   const store=new MissionStore(process.cwd()),m=store.start('s','fix the README typo')
   assess(store,'s',{likely_targets:['README.md']})
   const out=await runtime.start(m,{objective:'fix the README typo',role:'coder',category:'quick',scope:['README.md']})
@@ -62,7 +63,7 @@ test('zero-skill task gets a complete bounded execution profile and per-message 
 
 test('same-session corrective resume preserves the original execution tool surface and does not spawn a new child',async()=>{
   const created=[],prompts=[],c=client(created,prompts)
-  const runtime=new TaskRuntime(c,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
+  const runtime=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
   const store=new MissionStore(process.cwd()),m=store.start('s','fix parser bug')
   assess(store,'s',{task_kind:'bug-fix',likely_targets:['src/parser.ts'],likely_verification:['targeted-tests']})
   const first=await runtime.start(m,{objective:'fix parser bug',role:'coder',category:'standard',scope:['src/parser.ts']})

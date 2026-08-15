@@ -9,9 +9,10 @@ import { addEvidence } from '../dist/runtime/evidence/evidence-runtime.js'
 import { verificationSatisfied } from '../dist/runtime/verification/policy.js'
 import { DEFAULT_HI_CONFIG } from '../dist/config/defaults.js'
 import { methodologyExitCheck } from '../dist/runtime/methodology/exit.js'
+import {opencodeChildPort} from './helpers/host-port.mjs'
 
 function runtime(){
-  return new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
+  return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
 }
 function assessedMission(id,objective,overrides={}){
   const store=new MissionStore(); const m=store.start(id,objective)

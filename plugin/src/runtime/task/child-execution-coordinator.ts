@@ -1,15 +1,13 @@
-import type { OpenCodeClient } from '../../opencode/types.js'
 import { createHash } from 'node:crypto'
 import { realpathSync } from 'node:fs'
 import { resolve } from 'node:path'
 import type { MissionState,WorkerState } from '../mission/types.js'
 import type { BackgroundRegistry } from '../background/registry.js'
-import { createChildSession,sendPromptAsync,abortSession,type OpenCodeLifecycleEndpoint } from '../../opencode/client-adapter.js'
-import { NativeOpenCodeAdapter } from '../../opencode/native-adapter.js'
 import { redactProviderContext } from '../privacy/boundary.js'
 import { appendLedger } from '../ledger/ledger.js'
 import { reconcileModelExecutionIdentity } from '../../contracts/model.js'
 import { normalizeBoundedProjectPath } from '../../contracts/common.js'
+import type { ChildSessionPort } from '../host/port.js'
 
 function normFile(value:string):string{return normalizeBoundedProjectPath(value)??''}
 function nativeDiffMap(raw:any):Record<string,string>{
@@ -25,18 +23,18 @@ export interface ChildWorkspaceBinding{workspaceID:string;directory:string}
 function samePath(a:string,b:string):boolean{try{return realpathSync(resolve(a))===realpathSync(resolve(b))}catch{return resolve(a)===resolve(b)}}
 
 export class ChildExecutionCoordinator{
-  constructor(private readonly client:OpenCodeClient,private readonly lifecycle:OpenCodeLifecycleEndpoint={},private readonly registry?:BackgroundRegistry){}
+  constructor(private readonly host:ChildSessionPort,private readonly registry?:BackgroundRegistry){}
 
   resolveCallbackWorker(sessionID:string):WorkerState|undefined{const matches=this.registry?.list().filter(w=>w.session_id===sessionID)??[];return matches.length===1?matches[0]:undefined}
-  async create(parentSessionID:string,title:string,role:string,model?:string,variant?:string,workspace?:ChildWorkspaceBinding):Promise<{id?:string;workspaceID?:string;directory?:string}>{const child=await createChildSession(this.client,parentSessionID,title,role,model,variant,workspace?.workspaceID,this.lifecycle);if(workspace){if(child?.workspaceID!==workspace.workspaceID||typeof child?.directory!=='string'||!samePath(child.directory,workspace.directory)){if(child?.id)try{await abortSession(this.client,String(child.id),this.lifecycle)}catch{};throw new Error(`OpenCode child workspace binding mismatch: expected ${workspace.workspaceID} @ ${workspace.directory}, observed ${String(child?.workspaceID)} @ ${String(child?.directory)}`)}}return child}
-  async createForTask(parentSessionID:string,title:string,role:string,model?:string,variant?:string,forkFromSession?:string,workspace?:ChildWorkspaceBinding):Promise<{child:{id?:string;workspaceID?:string;directory?:string};fork:{requested:boolean;nativeAvailable:boolean;used:false;reason?:string}}>{const native=new NativeOpenCodeAdapter(this.client),requested=Boolean(forkFromSession),nativeAvailable=requested&&native.has('fork');const child=await this.create(parentSessionID,title,role,model,variant,workspace);return{child,fork:{requested,nativeAvailable,used:false,reason:requested?'native fork cannot set specialist agent; created isolated child instead':undefined}}}
-  async sendProviderPrompt(sessionID:string,text:string,role?:string,model?:string,variant?:string,tools?:Record<string,boolean>):Promise<unknown>{const safe=redactProviderContext(text);return sendPromptAsync(this.client,sessionID,safe.providerText,role,model,variant,tools)}
+  async create(parentSessionID:string,title:string,role:string,model?:string,variant?:string,workspace?:ChildWorkspaceBinding):Promise<{id?:string;workspaceID?:string;directory?:string}>{const created=await this.host.create({parentSessionID,title,role,model,variant,workspace}),child=created.child;if(workspace&&(child?.workspaceID!==workspace.workspaceID||typeof child?.directory!=='string'||!samePath(child.directory,workspace.directory))){if(child?.id)try{await this.host.abort(String(child.id))}catch{};throw new Error(`Host child workspace binding mismatch: expected ${workspace.workspaceID} @ ${workspace.directory}, observed ${String(child?.workspaceID)} @ ${String(child?.directory)}`)}return child}
+  async createForTask(parentSessionID:string,title:string,role:string,model?:string,variant?:string,forkFromSession?:string,workspace?:ChildWorkspaceBinding){const created=await this.host.create({parentSessionID,title,role,model,variant,workspace,forkFromSession});const child=created.child;if(workspace&&(child?.workspaceID!==workspace.workspaceID||typeof child?.directory!=='string'||!samePath(child.directory,workspace.directory))){if(child?.id)try{await this.host.abort(String(child.id))}catch{};throw new Error(`Host child workspace binding mismatch: expected ${workspace.workspaceID} @ ${workspace.directory}, observed ${String(child?.workspaceID)} @ ${String(child?.directory)}`)}return created}
+  async sendProviderPrompt(sessionID:string,text:string,role?:string,model?:string,variant?:string,tools?:Record<string,boolean>):Promise<unknown>{const safe=redactProviderContext(text);return this.host.prompt(sessionID,safe.providerText,role,model,variant,tools)}
   recordModelProjection(worker:WorkerState,model?:string,variant?:string):void{worker.projected_model=model??'host-default';worker.projected_model_variant=variant;worker.updated_at=Date.now()}
-  async abortNativeSession(m:MissionState,sessionID:string,reason:string,workerID?:string,taskID?:string):Promise<boolean>{const transport=await abortSession(this.client,sessionID,this.lifecycle);appendLedger(m,'worker.session-abort',{task_id:taskID,worker_id:workerID,payload:{session_id:sessionID,reason,transport}});return transport!=='unavailable'}
+  async abortNativeSession(m:MissionState,sessionID:string,reason:string,workerID?:string,taskID?:string):Promise<boolean>{const transport=await this.host.abort(sessionID);appendLedger(m,'worker.session-abort',{task_id:taskID,worker_id:workerID,payload:{session_id:sessionID,reason,transport}});return transport!=='unavailable'}
   async captureNativeDiff(worker:WorkerState,phase:'baseline'|'final'):Promise<Record<string,string>|undefined>{
-    if(!worker.session_id)return undefined;const native=new NativeOpenCodeAdapter(this.client);if(!native.has('diff'))return undefined
+    if(!worker.session_id||!this.host.capabilities.diff)return undefined
     try{
-      const map=nativeDiffMap(await native.diff(worker.session_id)),stateHash=createHash('sha256').update(JSON.stringify(Object.entries(map).sort(([a],[b])=>a.localeCompare(b)))).digest('hex')
+      const map=nativeDiffMap(await this.host.diff(worker.session_id)),stateHash=createHash('sha256').update(JSON.stringify(Object.entries(map).sort(([a],[b])=>a.localeCompare(b)))).digest('hex')
       if(phase==='baseline')worker.native_diff_baseline=map;else{worker.native_diff_final=map;worker.native_state_hash=stateHash}
       return map
     }catch{return undefined}
@@ -47,7 +45,7 @@ export class ChildExecutionCoordinator{
     const clearModelMarkers=()=>{m.execution.blockers=m.execution.blockers.filter(b=>!b.startsWith(`model-projection-mismatch:${taskID}:`)&&!b.startsWith(`model-effective-unverified:${taskID}:`)&&!b.startsWith(`model-effective-mismatch:${taskID}:`)&&!b.startsWith(`model-variant-unverified:${taskID}:`)&&!b.startsWith(`model-variant-mismatch:${taskID}:`))}
     const requested=(worker.requested_model||worker.requested_model_variant)?{model:worker.requested_model,variant:worker.requested_model_variant,source:'task-override'}:undefined
     const selected=(worker.model||worker.model_variant)?{model:worker.model,variant:worker.model_variant,source:'runtime-resolver/current-worker-selection'}:undefined
-    const projected=(worker.projected_model||worker.projected_model_variant)?{model:worker.projected_model,variant:worker.projected_model_variant,source:'opencode-child-or-prompt'}:undefined
+    const projected=(worker.projected_model||worker.projected_model_variant)?{model:worker.projected_model,variant:worker.projected_model_variant,source:'host-child-or-prompt'}:undefined
     const identity=reconcileModelExecutionIdentity({requested,selected,projected,observed:observed?{model:observed.model,variant:observed.variant,source:observed.source??'assistant-message-metadata'}:undefined})
     worker.effective_model=identity.effective?.model;worker.effective_model_variant=identity.effective?.variant;worker.effective_model_source=identity.effective?.source??observed?.source??'assistant-message-metadata';worker.effective_model_observed_at=Date.now();worker.effective_model_verified=identity.modelVerified;worker.effective_model_variant_verified=identity.variantVerified
     if(identity.status==='host-default-or-unconstrained'){clearModelMarkers();appendLedger(m,'model.effective.observed',{task_id:task?.id,worker_id:worker.id,payload:{requested:worker.requested_model,selected:expected??'host-default',projected:worker.projected_model??'host-default/unrecorded',observed:observed?.model??'host-default/unreported',expected_variant:expectedVariant,projected_variant:worker.projected_model_variant,variant:observed?.variant,source:worker.effective_model_source}});return{ok:true,expected,observed:observed?.model,reason:'host-default-or-unconstrained'}}

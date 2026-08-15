@@ -1,7 +1,7 @@
 import type { HiConfig, ConfigResolutionReport } from '../config/schema.js';
 import { MissionStore } from '../runtime/mission/mission-store.js';
 import type { AvailableModel } from '../runtime/routing/model-resolver.js';
-import type { OpenCodeCapabilities } from '../opencode/capabilities.js';
+import type { HostCapabilityView } from '../runtime/host/port.js';
 export interface DoctorCheck {
     id: string;
     status: 'pass' | 'warn' | 'fail';
@@ -11,7 +11,7 @@ export interface DoctorCheck {
 export interface DoctorRuntimeInfo {
     models?: AvailableModel[];
     resolution?: ConfigResolutionReport;
-    capabilities?: OpenCodeCapabilities;
+    capabilities?: HostCapabilityView;
     hostConfig?: Record<string, unknown>;
     openCodeVersion?: string;
     runtimeHostResources?: ReadonlySet<string>;

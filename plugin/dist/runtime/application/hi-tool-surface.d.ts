@@ -6,8 +6,7 @@ import type { TeamRuntime } from '../team/team-runtime.js';
 import type { ProcessRuntime } from '../process/runtime.js';
 import type { WorkspaceRuntime } from '../workspace/runtime.js';
 import type { BrowserRuntime } from '../browser/runtime.js';
-import type { NativeOpenCodeAdapter } from '../../opencode/native-adapter.js';
-import type { detectOpenCodeCapabilities } from '../../opencode/capabilities.js';
+import type { HostCapabilityView, HostNativeSessionPort } from '../host/port.js';
 import type { RuntimeScopedStores } from './runtime-scoped-stores.js';
 export interface PluginRuntimeState {
     config: HiConfig;
@@ -15,7 +14,6 @@ export interface PluginRuntimeState {
     hostConfig: Record<string, unknown>;
     openCodeVersion?: string;
 }
-type Capabilities = ReturnType<typeof detectOpenCodeCapabilities>;
 export declare function createHiToolSurface(input: {
     state: PluginRuntimeState;
     store: MissionStore;
@@ -25,12 +23,11 @@ export declare function createHiToolSurface(input: {
     workspaceRuntime?: WorkspaceRuntime;
     browserRuntime?: BrowserRuntime;
     projectRoot: string;
-    capabilities: Capabilities;
-    native: NativeOpenCodeAdapter;
+    capabilities: HostCapabilityView;
+    native: HostNativeSessionPort;
     getModels: () => AvailableModel[];
     scopedStores: RuntimeScopedStores;
 }): {
     toolSurface: Record<string, unknown>;
     reconfigure: () => void;
 };
-export {};

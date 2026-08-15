@@ -1,7 +1,7 @@
 import { normalizeModelCapabilityProfile } from '../contracts/model.js';
 import { detectOpenCodeCapabilities } from './capabilities.js';
 import { NativeOpenCodeAdapter } from './native-adapter.js';
-import { listProviders } from './client-adapter.js';
+import { lastAssistantModel, lastAssistantText, listMessages, listProviders, sendSyntheticContinuation } from './client-adapter.js';
 function providerModels(raw) {
     const edge = raw;
     const root = edge?.all ?? edge?.providers ?? edge ?? [];
@@ -56,5 +56,7 @@ export function createHostPort(ctx) {
         } })();
         return inventoryRefresh;
     };
-    return { client: ctx.client, capabilities, native, log, refreshRuntimeInventory, getModels: () => models };
+    const readAssistantResult = async (sessionID, limit = 12) => { const messages = await listMessages(ctx.client, sessionID, limit); return { text: lastAssistantText(messages), model: lastAssistantModel(messages) }; };
+    const continueSession = (sessionID, text, metadata) => sendSyntheticContinuation(ctx.client, sessionID, text, metadata);
+    return { capabilities, nativeSession: { diff: (sessionID) => native.diff(sessionID), revert: (sessionID, messageID) => native.revert(sessionID, messageID) }, log, refreshRuntimeInventory, getModels: () => models, readAssistantResult, continueSession };
 }

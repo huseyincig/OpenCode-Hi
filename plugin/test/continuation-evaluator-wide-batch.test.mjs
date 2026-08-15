@@ -8,6 +8,7 @@ import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {evaluateIdle,shouldCountStagnation} from '../dist/runtime/continuation/evaluator.js'
 import {dispatchContinuation} from '../dist/runtime/continuation/dispatcher.js'
 import {startAssessedMission,applyStructuredFollowup,DEFAULT_ASSESSMENT} from './helpers/semantic.mjs'
+import {continuationPort} from './helpers/host-port.mjs'
 
 
 async function assessPluginMission(hooks,sessionID,overrides={},revision=1){
@@ -62,13 +63,13 @@ test('semantic generation guard prevents an old continuation from clearing a new
   let resolve1,resolve2
   const calls=[]
   const client={session:{promptAsync:req=>{calls.push(req);return new Promise(r=>{if(calls.length===1)resolve1=r;else resolve2=r})}}}
-  const first=dispatchContinuation(client,m,'first','first')
+  const first=dispatchContinuation(continuationPort(client),m,'first','first')
   const firstID=m.continuation.active_action_id
   assert.ok(firstID)
   // A semantic follow-up invalidates the previous continuation action.
   applyStructuredFollowup(store,'s','opaque verification follow-up',{message_kind:'verification',likely_verification:['targeted-tests']})
   assert.equal(m.continuation.active_action_id,undefined)
-  const second=dispatchContinuation(client,m,'second','second')
+  const second=dispatchContinuation(continuationPort(client),m,'second','second')
   const secondID=m.continuation.active_action_id
   assert.ok(secondID&&secondID!==firstID)
   resolve1({data:{}})
@@ -170,7 +171,7 @@ test('continuation transport failures use a separate bounded runtime retry budge
   const failing={session:{promptAsync:async()=>{throw new Error('transport unavailable')}}}
   for(let i=1;i<=2;i++){
     m.continuation.continuation_lock_until=undefined;m.continuation.suppress_until=undefined
-    assert.equal(await dispatchContinuation(failing,m,'continue','runtime-retry'),false)
+    assert.equal(await dispatchContinuation(continuationPort(failing),m,'continue','runtime-retry'),false)
     assert.equal(m.continuation.continuation_failure_count,i)
     assert.equal(m.continuation.iteration,0,'failed transport delivery does not consume reasoning/continuation turn budget')
     assert.equal(m.continuation.stagnation_count,0)
@@ -179,7 +180,7 @@ test('continuation transport failures use a separate bounded runtime retry budge
     assert.equal(shouldCountStagnation(d),false)
   }
   m.continuation.continuation_lock_until=undefined;m.continuation.suppress_until=undefined
-  assert.equal(await dispatchContinuation(failing,m,'continue','runtime-retry'),false)
+  assert.equal(await dispatchContinuation(continuationPort(failing),m,'continue','runtime-retry'),false)
   const exhausted=evaluateIdle(m,Date.now()+5000)
   assert.equal(exhausted.decision,'USER_ACTION_REQUIRED')
   assert.equal(exhausted.reason_code,'continuation-runtime-exhausted')
@@ -189,7 +190,7 @@ test('continuation transport failures use a separate bounded runtime retry budge
 test('successful continuation delivery resets the runtime-failure counter',async()=>{
   const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'cont-reset','opaque implementation')
   m.continuation.continuation_failure_count=2;m.continuation.continuation_lock_until=undefined;m.continuation.suppress_until=undefined
-  const ok=await dispatchContinuation({session:{promptAsync:async()=>({data:{}})}},m,'continue','retry-success')
+  const ok=await dispatchContinuation(continuationPort({session:{promptAsync:async()=>({data:{}})}}),m,'continue','retry-success')
   assert.equal(ok,true)
   assert.equal(m.continuation.continuation_failure_count,0)
   assert.equal(m.continuation.iteration,1)

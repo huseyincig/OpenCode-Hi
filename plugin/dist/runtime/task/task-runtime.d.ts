@@ -1,13 +1,13 @@
-import type { OpenCodeClient } from '../../opencode/types.js';
 import type { HiConfig } from '../../config/schema.js';
 import type { Category, MissionState, WorkerResult, WorkerState } from '../mission/types.js';
 import { type AvailableModel } from '../routing/model-resolver.js';
 import { BackgroundRegistry } from '../background/registry.js';
-import type { OpenCodeLifecycleEndpoint } from '../../opencode/client-adapter.js';
 import { ConcurrencyScheduler } from '../scheduler/concurrency.js';
 import type { RuntimeSignalSink } from '../events/event-sink.js';
 import { type RuntimeScopedStores } from '../application/runtime-scoped-stores.js';
 import type { WorkspaceRuntime } from '../workspace/runtime.js';
+import type { ChildSessionPort } from '../host/port.js';
+import type { HostCapabilityContract } from '../../contracts/host-capability.js';
 export interface StartTaskInput {
     objective?: string;
     role?: string;
@@ -27,7 +27,7 @@ export interface StartTaskInput {
 }
 export declare class TaskRuntime {
     #private;
-    private client;
+    private childHost;
     private registry;
     private scheduler;
     private projectRoot;
@@ -35,9 +35,10 @@ export declare class TaskRuntime {
     private getModels;
     private getHostConfig;
     private events?;
+    private readonly hostCapabilitySource;
     private readonly workspaceRuntime?;
     private readonly extraHostResources;
-    constructor(client: OpenCodeClient, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined, lifecycle?: OpenCodeLifecycleEndpoint, scopedStores?: RuntimeScopedStores, workspaceRuntime?: WorkspaceRuntime | undefined, extraHostResources?: () => ReadonlySet<string>);
+    constructor(childHost: ChildSessionPort, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined, hostCapabilitySource?: (() => readonly HostCapabilityContract[]) | readonly HostCapabilityContract[], scopedStores?: RuntimeScopedStores, workspaceRuntime?: WorkspaceRuntime | undefined, extraHostResources?: () => ReadonlySet<string>);
     private sendProviderPrompt;
     private recordModelProjection;
     private abortNativeSession;

@@ -6,12 +6,13 @@ import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {startAssessedMission} from './helpers/semantic.mjs'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
+import {opencodeChildPort} from './helpers/host-port.mjs'
 
 function setup(promptImpl=async()=>{},withAbort=true){
   const calls=[]
   let seq=0;const session={promptAsync:async arg=>{calls.push(arg);return promptImpl(arg)},create:async()=>({data:{id:`recovery-${++seq}`}}),diff:async()=>({data:[]})};if(withAbort)session.abort=async()=>{};const client={session}
   const scheduler=new ConcurrencyScheduler(()=>({global:4,providers:{},models:{}}))
-  const runtime=new TaskRuntime(client,new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
   const store=new MissionStore(process.cwd())
   const m=startAssessedMission(store,'parent','opaque provider task')
   m.execution.tasks.push({id:'t1',mission_id:m.identity.mission_id,objective:'fix it',status:'running',role:'coder',category:'standard',scope:['src/a.ts'],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],execution_profile:{role:'coder',category:'standard',model:'p/primary',fallback_models:['p/fallback1','p/fallback2'],fallback_variants:{'p/fallback1':'high','p/fallback2':'medium'},methodologies:[],permission_profile:{skill_tool_enabled:true,skill_permissions:{},external_effects:'parent-only',recursive_task:'deny'},verification_policy:m.execution.verification_policy,max_context_chars:1000,max_handoff_chars:1000,max_result_chars:1000,max_artifacts:4},worker_id:'w1',external_action_requirements:[],created_at:Date.now(),updated_at:Date.now()})

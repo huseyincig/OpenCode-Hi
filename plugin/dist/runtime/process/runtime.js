@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { ProcessSpawnPermissionError } from '../../opencode/open-code-pty-adapter.js';
+import { ProcessSpawnPermissionError } from './executor.js';
 import { evaluateProcessSpawnAuthority } from './authority.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { addEvidence } from '../evidence/evidence-runtime.js';

@@ -24,12 +24,7 @@ export declare class NativeOpenCodeAdapter {
 }
 export declare function effectiveConfigView(hostConfig: Record<string, unknown> | undefined): Record<string, unknown>;
 export declare function configuredSubagentDepth(hostConfig: Record<string, unknown> | undefined): number | undefined;
-export interface ProviderPolicyView {
-    allowed: Set<string>;
-    denied: Set<string>;
-    source: string[];
-}
-export declare function providerPolicyView(hostConfig: Record<string, unknown> | undefined): ProviderPolicyView;
+export { providerPolicyView } from '../runtime/host/provider-policy.js';
 export declare function configuredRemoteInstructions(hostConfig: Record<string, unknown> | undefined): string[];
 export declare function configuredPluginSpecs(hostConfig: Record<string, unknown> | undefined): string[];
 export declare function configuredShareMode(hostConfig: Record<string, unknown> | undefined): unknown;

@@ -2,17 +2,9 @@ import { createHash, randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createOpencodeClient as createOpenCodeV2Client } from '@opencode-ai/sdk/v2/client';
 import { isProcessContract, processCommandIdentity } from '../contracts/process.js';
+import { ProcessSpawnPermissionError } from '../runtime/process/executor.js';
+export { ProcessSpawnPermissionError } from '../runtime/process/executor.js';
 import { evaluateProcessSpawnAuthority, processCommandLine } from '../runtime/process/authority.js';
-export class ProcessSpawnPermissionError extends Error {
-    decision;
-    reason;
-    constructor(decision, reason) {
-        super(`Hi ProcessExecutor spawn ${decision.toLowerCase()}: ${reason}`);
-        this.decision = decision;
-        this.reason = reason;
-        this.name = 'ProcessSpawnPermissionError';
-    }
-}
 function nativeData(value) { const first = value && typeof value === 'object' && 'data' in value ? value.data : value; return (first && typeof first === 'object' && 'data' in first ? first.data : first); }
 function cloneContract(value) { return structuredClone(value); }
 function processID() { return `proc_${createHash('sha256').update(randomUUID()).digest('hex').slice(0, 24)}`; }

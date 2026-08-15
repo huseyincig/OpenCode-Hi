@@ -4,7 +4,6 @@ const MAP = {
     'todo.updated': 'todo-updated', 'permission.asked': 'permission-asked', 'permission.replied': 'permission-replied', 'file.edited': 'file-edited', 'file.watcher.updated': 'file-watcher-updated',
     'lsp.client.diagnostics': 'lsp-diagnostics', 'installation.updated': 'installation-updated',
 };
-export function normalizeOpenCodeEvent(event) { const rawType = String(event?.type ?? ''); return { kind: MAP[rawType] ?? 'unknown', rawType, sessionID: eventSessionID(event), properties: event?.properties ?? {}, raw: event }; }
 export function eventStatus(event) { const raw = event.properties?.status ?? event.properties?.state; if (typeof raw === 'string')
     return raw; if (raw && typeof raw === 'object') {
     const nested = raw.type ?? raw.status ?? raw.state;
@@ -34,3 +33,5 @@ export function permissionReply(event) { const v = String(event.properties?.resp
 export function permissionDecision(event) { const v = permissionReply(event); return v === 'once' || v === 'always' ? 'allow' : v === 'reject' ? 'deny' : 'unknown'; }
 export function permissionPatterns(event) { const p = event.properties ?? {}; const raw = p.patterns ?? p.always ?? p.permission?.patterns ?? p.request?.patterns; return Array.isArray(raw) ? raw.filter((x) => typeof x === 'string') : []; }
 export function permissionEventID(event) { const p = event.properties ?? {}; const raw = p.id ?? p.permissionID ?? p.permissionId ?? p.requestID ?? p.requestId ?? p.permission?.id ?? p.request?.id; return typeof raw === 'string' && raw.trim() ? raw.trim() : undefined; }
+export function normalizeOpenCodeEvent(event) { const rawType = String(event?.type ?? ''), base = { kind: MAP[rawType] ?? 'unknown', rawType, sessionID: eventSessionID(event), properties: event?.properties ?? {}, filePaths: [], status: 'unknown' }; base.filePaths = eventFilePaths(base); base.status = eventStatus(base); const id = permissionEventID(base), reply = permissionReply(base), decision = permissionDecision(base), patterns = permissionPatterns(base); if (id || patterns.length || base.kind === 'permission-asked' || base.kind === 'permission-replied')
+    base.permission = { id, reply, decision, patterns }; return base; }

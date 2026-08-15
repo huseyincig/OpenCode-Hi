@@ -18,7 +18,7 @@ test('Native-10 provider policy deny removes an otherwise available model',()=>{
   const host={policy:{provider:{use:{blocked:'deny',ok:'allow'}}}}
   const r=resolveModel('standard',[{id:'blocked/m1',provider:'blocked',quality:10},{id:'ok/m2',provider:'ok',quality:1}],baseConfig,undefined,undefined,host)
   assert.equal(r.primary,'ok/m2')
-  assert.ok(r.rejected.some(x=>x.id==='blocked/m1'&&x.reason.includes('opencode-provider-policy-deny')))
+  assert.ok(r.rejected.some(x=>x.id==='blocked/m1'&&x.reason.includes('host-provider-policy-deny')))
 })
 
 test('Native-11 deep category selects a host-exposed high reasoning variant',()=>{

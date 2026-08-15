@@ -1,6 +1,7 @@
 import type { OpenCodeClient } from './types.js';
 import { type ProcessContract } from '../contracts/process.js';
-import type { ProcessExecutor, ProcessExit, ProcessHandle, ProcessOutput, ProcessOutputWindow, ProcessSpawnRequest, ProcessReconcileResult } from '../runtime/process/executor.js';
+import { type ProcessExecutor, type ProcessExit, type ProcessHandle, type ProcessOutput, type ProcessOutputWindow, type ProcessSpawnRequest, type ProcessReconcileResult } from '../runtime/process/executor.js';
+export { ProcessSpawnPermissionError } from '../runtime/process/executor.js';
 interface ProcessSocket {
     readyState: number;
     send(data: string): void;
@@ -12,11 +13,6 @@ interface ProcessSocket {
 export type ProcessSocketFactory = (url: string) => ProcessSocket;
 export type ProcessSignal = (pid: number, signal: 'SIGTERM' | 'SIGINT') => void;
 export type ProcessGroupResolver = (pid: number) => number | undefined;
-export declare class ProcessSpawnPermissionError extends Error {
-    readonly decision: 'ASK' | 'DENY';
-    readonly reason: string;
-    constructor(decision: 'ASK' | 'DENY', reason: string);
-}
 export declare function linuxProcessGroup(pid: number): number | undefined;
 export declare class OpenCodePtyAdapter implements ProcessExecutor {
     #private;
@@ -41,4 +37,3 @@ export declare class OpenCodePtyAdapter implements ProcessExecutor {
     snapshot(processId: string): ProcessContract;
     list(): ProcessContract[];
 }
-export {};

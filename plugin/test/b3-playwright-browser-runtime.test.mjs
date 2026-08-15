@@ -18,6 +18,7 @@ import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {PACKAGED_HI_AGENTS} from '../dist/generated/agent-config.js'
+import {opencodeChildPort} from './helpers/host-port.mjs'
 
 function fakePlaywright(){
   const launches=[],sessions=[]
@@ -109,7 +110,7 @@ test('B3 browser execution custom tools are default-off and only active visual w
 
 test('B3 TaskRuntime admits browser methodology only when runtime health resource is present and exposes bounded browser tools to visual-qa',async()=>{
   const created=[],prompts=[],client={session:{create:async req=>{created.push(req);return{data:{id:'child-browser'}}},promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async()=>({data:true}),diff:async()=>({data:[]})}}
-  const runtime=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[],()=>({agent:PACKAGED_HI_AGENTS}),undefined,{},undefined,undefined,()=>new Set(['host-capability:browser-execution']))
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[],()=>({agent:PACKAGED_HI_AGENTS}),undefined,{},undefined,undefined,()=>new Set(['host-capability:browser-execution']))
   const store=new MissionStore(process.cwd()),m=store.start('browser-ready','verify local browser')
   store.applyInitialSemanticAssessment('browser-ready',{material:true,message_kind:'mission',task_kind:'review',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['visual-review'],requested_external_actions:[],likely_verification:['visual-evidence'],likely_targets:['src/view.tsx'],intent_signals:['intent.browser'],suppressed_intent_signals:[]})
   m.methodology.methodology_needs.push({name:'hi-browser-testing',signal:'intent.browser',trigger_source:'task-intent',producer:'intent',reason:'browser acceptance',created_at:Date.now()})

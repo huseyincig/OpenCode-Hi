@@ -4,6 +4,7 @@ import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {createHiToolSurface} from '../dist/runtime/application/hi-tool-surface.js'
 import {RuntimeEventController} from '../dist/runtime/application/runtime-event-controller.js'
 import {detectOpenCodeCapabilities} from '../dist/opencode/capabilities.js'
+import {normalizeOpenCodeEvent} from '../dist/opencode/event-adapter.js'
 import {openHumanDecision} from '../dist/runtime/human-decision/runtime.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {HI_CONTROL_TOOL_IDS,promptToolOverrides} from '../dist/runtime/routing/execution-profile.js'
@@ -40,7 +41,7 @@ test('P3 parent session deletion stops mission and process runtime before worker
   const processRuntime={stopMission:async mission=>{assert.equal(mission.identity.status,'stopped');order.push('process');return 1}}
   const services={store,background:{},persistence:{save:()=>{order.push('save')}},tasks:{resolveChildCallback:()=>undefined,cancelAll:async()=>{order.push('tasks');return 1}},teams:{expireMission:async()=>{},reconcileMission:async()=>{}},processRuntime,eventSink:()=>{},scopedStores:{}}
   const controller=new RuntimeEventController({state:state(),host:{refreshRuntimeInventory:async()=>{},log:async()=>{},client:{}},services,projectAuthority:{grant:()=>{}},pendingNativePermissions:new Map(),projectRoot:'/repo'})
-  await controller.handle({event:{type:'session.deleted',properties:{info:{id:'deleted-parent'}}}})
+  await controller.handle(normalizeOpenCodeEvent({type:'session.deleted',properties:{info:{id:'deleted-parent'}}}))
   assert.equal(m.identity.status,'stopped');assert.deepEqual(order.slice(0,2),['process','tasks']);assert.equal(order.at(-1),'save')
 })
 
@@ -51,7 +52,7 @@ test('PROMPT B parent idle preserves an existing canonical operational HumanDeci
   const original=openHumanDecision(m,{semantic_type:'operational_action',reason_code:'provider-repair',summary:'repair provider',response_schema:{kind:'external-action'}}),saves=[]
   const services={store,background:{},persistence:{save:()=>saves.push('save')},tasks:{resolveChildCallback:()=>undefined},teams:{expireMission:async()=>{},reconcileMission:async()=>{}},processRuntime:{},workspaceRuntime:undefined,eventSink:()=>{},scopedStores:{}}
   const controller=new RuntimeEventController({state:state(),host:{refreshRuntimeInventory:async()=>{},log:async()=>{},client:{}},services,projectAuthority:{grant:()=>{}},pendingNativePermissions:new Map(),projectRoot:'/repo'})
-  await controller.handle({event:{type:'session.idle',properties:{sessionID:'human-idle-preserve'}}})
+  await controller.handle(normalizeOpenCodeEvent({type:'session.idle',properties:{sessionID:'human-idle-preserve'}}))
   assert.equal(m.authority.human_decision.decision_id,original.decision_id);assert.equal(m.authority.human_decision.semantic_type,'operational_action');assert.equal(m.authority.human_decision.reason_code,'provider-repair');assert.equal(m.authority.human_decision.authority_ref,undefined)
   assert.ok(saves.length>=1)
 })

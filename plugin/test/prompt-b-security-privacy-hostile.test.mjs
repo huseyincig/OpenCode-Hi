@@ -15,6 +15,7 @@ import {registerTemporaryMutation,resolveRollback} from '../dist/runtime/mutatio
 import {ChildExecutionCoordinator} from '../dist/runtime/task/child-execution-coordinator.js'
 import {authorityProtocolResponse} from './helpers/authority.mjs'
 import {startAssessedMission} from './helpers/semantic.mjs'
+import {opencodeChildPort} from './helpers/host-port.mjs'
 
 const SECRET='ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ123456'
 const TOKEN='vercel_token_ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -56,7 +57,7 @@ test('PROMPT B durable ledger redacts nested tokens, bearer credentials and CLI 
 
 test('PROMPT B provider child prompt and system runtime projection redact secret-bearing context',async()=>{
   let sent='';const client={session:{promptAsync:async req=>{sent=String(req?.body?.parts?.[0]?.text??'')}}}
-  await new ChildExecutionCoordinator(client).sendProviderPrompt('child',`diagnose token=${SECRET}`)
+  await new ChildExecutionCoordinator(opencodeChildPort(client)).sendProviderPrompt('child',`diagnose token=${SECRET}`)
   assert.doesNotMatch(sent,new RegExp(SECRET));assert.match(sent,/<HI_REDACTED_1>/)
   const store=new MissionStore(),m=startAssessedMission(store,'sec-system',`fix token=${SECRET}`);m.execution.constraints.push(`use api_key=${SECRET}`)
   const output={system:[]};await createSystemTransformHook(store)({sessionID:'sec-system'},output)

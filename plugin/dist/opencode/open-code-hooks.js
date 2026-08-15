@@ -10,10 +10,13 @@ import { createSystemTransformHook } from '../hooks/system-transform.js';
 import { createToolBeforeHook } from '../hooks/tool-before.js';
 import { createToolAfterHook } from '../hooks/tool-after.js';
 import { appendLedger } from '../runtime/ledger/ledger.js';
+import { normalizeOpenCodeEvent } from './event-adapter.js';
+import { ExperimentalOpenCodeAdapter } from './experimental-adapter.js';
 import { syncHumanDecisionTransport } from '../runtime/human-decision/transport.js';
 export function createOpenCodeHooks(input) {
     const { state, host, services, projectRoot, packagedSkillsDir, projectAuthority, toolSurface, reconfigureToolSurface, eventController, instanceLease } = input;
-    const { store, background, humanDecisionTransport, persistence, tasks, teams, processRuntime, browserRuntime, experimental, eventSink } = services;
+    const { store, background, humanDecisionTransport, persistence, tasks, teams, processRuntime, browserRuntime, eventSink } = services;
+    const experimental = new ExperimentalOpenCodeAdapter(store, background);
     return {
         name: 'opencode-hi',
         tool: toolSurface,
@@ -101,7 +104,7 @@ export function createOpenCodeHooks(input) {
             instanceLease.release();
         } },
         event: async (input) => { try {
-            await eventController.handle(input);
+            await eventController.handle(normalizeOpenCodeEvent(input?.event ?? input));
         }
         finally {
             for (const m of store.all())

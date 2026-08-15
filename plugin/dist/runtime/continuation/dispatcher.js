@@ -1,6 +1,5 @@
-import { sendSyntheticContinuation } from '../../opencode/client-adapter.js';
 import { appendLedger } from '../ledger/ledger.js';
-export async function dispatchContinuation(client, mission, prompt, reason) {
+export async function dispatchContinuation(host, mission, prompt, reason) {
     const now = Date.now(), generation = mission.continuation.generation;
     if (mission.continuation.user_interrupted || mission.identity.status === 'stopped') {
         appendLedger(mission, 'continuation.rejected', { payload: { reason: 'user-interrupted', generation } });
@@ -19,7 +18,7 @@ export async function dispatchContinuation(client, mission, prompt, reason) {
     mission.continuation.last_action_id = actionID;
     appendLedger(mission, 'continuation', { payload: { reason, iteration, generation, action_id: actionID } });
     try {
-        const sent = await sendSyntheticContinuation(client, mission.identity.session_id, prompt, { hiInternalContinuation: true, reason, generation, actionID });
+        const sent = await host.continueSession(mission.identity.session_id, prompt, { hiInternalContinuation: true, reason, generation, actionID });
         if (!sent) {
             appendLedger(mission, 'continuation.unavailable', { payload: { reason: 'host-continuation-api-missing' } });
             return false;

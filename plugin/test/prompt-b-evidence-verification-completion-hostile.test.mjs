@@ -10,8 +10,9 @@ import {evaluateCompletion} from '../dist/runtime/completion/evaluator.js'
 import {addEvidence} from '../dist/runtime/evidence/evidence-runtime.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {startAssessedMission} from './helpers/semantic.mjs'
+import {opencodeChildPort} from './helpers/host-port.mjs'
 
-function runtime(){return new TaskRuntime({},new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
+function runtime(){return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
 
 test('PROMPT B hostile DONE and all-tests-passed prose cannot replace verification Evidence',()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'pb9-done','fix src/a.ts',{task_kind:'bug-fix',likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})

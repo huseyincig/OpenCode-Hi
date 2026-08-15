@@ -1,0 +1,99 @@
+import type { AvailableModel } from '../routing/model-resolver.js';
+import type { HostCapabilityContract } from '../../contracts/host-capability.js';
+export type HostLogLevel = 'debug' | 'info' | 'warn' | 'error';
+export type HostEventKind = 'session-idle' | 'session-error' | 'session-deleted' | 'session-status' | 'session-diff' | 'session-compacted' | 'todo-updated' | 'permission-asked' | 'permission-replied' | 'file-edited' | 'file-watcher-updated' | 'lsp-diagnostics' | 'installation-updated' | 'unknown';
+export interface HostEvent {
+    kind: HostEventKind;
+    rawType: string;
+    sessionID?: string;
+    properties: Record<string, any>;
+    filePaths: string[];
+    status: string;
+    permission?: {
+        id?: string;
+        reply: 'once' | 'always' | 'reject' | 'unknown';
+        decision: 'allow' | 'deny' | 'unknown';
+        patterns: string[];
+    };
+}
+export interface HostAssistantResult {
+    text: string;
+    model?: {
+        model?: string;
+        variant?: string;
+        message_id?: string;
+    };
+}
+export interface HostCapabilityView {
+    childSessions: boolean;
+    asyncPrompt: boolean;
+    syncPrompt: boolean;
+    abort: boolean;
+    providerInventory: boolean;
+    appLog: boolean;
+    sessionStatus: boolean;
+    childSessionList: boolean;
+    sessionTodo: boolean;
+    sessionDiff: boolean;
+    sessionFork: boolean;
+    sessionSummarize: boolean;
+    sessionRevert: boolean;
+    sessionUnrevert: boolean;
+    workerRuntime: boolean;
+    degraded: string[];
+    contracts: HostCapabilityContract[];
+}
+export interface HostNativeSessionPort {
+    diff(sessionID: string): Promise<unknown>;
+    revert(sessionID: string, messageID?: string): Promise<unknown>;
+}
+export interface HostPort {
+    capabilities: HostCapabilityView;
+    nativeSession: HostNativeSessionPort;
+    log(level: HostLogLevel, message: string, extra?: Record<string, unknown>): Promise<void>;
+    refreshRuntimeInventory(reason: string): Promise<number>;
+    getModels(): AvailableModel[];
+    readAssistantResult(sessionID: string, limit?: number): Promise<HostAssistantResult>;
+    continueSession(sessionID: string, text: string, metadata: Record<string, unknown>): Promise<boolean>;
+}
+export interface ChildWorkspaceRequest {
+    workspaceID: string;
+    directory: string;
+}
+export interface ChildSessionCreateRequest {
+    parentSessionID: string;
+    title: string;
+    role: string;
+    model?: string;
+    variant?: string;
+    workspace?: ChildWorkspaceRequest;
+    forkFromSession?: string;
+}
+export interface ChildSessionCreateResult {
+    child: {
+        id?: string;
+        workspaceID?: string;
+        directory?: string;
+    };
+    fork: {
+        requested: boolean;
+        nativeAvailable: boolean;
+        used: false;
+        reason?: string;
+    };
+}
+export interface ChildSessionPort {
+    capabilities: {
+        create: boolean;
+        prompt: boolean;
+        abort: boolean;
+        diff: boolean;
+        summarize: boolean;
+        fork: boolean;
+    };
+    create(request: ChildSessionCreateRequest): Promise<ChildSessionCreateResult>;
+    prompt(sessionID: string, text: string, role?: string, model?: string, variant?: string, tools?: Record<string, boolean>): Promise<unknown>;
+    abort(sessionID: string): Promise<'server' | 'client' | 'unavailable'>;
+    diff(sessionID: string): Promise<unknown>;
+    summarize(sessionID: string): Promise<unknown>;
+}

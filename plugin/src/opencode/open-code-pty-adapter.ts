@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs'
 import type { OpenCodeClient } from './types.js'
 import { createOpencodeClient as createOpenCodeV2Client } from '@opencode-ai/sdk/v2/client'
 import { isProcessContract,processCommandIdentity,type ProcessContract } from '../contracts/process.js'
-import type { ProcessExecutor,ProcessExit,ProcessHandle,ProcessOutput,ProcessOutputWindow,ProcessSpawnRequest,ProcessReconcileResult } from '../runtime/process/executor.js'
+import { ProcessSpawnPermissionError,type ProcessExecutor,type ProcessExit,type ProcessHandle,type ProcessOutput,type ProcessOutputWindow,type ProcessSpawnRequest,type ProcessReconcileResult } from '../runtime/process/executor.js'
+export { ProcessSpawnPermissionError } from '../runtime/process/executor.js'
 import { evaluateProcessSpawnAuthority,processCommandLine } from '../runtime/process/authority.js'
 
 interface NativePtyInfo{id:string;title:string;command:string;args:string[];cwd:string;status:'running'|'exited';pid:number;exitCode?:number}
@@ -30,7 +31,6 @@ interface RuntimeProcessState{
   reconnects:number
 }
 
-export class ProcessSpawnPermissionError extends Error{constructor(readonly decision:'ASK'|'DENY',readonly reason:string){super(`Hi ProcessExecutor spawn ${decision.toLowerCase()}: ${reason}`);this.name='ProcessSpawnPermissionError'}}
 function nativeData<T>(value:any):T{const first=value&&typeof value==='object'&&'data'in value?value.data:value;return(first&&typeof first==='object'&&'data'in first?first.data:first) as T}
 function cloneContract(value:ProcessContract):ProcessContract{return structuredClone(value)}
 function processID():string{return`proc_${createHash('sha256').update(randomUUID()).digest('hex').slice(0,24)}`}

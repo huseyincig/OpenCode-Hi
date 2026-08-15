@@ -1,6 +1,6 @@
 import type { MissionState } from '../mission/types.js';
 import type { ProcessContract } from '../../contracts/process.js';
-import type { ProcessExecutor, ProcessOutput } from './executor.js';
+import { type ProcessExecutor, type ProcessOutput } from './executor.js';
 import { type ProcessPermissionRequest } from './authority.js';
 export type NativePermissionPrompter = (request: ProcessPermissionRequest) => Promise<void>;
 export interface ProcessStartInput {

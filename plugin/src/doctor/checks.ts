@@ -3,13 +3,13 @@ import { MissionStore } from '../runtime/mission/mission-store.js'
 import type { AvailableModel } from '../runtime/routing/model-resolver.js'
 import { automaticContinuationEnabled, adaptiveIdleEvaluatorEnabled } from '../config/execution-policy.js'
 import { inspectProject } from './project-inspection.js'
-import type { OpenCodeCapabilities } from '../opencode/capabilities.js'
+import type { HostCapabilityView } from '../runtime/host/port.js'
 import { configuredPluginSpecs, configuredRemoteInstructions, configuredShareMode, configuredSubagentDepth, providerPolicyView } from '../opencode/native-adapter.js'
 import { auditHiToolNamespace } from '../opencode/tool-namespace.js'
 import { knownHiCustomRoles } from '../runtime/routing/agent-reuse.js'
 
 export interface DoctorCheck { id:string; status:'pass'|'warn'|'fail'; machine_status?:'pass'|'info'|'action-required'|'not-applicable'; detail:string }
-export interface DoctorRuntimeInfo { models?:AvailableModel[]; resolution?:ConfigResolutionReport; capabilities?:OpenCodeCapabilities; hostConfig?:Record<string,unknown>; openCodeVersion?:string; runtimeHostResources?:ReadonlySet<string> }
+export interface DoctorRuntimeInfo { models?:AvailableModel[]; resolution?:ConfigResolutionReport; capabilities?:HostCapabilityView; hostConfig?:Record<string,unknown>; openCodeVersion?:string; runtimeHostResources?:ReadonlySet<string> }
 function providerCount(models:AvailableModel[]):number{return new Set(models.map(m=>m.provider).filter(Boolean)).size}
 function hiSpec(x:string):boolean{return x==='opencode-hi'||x.startsWith('opencode-hi@')||/OpenCode-Hi/i.test(x)}
 

@@ -1,9 +1,7 @@
 import { createHash } from 'node:crypto';
-import { normalizeOpenCodeEvent, eventFilePaths, permissionDecision, permissionEventID, permissionPatterns, permissionReply, eventStatus } from '../../opencode/event-adapter.js';
 import { authorityClassForPatterns } from '../safety/project-authority.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { addEvidence, markMutation, normalizeProjectPath } from '../evidence/evidence-runtime.js';
-import { lastAssistantText, lastAssistantModel, listMessages } from '../../opencode/client-adapter.js';
 import { parseWorkerResult } from '../task/result-parser.js';
 import { automaticContinuationEnabled, adaptiveIdleEvaluatorEnabled } from '../../config/execution-policy.js';
 import { dispatchContinuation } from '../continuation/dispatcher.js';
@@ -16,10 +14,9 @@ export class RuntimeEventController {
     constructor(deps) {
         this.deps = deps;
     }
-    async handle({ event }) {
+    async handle(ev) {
         const { state, host, services, projectAuthority, pendingNativePermissions, projectRoot } = this.deps;
         const { store, background, persistence, tasks, teams, processRuntime, workspaceRuntime, eventSink, scopedStores } = services;
-        const ev = normalizeOpenCodeEvent(event);
         if (ev.kind === 'installation-updated') {
             await host.refreshRuntimeInventory('installation-updated');
             return;
@@ -31,12 +28,12 @@ export class RuntimeEventController {
         const sid = ev.sessionID;
         if (!sid)
             return;
-        const nativePermissionID = permissionEventID(ev);
+        const nativePermissionID = ev.permission?.id;
         if (ev.kind === 'permission-asked' && nativePermissionID)
-            pendingNativePermissions.set(nativePermissionID, permissionPatterns(ev));
+            pendingNativePermissions.set(nativePermissionID, ev.permission?.patterns ?? []);
         if (ev.kind === 'permission-replied' && nativePermissionID) {
-            const patterns = [...new Set([...pendingNativePermissions.get(nativePermissionID) ?? [], ...permissionPatterns(ev)])];
-            if (permissionReply(ev) === 'always') {
+            const patterns = [...new Set([...pendingNativePermissions.get(nativePermissionID) ?? [], ...(ev.permission?.patterns ?? [])])];
+            if (ev.permission?.reply === 'always') {
                 const cls = authorityClassForPatterns(patterns);
                 if (cls) {
                     projectAuthority.grant(cls);
@@ -73,7 +70,7 @@ export class RuntimeEventController {
             return;
         }
         if (ev.kind === 'permission-asked' && mission) {
-            const pid = permissionEventID(ev);
+            const pid = ev.permission?.id;
             mission.authority.pending_permission_ids ??= [];
             const alreadyReplied = Boolean(pid && mission.execution.ledger.some(e => e.type === 'permission.replied' && e.payload?.permission_id === pid || e.type === 'permission.duplicate-ignored' && e.payload?.permission_id === pid && e.payload?.event === 'replied'));
             if (alreadyReplied) {
@@ -93,7 +90,7 @@ export class RuntimeEventController {
             return;
         }
         if (ev.kind === 'permission-replied' && mission) {
-            const pid = permissionEventID(ev);
+            const pid = ev.permission?.id;
             mission.authority.pending_permission_ids ??= [];
             const idx = pid ? mission.authority.pending_permission_ids.indexOf(pid) : -1;
             if (pid && idx < 0) {
@@ -103,7 +100,7 @@ export class RuntimeEventController {
                 if (idx >= 0)
                     mission.authority.pending_permission_ids.splice(idx, 1);
                 mission.authority.pending_permissions = Math.max(0, (mission.authority.pending_permissions ?? 0) - 1);
-                appendLedger(mission, 'permission.replied', { worker_id: child?.id, payload: { session_id: sid, permission_id: pid, decision: permissionDecision(ev) } });
+                appendLedger(mission, 'permission.replied', { worker_id: child?.id, payload: { session_id: sid, permission_id: pid, decision: ev.permission?.decision ?? 'unknown' } });
             }
             persistence.save(store.all());
             return;
@@ -113,7 +110,7 @@ export class RuntimeEventController {
             if (!m)
                 return;
             if (ev.kind === 'file-edited' || ev.kind === 'file-watcher-updated' || ev.kind === 'session-diff') {
-                const files = eventFilePaths(ev);
+                const files = ev.filePaths;
                 const stateHash = ev.kind === 'session-diff' ? createHash('sha256').update(JSON.stringify(ev.properties ?? {})).digest('hex') : undefined;
                 if (files.length)
                     await tasks.noteNativeWriteSet(m, child.id, files, ev.rawType, stateHash);
@@ -121,7 +118,7 @@ export class RuntimeEventController {
                 return;
             }
             if (ev.kind === 'session-status') {
-                const nativeStatus = eventStatus(ev);
+                const nativeStatus = ev.status;
                 tasks.noteNativeStatus(m, child.id, nativeStatus);
                 if (child.runtime_recovery_pending && !/idle|completed|stopped/i.test(nativeStatus)) {
                     child.runtime_recovery_pending = false;
@@ -156,7 +153,7 @@ export class RuntimeEventController {
                     openHumanDecision(m, { semantic_type: 'operational_action', reason_code: 'permission-failure', summary: `Native child permission failure requires user/runtime intervention before retry. ${detail.slice(0, 240)}`, task_id: child.task_id, worker_id: child.id, response_schema: { kind: 'external-action' } });
                 }
                 else if (automaticContinuationEnabled(state.config.executionPolicy) && !m.continuation.user_interrupted && !siblingPending.length)
-                    await dispatchContinuation(host.client, m, 'Hi child worker failed. Reconcile the failure, preserve completed work, and choose the minimum safe recovery. Do not duplicate completed tasks.', 'child-failed');
+                    await dispatchContinuation(host, m, 'Hi child worker failed. Reconcile the failure, preserve completed work, and choose the minimum safe recovery. Do not duplicate completed tasks.', 'child-failed');
                 else if (siblingPending.length)
                     appendLedger(m, 'parent.wake.deferred', { worker_id: child.id, payload: { reason: 'sibling-workers-pending', pending: siblingPending.map(w => w.id).slice(0, 20) } });
                 persistence.save(store.all());
@@ -172,9 +169,9 @@ export class RuntimeEventController {
             if (child.status === 'completed' || child.status === 'failed' || child.status === 'cancelled')
                 return;
             try {
-                const messages = await listMessages(host.client, sid, 12), modelEvidence = lastAssistantModel(messages), text = lastAssistantText(messages);
+                const assistant = await host.readAssistantResult(sid, 12), modelEvidence = assistant.model, text = assistant.text;
                 if (!modelEvidence && !text) {
-                    appendLedger(m, 'worker.idle.pre-assistant-ignored', { task_id: child.task_id, worker_id: child.id, payload: { session_id: sid, messages: messages.length } });
+                    appendLedger(m, 'worker.idle.pre-assistant-ignored', { task_id: child.task_id, worker_id: child.id, payload: { session_id: sid } });
                     persistence.save(store.all());
                     return;
                 }
@@ -194,7 +191,7 @@ export class RuntimeEventController {
                 store.updateProgress(m);
                 appendLedger(m, 'parent.wake', { worker_id: child.id, payload: { result: result.status } });
                 if (automaticContinuationEnabled(state.config.executionPolicy) && !m.continuation.user_interrupted && !background.pendingFor(m.identity.session_id).length)
-                    await dispatchContinuation(host.client, m, 'Hi child result is ready. Reconcile it against current obligations. Prefer same-session corrective resume for NEEDS_CONTEXT/FIX_REQUIRED. Do not create duplicate tasks.', 'child-result-ready');
+                    await dispatchContinuation(host, m, 'Hi child result is ready. Reconcile it against current obligations. Prefer same-session corrective resume for NEEDS_CONTEXT/FIX_REQUIRED. Do not create duplicate tasks.', 'child-result-ready');
             }
             catch (e) {
                 tasks.fail(m, child.id, String(e));
@@ -227,7 +224,7 @@ export class RuntimeEventController {
             return;
         }
         if ((ev.kind === 'file-edited' || ev.kind === 'file-watcher-updated' || ev.kind === 'session-diff') && mission) {
-            const files = eventFilePaths(ev).map(file => normalizeProjectPath(file, projectRoot)).filter(Boolean);
+            const files = ev.filePaths.map(file => normalizeProjectPath(file, projectRoot)).filter(Boolean);
             if (files.length) {
                 markMutation(mission, files, ev.rawType);
                 scopedStores.projectIntelligence.invalidateChanged(files);
@@ -287,7 +284,7 @@ export class RuntimeEventController {
             }
         }
         if (decision.prompt && ['CONTINUE', 'RECONCILE', 'VERIFY', 'RECOVER'].includes(decision.decision))
-            await dispatchContinuation(host.client, m, decision.prompt, decision.reason);
+            await dispatchContinuation(host, m, decision.prompt, decision.reason);
         persistence.save(store.all());
     }
 }

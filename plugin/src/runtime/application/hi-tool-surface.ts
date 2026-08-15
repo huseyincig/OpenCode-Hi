@@ -30,16 +30,14 @@ import type { ProcessRuntime } from '../process/runtime.js'
 import type { WorkspaceRuntime } from '../workspace/runtime.js'
 import type { BrowserRuntime } from '../browser/runtime.js'
 import { resolveBrowserExecutionOwner } from '../browser/ownership.js'
-import type { NativeOpenCodeAdapter } from '../../opencode/native-adapter.js'
-import type { detectOpenCodeCapabilities } from '../../opencode/capabilities.js'
+import type { HostCapabilityView,HostNativeSessionPort } from '../host/port.js'
 import type { RuntimeScopedStores } from './runtime-scoped-stores.js'
 
 function nativeDiffFiles(raw:any,projectRoot?:string):string[]{const items:any[]=Array.isArray(raw)?raw:Array.isArray(raw?.data)?raw.data:[];return[...new Set<string>(items.map((x:any)=>typeof x?.file==='string'?x.file:typeof x?.path==='string'?x.path:'').filter((x:string)=>Boolean(x)).map((x:string)=>normalizeProjectPath(x,projectRoot)).filter(Boolean))]}
 
 export interface PluginRuntimeState {config:HiConfig;configResolution?:ConfigResolutionReport;hostConfig:Record<string,unknown>;openCodeVersion?:string}
 
-type Capabilities=ReturnType<typeof detectOpenCodeCapabilities>
-export function createHiToolSurface(input:{state:PluginRuntimeState;store:MissionStore;tasks:TaskRuntime;teams:TeamRuntime;processRuntime:ProcessRuntime;workspaceRuntime?:WorkspaceRuntime;browserRuntime?:BrowserRuntime;projectRoot:string;capabilities:Capabilities;native:NativeOpenCodeAdapter;getModels:()=>AvailableModel[];scopedStores:RuntimeScopedStores}){
+export function createHiToolSurface(input:{state:PluginRuntimeState;store:MissionStore;tasks:TaskRuntime;teams:TeamRuntime;processRuntime:ProcessRuntime;workspaceRuntime?:WorkspaceRuntime;browserRuntime?:BrowserRuntime;projectRoot:string;capabilities:HostCapabilityView;native:HostNativeSessionPort;getModels:()=>AvailableModel[];scopedStores:RuntimeScopedStores}){
   const {state,store,tasks,teams,processRuntime,workspaceRuntime,browserRuntime,projectRoot,capabilities,native,getModels,scopedStores}=input
   const doctorTool=tool({description:'Run OpenCode-Hi runtime/configuration health checks',args:{},execute:async()=>{const browserHealth=browserRuntime?await browserRuntime.health():{available:false},runtimeHostResources=new Set<string>(browserHealth.available?['host-capability:browser-execution']:[]);return formatDoctor(runDoctor(state.config,store,projectRoot,{models:getModels(),resolution:state.configResolution,capabilities,hostConfig:state.hostConfig,openCodeVersion:state.openCodeVersion,runtimeHostResources}))}})
   const statusTool=tool({description:'Show compact user-facing Hi mission status. This intentionally excludes diagnostic logs and ledger payloads.',args:{},execute:async(_args:unknown,c:any)=>{const m=store.get(c?.sessionID);return m?formatUserMissionStatus(m):'Hi: no active mission'}})

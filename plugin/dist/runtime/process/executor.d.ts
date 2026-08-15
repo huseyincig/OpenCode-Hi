@@ -1,6 +1,11 @@
 import type { ProcessContract } from '../../contracts/process.js';
 import type { ExternalActionContract } from '../../contracts/external-action.js';
 export type ProcessPermissionDecision = 'allow' | 'ask' | 'deny';
+export declare class ProcessSpawnPermissionError extends Error {
+    readonly decision: 'ASK' | 'DENY';
+    readonly reason: string;
+    constructor(decision: 'ASK' | 'DENY', reason: string);
+}
 export interface ProcessNativePermissionGrant {
     permission: 'bash' | 'external_directory';
     pattern: string;

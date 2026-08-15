@@ -12,6 +12,7 @@ import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
 import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {PACKAGED_HI_AGENTS} from '../dist/generated/agent-config.js'
+import {opencodeChildPort} from './helpers/host-port.mjs'
 
 const all={childSessions:true,asyncPrompt:true,syncPrompt:true,abort:true,providerInventory:true,appLog:true,sessionStatus:true,childSessionList:true,sessionTodo:true,sessionDiff:true,sessionFork:true,sessionSummarize:true,sessionRevert:true,sessionUnrevert:true}
 const repoRoot=resolve(dirname(fileURLToPath(import.meta.url)),'../..')
@@ -43,7 +44,7 @@ test('browser and visual methodologies require canonical browser-execution host 
 test('TaskRuntime still fails visual methodology preflight before native child spawn when executor health resource is unavailable',async()=>{
   const created=[]
   const client={session:{create:async req=>{created.push(req);return{data:{id:'child'}}},promptAsync:async()=>({data:{}}),abort:async()=>({data:true}),diff:async()=>({data:[]})}}
-  const runtime=new TaskRuntime(client,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[],()=>({agent:PACKAGED_HI_AGENTS}),undefined,{},undefined,undefined,()=>new Set())
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[],()=>({agent:PACKAGED_HI_AGENTS}),undefined,{},undefined,undefined,()=>new Set())
   const store=new MissionStore(repoRoot),m=store.start('visual-resource','verify visual rendering')
   store.applyInitialSemanticAssessment('visual-resource',{material:true,message_kind:'mission',task_kind:'review',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['visual-review'],requested_external_actions:[],likely_verification:['visual-evidence'],likely_targets:['src/view.tsx'],intent_signals:['intent.visual-qa'],suppressed_intent_signals:[]})
   m.methodology.methodology_needs.push({name:'hi-visual-qa',signal:'intent.visual-qa',trigger_source:'task-intent',producer:'intent',reason:'explicit visual QA',created_at:Date.now()})

@@ -14,6 +14,7 @@ import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {resolveHiConfig} from '../dist/config/resolver.js'
 import {PACKAGED_HI_AGENTS} from '../dist/generated/agent-config.js'
 import {openCodeHostCapabilityContracts,hostCapabilityByID} from '../dist/contracts/host-capability.js'
+import {opencodeChildPort} from './helpers/host-port.mjs'
 
 const BASE='a'.repeat(40)
 const host={agent:PACKAGED_HI_AGENTS}
@@ -29,7 +30,7 @@ function client(created=[],prompts=[],aborted=[],workspacePath='/tmp/hi-w2-works
   create:async req=>{const id=`child-${++n}`,workspaceID=req.body.workspaceID;created.push(req);return{data:{id,...(workspaceID?{workspaceID,directory:mismatch?'/tmp/wrong-workspace':workspacePath}:{directory:process.cwd()})}}},
   promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async req=>{aborted.push(req);return{data:true}},diff:async()=>({data:[]})
 }}}
-function runtimeWithWorkspace(c,workspaceRuntime,root=process.cwd()){return new TaskRuntime(c,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),root,root,()=>resolveHiConfig({}),()=>[],()=>host,undefined,{},undefined,workspaceRuntime)}
+function runtimeWithWorkspace(c,workspaceRuntime,root=process.cwd()){return new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),root,root,()=>resolveHiConfig({}),()=>[],()=>host,undefined,{},undefined,workspaceRuntime)}
 
 test('W2 OpenCode adapter provisions only the builtin worktree type and binds exact Git repository identity',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-w2-primary-')),work=mkdtempSync(join(tmpdir(),'hi-w2-worktree-')),common=mkdtempSync(join(tmpdir(),'hi-w2-common-')),calls=[]
@@ -95,10 +96,10 @@ test('W2 adapter fails closed for primary-path, repository-identity, or source-b
 test('W2 ChildExecutionCoordinator binds workspaceID and exact returned directory; mismatch aborts child',async()=>{
   const created=[],aborted=[],root=mkdtempSync(join(tmpdir(),'hi-w2-bind-')),work=join(root,'work');mkdirSync(work)
   try{
-    const ok=new ChildExecutionCoordinator(client(created,[],aborted,work,false))
+    const ok=new ChildExecutionCoordinator(opencodeChildPort(client(created,[],aborted,work,false)))
     const child=await ok.create('parent','isolated','coder',undefined,undefined,{workspaceID:'ws_1',directory:work})
     assert.equal(created[0].body.workspaceID,'ws_1');assert.equal(child.workspaceID,'ws_1')
-    const badCreated=[],badAborted=[],bad=new ChildExecutionCoordinator(client(badCreated,[],badAborted,work,true))
+    const badCreated=[],badAborted=[],bad=new ChildExecutionCoordinator(opencodeChildPort(client(badCreated,[],badAborted,work,true)))
     await assert.rejects(()=>bad.create('parent','isolated','coder',undefined,undefined,{workspaceID:'ws_2',directory:work}),/workspace binding mismatch/)
     assert.equal(badAborted.length,1)
   }finally{rmSync(root,{recursive:true,force:true})}

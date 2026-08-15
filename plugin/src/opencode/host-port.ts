@@ -1,9 +1,10 @@
-import type { OpenCodePluginContext,OpenCodeClient } from './types.js'
+import type { OpenCodePluginContext } from './types.js'
 import type { AvailableModel } from '../runtime/routing/model-resolver.js'
 import { normalizeModelCapabilityProfile } from '../contracts/model.js'
 import { detectOpenCodeCapabilities } from './capabilities.js'
 import { NativeOpenCodeAdapter } from './native-adapter.js'
-import { listProviders } from './client-adapter.js'
+import { lastAssistantModel,lastAssistantText,listMessages,listProviders,sendSyntheticContinuation } from './client-adapter.js'
+import type { HostPort } from '../runtime/host/port.js'
 
 function providerModels(raw:unknown):AvailableModel[]{
   const edge=raw as any
@@ -31,15 +32,6 @@ function providerModels(raw:unknown):AvailableModel[]{
   return out
 }
 
-export interface HostPort{
-  client:OpenCodeClient
-  capabilities:ReturnType<typeof detectOpenCodeCapabilities>
-  native:NativeOpenCodeAdapter
-  log:(level:'debug'|'info'|'warn'|'error',message:string,extra?:Record<string,unknown>)=>Promise<void>
-  refreshRuntimeInventory:(reason:string)=>Promise<number>
-  getModels:()=>AvailableModel[]
-}
-
 export function createHostPort(ctx:OpenCodePluginContext):HostPort{
   const capabilities=detectOpenCodeCapabilities(ctx.client)
   const native=new NativeOpenCodeAdapter(ctx.client)
@@ -51,5 +43,7 @@ export function createHostPort(ctx:OpenCodePluginContext):HostPort{
     inventoryRefresh=(async()=>{try{const raw=await listProviders(ctx.client);models=providerModels(raw);await log('info','Hi runtime inventory refreshed',{reason,models:models.length});return models.length}catch(error){await log('warn','Hi runtime inventory refresh failed',{reason,error:String(error)});return models.length}finally{inventoryRefresh=undefined}})()
     return inventoryRefresh
   }
-  return {client:ctx.client,capabilities,native,log,refreshRuntimeInventory,getModels:()=>models}
+  const readAssistantResult=async(sessionID:string,limit=12)=>{const messages=await listMessages(ctx.client,sessionID,limit);return{text:lastAssistantText(messages),model:lastAssistantModel(messages)}}
+  const continueSession=(sessionID:string,text:string,metadata:Record<string,unknown>)=>sendSyntheticContinuation(ctx.client,sessionID,text,metadata)
+  return {capabilities,nativeSession:{diff:(sessionID)=>native.diff(sessionID),revert:(sessionID,messageID)=>native.revert(sessionID,messageID)},log,refreshRuntimeInventory,getModels:()=>models,readAssistantResult,continueSession}
 }

@@ -11,7 +11,9 @@ import { createToolBeforeHook } from '../hooks/tool-before.js'
 import { createToolAfterHook } from '../hooks/tool-after.js'
 import { appendLedger } from '../runtime/ledger/ledger.js'
 import type { PluginRuntimeState } from '../runtime/application/hi-tool-surface.js'
-import type { HostPort } from './host-port.js'
+import type { HostPort } from '../runtime/host/port.js'
+import { normalizeOpenCodeEvent } from './event-adapter.js'
+import { ExperimentalOpenCodeAdapter } from './experimental-adapter.js'
 import type { createRuntimeServices } from '../runtime/application/runtime-services.js'
 import type { ProjectAuthorityStore } from '../runtime/safety/project-authority.js'
 import type { RuntimeEventController } from '../runtime/application/runtime-event-controller.js'
@@ -19,7 +21,8 @@ import { syncHumanDecisionTransport } from '../runtime/human-decision/transport.
 
 export function createOpenCodeHooks(input:{state:PluginRuntimeState;host:HostPort;services:ReturnType<typeof createRuntimeServices>;projectRoot:string;packagedSkillsDir:string;projectAuthority:ProjectAuthorityStore;toolSurface:Record<string,unknown>;reconfigureToolSurface:()=>void;eventController:RuntimeEventController;instanceLease:{release:()=>void}}){
   const {state,host,services,projectRoot,packagedSkillsDir,projectAuthority,toolSurface,reconfigureToolSurface,eventController,instanceLease}=input
-  const {store,background,humanDecisionTransport,persistence,tasks,teams,processRuntime,browserRuntime,experimental,eventSink}=services
+  const {store,background,humanDecisionTransport,persistence,tasks,teams,processRuntime,browserRuntime,eventSink}=services
+  const experimental=new ExperimentalOpenCodeAdapter(store,background)
   return {
     name:'opencode-hi',
     tool:toolSurface,
@@ -38,6 +41,6 @@ export function createOpenCodeHooks(input:{state:PluginRuntimeState;host:HostPor
     'tool.execute.before':async(input:any,output:any)=>{try{await createToolBeforeHook(store,background,projectRoot)(input,output)}finally{for(const m of store.all())syncHumanDecisionTransport(m.authority.human_decision,humanDecisionTransport);persistence.save(store.all())}},
     'tool.execute.after':async(input:any,output:any)=>{try{await createToolAfterHook(store,background,eventSink,projectRoot)(input,output)}finally{for(const m of store.all())syncHumanDecisionTransport(m.authority.human_decision,humanDecisionTransport);persistence.save(store.all())}},
     dispose:async()=>{try{for(const m of store.all())if(m.identity.status==='active'){store.stop(m.identity.session_id,'plugin-dispose');await processRuntime.stopMission(m);await teams.shutdownMission(m);await tasks.cancelAll(m)}await browserRuntime.dispose();persistence.markCleanShutdown(store.all())}finally{instanceLease.release()}},
-    event:async(input:any)=>{try{await eventController.handle(input)}finally{for(const m of store.all())syncHumanDecisionTransport(m.authority.human_decision,humanDecisionTransport)}},
+    event:async(input:any)=>{try{await eventController.handle(normalizeOpenCodeEvent(input?.event??input))}finally{for(const m of store.all())syncHumanDecisionTransport(m.authority.human_decision,humanDecisionTransport)}},
   }
 }

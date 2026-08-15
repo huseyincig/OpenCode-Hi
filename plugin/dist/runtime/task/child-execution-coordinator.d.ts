@@ -1,7 +1,6 @@
-import type { OpenCodeClient } from '../../opencode/types.js';
 import type { MissionState, WorkerState } from '../mission/types.js';
 import type { BackgroundRegistry } from '../background/registry.js';
-import { type OpenCodeLifecycleEndpoint } from '../../opencode/client-adapter.js';
+import type { ChildSessionPort } from '../host/port.js';
 declare function normFile(value: string): string;
 export declare function diffDelta(before: Record<string, string> | undefined, after: Record<string, string>): string[];
 export { normFile };
@@ -10,29 +9,16 @@ export interface ChildWorkspaceBinding {
     directory: string;
 }
 export declare class ChildExecutionCoordinator {
-    private readonly client;
-    private readonly lifecycle;
+    private readonly host;
     private readonly registry?;
-    constructor(client: OpenCodeClient, lifecycle?: OpenCodeLifecycleEndpoint, registry?: BackgroundRegistry | undefined);
+    constructor(host: ChildSessionPort, registry?: BackgroundRegistry | undefined);
     resolveCallbackWorker(sessionID: string): WorkerState | undefined;
     create(parentSessionID: string, title: string, role: string, model?: string, variant?: string, workspace?: ChildWorkspaceBinding): Promise<{
         id?: string;
         workspaceID?: string;
         directory?: string;
     }>;
-    createForTask(parentSessionID: string, title: string, role: string, model?: string, variant?: string, forkFromSession?: string, workspace?: ChildWorkspaceBinding): Promise<{
-        child: {
-            id?: string;
-            workspaceID?: string;
-            directory?: string;
-        };
-        fork: {
-            requested: boolean;
-            nativeAvailable: boolean;
-            used: false;
-            reason?: string;
-        };
-    }>;
+    createForTask(parentSessionID: string, title: string, role: string, model?: string, variant?: string, forkFromSession?: string, workspace?: ChildWorkspaceBinding): Promise<import("../host/port.js").ChildSessionCreateResult>;
     sendProviderPrompt(sessionID: string, text: string, role?: string, model?: string, variant?: string, tools?: Record<string, boolean>): Promise<unknown>;
     recordModelProjection(worker: WorkerState, model?: string, variant?: string): void;
     abortNativeSession(m: MissionState, sessionID: string, reason: string, workerID?: string, taskID?: string): Promise<boolean>;

@@ -5,8 +5,6 @@ import { resolveSkillPlan } from '../skills/registry.js';
 import { resolveSkillPermissionMap, resolveSkillToolEnabled } from '../skills/permissions.js';
 import { createTask, createWorker, beginWorkerAttempt, workerFingerprint } from '../worker/worker-runtime.js';
 import { workerHandoffText } from './contracts.js';
-import { NativeOpenCodeAdapter } from '../../opencode/native-adapter.js';
-import { detectOpenCodeCapabilities } from '../../opencode/capabilities.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { parallelSafety } from '../scheduler/parallel-safety.js';
 import { routeCapabilities } from '../routing/capability-router.js';
@@ -60,7 +58,7 @@ function inferObligationIds(m, role, requiredEvidence, explicit = []) {
 }
 function providerOf(model) { return model && model !== 'host-default' && model.includes('/') ? model.slice(0, model.indexOf('/')) : undefined; }
 export class TaskRuntime {
-    client;
+    childHost;
     registry;
     scheduler;
     projectRoot;
@@ -68,6 +66,7 @@ export class TaskRuntime {
     getModels;
     getHostConfig;
     events;
+    hostCapabilitySource;
     workspaceRuntime;
     extraHostResources;
     #queue = [];
@@ -77,8 +76,8 @@ export class TaskRuntime {
     #results;
     #recovery;
     #scopedStores;
-    constructor(client, registry, scheduler, projectRoot, hiRoot, getConfig, getModels, getHostConfig, events, lifecycle = {}, scopedStores, workspaceRuntime, extraHostResources = () => new Set()) {
-        this.client = client;
+    constructor(childHost, registry, scheduler, projectRoot, hiRoot, getConfig, getModels, getHostConfig, events, hostCapabilitySource = [], scopedStores, workspaceRuntime, extraHostResources = () => new Set()) {
+        this.childHost = childHost;
         this.registry = registry;
         this.scheduler = scheduler;
         this.projectRoot = projectRoot;
@@ -86,11 +85,12 @@ export class TaskRuntime {
         this.getModels = getModels;
         this.getHostConfig = getHostConfig;
         this.events = events;
+        this.hostCapabilitySource = hostCapabilitySource;
         this.workspaceRuntime = workspaceRuntime;
         this.extraHostResources = extraHostResources;
         this.#scopedStores = scopedStores ?? createRuntimeScopedStores(projectRoot, hiRoot);
         this.#methodologyLearning = new ProjectMethodologyLearningStore(projectRoot);
-        this.#child = new ChildExecutionCoordinator(client, lifecycle, registry);
+        this.#child = new ChildExecutionCoordinator(childHost, registry);
         this.#results = new TaskResultReconciler(scheduler, registry, projectRoot, events, this.#methodologyLearning, this.#child, (m, w, run) => this.queueTask(m, w, run), () => this.drainQueue(), this.#scopedStores);
         this.#recovery = new TaskRecoveryCoordinator(scheduler, registry, projectRoot, getConfig, getModels, getHostConfig, events, this.#child, () => this.drainQueue(), (m, taskID) => this.workspaceBinding(m, taskID));
     }
@@ -178,7 +178,7 @@ export class TaskRuntime {
             appendLedger(m, 'model.policy.rejected', { payload: { items: selected.rejected.slice(0, 20) } });
         if (selected.scores?.length)
             appendLedger(m, 'model.scored', { payload: { role, category, top: selected.scores.slice(0, 6), feedback } });
-        const taskMethodologyNeeds = m.methodology.methodology_needs.filter(need => (!need.task_id && !need.obligation_id) || (need.obligation_id && input.obligationIds?.includes(need.obligation_id))), catalog = methodologyCatalog(this.projectRoot), candidates = this.#scopedStores.skillCatalog.candidates(hostConfig), permissionMap = resolveSkillPermissionMap(hostConfig, role), skillToolEnabled = resolveSkillToolEnabled(hostConfig, role), surface = effectiveExecutionSurface(hostConfig, role, skillToolEnabled), hostCapabilities = detectOpenCodeCapabilities(this.client).contracts, availableResources = new Set([...hostCapabilities.filter(item => item.status === 'SUPPORTED' && item.runtime_health_required !== true).map(item => `host-capability:${item.id}`), ...this.extraHostResources()]), skillPlan = resolveSkillPlan(methodologyNames(taskMethodologyNeeds), candidates, permissionMap, skillToolEnabled, role, catalog, availableResources), methodologies = skillPlan.selected.map(s => s.name), methodologyResourceFailures = skillPlan.outcomes.filter(item => item.outcome === 'resource-unavailable').map(item => item.name);
+        const taskMethodologyNeeds = m.methodology.methodology_needs.filter(need => (!need.task_id && !need.obligation_id) || (need.obligation_id && input.obligationIds?.includes(need.obligation_id))), catalog = methodologyCatalog(this.projectRoot), candidates = this.#scopedStores.skillCatalog.candidates(hostConfig), permissionMap = resolveSkillPermissionMap(hostConfig, role), skillToolEnabled = resolveSkillToolEnabled(hostConfig, role), surface = effectiveExecutionSurface(hostConfig, role, skillToolEnabled), hostCapabilities = typeof this.hostCapabilitySource === 'function' ? this.hostCapabilitySource() : Array.isArray(this.hostCapabilitySource) ? this.hostCapabilitySource : [], availableResources = new Set([...hostCapabilities.filter(item => item.status === 'SUPPORTED' && item.runtime_health_required !== true).map(item => `host-capability:${item.id}`), ...this.extraHostResources()]), skillPlan = resolveSkillPlan(methodologyNames(taskMethodologyNeeds), candidates, permissionMap, skillToolEnabled, role, catalog, availableResources), methodologies = skillPlan.selected.map(s => s.name), methodologyResourceFailures = skillPlan.outcomes.filter(item => item.outcome === 'resource-unavailable').map(item => item.name);
         appendLedger(m, 'skill.resolved', { payload: { role, requested: skillPlan.requested, outcomes: skillPlan.outcomes } });
         void this.events?.(runtimeSignal('skill.resolved', m.identity.mission_id, { payload: { role, requested: skillPlan.requested, outcomes: skillPlan.outcomes } }));
         if (skillPlan.missing.length)
@@ -189,7 +189,7 @@ export class TaskRuntime {
         if (isolationRequired && !isolationReason)
             throw new Error('Hi isolated task requires a bounded isolation reason');
         const constraints = [...new Set([...(m.execution.constraints ?? []), ...(input.constraints ?? []), ...(isolationRequired ? ['hi-isolation:git-worktree'] : [])])], desiredFingerprint = workerFingerprint(role, category, selected.primary, taskIntent.taskKind, objective, { scope, constraints, dependencies, requiredEvidence, obligationIds }), existing = m.execution.workers.find(w => w.fingerprint === desiredFingerprint && !['completed', 'failed', 'cancelled'].includes(w.status));
-        const native = new NativeOpenCodeAdapter(this.client), resumeCapable = Boolean(existing?.session_id), preflight = evaluateTaskPreconditions({ role, implementation: role === 'coder', dependencies: { unknown: unknownDependencies, failed: unavailableDependencies, incomplete: incompleteDependencies }, modelAvailable: Boolean(selected.primary), native: { childSession: resumeCapable || native.has('session-create'), prompt: native.has('prompt-async') || native.has('prompt-sync') }, hostConfig, methodologyResourceFailures, contractCriticalAmbiguity: m.identity.intent.ambiguity === 'contract-critical', authorityRequired: false });
+        const resumeCapable = Boolean(existing?.session_id), preflight = evaluateTaskPreconditions({ role, implementation: role === 'coder', dependencies: { unknown: unknownDependencies, failed: unavailableDependencies, incomplete: incompleteDependencies }, modelAvailable: Boolean(selected.primary), native: { childSession: resumeCapable || this.childHost.capabilities.create, prompt: this.childHost.capabilities.prompt }, hostConfig, methodologyResourceFailures, contractCriticalAmbiguity: m.identity.intent.ambiguity === 'contract-critical', authorityRequired: false });
         appendLedger(m, 'task.preflight', { payload: { role, decision: preflight.decision, resume_capable: resumeCapable, items: preflight.items.slice(0, 12) } });
         void this.events?.(runtimeSignal('task.preflight', m.identity.mission_id, { payload: { role, decision: preflight.decision, resume_capable: resumeCapable, items: preflight.items.slice(0, 12) } }));
         if (preflight.decision === 'RESOLVE' || preflight.decision === 'USER_ACTION_REQUIRED')
@@ -270,10 +270,9 @@ export class TaskRuntime {
             appendLedger(m, 'context.project-intelligence-selected', { task_id: task.id, payload: { consumer: 'task-context', items: projectIntelligenceHits.map(x => ({ id: x.item.id, confidence: x.item.confidence, score: Number(x.score.toFixed(6)), signals: x.signals, source_refs: x.item.source_refs.map(s => s.ref) })) } });
         let nativeSummary, relevantForHandoff = [...explicitRelevant, ...boundedRuntimeRelevant];
         if (relevantForHandoff.join('\n').length > profile.max_context_chars) {
-            const native = new NativeOpenCodeAdapter(this.client);
-            if (native.has('summarize'))
+            if (this.childHost.capabilities.summarize)
                 try {
-                    const summary = await native.summarize(m.identity.session_id);
+                    const summary = await this.childHost.summarize(m.identity.session_id);
                     nativeSummary = clipText(typeof summary === 'string' ? summary : JSON.stringify(summary), Math.min(6000, Math.floor(profile.max_context_chars / 2)));
                     relevantForHandoff = [`native-session-summary:${nativeSummary}`, ...boundedRuntimeRelevant];
                     appendLedger(m, 'context.native-summary-used', { task_id: task.id, payload: { source_session: m.identity.session_id, replaced_explicit_context: true } });
