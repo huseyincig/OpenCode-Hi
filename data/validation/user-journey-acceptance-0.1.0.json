@@ -1,0 +1,32 @@
+{
+  "claim_boundary": "Controlled end-to-end user journeys over canonical runtime contracts; not external-provider/T3 evidence.",
+  "kind": "PROMPT_B_USER_JOURNEY_ACCEPTANCE",
+  "known_node_teardown_normalized": true,
+  "program": "PROMPT_B",
+  "proof": "plugin/test/q6-user-journey-acceptance.test.mjs",
+  "proof_sha256": "1efc55999653aab673d180271435a1fc8c4770fd12f45bf3d1b98fbe3f891c4f",
+  "scenarios": [
+    "small-task",
+    "medium-feature",
+    "complex-mission",
+    "failure",
+    "authority",
+    "unsupported",
+    "restart"
+  ],
+  "schema": 1,
+  "section": 36,
+  "source_binding": {
+    "tested_git_commit": "69fa226d9df0dc44010d7ba69d58b0f5ab477175",
+    "tested_git_tree": "36e99a925d25c19c65dff8cfba8ed17dc414a9df"
+  },
+  "status": "PASS",
+  "terminal": {
+    "cancelled": 0,
+    "fail": 0,
+    "pass": 7,
+    "skipped": 0,
+    "tests": 7,
+    "todo": 0
+  }
+}

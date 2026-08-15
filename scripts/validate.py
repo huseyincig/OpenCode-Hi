@@ -713,6 +713,19 @@ try:
     if case.get('kind')!='PROPERTY_FUZZ_HISTORICAL_REGRESSION_CASE' or case.get('observed_before_fix')!='accepted-malformed-persisted-mission':err('PROMPT B property/fuzz historical regression case drift')
 except Exception as e:err(f'bad PROMPT B property/fuzz testing receipt: {e}')
 
+# PROMPT B §36 user journey acceptance certification
+try:
+    u36=json.loads((ROOT/'data/validation/prompt-b-user-journey-acceptance.json').read_text(encoding='utf-8'))
+    if u36.get('schema')!=1 or u36.get('kind')!='PROMPT_B_USER_JOURNEY_ACCEPTANCE_AUDIT' or u36.get('program')!='PROMPT_B' or u36.get('section')!=36 or u36.get('status')!='PASS':err('bad PROMPT B user journey audit receipt identity/status')
+    if u36.get('summary')!={'required':7,'covered':7,'violations':0} or u36.get('violations')!=[]:err('PROMPT B user journey summary drift')
+    if u36.get('required_scenarios')!=['small-task','medium-feature','complex-mission','failure','authority','unsupported','restart']:err('PROMPT B user journey scenario inventory drift')
+    a=json.loads((ROOT/u36['acceptance_receipt']).read_text(encoding='utf-8'))
+    if a.get('status')!='PASS' or a.get('source_binding')!={'tested_git_commit':'69fa226d9df0dc44010d7ba69d58b0f5ab477175','tested_git_tree':'36e99a925d25c19c65dff8cfba8ed17dc414a9df'}:err('PROMPT B user journey source binding drift')
+    if a.get('terminal')!={'tests':7,'pass':7,'fail':0,'cancelled':0,'skipped':0,'todo':0}:err('PROMPT B user journey terminal drift')
+    rel=a.get('proof'); expected=a.get('proof_sha256')
+    if not isinstance(rel,str) or not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B user journey proof hash drift')
+except Exception as e:err(f'bad PROMPT B user journey acceptance receipt: {e}')
+
 # PROMPT B §33 replay testing certification
 try:
     r33=json.loads((ROOT/'data/validation/prompt-b-replay-testing.json').read_text(encoding='utf-8'))

@@ -1364,3 +1364,14 @@ def test_prompt_b_performance_resource_benchmarks_measure_all_required_paths_wit
     assert b['metrics']['token_usage']['provider_observed']['confidence']=='exact' and b['metrics']['token_usage']['provider_observed']['source']=='provider-usage'
     assert b['metrics']['token_usage']['estimated']['confidence']=='estimated' and b['metrics']['token_usage']['estimated']['source']=='estimated'
     assert b['optimization_decision']=='NO_NEW_SCHEDULER_OR_WORK_STEALING_COMPLEXITY_WITHOUT_MEASURED_BENEFIT'
+
+
+def test_prompt_b_user_journey_acceptance_covers_all_required_scenarios():
+    d=json.loads((ROOT/'data/validation/prompt-b-user-journey-acceptance.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_USER_JOURNEY_ACCEPTANCE_AUDIT' and d['program']=='PROMPT_B' and d['section']==36 and d['status']=='PASS'
+    assert d['summary']=={'required':7,'covered':7,'violations':0} and d['violations']==[]
+    assert d['required_scenarios']==['small-task','medium-feature','complex-mission','failure','authority','unsupported','restart']
+    a=json.loads((ROOT/d['acceptance_receipt']).read_text())
+    assert a['status']=='PASS' and a['source_binding']=={'tested_git_commit':'69fa226d9df0dc44010d7ba69d58b0f5ab477175','tested_git_tree':'36e99a925d25c19c65dff8cfba8ed17dc414a9df'}
+    assert a['terminal']=={'tests':7,'pass':7,'fail':0,'cancelled':0,'skipped':0,'todo':0}
+    assert hashlib.sha256((ROOT/a['proof']).read_bytes()).hexdigest()==a['proof_sha256']
