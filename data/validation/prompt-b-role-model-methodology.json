@@ -1,0 +1,140 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_ROLE_MODEL_METHODOLOGY_ADVERSARIAL_AUDIT",
+  "program": "PROMPT_B",
+  "section": 7,
+  "status": "PASS",
+  "invariants": [
+    {
+      "invariant": "role-agent-model-methodology-separation",
+      "owner": "plugin/src/runtime/task/task-runtime.ts",
+      "owner_sha256": "fbb0e0dad347abfd5026b547239b3f00e952ddd5d1ef09df01507206726bf9ed",
+      "owner_anchor": "worker.requested_model=input.model",
+      "proof": "plugin/test/model-contract.test.mjs",
+      "proof_sha256": "f5ed6486945f86df3f39e3e059968aa2969d473cfda735fc2cada28a010e9748",
+      "proof_anchor": "model execution identity keeps requested selected projected observed and effective phases distinct"
+    },
+    {
+      "invariant": "requested-selected-projected-observed-model",
+      "owner": "plugin/src/contracts/model.ts",
+      "owner_sha256": "03970253978e5d3d73b63aeee2db4652c1a7ac260676068a4f29612968868107",
+      "owner_anchor": "reconcileModelExecutionIdentity",
+      "proof": "plugin/test/main-prompt-model-evidence.test.mjs",
+      "proof_sha256": "61e546d739d945d17cf23067684a8663de4388135d0884cba576d95ebe14bb5a",
+      "proof_anchor": "projected model mismatch is a first-class blocker even when observed model matches selection"
+    },
+    {
+      "invariant": "host-contradiction-handling",
+      "owner": "plugin/src/runtime/task/child-execution-coordinator.ts",
+      "owner_sha256": "2bad87bef617049c6647da63e4031f5aac7b52fa9550bb44c9bbbf936a129f8c",
+      "owner_anchor": "identity.status==='model-mismatch'",
+      "proof": "plugin/test/main-prompt-model-evidence.test.mjs",
+      "proof_sha256": "61e546d739d945d17cf23067684a8663de4388135d0884cba576d95ebe14bb5a",
+      "proof_anchor": "effective model mismatch blocks DONE and preserves the obligation for reconciliation"
+    },
+    {
+      "invariant": "unknown-model-capability",
+      "owner": "plugin/src/runtime/readiness/preconditions.ts",
+      "owner_sha256": "0e846c0d3180a25c386cca8a6569d045bdfd7cb5bccb4bf0cf1b2882f8ef20be",
+      "owner_anchor": "No permitted/available runtime model satisfies this task",
+      "proof": "plugin/test/main-prompt-delegation-preconditions.test.mjs",
+      "proof_sha256": "857a6341105fc3e3b5b1ff6e858aff381e41135536dc2bacc10780a2347c2120",
+      "proof_anchor": "missing native worker capability is RESOLVE before creating task or trying model fallbacks"
+    },
+    {
+      "invariant": "model-fallback",
+      "owner": "plugin/src/runtime/task/task-recovery-coordinator.ts",
+      "owner_sha256": "330a83fd6dfc14e2a3fb0a145f176a1bd5fe5b84a3af6e30ee5ec75fbd82e4d3",
+      "owner_anchor": "recoverRuntimeFailure",
+      "proof": "plugin/test/provider-fallback-hardening.test.mjs",
+      "proof_sha256": "130f3b21cdc9a1d29eb977797d353ef578ace7a7d59948263f6651c7224ce7b7",
+      "proof_anchor": "second provider failure advances to next fallback rather than returning to prior model"
+    },
+    {
+      "invariant": "methodology-available-admitted-selected-loaded",
+      "owner": "plugin/src/runtime/skills/registry.ts",
+      "owner_sha256": "8ae42062c49709c4c74cc15d38e19abb935f1af88438a89739fc4bb53abc5296",
+      "owner_anchor": "resolveSkillPlan",
+      "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
+      "proof_sha256": "fe46cea4f3ead48d057e30d5d206cf5c6bf302e6399a6d30610305011d0495b1",
+      "proof_anchor": "admitted project methodology reaches native lazy selection as project provider"
+    },
+    {
+      "invariant": "methodology-lazy-load",
+      "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
+      "owner_sha256": "b20afb9c75b9145acff682afc6ebf8dcbb0616f73b88075ed91f3be8d616f230",
+      "owner_anchor": "methodology-not-loaded",
+      "proof": "plugin/test/methodology-signal-contract.test.mjs",
+      "proof_sha256": "cab5b1250cdb9ad8f66039bb7634fbaec97d318c388f04c5e3567cc02222b717",
+      "proof_anchor": "selected child methodology must be actually native-loaded before DONE can be accepted"
+    },
+    {
+      "invariant": "methodology-collision",
+      "owner": "plugin/src/runtime/skills/registry.ts",
+      "owner_sha256": "8ae42062c49709c4c74cc15d38e19abb935f1af88438a89739fc4bb53abc5296",
+      "owner_anchor": "foreign.length",
+      "proof": "plugin/test/native-skill-catalog.test.mjs",
+      "proof_sha256": "1a02729738eda2debd76e802889ea5b9b2e2fbd6ad2d2585e56b6abac78f12af",
+      "proof_anchor": "native configured Hi skill path does not duplicate the same physical root as a personal provider"
+    },
+    {
+      "invariant": "methodology-exit",
+      "owner": "plugin/src/runtime/methodology/exit.ts",
+      "owner_sha256": "e16430921a8e8e94654407294491df93af1f359a5e5b3d9568ee82a22cea78f3",
+      "owner_anchor": "methodologyExitCheck",
+      "proof": "plugin/test/b3-methodology-exit-evidence.test.mjs",
+      "proof_sha256": "92949a6c267de22bc5929897a6e61650f222bffad42dacf929e373c6cd6f680c",
+      "proof_anchor": "fresh explicit passed browser/visual evidence satisfies only the matching methodology exit"
+    },
+    {
+      "invariant": "methodology-cannot-grant-authority",
+      "owner": "plugin/src/runtime/skills/methodology.ts",
+      "owner_sha256": "a8c4f649030d93a1a8e92b7db76c23742a5e18d1a9d3dabfcb98111e0c027bf2",
+      "owner_anchor": "never own orchestration, worker spawning, model selection, authority",
+      "proof": "plugin/test/native-skill-catalog.test.mjs",
+      "proof_sha256": "1a02729738eda2debd76e802889ea5b9b2e2fbd6ad2d2585e56b6abac78f12af",
+      "proof_anchor": "Hi methodology documents do not claim control-plane tool ownership"
+    },
+    {
+      "invariant": "methodology-cannot-own-completion",
+      "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
+      "owner_sha256": "b20afb9c75b9145acff682afc6ebf8dcbb0616f73b88075ed91f3be8d616f230",
+      "owner_anchor": "reconcileMethodologyExits",
+      "proof": "plugin/test/forensic-hardening.test.mjs",
+      "proof_sha256": "496210535aeea920852c6654bbafca8a50cbcf723a770b78d65cff275999792f",
+      "proof_anchor": "parent direct methodology remains active until mission-scope fresh verification satisfies its exit contract"
+    },
+    {
+      "invariant": "role-permissions-mechanically-projected",
+      "owner": "plugin/src/generated/permission-policy.ts",
+      "owner_sha256": "ceb7f062d58fdcacafceef5bf479b17d3efdacf473423b8d2cbca8c694c3a2b9",
+      "owner_anchor": "HI_PERMISSION_PROFILES",
+      "proof": "plugin/test/permission-profile-contract.test.mjs",
+      "proof_sha256": "d6f249eb3a76ee09a46a5cd8f4ed9e217e59a63e064f84f52e03ceec1e427421",
+      "proof_anchor": "canonical PermissionProfile catalog validates and exactly drives non-methodology native permissions"
+    },
+    {
+      "invariant": "prompt-persona-cannot-override-policy",
+      "owner": "plugin/src/runtime/routing/execution-profile.ts",
+      "owner_sha256": "3d3f09f8d72578a28f303f28525279b562dd1575d91aaf51581c5ebb114b7451",
+      "owner_anchor": "promptToolOverrides",
+      "proof": "plugin/test/main-prompt-execution-profile-tools.test.mjs",
+      "proof_sha256": "c6ea028972bc0a14fc17004c6954d3bc7144f8312302584b797eb7743c45db9c",
+      "proof_anchor": "prompt tool overrides only disable tools; they never turn a denied native permission into allow"
+    }
+  ],
+  "static_guards": {
+    "methodology_forbidden_owner_imports": [],
+    "skill_boundary_missing": [],
+    "skill_control_plane_claims": [],
+    "role_markdown_mechanical_owners": [],
+    "skill_count": 27
+  },
+  "violations": [],
+  "summary": {
+    "required": 13,
+    "covered": 13,
+    "violations": 0
+  },
+  "claim_boundary": "Deterministic current-source audit of PROMPT B section 7 role/model/methodology separation. It does not elevate prompt prose above executable policy."
+}

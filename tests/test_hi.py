@@ -913,3 +913,17 @@ def test_prompt_b_mission_task_worker_adversarial_audit_covers_all_section_6_inv
         assert row['owner_anchor'] in owner.read_text(errors='ignore') and row['proof_anchor'] in proof.read_text(errors='ignore')
     assert any(x['id']=='ambiguous-native-session-callback-ownership' for x in d['closed_defects'])
     assert (ROOT/'scripts/audit-mission-task-worker.py').is_file()
+
+def test_prompt_b_role_model_methodology_audit_keeps_semantic_planes_separate():
+    d=json.loads((ROOT/'data/validation/prompt-b-role-model-methodology.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_ROLE_MODEL_METHODOLOGY_ADVERSARIAL_AUDIT' and d['section']==7 and d['status']=='PASS'
+    assert d['violations']==[] and d['summary']=={'required':13,'covered':13,'violations':0}
+    expected={'role-agent-model-methodology-separation','requested-selected-projected-observed-model','host-contradiction-handling','unknown-model-capability','model-fallback','methodology-available-admitted-selected-loaded','methodology-lazy-load','methodology-collision','methodology-exit','methodology-cannot-grant-authority','methodology-cannot-own-completion','role-permissions-mechanically-projected','prompt-persona-cannot-override-policy'}
+    assert {x['invariant'] for x in d['invariants']}==expected
+    assert d['static_guards']=={'methodology_forbidden_owner_imports':[],'skill_boundary_missing':[],'skill_control_plane_claims':[],'role_markdown_mechanical_owners':[],'skill_count':27}
+    for row in d['invariants']:
+        owner=ROOT/row['owner'];proof=ROOT/row['proof']
+        assert hashlib.sha256(owner.read_bytes()).hexdigest()==row['owner_sha256']
+        assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
+        assert row['owner_anchor'] in owner.read_text(errors='ignore') and row['proof_anchor'] in proof.read_text(errors='ignore')
+    assert (ROOT/'scripts/audit-role-model-methodology.py').is_file()

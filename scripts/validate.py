@@ -282,6 +282,26 @@ try:
 except Exception as e:err(f'bad Hi methodology policy: {e}')
 # PROMPT A immutable reconstruction certification receipt. Historical evidence must not pin future current docs.
 try:
+    rmm=json.loads((ROOT/'data/validation/prompt-b-role-model-methodology.json').read_text(encoding='utf-8'))
+    if rmm.get('schema')!=1 or rmm.get('kind')!='PROMPT_B_ROLE_MODEL_METHODOLOGY_ADVERSARIAL_AUDIT' or rmm.get('program')!='PROMPT_B' or rmm.get('section')!=7 or rmm.get('status')!='PASS':err('bad PROMPT B Role/Model/Methodology audit receipt')
+    if rmm.get('violations')!=[] or rmm.get('summary')!={'required':13,'covered':13,'violations':0}:err('PROMPT B Role/Model/Methodology coverage drift')
+    expected={'role-agent-model-methodology-separation','requested-selected-projected-observed-model','host-contradiction-handling','unknown-model-capability','model-fallback','methodology-available-admitted-selected-loaded','methodology-lazy-load','methodology-collision','methodology-exit','methodology-cannot-grant-authority','methodology-cannot-own-completion','role-permissions-mechanically-projected','prompt-persona-cannot-override-policy'}
+    rows=rmm.get('invariants',[])
+    if {x.get('invariant') for x in rows if isinstance(x,dict)}!=expected or len(rows)!=13:err('PROMPT B Role/Model/Methodology invariant inventory drift')
+    for row in rows:
+        for key in ['owner','proof']:
+            rel=row.get(key); expected_hash=row.get(f'{key}_sha256')
+            if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B Role/Model/Methodology missing {key}: {rel}')
+            elif hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected_hash:err(f'PROMPT B Role/Model/Methodology {key} hash drift: {rel}')
+        owner=(ROOT/row['owner']).read_text(encoding='utf-8',errors='ignore') if isinstance(row.get('owner'),str) and (ROOT/row['owner']).is_file() else ''
+        proof=(ROOT/row['proof']).read_text(encoding='utf-8',errors='ignore') if isinstance(row.get('proof'),str) and (ROOT/row['proof']).is_file() else ''
+        if row.get('owner_anchor') not in owner:err(f"PROMPT B Role/Model/Methodology owner anchor drift: {row.get('invariant')}")
+        if row.get('proof_anchor') not in proof:err(f"PROMPT B Role/Model/Methodology proof anchor drift: {row.get('invariant')}")
+    guards=rmm.get('static_guards',{})
+    if guards.get('skill_count')!=27 or any(guards.get(k)!=[] for k in ['methodology_forbidden_owner_imports','skill_boundary_missing','skill_control_plane_claims','role_markdown_mechanical_owners']):err('PROMPT B Role/Model/Methodology static ownership guard drift')
+except Exception as e:err(f'bad PROMPT B Role/Model/Methodology receipt: {e}')
+
+try:
     mtw=json.loads((ROOT/'data/validation/prompt-b-mission-task-worker.json').read_text(encoding='utf-8'))
     if mtw.get('schema')!=1 or mtw.get('kind')!='PROMPT_B_MISSION_TASK_WORKER_ADVERSARIAL_AUDIT' or mtw.get('program')!='PROMPT_B' or mtw.get('section')!=6 or mtw.get('status')!='PASS':err('bad PROMPT B Mission/Task/Worker audit receipt')
     if mtw.get('violations')!=[] or mtw.get('summary')!={'required':15,'covered':15,'violations':0}:err('PROMPT B Mission/Task/Worker coverage drift')
