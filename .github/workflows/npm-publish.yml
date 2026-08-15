@@ -1,0 +1,73 @@
+name: Publish npm
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-publish-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'huseyincig/OpenCode-Hi' && github.event.release.prerelease == false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout exact release tag
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Setup supported Node and npm OIDC client
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Verify exact release identity
+        run: node scripts/verify-npm-oidc-release.mjs preflight "${{ github.event.release.tag_name }}"
+
+      - name: Verify npm Trusted Publishing client floor
+        shell: bash
+        run: |
+          node -e "const [M,m]=process.versions.node.split('.').map(Number); if (M < 22 || (M === 22 && m < 14)) process.exit(1)"
+          npm --version
+          node -e "const v=require('child_process').execFileSync('npm',['--version'],{encoding:'utf8'}).trim().split('.').map(Number); if (v[0] < 11 || (v[0] === 11 && v[1] < 5) || (v[0] === 11 && v[1] === 5 && v[2] < 1)) process.exit(1)"
+
+      - name: Install runtime dependencies
+        run: npm ci --prefix plugin
+
+      - name: Canonical source verification
+        run: npm run check
+
+      - name: Capture fresh package proof
+        run: npm pack --dry-run --json > npm-pack-proof.json
+
+      - name: Publish public package with npm Trusted Publishing OIDC
+        run: npm publish --access public
+
+      - name: Verify registry identity and integrity
+        shell: bash
+        run: |
+          VERSION="$(cat VERSION)"
+          npm view "opencode-hi@${VERSION}" version dist.integrity dist.shasum --json > npm-registry-proof.json
+          node scripts/verify-npm-oidc-release.mjs registry npm-pack-proof.json npm-registry-proof.json
+
+      - name: Verify fresh consumer install and ESM import
+        shell: bash
+        run: |
+          VERSION="$(cat VERSION)"
+          CONSUMER="$(mktemp -d)"
+          cd "$CONSUMER"
+          npm init -y >/dev/null
+          npm install --ignore-scripts "opencode-hi@${VERSION}"
+          node --input-type=module -e "await import('opencode-hi'); console.log('npm fresh consumer import PASS')"

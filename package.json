@@ -44,5 +44,8 @@
     "architecture:lint": "npm --prefix plugin run architecture:lint",
     "projections:check": "npm --prefix plugin run projections:check",
     "behavior:accept": "npm --prefix plugin test"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

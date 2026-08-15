@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "release_line": "0.1.x",
+  "generated_at": "2026-08-15",
+  "kind": "LOCAL_NPM_TRUSTED_PUBLISHING_READINESS",
+  "status": "LOCAL_IMPLEMENTED_EXTERNAL_BOOTSTRAP_REQUIRED",
+  "canonical_release_owner": "plugin/src/runtime/safety/release-chain.ts",
+  "workflow": {
+    "file": ".github/workflows/npm-publish.yml",
+    "trigger": "release.published",
+    "repository": "huseyincig/OpenCode-Hi",
+    "runner": "ubuntu-latest",
+    "permissions": {
+      "contents": "read",
+      "id-token": "write"
+    },
+    "node": "24",
+    "npm_min": "11.5.1",
+    "long_lived_npm_write_token": false,
+    "prerelease_allowed": false
+  },
+  "preflight": [
+    "exact annotated vVERSION tag resolves to checked-out HEAD",
+    "VERSION equals root package, runtime package and runtime lock versions",
+    "package repository URL exactly matches huseyincig/OpenCode-Hi",
+    "fresh npm pack dry-run proof exists before publish"
+  ],
+  "post_publish": [
+    "registry version equals pack version",
+    "registry integrity equals fresh pack integrity",
+    "registry shasum equals fresh pack shasum",
+    "fresh consumer install/import succeeds"
+  ],
+  "current_external_state": {
+    "npm_whoami": "ENEEDAUTH",
+    "opencode_hi_0_1_0_registry": "E404_NOT_PRESENT",
+    "trusted_publisher_configurable_now": false,
+    "reason": "npm trusted publisher configuration requires an existing registry package"
+  },
+  "immutable_release_constraint": {
+    "github_tag": "v0.1.0",
+    "released_source": "f1a2c1c4358e5a63656da7a585b6b5793d1ed3be",
+    "oidc_workflow_present_in_released_source": false,
+    "retag_or_source_substitution_allowed": false
+  },
+  "external_completion_sequence": [
+    "authenticate to npm under explicit registry authority",
+    "bootstrap-publish the exact already-released 0.1.0 package artifact without retagging/source substitution",
+    "verify registry version/integrity/shasum and fresh install",
+    "configure trusted publisher: GitHub huseyincig/OpenCode-Hi, workflow npm-publish.yml, allow npm publish",
+    "use OIDC workflow for subsequent releases and verify registry T4 receipt"
+  ],
+  "claim_boundary": "This file proves local R1 workflow/contracts only. It is not npm authentication, trusted-publisher configuration, publication, provenance, or T4 registry evidence."
+}
