@@ -37,6 +37,13 @@ export function effectiveExecutionSurface(hostConfig:Record<string,unknown>,role
   const roleTools=def&&isRecord(def.tools)?def.tools:{}
   const decisions:Record<string,NativePermissionDecision>={}
   for(const key of TOOL_KEYS)decisions[key]=decision(permission[key])
+  // Skill permissions are deny-by-default pattern maps. A wildcard deny plus one or
+  // more explicit allowed methodologies means the native skill tool itself must stay
+  // available so OpenCode can enforce the exact selected skill name at invocation.
+  // Do not apply this to bash/read maps: their generic execution decision must remain
+  // conservative because arbitrary commands/paths are not preselected by Hi.
+  const skillPermission=permission['skill']
+  if(skillToolEnabled&&isRecord(skillPermission)&&Object.entries(skillPermission).some(([name,value])=>name!=='*'&&value==='allow'))decisions.skill='allow'
   // Hi owns orchestration policy, while OpenCode owns enforcement. Persist both the
   // observed effective decisions and the invariants Hi depends on.
   decisions.task='deny'

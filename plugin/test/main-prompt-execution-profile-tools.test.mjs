@@ -30,6 +30,14 @@ test('execution surface mirrors native agent permissions and maps edit permissio
   assert.ok(qa.tools.includes('read'))
 })
 
+test('deny-by-default skill map keeps native skill tool available when exact Hi methodologies are explicitly allowed',()=>{
+  const visual=effectiveExecutionSurface(host,'visual-qa',true)
+  assert.equal(visual.permissions.decisions.skill,'allow')
+  assert.ok(visual.tools.includes('skill'))
+  assert.equal(visual.permissions.decisions.bash,'ask')
+  assert.equal(visual.permissions.decisions.edit,'deny')
+})
+
 test('zero-skill task gets a complete bounded execution profile and per-message tool minimization',async()=>{
   const created=[],prompts=[],c=client(created,prompts)
   const runtime=new TaskRuntime(c,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>host)
