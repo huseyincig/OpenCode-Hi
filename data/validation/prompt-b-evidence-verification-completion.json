@@ -35,7 +35,7 @@
     {
       "invariant": "changed-file-ownership",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "3588be6a97474be0606d26b0926d2cca413eaf947ebe9661fd7d535a0838bdcd",
+      "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
       "owner_anchor": "native.diff.mismatch",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
       "proof_sha256": "80715d317bd431ce5c3ed8c3b6dbe4caf3baeac487c50d1ce7615ecb309ee3e4",
@@ -62,7 +62,7 @@
     {
       "invariant": "worker-result-not-evidence",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "3588be6a97474be0606d26b0926d2cca413eaf947ebe9661fd7d535a0838bdcd",
+      "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
       "owner_anchor": "A WorkerResult is not itself proof",
       "proof": "plugin/test/prompt-b-evidence-verification-completion-hostile.test.mjs",
       "proof_sha256": "62b46683653f6efe5a8abcb55820bae4011d05fcada874a6cc8c14d1fb903ed7",
@@ -89,7 +89,7 @@
     {
       "invariant": "review-disposition",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "3588be6a97474be0606d26b0926d2cca413eaf947ebe9661fd7d535a0838bdcd",
+      "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
       "owner_anchor": "review.claim-unproven",
       "proof": "plugin/test/obligation-ownership.test.mjs",
       "proof_sha256": "f099d90a8769508cb1c3d5358d838b06899681083719c163732c881d30f9a082",

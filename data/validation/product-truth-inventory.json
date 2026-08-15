@@ -9,7 +9,7 @@
       "area": "mission",
       "canonical_owner": "MissionStore",
       "owner_path": "plugin/src/runtime/mission/mission-store.ts",
-      "owner_sha256": "e201a06c9577c88ee55b7ed40a8a025d15b5f46cf8b92f1ca06a690ecc351dc1",
+      "owner_sha256": "57d0bcb0ffbcf123f05ef1b5a7b0c0e44572f8b3566ad4d747ffffc088225a66",
       "producer_or_contract_paths": [
         "plugin/src/runtime/mission/types.ts",
         "plugin/src/runtime/mission/validators.ts"
@@ -361,7 +361,7 @@
       "area": "persistence-storage",
       "canonical_owner": "Mission persistence + storage ownership",
       "owner_path": "plugin/src/runtime/state/persistence.ts",
-      "owner_sha256": "12c19db1d85751878e0122b4cd7769dad215c24fa0e2e0a79d1391bda66a7e8e",
+      "owner_sha256": "df655ecc93d395864046621ef31ae66882817fad34e7478e0be8b65b7376491d",
       "producer_or_contract_paths": [
         "plugin/src/runtime/state/snapshot.ts",
         "plugin/src/runtime/storage/ownership.ts",

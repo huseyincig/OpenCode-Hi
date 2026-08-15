@@ -75,7 +75,13 @@ export class RuntimeEventController {
         if (ev.kind === 'permission-asked' && mission) {
             const pid = permissionEventID(ev);
             mission.authority.pending_permission_ids ??= [];
-            if (!pid || !mission.authority.pending_permission_ids.includes(pid)) {
+            const alreadyReplied = Boolean(pid && mission.execution.ledger.some(e => e.type === 'permission.replied' && e.payload?.permission_id === pid || e.type === 'permission.duplicate-ignored' && e.payload?.permission_id === pid && e.payload?.event === 'replied'));
+            if (alreadyReplied) {
+                if (pid)
+                    pendingNativePermissions.delete(pid);
+                appendLedger(mission, 'permission.stale-ask-ignored', { worker_id: child?.id, payload: { session_id: sid, permission_id: pid, reason: 'reply-observed-first' } });
+            }
+            else if (!pid || !mission.authority.pending_permission_ids.includes(pid)) {
                 if (pid)
                     mission.authority.pending_permission_ids.push(pid);
                 mission.authority.pending_permissions = (mission.authority.pending_permissions ?? 0) + 1;

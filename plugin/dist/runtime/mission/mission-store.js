@@ -228,7 +228,14 @@ export class MissionStore {
         m.continuation.last_progress_signature = this.signature(m);
         return m;
     }
-    restore(missions, uncleanShutdown = false) { for (const m of missions) {
+    restore(missions, uncleanShutdown = false) { const sessionIDs = new Set(), missionIDs = new Set(); for (const candidate of missions) {
+        if (sessionIDs.has(candidate.identity.session_id))
+            throw new Error(`Duplicate restored session identity ${candidate.identity.session_id}`);
+        if (missionIDs.has(candidate.identity.mission_id))
+            throw new Error(`Duplicate restored mission identity ${candidate.identity.mission_id}`);
+        sessionIDs.add(candidate.identity.session_id);
+        missionIDs.add(candidate.identity.mission_id);
+    } for (const m of missions) {
         if (m.authority.authority?.approved) {
             m.authority.authority = { ...m.authority.authority, approved: undefined };
             appendLedger(m, 'authority.approval.invalidated', { payload: { reason: 'runtime-restart' } });
@@ -238,7 +245,7 @@ export class MissionStore {
         m.continuation.continuation_failure_count = 0;
         m.continuation.last_continuation_failure_at = undefined;
         m.continuation.suppress_until = undefined;
-        if (m.identity.status === 'active') {
+        if (['active', 'waiting-user'].includes(m.identity.status)) {
             const restoredTeam = m.execution.execution_mode === 'team';
             if (restoredTeam) {
                 m.execution.execution_mode = 'single';

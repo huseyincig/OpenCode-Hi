@@ -1011,3 +1011,18 @@ def test_prompt_b_human_decision_adversarial_audit_is_complete_and_hash_bound():
         assert row['owner_anchor'] in owner.read_text(errors='replace') and row['proof_anchor'] in proof.read_text(errors='replace')
     closed={x['id'] for x in d['closed_defects']}
     assert {'idle-human-decision-authority-reclassification','authority-request-semantic-coherence','reason-label-authority-inference'}<=closed
+
+def test_prompt_b_persistence_concurrency_audit_is_strict_fail_closed_and_complete():
+    d=json.loads((ROOT/'data/validation/prompt-b-persistence-concurrency.json').read_text())
+    assert d['schema']==1 and d['kind']=='PROMPT_B_PERSISTENCE_CONCURRENCY_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['sections']==[16,17] and d['status']=='PASS'
+    assert d['violations']==[] and d['summary']=={'required':31,'covered':31,'violations':0,'by_section':{'16':{'required':19,'covered':19},'17':{'required':12,'covered':12}}}
+    assert len(d['invariants'])==31 and {x['section'] for x in d['invariants']}=={16,17}
+    for row in d['invariants']:
+        for key in ('owner','proof'):
+            rel=row[key];assert (ROOT/rel).is_file();assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==row[f'{key}_sha256']
+        assert row['owner_anchor'] in (ROOT/row['owner']).read_text(errors='replace')
+        assert row['proof_anchor'] in (ROOT/row['proof']).read_text(errors='replace')
+    assert all(d['static_guards'].values())
+    closed={x['id'] for x in d['closed_defects']}
+    assert {'duplicate-persisted-mission-replay','waiting-user-unclean-restart-gap','malformed-current-runtime-envelope','cancelled-worker-late-result-resurrection','permission-reply-before-ask-phantom-wait'}<=closed
+    assert (ROOT/'scripts/audit-persistence-concurrency.py').is_file()

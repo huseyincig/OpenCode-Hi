@@ -94,6 +94,7 @@ export class TaskResultReconciler{
     if(worker.generation_at_spawn!==undefined&&worker.generation_at_spawn!==m.continuation.generation){appendLedger(m,'worker.result.stale-generation-ignored',{worker_id:worker.id,payload:{worker_generation:worker.generation_at_spawn,mission_generation:m.continuation.generation}});return}
     const task=m.execution.tasks.find(t=>t.id===worker.task_id);if(!task)return
     const digest=resultDigest(result);if(worker.last_result_digest===digest){appendLedger(m,'worker.result.duplicate-ignored',{task_id:task.id,worker_id:worker.id,payload:{digest}});return}
+    if(['completed','failed','cancelled'].includes(worker.status)){appendLedger(m,'worker.result.terminal-ignored',{task_id:task.id,worker_id:worker.id,payload:{status:worker.status,digest}});return}
     worker.last_result_digest=digest;worker.last_result_at=Date.now()
     const observedMutationDuringWorker=Boolean(worker.started_at&&m.execution.evidence.last_mutation_at&&m.execution.evidence.last_mutation_at>=worker.started_at)
     const previousIssues=task.result?.open_issues??[];if(previousIssues.length)m.execution.blockers=m.execution.blockers.filter(b=>!previousIssues.includes(b)||m.execution.tasks.some(other=>other.id!==task.id&&(other.result?.open_issues??[]).includes(b)))

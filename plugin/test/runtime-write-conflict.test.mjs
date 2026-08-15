@@ -28,6 +28,8 @@ test('runtime-discovered overlapping writes quarantine the later writer and seri
   const a=await runtime.start(m,{objective:'edit A',role:'coder',category:'standard',scope:['src/a.ts']})
   const b=await runtime.start(m,{objective:'edit B',role:'coder',category:'standard',scope:['src/b.ts']})
   const wa=m.execution.workers.find(w=>w.id===a.worker_id),wb=m.execution.workers.find(w=>w.id===b.worker_id)
+  // This test isolates write-conflict serialization rather than methodology admission/load/exit.
+  for(const w of [wa,wb]){w.selected_methodologies=[];w.loaded_methodologies=[];w.methodologies=[]}
   assert.equal(wa.status,'busy');assert.equal(wb.status,'busy')
   await runtime.noteNativeWriteSet(m,wa.id,['src/shared.ts'],'session-diff','h1')
   await runtime.noteNativeWriteSet(m,wb.id,['src/shared.ts'],'session-diff','h2')

@@ -10,7 +10,7 @@
       "owner": "plugin/src/runtime/mission/validators.ts",
       "owner_sha256": "0a534c906ebd71f44b3f91cfb2f346cdbfee1ecf4ffd917b04f4b848784ed49b",
       "proof": "plugin/test/task-worker-contract.test.mjs",
-      "proof_sha256": "36e44e7c32c05bf7ddb11a537c7f85b25a97905033d6f15e2b81fbcfb0c2c359",
+      "proof_sha256": "879a15f054b4e7b78bd9e80c22239c71c07b9a635a7f09731fd19e66350288c0",
       "owner_anchor": "new Set(taskIDs).size",
       "proof_anchor": "RuntimePersistence rejects persisted mission graphs with unknown duplicate or cyclic Task dependencies"
     },
@@ -19,7 +19,7 @@
       "owner": "plugin/src/runtime/mission/validators.ts",
       "owner_sha256": "0a534c906ebd71f44b3f91cfb2f346cdbfee1ecf4ffd917b04f4b848784ed49b",
       "proof": "plugin/test/task-worker-contract.test.mjs",
-      "proof_sha256": "36e44e7c32c05bf7ddb11a537c7f85b25a97905033d6f15e2b81fbcfb0c2c359",
+      "proof_sha256": "879a15f054b4e7b78bd9e80c22239c71c07b9a635a7f09731fd19e66350288c0",
       "owner_anchor": "worker.parent_mission_id!==missionID",
       "proof_anchor": "PROMPT B Mission validator rejects ghost workers, cross-session worker binding and duplicate native session ownership"
     },
@@ -28,7 +28,7 @@
       "owner": "plugin/src/runtime/mission/validators.ts",
       "owner_sha256": "0a534c906ebd71f44b3f91cfb2f346cdbfee1ecf4ffd917b04f4b848784ed49b",
       "proof": "plugin/test/task-worker-contract.test.mjs",
-      "proof_sha256": "36e44e7c32c05bf7ddb11a537c7f85b25a97905033d6f15e2b81fbcfb0c2c359",
+      "proof_sha256": "879a15f054b4e7b78bd9e80c22239c71c07b9a635a7f09731fd19e66350288c0",
       "owner_anchor": "const cyclic=",
       "proof_anchor": "RuntimePersistence rejects persisted mission graphs with unknown duplicate or cyclic Task dependencies"
     },
@@ -37,7 +37,7 @@
       "owner": "plugin/src/runtime/mission/validators.ts",
       "owner_sha256": "0a534c906ebd71f44b3f91cfb2f346cdbfee1ecf4ffd917b04f4b848784ed49b",
       "proof": "plugin/test/task-worker-contract.test.mjs",
-      "proof_sha256": "36e44e7c32c05bf7ddb11a537c7f85b25a97905033d6f15e2b81fbcfb0c2c359",
+      "proof_sha256": "879a15f054b4e7b78bd9e80c22239c71c07b9a635a7f09731fd19e66350288c0",
       "owner_anchor": "ownerTask.worker_id!==worker.id",
       "proof_anchor": "PROMPT B Mission validator rejects ghost workers, cross-session worker binding and duplicate native session ownership"
     },
@@ -46,7 +46,7 @@
       "owner": "plugin/src/runtime/mission/validators.ts",
       "owner_sha256": "0a534c906ebd71f44b3f91cfb2f346cdbfee1ecf4ffd917b04f4b848784ed49b",
       "proof": "plugin/test/task-worker-contract.test.mjs",
-      "proof_sha256": "36e44e7c32c05bf7ddb11a537c7f85b25a97905033d6f15e2b81fbcfb0c2c359",
+      "proof_sha256": "879a15f054b4e7b78bd9e80c22239c71c07b9a635a7f09731fd19e66350288c0",
       "owner_anchor": "ownerTask.worker_id!==worker.id",
       "proof_anchor": "extra worker not owned by task.worker_id must fail closed"
     },
@@ -55,14 +55,14 @@
       "owner": "plugin/src/runtime/mission/validators.ts",
       "owner_sha256": "0a534c906ebd71f44b3f91cfb2f346cdbfee1ecf4ffd917b04f4b848784ed49b",
       "proof": "plugin/test/task-worker-contract.test.mjs",
-      "proof_sha256": "36e44e7c32c05bf7ddb11a537c7f85b25a97905033d6f15e2b81fbcfb0c2c359",
+      "proof_sha256": "879a15f054b4e7b78bd9e80c22239c71c07b9a635a7f09731fd19e66350288c0",
       "owner_anchor": "task.worker_id!==undefined",
       "proof_anchor": "PROMPT B Mission validator rejects ghost workers, cross-session worker binding and duplicate native session ownership"
     },
     {
       "invariant": "no-duplicate-completion",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "3588be6a97474be0606d26b0926d2cca413eaf947ebe9661fd7d535a0838bdcd",
+      "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
       "proof": "plugin/test/q3-adversarial-threat-matrix.test.mjs",
       "proof_sha256": "94257eb5e5ed94473f6f6676370304a0d504abc1facc274d4eb4106354a96a5d",
       "owner_anchor": "worker.result.duplicate-ignored",
@@ -80,7 +80,7 @@
     {
       "invariant": "stale-worker-result",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "3588be6a97474be0606d26b0926d2cca413eaf947ebe9661fd7d535a0838bdcd",
+      "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
       "proof": "plugin/test/prompt-b-mission-task-worker-adversarial.test.mjs",
       "proof_sha256": "58147e750b024a3d482f0bee20ce4c5b1e3f13bf6d26add8c30741265107aeff",
       "owner_anchor": "worker.result.stale-generation-ignored",
@@ -116,16 +116,16 @@
     {
       "invariant": "concurrent-write-safety",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "3588be6a97474be0606d26b0926d2cca413eaf947ebe9661fd7d535a0838bdcd",
+      "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
       "proof": "plugin/test/runtime-write-conflict.test.mjs",
-      "proof_sha256": "b80ead52c269fafa13bc01415a9f981997458ea4e79ed1a75eb602b3cda96fee",
+      "proof_sha256": "1ceae748c74bda866791482d0bb32ba46d1d056e5881d92ba6dd365135728f50",
       "owner_anchor": "parallel.write-conflict.quarantined",
       "proof_anchor": "runtime-discovered overlapping writes quarantine the later writer and serialize its resume"
     },
     {
       "invariant": "restart-reconstruction",
       "owner": "plugin/src/runtime/state/persistence.ts",
-      "owner_sha256": "12c19db1d85751878e0122b4cd7769dad215c24fa0e2e0a79d1391bda66a7e8e",
+      "owner_sha256": "df655ecc93d395864046621ef31ae66882817fad34e7478e0be8b65b7376491d",
       "proof": "plugin/test/crash-restart-survival.test.mjs",
       "proof_sha256": "159cd2863a6b39d464f7abcfd2e35876d03d0fad6351db2e425e7c8ac56a2c3b",
       "owner_anchor": "RUNTIME_STATE_SCHEMA = 10",
@@ -136,7 +136,7 @@
       "owner": "plugin/src/runtime/worker/worker-runtime.ts",
       "owner_sha256": "c59e00d0f1d39831e07f3112350a5186b007bf8c67285d8f4708887b23fe7cd4",
       "proof": "plugin/test/task-worker-contract.test.mjs",
-      "proof_sha256": "36e44e7c32c05bf7ddb11a537c7f85b25a97905033d6f15e2b81fbcfb0c2c359",
+      "proof_sha256": "879a15f054b4e7b78bd9e80c22239c71c07b9a635a7f09731fd19e66350288c0",
       "owner_anchor": "task.status='completed'",
       "proof_anchor": "WorkerContract starts at attempt zero and beginWorkerAttempt preserves identity while advancing lifecycle"
     }

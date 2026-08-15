@@ -429,6 +429,28 @@ try:
     if not {'idle-human-decision-authority-reclassification','authority-request-semantic-coherence','reason-label-authority-inference'}<=closed:err('PROMPT B HumanDecision closed defect drift')
 except Exception as e:err(f'bad PROMPT B HumanDecision audit receipt: {e}')
 
+
+try:
+    pc=json.loads((ROOT/'data/validation/prompt-b-persistence-concurrency.json').read_text(encoding='utf-8'))
+    if pc.get('schema')!=1 or pc.get('kind')!='PROMPT_B_PERSISTENCE_CONCURRENCY_ADVERSARIAL_AUDIT' or pc.get('program')!='PROMPT_B' or pc.get('sections')!=[16,17] or pc.get('status')!='PASS':err('bad PROMPT B Persistence/Concurrency audit receipt')
+    if pc.get('violations')!=[] or pc.get('summary')!={'required':31,'covered':31,'violations':0,'by_section':{'16':{'required':19,'covered':19},'17':{'required':12,'covered':12}}}:err('PROMPT B Persistence/Concurrency coverage drift')
+    rows=pc.get('invariants') or []
+    if len(rows)!=31 or {x.get('section') for x in rows if isinstance(x,dict)}!={16,17}:err('PROMPT B Persistence/Concurrency invariant inventory drift')
+    import hashlib
+    for row in rows:
+        for key in ('owner','proof'):
+            rel=row.get(key);expected=row.get(f'{key}_sha256')
+            if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B Persistence/Concurrency missing {key}: {rel}');continue
+            if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B Persistence/Concurrency {key} hash drift: {rel}')
+        try:
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B Persistence/Concurrency owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B Persistence/Concurrency proof anchor drift: {row.get('invariant')}")
+        except Exception as e:err(f'PROMPT B Persistence/Concurrency row invalid: {e}')
+    if not all((pc.get('static_guards') or {}).values()):err('PROMPT B Persistence/Concurrency static guard drift')
+    closed={x.get('id') for x in pc.get('closed_defects',[]) if isinstance(x,dict)}
+    if not {'duplicate-persisted-mission-replay','waiting-user-unclean-restart-gap','malformed-current-runtime-envelope','cancelled-worker-late-result-resurrection','permission-reply-before-ask-phantom-wait'}<=closed:err('PROMPT B Persistence/Concurrency closed defect receipt drift')
+except Exception as e:err(f'bad PROMPT B Persistence/Concurrency receipt: {e}')
+
 try:
     nr=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text(encoding='utf-8'))
     if nr.get('schema')!=1 or nr.get('kind')!='EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION' or nr.get('program')!='PROMPT_B' or nr.get('status')!='PASS':err('bad PROMPT B native reevaluation receipt identity/status')

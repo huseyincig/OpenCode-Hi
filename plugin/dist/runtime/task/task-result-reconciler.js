@@ -169,6 +169,10 @@ export class TaskResultReconciler {
             appendLedger(m, 'worker.result.duplicate-ignored', { task_id: task.id, worker_id: worker.id, payload: { digest } });
             return;
         }
+        if (['completed', 'failed', 'cancelled'].includes(worker.status)) {
+            appendLedger(m, 'worker.result.terminal-ignored', { task_id: task.id, worker_id: worker.id, payload: { status: worker.status, digest } });
+            return;
+        }
         worker.last_result_digest = digest;
         worker.last_result_at = Date.now();
         const observedMutationDuringWorker = Boolean(worker.started_at && m.execution.evidence.last_mutation_at && m.execution.evidence.last_mutation_at >= worker.started_at);

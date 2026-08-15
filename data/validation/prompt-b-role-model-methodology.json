@@ -62,7 +62,7 @@
     {
       "invariant": "methodology-lazy-load",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "3588be6a97474be0606d26b0926d2cca413eaf947ebe9661fd7d535a0838bdcd",
+      "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
       "owner_anchor": "methodology-not-loaded",
       "proof": "plugin/test/methodology-signal-contract.test.mjs",
       "proof_sha256": "cab5b1250cdb9ad8f66039bb7634fbaec97d318c388f04c5e3567cc02222b717",
@@ -98,7 +98,7 @@
     {
       "invariant": "methodology-cannot-own-completion",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "3588be6a97474be0606d26b0926d2cca413eaf947ebe9661fd7d535a0838bdcd",
+      "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
       "owner_anchor": "reconcileMethodologyExits",
       "proof": "plugin/test/forensic-hardening.test.mjs",
       "proof_sha256": "496210535aeea920852c6654bbafca8a50cbcf723a770b78d65cff275999792f",

@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtempSync,rmSync } from 'node:fs'
+import { mkdtempSync,rmSync,readFileSync,writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
@@ -75,8 +75,7 @@ test('RuntimePersistence consumes canonical Task/Worker contracts and fails clos
     persistence.save(store.all(),true)
     const loaded=persistence.load();assert.equal(loaded.length,1)
     assert.equal(loaded[0].execution.workers[0].requested_model,'p/requested');assert.equal(loaded[0].execution.workers[0].projected_model,'p/selected')
-    worker.attempt=-1
-    persistence.save(store.all(),true)
+    const raw=JSON.parse(readFileSync(persistence.path,'utf8'));raw.missions[0].execution.workers[0].attempt=-1;writeFileSync(persistence.path,JSON.stringify(raw))
     assert.equal(persistence.load().length,0)
     assert.match(String(persistence.lastLoadReport.error),/invalid mission state/i)
   }finally{rmSync(root,{recursive:true,force:true})}
@@ -92,9 +91,10 @@ test('RuntimePersistence rejects persisted mission graphs with unknown duplicate
     const persistence=new RuntimePersistence(root)
     persistence.save(store.all(),true);assert.equal(persistence.load().length,1)
 
-    b.dependencies=['missing-task'];persistence.save(store.all(),true);assert.equal(persistence.load().length,0);assert.match(String(persistence.lastLoadReport.error),/invalid mission state/i)
-    b.dependencies=[a.id];a.dependencies=[b.id];persistence.save(store.all(),true);assert.equal(persistence.load().length,0)
-    a.dependencies=[];b.id=a.id;persistence.save(store.all(),true);assert.equal(persistence.load().length,0)
+    const baseline=JSON.parse(readFileSync(persistence.path,'utf8')),ia=baseline.missions[0].execution.tasks.findIndex(t=>t.id===a.id),ib=baseline.missions[0].execution.tasks.findIndex(t=>t.id===b.id)
+    let raw=structuredClone(baseline);raw.missions[0].execution.tasks[ib].dependencies=['missing-task'];writeFileSync(persistence.path,JSON.stringify(raw));assert.equal(persistence.load().length,0);assert.match(String(persistence.lastLoadReport.error),/invalid mission state/i)
+    raw=structuredClone(baseline);raw.missions[0].execution.tasks[ia].dependencies=[b.id];writeFileSync(persistence.path,JSON.stringify(raw));assert.equal(persistence.load().length,0)
+    raw=structuredClone(baseline);raw.missions[0].execution.tasks[ib].id=a.id;writeFileSync(persistence.path,JSON.stringify(raw));assert.equal(persistence.load().length,0)
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
@@ -105,8 +105,8 @@ test('RuntimePersistence rejects invalid persisted topology shape and single exe
     const persistence=new RuntimePersistence(root)
     m.execution.execution_mode='single';m.execution.topology={mode:'single-agent',parallelism:1,reason:['minimum sufficient execution']}
     persistence.save(store.all(),true);assert.equal(persistence.load().length,1)
-    m.execution.topology.parallelism=2;persistence.save(store.all(),true);assert.equal(persistence.load().length,0)
-    m.execution.execution_mode='parallel';m.execution.topology={mode:'multi-agent',parallelism:0,reason:['invalid']};persistence.save(store.all(),true);assert.equal(persistence.load().length,0)
+    const baseline=JSON.parse(readFileSync(persistence.path,'utf8'));let raw=structuredClone(baseline);raw.missions[0].execution.topology.parallelism=2;writeFileSync(persistence.path,JSON.stringify(raw));assert.equal(persistence.load().length,0)
+    raw=structuredClone(baseline);raw.missions[0].execution.execution_mode='parallel';raw.missions[0].execution.topology={mode:'multi-agent',parallelism:0,reason:['invalid']};writeFileSync(persistence.path,JSON.stringify(raw));assert.equal(persistence.load().length,0)
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
@@ -120,13 +120,9 @@ test('PROMPT B Mission validator rejects ghost workers, cross-session worker bin
     const persistence=new RuntimePersistence(root)
     persistence.save(store.all(),true);assert.equal(persistence.load().length,1)
 
-    const ghost=structuredClone(wb);ghost.id='w-ghost';ghost.session_id='native-ghost';m.execution.workers.push(ghost)
-    persistence.save(store.all(),true);assert.equal(persistence.load().length,0,'extra worker not owned by task.worker_id must fail closed')
-    m.execution.workers.pop()
-
-    wb.parent_session_id='foreign-parent';persistence.save(store.all(),true);assert.equal(persistence.load().length,0,'worker parent_session_id must bind exact Mission session')
-    wb.parent_session_id=m.identity.session_id
-
-    wb.session_id=wa.session_id;persistence.save(store.all(),true);assert.equal(persistence.load().length,0,'two workers cannot own one native child session')
+    const baseline=JSON.parse(readFileSync(persistence.path,'utf8')),workers=baseline.missions[0].execution.workers
+    let raw=structuredClone(baseline),ghost=structuredClone(workers.find(x=>x.id===wb.id));ghost.id='w-ghost';ghost.session_id='native-ghost';raw.missions[0].execution.workers.push(ghost);writeFileSync(persistence.path,JSON.stringify(raw));assert.equal(persistence.load().length,0,'extra worker not owned by task.worker_id must fail closed')
+    raw=structuredClone(baseline);raw.missions[0].execution.workers.find(x=>x.id===wb.id).parent_session_id='foreign-parent';writeFileSync(persistence.path,JSON.stringify(raw));assert.equal(persistence.load().length,0,'worker parent_session_id must bind exact Mission session')
+    raw=structuredClone(baseline);raw.missions[0].execution.workers.find(x=>x.id===wb.id).session_id=wa.session_id;writeFileSync(persistence.path,JSON.stringify(raw));assert.equal(persistence.load().length,0,'two workers cannot own one native child session')
   }finally{rmSync(root,{recursive:true,force:true})}
 })

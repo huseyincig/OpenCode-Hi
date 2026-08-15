@@ -1,0 +1,369 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_PERSISTENCE_CONCURRENCY_ADVERSARIAL_AUDIT",
+  "program": "PROMPT_B",
+  "sections": [
+    16,
+    17
+  ],
+  "status": "PASS",
+  "invariants": [
+    {
+      "section": 16,
+      "invariant": "durable-eight-slices",
+      "owner": "plugin/src/runtime/mission/types.ts",
+      "owner_sha256": "ed63168e58dc39846bd8ec0a0db56aa3f59d931808fa24a2b33a8d11af29ce0f",
+      "owner_anchor": "export interface MissionState",
+      "proof": "plugin/test/prompt-b-persistence-restart-hostile.test.mjs",
+      "proof_sha256": "d8011b04206f07c5952ea663735ac41acbc8839ec4ec459f427bcb2bf7d0a57e",
+      "proof_anchor": "persistence round-trip preserves every durable control plane"
+    },
+    {
+      "section": 16,
+      "invariant": "task-dag-worker-restart",
+      "owner": "plugin/src/runtime/mission/mission-store.ts",
+      "owner_sha256": "57d0bcb0ffbcf123f05ef1b5a7b0c0e44572f8b3566ad4d747ffffc088225a66",
+      "owner_anchor": "['active','waiting-user'].includes(m.identity.status)",
+      "proof": "plugin/test/crash-restart-survival.test.mjs",
+      "proof_sha256": "159cd2863a6b39d464f7abcfd2e35876d03d0fad6351db2e425e7c8ac56a2c3b",
+      "proof_anchor": "unclean restart quarantines in-flight child"
+    },
+    {
+      "section": 16,
+      "invariant": "continuation-ephemeral-reset",
+      "owner": "plugin/src/runtime/mission/mission-store.ts",
+      "owner_sha256": "57d0bcb0ffbcf123f05ef1b5a7b0c0e44572f8b3566ad4d747ffffc088225a66",
+      "owner_anchor": "m.continuation.continuation_active=false",
+      "proof": "plugin/test/crash-restart-survival.test.mjs",
+      "proof_sha256": "159cd2863a6b39d464f7abcfd2e35876d03d0fad6351db2e425e7c8ac56a2c3b",
+      "proof_anchor": "explicit task restart reuses the quarantined child session"
+    },
+    {
+      "section": 16,
+      "invariant": "context-state-survival",
+      "owner": "plugin/src/runtime/state/persistence.ts",
+      "owner_sha256": "df655ecc93d395864046621ef31ae66882817fad34e7478e0be8b65b7376491d",
+      "owner_anchor": "missions:MissionState[]",
+      "proof": "plugin/test/prompt-b-persistence-restart-hostile.test.mjs",
+      "proof_sha256": "d8011b04206f07c5952ea663735ac41acbc8839ec4ec459f427bcb2bf7d0a57e",
+      "proof_anchor": "context"
+    },
+    {
+      "section": 16,
+      "invariant": "vcs-safety-survival",
+      "owner": "plugin/src/runtime/state/persistence.ts",
+      "owner_sha256": "df655ecc93d395864046621ef31ae66882817fad34e7478e0be8b65b7376491d",
+      "owner_anchor": "missions:MissionState[]",
+      "proof": "plugin/test/prompt-b-persistence-restart-hostile.test.mjs",
+      "proof_sha256": "d8011b04206f07c5952ea663735ac41acbc8839ec4ec459f427bcb2bf7d0a57e",
+      "proof_anchor": "vcs.changed_files"
+    },
+    {
+      "section": 16,
+      "invariant": "authority-restart-semantics",
+      "owner": "plugin/src/runtime/mission/mission-store.ts",
+      "owner_sha256": "57d0bcb0ffbcf123f05ef1b5a7b0c0e44572f8b3566ad4d747ffffc088225a66",
+      "owner_anchor": "authority.approval.invalidated",
+      "proof": "plugin/test/authority-input-split.test.mjs",
+      "proof_sha256": "d3eb04a2e2646f8d86b54422b0afed4a8b07e9e53c8c181ffe8e38a195c6c5fa",
+      "proof_anchor": "semantic revision and runtime restart invalidate unconsumed approval"
+    },
+    {
+      "section": 16,
+      "invariant": "release-transaction-survival",
+      "owner": "plugin/src/runtime/state/persistence.ts",
+      "owner_sha256": "df655ecc93d395864046621ef31ae66882817fad34e7478e0be8b65b7376491d",
+      "owner_anchor": "missions:MissionState[]",
+      "proof": "plugin/test/prompt-b-persistence-restart-hostile.test.mjs",
+      "proof_sha256": "d8011b04206f07c5952ea663735ac41acbc8839ec4ec459f427bcb2bf7d0a57e",
+      "proof_anchor": "release.release_chain.blocked_reason"
+    },
+    {
+      "section": 16,
+      "invariant": "methodology-state-survival",
+      "owner": "plugin/src/runtime/state/persistence.ts",
+      "owner_sha256": "df655ecc93d395864046621ef31ae66882817fad34e7478e0be8b65b7376491d",
+      "owner_anchor": "missions:MissionState[]",
+      "proof": "plugin/test/prompt-b-persistence-restart-hostile.test.mjs",
+      "proof_sha256": "d8011b04206f07c5952ea663735ac41acbc8839ec4ec459f427bcb2bf7d0a57e",
+      "proof_anchor": "parent_loaded_methodologies"
+    },
+    {
+      "section": 16,
+      "invariant": "process-restart-reconcile",
+      "owner": "plugin/src/runtime/process/runtime.ts",
+      "owner_sha256": "a0e48e9de3595a858517688afd742ce93bc65b07f7a52edfb301d555b1c9cb4f",
+      "owner_anchor": "reconcileRestored",
+      "proof": "plugin/test/p3-process-runtime-lifecycle.test.mjs",
+      "proof_sha256": "70b85c069b9cb7ccd92f541a35390e2f628e873b76b043c70f1ffe83ac99e157",
+      "proof_anchor": "restart reconciliation adopts exact owner identity and quarantines orphan"
+    },
+    {
+      "section": 16,
+      "invariant": "workspace-restart-reconcile",
+      "owner": "plugin/src/runtime/workspace/runtime.ts",
+      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_anchor": "reconcileRestored",
+      "proof": "plugin/test/w2-workspace-executor.test.mjs",
+      "proof_sha256": "f149d9bde62f3f73685915628f5a20e6e9f55a6f640675a3441b3610757398f2",
+      "proof_anchor": "restart adopts exact lease, quarantines missing owner without recreation"
+    },
+    {
+      "section": 16,
+      "invariant": "human-decision-survival",
+      "owner": "plugin/src/runtime/human-decision/transport.ts",
+      "owner_sha256": "2db615c4592412e6a6aaf91356007746c339530711bf053208940ef2b043a44e",
+      "owner_anchor": "readonly #entries=new Map<string,Entry>()",
+      "proof": "plugin/test/h1-human-decision-transport.test.mjs",
+      "proof_sha256": "9567c851068b6472e0a704d561143bcfdfa11860d8367b01527d729cdd8e6250",
+      "proof_anchor": "restart reopens persisted semantic decision but never replays stale ephemeral transport response"
+    },
+    {
+      "section": 16,
+      "invariant": "evidence-reference-restart",
+      "owner": "plugin/src/runtime/mission/mission-store.ts",
+      "owner_sha256": "57d0bcb0ffbcf123f05ef1b5a7b0c0e44572f8b3566ad4d747ffffc088225a66",
+      "owner_anchor": "evidence.crash-invalidated",
+      "proof": "plugin/test/prompt-b-persistence-restart-hostile.test.mjs",
+      "proof_sha256": "d8011b04206f07c5952ea663735ac41acbc8839ec4ec459f427bcb2bf7d0a57e",
+      "proof_anchor": "execution.evidence.items[0].id"
+    },
+    {
+      "section": 16,
+      "invariant": "partial-corrupt-old-unknown",
+      "owner": "plugin/src/runtime/state/persistence.ts",
+      "owner_sha256": "df655ecc93d395864046621ef31ae66882817fad34e7478e0be8b65b7376491d",
+      "owner_anchor": "unsupported runtime-state schema",
+      "proof": "plugin/test/prompt-b-persistence-restart-hostile.test.mjs",
+      "proof_sha256": "d8011b04206f07c5952ea663735ac41acbc8839ec4ec459f427bcb2bf7d0a57e",
+      "proof_anchor": "persistence rejects corrupt partial old and unknown schema"
+    },
+    {
+      "section": 16,
+      "invariant": "duplicate-replay-fail-close",
+      "owner": "plugin/src/runtime/state/persistence.ts",
+      "owner_sha256": "df655ecc93d395864046621ef31ae66882817fad34e7478e0be8b65b7376491d",
+      "owner_anchor": "duplicate persisted session identity",
+      "proof": "plugin/test/prompt-b-persistence-restart-hostile.test.mjs",
+      "proof_sha256": "d8011b04206f07c5952ea663735ac41acbc8839ec4ec459f427bcb2bf7d0a57e",
+      "proof_anchor": "duplicate persisted session or Mission identity fails closed"
+    },
+    {
+      "section": 16,
+      "invariant": "restore-duplicate-defense",
+      "owner": "plugin/src/runtime/mission/mission-store.ts",
+      "owner_sha256": "57d0bcb0ffbcf123f05ef1b5a7b0c0e44572f8b3566ad4d747ffffc088225a66",
+      "owner_anchor": "Duplicate restored session identity",
+      "proof": "plugin/test/prompt-b-persistence-restart-hostile.test.mjs",
+      "proof_sha256": "d8011b04206f07c5952ea663735ac41acbc8839ec4ec459f427bcb2bf7d0a57e",
+      "proof_anchor": "Duplicate restored session identity"
+    },
+    {
+      "section": 16,
+      "invariant": "atomic-primary-replace",
+      "owner": "plugin/src/runtime/state/persistence.ts",
+      "owner_sha256": "df655ecc93d395864046621ef31ae66882817fad34e7478e0be8b65b7376491d",
+      "owner_anchor": "renameSync(tmp,this.path)",
+      "proof": "plugin/test/prompt-b-persistence-restart-hostile.test.mjs",
+      "proof_sha256": "d8011b04206f07c5952ea663735ac41acbc8839ec4ec459f427bcb2bf7d0a57e",
+      "proof_anchor": "orphan partial tmp file never overrides last committed primary state"
+    },
+    {
+      "section": 16,
+      "invariant": "prewrite-validation",
+      "owner": "plugin/src/runtime/state/persistence.ts",
+      "owner_sha256": "df655ecc93d395864046621ef31ae66882817fad34e7478e0be8b65b7376491d",
+      "owner_anchor": "refusing to persist invalid mission state",
+      "proof": "plugin/test/prompt-b-persistence-restart-hostile.test.mjs",
+      "proof_sha256": "d8011b04206f07c5952ea663735ac41acbc8839ec4ec459f427bcb2bf7d0a57e",
+      "proof_anchor": "persistence refuses invalid Mission before replacing the last valid committed state"
+    },
+    {
+      "section": 16,
+      "invariant": "strict-current-envelope",
+      "owner": "plugin/src/runtime/state/persistence.ts",
+      "owner_sha256": "df655ecc93d395864046621ef31ae66882817fad34e7478e0be8b65b7376491d",
+      "owner_anchor": "runtime state envelope keys invalid",
+      "proof": "plugin/test/prompt-b-persistence-restart-hostile.test.mjs",
+      "proof_sha256": "d8011b04206f07c5952ea663735ac41acbc8839ec4ec459f427bcb2bf7d0a57e",
+      "proof_anchor": "malformed current-schema envelope metadata"
+    },
+    {
+      "section": 16,
+      "invariant": "waiting-user-crash-reconcile",
+      "owner": "plugin/src/runtime/mission/mission-store.ts",
+      "owner_sha256": "57d0bcb0ffbcf123f05ef1b5a7b0c0e44572f8b3566ad4d747ffffc088225a66",
+      "owner_anchor": "['active','waiting-user'].includes(m.identity.status)",
+      "proof": "plugin/test/prompt-b-persistence-restart-hostile.test.mjs",
+      "proof_sha256": "d8011b04206f07c5952ea663735ac41acbc8839ec4ec459f427bcb2bf7d0a57e",
+      "proof_anchor": "unclean restore invalidates only ephemeral/freshness state"
+    },
+    {
+      "section": 17,
+      "invariant": "simultaneous-task-completion",
+      "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
+      "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
+      "owner_anchor": "worker.result.terminal-ignored",
+      "proof": "plugin/test/prompt-b-concurrency-races.test.mjs",
+      "proof_sha256": "6beb09a514030620a08376315fd129a481f12e4d1e723e01d459558a02c9801e",
+      "proof_anchor": "simultaneous distinct task completions reconcile without double-closing"
+    },
+    {
+      "section": 17,
+      "invariant": "simultaneous-evidence-mutation",
+      "owner": "plugin/src/runtime/evidence/evidence-runtime.ts",
+      "owner_sha256": "508a3939ac7c754b51f46fd86aa13fe69344dfd5f63c2332baf079c573fe9720",
+      "owner_anchor": "mission.execution.evidence.fresh=",
+      "proof": "plugin/test/prompt-b-concurrency-races.test.mjs",
+      "proof_sha256": "6beb09a514030620a08376315fd129a481f12e4d1e723e01d459558a02c9801e",
+      "proof_anchor": "evidence/mutation race ordering is deterministic"
+    },
+    {
+      "section": 17,
+      "invariant": "worker-cancel-result-race",
+      "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
+      "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
+      "owner_anchor": "worker.result.terminal-ignored",
+      "proof": "plugin/test/prompt-b-concurrency-races.test.mjs",
+      "proof_sha256": "6beb09a514030620a08376315fd129a481f12e4d1e723e01d459558a02c9801e",
+      "proof_anchor": "cancellation wins over a late different worker result"
+    },
+    {
+      "section": 17,
+      "invariant": "permission-decision-race",
+      "owner": "plugin/src/runtime/application/runtime-event-controller.ts",
+      "owner_sha256": "1408bac72d8008e1441db5b7591dae8b947dcb94be0404d994ce3fc9a4688474",
+      "owner_anchor": "permission.stale-ask-ignored",
+      "proof": "plugin/test/prompt-b-concurrency-races.test.mjs",
+      "proof_sha256": "6beb09a514030620a08376315fd129a481f12e4d1e723e01d459558a02c9801e",
+      "proof_anchor": "permission reply-before-ask reorder cannot create a phantom pending permission"
+    },
+    {
+      "section": 17,
+      "invariant": "restart-during-write",
+      "owner": "plugin/src/runtime/state/persistence.ts",
+      "owner_sha256": "df655ecc93d395864046621ef31ae66882817fad34e7478e0be8b65b7376491d",
+      "owner_anchor": "writeFileSync(tmp",
+      "proof": "plugin/test/prompt-b-persistence-restart-hostile.test.mjs",
+      "proof_sha256": "d8011b04206f07c5952ea663735ac41acbc8839ec4ec459f427bcb2bf7d0a57e",
+      "proof_anchor": "orphan partial tmp file never overrides last committed primary state"
+    },
+    {
+      "section": 17,
+      "invariant": "queue-ordering",
+      "owner": "plugin/src/runtime/task/task-runtime.ts",
+      "owner_sha256": "fbb0e0dad347abfd5026b547239b3f00e952ddd5d1ef09df01507206726bf9ed",
+      "owner_anchor": "this.#queue.splice(i--,1)",
+      "proof": "plugin/test/prompt-b-concurrency-races.test.mjs",
+      "proof_sha256": "6beb09a514030620a08376315fd129a481f12e4d1e723e01d459558a02c9801e",
+      "proof_anchor": "bounded task queue is FIFO among runnable workers"
+    },
+    {
+      "section": 17,
+      "invariant": "starvation-prevention",
+      "owner": "plugin/src/runtime/task/task-runtime.ts",
+      "owner_sha256": "fbb0e0dad347abfd5026b547239b3f00e952ddd5d1ef09df01507206726bf9ed",
+      "owner_anchor": "while(progress)",
+      "proof": "plugin/test/prompt-b-concurrency-races.test.mjs",
+      "proof_sha256": "6beb09a514030620a08376315fd129a481f12e4d1e723e01d459558a02c9801e",
+      "proof_anchor": "later entries are not starved"
+    },
+    {
+      "section": 17,
+      "invariant": "retry-circuit",
+      "owner": "plugin/src/runtime/continuation/dispatcher.ts",
+      "owner_sha256": "a82f8580832d45de6690cb0005793d3e243637f9c1c44ca5124900ef77b1865f",
+      "owner_anchor": "continuation_failure_count",
+      "proof": "plugin/test/continuation-evaluator-wide-batch.test.mjs",
+      "proof_sha256": "a15ffc81f2ba3cbe9baa316186a76ab6e86a568e1a8435e53a987a218407c887",
+      "proof_anchor": "continuation transport failures use a separate bounded runtime retry budget"
+    },
+    {
+      "section": 17,
+      "invariant": "duplicate-event-delivery",
+      "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
+      "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
+      "owner_anchor": "worker.result.duplicate-ignored",
+      "proof": "plugin/test/q3-adversarial-threat-matrix.test.mjs",
+      "proof_sha256": "94257eb5e5ed94473f6f6676370304a0d504abc1facc274d4eb4106354a96a5d",
+      "proof_anchor": "duplicate child result callback is idempotently ignored"
+    },
+    {
+      "section": 17,
+      "invariant": "concurrent-workspace-mutation",
+      "owner": "plugin/src/runtime/workspace/runtime.ts",
+      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_anchor": "already owned by another active lease",
+      "proof": "plugin/test/w2-workspace-executor.test.mjs",
+      "proof_sha256": "f149d9bde62f3f73685915628f5a20e6e9f55a6f640675a3441b3610757398f2",
+      "proof_anchor": "concurrent lease identity collision is cleaned and rejected"
+    },
+    {
+      "section": 17,
+      "invariant": "process-lifecycle-races",
+      "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
+      "owner_sha256": "9e42d5e1d3f063d07b4edec865bc79f9aac67f1420f88ab89e598922ff5708d4",
+      "owner_anchor": "Refusing process-group signal",
+      "proof": "plugin/test/p2-opencode-pty-executor.test.mjs",
+      "proof_sha256": "7ea13f3c57dbb652953f128501bac03c8b0d826f31f217ca9b5a11e2ae25f7b3",
+      "proof_anchor": "kill signalling failure does not fabricate TERMINATED semantics"
+    },
+    {
+      "section": 17,
+      "invariant": "runtime-write-conflict-serialization",
+      "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
+      "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
+      "owner_anchor": "parallel.write-conflict.quarantined",
+      "proof": "plugin/test/runtime-write-conflict.test.mjs",
+      "proof_sha256": "1ceae748c74bda866791482d0bb32ba46d1d056e5881d92ba6dd365135728f50",
+      "proof_anchor": "runtime-discovered overlapping writes quarantine the later writer and serialize its resume"
+    }
+  ],
+  "static_guards": {
+    "save_validates_before_tmp_write": true,
+    "atomic_same_directory_rename": true,
+    "duplicate_session_and_mission_load_rejected": true,
+    "waiting_user_restart_reconciled": true,
+    "terminal_worker_result_rejected": true,
+    "reply_before_ask_rejected": true
+  },
+  "violations": [],
+  "summary": {
+    "required": 31,
+    "covered": 31,
+    "violations": 0,
+    "by_section": {
+      "16": {
+        "required": 19,
+        "covered": 19
+      },
+      "17": {
+        "required": 12,
+        "covered": 12
+      }
+    }
+  },
+  "closed_defects": [
+    {
+      "id": "duplicate-persisted-mission-replay",
+      "fix": "RuntimePersistence save/load and MissionStore restore reject duplicate session_id/mission_id identities instead of last-write-wins overwrite."
+    },
+    {
+      "id": "waiting-user-unclean-restart-gap",
+      "fix": "Unclean restart reconciliation applies to active and waiting-user missions, preserving HumanDecision while resetting/reconciling ephemeral workers/permissions/evidence."
+    },
+    {
+      "id": "malformed-current-runtime-envelope",
+      "fix": "RuntimePersistence rejects unknown/missing envelope keys and malformed timestamps even when schema number matches."
+    },
+    {
+      "id": "cancelled-worker-late-result-resurrection",
+      "fix": "TaskResultReconciler ignores all late results for completed/failed/cancelled terminal workers."
+    },
+    {
+      "id": "permission-reply-before-ask-phantom-wait",
+      "fix": "A permission reply observed before its ask makes the later ask stale/idempotent and cannot recreate pending permission state."
+    }
+  ],
+  "claim_boundary": "Persistence is current-schema, strict, atomic-replace and fail-closed; race safety is deterministic owner/idempotency behavior, not a claim that host delivery order is guaranteed."
+}

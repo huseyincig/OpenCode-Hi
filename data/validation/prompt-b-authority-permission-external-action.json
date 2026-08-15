@@ -29,7 +29,7 @@
       "owner_sha256": "592495c2883f6b79df055366dc846404986788eb168f7ba05776d2372e62d7f1",
       "owner_anchor": "actionContract(command:string,cwd?:string)",
       "proof": "plugin/test/authority-contract.test.mjs",
-      "proof_sha256": "7ef301603f6e038ee79527f5ffb262b96d69d27e2b625dcf045b33f343e62084",
+      "proof_sha256": "930613cf0b1ced29818aad138664ca728ce423029de2753f1bab6358810b5afc",
       "proof_anchor": "exact Authority action contract binds semantic action, target, command and cwd into one hash identity"
     },
     {

@@ -750,6 +750,11 @@ Host/UI separation remains truthful: ChatHumanDecisionTransport is ephemeral and
 
 Source-resolvable contract ambiguity remains repo-first: repository exploration is permitted while implementation is blocked, and no HumanDecision is opened merely because repository evidence can still resolve the question.
 
+
+### PROMPT B B10 — Persistence / restart + concurrency / race adversarial hardening — **CLOSED**
+
+PROMPT B sections 16–17 were re-audited as 31 executable invariants: 19 persistence/restart and 12 concurrency/race invariants. Five real defects were closed. RuntimePersistence now rejects duplicate persisted session/Mission identities on save/load and MissionStore restore rejects duplicate replay defensively; malformed current-schema top-level/runtime metadata is fail-closed; unclean restart reconciliation applies to both active and waiting-user Missions so HumanDecision remains durable while ephemeral permissions/workers and stale Evidence are reconciled; late results cannot resurrect terminal cancelled/completed/failed workers; and permission reply-before-ask reordering cannot recreate a phantom pending permission. Partial/corrupt/old/unknown state, orphan temp writes, atomic primary replacement, process/workspace restart, release/methodology/context/VCS/HumanDecision survival, queue fairness, retry circuit, duplicate delivery, write conflicts and process/workspace races are hash-bound in `data/validation/prompt-b-persistence-concurrency.json`.
+
 ## 11. Verification protocol for future checkpoints
 
 ### Focused verification first

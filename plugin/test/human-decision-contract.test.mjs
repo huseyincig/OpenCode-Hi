@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtempSync,rmSync } from 'node:fs'
+import { mkdtempSync,rmSync,readFileSync,writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { isHumanDecisionContract } from '../dist/contracts/human-decision.js'
@@ -68,8 +68,7 @@ test('RuntimePersistence round-trip preserves canonical HumanDecision state and 
     openHumanDecision(m,{semantic_type:'credential_action',reason_code:'interactive-shell',summary:'Interactive login required',response_schema:{kind:'external-action'}})
     new RuntimePersistence(root).save(store.all(),true)
     const loaded=new RuntimePersistence(root).load();assert.equal(loaded.length,1);assert.equal(loaded[0].authority.human_decision.decision_id,m.authority.human_decision.decision_id);assert.equal(loaded[0].authority.human_decision.status,'OPEN')
-    const bad=structuredClone(m);bad.authority.human_decision={...bad.authority.human_decision,decision_id:'hd_'+ 'f'.repeat(20)}
-    new RuntimePersistence(root).save([bad],true);const invalid=new RuntimePersistence(root);assert.deepEqual(invalid.load(),[]);assert.match(invalid.lastLoadReport.error,/invalid mission state/)
+    const persistence=new RuntimePersistence(root),raw=JSON.parse(readFileSync(persistence.path,'utf8'));raw.missions[0].authority.human_decision={...raw.missions[0].authority.human_decision,decision_id:'hd_'+ 'f'.repeat(20)};writeFileSync(persistence.path,JSON.stringify(raw));const invalid=new RuntimePersistence(root);assert.deepEqual(invalid.load(),[]);assert.match(invalid.lastLoadReport.error,/invalid mission state/)
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
