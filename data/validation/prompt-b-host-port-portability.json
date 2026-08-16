@@ -65,7 +65,7 @@
       "owner_sha256": "3a0f63b69b47b429b578489f1433a4170cf6fbd4c1a64c1ecd009f60bd2756b1",
       "owner_anchor": "export class ProcessSpawnPermissionError",
       "proof": "plugin/test/p2-opencode-pty-executor.test.mjs",
-      "proof_sha256": "6957fad0977a186b9c1f2efab1ae9487899ce338edc9c5dbce8d58a5be4d610a",
+      "proof_sha256": "d5fe4e13d882704d7a4443afdb4eb6ad9cb91a5f953e8050f35fff68e53a3167",
       "proof_anchor": "P2 spawn never silently executes native permission ask/deny"
     },
     {

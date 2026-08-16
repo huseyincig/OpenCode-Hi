@@ -63,7 +63,7 @@
     {
       "injection": "workspace-failure",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "ef05d013e9680f665fd4802ca8f626ac824afa7b09f851645116ebefdf2541d2",
+      "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",
       "proof_anchor": "PROMPT B workspace cleanup failure quarantines lease and records an explicit blocker",
       "status": "PASS"
     },

@@ -25,7 +25,7 @@
       "owner_sha256": "241585c04b86244704b9ce7484b9b3510c05fb99377fef43f11b0ecd00732867",
       "owner_anchor": "recordStagingInspection",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "ef05d013e9680f665fd4802ca8f626ac824afa7b09f851645116ebefdf2541d2",
+      "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",
       "proof_anchor": "preserves pre-staged and unstaged user changes exactly"
     },
     {
@@ -35,7 +35,7 @@
       "owner_sha256": "533a76ebf72a49a9254e5af02d13b09b045ed8011b4e9d0209cb9896dcdd04d8",
       "owner_anchor": "defaultInspect",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "ef05d013e9680f665fd4802ca8f626ac824afa7b09f851645116ebefdf2541d2",
+      "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",
       "proof_anchor": "untracked user"
     },
     {
@@ -105,7 +105,7 @@
       "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
       "owner_anchor": "reconcileRestored",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "ef05d013e9680f665fd4802ca8f626ac824afa7b09f851645116ebefdf2541d2",
+      "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",
       "proof_anchor": "restart adopts exact lease, quarantines missing owner without recreation"
     },
     {
@@ -165,7 +165,7 @@
       "owner_sha256": "533a76ebf72a49a9254e5af02d13b09b045ed8011b4e9d0209cb9896dcdd04d8",
       "owner_anchor": "realpathSync",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "ef05d013e9680f665fd4802ca8f626ac824afa7b09f851645116ebefdf2541d2",
+      "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",
       "proof_anchor": "symlinked workspace escape is canonicalized and rejected"
     },
     {
@@ -245,7 +245,7 @@
       "owner_sha256": "241585c04b86244704b9ce7484b9b3510c05fb99377fef43f11b0ecd00732867",
       "owner_anchor": "porcelainPaths",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "ef05d013e9680f665fd4802ca8f626ac824afa7b09f851645116ebefdf2541d2",
+      "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",
       "proof_anchor": "untracked user.txt"
     },
     {
