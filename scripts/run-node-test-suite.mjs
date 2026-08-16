@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import {mkdtempSync,mkdirSync,readdirSync,rmSync} from 'node:fs'
+import {mkdtempSync,mkdirSync,readdirSync,rmSync,writeSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join,resolve} from 'node:path'
 import {spawnSync} from 'node:child_process'
@@ -20,8 +20,8 @@ if(process.platform==='win32')env.LOCALAPPDATA=join(sandbox,'localappdata')
 let result
 try{
   result=spawnSync(process.execPath,['--test','--test-timeout=120000',...files],{cwd,env,encoding:'utf8',maxBuffer:64*1024*1024,timeout:300000,killSignal:'SIGTERM'})
-  if(result.stdout)process.stdout.write(result.stdout)
-  if(result.stderr)process.stderr.write(result.stderr)
+  if(result.stdout)writeSync(1,result.stdout)
+  if(result.stderr)writeSync(2,result.stderr)
 }finally{
   rmSync(sandbox,{recursive:true,force:true})
 }
