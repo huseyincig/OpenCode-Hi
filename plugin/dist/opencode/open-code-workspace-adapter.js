@@ -10,8 +10,19 @@ function defaultInspect(directory) {
     const root = canonicalExisting(directory), head = git(root, ['rev-parse', 'HEAD']), rawCommon = git(root, ['rev-parse', '--path-format=absolute', '--git-common-dir']), common_dir = canonicalExisting(rawCommon), raw = git(root, ['worktree', 'list', '--porcelain']), worktrees = raw.split(/\r?\n/).filter(x => x.startsWith('worktree ')).map(x => canonicalExisting(x.slice('worktree '.length).trim()));
     return { head, common_dir, worktrees };
 }
-function sameGitPath(a, b) { if (a === b)
-    return true; return process.platform === 'win32' && a.toLowerCase() === b.toLowerCase(); }
+function gitPathKey(path) {
+    if (process.platform !== 'win32')
+        return path;
+    let value = path.replaceAll('/', '\\'), prefix = '\\\\?\\', unc = '\\\\?\\UNC\\';
+    if (value.toLowerCase().startsWith(unc.toLowerCase()))
+        value = '\\\\' + value.slice(unc.length);
+    else if (value.startsWith(prefix))
+        value = value.slice(prefix.length);
+    if (value.length > 3)
+        value = value.replace(/\\+$/, '');
+    return value.toLowerCase();
+}
+function sameGitPath(a, b) { return gitPathKey(a) === gitPathKey(b); }
 function sameRepository(primary, workspace) { return sameGitPath(primary.common_dir, workspace.common_dir); }
 export class OpenCodeWorkspaceAdapter {
     client;
