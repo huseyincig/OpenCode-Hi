@@ -22,7 +22,7 @@
   "compatibility_projection": "data/validation/compatibility-matrix-0.1.0.json",
   "compatibility_sha256": "127cda3a9cf2017de21f28a9ee715c05e2c821bc0896565a8f1190debeb7a933",
   "lifecycle_audit": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
-  "lifecycle_sha256": "974ef593898b9c7a08fab99c361c48a98efb7940467bc05b44ac6e7434716603",
+  "lifecycle_sha256": "9579c93256c28261c131c894be8a2d83ce5d9d2379d76d4c3aa74a37299efee3",
   "capabilities": {
     "process-lifecycle": {
       "receipt": "data/validation/external-opencode-hi-0.1.1-process-1.18.18-head-3ca843d.json",

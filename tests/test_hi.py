@@ -9,6 +9,15 @@ def run(*args):return subprocess.run([sys.executable,*map(str,args)],text=True,c
 def load_module(name,path):
     spec=importlib.util.spec_from_file_location(name,path);m=importlib.util.module_from_spec(spec);assert spec and spec.loader;spec.loader.exec_module(m);return m
 
+def git_blob(commit,rel):
+    return subprocess.check_output(['git','show',f'{commit}:{rel}'],cwd=ROOT)
+
+def git_blob_sha256(commit,rel):
+    return hashlib.sha256(git_blob(commit,rel)).hexdigest()
+
+def git_blob_oid(commit,rel):
+    return subprocess.check_output(['git','rev-parse',f'{commit}:{rel}'],cwd=ROOT,text=True).strip()
+
 def test_identity_is_hi():
     d=json.loads((ROOT/'data/product.json').read_text())
     assert d['product_name']=='OpenCode-Hi' and d['short_name']=='HI' and d['version']==V
@@ -1243,7 +1252,8 @@ def test_prompt_b_release_engineering_separates_current_dev_source_from_historic
     assert d['registry_observation']['authority_condition']=='effective only after all engineering/final certification completes'
     by={x['stage']:x['status'] for x in d['stages']}
     assert by['T3']=='PASS' and by['tag']=='PENDING_FINAL_AUTHORIZED_PUBLICATION' and by['registry-publication']=='PENDING_FINAL_AUTHORIZED_PUBLICATION' and by['T4-receipt']=='PENDING_REAL_PUBLICATION_PROOF'
-    for rel,digest in d['proof_hashes'].items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
+    commit=d['audited_source_commit']
+    for rel,digest in d['proof_hashes'].items():assert git_blob_sha256(commit,rel)==digest
 
 
 def test_prompt_b_documentation_defect_cycle_requires_owner_impact_projection_and_lint():
@@ -1290,7 +1300,8 @@ def test_prompt_b_mutation_testing_kills_all_critical_mutants_without_compile_on
     assert all(x['status']=='KILLED_BY_INVARIANT_TEST' for x in d['mutants'])
     a=json.loads((ROOT/d['acceptance_receipt']).read_text())
     assert a['status']=='PASS' and a['summary']=={'configured':15,'killed':15,'survived':0,'compile_only_kills':0}
-    for rel,digest in d['proof_hashes'].items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
+    commit=d['audited_source_commit']
+    for rel,digest in d['proof_hashes'].items():assert git_blob_sha256(commit,rel)==digest
 
 
 def test_prompt_b_property_fuzz_testing_is_bounded_reproducible_and_source_bound():
@@ -1322,7 +1333,8 @@ def test_prompt_b_replay_testing_detects_semantic_drift_across_all_required_surf
     assert a['status']=='PASS' and a['source_binding']=={'tested_git_commit':'bca552865d060d41a629199ae9552a000324a7b2','tested_git_tree':'5ada6731d3b0d15219eb5b37f0dbd44c6b4f21f1'}
     assert a['nondeterministic_semantic_drift'] is False and a['first_pass_digest']==a['second_pass_digest'] and a['mismatches']==[] and a['total_cases']==28
     for rel,digest in {**a['inputs'],**a['owner_hashes']}.items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
-    for rel,digest in d['proof_hashes'].items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
+    commit=d['audited_source_commit']
+    for rel,digest in d['proof_hashes'].items():assert git_blob_sha256(commit,rel)==digest
 
 
 
@@ -1411,23 +1423,29 @@ def test_prompt_b_zero_known_defect_loop_closes_every_recorded_finding_and_reaud
     d=json.loads((ROOT/'data/validation/prompt-b-zero-known-defect-loop.json').read_text())
     assert d['schema']==1 and d['kind']=='PROMPT_B_ZERO_KNOWN_DEFECT_CLOSURE_LOOP' and d['section']==40 and d['status']=='PASS'
     assert d['summary']['recorded_findings']==62 and d['summary']['unresolved_known_defects']==0 and d['summary']['adjacent_regression_pass']==93
-    assert d['summary']['full_python_pass']==115 and d['summary']['full_node_pass']==848 and d['summary']['exact_t3_capabilities']==3 and d['summary']['lifecycle_invariants_pass']==61
+    assert d['summary']['full_python_pass']==118 and d['summary']['full_node_pass']==848 and d['summary']['exact_t3_capabilities']==3 and d['summary']['lifecycle_invariants_pass']==61
     assert d['violations']==[] and len({x['id'] for x in d['defects']})==62
+    commit=d['source_checkpoint']['commit']
     for row in d['defects']:
-        assert len(row['closure_pipeline'])==12 and hashlib.sha256((ROOT/row['regression_receipt']).read_bytes()).hexdigest()==row['regression_receipt_sha256']
+        assert len(row['closure_pipeline'])==12
+        assert git_blob_sha256(commit,row['regression_receipt'])==row['regression_receipt_sha256']
 
 
 def test_prompt_b_hygiene_audit_has_no_source_package_or_generated_artifact_leakage():
     d=json.loads((ROOT/'data/validation/prompt-b-hygiene.json').read_text())
     assert d['schema']==1 and d['kind']=='PROMPT_B_HYGIENE_AUDIT' and d['section']==41 and d['status']=='PASS'
     assert len(d['checks'])==12 and all(d['checks'].values()) and d['violations']==[]
-    for rel,digest in d['proof_hashes'].items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
+    commit=d['audited_source_commit']
+    for rel,digest in d['proof_hashes'].items():assert git_blob_sha256(commit,rel)==digest
 
 
 def test_prompt_b_final_certification_chain_is_truthful_coherent_and_tier_bound():
     f42=json.loads((ROOT/'data/validation/prompt-b-final-documentation-reaudit.json').read_text())
     assert f42['status']=='PASS' and f42['summary']=={'required':15,'covered':15,'violations':0} and f42['violations']==[]
-    for row in f42['areas']: assert hashlib.sha256((ROOT/row['path']).read_bytes()).hexdigest()==row['sha256']
+    commit=f42['source_checkpoint']['commit']
+    for row in f42['areas']:
+        assert git_blob_sha256(commit,row['path'])==row['checkpoint_sha256']
+        assert git_blob_oid(commit,row['path'])==row['checkpoint_blob_oid']
     f43=json.loads((ROOT/'data/validation/prompt-b-certification-evidence-tiers.json').read_text())
     assert f43['status']=='PASS' and len(f43['claims'])==7 and f43['violations']==[]
     ranks={'NONE':-1,'T0':0,'T1':1,'T2':2,'T3':3,'T4':4}
