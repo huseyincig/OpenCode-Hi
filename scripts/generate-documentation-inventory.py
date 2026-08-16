@@ -38,8 +38,9 @@ def main():
     candidates += [p for p in (ROOT/'roles').glob('*.md') if p.is_file()]
     candidates += [p for p in (ROOT/'skills').glob('*/SKILL.md') if p.is_file()]
     artifacts=[];unclassified=[]
-    for p in sorted(set(candidates)):
-        r=rel(p); c=classify(r,cfg)
+    by_rel={rel(p):p for p in candidates}
+    for r in sorted(by_rel):
+        p=by_rel[r]; c=classify(r,cfg)
         if not c: unclassified.append(r);continue
         lifecycle,audience,update_mode=c
         artifacts.append({'path':r,'sha256':sha(p),'audience':audience,'lifecycle':lifecycle,'update_mode':update_mode})

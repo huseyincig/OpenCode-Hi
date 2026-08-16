@@ -54,7 +54,7 @@
       "step": "doc-lint",
       "status": "PASS",
       "owner": "scripts/validate-documentation.py",
-      "owner_sha256": "f583540a9bd210ff470574fdf7d316c69c76bb4f1c3f287c4c6d8e46672c14b2",
+      "owner_sha256": "e56b1674ee91e7cbad9e79ef14b984c80f647ae5e2b54d09c815577826535209",
       "owner_anchor": "documentation parity",
       "proof": "data/validation/documentation-parity.json",
       "proof_sha256": "ae34ae445972c1aa630c85b9c0c9192262c5d0dec5ef0d283308df681632c08c",
@@ -68,7 +68,8 @@
     "parity_pass": true,
     "generated_dirty_guard": true,
     "generated_hand_edit_guard": true,
-    "prompt_a_docs_not_frozen": true
+    "prompt_a_docs_not_frozen": true,
+    "platform_neutral_document_order": true
   },
   "violations": [],
   "claim_boundary": "Documentation is evaluated in every material defect cycle. A source change does not require meaningless prose churn; it requires canonical documentation-owner impact evaluation, regenerated machine projections where applicable, and parity/lint PASS. Documentation never outranks live source/contracts/runtime evidence."

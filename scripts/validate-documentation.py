@@ -19,7 +19,8 @@ def current_docs(policy):
     for n in ac['constitution_current']:
         p=ROOT/'docs/engineering-constitution'/n
         if p.is_file():out.append(p)
-    return sorted(set(out))
+    by_rel={rel(p):p for p in out}
+    return [by_rel[r] for r in sorted(by_rel)]
 def links(path:Path,text:str):
     # Markdown inline links only; images are also file refs and are validated.
     out=[]
