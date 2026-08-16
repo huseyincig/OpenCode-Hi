@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import json,re,subprocess,sys,tarfile,tempfile
+import json,os,re,shutil,subprocess,sys,tarfile,tempfile
 from pathlib import Path,PurePosixPath
 ROOT=Path(__file__).resolve().parents[1]
 POLICY=ROOT/'data/documentation-ownership.json'
@@ -29,7 +29,10 @@ def main()->int:
  required=[x['path'] for x in policy.get('public_documents',[])]
  errors=[]
  with tempfile.TemporaryDirectory(prefix='hi-pack-docs-') as td:
-  cp=subprocess.run(['npm','pack','--ignore-scripts','--json','--pack-destination',td],cwd=ROOT,text=True,capture_output=True)
+  npm=shutil.which('npm.cmd' if os.name=='nt' else 'npm') or shutil.which('npm')
+  if not npm:
+   print('npm executable not found',file=sys.stderr);return 127
+  cp=subprocess.run([npm,'pack','--ignore-scripts','--json','--pack-destination',td],cwd=ROOT,text=True,capture_output=True)
   if cp.returncode!=0:
    print(cp.stdout+cp.stderr);return cp.returncode
   meta=json.loads(cp.stdout)[0]
