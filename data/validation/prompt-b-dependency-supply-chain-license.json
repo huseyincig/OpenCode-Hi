@@ -27,7 +27,7 @@
       "owner_sha256": "db547692d7109cb7e3f2f1d4da7463837d09e4996ea5bae10577901a5b5593fd",
       "owner_anchor": "def dependency_lock_paths(root:Path)",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "68b690ff8c90b4f3fd2bb57d6e55496a49ef28f0aaa7ee218ac33385701fb7ef",
+      "proof_sha256": "df75ca58feb9c89f1696acbf9599fd0e5cf80c0baa6d786691b33c4ab3b6d000",
       "proof_anchor": "dependency_locks']==['package-lock.json','plugin/package-lock.json']"
     },
     {
@@ -57,7 +57,7 @@
       "owner_sha256": "db547692d7109cb7e3f2f1d4da7463837d09e4996ea5bae10577901a5b5593fd",
       "owner_anchor": "dependency_graph_sha256",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "68b690ff8c90b4f3fd2bb57d6e55496a49ef28f0aaa7ee218ac33385701fb7ef",
+      "proof_sha256": "df75ca58feb9c89f1696acbf9599fd0e5cf80c0baa6d786691b33c4ab3b6d000",
       "proof_anchor": "release_manifest_contains_dependency_sbom_and_supply_chain_digest"
     },
     {

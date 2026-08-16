@@ -1,12 +1,23 @@
 {
-  "acceptance_receipt": "data/validation/cross-platform-acceptance-0.1.0.json",
-  "acceptance_sha256": "72ab6ced4033d809bfae7c58dc818cc138ec5712885961571e3fb51e1e2375a6",
-  "claim_boundary": "Linux current-source acceptance is executed locally. Windows is a mandatory CI validation target with historical v0.1.0 evidence, but current local Prompt B HEAD is not claimed Windows-certified until an exact-source Windows run exists.",
+  "acceptance_receipt": "data/validation/cross-platform-acceptance-0.1.1.json",
+  "acceptance_sha256": "bef2515be8389f9408f94f13cde3fef03c2455fe2e406bfb1368eb055aab70d4",
+  "claim_boundary": "Current-source Windows/Linux certification is bound to the exact external CI source checkpoint. Subsequent evidence-only commits may consume it only while runtime/package material paths remain byte-identical to that checkpoint.",
+  "github_actions": {
+    "conclusion": "success",
+    "run_id": 31934615573,
+    "ubuntu_job_id": 95134491593,
+    "windows_job_id": 95134491698
+  },
   "kind": "PROMPT_B_CROSS_PLATFORM_ACCEPTANCE_AUDIT",
   "linux_current_certified": true,
+  "post_ci_material_drift": [],
   "program": "PROMPT_B",
   "schema": 1,
   "section": 38,
+  "source_checkpoint": {
+    "commit": "fa3840a0824866efb965d4ce4fc037027a6da110",
+    "tree": "da5820eed63cdf3becd07123f517b9b0a3eba4cd"
+  },
   "status": "PASS",
   "summary": {
     "covered_surfaces": 7,
@@ -41,7 +52,7 @@
     },
     {
       "proof": "tests/test_hi.py",
-      "proof_sha256": "68b690ff8c90b4f3fd2bb57d6e55496a49ef28f0aaa7ee218ac33385701fb7ef",
+      "proof_sha256": "df75ca58feb9c89f1696acbf9599fd0e5cf80c0baa6d786691b33c4ab3b6d000",
       "surface": "filesystem"
     },
     {
@@ -51,6 +62,6 @@
     }
   ],
   "violations": [],
-  "windows_current_certified": false,
+  "windows_current_certified": true,
   "windows_historical_release_evidence": true
 }

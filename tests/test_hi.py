@@ -1398,11 +1398,15 @@ def test_prompt_b_cross_platform_acceptance_is_truthful_about_windows_current_so
     d=json.loads((ROOT/'data/validation/prompt-b-cross-platform-acceptance.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='PROMPT_B_CROSS_PLATFORM_ACCEPTANCE_AUDIT' and d['program']=='PROMPT_B' and d['section']==38 and d['status']=='PASS'
     assert d['summary']=={'required_surfaces':7,'covered_surfaces':7,'violations':0} and d['violations']==[]
-    assert d['linux_current_certified'] is True and d['windows_current_certified'] is False and d['windows_historical_release_evidence'] is True
+    assert d['linux_current_certified'] is True and d['windows_current_certified'] is True and d['windows_historical_release_evidence'] is True
+    assert d['acceptance_receipt']=='data/validation/cross-platform-acceptance-0.1.1.json' and d['post_ci_material_drift']==[]
+    assert d['github_actions']=={'run_id':31934615573,'ubuntu_job_id':95134491593,'windows_job_id':95134491698,'conclusion':'success'}
     a=json.loads((ROOT/d['acceptance_receipt']).read_text(encoding='utf-8'))
-    assert a['status']=='PASS_WITH_TRUTHFUL_WINDOWS_CURRENT_SOURCE_LIMITATION'
-    assert a['source_binding']=={'tested_git_commit':'edb83cc89157ac86f4ed05d2b318a5cb840425dd','tested_git_tree':'cc1ec0fa3abee41e1366d229cef7104997ac4f59'}
-    assert a['linux_current']['status']=='PASS' and a['windows']['current_source_tested'] is False
+    assert a['status']=='PASS' and a['kind']=='PROMPT_B_CROSS_PLATFORM_CURRENT_SOURCE_CI_ACCEPTANCE'
+    assert a['source_binding']=={'tested_git_commit':'fa3840a0824866efb965d4ce4fc037027a6da110','tested_git_tree':'da5820eed63cdf3becd07123f517b9b0a3eba4cd'}
+    ga=a['github_actions']; assert ga['run_id']==31934615573 and ga['conclusion']=='success'
+    assert ga['ubuntu']['job_id']==95134491593 and ga['ubuntu']['conclusion']=='success'
+    assert ga['windows']['job_id']==95134491698 and ga['windows']['conclusion']=='success'
 
 
 def test_prompt_b_exact_current_opencode_t3_is_fresh_source_bound_and_not_inferred_from_api_presence():

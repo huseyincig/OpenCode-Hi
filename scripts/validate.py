@@ -728,10 +728,14 @@ try:
     c38=json.loads((ROOT/'data/validation/prompt-b-cross-platform-acceptance.json').read_text(encoding='utf-8'))
     if c38.get('schema')!=1 or c38.get('kind')!='PROMPT_B_CROSS_PLATFORM_ACCEPTANCE_AUDIT' or c38.get('program')!='PROMPT_B' or c38.get('section')!=38 or c38.get('status')!='PASS':err('bad PROMPT B cross-platform audit identity/status')
     if c38.get('summary')!={'required_surfaces':7,'covered_surfaces':7,'violations':0} or c38.get('violations')!=[]:err('PROMPT B cross-platform summary drift')
-    if c38.get('linux_current_certified') is not True or c38.get('windows_current_certified') is not False or c38.get('windows_historical_release_evidence') is not True:err('PROMPT B cross-platform certification boundary drift')
-    a=json.loads((ROOT/c38['acceptance_receipt']).read_text(encoding='utf-8'))
-    if a.get('status')!='PASS_WITH_TRUTHFUL_WINDOWS_CURRENT_SOURCE_LIMITATION' or a.get('source_binding')!={'tested_git_commit':'edb83cc89157ac86f4ed05d2b318a5cb840425dd','tested_git_tree':'cc1ec0fa3abee41e1366d229cef7104997ac4f59'}:err('PROMPT B cross-platform source binding drift')
-    if (a.get('linux_current') or {}).get('status')!='PASS' or (a.get('windows') or {}).get('current_source_tested') is not False:err('PROMPT B cross-platform platform status drift')
+    if c38.get('linux_current_certified') is not True or c38.get('windows_current_certified') is not True or c38.get('windows_historical_release_evidence') is not True:err('PROMPT B cross-platform certification boundary drift')
+    ar=c38.get('acceptance_receipt'); a=json.loads((ROOT/ar).read_text(encoding='utf-8'))
+    if ar!='data/validation/cross-platform-acceptance-0.1.1.json' or a.get('status')!='PASS':err('PROMPT B cross-platform current receipt drift')
+    ab=a.get('source_binding') or {}; cp=c38.get('source_checkpoint') or {}
+    if ab.get('tested_git_commit')!=cp.get('commit') or ab.get('tested_git_tree')!=cp.get('tree'):err('PROMPT B cross-platform source checkpoint drift')
+    ga=a.get('github_actions') or {}; w=ga.get('windows') or {}; u=ga.get('ubuntu') or {}
+    if ga.get('conclusion')!='success' or w.get('conclusion')!='success' or u.get('conclusion')!='success':err('PROMPT B cross-platform CI conclusion drift')
+    if c38.get('post_ci_material_drift')!=[]:err('PROMPT B cross-platform post-CI material drift')
     for row in c38.get('surfaces',[]):
         rel=row.get('proof');expected=row.get('proof_sha256')
         if not isinstance(rel,str) or not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B cross-platform proof hash drift: '+str(rel))
