@@ -1,12 +1,11 @@
 import { spawnSync } from 'node:child_process';
-import { realpathSync } from 'node:fs';
+import { realpathSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createOpencodeClient as createOpenCodeV2Client } from '@opencode-ai/sdk/v2/client';
 function nativeData(value) { const first = value && typeof value === 'object' && 'data' in value ? value.data : value; return (first && typeof first === 'object' && 'data' in first ? first.data : first); }
 function git(directory, args) { const r = spawnSync('git', ['-C', directory, ...args], { encoding: 'utf8' }); if (r.status !== 0)
     throw new Error(`Git workspace inspection failed: ${String(r.stderr ?? r.stdout ?? 'unknown error')}`); return String(r.stdout ?? '').trim(); }
-const nativeRealpath = realpathSync.native;
-function canonicalExisting(path) { return process.platform === 'win32' ? nativeRealpath(resolve(path)) : realpathSync(resolve(path)); }
+function canonicalExisting(path) { return realpathSync(resolve(path)); }
 function defaultInspect(directory) {
     const root = canonicalExisting(directory), head = git(root, ['rev-parse', 'HEAD']), rawCommon = git(root, ['rev-parse', '--path-format=absolute', '--git-common-dir']), common_dir = canonicalExisting(rawCommon), raw = git(root, ['worktree', 'list', '--porcelain', '-z']), worktrees = raw.split('\0').filter(x => x.startsWith('worktree ')).map(x => canonicalExisting(x.slice('worktree '.length)));
     return { head, common_dir, worktrees };
@@ -23,7 +22,16 @@ function gitPathKey(path) {
         value = value.replace(/\\+$/, '');
     return value.toLowerCase();
 }
-function sameGitPath(a, b) { return gitPathKey(a) === gitPathKey(b); }
+const statIdentity = statSync;
+function sameGitPath(a, b) { if (gitPathKey(a) === gitPathKey(b))
+    return true; if (process.platform !== 'win32')
+    return false; try {
+    const left = statIdentity(a, { bigint: true }), right = statIdentity(b, { bigint: true });
+    return left.ino !== 0n && right.ino !== 0n && left.dev === right.dev && left.ino === right.ino;
+}
+catch {
+    return false;
+} }
 function sameRepository(primary, workspace) { return sameGitPath(primary.common_dir, workspace.common_dir); }
 export class OpenCodeWorkspaceAdapter {
     client;
