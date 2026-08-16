@@ -1116,7 +1116,7 @@
       "root_cause_record": "cwd-sensitive-test-root",
       "resolution": "Repository fixture roots are derived from import.meta.url rather than process.cwd(); exact same 17 tests pass from plugin cwd and repository root.",
       "regression_receipt": "data/validation/prompt-b-test-suite-audit.json",
-      "regression_receipt_sha256": "aab1362d3b14d721e126581de426c412f1db18e1cc520ff0d9a6f274d82624e0",
+      "regression_receipt_sha256": "1d3af7a079f77698a94568ce240b4f3af419d28c00f87319cf269a24246f8ff0",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1139,7 +1139,7 @@
       "root_cause_record": "test-suite-real-home-state-pollution",
       "resolution": "Canonical Node harness redirects Hi/XDG state and cache roots to a temporary suite sandbox and removes it; measured HOME Hi-state delta is zero.",
       "regression_receipt": "data/validation/prompt-b-test-suite-audit.json",
-      "regression_receipt_sha256": "aab1362d3b14d721e126581de426c412f1db18e1cc520ff0d9a6f274d82624e0",
+      "regression_receipt_sha256": "1d3af7a079f77698a94568ce240b4f3af419d28c00f87319cf269a24246f8ff0",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1162,7 +1162,7 @@
       "root_cause_record": "unbounded-test-runner-timeout",
       "resolution": "Native per-test timeout is 120s and suite process timeout is 300s; hangs cannot block CI indefinitely.",
       "regression_receipt": "data/validation/prompt-b-test-suite-audit.json",
-      "regression_receipt_sha256": "aab1362d3b14d721e126581de426c412f1db18e1cc520ff0d9a6f274d82624e0",
+      "regression_receipt_sha256": "1d3af7a079f77698a94568ce240b4f3af419d28c00f87319cf269a24246f8ff0",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1185,7 +1185,7 @@
       "root_cause_record": "mock-runtime-self-promoted-t3",
       "resolution": "Owned runtime capabilities require active-host health and report OBSERVED only; REAL_HOST_ACCEPTANCE/T3 remains external exact-receipt truth.",
       "regression_receipt": "data/validation/prompt-b-test-suite-audit.json",
-      "regression_receipt_sha256": "aab1362d3b14d721e126581de426c412f1db18e1cc520ff0d9a6f274d82624e0",
+      "regression_receipt_sha256": "1d3af7a079f77698a94568ce240b4f3af419d28c00f87319cf269a24246f8ff0",
       "closure_pipeline": [
         "discover",
         "classify",
