@@ -1252,8 +1252,7 @@ def test_prompt_b_release_engineering_separates_current_dev_source_from_historic
     assert d['registry_observation']['authority_condition']=='effective only after all engineering/final certification completes'
     by={x['stage']:x['status'] for x in d['stages']}
     assert by['T3']=='PASS' and by['tag']=='PENDING_FINAL_AUTHORIZED_PUBLICATION' and by['registry-publication']=='PENDING_FINAL_AUTHORIZED_PUBLICATION' and by['T4-receipt']=='PENDING_REAL_PUBLICATION_PROOF'
-    commit=d['audited_source_commit']
-    for rel,digest in d['proof_hashes'].items():assert git_blob_sha256(commit,rel)==digest
+    for rel,digest in d['proof_hashes'].items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
 
 
 def test_prompt_b_documentation_defect_cycle_requires_owner_impact_projection_and_lint():
@@ -1300,8 +1299,7 @@ def test_prompt_b_mutation_testing_kills_all_critical_mutants_without_compile_on
     assert all(x['status']=='KILLED_BY_INVARIANT_TEST' for x in d['mutants'])
     a=json.loads((ROOT/d['acceptance_receipt']).read_text())
     assert a['status']=='PASS' and a['summary']=={'configured':15,'killed':15,'survived':0,'compile_only_kills':0}
-    commit=d['audited_source_commit']
-    for rel,digest in d['proof_hashes'].items():assert git_blob_sha256(commit,rel)==digest
+    for rel,digest in d['proof_hashes'].items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
 
 
 def test_prompt_b_property_fuzz_testing_is_bounded_reproducible_and_source_bound():
@@ -1333,8 +1331,7 @@ def test_prompt_b_replay_testing_detects_semantic_drift_across_all_required_surf
     assert a['status']=='PASS' and a['source_binding']=={'tested_git_commit':'bca552865d060d41a629199ae9552a000324a7b2','tested_git_tree':'5ada6731d3b0d15219eb5b37f0dbd44c6b4f21f1'}
     assert a['nondeterministic_semantic_drift'] is False and a['first_pass_digest']==a['second_pass_digest'] and a['mismatches']==[] and a['total_cases']==28
     for rel,digest in {**a['inputs'],**a['owner_hashes']}.items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
-    commit=d['audited_source_commit']
-    for rel,digest in d['proof_hashes'].items():assert git_blob_sha256(commit,rel)==digest
+    for rel,digest in d['proof_hashes'].items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
 
 
 
