@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "release": "0.1.1",
+  "generated_at": "2026-08-16",
+  "publication_authority": {
+    "condition": "AUTHORIZED_ONLY_AFTER_ALL_ENGINEERING_AND_FINAL_CERTIFICATION_COMPLETE",
+    "authorized": true,
+    "attempted_in_candidate_t3": false
+  },
+  "status": "PASS_EXACT_CURRENT_WORKSPACE_ISOLATION_T3_RELEASE_0_1_1",
+  "source_binding": {
+    "tested_git_commit": "ef41e3dd38dbc9c89a5cb871b7cb09135def95d8",
+    "tested_git_tree": "f9a6b75fe344dc741ba7524408b234c18d9ee7c3",
+    "worktree": "/workspace/OpenCode-Hi",
+    "state": "CLEAN_COMMITTED_SOURCE",
+    "exact_candidate": true,
+    "runtime_hashes": {
+      "plugin/src/contracts/workspace.ts": "d2ed1d517537201302344aa3061f149b044ad85b6909fe85ec876904ea9b496a",
+      "plugin/src/runtime/workspace/executor.ts": "f6129bfab5c20641a144030b7357be598d4fd77dcde9ecdf664a390398d2e12b",
+      "plugin/src/runtime/workspace/runtime.ts": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "plugin/src/runtime/mission/validators.ts": "113bfe4fc6e72a97f8078c57c784473cfa2ddd4f68b1a051da1f24f650934e97",
+      "plugin/src/opencode/open-code-workspace-adapter.ts": "6fb6779efd15322e53f8a46001a8964a5b06563e2fc24e81c84b0a3886b0b98e",
+      "plugin/src/runtime/task/child-execution-coordinator.ts": "819e27671224e9f7bca8e70b7a2638d74c79164f04bcc5e5e647c0d5818d9817",
+      "plugin/src/contracts/host-capability.ts": "d0f7a502606323871c69d23f53cc4f4eea9634636985d8ef5e63f85bb7af01d6"
+    },
+    "note": "Fresh exact-current Workspace T3 acceptance for the committed 0.1.1 candidate."
+  },
+  "host": {
+    "os": "linux",
+    "arch": "aarch64",
+    "opencode_version": "1.18.18",
+    "server": "ephemeral-user-space-exact-1.18.18"
+  },
+  "gates": {
+    "workspace_runtime_canonical_decision": "PASS_CONTROLLED",
+    "workspace_create": "PASS_T3",
+    "workspace_source_baseline": "PASS_T3",
+    "workspace_child_id_directory_binding": "PASS_T3",
+    "workspace_observed_cwd_identity": "PASS_T3",
+    "workspace_write_isolation": "PASS_T3",
+    "workspace_primary_preservation": "PASS_T3",
+    "workspace_cleanup": "PASS_T3",
+    "workspace_host_cleanup_empty": "PASS_T3",
+    "workspace_verification": "PASS_T3",
+    "workspace_restart_adoption": "PASS_T3",
+    "workspace_orphan_quarantine": "PASS_CONTROLLED",
+    "workspace_no_recreation": "PASS_CONTROLLED",
+    "workspace_persisted_identity_strictness": "PASS_CONTROLLED",
+    "workspace_isolation_binding": "SUPPORTED_T3"
+  },
+  "evidence": {
+    "real_host": {
+      "health": {
+        "available": true,
+        "detail": "OpenCode experimental workspace list observed"
+      },
+      "baseline": "ef41e3dd38dbc9c89a5cb871b7cb09135def95d8",
+      "provisioned": {
+        "host_workspace_id": "wrk_0096a0e6e001sFG0LpJ8P2nCfR",
+        "workspace_path": "/home/node/.local/share/opencode/worktree/3bf2323c91f9e2c5ddacccaa9ce7e30cb30bb5af/proud-circuit"
+      },
+      "child": {
+        "id": "ses_ff695dd7effeCPRqCB82zvsBSX",
+        "workspaceID": "wrk_0096a0e6e001sFG0LpJ8P2nCfR",
+        "directory": "/home/node/.local/share/opencode/worktree/3bf2323c91f9e2c5ddacccaa9ce7e30cb30bb5af/proud-circuit"
+      },
+      "child_exact": true,
+      "isolated": "ISOLATED_Q011_OK",
+      "primary_has_isolated": false,
+      "user_preserved": true,
+      "reconcile": "ADOPTED",
+      "cleanup": "CLOSED"
+    },
+    "controlled_boundaries": {
+      "orphan_quarantine_and_no_recreation": "plugin/test/w2-workspace-executor.test.mjs",
+      "persisted_identity_strictness": "plugin/test/q4-property-fuzz.test.mjs"
+    },
+    "host_teardown_classification": {
+      "node_version": "v24.19.0",
+      "observed": "libuv EEXIST assertion only after terminal acceptance JSON was emitted",
+      "classification": "HOST_TEARDOWN_NOISE_AFTER_TERMINAL_PASS"
+    }
+  },
+  "limitations": [
+    "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution.",
+    "Exact T3 applies only to OpenCode 1.18.18 on linux/aarch64 and exact source ef41e3dd38dbc9c89a5cb871b7cb09135def95d8."
+  ],
+  "capability_limitations": {
+    "workspace-isolation-binding": [
+      "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution.",
+      "Exact T3 applies only to OpenCode 1.18.18 on linux/aarch64 and exact source ef41e3dd38dbc9c89a5cb871b7cb09135def95d8."
+    ]
+  },
+  "rule": "API existence or historical receipts do not certify this result; actual 0.1.1 candidate workspace/session invocation was required."
+}

@@ -353,7 +353,7 @@
     },
     {
       "path": "docs/HOSTS.md",
-      "sha256": "b77a34548f728eacb097f94ebc2bace7bc2c6429ebedb01f129cd8a8ec689565",
+      "sha256": "999bfc95b1ed2be82e63bcbddbff24bf192a52019a8fc8865de5b93ac6b7bbe1",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
