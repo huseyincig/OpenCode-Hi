@@ -19,7 +19,7 @@
       "section": 20,
       "invariant": "symlink-escape",
       "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
-      "owner_sha256": "66daa4368530fd4c2bdc53b62c7ced0ad191de4cbb03fb1a1eff93530f89313c",
+      "owner_sha256": "1a7e5aea6d3d5d00019e5f0cc73cef31e4dfdce6b1617a18da619cec99ac9bd9",
       "owner_anchor": "realpathSync",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
       "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",

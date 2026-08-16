@@ -16,31 +16,31 @@
   },
   "candidate_release": "0.1.1",
   "fresh_consumer_receipt": "data/validation/fresh-consumer-opencode-1.18.18.json",
-  "fresh_consumer_sha256": "3986b8640247ecb450eb31c2a3c488bef93388e50f3203a331ff2619c8a2ecb4",
-  "exact_source_commit": "8bc3f56b200d88c137270280fd5d40c256dbb7fd",
-  "exact_source_tree": "8b13ff6cb82cd60ea939e8a9bd2f96e83d13da2d",
+  "fresh_consumer_sha256": "1f7acc3907713ea5b0aa2aa090b1dd146612527dacceb4aa1a7e46d9394dcc55",
+  "exact_source_commit": "b8973df961bd45d11b5c4a55e7c55da419605a95",
+  "exact_source_tree": "6c27410e5c539777928a6f903b534d682803058d",
   "compatibility_projection": "data/validation/compatibility-matrix-0.1.0.json",
-  "compatibility_sha256": "ba436db4c0cddf8f02d03e41d7cb23adcf737167f631e0e95cd8832c354644b9",
+  "compatibility_sha256": "2da0aabc56d4cae96a3fe84065e94241271dcccb94c1c9f870eaf96610f5702b",
   "lifecycle_audit": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
-  "lifecycle_sha256": "38168a339f5be20cb07bd9fd63ad0d0f3d151b33e20b061ee185bd285ad1e17d",
+  "lifecycle_sha256": "5f801d2c5ab47793c6366ede6d9bfd39daca4098befe9d651c24c76d638d2883",
   "capabilities": {
     "process-lifecycle": {
-      "receipt": "data/validation/external-opencode-hi-0.1.1-process-1.18.18-head-8bc3f56.json",
-      "receipt_sha256": "5e9304a7e3f6752a2b8a5f87ccbd42c2f187abd1921e46929d946902fc2029e7",
+      "receipt": "data/validation/external-opencode-hi-0.1.1-process-1.18.18-head-b8973df.json",
+      "receipt_sha256": "baa8c57e9ed1470b8c5db798d508495702d8711313f83f8adfac3bb3eab32918",
       "status": "SUPPORTED_T3",
-      "tested_git_commit": "8bc3f56b200d88c137270280fd5d40c256dbb7fd"
+      "tested_git_commit": "b8973df961bd45d11b5c4a55e7c55da419605a95"
     },
     "workspace-isolation-binding": {
-      "receipt": "data/validation/external-opencode-hi-0.1.1-workspace-1.18.18-head-8bc3f56.json",
-      "receipt_sha256": "20849f251cea85bac2b8d2d43befbc5aef1b7ae6562d4250d7ada2283964aa7d",
+      "receipt": "data/validation/external-opencode-hi-0.1.1-workspace-1.18.18-head-b8973df.json",
+      "receipt_sha256": "ef1238333ce89c1b70c393d8304455c3b9f9648853e390ff264747d3d3c59a79",
       "status": "SUPPORTED_T3",
-      "tested_git_commit": "8bc3f56b200d88c137270280fd5d40c256dbb7fd"
+      "tested_git_commit": "b8973df961bd45d11b5c4a55e7c55da419605a95"
     },
     "browser-execution": {
-      "receipt": "data/validation/external-opencode-hi-0.1.1-browser-1.18.18-head-8bc3f56.json",
-      "receipt_sha256": "1611097aa26f6aa66117fc82fec13881719b18ec657ff35363c1773773bd5d10",
+      "receipt": "data/validation/external-opencode-hi-0.1.1-browser-1.18.18-head-b8973df.json",
+      "receipt_sha256": "1e2a7fa83c414c934db078f8e34d62ceb9f42840e7dd534ff6e2b19d53669435",
       "status": "SUPPORTED_T3",
-      "tested_git_commit": "8bc3f56b200d88c137270280fd5d40c256dbb7fd"
+      "tested_git_commit": "b8973df961bd45d11b5c4a55e7c55da419605a95"
     }
   },
   "summary": {
