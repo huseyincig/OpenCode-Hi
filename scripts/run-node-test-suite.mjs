@@ -25,6 +25,9 @@ try{
 }finally{
   rmSync(sandbox,{recursive:true,force:true})
 }
+const summaryText=result?.stdout??''
+const testsMatch=/ℹ tests (\d+)(?:\r?\n|$)/.exec(summaryText),passMatch=/ℹ pass (\d+)(?:\r?\n|$)/.exec(summaryText),failMatch=/ℹ fail (\d+)(?:\r?\n|$)/.exec(summaryText),cancelMatch=/ℹ cancelled (\d+)(?:\r?\n|$)/.exec(summaryText)
+if(testsMatch&&passMatch&&failMatch&&cancelMatch)console.log(`HI_NODE_TEST_SUMMARY tests=${testsMatch[1]} pass=${passMatch[1]} fail=${failMatch[1]} cancelled=${cancelMatch[1]}`)
 const knownLibuvTeardown=result?.signal==='SIGABRT'&&/uv__io_poll: Assertion `errno == EEXIST' failed/.test(result.stderr??'')&&/ℹ fail 0(?:\r?\n|$)/.test(result.stdout??'')&&/ℹ cancelled 0(?:\r?\n|$)/.test(result.stdout??'')
 if(knownLibuvTeardown){console.error('OpenCode-Hi test harness: ignored known Node 24.19.0 libuv teardown after terminal zero-failure summary');process.exit(0)}
 if(result?.error){console.error(result.error);process.exit(2)}
