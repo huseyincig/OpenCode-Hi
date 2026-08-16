@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-OpenCode-Hi is an Apache-2.0 project. Third-party orchestration control planes are not vendored into the product. Source-level references are integrated only under the decisions recorded in `docs/SOURCE-REUSE-MATRIX.md`.
+OpenCode-Hi is an Apache-2.0 project. Third-party orchestration control planes are not vendored into the product. Third-party code or ideas are incorporated only under compatible license/provenance boundaries; this notice is the public attribution owner. Detailed research/source-study notes are maintainer-local history, not a runtime or documentation dependency.
 
 ## Direct build/runtime dependencies
 

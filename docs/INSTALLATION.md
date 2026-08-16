@@ -171,7 +171,7 @@ The setup owner uses:
 
 ## Project filesystem ownership
 
-Package source is not supposed to be unpacked into arbitrary project-root product directories. Hi-owned durable project data lives under `.opencode/hi/`; OpenCode-native plugin/skill directories remain host-owned. See [Filesystem Layout](FILESYSTEM-LAYOUT.md) and [Storage Architecture](STORAGE-ARCHITECTURE.md).
+Package source is not supposed to be unpacked into arbitrary project-root product directories. Hi-owned durable project data lives under `.opencode/hi/`; OpenCode-native plugin/skill directories remain host-owned. See [Architecture](ARCHITECTURE.md#storage-and-filesystem-ownership).
 
 ## After configuration changes
 

@@ -24,7 +24,7 @@ checks=[
  ('dependency-confusion','plugin/package-lock.json','"lockfileVersion": 3','plugin/test/release-quality-batch.test.mjs','supply-chain metadata are mandatory'),
  ('permission-widening','plugin/src/generated/permission-policy.ts','mayBeWidenedByLowerLayer','plugin/test/permission-profile-contract.test.mjs','mayBeWidenedByLowerLayer'),
  ('approval-spoofing','plugin/src/runtime/safety/authority.ts','approve-exact-action','plugin/test/authority-input-split.test.mjs','assistant text can never settle a pending authority response'),
- ('source-reuse-license','docs/SOURCE-REUSE-MATRIX.md','Program license gate','THIRD_PARTY_NOTICES.md','AGPL, missing-license, unclear-license'),
+ ('source-reuse-license','THIRD_PARTY_NOTICES.md','license/provenance boundaries','docs/SECURITY-MODEL.md','trust boundaries'),
 ]
 violations=[];rows=[]
 for name,owner,oa,proof,pa in checks:

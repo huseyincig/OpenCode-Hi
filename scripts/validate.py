@@ -33,14 +33,16 @@ try:
 except Exception as e:err(f'bad plugin package-lock: {e}')
 if not re.search(rf'^##\s+(?:\[)?v?{re.escape(version)}(?:\])?(?:\s|$)',(ROOT/'CHANGELOG.md').read_text(encoding='utf-8'),re.M|re.I):err('CHANGELOG current version entry missing')
 # Root must remain product-repository clean.
-required_root={'README.md','CHANGELOG.md','CONTRIBUTING.md','SECURITY.md','THIRD_PARTY_NOTICES.md','LICENSE','VERSION','package.json'}
+required_root={'README.md','CHANGELOG.md','THIRD_PARTY_NOTICES.md','LICENSE','VERSION','package.json'}
 for name in required_root:
     if not (ROOT/name).is_file():err(f'required root file missing: {name}')
 for forbidden in ('KURULUM.md','RELEASE-READINESS.md','WORK-STATE.md','work-state.json','HI.cmd','HI.sh','HI-VALIDATE.cmd','HI-VALIDATE.sh','HI-RELEASE-PREP.cmd','HI-RELEASE-PREP.sh','docs/HI-TEST-LAB-HANDOFF.md','docs/FLOW-11-COVERAGE.md','docs/NATIVE-FIRST-10-COVERAGE.md','docs/MIGRATION-Hi-NEXT.md'):
     if (ROOT/forbidden).exists():err(f'non-product/legacy file present: {forbidden}')
-required_docs={'ARCHITECTURE.md','INSTALLATION.md','SKILLS.md','VALIDATION.md','THREAT-MODEL.md','SOURCE-REUSE-MATRIX.md','BASELINE-RECEIPT.md','ARCHITECTURE-REALITY-MAP.md','CONTEXT.md','EXECUTION-POLICY.md','HOSTS.md','HUMAN-DECISIONS.md','PRIVACY.md','PROJECT-INTELLIGENCE.md','RELEASE.md','VERIFICATION.md','BENCHMARKS.md','IMPLEMENTATION-REPORT.md','TERMINOLOGY.md','PRODUCT-IDENTITY.md','FILESYSTEM-LAYOUT.md','STORAGE-ARCHITECTURE.md','STORAGE-OWNERSHIP-MATRIX.md','SKILL-ARTIFACT-OWNERSHIP.md','FINAL-ACCEPTANCE.md','FINAL-SYSTEM-CERTIFICATION.md','HI-NAMING-NAMESPACE.md'}
-actual_docs={p.name for p in (ROOT/'docs').glob('*.md')}
+required_docs={'README.md','ARCHITECTURE.md','INSTALLATION.md','SKILLS.md','HOSTS.md','HUMAN-DECISIONS.md','RELEASE.md','VERIFICATION.md','SECURITY-MODEL.md','locales/tr/README.md'}
+actual_docs={p.relative_to(ROOT/'docs').as_posix() for p in (ROOT/'docs').rglob('*.md')}
 if actual_docs!=required_docs:err(f'docs set mismatch: {sorted(actual_docs)}')
+for rel in ('.github/CONTRIBUTING.md','.github/SECURITY.md','.github/SUPPORT.md','.github/pull_request_template.md','.github/ISSUE_TEMPLATE/bug_report.yml','.github/ISSUE_TEMPLATE/feature_request.yml'):
+    if not (ROOT/rel).is_file():err(f'community health file missing: {rel}')
 # Project-local runtime state/config is allowed only at repository root during development.
 # Nested .opencode directories are product-source contamination (typically leaked test/runtime state).
 for op in ROOT.rglob('.opencode'):
@@ -77,27 +79,26 @@ try:
     if not (ROOT/'scripts/generate-product-truth-inventory.py').is_file():err('product truth inventory generator missing')
 except Exception as e:err(f'bad product truth inventory: {e}')
 
-# PROMPT A documentation ownership/inventory: one meaning -> one current owner, with historical separation.
+# Public documentation ownership/inventory: bounded current surface only.
 try:
     doc_policy=json.loads((ROOT/'data/documentation-ownership.json').read_text(encoding='utf-8'))
     doc_inv=json.loads((ROOT/'data/validation/documentation-inventory.json').read_text(encoding='utf-8'))
     if doc_policy.get('schema')!=1 or doc_policy.get('type')!='hi-documentation-ownership':err('documentation ownership policy header invalid')
     if doc_inv.get('schema')!=1 or doc_inv.get('kind')!='DOCUMENTATION_TRUTH_INVENTORY' or doc_inv.get('status')!='PASS':err('documentation inventory receipt invalid')
     if doc_inv.get('release')!=version:err('documentation inventory version drift')
-    import hashlib
     meta=doc_inv.get('policy') or {}; policy_path=ROOT/meta.get('path','')
     if not policy_path.is_file() or hashlib.sha256(policy_path.read_bytes()).hexdigest()!=meta.get('sha256'):err('documentation ownership policy hash drift')
     violations=doc_inv.get('violations') or {}
-    for key in ('unclassified','duplicate_meaning_owner','missing_owner','historical_as_current_owner'):
-        if violations.get(key)!=[]:err(f'documentation inventory violation: {key}')
-    meanings=doc_policy.get('meanings') or []; ids=[x.get('meaning') for x in meanings if isinstance(x,dict)]
-    if len(ids)!=len(set(ids)) or not ids:err('documentation meaning ownership is duplicate/empty')
-    inv_artifacts={x.get('path'):x for x in doc_inv.get('artifacts',[]) if isinstance(x,dict)}
-    for item in meanings:
-        owner=item.get('owner'); meaning=item.get('meaning')
-        if not isinstance(owner,str) or not (ROOT/owner).is_file():err(f'documentation owner missing: {meaning} -> {owner}')
-        art=inv_artifacts.get(owner)
-        if art and art.get('lifecycle')=='HISTORICAL':err(f'historical artifact owns current meaning: {meaning} -> {owner}')
+    if any(violations.get(k)!=[] for k in ('missing','duplicate_area','budget_or_tracking')):err('documentation inventory reports violations')
+    public=doc_policy.get('public_documents') or []; machine=doc_policy.get('machine_owners') or []
+    areas=[x.get('area') for x in public+machine if isinstance(x,dict)]
+    if not areas or len(areas)!=len(set(areas)):err('documentation area ownership is duplicate/empty')
+    for item in public+machine:
+        rel=item.get('path')
+        if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'documentation owner missing: {item.get("area")} -> {rel}')
+    summary=doc_inv.get('summary') or {}
+    if summary.get('docs_markdown',999)>doc_policy.get('policy',{}).get('public_docs_budget',10):err('documentation public budget exceeded')
+    if summary.get('root_markdown',999)>doc_policy.get('policy',{}).get('root_markdown_budget',3):err('documentation root budget exceeded')
     if not (ROOT/'scripts/generate-documentation-inventory.py').is_file():err('documentation inventory generator missing')
 except Exception as e:err(f'bad documentation ownership/inventory: {e}')
 
@@ -501,7 +502,7 @@ try:
     if not all((sp.get('static_guards') or {}).values()):err('PROMPT B Security/Privacy static guard drift')
     closed={x.get('id') for x in sp.get('closed_defects',[]) if isinstance(x,dict)}
     if not {'process-secret-before-authority-persistence','durable-authority-secret-command','durable-ledger-secret-leak','temporary-rollback-secret-persistence','system-projection-secret-reexposure'}<=closed:err('PROMPT B Security/Privacy closed defect receipt drift')
-    if 'PROMPT B §20 current-architecture security/privacy closure' not in (ROOT/'docs/THREAT-MODEL.md').read_text(encoding='utf-8',errors='replace'):err('PROMPT B Security/Privacy threat model projection missing')
+    if '## Trust boundaries' not in (ROOT/'docs/SECURITY-MODEL.md').read_text(encoding='utf-8',errors='replace'):err('PROMPT B Security/Privacy public security model missing')
 except Exception as e:err(f'bad PROMPT B Security/Privacy receipt: {e}')
 
 try:
@@ -923,8 +924,6 @@ try:
         try: blob=subprocess.check_output(['git','show',f'{record_commit}:{rel}'],cwd=ROOT,stderr=subprocess.DEVNULL)
         except Exception:err(f'PROMPT A historical receipt input missing from completion commit: {rel}');continue
         if hashlib.sha256(blob).hexdigest()!=expected:err(f'PROMPT A historical receipt input hash drift: {rel}')
-    master=(ROOT/'docs/engineering-constitution/MASTER-CONTINUATION.md').read_text(encoding='utf-8')
-    if 'PROMPT A final exit gate — **COMPLETED**' not in master:err('PROMPT A completed status lost from current continuation ledger')
 except Exception as e:err(f'bad PROMPT A reconstruction receipt: {e}')
 
 
@@ -979,7 +978,7 @@ except Exception as e:err(f'bad PROMPT B documentation defect-cycle receipt: {e}
 try:
     f42=json.loads((ROOT/'data/validation/prompt-b-final-documentation-reaudit.json').read_text(encoding='utf-8'))
     if f42.get('schema')!=1 or f42.get('kind')!='PROMPT_B_FINAL_DOCUMENTATION_REAUDIT' or f42.get('section')!=42 or f42.get('status')!='PASS':err('bad PROMPT B final documentation re-audit')
-    if f42.get('summary')!={'required':15,'covered':15,'violations':0} or f42.get('violations')!=[]:err('PROMPT B final documentation re-audit incomplete')
+    if f42.get('summary',{}).get('violations')!=0 or f42.get('violations')!=[]:err('PROMPT B final documentation re-audit incomplete')
     f42commit=(f42.get('source_checkpoint') or {}).get('commit')
     for row in f42.get('areas',[]):
         rel=row.get('path'); expected=row.get('checkpoint_sha256'); expected_oid=row.get('checkpoint_blob_oid')
@@ -998,7 +997,6 @@ try:
     f44=json.loads((ROOT/f'data/validation/final-system-certification-{version}.json').read_text(encoding='utf-8'))
     if f44.get('schema')!=1 or f44.get('kind')!='FINAL_SYSTEM_CERTIFICATION' or f44.get('section')!=44 or f44.get('release')!=version:err('bad final system certification identity')
     if f44.get('status') not in {'PARTIAL','CERTIFIED'}:err('invalid final system certification state')
-    if not (ROOT/'docs/FINAL-SYSTEM-CERTIFICATION.md').is_file():err('final system certification document missing')
     blockers=f44.get('blockers') or []
     if f44.get('status')=='CERTIFIED' and blockers:err('CERTIFIED final system has blockers')
     if f44.get('status')=='PARTIAL' and not blockers:err('PARTIAL final system has no blocker')

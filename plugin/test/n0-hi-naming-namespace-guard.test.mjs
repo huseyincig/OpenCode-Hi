@@ -27,27 +27,27 @@ test('N0 permits a real external product name only at explicit integration bound
   assert.ok(namingViolationsFor('plugin/src/runtime/methodology/superpowers-provider.ts',`export class SuperpowersProvider {}`).length>0)
 })
 
-test('N0 keeps provenance policy separate from living canonical scan scope',()=>{
-  assert.deepEqual(namingViolationsFor('docs/SOURCE-REUSE-MATRIX.md','DCP FlowDeck Octto Skillful HHC historical provenance'),[])
+test('N0 keeps local engineering history separate from living canonical scan scope',()=>{
+  assert.deepEqual(namingViolationsFor('.project-docs/archive/docs/engineering-constitution/sources/example.md','DCP FlowDeck Octto Skillful HHC historical provenance'),[])
   assert.deepEqual(namingViolationsFor('data/validation/forensic-61-progress.json','HHC immutable receipt'),[])
-  const policy=source('docs/HI-NAMING-NAMESPACE.md')
-  assert.match(policy,/N1 — Final Hi Namespace Normalization/)
-  assert.match(policy,/does \*\*not\*\* bulk-rename/)
-  assert.match(policy,/OpenCode-native remains OpenCode/)
+  const policy=JSON.parse(source('data/documentation-ownership.json'))
+  assert.equal(policy.policy.local_only_directory,'.project-docs/')
+  assert.equal(policy.policy.historical_or_local_notes_may_not_own_current_truth,true)
 })
 
 test('N0 architecture and validator bind the naming policy',()=>{
   const lint=source('scripts/architecture_lint.mjs')
   assert.match(lint,/HI022','NAMING_NAMESPACE_DRIFT'/)
   assert.match(lint,/scanCanonicalNaming\(ROOT\)/)
-  assert.match(source('scripts/validate.py'),/HI-NAMING-NAMESPACE\.md/)
+  assert.match(source('data/documentation-ownership.json'),/one-current-area-one-public-owner/)
 })
 
 
-test('N1 final guard includes living reality/install/release docs and product/config catalogs',()=>{
+test('N1 final guard includes compact living architecture install release docs and product catalogs',()=>{
   const guard=source('scripts/naming_namespace_guard.mjs')
-  for(const rel of ['data/product.json','data/hi-config-options.json','docs/ARCHITECTURE-REALITY-MAP.md','docs/INSTALLATION.md','docs/RELEASE.md'])assert.match(guard,new RegExp(rel.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')))
-  const reality=source('docs/ARCHITECTURE-REALITY-MAP.md')
-  assert.match(reality,/Hi owns `ProcessContract` \+ `ProcessRuntime` \+ `OpenCodePtyAdapter`/)
-  assert.doesNotMatch(reality,/not currently adopted as Hi process ownership/i)
+  for(const rel of ['data/product.json','data/hi-config-options.json','docs/ARCHITECTURE.md','docs/INSTALLATION.md','docs/RELEASE.md'])assert.match(guard,new RegExp(rel.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')))
+  assert.doesNotMatch(guard,/docs\/ARCHITECTURE-REALITY-MAP\.md/)
+  const architecture=source('docs/ARCHITECTURE.md')
+  assert.match(architecture,/ProcessContract/)
+  assert.match(architecture,/OpenCodeWorkspaceAdapter/)
 })

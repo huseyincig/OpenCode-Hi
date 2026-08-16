@@ -10,7 +10,7 @@ def row(step,owner,oa,proof,pa):
 rows=[
  row('source-change','scripts/generate-product-truth-inventory.py','owner_sha256','data/validation/product-truth-inventory.json','"owner_sha256"'),
  row('tests','scripts/generate-product-truth-inventory.py','proof_paths','data/validation/product-truth-inventory.json','"proof_paths"'),
- row('docs-owner-impact-check','data/documentation-ownership.json','one-meaning-one-canonical-documentation-owner','data/validation/documentation-inventory.json','"canonical_ownership"'),
+ row('docs-owner-impact-check','data/documentation-ownership.json','one-current-area-one-public-owner','data/validation/documentation-inventory.json','"canonical_ownership"'),
  row('generated-parity-update','scripts/generate-documentation-projections.py','Generated from','data/validation/documentation-parity.json','"status": "PASS"'),
  row('doc-lint','scripts/validate-documentation.py','documentation parity','data/validation/documentation-parity.json','"violations": []'),
 ]
@@ -23,8 +23,8 @@ static={
  'parity_pass':dp.get('status')=='PASS' and dp.get('violations')==[],
  'generated_dirty_guard':'GENERATED_ARTIFACT_DIRTY' in (ROOT/'scripts/architecture_lint.mjs').read_text(encoding='utf-8'),
  'generated_hand_edit_guard':'GENERATED_ARTIFACT_HAND_EDIT' in (ROOT/'scripts/architecture_lint.mjs').read_text(encoding='utf-8'),
- 'prompt_a_docs_not_frozen':(ROOT/'docs/engineering-constitution/MASTER-CONTINUATION.md').is_file(),
- 'platform_neutral_document_order':"for r in sorted(by_rel)" in inv_src and "return [by_rel[r] for r in sorted(by_rel)]" in parity_src,
+ 'bounded_public_documentation':di.get('summary',{}).get('docs_markdown',999)<=10 and di.get('summary',{}).get('root_markdown',999)<=3,
+ 'platform_neutral_document_order':"artifacts.sort(key=lambda x:x['path'])" in inv_src and "for row in cfg.get('public_documents')" in parity_src,
 }
 viol=[x['step'] for x in rows if x['status']!='PASS']+[f'static:{k}' for k,v in static.items() if not v]
 out={'schema':1,'kind':'PROMPT_B_DOCUMENTATION_DEFECT_CYCLE_AUDIT','program':'PROMPT_B','section':29,'status':'PASS' if not viol else 'FAIL','summary':{'required':5,'covered':sum(x['status']=='PASS' for x in rows),'violations':len(viol)},'cycle':rows,'static_guards':static,'violations':viol,'claim_boundary':'Documentation is evaluated in every material defect cycle. A source change does not require meaningless prose churn; it requires canonical documentation-owner impact evaluation, regenerated machine projections where applicable, and parity/lint PASS. Documentation never outranks live source/contracts/runtime evidence.'}

@@ -1,0 +1,46 @@
+name: Bug report
+description: Report a reproducible OpenCode-Hi defect
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: "Please remove secrets and private repository content."
+  - type: input
+    id: hi-version
+    attributes:
+      label: OpenCode-Hi version
+      placeholder: "0.1.1"
+    validations:
+      required: true
+  - type: input
+    id: host-version
+    attributes:
+      label: OpenCode version
+      placeholder: "1.18.18"
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: OS / architecture
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Include exact steps and sanitized configuration.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true

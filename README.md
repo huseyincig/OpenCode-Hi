@@ -1,6 +1,6 @@
 # OpenCode-Hi
 
-[Türkçe README](README.tr.md)
+[Türkçe README](docs/locales/tr/README.md)
 
 OpenCode-Hi is the semantic and execution-control plane for evidence-aware AI software engineering on OpenCode. Hi owns the meaning of the work—Mission, Task, Worker, Role, Methodology, Authority, Evidence, Verification, recovery and completion—while OpenCode remains the primary native execution host for sessions, models, tools, permissions, PTY, workspace and other host primitives.
 
@@ -14,7 +14,7 @@ Hi is designed to use the minimum sufficient topology, model, context and verifi
 
 The source tree currently reports application version `0.1.1`. Version identity is owned by `VERSION` and parity-validated against package metadata. Historical GitHub `v0.1.0` remains immutable and is not reused for this hardened release identity.
 
-The GitHub `v0.1.0` release is immutable and source-bound to its historical commit. The current candidate is `0.1.1`; GitHub/npm publication is a final T4 step and must not be inferred from package metadata before external verification. See [Release Engineering](docs/RELEASE.md).
+`v0.1.1` is the current published release. GitHub/npm publication and provenance are externally verified; historical `v0.1.0` remains immutable. See [Release Engineering](docs/RELEASE.md).
 
 Current host capability truth is generated from exact receipts rather than hand-maintained here. See [Host Support](docs/HOSTS.md) and `data/validation/compatibility-matrix-0.1.0.json`.
 
@@ -119,7 +119,7 @@ Hi configuration is current-only and fail-closed. The canonical machine inventor
 
 Major control surfaces include execution policy/topology, primary mode, model routing, concurrency limits, context policy, methodology policy and compatibility diagnostics. Safety constraints cannot be widened by a lower-precedence layer.
 
-See [Installation and Configuration](docs/INSTALLATION.md) and [Execution Policy](docs/EXECUTION-POLICY.md).
+See [Installation and Configuration](docs/INSTALLATION.md) and [Architecture](docs/ARCHITECTURE.md#execution-policy).
 
 ## Roles, models, Methodologies and skills
 
@@ -137,48 +137,26 @@ User dirty, staged and unrelated files remain user-owned. Hi never treats a broa
 
 **Evidence is also different from prose.** Worker/model output, Context, Project Intelligence, Methodology content and browser observations do not become Evidence merely because they look convincing. Completion requires current obligations and fresh admissible proof to reconcile deterministically.
 
-See [Human Decisions and Authority](docs/HUMAN-DECISIONS.md), [Verification](docs/VERIFICATION.md), [Privacy](docs/PRIVACY.md), and [Threat Model](docs/THREAT-MODEL.md).
+See [Human Decisions and Authority](docs/HUMAN-DECISIONS.md), [Verification](docs/VERIFICATION.md), [Security model](docs/SECURITY-MODEL.md).
 
 ## State and recovery
 
 Hi-owned project state lives under `.opencode/hi/` according to explicit storage ownership. OpenCode-native plugin/skill directories remain OpenCode-owned. Durable state is current-schema only; restart reconciliation adopts exact owned resources or quarantines mismatches instead of inventing continuity.
 
-See [Filesystem Layout](docs/FILESYSTEM-LAYOUT.md) and [Storage Architecture](docs/STORAGE-ARCHITECTURE.md).
+See [Architecture](docs/ARCHITECTURE.md#storage-and-filesystem-ownership).
 
-## Documentation map
+## Documentation
 
-### Start here
-
-- [Product Identity](docs/PRODUCT-IDENTITY.md)
-- [Installation and Lifecycle](docs/INSTALLATION.md)
+- [Documentation index](docs/README.md)
+- [Installation and configuration](docs/INSTALLATION.md)
 - [Architecture](docs/ARCHITECTURE.md)
-- [Host Support](docs/HOSTS.md)
-
-### How Hi works
-
-- [Execution Policy](docs/EXECUTION-POLICY.md)
-- [Context Architecture](docs/CONTEXT.md)
-- [Project Intelligence](docs/PROJECT-INTELLIGENCE.md)
-- [Methodologies and Skills](docs/SKILLS.md)
+- [Host support](docs/HOSTS.md)
+- [Methodologies and skills](docs/SKILLS.md)
+- [Human decisions and authority](docs/HUMAN-DECISIONS.md)
 - [Verification](docs/VERIFICATION.md)
-
-### Safety and operations
-
-- [Human Decisions and Authority](docs/HUMAN-DECISIONS.md)
-- [Privacy](docs/PRIVACY.md)
-- [Threat Model](docs/THREAT-MODEL.md)
-- [Filesystem Layout](docs/FILESYSTEM-LAYOUT.md)
-- [Release Engineering](docs/RELEASE.md)
-
-### Contributors and architects
-
-- [Contributing](CONTRIBUTING.md)
-- [Engineering Constitution](docs/engineering-constitution/15-ENGINEERING-CONSTITUTION.md)
-- [ADR Index](docs/engineering-constitution/16-ADR-INDEX.md)
-- [Documentation Ownership](data/documentation-ownership.json)
-- [Source Reuse Matrix](docs/SOURCE-REUSE-MATRIX.md)
-
-Historical implementation reports, migration ledgers, old acceptance snapshots and source-study material are retained for provenance but are not current product truth owners.
+- [Security model](docs/SECURITY-MODEL.md)
+- [Release engineering](docs/RELEASE.md)
+- [Contributing](.github/CONTRIBUTING.md) · [Security](.github/SECURITY.md) · [Support](.github/SUPPORT.md)
 
 ## Verification
 
@@ -196,4 +174,4 @@ See [Verification Strategy](docs/VERIFICATION.md).
 
 ## License
 
-OpenCode-Hi is Apache-2.0 licensed. External mechanisms, clean-room/reference-only decisions and attribution boundaries are recorded in [Third-Party Notices](THIRD_PARTY_NOTICES.md) and the [Source Reuse Matrix](docs/SOURCE-REUSE-MATRIX.md).
+OpenCode-Hi is Apache-2.0 licensed. External mechanisms, clean-room/reference-only decisions and attribution boundaries are recorded in [Third-Party Notices](THIRD_PARTY_NOTICES.md).

@@ -9,13 +9,13 @@ const read=p=>readFileSync(resolve(root,p),'utf8')
 test('Q7 contributor adding config has one canonical option owner and generated projections',()=>{
  const catalog=JSON.parse(read('data/hi-config-options.json')),ids=catalog.options.map(x=>x.id);assert.equal(new Set(ids).size,ids.length);assert.ok(catalog.options.every(x=>x.owner==='hi-config'))
  assert.match(read('scripts/generate_config_policy.py'),/OUT\.write_bytes/);assert.match(read('plugin/src/generated/config-policy.ts'),/generated from data\/hi-config-options\.json; do not hand edit/)
- assert.match(read('docs/engineering-constitution/03-FAILURE-PATTERN-INVENTORY.md'),/Every runtime config option must declare owner/)
+ const ownership=JSON.parse(read('data/documentation-ownership.json'));assert.ok(ownership.public_documents.some(x=>x.path==='docs/INSTALLATION.md'&&x.area==='installation-configuration-lifecycle'))
 })
 
 test('Q7 contributor adding methodology edits canonical catalog rather than duplicate runtime lists',()=>{
  const catalog=JSON.parse(read('data/hi-methodologies.json')),items=catalog.profiles??[];assert.ok(items.length>=27);const names=items.map(x=>x.name);assert.equal(new Set(names).size,names.length)
  assert.match(read('scripts/generate_methodology_policy.py'),/methodology catalog\/package inventory drift/);assert.match(read('plugin/src/generated/methodology-policy.ts'),/generated/i)
- assert.match(read('docs/engineering-constitution/06-CONTRACT-CATALOG.md'),/Canonical owner:\*\* methodology catalog/)
+ assert.match(read('docs/SKILLS.md'),/canonical machine contract/i)
 })
 
 test('Q7 contributor adding host adapter behavior has explicit port and OpenCode boundary',()=>{
@@ -24,7 +24,7 @@ test('Q7 contributor adding host adapter behavior has explicit port and OpenCode
 })
 
 test('Q7 contributor adding validation rule has one architecture lint execution owner and documented acceptance path',()=>{
- const lint=read('scripts/architecture_lint.mjs'),doc=read('docs/engineering-constitution/10-VALIDATION-ARCHITECTURE.md'),rootPkg=JSON.parse(read('package.json')),pluginPkg=JSON.parse(read('plugin/package.json'))
- assert.match(lint,/HI022/);assert.match(doc,/architecture_lint\.mjs/);assert.equal(rootPkg.scripts['architecture:lint'],'npm --prefix plugin run architecture:lint');assert.match(pluginPkg.scripts['architecture:lint'],/architecture_lint\.mjs/)
+ const lint=read('scripts/architecture_lint.mjs'),doc=read('docs/VERIFICATION.md'),rootPkg=JSON.parse(read('package.json')),pluginPkg=JSON.parse(read('plugin/package.json'))
+ assert.match(lint,/HI022/);assert.match(doc,/npm run check/);assert.equal(rootPkg.scripts['architecture:lint'],'npm --prefix plugin run architecture:lint');assert.match(pluginPkg.scripts['architecture:lint'],/architecture_lint\.mjs/)
  const duplicateFiles=['scripts/validate.py','plugin/src/plugin.ts'].filter(p=>/HI022/.test(read(p)));assert.deepEqual(duplicateFiles,[])
 })

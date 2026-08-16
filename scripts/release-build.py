@@ -5,9 +5,9 @@ from pathlib import Path
 
 KIT=Path(__file__).resolve().parents[1]
 DIST_DIRS=['skills','plugin/dist']
-DIST_FILES=['VERSION','package.json','package-lock.json','scripts/native_plugin_setup.py','README.md','README.tr.md','LICENSE','THIRD_PARTY_NOTICES.md']
+DIST_FILES=['VERSION','package.json','package-lock.json','scripts/native_plugin_setup.py','README.md','docs/locales/tr/README.md','LICENSE','THIRD_PARTY_NOTICES.md']
 SOURCE_DIRS=['roles','skills','scripts','data','docs','plugin','tests']
-SOURCE_FILES=['VERSION','package.json','package-lock.json','README.md','README.tr.md','SECURITY.md','CONTRIBUTING.md','LICENSE','THIRD_PARTY_NOTICES.md','CHANGELOG.md','.gitignore','pytest.ini','requirements-dev.txt','.gitattributes']
+SOURCE_FILES=['VERSION','package.json','package-lock.json','README.md','docs/locales/tr/README.md','.github/SECURITY.md','.github/CONTRIBUTING.md','.github/SUPPORT.md','.github/pull_request_template.md','LICENSE','THIRD_PARTY_NOTICES.md','CHANGELOG.md','.gitignore','pytest.ini','requirements-dev.txt','.gitattributes']
 # Personal/development-environment files never enter shareable archives.
 FORBIDDEN_ROOTS={'.opencode','opencode.jsonc','AGENTS.md'}
 

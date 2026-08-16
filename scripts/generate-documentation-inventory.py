@@ -9,60 +9,44 @@ OUT=ROOT/'data/validation/documentation-inventory.json'
 def sha(p:Path)->str:return hashlib.sha256(p.read_bytes()).hexdigest()
 def rel(p:Path)->str:return p.relative_to(ROOT).as_posix()
 
-def classify(path:str,cfg:dict):
-    ac=cfg['artifact_classification']
-    if path in ac['root_current']:
-        return ('DERIVED_CURRENT' if path=='README.tr.md' else 'CANONICAL_CURRENT','USER' if path.startswith('README') else 'CONTRIBUTOR','HUMAN_OWNED')
-    if path.startswith('docs/') and path.count('/')==1:
-        name=path.split('/',1)[1]
-        if name in ac['docs_current']: return ('CANONICAL_CURRENT','USER' if name in {'INSTALLATION.md','SKILLS.md','HUMAN-DECISIONS.md','PRIVACY.md','PRODUCT-IDENTITY.md'} else 'CONTRIBUTOR','PARITY_VALIDATED')
-        if name in ac['docs_historical']: return ('HISTORICAL','HISTORICAL','HUMAN_OWNED')
-    prefix='docs/engineering-constitution/'
-    if path.startswith(prefix):
-        rest=path[len(prefix):]
-        if rest.startswith('adrs/'): return ('REFERENCE','ARCHITECT','HUMAN_OWNED')
-        if rest.startswith('sources/'): return ('HISTORICAL','HISTORICAL','HUMAN_OWNED')
-        if rest in ac['constitution_current']: return ('CANONICAL_CURRENT','ARCHITECT' if rest!='MASTER-CONTINUATION.md' else 'INTERNAL_ENGINEERING','HUMAN_OWNED')
-        if rest in ac['constitution_reference']: return ('REFERENCE','ARCHITECT','HUMAN_OWNED')
-        if rest in ac['constitution_historical']: return ('HISTORICAL','HISTORICAL','HUMAN_OWNED')
-    if path.startswith('roles/') and path.endswith('.md'): return ('DERIVED_CURRENT','CONTRIBUTOR','PARITY_VALIDATED')
-    if path.startswith('skills/') and path.endswith('/SKILL.md'): return ('DERIVED_CURRENT','CONTRIBUTOR','PARITY_VALIDATED')
-    return None
-
 def main():
     cfg=json.loads(POLICY.read_text(encoding='utf-8'))
-    candidates=[]
-    for p in [ROOT/'README.md',ROOT/'README.tr.md',ROOT/'CONTRIBUTING.md',ROOT/'SECURITY.md',ROOT/'CHANGELOG.md']:
-        if p.is_file(): candidates.append(p)
-    candidates += [p for p in (ROOT/'docs').rglob('*') if p.is_file() and p.suffix.lower() in {'.md','.txt'}]
-    candidates += [p for p in (ROOT/'roles').glob('*.md') if p.is_file()]
-    candidates += [p for p in (ROOT/'skills').glob('*/SKILL.md') if p.is_file()]
-    artifacts=[];unclassified=[]
-    by_rel={rel(p):p for p in candidates}
-    for r in sorted(by_rel):
-        p=by_rel[r]; c=classify(r,cfg)
-        if not c: unclassified.append(r);continue
-        lifecycle,audience,update_mode=c
-        artifacts.append({'path':r,'sha256':sha(p),'audience':audience,'lifecycle':lifecycle,'update_mode':update_mode})
-    meanings=cfg['meanings']; ids=[m['meaning'] for m in meanings]
-    dup=sorted({x for x in ids if ids.count(x)>1})
-    missing=[];historical_owner=[]
-    bypath={a['path']:a for a in artifacts}
-    for m in meanings:
-        p=ROOT/m['owner']
-        if not p.is_file(): missing.append({'meaning':m['meaning'],'owner':m['owner']});continue
-        if m['owner'] in bypath and bypath[m['owner']]['lifecycle']=='HISTORICAL': historical_owner.append({'meaning':m['meaning'],'owner':m['owner']})
-    current=sum(1 for a in artifacts if a['lifecycle'] in {'CANONICAL_CURRENT','DERIVED_CURRENT','GENERATED_CURRENT'})
-    status='PASS' if not(unclassified or dup or missing or historical_owner) else 'FAIL'
+    public=cfg.get('public_documents') or []
+    machine=cfg.get('machine_owners') or []
+    areas=[x.get('area') for x in public+machine]
+    duplicate=sorted({x for x in areas if areas.count(x)>1})
+    artifacts=[];missing=[]
+    for x in public:
+        path=x['path']; p=ROOT/path
+        if not p.is_file(): missing.append(path); continue
+        artifacts.append({'path':path,'sha256':sha(p),'area':x['area'],'audience':x['audience'],'lifecycle':'DERIVED_CURRENT' if x['update_mode']=='DERIVED_CURRENT' else 'CANONICAL_CURRENT','update_mode':x['update_mode']})
+    machine_rows=[]
+    for x in machine:
+        p=ROOT/x['path']
+        if not p.is_file(): missing.append(x['path']); continue
+        machine_rows.append({'path':x['path'],'sha256':sha(p),'area':x['area'],'lifecycle':'MACHINE_OWNER'})
+    artifacts.sort(key=lambda x:x['path']); machine_rows.sort(key=lambda x:x['path'])
+    docs_count=sum(1 for x in artifacts if x['path'].startswith('docs/') and x['path'].endswith('.md'))
+    root_md=[p.name for p in ROOT.glob('*.md') if p.is_file()]
+    budget=cfg['policy']['public_docs_budget']; root_budget=cfg['policy']['root_markdown_budget']
+    budget_viol=[]
+    if docs_count>budget:budget_viol.append(f'public-doc-budget:{docs_count}>{budget}')
+    if len(root_md)>root_budget:budget_viol.append(f'root-markdown-budget:{len(root_md)}>{root_budget}')
+    # Local-only archive must never be tracked or treated as a current owner.
+    tracked_local=False
+    import subprocess
+    tracked=subprocess.run(['git','ls-files','.project-docs'],cwd=ROOT,text=True,capture_output=True).stdout.strip()
+    tracked_local=bool(tracked)
+    if tracked_local:budget_viol.append('local-only-docs-are-tracked')
+    status='PASS' if not(missing or duplicate or budget_viol) else 'FAIL'
     out={'schema':1,'release':(ROOT/'VERSION').read_text(encoding='utf-8').strip(),'kind':'DOCUMENTATION_TRUTH_INVENTORY','status':status,
-         'policy':{'path':rel(POLICY),'sha256':sha(POLICY)},
-         'summary':{'artifacts':len(artifacts),'current_or_derived':current,'historical':sum(1 for a in artifacts if a['lifecycle']=='HISTORICAL'),'reference':sum(1 for a in artifacts if a['lifecycle']=='REFERENCE'),'canonical_meanings':len(meanings)},
-         'canonical_ownership':meanings,'artifacts':artifacts,
-         'violations':{'unclassified':unclassified,'duplicate_meaning_owner':dup,'missing_owner':missing,'historical_as_current_owner':historical_owner},
-         'classification_boundary':'Historical engineering/source-study artifacts remain available for provenance but may not own current product truth.'}
+      'policy':{'path':rel(POLICY),'sha256':sha(POLICY)},
+      'summary':{'public_documents':len(artifacts),'docs_markdown':docs_count,'root_markdown':len(root_md),'machine_owners':len(machine_rows),'canonical_areas':len(areas)},
+      'canonical_ownership':public+machine,'artifacts':artifacts,'machine_owners':machine_rows,
+      'violations':{'missing':missing,'duplicate_area':duplicate,'budget_or_tracking':budget_viol},
+      'classification_boundary':'Only the bounded public manifest owns current human documentation. Local engineering/history notes and Git history may inform maintainers but never own current product truth.'}
     OUT.write_text(json.dumps(out,indent=2,ensure_ascii=False)+'\n',encoding='utf-8',newline='\n')
-    print(f"documentation inventory {status}: artifacts={len(artifacts)} meanings={len(meanings)}")
-    if status!='PASS':
-        print(json.dumps(out['violations'],indent=2));return 1
-    return 0
+    print(f"documentation inventory {status}: public={len(artifacts)} docs={docs_count} root_md={len(root_md)} machine={len(machine_rows)}")
+    if status!='PASS':print(json.dumps(out['violations'],indent=2,ensure_ascii=False))
+    return 0 if status=='PASS' else 1
 if __name__=='__main__':sys.exit(main())

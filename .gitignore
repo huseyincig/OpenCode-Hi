@@ -29,3 +29,6 @@ Thumbs.db
 # Root opencode.jsonc (development workspace config; private local MCP URLs).
 # Use opencode.jsonc.example as a generic template for fresh consumer installs.
 opencode.jsonc
+
+# Local-only engineering/history documentation; intentionally never published.
+.project-docs/

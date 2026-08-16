@@ -25,14 +25,7 @@ def main():
         rows.append(f"| `{cap}` | **{x['status']}** | `{x['tested_git_commit']}` | `{x['receipt']}` |")
     rows += ['','This table is a projection, not evidence ownership: the referenced exact receipts remain the capability proof. Historical negative/older receipts remain preserved in the generated compatibility history.']
     replace_block(ROOT/'docs/HOSTS.md','<!-- BEGIN GENERATED HOST CAPABILITY MATRIX -->','<!-- END GENERATED HOST CAPABILITY MATRIX -->','\n'.join(rows))
-    pti=json.loads((ROOT/'data/validation/product-truth-inventory.json').read_text(encoding='utf-8'))
-    rows=['Generated from `data/validation/product-truth-inventory.json`. This is a trace projection, not a semantic owner.','', '| Area | Canonical owner | Owner source | Consumer/executor | Proof | Canonical doc |','|---|---|---|---|---|---|']
-    for x in pti['areas']:
-        consumers='<br>'.join(f"`{v}`" for v in x['consumer_or_executor_paths']) or '—'
-        proofs='<br>'.join(f"`{v}`" for v in x['proof_paths']) or '—'
-        rows.append(f"| `{x['area']}` | {x['canonical_owner']} | `{x['owner_path']}` | {consumers} | {proofs} | `{x['canonical_doc']}` |")
-    replace_block(ROOT/'docs/ARCHITECTURE-REALITY-MAP.md','<!-- BEGIN GENERATED PRODUCT TRUTH TRACE -->','<!-- END GENERATED PRODUCT TRUTH TRACE -->','\n'.join(rows))
 
-    print(f"documentation projections generated: config={len(cfg['options'])} capabilities={len(cur['capabilities'])} product areas={len(pti['areas'])}")
+    print(f"documentation projections generated: config={len(cfg['options'])} capabilities={len(cur['capabilities'])}")
     return 0
 if __name__=='__main__':sys.exit(main())

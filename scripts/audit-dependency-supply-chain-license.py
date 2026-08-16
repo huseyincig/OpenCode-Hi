@@ -18,7 +18,7 @@ rows=[
  row('risky-install-scripts','package-lock.json','"hasInstallScript": true','THIRD_PARTY_NOTICES.md','msgpackr-extract'),
  row('provenance-integrity','scripts/release-build.py','dependency_graph_sha256','tests/test_hi.py','release_manifest_contains_dependency_sbom_and_supply_chain_digest'),
  row('dependency-licenses','THIRD_PARTY_NOTICES.md','`playwright-core`','package-lock.json','"license": "Apache-2.0"'),
- row('source-reuse','docs/SOURCE-REUSE-MATRIX.md','### Program license gate','docs/THREAT-MODEL.md','Missing/unclear/AGPL-incompatible source'),
+ row('source-reuse','THIRD_PARTY_NOTICES.md','license/provenance boundaries','docs/SECURITY-MODEL.md','trust boundaries'),
  row('release-permissions',' .github/workflows/npm-publish.yml'.strip(),'id-token: write','plugin/test/r1-npm-oidc-workflow.test.mjs','no long-lived npm token surface'),
 ]
 viol=[r['invariant'] for r in rows if r['status']!='PASS']

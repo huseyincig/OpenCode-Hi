@@ -187,3 +187,22 @@ Core receives normalized Hi-compatible structures; OpenCode SDK uncertainty stay
 `TaskRuntime`, `ChildExecutionCoordinator`, `RuntimeEventController`, continuation dispatch, process control, and model/provider-policy resolution therefore do not require OpenCode SDK client types or lifecycle shapes. OpenCode remains the only implemented and real-host-certified adapter. A future session-capable host (for example Claude Code) is architecturally feasible by implementing the host ports and host-specific event/config/permission projections; that feasibility does **not** claim that such an adapter currently exists or is supported.
 
 Portability is an architecture property, not a claim that alternate hosts are currently implemented or certified.
+## Execution policy
+
+Execution topology and model selection are bounded structured decisions. Small/local work prefers the direct minimum-sufficient path; parallel or specialist execution requires explicit structured benefit/risk/capability signals. Provider/model fallback is bounded and never substitutes for evidence or authority.
+
+## Context and Project Intelligence
+
+The first-class semantic adapter currently supports `typescript` and `typescriptreact` only. JavaScript, LSP-backed and Tree-sitter-backed semantic adapters are not implemented or advertised.
+
+Context is consumer-bound and budgeted. Durable context artifacts, semantic TypeScript context, and Project Intelligence are distinct from Evidence. Project Intelligence is source-linked, freshness-aware knowledge; stale or unrelated records are filtered before retrieval. Compression does not widen privacy or consumer scope.
+
+## Storage and filesystem ownership
+
+OpenCode workspace isolation is bound through the `OpenCodeWorkspaceAdapter`; it verifies exact repository/worktree identity while the generic Workspace runtime owns Hi lease and recovery semantics.
+
+Hi-owned durable project data lives under `.opencode/hi/`. OpenCode-native plugin/skill/config locations remain host-owned. Runtime/transient state uses the runtime-state resolver rather than arbitrary project-root files. Setup, upgrade, rollback, and uninstall mutate only Hi-owned registration/state and preserve unrelated user configuration.
+
+## Privacy
+
+Provider-facing projections are redacted at the privacy boundary. Credentials and secret-bearing execution environment values are not product state. See [Security model](SECURITY-MODEL.md).

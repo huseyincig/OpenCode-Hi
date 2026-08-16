@@ -8,12 +8,9 @@ const ROOT=resolve(new URL('..',import.meta.url).pathname)
 const unix=p=>p.split(sep).join('/')
 const sha=p=>createHash('sha256').update(readFileSync(join(ROOT,p))).digest('hex')
 const json=p=>JSON.parse(readFileSync(join(ROOT,p),'utf8'))
-const walk=(dir,out=[])=>{for(const name of readdirSync(dir)){const p=join(dir,name),s=statSync(p);if(s.isDirectory()){if(['.git','node_modules','dist','__pycache__','.pytest_cache'].includes(name))continue;walk(p,out)}else out.push(p)}return out}
-const excludedPathPrefixes=['docs/engineering-constitution/sources/','data/validation/external-','data/validation/forensic-']
-const excludedPaths=new Set([
-  'docs/BASELINE-RECEIPT.md','docs/SOURCE-REUSE-MATRIX.md','docs/TERMINOLOGY.md','docs/PRODUCT-IDENTITY.md',
-  'docs/CANONICAL-IMPLEMENTATION-PROMPT.txt','plugin/test/config-no-legacy-superpowers.test.mjs'
-])
+const walk=(dir,out=[])=>{for(const name of readdirSync(dir)){const p=join(dir,name),s=statSync(p);if(s.isDirectory()){if(['.git','.project-docs','node_modules','dist','__pycache__','.pytest_cache'].includes(name))continue;walk(p,out)}else out.push(p)}return out}
+const excludedPathPrefixes=['.project-docs/','data/validation/external-','data/validation/forensic-']
+const excludedPaths=new Set(['plugin/test/config-no-legacy-superpowers.test.mjs'])
 const suspicious=/(?:^|[\/_-])(hhc|oho|superpowers|flowdeck|octto|skillful|orchestra|hiai)(?:[\/_-]|$)/i
 const suspiciousPaths=walk(ROOT).map(p=>unix(relative(ROOT,p))).filter(rel=>suspicious.test(rel)&&!excludedPaths.has(rel)&&!excludedPathPrefixes.some(x=>rel.startsWith(x)))
 const namingViolations=scanCanonicalNaming(ROOT)
@@ -21,7 +18,6 @@ const pkg=json('package.json'),product=json('data/product.json'),roles=json('dat
 const skills=readdirSync(join(ROOT,'skills')).filter(name=>statSync(join(ROOT,'skills',name)).isDirectory()).sort()
 const toolSource=readFileSync(join(ROOT,'plugin/src/opencode/tool-namespace.ts'),'utf8')
 const staleChecks={
-  architecture_reality_process_not_adopted:/not currently adopted as Hi process ownership/i.test(readFileSync(join(ROOT,'docs/ARCHITECTURE-REALITY-MAP.md'),'utf8')),
   release_manual_latest_host:/latest completed exact-host acceptance/i.test(readFileSync(join(ROOT,'docs/RELEASE.md'),'utf8')),
 }
 const publicChecks={
@@ -38,7 +34,7 @@ const receipt={
   schema:1,release:'0.1.0',kind:'FINAL_HI_NAMESPACE_NORMALIZATION',generated_at:'2026-08-15',status:pass?'PASS':'FAIL',
   claim_boundary:'Final living product namespace/status-coherence projection only. Historical provenance, immutable receipts, source-study material, and negative rejection tests are intentionally excluded from rename pressure.',
   canonical:{product:'OpenCode-Hi',package:'opencode-hi',skill_namespace:'hi-*',tool_namespace:'hi_*'},
-  guard:{violations:namingViolations,expanded_living_scope:['data/product.json','data/hi-config-options.json','docs/ARCHITECTURE-REALITY-MAP.md','docs/INSTALLATION.md','docs/RELEASE.md']},
+  guard:{violations:namingViolations,expanded_living_scope:['data/product.json','data/hi-config-options.json','docs/ARCHITECTURE.md','docs/INSTALLATION.md','docs/RELEASE.md']},
   public_surface:{...publicChecks,skill_count:skills.length,role_ids:roles.map(x=>x.id).sort(),config_option_count:options.length},
   path_audit:{violations:suspiciousPaths,excluded_provenance_or_negative_surfaces:[...excludedPaths].sort(),excluded_prefixes:excludedPathPrefixes},
   stale_living_status:staleChecks,
@@ -52,8 +48,7 @@ const receipt={
     terminology:{path:'data/validation/terminology-audit-0.1.0.json',sha256:sha('data/validation/terminology-audit-0.1.0.json')},
     product:{path:'data/product.json',sha256:sha('data/product.json')},
     config_catalog:{path:'data/hi-config-options.json',sha256:sha('data/hi-config-options.json')},
-    role_catalog:{path:'data/hi-roles.json',sha256:sha('data/hi-roles.json')},
-    architecture_reality:{path:'docs/ARCHITECTURE-REALITY-MAP.md',sha256:sha('docs/ARCHITECTURE-REALITY-MAP.md')}
+    role_catalog:{path:'data/hi-roles.json',sha256:sha('data/hi-roles.json')}
   },
   rules:[
     'living Hi-owned semantic surfaces do not adopt research-product branding as canonical owners',
