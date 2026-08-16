@@ -24,10 +24,10 @@
       "invariant": "lockfiles",
       "status": "PASS",
       "owner": "scripts/release-build.py",
-      "owner_sha256": "ce25a2114b4e2e615192d2d08099ec061684520af81be9324c6365194c8c4894",
+      "owner_sha256": "53166a5820728f2078ac3a1d119e881d4f66848b03df4c21bb687fd6d05f0aaf",
       "owner_anchor": "def dependency_lock_paths(root:Path)",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "410490f98c7d0336d223b7be86545b09a90f557d85fa2c276afaef9d21529d7e",
+      "proof_sha256": "6f3841f480057b5a0edc1026f85d4559aac9701d28c190ed4b9a1a4568541561",
       "proof_anchor": "dependency_locks']==['package-lock.json','plugin/package-lock.json']"
     },
     {
@@ -54,10 +54,10 @@
       "invariant": "provenance-integrity",
       "status": "PASS",
       "owner": "scripts/release-build.py",
-      "owner_sha256": "ce25a2114b4e2e615192d2d08099ec061684520af81be9324c6365194c8c4894",
+      "owner_sha256": "53166a5820728f2078ac3a1d119e881d4f66848b03df4c21bb687fd6d05f0aaf",
       "owner_anchor": "dependency_graph_sha256",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "410490f98c7d0336d223b7be86545b09a90f557d85fa2c276afaef9d21529d7e",
+      "proof_sha256": "6f3841f480057b5a0edc1026f85d4559aac9701d28c190ed4b9a1a4568541561",
       "proof_anchor": "release_manifest_contains_dependency_sbom_and_supply_chain_digest"
     },
     {

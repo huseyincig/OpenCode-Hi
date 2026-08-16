@@ -31,15 +31,15 @@ def links(path:Path,text:str):
         out.append((m.start(),target))
     return out
 def main():
-    errors=[]; policy=json.loads(POLICY.read_text()); docs=current_docs(policy)
-    version=(ROOT/'VERSION').read_text().strip(); pkg=json.loads((ROOT/'package.json').read_text()); pp=json.loads((ROOT/'plugin/package.json').read_text()); product=json.loads((ROOT/'data/product.json').read_text())
-    compat=json.loads((ROOT/'data/validation/compatibility-matrix-0.1.0.json').read_text()); release=json.loads((ROOT/f'data/validation/release-status-{version}.json').read_text())
+    errors=[]; policy=json.loads(POLICY.read_text(encoding='utf-8')); docs=current_docs(policy)
+    version=(ROOT/'VERSION').read_text(encoding='utf-8').strip(); pkg=json.loads((ROOT/'package.json').read_text(encoding='utf-8')); pp=json.loads((ROOT/'plugin/package.json').read_text(encoding='utf-8')); product=json.loads((ROOT/'data/product.json').read_text(encoding='utf-8'))
+    compat=json.loads((ROOT/'data/validation/compatibility-matrix-0.1.0.json').read_text(encoding='utf-8')); release=json.loads((ROOT/f'data/validation/release-status-{version}.json').read_text(encoding='utf-8'))
     if not(version==pkg.get('version')==pp.get('version')==product.get('version')):errors.append({'code':'DOC_VERSION_PARITY','detail':'VERSION/package/plugin/product mismatch'})
     if pkg.get('name')!='opencode-hi' or product.get('plugin_package')!='opencode-hi':errors.append({'code':'DOC_PACKAGE_PARITY','detail':'canonical package mismatch'})
     cap={k:v.get('status') for k,v in (compat.get('current_reference_host',{}).get('capabilities') or {}).items()}
     for required in ('process-lifecycle','workspace-isolation-binding','browser-execution'):
         if cap.get(required)!='SUPPORTED_T3':errors.append({'code':'DOC_HOST_SUPPORT_INPUT','detail':f'{required} not SUPPORTED_T3 in generated compatibility'})
-    readme=(ROOT/'README.md').read_text(); hosts=(ROOT/'docs/HOSTS.md').read_text(); install=(ROOT/'docs/INSTALLATION.md').read_text(); context=(ROOT/'docs/CONTEXT.md').read_text()
+    readme=(ROOT/'README.md').read_text(encoding='utf-8'); hosts=(ROOT/'docs/HOSTS.md').read_text(encoding='utf-8'); install=(ROOT/'docs/INSTALLATION.md').read_text(encoding='utf-8'); context=(ROOT/'docs/CONTEXT.md').read_text(encoding='utf-8')
     stale=[
       ('STALE_CANDIDATE',r'first coherent OpenCode-Hi candidate|exact 0[.]1[.]0 supported-host statement is bound only after|guaranteed[^\n]{0,60}candidate'),
       ('STALE_PROCESS_SUPPORT',r'process lifecycle remains DEGRADED'),
@@ -52,7 +52,7 @@ def main():
       ('STALE_PRODUCT_VERSION_IDENTITY',r'OpenCode-Hi 0[.]1[.]0 is a new product identity'),
     ]
     for p in docs:
-        text=p.read_text(errors='replace')
+        text=p.read_text(encoding='utf-8',errors='replace')
         for code,pat in stale:
             if re.search(pat,text,re.I):errors.append({'code':code,'path':rel(p)})
         for pos,target in links(p,text):
@@ -68,10 +68,10 @@ def main():
     if not observed_boundary:errors.append({'code':'DOC_HOST_OBSERVED_T3_BOUNDARY','path':'docs/HOSTS.md','detail':'runtime OBSERVED capability health must remain distinct from external T3 certification'})
     if 'only `TypeScriptSemanticContextAdapter`' not in hosts or 'JavaScript, LSP-backed and Tree-sitter-backed semantic adapters are not implemented or advertised' not in context:
         errors.append({'code':'DOC_SEMANTIC_ADAPTER_DRIFT','detail':'semantic adapter support boundary missing'})
-    if 'contains no raw stdout/stderr buffer' not in (ROOT/'docs/ARCHITECTURE.md').read_text():errors.append({'code':'DOC_PROCESS_CONTRACT_DRIFT','path':'docs/ARCHITECTURE.md'})
-    config_doc=(ROOT/'docs/INSTALLATION.md').read_text(); host_doc=(ROOT/'docs/HOSTS.md').read_text()
+    if 'contains no raw stdout/stderr buffer' not in (ROOT/'docs/ARCHITECTURE.md').read_text(encoding='utf-8'):errors.append({'code':'DOC_PROCESS_CONTRACT_DRIFT','path':'docs/ARCHITECTURE.md'})
+    config_doc=(ROOT/'docs/INSTALLATION.md').read_text(encoding='utf-8'); host_doc=(ROOT/'docs/HOSTS.md').read_text(encoding='utf-8')
     if config_doc.count('<!-- BEGIN GENERATED CONFIG REFERENCE -->')!=1 or config_doc.count('<!-- END GENERATED CONFIG REFERENCE -->')!=1:errors.append({'code':'DOC_CONFIG_GENERATED_MARKER','path':'docs/INSTALLATION.md'})
-    for option in json.loads((ROOT/'data/hi-config-options.json').read_text()).get('options',[]):
+    for option in json.loads((ROOT/'data/hi-config-options.json').read_text(encoding='utf-8')).get('options',[]):
         if f"`{option.get('path')}`" not in config_doc:errors.append({'code':'DOC_CONFIG_OPTION_OMITTED','path':'docs/INSTALLATION.md','detail':option.get('path')})
     if host_doc.count('<!-- BEGIN GENERATED HOST CAPABILITY MATRIX -->')!=1 or host_doc.count('<!-- END GENERATED HOST CAPABILITY MATRIX -->')!=1:errors.append({'code':'DOC_HOST_GENERATED_MARKER','path':'docs/HOSTS.md'})
     for cap,entry in (compat.get('current_reference_host',{}).get('capabilities') or {}).items():
@@ -84,7 +84,7 @@ def main():
          'checked_current_documents':[rel(p) for p in docs],
          'checks':{'version_package_product_parity':True,'local_markdown_links':True,'stale_current_status_patterns':True,'release_availability':True,'host_capabilities':True,'semantic_adapter_boundary':True},
          'violations':errors}
-    OUT.write_text(json.dumps(out,indent=2,ensure_ascii=False)+'\n')
+    OUT.write_text(json.dumps(out,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
     print(f'documentation parity {status}: docs={len(docs)} violations={len(errors)}')
     if errors: print(json.dumps(errors,indent=2,ensure_ascii=False))
     return 0 if status=='PASS' else 1

@@ -80,7 +80,7 @@ def dependency_components(root:Path):
     multi=len(locks)>1
     out=[]
     for rel in locks:
-        lock=json.loads((root/rel).read_text());packages=lock.get('packages') or {};rm=packages.get('') or {}
+        lock=json.loads((root/rel).read_text(encoding='utf-8'));packages=lock.get('packages') or {};rm=packages.get('') or {}
         direct_runtime=set((rm.get('dependencies') or {}).keys())
         direct_optional=set((rm.get('optionalDependencies') or {}).keys())
         direct_dev=set((rm.get('devDependencies') or {}).keys())
@@ -105,7 +105,7 @@ def dependency_components(root:Path):
 def validate_third_party_notices(root:Path,components):
     path=root/'THIRD_PARTY_NOTICES.md'
     if not path.is_file(): return ['THIRD_PARTY_NOTICES.md missing']
-    text=path.read_text()
+    text=path.read_text(encoding='utf-8')
     issues=[]
     for c in components:
         if c['relation']=='transitive': continue
@@ -116,30 +116,30 @@ def validate_third_party_notices(root:Path,components):
 def write_sbom(path:Path,version:str,components,graph_sha:str,dependency_locks:list[str],dependency_lock_sha256:dict[str,str]):
     direct=[c for c in components if c['relation']!='transitive']
     sbom={'schema':2,'format':'Hi-SBOM','product':'OpenCode-Hi','version':version,'dependency_locks':dependency_locks,'dependency_lock_sha256':dependency_lock_sha256,'dependency_graph_sha256':graph_sha,'component_count':len(components),'direct_component_count':len(direct),'components':components}
-    path.write_text(json.dumps(sbom,indent=2,sort_keys=True)+'\n')
+    path.write_text(json.dumps(sbom,indent=2,sort_keys=True)+'\n',encoding='utf-8')
     return sbom
 
 def release_identity(root:Path, version:str):
     issues=[]
     try:
-        pkg=json.loads((root/'package.json').read_text())
+        pkg=json.loads((root/'package.json').read_text(encoding='utf-8'))
         if pkg.get('version')!=version: issues.append('root package version mismatch')
     except Exception: issues.append('root package unreadable')
     try:
-        pp=json.loads((root/'plugin'/'package.json').read_text())
+        pp=json.loads((root/'plugin'/'package.json').read_text(encoding='utf-8'))
         if pp.get('version')!=version: issues.append('plugin package version mismatch')
         root_license=pkg.get('license') if isinstance(pkg,dict) else None
         if root_license and pp.get('license')!=root_license: issues.append('plugin package license mismatch')
     except Exception: issues.append('plugin package unreadable')
     try:
-        changelog=(root/'CHANGELOG.md').read_text()
+        changelog=(root/'CHANGELOG.md').read_text(encoding='utf-8')
         import re
         if not re.search(rf'^##\s+(?:\[)?v?{re.escape(version)}(?:\])?(?:\s|$)',changelog,re.M|re.I): issues.append('CHANGELOG version entry missing')
     except Exception: issues.append('CHANGELOG unreadable')
     for lock in (root/'package-lock.json',root/'plugin'/'package-lock.json'):
         if not lock.is_file(): continue
         try:
-            lj=json.loads(lock.read_text()); lv=((lj.get('packages') or {}).get('') or {}).get('version') or lj.get('version')
+            lj=json.loads(lock.read_text(encoding='utf-8')); lv=((lj.get('packages') or {}).get('') or {}).get('version') or lj.get('version')
             if lv and lv!=version: issues.append(f'{lock.relative_to(root).as_posix()} version mismatch')
         except Exception: issues.append(f'{lock.relative_to(root).as_posix()} unreadable')
     return issues
@@ -149,7 +149,7 @@ def main():
     ap.add_argument('--out',type=Path,default=KIT/'dist')
     ap.add_argument('--source-out',type=Path,help='Output directory for the clean SOURCE archive; personal .opencode/opencode.jsonc/AGENTS.md files are excluded')
     a=ap.parse_args()
-    version=(KIT/'VERSION').read_text().strip()
+    version=(KIT/'VERSION').read_text(encoding='utf-8').strip()
     identity_issues=release_identity(KIT,version)
     dependency_locks=dependency_lock_paths(KIT)
     dependency_lock_sha256={rel:sha(KIT/rel) for rel in dependency_locks}
@@ -169,8 +169,8 @@ def main():
     z=a.out/f'OpenCode-Hi-{version}-DISTRIBUTABLE.zip'
     write_zip(z,e)
     inputs_sha256=digest_entries(e)
-    m={'schema':5,'product_name':'OpenCode-Hi','repository':'https://github.com/huseyincig/OpenCode-Hi','version':version,'release_identity':{'version_file':version,'root_package':json.loads((KIT/'package.json').read_text()).get('version'),'plugin_package':json.loads((KIT/'plugin'/'package.json').read_text()).get('version'),'root_package_lock':((json.loads((KIT/'package-lock.json').read_text()).get('packages') or {}).get('') or {}).get('version') if (KIT/'package-lock.json').is_file() else None,'plugin_package_lock':((json.loads((KIT/'plugin'/'package-lock.json').read_text()).get('packages') or {}).get('') or {}).get('version') if (KIT/'plugin'/'package-lock.json').is_file() else None,'changelog_entry':True},'archive':z.name,'archive_sha256':sha(z),'file_count':len(e),'plugin_runtime_sha256':sha(runtime),'provenance':{'schema':1,'builder':'scripts/release-build.py','deterministic_zip':True,'canonical_zip_time':'2026-01-01T00:00:00Z','inputs_sha256':inputs_sha256,'input_file_count':len(e)},'supply_chain':{'schema':2,'dependency_locks':dependency_locks,'dependency_lock_sha256':dependency_lock_sha256,'dependency_graph_sha256':dependency_graph_sha256,'component_count':len(components),'sbom':sbom_path.name,'sbom_sha256':sha(sbom_path),'third_party_notices_sha256':sha(KIT/'THIRD_PARTY_NOTICES.md')},'files':{n:sha(p) for n,p in sorted(e.items())}}
-    (a.out/f'RELEASE-MANIFEST-{version}.json').write_text(json.dumps(m,indent=2)+'\n')
+    m={'schema':5,'product_name':'OpenCode-Hi','repository':'https://github.com/huseyincig/OpenCode-Hi','version':version,'release_identity':{'version_file':version,'root_package':json.loads((KIT/'package.json').read_text(encoding='utf-8')).get('version'),'plugin_package':json.loads((KIT/'plugin'/'package.json').read_text(encoding='utf-8')).get('version'),'root_package_lock':((json.loads((KIT/'package-lock.json').read_text(encoding='utf-8')).get('packages') or {}).get('') or {}).get('version') if (KIT/'package-lock.json').is_file() else None,'plugin_package_lock':((json.loads((KIT/'plugin'/'package-lock.json').read_text(encoding='utf-8')).get('packages') or {}).get('') or {}).get('version') if (KIT/'plugin'/'package-lock.json').is_file() else None,'changelog_entry':True},'archive':z.name,'archive_sha256':sha(z),'file_count':len(e),'plugin_runtime_sha256':sha(runtime),'provenance':{'schema':1,'builder':'scripts/release-build.py','deterministic_zip':True,'canonical_zip_time':'2026-01-01T00:00:00Z','inputs_sha256':inputs_sha256,'input_file_count':len(e)},'supply_chain':{'schema':2,'dependency_locks':dependency_locks,'dependency_lock_sha256':dependency_lock_sha256,'dependency_graph_sha256':dependency_graph_sha256,'component_count':len(components),'sbom':sbom_path.name,'sbom_sha256':sha(sbom_path),'third_party_notices_sha256':sha(KIT/'THIRD_PARTY_NOTICES.md')},'files':{n:sha(p) for n,p in sorted(e.items())}}
+    (a.out/f'RELEASE-MANIFEST-{version}.json').write_text(json.dumps(m,indent=2)+'\n',encoding='utf-8')
     print(f'DISTRIBUTABLE: {z}\nFILE COUNT: {len(e)}\nSHA256: {m["archive_sha256"]}')
 
     if a.source_out:

@@ -408,8 +408,8 @@ try:
             if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B lifecycle missing {key}: {rel}')
             elif hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected_hash:err(f'PROMPT B lifecycle {key} hash drift: {rel}')
         try:
-            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B lifecycle owner anchor drift: {row.get('invariant')}")
-            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B lifecycle proof anchor drift: {row.get('invariant')}")
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B lifecycle owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B lifecycle proof anchor drift: {row.get('invariant')}")
         except Exception as e:err(f'PROMPT B lifecycle row invalid: {e}')
     eq=life.get('capability_source_equivalence') or {}
     if set(eq)!={'process-lifecycle','workspace-isolation-binding','browser-execution'} or not all(x.get('status')=='SUPPORTED_T3' and x.get('equivalent') is True and x.get('runtime_hash_drift')==[] for x in eq.values() if isinstance(x,dict)):err('PROMPT B lifecycle capability source equivalence drift')
@@ -430,8 +430,8 @@ try:
             if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B HumanDecision missing {key}: {rel}')
             elif hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B HumanDecision {key} hash drift: {rel}')
         try:
-            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B HumanDecision owner anchor drift: {row.get('invariant')}")
-            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B HumanDecision proof anchor drift: {row.get('invariant')}")
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B HumanDecision owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B HumanDecision proof anchor drift: {row.get('invariant')}")
         except Exception as e:err(f'PROMPT B HumanDecision row invalid: {e}')
     closed={x.get('id') for x in hd.get('closed_defects',[]) if isinstance(x,dict)}
     if not {'idle-human-decision-authority-reclassification','authority-request-semantic-coherence','reason-label-authority-inference'}<=closed:err('PROMPT B HumanDecision closed defect drift')
@@ -451,8 +451,8 @@ try:
             if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B Persistence/Concurrency missing {key}: {rel}');continue
             if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B Persistence/Concurrency {key} hash drift: {rel}')
         try:
-            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B Persistence/Concurrency owner anchor drift: {row.get('invariant')}")
-            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B Persistence/Concurrency proof anchor drift: {row.get('invariant')}")
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B Persistence/Concurrency owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B Persistence/Concurrency proof anchor drift: {row.get('invariant')}")
         except Exception as e:err(f'PROMPT B Persistence/Concurrency row invalid: {e}')
     if not all((pc.get('static_guards') or {}).values()):err('PROMPT B Persistence/Concurrency static guard drift')
     closed={x.get('id') for x in pc.get('closed_defects',[]) if isinstance(x,dict)}
@@ -472,8 +472,8 @@ try:
             if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B VCS/Path missing {key}: {rel}');continue
             if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B VCS/Path {key} hash drift: {rel}')
         try:
-            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B VCS/Path owner anchor drift: {row.get('invariant')}")
-            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B VCS/Path proof anchor drift: {row.get('invariant')}")
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B VCS/Path owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B VCS/Path proof anchor drift: {row.get('invariant')}")
         except Exception as e:err(f'PROMPT B VCS/Path row invalid: {e}')
     if not all((vp.get('static_guards') or {}).values()):err('PROMPT B VCS/Path static guard drift')
     closed={x.get('id') for x in vp.get('closed_defects',[]) if isinstance(x,dict)}
@@ -495,13 +495,13 @@ try:
             if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B Security/Privacy missing {key}: {rel}');continue
             if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected_hash:err(f'PROMPT B Security/Privacy {key} hash drift: {rel}')
         try:
-            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B Security/Privacy owner anchor drift: {row.get('invariant')}")
-            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B Security/Privacy proof anchor drift: {row.get('invariant')}")
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B Security/Privacy owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B Security/Privacy proof anchor drift: {row.get('invariant')}")
         except Exception as e:err(f'PROMPT B Security/Privacy row invalid: {e}')
     if not all((sp.get('static_guards') or {}).values()):err('PROMPT B Security/Privacy static guard drift')
     closed={x.get('id') for x in sp.get('closed_defects',[]) if isinstance(x,dict)}
     if not {'process-secret-before-authority-persistence','durable-authority-secret-command','durable-ledger-secret-leak','temporary-rollback-secret-persistence','system-projection-secret-reexposure'}<=closed:err('PROMPT B Security/Privacy closed defect receipt drift')
-    if 'PROMPT B §20 current-architecture security/privacy closure' not in (ROOT/'docs/THREAT-MODEL.md').read_text(errors='replace'):err('PROMPT B Security/Privacy threat model projection missing')
+    if 'PROMPT B §20 current-architecture security/privacy closure' not in (ROOT/'docs/THREAT-MODEL.md').read_text(encoding='utf-8',errors='replace'):err('PROMPT B Security/Privacy threat model projection missing')
 except Exception as e:err(f'bad PROMPT B Security/Privacy receipt: {e}')
 
 try:
@@ -517,8 +517,8 @@ try:
             if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B Skills/Methodology Security missing {key}: {rel}');continue
             if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B Skills/Methodology Security {key} hash drift: {rel}')
         try:
-            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B Skills/Methodology Security owner anchor drift: {row.get('invariant')}")
-            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B Skills/Methodology Security proof anchor drift: {row.get('invariant')}")
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B Skills/Methodology Security owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B Skills/Methodology Security proof anchor drift: {row.get('invariant')}")
         except Exception as e:err(f'PROMPT B Skills/Methodology Security row invalid: {e}')
     if not all((sm.get('static_guards') or {}).values()):err('PROMPT B Skills/Methodology Security static guard drift')
     if sm.get('state_separation')!=['installed skill','admitted methodology','selected methodology','loaded methodology']:err('PROMPT B Skills/Methodology state separation drift')
@@ -539,8 +539,8 @@ try:
             if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B HostPort portability missing {key}: {rel}');continue
             if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B HostPort portability {key} hash drift: {rel}')
         try:
-            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B HostPort portability owner anchor drift: {row.get('invariant')}")
-            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B HostPort portability proof anchor drift: {row.get('invariant')}")
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B HostPort portability owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B HostPort portability proof anchor drift: {row.get('invariant')}")
         except Exception as e:err(f'PROMPT B HostPort portability row invalid: {e}')
     if not all((hp.get('static_guards') or {}).values()):err('PROMPT B HostPort portability static guard drift')
     alt=hp.get('alternate_host_feasibility') or {}
@@ -562,8 +562,8 @@ try:
             if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B Configuration missing {key}: {rel}');continue
             if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B Configuration {key} hash drift: {rel}')
         try:
-            if row.get('consumer_anchor') not in (ROOT/row['consumer']).read_text(errors='replace'):err(f"PROMPT B Configuration consumer anchor drift: {row.get('path')}")
-            if f"`{row.get('path')}`" not in (ROOT/row['documentation']).read_text(errors='replace'):err(f"PROMPT B Configuration documentation drift: {row.get('path')}")
+            if row.get('consumer_anchor') not in (ROOT/row['consumer']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B Configuration consumer anchor drift: {row.get('path')}")
+            if f"`{row.get('path')}`" not in (ROOT/row['documentation']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B Configuration documentation drift: {row.get('path')}")
         except Exception as e:err(f'PROMPT B Configuration row invalid: {e}')
     if not all((cfg.get('static_guards') or {}).values()):err('PROMPT B Configuration static guard drift')
     closed={x.get('id') for x in cfg.get('closed_defects',[]) if isinstance(x,dict)}
@@ -583,8 +583,8 @@ try:
             if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B CLI/developer tooling UX missing {key}: {rel}');continue
             if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B CLI/developer tooling UX {key} hash drift: {rel}')
         try:
-            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B CLI/developer tooling UX owner anchor drift: {row.get('invariant')}")
-            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B CLI/developer tooling UX proof anchor drift: {row.get('invariant')}")
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B CLI/developer tooling UX owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B CLI/developer tooling UX proof anchor drift: {row.get('invariant')}")
         except Exception as e:err(f'PROMPT B CLI/developer tooling UX row invalid: {e}')
     if not all((ux.get('static_guards') or {}).values()):err('PROMPT B CLI/developer tooling UX static guard drift')
     if ux.get('ux_contract')!=['specific','actionable','truthful','bounded']:err('PROMPT B CLI/developer tooling UX contract drift')
@@ -603,8 +603,8 @@ try:
             if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B install/update lifecycle missing {key}: {rel}');continue
             if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B install/update lifecycle {key} hash drift: {rel}')
         try:
-            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B install/update lifecycle owner anchor drift: {row.get('invariant')}")
-            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B install/update lifecycle proof anchor drift: {row.get('invariant')}")
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B install/update lifecycle owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B install/update lifecycle proof anchor drift: {row.get('invariant')}")
         except Exception as e:err(f'PROMPT B install/update lifecycle row invalid: {e}')
     if not all((iu.get('static_guards') or {}).values()):err('PROMPT B install/update lifecycle static guard drift')
     closed={x.get('id') for x in iu.get('closed_defects',[]) if isinstance(x,dict)}
@@ -629,8 +629,8 @@ try:
             if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B packaging/fresh consumer missing {key}: {rel}');continue
             if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B packaging/fresh consumer {key} hash drift: {rel}')
         try:
-            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B packaging/fresh consumer owner anchor drift: {row.get('invariant')}")
-            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B packaging/fresh consumer proof anchor drift: {row.get('invariant')}")
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B packaging/fresh consumer owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B packaging/fresh consumer proof anchor drift: {row.get('invariant')}")
         except Exception as e:err(f'PROMPT B packaging/fresh consumer row invalid: {e}')
     if not all((pf.get('static_guards') or {}).values()):err('PROMPT B packaging/fresh consumer static guard drift')
     ar=pf.get('acceptance_receipt')
@@ -653,8 +653,8 @@ try:
             if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B test-suite missing {key}: {rel}');continue
             if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B test-suite {key} hash drift: {rel}')
         try:
-            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B test-suite owner anchor drift: {row.get('invariant')}")
-            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B test-suite proof anchor drift: {row.get('invariant')}")
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B test-suite owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B test-suite proof anchor drift: {row.get('invariant')}")
         except Exception as e:err(f'PROMPT B test-suite row invalid: {e}')
     ha=json.loads((ROOT/'data/validation/test-harness-isolation-0.1.0.json').read_text(encoding='utf-8'))
     if ha.get('status')!='PASS' or ha.get('section')!=30:err('PROMPT B test harness acceptance drift')
@@ -711,8 +711,8 @@ try:
             if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B property/fuzz missing {key}: {rel}');continue
             if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B property/fuzz {key} hash drift: {rel}')
         try:
-            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B property/fuzz owner anchor drift: {row.get('area')}")
-            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B property/fuzz proof anchor drift: {row.get('area')}")
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B property/fuzz owner anchor drift: {row.get('area')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B property/fuzz proof anchor drift: {row.get('area')}")
         except Exception as e:err(f'PROMPT B property/fuzz row invalid: {e}')
     ar=json.loads((ROOT/f32['acceptance_receipt']).read_text(encoding='utf-8'))
     if ar.get('status')!='PASS' or ar.get('source_binding')!={'tested_git_commit':'6fe74d7786e25cb6894ddca7d4408a17220cc936','tested_git_tree':'3bf72be8b22082a720f2fa6aa271d56b100e5528'}:err('PROMPT B property/fuzz source binding drift')
@@ -794,7 +794,7 @@ try:
     for row in a.get('injections',[]):
         rel=row.get('proof');expected_hash=row.get('proof_sha256');anchor=row.get('proof_anchor')
         if not isinstance(rel,str) or not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected_hash:err('PROMPT B failure injection proof hash drift: '+str(rel));continue
-        if not isinstance(anchor,str) or anchor not in (ROOT/rel).read_text(errors='replace'):err('PROMPT B failure injection proof anchor drift: '+str(row.get('injection')))
+        if not isinstance(anchor,str) or anchor not in (ROOT/rel).read_text(encoding='utf-8',errors='replace'):err('PROMPT B failure injection proof anchor drift: '+str(row.get('injection')))
 except Exception as e:err(f'bad PROMPT B failure injection receipt: {e}')
 
 
@@ -934,8 +934,8 @@ try:
             if not isinstance(rel,str) or not (ROOT/rel).is_file():err(f'PROMPT B dependency/supply-chain/license missing {key}: {rel}');continue
             if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B dependency/supply-chain/license {key} hash drift: {rel}')
         try:
-            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(errors='replace'):err(f"PROMPT B dependency/supply-chain/license owner anchor drift: {row.get('invariant')}")
-            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(errors='replace'):err(f"PROMPT B dependency/supply-chain/license proof anchor drift: {row.get('invariant')}")
+            if row.get('owner_anchor') not in (ROOT/row['owner']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B dependency/supply-chain/license owner anchor drift: {row.get('invariant')}")
+            if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B dependency/supply-chain/license proof anchor drift: {row.get('invariant')}")
         except Exception as e:err(f'PROMPT B dependency/supply-chain/license row invalid: {e}')
     if not all((d27.get('static_guards') or {}).values()):err('PROMPT B dependency/supply-chain/license static guard drift')
 except Exception as e:err(f'bad PROMPT B dependency/supply-chain/license receipt: {e}')
