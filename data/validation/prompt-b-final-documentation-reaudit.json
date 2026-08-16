@@ -5,8 +5,8 @@
   "section": 42,
   "status": "PASS",
   "source_checkpoint": {
-    "commit": "2649d27a41eba56b1e6ae1e6dc0a161346faa42d",
-    "tree": "91f9dfaeb49460255bc741b570a32150d4785e01"
+    "commit": "23796eec58ee19caa4314acc05e59426aba6f63e",
+    "tree": "18d4297462302015b0044b552053a358b4e5c60b"
   },
   "areas": [
     {
@@ -123,8 +123,8 @@
   },
   "documentation_inventory": {
     "path": "data/validation/documentation-inventory.json",
-    "checkpoint_sha256": "ce9b1beb53f7de61b9df41026ff7e2723ab99e2ed8c31a1411f0f8f7014a5d9d",
-    "checkpoint_blob_oid": "716c7723bfdb20e5c0f2f9d61d44612a506f33b9",
+    "checkpoint_sha256": "85623aa9ae509ea25b27a7284e482a6f4a01da758d3f291dc8da7173319c08b4",
+    "checkpoint_blob_oid": "f12fa70b9943c1517bacdd5f1b3db849c739c3f9",
     "status": "PASS"
   },
   "summary": {
