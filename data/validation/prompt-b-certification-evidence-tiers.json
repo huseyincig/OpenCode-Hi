@@ -40,7 +40,7 @@
       "claim": "process-lifecycle",
       "required_tier": "T3",
       "available_tier": "T3",
-      "evidence": "data/validation/external-opencode-hi-0.1.1-process-1.18.18-head-b8973df.json",
+      "evidence": "data/validation/external-opencode-hi-0.1.1-process-1.18.18-head-0f35d83.json",
       "evidence_exists": true,
       "sufficient": true
     },
@@ -48,7 +48,7 @@
       "claim": "workspace-isolation-binding",
       "required_tier": "T3",
       "available_tier": "T3",
-      "evidence": "data/validation/external-opencode-hi-0.1.1-workspace-1.18.18-head-b8973df.json",
+      "evidence": "data/validation/external-opencode-hi-0.1.1-workspace-1.18.18-head-0f35d83.json",
       "evidence_exists": true,
       "sufficient": true
     },
@@ -56,7 +56,7 @@
       "claim": "browser-execution",
       "required_tier": "T3",
       "available_tier": "T3",
-      "evidence": "data/validation/external-opencode-hi-0.1.1-browser-1.18.18-head-b8973df.json",
+      "evidence": "data/validation/external-opencode-hi-0.1.1-browser-1.18.18-head-0f35d83.json",
       "evidence_exists": true,
       "sufficient": true
     },
