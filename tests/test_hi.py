@@ -1182,7 +1182,12 @@ def test_prompt_b_publishable_package_carries_setup_cli_and_direct_runtime_depen
     assert pkg['peerDependencies']['@opencode-ai/plugin']=='1.18.18'
     assert pkg['dependencies']['@opencode-ai/sdk']=='1.18.18'
     assert pkg['optionalDependencies']['playwright-core']=='1.62.1'
-    setup=ROOT/'scripts/native_plugin_setup.py';assert setup.stat().st_mode & 0o111
+    setup=ROOT/'scripts/native_plugin_setup.py'
+    if os.name=='nt':
+        mode=subprocess.check_output(['git','ls-files','-s','--','scripts/native_plugin_setup.py'],cwd=ROOT,text=True).split()[0]
+        assert mode=='100755'
+    else:
+        assert setup.stat().st_mode & 0o111
 
 
 def test_prompt_b_install_update_lifecycle_audit_is_complete_source_bound_and_truthful():

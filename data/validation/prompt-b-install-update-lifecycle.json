@@ -47,7 +47,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "def upgrade(",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "6f3841f480057b5a0edc1026f85d4559aac9701d28c190ed4b9a1a4568541561",
+      "proof_sha256": "68b690ff8c90b4f3fd2bb57d6e55496a49ef28f0aaa7ee218ac33385701fb7ef",
       "proof_anchor": "test_r2_owned_upgrade_and_one_step_rollback_preserve_foreign_config"
     },
     {
@@ -77,7 +77,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "def rollback(",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "6f3841f480057b5a0edc1026f85d4559aac9701d28c190ed4b9a1a4568541561",
+      "proof_sha256": "68b690ff8c90b4f3fd2bb57d6e55496a49ef28f0aaa7ee218ac33385701fb7ef",
       "proof_anchor": "test_r2_rollback_fails_closed_after_unrelated_post_operation_config_drift"
     },
     {
@@ -87,7 +87,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "def recover(",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "6f3841f480057b5a0edc1026f85d4559aac9701d28c190ed4b9a1a4568541561",
+      "proof_sha256": "68b690ff8c90b4f3fd2bb57d6e55496a49ef28f0aaa7ee218ac33385701fb7ef",
       "proof_anchor": "test_r2_recover_completes_interrupted_upgrade_when_config_matches_recorded_after_state"
     },
     {
@@ -127,7 +127,7 @@
       "owner_sha256": "e528d9cd9d437eec01f80fd309e6a096913d89ee9ed44bdd996ed3e6bbcbce01",
       "owner_anchor": "\"opencode-hi-setup\"",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "6f3841f480057b5a0edc1026f85d4559aac9701d28c190ed4b9a1a4568541561",
+      "proof_sha256": "68b690ff8c90b4f3fd2bb57d6e55496a49ef28f0aaa7ee218ac33385701fb7ef",
       "proof_anchor": "test_prompt_b_publishable_package_carries_setup_cli_and_direct_runtime_dependency_contract"
     },
     {
@@ -137,7 +137,7 @@
       "owner_sha256": "e528d9cd9d437eec01f80fd309e6a096913d89ee9ed44bdd996ed3e6bbcbce01",
       "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.18\"",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "6f3841f480057b5a0edc1026f85d4559aac9701d28c190ed4b9a1a4568541561",
+      "proof_sha256": "68b690ff8c90b4f3fd2bb57d6e55496a49ef28f0aaa7ee218ac33385701fb7ef",
       "proof_anchor": "test_prompt_b_publishable_package_carries_setup_cli_and_direct_runtime_dependency_contract"
     },
     {
