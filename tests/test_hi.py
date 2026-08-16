@@ -733,6 +733,7 @@ def test_r4_generated_release_status_projects_current_candidate_without_rewritin
     assert f'`{version}` (`v{version}`)' in block and d['status'] in block and 'Test counts are intentionally not persisted' in block
 
 
+@pytest.mark.evidence
 def test_n1_final_namespace_normalization_is_hash_bound_and_preserves_historical_exclusions():
     d=json.loads((ROOT/'data/validation/namespace-normalization-0.1.0.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='FINAL_HI_NAMESPACE_NORMALIZATION' and d['status']=='PASS'
@@ -854,7 +855,7 @@ def test_prompt_a_final_reconstruction_receipt_is_hash_bound_to_certified_source
         blob=subprocess.check_output(['git','show',f"{record['commit']}:{meta['path']}"])
         assert hashlib.sha256(blob).hexdigest()==meta['sha256']
     # Historical reconstruction remains immutable Git evidence; it is no longer a current public-doc dependency.
-    historical=subprocess.check_output(['git','show',f"{record['commit']}:docs/engineering-constitution/MASTER-CONTINUATION.md"],cwd=ROOT,text=True)
+    historical=subprocess.check_output(['git','show',f"{record['commit']}:docs/engineering-constitution/MASTER-CONTINUATION.md"],cwd=ROOT,text=True,encoding='utf-8')
     assert 'PROMPT A final exit gate — **COMPLETED**' in historical
     assert not (ROOT/'docs/engineering-constitution/MASTER-CONTINUATION.md').exists()
 
@@ -1108,6 +1109,7 @@ def test_prompt_b_host_port_portability_audit_is_host_agnostic_source_bound_and_
     assert (ROOT/'scripts/audit-host-port-portability.py').is_file()
 
 
+@pytest.mark.evidence
 def test_prompt_b_configuration_audit_covers_every_leaf_and_is_source_bound():
     d=json.loads((ROOT/'data/validation/prompt-b-configuration.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='PROMPT_B_CONFIGURATION_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['section']==23 and d['status']=='PASS'
@@ -1267,6 +1269,7 @@ def test_prompt_b_release_engineering_closes_t4_only_from_real_current_publicati
     for rel,digest in d['proof_hashes'].items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
 
 
+@pytest.mark.evidence
 def test_prompt_b_documentation_defect_cycle_requires_owner_impact_projection_and_lint():
     d=json.loads((ROOT/'data/validation/prompt-b-documentation-defect-cycle.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='PROMPT_B_DOCUMENTATION_DEFECT_CYCLE_AUDIT' and d['section']==29 and d['status']=='PASS'
