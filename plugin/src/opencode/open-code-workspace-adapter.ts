@@ -25,6 +25,7 @@ function gitPathKey(path:string):string{
   return value.toLowerCase()
 }
 const statIdentity=statSync as unknown as (path:string,options:{bigint:true})=>{dev:bigint;ino:bigint}
+// Windows may expose the same NTFS directory through a long name or an 8.3 alias; compare existing paths by exact filesystem identity after canonical string comparison.
 function sameGitPath(a:string,b:string):boolean{if(gitPathKey(a)===gitPathKey(b))return true;if(process.platform!=='win32')return false;try{const left=statIdentity(a,{bigint:true}),right=statIdentity(b,{bigint:true});return left.ino!==0n&&right.ino!==0n&&left.dev===right.dev&&left.ino===right.ino}catch{return false}}
 function sameRepository(primary:GitWorkspaceInspection,workspace:GitWorkspaceInspection):boolean{return sameGitPath(primary.common_dir,workspace.common_dir)}
 
@@ -51,7 +52,7 @@ export class OpenCodeWorkspaceAdapter implements WorkspaceExecutor{
     if(request.require_baseline&&primary.head!==request.source_baseline)throw new Error(`Primary source baseline drifted before workspace binding: expected ${request.source_baseline}, observed ${primary.head}`)
     if(request.require_baseline&&workspace.head!==request.source_baseline)throw new Error(`Workspace source baseline mismatch: expected ${request.source_baseline}, observed ${workspace.head}`)
     if(!sameRepository(primary,workspace))throw new Error('OpenCode workspace is not registered to the same Git common repository')
-    if(!primary.worktrees.some(path=>sameGitPath(path,workspacePath)))throw new Error(`OpenCode workspace path is not present in the primary Git worktree registry: workspace=${JSON.stringify(workspacePath)} key=${JSON.stringify(gitPathKey(workspacePath))} registry=${JSON.stringify(primary.worktrees.map(path=>({path,key:gitPathKey(path)})))}`)
+    if(!primary.worktrees.some(path=>sameGitPath(path,workspacePath)))throw new Error('OpenCode workspace path is not present in the primary Git worktree registry')
     if(!workspace.worktrees.some(path=>sameGitPath(path,workspacePath)))throw new Error('Workspace Git view does not contain its own canonical worktree path')
     return{host_workspace_id:native.id,workspace_path:workspacePath,...(native.branch?{branch:String(native.branch)}:{})}
   }
