@@ -2,7 +2,7 @@
   "schema": 2,
   "product_name": "OpenCode-Hi",
   "short_name": "HI",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "repository": "https://github.com/huseyincig/OpenCode-Hi",
   "plugin_package": "opencode-hi",
   "plugin_spec_main": "opencode-hi",

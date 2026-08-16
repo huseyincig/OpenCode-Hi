@@ -1,6 +1,6 @@
 {
   "name": "opencode-hi",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Evidence-aware adaptive execution and Hybrid Intelligence control plane for OpenCode.",
   "type": "module",
   "main": "plugin/dist/plugin.js",

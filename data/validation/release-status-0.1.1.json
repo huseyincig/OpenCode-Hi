@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "release": "0.1.1",
+  "kind": "GENERATED_RELEASE_STATUS_PROJECTION",
+  "generated_at": "2026-08-16",
+  "generator": "scripts/generate-release-status.py",
+  "claim_boundary": "Current release projection. Historical v0.1.0 remains immutable evidence. T4 is granted only from real current-version GitHub and npm publication receipts.",
+  "inputs": {
+    "compatibility": {
+      "path": "data/validation/compatibility-matrix-0.1.0.json",
+      "sha256": "a2956811ac2be2266199c60dab5573df2ac5825f2a5f05b08078043b067e7981"
+    },
+    "historical_v0_1_0_publication": {
+      "path": "data/validation/release-publication-0.1.0.json",
+      "sha256": "b0b9509dea487a6403d075d3ca18e8081285af4c053605d7f8f6438ad3d9798a"
+    }
+  },
+  "status": "PREPUBLICATION_CERTIFIED_PENDING_T4",
+  "release_blocked": true,
+  "publication_authority": {
+    "granted": true,
+    "condition": "effective only after all engineering and final certification complete"
+  },
+  "historical_github_release": {
+    "tag": "v0.1.0",
+    "released_source": "f1a2c1c4358e5a63656da7a585b6b5793d1ed3be",
+    "status": "PASS_T4"
+  },
+  "candidate": {
+    "version": "0.1.1",
+    "tag": "v0.1.1",
+    "github_status": "PENDING_T4",
+    "npm_status": "PENDING_T4",
+    "publication_attempted": false
+  },
+  "reference_host": {
+    "opencode_version": "1.18.18",
+    "platform": "linux",
+    "architecture": "aarch64",
+    "status": "CAPABILITY_SCOPED_EXACT_T3",
+    "capabilities": {
+      "process-lifecycle": {
+        "status": "SUPPORTED_T3",
+        "receipt": "data/validation/external-opencode-hi-0.1.0-process-1.18.18-head-aa9a402.json",
+        "tested_git_commit": "aa9a402f04fc40d53823c3e1b5e0190362dc5e75"
+      },
+      "workspace-isolation-binding": {
+        "status": "SUPPORTED_T3",
+        "receipt": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-aa9a402.json",
+        "tested_git_commit": "aa9a402f04fc40d53823c3e1b5e0190362dc5e75"
+      },
+      "browser-execution": {
+        "status": "SUPPORTED_T3",
+        "receipt": "data/validation/external-opencode-hi-0.1.0-browser-1.18.18-head-aa9a402.json",
+        "tested_git_commit": "aa9a402f04fc40d53823c3e1b5e0190362dc5e75"
+      }
+    }
+  },
+  "verification": {
+    "persisted_test_count": false,
+    "reason": "Test totals belong to fresh certification evidence, not hand-maintained release prose."
+  },
+  "rules": [
+    "historical v0.1.0 tag/release is immutable",
+    "current release tag is v0.1.1",
+    "publication authority becomes effective only after final certification",
+    "T4 requires real GitHub and npm verification for the current version"
+  ]
+}

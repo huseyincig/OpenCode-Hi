@@ -3,7 +3,7 @@
 OpenCode-Hi's canonical package name is `opencode-hi`. Installation truth has two separate layers:
 
 1. **registration/lifecycle mechanics** — implemented and deterministically verified by `scripts/native_plugin_setup.py`;
-2. **registry distribution availability** — currently blocked because `opencode-hi@0.1.0` has not yet been bootstrap-published to npm.
+2. **registry distribution availability** — the current `opencode-hi@0.1.1` candidate is not considered registry-available until final T4 publication and verification complete.
 
 A successful local registration test must not be presented as proof that a fresh user can download the package from npm today.
 
@@ -34,7 +34,7 @@ python3 scripts/native_plugin_setup.py install /path/to/project --version <versi
 python3 scripts/native_plugin_setup.py doctor /path/to/project
 ```
 
-For an installed/available npm package, the same CLI surface is exposed as `opencode-hi-setup` (for example through the package's npm bin). The current npm bootstrap remains blocked, so this is a verified package-content contract rather than a claim that `npx` can fetch `opencode-hi@0.1.0` publicly today.
+For an installed/available npm package, the same CLI surface is exposed as `opencode-hi-setup` (for example through the package's npm bin). The current npm bootstrap remains blocked, so this is a verified package-content contract rather than a pre-publication claim that `npx` can already fetch `opencode-hi@0.1.1`.
 
 `plan` is non-mutating. `install` is idempotent after Hi owns the exact registration. `doctor` validates registration/ownership/lifecycle state; it explicitly does **not** substitute for a real OpenCode runtime-load check.
 

@@ -1,6 +1,6 @@
 {
   "schema": 2,
-  "release": "0.1.0",
+  "release": "0.1.1",
   "generated_at": "2026-08-14",
   "basis": "OPENCODE-HI 0.1.x canonical source-driven implementation prompt",
   "internal_status": "LOCAL_IMPLEMENTATION_AND_IN_PROCESS_ACCEPTANCE_COMPLETE",
@@ -44,11 +44,9 @@
     }
   },
   "external_only_pending": [
-    "npm registry publish/install/integrity verification for opencode-hi@0.1.0"
+    "final GitHub/npm publication and registry/install integrity verification for opencode-hi@0.1.1"
   ],
-  "external_blockers": [
-    "npm registry authentication unavailable (npm whoami -> ENEEDAUTH)"
-  ],
+  "external_blockers": [],
   "release_blocked": true,
   "known_internal_blocking_findings": [],
   "historical_v58_provenance": [
@@ -56,7 +54,7 @@
     "data/validation/external-blockers-v58.json",
     "data/validation/external-opencode-cli-1.18.16.json"
   ],
-  "rule": "Historical v58 receipts demonstrate provenance and proven baseline behavior only. They do not certify the changed OpenCode-Hi 0.1.0 candidate.",
+  "rule": "Historical v58 and v0.1.0 receipts remain provenance only. They do not certify the current OpenCode-Hi 0.1.1 candidate.",
   "pre_freeze_external": {
     "status": "PASS_EXACT_SOURCE_9F3A1A9",
     "receipt": "data/validation/external-clean-consumer-0.1.0-head-9f3a1a9.json",

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "release": "0.1.0",
+  "release": "0.1.1",
   "kind": "DOCUMENTATION_TRUTH_INVENTORY",
   "status": "PASS",
   "policy": {
@@ -235,7 +235,7 @@
   "artifacts": [
     {
       "path": "CHANGELOG.md",
-      "sha256": "136b991e6bfafe0f8047c2b217936f80084263d4d45fe470297b20f95aeeb99e",
+      "sha256": "8fbdc7dae737284bc90ce60c267fab8e3955db100a85e379778b540bacac7c33",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "HUMAN_OWNED"
@@ -249,7 +249,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "fcccd0084a836f523bea35e81bb92f2e933380edf5763eff12cb2e4dcac2e927",
+      "sha256": "d3c713419eed7e9bfa602f5e557ad7b711cf4fff1d82ab791d4ccfc6cd3080cd",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "HUMAN_OWNED"
@@ -354,14 +354,14 @@
     },
     {
       "path": "docs/IMPLEMENTATION-REPORT.md",
-      "sha256": "4cf215252a78921698650b293d0c5e1f2ad4c25d1ed57a5180567fe6ae446155",
+      "sha256": "e2c98bc9adb5f2f19faa34d5bf30a39e7301dbd71ac0c1fd66613ea818444176",
       "audience": "HISTORICAL",
       "lifecycle": "HISTORICAL",
       "update_mode": "HUMAN_OWNED"
     },
     {
       "path": "docs/INSTALLATION.md",
-      "sha256": "76c3fe123f16e120ebfcd99c35153ea40a1566db38c416d2989c10003524db92",
+      "sha256": "6d1e30331df2bf670a32bd95a36abb9c309a6c8242e1efb7787138ccaa49a39f",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
@@ -389,7 +389,7 @@
     },
     {
       "path": "docs/RELEASE.md",
-      "sha256": "4fc58d37eacf8a1e89933583b8a1d2e3f90ff491eaeb019bf82eda18b754a768",
+      "sha256": "5b424c4177aa3eef4af1bcc75bf5397494fafd0ca30593f5778550b69de5590f",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
@@ -550,7 +550,7 @@
     },
     {
       "path": "docs/engineering-constitution/MASTER-CONTINUATION.md",
-      "sha256": "08b315b93438b6017a7f33e48f8ce9103f6ccd1fecf846bbb76a4c8857169ad0",
+      "sha256": "94e281657ffd1ed20b3dcd7b6f236128a46d2ee57c11da9af89fc6cf7c6b2b25",
       "audience": "INTERNAL_ENGINEERING",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "HUMAN_OWNED"

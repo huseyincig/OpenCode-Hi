@@ -6,7 +6,7 @@ OpenCode-Hi was evolved from the exact OpenCode-HHC-Orchestrator v58 baseline id
 
 ## Product migration
 
-The canonical identity is `OpenCode-Hi`, package `opencode-hi`, release line `0.1.x`, current candidate `0.1.0`, repository `huseyincig/OpenCode-Hi`. Public skill identities were migrated from `hhc-*` to `hi-*`. Historical old-product identifiers remain only where technically required for exact baseline provenance, attribution, license obligations, or immutable historical receipts. OpenCode-Hi provides no legacy product compatibility surface.
+The canonical identity is `OpenCode-Hi`, package `opencode-hi`, release line `0.1.x`, current candidate `0.1.1`, repository `huseyincig/OpenCode-Hi`. Public skill identities were migrated from `hhc-*` to `hi-*`. Historical old-product identifiers remain only where technically required for exact baseline provenance, attribution, license obligations, or immutable historical receipts. OpenCode-Hi provides no legacy product compatibility surface.
 
 ## Source reuse
 

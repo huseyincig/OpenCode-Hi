@@ -7,11 +7,11 @@
   "current_source": {
     "commit": "6fe74d7786e25cb6894ddca7d4408a17220cc936",
     "tree": "3bf72be8b22082a720f2fa6aa271d56b100e5528",
-    "version": "0.1.0"
+    "version": "0.1.1"
   },
   "certification_head": {
-    "commit": "aa9a402f04fc40d53823c3e1b5e0190362dc5e75",
-    "tree": "50cd33f1454193685e92dab2fd5dd339aef6b902"
+    "commit": "487ef706703d086befa8cb8e19fcefab3466d28b",
+    "tree": "ec15e1c9e707c575a88c092747427f34f0900e44"
   },
   "historical_release": {
     "tag": "v0.1.0",
@@ -20,12 +20,13 @@
     "release_id": 370666032
   },
   "registry_observation": {
-    "date": "2026-08-15",
-    "package": "opencode-hi@0.1.0",
-    "view": "E404_NOT_FOUND",
+    "date": "2026-08-16",
+    "package": "opencode-hi@0.1.1",
+    "view": "PREPUBLICATION",
     "whoami": "huseyincig",
     "publish_attempted": false,
-    "authority_granted": false
+    "authority_granted": true,
+    "authority_condition": "effective only after all engineering/final certification completes"
   },
   "stages": [
     {
@@ -36,9 +37,9 @@
     },
     {
       "stage": "version",
-      "status": "PASS_LOCAL_BLOCK_RELEASE_IDENTITY",
-      "detail": "0.1.0",
-      "proof": "VERSION/package/lock identity; current HEAD is not historical v0.1.0 released source"
+      "status": "PASS_NEW_RELEASE_IDENTITY",
+      "detail": "0.1.1",
+      "proof": "VERSION/package/lock identity; historical v0.1.0 is immutable"
     },
     {
       "stage": "build",
@@ -72,21 +73,21 @@
     },
     {
       "stage": "tag",
-      "status": "BLOCKED_RELEASE_IDENTITY",
-      "detail": "v0.1.0 already targets f1a2c1c4358e5a63656da7a585b6b5793d1ed3be; current source 6fe74d7786e25cb6894ddca7d4408a17220cc936 must not rewrite it",
-      "proof": "local annotated tag"
+      "status": "PENDING_FINAL_AUTHORIZED_PUBLICATION",
+      "detail": "historical v0.1.0 remains f1a2c1c4358e5a63656da7a585b6b5793d1ed3be; current candidate tag is v0.1.1",
+      "proof": "user authority effective only after final certification"
     },
     {
       "stage": "github-release",
-      "status": "HISTORICAL_PASS_CURRENT_BLOCKED",
-      "detail": "existing v0.1.0 release belongs to historical source; no current release mutation authorized",
-      "proof": "release-status + read-only GitHub verification"
+      "status": "PENDING_FINAL_AUTHORIZED_PUBLICATION",
+      "detail": "historical v0.1.0 remains immutable; v0.1.1 publication waits for final certification",
+      "proof": "conditional user publication authority"
     },
     {
       "stage": "registry-publication",
-      "status": "BLOCKED_AUTHORITY",
-      "detail": "registry package absent; npm credential is currently available but user has not authorized publish",
-      "proof": "read-only npm view/whoami on 2026-08-15"
+      "status": "PENDING_FINAL_AUTHORIZED_PUBLICATION",
+      "detail": "opencode-hi@0.1.1 publication is authorized only after final certification",
+      "proof": "explicit conditional user authority"
     },
     {
       "stage": "registry-integrity",
@@ -102,9 +103,9 @@
     },
     {
       "stage": "T4-receipt",
-      "status": "BLOCKED_AUTHORITY_AND_RELEASE_IDENTITY",
-      "detail": "no fabricated T4; current dev HEAD is not released/published",
-      "proof": "explicit authority + new release identity required"
+      "status": "PENDING_REAL_PUBLICATION_PROOF",
+      "detail": "no fabricated T4; requires real v0.1.1 GitHub/npm publication and post-publication verification",
+      "proof": "final external publication receipt required"
     }
   ],
   "checks": {
@@ -125,14 +126,14 @@
     "violations": 0
   },
   "proof_hashes": {
-    "VERSION": "e9dd8507f4bf0c6f42458e41aea833ad0bd3f6127272335eee9bf4d58541ed67",
-    "package.json": "bacad4fb690ab88db0da4021960a9651ad0b27f625ca14c5abcc30493b0bfff4",
-    "package-lock.json": "5d09284a57a7dd2faa3f0c31c24817d45fcdc03ca2b4f58fa765f99bef8ddc76",
-    "plugin/package-lock.json": "78f4aa59a5ca3be4c7b5ae1960c3c298a034cb00624a9efe76b75b3d89b71281",
+    "VERSION": "80447316529fc62014fbaa047fb67c51ac30e32830cda370405349d8d66d196c",
+    "package.json": "e528d9cd9d437eec01f80fd309e6a096913d89ee9ed44bdd996ed3e6bbcbce01",
+    "package-lock.json": "96e22583fe2cf1eb25c14c6f73a9291a4eef08ae8fd096f362bb80db712d83f5",
+    "plugin/package-lock.json": "fb6a6c977a496b7407dbd6a1dcbc3403f0a86dc9951c8f32fec48ccae91dd343",
     "data/validation/fresh-consumer-opencode-1.18.18.json": "b50664a7bab4a1efdc63ecf4eb86edf235d2d1fa48f3eeba04c200c2d5663089",
     "data/validation/release-status-0.1.0.json": "4ea5e44d7bca5562a30c9824fb680925417627d00165b2c4e36096f2ce60ef4a",
     ".github/workflows/npm-publish.yml": "3f5cd8e209624aa44ba48fe14bdc8899e75a5c773a624ab1ceaa2a6b5301c7a0",
     "scripts/verify-npm-oidc-release.mjs": "afa20a3a77053dff1918d4e98ff13131a92cfbccd39d44a3adbec6918afba067"
   },
-  "claim_boundary": "Release-engineering truth for current development source. Existing GitHub v0.1.0 remains historical and must not be rewritten. Registry publication/T4 is blocked without explicit user authority and, for current dev source, a new version/tag/release identity. Read-only npm/GitHub checks do not authorize mutation."
+  "claim_boundary": "Release-engineering truth for the current candidate. Historical v0.1.0 remains immutable. User granted push/tag/GitHub/npm publication authority only after final engineering/certification completes; T4 remains pending until real external publication and verification."
 }

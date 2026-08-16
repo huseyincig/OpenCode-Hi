@@ -12,9 +12,9 @@ Hi is designed to use the minimum sufficient topology, model, context and verifi
 
 ## Current product truth
 
-The source tree currently reports application version `0.1.0`. Version identity is owned by `VERSION` and parity-validated against package metadata; it is not a statement that the current development HEAD equals the already-published GitHub `v0.1.0` source.
+The source tree currently reports application version `0.1.1`. Version identity is owned by `VERSION` and parity-validated against package metadata. Historical GitHub `v0.1.0` remains immutable and is not reused for this hardened release identity.
 
-The GitHub `v0.1.0` release is immutable and source-bound to its release commit. The npm package bootstrap is still externally blocked: `opencode-hi@0.1.0` is not currently available from the npm registry. **Do not treat the package registration examples below as proof that registry installation is available today.** Current release state is machine-derived in `data/validation/release-status-0.1.0.json` and projected in [Release Engineering](docs/RELEASE.md).
+The GitHub `v0.1.0` release is immutable and source-bound to its historical commit. The current candidate is `0.1.1`; GitHub/npm publication is a final T4 step and must not be inferred from package metadata before external verification. See [Release Engineering](docs/RELEASE.md).
 
 Current host capability truth is generated from exact receipts rather than hand-maintained here. See [Host Support](docs/HOSTS.md) and `data/validation/compatibility-matrix-0.1.0.json`.
 

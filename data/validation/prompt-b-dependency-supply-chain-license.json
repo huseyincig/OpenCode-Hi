@@ -14,10 +14,10 @@
       "invariant": "dependency-versions",
       "status": "PASS",
       "owner": "package.json",
-      "owner_sha256": "bacad4fb690ab88db0da4021960a9651ad0b27f625ca14c5abcc30493b0bfff4",
+      "owner_sha256": "e528d9cd9d437eec01f80fd309e6a096913d89ee9ed44bdd996ed3e6bbcbce01",
       "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.18\"",
       "proof": "package-lock.json",
-      "proof_sha256": "5d09284a57a7dd2faa3f0c31c24817d45fcdc03ca2b4f58fa765f99bef8ddc76",
+      "proof_sha256": "96e22583fe2cf1eb25c14c6f73a9291a4eef08ae8fd096f362bb80db712d83f5",
       "proof_anchor": "\"version\": \"1.18.18\""
     },
     {
@@ -27,7 +27,7 @@
       "owner_sha256": "ce25a2114b4e2e615192d2d08099ec061684520af81be9324c6365194c8c4894",
       "owner_anchor": "def dependency_lock_paths(root:Path)",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "e6ae01cf93065683b251291f7bc054242f44cf367ceaa06215ba36f3abfa5281",
+      "proof_sha256": "c6a2369c1aaa064d84f138b35c35227815eefd142cd2ef42b6f87f54ad8d6248",
       "proof_anchor": "dependency_locks']==['package-lock.json','plugin/package-lock.json']"
     },
     {
@@ -44,7 +44,7 @@
       "invariant": "risky-install-scripts",
       "status": "PASS",
       "owner": "package-lock.json",
-      "owner_sha256": "5d09284a57a7dd2faa3f0c31c24817d45fcdc03ca2b4f58fa765f99bef8ddc76",
+      "owner_sha256": "96e22583fe2cf1eb25c14c6f73a9291a4eef08ae8fd096f362bb80db712d83f5",
       "owner_anchor": "\"hasInstallScript\": true",
       "proof": "THIRD_PARTY_NOTICES.md",
       "proof_sha256": "9cde8180060abe8d81fd0a8c4c977d5fa2ddfdf2bd54a396257dcee84993bf51",
@@ -57,7 +57,7 @@
       "owner_sha256": "ce25a2114b4e2e615192d2d08099ec061684520af81be9324c6365194c8c4894",
       "owner_anchor": "dependency_graph_sha256",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "e6ae01cf93065683b251291f7bc054242f44cf367ceaa06215ba36f3abfa5281",
+      "proof_sha256": "c6a2369c1aaa064d84f138b35c35227815eefd142cd2ef42b6f87f54ad8d6248",
       "proof_anchor": "release_manifest_contains_dependency_sbom_and_supply_chain_digest"
     },
     {
@@ -67,7 +67,7 @@
       "owner_sha256": "9cde8180060abe8d81fd0a8c4c977d5fa2ddfdf2bd54a396257dcee84993bf51",
       "owner_anchor": "`playwright-core`",
       "proof": "package-lock.json",
-      "proof_sha256": "5d09284a57a7dd2faa3f0c31c24817d45fcdc03ca2b4f58fa765f99bef8ddc76",
+      "proof_sha256": "96e22583fe2cf1eb25c14c6f73a9291a4eef08ae8fd096f362bb80db712d83f5",
       "proof_anchor": "\"license\": \"Apache-2.0\""
     },
     {

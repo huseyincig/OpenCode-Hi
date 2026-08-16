@@ -1,8 +1,8 @@
 {
   "schema": 6,
-  "release": "0.1.0",
+  "release": "0.1.1",
   "generated_at": "2026-08-14",
-  "candidate_status": "P8_GITHUB_RELEASE_PUBLISHED_NPM_T4_BLOCKED",
+  "candidate_status": "PROMPT_B_0_1_1_PREPUBLICATION_CERTIFICATION_IN_PROGRESS",
   "gates": {
     "source_integrity": "PASS_LOCAL_CURRENT_SOURCE",
     "deterministic_release": "PASS_LOCAL_CURRENT_WORKTREE",
@@ -29,9 +29,9 @@
     "npm_registry_publication": "PENDING_AUTH_T4_OPENCODE_HI_0_1_0"
   },
   "release_blocked": true,
-  "reason": "OpenCode-Hi 0.1.0 GitHub release is published and remotely verified against exact final source f1a2c1c: final Windows/Linux CI passed, clean-consumer/dependency/supply-chain and OpenCode 1.18.18 loader checks passed, deterministic artifacts were byte-identical, annotated tag v0.1.0 peels to f1a2c1c, and all five GitHub release asset digests match local SHA-256. Overall P8 remains release-blocked only for npm registry publication because npm authentication is unavailable.",
+  "reason": "Current 0.1.1 source is undergoing final Prompt B certification. Historical v0.1.0 remains immutable. User publication authority is granted only after engineering/certification completes; T4 is not claimed before real push/tag/release/npm verification.",
   "external_blockers": [
-    "npm-registry-auth-unavailable-for-opencode-hi-0.1.0-publication"
+    "final-certification-must-complete-before-authorized-0.1.1-publication"
   ],
   "current_local_evidence": {
     "node": {

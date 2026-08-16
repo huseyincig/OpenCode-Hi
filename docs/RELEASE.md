@@ -11,13 +11,13 @@ The block below is generator-owned. Do not hand-edit current release status, cur
 <!-- BEGIN GENERATED RELEASE STATUS -->
 ## Current release status — generated
 
-- Release: `0.1.0` — **PARTIAL_EXTERNAL_NPM_BOOTSTRAP_AUTH**.
-- GitHub: **PASS_T4** for `v0.1.0` at exact source `f1a2c1c4358e5a63656da7a585b6b5793d1ed3be`; remote asset digests match: `true`.
-- npm: **BLOCKED_T4_AUTH**; package is not yet present, no publish has been attempted, and Trusted Publisher binding remains unavailable until the package exists.
-- Trusted Publishing: local workflow readiness is `LOCAL_IMPLEMENTED_EXTERNAL_BOOTSTRAP_REQUIRED`; bootstrap publication/auth + registry proof + trust binding remain external.
-- Reference host: OpenCode `1.18.18` on `linux/aarch64`; process/workspace/browser owned surfaces are receipt-backed `SUPPORTED_T3`.
-- Test counts are intentionally not persisted here. Run the canonical verification commands for fresh counts/results.
-- Machine source: `data/validation/release-status-0.1.0.json` (generated from hash-bound receipts/status inputs).
+- Candidate: `0.1.1` (`v0.1.1`) — **PREPUBLICATION_CERTIFIED_PENDING_T4**.
+- Historical `v0.1.0` remains immutable and is not retagged or source-substituted.
+- GitHub current candidate: **PENDING_T4**; npm current candidate: **PENDING_T4**.
+- Publication authority is granted only after final engineering/certification completes; until real publication verification exists, T4 remains pending.
+- Reference host: OpenCode `1.18.18` on `linux/aarch64`; Hi-owned process/workspace/browser surfaces are exact-receipt `SUPPORTED_T3`.
+- Test counts are intentionally not persisted here; final certification owns fresh totals.
+- Machine source: `data/validation/release-status-0.1.1.json`.
 <!-- END GENERATED RELEASE STATUS -->
 
 

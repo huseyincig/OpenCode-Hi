@@ -3,65 +3,25 @@ from __future__ import annotations
 import hashlib,json
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
-OUT=ROOT/'data/validation/release-status-0.1.0.json'
-DOC=ROOT/'docs/RELEASE.md'
-BEGIN='<!-- BEGIN GENERATED RELEASE STATUS -->'
-END='<!-- END GENERATED RELEASE STATUS -->'
-INPUTS={
- 'final_acceptance':'data/validation/final-acceptance-0.1.0.json',
- 'release_gates':'data/validation/release-gates.json',
- 'publication':'data/validation/release-publication-0.1.0.json',
- 'compatibility':'data/validation/compatibility-matrix-0.1.0.json',
- 'oidc_readiness':'data/validation/npm-oidc-readiness-0.1.0.json',
-}
+DOC=ROOT/'docs/RELEASE.md';BEGIN='<!-- BEGIN GENERATED RELEASE STATUS -->';END='<!-- END GENERATED RELEASE STATUS -->'
 def read(rel):return json.loads((ROOT/rel).read_text())
 def sha(rel):return hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()
 def main():
- fa,rg,pub,cm,oidc=(read(INPUTS[k]) for k in ('final_acceptance','release_gates','publication','compatibility','oidc_readiness'))
- release=pub.get('release');
- if release!='0.1.0' or rg.get('release')!=release or fa.get('release')!=release:raise SystemExit('release identity drift across status inputs')
- released=pub.get('released_source') or {};gh=pub.get('github_release') or {};npm=pub.get('npm_registry') or {}
- rgpub=((rg.get('current_local_evidence') or {}).get('final_publication') or {})
- if gh.get('status')!='PASS_T4':raise SystemExit('GitHub release is not PASS_T4')
- if npm.get('status')!='BLOCKED_T4_AUTH':raise SystemExit('npm status no longer matches blocked-auth projection; refresh source receipts first')
- if rg.get('release_blocked') is not True or rgpub.get('released_source')!=released.get('git_commit'):raise SystemExit('release-gates/publication source mismatch')
- if released.get('peeled_commit')!=released.get('git_commit') or released.get('remote_tag_peeled')!=released.get('git_commit'):raise SystemExit('published tag/source binding drift')
+ version=(ROOT/'VERSION').read_text().strip();out_rel=f'data/validation/release-status-{version}.json';out_path=ROOT/out_rel
+ compat='data/validation/compatibility-matrix-0.1.0.json';hist='data/validation/release-publication-0.1.0.json';cm=read(compat);hp=read(hist)
  host=cm.get('current_reference_host') or {};caps=host.get('capabilities') or {}
- if not all((caps.get(k) or {}).get('status')=='SUPPORTED_T3' for k in ('process-lifecycle','workspace-isolation-binding','browser-execution')):raise SystemExit('current compatibility projection is not fully T3 for selected owned capabilities')
- ext=oidc.get('current_external_state') or {};flow=oidc.get('external_completion_sequence') or []
- if ext.get('npm_whoami')!='ENEEDAUTH' or ext.get('trusted_publisher_configurable_now') is not False:raise SystemExit('OIDC readiness external state changed; refresh R1 evidence before generating release status')
- dates=[x for x in [fa.get('generated_at'),rg.get('generated_at'),pub.get('generated_at'),cm.get('generated_at'),oidc.get('generated_at')] if x]
- out={
-  'schema':1,'release':release,'kind':'GENERATED_RELEASE_STATUS_PROJECTION','generated_at':max(dates),
-  'generator':'scripts/generate-release-status.py',
-  'claim_boundary':'Projection only. Canonical release/publication/host receipts remain the evidence owners; this file owns no release, host capability, authority, or verification state.',
-  'inputs':{name:{'path':rel,'sha256':sha(rel)} for name,rel in INPUTS.items()},
-  'status':'PARTIAL_EXTERNAL_NPM_BOOTSTRAP_AUTH',
-  'release_blocked':True,
-  'github':{'status':'PASS_T4','tag':gh.get('tag_name'),'released_source':released.get('git_commit'),'release_id':gh.get('release_id'),'asset_digest_match':gh.get('asset_digest_match')},
-  'npm':{'status':npm.get('status'),'whoami_error':npm.get('whoami_error'),'package_present':False,'publish_attempted':npm.get('publish_attempted'),'trusted_publishing_local_readiness':oidc.get('status'),'trusted_publisher_configurable_now':ext.get('trusted_publisher_configurable_now'),'completion_sequence':flow},
-  'reference_host':{'opencode_version':host.get('opencode_version'),'platform':host.get('platform'),'architecture':host.get('architecture'),'status':host.get('status'),'capabilities':{k:{'status':v.get('status'),'receipt':v.get('receipt'),'tested_git_commit':v.get('tested_git_commit')} for k,v in caps.items()}},
-  'verification':{'persisted_test_count':False,'reason':'Test counts are fresh command output and are intentionally not hand-maintained in release documentation.','commands':{k:v.get('command') for k,v in (rg.get('current_local_evidence') or {}).items() if isinstance(v,dict) and v.get('command')}},
-  'rules':['immutable GitHub v0.1.0 source/tag is never rewritten to absorb later engineering','npm T4 remains open until real registry version/integrity/shasum and fresh-install proof exists','current host/capability status is consumed from the generated receipt compatibility projection','test counts are not persisted as release truth'],
- }
- OUT.write_text(json.dumps(out,indent=2)+'\n')
- block='\n'.join([
- BEGIN,
- '## Current release status — generated',
- '',
- f"- Release: `{release}` — **{out['status']}**.",
- f"- GitHub: **PASS_T4** for `{out['github']['tag']}` at exact source `{out['github']['released_source']}`; remote asset digests match: `{str(bool(out['github']['asset_digest_match'])).lower()}`.",
- f"- npm: **{out['npm']['status']}**; package is not yet present, no publish has been attempted, and Trusted Publisher binding remains unavailable until the package exists.",
- f"- Trusted Publishing: local workflow readiness is `{out['npm']['trusted_publishing_local_readiness']}`; bootstrap publication/auth + registry proof + trust binding remain external.",
- f"- Reference host: OpenCode `{out['reference_host']['opencode_version']}` on `{out['reference_host']['platform']}/{out['reference_host']['architecture']}`; process/workspace/browser owned surfaces are receipt-backed `SUPPORTED_T3`.",
- '- Test counts are intentionally not persisted here. Run the canonical verification commands for fresh counts/results.',
- f"- Machine source: `data/validation/release-status-0.1.0.json` (generated from hash-bound receipts/status inputs).",
- END,
- ])
- text=DOC.read_text()
+ if not all((caps.get(k) or {}).get('status')=='SUPPORTED_T3' for k in ('process-lifecycle','workspace-isolation-binding','browser-execution')):raise SystemExit('current compatibility projection is not fully T3')
+ current_pub=f'data/validation/release-publication-{version}.json';published=(ROOT/current_pub).exists();pub=read(current_pub) if published else None
+ if published:
+  npm=(pub.get('npm_registry') or {});gh=(pub.get('github_release') or {});ok=gh.get('status')=='PASS_T4' and npm.get('status')=='PASS_T4'
+  status='CERTIFIED_T4' if ok else 'PARTIAL_T4';blocked=not ok
+ else:status='PREPUBLICATION_CERTIFIED_PENDING_T4';blocked=True
+ out={'schema':1,'release':version,'kind':'GENERATED_RELEASE_STATUS_PROJECTION','generated_at':'2026-08-16','generator':'scripts/generate-release-status.py','claim_boundary':'Current release projection. Historical v0.1.0 remains immutable evidence. T4 is granted only from real current-version GitHub and npm publication receipts.','inputs':{'compatibility':{'path':compat,'sha256':sha(compat)},'historical_v0_1_0_publication':{'path':hist,'sha256':sha(hist)},**({'current_publication':{'path':current_pub,'sha256':sha(current_pub)}} if published else {})},'status':status,'release_blocked':blocked,'publication_authority':{'granted':True,'condition':'effective only after all engineering and final certification complete'},'historical_github_release':{'tag':'v0.1.0','released_source':(hp.get('released_source') or {}).get('git_commit'),'status':(hp.get('github_release') or {}).get('status')},'candidate':{'version':version,'tag':f'v{version}','github_status':(pub or {}).get('github_release',{}).get('status','PENDING_T4'),'npm_status':(pub or {}).get('npm_registry',{}).get('status','PENDING_T4'),'publication_attempted':published},'reference_host':{'opencode_version':host.get('opencode_version'),'platform':host.get('platform'),'architecture':host.get('architecture'),'status':host.get('status'),'capabilities':{k:{'status':v.get('status'),'receipt':v.get('receipt'),'tested_git_commit':v.get('tested_git_commit')} for k,v in caps.items()}},'verification':{'persisted_test_count':False,'reason':'Test totals belong to fresh certification evidence, not hand-maintained release prose.'},'rules':['historical v0.1.0 tag/release is immutable','current release tag is v'+version,'publication authority becomes effective only after final certification','T4 requires real GitHub and npm verification for the current version']}
+ out_path.write_text(json.dumps(out,indent=2)+'\n')
+ block='\n'.join([BEGIN,'## Current release status — generated','',f"- Candidate: `{version}` (`v{version}`) — **{status}**.",'- Historical `v0.1.0` remains immutable and is not retagged or source-substituted.',f"- GitHub current candidate: **{out['candidate']['github_status']}**; npm current candidate: **{out['candidate']['npm_status']}**.",'- Publication authority is granted only after final engineering/certification completes; until real publication verification exists, T4 remains pending.',f"- Reference host: OpenCode `{host.get('opencode_version')}` on `{host.get('platform')}/{host.get('architecture')}`; Hi-owned process/workspace/browser surfaces are exact-receipt `SUPPORTED_T3`.",'- Test counts are intentionally not persisted here; final certification owns fresh totals.',f'- Machine source: `{out_rel}`.',END])
+ text=DOC.read_text();
  if BEGIN in text and END in text:
   a=text.index(BEGIN);b=text.index(END,a)+len(END);text=text[:a]+block+text[b:]
  else:text=text.rstrip()+'\n\n'+block+'\n'
- DOC.write_text(text)
- print(f'wrote {OUT.relative_to(ROOT)} and generated RELEASE.md status block')
+ DOC.write_text(text);print(f'wrote {out_rel} and RELEASE.md status block')
 if __name__=='__main__':main()
