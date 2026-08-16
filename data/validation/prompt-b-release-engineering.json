@@ -5,13 +5,13 @@
   "section": 28,
   "status": "CLOSED_LOCAL_T4_BLOCKED",
   "current_source": {
-    "commit": "3ca843d1443e94860f247fb5ac9b5192e391fec1",
-    "tree": "a1abf215abe18f22077fb920b7dc8eebf49ecd8c",
+    "commit": "8bc3f56b200d88c137270280fd5d40c256dbb7fd",
+    "tree": "8b13ff6cb82cd60ea939e8a9bd2f96e83d13da2d",
     "version": "0.1.1"
   },
   "certification_head": {
-    "commit": "3ca843d1443e94860f247fb5ac9b5192e391fec1",
-    "tree": "a1abf215abe18f22077fb920b7dc8eebf49ecd8c"
+    "commit": "8bc3f56b200d88c137270280fd5d40c256dbb7fd",
+    "tree": "8b13ff6cb82cd60ea939e8a9bd2f96e83d13da2d"
   },
   "historical_release": {
     "tag": "v0.1.0",
@@ -32,7 +32,7 @@
     {
       "stage": "source-commit",
       "status": "PASS",
-      "detail": "3ca843d1443e94860f247fb5ac9b5192e391fec1",
+      "detail": "8bc3f56b200d88c137270280fd5d40c256dbb7fd",
       "proof": "git HEAD"
     },
     {
@@ -130,7 +130,7 @@
     "package.json": "e528d9cd9d437eec01f80fd309e6a096913d89ee9ed44bdd996ed3e6bbcbce01",
     "package-lock.json": "96e22583fe2cf1eb25c14c6f73a9291a4eef08ae8fd096f362bb80db712d83f5",
     "plugin/package-lock.json": "fb6a6c977a496b7407dbd6a1dcbc3403f0a86dc9951c8f32fec48ccae91dd343",
-    "data/validation/fresh-consumer-opencode-1.18.18.json": "9d01e8a2cf33d0c8b69807fa349248d3ad1e6acfe0e47dc6bc5c06f762c52250",
+    "data/validation/fresh-consumer-opencode-1.18.18.json": "3986b8640247ecb450eb31c2a3c488bef93388e50f3203a331ff2619c8a2ecb4",
     "data/validation/release-status-0.1.0.json": "4ea5e44d7bca5562a30c9824fb680925417627d00165b2c4e36096f2ce60ef4a",
     ".github/workflows/npm-publish.yml": "3f5cd8e209624aa44ba48fe14bdc8899e75a5c773a624ab1ceaa2a6b5301c7a0",
     "scripts/verify-npm-oidc-release.mjs": "afa20a3a77053dff1918d4e98ff13131a92cfbccd39d44a3adbec6918afba067"

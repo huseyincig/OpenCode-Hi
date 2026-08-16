@@ -147,7 +147,7 @@
       "owner_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
       "owner_anchor": "\"external_host_status\": \"SEPARATE_T3_BOUNDARY\"",
       "proof": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
-      "proof_sha256": "9579c93256c28261c131c894be8a2d83ce5d9d2379d76d4c3aa74a37299efee3",
+      "proof_sha256": "38168a339f5be20cb07bd9fd63ad0d0f3d151b33e20b061ee185bd285ad1e17d",
       "proof_anchor": "\"status\": \"PASS\""
     }
   ],

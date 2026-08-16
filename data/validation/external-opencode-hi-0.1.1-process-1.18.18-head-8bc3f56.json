@@ -1,0 +1,115 @@
+{
+  "schema": 1,
+  "release": "0.1.1",
+  "generated_at": "2026-08-16",
+  "publication_authority": {
+    "condition": "AUTHORIZED_ONLY_AFTER_ALL_ENGINEERING_AND_FINAL_CERTIFICATION_COMPLETE",
+    "authorized": true,
+    "attempted_in_candidate_t3": false
+  },
+  "status": "PASS_EXACT_CURRENT_PROCESS_LIFECYCLE_T3_RELEASE_0_1_1",
+  "source_binding": {
+    "tested_git_commit": "8bc3f56b200d88c137270280fd5d40c256dbb7fd",
+    "tested_git_tree": "8b13ff6cb82cd60ea939e8a9bd2f96e83d13da2d",
+    "worktree": "/workspace/OpenCode-Hi",
+    "state": "CLEAN_COMMITTED_SOURCE",
+    "exact_candidate": true,
+    "runtime_hashes": {
+      "plugin/src/contracts/process.ts": "baa22ab538d5b0e16c09d2f5234d8fa13253881a608e3fbb6102833adff963fd",
+      "plugin/src/runtime/process/executor.ts": "3a0f63b69b47b429b578489f1433a4170cf6fbd4c1a64c1ecd009f60bd2756b1",
+      "plugin/src/runtime/process/runtime.ts": "3e93c1f1c717b9b1414710a19d711b807192d24c3e7030767f2d2573676c3ae7",
+      "plugin/src/opencode/open-code-pty-adapter.ts": "92ee5dbfa993900b7cc4164c9f4ebaed608f0dc6dffb70bd2111544f2a9cf2d2",
+      "plugin/src/contracts/host-capability.ts": "d0f7a502606323871c69d23f53cc4f4eea9634636985d8ef5e63f85bb7af01d6"
+    },
+    "note": "Fresh exact-current Process T3 invocation on the same committed 0.1.1 candidate; process owner blobs are bound to this checkpoint."
+  },
+  "host": {
+    "os": "linux",
+    "arch": "aarch64",
+    "opencode_version": "1.18.18",
+    "server": "ephemeral-user-space-exact-1.18.18"
+  },
+  "gates": {
+    "process_runtime_mission_owned": "PASS_T3",
+    "process_spawn_pid": "PASS_T3",
+    "process_quick_exit_before_observation": "PASS_T3",
+    "process_nonzero_exit": "PASS_T3",
+    "process_huge_unread_output_bounded": "PASS_T3",
+    "process_concurrent_isolation": "PASS_T3",
+    "process_group_identity": "PASS_T3",
+    "process_timeout_group_signal": "PASS_T3",
+    "process_kill_cleanup": "PASS_T3",
+    "process_restart_adoption": "PASS_T3",
+    "process_host_cleanup_empty": "PASS_T3",
+    "process_lifecycle": "SUPPORTED_T3"
+  },
+  "evidence": {
+    "real_host": {
+      "health": {
+        "available": true,
+        "detail": "OpenCode canonical v2 PTY list observed"
+      },
+      "main": {
+        "status": "EXITED",
+        "exit": 0,
+        "text": "RUNTIME_011_OK",
+        "pid": 24380,
+        "group": 24380
+      },
+      "nonzero": {
+        "status": "EXITED",
+        "exit": 7,
+        "text": "",
+        "pid": 24385,
+        "group": 24385
+      },
+      "huge": {
+        "status": "EXITED",
+        "exit": 0,
+        "chars": 1048576,
+        "buffered": 262144,
+        "truncated": true
+      },
+      "concurrent": {
+        "a": "ALPHA",
+        "b": "BETA",
+        "distinct": true
+      },
+      "timeout": {
+        "status": "TIMED_OUT",
+        "reason": "timeout-policy",
+        "pid": 24407,
+        "group": 24407
+      },
+      "restart": {
+        "disposition": "ADOPTED",
+        "status": "RUNNING",
+        "text_before": "RESTART_011_READY",
+        "text_after": "RESTART_011_READY",
+        "killed": "TERMINATED",
+        "remaining": 0
+      },
+      "host_server_restart_observation": {
+        "disposition": "ORPHANED",
+        "reason": "restart-owner-missing",
+        "claim": "server-kill is not promoted as adoption; runtime/plugin restart adoption is the certified restart boundary"
+      }
+    },
+    "host_teardown_classification": {
+      "node_version": "v24.19.0",
+      "observed": "libuv EEXIST assertion only after terminal acceptance JSON was emitted",
+      "classification": "HOST_TEARDOWN_NOISE_AFTER_TERMINAL_PASS"
+    }
+  },
+  "limitations": [
+    "Exact T3 applies only to OpenCode 1.18.18 on linux/aarch64 and exact source 8bc3f56b200d88c137270280fd5d40c256dbb7fd.",
+    "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted; arbitrary model-facing shell jobs are outside this claim."
+  ],
+  "capability_limitations": {
+    "process-lifecycle": [
+      "Exact T3 applies only to OpenCode 1.18.18 on linux/aarch64 and exact source 8bc3f56b200d88c137270280fd5d40c256dbb7fd.",
+      "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted; arbitrary model-facing shell jobs are outside this claim."
+    ]
+  },
+  "rule": "API existence or historical receipts do not certify this result; actual 0.1.1 candidate host invocation was required."
+}

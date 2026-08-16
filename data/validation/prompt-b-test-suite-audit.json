@@ -29,7 +29,7 @@
       "owner_sha256": "afd758b103c9e66d2a01237a54ae877071e854ce8bcabbade24f366b2b2c7ede",
       "owner_anchor": "External receipts remain canonical evidence",
       "proof": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
-      "proof_sha256": "9579c93256c28261c131c894be8a2d83ce5d9d2379d76d4c3aa74a37299efee3",
+      "proof_sha256": "38168a339f5be20cb07bd9fd63ad0d0f3d151b33e20b061ee185bd285ad1e17d",
       "proof_anchor": "\"covered\": 61"
     },
     {
