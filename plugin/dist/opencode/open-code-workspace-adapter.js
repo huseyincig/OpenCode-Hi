@@ -10,7 +10,9 @@ function defaultInspect(directory) {
     const root = canonicalExisting(directory), head = git(root, ['rev-parse', 'HEAD']), rawCommon = git(root, ['rev-parse', '--git-common-dir']), common_dir = canonicalExisting(resolve(root, rawCommon)), raw = git(root, ['worktree', 'list', '--porcelain']), worktrees = raw.split(/\r?\n/).filter(x => x.startsWith('worktree ')).map(x => canonicalExisting(x.slice('worktree '.length).trim()));
     return { head, common_dir, worktrees };
 }
-function sameRepository(primary, workspace) { return primary.common_dir === workspace.common_dir; }
+function sameGitPath(a, b) { if (a === b)
+    return true; return process.platform === 'win32' && a.toLowerCase() === b.toLowerCase(); }
+function sameRepository(primary, workspace) { return sameGitPath(primary.common_dir, workspace.common_dir); }
 export class OpenCodeWorkspaceAdapter {
     client;
     serverUrl;
@@ -61,9 +63,9 @@ export class OpenCodeWorkspaceAdapter {
             throw new Error(`Workspace source baseline mismatch: expected ${request.source_baseline}, observed ${workspace.head}`);
         if (!sameRepository(primary, workspace))
             throw new Error('OpenCode workspace is not registered to the same Git common repository');
-        if (!primary.worktrees.includes(workspacePath))
+        if (!primary.worktrees.some(path => sameGitPath(path, workspacePath)))
             throw new Error('OpenCode workspace path is not present in the primary Git worktree registry');
-        if (!workspace.worktrees.includes(workspacePath))
+        if (!workspace.worktrees.some(path => sameGitPath(path, workspacePath)))
             throw new Error('Workspace Git view does not contain its own canonical worktree path');
         return { host_workspace_id: native.id, workspace_path: workspacePath, ...(native.branch ? { branch: String(native.branch) } : {}) };
     }
@@ -111,7 +113,7 @@ export class OpenCodeWorkspaceAdapter {
         const raw = await this.#workspace().list({ directory: this.directory }), items = nativeData(raw) ?? [], native = Array.isArray(items) ? items.find(x => x?.id === lease.host_workspace_id) : undefined;
         if (!native) {
             const primary = this.inspector(lease.repository_root), target = resolve(lease.workspace_path);
-            const stillRegistered = primary.worktrees.some(x => resolve(x) === target);
+            const stillRegistered = primary.worktrees.some(x => sameGitPath(resolve(x), target));
             if (!stillRegistered && (lease.status === 'CLOSED' || lease.cleanup_state === 'CLEANUP_PENDING' || lease.cleanup_state === 'CLEANED'))
                 return { disposition: 'CLOSED', lease: { ...lease, status: 'CLOSED', cleanup_state: 'CLEANED' } };
             return { disposition: 'ORPHANED', lease: { ...lease, status: 'ORPHANED', cleanup_state: 'QUARANTINED' } };
@@ -130,14 +132,14 @@ export class OpenCodeWorkspaceAdapter {
         const primary = this.inspector(lease.repository_root), target = canonicalExisting(lease.workspace_path);
         if (target === canonicalExisting(lease.repository_root))
             throw new Error('Refusing cleanup of primary repository path');
-        if (!primary.worktrees.includes(target))
+        if (!primary.worktrees.some(path => sameGitPath(path, target)))
             throw new Error('Refusing workspace cleanup for path outside the registered Git worktree set');
         await this.#workspace().remove({ id: lease.host_workspace_id, directory: this.directory });
         const raw = await this.#workspace().list({ directory: this.directory }), items = nativeData(raw) ?? [];
         if (Array.isArray(items) && items.some(x => x?.id === lease.host_workspace_id))
             throw new Error('OpenCode workspace still exists after cleanup');
         const after = this.inspector(lease.repository_root);
-        if (after.worktrees.some(x => resolve(x) === target))
+        if (after.worktrees.some(x => sameGitPath(resolve(x), target)))
             throw new Error('Git worktree registry still contains workspace after cleanup');
     }
 }
