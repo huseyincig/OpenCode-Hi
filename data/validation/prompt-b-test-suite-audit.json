@@ -11,7 +11,7 @@
       "owner_sha256": "5b23743b0024e3392fbcf12af36067f7d2a60704fcf9be69e0ca8a9654e71bff",
       "owner_anchor": "node ../scripts/run-node-test-suite.mjs",
       "proof": "scripts/run-node-test-suite.mjs",
-      "proof_sha256": "fa1d0ee8dcff5340081c7413d2aa8df57191e05a65414da1ba1f3871370dd3ac",
+      "proof_sha256": "3f37ac8e8badc0807ea2ed2500fc7664cad04ce5f9d5ff26abecb9e55b385b89",
       "proof_anchor": "filter(x=>x.endsWith('.test.mjs')).sort()"
     },
     {
@@ -35,7 +35,7 @@
     {
       "invariant": "false-positive-resistance",
       "owner": "scripts/run-node-test-suite.mjs",
-      "owner_sha256": "fa1d0ee8dcff5340081c7413d2aa8df57191e05a65414da1ba1f3871370dd3ac",
+      "owner_sha256": "3f37ac8e8badc0807ea2ed2500fc7664cad04ce5f9d5ff26abecb9e55b385b89",
       "owner_anchor": "const knownLibuvTeardown=",
       "proof": "data/validation/test-harness-isolation-0.1.0.json",
       "proof_sha256": "de82193472c8da3b415675cdfb9b157bf860ab36ae8382f45b03393c9ee175ba",
@@ -53,16 +53,16 @@
     {
       "invariant": "timeout-handling",
       "owner": "scripts/run-node-test-suite.mjs",
-      "owner_sha256": "fa1d0ee8dcff5340081c7413d2aa8df57191e05a65414da1ba1f3871370dd3ac",
+      "owner_sha256": "3f37ac8e8badc0807ea2ed2500fc7664cad04ce5f9d5ff26abecb9e55b385b89",
       "owner_anchor": "'--test-timeout=120000'",
       "proof": "scripts/run-node-test-suite.mjs",
-      "proof_sha256": "fa1d0ee8dcff5340081c7413d2aa8df57191e05a65414da1ba1f3871370dd3ac",
+      "proof_sha256": "3f37ac8e8badc0807ea2ed2500fc7664cad04ce5f9d5ff26abecb9e55b385b89",
       "proof_anchor": "timeout:300000"
     },
     {
       "invariant": "test-isolation",
       "owner": "scripts/run-node-test-suite.mjs",
-      "owner_sha256": "fa1d0ee8dcff5340081c7413d2aa8df57191e05a65414da1ba1f3871370dd3ac",
+      "owner_sha256": "3f37ac8e8badc0807ea2ed2500fc7664cad04ce5f9d5ff26abecb9e55b385b89",
       "owner_anchor": "OPENCODE_HI_STATE_DIR",
       "proof": "data/validation/test-harness-isolation-0.1.0.json",
       "proof_sha256": "de82193472c8da3b415675cdfb9b157bf860ab36ae8382f45b03393c9ee175ba",
@@ -80,7 +80,7 @@
     {
       "invariant": "home-xdg-isolation",
       "owner": "scripts/run-node-test-suite.mjs",
-      "owner_sha256": "fa1d0ee8dcff5340081c7413d2aa8df57191e05a65414da1ba1f3871370dd3ac",
+      "owner_sha256": "3f37ac8e8badc0807ea2ed2500fc7664cad04ce5f9d5ff26abecb9e55b385b89",
       "owner_anchor": "XDG_STATE_HOME",
       "proof": "data/validation/test-harness-isolation-0.1.0.json",
       "proof_sha256": "de82193472c8da3b415675cdfb9b157bf860ab36ae8382f45b03393c9ee175ba",
@@ -98,7 +98,7 @@
     {
       "invariant": "deterministic-behavior",
       "owner": "scripts/run-node-test-suite.mjs",
-      "owner_sha256": "fa1d0ee8dcff5340081c7413d2aa8df57191e05a65414da1ba1f3871370dd3ac",
+      "owner_sha256": "3f37ac8e8badc0807ea2ed2500fc7664cad04ce5f9d5ff26abecb9e55b385b89",
       "owner_anchor": ".sort().map",
       "proof": "plugin/test/decision-replay-corpus.test.mjs",
       "proof_sha256": "0bb92635964dfe49d1412f4198de3472b794fadca26a41ee919873d0b44a84b8",
