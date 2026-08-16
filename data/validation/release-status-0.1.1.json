@@ -8,7 +8,7 @@
   "inputs": {
     "compatibility": {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
-      "sha256": "2da0aabc56d4cae96a3fe84065e94241271dcccb94c1c9f870eaf96610f5702b"
+      "sha256": "94d723ff6be7924190241f484377cfff6c0739a7a77eb4e98dad2001ca23ee03"
     },
     "historical_v0_1_0_publication": {
       "path": "data/validation/release-publication-0.1.0.json",
@@ -41,18 +41,18 @@
     "capabilities": {
       "process-lifecycle": {
         "status": "SUPPORTED_T3",
-        "receipt": "data/validation/external-opencode-hi-0.1.1-process-1.18.18-head-b8973df.json",
-        "tested_git_commit": "b8973df961bd45d11b5c4a55e7c55da419605a95"
+        "receipt": "data/validation/external-opencode-hi-0.1.1-process-1.18.18-head-0f35d83.json",
+        "tested_git_commit": "0f35d83db2280cc8b1097db6455e70acce741dc7"
       },
       "workspace-isolation-binding": {
         "status": "SUPPORTED_T3",
-        "receipt": "data/validation/external-opencode-hi-0.1.1-workspace-1.18.18-head-b8973df.json",
-        "tested_git_commit": "b8973df961bd45d11b5c4a55e7c55da419605a95"
+        "receipt": "data/validation/external-opencode-hi-0.1.1-workspace-1.18.18-head-0f35d83.json",
+        "tested_git_commit": "0f35d83db2280cc8b1097db6455e70acce741dc7"
       },
       "browser-execution": {
         "status": "SUPPORTED_T3",
-        "receipt": "data/validation/external-opencode-hi-0.1.1-browser-1.18.18-head-b8973df.json",
-        "tested_git_commit": "b8973df961bd45d11b5c4a55e7c55da419605a95"
+        "receipt": "data/validation/external-opencode-hi-0.1.1-browser-1.18.18-head-0f35d83.json",
+        "tested_git_commit": "0f35d83db2280cc8b1097db6455e70acce741dc7"
       }
     }
   },
