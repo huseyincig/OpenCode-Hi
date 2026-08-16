@@ -339,7 +339,7 @@
     },
     {
       "path": "docs/FINAL-SYSTEM-CERTIFICATION.md",
-      "sha256": "448e5d9e9cb8e244205666f9b64f145ab75c1583487b22c7c22b1df05f32957a",
+      "sha256": "c864e0b110b8c174a87bd7913b060ecbb4f8a56cdcce371d3c882facb50dc0aa",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
