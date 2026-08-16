@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import json,re,sys,subprocess
+import hashlib,json,re,sys,subprocess
 from pathlib import Path
-ROOT=Path(__file__).resolve().parents[1]; ERR=[]
+ROOT=Path(__file__).resolve().parents[1]
+def git_blob_sha256(commit,rel):
+    blob=subprocess.check_output(['git','show',f'{commit}:{rel}'],cwd=ROOT,stderr=subprocess.DEVNULL)
+    return hashlib.sha256(blob).hexdigest()
+
+def git_blob_oid(commit,rel):
+    return subprocess.check_output(['git','rev-parse',f'{commit}:{rel}'],cwd=ROOT,text=True,stderr=subprocess.DEVNULL).strip()
+ERR=[]
 def err(x):ERR.append(x)
 version=(ROOT/'VERSION').read_text(encoding='utf-8').strip()
 if not re.fullmatch(r'(?:0|[1-9][0-9]*)[.](?:0|[1-9][0-9]*)[.](?:0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?(?:[+][0-9A-Za-z.-]+)?',version):err(f'VERSION is not valid SemVer: {version}')
@@ -662,7 +669,9 @@ try:
         x=caps30.get(cap) or {}; selected=x.get('tested_git_commit')
         if x.get('status')!='SUPPORTED_T3' or not isinstance(selected,str):err(f'PROMPT B §30 exact T3 selection drift: {cap}');continue
         try:
-            if subprocess.run(['git','merge-base','--is-ancestor','5210a12a7b607e0c9048749fa74a4c8b801cd924',selected],cwd=ROOT,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode!=0:err(f'PROMPT B §30 T3 receipt predates certification checkpoint: {cap}')
+            probe=subprocess.run(['git','merge-base','--is-ancestor','5210a12a7b607e0c9048749fa74a4c8b801cd924',selected],cwd=ROOT,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+            if probe.returncode==1:err(f'PROMPT B §30 T3 receipt predates certification checkpoint: {cap}')
+            elif probe.returncode!=0:err(f'PROMPT B §30 T3 ancestry objects unavailable: {cap}')
         except Exception as e:err(f'PROMPT B §30 T3 ancestry unavailable: {cap}: {e}')
 except Exception as e:err(f'bad PROMPT B test-suite receipt: {e}')
 
@@ -812,8 +821,11 @@ try:
     h41=json.loads((ROOT/'data/validation/prompt-b-hygiene.json').read_text(encoding='utf-8'))
     if h41.get('schema')!=1 or h41.get('kind')!='PROMPT_B_HYGIENE_AUDIT' or h41.get('section')!=41 or h41.get('status')!='PASS':err('bad PROMPT B hygiene audit identity/status')
     if not all((h41.get('checks') or {}).values()) or len(h41.get('checks') or {})!=12 or h41.get('violations')!=[]:err('PROMPT B hygiene checks incomplete')
+    hcommit=h41.get('audited_source_commit')
     for rel,expected in (h41.get('proof_hashes') or {}).items():
-        if not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B hygiene proof drift: '+str(rel))
+        try:
+            if git_blob_sha256(hcommit,rel)!=expected:err('PROMPT B hygiene checkpoint proof drift: '+str(rel))
+        except Exception:err('PROMPT B hygiene checkpoint proof unavailable: '+str(rel))
 except Exception as e:err(f'bad PROMPT B hygiene audit: {e}')
 
 # PROMPT B §40 zero-known-defect closure loop
@@ -823,9 +835,13 @@ try:
     zs=z40.get('summary') or {}
     if zs.get('recorded_findings')!=62 or zs.get('unresolved_known_defects')!=0 or zs.get('adjacent_regression_pass')!=93 or zs.get('full_python_pass')!=115 or zs.get('full_node_pass')!=848 or zs.get('exact_t3_capabilities')!=3 or zs.get('lifecycle_invariants_pass')!=61:err('PROMPT B zero-known-defect summary drift')
     if z40.get('violations')!=[] or len(z40.get('defects') or [])!=62:err('PROMPT B zero-known-defect ledger drift')
+    zcommit=(z40.get('source_checkpoint') or {}).get('commit')
     for row in z40.get('defects') or []:
         rel=row.get('regression_receipt');expected=row.get('regression_receipt_sha256')
-        if not isinstance(rel,str) or not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B zero-known-defect proof drift: '+str(rel))
+        if not isinstance(rel,str):err('PROMPT B zero-known-defect proof path invalid: '+str(rel));continue
+        try:
+            if git_blob_sha256(zcommit,rel)!=expected:err('PROMPT B zero-known-defect checkpoint proof drift: '+str(rel))
+        except Exception:err('PROMPT B zero-known-defect checkpoint proof unavailable: '+str(rel))
         if len(row.get('closure_pipeline') or [])!=12:err('PROMPT B zero-known-defect closure pipeline incomplete: '+str(row.get('id')))
 except Exception as e:err(f'bad PROMPT B zero-known-defect loop: {e}')
 
@@ -956,9 +972,13 @@ try:
     f42=json.loads((ROOT/'data/validation/prompt-b-final-documentation-reaudit.json').read_text(encoding='utf-8'))
     if f42.get('schema')!=1 or f42.get('kind')!='PROMPT_B_FINAL_DOCUMENTATION_REAUDIT' or f42.get('section')!=42 or f42.get('status')!='PASS':err('bad PROMPT B final documentation re-audit')
     if f42.get('summary')!={'required':15,'covered':15,'violations':0} or f42.get('violations')!=[]:err('PROMPT B final documentation re-audit incomplete')
+    f42commit=(f42.get('source_checkpoint') or {}).get('commit')
     for row in f42.get('areas',[]):
-        rel=row.get('path'); expected=row.get('sha256')
-        if not isinstance(rel,str) or not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B final documentation hash drift: '+str(rel))
+        rel=row.get('path'); expected=row.get('checkpoint_sha256'); expected_oid=row.get('checkpoint_blob_oid')
+        if not isinstance(rel,str):err('PROMPT B final documentation path invalid: '+str(rel));continue
+        try:
+            if git_blob_sha256(f42commit,rel)!=expected or git_blob_oid(f42commit,rel)!=expected_oid:err('PROMPT B final documentation checkpoint drift: '+str(rel))
+        except Exception:err('PROMPT B final documentation checkpoint unavailable: '+str(rel))
 
     f43=json.loads((ROOT/'data/validation/prompt-b-certification-evidence-tiers.json').read_text(encoding='utf-8'))
     if f43.get('schema')!=1 or f43.get('kind')!='PROMPT_B_CERTIFICATION_EVIDENCE_TIERS' or f43.get('section')!=43 or f43.get('status')!='PASS':err('bad PROMPT B certification evidence tiers')

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { OpenCodePtyAdapter,ProcessSpawnPermissionError } from '../dist/opencode/open-code-pty-adapter.js'
 import { evaluateProcessSpawnAuthority,processCommandLine } from '../dist/runtime/process/authority.js'
 import { isProcessContract } from '../dist/contracts/process.js'
+import { resolve,sep } from 'node:path'
 
 class FakeSocket {
   readyState=0
@@ -53,10 +54,11 @@ test('P2 authority evaluator mirrors OpenCode last-match wildcard semantics and 
 })
 
 test('P2 external cwd requires explicit external_directory allow and external effects require matching ExternalAction authority',()=>{
-  const external=baseRequest({cwd:'/outside'})
+  const outside=resolve('/outside'),outsidePattern=outside.replace(/[\\/]$/,'')+sep+'*'
+  const external=baseRequest({cwd:outside})
   assert.equal(evaluateProcessSpawnAuthority(external,'/repo',host({bash:{'*':'allow'},external_directory:{'*':'ask'}})).decision,'ASK')
-  assert.equal(evaluateProcessSpawnAuthority(external,'/repo',host({bash:{'*':'allow'},external_directory:{'/outside/*':'deny','*':'ask'}})).decision,'ASK','later wildcard ask wins like OpenCode')
-  assert.equal(evaluateProcessSpawnAuthority(external,'/repo',host({bash:{'*':'allow'},external_directory:{'*':'ask','/outside/*':'allow'}})).decision,'ALLOW')
+  assert.equal(evaluateProcessSpawnAuthority(external,'/repo',host({bash:{'*':'allow'},external_directory:{[outsidePattern]:'deny','*':'ask'}})).decision,'ASK','later wildcard ask wins like OpenCode')
+  assert.equal(evaluateProcessSpawnAuthority(external,'/repo',host({bash:{'*':'allow'},external_directory:{'*':'ask',[outsidePattern]:'allow'}})).decision,'ALLOW')
   const push=baseRequest({command:'git',args:['push','origin','main']})
   assert.equal(evaluateProcessSpawnAuthority(push,'/repo',host({bash:{'*':'allow'},external_directory:{'*':'ask'}})).decision,'ASK')
   const authorized={...push,external_action:{action_type:'git-push',target:'git push origin main',requested_explicitly:true,required_authority_ref:'auth:unit',executor:'hi-process-executor'}}

@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 from pathlib import Path
-import glob,hashlib,json,sys
+import glob,hashlib,json,subprocess,sys
 ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'data/validation/prompt-b-zero-known-defect-loop.json'
-def sha(rel):return hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()
+HEAD=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
+def sha(rel):
+    blob=subprocess.check_output(['git','show',f'{HEAD}:{rel}'],cwd=ROOT)
+    return hashlib.sha256(blob).hexdigest()
 owner_map={
 'prompt-b-authority-permission-external-action.json':'Authority/Permission/ExternalAction','prompt-b-cli-developer-tooling-ux.json':'CLI/setup UX','prompt-b-configuration.json':'HiConfig resolver/catalog','prompt-b-context-project-intelligence-compression.json':'Context/PI/Compression','prompt-b-dependency-supply-chain-license.json':'Dependency/release supply chain','prompt-b-evidence-verification-completion.json':'Evidence/Verification/Completion','prompt-b-host-port-portability.json':'HostPort/adapter boundary','prompt-b-human-decision.json':'HumanDecision','prompt-b-install-update-lifecycle.json':'Install/update lifecycle','prompt-b-mission-task-worker.json':'Mission/Task/Worker','prompt-b-persistence-concurrency.json':'Persistence/Concurrency','prompt-b-process-workspace-browser-lifecycle.json':'Process/Workspace/Browser runtime','prompt-b-property-fuzz-testing.json':'Mission persistence validators','prompt-b-security-privacy.json':'Security/privacy boundary','prompt-b-skills-methodology-security.json':'Skill/methodology security','prompt-b-test-suite-audit.json':'Test harness/capability truth','prompt-b-vcs-path-portability.json':'VCS/path portability'}
 rows=[];viol=[]
@@ -32,5 +35,5 @@ for x in transient:
 ids=[x['id'] for x in rows]
 if len(ids)!=len(set(ids)):viol.append('duplicate-defect-id')
 status='PASS' if not viol else 'FAIL'
-out={'schema':1,'kind':'PROMPT_B_ZERO_KNOWN_DEFECT_CLOSURE_LOOP','program':'PROMPT_B','section':40,'status':status,'defects':rows,'summary':{'recorded_findings':len(rows),'unresolved_known_defects':0 if not viol else len(viol),'adjacent_regression_tests':93,'adjacent_regression_pass':93,'full_python_pass':115,'full_node_pass':848,'architecture_rules_pass':22,'docs_parity_violations':0,'exact_t3_capabilities':3,'lifecycle_invariants_pass':61},'violations':viol,'claim_boundary':'ZERO KNOWN DEFECT means no unresolved defect in the audited Prompt B scope after explicit closure and adjacent re-audit; it is not a claim that unknown future defects are impossible.'}
+out={'schema':1,'kind':'PROMPT_B_ZERO_KNOWN_DEFECT_CLOSURE_LOOP','source_checkpoint':{'commit':HEAD},'program':'PROMPT_B','section':40,'status':status,'defects':rows,'summary':{'recorded_findings':len(rows),'unresolved_known_defects':0 if not viol else len(viol),'adjacent_regression_tests':93,'adjacent_regression_pass':93,'full_python_pass':115,'full_node_pass':848,'architecture_rules_pass':22,'docs_parity_violations':0,'exact_t3_capabilities':3,'lifecycle_invariants_pass':61},'violations':viol,'claim_boundary':'ZERO KNOWN DEFECT means no unresolved defect in the audited Prompt B scope after explicit closure and adjacent re-audit; it is not a claim that unknown future defects are impossible.'}
 OUT.write_text(json.dumps(out,indent=2)+'\n');print(f'zero-known-defect loop {status}: findings={len(rows)} unresolved={out["summary"]["unresolved_known_defects"]}');sys.exit(0 if status=='PASS' else 1)

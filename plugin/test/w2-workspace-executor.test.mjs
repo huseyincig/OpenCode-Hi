@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {mkdtempSync,mkdirSync,rmSync,readFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
-import {join,resolve} from 'node:path'
+import {basename,dirname,join,resolve} from 'node:path'
 import {spawnSync} from 'node:child_process'
 import {OpenCodeWorkspaceAdapter} from '../dist/opencode/open-code-workspace-adapter.js'
 import {WorkspaceRuntime} from '../dist/runtime/workspace/runtime.js'
@@ -69,7 +69,7 @@ test('W3 lost ACK reconciliation fails closed when more than one new valid works
 })
 
 test('W2 default Git inspector accepts an actual detached registered worktree without staging or snapshot mutation',async()=>{
-  const root=mkdtempSync(join(tmpdir(),'hi-w2-real-git-')),work=join(root,'..',`${root.split('/').at(-1)}-work`)
+  const root=mkdtempSync(join(tmpdir(),'hi-w2-real-git-')),work=join(dirname(root),`${basename(root)}-work`)
   const run=(args,cwd=root)=>{const r=spawnSync('git',args,{cwd,encoding:'utf8'});assert.equal(r.status,0,String(r.stderr??r.stdout));return String(r.stdout??'').trim()}
   try{
     run(['init']);run(['config','user.email','hi@example.invalid']);run(['config','user.name','Hi Test']);
@@ -198,7 +198,7 @@ test('PROMPT B workspace cleanup failure quarantines lease and records an explic
 })
 
 test('PROMPT B real Git workspace provisioning preserves pre-staged and unstaged user changes exactly',async()=>{
-  const root=mkdtempSync(join(tmpdir(),'hi-pb-staged-primary-')),work=join(root,'..',`${root.split('/').at(-1)}-work`)
+  const root=mkdtempSync(join(tmpdir(),'hi-pb-staged-primary-')),work=join(dirname(root),`${basename(root)}-work`)
   const run=(args,cwd=root)=>{const r=spawnSync('git',args,{cwd,encoding:'utf8'});assert.equal(r.status,0,String(r.stderr??r.stdout));return String(r.stdout??'').trim()}
   try{
     const {writeFileSync}=await import('node:fs');run(['init']);run(['config','user.email','hi@example.invalid']);run(['config','user.name','Hi Test']);writeFileSync(join(root,'tracked.txt'),'base\n');writeFileSync(join(root,'staged.txt'),'base\n');run(['add','.']);run(['commit','-m','base']);const head=run(['rev-parse','HEAD'])
