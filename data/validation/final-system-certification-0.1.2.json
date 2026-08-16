@@ -6,8 +6,8 @@
   "status": "PARTIAL",
   "release": "0.1.2",
   "certified_source_checkpoint": {
-    "commit": "343fdd664da9490d6c6b7150c11160cfb79c83f1",
-    "tree": "19ed0973b7771a71b3869722f97335ecff41a5b8",
+    "commit": "5a162ac97d88d6c3c5a986577b1e77521e71892f",
+    "tree": "660f9d3c537a0bc0ebf7f5960b8955dbff187c76",
     "note": "Source checkpoint attested by a subsequent evidence commit to avoid self-referential Git hashes."
   },
   "schema_versions": {
@@ -181,7 +181,7 @@
     },
     "data/validation/prompt-b-hygiene.json": {
       "projection": "current-attestation",
-      "status": "FAIL"
+      "status": "PASS"
     },
     "data/validation/documentation-parity.json": {
       "projection": "current-attestation",
@@ -194,10 +194,6 @@
     "data/validation/release-status-0.1.2.json": {
       "projection": "current-attestation",
       "status": "PREPUBLICATION_CERTIFIED_PENDING_T4"
-    },
-    "data/validation/final-gates-0.1.2.json": {
-      "projection": "current-attestation",
-      "status": "FAIL"
     }
   },
   "claim_boundary": "PARTIAL means engineering evidence is closed locally while externally impossible prepublication evidence remains pending. CERTIFIED is emitted only after current-source Windows acceptance and real current-release T4 proof."
