@@ -8,7 +8,7 @@ def replace_block(path:Path,begin:str,end:str,body:str):
     text=path.read_text(encoding='utf-8')
     if text.count(begin)!=1 or text.count(end)!=1:raise RuntimeError(f'marker count invalid: {path}')
     a=text.index(begin)+len(begin); b=text.index(end,a)
-    path.write_text(text[:a]+'\n'+body.rstrip()+'\n'+text[b:],encoding='utf-8')
+    path.write_text(text[:a]+'\n'+body.rstrip()+'\n'+text[b:],encoding='utf-8',newline='\n')
 def md(value):
     if not isinstance(value,str): value=json.dumps(value,separators=(',',':'),ensure_ascii=False)
     return str(value).replace('|','\\|').replace('\n',' ')

@@ -84,7 +84,7 @@ def main():
          'checked_current_documents':[rel(p) for p in docs],
          'checks':{'version_package_product_parity':True,'local_markdown_links':True,'stale_current_status_patterns':True,'release_availability':True,'host_capabilities':True,'semantic_adapter_boundary':True},
          'violations':errors}
-    OUT.write_text(json.dumps(out,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
+    OUT.write_text(json.dumps(out,indent=2,ensure_ascii=False)+'\n',encoding='utf-8',newline='\n')
     print(f'documentation parity {status}: docs={len(docs)} violations={len(errors)}')
     if errors: print(json.dumps(errors,indent=2,ensure_ascii=False))
     return 0 if status=='PASS' else 1

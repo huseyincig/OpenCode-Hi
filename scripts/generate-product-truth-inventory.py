@@ -44,7 +44,7 @@ def main():
         rows.append({'area':area,'canonical_owner':owner,'owner_path':owner_path,'owner_sha256':digest(op) if op.is_file() else None,'producer_or_contract_paths':producers,'consumer_or_executor_paths':consumers,'proof_paths':proofs,'canonical_doc':doc})
     status='PASS' if not missing else 'FAIL'
     out={'schema':1,'release':(ROOT/'VERSION').read_text(encoding='utf-8').strip(),'kind':'PRODUCT_TRUTH_TRACE_INVENTORY','status':status,'claim_boundary':'Derived documentation/reconstruction trace map only; listed runtime/contracts remain semantic owners.','areas':rows,'violations':{'missing_paths':missing}}
-    OUT.write_text(json.dumps(out,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
+    OUT.write_text(json.dumps(out,indent=2,ensure_ascii=False)+'\n',encoding='utf-8',newline='\n')
     print(f'product truth inventory {status}: areas={len(rows)} missing={len(missing)}')
     if missing:print(json.dumps(missing,indent=2))
     return 0 if status=='PASS' else 1

@@ -46,7 +46,7 @@
     },
     {
       "proof": "scripts/release-build.py",
-      "proof_sha256": "53166a5820728f2078ac3a1d119e881d4f66848b03df4c21bb687fd6d05f0aaf",
+      "proof_sha256": "db547692d7109cb7e3f2f1d4da7463837d09e4996ea5bae10577901a5b5593fd",
       "surface": "packaging"
     }
   ],

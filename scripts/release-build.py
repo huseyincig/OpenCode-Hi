@@ -116,7 +116,7 @@ def validate_third_party_notices(root:Path,components):
 def write_sbom(path:Path,version:str,components,graph_sha:str,dependency_locks:list[str],dependency_lock_sha256:dict[str,str]):
     direct=[c for c in components if c['relation']!='transitive']
     sbom={'schema':2,'format':'Hi-SBOM','product':'OpenCode-Hi','version':version,'dependency_locks':dependency_locks,'dependency_lock_sha256':dependency_lock_sha256,'dependency_graph_sha256':graph_sha,'component_count':len(components),'direct_component_count':len(direct),'components':components}
-    path.write_text(json.dumps(sbom,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+    path.write_text(json.dumps(sbom,indent=2,sort_keys=True)+'\n',encoding='utf-8',newline='\n')
     return sbom
 
 def release_identity(root:Path, version:str):
@@ -170,7 +170,7 @@ def main():
     write_zip(z,e)
     inputs_sha256=digest_entries(e)
     m={'schema':5,'product_name':'OpenCode-Hi','repository':'https://github.com/huseyincig/OpenCode-Hi','version':version,'release_identity':{'version_file':version,'root_package':json.loads((KIT/'package.json').read_text(encoding='utf-8')).get('version'),'plugin_package':json.loads((KIT/'plugin'/'package.json').read_text(encoding='utf-8')).get('version'),'root_package_lock':((json.loads((KIT/'package-lock.json').read_text(encoding='utf-8')).get('packages') or {}).get('') or {}).get('version') if (KIT/'package-lock.json').is_file() else None,'plugin_package_lock':((json.loads((KIT/'plugin'/'package-lock.json').read_text(encoding='utf-8')).get('packages') or {}).get('') or {}).get('version') if (KIT/'plugin'/'package-lock.json').is_file() else None,'changelog_entry':True},'archive':z.name,'archive_sha256':sha(z),'file_count':len(e),'plugin_runtime_sha256':sha(runtime),'provenance':{'schema':1,'builder':'scripts/release-build.py','deterministic_zip':True,'canonical_zip_time':'2026-01-01T00:00:00Z','inputs_sha256':inputs_sha256,'input_file_count':len(e)},'supply_chain':{'schema':2,'dependency_locks':dependency_locks,'dependency_lock_sha256':dependency_lock_sha256,'dependency_graph_sha256':dependency_graph_sha256,'component_count':len(components),'sbom':sbom_path.name,'sbom_sha256':sha(sbom_path),'third_party_notices_sha256':sha(KIT/'THIRD_PARTY_NOTICES.md')},'files':{n:sha(p) for n,p in sorted(e.items())}}
-    (a.out/f'RELEASE-MANIFEST-{version}.json').write_text(json.dumps(m,indent=2)+'\n',encoding='utf-8')
+    (a.out/f'RELEASE-MANIFEST-{version}.json').write_text(json.dumps(m,indent=2)+'\n',encoding='utf-8',newline='\n')
     print(f'DISTRIBUTABLE: {z}\nFILE COUNT: {len(e)}\nSHA256: {m["archive_sha256"]}')
 
     if a.source_out:

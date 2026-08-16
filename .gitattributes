@@ -2,6 +2,11 @@
 *.md text eol=lf
 *.py text eol=lf
 *.ts text eol=lf
+*.mjs text eol=lf
+*.js text eol=lf
+*.cjs text eol=lf
+*.mts text eol=lf
+*.cts text eol=lf
 *.json text eol=lf
 *.jsonc text eol=lf
 *.yaml text eol=lf

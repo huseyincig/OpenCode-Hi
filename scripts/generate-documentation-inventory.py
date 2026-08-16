@@ -59,7 +59,7 @@ def main():
          'canonical_ownership':meanings,'artifacts':artifacts,
          'violations':{'unclassified':unclassified,'duplicate_meaning_owner':dup,'missing_owner':missing,'historical_as_current_owner':historical_owner},
          'classification_boundary':'Historical engineering/source-study artifacts remain available for provenance but may not own current product truth.'}
-    OUT.write_text(json.dumps(out,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
+    OUT.write_text(json.dumps(out,indent=2,ensure_ascii=False)+'\n',encoding='utf-8',newline='\n')
     print(f"documentation inventory {status}: artifacts={len(artifacts)} meanings={len(meanings)}")
     if status!='PASS':
         print(json.dumps(out['violations'],indent=2));return 1
