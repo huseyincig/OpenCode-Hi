@@ -4,7 +4,7 @@
 
 **PARTIAL** — OpenCode-Hi `0.1.1`.
 
-This is an exact-evidence certification, not a marketing assertion. The certified source checkpoint is `2aa9e7287b55f6ae76579d7cab6cea7ce2042a2a` (tree `a4150bfb632762528e40fe327c04248e335d70d8`). The certification receipts are committed afterward as an attestation because a file cannot truthfully contain the hash of the same Git commit that contains that file.
+This is an exact-evidence certification, not a marketing assertion. The certified source checkpoint is `a119629f49c1c52cf8410de446cc2f1c61d25b66` (tree `43b9b9be9ee4f0a85cf52ada689c08394de662e8`). The certification receipts are committed afterward as an attestation because a file cannot truthfully contain the hash of the same Git commit that contains that file.
 
 ## Evidence summary
 
@@ -32,9 +32,9 @@ T0 = static/schema/lint/doc parity; T1 = deterministic unit/contract; T2 = integ
 
 ## T3 receipts
 
-- `data/validation/external-opencode-hi-0.1.1-process-1.18.18-head-0f35d83.json`
-- `data/validation/external-opencode-hi-0.1.1-workspace-1.18.18-head-0f35d83.json`
-- `data/validation/external-opencode-hi-0.1.1-browser-1.18.18-head-0f35d83.json`
+- `data/validation/external-opencode-hi-0.1.1-process-1.18.18-head-ef41e3d.json`
+- `data/validation/external-opencode-hi-0.1.1-workspace-1.18.18-head-ef41e3d.json`
+- `data/validation/external-opencode-hi-0.1.1-browser-1.18.18-head-ef41e3d.json`
 
 ## Release / T4
 
