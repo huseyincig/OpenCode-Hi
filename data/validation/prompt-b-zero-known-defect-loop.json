@@ -1,6 +1,9 @@
 {
   "schema": 1,
   "kind": "PROMPT_B_ZERO_KNOWN_DEFECT_CLOSURE_LOOP",
+  "source_checkpoint": {
+    "commit": "15a6f53438549eb4ba4af924ca15b827da5ef864"
+  },
   "program": "PROMPT_B",
   "section": 40,
   "status": "PASS",
@@ -1116,7 +1119,7 @@
       "root_cause_record": "cwd-sensitive-test-root",
       "resolution": "Repository fixture roots are derived from import.meta.url rather than process.cwd(); exact same 17 tests pass from plugin cwd and repository root.",
       "regression_receipt": "data/validation/prompt-b-test-suite-audit.json",
-      "regression_receipt_sha256": "c6df04ec5270dd82b4b16f2553d4b3e93175a0409ffefa2106eaca857f408cb5",
+      "regression_receipt_sha256": "0fe9ed23bc1d6aa5a83ccfbdc642cae468f859d9a9038ce83b0302e7f0a4af50",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1139,7 +1142,7 @@
       "root_cause_record": "test-suite-real-home-state-pollution",
       "resolution": "Canonical Node harness redirects Hi/XDG state and cache roots to a temporary suite sandbox and removes it; measured HOME Hi-state delta is zero.",
       "regression_receipt": "data/validation/prompt-b-test-suite-audit.json",
-      "regression_receipt_sha256": "c6df04ec5270dd82b4b16f2553d4b3e93175a0409ffefa2106eaca857f408cb5",
+      "regression_receipt_sha256": "0fe9ed23bc1d6aa5a83ccfbdc642cae468f859d9a9038ce83b0302e7f0a4af50",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1162,7 +1165,7 @@
       "root_cause_record": "unbounded-test-runner-timeout",
       "resolution": "Native per-test timeout is 120s and suite process timeout is 300s; hangs cannot block CI indefinitely.",
       "regression_receipt": "data/validation/prompt-b-test-suite-audit.json",
-      "regression_receipt_sha256": "c6df04ec5270dd82b4b16f2553d4b3e93175a0409ffefa2106eaca857f408cb5",
+      "regression_receipt_sha256": "0fe9ed23bc1d6aa5a83ccfbdc642cae468f859d9a9038ce83b0302e7f0a4af50",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1185,7 +1188,7 @@
       "root_cause_record": "mock-runtime-self-promoted-t3",
       "resolution": "Owned runtime capabilities require active-host health and report OBSERVED only; REAL_HOST_ACCEPTANCE/T3 remains external exact-receipt truth.",
       "regression_receipt": "data/validation/prompt-b-test-suite-audit.json",
-      "regression_receipt_sha256": "c6df04ec5270dd82b4b16f2553d4b3e93175a0409ffefa2106eaca857f408cb5",
+      "regression_receipt_sha256": "0fe9ed23bc1d6aa5a83ccfbdc642cae468f859d9a9038ce83b0302e7f0a4af50",
       "closure_pipeline": [
         "discover",
         "classify",
