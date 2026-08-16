@@ -4,7 +4,7 @@
 
 **PARTIAL** — OpenCode-Hi `0.1.1`.
 
-This is an exact-evidence certification, not a marketing assertion. The certified source checkpoint is `16ccfd5be01a6e4150e20857c052d33a5247b8af` (tree `575ae289878775798dfd475374f629ae2937082c`). The certification receipts are committed afterward as an attestation because a file cannot truthfully contain the hash of the same Git commit that contains that file.
+This is an exact-evidence certification, not a marketing assertion. The certified source checkpoint is `b76cfa3eeafe041ea625afdd1d477b688c45ad21` (tree `2605bd40d5942c4bf238b626a9dc66e43e37ec0a`). The certification receipts are committed afterward as an attestation because a file cannot truthfully contain the hash of the same Git commit that contains that file.
 
 ## Evidence summary
 
@@ -17,7 +17,7 @@ This is an exact-evidence certification, not a marketing assertion. The certifie
 - Context / Project Intelligence: 12/12 PASS.
 - Process / Workspace / Browser lifecycle: 61/61 PASS.
 - Persistence / concurrency: 31/31 PASS. Git/VCS/path safety: 31/31 PASS.
-- Fresh final gates: Python 115, Node 848, architecture 22, docs parity violations 0.
+- Fresh final gates: Python 118, Node 848, architecture 22, docs parity violations 0.
 - Mutation: 15/15 compile-valid critical mutants killed; 0 survivors.
 - Property/fuzz: 864 deterministic cases across 9/9 areas.
 - Replay: 28 cases across 5/5 surfaces; nondeterministic drift 0.

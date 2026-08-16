@@ -6,8 +6,8 @@
   "status": "PARTIAL",
   "release": "0.1.1",
   "certified_source_checkpoint": {
-    "commit": "16ccfd5be01a6e4150e20857c052d33a5247b8af",
-    "tree": "575ae289878775798dfd475374f629ae2937082c",
+    "commit": "b76cfa3eeafe041ea625afdd1d477b688c45ad21",
+    "tree": "2605bd40d5942c4bf238b626a9dc66e43e37ec0a",
     "note": "Source checkpoint attested by a subsequent evidence commit to avoid self-referential Git hashes."
   },
   "schema_versions": {
@@ -56,7 +56,7 @@
     "windows_current": "PENDING_EXTERNAL_CI"
   },
   "test_totals": {
-    "python": 115,
+    "python": 118,
     "node": 848,
     "architecture": 22,
     "documentation_parity_violations": 0
@@ -109,7 +109,7 @@
   ],
   "inputs": {
     "data/validation/prompt-b-final-documentation-reaudit.json": {
-      "sha256": "d0984d9c9db3e6617d007f9f44d1d8edcb5d6455bf4f1444574045c23b0525a1"
+      "sha256": "5bf8cebb0e96ed8ff21fc6cdfa62df0bf86583d7f68d10721caacabd4202ffae"
     },
     "data/validation/prompt-b-certification-evidence-tiers.json": {
       "sha256": "a0796c83469d2a2a38dad3ea565c8868c7fa8168da94b5fcbda904bfbb02899a"
@@ -173,6 +173,9 @@
     },
     "data/validation/release-status-0.1.1.json": {
       "sha256": "311050ae88b049582c007e491a9ca4e1fd1009b6516d61e24df0e7607983627a"
+    },
+    "data/validation/final-gates-0.1.1.json": {
+      "sha256": "d125b598d0c7ddc8c9837780d5286c3a3a610a5fe8c31e844a82e8af298983b8"
     }
   },
   "claim_boundary": "PARTIAL means engineering evidence is closed locally while externally impossible prepublication evidence remains pending. CERTIFIED is emitted only after current-source Windows acceptance and real current-release T4 proof."
