@@ -13,7 +13,7 @@ function nativeData<T>(value:any):T{const first=value&&typeof value==='object'&&
 function git(directory:string,args:string[]):string{const r=spawnSync('git',['-C',directory,...args],{encoding:'utf8'});if(r.status!==0)throw new Error(`Git workspace inspection failed: ${String(r.stderr??r.stdout??'unknown error')}`);return String(r.stdout??'').trim()}
 function canonicalExisting(path:string):string{return realpathSync(resolve(path))}
 function defaultInspect(directory:string):GitWorkspaceInspection{
-  const root=canonicalExisting(directory),head=git(root,['rev-parse','HEAD']),rawCommon=git(root,['rev-parse','--git-common-dir']),common_dir=canonicalExisting(resolve(root,rawCommon)),raw=git(root,['worktree','list','--porcelain']),worktrees=raw.split(/\r?\n/).filter(x=>x.startsWith('worktree ')).map(x=>canonicalExisting(x.slice('worktree '.length).trim()))
+  const root=canonicalExisting(directory),head=git(root,['rev-parse','HEAD']),rawCommon=git(root,['rev-parse','--path-format=absolute','--git-common-dir']),common_dir=canonicalExisting(rawCommon),raw=git(root,['worktree','list','--porcelain']),worktrees=raw.split(/\r?\n/).filter(x=>x.startsWith('worktree ')).map(x=>canonicalExisting(x.slice('worktree '.length).trim()))
   return{head,common_dir,worktrees}
 }
 function sameGitPath(a:string,b:string):boolean{if(a===b)return true;return process.platform==='win32'&&a.toLowerCase()===b.toLowerCase()}
