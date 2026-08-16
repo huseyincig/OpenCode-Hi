@@ -25,6 +25,6 @@ test('Q7 contributor adding host adapter behavior has explicit port and OpenCode
 
 test('Q7 contributor adding validation rule has one architecture lint execution owner and documented acceptance path',()=>{
  const lint=read('scripts/architecture_lint.mjs'),doc=read('docs/VERIFICATION.md'),rootPkg=JSON.parse(read('package.json')),pluginPkg=JSON.parse(read('plugin/package.json'))
- assert.match(lint,/HI022/);assert.match(doc,/npm run check/);assert.equal(rootPkg.scripts['architecture:lint'],'npm --prefix plugin run architecture:lint');assert.match(pluginPkg.scripts['architecture:lint'],/architecture_lint\.mjs/)
+ assert.match(lint,/HI022/);assert.match(doc,/npm run check/);assert.match(rootPkg.scripts['check:product'],/plugin run check/);assert.match(rootPkg.scripts['check:evidence'],/validate\.py/);assert.equal(rootPkg.scripts['architecture:lint'],'npm --prefix plugin run architecture:lint');assert.match(pluginPkg.scripts['architecture:lint'],/architecture_lint\.mjs/)
  const duplicateFiles=['scripts/validate.py','plugin/src/plugin.ts'].filter(p=>/HI022/.test(read(p)));assert.deepEqual(duplicateFiles,[])
 })

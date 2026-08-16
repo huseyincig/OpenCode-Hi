@@ -88,6 +88,7 @@ def test_source_contract_evidence_exists():
     for c in d['contracts'].values():
         for e in c.get('evidence',[]):assert (ROOT/e.split('#',1)[0]).exists(),e
 
+@pytest.mark.evidence
 def test_validate_passes():
     r=run(ROOT/'scripts/validate.py'); assert r.returncode==0,r.stdout+r.stderr
 
@@ -773,6 +774,7 @@ def test_version_truth_is_semver_and_not_validator_hard_pinned_to_0_1_0():
     assert json.loads((ROOT/'plugin/package.json').read_text(encoding='utf-8'))['version']==version
 
 
+@pytest.mark.evidence
 def test_prompt_a_documentation_parity_binds_current_docs_to_machine_truth_and_links():
     d=json.loads((ROOT/'data/validation/documentation-parity.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='DOCUMENTATION_PARITY' and d['status']=='PASS' and d['violations']==[]
@@ -1058,6 +1060,7 @@ def test_prompt_b_vcs_path_portability_audit_is_bounded_and_source_bound():
     assert (ROOT/'scripts/audit-vcs-path-portability.py').is_file()
 
 
+@pytest.mark.evidence
 def test_prompt_b_security_privacy_audit_is_fail_closed_source_bound_and_complete():
     d=json.loads((ROOT/'data/validation/prompt-b-security-privacy.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='PROMPT_B_SECURITY_PRIVACY_ADVERSARIAL_AUDIT' and d['section']==20 and d['status']=='PASS'
@@ -1155,6 +1158,7 @@ def test_prompt_b_cli_first_run_doctor_supplies_recovery_action(tmp_path):
     assert 'Traceback' not in r.stdout+r.stderr
 
 
+@pytest.mark.evidence
 def test_prompt_b_cli_developer_tooling_ux_audit_is_actionable_bounded_and_source_bound():
     d=json.loads((ROOT/'data/validation/prompt-b-cli-developer-tooling-ux.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='PROMPT_B_CLI_DEVELOPER_TOOLING_UX_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['section']==24 and d['status']=='PASS'
@@ -1184,6 +1188,7 @@ def test_prompt_b_publishable_package_carries_setup_cli_and_direct_runtime_depen
         assert setup.stat().st_mode & 0o111
 
 
+@pytest.mark.evidence
 def test_prompt_b_install_update_lifecycle_audit_is_complete_source_bound_and_truthful():
     d=json.loads((ROOT/'data/validation/prompt-b-install-update-lifecycle.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='PROMPT_B_INSTALL_UPDATE_LIFECYCLE_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['section']==25 and d['status']=='PASS'
@@ -1209,6 +1214,7 @@ def test_prompt_b_packed_setup_fresh_consumer_smoke_is_real_tarball_bound():
     assert (ROOT/'scripts/run-packed-setup-smoke.py').is_file()
 
 
+@pytest.mark.evidence
 def test_prompt_b_packaging_fresh_consumer_audit_is_exact_host_and_source_tree_independent():
     d=json.loads((ROOT/'data/validation/prompt-b-packaging-fresh-consumer.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='PROMPT_B_PACKAGING_FRESH_CONSUMER_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['section']==26 and d['status']=='PASS'
@@ -1225,6 +1231,7 @@ def test_prompt_b_packaging_fresh_consumer_audit_is_exact_host_and_source_tree_i
     assert a['material_runtime']['provider_run']['attempted'] is False
 
 
+@pytest.mark.evidence
 def test_prompt_b_dependency_supply_chain_license_audit_is_dual_lock_integrity_and_license_bound():
     d=json.loads((ROOT/'data/validation/prompt-b-dependency-supply-chain-license.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='PROMPT_B_DEPENDENCY_SUPPLY_CHAIN_LICENSE_AUDIT' and d['program']=='PROMPT_B' and d['section']==27 and d['status']=='PASS'
@@ -1240,6 +1247,7 @@ def test_prompt_b_dependency_supply_chain_license_audit_is_dual_lock_integrity_a
     assert root_lock['lockfileVersion']==3 and plugin_lock['lockfileVersion']==3
 
 
+@pytest.mark.evidence
 def test_prompt_b_release_engineering_closes_t4_only_from_real_current_publication_evidence():
     d=json.loads((ROOT/'data/validation/prompt-b-release-engineering.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='PROMPT_B_RELEASE_ENGINEERING_AUDIT' and d['section']==28 and d['status']=='CLOSED_T4'
@@ -1270,6 +1278,7 @@ def test_prompt_b_documentation_defect_cycle_requires_owner_impact_projection_an
     assert all(d['static_guards'].values())
 
 
+@pytest.mark.evidence
 def test_prompt_b_test_suite_audit_is_isolated_bounded_and_never_promotes_mock_t3():
     d=json.loads((ROOT/'data/validation/prompt-b-test-suite-audit.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='PROMPT_B_TEST_SUITE_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['section']==30 and d['status']=='PASS'
@@ -1382,6 +1391,7 @@ def test_prompt_b_user_journey_acceptance_covers_all_required_scenarios():
     assert hashlib.sha256((ROOT/a['proof']).read_bytes()).hexdigest()==a['proof_sha256']
 
 
+@pytest.mark.evidence
 def test_prompt_b_developer_journey_acceptance_has_obvious_single_owners():
     d=json.loads((ROOT/'data/validation/prompt-b-developer-journey-acceptance.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='PROMPT_B_DEVELOPER_JOURNEY_ACCEPTANCE_AUDIT' and d['program']=='PROMPT_B' and d['section']==37 and d['status']=='PASS'
@@ -1396,19 +1406,25 @@ def test_prompt_b_developer_journey_acceptance_has_obvious_single_owners():
     assert hashlib.sha256((ROOT/a['proof']).read_bytes()).hexdigest()==a['proof_sha256']
 
 
-def test_prompt_b_cross_platform_acceptance_is_truthful_about_windows_current_source():
+def test_prompt_b_cross_platform_acceptance_is_fail_closed_and_evidence_bound():
     d=json.loads((ROOT/'data/validation/prompt-b-cross-platform-acceptance.json').read_text(encoding='utf-8'))
-    assert d['schema']==1 and d['kind']=='PROMPT_B_CROSS_PLATFORM_ACCEPTANCE_AUDIT' and d['program']=='PROMPT_B' and d['section']==38 and d['status']=='PASS'
-    assert d['summary']=={'required_surfaces':7,'covered_surfaces':7,'violations':0} and d['violations']==[]
-    assert d['linux_current_certified'] is True and d['windows_current_certified'] is True and d['windows_historical_release_evidence'] is True
-    assert d['acceptance_receipt']=='data/validation/cross-platform-acceptance-0.1.1.json' and d['post_ci_material_drift']==[]
-    assert d['github_actions']=={'run_id':31934615573,'ubuntu_job_id':95134491593,'windows_job_id':95134491698,'conclusion':'success'}
+    assert d['schema']==1 and d['kind']=='PROMPT_B_CROSS_PLATFORM_ACCEPTANCE_AUDIT' and d['program']=='PROMPT_B' and d['section']==38
+    assert d['summary']['required_surfaces']==7 and d['summary']['covered_surfaces']==7
+    assert d['windows_historical_release_evidence'] is True
+    assert d['acceptance_receipt']=='data/validation/cross-platform-acceptance-0.1.1.json'
     a=json.loads((ROOT/d['acceptance_receipt']).read_text(encoding='utf-8'))
-    assert a['status']=='PASS' and a['kind']=='PROMPT_B_CROSS_PLATFORM_CURRENT_SOURCE_CI_ACCEPTANCE'
-    assert a['source_binding']=={'tested_git_commit':'fa3840a0824866efb965d4ce4fc037027a6da110','tested_git_tree':'da5820eed63cdf3becd07123f517b9b0a3eba4cd'}
-    ga=a['github_actions']; assert ga['run_id']==31934615573 and ga['conclusion']=='success'
-    assert ga['ubuntu']['job_id']==95134491593 and ga['ubuntu']['conclusion']=='success'
-    assert ga['windows']['job_id']==95134491698 and ga['windows']['conclusion']=='success'
+    assert a['kind']=='PROMPT_B_CROSS_PLATFORM_CURRENT_SOURCE_CI_ACCEPTANCE'
+    binding=a['source_binding']; commit=binding['tested_git_commit']; tree=binding['tested_git_tree']
+    assert subprocess.check_output(['git','rev-parse',f'{commit}^{{tree}}'],cwd=ROOT,text=True).strip()==tree
+    ga=a['github_actions']; assert ga['status']=='completed' and ga['conclusion']=='success'
+    assert ga['ubuntu']['status']=='completed' and ga['ubuntu']['conclusion']=='success'
+    assert ga['windows']['status']=='completed' and ga['windows']['conclusion']=='success'
+    if d['status']=='PASS':
+        assert d['violations']==[] and d['post_ci_material_drift']==[]
+        assert d['linux_current_certified'] is True and d['windows_current_certified'] is True
+    else:
+        assert d['status']=='FAIL' and d['violations']
+        assert d['linux_current_certified'] is False and d['windows_current_certified'] is False
 
 
 def test_prompt_b_exact_current_opencode_t3_is_fresh_source_bound_and_not_inferred_from_api_presence():

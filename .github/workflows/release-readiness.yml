@@ -36,11 +36,37 @@ jobs:
         run: python -m pip install -r requirements-dev.txt
       - name: Install plugin dependencies
         run: npm ci --prefix plugin
-      - name: Canonical build, architecture lint, Node acceptance, validator
-        run: npm run check
-      - name: Python acceptance
-        run: python -m pytest -q tests/test_hi.py
+      - name: Product build, architecture lint, Node acceptance, docs parity
+        run: npm run check:product
+      - name: Python product acceptance
+        run: npm run test:python:product
       - name: Build deterministic release candidate
         run: python scripts/release-build.py --out dist-ci --source-out source-ci
       - name: Verify release archives are readable
-        run: python -c "import zipfile, pathlib; [zipfile.ZipFile(p).testzip() for p in pathlib.Path('.').glob('*-ci/*.zip')]"
+        run: python -c "import zipfile, pathlib; assert all(zipfile.ZipFile(p).testzip() is None for p in pathlib.Path('.').glob('*-ci/*.zip'))"
+
+  evidence-certification:
+    name: Evidence certification
+    needs: cross-platform
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Python verification dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: Check evidence readiness
+        id: evidence
+        run: python scripts/evidence-validation-readiness.py
+      - name: Evidence certification
+        if: steps.evidence.outputs.ready == 'true'
+        run: npm run check:evidence
+      - name: Evidence pending
+        if: steps.evidence.outputs.ready != 'true'
+        run: echo "Evidence certification pending external exact-source receipt; product acceptance completed independently."

@@ -17,7 +17,7 @@ ga=d.get('github_actions') or {};u=ga.get('ubuntu') or {};w=ga.get('windows') or
 if ga.get('workflow')!='Release Readiness' or ga.get('status')!='completed' or ga.get('conclusion')!='success':viol.append('workflow-not-success')
 for name,j in [('ubuntu',u),('windows',w)]:
  if not isinstance(j.get('job_id'),int) or j.get('status')!='completed' or j.get('conclusion')!='success':viol.append(name+'-job-not-success')
-required_steps={'Canonical build, architecture lint, Node acceptance, validator','Python acceptance','Build deterministic release candidate','Verify release archives are readable'}
+required_steps={'Product build, architecture lint, Node acceptance, docs parity','Python product acceptance','Build deterministic release candidate','Verify release archives are readable'}
 for name,j in [('ubuntu',u),('windows',w)]:
  steps={x.get('name'):x.get('conclusion') for x in (j.get('steps') or [])}
  if any(steps.get(x)!='success' for x in required_steps):viol.append(name+'-required-step-not-success')

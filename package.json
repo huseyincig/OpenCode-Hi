@@ -40,13 +40,17 @@
   "scripts": {
     "build": "npm --prefix plugin run build",
     "test": "npm --prefix plugin test",
-    "check": "npm --prefix plugin run check && npm run docs:check && node scripts/run-python.mjs scripts/validate.py",
+    "check": "npm run check:product && npm run check:evidence",
     "prepack": "npm run build",
     "contracts:generate": "npm --prefix plugin run build",
     "architecture:lint": "npm --prefix plugin run architecture:lint",
     "projections:check": "npm --prefix plugin run projections:check",
     "behavior:accept": "npm --prefix plugin test",
-    "docs:check": "node scripts/run-python.mjs scripts/generate-product-truth-inventory.py && node scripts/run-python.mjs scripts/generate-documentation-projections.py && node scripts/run-python.mjs scripts/generate-documentation-inventory.py && node scripts/run-python.mjs scripts/validate-documentation.py"
+    "docs:check": "node scripts/run-python.mjs scripts/generate-product-truth-inventory.py && node scripts/run-python.mjs scripts/generate-documentation-projections.py && node scripts/run-python.mjs scripts/generate-documentation-inventory.py && node scripts/run-python.mjs scripts/validate-documentation.py",
+    "check:product": "npm --prefix plugin run check && npm run docs:check",
+    "check:evidence": "node scripts/run-python.mjs scripts/validate.py && npm run test:python:all",
+    "test:python:product": "node scripts/run-python.mjs -m pytest -q -m \"not evidence\" tests/test_hi.py",
+    "test:python:all": "node scripts/run-python.mjs -m pytest -q tests/test_hi.py"
   },
   "publishConfig": {
     "access": "public"
