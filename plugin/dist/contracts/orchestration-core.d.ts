@@ -155,3 +155,42 @@ export interface WorkGraphValidation {
 /** Mechanical graph invariants. Semantic policy belongs to planner/scheduler layers. */
 export declare function validateWorkGraph(graph: WorkGraph): WorkGraphValidation;
 export declare function isCapabilityResolution(value: unknown): value is CapabilityResolution;
+export type SchedulingDisposition = 'RUNNABLE' | 'ACTIVE' | 'WAITING_DEPENDENCY' | 'BLOCKED_DEPENDENCY' | 'BLOCKED_STATE' | 'DEFERRED_CONFLICT' | 'DEFERRED_CAPACITY' | 'TERMINAL';
+export type SchedulingReasonCode = 'ready' | 'already-active' | 'terminal-work' | 'unknown-dependency' | 'dependency-incomplete' | 'dependency-failed' | 'dependency-cancelled' | 'task-blocked' | 'mutable-surface-conflict' | 'shared-mutable-surface' | 'topology-capacity' | 'global-capacity' | 'provider-capacity' | 'model-capacity';
+export interface SchedulingResourceBinding {
+    provider?: string;
+    model?: string;
+}
+export interface SchedulingUnitTraits {
+    readOnly: boolean;
+}
+export interface SchedulingRunningAllocation extends SchedulingResourceBinding {
+    executionUnitId: string;
+}
+export interface SchedulingCapacityState {
+    topology: number;
+    global: number;
+    providers: Record<string, number>;
+    models: Record<string, number>;
+    running: SchedulingRunningAllocation[];
+}
+export interface SchedulingSnapshot {
+    graph: WorkGraph;
+    unitTraits: Record<string, SchedulingUnitTraits>;
+    resolvedResources: Record<string, SchedulingResourceBinding | undefined>;
+    capacity: SchedulingCapacityState;
+}
+export interface SchedulingUnitDecision {
+    executionUnitId: string;
+    disposition: SchedulingDisposition;
+    reasons: Array<{
+        code: SchedulingReasonCode;
+        detail?: string;
+    }>;
+    blockingUnitIds: string[];
+    blockingDependencyIds: string[];
+}
+export interface SchedulingDecision {
+    missionId: string;
+    units: SchedulingUnitDecision[];
+}

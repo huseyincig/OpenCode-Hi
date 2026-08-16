@@ -7,88 +7,87 @@
 
 ## Active Task
 
-### Scheduler Core — Deterministic Scheduling Decisions
+### Scheduler Runtime Integration — Parity-Safe Adapter
 
-Evolve the architecture reset from passive WorkGraph projection into a host-neutral, deterministic scheduling-decision layer without replacing the current TaskRuntime execution path yet.
+Connect the verified host-neutral deterministic scheduler planner to the current Mission/Task/Worker runtime through a narrow adapter, without moving execution side effects into the planner and without broad TaskRuntime rewrite.
 
 ## Current Objective
 
-Define the minimum scheduler semantics needed to decide **which ExecutionUnits are runnable now, which are blocked, and why**, while preserving the current dependency, bounded-concurrency and write-surface safety behavior.
+Make `TaskRuntime` consume one authoritative scheduler decision path for dependency readiness, topology capacity and resolved resource capacity, while preserving existing queue mutation, session execution, resource acquisition/release, workspace cleanup and failure side effects.
 
-The scheduler decision must remain separate from provider/model/session execution.
-
-Target flow for this phase:
+Target flow:
 
 ```text
-MissionState
+MissionState + current runtime allocations
   -> WorkGraph projection
-  -> SchedulingSnapshot
-  -> deterministic scheduling decision
-       |- runnable
-       |- waiting-dependency
-       |- blocked-dependency
-       |- deferred-conflict
-       `- deferred-capacity
-  -> current TaskRuntime remains execution owner
+  -> runtime SchedulingSnapshot adapter
+  -> pure planScheduling(...)
+  -> one unit decision
+  -> TaskRuntime performs existing side effects
 ```
 
 ## Architecture Invariants
 
-- Hi owns scheduler semantics; host adapters only execute selected work.
-- Scheduling is based on work/dependency state before provider/model allocation.
-- One provider/model may serve multiple ExecutionUnits.
-- Dependency failure must not leave work queued forever.
-- Parallel execution must not permit unsafe overlapping mutable surfaces.
-- Read-only work may coexist when safe; do not encode this as transient OpenCode API behavior.
-- Capacity/backpressure decisions must be explicit and explainable.
-- The scheduling planner must be deterministic and side-effect-free; acquiring/releasing runtime resources remains a separate action.
-- Existing `ConcurrencyScheduler`, `parallelSafety`, TaskRuntime queue behavior and dirty-tree user work must be preserved until parity is demonstrated.
-- Do not introduce model routing, skill routing, semantic progress governor, or broad TaskRuntime migration into this phase unless strictly required by the scheduler contract.
+- `planScheduling` remains deterministic and side-effect-free.
+- Runtime snapshot construction may translate current worker IDs/roles/resource allocations into host-neutral ExecutionUnit semantics, but host-specific client/session objects must not enter core contracts.
+- TaskRuntime remains execution owner in this phase.
+- Dependency-blocked transitions, queue removal, resource acquire/release, registry changes, session create/abort and workspace cleanup remain runtime side effects.
+- Do not silently weaken existing `parallelSafety`, dependency or capacity behavior.
+- Remove duplicated legacy readiness helpers only after parity tests prove the planner-backed path is equivalent or stricter.
+- Provider/model capacity is a resolved-resource constraint, not work-graph topology.
+- Same provider/model must remain usable by multiple independent units when ceilings permit.
+- Existing unrelated release/validation dirty-tree work must remain untouched.
 
 ## Known Baseline
 
-The previous verified milestone added:
+Verified milestones:
 
-- `plugin/src/contracts/orchestration-core.ts`
-- `plugin/src/runtime/execution/work-graph-projection.ts`
-- `plugin/test/orchestration-core-projection.test.mjs`
+- `agent-archive/2026-08-17-orchestration-core-contract-extraction.md`
+- `agent-archive/2026-08-17-deterministic-scheduler-core.md`
 
-with host-neutral WorkGraph/ExecutionUnit/CapabilityPort contracts and lossless projection coverage. See:
+Current scheduler core provides:
 
-`agent-archive/2026-08-17-orchestration-core-contract-extraction.md`
+- `SchedulingSnapshot`
+- `SchedulingDecision`
+- explicit per-unit disposition/reason codes
+- pure `planScheduling(...)`
+- dependency/conflict/topology/global/provider/model capacity semantics
 
 ## Acceptance Criteria
 
 This phase is complete only when:
 
-1. A host-neutral scheduling contract exists for scheduling input/snapshot, per-unit disposition, reason codes and bounded capacity state.
-2. A pure deterministic planner can classify each non-terminal ExecutionUnit as runnable/waiting/blocked/deferred with explicit reasons.
-3. Unknown or failed dependencies fail closed rather than queue indefinitely.
-4. Mutable-surface conflict semantics preserve or strengthen current `parallelSafety` behavior.
-5. Capacity semantics preserve current global/provider/model ceilings without coupling graph topology to a specific model/provider. Model/provider capacity may be applied only after those resources are resolved.
-6. The same provider/model can still back multiple independent units when capacity permits.
-7. Current TaskRuntime execution remains unchanged or uses only a narrow parity-safe adapter; no broad runtime rewrite.
-8. Targeted tests compare new planner decisions with current scheduler/parallel-safety behavior on representative cases.
-9. TypeScript build and architecture lint pass with real exit status / recognized host teardown handling.
-10. Existing unrelated release/validation dirty-tree changes remain untouched.
+1. A narrow runtime adapter builds a valid `SchedulingSnapshot` from current Mission/Task/Worker state plus current resolved/running resource allocations.
+2. TaskRuntime readiness/queue-drain decisions consume planner output for the covered semantics instead of independently reimplementing dependency/topology/capacity rules.
+3. Runtime side effects remain outside the pure planner.
+4. Failed/cancelled dependencies still transition queued dependents to blocked/failed exactly once and do not remain queued.
+5. Unknown dependencies remain fail-closed at task preflight/contract boundaries.
+6. Unsafe mutable-surface parallel dispatch remains rejected/deferred with no write-conflict widening.
+7. Global/provider/model and topology ceilings preserve current behavior, including fallback/rebind safety.
+8. Existing scheduler/task tests pass and new integration parity tests demonstrate planner-backed decisions at real TaskRuntime boundaries.
+9. No broad team/model/skill/recovery redesign occurs.
+10. TypeScript build, architecture lint, targeted tests and scoped diff checks pass.
+11. Unrelated dirty-tree release/validation files remain untouched.
 
 ## Required Verification
 
 ```text
-- new scheduler contract/planner tests
-- existing scheduler-hardening tests
-- relevant task dependency/queue tests
+- new scheduler runtime-adapter/integration tests
+- scheduler-planner tests
+- scheduler-hardening tests
+- relevant TaskRuntime dependency/queue tests
+- provider fallback/rebind tests if touched
 - TypeScript build
 - architecture lint
 - scoped git diff inspection
 ```
 
+Known host caveat remains: Node may abort with libuv `EEXIST` after a terminal zero-failure test summary. Distinguish that host teardown mechanically from product failure.
+
 ## Current Repository State Warning
 
-The repository still contains unrelated user-owned uncommitted release/documentation-validation evidence changes. Do not reset, clean, overwrite, stage, or include them in architecture-reset work.
+The repository contains unrelated user-owned release/documentation-validation evidence changes. Do not reset, clean, overwrite, stage or include them in architecture-reset work.
 
 ## Exact Next Action
 
-Inspect `plugin/src/runtime/scheduler/concurrency.ts`, `plugin/src/runtime/scheduler/parallel-safety.ts`, TaskRuntime queue/readiness logic and the new WorkGraph/ExecutionUnit projection. Then define a host-neutral `SchedulingSnapshot` / `SchedulingDecision` contract and implement a side-effect-free planner that reproduces current dependency, conflict and capacity decisions before any TaskRuntime migration.
-
-Do **not** replace TaskRuntime dispatch, add semantic-progress logic, redesign model routing, remove team/skill systems, or enter release/npm/publication work in this phase.
+Inspect `TaskRuntime.canRun`, `drainQueue`, start-time `parallelSafety`, worker/model allocation state and the new `planScheduling` contract. Design the smallest runtime snapshot adapter that maps current state to SchedulingSnapshot, then replace only the duplicated readiness checks with planner-backed decisions under integration tests. Do not migrate execution side effects or redesign unrelated subsystems.
