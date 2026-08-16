@@ -4,7 +4,7 @@
 
 **CERTIFIED** — OpenCode-Hi `0.1.1`.
 
-This is an exact-evidence certification, not a marketing assertion. The certified source checkpoint is `073a15433b2961f8766439cffaa0aed960819e10` (tree `7baebd4f20b27c0d680416a0ad13167efce7a49d`). The certification receipts are committed afterward as an attestation because a file cannot truthfully contain the hash of the same Git commit that contains that file.
+This is an exact-evidence certification, not a marketing assertion. The certified source checkpoint is `1898f68a41abe0b2ed65640bbce7ce829daae8f2` (tree `2098e67bd68baf948ad908ec0a20d10670407694`). The certification receipts are committed afterward as an attestation because a file cannot truthfully contain the hash of the same Git commit that contains that file.
 
 ## Evidence summary
 
