@@ -6,8 +6,8 @@
   "status": "PARTIAL",
   "release": "0.1.1",
   "certified_source_checkpoint": {
-    "commit": "a91e9fe18a8932e976cd34afd24fb0c353d1cfc5",
-    "tree": "3eaaad5f5d757c3422180c089eb2203604e2e5ad",
+    "commit": "cc377cd791557f223495a9d63a7d01fd595f1d4d",
+    "tree": "9a1d7a47967ec85fbfce385d6ecf34db2eaade36",
     "note": "Source checkpoint attested by a subsequent evidence commit to avoid self-referential Git hashes."
   },
   "schema_versions": {
@@ -109,7 +109,7 @@
   ],
   "inputs": {
     "data/validation/prompt-b-final-documentation-reaudit.json": {
-      "sha256": "99a6b34b6dcd876749e896b8e70704937fa202489cdb7b681dcae93a7d95df07"
+      "sha256": "42cbc536ec4ee6978a4354619409968348fd1edd6c205ba5bdf0079d96cfb471"
     },
     "data/validation/prompt-b-certification-evidence-tiers.json": {
       "sha256": "a0796c83469d2a2a38dad3ea565c8868c7fa8168da94b5fcbda904bfbb02899a"
