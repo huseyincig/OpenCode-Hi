@@ -2,6 +2,12 @@
 
 All notable changes to OpenCode-Hi are documented here.
 
+## 0.1.3
+
+- Corrected the npm Trusted Publishing workflow so canonical evidence verification installs its Python verification dependencies before running the full release gate.
+- Preserves the documentation-correctness and complete packed public-document surface prepared in 0.1.2; no intentional runtime behavior change.
+- `v0.1.2` remains immutable as a GitHub release whose npm publication did not occur because the publish workflow failed before the publish step.
+
 ## 0.1.2
 
 - Corrected public documentation freshness across the English and Turkish README surfaces.

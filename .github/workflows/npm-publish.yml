@@ -49,6 +49,14 @@ jobs:
       - name: Install locked build/runtime-workspace dependencies
         run: npm ci --prefix plugin --ignore-scripts --no-audit --no-fund
 
+      - name: Setup Python verification runtime
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python verification dependencies
+        run: python -m pip install -r requirements-dev.txt
+
       - name: Canonical source verification
         run: npm run check
 

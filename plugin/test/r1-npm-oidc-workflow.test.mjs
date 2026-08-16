@@ -22,6 +22,8 @@ test('R1 npm publish workflow is release-bound OIDC with no long-lived npm token
   assert.match(workflow,/Install locked distribution dependencies/)
   assert.match(workflow,/npm ci --ignore-scripts --no-audit --no-fund/)
   assert.match(workflow,/npm ci --prefix plugin --ignore-scripts --no-audit --no-fund/)
+  assert.match(workflow,/actions\/setup-python@v5/)
+  assert.match(workflow,/python -m pip install -r requirements-dev\.txt/)
   assert.match(workflow,/npm publish --ignore-scripts --access public/)
   assert.doesNotMatch(workflow,/NODE_AUTH_TOKEN|NPM_TOKEN|secrets\.[A-Za-z0-9_]*NPM/i)
   assert.doesNotMatch(workflow,/workflow_dispatch|repository_dispatch/)

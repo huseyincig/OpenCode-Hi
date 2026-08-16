@@ -1,28 +1,28 @@
 {
-  "acceptance_receipt": "data/validation/cross-platform-acceptance-0.1.2.json",
-  "acceptance_sha256": "aaa8da0753b5e1364a8b6c8d17ba48e7b3e54287df61f8afbad3357718788a9f",
+  "acceptance_receipt": "data/validation/cross-platform-acceptance-0.1.3.json",
+  "acceptance_sha256": null,
   "claim_boundary": "Current-source Windows/Linux certification is bound to the exact external CI source checkpoint. Subsequent evidence-only commits may consume it only while runtime/package material paths remain byte-identical to that checkpoint.",
   "github_actions": {
-    "conclusion": "success",
-    "run_id": 31962092344,
-    "ubuntu_job_id": 95201458542,
-    "windows_job_id": 95201458548
+    "conclusion": null,
+    "run_id": null,
+    "ubuntu_job_id": null,
+    "windows_job_id": null
   },
   "kind": "PROMPT_B_CROSS_PLATFORM_ACCEPTANCE_AUDIT",
-  "linux_current_certified": true,
+  "linux_current_certified": false,
   "post_ci_material_drift": [],
   "program": "PROMPT_B",
   "schema": 1,
   "section": 38,
   "source_checkpoint": {
-    "commit": "c6d57dd64d03d71c1685cec9b313a2fcbd25894b",
-    "tree": "f903b794224419fafdfde30e1e4e610b30e9e6f6"
+    "commit": null,
+    "tree": null
   },
-  "status": "PASS",
+  "status": "FAIL",
   "summary": {
     "covered_surfaces": 7,
     "required_surfaces": 7,
-    "violations": 0
+    "violations": 9
   },
   "surfaces": [
     {
@@ -61,7 +61,17 @@
       "surface": "packaging"
     }
   ],
-  "violations": [],
-  "windows_current_certified": true,
+  "violations": [
+    "status-drift",
+    "source-commit-missing",
+    "workflow-not-success",
+    "ubuntu-job-not-success",
+    "windows-job-not-success",
+    "ubuntu-required-step-not-success",
+    "windows-required-step-not-success",
+    "ubuntu-node-summary-drift",
+    "windows-node-summary-drift"
+  ],
+  "windows_current_certified": false,
   "windows_historical_release_evidence": true
 }
