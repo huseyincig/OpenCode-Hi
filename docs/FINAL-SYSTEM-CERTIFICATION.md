@@ -4,14 +4,14 @@
 
 **PARTIAL** — OpenCode-Hi `0.1.1`.
 
-This is an exact-evidence certification, not a marketing assertion. The certified source checkpoint is `a119629f49c1c52cf8410de446cc2f1c61d25b66` (tree `43b9b9be9ee4f0a85cf52ada689c08394de662e8`). The certification receipts are committed afterward as an attestation because a file cannot truthfully contain the hash of the same Git commit that contains that file.
+This is an exact-evidence certification, not a marketing assertion. The certified source checkpoint is `0d285ae17d9332cdba20b0744d836a5bfe71b678` (tree `ea2557f98e786ec3047e6ed9efd51c3bda84b393`). The certification receipts are committed afterward as an attestation because a file cannot truthfully contain the hash of the same Git commit that contains that file.
 
 ## Evidence summary
 
 - Package version: `0.1.1`.
 - Schema: final certification v1.
 - Exact host: OpenCode `1.18.18`, Linux/aarch64; Process, Workspace and Browser are `SUPPORTED_T3`.
-- Platform: Linux current-source PASS; Windows current-source PENDING_EXTERNAL_CI.
+- Platform: Linux current-source PASS; Windows current-source PASS.
 - Architecture: 22/22 rules PASS.
 - Security: 20/20 PASS. Authority: 18/18 PASS.
 - Context / Project Intelligence: 12/12 PASS.
@@ -45,12 +45,11 @@ Current release status is machine-owned by `data/validation/release-status-0.1.1
 - Alternate host implementations are feasible by port contract but are not shipped or certified.
 - Native structured HumanDecision UI opening is unsupported; bounded chat transport remains the truthful fallback.
 - Current local T3 receipts are exact to OpenCode 1.18.18 on Linux/aarch64.
-- Windows current-source acceptance is pending the exact-source CI run.
+- Windows current-source acceptance is externally verified.
 - T4 publication verification is pending.
 
 ## Blockers
 
-- `current-source-windows-acceptance-pending-external-ci`
 - `T4-current-release-publication-verification-pending`
 
 ## Canonical documentation index
