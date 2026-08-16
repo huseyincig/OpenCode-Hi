@@ -872,7 +872,7 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**PROMPT B — PREPUBLICATION ENGINEERING COMPLETE. Sections 20–47 are closed internally. Final certification is PARTIAL only because current-source Windows CI and current-release T4 publication evidence are external post-push gates.**
+**PROMPT B — RELEASE/PUBLICATION COMPLETE. Sections 20–47 are closed with current-source Windows CI and real current-release T4 evidence. Final certification is CERTIFIED.**
 
 
 
@@ -939,6 +939,6 @@ Section 41 Hygiene audit is closed by `data/validation/prompt-b-hygiene.json`: 1
 
 Section 42 Final documentation re-audit is closed by `data/validation/prompt-b-final-documentation-reaudit.json`: **15/15 current truth areas PASS, 0 violations**. Documentation inventory includes the canonical final certification owner and parity is current-version bound rather than historical-release bound.
 
-Section 43 Certification evidence tiers is closed by `data/validation/prompt-b-certification-evidence-tiers.json`. T0/T1/T2/T3/T4 are explicit and lower-tier evidence cannot certify a higher-tier claim. Current external publication remains truthfully `NONE`/pending until real T4 evidence exists.
+Section 43 Certification evidence tiers is closed by `data/validation/prompt-b-certification-evidence-tiers.json`. T0/T1/T2/T3/T4 are explicit and lower-tier evidence cannot certify a higher-tier claim. Current T4 is now backed by the immutable `v0.1.1` GitHub Release, npm Trusted Publishing OIDC, registry digest/provenance verification, and fresh-registry exact OpenCode 1.18.18 acceptance.
 
-Sections 44–47 are internally closed by `data/validation/final-system-certification-0.1.1.json`, `prompt-b-certification-vocabulary.json`, `prompt-b-final-product-quality.json`, and `prompt-b-final-mandatory-state.json`. Repository-internal quality/coherence is green; final label remains **PARTIAL** until exact-source Windows CI and real GitHub/npm T4 publication verification close the two external blockers. `CERTIFIED` is forbidden before those receipts exist.
+Sections 44–47 are closed by `data/validation/final-system-certification-0.1.1.json`, `prompt-b-certification-vocabulary.json`, `prompt-b-final-product-quality.json`, and `prompt-b-final-mandatory-state.json`. Exact-source Windows CI is PASS and real GitHub/npm T4 publication verification is present; blockers are zero and the final label is **CERTIFIED**.

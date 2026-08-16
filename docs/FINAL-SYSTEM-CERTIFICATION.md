@@ -2,9 +2,9 @@
 
 ## Status
 
-**PARTIAL** — OpenCode-Hi `0.1.1`.
+**CERTIFIED** — OpenCode-Hi `0.1.1`.
 
-This is an exact-evidence certification, not a marketing assertion. The certified source checkpoint is `0c2f48bcde874cb2029feac5d645d1a917713e61` (tree `80adb268c43e3f6595edcc3fb3203d97e7886a4f`). The certification receipts are committed afterward as an attestation because a file cannot truthfully contain the hash of the same Git commit that contains that file.
+This is an exact-evidence certification, not a marketing assertion. The certified source checkpoint is `fb404fcf1c9a2917bce7712aecb3b48f901413a1` (tree `fabb5e686ad0da1c9e2d086a567aa8f3bc448c8e`). The certification receipts are committed afterward as an attestation because a file cannot truthfully contain the hash of the same Git commit that contains that file.
 
 ## Evidence summary
 
@@ -38,7 +38,7 @@ T0 = static/schema/lint/doc parity; T1 = deterministic unit/contract; T2 = integ
 
 ## Release / T4
 
-Current release status is machine-owned by `data/validation/release-status-0.1.1.json`. Current GitHub/npm T4 evidence is **pending**; no T4 claim is made before real publication and registry verification.
+Current release status is machine-owned by `data/validation/release-status-0.1.1.json`. Current GitHub/npm T4 evidence is present.
 
 ## Known unsupported capabilities and limitations
 
@@ -46,11 +46,11 @@ Current release status is machine-owned by `data/validation/release-status-0.1.1
 - Native structured HumanDecision UI opening is unsupported; bounded chat transport remains the truthful fallback.
 - Current local T3 receipts are exact to OpenCode 1.18.18 on Linux/aarch64.
 - Windows current-source acceptance is externally verified.
-- T4 publication verification is pending.
+- T4 publication verification is complete.
 
 ## Blockers
 
-- `T4-current-release-publication-verification-pending`
+- None.
 
 ## Canonical documentation index
 
@@ -58,6 +58,6 @@ Canonical ownership is machine-defined in `data/documentation-ownership.json`; c
 
 ## Certification vocabulary
 
-**PARTIAL** — do not label this release CERTIFIED until every blocker above is closed.
+**CERTIFIED** — all required local and external evidence is present.
 
 `ZERO KNOWN DEFECT` is scoped strictly to the audited Prompt B defect inventory and does not claim future defects are impossible. `DOCUMENTATION-SOURCE PARITY VERIFIED` is supported by the current documentation parity receipt.

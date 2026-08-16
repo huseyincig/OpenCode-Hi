@@ -85,17 +85,18 @@ Exact version/platform/architecture and receipt links belong to [Host Support](d
 
 ### Registry distribution
 
-The canonical package name is `opencode-hi`, but npm bootstrap publication is not yet complete. Until the registry package exists, a normal fresh-user `npm` package installation path is **not** advertised as available.
+The canonical package is publicly available as `opencode-hi@0.1.1` on npm. The published artifact is bound to the immutable annotated `v0.1.1` tag through npm Trusted Publishing OIDC provenance, and fresh-registry acceptance loaded it successfully on exact OpenCode `1.18.18`.
 
-Once the registry package exists, the ownership-aware setup lifecycle can register an exact package version in a project without replacing unrelated OpenCode configuration:
+A fresh project can install the exact package version and use the package-provided setup CLI without a repository checkout:
 
 ```bash
-python3 scripts/native_plugin_setup.py plan /path/to/project --version <version>
-python3 scripts/native_plugin_setup.py install /path/to/project --version <version>
-python3 scripts/native_plugin_setup.py doctor /path/to/project
+npm install --save-dev opencode-hi@0.1.1
+./node_modules/.bin/opencode-hi-setup plan /path/to/project --version 0.1.1
+./node_modules/.bin/opencode-hi-setup install /path/to/project --version 0.1.1
+./node_modules/.bin/opencode-hi-setup doctor /path/to/project
 ```
 
-These commands are repository tooling and the lifecycle itself is deterministically tested; successful registration is still distinct from runtime package availability/loading.
+Registration/doctor remain distinct from runtime loading; current T4 evidence additionally verifies a fresh registry consumer, 31 Hi tools, agent projection and session creation on exact OpenCode `1.18.18`.
 
 ### Development/source loading
 

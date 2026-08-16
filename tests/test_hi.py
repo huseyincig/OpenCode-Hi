@@ -1246,17 +1246,19 @@ def test_prompt_b_dependency_supply_chain_license_audit_is_dual_lock_integrity_a
     assert root_lock['lockfileVersion']==3 and plugin_lock['lockfileVersion']==3
 
 
-def test_prompt_b_release_engineering_separates_current_dev_source_from_historical_release_and_blocks_t4_truthfully():
+def test_prompt_b_release_engineering_closes_t4_only_from_real_current_publication_evidence():
     d=json.loads((ROOT/'data/validation/prompt-b-release-engineering.json').read_text(encoding='utf-8'))
-    assert d['schema']==1 and d['kind']=='PROMPT_B_RELEASE_ENGINEERING_AUDIT' and d['section']==28 and d['status']=='CLOSED_LOCAL_T4_BLOCKED'
-    assert d['violations']==[] and d['summary']=={'stages':13,'local_pass_or_historical':8,'blocked_external_or_identity':5,'violations':0}
+    assert d['schema']==1 and d['kind']=='PROMPT_B_RELEASE_ENGINEERING_AUDIT' and d['section']==28 and d['status']=='CLOSED_T4'
+    assert d['violations']==[] and d['summary']=={'stages':13,'local_pass_or_historical':13,'blocked_external_or_identity':0,'violations':0}
     assert all(d['checks'].values())
     assert d['current_source']['commit']!=d['historical_release']['source_commit']
     assert d['historical_release']['tag']=='v0.1.0' and d['historical_release']['github_status']=='PASS_T4'
-    assert d['registry_observation']['view']=='PREPUBLICATION' and d['registry_observation']['publish_attempted'] is False and d['registry_observation']['authority_granted'] is True
+    assert d['registry_observation']['view']=='PUBLISHED_T4' and d['registry_observation']['publish_attempted'] is True and d['registry_observation']['authority_granted'] is True
     assert d['registry_observation']['authority_condition']=='effective only after all engineering/final certification completes'
     by={x['stage']:x['status'] for x in d['stages']}
-    assert by['T3']=='PASS' and by['tag']=='PENDING_FINAL_AUTHORIZED_PUBLICATION' and by['registry-publication']=='PENDING_FINAL_AUTHORIZED_PUBLICATION' and by['T4-receipt']=='PENDING_REAL_PUBLICATION_PROOF'
+    assert by['T3']=='PASS' and by['tag']=='PASS_T4' and by['registry-publication']=='PASS_T4' and by['registry-integrity']=='PASS_T4' and by['fresh-registry-install']=='PASS_T4' and by['T4-receipt']=='PASS_T4'
+    pub=json.loads((ROOT/'data/validation/release-publication-0.1.1.json').read_text(encoding='utf-8'))
+    assert pub['status']=='PASS_T4' and pub['github_release']['status']=='PASS_T4' and pub['npm_registry']['status']=='PASS_T4' and pub['fresh_registry_consumer']['status']=='PASS_T4'
     for rel,digest in d['proof_hashes'].items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
 
 

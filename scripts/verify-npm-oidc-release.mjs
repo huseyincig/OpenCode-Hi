@@ -50,14 +50,19 @@ if(mode==='registry'){
   if(!packPath||!viewPath)fail('registry requires pack JSON and npm view JSON paths')
   const packRaw=json(packPath)
   const pack=Array.isArray(packRaw)?packRaw[0]:packRaw
-  const view=json(viewPath)
+  const viewRaw=json(viewPath)
+  const view=Array.isArray(viewRaw)?viewRaw[0]:viewRaw
   if(!pack||typeof pack!=='object')fail('pack receipt is empty')
+  if(!view||typeof view!=='object')fail('registry receipt is empty')
   if(pack.name!==pkg.name||pack.version!==version)fail(`pack identity ${pack.name}@${pack.version} != ${pkg.name}@${version}`)
   if(typeof pack.integrity!=='string'||!pack.integrity)fail('pack integrity missing')
   if(typeof pack.shasum!=='string'||!pack.shasum)fail('pack shasum missing')
-  if(view.version!==version)fail(`registry version ${view.version} != ${version}`)
-  if(view?.dist?.integrity!==pack.integrity)fail('registry integrity does not match fresh pack proof')
-  if(view?.dist?.shasum!==pack.shasum)fail('registry shasum does not match fresh pack proof')
+  const registryVersion=view.version
+  const registryIntegrity=view?.dist?.integrity??view['dist.integrity']
+  const registryShasum=view?.dist?.shasum??view['dist.shasum']
+  if(registryVersion!==version)fail(`registry version ${registryVersion} != ${version}`)
+  if(registryIntegrity!==pack.integrity)fail('registry integrity does not match fresh pack proof')
+  if(registryShasum!==pack.shasum)fail('registry shasum does not match fresh pack proof')
   console.log(JSON.stringify({status:'PASS',name:pkg.name,version,integrity:pack.integrity,shasum:pack.shasum}))
   process.exit(0)
 }

@@ -62,8 +62,18 @@ jobs:
         shell: bash
         run: |
           VERSION="$(cat VERSION)"
-          npm view "opencode-hi@${VERSION}" version dist.integrity dist.shasum --json > npm-registry-proof.json
-          node scripts/verify-npm-oidc-release.mjs registry npm-pack-proof.json npm-registry-proof.json
+          rm -f npm-registry-proof.json
+          for attempt in $(seq 1 12); do
+            if npm view "opencode-hi@${VERSION}" version dist.integrity dist.shasum --json > npm-registry-proof.json 2>/tmp/npm-view.err; then
+              if node scripts/verify-npm-oidc-release.mjs registry npm-pack-proof.json npm-registry-proof.json; then
+                exit 0
+              fi
+            fi
+            if [ "$attempt" -lt 12 ]; then sleep 5; fi
+          done
+          cat /tmp/npm-view.err >&2 || true
+          echo "registry verification did not converge after bounded retries" >&2
+          exit 1
 
       - name: Verify fresh consumer install and ESM import
         shell: bash

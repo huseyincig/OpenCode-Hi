@@ -41,10 +41,15 @@ test('R1 registry proof requires fresh pack integrity and shasum equality before
   assert.match(workflow,/npm pack --dry-run --json --ignore-scripts > npm-pack-proof\.json/)
   assert.match(workflow,/npm view .*dist\.integrity dist\.shasum --json/)
   assert.match(workflow,/verify-npm-oidc-release\.mjs registry/)
+  assert.match(workflow,/for attempt in \$\(seq 1 12\)/)
+  assert.match(workflow,/sleep 5/)
   assert.match(workflow,/npm install --ignore-scripts "opencode-hi@\$\{VERSION\}"/)
   assert.match(workflow,/await import\('opencode-hi'\)/)
   assert.match(verifier,/registry integrity does not match fresh pack proof/)
   assert.match(verifier,/registry shasum does not match fresh pack proof/)
+  assert.match(verifier,/view\['dist\.integrity'\]/)
+  assert.match(verifier,/view\['dist\.shasum'\]/)
+  assert.match(verifier,/Array\.isArray\(viewRaw\)\?viewRaw\[0\]:viewRaw/)
 })
 
 test('R1 preflight rejects the historical release tag when current source has advanced beyond it',()=>{

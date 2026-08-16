@@ -948,13 +948,15 @@ except Exception as e:err(f'bad PROMPT B dependency/supply-chain/license receipt
 # PROMPT B §28 release engineering certification
 try:
     r28=json.loads((ROOT/'data/validation/prompt-b-release-engineering.json').read_text(encoding='utf-8'))
-    if r28.get('schema')!=1 or r28.get('kind')!='PROMPT_B_RELEASE_ENGINEERING_AUDIT' or r28.get('program')!='PROMPT_B' or r28.get('section')!=28 or r28.get('status')!='CLOSED_LOCAL_T4_BLOCKED':err('bad PROMPT B release engineering receipt identity/status')
-    if r28.get('summary')!={'stages':13,'local_pass_or_historical':8,'blocked_external_or_identity':5,'violations':0} or r28.get('violations')!=[]:err('PROMPT B release engineering summary drift')
+    if r28.get('schema')!=1 or r28.get('kind')!='PROMPT_B_RELEASE_ENGINEERING_AUDIT' or r28.get('program')!='PROMPT_B' or r28.get('section')!=28 or r28.get('status')!='CLOSED_T4':err('bad PROMPT B release engineering receipt identity/status')
+    if r28.get('summary')!={'stages':13,'local_pass_or_historical':13,'blocked_external_or_identity':0,'violations':0} or r28.get('violations')!=[]:err('PROMPT B release engineering summary drift')
     if not all((r28.get('checks') or {}).values()):err('PROMPT B release engineering check drift')
     for rel,expected in (r28.get('proof_hashes') or {}).items():
         if not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B release engineering proof hash drift: '+str(rel))
     obs=r28.get('registry_observation',{});
-    if obs.get('publish_attempted') is not False or obs.get('authority_granted') is not True or obs.get('authority_condition')!='effective only after all engineering/final certification completes':err('PROMPT B release engineering authority boundary drift')
+    if obs.get('view')!='PUBLISHED_T4' or obs.get('publish_attempted') is not True or obs.get('authority_granted') is not True or obs.get('authority_condition')!='effective only after all engineering/final certification completes':err('PROMPT B release engineering authority boundary drift')
+    pub=json.loads((ROOT/'data/validation/release-publication-0.1.1.json').read_text(encoding='utf-8'))
+    if pub.get('status')!='PASS_T4' or (pub.get('github_release') or {}).get('status')!='PASS_T4' or (pub.get('npm_registry') or {}).get('status')!='PASS_T4' or (pub.get('fresh_registry_consumer') or {}).get('status')!='PASS_T4':err('PROMPT B release publication T4 drift')
 except Exception as e:err(f'bad PROMPT B release engineering receipt: {e}')
 
 

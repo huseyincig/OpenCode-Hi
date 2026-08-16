@@ -37,7 +37,7 @@
       "owner_sha256": "e4a360e19a9a5d2d82ca57d753b7c2e43c2843349c1d9e74adae03caeb78efb3",
       "owner_anchor": "one-meaning-one-canonical-documentation-owner",
       "proof": "data/validation/documentation-inventory.json",
-      "proof_sha256": "5ca729dec65de3c4d53953092908cfa1d0207aa9b038332e7a72f77a57fa46f1",
+      "proof_sha256": "2c5035b4f96c8942c203c3c5589afcfc99b2c5d6af0ddfb645240e272490ce56",
       "proof_anchor": "\"canonical_ownership\""
     },
     {
@@ -47,17 +47,17 @@
       "owner_sha256": "8c838fc9a3448ce2baba1a092e5cfad47b1820411d2cde4b83cadd25581fe79d",
       "owner_anchor": "Generated from",
       "proof": "data/validation/documentation-parity.json",
-      "proof_sha256": "ae34ae445972c1aa630c85b9c0c9192262c5d0dec5ef0d283308df681632c08c",
+      "proof_sha256": "ce5c97893b38bafb28c7ad64d83e60257cc02f843f877b118ac1e92feed96418",
       "proof_anchor": "\"status\": \"PASS\""
     },
     {
       "step": "doc-lint",
       "status": "PASS",
       "owner": "scripts/validate-documentation.py",
-      "owner_sha256": "e56b1674ee91e7cbad9e79ef14b984c80f647ae5e2b54d09c815577826535209",
+      "owner_sha256": "998688cb711e48f692e26b955948f39e6c095b477ec3875427b00219e804cd10",
       "owner_anchor": "documentation parity",
       "proof": "data/validation/documentation-parity.json",
-      "proof_sha256": "ae34ae445972c1aa630c85b9c0c9192262c5d0dec5ef0d283308df681632c08c",
+      "proof_sha256": "ce5c97893b38bafb28c7ad64d83e60257cc02f843f877b118ac1e92feed96418",
       "proof_anchor": "\"violations\": []"
     }
   ],

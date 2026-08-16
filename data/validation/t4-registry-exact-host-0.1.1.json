@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "kind": "T4_REGISTRY_EXACT_HOST_ACCEPTANCE",
+  "status": "PASS",
+  "release": "0.1.1",
+  "registry": {
+    "version": "0.1.1",
+    "dist.integrity": "sha512-dHEvmBHZ2qmmtCIhksvr0jiWXTJHRLqQ4yO+29fUDpQbe9D8IQlj9ca6rR1h9JECCgZdg5lIh6XbUAsKegy8Ig==",
+    "dist.shasum": "f1e739c9ef7b4f46be1a05fcdc69aa9127403be9",
+    "dist.attestations": {
+      "url": "https://registry.npmjs.org/-/npm/v1/attestations/opencode-hi@0.1.1",
+      "provenance": {
+        "predicateType": "https://slsa.dev/provenance/v1"
+      }
+    },
+    "attestation_subject_sha512": "74712f9811d9daa9a6b4222192cbebd238965d324744ba90e323bedbd7d40e941b7bd0fc210963f5c6baad1d61f491020a065d83994887a5db500b0a7a0cbc22",
+    "provenance_tlog_index": "2489120752",
+    "publish_attestation_tlog_index": "2489120830"
+  },
+  "consumer": {
+    "resolved_entrypoint": "file://<temp>/consumer/node_modules/opencode-hi/plugin/dist/plugin.js",
+    "hi_tool_count": 31,
+    "coder_agent_observed": true,
+    "session_created": true
+  },
+  "host": {
+    "opencode": "1.18.18",
+    "binary": "/home/node/.local/share/hi-opencode-1.18.18/node_modules/.bin/opencode",
+    "platform": "linux",
+    "architecture": "aarch64"
+  },
+  "checks": {
+    "registry_install": true,
+    "setup_reconfigure": true,
+    "consumer_resolution": true,
+    "exact_host_version": true,
+    "server_tool_ids": true,
+    "agent_projection": true,
+    "session_create": true,
+    "no_source_tree_in_server_log": true
+  }
+}

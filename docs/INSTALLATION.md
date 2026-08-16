@@ -3,9 +3,9 @@
 OpenCode-Hi's canonical package name is `opencode-hi`. Installation truth has two separate layers:
 
 1. **registration/lifecycle mechanics** — implemented and deterministically verified by `scripts/native_plugin_setup.py`;
-2. **registry distribution availability** — the current `opencode-hi@0.1.1` candidate is not considered registry-available until final T4 publication and verification complete.
+2. **registry distribution availability** — `opencode-hi@0.1.1` is published on npm and T4-verified through Trusted Publishing OIDC provenance plus fresh-registry exact-host acceptance.
 
-A successful local registration test must not be presented as proof that a fresh user can download the package from npm today.
+Local registration tests and public-registry availability remain separate evidence layers; the current release has both.
 
 ## Prerequisites
 
@@ -18,11 +18,11 @@ Current exact host support belongs to `data/validation/compatibility-matrix-0.1.
 
 ## Package registration
 
-When a registry package version is actually available, OpenCode package configuration uses an exact package spec such as:
+For the current public release, OpenCode package configuration uses the exact package spec:
 
 ```json
 {
-  "plugin": ["opencode-hi@<version>"]
+  "plugin": ["opencode-hi@0.1.1"]
 }
 ```
 
@@ -34,11 +34,11 @@ python3 scripts/native_plugin_setup.py install /path/to/project --version <versi
 python3 scripts/native_plugin_setup.py doctor /path/to/project
 ```
 
-For an installed/available npm package, the same CLI surface is exposed as `opencode-hi-setup` (for example through the package's npm bin). The current npm bootstrap remains blocked, so this is a verified package-content contract rather than a pre-publication claim that `npx` can already fetch `opencode-hi@0.1.1`.
+The npm package exposes the same lifecycle as `opencode-hi-setup`. A fresh registry consumer has installed `opencode-hi@0.1.1` and loaded it on exact OpenCode `1.18.18`; this is current T4 evidence rather than a package-content-only claim.
 
 `plan` is non-mutating. `install` is idempotent after Hi owns the exact registration. `doctor` validates registration/ownership/lifecycle state; it explicitly does **not** substitute for a real OpenCode runtime-load check.
 
-At the current release state, npm bootstrap is blocked, so the example above describes the verified registration contract rather than an available public npm download path.
+For a local install, `./node_modules/.bin/opencode-hi-setup` can be used directly; source-checkout invocations below remain the development equivalent.
 
 ## Development/source loading
 

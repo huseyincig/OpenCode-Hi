@@ -51,6 +51,7 @@ def main():
       ('STALE_FUTURE_WORKSPACE_ADAPTER',r'future Git/OpenCode adapter'),
       ('STALE_N1_FUTURE',r'Final source-driven normalization is reserved for `N1|N1[^\n]{0,100}after the engineering work-package program completes'),
       ('STALE_PRODUCT_VERSION_IDENTITY',r'OpenCode-Hi 0[.]1[.]0 is a new product identity'),
+      ('STALE_NPM_PREPUBLICATION',r'npm bootstrap publication is not yet complete|current npm bootstrap remains blocked|not considered registry-available until final T4|final label remains \*\*PARTIAL\*\* until exact-source Windows CI'),
     ]
     for p in docs:
         text=p.read_text(encoding='utf-8',errors='replace')

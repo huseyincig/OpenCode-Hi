@@ -1,0 +1,88 @@
+{
+  "schema": 1,
+  "kind": "CURRENT_RELEASE_T4_PUBLICATION",
+  "release": "0.1.1",
+  "status": "PASS_T4",
+  "released_source": {
+    "git_commit": "fb404fcf1c9a2917bce7712aecb3b48f901413a1",
+    "git_tree": "fabb5e686ad0da1c9e2d086a567aa8f3bc448c8e",
+    "annotated_tag": "v0.1.1",
+    "tag_object": "17057d4be7c7fcce659701524e842a1b5cedf20b",
+    "tag_object_type": "tag"
+  },
+  "release_readiness": {
+    "status": "PASS_T4",
+    "run_id": 31935238603,
+    "source_commit": "fb404fcf1c9a2917bce7712aecb3b48f901413a1",
+    "ubuntu_job_id": 95135982715,
+    "windows_job_id": 95135982837,
+    "jobs": {
+      "ubuntu-latest / node-22 / python-3.11": "success",
+      "windows-latest / node-22 / python-3.11": "success"
+    }
+  },
+  "github_release": {
+    "status": "PASS_T4",
+    "release_id": 371267155,
+    "tag": "v0.1.1",
+    "published_at": "2026-08-16T08:01:07Z",
+    "draft": false,
+    "prerelease": false,
+    "url": "https://github.com/huseyincig/OpenCode-Hi/releases/tag/v0.1.1",
+    "tag_peels_to_released_source": true
+  },
+  "npm_registry": {
+    "status": "PASS_T4",
+    "package": "opencode-hi",
+    "version": "0.1.1",
+    "latest": "0.1.1",
+    "integrity": "sha512-dHEvmBHZ2qmmtCIhksvr0jiWXTJHRLqQ4yO+29fUDpQbe9D8IQlj9ca6rR1h9JECCgZdg5lIh6XbUAsKegy8Ig==",
+    "shasum": "f1e739c9ef7b4f46be1a05fcdc69aa9127403be9",
+    "tarball": "https://registry.npmjs.org/opencode-hi/-/opencode-hi-0.1.1.tgz",
+    "pack_integrity_match": true,
+    "pack_shasum_match": true,
+    "provenance_status": "PASS",
+    "attestations_url": "https://registry.npmjs.org/-/npm/v1/attestations/opencode-hi@0.1.1",
+    "attestation_subject_sha512": "74712f9811d9daa9a6b4222192cbebd238965d324744ba90e323bedbd7d40e941b7bd0fc210963f5c6baad1d61f491020a065d83994887a5db500b0a7a0cbc22",
+    "provenance": {
+      "predicate_type": "https://slsa.dev/provenance/v1",
+      "workflow": {
+        "ref": "refs/tags/v0.1.1",
+        "repository": "https://github.com/huseyincig/OpenCode-Hi",
+        "path": ".github/workflows/npm-publish.yml"
+      },
+      "git_commit": "fb404fcf1c9a2917bce7712aecb3b48f901413a1",
+      "invocation_id": "https://github.com/huseyincig/OpenCode-Hi/actions/runs/31935378467/attempts/2",
+      "transparency_log_index": "2489120752"
+    },
+    "publish_attestation": {
+      "predicate_type": "https://github.com/npm/attestation/tree/main/specs/publish/v0.1",
+      "transparency_log_index": "2489120830"
+    }
+  },
+  "oidc_publication": {
+    "status": "PASS_T4",
+    "workflow_run_id": 31935378467,
+    "run_attempt": 2,
+    "job_id": 95173579564,
+    "source_commit": "fb404fcf1c9a2917bce7712aecb3b48f901413a1",
+    "publish_step_conclusion": "success",
+    "workflow_overall_conclusion": "failure",
+    "post_publish_verification_step": "failure",
+    "classification": "PUBLICATION_SUCCEEDED_POST_PUBLISH_READ_AFTER_WRITE_VERIFICATION_RACED_REGISTRY_PROPAGATION",
+    "independent_followup_verification": "PASS"
+  },
+  "fresh_registry_consumer": {
+    "status": "PASS_T4",
+    "receipt": "data/validation/t4-registry-exact-host-0.1.1.json",
+    "exact_opencode": "1.18.18",
+    "hi_tool_count": 31,
+    "session_created": true
+  },
+  "bootstrap": {
+    "version": "0.0.0-oidc-bootstrap.0",
+    "dist_tag": "oidc-bootstrap",
+    "purpose": "One-time first-package registry bootstrap required before npm Trusted Publisher could be created; not a certified product release and never held latest after 0.1.1 publication."
+  },
+  "claim_boundary": "T4 binds immutable v0.1.1 GitHub release/tag, successful npm Trusted Publishing OIDC publication, registry pack digest equality, npm/Sigstore provenance tied to exact tag commit/workflow/run, and a fresh registry consumer loaded by exact OpenCode 1.18.18. The workflow attempt overall failed only because immediate post-publish npm view raced registry propagation; independent follow-up verification and exact-host acceptance subsequently passed."
+}

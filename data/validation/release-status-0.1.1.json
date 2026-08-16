@@ -13,10 +13,14 @@
     "historical_v0_1_0_publication": {
       "path": "data/validation/release-publication-0.1.0.json",
       "sha256": "b0b9509dea487a6403d075d3ca18e8081285af4c053605d7f8f6438ad3d9798a"
+    },
+    "current_publication": {
+      "path": "data/validation/release-publication-0.1.1.json",
+      "sha256": "7255a17b208b0dd388b6404567712890b29b8fad314a664af5f8cfb2ee34e605"
     }
   },
-  "status": "PREPUBLICATION_CERTIFIED_PENDING_T4",
-  "release_blocked": true,
+  "status": "CERTIFIED_T4",
+  "release_blocked": false,
   "publication_authority": {
     "granted": true,
     "condition": "effective only after all engineering and final certification complete"
@@ -29,9 +33,9 @@
   "candidate": {
     "version": "0.1.1",
     "tag": "v0.1.1",
-    "github_status": "PENDING_T4",
-    "npm_status": "PENDING_T4",
-    "publication_attempted": false
+    "github_status": "PASS_T4",
+    "npm_status": "PASS_T4",
+    "publication_attempted": true
   },
   "reference_host": {
     "opencode_version": "1.18.18",
