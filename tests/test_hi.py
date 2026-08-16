@@ -786,7 +786,7 @@ def test_prompt_a_documentation_parity_binds_current_docs_to_machine_truth_and_l
     for meta in d['inputs'].values():
         path=ROOT/meta['path']; assert path.is_file(); assert hashlib.sha256(path.read_bytes()).hexdigest()==meta['sha256']
     pkg=json.loads((ROOT/'package.json').read_text(encoding='utf-8'))
-    assert 'docs:check' in pkg['scripts'] and 'npm run docs:check' in pkg['scripts']['check']
+    assert 'docs:check' in pkg['scripts'] and 'npm run docs:check' in pkg['scripts']['check:product'] and pkg['scripts']['check']=='npm run check:product && npm run check:evidence'
 
 
 def test_prompt_a_first_use_docs_do_not_advertise_unavailable_registry_or_stale_capabilities():

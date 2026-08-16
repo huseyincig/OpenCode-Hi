@@ -10,12 +10,12 @@
   "known_node_teardown_normalized": true,
   "program": "PROMPT_B",
   "proof": "plugin/test/q7-developer-journey-acceptance.test.mjs",
-  "proof_sha256": "df2826e268ac1c37d5a303bf0408f75a9775daa5406a3b2b85aa97c6fbf3247f",
+  "proof_sha256": "da8e145190f363b105d868953e03cc9bc8732664057f08352a6a1d73b8ce1577",
   "schema": 1,
   "section": 37,
   "source_binding": {
-    "tested_git_commit": "07fbec3160f0bacb0ece896ac36358a50894ee25",
-    "tested_git_tree": "2a3375a247fc43239de6ee6c7cc204aeb9595015"
+    "tested_git_commit": "ca3144577e6219cce78c6bc72930b75be1e3edbd",
+    "tested_git_tree": "f82a3935e041db11b2de0a3eb91ddd555130cc79"
   },
   "status": "PASS",
   "terminal": {

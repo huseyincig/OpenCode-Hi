@@ -16,7 +16,7 @@
     "expanded_living_scope": [
       "data/product.json",
       "data/hi-config-options.json",
-      "docs/ARCHITECTURE-REALITY-MAP.md",
+      "docs/ARCHITECTURE.md",
       "docs/INSTALLATION.md",
       "docs/RELEASE.md"
     ]
@@ -45,21 +45,15 @@
   "path_audit": {
     "violations": [],
     "excluded_provenance_or_negative_surfaces": [
-      "docs/BASELINE-RECEIPT.md",
-      "docs/CANONICAL-IMPLEMENTATION-PROMPT.txt",
-      "docs/PRODUCT-IDENTITY.md",
-      "docs/SOURCE-REUSE-MATRIX.md",
-      "docs/TERMINOLOGY.md",
       "plugin/test/config-no-legacy-superpowers.test.mjs"
     ],
     "excluded_prefixes": [
-      "docs/engineering-constitution/sources/",
+      ".project-docs/",
       "data/validation/external-",
       "data/validation/forensic-"
     ]
   },
   "stale_living_status": {
-    "architecture_reality_process_not_adopted": false,
     "release_manual_latest_host": false
   },
   "allowed_noncanonical_names": [
@@ -79,7 +73,7 @@
   "inputs": {
     "naming_guard": {
       "path": "scripts/naming_namespace_guard.mjs",
-      "sha256": "724944fb55c3f19398678ae2d9795d65a9f7aab1e3cd4ecb98d8cb4a9173d5d0"
+      "sha256": "87270fa29c2c9204e442e515c6a9ece5aea5b12abe0280d91027ccfaf674db0d"
     },
     "terminology": {
       "path": "data/validation/terminology-audit-0.1.0.json",
@@ -96,10 +90,6 @@
     "role_catalog": {
       "path": "data/hi-roles.json",
       "sha256": "2f9dbd6559fc4974a8cf2201767767133dae3e407adc883b6a019e6feb61ea0a"
-    },
-    "architecture_reality": {
-      "path": "docs/ARCHITECTURE-REALITY-MAP.md",
-      "sha256": "15bd8e0d77ec1b893dda66f48e56028dcf258b7944234d4f5c2b8a54ff48ba8f"
     }
   },
   "rules": [

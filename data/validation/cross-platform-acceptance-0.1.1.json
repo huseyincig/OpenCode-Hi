@@ -1,19 +1,25 @@
 {
-  "claim_boundary": "External GitHub Actions evidence for exact source checkpoint. A later repository evidence-attestation commit may consume this receipt only while audited runtime/package source remains unchanged from the recorded checkpoint.",
+  "claim_boundary": "External GitHub Actions product-acceptance evidence for an exact source checkpoint. Evidence certification is a separate phase and may consume this receipt from later evidence-only commits only while audited runtime/package material paths remain unchanged.",
   "github_actions": {
     "conclusion": "success",
     "event": "push",
-    "run_id": 31934615573,
+    "run_id": 31959345724,
     "status": "completed",
     "ubuntu": {
       "conclusion": "success",
-      "job_id": 95134491593,
+      "job_id": 95194828053,
       "name": "ubuntu-latest / node-22 / python-3.11",
       "node_summary": {
         "fail": 0,
         "pass": 848,
         "skipped": 0,
         "tests": 848
+      },
+      "python_product_summary": {
+        "deselected": 13,
+        "fail": 0,
+        "pass": 105,
+        "skip": 0
       },
       "status": "completed",
       "steps": [
@@ -49,12 +55,12 @@
         },
         {
           "conclusion": "success",
-          "name": "Canonical build, architecture lint, Node acceptance, validator",
+          "name": "Product build, architecture lint, Node acceptance, docs parity",
           "status": "completed"
         },
         {
           "conclusion": "success",
-          "name": "Python acceptance",
+          "name": "Python product acceptance",
           "status": "completed"
         },
         {
@@ -91,13 +97,19 @@
     },
     "windows": {
       "conclusion": "success",
-      "job_id": 95134491698,
+      "job_id": 95194828093,
       "name": "windows-latest / node-22 / python-3.11",
       "node_summary": {
         "fail": 0,
         "pass": 847,
         "skipped": 1,
         "tests": 848
+      },
+      "python_product_summary": {
+        "deselected": 13,
+        "fail": 0,
+        "pass": 101,
+        "skip": 4
       },
       "status": "completed",
       "steps": [
@@ -133,12 +145,12 @@
         },
         {
           "conclusion": "success",
-          "name": "Canonical build, architecture lint, Node acceptance, validator",
+          "name": "Product build, architecture lint, Node acceptance, docs parity",
           "status": "completed"
         },
         {
           "conclusion": "success",
-          "name": "Python acceptance",
+          "name": "Python product acceptance",
           "status": "completed"
         },
         {
@@ -191,8 +203,8 @@
   "schema": 1,
   "section": 38,
   "source_binding": {
-    "tested_git_commit": "fa3840a0824866efb965d4ce4fc037027a6da110",
-    "tested_git_tree": "da5820eed63cdf3becd07123f517b9b0a3eba4cd"
+    "tested_git_commit": "ca3144577e6219cce78c6bc72930b75be1e3edbd",
+    "tested_git_tree": "f82a3935e041db11b2de0a3eb91ddd555130cc79"
   },
   "status": "PASS"
 }

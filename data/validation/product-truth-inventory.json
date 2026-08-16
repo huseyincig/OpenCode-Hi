@@ -114,7 +114,7 @@
         "plugin/test/profile-system.test.mjs",
         "plugin/test/per-role-routing-runtime.test.mjs"
       ],
-      "canonical_doc": "docs/EXECUTION-POLICY.md"
+      "canonical_doc": "docs/ARCHITECTURE.md"
     },
     {
       "area": "configuration",
@@ -208,7 +208,7 @@
         "plugin/test/context-survival-hardening.test.mjs",
         "plugin/test/c4-context-budget-estimator.test.mjs"
       ],
-      "canonical_doc": "docs/CONTEXT.md"
+      "canonical_doc": "docs/ARCHITECTURE.md"
     },
     {
       "area": "semantic-context",
@@ -225,7 +225,7 @@
       "proof_paths": [
         "plugin/test/c6-semantic-context-adapter.test.mjs"
       ],
-      "canonical_doc": "docs/CONTEXT.md"
+      "canonical_doc": "docs/ARCHITECTURE.md"
     },
     {
       "area": "project-intelligence",
@@ -242,7 +242,7 @@
       "proof_paths": [
         "plugin/test/c5-project-intelligence-hybrid-retrieval.test.mjs"
       ],
-      "canonical_doc": "docs/PROJECT-INTELLIGENCE.md"
+      "canonical_doc": "docs/ARCHITECTURE.md"
     },
     {
       "area": "evidence-verification",
@@ -374,7 +374,7 @@
         "plugin/test/a4-persistence-validator-composition.test.mjs",
         "plugin/test/storage-ownership-contract.test.mjs"
       ],
-      "canonical_doc": "docs/STORAGE-ARCHITECTURE.md"
+      "canonical_doc": "docs/ARCHITECTURE.md"
     },
     {
       "area": "install-lifecycle",
@@ -402,7 +402,7 @@
       "proof_paths": [
         "plugin/test/hi-core-evolution.test.mjs"
       ],
-      "canonical_doc": "docs/PRIVACY.md"
+      "canonical_doc": "docs/SECURITY-MODEL.md"
     },
     {
       "area": "scheduler",
@@ -418,7 +418,7 @@
       "proof_paths": [
         "plugin/test/scheduler-hardening.test.mjs"
       ],
-      "canonical_doc": "docs/BENCHMARKS.md"
+      "canonical_doc": "docs/VERIFICATION.md"
     },
     {
       "area": "telemetry",
@@ -437,7 +437,7 @@
         "plugin/test/ledger-status-metrics.test.mjs",
         "plugin/test/hi-benchmarks.test.mjs"
       ],
-      "canonical_doc": "docs/BENCHMARKS.md"
+      "canonical_doc": "docs/VERIFICATION.md"
     }
   ],
   "violations": {

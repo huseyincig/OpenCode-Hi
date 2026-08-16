@@ -44,10 +44,10 @@
     {
       "invariant": "skipped-tests-audited",
       "owner": ".github/workflows/release-readiness.yml",
-      "owner_sha256": "086ca4a7e1ca59ec730a3ee98de264802b5af1fd6ed22ea7a26e8e7a1732700c",
+      "owner_sha256": "7009d76a5e6f471f4a23eb9a78fac4d678f636147bbf180a0f294602f2a61638",
       "owner_anchor": "os: [ubuntu-latest, windows-latest]",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "8f7fc441758706d3ebb119f3c41da42abb5680fd1094bf25fd1d3735163a8798",
+      "proof_sha256": "e29960bfeb136f29e92fd3da7094b3e9398d820b9e2e623ae703e151d038bf7f",
       "proof_anchor": "pytest.skip('symlink privilege varies on Windows')"
     },
     {
@@ -89,7 +89,7 @@
     {
       "invariant": "platform-assumptions",
       "owner": ".github/workflows/release-readiness.yml",
-      "owner_sha256": "086ca4a7e1ca59ec730a3ee98de264802b5af1fd6ed22ea7a26e8e7a1732700c",
+      "owner_sha256": "7009d76a5e6f471f4a23eb9a78fac4d678f636147bbf180a0f294602f2a61638",
       "owner_anchor": "windows-latest",
       "proof": "plugin/test/real-hosted-release-transaction.test.mjs",
       "proof_sha256": "720c37ed824c2344b342ca580fd74ea3658bd4cf538848b631ce22e52ed62502",

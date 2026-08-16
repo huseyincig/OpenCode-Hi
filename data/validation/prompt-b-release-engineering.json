@@ -5,13 +5,28 @@
   "section": 28,
   "status": "CLOSED_T4",
   "current_source": {
-    "commit": "ef41e3dd38dbc9c89a5cb871b7cb09135def95d8",
-    "tree": "f9a6b75fe344dc741ba7524408b234c18d9ee7c3",
+    "commit": "ca3144577e6219cce78c6bc72930b75be1e3edbd",
+    "tree": "f82a3935e041db11b2de0a3eb91ddd555130cc79",
     "version": "0.1.1"
   },
+  "release_source": {
+    "commit": "fb404fcf1c9a2917bce7712aecb3b48f901413a1",
+    "tree": "fabb5e686ad0da1c9e2d086a567aa8f3bc448c8e",
+    "tag": "v0.1.1"
+  },
+  "development_head": {
+    "post_release": true,
+    "runtime_drift_from_release": [],
+    "package_or_documentation_drift_from_release": [
+      "README.md",
+      "docs/locales/tr/README.md",
+      "package.json"
+    ],
+    "republish_same_version_forbidden": true
+  },
   "certification_head": {
-    "commit": "1898f68a41abe0b2ed65640bbce7ce829daae8f2",
-    "tree": "2098e67bd68baf948ad908ec0a20d10670407694"
+    "commit": "ca3144577e6219cce78c6bc72930b75be1e3edbd",
+    "tree": "f82a3935e041db11b2de0a3eb91ddd555130cc79"
   },
   "historical_release": {
     "tag": "v0.1.0",
@@ -113,7 +128,7 @@
     "fresh_exact_host": true,
     "historical_tag_distinct": true,
     "historical_release_source": true,
-    "package_surface_equivalent_to_checkpoint": true,
+    "released_runtime_immutable": true,
     "current_tag_annotated": true,
     "current_tag_exact_source": true,
     "github_release_t4": true,
@@ -131,7 +146,7 @@
   },
   "proof_hashes": {
     "VERSION": "80447316529fc62014fbaa047fb67c51ac30e32830cda370405349d8d66d196c",
-    "package.json": "e528d9cd9d437eec01f80fd309e6a096913d89ee9ed44bdd996ed3e6bbcbce01",
+    "package.json": "d19ddfb516393c6c642c153c8d3650b9331363d467007600a52e2c68f121291d",
     "package-lock.json": "96e22583fe2cf1eb25c14c6f73a9291a4eef08ae8fd096f362bb80db712d83f5",
     "plugin/package-lock.json": "fb6a6c977a496b7407dbd6a1dcbc3403f0a86dc9951c8f32fec48ccae91dd343",
     "data/validation/fresh-consumer-opencode-1.18.18.json": "bd5781423ea642e5554751ffb283475835d308b4161354f5e7db8b4a97e6cc9c",
@@ -141,5 +156,5 @@
     "data/validation/release-publication-0.1.1.json": "7255a17b208b0dd388b6404567712890b29b8fad314a664af5f8cfb2ee34e605",
     "data/validation/t4-registry-exact-host-0.1.1.json": "6452a038f55911291b838bf3107d8d77a14e57bb39eab0744a308ae4812c7223"
   },
-  "claim_boundary": "Release-engineering truth for the current release. Historical v0.1.0 remains immutable. T4 is accepted only from the real current-version GitHub release, npm Trusted Publishing OIDC publication, registry digest/provenance verification, and fresh registry exact-host acceptance."
+  "claim_boundary": "T4 certifies the immutable released tag/artifact, not every later documentation commit on main. A post-release development HEAD may advance documentation without mutating the published artifact; the same version must never be republished. Historical v0.1.0 remains immutable."
 }

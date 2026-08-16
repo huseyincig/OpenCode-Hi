@@ -5,348 +5,146 @@
   "status": "PASS",
   "policy": {
     "path": "data/documentation-ownership.json",
-    "sha256": "e4a360e19a9a5d2d82ca57d753b7c2e43c2843349c1d9e74adae03caeb78efb3"
+    "sha256": "bd3aab27ff5fe80fe1f41a3573e60a72146bdfecf8b45459b5cb2e5a3b3538a0"
   },
   "summary": {
-    "artifacts": 123,
-    "current_or_derived": 69,
-    "historical": 32,
-    "reference": 22,
-    "canonical_meanings": 37
+    "public_documents": 14,
+    "docs_markdown": 10,
+    "root_markdown": 3,
+    "machine_owners": 2,
+    "canonical_areas": 16
   },
   "canonical_ownership": [
     {
-      "meaning": "product-identity",
-      "owner": "docs/PRODUCT-IDENTITY.md",
+      "path": "README.md",
+      "area": "product-overview",
       "audience": "USER",
       "update_mode": "HUMAN_OWNED"
     },
     {
-      "meaning": "product-purpose",
-      "owner": "README.md",
+      "path": "docs/README.md",
+      "area": "documentation-index",
       "audience": "USER",
       "update_mode": "HUMAN_OWNED"
     },
     {
-      "meaning": "terminology",
-      "owner": "docs/TERMINOLOGY.md",
+      "path": "docs/INSTALLATION.md",
+      "area": "installation-configuration-lifecycle",
+      "audience": "USER",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "area": "architecture-execution-context-storage-privacy",
       "audience": "CONTRIBUTOR",
       "update_mode": "PARITY_VALIDATED"
     },
     {
-      "meaning": "engineering-constitution",
-      "owner": "docs/engineering-constitution/15-ENGINEERING-CONSTITUTION.md",
-      "audience": "ARCHITECT",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "meaning": "domain-ontology",
-      "owner": "docs/engineering-constitution/04-DOMAIN-ONTOLOGY.md",
-      "audience": "ARCHITECT",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "meaning": "current-architecture",
-      "owner": "docs/ARCHITECTURE.md",
-      "audience": "CONTRIBUTOR",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "meaning": "runtime-reality",
-      "owner": "docs/ARCHITECTURE-REALITY-MAP.md",
-      "audience": "ARCHITECT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "meaning": "host-integration",
-      "owner": "docs/HOSTS.md",
+      "path": "docs/HOSTS.md",
+      "area": "host-support",
       "audience": "OPERATOR",
       "update_mode": "RECEIPT_DERIVED"
     },
     {
-      "meaning": "host-portability",
-      "owner": "docs/HOSTS.md",
-      "audience": "ARCHITECT",
+      "path": "docs/SKILLS.md",
+      "area": "methodologies-skills",
+      "audience": "USER",
       "update_mode": "PARITY_VALIDATED"
     },
     {
-      "meaning": "mission-task-worker",
-      "owner": "docs/ARCHITECTURE.md",
+      "path": "docs/HUMAN-DECISIONS.md",
+      "area": "human-decisions-authority",
+      "audience": "USER",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "path": "docs/VERIFICATION.md",
+      "area": "verification-validation-certification",
       "audience": "CONTRIBUTOR",
       "update_mode": "PARITY_VALIDATED"
     },
     {
-      "meaning": "roles",
-      "owner": "docs/ARCHITECTURE.md",
-      "audience": "CONTRIBUTOR",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "meaning": "permissions",
-      "owner": "docs/engineering-constitution/15-ENGINEERING-CONSTITUTION.md",
-      "audience": "CONTRIBUTOR",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "meaning": "authority",
-      "owner": "docs/HUMAN-DECISIONS.md",
+      "path": "docs/SECURITY-MODEL.md",
+      "area": "security-privacy-threat-boundaries",
       "audience": "USER",
       "update_mode": "PARITY_VALIDATED"
     },
     {
-      "meaning": "external-action",
-      "owner": "docs/HUMAN-DECISIONS.md",
-      "audience": "OPERATOR",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "meaning": "evidence",
-      "owner": "docs/VERIFICATION.md",
-      "audience": "USER",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "meaning": "verification",
-      "owner": "docs/VERIFICATION.md",
-      "audience": "CONTRIBUTOR",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "meaning": "completion",
-      "owner": "docs/VERIFICATION.md",
-      "audience": "USER",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "meaning": "context",
-      "owner": "docs/CONTEXT.md",
-      "audience": "CONTRIBUTOR",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "meaning": "project-intelligence",
-      "owner": "docs/PROJECT-INTELLIGENCE.md",
-      "audience": "CONTRIBUTOR",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "meaning": "methodologies-skills",
-      "owner": "docs/SKILLS.md",
-      "audience": "USER",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "meaning": "human-decisions",
-      "owner": "docs/HUMAN-DECISIONS.md",
-      "audience": "USER",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "meaning": "process-execution",
-      "owner": "docs/HOSTS.md",
-      "audience": "OPERATOR",
-      "update_mode": "RECEIPT_DERIVED"
-    },
-    {
-      "meaning": "workspace-isolation",
-      "owner": "docs/HOSTS.md",
-      "audience": "OPERATOR",
-      "update_mode": "RECEIPT_DERIVED"
-    },
-    {
-      "meaning": "browser-execution",
-      "owner": "docs/HOSTS.md",
-      "audience": "OPERATOR",
-      "update_mode": "RECEIPT_DERIVED"
-    },
-    {
-      "meaning": "storage-filesystem",
-      "owner": "docs/FILESYSTEM-LAYOUT.md",
-      "audience": "OPERATOR",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "meaning": "configuration",
-      "owner": "docs/INSTALLATION.md",
-      "audience": "USER",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "meaning": "privacy",
-      "owner": "docs/PRIVACY.md",
-      "audience": "USER",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "meaning": "security-threat-model",
-      "owner": "docs/THREAT-MODEL.md",
-      "audience": "CONTRIBUTOR",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "meaning": "installation-lifecycle",
-      "owner": "docs/INSTALLATION.md",
-      "audience": "USER",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "meaning": "release",
-      "owner": "docs/RELEASE.md",
+      "path": "docs/RELEASE.md",
+      "area": "release",
       "audience": "RELEASE_ENGINEER",
       "update_mode": "RECEIPT_DERIVED"
     },
     {
-      "meaning": "validation-testing",
-      "owner": "docs/VERIFICATION.md",
-      "audience": "CONTRIBUTOR",
-      "update_mode": "PARITY_VALIDATED"
+      "path": "docs/locales/tr/README.md",
+      "area": "turkish-translation",
+      "audience": "USER",
+      "update_mode": "DERIVED_CURRENT"
     },
     {
-      "meaning": "supported-host-matrix",
-      "owner": "data/validation/compatibility-matrix-0.1.0.json",
-      "audience": "OPERATOR",
-      "update_mode": "GENERATED"
-    },
-    {
-      "meaning": "current-release-status",
-      "owner": "data/validation/release-status-0.1.0.json",
-      "audience": "RELEASE_ENGINEER",
-      "update_mode": "GENERATED"
-    },
-    {
-      "meaning": "continuation-state",
-      "owner": "docs/engineering-constitution/MASTER-CONTINUATION.md",
-      "audience": "INTERNAL_ENGINEERING",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "meaning": "adr-rationale",
-      "owner": "docs/engineering-constitution/16-ADR-INDEX.md",
-      "audience": "ARCHITECT",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "meaning": "research-source-reuse",
-      "owner": "docs/SOURCE-REUSE-MATRIX.md",
+      "path": ".github/CONTRIBUTING.md",
+      "area": "contribution",
       "audience": "CONTRIBUTOR",
       "update_mode": "HUMAN_OWNED"
     },
     {
-      "meaning": "final-system-certification",
-      "owner": "docs/FINAL-SYSTEM-CERTIFICATION.md",
-      "audience": "OPERATOR",
-      "update_mode": "RECEIPT_DERIVED"
+      "path": ".github/SECURITY.md",
+      "area": "vulnerability-reporting",
+      "audience": "USER",
+      "update_mode": "HUMAN_OWNED"
+    },
+    {
+      "path": ".github/SUPPORT.md",
+      "area": "support",
+      "audience": "USER",
+      "update_mode": "HUMAN_OWNED"
+    },
+    {
+      "area": "supported-host-matrix",
+      "path": "data/validation/compatibility-matrix-0.1.0.json"
+    },
+    {
+      "area": "current-release-status",
+      "path": "data/validation/release-status-0.1.1.json"
     }
   ],
   "artifacts": [
     {
-      "path": "CHANGELOG.md",
-      "sha256": "8fbdc7dae737284bc90ce60c267fab8e3955db100a85e379778b540bacac7c33",
+      "path": ".github/CONTRIBUTING.md",
+      "sha256": "ef7b7d6548b259c707d6c641c3ea978d9da8833683b5040efb1f2772a75da75b",
+      "area": "contribution",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "HUMAN_OWNED"
     },
     {
-      "path": "CONTRIBUTING.md",
-      "sha256": "e05dadba3ca2bb7e5b67714bb4c151985b49f6b9b69c02b82a2d2cd227441f4f",
-      "audience": "CONTRIBUTOR",
+      "path": ".github/SECURITY.md",
+      "sha256": "c3250666e83b77c620d8e53324d61f5a6a8e172477725213c62c34e733de4f8e",
+      "area": "vulnerability-reporting",
+      "audience": "USER",
+      "lifecycle": "CANONICAL_CURRENT",
+      "update_mode": "HUMAN_OWNED"
+    },
+    {
+      "path": ".github/SUPPORT.md",
+      "sha256": "fd0a469367e98ad9ad7f6d7a9f8c6b23d2f0382ffe90f565e35317f50efc975a",
+      "area": "support",
+      "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "HUMAN_OWNED"
     },
     {
       "path": "README.md",
-      "sha256": "999c3a895f6686ad24e2d96b63e2885e22db8a85d6be0905749fa094ccc928ab",
+      "sha256": "3c0d94817e496fc810f5db97b5966889657de36fa0083ea572ed3f5d14f15081",
+      "area": "product-overview",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "README.tr.md",
-      "sha256": "fba3a8da07183e417d37008654daadab33527b6d55400ed87f34622a224f50df",
-      "audience": "USER",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "SECURITY.md",
-      "sha256": "12b11f0558be9ff596e25774768578cdd87b6e47770a87a258aa5801be743a3e",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/ARCHITECTURE-REALITY-MAP.md",
-      "sha256": "15bd8e0d77ec1b893dda66f48e56028dcf258b7944234d4f5c2b8a54ff48ba8f",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
     },
     {
       "path": "docs/ARCHITECTURE.md",
-      "sha256": "c7e7085e1016093f70bdc8698f8b2afa6504a639863579da089c5012b8630525",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "docs/BASELINE-RECEIPT.md",
-      "sha256": "6845e47847e7a5fa2d687ab22ce4be8fc851657b41c3e1fe5f90e398c4895c18",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/BENCHMARKS.md",
-      "sha256": "1cc539c1ee959f48f313dfcbea470a9e6238c017e6e2fad6e45b2b5cbd1bdaf3",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "docs/CANONICAL-IMPLEMENTATION-PROMPT.txt",
-      "sha256": "b69399a05bb85c09d3ce9b343d72d6091cb2551d43c7d8f9aa864553ad612135",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/CONTEXT.md",
-      "sha256": "1a9cb009e21f722ed73c95977fac2622f83924048349963170cd7f3101f90147",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "docs/EXECUTION-POLICY.md",
-      "sha256": "92e08a4dd1a565dd5249aabf731fce2d0df664b76ee973c3893424017f86b6b1",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "docs/FILESYSTEM-LAYOUT.md",
-      "sha256": "d7a90284a3126b9d18a319c0c164b9a4cf9ff92fbacc7dc81bc207ab86bec3f8",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "docs/FINAL-ACCEPTANCE.md",
-      "sha256": "74935a81799a1c2ee3ff98c32bc53b13edb6977a4c1a7f4942ded9f68cd48008",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/FINAL-SYSTEM-CERTIFICATION.md",
-      "sha256": "957bf249f843362f4176842b7ba247bd3548fc426a54f0615b4f09f855dfc250",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "docs/HI-NAMING-NAMESPACE.md",
-      "sha256": "be86bc679b43f3791655e6ad5f8ef73ca8ccd7f1b183c029c361753134396453",
+      "sha256": "73e235a5ad296706985598b6b4e870b7f4137bdc1f57608caa2a67a012d4cdac",
+      "area": "architecture-execution-context-storage-privacy",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
@@ -354,758 +152,94 @@
     {
       "path": "docs/HOSTS.md",
       "sha256": "999bfc95b1ed2be82e63bcbddbff24bf192a52019a8fc8865de5b93ac6b7bbe1",
-      "audience": "CONTRIBUTOR",
+      "area": "host-support",
+      "audience": "OPERATOR",
       "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
+      "update_mode": "RECEIPT_DERIVED"
     },
     {
       "path": "docs/HUMAN-DECISIONS.md",
       "sha256": "2d3e62ca4fb277956750962eba258d92f0fd34587692665c58c29a74b8e9ba36",
+      "area": "human-decisions-authority",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "docs/IMPLEMENTATION-REPORT.md",
-      "sha256": "e2c98bc9adb5f2f19faa34d5bf30a39e7301dbd71ac0c1fd66613ea818444176",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
     },
     {
       "path": "docs/INSTALLATION.md",
-      "sha256": "613d9f2a92a5312bc6d765bdc216eedf0b395720246f9ad3c253075ecaf38362",
+      "sha256": "cb12e36b65d8f2f64f578d878bc32ac832cdab1edaf92d59e88d2c3ab3f904f3",
+      "area": "installation-configuration-lifecycle",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
     },
     {
-      "path": "docs/PRIVACY.md",
-      "sha256": "fcb4b867020643d41bfd2b0bf4d23f53455dc6c33cd4a03825c7aa17df25d555",
+      "path": "docs/README.md",
+      "sha256": "e354c460652cc978c2cfb50f127cb3465ae664765d842a77b917432bcd54addc",
+      "area": "documentation-index",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "docs/PRODUCT-IDENTITY.md",
-      "sha256": "6a1ccb30f5c20ce412cd4ef2b8aaf421c7ef14c5161e742d3d8a84fe9a6d1459",
-      "audience": "USER",
-      "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "docs/PROJECT-INTELLIGENCE.md",
-      "sha256": "48e0b45a48261a1df86a615f4a464c13d047972a5ed0bd089cac955b5cd11d98",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
+      "update_mode": "HUMAN_OWNED"
     },
     {
       "path": "docs/RELEASE.md",
       "sha256": "3a0721686897d766d94faa7c58ffe06100a5a74cb2e8497b7ea45b98de11e0c6",
-      "audience": "CONTRIBUTOR",
+      "area": "release",
+      "audience": "RELEASE_ENGINEER",
       "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
+      "update_mode": "RECEIPT_DERIVED"
     },
     {
-      "path": "docs/SKILL-ARTIFACT-OWNERSHIP.md",
-      "sha256": "681de4d619a06d5eab4f64e34a979861824354d1dc55bd57a6ae7925ec0baf6a",
-      "audience": "CONTRIBUTOR",
+      "path": "docs/SECURITY-MODEL.md",
+      "sha256": "a3d4a84cc6a4ff1a886829e0433672eafa3e0168854fc1482e810f7dd24b8ef5",
+      "area": "security-privacy-threat-boundaries",
+      "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
     },
     {
       "path": "docs/SKILLS.md",
       "sha256": "287c45f710194ab42c190f2b01037643b9c14fe22f3da955850db47faaa52767",
+      "area": "methodologies-skills",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
     },
     {
-      "path": "docs/SOURCE-REUSE-MATRIX.md",
-      "sha256": "b40f802de7ad285bcba3f696ac1c646c0bcb0595a4249539566b2ce689f56181",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "docs/STORAGE-ARCHITECTURE.md",
-      "sha256": "81ea4c20cae5095f84d7c0e824dc787dfdcafc9fe214d1f380d70a28f2743d17",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "docs/STORAGE-OWNERSHIP-MATRIX.md",
-      "sha256": "73a6d68c08049c481aa19b6d12393a248c7e6987899e8f49d111ff3cd500a767",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "docs/TERMINOLOGY.md",
-      "sha256": "b5518e742e1d84b3b3d4544f88cfdae0d8608a94c60c82d57e3be77394ac06a4",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "docs/THREAT-MODEL.md",
-      "sha256": "871af4a760439f3f0084e80105b86df2a738cc1a4c513667216749692ac6ed4b",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "docs/VALIDATION.md",
-      "sha256": "a749f74fb96b2bc792bf7173abb2f50828b461461908a77812ac7b91e4bf270a",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
       "path": "docs/VERIFICATION.md",
-      "sha256": "2f38d4bbc87ecc4ce3480259edeb499b309b827812e6c0b19a7ee60ef1a658a3",
+      "sha256": "6c770e912dbc7ba02be7eb833202a6563d606867e04952cc43212e7a05937f3b",
+      "area": "verification-validation-certification",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
     },
     {
-      "path": "docs/engineering-constitution/03-FAILURE-PATTERN-INVENTORY.md",
-      "sha256": "5c4c50ad019fbf80ecbfb481e9004e158f8b3959ac007189552e3f3bfde80825",
-      "audience": "ARCHITECT",
-      "lifecycle": "REFERENCE",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/04-DOMAIN-ONTOLOGY.md",
-      "sha256": "ccdba14bd2bba2e6b8c3ac5ab33fc4f143f1e73b0fac4900e0ad20abd2a4862c",
-      "audience": "ARCHITECT",
-      "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/05-COMPONENT-METAMODEL.md",
-      "sha256": "aa160e115c1303d51c16b04be795e8aba2df444334f68d153ed04789feb339b5",
-      "audience": "ARCHITECT",
-      "lifecycle": "REFERENCE",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/06-CONTRACT-CATALOG.md",
-      "sha256": "001b69d3579ad50312f49a339c1a3d5f5c7d6e3ef5fd436e6bebc4640acbb2ce",
-      "audience": "ARCHITECT",
-      "lifecycle": "REFERENCE",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/07-TEMPLATE-CATALOG.md",
-      "sha256": "ee98cfea30e76aaedec52b3158cb36694ebf93f91b02fb9a3bdb6ca029282bed",
-      "audience": "ARCHITECT",
-      "lifecycle": "REFERENCE",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/08-SCHEMA-CATALOG.md",
-      "sha256": "a5ff1394081ea04a766fce60c574214d022b30681b6e1bc149a7c39bf17e50e8",
-      "audience": "ARCHITECT",
-      "lifecycle": "REFERENCE",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/09-GENERATOR-ARCHITECTURE.md",
-      "sha256": "4081828e94eec709616c3850a00d73a6feddb476a9df9740b0aedc5a653245be",
-      "audience": "ARCHITECT",
-      "lifecycle": "REFERENCE",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/10-VALIDATION-ARCHITECTURE.md",
-      "sha256": "2f9b7b138b362495fa901f490818b3cd804ef7b4da74c0518a7684a893587e82",
-      "audience": "ARCHITECT",
-      "lifecycle": "REFERENCE",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/11-BEHAVIORAL-ACCEPTANCE.md",
-      "sha256": "95f3c9faa984107d3db99a085fd6dd179f5c710e96f03ad138b551901b933464",
-      "audience": "ARCHITECT",
-      "lifecycle": "REFERENCE",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/12-HOST-PROJECTION-ARCHITECTURE.md",
-      "sha256": "63dc0873fa10abe8e6793d3e629c1710444f4324e36a7db6087bba4f16951a37",
-      "audience": "ARCHITECT",
-      "lifecycle": "REFERENCE",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/14-SOURCE-SEMANTICS-REGISTER.md",
-      "sha256": "a77f586cde00f8c0a575ded8be33d60a49cd077a81f7fd0c21aac92924ca7fed",
-      "audience": "ARCHITECT",
-      "lifecycle": "REFERENCE",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/15-ENGINEERING-CONSTITUTION.md",
-      "sha256": "24dc095c3fd3cb2406186c091ce96f167c7cd3141c7b2372ff41a50f6b69bb17",
-      "audience": "ARCHITECT",
-      "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/16-ADR-INDEX.md",
-      "sha256": "077324116e1d2a99ae23cdbcaf918c607d3fea4c337bb256c8d9eefc86e687d5",
-      "audience": "ARCHITECT",
-      "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/MASTER-CONTINUATION.md",
-      "sha256": "e7db6f6aa31a903bbaaf165c2a0bcefd07a993dcf057dc5547d5009f3f95f0de",
-      "audience": "INTERNAL_ENGINEERING",
-      "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/README.md",
-      "sha256": "d73a3a25ccd08c1fd9846e38b8df9e5d31ac6d9e9ed2a0bcc10038ec8cf2188d",
-      "audience": "ARCHITECT",
-      "lifecycle": "CANONICAL_CURRENT",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/adrs/ADR-0001-canonical-contract-before-projection.md",
-      "sha256": "869eb82805e8c5d2062231571ad17803380f4b7c00223d6df3efe5f4aa28bef6",
-      "audience": "ARCHITECT",
-      "lifecycle": "REFERENCE",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/adrs/ADR-0002-role-agent-separation.md",
-      "sha256": "27596692d9d0f3ed8234ce322afe83b73dfeea51d0ae0da231101f2ff4e10018",
-      "audience": "ARCHITECT",
-      "lifecycle": "REFERENCE",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/adrs/ADR-0003-methodology-how-boundary.md",
-      "sha256": "e27ca0eca0da63b3f6fd89380deb6fb813c31f1a5b221982dd64edc6a7cbf262",
-      "audience": "ARCHITECT",
-      "lifecycle": "REFERENCE",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/adrs/ADR-0004-authority-is-exact-action-bound.md",
-      "sha256": "f4e1c8c2af9928cf3635bd880ec753f12403cea04137138380e728b0e25969bc",
-      "audience": "ARCHITECT",
-      "lifecycle": "REFERENCE",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/adrs/ADR-0005-capabilities-require-real-executors.md",
-      "sha256": "97c068a6e335e69e12acc4f36156b9c28bc2e324dcd3d838650f814c1ecb8ccb",
-      "audience": "ARCHITECT",
-      "lifecycle": "REFERENCE",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/adrs/ADR-0006-worker-results-do-not-own-completion.md",
-      "sha256": "8fc7d603d249bc2d9da696ac31e361eeafe6aa9ba3941b13838b71c727bdd21d",
-      "audience": "ARCHITECT",
-      "lifecycle": "REFERENCE",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/adrs/ADR-0007-team-is-taskruntime-projection.md",
-      "sha256": "662d7b2d19d147fd918590c1e3caa1cd286e3bae12301df111fac9fc80d3cf17",
-      "audience": "ARCHITECT",
-      "lifecycle": "REFERENCE",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/adrs/ADR-0008-current-only-schema-policy.md",
-      "sha256": "5754b32f0e0ae52a54f7eba0f50cfbc082d368962668a3f3ab93cfa47cd4172d",
-      "audience": "ARCHITECT",
-      "lifecycle": "REFERENCE",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/adrs/ADR-0009-deterministic-generation.md",
-      "sha256": "3509dd2bf5d68e8d874fa79bdfb39ca0b56a5554f3aa5b2360308265cfe4f49b",
-      "audience": "ARCHITECT",
-      "lifecycle": "REFERENCE",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/adrs/ADR-0010-storage-owner-uniqueness.md",
-      "sha256": "6264c84f031a27438f05ddc8cf29adcb34b78b853050111b8372d868c79606d7",
-      "audience": "ARCHITECT",
-      "lifecycle": "REFERENCE",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/adrs/ADR-0011-evidence-tier-labeling.md",
-      "sha256": "5de4257e106d93e1f2e2130dab550fd99f9ca0a1cb1c0268afe18a089254d546",
-      "audience": "ARCHITECT",
-      "lifecycle": "REFERENCE",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/adrs/ADR-0012-migration-by-owner-class.md",
-      "sha256": "199e5c4017f47d2544656c2a92425b0d472f5a412b4c0c98e30df44e6c42caf4",
-      "audience": "ARCHITECT",
-      "lifecycle": "REFERENCE",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/history/00-PROGRAM-PLAN.md",
-      "sha256": "3f5d913f239c2a0271fb1b4e4ce9e34c47eb00eec726f8ddc0e2c9d0adb946c7",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/history/01-SOURCE-ARCHITECTURE-STUDY.md",
-      "sha256": "cecfd23aa3bf8fdc602e20bd183a134ea8a9925285e5ee4533556295767e0fd0",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/history/02-RUNTIME-REALITY-MAP.md",
-      "sha256": "2072294e4af8777bdd6a3d1f289105e0d81fd29d76308955a51e898453992cdc",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/history/13-MIGRATION-MATRIX.md",
-      "sha256": "2df119ca695c9f41856f03107c811e38f38ccb164a8d062bcedbf3b351460051",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/history/17-IMPLEMENTATION-PROOF.md",
-      "sha256": "282ea51973597489f1695e27c04e4f493091cbac5993882be111fd2dbc985040",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/00-opencode-hhc-v58.md",
-      "sha256": "b2d2140a409c708f0bf568a924a3ccb619c2cdd9a30e81d2c77bca7b3980316c",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/01-opencode-dcp.md",
-      "sha256": "7cbd9ec7eb1cce302277f47571aa8994319e71bd6cd082435906361a21a43fa3",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/02-openagentscontrol.md",
-      "sha256": "cab1ec2c4c7a0df5f3e56468d1cca0887fae09a9d0e187e4aa1d216de8665a91",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/03-agentic.md",
-      "sha256": "717c7b1d384d2d1ff13f6982278f2386a964c58246a8166e813aff8a83518dd7",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/04-type-inject.md",
-      "sha256": "da69034f03782351cd7b6626087084572b047162a01d154f692adecbd810cfa1",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/05-vibeguard.md",
-      "sha256": "c527c868e72cc0a03393391da0622102f0bf0686e1b56b0bded4f0d9841894c2",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/06-supermemory.md",
-      "sha256": "0206803b60f0a2288d8ce9654f8b6d7560ca15ea91fb59a58134aa41af9429d6",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/07-skillful.md",
-      "sha256": "c0d389d9581fc27e02a5e660ff4864bd1a32ca7bb624f3daba4440ea6df2f01e",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/08-plannotator.md",
-      "sha256": "5a8074b33d1b427c8bbffe19510c6963e2368078bcf497d1053e50023e1f1249",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/09-octto.md",
-      "sha256": "ffc95c6657a06223b8881a746af47ae16ab68a2fb1f7d9a2105f42ede571c3d8",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/10-goal-willytop8.md",
-      "sha256": "149cc1c062aaa17cc6ac801b1af3bb726266c05c19124739af56766a1c0df02f",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/11-goal-prevalentware.md",
-      "sha256": "3852aa51e995ebf226d7b83cf4b3aa287994111367eaf2dd262a82d80833d14f",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/12-background-agents.md",
-      "sha256": "7efab79648fb9207d2ce7ddfb6e312127ee02821c00033666cae549be78f4c29",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/13-opencode-pty.md",
-      "sha256": "cd4018aa50f4f33c8bae42aeb96be24a61025d99a13043fffcd852e98f034bcc",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/14-opencode-worktree.md",
-      "sha256": "bf67e6bede6b184612ab9c212c4c4d7e3dacda7bc133fc49a51aa4d41362d31d",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/15-shell-strategy.md",
-      "sha256": "49119dbd3f4e8e8e6db3aef699d4521dcba90fc0cb889f731b845c55b3450da8",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/16-ocx.md",
-      "sha256": "e7776d25589a22f730b5de6ac045136bf75e6b2e6ee5afb62805e4ae5d4609fb",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/17-plugin-template.md",
-      "sha256": "dbf358a54b68713ae57d843a6efe045faf6f63f1604fd8d01bc25806df2ed392",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/18-md-table-formatter.md",
-      "sha256": "aafe6163c44adaa657035ec76d1e3c61acf8657a86c443e78c24d585d2127fd9",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/19-superpowers.md",
-      "sha256": "4e55c35fe3cf6182e8c3a51887809ac9dc73188c663be6f3e1e7700ba72ab53b",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/20-agent-orchestration-kit.md",
-      "sha256": "1e18f5e44f4199272cd20d95064ba8629b0287d4e9b4cd0d3032e30c5de05775",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/21-opencode-upstream.md",
-      "sha256": "9412d5bc4f5d6b3d5d3a42dfeed3f40591649775e7e094cf220b8d2b9f69c119",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "docs/engineering-constitution/sources/README.md",
-      "sha256": "d096e8221baf1c80ae3bd54bbd03e4d46915ef71d6c7da7cc51304a4e5de89c4",
-      "audience": "HISTORICAL",
-      "lifecycle": "HISTORICAL",
-      "update_mode": "HUMAN_OWNED"
-    },
-    {
-      "path": "roles/architect.md",
-      "sha256": "96e5c502eb42355af375608294c73e9d0588e93d2d9d03eafd7bbc0edf12202e",
-      "audience": "CONTRIBUTOR",
+      "path": "docs/locales/tr/README.md",
+      "sha256": "314cd64fdeb6bc165ee0d74c36b6942ba4f93504de66ad2b7adab8082663adf0",
+      "area": "turkish-translation",
+      "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
+      "update_mode": "DERIVED_CURRENT"
+    }
+  ],
+  "machine_owners": [
+    {
+      "path": "data/validation/compatibility-matrix-0.1.0.json",
+      "sha256": "25ddee8346eb2394988848f16cb9b42ffd4f1a8fa47ddca9357ae4a507561a0a",
+      "area": "supported-host-matrix",
+      "lifecycle": "MACHINE_OWNER"
     },
     {
-      "path": "roles/coder.md",
-      "sha256": "eeb88d22b25ffd1f24a66e7899111b5a547a4ce0846076f50e503b2b04baf547",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "roles/manager.md",
-      "sha256": "4b8182b37d26e42e4cf1bd4ece7b38fda3357eed48729eace5ed53b40fb4b9cd",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "roles/qa-reviewer.md",
-      "sha256": "d624bf78ea4c7c934c7a28538dccf73fbfc8aa3f1e78d31ccfd2f01e90cd94c7",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "roles/repository-explorer.md",
-      "sha256": "2781ec5e15ec71c390daaa0e6bb3a8d731a4a1fa3853dd0abfcb41149c538745",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "roles/security-reviewer.md",
-      "sha256": "f36ae0fe0ab87692adb764138859374e8098eead6e481515384fbcacc6a9b73f",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "roles/visual-qa.md",
-      "sha256": "a9c57075a474a322acc9528276732ad50240f58087e24840fd37f9bf27372736",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "roles/working-manager.md",
-      "sha256": "683c9b194911d673ff74129a715aa1e4686a67652f4e758415544a209ee0c82b",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-accessibility-review/SKILL.md",
-      "sha256": "28fb1e97293e7d8411f84ef3d51f3f79bf4e9d591799547c61145693ce73266e",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-adversarial-validation/SKILL.md",
-      "sha256": "f6b05a04d4d83531b6bbbc0f8149a9e801a3bdff784c31969e1b2e40b2389342",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-api-contract-review/SKILL.md",
-      "sha256": "45d4741789505897e61ac396f18bd03e087adc9ec1f884a076dfdfe38299dc05",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-api-interface-design/SKILL.md",
-      "sha256": "21b5e037d85bce3b88e71d284d1bf6e53196511167c8b5a8c1fc96030f2f8bec",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-architecture-decisions/SKILL.md",
-      "sha256": "b33ab48ea9b970f813ffda70674870c9ba2042f58b0ef341fb251c155ceaa18e",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-browser-testing/SKILL.md",
-      "sha256": "4a964896bac8d1a8cfab69c5bdf3d52ff369c2b2ee3efd3d5f5cd47f6f8c7495",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-changelog-and-documentation/SKILL.md",
-      "sha256": "6f90adfe5ddbb047605cb635ce2d83ba694156eaf1aa6007e054a2f696b34373",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-ci-build-recovery/SKILL.md",
-      "sha256": "97a46f82ab67611f5482c57481c1471695dfb35277b6e982a13fbbe7fbaacc41",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-code-review/SKILL.md",
-      "sha256": "d220d97c10936aa1c0b5326d75ec5fa1faf1f130da2e0e19a3be24bafcfbee0c",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-database-migration/SKILL.md",
-      "sha256": "08de6d8addac64d26c1dc543b4e57f023d1b7fb7b3e4e458c61917bb6398ed20",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-debugging-root-cause/SKILL.md",
-      "sha256": "2b5885527570904744bf053df66f65e9769391f5a622d318d337e4e8ce22db4f",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-dependency-change/SKILL.md",
-      "sha256": "b4d5b54906876c3cc0854c1143a0eefeae6706ed63cb125f99dd4dfcea7ee3c3",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-design-discovery/SKILL.md",
-      "sha256": "71d9aa81d4bc20a89ec6e2aba6623af2e102da5ede941d00b6cce338bc5e4fc6",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-implementation-planning/SKILL.md",
-      "sha256": "4f1cce46f155e1d7487be59005777bbf38f3adaeb25e5024ca9b40b3287e7f9d",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-iterative-retrieval/SKILL.md",
-      "sha256": "58107f0766c07cb2885292d8fdc7d1834b33eb350187fe646150b885d43c43ca",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-methodology-authoring/SKILL.md",
-      "sha256": "bcc208ca2887ad029dd55609fcf3fa2d1a8d5b8f76a48763f7e99f38b59db015",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-performance-analysis/SKILL.md",
-      "sha256": "9fc192019728a85555e4f4a7380dc1b0535f2a0559f9699f43efc32dec6a0e4d",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-regression-review/SKILL.md",
-      "sha256": "3bde1f265e7910a1361188c89f208bdae1cb1273c4b26d339f0aa18f480591fa",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-release-guardrails/SKILL.md",
-      "sha256": "a4d4f2ad5eb510ff35cc207f024050a6895e6116c0f9642c2be7d2a66bea9f0d",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-repository-analysis/SKILL.md",
-      "sha256": "e0297856ab7de0c354c8376243f9b20150d87e465c92439bd471d510238504bf",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-review-feedback/SKILL.md",
-      "sha256": "486839593e8ed6a36d393a107b0cab843cb0214d3179dd6ea38a6b4ba8284093",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-safe-refactoring/SKILL.md",
-      "sha256": "26893655e4f14ff34b6e638f15c125d5097c1a71ac1e8a039d14beee41a5487c",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-security-review/SKILL.md",
-      "sha256": "4a14a406e7340c334bbe74dbc72aa8d84400c1a072aeb1cfa0423920e61270f2",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-source-driven-development/SKILL.md",
-      "sha256": "83e6c841976bccc61f25af599e1bcd043c6ee9545f0357765c34db68998cb788",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-test-driven-development/SKILL.md",
-      "sha256": "b5a15859983dd53610195dfd15e0a1ae985ed6a6c73c765a254c918870c98b03",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-test-strategy/SKILL.md",
-      "sha256": "ed45ae70676b7ae072687d0a27d7505acc27071596ad3b31ab74282887fad02f",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
-    },
-    {
-      "path": "skills/hi-visual-qa/SKILL.md",
-      "sha256": "e3d5e9b9cafa491f121d8d1677b5be426ac6a428a884fd9b74cbe705bb9f918b",
-      "audience": "CONTRIBUTOR",
-      "lifecycle": "DERIVED_CURRENT",
-      "update_mode": "PARITY_VALIDATED"
+      "path": "data/validation/release-status-0.1.1.json",
+      "sha256": "cafbc67f09022d4d6af11e636f63b603bd6d224f044c4f8e50b5b1a3af6f975d",
+      "area": "current-release-status",
+      "lifecycle": "MACHINE_OWNER"
     }
   ],
   "violations": {
-    "unclassified": [],
-    "duplicate_meaning_owner": [],
-    "missing_owner": [],
-    "historical_as_current_owner": []
+    "missing": [],
+    "duplicate_area": [],
+    "budget_or_tracking": []
   },
-  "classification_boundary": "Historical engineering/source-study artifacts remain available for provenance but may not own current product truth."
+  "classification_boundary": "Only the bounded public manifest owns current human documentation. Local engineering/history notes and Git history may inform maintainers but never own current product truth."
 }

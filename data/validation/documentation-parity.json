@@ -6,7 +6,7 @@
   "inputs": {
     "documentation_ownership": {
       "path": "data/documentation-ownership.json",
-      "sha256": "e4a360e19a9a5d2d82ca57d753b7c2e43c2843349c1d9e74adae03caeb78efb3"
+      "sha256": "bd3aab27ff5fe80fe1f41a3573e60a72146bdfecf8b45459b5cb2e5a3b3538a0"
     },
     "compatibility": {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
@@ -18,48 +18,29 @@
     }
   },
   "checked_current_documents": [
-    "CHANGELOG.md",
-    "CONTRIBUTING.md",
     "README.md",
-    "README.tr.md",
-    "SECURITY.md",
-    "docs/ARCHITECTURE-REALITY-MAP.md",
-    "docs/ARCHITECTURE.md",
-    "docs/BENCHMARKS.md",
-    "docs/CONTEXT.md",
-    "docs/EXECUTION-POLICY.md",
-    "docs/FILESYSTEM-LAYOUT.md",
-    "docs/FINAL-SYSTEM-CERTIFICATION.md",
-    "docs/HI-NAMING-NAMESPACE.md",
-    "docs/HOSTS.md",
-    "docs/HUMAN-DECISIONS.md",
+    "docs/README.md",
     "docs/INSTALLATION.md",
-    "docs/PRIVACY.md",
-    "docs/PRODUCT-IDENTITY.md",
-    "docs/PROJECT-INTELLIGENCE.md",
-    "docs/RELEASE.md",
-    "docs/SKILL-ARTIFACT-OWNERSHIP.md",
+    "docs/ARCHITECTURE.md",
+    "docs/HOSTS.md",
     "docs/SKILLS.md",
-    "docs/SOURCE-REUSE-MATRIX.md",
-    "docs/STORAGE-ARCHITECTURE.md",
-    "docs/STORAGE-OWNERSHIP-MATRIX.md",
-    "docs/TERMINOLOGY.md",
-    "docs/THREAT-MODEL.md",
-    "docs/VALIDATION.md",
+    "docs/HUMAN-DECISIONS.md",
     "docs/VERIFICATION.md",
-    "docs/engineering-constitution/04-DOMAIN-ONTOLOGY.md",
-    "docs/engineering-constitution/15-ENGINEERING-CONSTITUTION.md",
-    "docs/engineering-constitution/16-ADR-INDEX.md",
-    "docs/engineering-constitution/MASTER-CONTINUATION.md",
-    "docs/engineering-constitution/README.md"
+    "docs/SECURITY-MODEL.md",
+    "docs/RELEASE.md",
+    "docs/locales/tr/README.md",
+    ".github/CONTRIBUTING.md",
+    ".github/SECURITY.md",
+    ".github/SUPPORT.md"
   ],
   "checks": {
-    "version_package_product_parity": true,
+    "bounded_public_surface": true,
     "local_markdown_links": true,
     "stale_current_status_patterns": true,
     "release_availability": true,
     "host_capabilities": true,
-    "semantic_adapter_boundary": true
+    "generated_config_host_projections": true,
+    "community_health_files": true
   },
   "violations": []
 }

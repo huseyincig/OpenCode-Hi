@@ -162,7 +162,7 @@
       "owner_sha256": "5b23743b0024e3392fbcf12af36067f7d2a60704fcf9be69e0ca8a9654e71bff",
       "owner_anchor": "\"scripts\"",
       "proof": "package.json",
-      "proof_sha256": "e528d9cd9d437eec01f80fd309e6a096913d89ee9ed44bdd996ed3e6bbcbce01",
+      "proof_sha256": "d19ddfb516393c6c642c153c8d3650b9331363d467007600a52e2c68f121291d",
       "proof_anchor": "\"prepack\": \"npm run build\""
     },
     {
@@ -198,12 +198,12 @@
     {
       "section": 20,
       "invariant": "source-reuse-license",
-      "owner": "docs/SOURCE-REUSE-MATRIX.md",
-      "owner_sha256": "b40f802de7ad285bcba3f696ac1c646c0bcb0595a4249539566b2ce689f56181",
-      "owner_anchor": "Program license gate",
-      "proof": "THIRD_PARTY_NOTICES.md",
-      "proof_sha256": "9cde8180060abe8d81fd0a8c4c977d5fa2ddfdf2bd54a396257dcee84993bf51",
-      "proof_anchor": "AGPL, missing-license, unclear-license"
+      "owner": "THIRD_PARTY_NOTICES.md",
+      "owner_sha256": "d5d10c4920bc64eab06a8c14523a8bc8c485cbf00fec96f353c7603eba25fc54",
+      "owner_anchor": "license/provenance boundaries",
+      "proof": "docs/SECURITY-MODEL.md",
+      "proof_sha256": "a3d4a84cc6a4ff1a886829e0433672eafa3e0168854fc1482e810f7dd24b8ef5",
+      "proof_anchor": "trust boundaries"
     }
   ],
   "static_guards": {

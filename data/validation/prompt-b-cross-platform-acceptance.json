@@ -1,12 +1,12 @@
 {
   "acceptance_receipt": "data/validation/cross-platform-acceptance-0.1.1.json",
-  "acceptance_sha256": "bef2515be8389f9408f94f13cde3fef03c2455fe2e406bfb1368eb055aab70d4",
+  "acceptance_sha256": "23070a3ad828d36aea06709fef7fcc848716eb60e151f3f02ff24225c23d6a27",
   "claim_boundary": "Current-source Windows/Linux certification is bound to the exact external CI source checkpoint. Subsequent evidence-only commits may consume it only while runtime/package material paths remain byte-identical to that checkpoint.",
   "github_actions": {
     "conclusion": "success",
-    "run_id": 31934615573,
-    "ubuntu_job_id": 95134491593,
-    "windows_job_id": 95134491698
+    "run_id": 31959345724,
+    "ubuntu_job_id": 95194828053,
+    "windows_job_id": 95194828093
   },
   "kind": "PROMPT_B_CROSS_PLATFORM_ACCEPTANCE_AUDIT",
   "linux_current_certified": true,
@@ -15,8 +15,8 @@
   "schema": 1,
   "section": 38,
   "source_checkpoint": {
-    "commit": "fa3840a0824866efb965d4ce4fc037027a6da110",
-    "tree": "da5820eed63cdf3becd07123f517b9b0a3eba4cd"
+    "commit": "ca3144577e6219cce78c6bc72930b75be1e3edbd",
+    "tree": "f82a3935e041db11b2de0a3eb91ddd555130cc79"
   },
   "status": "PASS",
   "summary": {
@@ -52,12 +52,12 @@
     },
     {
       "proof": "tests/test_hi.py",
-      "proof_sha256": "8f7fc441758706d3ebb119f3c41da42abb5680fd1094bf25fd1d3735163a8798",
+      "proof_sha256": "e29960bfeb136f29e92fd3da7094b3e9398d820b9e2e623ae703e151d038bf7f",
       "surface": "filesystem"
     },
     {
       "proof": "scripts/release-build.py",
-      "proof_sha256": "db547692d7109cb7e3f2f1d4da7463837d09e4996ea5bae10577901a5b5593fd",
+      "proof_sha256": "3beba6c63acf85a89f542e94ddc8217bf0e91978233543b9c4e8173e0d2c90fd",
       "surface": "packaging"
     }
   ],
