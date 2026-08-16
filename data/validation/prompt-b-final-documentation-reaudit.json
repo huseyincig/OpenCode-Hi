@@ -5,15 +5,15 @@
   "section": 42,
   "status": "PASS",
   "source_checkpoint": {
-    "commit": "5a162ac97d88d6c3c5a986577b1e77521e71892f",
-    "tree": "660f9d3c537a0bc0ebf7f5960b8955dbff187c76"
+    "commit": "798984f88ebc1cc720f8a6c27a646c9e6112a387",
+    "tree": "ec4e51f184b38eec6393ef10dc2ad98f61eaccbe"
   },
   "areas": [
     {
       "area": "README",
       "path": "README.md",
-      "checkpoint_sha256": "b4a164540e2f52f847c83984301c8b818329005fb17a20cb5c43f6aaecf30b2c",
-      "checkpoint_blob_oid": "9e79a35bcbb035ded3b0581ea08c0dac875fc0a2",
+      "checkpoint_sha256": "5b8134f23aa4f5dd8d74b3d2d676b5a80e1216e45f10c5d6483158dcb0c7cc2a",
+      "checkpoint_blob_oid": "b269d4046ae9193534c54b8498ef594f19f1b310",
       "status": "PASS"
     },
     {
@@ -75,8 +75,8 @@
     {
       "area": "release",
       "path": "docs/RELEASE.md",
-      "checkpoint_sha256": "53fd5296ccc43c76edf7c05c274954d710a9c3412a9a71abfbb7c1dcac80d2ad",
-      "checkpoint_blob_oid": "d35f2a2208bec5d0599b21a3fa6e9499fc77e8d0",
+      "checkpoint_sha256": "4010d8f7e62efc6b71252adf9394eb3201da00dbec29a19fc9d7a7a9a4002271",
+      "checkpoint_blob_oid": "86f05c4d3daf4b66fe1b0ff10ffcfc8a644d80f7",
       "status": "PASS"
     },
     {
@@ -103,14 +103,14 @@
   ],
   "documentation_parity": {
     "path": "data/validation/documentation-parity.json",
-    "checkpoint_sha256": "0c442b550f09ff3d9a3f260630f25fb8a1d7b17e1f4a53ce679a1bb6b84c8a65",
-    "checkpoint_blob_oid": "f93f36d3fd630d1e4dce4bfea26ab1e3259cda75",
+    "checkpoint_sha256": "edac96beb02dd23718eccf15f7992510f8bd52807ae6fe94fe7b27d52f05d625",
+    "checkpoint_blob_oid": "7f913860395ceeff60c30a96945ad2ab849edddb",
     "violations": 0
   },
   "documentation_inventory": {
     "path": "data/validation/documentation-inventory.json",
-    "checkpoint_sha256": "16ae3cf7350d294d497dec909d77c56f28124c0e6a9ee42c0c79d7f8b20ca504",
-    "checkpoint_blob_oid": "1d6f98a55a4464834a0ca12df69df4f7e58156ec",
+    "checkpoint_sha256": "21bb06d9aed36cb64ddaaf9e79d54df4ec7b8853f7192a9a4927a896ed0e2c00",
+    "checkpoint_blob_oid": "7364160ffab9c8fe4eaff302ee3e34cf765db6ee",
     "status": "PASS"
   },
   "summary": {

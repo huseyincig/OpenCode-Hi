@@ -14,10 +14,10 @@
       "invariant": "dependency-versions",
       "status": "PASS",
       "owner": "package.json",
-      "owner_sha256": "7944795789c12a7766b983348ce817fda8da8c341582537eb13952ca80ec311c",
+      "owner_sha256": "877d0b4461788f36459ab48d6afdb9b401318264bf424b8f1918ff1e06b5dd97",
       "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.18\"",
       "proof": "package-lock.json",
-      "proof_sha256": "e8f0fd6d2dcfed17c4894de5af379782c77539fb0b463dc69192ff8acd0f43ac",
+      "proof_sha256": "3ce22d386c7f0edeb613b3a9c12dbb0e6c9aeb1c736361e6aeb93a92269c915e",
       "proof_anchor": "\"version\": \"1.18.18\""
     },
     {
@@ -27,7 +27,7 @@
       "owner_sha256": "3beba6c63acf85a89f542e94ddc8217bf0e91978233543b9c4e8173e0d2c90fd",
       "owner_anchor": "def dependency_lock_paths(root:Path)",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "6ed214f53c982c13ec9cdd662066d4b36d6e7a95d174adffe5d7bd3f70c9dfd9",
+      "proof_sha256": "e6437b2b853dcd53d8d1b36c998d55620a17ba85fbca3bdfff2030b7556eb88f",
       "proof_anchor": "dependency_locks']==['package-lock.json','plugin/package-lock.json']"
     },
     {
@@ -37,14 +37,14 @@
       "owner_sha256": "8509951b3ce97234c2d89440710ea7164584ed7a8c1b299952f2aa9e8b96083a",
       "owner_anchor": "@opencode-ai/sdk/v2/client",
       "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
-      "proof_sha256": "72c937c21a9bd81795c572ca4fc1b1fdc78d6d24d26534946e344031e37079f0",
+      "proof_sha256": "50fa7c4f012498b9b5c3938884f9f054876e6b6c02f6fca038ba790d4cc2a757",
       "proof_anchor": "\"consumer_resolution\": true"
     },
     {
       "invariant": "risky-install-scripts",
       "status": "PASS",
       "owner": "package-lock.json",
-      "owner_sha256": "e8f0fd6d2dcfed17c4894de5af379782c77539fb0b463dc69192ff8acd0f43ac",
+      "owner_sha256": "3ce22d386c7f0edeb613b3a9c12dbb0e6c9aeb1c736361e6aeb93a92269c915e",
       "owner_anchor": "\"hasInstallScript\": true",
       "proof": "THIRD_PARTY_NOTICES.md",
       "proof_sha256": "d5d10c4920bc64eab06a8c14523a8bc8c485cbf00fec96f353c7603eba25fc54",
@@ -57,7 +57,7 @@
       "owner_sha256": "3beba6c63acf85a89f542e94ddc8217bf0e91978233543b9c4e8173e0d2c90fd",
       "owner_anchor": "dependency_graph_sha256",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "6ed214f53c982c13ec9cdd662066d4b36d6e7a95d174adffe5d7bd3f70c9dfd9",
+      "proof_sha256": "e6437b2b853dcd53d8d1b36c998d55620a17ba85fbca3bdfff2030b7556eb88f",
       "proof_anchor": "release_manifest_contains_dependency_sbom_and_supply_chain_digest"
     },
     {
@@ -67,7 +67,7 @@
       "owner_sha256": "d5d10c4920bc64eab06a8c14523a8bc8c485cbf00fec96f353c7603eba25fc54",
       "owner_anchor": "`playwright-core`",
       "proof": "package-lock.json",
-      "proof_sha256": "e8f0fd6d2dcfed17c4894de5af379782c77539fb0b463dc69192ff8acd0f43ac",
+      "proof_sha256": "3ce22d386c7f0edeb613b3a9c12dbb0e6c9aeb1c736361e6aeb93a92269c915e",
       "proof_anchor": "\"license\": \"Apache-2.0\""
     },
     {
@@ -84,10 +84,10 @@
       "invariant": "release-permissions",
       "status": "PASS",
       "owner": ".github/workflows/npm-publish.yml",
-      "owner_sha256": "4e2dd03e996250c917b91f572d24a7b11b41837a8644a14c969f1f8abd579c15",
+      "owner_sha256": "fddeff0ad498142ab454a0df576328bdb061106ce7eddec3ae553e3f653572b5",
       "owner_anchor": "id-token: write",
       "proof": "plugin/test/r1-npm-oidc-workflow.test.mjs",
-      "proof_sha256": "1f7688f420059f4ad046e8ba817da62f5bafe5c483a396162f0a9cb14d1d7e32",
+      "proof_sha256": "2a504e0bdc6331a2ad4889557052910e4fb52de283abc4ceceff2fc358312ed2",
       "proof_anchor": "no long-lived npm token surface"
     }
   ],

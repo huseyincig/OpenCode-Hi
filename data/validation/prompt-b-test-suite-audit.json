@@ -8,7 +8,7 @@
     {
       "invariant": "harness-invocation",
       "owner": "plugin/package.json",
-      "owner_sha256": "f3529164654e5dd1481625f38a849f128200368538a49ef7a667339446beec74",
+      "owner_sha256": "ff85a5d492f8d8beae9b29aba9d795f94098c11efb597c1c518ed16eb121e567",
       "owner_anchor": "node ../scripts/run-node-test-suite.mjs",
       "proof": "scripts/run-node-test-suite.mjs",
       "proof_sha256": "3f37ac8e8badc0807ea2ed2500fc7664cad04ce5f9d5ff26abecb9e55b385b89",
@@ -47,7 +47,7 @@
       "owner_sha256": "ee3ed09654ad1a29a49bbe5cdb9a53a120bd95a9613bf8a5c70f10e101b72ba6",
       "owner_anchor": "os: [ubuntu-latest, windows-latest]",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "6ed214f53c982c13ec9cdd662066d4b36d6e7a95d174adffe5d7bd3f70c9dfd9",
+      "proof_sha256": "e6437b2b853dcd53d8d1b36c998d55620a17ba85fbca3bdfff2030b7556eb88f",
       "proof_anchor": "pytest.skip('symlink privilege varies on Windows')"
     },
     {
