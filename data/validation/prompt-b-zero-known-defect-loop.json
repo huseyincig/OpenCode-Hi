@@ -2,7 +2,7 @@
   "schema": 1,
   "kind": "PROMPT_B_ZERO_KNOWN_DEFECT_CLOSURE_LOOP",
   "source_checkpoint": {
-    "commit": "429207b9a755753affcc5e36b108cf204128d4d0"
+    "commit": "343fdd664da9490d6c6b7150c11160cfb79c83f1"
   },
   "program": "PROMPT_B",
   "section": 40,
@@ -84,7 +84,7 @@
       "root_cause_record": "malformed-opencode-config-silent-overwrite-risk",
       "resolution": "Existing malformed JSON now blocks setup with bounded structured repair guidance and is never treated as an empty config.",
       "regression_receipt": "data/validation/prompt-b-cli-developer-tooling-ux.json",
-      "regression_receipt_sha256": "fc33b5c5c73f878135e63b382104e1007178aa0fa19bb9f898bb9e2fcf79e1ae",
+      "regression_receipt_sha256": "e870cdd2125bf5403d9c497221b08a4fa80d556ad7f0be215774f165b0221279",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -107,7 +107,7 @@
       "root_cause_record": "reconfigure-invalid-limit-accepted",
       "resolution": "Scalar and keyed concurrency/config limits are validated at the CLI boundary before persistence.",
       "regression_receipt": "data/validation/prompt-b-cli-developer-tooling-ux.json",
-      "regression_receipt_sha256": "fc33b5c5c73f878135e63b382104e1007178aa0fa19bb9f898bb9e2fcf79e1ae",
+      "regression_receipt_sha256": "e870cdd2125bf5403d9c497221b08a4fa80d556ad7f0be215774f165b0221279",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -130,7 +130,7 @@
       "root_cause_record": "blocked-plan-missing-recovery-guidance",
       "resolution": "Plan/doctor blocked states now carry truthful reason/action guidance; JSONC is classified as unsupported safe mutation rather than malformed JSON.",
       "regression_receipt": "data/validation/prompt-b-cli-developer-tooling-ux.json",
-      "regression_receipt_sha256": "fc33b5c5c73f878135e63b382104e1007178aa0fa19bb9f898bb9e2fcf79e1ae",
+      "regression_receipt_sha256": "e870cdd2125bf5403d9c497221b08a4fa80d556ad7f0be215774f165b0221279",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -153,7 +153,7 @@
       "root_cause_record": "UNKNOWN_CONFIG_ACCEPTED",
       "resolution": "Profile settings project only the two canonical threshold leaves and accept only low|medium|high.",
       "regression_receipt": "data/validation/prompt-b-configuration.json",
-      "regression_receipt_sha256": "684b913fd82bd1327cfba9482761192614799ab09b0b27b3f13a1be14470943e",
+      "regression_receipt_sha256": "87b231265b5bf764e0e93840ee5838dd68858e99ec9c835f15aa0fa469cbf49d",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -176,7 +176,7 @@
       "root_cause_record": "LOWER_PRECEDENCE_SAFETY_WIDENING",
       "resolution": "Nested config resolution is per-leaf; absent/invalid project siblings no longer erase valid host constraints or preferences.",
       "regression_receipt": "data/validation/prompt-b-configuration.json",
-      "regression_receipt_sha256": "684b913fd82bd1327cfba9482761192614799ab09b0b27b3f13a1be14470943e",
+      "regression_receipt_sha256": "87b231265b5bf764e0e93840ee5838dd68858e99ec9c835f15aa0fa469cbf49d",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -199,7 +199,7 @@
       "root_cause_record": "DUPLICATE_CONFIG_OWNER",
       "resolution": "Project routing discovery returns sparse explicit validated overrides and no longer manufactures strategy/list/map defaults.",
       "regression_receipt": "data/validation/prompt-b-configuration.json",
-      "regression_receipt_sha256": "684b913fd82bd1327cfba9482761192614799ab09b0b27b3f13a1be14470943e",
+      "regression_receipt_sha256": "87b231265b5bf764e0e93840ee5838dd68858e99ec9c835f15aa0fa469cbf49d",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -245,7 +245,7 @@
       "root_cause_record": "publishable-root-lock-missing",
       "resolution": "Publishable distribution dependency graph now has canonical root package-lock.json v3 with exact accepted runtime versions and registry integrity.",
       "regression_receipt": "data/validation/prompt-b-dependency-supply-chain-license.json",
-      "regression_receipt_sha256": "cdc50e27587481cbaded1cc9047a66ba7d79be93d7651875bfcd62d6324fcba2",
+      "regression_receipt_sha256": "ecbd367543b968360ce27575d6109c8ce38b9864a46fbc067c13e02e841d88f5",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -268,7 +268,7 @@
       "root_cause_record": "third-party-notices-runtime-drift",
       "resolution": "Notices now enumerate direct runtime SDK, host peer, optional Playwright, build TypeScript, and the audited optional msgpackr-extract install-script boundary.",
       "regression_receipt": "data/validation/prompt-b-dependency-supply-chain-license.json",
-      "regression_receipt_sha256": "cdc50e27587481cbaded1cc9047a66ba7d79be93d7651875bfcd62d6324fcba2",
+      "regression_receipt_sha256": "ecbd367543b968360ce27575d6109c8ce38b9864a46fbc067c13e02e841d88f5",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -291,7 +291,7 @@
       "root_cause_record": "release-pack-proof-prepack-output-corruption",
       "resolution": "Canonical check/build runs before a scripts-disabled pack proof; publish also uses --ignore-scripts against the same built tree.",
       "regression_receipt": "data/validation/prompt-b-dependency-supply-chain-license.json",
-      "regression_receipt_sha256": "cdc50e27587481cbaded1cc9047a66ba7d79be93d7651875bfcd62d6324fcba2",
+      "regression_receipt_sha256": "ecbd367543b968360ce27575d6109c8ce38b9864a46fbc067c13e02e841d88f5",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -314,7 +314,7 @@
       "root_cause_record": "single-lock-sbom-omitted-distribution-runtime",
       "resolution": "Release SBOM and release-chain verification deterministically bind both root distribution and plugin build/test lock graphs.",
       "regression_receipt": "data/validation/prompt-b-dependency-supply-chain-license.json",
-      "regression_receipt_sha256": "cdc50e27587481cbaded1cc9047a66ba7d79be93d7651875bfcd62d6324fcba2",
+      "regression_receipt_sha256": "ecbd367543b968360ce27575d6109c8ce38b9864a46fbc067c13e02e841d88f5",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -590,7 +590,7 @@
       "root_cause_record": "lifecycle-missing-reinstall",
       "resolution": "Local lifecycle receipt now exercises reinstall, doctor and final clean uninstall.",
       "regression_receipt": "data/validation/prompt-b-install-update-lifecycle.json",
-      "regression_receipt_sha256": "999bc1d4543c93d9484fa521b9aa5b5693cacc62aa3857e8b390512c9a0681c1",
+      "regression_receipt_sha256": "322b6c47b0ec356422ec00f1540fd341507a803c978c210722bb3f477ef051ca",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -613,7 +613,7 @@
       "root_cause_record": "packed-setup-cli-missing",
       "resolution": "Publishable package now carries executable opencode-hi-setup plus VERSION.",
       "regression_receipt": "data/validation/prompt-b-install-update-lifecycle.json",
-      "regression_receipt_sha256": "999bc1d4543c93d9484fa521b9aa5b5693cacc62aa3857e8b390512c9a0681c1",
+      "regression_receipt_sha256": "322b6c47b0ec356422ec00f1540fd341507a803c978c210722bb3f477ef051ca",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -636,7 +636,7 @@
       "root_cause_record": "root-runtime-dependency-contract-missing",
       "resolution": "Root package explicitly declares host peer, direct SDK dependency and optional playwright-core runtime dependency.",
       "regression_receipt": "data/validation/prompt-b-install-update-lifecycle.json",
-      "regression_receipt_sha256": "999bc1d4543c93d9484fa521b9aa5b5693cacc62aa3857e8b390512c9a0681c1",
+      "regression_receipt_sha256": "322b6c47b0ec356422ec00f1540fd341507a803c978c210722bb3f477ef051ca",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -935,7 +935,7 @@
       "root_cause_record": "process-secret-before-authority-persistence",
       "resolution": "ProcessRuntime evaluates shell/credential safety before constructing or persisting external-action Authority state.",
       "regression_receipt": "data/validation/prompt-b-security-privacy.json",
-      "regression_receipt_sha256": "81898724617235aa8dc2cb453cf6762ea169ca6c8c35761232ebc80717eef4cf",
+      "regression_receipt_sha256": "dce0678e56d789c0de38bc2a757d67070a8918b5b3e14a1ce08bb413315d5714",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -958,7 +958,7 @@
       "root_cause_record": "durable-authority-secret-command",
       "resolution": "Authority hashes remain raw-command-bound but pending/executing descriptors are durable-redacted; hash-based completion avoids reconstructing identity from persisted text.",
       "regression_receipt": "data/validation/prompt-b-security-privacy.json",
-      "regression_receipt_sha256": "81898724617235aa8dc2cb453cf6762ea169ca6c8c35761232ebc80717eef4cf",
+      "regression_receipt_sha256": "dce0678e56d789c0de38bc2a757d67070a8918b5b3e14a1ce08bb413315d5714",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -981,7 +981,7 @@
       "root_cause_record": "durable-ledger-secret-leak",
       "resolution": "Ledger string payloads are redacted at the durable observability owner boundary before storage.",
       "regression_receipt": "data/validation/prompt-b-security-privacy.json",
-      "regression_receipt_sha256": "81898724617235aa8dc2cb453cf6762ea169ca6c8c35761232ebc80717eef4cf",
+      "regression_receipt_sha256": "dce0678e56d789c0de38bc2a757d67070a8918b5b3e14a1ce08bb413315d5714",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1004,7 +1004,7 @@
       "root_cause_record": "temporary-rollback-secret-persistence",
       "resolution": "Secret-bearing executable rollback commands are rejected; durable mutation descriptions and failure details are redacted.",
       "regression_receipt": "data/validation/prompt-b-security-privacy.json",
-      "regression_receipt_sha256": "81898724617235aa8dc2cb453cf6762ea169ca6c8c35761232ebc80717eef4cf",
+      "regression_receipt_sha256": "dce0678e56d789c0de38bc2a757d67070a8918b5b3e14a1ce08bb413315d5714",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1027,7 +1027,7 @@
       "root_cause_record": "system-projection-secret-reexposure",
       "resolution": "Hi-added Mission runtime system projection is provider-redacted before insertion.",
       "regression_receipt": "data/validation/prompt-b-security-privacy.json",
-      "regression_receipt_sha256": "81898724617235aa8dc2cb453cf6762ea169ca6c8c35761232ebc80717eef4cf",
+      "regression_receipt_sha256": "dce0678e56d789c0de38bc2a757d67070a8918b5b3e14a1ce08bb413315d5714",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1119,7 +1119,7 @@
       "root_cause_record": "cwd-sensitive-test-root",
       "resolution": "Repository fixture roots are derived from import.meta.url rather than process.cwd(); exact same 17 tests pass from plugin cwd and repository root.",
       "regression_receipt": "data/validation/prompt-b-test-suite-audit.json",
-      "regression_receipt_sha256": "971bf4b5882fc68c7b5b4beaf0ee88ae25f9239b2537b60831e36b5524d7609c",
+      "regression_receipt_sha256": "bcbe7dcc0ffbdb1eaf79b6f1550c75e526eb5e9d0663d47c4d3cd793a2d421cb",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1142,7 +1142,7 @@
       "root_cause_record": "test-suite-real-home-state-pollution",
       "resolution": "Canonical Node harness redirects Hi/XDG state and cache roots to a temporary suite sandbox and removes it; measured HOME Hi-state delta is zero.",
       "regression_receipt": "data/validation/prompt-b-test-suite-audit.json",
-      "regression_receipt_sha256": "971bf4b5882fc68c7b5b4beaf0ee88ae25f9239b2537b60831e36b5524d7609c",
+      "regression_receipt_sha256": "bcbe7dcc0ffbdb1eaf79b6f1550c75e526eb5e9d0663d47c4d3cd793a2d421cb",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1165,7 +1165,7 @@
       "root_cause_record": "unbounded-test-runner-timeout",
       "resolution": "Native per-test timeout is 120s and suite process timeout is 300s; hangs cannot block CI indefinitely.",
       "regression_receipt": "data/validation/prompt-b-test-suite-audit.json",
-      "regression_receipt_sha256": "971bf4b5882fc68c7b5b4beaf0ee88ae25f9239b2537b60831e36b5524d7609c",
+      "regression_receipt_sha256": "bcbe7dcc0ffbdb1eaf79b6f1550c75e526eb5e9d0663d47c4d3cd793a2d421cb",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1188,7 +1188,7 @@
       "root_cause_record": "mock-runtime-self-promoted-t3",
       "resolution": "Owned runtime capabilities require active-host health and report OBSERVED only; REAL_HOST_ACCEPTANCE/T3 remains external exact-receipt truth.",
       "regression_receipt": "data/validation/prompt-b-test-suite-audit.json",
-      "regression_receipt_sha256": "971bf4b5882fc68c7b5b4beaf0ee88ae25f9239b2537b60831e36b5524d7609c",
+      "regression_receipt_sha256": "bcbe7dcc0ffbdb1eaf79b6f1550c75e526eb5e9d0663d47c4d3cd793a2d421cb",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1303,7 +1303,7 @@
       "root_cause_record": "fresh-consumer assertion depended on a narrower agent response shape than the native endpoint contract",
       "resolution": "acceptance consumes the live agent endpoint and verifies canonical coder projection without invented fields",
       "regression_receipt": "data/validation/fresh-consumer-opencode-1.18.18.json",
-      "regression_receipt_sha256": "bd5781423ea642e5554751ffb283475835d308b4161354f5e7db8b4a97e6cc9c",
+      "regression_receipt_sha256": "72c937c21a9bd81795c572ca4fc1b1fdc78d6d24d26534946e344031e37079f0",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1395,7 +1395,7 @@
       "root_cause_record": "test assumed the methodology catalog top-level shape and bypassed root-to-plugin architecture script indirection",
       "resolution": "journey follows canonical profiles catalog and root npm script to plugin architecture lint owner",
       "regression_receipt": "plugin/test/q7-developer-journey-acceptance.test.mjs",
-      "regression_receipt_sha256": "df2826e268ac1c37d5a303bf0408f75a9775daa5406a3b2b85aa97c6fbf3247f",
+      "regression_receipt_sha256": "da8e145190f363b105d868953e03cc9bc8732664057f08352a6a1d73b8ce1577",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1441,7 +1441,7 @@
       "root_cause_record": "npm 11 multi-field npm view --json emits dotted field keys while the verifier assumed a nested dist object",
       "resolution": "registry verifier normalizes npm 11 dotted fields and npm 12 array/nested JSON shapes before exact version/integrity/shasum comparison",
       "regression_receipt": "plugin/test/r1-npm-oidc-workflow.test.mjs",
-      "regression_receipt_sha256": "f513ac89204869cb291197c1b6d4aebb3da00acdeba3bc8500f78889a3631d4a",
+      "regression_receipt_sha256": "1f7688f420059f4ad046e8ba817da62f5bafe5c483a396162f0a9cb14d1d7e32",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1464,7 +1464,53 @@
       "root_cause_record": "immediate npm view after a successful publish raced public registry propagation and produced a false-negative E404",
       "resolution": "post-publish registry verification uses a bounded 12-attempt/5-second retry loop and still fails closed if version/digests never converge",
       "regression_receipt": ".github/workflows/npm-publish.yml",
-      "regression_receipt_sha256": "bc4e784145d52f21b7584bb362bc2ddfb07548bec30833df5f7d38d8137262df",
+      "regression_receipt_sha256": "4e2dd03e996250c917b91f572d24a7b11b41837a8644a14c969f1f8abd579c15",
+      "closure_pipeline": [
+        "discover",
+        "classify",
+        "canonical-owner",
+        "root-cause",
+        "fix",
+        "regression-test",
+        "focused-verification",
+        "full-verification",
+        "docs-parity",
+        "local-commit",
+        "ledger",
+        "adjacent-reaudit"
+      ]
+    },
+    {
+      "id": "npm-packed-public-document-links-incomplete",
+      "classification": "RELEASE_PACKAGING_DEFECT",
+      "canonical_owner": "scripts/audit-packed-public-docs.py",
+      "root_cause_record": "the npm package README linked canonical public documentation that was not guaranteed to be present in the packed artifact",
+      "resolution": "all canonical public docs and community targets referenced by README are explicitly packed and a tarball audit rejects missing relative links, stale removed-doc references, or README byte drift",
+      "regression_receipt": "scripts/audit-packed-public-docs.py",
+      "regression_receipt_sha256": "98986adc8a3bf1842b53f5edf5789ea7a937d1bd002506e957bd3a0279c6c918",
+      "closure_pipeline": [
+        "discover",
+        "classify",
+        "canonical-owner",
+        "root-cause",
+        "fix",
+        "regression-test",
+        "focused-verification",
+        "full-verification",
+        "docs-parity",
+        "local-commit",
+        "ledger",
+        "adjacent-reaudit"
+      ]
+    },
+    {
+      "id": "windows-packed-doc-audit-npm-shim-resolution",
+      "classification": "CI_PORTABILITY_DEFECT",
+      "canonical_owner": "scripts/audit-packed-public-docs.py",
+      "root_cause_record": "Python subprocess attempted the POSIX npm executable name on Windows where the npm shim is npm.cmd",
+      "resolution": "packed documentation audit resolves npm.cmd on Windows and npm on POSIX before invoking npm pack",
+      "regression_receipt": "scripts/audit-packed-public-docs.py",
+      "regression_receipt_sha256": "98986adc8a3bf1842b53f5edf5789ea7a937d1bd002506e957bd3a0279c6c918",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1487,7 +1533,7 @@
       "root_cause_record": "documentation parity did not reject prepublication npm/bootstrap wording after real T4 publication completed",
       "resolution": "current README/installation/release/continuation truth is updated and documentation parity rejects stale npm prepublication wording",
       "regression_receipt": "scripts/validate-documentation.py",
-      "regression_receipt_sha256": "998688cb711e48f692e26b955948f39e6c095b477ec3875427b00219e804cd10",
+      "regression_receipt_sha256": "35accf62c8bec555b69c386af5e0d8d5a6e64e6f8cd117c7163834201531dcbf",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1505,7 +1551,7 @@
     }
   ],
   "summary": {
-    "recorded_findings": 65,
+    "recorded_findings": 67,
     "unresolved_known_defects": 0,
     "adjacent_regression_tests": 93,
     "adjacent_regression_pass": 93,

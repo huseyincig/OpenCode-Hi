@@ -5,8 +5,8 @@
   "section": 42,
   "status": "PASS",
   "source_checkpoint": {
-    "commit": "c6d57dd64d03d71c1685cec9b313a2fcbd25894b",
-    "tree": "f903b794224419fafdfde30e1e4e610b30e9e6f6"
+    "commit": "343fdd664da9490d6c6b7150c11160cfb79c83f1",
+    "tree": "19ed0973b7771a71b3869722f97335ecff41a5b8"
   },
   "areas": [
     {
