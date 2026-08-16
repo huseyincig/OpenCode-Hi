@@ -14,11 +14,12 @@
     "locked_sdk": "1.18.18",
     "captured_at": "2026-08-16"
   },
-  "candidate_release": "0.1.1",
+  "candidate_release": "0.1.2",
   "fresh_consumer_receipt": "data/validation/fresh-consumer-opencode-1.18.18.json",
-  "fresh_consumer_sha256": "bd5781423ea642e5554751ffb283475835d308b4161354f5e7db8b4a97e6cc9c",
-  "exact_source_commit": "ef41e3dd38dbc9c89a5cb871b7cb09135def95d8",
-  "exact_source_tree": "f9a6b75fe344dc741ba7524408b234c18d9ee7c3",
+  "fresh_consumer_sha256": "72c937c21a9bd81795c572ca4fc1b1fdc78d6d24d26534946e344031e37079f0",
+  "exact_source_commit": "c6d57dd64d03d71c1685cec9b313a2fcbd25894b",
+  "exact_source_tree": "f903b794224419fafdfde30e1e4e610b30e9e6f6",
+  "capability_evidence_mode": "CURRENT_EXACT_HOST_PACKAGE_PLUS_RUNTIME_EQUIVALENT_EXACT_T3",
   "compatibility_projection": "data/validation/compatibility-matrix-0.1.0.json",
   "compatibility_sha256": "25ddee8346eb2394988848f16cb9b42ffd4f1a8fa47ddca9357ae4a507561a0a",
   "lifecycle_audit": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
@@ -28,19 +29,25 @@
       "receipt": "data/validation/external-opencode-hi-0.1.1-process-1.18.18-head-ef41e3d.json",
       "receipt_sha256": "fbc7cd4826ed6fed3b16f3c6fa1939c71196e1eba0f81995dfb986ee8b2f7589",
       "status": "SUPPORTED_T3",
-      "tested_git_commit": "ef41e3dd38dbc9c89a5cb871b7cb09135def95d8"
+      "receipt_source_commit": "ef41e3dd38dbc9c89a5cb871b7cb09135def95d8",
+      "runtime_equivalent_to_current": true,
+      "runtime_hash_drift": []
     },
     "workspace-isolation-binding": {
       "receipt": "data/validation/external-opencode-hi-0.1.1-workspace-1.18.18-head-ef41e3d.json",
       "receipt_sha256": "9a30fe0c7e360fa4a20cd25d1319408e9e281d927a9d57af91d6bf61859f0bbc",
       "status": "SUPPORTED_T3",
-      "tested_git_commit": "ef41e3dd38dbc9c89a5cb871b7cb09135def95d8"
+      "receipt_source_commit": "ef41e3dd38dbc9c89a5cb871b7cb09135def95d8",
+      "runtime_equivalent_to_current": true,
+      "runtime_hash_drift": []
     },
     "browser-execution": {
       "receipt": "data/validation/external-opencode-hi-0.1.1-browser-1.18.18-head-ef41e3d.json",
       "receipt_sha256": "befd324957a78d4d97ade0adbf80744f3b8fa896fbd83e432031e367533221e6",
       "status": "SUPPORTED_T3",
-      "tested_git_commit": "ef41e3dd38dbc9c89a5cb871b7cb09135def95d8"
+      "receipt_source_commit": "ef41e3dd38dbc9c89a5cb871b7cb09135def95d8",
+      "runtime_equivalent_to_current": true,
+      "runtime_hash_drift": []
     }
   },
   "summary": {
@@ -50,5 +57,5 @@
     "violations": 0
   },
   "violations": [],
-  "claim_boundary": "Section 39 requires fresh exact-current host invocation. API presence and historical receipts are insufficient; all three material Hi-owned capabilities were rerun with the exact OpenCode 1.18.18 user-space binary on Linux/aarch64 against the committed current release candidate; the older system-default binary was observed but not selected."
+  "claim_boundary": "Current candidate certification requires a fresh packed 0.1.2 artifact loaded by exact OpenCode 1.18.18 plus exact real-host T3 capability receipts whose complete capability-relevant runtime owner hashes are byte-identical to current source. Historical receipt prose or API presence alone is insufficient; receipt source commits remain explicit and are never relabeled as current."
 }

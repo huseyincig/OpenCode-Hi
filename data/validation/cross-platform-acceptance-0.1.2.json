@@ -1,0 +1,208 @@
+{
+  "schema": 1,
+  "release": "0.1.2",
+  "kind": "PROMPT_B_CROSS_PLATFORM_CURRENT_SOURCE_CI_ACCEPTANCE",
+  "program": "PROMPT_B",
+  "section": 38,
+  "status": "PASS",
+  "source_binding": {
+    "tested_git_commit": "c6d57dd64d03d71c1685cec9b313a2fcbd25894b",
+    "tested_git_tree": "f903b794224419fafdfde30e1e4e610b30e9e6f6"
+  },
+  "github_actions": {
+    "workflow": "Release Readiness",
+    "workflow_file": ".github/workflows/release-readiness.yml",
+    "run_id": 31962092344,
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "ubuntu": {
+      "job_id": 95201458542,
+      "name": "ubuntu-latest / node-22 / python-3.11",
+      "status": "completed",
+      "conclusion": "success",
+      "node_summary": {
+        "tests": 848,
+        "pass": 848,
+        "fail": 0,
+        "skipped": 0
+      },
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install Python verification dependencies",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install plugin dependencies",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Product build, architecture lint, Node acceptance, docs parity",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Packed public documentation",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Python product acceptance",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build deterministic release candidate",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify release archives are readable",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    "windows": {
+      "job_id": 95201458548,
+      "name": "windows-latest / node-22 / python-3.11",
+      "status": "completed",
+      "conclusion": "success",
+      "node_summary": {
+        "tests": 848,
+        "pass": 847,
+        "fail": 0,
+        "skipped": 1
+      },
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install Python verification dependencies",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install plugin dependencies",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Product build, architecture lint, Node acceptance, docs parity",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Packed public documentation",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Python product acceptance",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build deterministic release candidate",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify release archives are readable",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    }
+  },
+  "portability_surfaces": [
+    "shell-command-policy",
+    "path-semantics",
+    "executable-discovery",
+    "newline",
+    "process-handling",
+    "filesystem",
+    "packaging"
+  ],
+  "claim_boundary": "External GitHub Actions evidence for exact 0.1.2 source checkpoint, including packed public-document validation on Ubuntu and Windows. Later evidence-only commits may consume this receipt only while audited runtime/package material remains unchanged."
+}

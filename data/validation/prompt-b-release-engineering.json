@@ -3,30 +3,26 @@
   "kind": "PROMPT_B_RELEASE_ENGINEERING_AUDIT",
   "program": "PROMPT_B",
   "section": 28,
-  "status": "CLOSED_T4",
+  "status": "CLOSED_LOCAL_T4_BLOCKED",
   "current_source": {
-    "commit": "e9cbc837172fef286047e31730472d6d3a4e7dbb",
-    "tree": "2754435b010ffcef478a36c27f405b6ea1bb5062",
-    "version": "0.1.1"
+    "commit": "c6d57dd64d03d71c1685cec9b313a2fcbd25894b",
+    "tree": "f903b794224419fafdfde30e1e4e610b30e9e6f6",
+    "version": "0.1.2"
   },
   "release_source": {
-    "commit": "fb404fcf1c9a2917bce7712aecb3b48f901413a1",
-    "tree": "fabb5e686ad0da1c9e2d086a567aa8f3bc448c8e",
-    "tag": "v0.1.1"
+    "commit": "c6d57dd64d03d71c1685cec9b313a2fcbd25894b",
+    "tree": "f903b794224419fafdfde30e1e4e610b30e9e6f6",
+    "tag": null
   },
   "development_head": {
-    "post_release": true,
+    "post_release": false,
     "runtime_drift_from_release": [],
-    "package_or_documentation_drift_from_release": [
-      "README.md",
-      "docs/locales/tr/README.md",
-      "package.json"
-    ],
-    "republish_same_version_forbidden": true
+    "package_or_documentation_drift_from_release": [],
+    "republish_same_version_forbidden": false
   },
   "certification_head": {
-    "commit": "e9cbc837172fef286047e31730472d6d3a4e7dbb",
-    "tree": "2754435b010ffcef478a36c27f405b6ea1bb5062"
+    "commit": "c6d57dd64d03d71c1685cec9b313a2fcbd25894b",
+    "tree": "f903b794224419fafdfde30e1e4e610b30e9e6f6"
   },
   "historical_release": {
     "tag": "v0.1.0",
@@ -36,10 +32,10 @@
   },
   "registry_observation": {
     "date": "2026-08-16",
-    "package": "opencode-hi@0.1.1",
-    "view": "PUBLISHED_T4",
+    "package": "opencode-hi@0.1.2",
+    "view": "PREPUBLICATION",
     "whoami": "huseyincig",
-    "publish_attempted": true,
+    "publish_attempted": false,
     "authority_granted": true,
     "authority_condition": "effective only after all engineering/final certification completes"
   },
@@ -47,20 +43,20 @@
     {
       "stage": "source-commit",
       "status": "PASS",
-      "detail": "ef41e3dd38dbc9c89a5cb871b7cb09135def95d8",
-      "proof": "exact-current T3 source checkpoint"
+      "detail": "c6d57dd64d03d71c1685cec9b313a2fcbd25894b",
+      "proof": "git HEAD"
     },
     {
       "stage": "version",
       "status": "PASS_NEW_RELEASE_IDENTITY",
-      "detail": "0.1.1",
-      "proof": "VERSION/package/lock identity; historical v0.1.0 immutable"
+      "detail": "0.1.2",
+      "proof": "VERSION/package/lock identity; historical v0.1.0 is immutable"
     },
     {
       "stage": "build",
       "status": "PASS",
       "detail": "canonical npm/plugin build green",
-      "proof": "canonical final gates"
+      "proof": "npm run check / release-build deterministic gate"
     },
     {
       "stage": "tests",
@@ -71,8 +67,8 @@
     {
       "stage": "packed-artifact",
       "status": "PASS",
-      "detail": "fresh npm pack digest equals registry artifact",
-      "proof": "data/validation/release-publication-0.1.1.json"
+      "detail": "deterministic pack/release artifacts",
+      "proof": "\u00a725/\u00a727 deterministic pack and dual-lock SBOM"
     },
     {
       "stage": "fresh-install",
@@ -84,43 +80,43 @@
       "stage": "T3",
       "status": "PASS",
       "detail": "exact OpenCode 1.18.18 packed consumer runtime",
-      "proof": "31 Hi tools + agent projection + session"
+      "proof": "31 Hi tools + agent projection + session; current source checkpoint"
     },
     {
       "stage": "tag",
-      "status": "PASS_T4",
-      "detail": "v0.1.1",
-      "proof": "data/validation/release-publication-0.1.1.json"
+      "status": "PENDING_FINAL_AUTHORIZED_PUBLICATION",
+      "detail": "historical v0.1.0 remains f1a2c1c4358e5a63656da7a585b6b5793d1ed3be; current candidate tag is v0.1.2",
+      "proof": "user authority effective only after final certification"
     },
     {
       "stage": "github-release",
-      "status": "PASS_T4",
-      "detail": "GitHub Release v0.1.1 published and exact-tag verified",
-      "proof": "data/validation/release-publication-0.1.1.json"
+      "status": "PENDING_FINAL_AUTHORIZED_PUBLICATION",
+      "detail": "historical v0.1.0 remains immutable; v0.1.2 publication waits for final certification",
+      "proof": "conditional user publication authority"
     },
     {
       "stage": "registry-publication",
-      "status": "PASS_T4",
-      "detail": "opencode-hi@0.1.1 published through npm Trusted Publishing OIDC",
-      "proof": "data/validation/release-publication-0.1.1.json"
+      "status": "PENDING_FINAL_AUTHORIZED_PUBLICATION",
+      "detail": "opencode-hi@0.1.2 publication is authorized only after final certification",
+      "proof": "explicit conditional user authority"
     },
     {
       "stage": "registry-integrity",
-      "status": "PASS_T4",
-      "detail": "registry integrity/shasum equal fresh pack proof; provenance exact-tag bound",
-      "proof": "data/validation/release-publication-0.1.1.json"
+      "status": "BLOCKED_UPSTREAM_PUBLICATION",
+      "detail": "cannot verify registry integrity before publication",
+      "proof": "current-version npm publication absent"
     },
     {
       "stage": "fresh-registry-install",
-      "status": "PASS_T4",
-      "detail": "fresh registry consumer loaded by exact OpenCode 1.18.18",
-      "proof": "data/validation/t4-registry-exact-host-0.1.1.json"
+      "status": "BLOCKED_UPSTREAM_PUBLICATION",
+      "detail": "registry package absent",
+      "proof": "current-version npm publication absent"
     },
     {
       "stage": "T4-receipt",
-      "status": "PASS_T4",
-      "detail": "real GitHub/npm/provenance/exact-host publication evidence complete",
-      "proof": "data/validation/release-publication-0.1.1.json"
+      "status": "PENDING_REAL_PUBLICATION_PROOF",
+      "detail": "no fabricated T4; requires real current GitHub/npm publication and verification",
+      "proof": "final external publication receipt required"
     }
   ],
   "checks": {
@@ -129,32 +125,26 @@
     "historical_tag_distinct": true,
     "historical_release_source": true,
     "released_runtime_immutable": true,
-    "current_tag_annotated": true,
-    "current_tag_exact_source": true,
-    "github_release_t4": true,
-    "registry_published_t4": true,
-    "registry_integrity_t4": true,
-    "fresh_registry_t4": true,
-    "publication_receipt_t4": true
+    "registry_still_unpublished": true,
+    "publish_not_attempted": true,
+    "no_current_tag_rewrite": true
   },
   "violations": [],
   "summary": {
     "stages": 13,
-    "local_pass_or_historical": 13,
-    "blocked_external_or_identity": 0,
+    "local_pass_or_historical": 8,
+    "blocked_external_or_identity": 5,
     "violations": 0
   },
   "proof_hashes": {
-    "VERSION": "80447316529fc62014fbaa047fb67c51ac30e32830cda370405349d8d66d196c",
-    "package.json": "d19ddfb516393c6c642c153c8d3650b9331363d467007600a52e2c68f121291d",
-    "package-lock.json": "96e22583fe2cf1eb25c14c6f73a9291a4eef08ae8fd096f362bb80db712d83f5",
-    "plugin/package-lock.json": "fb6a6c977a496b7407dbd6a1dcbc3403f0a86dc9951c8f32fec48ccae91dd343",
-    "data/validation/fresh-consumer-opencode-1.18.18.json": "bd5781423ea642e5554751ffb283475835d308b4161354f5e7db8b4a97e6cc9c",
+    "VERSION": "297b50f08386d3521f8fdaf2f78eb8d9d0acdf452d2e61596905fba37208c792",
+    "package.json": "7944795789c12a7766b983348ce817fda8da8c341582537eb13952ca80ec311c",
+    "package-lock.json": "e8f0fd6d2dcfed17c4894de5af379782c77539fb0b463dc69192ff8acd0f43ac",
+    "plugin/package-lock.json": "f5a53b169df31347de9406b4fb6b645ea6997f90404df9f76ec40171c158da99",
+    "data/validation/fresh-consumer-opencode-1.18.18.json": "72c937c21a9bd81795c572ca4fc1b1fdc78d6d24d26534946e344031e37079f0",
     "data/validation/release-status-0.1.0.json": "4ea5e44d7bca5562a30c9824fb680925417627d00165b2c4e36096f2ce60ef4a",
-    ".github/workflows/npm-publish.yml": "bc4e784145d52f21b7584bb362bc2ddfb07548bec30833df5f7d38d8137262df",
-    "scripts/verify-npm-oidc-release.mjs": "d786803e0226f45d95b12804f885550ce614498b3017792d0fa5cbe219cf00c9",
-    "data/validation/release-publication-0.1.1.json": "7255a17b208b0dd388b6404567712890b29b8fad314a664af5f8cfb2ee34e605",
-    "data/validation/t4-registry-exact-host-0.1.1.json": "6452a038f55911291b838bf3107d8d77a14e57bb39eab0744a308ae4812c7223"
+    ".github/workflows/npm-publish.yml": "4e2dd03e996250c917b91f572d24a7b11b41837a8644a14c969f1f8abd579c15",
+    "scripts/verify-npm-oidc-release.mjs": "d786803e0226f45d95b12804f885550ce614498b3017792d0fa5cbe219cf00c9"
   },
-  "claim_boundary": "T4 certifies the immutable released tag/artifact, not every later documentation commit on main. A post-release development HEAD may advance documentation without mutating the published artifact; the same version must never be republished. Historical v0.1.0 remains immutable."
+  "claim_boundary": "Release-engineering truth for the current candidate. Historical v0.1.0 remains immutable. T4 remains pending until real external publication and verification."
 }

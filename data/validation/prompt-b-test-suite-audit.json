@@ -8,7 +8,7 @@
     {
       "invariant": "harness-invocation",
       "owner": "plugin/package.json",
-      "owner_sha256": "5b23743b0024e3392fbcf12af36067f7d2a60704fcf9be69e0ca8a9654e71bff",
+      "owner_sha256": "f3529164654e5dd1481625f38a849f128200368538a49ef7a667339446beec74",
       "owner_anchor": "node ../scripts/run-node-test-suite.mjs",
       "proof": "scripts/run-node-test-suite.mjs",
       "proof_sha256": "3f37ac8e8badc0807ea2ed2500fc7664cad04ce5f9d5ff26abecb9e55b385b89",
@@ -44,10 +44,10 @@
     {
       "invariant": "skipped-tests-audited",
       "owner": ".github/workflows/release-readiness.yml",
-      "owner_sha256": "7009d76a5e6f471f4a23eb9a78fac4d678f636147bbf180a0f294602f2a61638",
+      "owner_sha256": "ee3ed09654ad1a29a49bbe5cdb9a53a120bd95a9613bf8a5c70f10e101b72ba6",
       "owner_anchor": "os: [ubuntu-latest, windows-latest]",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "cf404d65953788ae9b60085fa1f3824e8816f3a911dac39498bc41bb7046c72e",
+      "proof_sha256": "b123a230fcda2be9f66ad782ce307601f961f39eae5fdc1639c333f5d57d61e6",
       "proof_anchor": "pytest.skip('symlink privilege varies on Windows')"
     },
     {
@@ -89,7 +89,7 @@
     {
       "invariant": "platform-assumptions",
       "owner": ".github/workflows/release-readiness.yml",
-      "owner_sha256": "7009d76a5e6f471f4a23eb9a78fac4d678f636147bbf180a0f294602f2a61638",
+      "owner_sha256": "ee3ed09654ad1a29a49bbe5cdb9a53a120bd95a9613bf8a5c70f10e101b72ba6",
       "owner_anchor": "windows-latest",
       "proof": "plugin/test/real-hosted-release-transaction.test.mjs",
       "proof_sha256": "720c37ed824c2344b342ca580fd74ea3658bd4cf538848b631ce22e52ed62502",

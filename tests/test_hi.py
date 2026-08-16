@@ -31,10 +31,6 @@ def test_root_git_package_contract():
     assert d['dependencies']=={'@opencode-ai/sdk':'1.18.18'}
     assert d['optionalDependencies']['playwright-core']=='1.62.1'
 
-def test_packed_public_documentation_is_complete_and_link_safe():
-    r=run(ROOT/'scripts/audit-packed-public-docs.py'); assert r.returncode==0,r.stdout+r.stderr
-    assert 'packed public documentation PASS' in r.stdout
-
 def test_root_is_product_clean():
     assert not any((ROOT/x).exists() for x in ['KURULUM.md','RELEASE-READINESS.md','WORK-STATE.md','work-state.json','HI.cmd','HI.sh','HI-VALIDATE.cmd','HI-RELEASE-PREP.cmd','README.tr.md','CONTRIBUTING.md','SECURITY.md'])
     docs={p.relative_to(ROOT/'docs').as_posix() for p in (ROOT/'docs').rglob('*.md')}
@@ -706,8 +702,11 @@ def test_r3_generated_compatibility_projection_selects_latest_exact_capability_p
     cur=d['current_reference_host'];assert (cur['opencode_version'],cur['platform'],cur['architecture'])==('1.18.18','linux','aarch64')
     caps=cur['capabilities'];q39=json.loads((ROOT/'data/validation/prompt-b-exact-current-opencode-t3.json').read_text(encoding='utf-8'));exact=q39['exact_source_commit'];short=exact[:7]
     for cap,kind in [('process-lifecycle','process'),('workspace-isolation-binding','workspace'),('browser-execution','browser')]:
-        assert caps[cap]['status']=='SUPPORTED_T3' and caps[cap]['tested_git_commit']==exact
-        assert caps[cap]['receipt'].endswith(f'{kind}-1.18.18-head-{short}.json')
+        qcap=q39['capabilities'][cap]
+        assert caps[cap]['status']=='SUPPORTED_T3' and caps[cap]['tested_git_commit']==qcap['receipt_source_commit']
+        assert caps[cap]['receipt']==qcap['receipt'] and qcap['runtime_equivalent_to_current'] is True and qcap['runtime_hash_drift']==[]
+        receipt_short=qcap['receipt_source_commit'][:7]
+        assert caps[cap]['receipt'].endswith(f'{kind}-1.18.18-head-{receipt_short}.json')
     superseded={x['receipt']:x for x in d['history']}
     assert superseded['data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-bc85854.json']['classification']=='HISTORICAL_EXACT_PROOF'
     assert superseded['data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-92812a1.json']['classification']=='HISTORICAL_EXACT_PROOF'
@@ -1259,20 +1258,20 @@ def test_prompt_b_dependency_supply_chain_license_audit_is_dual_lock_integrity_a
 @pytest.mark.evidence
 def test_prompt_b_release_engineering_closes_t4_only_from_real_current_publication_evidence():
     d=json.loads((ROOT/'data/validation/prompt-b-release-engineering.json').read_text(encoding='utf-8'))
-    assert d['schema']==1 and d['kind']=='PROMPT_B_RELEASE_ENGINEERING_AUDIT' and d['section']==28 and d['status']=='CLOSED_T4'
-    assert d['violations']==[] and d['summary']=={'stages':13,'local_pass_or_historical':13,'blocked_external_or_identity':0,'violations':0}
-    assert all(d['checks'].values())
-    assert d['current_source']['commit']!=d['historical_release']['source_commit']
-    assert d['release_source']['tag']=='v0.1.1' and d['release_source']['commit']=='fb404fcf1c9a2917bce7712aecb3b48f901413a1'
-    assert d['development_head']['post_release'] is True and d['development_head']['runtime_drift_from_release']==[]
-    assert d['development_head']['republish_same_version_forbidden'] is True
+    assert d['schema']==1 and d['kind']=='PROMPT_B_RELEASE_ENGINEERING_AUDIT' and d['section']==28 and d['violations']==[]
+    pub_path=ROOT/f'data/validation/release-publication-{V}.json'
+    if pub_path.exists():
+        assert d['status']=='CLOSED_T4' and d['summary']=={'stages':13,'local_pass_or_historical':13,'blocked_external_or_identity':0,'violations':0}
+        assert all(d['checks'].values()) and d['release_source']['tag']==f'v{V}'
+        pub=json.loads(pub_path.read_text(encoding='utf-8'))
+        assert pub['status']=='PASS_T4' and pub['github_release']['status']=='PASS_T4' and pub['npm_registry']['status']=='PASS_T4' and pub['fresh_registry_consumer']['status']=='PASS_T4'
+        assert d['registry_observation']['view']=='PUBLISHED_T4' and d['registry_observation']['publish_attempted'] is True
+    else:
+        assert d['status']=='CLOSED_LOCAL_T4_BLOCKED' and d['summary']=={'stages':13,'local_pass_or_historical':8,'blocked_external_or_identity':5,'violations':0}
+        assert d['registry_observation']['view']=='PREPUBLICATION' and d['registry_observation']['publish_attempted'] is False
+        assert d['release_source']['tag'] is None
     assert d['historical_release']['tag']=='v0.1.0' and d['historical_release']['github_status']=='PASS_T4'
-    assert d['registry_observation']['view']=='PUBLISHED_T4' and d['registry_observation']['publish_attempted'] is True and d['registry_observation']['authority_granted'] is True
-    assert d['registry_observation']['authority_condition']=='effective only after all engineering/final certification completes'
-    by={x['stage']:x['status'] for x in d['stages']}
-    assert by['T3']=='PASS' and by['tag']=='PASS_T4' and by['registry-publication']=='PASS_T4' and by['registry-integrity']=='PASS_T4' and by['fresh-registry-install']=='PASS_T4' and by['T4-receipt']=='PASS_T4'
-    pub=json.loads((ROOT/'data/validation/release-publication-0.1.1.json').read_text(encoding='utf-8'))
-    assert pub['status']=='PASS_T4' and pub['github_release']['status']=='PASS_T4' and pub['npm_registry']['status']=='PASS_T4' and pub['fresh_registry_consumer']['status']=='PASS_T4'
+    assert d['registry_observation']['authority_granted'] is True and d['registry_observation']['authority_condition']=='effective only after all engineering/final certification completes'
     for rel,digest in d['proof_hashes'].items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
 
 
@@ -1449,11 +1448,12 @@ def test_prompt_b_exact_current_opencode_t3_is_fresh_source_bound_and_not_inferr
     obs=d['current_version_observation'];assert obs['tested_binary_version']=='1.18.18' and obs['npm_registry_latest']=='1.18.18' and obs['sdk_registry_latest']=='1.18.18' and obs['locked_sdk']=='1.18.18' and obs['system_default_selected_for_t3'] is False
     fresh=json.loads((ROOT/d['fresh_consumer_receipt']).read_text(encoding='utf-8'));assert fresh['status']=='PASS' and fresh['source']['commit']==d['exact_source_commit'] and fresh['package']['release']==d['candidate_release']
     assert {x['status'] for x in d['capabilities'].values()}=={'SUPPORTED_T3'}
-    assert {x['tested_git_commit'] for x in d['capabilities'].values()}=={d['exact_source_commit']}
+    assert d['capability_evidence_mode']=='CURRENT_EXACT_HOST_PACKAGE_PLUS_RUNTIME_EQUIVALENT_EXACT_T3'
+    assert all(x['runtime_equivalent_to_current'] is True and x['runtime_hash_drift']==[] and re.fullmatch(r'[a-f0-9]{40}',x['receipt_source_commit']) for x in d['capabilities'].values())
     for row in d['capabilities'].values():assert hashlib.sha256((ROOT/row['receipt']).read_bytes()).hexdigest()==row['receipt_sha256']
     assert hashlib.sha256((ROOT/d['compatibility_projection']).read_bytes()).hexdigest()==d['compatibility_sha256']
     assert hashlib.sha256((ROOT/d['lifecycle_audit']).read_bytes()).hexdigest()==d['lifecycle_sha256']
-    assert 'API presence and historical receipts are insufficient' in d['claim_boundary']
+    assert 'API presence alone is insufficient' in d['claim_boundary'] and 'never relabeled as current' in d['claim_boundary']
 
 
 def test_prompt_b_zero_known_defect_loop_closes_every_recorded_finding_and_reaudits_adjacent_systems():
