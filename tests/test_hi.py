@@ -1246,6 +1246,9 @@ def test_prompt_b_release_engineering_closes_t4_only_from_real_current_publicati
     assert d['violations']==[] and d['summary']=={'stages':13,'local_pass_or_historical':13,'blocked_external_or_identity':0,'violations':0}
     assert all(d['checks'].values())
     assert d['current_source']['commit']!=d['historical_release']['source_commit']
+    assert d['release_source']['tag']=='v0.1.1' and d['release_source']['commit']=='fb404fcf1c9a2917bce7712aecb3b48f901413a1'
+    assert d['development_head']['post_release'] is True and d['development_head']['runtime_drift_from_release']==[]
+    assert d['development_head']['republish_same_version_forbidden'] is True
     assert d['historical_release']['tag']=='v0.1.0' and d['historical_release']['github_status']=='PASS_T4'
     assert d['registry_observation']['view']=='PUBLISHED_T4' and d['registry_observation']['publish_attempted'] is True and d['registry_observation']['authority_granted'] is True
     assert d['registry_observation']['authority_condition']=='effective only after all engineering/final certification completes'
@@ -1385,7 +1388,10 @@ def test_prompt_b_developer_journey_acceptance_has_obvious_single_owners():
     assert d['summary']=={'required':4,'covered':4,'violations':0} and d['violations']==[]
     assert d['required_journeys']==['add-config','add-methodology','add-host-adapter-behavior','add-validation-rule']
     a=json.loads((ROOT/d['acceptance_receipt']).read_text(encoding='utf-8'))
-    assert a['status']=='PASS' and a['source_binding']=={'tested_git_commit':'07fbec3160f0bacb0ece896ac36358a50894ee25','tested_git_tree':'2a3375a247fc43239de6ee6c7cc204aeb9595015'}
+    assert a['status']=='PASS'
+    binding=a['source_binding']; commit=binding['tested_git_commit']; tree=binding['tested_git_tree']
+    assert subprocess.run(['git','merge-base','--is-ancestor',commit,'HEAD'],cwd=ROOT).returncode==0
+    assert subprocess.check_output(['git','rev-parse',f'{commit}^{{tree}}'],cwd=ROOT,text=True).strip()==tree
     assert a['terminal']=={'tests':4,'pass':4,'fail':0,'cancelled':0,'skipped':0,'todo':0}
     assert hashlib.sha256((ROOT/a['proof']).read_bytes()).hexdigest()==a['proof_sha256']
 

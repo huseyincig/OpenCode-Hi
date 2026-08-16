@@ -45,12 +45,23 @@ else:
   {'stage':'fresh-registry-install','status':'BLOCKED_UPSTREAM_PUBLICATION','detail':'registry package absent','proof':'current-version npm publication absent'},
   {'stage':'T4-receipt','status':'PENDING_REAL_PUBLICATION_PROOF','detail':'no fabricated T4; requires real current GitHub/npm publication and verification','proof':'final external publication receipt required'},
  ]
+release_source=(pub.get('released_source') or {}) if t4 else {}
+release_commit=release_source.get('git_commit') if t4 else head
+release_tree=release_source.get('git_tree') if t4 else tree
+runtime_paths=['VERSION','plugin/package.json','plugin/package-lock.json','plugin/src','plugin/dist','skills','scripts/native_plugin_setup.py']
+release_package_paths=['package.json','package-lock.json','README.md','docs/locales/tr/README.md']
+def changed_paths(base,target,paths):
+    if not base or not target:return []
+    out=subprocess.run(['git','diff','--name-only',base,target,'--',*paths],cwd=ROOT,text=True,capture_output=True)
+    return [x for x in out.stdout.splitlines() if x]
+runtime_drift=changed_paths(release_commit,cert_head,runtime_paths) if t4 else []
+package_doc_drift=changed_paths(release_commit,cert_head,release_package_paths) if t4 else []
 checks={
  'fresh_source_binding':isinstance(head,str) and isinstance(tree,str) and len(head)==40 and len(tree)==40,
  'fresh_exact_host':fresh.get('status')=='PASS' and fresh.get('host')=={'opencode':'1.18.18','platform':'linux','architecture':'aarch64'},
- 'historical_tag_distinct':hist_tag_commit!=head,
+ 'historical_tag_distinct':hist_tag_commit!=release_commit,
  'historical_release_source':historical.get('github',{}).get('released_source')==hist_tag_commit,
- 'package_surface_equivalent_to_checkpoint':subprocess.run(['git','diff','--quiet',head,cert_head,'--','VERSION','package.json','package-lock.json','plugin/package.json','plugin/package-lock.json','plugin/dist','skills','scripts/native_plugin_setup.py'],cwd=ROOT).returncode==0,
+ 'released_runtime_immutable':not runtime_drift,
 }
 if t4:
  rs=pub.get('released_source') or {};gh=pub.get('github_release') or {};npm=pub.get('npm_registry') or {};fr=pub.get('fresh_registry_consumer') or {}
@@ -69,7 +80,7 @@ viol=[k for k,v in checks.items() if not v]
 status='CLOSED_T4' if t4 and not viol else ('CLOSED_LOCAL_T4_BLOCKED' if not viol else 'FAIL')
 proofs=['VERSION','package.json','package-lock.json','plugin/package-lock.json','data/validation/fresh-consumer-opencode-1.18.18.json','data/validation/release-status-0.1.0.json','.github/workflows/npm-publish.yml','scripts/verify-npm-oidc-release.mjs']
 if published:proofs += [pub_rel,'data/validation/t4-registry-exact-host-0.1.1.json']
-out={'schema':1,'kind':'PROMPT_B_RELEASE_ENGINEERING_AUDIT','program':'PROMPT_B','section':28,'status':status,'current_source':{'commit':head,'tree':tree,'version':version},'certification_head':{'commit':cert_head,'tree':cert_tree},'historical_release':{'tag':'v0.1.0','source_commit':hist_tag_commit,'github_status':'PASS_T4','release_id':historical.get('github',{}).get('release_id')},'registry_observation':{'date':'2026-08-16','package':f'opencode-hi@{version}','view':'PUBLISHED_T4' if t4 else 'PREPUBLICATION','whoami':'huseyincig','publish_attempted':bool(published),'authority_granted':True,'authority_condition':'effective only after all engineering/final certification completes'},'stages':stages,'checks':checks,'violations':viol,'summary':{'stages':13,'local_pass_or_historical':13 if t4 else 8,'blocked_external_or_identity':0 if t4 else 5,'violations':len(viol)},'proof_hashes':{rel:sha(rel) for rel in proofs},'claim_boundary':'Release-engineering truth for the current release. Historical v0.1.0 remains immutable. T4 is accepted only from the real current-version GitHub release, npm Trusted Publishing OIDC publication, registry digest/provenance verification, and fresh registry exact-host acceptance.' if t4 else 'Release-engineering truth for the current candidate. Historical v0.1.0 remains immutable. T4 remains pending until real external publication and verification.'}
+out={'schema':1,'kind':'PROMPT_B_RELEASE_ENGINEERING_AUDIT','program':'PROMPT_B','section':28,'status':status,'current_source':{'commit':cert_head,'tree':cert_tree,'version':version},'release_source':{'commit':release_commit,'tree':release_tree,'tag':current_tag if t4 else None},'development_head':{'post_release':bool(t4 and cert_head!=release_commit),'runtime_drift_from_release':runtime_drift,'package_or_documentation_drift_from_release':package_doc_drift,'republish_same_version_forbidden':bool(t4 and cert_head!=release_commit)},'certification_head':{'commit':cert_head,'tree':cert_tree},'historical_release':{'tag':'v0.1.0','source_commit':hist_tag_commit,'github_status':'PASS_T4','release_id':historical.get('github',{}).get('release_id')},'registry_observation':{'date':'2026-08-16','package':f'opencode-hi@{version}','view':'PUBLISHED_T4' if t4 else 'PREPUBLICATION','whoami':'huseyincig','publish_attempted':bool(published),'authority_granted':True,'authority_condition':'effective only after all engineering/final certification completes'},'stages':stages,'checks':checks,'violations':viol,'summary':{'stages':13,'local_pass_or_historical':13 if t4 else 8,'blocked_external_or_identity':0 if t4 else 5,'violations':len(viol)},'proof_hashes':{rel:sha(rel) for rel in proofs},'claim_boundary':'T4 certifies the immutable released tag/artifact, not every later documentation commit on main. A post-release development HEAD may advance documentation without mutating the published artifact; the same version must never be republished. Historical v0.1.0 remains immutable.' if t4 else 'Release-engineering truth for the current candidate. Historical v0.1.0 remains immutable. T4 remains pending until real external publication and verification.'}
 OUT.write_text(json.dumps(out,indent=2)+'\n',encoding='utf-8',newline='\n')
 print(f"release engineering audit {out['status']}: stages=13 blocked={out['summary']['blocked_external_or_identity']} violations={len(viol)}")
 if viol:raise SystemExit(1)

@@ -749,7 +749,14 @@ try:
     if d37.get('summary')!={'required':4,'covered':4,'violations':0} or d37.get('violations')!=[]:err('PROMPT B developer journey summary drift')
     if d37.get('required_journeys')!=['add-config','add-methodology','add-host-adapter-behavior','add-validation-rule']:err('PROMPT B developer journey inventory drift')
     a=json.loads((ROOT/d37['acceptance_receipt']).read_text(encoding='utf-8'))
-    if a.get('status')!='PASS' or a.get('source_binding')!={'tested_git_commit':'07fbec3160f0bacb0ece896ac36358a50894ee25','tested_git_tree':'2a3375a247fc43239de6ee6c7cc204aeb9595015'}:err('PROMPT B developer journey source binding drift')
+    if a.get('status')!='PASS':err('PROMPT B developer journey acceptance not PASS')
+    db=a.get('source_binding') or {}; dcommit=db.get('tested_git_commit'); dtree=db.get('tested_git_tree')
+    try:
+        if not isinstance(dcommit,str) or subprocess.run(['git','merge-base','--is-ancestor',dcommit,'HEAD'],cwd=ROOT).returncode!=0:err('PROMPT B developer journey source is not an ancestor of HEAD')
+        if subprocess.check_output(['git','rev-parse',f'{dcommit}^{{tree}}'],cwd=ROOT,text=True,stderr=subprocess.DEVNULL).strip()!=dtree:err('PROMPT B developer journey source tree drift')
+        developer_surfaces=['plugin/test/q7-developer-journey-acceptance.test.mjs','data/hi-config-options.json','data/hi-methodologies.json','scripts/generate_config_policy.py','scripts/generate_methodology_policy.py','scripts/architecture_lint.mjs','docs/INSTALLATION.md','docs/SKILLS.md','docs/ARCHITECTURE.md','docs/VERIFICATION.md','data/documentation-ownership.json']
+        if subprocess.run(['git','diff','--quiet',dcommit,'HEAD','--',*developer_surfaces],cwd=ROOT).returncode!=0:err('PROMPT B developer journey source-bound surface drift')
+    except Exception as e:err(f'PROMPT B developer journey source binding unavailable: {e}')
     if a.get('terminal')!={'tests':4,'pass':4,'fail':0,'cancelled':0,'skipped':0,'todo':0}:err('PROMPT B developer journey terminal drift')
     rel=a.get('proof');expected=a.get('proof_sha256')
     if not isinstance(rel,str) or not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B developer journey proof hash drift')
