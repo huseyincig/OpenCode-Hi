@@ -75,7 +75,7 @@ export class OpenCodeWorkspaceAdapter {
         if (!sameRepository(primary, workspace))
             throw new Error('OpenCode workspace is not registered to the same Git common repository');
         if (!primary.worktrees.some(path => sameGitPath(path, workspacePath)))
-            throw new Error('OpenCode workspace path is not present in the primary Git worktree registry');
+            throw new Error(`OpenCode workspace path is not present in the primary Git worktree registry: workspace=${JSON.stringify(workspacePath)} key=${JSON.stringify(gitPathKey(workspacePath))} registry=${JSON.stringify(primary.worktrees.map(path => ({ path, key: gitPathKey(path) })))}`);
         if (!workspace.worktrees.some(path => sameGitPath(path, workspacePath)))
             throw new Error('Workspace Git view does not contain its own canonical worktree path');
         return { host_workspace_id: native.id, workspace_path: workspacePath, ...(native.branch ? { branch: String(native.branch) } : {}) };
