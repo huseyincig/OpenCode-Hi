@@ -5,8 +5,8 @@
   "section": 42,
   "status": "PASS",
   "source_checkpoint": {
-    "commit": "9d9c51199b8aa48871dd010e3afec6e763cc7322",
-    "tree": "dac9464da42ecaa7932498d0ec070cbad5095ac6"
+    "commit": "16ccfd5be01a6e4150e20857c052d33a5247b8af",
+    "tree": "575ae289878775798dfd475374f629ae2937082c"
   },
   "areas": [
     {
@@ -96,7 +96,7 @@
     {
       "area": "receipts",
       "path": "data/validation/prompt-b-zero-known-defect-loop.json",
-      "sha256": "da87e23924f94802fae0a0aa52d59e7e38cc77c4bea6f53433d23a5d434918d4",
+      "sha256": "1809477683fa64890cdc96dc942f0223872dec6374067d752ece6b67817dc770",
       "status": "PASS"
     }
   ],
@@ -107,7 +107,7 @@
   },
   "documentation_inventory": {
     "path": "data/validation/documentation-inventory.json",
-    "sha256": "6d5477596d6c7c58e62c8de80e9d55c75719b49d15c6ae8b3a9a904b33b7b723",
+    "sha256": "008e299666275ec9e092adfedeb337cd0ceac01d098c4d7d88a32fbef538eb79",
     "status": "PASS"
   },
   "summary": {

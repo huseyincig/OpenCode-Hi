@@ -6,8 +6,8 @@
   "status": "PARTIAL",
   "release": "0.1.1",
   "certified_source_checkpoint": {
-    "commit": "9d9c51199b8aa48871dd010e3afec6e763cc7322",
-    "tree": "dac9464da42ecaa7932498d0ec070cbad5095ac6",
+    "commit": "16ccfd5be01a6e4150e20857c052d33a5247b8af",
+    "tree": "575ae289878775798dfd475374f629ae2937082c",
     "note": "Source checkpoint attested by a subsequent evidence commit to avoid self-referential Git hashes."
   },
   "schema_versions": {
@@ -109,7 +109,7 @@
   ],
   "inputs": {
     "data/validation/prompt-b-final-documentation-reaudit.json": {
-      "sha256": "ce45f34827a3d06d2c8bf55dc26de74fcd41d08e642707dc6552471b6c61a0b7"
+      "sha256": "d0984d9c9db3e6617d007f9f44d1d8edcb5d6455bf4f1444574045c23b0525a1"
     },
     "data/validation/prompt-b-certification-evidence-tiers.json": {
       "sha256": "a0796c83469d2a2a38dad3ea565c8868c7fa8168da94b5fcbda904bfbb02899a"
@@ -133,7 +133,7 @@
       "sha256": "ab083e899d0dc29cf0ba38a70a3be160a954a3095983e6042a783626ebe5e54e"
     },
     "data/validation/prompt-b-test-suite-audit.json": {
-      "sha256": "1d3af7a079f77698a94568ce240b4f3af419d28c00f87319cf269a24246f8ff0"
+      "sha256": "c6df04ec5270dd82b4b16f2553d4b3e93175a0409ffefa2106eaca857f408cb5"
     },
     "data/validation/prompt-b-mutation-testing.json": {
       "sha256": "dabfe5f97ff6e6d5b819faa922e836dd293de51083e277df642316ae383e3a77"
@@ -160,10 +160,10 @@
       "sha256": "5c2e3dd974ee5553636988a66826ab47b61aee26bc84b7b7a45dc325b7aea57d"
     },
     "data/validation/prompt-b-zero-known-defect-loop.json": {
-      "sha256": "da87e23924f94802fae0a0aa52d59e7e38cc77c4bea6f53433d23a5d434918d4"
+      "sha256": "1809477683fa64890cdc96dc942f0223872dec6374067d752ece6b67817dc770"
     },
     "data/validation/prompt-b-hygiene.json": {
-      "sha256": "832452a6a1da2687c5f80bcb44484807ba7171744f98377cf8c9e512ee9668ca"
+      "sha256": "43ba1a25b153906301ade5fc9e5abf2b22e30b0d74f55324017dce965d5157d3"
     },
     "data/validation/documentation-parity.json": {
       "sha256": "bc03b219a5d2b194859a9648de9425fe0f2600d560805ca9fbfc7f9883d46148"
