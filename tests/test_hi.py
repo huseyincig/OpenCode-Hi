@@ -33,7 +33,7 @@ def test_semantic_contract_names_only():
 def test_setup_adds_only_hi_and_preserves_other_plugins(tmp_path):
     (tmp_path/'opencode.json').write_text(json.dumps({'plugin':['user-plugin@1']}))
     r=run(ROOT/'scripts/native_plugin_setup.py','install',tmp_path);assert r.returncode==0,r.stderr
-    p=json.loads((tmp_path/'opencode.json').read_text())['plugin']; assert 'opencode-hi@0.1.0' in p
+    p=json.loads((tmp_path/'opencode.json').read_text())['plugin']; assert f'opencode-hi@{V}' in p
     assert 'user-plugin@1' in p and len([x for x in p if x.startswith('opencode-hi@')])==1
 
 def test_setup_blocks_conflicting_hi_registration(tmp_path):
@@ -494,7 +494,7 @@ def test_living_validation_contracts_are_bound_to_hi_0_1_0():
 
 def test_current_0_1_0_receipts_are_not_historical_v58_claims():
     gates=json.loads((ROOT/'data/validation/release-gates.json').read_text())
-    assert gates['candidate_status']=='P8_GITHUB_RELEASE_PUBLISHED_NPM_T4_BLOCKED'
+    assert gates['candidate_status']=='PROMPT_B_0_1_1_PREPUBLICATION_CERTIFICATION_IN_PROGRESS'
     assert gates['current_local_evidence']['benchmarks']['receipt']=='data/validation/benchmarks-0.1.0.json'
     assert gates['current_local_evidence']['install_lifecycle']['receipt']=='data/validation/install-lifecycle-0.1.0.json'
     assert gates['historical_receipts_not_valid_for_current_candidate']['release']=='2.0.10-v58'
@@ -586,7 +586,7 @@ def test_r2_install_is_idempotent_once_setup_ownership_exists(tmp_path):
     second=run(ROOT/'scripts/native_plugin_setup.py','install',tmp_path);out=json.loads(second.stdout)
     assert second.returncode==0 and out['status']=='NOOP' and out['reason']=='already-installed-owned'
     assert cfg.read_text()==before
-    assert json.loads(cfg.read_text())['plugin']==['foreign@1','opencode-hi@0.1.0']
+    assert json.loads(cfg.read_text())['plugin']==['foreign@1',f'opencode-hi@{V}']
 
 
 def test_r2_owned_upgrade_and_one_step_rollback_preserve_foreign_config(tmp_path):
@@ -612,7 +612,7 @@ def test_r2_uninstall_rollback_restores_owned_registration_without_touching_fore
     assert not (tmp_path/'.opencode/hi/provenance/setup.json').exists()
     rb=run(ROOT/'scripts/native_plugin_setup.py','rollback',tmp_path);r=json.loads(rb.stdout)
     assert rb.returncode==0 and r['rolled_back_operation']=='uninstall'
-    data=json.loads(cfg.read_text());assert data['plugin']==['a@1','b@1','opencode-hi@0.1.0']
+    data=json.loads(cfg.read_text());assert data['plugin']==['a@1','b@1',f'opencode-hi@{V}']
     assert data['theme']=='user-theme' and data['unknown']=={'keep':True}
     assert (tmp_path/'.opencode/hi/provenance/setup.json').is_file()
 
@@ -773,8 +773,8 @@ def test_prompt_a_first_use_docs_do_not_advertise_unavailable_registry_or_stale_
     for text in (readme,tr):
         assert 'first coherent OpenCode-Hi candidate' not in text
         assert 'opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git#' not in text
-    assert 'not currently available from the npm registry' in readme
-    assert 'npm bootstrap publication is not yet complete' in readme
+    assert f'The current candidate is `{V}`' in readme
+    assert 'publication is a final T4 step' in readme
     assert 'registry distribution availability' in install
     assert 'ProcessContract' in arch and 'WorkspaceLease' in arch and 'BrowserObservation' in arch
     assert 'contains no raw stdout/stderr buffer' in arch
@@ -1239,9 +1239,10 @@ def test_prompt_b_release_engineering_separates_current_dev_source_from_historic
     assert all(d['checks'].values())
     assert d['current_source']['commit']!=d['historical_release']['source_commit']
     assert d['historical_release']['tag']=='v0.1.0' and d['historical_release']['github_status']=='PASS_T4'
-    assert d['registry_observation']['view']=='E404_NOT_FOUND' and d['registry_observation']['publish_attempted'] is False and d['registry_observation']['authority_granted'] is False
+    assert d['registry_observation']['view']=='PREPUBLICATION' and d['registry_observation']['publish_attempted'] is False and d['registry_observation']['authority_granted'] is True
+    assert d['registry_observation']['authority_condition']=='effective only after all engineering/final certification completes'
     by={x['stage']:x['status'] for x in d['stages']}
-    assert by['T3']=='PASS' and by['tag']=='BLOCKED_RELEASE_IDENTITY' and by['registry-publication']=='BLOCKED_AUTHORITY' and by['T4-receipt']=='BLOCKED_AUTHORITY_AND_RELEASE_IDENTITY'
+    assert by['T3']=='PASS' and by['tag']=='PENDING_FINAL_AUTHORIZED_PUBLICATION' and by['registry-publication']=='PENDING_FINAL_AUTHORIZED_PUBLICATION' and by['T4-receipt']=='PENDING_REAL_PUBLICATION_PROOF'
     for rel,digest in d['proof_hashes'].items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
 
 
@@ -1394,7 +1395,10 @@ def test_prompt_b_exact_current_opencode_t3_is_fresh_source_bound_and_not_inferr
     d=json.loads((ROOT/'data/validation/prompt-b-exact-current-opencode-t3.json').read_text())
     assert d['schema']==1 and d['kind']=='PROMPT_B_EXACT_CURRENT_OPENCODE_T3_AUDIT' and d['program']=='PROMPT_B' and d['section']==39 and d['status']=='PASS'
     assert d['summary']=={'required_capabilities':3,'exact_current_capabilities':3,'lifecycle_invariants':61,'violations':0} and d['violations']==[]
-    assert d['exact_source_commit']=='aa9a402f04fc40d53823c3e1b5e0190362dc5e75' and d['exact_source_tree']=='50cd33f1454193685e92dab2fd5dd339aef6b902'
+    assert re.fullmatch(r'[a-f0-9]{40}',d['exact_source_commit']) and re.fullmatch(r'[a-f0-9]{40}',d['exact_source_tree'])
+    assert d['candidate_release']==(ROOT/'VERSION').read_text().strip()
+    obs=d['current_version_observation'];assert obs['tested_binary_version']=='1.18.18' and obs['npm_registry_latest']=='1.18.18' and obs['sdk_registry_latest']=='1.18.18' and obs['locked_sdk']=='1.18.18' and obs['system_default_selected_for_t3'] is False
+    fresh=json.loads((ROOT/d['fresh_consumer_receipt']).read_text());assert fresh['status']=='PASS' and fresh['source']['commit']==d['exact_source_commit'] and fresh['package']['release']==d['candidate_release']
     assert {x['status'] for x in d['capabilities'].values()}=={'SUPPORTED_T3'}
     assert {x['tested_git_commit'] for x in d['capabilities'].values()}=={d['exact_source_commit']}
     for row in d['capabilities'].values():assert hashlib.sha256((ROOT/row['receipt']).read_bytes()).hexdigest()==row['receipt_sha256']

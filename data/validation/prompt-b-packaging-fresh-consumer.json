@@ -17,7 +17,7 @@
       "owner_sha256": "e528d9cd9d437eec01f80fd309e6a096913d89ee9ed44bdd996ed3e6bbcbce01",
       "owner_anchor": "\"prepack\": \"npm run build\"",
       "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
-      "proof_sha256": "b50664a7bab4a1efdc63ecf4eb86edf235d2d1fa48f3eeba04c200c2d5663089",
+      "proof_sha256": "9d01e8a2cf33d0c8b69807fa349248d3ad1e6acfe0e47dc6bc5c06f762c52250",
       "proof_anchor": "\"installed_from_tarball\": true"
     },
     {
@@ -27,7 +27,7 @@
       "owner_sha256": "4fb55ca1030635ae828c798b9a035f08950d1b5ad8b1dd8f76a5d448ac6aa843",
       "owner_anchor": "TemporaryDirectory(prefix='hi-b26-consumer-')",
       "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
-      "proof_sha256": "b50664a7bab4a1efdc63ecf4eb86edf235d2d1fa48f3eeba04c200c2d5663089",
+      "proof_sha256": "9d01e8a2cf33d0c8b69807fa349248d3ad1e6acfe0e47dc6bc5c06f762c52250",
       "proof_anchor": "\"project\": \"<temp>/consumer/project\""
     },
     {
@@ -37,7 +37,7 @@
       "owner_sha256": "4fb55ca1030635ae828c798b9a035f08950d1b5ad8b1dd8f76a5d448ac6aa843",
       "owner_anchor": "npm','install','--ignore-scripts'",
       "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
-      "proof_sha256": "b50664a7bab4a1efdc63ecf4eb86edf235d2d1fa48f3eeba04c200c2d5663089",
+      "proof_sha256": "9d01e8a2cf33d0c8b69807fa349248d3ad1e6acfe0e47dc6bc5c06f762c52250",
       "proof_anchor": "\"pack_install\": true"
     },
     {
@@ -47,7 +47,7 @@
       "owner_sha256": "4fb55ca1030635ae828c798b9a035f08950d1b5ad8b1dd8f76a5d448ac6aa843",
       "owner_anchor": "'reconfigure',str(project),'--primary-mode','manager'",
       "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
-      "proof_sha256": "b50664a7bab4a1efdc63ecf4eb86edf235d2d1fa48f3eeba04c200c2d5663089",
+      "proof_sha256": "9d01e8a2cf33d0c8b69807fa349248d3ad1e6acfe0e47dc6bc5c06f762c52250",
       "proof_anchor": "\"setup_reconfigure\": true"
     },
     {
@@ -57,7 +57,7 @@
       "owner_sha256": "4fb55ca1030635ae828c798b9a035f08950d1b5ad8b1dd8f76a5d448ac6aa843",
       "owner_anchor": "'opencode','serve'",
       "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
-      "proof_sha256": "b50664a7bab4a1efdc63ecf4eb86edf235d2d1fa48f3eeba04c200c2d5663089",
+      "proof_sha256": "9d01e8a2cf33d0c8b69807fa349248d3ad1e6acfe0e47dc6bc5c06f762c52250",
       "proof_anchor": "\"exact_host_version\": true"
     },
     {
@@ -67,7 +67,7 @@
       "owner_sha256": "4fb55ca1030635ae828c798b9a035f08950d1b5ad8b1dd8f76a5d448ac6aa843",
       "owner_anchor": "'/experimental/tool/ids?'",
       "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
-      "proof_sha256": "b50664a7bab4a1efdc63ecf4eb86edf235d2d1fa48f3eeba04c200c2d5663089",
+      "proof_sha256": "9d01e8a2cf33d0c8b69807fa349248d3ad1e6acfe0e47dc6bc5c06f762c52250",
       "proof_anchor": "\"hi_tool_count\": 31"
     },
     {
@@ -77,7 +77,7 @@
       "owner_sha256": "e528d9cd9d437eec01f80fd309e6a096913d89ee9ed44bdd996ed3e6bbcbce01",
       "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.18\"",
       "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
-      "proof_sha256": "b50664a7bab4a1efdc63ecf4eb86edf235d2d1fa48f3eeba04c200c2d5663089",
+      "proof_sha256": "9d01e8a2cf33d0c8b69807fa349248d3ad1e6acfe0e47dc6bc5c06f762c52250",
       "proof_anchor": "\"consumer_resolution\": true"
     },
     {
@@ -87,7 +87,7 @@
       "owner_sha256": "4fb55ca1030635ae828c798b9a035f08950d1b5ad8b1dd8f76a5d448ac6aa843",
       "owner_anchor": "'no_source_tree_in_server_log'",
       "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
-      "proof_sha256": "b50664a7bab4a1efdc63ecf4eb86edf235d2d1fa48f3eeba04c200c2d5663089",
+      "proof_sha256": "9d01e8a2cf33d0c8b69807fa349248d3ad1e6acfe0e47dc6bc5c06f762c52250",
       "proof_anchor": "\"no_source_tree_in_server_log\": true"
     }
   ],

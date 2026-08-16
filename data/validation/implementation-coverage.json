@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "release": "0.1.0",
+  "release": "0.1.1",
   "status": "SOURCE_COVERAGE_COMPLETE_EXTERNAL_VALIDATION_PENDING",
   "gaps": {
     "GAP-001": {

@@ -10,7 +10,7 @@
     },
     "compatibility": {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
-      "sha256": "a2956811ac2be2266199c60dab5573df2ac5825f2a5f05b08078043b067e7981"
+      "sha256": "127cda3a9cf2017de21f28a9ee715c05e2c821bc0896565a8f1190debeb7a933"
     },
     "release_status": {
       "path": "data/validation/release-status-0.1.0.json",

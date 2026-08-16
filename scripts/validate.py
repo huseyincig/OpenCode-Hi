@@ -835,8 +835,12 @@ try:
     if q39.get('schema')!=1 or q39.get('kind')!='PROMPT_B_EXACT_CURRENT_OPENCODE_T3_AUDIT' or q39.get('program')!='PROMPT_B' or q39.get('section')!=39 or q39.get('status')!='PASS':err('bad PROMPT B exact-current OpenCode T3 receipt identity/status')
     if q39.get('summary')!={'required_capabilities':3,'exact_current_capabilities':3,'lifecycle_invariants':61,'violations':0} or q39.get('violations')!=[]:err('PROMPT B exact-current OpenCode T3 summary drift')
     obs=q39.get('current_version_observation') or {}
-    if [obs.get(k) for k in ['installed','npm_registry_latest','sdk_registry_latest','locked_sdk']]!=['1.18.18']*4:err('PROMPT B exact-current OpenCode version observation drift')
-    if q39.get('exact_source_commit')!='aa9a402f04fc40d53823c3e1b5e0190362dc5e75' or q39.get('exact_source_tree')!='50cd33f1454193685e92dab2fd5dd339aef6b902':err('PROMPT B exact-current source binding drift')
+    if [obs.get(k) for k in ['tested_binary_version','npm_registry_latest','sdk_registry_latest','locked_sdk']]!=['1.18.18']*4 or obs.get('system_default_selected_for_t3') is not False:err('PROMPT B exact-current OpenCode version observation drift')
+    if q39.get('candidate_release')!=version:err('PROMPT B exact-current candidate release drift')
+    if not re.fullmatch(r'[a-f0-9]{40}',str(q39.get('exact_source_commit',''))) or not re.fullmatch(r'[a-f0-9]{40}',str(q39.get('exact_source_tree',''))):err('PROMPT B exact-current source binding invalid')
+    fresh39=json.loads((ROOT/q39.get('fresh_consumer_receipt','')).read_text(encoding='utf-8'))
+    if fresh39.get('status')!='PASS' or fresh39.get('source',{}).get('commit')!=q39.get('exact_source_commit') or fresh39.get('package',{}).get('release')!=version:err('PROMPT B exact-current fresh-consumer binding drift')
+    if hashlib.sha256((ROOT/q39['fresh_consumer_receipt']).read_bytes()).hexdigest()!=q39.get('fresh_consumer_sha256'):err('PROMPT B exact-current fresh-consumer hash drift')
     for cap,row in (q39.get('capabilities') or {}).items():
         rel=row.get('receipt');expected=row.get('receipt_sha256')
         if row.get('status')!='SUPPORTED_T3' or row.get('tested_git_commit')!=q39.get('exact_source_commit'):err('PROMPT B exact-current capability source/status drift: '+str(cap))

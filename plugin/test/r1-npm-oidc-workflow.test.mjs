@@ -50,5 +50,5 @@ test('R1 registry proof requires fresh pack integrity and shasum equality before
 test('R1 preflight rejects the historical release tag when current source has advanced beyond it',()=>{
   const run=spawnSync(process.execPath,['scripts/verify-npm-oidc-release.mjs','preflight','v0.1.0'],{cwd:root,encoding:'utf8'})
   assert.notEqual(run.status,0)
-  assert.match(run.stderr,/not checked-out HEAD/)
+  assert.match(run.stderr,/(release tag v0\.1\.0 != v0\.1\.1|not checked-out HEAD)/)
 })

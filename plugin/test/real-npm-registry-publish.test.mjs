@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import http from 'node:http'
-import {mkdtempSync,writeFileSync,rmSync} from 'node:fs'
+import {mkdtempSync,writeFileSync,rmSync,readFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join,resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
@@ -42,12 +42,12 @@ async function registry(){
 }
 
 test('real npm registry publish/view round-trip is bound to Hi pack proof, authority, and registry integrity',async(t)=>{
-  const root=resolve(fileURLToPath(new URL('../..',import.meta.url))),reg=await registry();t.after(()=>reg.server.close())
+  const root=resolve(fileURLToPath(new URL('../..',import.meta.url))),version=readFileSync(resolve(root,'VERSION'),'utf8').trim(),reg=await registry();t.after(()=>reg.server.close())
   const cfg=mkdtempSync(join(tmpdir(),'hi-npmrc-'));t.after(()=>rmSync(cfg,{recursive:true,force:true}))
   const npmrc=join(cfg,'.npmrc');writeFileSync(npmrc,`registry=${reg.url}\n//${new URL(reg.url).host}/:_authToken=hi-local-test\n`)
   const env={NPM_CONFIG_USERCONFIG:npmrc,NPM_CONFIG_CACHE:join(cfg,'cache')}
   const pack=await runNpm(['pack','--dry-run','--json','--ignore-scripts'],{cwd:root,env});assert.equal(pack.code,0,pack.stderr)
-  const packJson=JSON.parse(pack.stdout);assert.equal(packJson[0].name,'opencode-hi');assert.equal(packJson[0].version,'0.1.0');assert.ok(packJson[0].integrity);assert.ok(packJson[0].shasum)
+  const packJson=JSON.parse(pack.stdout);assert.equal(packJson[0].name,'opencode-hi');assert.equal(packJson[0].version,version);assert.ok(packJson[0].integrity);assert.ok(packJson[0].shasum)
 
   const store=new MissionStore(root),m=startAssessedMission(store,'real-npm','publish package',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',requested_external_actions:['package-publish']});recordRemoteReleaseVerification(m,'npm pack --dry-run --json',{stdout:pack.stdout,metadata:{exit:0}},root)
   assert.doesNotThrow(()=>assertReleaseChainPrecondition(m,'npm publish',root))
@@ -58,10 +58,10 @@ test('real npm registry publish/view round-trip is bound to Hi pack proof, autho
   await after({sessionID:'real-npm',tool:'bash',args:{command:'npm publish',cwd:root}},{title:'publish',output:pub.stdout+pub.stderr,metadata:{exit:0}})
   assert.equal(m.release.release_chain?.package?.outcome,'success');assert.equal(m.release.release_chain?.package?.remote_verified,false)
 
-  const uploaded=reg.get();assert.equal(uploaded?.versions?.['0.1.0']?.dist?.integrity,packJson[0].integrity);assert.equal(uploaded?.versions?.['0.1.0']?.dist?.shasum,packJson[0].shasum)
-  const view=await runNpm(['view','opencode-hi@0.1.0','--json'],{cwd:root,env});assert.equal(view.code,0,view.stderr)
-  const seen=JSON.parse(view.stdout);assert.equal(seen.version,'0.1.0');assert.equal(seen.dist.integrity,packJson[0].integrity);assert.equal(seen.dist.shasum,packJson[0].shasum)
-  recordRemoteReleaseVerification(m,'npm view opencode-hi@0.1.0 --json',{stdout:view.stdout,metadata:{exit:0}},root)
+  const uploaded=reg.get();assert.equal(uploaded?.versions?.[version]?.dist?.integrity,packJson[0].integrity);assert.equal(uploaded?.versions?.[version]?.dist?.shasum,packJson[0].shasum)
+  const view=await runNpm(['view',`opencode-hi@${version}`,'--json'],{cwd:root,env});assert.equal(view.code,0,view.stderr)
+  const seen=JSON.parse(view.stdout);assert.equal(seen.version,version);assert.equal(seen.dist.integrity,packJson[0].integrity);assert.equal(seen.dist.shasum,packJson[0].shasum)
+  recordRemoteReleaseVerification(m,`npm view opencode-hi@${version} --json`,{stdout:view.stdout,metadata:{exit:0}},root)
   assert.equal(m.release.release_chain?.package?.remote_verified,true)
   assert.ok(!m.execution.blockers.includes('release-chain:package-remote-unverified'))
 })

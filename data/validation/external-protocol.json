@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "release": "0.1.0",
+  "release": "0.1.1",
   "execution_environment": "external",
   "sequence": [
     "plain-opencode",

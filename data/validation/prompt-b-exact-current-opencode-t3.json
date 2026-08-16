@@ -5,36 +5,42 @@
   "section": 39,
   "status": "PASS",
   "current_version_observation": {
-    "installed": "1.18.18",
+    "tested_binary": "/home/node/.local/share/hi-opencode-1.18.18/node_modules/.bin/opencode",
+    "tested_binary_version": "1.18.18",
+    "system_default_observed": "1.18.16",
+    "system_default_selected_for_t3": false,
     "npm_registry_latest": "1.18.18",
     "sdk_registry_latest": "1.18.18",
     "locked_sdk": "1.18.18",
     "captured_at": "2026-08-16"
   },
-  "exact_source_commit": "aa9a402f04fc40d53823c3e1b5e0190362dc5e75",
-  "exact_source_tree": "50cd33f1454193685e92dab2fd5dd339aef6b902",
+  "candidate_release": "0.1.1",
+  "fresh_consumer_receipt": "data/validation/fresh-consumer-opencode-1.18.18.json",
+  "fresh_consumer_sha256": "9d01e8a2cf33d0c8b69807fa349248d3ad1e6acfe0e47dc6bc5c06f762c52250",
+  "exact_source_commit": "3ca843d1443e94860f247fb5ac9b5192e391fec1",
+  "exact_source_tree": "a1abf215abe18f22077fb920b7dc8eebf49ecd8c",
   "compatibility_projection": "data/validation/compatibility-matrix-0.1.0.json",
-  "compatibility_sha256": "a2956811ac2be2266199c60dab5573df2ac5825f2a5f05b08078043b067e7981",
+  "compatibility_sha256": "127cda3a9cf2017de21f28a9ee715c05e2c821bc0896565a8f1190debeb7a933",
   "lifecycle_audit": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
-  "lifecycle_sha256": "9894c752d413198b2b340daf6a39c58e03bfa95802ef1f9395b3649027380ab1",
+  "lifecycle_sha256": "974ef593898b9c7a08fab99c361c48a98efb7940467bc05b44ac6e7434716603",
   "capabilities": {
     "process-lifecycle": {
-      "receipt": "data/validation/external-opencode-hi-0.1.0-process-1.18.18-head-aa9a402.json",
-      "receipt_sha256": "8fd597230c58e7cf2eff0d9293aa9763dd893cb91b22fbd44cd77fcb0cf31895",
+      "receipt": "data/validation/external-opencode-hi-0.1.1-process-1.18.18-head-3ca843d.json",
+      "receipt_sha256": "5c998048a10d00d8abad75126b17c804dc2419cdba59f633c9ccb721cf524270",
       "status": "SUPPORTED_T3",
-      "tested_git_commit": "aa9a402f04fc40d53823c3e1b5e0190362dc5e75"
+      "tested_git_commit": "3ca843d1443e94860f247fb5ac9b5192e391fec1"
     },
     "workspace-isolation-binding": {
-      "receipt": "data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-aa9a402.json",
-      "receipt_sha256": "4e78f0db38070e29f06d05840a1d291a2c5dc5acef8d7ccf3101b7bc43b1192a",
+      "receipt": "data/validation/external-opencode-hi-0.1.1-workspace-1.18.18-head-3ca843d.json",
+      "receipt_sha256": "0c7e1cebee01afc9029d983cc57259d4c98bf7afd9fcefd6c1e4f03a0d448c9c",
       "status": "SUPPORTED_T3",
-      "tested_git_commit": "aa9a402f04fc40d53823c3e1b5e0190362dc5e75"
+      "tested_git_commit": "3ca843d1443e94860f247fb5ac9b5192e391fec1"
     },
     "browser-execution": {
-      "receipt": "data/validation/external-opencode-hi-0.1.0-browser-1.18.18-head-aa9a402.json",
-      "receipt_sha256": "2574b3a916b7c9f4a439b398a4b0279eb4185fbd2c475e45510966d8e1ed97cd",
+      "receipt": "data/validation/external-opencode-hi-0.1.1-browser-1.18.18-head-3ca843d.json",
+      "receipt_sha256": "841aa2b6824a894c2cb6980d6361c47c019e64c8894fd733a909f1217cdba063",
       "status": "SUPPORTED_T3",
-      "tested_git_commit": "aa9a402f04fc40d53823c3e1b5e0190362dc5e75"
+      "tested_git_commit": "3ca843d1443e94860f247fb5ac9b5192e391fec1"
     }
   },
   "summary": {
@@ -44,5 +50,5 @@
     "violations": 0
   },
   "violations": [],
-  "claim_boundary": "Section 39 requires fresh exact-current host invocation. API presence and historical receipts are insufficient; all three material Hi-owned capabilities were rerun on OpenCode 1.18.18 Linux/aarch64 against the exact section-39 source."
+  "claim_boundary": "Section 39 requires fresh exact-current host invocation. API presence and historical receipts are insufficient; all three material Hi-owned capabilities were rerun with the exact OpenCode 1.18.18 user-space binary on Linux/aarch64 against the committed current release candidate; the older system-default binary was observed but not selected."
 }
