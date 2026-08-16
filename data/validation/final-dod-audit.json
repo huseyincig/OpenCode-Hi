@@ -1,6 +1,6 @@
 {
   "schema": 2,
-  "release": "0.1.1",
+  "release": "0.1.2",
   "generated_at": "2026-08-14",
   "basis": "OPENCODE-HI 0.1.x canonical source-driven implementation prompt",
   "internal_status": "LOCAL_IMPLEMENTATION_AND_IN_PROCESS_ACCEPTANCE_COMPLETE",

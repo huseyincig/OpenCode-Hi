@@ -1,8 +1,8 @@
 {
   "schema": 6,
-  "release": "0.1.1",
+  "release": "0.1.2",
   "generated_at": "2026-08-14",
-  "candidate_status": "PROMPT_B_0_1_1_PREPUBLICATION_CERTIFICATION_IN_PROGRESS",
+  "candidate_status": "PROMPT_B_0_1_2_PREPUBLICATION_CERTIFICATION_IN_PROGRESS",
   "gates": {
     "source_integrity": "PASS_LOCAL_CURRENT_SOURCE",
     "deterministic_release": "PASS_LOCAL_CURRENT_WORKTREE",

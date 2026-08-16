@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "release": "0.1.1",
+  "release": "0.1.2",
   "kind": "DOCUMENTATION_TRUTH_INVENTORY",
   "status": "PASS",
   "policy": {
@@ -135,7 +135,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "685abf6e9ee28bae31abce6b59996291f0a25701c3409b84b2f3f526a7864b8c",
+      "sha256": "b4a164540e2f52f847c83984301c8b818329005fb17a20cb5c43f6aaecf30b2c",
       "area": "product-overview",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -183,7 +183,7 @@
     },
     {
       "path": "docs/RELEASE.md",
-      "sha256": "8a51754085d953f6fd2c8b36b05b054de7eda2cb471b3cfa8b5cf3636bac6479",
+      "sha256": "53fd5296ccc43c76edf7c05c274954d710a9c3412a9a71abfbb7c1dcac80d2ad",
       "area": "release",
       "audience": "RELEASE_ENGINEER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -215,7 +215,7 @@
     },
     {
       "path": "docs/locales/tr/README.md",
-      "sha256": "e57dd1037fcf6f6103d29e4473ec943832ededd309526b3a5b8a2b20286eb88a",
+      "sha256": "e65801dbaf49f2d0a6dd9eaad05a98c0c3c38cea162589fb212a5d9427393aa1",
       "area": "turkish-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",

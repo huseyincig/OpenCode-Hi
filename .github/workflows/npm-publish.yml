@@ -52,6 +52,9 @@ jobs:
       - name: Canonical source verification
         run: npm run check
 
+      - name: Verify packed public documentation
+        run: npm run docs:pack-check
+
       - name: Capture fresh package proof
         run: npm pack --dry-run --json --ignore-scripts > npm-pack-proof.json
 

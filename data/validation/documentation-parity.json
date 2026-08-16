@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "release": "0.1.1",
+  "release": "0.1.2",
   "kind": "DOCUMENTATION_PARITY",
   "status": "PASS",
   "inputs": {
@@ -13,8 +13,8 @@
       "sha256": "25ddee8346eb2394988848f16cb9b42ffd4f1a8fa47ddca9357ae4a507561a0a"
     },
     "release_status": {
-      "path": "data/validation/release-status-0.1.1.json",
-      "sha256": "cafbc67f09022d4d6af11e636f63b603bd6d224f044c4f8e50b5b1a3af6f975d"
+      "path": "data/validation/release-status-0.1.2.json",
+      "sha256": "b4bd6cf2ad567924c860421972d99d277f9df484e38ea756a0dc281406835090"
     }
   },
   "checked_current_documents": [

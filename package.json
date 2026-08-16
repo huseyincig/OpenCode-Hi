@@ -1,6 +1,6 @@
 {
   "name": "opencode-hi",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Evidence-aware adaptive execution and Hybrid Intelligence control plane for OpenCode.",
   "type": "module",
   "main": "plugin/dist/plugin.js",
@@ -18,7 +18,10 @@
     "README.md",
     "LICENSE",
     "THIRD_PARTY_NOTICES.md",
-    "docs/locales/tr/README.md"
+    "docs",
+    ".github/CONTRIBUTING.md",
+    ".github/SECURITY.md",
+    ".github/SUPPORT.md"
   ],
   "repository": {
     "type": "git",
@@ -50,7 +53,8 @@
     "check:product": "npm --prefix plugin run check && npm run docs:check",
     "check:evidence": "node scripts/run-python.mjs scripts/validate.py && npm run test:python:all",
     "test:python:product": "node scripts/run-python.mjs -m pytest -q -m \"not evidence\" tests/test_hi.py",
-    "test:python:all": "node scripts/run-python.mjs -m pytest -q tests/test_hi.py"
+    "test:python:all": "node scripts/run-python.mjs -m pytest -q tests/test_hi.py",
+    "docs:pack-check": "node scripts/run-python.mjs scripts/audit-packed-public-docs.py"
   },
   "publishConfig": {
     "access": "public"

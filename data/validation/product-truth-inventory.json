@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "release": "0.1.1",
+  "release": "0.1.2",
   "kind": "PRODUCT_TRUTH_TRACE_INVENTORY",
   "status": "PASS",
   "claim_boundary": "Derived documentation/reconstruction trace map only; listed runtime/contracts remain semantic owners.",

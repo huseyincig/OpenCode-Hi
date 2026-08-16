@@ -25,11 +25,15 @@ def test_identity_is_hi():
 
 def test_root_git_package_contract():
     d=json.loads((ROOT/'package.json').read_text(encoding='utf-8')); assert d['name']=='opencode-hi' and d['version']==V
-    assert d['main']=='plugin/dist/plugin.js' and (ROOT/d['main']).is_file() and {'skills','scripts/native_plugin_setup.py','VERSION','docs/locales/tr/README.md'}<=set(d['files'])
+    assert d['main']=='plugin/dist/plugin.js' and (ROOT/d['main']).is_file() and {'skills','scripts/native_plugin_setup.py','VERSION','docs','.github/CONTRIBUTING.md','.github/SECURITY.md','.github/SUPPORT.md'}<=set(d['files'])
     assert d['bin']=={'opencode-hi-setup':'scripts/native_plugin_setup.py'}
     assert d['peerDependencies']['@opencode-ai/plugin']=='1.18.18'
     assert d['dependencies']=={'@opencode-ai/sdk':'1.18.18'}
     assert d['optionalDependencies']['playwright-core']=='1.62.1'
+
+def test_packed_public_documentation_is_complete_and_link_safe():
+    r=run(ROOT/'scripts/audit-packed-public-docs.py'); assert r.returncode==0,r.stdout+r.stderr
+    assert 'packed public documentation PASS' in r.stdout
 
 def test_root_is_product_clean():
     assert not any((ROOT/x).exists() for x in ['KURULUM.md','RELEASE-READINESS.md','WORK-STATE.md','work-state.json','HI.cmd','HI.sh','HI-VALIDATE.cmd','HI-RELEASE-PREP.cmd','README.tr.md','CONTRIBUTING.md','SECURITY.md'])
@@ -513,7 +517,7 @@ def test_living_validation_contracts_are_bound_to_hi_0_1_0():
 
 def test_current_0_1_0_receipts_are_not_historical_v58_claims():
     gates=json.loads((ROOT/'data/validation/release-gates.json').read_text(encoding='utf-8'))
-    assert gates['candidate_status']=='PROMPT_B_0_1_1_PREPUBLICATION_CERTIFICATION_IN_PROGRESS'
+    assert gates['candidate_status']==f"PROMPT_B_{V.replace('.','_')}_PREPUBLICATION_CERTIFICATION_IN_PROGRESS"
     assert gates['current_local_evidence']['benchmarks']['receipt']=='data/validation/benchmarks-0.1.0.json'
     assert gates['current_local_evidence']['install_lifecycle']['receipt']=='data/validation/install-lifecycle-0.1.0.json'
     assert gates['historical_receipts_not_valid_for_current_candidate']['release']=='2.0.10-v58'
@@ -1417,22 +1421,25 @@ def test_prompt_b_cross_platform_acceptance_is_fail_closed_and_evidence_bound():
     assert d['schema']==1 and d['kind']=='PROMPT_B_CROSS_PLATFORM_ACCEPTANCE_AUDIT' and d['program']=='PROMPT_B' and d['section']==38
     assert d['summary']['required_surfaces']==7 and d['summary']['covered_surfaces']==7
     assert d['windows_historical_release_evidence'] is True
-    assert d['acceptance_receipt']=='data/validation/cross-platform-acceptance-0.1.1.json'
-    a=json.loads((ROOT/d['acceptance_receipt']).read_text(encoding='utf-8'))
-    assert a['kind']=='PROMPT_B_CROSS_PLATFORM_CURRENT_SOURCE_CI_ACCEPTANCE'
-    binding=a['source_binding']; commit=binding['tested_git_commit']; tree=binding['tested_git_tree']
-    assert subprocess.check_output(['git','rev-parse',f'{commit}^{{tree}}'],cwd=ROOT,text=True).strip()==tree
-    ga=a['github_actions']; assert ga['status']=='completed' and ga['conclusion']=='success'
-    assert ga['ubuntu']['status']=='completed' and ga['ubuntu']['conclusion']=='success'
-    assert ga['windows']['status']=='completed' and ga['windows']['conclusion']=='success'
+    assert d['acceptance_receipt']==f'data/validation/cross-platform-acceptance-{V}.json'
+    receipt=ROOT/d['acceptance_receipt']
     if d['status']=='PASS':
+        assert receipt.is_file(); a=json.loads(receipt.read_text(encoding='utf-8'))
+        assert a['kind']=='PROMPT_B_CROSS_PLATFORM_CURRENT_SOURCE_CI_ACCEPTANCE' and a['status']=='PASS'
+        binding=a['source_binding']; commit=binding['tested_git_commit']; tree=binding['tested_git_tree']
+        assert subprocess.check_output(['git','rev-parse',f'{commit}^{{tree}}'],cwd=ROOT,text=True).strip()==tree
+        ga=a['github_actions']; assert ga['status']=='completed' and ga['conclusion']=='success'
+        assert ga['ubuntu']['status']=='completed' and ga['ubuntu']['conclusion']=='success'
+        assert ga['windows']['status']=='completed' and ga['windows']['conclusion']=='success'
         assert d['violations']==[] and d['post_ci_material_drift']==[]
         assert d['linux_current_certified'] is True and d['windows_current_certified'] is True
     else:
         assert d['status']=='FAIL' and d['violations']
         assert d['linux_current_certified'] is False and d['windows_current_certified'] is False
+        if receipt.exists(): assert json.loads(receipt.read_text(encoding='utf-8')).get('status')!='PASS'
 
 
+@pytest.mark.evidence
 def test_prompt_b_exact_current_opencode_t3_is_fresh_source_bound_and_not_inferred_from_api_presence():
     d=json.loads((ROOT/'data/validation/prompt-b-exact-current-opencode-t3.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='PROMPT_B_EXACT_CURRENT_OPENCODE_T3_AUDIT' and d['program']=='PROMPT_B' and d['section']==39 and d['status']=='PASS'
@@ -1470,6 +1477,7 @@ def test_prompt_b_hygiene_audit_has_no_source_package_or_generated_artifact_leak
     for rel,digest in d['proof_hashes'].items():assert git_blob_sha256(commit,rel)==digest
 
 
+@pytest.mark.evidence
 def test_prompt_b_final_certification_chain_is_truthful_coherent_and_tier_bound():
     f42=json.loads((ROOT/'data/validation/prompt-b-final-documentation-reaudit.json').read_text(encoding='utf-8'))
     assert f42['status']=='PASS' and f42['summary']['violations']==0 and f42['violations']==[]

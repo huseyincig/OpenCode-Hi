@@ -731,7 +731,7 @@ try:
     if c38.get('summary')!={'required_surfaces':7,'covered_surfaces':7,'violations':0} or c38.get('violations')!=[]:err('PROMPT B cross-platform summary drift')
     if c38.get('linux_current_certified') is not True or c38.get('windows_current_certified') is not True or c38.get('windows_historical_release_evidence') is not True:err('PROMPT B cross-platform certification boundary drift')
     ar=c38.get('acceptance_receipt'); a=json.loads((ROOT/ar).read_text(encoding='utf-8'))
-    if ar!='data/validation/cross-platform-acceptance-0.1.1.json' or a.get('status')!='PASS':err('PROMPT B cross-platform current receipt drift')
+    if ar!=f'data/validation/cross-platform-acceptance-{version}.json' or a.get('status')!='PASS':err('PROMPT B cross-platform current receipt drift')
     ab=a.get('source_binding') or {}; cp=c38.get('source_checkpoint') or {}
     if ab.get('tested_git_commit')!=cp.get('commit') or ab.get('tested_git_tree')!=cp.get('tree'):err('PROMPT B cross-platform source checkpoint drift')
     ga=a.get('github_actions') or {}; w=ga.get('windows') or {}; u=ga.get('ubuntu') or {}

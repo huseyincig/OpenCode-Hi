@@ -26,7 +26,7 @@ if t4:
   {'stage':'github-release','status':'PASS_T4','detail':f'GitHub Release {current_tag} published and exact-tag verified','proof':pub_rel},
   {'stage':'registry-publication','status':'PASS_T4','detail':f'opencode-hi@{version} published through npm Trusted Publishing OIDC','proof':pub_rel},
   {'stage':'registry-integrity','status':'PASS_T4','detail':'registry integrity/shasum equal fresh pack proof; provenance exact-tag bound','proof':pub_rel},
-  {'stage':'fresh-registry-install','status':'PASS_T4','detail':'fresh registry consumer loaded by exact OpenCode 1.18.18','proof':'data/validation/t4-registry-exact-host-0.1.1.json'},
+  {'stage':'fresh-registry-install','status':'PASS_T4','detail':'fresh registry consumer loaded by exact OpenCode 1.18.18','proof':f'data/validation/t4-registry-exact-host-{version}.json'},
   {'stage':'T4-receipt','status':'PASS_T4','detail':'real GitHub/npm/provenance/exact-host publication evidence complete','proof':pub_rel},
  ]
 else:
@@ -79,7 +79,7 @@ else:
 viol=[k for k,v in checks.items() if not v]
 status='CLOSED_T4' if t4 and not viol else ('CLOSED_LOCAL_T4_BLOCKED' if not viol else 'FAIL')
 proofs=['VERSION','package.json','package-lock.json','plugin/package-lock.json','data/validation/fresh-consumer-opencode-1.18.18.json','data/validation/release-status-0.1.0.json','.github/workflows/npm-publish.yml','scripts/verify-npm-oidc-release.mjs']
-if published:proofs += [pub_rel,'data/validation/t4-registry-exact-host-0.1.1.json']
+if published:proofs += [pub_rel,f'data/validation/t4-registry-exact-host-{version}.json']
 out={'schema':1,'kind':'PROMPT_B_RELEASE_ENGINEERING_AUDIT','program':'PROMPT_B','section':28,'status':status,'current_source':{'commit':cert_head,'tree':cert_tree,'version':version},'release_source':{'commit':release_commit,'tree':release_tree,'tag':current_tag if t4 else None},'development_head':{'post_release':bool(t4 and cert_head!=release_commit),'runtime_drift_from_release':runtime_drift,'package_or_documentation_drift_from_release':package_doc_drift,'republish_same_version_forbidden':bool(t4 and cert_head!=release_commit)},'certification_head':{'commit':cert_head,'tree':cert_tree},'historical_release':{'tag':'v0.1.0','source_commit':hist_tag_commit,'github_status':'PASS_T4','release_id':historical.get('github',{}).get('release_id')},'registry_observation':{'date':'2026-08-16','package':f'opencode-hi@{version}','view':'PUBLISHED_T4' if t4 else 'PREPUBLICATION','whoami':'huseyincig','publish_attempted':bool(published),'authority_granted':True,'authority_condition':'effective only after all engineering/final certification completes'},'stages':stages,'checks':checks,'violations':viol,'summary':{'stages':13,'local_pass_or_historical':13 if t4 else 8,'blocked_external_or_identity':0 if t4 else 5,'violations':len(viol)},'proof_hashes':{rel:sha(rel) for rel in proofs},'claim_boundary':'T4 certifies the immutable released tag/artifact, not every later documentation commit on main. A post-release development HEAD may advance documentation without mutating the published artifact; the same version must never be republished. Historical v0.1.0 remains immutable.' if t4 else 'Release-engineering truth for the current candidate. Historical v0.1.0 remains immutable. T4 remains pending until real external publication and verification.'}
 OUT.write_text(json.dumps(out,indent=2)+'\n',encoding='utf-8',newline='\n')
 print(f"release engineering audit {out['status']}: stages=13 blocked={out['summary']['blocked_external_or_identity']} violations={len(viol)}")

@@ -12,7 +12,7 @@ Hi is designed to use the minimum sufficient topology, model, context and verifi
 
 ## Current product truth
 
-This checkout tracks application/package version `0.1.1`. Version identity is owned by `VERSION` and parity-validated against package metadata. Published availability is external state: GitHub Releases and the npm registry are authoritative for whether a given version has been released. Historical `v0.1.1` and `v0.1.0` release artifacts remain immutable.
+This checkout tracks application/package version `0.1.2`. Version identity is owned by `VERSION` and parity-validated against package metadata. Published availability is external state: GitHub Releases and the npm registry are authoritative for whether a given version has been released. Historical `v0.1.1` and `v0.1.0` release artifacts remain immutable.
 
 Current host capability truth is generated from exact receipts rather than hand-maintained here. See [Host Support](docs/HOSTS.md) and `data/validation/compatibility-matrix-0.1.0.json`.
 
@@ -83,14 +83,14 @@ Exact version/platform/architecture and receipt links belong to [Host Support](d
 
 ### Registry distribution
 
-For this source/package version, the exact registry identity is `opencode-hi@0.1.1`. Release availability itself is not hand-maintained in this README; verify it from npm/GitHub. Published releases use npm Trusted Publishing OIDC provenance and are acceptance-checked on the recorded exact OpenCode host.
+For this source/package version, the exact registry identity is `opencode-hi@0.1.2`. Release availability itself is not hand-maintained in this README; verify it from npm/GitHub. Published releases use npm Trusted Publishing OIDC provenance and are acceptance-checked on the recorded exact OpenCode host.
 
 A fresh project can install the exact package version and use the package-provided setup CLI without a repository checkout:
 
 ```bash
-npm install --save-dev opencode-hi@0.1.1
-./node_modules/.bin/opencode-hi-setup plan /path/to/project --version 0.1.1
-./node_modules/.bin/opencode-hi-setup install /path/to/project --version 0.1.1
+npm install --save-dev opencode-hi@0.1.2
+./node_modules/.bin/opencode-hi-setup plan /path/to/project --version 0.1.2
+./node_modules/.bin/opencode-hi-setup install /path/to/project --version 0.1.2
 ./node_modules/.bin/opencode-hi-setup doctor /path/to/project
 ```
 

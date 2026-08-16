@@ -3,7 +3,8 @@ from __future__ import annotations
 import json, os, subprocess
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
-RECEIPT=ROOT/'data/validation/cross-platform-acceptance-0.1.1.json'
+VERSION=(ROOT/'VERSION').read_text(encoding='utf-8').strip()
+RECEIPT=ROOT/f'data/validation/cross-platform-acceptance-{VERSION}.json'
 MATERIAL_PREFIXES=('plugin/src/','plugin/dist/','skills/')
 MATERIAL_EXACT={'package.json','package-lock.json','plugin/package.json','plugin/package-lock.json','VERSION','.gitattributes','scripts/native_plugin_setup.py'}
 

@@ -2,6 +2,13 @@
 
 All notable changes to OpenCode-Hi are documented here.
 
+## 0.1.2
+
+- Corrected public documentation freshness across the English and Turkish README surfaces.
+- Package all canonical public documentation referenced by the npm README so relative links remain valid in the published tarball.
+- Added fail-closed packed-document parity, stale-reference, and local-link validation for npm releases.
+- No runtime behavior change; this is a documentation/governance patch release.
+
 ## 0.1.1
 
 - Completed the full zero-defect hardening and certification program across authority, persistence, concurrency, host portability, security, test quality, mutation/property/replay/failure-injection, performance, user/developer journeys, cross-platform claim boundaries, and exact-current OpenCode T3.

@@ -9,6 +9,7 @@ const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..')
 const workflow=readFileSync(resolve(root,'.github/workflows/npm-publish.yml'),'utf8')
 const pkg=JSON.parse(readFileSync(resolve(root,'package.json'),'utf8'))
 const verifier=readFileSync(resolve(root,'scripts/verify-npm-oidc-release.mjs'),'utf8')
+const version=readFileSync(resolve(root,'VERSION'),'utf8').trim()
 
 test('R1 npm publish workflow is release-bound OIDC with no long-lived npm token surface',()=>{
   assert.match(workflow,/release:\s*\n\s*types: \[published\]/)
@@ -38,6 +39,7 @@ test('R1 workflow fails closed on exact annotated tag/source/package identity be
 })
 
 test('R1 registry proof requires fresh pack integrity and shasum equality before fresh-consumer acceptance',()=>{
+  assert.match(workflow,/npm run docs:pack-check/)
   assert.match(workflow,/npm pack --dry-run --json --ignore-scripts > npm-pack-proof\.json/)
   assert.match(workflow,/npm view .*dist\.integrity dist\.shasum --json/)
   assert.match(workflow,/verify-npm-oidc-release\.mjs registry/)
@@ -55,5 +57,5 @@ test('R1 registry proof requires fresh pack integrity and shasum equality before
 test('R1 preflight rejects the historical release tag when current source has advanced beyond it',()=>{
   const run=spawnSync(process.execPath,['scripts/verify-npm-oidc-release.mjs','preflight','v0.1.0'],{cwd:root,encoding:'utf8'})
   assert.notEqual(run.status,0)
-  assert.match(run.stderr,/(release tag v0\.1\.0 != v0\.1\.1|not checked-out HEAD)/)
+  assert.ok(run.stderr.includes(`release tag v0.1.0 != v${version}`)||run.stderr.includes('not checked-out HEAD'))
 })

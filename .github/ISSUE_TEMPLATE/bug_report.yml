@@ -9,7 +9,7 @@ body:
     id: hi-version
     attributes:
       label: OpenCode-Hi version
-      placeholder: "0.1.1"
+      placeholder: "e.g. output from the installed package version"
     validations:
       required: true
   - type: input
