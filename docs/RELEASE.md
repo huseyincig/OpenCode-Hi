@@ -2,7 +2,7 @@
 
 OpenCode-Hi preserves deterministic source/distributable artifacts, manifest, SBOM, hashes, clean-candidate validation, and forensic candidate binding from the proven baseline. Publishing is authority-gated and must not rely on long-lived secrets when trusted/OIDC publishing is available.
 
-A 0.1.0 candidate may be called release-ready only when all mandatory internal gates are green and required external OpenCode/clean-install receipts are bound to the exact candidate. If the environment prevents an external receipt, status remains `PENDING_EXTERNAL`; the acceptance bar is not lowered.
+A release candidate may be called release-ready only when all mandatory internal gates are green and required external OpenCode/clean-install receipts are bound to that exact candidate. If the environment prevents a required external receipt, the release remains pending; the acceptance bar is not lowered.
 
 ## Current release status
 
@@ -11,9 +11,9 @@ The block below is generator-owned. Do not hand-edit current release status, cur
 <!-- BEGIN GENERATED RELEASE STATUS -->
 ## Current release status — generated
 
-- Candidate: `0.1.1` (`v0.1.1`) — **CERTIFIED_T4**.
+- Published release: `0.1.1` (`v0.1.1`) — **CERTIFIED_T4**.
 - Historical `v0.1.0` remains immutable and is not retagged or source-substituted.
-- GitHub current candidate: **PASS_T4**; npm current candidate: **PASS_T4**.
+- GitHub release: **PASS_T4**; npm package: **PASS_T4**.
 - Publication verification is complete: GitHub Release and npm registry are both PASS_T4.
 - Reference host: OpenCode `1.18.18` on `linux/aarch64`; Hi-owned process/workspace/browser surfaces are exact-receipt `SUPPORTED_T3`.
 - Test counts are intentionally not persisted here; final certification owns fresh totals.

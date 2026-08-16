@@ -12,9 +12,7 @@ Hi is designed to use the minimum sufficient topology, model, context and verifi
 
 ## Current product truth
 
-The source tree currently reports application version `0.1.1`. Version identity is owned by `VERSION` and parity-validated against package metadata. Historical GitHub `v0.1.0` remains immutable and is not reused for this hardened release identity.
-
-`v0.1.1` is the current published release. GitHub/npm publication and provenance are externally verified; historical `v0.1.0` remains immutable. See [Release Engineering](docs/RELEASE.md).
+This checkout tracks application/package version `0.1.1`. Version identity is owned by `VERSION` and parity-validated against package metadata. Published availability is external state: GitHub Releases and the npm registry are authoritative for whether a given version has been released. Historical `v0.1.1` and `v0.1.0` release artifacts remain immutable.
 
 Current host capability truth is generated from exact receipts rather than hand-maintained here. See [Host Support](docs/HOSTS.md) and `data/validation/compatibility-matrix-0.1.0.json`.
 
@@ -85,7 +83,7 @@ Exact version/platform/architecture and receipt links belong to [Host Support](d
 
 ### Registry distribution
 
-The canonical package is publicly available as `opencode-hi@0.1.1` on npm. The published artifact is bound to the immutable annotated `v0.1.1` tag through npm Trusted Publishing OIDC provenance, and fresh-registry acceptance loaded it successfully on exact OpenCode `1.18.18`.
+For this source/package version, the exact registry identity is `opencode-hi@0.1.1`. Release availability itself is not hand-maintained in this README; verify it from npm/GitHub. Published releases use npm Trusted Publishing OIDC provenance and are acceptance-checked on the recorded exact OpenCode host.
 
 A fresh project can install the exact package version and use the package-provided setup CLI without a repository checkout:
 
@@ -96,7 +94,7 @@ npm install --save-dev opencode-hi@0.1.1
 ./node_modules/.bin/opencode-hi-setup doctor /path/to/project
 ```
 
-Registration/doctor remain distinct from runtime loading; current T4 evidence additionally verifies a fresh registry consumer, 31 Hi tools, agent projection and session creation on exact OpenCode `1.18.18`.
+Registration/doctor remain distinct from runtime loading; published-release T4 evidence verifies fresh-registry installation plus exact-host loading; current evidence details live in Release Engineering rather than being duplicated here.
 
 ### Development/source loading
 

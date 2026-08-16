@@ -779,10 +779,13 @@ def test_version_truth_is_semver_and_not_validator_hard_pinned_to_0_1_0():
 def test_prompt_a_documentation_parity_binds_current_docs_to_machine_truth_and_links():
     d=json.loads((ROOT/'data/validation/documentation-parity.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='DOCUMENTATION_PARITY' and d['status']=='PASS' and d['violations']==[]
-    assert {'bounded_public_surface','local_markdown_links','stale_current_status_patterns','release_availability','host_capabilities','generated_config_host_projections','community_health_files'}==set(d['checks'])
+    assert {'bounded_public_surface','local_markdown_links','stale_current_status_patterns','release_availability','localized_version_parity','localized_release_status','host_capabilities','generated_config_host_projections','community_health_files'}==set(d['checks'])
     assert 'README.md' in d['checked_current_documents'] and 'docs/ARCHITECTURE.md' in d['checked_current_documents']
     assert 'docs/engineering-constitution/MASTER-CONTINUATION.md' not in d['checked_current_documents']
     assert '.github/CONTRIBUTING.md' in d['checked_current_documents']
+    version=(ROOT/'VERSION').read_text(encoding='utf-8').strip(); tr=(ROOT/'docs/locales/tr/README.md').read_text(encoding='utf-8')
+    assert f'`{version}`' in tr and f'opencode-hi@{version}' in tr
+    assert not re.search(r'npm bootstrap|registry package oluşana kadar|release-status-0\.1\.0',tr,re.I)
     for meta in d['inputs'].values():
         path=ROOT/meta['path']; assert path.is_file(); assert hashlib.sha256(path.read_bytes()).hexdigest()==meta['sha256']
     pkg=json.loads((ROOT/'package.json').read_text(encoding='utf-8'))
@@ -794,7 +797,7 @@ def test_prompt_a_first_use_docs_do_not_advertise_unavailable_registry_or_stale_
     for text in (readme,tr):
         assert 'first coherent OpenCode-Hi candidate' not in text
         assert 'opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git#' not in text
-    assert '`v0.1.1` is the current published release' in readme
+    assert f'`{V}`' in readme and 'Published availability is external state' in readme
     assert 'npm bootstrap publication is not yet complete' not in readme+install
     assert 'ProcessContract' in arch and 'WorkspaceLease' in arch and 'BrowserObservation' in arch
     assert 'contains no raw stdout/stderr buffer' in arch

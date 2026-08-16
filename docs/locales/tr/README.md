@@ -8,86 +8,153 @@ Temel kural:
 
 > **Hi ürün semantiğine karar verir; OpenCode doğru native primitive’i çalıştırır.**
 
-Hi mümkün olan en fazla agent/token/araç yerine iş için **minimum yeterli** topology, model, context ve verification kullanmayı hedefler.
+Hi, mümkün olan en fazla agent/token/araç yerine iş için **minimum yeterli** topology, model, context ve verification kullanmayı hedefler.
 
 ## Güncel ürün gerçeği
 
-Source tree uygulama sürümünü `0.1.0` olarak bildiriyor. Sürümün canonical sahibi `VERSION` dosyasıdır ve package metadata ile parity doğrulanır. Bu, güncel development HEAD’in daha önce yayımlanmış immutable GitHub `v0.1.0` source’u ile aynı olduğu anlamına gelmez.
+Bu checkout uygulama/package sürümü olarak `0.1.1`'yi izler. Sürüm kimliğinin canonical sahibi `VERSION` dosyasıdır ve package metadata ile parity doğrulanır. Bir sürümün gerçekten yayımlanmış olup olmadığı mutable external state'tir; bunun authoritative kaynakları GitHub Releases ve npm registry'dir. Tarihsel `v0.1.1` ve `v0.1.0` release artifact'leri immutable kalır.
 
-GitHub `v0.1.0` release’i source-bound ve immutable’dır. npm bootstrap ise henüz tamamlanmadı; `opencode-hi@0.1.0` şu anda npm registry’den alınabilir durumda değildir. Bu nedenle aşağıdaki package registration mekanikleri, bugün public npm download yolunun açık olduğuna dair kanıt değildir.
-
-Mutable release durumu `data/validation/release-status-0.1.0.json`, host/capability durumu ise `data/validation/compatibility-matrix-0.1.0.json` tarafından üretilir.
+Güncel host/capability gerçeği elle yazılan metinden değil exact receipt'lerden üretilir. Ayrıntı için [Host Support](../../HOSTS.md) ve `data/validation/compatibility-matrix-0.1.0.json` kullanılır.
 
 ## Ne sağlar?
 
-OpenCode-Hi şunları ekler:
+OpenCode-Hi native AI execution çevresine deterministic ürün semantiği ekler:
 
 - tek canonical Mission/Task/Worker ownership modeli;
 - direct, delegated ve bounded multi-agent execution;
-- Role, model, Methodology ve topology’nin birbirinden bağımsız seçimi;
-- exact Authority ve monotonic Permission sınırları;
+- Role, model, Methodology ve topology'nin birbirinden bağımsız seçimi;
+- exact Authority ve monotonic host Permission sınırları;
 - source-aware Context Governor, Project Intelligence ve TypeScript Semantic Context;
 - lazy Methodology/skill discovery ve loading;
 - structured Evidence, VerificationEnvelope ve deterministic completion;
 - bounded recovery, WAIT ve authoritative STOP;
-- exact-host kabulü olan Hi-owned process, isolated-workspace ve browser execution yüzeyleri;
-- restart-safe lifecycle state;
-- ownership-aware install/upgrade/reconfigure/uninstall/rollback/recovery.
+- exact-host kabulü bulunan Hi-owned process, isolated-workspace ve browser executor yüzeyleri;
+- restart-safe durable state;
+- ownership-aware install, upgrade, reconfigure, uninstall, rollback ve crash recovery.
 
-Modelin “done” demesi, screenshot bulunması, skill’in kurulu olması veya host API’nin mevcut olması tek başına support/PASS/completion kanıtı değildir.
+Bir modelin “done” demesi, screenshot bulunması, skill'in kurulu olması veya host API'nin mevcut olması tek başına product support/PASS/completion kanıtı değildir.
+
+## Hi ve OpenCode
+
+```text
+User intent
+   |
+   v
+Hi semantic assessment
+   |
+   v
+Mission -> TaskRuntime -> Worker
+   |          |             |
+   |          +--> Role / model / Methodology
+   |          +--> Authority / Permission
+   |          +--> Context / Project Intelligence
+   |          |
+   |          v
+   |       Hi HostPort
+   |          |
+   |          v
+   |       OpenCode native execution
+   |          |
+   |          v
+   +<-- observed result / Evidence / Verification
+              |
+              v
+        recovery / WAIT / STOP
+              |
+              v
+         deterministic completion
+```
+
+Hi semantiği host-portable'dır; OpenCode'a özgü tipler ve belirsiz host davranışı adapter sınırlarında kalır. OpenCode-native kavramlar kozmetik olarak Hi adıyla yeniden adlandırılmaz.
 
 ## Capability özeti
 
-Canonical mutable support görünümü generated compatibility projection’dır:
+Machine-readable compatibility projection canonical mutable support görünümüdür. Güncel exact-host acceptance sınırında:
 
-- **Process lifecycle:** Hi-owned `ProcessContract` / `ProcessExecutor` yüzeyinde supported. PID-bound spawn, bounded IO, event-driven WAIT, timeout, kill, ayrı cleanup, restart adoption ve STOP reconciliation kapsanır. Genel native/model-facing bash otomatik olarak Hi ownership’a girmez.
-- **Workspace isolation:** Hi-owned `IsolationDecision` / `WorkspaceLease` / `WorkspaceRuntime` zincirinde supported. Required isolation alternate workspace’e bağlanır; verification aynı lease içinde yürür; primary/user-dirty worktree korunur.
+- **Process lifecycle:** Hi-owned `ProcessContract` / `ProcessExecutor` yüzeyinde supported. PID-bound spawn, bounded IO, event-driven WAIT, timeout, kill, ayrı cleanup, restart adoption ve STOP reconciliation kapsanır.
+- **Workspace isolation:** Hi-owned `IsolationDecision` / `WorkspaceLease` / `WorkspaceRuntime` yüzeyinde supported. Required isolation alternate workspace'e bağlanır; verification aynı lease içinde yürür ve primary/user-dirty worktree korunur.
 - **Browser execution:** Hi-owned ve runtime-health-gated yüzeyde supported. BrowserObservation veya screenshot otomatik Evidence/PASS değildir.
-- **HumanDecision:** chat transport supported. Deterministic structured OpenCode question-opening UI transport, gerekli public host opener olmadığı için unsupported.
-- **Semantic Context:** explicit first-class adapter yalnız TypeScript/TSX destekler; JavaScript/LSP/Tree-sitter semantic adapter desteği ilan edilmez.
+- **HumanDecision:** chat transport supported. Deterministic structured OpenCode question-opening UI transport, accepted host API gerekli public opener'ı sağlamadığı için unsupported'dır.
+- **Semantic Context:** explicit first-class adapter yalnız TypeScript/TSX destekler. JavaScript, LSP ve Tree-sitter semantic adapter desteği ilan edilmez.
 
-Exact host version/platform/architecture ve receipt bağları için [Host Support](../../HOSTS.md) kullanın.
+Exact host version/platform/architecture ve receipt bağlantıları için [Host Support](../../HOSTS.md) kullanın.
 
-## Kurulum durumu
+## Kurulum ve ilk kullanım
 
-Canonical package adı `opencode-hi` olmakla birlikte npm bootstrap publication açık değildir. Registry package oluşana kadar normal fresh-user npm kurulumu **mevcut gibi gösterilmez**.
+### Registry dağıtımı
 
-Registry package mevcut olduğunda repository setup lifecycle exact package registration’ı user config’i ezmeden yönetebilir:
+Bu source/package sürümünün exact registry kimliği `opencode-hi@0.1.1`'dir. Release availability bu README'ye elle yazılmaz; npm/GitHub üzerinden doğrulanır. Yayımlanan sürümler npm Trusted Publishing OIDC provenance kullanır ve recorded exact OpenCode host üzerinde acceptance ile doğrulanır.
+
+Yeni bir proje repository checkout yapmadan exact package sürümünü kurabilir ve package içindeki setup CLI'ı kullanabilir:
 
 ```bash
-python3 scripts/native_plugin_setup.py plan /path/to/project --version <version>
-python3 scripts/native_plugin_setup.py install /path/to/project --version <version>
-python3 scripts/native_plugin_setup.py doctor /path/to/project
+npm install --save-dev opencode-hi@0.1.1
+./node_modules/.bin/opencode-hi-setup plan /path/to/project --version 0.1.1
+./node_modules/.bin/opencode-hi-setup install /path/to/project --version 0.1.1
+./node_modules/.bin/opencode-hi-setup doctor /path/to/project
 ```
 
-Source development için:
+Registration/doctor ile runtime loading farklıdır. Published-release T4 evidence fresh-registry installation ve exact-host loading doğrulamasını içerir; güncel evidence ayrıntıları Release Engineering dokümanında tutulur.
+
+### Source development
+
+Source development için önce runtime build edilir:
 
 ```bash
 npm ci --prefix plugin
 npm run build
 ```
 
-OpenCode project-local plugin’leri `.opencode/plugins/` altında ve local/file loading mekanizmalarıyla destekler. Exact host version’ın desteklediği local loading yolunu kullanın; Git URL’yi npm package gibi varsaymayın.
+OpenCode accepted host üzerinde `.opencode/plugins/` ve local/file plugin loading mekanizmalarını destekler. Exact OpenCode sürümünün desteklediği local-plugin yolunu kullanın; Git URL'yi npm registry package gibi varsaymayın.
 
-Install/upgrade/reconfigure/uninstall/rollback/recover davranışı için [Installation](../../INSTALLATION.md) belgesine bakın.
+Install/upgrade/reconfigure/doctor/uninstall/rollback/recovery davranışı için [Installation and Lifecycle](../../INSTALLATION.md) belgesine bakın.
 
-## Mimari ve güvenlik
+## Configuration
+
+Hi configuration current-only ve fail-closed'dur. Canonical machine inventory `data/hi-config-options.json` dosyasıdır. Her runtime option validator, precedence, consumer, executable effect, documentation ve test ile bağlı olmalıdır. Unknown veya stale config sessizce compatibility feature olarak kabul edilmez.
+
+Ayrıntı için [Installation and Configuration](../../INSTALLATION.md) ve [Architecture](../../ARCHITECTURE.md#execution-policy) kullanın.
+
+## Roles, models, Methodologies ve skills
 
 `ROLE != AGENT != MODEL != METHODOLOGY != TASK != WORKER != TOPOLOGY`.
 
-Permission ile Authority farklıdır. OpenCode Permission native action’ın çalışıp çalışamayacağını belirler; Hi Authority hassas/external action’ı exact action/target/parameter/scope’a bağlar. Hi host denial’ı genişletemez.
+Hi, `hi-*` namespace altında 27 built-in Methodology sunar. Methodology reusable **HOW**'dur; OpenCode skill ise ana hostta methodology içeriğini discover/load eden native primitive'dir. Installed skill, admitted Methodology, selected Methodology ve loaded Methodology aynı şey değildir.
 
-User’a ait dirty/staged/unrelated dosyalar user-owned kalır. Broad reset/stash/checkout/restore veya `git add -A` güvenli ownership shortcut’ı değildir.
+Role seçimi tek başına model seçmez; Methodology Authority veremez ve completion sahibi olamaz. Ayrıntı için [Methodologies and Skills](../../SKILLS.md) kullanın.
 
-Evidence de prose’dan farklıdır. Worker/model çıktısı, Context, Project Intelligence, Methodology içeriği veya BrowserObservation ikna edici görünse bile otomatik Evidence olmaz. Completion ancak current obligation ve fresh admissible proof deterministic olarak uzlaştığında kapanır.
+## Güvenlik ve kontrol
 
-## Methodologies ve OpenCode skills
+**Permission ile Authority farklıdır.** OpenCode Permission hostun ne çalıştırabileceğini belirler; Hi Authority hassas/external effect'i exact action/target/parameters/scope'a bağlar. Hi host denial'ını sessizce genişletemez.
 
-Hi 27 built-in `hi-*` Methodology paketler. Methodology reusable **HOW**’dur; OpenCode skill ise ana hostta methodology içeriğini discover/load eden native primitive’dir. Installed skill, admitted Methodology, selected Methodology ve loaded Methodology aynı şey değildir.
+User'a ait dirty, staged ve unrelated dosyalar user-owned kalır. Broad reset/stash/checkout/restore veya `git add -A` güvenli ownership shortcut'ı değildir.
 
-## Geliştirme ve doğrulama
+**Evidence prose değildir.** Worker/model output, Context, Project Intelligence, Methodology content veya browser observation ikna edici görünse bile otomatik Evidence olmaz. Completion ancak current obligations ile fresh admissible proof deterministic olarak uzlaştığında kapanır.
 
-Repository root’tan:
+Ayrıntı için [Human Decisions and Authority](../../HUMAN-DECISIONS.md), [Verification](../../VERIFICATION.md) ve [Security model](../../SECURITY-MODEL.md) kullanın.
+
+## State ve recovery
+
+Hi-owned project state explicit storage ownership kurallarına göre `.opencode/hi/` altında yaşar. OpenCode-native plugin/skill dizinleri OpenCode-owned kalır. Durable state current-schema only'dir; restart reconciliation exact owned resource'u adopt eder veya mismatch'i quarantine eder, continuity uydurmaz.
+
+Ayrıntı için [Architecture](../../ARCHITECTURE.md#storage-and-filesystem-ownership) kullanın.
+
+## Dokümantasyon
+
+- [Documentation index](../../README.md)
+- [Installation and configuration](../../INSTALLATION.md)
+- [Architecture](../../ARCHITECTURE.md)
+- [Host support](../../HOSTS.md)
+- [Methodologies and skills](../../SKILLS.md)
+- [Human decisions and authority](../../HUMAN-DECISIONS.md)
+- [Verification](../../VERIFICATION.md)
+- [Security model](../../SECURITY-MODEL.md)
+- [Release engineering](../../RELEASE.md)
+- [Contributing](../../../.github/CONTRIBUTING.md) · [Security](../../../.github/SECURITY.md) · [Support](../../../.github/SUPPORT.md)
+
+## Doğrulama
+
+Repository root'tan canonical kontroller:
 
 ```bash
 npm run check
@@ -97,8 +164,8 @@ python scripts/validate.py
 
 Fresh test count dokümana elle yazılmaz; command output onun sahibidir. Host-bound claim T3, gerçek external publication claim T4 evidence gerektirir.
 
-Canonical davranış dokümantasyonu [English README](../../../README.md) ve onun bağladığı İngilizce product docs’tur. Bu Türkçe çeviri yeni davranış tanımlamaz veya İngilizce canonical truth’u genişletmez.
+Bu Türkçe README current İngilizce README'nin localization yüzeyidir; yeni product behavior tanımlamaz veya canonical English truth'u genişletmez.
 
 ## Lisans
 
-Apache-2.0. Üçüncü taraf attribution/source-reuse sınırları [`THIRD_PARTY_NOTICES.md`](../../../THIRD_PARTY_NOTICES.md) içinde tutulur.
+OpenCode-Hi Apache-2.0 lisanslıdır. External mechanisms, attribution ve source-reuse sınırları [Third-Party Notices](../../../THIRD_PARTY_NOTICES.md) içinde tutulur.

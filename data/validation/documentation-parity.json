@@ -38,6 +38,8 @@
     "local_markdown_links": true,
     "stale_current_status_patterns": true,
     "release_availability": true,
+    "localized_version_parity": true,
+    "localized_release_status": true,
     "host_capabilities": true,
     "generated_config_host_projections": true,
     "community_health_files": true

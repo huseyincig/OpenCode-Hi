@@ -7,7 +7,7 @@ All notable changes to OpenCode-Hi are documented here.
 - Completed the full zero-defect hardening and certification program across authority, persistence, concurrency, host portability, security, test quality, mutation/property/replay/failure-injection, performance, user/developer journeys, cross-platform claim boundaries, and exact-current OpenCode T3.
 - Revalidated Hi-owned process lifecycle, workspace isolation binding, and browser execution against exact OpenCode 1.18.18 on Linux/aarch64.
 - Preserved historical `v0.1.0` release identity; `0.1.1` is the new release identity for the hardened current source.
-- Publication remains a final external step and is not considered complete until GitHub/npm T4 receipts verify the exact `0.1.1` artifact.
+- Published `v0.1.1` to GitHub and `opencode-hi@0.1.1` to npm through Trusted Publishing OIDC; T4 receipts verify exact tag/source binding, registry integrity/provenance and fresh-registry OpenCode acceptance.
 
 ## 0.1.0
 

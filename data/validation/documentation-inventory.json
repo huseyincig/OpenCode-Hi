@@ -135,7 +135,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "3c0d94817e496fc810f5db97b5966889657de36fa0083ea572ed3f5d14f15081",
+      "sha256": "685abf6e9ee28bae31abce6b59996291f0a25701c3409b84b2f3f526a7864b8c",
       "area": "product-overview",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -183,7 +183,7 @@
     },
     {
       "path": "docs/RELEASE.md",
-      "sha256": "3a0721686897d766d94faa7c58ffe06100a5a74cb2e8497b7ea45b98de11e0c6",
+      "sha256": "8a51754085d953f6fd2c8b36b05b054de7eda2cb471b3cfa8b5cf3636bac6479",
       "area": "release",
       "audience": "RELEASE_ENGINEER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -215,7 +215,7 @@
     },
     {
       "path": "docs/locales/tr/README.md",
-      "sha256": "314cd64fdeb6bc165ee0d74c36b6942ba4f93504de66ad2b7adab8082663adf0",
+      "sha256": "e57dd1037fcf6f6103d29e4473ec943832ededd309526b3a5b8a2b20286eb88a",
       "area": "turkish-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",
