@@ -52,7 +52,7 @@
     },
     {
       "proof": "tests/test_hi.py",
-      "proof_sha256": "2ceac7a9e9e24feaf35912c0b6785e3a9627e3c62edfc1a58b7edce433efc66f",
+      "proof_sha256": "8f7fc441758706d3ebb119f3c41da42abb5680fd1094bf25fd1d3735163a8798",
       "surface": "filesystem"
     },
     {

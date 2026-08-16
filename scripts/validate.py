@@ -837,8 +837,10 @@ try:
     z40=json.loads((ROOT/'data/validation/prompt-b-zero-known-defect-loop.json').read_text(encoding='utf-8'))
     if z40.get('schema')!=1 or z40.get('kind')!='PROMPT_B_ZERO_KNOWN_DEFECT_CLOSURE_LOOP' or z40.get('section')!=40 or z40.get('status')!='PASS':err('bad PROMPT B zero-known-defect loop identity/status')
     zs=z40.get('summary') or {}
-    if zs.get('recorded_findings')!=62 or zs.get('unresolved_known_defects')!=0 or zs.get('adjacent_regression_pass')!=93 or zs.get('full_python_pass')!=118 or zs.get('full_node_pass')!=848 or zs.get('exact_t3_capabilities')!=3 or zs.get('lifecycle_invariants_pass')!=61:err('PROMPT B zero-known-defect summary drift')
-    if z40.get('violations')!=[] or len(z40.get('defects') or [])!=62:err('PROMPT B zero-known-defect ledger drift')
+    if zs.get('recorded_findings')!=65 or zs.get('unresolved_known_defects')!=0 or zs.get('adjacent_regression_pass')!=93 or zs.get('full_python_pass')!=118 or zs.get('full_node_pass')!=848 or zs.get('exact_t3_capabilities')!=3 or zs.get('lifecycle_invariants_pass')!=61:err('PROMPT B zero-known-defect summary drift')
+    if z40.get('violations')!=[] or len(z40.get('defects') or [])!=65:err('PROMPT B zero-known-defect ledger drift')
+    required_post_t4={'npm-view-json-shape-verifier-drift','npm-postpublish-registry-read-after-write-race','post-t4-documentation-stale-publication-state'}
+    if not required_post_t4<={x.get('id') for x in z40.get('defects') or []}:err('PROMPT B zero-known-defect post-T4 closure drift')
     zcommit=(z40.get('source_checkpoint') or {}).get('commit')
     for row in z40.get('defects') or []:
         rel=row.get('regression_receipt');expected=row.get('regression_receipt_sha256')

@@ -1430,9 +1430,10 @@ def test_prompt_b_exact_current_opencode_t3_is_fresh_source_bound_and_not_inferr
 def test_prompt_b_zero_known_defect_loop_closes_every_recorded_finding_and_reaudits_adjacent_systems():
     d=json.loads((ROOT/'data/validation/prompt-b-zero-known-defect-loop.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='PROMPT_B_ZERO_KNOWN_DEFECT_CLOSURE_LOOP' and d['section']==40 and d['status']=='PASS'
-    assert d['summary']['recorded_findings']==62 and d['summary']['unresolved_known_defects']==0 and d['summary']['adjacent_regression_pass']==93
+    assert d['summary']['recorded_findings']==65 and d['summary']['unresolved_known_defects']==0 and d['summary']['adjacent_regression_pass']==93
     assert d['summary']['full_python_pass']==118 and d['summary']['full_node_pass']==848 and d['summary']['exact_t3_capabilities']==3 and d['summary']['lifecycle_invariants_pass']==61
-    assert d['violations']==[] and len({x['id'] for x in d['defects']})==62
+    assert d['violations']==[] and len({x['id'] for x in d['defects']})==65
+    assert {'npm-view-json-shape-verifier-drift','npm-postpublish-registry-read-after-write-race','post-t4-documentation-stale-publication-state'}<={x['id'] for x in d['defects']}
     commit=d['source_checkpoint']['commit']
     for row in d['defects']:
         assert len(row['closure_pipeline'])==12

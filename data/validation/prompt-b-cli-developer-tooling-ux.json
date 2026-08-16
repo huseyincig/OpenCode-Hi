@@ -11,7 +11,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "'install':lambda:install",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "2ceac7a9e9e24feaf35912c0b6785e3a9627e3c62edfc1a58b7edce433efc66f",
+      "proof_sha256": "8f7fc441758706d3ebb119f3c41da42abb5680fd1094bf25fd1d3735163a8798",
       "proof_anchor": "test_prompt_b_cli_malformed_config_fails_closed_without_overwrite"
     },
     {
@@ -20,7 +20,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "'action':action",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "2ceac7a9e9e24feaf35912c0b6785e3a9627e3c62edfc1a58b7edce433efc66f",
+      "proof_sha256": "8f7fc441758706d3ebb119f3c41da42abb5680fd1094bf25fd1d3735163a8798",
       "proof_anchor": "test_prompt_b_cli_first_run_doctor_supplies_recovery_action"
     },
     {
@@ -29,7 +29,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "def doctor(project:Path)",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "2ceac7a9e9e24feaf35912c0b6785e3a9627e3c62edfc1a58b7edce433efc66f",
+      "proof_sha256": "8f7fc441758706d3ebb119f3c41da42abb5680fd1094bf25fd1d3735163a8798",
       "proof_anchor": "test_prompt_b_cli_first_run_doctor_supplies_recovery_action"
     },
     {
@@ -38,7 +38,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "argparse.ArgumentParser",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "2ceac7a9e9e24feaf35912c0b6785e3a9627e3c62edfc1a58b7edce433efc66f",
+      "proof_sha256": "8f7fc441758706d3ebb119f3c41da42abb5680fd1094bf25fd1d3735163a8798",
       "proof_anchor": "native_plugin_setup.py"
     },
     {
@@ -56,7 +56,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "e.detail[:500]",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "2ceac7a9e9e24feaf35912c0b6785e3a9627e3c62edfc1a58b7edce433efc66f",
+      "proof_sha256": "8f7fc441758706d3ebb119f3c41da42abb5680fd1094bf25fd1d3735163a8798",
       "proof_anchor": "'Traceback' not in r.stdout"
     },
     {
@@ -65,7 +65,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "actions.append('Run the recover command",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "2ceac7a9e9e24feaf35912c0b6785e3a9627e3c62edfc1a58b7edce433efc66f",
+      "proof_sha256": "8f7fc441758706d3ebb119f3c41da42abb5680fd1094bf25fd1d3735163a8798",
       "proof_anchor": "any('plan' in x and 'install' in x for x in out['actions'])"
     },
     {
@@ -74,7 +74,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "_bounded_cli_int('parallel-max',1,8)",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "2ceac7a9e9e24feaf35912c0b6785e3a9627e3c62edfc1a58b7edce433efc66f",
+      "proof_sha256": "8f7fc441758706d3ebb119f3c41da42abb5680fd1094bf25fd1d3735163a8798",
       "proof_anchor": "test_prompt_b_cli_reconfigure_rejects_out_of_range_and_malformed_limits"
     },
     {
@@ -101,7 +101,7 @@
       "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
       "owner_anchor": "jsonc-safe-mutation-not-supported",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "2ceac7a9e9e24feaf35912c0b6785e3a9627e3c62edfc1a58b7edce433efc66f",
+      "proof_sha256": "8f7fc441758706d3ebb119f3c41da42abb5680fd1094bf25fd1d3735163a8798",
       "proof_anchor": "test_prompt_b_cli_jsonc_plan_is_truthful_actionable_and_non_mutating"
     }
   ],
