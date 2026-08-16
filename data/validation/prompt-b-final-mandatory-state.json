@@ -6,8 +6,8 @@
   "status": "PASS",
   "certification_state": "PARTIAL",
   "source_checkpoint": {
-    "commit": "47f32c34033385cef0cc7f1b715e810bcfa17540",
-    "tree": "e58454210da35570a6d8381244792c9d6712bb72"
+    "commit": "c253fd675844e3fe5e48d3a836943c1139e7699a",
+    "tree": "29a842010fe01843413ba7cfd820c9276ec45f42"
   },
   "coherence": {
     "source_contracts": true,
