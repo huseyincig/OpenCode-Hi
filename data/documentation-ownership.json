@@ -223,6 +223,12 @@
       "owner": "docs/SOURCE-REUSE-MATRIX.md",
       "audience": "CONTRIBUTOR",
       "update_mode": "HUMAN_OWNED"
+    },
+    {
+      "meaning": "final-system-certification",
+      "owner": "docs/FINAL-SYSTEM-CERTIFICATION.md",
+      "audience": "OPERATOR",
+      "update_mode": "RECEIPT_DERIVED"
     }
   ],
   "artifact_classification": {
@@ -240,6 +246,7 @@
       "CONTEXT.md",
       "EXECUTION-POLICY.md",
       "FILESYSTEM-LAYOUT.md",
+      "FINAL-SYSTEM-CERTIFICATION.md",
       "HI-NAMING-NAMESPACE.md",
       "HOSTS.md",
       "HUMAN-DECISIONS.md",

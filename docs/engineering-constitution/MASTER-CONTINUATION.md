@@ -872,7 +872,7 @@ Do not waste future turns reopening these without contradictory repository evide
 
 ## 14. Next action
 
-**PROMPT B — IN PROGRESS. Sections 20–41 are CLOSED. Next: Final documentation re-audit (section 42).**
+**PROMPT B — PREPUBLICATION ENGINEERING COMPLETE. Sections 20–47 are closed internally. Final certification is PARTIAL only because current-source Windows CI and current-release T4 publication evidence are external post-push gates.**
 
 
 
@@ -935,3 +935,10 @@ Section 40 Zero-known-defect closure loop is closed by `data/validation/prompt-b
 
 
 Section 41 Hygiene audit is closed by `data/validation/prompt-b-hygiene.json`: 12/12 hygiene checks PASS, including clean worktree at audited source, zero backup/temp/runtime-state/log leakage, no debug/TODO/secret findings in living source, dist/source parity, deterministic documentation generation, and clean package dry-run inventory.
+
+
+Section 42 Final documentation re-audit is closed by `data/validation/prompt-b-final-documentation-reaudit.json`: **15/15 current truth areas PASS, 0 violations**. Documentation inventory includes the canonical final certification owner and parity is current-version bound rather than historical-release bound.
+
+Section 43 Certification evidence tiers is closed by `data/validation/prompt-b-certification-evidence-tiers.json`. T0/T1/T2/T3/T4 are explicit and lower-tier evidence cannot certify a higher-tier claim. Current external publication remains truthfully `NONE`/pending until real T4 evidence exists.
+
+Sections 44–47 are internally closed by `data/validation/final-system-certification-0.1.1.json`, `prompt-b-certification-vocabulary.json`, `prompt-b-final-product-quality.json`, and `prompt-b-final-mandatory-state.json`. Repository-internal quality/coherence is green; final label remains **PARTIAL** until exact-source Windows CI and real GitHub/npm T4 publication verification close the two external blockers. `CERTIFIED` is forbidden before those receipts exist.

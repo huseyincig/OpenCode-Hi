@@ -31,7 +31,7 @@ for name in required_root:
     if not (ROOT/name).is_file():err(f'required root file missing: {name}')
 for forbidden in ('KURULUM.md','RELEASE-READINESS.md','WORK-STATE.md','work-state.json','HI.cmd','HI.sh','HI-VALIDATE.cmd','HI-VALIDATE.sh','HI-RELEASE-PREP.cmd','HI-RELEASE-PREP.sh','docs/HI-TEST-LAB-HANDOFF.md','docs/FLOW-11-COVERAGE.md','docs/NATIVE-FIRST-10-COVERAGE.md','docs/MIGRATION-Hi-NEXT.md'):
     if (ROOT/forbidden).exists():err(f'non-product/legacy file present: {forbidden}')
-required_docs={'ARCHITECTURE.md','INSTALLATION.md','SKILLS.md','VALIDATION.md','THREAT-MODEL.md','SOURCE-REUSE-MATRIX.md','BASELINE-RECEIPT.md','ARCHITECTURE-REALITY-MAP.md','CONTEXT.md','EXECUTION-POLICY.md','HOSTS.md','HUMAN-DECISIONS.md','PRIVACY.md','PROJECT-INTELLIGENCE.md','RELEASE.md','VERIFICATION.md','BENCHMARKS.md','IMPLEMENTATION-REPORT.md','TERMINOLOGY.md','PRODUCT-IDENTITY.md','FILESYSTEM-LAYOUT.md','STORAGE-ARCHITECTURE.md','STORAGE-OWNERSHIP-MATRIX.md','SKILL-ARTIFACT-OWNERSHIP.md','FINAL-ACCEPTANCE.md','HI-NAMING-NAMESPACE.md'}
+required_docs={'ARCHITECTURE.md','INSTALLATION.md','SKILLS.md','VALIDATION.md','THREAT-MODEL.md','SOURCE-REUSE-MATRIX.md','BASELINE-RECEIPT.md','ARCHITECTURE-REALITY-MAP.md','CONTEXT.md','EXECUTION-POLICY.md','HOSTS.md','HUMAN-DECISIONS.md','PRIVACY.md','PROJECT-INTELLIGENCE.md','RELEASE.md','VERIFICATION.md','BENCHMARKS.md','IMPLEMENTATION-REPORT.md','TERMINOLOGY.md','PRODUCT-IDENTITY.md','FILESYSTEM-LAYOUT.md','STORAGE-ARCHITECTURE.md','STORAGE-OWNERSHIP-MATRIX.md','SKILL-ARTIFACT-OWNERSHIP.md','FINAL-ACCEPTANCE.md','FINAL-SYSTEM-CERTIFICATION.md','HI-NAMING-NAMESPACE.md'}
 actual_docs={p.name for p in (ROOT/'docs').glob('*.md')}
 if actual_docs!=required_docs:err(f'docs set mismatch: {sorted(actual_docs)}')
 # Project-local runtime state/config is allowed only at repository root during development.
@@ -950,6 +950,45 @@ try:
             if hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err(f'PROMPT B documentation defect-cycle {key} hash drift: {rel}')
     if not all((d29.get('static_guards') or {}).values()):err('PROMPT B documentation defect-cycle static guard drift')
 except Exception as e:err(f'bad PROMPT B documentation defect-cycle receipt: {e}')
+
+# PROMPT B §§42-47 final certification chain
+try:
+    f42=json.loads((ROOT/'data/validation/prompt-b-final-documentation-reaudit.json').read_text(encoding='utf-8'))
+    if f42.get('schema')!=1 or f42.get('kind')!='PROMPT_B_FINAL_DOCUMENTATION_REAUDIT' or f42.get('section')!=42 or f42.get('status')!='PASS':err('bad PROMPT B final documentation re-audit')
+    if f42.get('summary')!={'required':15,'covered':15,'violations':0} or f42.get('violations')!=[]:err('PROMPT B final documentation re-audit incomplete')
+    for row in f42.get('areas',[]):
+        rel=row.get('path'); expected=row.get('sha256')
+        if not isinstance(rel,str) or not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B final documentation hash drift: '+str(rel))
+
+    f43=json.loads((ROOT/'data/validation/prompt-b-certification-evidence-tiers.json').read_text(encoding='utf-8'))
+    if f43.get('schema')!=1 or f43.get('kind')!='PROMPT_B_CERTIFICATION_EVIDENCE_TIERS' or f43.get('section')!=43 or f43.get('status')!='PASS':err('bad PROMPT B certification evidence tiers')
+    if f43.get('violations')!=[] or len(f43.get('claims') or [])!=7:err('PROMPT B certification evidence tier coverage drift')
+    ranks={'NONE':-1,'T0':0,'T1':1,'T2':2,'T3':3,'T4':4}
+    for row in f43.get('claims',[]):
+        if row.get('claim')!='external-publication' and ranks.get(row.get('available_tier'),-1)<ranks.get(row.get('required_tier'),99):err('PROMPT B insufficient evidence tier: '+str(row.get('claim')))
+
+    f44=json.loads((ROOT/f'data/validation/final-system-certification-{version}.json').read_text(encoding='utf-8'))
+    if f44.get('schema')!=1 or f44.get('kind')!='FINAL_SYSTEM_CERTIFICATION' or f44.get('section')!=44 or f44.get('release')!=version:err('bad final system certification identity')
+    if f44.get('status') not in {'PARTIAL','CERTIFIED'}:err('invalid final system certification state')
+    if not (ROOT/'docs/FINAL-SYSTEM-CERTIFICATION.md').is_file():err('final system certification document missing')
+    blockers=f44.get('blockers') or []
+    if f44.get('status')=='CERTIFIED' and blockers:err('CERTIFIED final system has blockers')
+    if f44.get('status')=='PARTIAL' and not blockers:err('PARTIAL final system has no blocker')
+    if f44.get('known_defect_count')!=0:err('final system certification has known defects')
+
+    f45=json.loads((ROOT/'data/validation/prompt-b-certification-vocabulary.json').read_text(encoding='utf-8'))
+    if f45.get('schema')!=1 or f45.get('kind')!='PROMPT_B_CERTIFICATION_VOCABULARY_AUDIT' or f45.get('section')!=45 or f45.get('status')!='PASS' or f45.get('violations')!=[]:err('bad PROMPT B certification vocabulary audit')
+    if f45.get('current_label')!=f44.get('status'):err('certification vocabulary/final status mismatch')
+
+    f46=json.loads((ROOT/'data/validation/prompt-b-final-product-quality.json').read_text(encoding='utf-8'))
+    if f46.get('schema')!=1 or f46.get('kind')!='PROMPT_B_FINAL_PRODUCT_QUALITY_AUDIT' or f46.get('section')!=46 or f46.get('status')!='PASS':err('bad PROMPT B final product quality audit')
+    if f46.get('summary')!={'required':10,'covered':10,'violations':0} or not all((f46.get('checks') or {}).values()):err('PROMPT B final product quality incomplete')
+
+    f47=json.loads((ROOT/'data/validation/prompt-b-final-mandatory-state.json').read_text(encoding='utf-8'))
+    if f47.get('schema')!=1 or f47.get('kind')!='PROMPT_B_FINAL_MANDATORY_END_STATE_AUDIT' or f47.get('section')!=47 or f47.get('status')!='PASS':err('bad PROMPT B final mandatory state audit')
+    if f47.get('summary')!={'required':12,'coherent':12,'violations':0} or not all((f47.get('coherence') or {}).values()):err('PROMPT B final mandatory state incoherent')
+    if f47.get('certification_state')!=f44.get('status'):err('final mandatory state/certification mismatch')
+except Exception as e:err(f'bad PROMPT B §§42-47 final certification chain: {e}')
 
 for p in (ROOT/'data').rglob('*.json'):
     try:json.loads(p.read_text(encoding='utf-8'))

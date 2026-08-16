@@ -41,7 +41,7 @@
     },
     {
       "proof": "tests/test_hi.py",
-      "proof_sha256": "83bbcb896f89b2abdaca1cf976f7ebb940d82312a48406972c29392ce4f6ac72",
+      "proof_sha256": "3ed2ec3dca9225ad733afecfe1b90ad2f0741c91a8a59ff5e319049e74f13740",
       "surface": "filesystem"
     },
     {

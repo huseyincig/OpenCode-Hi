@@ -24,7 +24,7 @@ def test_root_git_package_contract():
 
 def test_root_is_product_clean():
     assert not any((ROOT/x).exists() for x in ['KURULUM.md','RELEASE-READINESS.md','WORK-STATE.md','work-state.json','HI.cmd','HI.sh','HI-VALIDATE.cmd','HI-RELEASE-PREP.cmd'])
-    assert {p.name for p in (ROOT/'docs').glob('*.md')}=={'ARCHITECTURE.md','INSTALLATION.md','SKILLS.md','VALIDATION.md','THREAT-MODEL.md','SOURCE-REUSE-MATRIX.md','BASELINE-RECEIPT.md','ARCHITECTURE-REALITY-MAP.md','CONTEXT.md','EXECUTION-POLICY.md','HOSTS.md','HUMAN-DECISIONS.md','PRIVACY.md','PROJECT-INTELLIGENCE.md','RELEASE.md','VERIFICATION.md','BENCHMARKS.md','IMPLEMENTATION-REPORT.md','TERMINOLOGY.md','PRODUCT-IDENTITY.md','FILESYSTEM-LAYOUT.md','STORAGE-ARCHITECTURE.md','STORAGE-OWNERSHIP-MATRIX.md','SKILL-ARTIFACT-OWNERSHIP.md','FINAL-ACCEPTANCE.md','HI-NAMING-NAMESPACE.md'}
+    assert {p.name for p in (ROOT/'docs').glob('*.md')}=={'ARCHITECTURE.md','INSTALLATION.md','SKILLS.md','VALIDATION.md','THREAT-MODEL.md','SOURCE-REUSE-MATRIX.md','BASELINE-RECEIPT.md','ARCHITECTURE-REALITY-MAP.md','CONTEXT.md','EXECUTION-POLICY.md','HOSTS.md','HUMAN-DECISIONS.md','PRIVACY.md','PROJECT-INTELLIGENCE.md','RELEASE.md','VERIFICATION.md','BENCHMARKS.md','IMPLEMENTATION-REPORT.md','TERMINOLOGY.md','PRODUCT-IDENTITY.md','FILESYSTEM-LAYOUT.md','STORAGE-ARCHITECTURE.md','STORAGE-OWNERSHIP-MATRIX.md','SKILL-ARTIFACT-OWNERSHIP.md','FINAL-ACCEPTANCE.md','FINAL-SYSTEM-CERTIFICATION.md','HI-NAMING-NAMESPACE.md'}
 
 def test_semantic_contract_names_only():
     for rel in ['data/validation/implementation-coverage.json','data/validation/native-coverage.json','data/validation/flow-coverage.json','data/validation/flow-acceptance.json','data/validation/source-gates.json']:assert (ROOT/rel).is_file()
@@ -733,7 +733,7 @@ def test_prompt_a_documentation_inventory_classifies_all_truth_surfaces_and_has_
     assert policy['schema']==1 and policy['type']=='hi-documentation-ownership'
     assert inv['schema']==1 and inv['kind']=='DOCUMENTATION_TRUTH_INVENTORY' and inv['status']=='PASS'
     assert inv['violations']=={'unclassified':[],'duplicate_meaning_owner':[],'missing_owner':[],'historical_as_current_owner':[]}
-    meanings=policy['meanings']; assert len(meanings)==len({x['meaning'] for x in meanings})==36
+    meanings=policy['meanings']; assert len(meanings)==len({x['meaning'] for x in meanings})==37
     artifacts={x['path']:x for x in inv['artifacts']}
     assert artifacts['README.md']['lifecycle']=='CANONICAL_CURRENT'
     assert artifacts['README.tr.md']['lifecycle']=='DERIVED_CURRENT'
@@ -1422,3 +1422,21 @@ def test_prompt_b_hygiene_audit_has_no_source_package_or_generated_artifact_leak
     assert d['schema']==1 and d['kind']=='PROMPT_B_HYGIENE_AUDIT' and d['section']==41 and d['status']=='PASS'
     assert len(d['checks'])==12 and all(d['checks'].values()) and d['violations']==[]
     for rel,digest in d['proof_hashes'].items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
+
+
+def test_prompt_b_final_certification_chain_is_truthful_coherent_and_tier_bound():
+    f42=json.loads((ROOT/'data/validation/prompt-b-final-documentation-reaudit.json').read_text())
+    assert f42['status']=='PASS' and f42['summary']=={'required':15,'covered':15,'violations':0} and f42['violations']==[]
+    for row in f42['areas']: assert hashlib.sha256((ROOT/row['path']).read_bytes()).hexdigest()==row['sha256']
+    f43=json.loads((ROOT/'data/validation/prompt-b-certification-evidence-tiers.json').read_text())
+    assert f43['status']=='PASS' and len(f43['claims'])==7 and f43['violations']==[]
+    ranks={'NONE':-1,'T0':0,'T1':1,'T2':2,'T3':3,'T4':4}
+    assert all(x['claim']=='external-publication' or ranks[x['available_tier']]>=ranks[x['required_tier']] for x in f43['claims'])
+    f44=json.loads((ROOT/f'data/validation/final-system-certification-{V}.json').read_text())
+    assert f44['status'] in {'PARTIAL','CERTIFIED'} and f44['known_defect_count']==0
+    assert bool(f44['blockers']) == (f44['status']=='PARTIAL')
+    text=(ROOT/'docs/FINAL-SYSTEM-CERTIFICATION.md').read_text()
+    assert f'**{f44["status"]}**' in text and 'T0 = static/schema/lint/doc parity' in text and 'Known unsupported capabilities and limitations' in text
+    f45=json.loads((ROOT/'data/validation/prompt-b-certification-vocabulary.json').read_text()); assert f45['status']=='PASS' and f45['current_label']==f44['status'] and f45['violations']==[]
+    f46=json.loads((ROOT/'data/validation/prompt-b-final-product-quality.json').read_text()); assert f46['status']=='PASS' and f46['summary']=={'required':10,'covered':10,'violations':0} and all(f46['checks'].values())
+    f47=json.loads((ROOT/'data/validation/prompt-b-final-mandatory-state.json').read_text()); assert f47['status']=='PASS' and f47['summary']=={'required':12,'coherent':12,'violations':0} and all(f47['coherence'].values())

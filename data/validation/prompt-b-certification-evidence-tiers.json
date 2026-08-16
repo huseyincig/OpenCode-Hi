@@ -1,0 +1,80 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_CERTIFICATION_EVIDENCE_TIERS",
+  "program": "PROMPT_B",
+  "section": 43,
+  "status": "PASS",
+  "tiers": {
+    "T0": "static/schema/lint/doc parity",
+    "T1": "deterministic unit/contract",
+    "T2": "integration/runtime wiring",
+    "T3": "exact-version real-host",
+    "T4": "real external publication/release"
+  },
+  "claims": [
+    {
+      "claim": "source-doc-parity",
+      "required_tier": "T0",
+      "available_tier": "T0",
+      "evidence": "data/validation/documentation-parity.json",
+      "evidence_exists": true,
+      "sufficient": true
+    },
+    {
+      "claim": "contracts-and-unit-semantics",
+      "required_tier": "T1",
+      "available_tier": "T1",
+      "evidence": "data/validation/prompt-b-test-suite-audit.json",
+      "evidence_exists": true,
+      "sufficient": true
+    },
+    {
+      "claim": "runtime-wiring-fresh-consumer",
+      "required_tier": "T2",
+      "available_tier": "T3",
+      "evidence": "data/validation/fresh-consumer-opencode-1.18.18.json",
+      "evidence_exists": true,
+      "sufficient": true
+    },
+    {
+      "claim": "process-lifecycle",
+      "required_tier": "T3",
+      "available_tier": "T3",
+      "evidence": "data/validation/external-opencode-hi-0.1.1-process-1.18.18-head-3ca843d.json",
+      "evidence_exists": true,
+      "sufficient": true
+    },
+    {
+      "claim": "workspace-isolation-binding",
+      "required_tier": "T3",
+      "available_tier": "T3",
+      "evidence": "data/validation/external-opencode-hi-0.1.1-workspace-1.18.18-head-3ca843d.json",
+      "evidence_exists": true,
+      "sufficient": true
+    },
+    {
+      "claim": "browser-execution",
+      "required_tier": "T3",
+      "available_tier": "T3",
+      "evidence": "data/validation/external-opencode-hi-0.1.1-browser-1.18.18-head-3ca843d.json",
+      "evidence_exists": true,
+      "sufficient": true
+    },
+    {
+      "claim": "external-publication",
+      "required_tier": "T4",
+      "available_tier": "NONE",
+      "evidence": "data/validation/release-publication-0.1.1.json",
+      "evidence_exists": false,
+      "sufficient": false
+    }
+  ],
+  "summary": {
+    "claims": 7,
+    "locally_sufficient": 6,
+    "pending_t4": true,
+    "violations": 0
+  },
+  "violations": [],
+  "rule": "A lower evidence tier never certifies a higher-tier claim."
+}

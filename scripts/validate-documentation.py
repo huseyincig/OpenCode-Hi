@@ -33,7 +33,7 @@ def links(path:Path,text:str):
 def main():
     errors=[]; policy=json.loads(POLICY.read_text()); docs=current_docs(policy)
     version=(ROOT/'VERSION').read_text().strip(); pkg=json.loads((ROOT/'package.json').read_text()); pp=json.loads((ROOT/'plugin/package.json').read_text()); product=json.loads((ROOT/'data/product.json').read_text())
-    compat=json.loads((ROOT/'data/validation/compatibility-matrix-0.1.0.json').read_text()); release=json.loads((ROOT/'data/validation/release-status-0.1.0.json').read_text())
+    compat=json.loads((ROOT/'data/validation/compatibility-matrix-0.1.0.json').read_text()); release=json.loads((ROOT/f'data/validation/release-status-{version}.json').read_text())
     if not(version==pkg.get('version')==pp.get('version')==product.get('version')):errors.append({'code':'DOC_VERSION_PARITY','detail':'VERSION/package/plugin/product mismatch'})
     if pkg.get('name')!='opencode-hi' or product.get('plugin_package')!='opencode-hi':errors.append({'code':'DOC_PACKAGE_PARITY','detail':'canonical package mismatch'})
     cap={k:v.get('status') for k,v in (compat.get('current_reference_host',{}).get('capabilities') or {}).items()}
@@ -80,7 +80,7 @@ def main():
 
     status='PASS' if not errors else 'FAIL'
     out={'schema':1,'release':version,'kind':'DOCUMENTATION_PARITY','status':status,
-         'inputs':{'documentation_ownership':{'path':rel(POLICY),'sha256':sha(POLICY)},'compatibility':{'path':'data/validation/compatibility-matrix-0.1.0.json','sha256':sha(ROOT/'data/validation/compatibility-matrix-0.1.0.json')},'release_status':{'path':'data/validation/release-status-0.1.0.json','sha256':sha(ROOT/'data/validation/release-status-0.1.0.json')}},
+         'inputs':{'documentation_ownership':{'path':rel(POLICY),'sha256':sha(POLICY)},'compatibility':{'path':'data/validation/compatibility-matrix-0.1.0.json','sha256':sha(ROOT/'data/validation/compatibility-matrix-0.1.0.json')},'release_status':{'path':f'data/validation/release-status-{version}.json','sha256':sha(ROOT/f'data/validation/release-status-{version}.json')}},
          'checked_current_documents':[rel(p) for p in docs],
          'checks':{'version_package_product_parity':True,'local_markdown_links':True,'stale_current_status_patterns':True,'release_availability':True,'host_capabilities':True,'semantic_adapter_boundary':True},
          'violations':errors}

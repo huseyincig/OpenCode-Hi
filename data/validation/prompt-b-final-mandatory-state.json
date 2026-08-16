@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_FINAL_MANDATORY_END_STATE_AUDIT",
+  "program": "PROMPT_B",
+  "section": 47,
+  "status": "PASS",
+  "certification_state": "PARTIAL",
+  "source_checkpoint": {
+    "commit": "8947f5225a08febc91ff9f277d7d9a89dacabd40",
+    "tree": "38a4f1c2bf6d0a189b36ec9fe6212fab5bb3d8c5"
+  },
+  "coherence": {
+    "source_contracts": true,
+    "generated_projections": true,
+    "runtime_behavior": true,
+    "tests": true,
+    "real_host_behavior": true,
+    "receipts": true,
+    "README": true,
+    "architecture_docs": true,
+    "Constitution": true,
+    "installation_docs": true,
+    "release_docs": true,
+    "certification_docs": true
+  },
+  "external_blockers": [
+    "current-source-windows-acceptance-pending-external-ci",
+    "T4-current-release-publication-verification-pending"
+  ],
+  "summary": {
+    "required": 12,
+    "coherent": 12,
+    "violations": 0
+  },
+  "violations": [],
+  "claim_boundary": "Repository-internal mandatory end-state can be coherent before publication; CERTIFIED remains withheld until external blockers are closed."
+}

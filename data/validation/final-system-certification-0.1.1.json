@@ -1,0 +1,178 @@
+{
+  "schema": 1,
+  "kind": "FINAL_SYSTEM_CERTIFICATION",
+  "program": "PROMPT_B",
+  "section": 44,
+  "status": "PARTIAL",
+  "release": "0.1.1",
+  "certified_source_checkpoint": {
+    "commit": "8947f5225a08febc91ff9f277d7d9a89dacabd40",
+    "tree": "38a4f1c2bf6d0a189b36ec9fe6212fab5bb3d8c5",
+    "note": "Source checkpoint attested by a subsequent evidence commit to avoid self-referential Git hashes."
+  },
+  "schema_versions": {
+    "final_certification": 1
+  },
+  "host_matrix": {
+    "opencode_version": "1.18.18",
+    "platform": "linux",
+    "architecture": "aarch64",
+    "status": "CAPABILITY_SCOPED_EXACT_T3",
+    "capabilities": {
+      "process-lifecycle": {
+        "status": "SUPPORTED_T3",
+        "tested_git_commit": "3ca843d1443e94860f247fb5ac9b5192e391fec1",
+        "receipt": "data/validation/external-opencode-hi-0.1.1-process-1.18.18-head-3ca843d.json",
+        "source_rank": 185,
+        "scope_limitations": [
+          "Exact T3 applies only to OpenCode 1.18.18 on linux/aarch64 and exact source 3ca843d1443e94860f247fb5ac9b5192e391fec1.",
+          "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted; arbitrary model-facing shell jobs are outside this claim."
+        ]
+      },
+      "workspace-isolation-binding": {
+        "status": "SUPPORTED_T3",
+        "tested_git_commit": "3ca843d1443e94860f247fb5ac9b5192e391fec1",
+        "receipt": "data/validation/external-opencode-hi-0.1.1-workspace-1.18.18-head-3ca843d.json",
+        "source_rank": 185,
+        "scope_limitations": [
+          "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution.",
+          "Exact T3 applies only to OpenCode 1.18.18 on linux/aarch64 and exact source 3ca843d1443e94860f247fb5ac9b5192e391fec1."
+        ]
+      },
+      "browser-execution": {
+        "status": "SUPPORTED_T3",
+        "tested_git_commit": "3ca843d1443e94860f247fb5ac9b5192e391fec1",
+        "receipt": "data/validation/external-opencode-hi-0.1.1-browser-1.18.18-head-3ca843d.json",
+        "source_rank": 185,
+        "scope_limitations": [
+          "Browser execution remains local-http(s) scoped and rejects credential-bearing URLs and arbitrary selectors.",
+          "Exact T3 applies only to OpenCode 1.18.18 on linux/aarch64 with real Chromium and exact source 3ca843d1443e94860f247fb5ac9b5192e391fec1."
+        ]
+      }
+    }
+  },
+  "platform_matrix": {
+    "linux_current": "PASS",
+    "windows_current": "PENDING_EXTERNAL_CI"
+  },
+  "test_totals": {
+    "python": 115,
+    "node": 848,
+    "architecture": 22
+  },
+  "mutation": {
+    "required_areas": 9,
+    "configured_mutants": 15,
+    "killed_mutants": 15,
+    "survived_mutants": 0,
+    "compile_only_kills": 0,
+    "violations": 0
+  },
+  "property_fuzz": {
+    "required_areas": 9,
+    "covered_areas": 9,
+    "generated_cases": 864,
+    "violations": 0
+  },
+  "replay": {
+    "required_surfaces": 5,
+    "covered_surfaces": 5,
+    "cases": 28,
+    "nondeterministic_drift": 0,
+    "violations": 0
+  },
+  "failure_injection": {
+    "required": 12,
+    "covered": 12,
+    "violations": 0
+  },
+  "exact_t3": {
+    "required_capabilities": 3,
+    "exact_current_capabilities": 3,
+    "lifecycle_invariants": 61,
+    "violations": 0
+  },
+  "known_unsupported_capabilities": [
+    "alternate-host implementation is not shipped",
+    "structured native HumanDecision UI open remains unsupported; chat transport is used"
+  ],
+  "known_limitations": [
+    "T3 scope is exact OpenCode 1.18.18 on Linux/aarch64 for current local receipts",
+    "Windows current-source proof is external-CI gated until pushed",
+    "T4 is impossible before real GitHub/npm publication and is not fabricated"
+  ],
+  "known_defect_count": 0,
+  "blockers": [
+    "current-source-windows-acceptance-pending-external-ci",
+    "T4-current-release-publication-verification-pending"
+  ],
+  "inputs": {
+    "data/validation/prompt-b-final-documentation-reaudit.json": {
+      "sha256": "102e755376929086acb87aff73414eb1122c44b4b961d215f60eebed898c3248"
+    },
+    "data/validation/prompt-b-certification-evidence-tiers.json": {
+      "sha256": "a0796c83469d2a2a38dad3ea565c8868c7fa8168da94b5fcbda904bfbb02899a"
+    },
+    "data/validation/prompt-b-security-privacy.json": {
+      "sha256": "be16edec2f293d46f448f558c9e7f8055e21376f2e3824f8077fecdc5d1ed457"
+    },
+    "data/validation/prompt-b-authority-permission-external-action.json": {
+      "sha256": "1b843540d24ad320a8832d80d137655a152e6dd8d2f463169ebda2a31f18d33c"
+    },
+    "data/validation/prompt-b-context-project-intelligence-compression.json": {
+      "sha256": "f7203a29c00815f2c5fd94559e8008e6f441dceaeaa2fc87dbc1e6b59939c98c"
+    },
+    "data/validation/prompt-b-process-workspace-browser-lifecycle.json": {
+      "sha256": "974ef593898b9c7a08fab99c361c48a98efb7940467bc05b44ac6e7434716603"
+    },
+    "data/validation/prompt-b-persistence-concurrency.json": {
+      "sha256": "08c31496239f2b49a7ca7315c963d6fb95fedbe833bc0287225f227cda116155"
+    },
+    "data/validation/prompt-b-vcs-path-portability.json": {
+      "sha256": "ab083e899d0dc29cf0ba38a70a3be160a954a3095983e6042a783626ebe5e54e"
+    },
+    "data/validation/prompt-b-test-suite-audit.json": {
+      "sha256": "aab1362d3b14d721e126581de426c412f1db18e1cc520ff0d9a6f274d82624e0"
+    },
+    "data/validation/prompt-b-mutation-testing.json": {
+      "sha256": "dabfe5f97ff6e6d5b819faa922e836dd293de51083e277df642316ae383e3a77"
+    },
+    "data/validation/prompt-b-property-fuzz-testing.json": {
+      "sha256": "90bedeb1d638ecd133e09592956ce7d0cd335e116fa6c300799ae1df997c7408"
+    },
+    "data/validation/prompt-b-replay-testing.json": {
+      "sha256": "c5992956403c057b847a562cd28b47299d677b73aa7af423b7057274ba4f9aa3"
+    },
+    "data/validation/prompt-b-failure-injection.json": {
+      "sha256": "cdbbbe5781ea6218064ac42090bcbb6663977a9102c26d99379f0c2e7c718db0"
+    },
+    "data/validation/prompt-b-install-update-lifecycle.json": {
+      "sha256": "73b0954bfdc96380928300c2b1c4f1f62d3c0e8a178e23fc27a2ab1c5af4f56d"
+    },
+    "data/validation/prompt-b-packaging-fresh-consumer.json": {
+      "sha256": "7cefbb6af933d4156b95d1cdbe0300d2424dc269dfe3d45cb9c31a54eefa9d1b"
+    },
+    "data/validation/prompt-b-cross-platform-acceptance.json": {
+      "sha256": "db2c271c61cc9afc8565aef3c736c3354d880b5f38d2e61b1c7b4c5a21af0f83"
+    },
+    "data/validation/prompt-b-exact-current-opencode-t3.json": {
+      "sha256": "5c2e3dd974ee5553636988a66826ab47b61aee26bc84b7b7a45dc325b7aea57d"
+    },
+    "data/validation/prompt-b-zero-known-defect-loop.json": {
+      "sha256": "3e8199c3969cf264741d064a1ec6525dbd008c5044901a67b0a6bffeb2777d0d"
+    },
+    "data/validation/prompt-b-hygiene.json": {
+      "sha256": "4a08dc914494a6bf6bb4fc10bcd59b7298d493b07723eae407c552b1bd65b54b"
+    },
+    "data/validation/documentation-parity.json": {
+      "sha256": "bc03b219a5d2b194859a9648de9425fe0f2600d560805ca9fbfc7f9883d46148"
+    },
+    "data/validation/compatibility-matrix-0.1.0.json": {
+      "sha256": "127cda3a9cf2017de21f28a9ee715c05e2c821bc0896565a8f1190debeb7a933"
+    },
+    "data/validation/release-status-0.1.1.json": {
+      "sha256": "311050ae88b049582c007e491a9ca4e1fd1009b6516d61e24df0e7607983627a"
+    }
+  },
+  "claim_boundary": "PARTIAL means engineering evidence is closed locally while externally impossible prepublication evidence remains pending. CERTIFIED is emitted only after current-source Windows acceptance and real current-release T4 proof."
+}

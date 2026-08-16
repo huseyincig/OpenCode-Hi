@@ -6,15 +6,15 @@
   "inputs": {
     "documentation_ownership": {
       "path": "data/documentation-ownership.json",
-      "sha256": "e1fc392a9d49080eed2b7e855ad6099b87211c33fbf898600326680285e621ef"
+      "sha256": "e4a360e19a9a5d2d82ca57d753b7c2e43c2843349c1d9e74adae03caeb78efb3"
     },
     "compatibility": {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
       "sha256": "127cda3a9cf2017de21f28a9ee715c05e2c821bc0896565a8f1190debeb7a933"
     },
     "release_status": {
-      "path": "data/validation/release-status-0.1.0.json",
-      "sha256": "4ea5e44d7bca5562a30c9824fb680925417627d00165b2c4e36096f2ce60ef4a"
+      "path": "data/validation/release-status-0.1.1.json",
+      "sha256": "311050ae88b049582c007e491a9ca4e1fd1009b6516d61e24df0e7607983627a"
     }
   },
   "checked_current_documents": [
@@ -29,6 +29,7 @@
     "docs/CONTEXT.md",
     "docs/EXECUTION-POLICY.md",
     "docs/FILESYSTEM-LAYOUT.md",
+    "docs/FINAL-SYSTEM-CERTIFICATION.md",
     "docs/HI-NAMING-NAMESPACE.md",
     "docs/HOSTS.md",
     "docs/HUMAN-DECISIONS.md",
