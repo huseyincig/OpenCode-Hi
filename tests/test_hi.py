@@ -1462,7 +1462,7 @@ def test_prompt_b_zero_known_defect_loop_closes_every_recorded_finding_and_reaud
     assert d['summary']['recorded_findings']==67 and d['summary']['unresolved_known_defects']==0 and d['summary']['adjacent_regression_pass']==93
     assert d['summary']['full_python_pass']==118 and d['summary']['full_node_pass']==848 and d['summary']['exact_t3_capabilities']==3 and d['summary']['lifecycle_invariants_pass']==61
     assert d['violations']==[] and len({x['id'] for x in d['defects']})==67
-    assert {'npm-view-json-shape-verifier-drift','npm-postpublish-registry-read-after-write-race','post-t4-documentation-stale-publication-state'}<={x['id'] for x in d['defects']}
+    assert {'npm-view-json-shape-verifier-drift','npm-postpublish-registry-read-after-write-race','post-t4-documentation-stale-publication-state','npm-packed-public-document-links-incomplete','windows-packed-doc-audit-npm-shim-resolution'}<={x['id'] for x in d['defects']}
     commit=d['source_checkpoint']['commit']
     for row in d['defects']:
         assert len(row['closure_pipeline'])==12
