@@ -2,7 +2,6 @@ import {existsSync} from 'node:fs'
 import {projectHiOpenCodeAgents,type HiAgentProjectionResult} from './agent-binding.js'
 import {applyAdmittedProjectMethodologyPermissions} from '../runtime/methodology/host-permissions.js'
 import {applyProjectAuthorityPermissions,type ProjectAuthorityStore} from '../runtime/safety/project-authority.js'
-import {projectBuiltinPrimaryHiToolVisibility,type PrimaryToolVisibilityProjectionResult} from './primary-tool-visibility.js'
 
 function record(value:unknown):Record<string,unknown>|undefined{return value&&typeof value==='object'&&!Array.isArray(value)?value as Record<string,unknown>:undefined}
 
@@ -21,13 +20,12 @@ export function probeOpenCodeComposition(config:Record<string,unknown>):OpenCode
   const family:OpenCodeConfigFamily=v1Signals.length&&v2Signals.length?'mixed':v1Signals.length?'v1-config-hook':v2Signals.length?'v2-domain-config':'unknown'
   return{family,signals:[...v1Signals.map(x=>`v1:${x}`),...v2Signals.map(x=>`v2:${x}`)],v1ConfigProjection:family==='v1-config-hook'||family==='unknown',v2DomainTransformPreferred:family==='v2-domain-config'||family==='mixed'}
 }
-export interface V1CompositionProjectionResult{agentProjection:HiAgentProjectionResult;primaryToolVisibility:PrimaryToolVisibilityProjectionResult;skillPathAdded:boolean;methodologyPermissions:number;diagnostics:string[]}
+export interface V1CompositionProjectionResult{agentProjection:HiAgentProjectionResult;skillPathAdded:boolean;methodologyPermissions:number;diagnostics:string[]}
 /** Current SDK/V1 compatibility projection. Mutates only explicit Hi-owned/narrowing leaves. */
 export function projectHiV1Composition(input:{config:Record<string,unknown>;packagedAgents:Record<string,unknown>;packagedSkillsDir:string;projectRoot:string;projectAuthority:ProjectAuthorityStore}):V1CompositionProjectionResult{
   const {config,packagedAgents,packagedSkillsDir,projectRoot,projectAuthority}=input,diagnostics:string[]=[]
   const agentProjection=projectHiOpenCodeAgents(config,packagedAgents)
-  if(agentProjection.collisions.length){diagnostics.push(...agentProjection.collisions.map(name=>`agent-collision:${name}`));return{agentProjection,primaryToolVisibility:{targets:[],defaultHidden:[],explicitPreserved:[],diagnostics:[]},skillPathAdded:false,methodologyPermissions:0,diagnostics}}
-  const primaryToolVisibility=projectBuiltinPrimaryHiToolVisibility(config);diagnostics.push(...primaryToolVisibility.diagnostics)
+  if(agentProjection.collisions.length){diagnostics.push(...agentProjection.collisions.map(name=>`agent-collision:${name}`));return{agentProjection,skillPathAdded:false,methodologyPermissions:0,diagnostics}}
   let skillPathAdded=false
   if(existsSync(packagedSkillsDir)){
     const skills=record(config.skills)??{},paths=Array.isArray(skills.paths)?skills.paths:[]
@@ -36,7 +34,7 @@ export function projectHiV1Composition(input:{config:Record<string,unknown>;pack
   }
   const methodology=applyAdmittedProjectMethodologyPermissions(config,projectRoot,{hiInjectedAgents:new Set(agentProjection.inserted)})
   applyProjectAuthorityPermissions(config,projectAuthority)
-  return{agentProjection,primaryToolVisibility,skillPathAdded,methodologyPermissions:methodology.length,diagnostics}
+  return{agentProjection,skillPathAdded,methodologyPermissions:methodology.length,diagnostics}
 }
 
 export interface OpenCodeCompositionProjectionResult{

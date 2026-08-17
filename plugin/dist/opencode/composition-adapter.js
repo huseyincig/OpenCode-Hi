@@ -2,7 +2,6 @@ import { existsSync } from 'node:fs';
 import { projectHiOpenCodeAgents } from './agent-binding.js';
 import { applyAdmittedProjectMethodologyPermissions } from '../runtime/methodology/host-permissions.js';
 import { applyProjectAuthorityPermissions } from '../runtime/safety/project-authority.js';
-import { projectBuiltinPrimaryHiToolVisibility } from './primary-tool-visibility.js';
 function record(value) { return value && typeof value === 'object' && !Array.isArray(value) ? value : undefined; }
 export function selectOpenCodeCompositionMode(capabilities) {
     if (capabilities.v2AgentTransform && capabilities.v2SkillRegistration && capabilities.v2PermissionTransform)
@@ -27,10 +26,8 @@ export function projectHiV1Composition(input) {
     const agentProjection = projectHiOpenCodeAgents(config, packagedAgents);
     if (agentProjection.collisions.length) {
         diagnostics.push(...agentProjection.collisions.map(name => `agent-collision:${name}`));
-        return { agentProjection, primaryToolVisibility: { targets: [], defaultHidden: [], explicitPreserved: [], diagnostics: [] }, skillPathAdded: false, methodologyPermissions: 0, diagnostics };
+        return { agentProjection, skillPathAdded: false, methodologyPermissions: 0, diagnostics };
     }
-    const primaryToolVisibility = projectBuiltinPrimaryHiToolVisibility(config);
-    diagnostics.push(...primaryToolVisibility.diagnostics);
     let skillPathAdded = false;
     if (existsSync(packagedSkillsDir)) {
         const skills = record(config.skills) ?? {}, paths = Array.isArray(skills.paths) ? skills.paths : [];
@@ -43,7 +40,7 @@ export function projectHiV1Composition(input) {
     }
     const methodology = applyAdmittedProjectMethodologyPermissions(config, projectRoot, { hiInjectedAgents: new Set(agentProjection.inserted) });
     applyProjectAuthorityPermissions(config, projectAuthority);
-    return { agentProjection, primaryToolVisibility, skillPathAdded, methodologyPermissions: methodology.length, diagnostics };
+    return { agentProjection, skillPathAdded, methodologyPermissions: methodology.length, diagnostics };
 }
 /**
  * Adapter entrypoint used by the current config hook. V2-shaped config is never
