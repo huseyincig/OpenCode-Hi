@@ -122,6 +122,22 @@ test('independent-multi semantic state suppresses contradictory intent.planning 
   assert.deepEqual(assessed?.payload?.intent_signals,['intent.planning']);assert.deepEqual(assessed?.payload?.effective_intent_signals,[]);assert.deepEqual(assessed?.payload?.runtime_suppressed_intent_signals,['intent.planning'])
 })
 
+test('explicit verification policy suppresses contradictory intent.test-strategy methodology signal',()=>{
+  const store=new MissionStore(root)
+  const m=store.start('s-explicit-verification-strategy','Fix two files and run targeted tests')
+  store.applyInitialSemanticAssessment('s-explicit-verification-strategy',{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'multi-file',risk:'medium',ambiguity:'none',dependency_class:'independent-multi',required_capabilities:['implementation','verification','multi-stream-delegation'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:[],intent_signals:['intent.test-strategy'],suppressed_intent_signals:[]})
+  assert.equal(m.methodology.methodology_needs.some(x=>x.name==='hi-test-strategy'),false)
+  assert.deepEqual(m.execution.verification_policy.requiredKinds,['targeted-tests'])
+  const assessed=m.execution.ledger.findLast(x=>x.type==='semantic.assessed');assert.deepEqual(assessed?.payload?.intent_signals,['intent.test-strategy']);assert.deepEqual(assessed?.payload?.effective_intent_signals,[]);assert.deepEqual(assessed?.payload?.runtime_suppressed_intent_signals,['intent.test-strategy'])
+})
+
+test('intent.test-strategy remains active when semantic assessment has no explicit verification policy',()=>{
+  const store=new MissionStore(root)
+  const m=store.start('s-unknown-verification-strategy','Choose sufficient verification for an unclear change')
+  store.applyInitialSemanticAssessment('s-unknown-verification-strategy',{material:true,message_kind:'mission',task_kind:'implementation',scope:'multi-file',risk:'medium',ambiguity:'none',dependency_class:'sequential',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:['intent.test-strategy'],suppressed_intent_signals:[]})
+  assert.ok(m.methodology.methodology_needs.some(x=>x.name==='hi-test-strategy'&&x.producer==='intent'))
+})
+
 test('sequential semantic state keeps intent.planning methodology signal active',()=>{
   const store=new MissionStore(root)
   const m=store.start('s-sequential-planning-signal','Sequence dependent changes')

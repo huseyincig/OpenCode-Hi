@@ -18,6 +18,7 @@ function obligation(id:string,kind:Obligation['kind'],summary:string,requiredEvi
 function reconciledIntentMethodologySignals(assessment:SemanticIntentAssessment):{active:SemanticIntentAssessment['intent_signals'];suppressed:SemanticIntentAssessment['intent_signals'];runtimeSuppressed:SemanticIntentAssessment['intent_signals']}{
   const suppressed=new Set(assessment.suppressed_intent_signals),runtimeSuppressed:SemanticIntentAssessment['intent_signals']=[]
   if(assessment.dependency_class==='independent-multi'&&assessment.intent_signals.includes('intent.planning')){suppressed.add('intent.planning');runtimeSuppressed.push('intent.planning')}
+  if(assessment.likely_verification.length>0&&assessment.intent_signals.includes('intent.test-strategy')){suppressed.add('intent.test-strategy');runtimeSuppressed.push('intent.test-strategy')}
   return{active:assessment.intent_signals.filter(signal=>!suppressed.has(signal)),suppressed:[...suppressed],runtimeSuppressed}
 }
 export class MissionStore {

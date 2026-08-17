@@ -20,6 +20,10 @@ function reconciledIntentMethodologySignals(assessment) {
         suppressed.add('intent.planning');
         runtimeSuppressed.push('intent.planning');
     }
+    if (assessment.likely_verification.length > 0 && assessment.intent_signals.includes('intent.test-strategy')) {
+        suppressed.add('intent.test-strategy');
+        runtimeSuppressed.push('intent.test-strategy');
+    }
     return { active: assessment.intent_signals.filter(signal => !suppressed.has(signal)), suppressed: [...suppressed], runtimeSuppressed };
 }
 export class MissionStore {
