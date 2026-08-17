@@ -96,6 +96,15 @@ Efficiency second, only with truthful provenance:
 - full plugin suite/build/architecture lint after any final cutover;
 - scoped diff inspection.
 
+## Current Mechanical Evidence
+
+- current host OpenCode is `1.18.18`; project `@opencode-ai/plugin` and `@opencode-ai/sdk` are also `1.18.18`;
+- OpenCode Go credential is present for the repo owner as provider `opencode-go` and a real `opencode-go/deepseek-v4-flash` probe completed with `finish=stop`;
+- the probe exported exact observed usage of 7333 input / 5 output tokens; its monetary `cost` is OpenCode-calculated and must not be presented as provider-billed cost;
+- pre-reset Hi commit `e8c1a7d77f3546bb2f940f4e7b439ed06a273e83` is reproducible in isolated worktree `/workspace/Reference/benchmarks/opencode-hi-e8c1a7d`: clean `npm ci`, plugin suite 848/848 PASS, architecture lint 22/22 PASS;
+- strict comparative receipt contract is implemented and targeted verification is build PASS + 10/10 receipt-schema tests PASS; checkpoint pending;
+- deterministic in-process benchmark simulations remain regression/ablation guards only and are not comparative real-host product proof.
+
 ## Exact Next Action
 
-Inspect the current benchmark/telemetry harness, `/workspace/Reference/upstream-audit/benchmark-plan.md`, available OpenCode runtime binaries/SDK, Git history/checkpoints and any existing benchmark receipts. Establish which vanilla OpenCode and pre-reset Hi baselines are mechanically runnable on this host. Define and test a strict comparative episode/receipt schema before running or claiming comparisons. Keep deterministic in-process policy simulations explicitly separate from real host/product episodes.
+Checkpoint the strict comparative receipt contract without staging unrelated user-owned dirty validation/release/script files. Then create one pinned trivial-localized-work fixture and execute the same `opencode-go/deepseek-v4-flash` real-host episode through: (1) vanilla OpenCode 1.18.18 with external plugins disabled, (2) reproducible pre-reset Hi `e8c1a7d`, and (3) current Hi checkpoint. Use isolated config/worktree state per episode, capture exact system/model/config identity and raw machine receipts, run deterministic acceptance after each episode, and only then compare correctness/over-orchestration/usage. Do not infer provider-billed cost from OpenCode-derived monetary values.
