@@ -25,6 +25,12 @@ test('multi-stream state overrides the local single path only when explicitly se
   assert.equal(resolveExecutionMode(intent({scope:'local'})).mode,'single')
 })
 
+test('independent-multi dependency state proves parallel branches even when scope is repo-wide',()=>{
+  const d=resolveExecutionMode(intent({scope:'repo-wide',dependencyClass:'independent-multi',requiredCapabilities:['implementation','verification','repository-analysis']}))
+  assert.equal(d.mode,'parallel')
+  assert.match(d.reason.join(' '),/independent-multi/)
+})
+
 test('authority boundary forbids speculative parallel execution',()=>{
   const d=resolveExecutionMode(intent({risk:'authority-boundary',scope:'multi-stream',dependencyClass:'independent-multi',requestedExternalActions:['package-publish']}))
   assert.equal(d.mode,'single')
