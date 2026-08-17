@@ -7,6 +7,7 @@ import {createRequire} from 'node:module'
 import {PACKAGED_HI_AGENTS} from '../dist/generated/agent-config.js'
 import {ProjectAuthorityStore} from '../dist/runtime/safety/project-authority.js'
 import {probeOpenCodeComposition,projectHiOpenCodeComposition,projectHiV1Composition,selectOpenCodeCompositionMode} from '../dist/opencode/composition-adapter.js'
+import {HI_PRIMARY_HIDDEN_TOOL_IDS,projectBuiltinPrimaryHiToolVisibility} from '../dist/opencode/primary-tool-visibility.js'
 
 const require=createRequire(import.meta.url)
 const clone=x=>structuredClone(x)
@@ -56,6 +57,33 @@ test('V1 composition preserves plugin/provider/MCP/custom order and host global 
 
 test('V1 composition does not create host-global default_agent or subagent_depth when absent',()=>{
   const dir=root();try{const config={plugin:['opencode-hi']},authority=new ProjectAuthorityStore(dir);const out=projectHiV1Composition({config,packagedAgents:PACKAGED_HI_AGENTS,packagedSkillsDir:join(dir,'missing'),projectRoot:dir,projectAuthority:authority});assert.deepEqual(out.agentProjection.collisions,[]);assert.equal('default_agent' in config,false);assert.equal('subagent_depth' in config,false)}finally{rmSync(dir,{recursive:true,force:true})}
+})
+
+
+test('V1 composition hides only provider-irrelevant Hi tools from built-in primaries while preserving executable control-plane tools',()=>{
+  const dir=root();try{
+    const config={plugin:['opencode-hi']},authority=new ProjectAuthorityStore(dir)
+    const out=projectHiV1Composition({config,packagedAgents:PACKAGED_HI_AGENTS,packagedSkillsDir:join(dir,'missing'),projectRoot:dir,projectAuthority:authority})
+    assert.deepEqual(out.primaryToolVisibility.targets,['build','plan'])
+    for(const primary of ['build','plan'])for(const id of HI_PRIMARY_HIDDEN_TOOL_IDS)assert.equal(config.agent[primary].tools[id],false,`${primary}:${id}`)
+    for(const id of ['hi_intent_assess','hi_direct_progress','hi_task_start','hi_task_await','hi_context_artifact_add','hi_temporary_mutation_register','hi_process_spawn'])assert.equal(config.agent.build.tools[id],undefined,`${id} must remain provider-visible on the primary surface`)
+    assert.equal('default_agent' in config,false);assert.equal('subagent_depth' in config,false)
+  }finally{rmSync(dir,{recursive:true,force:true})}
+})
+
+test('primary Hi tool visibility is idempotent and never overwrites explicit host tool choices or non-Hi tools',()=>{
+  const config={agent:{build:{description:'host build',tools:{hi_status:true,hi_browser_open:false,external_custom_tool:true}},plan:{tools:{hi_metrics:true}}}},beforeBuild=config.agent.build
+  const first=projectBuiltinPrimaryHiToolVisibility(config),second=projectBuiltinPrimaryHiToolVisibility(config)
+  assert.equal(config.agent.build,beforeBuild,'existing host agent identity is preserved')
+  assert.equal(config.agent.build.tools.hi_status,true);assert.equal(config.agent.build.tools.hi_browser_open,false);assert.equal(config.agent.build.tools.external_custom_tool,true);assert.equal(config.agent.build.tools.hi_metrics,false)
+  assert.equal(config.agent.plan.tools.hi_metrics,true);assert.equal(config.agent.plan.tools.hi_browser_open,false)
+  assert.ok(first.explicitPreserved.includes('build:hi_status'));assert.equal(second.defaultHidden.length,0)
+})
+
+test('primary tool visibility fails narrow on malformed host agent/tool leaves instead of replacing them',()=>{
+  const malformed={agent:{build:'host-owned-nonrecord',plan:{tools:'host-owned-nonrecord'}}},before=structuredClone(malformed)
+  const out=projectBuiltinPrimaryHiToolVisibility(malformed)
+  assert.deepEqual(malformed,before);assert.deepEqual(out.targets,[]);assert.deepEqual(out.diagnostics,['primary-tool-visibility-skipped:build:agent-shape','primary-tool-visibility-skipped:plan:tools-shape'])
 })
 
 test('V2 or mixed shapes are left untouched and return deterministic adapter diagnostics instead of receiving V1 keys',()=>{

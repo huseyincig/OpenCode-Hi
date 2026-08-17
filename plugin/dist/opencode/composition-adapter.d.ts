@@ -1,5 +1,6 @@
 import { type HiAgentProjectionResult } from './agent-binding.js';
 import { type ProjectAuthorityStore } from '../runtime/safety/project-authority.js';
+import { type PrimaryToolVisibilityProjectionResult } from './primary-tool-visibility.js';
 export interface OpenCodeCompositionCapabilities {
     v1ConfigHook: boolean;
     v2AgentTransform: boolean;
@@ -18,6 +19,7 @@ export interface OpenCodeCompositionProbe {
 export declare function probeOpenCodeComposition(config: Record<string, unknown>): OpenCodeCompositionProbe;
 export interface V1CompositionProjectionResult {
     agentProjection: HiAgentProjectionResult;
+    primaryToolVisibility: PrimaryToolVisibilityProjectionResult;
     skillPathAdded: boolean;
     methodologyPermissions: number;
     diagnostics: string[];
