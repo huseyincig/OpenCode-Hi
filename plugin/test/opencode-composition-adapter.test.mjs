@@ -58,6 +58,16 @@ test('V1 composition does not create host-global default_agent or subagent_depth
   const dir=root();try{const config={plugin:['opencode-hi']},authority=new ProjectAuthorityStore(dir);const out=projectHiV1Composition({config,packagedAgents:PACKAGED_HI_AGENTS,packagedSkillsDir:join(dir,'missing'),projectRoot:dir,projectAuthority:authority});assert.deepEqual(out.agentProjection.collisions,[]);assert.equal('default_agent' in config,false);assert.equal('subagent_depth' in config,false)}finally{rmSync(dir,{recursive:true,force:true})}
 })
 
+test('V1 composition disables the competing native task runtime only on built-in primary agents',()=>{
+  const dir=root();try{
+    const config={plugin:['opencode-hi'],agent:{build:{tools:{task:true,external_tool:true}},external:{tools:{task:true}}}},authority=new ProjectAuthorityStore(dir)
+    const out=projectHiV1Composition({config,packagedAgents:PACKAGED_HI_AGENTS,packagedSkillsDir:join(dir,'missing'),projectRoot:dir,projectAuthority:authority})
+    assert.equal(config.agent.build.tools.task,false);assert.equal(config.agent.plan.tools.task,false);assert.equal(config.agent.build.tools.external_tool,true);assert.equal(config.agent.external.tools.task,true)
+    assert.ok(out.diagnostics.includes('native-task-exclusion-narrowed:build:explicit-true'))
+    assert.equal('default_agent' in config,false)
+  }finally{rmSync(dir,{recursive:true,force:true})}
+})
+
 test('V2 or mixed shapes are left untouched and return deterministic adapter diagnostics instead of receiving V1 keys',()=>{
   const dir=root();try{
     const authority=new ProjectAuthorityStore(dir)

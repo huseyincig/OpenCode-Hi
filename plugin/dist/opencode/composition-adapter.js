@@ -3,6 +3,29 @@ import { projectHiOpenCodeAgents } from './agent-binding.js';
 import { applyAdmittedProjectMethodologyPermissions } from '../runtime/methodology/host-permissions.js';
 import { applyProjectAuthorityPermissions } from '../runtime/safety/project-authority.js';
 function record(value) { return value && typeof value === 'object' && !Array.isArray(value) ? value : undefined; }
+function projectBuiltinPrimaryNativeTaskExclusion(config, diagnostics) {
+    const agents = record(config.agent) ?? {};
+    for (const name of ['build', 'plan']) {
+        const current = agents[name];
+        if (current !== undefined && !record(current)) {
+            diagnostics.push(`native-task-exclusion-skipped:${name}:agent-shape`);
+            continue;
+        }
+        const agent = record(current) ?? {};
+        const existingTools = agent.tools;
+        if (existingTools !== undefined && !record(existingTools)) {
+            diagnostics.push(`native-task-exclusion-skipped:${name}:tools-shape`);
+            continue;
+        }
+        const tools = record(existingTools) ?? {};
+        if (tools.task === true)
+            diagnostics.push(`native-task-exclusion-narrowed:${name}:explicit-true`);
+        tools.task = false;
+        agent.tools = tools;
+        agents[name] = agent;
+    }
+    config.agent = agents;
+}
 export function selectOpenCodeCompositionMode(capabilities) {
     if (capabilities.v2AgentTransform && capabilities.v2SkillRegistration && capabilities.v2PermissionTransform)
         return 'v2-domain-transform';
@@ -28,6 +51,7 @@ export function projectHiV1Composition(input) {
         diagnostics.push(...agentProjection.collisions.map(name => `agent-collision:${name}`));
         return { agentProjection, skillPathAdded: false, methodologyPermissions: 0, diagnostics };
     }
+    projectBuiltinPrimaryNativeTaskExclusion(config, diagnostics);
     let skillPathAdded = false;
     if (existsSync(packagedSkillsDir)) {
         const skills = record(config.skills) ?? {}, paths = Array.isArray(skills.paths) ? skills.paths : [];

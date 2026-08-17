@@ -5,6 +5,21 @@ import {applyProjectAuthorityPermissions,type ProjectAuthorityStore} from '../ru
 
 function record(value:unknown):Record<string,unknown>|undefined{return value&&typeof value==='object'&&!Array.isArray(value)?value as Record<string,unknown>:undefined}
 
+function projectBuiltinPrimaryNativeTaskExclusion(config:Record<string,unknown>,diagnostics:string[]):void{
+  const agents=record(config.agent)??{}
+  for(const name of ['build','plan']){
+    const current=agents[name]
+    if(current!==undefined&&!record(current)){diagnostics.push(`native-task-exclusion-skipped:${name}:agent-shape`);continue}
+    const agent=record(current)??{}
+    const existingTools=agent.tools
+    if(existingTools!==undefined&&!record(existingTools)){diagnostics.push(`native-task-exclusion-skipped:${name}:tools-shape`);continue}
+    const tools=record(existingTools)??{}
+    if(tools.task===true)diagnostics.push(`native-task-exclusion-narrowed:${name}:explicit-true`)
+    tools.task=false;agent.tools=tools;agents[name]=agent
+  }
+  config.agent=agents
+}
+
 export interface OpenCodeCompositionCapabilities{v1ConfigHook:boolean;v2AgentTransform:boolean;v2SkillRegistration:boolean;v2PermissionTransform:boolean}
 export type OpenCodeCompositionMode='v1-config-hook'|'v2-domain-transform'|'unsupported'
 export function selectOpenCodeCompositionMode(capabilities:OpenCodeCompositionCapabilities):OpenCodeCompositionMode{
@@ -26,6 +41,7 @@ export function projectHiV1Composition(input:{config:Record<string,unknown>;pack
   const {config,packagedAgents,packagedSkillsDir,projectRoot,projectAuthority}=input,diagnostics:string[]=[]
   const agentProjection=projectHiOpenCodeAgents(config,packagedAgents)
   if(agentProjection.collisions.length){diagnostics.push(...agentProjection.collisions.map(name=>`agent-collision:${name}`));return{agentProjection,skillPathAdded:false,methodologyPermissions:0,diagnostics}}
+  projectBuiltinPrimaryNativeTaskExclusion(config,diagnostics)
   let skillPathAdded=false
   if(existsSync(packagedSkillsDir)){
     const skills=record(config.skills)??{},paths=Array.isArray(skills.paths)?skills.paths:[]

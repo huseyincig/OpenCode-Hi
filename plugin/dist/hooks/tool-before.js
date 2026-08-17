@@ -29,6 +29,10 @@ export function createToolBeforeHook(store, background, projectRoot) {
             else
                 throw new Error(`Hi ownership guard: child workers cannot invoke Hi control-plane tool '${tool}'.`);
         }
+        if (m.identity.status === 'active' && tool === 'task') {
+            appendLedger(m, 'orchestration.native-task-blocked', { worker_id: child?.id, payload: { owner: child ? 'child' : 'parent', required_tool: 'hi_task_start' } });
+            throw new Error(child ? 'Hi ownership guard: child workers cannot invoke the native OpenCode task runtime; parent Hi must delegate through hi_task_start.' : 'Hi ownership guard: native OpenCode task delegation is disabled while Hi owns the active mission; use hi_task_start.');
+        }
         if (m.identity.semantic_assessment.status === 'pending') {
             const allowed = new Set(['hi_intent_assess', 'hi_status', 'hi_ledger', 'hi_readiness']);
             if (!allowed.has(tool))
