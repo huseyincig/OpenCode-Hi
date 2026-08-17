@@ -46,7 +46,7 @@ function markdownWorkerResult(text:string):WorkerResult|undefined{
 }
 
 export function parseWorkerResult(text:string):WorkerResult{
-  const bounded=clipText(text,DEFAULT_CONTEXT_BUDGET.max_result_chars),fenced=bounded.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1],candidates=[fenced,bounded].filter(Boolean) as string[]
+  const bounded=clipText(text,DEFAULT_CONTEXT_BUDGET.max_result_chars),jsonFenced=bounded.match(/```json\s*([\s\S]*?)```/i)?.[1],candidates=[jsonFenced,bounded].filter(Boolean) as string[]
   for(const raw of candidates){try{const start=raw.indexOf('{'),end=raw.lastIndexOf('}');if(start>=0&&end>start)return normalizeWorkerResult(JSON.parse(raw.slice(start,end+1)))}catch{}}
   const markdown=markdownWorkerResult(bounded);if(markdown)return markdown
   const status=bounded.match(/(?:^|\n)\s*(?:\*\*|__)?\s*STATUS\s*:\s*([A-Z_ -]+?)(?:\s*(?:\*\*|__))?\s*(?=\n|$)/i)?.[1]?.trim().replace(/[ -]+/g,'_'),summary=bounded.match(/(?:^|\n)\s*(?:\*\*|__)?\s*(?:SUMMARY|FINDINGS?)\s*:\s*(?:\*\*|__)?\s*([^\n]+)/i)?.[1]?.replace(/(?:\*\*|__)\s*$/,'').trim()

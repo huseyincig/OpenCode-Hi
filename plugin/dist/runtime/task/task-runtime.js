@@ -241,7 +241,10 @@ export class TaskRuntime {
                 const resumeAdmission = this.reserveExistingSessionAttempt(m, existing, nextModel);
                 if (!resumeAdmission.ok)
                     throw new Error(`Worker resume scheduler admission unavailable: ${resumeAdmission.reason}`);
-                const previousModel = existing.model;
+                const previousModel = existing.model, attemptBaseline = await this.captureNativeDiff(existing, 'baseline');
+                if (!attemptBaseline)
+                    existing.native_diff_baseline = undefined;
+                existing.native_diff_final = undefined;
                 existing.model = nextModel;
                 existing.generation_at_spawn = m.continuation.generation;
                 existing.status = 'busy';
@@ -250,7 +253,7 @@ export class TaskRuntime {
                 this.registry.set(existing);
                 const issues = oldTask.result.open_issues.join(' | '), missing = oldTask.result.needs_context.join(' | '), freshEvidence = m.execution.evidence.items.filter(e => !e.invalidated_at && ((e.outcome === 'passed') || e.pass === true) && (e.task_id === oldTask.id || e.obligation_ids?.some(id => oldTask.obligation_ids.includes(id)) || (e.scope ?? []).some(file => oldTask.scope.includes(file)))).slice(-8).map(e => `${e.kind}: ${e.summary}`).join(' | '), reviewScope = isHiReadOnlyChildRole(existing.role) ? `Scoped rereview only: previous findings=${issues || 'none'}; changed scope=${m.vcs.changed_files.slice(-20).join(',') || 'none'}; affected evidence=${freshEvidence || 'none'}.` : '', resumeExitRequirements = existing.selected_methodologies.flatMap(name => { const item = catalog.find(x => x.name === name); return item ? [`${name}: ${item.exitRequirements.join(', ')}`] : []; });
                 const resumeVariant = nextModel === selected.primary ? selected.primaryVariant : selected.fallbackVariants[nextModel];
-                const protectedBaseline = Object.keys(existing.native_diff_baseline ?? {}).slice(0, 60);
+                const protectedBaseline = Object.keys(m.vcs.preexisting_user_changes ?? {}).slice(0, 60);
                 beginWorkerAttempt(oldTask, existing);
                 this.recordModelProjection(existing, nextModel, resumeVariant);
                 await this.sendProviderPrompt(existing.session_id, clipText([`Hi corrective resume for existing task ${oldTask.id}.`, `Previous status: ${oldTask.result.status}.`, `Missing context: ${missing || 'none'}.`, `Open issues: ${issues || 'none'}.`, `Current user constraints: ${(oldTask.constraints ?? []).join(' | ') || 'none'}.`, `CURRENT FRESH EVIDENCE: ${freshEvidence || 'none'}.`, `METHODOLOGY EXIT REQUIREMENTS: ${resumeExitRequirements.join(' | ') || 'none'}.`, protectedBaseline.length ? `PRE-EXISTING USER DIRTY BASELINE: ${protectedBaseline.join(', ')}. Cleanup means restore these paths to their exact worker-start baseline, NOT to HEAD. Never discard user-owned edits with git checkout/reset/restore.` : 'Pre-existing user dirty baseline: none observed.', reviewScope, 'Resume from current session context. Apply the smallest correction. Do not restart planning or create sub-orchestrators. Return the structured WorkerResult again.'].filter(Boolean).join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), existing.role, nextModel === 'host-default' ? undefined : nextModel, resumeVariant, promptToolOverrides(oldTask.execution_profile?.tools ?? []));

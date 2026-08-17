@@ -249,6 +249,13 @@ test('worker result normalizes real-host success alias with bounded structured e
   assert.ok(result.evidence.some(e=>e.kind==='review-evidence'&&e.outcome==='passed'))
 })
 
+test('explicit JSON WorkerResult fence wins over an earlier diff fence and drops invalid proof shape',()=>{
+  const text='Implementation complete. Diff:\n\n```diff\n--- src/alpha.js\n+++ src/alpha.js\n@@\n export function double(n){\n-  return n*3\n+  return n*2\n }\n```\n\nVerification deferred to parent.\n\n```json\n{\n  "status":"DONE",\n  "summary":"Changed alpha minimally.",\n  "changed_files":["src/alpha.js"],\n  "scope_expansions":[],\n  "evidence":{"kind":"implementation-complete","detail":"not a canonical evidence array"},\n  "open_issues":["Parent verification required."],\n  "needs_context":null,\n  "context_gap":"none",\n  "failure_finding":"none"\n}\n```'
+  const result=parseWorkerResult(text)
+  assert.equal(result.status,'DONE');assert.equal(result.summary,'Changed alpha minimally.');assert.deepEqual(result.changed_files,['src/alpha.js'])
+  assert.deepEqual(result.evidence,[],'schema-invalid evidence object must not be promoted to proof');assert.deepEqual(result.needs_context,[]);assert.deepEqual(result.open_issues,['Parent verification required.'])
+})
+
 test('real-host labeled WorkerResult fallback recovers state without promoting narrative evidence to proof',()=>{
   const text='WorkerResult:\n\n- **status**: DONE\n- **summary**: Fixed src/alpha.js with the smallest production change.\n- **changed_files**: `["src/alpha.js"]`\n- **scope_expansions**: `[]`\n- **evidence**:\n  - kind: `targeted-tests`, outcome: omitted because parent verification remains open\n  - kind: `code-change`, summary: observed via read after edit\n- **open_issues**: Test execution requires parent/control-plane verification.\n- **needs_context**: none\n- **context_gap**: none\n- **failure_finding**: none'
   const result=parseWorkerResult(text)

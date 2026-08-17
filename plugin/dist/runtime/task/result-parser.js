@@ -59,7 +59,7 @@ function markdownWorkerResult(text) {
     });
 }
 export function parseWorkerResult(text) {
-    const bounded = clipText(text, DEFAULT_CONTEXT_BUDGET.max_result_chars), fenced = bounded.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1], candidates = [fenced, bounded].filter(Boolean);
+    const bounded = clipText(text, DEFAULT_CONTEXT_BUDGET.max_result_chars), jsonFenced = bounded.match(/```json\s*([\s\S]*?)```/i)?.[1], candidates = [jsonFenced, bounded].filter(Boolean);
     for (const raw of candidates) {
         try {
             const start = raw.indexOf('{'), end = raw.lastIndexOf('}');

@@ -50,6 +50,7 @@ export class TaskResultReconciler {
         const task = m.execution.tasks.find(t => t.id === worker.task_id);
         if (!task)
             return result;
+        const priorTaskChanges = new Set((task.result?.changed_files ?? []).map(normFile).filter(Boolean));
         const final = await this.child.captureNativeDiff(worker, 'final');
         const baseline = worker.native_diff_baseline ?? {};
         const nativeDelta = final ? diffDelta(baseline, final) : [];
@@ -59,7 +60,7 @@ export class TaskResultReconciler {
         // A file whose native diff signature is identical to the worker baseline is not part of the
         // worker's net delta, even if the worker self-reports it or briefly touched and restored it.
         // This prevents Hi cleanup from stealing/reverting pre-existing user work.
-        const preservedPreexisting = final ? reportedRaw.filter(file => baseline[file] !== undefined && final[file] === baseline[file]) : [];
+        const preservedPreexisting = final ? reportedRaw.filter(file => !priorTaskChanges.has(file) && baseline[file] !== undefined && final[file] === baseline[file]) : [];
         const reported = reportedRaw.filter(file => !preservedPreexisting.includes(file));
         const observed = final ? observedRaw.filter(file => !(baseline[file] !== undefined && final[file] === baseline[file])) : observedRaw;
         if (preservedPreexisting.length)
@@ -316,9 +317,9 @@ export class TaskResultReconciler {
         // Proof ownership: ingest worker-reported proof into the canonical Evidence owner before
         // methodology exit evaluation. A WorkerResult is not itself proof. If changed files were
         // only reported after the fact, mark that mutation first so same-result evidence is stale.
-        const fallbackMutation = effectiveResult.changed_files.length > 0 && !observedMutationDuringWorker;
+        const nativeAttemptDelta = worker.native_diff_final ? diffDelta(worker.native_diff_baseline ?? {}, worker.native_diff_final) : undefined, fallbackMutationFiles = nativeAttemptDelta ?? effectiveResult.changed_files, fallbackMutation = fallbackMutationFiles.length > 0 && !observedMutationDuringWorker;
         if (fallbackMutation)
-            markMutation(m, effectiveResult.changed_files, 'worker-result-fallback');
+            markMutation(m, fallbackMutationFiles, 'worker-result-fallback');
         const evidenceSource = isHiReadOnlyChildRole(worker.role) ? `worker:${worker.id}:reviewer` : `worker:${worker.id}`, attemptIdentity = executionAttemptIdentity({ executionUnitId: `eu:${task.id}`, workerId: worker.id, ordinal: worker.attempt, generation: worker.generation_at_spawn ?? m.continuation.generation }), producer_attempt = { worker_id: worker.id, execution_unit_id: attemptIdentity.executionUnitId, attempt_id: attemptIdentity.attemptId, run_id: attemptIdentity.runId, ordinal: attemptIdentity.ordinal, generation: attemptIdentity.generation };
         for (const e of effectiveResult.evidence)
             addEvidence(m, { kind: e.kind, summary: e.summary, scope: e.scope ?? effectiveResult.changed_files, source: evidenceSource, source_session_id: worker.session_id, source_state_hash: worker.native_state_hash, task_id: task.id, obligation_ids: task.obligation_ids, producer_attempt, pass: e.pass, outcome: e.outcome, reason: e.reason, invalidated_at: (cleanlinessMarker || fallbackMutation && !isHiReadOnlyChildRole(worker.role)) ? (m.execution.evidence.last_mutation_at ?? Date.now()) : undefined });
