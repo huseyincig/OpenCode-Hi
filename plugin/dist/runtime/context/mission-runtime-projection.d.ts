@@ -2,6 +2,7 @@ import type { MissionState, WorkerState } from '../mission/types.js';
 export interface MissionRuntimeProjection {
     objective: string;
     next_action: string;
+    execution: string;
     blockers: string[];
     obligations: string[];
     active_methodologies: string[];

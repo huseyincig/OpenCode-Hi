@@ -5,8 +5,10 @@ function id() { return `ev_${Date.now().toString(36)}_${Math.random().toString(3
 const WRITE_TOOLS = new Set(['write', 'edit', 'patch', 'apply_patch', 'multiedit']);
 const SHELL_MUTATION_COMMAND = /(?:^|[;&|]\s*)(?:rm|mv|cp|touch|mkdir|rmdir|chmod|chown|chgrp|ln|truncate|dd|install|patch|rsync|tee|sed\s+-i|perl\s+-pi|python[^\n]*(?:\bwrite\b|\bopen\s*\([^)]*,\s*['"]?[wa+])|node[^\n]*(?:writeFileSync|writeFile|appendFileSync|appendFile|renameSync|rename|unlinkSync|unlink|mkdirSync|mkdir|rmSync|chmodSync|chmod)|git\s+(?:apply|am|checkout|switch|merge|rebase|cherry-pick|restore|reset|clean|stash)|npm\s+(?:install|uninstall|update|run\s+build)|pnpm\s+(?:add|remove|install|update|build)|yarn\s+(?:add|remove|install|build)|bun\s+(?:add|remove|install|build)|make(?:\s|$)|cmake\s+--build)\b/i;
 const SHELL_REDIRECTION = /(?:^|[^<>])(?:>>?|2>>?|1>>?)\s*[^&|]/;
-function shellMayMutate(command) { return SHELL_MUTATION_COMMAND.test(command) || SHELL_REDIRECTION.test(command); }
+export function shellMayMutate(command) { return SHELL_MUTATION_COMMAND.test(command) || SHELL_REDIRECTION.test(command); }
 const VERIFY_HINT = /(test|pytest|vitest|jest|npm\s+test|pnpm\s+test|bun\s+test|cargo\s+test|go\s+test|lint|build|typecheck|check)/i;
+export function isVerificationCommand(command) { return VERIFY_HINT.test(command); }
+export function toolMayMutate(tool, args) { return WRITE_TOOLS.has(tool) || (tool === 'bash' && shellMayMutate(typeof args?.command === 'string' ? args.command : '')); }
 function verificationKind(command) { if (/test|pytest|vitest|jest|spec|go\s+test|cargo\s+test/i.test(command))
     return 'targeted-tests'; if (/typecheck|tsc\b|mypy|pyright/i.test(command))
     return 'typecheck'; if (/lint|eslint|ruff/i.test(command))

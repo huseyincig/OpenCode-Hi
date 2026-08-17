@@ -6,6 +6,7 @@ import { userMissionStatus } from '../ledger/status.js'
 export interface MissionRuntimeProjection {
   objective:string
   next_action:string
+  execution:string
   blockers:string[]
   obligations:string[]
   active_methodologies:string[]
@@ -28,6 +29,7 @@ function nextAction(m:MissionState,worker?:WorkerState):string{
   const openDecision=m.authority.human_decision?.status==='OPEN'?m.authority.human_decision:undefined
   if(openDecision)return `user-action:${openDecision.semantic_type}:${openDecision.reason_code}`
   if(m.authority.pending_permissions>0||m.authority.authority?.pending||m.authority.authority?.executing)return 'user-action:authority-or-native-permission'
+  if(!worker&&m.execution.execution_mode==='parallel'&&m.execution.tasks.length===0)return 'delegate:parallel-work-via-hi_task_start'
   if(!worker&&m.methodology.methodology_needs.length){const need=m.methodology.methodology_needs[0];return `methodology:${need.name}:${clipText(need.reason,260)}`}
   const s=userMissionStatus(m)
   return worker&&['busy','starting','queued'].includes(worker.status)?`wait:${worker.id}:${worker.status}`:s.next_action
@@ -35,6 +37,11 @@ function nextAction(m:MissionState,worker?:WorkerState):string{
 function blockerSummary(m:MissionState):string[]{
   const gates=syncMissionGates(m).filter(g=>g.status!=='closed').map(g=>`gate:${g.id}:${g.status}:${g.reason??g.summary}`)
   return compactList([...m.execution.blockers,...gates],8).map(x=>clipText(x,320))
+}
+function executionSummary(m:MissionState,worker?:WorkerState):string{
+  const topology=m.execution.topology
+  const ownership=worker?`worker:${worker.id}`:m.execution.execution_mode==='parallel'?'parent-delegation-only':'parent-direct-allowed'
+  return `mode=${m.execution.execution_mode}; topology=${topology?.mode??'single-agent'}; parallelism=${topology?.parallelism??1}; ownership=${ownership}`
 }
 function verificationSummary(m:MissionState):string{
   const required=m.execution.verification_policy.requiredKinds.join(',')||'none'
@@ -65,6 +72,7 @@ export function buildMissionRuntimeProjection(m:MissionState,worker?:WorkerState
   return{
     objective,
     next_action:nextAction(m,worker),
+    execution:executionSummary(m,worker),
     blockers:blockerSummary(m),
     obligations:m.execution.obligations.filter(o=>o.status==='open').slice(0,8).map(o=>`${o.id}:${clipText(o.summary,300)}`),
     active_methodologies:methodologySummary(m,worker),
@@ -79,6 +87,7 @@ export function renderMissionRuntimeProjection(p:MissionRuntimeProjection):strin
   'Hi MISSION RUNTIME PROJECTION',
   `Objective: ${p.objective}`,
   `Next action: ${p.next_action}`,
+  `Execution: ${p.execution}`,
   `Blockers: ${p.blockers.join(' | ')||'none'}`,
   `Obligations: ${p.obligations.join(' | ')||'none'}`,
   `Active methodologies: ${p.active_methodologies.join(', ')||'none'}`,

@@ -18,12 +18,18 @@ function fixture(){
   return{store,m}
 }
 
-test('C1 MissionRuntimeProjection exposes only the nine dynamic runtime fields',()=>{
+test('C1 MissionRuntimeProjection exposes only the bounded dynamic runtime fields',()=>{
   const {m}=fixture(),p=buildMissionRuntimeProjection(m)
-  assert.deepEqual(Object.keys(p),['objective','next_action','blockers','obligations','active_methodologies','verification','authority','changed_files','task_worker'])
+  assert.deepEqual(Object.keys(p),['objective','next_action','execution','blockers','obligations','active_methodologies','verification','authority','changed_files','task_worker'])
   const lines=renderMissionRuntimeProjection(p).split('\n')
-  assert.deepEqual(lines.map(x=>x.split(':')[0]),['Hi MISSION RUNTIME PROJECTION','Objective','Next action','Blockers','Obligations','Active methodologies','Verification','Authority','Changed-file state','Current task/worker'])
+  assert.deepEqual(lines.map(x=>x.split(':')[0]),['Hi MISSION RUNTIME PROJECTION','Objective','Next action','Execution','Blockers','Obligations','Active methodologies','Verification','Authority','Changed-file state','Current task/worker'])
   assert.doesNotMatch(lines.join('\n'),/Execution mode:|Primary mode:|Task kind:|Risk:|Dependency class:|Methodology provenance:/)
+})
+
+test('C1 parallel runtime projection makes scheduler-owned delegation explicit before parent mutation',()=>{
+  const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'c1-parallel','independent fixes',{scope:'multi-file',dependency_class:'independent-multi',required_capabilities:['implementation','verification']})
+  const p=buildMissionRuntimeProjection(m),text=renderMissionRuntimeProjection(p)
+  assert.equal(m.execution.execution_mode,'parallel');assert.equal(p.next_action,'delegate:parallel-work-via-hi_task_start');assert.match(p.execution,/mode=parallel/);assert.match(p.execution,/parent-delegation-only/);assert.match(text,/Execution: mode=parallel/)
 })
 
 test('C1 stable policy lives in generated OpenCode agent projections while dynamic state stays separate',()=>{
