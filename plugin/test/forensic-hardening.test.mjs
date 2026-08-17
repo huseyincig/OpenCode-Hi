@@ -100,6 +100,18 @@ test('runtime state is persisted with private file permissions on POSIX',()=>{
   }finally{rmSync(root,{recursive:true,force:true});rmSync(dirname(persistence.path),{recursive:true,force:true})}
 })
 
+test('parent direct progress can close an explicit analysis obligation without bypassing implementation or verification',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-direct-analysis-'))
+  try{
+    const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
+    await hooks['chat.message']({sessionID:'s-analysis',message:{role:'user',parts:[{type:'text',text:'Fix the parser bug and verify it'}]}},{parts:[]});await assessPluginMission(hooks,'s-analysis',{task_kind:'bug-fix',scope:'multi-file',dependency_class:'independent-multi',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/parser.ts']})
+    const empty=String(await hooks.tool.hi_direct_progress.execute({summary:'   ',obligation_id:'o-analysis'},{sessionID:'s-analysis'}));assert.match(empty,/non-empty bounded summary/)
+    const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Root cause isolated to the parser branch condition.',obligation_id:'o-analysis'},{sessionID:'s-analysis'}));assert.equal(result.status,'RECORDED');assert.deepEqual(result.changed_files,[]);assert.equal(result.verification_required,true)
+    const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:'s-analysis'}));const obligations=Object.fromEntries(ledger.obligations.map(o=>[o.id,o.status]));assert.equal(obligations['o-analysis'],'closed');assert.equal(obligations['o-implementation'],'open');assert.equal(obligations['o-verification'],'open');assert.ok(ledger.events.some(e=>e.type==='analysis.direct-progress'))
+    await hooks.dispose?.()
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
 test('parent direct progress cannot close implementation from an unrelated changed file',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-direct-owned-'))
   try{
