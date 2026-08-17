@@ -34,14 +34,11 @@ export function authorityClassForPatterns(patterns) { const p = patterns.map(nor
     return 'package-publish'; if (p.some(x => /^(docker push|kubectl apply|kubectl delete|terraform apply|vercel deploy|netlify deploy)(?:\s|\*)?/.test(x)))
     return 'deploy'; return undefined; }
 function wildcard(pattern, value) { const esc = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.'); return new RegExp(`^${esc}$`, 'i').test(value); }
-function explicitDecision(bash, pattern) { if (typeof bash === 'string')
-    return bash === 'deny' ? 'deny' : undefined; if (!bash || typeof bash !== 'object')
-    return undefined; let decision; for (const [k, v] of Object.entries(bash)) {
-    if (k === '*')
-        continue;
-    if (wildcard(k, pattern.replace(/\*$/, '')) || wildcard(k, pattern))
-        decision = v;
-} return ['allow', 'ask', 'deny'].includes(decision) ? decision : undefined; }
+function decisionInfo(bash, pattern) { if (typeof bash === 'string')
+    return bash === 'allow' || bash === 'ask' || bash === 'deny' ? { decision: bash, source: 'broad' } : undefined; if (!bash || typeof bash !== 'object')
+    return undefined; let result; for (const [k, v] of Object.entries(bash))
+    if ((k === '*' || wildcard(k, pattern.replace(/\*$/, '')) || wildcard(k, pattern)) && (v === 'allow' || v === 'ask' || v === 'deny'))
+        result = { decision: v, source: k === '*' ? 'broad' : 'specific' }; return result; }
 /** Merge Hi's authority prompt/persistent grants without ever weakening a user/native explicit deny. */
 export function applyProjectAuthorityPermissions(config, store) {
     const permission = (config.permission && typeof config.permission === 'object' && !Array.isArray(config.permission) ? config.permission : {});
@@ -50,23 +47,29 @@ export function applyProjectAuthorityPermissions(config, store) {
         config.permission = permission;
         return;
     }
-    const bash = existing && typeof existing === 'object' && !Array.isArray(existing) ? { ...existing } : { '*': typeof existing === 'string' ? existing : 'allow' };
-    // Project-local VCS bookkeeping is reversible and should not create approval spam in autonomous flows.
+    const bash = existing && typeof existing === 'object' && !Array.isArray(existing) ? { ...existing } : { ...(typeof existing === 'string' ? { '*': existing } : {}) };
+    // Local reversible bookkeeping follows an existing host/user decision. When none exists,
+    // OpenCode V1 is permissive by default, so adding an explicit ALLOW is semantically neutral.
     for (const pattern of ['git status*', 'git diff *', 'git add *', 'git commit *', 'git merge *', 'git tag *'])
-        if (explicitDecision(existing, pattern) === undefined)
+        if (decisionInfo(existing, pattern) === undefined)
             bash[pattern] = 'allow';
+    // External effects are Hi authority hinges. A broad/default ALLOW may be narrowed to ASK,
+    // or restored to ALLOW after exact persistent native approval. Specific user/plugin rules
+    // and broad ASK/DENY remain authoritative and are never widened.
     for (const cls of Object.keys(CLASS_PATTERNS))
         for (const pattern of CLASS_PATTERNS[cls]) {
-            const user = explicitDecision(existing, pattern);
-            if (user === 'deny' || user === 'allow')
+            const info = decisionInfo(existing, pattern);
+            if (info?.source === 'specific' || info?.decision === 'ask' || info?.decision === 'deny')
                 continue;
             bash[pattern] = store.has(cls) ? 'allow' : 'ask';
         }
     // Persistent normal-push approval never widens to destructive history rewrites.
-    if (explicitDecision(existing, 'git push --force*') === undefined)
-        bash['git push --force*'] = 'ask';
-    if (explicitDecision(existing, 'git push -f *') === undefined)
-        bash['git push -f *'] = 'ask';
+    for (const pattern of ['git push --force*', 'git push -f *']) {
+        const info = decisionInfo(existing, pattern);
+        if (info?.source === 'specific' || info?.decision === 'ask' || info?.decision === 'deny')
+            continue;
+        bash[pattern] = 'ask';
+    }
     permission.bash = bash;
     config.permission = permission;
 }

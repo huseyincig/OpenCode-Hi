@@ -1,4 +1,7 @@
 import { compactMissionContext } from '../runtime/state/snapshot.js';
+import { appendLedger } from '../runtime/ledger/ledger.js';
 export function createSessionCompactingHook(store, background) { return async (input, output) => { const sessionID = input?.sessionID; if (!sessionID || !Array.isArray(output?.context))
     return; const child = background?.list().find(w => w.session_id === sessionID), mission = child ? store.get(child.parent_session_id) : store.get(sessionID); if (!mission)
-    return; output.context.push(compactMissionContext(mission, child)); }; }
+    return; const context = compactMissionContext(mission, child); if (output.context.includes(context))
+    return; if (output.context.some((x) => typeof x === 'string' && x.includes('Hi MISSION SURVIVAL STATE')))
+    appendLedger(mission, 'host.composition-collision', { task_id: child?.task_id, worker_id: child?.id, payload: { surface: 'session-compacting', reason: 'hi-survival-marker-without-canonical-context' } }); output.context.push(context); }; }

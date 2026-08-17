@@ -1,9 +1,6 @@
-import { existsSync } from 'node:fs'
 import { resolveHiConfigWithReport } from '../config/resolver.js'
-import { bindHiOpenCodeAgents } from './agent-binding.js'
 import { PACKAGED_HI_AGENTS } from '../generated/agent-config.js'
-import { applyAdmittedProjectMethodologyPermissions } from '../runtime/methodology/host-permissions.js'
-import { applyProjectAuthorityPermissions } from '../runtime/safety/project-authority.js'
+import { projectHiOpenCodeComposition } from './composition-adapter.js'
 import { createChatMessageHook } from '../hooks/chat-message.js'
 import { createMessagesTransformHook } from '../hooks/messages-transform.js'
 import { createSystemTransformHook } from '../hooks/system-transform.js'
@@ -26,11 +23,8 @@ export function createOpenCodeHooks(input:{state:PluginRuntimeState;host:HostPor
   return {
     name:'opencode-hi',
     tool:toolSurface,
-    config:async(opencodeConfig:Record<string,unknown>)=>{state.hostConfig=opencodeConfig;const resolved=resolveHiConfigWithReport(opencodeConfig.hi,projectRoot);state.config=resolved.config;state.configResolution=resolved.report;opencodeConfig.hi=state.config as unknown as Record<string,unknown>
-      if(existsSync(packagedSkillsDir)){const skills=(opencodeConfig.skills&&typeof opencodeConfig.skills==='object'?opencodeConfig.skills:{} ) as Record<string,unknown>;const paths=Array.isArray(skills.paths)?skills.paths as unknown[]:[];if(!paths.includes(packagedSkillsDir))paths.push(packagedSkillsDir);skills.paths=paths;opencodeConfig.skills=skills}
-      const agentCollisions=bindHiOpenCodeAgents(opencodeConfig,PACKAGED_HI_AGENTS as unknown as Record<string,unknown>);if(agentCollisions.length)throw new Error(`OpenCode-Hi agent binding collision: ${agentCollisions.join(', ')}. Canonical Hi role names must resolve to the packaged Hi OpenCode agent contract.`);const requestedPrimary=state.config.primaryMode==='manager'?'manager':state.config.primaryMode==='working-manager'?'working-manager':undefined;if(requestedPrimary&&opencodeConfig.default_agent!==undefined&&opencodeConfig.default_agent!==requestedPrimary)throw new Error(`OpenCode-Hi primary binding conflict: primaryMode=${requestedPrimary} but OpenCode default_agent=${String(opencodeConfig.default_agent)}.`);if(opencodeConfig.default_agent===undefined)opencodeConfig.default_agent=requestedPrimary??'working-manager';if(opencodeConfig.subagent_depth===undefined)opencodeConfig.subagent_depth=1
-      applyAdmittedProjectMethodologyPermissions(opencodeConfig,projectRoot)
-      applyProjectAuthorityPermissions(opencodeConfig,projectAuthority)
+    config:async(opencodeConfig:Record<string,unknown>)=>{state.hostConfig=opencodeConfig;const resolved=resolveHiConfigWithReport(opencodeConfig.hi,projectRoot);state.config=resolved.config;state.configResolution=resolved.report
+      const composition=projectHiOpenCodeComposition({config:opencodeConfig,packagedAgents:PACKAGED_HI_AGENTS as unknown as Record<string,unknown>,packagedSkillsDir,projectRoot,projectAuthority});if(!composition.applied)throw new Error(`OpenCode-Hi host composition adapter unavailable for ${composition.mode}: ${composition.diagnostics.join(', ')}. V1 config projection is intentionally not applied to V2/mixed config shapes.`);const projection=composition.v1!;if(projection.agentProjection.collisions.length)throw new Error(`OpenCode-Hi agent binding collision: ${projection.agentProjection.collisions.join(', ')}. Canonical Hi role names may be narrowed by host policy, but execution-semantic widening/overrides require a distinct agent namespace.`);opencodeConfig.hi=state.config as unknown as Record<string,unknown>
       services.scopedStores.skillCatalog.refresh(opencodeConfig)
       reconfigureToolSurface()
     },

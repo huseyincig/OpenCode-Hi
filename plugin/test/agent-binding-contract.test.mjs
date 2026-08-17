@@ -38,3 +38,30 @@ test('canonical primary Hi agents remain host-selected for model and reject host
     assert.deepEqual(bindHiOpenCodeAgents(cfg,PACKAGED_HI_AGENTS),[role])
   }
 })
+
+
+test('canonical Hi agent permits harmless metadata and permission narrowing without overwriting host policy',()=>{
+  const actual=clone(PACKAGED_HI_AGENTS.coder)
+  actual.description='User-facing label for the same canonical Hi coder'
+  actual.hidden=true
+  actual.steps=Math.max(1,actual.steps-1)
+  actual.permission.edit='deny'
+  actual.permission.bash['git diff*']='ask'
+  actual.permission.bash['rm -rf *']='deny'
+  assert.equal(matchesHiOpenCodeAgent(actual,PACKAGED_HI_AGENTS.coder),true)
+  const cfg={agent:{coder:actual,external:{description:'foreign agent',mode:'subagent'}}}
+  assert.deepEqual(bindHiOpenCodeAgents(cfg,{coder:PACKAGED_HI_AGENTS.coder}),[])
+  assert.equal(cfg.agent.coder,actual,'compatible host agent is preserved rather than replaced')
+  assert.deepEqual(cfg.agent.external,{description:'foreign agent',mode:'subagent'})
+})
+
+test('canonical Hi agent rejects permission widening, model/tool takeover, disablement and larger step budget',()=>{
+  for(const mutate of [
+    a=>{a.permission.task='allow'},
+    a=>{a.model='p/forced'},
+    a=>{a.variant='high'},
+    a=>{a.tools={bash:true}},
+    a=>{a.disabled=true},
+    a=>{a.steps=PACKAGED_HI_AGENTS.coder.steps+1},
+  ]){const actual=clone(PACKAGED_HI_AGENTS.coder);mutate(actual);assert.equal(matchesHiOpenCodeAgent(actual,PACKAGED_HI_AGENTS.coder),false)}
+})

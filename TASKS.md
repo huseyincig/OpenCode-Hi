@@ -1,7 +1,7 @@
 # OpenCode-Hi Active Task State
 
 **Project:** `/workspace/OpenCode-Hi`
-**Status:** ACTIVE — ROADMAP MILESTONE 6
+**Status:** ACTIVE — ROADMAP MILESTONE 7
 **Updated:** 2026-08-17
 **Global authority:** `/workspace/PROTOCOL.md`
 **Legacy project-policy layer:** `/workspace/OpenCode-Hi/PROTOCOL.md`
@@ -9,34 +9,33 @@
 
 ## Active Task
 
-### Milestone 6 — Host/Plugin Composition Hardening
+### Milestone 7 — Primitive Scope-Down
 
-Make Hi coexist with OpenCode and other plugins/skills instead of owning shared host configuration, while retaining Hi control-plane semantics behind capability adapters.
+Delete or thin machinery that duplicates stronger native/ecosystem capabilities, retaining only Hi-specific orchestration semantics with measured justification.
 
 ## Verified Baseline
 
-Milestone 5 is complete; see `agent-archive/2026-08-17-semantic-progress-recovery-economics.md`. Semantic progress is runtime-owned, repeated same-state recovery is fenced, unknown consequential outcomes block replay, usage/economics provenance is explicit, and model feedback is bounded/current-mission with exact-attempt evidence attribution. Full plugin suite passed 916/916 with architecture lint 22/22.
+Milestone 6 is complete; see `agent-archive/2026-08-17-host-plugin-composition-hardening.md`. Hi no longer owns host-global primary/depth configuration, V1 config mutation is isolated behind a composition adapter, V2/mixed shapes fail closed without V1 backfill, host/user permission restrictions are monotonic, external primaries/plugins/skills coexist, and transform collisions are observable/idempotent. Full plugin suite passed 932/932 with architecture lint 22/22.
 
 ## Scope
 
-1. Inspect `open-code-hooks.ts` / config hooks and identify every shared OpenCode config mutation Hi currently owns.
-2. Separate required Hi projection from unnecessary host ownership (`default_agent`, broad agent catalog/global names, `subagent_depth`, skill paths, permissions, MCP/provider/plugin fields).
-3. Preserve unknown-but-host-valid fields and existing plugin/user ordering; no lossy re-modeling of OpenCode config.
-4. Add stable 1.18.18 SDK/config compatibility probes plus current dev/V2 capability/transform probes without shaping Hi Core around either API.
-5. Prefer scoped transform/registration seams when available; retain a narrow V1 compatibility adapter where required.
-6. Preserve native permission inheritance and never widen another plugin/user's authority.
-7. Detect/report namespace or mutually exclusive transform/context ownership collisions rather than silently overriding them.
-8. Add representative coexistence tests using external-agent/plugin/MCP/provider/skill/config shapes.
+1. Inventory the current implementation/state/test surface for six candidate primitive classes: skill filesystem discovery/loading; generic context governor/compaction; project-intelligence memory; browser runtime; TeamRuntime; model quirks/duplicate model metadata.
+2. For each candidate classify current code as `REMOVE`, `THIN`, `RETAIN-HI-SEMANTIC`, or `ADAPTER-ONLY` using current OpenCode/native/ecosystem capability evidence and existing product measurements/tests.
+3. Skill path: prefer native inventory/loading; retain only shortlist/index/admission logic that measurably reduces prompt/context surface or enforces Hi methodology contracts.
+4. Context path: remove generic memory/compaction behavior that duplicates host/external context systems; retain ExecutionUnit context selection/protection/budget semantics needed by Hi control decisions.
+5. Project intelligence: retain only orchestration-specific empirical/procedure learning with bounded confidence/provenance; do not grow a generic memory product.
+6. Browser: keep backend-neutral capability/verification semantics; remove any generic browser-engine ownership when Playwright/native/external execution can satisfy the host port.
+7. TeamRuntime: absorb useful topology/role projection into WorkGraph/scheduler and remove separate durable/state ownership if no independently measured semantics remain.
+8. Model quirks/catalog: remove factual folklore/duplicate metadata when live runtime or models.dev/OpenCode metadata exists; retain only bounded empirically observed behavior signals with provenance.
 
 ## Acceptance Criteria
 
-- unrelated OpenCode config survives Hi configuration byte/semantic-equivalently except for explicitly owned Hi projection leaves;
-- Hi does not unconditionally take ownership of `default_agent` or unrelated global agent/plugin/provider/MCP configuration;
-- existing user/plugin permission restrictions are preserved or narrowed, never widened;
-- external agents/plugins/skills remain usable unless an explicit proven collision exists;
-- V1 compatibility and current dev/V2 transform capability are isolated behind host adapter/probe seams;
-- config/order/collision diagnostics are deterministic and tested;
-- full relevant plugin suite, TypeScript build and architecture lint pass.
+- source/state surface is measurably simpler for every removed/thinned primitive;
+- no covered behavior regression;
+- retained layers each have a named Hi-specific semantic and direct test/benchmark justification;
+- no second skill loader, generic memory product, generic browser engine, duplicate team scheduler or duplicate model catalog remains without evidence;
+- native/external capability failures remain truthful and fail closed through adapters;
+- full relevant plugin suite, TypeScript build and architecture lint pass after cutovers.
 
 ## Constraints
 
@@ -44,20 +43,18 @@ Milestone 5 is complete; see `agent-archive/2026-08-17-semantic-progress-recover
 - Do not reset/clean the working tree.
 - Do not touch release/publication validation artifacts.
 - No push/tag/release/npm publication.
-- Do not redesign scheduler/evidence/progress economics in this milestone.
-- Do not copy OpenCode config schema into Hi as a competing source of truth.
-- Native-first, not native-dependent: host evolution must change adapters/probes, not Hi core semantics.
+- Do not re-open broad ecosystem discovery; research only a candidate whose current ownership decision depends on changed/uncertain external capability.
+- Do not delete functionality merely to reduce LOC; preserve Hi-owned semantics proven useful by tests/benchmarks.
+- Keep host/API-specific behavior behind adapters; do not move OpenCode shapes into Hi Core.
 
 ## Required Verification
 
-- config-hook coexistence tests with unknown valid fields;
-- multi-plugin ordering/agent/permission tests;
-- skill/MCP/provider preservation tests;
-- V1/current SDK compatibility tests and dev/V2 capability probe tests;
-- collision diagnostic tests;
-- full plugin test suite after cutover;
-- TypeScript build, architecture lint and scoped diff inspection.
+- before/after primitive ownership inventory with source/state/test counts;
+- targeted parity tests for each cutover;
+- architecture lint and TypeScript build after each meaningful deletion/thinning;
+- full plugin suite after the milestone cutovers;
+- scoped diff inspection and a short archive record naming every retained/deleted semantic.
 
 ## Exact Next Action
 
-Inspect current config/open-code hook implementation (`plugin/src/open-code-hooks.ts` or actual current equivalent), generated agent/skill projection, config mutation tests and OpenCode SDK 1.18.18 config types. Mechanically inventory every key Hi mutates and classify it as REQUIRED PROJECTION, NARROWING POLICY, or UNNECESSARY HOST OWNERSHIP before changing code. Reconcile the seam with current `anomalyco/opencode` dev/V2 config transform/registration source before implementation.
+Mechanically inventory the six candidate primitive classes using current source, durable state contracts and tests. For each, list exact files, runtime/state owners, direct callers and behavioral proof tests. Compare against the existing upstream audit/ownership matrix and current host capability evidence. Produce a compact decision table before editing; then begin with the lowest-risk/highest-duplication candidate rather than performing a broad rewrite.

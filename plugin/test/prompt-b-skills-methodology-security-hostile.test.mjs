@@ -10,6 +10,7 @@ import {applyAdmittedProjectMethodologyPermissions} from '../dist/runtime/method
 import {methodologyCatalog} from '../dist/runtime/methodology/catalog.js'
 import {assertChildMethodologyLoad,recordChildMethodologyLoad} from '../dist/runtime/methodology/native-loading.js'
 import {PACKAGED_HI_AGENTS} from '../dist/generated/agent-config.js'
+import {projectHiOpenCodeAgents} from '../dist/opencode/agent-binding.js'
 
 const sha=s=>createHash('sha256').update(s).digest('hex'),clone=x=>JSON.parse(JSON.stringify(x))
 function dirs(root,name){const skill=join(root,'.opencode','skills',name,'SKILL.md'),policy=join(root,'.opencode','hi','policy','methodologies',name+'.json'),prov=join(root,'.opencode','hi','provenance','methodologies',name+'.json'),candRoot=join(root,'.opencode','hi','project-intelligence','methodology-candidates');for(const p of [skill,policy,prov,join(candRoot,'x')])mkdirSync(join(p,'..'),{recursive:true});return{skill,policy,prov,candRoot}}
@@ -37,7 +38,7 @@ test('PROMPT B SKILL.md symlink and resource symlink cannot escape the admitted 
 })
 
 test('PROMPT B repository-local methodology provenance can never silently grant native skill allow',()=>{
-  const f=projectFixture('explicit-user-request');try{assert.deepEqual(discoverProjectMethodologyPolicies(f.root).map(x=>x.name),[f.name]);const cfg={agent:{coder:clone(PACKAGED_HI_AGENTS.coder)}};const applied=applyAdmittedProjectMethodologyPermissions(cfg,f.root);assert.equal(cfg.agent.coder.permission.skill[f.name],'ask');assert.ok(applied.some(x=>x.name===f.name&&x.decision==='ask'));const trusted={agent:{coder:clone(PACKAGED_HI_AGENTS.coder)}};trusted.agent.coder.permission.skill[f.name]='allow';applyAdmittedProjectMethodologyPermissions(trusted,f.root);assert.equal(trusted.agent.coder.permission.skill[f.name],'allow');const denied={agent:{coder:clone(PACKAGED_HI_AGENTS.coder)}};denied.agent.coder.permission.skill[f.name]='deny';applyAdmittedProjectMethodologyPermissions(denied,f.root);assert.equal(denied.agent.coder.permission.skill[f.name],'deny')}finally{f.cleanup()}
+  const f=projectFixture('explicit-user-request');try{assert.deepEqual(discoverProjectMethodologyPolicies(f.root).map(x=>x.name),[f.name]);const cfg={};projectHiOpenCodeAgents(cfg,{coder:PACKAGED_HI_AGENTS.coder});const applied=applyAdmittedProjectMethodologyPermissions(cfg,f.root);assert.equal(cfg.agent.coder.permission.skill[f.name],'ask');assert.ok(applied.some(x=>x.name===f.name&&x.decision==='ask'));const trusted={agent:{coder:clone(PACKAGED_HI_AGENTS.coder)}};trusted.agent.coder.permission.skill[f.name]='allow';applyAdmittedProjectMethodologyPermissions(trusted,f.root);assert.equal(trusted.agent.coder.permission.skill[f.name],'allow');const denied={agent:{coder:clone(PACKAGED_HI_AGENTS.coder)}};denied.agent.coder.permission.skill[f.name]='deny';applyAdmittedProjectMethodologyPermissions(denied,f.root);assert.equal(denied.agent.coder.permission.skill[f.name],'deny')}finally{f.cleanup()}
 })
 
 test('PROMPT B installed, admitted, selected and loaded methodology states are distinct',()=>{
@@ -46,7 +47,7 @@ test('PROMPT B installed, admitted, selected and loaded methodology states are d
 })
 
 test('PROMPT B selected methodology is not loaded until the exact child load is observed',()=>{
-  const f=projectFixture();try{const cfg={agent:{coder:clone(PACKAGED_HI_AGENTS.coder)}};applyAdmittedProjectMethodologyPermissions(cfg,f.root);const candidates=discoverSkills(f.root),plan=resolveSkillPlan([f.name],candidates,cfg.agent.coder.permission.skill,true,'coder',methodologyCatalog(f.root));assert.deepEqual(plan.selected.map(x=>x.name),[f.name]);assert.equal(plan.selected[0].permission,'ask');const worker={selected_methodologies:[f.name],loaded_methodologies:[]};assert.deepEqual(worker.loaded_methodologies,[]);recordChildMethodologyLoad(worker,f.name);assert.deepEqual(worker.loaded_methodologies,[f.name])}finally{f.cleanup()}
+  const f=projectFixture();try{const cfg={};projectHiOpenCodeAgents(cfg,{coder:PACKAGED_HI_AGENTS.coder});applyAdmittedProjectMethodologyPermissions(cfg,f.root);const candidates=discoverSkills(f.root),plan=resolveSkillPlan([f.name],candidates,cfg.agent.coder.permission.skill,true,'coder',methodologyCatalog(f.root));assert.deepEqual(plan.selected.map(x=>x.name),[f.name]);assert.equal(plan.selected[0].permission,'ask');const worker={selected_methodologies:[f.name],loaded_methodologies:[]};assert.deepEqual(worker.loaded_methodologies,[]);recordChildMethodologyLoad(worker,f.name);assert.deepEqual(worker.loaded_methodologies,[f.name])}finally{f.cleanup()}
 })
 
 test('PROMPT B project policy/provenance directory symlink escape is not an admission surface',()=>{
@@ -61,5 +62,5 @@ test('PROMPT B foreign project skill ID cannot shadow or replace a built-in Hi m
 })
 
 test('PROMPT B forged project-learning files cannot turn repository provenance into silent execution trust',()=>{
-  const f=projectFixture('project-learning');try{assert.deepEqual(discoverProjectMethodologyPolicies(f.root).map(x=>x.name),[f.name]);const cfg={agent:{coder:clone(PACKAGED_HI_AGENTS.coder)}};applyAdmittedProjectMethodologyPermissions(cfg,f.root);assert.equal(cfg.agent.coder.permission.skill[f.name],'ask');const candidates=discoverSkills(f.root),plan=resolveSkillPlan([f.name],candidates,cfg.agent.coder.permission.skill,true,'coder',methodologyCatalog(f.root));assert.equal(plan.selected[0]?.permission,'ask')}finally{f.cleanup()}
+  const f=projectFixture('project-learning');try{assert.deepEqual(discoverProjectMethodologyPolicies(f.root).map(x=>x.name),[f.name]);const cfg={};projectHiOpenCodeAgents(cfg,{coder:PACKAGED_HI_AGENTS.coder});applyAdmittedProjectMethodologyPermissions(cfg,f.root);assert.equal(cfg.agent.coder.permission.skill[f.name],'ask');const candidates=discoverSkills(f.root),plan=resolveSkillPlan([f.name],candidates,cfg.agent.coder.permission.skill,true,'coder',methodologyCatalog(f.root));assert.equal(plan.selected[0]?.permission,'ask')}finally{f.cleanup()}
 })

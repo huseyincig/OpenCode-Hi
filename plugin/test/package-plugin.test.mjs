@@ -13,8 +13,8 @@ test('git package config hook registers packaged agents and skills', async()=>{
     const config={plugin:['opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git']}
     await hooks.config(config)
     for(const name of ['working-manager','manager','coder','repository-explorer','qa-reviewer','architect','security-reviewer','visual-qa']) assert.ok(config.agent?.[name],name)
-    assert.equal(config.default_agent,'working-manager')
-    assert.equal(config.subagent_depth,1)
+    assert.equal('default_agent' in config,false,'Hi must not take ownership of host-global default_agent')
+    assert.equal('subagent_depth' in config,false,'Hi recursion policy must not mutate host-global subagent_depth')
     assert.ok(Array.isArray(config.skills?.paths))
     assert.ok(config.skills.paths.some(x=>String(x).endsWith('/skills')||String(x).endsWith('\\skills')))
     await hooks.dispose?.()

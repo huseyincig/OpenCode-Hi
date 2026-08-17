@@ -90,23 +90,16 @@ test('plugin persists native always reply and applies it on the next project boo
 })
 
 
-test('global ask does not spam autonomous local commit/merge steps; external push remains the single authority hinge',()=>{
+test('global host ASK remains authoritative for local and external actions even when Hi has a persistent grant',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-auth-'))
   try{
     const cfg={permission:{bash:{'*':'ask'}}}
     applyProjectAuthorityPermissions(cfg,new ProjectAuthorityStore(root))
-    assert.equal(cfg.permission.bash['git add *'],'allow')
-    assert.equal(cfg.permission.bash['git commit *'],'allow')
-    assert.equal(cfg.permission.bash['git merge *'],'allow')
-    assert.equal(cfg.permission.bash['git tag *'],'allow')
-    assert.equal(cfg.permission.bash['git push *'],'ask')
+    for(const pattern of ['git add *','git commit *','git merge *','git tag *','git push *'])assert.equal(cfg.permission.bash[pattern],undefined)
+    assert.equal(cfg.permission.bash['*'],'ask')
     const st=new ProjectAuthorityStore(root);st.grant('git-push')
     const next={permission:{bash:{'*':'ask'}}};applyProjectAuthorityPermissions(next,st)
-    assert.equal(next.permission.bash['git commit *'],'allow')
-    assert.equal(next.permission.bash['git merge *'],'allow')
-    assert.equal(next.permission.bash['git push *'],'allow')
-    assert.equal(next.permission.bash['gh release create *'],'ask')
-    assert.equal(next.permission.bash['git push --force*'],'ask')
+    assert.equal(next.permission.bash['*'],'ask');assert.equal(next.permission.bash['git commit *'],undefined);assert.equal(next.permission.bash['git push *'],undefined);assert.equal(next.permission.bash['gh release create *'],undefined);assert.equal(next.permission.bash['git push --force*'],undefined)
   } finally { rmSync(root,{recursive:true,force:true}) }
 })
 

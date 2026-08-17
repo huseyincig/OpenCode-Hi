@@ -94,3 +94,14 @@ test('primary chat model metadata stays host-selected and does not manufacture H
   assert.equal(Object.hasOwn(m,'primary_model'),false)
   assert.equal(Object.hasOwn(m,'primary_model_variant'),false)
 })
+
+
+test('external/native host primary can start a Hi mission without Hi owning default_agent',async()=>{
+  const store=new MissionStore(process.cwd()),hook=createChatMessageHook(store)
+  await hook({sessionID:'native-build-primary',agent:'build'},nativeUser('opaque primary task'))
+  const m=store.get('native-build-primary');assert.ok(m)
+  assert.equal(m.execution.primary_mode,'working-manager','Hi execution policy remains internal when host uses a different primary agent name')
+  const out={system:['native-build-system']}
+  await createSystemTransformHook(store,new BackgroundRegistry())({sessionID:'native-build-primary',agent:'build'},out)
+  assert.equal(out.system.length,2);assert.match(out.system[1],/Hi SEMANTIC ASSESSMENT GATE/)
+})

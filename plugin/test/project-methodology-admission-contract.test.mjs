@@ -17,6 +17,7 @@ import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {activateMethodologySignal} from '../dist/runtime/methodology/activation.js'
 import {fileURLToPath} from 'node:url'
 import {opencodeChildPort} from './helpers/host-port.mjs'
+import {projectHiOpenCodeAgents} from '../dist/opencode/agent-binding.js'
 
 const hiRoot=fileURLToPath(new URL('../../',import.meta.url)).replace(/[\\/]$/,'')
 const sha=text=>createHash('sha256').update(text).digest('hex')
@@ -56,7 +57,7 @@ test('project-learning admission rejects an incoherent READY candidate contract 
 
 test('admitted project methodology derives an exact native ask only for compatible roles unless host/user explicitly trusts it',()=>{
   const f=fixture();try{
-    const config={agent:{coder:clone(PACKAGED_HI_AGENTS.coder),'qa-reviewer':clone(PACKAGED_HI_AGENTS['qa-reviewer'])}}
+    const config={};projectHiOpenCodeAgents(config,{coder:PACKAGED_HI_AGENTS.coder,'qa-reviewer':PACKAGED_HI_AGENTS['qa-reviewer']})
     const applied=applyAdmittedProjectMethodologyPermissions(config,f.root)
     assert.ok(applied.some(x=>x.name===f.name&&x.role==='coder'&&x.decision==='ask'))
     assert.equal(config.agent.coder.permission.skill[f.name],'ask')
@@ -76,7 +77,7 @@ test('explicit native deny is preserved even for an admitted compatible project 
 
 test('admitted project methodology reaches native lazy selection as project provider',()=>{
   const f=fixture();try{
-    const config={agent:{coder:clone(PACKAGED_HI_AGENTS.coder)}};applyAdmittedProjectMethodologyPermissions(config,f.root)
+    const config={};projectHiOpenCodeAgents(config,{coder:PACKAGED_HI_AGENTS.coder});applyAdmittedProjectMethodologyPermissions(config,f.root)
     const candidates=discoverSkills(f.root,hiRoot),catalog=methodologyCatalog(f.root)
     const plan=resolveSkillPlan([f.name],candidates,config.agent.coder.permission.skill,true,'coder',catalog)
     assert.deepEqual(plan.selected.map(x=>[x.name,x.provider]),[[f.name,'project']])
@@ -114,7 +115,7 @@ test('project methodology update requires fresh provenance hash before re-admiss
 
 test('TaskRuntime hot-refreshes an admitted project methodology permission before same-process task selection',async()=>{
   const f=fixture();try{
-    const host={agent:{coder:clone(PACKAGED_HI_AGENTS.coder)}}
+    const host={};projectHiOpenCodeAgents(host,{coder:PACKAGED_HI_AGENTS.coder})
     assert.equal(host.agent.coder.permission.skill[f.name],undefined)
     const client={session:{create:async()=>({data:{id:'child-hot'}}),promptAsync:async()=>({data:{}}),diff:async()=>({data:[]})}}
     const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),f.root,hiRoot,()=>DEFAULT_HI_CONFIG,()=>[],()=>host)
@@ -126,5 +127,16 @@ test('TaskRuntime hot-refreshes an admitted project methodology permission befor
     assert.equal(host.agent.coder.permission.skill[f.name],'ask')
     assert.ok(started.methodologies.includes(f.name))
     assert.ok(m.execution.workers.find(w=>w.id===started.worker_id)?.selected_methodologies.includes(f.name))
+  }finally{rmSync(f.root,{recursive:true,force:true})}
+})
+
+
+test('pre-existing host wildcard skill deny is not widened to ASK by project methodology admission',()=>{
+  const f=fixture();try{
+    const coder=clone(PACKAGED_HI_AGENTS.coder),config={agent:{coder}}
+    const applied=applyAdmittedProjectMethodologyPermissions(config,f.root)
+    assert.ok(applied.some(x=>x.name===f.name&&x.role==='coder'&&x.decision==='deny'))
+    assert.equal(config.agent.coder.permission.skill[f.name],undefined)
+    assert.equal(config.agent.coder.permission.skill['*'],'deny')
   }finally{rmSync(f.root,{recursive:true,force:true})}
 })

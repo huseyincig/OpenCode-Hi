@@ -75,3 +75,15 @@ test('plugin-wired worker skill resolution preserves Hi-native provider provenan
     await hooks.dispose?.()
   }finally{rmSync(root,{recursive:true,force:true})}
 })
+
+
+test('V2-shaped config fails with explicit adapter diagnostic and is not backfilled with V1 Hi keys',async()=>{
+  const root=temp('hi-v2-composition-')
+  try{
+    const cfg={plugins:['external'],agents:{external:{description:'keep'}},permissions:[{action:'bash',resource:'*',effect:'ask'}],providers:{p:{custom:true}},skills:['./external-skills'],mcp:{servers:{x:{type:'remote'}}}},before=JSON.stringify(cfg)
+    const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()})
+    await assert.rejects(()=>hooks.config(cfg),/v2-domain-transform-required/)
+    assert.equal(JSON.stringify(cfg),before,'failed compatibility projection must leave shared V2 config untouched')
+    await hooks.dispose?.()
+  }finally{rmSync(root,{recursive:true,force:true})}
+})

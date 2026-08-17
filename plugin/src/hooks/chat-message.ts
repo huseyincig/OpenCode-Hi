@@ -28,7 +28,10 @@ export function createChatMessageHook(store:MissionStore,onFollowupPending?: (se
   const userText=extractNativeUserText(input,output);if(!userText)return
   const agent=typeof input?.agent==='string'?input.agent:''
   const observedPrimary=isHiPrimaryRole(agent)?agent:undefined
-  if(agent&&!observedPrimary)return
+  // Host agent identity is not Hi execution-policy ownership. A user may keep OpenCode's
+  // native/default/external primary agent while Hi supplies the control-plane projection.
+  // Hi canonical primary names are observed when present; other host primary names simply
+  // leave MissionStore's configured Hi primary policy unchanged.
   const existing=store.get(sid)
   if(existing&&observedPrimary)store.bindObservedPrimary(sid,observedPrimary)
   const openDecision=existing?.authority.human_decision?.status==='OPEN'?existing.authority.human_decision:undefined
