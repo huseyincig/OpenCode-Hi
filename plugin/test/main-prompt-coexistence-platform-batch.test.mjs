@@ -64,8 +64,9 @@ test('plugin-wired worker skill resolution preserves Hi-native provider provenan
     const hooks=await HiPlugin({directory:root,worktree:root,project:{name:'native-provider'},client:c})
     const cfg={};await hooks.config(cfg)
     await hooks['chat.message']({sessionID:'native-provider-parent',message:{role:'user',parts:[{type:'text',text:'fix the parser bug with TDD'}]}},{parts:[]}); await assessPluginMission(hooks,'native-provider-parent',{task_kind:'bug-fix',required_capabilities:['implementation'],likely_targets:['src/parser.ts'],intent_signals:['intent.tdd']})
-    const start=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'fix the parser bug with TDD',role:'coder',category:'bug-fix',scope:'src/parser.ts'},{sessionID:'native-provider-parent'}))
+    const start=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'fix the parser bug with TDD',role:'coder',category:'bug-fix',scope:'src/parser.ts',dependencies:'none'},{sessionID:'native-provider-parent'}))
     assert.ok(start.methodologies.includes('hi-test-driven-development'))
+    const listed=JSON.parse(await hooks.tool.hi_task_list.execute({},{sessionID:'native-provider-parent'}));assert.deepEqual(listed.find(x=>x.task.id===start.task_id)?.task.dependencies,[])
     const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({},{sessionID:'native-provider-parent'}))
     const resolved=ledger.find?.(x=>x.event==='skill.resolved'||x.type==='skill.resolved')??ledger.events?.find?.(x=>x.event==='skill.resolved'||x.type==='skill.resolved')
     const outcomes=resolved?.payload?.outcomes??resolved?.data?.payload?.outcomes??[]
