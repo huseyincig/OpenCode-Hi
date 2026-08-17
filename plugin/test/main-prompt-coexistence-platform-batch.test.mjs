@@ -64,9 +64,9 @@ test('plugin-wired worker skill resolution preserves Hi-native provider provenan
     const hooks=await HiPlugin({directory:root,worktree:root,project:{name:'native-provider'},client:c})
     const cfg={};await hooks.config(cfg)
     await hooks['chat.message']({sessionID:'native-provider-parent',message:{role:'user',parts:[{type:'text',text:'fix the parser bug with TDD'}]}},{parts:[]}); await assessPluginMission(hooks,'native-provider-parent',{task_kind:'bug-fix',required_capabilities:['implementation'],likely_targets:['src/parser.ts'],intent_signals:['intent.tdd']})
-    const start=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'fix the parser bug with TDD',role:'coder',category:'bug-fix',scope:'src/parser.ts',dependencies:'none'},{sessionID:'native-provider-parent'}))
+    const start=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'fix the parser bug with TDD',role:'coder',category:'bug-fix',scope:'Only src/parser.ts may be modified.',dependencies:'none'},{sessionID:'native-provider-parent'}))
     assert.ok(start.methodologies.includes('hi-test-driven-development'))
-    const listed=JSON.parse(await hooks.tool.hi_task_list.execute({},{sessionID:'native-provider-parent'}));assert.deepEqual(listed.find(x=>x.task.id===start.task_id)?.task.dependencies,[])
+    const listed=JSON.parse(await hooks.tool.hi_task_list.execute({},{sessionID:'native-provider-parent'}));assert.deepEqual(listed.find(x=>x.task.id===start.task_id)?.task.dependencies,[]);assert.deepEqual(listed.find(x=>x.task.id===start.task_id)?.task.scope,['src/parser.ts'])
     const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({},{sessionID:'native-provider-parent'}))
     const resolved=ledger.find?.(x=>x.event==='skill.resolved'||x.type==='skill.resolved')??ledger.events?.find?.(x=>x.event==='skill.resolved'||x.type==='skill.resolved')
     const outcomes=resolved?.payload?.outcomes??resolved?.data?.payload?.outcomes??[]
@@ -84,6 +84,20 @@ test('V2-shaped config fails with explicit adapter diagnostic and is not backfil
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()})
     await assert.rejects(()=>hooks.config(cfg),/v2-domain-transform-required/)
     assert.equal(JSON.stringify(cfg),before,'failed compatibility projection must leave shared V2 config untouched')
+    await hooks.dispose?.()
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+
+test('hi_task_start scope prose fails closed when it ambiguously names multiple project paths',async()=>{
+  const root=temp('hi-scope-ambiguous-');let child=0
+  const c={app:{log:async()=>{}},provider:{list:async()=>({data:[]})},session:{create:async()=>({data:{id:`scope-child-${++child}`}}),promptAsync:async()=>({data:{}}),diff:async()=>({data:[]}),abort:async()=>({data:{}})}}
+  try{
+    const hooks=await HiPlugin({directory:root,worktree:root,project:{name:'scope-ambiguous'},client:c});const cfg={};await hooks.config(cfg)
+    await hooks['chat.message']({sessionID:'scope-parent',message:{role:'user',parts:[{type:'text',text:'fix one bounded file'}]}},{parts:[]});await assessPluginMission(hooks,'scope-parent',{task_kind:'bug-fix',required_capabilities:['implementation']})
+    const out=await hooks.tool.hi_task_start.execute({objective:'bounded change',role:'coder',scope:'Only src/a.ts may be modified; do not modify src/b.ts'},{sessionID:'scope-parent'})
+    assert.match(String(out),/scope prose must identify exactly one bounded project-relative path/i)
+    const listed=JSON.parse(await hooks.tool.hi_task_list.execute({},{sessionID:'scope-parent'}));assert.deepEqual(listed,[]);assert.equal(child,0)
     await hooks.dispose?.()
   }finally{rmSync(root,{recursive:true,force:true})}
 })

@@ -20,11 +20,37 @@ import { evaluateCompletion } from '../completion/evaluator.js';
 import { primaryRoleCanDirectImplementation } from '../roles/catalog.js';
 import { nativeTool as tool } from '../../opencode/plugin-tool.js';
 import { assertHiToolNamespace } from '../../opencode/tool-namespace.js';
+import { normalizeBoundedProjectPath } from '../../contracts/common.js';
 function optionalIdList(value) {
     if (value === undefined || value === null)
         return undefined;
     const raw = Array.isArray(value) ? value.map(String) : String(value).split(',');
     return raw.map(x => x.trim()).filter(x => x.length > 0 && !/^(?:none|null|n\/?a)$/i.test(x));
+}
+function optionalScopeList(value) {
+    if (value === undefined || value === null)
+        return undefined;
+    const parts = (Array.isArray(value) ? value.map(String) : String(value).split(',')).map(x => x.trim()).filter(Boolean);
+    if (!parts.length)
+        return undefined;
+    const out = [];
+    for (const part of parts) {
+        if (/^(?:none|null|n\/?a)$/i.test(part))
+            continue;
+        if (!/\s/.test(part)) {
+            const exact = normalizeBoundedProjectPath(part);
+            if (!exact)
+                throw new Error(`Hi task scope must use bounded project-relative paths: ${part}`);
+            out.push(exact);
+            continue;
+        }
+        const candidates = [...part.matchAll(/(?:^|[\s`'"(])((?:\.\/)?[A-Za-z0-9_@+.-]+(?:\/[A-Za-z0-9_@+.-]+)+|[A-Za-z0-9_@+-]+\.[A-Za-z0-9]{1,12})(?=$|[\s`'"),.;:!?])/g)].map(m => normalizeBoundedProjectPath(m[1])).filter((x) => Boolean(x));
+        const unique = [...new Set(candidates)];
+        if (unique.length !== 1)
+            throw new Error(`Hi task scope prose must identify exactly one bounded project-relative path; use comma-separated exact paths for multiple targets`);
+        out.push(unique[0]);
+    }
+    return out.length ? [...new Set(out)] : undefined;
 }
 import { resolveBrowserExecutionOwner } from '../browser/ownership.js';
 function nativeDiffFiles(raw, projectRoot) { const items = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : []; return [...new Set(items.map((x) => typeof x?.file === 'string' ? x.file : typeof x?.path === 'string' ? x.path : '').filter((x) => Boolean(x)).map((x) => normalizeProjectPath(x, projectRoot)).filter(Boolean))]; }
@@ -141,7 +167,7 @@ export function createHiToolSurface(input) {
         } reconcileMethodologyExits(m, projectRoot); syncMissionGates(m); return JSON.stringify({ status: 'RECORDED', verification_required: !evaluateCompletion(m).complete, changed_files: o.kind === 'implementation' ? directFiles.slice(-30) : [] }); } });
     const startTool = tool({ description: 'Start one bounded Hi worker task. Use only when delegation is actually beneficial.', args: { objective: tool.schema.string().optional(), role: tool.schema.string().optional(), category: tool.schema.string().optional(), model: tool.schema.string().optional(), model_variant: tool.schema.string().optional(), scope: tool.schema.string().optional(), constraints: tool.schema.string().optional(), dependencies: tool.schema.string().optional(), required_evidence: tool.schema.string().optional(), obligation_ids: tool.schema.string().optional(), context_artifact_ids: tool.schema.string().optional(), fork_from_session: tool.schema.string().optional(), isolation_required: tool.schema.boolean().optional(), isolation_reason: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
             return 'No active Hi mission'; try {
-            const input = { ...a, forkFromSession: a.fork_from_session ? String(a.fork_from_session) : undefined, modelVariant: a.model_variant ? String(a.model_variant) : undefined, isolationRequired: a.isolation_required === true, isolationReason: a.isolation_reason ? String(a.isolation_reason) : undefined, scope: a.scope ? String(a.scope).split(',').map((x) => x.trim()).filter(Boolean) : undefined, constraints: a.constraints ? [String(a.constraints)] : undefined, dependencies: optionalIdList(a.dependencies), requiredEvidence: a.required_evidence ? String(a.required_evidence).split(',').map((x) => x.trim()).filter(Boolean) : undefined, obligationIds: a.obligation_ids ? String(a.obligation_ids).split(',').map((x) => x.trim()).filter(Boolean) : undefined, contextArtifactIds: a.context_artifact_ids ? String(a.context_artifact_ids).split(',').map((x) => x.trim()).filter(Boolean) : undefined };
+            const input = { ...a, forkFromSession: a.fork_from_session ? String(a.fork_from_session) : undefined, modelVariant: a.model_variant ? String(a.model_variant) : undefined, isolationRequired: a.isolation_required === true, isolationReason: a.isolation_reason ? String(a.isolation_reason) : undefined, scope: optionalScopeList(a.scope), constraints: a.constraints ? [String(a.constraints)] : undefined, dependencies: optionalIdList(a.dependencies), requiredEvidence: a.required_evidence ? String(a.required_evidence).split(',').map((x) => x.trim()).filter(Boolean) : undefined, obligationIds: a.obligation_ids ? String(a.obligation_ids).split(',').map((x) => x.trim()).filter(Boolean) : undefined, contextArtifactIds: a.context_artifact_ids ? String(a.context_artifact_ids).split(',').map((x) => x.trim()).filter(Boolean) : undefined };
             if (m.execution.adaptive_execution?.path === 'DIRECT' && !m.execution.verification_policy.requireReview && ['qa-reviewer', 'security-reviewer'].includes(String(input.role ?? '')))
                 return JSON.stringify({ status: 'SKIPPED', reason: 'minimum-sufficient-direct-path: independent reviewer is not required' });
             return JSON.stringify(await tasks.start(m, input));
