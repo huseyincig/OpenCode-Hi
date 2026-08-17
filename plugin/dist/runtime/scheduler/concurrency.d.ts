@@ -14,4 +14,10 @@ export declare class ConcurrencyScheduler {
     acquire(id: string, provider?: string, model?: string): boolean;
     release(id: string): void;
     running(): number;
+    policySnapshot(): ConcurrencyPolicy;
+    allocations(): Array<{
+        id: string;
+        provider?: string;
+        model?: string;
+    }>;
 }

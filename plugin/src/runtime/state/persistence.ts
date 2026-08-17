@@ -78,7 +78,7 @@ export class RuntimePersistence {
 
   save(missions:MissionState[],cleanShutdown=false):void{
     const sessionIDs=new Set<string>(),missionIDs=new Set<string>()
-    for(let index=0;index<missions.length;index++){const mission=missions[index];if(!validateMissionEnvelope(mission))throw new Error(`refusing to persist invalid mission state at index ${index}`);if(sessionIDs.has(mission.identity.session_id))throw new Error(`refusing to persist duplicate session identity ${mission.identity.session_id}`);if(missionIDs.has(mission.identity.mission_id))throw new Error(`refusing to persist duplicate mission identity ${mission.identity.mission_id}`);sessionIDs.add(mission.identity.session_id);missionIDs.add(mission.identity.mission_id)}
+    for(let index=0;index<missions.length;index++){const mission=missions[index],sessionID=mission?.identity?.session_id,missionID=mission?.identity?.mission_id;if(typeof sessionID==='string'&&sessionIDs.has(sessionID))throw new Error(`refusing to persist duplicate session identity ${sessionID}`);if(typeof missionID==='string'&&missionIDs.has(missionID))throw new Error(`refusing to persist duplicate mission identity ${missionID}`);if(!validateMissionEnvelope(mission))throw new Error(`refusing to persist invalid mission state at index ${index}`);sessionIDs.add(mission.identity.session_id);missionIDs.add(mission.identity.mission_id)}
     mkdirSync(dirname(this.path),{recursive:true,mode:0o700})
     const now=Date.now()
     const payload:PersistedRuntimeState={schema:RUNTIME_STATE_SCHEMA,updated_at:now,runtime:{boot_id:this.bootId,started_at:this.startedAt,clean_shutdown:cleanShutdown,last_saved_at:now,previous_boot_id:this.previousBootId},missions}

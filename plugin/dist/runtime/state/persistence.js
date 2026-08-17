@@ -61,13 +61,13 @@ export class RuntimePersistence {
     save(missions, cleanShutdown = false) {
         const sessionIDs = new Set(), missionIDs = new Set();
         for (let index = 0; index < missions.length; index++) {
-            const mission = missions[index];
+            const mission = missions[index], sessionID = mission?.identity?.session_id, missionID = mission?.identity?.mission_id;
+            if (typeof sessionID === 'string' && sessionIDs.has(sessionID))
+                throw new Error(`refusing to persist duplicate session identity ${sessionID}`);
+            if (typeof missionID === 'string' && missionIDs.has(missionID))
+                throw new Error(`refusing to persist duplicate mission identity ${missionID}`);
             if (!validateMissionEnvelope(mission))
                 throw new Error(`refusing to persist invalid mission state at index ${index}`);
-            if (sessionIDs.has(mission.identity.session_id))
-                throw new Error(`refusing to persist duplicate session identity ${mission.identity.session_id}`);
-            if (missionIDs.has(mission.identity.mission_id))
-                throw new Error(`refusing to persist duplicate mission identity ${mission.identity.mission_id}`);
             sessionIDs.add(mission.identity.session_id);
             missionIDs.add(mission.identity.mission_id);
         }

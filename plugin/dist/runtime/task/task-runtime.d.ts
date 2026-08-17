@@ -59,9 +59,9 @@ export declare class TaskRuntime {
     queueDepth(): number;
     private workspaceBinding;
     cleanupWorkspaceForTask(m: MissionState, taskID: string): Promise<boolean>;
-    private depsReady;
     private failedDeps;
-    private canRun;
+    private admittedModel;
+    private reserveExistingSessionAttempt;
     private queueTask;
     private drainQueue;
     start(m: MissionState, input?: StartTaskInput): Promise<{

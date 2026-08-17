@@ -1,9 +1,9 @@
 import { executionAttemptIdentity } from '../../contracts/orchestration-core.js';
 function clone(value) { return structuredClone(value); }
-function projectNode(task) {
+function projectNode(task, missionId) {
     return {
         id: task.id,
-        missionId: task.mission_id,
+        missionId: task.mission_id || missionId,
         objective: task.objective,
         status: task.status,
         scope: [...task.scope],
@@ -12,7 +12,7 @@ function projectNode(task) {
         requiredEvidence: [...task.requiredEvidence],
         obligationIds: [...task.obligation_ids],
         contextReferences: clone(task.context_artifacts),
-        externalActionRequirements: [...task.external_action_requirements],
+        externalActionRequirements: [...(task.external_action_requirements ?? [])],
         gateIds: [...task.gate_ids],
         createdAt: task.created_at,
         updatedAt: task.updated_at,
@@ -40,16 +40,16 @@ function projectResources(task, worker) {
         modelSelectionReason: [...(worker?.model_selection_reason ?? [])],
     };
 }
-function projectAttempt(unitID, worker) {
+function projectAttempt(unitID, worker, missionGeneration) {
     if (!worker)
         return undefined;
-    const identity = executionAttemptIdentity({ executionUnitId: unitID, workerId: worker.id, ordinal: worker.attempt, generation: worker.generation_at_spawn });
+    const identity = executionAttemptIdentity({ executionUnitId: unitID, workerId: worker.id, ordinal: worker.attempt ?? 0, generation: worker.generation_at_spawn ?? missionGeneration });
     return {
         ...identity,
         workerId: worker.id,
         status: worker.status,
         ...(worker.started_at === undefined ? {} : { startedAt: worker.started_at }),
-        updatedAt: worker.updated_at,
+        updatedAt: worker.updated_at ?? worker.started_at ?? 0,
         ...(worker.completed_at === undefined ? {} : { completedAt: worker.completed_at }),
         ...(worker.session_id ? { sessionId: worker.session_id } : {}),
         ...(worker.forked_from_session_id ? { forkedFromSessionId: worker.forked_from_session_id } : {}),
@@ -58,11 +58,11 @@ function projectAttempt(unitID, worker) {
         fallbackHistory: clone(worker.fallback_history ?? []),
     };
 }
-function projectUnit(task, worker) {
-    const id = `eu:${task.id}`, resourceSelection = projectResources(task, worker), attempt = projectAttempt(id, worker);
+function projectUnit(task, worker, missionId, missionGeneration) {
+    const id = `eu:${task.id}`, resourceSelection = projectResources(task, worker), attempt = projectAttempt(id, worker, missionGeneration);
     return {
         id,
-        missionId: task.mission_id,
+        missionId: task.mission_id || missionId,
         workNodeId: task.id,
         objective: task.objective,
         role: task.role,
@@ -88,9 +88,9 @@ function projectUnit(task, worker) {
  */
 export function projectMissionToWorkGraph(mission, observedAt = Date.now()) {
     const workerByTask = new Map(mission.execution.workers.map(worker => [worker.task_id, worker]));
-    const nodes = mission.execution.tasks.map(projectNode);
+    const nodes = mission.execution.tasks.map(task => projectNode(task, mission.identity.mission_id));
     const edges = mission.execution.tasks.flatMap(task => task.dependencies.map(dependency => ({ from: dependency, to: task.id, kind: 'requires' })));
-    const executionUnits = mission.execution.tasks.map(task => projectUnit(task, workerByTask.get(task.id)));
+    const executionUnits = mission.execution.tasks.map(task => projectUnit(task, workerByTask.get(task.id), mission.identity.mission_id, mission.continuation.generation));
     return {
         missionId: mission.identity.mission_id,
         objective: mission.identity.objective,

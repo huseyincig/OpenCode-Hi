@@ -1,7 +1,7 @@
 # OpenCode-Hi Active Task State
 
 **Project:** `/workspace/OpenCode-Hi`
-**Status:** ACTIVE — ROADMAP MILESTONE 3
+**Status:** ACTIVE — ROADMAP MILESTONE 4
 **Updated:** 2026-08-17
 **Global authority:** `/workspace/PROTOCOL.md`
 **Legacy project-policy layer:** `/workspace/OpenCode-Hi/PROTOCOL.md`
@@ -9,35 +9,31 @@
 
 ## Active Task
 
-### Milestone 3 — Incremental TaskRuntime Cutover
+### Milestone 4 — Claim-Linked Evidence + Completion
 
-Make the WorkGraph/scheduler lifecycle the authoritative source for TaskRuntime dispatch decisions without moving host/session side effects into the pure scheduler and without deleting proven behavior prematurely.
+Make mission completion fail-closed over claim/obligation/scope/attempt-linked evidence so stale or misattributed proof cannot satisfy work.
 
 ## Verified Baseline
 
-Milestone 2 is complete; see `agent-archive/2026-08-17-deterministic-scheduler-state-owner.md`. Canonical Mission state now carries optional durable scheduler reservations with exact attempt and host-execution fences, restart quarantine, deterministic admission/fairness and resource/conflict/dependency semantics.
+Milestone 3 is complete; see `agent-archive/2026-08-17-incremental-taskruntime-cutover.md`. TaskRuntime dispatch is scheduler-owned, attempts are reserved/bound/fenced across normal, recovery and restart paths, and the full plugin suite passed 889/889 with architecture lint 22/22.
 
 ## Scope
 
-1. Build the smallest Mission/Task/Worker -> `SchedulingSnapshot` adapter used by TaskRuntime.
-2. Replace duplicated `depsReady` / failed-dependency / topology / resource admission checks with scheduler-owned decisions.
-3. Reserve the exact next attempt before host child/session creation.
-4. Bind the reservation to the actual host execution after child creation; settle/release it on result, failure, cancellation and recovery boundaries.
-5. Preserve existing queue mutation, registry, workspace, model routing, child session execution, evidence, authority and recovery side effects.
-6. Prevent legacy and scheduler paths from both dispatching one worker.
-7. Keep broad TaskRuntime restructuring out of scope until parity tests prove the cutover seam.
+1. Replace mission-global evidence freshness decisions with claim/obligation/scope/dependency-linked applicability.
+2. Bind evidence to the exact producing `ExecutionAttempt` and relevant source/diff identity where available.
+3. Invalidate only evidence affected by a relevant mutation; unrelated proof remains usable.
+4. Add a narrow transaction/settlement receipt only where evidence settlement crosses another correctness-critical transition.
+5. Refactor completion evaluation into a fail-closed adjudicator over claims, evidence, active execution, authority and gates.
+6. Preserve existing evidence capture sources and worker/result compatibility until parity tests prove safe migration.
 
 ## Acceptance Criteria
 
-- TaskRuntime dispatch readiness is mechanically sourced from the scheduler owner;
-- dependency-blocked queued work still transitions exactly once and leaves the queue;
-- no worker can be host-spawned without an exact scheduler reservation;
-- host/session binding updates the same reservation and stale callbacks cannot settle a newer attempt;
-- topology/global/provider/model/write-conflict behavior is parity-equivalent or stricter;
-- same-model parallel workers remain supported below ceilings;
-- cancellation, runtime failure/fallback, result settlement and restart paths do not leak reservations;
-- no duplicate scheduling owner remains in the covered TaskRuntime paths;
-- focused integration/parity tests, build and architecture lint pass.
+- mutation invalidates only affected evidence;
+- stale, wrong-task or wrong-attempt evidence cannot satisfy a claim;
+- malformed/inconclusive reviewer output cannot PASS;
+- worker `DONE` cannot bypass required evidence;
+- active process/worker/authority/gate obligations block completion;
+- existing supported verification flows remain compatible or become intentionally stricter with explicit tests.
 
 ## Constraints
 
@@ -45,19 +41,19 @@ Milestone 2 is complete; see `agent-archive/2026-08-17-deterministic-scheduler-s
 - Do not reset/clean the working tree.
 - Do not touch release/publication validation artifacts.
 - No push/tag/release/npm publication.
-- `planScheduling()` and lifecycle reducer remain host-neutral/pure; side effects stay in runtime adapters.
-- Do not redesign model routing, evidence, authority, skills, team runtime or recovery beyond the minimum scheduler integration seam.
+- Do not redesign model routing, scheduler topology, skills or team runtime in this milestone.
+- Evidence producer identity and completion decisions remain host-neutral core semantics.
 
 ## Required Verification
 
-- new TaskRuntime scheduler-adapter/integration parity tests;
-- queue/dependency/failure/cancel tests;
-- provider fallback/recovery tests if reservation lifecycle is touched there;
-- scheduler lifecycle/planner tests;
-- TypeScript build;
-- architecture lint;
+- evidence freshness/invalidation ordering tests;
+- wrong-task/wrong-attempt/claim-linkage adversarial tests;
+- completion/evidence bypass and reviewer-output tests;
+- relevant persistence/contract tests;
+- full plugin test suite when the cutover seam is complete;
+- TypeScript build and architecture lint;
 - scoped diff inspection.
 
 ## Exact Next Action
 
-Inspect current `TaskRuntime.canRun`, `queueTask`, `drainQueue`, initial `run()` dispatch, `TaskResultReconciler`, `TaskRecoveryCoordinator` and cancellation paths. Define a narrow runtime scheduler adapter that projects Mission state plus current resource bindings into `SchedulingSnapshot`, computes the exact next attempt identity, and performs reservation/host-binding/release transitions. Add integration tests before replacing legacy readiness checks.
+Inspect current evidence contract/runtime, `verificationSatisfied`, `VerificationEnvelope`, worker-result evidence ingestion and `completion/evaluator.ts`. Map existing evidence fields to claim/obligation/scope/producer identity, identify where mission-global freshness is currently over-broad, then introduce the smallest host-neutral claim-linked evidence applicability layer with tests before changing completion behavior.

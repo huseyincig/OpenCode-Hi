@@ -52,6 +52,7 @@ test('structured constraint follow-up rebases a busy worker onto a fresh session
   assert.equal(reconciled,1)
   assert.equal(m.execution.tasks.length,taskCount);assert.equal(m.execution.workers.length,workerCount)
   assert.equal(worker.session_id,'child-new');assert.equal(worker.generation_at_spawn,m.continuation.generation)
+  assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(m.execution.scheduler.reservations[0].workerId,worker.id);assert.equal(m.execution.scheduler.reservations[0].hostExecutionId,'child-new');assert.equal(m.execution.scheduler.reservations[0].phase,'RUNNING')
   assert.deepEqual(worker.loaded_methodologies,[])
   assert.equal(calls.aborts,1);assert.equal(calls.creates,1);assert.equal(calls.prompts,1)
   assert.ok(task.constraints.includes('任意の制約テキスト'))

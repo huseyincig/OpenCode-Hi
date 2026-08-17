@@ -6,7 +6,6 @@ import { resolveSkillPermissionMap, resolveSkillToolEnabled } from '../skills/pe
 import { createTask, createWorker, beginWorkerAttempt, workerFingerprint } from '../worker/worker-runtime.js';
 import { workerHandoffText } from './contracts.js';
 import { appendLedger } from '../ledger/ledger.js';
-import { parallelSafety } from '../scheduler/parallel-safety.js';
 import { routeCapabilities } from '../routing/capability-router.js';
 import { verificationEconomyInstruction } from '../verification/policy.js';
 import { targetedVerificationHint } from '../verification/discovery.js';
@@ -30,6 +29,7 @@ import { createRuntimeScopedStores } from '../application/runtime-scoped-stores.
 import { ChildExecutionCoordinator } from './child-execution-coordinator.js';
 import { TaskResultReconciler } from './task-result-reconciler.js';
 import { TaskRecoveryCoordinator } from './task-recovery-coordinator.js';
+import { taskRuntimeAdmittedModel, taskRuntimeUnitDecision, reserveTaskRuntimeDispatch, bindTaskRuntimeHost, releaseTaskRuntimeReservation, reconcileStoppedTaskRuntimeRestart } from '../scheduler/task-runtime-adapter.js';
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
 const MAX_QUEUE = 32;
 function inferObligationIds(m, role, requiredEvidence, explicit = []) {
@@ -106,13 +106,29 @@ export class TaskRuntime {
     workspaceBinding(m, taskID) { const required = m.execution.isolation_decisions.some(d => d.required && d.requested_by === `task:${taskID}`), lease = this.workspaceRuntime?.forTask(m, taskID); if (required && (!lease || lease.status !== 'ACTIVE' || lease.cleanup_state !== 'ACTIVE' || !lease.host_workspace_id))
         throw new Error(`Required workspace lease is not active for task ${taskID}`); return lease?.host_workspace_id && lease.status === 'ACTIVE' && lease.cleanup_state === 'ACTIVE' ? { workspaceID: lease.host_workspace_id, directory: lease.workspace_path } : undefined; }
     async cleanupWorkspaceForTask(m, taskID) { return this.workspaceRuntime ? this.workspaceRuntime.cleanupTask(m, taskID) : true; }
-    depsReady(m, deps) { return deps.every(id => m.execution.tasks.find(t => t.id === id)?.status === 'completed'); }
     failedDeps(m, deps) { return deps.filter(id => { const status = m.execution.tasks.find(t => t.id === id)?.status; return status === 'failed' || status === 'cancelled'; }); }
-    canRun(m, worker, chain) { if (m.identity.status !== 'active' || m.continuation.user_interrupted || m.identity.semantic_assessment.status !== 'assessed' || worker.status === 'cancelled')
-        return false; if (!this.depsReady(m, m.execution.tasks.find(t => t.id === worker.task_id)?.dependencies ?? []))
-        return false; const active = m.execution.workers.filter(w => w.id !== worker.id && ['starting', 'busy'].includes(w.status)).length; if (m.execution.execution_mode === 'single' && active > 0)
-        return false; if (m.execution.execution_mode === 'parallel' && active >= Math.max(1, m.execution.topology?.parallelism ?? 1))
-        return false; return chain.some(model => this.scheduler.canStart(worker.id, providerOf(model), model === 'host-default' ? undefined : model).ok); }
+    admittedModel(m, worker, chain) { return taskRuntimeAdmittedModel(m, worker, chain, this.scheduler); }
+    reserveExistingSessionAttempt(m, worker, model) {
+        if (!model || !worker.session_id)
+            return { ok: false, reason: 'model-or-session-missing' };
+        if (this.admittedModel(m, worker, [model]) !== model)
+            return { ok: false, reason: 'scheduler-not-admitted' };
+        const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler);
+        if (!reservation.accepted)
+            return { ok: false, reason: reservation.reason };
+        const provider = providerOf(model);
+        if (!this.scheduler.acquire(worker.id, provider, model === 'host-default' ? undefined : model)) {
+            releaseTaskRuntimeReservation(m, worker.id);
+            return { ok: false, reason: 'legacy-resource-backstop' };
+        }
+        const bound = bindTaskRuntimeHost(m, worker.id, worker.session_id);
+        if (!bound.accepted) {
+            this.scheduler.release(worker.id);
+            releaseTaskRuntimeReservation(m, worker.id);
+            return { ok: false, reason: bound.reason };
+        }
+        return { ok: true, reason: 'reserved-and-bound' };
+    }
     queueTask(m, worker, run) { if (this.#queue.length >= MAX_QUEUE)
         throw new Error('Hi bounded dispatch queue is full'); const t = m.execution.tasks.find(x => x.id === worker.task_id); worker.status = 'queued'; if (t)
         t.status = 'queued'; if (!this.#queue.some(x => x.worker.id === worker.id))
@@ -132,7 +148,7 @@ export class TaskRuntime {
                     this.#queue.splice(i--, 1);
                     continue;
                 }
-                const failed = this.failedDeps(e.mission, t.dependencies);
+                const decision = taskRuntimeUnitDecision(e.mission, e.worker, chain[0], this.scheduler), failed = decision?.disposition === 'BLOCKED_DEPENDENCY' ? decision.blockingDependencyIds.filter(id => { const status = e.mission.execution.tasks.find(task => task.id === id)?.status; return status === 'failed' || status === 'cancelled'; }) : [];
                 if (failed.length) {
                     this.#queue.splice(i--, 1);
                     e.worker.status = 'failed';
@@ -143,13 +159,13 @@ export class TaskRuntime {
                     e.mission.execution.blockers = [...new Set([...e.mission.execution.blockers, reason])];
                     this.registry.delete(e.worker.id);
                     await this.cleanupWorkspaceForTask(e.mission, t.id);
-                    appendLedger(e.mission, 'worker.dependency-blocked', { task_id: t.id, worker_id: e.worker.id, payload: { dependencies: failed } });
+                    appendLedger(e.mission, 'worker.dependency-blocked', { task_id: t.id, worker_id: e.worker.id, payload: { dependencies: failed, source: 'scheduler' } });
                     void this.events?.(runtimeSignal('worker.dependency-blocked', e.mission.identity.mission_id, { task_id: t.id, worker_id: e.worker.id, payload: { dependencies: failed } }));
                     syncMissionGates(e.mission);
                     progress = true;
                     continue;
                 }
-                if (!this.depsReady(e.mission, t.dependencies) || !this.canRun(e.mission, e.worker, chain))
+                if (!this.admittedModel(e.mission, e.worker, chain))
                     continue;
                 this.#queue.splice(i--, 1);
                 progress = true;
@@ -198,11 +214,28 @@ export class TaskRuntime {
             this.workspaceBinding(m, existing.task_id);
             const oldTask = m.execution.tasks.find(t => t.id === existing.task_id);
             if (existing.status === 'ready' && existing.session_id && oldTask?.result && ['FIX_REQUIRED', 'NEEDS_CONTEXT', 'BLOCKED'].includes(oldTask.result.status)) {
-                const chain = [selected.primary, ...selected.fallbacks].filter((x) => Boolean(x)), nextModel = chain.find(model => this.scheduler.canStart(existing.id, providerOf(model), model === 'host-default' ? undefined : model).ok) ?? existing.model;
+                const chain = [selected.primary, ...selected.fallbacks].filter((x) => Boolean(x));
+                if (existing.restart_reconcile_pending) {
+                    const stopped = await this.abortNativeSession(m, existing.session_id, 'restart-reconcile-quiesce', existing.id, oldTask?.id);
+                    if (!stopped) {
+                        appendLedger(m, 'scheduler.restart-reconcile-blocked', { task_id: oldTask?.id, worker_id: existing.id, payload: { reason: 'abort-unavailable', session_id: existing.session_id } });
+                        throw new Error('Worker restart reconciliation requires a verified host abort before resume');
+                    }
+                    const reconciled = reconcileStoppedTaskRuntimeRestart(m, existing);
+                    if (!reconciled.accepted) {
+                        appendLedger(m, 'scheduler.restart-reconcile-blocked', { task_id: oldTask?.id, worker_id: existing.id, payload: { reason: reconciled.reason, session_id: existing.session_id } });
+                        throw new Error(`Worker restart scheduler reconciliation failed: ${reconciled.reason}`);
+                    }
+                    this.scheduler.release(existing.id);
+                    appendLedger(m, 'scheduler.restart-reconciled', { task_id: oldTask?.id, worker_id: existing.id, payload: { session_id: existing.session_id, outcome: 'terminal-aborted-before-resume' } });
+                }
+                const nextModel = this.admittedModel(m, existing, chain) ?? existing.model;
                 if (!nextModel)
-                    throw new Error('Worker resume capacity unavailable');
+                    throw new Error('Worker resume scheduler admission unavailable');
+                const resumeAdmission = this.reserveExistingSessionAttempt(m, existing, nextModel);
+                if (!resumeAdmission.ok)
+                    throw new Error(`Worker resume scheduler admission unavailable: ${resumeAdmission.reason}`);
                 const previousModel = existing.model;
-                this.scheduler.acquire(existing.id, providerOf(nextModel), nextModel === 'host-default' ? undefined : nextModel);
                 existing.model = nextModel;
                 existing.generation_at_spawn = m.continuation.generation;
                 existing.status = 'busy';
@@ -221,9 +254,6 @@ export class TaskRuntime {
             }
             return { task_id: oldTask?.id ?? existing.task_id, worker_id: existing.id, session_id: existing.session_id, model: existing.model, methodologies: existing.selected_methodologies, selection_reason: ['same-session worker reuse'], readiness: 'READY', preconditions: preflight.items };
         }
-        const safety = parallelSafety(m.execution.tasks, { scope, dependencies, role }), hardParallelConflicts = safety.reasons.filter(reason => !reason.startsWith('dependency:'));
-        if (hardParallelConflicts.length && m.execution.tasks.some(t => ['queued', 'running'].includes(t.status)))
-            throw new Error(`Unsafe parallel dispatch: ${hardParallelConflicts.join('; ')}`);
         const requestedArtifactIds = [...new Set(input.contextArtifactIds ?? [])].slice(0, DEFAULT_CONTEXT_BUDGET.max_artifacts), unknownArtifactIds = requestedArtifactIds.filter(id => !m.context.context_artifacts.some(a => a.id === id));
         if (unknownArtifactIds.length)
             throw new Error(`Unknown context artifact id(s): ${unknownArtifactIds.join(', ')}`);
@@ -298,13 +328,18 @@ export class TaskRuntime {
                 appendLedger(m, 'model.fallback.skipped', { task_id: task.id, worker_id: worker.id, payload: { model, reason: runtimeCandidate.reason, index: i, phase: 'dispatch-revalidation' } });
                 continue;
             }
-            const capacity = this.scheduler.canStart(worker.id, provider, model === 'host-default' ? undefined : model);
-            if (!capacity.ok) {
-                lastError = new Error(`Worker capacity unavailable: ${capacity.reason}`);
-                appendLedger(m, 'model.fallback.skipped', { task_id: task.id, worker_id: worker.id, payload: { model, reason: capacity.reason, index: i } });
+            const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler);
+            if (!reservation.accepted) {
+                lastError = new Error(`Worker scheduler admission unavailable: ${reservation.reason}`);
+                appendLedger(m, 'model.fallback.skipped', { task_id: task.id, worker_id: worker.id, payload: { model, reason: reservation.reason, index: i, source: 'scheduler' } });
                 continue;
             }
-            this.scheduler.acquire(worker.id, provider, model === 'host-default' ? undefined : model);
+            if (!this.scheduler.acquire(worker.id, provider, model === 'host-default' ? undefined : model)) {
+                releaseTaskRuntimeReservation(m, worker.id);
+                lastError = new Error('Legacy resource tracker disagreed with scheduler admission');
+                appendLedger(m, 'scheduler.resource-tracker-mismatch', { task_id: task.id, worker_id: worker.id, payload: { model, index: i } });
+                continue;
+            }
             worker.model = model;
             worker.model_variant = variant;
             try {
@@ -326,6 +361,9 @@ export class TaskRuntime {
                 worker.session_id = child?.id;
                 if (!worker.session_id)
                     throw new Error('Child session id missing');
+                const bound = bindTaskRuntimeHost(m, worker.id, worker.session_id);
+                if (!bound.accepted)
+                    throw new Error(`Scheduler host binding failed: ${bound.reason}`);
                 recordPreexistingUserBaseline(m, await this.captureNativeDiff(worker, 'baseline'));
                 worker.generation_at_spawn = m.continuation.generation;
                 worker.status = 'busy';
@@ -346,15 +384,23 @@ export class TaskRuntime {
             }
             catch (error) {
                 lastError = error;
-                this.scheduler.release(worker.id);
+                let hostStopped = true;
                 if (worker.session_id) {
                     try {
-                        await this.abortNativeSession(m, worker.session_id, 'dispatch-fallback', worker.id, task.id);
+                        hostStopped = await this.abortNativeSession(m, worker.session_id, 'dispatch-fallback', worker.id, task.id);
                     }
-                    catch { }
-                    ;
-                    worker.session_id = undefined;
+                    catch {
+                        hostStopped = false;
+                    }
+                    if (hostStopped)
+                        worker.session_id = undefined;
                 }
+                if (!hostStopped) {
+                    appendLedger(m, 'worker.start.abort-blocked', { task_id: task.id, worker_id: worker.id, payload: { model, index: i, error: String(error) } });
+                    throw new Error(`Scheduler reservation retained because host abort could not be verified for worker ${worker.id}`);
+                }
+                this.scheduler.release(worker.id);
+                releaseTaskRuntimeReservation(m, worker.id);
                 if (m.identity.status !== 'active' || m.continuation.user_interrupted || worker.status === 'cancelled') {
                     worker.status = 'cancelled';
                     task.status = 'cancelled';
@@ -375,7 +421,7 @@ export class TaskRuntime {
         else
             task.status = 'failed'; await this.cleanupWorkspaceForTask(m, task.id); appendLedger(m, 'worker.start.failed', { task_id: task.id, worker_id: worker.id, payload: { error: String(lastError), attempted_models: chain } }); throw lastError; });
         syncMissionGates(m);
-        if (!this.canRun(m, worker, chain)) {
+        if (!this.admittedModel(m, worker, chain)) {
             this.queueTask(m, worker, run);
             return { task_id: task.id, worker_id: worker.id, model: worker.model, methodologies: worker.selected_methodologies, selection_reason: [...routed.reason, ...selected.reason, ...selected.fallbackReasons.map(x => `${x.model}:${x.reason}`), 'queued:runtime-capacity-or-prerequisite', ...skillPlan.reason], readiness: 'WAIT', preconditions: preflight.items };
         }
@@ -405,6 +451,7 @@ export class TaskRuntime {
                 worker.status = 'cancelled';
                 task.status = 'cancelled';
                 this.scheduler.release(worker.id);
+                releaseTaskRuntimeReservation(m, worker.id, 'CANCEL');
                 this.registry.delete(worker.id);
                 this.#queue = this.#queue.filter(q => q.worker.id !== worker.id);
                 await this.cleanupWorkspaceForTask(m, task.id);
@@ -421,6 +468,7 @@ export class TaskRuntime {
                     continue;
                 }
                 this.scheduler.release(worker.id);
+                releaseTaskRuntimeReservation(m, worker.id);
             }
             worker.status = 'ready';
             task.status = task.result ? 'waiting' : 'waiting';
@@ -449,12 +497,11 @@ export class TaskRuntime {
                 appendLedger(m, 'worker.semantic-resume-blocked', { task_id: task.id, worker_id: worker.id, payload: { reason: String(error) } });
                 continue;
             }
-            const model = worker.model, provider = providerOf(model), capacity = this.scheduler.canStart(worker.id, provider, model === 'host-default' ? undefined : model);
-            if (!capacity.ok) {
-                appendLedger(m, 'worker.semantic-resume-deferred', { task_id: task.id, worker_id: worker.id, payload: { revision: m.identity.semantic_assessment.revision, reason: capacity.reason } });
+            const model = worker.model, resumeAdmission = this.reserveExistingSessionAttempt(m, worker, model);
+            if (!resumeAdmission.ok) {
+                appendLedger(m, 'worker.semantic-resume-deferred', { task_id: task.id, worker_id: worker.id, payload: { revision: m.identity.semantic_assessment.revision, reason: resumeAdmission.reason } });
                 continue;
             }
-            this.scheduler.acquire(worker.id, provider, model === 'host-default' ? undefined : model);
             worker.generation_at_spawn = m.continuation.generation;
             worker.parent_mission_id = m.identity.mission_id;
             worker.status = 'busy';
@@ -521,10 +568,30 @@ export class TaskRuntime {
             catch (error) {
                 const marker = `constraint-abort-unavailable:${task.id}:${worker.id}`;
                 m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
-                worker.status = 'ready';
-                task.status = 'waiting';
+                worker.status = 'busy';
+                task.status = 'running';
                 appendLedger(m, 'worker.constraint-rebase.blocked', { task_id: task.id, worker_id: worker.id, payload: { from_session: oldSession, error: String(error), generation: m.continuation.generation } });
                 this.registry.set(worker);
+                continue;
+            }
+            this.scheduler.release(worker.id);
+            releaseTaskRuntimeReservation(m, worker.id);
+            worker.session_id = undefined;
+            worker.status = 'ready';
+            task.status = 'waiting';
+            this.registry.set(worker);
+            if (!model) {
+                appendLedger(m, 'worker.constraint-rebase.deferred', { task_id: task.id, worker_id: worker.id, payload: { reason: 'model-missing' } });
+                continue;
+            }
+            const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler);
+            if (!reservation.accepted) {
+                appendLedger(m, 'worker.constraint-rebase.deferred', { task_id: task.id, worker_id: worker.id, payload: { reason: reservation.reason } });
+                continue;
+            }
+            if (!this.scheduler.acquire(worker.id, providerOf(model), model === 'host-default' ? undefined : model)) {
+                releaseTaskRuntimeReservation(m, worker.id);
+                appendLedger(m, 'worker.constraint-rebase.deferred', { task_id: task.id, worker_id: worker.id, payload: { reason: 'legacy-resource-backstop' } });
                 continue;
             }
             try {
@@ -534,6 +601,9 @@ export class TaskRuntime {
                     throw new Error('Constraint rebase child session id missing');
                 const recoverySessionID = String(child.id);
                 worker.session_id = recoverySessionID;
+                const bound = bindTaskRuntimeHost(m, worker.id, recoverySessionID);
+                if (!bound.accepted)
+                    throw new Error(`Scheduler host binding failed during constraint rebase: ${bound.reason}`);
                 worker.loaded_methodologies = [];
                 worker.semantic_pause_revision = undefined;
                 recordPreexistingUserBaseline(m, await this.captureNativeDiff(worker, 'baseline'));
@@ -552,11 +622,30 @@ export class TaskRuntime {
                 reconciled++;
             }
             catch (error) {
-                this.scheduler.release(worker.id);
-                worker.status = 'ready';
-                task.status = task.result ? 'waiting' : 'blocked';
+                let stopped = true;
+                if (worker.session_id)
+                    try {
+                        stopped = await this.abortNativeSession(m, worker.session_id, 'constraint-rebase-failed', worker.id, task.id);
+                    }
+                    catch {
+                        stopped = false;
+                    }
+                ;
+                if (stopped) {
+                    this.scheduler.release(worker.id);
+                    releaseTaskRuntimeReservation(m, worker.id);
+                    worker.session_id = undefined;
+                    worker.status = 'ready';
+                    task.status = task.result ? 'waiting' : 'blocked';
+                }
+                else {
+                    const marker = `constraint-rebase-recovery-abort-unavailable:${task.id}:${worker.id}`;
+                    m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+                    worker.status = 'busy';
+                    task.status = 'running';
+                }
                 this.registry.set(worker);
-                appendLedger(m, 'worker.constraint-rebase.failed', { task_id: task.id, worker_id: worker.id, payload: { from_session: oldSession, error: String(error), generation: m.continuation.generation } });
+                appendLedger(m, 'worker.constraint-rebase.failed', { task_id: task.id, worker_id: worker.id, payload: { from_session: oldSession, error: String(error), generation: m.continuation.generation, host_stopped: stopped } });
             }
         }
         syncMissionGates(m);
@@ -581,6 +670,9 @@ export class TaskRuntime {
             appendLedger(m, 'worker.cancel.blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: 'abort-unavailable' } });
             return false;
         }
+    } const reservationRelease = releaseTaskRuntimeReservation(m, worker.id, 'CANCEL'); if (!reservationRelease.accepted) {
+        appendLedger(m, 'worker.cancel.scheduler-blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: reservationRelease.reason } });
+        return false;
     } worker.status = 'cancelled'; this.scheduler.release(worker.id); const t = m.execution.tasks.find(x => x.id === worker.task_id); if (t)
         t.status = 'cancelled'; this.registry.delete(worker.id); this.#queue = this.#queue.filter(q => q.worker.id !== worker.id); await this.cleanupWorkspaceForTask(m, worker.task_id); appendLedger(m, 'worker.cancelled', { task_id: t?.id, worker_id: worker.id }); syncMissionGates(m); this.drainQueue(); return true; }
 }

@@ -10,6 +10,7 @@ import { recordPreexistingUserBaseline } from '../safety/staging-safety.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { runtimeSignal } from '../events/event-sink.js';
 import { syncMissionGates } from '../gates/gates.js';
+import { taskRuntimeAdmittedModel, reserveTaskRuntimeDispatch, bindTaskRuntimeHost, beginTaskRuntimeSettlement, releaseTaskRuntimeReservation } from '../scheduler/task-runtime-adapter.js';
 function providerOf(model) { return model && model !== 'host-default' && model.includes('/') ? model.slice(0, model.indexOf('/')) : undefined; }
 export class TaskRecoveryCoordinator {
     scheduler;
@@ -67,11 +68,37 @@ export class TaskRecoveryCoordinator {
             variant = next === selected.primary ? selected.primaryVariant : selected.fallbackVariants[next];
             action = 'model-escalation';
         }
-        const capacity = this.scheduler.canStart(worker.id, providerOf(model), model === 'host-default' ? undefined : model);
-        if (!capacity.ok)
+        if (!model)
             return false;
+        const previousWorkerStatus = worker.status, previousTaskStatus = task.status;
+        worker.status = 'ready';
+        task.status = 'waiting';
+        if (taskRuntimeAdmittedModel(m, worker, [model], this.scheduler) !== model) {
+            worker.status = previousWorkerStatus;
+            task.status = previousTaskStatus;
+            return false;
+        }
+        const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler);
+        if (!reservation.accepted) {
+            worker.status = previousWorkerStatus;
+            task.status = previousTaskStatus;
+            return false;
+        }
         try {
-            this.scheduler.acquire(worker.id, providerOf(model), model === 'host-default' ? undefined : model);
+            if (!this.scheduler.acquire(worker.id, providerOf(model), model === 'host-default' ? undefined : model)) {
+                releaseTaskRuntimeReservation(m, worker.id);
+                worker.status = previousWorkerStatus;
+                task.status = previousTaskStatus;
+                return false;
+            }
+            const bound = bindTaskRuntimeHost(m, worker.id, worker.session_id);
+            if (!bound.accepted) {
+                this.scheduler.release(worker.id);
+                releaseTaskRuntimeReservation(m, worker.id);
+                worker.status = previousWorkerStatus;
+                task.status = previousTaskStatus;
+                return false;
+            }
             const previous = worker.model;
             worker.model = model;
             worker.model_variant = variant;
@@ -91,11 +118,28 @@ export class TaskRecoveryCoordinator {
             return true;
         }
         catch (error) {
-            this.scheduler.release(worker.id);
-            worker.status = 'ready';
-            task.status = task.result?.status === 'DONE' ? 'completed' : task.result ? 'waiting' : 'blocked';
+            let stopped = true;
+            if (worker.session_id)
+                try {
+                    stopped = await this.child.abortNativeSession(m, worker.session_id, 'stagnation-recovery-failed', worker.id, task.id);
+                }
+                catch {
+                    stopped = false;
+                }
+            if (stopped) {
+                this.scheduler.release(worker.id);
+                releaseTaskRuntimeReservation(m, worker.id);
+                worker.status = 'ready';
+                task.status = task.result?.status === 'DONE' ? 'completed' : task.result ? 'waiting' : 'blocked';
+            }
+            else {
+                const marker = `stagnation-recovery-abort-unavailable:${task.id}:${worker.id}`;
+                m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+                worker.status = 'busy';
+                task.status = 'running';
+            }
             this.registry.set(worker);
-            appendLedger(m, 'worker.stagnation-recovery.failed', { task_id: task.id, worker_id: worker.id, payload: { level, action, error: String(error) } });
+            appendLedger(m, 'worker.stagnation-recovery.failed', { task_id: task.id, worker_id: worker.id, payload: { level, action, error: String(error), host_stopped: stopped } });
             return false;
         }
     }
@@ -109,41 +153,52 @@ export class TaskRecoveryCoordinator {
         appendLedger(m, 'worker.failure.classified', { task_id: task?.id, worker_id: worker.id, payload: { kind: failure.kind, stagnation: failure.stagnation, retryable: failure.retryable, reason: failure.reason } });
         if (!failure.retryable || !['provider-transport', 'tool-incompatibility', 'context-overflow'].includes(failure.kind) || !worker.session_id || !task)
             return false;
-        this.scheduler.release(worker.id);
         const failedSession = worker.session_id, candidates = worker.fallbacks.filter(x => x && x !== worker.model);
+        let stopped = false;
+        try {
+            stopped = await this.child.abortNativeSession(m, failedSession, 'terminal-runtime-fallback', worker.id, task.id);
+        }
+        catch { }
+        if (!stopped) {
+            const marker = `runtime-fallback-abort-unavailable:${task.id}:${worker.id}`;
+            m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+            worker.runtime_fallback_exhausted = true;
+            appendLedger(m, 'worker.runtime-fallback.abort-blocked', { task_id: task.id, worker_id: worker.id, payload: { session_id: failedSession, failure_class: failure.kind, marker } });
+            return false;
+        }
+        this.scheduler.release(worker.id);
+        releaseTaskRuntimeReservation(m, worker.id);
+        worker.session_id = undefined;
+        worker.status = 'ready';
+        task.status = 'waiting';
+        this.registry.set(worker);
         for (const model of candidates) {
             const runtimeCandidate = runtimeModelCandidateStatus(model, this.getModels(), this.getConfig(), this.getHostConfig());
             if (!runtimeCandidate.ok) {
                 appendLedger(m, 'worker.runtime-fallback.skipped', { task_id: task.id, worker_id: worker.id, payload: { model, reason: runtimeCandidate.reason, failure_class: failure.kind, phase: 'runtime-policy-revalidation' } });
                 continue;
             }
-            const provider = providerOf(model), capacity = this.scheduler.canStart(worker.id, provider, model === 'host-default' ? undefined : model);
-            if (!capacity.ok) {
-                appendLedger(m, 'worker.runtime-fallback.skipped', { task_id: task.id, worker_id: worker.id, payload: { model, reason: capacity.reason, failure_class: failure.kind } });
+            const provider = providerOf(model), variant = task.execution_profile?.fallback_variants?.[model], previous = worker.model, fallbackReason = task.execution_profile?.fallback_reasons?.find(x => x.model === model)?.reason ?? `runtime fallback after ${failure.kind}`;
+            const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler);
+            if (!reservation.accepted) {
+                appendLedger(m, 'worker.runtime-fallback.skipped', { task_id: task.id, worker_id: worker.id, payload: { model, reason: reservation.reason, failure_class: failure.kind, source: 'scheduler' } });
+                continue;
+            }
+            if (!this.scheduler.acquire(worker.id, provider, model === 'host-default' ? undefined : model)) {
+                releaseTaskRuntimeReservation(m, worker.id);
+                appendLedger(m, 'scheduler.resource-tracker-mismatch', { task_id: task.id, worker_id: worker.id, payload: { model, phase: 'runtime-fallback' } });
                 continue;
             }
             try {
-                this.scheduler.acquire(worker.id, provider, model === 'host-default' ? undefined : model);
-                const variant = task.execution_profile?.fallback_variants?.[model], previous = worker.model, fallbackReason = task.execution_profile?.fallback_reasons?.find(x => x.model === model)?.reason ?? `runtime fallback after ${failure.kind}`;
-                let stopped = false;
-                try {
-                    stopped = await this.child.abortNativeSession(m, failedSession, 'terminal-runtime-fallback', worker.id, task.id);
-                }
-                catch { }
-                ;
-                if (!stopped) {
-                    const marker = `runtime-fallback-abort-unavailable:${task.id}:${worker.id}`;
-                    m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
-                    worker.runtime_fallback_exhausted = true;
-                    appendLedger(m, 'worker.runtime-fallback.abort-blocked', { task_id: task.id, worker_id: worker.id, payload: { session_id: failedSession, failure_class: failure.kind, marker } });
-                    return false;
-                }
                 this.child.recordModelProjection(worker, model, variant);
                 const child = await this.child.create(m.identity.session_id, `Hi · ${worker.role} · runtime recovery · ${task.objective.slice(0, 45)}`, worker.role, model === 'host-default' ? undefined : model, variant, this.workspaceBinding?.(m, task.id));
                 if (!child?.id)
                     throw new Error('Runtime fallback child session id missing');
                 const recoverySessionID = String(child.id);
                 worker.session_id = recoverySessionID;
+                const bound = bindTaskRuntimeHost(m, worker.id, recoverySessionID);
+                if (!bound.accepted)
+                    throw new Error(`Scheduler host binding failed during runtime fallback: ${bound.reason}`);
                 worker.loaded_methodologies = [];
                 worker.model = model;
                 worker.model_variant = variant;
@@ -166,8 +221,32 @@ export class TaskRecoveryCoordinator {
             }
             catch (nextError) {
                 worker.runtime_recovery_pending = false;
-                this.scheduler.release(worker.id);
-                appendLedger(m, 'worker.runtime-fallback.failed', { task_id: task.id, worker_id: worker.id, payload: { model, error: String(nextError), failure_class: failure.kind, from_session: failedSession } });
+                let recoveryStopped = true;
+                if (worker.session_id)
+                    try {
+                        recoveryStopped = await this.child.abortNativeSession(m, worker.session_id, 'runtime-fallback-failed', worker.id, task.id);
+                    }
+                    catch {
+                        recoveryStopped = false;
+                    }
+                if (recoveryStopped) {
+                    this.scheduler.release(worker.id);
+                    releaseTaskRuntimeReservation(m, worker.id);
+                    worker.session_id = undefined;
+                    worker.status = 'ready';
+                    task.status = 'waiting';
+                    this.registry.set(worker);
+                }
+                else {
+                    const marker = `runtime-fallback-recovery-abort-unavailable:${task.id}:${worker.id}`;
+                    m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+                    worker.status = 'busy';
+                    task.status = 'running';
+                    this.registry.set(worker);
+                }
+                appendLedger(m, 'worker.runtime-fallback.failed', { task_id: task.id, worker_id: worker.id, payload: { model, error: String(nextError), failure_class: failure.kind, from_session: failedSession, host_stopped: recoveryStopped } });
+                if (!recoveryStopped)
+                    return false;
             }
         }
         worker.runtime_fallback_exhausted = true;
@@ -184,7 +263,10 @@ export class TaskRecoveryCoordinator {
         return; if (worker.generation_at_spawn !== undefined && worker.generation_at_spawn !== m.continuation.generation) {
         appendLedger(m, 'worker.failure.stale-generation-ignored', { worker_id: worker.id });
         return;
-    } const task = m.execution.tasks.find(t => t.id === worker.task_id), permissionFailure = worker.last_runtime_failure_kind === 'permission', marker = permissionFailure ? `permission-failure:${worker.id}` : error; worker.status = 'failed'; worker.completed_at = Date.now(); this.scheduler.release(worker.id); this.registry.delete(worker.id); if (permissionFailure)
+    } const settlement = beginTaskRuntimeSettlement(m, worker); if (!settlement.accepted && settlement.reason !== 'reservation-not-found') {
+        appendLedger(m, 'worker.failure.scheduler-fence-rejected', { worker_id: worker.id, payload: { reason: settlement.reason } });
+        return;
+    } const task = m.execution.tasks.find(t => t.id === worker.task_id), permissionFailure = worker.last_runtime_failure_kind === 'permission', marker = permissionFailure ? `permission-failure:${worker.id}` : error; worker.status = 'failed'; worker.completed_at = Date.now(); this.scheduler.release(worker.id); releaseTaskRuntimeReservation(m, worker.id); this.registry.delete(worker.id); if (permissionFailure)
         m.continuation.stagnation_count = 0; if (task) {
         task.status = 'failed';
         task.updated_at = Date.now();

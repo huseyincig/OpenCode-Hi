@@ -275,6 +275,19 @@ export class MissionStore {
                             t.status = t.result?.status === 'DONE' ? 'completed' : 'waiting';
                     }
                     else {
+                        const reservation = m.execution.scheduler?.reservations.find(r => r.workerId === w.id);
+                        if (reservation?.phase === 'RECONCILING' && !reservation.hostExecutionId) {
+                            const reconciled = reduceSchedulerLifecycle(m.execution.scheduler, { type: 'RECONCILE', reservationId: reservation.reservationId, attempt: reservation.attempt, outcome: 'NOT_STARTED', at: now });
+                            if (reconciled.accepted) {
+                                m.execution.scheduler = reconciled.state;
+                                appendLedger(m, 'scheduler.restart-reconciled', { task_id: t?.id, worker_id: w.id, payload: { outcome: 'not-started', reservation_id: reservation.reservationId } });
+                            }
+                            else {
+                                const marker = `scheduler-restart-reconcile-failed:${w.id}`;
+                                m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+                                appendLedger(m, 'scheduler.restart-reconcile-failed', { task_id: t?.id, worker_id: w.id, payload: { reason: reconciled.reason, reservation_id: reservation.reservationId } });
+                            }
+                        }
                         w.status = 'failed';
                         w.completed_at = now;
                         if (t) {

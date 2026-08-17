@@ -32,6 +32,7 @@ test('runtime-discovered overlapping writes quarantine the later writer and seri
   // This test isolates write-conflict serialization rather than methodology admission/load/exit.
   for(const w of [wa,wb]){w.selected_methodologies=[];w.loaded_methodologies=[];w.methodologies=[]}
   assert.equal(wa.status,'busy');assert.equal(wb.status,'busy')
+  assert.equal(m.execution.scheduler.reservations.length,2);assert.ok(m.execution.scheduler.reservations.every(r=>r.phase==='RUNNING'))
   await runtime.noteNativeWriteSet(m,wa.id,['src/shared.ts'],'session-diff','h1')
   await runtime.noteNativeWriteSet(m,wb.id,['src/shared.ts'],'session-diff','h2')
   const ta=m.execution.tasks.find(t=>t.id===a.task_id),tb=m.execution.tasks.find(t=>t.id===b.task_id)
@@ -41,16 +42,20 @@ test('runtime-discovered overlapping writes quarantine the later writer and seri
   assert.equal(calls.aborts.length,1)
   assert.deepEqual(calls.aborts[0],{path:{id:wb.session_id}})
   assert.ok(m.execution.blockers.some(x=>x.startsWith('parallel-write-conflict:')))
+  assert.equal(m.execution.scheduler.reservations.length,1,'aborted conflicting run must release its exact reservation')
+  assert.equal(m.execution.scheduler.reservations[0].workerId,wa.id)
 
   runtime.applyResult(m,wa.id,done)
   await new Promise(resolve=>setImmediate(resolve))
   assert.equal(wb.status,'busy','quarantined worker should resume after winner completion')
   assert.equal(tb.status,'running')
+  assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(m.execution.scheduler.reservations[0].workerId,wb.id);assert.equal(m.execution.scheduler.reservations[0].phase,'RUNNING');assert.equal(m.execution.scheduler.reservations[0].attempt.ordinal,2)
   assert.match(calls.prompts.at(-1).body.parts[0].text,/write-conflict reconciliation/i)
   assert.match(calls.prompts.at(-1).body.parts[0].text,/src\/shared\.ts/)
 
   runtime.applyResult(m,wb.id,done)
   assert.equal(tb.status,'completed')
+  assert.equal(m.execution.scheduler.reservations.length,0)
   assert.equal(m.execution.blockers.some(x=>x.startsWith('parallel-write-conflict:')),false,'conflict blocker clears only after quarantined task reconciles')
 })
 

@@ -193,6 +193,7 @@ test('Gap #recovery-runtime: level-2 escalation resumes same child session with 
   const client={session:{promptAsync:async req=>{calls.push(req)}}}
   const store=new MissionStore()
   const m=store.start('recovery-runtime-session','fix bug')
+  store.applyInitialSemanticAssessment('recovery-runtime-session',{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]})
   const task=createTask(m,{objective:'fix bug',role:'coder',category:'standard'})
   const worker=createWorker(m,task,'p/cheap',['p/strong'])
   worker.session_id='child-1'; worker.status='completed'; task.status='completed'

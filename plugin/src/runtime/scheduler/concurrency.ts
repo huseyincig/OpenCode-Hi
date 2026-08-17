@@ -17,4 +17,6 @@ export class ConcurrencyScheduler{
   acquire(id:string,provider?:string,model?:string):boolean{const c=this.canStart(id,provider,model);if(!c.ok)return false;this.#running.set(id,{provider,model});return true}
   release(id:string):void{this.#running.delete(id)}
   running():number{return this.#running.size}
+  policySnapshot():ConcurrencyPolicy{const p=this.policy();return{global:p.global,providers:{...(p.providers??{})},models:{...(p.models??{})}}}
+  allocations():Array<{id:string;provider?:string;model?:string}>{return[...this.#running.entries()].map(([id,slot])=>({id,...slot}))}
 }

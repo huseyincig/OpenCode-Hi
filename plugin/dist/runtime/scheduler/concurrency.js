@@ -31,4 +31,6 @@ export class ConcurrencyScheduler {
         return false; this.#running.set(id, { provider, model }); return true; }
     release(id) { this.#running.delete(id); }
     running() { return this.#running.size; }
+    policySnapshot() { const p = this.policy(); return { global: p.global, providers: { ...(p.providers ?? {}) }, models: { ...(p.models ?? {}) } }; }
+    allocations() { return [...this.#running.entries()].map(([id, slot]) => ({ id, ...slot })); }
 }
