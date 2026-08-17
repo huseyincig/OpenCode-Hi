@@ -97,14 +97,17 @@ export interface ExecutionAttempt extends ExecutionAttemptIdentity {
   fallbackHistory:Array<{from?:string;to:string;variant?:string;reason:string;phase:'dispatch'|'runtime';at:number}>
 }
 
-export function executionAttemptIdentity(input:{executionUnitId:string;workerId:string;ordinal:number;generation:number;sessionId?:string}):ExecutionAttemptIdentity{
+export function executionAttemptIdentity(input:{executionUnitId:string;workerId:string;ordinal:number;generation:number}):ExecutionAttemptIdentity{
   const attemptId=`${input.executionUnitId}:g${input.generation}:a${input.ordinal}`
-  const owner=input.sessionId?`session:${input.sessionId}`:`worker:${input.workerId}`
-  return{executionUnitId:input.executionUnitId,attemptId,runId:`${owner}:g${input.generation}:a${input.ordinal}`,ordinal:input.ordinal,generation:input.generation}
+  return{executionUnitId:input.executionUnitId,attemptId,runId:`worker:${input.workerId}:g${input.generation}:a${input.ordinal}`,ordinal:input.ordinal,generation:input.generation}
 }
 
 export function sameExecutionAttempt(a:Pick<ExecutionAttemptIdentity,'executionUnitId'|'attemptId'|'runId'|'generation'>,b:Pick<ExecutionAttemptIdentity,'executionUnitId'|'attemptId'|'runId'|'generation'>):boolean{
   return a.executionUnitId===b.executionUnitId&&a.attemptId===b.attemptId&&a.runId===b.runId&&a.generation===b.generation
+}
+
+export function sameExecutionAttemptFence(a:Pick<ExecutionAttempt,'executionUnitId'|'attemptId'|'runId'|'generation'|'workerId'|'sessionId'>,b:Pick<ExecutionAttempt,'executionUnitId'|'attemptId'|'runId'|'generation'|'workerId'|'sessionId'>):boolean{
+  return sameExecutionAttempt(a,b)&&a.workerId===b.workerId&&a.sessionId===b.sessionId
 }
 
 export type ExecutionTransitionKind='DISPATCH'|'SETTLEMENT'|'EVIDENCE_COMMIT'
@@ -247,7 +250,7 @@ export function validateWorkGraph(graph:WorkGraph):WorkGraphValidation{
         if(unit.attempt.ordinal<0||!Number.isInteger(unit.attempt.ordinal))reasons.push(`attempt-ordinal-invalid:${unit.id}`)
         if(unit.attempt.generation<1||!Number.isInteger(unit.attempt.generation))reasons.push(`attempt-generation-invalid:${unit.id}`)
         if(!unit.attempt.attemptId||!unit.attempt.runId)reasons.push(`attempt-identity-missing:${unit.id}`)
-        const expected=executionAttemptIdentity({executionUnitId:unit.id,workerId:unit.attempt.workerId,ordinal:unit.attempt.ordinal,generation:unit.attempt.generation,sessionId:unit.attempt.sessionId})
+        const expected=executionAttemptIdentity({executionUnitId:unit.id,workerId:unit.attempt.workerId,ordinal:unit.attempt.ordinal,generation:unit.attempt.generation})
         if(!sameExecutionAttempt(unit.attempt,expected))reasons.push(`attempt-identity-drift:${unit.id}`)
       }
     }
@@ -340,4 +343,84 @@ export interface SchedulingUnitDecision {
 export interface SchedulingDecision {
   missionId:string
   units:SchedulingUnitDecision[]
+}
+
+
+export type SchedulerReservationPhase='RESERVED'|'RUNNING'|'SETTLING'|'RECONCILING'
+
+export interface SchedulerReservation {
+  reservationId:string
+  missionId:string
+  workNodeId:string
+  executionUnitId:string
+  workerId:string
+  attempt:ExecutionAttemptIdentity
+  phase:SchedulerReservationPhase
+  resource:SchedulingResourceBinding
+  ticket:number
+  reservedAt:number
+  updatedAt:number
+  hostExecutionId?:string
+}
+
+export interface SchedulerLifecycleState {
+  missionId:string
+  revision:number
+  nextTicket:number
+  reservations:SchedulerReservation[]
+}
+
+export type SchedulerReconcileOutcome='ACTIVE'|'NOT_STARTED'|'TERMINAL'|'UNKNOWN'
+
+export type SchedulerLifecycleEvent=
+  |{type:'RESERVE';missionId:string;workNodeId:string;workerId:string;attempt:ExecutionAttemptIdentity;resource:SchedulingResourceBinding;at:number}
+  |{type:'HOST_BOUND';reservationId:string;attempt:ExecutionAttemptIdentity;hostExecutionId:string;at:number}
+  |{type:'BEGIN_SETTLEMENT';reservationId:string;attempt:ExecutionAttemptIdentity;hostExecutionId?:string;at:number}
+  |{type:'RELEASE';reservationId:string;attempt:ExecutionAttemptIdentity;hostExecutionId?:string;at:number}
+  |{type:'CANCEL';reservationId:string;attempt:ExecutionAttemptIdentity;hostExecutionId?:string;at:number}
+  |{type:'RESTART_QUARANTINE';at:number}
+  |{type:'RECONCILE';reservationId:string;attempt:ExecutionAttemptIdentity;hostExecutionId?:string;outcome:SchedulerReconcileOutcome;at:number}
+
+export interface SchedulerLifecycleResult {
+  accepted:boolean
+  reason:string
+  state:SchedulerLifecycleState
+  reservation?:SchedulerReservation
+}
+
+
+export function createSchedulerLifecycleState(missionId:string):SchedulerLifecycleState{
+  return{missionId,revision:0,nextTicket:1,reservations:[]}
+}
+
+export function schedulerReservationId(input:{missionId:string;workNodeId:string;attempt:ExecutionAttemptIdentity}):string{
+  return['sr1',input.missionId,input.workNodeId,input.attempt.executionUnitId,input.attempt.attemptId,input.attempt.runId,String(input.attempt.generation)].map(receiptPart).join('|')
+}
+
+export function isSchedulerLifecycleState(value:unknown):value is SchedulerLifecycleState{
+  if(!value||typeof value!=='object'||Array.isArray(value))return false
+  const state=value as Record<string,unknown>
+  if(typeof state.missionId!=='string'||!state.missionId||!Number.isInteger(state.revision)||Number(state.revision)<0||!Number.isInteger(state.nextTicket)||Number(state.nextTicket)<1||!Array.isArray(state.reservations))return false
+  const ids=new Set<string>(),units=new Set<string>(),tickets=new Set<number>()
+  for(const raw of state.reservations){
+    if(!raw||typeof raw!=='object'||Array.isArray(raw))return false
+    const item=raw as Record<string,unknown>,attempt=item.attempt as Record<string,unknown>|undefined,resource=item.resource as Record<string,unknown>|undefined
+    if(typeof item.reservationId!=='string'||!item.reservationId||typeof item.missionId!=='string'||item.missionId!==state.missionId||typeof item.workNodeId!=='string'||!item.workNodeId||typeof item.executionUnitId!=='string'||!item.executionUnitId||typeof item.workerId!=='string'||!item.workerId)return false
+    if(!['RESERVED','RUNNING','SETTLING','RECONCILING'].includes(String(item.phase))||!Number.isInteger(item.ticket)||Number(item.ticket)<1||typeof item.reservedAt!=='number'||!Number.isFinite(item.reservedAt)||typeof item.updatedAt!=='number'||!Number.isFinite(item.updatedAt))return false
+    if(item.hostExecutionId!==undefined&&(typeof item.hostExecutionId!=='string'||!item.hostExecutionId))return false
+    if(['RUNNING','SETTLING'].includes(String(item.phase))&&typeof item.hostExecutionId!=='string')return false
+    if(item.phase==='RESERVED'&&item.hostExecutionId!==undefined)return false
+    if(Number(item.updatedAt)<Number(item.reservedAt))return false
+    if(!attempt||typeof attempt.executionUnitId!=='string'||typeof attempt.attemptId!=='string'||typeof attempt.runId!=='string'||!Number.isInteger(attempt.ordinal)||Number(attempt.ordinal)<0||!Number.isInteger(attempt.generation)||Number(attempt.generation)<1)return false
+    const expectedAttempt=executionAttemptIdentity({executionUnitId:String(attempt.executionUnitId),workerId:String(item.workerId),ordinal:Number(attempt.ordinal),generation:Number(attempt.generation)})
+    if(!sameExecutionAttempt(attempt as unknown as ExecutionAttemptIdentity,expectedAttempt)||attempt.executionUnitId!==item.executionUnitId)return false
+    const expectedReservation=schedulerReservationId({missionId:String(item.missionId),workNodeId:String(item.workNodeId),attempt:expectedAttempt})
+    if(item.reservationId!==expectedReservation)return false
+    if(!resource||Array.isArray(resource)||(resource.provider!==undefined&&typeof resource.provider!=='string')||(resource.model!==undefined&&typeof resource.model!=='string'))return false
+    const ticket=Number(item.ticket)
+    if(ids.has(String(item.reservationId))||units.has(String(item.executionUnitId))||tickets.has(ticket))return false
+    ids.add(String(item.reservationId));units.add(String(item.executionUnitId));tickets.add(ticket)
+  }
+  if(tickets.size&&Math.max(...tickets)>=Number(state.nextTicket))return false
+  return true
 }

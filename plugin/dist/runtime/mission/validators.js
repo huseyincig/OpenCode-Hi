@@ -8,6 +8,7 @@ import { HI_METHODOLOGY_PRODUCERS, HI_METHODOLOGY_SIGNAL_CATALOG, HI_METHODOLOGY
 import { SEMANTIC_CAPABILITIES, SEMANTIC_VERIFICATION_KINDS } from '../intent/semantic-assessment.js';
 import { isProcessContract } from '../../contracts/process.js';
 import { isIsolationDecisionContract, isWorkspaceLeaseContract } from '../../contracts/workspace.js';
+import { isSchedulerLifecycleState } from '../../contracts/orchestration-core.js';
 function isRecord(value) { return Boolean(value) && typeof value === 'object' && !Array.isArray(value); }
 function stringArray(value) { return Array.isArray(value) && value.every(item => typeof item === 'string'); }
 function recordArray(value) { return Array.isArray(value) && value.every(isRecord); }
@@ -178,6 +179,16 @@ export function validateMissionExecutionState(identity, execution, methodology) 
         return false;
     if (!stringArray(execution.blockers) || !stringArray(execution.constraints) || typeof execution.native_todos_incomplete !== 'number' || !Array.isArray(execution.gates) || !execution.gates.every(validGate))
         return false;
+    if (execution.scheduler !== undefined) {
+        if (!isSchedulerLifecycleState(execution.scheduler) || execution.scheduler.missionId !== identity.mission_id)
+            return false;
+        const tasks = execution.tasks, workers = execution.workers;
+        for (const reservation of execution.scheduler.reservations) {
+            const task = tasks.find(task => task.id === reservation.workNodeId), worker = workers.find(worker => worker.id === reservation.workerId);
+            if (!task || !worker || worker.task_id !== task.id || reservation.executionUnitId !== `eu:${task.id}`)
+                return false;
+        }
+    }
     const processIDs = new Set();
     for (const process of execution.processes) {
         if (processIDs.has(process.process_id))

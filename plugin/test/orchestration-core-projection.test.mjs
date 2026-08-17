@@ -4,7 +4,7 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { createTask,createWorker,beginWorkerAttempt } from '../dist/runtime/worker/worker-runtime.js'
 import { addEvidence,markMutation } from '../dist/runtime/evidence/evidence-runtime.js'
 import { projectMissionToWorkGraph } from '../dist/runtime/execution/work-graph-projection.js'
-import { validateWorkGraph,isCapabilityResolution,executionAttemptIdentity,sameExecutionAttempt,executionTransitionReceiptId } from '../dist/contracts/orchestration-core.js'
+import { validateWorkGraph,isCapabilityResolution,executionAttemptIdentity,sameExecutionAttempt,sameExecutionAttemptFence,executionTransitionReceiptId } from '../dist/contracts/orchestration-core.js'
 import { startAssessedMission } from './helpers/semantic.mjs'
 
 function mission(id='core-projection'){
@@ -100,11 +100,11 @@ test('WorkGraph validator rejects multi-node dependency cycles deterministically
 })
 
 test('execution attempt identity fences ordinal generation and host run identity',()=>{
-  const base=executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:2,generation:7,sessionId:'ses-a'})
-  const same=executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:2,generation:7,sessionId:'ses-a'})
-  const nextAttempt=executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:3,generation:7,sessionId:'ses-a'})
-  const nextGeneration=executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:2,generation:8,sessionId:'ses-a'})
-  const replacementSession=executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:2,generation:7,sessionId:'ses-b'})
+  const base=executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:2,generation:7})
+  const same=executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:2,generation:7})
+  const nextAttempt=executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:3,generation:7})
+  const nextGeneration=executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:2,generation:8})
+  const replacementSession=executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w2',ordinal:2,generation:7})
   assert.deepEqual(base,same)
   assert.equal(sameExecutionAttempt(base,same),true)
   assert.equal(sameExecutionAttempt(base,nextAttempt),false)
@@ -122,26 +122,29 @@ test('projection derives exact current attempt identity from durable worker fiel
   worker.session_id='child-a';worker.generation_at_spawn=3;beginWorkerAttempt(task,worker,100)
   const first=projectMissionToWorkGraph(m,110).executionUnits[0].attempt
   assert.equal(first.attemptId,`eu:${task.id}:g3:a1`)
-  assert.equal(first.runId,'session:child-a:g3:a1')
+  assert.equal(first.runId,`worker:${worker.id}:g3:a1`)
   beginWorkerAttempt(task,worker,120)
   const resumed=projectMissionToWorkGraph(m,130).executionUnits[0].attempt
   assert.equal(resumed.attemptId,`eu:${task.id}:g3:a2`)
-  assert.equal(resumed.runId,'session:child-a:g3:a2')
+  assert.equal(resumed.runId,`worker:${worker.id}:g3:a2`)
   worker.session_id='child-b';worker.generation_at_spawn=4
   const replaced=projectMissionToWorkGraph(m,140).executionUnits[0].attempt
   assert.equal(replaced.attemptId,`eu:${task.id}:g4:a2`)
-  assert.equal(replaced.runId,'session:child-b:g4:a2')
+  assert.equal(replaced.runId,`worker:${worker.id}:g4:a2`)
   assert.equal(sameExecutionAttempt(resumed,replaced),false)
+  const sameIdentityDifferentHost={...first,sessionId:'child-b'}
+  assert.equal(sameExecutionAttempt(first,sameIdentityDifferentHost),true)
+  assert.equal(sameExecutionAttemptFence(first,sameIdentityDifferentHost),false)
 })
 
 test('transition receipt identity is deterministic and bound to exact attempt and transition',()=>{
-  const attempt=executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:1,generation:2,sessionId:'ses-1'})
+  const attempt=executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:1,generation:2})
   const input={missionId:'m1',workNodeId:'t1',attempt,transition:'DISPATCH'}
   const first=executionTransitionReceiptId(input),second=executionTransitionReceiptId(input)
   assert.equal(first,second)
   assert.notEqual(first,executionTransitionReceiptId({...input,transition:'SETTLEMENT'}))
-  assert.notEqual(first,executionTransitionReceiptId({...input,attempt:executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:2,generation:2,sessionId:'ses-1'})}))
-  assert.notEqual(first,executionTransitionReceiptId({...input,attempt:executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:1,generation:3,sessionId:'ses-1'})}))
+  assert.notEqual(first,executionTransitionReceiptId({...input,attempt:executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:2,generation:2})}))
+  assert.notEqual(first,executionTransitionReceiptId({...input,attempt:executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:1,generation:3})}))
 })
 
 

@@ -9,6 +9,7 @@ import { HI_METHODOLOGY_PRODUCERS, HI_METHODOLOGY_SIGNAL_CATALOG, HI_METHODOLOGY
 import { SEMANTIC_CAPABILITIES, SEMANTIC_VERIFICATION_KINDS } from '../intent/semantic-assessment.js'
 import { isProcessContract } from '../../contracts/process.js'
 import { isIsolationDecisionContract,isWorkspaceLeaseContract } from '../../contracts/workspace.js'
+import { isSchedulerLifecycleState } from '../../contracts/orchestration-core.js'
 
 function isRecord(value:unknown):value is Record<string,unknown>{return Boolean(value)&&typeof value==='object'&&!Array.isArray(value)}
 function stringArray(value:unknown):value is string[]{return Array.isArray(value)&&value.every(item=>typeof item==='string')}
@@ -132,6 +133,14 @@ export function validateMissionExecutionState(identity:unknown,execution:unknown
   if((identity.semantic_assessment as any)?.status==='pending'&&(identity.semantic_assessment as any)?.phase==='initial'&&(((execution.obligations as unknown[])?.length??0)>0||((execution.tasks as unknown[])?.length??0)>0||((execution.workers as unknown[])?.length??0)>0||((execution.processes as unknown[])?.length??0)>0||((execution.isolation_decisions as unknown[])?.length??0)>0||((execution.workspace_leases as unknown[])?.length??0)>0||((methodology.methodology_needs as unknown[])?.length??0)>0))return false
   if((!Array.isArray(execution.obligations)||!execution.obligations.every(validObligation))||!Array.isArray(execution.tasks)||!execution.tasks.every(isTaskContract)||!Array.isArray(execution.workers)||!execution.workers.every(isWorkerContract)||!Array.isArray(execution.processes)||!execution.processes.every(isProcessContract)||!Array.isArray(execution.isolation_decisions)||!execution.isolation_decisions.every(isIsolationDecisionContract)||!Array.isArray(execution.workspace_leases)||!execution.workspace_leases.every(isWorkspaceLeaseContract)||!recordArray(execution.ledger))return false
   if(!stringArray(execution.blockers)||!stringArray(execution.constraints)||typeof execution.native_todos_incomplete!=='number'||!Array.isArray(execution.gates)||!execution.gates.every(validGate))return false
+  if(execution.scheduler!==undefined){
+    if(!isSchedulerLifecycleState(execution.scheduler)||execution.scheduler.missionId!==identity.mission_id)return false
+    const tasks=execution.tasks as any[],workers=execution.workers as any[]
+    for(const reservation of execution.scheduler.reservations){
+      const task=tasks.find(task=>task.id===reservation.workNodeId),worker=workers.find(worker=>worker.id===reservation.workerId)
+      if(!task||!worker||worker.task_id!==task.id||reservation.executionUnitId!==`eu:${task.id}`)return false
+    }
+  }
   const processIDs=new Set<string>();for(const process of execution.processes as any[]){if(processIDs.has(process.process_id))return false;processIDs.add(process.process_id);if(process.mission_id!==identity.mission_id)return false;const task=(execution.tasks as any[]).find(t=>t.id===process.task_id),worker=(execution.workers as any[]).find(w=>w.id===process.worker_id);if(!task||!worker||worker.task_id!==task.id)return false}
   const leaseIDs=new Set<string>(),activeWorkspacePaths=new Set<string>(),activeHostWorkspaceIDs=new Set<string>();for(const lease of execution.workspace_leases as any[]){if(leaseIDs.has(lease.lease_id))return false;leaseIDs.add(lease.lease_id);if(lease.mission_id!==identity.mission_id)return false;if(!(execution.tasks as any[]).some(t=>t.id===lease.task_id))return false;if(lease.status!=='CLOSED'){if(activeWorkspacePaths.has(lease.workspace_path))return false;activeWorkspacePaths.add(lease.workspace_path);if(lease.host_workspace_id){if(activeHostWorkspaceIDs.has(lease.host_workspace_id))return false;activeHostWorkspaceIDs.add(lease.host_workspace_id)}}}
   return isRecord(execution.evidence)&&typeof execution.evidence.fresh==='boolean'&&Array.isArray(execution.evidence.items)&&execution.evidence.items.every(isEvidenceItemContract)&&(execution.evidence.last_mutation_at===undefined||typeof execution.evidence.last_mutation_at==='number')

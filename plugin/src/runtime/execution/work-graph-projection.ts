@@ -46,7 +46,7 @@ function projectResources(task:MissionTask,worker:WorkerState|undefined):Executi
 
 function projectAttempt(unitID:string,worker:WorkerState|undefined):ExecutionAttempt|undefined{
   if(!worker)return undefined
-  const identity=executionAttemptIdentity({executionUnitId:unitID,workerId:worker.id,ordinal:worker.attempt,generation:worker.generation_at_spawn,sessionId:worker.session_id})
+  const identity=executionAttemptIdentity({executionUnitId:unitID,workerId:worker.id,ordinal:worker.attempt,generation:worker.generation_at_spawn})
   return{
     ...identity,
     workerId:worker.id,

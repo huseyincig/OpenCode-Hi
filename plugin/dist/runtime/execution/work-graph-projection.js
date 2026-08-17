@@ -43,7 +43,7 @@ function projectResources(task, worker) {
 function projectAttempt(unitID, worker) {
     if (!worker)
         return undefined;
-    const identity = executionAttemptIdentity({ executionUnitId: unitID, workerId: worker.id, ordinal: worker.attempt, generation: worker.generation_at_spawn, sessionId: worker.session_id });
+    const identity = executionAttemptIdentity({ executionUnitId: unitID, workerId: worker.id, ordinal: worker.attempt, generation: worker.generation_at_spawn });
     return {
         ...identity,
         workerId: worker.id,

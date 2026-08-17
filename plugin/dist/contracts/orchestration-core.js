@@ -1,10 +1,12 @@
 export function executionAttemptIdentity(input) {
     const attemptId = `${input.executionUnitId}:g${input.generation}:a${input.ordinal}`;
-    const owner = input.sessionId ? `session:${input.sessionId}` : `worker:${input.workerId}`;
-    return { executionUnitId: input.executionUnitId, attemptId, runId: `${owner}:g${input.generation}:a${input.ordinal}`, ordinal: input.ordinal, generation: input.generation };
+    return { executionUnitId: input.executionUnitId, attemptId, runId: `worker:${input.workerId}:g${input.generation}:a${input.ordinal}`, ordinal: input.ordinal, generation: input.generation };
 }
 export function sameExecutionAttempt(a, b) {
     return a.executionUnitId === b.executionUnitId && a.attemptId === b.attemptId && a.runId === b.runId && a.generation === b.generation;
+}
+export function sameExecutionAttemptFence(a, b) {
+    return sameExecutionAttempt(a, b) && a.workerId === b.workerId && a.sessionId === b.sessionId;
 }
 function receiptPart(value) { return `${value.length}:${value}`; }
 export function executionTransitionReceiptId(input) {
@@ -89,7 +91,7 @@ export function validateWorkGraph(graph) {
                     reasons.push(`attempt-generation-invalid:${unit.id}`);
                 if (!unit.attempt.attemptId || !unit.attempt.runId)
                     reasons.push(`attempt-identity-missing:${unit.id}`);
-                const expected = executionAttemptIdentity({ executionUnitId: unit.id, workerId: unit.attempt.workerId, ordinal: unit.attempt.ordinal, generation: unit.attempt.generation, sessionId: unit.attempt.sessionId });
+                const expected = executionAttemptIdentity({ executionUnitId: unit.id, workerId: unit.attempt.workerId, ordinal: unit.attempt.ordinal, generation: unit.attempt.generation });
                 if (!sameExecutionAttempt(unit.attempt, expected))
                     reasons.push(`attempt-identity-drift:${unit.id}`);
             }
@@ -122,4 +124,54 @@ export function isCapabilityResolution(value) {
         && Array.isArray(item.semanticLoss) && item.semanticLoss.every(x => typeof x === 'string')
         && Array.isArray(item.reason) && item.reason.every(x => typeof x === 'string')
         && (item.implementation !== 'UNAVAILABLE' || item.available === false);
+}
+export function createSchedulerLifecycleState(missionId) {
+    return { missionId, revision: 0, nextTicket: 1, reservations: [] };
+}
+export function schedulerReservationId(input) {
+    return ['sr1', input.missionId, input.workNodeId, input.attempt.executionUnitId, input.attempt.attemptId, input.attempt.runId, String(input.attempt.generation)].map(receiptPart).join('|');
+}
+export function isSchedulerLifecycleState(value) {
+    if (!value || typeof value !== 'object' || Array.isArray(value))
+        return false;
+    const state = value;
+    if (typeof state.missionId !== 'string' || !state.missionId || !Number.isInteger(state.revision) || Number(state.revision) < 0 || !Number.isInteger(state.nextTicket) || Number(state.nextTicket) < 1 || !Array.isArray(state.reservations))
+        return false;
+    const ids = new Set(), units = new Set(), tickets = new Set();
+    for (const raw of state.reservations) {
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw))
+            return false;
+        const item = raw, attempt = item.attempt, resource = item.resource;
+        if (typeof item.reservationId !== 'string' || !item.reservationId || typeof item.missionId !== 'string' || item.missionId !== state.missionId || typeof item.workNodeId !== 'string' || !item.workNodeId || typeof item.executionUnitId !== 'string' || !item.executionUnitId || typeof item.workerId !== 'string' || !item.workerId)
+            return false;
+        if (!['RESERVED', 'RUNNING', 'SETTLING', 'RECONCILING'].includes(String(item.phase)) || !Number.isInteger(item.ticket) || Number(item.ticket) < 1 || typeof item.reservedAt !== 'number' || !Number.isFinite(item.reservedAt) || typeof item.updatedAt !== 'number' || !Number.isFinite(item.updatedAt))
+            return false;
+        if (item.hostExecutionId !== undefined && (typeof item.hostExecutionId !== 'string' || !item.hostExecutionId))
+            return false;
+        if (['RUNNING', 'SETTLING'].includes(String(item.phase)) && typeof item.hostExecutionId !== 'string')
+            return false;
+        if (item.phase === 'RESERVED' && item.hostExecutionId !== undefined)
+            return false;
+        if (Number(item.updatedAt) < Number(item.reservedAt))
+            return false;
+        if (!attempt || typeof attempt.executionUnitId !== 'string' || typeof attempt.attemptId !== 'string' || typeof attempt.runId !== 'string' || !Number.isInteger(attempt.ordinal) || Number(attempt.ordinal) < 0 || !Number.isInteger(attempt.generation) || Number(attempt.generation) < 1)
+            return false;
+        const expectedAttempt = executionAttemptIdentity({ executionUnitId: String(attempt.executionUnitId), workerId: String(item.workerId), ordinal: Number(attempt.ordinal), generation: Number(attempt.generation) });
+        if (!sameExecutionAttempt(attempt, expectedAttempt) || attempt.executionUnitId !== item.executionUnitId)
+            return false;
+        const expectedReservation = schedulerReservationId({ missionId: String(item.missionId), workNodeId: String(item.workNodeId), attempt: expectedAttempt });
+        if (item.reservationId !== expectedReservation)
+            return false;
+        if (!resource || Array.isArray(resource) || (resource.provider !== undefined && typeof resource.provider !== 'string') || (resource.model !== undefined && typeof resource.model !== 'string'))
+            return false;
+        const ticket = Number(item.ticket);
+        if (ids.has(String(item.reservationId)) || units.has(String(item.executionUnitId)) || tickets.has(ticket))
+            return false;
+        ids.add(String(item.reservationId));
+        units.add(String(item.executionUnitId));
+        tickets.add(ticket);
+    }
+    if (tickets.size && Math.max(...tickets) >= Number(state.nextTicket))
+        return false;
+    return true;
 }

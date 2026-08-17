@@ -98,9 +98,9 @@ export declare function executionAttemptIdentity(input: {
     workerId: string;
     ordinal: number;
     generation: number;
-    sessionId?: string;
 }): ExecutionAttemptIdentity;
 export declare function sameExecutionAttempt(a: Pick<ExecutionAttemptIdentity, 'executionUnitId' | 'attemptId' | 'runId' | 'generation'>, b: Pick<ExecutionAttemptIdentity, 'executionUnitId' | 'attemptId' | 'runId' | 'generation'>): boolean;
+export declare function sameExecutionAttemptFence(a: Pick<ExecutionAttempt, 'executionUnitId' | 'attemptId' | 'runId' | 'generation' | 'workerId' | 'sessionId'>, b: Pick<ExecutionAttempt, 'executionUnitId' | 'attemptId' | 'runId' | 'generation' | 'workerId' | 'sessionId'>): boolean;
 export type ExecutionTransitionKind = 'DISPATCH' | 'SETTLEMENT' | 'EVIDENCE_COMMIT';
 export type ExecutionTransitionState = 'PREPARED' | 'COMMITTED' | 'UNKNOWN';
 export interface ExecutionTransitionReceipt {
@@ -238,3 +238,81 @@ export interface SchedulingDecision {
     missionId: string;
     units: SchedulingUnitDecision[];
 }
+export type SchedulerReservationPhase = 'RESERVED' | 'RUNNING' | 'SETTLING' | 'RECONCILING';
+export interface SchedulerReservation {
+    reservationId: string;
+    missionId: string;
+    workNodeId: string;
+    executionUnitId: string;
+    workerId: string;
+    attempt: ExecutionAttemptIdentity;
+    phase: SchedulerReservationPhase;
+    resource: SchedulingResourceBinding;
+    ticket: number;
+    reservedAt: number;
+    updatedAt: number;
+    hostExecutionId?: string;
+}
+export interface SchedulerLifecycleState {
+    missionId: string;
+    revision: number;
+    nextTicket: number;
+    reservations: SchedulerReservation[];
+}
+export type SchedulerReconcileOutcome = 'ACTIVE' | 'NOT_STARTED' | 'TERMINAL' | 'UNKNOWN';
+export type SchedulerLifecycleEvent = {
+    type: 'RESERVE';
+    missionId: string;
+    workNodeId: string;
+    workerId: string;
+    attempt: ExecutionAttemptIdentity;
+    resource: SchedulingResourceBinding;
+    at: number;
+} | {
+    type: 'HOST_BOUND';
+    reservationId: string;
+    attempt: ExecutionAttemptIdentity;
+    hostExecutionId: string;
+    at: number;
+} | {
+    type: 'BEGIN_SETTLEMENT';
+    reservationId: string;
+    attempt: ExecutionAttemptIdentity;
+    hostExecutionId?: string;
+    at: number;
+} | {
+    type: 'RELEASE';
+    reservationId: string;
+    attempt: ExecutionAttemptIdentity;
+    hostExecutionId?: string;
+    at: number;
+} | {
+    type: 'CANCEL';
+    reservationId: string;
+    attempt: ExecutionAttemptIdentity;
+    hostExecutionId?: string;
+    at: number;
+} | {
+    type: 'RESTART_QUARANTINE';
+    at: number;
+} | {
+    type: 'RECONCILE';
+    reservationId: string;
+    attempt: ExecutionAttemptIdentity;
+    hostExecutionId?: string;
+    outcome: SchedulerReconcileOutcome;
+    at: number;
+};
+export interface SchedulerLifecycleResult {
+    accepted: boolean;
+    reason: string;
+    state: SchedulerLifecycleState;
+    reservation?: SchedulerReservation;
+}
+export declare function createSchedulerLifecycleState(missionId: string): SchedulerLifecycleState;
+export declare function schedulerReservationId(input: {
+    missionId: string;
+    workNodeId: string;
+    attempt: ExecutionAttemptIdentity;
+}): string;
+export declare function isSchedulerLifecycleState(value: unknown): value is SchedulerLifecycleState;

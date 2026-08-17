@@ -10,6 +10,8 @@ import { decideTopology } from '../execution/topology-policy.js';
 import { activateMethodologySignal, suppressIntentMethodologySignals } from '../methodology/activation.js';
 import { architectureMethodologySignals } from '../methodology/signals.js';
 import { resolveHumanDecision } from '../human-decision/runtime.js';
+import { createSchedulerLifecycleState } from '../../contracts/orchestration-core.js';
+import { reduceSchedulerLifecycle } from '../scheduler/lifecycle.js';
 function obligation(id, kind, summary, requiredEvidence = []) { return { id, kind, summary, status: 'open', requiredEvidence }; }
 export class MissionStore {
     #bySession = new Map();
@@ -20,9 +22,10 @@ export class MissionStore {
     constructor(root = process.cwd(), nativeContext = {}, getPrimaryMode = () => 'auto', getTopology = () => ({ mode: 'adaptive', maxAgents: 4, parallelism: 2 })) { this.#root = root; this.#repo = collectRepoContext(root, nativeContext); this.#getPrimaryMode = getPrimaryMode; this.#getTopology = getTopology; }
     start(sessionID, userText, observedPrimary) {
         const intent = provisionalIntent(userText, this.#repo), now = Date.now(), primaryConfigured = this.#getPrimaryMode(), primary = observedPrimary ?? (primaryConfigured === 'manager' ? 'manager' : 'working-manager');
+        const missionID = `m_${now.toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
         const mission = {
-            identity: { mission_id: `m_${now.toString(36)}_${Math.random().toString(36).slice(2, 10)}`, session_id: sessionID, objective: intent.objective, intent, semantic_assessment: { status: 'pending', phase: 'initial', revision: 1, source: 'host-primary', pending_text: userText.slice(0, 12000) }, status: 'active', risk: intent.risk, created_at: now, updated_at: now },
-            execution: { execution_mode: 'single', primary_mode: primary, verification_policy: { requiredKinds: [], requireFresh: true, requireReview: false, allowWorkerReportedEvidence: true }, adaptive_execution: { path: 'DIRECT', reasons: ['semantic assessment pending'] }, topology: { mode: 'single-agent', parallelism: 1, reason: ['semantic assessment pending'] }, obligations: [], tasks: [], workers: [], processes: [], isolation_decisions: [], workspace_leases: [], evidence: { fresh: false, items: [] }, ledger: [], blockers: [], constraints: [], native_todos_incomplete: 0, gates: [] },
+            identity: { mission_id: missionID, session_id: sessionID, objective: intent.objective, intent, semantic_assessment: { status: 'pending', phase: 'initial', revision: 1, source: 'host-primary', pending_text: userText.slice(0, 12000) }, status: 'active', risk: intent.risk, created_at: now, updated_at: now },
+            execution: { execution_mode: 'single', primary_mode: primary, verification_policy: { requiredKinds: [], requireFresh: true, requireReview: false, allowWorkerReportedEvidence: true }, adaptive_execution: { path: 'DIRECT', reasons: ['semantic assessment pending'] }, topology: { mode: 'single-agent', parallelism: 1, reason: ['semantic assessment pending'] }, obligations: [], tasks: [], workers: [], processes: [], isolation_decisions: [], workspace_leases: [], evidence: { fresh: false, items: [] }, ledger: [], blockers: [], constraints: [], native_todos_incomplete: 0, gates: [], scheduler: createSchedulerLifecycleState(missionID) },
             continuation: { generation: 1, iteration: 0, continuation_budget: continuationBudget('standard'), continuation_active: false, last_progress_signature: '', stagnation_count: 0, user_interrupted: false, resume_count: 0, last_user_message_at: now },
             context: { context_artifacts: [] },
             vcs: { changed_files: [], temporary_mutations: [] },
@@ -236,6 +239,11 @@ export class MissionStore {
         sessionIDs.add(candidate.identity.session_id);
         missionIDs.add(candidate.identity.mission_id);
     } for (const m of missions) {
+        m.execution.scheduler ??= createSchedulerLifecycleState(m.identity.mission_id);
+        if (m.execution.scheduler.reservations.length) {
+            m.execution.scheduler = reduceSchedulerLifecycle(m.execution.scheduler, { type: 'RESTART_QUARANTINE', at: Date.now() }).state;
+            appendLedger(m, 'scheduler.restart-quarantined', { payload: { reservations: m.execution.scheduler.reservations.length } });
+        }
         if (m.authority.authority?.approved) {
             m.authority.authority = { ...m.authority.authority, approved: undefined };
             appendLedger(m, 'authority.approval.invalidated', { payload: { reason: 'runtime-restart' } });
@@ -330,7 +338,7 @@ export class MissionStore {
         m.continuation.stagnation_count += 1; m.continuation.last_progress_signature = next; m.identity.updated_at = Date.now(); return progressed; }
     closeObligation(m, id) { const o = m.execution.obligations.find(x => x.id === id); if (!o)
         return; o.status = 'closed'; o.closedAt = Date.now(); syncMissionGates(m); appendLedger(m, 'obligation.closed', { payload: { obligation: id } }); }
-    signature(m) { const data = JSON.stringify({ obligations: m.execution.obligations.map(o => [o.id, o.status]), tasks: m.execution.tasks.map(t => [t.id, t.status, t.result?.status, t.result?.open_issues, t.result?.needs_context]), workers: m.execution.workers.map(w => [w.id, w.status, w.model, w.model_variant, w.runtime_recovery_attempt]), processes: m.execution.processes.map(p => [p.process_id, p.status, p.cleanup_state, p.pid]), isolation: m.execution.isolation_decisions.map(d => [d.required, d.strategy, d.requested_by, d.scope]), workspaces: m.execution.workspace_leases.map(w => [w.lease_id, w.status, w.cleanup_state, w.workspace_path]), evidence: m.execution.evidence.items.map(e => [e.kind, e.outcome, e.invalidated_at, e.task_id, e.obligation_ids]), files: m.vcs.changed_files, blockers: m.execution.blockers, constraints: m.execution.constraints, tasks_constraints: m.execution.tasks.map(t => [t.id, t.constraints]), gates: m.execution.gates.map(g => [g.id, g.status, g.reason]), temporary: m.vcs.temporary_mutations.map(x => [x.id, x.status]), human_decision: m.authority.human_decision ? [m.authority.human_decision.decision_id, m.authority.human_decision.status, m.authority.human_decision.reason_code, m.authority.human_decision.resolved_at] : undefined }); let h = 2166136261; for (let i = 0; i < data.length; i++) {
+    signature(m) { const data = JSON.stringify({ obligations: m.execution.obligations.map(o => [o.id, o.status]), tasks: m.execution.tasks.map(t => [t.id, t.status, t.result?.status, t.result?.open_issues, t.result?.needs_context]), workers: m.execution.workers.map(w => [w.id, w.status, w.model, w.model_variant, w.runtime_recovery_attempt]), processes: m.execution.processes.map(p => [p.process_id, p.status, p.cleanup_state, p.pid]), isolation: m.execution.isolation_decisions.map(d => [d.required, d.strategy, d.requested_by, d.scope]), workspaces: m.execution.workspace_leases.map(w => [w.lease_id, w.status, w.cleanup_state, w.workspace_path]), evidence: m.execution.evidence.items.map(e => [e.kind, e.outcome, e.invalidated_at, e.task_id, e.obligation_ids]), files: m.vcs.changed_files, blockers: m.execution.blockers, constraints: m.execution.constraints, tasks_constraints: m.execution.tasks.map(t => [t.id, t.constraints]), gates: m.execution.gates.map(g => [g.id, g.status, g.reason]), temporary: m.vcs.temporary_mutations.map(x => [x.id, x.status]), human_decision: m.authority.human_decision ? [m.authority.human_decision.decision_id, m.authority.human_decision.status, m.authority.human_decision.reason_code, m.authority.human_decision.resolved_at] : undefined, scheduler: m.execution.scheduler?.reservations.map(r => [r.reservationId, r.phase, r.attempt.attemptId, r.hostExecutionId]) }); let h = 2166136261; for (let i = 0; i < data.length; i++) {
         h ^= data.charCodeAt(i);
         h = Math.imul(h, 16777619);
     } return (h >>> 0).toString(16).padStart(8, '0'); }

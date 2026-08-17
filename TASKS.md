@@ -1,7 +1,7 @@
 # OpenCode-Hi Active Task State
 
 **Project:** `/workspace/OpenCode-Hi`
-**Status:** ACTIVE — ROADMAP MILESTONE 2
+**Status:** ACTIVE — ROADMAP MILESTONE 3
 **Updated:** 2026-08-17
 **Global authority:** `/workspace/PROTOCOL.md`
 **Legacy project-policy layer:** `/workspace/OpenCode-Hi/PROTOCOL.md`
@@ -9,56 +9,55 @@
 
 ## Active Task
 
-### Milestone 2 — Deterministic Scheduler State Owner
+### Milestone 3 — Incremental TaskRuntime Cutover
 
-Evolve the current pure `planScheduling()` admission policy into one canonical scheduler lifecycle without creating a second Task/Worker state machine.
+Make the WorkGraph/scheduler lifecycle the authoritative source for TaskRuntime dispatch decisions without moving host/session side effects into the pure scheduler and without deleting proven behavior prematurely.
 
 ## Verified Baseline
 
-Milestone 1 is complete; see `agent-archive/2026-08-17-exact-execution-identity-graph-invariants.md`. Core now provides exact attempt/run identity, attempt fencing comparison, dependency-cycle validation, narrow transition-receipt identity and structured progress-delta vocabulary.
+Milestone 2 is complete; see `agent-archive/2026-08-17-deterministic-scheduler-state-owner.md`. Canonical Mission state now carries optional durable scheduler reservations with exact attempt and host-execution fences, restart quarantine, deterministic admission/fairness and resource/conflict/dependency semantics.
 
 ## Scope
 
-1. Keep `planScheduling()` pure and side-effect-free.
-2. Define the smallest canonical scheduler state for ready/admitted/running/settling execution units.
-3. Add exact dispatch claim/reservation ownership bound to `ExecutionAttemptIdentity`.
-4. Prevent double dispatch and stale settlement using attempt generation/run fencing.
-5. Model dependency readiness/failure propagation and fan-in without duplicating TaskRuntime task state.
-6. Integrate resource/write-set admission, topology/global/provider/model capacity and cancellation/backpressure inputs.
-7. Define deterministic fairness/starvation behavior; priority/critical-path inputs only if they materially improve policy.
-8. Keep recovery as a bounded interface; do not duplicate recovery logic inside scheduler.
-9. Provide restart/reconciliation semantics for scheduler-owned reservations before broad TaskRuntime cutover.
+1. Build the smallest Mission/Task/Worker -> `SchedulingSnapshot` adapter used by TaskRuntime.
+2. Replace duplicated `depsReady` / failed-dependency / topology / resource admission checks with scheduler-owned decisions.
+3. Reserve the exact next attempt before host child/session creation.
+4. Bind the reservation to the actual host execution after child creation; settle/release it on result, failure, cancellation and recovery boundaries.
+5. Preserve existing queue mutation, registry, workspace, model routing, child session execution, evidence, authority and recovery side effects.
+6. Prevent legacy and scheduler paths from both dispatching one worker.
+7. Keep broad TaskRuntime restructuring out of scope until parity tests prove the cutover seam.
 
 ## Acceptance Criteria
 
-- no double dispatch under concurrent/replayed admission;
-- cyclic/invalid graph cannot enter scheduler lifecycle;
-- stale attempt/run cannot settle a newer reservation;
-- dependency failure/cancel propagation is deterministic;
-- independent same-model units can run concurrently below ceilings;
-- conflicting mutable work cannot be admitted concurrently;
-- fairness prevents an older runnable unit from being permanently starved by later equivalent work;
-- scheduler state remains host-neutral and does not own OpenCode Session/Task transport;
-- TaskRuntime is not broadly cut over until scheduler state-machine tests pass.
+- TaskRuntime dispatch readiness is mechanically sourced from the scheduler owner;
+- dependency-blocked queued work still transitions exactly once and leaves the queue;
+- no worker can be host-spawned without an exact scheduler reservation;
+- host/session binding updates the same reservation and stale callbacks cannot settle a newer attempt;
+- topology/global/provider/model/write-conflict behavior is parity-equivalent or stricter;
+- same-model parallel workers remain supported below ceilings;
+- cancellation, runtime failure/fallback, result settlement and restart paths do not leak reservations;
+- no duplicate scheduling owner remains in the covered TaskRuntime paths;
+- focused integration/parity tests, build and architecture lint pass.
 
 ## Constraints
 
-- Preserve all unrelated user-owned dirty files exactly.
+- Preserve unrelated user-owned dirty files exactly.
 - Do not reset/clean the working tree.
 - Do not touch release/publication validation artifacts.
 - No push/tag/release/npm publication.
-- Do not create a second canonical task/worker database or broad WAL.
-- Use narrow transition receipts only around real dispatch/settlement ambiguity.
+- `planScheduling()` and lifecycle reducer remain host-neutral/pure; side effects stay in runtime adapters.
+- Do not redesign model routing, evidence, authority, skills, team runtime or recovery beyond the minimum scheduler integration seam.
 
 ## Required Verification
 
-- scheduler state-machine unit tests;
-- duplicate/replayed admission adversarial tests;
-- stale settlement/fencing tests;
-- dependency/fan-in/failure propagation tests;
-- fairness/backpressure/resource conflict tests;
-- build + architecture lint + scoped diff inspection.
+- new TaskRuntime scheduler-adapter/integration parity tests;
+- queue/dependency/failure/cancel tests;
+- provider fallback/recovery tests if reservation lifecycle is touched there;
+- scheduler lifecycle/planner tests;
+- TypeScript build;
+- architecture lint;
+- scoped diff inspection.
 
 ## Exact Next Action
 
-Inspect `TaskRuntime` queue/drain/start/result paths, `ConcurrencyScheduler`, `parallelSafety`, `BackgroundRegistry`, task result reconciliation, and restart handling. Identify the minimum state transitions currently distributed across those modules, then define a host-neutral scheduler lifecycle/claim contract and pure transition reducer before wiring any side effects.
+Inspect current `TaskRuntime.canRun`, `queueTask`, `drainQueue`, initial `run()` dispatch, `TaskResultReconciler`, `TaskRecoveryCoordinator` and cancellation paths. Define a narrow runtime scheduler adapter that projects Mission state plus current resource bindings into `SchedulingSnapshot`, computes the exact next attempt identity, and performs reservation/host-binding/release transitions. Add integration tests before replacing legacy readiness checks.
