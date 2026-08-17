@@ -101,3 +101,19 @@ test('hi_task_start scope prose fails closed when it ambiguously names multiple 
     await hooks.dispose?.()
   }finally{rmSync(root,{recursive:true,force:true})}
 })
+
+
+test('hi_task_start canonicalizes semicolon-separated multi-path scope before scheduler admission',async()=>{
+  const root=temp('hi-scope-semicolon-');let child=0
+  const c={app:{log:async()=>{}},provider:{list:async()=>({data:[]})},session:{create:async()=>({data:{id:`scope-child-${++child}`}}),promptAsync:async()=>({data:{}}),diff:async()=>({data:[]}),abort:async()=>({data:{}})}}
+  try{
+    const hooks=await HiPlugin({directory:root,worktree:root,project:{name:'scope-semicolon'},client:c});const cfg={};await hooks.config(cfg)
+    await hooks['chat.message']({sessionID:'scope-parent-semicolon',message:{role:'user',parts:[{type:'text',text:'fix two bounded files'}]}},{parts:[]});await assessPluginMission(hooks,'scope-parent-semicolon',{task_kind:'implementation',scope:'multi-file',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation']})
+    const first=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'bounded A',role:'coder',scope:'src/alpha.js;src/shared.js'},{sessionID:'scope-parent-semicolon'}))
+    const second=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'bounded B',role:'coder',scope:'src/beta.js;src/shared.js'},{sessionID:'scope-parent-semicolon'}))
+    assert.ok(first.task_id);assert.equal(second.readiness,'WAIT');const listed=JSON.parse(await hooks.tool.hi_task_list.execute({},{sessionID:'scope-parent-semicolon'}));assert.equal(listed.length,2)
+    assert.deepEqual(listed[0].task.scope,['src/alpha.js','src/shared.js']);assert.deepEqual(listed[1].task.scope,['src/beta.js','src/shared.js'])
+    assert.equal(listed[0].task.status,'running');assert.equal(listed[1].task.status,'queued');assert.equal(child,1,'overlapping mutable scope must not start a second child concurrently')
+    await hooks.dispose?.()
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
