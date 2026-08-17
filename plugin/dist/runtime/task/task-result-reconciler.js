@@ -242,7 +242,7 @@ export class TaskResultReconciler {
         const observedMutationDuringWorker = Boolean(worker.started_at && m.execution.evidence.last_mutation_at && m.execution.evidence.last_mutation_at >= worker.started_at);
         const previousIssues = task.result?.open_issues ?? [];
         if (previousIssues.length)
-            m.execution.blockers = m.execution.blockers.filter(b => !previousIssues.includes(b) || m.execution.tasks.some(other => other.id !== task.id && (other.result?.open_issues ?? []).includes(b)));
+            m.execution.blockers = m.execution.blockers.filter(b => !previousIssues.includes(b) || m.execution.tasks.some(other => other.id !== task.id && other.result?.status !== 'DONE' && (other.result?.open_issues ?? []).includes(b)));
         const previousCollateral = [...(task.diff_cleanliness?.collateral ?? [])];
         const ownership = isHiReadOnlyChildRole(worker.role) && result.changed_files.length
             ? { outside: [...result.changed_files], accepted: [], collateral: [...result.changed_files] }

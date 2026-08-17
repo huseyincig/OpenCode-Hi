@@ -109,7 +109,7 @@ export class TaskResultReconciler{
     if(['completed','failed','cancelled'].includes(worker.status)){appendLedger(m,'worker.result.terminal-ignored',{task_id:task.id,worker_id:worker.id,payload:{status:worker.status,digest}});return}
     worker.last_result_digest=digest;worker.last_result_at=Date.now()
     const observedMutationDuringWorker=Boolean(worker.started_at&&m.execution.evidence.last_mutation_at&&m.execution.evidence.last_mutation_at>=worker.started_at)
-    const previousIssues=task.result?.open_issues??[];if(previousIssues.length)m.execution.blockers=m.execution.blockers.filter(b=>!previousIssues.includes(b)||m.execution.tasks.some(other=>other.id!==task.id&&(other.result?.open_issues??[]).includes(b)))
+    const previousIssues=task.result?.open_issues??[];if(previousIssues.length)m.execution.blockers=m.execution.blockers.filter(b=>!previousIssues.includes(b)||m.execution.tasks.some(other=>other.id!==task.id&&other.result?.status!=='DONE'&&(other.result?.open_issues??[]).includes(b)))
 
     const previousCollateral=[...(task.diff_cleanliness?.collateral??[])]
     const ownership=isHiReadOnlyChildRole(worker.role)&&result.changed_files.length

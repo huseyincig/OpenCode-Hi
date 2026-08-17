@@ -52,6 +52,6 @@ export function verificationMethodologySignals(input:{changed:boolean;scopeExpan
 export function architectureMethodologySignals(intent:NormalizedMissionIntent):HiMethodologySignal[]{
   const out:HiMethodologySignal[]=[]
   if(intent.ambiguity==='contract-critical')add(out,'architecture.contract-ambiguity','Structured mission state contains unresolved contract-critical ambiguity.')
-  if(intent.dependencyClass==='sequential'||intent.dependencyClass==='independent-multi'||intent.scope==='multi-stream')add(out,'architecture.dependency-structure','Structured mission state requires material dependency or multi-stream coordination.')
+  if(intent.dependencyClass==='sequential'||(intent.scope==='multi-stream'&&intent.dependencyClass!=='independent-multi'))add(out,'architecture.dependency-structure','Structured mission state requires material sequencing or coupled multi-stream coordination.')
   return out
 }

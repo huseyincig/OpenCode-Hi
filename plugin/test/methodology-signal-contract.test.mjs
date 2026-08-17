@@ -105,6 +105,14 @@ test('loaded methodology need resolves after the bounded worker completes succes
 })
 
 
+test('independent multi-stream topology does not activate dependency-planning methodology',()=>{
+  const store=new MissionStore(root)
+  const m=store.start('s-independent-multi-methodology','Fix two independent disjoint files')
+  store.applyInitialSemanticAssessment('s-independent-multi-methodology',{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'multi-stream',risk:'low',ambiguity:'none',dependency_class:'independent-multi',required_capabilities:['implementation','verification'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:['src/a.ts','src/b.ts'],intent_signals:[],suppressed_intent_signals:[]})
+  assert.deepEqual(architectureMethodologySignals(m.identity.intent),[])
+  assert.equal(m.methodology.methodology_needs.some(x=>x.name==='hi-implementation-planning'),false)
+})
+
 test('architecture runtime producer owns only structured architecture state while explicit durable-decision intent stays intent-owned',()=>{
   const store=new MissionStore(root)
   const m=store.start('s-architecture-producer','Plan an architecture decision then update dependent API modules sequentially')

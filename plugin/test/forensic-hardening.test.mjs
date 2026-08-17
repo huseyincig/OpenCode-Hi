@@ -59,12 +59,22 @@ test('resolving one task issue does not clear the same blocker still owned by an
   const rt=new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:4,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
   const issue={status:'FIX_REQUIRED',summary:'shared issue',changed_files:[],evidence:[],open_issues:['shared:blocker'],needs_context:[]}
   m.execution.tasks.push({id:'t1',objective:'t1',status:'waiting',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],result:issue,worker_id:'w1',created_at:1,updated_at:1})
-  m.execution.tasks.push({id:'t2',objective:'t2',status:'completed',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],result:{status:'DONE',summary:'done with concern',changed_files:[],evidence:[],open_issues:['shared:blocker'],needs_context:[]},worker_id:'w2',created_at:1,updated_at:1})
+  m.execution.tasks.push({id:'t2',objective:'t2',status:'waiting',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],result:{status:'FIX_REQUIRED',summary:'second task still owns concern',changed_files:[],evidence:[],open_issues:['shared:blocker'],needs_context:[]},worker_id:'w2',created_at:1,updated_at:1})
   m.execution.workers.push({id:'w1',task_id:'t1',role:'coder',category:'standard',parent_session_id:'s',parent_mission_id:m.identity.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'w1',status:'ready',generation_at_spawn:m.continuation.generation})
-  m.execution.workers.push({id:'w2',task_id:'t2',role:'coder',category:'standard',parent_session_id:'s',parent_mission_id:m.identity.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'w2',status:'completed',generation_at_spawn:m.continuation.generation})
+  m.execution.workers.push({id:'w2',task_id:'t2',role:'coder',category:'standard',parent_session_id:'s',parent_mission_id:m.identity.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'w2',status:'ready',generation_at_spawn:m.continuation.generation})
   m.execution.blockers=['shared:blocker']
   rt.applyResult(m,'w1',{status:'DONE',summary:'fixed',changed_files:[],evidence:[],open_issues:[],needs_context:[]})
   assert.ok(m.execution.blockers.includes('shared:blocker'))
+})
+
+test('DONE worker open issues remain provenance and do not become mission blockers',()=>{
+  const m=new MissionStore().start('s-done-info','finish bounded work')
+  const task={id:'t-done',objective:'done',status:'running',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],worker_id:'w-done',created_at:1,updated_at:1}
+  const worker={id:'w-done',task_id:'t-done',role:'coder',category:'standard',parent_session_id:m.identity.session_id,parent_mission_id:m.identity.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'done',status:'busy',generation_at_spawn:m.continuation.generation}
+  m.execution.tasks.push(task);m.execution.workers.push(worker)
+  const rt=new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
+  rt.applyResult(m,'w-done',{status:'DONE',summary:'implementation done; parent verification remains',changed_files:[],evidence:[],open_issues:['parent verification still required'],needs_context:[]})
+  assert.equal(task.result.status,'DONE');assert.deepEqual(task.result.open_issues,['parent verification still required']);assert.equal(m.execution.blockers.includes('parent verification still required'),false)
 })
 
 import {mkdirSync,writeFileSync,statSync} from 'node:fs'

@@ -21,4 +21,5 @@ else if (result.status === 'FIX_REQUIRED') {
 else {
     task.status = 'failed';
     worker.status = 'failed';
-} m.vcs.changed_files = [...new Set([...m.vcs.changed_files, ...result.changed_files])]; m.execution.blockers = [...new Set([...m.execution.blockers, ...result.open_issues])]; appendLedger(m, 'worker.completed', { task_id: task.id, worker_id: worker.id, payload: { status: result.status, changed_files: result.changed_files } }); }
+} m.vcs.changed_files = [...new Set([...m.vcs.changed_files, ...result.changed_files])]; if (result.status !== 'DONE')
+    m.execution.blockers = [...new Set([...m.execution.blockers, ...result.open_issues])]; appendLedger(m, 'worker.completed', { task_id: task.id, worker_id: worker.id, payload: { status: result.status, changed_files: result.changed_files } }); }
