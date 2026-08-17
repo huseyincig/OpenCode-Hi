@@ -1,93 +1,64 @@
 # OpenCode-Hi Active Task State
 
 **Project:** `/workspace/OpenCode-Hi`
-**Status:** ACTIVE
+**Status:** ACTIVE — ROADMAP MILESTONE 2
 **Updated:** 2026-08-17
-**Authority:** `/workspace/OpenCode-Hi/PROTOCOL.md`
+**Global authority:** `/workspace/PROTOCOL.md`
+**Legacy project-policy layer:** `/workspace/OpenCode-Hi/PROTOCOL.md`
+**Roadmap:** `/workspace/OpenCode-Hi/ROADMAP.md`
 
 ## Active Task
 
-### Scheduler Runtime Integration — Parity-Safe Adapter
+### Milestone 2 — Deterministic Scheduler State Owner
 
-Connect the verified host-neutral deterministic scheduler planner to the current Mission/Task/Worker runtime through a narrow adapter, without moving execution side effects into the planner and without broad TaskRuntime rewrite.
+Evolve the current pure `planScheduling()` admission policy into one canonical scheduler lifecycle without creating a second Task/Worker state machine.
 
-## Current Objective
+## Verified Baseline
 
-Make `TaskRuntime` consume one authoritative scheduler decision path for dependency readiness, topology capacity and resolved resource capacity, while preserving existing queue mutation, session execution, resource acquisition/release, workspace cleanup and failure side effects.
+Milestone 1 is complete; see `agent-archive/2026-08-17-exact-execution-identity-graph-invariants.md`. Core now provides exact attempt/run identity, attempt fencing comparison, dependency-cycle validation, narrow transition-receipt identity and structured progress-delta vocabulary.
 
-Target flow:
+## Scope
 
-```text
-MissionState + current runtime allocations
-  -> WorkGraph projection
-  -> runtime SchedulingSnapshot adapter
-  -> pure planScheduling(...)
-  -> one unit decision
-  -> TaskRuntime performs existing side effects
-```
-
-## Architecture Invariants
-
-- `planScheduling` remains deterministic and side-effect-free.
-- Runtime snapshot construction may translate current worker IDs/roles/resource allocations into host-neutral ExecutionUnit semantics, but host-specific client/session objects must not enter core contracts.
-- TaskRuntime remains execution owner in this phase.
-- Dependency-blocked transitions, queue removal, resource acquire/release, registry changes, session create/abort and workspace cleanup remain runtime side effects.
-- Do not silently weaken existing `parallelSafety`, dependency or capacity behavior.
-- Remove duplicated legacy readiness helpers only after parity tests prove the planner-backed path is equivalent or stricter.
-- Provider/model capacity is a resolved-resource constraint, not work-graph topology.
-- Same provider/model must remain usable by multiple independent units when ceilings permit.
-- Existing unrelated release/validation dirty-tree work must remain untouched.
-
-## Known Baseline
-
-Verified milestones:
-
-- `agent-archive/2026-08-17-orchestration-core-contract-extraction.md`
-- `agent-archive/2026-08-17-deterministic-scheduler-core.md`
-
-Current scheduler core provides:
-
-- `SchedulingSnapshot`
-- `SchedulingDecision`
-- explicit per-unit disposition/reason codes
-- pure `planScheduling(...)`
-- dependency/conflict/topology/global/provider/model capacity semantics
+1. Keep `planScheduling()` pure and side-effect-free.
+2. Define the smallest canonical scheduler state for ready/admitted/running/settling execution units.
+3. Add exact dispatch claim/reservation ownership bound to `ExecutionAttemptIdentity`.
+4. Prevent double dispatch and stale settlement using attempt generation/run fencing.
+5. Model dependency readiness/failure propagation and fan-in without duplicating TaskRuntime task state.
+6. Integrate resource/write-set admission, topology/global/provider/model capacity and cancellation/backpressure inputs.
+7. Define deterministic fairness/starvation behavior; priority/critical-path inputs only if they materially improve policy.
+8. Keep recovery as a bounded interface; do not duplicate recovery logic inside scheduler.
+9. Provide restart/reconciliation semantics for scheduler-owned reservations before broad TaskRuntime cutover.
 
 ## Acceptance Criteria
 
-This phase is complete only when:
+- no double dispatch under concurrent/replayed admission;
+- cyclic/invalid graph cannot enter scheduler lifecycle;
+- stale attempt/run cannot settle a newer reservation;
+- dependency failure/cancel propagation is deterministic;
+- independent same-model units can run concurrently below ceilings;
+- conflicting mutable work cannot be admitted concurrently;
+- fairness prevents an older runnable unit from being permanently starved by later equivalent work;
+- scheduler state remains host-neutral and does not own OpenCode Session/Task transport;
+- TaskRuntime is not broadly cut over until scheduler state-machine tests pass.
 
-1. A narrow runtime adapter builds a valid `SchedulingSnapshot` from current Mission/Task/Worker state plus current resolved/running resource allocations.
-2. TaskRuntime readiness/queue-drain decisions consume planner output for the covered semantics instead of independently reimplementing dependency/topology/capacity rules.
-3. Runtime side effects remain outside the pure planner.
-4. Failed/cancelled dependencies still transition queued dependents to blocked/failed exactly once and do not remain queued.
-5. Unknown dependencies remain fail-closed at task preflight/contract boundaries.
-6. Unsafe mutable-surface parallel dispatch remains rejected/deferred with no write-conflict widening.
-7. Global/provider/model and topology ceilings preserve current behavior, including fallback/rebind safety.
-8. Existing scheduler/task tests pass and new integration parity tests demonstrate planner-backed decisions at real TaskRuntime boundaries.
-9. No broad team/model/skill/recovery redesign occurs.
-10. TypeScript build, architecture lint, targeted tests and scoped diff checks pass.
-11. Unrelated dirty-tree release/validation files remain untouched.
+## Constraints
+
+- Preserve all unrelated user-owned dirty files exactly.
+- Do not reset/clean the working tree.
+- Do not touch release/publication validation artifacts.
+- No push/tag/release/npm publication.
+- Do not create a second canonical task/worker database or broad WAL.
+- Use narrow transition receipts only around real dispatch/settlement ambiguity.
 
 ## Required Verification
 
-```text
-- new scheduler runtime-adapter/integration tests
-- scheduler-planner tests
-- scheduler-hardening tests
-- relevant TaskRuntime dependency/queue tests
-- provider fallback/rebind tests if touched
-- TypeScript build
-- architecture lint
-- scoped git diff inspection
-```
-
-Known host caveat remains: Node may abort with libuv `EEXIST` after a terminal zero-failure test summary. Distinguish that host teardown mechanically from product failure.
-
-## Current Repository State Warning
-
-The repository contains unrelated user-owned release/documentation-validation evidence changes. Do not reset, clean, overwrite, stage or include them in architecture-reset work.
+- scheduler state-machine unit tests;
+- duplicate/replayed admission adversarial tests;
+- stale settlement/fencing tests;
+- dependency/fan-in/failure propagation tests;
+- fairness/backpressure/resource conflict tests;
+- build + architecture lint + scoped diff inspection.
 
 ## Exact Next Action
 
-Inspect `TaskRuntime.canRun`, `drainQueue`, start-time `parallelSafety`, worker/model allocation state and the new `planScheduling` contract. Design the smallest runtime snapshot adapter that maps current state to SchedulingSnapshot, then replace only the duplicated readiness checks with planner-backed decisions under integration tests. Do not migrate execution side effects or redesign unrelated subsystems.
+Inspect `TaskRuntime` queue/drain/start/result paths, `ConcurrencyScheduler`, `parallelSafety`, `BackgroundRegistry`, task result reconciliation, and restart handling. Identify the minimum state transitions currently distributed across those modules, then define a host-neutral scheduler lifecycle/claim contract and pure transition reducer before wiring any side effects.

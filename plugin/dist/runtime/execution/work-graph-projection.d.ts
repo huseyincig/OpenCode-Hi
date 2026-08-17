@@ -1,4 +1,4 @@
-import type { WorkGraph } from '../../contracts/orchestration-core.js';
+import { type WorkGraph } from '../../contracts/orchestration-core.js';
 import type { MissionState } from '../mission/types.js';
 /**
  * Side-effect-free compatibility projection from the current durable runtime.

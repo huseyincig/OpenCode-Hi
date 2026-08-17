@@ -76,20 +76,56 @@ export interface ExecutionResourceSelection {
   modelSelectionReason:string[]
 }
 
-export interface ExecutionAttempt {
+export interface ExecutionAttemptIdentity {
   executionUnitId:string
+  attemptId:string
+  runId:string
   ordinal:number
-  workerId?:string
+  generation:number
+}
+
+export interface ExecutionAttempt extends ExecutionAttemptIdentity {
+  workerId:string
   status:WorkerContractStatus|'unassigned'
   startedAt?:number
   updatedAt:number
   completedAt?:number
   sessionId?:string
   forkedFromSessionId?:string
-  generation:number
   recoveryAttempt:number
   lastFailureKind?:string
   fallbackHistory:Array<{from?:string;to:string;variant?:string;reason:string;phase:'dispatch'|'runtime';at:number}>
+}
+
+export function executionAttemptIdentity(input:{executionUnitId:string;workerId:string;ordinal:number;generation:number;sessionId?:string}):ExecutionAttemptIdentity{
+  const attemptId=`${input.executionUnitId}:g${input.generation}:a${input.ordinal}`
+  const owner=input.sessionId?`session:${input.sessionId}`:`worker:${input.workerId}`
+  return{executionUnitId:input.executionUnitId,attemptId,runId:`${owner}:g${input.generation}:a${input.ordinal}`,ordinal:input.ordinal,generation:input.generation}
+}
+
+export function sameExecutionAttempt(a:Pick<ExecutionAttemptIdentity,'executionUnitId'|'attemptId'|'runId'|'generation'>,b:Pick<ExecutionAttemptIdentity,'executionUnitId'|'attemptId'|'runId'|'generation'>):boolean{
+  return a.executionUnitId===b.executionUnitId&&a.attemptId===b.attemptId&&a.runId===b.runId&&a.generation===b.generation
+}
+
+export type ExecutionTransitionKind='DISPATCH'|'SETTLEMENT'|'EVIDENCE_COMMIT'
+export type ExecutionTransitionState='PREPARED'|'COMMITTED'|'UNKNOWN'
+export interface ExecutionTransitionReceipt {
+  receiptId:string
+  missionId:string
+  workNodeId:string
+  executionUnitId:string
+  attemptId:string
+  runId:string
+  generation:number
+  transition:ExecutionTransitionKind
+  state:ExecutionTransitionState
+  observedAt:number
+  stateHash?:string
+}
+
+function receiptPart(value:string):string{return`${value.length}:${value}`}
+export function executionTransitionReceiptId(input:{missionId:string;workNodeId:string;attempt:ExecutionAttemptIdentity;transition:ExecutionTransitionKind}):string{
+  return['etr1',input.missionId,input.workNodeId,input.attempt.executionUnitId,input.attempt.attemptId,input.attempt.runId,String(input.attempt.generation),input.transition].map(receiptPart).join('|')
 }
 
 export interface ExecutionUnit {
@@ -113,6 +149,17 @@ export interface ExecutionUnit {
   result?:WorkerResult
 }
 
+export interface ProgressDelta {
+  stateChanged:boolean
+  evidenceAdded:number
+  evidenceInvalidated:number
+  dependencyCompletions:number
+  changedFiles:number
+  failureSignatureChanged:boolean
+  executionAdvanced:boolean
+  signals:string[]
+}
+
 export interface ProgressObservation {
   missionId:string
   generation:number
@@ -123,6 +170,7 @@ export interface ProgressObservation {
   continuationActive:boolean
   reason?:string
   observedAt:number
+  delta?:ProgressDelta
 }
 
 export interface WorkGraph {
@@ -144,6 +192,24 @@ export interface WorkGraph {
 
 
 export interface WorkGraphValidation {ok:boolean;reasons:string[]}
+
+function dependencyCycles(nodes:WorkNode[]):string[]{
+  const dependencies=new Map(nodes.map(node=>[node.id,node.dependencies.filter(dep=>nodes.some(candidate=>candidate.id===dep))]))
+  const state=new Map<string,0|1|2>(),stack:string[]=[],cycles=new Set<string>()
+  const visit=(id:string):void=>{
+    const current=state.get(id)??0
+    if(current===2)return
+    if(current===1){
+      const index=stack.lastIndexOf(id),cycle=index>=0?[...stack.slice(index),id]:[id,id]
+      cycles.add(cycle.join('->'));return
+    }
+    state.set(id,1);stack.push(id)
+    for(const dep of dependencies.get(id)??[])visit(dep)
+    stack.pop();state.set(id,2)
+  }
+  for(const node of nodes)visit(node.id)
+  return[...cycles].sort()
+}
 
 /** Mechanical graph invariants. Semantic policy belongs to planner/scheduler layers. */
 export function validateWorkGraph(graph:WorkGraph):WorkGraphValidation{
@@ -176,10 +242,24 @@ export function validateWorkGraph(graph:WorkGraph):WorkGraphValidation{
     const unit=units[0]
     if(unit){
       if(JSON.stringify(unit.dependencies)!==JSON.stringify(node.dependencies))reasons.push(`unit-dependency-drift:${unit.id}`)
-      if(unit.attempt&&unit.attempt.executionUnitId!==unit.id)reasons.push(`attempt-unit-mismatch:${unit.id}`)
+      if(unit.attempt){
+        if(unit.attempt.executionUnitId!==unit.id)reasons.push(`attempt-unit-mismatch:${unit.id}`)
+        if(unit.attempt.ordinal<0||!Number.isInteger(unit.attempt.ordinal))reasons.push(`attempt-ordinal-invalid:${unit.id}`)
+        if(unit.attempt.generation<1||!Number.isInteger(unit.attempt.generation))reasons.push(`attempt-generation-invalid:${unit.id}`)
+        if(!unit.attempt.attemptId||!unit.attempt.runId)reasons.push(`attempt-identity-missing:${unit.id}`)
+        const expected=executionAttemptIdentity({executionUnitId:unit.id,workerId:unit.attempt.workerId,ordinal:unit.attempt.ordinal,generation:unit.attempt.generation,sessionId:unit.attempt.sessionId})
+        if(!sameExecutionAttempt(unit.attempt,expected))reasons.push(`attempt-identity-drift:${unit.id}`)
+      }
     }
   }
   for(const edge of graph.edges){const target=graph.nodes.find(node=>node.id===edge.to);if(target&&!target.dependencies.includes(edge.from))reasons.push(`orphan-edge:${edge.from}->${edge.to}`)}
+  const delta=graph.progress.delta
+  if(delta){
+    const counts=[delta.evidenceAdded,delta.evidenceInvalidated,delta.dependencyCompletions,delta.changedFiles]
+    if(counts.some(value=>!Number.isInteger(value)||value<0))reasons.push('progress-delta-count-invalid')
+    if(!Array.isArray(delta.signals)||delta.signals.some(value=>typeof value!=='string'))reasons.push('progress-delta-signals-invalid')
+  }
+  for(const cycle of dependencyCycles(graph.nodes))reasons.push(`dependency-cycle:${cycle}`)
   return{ok:reasons.length===0,reasons:[...new Set(reasons)]}
 }
 

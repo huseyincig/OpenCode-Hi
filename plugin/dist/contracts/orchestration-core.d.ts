@@ -67,17 +67,21 @@ export interface ExecutionResourceSelection {
     fallbacks: string[];
     modelSelectionReason: string[];
 }
-export interface ExecutionAttempt {
+export interface ExecutionAttemptIdentity {
     executionUnitId: string;
+    attemptId: string;
+    runId: string;
     ordinal: number;
-    workerId?: string;
+    generation: number;
+}
+export interface ExecutionAttempt extends ExecutionAttemptIdentity {
+    workerId: string;
     status: WorkerContractStatus | 'unassigned';
     startedAt?: number;
     updatedAt: number;
     completedAt?: number;
     sessionId?: string;
     forkedFromSessionId?: string;
-    generation: number;
     recoveryAttempt: number;
     lastFailureKind?: string;
     fallbackHistory: Array<{
@@ -89,6 +93,35 @@ export interface ExecutionAttempt {
         at: number;
     }>;
 }
+export declare function executionAttemptIdentity(input: {
+    executionUnitId: string;
+    workerId: string;
+    ordinal: number;
+    generation: number;
+    sessionId?: string;
+}): ExecutionAttemptIdentity;
+export declare function sameExecutionAttempt(a: Pick<ExecutionAttemptIdentity, 'executionUnitId' | 'attemptId' | 'runId' | 'generation'>, b: Pick<ExecutionAttemptIdentity, 'executionUnitId' | 'attemptId' | 'runId' | 'generation'>): boolean;
+export type ExecutionTransitionKind = 'DISPATCH' | 'SETTLEMENT' | 'EVIDENCE_COMMIT';
+export type ExecutionTransitionState = 'PREPARED' | 'COMMITTED' | 'UNKNOWN';
+export interface ExecutionTransitionReceipt {
+    receiptId: string;
+    missionId: string;
+    workNodeId: string;
+    executionUnitId: string;
+    attemptId: string;
+    runId: string;
+    generation: number;
+    transition: ExecutionTransitionKind;
+    state: ExecutionTransitionState;
+    observedAt: number;
+    stateHash?: string;
+}
+export declare function executionTransitionReceiptId(input: {
+    missionId: string;
+    workNodeId: string;
+    attempt: ExecutionAttemptIdentity;
+    transition: ExecutionTransitionKind;
+}): string;
 export interface ExecutionUnit {
     id: string;
     missionId: string;
@@ -109,6 +142,16 @@ export interface ExecutionUnit {
     nativeStateHash?: string;
     result?: WorkerResult;
 }
+export interface ProgressDelta {
+    stateChanged: boolean;
+    evidenceAdded: number;
+    evidenceInvalidated: number;
+    dependencyCompletions: number;
+    changedFiles: number;
+    failureSignatureChanged: boolean;
+    executionAdvanced: boolean;
+    signals: string[];
+}
 export interface ProgressObservation {
     missionId: string;
     generation: number;
@@ -119,6 +162,7 @@ export interface ProgressObservation {
     continuationActive: boolean;
     reason?: string;
     observedAt: number;
+    delta?: ProgressDelta;
 }
 export interface WorkGraph {
     missionId: string;

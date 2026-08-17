@@ -4,7 +4,7 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { createTask,createWorker,beginWorkerAttempt } from '../dist/runtime/worker/worker-runtime.js'
 import { addEvidence,markMutation } from '../dist/runtime/evidence/evidence-runtime.js'
 import { projectMissionToWorkGraph } from '../dist/runtime/execution/work-graph-projection.js'
-import { validateWorkGraph,isCapabilityResolution } from '../dist/contracts/orchestration-core.js'
+import { validateWorkGraph,isCapabilityResolution,executionAttemptIdentity,sameExecutionAttempt,executionTransitionReceiptId } from '../dist/contracts/orchestration-core.js'
 import { startAssessedMission } from './helpers/semantic.mjs'
 
 function mission(id='core-projection'){
@@ -84,4 +84,76 @@ test('CapabilityResolution is host-neutral and fail-closed for unavailable seman
   assert.equal(isCapabilityResolution({capability:'child-execution',implementation:'NATIVE',available:true,semanticLoss:[],reason:['host satisfies contract']}),true)
   assert.equal(isCapabilityResolution({capability:'child-execution',implementation:'UNAVAILABLE',available:true,semanticLoss:['missing'],reason:['bad']}),false)
   assert.equal(isCapabilityResolution({capability:'child-execution',implementation:'MAGIC',available:true,semanticLoss:[],reason:[]}),false)
+})
+
+
+test('WorkGraph validator rejects multi-node dependency cycles deterministically',()=>{
+  const m=mission('projection-cycle')
+  const a=createTask(m,{objective:'a',role:'coder',category:'standard'})
+  const b=createTask(m,{objective:'b',role:'coder',category:'standard',dependencies:[a.id]})
+  const c=createTask(m,{objective:'c',role:'coder',category:'standard',dependencies:[b.id]})
+  a.dependencies=[c.id]
+  const graph=projectMissionToWorkGraph(m,10)
+  const result=validateWorkGraph(graph)
+  assert.equal(result.ok,false)
+  assert.match(result.reasons.join('|'),/dependency-cycle:/)
+})
+
+test('execution attempt identity fences ordinal generation and host run identity',()=>{
+  const base=executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:2,generation:7,sessionId:'ses-a'})
+  const same=executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:2,generation:7,sessionId:'ses-a'})
+  const nextAttempt=executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:3,generation:7,sessionId:'ses-a'})
+  const nextGeneration=executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:2,generation:8,sessionId:'ses-a'})
+  const replacementSession=executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:2,generation:7,sessionId:'ses-b'})
+  assert.deepEqual(base,same)
+  assert.equal(sameExecutionAttempt(base,same),true)
+  assert.equal(sameExecutionAttempt(base,nextAttempt),false)
+  assert.equal(sameExecutionAttempt(base,nextGeneration),false)
+  assert.equal(sameExecutionAttempt(base,replacementSession),false)
+  assert.notEqual(base.attemptId,nextAttempt.attemptId)
+  assert.notEqual(base.attemptId,nextGeneration.attemptId)
+  assert.notEqual(base.runId,replacementSession.runId)
+})
+
+test('projection derives exact current attempt identity from durable worker fields',()=>{
+  const m=mission('projection-attempt-fence')
+  const task=createTask(m,{objective:'continue same work',role:'coder',category:'standard'})
+  const worker=createWorker(m,task,'provider/model')
+  worker.session_id='child-a';worker.generation_at_spawn=3;beginWorkerAttempt(task,worker,100)
+  const first=projectMissionToWorkGraph(m,110).executionUnits[0].attempt
+  assert.equal(first.attemptId,`eu:${task.id}:g3:a1`)
+  assert.equal(first.runId,'session:child-a:g3:a1')
+  beginWorkerAttempt(task,worker,120)
+  const resumed=projectMissionToWorkGraph(m,130).executionUnits[0].attempt
+  assert.equal(resumed.attemptId,`eu:${task.id}:g3:a2`)
+  assert.equal(resumed.runId,'session:child-a:g3:a2')
+  worker.session_id='child-b';worker.generation_at_spawn=4
+  const replaced=projectMissionToWorkGraph(m,140).executionUnits[0].attempt
+  assert.equal(replaced.attemptId,`eu:${task.id}:g4:a2`)
+  assert.equal(replaced.runId,'session:child-b:g4:a2')
+  assert.equal(sameExecutionAttempt(resumed,replaced),false)
+})
+
+test('transition receipt identity is deterministic and bound to exact attempt and transition',()=>{
+  const attempt=executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:1,generation:2,sessionId:'ses-1'})
+  const input={missionId:'m1',workNodeId:'t1',attempt,transition:'DISPATCH'}
+  const first=executionTransitionReceiptId(input),second=executionTransitionReceiptId(input)
+  assert.equal(first,second)
+  assert.notEqual(first,executionTransitionReceiptId({...input,transition:'SETTLEMENT'}))
+  assert.notEqual(first,executionTransitionReceiptId({...input,attempt:executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:2,generation:2,sessionId:'ses-1'})}))
+  assert.notEqual(first,executionTransitionReceiptId({...input,attempt:executionAttemptIdentity({executionUnitId:'eu:t1',workerId:'w1',ordinal:1,generation:3,sessionId:'ses-1'})}))
+})
+
+
+test('WorkGraph validator rejects stale attempt identity and malformed progress deltas',()=>{
+  const m=mission('projection-attempt-corruption')
+  const task=createTask(m,{objective:'x',role:'coder',category:'standard'})
+  const worker=createWorker(m,task,'p/m');worker.session_id='child';beginWorkerAttempt(task,worker,10)
+  const graph=projectMissionToWorkGraph(m,20)
+  const stale=structuredClone(graph);stale.executionUnits[0].attempt.generation+=1
+  let result=validateWorkGraph(stale)
+  assert.equal(result.ok,false);assert.match(result.reasons.join('|'),/attempt-identity-drift/)
+  const badDelta=structuredClone(graph);badDelta.progress.delta={stateChanged:true,evidenceAdded:-1,evidenceInvalidated:0,dependencyCompletions:0,changedFiles:0,failureSignatureChanged:false,executionAdvanced:false,signals:['x']}
+  result=validateWorkGraph(badDelta)
+  assert.equal(result.ok,false);assert.match(result.reasons.join('|'),/progress-delta-count-invalid/)
 })

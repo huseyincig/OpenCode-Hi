@@ -1,4 +1,4 @@
-import type { WorkGraph,WorkNode,ExecutionUnit,ExecutionResourceSelection,ExecutionAttempt } from '../../contracts/orchestration-core.js'
+import { executionAttemptIdentity,type WorkGraph,type WorkNode,type ExecutionUnit,type ExecutionResourceSelection,type ExecutionAttempt } from '../../contracts/orchestration-core.js'
 import type { MissionState,MissionTask,WorkerState } from '../mission/types.js'
 
 function clone<T>(value:T):T{return structuredClone(value)}
@@ -46,9 +46,9 @@ function projectResources(task:MissionTask,worker:WorkerState|undefined):Executi
 
 function projectAttempt(unitID:string,worker:WorkerState|undefined):ExecutionAttempt|undefined{
   if(!worker)return undefined
+  const identity=executionAttemptIdentity({executionUnitId:unitID,workerId:worker.id,ordinal:worker.attempt,generation:worker.generation_at_spawn,sessionId:worker.session_id})
   return{
-    executionUnitId:unitID,
-    ordinal:worker.attempt,
+    ...identity,
     workerId:worker.id,
     status:worker.status,
     ...(worker.started_at===undefined?{}:{startedAt:worker.started_at}),
@@ -56,7 +56,6 @@ function projectAttempt(unitID:string,worker:WorkerState|undefined):ExecutionAtt
     ...(worker.completed_at===undefined?{}:{completedAt:worker.completed_at}),
     ...(worker.session_id?{sessionId:worker.session_id}:{}),
     ...(worker.forked_from_session_id?{forkedFromSessionId:worker.forked_from_session_id}:{}),
-    generation:worker.generation_at_spawn,
     recoveryAttempt:worker.runtime_recovery_attempt??0,
     ...(worker.last_runtime_failure_kind?{lastFailureKind:worker.last_runtime_failure_kind}:{}),
     fallbackHistory:clone(worker.fallback_history??[]),

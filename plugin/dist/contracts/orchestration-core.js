@@ -1,3 +1,38 @@
+export function executionAttemptIdentity(input) {
+    const attemptId = `${input.executionUnitId}:g${input.generation}:a${input.ordinal}`;
+    const owner = input.sessionId ? `session:${input.sessionId}` : `worker:${input.workerId}`;
+    return { executionUnitId: input.executionUnitId, attemptId, runId: `${owner}:g${input.generation}:a${input.ordinal}`, ordinal: input.ordinal, generation: input.generation };
+}
+export function sameExecutionAttempt(a, b) {
+    return a.executionUnitId === b.executionUnitId && a.attemptId === b.attemptId && a.runId === b.runId && a.generation === b.generation;
+}
+function receiptPart(value) { return `${value.length}:${value}`; }
+export function executionTransitionReceiptId(input) {
+    return ['etr1', input.missionId, input.workNodeId, input.attempt.executionUnitId, input.attempt.attemptId, input.attempt.runId, String(input.attempt.generation), input.transition].map(receiptPart).join('|');
+}
+function dependencyCycles(nodes) {
+    const dependencies = new Map(nodes.map(node => [node.id, node.dependencies.filter(dep => nodes.some(candidate => candidate.id === dep))]));
+    const state = new Map(), stack = [], cycles = new Set();
+    const visit = (id) => {
+        const current = state.get(id) ?? 0;
+        if (current === 2)
+            return;
+        if (current === 1) {
+            const index = stack.lastIndexOf(id), cycle = index >= 0 ? [...stack.slice(index), id] : [id, id];
+            cycles.add(cycle.join('->'));
+            return;
+        }
+        state.set(id, 1);
+        stack.push(id);
+        for (const dep of dependencies.get(id) ?? [])
+            visit(dep);
+        stack.pop();
+        state.set(id, 2);
+    };
+    for (const node of nodes)
+        visit(node.id);
+    return [...cycles].sort();
+}
 /** Mechanical graph invariants. Semantic policy belongs to planner/scheduler layers. */
 export function validateWorkGraph(graph) {
     const reasons = [];
@@ -45,8 +80,19 @@ export function validateWorkGraph(graph) {
         if (unit) {
             if (JSON.stringify(unit.dependencies) !== JSON.stringify(node.dependencies))
                 reasons.push(`unit-dependency-drift:${unit.id}`);
-            if (unit.attempt && unit.attempt.executionUnitId !== unit.id)
-                reasons.push(`attempt-unit-mismatch:${unit.id}`);
+            if (unit.attempt) {
+                if (unit.attempt.executionUnitId !== unit.id)
+                    reasons.push(`attempt-unit-mismatch:${unit.id}`);
+                if (unit.attempt.ordinal < 0 || !Number.isInteger(unit.attempt.ordinal))
+                    reasons.push(`attempt-ordinal-invalid:${unit.id}`);
+                if (unit.attempt.generation < 1 || !Number.isInteger(unit.attempt.generation))
+                    reasons.push(`attempt-generation-invalid:${unit.id}`);
+                if (!unit.attempt.attemptId || !unit.attempt.runId)
+                    reasons.push(`attempt-identity-missing:${unit.id}`);
+                const expected = executionAttemptIdentity({ executionUnitId: unit.id, workerId: unit.attempt.workerId, ordinal: unit.attempt.ordinal, generation: unit.attempt.generation, sessionId: unit.attempt.sessionId });
+                if (!sameExecutionAttempt(unit.attempt, expected))
+                    reasons.push(`attempt-identity-drift:${unit.id}`);
+            }
         }
     }
     for (const edge of graph.edges) {
@@ -54,6 +100,16 @@ export function validateWorkGraph(graph) {
         if (target && !target.dependencies.includes(edge.from))
             reasons.push(`orphan-edge:${edge.from}->${edge.to}`);
     }
+    const delta = graph.progress.delta;
+    if (delta) {
+        const counts = [delta.evidenceAdded, delta.evidenceInvalidated, delta.dependencyCompletions, delta.changedFiles];
+        if (counts.some(value => !Number.isInteger(value) || value < 0))
+            reasons.push('progress-delta-count-invalid');
+        if (!Array.isArray(delta.signals) || delta.signals.some(value => typeof value !== 'string'))
+            reasons.push('progress-delta-signals-invalid');
+    }
+    for (const cycle of dependencyCycles(graph.nodes))
+        reasons.push(`dependency-cycle:${cycle}`);
     return { ok: reasons.length === 0, reasons: [...new Set(reasons)] };
 }
 export function isCapabilityResolution(value) {

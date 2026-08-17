@@ -1,3 +1,4 @@
+import { executionAttemptIdentity } from '../../contracts/orchestration-core.js';
 function clone(value) { return structuredClone(value); }
 function projectNode(task) {
     return {
@@ -42,9 +43,9 @@ function projectResources(task, worker) {
 function projectAttempt(unitID, worker) {
     if (!worker)
         return undefined;
+    const identity = executionAttemptIdentity({ executionUnitId: unitID, workerId: worker.id, ordinal: worker.attempt, generation: worker.generation_at_spawn, sessionId: worker.session_id });
     return {
-        executionUnitId: unitID,
-        ordinal: worker.attempt,
+        ...identity,
         workerId: worker.id,
         status: worker.status,
         ...(worker.started_at === undefined ? {} : { startedAt: worker.started_at }),
@@ -52,7 +53,6 @@ function projectAttempt(unitID, worker) {
         ...(worker.completed_at === undefined ? {} : { completedAt: worker.completed_at }),
         ...(worker.session_id ? { sessionId: worker.session_id } : {}),
         ...(worker.forked_from_session_id ? { forkedFromSessionId: worker.forked_from_session_id } : {}),
-        generation: worker.generation_at_spawn,
         recoveryAttempt: worker.runtime_recovery_attempt ?? 0,
         ...(worker.last_runtime_failure_kind ? { lastFailureKind: worker.last_runtime_failure_kind } : {}),
         fallbackHistory: clone(worker.fallback_history ?? []),
