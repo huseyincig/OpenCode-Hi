@@ -91,6 +91,7 @@ export declare class TaskRuntime {
     recoverRuntimeFailure(m: MissionState, workerID: string, error: string): Promise<boolean>;
     fail(m: MissionState, workerID: string, error: string): void;
     peek(m: MissionState, id: string): any;
+    awaitTask(m: MissionState, id: string, timeoutMs?: number): Promise<any>;
     list(m: MissionState): any[];
     cancelAll(m: MissionState): Promise<number>;
     cancel(m: MissionState, id: string): Promise<boolean>;

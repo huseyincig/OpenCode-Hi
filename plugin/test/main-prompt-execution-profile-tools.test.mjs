@@ -59,6 +59,8 @@ test('zero-skill task gets a complete bounded execution profile and per-message 
   assert.equal(tools.skill,false);assert.equal(tools.task,false);assert.equal(tools.webfetch,false);assert.equal(tools.websearch,false)
   assert.equal(tools.hi_direct_progress,false);assert.equal(tools.hi_task_start,false);assert.equal(tools.hi_task_cancel,false);assert.equal(tools.hi_team_create,undefined)
   assert.equal(tools.edit,undefined);assert.equal(tools.write,undefined)
+  assert.match(JSON.stringify(prompts[0]),/host ask-gated tools: bash/i)
+  assert.match(JSON.stringify(prompts[0]),/Do not invoke ask-gated tools solely to obtain mission verification/i)
 })
 
 test('same-session corrective resume preserves the original execution tool surface and does not spawn a new child',async()=>{

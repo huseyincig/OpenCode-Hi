@@ -5,6 +5,7 @@ export declare class BackgroundRegistry {
     get(id: string): WorkerState | undefined;
     set(w: WorkerState): void;
     delete(id: string): void;
+    waitForChange(id: string, timeoutMs: number): Promise<boolean>;
     pendingFor(parent: string): WorkerState[];
     dedupeSpawn(fingerprint: string, spawn: () => Promise<WorkerState>): Promise<WorkerState>;
 }

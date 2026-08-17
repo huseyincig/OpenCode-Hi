@@ -201,3 +201,38 @@ test('Gap #recovery-runtime: level-2 escalation resumes same child session with 
   assert.equal(m.continuation.recovery_history?.at(-1)?.action,'model-escalation')
   assert.equal(m.continuation.recovery_history?.at(-1)?.level,2)
 })
+
+
+test('BackgroundRegistry waitForChange is bounded and wakes on set/delete transitions', async () => {
+  const { BackgroundRegistry } = await import('../dist/runtime/background/registry.js')
+  const registry=new BackgroundRegistry()
+  const worker={id:'wait-worker',task_id:'wait-task',role:'coder',category:'quick',parent_session_id:'wait-parent',model:'host-default',fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'wait-fp',status:'busy',attempt:1,updated_at:Date.now()}
+  registry.set(worker)
+  const setWait=registry.waitForChange(worker.id,1000)
+  setTimeout(()=>registry.set({...worker,status:'ready',updated_at:Date.now()+1}),10)
+  assert.equal(await setWait,true)
+  const deleteWait=registry.waitForChange(worker.id,1000)
+  setTimeout(()=>registry.delete(worker.id),10)
+  assert.equal(await deleteWait,true)
+  registry.set(worker)
+  const started=Date.now();assert.equal(await registry.waitForChange(worker.id,20),false);assert.ok(Date.now()-started>=10)
+})
+
+test('TaskRuntime awaitTask returns terminal immediately and wakes on the canonical registry terminal transition', async () => {
+  const { createTask, createWorker } = await import('../dist/runtime/worker/worker-runtime.js')
+  const { TaskRuntime } = await import('../dist/runtime/task/task-runtime.js')
+  const { BackgroundRegistry } = await import('../dist/runtime/background/registry.js')
+  const { ConcurrencyScheduler } = await import('../dist/runtime/scheduler/concurrency.js')
+  const { resolveHiConfig } = await import('../dist/config/resolver.js')
+  const store=new MissionStore(),m=store.start('await-runtime','wait for worker')
+  store.applyInitialSemanticAssessment('await-runtime',{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]})
+  const task=createTask(m,{objective:'work',role:'coder',category:'quick'}),worker=createWorker(m,task,'host-default'),registry=new BackgroundRegistry()
+  worker.status='busy';task.status='running';registry.set(worker)
+  const runtime=new TaskRuntime(opencodeChildPort({}),registry,new ConcurrencyScheduler(()=>({global:2})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>({}))
+  const waiting=runtime.awaitTask(m,task.id,1000)
+  setTimeout(()=>{worker.status='completed';worker.completed_at=Date.now();task.status='completed';task.updated_at=Date.now();registry.delete(worker.id)},10)
+  const done=await waiting
+  assert.equal(done.changed,true);assert.equal(done.timed_out,false);assert.equal(done.terminal,true);assert.equal(done.status,'completed')
+  const immediate=await runtime.awaitTask(m,task.id,1000)
+  assert.equal(immediate.changed,false);assert.equal(immediate.timed_out,false);assert.equal(immediate.terminal,true);assert.equal(immediate.status,'completed')
+})
