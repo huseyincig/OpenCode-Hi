@@ -113,6 +113,23 @@ test('independent multi-stream topology does not activate dependency-planning me
   assert.equal(m.methodology.methodology_needs.some(x=>x.name==='hi-implementation-planning'),false)
 })
 
+test('independent-multi semantic state suppresses contradictory intent.planning methodology signal',()=>{
+  const store=new MissionStore(root)
+  const m=store.start('s-independent-planning-conflict','Fix two independent branches concurrently')
+  store.applyInitialSemanticAssessment('s-independent-planning-conflict',{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'repo-wide',risk:'low',ambiguity:'resolvable',dependency_class:'independent-multi',required_capabilities:['implementation','verification','multi-stream-delegation'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:[],intent_signals:['intent.planning'],suppressed_intent_signals:[]})
+  assert.equal(m.methodology.methodology_needs.some(x=>x.name==='hi-implementation-planning'),false)
+  const assessed=m.execution.ledger.findLast(x=>x.type==='semantic.assessed')
+  assert.deepEqual(assessed?.payload?.intent_signals,['intent.planning']);assert.deepEqual(assessed?.payload?.effective_intent_signals,[]);assert.deepEqual(assessed?.payload?.runtime_suppressed_intent_signals,['intent.planning'])
+})
+
+test('sequential semantic state keeps intent.planning methodology signal active',()=>{
+  const store=new MissionStore(root)
+  const m=store.start('s-sequential-planning-signal','Sequence dependent changes')
+  store.applyInitialSemanticAssessment('s-sequential-planning-signal',{material:true,message_kind:'mission',task_kind:'implementation',scope:'multi-file',risk:'medium',ambiguity:'none',dependency_class:'sequential',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:['intent.planning'],suppressed_intent_signals:[]})
+  assert.ok(m.methodology.methodology_needs.some(x=>x.name==='hi-implementation-planning'&&x.producer==='intent'))
+  const assessed=m.execution.ledger.findLast(x=>x.type==='semantic.assessed');assert.deepEqual(assessed?.payload?.effective_intent_signals,['intent.planning']);assert.deepEqual(assessed?.payload?.runtime_suppressed_intent_signals,[])
+})
+
 test('architecture runtime producer owns only structured architecture state while explicit durable-decision intent stays intent-owned',()=>{
   const store=new MissionStore(root)
   const m=store.start('s-architecture-producer','Plan an architecture decision then update dependent API modules sequentially')

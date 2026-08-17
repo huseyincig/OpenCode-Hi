@@ -14,6 +14,14 @@ import { createSchedulerLifecycleState } from '../../contracts/orchestration-cor
 import { reduceSchedulerLifecycle } from '../scheduler/lifecycle.js';
 import { semanticProgressDelta, semanticProgressMade, semanticProgressSnapshot } from '../progress/semantic-progress.js';
 function obligation(id, kind, summary, requiredEvidence = []) { return { id, kind, summary, status: 'open', requiredEvidence }; }
+function reconciledIntentMethodologySignals(assessment) {
+    const suppressed = new Set(assessment.suppressed_intent_signals), runtimeSuppressed = [];
+    if (assessment.dependency_class === 'independent-multi' && assessment.intent_signals.includes('intent.planning')) {
+        suppressed.add('intent.planning');
+        runtimeSuppressed.push('intent.planning');
+    }
+    return { active: assessment.intent_signals.filter(signal => !suppressed.has(signal)), suppressed: [...suppressed], runtimeSuppressed };
+}
 export class MissionStore {
     #bySession = new Map();
     #root;
@@ -85,14 +93,13 @@ export class MissionStore {
         m.execution.topology = { mode: topology.mode, parallelism: topology.parallelism, reason: topology.reason };
         m.continuation.continuation_budget = continuationBudget(category);
         m.methodology.methodology_needs = [];
-        const suppressed = new Set(assessment.suppressed_intent_signals);
-        for (const signal of assessment.intent_signals)
-            if (!suppressed.has(signal))
-                activateMethodologySignal(m, this.#root, { signal, producer: 'intent', reason: 'Host primary semantic assessment reported this explicit intent signal.' });
+        const reconciledSignals = reconciledIntentMethodologySignals(assessment);
+        for (const signal of reconciledSignals.active)
+            activateMethodologySignal(m, this.#root, { signal, producer: 'intent', reason: 'Host primary semantic assessment reported this explicit intent signal.' });
         for (const signal of architectureMethodologySignals(m.identity.intent))
             activateMethodologySignal(m, this.#root, { signal: signal.name, producer: 'architecture', reason: signal.reason });
         syncMissionGates(m);
-        appendLedger(m, 'semantic.assessed', { payload: { revision: m.identity.semantic_assessment.revision, source: m.identity.semantic_assessment.source, taskKind: m.identity.intent.taskKind, scope: m.identity.intent.scope, risk: m.identity.intent.risk, ambiguity: m.identity.intent.ambiguity, dependencyClass: m.identity.intent.dependencyClass, capabilities: m.identity.intent.requiredCapabilities, intent_signals: assessment.intent_signals, suppressed_intent_signals: assessment.suppressed_intent_signals, technical_targets: m.identity.intent.likelyTargets ?? [] } });
+        appendLedger(m, 'semantic.assessed', { payload: { revision: m.identity.semantic_assessment.revision, source: m.identity.semantic_assessment.source, taskKind: m.identity.intent.taskKind, scope: m.identity.intent.scope, risk: m.identity.intent.risk, ambiguity: m.identity.intent.ambiguity, dependencyClass: m.identity.intent.dependencyClass, capabilities: m.identity.intent.requiredCapabilities, intent_signals: assessment.intent_signals, effective_intent_signals: reconciledSignals.active, suppressed_intent_signals: assessment.suppressed_intent_signals, runtime_suppressed_intent_signals: reconciledSignals.runtimeSuppressed, technical_targets: m.identity.intent.likelyTargets ?? [] } });
         m.identity.updated_at = now;
         this.syncProgressBaseline(m);
         return m;
@@ -206,12 +213,11 @@ export class MissionStore {
         m.identity.intent = assessedIntent(m.identity.intent, assessment);
         m.identity.intent.objective = m.identity.objective;
         m.identity.risk = m.identity.intent.risk;
-        const suppressed = new Set(assessment.suppressed_intent_signals);
-        if (suppressed.size)
-            suppressIntentMethodologySignals(m, [...suppressed], `Host primary semantic follow-up explicitly superseded intent methodology at revision ${m.identity.semantic_assessment.revision}.`);
-        for (const signal of assessment.intent_signals)
-            if (!suppressed.has(signal))
-                activateMethodologySignal(m, this.#root, { signal, producer: 'intent', reason: `Host primary semantic follow-up assessment revision ${m.identity.semantic_assessment.revision}.` });
+        const reconciledSignals = reconciledIntentMethodologySignals(assessment);
+        if (reconciledSignals.suppressed.length)
+            suppressIntentMethodologySignals(m, reconciledSignals.suppressed, `Host primary semantic follow-up superseded or runtime-reconciled intent methodology at revision ${m.identity.semantic_assessment.revision}.`);
+        for (const signal of reconciledSignals.active)
+            activateMethodologySignal(m, this.#root, { signal, producer: 'intent', reason: `Host primary semantic follow-up assessment revision ${m.identity.semantic_assessment.revision}.` });
         if (m.identity.intent.risk === 'high' && !m.execution.obligations.some(o => o.id === 'o-high-assurance' && o.status === 'open'))
             m.execution.obligations.push(obligation('o-high-assurance', 'review', 'Security-sensitive change reviewed'));
         if (m.identity.intent.risk === 'authority-boundary' && !m.execution.obligations.some(o => o.kind === 'authority' && o.status === 'open'))
@@ -226,7 +232,7 @@ export class MissionStore {
         m.execution.topology = { mode: topology.mode, parallelism: topology.parallelism, reason: topology.reason };
         m.continuation.continuation_budget = Math.max(m.continuation.continuation_budget, continuationBudget(category));
         m.identity.status = 'active';
-        appendLedger(m, 'semantic.followup-assessed', { payload: { revision: m.identity.semantic_assessment.revision, message_kind: kind, taskKind: m.identity.intent.taskKind, scope: m.identity.intent.scope, risk: m.identity.intent.risk, ambiguity: m.identity.intent.ambiguity, dependencyClass: m.identity.intent.dependencyClass, intent_signals: assessment.intent_signals, suppressed_intent_signals: assessment.suppressed_intent_signals } });
+        appendLedger(m, 'semantic.followup-assessed', { payload: { revision: m.identity.semantic_assessment.revision, message_kind: kind, taskKind: m.identity.intent.taskKind, scope: m.identity.intent.scope, risk: m.identity.intent.risk, ambiguity: m.identity.intent.ambiguity, dependencyClass: m.identity.intent.dependencyClass, intent_signals: assessment.intent_signals, effective_intent_signals: reconciledSignals.active, suppressed_intent_signals: assessment.suppressed_intent_signals, runtime_suppressed_intent_signals: reconciledSignals.runtimeSuppressed } });
         syncMissionGates(m);
         m.identity.updated_at = now;
         this.syncProgressBaseline(m);
