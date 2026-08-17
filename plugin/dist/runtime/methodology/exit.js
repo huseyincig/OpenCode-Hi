@@ -6,9 +6,9 @@ import { missionRequiresPackagePublish, missionRequiresReleaseCreate } from '../
 import { discoverProjectMethodologyPolicies } from './project-policy.js';
 function normScope(value) { return value.trim().replace(/\\/g, '/').replace(/^\.\//, ''); }
 function passedEvidence(m, task, obligationId) {
-    const mutation = m.execution.evidence.last_mutation_at ?? 0, taskScope = new Set((task?.scope ?? []).map(normScope).filter(Boolean));
+    const taskScope = new Set((task?.scope ?? []).map(normScope).filter(Boolean));
     return m.execution.evidence.items.filter(e => {
-        if (e.invalidated_at || !((e.outcome === 'passed') || e.pass === true) || e.observed_at < mutation)
+        if (e.invalidated_at || !((e.outcome === 'passed') || e.pass === true))
             return false;
         if (!task && !obligationId)
             return true;

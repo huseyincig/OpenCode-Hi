@@ -24,17 +24,24 @@ function outcomeOf(output, text) { const exit = numericExit(output); if (ENVIRON
     return { outcome: exit === 0 ? 'passed' : 'failed', reason: exit === 0 ? undefined : `verification-exit-${exit}` }; if (/(^|\n)\s*(fail|failed|error)|exit\s*code\s*[1-9]/i.test(text))
     return { outcome: 'failed', reason: 'verification-reported-failure' }; return { outcome: 'pending', reason: 'verification-exit-unknown' }; }
 function absolutePath(value) { return value.startsWith('/') || /^[A-Za-z]:[\\/]/.test(value); }
+function evidencePath(value) { return value.trim().replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+$/, ''); }
+function sameEvidenceSurface(a, b) { const x = evidencePath(a), y = evidencePath(b); return Boolean(x && y && (x === y || x.startsWith(`${y}/`) || y.startsWith(`${x}/`))); }
+function mutationAffectsEvidence(scope, files) { if (!files.length || !scope.length)
+    return true; return scope.some(s => files.some(f => sameEvidenceSurface(s, f))); }
+function refreshCompatibilityFreshness(mission) { mission.execution.evidence.fresh = mission.execution.evidence.items.some(e => (e.outcome === 'passed' || e.pass === true) && !e.invalidated_at); }
 export function normalizeProjectPath(value, projectRoot) { const raw = value.trim(); if (!raw)
     return ''; if (!absolutePath(raw))
     return normalizeBoundedProjectPath(raw) ?? ''; if (!projectRoot)
     return ''; const root = resolve(projectRoot), abs = resolve(raw), rel = relative(root, abs); if (!rel)
     return ''; if (rel === '..' || rel.startsWith(`..${sep}`) || absolutePath(rel))
     return ''; return normalizeBoundedProjectPath(rel.replace(/\\/g, '/')) ?? ''; }
-export function markMutation(mission, files = [], source = 'tool') { const now = Date.now(); mission.execution.evidence.last_mutation_at = now; mission.execution.evidence.fresh = false; for (const item of mission.execution.evidence.items)
-    if (!item.invalidated_at)
-        item.invalidated_at = now; mission.vcs.changed_files = [...new Set([...mission.vcs.changed_files, ...files])]; appendLedger(mission, 'file.changed', { payload: { source, files } }); }
-export function addEvidence(mission, input) { const item = { id: id(), observed_at: input.observed_at ?? Date.now(), kind: input.kind, summary: input.summary, scope: input.scope, source: input.source, source_session_id: input.source_session_id, source_state_hash: input.source_state_hash, task_id: input.task_id, obligation_ids: input.obligation_ids, pass: input.pass, outcome: input.outcome ?? (input.pass === true ? 'passed' : input.pass === false ? 'failed' : undefined), reason: input.reason, invalidated_at: input.invalidated_at }; mission.execution.evidence.items.push(item); if (mission.execution.evidence.items.length > 100)
-    mission.execution.evidence.items.splice(0, mission.execution.evidence.items.length - 100); const mutation = mission.execution.evidence.last_mutation_at ?? 0; mission.execution.evidence.fresh = mission.execution.evidence.items.some(e => (e.outcome === 'passed' || e.pass === true) && !e.invalidated_at && e.observed_at >= mutation); appendLedger(mission, item.outcome === 'failed' ? 'verification.fail' : item.outcome === 'environment-issue' ? 'verification.environment-issue' : 'verification.pass', { payload: { kind: item.kind, summary: item.summary, reason: item.reason, source_session_id: item.source_session_id, source_state_hash: item.source_state_hash, task_id: item.task_id, obligation_ids: item.obligation_ids } }); return item; }
+export function markMutation(mission, files = [], source = 'tool') { const now = Date.now(), changed = [...new Set(files.map(evidencePath).filter(Boolean))]; mission.execution.evidence.last_mutation_at = now; const invalidated = []; for (const item of mission.execution.evidence.items)
+    if (!item.invalidated_at && mutationAffectsEvidence(item.scope ?? [], changed)) {
+        item.invalidated_at = now;
+        invalidated.push(item.id);
+    } refreshCompatibilityFreshness(mission); mission.vcs.changed_files = [...new Set([...mission.vcs.changed_files, ...changed])]; appendLedger(mission, 'file.changed', { payload: { source, files: changed, evidence_invalidated: invalidated.slice(0, 100), invalidation_mode: changed.length ? 'scope-overlap' : 'unknown-surface-fail-closed' } }); }
+export function addEvidence(mission, input) { const item = { id: id(), observed_at: input.observed_at ?? Date.now(), kind: input.kind, summary: input.summary, scope: input.scope, source: input.source, source_session_id: input.source_session_id, source_state_hash: input.source_state_hash, task_id: input.task_id, obligation_ids: input.obligation_ids, producer_attempt: input.producer_attempt, pass: input.pass, outcome: input.outcome ?? (input.pass === true ? 'passed' : input.pass === false ? 'failed' : undefined), reason: input.reason, invalidated_at: input.invalidated_at }; mission.execution.evidence.items.push(item); if (mission.execution.evidence.items.length > 100)
+    mission.execution.evidence.items.splice(0, mission.execution.evidence.items.length - 100); refreshCompatibilityFreshness(mission); appendLedger(mission, item.outcome === 'failed' ? 'verification.fail' : item.outcome === 'environment-issue' ? 'verification.environment-issue' : 'verification.pass', { payload: { kind: item.kind, summary: item.summary, reason: item.reason, source_session_id: item.source_session_id, source_state_hash: item.source_state_hash, task_id: item.task_id, obligation_ids: item.obligation_ids } }); return item; }
 export function observeToolBefore(mission, tool, args, projectRoot) { if (WRITE_TOOLS.has(tool)) {
     const files = [args?.filePath, args?.path, args?.file].filter((x) => typeof x === 'string').map(x => normalizeProjectPath(x, projectRoot)).filter(Boolean);
     markMutation(mission, files, tool);
@@ -56,6 +63,6 @@ export function observeToolAfter(mission, tool, args, output, projectRoot) { if 
     if (text.trim() && (exit === undefined || exit === 0) && !/(error|failed)/i.test(text))
         addEvidence(mission, { kind: 'review-input', summary: 'Read-only command: ' + command.slice(0, 180), scope: [], source: 'bash', pass: true, outcome: 'passed' });
 } if (tool === 'bash' && VERIFY_HINT.test(command)) {
-    const text = typeof output === 'string' ? output : JSON.stringify(output ?? ''), out = outcomeOf(output, text);
-    addEvidence(mission, { kind: verificationKind(command), summary: command.slice(0, 180), scope: mission.vcs.changed_files, source: 'bash', pass: out.outcome === 'passed' ? true : out.outcome === 'failed' ? false : undefined, outcome: out.outcome, reason: out.reason });
+    const text = typeof output === 'string' ? output : JSON.stringify(output ?? ''), out = outcomeOf(output, text), obligation_ids = mission.execution.obligations.filter(o => o.kind === 'verification' && o.status === 'open').map(o => o.id);
+    addEvidence(mission, { kind: verificationKind(command), summary: command.slice(0, 180), scope: mission.vcs.changed_files, source: 'bash', obligation_ids, pass: out.outcome === 'passed' ? true : out.outcome === 'failed' ? false : undefined, outcome: out.outcome, reason: out.reason });
 } }

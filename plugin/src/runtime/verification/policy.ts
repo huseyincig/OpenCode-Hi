@@ -1,6 +1,7 @@
 import type { EvidenceItem,MissionState,MissionTask,NormalizedMissionIntent,VerificationPolicy } from '../mission/types.js'
 import type { RepoContext } from '../intent/repo-context.js'
 import type { VerificationEnvelope,VerificationCheckResult } from '../../contracts/verification-envelope.js'
+import { evidenceClaimApplicability } from '../evidence/applicability.js'
 const VERIFICATION_KIND_ALIASES:Readonly<Record<string,string>>={test:'targeted-tests',tests:'targeted-tests','targeted-tests':'targeted-tests',pytest:'targeted-tests','go test':'targeted-tests','cargo test':'targeted-tests','npm test':'targeted-tests','pnpm test':'targeted-tests','bun test':'targeted-tests',vitest:'targeted-tests',jest:'targeted-tests',spec:'targeted-tests',typecheck:'typecheck',tsc:'typecheck',mypy:'typecheck',pyright:'typecheck',lint:'lint',eslint:'lint',ruff:'lint',build:'build',compile:'build','cargo check':'build',check:'changed-surface-sanity',sanity:'changed-surface-sanity','changed-surface-sanity':'changed-surface-sanity','visual-check':'visual-check','visual-evidence':'visual-evidence','review-evidence':'review-evidence'}
 function canonical(kind:string):string{const k=kind.toLowerCase().trim();return VERIFICATION_KIND_ALIASES[k]??k}
 export function verificationPolicyFor(intent:NormalizedMissionIntent):VerificationPolicy{const independentReview=intent.risk==='high'||intent.requiredCapabilities.includes('independent-review')||intent.requiredCapabilities.includes('security-review');return{requiredKinds:[...new Set(intent.likelyVerification.map(canonical))],requireFresh:true,requireReview:independentReview,allowWorkerReportedEvidence:intent.risk!=='high'}}
@@ -36,12 +37,9 @@ export function verificationEconomyInstruction(m:MissionState):string{
 const STRONGER_EVIDENCE:Readonly<Record<string,readonly string[]>>={'changed-surface-sanity':['changed-surface-sanity','targeted-tests','typecheck','lint','build'],'visual-check':['visual-check','visual-evidence'],'review-evidence':['review-evidence']}
 function kindMatches(required:string,actual:string):boolean{const r=canonical(required),a=canonical(actual);if(r===a)return true;return Boolean(STRONGER_EVIDENCE[r]?.includes(a))}
 function evidenceAllowedForVerification(m:MissionState,e:EvidenceItem,obligationID?:string):boolean{
-  const workerSource=String(e.source??'').startsWith('worker:'),passed=e.outcome==='passed'||e.pass===true
+  const workerSource=String(e.source??'').startsWith('worker:')
   if(workerSource&&!m.execution.verification_policy.allowWorkerReportedEvidence&&!String(e.source??'').includes(':reviewer'))return false
-  if(workerSource&&passed&&(!e.source_session_id||!e.source_state_hash||!/^[a-f0-9]{64}$/i.test(e.source_state_hash)))return false
-  if(obligationID&&canonical(e.kind)==='review-evidence'&&!e.obligation_ids?.includes(obligationID))return false
-  if(obligationID&&workerSource&&!e.obligation_ids?.includes(obligationID))return false
-  return true
+  return evidenceClaimApplicability(m,e,obligationID).applicable
 }
 function verificationResult(e:EvidenceItem):VerificationCheckResult{
   if(e.outcome==='passed'||e.pass===true)return'passed'
@@ -84,4 +82,27 @@ export function verificationSatisfied(m:MissionState,obligationID?:string):{ok:b
   return{ok:missing.length===0,missing:[...new Set(missing)]}
 }
 
-export function latestBlockingVerificationEvidence(m:MissionState,obligationID?:string):EvidenceItem|undefined{const obligation=obligationID?m.execution.obligations.find(o=>o.id===obligationID):undefined,requiredKinds=[...new Set((obligation?.requiredEvidence?.length?obligation.requiredEvidence:m.execution.verification_policy.requiredKinds).map(canonical))],mutation=m.execution.evidence.last_mutation_at??0,current=[...m.execution.evidence.items].filter(e=>!e.invalidated_at&&e.observed_at>=mutation).sort((a,b)=>b.observed_at-a.observed_at);for(const e of current){if(e.outcome!=='environment-issue'&&e.outcome!=='failed')continue;const matched=requiredKinds.filter(r=>kindMatches(r,e.kind));if(!matched.length)continue;const superseded=matched.every(r=>current.some(candidate=>candidate.observed_at>e.observed_at&&candidate.outcome==='passed'&&candidate.pass!==false&&kindMatches(r,candidate.kind)));if(!superseded)return e}return undefined}
+
+export function verificationClaimsSatisfied(m:MissionState):{ok:boolean;missing:string[]}{
+  const obligations=m.execution.obligations.filter(o=>o.kind==='verification')
+  if(!obligations.length)return{ok:true,missing:[]}
+  const missing=obligations.flatMap(o=>verificationSatisfied(m,o.id).missing.map(item=>`${o.id}:${item}`))
+  return{ok:missing.length===0,missing:[...new Set(missing)]}
+}
+
+export function reviewObligationSatisfied(m:MissionState,obligationID:string):{ok:boolean;reason?:string;evidence_id?:string}{
+  const obligation=m.execution.obligations.find(o=>o.id===obligationID&&o.kind==='review')
+  if(!obligation)return{ok:false,reason:'review-obligation-missing'}
+  const evidence=[...m.execution.evidence.items].filter(e=>canonical(e.kind)==='review-evidence'&&!e.invalidated_at&&(e.outcome==='passed'||e.pass===true)&&(!m.execution.verification_policy.requireReview||(String(e.source??'').startsWith('worker:')&&String(e.source??'').includes(':reviewer')))&&evidenceClaimApplicability(m,e,obligationID).applicable).sort((a,b)=>b.observed_at-a.observed_at)
+  const exact=evidence[0]
+  return exact?{ok:true,evidence_id:exact.id}:{ok:false,reason:'fresh-claim-linked-review-evidence-required'}
+}
+
+export function reviewClaimsSatisfied(m:MissionState):{ok:boolean;missing:string[]}{
+  const reviews=m.execution.obligations.filter(o=>o.kind==='review')
+  if(!reviews.length)return{ok:!m.execution.verification_policy.requireReview,missing:m.execution.verification_policy.requireReview?['review-obligation-missing']:[]}
+  const missing=reviews.filter(o=>!reviewObligationSatisfied(m,o.id).ok).map(o=>o.id)
+  return{ok:missing.length===0,missing}
+}
+
+export function latestBlockingVerificationEvidence(m:MissionState,obligationID?:string):EvidenceItem|undefined{const obligation=obligationID?m.execution.obligations.find(o=>o.id===obligationID):undefined,requiredKinds=[...new Set((obligation?.requiredEvidence?.length?obligation.requiredEvidence:m.execution.verification_policy.requiredKinds).map(canonical))],current=[...m.execution.evidence.items].filter(e=>!e.invalidated_at&&evidenceAllowedForVerification(m,e,obligationID)).sort((a,b)=>b.observed_at-a.observed_at);for(const e of current){if(e.outcome!=='environment-issue'&&e.outcome!=='failed')continue;const matched=requiredKinds.filter(r=>kindMatches(r,e.kind));if(!matched.length)continue;const superseded=matched.every(r=>current.some(candidate=>candidate.observed_at>e.observed_at&&candidate.outcome==='passed'&&candidate.pass!==false&&kindMatches(r,candidate.kind)));if(!superseded)return e}return undefined}

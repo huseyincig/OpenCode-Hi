@@ -10,9 +10,9 @@ export interface MethodologyExitCheck { ok:boolean; missing:HiMethodologyExitReq
 
 function normScope(value:string):string{return value.trim().replace(/\\/g,'/').replace(/^\.\//,'')}
 function passedEvidence(m:MissionState,task?:MissionTask,obligationId?:string){
-  const mutation=m.execution.evidence.last_mutation_at??0,taskScope=new Set((task?.scope??[]).map(normScope).filter(Boolean))
+  const taskScope=new Set((task?.scope??[]).map(normScope).filter(Boolean))
   return m.execution.evidence.items.filter(e=>{
-    if(e.invalidated_at||!((e.outcome==='passed')||e.pass===true)||e.observed_at<mutation)return false
+    if(e.invalidated_at||!((e.outcome==='passed')||e.pass===true))return false
     if(!task&&!obligationId)return true
     if(task&&e.task_id===task.id)return true
     if(obligationId&&e.obligation_ids?.includes(obligationId))return true

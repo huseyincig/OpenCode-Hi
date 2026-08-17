@@ -11,6 +11,7 @@ import {addEvidence} from '../dist/runtime/evidence/evidence-runtime.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {startAssessedMission} from './helpers/semantic.mjs'
 import {opencodeChildPort} from './helpers/host-port.mjs'
+import {executionAttemptIdentity} from '../dist/contracts/orchestration-core.js'
 
 function runtime(){return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
 
@@ -30,14 +31,20 @@ test('PROMPT B worker PASS evidence without exact source-state identity cannot s
   const verification=m.execution.obligations.find(o=>o.kind==='verification');verification.requiredEvidence=['targeted-tests']
   addEvidence(m,{kind:'targeted-tests',summary:'all tests passed',scope:['src/a.ts'],source:'worker:w-unbound',task_id:'t1',obligation_ids:[verification.id],pass:true,outcome:'passed'})
   assert.deepEqual(verificationSatisfied(m,verification.id),{ok:false,missing:['targeted-tests']})
-  addEvidence(m,{kind:'targeted-tests',summary:'exact source-bound tests passed',scope:['src/a.ts'],source:'worker:w-bound',source_session_id:'s-bound',source_state_hash:'b'.repeat(64),task_id:'t2',obligation_ids:[verification.id],pass:true,outcome:'passed'})
+  addEvidence(m,{kind:'targeted-tests',summary:'source-bound but attempt-unbound tests passed',scope:['src/a.ts'],source:'worker:w-unfenced',source_session_id:'s-unfenced',source_state_hash:'b'.repeat(64),task_id:'t-unfenced',obligation_ids:[verification.id],pass:true,outcome:'passed'})
+  assert.deepEqual(verificationSatisfied(m,verification.id),{ok:false,missing:['targeted-tests']},'source/session identity alone cannot replace exact attempt identity')
+  const task=createTask(m,{objective:'verify src/a.ts',role:'coder',category:'standard',scope:['src/a.ts'],obligationIds:[verification.id],requiredEvidence:['targeted-tests']}),worker=createWorker(m,task,'host-default');worker.session_id='s-bound';worker.native_state_hash='c'.repeat(64);worker.attempt=1;worker.generation_at_spawn=m.continuation.generation
+  const identity=executionAttemptIdentity({executionUnitId:`eu:${task.id}`,workerId:worker.id,ordinal:worker.attempt,generation:worker.generation_at_spawn})
+  addEvidence(m,{kind:'targeted-tests',summary:'exact attempt-bound tests passed',scope:['src/a.ts'],source:`worker:${worker.id}`,source_session_id:worker.session_id,source_state_hash:worker.native_state_hash,task_id:task.id,obligation_ids:[verification.id],producer_attempt:{worker_id:worker.id,execution_unit_id:identity.executionUnitId,attempt_id:identity.attemptId,run_id:identity.runId,ordinal:identity.ordinal,generation:identity.generation},pass:true,outcome:'passed'})
   assert.deepEqual(verificationSatisfied(m,verification.id),{ok:true,missing:[]})
+  worker.attempt+=1
+  assert.deepEqual(verificationSatisfied(m,verification.id),{ok:false,missing:['targeted-tests']},'evidence from a prior attempt cannot satisfy the current claim')
 })
 
 test('PROMPT B mutation invalidates previously passed verification before completion',()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'pb9-mutation','fix src/a.ts',{task_kind:'bug-fix',likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
   const verification=m.execution.obligations.find(o=>o.kind==='verification');verification.requiredEvidence=['targeted-tests']
-  const evidence=addEvidence(m,{kind:'targeted-tests',summary:'targeted tests pass',scope:['src/a.ts'],source:'bash',pass:true,outcome:'passed'})
+  const evidence=addEvidence(m,{kind:'targeted-tests',summary:'targeted tests pass',scope:['src/a.ts'],source:'bash',obligation_ids:[verification.id],pass:true,outcome:'passed'})
   assert.deepEqual(verificationSatisfied(m,verification.id),{ok:true,missing:[]})
   m.execution.evidence.last_mutation_at=evidence.observed_at+1;evidence.invalidated_at=evidence.observed_at+1;m.execution.evidence.fresh=false
   assert.deepEqual(verificationSatisfied(m,verification.id),{ok:false,missing:['fresh-evidence']})

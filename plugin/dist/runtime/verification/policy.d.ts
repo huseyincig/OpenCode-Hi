@@ -16,4 +16,17 @@ export declare function verificationSatisfied(m: MissionState, obligationID?: st
     ok: boolean;
     missing: string[];
 };
+export declare function verificationClaimsSatisfied(m: MissionState): {
+    ok: boolean;
+    missing: string[];
+};
+export declare function reviewObligationSatisfied(m: MissionState, obligationID: string): {
+    ok: boolean;
+    reason?: string;
+    evidence_id?: string;
+};
+export declare function reviewClaimsSatisfied(m: MissionState): {
+    ok: boolean;
+    missing: string[];
+};
 export declare function latestBlockingVerificationEvidence(m: MissionState, obligationID?: string): EvidenceItem | undefined;

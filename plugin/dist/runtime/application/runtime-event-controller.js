@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { authorityClassForPatterns } from '../safety/project-authority.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { addEvidence, markMutation, normalizeProjectPath } from '../evidence/evidence-runtime.js';
+import { evidenceProducerAttemptForWorker } from '../evidence/applicability.js';
 import { parseWorkerResult } from '../task/result-parser.js';
 import { automaticContinuationEnabled, adaptiveIdleEvaluatorEnabled } from '../../config/execution-policy.js';
 import { dispatchContinuation } from '../continuation/dispatcher.js';
@@ -130,7 +131,7 @@ export class RuntimeEventController {
             if (ev.kind === 'lsp-diagnostics') {
                 const diagnostics = Array.isArray(ev.properties?.diagnostics) ? ev.properties.diagnostics : [];
                 const errors = diagnostics.filter((d) => ['error', 1].includes(d?.severity)).length;
-                addEvidence(m, { kind: 'lsp-diagnostics', summary: `native LSP diagnostics: ${errors} error(s), ${diagnostics.length} total`, scope: child.write_set ?? [], source: `session:${sid}:lsp`, pass: errors === 0, outcome: errors === 0 ? 'passed' : 'failed', reason: errors ? `${errors} error diagnostic(s)` : undefined });
+                addEvidence(m, { kind: 'lsp-diagnostics', summary: `native LSP diagnostics: ${errors} error(s), ${diagnostics.length} total`, scope: child.write_set ?? [], source: `session:${sid}:lsp`, source_session_id: sid, source_state_hash: child.native_state_hash, task_id: child.task_id, obligation_ids: m.execution.tasks.find(t => t.id === child.task_id)?.obligation_ids ?? [], producer_attempt: evidenceProducerAttemptForWorker(m, child), pass: errors === 0, outcome: errors === 0 ? 'passed' : 'failed', reason: errors ? `${errors} error diagnostic(s)` : undefined });
                 persistence.save(store.all());
                 return;
             }
@@ -237,7 +238,7 @@ export class RuntimeEventController {
         if (ev.kind === 'lsp-diagnostics' && mission) {
             const diagnostics = Array.isArray(ev.properties?.diagnostics) ? ev.properties.diagnostics : [];
             const errors = diagnostics.filter((d) => ['error', 1].includes(d?.severity)).length;
-            addEvidence(mission, { kind: 'lsp-diagnostics', summary: `native LSP diagnostics: ${errors} error(s), ${diagnostics.length} total`, scope: mission.vcs.changed_files, source: `session:${sid}:lsp`, pass: errors === 0, outcome: errors === 0 ? 'passed' : 'failed', reason: errors ? `${errors} error diagnostic(s)` : undefined });
+            addEvidence(mission, { kind: 'lsp-diagnostics', summary: `native LSP diagnostics: ${errors} error(s), ${diagnostics.length} total`, scope: mission.vcs.changed_files, source: `session:${sid}:lsp`, source_session_id: sid, obligation_ids: mission.execution.obligations.filter(o => o.kind === 'verification' && o.status === 'open').map(o => o.id), pass: errors === 0, outcome: errors === 0 ? 'passed' : 'failed', reason: errors ? `${errors} error diagnostic(s)` : undefined });
             persistence.save(store.all());
             return;
         }

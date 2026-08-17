@@ -1,4 +1,4 @@
-import { verificationSatisfied } from '../verification/policy.js';
+import { verificationClaimsSatisfied, reviewClaimsSatisfied } from '../verification/policy.js';
 import { syncMissionGates } from '../gates/gates.js';
 import { missionRequiresPackagePublish, missionRequiresReleaseCreate } from '../safety/release-chain.js';
 export function evaluateCompletion(m) { const reasons = []; syncMissionGates(m); if (missionRequiresReleaseCreate(m)) {
@@ -25,9 +25,7 @@ export function evaluateCompletion(m) { const reasons = []; syncMissionGates(m);
     reasons.push(`open-obligations:${open.map(o => o.id).join(',')}`); const authorityGate = m.execution.gates.find(g => g.kind === 'user-authority' && g.status !== 'closed'); if (authorityGate)
     return { complete: false, reasons: [...reasons, `authority:${authorityGate.status}`], next: 'USER_ACTION_REQUIRED' }; const rollback = m.execution.gates.find(g => g.kind === 'rollback' && g.status !== 'closed'); if (rollback)
     return { complete: false, reasons: [...reasons, 'temporary-rollback-pending'], next: 'USER_ACTION_REQUIRED' }; const prereq = m.execution.gates.find(g => g.kind === 'prerequisite-task' && g.status !== 'closed'); if (prereq)
-    reasons.push('prerequisite-task-pending'); const verificationRequired = m.execution.obligations.some(o => o.kind === 'verification'); if (verificationRequired) {
-    const check = verificationSatisfied(m);
-    if (!check.ok)
-        return { complete: false, reasons: [...reasons, `verification-missing:${check.missing.join(',')}`], next: 'VERIFY' };
-} if (m.execution.tasks.some(t => t.result?.status === 'FIX_REQUIRED' || t.result?.status === 'NEEDS_CONTEXT'))
+    reasons.push('prerequisite-task-pending'); const verification = verificationClaimsSatisfied(m); if (!verification.ok)
+    return { complete: false, reasons: [...reasons, `verification-claims-missing:${verification.missing.join(',')}`], next: 'VERIFY' }; const reviews = reviewClaimsSatisfied(m); if (!reviews.ok)
+    return { complete: false, reasons: [...reasons, `review-claims-missing:${reviews.missing.join(',')}`], next: 'RECONCILE' }; if (m.execution.tasks.some(t => t.result?.status === 'FIX_REQUIRED' || t.result?.status === 'NEEDS_CONTEXT'))
     return { complete: false, reasons: [...reasons, 'worker-result-unreconciled'], next: 'RECONCILE' }; return reasons.length ? { complete: false, reasons, next: 'CONTINUE' } : { complete: true, reasons: ['all-required-obligations-closed', 'no-pending-work', 'fresh-evidence', 'all-gates-closed'] }; }

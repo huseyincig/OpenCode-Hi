@@ -6,7 +6,7 @@ import type { RuntimeScopedStores } from '../application/runtime-scoped-stores.j
 import { isHiReadOnlyChildRole,isHiReviewerRole } from '../roles/catalog.js'
 import { assessDiffOwnership } from './diff-ownership.js'
 import { applyWorkerResult,beginWorkerAttempt } from '../worker/worker-runtime.js'
-import { replanVerificationForChangedSurface,verificationSatisfied } from '../verification/policy.js'
+import { replanVerificationForChangedSurface,verificationSatisfied,reviewObligationSatisfied } from '../verification/policy.js'
 import { collectRepoContext } from '../intent/repo-context.js'
 import { changedSurfaceMethodologySignals,verificationMethodologySignals,workerResultMethodologySignals } from '../methodology/signals.js'
 import { activateMethodologySignal } from '../methodology/activation.js'
@@ -22,6 +22,7 @@ import type { ConcurrencyScheduler } from '../scheduler/concurrency.js'
 import type { ProjectMethodologyLearningStore } from '../project-intelligence/methodology-learning.js'
 import { ChildExecutionCoordinator,diffDelta,normFile } from './child-execution-coordinator.js'
 import { taskRuntimeAdmittedModel,reserveTaskRuntimeDispatch,bindTaskRuntimeHost,beginTaskRuntimeSettlement,releaseTaskRuntimeReservation } from '../scheduler/task-runtime-adapter.js'
+import { executionAttemptIdentity } from '../../contracts/orchestration-core.js'
 
 function providerOf(model:string|undefined):string|undefined{return model&&model!=='host-default'&&model.includes('/')?model.slice(0,model.indexOf('/')):undefined}
 function resultDigest(result:WorkerResult):string{return createHash('sha256').update(JSON.stringify(result)).digest('hex')}
@@ -178,8 +179,8 @@ export class TaskResultReconciler{
     // only reported after the fact, mark that mutation first so same-result evidence is stale.
     const fallbackMutation=effectiveResult.changed_files.length>0&&!observedMutationDuringWorker
     if(fallbackMutation)markMutation(m,effectiveResult.changed_files,'worker-result-fallback')
-    const evidenceSource=isHiReadOnlyChildRole(worker.role)?`worker:${worker.id}:reviewer`:`worker:${worker.id}`
-    for(const e of effectiveResult.evidence)addEvidence(m,{kind:e.kind,summary:e.summary,scope:e.scope??effectiveResult.changed_files,source:evidenceSource,source_session_id:worker.session_id,source_state_hash:worker.native_state_hash,task_id:task.id,obligation_ids:task.obligation_ids,pass:e.pass,outcome:e.outcome,reason:e.reason,invalidated_at:(cleanlinessMarker||fallbackMutation&&!isHiReadOnlyChildRole(worker.role))?(m.execution.evidence.last_mutation_at??Date.now()):undefined})
+    const evidenceSource=isHiReadOnlyChildRole(worker.role)?`worker:${worker.id}:reviewer`:`worker:${worker.id}`,attemptIdentity=executionAttemptIdentity({executionUnitId:`eu:${task.id}`,workerId:worker.id,ordinal:worker.attempt,generation:worker.generation_at_spawn??m.continuation.generation}),producer_attempt={worker_id:worker.id,execution_unit_id:attemptIdentity.executionUnitId,attempt_id:attemptIdentity.attemptId,run_id:attemptIdentity.runId,ordinal:attemptIdentity.ordinal,generation:attemptIdentity.generation}
+    for(const e of effectiveResult.evidence)addEvidence(m,{kind:e.kind,summary:e.summary,scope:e.scope??effectiveResult.changed_files,source:evidenceSource,source_session_id:worker.session_id,source_state_hash:worker.native_state_hash,task_id:task.id,obligation_ids:task.obligation_ids,producer_attempt,pass:e.pass,outcome:e.outcome,reason:e.reason,invalidated_at:(cleanlinessMarker||fallbackMutation&&!isHiReadOnlyChildRole(worker.role))?(m.execution.evidence.last_mutation_at??Date.now()):undefined})
 
     if(effectiveResult.status==='DONE'&&(worker.loaded_methodologies?.length??0)>0){
       const missingExit=[...new Set((worker.loaded_methodologies??[]).flatMap(name=>methodologyExitCheck(m,name,{task,worker,result:effectiveResult,projectRoot:this.projectRoot,scope:'worker'}).missing))]
@@ -199,8 +200,8 @@ export class TaskResultReconciler{
       activateMethodologySignal(m,this.projectRoot,{signal:signal.name,producer,reason:signal.reason})
     }
     if(ownership.accepted.length){task.scope=[...new Set([...task.scope,...ownership.accepted])];appendLedger(m,'task.scope-expanded',{task_id:task.id,worker_id:worker.id,payload:{files:ownership.accepted.slice(0,40),policy:'bounded-explicit-ownership'}})}
-    if(effectiveResult.status==='DONE'&&effectiveResult.methodology_observations?.length){const mutation=m.execution.evidence.last_mutation_at??0,evidenceRefs=m.execution.evidence.items.filter(e=>e.task_id===task.id&&!e.invalidated_at&&(e.outcome==='passed'||e.pass===true)&&e.observed_at>=mutation).map(e=>e.kind);for(const observation of effectiveResult.methodology_observations)this.methodologyLearning.observe(m,worker,observation,evidenceRefs)}
-    const reviewEvidenceSatisfied=(obligationID:string)=>verificationSatisfied(m,obligationID).ok||m.execution.evidence.items.some(e=>e.kind==='review-evidence'&&e.obligation_ids?.includes(obligationID)&&String(e.source??'').startsWith(`worker:${worker.id}:reviewer`)&&(e.outcome==='passed'||e.pass===true)&&!e.invalidated_at&&Boolean(e.source_session_id)&&Boolean(e.source_state_hash&&/^[a-f0-9]{64}$/i.test(e.source_state_hash)))
+    if(effectiveResult.status==='DONE'&&effectiveResult.methodology_observations?.length){const evidenceRefs=m.execution.evidence.items.filter(e=>e.task_id===task.id&&!e.invalidated_at&&(e.outcome==='passed'||e.pass===true)&&e.producer_attempt?.worker_id===worker.id&&e.producer_attempt.ordinal===worker.attempt&&e.producer_attempt.generation===(worker.generation_at_spawn??m.continuation.generation)).map(e=>e.kind);for(const observation of effectiveResult.methodology_observations)this.methodologyLearning.observe(m,worker,observation,evidenceRefs)}
+    const reviewEvidenceSatisfied=(obligationID:string)=>reviewObligationSatisfied(m,obligationID).ok
     if(effectiveResult.status==='DONE'){
       const now=Date.now();if(worker.role==='repository-explorer'&&m.identity.intent.ambiguity!=='none'){m.identity.intent.ambiguity='none';appendLedger(m,'intent.ambiguity.resolved',{task_id:task.id,worker_id:worker.id,payload:{source:'repository-explorer-result'}})}
       for(const id of task.obligation_ids){const owned=m.execution.obligations.find(o=>o.id===id&&o.status==='open');if(!owned)continue;if(owned.kind==='verification'){if(verificationSatisfied(m,owned.id).ok){owned.status='closed';owned.closedAt=now}}else if(owned.kind==='review'){if(reviewEvidenceSatisfied(owned.id)){owned.status='closed';owned.closedAt=now}else appendLedger(m,'review.claim-unproven',{task_id:task.id,worker_id:worker.id,payload:{obligation:owned.id,reason:'explicit-fresh-source-bound-review-evidence-required'}})}else{owned.status='closed';owned.closedAt=now}if(owned.status==='closed')appendLedger(m,'obligation.closed',{task_id:task.id,worker_id:worker.id,payload:{obligation:owned.id,owner:'task'}})}

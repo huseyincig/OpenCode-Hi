@@ -4,6 +4,8 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { addEvidence } from '../dist/runtime/evidence/evidence-runtime.js'
 import { verificationEnvelopeFor,verificationSatisfied } from '../dist/runtime/verification/policy.js'
 import { isVerificationEnvelopeContract } from '../dist/contracts/verification-envelope.js'
+import { executionAttemptIdentity } from '../dist/contracts/orchestration-core.js'
+import { createTask,createWorker } from '../dist/runtime/worker/worker-runtime.js'
 import { compactLedgerReport } from '../dist/runtime/ledger/report.js'
 import { startAssessedMission } from './helpers/semantic.mjs'
 
@@ -63,7 +65,9 @@ test('obligation-scoped worker evidence cannot satisfy a different verification 
   const first=m.execution.obligations.find(o=>o.kind==='verification'); assert.ok(first)
   first.requiredEvidence=['targeted-tests']
   m.execution.obligations.push({id:'o-other-verification',kind:'verification',summary:'other verification',status:'open',requiredEvidence:['targeted-tests']})
-  addEvidence(m,{kind:'targeted-tests',summary:'first only',scope:['src/a.ts'],source:'worker:w1',source_session_id:'worker-session',source_state_hash:'d'.repeat(64),task_id:'t1',obligation_ids:[first.id],pass:true,outcome:'passed'})
+  const task=createTask(m,{objective:'first verification owner',role:'coder',category:'standard',scope:['src/a.ts'],obligationIds:[first.id],requiredEvidence:['targeted-tests']}),worker=createWorker(m,task,'host-default');worker.session_id='worker-session';worker.native_state_hash='d'.repeat(64);worker.attempt=1;worker.generation_at_spawn=m.continuation.generation
+  const identity=executionAttemptIdentity({executionUnitId:`eu:${task.id}`,workerId:worker.id,ordinal:worker.attempt,generation:worker.generation_at_spawn})
+  addEvidence(m,{kind:'targeted-tests',summary:'first only',scope:['src/a.ts'],source:`worker:${worker.id}`,source_session_id:worker.session_id,source_state_hash:worker.native_state_hash,task_id:task.id,obligation_ids:[first.id],producer_attempt:{worker_id:worker.id,execution_unit_id:identity.executionUnitId,attempt_id:identity.attemptId,run_id:identity.runId,ordinal:identity.ordinal,generation:identity.generation},pass:true,outcome:'passed'})
   assert.equal(verificationEnvelopeFor(m,first.id).checks[0].result,'passed')
   assert.equal(verificationEnvelopeFor(m,'o-other-verification').checks[0].result,'not_run')
 })

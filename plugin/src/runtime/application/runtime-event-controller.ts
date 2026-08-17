@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { authorityClassForPatterns } from '../safety/project-authority.js'
 import { appendLedger } from '../ledger/ledger.js'
 import { addEvidence, markMutation, normalizeProjectPath } from '../evidence/evidence-runtime.js'
+import { evidenceProducerAttemptForWorker } from '../evidence/applicability.js'
 import { parseWorkerResult } from '../task/result-parser.js'
 import { automaticContinuationEnabled, adaptiveIdleEvaluatorEnabled } from '../../config/execution-policy.js'
 import { dispatchContinuation } from '../continuation/dispatcher.js'
@@ -43,7 +44,7 @@ export class RuntimeEventController{
       if(ev.kind==='session-status'){const nativeStatus=ev.status;tasks.noteNativeStatus(m,child.id,nativeStatus);if(child.runtime_recovery_pending&&!/idle|completed|stopped/i.test(nativeStatus)){child.runtime_recovery_pending=false;appendLedger(m,'worker.runtime-fallback.active',{task_id:child.task_id,worker_id:child.id,payload:{status:nativeStatus,attempt:child.runtime_recovery_attempt??0}})}persistence.save(store.all());return}
       if(ev.kind==='lsp-diagnostics'){
         const diagnostics=Array.isArray(ev.properties?.diagnostics)?ev.properties.diagnostics:[];const errors=diagnostics.filter((d:any)=>['error',1].includes(d?.severity)).length
-        addEvidence(m,{kind:'lsp-diagnostics',summary:`native LSP diagnostics: ${errors} error(s), ${diagnostics.length} total`,scope:child.write_set??[],source:`session:${sid}:lsp`,pass:errors===0,outcome:errors===0?'passed':'failed',reason:errors?`${errors} error diagnostic(s)`:undefined});persistence.save(store.all());return
+        addEvidence(m,{kind:'lsp-diagnostics',summary:`native LSP diagnostics: ${errors} error(s), ${diagnostics.length} total`,scope:child.write_set??[],source:`session:${sid}:lsp`,source_session_id:sid,source_state_hash:child.native_state_hash,task_id:child.task_id,obligation_ids:m.execution.tasks.find(t=>t.id===child.task_id)?.obligation_ids??[],producer_attempt:evidenceProducerAttemptForWorker(m,child),pass:errors===0,outcome:errors===0?'passed':'failed',reason:errors?`${errors} error diagnostic(s)`:undefined});persistence.save(store.all());return
       }
       if(ev.kind==='session-error'||ev.kind==='session-deleted'){
         const detail=String(ev.properties?.error?.message??ev.properties?.error??ev.rawType)
@@ -61,7 +62,7 @@ export class RuntimeEventController{
     if(ev.kind==='session-deleted'){const parent=store.get(sid);if(parent){store.stop(sid,'parent-session-deleted');await processRuntime.stopMission(parent);await tasks.cancelAll(parent);if(workspaceRuntime)await workspaceRuntime.cleanupMission(parent);persistence.save(store.all())}return}
     if(ev.kind==='todo-updated'){const m=store.get(sid);if(m){const todos=ev.properties?.todos??ev.properties?.items??[];if(Array.isArray(todos))m.execution.native_todos_incomplete=todos.filter((t:any)=>!['completed','cancelled','done'].includes(String(t?.status??'').toLowerCase())).length;store.updateProgress(m);persistence.save(store.all())}return}
     if((ev.kind==='file-edited'||ev.kind==='file-watcher-updated'||ev.kind==='session-diff')&&mission){const files=ev.filePaths.map(file=>normalizeProjectPath(file,projectRoot)).filter(Boolean);if(files.length){markMutation(mission,files,ev.rawType);scopedStores.projectIntelligence.invalidateChanged(files);scopedStores.contextArtifacts.invalidateChanged(files);scopedStores.skillCatalog.invalidateChanged(files)}persistence.save(store.all());return}
-    if(ev.kind==='lsp-diagnostics'&&mission){const diagnostics=Array.isArray(ev.properties?.diagnostics)?ev.properties.diagnostics:[];const errors=diagnostics.filter((d:any)=>['error',1].includes(d?.severity)).length;addEvidence(mission,{kind:'lsp-diagnostics',summary:`native LSP diagnostics: ${errors} error(s), ${diagnostics.length} total`,scope:mission.vcs.changed_files,source:`session:${sid}:lsp`,pass:errors===0,outcome:errors===0?'passed':'failed',reason:errors?`${errors} error diagnostic(s)`:undefined});persistence.save(store.all());return}
+    if(ev.kind==='lsp-diagnostics'&&mission){const diagnostics=Array.isArray(ev.properties?.diagnostics)?ev.properties.diagnostics:[];const errors=diagnostics.filter((d:any)=>['error',1].includes(d?.severity)).length;addEvidence(mission,{kind:'lsp-diagnostics',summary:`native LSP diagnostics: ${errors} error(s), ${diagnostics.length} total`,scope:mission.vcs.changed_files,source:`session:${sid}:lsp`,source_session_id:sid,obligation_ids:mission.execution.obligations.filter(o=>o.kind==='verification'&&o.status==='open').map(o=>o.id),pass:errors===0,outcome:errors===0?'passed':'failed',reason:errors?`${errors} error diagnostic(s)`:undefined});persistence.save(store.all());return}
     if(ev.kind==='session-compacted'&&mission){appendLedger(mission,'session.compacted',{payload:{source:'native-event'}});persistence.save(store.all());return}
     if(ev.kind!=='session-idle')return
     const m=store.get(sid);if(!m||!adaptiveIdleEvaluatorEnabled(state.config.executionPolicy))return

@@ -46,7 +46,9 @@ test('worker evidence is scoped to its owned verification obligation',()=>{
   const v1=m.execution.obligations.find(o=>o.kind==='verification'); assert.ok(v1)
   v1.requiredEvidence=['targeted-tests']
   m.execution.obligations.push({id:'o-verification-followup',kind:'verification',summary:'verify separate beta surface',status:'open',requiredEvidence:['targeted-tests']})
-  addEvidence(m,{kind:'targeted-tests',summary:'alpha tests pass',scope:['src/alpha.ts'],source:'worker:w1',source_session_id:'s-worker',source_state_hash:'b'.repeat(64),task_id:'t1',obligation_ids:[v1.id],pass:true,outcome:'passed'})
+  const task=createTask(m,{objective:'verify alpha',role:'coder',category:'standard',scope:['src/alpha.ts'],requiredEvidence:['targeted-tests'],obligationIds:[v1.id]})
+  const worker=createWorker(m,task,'host-default');worker.status='busy';worker.started_at=Date.now()-5;worker.session_id='s-worker';worker.native_state_hash='b'.repeat(64)
+  runtime().applyResult(m,worker.id,{status:'DONE',summary:'alpha verified',changed_files:[],evidence:[{kind:'targeted-tests',summary:'alpha tests pass',scope:['src/alpha.ts'],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
   assert.deepEqual(verificationSatisfied(m,v1.id),{ok:true,missing:[]})
   assert.deepEqual(verificationSatisfied(m,'o-verification-followup'),{ok:false,missing:['targeted-tests']})
 })

@@ -123,7 +123,7 @@ export function createHiToolSurface(input) {
             m.execution.blockers = m.execution.blockers.filter(b => !b.startsWith('direct-diff-cleanliness:'));
         }
         else {
-            const mutation = m.execution.evidence.last_mutation_at ?? 0, freshInput = m.execution.evidence.items.filter(e => e.kind === 'review-input' && !e.invalidated_at && e.observed_at >= mutation);
+            const freshInput = m.execution.evidence.items.filter(e => e.kind === 'review-input' && !e.invalidated_at);
             if (!freshInput.length)
                 return 'BLOCKED: no fresh review input observed';
             const reviewVerification = m.execution.obligations.find(x => x.kind === 'verification' && x.status === 'open');
