@@ -6,6 +6,7 @@ import { deriveEfficiencyMetrics } from './execution.js';
 import { ConcurrencyScheduler } from '../scheduler/concurrency.js';
 import { parallelSafety } from '../scheduler/parallel-safety.js';
 import { recoveryPlan } from '../continuation/recovery.js';
+import { recordRecoveryStrategy } from '../continuation/recovery-governor.js';
 const baseIntent = (overrides) => ({
     objective: 'benchmark', taskKind: 'implementation', risk: 'low', scope: 'local', ambiguity: 'none', dependencyClass: 'independent',
     requiredCapabilities: [], requestedExternalActions: [], likelyVerification: ['changed-surface-sanity'], avoid: [], ...overrides,
@@ -70,4 +71,14 @@ export function runSchedulerEconomicsBenchmarks() {
         { id: 'session-reuse', kind: 'DETERMINISTIC_SCHEDULER_SIMULATION', claimBoundary: schedulerClaim, metrics: { queueWaitUnits: 0, providerSaturationEvents: 0, modelSaturationEvents: 0, taskDurationUnits: 2, retries: 1, contextChars: 1200, sessionReuseSavedUnits: same.action === 'same-worker-resume' && escalated.action === 'model-escalation' ? 2 : 0, writeConflictEvents: 0 }, evidence: [`level1=${same.action}`, `level2=${escalated.action}`, 'reuse benefit is expressed as avoided fresh-session/handoff units, not token billing'] },
         { id: 'write-conflict', kind: 'DETERMINISTIC_SCHEDULER_SIMULATION', claimBoundary: schedulerClaim, metrics: { queueWaitUnits: conflict.safe ? 0 : 1, providerSaturationEvents: 0, modelSaturationEvents: 0, taskDurationUnits: 2, retries: 0, contextChars: 0, sessionReuseSavedUnits: 0, writeConflictEvents: conflict.safe ? 0 : 1 }, evidence: [`conflict=${conflict.reasons.join('|')}`, `independent-safe=${independent.safe}`] }
     ];
+}
+/** Counterfactual policy ablation: old counter-only selection vs semantic-state strategy fencing. */
+export function runRecoveryGovernorAblation() {
+    const base = { continuation: { stagnation_count: 1, generation: 1, last_progress_signature: 'deadbeef', recovery_history: [] }, authority: {}, release: {} };
+    const baselineFirst = recoveryPlan({ ...base, continuation: { ...base.continuation, recovery_history: [] } }), baselineSecond = recoveryPlan({ ...base, continuation: { ...base.continuation, recovery_history: [] } });
+    const governedMission = structuredClone(base), first = recoveryPlan(governedMission);
+    recordRecoveryStrategy(governedMission, first, 'started', 1);
+    const second = recoveryPlan(governedMission);
+    const fresh = structuredClone(base), freshFirst = recoveryPlan(fresh);
+    return { kind: 'DETERMINISTIC_RECOVERY_ABLATION', claimBoundary: 'In-process policy ablation only; measures redundant recovery-decision selection on identical semantic state, not provider latency/token billing.', baseline: { first: baselineFirst.action, second: baselineSecond.action, redundantActions: Number(baselineFirst.action === baselineSecond.action) }, governed: { first: first.action, second: second.action, redundantActions: Number(first.action === second.action) }, coveredCorrectnessPreserved: freshFirst.action === baselineFirst.action, evidence: [`baseline=${baselineFirst.action}->${baselineSecond.action}`, `governed=${first.action}->${second.action}`, 'fresh-state first recovery action remains unchanged'] };
 }

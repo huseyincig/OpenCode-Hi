@@ -1,3 +1,4 @@
+import { workerDerivedOpenCodeCost, workerExactTokenUsage } from '../economics/usage-runtime.js';
 export function missionMetrics(m) {
     const events = m.execution.ledger;
     const count = (pred) => events.filter(e => pred(e.type, e.payload)).length;
@@ -5,6 +6,8 @@ export function missionMetrics(m) {
     const recoverySuccess = count((t, p) => t === 'runtime.decision' && p?.decision === 'RECOVER' && String(p?.reason ?? '').includes('level-1'));
     const handoffs = events.filter(e => e.type === 'worker.handoff').map(e => Number(e.payload?.chars ?? 0)).filter(n => Number.isFinite(n) && n >= 0);
     const methodologyCounts = m.execution.workers.map(w => w.selected_methodologies.length);
+    const completeObservations = m.execution.workers.flatMap(w => w.usage_observations ?? []).filter(x => x.coverage === 'assistant-step-total'), partialObservations = m.execution.workers.flatMap(w => w.usage_observations ?? []).filter(x => x.coverage !== 'assistant-step-total');
+    const exactCompleteTokens = m.execution.workers.map(workerExactTokenUsage).reduce((a, b) => ({ input: a.input + b.input, output: a.output + b.output, reasoning: a.reasoning + b.reasoning, cache_read: a.cache_read + b.cache_read, cache_write: a.cache_write + b.cache_write }), { input: 0, output: 0, reasoning: 0, cache_read: 0, cache_write: 0 }), derivedOpenCodeCost = m.execution.workers.reduce((sum, w) => sum + workerDerivedOpenCodeCost(w), 0);
     const avg = (xs) => xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length) : 0;
     return {
         completed: m.identity.status === 'completed',
@@ -27,6 +30,7 @@ export function missionMetrics(m) {
         continuation_recovery_success: recoverySuccess,
         evidence_items: m.execution.evidence.items.length,
         failed_workers: m.execution.workers.filter(w => w.status === 'failed').length,
+        usage: { complete_observations: completeObservations.length, partial_observations: partialObservations.length, exact_complete_tokens: exactCompleteTokens, derived_opencode_cost_usd: Number(derivedOpenCodeCost.toFixed(12)), monetary_basis: 'opencode-calculated-derived' },
     };
 }
 export function aggregateMissionMetrics(missions) {
@@ -54,6 +58,7 @@ export function aggregateMissionMetrics(missions) {
         continuation_recovery_events: rows.reduce((n, x) => n + x.continuation_recovery_events, 0),
         continuation_recovery_success: rows.reduce((n, x) => n + x.continuation_recovery_success, 0),
         failed_workers: rows.reduce((n, x) => n + x.failed_workers, 0),
-        note: 'Token and monetary cost metrics require host/provider usage events; Hi reports worker/methodology/handoff economy from bounded runtime state and does not fabricate unavailable token/cost telemetry.',
+        usage: { complete_observations: rows.reduce((n, x) => n + x.usage.complete_observations, 0), partial_observations: rows.reduce((n, x) => n + x.usage.partial_observations, 0), exact_complete_tokens: rows.reduce((a, x) => ({ input: a.input + x.usage.exact_complete_tokens.input, output: a.output + x.usage.exact_complete_tokens.output, reasoning: a.reasoning + x.usage.exact_complete_tokens.reasoning, cache_read: a.cache_read + x.usage.exact_complete_tokens.cache_read, cache_write: a.cache_write + x.usage.exact_complete_tokens.cache_write }), { input: 0, output: 0, reasoning: 0, cache_read: 0, cache_write: 0 }), derived_opencode_cost_usd: Number(rows.reduce((n, x) => n + x.usage.derived_opencode_cost_usd, 0).toFixed(12)), monetary_basis: 'opencode-calculated-derived' },
+        note: 'Hi does not fabricate unavailable token/cost telemetry. Complete token totals use exact OpenCode step-finish observations only. Assistant-level fallback usage is reported separately as partial coverage. Monetary values labeled derived_opencode_cost_usd are OpenCode-calculated values, not claimed provider-billed cost. Routing expected_completion_cost remains heuristic.',
     };
 }

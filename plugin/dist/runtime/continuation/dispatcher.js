@@ -1,4 +1,5 @@
 import { appendLedger } from '../ledger/ledger.js';
+import { recordRecoveryStrategy } from './recovery-governor.js';
 export async function dispatchContinuation(host, mission, prompt, reason) {
     const now = Date.now(), generation = mission.continuation.generation;
     if (mission.continuation.user_interrupted || mission.identity.status === 'stopped') {
@@ -33,6 +34,12 @@ export async function dispatchContinuation(host, mission, prompt, reason) {
         }
         mission.continuation.continuation_failure_count = 0;
         mission.continuation.last_continuation_failure_at = undefined;
+        const recovery = /^stagnation-level-(\d+):(same-worker-resume|model-escalation|narrow-task|alternate-plan|fresh-worker)$/.exec(reason);
+        if (recovery) {
+            const level = Number(recovery[1]);
+            if (level >= 1 && level <= 5)
+                recordRecoveryStrategy(mission, { level: level, action: recovery[2] }, 'started', now);
+        }
         return true;
     }
     catch (error) {

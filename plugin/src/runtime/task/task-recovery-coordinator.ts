@@ -17,6 +17,7 @@ import type { BackgroundRegistry } from '../background/registry.js'
 import type { ConcurrencyScheduler } from '../scheduler/concurrency.js'
 import { ChildExecutionCoordinator,type ChildWorkspaceBinding } from './child-execution-coordinator.js'
 import { taskRuntimeAdmittedModel,reserveTaskRuntimeDispatch,bindTaskRuntimeHost,beginTaskRuntimeSettlement,releaseTaskRuntimeReservation } from '../scheduler/task-runtime-adapter.js'
+import { recordRecoveryStrategy } from '../continuation/recovery-governor.js'
 
 function providerOf(model:string|undefined):string|undefined{return model&&model!=='host-default'&&model.includes('/')?model.slice(0,model.indexOf('/')):undefined}
 export type ChildCallbackDisposition='accept'|'restart-reconcile-pending'|'stale-mission'
@@ -52,6 +53,7 @@ export class TaskRecoveryCoordinator{
         ?'Hi stagnation recovery: continue the SAME task/session with one narrowly scoped corrective attempt. Preserve completed work and evidence. Do not restart planning.'
         :`Hi stagnation recovery: continue the SAME task/session with policy escalation from ${previous??'default'} to ${model??'default'}. Preserve completed work and evidence. Do not restart planning.`
       beginWorkerAttempt(task,worker);this.child.recordModelProjection(worker,model,variant);await this.child.sendProviderPrompt(worker.session_id,clipText(`${instruction}\nReturn the normal structured WorkerResult.`,DEFAULT_CONTEXT_BUDGET.max_handoff_chars),worker.role,model==='host-default'?undefined:model,variant,promptToolOverrides(task.execution_profile?.tools??[]))
+      recordRecoveryStrategy(m,{level:level as 1|2,action:action as 'same-worker-resume'|'model-escalation'},'started')
       appendLedger(m,'worker.stagnation-recovery',{task_id:task.id,worker_id:worker.id,payload:{level,action,from:previous,to:model,variant,generation:m.continuation.generation}})
       void this.events?.(runtimeSignal('worker.recovered',m.identity.mission_id,{task_id:task.id,worker_id:worker.id,payload:{level,action,from:previous,to:model,variant}}))
       return true

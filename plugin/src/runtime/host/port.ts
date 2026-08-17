@@ -1,3 +1,4 @@
+import type { HostUsageObservation } from '../../contracts/execution-usage.js'
 import type { AvailableModel } from '../routing/model-resolver.js'
 import type { HostCapabilityContract } from '../../contracts/host-capability.js'
 
@@ -16,7 +17,7 @@ export interface HostEvent{
   status:string
   permission?:{id?:string;reply:'once'|'always'|'reject'|'unknown';decision:'allow'|'deny'|'unknown';patterns:string[]}
 }
-export interface HostAssistantResult{text:string;model?:{model?:string;variant?:string;message_id?:string}}
+export interface HostAssistantResult{text:string;model?:{model?:string;variant?:string;message_id?:string};usage?:HostUsageObservation}
 export interface HostCapabilityView{
   childSessions:boolean;asyncPrompt:boolean;syncPrompt:boolean;abort:boolean;providerInventory:boolean;appLog:boolean
   sessionStatus:boolean;childSessionList:boolean;sessionTodo:boolean;sessionDiff:boolean;sessionFork:boolean;sessionSummarize:boolean;sessionRevert:boolean;sessionUnrevert:boolean

@@ -1,7 +1,7 @@
 # OpenCode-Hi Active Task State
 
 **Project:** `/workspace/OpenCode-Hi`
-**Status:** ACTIVE — ROADMAP MILESTONE 5
+**Status:** ACTIVE — ROADMAP MILESTONE 6
 **Updated:** 2026-08-17
 **Global authority:** `/workspace/PROTOCOL.md`
 **Legacy project-policy layer:** `/workspace/OpenCode-Hi/PROTOCOL.md`
@@ -9,33 +9,34 @@
 
 ## Active Task
 
-### Milestone 5 — Semantic Progress, Recovery + Economics
+### Milestone 6 — Host/Plugin Composition Hardening
 
-Minimize unproductive probabilistic execution by making progress, recovery and resource decisions depend on structured state/evidence gain rather than raw activity or blind retries.
+Make Hi coexist with OpenCode and other plugins/skills instead of owning shared host configuration, while retaining Hi control-plane semantics behind capability adapters.
 
 ## Verified Baseline
 
-Milestone 4 is complete; see `agent-archive/2026-08-17-claim-linked-evidence-completion.md`. Evidence is claim/obligation/task/scope/attempt-linked, relevant mutation selectively invalidates proof, wrong-attempt proof cannot satisfy claims, and completion re-adjudicates verification/review claims fail-closed. Full plugin suite passed 895/895 with architecture lint 22/22.
+Milestone 5 is complete; see `agent-archive/2026-08-17-semantic-progress-recovery-economics.md`. Semantic progress is runtime-owned, repeated same-state recovery is fenced, unknown consequential outcomes block replay, usage/economics provenance is explicit, and model feedback is bounded/current-mission with exact-attempt evidence attribution. Full plugin suite passed 916/916 with architecture lint 22/22.
 
 ## Scope
 
-1. Define a structured semantic progress delta from evidence gain/invalidation, dependency resolution, meaningful task/worker/result state, diff/state identity, failure signature and validated investigation steps.
-2. Detect repeated tool/model/failure activity with no material state or evidence gain.
-3. Replace blind retry semantics with cause-aware recovery: retry, change context, change role/model, replan, ask, or stop.
-4. Require material strategy/state/evidence delta before repeating a failed recovery strategy.
-5. Enforce bounded per-mission/per-unit budgets for turns, retries, wall time, workers, context and cost where exact data exists.
-6. Separate exact host/provider usage telemetry from heuristic/estimated economics; never present estimates as exact cost.
-7. Strengthen model-feedback attribution, confidence and decay only where supported by observed mission data.
+1. Inspect `open-code-hooks.ts` / config hooks and identify every shared OpenCode config mutation Hi currently owns.
+2. Separate required Hi projection from unnecessary host ownership (`default_agent`, broad agent catalog/global names, `subagent_depth`, skill paths, permissions, MCP/provider/plugin fields).
+3. Preserve unknown-but-host-valid fields and existing plugin/user ordering; no lossy re-modeling of OpenCode config.
+4. Add stable 1.18.18 SDK/config compatibility probes plus current dev/V2 capability/transform probes without shaping Hi Core around either API.
+5. Prefer scoped transform/registration seams when available; retain a narrow V1 compatibility adapter where required.
+6. Preserve native permission inheritance and never widen another plugin/user's authority.
+7. Detect/report namespace or mutually exclusive transform/context ownership collisions rather than silently overriding them.
+8. Add representative coexistence tests using external-agent/plugin/MCP/provider/skill/config shapes.
 
 ## Acceptance Criteria
 
-- repeated identical failure/tool loops terminate, change strategy or replan within deterministic bounds;
-- wait/block/permission/provider states are not misclassified as reasoning stagnation;
-- recovery never blindly replays ambiguous consequential effects;
-- repeated retry requires new information, changed strategy, or a justified bounded exception;
-- exact usage telemetry and estimated economics are mechanically distinguishable;
-- existing supported recovery flows remain compatible or intentionally stricter with explicit tests;
-- an ablation/regression proof demonstrates reduced redundant recovery/work without lowering covered-task correctness.
+- unrelated OpenCode config survives Hi configuration byte/semantic-equivalently except for explicitly owned Hi projection leaves;
+- Hi does not unconditionally take ownership of `default_agent` or unrelated global agent/plugin/provider/MCP configuration;
+- existing user/plugin permission restrictions are preserved or narrowed, never widened;
+- external agents/plugins/skills remain usable unless an explicit proven collision exists;
+- V1 compatibility and current dev/V2 transform capability are isolated behind host adapter/probe seams;
+- config/order/collision diagnostics are deterministic and tested;
+- full relevant plugin suite, TypeScript build and architecture lint pass.
 
 ## Constraints
 
@@ -43,22 +44,20 @@ Milestone 4 is complete; see `agent-archive/2026-08-17-claim-linked-evidence-com
 - Do not reset/clean the working tree.
 - Do not touch release/publication validation artifacts.
 - No push/tag/release/npm publication.
-- Do not redesign scheduler topology, evidence ownership, skill system, team runtime or host composition in this milestone.
-- Progress/recovery/economics decisions remain runtime-owned and host-neutral; model prose is observation, not control authority.
-- Do not fabricate token/cost telemetry when the host/provider did not supply exact usage.
+- Do not redesign scheduler/evidence/progress economics in this milestone.
+- Do not copy OpenCode config schema into Hi as a competing source of truth.
+- Native-first, not native-dependent: host evolution must change adapters/probes, not Hi core semantics.
 
 ## Required Verification
 
-- semantic progress/no-progress invariant tests;
-- repeated-strategy/failure-loop adversarial tests;
-- wait/provider/permission separation regressions;
-- recovery strategy transition tests;
-- exact-vs-estimated economics/usage contract tests;
-- relevant persistence/contract tests if new durable fields are introduced;
-- full plugin test suite when the cutover seam is complete;
-- TypeScript build and architecture lint;
-- scoped diff inspection.
+- config-hook coexistence tests with unknown valid fields;
+- multi-plugin ordering/agent/permission tests;
+- skill/MCP/provider preservation tests;
+- V1/current SDK compatibility tests and dev/V2 capability probe tests;
+- collision diagnostic tests;
+- full plugin test suite after cutover;
+- TypeScript build, architecture lint and scoped diff inspection.
 
 ## Exact Next Action
 
-Inspect existing `ProgressObservation`/Mission continuation state, progress signatures, stagnation accounting, `recoveryPlan`, `TaskRecoveryCoordinator`, model feedback and any usage/cost fields. Build a narrow inventory showing which current signals are true semantic state/evidence deltas versus activity counters or heuristics. Introduce the smallest host-neutral semantic progress observation/reducer with adversarial tests before changing recovery decisions.
+Inspect current config/open-code hook implementation (`plugin/src/open-code-hooks.ts` or actual current equivalent), generated agent/skill projection, config mutation tests and OpenCode SDK 1.18.18 config types. Mechanically inventory every key Hi mutates and classify it as REQUIRED PROJECTION, NARROWING POLICY, or UNNECESSARY HOST OWNERSHIP before changing code. Reconcile the seam with current `anomalyco/opencode` dev/V2 config transform/registration source before implementation.

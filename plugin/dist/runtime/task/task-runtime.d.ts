@@ -8,6 +8,7 @@ import { type RuntimeScopedStores } from '../application/runtime-scoped-stores.j
 import type { WorkspaceRuntime } from '../workspace/runtime.js';
 import type { ChildSessionPort } from '../host/port.js';
 import type { HostCapabilityContract } from '../../contracts/host-capability.js';
+import type { HostUsageObservation } from '../../contracts/execution-usage.js';
 export interface StartTaskInput {
     objective?: string;
     role?: string;
@@ -44,6 +45,7 @@ export declare class TaskRuntime {
     private abortNativeSession;
     private captureNativeDiff;
     reconcileNativeResult(m: MissionState, workerID: string, result: WorkerResult): Promise<WorkerResult>;
+    noteUsage(m: MissionState, workerID: string, usage: HostUsageObservation): void;
     noteEffectiveModel(m: MissionState, workerID: string, observed?: {
         model?: string;
         variant?: string;

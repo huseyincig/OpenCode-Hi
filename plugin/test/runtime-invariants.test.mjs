@@ -213,4 +213,6 @@ test('Gap #recovery-runtime: level-2 escalation resumes same child session with 
   assert.deepEqual(calls[0].path,{id:'child-1'})
   assert.deepEqual(calls[0].body.model,{providerID:'p',modelID:'strong'})
   assert.equal(calls[0].body.variant,'high')
+  assert.equal(m.continuation.recovery_history?.at(-1)?.action,'model-escalation')
+  assert.equal(m.continuation.recovery_history?.at(-1)?.level,2)
 })

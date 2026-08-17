@@ -7,6 +7,7 @@ import type { NormalizedMissionIntent,MissionState,MissionTask } from '../missio
 import { ConcurrencyScheduler } from '../scheduler/concurrency.js'
 import { parallelSafety } from '../scheduler/parallel-safety.js'
 import { recoveryPlan } from '../continuation/recovery.js'
+import { recordRecoveryStrategy } from '../continuation/recovery-governor.js'
 
 export type BenchmarkScenarioId=
   |'simple-local-task'|'unknown-repository-convention'|'complex-cross-module-task'
@@ -116,4 +117,22 @@ export function runSchedulerEconomicsBenchmarks():SchedulerEconomicsResult[]{
     {id:'session-reuse',kind:'DETERMINISTIC_SCHEDULER_SIMULATION',claimBoundary:schedulerClaim,metrics:{queueWaitUnits:0,providerSaturationEvents:0,modelSaturationEvents:0,taskDurationUnits:2,retries:1,contextChars:1200,sessionReuseSavedUnits:same.action==='same-worker-resume'&&escalated.action==='model-escalation'?2:0,writeConflictEvents:0},evidence:[`level1=${same.action}`,`level2=${escalated.action}`,'reuse benefit is expressed as avoided fresh-session/handoff units, not token billing']},
     {id:'write-conflict',kind:'DETERMINISTIC_SCHEDULER_SIMULATION',claimBoundary:schedulerClaim,metrics:{queueWaitUnits:conflict.safe?0:1,providerSaturationEvents:0,modelSaturationEvents:0,taskDurationUnits:2,retries:0,contextChars:0,sessionReuseSavedUnits:0,writeConflictEvents:conflict.safe?0:1},evidence:[`conflict=${conflict.reasons.join('|')}`,`independent-safe=${independent.safe}`]}
   ]
+}
+
+
+export interface RecoveryGovernorAblationResult{
+  kind:'DETERMINISTIC_RECOVERY_ABLATION'
+  claimBoundary:string
+  baseline:{first:string;second:string;redundantActions:number}
+  governed:{first:string;second:string;redundantActions:number}
+  coveredCorrectnessPreserved:boolean
+  evidence:string[]
+}
+/** Counterfactual policy ablation: old counter-only selection vs semantic-state strategy fencing. */
+export function runRecoveryGovernorAblation():RecoveryGovernorAblationResult{
+  const base={continuation:{stagnation_count:1,generation:1,last_progress_signature:'deadbeef',recovery_history:[]},authority:{},release:{}} as unknown as MissionState
+  const baselineFirst=recoveryPlan({...base,continuation:{...base.continuation,recovery_history:[]}} as MissionState),baselineSecond=recoveryPlan({...base,continuation:{...base.continuation,recovery_history:[]}} as MissionState)
+  const governedMission=structuredClone(base),first=recoveryPlan(governedMission);recordRecoveryStrategy(governedMission,first,'started',1);const second=recoveryPlan(governedMission)
+  const fresh=structuredClone(base),freshFirst=recoveryPlan(fresh)
+  return{kind:'DETERMINISTIC_RECOVERY_ABLATION',claimBoundary:'In-process policy ablation only; measures redundant recovery-decision selection on identical semantic state, not provider latency/token billing.',baseline:{first:baselineFirst.action,second:baselineSecond.action,redundantActions:Number(baselineFirst.action===baselineSecond.action)},governed:{first:first.action,second:second.action,redundantActions:Number(first.action===second.action)},coveredCorrectnessPreserved:freshFirst.action===baselineFirst.action,evidence:[`baseline=${baselineFirst.action}->${baselineSecond.action}`,`governed=${first.action}->${second.action}`,'fresh-state first recovery action remains unchanged']}
 }

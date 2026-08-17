@@ -30,6 +30,7 @@ import { ChildExecutionCoordinator } from './child-execution-coordinator.js';
 import { TaskResultReconciler } from './task-result-reconciler.js';
 import { TaskRecoveryCoordinator } from './task-recovery-coordinator.js';
 import { taskRuntimeAdmittedModel, taskRuntimeUnitDecision, reserveTaskRuntimeDispatch, bindTaskRuntimeHost, releaseTaskRuntimeReservation, reconcileStoppedTaskRuntimeRestart } from '../scheduler/task-runtime-adapter.js';
+import { bindWorkerUsageObservation } from '../economics/usage-runtime.js';
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
 const MAX_QUEUE = 32;
 function inferObligationIds(m, role, requiredEvidence, explicit = []) {
@@ -99,6 +100,8 @@ export class TaskRuntime {
     async abortNativeSession(m, sessionID, reason, workerID, taskID) { return this.#child.abortNativeSession(m, sessionID, reason, workerID, taskID); }
     async captureNativeDiff(worker, phase) { return this.#child.captureNativeDiff(worker, phase); }
     async reconcileNativeResult(m, workerID, result) { return this.#results.reconcileNativeResult(m, workerID, result); }
+    noteUsage(m, workerID, usage) { const worker = m.execution.workers.find(w => w.id === workerID); if (worker)
+        bindWorkerUsageObservation(m, worker, usage); }
     noteEffectiveModel(m, workerID, observed) { return this.#child.noteEffectiveModel(m, workerID, observed); }
     resolveChildCallback(sessionID) { return this.#child.resolveCallbackWorker(sessionID); }
     childCallbackDisposition(m, worker) { return this.#recovery.callbackDisposition(m, worker); }

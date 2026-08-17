@@ -4,5 +4,5 @@ export interface RecoveryPlan {
     action: 'continue' | 'same-worker-resume' | 'model-escalation' | 'narrow-task' | 'alternate-plan' | 'fresh-worker' | 'user-action';
     prompt: string;
 }
-/** Bounded reasoning-stagnation recovery. Provider/tool/permission failures are classified elsewhere. */
+/** Bounded reasoning-stagnation recovery with replay prevention on unchanged semantic state. */
 export declare function recoveryPlan(m: MissionState): RecoveryPlan;

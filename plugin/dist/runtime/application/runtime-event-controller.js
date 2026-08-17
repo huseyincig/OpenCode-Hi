@@ -171,6 +171,8 @@ export class RuntimeEventController {
                 return;
             try {
                 const assistant = await host.readAssistantResult(sid, 12), modelEvidence = assistant.model, text = assistant.text;
+                if (assistant.usage)
+                    tasks.noteUsage(m, child.id, assistant.usage);
                 if (!modelEvidence && !text) {
                     appendLedger(m, 'worker.idle.pre-assistant-ignored', { task_id: child.task_id, worker_id: child.id, payload: { session_id: sid } });
                     persistence.save(store.all());

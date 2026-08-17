@@ -49,3 +49,21 @@ export interface SchedulerEconomicsResult {
     evidence: string[];
 }
 export declare function runSchedulerEconomicsBenchmarks(): SchedulerEconomicsResult[];
+export interface RecoveryGovernorAblationResult {
+    kind: 'DETERMINISTIC_RECOVERY_ABLATION';
+    claimBoundary: string;
+    baseline: {
+        first: string;
+        second: string;
+        redundantActions: number;
+    };
+    governed: {
+        first: string;
+        second: string;
+        redundantActions: number;
+    };
+    coveredCorrectnessPreserved: boolean;
+    evidence: string[];
+}
+/** Counterfactual policy ablation: old counter-only selection vs semantic-state strategy fencing. */
+export declare function runRecoveryGovernorAblation(): RecoveryGovernorAblationResult;

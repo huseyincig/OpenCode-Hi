@@ -10,6 +10,8 @@ import { SEMANTIC_CAPABILITIES, SEMANTIC_VERIFICATION_KINDS } from '../intent/se
 import { isProcessContract } from '../../contracts/process.js'
 import { isIsolationDecisionContract,isWorkspaceLeaseContract } from '../../contracts/workspace.js'
 import { isSchedulerLifecycleState } from '../../contracts/orchestration-core.js'
+import { isProgressDelta,isSemanticProgressSnapshot } from '../progress/semantic-progress.js'
+import { isRecoveryStrategyRecord } from '../continuation/recovery-governor.js'
 
 function isRecord(value:unknown):value is Record<string,unknown>{return Boolean(value)&&typeof value==='object'&&!Array.isArray(value)}
 function stringArray(value:unknown):value is string[]{return Array.isArray(value)&&value.every(item=>typeof item==='string')}
@@ -151,6 +153,9 @@ export function validateContinuationState(continuation:unknown):boolean{
   if(typeof continuation.last_progress_signature!=='string'||typeof continuation.stagnation_count!=='number'||typeof continuation.user_interrupted!=='boolean'||typeof continuation.resume_count!=='number')return false
   for(const field of ['suppress_until','continuation_lock_until','last_continuation_at','continuation_failure_count','last_continuation_failure_at','interrupted_at','resumed_at','last_user_message_at'] as const)if(continuation[field]!==undefined&&typeof continuation[field]!=='number')return false
   for(const field of ['continuation_reason','last_action_id','active_action_id','interrupted_reason'] as const)if(continuation[field]!==undefined&&typeof continuation[field]!=='string')return false
+  if(continuation.semantic_progress_snapshot!==undefined&&!isSemanticProgressSnapshot(continuation.semantic_progress_snapshot))return false
+  if(continuation.last_progress_delta!==undefined&&!isProgressDelta(continuation.last_progress_delta))return false
+  if(continuation.recovery_history!==undefined&&(!Array.isArray(continuation.recovery_history)||continuation.recovery_history.length>24||!continuation.recovery_history.every(isRecoveryStrategyRecord)))return false
   return continuation.pending_nudge===undefined||isRecord(continuation.pending_nudge)
 }
 

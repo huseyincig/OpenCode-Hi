@@ -39,6 +39,8 @@ import type { ChildWorkspaceBinding } from './child-execution-coordinator.js'
 import type { ChildSessionPort } from '../host/port.js'
 import type { HostCapabilityContract } from '../../contracts/host-capability.js'
 import { taskRuntimeAdmittedModel,taskRuntimeUnitDecision,reserveTaskRuntimeDispatch,bindTaskRuntimeHost,releaseTaskRuntimeReservation,reconcileStoppedTaskRuntimeRestart } from '../scheduler/task-runtime-adapter.js'
+import { bindWorkerUsageObservation } from '../economics/usage-runtime.js'
+import type { HostUsageObservation } from '../../contracts/execution-usage.js'
 
 export interface StartTaskInput{objective?:string;role?:string;category?:Category;scope?:string[];dependencies?:string[];requiredEvidence?:string[];obligationIds?:string[];model?:string;modelVariant?:string;relevantContext?:string[];contextArtifactIds?:string[];constraints?:string[];forkFromSession?:string;isolationRequired?:boolean;isolationReason?:string}
 const CATEGORIES=new Set(['quick','standard','deep','visual','critical'])
@@ -67,6 +69,7 @@ export class TaskRuntime{
   private async abortNativeSession(m:MissionState,sessionID:string,reason:string,workerID?:string,taskID?:string):Promise<boolean>{return this.#child.abortNativeSession(m,sessionID,reason,workerID,taskID)}
   private async captureNativeDiff(worker:WorkerState,phase:'baseline'|'final'):Promise<Record<string,string>|undefined>{return this.#child.captureNativeDiff(worker,phase)}
   async reconcileNativeResult(m:MissionState,workerID:string,result:WorkerResult):Promise<WorkerResult>{return this.#results.reconcileNativeResult(m,workerID,result)}
+  noteUsage(m:MissionState,workerID:string,usage:HostUsageObservation):void{const worker=m.execution.workers.find(w=>w.id===workerID);if(worker)bindWorkerUsageObservation(m,worker,usage)}
   noteEffectiveModel(m:MissionState,workerID:string,observed?:{model?:string;variant?:string;source?:string}):{ok:boolean;expected?:string;observed?:string;reason:string}{return this.#child.noteEffectiveModel(m,workerID,observed)}
   resolveChildCallback(sessionID:string):WorkerState|undefined{return this.#child.resolveCallbackWorker(sessionID)}
   childCallbackDisposition(m:MissionState,worker:WorkerState){return this.#recovery.callbackDisposition(m,worker)}

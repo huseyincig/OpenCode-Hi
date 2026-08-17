@@ -11,7 +11,8 @@ function mission(){const store=new MissionStore(process.cwd());return startAsses
 function add(m,{id,model='p/a',role='coder',category='standard',status='completed',started=100,completed=200,retry=0,verification='passed'}){
   const taskId=`t-${id}`
   m.execution.tasks.push({id:taskId,mission_id:m.identity.mission_id,objective:id,status:status==='completed'?'completed':'failed',role,category,scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],external_action_requirements:[],worker_id:id,created_at:started,updated_at:completed,result:{status:status==='completed'?'DONE':'FAILED',summary:id,changed_files:[],evidence:verification==='not-observed'?[]:[{kind:'targeted-tests',summary:'proof',pass:verification==='passed',outcome:verification}],open_issues:[],needs_context:[]}})
-  m.execution.workers.push({id,task_id:taskId,role,category,parent_session_id:m.identity.session_id,parent_mission_id:m.identity.mission_id,model,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:`f-${id}`,status,attempt:1,started_at:started,updated_at:completed,completed_at:completed,...(retry?{fallback_history:Array.from({length:retry},(_,i)=>({from:model,to:'p/b',reason:`provider failure ${i}`,phase:'runtime',at:completed+i}))}:{})})
+  m.execution.workers.push({id,task_id:taskId,role,category,parent_session_id:m.identity.session_id,parent_mission_id:m.identity.mission_id,model,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:`f-${id}`,status,attempt:1,generation_at_spawn:m.continuation.generation,started_at:started,updated_at:completed,completed_at:completed,...(retry?{fallback_history:Array.from({length:retry},(_,i)=>({from:model,to:'p/b',reason:`provider failure ${i}`,phase:'runtime',at:completed+i}))}:{})})
+  if(verification!=='not-observed')m.execution.evidence.items.push({id:`ev-${id}`,kind:'targeted-tests',summary:'canonical proof',scope:[],source:`worker:${id}`,source_session_id:`s-${id}`,source_state_hash:'a'.repeat(64),task_id:taskId,obligation_ids:[],producer_attempt:{worker_id:id,execution_unit_id:`eu:${taskId}`,attempt_id:`eu:${taskId}:g${m.continuation.generation}:a1`,run_id:`worker:${id}:g${m.continuation.generation}:a1`,ordinal:1,generation:m.continuation.generation},observed_at:completed,pass:verification==='passed',outcome:verification})
 }
 
 test('O3 feedback is role/category scoped and bounded to the newest 12 terminal workers',()=>{
@@ -33,10 +34,39 @@ test('O3 sparse single success is insufficient confidence and does not manufactu
   assert.equal(f.confidence['p/b'],'insufficient');assert.equal(b.success_credit,0);assert.equal(b.verification_adjustment,0);assert.equal(b.feedback_confidence,'insufficient')
 })
 
-test('O3 repeated failure plus retry reaches low confidence and may steer only the current bounded selection',()=>{
+test('O3 one failed sample plus retry stays insufficient and cannot manufacture routing confidence',()=>{
   const models=[{id:'p/cheap',provider:'p',quality:5,cost:.1,expectedTurns:3,contextOverhead:1,tags:['balanced']},{id:'p/robust',provider:'p',quality:5,cost:1,expectedTurns:3,contextOverhead:1,tags:['balanced']}]
   const m=mission();add(m,{id:'bad',model:'p/cheap',status:'failed',verification:'failed',retry:1})
   const f=deriveMissionModelFeedback(m,'coder','standard'),r=resolveModel('standard',models,cfg,undefined,'coder',undefined,f),cheap=r.scores.find(x=>x.model==='p/cheap')
-  assert.equal(f.confidence['p/cheap'],'low');assert.equal(r.primary,'p/robust');assert.ok(cheap.failure_penalty>0);assert.ok(cheap.verification_adjustment<0);assert.equal(cheap.observed_latency_ms,100)
+  assert.equal(f.samples['p/cheap'],1);assert.equal(f.retries['p/cheap'],1);assert.equal(f.confidence['p/cheap'],'insufficient');assert.equal(cheap.failure_penalty,0);assert.equal(cheap.verification_adjustment,0);assert.equal(cheap.observed_latency_ms,100)
   assert.ok(r.reason.includes('bounded-window-model-feedback-aware'))
+})
+
+test('O3 two independent failed attempts reach low confidence and may steer current bounded selection',()=>{
+  const models=[{id:'p/cheap',provider:'p',quality:5,cost:.1,expectedTurns:3,contextOverhead:1,tags:['balanced']},{id:'p/robust',provider:'p',quality:5,cost:1,expectedTurns:3,contextOverhead:1,tags:['balanced']}]
+  const m=mission();add(m,{id:'bad1',model:'p/cheap',status:'failed',verification:'failed'});add(m,{id:'bad2',model:'p/cheap',status:'failed',verification:'failed',completed:300})
+  const f=deriveMissionModelFeedback(m,'coder','standard'),r=resolveModel('standard',models,cfg,undefined,'coder',undefined,f),cheap=r.scores.find(x=>x.model==='p/cheap')
+  assert.equal(f.samples['p/cheap'],2);assert.equal(f.confidence['p/cheap'],'low');assert.equal(r.primary,'p/robust');assert.ok(cheap.failure_penalty>0);assert.ok(cheap.verification_adjustment<0)
+})
+
+
+test('O3 fallback failure is attributed to the failed from-model while final success remains with the model that completed',()=>{
+  const m=mission()
+  add(m,{id:'final',model:'p/robust',verification:'passed'})
+  m.execution.workers[0].fallback_history=[{from:'p/cheap',to:'p/robust',reason:'provider failure',phase:'runtime',at:150}]
+  const f=deriveMissionModelFeedback(m,'coder','standard')
+  assert.equal(f.successes['p/robust'],1)
+  assert.equal(f.failures['p/cheap'],1)
+  assert.equal(f.retries['p/cheap'],1)
+  assert.equal(f.samples['p/cheap'],1)
+  assert.equal(f.confidence['p/cheap'],'insufficient','one failed attempt is still one sample; retry count must not manufacture confidence')
+  assert.equal(f.verification_passes['p/robust'],1)
+})
+
+test('O3 invalidated or wrong-attempt evidence does not become model verification credit',()=>{
+  const m=mission();add(m,{id:'attempt',model:'p/a',verification:'passed'})
+  const item=m.execution.evidence.items.at(-1);item.producer_attempt={...item.producer_attempt,attempt_id:`eu:${item.task_id}:g${m.continuation.generation}:a2`,run_id:`worker:attempt:g${m.continuation.generation}:a2`,ordinal:2}
+  const f=deriveMissionModelFeedback(m,'coder','standard')
+  assert.equal(f.verification_passes['p/a']??0,0)
+  assert.equal(missionModelFeedbackObservations(m,'coder','standard')[0].verification_outcome,'not-observed')
 })

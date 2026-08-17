@@ -1,3 +1,4 @@
+import type { HostUsageObservation } from '../../contracts/execution-usage.js';
 import type { AvailableModel } from '../routing/model-resolver.js';
 import type { HostCapabilityContract } from '../../contracts/host-capability.js';
 export type HostLogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -23,6 +24,7 @@ export interface HostAssistantResult {
         variant?: string;
         message_id?: string;
     };
+    usage?: HostUsageObservation;
 }
 export interface HostCapabilityView {
     childSessions: boolean;

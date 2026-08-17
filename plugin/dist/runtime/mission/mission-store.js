@@ -12,6 +12,7 @@ import { architectureMethodologySignals } from '../methodology/signals.js';
 import { resolveHumanDecision } from '../human-decision/runtime.js';
 import { createSchedulerLifecycleState } from '../../contracts/orchestration-core.js';
 import { reduceSchedulerLifecycle } from '../scheduler/lifecycle.js';
+import { semanticProgressDelta, semanticProgressMade, semanticProgressSnapshot } from '../progress/semantic-progress.js';
 function obligation(id, kind, summary, requiredEvidence = []) { return { id, kind, summary, status: 'open', requiredEvidence }; }
 export class MissionStore {
     #bySession = new Map();
@@ -35,7 +36,7 @@ export class MissionStore {
         };
         syncMissionGates(mission);
         appendLedger(mission, 'mission.provisional', { payload: { semantic_revision: 1, technical_targets: intent.likelyTargets ?? [], repo: { name: this.#repo.name, ecosystems: this.#repo.ecosystems, markers: this.#repo.markers, native: this.#repo.native } } });
-        mission.continuation.last_progress_signature = this.signature(mission);
+        this.syncProgressBaseline(mission);
         this.#bySession.set(sessionID, mission);
         return mission;
     }
@@ -57,7 +58,7 @@ export class MissionStore {
             appendLedger(m, 'semantic.non-material', { payload: { revision: m.identity.semantic_assessment.revision, source: m.identity.semantic_assessment.source } });
             syncMissionGates(m);
             m.identity.updated_at = now;
-            m.continuation.last_progress_signature = this.signature(m);
+            this.syncProgressBaseline(m);
             return m;
         }
         m.identity.intent = assessedIntent(m.identity.intent, assessment);
@@ -93,11 +94,11 @@ export class MissionStore {
         syncMissionGates(m);
         appendLedger(m, 'semantic.assessed', { payload: { revision: m.identity.semantic_assessment.revision, source: m.identity.semantic_assessment.source, taskKind: m.identity.intent.taskKind, scope: m.identity.intent.scope, risk: m.identity.intent.risk, ambiguity: m.identity.intent.ambiguity, dependencyClass: m.identity.intent.dependencyClass, capabilities: m.identity.intent.requiredCapabilities, intent_signals: assessment.intent_signals, suppressed_intent_signals: assessment.suppressed_intent_signals, technical_targets: m.identity.intent.likelyTargets ?? [] } });
         m.identity.updated_at = now;
-        m.continuation.last_progress_signature = this.signature(m);
+        this.syncProgressBaseline(m);
         return m;
     }
     bindObservedPrimary(sessionID, primary) { const m = this.get(sessionID); if (!m || m.execution.primary_mode === primary)
-        return; const previous = m.execution.primary_mode; m.execution.primary_mode = primary; appendLedger(m, 'primary.agent-observed', { payload: { previous, observed: primary, source: 'host-chat-message' } }); m.continuation.last_progress_signature = this.signature(m); }
+        return; const previous = m.execution.primary_mode; m.execution.primary_mode = primary; appendLedger(m, 'primary.agent-observed', { payload: { previous, observed: primary, source: 'host-chat-message' } }); this.syncProgressBaseline(m); }
     get(sessionID) { return this.#bySession.get(sessionID); }
     beginFollowupSemanticAssessment(sessionID, userText) {
         const m = this.get(sessionID);
@@ -129,7 +130,7 @@ export class MissionStore {
         appendLedger(m, 'semantic.followup-pending', { payload: { revision: m.identity.semantic_assessment.revision, generation: m.continuation.generation, preview: text.slice(0, 180) } });
         syncMissionGates(m);
         m.identity.updated_at = Date.now();
-        m.continuation.last_progress_signature = this.signature(m);
+        this.syncProgressBaseline(m);
         return m;
     }
     applyFollowupSemanticAssessment(sessionID, assessment) {
@@ -147,7 +148,7 @@ export class MissionStore {
             appendLedger(m, 'semantic.followup-non-material', { payload: { revision: m.identity.semantic_assessment.revision } });
             syncMissionGates(m);
             m.identity.updated_at = now;
-            m.continuation.last_progress_signature = this.signature(m);
+            this.syncProgressBaseline(m);
             return m;
         }
         if (assessment.message_kind === 'stop') {
@@ -158,7 +159,7 @@ export class MissionStore {
             appendLedger(m, 'mission.stopped', { payload: { reason: 'semantic-user-stop', generation: m.continuation.generation } });
             syncMissionGates(m);
             m.identity.updated_at = now;
-            m.continuation.last_progress_signature = this.signature(m);
+            this.syncProgressBaseline(m);
             return m;
         }
         if (assessment.message_kind === 'resume') {
@@ -169,7 +170,7 @@ export class MissionStore {
             appendLedger(m, 'mission.resumed', { payload: { reason: 'semantic-user-resume', generation: m.continuation.generation } });
             syncMissionGates(m);
             m.identity.updated_at = now;
-            m.continuation.last_progress_signature = this.signature(m);
+            this.syncProgressBaseline(m);
             return m;
         }
         const kind = assessment.message_kind;
@@ -228,7 +229,7 @@ export class MissionStore {
         appendLedger(m, 'semantic.followup-assessed', { payload: { revision: m.identity.semantic_assessment.revision, message_kind: kind, taskKind: m.identity.intent.taskKind, scope: m.identity.intent.scope, risk: m.identity.intent.risk, ambiguity: m.identity.intent.ambiguity, dependencyClass: m.identity.intent.dependencyClass, intent_signals: assessment.intent_signals, suppressed_intent_signals: assessment.suppressed_intent_signals } });
         syncMissionGates(m);
         m.identity.updated_at = now;
-        m.continuation.last_progress_signature = this.signature(m);
+        this.syncProgressBaseline(m);
         return m;
     }
     restore(missions, uncleanShutdown = false) { const sessionIDs = new Set(), missionIDs = new Set(); for (const candidate of missions) {
@@ -323,7 +324,7 @@ export class MissionStore {
         }
         syncMissionGates(m);
         m.identity.updated_at = Date.now();
-        m.continuation.last_progress_signature = this.signature(m);
+        this.syncProgressBaseline(m);
         this.#bySession.set(m.identity.session_id, m);
         appendLedger(m, 'mission.restored', { payload: { status: m.identity.status, recovery: uncleanShutdown ? 'unclean-shutdown' : 'normal-restart', generation: m.continuation.generation, team_runtime: 'ephemeral-reset-to-single-if-needed' } });
         if (uncleanShutdown)
@@ -345,14 +346,12 @@ export class MissionStore {
         return; if (m.authority.human_decision?.status === 'OPEN')
         resolveHumanDecision(m, 'mission-completed'); m.identity.status = 'completed'; syncMissionGates(m); appendLedger(m, 'mission.completed'); }
     all() { return [...this.#bySession.values()]; }
-    updateProgress(m, countStagnation = false) { syncMissionGates(m); const next = this.signature(m), progressed = next !== m.continuation.last_progress_signature; if (progressed)
+    syncProgressBaseline(m) { const snapshot = semanticProgressSnapshot(m); m.continuation.semantic_progress_snapshot = snapshot; m.continuation.last_progress_signature = snapshot.state_hash; m.continuation.last_progress_delta = semanticProgressDelta(undefined, snapshot); }
+    updateProgress(m, countStagnation = false) { syncMissionGates(m); const previous = m.continuation.semantic_progress_snapshot, next = semanticProgressSnapshot(m), delta = semanticProgressDelta(previous, next), progressed = previous ? semanticProgressMade(delta) : next.state_hash !== m.continuation.last_progress_signature; if (progressed)
         m.continuation.stagnation_count = 0;
     else if (countStagnation)
-        m.continuation.stagnation_count += 1; m.continuation.last_progress_signature = next; m.identity.updated_at = Date.now(); return progressed; }
+        m.continuation.stagnation_count += 1; m.continuation.semantic_progress_snapshot = next; m.continuation.last_progress_delta = delta; m.continuation.last_progress_signature = next.state_hash; m.identity.updated_at = Date.now(); return progressed; }
     closeObligation(m, id) { const o = m.execution.obligations.find(x => x.id === id); if (!o)
         return; o.status = 'closed'; o.closedAt = Date.now(); syncMissionGates(m); appendLedger(m, 'obligation.closed', { payload: { obligation: id } }); }
-    signature(m) { const data = JSON.stringify({ obligations: m.execution.obligations.map(o => [o.id, o.status]), tasks: m.execution.tasks.map(t => [t.id, t.status, t.result?.status, t.result?.open_issues, t.result?.needs_context]), workers: m.execution.workers.map(w => [w.id, w.status, w.model, w.model_variant, w.runtime_recovery_attempt]), processes: m.execution.processes.map(p => [p.process_id, p.status, p.cleanup_state, p.pid]), isolation: m.execution.isolation_decisions.map(d => [d.required, d.strategy, d.requested_by, d.scope]), workspaces: m.execution.workspace_leases.map(w => [w.lease_id, w.status, w.cleanup_state, w.workspace_path]), evidence: m.execution.evidence.items.map(e => [e.kind, e.outcome, e.invalidated_at, e.task_id, e.obligation_ids]), files: m.vcs.changed_files, blockers: m.execution.blockers, constraints: m.execution.constraints, tasks_constraints: m.execution.tasks.map(t => [t.id, t.constraints]), gates: m.execution.gates.map(g => [g.id, g.status, g.reason]), temporary: m.vcs.temporary_mutations.map(x => [x.id, x.status]), human_decision: m.authority.human_decision ? [m.authority.human_decision.decision_id, m.authority.human_decision.status, m.authority.human_decision.reason_code, m.authority.human_decision.resolved_at] : undefined, scheduler: m.execution.scheduler?.reservations.map(r => [r.reservationId, r.phase, r.attempt.attemptId, r.hostExecutionId]) }); let h = 2166136261; for (let i = 0; i < data.length; i++) {
-        h ^= data.charCodeAt(i);
-        h = Math.imul(h, 16777619);
-    } return (h >>> 0).toString(16).padStart(8, '0'); }
+    signature(m) { return semanticProgressSnapshot(m).state_hash; }
 }

@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { runDeterministicBenchmarks,runSchedulerEconomicsBenchmarks } from '../dist/runtime/telemetry/benchmarks.js'
+import { runDeterministicBenchmarks,runSchedulerEconomicsBenchmarks,runRecoveryGovernorAblation } from '../dist/runtime/telemetry/benchmarks.js'
 
 test('0.1.0 benchmark set covers every required representative scenario without pretending to be host telemetry',()=>{
   const rows=runDeterministicBenchmarks();assert.equal(rows.length,9)
@@ -35,4 +35,16 @@ test('O1 scheduler economics baseline measures every G9 dimension without claimi
   assert.equal(by['session-reuse'].metrics.sessionReuseSavedUnits,2)
   assert.equal(by['write-conflict'].metrics.writeConflictEvents,1)
   assert.equal(by['write-conflict'].metrics.queueWaitUnits,1)
+})
+
+
+test('M5 recovery ablation removes redundant same-state strategy replay without changing the fresh-state first action',()=>{
+  const row=runRecoveryGovernorAblation()
+  assert.equal(row.kind,'DETERMINISTIC_RECOVERY_ABLATION')
+  assert.equal(row.baseline.redundantActions,1)
+  assert.equal(row.governed.redundantActions,0)
+  assert.equal(row.governed.first,'same-worker-resume')
+  assert.notEqual(row.governed.second,row.governed.first)
+  assert.equal(row.coveredCorrectnessPreserved,true)
+  assert.match(row.claimBoundary,/not provider latency\/token billing/i)
 })

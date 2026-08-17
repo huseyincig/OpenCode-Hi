@@ -11,6 +11,7 @@ import { appendLedger } from '../ledger/ledger.js';
 import { runtimeSignal } from '../events/event-sink.js';
 import { syncMissionGates } from '../gates/gates.js';
 import { taskRuntimeAdmittedModel, reserveTaskRuntimeDispatch, bindTaskRuntimeHost, beginTaskRuntimeSettlement, releaseTaskRuntimeReservation } from '../scheduler/task-runtime-adapter.js';
+import { recordRecoveryStrategy } from '../continuation/recovery-governor.js';
 function providerOf(model) { return model && model !== 'host-default' && model.includes('/') ? model.slice(0, model.indexOf('/')) : undefined; }
 export class TaskRecoveryCoordinator {
     scheduler;
@@ -113,6 +114,7 @@ export class TaskRecoveryCoordinator {
             beginWorkerAttempt(task, worker);
             this.child.recordModelProjection(worker, model, variant);
             await this.child.sendProviderPrompt(worker.session_id, clipText(`${instruction}\nReturn the normal structured WorkerResult.`, DEFAULT_CONTEXT_BUDGET.max_handoff_chars), worker.role, model === 'host-default' ? undefined : model, variant, promptToolOverrides(task.execution_profile?.tools ?? []));
+            recordRecoveryStrategy(m, { level: level, action: action }, 'started');
             appendLedger(m, 'worker.stagnation-recovery', { task_id: task.id, worker_id: worker.id, payload: { level, action, from: previous, to: model, variant, generation: m.continuation.generation } });
             void this.events?.(runtimeSignal('worker.recovered', m.identity.mission_id, { task_id: task.id, worker_id: worker.id, payload: { level, action, from: previous, to: model, variant } }));
             return true;

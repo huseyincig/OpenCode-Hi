@@ -1,4 +1,5 @@
 import { createOpencodeClient as createOpenCodeV2Client } from '@opencode-ai/sdk/v2/client';
+import { EMPTY_TOKEN_USAGE, addTokenUsage } from '../contracts/execution-usage.js';
 export function dataOf(value) { return (value && typeof value === 'object' && 'data' in value) ? value.data : value; }
 export async function createChildSession(client, parentID, title, agent, model, variant, workspaceID, endpoint = {}) {
     const identity = modelIdentity(model);
@@ -127,6 +128,39 @@ export function lastAssistantModel(messages) {
         const canonical = provider && modelID ? `${String(provider)}/${String(modelID)}` : (typeof modelID === 'string' && modelID.includes('/') ? modelID : undefined);
         if (canonical)
             return { model: canonical, variant: info?.variant ?? info?.model?.variant, message_id: info?.id ?? msg?.id };
+    }
+    return undefined;
+}
+function usageTokens(value) {
+    const tokens = value?.tokens, cache = tokens?.cache;
+    const values = [tokens?.input, tokens?.output, tokens?.reasoning, cache?.read, cache?.write];
+    if (values.some(v => typeof v !== 'number' || !Number.isFinite(v) || v < 0))
+        return undefined;
+    return { input: tokens.input, output: tokens.output, reasoning: tokens.reasoning, cache_read: cache.read, cache_write: cache.write };
+}
+export function lastAssistantUsage(messages) {
+    for (let i = messages.length - 1; i >= 0; i--) {
+        const msg = messages[i], info = msg?.info ?? msg?.message ?? msg;
+        if (info?.role && info.role !== 'assistant')
+            continue;
+        const parts = msg?.parts ?? info?.parts ?? [], steps = parts.filter((p) => p?.type === 'step-finish');
+        const provider = info?.providerID ?? info?.providerId ?? info?.model?.providerID ?? info?.model?.providerId ?? info?.provider, modelID = info?.modelID ?? info?.modelId ?? info?.model?.modelID ?? info?.model?.modelId ?? info?.model?.id ?? (typeof info?.model === 'string' ? info.model : undefined), model_identity = provider && modelID ? `${String(provider)}/${String(modelID)}` : (typeof modelID === 'string' && modelID.includes('/') ? modelID : undefined), message_id = info?.id ?? msg?.id, observed_at = Number(info?.time?.completed ?? info?.time?.created);
+        if (steps.length) {
+            let tokens = { ...EMPTY_TOKEN_USAGE }, cost = 0;
+            for (const step of steps) {
+                const parsed = usageTokens(step);
+                if (!parsed || typeof step.cost !== 'number' || !Number.isFinite(step.cost) || step.cost < 0)
+                    return undefined;
+                tokens = addTokenUsage(tokens, parsed);
+                cost += step.cost;
+            }
+            return { ...(message_id ? { message_id: String(message_id) } : {}), ...(model_identity ? { model_identity } : {}), ...(Number.isFinite(observed_at) && observed_at >= 0 ? { observed_at } : {}), token_source: 'opencode-step-finish', coverage: 'assistant-step-total', confidence: 'exact', step_count: steps.length, tokens, monetary: { usd: cost, source: 'opencode-calculated', confidence: 'derived' } };
+        }
+        const tokens = usageTokens(info);
+        if (!tokens)
+            return undefined;
+        const cost = typeof info?.cost === 'number' && Number.isFinite(info.cost) && info.cost >= 0 ? info.cost : undefined;
+        return { ...(message_id ? { message_id: String(message_id) } : {}), ...(model_identity ? { model_identity } : {}), ...(Number.isFinite(observed_at) && observed_at >= 0 ? { observed_at } : {}), token_source: 'opencode-assistant-message', coverage: 'assistant-message-reported', confidence: 'exact', step_count: 1, tokens, ...(cost === undefined ? {} : { monetary: { usd: cost, source: 'opencode-calculated', confidence: 'derived' } }) };
     }
     return undefined;
 }

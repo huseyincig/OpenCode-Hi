@@ -3,6 +3,7 @@ import { recoveryPlan } from './recovery.js';
 import { evaluatePreconditions } from '../readiness/preconditions.js';
 import { latestBlockingVerificationEvidence } from '../verification/policy.js';
 import { setRuntimeNudge } from '../nudge/runtime-nudge.js';
+import { ambiguousConsequentialEffect } from './recovery-governor.js';
 export function evaluateIdle(m, now = Date.now()) {
     if (!m)
         return { decision: 'NOTHING', reason: 'no-active-mission', reason_code: 'no-active-mission' };
@@ -62,6 +63,11 @@ export function evaluateIdle(m, now = Date.now()) {
     const completion = evaluateCompletion(m);
     if (completion.complete)
         return { decision: 'STOP', reason: 'complete', reason_code: 'complete' };
+    const uncertainEffect = ambiguousConsequentialEffect(m);
+    if (uncertainEffect) {
+        m.continuation.stagnation_count = 0;
+        return { decision: 'USER_ACTION_REQUIRED', reason: uncertainEffect, reason_code: 'recovery-effect-uncertain' };
+    }
     if (completion.next === 'USER_ACTION_REQUIRED')
         return { decision: 'USER_ACTION_REQUIRED', reason: 'waiting-user-authority', reason_code: 'waiting-user-authority' };
     if (completion.next === 'VERIFY') {

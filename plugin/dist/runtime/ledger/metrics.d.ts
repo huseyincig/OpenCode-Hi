@@ -20,6 +20,19 @@ export interface MissionMetrics {
     continuation_recovery_success: number;
     evidence_items: number;
     failed_workers: number;
+    usage: {
+        complete_observations: number;
+        partial_observations: number;
+        exact_complete_tokens: {
+            input: number;
+            output: number;
+            reasoning: number;
+            cache_read: number;
+            cache_write: number;
+        };
+        derived_opencode_cost_usd: number;
+        monetary_basis: 'opencode-calculated-derived';
+    };
 }
 export declare function missionMetrics(m: MissionState): MissionMetrics;
 export declare function aggregateMissionMetrics(missions: MissionState[]): Record<string, unknown>;

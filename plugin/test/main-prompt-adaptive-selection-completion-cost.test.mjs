@@ -20,6 +20,7 @@ test('Smart Select optimizes expected completion cost, not raw per-call model co
   assert.equal(r.primary,'p/pricier-fast')
   const cheap=r.scores.find(x=>x.model==='p/cheap-slow'),fast=r.scores.find(x=>x.model==='p/pricier-fast')
   assert.ok(fast.expected_completion_cost<cheap.expected_completion_cost)
+  assert.equal(fast.expected_completion_cost_basis,'heuristic');assert.equal(cheap.expected_completion_cost_basis,'heuristic')
   assert.ok(r.reason.includes('expected-completion-cost-aware'))
 })
 
@@ -48,8 +49,12 @@ test('TaskRuntime feeds current mission worker failure history into the next Sma
   ]
   const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:3,providers:{p:3},models:{}})),process.cwd(),process.cwd(),()=>cfg,()=>models,()=>({}))
   const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'s','implement a standard change',{task_kind:'implementation',required_capabilities:['implementation']})
-  m.execution.workers.push({id:'old',task_id:'old-task',role:'coder',category:'standard',parent_session_id:'s',parent_mission_id:m.identity.mission_id,model:'p/cheap',fallbacks:['p/robust'],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'old-f',status:'failed',last_runtime_failure_kind:'provider-transport',fallback_history:[{from:'p/cheap',to:'p/robust',reason:'runtime fallback after provider transport; failure=provider-transport',phase:'runtime',at:Date.now()}]})
-  m.execution.tasks.push({id:'old-task',objective:'old attempt',status:'failed',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],worker_id:'old',created_at:Date.now(),updated_at:Date.now()})
+  const now=Date.now()
+  for(const [i,id] of ['old-a','old-b'].entries()){
+    const taskId=`${id}-task`,at=now-i
+    m.execution.workers.push({id,task_id:taskId,role:'coder',category:'standard',parent_session_id:'s',parent_mission_id:m.identity.mission_id,model:'p/cheap',fallbacks:['p/robust'],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:`${id}-f`,status:'failed',attempt:1,generation_at_spawn:m.continuation.generation,updated_at:at,completed_at:at,last_runtime_failure_kind:'provider-transport'})
+    m.execution.tasks.push({id:taskId,mission_id:m.identity.mission_id,objective:'old failed attempt',status:'failed',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],external_action_requirements:[],gate_ids:[],worker_id:id,created_at:at,updated_at:at})
+  }
   const out=await runtime.start(m,{objective:'continue implementation on another bounded task',role:'coder',category:'standard',scope:['src/new.ts']})
   assert.equal(out.model,'p/robust')
   assert.ok(created[0].body.model.id==='robust')

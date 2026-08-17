@@ -22,6 +22,7 @@ export interface ModelResolution {
         model: string;
         score: number;
         expected_completion_cost: number;
+        expected_completion_cost_basis: 'heuristic';
         failure_penalty: number;
         success_credit: number;
         verification_adjustment: number;

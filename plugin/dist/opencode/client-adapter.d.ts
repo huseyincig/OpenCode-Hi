@@ -1,4 +1,5 @@
 import type { OpenCodeClient } from './types.js';
+import { type HostUsageObservation } from '../contracts/execution-usage.js';
 export declare function dataOf<T = any>(value: any): T;
 export declare function createChildSession(client: OpenCodeClient, parentID: string, title: string, agent?: string, model?: string, variant?: string, workspaceID?: string, endpoint?: OpenCodeLifecycleEndpoint): Promise<any>;
 export declare function modelIdentity(model?: string): {
@@ -22,3 +23,4 @@ export interface AssistantModelEvidence {
     message_id?: string;
 }
 export declare function lastAssistantModel(messages: any[]): AssistantModelEvidence | undefined;
+export declare function lastAssistantUsage(messages: any[]): HostUsageObservation | undefined;

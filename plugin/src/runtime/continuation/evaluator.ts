@@ -4,8 +4,9 @@ import { recoveryPlan } from './recovery.js'
 import { evaluatePreconditions } from '../readiness/preconditions.js'
 import { latestBlockingVerificationEvidence } from '../verification/policy.js'
 import { setRuntimeNudge } from '../nudge/runtime-nudge.js'
+import { ambiguousConsequentialEffect } from './recovery-governor.js'
 export type RuntimeDecision='NOTHING'|'WAIT'|'CONTINUE'|'RECONCILE'|'VERIFY'|'RECOVER'|'USER_ACTION_REQUIRED'|'STOP'
-export type IdleReasonCode='no-active-mission'|'user-stop'|'mission-inactive'|'continuation-lock'|'continuation-reentrant'|'suppressed'|'waiting-permission'|'waiting-worker'|'waiting-process'|'process-orphan-blocked'|'worker-result-unreconciled'|'contract-ambiguity-repo-first'|'precondition-blocked'|'complete'|'waiting-user-authority'|'verification-pending'|'verification-failed'|'verification-environment-issue'|'provider-failure-blocked'|'permission-failure-blocked'|'continuation-runtime-retry'|'continuation-runtime-exhausted'|'execution-budget-exhausted'|'stagnation-recovery'|'open-obligation'
+export type IdleReasonCode='no-active-mission'|'user-stop'|'mission-inactive'|'continuation-lock'|'continuation-reentrant'|'suppressed'|'waiting-permission'|'waiting-worker'|'waiting-process'|'process-orphan-blocked'|'worker-result-unreconciled'|'contract-ambiguity-repo-first'|'precondition-blocked'|'complete'|'waiting-user-authority'|'verification-pending'|'verification-failed'|'verification-environment-issue'|'provider-failure-blocked'|'permission-failure-blocked'|'continuation-runtime-retry'|'continuation-runtime-exhausted'|'execution-budget-exhausted'|'recovery-effect-uncertain'|'stagnation-recovery'|'open-obligation'
 export interface DecisionResult{decision:RuntimeDecision;reason:string;reason_code:IdleReasonCode;prompt?:string}
 export function evaluateIdle(m:MissionState|undefined,now=Date.now()):DecisionResult{
   if(!m)return{decision:'NOTHING',reason:'no-active-mission',reason_code:'no-active-mission'}
@@ -26,6 +27,7 @@ export function evaluateIdle(m:MissionState|undefined,now=Date.now()):DecisionRe
   const permissionBlocker=m.execution.blockers.find(x=>x.startsWith('permission-failure:'));if(permissionBlocker){m.continuation.stagnation_count=0;return{decision:'USER_ACTION_REQUIRED',reason:permissionBlocker,reason_code:'permission-failure-blocked'}}
   const providerBlocker=m.execution.blockers.find(x=>x.startsWith('provider-failure:'));if(providerBlocker){m.continuation.stagnation_count=0;return{decision:'USER_ACTION_REQUIRED',reason:providerBlocker,reason_code:'provider-failure-blocked'}}
   const completion=evaluateCompletion(m);if(completion.complete)return{decision:'STOP',reason:'complete',reason_code:'complete'}
+  const uncertainEffect=ambiguousConsequentialEffect(m);if(uncertainEffect){m.continuation.stagnation_count=0;return{decision:'USER_ACTION_REQUIRED',reason:uncertainEffect,reason_code:'recovery-effect-uncertain'}}
   if(completion.next==='USER_ACTION_REQUIRED')return{decision:'USER_ACTION_REQUIRED',reason:'waiting-user-authority',reason_code:'waiting-user-authority'}
   if(completion.next==='VERIFY'){
     const latest=latestBlockingVerificationEvidence(m)

@@ -1,3 +1,4 @@
+import type { ExecutionUsageObservation } from './execution-usage.js';
 export declare const WORKER_STATUSES: readonly ["created", "queued", "starting", "ready", "busy", "completed", "failed", "cancelled"];
 export type WorkerContractStatus = typeof WORKER_STATUSES[number];
 export interface WorkerContract {
@@ -53,5 +54,6 @@ export interface WorkerContract {
     effective_model_source?: string;
     effective_model_observed_at?: number;
     semantic_pause_revision?: number;
+    usage_observations?: ExecutionUsageObservation[];
 }
 export declare function isWorkerContract(v: unknown): v is WorkerContract;
