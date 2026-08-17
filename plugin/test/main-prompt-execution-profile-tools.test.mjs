@@ -71,7 +71,8 @@ test('same-session corrective resume preserves the original execution tool surfa
   const first=await runtime.start(m,{objective:'fix parser bug',role:'coder',category:'standard',scope:['src/parser.ts']})
   runtime.applyResult(m,first.worker_id,{status:'FIX_REQUIRED',summary:'one correction remains',changed_files:['src/parser.ts'],evidence:[],open_issues:['fix:x'],needs_context:[]})
   m.execution.workers.find(w=>w.id===first.worker_id).selected_methodologies=['hi-test-driven-development'];m.execution.workers.find(w=>w.id===first.worker_id).loaded_methodologies=['hi-test-driven-development']
-  const second=await runtime.start(m,{objective:'fix parser bug',role:'coder',category:'standard',scope:['src/parser.ts']})
+  m.execution.workers.find(w=>w.id===first.worker_id).fingerprint='intentionally-drifted-after-runtime-model-transition'
+  const second=await runtime.resume(m,first.task_id)
   assert.equal(second.worker_id,first.worker_id);assert.equal(second.session_id,first.session_id);assert.equal(created.length,1);assert.equal(prompts.length,2)
   const resumeTools=prompts[1].body.tools
   assert.equal(resumeTools.task,false);assert.equal(resumeTools.hi_direct_progress,false);assert.equal(resumeTools.hi_task_start,false)
