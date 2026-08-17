@@ -1,7 +1,7 @@
 import { resolveCategory } from '../routing/category.js';
 import { resolveModel, runtimeModelCandidateStatus } from '../routing/model-resolver.js';
 import { deriveMissionModelFeedback } from '../routing/model-feedback.js';
-import { resolveSkillPlan } from '../skills/registry.js';
+import { methodologySkillCandidates, resolveSkillPlan } from '../skills/registry.js';
 import { resolveSkillPermissionMap, resolveSkillToolEnabled } from '../skills/permissions.js';
 import { createTask, createWorker, beginWorkerAttempt, workerFingerprint } from '../worker/worker-runtime.js';
 import { workerHandoffText } from './contracts.js';
@@ -13,7 +13,6 @@ import { bindMethodologyNeeds, methodologyNames } from '../methodology/activatio
 import { methodologyCatalog } from '../methodology/catalog.js';
 import { methodologyProvenance, ownershipContract } from '../skills/methodology.js';
 import { DEFAULT_CONTEXT_BUDGET, clipList, clipText } from '../context/budget.js';
-import { modelQuirks } from '../routing/model-quirks.js';
 import { runtimeSignal } from '../events/event-sink.js';
 import { syncMissionGates } from '../gates/gates.js';
 import { recordPreexistingUserBaseline } from '../safety/staging-safety.js';
@@ -63,6 +62,7 @@ export class TaskRuntime {
     registry;
     scheduler;
     projectRoot;
+    hiRoot;
     getConfig;
     getModels;
     getHostConfig;
@@ -82,6 +82,7 @@ export class TaskRuntime {
         this.registry = registry;
         this.scheduler = scheduler;
         this.projectRoot = projectRoot;
+        this.hiRoot = hiRoot;
         this.getConfig = getConfig;
         this.getModels = getModels;
         this.getHostConfig = getHostConfig;
@@ -197,7 +198,7 @@ export class TaskRuntime {
             appendLedger(m, 'model.policy.rejected', { payload: { items: selected.rejected.slice(0, 20) } });
         if (selected.scores?.length)
             appendLedger(m, 'model.scored', { payload: { role, category, top: selected.scores.slice(0, 6), feedback } });
-        const taskMethodologyNeeds = m.methodology.methodology_needs.filter(need => (!need.task_id && !need.obligation_id) || (need.obligation_id && input.obligationIds?.includes(need.obligation_id))), catalog = methodologyCatalog(this.projectRoot), candidates = this.#scopedStores.skillCatalog.candidates(hostConfig), permissionMap = resolveSkillPermissionMap(hostConfig, role), skillToolEnabled = resolveSkillToolEnabled(hostConfig, role), surface = effectiveExecutionSurface(hostConfig, role, skillToolEnabled), hostCapabilities = typeof this.hostCapabilitySource === 'function' ? this.hostCapabilitySource() : Array.isArray(this.hostCapabilitySource) ? this.hostCapabilitySource : [], availableResources = new Set([...hostCapabilities.filter(item => item.status === 'SUPPORTED' && item.runtime_health_required !== true).map(item => `host-capability:${item.id}`), ...this.extraHostResources()]), skillPlan = resolveSkillPlan(methodologyNames(taskMethodologyNeeds), candidates, permissionMap, skillToolEnabled, role, catalog, availableResources), methodologies = skillPlan.selected.map(s => s.name), methodologyResourceFailures = skillPlan.outcomes.filter(item => item.outcome === 'resource-unavailable').map(item => item.name);
+        const taskMethodologyNeeds = m.methodology.methodology_needs.filter(need => (!need.task_id && !need.obligation_id) || (need.obligation_id && input.obligationIds?.includes(need.obligation_id))), catalog = methodologyCatalog(this.projectRoot), requestedMethodologyNames = methodologyNames(taskMethodologyNeeds), candidates = methodologySkillCandidates(requestedMethodologyNames, this.projectRoot, this.hiRoot, hostConfig, catalog), permissionMap = resolveSkillPermissionMap(hostConfig, role), skillToolEnabled = resolveSkillToolEnabled(hostConfig, role), surface = effectiveExecutionSurface(hostConfig, role, skillToolEnabled), hostCapabilities = typeof this.hostCapabilitySource === 'function' ? this.hostCapabilitySource() : Array.isArray(this.hostCapabilitySource) ? this.hostCapabilitySource : [], availableResources = new Set([...hostCapabilities.filter(item => item.status === 'SUPPORTED' && item.runtime_health_required !== true).map(item => `host-capability:${item.id}`), ...this.extraHostResources()]), skillPlan = resolveSkillPlan(requestedMethodologyNames, candidates, permissionMap, skillToolEnabled, role, catalog, availableResources), methodologies = skillPlan.selected.map(s => s.name), methodologyResourceFailures = skillPlan.outcomes.filter(item => item.outcome === 'resource-unavailable').map(item => item.name);
         appendLedger(m, 'skill.resolved', { payload: { role, requested: skillPlan.requested, outcomes: skillPlan.outcomes } });
         void this.events?.(runtimeSignal('skill.resolved', m.identity.mission_id, { payload: { role, requested: skillPlan.requested, outcomes: skillPlan.outcomes } }));
         if (skillPlan.missing.length)
@@ -293,14 +294,11 @@ export class TaskRuntime {
         for (const ref of task.context_artifacts)
             if (ref.source_ref.startsWith('hi-artifact:'))
                 contextArtifactStore.bindConsumer(ref.source_ref.slice('hi-artifact:'.length), task.id);
-        const quirks = modelQuirks(selected.primary, this.getModels().find(x => x.id === selected.primary));
         const artifactContext = task.context_artifacts.map(a => { const id = a.source_ref.startsWith('hi-artifact:') ? a.source_ref.slice('hi-artifact:'.length) : undefined, stored = id ? contextArtifactStore.get(id) : undefined; if (stored?.freshness === 'FRESH')
             return `artifact:${stored.artifact_id}:${stored.summary}\n${clipText(stored.content, 3000)}`; if (stored)
-            return `artifact-stale:${stored.artifact_id}:${stored.summary}`; return `${a.kind}:${a.title ?? a.source_handle_id ?? a.id}${a.summary ? ` — ${a.summary}` : ''}`; }), verificationHint = targetedVerificationHint(this.projectRoot, task.scope.length ? task.scope : (m.vcs.changed_files.length ? m.vcs.changed_files : m.identity.intent.likelyTargets ?? [])), semanticContexts = semanticContextsForTargets(this.projectRoot, task.scope, task.id, 3000), semanticContext = semanticContexts.map(renderSemanticContext), projectIntelligenceHits = this.#scopedStores.projectIntelligence.retrieve(`${task.objective} ${m.identity.objective}`, task.scope, 'task-context', 4), projectIntelligence = projectIntelligenceHits.map(hit => hit.item), projectContext = projectIntelligence.map(p => `project-intelligence:${p.id}:${p.statement} [${p.source_refs.map(x => x.ref.slice(5)).join(', ')}]`), explicitRelevant = input.relevantContext ?? [], boundedRuntimeRelevant = [...(verificationHint ? [verificationHint] : []), ...semanticContext, ...projectContext, ...artifactContext];
+            return `artifact-stale:${stored.artifact_id}:${stored.summary}`; return `${a.kind}:${a.title ?? a.source_handle_id ?? a.id}${a.summary ? ` — ${a.summary}` : ''}`; }), verificationHint = targetedVerificationHint(this.projectRoot, task.scope.length ? task.scope : (m.vcs.changed_files.length ? m.vcs.changed_files : m.identity.intent.likelyTargets ?? [])), semanticContexts = semanticContextsForTargets(this.projectRoot, task.scope, task.id, 3000), semanticContext = semanticContexts.map(renderSemanticContext), explicitRelevant = input.relevantContext ?? [], boundedRuntimeRelevant = [...(verificationHint ? [verificationHint] : []), ...semanticContext, ...artifactContext];
         if (semanticContexts.length)
             appendLedger(m, 'context.semantic-selected', { task_id: task.id, payload: { items: semanticContexts.slice(0, 6).map(x => ({ id: x.id, source_ref: x.source_ref, source_hash: x.source_hash.slice(0, 16), symbols: x.symbols.length, chars: x.budget.used_chars })), total_chars: semanticContexts.reduce((n, x) => n + x.budget.used_chars, 0) } });
-        if (projectIntelligence.length)
-            appendLedger(m, 'context.project-intelligence-selected', { task_id: task.id, payload: { consumer: 'task-context', items: projectIntelligenceHits.map(x => ({ id: x.item.id, confidence: x.item.confidence, score: Number(x.score.toFixed(6)), signals: x.signals, source_refs: x.item.source_refs.map(s => s.ref) })) } });
         let nativeSummary, relevantForHandoff = [...explicitRelevant, ...boundedRuntimeRelevant];
         if (relevantForHandoff.join('\n').length > profile.max_context_chars) {
             if (this.childHost.capabilities.summarize)
@@ -317,7 +315,7 @@ export class TaskRuntime {
             if (!nativeSummary)
                 relevantForHandoff = clipList(relevantForHandoff, profile.max_context_chars);
         }
-        const buildHandoff = () => { const preexisting = Object.keys(worker.native_diff_baseline ?? {}).slice(0, 60), core = workerHandoffText({ objective, scope: task.scope, constraints: clipList([...(task.constraints ?? []), 'minimum sufficient change', 'no unrequested publish/push/deploy', 'return compact evidence', preexisting.length ? `pre-existing user dirty paths at worker start: ${preexisting.join(', ')}; preserve their exact baseline state unless the task explicitly requires changing them; never use git checkout/reset/restore in a way that discards user-owned edits` : 'no pre-existing native dirty paths were observed at worker start', verificationEconomyInstruction(m), `model-quirks:${JSON.stringify(quirks)}`], 5000), required_evidence: task.requiredEvidence, relevant_context: clipList(relevantForHandoff, profile.max_context_chars), methodologies: worker.selected_methodologies, methodology_exit_requirements: worker.selected_methodologies.flatMap(name => { const item = catalog.find(x => x.name === name); return item ? [`${name}: ${item.exitRequirements.join(', ')}`] : []; }), approval_gated_methodologies: approvalGated, expected_output: { status: true, summary: true, changed_files: true, scope_expansions: true, evidence: true, findings: isHiReviewerRole(worker.role) ? true : undefined, open_issues: true } }, profile.max_handoff_chars), full = [ownershipContract('child', worker.selected_methodologies), core].filter(Boolean).join('\n\n'); return clipText(full, profile.max_handoff_chars); };
+        const buildHandoff = () => { const preexisting = Object.keys(worker.native_diff_baseline ?? {}).slice(0, 60), core = workerHandoffText({ objective, scope: task.scope, constraints: clipList([...(task.constraints ?? []), 'minimum sufficient change', 'no unrequested publish/push/deploy', 'return compact evidence', preexisting.length ? `pre-existing user dirty paths at worker start: ${preexisting.join(', ')}; preserve their exact baseline state unless the task explicitly requires changing them; never use git checkout/reset/restore in a way that discards user-owned edits` : 'no pre-existing native dirty paths were observed at worker start', verificationEconomyInstruction(m)], 5000), required_evidence: task.requiredEvidence, relevant_context: clipList(relevantForHandoff, profile.max_context_chars), methodologies: worker.selected_methodologies, methodology_exit_requirements: worker.selected_methodologies.flatMap(name => { const item = catalog.find(x => x.name === name); return item ? [`${name}: ${item.exitRequirements.join(', ')}`] : []; }), approval_gated_methodologies: approvalGated, expected_output: { status: true, summary: true, changed_files: true, scope_expansions: true, evidence: true, findings: isHiReviewerRole(worker.role) ? true : undefined, open_issues: true } }, profile.max_handoff_chars), full = [ownershipContract('child', worker.selected_methodologies), core].filter(Boolean).join('\n\n'); return clipText(full, profile.max_handoff_chars); };
         const chain = [selected.primary, ...selected.fallbacks].filter((x) => Boolean(x)), toolOverrides = promptToolOverrides(profile.tools);
         const run = () => this.registry.dedupeSpawn(worker.fingerprint, async () => { let lastError = new Error('No runtime model available'); for (let i = 0; i < chain.length; i++) {
             if (m.identity.status !== 'active' || m.continuation.user_interrupted || worker.status === 'cancelled') {

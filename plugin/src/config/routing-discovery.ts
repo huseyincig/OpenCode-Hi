@@ -16,7 +16,6 @@ interface ProjectRoutingFile {
   execution?: Partial<HiConfig['execution']>
   models?: Partial<HiConfig['models']>
   parallel?: Partial<HiConfig['parallel']>
-  teamMode?: Partial<HiConfig['teamMode']>
   profile?: Partial<HiConfig['profile']>
   routing?: {
     strategy?: 'cost-quality' | 'quality' | 'cost'
@@ -97,12 +96,6 @@ export function loadProjectRoutingConfig(projectRoot: string): Partial<HiConfig>
     const max=bounded(raw.parallel.max,1,8);if(max!==undefined)x.max=max
     for(const key of ['providers','models'] as const)if(raw.parallel[key]&&typeof raw.parallel[key]==='object'&&!Array.isArray(raw.parallel[key])){const limits:Record<string,number>={};for(const [k,v] of Object.entries(raw.parallel[key]!))if(typeof v==='number'&&Number.isInteger(v)&&v>0)limits[k]=Math.min(32,v);if(Object.keys(limits).length)x[key]=limits}
     if(Object.keys(x).length)out.parallel=x as HiConfig['parallel']
-  }
-  if(raw.teamMode&&typeof raw.teamMode==='object'&&!Array.isArray(raw.teamMode)){
-    const x:Partial<HiConfig['teamMode']>={}
-    if(typeof raw.teamMode.enabled==='boolean')x.enabled=raw.teamMode.enabled
-    const maxMembers=bounded(raw.teamMode.maxMembers,2,8),maxWallMinutes=bounded(raw.teamMode.maxWallMinutes,1,240);if(maxMembers!==undefined)x.maxMembers=maxMembers;if(maxWallMinutes!==undefined)x.maxWallMinutes=maxWallMinutes
-    if(Object.keys(x).length)out.teamMode=x as HiConfig['teamMode']
   }
   if(raw.profile&&typeof raw.profile==='object'&&!Array.isArray(raw.profile)){
     const profiles:Partial<HiConfig['profile']>={}

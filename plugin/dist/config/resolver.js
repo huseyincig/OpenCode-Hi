@@ -58,7 +58,6 @@ export function resolveHiConfigWithReport(raw, projectRoot) {
         notes.push(`project routing override merged from .opencode/hi/policy/routing.json (${Object.keys(fromProject.routing.roleModels ?? {}).length} roles)`);
     const hostRouting = isRecord(input.routing) ? input.routing : {}, projectRouting = isRecord(fromProject?.routing) ? fromProject.routing : {};
     const hostParallel = isRecord(input.parallel) ? input.parallel : {}, projectParallel = isRecord(fromProject?.parallel) ? fromProject.parallel : {};
-    const hostTeam = isRecord(input.teamMode) ? input.teamMode : {}, projectTeam = isRecord(fromProject?.teamMode) ? fromProject.teamMode : {};
     const compatibility = isRecord(input.compatibility) ? input.compatibility : {};
     const hostExecution = isRecord(input.execution) ? input.execution : {}, projectExecution = isRecord(fromProject?.execution) ? fromProject.execution : {};
     const hostModels = isRecord(input.models) ? input.models : {}, projectModels = isRecord(fromProject?.models) ? fromProject.models : {};
@@ -96,11 +95,6 @@ export function resolveHiConfigWithReport(raw, projectRoot) {
             max: boundedLayer(projectParallel.max, hostParallel.max, DEFAULT_HI_CONFIG.parallel.max, 1, 8),
             providers: { ...limits(hostParallel.providers), ...limits(projectParallel.providers) },
             models: { ...limits(hostParallel.models), ...limits(projectParallel.models) },
-        },
-        teamMode: {
-            enabled: booleanLayer(projectTeam.enabled, hostTeam.enabled, DEFAULT_HI_CONFIG.teamMode.enabled),
-            maxMembers: boundedLayer(projectTeam.maxMembers, hostTeam.maxMembers, DEFAULT_HI_CONFIG.teamMode.maxMembers, 2, 8),
-            maxWallMinutes: boundedLayer(projectTeam.maxWallMinutes, hostTeam.maxWallMinutes, DEFAULT_HI_CONFIG.teamMode.maxWallMinutes, 1, 240),
         },
         profile: {
             minimal: profileLayer(hostProfile.minimal, projectProfile.minimal, DEFAULT_HI_CONFIG.profile.minimal),

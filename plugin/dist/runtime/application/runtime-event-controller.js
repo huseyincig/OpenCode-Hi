@@ -17,7 +17,7 @@ export class RuntimeEventController {
     }
     async handle(ev) {
         const { state, host, services, projectAuthority, pendingNativePermissions, projectRoot } = this.deps;
-        const { store, background, persistence, tasks, teams, processRuntime, workspaceRuntime, eventSink, scopedStores } = services;
+        const { store, background, persistence, tasks, processRuntime, workspaceRuntime, eventSink, scopedStores } = services;
         if (ev.kind === 'installation-updated') {
             await host.refreshRuntimeInventory('installation-updated');
             return;
@@ -46,14 +46,10 @@ export class RuntimeEventController {
         const child = tasks.resolveChildCallback(sid);
         const childMission = child ? store.get(child.parent_session_id) : undefined;
         const mission = childMission ?? store.get(sid);
-        if (mission) {
-            await teams.expireMission(mission);
-            await teams.reconcileMission(mission);
-            if (child?.status === 'cancelled') {
-                appendLedger(mission, 'worker.callback.after-team-shutdown-ignored', { worker_id: child.id, payload: { session_id: sid, event: ev.rawType } });
-                persistence.save(store.all());
-                return;
-            }
+        if (mission && child?.status === 'cancelled') {
+            appendLedger(mission, 'worker.callback.after-cancel-ignored', { worker_id: child.id, payload: { session_id: sid, event: ev.rawType } });
+            persistence.save(store.all());
+            return;
         }
         if (child && mission && tasks.childCallbackDisposition(mission, child) === 'restart-reconcile-pending') {
             appendLedger(mission, 'worker.callback.pre-reconcile-ignored', { worker_id: child.id, payload: { session_id: sid, event: ev.rawType, reason: 'runtime-restart-reconcile-pending' } });
@@ -145,7 +141,6 @@ export class RuntimeEventController {
                 }
                 tasks.fail(m, child.id, detail);
                 await tasks.cleanupWorkspaceForTask(m, child.task_id);
-                await teams.reconcileMission(m);
                 store.updateProgress(m);
                 appendLedger(m, 'parent.wake', { worker_id: child.id, payload: { result: 'FAILED', event: ev.rawType } });
                 const siblingPending = background.pendingFor(m.identity.session_id).filter(w => w.id !== child.id), permissionFailure = child.last_runtime_failure_kind === 'permission';
@@ -186,7 +181,6 @@ export class RuntimeEventController {
                 tasks.applyResult(m, child.id, result);
                 if (['completed', 'failed', 'cancelled'].includes(child.status))
                     await tasks.cleanupWorkspaceForTask(m, child.task_id);
-                await teams.reconcileMission(m);
                 if (['completed', 'failed', 'cancelled'].includes(child.status))
                     background.delete(child.id);
                 else
@@ -230,9 +224,8 @@ export class RuntimeEventController {
             const files = ev.filePaths.map(file => normalizeProjectPath(file, projectRoot)).filter(Boolean);
             if (files.length) {
                 markMutation(mission, files, ev.rawType);
-                scopedStores.projectIntelligence.invalidateChanged(files);
                 scopedStores.contextArtifacts.invalidateChanged(files);
-                scopedStores.skillCatalog.invalidateChanged(files);
+                void files;
             }
             persistence.save(store.all());
             return;

@@ -12,13 +12,11 @@ import {BackgroundRegistry} from '../background/registry.js'
 import {RuntimePersistence} from '../state/persistence.js'
 import {ConcurrencyScheduler} from '../scheduler/concurrency.js'
 import {TaskRuntime} from '../task/task-runtime.js'
-import {TeamRuntime} from '../team/team-runtime.js'
 import {appendLedger} from '../ledger/ledger.js'
 import {createRuntimeScopedStores} from './runtime-scoped-stores.js'
 import {ProcessRuntime} from '../process/runtime.js'
 import {WorkspaceRuntime} from '../workspace/runtime.js'
 import {ChatHumanDecisionTransport} from '../human-decision/transport.js'
-import {BrowserRuntime} from '../browser/runtime.js'
 
 export interface RuntimeServicePorts{
   nativeContext:NativeProjectContext
@@ -44,13 +42,11 @@ export function createRuntimeServices(input:{ports:RuntimeServicePorts;projectRo
   const scheduler=new ConcurrencyScheduler(()=>({global:getConfig().parallel.enabled?getConfig().parallel.max:1,providers:getConfig().parallel.providers,models:getConfig().parallel.models}))
   const eventSink:RuntimeSignalSink=ev=>{const m=store.all().find(x=>x.identity.mission_id===ev.mission_id);if(m)appendLedger(m,`event.${ev.type}`,{task_id:ev.task_id,worker_id:ev.worker_id,payload:ev.payload})}
   const browserExecutor=ports.createBrowser((bytes,c)=>{const a=scopedStores.contextArtifacts.addBinary('browser-screenshot',`Browser screenshot for ${c.task_id}`,bytes,{extension:'png',mediaType:'image/png',producer:'hi-browser-executor',consumerRefs:[`task:${c.task_id}`]});return`hi-artifact:${a.artifact_id}`})
-  const browserRuntime=new BrowserRuntime(browserExecutor)
   let browserAvailable=false
   const setBrowserAvailable=(value:boolean)=>{browserAvailable=value}
   const workspaceRuntime=new WorkspaceRuntime(ports.workspace,projectRoot)
   const tasks=new TaskRuntime(ports.childSession,background,scheduler,projectRoot,packageRoot,getConfig,getModels,getHostConfig,eventSink,ports.hostCapabilities,scopedStores,workspaceRuntime,()=>browserAvailable?new Set(['host-capability:browser-execution']):new Set())
   for(const m of store.all())for(const w of m.execution.workers)if(w.session_id&&w.status==='ready')background.set(w)
   const processRuntime=new ProcessRuntime(ports.process,projectRoot,getHostConfig)
-  const teams=new TeamRuntime(tasks,()=>getConfig().teamMode.enabled,()=>({maxMembers:getConfig().teamMode.maxMembers,maxWallMs:getConfig().teamMode.maxWallMinutes*60*1000}))
-  return{store,background,humanDecisionTransport,persistence,scheduler,eventSink,tasks,processExecutor:ports.process,processRuntime,workspaceExecutor:ports.workspace,workspaceRuntime,browserExecutor,browserRuntime,setBrowserAvailable,teams,scopedStores}
+  return{store,background,humanDecisionTransport,persistence,scheduler,eventSink,tasks,processExecutor:ports.process,processRuntime,workspaceExecutor:ports.workspace,workspaceRuntime,browserExecutor,setBrowserAvailable,scopedStores}
 }

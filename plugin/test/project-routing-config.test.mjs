@@ -21,8 +21,7 @@ test('project-owned HI config survives host stripping of unknown top-level hi co
   const root=mkdtempSync(join(tmpdir(),'hi-real-config-shape-')); projectConfig(root)
   const resolved=resolveHiConfigWithReport(undefined,root).config
   assert.equal(resolved.primaryMode,'manager')
-  assert.equal(resolved.teamMode.enabled,true)
-  assert.equal(resolved.teamMode.maxMembers,3)
+  assert.equal('teamMode' in resolved,false,'legacy project teamMode is ignored; scheduler topology owns parallelism')
   assert.equal(resolved.parallel.enabled,false)
   assert.equal(resolved.routing.maxFallbacks,1)
   assert.deepEqual(resolved.routing.roleModels.coder,['openai/local'])
@@ -30,7 +29,6 @@ test('project-owned HI config survives host stripping of unknown top-level hi co
   const hooks=await HiPlugin({directory:root,worktree:root,project:{},client})
   const hostConfig={} // mirrors OpenCode 1.18.x canonical config after unknown `hi` is stripped
   await hooks.config(hostConfig)
-  assert.ok(hooks.tool.hi_team_create,'Team tool must be enabled from project-owned HI config')
-  assert.ok(hooks.tool.hi_team_shutdown)
+  assert.equal(hooks.tool.hi_team_create,undefined);assert.equal(hooks.tool.hi_team_shutdown,undefined)
   await hooks.dispose?.(); rmSync(root,{recursive:true,force:true})
 })

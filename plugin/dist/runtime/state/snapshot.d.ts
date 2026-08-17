@@ -1,4 +1,5 @@
 import type { MissionState, WorkerState } from '../mission/types.js';
+export declare function boundMissionSurvivalSections(sections: string[], maxChars?: number): string;
 /**
  * Compaction survival state is intentionally priority-preserving rather than a
  * transcript summary. Every section is independently bounded so a large task

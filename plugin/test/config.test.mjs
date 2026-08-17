@@ -6,7 +6,7 @@ test('config defaults are adaptive and bounded', () => {
   const config = resolveHiConfig(undefined)
   assert.equal(config.executionPolicy, 'adaptive')
   assert.equal(config.parallel.max, 3)
-  assert.equal('auto' in config.teamMode, false)
+  assert.equal('teamMode' in config,false,'generic TeamRuntime config is no longer an active Hi primitive')
 })
 
 test('parallel max is clamped', () => {

@@ -44,11 +44,6 @@ export interface HiConfig {
         providers: Record<string, number>;
         models: Record<string, number>;
     };
-    teamMode: {
-        enabled: boolean;
-        maxMembers: number;
-        maxWallMinutes: number;
-    };
     profile: {
         minimal: ProfileSettings;
         balanced: ProfileSettings;

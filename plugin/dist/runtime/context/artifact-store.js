@@ -3,7 +3,6 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { dirname, join } from 'node:path';
 import { durableArtifactBinaryPath, durableArtifactPath, hiProjectRoot } from '../storage/ownership.js';
 import { artifactContentHash, isArtifactContract, newArtifactId } from '../../contracts/artifact.js';
-import { buildCompressionArtifact, isCompressionArtifact } from '../../contracts/compression-artifact.js';
 export class ContextArtifactStore {
     projectRoot;
     #items = new Map();
@@ -41,22 +40,6 @@ export class ContextArtifactStore {
         writeFileSync(path, JSON.stringify(item, null, 2) + '\n', 'utf8');
     }
     #put(item) { this.#items.set(item.artifact_id, item); this.#persist(item); return structuredClone(item); }
-    #sourceFilesForCompression(sources) { const files = []; for (const source of sources) {
-        if (source.source_ref.startsWith('file:'))
-            files.push(source.source_ref.slice(5));
-        if (source.source_ref.startsWith('hi-artifact:')) {
-            const parent = this.#items.get(source.source_ref.slice('hi-artifact:'.length));
-            if (parent)
-                files.push(...parent.provenance.source_files);
-        }
-    } return [...new Set(files)].slice(0, 32); }
-    addCompression(sources, summary, options) {
-        const id = newArtifactId(), compression = buildCompressionArtifact(id, sources, summary, { consumerScope: options.consumerScope, modelIdentity: options.modelIdentity, policyVersion: options.policyVersion }), content = JSON.stringify(compression);
-        const privacy = sources.every(s => s.privacy_class === 'redacted') ? 'redacted' : 'project-private';
-        const item = { artifact_id: id, kind: 'context-compression', content_ref: 'inline-body', content, content_hash: artifactContentHash(content), summary: compression.summary, producer: 'hi-context-compression', provenance: { source_files: this.#sourceFilesForCompression(sources) }, created_at: compression.created_at, retention_class: this.projectRoot ? 'project' : 'session', privacy_class: privacy, consumer_refs: [options.consumerScope], freshness: compression.freshness };
-        this.#put(item);
-        return structuredClone(compression);
-    }
     addBinary(kind, summary, bytes, options) {
         if (!this.projectRoot)
             throw new Error('Binary artifact persistence requires a project root');
@@ -73,17 +56,6 @@ export class ContextArtifactStore {
         const item = { artifact_id: id, kind, content_ref: 'inline-body', content: manifest, content_hash: artifactContentHash(manifest), summary, producer: options.producer ?? 'context-artifact-store', provenance: { source_files: [] }, created_at: Date.now(), retention_class: 'project', privacy_class: options.privacyClass ?? 'project-private', consumer_refs: [...new Set(options.consumerRefs ?? [])].slice(0, 32), freshness: 'FRESH' };
         return this.#put(item);
     }
-    getCompression(id) { const item = this.#items.get(id); if (!item || item.kind !== 'context-compression')
-        return undefined; try {
-        const parsed = JSON.parse(item.content);
-        if (!isCompressionArtifact(parsed) || parsed.id !== item.artifact_id || parsed.summary !== item.summary || parsed.created_at !== item.created_at)
-            return undefined;
-        const view = { ...parsed, freshness: item.freshness };
-        return isCompressionArtifact(view) ? structuredClone(view) : undefined;
-    }
-    catch {
-        return undefined;
-    } }
     add(kind, summary, content, sourceFiles = [], options = {}) {
         const item = {
             artifact_id: newArtifactId(), kind, content_ref: 'inline-body', content, content_hash: artifactContentHash(content), summary,

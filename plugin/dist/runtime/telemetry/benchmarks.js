@@ -1,12 +1,12 @@
 import { decideAdaptiveExecution } from '../execution/adaptive-policy.js';
 import { decideTopology } from '../execution/topology-policy.js';
-import { governContext } from '../context/governor.js';
 import { extractTypeScriptSemanticContext } from '../semantic/typescript-context.js';
 import { deriveEfficiencyMetrics } from './execution.js';
 import { ConcurrencyScheduler } from '../scheduler/concurrency.js';
 import { parallelSafety } from '../scheduler/parallel-safety.js';
 import { recoveryPlan } from '../continuation/recovery.js';
 import { recordRecoveryStrategy } from '../continuation/recovery-governor.js';
+import { boundMissionSurvivalSections } from '../state/snapshot.js';
 const baseIntent = (overrides) => ({
     objective: 'benchmark', taskKind: 'implementation', risk: 'low', scope: 'local', ambiguity: 'none', dependencyClass: 'independent',
     requiredCapabilities: [], requestedExternalActions: [], likelyVerification: ['changed-surface-sanity'], avoid: [], ...overrides,
@@ -30,21 +30,24 @@ export function runDeterministicBenchmarks() {
     const broad = decideAdaptiveExecution(broadIntent), broadTopology = decideTopology(broadIntent);
     const multiIntent = baseIntent({ objective: 'independent backend/frontend/test streams', risk: 'medium', scope: 'multi-stream', dependencyClass: 'independent' });
     const multiTopology = decideTopology(multiIntent);
-    const entries = [
-        { id: 'objective', kind: 'objective', text: 'O'.repeat(600), contextClass: 'PROTECTED', createdAt: 1 },
-        { id: 'old', kind: 'exploration', text: 'X'.repeat(5000), contextClass: 'COMPRESSIBLE', createdAt: 2 },
-        { id: 'dup1', kind: 'tool', text: 'D'.repeat(2400), contextClass: 'PURGEABLE', createdAt: 3 },
-        { id: 'dup2', kind: 'tool', text: 'D'.repeat(2400), contextClass: 'PURGEABLE', createdAt: 4 },
+    const survivalSections = [
+        'Hi MISSION SURVIVAL STATE',
+        `MISSION OBJECTIVE: ${'O'.repeat(1800)}`,
+        `KNOWN BLOCKERS: ${'B'.repeat(1800)}`,
+        `NEXT SAFE ACTION: ${'N'.repeat(1000)}`,
+        'STOP CONDITIONS: all required obligations closed; no pending work; fresh evidence; no authority/rollback gate pending',
+        `CURRENT TASKS: ${'T'.repeat(5000)}`,
+        `LATEST RELEVANT EVIDENCE: ${'E'.repeat(3500)}`,
     ];
-    const governed = governContext(entries, { maxChars: 2600, compressToChars: 700 });
+    const rawSurvival = survivalSections.join('\n'), boundedSurvival = boundMissionSurvivalSections(survivalSections, 2600);
     const tsSource = `export interface User { id: string; name: string }\n${'const noise = 1;\n'.repeat(350)}export type UserId = User['id'];\nexport function loadUser(id: UserId): Promise<User>;\n`;
     const semantic = extractTypeScriptSemanticContext(tsSource, ['User', 'UserId', 'loadUser']);
     return [
         result('simple-local-task', obs({ modelCalls: 2, agentCount: 2, toolCalls: 4, contextChars: 5000, skills: 2, verificationActions: 2, delegations: 1, totalActions: 8, productiveActions: 4, elapsedUnits: 8 }), obs({ modelCalls: 1, agentCount: directTopology.agentCount, toolCalls: 2, contextChars: 1200, skills: 0, verificationActions: 1, totalActions: 3, productiveActions: 3, elapsedUnits: 3 }), [`path=${direct.path}`, `topology=${directTopology.mode}`]),
-        result('unknown-repository-convention', obs({ toolCalls: 7, contextChars: 10000, totalActions: 8, productiveActions: 4, elapsedUnits: 8 }), obs({ toolCalls: 2, contextChars: 2400, totalActions: 3, productiveActions: 3, elapsedUnits: 3 }), ['fresh Project Intelligence permits bounded pattern reuse; freshness invalidation is tested separately']),
+        result('unknown-repository-convention', obs({ toolCalls: 7, contextChars: 10000, totalActions: 8, productiveActions: 4, elapsedUnits: 8 }), obs({ toolCalls: 2, contextChars: 2400, totalActions: 3, productiveActions: 3, elapsedUnits: 3 }), ['repo-native semantic context and targeted inspection avoid a generic persisted fact-memory dependency']),
         result('complex-cross-module-task', obs({ modelCalls: 3, agentCount: 3, toolCalls: 10, contextChars: 18000, skills: 3, verificationActions: 4, delegations: 2, totalActions: 17, productiveActions: 10, elapsedUnits: 14 }), obs({ modelCalls: 2, agentCount: broadTopology.agentCount, toolCalls: 8, contextChars: 12000, skills: 2, verificationActions: 3, delegations: 0, totalActions: 12, productiveActions: 10, elapsedUnits: 11 }), [`path=${broad.path}`, `topology=${broadTopology.mode}`, 'planning remains bounded to real sequencing']),
         result('failed-verification', obs({ modelCalls: 4, toolCalls: 9, retries: 3, verificationActions: 4, totalActions: 16, productiveActions: 7, elapsedUnits: 16 }), obs({ modelCalls: 2, toolCalls: 6, retries: 1, verificationActions: 3, totalActions: 10, productiveActions: 8, elapsedUnits: 10 }), ['bounded retry requires a materially different attempt']),
-        result('long-session', obs({ contextChars: entries.reduce((n, e) => n + e.text.length, 0), toolCalls: 5, totalActions: 7, productiveActions: 4, elapsedUnits: 7 }), obs({ contextChars: governed.afterChars, toolCalls: 4, totalActions: 6, productiveActions: 5, elapsedUnits: 6 }), [`governor=${governed.action}`, `protected=${governed.entries.some(e => e.id === 'objective')}`, `semantic=${semantic.contextChars}/${semantic.sourceChars} chars`]),
+        result('long-session', obs({ contextChars: rawSurvival.length, toolCalls: 5, totalActions: 7, productiveActions: 4, elapsedUnits: 7 }), obs({ contextChars: boundedSurvival.length, toolCalls: 4, totalActions: 6, productiveActions: 5, elapsedUnits: 6 }), [`mission-survival-bound=${boundedSurvival.length}/${rawSurvival.length}`, `priority-prefix=${boundedSurvival.startsWith('Hi MISSION SURVIVAL STATE')}`, `semantic=${semantic.contextChars}/${semantic.sourceChars} chars`]),
         result('human-gated-task', obs({ humanInteractions: 4, totalActions: 7, productiveActions: 3, elapsedUnits: 7 }), obs({ humanInteractions: 1, totalActions: 4, productiveActions: 4, elapsedUnits: 4 }), ['Human Value Gate removes non-material approval prompts and batches independent material questions']),
         result('long-running-process', obs({ toolCalls: 10, totalActions: 11, productiveActions: 4, elapsedUnits: 11 }), obs({ toolCalls: 3, totalActions: 4, productiveActions: 4, elapsedUnits: 4 }), ['process governor replaces blind polling with observable process state where available']),
         result('multi-model-task', obs({ modelCalls: 4, agentCount: 2, delegations: 1, totalActions: 8, productiveActions: 4, elapsedUnits: 8 }), obs({ modelCalls: 2, agentCount: 1, delegations: 0, totalActions: 4, productiveActions: 4, elapsedUnits: 4 }), ['model diversity is not activated without material capability need']),

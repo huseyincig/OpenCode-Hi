@@ -1,15 +1,8 @@
 import { type ArtifactContract, type ArtifactPrivacyClass } from '../../contracts/artifact.js';
-import { type CompressionArtifact } from '../../contracts/compression-artifact.js';
-import type { ContextReferenceContract } from '../../contracts/context-reference.js';
 export declare class ContextArtifactStore {
     #private;
     readonly projectRoot?: string | undefined;
     constructor(projectRoot?: string | undefined);
-    addCompression(sources: ContextReferenceContract[], summary: string, options: {
-        consumerScope: string;
-        modelIdentity: string;
-        policyVersion?: string;
-    }): CompressionArtifact;
     addBinary(kind: string, summary: string, bytes: Uint8Array, options: {
         extension: string;
         mediaType: string;
@@ -17,7 +10,6 @@ export declare class ContextArtifactStore {
         privacyClass?: ArtifactPrivacyClass;
         consumerRefs?: string[];
     }): ArtifactContract;
-    getCompression(id: string): CompressionArtifact | undefined;
     add(kind: string, summary: string, content: string, sourceFiles?: string[], options?: {
         producer?: string;
         privacyClass?: ArtifactPrivacyClass;

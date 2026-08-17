@@ -5,7 +5,6 @@ import {tmpdir} from 'node:os'
 import {join,resolve,dirname} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {PlaywrightBrowserAdapter} from '../dist/opencode/playwright-browser-adapter.js'
-import {BrowserRuntime} from '../dist/runtime/browser/runtime.js'
 import {ContextArtifactStore} from '../dist/runtime/context/artifact-store.js'
 import {isBrowserObservationContract} from '../dist/contracts/browser-observation.js'
 import {durableArtifactBinaryPath} from '../dist/runtime/storage/ownership.js'
@@ -80,9 +79,9 @@ test('PROMPT B browser snapshot refreshes client-side route state and fails clos
 test('B3 screenshot bytes are retained by the existing canonical artifact owner before observation succeeds',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-browser-artifact-')),store=new ContextArtifactStore(root),pw=fakePlaywright()
   try{
-    const adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module,persist_screenshot:(bytes,c)=>{const a=store.addBinary('browser-screenshot',`screenshot ${c.task_id}`,bytes,{extension:'png',mediaType:'image/png',producer:'hi-browser-executor',consumerRefs:[`task:${c.task_id}`]});return`hi-artifact:${a.artifact_id}`}}),runtime=new BrowserRuntime(adapter)
-    await runtime.open(ctx('task_screen'),'http://127.0.0.1:3000/')
-    const shot=await runtime.screenshot(ctx('task_screen'))
+    const adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module,persist_screenshot:(bytes,c)=>{const a=store.addBinary('browser-screenshot',`screenshot ${c.task_id}`,bytes,{extension:'png',mediaType:'image/png',producer:'hi-browser-executor',consumerRefs:[`task:${c.task_id}`]});return`hi-artifact:${a.artifact_id}`}})
+    await adapter.open(ctx('task_screen'),'http://127.0.0.1:3000/')
+    const shot=await adapter.screenshot(ctx('task_screen'))
     assert.equal(shot.result,'OBSERVED');assert.ok(isBrowserObservationContract(shot));assert.match(shot.screenshot_artifact_ref,/^hi-artifact:a_[a-f0-9]{24}$/)
     const id=shot.screenshot_artifact_ref.slice('hi-artifact:'.length),manifest=store.get(id);assert.ok(manifest);const meta=JSON.parse(manifest.content)
     const binary=durableArtifactBinaryPath(root,'browser-screenshot',id,'png');assert.equal(existsSync(binary),true);assert.equal(readFileSync(binary).length,7);assert.equal(meta.byte_size,7);assert.match(meta.byte_sha256,/^[a-f0-9]{64}$/)

@@ -12,7 +12,7 @@ import { ExperimentalOpenCodeAdapter } from './experimental-adapter.js';
 import { syncHumanDecisionTransport } from '../runtime/human-decision/transport.js';
 export function createOpenCodeHooks(input) {
     const { state, host, services, projectRoot, packagedSkillsDir, projectAuthority, toolSurface, reconfigureToolSurface, eventController, instanceLease } = input;
-    const { store, background, humanDecisionTransport, persistence, tasks, teams, processRuntime, browserRuntime, eventSink } = services;
+    const { store, background, humanDecisionTransport, persistence, tasks, processRuntime, browserExecutor, eventSink } = services;
     const experimental = new ExperimentalOpenCodeAdapter(store, background);
     return {
         name: 'opencode-hi',
@@ -29,7 +29,6 @@ export function createOpenCodeHooks(input) {
             if (projection.agentProjection.collisions.length)
                 throw new Error(`OpenCode-Hi agent binding collision: ${projection.agentProjection.collisions.join(', ')}. Canonical Hi role names may be narrowed by host policy, but execution-semantic widening/overrides require a distinct agent namespace.`);
             opencodeConfig.hi = state.config;
-            services.scopedStores.skillCatalog.refresh(opencodeConfig);
             reconfigureToolSurface();
         },
         'chat.message': async (input, output) => { try {
@@ -41,7 +40,7 @@ export function createOpenCodeHooks(input) {
             if (!host.getModels().length)
                 void host.refreshRuntimeInventory('chat-message');
             await createChatMessageHook(store, async (sid, text) => { const m = store.get(sid); if (!m)
-                return; const teamsPaused = teams.adoptSemanticGeneration(m), workersPaused = await tasks.pauseForSemanticAssessment(m); appendLedger(m, 'semantic.execution-quarantined', { payload: { revision: m.identity.semantic_assessment.revision, workers: workersPaused, teams: teamsPaused, preview: text.slice(0, 180) } }); }, humanDecisionTransport)(input, output);
+                return; const workersPaused = await tasks.pauseForSemanticAssessment(m); appendLedger(m, 'semantic.execution-quarantined', { payload: { revision: m.identity.semantic_assessment.revision, workers: workersPaused, preview: text.slice(0, 180) } }); }, humanDecisionTransport)(input, output);
         }
         finally {
             for (const m of store.all())
@@ -77,10 +76,11 @@ export function createOpenCodeHooks(input) {
                 if (m.identity.status === 'active') {
                     store.stop(m.identity.session_id, 'plugin-dispose');
                     await processRuntime.stopMission(m);
-                    await teams.shutdownMission(m);
                     await tasks.cancelAll(m);
                 }
-            await browserRuntime.dispose();
+            const browserDisposable = browserExecutor;
+            if (browserDisposable.dispose)
+                await browserDisposable.dispose();
             persistence.markCleanShutdown(store.all());
         }
         finally {

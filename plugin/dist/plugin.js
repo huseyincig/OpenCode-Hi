@@ -31,7 +31,7 @@ export const HiPlugin = async (ctx) => {
     const services = createRuntimeServices({ ports: { nativeContext: { project: ctx.project, directory: ctx.directory, worktree: ctx.worktree }, childSession, hostCapabilities, process: processExecutor, workspace: workspaceExecutor, createBrowser: persist => new PlaywrightBrowserAdapter({ persist_screenshot: persist }) }, projectRoot, packageRoot, getConfig: () => state.config, getModels: host.getModels, getHostConfig: () => state.hostConfig });
     await services.workspaceRuntime.reconcileRestored(services.store.all());
     await services.processRuntime.reconcileRestored(services.store.all());
-    const browserHealth = await services.browserRuntime.health();
+    const browserHealth = await services.browserExecutor.health();
     browserAvailable = browserHealth.available;
     services.setBrowserAvailable(browserAvailable);
     refreshOwnedCapabilities();
@@ -39,7 +39,7 @@ export const HiPlugin = async (ctx) => {
     services.persistence.save(services.store.all());
     const pendingNativePermissions = new Map();
     const eventController = new RuntimeEventController({ state, host, services, projectAuthority, pendingNativePermissions, projectRoot });
-    const { toolSurface, reconfigure } = createHiToolSurface({ state, store: services.store, tasks: services.tasks, teams: services.teams, processRuntime: services.processRuntime, workspaceRuntime: services.workspaceRuntime, browserRuntime: services.browserRuntime, projectRoot, capabilities: host.capabilities, native: host.nativeSession, getModels: host.getModels, scopedStores: services.scopedStores });
+    const { toolSurface, reconfigure } = createHiToolSurface({ state, store: services.store, tasks: services.tasks, processRuntime: services.processRuntime, workspaceRuntime: services.workspaceRuntime, browserExecutor: services.browserExecutor, projectRoot, capabilities: host.capabilities, native: host.nativeSession, getModels: host.getModels, scopedStores: services.scopedStores });
     void host.log('info', 'OpenCode-Hi plugin initialized', { directory: ctx.directory, models: host.getModels().length, restored: services.store.all().length, uncleanShutdown: services.persistence.lastLoadReport.uncleanShutdown === true, capabilities: host.capabilities, browser: browserHealth });
     // Acquire only after initialization succeeds so a failed init cannot leave a stale process-global lease.
     const instanceLease = acquireHiRuntimeInstance(String(projectRoot), ctx.client);

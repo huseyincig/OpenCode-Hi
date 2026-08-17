@@ -92,7 +92,7 @@ test('restart before host creation reconciles pre-spawn reservation as NOT_START
 })
 
 
-test('process-ephemeral team projection resets to single without replacing durable task worker obligation or evidence identity',()=>{
+test('legacy team execution snapshot normalizes to scheduler-owned parallel mode without replacing durable task worker obligation or evidence identity',()=>{
   const source=persistedBusy(),task2=structuredClone(source.execution.tasks[0]),worker2=structuredClone(source.execution.workers[0])
   task2.id='team-task-2';task2.worker_id='team-worker-2';task2.objective='second team perspective'
   worker2.id='team-worker-2';worker2.task_id=task2.id;worker2.fingerprint='team-worker-2';worker2.session_id='child-team-2'
@@ -100,7 +100,7 @@ test('process-ephemeral team projection resets to single without replacing durab
   const taskIDs=source.execution.tasks.map(x=>x.id),workerIDs=source.execution.workers.map(x=>x.id),obligationIDs=source.execution.obligations.map(x=>x.id),evidenceIDs=source.execution.evidence.items.map(x=>x.id)
   const restored=new MissionStore();restored.restore([source],false)
   const m=restored.get('parent-1');assert.ok(m)
-  assert.equal(m.execution.execution_mode,'single')
+  assert.equal(m.execution.execution_mode,'parallel')
   assert.deepEqual(m.execution.tasks.map(x=>x.id),taskIDs)
   assert.deepEqual(m.execution.workers.map(x=>x.id),workerIDs)
   assert.deepEqual(m.execution.obligations.map(x=>x.id),obligationIDs)
@@ -108,9 +108,9 @@ test('process-ephemeral team projection resets to single without replacing durab
   assert.equal(m.execution.evidence.fresh,true)
   assert.ok(m.execution.workers.every(x=>x.status==='ready'&&x.restart_reconcile_pending===true))
   assert.ok(m.execution.tasks.every(x=>x.status==='waiting'&&x.result?.status==='NEEDS_CONTEXT'))
-  const reset=m.execution.ledger.find(x=>x.type==='team.projection-reset')
+  const reset=m.execution.ledger.find(x=>x.type==='execution-mode.compatibility-normalized')
   assert.ok(reset)
-  assert.equal(reset.payload.reason,'process-ephemeral-team-runtime')
+  assert.equal(reset.payload.from,'team');assert.equal(reset.payload.to,'parallel');assert.equal(reset.payload.reason,'scheduler-owned-topology')
   assert.deepEqual(reset.payload.durable_tasks,taskIDs)
   assert.deepEqual(reset.payload.durable_workers,workerIDs)
 })

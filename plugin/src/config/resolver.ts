@@ -32,7 +32,6 @@ export function resolveHiConfigWithReport(raw:unknown,projectRoot?:string):{conf
   if(fromProject&&fromProject.routing)notes.push(`project routing override merged from .opencode/hi/policy/routing.json (${Object.keys(fromProject.routing.roleModels??{}).length} roles)`)
   const hostRouting=isRecord(input.routing)?input.routing:{},projectRouting=isRecord(fromProject?.routing)?fromProject!.routing as unknown as Record<string,unknown>:{}
   const hostParallel=isRecord(input.parallel)?input.parallel:{},projectParallel=isRecord(fromProject?.parallel)?fromProject!.parallel as unknown as Record<string,unknown>:{}
-  const hostTeam=isRecord(input.teamMode)?input.teamMode:{},projectTeam=isRecord(fromProject?.teamMode)?fromProject!.teamMode as unknown as Record<string,unknown>:{}
   const compatibility=isRecord(input.compatibility)?input.compatibility:{}
   const hostExecution=isRecord(input.execution)?input.execution:{},projectExecution=isRecord(fromProject?.execution)?fromProject!.execution as unknown as Record<string,unknown>:{}
   const hostModels=isRecord(input.models)?input.models:{},projectModels=isRecord(fromProject?.models)?fromProject!.models as unknown as Record<string,unknown>:{}
@@ -72,11 +71,6 @@ export function resolveHiConfigWithReport(raw:unknown,projectRoot?:string):{conf
       max:boundedLayer(projectParallel.max,hostParallel.max,DEFAULT_HI_CONFIG.parallel.max,1,8),
       providers:{...limits(hostParallel.providers),...limits(projectParallel.providers)},
       models:{...limits(hostParallel.models),...limits(projectParallel.models)},
-    },
-    teamMode:{
-      enabled:booleanLayer(projectTeam.enabled,hostTeam.enabled,DEFAULT_HI_CONFIG.teamMode.enabled),
-      maxMembers:boundedLayer(projectTeam.maxMembers,hostTeam.maxMembers,DEFAULT_HI_CONFIG.teamMode.maxMembers,2,8),
-      maxWallMinutes:boundedLayer(projectTeam.maxWallMinutes,hostTeam.maxWallMinutes,DEFAULT_HI_CONFIG.teamMode.maxWallMinutes,1,240),
     },
     profile:{
       minimal:profileLayer(hostProfile.minimal,projectProfile.minimal,DEFAULT_HI_CONFIG.profile.minimal),

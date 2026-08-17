@@ -1,7 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {normalizeModelCapabilityProfile,reconcileModelExecutionIdentity} from '../dist/contracts/model.js'
-import {modelQuirks} from '../dist/runtime/routing/model-quirks.js'
 
 test('runtime model capability profile normalizes bounded host facts without inventing capability',()=>{
   const p=normalizeModelCapabilityProfile({id:'provider/model-x',provider:'provider',cost:1.5,quality:7,writeCapable:true,tags:['coding','coding'],variants:['high','low']})
@@ -13,7 +12,6 @@ test('runtime model capability profile normalizes bounded host facts without inv
 test('model capability profile rejects invalid numeric and quirk facts',()=>{
   assert.throws(()=>normalizeModelCapabilityProfile({id:'x',cost:-1}),/cost/)
   assert.throws(()=>normalizeModelCapabilityProfile({id:'x',expectedTurns:0}),/expectedTurns/)
-  assert.throws(()=>normalizeModelCapabilityProfile({id:'x',quirks:{explicitToolBoundaries:'yes'}}),/explicitToolBoundaries/)
 })
 
 test('model execution identity keeps requested selected projected observed and effective phases distinct',()=>{
@@ -44,13 +42,8 @@ test('host-default remains unconstrained while observed metadata is still record
   assert.equal(x.effective?.model,'provider/runtime')
 })
 
-test('model quirks prefer explicit capability metadata over technical model-id fallback',()=>{
-  const explicit=modelQuirks('provider/mini',{id:'provider/mini',quirks:{compactInstructionSensitive:false,explicitToolBoundaries:true}})
-  assert.equal(explicit.source,'capability-profile')
-  assert.equal(explicit.compactInstructionSensitive,false)
-  assert.equal(explicit.explicitToolBoundaries,true)
-  const fallback=modelQuirks('provider/mini')
-  assert.equal(fallback.source,'technical-model-id-fallback')
-  assert.equal(fallback.compactInstructionSensitive,true)
-  assert.equal(modelQuirks('provider/plain').source,'none')
+test('model capability profile does not create a Hi-owned model-quirk fact surface',()=>{
+  const p=normalizeModelCapabilityProfile({id:'provider/mini',quirks:{compactInstructionSensitive:true},quality:3})
+  assert.equal('quirks' in p,false)
+  assert.equal(p.id,'provider/mini')
 })

@@ -9,10 +9,7 @@ export interface SkillCandidate {
     enabled: boolean;
     orchestrationRisk: boolean;
     permission?: SkillPermission;
-}
-export interface SkillDiscoveryRoot {
-    path: string;
-    provider: SkillProvider;
+    canonicalForMethodology?: boolean;
 }
 export type SkillPreflightOutcome = 'allow' | 'ask' | 'deny' | 'disabled' | 'missing' | 'invalid' | 'incompatible' | 'resource-unavailable' | 'unknown-policy' | 'budget-exceeded' | 'composition-deferred';
 export interface SkillPreflightResult {
@@ -28,17 +25,11 @@ export interface SkillPlan {
     outcomes: SkillPreflightResult[];
     reason: string[];
 }
-export declare function parseSkillFrontmatter(text: string): Record<string, string>;
-export declare function configuredSkillPaths(hostConfig: Record<string, unknown>): string[];
-export declare function skillDiscoveryRoots(projectRoot: string, hiRoot?: string, extraPaths?: string[]): SkillDiscoveryRoot[];
-export declare function discoverSkills(projectRoot: string, hiRoot?: string, extraPaths?: string[]): SkillCandidate[];
+/**
+ * Narrow native-skill compatibility probe. It does not inventory or load the skill catalog.
+ * Only methodology names already selected by Hi policy are checked for canonical availability
+ * and same-name shadows across the OpenCode discovery roots. OpenCode owns actual discovery,
+ * permission enforcement, body loading and bundled resource access.
+ */
+export declare function methodologySkillCandidates(requestedNames: string[], projectRoot: string, hiRoot: string, hostConfig: Record<string, unknown>, catalog?: HiMethodologyCatalogEntry[]): SkillCandidate[];
 export declare function resolveSkillPlan(methodologyNeeds: string[], candidates: SkillCandidate[], permissionMap?: Record<string, SkillPermission>, skillToolEnabled?: boolean, role?: string, catalog?: HiMethodologyCatalogEntry[], availableResources?: ReadonlySet<string>): SkillPlan;
-export type SkillResourceKind = 'references' | 'scripts' | 'assets' | 'examples';
-export interface SkillResource {
-    name: string;
-    kind: SkillResourceKind;
-    relativePath: string;
-    absolutePath: string;
-}
-export declare function indexSkillResources(skill: SkillCandidate): SkillResource[];
-export declare function readSkillResource(skill: SkillCandidate, kind: SkillResourceKind, relativePath: string): string;

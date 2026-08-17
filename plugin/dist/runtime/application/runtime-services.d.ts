@@ -12,11 +12,9 @@ import { BackgroundRegistry } from '../background/registry.js';
 import { RuntimePersistence } from '../state/persistence.js';
 import { ConcurrencyScheduler } from '../scheduler/concurrency.js';
 import { TaskRuntime } from '../task/task-runtime.js';
-import { TeamRuntime } from '../team/team-runtime.js';
 import { ProcessRuntime } from '../process/runtime.js';
 import { WorkspaceRuntime } from '../workspace/runtime.js';
 import { ChatHumanDecisionTransport } from '../human-decision/transport.js';
-import { BrowserRuntime } from '../browser/runtime.js';
 export interface RuntimeServicePorts {
     nativeContext: NativeProjectContext;
     childSession: ChildSessionPort;
@@ -45,8 +43,6 @@ export declare function createRuntimeServices(input: {
     workspaceExecutor: WorkspaceExecutor;
     workspaceRuntime: WorkspaceRuntime;
     browserExecutor: BrowserExecutor;
-    browserRuntime: BrowserRuntime;
     setBrowserAvailable: (value: boolean) => void;
-    teams: TeamRuntime;
     scopedStores: import("./runtime-scoped-stores.js").RuntimeScopedStores;
 };

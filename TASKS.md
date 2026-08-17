@@ -1,60 +1,101 @@
 # OpenCode-Hi Active Task State
 
 **Project:** `/workspace/OpenCode-Hi`
-**Status:** ACTIVE — ROADMAP MILESTONE 7
+**Status:** ACTIVE — ROADMAP MILESTONE 8
 **Updated:** 2026-08-17
 **Global authority:** `/workspace/PROTOCOL.md`
 **Legacy project-policy layer:** `/workspace/OpenCode-Hi/PROTOCOL.md`
 **Roadmap:** `/workspace/OpenCode-Hi/ROADMAP.md`
+**Benchmark design:** `/workspace/Reference/upstream-audit/benchmark-plan.md`
 
 ## Active Task
 
-### Milestone 7 — Primitive Scope-Down
+### Milestone 8 — Comparative Product Benchmark + Final Cutovers
 
-Delete or thin machinery that duplicates stronger native/ecosystem capabilities, retaining only Hi-specific orchestration semantics with measured justification.
+Decide which reset architecture components are measurably better. Benchmark results, not architecture aesthetics or feature count, determine final subsystem retention/simplification.
 
 ## Verified Baseline
 
-Milestone 6 is complete; see `agent-archive/2026-08-17-host-plugin-composition-hardening.md`. Hi no longer owns host-global primary/depth configuration, V1 config mutation is isolated behind a composition adapter, V2/mixed shapes fail closed without V1 backfill, host/user permission restrictions are monotonic, external primaries/plugins/skills coexist, and transform collisions are observable/idempotent. Full plugin suite passed 932/932 with architecture lint 22/22.
+Milestone 7 is complete; see `agent-archive/2026-08-17-primitive-scope-down.md`. Duplicate primitive ownership was removed/thinned across model metadata, TeamRuntime, generic ProjectIntelligence, generic context/memory, skill loading and browser runtime. The scoped non-generated diff removed a net 1024 lines; final full plugin suite passed 893/893 and architecture lint passed 22/22.
 
-## Scope
+## First-Wave Baselines
 
-1. Inventory the current implementation/state/test surface for six candidate primitive classes: skill filesystem discovery/loading; generic context governor/compaction; project-intelligence memory; browser runtime; TeamRuntime; model quirks/duplicate model metadata.
-2. For each candidate classify current code as `REMOVE`, `THIN`, `RETAIN-HI-SEMANTIC`, or `ADAPTER-ONLY` using current OpenCode/native/ecosystem capability evidence and existing product measurements/tests.
-3. Skill path: prefer native inventory/loading; retain only shortlist/index/admission logic that measurably reduces prompt/context surface or enforces Hi methodology contracts.
-4. Context path: remove generic memory/compaction behavior that duplicates host/external context systems; retain ExecutionUnit context selection/protection/budget semantics needed by Hi control decisions.
-5. Project intelligence: retain only orchestration-specific empirical/procedure learning with bounded confidence/provenance; do not grow a generic memory product.
-6. Browser: keep backend-neutral capability/verification semantics; remove any generic browser-engine ownership when Playwright/native/external execution can satisfy the host port.
-7. TeamRuntime: absorb useful topology/role projection into WorkGraph/scheduler and remove separate durable/state ownership if no independently measured semantics remain.
-8. Model quirks/catalog: remove factual folklore/duplicate metadata when live runtime or models.dev/OpenCode metadata exists; retain only bounded empirically observed behavior signals with provenance.
+Required where reproducible:
 
-## Acceptance Criteria
+1. vanilla OpenCode exact supported runtime;
+2. a mechanically reproducible pre-reset/current Hi baseline commit;
+3. current new Hi control plane.
 
-- source/state surface is measurably simpler for every removed/thinned primitive;
-- no covered behavior regression;
-- retained layers each have a named Hi-specific semantic and direct test/benchmark justification;
-- no second skill loader, generic memory product, generic browser engine, duplicate team scheduler or duplicate model catalog remains without evidence;
-- native/external capability failures remain truthful and fail closed through adapters;
-- full relevant plugin suite, TypeScript build and architecture lint pass after cutovers.
+Competitor baselines (OMO/Swarm/Ensemble) are optional per scenario only when current, reproducibly installable and semantically comparable. Do not force competitors into unrelated task classes.
+
+## Scenario Classes
+
+Use the benchmark plan. First wave must cover deterministic adversarial/control-plane cases before expensive production episodes:
+
+- trivial localized work / over-orchestration;
+- dependency/fan-in and independent same-model parallel work;
+- mutable-surface conflict;
+- misleading DONE / incomplete or stale evidence;
+- mutation-after-verification freshness;
+- provider/child failure and recovery;
+- restart/stale callback/duplicate dispatch;
+- authority/ambiguous external-action replay;
+- context-heavy bounded investigation;
+- plugin/config coexistence preservation.
+
+Then add pinned real production-commit tasks for external validity when the runtime/baseline harness is mechanically reproducible.
+
+## Primary Metrics
+
+Correctness first:
+
+- deterministic acceptance/check success;
+- evidence completeness/freshness;
+- false completion;
+- duplicate/stale dispatch acceptance;
+- wrong-task/wrong-attempt evidence acceptance;
+- recovery correctness;
+- ambiguous side-effect replay;
+- deadlock/stall/orphan/cleanup failures.
+
+Efficiency second, only with truthful provenance:
+
+- exact input/output/reasoning/cache tokens when host supplies them;
+- provider-billed exact cost only when actually supplied;
+- OpenCode-derived cost separately labeled;
+- wall time, model/tool calls, workers, retries/replans/polling;
+- context transferred and mechanically identifiable redundant work.
+
+## Acceptance / Final Cutover Rule
+
+- no deterministic correctness regression on covered task classes;
+- zero known false completion in exact adversarial completion/evidence fixtures;
+- zero duplicate side-effect execution in exact-attempt/restart fixtures;
+- measurable reduction in unnecessary execution on relevant trivial/single-worker or recovery cases;
+- routing/context/skill/scheduler optimizations survive only if benefit is demonstrated or correctness requires them;
+- remove/simplify any subsystem that does not improve correctness, predictability or measured execution efficiency for its relevant task class.
 
 ## Constraints
 
 - Preserve unrelated user-owned dirty files exactly.
 - Do not reset/clean the working tree.
-- Do not touch release/publication validation artifacts.
+- Do not touch release/publication validation artifacts unless a benchmark specifically requires a new isolated receipt outside those user-owned files.
 - No push/tag/release/npm publication.
-- Do not re-open broad ecosystem discovery; research only a candidate whose current ownership decision depends on changed/uncertain external capability.
-- Do not delete functionality merely to reduce LOC; preserve Hi-owned semantics proven useful by tests/benchmarks.
-- Keep host/API-specific behavior behind adapters; do not move OpenCode shapes into Hi Core.
+- Existing local performance/resource scripts are regression guards, not comparative product proof.
+- Do not fabricate exact token/cost values; estimates remain separately labeled.
+- Do not claim competitor superiority/inferiority without reproducible comparable episodes.
+- Do not start broad ecosystem discovery unless a benchmark exposes a concrete unexplained gap.
 
 ## Required Verification
 
-- before/after primitive ownership inventory with source/state/test counts;
-- targeted parity tests for each cutover;
-- architecture lint and TypeScript build after each meaningful deletion/thinning;
-- full plugin suite after the milestone cutovers;
-- scoped diff inspection and a short archive record naming every retained/deleted semantic.
+- benchmark harness/receipt schema tests;
+- deterministic adversarial first-wave episodes with exact baseline/system identity;
+- baseline reproducibility proof before any comparative claim;
+- confidence/variance preservation for repeated real episodes;
+- architecture ablation receipts for retained Hi subsystems where applicable;
+- full plugin suite/build/architecture lint after any final cutover;
+- scoped diff inspection.
 
 ## Exact Next Action
 
-Mechanically inventory the six candidate primitive classes using current source, durable state contracts and tests. For each, list exact files, runtime/state owners, direct callers and behavioral proof tests. Compare against the existing upstream audit/ownership matrix and current host capability evidence. Produce a compact decision table before editing; then begin with the lowest-risk/highest-duplication candidate rather than performing a broad rewrite.
+Inspect the current benchmark/telemetry harness, `/workspace/Reference/upstream-audit/benchmark-plan.md`, available OpenCode runtime binaries/SDK, Git history/checkpoints and any existing benchmark receipts. Establish which vanilla OpenCode and pre-reset Hi baselines are mechanically runnable on this host. Define and test a strict comparative episode/receipt schema before running or claiming comparisons. Keep deterministic in-process policy simulations explicitly separate from real host/product episodes.

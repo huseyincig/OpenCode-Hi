@@ -56,7 +56,7 @@ guard('HI003','CONFIG_EXECUTOR_MISSING',()=>{
   const options=validateConfigOptionCatalog(structuredClone(HI_CONFIG_OPTIONS))
   const catalogPaths=[...new Set(options.map(x=>x.path))].sort(), defaultPaths=leafPaths(structuredClone(HI_CONFIG_DEFAULTS)).sort()
   assert(JSON.stringify(catalogPaths)===JSON.stringify(defaultPaths),'HiConfig leaf/default catalog coverage drift')
-  assert(options.filter(x=>x.classification==='runtime').length===29,'runtime option inventory must remain explicit (29)')
+  assert(options.filter(x=>x.classification==='runtime').length===26,'runtime option inventory must remain explicit (26)')
   assert(options.filter(x=>x.classification==='diagnostic').length===2,'diagnostic option inventory must remain explicit (2)')
   assert(options.filter(x=>x.classification==='schema-marker').length===1,'schema marker inventory must remain explicit (1)')
   for(const x of options){
@@ -151,7 +151,7 @@ guard('HI016','LEGACY_CURRENT_ONLY_VIOLATION',()=>{
 
 guard('HI017','BEHAVIORAL_PROOF_MISSING',()=>{
   for(const [id,[,files]] of Object.entries(proofLinks))for(const file of files)assert(testExists(file),`${id}: missing ${file}`)
-  for(const file of ['config-option-contract.test.mjs','config-executable-effect.test.mjs','permission-profile-contract.test.mjs','role-contract-catalog.test.mjs','role-skill-permission-sync.test.mjs','host-capability-contract.test.mjs','storage-ownership-contract.test.mjs','agent-binding-contract.test.mjs','methodology-host-capability.test.mjs','team-contract.test.mjs','team-mode-hardening.test.mjs'])assert(testExists(file),`missing migrated-class acceptance ${file}`)
+  for(const file of ['config-option-contract.test.mjs','config-executable-effect.test.mjs','permission-profile-contract.test.mjs','role-contract-catalog.test.mjs','role-skill-permission-sync.test.mjs','host-capability-contract.test.mjs','storage-ownership-contract.test.mjs','agent-binding-contract.test.mjs','methodology-host-capability.test.mjs'])assert(testExists(file),`missing migrated-class acceptance ${file}`)
 })
 
 guard('HI021','EXECUTION_SURFACE_PERMISSION_DRIFT',()=>{

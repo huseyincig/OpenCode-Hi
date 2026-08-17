@@ -66,7 +66,7 @@ export class TaskResultReconciler{
   }
   async noteNativeWriteSet(m:MissionState,workerID:string,files:string[],source='session-diff',stateHash?:string):Promise<void>{
     const worker=m.execution.workers.find(w=>w.id===workerID);if(!worker||!files.length)return
-    worker.write_set=[...new Set([...(worker.write_set??[]),...files])].slice(0,300);if(stateHash)worker.native_state_hash=stateHash;markMutation(m,files,source);this.scopedStores.projectIntelligence.invalidateChanged(files);this.scopedStores.contextArtifacts.invalidateChanged(files);this.scopedStores.skillCatalog.invalidateChanged(files);if(isHiReadOnlyChildRole(worker.role))return
+    worker.write_set=[...new Set([...(worker.write_set??[]),...files])].slice(0,300);if(stateHash)worker.native_state_hash=stateHash;markMutation(m,files,source);this.scopedStores.contextArtifacts.invalidateChanged(files);if(isHiReadOnlyChildRole(worker.role))return
     for(const other of m.execution.workers){
       if(other.id===worker.id||isHiReadOnlyChildRole(other.role)||!(other.write_set??[]).length||!['starting','busy'].includes(other.status)||!['starting','busy'].includes(worker.status))continue
       const overlap=(worker.write_set??[]).filter(x=>(other.write_set??[]).includes(x));if(!overlap.length)continue

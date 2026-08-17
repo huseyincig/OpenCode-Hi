@@ -11,7 +11,6 @@ import { DEFAULT_CONTEXT_BUDGET } from '../dist/runtime/context/budget.js'
 import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import {ProjectIntelligenceStore} from '../dist/runtime/project-intelligence/store.js'
 import {ContextArtifactStore} from '../dist/runtime/context/artifact-store.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 
@@ -94,31 +93,22 @@ test('unknown task context artifact id fails closed instead of widening context'
 })
 
 
-test('scoped TypeScript semantic context and fresh project intelligence reach the child handoff',async()=>{
+test('scoped TypeScript semantic context reaches the child handoff without a generic project-memory injection layer',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-runtime-context-'))
   try{
     mkdirSync(join(root,'src'),{recursive:true})
     writeFileSync(join(root,'src','a.ts'),"export interface PublicContract { id:string }\nconst noise='do-not-inject'\n")
-    const pi=new ProjectIntelligenceStore(root)
-    pi.upsert({id:'p-relevant',statement:'PublicContract IDs are stable project identifiers',source_refs:[{ref:'file:src/a.ts',hash:'a'.repeat(64)}],confidence:.9,freshness:'FRESH',lifecycle:'ACTIVE',consumer_domains:['task-context'],updated_at:1})
-    pi.upsert({id:'p-unrelated',statement:'Unrelated subsystem rule',source_refs:[{ref:'file:src/other.ts',hash:'b'.repeat(64)}],confidence:.99,freshness:'FRESH',lifecycle:'ACTIVE',consumer_domains:['task-context'],updated_at:2})
     const prompts=[]
-    const client={session:{create:async()=>({data:{id:'child-semantic-pi'}}),promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async()=>({data:{}})}}
-    const store=new MissionStore(root),m=startAssessedMission(store,'parent-semantic-pi','opaque TypeScript task',{likely_targets:['src/a.ts']})
+    const client={session:{create:async()=>({data:{id:'child-semantic'}}),promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async()=>({data:{}})}}
+    const store=new MissionStore(root),m=startAssessedMission(store,'parent-semantic','opaque TypeScript task',{likely_targets:['src/a.ts']})
     const rt=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2})),root,process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
     const started=await rt.start(m,{objective:'small fix',role:'coder',category:'quick',scope:['src/a.ts']})
     const text=prompts[0].body.parts[0].text
     const semanticEvent=m.execution.ledger.find(e=>e.type==='context.semantic-selected'&&e.task_id===started.task_id)
     assert.ok(semanticEvent);assert.equal(semanticEvent.payload.items[0].source_ref,'file:src/a.ts');assert.equal(typeof semanticEvent.payload.items[0].source_hash,'string')
-    assert.match(text,/semantic-typescript:src\/a\.ts/)
-    assert.match(text,/interface PublicContract/)
-    assert.match(text,/project-intelligence:p-relevant:PublicContract IDs are stable project identifiers/)
-    assert.doesNotMatch(text,/p-unrelated/);const piEvent=m.execution.ledger.find(e=>e.type==='context.project-intelligence-selected'&&e.task_id===started.task_id);assert.ok(piEvent);assert.equal(piEvent.payload.consumer,'task-context');assert.deepEqual(piEvent.payload.items.map(x=>x.id),['p-relevant'])
-    await rt.noteNativeWriteSet(m,started.worker_id,['src/a.ts'])
-    assert.equal(new ProjectIntelligenceStore(root).get('p-relevant').freshness,'POTENTIALLY_STALE')
+    assert.match(text,/semantic-typescript:src\/a\.ts/);assert.match(text,/interface PublicContract/);assert.doesNotMatch(text,/project-intelligence:/)
   }finally{rmSync(root,{recursive:true,force:true})}
 })
-
 
 test('fresh durable context artifact content is loaded only while source-bound freshness holds',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-durable-context-'))

@@ -323,48 +323,6 @@ export declare const HI_CONFIG_OPTIONS: readonly [{
     readonly runtimeConsumer: "runtime/scheduler/ConcurrencyScheduler.canStart";
     readonly executorEffect: "caps concurrent workers per model";
 }, {
-    readonly id: "config.team-enabled";
-    readonly path: "teamMode.enabled";
-    readonly classification: "runtime";
-    readonly type: "boolean";
-    readonly defaultValue: false;
-    readonly owner: "hi-config";
-    readonly sourceSurfaces: readonly ["host-hi-config", "project-routing-policy"];
-    readonly precedenceOrder: readonly ["default", "host-hi-config", "project-routing-policy"];
-    readonly validator: "boolean";
-    readonly safetySemantics: "constraint";
-    readonly behavioralAcceptanceRefs: readonly ["project-routing-config.test.mjs"];
-    readonly runtimeConsumer: "plugin tool-surface gate + runtime/team/TeamRuntime";
-    readonly executorEffect: "enables Team Mode tools only when host worker-runtime is supported and permits team creation";
-}, {
-    readonly id: "config.team-max-members";
-    readonly path: "teamMode.maxMembers";
-    readonly classification: "runtime";
-    readonly type: "integer";
-    readonly defaultValue: 4;
-    readonly owner: "hi-config";
-    readonly sourceSurfaces: readonly ["host-hi-config", "project-routing-policy"];
-    readonly precedenceOrder: readonly ["default", "host-hi-config", "project-routing-policy"];
-    readonly validator: "bounded-integer:2..8";
-    readonly safetySemantics: "capacity";
-    readonly behavioralAcceptanceRefs: readonly ["team-mode-hardening.test.mjs"];
-    readonly runtimeConsumer: "runtime/team/TeamRuntime.create/addMember";
-    readonly executorEffect: "caps distinct Team Mode members";
-}, {
-    readonly id: "config.team-max-wall-minutes";
-    readonly path: "teamMode.maxWallMinutes";
-    readonly classification: "runtime";
-    readonly type: "integer";
-    readonly defaultValue: 45;
-    readonly owner: "hi-config";
-    readonly sourceSurfaces: readonly ["host-hi-config", "project-routing-policy"];
-    readonly precedenceOrder: readonly ["default", "host-hi-config", "project-routing-policy"];
-    readonly validator: "bounded-integer:1..240";
-    readonly safetySemantics: "capacity";
-    readonly behavioralAcceptanceRefs: readonly ["team-mode-hardening.test.mjs"];
-    readonly runtimeConsumer: "runtime/team/TeamRuntime.create/expireMission";
-    readonly executorEffect: "sets team expiry deadline and terminal expiration gate";
-}, {
     readonly id: "config.profile-minimal-specialist-threshold";
     readonly path: "profile.minimal.specialistThreshold";
     readonly classification: "runtime";
@@ -482,11 +440,6 @@ export declare const HI_CONFIG_DEFAULTS: {
         readonly max: 3;
         readonly providers: {};
         readonly models: {};
-    };
-    readonly teamMode: {
-        readonly enabled: false;
-        readonly maxMembers: 4;
-        readonly maxWallMinutes: 45;
     };
     readonly profile: {
         readonly minimal: {

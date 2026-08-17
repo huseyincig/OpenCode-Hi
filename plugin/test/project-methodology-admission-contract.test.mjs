@@ -7,7 +7,7 @@ import {tmpdir} from 'node:os'
 import {discoverProjectMethodologyPolicies} from '../dist/runtime/methodology/project-policy.js'
 import {methodologyCatalog} from '../dist/runtime/methodology/catalog.js'
 import {applyAdmittedProjectMethodologyPermissions} from '../dist/runtime/methodology/host-permissions.js'
-import {discoverSkills,resolveSkillPlan} from '../dist/runtime/skills/registry.js'
+import {methodologySkillCandidates,resolveSkillPlan} from '../dist/runtime/skills/registry.js'
 import {PACKAGED_HI_AGENTS} from '../dist/generated/agent-config.js'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
@@ -78,7 +78,7 @@ test('explicit native deny is preserved even for an admitted compatible project 
 test('admitted project methodology reaches native lazy selection as project provider',()=>{
   const f=fixture();try{
     const config={};projectHiOpenCodeAgents(config,{coder:PACKAGED_HI_AGENTS.coder});applyAdmittedProjectMethodologyPermissions(config,f.root)
-    const candidates=discoverSkills(f.root,hiRoot),catalog=methodologyCatalog(f.root)
+    const catalog=methodologyCatalog(f.root),candidates=methodologySkillCandidates([f.name],f.root,hiRoot,{},catalog)
     const plan=resolveSkillPlan([f.name],candidates,config.agent.coder.permission.skill,true,'coder',catalog)
     assert.deepEqual(plan.selected.map(x=>[x.name,x.provider]),[[f.name,'project']])
   }finally{rmSync(f.root,{recursive:true,force:true})}

@@ -1,6 +1,5 @@
 import { ContractValidationError, assertNonEmptyString, assertRecord } from './common.js'
 
-export interface ModelQuirkHints { compactInstructionSensitive?:boolean; avoidLongNestedPlans?:boolean; explicitToolBoundaries?:boolean }
 
 export interface ModelCapabilityProfile {
   id:string
@@ -12,7 +11,6 @@ export interface ModelCapabilityProfile {
   expectedTurns?:number
   contextOverhead?:number
   variants?:string[]
-  quirks?:ModelQuirkHints
   source?:'runtime-inventory'|'configured'|'synthetic-host-default'
 }
 
@@ -22,7 +20,6 @@ export interface NormalizedModelCapabilityProfile extends ModelCapabilityProfile
   writeCapable:boolean
   tags:string[]
   variants:string[]
-  quirks?:ModelQuirkHints
   source:'runtime-inventory'|'configured'|'synthetic-host-default'
 }
 
@@ -63,8 +60,6 @@ export function normalizeModelCapabilityProfile(value:unknown,source:NormalizedM
   if(typeof writeCapable!=='boolean')throw new ContractValidationError(`${field}.writeCapable`,'must be boolean')
   const expectedTurns=positiveOptional(r.expectedTurns,`${field}.expectedTurns`)
   const contextOverhead=positiveOptional(r.contextOverhead,`${field}.contextOverhead`)
-  let quirks:ModelQuirkHints|undefined
-  if(r.quirks!==undefined){const q=assertRecord(r.quirks,`${field}.quirks`);quirks={};for(const key of ['compactInstructionSensitive','avoidLongNestedPlans','explicitToolBoundaries'] as const){const value=q[key];if(value!==undefined&&typeof value!=='boolean')throw new ContractValidationError(`${field}.quirks.${key}`,'must be boolean');if(typeof value==='boolean')quirks[key]=value}}
   return{
     id,
     ...(provider?{provider}:{}),
@@ -75,7 +70,6 @@ export function normalizeModelCapabilityProfile(value:unknown,source:NormalizedM
     ...(expectedTurns===undefined?{}:{expectedTurns}),
     ...(contextOverhead===undefined?{}:{contextOverhead}),
     variants:stringList(r.variants,`${field}.variants`),
-    ...(quirks?{quirks}:{}),
     source,
   }
 }

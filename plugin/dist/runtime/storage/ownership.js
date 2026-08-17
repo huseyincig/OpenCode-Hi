@@ -7,7 +7,6 @@ function safeSegment(value) {
 }
 export function hiProjectRoot(projectRoot) { return join(resolve(projectRoot), '.opencode', 'hi'); }
 export function projectPolicyPath(projectRoot, name) { return join(hiProjectRoot(projectRoot), 'policy', `${safeSegment(name)}.json`); }
-export function projectIntelligencePath(projectRoot, id) { return join(hiProjectRoot(projectRoot), 'project-intelligence', 'patterns', `${safeSegment(id)}.json`); }
 export function projectMethodologyCandidatePath(projectRoot, id) { return join(hiProjectRoot(projectRoot), 'project-intelligence', 'methodology-candidates', `${safeSegment(id)}.json`); }
 export function durableArtifactPath(projectRoot, kind, id) { return join(hiProjectRoot(projectRoot), 'artifacts', safeSegment(kind), `${safeSegment(id)}.json`); }
 export function durableArtifactBinaryPath(projectRoot, kind, id, extension) { return join(hiProjectRoot(projectRoot), 'artifacts', safeSegment(kind), `${safeSegment(id)}.${safeSegment(extension).replace(/^\.+/, '')}`); }

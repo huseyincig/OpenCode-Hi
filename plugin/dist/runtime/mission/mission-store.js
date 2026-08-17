@@ -255,10 +255,10 @@ export class MissionStore {
         m.continuation.last_continuation_failure_at = undefined;
         m.continuation.suppress_until = undefined;
         if (['active', 'waiting-user'].includes(m.identity.status)) {
-            const restoredTeam = m.execution.execution_mode === 'team';
-            if (restoredTeam) {
-                m.execution.execution_mode = 'single';
-                appendLedger(m, 'team.projection-reset', { payload: { reason: 'process-ephemeral-team-runtime', durable_tasks: m.execution.tasks.map(t => t.id), durable_workers: m.execution.workers.map(w => w.id), generation: m.continuation.generation } });
+            const legacyTeam = m.execution.execution_mode === 'team';
+            if (legacyTeam) {
+                m.execution.execution_mode = 'parallel';
+                appendLedger(m, 'execution-mode.compatibility-normalized', { payload: { from: 'team', to: 'parallel', reason: 'scheduler-owned-topology', durable_tasks: m.execution.tasks.map(t => t.id), durable_workers: m.execution.workers.map(w => w.id), generation: m.continuation.generation } });
             }
             const now = Date.now();
             for (const w of m.execution.workers) {
@@ -326,7 +326,7 @@ export class MissionStore {
         m.identity.updated_at = Date.now();
         this.syncProgressBaseline(m);
         this.#bySession.set(m.identity.session_id, m);
-        appendLedger(m, 'mission.restored', { payload: { status: m.identity.status, recovery: uncleanShutdown ? 'unclean-shutdown' : 'normal-restart', generation: m.continuation.generation, team_runtime: 'ephemeral-reset-to-single-if-needed' } });
+        appendLedger(m, 'mission.restored', { payload: { status: m.identity.status, recovery: uncleanShutdown ? 'unclean-shutdown' : 'normal-restart', generation: m.continuation.generation, legacy_team_mode: 'normalized-to-parallel-if-needed' } });
         if (uncleanShutdown)
             appendLedger(m, 'runtime.crash-recovery', { payload: { action: 'ephemeral-workers-reconciled' } });
     } }

@@ -32,6 +32,7 @@ export declare class TaskRuntime {
     private registry;
     private scheduler;
     private projectRoot;
+    private readonly hiRoot;
     private getConfig;
     private getModels;
     private getHostConfig;

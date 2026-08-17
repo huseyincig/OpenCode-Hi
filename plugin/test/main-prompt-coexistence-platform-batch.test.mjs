@@ -7,7 +7,6 @@ import {fileURLToPath} from 'node:url'
 import HiPlugin from '../dist/plugin.js'
 import { assessPluginMission } from './helpers/semantic.mjs'
 import {collectRepoContext} from '../dist/runtime/intent/repo-context.js'
-import {configuredSkillPaths,discoverSkills} from '../dist/runtime/skills/registry.js'
 import {runtimeStatePath} from '../dist/runtime/storage/locations.js'
 
 const repoRoot=resolve(dirname(fileURLToPath(import.meta.url)),'../..')
@@ -23,12 +22,12 @@ test('native project context is worktree-first and plugin state/config persist i
 
 test('Hi config hook registers packaged native skill path without depending on another plugin',async()=>{
   const root=temp('hi-native-skills-')
-  try{const cfg={plugin:['opencode-hi']};const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config(cfg);const paths=configuredSkillPaths(cfg);assert.ok(paths.some(x=>x.endsWith('/skills')||x.endsWith('\\skills')));const found=discoverSkills(root,undefined,paths);assert.ok(found.some(x=>x.name==='hi-test-driven-development'));assert.ok(!('hi_superpowers_status' in hooks.tool));await hooks.dispose?.()}finally{rmSync(root,{recursive:true,force:true})}
+  try{const cfg={plugin:['opencode-hi']};const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config(cfg);const paths=cfg.skills?.paths??[];assert.ok(paths.some(x=>x.endsWith('/skills')||x.endsWith('\\skills')),'Hi packaged skill root is projected for native OpenCode discovery');assert.ok(!('hi_superpowers_status' in hooks.tool));await hooks.dispose?.()}finally{rmSync(root,{recursive:true,force:true})}
 })
 
 test('personal/project skill paths coexist without changing Hi-native provider ownership',async()=>{
   const root=temp('hi-skill-coexist-'),extra=join(root,'external-skills')
-  try{writeSkill(extra,'project-method');const cfg={skills:{paths:[extra]}};const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config(cfg);const found=discoverSkills(root,repoRoot,configuredSkillPaths(cfg));assert.equal(found.find(x=>x.name==='project-method')?.provider,'personal');assert.ok(found.some(x=>x.name==='hi-source-driven-development'&&x.provider==='hi'));await hooks.dispose?.()}finally{rmSync(root,{recursive:true,force:true})}
+  try{writeSkill(extra,'project-method');const cfg={skills:{paths:[extra]}};const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config(cfg);assert.ok(cfg.skills.paths.includes(extra),'external native skill path is preserved');assert.ok(cfg.skills.paths.some(x=>x===join(repoRoot,'skills')),'Hi packaged path is appended without indexing the external skill');await hooks.dispose?.()}finally{rmSync(root,{recursive:true,force:true})}
 })
 
 test('default plugin surface does not invent MCP runtime and optional Team tools stay unregistered when disabled',async()=>{

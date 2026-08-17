@@ -67,8 +67,8 @@
       "control": "Resource/provenance/archive paths are normalized and traversal/symlink escape is rejected.",
       "proof_tests": [
         {
-          "file": "plugin/test/hi-acceptance-evolution.test.mjs",
-          "contains": "skill resource API rejects traversal"
+          "file": "plugin/test/prompt-b-skills-methodology-security-hostile.test.mjs",
+          "contains": "requested methodology preflight rejects a same-name project skill symlink escaping its native discovery root"
         },
         {
           "file": "plugin/test/contract-primitives.test.mjs",
@@ -165,16 +165,16 @@
     {
       "id": "Q3-ADV-010",
       "threat": "pi-poisoning",
-      "owner": "ProjectIntelligence contract/store",
-      "control": "PI requires provenance/freshness/consumer eligibility, becomes stale on source drift, and never converts into Evidence.",
+      "owner": "ProjectMethodologyLearning/admission boundary",
+      "control": "Generic ProjectIntelligence memory was removed; retained project methodology learning requires bounded repeated evidence, READY candidate state, hash-bound provenance, compatible native permission and fresh re-admission after change.",
       "proof_tests": [
         {
-          "file": "plugin/test/project-intelligence-contract.test.mjs",
-          "contains": "Project Intelligence is excluded from task context when stale, retired, unrelated or consumer-ineligible"
+          "file": "plugin/test/project-methodology-admission-contract.test.mjs",
+          "contains": "project-learning provenance without a READY repeated-evidence candidate is not admitted"
         },
         {
-          "file": "plugin/test/project-intelligence-contract.test.mjs",
-          "contains": "source hash drift invalidates Project Intelligence without converting it into Evidence"
+          "file": "plugin/test/project-methodology-admission-contract.test.mjs",
+          "contains": "project methodology update requires fresh provenance hash before re-admission"
         }
       ],
       "evidence": []

@@ -121,18 +121,6 @@ export function loadProjectRoutingConfig(projectRoot) {
         if (Object.keys(x).length)
             out.parallel = x;
     }
-    if (raw.teamMode && typeof raw.teamMode === 'object' && !Array.isArray(raw.teamMode)) {
-        const x = {};
-        if (typeof raw.teamMode.enabled === 'boolean')
-            x.enabled = raw.teamMode.enabled;
-        const maxMembers = bounded(raw.teamMode.maxMembers, 2, 8), maxWallMinutes = bounded(raw.teamMode.maxWallMinutes, 1, 240);
-        if (maxMembers !== undefined)
-            x.maxMembers = maxMembers;
-        if (maxWallMinutes !== undefined)
-            x.maxWallMinutes = maxWallMinutes;
-        if (Object.keys(x).length)
-            out.teamMode = x;
-    }
     if (raw.profile && typeof raw.profile === 'object' && !Array.isArray(raw.profile)) {
         const profiles = {};
         for (const name of ['minimal', 'balanced', 'thorough']) {

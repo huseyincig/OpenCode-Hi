@@ -1,8 +1,3 @@
-export interface ModelQuirkHints {
-    compactInstructionSensitive?: boolean;
-    avoidLongNestedPlans?: boolean;
-    explicitToolBoundaries?: boolean;
-}
 export interface ModelCapabilityProfile {
     id: string;
     provider?: string;
@@ -13,7 +8,6 @@ export interface ModelCapabilityProfile {
     expectedTurns?: number;
     contextOverhead?: number;
     variants?: string[];
-    quirks?: ModelQuirkHints;
     source?: 'runtime-inventory' | 'configured' | 'synthetic-host-default';
 }
 export interface NormalizedModelCapabilityProfile extends ModelCapabilityProfile {
@@ -22,7 +16,6 @@ export interface NormalizedModelCapabilityProfile extends ModelCapabilityProfile
     writeCapable: boolean;
     tags: string[];
     variants: string[];
-    quirks?: ModelQuirkHints;
     source: 'runtime-inventory' | 'configured' | 'synthetic-host-default';
 }
 export interface ModelIdentityRef {

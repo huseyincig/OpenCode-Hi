@@ -29,18 +29,6 @@ export function normalizeModelCapabilityProfile(value, source = 'runtime-invento
         throw new ContractValidationError(`${field}.writeCapable`, 'must be boolean');
     const expectedTurns = positiveOptional(r.expectedTurns, `${field}.expectedTurns`);
     const contextOverhead = positiveOptional(r.contextOverhead, `${field}.contextOverhead`);
-    let quirks;
-    if (r.quirks !== undefined) {
-        const q = assertRecord(r.quirks, `${field}.quirks`);
-        quirks = {};
-        for (const key of ['compactInstructionSensitive', 'avoidLongNestedPlans', 'explicitToolBoundaries']) {
-            const value = q[key];
-            if (value !== undefined && typeof value !== 'boolean')
-                throw new ContractValidationError(`${field}.quirks.${key}`, 'must be boolean');
-            if (typeof value === 'boolean')
-                quirks[key] = value;
-        }
-    }
     return {
         id,
         ...(provider ? { provider } : {}),
@@ -51,7 +39,6 @@ export function normalizeModelCapabilityProfile(value, source = 'runtime-invento
         ...(expectedTurns === undefined ? {} : { expectedTurns }),
         ...(contextOverhead === undefined ? {} : { contextOverhead }),
         variants: stringList(r.variants, `${field}.variants`),
-        ...(quirks ? { quirks } : {}),
         source,
     };
 }

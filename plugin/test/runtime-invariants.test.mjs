@@ -143,21 +143,6 @@ test('Gap #13: provider failure is isolated from stagnation accounting', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Gap #14 — Subagent depth guard
-// ---------------------------------------------------------------------------
-
-test('Gap #14: nested active team is forbidden', async () => {
-  const { TeamRuntime } = await import('../dist/runtime/team/team-runtime.js')
-  const store = new MissionStore()
-  const m = store.start('s1', 'demo')
-  // Stub-only test: we don't have a full Tasks instance here, so we just
-  // assert the structural constant from the source: the runtime throws
-  // 'Nested or second active team is not allowed' in its create() method.
-  // Reading the impl text confirms the invariant for grep-ability.
-  assert.equal(typeof TeamRuntime.prototype.create, 'function')
-})
-
-// ---------------------------------------------------------------------------
 // Gap #15 — Same-session resume preferred on FIX_REQUIRED
 // ---------------------------------------------------------------------------
 

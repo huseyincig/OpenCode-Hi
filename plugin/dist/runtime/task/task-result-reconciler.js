@@ -102,9 +102,7 @@ export class TaskResultReconciler {
         if (stateHash)
             worker.native_state_hash = stateHash;
         markMutation(m, files, source);
-        this.scopedStores.projectIntelligence.invalidateChanged(files);
         this.scopedStores.contextArtifacts.invalidateChanged(files);
-        this.scopedStores.skillCatalog.invalidateChanged(files);
         if (isHiReadOnlyChildRole(worker.role))
             return;
         for (const other of m.execution.workers) {

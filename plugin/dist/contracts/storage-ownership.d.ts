@@ -50,17 +50,6 @@ export declare const STORAGE_OWNERSHIP_CATALOG: readonly [{
     readonly retention: "plugin registration ownership lifetime";
     readonly privacy: "project-private";
 }, {
-    readonly data_class: "project-intelligence-pattern";
-    readonly canonical_owner: "hi-project-intelligence";
-    readonly scope: "project";
-    readonly lifecycle: "derived";
-    readonly path_provider: ".opencode/hi/project-intelligence/patterns/<id>.json";
-    readonly schema_ref: "ProjectIntelligenceContract";
-    readonly write_owner: "ProjectIntelligenceStore";
-    readonly readers: readonly ["ProjectIntelligenceStore", "TaskRuntime"];
-    readonly retention: "project reusable knowledge lifecycle";
-    readonly privacy: "project-private";
-}, {
     readonly data_class: "project-methodology-candidate";
     readonly canonical_owner: "hi-project-methodology-learning";
     readonly scope: "project";
