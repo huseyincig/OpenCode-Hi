@@ -249,6 +249,19 @@ test('worker result normalizes real-host success alias with bounded structured e
   assert.ok(result.evidence.some(e=>e.kind==='review-evidence'&&e.outcome==='passed'))
 })
 
+test('real-host labeled WorkerResult fallback recovers state without promoting narrative evidence to proof',()=>{
+  const text='WorkerResult:\n\n- **status**: DONE\n- **summary**: Fixed src/alpha.js with the smallest production change.\n- **changed_files**: `["src/alpha.js"]`\n- **scope_expansions**: `[]`\n- **evidence**:\n  - kind: `targeted-tests`, outcome: omitted because parent verification remains open\n  - kind: `code-change`, summary: observed via read after edit\n- **open_issues**: Test execution requires parent/control-plane verification.\n- **needs_context**: none\n- **context_gap**: none\n- **failure_finding**: none'
+  const result=parseWorkerResult(text)
+  assert.equal(result.status,'DONE');assert.equal(result.summary,'Fixed src/alpha.js with the smallest production change.');assert.deepEqual(result.changed_files,['src/alpha.js']);assert.deepEqual(result.scope_expansions,[])
+  assert.deepEqual(result.evidence,[],'narrative markdown evidence must never become canonical proof')
+  assert.deepEqual(result.open_issues,['Test execution requires parent/control-plane verification.']);assert.deepEqual(result.needs_context,[]);assert.equal(result.context_gap,'none');assert.equal(result.failure_finding,'none')
+})
+
+test('labeled WorkerResult fallback requires the explicit WorkerResult marker and does not accept free-text PASS prose',()=>{
+  assert.equal(parseWorkerResult('- **status**: DONE\n- **summary**: looks fine').status,'FAILED')
+  assert.equal(parseWorkerResult('Review looks good; PASS overall').status,'FAILED')
+})
+
 test('worker result rejects arbitrary prose or object evidence as proof',()=>{
   const a=parseWorkerResult(JSON.stringify({status:'success',summary:'done',changed_files:[],evidence:{schema_value:'x',read_only_confirmed:true},open_issues:[],needs_context:[]}))
   const b=parseWorkerResult(JSON.stringify({status:'success',summary:'done',changed_files:[],evidence:['schema value x','no files modified'],open_issues:[],needs_context:[]}))

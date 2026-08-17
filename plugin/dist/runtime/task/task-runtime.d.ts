@@ -25,6 +25,7 @@ export interface StartTaskInput {
     forkFromSession?: string;
     isolationRequired?: boolean;
     isolationReason?: string;
+    resumeTaskId?: string;
 }
 export declare class TaskRuntime {
     #private;
@@ -68,6 +69,20 @@ export declare class TaskRuntime {
     private queueTask;
     private drainQueue;
     start(m: MissionState, input?: StartTaskInput): Promise<{
+        task_id: string;
+        worker_id: string;
+        session_id?: string;
+        model?: string;
+        methodologies: string[];
+        selection_reason: string[];
+        readiness: 'READY' | 'WAIT';
+        preconditions: Array<{
+            id: string;
+            decision: string;
+            reason: string;
+        }>;
+    }>;
+    resume(m: MissionState, taskID: string): Promise<{
         task_id: string;
         worker_id: string;
         session_id?: string;
