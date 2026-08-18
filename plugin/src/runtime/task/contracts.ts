@@ -43,6 +43,7 @@ export function workerHandoffText(h:WorkerHandoff,maxChars:number=DEFAULT_CONTEX
       ? `APPROVAL-GATED METHODOLOGIES: ${h.approval_gated_methodologies.join(', ')}. Native OpenCode permission ask/deny remains authoritative.`
       : 'APPROVAL-GATED METHODOLOGIES: none.',
     `Return compact JSON-compatible result with ${resultFields}.`,
+    h.required_evidence.length?'Required evidence kinds are canonical IDs: when satisfied, emit those exact values as evidence.kind; never rename or alias them. If unmet, report the gap instead of fabricating proof.':'',
     reviewFindingInstruction,
     'Use context_gap=scope|iterative|none and failure_finding=ci-build|unknown-root-cause|none only when directly supported by this bounded task.',
     'Evidence is structured proof, not prose classification: when a worker-scope methodology exit requires decision-evidence, diagnostic-evidence, measurement-evidence, browser-evidence, visual-evidence, accessibility-evidence, or source-provenance-evidence, return that exact evidence.kind with a concrete summary/scope; targeted-test-evidence may be satisfied by evidence.kind=targeted-tests.',
