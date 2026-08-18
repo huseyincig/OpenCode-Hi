@@ -85,3 +85,62 @@ test('per-role: native provider policy deny removes role model', () => {
   // The roleModel's provider is denied, so it must not be primary.
   assert.notEqual(m.primary, 'opencode-go/minimax-m3')
 })
+
+test('M11 admitted empirical feedback may rerank configured role priors without leaving the configured set', () => {
+  const inventory = [
+    { id: 'p/a', provider: 'p', tags: ['balanced'], quality: 5, cost: .2 },
+    { id: 'p/b', provider: 'p', tags: ['balanced'], quality: 5, cost: .2 },
+    { id: 'p/outside', provider: 'p', tags: ['balanced'], quality: 20, cost: .01 },
+  ]
+  const cfg = cfgWith({ coder: ['p/a', 'p/b'] })
+  const feedback = {
+    samples: { 'p/a': 2, 'p/b': 2 }, confidence: { 'p/a': 'low', 'p/b': 'low' },
+    failures: { 'p/a': 2 }, successes: { 'p/b': 2 },
+    verification_failures: { 'p/a': 2 }, verification_passes: { 'p/b': 2 },
+  }
+  const r = resolveModel('standard', inventory, cfg, undefined, 'coder', undefined, feedback)
+  assert.equal(r.primary, 'p/b')
+  assert.ok(r.reason.includes('empirical-feedback-reranked-configured-priors'))
+  assert.ok(!r.reason.some(x => x.includes('recommended-fast-path')))
+  assert.deepEqual([r.primary, ...r.fallbacks].slice(0, 2), ['p/b', 'p/a'])
+})
+
+test('M11 sparse feedback keeps configured role prior on the no-scoring fast path', () => {
+  const inventory = [
+    { id: 'p/a', provider: 'p', tags: ['balanced'], quality: 5, cost: .2 },
+    { id: 'p/b', provider: 'p', tags: ['balanced'], quality: 5, cost: .2 },
+  ]
+  const cfg = cfgWith({ coder: ['p/a', 'p/b'] })
+  const feedback = { samples: { 'p/a': 1 }, failures: { 'p/a': 1 }, confidence: { 'p/a': 'insufficient' } }
+  const r = resolveModel('standard', inventory, cfg, undefined, 'coder', undefined, feedback)
+  assert.equal(r.primary, 'p/a')
+  assert.ok(r.reason.some(x => x.includes('recommended-fast-path')))
+})
+
+test('M11 explicit model override remains authoritative over admitted empirical role feedback', () => {
+  const inventory = [
+    { id: 'p/a', provider: 'p', tags: ['balanced'], quality: 5, cost: .2 },
+    { id: 'p/b', provider: 'p', tags: ['balanced'], quality: 5, cost: .2 },
+  ]
+  const cfg = cfgWith({ coder: ['p/a', 'p/b'] })
+  const feedback = { samples: { 'p/a': 2, 'p/b': 2 }, failures: { 'p/a': 2 }, successes: { 'p/b': 2 }, confidence: { 'p/a': 'low', 'p/b': 'low' } }
+  const r = resolveModel('standard', inventory, cfg, 'p/a', 'coder', undefined, feedback)
+  assert.equal(r.primary, 'p/a')
+  assert.ok(r.reason.includes('explicit override'))
+  assert.ok(!r.reason.includes('empirical-feedback-reranked-configured-priors'))
+})
+
+test('M11 live OpenCode Go inventory uses the canonical default coder prior without persisted project routing', () => {
+  const inventory = [
+    { id: 'opencode-go/mimo-v2.5', provider: 'opencode-go', tags: ['fast','cheap','balanced'], quality: 5 },
+    { id: 'opencode-go/deepseek-v4-flash', provider: 'opencode-go', tags: ['fast','cheap','coding'], quality: 5 },
+    { id: 'opencode-go/qwen3.7-plus', provider: 'opencode-go', tags: ['reasoning','coding'], quality: 5 },
+    { id: 'opencode-go/mimo-v2.5-pro', provider: 'opencode-go', tags: ['reasoning','high-assurance'], quality: 5 },
+    { id: 'opencode/laguna-s-2.1-free', provider: 'opencode', tags: ['fast','cheap'], quality: 99, cost: 0 },
+  ]
+  const cfg = cfgWith({})
+  const r = resolveModel('quick', inventory, cfg, undefined, 'coder', {})
+  assert.equal(r.primary, 'opencode-go/deepseek-v4-flash')
+  assert.ok(r.reason.includes('default role prior:coder'))
+  assert.ok(r.reason.some(x => x.includes('recommended-fast-path')))
+})

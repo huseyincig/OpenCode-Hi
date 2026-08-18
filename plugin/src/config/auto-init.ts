@@ -15,22 +15,22 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 
 export const DEFAULT_ROLE_MODELS_OPENCODE_GO: Record<string, string[]> = {
-  'working-manager': ['opencode-go/minimax-m3'],
-  manager: ['opencode-go/minimax-m3-high', 'opencode-go/minimax-m3'],
-  coder: ['opencode-go/deepseek-v4-pro'],
-  'security-reviewer': ['opencode-go/glm-5.2'],
-  'qa-reviewer': ['opencode-go/qwen3.7-plus'],
-  architect: ['opencode-go/glm-5.2'],
-  'visual-qa': ['opencode-go/mimo-v2.5'],
-  'repository-explorer': ['opencode-go/deepseek-v4-flash'],
+  'working-manager': ['opencode-go/mimo-v2.5','opencode-go/deepseek-v4-flash','opencode-go/qwen3.7-plus','opencode-go/mimo-v2.5-pro'],
+  manager: ['opencode-go/mimo-v2.5','opencode-go/qwen3.7-plus','opencode-go/minimax-m2.7','opencode-go/mimo-v2.5-pro'],
+  coder: ['opencode-go/deepseek-v4-flash','opencode-go/mimo-v2.5','opencode-go/qwen3.7-plus','opencode-go/mimo-v2.5-pro'],
+  'security-reviewer': ['opencode-go/mimo-v2.5-pro','opencode-go/qwen3.6-plus','opencode-go/hy3'],
+  'qa-reviewer': ['opencode-go/hy3','opencode-go/qwen3.6-plus','opencode-go/mimo-v2.5-pro'],
+  architect: ['opencode-go/qwen3.7-plus','opencode-go/minimax-m2.7','opencode-go/mimo-v2.5-pro'],
+  'visual-qa': ['opencode-go/hy3','opencode-go/mimo-v2.5','opencode-go/qwen3.6-plus'],
+  'repository-explorer': ['opencode-go/mimo-v2.5','opencode-go/deepseek-v4-flash','opencode-go/qwen3.7-plus'],
 }
 
-export const DEFAULT_STRATEGY: 'quality' = 'quality'
+export const DEFAULT_STRATEGY: 'cost-quality' = 'cost-quality'
 
 export function defaultProjectRoutingConfig(availableModelIDs?: string[]): {
   schema: 1
   type: 'hi-routing'
-  routing: { strategy: 'quality'; modelPolicy:'recommended'; roleModels: Record<string, string[]>; roleVariants:Record<string,Record<string,string>>; adaptiveRoles:string[] }
+  routing: { strategy: 'cost-quality'; modelPolicy:'recommended'; roleModels: Record<string, string[]>; roleVariants:Record<string,Record<string,string>>; adaptiveRoles:string[] }
   applied_at: number
   applied_by: string
 } {

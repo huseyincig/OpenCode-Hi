@@ -50,6 +50,8 @@ export function semanticTargets(value:unknown,max=20):string[]{
   }
   return[...new Set(out)].slice(0,max)
 }
+function testLikeTarget(path:string):boolean{return /(^|\/)(?:test|tests|__tests__)(?:\/|$)|\.(?:test|spec)\.[^/]+$/i.test(path)}
+export function materialSemanticTargets(assessment:Pick<SemanticIntentAssessment,'likely_targets'|'likely_verification'|'intent_signals'>):string[]{const verificationOwnsTests=assessment.likely_verification.includes('targeted-tests')&&!assessment.intent_signals.includes('intent.tdd');return assessment.likely_targets.filter(path=>!(verificationOwnsTests&&testLikeTarget(path)))}
 export function provisionalIntent(text:string,repo?:RepoContext):NormalizedMissionIntent{
   const objective=text.trim().replace(/\s+/g,' '),targets=technicalTargets(text),explicitVerification=technicalVerificationKinds(text)
   const avoid=['unnecessary-agents','unnecessary-skills','full-chat-child-context','unrequested-external-effects']
@@ -93,10 +95,9 @@ export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessm
     required_capabilities:enumList(v.required_capabilities,SEMANTIC_CAPABILITIES),requested_external_actions:externalActions,likely_verification:effectiveVerification,user_verification:userVerification,verification_ceiling:verificationCeiling,likely_targets:semanticTargets(v.likely_targets,20),
     intent_signals:intentSignalList(v.intent_signals),suppressed_intent_signals:intentSignalList(v.suppressed_intent_signals),
   }
-  const boundedSingleTargetBugFix=assessment.task_kind==='bug-fix'&&assessment.scope==='multi-file'&&assessment.risk==='low'&&assessment.ambiguity==='none'&&assessment.dependency_class==='sequential'&&assessment.likely_targets.length===1&&assessment.likely_verification.length>0&&!assessment.required_capabilities.some(cap=>['multi-stream-delegation','source-verification','dependency-change','design-exploration'].includes(cap))
-  if(boundedSingleTargetBugFix)throw new Error('semantic assessment is incoherent: sequential multi-file bug-fix requires multiple material ordered work units; one implementation target plus verification/read-only files is not a sequential multi-file dependency')
-  return assessment
+  const materialTargets=materialSemanticTargets(assessment),localSequential=assessment.scope==='local'&&assessment.dependency_class==='sequential',boundedSingleMaterialTarget=assessment.scope==='multi-file'&&assessment.ambiguity==='none'&&assessment.dependency_class==='sequential'&&materialTargets.length===1&&assessment.likely_verification.length>0&&!assessment.required_capabilities.some(cap=>['multi-stream-delegation','source-verification','dependency-change','design-exploration'].includes(cap))
+  return localSequential||boundedSingleMaterialTarget?{...assessment,scope:'local',dependency_class:'independent'}:assessment
 }
 export function assessedIntent(current:NormalizedMissionIntent,assessment:SemanticIntentAssessment):NormalizedMissionIntent{
-  return{...current,likelyTargets:assessment.likely_targets.length?assessment.likely_targets:current.likelyTargets,taskKind:assessment.task_kind,scope:assessment.scope,risk:assessment.risk,ambiguity:assessment.ambiguity,dependencyClass:assessment.dependency_class,requiredCapabilities:[...assessment.required_capabilities],requestedExternalActions:[...assessment.requested_external_actions],likelyVerification:[...assessment.likely_verification]}
+  return{...current,likelyTargets:assessment.likely_targets.length?assessment.likely_targets:current.likelyTargets,taskKind:assessment.task_kind,scope:assessment.scope,risk:assessment.risk,ambiguity:assessment.ambiguity,dependencyClass:assessment.scope==='local'&&assessment.dependency_class==='sequential'?'independent':assessment.dependency_class,requiredCapabilities:[...assessment.required_capabilities],requestedExternalActions:[...assessment.requested_external_actions],likelyVerification:[...assessment.likely_verification]}
 }

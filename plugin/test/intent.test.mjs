@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {parseSemanticIntentAssessment,provisionalIntent,technicalTargets,semanticTargets,assessedIntent} from '../dist/runtime/intent/semantic-assessment.js'
+import {parseSemanticIntentAssessment,provisionalIntent,technicalTargets,semanticTargets,assessedIntent,materialSemanticTargets} from '../dist/runtime/intent/semantic-assessment.js'
+import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 
 const base={material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]}
 
@@ -64,8 +65,16 @@ test('unsupported capability and non-intent signal values fail closed',()=>{
 })
 
 
-test('semantic assessment rejects a single-target low-risk bug-fix misclassified as sequential multi-file work',()=>{
-  assert.throws(()=>parseSemanticIntentAssessment({...base,task_kind:'bug-fix',scope:'multi-file',risk:'low',ambiguity:'none',dependency_class:'sequential',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['packages/core/src/ripgrep.ts']}),/sequential multi-file bug-fix requires multiple material ordered work units/)
+test('semantic assessment canonicalizes a single-material-target sequential multi-file label without another model turn',()=>{
+  const a=parseSemanticIntentAssessment({...base,task_kind:'bug-fix',scope:'multi-file',risk:'low',ambiguity:'none',dependency_class:'sequential',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['packages/core/src/ripgrep.ts']})
+  assert.equal(a.scope,'local');assert.equal(a.dependency_class,'independent')
+})
+
+test('targeted existing test paths are verifier-only unless explicit test-authoring intent makes them material',()=>{
+  const ordinary=parseSemanticIntentAssessment({...base,scope:'multi-file',risk:'low',dependency_class:'sequential',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/value.js','test/value.test.js']})
+  assert.deepEqual(materialSemanticTargets(ordinary),['src/value.js']);assert.equal(ordinary.scope,'local');assert.equal(ordinary.dependency_class,'independent')
+  const tdd=parseSemanticIntentAssessment({...base,scope:'multi-file',risk:'low',dependency_class:'sequential',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/value.js','test/value.test.js'],intent_signals:['intent.tdd']})
+  assert.deepEqual(materialSemanticTargets(tdd),['src/value.js','test/value.test.js']);assert.equal(tdd.scope,'multi-file');assert.equal(tdd.dependency_class,'sequential')
 })
 
 test('semantic assessment preserves a real sequential multi-file bug-fix when multiple material targets are explicit',()=>{
@@ -76,4 +85,13 @@ test('semantic assessment preserves a real sequential multi-file bug-fix when mu
 test('semantic assessment does not reject incomplete sequential evidence when ambiguity remains resolvable',()=>{
   const a=parseSemanticIntentAssessment({...base,task_kind:'bug-fix',scope:'multi-file',risk:'low',ambiguity:'resolvable',dependency_class:'sequential',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/parser.ts']})
   assert.equal(a.ambiguity,'resolvable');assert.equal(a.dependency_class,'sequential')
+})
+
+test('local sequential classification canonicalizes to one independent material work unit after assessment',()=>{
+  const store=new MissionStore()
+  store.start('local-sequential-normalize','Change src/value.js and then run its existing test')
+  const m=store.applyInitialSemanticAssessment('local-sequential-normalize',{...base,scope:'local',dependency_class:'sequential',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/value.js','test/value.test.js']})
+  assert.equal(m.identity.intent.scope,'local')
+  assert.equal(m.identity.intent.dependencyClass,'independent')
+  assert.equal(m.execution.adaptive_execution.path,'DIRECT')
 })

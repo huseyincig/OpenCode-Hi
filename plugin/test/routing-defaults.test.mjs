@@ -17,14 +17,14 @@ test('default roleModels contains the new per-role map (2.0.10)', () => {
   // All canonical roles have a curated recommendation. Runtime auto-init
   // still validates these IDs against the live OpenCode inventory before persisting.
   assert.deepEqual(DEFAULT_ROLE_MODELS_OPENCODE_GO, {
-    'working-manager': ['opencode-go/minimax-m3'],
-    manager: ['opencode-go/minimax-m3-high', 'opencode-go/minimax-m3'],
-    coder: ['opencode-go/deepseek-v4-pro'],
-    'security-reviewer': ['opencode-go/glm-5.2'],
-    'qa-reviewer': ['opencode-go/qwen3.7-plus'],
-    architect: ['opencode-go/glm-5.2'],
-    'visual-qa': ['opencode-go/mimo-v2.5'],
-    'repository-explorer': ['opencode-go/deepseek-v4-flash'],
+    'working-manager': ['opencode-go/mimo-v2.5','opencode-go/deepseek-v4-flash','opencode-go/qwen3.7-plus','opencode-go/mimo-v2.5-pro'],
+    manager: ['opencode-go/mimo-v2.5','opencode-go/qwen3.7-plus','opencode-go/minimax-m2.7','opencode-go/mimo-v2.5-pro'],
+    coder: ['opencode-go/deepseek-v4-flash','opencode-go/mimo-v2.5','opencode-go/qwen3.7-plus','opencode-go/mimo-v2.5-pro'],
+    'security-reviewer': ['opencode-go/mimo-v2.5-pro','opencode-go/qwen3.6-plus','opencode-go/hy3'],
+    'qa-reviewer': ['opencode-go/hy3','opencode-go/qwen3.6-plus','opencode-go/mimo-v2.5-pro'],
+    architect: ['opencode-go/qwen3.7-plus','opencode-go/minimax-m2.7','opencode-go/mimo-v2.5-pro'],
+    'visual-qa': ['opencode-go/hy3','opencode-go/mimo-v2.5','opencode-go/qwen3.6-plus'],
+    'repository-explorer': ['opencode-go/mimo-v2.5','opencode-go/deepseek-v4-flash','opencode-go/qwen3.7-plus'],
   })
 })
 
@@ -37,7 +37,7 @@ test('ensureProjectRoutingConfig writes the default file when missing', () => {
     const content = JSON.parse(readFileSync(result.path, 'utf8'))
     assert.equal(content.schema, 1)
     assert.equal(content.type, 'hi-routing')
-    assert.equal(content.routing.strategy, 'quality')
+    assert.equal(content.routing.strategy, 'cost-quality')
     assert.deepEqual(content.routing.roleModels, DEFAULT_ROLE_MODELS_OPENCODE_GO)
     assert.equal(content.applied_by, 'opencode-hi')
   } finally { rmSync(project, { recursive: true, force: true }) }
@@ -57,14 +57,16 @@ test('ensureProjectRoutingConfig is idempotent on a second call', () => {
 test('inventory-aware auto-init persists only live curated recommendations', () => {
   const project = makeProject()
   try {
-    const live=['opencode-go/minimax-m3','opencode-go/deepseek-v4-pro']
+    const live=['opencode-go/mimo-v2.5','opencode-go/deepseek-v4-flash']
     const result=ensureProjectRoutingConfig(project,live)
     assert.equal(result.created,true)
     const content=JSON.parse(readFileSync(result.path,'utf8'))
     assert.deepEqual(content.routing.roleModels,{
-      'working-manager':['opencode-go/minimax-m3'],
-      manager:['opencode-go/minimax-m3'],
-      coder:['opencode-go/deepseek-v4-pro'],
+      'working-manager':['opencode-go/mimo-v2.5','opencode-go/deepseek-v4-flash'],
+      manager:['opencode-go/mimo-v2.5'],
+      coder:['opencode-go/deepseek-v4-flash','opencode-go/mimo-v2.5'],
+      'visual-qa':['opencode-go/mimo-v2.5'],
+      'repository-explorer':['opencode-go/mimo-v2.5','opencode-go/deepseek-v4-flash'],
     })
   } finally { rmSync(project,{recursive:true,force:true}) }
 })

@@ -405,6 +405,17 @@ Therefore the browser-unavailable primary schema gating candidate is **REJECTED*
 
 Repeated fixtures show lower unnecessary worker/model overhead without covered-task correctness regression; decomposition never creates overlapping uncontrolled writers or fan-in ambiguity. Model benchmarks cover the declared seven-model role priors with exact requested/effective attribution, bounded escalation, and no claim of provider remaining quota or provider-billed cost that was not observed.
 
+### Retained checkpoint — role routing v1
+
+- canonical in-memory role priors and `cost-quality` default retained; no silent project routing-policy persistence;
+- sparse feedback keeps the prior order, while confidence-admitted bounded feedback may rerank only within the configured/default role set; explicit/fixed model authority stays above empirical feedback;
+- common correctness fixes canonicalize verifier-only test targets and make tool-after verification closure exact claim-linked per obligation;
+- retained image architecture `22/22 PASS`, plugin suite `974/974 PASS`;
+- repeated trivial child comparator: candidate MiMo parent + DeepSeek coder strict `3/3` vs baseline `2/3`; candidate wall `-12.61%`, input `-7.50%`, but model calls `+14.63%`, tools `+12.50%`, OpenCode-derived cost `+74.90%`; retention is correctness/predictability-driven, not a general efficiency claim;
+- aggregate SHA-256 `4c72018e3cd07c15d1c1ca4e33a0de6b66c69a0a3ccd95f8f398ef8b04ad534b`; retained manifest SHA-256 `80811c936f1bf8d2ed3bd0e4df8b003eb64a6fa33d0ce6a98d7e92139ffa518d`.
+
+M11 remains ACTIVE for the remaining model-role coverage, real-host empirical rerank/escalation, decomposition economics, and fresh-review intelligence.
+
 # Milestone 12 — Capability & Isolation Intelligence
 
 **Goal:** dynamically choose native shell/process/workspace/MCP/browser capabilities while keeping Hi ownership narrow and exact.

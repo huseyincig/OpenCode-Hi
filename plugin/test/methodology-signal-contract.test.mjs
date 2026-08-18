@@ -256,3 +256,21 @@ test('intent suppression preserves a runtime-emergent need for the same methodol
   assert.equal(remaining[0].producer,'changed-surface')
   assert.equal(remaining[0].signal,'surface.security')
 })
+
+test('local implementation plus verifier-only test does not activate dependency planning from a sequential assessor label',()=>{
+  const store=new MissionStore(root)
+  const m=store.start('s-local-verifier-sequential','Change src/value.js then run its existing test')
+  store.applyInitialSemanticAssessment('s-local-verifier-sequential',{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'sequential',required_capabilities:['implementation','verification'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:['src/value.js','test/value.test.js'],intent_signals:[],suppressed_intent_signals:[]})
+  assert.equal(m.identity.intent.dependencyClass,'independent')
+  assert.deepEqual(architectureMethodologySignals(m.identity.intent),[])
+  assert.equal(m.methodology.methodology_needs.some(x=>x.name==='hi-implementation-planning'),false)
+})
+
+test('real multi-file sequential work still activates dependency planning after local canonicalization',()=>{
+  const store=new MissionStore(root)
+  const m=store.start('s-real-sequential-after-canonicalization','Change src/a.ts then src/b.ts in order')
+  store.applyInitialSemanticAssessment('s-real-sequential-after-canonicalization',{material:true,message_kind:'mission',task_kind:'implementation',scope:'multi-file',risk:'medium',ambiguity:'none',dependency_class:'sequential',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:['src/a.ts','src/b.ts'],intent_signals:[],suppressed_intent_signals:[]})
+  assert.equal(m.identity.intent.dependencyClass,'sequential')
+  assert.deepEqual(architectureMethodologySignals(m.identity.intent).map(x=>x.name),['architecture.dependency-structure'])
+  assert.ok(m.methodology.methodology_needs.some(x=>x.name==='hi-implementation-planning'&&x.producer==='architecture'))
+})
