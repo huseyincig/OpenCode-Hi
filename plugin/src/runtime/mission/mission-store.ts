@@ -19,8 +19,9 @@ function reconciledIntentMethodologySignals(assessment:SemanticIntentAssessment)
   const suppressed=new Set(assessment.suppressed_intent_signals),runtimeSuppressed:SemanticIntentAssessment['intent_signals']=[]
   if(assessment.dependency_class==='independent-multi'&&assessment.intent_signals.includes('intent.planning')){suppressed.add('intent.planning');runtimeSuppressed.push('intent.planning')}
   if(assessment.likely_verification.length>0&&assessment.intent_signals.includes('intent.test-strategy')){suppressed.add('intent.test-strategy');runtimeSuppressed.push('intent.test-strategy')}
-  const boundedDirectBugFix=assessment.task_kind==='bug-fix'&&assessment.scope==='local'&&assessment.ambiguity==='none'&&assessment.dependency_class==='independent'&&['low','medium'].includes(assessment.risk)&&!assessment.required_capabilities.includes('source-verification')&&assessment.likely_targets.length>0&&assessment.likely_verification.length>0
-  if(boundedDirectBugFix&&assessment.intent_signals.includes('intent.debugging')){suppressed.add('intent.debugging');runtimeSuppressed.push('intent.debugging')}
+  const boundedDirectBugFix=assessment.task_kind==='bug-fix'&&assessment.scope==='local'&&assessment.dependency_class==='independent'&&['low','medium'].includes(assessment.risk)&&!assessment.required_capabilities.includes('source-verification')&&assessment.likely_targets.length>0&&assessment.likely_verification.length>0
+  const debuggingBackedByDiagnosis=assessment.required_capabilities.includes('repository-analysis')
+  if(boundedDirectBugFix&&assessment.intent_signals.includes('intent.debugging')&&(assessment.ambiguity==='none'||!debuggingBackedByDiagnosis)){suppressed.add('intent.debugging');runtimeSuppressed.push('intent.debugging')}
   return{active:assessment.intent_signals.filter(signal=>!suppressed.has(signal)),suppressed:[...suppressed],runtimeSuppressed}
 }
 export class MissionStore {

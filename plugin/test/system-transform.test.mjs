@@ -109,4 +109,6 @@ test('pending semantic gate distinguishes material implementation scope from ver
   assert.match(text,/scope and dependency_class describe material implementation\/change work units/)
   assert.match(text,/test files that the user says must remain unchanged/)
   assert.match(text,/one implementation change followed by verification is not a sequential dependency/)
+  assert.match(text,/Select intent\.debugging only when root-cause diagnosis is materially required/)
+  assert.match(text,/if diagnosis is required include repository-analysis in required_capabilities/)
 })
