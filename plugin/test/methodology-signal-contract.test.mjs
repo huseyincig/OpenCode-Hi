@@ -131,6 +131,28 @@ test('explicit verification policy suppresses contradictory intent.test-strategy
   const assessed=m.execution.ledger.findLast(x=>x.type==='semantic.assessed');assert.deepEqual(assessed?.payload?.intent_signals,['intent.test-strategy']);assert.deepEqual(assessed?.payload?.effective_intent_signals,[]);assert.deepEqual(assessed?.payload?.runtime_suppressed_intent_signals,['intent.test-strategy'])
 })
 
+test('clear bounded direct bug-fix suppresses over-inferred intent.debugging methodology signal',()=>{
+  const store=new MissionStore(root)
+  const m=store.start('s-direct-debugging-conflict','Fix the proven parser regression')
+  store.applyInitialSemanticAssessment('s-direct-debugging-conflict',{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification','repository-analysis'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:['src/parser.ts','test/parser.test.ts'],intent_signals:['intent.debugging','intent.test-strategy'],suppressed_intent_signals:[]})
+  assert.equal(m.execution.adaptive_execution.path,'DIRECT')
+  assert.equal(m.methodology.methodology_needs.some(x=>x.name==='hi-debugging-root-cause'),false)
+  assert.equal(m.methodology.methodology_needs.some(x=>x.name==='hi-test-strategy'),false)
+  const assessed=m.execution.ledger.findLast(x=>x.type==='semantic.assessed')
+  assert.deepEqual(assessed?.payload?.intent_signals,['intent.debugging','intent.test-strategy'])
+  assert.deepEqual(assessed?.payload?.effective_intent_signals,[])
+  assert.deepEqual(assessed?.payload?.runtime_suppressed_intent_signals,['intent.test-strategy','intent.debugging'])
+})
+
+test('uncertain bug-fix keeps explicit intent.debugging methodology signal active',()=>{
+  const store=new MissionStore(root)
+  const m=store.start('s-real-debugging-need','Diagnose an uncertain parser failure')
+  store.applyInitialSemanticAssessment('s-real-debugging-need',{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'resolvable',dependency_class:'independent',required_capabilities:['implementation','repository-analysis'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:['src/parser.ts'],intent_signals:['intent.debugging'],suppressed_intent_signals:[]})
+  assert.equal(m.execution.adaptive_execution.path,'EVIDENCE')
+  assert.ok(m.methodology.methodology_needs.some(x=>x.name==='hi-debugging-root-cause'&&x.signal==='intent.debugging'))
+  const assessed=m.execution.ledger.findLast(x=>x.type==='semantic.assessed');assert.deepEqual(assessed?.payload?.effective_intent_signals,['intent.debugging']);assert.deepEqual(assessed?.payload?.runtime_suppressed_intent_signals,[])
+})
+
 test('intent.test-strategy remains active when semantic assessment has no explicit verification policy',()=>{
   const store=new MissionStore(root)
   const m=store.start('s-unknown-verification-strategy','Choose sufficient verification for an unclear change')
