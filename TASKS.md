@@ -21,7 +21,7 @@ M9 is complete; archive: `agent-archive/2026-08-18-m9-semantic-decision-kernel.m
 
 M9 evidence:
 - pure typed `SemanticDecisionEnvelope` integrated without another model/tool/host call or durable state owner;
-- semantic entry gate `2666 -> 1866` chars (`30.01%` reduction);
+- semantic entry gate `3247 -> 1866` chars (`42.53%` reduction);
 - focused decision/transform tests `29/29 PASS`;
 - exact retained-product overlay build PASS + architecture lint `22/22 PASS` + full plugin/node suite `942/942 PASS`.
 

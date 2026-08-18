@@ -100,7 +100,7 @@ Complexity target is O(C + R), where C is the bounded semantic capability set an
 
 ## 5. Entry Frugality
 
-The current parent first turn has an unavoidable semantic-assessment gate because execution is fail-closed until natural-language intent is normalized. Pre-M9 measurement on the exact current dist runtime is **2666 characters**.
+The current parent first turn has an unavoidable semantic-assessment gate because execution is fail-closed until natural-language intent is normalized. Canonical pre-M9 measurement on the exact Phase 1 retained-product archive is **3247 characters**. An earlier `2666` measurement came from the dirty working-tree dist and is discarded as product provenance.
 
 M9 will keep this gate but compact its language. Required semantics that cannot be removed:
 

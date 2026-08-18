@@ -17,11 +17,13 @@ Phase 2 is active. M9 introduced one pure typed semantic decision composition ov
 
 ## Mechanical evidence
 
-Pre-change exact current dist semantic gate: `2666` chars.
+Canonical pre-change Phase 1 retained-product semantic gate: `3247` chars.
+
+An earlier `2666` measurement came from the dirty working-tree dist and is discarded as product provenance; it is not used for the product claim.
 
 Final M9 gate: `1866` chars.
 
-Reduction: `30.01%`.
+Reduction: `42.53%`.
 
 Focused semantic/transform set: `29/29 PASS`.
 

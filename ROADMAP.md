@@ -339,7 +339,7 @@ Every added decision layer must either improve covered-task correctness/predicta
 - ambiguous/source-verification work stays evidence-first;
 - independent review requirement is preserved;
 - isolation is never silently provisioned from mission-level uncertainty alone;
-- semantic entry gate preserves multilingual/schema/coherence/authority constraints while reducing provider-visible characters by at least 30% from the pre-M9 measured baseline (`2666` chars);
+- semantic entry gate preserves multilingual/schema/coherence/authority constraints while reducing provider-visible characters by at least 30% from the canonical Phase 1 retained-product baseline (`3247` chars);
 - focused tests prove decision parity and prompt contract;
 - no user-owned dirty file is modified.
 
@@ -347,7 +347,7 @@ Every added decision layer must either improve covered-task correctness/predicta
 
 - Added pure host-neutral `SemanticDecisionEnvelope` composition without adding a model/tool/host call or a second durable state owner.
 - MissionStore now consumes that envelope while preserving the existing adaptive/topology durable fields and Phase 1 policy reasons.
-- Semantic entry gate reduced from `2666` to `1866` characters (`30.01%`) while preserving multilingual, schema/coherence, debugging/diagnosis and authority invariants.
+- Semantic entry gate reduced from `3247` to `1866` characters (`42.53%`) while preserving multilingual, schema/coherence, debugging/diagnosis and authority invariants.
 - Exact retained-product overlay verification: build PASS, architecture lint `22/22 PASS`, full plugin/node suite `942/942 PASS`.
 - Verification was run in `/tmp/opencode-hi-m9-check` over the exact Phase 1 archive so user-owned dirty generated/dist files in the working tree remained untouched.
 
