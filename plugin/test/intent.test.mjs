@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {parseSemanticIntentAssessment,provisionalIntent,technicalTargets,assessedIntent} from '../dist/runtime/intent/semantic-assessment.js'
+import {parseSemanticIntentAssessment,provisionalIntent,technicalTargets,semanticTargets,assessedIntent} from '../dist/runtime/intent/semantic-assessment.js'
 
 const base={material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]}
 
@@ -13,6 +13,17 @@ test('provisional intent remains semantically unclassified and only preserves te
 
 test('technical target extraction parses machine-like paths without classifying user semantics',()=>{
   assert.deepEqual(technicalTargets('foo/bar.ts README.md package.json'),['foo/bar.ts','README.md','package.json'])
+})
+
+test('semantic targets normalize prose-wrapped project paths and preserve browser URLs',()=>{
+  assert.deepEqual(semanticTargets(['ripgrep preview truncation code in packages/core','https://127.0.0.1:4173/view']),['packages/core','https://127.0.0.1:4173/view'])
+})
+
+test('semantic assessment drops prose-only target descriptions and falls back to provisional technical targets',()=>{
+  const a=parseSemanticIntentAssessment({...base,likely_targets:['the ripgrep preview implementation']})
+  assert.deepEqual(a.likely_targets,[])
+  const intent=assessedIntent(provisionalIntent('Fix packages/core/src/ripgrep.ts without touching tests'),a)
+  assert.deepEqual(intent.likelyTargets,['packages/core/src/ripgrep.ts'])
 })
 
 test('structured bug-fix assessment produces bounded deterministic intent state',()=>{

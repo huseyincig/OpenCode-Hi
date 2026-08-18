@@ -11,12 +11,19 @@ test('mission starts provisional with no executable obligations or workers',()=>
   assert.equal(m.execution.execution_mode,'single')
 })
 
-test('assessed material mission creates deterministic obligations without spawning workers',()=>{
-  const store=new MissionStore(),m=startAssessedMission(store,'s1','opaque request',{task_kind:'bug-fix',likely_verification:['targeted-tests']})
-  assert.ok(m.execution.obligations.some(o=>o.kind==='analysis'))
+test('bounded local bugfix uses minimum-sufficient implementation and verification obligations without ceremony',()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'s1','opaque request',{task_kind:'bug-fix',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
+  assert.ok(!m.execution.obligations.some(o=>o.kind==='analysis'))
   assert.ok(m.execution.obligations.some(o=>o.kind==='implementation'))
   assert.ok(m.execution.obligations.some(o=>o.kind==='verification'))
   assert.equal(m.execution.workers.length,0)
+})
+
+test('bugfix with material diagnosis need retains an explicit analysis obligation',()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'s-analysis','opaque diagnosis request',{task_kind:'bug-fix',scope:'local',risk:'low',ambiguity:'resolvable',dependency_class:'independent',required_capabilities:['repository-analysis','implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
+  assert.ok(m.execution.obligations.some(o=>o.kind==='analysis'))
+  assert.ok(m.execution.obligations.some(o=>o.kind==='implementation'))
+  assert.ok(m.execution.obligations.some(o=>o.kind==='verification'))
 })
 
 test('explicit stop is sticky until explicit resume',()=>{

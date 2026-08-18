@@ -125,7 +125,7 @@ Rules:
 
 1. Child surfaces remain exact-task scoped.
 2. Parent static tool removal is not retained without repeated end-to-end evidence.
-3. MCP/browser capability schemas are exposed only when the execution unit needs them and the chosen backend requires schema exposure.
+3. Capability-specific schema exposure is a hypothesis, not a blanket cutover. M10 rejected browser-unavailable primary schema gating despite a 17.71% static schema reduction because repeated task-level wall/input/tool/model/cost economics regressed. Revisit only through a stronger native/dynamic seam with repeated end-to-end benefit.
 4. Repeated tool output is deduplicated or projected only when correctness-critical provenance remains recoverable.
 5. New OpenCode dev/V2 seams are adopted through capability probes, not branch/version folklore.
 
@@ -152,6 +152,26 @@ A split is admissible only when:
 - a coherent whole-problem judgment is not being fragmented incorrectly.
 
 Heavy-model escalation needs a named reason such as unresolved coherent reasoning, failed lower tier with material new evidence, critical assurance, or empirically supported task-class history.
+
+### 7.1 OpenCode Go model budget and role priors
+
+Phase 2 uses the OpenCode Go family as a bounded routing pool. The request counts below are the **user-authoritative M11 Hi planning override**. They are not a claim that the provider enforces literal request counters or that these values equal current published estimates. OpenCode currently documents Go enforcement by dollar usage ($12 / 5h, $30 / week, $60 / month), describes request counts as estimates that may change, and exposes current usage through the console. Hi therefore records exact local request/usage observations and provider rate-limit failures, but treats unknown server-side remaining quota as `UNKNOWN` rather than inventing it.
+
+| Exact model | 5h | week | month | Phase 2 initial role prior |
+| --- | ---: | ---: | ---: | --- |
+| `opencode-go/mimo-v2.5` | 30,100 | 75,200 | 150,400 | fast dispatcher, intent classifier, lightweight DIRECT/worker loops |
+| `opencode-go/deepseek-v4-flash` | 7,600 | 18,900 | 37,800 | agile coder, tool/PTY specialist, routine worker |
+| `opencode-go/qwen3.7-plus` | 4,300 | 10,800 | 21,600 | WorkGraph planner, dependency architect |
+| `opencode-go/hy3` | 4,300 | 10,750 | 21,500 | verifier, browser/tool supervisor, bounded summarizer |
+| `opencode-go/minimax-m2.7` | 3,400 | 8,500 | 17,000 | synthesis, documentation, prompt/recovery analysis |
+| `opencode-go/qwen3.6-plus` | 3,300 | 8,200 | 16,300 | adversarial/edge-case/coexistence validation |
+| `opencode-go/mimo-v2.5-pro` | 3,250 | 8,150 | 16,300 | principal fresh reviewer, critical replan/recovery/final assurance |
+
+These are **priors, not fixed assignments**, except that the current user override makes `opencode-go/mimo-v2.5` the default primary test/benchmark controller, routine DIRECT engine and initial dispatcher when the experiment is not explicitly measuring another model. Routing order remains WorkGraph/ExecutionUnit first, exact model second. A cheaper/high-capacity model wins routine work when confidence is adequate. Escalation to a narrower-capacity model requires a named semantic/evidence/failure delta. Empirical observations may override the prior only with exact requested/effective model attribution, bounded confidence/decay, and reversible evidence. A fallback is not considered successful merely because a model switch was requested; the accepted dispatch and effective model must be mechanically observed for the fenced execution attempt.
+
+M10 production ablations remained pinned to `opencode-go/deepseek-v4-flash` to preserve M8 provenance and isolate the provider-surface variable. M10 is now complete. M11 uses `opencode-go/mimo-v2.5` as the default benchmark/test dispatcher while exact role-model changes become explicit benchmark variables with requested/effective attribution.
+
+Current source basis: OpenCode dev `4e81a0b73f6e614afebf9c7ff8862904a3674455`, `packages/web/src/content/docs/go.mdx` and `agents.mdx`, observed 2026-08-18.
 
 ## 8. Capability & Isolation Intelligence
 

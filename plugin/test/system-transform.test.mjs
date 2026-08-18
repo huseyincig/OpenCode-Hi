@@ -69,6 +69,14 @@ test('system-transform is no-op for inactive missions', async () => {
   assert.equal(output.system.length, 0)
 })
 
+
+test('system-transform emits one terminal stop projection for a completed parent mission',async()=>{
+  const store=new MissionStore();const m=startAssessedMission(store,'s-complete','fix one bug',{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
+  for(const o of m.execution.obligations){o.status='closed';o.closedAt=Date.now()}store.complete('s-complete')
+  const hook=createSystemTransformHook(store),output={system:[]};await hook({sessionID:'s-complete'},output);await hook({sessionID:'s-complete'},output)
+  assert.deepEqual(output.system,['Hi MISSION COMPLETE: required evidence and obligations are closed. Stop; do not invoke more tools.'])
+})
+
 test('system-transform skips child whose generation is stale', async () => {
   const store = new MissionStore()
   const bg = new BackgroundRegistry()

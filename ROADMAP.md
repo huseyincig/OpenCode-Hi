@@ -353,26 +353,40 @@ Every added decision layer must either improve covered-task correctness/predicta
 
 # Milestone 10 — Dynamic Provider-Visible Surface & Token Frugality
 
-**Status:** ACTIVE — 2026-08-18
+**Status:** COMPLETE — 2026-08-18
 
-**Goal:** reduce the current ~7.52× production input-token overhead without repeating the failed static tool-visibility cutover.
+**Goal:** reduce the Phase 1 production provider-visible overhead without repeating the failed static tool-visibility cutover.
 
-### Scope
+### Retained outcome
 
-- Measure prompt components, tool-schema bytes, runtime projection, handoff, repeated tool outputs, and child context separately.
-- Use native per-child prompt tool overrides already supported by OpenCode.
-- Track current OpenCode native seams for primary-turn tool/model projection; adopt native support when semantically sufficient.
-- Phase/capability-specific Hi tool exposure only when repeated real-host ablations improve end-to-end economics.
-- Deduplicate provider-visible repeated results and preserve only correctness-critical state.
-- Keep methodology/skill body loading on-demand through the native skill primitive.
+- Provider-visible accounting was decomposed across semantic gate/system text, parent tool schemas, mission runtime projection, child handoff/context and repeated tool/result payloads.
+- Retained common fixes normalize bounded semantic targets, make explicit executable verifier syntax authoritative for low/medium local initial verification, block unrequired broader parent verifiers, reconcile reverted transient mutation ownership against current diff, remove ceremony-only analysis obligations, close bounded DIRECT implementation only from current owned diff + fresh post-mutation required evidence, and project terminal completion to stop redundant follow-up work.
+- No extra inference call was added merely to optimize context.
 
-### Acceptance
+### Browser primary-surface ablation decision
 
-- every retained surface reduction has repeated task-level benefit, not schema-size-only evidence;
-- deterministic correctness and completion settlement do not regress;
-- exact input/model/tool/wall/cost provenance remains comparable with M8.
+Browser-unavailable primary schema gating reduced the static parent Hi surface `31 -> 23` tools and `7839 -> 6451` proxy chars (`-17.71%`), but V12 repeated real-host task economics regressed despite both arms achieving `3/3 VERIFIED_SUCCESS`:
+
+- wall `+10.26%`;
+- model calls `+16.67%`;
+- tool calls `+12.20%`;
+- input tokens `+36.41%`;
+- output tokens `+10.64%`;
+- OpenCode-derived cost `+31.87%`;
+- first-step input `-3.46%`.
+
+Therefore the browser-unavailable primary schema gating candidate is **REJECTED**. Static schema reduction alone does not earn retention. Future native/dynamic capability-specific exposure may be reconsidered only with repeated task-level benefit.
+
+### Completion evidence
+
+- aggregate: `/workspace/Reference/phase2-autopilot/m10-browser-realhost-v12-aggregate.json`, SHA-256 `d021e26dbdd650a0dbd373faf751619ee9a88f0d811ee2d05f5eb125f7ffced2`;
+- retained manifest: `/workspace/Reference/phase2-autopilot/m10-v12-retained-final-manifest.json`, SHA-256 `da47dac4d827165dfce892a7e1030733ae969f4f422dc523567c13919ccc84fe`;
+- exact retained-product isolated build PASS + architecture lint `22/22 PASS` + plugin suite `965/965 PASS`;
+- all monetary benchmark values are OpenCode-derived, not provider-billed cost.
 
 # Milestone 11 — Adaptive Decomposition, Model & Review Intelligence
+
+**Status:** ACTIVE — 2026-08-18
 
 **Goal:** choose zero/one/many workers and light/heavy model classes from expected completion value rather than ceremony.
 
@@ -381,13 +395,15 @@ Every added decision layer must either improve covered-task correctness/predicta
 - bounded decomposition contracts with explicit write/read surfaces, dependencies, verification and fan-in;
 - evaluate split-first/cheap-first execution against unsplit comparators instead of adopting ecosystem doctrine by assertion;
 - reserve heavy reasoning for work that cannot be safely/economically decomposed or that empirically fails lighter routing;
-- confidence-aware empirical routing with exact effective-model attribution;
+- confidence-aware empirical routing with exact requested/effective-model attribution;
+- user-authoritative OpenCode Go M11 role priors: MiMo-V2.5 primary test engine/dispatcher and routine DIRECT first choice; DeepSeek V4 Flash coder/tool specialist; Qwen3.7 Plus WorkGraph planner; Hy3 verifier/browser supervisor; MiniMax M2.7 synthesis/recovery; Qwen3.6 Plus adversarial validator; MiMo-V2.5-Pro principal fresh reviewer;
+- protect narrow model tiers from routine tests; escalation requires semantic/evidence/failure delta;
 - fresh reviewer only for material independence/assurance benefit;
-- escalation requires semantic/evidence/failure delta.
+- treat model request counts as Hi planning ceilings, never fabricated provider remaining quota; exact provider-side remaining stays unknown unless observed.
 
 ### Acceptance
 
-Repeated fixtures show lower unnecessary worker/model overhead without covered-task correctness regression; decomposition never creates overlapping uncontrolled writers or fan-in ambiguity.
+Repeated fixtures show lower unnecessary worker/model overhead without covered-task correctness regression; decomposition never creates overlapping uncontrolled writers or fan-in ambiguity. Model benchmarks cover the declared seven-model role priors with exact requested/effective attribution, bounded escalation, and no claim of provider remaining quota or provider-billed cost that was not observed.
 
 # Milestone 12 — Capability & Isolation Intelligence
 

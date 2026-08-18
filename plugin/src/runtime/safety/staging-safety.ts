@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process'
 import type { MissionState } from '../mission/types.js'
 import { appendLedger } from '../ledger/ledger.js'
 import { gitCommandParts } from './command-classifier.js'
@@ -24,6 +25,12 @@ function porcelainPaths(text:string):string[]{
   const out:string[]=[]
   for(const raw of text.split(/\r?\n/)){if(!raw.trim())continue;const body=raw.length>=3?raw.slice(3).trim():raw.trim();const target=body.includes(' -> ')?body.split(' -> ').pop()!:body;if(target){const file=normFile(target.replace(/^"|"$/g,''));out.push(file||'__INVALID_GIT_PATH__')}}
   return [...new Set(out.filter(Boolean))]
+}
+export function inspectCurrentGitChangedFiles(projectRoot?:string):string[]|undefined{
+  if(!projectRoot)return undefined
+  const r=spawnSync('git',['-c',`safe.directory=${projectRoot}`,'-C',projectRoot,'status','--porcelain=v1','--untracked-files=all'],{encoding:'utf8'})
+  if(r.status!==0||typeof r.stdout!=='string')return undefined
+  const files=porcelainPaths(r.stdout);return files.includes('__INVALID_GIT_PATH__')?undefined:files
 }
 export function recordGitStatusInspection(m:MissionState,command:string,output:any):void{
   if(!isGitStatusInspection(command))return;const text=commandText(output),files=porcelainPaths(text);m.vcs.git_topology_safety={clean:files.length===0,verified_files:files,verified_at:Date.now(),source:command.slice(0,180)};appendLedger(m,'git.worktree.inspected',{payload:{clean:files.length===0,files:files.slice(0,80),count:files.length}})
