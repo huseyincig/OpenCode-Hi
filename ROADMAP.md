@@ -1,8 +1,8 @@
 # OpenCode-Hi Architecture Roadmap
 
 **Project:** `/workspace/OpenCode-Hi`
-**Updated:** 2026-08-17
-**Status:** ACTIVE ARCHITECTURE RESET
+**Updated:** 2026-08-18
+**Status:** COMPLETE — ARCHITECTURE RESET — 2026-08-18
 **Research basis:** `/workspace/Reference/upstream-audit/`
 
 ## Product Direction
