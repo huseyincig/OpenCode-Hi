@@ -51,3 +51,18 @@ test('unsupported capability and non-intent signal values fail closed',()=>{
   assert.throws(()=>parseSemanticIntentAssessment({...base,required_capabilities:['magic-review']}),/unsupported semantic enum/)
   assert.throws(()=>parseSemanticIntentAssessment({...base,intent_signals:['surface.security']}),/unsupported semantic intent signal/)
 })
+
+
+test('semantic assessment rejects a single-target low-risk bug-fix misclassified as sequential multi-file work',()=>{
+  assert.throws(()=>parseSemanticIntentAssessment({...base,task_kind:'bug-fix',scope:'multi-file',risk:'low',ambiguity:'none',dependency_class:'sequential',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['packages/core/src/ripgrep.ts']}),/sequential multi-file bug-fix requires multiple material ordered work units/)
+})
+
+test('semantic assessment preserves a real sequential multi-file bug-fix when multiple material targets are explicit',()=>{
+  const a=parseSemanticIntentAssessment({...base,task_kind:'bug-fix',scope:'multi-file',risk:'low',ambiguity:'none',dependency_class:'sequential',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/parser.ts','src/consumer.ts']})
+  assert.equal(a.dependency_class,'sequential');assert.equal(a.scope,'multi-file');assert.deepEqual(a.likely_targets,['src/parser.ts','src/consumer.ts'])
+})
+
+test('semantic assessment does not reject incomplete sequential evidence when ambiguity remains resolvable',()=>{
+  const a=parseSemanticIntentAssessment({...base,task_kind:'bug-fix',scope:'multi-file',risk:'low',ambiguity:'resolvable',dependency_class:'sequential',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/parser.ts']})
+  assert.equal(a.ambiguity,'resolvable');assert.equal(a.dependency_class,'sequential')
+})

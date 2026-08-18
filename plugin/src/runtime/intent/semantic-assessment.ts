@@ -61,12 +61,15 @@ export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessm
   if(messageKind!=='non-material'&&v.material!==true)throw new Error('material message kind must set material=true')
   const risk=take('risk',risks),externalActions=enumList(v.requested_external_actions,SEMANTIC_EXTERNAL_ACTIONS,8)
   if(externalActions.length&&risk!=='authority-boundary')throw new Error('requested_external_actions require risk=authority-boundary')
-  return{
+  const assessment:SemanticIntentAssessment={
     material:v.material,message_kind:messageKind,
     task_kind:take('task_kind',taskKinds),scope:take('scope',scopes),risk,ambiguity:take('ambiguity',ambiguities),dependency_class:take('dependency_class',dependencies),
     required_capabilities:enumList(v.required_capabilities,SEMANTIC_CAPABILITIES),requested_external_actions:externalActions,likely_verification:enumList(v.likely_verification,SEMANTIC_VERIFICATION_KINDS,12),likely_targets:stringList(v.likely_targets,20),
     intent_signals:intentSignalList(v.intent_signals),suppressed_intent_signals:intentSignalList(v.suppressed_intent_signals),
   }
+  const boundedSingleTargetBugFix=assessment.task_kind==='bug-fix'&&assessment.scope==='multi-file'&&assessment.risk==='low'&&assessment.ambiguity==='none'&&assessment.dependency_class==='sequential'&&assessment.likely_targets.length===1&&assessment.likely_verification.length>0&&!assessment.required_capabilities.some(cap=>['multi-stream-delegation','source-verification','dependency-change','design-exploration'].includes(cap))
+  if(boundedSingleTargetBugFix)throw new Error('semantic assessment is incoherent: sequential multi-file bug-fix requires multiple material ordered work units; one implementation target plus verification/read-only files is not a sequential multi-file dependency')
+  return assessment
 }
 export function assessedIntent(current:NormalizedMissionIntent,assessment:SemanticIntentAssessment):NormalizedMissionIntent{
   return{...current,likelyTargets:assessment.likely_targets.length?assessment.likely_targets:current.likelyTargets,taskKind:assessment.task_kind,scope:assessment.scope,risk:assessment.risk,ambiguity:assessment.ambiguity,dependencyClass:assessment.dependency_class,requiredCapabilities:[...assessment.required_capabilities],requestedExternalActions:[...assessment.requested_external_actions],likelyVerification:[...assessment.likely_verification]}

@@ -97,3 +97,16 @@ test('system-transform requires child delegation for an independent review oblig
   assert.match(text, /independent-review-required/)
   assert.match(text, /gate-reviewer:open/)
 })
+
+
+test('pending semantic gate distinguishes material implementation scope from verifier-only files and sequencing', async () => {
+  const store = new MissionStore()
+  store.start('s-semantic-coherence','Fix one production file; keep the regression test unchanged and run it afterward')
+  const hook = createSystemTransformHook(store)
+  const output = { system: [] }
+  await hook({ sessionID: 's-semantic-coherence' }, output)
+  const text=output.system.join('\n')
+  assert.match(text,/scope and dependency_class describe material implementation\/change work units/)
+  assert.match(text,/test files that the user says must remain unchanged/)
+  assert.match(text,/one implementation change followed by verification is not a sequential dependency/)
+})
