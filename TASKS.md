@@ -11,7 +11,7 @@
 
 ### M11 — Adaptive Decomposition, Model & Review Intelligence
 
-Choose zero/one/many workers and exact model/reviewer execution from expected completion value rather than ceremony. WorkGraph/ExecutionUnit semantics precede model choice. Exact requested/effective attribution and bounded evidence are mandatory.
+Model-routing evidence is checkpointed. The active M11 work is now decomposition economics/correctness plus fresh-reviewer value: choose zero/one/many workers from the work graph, and require independent review only when material assurance benefit justifies it.
 
 ## Current User-Authoritative OpenCode Go Planning Priors
 
@@ -25,30 +25,30 @@ Choose zero/one/many workers and exact model/reviewer execution from expected co
 | adversarial/edge-case validator | `opencode-go/qwen3.6-plus` | 3,300 / 8,200 / 16,300 |
 | principal fresh reviewer/final assurance | `opencode-go/mimo-v2.5-pro` | 3,250 / 8,150 / 16,300 |
 
-These request numbers are Hi planning authority, not observed provider remaining quota. Current OpenCode Go documentation describes enforcement in dollar-usage terms and request counts as estimates; provider remaining stays `UNKNOWN` unless mechanically observed. OpenCode-derived benchmark cost is never provider-billed cost.
+These request counts are Hi planning authority, not observed provider remaining quota. Provider remaining stays `UNKNOWN` unless mechanically observed. OpenCode-derived cost is never provider-billed cost.
 
-## Retained M11 Checkpoint — Role Routing v1
+## Completed M11 Checkpoints
 
-Archive: `agent-archive/2026-08-18-m11-role-routing-checkpoint.md`.
-
-Mechanical evidence:
-- live OpenCode 1.18.18 inventory confirmed all seven override model IDs;
-- deterministic retained image `/workspace/Reference/phase2-autopilot/opencode-hi-m11-routing-v8`: architecture `22/22 PASS`, plugin suite `974/974 PASS`;
-- repeated real-host aggregate `/workspace/Reference/phase2-autopilot/m11-routing-compare-v5-aggregate.json`, SHA-256 `4c72018e3cd07c15d1c1ca4e33a0de6b66c69a0a3ccd95f8f398ef8b04ad534b`;
-- retained manifest SHA-256 `80811c936f1bf8d2ed3bd0e4df8b003eb64a6fa33d0ce6a98d7e92139ffa518d`;
-- MiMo parent/test controller exact `3/3`; candidate DeepSeek coder exact `3/3` and strict child settlement `3/3`; baseline free-model route strict settlement `2/3`;
-- candidate retained for correctness/predictability, not general cost efficiency; mean OpenCode-derived cost was `+74.90%` while wall was `-12.61%` and input `-7.50%`.
-
-Retained product behavior also includes verifier-only test/material-target canonicalization and exact claim-linked tool-after verification closure discovered by the real-host corpus.
+- Role-routing product checkpoint: `agent-archive/2026-08-18-m11-role-routing-checkpoint.md`, retained product commit `d0ae80605609dd9f204e9e8df21d1f9c123a4052`.
+- Model routing/recovery evidence: `agent-archive/2026-08-18-m11-model-routing-evidence.md`.
+- Immutable `d0ae806` verification: architecture `22/22 PASS`, plugin suite `974/974 PASS`; log SHA-256 `884222577c286d5c65c69f2587148035934dcf105ecdcbf78d015729a5bfbbdb`.
+- Seven declared model priors/alternates have exact requested/selected/effective attribution coverage; mission-local empirical rerank threshold is real-host verified; resolution-time fallback is real-host verified; runtime provider failure recovery and level-2 escalation are deterministic-contract verified. Authentic localhost provider-failure probes did not settle within the 20s ceiling, so no real-host runtime-recovery success claim is made.
 
 ## M11 Acceptance Still Open
 
-- cover declared seven-model priors with exact requested/effective attribution without inventing fake permanent roles;
-- test bounded empirical rerank/fallback/escalation on real host;
-- compare zero/one/many worker decomposition with no overlapping uncontrolled writers or fan-in ambiguity;
-- prove fresh reviewer is used only when material independence/assurance benefit exists;
+- compare **zero vs one** worker on bounded local work and retain delegation only when task-level correctness/predictability or measured economics justify it;
+- compare **one vs many** workers on genuinely independent and dependency/fan-in work without overlapping uncontrolled writers or ambiguous fan-in;
+- prove fresh reviewer is skipped for low-risk deterministic work and used only when material independence/assurance benefit exists;
+- measure reviewer benefit against its extra context/model/tool/cost overhead; no reviewer ceremony by default;
 - retain changes only for deterministic correctness/predictability or measured task-class efficiency.
+
+## Required Verification
+
+- deterministic decomposition/minimum-team/reviewer contract tests;
+- architecture lint + exact isolated plugin suite for any retained product-code change;
+- repeated hash-bound real-host comparisons using MiMo-V2.5 as parent/test controller unless the model is the explicit independent variable;
+- preserve failure repetitions and exact requested/effective attribution; do not claim provider-billed economics or unknown quota.
 
 ## Exact Next Action
 
-Using the retained M11 routing checkpoint as baseline, run bounded real-host attribution coverage for the remaining role-primary models: repository-explorer → MiMo-V2.5, architect → Qwen3.7 Plus, qa-reviewer → Hy3, security-reviewer → MiMo-V2.5-Pro. Keep MiMo-V2.5 as parent/controller, do not create new permanent roles, and require exact child requested/effective identity plus clean task/worker settlement. Then cover MiniMax M2.7 and Qwen3.6 Plus only as controlled role-compatible fallback/alternate candidates before moving to empirical rerank/escalation and decomposition/reviewer experiments.
+Characterize current zero/one/many decomposition and fresh-reviewer decision owners on immutable `d0ae806`. Reuse the existing M8 parallel/fan-in/conflict evidence where its fixture and semantics still match current code, but do not assume those results prove M11 economics. Define the smallest new real-host comparator that isolates **DIRECT zero-child vs one coder child** on the same bounded local implementation, with parent MiMo and identical external acceptance. Then define a reviewer comparator where low-risk deterministic evidence should skip review while a materially high-assurance review mission requires a fresh reviewer. Retain no new product behavior until repeated evidence justifies it.

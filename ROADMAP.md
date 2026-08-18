@@ -405,6 +405,10 @@ Therefore the browser-unavailable primary schema gating candidate is **REJECTED*
 
 Repeated fixtures show lower unnecessary worker/model overhead without covered-task correctness regression; decomposition never creates overlapping uncontrolled writers or fan-in ambiguity. Model benchmarks cover the declared seven-model role priors with exact requested/effective attribution, bounded escalation, and no claim of provider remaining quota or provider-billed cost that was not observed.
 
+### M11 model-routing checkpoint — 2026-08-18
+
+Model-routing evidence is complete for the declared pool on retained product commit `d0ae806`: exact default-role attribution, controlled role-compatible alternates, mission-local empirical rerank admission, resolution-time unavailable-model fallback, and deterministic runtime recovery/escalation invariants are verified. Archive: `agent-archive/2026-08-18-m11-model-routing-evidence.md`. Authentic runtime provider-failure recovery is not claimed real-host verified because pinned OpenCode 1.18.18 localhost failure probes did not settle within the bounded 20-second probe ceiling. M11 remains ACTIVE for decomposition and fresh-reviewer value.
+
 ### Retained checkpoint — role routing v1
 
 - canonical in-memory role priors and `cost-quality` default retained; no silent project routing-policy persistence;
