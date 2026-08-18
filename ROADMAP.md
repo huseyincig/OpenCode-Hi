@@ -213,6 +213,8 @@ Coexistence tests cover representative external-agent/plugin/config shapes and p
 
 # Milestone 8 — Comparative Product Benchmark + Final Cutovers
 
+**Status:** COMPLETE — 2026-08-18
+
 **Goal:** decide which reset architecture components are actually better.
 
 Use `/workspace/Reference/upstream-audit/benchmark-plan.md`.
@@ -238,6 +240,15 @@ Use `/workspace/Reference/upstream-audit/benchmark-plan.md`.
 ### Final rule
 
 Remove or simplify any subsystem that does not improve correctness, predictability or measured execution efficiency on its relevant task class.
+
+### Completion evidence and decision
+
+- Final production external-validity aggregate: `/workspace/Reference/benchmarks/m8-production/aggregate-r8-r10.json` sha256 `3a1dbea06117e6ae9cc555ffe91dee749eb1a1ea345866f25f5bf6bb0dc47c7a`; exact retained product code `8f6b19098b1db0a739bb97f82537fcdc45896278` is 3/3 strict success, pre-reset Hi is 0/3 strict settlement but 3/3 external correctness, and vanilla is 3/3 external success.
+- Final required Architecture ablations are under `/workspace/Reference/benchmarks/m8-architecture-ablations/aggregate.json` sha256 `53786945dd0fcba8cf2d396b06489e9761cae2d9cbf4a35d9f32592ab96de460`; validated POLICY_ABLATION receipts cover direct-vs-graph, semantic no-progress, empirical model routing, skill shortlist, and fresh-context review.
+- Retain correctness/predictability mechanisms on the task classes where they were mechanically justified: bounded scheduler conflict/fan-in admission, claim-linked evidence/freshness, recovery and restart fencing, exact authority, adaptive direct execution, semantic no-progress, bounded empirical model feedback, shortlist/lazy methodology exposure, fresh reviewer default, bounded context selection and coexistence hardening.
+- Keep generic ProjectIntelligence injection removed and keep the broad primary tool-visibility cutover rejected/reverted. Do not claim general Hi-over-vanilla efficiency: vanilla remained materially lighter on final production and several real-host fixtures.
+- Exact isolated retained-product verification is build PASS + architecture lint PASS + full plugin suite `934/934 PASS`. Final archive: `agent-archive/2026-08-18-m8-final-comparative-benchmark.md`.
+- No later numbered roadmap milestone is defined. Completion does not authorize deferred publication/release work.
 
 ---
 

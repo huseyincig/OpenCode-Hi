@@ -1,7 +1,7 @@
 # OpenCode-Hi Active Task State
 
 **Project:** `/workspace/OpenCode-Hi`
-**Status:** ACTIVE — ROADMAP MILESTONE 8
+**Status:** COMPLETE — ROADMAP MILESTONE 8 / ARCHITECTURE RESET
 **Updated:** 2026-08-18
 **Global authority:** `/workspace/PROTOCOL.md`
 **Legacy project-policy layer:** `/workspace/OpenCode-Hi/PROTOCOL.md`
@@ -10,9 +10,9 @@
 
 ## Active Task
 
-### Milestone 8 — Comparative Product Benchmark + Final Cutovers
+### None — Milestone 8 and the architecture reset roadmap are complete
 
-Decide which reset architecture components are measurably better. Benchmark results, not architecture aesthetics or feature count, determine final subsystem retention/simplification.
+Milestone 8 final comparative evidence and cutover decisions are complete. `ROADMAP.md` defines no subsequent numbered milestone. Do not activate deferred release/publication or broad research work without a new explicit user objective.
 
 ## Verified Baseline
 
@@ -170,6 +170,21 @@ Efficiency second, only with truthful provenance:
 - pre-reset Hi is VERIFIED_FAILURE 9/16: V2-shaped config is silently mutated with V1 `hi/agent/default_agent/subagent_depth/permission` fields, `default_agent=working-manager` is claimed, foreign message marker suppresses the canonical Hi parent contract, and repeated system/compaction hooks duplicate canonical projections. redundant actions=10. V1 foreign plugin/skill/MCP/custom-agent/unknown fields themselves are preserved.
 - **composition adapter + idempotent coexistence transforms RETAIN; `default_agent` ownership KEEP_REMOVED:** reset hardening prevents host/plugin config corruption and duplicate/suppressed projections. Vanilla is excluded because this fixture measures Hi additive composition semantics. No provider/model inference or monetary cost occurred.
 
+- M8 production external-validity task `m8-prod-opencode-unicode-012` is final on `anomalyco/opencode` `ab7cbc808f61e062af20d9a9a838ae93ed8f940d -> 6c035e1fd79ede42506eda9a04cab07cb1e502e7`; final fixture sha256 `3936f2a4d1353f09b0969cd84dae1795831a7e2548867e6333ffe5be5df69b79`, runner sha256 `845e11ad0d88df298166db81b3587d79edf402bbd31d6088d2743e7c728a8075`, aggregate `/workspace/Reference/benchmarks/m8-production/aggregate-r8-r10.json` sha256 `3a1dbea06117e6ae9cc555ffe91dee749eb1a1ea345866f25f5bf6bb0dc47c7a`. Full-repo porcelain acceptance allows exactly `packages/core/src/ripgrep.ts`; the target regression test is hash-bound unchanged; only canonical OpenCode-generated `.opencode/*` runtime paths are ignored.
+- exact retained current product `8f6b19098b1db0a739bb97f82537fcdc45896278` is 3/3 VERIFIED_SUCCESS and 3/3 strict Hi settlement on final production r8/r9/r10. Current means: wall `103.63s` (range `72.73–121.56s`), input `114.50k`, output `3.13k`, model calls `11.33`, tool calls `12.67`, OpenCode-derived cost `$0.0290923`; all three external acceptance checks pass with unchanged test and exact one-file production diff.
+- reproducible pre-reset Hi `e8c1a7d` is 0/3 strict success but 3/3 external acceptance on the same production task: all three correct implementations stop with `o-analysis` still open; r8 additionally leaves `hi-debugging-root-cause`, r10 leaves `hi-debugging-root-cause` plus `hi-regression-review`. This is repeated control-plane settlement failure, not implementation/test failure.
+- vanilla OpenCode 1.18.18 is 3/3 external VERIFIED_SUCCESS on the exact task. Means: wall `42.08s`, input `15.23k`, output `0.85k`, model calls `7.0`, tool calls `6.33`, OpenCode-derived cost `$0.0051614`. Current is therefore ~`2.46x` vanilla wall, ~`7.52x` input, ~`1.62x` model calls, `2.0x` tool calls and ~`5.64x` OpenCode-derived cost on this production fixture. **No general Hi-over-vanilla efficiency claim is supported.**
+- the production task exposed and drove three scoped runtime fixes rather than harness bypasses: `bf20eac` makes direct completion state truthful and suppresses clear DIRECT over-debugging; `2da7d7a` rejects incoherent single-target `multi-file + sequential` semantics while preserving real sequential/ambiguous work; `8f6b190` suppresses debugging signals not backed by diagnosis capability while retaining real `repository-analysis` debugging.
+- benchmark-plan Architecture-ablation coverage was mechanically searched before rerun; the five requested fields lacked final M8 comparative receipts, so one minimum deterministic synthetic policy-ablation fixture was run against exact `8f6b190`. Aggregate `/workspace/Reference/benchmarks/m8-architecture-ablations/aggregate.json` sha256 `53786945dd0fcba8cf2d396b06489e9761cae2d9cbf4a35d9f32592ab96de460`; all five POLICY_ABLATION receipts validate under the exact `42c1cd6` comparative contract.
+- **direct-vs-graph RETAIN adaptive DIRECT:** clear local independent work selects DIRECT; forced-graph comparator adds at least one child dispatch/context boundary. Receipt sha256 `b754016f8bd98b85ad2705321ed56ffaaf17d836b104876edce3b1e8603cf6d0`. Structural ablation only; no wall/provider-cost claim.
+- **semantic no-progress governor RETAIN:** semantic comparator has 0 false positives / 0 false negatives and preserves 2/2 recovery events; naive state-change ablation has 2 false-progress positives. Receipt sha256 `0be749c6ca64e0bbb1083e45773a56e132aa32d516938ced4b34cbd8e84c3f9c`.
+- **empirical model feedback RETAIN:** identical deterministic inventory selects heuristic `p/model-a` without feedback and medium-confidence empirical `p/model-b` after four A failures/four B successes. Receipt sha256 `070980dd874073da4c68e86fbef5a69f46a252ee21a89f1c88290193c5d0a24a`; this is routing-policy evidence, not live provider superiority.
+- **skill shortlist/lazy exposure RETAIN:** exact 27-entry built-in catalog is 13777 metadata / 36437 SKILL-body bytes; two-methodology shortlist is 1013 / 2765 bytes, reductions `92.65%` and `92.41%`. Receipt sha256 `9d19276c8ed04d9e00d5a32d7600f9d13fed06ca96ee1404ac5df2b50e72a1da`.
+- **fresh reviewer default RETAIN:** exact child-creation seam has no implementation-session fork for fresh review; contaminated comparator explicitly forks `implementation-session`. Synthetic contamination oracle finds the seeded defect only fresh, but this is not a measured LLM defect-detection rate. Receipt sha256 `79127c8a9ba193be9fac3b581b9900634ca507b14891e7823c973bbb4116b2d5`.
+- final isolated retained-product verification at `/workspace/Reference/benchmarks/opencode-hi-8f6b190`: plugin build PASS, architecture lint PASS, full node/plugin suite `934/934 PASS`; `plugin/dist/plugin.js` sha256 `66980d0546f69c9b32a045291fa9601289dcc31422ab8a6c493b94c702689bea`, comparative contract sha256 `0ede93af9fff359ac1f071c71a2abd19587c59f7a420d0bcf4a544e4d7cbc009`.
+- broader root validation is intentionally not green-washed: `docs:check` still expects 8 owner files removed/thinned in prior scope-down, and git-archive `check:evidence` cannot satisfy ancestry checks while committed validation records also contain pre-existing drift/removed-owner references. The user explicitly prohibited unrelated validation/release/script work, so those surfaces remain untouched. Required M8 product verification is green.
+- final decision/archive is `agent-archive/2026-08-18-m8-final-comparative-benchmark.md`. Milestone 8 is complete; `ROADMAP.md` defines no M9.
+
 ## Exact Next Action
 
-First-wave M8 scenario coverage is complete. Re-read `ROADMAP.md` Milestone 8 acceptance and `/workspace/Reference/upstream-audit/benchmark-plan.md` external-validity requirements. Determine mechanically whether pinned real production-commit tasks are still mandatory beyond the completed real-host trivial/independent/conflict/fan-in episodes. If required, run the minimum representative pinned production tasks with exact provenance before final M8 cutover summary. If not required, perform final isolated product verification for exact retained current code, create the M8 final decision/archive, mark Milestone 8 complete, and activate the next roadmap milestone only if ROADMAP explicitly defines authorized sequential work.
+No authorized roadmap milestone remains. Preserve the completed M8 evidence and retained product state. Wait for a new explicit user objective; do not infer release/publication, broad documentation certification, or new research work from the completed roadmap.
