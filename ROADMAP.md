@@ -2,7 +2,7 @@
 
 **Project:** `/workspace/OpenCode-Hi`
 **Updated:** 2026-08-18
-**Status:** COMPLETE — ARCHITECTURE RESET — 2026-08-18
+**Status:** ACTIVE — PHASE 2 SEMANTIC AUTOPILOT & DECISION INTELLIGENCE
 **Research basis:** `/workspace/Reference/upstream-audit/`
 
 ## Product Direction
@@ -273,3 +273,180 @@ Reopen targeted ecosystem research only when:
 - a new capability class becomes necessary for an authorized milestone.
 
 Do not restart broad repository discovery merely to increase source count.
+
+---
+
+# Phase 2 — Semantic Autopilot & Decision Intelligence
+
+**Status:** ACTIVE — 2026-08-18
+
+**Phase 1 inheritance:** Milestones 1–8 remain complete. The retained deterministic kernel at `8f6b19098b1db0a739bb97f82537fcdc45896278` is the correctness baseline; Phase 2 may simplify provider-visible orchestration but must not weaken execution identity, scheduler ownership, evidence freshness, authority, recovery fencing, or completion adjudication.
+
+## Product Goal
+
+Turn the Phase 1 deterministic kernel into a high-quality autonomous decision system that chooses the minimum sufficient execution strategy and native/external capabilities for each mission while materially reducing provider-visible context, tool, model-call, and wall-time overhead.
+
+The target is not “more agents.” It is:
+
+```text
+user intent
+-> semantic decision envelope
+-> DIRECT or bounded WorkGraph
+-> capability / isolation / model / review policy
+-> native or external primitive
+-> Hi deterministic supervision
+-> fresh evidence / completion
+```
+
+Every added decision layer must either improve covered-task correctness/predictability or reduce measured execution overhead. Static prompt/tool cuts that look smaller but regress end-to-end execution are rejected.
+
+## Phase 2 Non-Negotiables
+
+1. Phase 1 deterministic kernel invariants remain authoritative.
+2. Native primitive + Hi semantic supervision is preferred over duplicate engines.
+3. Decision policy is host-neutral and typed; host API shapes terminate at adapters.
+4. No model call is added merely to make a decision that bounded deterministic state can make.
+5. DIRECT is the default for clear reversible work; graph/delegation requires a named expected benefit.
+6. Parallel fan-out requires independent, useful work and must account for spawn/context/fan-in overhead.
+7. Isolation is an explicit policy decision tied to task ownership and mutable surfaces; worktree creation stays native.
+8. Model escalation requires a named reason; factual model truth comes from OpenCode/runtime/models.dev, while Hi owns empirical observations.
+9. Browser is a capability, not a Hi-owned engine. Hi owns backend selection, attempt/session ownership, evidence/artifacts, bounds, and recovery.
+10. Provider-visible tool/context exposure is task/phase scoped wherever the host supports it; no blanket cutover survives without repeated task-level benefit.
+11. Fresh review is used only when independence materially improves assurance.
+12. Cost claims use exact host/provider observations when available; OpenCode-derived or heuristic values remain explicitly labeled.
+
+# Milestone 9 — Semantic Decision Kernel + Entry Frugality
+
+**Status:** COMPLETE — 2026-08-18
+
+**Goal:** unify Phase 2 execution decisions behind one deterministic typed envelope and reduce unavoidable first-turn semantic-control overhead without changing Phase 1 correctness semantics.
+
+### Scope
+
+- Compose existing adaptive execution, topology, minimum-team, verification, category/model-class, and capability needs into one host-neutral `SemanticDecisionEnvelope`.
+- Keep exact model/provider selection and actual tool availability downstream; the envelope expresses intent/policy, not fabricated runtime facts.
+- Express whether isolation is `NONE`, `CANDIDATE`, or explicitly required by a later exact task contract; never provision a worktree from a vague mission heuristic.
+- Express reviewer need, browser/process/workspace/web eligibility, and minimum provider-visible control-plane phase.
+- Replace the verbose semantic-assessment system gate with a compact mechanically equivalent projection.
+- Measure entry-gate characters and ensure no extra model/tool call is introduced.
+- Record bounded decision reason codes for explainability and later ablation.
+
+### Acceptance
+
+- direct low-risk work remains DIRECT / single / zero-child where existing policy permits;
+- high-risk/authority work cannot be downgraded by the envelope;
+- real multi-stream work can still select bounded fan-out;
+- ambiguous/source-verification work stays evidence-first;
+- independent review requirement is preserved;
+- isolation is never silently provisioned from mission-level uncertainty alone;
+- semantic entry gate preserves multilingual/schema/coherence/authority constraints while reducing provider-visible characters by at least 30% from the pre-M9 measured baseline (`2666` chars);
+- focused tests prove decision parity and prompt contract;
+- no user-owned dirty file is modified.
+
+### Completion evidence
+
+- Added pure host-neutral `SemanticDecisionEnvelope` composition without adding a model/tool/host call or a second durable state owner.
+- MissionStore now consumes that envelope while preserving the existing adaptive/topology durable fields and Phase 1 policy reasons.
+- Semantic entry gate reduced from `2666` to `1866` characters (`30.01%`) while preserving multilingual, schema/coherence, debugging/diagnosis and authority invariants.
+- Exact retained-product overlay verification: build PASS, architecture lint `22/22 PASS`, full plugin/node suite `942/942 PASS`.
+- Verification was run in `/tmp/opencode-hi-m9-check` over the exact Phase 1 archive so user-owned dirty generated/dist files in the working tree remained untouched.
+
+# Milestone 10 — Dynamic Provider-Visible Surface & Token Frugality
+
+**Status:** ACTIVE — 2026-08-18
+
+**Goal:** reduce the current ~7.52× production input-token overhead without repeating the failed static tool-visibility cutover.
+
+### Scope
+
+- Measure prompt components, tool-schema bytes, runtime projection, handoff, repeated tool outputs, and child context separately.
+- Use native per-child prompt tool overrides already supported by OpenCode.
+- Track current OpenCode native seams for primary-turn tool/model projection; adopt native support when semantically sufficient.
+- Phase/capability-specific Hi tool exposure only when repeated real-host ablations improve end-to-end economics.
+- Deduplicate provider-visible repeated results and preserve only correctness-critical state.
+- Keep methodology/skill body loading on-demand through the native skill primitive.
+
+### Acceptance
+
+- every retained surface reduction has repeated task-level benefit, not schema-size-only evidence;
+- deterministic correctness and completion settlement do not regress;
+- exact input/model/tool/wall/cost provenance remains comparable with M8.
+
+# Milestone 11 — Adaptive Decomposition, Model & Review Intelligence
+
+**Goal:** choose zero/one/many workers and light/heavy model classes from expected completion value rather than ceremony.
+
+### Scope
+
+- bounded decomposition contracts with explicit write/read surfaces, dependencies, verification and fan-in;
+- evaluate split-first/cheap-first execution against unsplit comparators instead of adopting ecosystem doctrine by assertion;
+- reserve heavy reasoning for work that cannot be safely/economically decomposed or that empirically fails lighter routing;
+- confidence-aware empirical routing with exact effective-model attribution;
+- fresh reviewer only for material independence/assurance benefit;
+- escalation requires semantic/evidence/failure delta.
+
+### Acceptance
+
+Repeated fixtures show lower unnecessary worker/model overhead without covered-task correctness regression; decomposition never creates overlapping uncontrolled writers or fan-in ambiguity.
+
+# Milestone 12 — Capability & Isolation Intelligence
+
+**Goal:** dynamically choose native shell/process/workspace/MCP/browser capabilities while keeping Hi ownership narrow and exact.
+
+### Scope
+
+- capability requirement/availability/semantic-guarantee decision model;
+- native workspace isolation only for an exact task with a justified mutable-surface/lifecycle reason;
+- process/PTY use only when long-lived interactive lifecycle is actually required;
+- MCP activation/exposure only when its tool set is task-relevant and context cost is justified;
+- fail-closed degradation when native semantics are insufficient for required ownership/evidence.
+
+### Acceptance
+
+Capability decisions are explainable, task-bound, testable, and do not widen native permissions or create duplicate generic runtimes.
+
+# Milestone 13 — Browser Autopilot
+
+**Goal:** evolve browser support from visual-verification executor into task-aware, evidence-producing browser orchestration without building another browser engine.
+
+### Scope
+
+- backend policy for Playwright CLI/skill, MCP/persistent browser, or other host-supported adapters;
+- route/navigation/action plan bounded by task objective and allowed origins;
+- exact browser session/attempt ownership and cleanup;
+- DOM/text/screenshot/network/console evidence as bounded artifacts;
+- browser→code feedback loop with claim-linked evidence;
+- isolate browser sessions when state/cookie/concurrency semantics require it.
+
+### Acceptance
+
+Representative UI/browser tasks complete with bounded evidence, no cross-task session leakage, deterministic cleanup, and lower context cost for the lightweight backend on tasks where persistence is unnecessary.
+
+# Milestone 14 — Closed-Loop Supervision & Runtime Engineering
+
+**Goal:** make decision quality improve from bounded observations while hardening algorithmic/runtime efficiency.
+
+### Scope
+
+- confidence/decay/attribution for routing and procedure learning;
+- bounded state indexes instead of repeated broad scans where profiling proves value;
+- queue/fairness/backpressure/critical-path improvements only where measurable;
+- async cancellation/liveness and memory-retention audit;
+- Big-O and allocation profiling on hot runtime paths;
+- no broad self-modifying policy without reversible evidence gates.
+
+### Acceptance
+
+Profiling and adversarial tests demonstrate the retained changes improve measured hot paths or decision quality without introducing a second state owner.
+
+# Milestone 15 — Broad Production Corpus + Final Phase 2 Cutovers
+
+**Goal:** decide whether the Semantic Autopilot is actually better on real work.
+
+### Scope
+
+Use repeated isolated episodes spanning at least localized fixes, diagnosis, multi-module work, decomposition/fan-in, security/authority, context-heavy work, browser/UI, recovery, and capability/isolation decisions. Compare vanilla OpenCode, retained Phase 1 Hi, and Phase 2; add current OMO/Swarm/Ensemble only where the scenario is reproducibly comparable.
+
+### Final Rule
+
+Retain a Phase 2 subsystem only when it improves deterministic correctness/predictability or measured execution efficiency on its relevant task class. Do not claim general Hi superiority from a narrow corpus.

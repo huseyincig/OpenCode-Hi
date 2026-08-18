@@ -1,29 +1,57 @@
 # OpenCode-Hi Active Task State
 
 **Project:** `/workspace/OpenCode-Hi`
-**Status:** NO ACTIVE AUTHORIZED WORK — ARCHITECTURE RESET COMPLETE
+**Status:** ACTIVE — PHASE 2 / MILESTONE 10
 **Updated:** 2026-08-18
 **Global authority:** `/workspace/PROTOCOL.md`
 **Legacy project-policy layer:** `/workspace/OpenCode-Hi/PROTOCOL.md`
 **Roadmap:** `/workspace/OpenCode-Hi/ROADMAP.md`
+**Phase 2 design:** `/workspace/OpenCode-Hi/docs/PHASE2-SEMANTIC-AUTOPILOT.md`
+**Phase 2 research:** `/workspace/Reference/phase2-autopilot/research-2026-08-18.md`
 
 ## Active Task
 
-None. Milestone 8 and the numbered architecture-reset roadmap are complete; `ROADMAP.md` defines no M9 or later active milestone.
+### M10 — Dynamic Provider-Visible Surface & Token Frugality
 
-## Completion Pointers
+Reduce the current Phase 1 production input/cost overhead by measuring and then eliminating provider-visible orchestration that does not earn task-level value. Do not repeat the rejected M8 blanket primary-tool cutover.
 
-- M8 completion checkpoint: `9db6953389b542c6ab2bd993df35f8eaef712939`.
-- Exact retained product-code commit: `8f6b19098b1db0a739bb97f82537fcdc45896278`.
-- Final archive: `agent-archive/2026-08-18-m8-final-comparative-benchmark.md`.
-- Production aggregate: `/workspace/Reference/benchmarks/m8-production/aggregate-r8-r10.json`, sha256 `3a1dbea06117e6ae9cc555ffe91dee749eb1a1ea345866f25f5bf6bb0dc47c7a`.
-- Architecture-ablation aggregate: `/workspace/Reference/benchmarks/m8-architecture-ablations/aggregate.json`, sha256 `53786945dd0fcba8cf2d396b06489e9761cae2d9cbf4a35d9f32592ab96de460`.
-- Exact retained archive verification: build PASS, architecture lint PASS, full plugin/node suite `934/934 PASS`.
+## Completed Phase 2 Checkpoint
 
-## Known Out-of-Scope State
+M9 is complete; archive: `agent-archive/2026-08-18-m9-semantic-decision-kernel.md`.
 
-Unrelated pre-existing dirty validation/release/script/source/test files remain preserved. Broader docs/evidence certification checks are not treated as M8 completion gates and were not rewritten to manufacture green results.
+M9 evidence:
+- pure typed `SemanticDecisionEnvelope` integrated without another model/tool/host call or durable state owner;
+- semantic entry gate `2666 -> 1866` chars (`30.01%` reduction);
+- focused decision/transform tests `29/29 PASS`;
+- exact retained-product overlay build PASS + architecture lint `22/22 PASS` + full plugin/node suite `942/942 PASS`.
+
+## M10 Baseline / Constraints
+
+- M8 final production current Hi remained ~2.46× vanilla wall, ~7.52× input and ~5.64× OpenCode-derived cost.
+- The prior static primary Hi-tool visibility cutover reduced schema size but regressed repeated end-to-end wall/input/output/model/tool/cost metrics, so it remains rejected.
+- Child execution already supports native per-prompt tool overrides; current OpenCode primary `chat.message` does not expose an equivalent general per-turn tool-set override in the currently observed dev hook surface.
+- Current OpenCode documentation warns that MCP tool definitions consume model context; MCP/browser surfaces must be on-demand.
+- Preserve Phase 1 settlement/evidence/authority/recovery invariants and the M9 decision envelope.
+- Preserve all unrelated pre-existing dirty files, especially user-owned `plugin/src/runtime/routing/execution-mode.ts`, related tests, generated dist, validation/release/script state.
+- Use per-command `git -c safe.directory=/workspace/OpenCode-Hi`; do not mutate global Git config.
+
+## Acceptance Criteria
+
+- provider-visible overhead is decomposed into separately measurable components before a new cutover;
+- measurement distinguishes system text, tool-schema surface, mission runtime projection, child handoff/context and repeated result/tool payloads;
+- any optimization retained in product code has an ablation showing lower relevant overhead with no deterministic correctness regression;
+- no claimed provider cost is inferred from OpenCode-derived/heuristic cost;
+- no extra model/tool call is introduced merely to optimize context;
+- primary static tool removal is not reintroduced without repeated real-host task-level benefit.
+
+## Required Verification
+
+- deterministic surface/accounting tests;
+- focused affected runtime tests;
+- architecture lint for changed ownership boundaries;
+- exact retained-product isolated full suite after a retained M10 cutover;
+- repeated real-host comparison for any change expected to affect provider-visible task economics.
 
 ## Exact Next Action
 
-Wait for a new explicit user objective. Do not infer release/publication, broad documentation certification, new roadmap work, or ecosystem research from the completed architecture reset.
+Build a read-only provider-surface measurement harness against the exact retained product and M9 overlay. Quantify semantic gate/system projection, registered Hi tool schema surface, role/task child tool surfaces, bounded runtime projection and worker handoff payloads. Use those measurements to choose the first M10 optimization; do not modify primary tool visibility before the measurement identifies the dominant repeated cost.
