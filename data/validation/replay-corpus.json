@@ -42,7 +42,7 @@
         "next": "VERIFY",
         "reason_classes": [
           "open-obligations",
-          "verification-missing"
+          "verification-claims-missing"
         ]
       },
       "id": "completion-verification-missing",

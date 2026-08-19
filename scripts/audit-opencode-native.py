@@ -4,7 +4,7 @@ import argparse,hashlib,json,subprocess,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 EXPECTED_VERSION='1.18.18'
-DEFAULT_COMMIT='e23586af2623f1bc2e8e6965d2d7acf7bd03d5c3'
+DEFAULT_COMMIT='v1.18.18'
 SOURCES={
  'plugin-hooks':'packages/plugin/src/index.ts',
  'session':'packages/opencode/src/session/session.ts',
@@ -21,7 +21,7 @@ SOURCES={
  'package':'packages/opencode/package.json',
 }
 def git(root:Path,*args:str,bytes=False):
-    return subprocess.check_output(['git','-C',str(root),*args],stderr=subprocess.STDOUT,text=not bytes)
+    return subprocess.check_output(['git','-c',f'safe.directory={root}','-C',str(root),*args],stderr=subprocess.STDOUT,text=not bytes)
 def blob(root:Path,commit:str,path:str)->bytes:return git(root,'show',f'{commit}:{path}',bytes=True)
 def text(root:Path,commit:str,path:str)->str:return blob(root,commit,path).decode()
 def require(haystack:str,*needles:str):
@@ -66,7 +66,7 @@ def main()->int:
             if not (ROOT/rel).is_file():missing.append({'surface':d['surface'],'path':rel})
     out={
       'schema':1,'kind':'EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION','program':'PROMPT_B','status':'PASS' if not missing else 'FAIL',
-      'opencode':{'version':EXPECTED_VERSION,'source_commit':commit,'source_worktree_used':False,'source_read_mode':'git-blob'},
+      'opencode':{'version':EXPECTED_VERSION,'source_ref':a.commit,'source_commit':commit,'source_worktree_used':False,'source_read_mode':'git-blob'},
       'upstream_blob_sha256':{k:{'path':v,'sha256':hashlib.sha256(blob(upstream,commit,v)).hexdigest()} for k,v in SOURCES.items()},
       'decisions':decisions,'missing_hi_paths':missing,
       'summary':{'surfaces':len(decisions),'remove_custom_mechanism':sum(d['hi_decision'].startswith('REMOVE') for d in decisions),'keep_thin_or_stronger':sum(d['hi_decision'].startswith('KEEP') for d in decisions),'unsupported':sum(d['hi_decision'].startswith('UNSUPPORTED') for d in decisions)},

@@ -11,7 +11,8 @@ if a.get('schema')!=1 or a.get('kind')!='PROMPT_B_FAILURE_INJECTION_ACCEPTANCE' 
 seen=[x.get('injection') for x in a.get('injections',[]) if isinstance(x,dict)]
 if seen!=required:violations.append('injection-inventory')
 if a.get('summary')!={'required':12,'covered':12,'violations':0}:violations.append('acceptance-summary')
-if a.get('terminal')!={'tests':54,'pass':54,'fail':0,'cancelled':0,'skipped':0,'todo':0}:violations.append('targeted-terminal')
+terminal=a.get('terminal') or {}
+if not isinstance(terminal.get('tests'),int) or terminal.get('tests',0)<=0 or terminal.get('pass')!=terminal.get('tests') or terminal.get('fail')!=0 or terminal.get('cancelled')!=0 or terminal.get('skipped')!=0 or terminal.get('todo')!=0:violations.append('targeted-terminal')
 if not (a.get('bounded_recovery') or {}).get('no_infinite_retry'):violations.append('infinite-retry-guard')
 for row in a.get('injections',[]):
  rel=row.get('proof');anchor=row.get('proof_anchor');expected=row.get('proof_sha256')

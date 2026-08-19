@@ -8,7 +8,7 @@ checks=[
  # §16 Persistence/restart
  (16,'durable-eight-slices','plugin/src/runtime/mission/types.ts','export interface MissionState','plugin/test/prompt-b-persistence-restart-hostile.test.mjs','persistence round-trip preserves every durable control plane'),
  (16,'task-dag-worker-restart','plugin/src/runtime/mission/mission-store.ts',"['active','waiting-user'].includes(m.identity.status)",'plugin/test/crash-restart-survival.test.mjs','unclean restart quarantines in-flight child'),
- (16,'continuation-ephemeral-reset','plugin/src/runtime/mission/mission-store.ts','m.continuation.continuation_active=false','plugin/test/crash-restart-survival.test.mjs','explicit task restart reuses the quarantined child session'),
+ (16,'continuation-ephemeral-reset','plugin/src/runtime/mission/mission-store.ts','m.continuation.continuation_active=false','plugin/test/crash-restart-survival.test.mjs','explicit task restart quiesces and reconciles the durable reservation before the next same-session attempt'),
  (16,'context-state-survival','plugin/src/runtime/state/persistence.ts','missions:MissionState[]','plugin/test/prompt-b-persistence-restart-hostile.test.mjs','context'),
  (16,'vcs-safety-survival','plugin/src/runtime/state/persistence.ts','missions:MissionState[]','plugin/test/prompt-b-persistence-restart-hostile.test.mjs','vcs.changed_files'),
  (16,'authority-restart-semantics','plugin/src/runtime/mission/mission-store.ts','authority.approval.invalidated','plugin/test/authority-input-split.test.mjs','semantic revision and runtime restart invalidate unconsumed approval'),

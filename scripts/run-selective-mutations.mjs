@@ -15,8 +15,8 @@ const mutants=[
   {
     id:'completion-required-evidence-bypass',
     file:'plugin/src/runtime/verification/policy.ts',
-    from:"return{ok:missing.length===0,missing:[...new Set(missing)]}",
-    to:"return{ok:true,missing:[...new Set(missing)]}",
+    from:"if(!envelope.independent_review)missing.push('review-obligation')\n  return{ok:missing.length===0,missing:[...new Set(missing)]}",
+    to:"if(!envelope.independent_review)missing.push('review-obligation')\n  return{ok:true,missing:[...new Set(missing)]}",
     expected:/Q2 completion cannot pass without required evidence/,
   },
   {
