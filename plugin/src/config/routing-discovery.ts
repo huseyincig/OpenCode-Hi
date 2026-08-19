@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { HiConfig } from './schema.js'
+import { isModelRoutedChildRole, type HiConfig } from './schema.js'
 
 // Reads .opencode/hi/policy/routing.json (schema 1) from the project root and
 // returns a Partial<HiConfig> that callers can merge into the resolved
@@ -47,13 +47,13 @@ export function loadProjectRoutingConfig(projectRoot: string): Partial<HiConfig>
   if (r.strategy === 'cost-quality' || r.strategy === 'quality' || r.strategy === 'cost') routing.strategy = r.strategy
   if (r.roleModels && typeof r.roleModels === 'object') {
     const roleModels:Record<string,string[]> = {}
-    for (const [k,v] of Object.entries(r.roleModels)) if (Array.isArray(v)) { const xs=v.filter((x):x is string=>typeof x==='string'&&x.trim().length>0).map(x=>x.trim()); if(xs.length) roleModels[k]=xs }
+    for (const [k,v] of Object.entries(r.roleModels)) if (isModelRoutedChildRole(k) && Array.isArray(v)) { const xs=v.filter((x):x is string=>typeof x==='string'&&x.trim().length>0).map(x=>x.trim()); if(xs.length) roleModels[k]=xs }
     if(Object.keys(roleModels).length) routing.roleModels=roleModels
   }
   if (r.roleVariants && typeof r.roleVariants === 'object') {
     const roleVariants:Record<string,Record<string,string>> = {}
     for (const [role,value] of Object.entries(r.roleVariants)) {
-      if (!value || typeof value !== 'object' || Array.isArray(value)) continue
+      if (!isModelRoutedChildRole(role) || !value || typeof value !== 'object' || Array.isArray(value)) continue
       const variants:Record<string,string> = {}
       for (const [model,variant] of Object.entries(value)) if (typeof variant === 'string' && variant.trim()) variants[model]=variant.trim()
       if (Object.keys(variants).length) roleVariants[role]=variants
@@ -87,7 +87,7 @@ export function loadProjectRoutingConfig(projectRoot: string): Partial<HiConfig>
     const m:Partial<HiConfig['models']>={}
     if(['adaptive','fixed','role-mapped'].includes(String(raw.models.mode)))m.mode=raw.models.mode
     if(typeof raw.models.default==='string'&&raw.models.default.trim())m.default=raw.models.default.trim()
-    if(raw.models.roles&&typeof raw.models.roles==='object'&&!Array.isArray(raw.models.roles)){const roles=Object.fromEntries(Object.entries(raw.models.roles).filter(([,v])=>typeof v==='string'&&v.trim()).map(([k,v])=>[k,String(v).trim()]));if(Object.keys(roles).length)m.roles=roles}
+    if(raw.models.roles&&typeof raw.models.roles==='object'&&!Array.isArray(raw.models.roles)){const roles=Object.fromEntries(Object.entries(raw.models.roles).filter(([k,v])=>isModelRoutedChildRole(k)&&typeof v==='string'&&v.trim()).map(([k,v])=>[k,String(v).trim()]));if(Object.keys(roles).length)m.roles=roles}
     if(Object.keys(m).length)out.models=m as HiConfig['models']
   }
   if(raw.parallel&&typeof raw.parallel==='object'&&!Array.isArray(raw.parallel)){

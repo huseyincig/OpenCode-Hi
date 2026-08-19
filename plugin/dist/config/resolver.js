@@ -1,5 +1,5 @@
 import { DEFAULT_HI_CONFIG } from './defaults.js';
-import { HI_CONFIG_SCHEMA, isRecord } from './schema.js';
+import { HI_CONFIG_SCHEMA, isModelRoutedChildRole, isRecord } from './schema.js';
 import { loadProjectRoutingConfig } from './routing-discovery.js';
 function limits(raw) { if (!isRecord(raw))
     return {}; const out = {}; for (const [k, v] of Object.entries(raw))
@@ -12,13 +12,15 @@ function modelList(raw) { if (typeof raw === 'string')
     raw = [raw]; return Array.isArray(raw) ? [...new Set(raw.filter((x) => typeof x === 'string' && x.trim().length > 0).map(x => x.trim()))].slice(0, 8) : []; }
 function roleModels(raw) { if (!isRecord(raw))
     return {}; const out = {}; for (const [k, v] of Object.entries(raw)) {
+    if (!isModelRoutedChildRole(k))
+        continue;
     const xs = modelList(v);
     if (xs.length)
         out[k] = xs;
 } return out; }
 function roleVariants(raw) { if (!isRecord(raw))
     return {}; const out = {}; for (const [role, v] of Object.entries(raw)) {
-    if (!isRecord(v))
+    if (!isModelRoutedChildRole(role) || !isRecord(v))
         continue;
     const inner = {};
     for (const [model, variant] of Object.entries(v))
@@ -28,7 +30,7 @@ function roleVariants(raw) { if (!isRecord(raw))
         out[role] = inner;
 } return out; }
 function modelMap(raw) { if (!isRecord(raw))
-    return {}; return Object.fromEntries(Object.entries(raw).filter(([, v]) => typeof v === 'string' && v.trim()).map(([k, v]) => [k, String(v).trim()])); }
+    return {}; return Object.fromEntries(Object.entries(raw).filter(([k, v]) => isModelRoutedChildRole(k) && typeof v === 'string' && v.trim()).map(([k, v]) => [k, String(v).trim()])); }
 function threshold(value) { return value === 'low' || value === 'medium' || value === 'high' ? value : undefined; }
 function categoryModels(raw) { if (!isRecord(raw))
     return {}; const out = {}; for (const k of ['quick', 'standard', 'deep', 'visual', 'critical']) {

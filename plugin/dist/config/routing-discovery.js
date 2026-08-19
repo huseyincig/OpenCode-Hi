@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { isModelRoutedChildRole } from './schema.js';
 export function loadProjectRoutingConfig(projectRoot) {
     if (!projectRoot)
         return undefined;
@@ -22,7 +23,7 @@ export function loadProjectRoutingConfig(projectRoot) {
     if (r.roleModels && typeof r.roleModels === 'object') {
         const roleModels = {};
         for (const [k, v] of Object.entries(r.roleModels))
-            if (Array.isArray(v)) {
+            if (isModelRoutedChildRole(k) && Array.isArray(v)) {
                 const xs = v.filter((x) => typeof x === 'string' && x.trim().length > 0).map(x => x.trim());
                 if (xs.length)
                     roleModels[k] = xs;
@@ -33,7 +34,7 @@ export function loadProjectRoutingConfig(projectRoot) {
     if (r.roleVariants && typeof r.roleVariants === 'object') {
         const roleVariants = {};
         for (const [role, value] of Object.entries(r.roleVariants)) {
-            if (!value || typeof value !== 'object' || Array.isArray(value))
+            if (!isModelRoutedChildRole(role) || !value || typeof value !== 'object' || Array.isArray(value))
                 continue;
             const variants = {};
             for (const [model, variant] of Object.entries(value))
@@ -95,7 +96,7 @@ export function loadProjectRoutingConfig(projectRoot) {
         if (typeof raw.models.default === 'string' && raw.models.default.trim())
             m.default = raw.models.default.trim();
         if (raw.models.roles && typeof raw.models.roles === 'object' && !Array.isArray(raw.models.roles)) {
-            const roles = Object.fromEntries(Object.entries(raw.models.roles).filter(([, v]) => typeof v === 'string' && v.trim()).map(([k, v]) => [k, String(v).trim()]));
+            const roles = Object.fromEntries(Object.entries(raw.models.roles).filter(([k, v]) => isModelRoutedChildRole(k) && typeof v === 'string' && v.trim()).map(([k, v]) => [k, String(v).trim()]));
             if (Object.keys(roles).length)
                 m.roles = roles;
         }

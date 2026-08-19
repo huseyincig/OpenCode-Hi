@@ -149,6 +149,8 @@ See [Installation and Lifecycle](docs/INSTALLATION.md) for Git/npm installation,
 
 **Installed the plugin? Continue with the complete [Configuration Guide](docs/CONFIGURATION.md)** for Windows, Linux, macOS, every supported option, primary/worker roles, single-model and per-role routing, multiple fallback models, variants, provider/model policy, concurrency, CLI/manual configuration, and troubleshooting.
 
+**Türkçe:** [Kurulum ve Yapılandırma Rehberi](docs/locales/tr/CONFIGURATION.md).
+
 ## Configuration
 
 Hi configuration is current-only and fail-closed. The canonical machine inventory is `data/hi-config-options.json`; each runtime option must have a validator, precedence, consumer, executable effect, documentation and tests. Unknown or stale configuration is not silently accepted as a compatibility feature.

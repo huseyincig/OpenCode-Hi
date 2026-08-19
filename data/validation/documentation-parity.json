@@ -6,7 +6,7 @@
   "inputs": {
     "documentation_ownership": {
       "path": "data/documentation-ownership.json",
-      "sha256": "db57fa2aae954c068b1f7cfee7c7341ceeaed235c2c13a4f6972eacfe42b19ad"
+      "sha256": "cb5659bcc457a0d02127ad4319f4160704811751cc9ac6179677a4a0f575585a"
     },
     "compatibility": {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
@@ -30,6 +30,7 @@
     "docs/SECURITY-MODEL.md",
     "docs/RELEASE.md",
     "docs/locales/tr/README.md",
+    "docs/locales/tr/CONFIGURATION.md",
     ".github/CONTRIBUTING.md",
     ".github/SECURITY.md",
     ".github/SUPPORT.md"

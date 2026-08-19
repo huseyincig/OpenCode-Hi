@@ -6,6 +6,9 @@ export type CategoryName = 'quick' | 'standard' | 'deep' | 'visual' | 'critical'
 export type CompatibilityMode = 'compatible' | 'strict';
 export type TopologyMode = 'adaptive' | 'single-agent' | 'multi-agent';
 export type ModelSelectionMode = 'adaptive' | 'fixed' | 'role-mapped';
+export declare const MODEL_ROUTED_CHILD_ROLES: readonly ["coder", "architect", "repository-explorer", "qa-reviewer", "security-reviewer", "visual-qa"];
+export type ModelRoutedChildRole = typeof MODEL_ROUTED_CHILD_ROLES[number];
+export declare function isModelRoutedChildRole(value: unknown): value is ModelRoutedChildRole;
 export interface ProfileSettings {
     specialistThreshold: 'low' | 'medium' | 'high';
     reviewThreshold: 'low' | 'medium' | 'high';

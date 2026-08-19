@@ -17,7 +17,7 @@
       "owner_sha256": "ab3a8c6c8b34858ca9662f38ba63806af2af04c60f7b9a498f3211e1a2e8780d",
       "owner_anchor": "owner_sha256",
       "proof": "data/validation/product-truth-inventory.json",
-      "proof_sha256": "678691ff1489a94a62d16f24b74680ab0a3292f369eacfd1b0a91c838c2a0470",
+      "proof_sha256": "22b0b5378274e0b981a187b5f0f2b5fb16c5c3ee808a8c6d68364e4c6e74eae0",
       "proof_anchor": "\"owner_sha256\""
     },
     {
@@ -27,37 +27,37 @@
       "owner_sha256": "ab3a8c6c8b34858ca9662f38ba63806af2af04c60f7b9a498f3211e1a2e8780d",
       "owner_anchor": "proof_paths",
       "proof": "data/validation/product-truth-inventory.json",
-      "proof_sha256": "678691ff1489a94a62d16f24b74680ab0a3292f369eacfd1b0a91c838c2a0470",
+      "proof_sha256": "22b0b5378274e0b981a187b5f0f2b5fb16c5c3ee808a8c6d68364e4c6e74eae0",
       "proof_anchor": "\"proof_paths\""
     },
     {
       "step": "docs-owner-impact-check",
       "status": "PASS",
       "owner": "data/documentation-ownership.json",
-      "owner_sha256": "db57fa2aae954c068b1f7cfee7c7341ceeaed235c2c13a4f6972eacfe42b19ad",
+      "owner_sha256": "cb5659bcc457a0d02127ad4319f4160704811751cc9ac6179677a4a0f575585a",
       "owner_anchor": "one-current-area-one-public-owner",
       "proof": "data/validation/documentation-inventory.json",
-      "proof_sha256": "1087e4b39289de68ca191ac9e6c3ee5629f4db81e156fdea175e04752177aaed",
+      "proof_sha256": "d61a227f291946b54e153efe6611878a9ede226bc1797dbd376901753ce9381f",
       "proof_anchor": "\"canonical_ownership\""
     },
     {
       "step": "generated-parity-update",
       "status": "PASS",
       "owner": "scripts/generate-documentation-projections.py",
-      "owner_sha256": "edc482e179739db21b205286baced367c8d6ce714e0df9263f1efe2622327c1e",
+      "owner_sha256": "d28be108c398a85b956fe702e75002975f29e85074205dea7192de9307883c15",
       "owner_anchor": "Generated from",
       "proof": "data/validation/documentation-parity.json",
-      "proof_sha256": "7722affc12950d9278e7645aab5cecf01d4a16368754995e50bcdf9be6e69594",
+      "proof_sha256": "eca8448e33cbced6107753441e6d76994f1e06d85000a3b3440f51e96b72ce38",
       "proof_anchor": "\"status\": \"PASS\""
     },
     {
       "step": "doc-lint",
       "status": "PASS",
       "owner": "scripts/validate-documentation.py",
-      "owner_sha256": "e1a50b5609fe397654a650ab1bb7dc624997f3f6028d2b1b0eb2c9f4b4b071e3",
+      "owner_sha256": "85298e6a9869f3ad199cdfaec0d6435c2daf84abb8770b14e1c53586df145aba",
       "owner_anchor": "documentation parity",
       "proof": "data/validation/documentation-parity.json",
-      "proof_sha256": "7722affc12950d9278e7645aab5cecf01d4a16368754995e50bcdf9be6e69594",
+      "proof_sha256": "eca8448e33cbced6107753441e6d76994f1e06d85000a3b3440f51e96b72ce38",
       "proof_anchor": "\"violations\": []"
     }
   ],

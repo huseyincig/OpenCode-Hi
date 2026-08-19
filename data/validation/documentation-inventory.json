@@ -5,14 +5,14 @@
   "status": "PASS",
   "policy": {
     "path": "data/documentation-ownership.json",
-    "sha256": "db57fa2aae954c068b1f7cfee7c7341ceeaed235c2c13a4f6972eacfe42b19ad"
+    "sha256": "cb5659bcc457a0d02127ad4319f4160704811751cc9ac6179677a4a0f575585a"
   },
   "summary": {
-    "public_documents": 15,
-    "docs_markdown": 11,
+    "public_documents": 16,
+    "docs_markdown": 12,
     "root_markdown": 3,
     "machine_owners": 2,
-    "canonical_areas": 17
+    "canonical_areas": 18
   },
   "canonical_ownership": [
     {
@@ -88,6 +88,12 @@
       "update_mode": "DERIVED_CURRENT"
     },
     {
+      "path": "docs/locales/tr/CONFIGURATION.md",
+      "area": "turkish-configuration-translation",
+      "audience": "USER",
+      "update_mode": "DERIVED_CURRENT"
+    },
+    {
       "path": ".github/CONTRIBUTING.md",
       "area": "contribution",
       "audience": "CONTRIBUTOR",
@@ -141,7 +147,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "b95ff3c546b9c0c9f08a56b251562d6fc0de0b0f6602438d92ab13ca39c9d457",
+      "sha256": "8ae5bcc7d5fdd6ba5c2d122267f46fdd5fa2323433b426b122a811e6eb9ae4f5",
       "area": "product-overview",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -157,7 +163,7 @@
     },
     {
       "path": "docs/CONFIGURATION.md",
-      "sha256": "cc1c8d79a4893aabf90ef132a389a84810fc047c804e7c4645f92f9e536846ff",
+      "sha256": "8c1e7d5c149795a1840b3a3d8c6b6d0ae34ae8052b3feea261139462ce38a9b2",
       "area": "configuration-guide",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -181,7 +187,7 @@
     },
     {
       "path": "docs/INSTALLATION.md",
-      "sha256": "bb4bed2bff33cf0bc7fe028926c1c02f004aa9f55b22faca6d75f35eae9eaf93",
+      "sha256": "4f6cde1b5578507f392301857be747ed2d67d617acaf21e6786f62a5bada79a5",
       "area": "installation-configuration-lifecycle",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -189,7 +195,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256": "c933c6a6896d2f68294b446d2273ca29101c1bc8f0ed7908791ea0e76ec64cfb",
+      "sha256": "767ed97f8d06801be5672a82f0b9f312a7fc5185606de6f9a90a5ae985bc9f1e",
       "area": "documentation-index",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -228,8 +234,16 @@
       "update_mode": "PARITY_VALIDATED"
     },
     {
+      "path": "docs/locales/tr/CONFIGURATION.md",
+      "sha256": "fe3b2cf828a551a4a3d27802ceafd39beae60fc5d9926eefdfe4c1e1afda3b74",
+      "area": "turkish-configuration-translation",
+      "audience": "USER",
+      "lifecycle": "DERIVED_CURRENT",
+      "update_mode": "DERIVED_CURRENT"
+    },
+    {
       "path": "docs/locales/tr/README.md",
-      "sha256": "c1bd6788eaf8253355683b791fb2a8eee460e75562ab32b79f573ad0a7d424ed",
+      "sha256": "10c8e59183e9e7a2d754ab9c92270921b2fac62892cc80524d604a8d5e87a544",
       "area": "turkish-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",

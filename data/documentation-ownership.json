@@ -6,7 +6,7 @@
     "truth_precedence": "live-source-contract-runtime-evidence-before-docs",
     "historical_or_local_notes_may_not_own_current_truth": true,
     "generated_facts_must_name_machine_owner": true,
-    "public_docs_budget": 11,
+    "public_docs_budget": 12,
     "root_markdown_budget": 3,
     "local_only_directory": ".project-docs/",
     "engineering_state_root_markdown": [
@@ -85,6 +85,12 @@
     {
       "path": "docs/locales/tr/README.md",
       "area": "turkish-translation",
+      "audience": "USER",
+      "update_mode": "DERIVED_CURRENT"
+    },
+    {
+      "path": "docs/locales/tr/CONFIGURATION.md",
+      "area": "turkish-configuration-translation",
       "audience": "USER",
       "update_mode": "DERIVED_CURRENT"
     },

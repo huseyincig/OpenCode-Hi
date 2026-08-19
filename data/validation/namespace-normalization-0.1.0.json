@@ -73,7 +73,7 @@
   "inputs": {
     "naming_guard": {
       "path": "scripts/naming_namespace_guard.mjs",
-      "sha256": "a713c2d17180f240aab52bf63201d54291e83f2485382baae5536bcbd92024a1"
+      "sha256": "794b314adf7efbdcfbc71f7cac5297bcb66b40aaec5dfa8da6d2aaceb4a61bd8"
     },
     "terminology": {
       "path": "data/validation/terminology-audit-0.1.0.json",
@@ -85,7 +85,7 @@
     },
     "config_catalog": {
       "path": "data/hi-config-options.json",
-      "sha256": "d3d3801d6f1264e992a69ba74702bf8ce92cc6da5523c36b77c0be81efef72e7"
+      "sha256": "60bd659fc9f34da7a1165f617d5266ced845d91879768566a523833e0943625f"
     },
     "role_catalog": {
       "path": "data/hi-roles.json",

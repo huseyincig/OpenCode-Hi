@@ -10,10 +10,10 @@ import {resolveModel} from '../dist/runtime/routing/model-resolver.js'
 const ALL=[...new Set(Object.values(DEFAULT_ROLE_MODELS_OPENCODE_GO).flat())]
 function project(){return mkdtempSync(join(tmpdir(),'hi-model-setup-'))}
 
-test('recommended setup persists all 8 canonical roles when curated inventory is available',()=>{
+test('recommended setup persists only the 6 model-routed child roles when curated inventory is available',()=>{
  const p=project();try{
-  const r=ensureProjectRoutingConfig(p,ALL);assert.equal(r.created,true);assert.equal(r.configuredRoles,8)
-  const raw=JSON.parse(readFileSync(r.path,'utf8'));assert.equal(raw.routing.modelPolicy,'recommended');assert.deepEqual(raw.routing.adaptiveRoles,[]);assert.equal(Object.keys(raw.routing.roleModels).length,8)
+  const r=ensureProjectRoutingConfig(p,ALL);assert.equal(r.created,true);assert.equal(r.configuredRoles,6)
+  const raw=JSON.parse(readFileSync(r.path,'utf8'));assert.equal(raw.routing.modelPolicy,'recommended');assert.deepEqual(raw.routing.adaptiveRoles,[]);assert.equal(Object.keys(raw.routing.roleModels).length,6);assert.equal(raw.routing.roleModels.manager,undefined);assert.equal(raw.routing.roleModels['working-manager'],undefined)
   const first=resolveHiConfig({},p),second=resolveHiConfig({},p);assert.deepEqual(second.routing.roleModels,first.routing.roleModels);assert.equal('modelPolicy' in second.routing,false);assert.equal('adaptiveRoles' in second.routing,false)
  }finally{rmSync(p,{recursive:true,force:true})}
 })

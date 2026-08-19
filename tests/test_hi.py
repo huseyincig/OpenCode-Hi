@@ -42,7 +42,7 @@ def test_root_git_package_contract():
 def test_root_is_product_clean():
     assert not any((ROOT/x).exists() for x in ['KURULUM.md','RELEASE-READINESS.md','WORK-STATE.md','work-state.json','HI.cmd','HI.sh','HI-VALIDATE.cmd','HI-RELEASE-PREP.cmd','README.tr.md','CONTRIBUTING.md','SECURITY.md'])
     docs={p.relative_to(ROOT/'docs').as_posix() for p in (ROOT/'docs').rglob('*.md')}
-    assert docs=={'README.md','ARCHITECTURE.md','INSTALLATION.md','CONFIGURATION.md','SKILLS.md','HOSTS.md','HUMAN-DECISIONS.md','VERIFICATION.md','SECURITY-MODEL.md','RELEASE.md','locales/tr/README.md'}
+    assert docs=={'README.md','ARCHITECTURE.md','INSTALLATION.md','CONFIGURATION.md','SKILLS.md','HOSTS.md','HUMAN-DECISIONS.md','VERIFICATION.md','SECURITY-MODEL.md','RELEASE.md','locales/tr/README.md','locales/tr/CONFIGURATION.md'}
     assert not (ROOT/'docs/engineering-constitution').exists()
     ignore=(ROOT/'.gitignore').read_text(encoding='utf-8')
     assert '.project-docs/' in ignore
@@ -474,7 +474,7 @@ def test_prompt_a_documentation_inventory_classifies_all_truth_surfaces_and_has_
     inv=json.loads((ROOT/'data/validation/documentation-inventory.json').read_text(encoding='utf-8'))
     assert policy['schema']==1 and policy['type']=='hi-documentation-ownership'
     assert policy['policy']['rule']=='one-current-area-one-public-owner'
-    assert policy['policy']['public_docs_budget']==11 and policy['policy']['root_markdown_budget']==3
+    assert policy['policy']['public_docs_budget']==12 and policy['policy']['root_markdown_budget']==3
     assert inv['schema']==1 and inv['kind']=='DOCUMENTATION_TRUTH_INVENTORY' and inv['status']=='PASS'
     assert inv['violations']=={'missing':[],'duplicate_area':[],'budget_or_tracking':[]}
     areas=[x['area'] for x in policy['public_documents']+policy['machine_owners']]
@@ -483,7 +483,7 @@ def test_prompt_a_documentation_inventory_classifies_all_truth_surfaces_and_has_
     assert artifacts['README.md']['lifecycle']=='CANONICAL_CURRENT'
     assert artifacts['docs/locales/tr/README.md']['lifecycle']=='DERIVED_CURRENT'
     assert 'docs/engineering-constitution/15-ENGINEERING-CONSTITUTION.md' not in artifacts
-    assert inv['summary']['docs_markdown']==11 and inv['summary']['root_markdown']==3
+    assert inv['summary']['docs_markdown']==12 and inv['summary']['root_markdown']==3
     for item in policy['public_documents']+policy['machine_owners']:assert (ROOT/item['path']).is_file()
     assert hashlib.sha256((ROOT/inv['policy']['path']).read_bytes()).hexdigest()==inv['policy']['sha256']
 
@@ -529,10 +529,33 @@ def test_prompt_a_first_use_docs_do_not_advertise_unavailable_registry_or_stale_
     assert 'contains no raw stdout/stderr buffer' in arch
 
 
+def test_role_models_cli_rejects_primary_role_model_assignment_and_accepts_child_roles(tmp_path):
+    script=ROOT/'scripts/native_plugin_setup.py'
+    project=tmp_path/'project';project.mkdir()
+    for primary in ('manager','working-manager'):
+        blocked=subprocess.run([sys.executable,str(script),'role-models',str(project),'--set',f'{primary}=provider/model','--policy','manual'],cwd=ROOT,text=True,capture_output=True)
+        assert blocked.returncode==2
+        out=json.loads(blocked.stdout)
+        assert out['status']=='BLOCKED' and out['reason']=='role-model-primary-owned-by-opencode'
+        assert primary in out['detail'] and 'OpenCode' in out['action']
+    unknown=subprocess.run([sys.executable,str(script),'role-models',str(project),'--set','unknown=provider/model','--policy','manual'],cwd=ROOT,text=True,capture_output=True)
+    assert unknown.returncode==2 and json.loads(unknown.stdout)['reason']=='unsupported-role-model'
+    applied=subprocess.run([sys.executable,str(script),'role-models',str(project),'--set','coder=provider/code,provider/fallback','--policy','manual'],cwd=ROOT,text=True,capture_output=True,check=True)
+    data=json.loads(applied.stdout)
+    assert data['status']=='APPLIED' and data['roleModels']=={'coder':['provider/code','provider/fallback']}
+    cfg=project/'.opencode/hi/policy/routing.json';raw=json.loads(cfg.read_text(encoding='utf-8'));raw['routing']['roleModels']['manager']=['provider/stale'];raw['routing']['roleModels']['unknown']=['provider/unknown'];cfg.write_text(json.dumps(raw),encoding='utf-8')
+    printed=subprocess.run([sys.executable,str(script),'role-models',str(project),'--print'],cwd=ROOT,text=True,capture_output=True,check=True)
+    current=json.loads(printed.stdout)
+    assert current['roleModels']=={'coder':['provider/code','provider/fallback']}
+    assert current['ignoredRoleModelRoles']==['manager','unknown']
+
+
 def test_configuration_guide_covers_supported_variations_and_is_readme_linked():
     readme=(ROOT/'README.md').read_text(encoding='utf-8')
     guide=(ROOT/'docs/CONFIGURATION.md').read_text(encoding='utf-8')
+    guide_tr=(ROOT/'docs/locales/tr/CONFIGURATION.md').read_text(encoding='utf-8')
     assert '[Configuration Guide](docs/CONFIGURATION.md)' in readme
+    assert 'OpenCode-Hi Türkçe Kurulum ve Yapılandırma Rehberi' in guide_tr
     for platform in ['Windows','Linux','macOS']:
         assert platform in guide
     for role in ['working-manager','manager','coder','architect','repository-explorer','qa-reviewer','security-reviewer','visual-qa']:
@@ -542,14 +565,15 @@ def test_configuration_guide_covers_supported_variations_and_is_readme_linked():
     for phrase in ['models.mode','models.default','models.roles','routing.roleModels','routing.roleVariants','routing.categoryModels','routing.categoryVariants','routing.allowedProviders','routing.deniedModels','parallel.max','execution.parallelism','maxFallbacks']:
         assert phrase in guide
     assert 'no general `allowedModels` whitelist' in guide
-    assert 'Current project model routing is applied by `TaskRuntime` when Hi dispatches **child workers**' in guide
-    assert 'does **not** currently prove or force the primary session model' in guide
+    assert 'The setup CLI rejects primary-role model assignments explicitly.' in guide
+    assert 'role-model-primary-owned-by-opencode' in guide_tr
     assert '"model": "provider/model-x"' in guide
     assert 'This requires configuring both ownership layers with the same model ID.' in guide
     assert 'rejects incompatible same-name agent definitions as collisions' in guide
     assert '.opencode/hi/policy/routing.json' in guide
     options=json.loads((ROOT/'data/hi-config-options.json').read_text(encoding='utf-8'))['options']
     assert all(f"`{x['path']}`" in guide for x in options)
+    assert all(f"`{x['path']}`" in guide_tr for x in options)
 
 
 def test_prompt_a_constitution_separates_current_law_from_program_history():
@@ -1012,6 +1036,11 @@ def test_prompt_b_release_engineering_closes_t4_only_from_real_current_publicati
         pub=json.loads(pub_path.read_text(encoding='utf-8'))
         assert pub['status']=='PASS_T4' and pub['github_release']['status']=='PASS_T4' and pub['npm_registry']['status']=='PASS_T4' and pub['fresh_registry_consumer']['status']=='PASS_T4'
         assert d['registry_observation']['current_publication_receipt_present'] is True
+        dev=d['development_head']
+        assert dev['current_version_already_published'] is True
+        if dev['post_release'] and dev['runtime_drift_from_release']:
+            assert dev['next_release_version_required'] is True and dev['republish_same_version_forbidden'] is True
+            assert '## Unreleased' in (ROOT/'CHANGELOG.md').read_text(encoding='utf-8')
     else:
         assert d['status']=='CLOSED_LOCAL_T4_BLOCKED' and d['summary']=={'stages':13,'local_pass_or_historical':8,'blocked_external_or_identity':5,'violations':0}
         assert d['registry_observation']['current_publication_receipt_present'] is False
@@ -1184,8 +1213,19 @@ def test_prompt_b_cross_platform_acceptance_is_fail_closed_and_evidence_bound():
         assert d['violations']==[] and d['post_ci_material_drift']==[]
         assert d['linux_current_certified'] is True and d['windows_current_certified'] is True
     elif d['status']=='PENDING_EXTERNAL_CI':
-        assert not receipt.exists() and d['violations']==[] and d['blockers']==['current-source-cross-platform-ci-receipt-missing']
-        assert d['linux_current_certified'] is False and d['windows_current_certified'] is False
+        assert d['violations']==[] and d['linux_current_certified'] is False and d['windows_current_certified'] is False
+        if d['blockers']==['current-source-cross-platform-ci-receipt-missing']:
+            assert not receipt.exists() and d['post_ci_material_drift']==[]
+        else:
+            assert d['blockers']==['current-source-cross-platform-ci-receipt-stale'] and receipt.exists() and d['post_ci_material_drift']
+            prior=json.loads(receipt.read_text(encoding='utf-8'));meta=d['prior_acceptance'];cp=d['source_checkpoint']
+            assert prior['status']=='PASS' and prior['source_binding']['tested_git_commit']==meta['commit'] and prior['source_binding']['tested_git_tree']==meta['tree']
+            assert hashlib.sha256(receipt.read_bytes()).hexdigest()==d['acceptance_sha256']==meta['sha256']
+            assert subprocess.check_output(['git','rev-parse',f"{cp['commit']}^{{tree}}"],cwd=ROOT,text=True).strip()==cp['tree']
+            assert subprocess.run(['git','merge-base','--is-ancestor',cp['commit'],'HEAD'],cwd=ROOT).returncode==0
+            changed=subprocess.check_output(['git','diff','--name-only',f"{cp['commit']}..HEAD"],cwd=ROOT,text=True).splitlines()
+            material_prefixes=('plugin/src/','plugin/dist/','skills/');material_exact={'package.json','package-lock.json','plugin/package.json','plugin/package-lock.json','VERSION','.gitattributes','scripts/native_plugin_setup.py'}
+            assert not any(rel in material_exact or rel.startswith(material_prefixes) for rel in changed)
     else:
         assert d['status']=='FAIL' and d['violations']
         assert d['linux_current_certified'] is False and d['windows_current_certified'] is False

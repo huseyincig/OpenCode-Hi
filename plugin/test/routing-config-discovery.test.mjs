@@ -184,18 +184,18 @@ test('PROMPT B §23 project precedence is leaf-scoped and absent project sibling
       parallel: { enabled: false, max: 1, providers: { p: 1 }, models: { 'p/m': 1 } },
       execution: { topology: 'single-agent', maxAgents: 2, parallelism: 1 },
       teamMode: { enabled: false, maxMembers: 2, maxWallMinutes: 5 },
-      models: { mode: 'fixed', default: 'host/default', roles: { reviewer: 'host/reviewer' } },
+      models: { mode: 'fixed', default: 'host/default', roles: { 'qa-reviewer': 'host/reviewer' } },
       profile: { balanced: { specialistThreshold: 'high', reviewThreshold: 'low' } },
-      routing: { strategy: 'quality', maxFallbacks: 1, roleModels: { reviewer: ['host/reviewer'] } },
+      routing: { strategy: 'quality', maxFallbacks: 1, roleModels: { 'qa-reviewer': ['host/reviewer'] } },
     }, project)
     assert.deepEqual(cfg.parallel,{enabled:true,max:1,providers:{p:1},models:{'p/m':1}})
     assert.deepEqual(cfg.execution,{topology:'multi-agent',maxAgents:2,parallelism:1})
     assert.equal('teamMode' in cfg,false)
-    assert.deepEqual(cfg.models,{mode:'role-mapped',default:'host/default',roles:{reviewer:'host/reviewer'}})
+    assert.deepEqual(cfg.models,{mode:'role-mapped',default:'host/default',roles:{'qa-reviewer':'host/reviewer'}})
     assert.deepEqual(cfg.profile.balanced,{specialistThreshold:'high',reviewThreshold:'high'})
     assert.equal(cfg.routing.strategy,'quality')
     assert.equal(cfg.routing.maxFallbacks,1)
-    assert.deepEqual(cfg.routing.roleModels,{reviewer:['host/reviewer'],coder:['project/coder']})
+    assert.deepEqual(cfg.routing.roleModels,{'qa-reviewer':['host/reviewer'],coder:['project/coder']})
   } finally { rmSync(project,{recursive:true,force:true}) }
 })
 

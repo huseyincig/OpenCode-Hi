@@ -4,6 +4,8 @@ OpenCode-Hi's canonical package name is `opencode-hi`. Installation truth has se
 
 After the plugin loads, use the complete [Configuration Guide](CONFIGURATION.md) for Windows/Linux/macOS project paths, all supported runtime settings, role/model/fallback routing, variants, provider/model policy, concurrency, CLI/manual configuration, and troubleshooting.
 
+Türkçe kullanıcı rehberi: [Türkçe Kurulum ve Yapılandırma Rehberi](locales/tr/CONFIGURATION.md).
+
 1. **npm registry distribution** — `opencode-hi@0.2.0` is published and T4-verified through Trusted Publishing OIDC provenance plus fresh-registry exact-host acceptance;
 2. **Git source distribution** — the public Git repository/tag can be materialized directly with Bun and loaded through OpenCode's local-plugin mechanism without using the npm registry;
 3. **registration/lifecycle mechanics** — npm-package registration is managed by `scripts/native_plugin_setup.py`; Git/local loading remains explicit so the helper never pretends an unsupported native Git resolver exists.
@@ -118,12 +120,12 @@ Generated from `data/hi-config-options.json`. Do not hand-edit this table.
 | `execution.parallelism` | runtime | `2` | capacity | caps parallel streams inside selected mission topology |
 | `models.mode` | runtime | `adaptive` | preference | switches adaptive scoring versus fixed or role-mapped model preference |
 | `models.default` | runtime | `auto` | preference | provides fixed project model when models.mode=fixed |
-| `models.roles` | runtime | `{}` | preference | provides project role-specific model when models.mode=role-mapped |
+| `models.roles` | runtime | `{}` | preference | provides project child-role-specific model when models.mode=role-mapped; primary manager models remain OpenCode-owned |
 | `routing.strategy` | runtime | `cost-quality` | preference | changes model scoring between quality, cost, and cost-quality |
 | `routing.categoryModels` | runtime | `{}` | preference | prepends configured category candidates before scored models |
 | `routing.categoryVariants` | runtime | `{}` | preference | changes selected native model variant by task category |
-| `routing.roleModels` | runtime | `{}` | preference | prepends configured role candidates before category/scored models |
-| `routing.roleVariants` | runtime | `{}` | preference | changes selected native variant for a specific role/model pair |
+| `routing.roleModels` | runtime | `{}` | preference | prepends configured child-role candidates before category/scored models; primary manager roles are excluded |
+| `routing.roleVariants` | runtime | `{}` | preference | changes selected native variant for a specific child-role/model pair; primary manager roles are excluded |
 | `routing.maxFallbacks` | runtime | `3` | capacity | bounds fallback candidate count |
 | `routing.allowedProviders` | runtime | `[]` | constraint | narrows eligible providers and disables unconstrained host-default fallback when nonempty |
 | `routing.deniedModels` | runtime | `[]` | constraint | denies exact models and composes project/raw denies monotonically |
@@ -148,7 +150,7 @@ python3 scripts/native_plugin_setup.py role-models /path/to/project --print
 python3 scripts/native_plugin_setup.py role-models /path/to/project --list-available
 ```
 
-The command also supports explicit role/model/variant mappings and bounded policy modes. Role remains distinct from model; configuring one does not merge their semantic ownership.
+The command supports explicit model/fallback/variant mappings for the six Hi child roles only: `coder`, `architect`, `repository-explorer`, `qa-reviewer`, `security-reviewer`, and `visual-qa`. `manager` and `working-manager` remain primary OpenCode roles and are not valid Hi role-model targets; their primary model is selected through OpenCode. Role remains distinct from model; configuring one does not merge their semantic ownership.
 
 ## Upgrade
 

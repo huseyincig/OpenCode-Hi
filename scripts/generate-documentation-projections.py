@@ -20,6 +20,9 @@ def main():
         rows.append(f"| `{md(x['path'])}` | {md(x['classification'])} | `{md(x.get('default'))}` | {md(x.get('safety_semantics'))} | {md(effect)} |")
     replace_block(ROOT/'docs/INSTALLATION.md','<!-- BEGIN GENERATED CONFIG REFERENCE -->','<!-- END GENERATED CONFIG REFERENCE -->','\n'.join(rows))
     replace_block(ROOT/'docs/CONFIGURATION.md','<!-- BEGIN GENERATED CONFIG REFERENCE -->','<!-- END GENERATED CONFIG REFERENCE -->','\n'.join(rows))
+    tr_rows=['`data/hi-config-options.json` kaynağından generated edilir. Elle düzenlemeyin.','', '| Alan | Sınıf | Default | Güvenlik semantiği |','|---|---|---|---|']
+    for x in cfg['options']:tr_rows.append(f"| `{md(x['path'])}` | {md(x['classification'])} | `{md(x.get('default'))}` | {md(x.get('safety_semantics'))} |")
+    replace_block(ROOT/'docs/locales/tr/CONFIGURATION.md','<!-- BEGIN GENERATED CONFIG REFERENCE -->','<!-- END GENERATED CONFIG REFERENCE -->','\n'.join(tr_rows))
     cm=json.loads((ROOT/'data/validation/compatibility-matrix-0.1.0.json').read_text(encoding='utf-8'))
     cur=cm['current_reference_host']; rows=[f"Generated from `data/validation/compatibility-matrix-0.1.0.json`. Current recorded exact host: OpenCode `{cur['opencode_version']}` on `{cur['platform']}/{cur['architecture']}`.",'','| Hi capability | Status | Exact source | Receipt |','|---|---|---|---|']
     for cap,x in sorted(cur['capabilities'].items()):

@@ -60,7 +60,7 @@
     {
       "area": "config",
       "owner": "plugin/src/config/resolver.ts",
-      "owner_sha256": "1bb96af9473a160e2301373911ef7e21f72a7a525ee375da07c85e4c9f42d18e",
+      "owner_sha256": "ba7593ba17038cba103d460b97c78bf6530e0e6588ca15cbece576d7347a1115",
       "owner_anchor": "resolveHiConfigWithReport",
       "proof": "plugin/test/q4-property-fuzz.test.mjs",
       "proof_sha256": "5b73eee33e6a745e2b740878a3619685fd2ad3cd98224d68f855bfb5717409dd",

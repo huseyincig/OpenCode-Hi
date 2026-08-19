@@ -13,12 +13,10 @@ function makeProject() {
   return mkdtempSync(join(tmpdir(), 'hi-routing-defaults-'))
 }
 
-test('default roleModels contains the new per-role map (2.0.10)', () => {
-  // All canonical roles have a curated recommendation. Runtime auto-init
-  // still validates these IDs against the live OpenCode inventory before persisting.
+test('default roleModels contains only model-routed child roles', () => {
+  // Only Hi child roles are model-routed by TaskRuntime. Primary manager roles stay OpenCode-owned.
+  // Runtime auto-init validates these IDs against the live OpenCode inventory before persisting.
   assert.deepEqual(DEFAULT_ROLE_MODELS_OPENCODE_GO, {
-    'working-manager': ['opencode-go/mimo-v2.5','opencode-go/deepseek-v4-flash','opencode-go/qwen3.7-plus','opencode-go/mimo-v2.5-pro'],
-    manager: ['opencode-go/mimo-v2.5','opencode-go/qwen3.7-plus','opencode-go/minimax-m2.7','opencode-go/mimo-v2.5-pro'],
     coder: ['opencode-go/deepseek-v4-flash','opencode-go/mimo-v2.5','opencode-go/qwen3.7-plus','opencode-go/mimo-v2.5-pro'],
     'security-reviewer': ['opencode-go/mimo-v2.5-pro','opencode-go/qwen3.6-plus','opencode-go/hy3'],
     'qa-reviewer': ['opencode-go/hy3','opencode-go/qwen3.6-plus','opencode-go/mimo-v2.5-pro'],
@@ -62,8 +60,6 @@ test('inventory-aware auto-init persists only live curated recommendations', () 
     assert.equal(result.created,true)
     const content=JSON.parse(readFileSync(result.path,'utf8'))
     assert.deepEqual(content.routing.roleModels,{
-      'working-manager':['opencode-go/mimo-v2.5','opencode-go/deepseek-v4-flash'],
-      manager:['opencode-go/mimo-v2.5'],
       coder:['opencode-go/deepseek-v4-flash','opencode-go/mimo-v2.5'],
       'visual-qa':['opencode-go/mimo-v2.5'],
       'repository-explorer':['opencode-go/mimo-v2.5','opencode-go/deepseek-v4-flash'],

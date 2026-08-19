@@ -11,10 +11,9 @@
 // are written to disk only when no file exists, so user overrides
 // are preserved across runs.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { MODEL_ROUTED_CHILD_ROLES } from './schema.js';
 import { dirname, join } from 'node:path';
 export const DEFAULT_ROLE_MODELS_OPENCODE_GO = {
-    'working-manager': ['opencode-go/mimo-v2.5', 'opencode-go/deepseek-v4-flash', 'opencode-go/qwen3.7-plus', 'opencode-go/mimo-v2.5-pro'],
-    manager: ['opencode-go/mimo-v2.5', 'opencode-go/qwen3.7-plus', 'opencode-go/minimax-m2.7', 'opencode-go/mimo-v2.5-pro'],
     coder: ['opencode-go/deepseek-v4-flash', 'opencode-go/mimo-v2.5', 'opencode-go/qwen3.7-plus', 'opencode-go/mimo-v2.5-pro'],
     'security-reviewer': ['opencode-go/mimo-v2.5-pro', 'opencode-go/qwen3.6-plus', 'opencode-go/hy3'],
     'qa-reviewer': ['opencode-go/hy3', 'opencode-go/qwen3.6-plus', 'opencode-go/mimo-v2.5-pro'],
@@ -22,6 +21,9 @@ export const DEFAULT_ROLE_MODELS_OPENCODE_GO = {
     'visual-qa': ['opencode-go/hy3', 'opencode-go/mimo-v2.5', 'opencode-go/qwen3.6-plus'],
     'repository-explorer': ['opencode-go/mimo-v2.5', 'opencode-go/deepseek-v4-flash', 'opencode-go/qwen3.7-plus'],
 };
+for (const role of Object.keys(DEFAULT_ROLE_MODELS_OPENCODE_GO))
+    if (!MODEL_ROUTED_CHILD_ROLES.includes(role))
+        throw new Error(`Non-child role in model defaults: ${role}`);
 export const DEFAULT_STRATEGY = 'cost-quality';
 export function defaultProjectRoutingConfig(availableModelIDs) {
     return {

@@ -4,7 +4,7 @@ import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import HiPlugin from '../dist/plugin.js'
-import {resolveHiConfigWithReport} from '../dist/config/resolver.js'
+import {resolveHiConfig,resolveHiConfigWithReport} from '../dist/config/resolver.js'
 
 function projectConfig(root){
   mkdirSync(join(root,'.opencode','hi','policy'),{recursive:true})
@@ -31,4 +31,22 @@ test('project-owned HI config survives host stripping of unknown top-level hi co
   await hooks.config(hostConfig)
   assert.equal(hooks.tool.hi_team_create,undefined);assert.equal(hooks.tool.hi_team_shutdown,undefined)
   await hooks.dispose?.(); rmSync(root,{recursive:true,force:true})
+})
+
+
+test('project model routing admits child roles only and ignores primary/unknown role model keys', async()=>{
+  const p=mkdtempSync(join(tmpdir(),'hi-project-routing-role-scope-'));try{
+    mkdirSync(join(p,'.opencode','hi','policy'),{recursive:true})
+    writeFileSync(join(p,'.opencode','hi','policy','routing.json'),JSON.stringify({
+      schema:1,type:'hi-routing',
+      models:{mode:'role-mapped',roles:{manager:'p/manager','working-manager':'p/wm',coder:'p/code',unknown:'p/nope'}},
+      routing:{roleModels:{manager:['p/manager'],'working-manager':['p/wm'],coder:['p/code','p/fallback'],unknown:['p/nope']},roleVariants:{manager:{'p/manager':'high'},coder:{'p/code':'high'},unknown:{'p/nope':'low'}}}
+    }))
+    const cfg=resolveHiConfig({},p)
+    assert.deepEqual(cfg.models.roles,{coder:'p/code'})
+    assert.deepEqual(cfg.routing.roleModels,{coder:['p/code','p/fallback']})
+    assert.deepEqual(cfg.routing.roleVariants,{coder:{'p/code':'high'}})
+    const host=resolveHiConfig({models:{mode:'role-mapped',roles:{manager:'h/manager',coder:'h/code',unknown:'h/nope'}},routing:{roleModels:{manager:['h/manager'],coder:['h/code'],unknown:['h/nope']},roleVariants:{manager:{'h/manager':'high'},coder:{'h/code':'low'},unknown:{'h/nope':'high'}}}})
+    assert.deepEqual(host.models.roles,{coder:'h/code'});assert.deepEqual(host.routing.roleModels,{coder:['h/code']});assert.deepEqual(host.routing.roleVariants,{coder:{'h/code':'low'}})
+  }finally{rmSync(p,{recursive:true,force:true})}
 })

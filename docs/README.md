@@ -6,6 +6,7 @@ This directory contains the **current public product contract**. Historical reco
 
 - [Installation and lifecycle](INSTALLATION.md)
 - [Complete configuration guide](CONFIGURATION.md)
+- [Türkçe kurulum ve yapılandırma rehberi](locales/tr/CONFIGURATION.md)
 - [Architecture](ARCHITECTURE.md)
 - [Host support](HOSTS.md)
 - [Methodologies and skills](SKILLS.md)

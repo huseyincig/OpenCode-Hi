@@ -25,7 +25,7 @@ const CANONICAL_DIRS=[
 const CANONICAL_DATA=['data/product.json','data/hi-config-options.json','data/hi-methodologies.json','data/hi-roles.json','data/hi-permission-profiles.json']
 const CANONICAL_DOCS=[
   'README.md','docs/README.md','docs/ARCHITECTURE.md','docs/HOSTS.md','docs/HUMAN-DECISIONS.md',
-  'docs/INSTALLATION.md','docs/CONFIGURATION.md','docs/RELEASE.md','docs/SECURITY-MODEL.md','docs/SKILLS.md','docs/VERIFICATION.md',
+  'docs/INSTALLATION.md','docs/CONFIGURATION.md','docs/locales/tr/CONFIGURATION.md','docs/RELEASE.md','docs/SECURITY-MODEL.md','docs/SKILLS.md','docs/VERIFICATION.md',
 ]
 const TEXT_EXTENSIONS=new Set(['.ts','.js','.mjs','.json','.md','.txt','.yaml','.yml','.toml'])
 

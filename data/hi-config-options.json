@@ -258,7 +258,7 @@
       "validator": "model-id-map",
       "safety_semantics": "preference",
       "runtime_consumer": "runtime/routing/model-resolver.resolveModel",
-      "executor_effect": "provides project role-specific model when models.mode=role-mapped",
+      "executor_effect": "provides project child-role-specific model when models.mode=role-mapped; primary manager models remain OpenCode-owned",
       "behavioral_acceptance_refs": [
         "per-role-routing-runtime.test.mjs"
       ]
@@ -354,7 +354,7 @@
       "validator": "role-model-map",
       "safety_semantics": "preference",
       "runtime_consumer": "runtime/routing/model-resolver.resolveModel",
-      "executor_effect": "prepends configured role candidates before category/scored models",
+      "executor_effect": "prepends configured child-role candidates before category/scored models; primary manager roles are excluded",
       "behavioral_acceptance_refs": [
         "per-role-routing-runtime.test.mjs"
       ]
@@ -378,7 +378,7 @@
       "validator": "role-variant-map",
       "safety_semantics": "preference",
       "runtime_consumer": "runtime/routing/model-resolver.chooseVariant",
-      "executor_effect": "changes selected native variant for a specific role/model pair",
+      "executor_effect": "changes selected native variant for a specific child-role/model pair; primary manager roles are excluded",
       "behavioral_acceptance_refs": [
         "main-prompt-model-setup-persistence.test.mjs"
       ]

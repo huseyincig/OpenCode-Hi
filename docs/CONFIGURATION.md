@@ -287,13 +287,13 @@ Example:
 | `security-reviewer` | child reviewer | Security/trust/authority review | read-only |
 | `visual-qa` | child reviewer | Browser/visual/accessibility verification | read-only |
 
-Configuration maps should use these canonical IDs. The loader may preserve forward-compatible keys, but only roles actually selected by the runtime can affect execution.
+Primary role selection uses `primaryMode`. Model maps are narrower: current Hi role-model configuration accepts only the six model-routed child role IDs listed below; primary or unknown role-model keys are ignored by the effective config loader.
 
 ### Primary-role model ownership
 
 Current project model routing is applied by `TaskRuntime` when Hi dispatches **child workers**. The active child role IDs are `coder`, `architect`, `repository-explorer`, `qa-reviewer`, `security-reviewer`, and `visual-qa`.
 
-`manager` and `working-manager` are primary OpenCode agents. Their current session model is selected/owned by the OpenCode host/session-agent layer, not by Hi's child `resolveModel()` path. Writing `manager` or `working-manager` under `models.roles` or `routing.roleModels` may be preserved in JSON, but it does **not** currently prove or force the primary session model.
+`manager` and `working-manager` are primary OpenCode agents. Their current session model is selected/owned by the OpenCode host/session-agent layer, not by Hi's child `resolveModel()` path. They are therefore **not valid Hi role-model targets**: project `models.roles`, `routing.roleModels`, and `routing.roleVariants` admit child roles only. The setup CLI rejects primary-role model assignments explicitly.
 
 OpenCode's supported project/global default-model control is the root `model` field in `opencode.json`/`opencode.jsonc`:
 
@@ -306,25 +306,38 @@ OpenCode's supported project/global default-model control is the root `model` fi
 
 See the official OpenCode model guide: <https://opencode.ai/docs/models/>. OpenCode also supports model properties on user-defined agent configurations, but **do not redeclare canonical Hi agent IDs** such as `manager` or `working-manager` just to set a model: Hi protects its injected role contracts and rejects incompatible same-name agent definitions as collisions. See <https://opencode.ai/docs/agents/> for the host's generic agent model mechanism.
 
-The setup CLI/auto-init can currently preserve or emit primary-role mapping keys alongside child mappings. Treat those primary entries as non-operative compatibility/config data until a current runtime consumer is added and verified; `hi_doctor`/runtime evidence, not file presence, is authoritative.
+Auto-init writes recommendations for the six child roles only. `opencode-hi-setup role-models --set manager=...` or `working-manager=...` is blocked with an action telling you to choose the primary model in OpenCode instead.
 
 ## 7. Model-routing controls: which mechanism should I use?
 
 There are two different model-selection layers. They are intentionally not the same.
 
-### 7.1 `models.mode`: project-level primary override
+Supported Hi role-model targets are exactly:
+
+```text
+coder
+architect
+repository-explorer
+qa-reviewer
+security-reviewer
+visual-qa
+```
+
+`manager` and `working-manager` remain valid values of `primaryMode`, but they are not valid model-map targets.
+
+### 7.1 `models.mode`: project-level child-model preference
 
 `models.mode` accepts `adaptive`, `fixed`, or `role-mapped`.
 
 - `adaptive`: normal Hi routing/scoring.
-- `fixed`: `models.default` becomes the preferred project primary model.
-- `role-mapped`: `models.roles[role]` becomes the preferred model for that role.
+- `fixed`: `models.default` becomes the preferred model for Hi-dispatched child tasks.
+- `role-mapped`: `models.roles[role]` becomes the preferred model for a supported child role.
 
-These are **primary preferences/overrides**, not model allowlists. If the preferred model is unavailable or rejected by policy, routing may continue with another eligible model.
+These are **child-routing preferences/overrides**, not model allowlists. If the preferred model is unavailable or rejected by policy, routing may continue with another eligible model.
 
 ### 7.2 `routing.roleModels`: ordered role candidates and fallback priors
 
-`routing.roleModels` accepts an ordered array per role. It is an ordered **routing prior**, not an unconditional hard order. When all configured role candidates are live/policy-allowed and bounded feedback is still sparse, the recommended fast path preserves the configured order. If candidates are unavailable/rejected or enough admitted feedback exists, eligible configured candidates can be reranked by the normal routing logic. Fallback output is still bounded by `routing.maxFallbacks`.
+`routing.roleModels` accepts an ordered array for each supported child role. It is an ordered **routing prior**, not an unconditional hard order. When all configured role candidates are live/policy-allowed and bounded feedback is still sparse, the recommended fast path preserves the configured order. If candidates are unavailable/rejected or enough admitted feedback exists, eligible configured candidates can be reranked by the normal routing logic. Fallback output is still bounded by `routing.maxFallbacks`.
 
 Example:
 
@@ -345,7 +358,7 @@ Example:
 }
 ```
 
-Use `models.roles` when you want **one preferred model per role**. Use `routing.roleModels` when you want **an ordered role-specific candidate/fallback list**.
+Use `models.roles` when you want **one preferred model per child role**. Use `routing.roleModels` when you want **an ordered child-role candidate/fallback list**.
 
 ## 8. Recipe: prefer one model for all Hi-dispatched child tasks
 
@@ -406,7 +419,7 @@ The OpenCode `model` field controls the primary session/default host model; the 
 
 ## 9. Recipe: one different preferred model per child role
 
-This section applies to Hi child workers. Current Hi project routing does not independently assign one static model to `manager` and another to `working-manager`; primary selection remains an OpenCode session/default-model concern.
+This section applies only to the six Hi child workers. `manager` and `working-manager` are intentionally absent; their primary session model remains an OpenCode concern.
 
 ```json
 {
@@ -899,9 +912,11 @@ On PowerShell use the same arguments with `.cmd` and Windows path syntax.
 
 `--set ROLE=PRIMARY,FALLBACK1,FALLBACK2` writes `routing.roleModels`. `--variant ROLE:MODEL=VARIANT` writes `routing.roleVariants`. The CLI bounds each explicit `--set` role list and preserves routing fields it does not own.
 
+Primary-role assignments are intentionally rejected. For example, `--set manager=provider/model` returns `BLOCKED` with reason `role-model-primary-owned-by-opencode`.
+
 `--defaults --policy recommended` writes inventory-validated recommended role mappings. Recommended defaults are preferences; unavailable models are not forced into runtime use.
 
-Current CLI defaults/catalog include `manager` and `working-manager` keys for continuity, but current TaskRuntime model routing consumes child roles only. Do not interpret a primary-role key written by this command as proof that the OpenCode primary session model changed.
+The role-model CLI accepts only `coder`, `architect`, `repository-explorer`, `qa-reviewer`, `security-reviewer`, and `visual-qa`. Attempts to assign `manager` or `working-manager` are blocked because primary model ownership belongs to OpenCode.
 
 ## 25. Manual JSON vs CLI
 
@@ -992,12 +1007,12 @@ Generated from `data/hi-config-options.json`. Do not hand-edit this table.
 | `execution.parallelism` | runtime | `2` | capacity | caps parallel streams inside selected mission topology |
 | `models.mode` | runtime | `adaptive` | preference | switches adaptive scoring versus fixed or role-mapped model preference |
 | `models.default` | runtime | `auto` | preference | provides fixed project model when models.mode=fixed |
-| `models.roles` | runtime | `{}` | preference | provides project role-specific model when models.mode=role-mapped |
+| `models.roles` | runtime | `{}` | preference | provides project child-role-specific model when models.mode=role-mapped; primary manager models remain OpenCode-owned |
 | `routing.strategy` | runtime | `cost-quality` | preference | changes model scoring between quality, cost, and cost-quality |
 | `routing.categoryModels` | runtime | `{}` | preference | prepends configured category candidates before scored models |
 | `routing.categoryVariants` | runtime | `{}` | preference | changes selected native model variant by task category |
-| `routing.roleModels` | runtime | `{}` | preference | prepends configured role candidates before category/scored models |
-| `routing.roleVariants` | runtime | `{}` | preference | changes selected native variant for a specific role/model pair |
+| `routing.roleModels` | runtime | `{}` | preference | prepends configured child-role candidates before category/scored models; primary manager roles are excluded |
+| `routing.roleVariants` | runtime | `{}` | preference | changes selected native variant for a specific child-role/model pair; primary manager roles are excluded |
 | `routing.maxFallbacks` | runtime | `3` | capacity | bounds fallback candidate count |
 | `routing.allowedProviders` | runtime | `[]` | constraint | narrows eligible providers and disables unconstrained host-default fallback when nonempty |
 | `routing.deniedModels` | runtime | `[]` | constraint | denies exact models and composes project/raw denies monotonically |

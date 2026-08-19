@@ -2,6 +2,11 @@
 
 All notable changes to OpenCode-Hi are documented here.
 
+## Unreleased
+
+- Simplifies model ownership: OpenCode owns the primary `manager` / `working-manager` session model, while Hi role-model routing accepts only the six child roles. Auto-init, project config resolution and setup CLI now enforce the same boundary.
+- Adds complete English and Turkish Windows/Linux/macOS installation and configuration guides, including primary-vs-child model ownership, single-model/per-role/fallback/variant/category/provider/concurrency recipes and generated canonical option references.
+
 ## 0.2.0
 
 - Introduces the Phase 2 Semantic Autopilot runtime: work-graph-first execution, semantic intent assessment, adaptive execution planning, stronger completion/continuation ownership, and bounded model/provider feedback.

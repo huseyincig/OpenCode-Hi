@@ -8,43 +8,43 @@
     {
       "invariant": "installation",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
+      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
       "owner_anchor": "'install':lambda:install",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "61b5579448d0879c26ae336202d18d9cf99b4eb718f7f8c5d138d474419e5780",
+      "proof_sha256": "f061a01277c7537309815238532a879208405c76f8706dbe695ab3ae7fec5895",
       "proof_anchor": "test_prompt_b_cli_malformed_config_fails_closed_without_overwrite"
     },
     {
       "invariant": "first-run",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
+      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
       "owner_anchor": "'action':action",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "61b5579448d0879c26ae336202d18d9cf99b4eb718f7f8c5d138d474419e5780",
+      "proof_sha256": "f061a01277c7537309815238532a879208405c76f8706dbe695ab3ae7fec5895",
       "proof_anchor": "test_prompt_b_cli_first_run_doctor_supplies_recovery_action"
     },
     {
       "invariant": "doctor-diagnostics",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
+      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
       "owner_anchor": "def doctor(project:Path)",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "61b5579448d0879c26ae336202d18d9cf99b4eb718f7f8c5d138d474419e5780",
+      "proof_sha256": "f061a01277c7537309815238532a879208405c76f8706dbe695ab3ae7fec5895",
       "proof_anchor": "test_prompt_b_cli_first_run_doctor_supplies_recovery_action"
     },
     {
       "invariant": "help",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
+      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
       "owner_anchor": "argparse.ArgumentParser",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "61b5579448d0879c26ae336202d18d9cf99b4eb718f7f8c5d138d474419e5780",
+      "proof_sha256": "f061a01277c7537309815238532a879208405c76f8706dbe695ab3ae7fec5895",
       "proof_anchor": "native_plugin_setup.py"
     },
     {
       "invariant": "command-inventory",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
+      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
       "owner_anchor": "choices=['plan','install','upgrade','doctor','uninstall','rollback','recover','role-models','reconfigure']",
       "proof": "scripts/run-install-lifecycle.py",
       "proof_sha256": "4a3a60ac330f02d7425946a1fea3e3da0fb1040867b94a40ba0e176937973cc4",
@@ -53,28 +53,28 @@
     {
       "invariant": "bounded-errors-no-stack",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
+      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
       "owner_anchor": "e.detail[:500]",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "61b5579448d0879c26ae336202d18d9cf99b4eb718f7f8c5d138d474419e5780",
+      "proof_sha256": "f061a01277c7537309815238532a879208405c76f8706dbe695ab3ae7fec5895",
       "proof_anchor": "'Traceback' not in r.stdout"
     },
     {
       "invariant": "recovery-instructions",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
+      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
       "owner_anchor": "actions.append('Run the recover command",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "61b5579448d0879c26ae336202d18d9cf99b4eb718f7f8c5d138d474419e5780",
+      "proof_sha256": "f061a01277c7537309815238532a879208405c76f8706dbe695ab3ae7fec5895",
       "proof_anchor": "any('plan' in x and 'install' in x for x in out['actions'])"
     },
     {
       "invariant": "config-errors",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
+      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
       "owner_anchor": "_bounded_cli_int('parallel-max',1,8)",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "61b5579448d0879c26ae336202d18d9cf99b4eb718f7f8c5d138d474419e5780",
+      "proof_sha256": "f061a01277c7537309815238532a879208405c76f8706dbe695ab3ae7fec5895",
       "proof_anchor": "test_prompt_b_cli_reconfigure_rejects_out_of_range_and_malformed_limits"
     },
     {
@@ -98,10 +98,10 @@
     {
       "invariant": "truthful-nonmutating-blocked-state",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "89202ea783259ba8d8a6b06f1acfa6f42f39bac0318b0cd2926c64b069698efe",
+      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
       "owner_anchor": "jsonc-safe-mutation-not-supported",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "61b5579448d0879c26ae336202d18d9cf99b4eb718f7f8c5d138d474419e5780",
+      "proof_sha256": "f061a01277c7537309815238532a879208405c76f8706dbe695ab3ae7fec5895",
       "proof_anchor": "test_prompt_b_cli_jsonc_plan_is_truthful_actionable_and_non_mutating"
     }
   ],

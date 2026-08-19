@@ -29,11 +29,10 @@ DEFAULT_PROVIDER_MODELS=[
 
 # Roles with explicit per-role model mapping hints. Other roles fall back to
 # scoring + provider selection without an explicit roleModels entry.
-ROLES_WITH_HINT=['working-manager','manager','repository-explorer','architect','coder','qa-reviewer','security-reviewer','visual-qa']
+ROLES_WITH_HINT=['repository-explorer','architect','coder','qa-reviewer','security-reviewer','visual-qa']
+PRIMARY_ROLES={'working-manager','manager'}
 
 DEFAULT_ROLE_MODELS={
- 'working-manager':['opencode-go/minimax-m3'],
- 'manager':['opencode-go/minimax-m3-high','opencode-go/minimax-m3'],
  'repository-explorer':['opencode-go/deepseek-v4-flash'],
  'architect':['opencode-go/glm-5.2'],
  'coder':['opencode-go/deepseek-v4-pro'],
@@ -360,6 +359,12 @@ def _prompt_model_selection(role:str,available:list[str],defaults_by_role:dict[s
             if sel not in selected:selected.append(sel)
     return selected or list(defaults_by_role.get(role,[DEFAULT_ROLE_MODEL]))
 
+def _validate_model_routed_role(role:str)->None:
+    if role in PRIMARY_ROLES:
+        raise SetupInputError('role-model-primary-owned-by-opencode',detail=f'{role} is a primary OpenCode agent and is not Hi child-model routed.',action='Choose the primary role/model in OpenCode. Use Hi role-models only for coder, architect, repository-explorer, qa-reviewer, security-reviewer, or visual-qa.')
+    if role not in ROLES_WITH_HINT:
+        raise SetupInputError('unsupported-role-model',detail=f'{role} is not a current Hi model-routed child role.',action='Use one of: '+', '.join(ROLES_WITH_HINT)+'.')
+
 def role_models(project:Path,list_available:bool=False,defaults:bool=False,print_only:bool=False,sets:list[str]|None=None,variants:list[str]|None=None,policy:str|None=None)->dict:
     """Interactive role→model mapping for HI routing.roleModels.
 
@@ -374,39 +379,48 @@ def role_models(project:Path,list_available:bool=False,defaults:bool=False,print
     existing_models=existing_routing.get('roleModels',{}) or {}
     existing_variants=existing_routing.get('roleVariants',{}) or {}
 
+    for item in sets or []:
+        if '=' not in item: continue
+        _validate_model_routed_role(item.split('=',1)[0].strip())
+    for item in variants or []:
+        lhs=item.split('=',1)[0] if '=' in item else ''
+        if ':' in lhs:_validate_model_routed_role(lhs.split(':',1)[0].strip())
+
     if print_only:
-        return {'status':'OK' if cfg.exists() else 'NOT_CONFIGURED','product':PRODUCT,'config':str(cfg),'roleModels':existing_models,'roleVariants':existing_variants,'modelPolicy':existing_routing.get('modelPolicy','adaptive'),'adaptiveRoles':existing_routing.get('adaptiveRoles',[]),'note':'HI runtime merges roleModels/roleVariants from this file.'}
+        supported_models={k:list(v) for k,v in existing_models.items() if k in ROLES_WITH_HINT and isinstance(v,list)}
+        supported_variants={k:dict(v) for k,v in existing_variants.items() if k in ROLES_WITH_HINT and isinstance(v,dict)}
+        ignored=sorted((set(existing_models)|set(existing_variants))-set(ROLES_WITH_HINT))
+        return {'status':'OK' if cfg.exists() else 'NOT_CONFIGURED','product':PRODUCT,'config':str(cfg),'roleModels':supported_models,'roleVariants':supported_variants,'ignoredRoleModelRoles':ignored,'modelPolicy':existing_routing.get('modelPolicy','adaptive'),'adaptiveRoles':[r for r in existing_routing.get('adaptiveRoles',[]) if r in ROLES_WITH_HINT],'note':'HI model routing applies only to the six child roles; primary manager models are OpenCode-owned.'}
 
     available=discover_available_models()
     if list_available:
         return {'status':'OK','product':PRODUCT,'available':available,'config':str(cfg),'note':'Use without --list-available to assign models.'}
 
-    print(f"\n=== {PRODUCT} — Role Models Setup ===")
-    print(f"Project: {project}")
-    print(f"Config target: {cfg}")
-    print(f"Schema: {ROUTING_SCHEMA}")
-    if existing_models:
-        print(f"Existing roleModels will be shown as default. Override per role.\n")
-    else:
-        print(f"No existing roleModels. Will write defaults unless you customise.\n")
+    if not sets and not defaults:
+        print(f"\n=== {PRODUCT} — Role Models Setup ===")
+        print(f"Project: {project}")
+        print(f"Config target: {cfg}")
+        print(f"Schema: {ROUTING_SCHEMA}")
+        if existing_models: print(f"Existing roleModels will be shown as default. Override per role.\n")
+        else: print(f"No existing roleModels. Will write defaults unless you customise.\n")
 
     defaults_by_role={r:list(DEFAULT_ROLE_MODELS.get(r,[DEFAULT_ROLE_MODEL])) for r in ROLES_WITH_HINT}
     if existing_models:
         for r,ms in existing_models.items():defaults_by_role[r]=list(ms)
 
-    # Preserve role mappings outside the interactive/canonical subset (for
-    # example manager/working-manager or forward-compatible custom roles).
-    new_roleModels={k:list(v) for k,v in existing_models.items() if isinstance(v,list)}
+    # Preserve forward-compatible unknown mappings, but remove obsolete primary-role
+    # model entries because primary model ownership belongs to OpenCode.
+    new_roleModels={k:list(v) for k,v in existing_models.items() if isinstance(v,list) and k in ROLES_WITH_HINT}
     if defaults and policy=='recommended':
         # Recommended reconfigure owns only canonical role recommendations;
         # preserve forward-compatible custom roles but do not retain stale
         # canonical models that are absent from the current inventory.
-        new_roleModels={k:list(v) for k,v in existing_models.items() if isinstance(v,list) and k not in ROLES_WITH_HINT}
+        new_roleModels={}
 
     if sets:
         for item in sets:
             if '=' not in item: continue
-            role,models=item.split('=',1); role=role.strip(); vals=[x.strip() for x in models.split(',') if x.strip()]
+            role,models=item.split('=',1); role=role.strip(); _validate_model_routed_role(role); vals=[x.strip() for x in models.split(',') if x.strip()]
             if role and vals:new_roleModels[role]=vals[:7]
     elif defaults:
         # Recommended setup validates defaults against the discovered inventory.
@@ -415,7 +429,7 @@ def role_models(project:Path,list_available:bool=False,defaults:bool=False,print
         for role,models in defaults_by_role.items():
             live=[m for m in models if m in available]
             if live:new_roleModels[role]=live
-        print("Defaults mode: writing inventory-validated per-role recommendations.")
+        pass
     else:
         try:
             for role in ROLES_WITH_HINT:
@@ -436,11 +450,11 @@ def role_models(project:Path,list_available:bool=False,defaults:bool=False,print
     existing_routing=merged.get('routing') if isinstance(merged.get('routing'),dict) else {}
     next_routing=dict(existing_routing)
     next_routing['roleModels']=new_roleModels
-    next_variants={k:dict(v) for k,v in existing_variants.items() if isinstance(v,dict)}
+    next_variants={k:dict(v) for k,v in existing_variants.items() if isinstance(v,dict) and k in ROLES_WITH_HINT}
     for item in variants or []:
         if '=' not in item or ':' not in item.split('=',1)[0]:continue
         lhs,var=item.split('=',1);role,model=lhs.split(':',1);role=role.strip();model=model.strip();var=var.strip()
-        if role and model and var:next_variants.setdefault(role,{})[model]=var
+        if role and model and var:_validate_model_routed_role(role);next_variants.setdefault(role,{})[model]=var
     next_routing['roleVariants']=next_variants
     selected_policy=policy if policy in ('recommended','adaptive','manual') else ('manual' if sets or variants else ('recommended' if defaults else existing_routing.get('modelPolicy','manual')))
     next_routing['modelPolicy']=selected_policy

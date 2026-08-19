@@ -46,7 +46,7 @@ for name in required_root:
     if not (ROOT/name).is_file():err(f'required root file missing: {name}')
 for forbidden in ('KURULUM.md','RELEASE-READINESS.md','WORK-STATE.md','work-state.json','HI.cmd','HI.sh','HI-VALIDATE.cmd','HI-VALIDATE.sh','HI-RELEASE-PREP.cmd','HI-RELEASE-PREP.sh','docs/HI-TEST-LAB-HANDOFF.md','docs/FLOW-11-COVERAGE.md','docs/NATIVE-FIRST-10-COVERAGE.md','docs/MIGRATION-Hi-NEXT.md'):
     if (ROOT/forbidden).exists():err(f'non-product/legacy file present: {forbidden}')
-required_docs={'README.md','ARCHITECTURE.md','INSTALLATION.md','CONFIGURATION.md','SKILLS.md','HOSTS.md','HUMAN-DECISIONS.md','RELEASE.md','VERIFICATION.md','SECURITY-MODEL.md','locales/tr/README.md'}
+required_docs={'README.md','ARCHITECTURE.md','INSTALLATION.md','CONFIGURATION.md','SKILLS.md','HOSTS.md','HUMAN-DECISIONS.md','RELEASE.md','VERIFICATION.md','SECURITY-MODEL.md','locales/tr/README.md','locales/tr/CONFIGURATION.md'}
 actual_docs={p.relative_to(ROOT/'docs').as_posix() for p in (ROOT/'docs').rglob('*.md')}
 if actual_docs!=required_docs:err(f'docs set mismatch: {sorted(actual_docs)}')
 for rel in ('.github/CONTRIBUTING.md','.github/SECURITY.md','.github/SUPPORT.md','.github/pull_request_template.md','.github/ISSUE_TEMPLATE/bug_report.yml','.github/ISSUE_TEMPLATE/feature_request.yml'):
@@ -760,9 +760,29 @@ try:
             if ga.get('conclusion')!='success' or w.get('conclusion')!='success' or u.get('conclusion')!='success':err('PROMPT B cross-platform CI conclusion drift')
         if c38.get('post_ci_material_drift')!=[]:err('PROMPT B cross-platform post-CI material drift')
     elif c38.get('status')=='PENDING_EXTERNAL_CI':
-        if receipt and receipt.exists():err('PROMPT B cross-platform pending despite current receipt')
-        if c38.get('violations')!=[] or c38.get('blockers')!=['current-source-cross-platform-ci-receipt-missing']:err('PROMPT B cross-platform pending blocker drift')
+        blockers=c38.get('blockers') or []
+        if c38.get('violations')!=[] or blockers not in (['current-source-cross-platform-ci-receipt-missing'],['current-source-cross-platform-ci-receipt-stale']):err('PROMPT B cross-platform pending blocker drift')
         if c38.get('linux_current_certified') is not False or c38.get('windows_current_certified') is not False:err('PROMPT B cross-platform pending falsely certified')
+        if blockers==['current-source-cross-platform-ci-receipt-missing']:
+            if receipt and receipt.exists():err('PROMPT B cross-platform missing-receipt pending despite receipt')
+            if c38.get('post_ci_material_drift')!=[]:err('PROMPT B cross-platform missing-receipt pending has material drift')
+        else:
+            if not receipt or not receipt.is_file():err('PROMPT B cross-platform stale-receipt pending missing prior receipt')
+            else:
+                prior=json.loads(receipt.read_text(encoding='utf-8'));pb=prior.get('source_binding') or {};meta=c38.get('prior_acceptance') or {};cp=c38.get('source_checkpoint') or {}
+                if hashlib.sha256(receipt.read_bytes()).hexdigest()!=c38.get('acceptance_sha256') or meta.get('sha256')!=c38.get('acceptance_sha256'):err('PROMPT B cross-platform stale prior receipt hash drift')
+                if prior.get('status')!='PASS' or pb.get('tested_git_commit')!=meta.get('commit') or pb.get('tested_git_tree')!=meta.get('tree'):err('PROMPT B cross-platform stale prior receipt identity drift')
+                if not c38.get('post_ci_material_drift'):err('PROMPT B cross-platform stale pending missing material drift')
+                target=cp.get('commit');target_tree=cp.get('tree')
+                if not isinstance(target,str) or not isinstance(target_tree,str):err('PROMPT B cross-platform pending current source checkpoint missing')
+                else:
+                    try:
+                        if subprocess.check_output(['git','rev-parse',f'{target}^{{tree}}'],cwd=ROOT,text=True).strip()!=target_tree:err('PROMPT B cross-platform pending current source tree drift')
+                        if subprocess.run(['git','merge-base','--is-ancestor',target,'HEAD'],cwd=ROOT,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode!=0:err('PROMPT B cross-platform pending source is not ancestor')
+                        changed=subprocess.check_output(['git','diff','--name-only',f'{target}..HEAD'],cwd=ROOT,text=True).splitlines()
+                        material_prefixes=('plugin/src/','plugin/dist/','skills/');material_exact={'package.json','package-lock.json','plugin/package.json','plugin/package-lock.json','VERSION','.gitattributes','scripts/native_plugin_setup.py'}
+                        if any(rel in material_exact or rel.startswith(material_prefixes) for rel in changed):err('PROMPT B cross-platform pending post-checkpoint material drift')
+                    except subprocess.CalledProcessError:err('PROMPT B cross-platform pending checkpoint git object missing')
     else:err('PROMPT B cross-platform audit is neither PASS nor truthful PENDING_EXTERNAL_CI')
 except Exception as e:err(f'bad PROMPT B cross-platform acceptance receipt: {e}')
 
@@ -995,6 +1015,11 @@ try:
     obs=r28.get('registry_observation',{})
     if obs.get('current_publication_receipt_present') is not published or obs.get('authority_granted') is not False or obs.get('authority_condition')!='explicit current user authority required after final certification; this audit never grants publication authority':err('PROMPT B release engineering authority boundary drift')
     if not isinstance(obs.get('reference_host_registry_latest'),(str,type(None))) or not isinstance(obs.get('reference_sdk_registry_latest'),(str,type(None))):err('PROMPT B release engineering registry observation drift')
+    dev=r28.get('development_head') or {}
+    if published and dev.get('current_version_already_published') is not True:err('PROMPT B release engineering published-version development state drift')
+    if published and dev.get('post_release') and dev.get('runtime_drift_from_release'):
+        if dev.get('next_release_version_required') is not True or dev.get('republish_same_version_forbidden') is not True:err('PROMPT B release engineering unreleased runtime version boundary drift')
+        if '## Unreleased' not in (ROOT/'CHANGELOG.md').read_text(encoding='utf-8'):err('PROMPT B release engineering unreleased runtime changelog boundary drift')
     if published:
         pub=json.loads((ROOT/f'data/validation/release-publication-{version}.json').read_text(encoding='utf-8'))
         if pub.get('status')!='PASS_T4' or (pub.get('github_release') or {}).get('status')!='PASS_T4' or (pub.get('npm_registry') or {}).get('status')!='PASS_T4' or (pub.get('fresh_registry_consumer') or {}).get('status')!='PASS_T4':err('PROMPT B current release publication T4 drift')

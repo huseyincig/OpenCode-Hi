@@ -1,5 +1,5 @@
 import { DEFAULT_HI_CONFIG } from './defaults.js'
-import { HI_CONFIG_SCHEMA, isRecord, type HiConfig, type CategoryName, type ConfigResolutionReport, type ExecutionPolicyMode, type PrimaryModePolicy } from './schema.js'
+import { HI_CONFIG_SCHEMA, isModelRoutedChildRole, isRecord, type HiConfig, type CategoryName, type ConfigResolutionReport, type ExecutionPolicyMode, type PrimaryModePolicy } from './schema.js'
 import { loadProjectRoutingConfig } from './routing-discovery.js'
 
 function limits(raw:unknown):Record<string,number>{if(!isRecord(raw))return{};const out:Record<string,number>={};for(const [k,v] of Object.entries(raw))if(typeof v==='number'&&Number.isInteger(v)&&v>0)out[k]=Math.min(32,v);return out}
@@ -7,9 +7,9 @@ function validNumber(raw:unknown):raw is number{return typeof raw==='number'&&Nu
 function bounded(raw:unknown,fallback:number,min:number,max:number):number{return validNumber(raw)?Math.max(min,Math.min(max,Math.floor(raw))):fallback}
 function boundedLayer(high:unknown,low:unknown,fallback:number,min:number,max:number):number{return validNumber(high)?bounded(high,fallback,min,max):validNumber(low)?bounded(low,fallback,min,max):fallback}
 function modelList(raw:unknown):string[]{if(typeof raw==='string')raw=[raw];return Array.isArray(raw)?[...new Set(raw.filter((x):x is string=>typeof x==='string'&&x.trim().length>0).map(x=>x.trim()))].slice(0,8):[]}
-function roleModels(raw:unknown):Record<string,string[]>{if(!isRecord(raw))return{};const out:Record<string,string[]>={};for(const [k,v] of Object.entries(raw)){const xs=modelList(v);if(xs.length)out[k]=xs}return out}
-function roleVariants(raw:unknown):Record<string,Record<string,string>>{if(!isRecord(raw))return{};const out:Record<string,Record<string,string>>={};for(const [role,v] of Object.entries(raw)){if(!isRecord(v))continue;const inner:Record<string,string>={};for(const [model,variant] of Object.entries(v))if(typeof variant==='string'&&variant.trim())inner[model]=variant.trim();if(Object.keys(inner).length)out[role]=inner}return out}
-function modelMap(raw:unknown):Record<string,string>{if(!isRecord(raw))return{};return Object.fromEntries(Object.entries(raw).filter(([,v])=>typeof v==='string'&&v.trim()).map(([k,v])=>[k,String(v).trim()]))}
+function roleModels(raw:unknown):Record<string,string[]>{if(!isRecord(raw))return{};const out:Record<string,string[]>={};for(const [k,v] of Object.entries(raw)){if(!isModelRoutedChildRole(k))continue;const xs=modelList(v);if(xs.length)out[k]=xs}return out}
+function roleVariants(raw:unknown):Record<string,Record<string,string>>{if(!isRecord(raw))return{};const out:Record<string,Record<string,string>>={};for(const [role,v] of Object.entries(raw)){if(!isModelRoutedChildRole(role)||!isRecord(v))continue;const inner:Record<string,string>={};for(const [model,variant] of Object.entries(v))if(typeof variant==='string'&&variant.trim())inner[model]=variant.trim();if(Object.keys(inner).length)out[role]=inner}return out}
+function modelMap(raw:unknown):Record<string,string>{if(!isRecord(raw))return{};return Object.fromEntries(Object.entries(raw).filter(([k,v])=>isModelRoutedChildRole(k)&&typeof v==='string'&&v.trim()).map(([k,v])=>[k,String(v).trim()]))}
 function threshold(value:unknown):'low'|'medium'|'high'|undefined{return value==='low'||value==='medium'||value==='high'?value:undefined}
 function categoryModels(raw:unknown):Partial<Record<CategoryName,string[]>>{if(!isRecord(raw))return{};const out:Partial<Record<CategoryName,string[]>>={};for(const k of ['quick','standard','deep','visual','critical'] as CategoryName[]){const xs=modelList(raw[k]);if(xs.length)out[k]=xs}return out}
 function executionPolicy(raw:unknown):ExecutionPolicyMode|undefined{const canonical:Record<string,ExecutionPolicyMode>={minimal:'minimal',balanced:'balanced',thorough:'thorough',adaptive:'adaptive',manual:'manual'};return canonical[typeof raw==='string'?raw:'']}

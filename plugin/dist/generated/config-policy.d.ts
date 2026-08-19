@@ -153,7 +153,7 @@ export declare const HI_CONFIG_OPTIONS: readonly [{
     readonly safetySemantics: "preference";
     readonly behavioralAcceptanceRefs: readonly ["per-role-routing-runtime.test.mjs"];
     readonly runtimeConsumer: "runtime/routing/model-resolver.resolveModel";
-    readonly executorEffect: "provides project role-specific model when models.mode=role-mapped";
+    readonly executorEffect: "provides project child-role-specific model when models.mode=role-mapped; primary manager models remain OpenCode-owned";
 }, {
     readonly id: "config.routing-strategy";
     readonly path: "routing.strategy";
@@ -209,7 +209,7 @@ export declare const HI_CONFIG_OPTIONS: readonly [{
     readonly safetySemantics: "preference";
     readonly behavioralAcceptanceRefs: readonly ["per-role-routing-runtime.test.mjs"];
     readonly runtimeConsumer: "runtime/routing/model-resolver.resolveModel";
-    readonly executorEffect: "prepends configured role candidates before category/scored models";
+    readonly executorEffect: "prepends configured child-role candidates before category/scored models; primary manager roles are excluded";
 }, {
     readonly id: "config.routing-role-variants";
     readonly path: "routing.roleVariants";
@@ -223,7 +223,7 @@ export declare const HI_CONFIG_OPTIONS: readonly [{
     readonly safetySemantics: "preference";
     readonly behavioralAcceptanceRefs: readonly ["main-prompt-model-setup-persistence.test.mjs"];
     readonly runtimeConsumer: "runtime/routing/model-resolver.chooseVariant";
-    readonly executorEffect: "changes selected native variant for a specific role/model pair";
+    readonly executorEffect: "changes selected native variant for a specific child-role/model pair; primary manager roles are excluded";
 }, {
     readonly id: "config.routing-max-fallbacks";
     readonly path: "routing.maxFallbacks";

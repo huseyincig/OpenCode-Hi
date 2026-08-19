@@ -48,7 +48,7 @@
         "id": "hi.config.catalog",
         "hash": {
           "algorithm": "sha256",
-          "value": "4c5630b7f1e5169802500839f486d203adeb1bb3272bf62aa5a02088e2a8405f"
+          "value": "03b7215ead614457cbeb8cd8f3aeadb9d6e4ce7543f4e2de5fb9e1164b0bcf26"
         }
       }
     ],
@@ -57,7 +57,7 @@
     "outputPath": "plugin/src/generated/config-policy.ts",
     "outputHash": {
       "algorithm": "sha256",
-      "value": "4962b6c774a1238b8016ed35bd6e543db9dd19ad9aab95fccf28095c94ea1a6a"
+      "value": "bd331fc6e93a0104e08617c54c8e894def1814750e2625dfaea128de6b84cc25"
     }
   },
   {
