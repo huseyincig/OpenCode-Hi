@@ -3,7 +3,8 @@ import {spawnSync} from 'node:child_process'
 import {createHash} from 'node:crypto'
 import {readFileSync,writeFileSync} from 'node:fs'
 import {resolve} from 'node:path'
-const root=resolve(new URL('..',import.meta.url).pathname)
+import {fileURLToPath} from 'node:url'
+const root=resolve(fileURLToPath(new URL('..',import.meta.url)))
 const testRel='plugin/test/q4-property-fuzz.test.mjs'
 const caseRel='data/validation/property-fuzz-failures/persistence-envelopes-seed-c0ffee-case-0.json'
 const outRel='data/validation/property-fuzz-acceptance-0.1.0.json'

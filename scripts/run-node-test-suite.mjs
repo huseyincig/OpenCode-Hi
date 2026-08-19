@@ -1,20 +1,53 @@
 #!/usr/bin/env node
-import {mkdtempSync,mkdirSync,readdirSync,rmSync,writeSync} from 'node:fs'
+import {mkdtempSync,mkdirSync,readFileSync,readdirSync,rmSync,writeFileSync,writeSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join,resolve} from 'node:path'
 import {spawnSync} from 'node:child_process'
 
 const cwd=process.cwd()
+const repositoryRoot=resolve(cwd,'..')
 const testDir=resolve(cwd,'test')
+
+// Release portability invariant: file: URLs are not filesystem paths on Windows.
+// Fail locally before CI if an import.meta.url path is converted through URL.pathname
+// instead of Node's platform-aware fileURLToPath().
+const unsafeFileUrlPath=/new\s+URL\s*\([^;]*import\.meta\.url[^;]*\)\s*\.pathname\b/s
+const portabilityFiles=[]
+function collectPortabilityFiles(dir){
+  for(const entry of readdirSync(dir,{withFileTypes:true})){
+    const path=resolve(dir,entry.name)
+    if(entry.isDirectory()){if(!['node_modules','dist','.git'].includes(entry.name))collectPortabilityFiles(path);continue}
+    if(/\.(?:ts|js|mjs|cjs|mts|cts)$/.test(entry.name))portabilityFiles.push(path)
+  }
+}
+for(const dir of [resolve(repositoryRoot,'plugin','src'),resolve(repositoryRoot,'plugin','test'),resolve(repositoryRoot,'scripts')])collectPortabilityFiles(dir)
+const unsafePathFiles=portabilityFiles.filter(path=>unsafeFileUrlPath.test(readFileSync(path,'utf8')))
+if(unsafePathFiles.length){
+  console.error('OpenCode-Hi portability guard: use fileURLToPath() instead of URL.pathname for import.meta.url filesystem paths:')
+  for(const path of unsafePathFiles)console.error(`- ${path}`)
+  process.exit(2)
+}
 const files=readdirSync(testDir).filter(x=>x.endsWith('.test.mjs')).sort().map(x=>join('test',x))
 if(files.length===0){console.error('OpenCode-Hi test harness: no test/*.test.mjs files found');process.exit(2)}
 const sandbox=mkdtempSync(join(tmpdir(),'opencode-hi-test-env-'))
 for(const d of ['hi-state','xdg-state','xdg-cache','xdg-config','localappdata'])mkdirSync(join(sandbox,d),{recursive:true})
+const gitGlobal=join(sandbox,'gitconfig')
+writeFileSync(gitGlobal,'')
+// Test-created repositories must not inherit a developer/runner Git EOL policy.
+// Git command-scope config overrides system/global/local files, making LF-sensitive
+// VCS fixtures deterministic on Windows and POSIX without changing product behavior.
 const env={...process.env,
   OPENCODE_HI_STATE_DIR:join(sandbox,'hi-state'),
   XDG_STATE_HOME:join(sandbox,'xdg-state'),
   XDG_CACHE_HOME:join(sandbox,'xdg-cache'),
   XDG_CONFIG_HOME:join(sandbox,'xdg-config'),
+  GIT_CONFIG_NOSYSTEM:'1',
+  GIT_CONFIG_GLOBAL:gitGlobal,
+  GIT_CONFIG_COUNT:'2',
+  GIT_CONFIG_KEY_0:'core.autocrlf',
+  GIT_CONFIG_VALUE_0:'false',
+  GIT_CONFIG_KEY_1:'core.eol',
+  GIT_CONFIG_VALUE_1:'lf',
 }
 if(process.platform==='win32')env.LOCALAPPDATA=join(sandbox,'localappdata')
 let result

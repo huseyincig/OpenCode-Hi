@@ -2,9 +2,10 @@
 import {createHash} from 'node:crypto'
 import {readFileSync,writeFileSync,readdirSync,statSync} from 'node:fs'
 import {join,relative,resolve,sep} from 'node:path'
+import {fileURLToPath} from 'node:url'
 import {scanCanonicalNaming} from './naming_namespace_guard.mjs'
 
-const ROOT=resolve(new URL('..',import.meta.url).pathname)
+const ROOT=resolve(fileURLToPath(new URL('..',import.meta.url)))
 const unix=p=>p.split(sep).join('/')
 const sha=p=>createHash('sha256').update(readFileSync(join(ROOT,p))).digest('hex')
 const json=p=>JSON.parse(readFileSync(join(ROOT,p),'utf8'))

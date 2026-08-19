@@ -22,6 +22,8 @@ add('timeout-handling','scripts/run-node-test-suite.mjs',"'--test-timeout=120000
 add('test-isolation','scripts/run-node-test-suite.mjs','OPENCODE_HI_STATE_DIR','data/validation/test-harness-isolation-0.1.0.json','"home_hi_state_delta"')
 add('cwd-independence','plugin/test/native-skill-catalog.test.mjs','fileURLToPath(import.meta.url)','data/validation/test-harness-isolation-0.1.0.json','"repo_root_cwd"')
 add('home-xdg-isolation','scripts/run-node-test-suite.mjs','XDG_STATE_HOME','data/validation/test-harness-isolation-0.1.0.json','"isolation_env"')
+add('git-config-isolation','scripts/run-node-test-suite.mjs','GIT_CONFIG_NOSYSTEM','data/validation/test-harness-isolation-0.1.0.json','GIT_CONFIG_NOSYSTEM')
+add('file-url-path-portability','scripts/run-node-test-suite.mjs','unsafeFileUrlPath','plugin/test/m14-backpressure-rollback.test.mjs','fileURLToPath')
 add('platform-assumptions','.github/workflows/release-readiness.yml','windows-latest','plugin/test/real-hosted-release-transaction.test.mjs','mandatory Ubuntu release-readiness job')
 add('deterministic-behavior','scripts/run-node-test-suite.mjs','.sort().map','plugin/test/decision-replay-corpus.test.mjs','Q1 decision replay corpora are tests-only inputs, not runtime configuration')
 # Global hostile/static guards.
@@ -37,6 +39,8 @@ static={
  'runner_sorted_inventory': ".filter(x=>x.endsWith('.test.mjs')).sort()" in runner,
  'runner_bounded_timeout': "'--test-timeout=120000'" in runner and 'timeout:300000' in runner,
  'runner_temp_state_cleanup': 'OPENCODE_HI_STATE_DIR' in runner and 'XDG_STATE_HOME' in runner and 'rmSync(sandbox,{recursive:true,force:true})' in runner,
+ 'runner_git_config_isolated': all(x in runner for x in ['GIT_CONFIG_NOSYSTEM','GIT_CONFIG_GLOBAL','core.autocrlf','core.eol']),
+ 'runner_file_url_path_guard': 'unsafeFileUrlPath' in runner and 'fileURLToPath() instead of URL.pathname' in runner,
  'libuv_exception_strict': "result?.signal==='SIGABRT'" in runner and 'fail 0' in runner and 'cancelled 0' in runner and 'uv__io_poll' in runner,
  'runtime_never_assigns_real_host_acceptance': "verification_level:'REAL_HOST_ACCEPTANCE'" not in hostcap,
  'current_t3_receipt_backed': all((compat['current_reference_host']['capabilities'][k].get('status')=='SUPPORTED_T3' and isinstance(compat['current_reference_host']['capabilities'][k].get('receipt'),str) and (ROOT/compat['current_reference_host']['capabilities'][k]['receipt']).is_file()) for k in ('process-lifecycle','workspace-isolation-binding','browser-execution')),
@@ -51,11 +55,13 @@ closed=[
  {'id':'cwd-sensitive-test-root','fix':'Repository fixture roots are derived from import.meta.url rather than process.cwd(); exact same 17 tests pass from plugin cwd and repository root.'},
  {'id':'test-suite-real-home-state-pollution','fix':'Canonical Node harness redirects Hi/XDG state and cache roots to a temporary suite sandbox and removes it; measured HOME Hi-state delta is zero.'},
  {'id':'unbounded-test-runner-timeout','fix':'Native per-test timeout is 120s and suite process timeout is 300s; hangs cannot block CI indefinitely.'},
+ {'id':'windows-test-git-eol-host-config-leak','finding':'Temporary Git repositories inherited runner/system/global core.autocrlf/core.eol policy, so exact VCS fixture bytes differed on Windows.','fix':'Canonical Node harness isolates system/global Git config and injects command-scope core.autocrlf=false plus core.eol=lf for all test-created repositories.'},
+ {'id':'windows-file-url-pathname-filesystem-assumption','finding':'Several tests/release scripts treated URL.pathname from import.meta.url as a native filesystem path; Windows file URLs retain a leading slash before the drive letter.','fix':'All living import.meta.url filesystem roots use Node fileURLToPath(), and the canonical Node harness rejects recurrence before executing the suite.'},
  {'id':'mock-runtime-self-promoted-t3','fix':'Owned runtime capabilities require active-host health and report OBSERVED only; REAL_HOST_ACCEPTANCE/T3 remains external exact-receipt truth.'},
 ]
-status='PASS' if len(rows)==11 and not violations else 'FAIL'
-data={'schema':1,'kind':'PROMPT_B_TEST_SUITE_ADVERSARIAL_AUDIT','program':'PROMPT_B','section':30,'status':status,'invariants':rows,'violations':violations,'summary':{'required':11,'covered':len(rows),'violations':len(violations)},'static_guards':static,'conditional_skips':skips,'harness_acceptance':'data/validation/test-harness-isolation-0.1.0.json','closed_defects':closed,'claim_boundary':'Controlled unit/integration tests prove local semantics only. A green mock is never T3. Exact host support is promoted solely by external exact-source OpenCode acceptance receipts selected through the compatibility projection.'}
+status='PASS' if len(rows)==13 and not violations else 'FAIL'
+data={'schema':1,'kind':'PROMPT_B_TEST_SUITE_ADVERSARIAL_AUDIT','program':'PROMPT_B','section':30,'status':status,'invariants':rows,'violations':violations,'summary':{'required':13,'covered':len(rows),'violations':len(violations)},'static_guards':static,'conditional_skips':skips,'harness_acceptance':'data/validation/test-harness-isolation-0.1.0.json','closed_defects':closed,'claim_boundary':'Controlled unit/integration tests prove local semantics only. A green mock is never T3. Exact host support is promoted solely by external exact-source OpenCode acceptance receipts selected through the compatibility projection.'}
 OUT.write_text(json.dumps(data,indent=2)+'\n')
-print(f'test suite audit {status}: covered={len(rows)}/11 violations={len(violations)}')
+print(f'test suite audit {status}: covered={len(rows)}/13 violations={len(violations)}')
 if violations: print('\n'.join(violations))
 sys.exit(0 if status=='PASS' else 1)

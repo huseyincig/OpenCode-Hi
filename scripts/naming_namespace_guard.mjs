@@ -69,7 +69,7 @@ export function scanCanonicalNaming(rootInput){
 }
 
 if(import.meta.url===pathToFileURL(process.argv[1]??'').href){
-  const root=resolve(process.argv[2]??new URL('..',import.meta.url).pathname),violations=scanCanonicalNaming(root)
+  const root=resolve(process.argv[2]??fileURLToPath(new URL('..',import.meta.url))),violations=scanCanonicalNaming(root)
   if(violations.length){for(const v of violations)console.error(`${v.path}: foreign canonical namespace token ${v.brand} in ${v.where}`);process.exit(1)}
   console.log('HI NAMING NAMESPACE PASS')
 }

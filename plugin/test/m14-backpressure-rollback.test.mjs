@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {mkdtempSync,rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
+import {fileURLToPath} from 'node:url'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
 import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
@@ -16,7 +17,7 @@ import {createTask} from '../dist/runtime/worker/worker-runtime.js'
 import {validateMissionEnvelope} from '../dist/runtime/mission/validators.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 
-const hiRoot=new URL('../../',import.meta.url).pathname.replace(/\/$/,'')
+const hiRoot=fileURLToPath(new URL('../../',import.meta.url)).replace(/[\\/]$/,'')
 const BASE='b'.repeat(40)
 const host={agent:PACKAGED_HI_AGENTS}
 function client(created=[],prompts=[],aborts=[]){let n=0;return{session:{

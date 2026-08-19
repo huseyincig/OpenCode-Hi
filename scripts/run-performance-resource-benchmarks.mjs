@@ -4,6 +4,7 @@ import {spawnSync} from 'node:child_process'
 import {mkdtempSync,rmSync,statSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join,resolve} from 'node:path'
+import {fileURLToPath} from 'node:url'
 import {writeFileSync} from 'node:fs'
 import {MissionStore} from '../plugin/dist/runtime/mission/mission-store.js'
 import {createTask} from '../plugin/dist/runtime/worker/worker-runtime.js'
@@ -15,7 +16,7 @@ import {ConcurrencyScheduler} from '../plugin/dist/runtime/scheduler/concurrency
 import {OpenCodePtyAdapter} from '../plugin/dist/opencode/open-code-pty-adapter.js'
 import {providerUsageObservation,contextBudgetEstimator} from '../plugin/dist/runtime/context/budget-estimator.js'
 
-const ROOT=resolve(new URL('..',import.meta.url).pathname)
+const ROOT=resolve(fileURLToPath(new URL('..',import.meta.url)))
 const out=resolve(process.argv[2]??'data/validation/performance-resource-benchmarks-0.1.0.json')
 const now=()=>performance.now(),median=xs=>{const a=[...xs].sort((a,b)=>a-b);return a[Math.floor(a.length/2)]},band=(v,threshold,unit)=>({status:v<=threshold?'PASS':'FAIL',threshold:`<=${threshold}${unit}`,observed_bucket:`<=${threshold}${unit}`}),samples=(n,fn)=>{const xs=[];for(let i=0;i<n;i++){const s=now();fn(i);xs.push(now()-s)}return xs}
 const assessed=(store,id,objective='benchmark task')=>{const m=store.start(id,objective);store.applyInitialSemanticAssessment(id,{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[]});return m}
