@@ -3,6 +3,7 @@ import { HI_METHODOLOGY_EXIT_REQUIREMENT_CATALOG, type HiMethodologyExitRequirem
 import { methodologyCatalogEntry } from './catalog.js'
 import { appendLedger } from '../ledger/ledger.js'
 import { verificationSatisfied } from '../verification/policy.js'
+import { evidenceClaimApplicability } from '../evidence/applicability.js'
 import { missionRequiresPackagePublish, missionRequiresReleaseCreate } from '../safety/release-chain.js'
 import { discoverProjectMethodologyPolicies } from './project-policy.js'
 
@@ -21,8 +22,13 @@ function passedEvidence(m:MissionState,task?:MissionTask,obligationId?:string){
     return false
   })
 }
+function browserProofLinked(m:MissionState,e:MissionState['execution']['evidence']['items'][number]):boolean{
+  if(!['browser-evidence','visual-evidence','accessibility-evidence'].includes(String(e.kind)))return true
+  const refs=[...new Set(e.evidence_refs??[])];if(!refs.length)return false
+  return refs.every(id=>{const support=m.execution.evidence.items.find(item=>item.id===id);return Boolean(support&&support.kind==='browser-evidence'&&String(support.source??'').startsWith('browser:')&&!support.invalidated_at&&support.outcome!=='failed'&&support.pass!==false&&support.producer_attempt&&evidenceClaimApplicability(m,support).applicable)})
+}
 function evidenceKinds(m:MissionState,task?:MissionTask,obligationId?:string):Set<string>{
-  return new Set(passedEvidence(m,task,obligationId).map(e=>String(e.kind).trim().toLowerCase()).filter(Boolean))
+  return new Set(passedEvidence(m,task,obligationId).filter(e=>browserProofLinked(m,e)).map(e=>String(e.kind).trim().toLowerCase()).filter(Boolean))
 }
 function hasEvidenceKind(m:MissionState,task:MissionTask|undefined,kinds:readonly string[],obligationId?:string):boolean{
   const actual=evidenceKinds(m,task,obligationId)

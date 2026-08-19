@@ -23,6 +23,7 @@ import type { ProjectMethodologyLearningStore } from '../project-intelligence/me
 import { ChildExecutionCoordinator,diffDelta,normFile } from './child-execution-coordinator.js'
 import { taskRuntimeAdmittedModel,reserveTaskRuntimeDispatch,bindTaskRuntimeHost,beginTaskRuntimeSettlement,releaseTaskRuntimeReservation } from '../scheduler/task-runtime-adapter.js'
 import { executionAttemptIdentity } from '../../contracts/orchestration-core.js'
+import { evidenceClaimApplicability } from '../evidence/applicability.js'
 
 function providerOf(model:string|undefined):string|undefined{return model&&model!=='host-default'&&model.includes('/')?model.slice(0,model.indexOf('/')):undefined}
 function resultDigest(result:WorkerResult):string{return createHash('sha256').update(JSON.stringify(result)).digest('hex')}
@@ -174,13 +175,26 @@ export class TaskResultReconciler{
     }
 
 
+    const browserProofKinds=new Set(['browser-evidence','visual-evidence','accessibility-evidence'])
+    const reconciledEvidence=effectiveResult.evidence.map(e=>{
+      const claimedPassed=e.outcome==='passed'||e.pass===true
+      if(!claimedPassed||!browserProofKinds.has(e.kind))return e
+      const requested=[...new Set(e.evidence_refs??[])],support=requested.map(id=>m.execution.evidence.items.find(item=>item.id===id)).filter((item):item is NonNullable<typeof item>=>Boolean(item))
+      const valid=requested.length>0&&support.length===requested.length&&support.every(item=>String(item.source??'').startsWith('browser:')&&item.kind==='browser-evidence'&&!item.invalidated_at&&item.outcome!=='failed'&&item.pass!==false&&item.task_id===task.id&&evidenceClaimApplicability(m,item).applicable)
+      if(valid)return e
+      appendLedger(m,'browser.evidence-unbound',{task_id:task.id,worker_id:worker.id,payload:{kind:e.kind,requested_refs:requested.slice(0,20),resolved_refs:support.map(item=>item.id),reason:'passed browser-derived proof requires current task/attempt browser observations'}})
+      const {pass:_pass,outcome:_outcome,...rest}=e
+      return{...rest,outcome:'pending' as const,reason:'browser-proof-unbound: passed browser/visual/accessibility proof requires current task/attempt browser observation evidence_refs'}
+    })
+    effectiveResult={...effectiveResult,evidence:reconciledEvidence}
+
     // Proof ownership: ingest worker-reported proof into the canonical Evidence owner before
     // methodology exit evaluation. A WorkerResult is not itself proof. If changed files were
     // only reported after the fact, mark that mutation first so same-result evidence is stale.
     const nativeAttemptDelta=worker.native_diff_final?diffDelta(worker.native_diff_baseline??{},worker.native_diff_final):undefined,fallbackMutationFiles=nativeAttemptDelta??effectiveResult.changed_files,fallbackMutation=fallbackMutationFiles.length>0&&!observedMutationDuringWorker
     if(fallbackMutation)markMutation(m,fallbackMutationFiles,'worker-result-fallback')
     const evidenceSource=isHiReadOnlyChildRole(worker.role)?`worker:${worker.id}:reviewer`:`worker:${worker.id}`,attemptIdentity=executionAttemptIdentity({executionUnitId:`eu:${task.id}`,workerId:worker.id,ordinal:worker.attempt,generation:worker.generation_at_spawn??m.continuation.generation}),producer_attempt={worker_id:worker.id,execution_unit_id:attemptIdentity.executionUnitId,attempt_id:attemptIdentity.attemptId,run_id:attemptIdentity.runId,ordinal:attemptIdentity.ordinal,generation:attemptIdentity.generation}
-    for(const e of effectiveResult.evidence)addEvidence(m,{kind:e.kind,summary:e.summary,scope:e.scope??effectiveResult.changed_files,source:evidenceSource,source_session_id:worker.session_id,source_state_hash:worker.native_state_hash,task_id:task.id,obligation_ids:task.obligation_ids,producer_attempt,pass:e.pass,outcome:e.outcome,reason:e.reason,invalidated_at:(cleanlinessMarker||fallbackMutation&&!isHiReadOnlyChildRole(worker.role))?(m.execution.evidence.last_mutation_at??Date.now()):undefined})
+    for(const e of effectiveResult.evidence){const refs=[...new Set(e.evidence_refs??[])],support=refs.map(id=>m.execution.evidence.items.find(item=>item.id===id)).filter((item):item is NonNullable<typeof item>=>Boolean(item)),browserStateHash=browserProofKinds.has(e.kind)&&refs.length&&support.length===refs.length?createHash('sha256').update(support.map(item=>`${item.id}:${item.source_state_hash??''}`).join('\n')).digest('hex'):undefined;addEvidence(m,{kind:e.kind,summary:e.summary,scope:e.scope??effectiveResult.changed_files,source:evidenceSource,source_session_id:worker.session_id,source_state_hash:browserStateHash??worker.native_state_hash,task_id:task.id,obligation_ids:task.obligation_ids,evidence_refs:refs.length?refs:undefined,producer_attempt,pass:e.pass,outcome:e.outcome,reason:e.reason,invalidated_at:(cleanlinessMarker||fallbackMutation&&!isHiReadOnlyChildRole(worker.role))?(m.execution.evidence.last_mutation_at??Date.now()):undefined})}
 
     if(effectiveResult.status==='DONE'&&(worker.loaded_methodologies?.length??0)>0){
       const missingExit=[...new Set((worker.loaded_methodologies??[]).flatMap(name=>methodologyExitCheck(m,name,{task,worker,result:effectiveResult,projectRoot:this.projectRoot,scope:'worker'}).missing))]

@@ -4,7 +4,7 @@ import { isReviewFindingContract,type ReviewFinding } from './review-finding.js'
 export { WORKER_EVIDENCE_KINDS } from './evidence-kinds.js'
 export type { EvidenceOutcome,WorkerEvidenceKind } from './evidence-kinds.js'
 export type WorkerResultStatus = 'DONE'|'FIX_REQUIRED'|'NEEDS_CONTEXT'|'BLOCKED'|'FAILED'
-export interface WorkerEvidence { kind:WorkerEvidenceKind; summary:string; scope?:string[]; pass?:boolean; outcome?:EvidenceOutcome; reason?:string }
+export interface WorkerEvidence { kind:WorkerEvidenceKind; summary:string; scope?:string[]; evidence_refs?:string[]; pass?:boolean; outcome?:EvidenceOutcome; reason?:string }
 export interface MethodologyObservation { key:string; procedure:string; trigger:string; do_not_trigger:string; exit_condition:string; evidence:WorkerEvidenceKind[] }
 export interface ScopeExpansion { file:string; reason:string; necessary:boolean }
 export interface WorkerResult { status:WorkerResultStatus; summary:string; changed_files:string[]; scope_expansions?:ScopeExpansion[]; evidence:WorkerEvidence[]; findings?:ReviewFinding[]; open_issues:string[]; needs_context:string[]; context_gap?:'scope'|'iterative'|'none'; failure_finding?:'ci-build'|'unknown-root-cause'|'none'; methodology_observations?:MethodologyObservation[] }
@@ -13,7 +13,7 @@ const STATUS_ALIAS:Record<string,WorkerResultStatus>={DONE:'DONE',PASS:'DONE',SU
 const KIND_SET=new Set<string>(WORKER_EVIDENCE_KINDS)
 const OUTCOME_SET=new Set<string>(['pending','passed','failed','environment-issue'])
 const RESULT_KEYS=new Set(['status','summary','changed_files','scope_expansions','evidence','findings','open_issues','needs_context','context_gap','failure_finding','methodology_observations'])
-const EVIDENCE_KEYS=new Set(['kind','summary','scope','pass','outcome','reason'])
+const EVIDENCE_KEYS=new Set(['kind','summary','scope','evidence_refs','pass','outcome','reason'])
 const OBS_KEYS=new Set(['key','procedure','trigger','do_not_trigger','exit_condition','evidence'])
 const EXPANSION_KEYS=new Set(['file','reason','necessary'])
 function record(v:unknown):v is Record<string,unknown>{return Boolean(v)&&typeof v==='object'&&!Array.isArray(v)}
@@ -25,6 +25,7 @@ function cleanKey(v:unknown):string{return String(v??'').trim().toLowerCase().re
 export function isWorkerEvidenceContract(v:unknown):v is WorkerEvidence{
   if(!record(v)||!onlyKeys(v,EVIDENCE_KEYS)||typeof v.kind!=='string'||!KIND_SET.has(v.kind)||typeof v.summary!=='string')return false
   if(v.scope!==undefined&&!stringArray(v.scope))return false
+  if(v.evidence_refs!==undefined&&(!stringArray(v.evidence_refs)||v.evidence_refs.length>20))return false
   if(v.pass!==undefined&&typeof v.pass!=='boolean')return false
   if(v.outcome!==undefined&&(typeof v.outcome!=='string'||!OUTCOME_SET.has(v.outcome)))return false
   return v.reason===undefined||typeof v.reason==='string'
@@ -45,7 +46,7 @@ export function isWorkerResultContract(v:unknown):v is WorkerResult{
 
 function normalizeEvidence(raw:unknown):WorkerEvidence[]{
   const values=Array.isArray(raw)?raw:(record(raw)?Object.entries(raw).map(([kind,value])=>({kind,summary:typeof value==='string'?value:JSON.stringify(value)})):[])
-  return values.slice(0,40).flatMap((v:any)=>{if(!record(v))return[];const kind=String(v.kind??'') as WorkerEvidenceKind;if(!KIND_SET.has(kind))return[];const outcome=typeof v.outcome==='string'&&OUTCOME_SET.has(v.outcome)?v.outcome as EvidenceOutcome:undefined;return[{kind,summary:clip(v.summary,1000),scope:Array.isArray(v.scope)?v.scope.map(String).slice(0,50):undefined,pass:typeof v.pass==='boolean'?v.pass:undefined,outcome,reason:typeof v.reason==='string'?clip(v.reason,1000):undefined}]})
+  return values.slice(0,40).flatMap((v:any)=>{if(!record(v))return[];const kind=String(v.kind??'') as WorkerEvidenceKind;if(!KIND_SET.has(kind))return[];const outcome=typeof v.outcome==='string'&&OUTCOME_SET.has(v.outcome)?v.outcome as EvidenceOutcome:undefined;return[{kind,summary:clip(v.summary,1000),scope:Array.isArray(v.scope)?v.scope.map(String).slice(0,50):undefined,evidence_refs:Array.isArray(v.evidence_refs)?[...new Set(v.evidence_refs.map(String).filter(Boolean))].slice(0,20):undefined,pass:typeof v.pass==='boolean'?v.pass:undefined,outcome,reason:typeof v.reason==='string'?clip(v.reason,1000):undefined}]})
 }
 function normalizeMethodologyObservations(raw:unknown):MethodologyObservation[]|undefined{
   if(!Array.isArray(raw))return undefined
