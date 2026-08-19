@@ -5,7 +5,7 @@ import type { RepoContext } from './repo-context.js'
 import { normalizeBoundedProjectPath } from '../../contracts/common.js'
 
 export type SemanticMessageKind='mission'|'amendment'|'constraint'|'verification'|'stop'|'resume'|'non-material'
-export const SEMANTIC_CAPABILITIES=['implementation','repository-analysis','review','verification','independent-review','security-review','visual-qa','design-exploration','multi-stream-delegation','source-verification','qa-review','dependency-change','interactive-process'] as const
+export const SEMANTIC_CAPABILITIES=['implementation','repository-analysis','review','verification','independent-review','security-review','visual-qa','design-exploration','multi-stream-delegation','source-verification','qa-review','dependency-change','interactive-process','mcp'] as const
 export type SemanticCapability=typeof SEMANTIC_CAPABILITIES[number]
 export const SEMANTIC_EXTERNAL_ACTIONS=['git-push','release-create','package-publish','deploy'] as const
 export type SemanticExternalAction=typeof SEMANTIC_EXTERNAL_ACTIONS[number]

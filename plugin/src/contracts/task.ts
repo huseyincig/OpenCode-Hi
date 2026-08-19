@@ -35,13 +35,13 @@ const STATUS=new Set<string>(TASK_STATUSES)
 const EXTERNAL=new Set<string>(TASK_EXTERNAL_ACTIONS)
 const CATEGORIES=new Set(['quick','standard','deep','visual','critical'])
 const TASK_KEYS=new Set(['id','mission_id','objective','status','role','category','scope','constraints','dependencies','requiredEvidence','obligation_ids','context_artifacts','execution_profile','gate_ids','worker_id','result','diff_cleanliness','external_action_requirements','created_at','updated_at'])
-const PROFILE_KEYS=new Set(['role','category','task','tools','model','model_variant','fallback_models','fallback_variants','fallback_reasons','methodologies','permission_profile','verification_policy','max_context_chars','max_handoff_chars','max_result_chars','max_artifacts','expected_turns','context_overhead'])
+const PROFILE_KEYS=new Set(['role','category','task','tools','mcp_servers','model','model_variant','fallback_models','fallback_variants','fallback_reasons','methodologies','permission_profile','verification_policy','max_context_chars','max_handoff_chars','max_result_chars','max_artifacts','expected_turns','context_overhead'])
 function record(v:unknown):v is Record<string,unknown>{return Boolean(v)&&typeof v==='object'&&!Array.isArray(v)}
 function strings(v:unknown):v is string[]{return Array.isArray(v)&&v.every(x=>typeof x==='string')}
 function finite(v:unknown):v is number{return typeof v==='number'&&Number.isFinite(v)}
 function validDiff(v:unknown):boolean{return record(v)&&strings(v.collateral)&&v.collateral.every(x=>normalizeBoundedProjectPath(x)!==undefined)&&strings(v.accepted_expansions)&&v.accepted_expansions.every(x=>normalizeBoundedProjectPath(x)!==undefined)&&(v.native_verified_reverts===undefined||strings(v.native_verified_reverts)&&v.native_verified_reverts.every(x=>normalizeBoundedProjectPath(x)!==undefined))}
 function validProfile(v:unknown):boolean{
-  if(!record(v)||!Object.keys(v).every(k=>PROFILE_KEYS.has(k))||typeof v.role!=='string'||typeof v.category!=='string'||!CATEGORIES.has(v.category)||!record(v.task)||!strings(v.tools)||!strings(v.fallback_models)||!strings(v.methodologies))return false
+  if(!record(v)||!Object.keys(v).every(k=>PROFILE_KEYS.has(k))||typeof v.role!=='string'||typeof v.category!=='string'||!CATEGORIES.has(v.category)||!record(v.task)||!strings(v.tools)||(v.mcp_servers!==undefined&&!strings(v.mcp_servers))||!strings(v.fallback_models)||!strings(v.methodologies))return false
   const task=v.task;if(typeof task.objective!=='string'||!strings(task.scope)||!strings(task.dependencies)||!strings(task.required_evidence))return false
   for(const k of ['model','model_variant'])if(v[k]!==undefined&&typeof v[k]!=='string')return false
   if(v.fallback_variants!==undefined&&(!record(v.fallback_variants)||!Object.values(v.fallback_variants).every(x=>x===undefined||typeof x==='string')))return false
