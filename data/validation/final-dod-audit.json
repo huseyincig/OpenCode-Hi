@@ -28,7 +28,7 @@
     "final_gates": {
       "status": "PASS",
       "receipt": "data/validation/final-gates-0.2.0.json",
-      "source_commit": "5cfc10f180dfe9d93dd59fcae9f40a318cbdac5e"
+      "source_commit": "d5fa573b883b5f890a0dadc41e93d1e3015bcb77"
     },
     "exact_host_t3": {
       "status": "PASS",
@@ -45,11 +45,9 @@
     }
   },
   "external_only_pending": [
-    "exact-source Ubuntu/Windows Release Readiness GitHub Actions for 0.2.0",
-    "explicitly authorized GitHub/npm publication and current-version T4 registry verification for 0.2.0"
+    "real GitHub/npm publication plus current-version registry/provenance/exact-host T4 verification for opencode-hi@0.2.0"
   ],
   "external_blockers": [
-    "current-source-windows-acceptance-pending-external-ci",
     "T4-current-release-publication-verification-pending"
   ],
   "release_blocked": true,

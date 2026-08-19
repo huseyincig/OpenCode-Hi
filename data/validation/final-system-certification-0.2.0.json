@@ -6,8 +6,8 @@
   "status": "PARTIAL",
   "release": "0.2.0",
   "certified_source_checkpoint": {
-    "commit": "0af906eea8ca8446c6a36849a47dd96291b28332",
-    "tree": "6f5f5cd2dee1c5d2e6b152e8e01d9be72980cc9e",
+    "commit": "d5fa573b883b5f890a0dadc41e93d1e3015bcb77",
+    "tree": "63d583bcae7a38c3b4ad303bbd4fef3c1dd726c3",
     "note": "Source checkpoint attested by a subsequent evidence commit to avoid self-referential Git hashes."
   },
   "schema_versions": {
@@ -53,7 +53,7 @@
   },
   "platform_matrix": {
     "linux_current": "PASS",
-    "windows_current": "PENDING_EXTERNAL_CI"
+    "windows_current": "PASS"
   },
   "test_totals": {
     "python": 95,
@@ -99,12 +99,11 @@
   ],
   "known_limitations": [
     "T3 scope is exact OpenCode 1.18.18 on Linux/aarch64 for current local receipts",
-    "Windows current-source proof is external-CI gated until pushed",
+    "Windows current-source proof is bound to the exact external CI source checkpoint and subsequent evidence-only attestation commits",
     "T4 is impossible before real GitHub/npm publication and is not fabricated"
   ],
   "known_defect_count": 0,
   "blockers": [
-    "current-source-windows-acceptance-pending-external-ci",
     "T4-current-release-publication-verification-pending"
   ],
   "current_projections": {
@@ -170,7 +169,7 @@
     },
     "data/validation/prompt-b-cross-platform-acceptance.json": {
       "projection": "current-attestation",
-      "status": "PENDING_EXTERNAL_CI"
+      "status": "PASS"
     },
     "data/validation/prompt-b-exact-current-opencode-t3.json": {
       "projection": "current-attestation",
@@ -194,7 +193,7 @@
     },
     "data/validation/release-status-0.2.0.json": {
       "projection": "current-attestation",
-      "status": "PREPUBLICATION_CERTIFICATION_IN_PROGRESS"
+      "status": "PREPUBLICATION_CERTIFIED_PENDING_T4"
     },
     "data/validation/final-gates-0.2.0.json": {
       "projection": "current-attestation",

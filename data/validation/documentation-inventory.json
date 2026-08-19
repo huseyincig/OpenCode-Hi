@@ -231,7 +231,7 @@
     },
     {
       "path": "data/validation/release-status-0.2.0.json",
-      "sha256": "debcd73c6248d1029ff2e6d2b9e75147d7e19eeb84bcbe6117df859e911cbf44",
+      "sha256": "e054f68595ff85b907ca9d141ac7f7eac6083c36b3de8d88377204ec3629aae4",
       "area": "current-release-status",
       "lifecycle": "MACHINE_OWNER"
     }

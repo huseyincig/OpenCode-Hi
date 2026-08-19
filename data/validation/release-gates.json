@@ -36,8 +36,8 @@
   "current_local_evidence": {
     "source_checkpoint": {
       "status": "PASS",
-      "commit": "5cfc10f180dfe9d93dd59fcae9f40a318cbdac5e",
-      "tree": "1ecde4cc17b2550967713f54faea01897c546d95"
+      "commit": "d5fa573b883b5f890a0dadc41e93d1e3015bcb77",
+      "tree": "63d583bcae7a38c3b4ad303bbd4fef3c1dd726c3"
     },
     "node": {
       "command": "npm --prefix plugin test",
@@ -53,7 +53,8 @@
     },
     "final_gates": {
       "status": "PASS",
-      "receipt": "data/validation/final-gates-0.2.0.json"
+      "receipt": "data/validation/final-gates-0.2.0.json",
+      "source_commit": "d5fa573b883b5f890a0dadc41e93d1e3015bcb77"
     },
     "fresh_consumer": {
       "status": "PASS",
@@ -80,7 +81,6 @@
       "status": "PARTIAL",
       "receipt": "data/validation/final-system-certification-0.2.0.json",
       "blockers": [
-        "current-source-windows-acceptance-pending-external-ci",
         "T4-current-release-publication-verification-pending"
       ]
     },
@@ -92,7 +92,7 @@
     "hygiene": {
       "status": "PASS",
       "receipt": "data/validation/prompt-b-hygiene.json",
-      "audited_source_commit": "0af906eea8ca8446c6a36849a47dd96291b28332"
+      "audited_source_commit": "d5fa573b883b5f890a0dadc41e93d1e3015bcb77"
     }
   },
   "historical_receipts_not_valid_for_current_candidate": {

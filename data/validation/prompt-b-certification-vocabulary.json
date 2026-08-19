@@ -6,7 +6,6 @@
   "status": "PASS",
   "current_label": "PARTIAL",
   "blockers": [
-    "current-source-windows-acceptance-pending-external-ci",
     "T4-current-release-publication-verification-pending"
   ],
   "allowed_positive_labels": [
