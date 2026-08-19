@@ -14,14 +14,27 @@ import { createSchedulerLifecycleState } from '../../contracts/orchestration-cor
 import { reduceSchedulerLifecycle } from '../scheduler/lifecycle.js'
 import { semanticProgressDelta,semanticProgressMade,semanticProgressSnapshot } from '../progress/semantic-progress.js'
 function obligation(id:string,kind:Obligation['kind'],summary:string,requiredEvidence:string[]=[]):Obligation{return{id,kind,summary,status:'open',requiredEvidence}}
-function reconciledIntentMethodologySignals(assessment:SemanticIntentAssessment):{active:SemanticIntentAssessment['intent_signals'];suppressed:SemanticIntentAssessment['intent_signals'];runtimeSuppressed:SemanticIntentAssessment['intent_signals']}{
+function explicitTestMutationForbidden(text:string):boolean{
+  const normalized=text.toLowerCase().replace(/[\u2018\u2019]/g,"'").replace(/\s+/g,' ').trim()
+  if(!normalized)return false
+  return[
+    /\b(?:do not|don't|must not)\s+(?:modify|edit|change|write|add|create|update|touch)\s+(?:the\s+)?(?:tests?|test files?)\b/,
+    /\b(?:tests?|test files?)\s+(?:must|should)\s+(?:remain|stay)\s+unchanged\b/,
+    /\bwithout\s+(?:modifying|editing|changing|writing|adding|creating|updating|touching)\s+(?:the\s+)?(?:tests?|test files?)\b/,
+  ].some(pattern=>pattern.test(normalized))
+}
+function reconciledIntentMethodologySignals(assessment:SemanticIntentAssessment,userText=''):{active:SemanticIntentAssessment['intent_signals'];suppressed:SemanticIntentAssessment['intent_signals'];runtimeSuppressed:SemanticIntentAssessment['intent_signals']}{
   const suppressed=new Set(assessment.suppressed_intent_signals),runtimeSuppressed:SemanticIntentAssessment['intent_signals']=[]
   if(assessment.dependency_class==='independent-multi'&&assessment.intent_signals.includes('intent.planning')){suppressed.add('intent.planning');runtimeSuppressed.push('intent.planning')}
   if(assessment.likely_verification.length>0&&assessment.intent_signals.includes('intent.test-strategy')){suppressed.add('intent.test-strategy');runtimeSuppressed.push('intent.test-strategy')}
   const boundedDirectBugFix=assessment.task_kind==='bug-fix'&&assessment.scope==='local'&&assessment.dependency_class==='independent'&&['low','medium'].includes(assessment.risk)&&!assessment.required_capabilities.includes('source-verification')&&assessment.likely_targets.length>0&&assessment.likely_verification.length>0
   const debuggingBackedByDiagnosis=assessment.required_capabilities.includes('repository-analysis')
   if(boundedDirectBugFix&&assessment.intent_signals.includes('intent.debugging')&&(assessment.ambiguity==='none'||!debuggingBackedByDiagnosis)){suppressed.add('intent.debugging');runtimeSuppressed.push('intent.debugging')}
-  return{active:assessment.intent_signals.filter(signal=>!suppressed.has(signal)),suppressed:[...suppressed],runtimeSuppressed}
+  if(explicitTestMutationForbidden(userText)){
+    suppressed.add('intent.tdd')
+    runtimeSuppressed.push('intent.tdd')
+  }
+  return{active:assessment.intent_signals.filter(signal=>!suppressed.has(signal)),suppressed:[...suppressed],runtimeSuppressed:[...new Set(runtimeSuppressed)]}
 }
 export class MissionStore {
   readonly #bySession=new Map<string,MissionState>();readonly #root:string;readonly #repo:RepoContext;readonly #getPrimaryMode:()=> 'auto'|'working-manager'|'manager';readonly #getTopology:()=>TopologyPolicyConfig
@@ -49,7 +62,7 @@ export class MissionStore {
     if(!assessment.material){m.identity.intent=assessedIntent(m.identity.intent,assessment);m.identity.risk=m.identity.intent.risk;m.identity.objective=m.identity.intent.objective;m.identity.status='completed';m.execution.obligations=[];m.methodology.methodology_needs=[];appendLedger(m,'semantic.non-material',{payload:{revision:m.identity.semantic_assessment.revision,source:m.identity.semantic_assessment.source,taskKind:m.identity.intent.taskKind,scope:m.identity.intent.scope,risk:m.identity.intent.risk}});syncMissionGates(m);m.identity.updated_at=now;this.syncProgressBaseline(m);return m}
     const explicitUserVerification=[...m.identity.intent.likelyVerification] as SemanticIntentAssessment['likely_verification'],boundedExplicitVerification=explicitUserVerification.length>0&&assessment.scope==='local'&&['low','medium'].includes(assessment.risk)&&assessment.task_kind!=='release-readiness',effectiveAssessment:SemanticIntentAssessment=boundedExplicitVerification?{...assessment,likely_verification:explicitUserVerification,user_verification:explicitUserVerification,verification_ceiling:true}:assessment
     m.identity.intent=assessedIntent(m.identity.intent,effectiveAssessment);m.identity.risk=m.identity.intent.risk;m.identity.objective=m.identity.intent.objective
-    const reconciledSignals=reconciledIntentMethodologySignals(effectiveAssessment),obligations:Obligation[]=[],bugFixAnalysisRequired=m.identity.intent.taskKind==='bug-fix'&&(m.identity.intent.scope!=='local'||m.identity.intent.ambiguity!=='none'||reconciledSignals.active.includes('intent.debugging'))
+    const reconciledSignals=reconciledIntentMethodologySignals(effectiveAssessment,m.identity.semantic_assessment.pending_text),obligations:Obligation[]=[],bugFixAnalysisRequired=m.identity.intent.taskKind==='bug-fix'&&(m.identity.intent.scope!=='local'||m.identity.intent.ambiguity!=='none'||reconciledSignals.active.includes('intent.debugging'))
     if(bugFixAnalysisRequired||m.identity.intent.taskKind==='performance')obligations.push(obligation('o-analysis','analysis',m.identity.intent.taskKind==='bug-fix'?'Root cause understood':'Relevant performance bottleneck identified'))
     if(m.identity.intent.taskKind!=='review'&&m.identity.intent.taskKind!=='release-readiness')obligations.push(obligation('o-implementation','implementation','Requested change completed'))
     if(m.identity.intent.taskKind==='review')obligations.push(obligation('o-review','review','Requested review completed',m.identity.intent.likelyVerification))
@@ -90,7 +103,7 @@ export class MissionStore {
     else if(kind==='verification'){m.identity.objective=`${m.identity.objective}\nFollow-up verification: ${text}`.slice(0,9000);let verify=m.execution.obligations.find(o=>o.kind==='verification');if(!verify){verify=obligation('o-followup-verification-r'+m.identity.semantic_assessment.revision,'verification',`User verification follow-up: ${text.slice(0,500)}`,assessment.likely_verification);m.execution.obligations.push(verify)}else{verify.status='open';verify.closedAt=undefined;verify.summary=`${verify.summary}; ${text.slice(0,300)}`.slice(0,700)}}
     else{m.identity.objective=`${m.identity.objective}\nFollow-up: ${text}`.slice(0,9000);m.execution.obligations.push(obligation('o-followup-r'+m.identity.semantic_assessment.revision,'implementation',`User follow-up: ${text.slice(0,500)}`))}
     m.identity.intent=assessedIntent(m.identity.intent,assessment);m.identity.intent.objective=m.identity.objective;m.identity.risk=m.identity.intent.risk
-    const reconciledSignals=reconciledIntentMethodologySignals(assessment);if(reconciledSignals.suppressed.length)suppressIntentMethodologySignals(m,reconciledSignals.suppressed,`Host primary semantic follow-up superseded or runtime-reconciled intent methodology at revision ${m.identity.semantic_assessment.revision}.`)
+    const reconciledSignals=reconciledIntentMethodologySignals(assessment,text);if(reconciledSignals.suppressed.length)suppressIntentMethodologySignals(m,reconciledSignals.suppressed,`Host primary semantic follow-up superseded or runtime-reconciled intent methodology at revision ${m.identity.semantic_assessment.revision}.`)
     for(const signal of reconciledSignals.active)activateMethodologySignal(m,this.#root,{signal,producer:'intent',reason:`Host primary semantic follow-up assessment revision ${m.identity.semantic_assessment.revision}.`})
     if(m.identity.intent.risk==='high'&&!m.execution.obligations.some(o=>o.id==='o-high-assurance'&&o.status==='open'))m.execution.obligations.push(obligation('o-high-assurance','review','Security-sensitive change reviewed'))
     if(m.identity.intent.risk==='authority-boundary'&&!m.execution.obligations.some(o=>o.kind==='authority'&&o.status==='open'))m.execution.obligations.push(obligation(`o-authority-${now.toString(36)}`,'authority','External action explicitly authorized and completed'))
