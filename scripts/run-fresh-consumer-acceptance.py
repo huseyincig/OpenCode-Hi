@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import json,subprocess,tempfile,tarfile,os,time,socket,urllib.request,urllib.parse,signal,hashlib
+import json,subprocess,tempfile,tarfile,os,time,socket,urllib.request,urllib.parse,signal,hashlib,shutil
+from datetime import datetime,timezone
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'data/validation/fresh-consumer-opencode-1.18.18.json'
@@ -10,7 +11,21 @@ def free_port():
     s=socket.socket();s.bind(('127.0.0.1',0));p=s.getsockname()[1];s.close();return p
 def get_json(url,timeout=5):
     with urllib.request.urlopen(url,timeout=timeout) as r:return json.loads(r.read().decode())
+def exact_opencode():
+    requested=os.environ.get('HI_EXACT_OPENCODE_BIN','opencode')
+    path=Path(requested).expanduser() if ('/' in requested or '\\' in requested) else None
+    resolved=str(path.resolve()) if path and path.is_file() else shutil.which(requested)
+    if not resolved:raise RuntimeError('Exact OpenCode binary unavailable; set HI_EXACT_OPENCODE_BIN')
+    version=run([resolved,'--version']).stdout.strip()
+    if version!='1.18.18':raise RuntimeError(f'Exact OpenCode version mismatch: expected 1.18.18, observed {version or "<empty>"}')
+    return resolved,version,hashlib.sha256(Path(resolved).read_bytes()).hexdigest()
+def npm_latest(package):
+    r=run(['npm','view',package,'version','--json'],ROOT,timeout=30)
+    if r.returncode!=0:return None
+    try:value=json.loads(r.stdout);return value if isinstance(value,str) else None
+    except Exception:return None
 def main()->int:
+  opencode_bin,opencode_version,opencode_sha256=exact_opencode();registry={'opencode_ai_latest':npm_latest('opencode-ai'),'sdk_latest':npm_latest('@opencode-ai/sdk'),'observed_at':datetime.now(timezone.utc).isoformat()}
   with tempfile.TemporaryDirectory(prefix='hi-b26-consumer-') as td:
     td=Path(td);packdir=td/'pack';packdir.mkdir();consumer=td/'consumer';consumer.mkdir();home=td/'home';home.mkdir();xdg=td/'xdg';xdg.mkdir()
     pack=run(['npm','pack','--ignore-scripts','--pack-destination',str(packdir)],ROOT)
@@ -31,7 +46,7 @@ def main()->int:
     env=os.environ.copy();env['HOME']=str(home);env['XDG_DATA_HOME']=str(xdg/'data');env['XDG_CONFIG_HOME']=str(xdg/'config');env['XDG_CACHE_HOME']=str(xdg/'cache');env['XDG_STATE_HOME']=str(xdg/'state')
     port=free_port();log=td/'opencode.log'
     with log.open('w') as lf:
-      proc=subprocess.Popen(['opencode','serve','--hostname','127.0.0.1','--port',str(port),'--print-logs','--log-level','INFO'],cwd=project,env=env,stdout=lf,stderr=subprocess.STDOUT,text=True)
+      proc=subprocess.Popen([opencode_bin,'serve','--hostname','127.0.0.1','--port',str(port),'--print-logs','--log-level','INFO'],cwd=project,env=env,stdout=lf,stderr=subprocess.STDOUT,text=True)
     base=f'http://127.0.0.1:{port}'
     tool_ids=None;server_error=None
     try:
@@ -76,11 +91,11 @@ def main()->int:
       'agent_projection':isinstance(coder,dict) and coder.get('name')=='coder' and coder.get('mode')=='subagent' and coder.get('description')=='Implements scoped changes and produces test and behavior evidence',
       'session_create':isinstance(session,dict) and not session.get('error') and bool(session.get('id') or (session.get('data') or {}).get('id')),
       'no_source_tree_in_server_log':str(ROOT) not in log_text,
-      'exact_host_version':run(['opencode','--version']).stdout.strip()=='1.18.18',
+      'exact_host_version':opencode_version=='1.18.18',
     }
     status='PASS' if all(checks.values()) else 'FAIL'
     head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip();tree=subprocess.check_output(['git','rev-parse','HEAD^{tree}'],cwd=ROOT,text=True).strip()
-    receipt={'schema':1,'kind':'PROMPT_B_FRESH_CONSUMER_EXACT_HOST_ACCEPTANCE','program':'PROMPT_B','section':26,'status':status,'source':{'commit':head,'tree':tree},'host':{'opencode':'1.18.18','platform':'linux','architecture':os.uname().machine},'package':{'release':(ROOT/'VERSION').read_text().strip(),'tarball_name':tgz.name,'installed_from_tarball':True,'resolved_entrypoint':resolved.replace(str(td),'<temp>')},'consumer':{'project':str(project).replace(str(td),'<temp>'),'wrapper':'.opencode/plugins/hi-packed.js','reconfigure_rc':reconfig.returncode},'material_runtime':{'hi_tool_count':len(hi_ids),'hi_tools':hi_ids,'agent_endpoint_count':len(agent_rows),'coder_agent_observed':bool(coder),'coder_projection':({k:coder.get(k) for k in ('name','mode','description','native','hidden') if k in coder} if isinstance(coder,dict) else None),'session':{'created':checks['session_create'],'version':(session.get('version') if isinstance(session,dict) else None),'directory':'<temp>/consumer/project'},'provider_run':provider_run},'checks':checks,'claim_boundary':'Fresh packed artifact installed outside source tree and loaded by exact OpenCode 1.18.18 through its native local-plugin seam. Provider-backed model execution is opportunistic and is not required for package/runtime acceptance; tool registration, config/agent projection and session material path are provider-independent.'}
+    receipt={'schema':1,'kind':'PROMPT_B_FRESH_CONSUMER_EXACT_HOST_ACCEPTANCE','program':'PROMPT_B','section':26,'status':status,'source':{'commit':head,'tree':tree},'host':{'opencode':opencode_version,'platform':'linux','architecture':os.uname().machine,'binary':opencode_bin,'binary_sha256':opencode_sha256,'registry_observation':registry},'package':{'release':(ROOT/'VERSION').read_text().strip(),'tarball_name':tgz.name,'installed_from_tarball':True,'resolved_entrypoint':resolved.replace(str(td),'<temp>')},'consumer':{'project':str(project).replace(str(td),'<temp>'),'wrapper':'.opencode/plugins/hi-packed.js','reconfigure_rc':reconfig.returncode},'material_runtime':{'hi_tool_count':len(hi_ids),'hi_tools':hi_ids,'agent_endpoint_count':len(agent_rows),'coder_agent_observed':bool(coder),'coder_projection':({k:coder.get(k) for k in ('name','mode','description','native','hidden') if k in coder} if isinstance(coder,dict) else None),'session':{'created':checks['session_create'],'version':(session.get('version') if isinstance(session,dict) else None),'directory':'<temp>/consumer/project'},'provider_run':provider_run},'checks':checks,'claim_boundary':'Fresh packed artifact installed outside source tree and loaded by exact OpenCode 1.18.18 through its native local-plugin seam. Provider-backed model execution is opportunistic and is not required for package/runtime acceptance; tool registration, config/agent projection and session material path are provider-independent.'}
     OUT.write_text(json.dumps(receipt,indent=2,ensure_ascii=False)+'\n')
     print(f"fresh consumer acceptance {status}: hi_tools={len(hi_ids)} session={checks['session_create']} agent={checks['agent_projection']} provider_attempted={provider_run.get('attempted')}")
     if status!='PASS':

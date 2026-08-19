@@ -9,11 +9,6 @@ import type { WorkerResult } from './worker-result.js'
 /** Host-neutral capability semantics. Host adapters resolve these contracts. */
 export type CapabilityImplementation='NATIVE'|'HYBRID'|'HI_OWNED'|'UNAVAILABLE'
 
-export interface CapabilityRequirement {
-  capability:string
-  required:boolean
-  reason:string
-}
 
 export interface CapabilityResolution {
   capability:string
@@ -102,7 +97,6 @@ export function sameExecutionAttemptFence(a:Pick<ExecutionAttempt,'executionUnit
 }
 
 export type ExecutionTransitionKind='DISPATCH'|'SETTLEMENT'|'EVIDENCE_COMMIT'
-export type ExecutionTransitionState='PREPARED'|'COMMITTED'|'UNKNOWN'
 
 function receiptPart(value:string):string{return`${value.length}:${value}`}
 export function executionTransitionReceiptId(input:{missionId:string;workNodeId:string;attempt:ExecutionAttemptIdentity;transition:ExecutionTransitionKind}):string{

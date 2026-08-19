@@ -7,11 +7,6 @@ import type { WorkerContractStatus } from './worker.js';
 import type { WorkerResult } from './worker-result.js';
 /** Host-neutral capability semantics. Host adapters resolve these contracts. */
 export type CapabilityImplementation = 'NATIVE' | 'HYBRID' | 'HI_OWNED' | 'UNAVAILABLE';
-export interface CapabilityRequirement {
-    capability: string;
-    required: boolean;
-    reason: string;
-}
 export interface CapabilityResolution {
     capability: string;
     implementation: CapabilityImplementation;
@@ -93,7 +88,6 @@ export declare function executionAttemptIdentity(input: {
 export declare function sameExecutionAttempt(a: Pick<ExecutionAttemptIdentity, 'executionUnitId' | 'attemptId' | 'runId' | 'generation'>, b: Pick<ExecutionAttemptIdentity, 'executionUnitId' | 'attemptId' | 'runId' | 'generation'>): boolean;
 export declare function sameExecutionAttemptFence(a: Pick<ExecutionAttempt, 'executionUnitId' | 'attemptId' | 'runId' | 'generation' | 'workerId' | 'sessionId'>, b: Pick<ExecutionAttempt, 'executionUnitId' | 'attemptId' | 'runId' | 'generation' | 'workerId' | 'sessionId'>): boolean;
 export type ExecutionTransitionKind = 'DISPATCH' | 'SETTLEMENT' | 'EVIDENCE_COMMIT';
-export type ExecutionTransitionState = 'PREPARED' | 'COMMITTED' | 'UNKNOWN';
 export declare function executionTransitionReceiptId(input: {
     missionId: string;
     workNodeId: string;

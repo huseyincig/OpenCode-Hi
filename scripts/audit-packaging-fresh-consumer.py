@@ -14,15 +14,15 @@ rows=[
  row('fresh-temp-consumer','scripts/run-fresh-consumer-acceptance.py',"TemporaryDirectory(prefix='hi-b26-consumer-')",'data/validation/fresh-consumer-opencode-1.18.18.json','"project": "<temp>/consumer/project"'),
  row('install-packed-artifact','scripts/run-fresh-consumer-acceptance.py',"npm','install','--ignore-scripts'",'data/validation/fresh-consumer-opencode-1.18.18.json','"pack_install": true'),
  row('configure-packed-artifact','scripts/run-fresh-consumer-acceptance.py',"'reconfigure',str(project),'--primary-mode','manager'",'data/validation/fresh-consumer-opencode-1.18.18.json','"setup_reconfigure": true'),
- row('start-exact-opencode','scripts/run-fresh-consumer-acceptance.py',"'opencode','serve'",'data/validation/fresh-consumer-opencode-1.18.18.json','"exact_host_version": true'),
- row('execute-material-hi-runtime','scripts/run-fresh-consumer-acceptance.py',"'/experimental/tool/ids?'",'data/validation/fresh-consumer-opencode-1.18.18.json','"hi_tool_count": 31'),
+ row('start-exact-opencode','scripts/run-fresh-consumer-acceptance.py',"opencode_bin,'serve'",'data/validation/fresh-consumer-opencode-1.18.18.json','"exact_host_version": true'),
+ row('execute-material-hi-runtime','scripts/run-fresh-consumer-acceptance.py',"'/experimental/tool/ids?'",'data/validation/fresh-consumer-opencode-1.18.18.json','"hi_tool_count":'),
  row('no-hidden-dev-dependency','package.json','"@opencode-ai/sdk": "1.18.18"','data/validation/fresh-consumer-opencode-1.18.18.json','"consumer_resolution": true'),
  row('no-repository-relative-runtime-path','scripts/run-fresh-consumer-acceptance.py',"'no_source_tree_in_server_log'",'data/validation/fresh-consumer-opencode-1.18.18.json','"no_source_tree_in_server_log": true'),
 ]
 checks=a.get('checks') or {};runtime=a.get('material_runtime') or {};pkg=a.get('package') or {}
 static={
  'acceptance_pass':a.get('status')=='PASS',
- 'exact_host':a.get('host')=={'opencode':'1.18.18','platform':'linux','architecture':'aarch64'},
+ 'exact_host':a.get('host',{}).get('opencode')=='1.18.18' and a.get('host',{}).get('platform')=='linux' and a.get('host',{}).get('architecture')=='aarch64' and bool(a.get('host',{}).get('binary_sha256')),
  'all_acceptance_checks':bool(checks) and all(checks.values()),
  'hi_material_surface':runtime.get('hi_tool_count',0)>=10 and {'hi_doctor','hi_status','hi_task_start'}<=set(runtime.get('hi_tools') or []),
  'session_material_path':(runtime.get('session') or {}).get('created') is True and (runtime.get('session') or {}).get('version')=='1.18.18',

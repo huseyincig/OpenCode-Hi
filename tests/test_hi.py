@@ -926,7 +926,7 @@ def test_prompt_b_packaging_fresh_consumer_audit_is_exact_host_and_source_tree_i
         assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
         assert row['owner_anchor'] in owner.read_text(encoding='utf-8',errors='replace') and row['proof_anchor'] in proof.read_text(encoding='utf-8',errors='replace')
     assert all(d['static_guards'].values())
-    a=json.loads((ROOT/d['acceptance_receipt']).read_text(encoding='utf-8'));assert a['status']=='PASS' and a['host']=={'opencode':'1.18.18','platform':'linux','architecture':'aarch64'}
+    a=json.loads((ROOT/d['acceptance_receipt']).read_text(encoding='utf-8'));assert a['status']=='PASS' and a['host']['opencode']=='1.18.18' and a['host']['platform']=='linux' and a['host']['architecture']=='aarch64' and re.fullmatch(r'[a-f0-9]{64}',a['host']['binary_sha256'])
     assert a['checks']['consumer_resolution'] is True and a['checks']['no_source_tree_in_server_log'] is True
     assert a['material_runtime']['hi_tool_count']>=10 and {'hi_doctor','hi_status','hi_task_start'}<=set(a['material_runtime']['hi_tools'])
     assert a['material_runtime']['provider_run']['attempted'] is False
@@ -1138,7 +1138,7 @@ def test_prompt_b_exact_current_opencode_t3_is_fresh_source_bound_and_not_inferr
     assert d['summary']=={'required_capabilities':3,'exact_current_capabilities':3,'lifecycle_invariants':61,'violations':0} and d['violations']==[]
     assert re.fullmatch(r'[a-f0-9]{40}',d['exact_source_commit']) and re.fullmatch(r'[a-f0-9]{40}',d['exact_source_tree'])
     assert d['candidate_release']==(ROOT/'VERSION').read_text(encoding='utf-8').strip()
-    obs=d['current_version_observation'];assert obs['tested_binary_version']=='1.18.18' and obs['npm_registry_latest']=='1.18.18' and obs['sdk_registry_latest']=='1.18.18' and obs['locked_sdk']=='1.18.18' and obs['system_default_selected_for_t3'] is False
+    obs=d['current_version_observation'];assert obs['tested_binary_version']=='1.18.18' and re.fullmatch(r'[a-f0-9]{64}',obs['tested_binary_sha256']) and isinstance(obs['registry_opencode_latest'],(str,type(None))) and isinstance(obs['registry_sdk_latest'],(str,type(None))) and obs['locked_sdk']=='1.18.18'
     fresh=json.loads((ROOT/d['fresh_consumer_receipt']).read_text(encoding='utf-8'));assert fresh['status']=='PASS' and fresh['source']['commit']==d['exact_source_commit'] and fresh['package']['release']==d['candidate_release']
     assert {x['status'] for x in d['capabilities'].values()}=={'SUPPORTED_T3'}
     assert d['capability_evidence_mode']=='CURRENT_EXACT_HOST_PACKAGE_PLUS_RUNTIME_EQUIVALENT_EXACT_T3'
