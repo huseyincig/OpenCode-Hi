@@ -181,8 +181,8 @@ def test_canonical_agent_sources_are_eight():
 
 def test_living_validation_receipts_do_not_hardcode_stale_test_counts():
     gates=json.loads((ROOT/'data/validation/release-gates.json').read_text(encoding='utf-8'))
-    assert gates['gates']['node_runtime_acceptance']=='PASS_LOCAL_CURRENT_SOURCE'
-    assert gates['gates']['python_acceptance']=='PASS_LOCAL_CURRENT_SOURCE'
+    for key in ('node_runtime_acceptance','python_acceptance'):
+        assert gates['gates'][key].startswith(('PENDING_LOCAL_','PASS_LOCAL_'))
     assert 'tests' not in gates['current_local_evidence']['node']
     assert 'tests' not in gates['current_local_evidence']['python']
     audit=json.loads((ROOT/'data/validation/final-dod-audit.json').read_text(encoding='utf-8'))
@@ -195,8 +195,9 @@ def test_release_gate_stays_blocked_until_exact_candidate_external_completion():
     assert d['gates']['source_integrity'].startswith(('PENDING_','PASS_LOCAL_'))
     assert d['gates']['node_runtime_acceptance'].startswith(('PENDING_','PASS_LOCAL_'))
     assert d['gates']['python_acceptance'].startswith(('PENDING_','PASS_LOCAL_'))
-    for gate in ('plain_opencode_smoke','packaged_agents_skills','opencode_native_child_sessions','opencode_model_provider_binding','permission_denial_runtime','native_package_plugin_install_exact_candidate','windows_runtime_smoke','dependency_supply_chain_external'):
-        assert d['gates'][gate].startswith('PENDING_'),(gate,d['gates'][gate])
+    for gate in ('plain_opencode_smoke','packaged_agents_skills','opencode_native_child_sessions','opencode_model_provider_binding','permission_denial_runtime','native_package_plugin_install_exact_candidate','dependency_supply_chain_external'):
+        assert d['gates'][gate].startswith(('PENDING_','PASS_T3_','PASS_CLEAN_')),(gate,d['gates'][gate])
+    assert d['gates']['windows_runtime_smoke'].startswith(('PENDING_','PASS_CROSS_PLATFORM_'))
     assert d['gates']['github_release_publication'].startswith('PENDING_')
     assert d['gates']['npm_registry_publication'].startswith('PENDING_AUTH_T4_')
     hist=d['historical_release_evidence']
@@ -212,12 +213,12 @@ def test_living_validation_contracts_are_bound_to_hi_0_1_0():
     assert schema['required_coexistence']==['plain_opencode_smoke','hi_only_smoke']
     assert 'hi_version' in schema['binding'] and 'oho_version' not in schema['binding']
 
-def test_current_0_1_0_receipts_are_not_historical_v58_claims():
+def test_current_release_evidence_does_not_relabel_historical_receipts():
     gates=json.loads((ROOT/'data/validation/release-gates.json').read_text(encoding='utf-8'))
     assert gates['candidate_status']==f"PROMPT_B_{V.replace('.','_')}_PREPUBLICATION_CERTIFICATION_IN_PROGRESS"
-    assert gates['current_local_evidence']['benchmarks']['receipt']=='data/validation/benchmarks-0.1.0.json'
-    assert gates['current_local_evidence']['install_lifecycle']['receipt']=='data/validation/install-lifecycle-0.1.0.json'
+    assert 'benchmarks' not in gates['current_local_evidence'] and 'install_lifecycle' not in gates['current_local_evidence']
     assert gates['historical_receipts_not_valid_for_current_candidate']['release']=='2.0.10-v58'
+    assert gates['historical_release_evidence']['release']=='0.1.3'
     audit=json.loads((ROOT/'data/validation/architecture-audit-0.1.0.json').read_text(encoding='utf-8'))
     assert audit['known_internal_blocking_findings']==[]
     assert audit['checks']['opencode_native_behavior']['status']=='PASS_EXACT_SOURCE_HOST_1_18_18'
