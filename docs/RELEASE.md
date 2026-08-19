@@ -11,10 +11,10 @@ The block below is generator-owned. Do not hand-edit current release status, cur
 <!-- BEGIN GENERATED RELEASE STATUS -->
 ## Current release status — generated
 
-- Release candidate: `0.2.0` (`v0.2.0`) — **PREPUBLICATION_CERTIFIED_PENDING_T4**.
+- Published release: `0.2.0` (`v0.2.0`) — **CERTIFIED_T4**.
 - Historical `v0.1.0` remains immutable and is not retagged or source-substituted.
-- GitHub candidate: **PENDING_T4**; npm candidate: **PENDING_T4**.
-- Prepublication certification is complete; publication still requires explicit current authority and real T4 verification.
+- GitHub release: **PASS_T4**; npm package: **PASS_T4**.
+- Publication verification is complete: GitHub Release and npm registry are both PASS_T4.
 - Reference host baseline: OpenCode `1.18.18` on `linux/aarch64`; historical capability receipts are baseline provenance only. Current candidate exact-source status comes from `data/validation/release-gates.json`.
 - Test counts are intentionally not persisted here; final certification owns fresh totals.
 - Machine source: `data/validation/release-status-0.2.0.json`.

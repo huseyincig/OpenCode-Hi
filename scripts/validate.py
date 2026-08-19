@@ -202,9 +202,19 @@ final_audit=json.loads((ROOT/'data/validation/final-dod-audit.json').read_text(e
 if final_audit.get('release')!=version:err('final DoD audit release stale')
 if final_audit.get('internal_status')!='LOCAL_IMPLEMENTATION_AND_IN_PROCESS_ACCEPTANCE_COMPLETE':err('final DoD internal audit not complete')
 if final_audit.get('source_checklist',{}).get('internal_missing')!=[]:err('final DoD audit reports internal missing requirements')
-if final_audit.get('release_blocked') is not True:err('final DoD audit must remain release-blocked until external receipts exist')
+pub_path=ROOT/f'data/validation/release-publication-{version}.json'
+pub_t4=False
+if pub_path.is_file():
+    try:
+        pub_now=json.loads(pub_path.read_text(encoding='utf-8'));pub_t4=pub_now.get('status')=='PASS_T4' and (pub_now.get('github_release') or {}).get('status')=='PASS_T4' and (pub_now.get('npm_registry') or {}).get('status')=='PASS_T4' and (pub_now.get('fresh_registry_consumer') or {}).get('status')=='PASS_T4'
+    except Exception:pub_t4=False
+if final_audit.get('release_blocked') is not (not pub_t4):err('final DoD release-blocked state disagrees with current T4 publication evidence')
 rg=json.loads((ROOT/'data/validation/release-gates.json').read_text(encoding='utf-8'))
-if not any(str(v).startswith('PENDING_') for v in rg.get('gates',{}).values()):err('release gates unexpectedly have no explicit pending evidence while release is blocked')
+pending=any(str(v).startswith('PENDING_') for v in rg.get('gates',{}).values())
+if pub_t4:
+    if pending or rg.get('release_blocked') is not False or rg.get('external_blockers')!=[]:err('release gates remain blocked/pending after current T4 publication')
+    if not str((rg.get('gates') or {}).get('github_release_publication','')).startswith('PASS_T4_') or not str((rg.get('gates') or {}).get('npm_registry_publication','')).startswith('PASS_T4_'):err('release publication gates are not PASS_T4 after current publication')
+elif not pending or rg.get('release_blocked') is not True:err('release gates unexpectedly lack explicit pending evidence before T4 publication')
 # M5 canonical ConfigOption catalog: every HiConfig leaf is classified and runtime entries must name an executable consumer/effect.
 try:
     cc=json.loads((ROOT/'data/hi-config-options.json').read_text(encoding='utf-8'))
@@ -985,8 +995,9 @@ try:
     obs=r28.get('registry_observation',{})
     if obs.get('current_publication_receipt_present') is not published or obs.get('authority_granted') is not False or obs.get('authority_condition')!='explicit current user authority required after final certification; this audit never grants publication authority':err('PROMPT B release engineering authority boundary drift')
     if not isinstance(obs.get('reference_host_registry_latest'),(str,type(None))) or not isinstance(obs.get('reference_sdk_registry_latest'),(str,type(None))):err('PROMPT B release engineering registry observation drift')
-    pub=json.loads((ROOT/'data/validation/release-publication-0.1.1.json').read_text(encoding='utf-8'))
-    if pub.get('status')!='PASS_T4' or (pub.get('github_release') or {}).get('status')!='PASS_T4' or (pub.get('npm_registry') or {}).get('status')!='PASS_T4' or (pub.get('fresh_registry_consumer') or {}).get('status')!='PASS_T4':err('PROMPT B release publication T4 drift')
+    if published:
+        pub=json.loads((ROOT/f'data/validation/release-publication-{version}.json').read_text(encoding='utf-8'))
+        if pub.get('status')!='PASS_T4' or (pub.get('github_release') or {}).get('status')!='PASS_T4' or (pub.get('npm_registry') or {}).get('status')!='PASS_T4' or (pub.get('fresh_registry_consumer') or {}).get('status')!='PASS_T4':err('PROMPT B current release publication T4 drift')
 except Exception as e:err(f'bad PROMPT B release engineering receipt: {e}')
 
 

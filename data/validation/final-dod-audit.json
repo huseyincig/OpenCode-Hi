@@ -44,13 +44,9 @@
       "status": "PASS_PREFLIGHT_FINAL_HASH_REGEN_REQUIRED"
     }
   },
-  "external_only_pending": [
-    "real GitHub/npm publication plus current-version registry/provenance/exact-host T4 verification for opencode-hi@0.2.0"
-  ],
-  "external_blockers": [
-    "T4-current-release-publication-verification-pending"
-  ],
-  "release_blocked": true,
+  "external_only_pending": [],
+  "external_blockers": [],
+  "release_blocked": false,
   "known_internal_blocking_findings": [],
   "historical_v58_provenance": [
     "data/validation/forensic-61-progress.json",
@@ -62,5 +58,11 @@
     "release": "0.1.3",
     "release_status_receipt": "data/validation/release-status-0.1.3.json",
     "status": "CERTIFIED_T4"
+  },
+  "final_publication": {
+    "status": "PASS_T4",
+    "receipt": "data/validation/release-publication-0.2.0.json",
+    "released_source": "a967aa618b062c92967475cf9e1e76be6c7cdeea",
+    "tag": "v0.2.0"
   }
 }

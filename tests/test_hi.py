@@ -194,21 +194,25 @@ def test_living_validation_receipts_do_not_hardcode_stale_test_counts():
     assert isinstance(audit['local_acceptance']['node'],dict) and 'node_tests' not in audit['local_acceptance']
     assert isinstance(audit['local_acceptance']['python'],dict) and 'python_tests' not in audit['local_acceptance']
 
-def test_release_gate_stays_blocked_until_exact_candidate_external_completion():
-    d=json.loads((ROOT/'data/validation/release-gates.json').read_text(encoding='utf-8'))
-    assert d['release']==V and d['release_blocked'] is True
+def test_release_gate_tracks_exact_candidate_external_completion_without_fabricating_t4():
+    d=json.loads((ROOT/'data/validation/release-gates.json').read_text(encoding='utf-8'));pub_path=ROOT/f'data/validation/release-publication-{V}.json';published=pub_path.is_file()
+    assert d['release']==V and d['release_blocked'] is (not published)
     assert d['gates']['source_integrity'].startswith(('PENDING_','PASS_LOCAL_'))
     assert d['gates']['node_runtime_acceptance'].startswith(('PENDING_','PASS_LOCAL_'))
     assert d['gates']['python_acceptance'].startswith(('PENDING_','PASS_LOCAL_'))
     for gate in ('plain_opencode_smoke','packaged_agents_skills','opencode_native_child_sessions','opencode_model_provider_binding','permission_denial_runtime','native_package_plugin_install_exact_candidate','dependency_supply_chain_external'):
         assert d['gates'][gate].startswith(('PENDING_','PASS_T3_','PASS_CLEAN_')),(gate,d['gates'][gate])
     assert d['gates']['windows_runtime_smoke'].startswith(('PENDING_','PASS_CROSS_PLATFORM_'))
-    assert d['gates']['github_release_publication'].startswith('PENDING_')
-    assert d['gates']['npm_registry_publication'].startswith('PENDING_AUTH_T4_')
+    if published:
+        pub=json.loads(pub_path.read_text(encoding='utf-8'));assert pub['status']=='PASS_T4'
+        assert d['gates']['github_release_publication'].startswith('PASS_T4_') and d['gates']['npm_registry_publication'].startswith('PASS_T4_')
+        assert d['external_blockers']==[]
+    else:
+        assert d['gates']['github_release_publication'].startswith('PENDING_') and d['gates']['npm_registry_publication'].startswith('PENDING_AUTH_T4_')
+        assert d['external_blockers']
     hist=d['historical_release_evidence']
     assert hist['release']=='0.1.3' and hist['github_release_status']=='PASS_T4' and hist['npm_registry_status']=='PASS_T4'
-    assert (ROOT/hist['release_status_receipt']).is_file()
-    assert '0.2.0' in d['reason'] and d['external_blockers']
+    assert (ROOT/hist['release_status_receipt']).is_file() and '0.2.0' in d['reason']
 
 
 def test_living_validation_contracts_are_bound_to_hi_0_1_0():

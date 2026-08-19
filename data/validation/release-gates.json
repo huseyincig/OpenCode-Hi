@@ -25,14 +25,12 @@
     "dependency_supply_chain_external": "PASS_CLEAN_CONSUMER_EXACT_SOURCE_5CFC10F",
     "filesystem_hygiene": "PASS_LOCAL_CURRENT_SOURCE",
     "native_package_plugin_install_exact_candidate": "PASS_T3_FRESH_CONSUMER_EXACT_SOURCE_5CFC10F_OPENCODE_1_18_18",
-    "github_release_publication": "PENDING_AUTH_T4_V0_2_0",
-    "npm_registry_publication": "PENDING_AUTH_T4_OPENCODE_HI_0_2_0"
+    "github_release_publication": "PASS_T4_V0_2_0_EXACT_SOURCE_A967AA6",
+    "npm_registry_publication": "PASS_T4_OPENCODE_HI_0_2_0"
   },
-  "release_blocked": true,
-  "reason": "0.2.0 exact-source Ubuntu/Windows Release Readiness run 32289116515 is PASS together with the existing local/T3/deterministic prepublication gates. Engineering prepublication readiness is complete; real current-version T4 publication and verification remain pending. Publication authority is external to this machine projection.",
-  "external_blockers": [
-    "T4-current-release-publication-verification-pending"
-  ],
+  "release_blocked": false,
+  "reason": "OpenCode-Hi 0.2.0 publication is complete: immutable annotated v0.2.0 peels to a967aa618b062c92967475cf9e1e76be6c7cdeea, GitHub Release 373295147 is published, npm Trusted Publishing OIDC run 32292759001 succeeded, registry integrity/shasum and Sigstore provenance match the exact tag/source, and fresh registry acceptance passed under exact OpenCode 1.18.18.",
+  "external_blockers": [],
   "current_local_evidence": {
     "source_checkpoint": {
       "status": "PASS",
@@ -93,6 +91,15 @@
       "status": "PASS",
       "receipt": "data/validation/prompt-b-hygiene.json",
       "audited_source_commit": "d5fa573b883b5f890a0dadc41e93d1e3015bcb77"
+    },
+    "final_publication": {
+      "status": "PASS_T4",
+      "receipt": "data/validation/release-publication-0.2.0.json",
+      "released_source": "a967aa618b062c92967475cf9e1e76be6c7cdeea",
+      "tag": "v0.2.0",
+      "release_id": 373295147,
+      "github_actions_publish_run": 32292759001,
+      "registry_exact_host_receipt": "data/validation/t4-registry-exact-host-0.2.0.json"
     }
   },
   "historical_receipts_not_valid_for_current_candidate": {
