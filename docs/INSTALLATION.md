@@ -1,44 +1,78 @@
 # Installation, Configuration and Lifecycle
 
-OpenCode-Hi's canonical package name is `opencode-hi`. Installation truth has two separate layers:
+OpenCode-Hi's canonical package name is `opencode-hi`. Installation truth has separate distribution and host-loading layers:
 
-1. **registration/lifecycle mechanics** — implemented and deterministically verified by `scripts/native_plugin_setup.py`;
-2. **registry distribution availability** — `opencode-hi@0.1.1` is published on npm and T4-verified through Trusted Publishing OIDC provenance plus fresh-registry exact-host acceptance.
-
-Local registration tests and public-registry availability remain separate evidence layers; the current release has both.
+1. **npm registry distribution** — `opencode-hi@0.2.0` is published and T4-verified through Trusted Publishing OIDC provenance plus fresh-registry exact-host acceptance;
+2. **Git source distribution** — the public Git repository/tag can be materialized directly with Bun and loaded through OpenCode's local-plugin mechanism without using the npm registry;
+3. **registration/lifecycle mechanics** — npm-package registration is managed by `scripts/native_plugin_setup.py`; Git/local loading remains explicit so the helper never pretends an unsupported native Git resolver exists.
 
 ## Prerequisites
 
 - a supported OpenCode host for the path being tested;
-- Python 3 for the setup CLI (the packed package exposes it as `opencode-hi-setup`; a source checkout may invoke the same script directly);
-- Node/npm only when building from source;
+- Bun for the verified Git-source/no-registry path;
+- Python 3 for the npm package setup CLI (the packed package exposes it as `opencode-hi-setup`; a source checkout may invoke the same script directly);
+- Node/npm only when using npm distribution or building the repository through its npm scripts;
 - a project directory whose unrelated OpenCode/user configuration must be preserved.
 
 Current exact host support belongs to `data/validation/compatibility-matrix-0.1.0.json` and [Host Support](HOSTS.md).
 
-## Package registration
+## Git source installation — no npm registry
+
+The verified OpenCode `1.18.18` Git path uses a project-local OpenCode dependency plus a local plugin wrapper:
+
+```bash
+mkdir -p .opencode/plugins
+cat > .opencode/package.json <<'JSON'
+{
+  "private": true,
+  "dependencies": {
+    "opencode-hi": "git+https://github.com/huseyincig/OpenCode-Hi.git#v0.2.0"
+  }
+}
+JSON
+cat > .opencode/plugins/opencode-hi.js <<'JS'
+export { default } from "opencode-hi"
+JS
+(cd .opencode && bun install)
+```
+
+Restart OpenCode after materialization. Exact-host acceptance against public `v0.2.0` on OpenCode `1.18.18` observed successful Git dependency import and `31` Hi tool IDs from the running host.
+
+The following direct package spec is also a valid Git package identifier and is intentionally shown for hosts/resolvers that support it:
+
+```json
+{
+  "plugin": [
+    "opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git"
+  ]
+}
+```
+
+Compatibility boundary: OpenCode `1.18.18` does **not** pass native direct-Git plugin installation for that spec; its resolver reports `git dep preparation failed`. Stable OpenCode documentation currently promises npm package loading and local plugin loading, not direct Git package specs. Therefore the Git/Bun local-wrapper path above is the supported no-registry path for the accepted `1.18.18` host.
+
+## npm package registration
 
 For the current public release, OpenCode package configuration uses the exact package spec:
 
 ```json
 {
-  "plugin": ["opencode-hi@0.1.1"]
+  "plugin": ["opencode-hi@0.2.0"]
 }
 ```
 
-The setup CLI can plan and apply that registration without replacing unrelated configuration. The publishable package includes `scripts/native_plugin_setup.py`, `VERSION`, and the executable npm bin `opencode-hi-setup`; this avoids requiring a repository checkout once a registry package exists. From a source checkout:
+The setup CLI can plan and apply that registration without replacing unrelated configuration. The publishable package includes `scripts/native_plugin_setup.py`, `VERSION`, and the executable npm bin `opencode-hi-setup`. From a source checkout:
 
 ```bash
-python3 scripts/native_plugin_setup.py plan /path/to/project --version <version>
-python3 scripts/native_plugin_setup.py install /path/to/project --version <version>
+python3 scripts/native_plugin_setup.py plan /path/to/project --version 0.2.0
+python3 scripts/native_plugin_setup.py install /path/to/project --version 0.2.0
 python3 scripts/native_plugin_setup.py doctor /path/to/project
 ```
 
-The npm package exposes the same lifecycle as `opencode-hi-setup`. A fresh registry consumer has installed `opencode-hi@0.1.1` and loaded it on exact OpenCode `1.18.18`; this is current T4 evidence rather than a package-content-only claim.
+The npm package exposes the same lifecycle as `opencode-hi-setup`. A fresh registry consumer has installed `opencode-hi@0.2.0` and loaded it on exact OpenCode `1.18.18`; this is current T4 evidence rather than a package-content-only claim.
 
 `plan` is non-mutating. `install` is idempotent after Hi owns the exact registration. `doctor` validates registration/ownership/lifecycle state; it explicitly does **not** substitute for a real OpenCode runtime-load check.
 
-For a local install, `./node_modules/.bin/opencode-hi-setup` can be used directly; source-checkout invocations below remain the development equivalent.
+For a local npm install, `./node_modules/.bin/opencode-hi-setup` can be used directly.
 
 ## Development/source loading
 
@@ -49,9 +83,7 @@ npm ci --prefix plugin
 npm run build
 ```
 
-OpenCode supports project-local plugin files under `.opencode/plugins/` and local/file plugin loading. Use the exact host-supported local plugin mechanism when testing source builds. Do not use an arbitrary Git URL as if it were a guaranteed npm package specifier.
-
-A runtime acceptance check must observe the built plugin actually loading, not merely a configuration file containing its path/spec.
+OpenCode supports project-local plugin files under `.opencode/plugins/` and local/file plugin loading. A runtime acceptance check must observe the built plugin actually loading, not merely a configuration file containing its path/spec.
 
 ## Reconfigure
 

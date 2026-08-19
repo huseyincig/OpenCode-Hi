@@ -81,9 +81,45 @@ Exact host version/platform/architecture ve receipt bağlantıları için [Host 
 
 ## Kurulum ve ilk kullanım
 
-### Registry dağıtımı
+OpenCode-Hi hem npm registry üzerinden hem de **doğrudan Git source** kullanılarak kurulabilir. Aşağıdaki Git/Bun local-plugin yolunda npm registry zorunlu değildir.
 
-Bu source/package sürümünün exact registry kimliği `opencode-hi@0.2.0`'dir. Release availability bu README'ye elle yazılmaz; npm/GitHub üzerinden doğrulanır. Yayımlanan sürümler npm Trusted Publishing OIDC provenance kullanır ve recorded exact OpenCode host üzerinde acceptance ile doğrulanır.
+### Git source — npm registry gerektirmez
+
+Exact OpenCode `1.18.18` için doğrulanmış Git-source yolu, OpenCode-Hi'yi OpenCode config dizini içinde Bun ile materialize edip local plugin wrapper üzerinden yüklemektir:
+
+```bash
+mkdir -p .opencode/plugins
+cat > .opencode/package.json <<'JSON'
+{
+  "private": true,
+  "dependencies": {
+    "opencode-hi": "git+https://github.com/huseyincig/OpenCode-Hi.git#v0.2.0"
+  }
+}
+JSON
+cat > .opencode/plugins/opencode-hi.js <<'JS'
+export { default } from "opencode-hi"
+JS
+(cd .opencode && bun install)
+```
+
+Kurulumdan sonra OpenCode'u yeniden başlatın. Bu yol public `v0.2.0` Git tag'i ile exact OpenCode `1.18.18` üzerinde acceptance-tested edildi: Git dependency başarıyla import edildi ve çalışan host güncel paketin beklediği `31` Hi tool ID'sini gördü.
+
+Bazı OpenCode sürümleri veya package resolver konfigürasyonları `opencode.json` içinde doğrudan Git package spec kabul edebilir:
+
+```json
+{
+  "plugin": [
+    "opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git"
+  ]
+}
+```
+
+Bu doğrudan biçim Git kullanıcılarının package spec'i açıkça görebilmesi için dokümante edilmiştir; ancak **OpenCode 1.18.18 üzerinde certified değildir**. Exact-host probe `1.18.18` üzerinde repository'yi fetch/resolve ederken native Git-plugin installer `git dep preparation failed` ile başarısız olur. Güncel stable OpenCode dokümantasyonu npm package ve local plugin yollarını garanti eder; Git package spec'i garanti etmez. `1.18.18` için yukarıdaki doğrulanmış Git/Bun local-wrapper yolunu kullanın.
+
+### npm registry
+
+Bu release'in exact registry kimliği `opencode-hi@0.2.0`'dir. Yayımlanan sürümler npm Trusted Publishing OIDC provenance kullanır ve recorded exact OpenCode host üzerinde acceptance ile doğrulanır.
 
 Yeni bir proje repository checkout yapmadan exact package sürümünü kurabilir ve package içindeki setup CLI'ı kullanabilir:
 
@@ -105,7 +141,7 @@ npm ci --prefix plugin
 npm run build
 ```
 
-OpenCode accepted host üzerinde `.opencode/plugins/` ve local/file plugin loading mekanizmalarını destekler. Exact OpenCode sürümünün desteklediği local-plugin yolunu kullanın; Git URL'yi npm registry package gibi varsaymayın.
+OpenCode accepted host üzerinde `.opencode/plugins/` ve local/file plugin loading mekanizmalarını destekler. Runtime verification plugin'in, Hi agent/tool/native skill yüzeyinin gerçekten yüklendiğini doğrulamalıdır.
 
 Install/upgrade/reconfigure/doctor/uninstall/rollback/recovery davranışı için [Installation and Lifecycle](../../INSTALLATION.md) belgesine bakın.
 

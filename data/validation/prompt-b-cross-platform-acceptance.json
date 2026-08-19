@@ -53,12 +53,12 @@
     },
     {
       "proof": "tests/test_hi.py",
-      "proof_sha256": "d62f6e2800d7f561b536346a0b1ee26c2a4719ff21f564315b5d7dcd2364a9f6",
+      "proof_sha256": "22e46c6377a9991a8c1c1ba7dffec4973f7bc278e097ecc6a08a58ba3e999b25",
       "surface": "filesystem"
     },
     {
       "proof": "scripts/release-build.py",
-      "proof_sha256": "3beba6c63acf85a89f542e94ddc8217bf0e91978233543b9c4e8173e0d2c90fd",
+      "proof_sha256": "72572d3cb90e53147cb079e8ecdefc2abff7e75c0a55d1b1d5bf0adad027707b",
       "surface": "packaging"
     }
   ],

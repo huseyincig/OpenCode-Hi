@@ -44,7 +44,12 @@ def test_root_is_product_clean():
     docs={p.relative_to(ROOT/'docs').as_posix() for p in (ROOT/'docs').rglob('*.md')}
     assert docs=={'README.md','ARCHITECTURE.md','INSTALLATION.md','SKILLS.md','HOSTS.md','HUMAN-DECISIONS.md','VERIFICATION.md','SECURITY-MODEL.md','RELEASE.md','locales/tr/README.md'}
     assert not (ROOT/'docs/engineering-constitution').exists()
-    assert '.project-docs/' in (ROOT/'.gitignore').read_text(encoding='utf-8')
+    ignore=(ROOT/'.gitignore').read_text(encoding='utf-8')
+    assert '.project-docs/' in ignore
+    for pattern in ['/AGENTS.md','/PROJECT_POLICY.md','/PROTOCOL.md','/ROADMAP.md','/TASKS.md','/agent-archive/']:
+        assert pattern in ignore
+    tracked=subprocess.check_output(['git','ls-files','--','AGENTS.md','PROJECT_POLICY.md','PROTOCOL.md','ROADMAP.md','TASKS.md','agent-archive'],cwd=ROOT,text=True).splitlines()
+    assert tracked==[]
     for rel in ['.github/CONTRIBUTING.md','.github/SECURITY.md','.github/SUPPORT.md','.github/pull_request_template.md','.github/ISSUE_TEMPLATE/bug_report.yml','.github/ISSUE_TEMPLATE/feature_request.yml']:
         assert (ROOT/rel).is_file()
 
@@ -157,6 +162,8 @@ def test_release_names_and_source_integrity(tmp_path):
     assert re.fullmatch(r'[a-f0-9]{64}',manifest['supply_chain']['dependency_graph_sha256'])
 
     assert 'README.tr.md' not in n and 'WORK-STATE.md' not in n and 'KURULUM.md' not in n
+    assert not {'AGENTS.md','PROJECT_POLICY.md','PROTOCOL.md','ROADMAP.md','TASKS.md'} & n
+    assert not any(name.startswith('agent-archive/') for name in n)
     assert not any(name.startswith('docs/engineering-constitution/') for name in n)
     assert not any(part == '.project-docs' for name in n for part in Path(name).parts)
     assert not any(part == '.opencode' for name in n for part in Path(name).parts), sorted(x for x in n if '.opencode' in Path(x).parts)[:10]
@@ -509,9 +516,13 @@ def test_prompt_a_documentation_parity_binds_current_docs_to_machine_truth_and_l
 
 def test_prompt_a_first_use_docs_do_not_advertise_unavailable_registry_or_stale_capabilities():
     readme=(ROOT/'README.md').read_text(encoding='utf-8'); tr=(ROOT/'docs/locales/tr/README.md').read_text(encoding='utf-8'); arch=(ROOT/'docs/ARCHITECTURE.md').read_text(encoding='utf-8'); install=(ROOT/'docs/INSTALLATION.md').read_text(encoding='utf-8')
+    direct_git='opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git'
+    pinned_git='git+https://github.com/huseyincig/OpenCode-Hi.git#v0.2.0'
     for text in (readme,tr):
         assert 'first coherent OpenCode-Hi candidate' not in text
-        assert 'opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git#' not in text
+        assert direct_git in text and pinned_git in text
+        assert 'git dep preparation failed' in text
+    assert direct_git in install and pinned_git in install and 'opencode-hi@0.2.0' in install
     assert f'`{V}`' in readme and 'Published availability is external state' in readme
     assert 'npm bootstrap publication is not yet complete' not in readme+install
     assert 'ProcessContract' in arch and 'WorkspaceLease' in arch and 'BrowserObservation' in arch

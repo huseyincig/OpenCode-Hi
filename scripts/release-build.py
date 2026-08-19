@@ -9,7 +9,7 @@ DIST_FILES=['VERSION','package.json','package-lock.json','scripts/native_plugin_
 SOURCE_DIRS=['roles','skills','scripts','data','docs','plugin','tests']
 SOURCE_FILES=['VERSION','package.json','package-lock.json','README.md','docs/locales/tr/README.md','.github/SECURITY.md','.github/CONTRIBUTING.md','.github/SUPPORT.md','.github/pull_request_template.md','LICENSE','THIRD_PARTY_NOTICES.md','CHANGELOG.md','.gitignore','pytest.ini','requirements-dev.txt','.gitattributes']
 # Personal/development-environment files never enter shareable archives.
-FORBIDDEN_ROOTS={'.opencode','opencode.jsonc','AGENTS.md'}
+FORBIDDEN_ROOTS={'.opencode','opencode.jsonc','AGENTS.md','PROJECT_POLICY.md','PROTOCOL.md','ROADMAP.md','TASKS.md','agent-archive'}
 
 def sha(p):
     h=hashlib.sha256()
@@ -147,7 +147,7 @@ def release_identity(root:Path, version:str):
 def main():
     ap=argparse.ArgumentParser()
     ap.add_argument('--out',type=Path,default=KIT/'dist')
-    ap.add_argument('--source-out',type=Path,help='Output directory for the clean SOURCE archive; personal .opencode/opencode.jsonc/AGENTS.md files are excluded')
+    ap.add_argument('--source-out',type=Path,help='Output directory for the clean SOURCE archive; local .opencode/opencode.jsonc and AI/engineering governance files are excluded')
     a=ap.parse_args()
     version=(KIT/'VERSION').read_text(encoding='utf-8').strip()
     identity_issues=release_identity(KIT,version)

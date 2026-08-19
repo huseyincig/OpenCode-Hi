@@ -32,3 +32,11 @@ opencode.jsonc
 
 # Local-only engineering/history documentation; intentionally never published.
 .project-docs/
+
+# Local-only AI/engineering governance and continuation state; never publish.
+/AGENTS.md
+/PROJECT_POLICY.md
+/PROTOCOL.md
+/ROADMAP.md
+/TASKS.md
+/agent-archive/

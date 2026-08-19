@@ -33,6 +33,13 @@ def main():
     if (ROOT/'docs/engineering-constitution').exists():errors.append({'code':'PUBLIC_INTERNAL_ENGINEERING_TREE_PRESENT'})
     if '.project-docs/' not in (ROOT/'.gitignore').read_text(encoding='utf-8'):errors.append({'code':'LOCAL_DOCS_IGNORE_MISSING'})
     if subprocess.run(['git','ls-files','.project-docs'],cwd=ROOT,text=True,capture_output=True).stdout.strip():errors.append({'code':'LOCAL_DOCS_TRACKED'})
+    local_engineering=['AGENTS.md','PROJECT_POLICY.md','PROTOCOL.md','ROADMAP.md','TASKS.md','agent-archive']
+    ignore_text=(ROOT/'.gitignore').read_text(encoding='utf-8')
+    required_ignores=['/AGENTS.md','/PROJECT_POLICY.md','/PROTOCOL.md','/ROADMAP.md','/TASKS.md','/agent-archive/']
+    missing_ignores=[x for x in required_ignores if x not in ignore_text]
+    if missing_ignores:errors.append({'code':'LOCAL_ENGINEERING_IGNORE_MISSING','paths':missing_ignores})
+    tracked_local=subprocess.run(['git','ls-files','--',*local_engineering],cwd=ROOT,text=True,capture_output=True).stdout.splitlines()
+    if tracked_local:errors.append({'code':'LOCAL_ENGINEERING_STATE_TRACKED','paths':tracked_local})
     stale=[
       ('STALE_PREPUBLICATION',r'npm bootstrap publication is not yet complete|current npm bootstrap remains blocked|not considered registry-available until final T4|final label remains \*\*PARTIAL\*\*'),
       ('STALE_CAPABILITY',r'process lifecycle remains DEGRADED|workspace[- ]isolation(?: binding)? remains UNSUPPORTED|browser[- ]execution remains UNSUPPORTED'),
