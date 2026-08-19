@@ -73,7 +73,7 @@
   "inputs": {
     "naming_guard": {
       "path": "scripts/naming_namespace_guard.mjs",
-      "sha256": "87270fa29c2c9204e442e515c6a9ece5aea5b12abe0280d91027ccfaf674db0d"
+      "sha256": "75c5631bf78bd500aa1d839a8bb199ba664ec61e5dd1800b51b6a22f12a50523"
     },
     "terminology": {
       "path": "data/validation/terminology-audit-0.1.0.json",

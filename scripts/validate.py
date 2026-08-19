@@ -656,7 +656,7 @@ except Exception as e:err(f'bad PROMPT B packaging/fresh consumer receipt: {e}')
 try:
     t30=json.loads((ROOT/'data/validation/prompt-b-test-suite-audit.json').read_text(encoding='utf-8'))
     if t30.get('schema')!=1 or t30.get('kind')!='PROMPT_B_TEST_SUITE_ADVERSARIAL_AUDIT' or t30.get('program')!='PROMPT_B' or t30.get('section')!=30 or t30.get('status')!='PASS':err('bad PROMPT B test-suite audit receipt identity/status')
-    if t30.get('summary')!={'required':11,'covered':11,'violations':0} or t30.get('violations')!=[]:err('PROMPT B test-suite audit summary drift')
+    if t30.get('summary')!={'required':13,'covered':13,'violations':0} or t30.get('violations')!=[]:err('PROMPT B test-suite audit summary drift')
     if not all((t30.get('static_guards') or {}).values()):err('PROMPT B test-suite static guard drift')
     for row in t30.get('invariants',[]):
         for key in ('owner','proof'):

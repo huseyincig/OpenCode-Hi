@@ -21,7 +21,7 @@
     "opencode_native_child_sessions": "PASS_T3_SOURCE_EQUIVALENT_OPENCODE_1_18_18",
     "opencode_model_provider_binding": "PASS_T3_SOURCE_EQUIVALENT_OPENCODE_1_18_18",
     "permission_denial_runtime": "PASS_T3_SOURCE_EQUIVALENT_OPENCODE_1_18_18",
-    "windows_runtime_smoke": "PENDING_GITHUB_ACTIONS_EXACT_0_2_0_SOURCE",
+    "windows_runtime_smoke": "PASS_CROSS_PLATFORM_EXACT_SOURCE_1E86E36_RUN_32289116515",
     "dependency_supply_chain_external": "PASS_CLEAN_CONSUMER_EXACT_SOURCE_5CFC10F",
     "filesystem_hygiene": "PASS_LOCAL_CURRENT_SOURCE",
     "native_package_plugin_install_exact_candidate": "PASS_T3_FRESH_CONSUMER_EXACT_SOURCE_5CFC10F_OPENCODE_1_18_18",
@@ -29,10 +29,9 @@
     "npm_registry_publication": "PENDING_AUTH_T4_OPENCODE_HI_0_2_0"
   },
   "release_blocked": true,
-  "reason": "0.2.0 local canonical gates, clean-worktree hygiene, Linux/aarch64 exact OpenCode 1.18.18 T3, fresh packed consumer, dependency audit, zero-known-defect closure, and deterministic release preflight are complete. Release remains blocked on exact-source Ubuntu/Windows GitHub Actions and real current-version T4 publication under explicit current user authority.",
+  "reason": "0.2.0 exact-source Ubuntu/Windows Release Readiness run 32289116515 is PASS together with the existing local/T3/deterministic prepublication gates. Engineering prepublication readiness is complete; real current-version T4 publication and verification remain pending. Publication authority is external to this machine projection.",
   "external_blockers": [
-    "current-0.2.0-exact-source-ubuntu-windows-github-actions-pending",
-    "current-0.2.0-publication-requires-explicit-current-user-authority-and-real-t4-proof"
+    "T4-current-release-publication-verification-pending"
   ],
   "current_local_evidence": {
     "source_checkpoint": {
@@ -72,8 +71,10 @@
       "unresolved": 0
     },
     "cross_platform": {
-      "status": "PENDING_EXTERNAL_CI",
-      "receipt": "data/validation/prompt-b-cross-platform-acceptance.json"
+      "status": "PASS",
+      "receipt": "data/validation/prompt-b-cross-platform-acceptance.json",
+      "tested_source": "1e86e36eb47ba4fc574702590f6384603780d94e",
+      "github_actions_run": 32289116515
     },
     "final_system": {
       "status": "PARTIAL",

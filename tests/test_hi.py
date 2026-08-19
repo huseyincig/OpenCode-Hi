@@ -1001,10 +1001,10 @@ def test_prompt_b_documentation_defect_cycle_requires_owner_impact_projection_an
 def test_prompt_b_test_suite_audit_is_isolated_bounded_and_never_promotes_mock_t3():
     d=json.loads((ROOT/'data/validation/prompt-b-test-suite-audit.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='PROMPT_B_TEST_SUITE_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['section']==30 and d['status']=='PASS'
-    assert d['violations']==[] and d['summary']=={'required':11,'covered':11,'violations':0}
+    assert d['violations']==[] and d['summary']=={'required':13,'covered':13,'violations':0}
     assert all(d['static_guards'].values())
     assert d['conditional_skips']=={'python_windows_symlink_privilege':4,'node_windows_posix_hosted_release':1,'silent_only_or_todo':0}
-    assert {'cwd-sensitive-test-root','test-suite-real-home-state-pollution','unbounded-test-runner-timeout','mock-runtime-self-promoted-t3'}<={x['id'] for x in d['closed_defects']}
+    assert {'cwd-sensitive-test-root','test-suite-real-home-state-pollution','unbounded-test-runner-timeout','windows-test-git-eol-host-config-leak','windows-file-url-pathname-filesystem-assumption','mock-runtime-self-promoted-t3'}<={x['id'] for x in d['closed_defects']}
     for row in d['invariants']:
         owner=ROOT/row['owner'];proof=ROOT/row['proof'];assert owner.is_file() and proof.is_file()
         assert hashlib.sha256(owner.read_bytes()).hexdigest()==row['owner_sha256']

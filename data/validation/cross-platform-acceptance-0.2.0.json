@@ -1,0 +1,194 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_CROSS_PLATFORM_CURRENT_SOURCE_CI_ACCEPTANCE",
+  "program": "PROMPT_B",
+  "section": 38,
+  "release": "0.2.0",
+  "status": "PASS",
+  "source_binding": {
+    "tested_git_commit": "1e86e36eb47ba4fc574702590f6384603780d94e",
+    "tested_git_tree": "b8b96ca679dd9c5e84f016d541225133b2e1d502"
+  },
+  "github_actions": {
+    "workflow": "Release Readiness",
+    "run_id": 32289116515,
+    "status": "completed",
+    "conclusion": "success",
+    "ubuntu": {
+      "job_id": 96185579576,
+      "status": "completed",
+      "conclusion": "success",
+      "required_steps": {
+        "Product build, architecture lint, Node acceptance, docs parity": "success",
+        "Packed public documentation": "success",
+        "Python product acceptance": "success",
+        "Build deterministic release candidate": "success",
+        "Verify release archives are readable": "success"
+      },
+      "node_summary": {
+        "tests": 1034,
+        "pass": 1034,
+        "fail": 0,
+        "skipped": 0
+      },
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install Python verification dependencies",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install plugin dependencies",
+          "conclusion": "success"
+        },
+        {
+          "name": "Product build, architecture lint, Node acceptance, docs parity",
+          "conclusion": "success"
+        },
+        {
+          "name": "Packed public documentation",
+          "conclusion": "success"
+        },
+        {
+          "name": "Python product acceptance",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build deterministic release candidate",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify release archives are readable",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    "windows": {
+      "job_id": 96185579252,
+      "status": "completed",
+      "conclusion": "success",
+      "required_steps": {
+        "Product build, architecture lint, Node acceptance, docs parity": "success",
+        "Packed public documentation": "success",
+        "Python product acceptance": "success",
+        "Build deterministic release candidate": "success",
+        "Verify release archives are readable": "success"
+      },
+      "node_summary": {
+        "tests": 1034,
+        "pass": 1033,
+        "fail": 0,
+        "skipped": 1
+      },
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install Python verification dependencies",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install plugin dependencies",
+          "conclusion": "success"
+        },
+        {
+          "name": "Product build, architecture lint, Node acceptance, docs parity",
+          "conclusion": "success"
+        },
+        {
+          "name": "Packed public documentation",
+          "conclusion": "success"
+        },
+        {
+          "name": "Python product acceptance",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build deterministic release candidate",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify release archives are readable",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    }
+  },
+  "portability_surfaces": [
+    "checkout",
+    "node-toolchain",
+    "python-toolchain",
+    "product-check",
+    "packed-public-documentation",
+    "python-product-acceptance",
+    "release-archive"
+  ],
+  "summary": {
+    "required_surfaces": 7,
+    "covered_surfaces": 7,
+    "violations": 0
+  },
+  "violations": [],
+  "claim_boundary": "Exact current-source dual-platform GitHub Actions acceptance. This receipt certifies only the recorded commit/tree and required Ubuntu/Windows product steps; higher-tier publication remains separate."
+}

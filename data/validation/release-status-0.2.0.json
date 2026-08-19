@@ -12,14 +12,14 @@
     },
     "current_release_gates": {
       "path": "data/validation/release-gates.json",
-      "sha256": "8f4ff1f5e963e402742031de59499bbb2fa761e0e6dc3b6340574a9762b8bfd3"
+      "sha256": "ed5fa961cc3074b1034fc92e61abe22f5b8b378c636d5956dd2b72567bd3dbc5"
     },
     "historical_v0_1_0_publication": {
       "path": "data/validation/release-publication-0.1.0.json",
       "sha256": "b0b9509dea487a6403d075d3ca18e8081285af4c053605d7f8f6438ad3d9798a"
     }
   },
-  "status": "PREPUBLICATION_CERTIFICATION_IN_PROGRESS",
+  "status": "PREPUBLICATION_CERTIFIED_PENDING_T4",
   "release_blocked": true,
   "publication_authority": {
     "required": true,
@@ -37,7 +37,7 @@
     "github_status": "PENDING_T4",
     "npm_status": "PENDING_T4",
     "publication_attempted": false,
-    "prepublication_ready": false
+    "prepublication_ready": true
   },
   "reference_host": {
     "opencode_version": "1.18.18",
@@ -65,7 +65,7 @@
       "process-lifecycle": "PASS_T3_SOURCE_EQUIVALENT_OPENCODE_1_18_18",
       "workspace-isolation-binding": "PASS_T3_FRESH_CONSUMER_EXACT_SOURCE_5CFC10F_OPENCODE_1_18_18",
       "browser-execution": "PASS_T3_SOURCE_EQUIVALENT_OPENCODE_1_18_18",
-      "windows": "PENDING_GITHUB_ACTIONS_EXACT_0_2_0_SOURCE",
+      "windows": "PASS_CROSS_PLATFORM_EXACT_SOURCE_1E86E36_RUN_32289116515",
       "clean_consumer": "PASS_CLEAN_CONSUMER_EXACT_SOURCE_5CFC10F"
     }
   },

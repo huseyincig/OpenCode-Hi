@@ -11,7 +11,7 @@
       "owner_sha256": "7f9986d6c981cb71f9d1967b1d62be55b6695b6e31f8eab97246f42c9c0b40b6",
       "owner_anchor": "node ../scripts/run-node-test-suite.mjs",
       "proof": "scripts/run-node-test-suite.mjs",
-      "proof_sha256": "3f37ac8e8badc0807ea2ed2500fc7664cad04ce5f9d5ff26abecb9e55b385b89",
+      "proof_sha256": "987692ec836f2b16c62f53c8cc4f4f14551bb35c33298e6d5d22eb8281b25f6c",
       "proof_anchor": "filter(x=>x.endsWith('.test.mjs')).sort()"
     },
     {
@@ -35,10 +35,10 @@
     {
       "invariant": "false-positive-resistance",
       "owner": "scripts/run-node-test-suite.mjs",
-      "owner_sha256": "3f37ac8e8badc0807ea2ed2500fc7664cad04ce5f9d5ff26abecb9e55b385b89",
+      "owner_sha256": "987692ec836f2b16c62f53c8cc4f4f14551bb35c33298e6d5d22eb8281b25f6c",
       "owner_anchor": "const knownLibuvTeardown=",
       "proof": "data/validation/test-harness-isolation-0.1.0.json",
-      "proof_sha256": "e15d13e609fb514a470ac005b82482026092282dcf3626687b911e7aa0d53080",
+      "proof_sha256": "aeee745e99662590a5e0c9ae424d6cf95a2e6a106be0afec2b91a402ca3df8cb",
       "proof_anchor": "SIGABRT is normalized only with exact uv__io_poll EEXIST signature"
     },
     {
@@ -47,25 +47,25 @@
       "owner_sha256": "ee3ed09654ad1a29a49bbe5cdb9a53a120bd95a9613bf8a5c70f10e101b72ba6",
       "owner_anchor": "os: [ubuntu-latest, windows-latest]",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "0733d97ab6d71bc629e3f0692503c8ce722670f3cd9474c73ba37529ec03ed4b",
+      "proof_sha256": "0f6e4c1b03280534af7aec99a3e887d365c691478c6918bf6c27903154c60340",
       "proof_anchor": "pytest.skip('symlink privilege varies on Windows')"
     },
     {
       "invariant": "timeout-handling",
       "owner": "scripts/run-node-test-suite.mjs",
-      "owner_sha256": "3f37ac8e8badc0807ea2ed2500fc7664cad04ce5f9d5ff26abecb9e55b385b89",
+      "owner_sha256": "987692ec836f2b16c62f53c8cc4f4f14551bb35c33298e6d5d22eb8281b25f6c",
       "owner_anchor": "'--test-timeout=120000'",
       "proof": "scripts/run-node-test-suite.mjs",
-      "proof_sha256": "3f37ac8e8badc0807ea2ed2500fc7664cad04ce5f9d5ff26abecb9e55b385b89",
+      "proof_sha256": "987692ec836f2b16c62f53c8cc4f4f14551bb35c33298e6d5d22eb8281b25f6c",
       "proof_anchor": "timeout:300000"
     },
     {
       "invariant": "test-isolation",
       "owner": "scripts/run-node-test-suite.mjs",
-      "owner_sha256": "3f37ac8e8badc0807ea2ed2500fc7664cad04ce5f9d5ff26abecb9e55b385b89",
+      "owner_sha256": "987692ec836f2b16c62f53c8cc4f4f14551bb35c33298e6d5d22eb8281b25f6c",
       "owner_anchor": "OPENCODE_HI_STATE_DIR",
       "proof": "data/validation/test-harness-isolation-0.1.0.json",
-      "proof_sha256": "e15d13e609fb514a470ac005b82482026092282dcf3626687b911e7aa0d53080",
+      "proof_sha256": "aeee745e99662590a5e0c9ae424d6cf95a2e6a106be0afec2b91a402ca3df8cb",
       "proof_anchor": "\"home_hi_state_delta\""
     },
     {
@@ -74,17 +74,35 @@
       "owner_sha256": "97829bf90a65fec515bfd6c01736f80a2b36e996a38d2fb565e129569407c3ac",
       "owner_anchor": "fileURLToPath(import.meta.url)",
       "proof": "data/validation/test-harness-isolation-0.1.0.json",
-      "proof_sha256": "e15d13e609fb514a470ac005b82482026092282dcf3626687b911e7aa0d53080",
+      "proof_sha256": "aeee745e99662590a5e0c9ae424d6cf95a2e6a106be0afec2b91a402ca3df8cb",
       "proof_anchor": "\"repo_root_cwd\""
     },
     {
       "invariant": "home-xdg-isolation",
       "owner": "scripts/run-node-test-suite.mjs",
-      "owner_sha256": "3f37ac8e8badc0807ea2ed2500fc7664cad04ce5f9d5ff26abecb9e55b385b89",
+      "owner_sha256": "987692ec836f2b16c62f53c8cc4f4f14551bb35c33298e6d5d22eb8281b25f6c",
       "owner_anchor": "XDG_STATE_HOME",
       "proof": "data/validation/test-harness-isolation-0.1.0.json",
-      "proof_sha256": "e15d13e609fb514a470ac005b82482026092282dcf3626687b911e7aa0d53080",
+      "proof_sha256": "aeee745e99662590a5e0c9ae424d6cf95a2e6a106be0afec2b91a402ca3df8cb",
       "proof_anchor": "\"isolation_env\""
+    },
+    {
+      "invariant": "git-config-isolation",
+      "owner": "scripts/run-node-test-suite.mjs",
+      "owner_sha256": "987692ec836f2b16c62f53c8cc4f4f14551bb35c33298e6d5d22eb8281b25f6c",
+      "owner_anchor": "GIT_CONFIG_NOSYSTEM",
+      "proof": "data/validation/test-harness-isolation-0.1.0.json",
+      "proof_sha256": "aeee745e99662590a5e0c9ae424d6cf95a2e6a106be0afec2b91a402ca3df8cb",
+      "proof_anchor": "GIT_CONFIG_NOSYSTEM"
+    },
+    {
+      "invariant": "file-url-path-portability",
+      "owner": "scripts/run-node-test-suite.mjs",
+      "owner_sha256": "987692ec836f2b16c62f53c8cc4f4f14551bb35c33298e6d5d22eb8281b25f6c",
+      "owner_anchor": "unsafeFileUrlPath",
+      "proof": "plugin/test/m14-backpressure-rollback.test.mjs",
+      "proof_sha256": "31567bae1acbe172cccc069303aedb3ee468267729f9703ed773fcb08d7c0a80",
+      "proof_anchor": "fileURLToPath"
     },
     {
       "invariant": "platform-assumptions",
@@ -98,7 +116,7 @@
     {
       "invariant": "deterministic-behavior",
       "owner": "scripts/run-node-test-suite.mjs",
-      "owner_sha256": "3f37ac8e8badc0807ea2ed2500fc7664cad04ce5f9d5ff26abecb9e55b385b89",
+      "owner_sha256": "987692ec836f2b16c62f53c8cc4f4f14551bb35c33298e6d5d22eb8281b25f6c",
       "owner_anchor": ".sort().map",
       "proof": "plugin/test/decision-replay-corpus.test.mjs",
       "proof_sha256": "0bb92635964dfe49d1412f4198de3472b794fadca26a41ee919873d0b44a84b8",
@@ -107,8 +125,8 @@
   ],
   "violations": [],
   "summary": {
-    "required": 11,
-    "covered": 11,
+    "required": 13,
+    "covered": 13,
     "violations": 0
   },
   "static_guards": {
@@ -117,6 +135,8 @@
     "runner_sorted_inventory": true,
     "runner_bounded_timeout": true,
     "runner_temp_state_cleanup": true,
+    "runner_git_config_isolated": true,
+    "runner_file_url_path_guard": true,
     "libuv_exception_strict": true,
     "runtime_never_assigns_real_host_acceptance": true,
     "current_t3_receipt_backed": true,
@@ -141,6 +161,16 @@
     {
       "id": "unbounded-test-runner-timeout",
       "fix": "Native per-test timeout is 120s and suite process timeout is 300s; hangs cannot block CI indefinitely."
+    },
+    {
+      "id": "windows-test-git-eol-host-config-leak",
+      "finding": "Temporary Git repositories inherited runner/system/global core.autocrlf/core.eol policy, so exact VCS fixture bytes differed on Windows.",
+      "fix": "Canonical Node harness isolates system/global Git config and injects command-scope core.autocrlf=false plus core.eol=lf for all test-created repositories."
+    },
+    {
+      "id": "windows-file-url-pathname-filesystem-assumption",
+      "finding": "Several tests/release scripts treated URL.pathname from import.meta.url as a native filesystem path; Windows file URLs retain a leading slash before the drive letter.",
+      "fix": "All living import.meta.url filesystem roots use Node fileURLToPath(), and the canonical Node harness rejects recurrence before executing the suite."
     },
     {
       "id": "mock-runtime-self-promoted-t3",
