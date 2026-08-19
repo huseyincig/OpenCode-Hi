@@ -11,7 +11,7 @@
 
 ### M14 — Closed-Loop Supervision & Runtime Engineering
 
-M13 is complete. Archive: `agent-archive/2026-08-19-m13-browser-autopilot.md`. M14 first retained product checkpoint is `90805398287f86f9596abf16862ee49ced0262b3`; exact immutable-image verification is build PASS, architecture lint `22/22 PASS`, plugin suite `1004/1004 PASS`. Scheduler checkpoint: `agent-archive/2026-08-19-m14-scheduler-hotpath-checkpoint.md`.
+M13 is complete. Archive: `agent-archive/2026-08-19-m13-browser-autopilot.md`. M14 retained product checkpoint is `d90787b06cf6f1fe64e0656b10403825bd4b5114`; exact immutable-image verification is build PASS, architecture lint `22/22 PASS`, plugin suite `1010/1010 PASS`. Scheduler checkpoint: `agent-archive/2026-08-19-m14-scheduler-hotpath-checkpoint.md`; feedback-decay checkpoint: `agent-archive/2026-08-19-m14-feedback-epoch-checkpoint.md`.
 
 M14 must improve decision quality from bounded attributed observations and harden runtime efficiency only where measurement proves value. It must not create a second state owner, broad self-modifying policy, speculative cache/index layer, or optimization without a baseline.
 
@@ -36,4 +36,4 @@ M14 must improve decision quality from bounded attributed observations and harde
 
 ## Exact Next Action
 
-On exact retained M14 checkpoint `9080539`, design and test the smallest reversible decay/freshness admission rule for model feedback and project methodology learning. Baseline receipt `m14-baseline-characterization.json` proves 365-day-old observations still affect both routing and methodology admission, but no canonical Hi TTL/half-life exists. Preserve historical evidence/provenance and explicit/fixed user model authority; stale evidence should lose active decision weight rather than be destructively deleted. Do not copy an external memory TTL by analogy. Before retention, use adversarial fresh/stale/boundary attribution tests, a hash-bound baseline→candidate decision comparator, architecture lint and an exact immutable full suite.
+On exact retained M14 checkpoint `d90787b`, audit async wait/cancellation, queue/backpressure and memory-retention behavior without product mutation first. Measure BackgroundRegistry waiter/timer cleanup, delete/cancel wake semantics, spawn-dedupe cleanup, TaskRuntime queue terminal/cancel removal, and any ephemeral map entries retained after adversarial lifecycle paths. Use bounded deterministic counters and active-handle checks where reliable; do not infer a leak from source scans alone. If a real leak/liveness/fairness gap is demonstrated, make one smallest cutover with an adversarial comparator. Otherwise preserve the current runtime and use the negative evidence toward M14 completion.
