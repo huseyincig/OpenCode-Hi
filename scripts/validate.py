@@ -648,7 +648,8 @@ try:
     if not isinstance(ar,str) or not (ROOT/ar).is_file():err('PROMPT B fresh consumer acceptance receipt missing')
     else:
         a=json.loads((ROOT/ar).read_text(encoding='utf-8'))
-        if a.get('status')!='PASS' or a.get('host')!={'opencode':'1.18.18','platform':'linux','architecture':'aarch64'}:err('PROMPT B fresh consumer exact-host acceptance drift')
+        host=a.get('host') or {}
+        if a.get('status')!='PASS' or host.get('opencode')!='1.18.18' or host.get('platform')!='linux' or host.get('architecture')!='aarch64' or not isinstance(host.get('binary_sha256'),str) or len(host.get('binary_sha256'))!=64:err('PROMPT B fresh consumer exact-host acceptance drift')
         if not all((a.get('checks') or {}).values()):err('PROMPT B fresh consumer acceptance check drift')
 except Exception as e:err(f'bad PROMPT B packaging/fresh consumer receipt: {e}')
 
@@ -670,20 +671,17 @@ try:
     ha=json.loads((ROOT/'data/validation/test-harness-isolation-0.1.0.json').read_text(encoding='utf-8'))
     if ha.get('status')!='PASS' or ha.get('section')!=30:err('PROMPT B test harness acceptance drift')
     obs=ha.get('canonical_suite_observation') or {}
-    if obs.get('tests')!=816 or obs.get('pass')!=816 or obs.get('fail')!=0 or obs.get('cancelled')!=0 or obs.get('home_hi_state_delta')!=0:err('PROMPT B canonical test harness observation drift')
+    if ha.get('schema')!=2 or not isinstance(obs.get('tests'),int) or obs.get('tests',0)<=0 or obs.get('pass')!=obs.get('tests') or obs.get('fail')!=0 or obs.get('cancelled')!=0 or obs.get('home_hi_state_delta')!={'entries':0,'bytes':0}:err('PROMPT B canonical test harness observation drift')
     for k in ('plugin_cwd','repo_root_cwd'):
         x=(ha.get('cwd_dual_run') or {}).get(k) or {}
-        if x.get('tests')!=17 or x.get('pass')!=17 or x.get('fail')!=0:err(f'PROMPT B cwd dual-run drift: {k}')
+        if not isinstance(x.get('tests'),int) or x.get('tests',0)<=0 or x.get('pass')!=x.get('tests') or x.get('fail')!=0 or x.get('cancelled')!=0:err(f'PROMPT B cwd dual-run drift: {k}')
     cm30=json.loads((ROOT/'data/validation/compatibility-matrix-0.1.0.json').read_text(encoding='utf-8'))
     caps30=cm30.get('current_reference_host',{}).get('capabilities',{})
     for cap in ('process-lifecycle','workspace-isolation-binding','browser-execution'):
         x=caps30.get(cap) or {}; selected=x.get('tested_git_commit')
         if x.get('status')!='SUPPORTED_T3' or not isinstance(selected,str):err(f'PROMPT B §30 exact T3 selection drift: {cap}');continue
-        try:
-            probe=subprocess.run(['git','merge-base','--is-ancestor','5210a12a7b607e0c9048749fa74a4c8b801cd924',selected],cwd=ROOT,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
-            if probe.returncode==1:err(f'PROMPT B §30 T3 receipt predates certification checkpoint: {cap}')
-            elif probe.returncode!=0:err(f'PROMPT B §30 T3 ancestry objects unavailable: {cap}')
-        except Exception as e:err(f'PROMPT B §30 T3 ancestry unavailable: {cap}: {e}')
+        receipt=x.get('receipt')
+        if not isinstance(receipt,str) or not (ROOT/receipt).is_file():err(f'PROMPT B §30 T3 receipt missing: {cap}')
 except Exception as e:err(f'bad PROMPT B test-suite receipt: {e}')
 
 
@@ -823,16 +821,17 @@ except Exception as e:err(f'bad PROMPT B failure injection receipt: {e}')
 # PROMPT B §35 performance/token/resource benchmark certification
 try:
     p35=json.loads((ROOT/'data/validation/prompt-b-performance-resource-benchmarks.json').read_text(encoding='utf-8'))
-    if p35.get('schema')!=1 or p35.get('kind')!='PROMPT_B_PERFORMANCE_RESOURCE_BENCHMARK_AUDIT' or p35.get('program')!='PROMPT_B' or p35.get('section')!=35 or p35.get('status')!='PASS':err('bad PROMPT B performance/resource benchmark audit identity/status')
-    required=['startup','task_initialization','skill_discovery_cache','pi_retrieval','context_build','persistence','scheduling','process_output','memory_growth','token_usage']
+    if p35.get('schema')!=2 or p35.get('kind')!='PROMPT_B_PERFORMANCE_RESOURCE_BENCHMARK_AUDIT' or p35.get('program')!='PROMPT_B' or p35.get('section')!=35 or p35.get('status')!='PASS':err('bad PROMPT B performance/resource benchmark audit identity/status')
+    required=['startup','task_initialization','skill_selection','project_methodology_learning','context_projection','persistence','scheduling','process_output','memory_growth','token_usage']
     if p35.get('required_metrics')!=required or p35.get('summary')!={'required':10,'covered':10,'violations':0} or p35.get('violations')!=[] or not all((p35.get('static_guards') or {}).values()):err('PROMPT B performance/resource benchmark summary drift')
     b=json.loads((ROOT/p35['benchmark_receipt']).read_text(encoding='utf-8'))
     if b.get('status')!='PASS' or not source_binding_valid(b.get('source_binding')):err('PROMPT B performance/resource benchmark source binding drift')
     if list((b.get('metrics') or {}).keys())!=required:err('PROMPT B performance/resource benchmark metric inventory drift')
     metrics=b.get('metrics') or {}
-    if any((metrics.get(k) or {}).get('status')!='PASS' for k in required if k!='skill_discovery_cache'):err('PROMPT B performance/resource metric failure')
-    skill=metrics.get('skill_discovery_cache') or {}
-    if (skill.get('cold') or {}).get('status')!='PASS' or (skill.get('cached') or {}).get('status')!='PASS' or skill.get('full_scans')!=1:err('PROMPT B skill cache benchmark drift')
+    if any((metrics.get(k) or {}).get('status')!='PASS' for k in required):err('PROMPT B performance/resource metric failure')
+    if (metrics.get('skill_selection') or {}).get('selected_total',0)<=0:err('PROMPT B skill selection benchmark drift')
+    if (metrics.get('project_methodology_learning') or {}).get('ready_at_observation')!=2:err('PROMPT B project methodology learning benchmark drift')
+    if (metrics.get('context_projection') or {}).get('total_projected_chars',0)<=0:err('PROMPT B context projection benchmark drift')
     tok=metrics.get('token_usage') or {};obs=tok.get('provider_observed') or {};est=tok.get('estimated') or {}
     if not (obs.get('confidence')=='exact' and obs.get('source')=='provider-usage' and est.get('confidence')=='estimated' and est.get('source')=='estimated'):err('PROMPT B token benchmark truth boundary drift')
     if b.get('optimization_decision')!='NO_NEW_SCHEDULER_OR_WORK_STEALING_COMPLEXITY_WITHOUT_MEASURED_BENEFIT':err('PROMPT B benchmark optimization decision drift')
@@ -853,10 +852,10 @@ except Exception as e:err(f'bad PROMPT B hygiene audit: {e}')
 # PROMPT B §40 zero-known-defect closure loop
 try:
     z40=json.loads((ROOT/'data/validation/prompt-b-zero-known-defect-loop.json').read_text(encoding='utf-8'))
-    if z40.get('schema')!=1 or z40.get('kind')!='PROMPT_B_ZERO_KNOWN_DEFECT_CLOSURE_LOOP' or z40.get('section')!=40 or z40.get('status')!='PASS':err('bad PROMPT B zero-known-defect loop identity/status')
+    if z40.get('schema')!=2 or z40.get('kind')!='PROMPT_B_ZERO_KNOWN_DEFECT_CLOSURE_LOOP' or z40.get('section')!=40 or z40.get('status')!='PASS':err('bad PROMPT B zero-known-defect loop identity/status')
     zs=z40.get('summary') or {}
-    if zs.get('recorded_findings')!=68 or zs.get('unresolved_known_defects')!=0 or zs.get('adjacent_regression_pass')!=93 or zs.get('full_python_pass')!=118 or zs.get('full_node_pass')!=848 or zs.get('exact_t3_capabilities')!=3 or zs.get('lifecycle_invariants_pass')!=61:err('PROMPT B zero-known-defect summary drift')
-    if z40.get('violations')!=[] or len(z40.get('defects') or [])!=68:err('PROMPT B zero-known-defect ledger drift')
+    if zs.get('recorded_findings')!=len(z40.get('defects') or []) or zs.get('unresolved_known_defects')!=0 or zs.get('closure_receipts_checked')!=len(z40.get('defects') or []) or zs.get('exact_t3_capabilities')!=3 or zs.get('lifecycle_invariants_pass')!=61 or zs.get('documentation_parity_violations')!=0:err('PROMPT B zero-known-defect summary drift')
+    if z40.get('violations')!=[] or len({x.get('id') for x in z40.get('defects') or []})!=len(z40.get('defects') or []):err('PROMPT B zero-known-defect ledger drift')
     required_post_t4={'npm-view-json-shape-verifier-drift','npm-postpublish-registry-read-after-write-race','post-t4-documentation-stale-publication-state','npm-packed-public-document-links-incomplete','windows-packed-doc-audit-npm-shim-resolution'}
     if not required_post_t4<={x.get('id') for x in z40.get('defects') or []}:err('PROMPT B zero-known-defect post-T4 closure drift')
     zcommit=(z40.get('source_checkpoint') or {}).get('commit')

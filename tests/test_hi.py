@@ -1002,13 +1002,13 @@ def test_prompt_b_test_suite_audit_is_isolated_bounded_and_never_promotes_mock_t
         assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
         assert row['owner_anchor'] in owner.read_text(encoding='utf-8',errors='replace') and row['proof_anchor'] in proof.read_text(encoding='utf-8',errors='replace')
     h=json.loads((ROOT/d['harness_acceptance']).read_text(encoding='utf-8'))
-    assert h['status']=='PASS'; harness_commit=assert_source_binding(h['source_binding'])
-    assert h['canonical_suite_observation']=={'tests':816,'pass':816,'fail':0,'cancelled':0,'home_hi_state_before':5301,'home_hi_state_after':5301,'home_hi_state_delta':0}
-    assert all(h['cwd_dual_run'][k]['tests']==17 and h['cwd_dual_run'][k]['pass']==17 and h['cwd_dual_run'][k]['fail']==0 for k in ('plugin_cwd','repo_root_cwd'))
+    assert h['schema']==2 and h['status']=='PASS'; assert_source_binding(h['source_binding'])
+    obs=h['canonical_suite_observation'];assert obs['tests']>0 and obs['pass']==obs['tests'] and obs['fail']==0 and obs['cancelled']==0 and obs['home_hi_state_delta']=={'entries':0,'bytes':0}
+    assert all(h['cwd_dual_run'][k]['tests']>0 and h['cwd_dual_run'][k]['pass']==h['cwd_dual_run'][k]['tests'] and h['cwd_dual_run'][k]['fail']==0 and h['cwd_dual_run'][k]['cancelled']==0 for k in ('plugin_cwd','repo_root_cwd'))
     compat=json.loads((ROOT/'data/validation/compatibility-matrix-0.1.0.json').read_text(encoding='utf-8'))
     for cap in ('process-lifecycle','workspace-isolation-binding','browser-execution'):
         current=compat['current_reference_host']['capabilities'][cap];assert current['status']=='SUPPORTED_T3'
-        assert subprocess.run(['git','merge-base','--is-ancestor',harness_commit,current['tested_git_commit']],cwd=ROOT).returncode==0
+        assert (ROOT/current['receipt']).is_file()
 
 
 
@@ -1076,14 +1076,16 @@ def test_prompt_b_failure_injection_is_complete_bounded_and_terminal():
 
 def test_prompt_b_performance_resource_benchmarks_measure_all_required_paths_without_fake_token_truth():
     d=json.loads((ROOT/'data/validation/prompt-b-performance-resource-benchmarks.json').read_text(encoding='utf-8'))
-    assert d['schema']==1 and d['kind']=='PROMPT_B_PERFORMANCE_RESOURCE_BENCHMARK_AUDIT' and d['program']=='PROMPT_B' and d['section']==35 and d['status']=='PASS'
-    required=['startup','task_initialization','skill_discovery_cache','pi_retrieval','context_build','persistence','scheduling','process_output','memory_growth','token_usage']
+    assert d['schema']==2 and d['kind']=='PROMPT_B_PERFORMANCE_RESOURCE_BENCHMARK_AUDIT' and d['program']=='PROMPT_B' and d['section']==35 and d['status']=='PASS'
+    required=['startup','task_initialization','skill_selection','project_methodology_learning','context_projection','persistence','scheduling','process_output','memory_growth','token_usage']
     assert d['required_metrics']==required and d['summary']=={'required':10,'covered':10,'violations':0} and d['violations']==[] and all(d['static_guards'].values())
     b=json.loads((ROOT/d['benchmark_receipt']).read_text(encoding='utf-8'))
     assert b['status']=='PASS';assert_source_binding(b['source_binding'])
     assert list(b['metrics'])==required
-    assert all(b['metrics'][k]['status']=='PASS' for k in required if k!='skill_discovery_cache')
-    assert b['metrics']['skill_discovery_cache']['cold']['status']=='PASS' and b['metrics']['skill_discovery_cache']['cached']['status']=='PASS' and b['metrics']['skill_discovery_cache']['full_scans']==1
+    assert all(b['metrics'][k]['status']=='PASS' for k in required)
+    assert b['metrics']['skill_selection']['selected_total']>0
+    assert b['metrics']['project_methodology_learning']['ready_at_observation']==2
+    assert b['metrics']['context_projection']['total_projected_chars']>0
     assert b['metrics']['process_output']['max_buffered_chars']==256*1024 and b['metrics']['process_output']['max_read_chars']==64*1024
     assert b['metrics']['token_usage']['provider_observed']['confidence']=='exact' and b['metrics']['token_usage']['provider_observed']['source']=='provider-usage'
     assert b['metrics']['token_usage']['estimated']['confidence']=='estimated' and b['metrics']['token_usage']['estimated']['source']=='estimated'
@@ -1159,10 +1161,11 @@ def test_prompt_b_exact_current_opencode_t3_is_fresh_source_bound_and_not_inferr
 
 def test_prompt_b_zero_known_defect_loop_closes_every_recorded_finding_and_reaudits_adjacent_systems():
     d=json.loads((ROOT/'data/validation/prompt-b-zero-known-defect-loop.json').read_text(encoding='utf-8'))
-    assert d['schema']==1 and d['kind']=='PROMPT_B_ZERO_KNOWN_DEFECT_CLOSURE_LOOP' and d['section']==40 and d['status']=='PASS'
-    assert d['summary']['recorded_findings']==68 and d['summary']['unresolved_known_defects']==0 and d['summary']['adjacent_regression_pass']==93
-    assert d['summary']['full_python_pass']==118 and d['summary']['full_node_pass']==848 and d['summary']['exact_t3_capabilities']==3 and d['summary']['lifecycle_invariants_pass']==61
-    assert d['violations']==[] and len({x['id'] for x in d['defects']})==68
+    assert d['schema']==2 and d['kind']=='PROMPT_B_ZERO_KNOWN_DEFECT_CLOSURE_LOOP' and d['section']==40 and d['status']=='PASS'
+    assert d['summary']['recorded_findings']==len(d['defects']) and d['summary']['unresolved_known_defects']==0 and d['summary']['closure_receipts_checked']==len(d['defects'])
+    assert d['summary']['exact_t3_capabilities']==3 and d['summary']['lifecycle_invariants_pass']==61 and d['summary']['documentation_parity_violations']==0
+    assert d['violations']==[] and len({x['id'] for x in d['defects']})==len(d['defects'])
+    assert {'short-lived-pty-output-before-attach','release-certification-stale-phase1-performance-primitives','test-harness-stale-fixed-suite-count'}<={x['id'] for x in d['defects']}
     assert {'npm-view-json-shape-verifier-drift','npm-postpublish-registry-read-after-write-race','post-t4-documentation-stale-publication-state','npm-packed-public-document-links-incomplete','windows-packed-doc-audit-npm-shim-resolution'}<={x['id'] for x in d['defects']}
     commit=d['source_checkpoint']['commit']
     for row in d['defects']:

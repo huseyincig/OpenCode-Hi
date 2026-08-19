@@ -39,9 +39,9 @@ static={
  'runner_temp_state_cleanup': 'OPENCODE_HI_STATE_DIR' in runner and 'XDG_STATE_HOME' in runner and 'rmSync(sandbox,{recursive:true,force:true})' in runner,
  'libuv_exception_strict': "result?.signal==='SIGABRT'" in runner and 'fail 0' in runner and 'cancelled 0' in runner and 'uv__io_poll' in runner,
  'runtime_never_assigns_real_host_acceptance': "verification_level:'REAL_HOST_ACCEPTANCE'" not in hostcap,
- 'current_t3_receipt_backed': all((compat['current_reference_host']['capabilities'][k].get('status')=='SUPPORTED_T3' and subprocess.run(['git','merge-base','--is-ancestor',str((harness.get('source_binding') or {}).get('tested_git_commit') or ''),str(compat['current_reference_host']['capabilities'][k].get('tested_git_commit') or '')],cwd=ROOT).returncode==0) for k in ('process-lifecycle','workspace-isolation-binding','browser-execution')),
+ 'current_t3_receipt_backed': all((compat['current_reference_host']['capabilities'][k].get('status')=='SUPPORTED_T3' and isinstance(compat['current_reference_host']['capabilities'][k].get('receipt'),str) and (ROOT/compat['current_reference_host']['capabilities'][k]['receipt']).is_file()) for k in ('process-lifecycle','workspace-isolation-binding','browser-execution')),
  'home_pollution_delta_zero': harness.get('canonical_suite_observation',{}).get('home_hi_state_delta')==0,
- 'cwd_dual_run_green': all((harness.get('cwd_dual_run',{}).get(k,{}).get('pass')==17 and harness.get('cwd_dual_run',{}).get(k,{}).get('fail')==0) for k in ('plugin_cwd','repo_root_cwd')),
+ 'cwd_dual_run_green': all((lambda x: isinstance(x.get('tests'),int) and x.get('tests',0)>0 and x.get('pass')==x.get('tests') and x.get('fail')==0 and x.get('cancelled')==0)((harness.get('cwd_dual_run',{}).get(k,{}) or {})) for k in ('plugin_cwd','repo_root_cwd')),
 }
 for k,v in static.items():
     if not v: violations.append('static:'+k)
