@@ -1,7 +1,10 @@
 {
   "acceptance_receipt": "data/validation/cross-platform-acceptance-0.2.0.json",
   "acceptance_sha256": null,
-  "claim_boundary": "Current-source Windows/Linux certification is bound to the exact external CI source checkpoint. Subsequent evidence-only commits may consume it only while runtime/package material paths remain byte-identical to that checkpoint.",
+  "blockers": [
+    "current-source-cross-platform-ci-receipt-missing"
+  ],
+  "claim_boundary": "Current-source Windows/Linux certification is external-CI gated. Missing current-version CI evidence is represented as PENDING_EXTERNAL_CI, never promoted to PASS; an invalid existing receipt fails closed.",
   "github_actions": {
     "conclusion": null,
     "run_id": null,
@@ -18,11 +21,11 @@
     "commit": null,
     "tree": null
   },
-  "status": "FAIL",
+  "status": "PENDING_EXTERNAL_CI",
   "summary": {
     "covered_surfaces": 7,
     "required_surfaces": 7,
-    "violations": 9
+    "violations": 0
   },
   "surfaces": [
     {
@@ -52,7 +55,7 @@
     },
     {
       "proof": "tests/test_hi.py",
-      "proof_sha256": "a300b1429ae548b429841735615d8ba4ffb602dcf0abb834f4bc48cbd0ad5067",
+      "proof_sha256": "0733d97ab6d71bc629e3f0692503c8ce722670f3cd9474c73ba37529ec03ed4b",
       "surface": "filesystem"
     },
     {
@@ -61,17 +64,7 @@
       "surface": "packaging"
     }
   ],
-  "violations": [
-    "status-drift",
-    "source-commit-missing",
-    "workflow-not-success",
-    "ubuntu-job-not-success",
-    "windows-job-not-success",
-    "ubuntu-required-step-not-success",
-    "windows-required-step-not-success",
-    "ubuntu-node-summary-drift",
-    "windows-node-summary-drift"
-  ],
+  "violations": [],
   "windows_current_certified": false,
   "windows_historical_release_evidence": true
 }

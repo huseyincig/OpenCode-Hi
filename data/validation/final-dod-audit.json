@@ -1,7 +1,7 @@
 {
   "schema": 2,
   "release": "0.2.0",
-  "generated_at": "2026-08-14",
+  "generated_at": "2026-08-19",
   "basis": "OpenCode-Hi 0.2.0 Phase 2 final product and release-preparation contracts",
   "internal_status": "LOCAL_IMPLEMENTATION_AND_IN_PROCESS_ACCEPTANCE_COMPLETE",
   "source_checklist": {
@@ -15,27 +15,43 @@
   "local_acceptance": {
     "node": {
       "command": "npm --prefix plugin test",
-      "status": "PENDING_CURRENT_0_2_0_SOURCE_CHECKPOINT"
+      "status": "PASS"
     },
     "python": {
       "command": "python -m pytest -q tests/test_hi.py",
-      "status": "PENDING_CURRENT_0_2_0_SOURCE_CHECKPOINT"
+      "status": "PASS"
     },
     "source_validation": {
       "command": "python scripts/validate.py",
-      "status": "PENDING_CURRENT_0_2_0_SOURCE_CHECKPOINT"
+      "status": "PASS"
+    },
+    "final_gates": {
+      "status": "PASS",
+      "receipt": "data/validation/final-gates-0.2.0.json",
+      "source_commit": "5cfc10f180dfe9d93dd59fcae9f40a318cbdac5e"
+    },
+    "exact_host_t3": {
+      "status": "PASS",
+      "receipt": "data/validation/prompt-b-exact-current-opencode-t3.json",
+      "opencode_version": "1.18.18"
+    },
+    "fresh_consumer": {
+      "status": "PASS",
+      "receipt": "data/validation/fresh-consumer-opencode-1.18.18.json"
     },
     "deterministic_release": {
       "command": "python scripts/release-build.py --out <out> --source-out <source-out>",
-      "status": "PENDING_CURRENT_0_2_0_SOURCE_CHECKPOINT"
+      "status": "PASS_PREFLIGHT_FINAL_HASH_REGEN_REQUIRED"
     }
   },
   "external_only_pending": [
-    "exact-source Ubuntu/Windows Release Readiness for 0.2.0",
-    "exact OpenCode 1.18.18 clean-consumer/package-host certification for 0.2.0",
-    "explicitly authorized GitHub/npm publication and registry verification for 0.2.0"
+    "exact-source Ubuntu/Windows Release Readiness GitHub Actions for 0.2.0",
+    "explicitly authorized GitHub/npm publication and current-version T4 registry verification for 0.2.0"
   ],
-  "external_blockers": [],
+  "external_blockers": [
+    "current-source-windows-acceptance-pending-external-ci",
+    "T4-current-release-publication-verification-pending"
+  ],
   "release_blocked": true,
   "known_internal_blocking_findings": [],
   "historical_v58_provenance": [

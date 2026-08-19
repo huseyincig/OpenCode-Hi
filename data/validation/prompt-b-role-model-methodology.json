@@ -8,16 +8,16 @@
     {
       "invariant": "role-agent-model-methodology-separation",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "4aefdeea9a786314ac380d757ffcc17b9355dd29b22e0a8e892399ce4e04e0e7",
+      "owner_sha256": "a79261104fd8c84cf1d825a45b23c300edd0819aaa345441f73863367e0bc598",
       "owner_anchor": "worker.requested_model=input.model",
       "proof": "plugin/test/model-contract.test.mjs",
-      "proof_sha256": "f5ed6486945f86df3f39e3e059968aa2969d473cfda735fc2cada28a010e9748",
+      "proof_sha256": "56be752a4527d0347fcaa938a269c2e011793a529efd5e41975e0943e11abb5c",
       "proof_anchor": "model execution identity keeps requested selected projected observed and effective phases distinct"
     },
     {
       "invariant": "requested-selected-projected-observed-model",
       "owner": "plugin/src/contracts/model.ts",
-      "owner_sha256": "03970253978e5d3d73b63aeee2db4652c1a7ac260676068a4f29612968868107",
+      "owner_sha256": "a7391fb2db0e149aece688393aa93226922ab788f6e4597850e7894b6bf9b38e",
       "owner_anchor": "reconcileModelExecutionIdentity",
       "proof": "plugin/test/main-prompt-model-evidence.test.mjs",
       "proof_sha256": "f17b080fe3d44904766a1568d3b49e8ef48afec5331c659e751cb357c1d65519",
@@ -44,7 +44,7 @@
     {
       "invariant": "model-fallback",
       "owner": "plugin/src/runtime/task/task-recovery-coordinator.ts",
-      "owner_sha256": "330a83fd6dfc14e2a3fb0a145f176a1bd5fe5b84a3af6e30ee5ec75fbd82e4d3",
+      "owner_sha256": "52fda2ededee4d2c75b45842590b406e957131a9ced214559e9fb2ee8ce10f1d",
       "owner_anchor": "recoverRuntimeFailure",
       "proof": "plugin/test/provider-fallback-hardening.test.mjs",
       "proof_sha256": "a25a8720db82be6d1e03c87a8747534ffb41041f63b3a71378d9ab922c546c87",
@@ -53,37 +53,37 @@
     {
       "invariant": "methodology-available-admitted-selected-loaded",
       "owner": "plugin/src/runtime/skills/registry.ts",
-      "owner_sha256": "ad2da40fc07e254656a256071daea5d803e4de070cbf0df2168f08550de1c24b",
+      "owner_sha256": "032129401c9bca75326de27eea0ff7fff9d0d357d5952dce9fca14edea423296",
       "owner_anchor": "resolveSkillPlan",
       "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
-      "proof_sha256": "12ad8467fc327afc552309149bf329b3108a7a04c16f5220609e3636b0a8cb2a",
+      "proof_sha256": "6ce8447f1eaa2cde2e389d76e2843d431ad5c6a0bf31e8a9f654053b556283bc",
       "proof_anchor": "admitted project methodology reaches native lazy selection as project provider"
     },
     {
       "invariant": "methodology-lazy-load",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
+      "owner_sha256": "14da681b14b058aa3104cfb2f8f1cb78dfc2c75c2a7dc975748e1a49748d53d7",
       "owner_anchor": "methodology-not-loaded",
       "proof": "plugin/test/methodology-signal-contract.test.mjs",
-      "proof_sha256": "51f6ab1bdd95c36d369ea391b36b6ac719fb5edbeac8b1fff2092af9abb5c8a9",
+      "proof_sha256": "3398eeac613b36af81bae176f105ac0e55ea187b2adabcb6901d24c70f543c56",
       "proof_anchor": "selected child methodology must be actually native-loaded before DONE can be accepted"
     },
     {
       "invariant": "methodology-collision",
       "owner": "plugin/src/runtime/skills/registry.ts",
-      "owner_sha256": "ad2da40fc07e254656a256071daea5d803e4de070cbf0df2168f08550de1c24b",
+      "owner_sha256": "032129401c9bca75326de27eea0ff7fff9d0d357d5952dce9fca14edea423296",
       "owner_anchor": "foreign.length",
       "proof": "plugin/test/native-skill-catalog.test.mjs",
-      "proof_sha256": "90a533b40a0d9ffff37fc5141bb1b8ec3abcd6538f59f465f3c7a3a2849159f1",
+      "proof_sha256": "97829bf90a65fec515bfd6c01736f80a2b36e996a38d2fb565e129569407c3ac",
       "proof_anchor": "native configured Hi skill path does not duplicate the same physical root as a personal provider"
     },
     {
       "invariant": "methodology-exit",
       "owner": "plugin/src/runtime/methodology/exit.ts",
-      "owner_sha256": "e16430921a8e8e94654407294491df93af1f359a5e5b3d9568ee82a22cea78f3",
+      "owner_sha256": "fce41d3c3ba5498e9de68a339f861858b1f11d3e0242e7b15a9b689df39fa86b",
       "owner_anchor": "methodologyExitCheck",
       "proof": "plugin/test/b3-methodology-exit-evidence.test.mjs",
-      "proof_sha256": "92949a6c267de22bc5929897a6e61650f222bffad42dacf929e373c6cd6f680c",
+      "proof_sha256": "6a215a74640f03732efceb56c688686865e9d1b2652f7551e308655fce51a2e4",
       "proof_anchor": "fresh explicit passed browser/visual evidence satisfies only the matching methodology exit"
     },
     {
@@ -92,16 +92,16 @@
       "owner_sha256": "a8c4f649030d93a1a8e92b7db76c23742a5e18d1a9d3dabfcb98111e0c027bf2",
       "owner_anchor": "never own orchestration, worker spawning, model selection, authority",
       "proof": "plugin/test/native-skill-catalog.test.mjs",
-      "proof_sha256": "90a533b40a0d9ffff37fc5141bb1b8ec3abcd6538f59f465f3c7a3a2849159f1",
+      "proof_sha256": "97829bf90a65fec515bfd6c01736f80a2b36e996a38d2fb565e129569407c3ac",
       "proof_anchor": "Hi methodology documents do not claim control-plane tool ownership"
     },
     {
       "invariant": "methodology-cannot-own-completion",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
+      "owner_sha256": "14da681b14b058aa3104cfb2f8f1cb78dfc2c75c2a7dc975748e1a49748d53d7",
       "owner_anchor": "reconcileMethodologyExits",
       "proof": "plugin/test/forensic-hardening.test.mjs",
-      "proof_sha256": "7aedc7c9590ed12a0163f0a9e90ddf5872de3e2baa3547479d8521492861efda",
+      "proof_sha256": "c06990b9b2274477c98523f93ee7c1c3c3bbb7261283230f0e4ece8139a66034",
       "proof_anchor": "parent direct methodology remains active until mission-scope fresh verification satisfies its exit contract"
     },
     {
@@ -116,10 +116,10 @@
     {
       "invariant": "prompt-persona-cannot-override-policy",
       "owner": "plugin/src/runtime/routing/execution-profile.ts",
-      "owner_sha256": "3d3f09f8d72578a28f303f28525279b562dd1575d91aaf51581c5ebb114b7451",
+      "owner_sha256": "b10cec6b7dc467a5fb61a818084f8be3140216a8c76b1b52afd718f44e071bad",
       "owner_anchor": "promptToolOverrides",
       "proof": "plugin/test/main-prompt-execution-profile-tools.test.mjs",
-      "proof_sha256": "5103898ef188d2a0e84854d647f5285147fd61188e0a08d4ea2488c96b8f3b82",
+      "proof_sha256": "e6eeafc888e82f75df1a2e6273ba54d01cc94f3284c82168449f16eb52326e6f",
       "proof_anchor": "prompt tool overrides only disable tools; they never turn a denied native permission into allow"
     }
   ],

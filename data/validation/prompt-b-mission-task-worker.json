@@ -8,61 +8,61 @@
     {
       "invariant": "unique-identities",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "113bfe4fc6e72a97f8078c57c784473cfa2ddd4f68b1a051da1f24f650934e97",
+      "owner_sha256": "61ce2e9002580c6c12a7df3f3f5dc5894c92aaebce6a96b8676c72d7f791a6f4",
       "proof": "plugin/test/task-worker-contract.test.mjs",
-      "proof_sha256": "879a15f054b4e7b78bd9e80c22239c71c07b9a635a7f09731fd19e66350288c0",
+      "proof_sha256": "06d94312c3165fccb0a2e539f753500f1103cf7370cd9cbadd21f64c6e26bf43",
       "owner_anchor": "new Set(taskIDs).size",
       "proof_anchor": "RuntimePersistence rejects persisted mission graphs with unknown duplicate or cyclic Task dependencies"
     },
     {
       "invariant": "mission-ownership",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "113bfe4fc6e72a97f8078c57c784473cfa2ddd4f68b1a051da1f24f650934e97",
+      "owner_sha256": "61ce2e9002580c6c12a7df3f3f5dc5894c92aaebce6a96b8676c72d7f791a6f4",
       "proof": "plugin/test/task-worker-contract.test.mjs",
-      "proof_sha256": "879a15f054b4e7b78bd9e80c22239c71c07b9a635a7f09731fd19e66350288c0",
+      "proof_sha256": "06d94312c3165fccb0a2e539f753500f1103cf7370cd9cbadd21f64c6e26bf43",
       "owner_anchor": "worker.parent_mission_id!==missionID",
       "proof_anchor": "PROMPT B Mission validator rejects ghost workers, cross-session worker binding and duplicate native session ownership"
     },
     {
       "invariant": "task-dag-validity",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "113bfe4fc6e72a97f8078c57c784473cfa2ddd4f68b1a051da1f24f650934e97",
+      "owner_sha256": "61ce2e9002580c6c12a7df3f3f5dc5894c92aaebce6a96b8676c72d7f791a6f4",
       "proof": "plugin/test/task-worker-contract.test.mjs",
-      "proof_sha256": "879a15f054b4e7b78bd9e80c22239c71c07b9a635a7f09731fd19e66350288c0",
+      "proof_sha256": "06d94312c3165fccb0a2e539f753500f1103cf7370cd9cbadd21f64c6e26bf43",
       "owner_anchor": "const cyclic=",
       "proof_anchor": "RuntimePersistence rejects persisted mission graphs with unknown duplicate or cyclic Task dependencies"
     },
     {
       "invariant": "worker-binding",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "113bfe4fc6e72a97f8078c57c784473cfa2ddd4f68b1a051da1f24f650934e97",
+      "owner_sha256": "61ce2e9002580c6c12a7df3f3f5dc5894c92aaebce6a96b8676c72d7f791a6f4",
       "proof": "plugin/test/task-worker-contract.test.mjs",
-      "proof_sha256": "879a15f054b4e7b78bd9e80c22239c71c07b9a635a7f09731fd19e66350288c0",
+      "proof_sha256": "06d94312c3165fccb0a2e539f753500f1103cf7370cd9cbadd21f64c6e26bf43",
       "owner_anchor": "ownerTask.worker_id!==worker.id",
       "proof_anchor": "PROMPT B Mission validator rejects ghost workers, cross-session worker binding and duplicate native session ownership"
     },
     {
       "invariant": "no-ghost-workers",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "113bfe4fc6e72a97f8078c57c784473cfa2ddd4f68b1a051da1f24f650934e97",
+      "owner_sha256": "61ce2e9002580c6c12a7df3f3f5dc5894c92aaebce6a96b8676c72d7f791a6f4",
       "proof": "plugin/test/task-worker-contract.test.mjs",
-      "proof_sha256": "879a15f054b4e7b78bd9e80c22239c71c07b9a635a7f09731fd19e66350288c0",
+      "proof_sha256": "06d94312c3165fccb0a2e539f753500f1103cf7370cd9cbadd21f64c6e26bf43",
       "owner_anchor": "ownerTask.worker_id!==worker.id",
       "proof_anchor": "extra worker not owned by task.worker_id must fail closed"
     },
     {
       "invariant": "no-orphan-tasks",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "113bfe4fc6e72a97f8078c57c784473cfa2ddd4f68b1a051da1f24f650934e97",
+      "owner_sha256": "61ce2e9002580c6c12a7df3f3f5dc5894c92aaebce6a96b8676c72d7f791a6f4",
       "proof": "plugin/test/task-worker-contract.test.mjs",
-      "proof_sha256": "879a15f054b4e7b78bd9e80c22239c71c07b9a635a7f09731fd19e66350288c0",
+      "proof_sha256": "06d94312c3165fccb0a2e539f753500f1103cf7370cd9cbadd21f64c6e26bf43",
       "owner_anchor": "task.worker_id!==undefined",
       "proof_anchor": "PROMPT B Mission validator rejects ghost workers, cross-session worker binding and duplicate native session ownership"
     },
     {
       "invariant": "no-duplicate-completion",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
+      "owner_sha256": "14da681b14b058aa3104cfb2f8f1cb78dfc2c75c2a7dc975748e1a49748d53d7",
       "proof": "plugin/test/q3-adversarial-threat-matrix.test.mjs",
       "proof_sha256": "d2a3478267f374594c90a29a458ed2938a343826be6e79d621e8430e66f274d2",
       "owner_anchor": "worker.result.duplicate-ignored",
@@ -80,7 +80,7 @@
     {
       "invariant": "stale-worker-result",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
+      "owner_sha256": "14da681b14b058aa3104cfb2f8f1cb78dfc2c75c2a7dc975748e1a49748d53d7",
       "proof": "plugin/test/prompt-b-mission-task-worker-adversarial.test.mjs",
       "proof_sha256": "551721963314f48940e8877b89d9f99f793931167015d6a104b173bde8c16cb5",
       "owner_anchor": "worker.result.stale-generation-ignored",
@@ -89,25 +89,25 @@
     {
       "invariant": "task-cancellation",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "4aefdeea9a786314ac380d757ffcc17b9355dd29b22e0a8e892399ce4e04e0e7",
+      "owner_sha256": "a79261104fd8c84cf1d825a45b23c300edd0819aaa345441f73863367e0bc598",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",
+      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
       "owner_anchor": "async cancel(m:MissionState",
       "proof_anchor": "W2 explicit isolated task provisions one lease, binds child workspace, preserves deny permission, and cleanup follows child abort"
     },
     {
       "invariant": "task-recovery",
       "owner": "plugin/src/runtime/task/task-recovery-coordinator.ts",
-      "owner_sha256": "330a83fd6dfc14e2a3fb0a145f176a1bd5fe5b84a3af6e30ee5ec75fbd82e4d3",
+      "owner_sha256": "52fda2ededee4d2c75b45842590b406e957131a9ced214559e9fb2ee8ce10f1d",
       "proof": "plugin/test/crash-restart-survival.test.mjs",
-      "proof_sha256": "02607af55a9529c1b70ee52db3d0e31d4bce4c5202c4de9acebf6d79459d212b",
+      "proof_sha256": "3a4196a54f17ee9edb281c81055f41fe638e0150590ebfc6f1b4d5636ac86ba9",
       "owner_anchor": "recoverRuntimeFailure",
-      "proof_anchor": "explicit task restart reuses the quarantined child session and only then unlocks its callbacks"
+      "proof_anchor": "explicit task restart quiesces and reconciles the durable reservation before the next same-session attempt"
     },
     {
       "invariant": "dependency-unblock",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "4aefdeea9a786314ac380d757ffcc17b9355dd29b22e0a8e892399ce4e04e0e7",
+      "owner_sha256": "a79261104fd8c84cf1d825a45b23c300edd0819aaa345441f73863367e0bc598",
       "proof": "plugin/test/scheduler-hardening.test.mjs",
       "proof_sha256": "4f34d1dee8001c1434d403ce0fae27f4a23972af70f3f2eae17bb683cfbfcd52",
       "owner_anchor": "drainQueue",
@@ -116,27 +116,27 @@
     {
       "invariant": "concurrent-write-safety",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "c8f0ffbc35ca225898dbb8b9e975c077b2253a94e61631259c6d0f1f3028e1da",
+      "owner_sha256": "14da681b14b058aa3104cfb2f8f1cb78dfc2c75c2a7dc975748e1a49748d53d7",
       "proof": "plugin/test/runtime-write-conflict.test.mjs",
-      "proof_sha256": "c623ccf629a7401e01bc505ee4987712204d390534b5cf98100feb4323735f3f",
+      "proof_sha256": "2384c70914522d59854ad9132e07ae6b180fe7e5615105d125ec7a5c8449ba84",
       "owner_anchor": "parallel.write-conflict.quarantined",
       "proof_anchor": "runtime-discovered overlapping writes quarantine the later writer and serialize its resume"
     },
     {
       "invariant": "restart-reconstruction",
       "owner": "plugin/src/runtime/state/persistence.ts",
-      "owner_sha256": "df655ecc93d395864046621ef31ae66882817fad34e7478e0be8b65b7376491d",
+      "owner_sha256": "f611defb9fe0f1a0d9370f789f524bf59de2c1f770e52572f9f8161b3c012ab2",
       "proof": "plugin/test/crash-restart-survival.test.mjs",
-      "proof_sha256": "02607af55a9529c1b70ee52db3d0e31d4bce4c5202c4de9acebf6d79459d212b",
+      "proof_sha256": "3a4196a54f17ee9edb281c81055f41fe638e0150590ebfc6f1b4d5636ac86ba9",
       "owner_anchor": "RUNTIME_STATE_SCHEMA = 10",
       "proof_anchor": "unclean restart quarantines in-flight child, resets ephemeral permission wait, and invalidates evidence"
     },
     {
       "invariant": "terminal-state-correctness",
       "owner": "plugin/src/runtime/worker/worker-runtime.ts",
-      "owner_sha256": "c59e00d0f1d39831e07f3112350a5186b007bf8c67285d8f4708887b23fe7cd4",
+      "owner_sha256": "03708a10149b15668f3674ab7e64d2272cd491f1f9db101289798c6b080c10f8",
       "proof": "plugin/test/task-worker-contract.test.mjs",
-      "proof_sha256": "879a15f054b4e7b78bd9e80c22239c71c07b9a635a7f09731fd19e66350288c0",
+      "proof_sha256": "06d94312c3165fccb0a2e539f753500f1103cf7370cd9cbadd21f64c6e26bf43",
       "owner_anchor": "task.status='completed'",
       "proof_anchor": "WorkerContract starts at attempt zero and beginWorkerAttempt preserves identity while advancing lifecycle"
     }

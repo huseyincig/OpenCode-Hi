@@ -5,7 +5,8 @@
   "status": "PASS",
   "opencode": {
     "version": "1.18.18",
-    "source_commit": "e23586af2623f1bc2e8e6965d2d7acf7bd03d5c3",
+    "source_ref": "v1.18.18",
+    "source_commit": "31406ccc51b4bd2a4e1e086b2bcaa5f7f804f26d",
     "source_worktree_used": false,
     "source_read_mode": "git-blob"
   },
@@ -32,7 +33,7 @@
     },
     "workspace": {
       "path": "packages/opencode/src/control-plane/workspace.ts",
-      "sha256": "087058224b0833b7df8382dd9f5ff0800303090fb4b7df8b07dacb12d63e243c"
+      "sha256": "b9a819b67c3eb8f3af972f7a09f69f4edf0200bcc8d90ac77b053aaae999e347"
     },
     "workspace-adapter": {
       "path": "packages/opencode/src/control-plane/adapters/worktree.ts",
@@ -60,7 +61,7 @@
     },
     "package": {
       "path": "packages/opencode/package.json",
-      "sha256": "bd2f7313b59402fe6389f3ebe41f035dba0fa214a51427b9a5d382337d1f0627"
+      "sha256": "3bd4269fe9e691cb23cd7d65d6057821eb56228fe429d551bedcab044413740c"
     }
   },
   "decisions": [
@@ -150,10 +151,10 @@
     {
       "surface": "skill-loading",
       "native": "OpenCode Skill service/discovery + native skill tool",
-      "hi_decision": "KEEP_POLICY_INDEX_ONLY",
-      "reason": "OpenCode owns skill discovery/loading; Hi owns methodology admission/selection and bounded catalog cache, not a second loader.",
+      "hi_decision": "KEEP_POLICY_SELECTION_ONLY",
+      "reason": "OpenCode owns skill discovery/loading; Hi owns methodology admission and bounded native-skill selection without a second persistent skill index or loader.",
       "hi_paths": [
-        "plugin/src/runtime/skills/catalog-index.ts",
+        "plugin/src/runtime/skills/registry.ts",
         "plugin/src/runtime/methodology/native-loading.ts"
       ]
     },
@@ -180,7 +181,7 @@
       "surface": "compaction",
       "native": "experimental.session.compacting hook",
       "hi_decision": "KEEP_THIN_EXPERIMENTAL_BOUNDARY",
-      "reason": "Hi Context Governor supplies protected/compressible semantic context while OpenCode owns compaction primitive.",
+      "reason": "Hi supplies bounded Mission runtime projection and durable context-artifact semantics while OpenCode owns the compaction primitive.",
       "hi_paths": [
         "plugin/src/opencode/experimental-adapter.ts",
         "plugin/src/hooks/session-compacting.ts"

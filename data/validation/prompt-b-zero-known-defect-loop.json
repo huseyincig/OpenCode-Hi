@@ -1,8 +1,8 @@
 {
-  "schema": 1,
+  "schema": 2,
   "kind": "PROMPT_B_ZERO_KNOWN_DEFECT_CLOSURE_LOOP",
   "source_checkpoint": {
-    "commit": "47f32c34033385cef0cc7f1b715e810bcfa17540"
+    "commit": "5cfc10f180dfe9d93dd59fcae9f40a318cbdac5e"
   },
   "program": "PROMPT_B",
   "section": 40,
@@ -153,7 +153,7 @@
       "root_cause_record": "UNKNOWN_CONFIG_ACCEPTED",
       "resolution": "Profile settings project only the two canonical threshold leaves and accept only low|medium|high.",
       "regression_receipt": "data/validation/prompt-b-configuration.json",
-      "regression_receipt_sha256": "87b231265b5bf764e0e93840ee5838dd68858e99ec9c835f15aa0fa469cbf49d",
+      "regression_receipt_sha256": "8db422fc526f34cca3fe1e6876366140e203ea7050c4de8ae1133aea45c8f5d9",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -176,7 +176,7 @@
       "root_cause_record": "LOWER_PRECEDENCE_SAFETY_WIDENING",
       "resolution": "Nested config resolution is per-leaf; absent/invalid project siblings no longer erase valid host constraints or preferences.",
       "regression_receipt": "data/validation/prompt-b-configuration.json",
-      "regression_receipt_sha256": "87b231265b5bf764e0e93840ee5838dd68858e99ec9c835f15aa0fa469cbf49d",
+      "regression_receipt_sha256": "8db422fc526f34cca3fe1e6876366140e203ea7050c4de8ae1133aea45c8f5d9",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -199,30 +199,7 @@
       "root_cause_record": "DUPLICATE_CONFIG_OWNER",
       "resolution": "Project routing discovery returns sparse explicit validated overrides and no longer manufactures strategy/list/map defaults.",
       "regression_receipt": "data/validation/prompt-b-configuration.json",
-      "regression_receipt_sha256": "87b231265b5bf764e0e93840ee5838dd68858e99ec9c835f15aa0fa469cbf49d",
-      "closure_pipeline": [
-        "discover",
-        "classify",
-        "canonical-owner",
-        "root-cause",
-        "fix",
-        "regression-test",
-        "focused-verification",
-        "full-verification",
-        "docs-parity",
-        "local-commit",
-        "ledger",
-        "adjacent-reaudit"
-      ]
-    },
-    {
-      "id": "compression-cross-consumer-rescope",
-      "classification": "PRODUCT_OR_ARCHITECTURE_DEFECT",
-      "canonical_owner": "Context/PI/Compression",
-      "root_cause_record": "compression-cross-consumer-rescope",
-      "resolution": "CompressionArtifact sources must already be explicitly bound to the exact compression consumer scope; cross-task/consumer derivation requires canonical rebind first.",
-      "regression_receipt": "data/validation/prompt-b-context-project-intelligence-compression.json",
-      "regression_receipt_sha256": "f7203a29c00815f2c5fd94559e8008e6f441dceaeaa2fc87dbc1e6b59939c98c",
+      "regression_receipt_sha256": "8db422fc526f34cca3fe1e6876366140e203ea7050c4de8ae1133aea45c8f5d9",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -337,7 +314,7 @@
       "root_cause_record": "reviewer-done-auto-pass-evidence",
       "resolution": "Reviewer DONE/prose no longer synthesizes passed review Evidence or closes review/verification obligations without explicit fresh source-bound review evidence.",
       "regression_receipt": "data/validation/prompt-b-evidence-verification-completion.json",
-      "regression_receipt_sha256": "f34f26fe80b50ea7eb6c389afc471380570d36c2cf8063cc5b0908579ad3b9be",
+      "regression_receipt_sha256": "7fac0d527eef62f445676067dc66fde2aafb7b323f3324e4032a04edc595de0c",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -360,7 +337,7 @@
       "root_cause_record": "worker-pass-without-source-state",
       "resolution": "Passed worker-sourced verification Evidence requires exact worker session plus 64-hex source-state identity; final native diff deterministically binds worker.native_state_hash.",
       "regression_receipt": "data/validation/prompt-b-evidence-verification-completion.json",
-      "regression_receipt_sha256": "f34f26fe80b50ea7eb6c389afc471380570d36c2cf8063cc5b0908579ad3b9be",
+      "regression_receipt_sha256": "7fac0d527eef62f445676067dc66fde2aafb7b323f3324e4032a04edc595de0c",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -797,7 +774,7 @@
       "root_cause_record": "browser-cross-execution-owner-state-leak",
       "resolution": "Browser sessions are bound to exact execution_owner_ref and stale owners are rejected/reset.",
       "regression_receipt": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
-      "regression_receipt_sha256": "3ab7d407343f67e9bc407ef348de98af48ac0b90e921b8a824fd1b56e8875a50",
+      "regression_receipt_sha256": "dddd912726b7dcc3f16e4d2fd7860b7d3feed6a06bb52b7c69f5d0a8edd5448b",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -820,7 +797,7 @@
       "root_cause_record": "workspace-forged-isolation-decision",
       "resolution": "Workspace provision requires canonical Mission-owned exact-Task IsolationDecision.",
       "regression_receipt": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
-      "regression_receipt_sha256": "3ab7d407343f67e9bc407ef348de98af48ac0b90e921b8a824fd1b56e8875a50",
+      "regression_receipt_sha256": "dddd912726b7dcc3f16e4d2fd7860b7d3feed6a06bb52b7c69f5d0a8edd5448b",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -843,7 +820,7 @@
       "root_cause_record": "process-kill-failure-false-termination",
       "resolution": "Kill/timeout semantic flags are committed only after successful signal delivery.",
       "regression_receipt": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
-      "regression_receipt_sha256": "3ab7d407343f67e9bc407ef348de98af48ac0b90e921b8a824fd1b56e8875a50",
+      "regression_receipt_sha256": "dddd912726b7dcc3f16e4d2fd7860b7d3feed6a06bb52b7c69f5d0a8edd5448b",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -866,7 +843,7 @@
       "root_cause_record": "process-group-unverified-signal",
       "resolution": "Linux process-group signalling requires independently observed isolated pgrp==owned PID and fails closed on drift.",
       "regression_receipt": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
-      "regression_receipt_sha256": "3ab7d407343f67e9bc407ef348de98af48ac0b90e921b8a824fd1b56e8875a50",
+      "regression_receipt_sha256": "dddd912726b7dcc3f16e4d2fd7860b7d3feed6a06bb52b7c69f5d0a8edd5448b",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -889,7 +866,7 @@
       "root_cause_record": "duplicate-active-workspace-identity",
       "resolution": "Different Tasks cannot own the same active workspace path or host workspace ID; collision is cleaned/rejected and persisted duplicates fail validation.",
       "regression_receipt": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
-      "regression_receipt_sha256": "3ab7d407343f67e9bc407ef348de98af48ac0b90e921b8a824fd1b56e8875a50",
+      "regression_receipt_sha256": "dddd912726b7dcc3f16e4d2fd7860b7d3feed6a06bb52b7c69f5d0a8edd5448b",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1048,7 +1025,7 @@
       "classification": "PRODUCT_OR_ARCHITECTURE_DEFECT",
       "canonical_owner": "Skill/methodology security",
       "root_cause_record": "skill-discovery-symlink-escape",
-      "resolution": "Project/personal/Hi skill candidates are accepted only when the canonical skill directory and SKILL.md remain confined to the canonical discovery root/skill directory.",
+      "resolution": "Selected-name native compatibility probing canonicalizes the exact SKILL.md and rejects same-name roots that escape by symlink.",
       "regression_receipt": "data/validation/prompt-b-skills-methodology-security.json",
       "regression_receipt_sha256": "dde4de1c6ccffb4e5d590c3ca03f8507cee5ed4b4f58eb9413a73233486e58a3",
       "closure_pipeline": [
@@ -1071,7 +1048,7 @@
       "classification": "PRODUCT_OR_ARCHITECTURE_DEFECT",
       "canonical_owner": "Skill/methodology security",
       "root_cause_record": "repo-provenance-silent-skill-trust",
-      "resolution": "Repository-local methodology provenance is integrity metadata only; admitted project methodologies default to native ASK unless an exact host/user permission already says ALLOW, while DENY is preserved.",
+      "resolution": "Repository-local methodology provenance proves integrity only; absent an explicit native decision, admitted project methodology is narrowed to ASK.",
       "regression_receipt": "data/validation/prompt-b-skills-methodology-security.json",
       "regression_receipt_sha256": "dde4de1c6ccffb4e5d590c3ca03f8507cee5ed4b4f58eb9413a73233486e58a3",
       "closure_pipeline": [
@@ -1094,7 +1071,30 @@
       "classification": "PRODUCT_OR_ARCHITECTURE_DEFECT",
       "canonical_owner": "Skill/methodology security",
       "root_cause_record": "project-methodology-artifact-symlink-escape",
-      "resolution": "Project methodology policy, skill, provenance and learning candidate files must resolve to exact confined project paths before admission.",
+      "resolution": "Project policy, skill, provenance and project-learning candidate admission require exact confined canonical files.",
+      "regression_receipt": "data/validation/prompt-b-skills-methodology-security.json",
+      "regression_receipt_sha256": "dde4de1c6ccffb4e5d590c3ca03f8507cee5ed4b4f58eb9413a73233486e58a3",
+      "closure_pipeline": [
+        "discover",
+        "classify",
+        "canonical-owner",
+        "root-cause",
+        "fix",
+        "regression-test",
+        "focused-verification",
+        "full-verification",
+        "docs-parity",
+        "local-commit",
+        "ledger",
+        "adjacent-reaudit"
+      ]
+    },
+    {
+      "id": "second-skill-loader-removed",
+      "classification": "PRODUCT_OR_ARCHITECTURE_DEFECT",
+      "canonical_owner": "Skill/methodology security",
+      "root_cause_record": "second-skill-loader-removed",
+      "resolution": "Hi no longer owns a full skill/resource inventory or loader; OpenCode owns discovery/body/resource loading while Hi checks only selected methodology names and records observed loads.",
       "regression_receipt": "data/validation/prompt-b-skills-methodology-security.json",
       "regression_receipt_sha256": "dde4de1c6ccffb4e5d590c3ca03f8507cee5ed4b4f58eb9413a73233486e58a3",
       "closure_pipeline": [
@@ -1280,7 +1280,7 @@
       "root_cause_record": "same-server process/workspace health probes were awaited during plugin initialization",
       "resolution": "process/workspace health probes are deferred until plugin initialization returns",
       "regression_receipt": "plugin/test/host-capability-contract.test.mjs",
-      "regression_receipt_sha256": "2c278ad0c53a4326ebe441a185a06c14f968f1421927914ebe6d6ee3dafe6e70",
+      "regression_receipt_sha256": "b3f2950570902c3ca915227175428d41024dfa61910562d28b152dffc51ac4bb",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1556,7 +1556,237 @@
       "root_cause_record": "documentation parity did not reject prepublication npm/bootstrap wording after real T4 publication completed",
       "resolution": "current README/installation/release/continuation truth is updated and documentation parity rejects stale npm prepublication wording",
       "regression_receipt": "scripts/validate-documentation.py",
-      "regression_receipt_sha256": "35accf62c8bec555b69c386af5e0d8d5a6e64e6f8cd117c7163834201531dcbf",
+      "regression_receipt_sha256": "e82268a631b314da8f113d6d55d10d7b5405428e8492a64e57f8553b01f60ba5",
+      "closure_pipeline": [
+        "discover",
+        "classify",
+        "canonical-owner",
+        "root-cause",
+        "fix",
+        "regression-test",
+        "focused-verification",
+        "full-verification",
+        "docs-parity",
+        "local-commit",
+        "ledger",
+        "adjacent-reaudit"
+      ]
+    },
+    {
+      "id": "short-lived-pty-output-before-attach",
+      "classification": "PRODUCT_RUNTIME_DEFECT",
+      "canonical_owner": "plugin/src/opencode/open-code-pty-adapter.ts",
+      "root_cause_record": "OpenCode PTY create starts immediately while attach is rejected after exit, so a very short process could terminate before Hi established cursor replay and lose user-visible output",
+      "resolution": "POSIX requested commands are held behind initial cursor metadata plus a bounded echo-suppressed ready marker; the internal marker is hidden from initial and restart replay before releasing the original command",
+      "regression_receipt": "plugin/test/p2-opencode-pty-executor.test.mjs",
+      "regression_receipt_sha256": "e35c47f6deb71d4e2f8a3f7e14dde04513e7a7cb569d274e2804ecc8831e840c",
+      "closure_pipeline": [
+        "discover",
+        "classify",
+        "canonical-owner",
+        "root-cause",
+        "fix",
+        "regression-test",
+        "focused-verification",
+        "full-verification",
+        "docs-parity",
+        "local-commit",
+        "ledger",
+        "adjacent-reaudit"
+      ]
+    },
+    {
+      "id": "release-certification-stale-phase1-performance-primitives",
+      "classification": "VALIDATION_ARCHITECTURE_DRIFT",
+      "canonical_owner": "scripts/run-performance-resource-benchmarks.mjs",
+      "root_cause_record": "living performance certification still measured removed SkillCatalogIndex, generic Project Intelligence retrieval and ContextGovernor primitives",
+      "resolution": "performance certification measures current Phase 2 native skill selection, evidence-backed project methodology learning and bounded Mission runtime projection hot paths",
+      "regression_receipt": "scripts/run-performance-resource-benchmarks.mjs",
+      "regression_receipt_sha256": "ecd34e8167d08dc003fbd6ebd742c88013201bc542bbf398ba608bc58e222baf",
+      "closure_pipeline": [
+        "discover",
+        "classify",
+        "canonical-owner",
+        "root-cause",
+        "fix",
+        "regression-test",
+        "focused-verification",
+        "full-verification",
+        "docs-parity",
+        "local-commit",
+        "ledger",
+        "adjacent-reaudit"
+      ]
+    },
+    {
+      "id": "test-harness-stale-fixed-suite-count",
+      "classification": "VALIDATION_EVIDENCE_DRIFT",
+      "canonical_owner": "scripts/run-test-harness-isolation.py",
+      "root_cause_record": "living test-harness acceptance persisted historical full-suite and cwd-probe counts as release truth",
+      "resolution": "a canonical harness runner now records fresh terminal counts and zero real-home state delta, while validators require pass==tests and no failures instead of historical totals",
+      "regression_receipt": "scripts/run-test-harness-isolation.py",
+      "regression_receipt_sha256": "332f076a5b5fda1a0acac7832181557609b9c8c7920fe8985709708270d1467b",
+      "closure_pipeline": [
+        "discover",
+        "classify",
+        "canonical-owner",
+        "root-cause",
+        "fix",
+        "regression-test",
+        "focused-verification",
+        "full-verification",
+        "docs-parity",
+        "local-commit",
+        "ledger",
+        "adjacent-reaudit"
+      ]
+    },
+    {
+      "id": "skills-security-stale-second-loader-contract",
+      "classification": "VALIDATION_ARCHITECTURE_DRIFT",
+      "canonical_owner": "scripts/audit-skills-methodology-security.py",
+      "root_cause_record": "living skill-security audit still certified removed SkillCatalogIndex/resource-reader responsibilities after Phase 2 moved actual skill discovery/body/resource loading back to OpenCode",
+      "resolution": "skill-security audit now certifies only selected-name confinement, admission/provenance/trust separation, same-name shadow rejection and observed native load while explicitly forbidding a second Hi loader",
+      "regression_receipt": "scripts/audit-skills-methodology-security.py",
+      "regression_receipt_sha256": "4d2aee04c62e021a3ed770013cd02ac15f76245e7504e95e23368ddcafea5b18",
+      "closure_pipeline": [
+        "discover",
+        "classify",
+        "canonical-owner",
+        "root-cause",
+        "fix",
+        "regression-test",
+        "focused-verification",
+        "full-verification",
+        "docs-parity",
+        "local-commit",
+        "ledger",
+        "adjacent-reaudit"
+      ]
+    },
+    {
+      "id": "native-reevaluation-stale-upstream-source-pin",
+      "classification": "VALIDATION_SOURCE_BINDING_DRIFT",
+      "canonical_owner": "scripts/audit-opencode-native.py",
+      "root_cause_record": "native reevaluation defaulted to an obsolete commit absent from the exact v1.18.18 upstream clone and used a bare git invocation blocked by repository ownership isolation",
+      "resolution": "native reevaluation resolves immutable v1.18.18, records the resolved commit, and scopes safe.directory only to its explicit upstream Git command",
+      "regression_receipt": "scripts/audit-opencode-native.py",
+      "regression_receipt_sha256": "e2d47cf23b1233266a1a73f993538fe2b0e8da98374f0c1929faebd0d33368a4",
+      "closure_pipeline": [
+        "discover",
+        "classify",
+        "canonical-owner",
+        "root-cause",
+        "fix",
+        "regression-test",
+        "focused-verification",
+        "full-verification",
+        "docs-parity",
+        "local-commit",
+        "ledger",
+        "adjacent-reaudit"
+      ]
+    },
+    {
+      "id": "config-validator-stale-second-leaf-count",
+      "classification": "VALIDATION_SCHEMA_DRIFT",
+      "canonical_owner": "scripts/validate.py",
+      "root_cause_record": "a second validator block retained the pre-TeamMode-removal 32-leaf config count after the canonical catalog and primary audit moved to 29 leaves",
+      "resolution": "all living config validation now requires the canonical 29-leaf split: 26 runtime, 2 diagnostic and 1 schema marker",
+      "regression_receipt": "scripts/validate.py",
+      "regression_receipt_sha256": "3ffaf31ea1caf8005e6c60f0f6272d98225dafbd036743eb1f38b59652e1fa5f",
+      "closure_pipeline": [
+        "discover",
+        "classify",
+        "canonical-owner",
+        "root-cause",
+        "fix",
+        "regression-test",
+        "focused-verification",
+        "full-verification",
+        "docs-parity",
+        "local-commit",
+        "ledger",
+        "adjacent-reaudit"
+      ]
+    },
+    {
+      "id": "living-audit-stale-proof-anchors",
+      "classification": "VALIDATION_PROOF_DRIFT",
+      "canonical_owner": "scripts/audit-mission-task-worker.py",
+      "root_cause_record": "several living audits retained pre-M15 proof phrases for restart, host ASK authority and browser runtime-resource semantics although the executable tests had evolved",
+      "resolution": "mission/persistence/authority/host-port audits now bind the current exact behavioral proof phrases without changing product behavior",
+      "regression_receipt": "scripts/audit-host-port-portability.py",
+      "regression_receipt_sha256": "7eccd03d29305b4ce0d95b5f17b0d733e6bcb6170428e049e52ec581f37b8806",
+      "closure_pipeline": [
+        "discover",
+        "classify",
+        "canonical-owner",
+        "root-cause",
+        "fix",
+        "regression-test",
+        "focused-verification",
+        "full-verification",
+        "docs-parity",
+        "local-commit",
+        "ledger",
+        "adjacent-reaudit"
+      ]
+    },
+    {
+      "id": "failure-injection-stale-fixed-targeted-count",
+      "classification": "VALIDATION_EVIDENCE_DRIFT",
+      "canonical_owner": "scripts/run-failure-injection.py",
+      "root_cause_record": "failure-injection acceptance required an obsolete literal 54-test terminal count even though the bounded injection inventory remained 12 and the current targeted suite had grown",
+      "resolution": "acceptance now requires a nonempty terminal suite with pass==tests and zero fail/cancelled/skipped/todo while the 12 injection inventory and proof anchors remain exact",
+      "regression_receipt": "scripts/run-failure-injection.py",
+      "regression_receipt_sha256": "e2da22ac1901ee302e1d5b9064f7fa6d0f0d8915e9ca63a025321f1607da0264",
+      "closure_pipeline": [
+        "discover",
+        "classify",
+        "canonical-owner",
+        "root-cause",
+        "fix",
+        "regression-test",
+        "focused-verification",
+        "full-verification",
+        "docs-parity",
+        "local-commit",
+        "ledger",
+        "adjacent-reaudit"
+      ]
+    },
+    {
+      "id": "replay-corpus-stale-completion-reason-class",
+      "classification": "VALIDATION_REPLAY_DRIFT",
+      "canonical_owner": "data/validation/replay-corpus.json",
+      "root_cause_record": "completion owner evolved from generic verification-missing to claim-scoped verification-claims-missing while the deterministic replay corpus retained the obsolete expected reason class",
+      "resolution": "replay corpus now matches the canonical claim-linked completion reason without changing runtime behavior",
+      "regression_receipt": "data/validation/replay-corpus.json",
+      "regression_receipt_sha256": "a41d2de33a4aad392f2a3b554cbb3bd3ab8deb63973ce63b9f6c1d2857973033",
+      "closure_pipeline": [
+        "discover",
+        "classify",
+        "canonical-owner",
+        "root-cause",
+        "fix",
+        "regression-test",
+        "focused-verification",
+        "full-verification",
+        "docs-parity",
+        "local-commit",
+        "ledger",
+        "adjacent-reaudit"
+      ]
+    },
+    {
+      "id": "living-acceptance-hardcoded-source-commit",
+      "classification": "VALIDATION_SOURCE_BINDING_DRIFT",
+      "canonical_owner": "scripts/validate.py",
+      "root_cause_record": "multiple living acceptance validators required obsolete literal source commits while simultaneously requiring current proof hashes",
+      "resolution": "living acceptance source binding now verifies exact recorded commit/tree objects and ancestor relation to the current candidate while owner/proof hashes continue to detect material drift",
+      "regression_receipt": "scripts/validate.py",
+      "regression_receipt_sha256": "3ffaf31ea1caf8005e6c60f0f6272d98225dafbd036743eb1f38b59652e1fa5f",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1574,17 +1804,13 @@
     }
   ],
   "summary": {
-    "recorded_findings": 68,
+    "recorded_findings": 78,
     "unresolved_known_defects": 0,
-    "adjacent_regression_tests": 93,
-    "adjacent_regression_pass": 93,
-    "full_python_pass": 118,
-    "full_node_pass": 848,
-    "architecture_rules_pass": 22,
-    "docs_parity_violations": 0,
+    "closure_receipts_checked": 78,
+    "documentation_parity_violations": 0,
     "exact_t3_capabilities": 3,
     "lifecycle_invariants_pass": 61
   },
   "violations": [],
-  "claim_boundary": "ZERO KNOWN DEFECT means no unresolved defect in the audited Prompt B scope after explicit closure and adjacent re-audit; it is not a claim that unknown future defects are impossible."
+  "claim_boundary": "ZERO KNOWN DEFECT means no unresolved defect in the audited Prompt B scope after explicit closure and adjacent evidence re-audit. Full-suite terminal counts belong to fresh final-gates evidence, not this defect ledger; unknown future defects remain possible."
 }

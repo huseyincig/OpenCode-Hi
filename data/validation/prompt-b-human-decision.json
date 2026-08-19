@@ -80,7 +80,7 @@
     {
       "invariant": "restart-no-transport-replay",
       "owner": "plugin/src/runtime/application/runtime-services.ts",
-      "owner_sha256": "9217ac66e7a59c514002057b0f8154b08bef9b79b77b9dc7cbac83580538e8fa",
+      "owner_sha256": "a77335125a9b424c22a606b1765177eee93e9f7de0dde1fa23e3ea16c650a225",
       "owner_anchor": "new ChatHumanDecisionTransport()",
       "proof": "plugin/test/h1-human-decision-transport.test.mjs",
       "proof_sha256": "9567c851068b6472e0a704d561143bcfdfa11860d8367b01527d729cdd8e6250",
@@ -98,7 +98,7 @@
     {
       "invariant": "exact-blocked-decision-relation",
       "owner": "plugin/src/runtime/completion/evaluator.ts",
-      "owner_sha256": "72182965f77468244b1e3ea63749d2324008da60635e79dcce58e4f0740b4c10",
+      "owner_sha256": "a84becde3d024c4ef0242d916c83e644b4ad6c6bd3ba953f39086f5920254222",
       "owner_anchor": "human-decision:",
       "proof": "plugin/test/human-decision-contract.test.mjs",
       "proof_sha256": "4cfd2b71345e15d1a5f86b0bade77fcb66d52d2c0e9b6ab9eb1c802723437d49",
@@ -107,7 +107,7 @@
     {
       "invariant": "source-resolvable-not-asked",
       "owner": "plugin/src/runtime/continuation/evaluator.ts",
-      "owner_sha256": "9a0cd389595fe1579d843b04e48d03c625441ee656c9d1c7aa632c0d5163a03e",
+      "owner_sha256": "18ef44e9262368e1f6fcb4efaf5bd4a66c3091fb4a5a9b5aef7de6af32942dce",
       "owner_anchor": "Resolve the contract-critical ambiguity from repository structure",
       "proof": "plugin/test/main-prompt-delegation-preconditions.test.mjs",
       "proof_sha256": "73f749171d427a7524b2b105002b786bce5d25a84085ba20d394a851395cb3db",
@@ -125,16 +125,16 @@
     {
       "invariant": "idle-does-not-reclassify-open-decision",
       "owner": "plugin/src/runtime/application/runtime-event-controller.ts",
-      "owner_sha256": "5094345ed540a745c73cca7022d082f07690b05180006be922883baf24f7b7cc",
+      "owner_sha256": "d6e57e53d26b1d631f89e69cf428a4ca616a1eb7eef09cc4e56642d03470edaf",
       "owner_anchor": "m.authority.human_decision?.status!=='OPEN'",
       "proof": "plugin/test/p3-process-control-integration.test.mjs",
-      "proof_sha256": "b751f33c5866a288da8841e37b8ac63c081323289c6633ecec652acac29d6ec0",
+      "proof_sha256": "f311974099d72d27db45d0b76b4d12b9d631daefa8a84751beb7e7d2e9e640a0",
       "proof_anchor": "parent idle preserves an existing canonical operational HumanDecision"
     },
     {
       "invariant": "structured-host-ui-truthful-unsupported",
       "owner": "plugin/src/contracts/host-capability.ts",
-      "owner_sha256": "d0f7a502606323871c69d23f53cc4f4eea9634636985d8ef5e63f85bb7af01d6",
+      "owner_sha256": "6296832cd6f5b73f234f2b41e86177525146a5b452d5def7b58c61515ef9e1af",
       "owner_anchor": "unsupported('structured-human-decision-transport'",
       "proof": "plugin/test/h2-structured-human-decision-host.test.mjs",
       "proof_sha256": "2d4584d3e994c00a350107ac3ad4bd066e93bb6c208f3eada7c0c97550f3d259",

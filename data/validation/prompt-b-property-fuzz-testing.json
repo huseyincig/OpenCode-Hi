@@ -18,7 +18,7 @@
       "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
       "owner_anchor": "assertCanonicalId",
       "proof": "plugin/test/q4-property-fuzz.test.mjs",
-      "proof_sha256": "124af8a6be516d3171e89da6baf65e707421ac43c39e360a973b1ba5fc53b91c",
+      "proof_sha256": "5b73eee33e6a745e2b740878a3619685fd2ad3cd98224d68f855bfb5717409dd",
       "proof_anchor": "Q4 seeded property fuzz: canonical IDs accept valid syntax and reject malformed forms"
     },
     {
@@ -27,25 +27,25 @@
       "owner_sha256": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
       "owner_anchor": "normalizeBoundedProjectPath",
       "proof": "plugin/test/q4-property-fuzz.test.mjs",
-      "proof_sha256": "124af8a6be516d3171e89da6baf65e707421ac43c39e360a973b1ba5fc53b91c",
+      "proof_sha256": "5b73eee33e6a745e2b740878a3619685fd2ad3cd98224d68f855bfb5717409dd",
       "proof_anchor": "Q4 seeded property fuzz: paths remain project-bounded"
     },
     {
       "area": "schemas",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "113bfe4fc6e72a97f8078c57c784473cfa2ddd4f68b1a051da1f24f650934e97",
+      "owner_sha256": "61ce2e9002580c6c12a7df3f3f5dc5894c92aaebce6a96b8676c72d7f791a6f4",
       "owner_anchor": "validateMissionEnvelope",
       "proof": "plugin/test/q4-property-fuzz.test.mjs",
-      "proof_sha256": "124af8a6be516d3171e89da6baf65e707421ac43c39e360a973b1ba5fc53b91c",
+      "proof_sha256": "5b73eee33e6a745e2b740878a3619685fd2ad3cd98224d68f855bfb5717409dd",
       "proof_anchor": "Q4 seeded property fuzz: strict schemas reject widening unknown and malformed permission profiles"
     },
     {
       "area": "event-ordering",
       "owner": "plugin/src/runtime/application/runtime-event-controller.ts",
-      "owner_sha256": "5094345ed540a745c73cca7022d082f07690b05180006be922883baf24f7b7cc",
+      "owner_sha256": "d6e57e53d26b1d631f89e69cf428a4ca616a1eb7eef09cc4e56642d03470edaf",
       "owner_anchor": "ev.kind==='permission-asked'",
       "proof": "plugin/test/q4-property-fuzz.test.mjs",
-      "proof_sha256": "124af8a6be516d3171e89da6baf65e707421ac43c39e360a973b1ba5fc53b91c",
+      "proof_sha256": "5b73eee33e6a745e2b740878a3619685fd2ad3cd98224d68f855bfb5717409dd",
       "proof_anchor": "Q4 seeded property fuzz: permission event ordering and duplicates never leave phantom pending authority"
     },
     {
@@ -54,16 +54,16 @@
       "owner_sha256": "59ffd9afcdda8f293484bcd1b5ba9672e7687f1f431f1b19bfd2dac2f158aca4",
       "owner_anchor": "normalizeOpenCodeEvent",
       "proof": "plugin/test/q4-property-fuzz.test.mjs",
-      "proof_sha256": "124af8a6be516d3171e89da6baf65e707421ac43c39e360a973b1ba5fc53b91c",
+      "proof_sha256": "5b73eee33e6a745e2b740878a3619685fd2ad3cd98224d68f855bfb5717409dd",
       "proof_anchor": "Q4 seeded property fuzz: malformed host observations normalize without unbounded output or fabricated permission decisions"
     },
     {
       "area": "config",
       "owner": "plugin/src/config/resolver.ts",
-      "owner_sha256": "1fd76677fea9c73dd80f7f8472a866de06fbc4992696fa474029a28ef8475851",
+      "owner_sha256": "1bb96af9473a160e2301373911ef7e21f72a7a525ee375da07c85e4c9f42d18e",
       "owner_anchor": "resolveHiConfigWithReport",
       "proof": "plugin/test/q4-property-fuzz.test.mjs",
-      "proof_sha256": "124af8a6be516d3171e89da6baf65e707421ac43c39e360a973b1ba5fc53b91c",
+      "proof_sha256": "5b73eee33e6a745e2b740878a3619685fd2ad3cd98224d68f855bfb5717409dd",
       "proof_anchor": "Q4 seeded property fuzz: malformed config resolves to bounded canonical executable values"
     },
     {
@@ -72,25 +72,25 @@
       "owner_sha256": "e81c16ad08a0392b4cb5094500dd046a2ef0d9bf731159817fc67d0a4c4c6378",
       "owner_anchor": "approvePendingAuthority",
       "proof": "plugin/test/q4-property-fuzz.test.mjs",
-      "proof_sha256": "124af8a6be516d3171e89da6baf65e707421ac43c39e360a973b1ba5fc53b91c",
+      "proof_sha256": "5b73eee33e6a745e2b740878a3619685fd2ad3cd98224d68f855bfb5717409dd",
       "proof_anchor": "Q4 seeded property fuzz: decision payloads cannot authorize without exact structured identity"
     },
     {
       "area": "tool-outputs",
       "owner": "plugin/src/runtime/task/result-parser.ts",
-      "owner_sha256": "e851ee7ad0011f57e350142161ce4873a046471c8510796f967d52ffd59e5d2f",
+      "owner_sha256": "5e5403eda8c62c65c2fe7f90736bb1b7a61412066e61986c9f8e8223a747dd0a",
       "owner_anchor": "parseWorkerResult",
       "proof": "plugin/test/q4-property-fuzz.test.mjs",
-      "proof_sha256": "124af8a6be516d3171e89da6baf65e707421ac43c39e360a973b1ba5fc53b91c",
+      "proof_sha256": "5b73eee33e6a745e2b740878a3619685fd2ad3cd98224d68f855bfb5717409dd",
       "proof_anchor": "Q4 seeded property fuzz: arbitrary tool/worker output parsing is bounded and canonical"
     },
     {
       "area": "persistence-envelopes",
       "owner": "plugin/src/runtime/state/persistence.ts",
-      "owner_sha256": "df655ecc93d395864046621ef31ae66882817fad34e7478e0be8b65b7376491d",
+      "owner_sha256": "f611defb9fe0f1a0d9370f789f524bf59de2c1f770e52572f9f8161b3c012ab2",
       "owner_anchor": "validateMissionEnvelope",
       "proof": "plugin/test/q4-property-fuzz.test.mjs",
-      "proof_sha256": "124af8a6be516d3171e89da6baf65e707421ac43c39e360a973b1ba5fc53b91c",
+      "proof_sha256": "5b73eee33e6a745e2b740878a3619685fd2ad3cd98224d68f855bfb5717409dd",
       "proof_anchor": "Q4 seeded property fuzz: persistence envelopes reject malformed schema and shape while valid round-trips survive"
     }
   ],

@@ -6,157 +6,165 @@
   "status": "PASS",
   "invariants": [
     {
-      "invariant": "discovery-confinement",
+      "invariant": "selected-name-discovery-confinement",
       "owner": "plugin/src/runtime/skills/registry.ts",
-      "owner_sha256": "ad2da40fc07e254656a256071daea5d803e4de070cbf0df2168f08550de1c24b",
-      "owner_anchor": "confined(root,actualDir)",
+      "owner_sha256": "032129401c9bca75326de27eea0ff7fff9d0d357d5952dce9fca14edea423296",
+      "owner_anchor": "if(!confined(root,actual))",
       "proof": "plugin/test/prompt-b-skills-methodology-security-hostile.test.mjs",
-      "proof_sha256": "f0b42face783c855cb04c409b7eea3f2b83ea0d01c98ad0b8db37a314f4c93e1",
-      "proof_anchor": "project skill discovery rejects a skill-directory symlink escaping its discovery root"
+      "proof_sha256": "c0686cd0712593810f9c994480acbe6c6b380d688a60ebd381e78768928f9004",
+      "proof_anchor": "PROMPT B requested methodology preflight rejects a same-name project skill symlink escaping its native discovery root"
     },
     {
-      "invariant": "resource-indexing",
+      "invariant": "native-discovery-host-owned",
       "owner": "plugin/src/runtime/skills/registry.ts",
-      "owner_sha256": "ad2da40fc07e254656a256071daea5d803e4de070cbf0df2168f08550de1c24b",
-      "owner_anchor": "indexSkillResources",
+      "owner_sha256": "032129401c9bca75326de27eea0ff7fff9d0d357d5952dce9fca14edea423296",
+      "owner_anchor": "Narrow native-skill compatibility probe.",
       "proof": "plugin/test/prompt-b-skills-methodology-security-hostile.test.mjs",
-      "proof_sha256": "f0b42face783c855cb04c409b7eea3f2b83ea0d01c98ad0b8db37a314f4c93e1",
-      "proof_anchor": "resource symlink cannot escape the admitted skill directory"
+      "proof_sha256": "c0686cd0712593810f9c994480acbe6c6b380d688a60ebd381e78768928f9004",
+      "proof_anchor": "PROMPT B native-installed skill outside Hi methodology policy is not selected by Hi while native loading remains host-owned"
     },
     {
-      "invariant": "arbitrary-path-read",
+      "invariant": "frontmatter-name-description",
       "owner": "plugin/src/runtime/skills/registry.ts",
-      "owner_sha256": "ad2da40fc07e254656a256071daea5d803e4de070cbf0df2168f08550de1c24b",
-      "owner_anchor": "Unsafe skill resource path",
-      "proof": "plugin/test/prompt-b-skills-methodology-security-hostile.test.mjs",
-      "proof_sha256": "f0b42face783c855cb04c409b7eea3f2b83ea0d01c98ad0b8db37a314f4c93e1",
-      "proof_anchor": "readSkillResource(skill,'references','../outside.md')"
+      "owner_sha256": "032129401c9bca75326de27eea0ff7fff9d0d357d5952dce9fca14edea423296",
+      "owner_anchor": "fm.name===name&&Boolean(fm.description)",
+      "proof": "plugin/test/native-skill-catalog.test.mjs",
+      "proof_sha256": "97829bf90a65fec515bfd6c01736f80a2b36e996a38d2fb565e129569407c3ac",
+      "proof_anchor": "generated SKILL mechanical contract sections mirror canonical methodology data"
     },
     {
-      "invariant": "symlink-escape",
-      "owner": "plugin/src/runtime/methodology/project-policy.ts",
-      "owner_sha256": "f5ceeb9028f2a745eecebed682fa0ee7b503c285adf411f21e6ea36cf8e5b57d",
-      "owner_anchor": "exactConfinedFile",
-      "proof": "plugin/test/prompt-b-skills-methodology-security-hostile.test.mjs",
-      "proof_sha256": "f0b42face783c855cb04c409b7eea3f2b83ea0d01c98ad0b8db37a314f4c93e1",
-      "proof_anchor": "project policy/provenance directory symlink escape is not an admission surface"
-    },
-    {
-      "invariant": "frontmatter-validation",
+      "invariant": "same-name-shadow-collision",
       "owner": "plugin/src/runtime/skills/registry.ts",
-      "owner_sha256": "ad2da40fc07e254656a256071daea5d803e4de070cbf0df2168f08550de1c24b",
-      "owner_anchor": "validSkillFrontmatter",
-      "proof": "plugin/test/c7-skill-catalog-index.test.mjs",
-      "proof_sha256": "ca2dffac17abf8ff91ac7b9ae17d950fcf4497b60f3929aca9cc3192687ef667",
-      "proof_anchor": "assert.equal(bad.valid,false)"
-    },
-    {
-      "invariant": "id-collisions",
-      "owner": "plugin/src/runtime/skills/registry.ts",
-      "owner_sha256": "ad2da40fc07e254656a256071daea5d803e4de070cbf0df2168f08550de1c24b",
+      "owner_sha256": "032129401c9bca75326de27eea0ff7fff9d0d357d5952dce9fca14edea423296",
       "owner_anchor": "const foreign=all.filter",
       "proof": "plugin/test/prompt-b-skills-methodology-security-hostile.test.mjs",
-      "proof_sha256": "f0b42face783c855cb04c409b7eea3f2b83ea0d01c98ad0b8db37a314f4c93e1",
-      "proof_anchor": "foreign project skill ID cannot shadow or replace a built-in Hi methodology"
+      "proof_sha256": "c0686cd0712593810f9c994480acbe6c6b380d688a60ebd381e78768928f9004",
+      "proof_anchor": "PROMPT B foreign project skill ID cannot shadow or replace a built-in Hi methodology"
     },
     {
-      "invariant": "project-vs-built-in-precedence",
-      "owner": "plugin/src/runtime/skills/registry.ts",
-      "owner_sha256": "ad2da40fc07e254656a256071daea5d803e4de070cbf0df2168f08550de1c24b",
-      "owner_anchor": "expectedProvider:SkillProvider=policy.provider",
+      "invariant": "project-policy-symlink-confinement",
+      "owner": "plugin/src/runtime/methodology/project-policy.ts",
+      "owner_sha256": "8e7b3f9f0840c36dcfb24361219e02f228cb2a141d29a3a795adb9a0bc95c830",
+      "owner_anchor": "exactConfinedFile",
       "proof": "plugin/test/prompt-b-skills-methodology-security-hostile.test.mjs",
-      "proof_sha256": "f0b42face783c855cb04c409b7eea3f2b83ea0d01c98ad0b8db37a314f4c93e1",
-      "proof_anchor": "assert.equal(plan.outcomes[0].outcome,'invalid')"
+      "proof_sha256": "c0686cd0712593810f9c994480acbe6c6b380d688a60ebd381e78768928f9004",
+      "proof_anchor": "PROMPT B project policy/provenance directory symlink escape is not an admission surface"
     },
     {
-      "invariant": "malicious-content",
+      "invariant": "project-skill-provenance-hash",
+      "owner": "plugin/src/runtime/methodology/project-policy.ts",
+      "owner_sha256": "8e7b3f9f0840c36dcfb24361219e02f228cb2a141d29a3a795adb9a0bc95c830",
+      "owner_anchor": "provenance.skill_sha256!==digest(skillText)",
+      "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
+      "proof_sha256": "6ce8447f1eaa2cde2e389d76e2843d431ad5c6a0bf31e8a9f654053b556283bc",
+      "proof_anchor": "project methodology is admitted only when skill, policy and hash-bound provenance are coherent"
+    },
+    {
+      "invariant": "project-policy-provenance-hash",
+      "owner": "plugin/src/runtime/methodology/project-policy.ts",
+      "owner_sha256": "8e7b3f9f0840c36dcfb24361219e02f228cb2a141d29a3a795adb9a0bc95c830",
+      "owner_anchor": "provenance.policy_sha256!==digest(policyText)",
+      "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
+      "proof_sha256": "6ce8447f1eaa2cde2e389d76e2843d431ad5c6a0bf31e8a9f654053b556283bc",
+      "proof_anchor": "project methodology update requires fresh provenance hash before re-admission"
+    },
+    {
+      "invariant": "project-learning-ready",
+      "owner": "plugin/src/runtime/methodology/project-policy.ts",
+      "owner_sha256": "8e7b3f9f0840c36dcfb24361219e02f228cb2a141d29a3a795adb9a0bc95c830",
+      "owner_anchor": "candidate.state!=='READY'",
+      "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
+      "proof_sha256": "6ce8447f1eaa2cde2e389d76e2843d431ad5c6a0bf31e8a9f654053b556283bc",
+      "proof_anchor": "project-learning provenance without a READY repeated-evidence candidate is not admitted"
+    },
+    {
+      "invariant": "project-default-trust-ask",
       "owner": "plugin/src/runtime/methodology/host-permissions.ts",
-      "owner_sha256": "92847075c2759e370e2f8c6ded9d4a41c536c412e7ecde1de42075c21dfe7fcb",
+      "owner_sha256": "a59a6aeeee54eb1a2d82793de3e77e7e901413dd7eef6ac1057919fb8522e346",
       "owner_anchor": "skill[policy.name]='ask'",
       "proof": "plugin/test/prompt-b-skills-methodology-security-hostile.test.mjs",
-      "proof_sha256": "f0b42face783c855cb04c409b7eea3f2b83ea0d01c98ad0b8db37a314f4c93e1",
-      "proof_anchor": "repository-local methodology provenance can never silently grant native skill allow"
+      "proof_sha256": "c0686cd0712593810f9c994480acbe6c6b380d688a60ebd381e78768928f9004",
+      "proof_anchor": "PROMPT B repository-local methodology provenance can never silently grant native skill allow"
     },
     {
-      "invariant": "lazy-load",
+      "invariant": "explicit-deny-preserved",
+      "owner": "plugin/src/runtime/methodology/host-permissions.ts",
+      "owner_sha256": "a59a6aeeee54eb1a2d82793de3e77e7e901413dd7eef6ac1057919fb8522e346",
+      "owner_anchor": "if(exact==='deny'||exact==='ask'||exact==='allow')",
+      "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
+      "proof_sha256": "6ce8447f1eaa2cde2e389d76e2843d431ad5c6a0bf31e8a9f654053b556283bc",
+      "proof_anchor": "explicit native deny is preserved even for an admitted compatible project methodology"
+    },
+    {
+      "invariant": "selected-not-loaded",
       "owner": "plugin/src/runtime/methodology/native-loading.ts",
       "owner_sha256": "67ca10a2f409d7220a64a45418c976b7510de4267b2b1096ebff96117e77b6d8",
       "owner_anchor": "assertChildMethodologyLoad",
       "proof": "plugin/test/prompt-b-skills-methodology-security-hostile.test.mjs",
-      "proof_sha256": "f0b42face783c855cb04c409b7eea3f2b83ea0d01c98ad0b8db37a314f4c93e1",
-      "proof_anchor": "selected methodology is not loaded until the exact child load is observed"
+      "proof_sha256": "c0686cd0712593810f9c994480acbe6c6b380d688a60ebd381e78768928f9004",
+      "proof_anchor": "PROMPT B selected methodology is not loaded until the exact child load is observed"
     },
     {
-      "invariant": "admission",
-      "owner": "plugin/src/runtime/methodology/project-policy.ts",
-      "owner_sha256": "f5ceeb9028f2a745eecebed682fa0ee7b503c285adf411f21e6ea36cf8e5b57d",
-      "owner_anchor": "provenance.skill_sha256!==digest(skillText)",
-      "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
-      "proof_sha256": "12ad8467fc327afc552309149bf329b3108a7a04c16f5220609e3636b0a8cb2a",
-      "proof_anchor": "project methodology is admitted only when skill, policy and hash-bound provenance are coherent"
+      "invariant": "unadmitted-not-selected",
+      "owner": "plugin/src/runtime/skills/registry.ts",
+      "owner_sha256": "032129401c9bca75326de27eea0ff7fff9d0d357d5952dce9fca14edea423296",
+      "owner_anchor": "if(!policy)continue",
+      "proof": "plugin/test/prompt-b-skills-methodology-security-hostile.test.mjs",
+      "proof_sha256": "c0686cd0712593810f9c994480acbe6c6b380d688a60ebd381e78768928f9004",
+      "proof_anchor": "PROMPT B native-installed skill outside Hi methodology policy is not selected by Hi while native loading remains host-owned"
     },
     {
-      "invariant": "user-project-trust",
+      "invariant": "methodology-cannot-grant-authority",
       "owner": "plugin/src/runtime/methodology/host-permissions.ts",
-      "owner_sha256": "92847075c2759e370e2f8c6ded9d4a41c536c412e7ecde1de42075c21dfe7fcb",
-      "owner_anchor": "Repository-local methodology provenance proves integrity, not user trust",
+      "owner_sha256": "a59a6aeeee54eb1a2d82793de3e77e7e901413dd7eef6ac1057919fb8522e346",
+      "owner_anchor": "Repository-local methodology provenance proves integrity, not trust.",
       "proof": "plugin/test/prompt-b-skills-methodology-security-hostile.test.mjs",
-      "proof_sha256": "f0b42face783c855cb04c409b7eea3f2b83ea0d01c98ad0b8db37a314f4c93e1",
-      "proof_anchor": "assert.equal(cfg.agent.coder.permission.skill[f.name],'ask')"
-    },
-    {
-      "invariant": "provenance",
-      "owner": "plugin/src/runtime/methodology/project-policy.ts",
-      "owner_sha256": "f5ceeb9028f2a745eecebed682fa0ee7b503c285adf411f21e6ea36cf8e5b57d",
-      "owner_anchor": "provenance.policy_sha256!==digest(policyText)",
-      "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
-      "proof_sha256": "12ad8467fc327afc552309149bf329b3108a7a04c16f5220609e3636b0a8cb2a",
-      "proof_anchor": "project methodology update requires fresh provenance hash before re-admission"
-    },
-    {
-      "invariant": "methodology-learning-promotion",
-      "owner": "plugin/src/runtime/project-intelligence/methodology-candidate.ts",
-      "owner_sha256": "cac6049ae36c2e659164e2f9db7d2faa9eee4e3f5521a560b4927fdfa94f916d",
-      "owner_anchor": "v.state==='READY'&&independent<2",
-      "proof": "plugin/test/prompt-b-skills-methodology-security-hostile.test.mjs",
-      "proof_sha256": "f0b42face783c855cb04c409b7eea3f2b83ea0d01c98ad0b8db37a314f4c93e1",
-      "proof_anchor": "forged project-learning files cannot turn repository provenance into silent execution trust"
+      "proof_sha256": "c0686cd0712593810f9c994480acbe6c6b380d688a60ebd381e78768928f9004",
+      "proof_anchor": "PROMPT B forged project-learning files cannot turn repository provenance into silent execution trust"
     }
   ],
   "static_guards": {
-    "installed_not_admitted": true,
-    "admitted_not_selected": true,
-    "selected_not_loaded": true,
-    "project_default_trust_is_ask": true,
-    "explicit_deny_preserved": true,
+    "selected_names_only": true,
+    "no_second_skill_catalog_loader": true,
+    "native_loading_host_owned": true,
+    "canonical_skill_realpath_confinement": true,
+    "same_name_shadow_rejected": true,
     "project_artifacts_realpath_confined": true,
-    "resource_parent_traversal_rejected": true
+    "project_learning_requires_ready": true,
+    "project_provenance_is_not_trust": true,
+    "project_default_is_ask": true,
+    "explicit_native_decision_preserved": true,
+    "selected_loaded_separation": true
   },
-  "violations": [],
-  "summary": {
-    "required": 13,
-    "covered": 13,
-    "violations": 0
-  },
-  "closed_defects": [
-    {
-      "id": "skill-discovery-symlink-escape",
-      "fix": "Project/personal/Hi skill candidates are accepted only when the canonical skill directory and SKILL.md remain confined to the canonical discovery root/skill directory."
-    },
-    {
-      "id": "repo-provenance-silent-skill-trust",
-      "fix": "Repository-local methodology provenance is integrity metadata only; admitted project methodologies default to native ASK unless an exact host/user permission already says ALLOW, while DENY is preserved."
-    },
-    {
-      "id": "project-methodology-artifact-symlink-escape",
-      "fix": "Project methodology policy, skill, provenance and learning candidate files must resolve to exact confined project paths before admission."
-    }
-  ],
   "state_separation": [
     "installed skill",
     "admitted methodology",
     "selected methodology",
     "loaded methodology"
   ],
-  "claim_boundary": "Project-local skill/methodology files may become structurally admitted after integrity/provenance checks, but repository content cannot silently manufacture native execution trust. Native/user permission remains the load boundary; methodologies cannot grant Authority or Completion."
+  "closed_defects": [
+    {
+      "id": "skill-discovery-symlink-escape",
+      "fix": "Selected-name native compatibility probing canonicalizes the exact SKILL.md and rejects same-name roots that escape by symlink."
+    },
+    {
+      "id": "repo-provenance-silent-skill-trust",
+      "fix": "Repository-local methodology provenance proves integrity only; absent an explicit native decision, admitted project methodology is narrowed to ASK."
+    },
+    {
+      "id": "project-methodology-artifact-symlink-escape",
+      "fix": "Project policy, skill, provenance and project-learning candidate admission require exact confined canonical files."
+    },
+    {
+      "id": "second-skill-loader-removed",
+      "fix": "Hi no longer owns a full skill/resource inventory or loader; OpenCode owns discovery/body/resource loading while Hi checks only selected methodology names and records observed loads."
+    }
+  ],
+  "violations": [],
+  "summary": {
+    "required": 13,
+    "covered": 13,
+    "violations": 0
+  },
+  "claim_boundary": "Installed OpenCode skills, admitted Hi methodology policy, selected methodology and observed native load are distinct states. Repository content cannot grant trust or authority, foreign same-name skills cannot shadow canonical Hi methodology, and Hi does not reimplement OpenCode skill/resource loading."
 }

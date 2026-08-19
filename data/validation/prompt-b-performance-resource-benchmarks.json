@@ -1,17 +1,17 @@
 {
-  "schema": 1,
+  "schema": 2,
   "kind": "PROMPT_B_PERFORMANCE_RESOURCE_BENCHMARK_AUDIT",
   "program": "PROMPT_B",
   "section": 35,
   "status": "PASS",
   "benchmark_receipt": "data/validation/performance-resource-benchmarks-0.1.0.json",
-  "benchmark_sha256": "39055b8dec371344868cdf74715acfa451e81f8fcac9e182b9af7e6e732c26a5",
+  "benchmark_sha256": "264ec6f002f8476ab952e1fde9789937e0c64f485f405adaa406b85bae489195",
   "required_metrics": [
     "startup",
     "task_initialization",
-    "skill_discovery_cache",
-    "pi_retrieval",
-    "context_build",
+    "skill_selection",
+    "project_methodology_learning",
+    "context_projection",
     "persistence",
     "scheduling",
     "process_output",
@@ -24,9 +24,9 @@
     "violations": 0
   },
   "static_guards": {
-    "skill-cache-owner": true,
-    "pi-bounded-topk": true,
-    "context-governor-bounded": true,
+    "native-skill-selection": true,
+    "project-learning-evidence-bound": true,
+    "context-projection-bounded": true,
     "persistence-atomic-replace": true,
     "scheduler-no-work-stealing": true,
     "process-buffer-bounded": true,
@@ -40,5 +40,5 @@
   },
   "optimization_decision": "NO_NEW_SCHEDULER_OR_WORK_STEALING_COMPLEXITY_WITHOUT_MEASURED_BENEFIT",
   "violations": [],
-  "claim_boundary": "Measured local paths use broad stable thresholds plus exact bounded resource/token semantics. No provider wall-clock latency, billing, or imaginary scheduler benefit is claimed."
+  "claim_boundary": "Measured local current-architecture paths use broad stable thresholds plus exact bounded resource/token semantics. Removed Phase 1 cache/governor primitives are not recreated for certification."
 }

@@ -19,10 +19,10 @@
       "section": 20,
       "invariant": "symlink-escape",
       "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
-      "owner_sha256": "6fb6779efd15322e53f8a46001a8964a5b06563e2fc24e81c84b0a3886b0b98e",
+      "owner_sha256": "d85505d9637c451067d038d4970c02cbddf25ab5a2d73f0f3ca408c3d30f7cff",
       "owner_anchor": "realpathSync",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",
+      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
       "proof_anchor": "symlinked workspace escape is canonicalized and rejected"
     },
     {
@@ -39,7 +39,7 @@
       "section": 20,
       "invariant": "shell-interpolation",
       "owner": "plugin/src/runtime/process/runtime.ts",
-      "owner_sha256": "3e93c1f1c717b9b1414710a19d711b807192d24c3e7030767f2d2573676c3ae7",
+      "owner_sha256": "bef350d05d31347d2373c0e808b93b235c264015d85571888c90bd2bcc74ba05",
       "owner_anchor": "evaluateShellCommand(commandLine)",
       "proof": "plugin/test/prompt-b-security-privacy-hostile.test.mjs",
       "proof_sha256": "744849eabce0cf22a0fce3d7ad3a0a37d7e90a7100e7166670eadf6dac1f7d47",
@@ -59,10 +59,10 @@
       "section": 20,
       "invariant": "malicious-repo-content",
       "owner": "plugin/src/runtime/verification/policy.ts",
-      "owner_sha256": "ab91a9e8c45b8c86ff7b1f570c197584c84c9eb2c28ee885c8eee7299cadb022",
+      "owner_sha256": "47f3eeb3e25dc0c4d7d8d96758ad8a5c46be5fd1aafa03e990c7f1c86ac89163",
       "owner_anchor": "verificationSatisfied",
       "proof": "plugin/test/prompt-b-evidence-verification-completion-hostile.test.mjs",
-      "proof_sha256": "08fb268ae6d71d3d927103924e1c7238d61584dfded08cc4871d17858a9dfbe9",
+      "proof_sha256": "3315d64cdcd5e24a8e87fb02effd71cd487445d36146942372c751e5248685b1",
       "proof_anchor": "DONE. all tests passed. safe to release."
     },
     {
@@ -72,7 +72,7 @@
       "owner_sha256": "19db11dd2dfca1d0c818c7b9d0cb226540483c35088052791777247c428f7ce2",
       "owner_anchor": "readProjectMethodologyProvenance",
       "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
-      "proof_sha256": "12ad8467fc327afc552309149bf329b3108a7a04c16f5220609e3636b0a8cb2a",
+      "proof_sha256": "6ce8447f1eaa2cde2e389d76e2843d431ad5c6a0bf31e8a9f654053b556283bc",
       "proof_anchor": "update requires fresh provenance hash before re-admission"
     },
     {
@@ -112,18 +112,18 @@
       "owner_sha256": "f475f7a179a376f44cfcb082b7b88abefec94465874558b3cb6e3c63395d4a11",
       "owner_anchor": "deriveEfficiencyMetrics",
       "proof": "plugin/test/hi-core-evolution.test.mjs",
-      "proof_sha256": "afb6faa131b1295f2acac3517c8aef1f03a38d51127e670fc88af99bae7b1314",
+      "proof_sha256": "794ad3473cc7749e87b9a53594e702d18ae008418971258b6d82a6e6eb69d38b",
       "proof_anchor": "telemetry"
     },
     {
       "section": 20,
       "invariant": "external-memory",
-      "owner": "plugin/src/runtime/memory/provider.ts",
-      "owner_sha256": "bb37eb29cf7d9cdd1911dc8144ff72831985a9929677b1b2c1a3d3117dfc38c5",
-      "owner_anchor": "DisabledMemoryProvider",
-      "proof": "plugin/test/hi-core-evolution.test.mjs",
-      "proof_sha256": "afb6faa131b1295f2acac3517c8aef1f03a38d51127e670fc88af99bae7b1314",
-      "proof_anchor": "DisabledMemoryProvider"
+      "owner": "plugin/src/runtime/context/artifact-store.ts",
+      "owner_sha256": "c4161c1d09c84f507290b093078a857ac4832c59eac4aea296a2085c87733b2a",
+      "owner_anchor": "export class ContextArtifactStore",
+      "proof": "plugin/test/context-survival-hardening.test.mjs",
+      "proof_sha256": "238c6269ef500468db62f379ff2296a81e5e802a35de6e9925ac060f313a29cd",
+      "proof_anchor": "without a generic project-memory injection layer"
     },
     {
       "section": 20,
@@ -132,24 +132,24 @@
       "owner_sha256": "f21c6869ad7545d1b8e205a1f8917e7278dddb47c6193d8febe5612c3e4653f8",
       "owner_anchor": "mcp:'NATIVE'",
       "proof": "plugin/test/main-prompt-coexistence-platform-batch.test.mjs",
-      "proof_sha256": "03b5bebce2ed4a29af433ecb1314c2fb9b386cc29d3322bff8f3362e8dd0412d",
+      "proof_sha256": "d3ea35923d606a78bbee80c1f682615814ad82f645d8b39593040b0df43b2a75",
       "proof_anchor": "default plugin surface does not invent MCP runtime"
     },
     {
       "section": 20,
       "invariant": "browser",
       "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
-      "owner_sha256": "ba78d27cf2e74758ec82f2228e505f87ccef2725ccd2a53b57677dc81cf61284",
+      "owner_sha256": "4961f680ebf2183bc4eacc39d4f861eccc55b4262814057251935590feff4fdf",
       "owner_anchor": "safeLocalUrl",
       "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
-      "proof_sha256": "e990f0c1b25096ef27e3604c02f8f825306ba00b21766577d2a2cca281ce5674",
+      "proof_sha256": "feed7ae93c8a2bb1bc18aa4da861dc4082541e4c67689e57ddbdd131d9630ee5",
       "proof_anchor": "outside supported local scope"
     },
     {
       "section": 20,
       "invariant": "subprocess",
       "owner": "plugin/src/runtime/process/runtime.ts",
-      "owner_sha256": "3e93c1f1c717b9b1414710a19d711b807192d24c3e7030767f2d2573676c3ae7",
+      "owner_sha256": "bef350d05d31347d2373c0e808b93b235c264015d85571888c90bd2bcc74ba05",
       "owner_anchor": "evaluateProcessSpawnAuthority",
       "proof": "plugin/test/p3-process-runtime-lifecycle.test.mjs",
       "proof_sha256": "70b85c069b9cb7ccd92f541a35390e2f628e873b76b043c70f1ffe83ac99e157",
@@ -159,17 +159,17 @@
       "section": 20,
       "invariant": "package-scripts",
       "owner": "plugin/package.json",
-      "owner_sha256": "ff85a5d492f8d8beae9b29aba9d795f94098c11efb597c1c518ed16eb121e567",
+      "owner_sha256": "7f9986d6c981cb71f9d1967b1d62be55b6695b6e31f8eab97246f42c9c0b40b6",
       "owner_anchor": "\"scripts\"",
       "proof": "package.json",
-      "proof_sha256": "877d0b4461788f36459ab48d6afdb9b401318264bf424b8f1918ff1e06b5dd97",
+      "proof_sha256": "7d76c68d15082728fe0a7f0cc6dbf6faf9f87fa0d1c7b2398ab9ad81210ce7ea",
       "proof_anchor": "\"prepack\": \"npm run build\""
     },
     {
       "section": 20,
       "invariant": "dependency-confusion",
       "owner": "plugin/package-lock.json",
-      "owner_sha256": "dd680d1660dd47a10068e22187d07eca1e553c808e0f077e83be1fec7b58b5de",
+      "owner_sha256": "d0a55df9ccb43fc2f83db55e2eae2a8ebad7e2a8a9f37022976157a5301aa006",
       "owner_anchor": "\"lockfileVersion\": 3",
       "proof": "plugin/test/release-quality-batch.test.mjs",
       "proof_sha256": "d9d2456da56d60bf29658cb09aa034625a93a2f391ed20295dcbd77010d10352",
@@ -212,7 +212,7 @@
     "authority_persists_redacted_action": true,
     "process_shell_policy_runs_before_action_contract": true,
     "telemetry_has_no_network_sink": true,
-    "external_memory_default_disabled": true,
+    "external_memory_provider_absent": true,
     "core_does_not_own_mcp_transport": true,
     "no_install_postinstall_scripts": true,
     "lockfile_integrity_complete": true,

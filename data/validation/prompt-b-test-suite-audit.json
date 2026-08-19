@@ -8,7 +8,7 @@
     {
       "invariant": "harness-invocation",
       "owner": "plugin/package.json",
-      "owner_sha256": "ff85a5d492f8d8beae9b29aba9d795f94098c11efb597c1c518ed16eb121e567",
+      "owner_sha256": "7f9986d6c981cb71f9d1967b1d62be55b6695b6e31f8eab97246f42c9c0b40b6",
       "owner_anchor": "node ../scripts/run-node-test-suite.mjs",
       "proof": "scripts/run-node-test-suite.mjs",
       "proof_sha256": "3f37ac8e8badc0807ea2ed2500fc7664cad04ce5f9d5ff26abecb9e55b385b89",
@@ -17,10 +17,10 @@
     {
       "invariant": "mocks-do-not-own-t3",
       "owner": "plugin/src/contracts/host-capability.ts",
-      "owner_sha256": "d0f7a502606323871c69d23f53cc4f4eea9634636985d8ef5e63f85bb7af01d6",
+      "owner_sha256": "6296832cd6f5b73f234f2b41e86177525146a5b452d5def7b58c61515ef9e1af",
       "owner_anchor": "Runtime support requires an active-host observation; T3/REAL_HOST_ACCEPTANCE belongs only",
       "proof": "plugin/test/host-capability-contract.test.mjs",
-      "proof_sha256": "2c278ad0c53a4326ebe441a185a06c14f968f1421927914ebe6d6ee3dafe6e70",
+      "proof_sha256": "b3f2950570902c3ca915227175428d41024dfa61910562d28b152dffc51ac4bb",
       "proof_anchor": "without upgrading verification"
     },
     {
@@ -29,7 +29,7 @@
       "owner_sha256": "afd758b103c9e66d2a01237a54ae877071e854ce8bcabbade24f366b2b2c7ede",
       "owner_anchor": "External receipts remain canonical evidence",
       "proof": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
-      "proof_sha256": "3ab7d407343f67e9bc407ef348de98af48ac0b90e921b8a824fd1b56e8875a50",
+      "proof_sha256": "71632091e85b2b797550e975246265339de54a82fe7d42ad84744974af64f336",
       "proof_anchor": "\"covered\": 61"
     },
     {
@@ -38,7 +38,7 @@
       "owner_sha256": "3f37ac8e8badc0807ea2ed2500fc7664cad04ce5f9d5ff26abecb9e55b385b89",
       "owner_anchor": "const knownLibuvTeardown=",
       "proof": "data/validation/test-harness-isolation-0.1.0.json",
-      "proof_sha256": "de82193472c8da3b415675cdfb9b157bf860ab36ae8382f45b03393c9ee175ba",
+      "proof_sha256": "e15d13e609fb514a470ac005b82482026092282dcf3626687b911e7aa0d53080",
       "proof_anchor": "SIGABRT is normalized only with exact uv__io_poll EEXIST signature"
     },
     {
@@ -47,7 +47,7 @@
       "owner_sha256": "ee3ed09654ad1a29a49bbe5cdb9a53a120bd95a9613bf8a5c70f10e101b72ba6",
       "owner_anchor": "os: [ubuntu-latest, windows-latest]",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "e6437b2b853dcd53d8d1b36c998d55620a17ba85fbca3bdfff2030b7556eb88f",
+      "proof_sha256": "0733d97ab6d71bc629e3f0692503c8ce722670f3cd9474c73ba37529ec03ed4b",
       "proof_anchor": "pytest.skip('symlink privilege varies on Windows')"
     },
     {
@@ -65,16 +65,16 @@
       "owner_sha256": "3f37ac8e8badc0807ea2ed2500fc7664cad04ce5f9d5ff26abecb9e55b385b89",
       "owner_anchor": "OPENCODE_HI_STATE_DIR",
       "proof": "data/validation/test-harness-isolation-0.1.0.json",
-      "proof_sha256": "de82193472c8da3b415675cdfb9b157bf860ab36ae8382f45b03393c9ee175ba",
-      "proof_anchor": "\"home_hi_state_delta\": 0"
+      "proof_sha256": "e15d13e609fb514a470ac005b82482026092282dcf3626687b911e7aa0d53080",
+      "proof_anchor": "\"home_hi_state_delta\""
     },
     {
       "invariant": "cwd-independence",
       "owner": "plugin/test/native-skill-catalog.test.mjs",
-      "owner_sha256": "90a533b40a0d9ffff37fc5141bb1b8ec3abcd6538f59f465f3c7a3a2849159f1",
+      "owner_sha256": "97829bf90a65fec515bfd6c01736f80a2b36e996a38d2fb565e129569407c3ac",
       "owner_anchor": "fileURLToPath(import.meta.url)",
       "proof": "data/validation/test-harness-isolation-0.1.0.json",
-      "proof_sha256": "de82193472c8da3b415675cdfb9b157bf860ab36ae8382f45b03393c9ee175ba",
+      "proof_sha256": "e15d13e609fb514a470ac005b82482026092282dcf3626687b911e7aa0d53080",
       "proof_anchor": "\"repo_root_cwd\""
     },
     {
@@ -83,7 +83,7 @@
       "owner_sha256": "3f37ac8e8badc0807ea2ed2500fc7664cad04ce5f9d5ff26abecb9e55b385b89",
       "owner_anchor": "XDG_STATE_HOME",
       "proof": "data/validation/test-harness-isolation-0.1.0.json",
-      "proof_sha256": "de82193472c8da3b415675cdfb9b157bf860ab36ae8382f45b03393c9ee175ba",
+      "proof_sha256": "e15d13e609fb514a470ac005b82482026092282dcf3626687b911e7aa0d53080",
       "proof_anchor": "\"isolation_env\""
     },
     {

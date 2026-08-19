@@ -8,7 +8,7 @@
     {
       "invariant": "host-port-hi-needs-not-sdk",
       "owner": "plugin/src/runtime/host/port.ts",
-      "owner_sha256": "20571b8c87069a7e2bb9bfb7afa4ff346c691d0741f03aaf76467ead1f71aea9",
+      "owner_sha256": "c8fe676b993d08e42478e6ccbf97bb9810c1a57a1263b6601baee6ca5370c144",
       "owner_anchor": "export interface HostPort",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",
@@ -17,7 +17,7 @@
     {
       "invariant": "semantic-core-sdk-confinement",
       "owner": "plugin/src/runtime/application/runtime-event-controller.ts",
-      "owner_sha256": "5094345ed540a745c73cca7022d082f07690b05180006be922883baf24f7b7cc",
+      "owner_sha256": "d6e57e53d26b1d631f89e69cf428a4ca616a1eb7eef09cc4e56642d03470edaf",
       "owner_anchor": "import type { HostEvent,HostPort } from '../host/port.js'",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",
@@ -26,7 +26,7 @@
     {
       "invariant": "normalized-event-boundary",
       "owner": "plugin/src/opencode/open-code-hooks.ts",
-      "owner_sha256": "6389ee4526cece74dff463bc3f461fcbc8e9ebe0489bed4408285bf5dbd703a8",
+      "owner_sha256": "c3c208e4e18d6b6d81efd225b2ddb54a54f68cf6f7e5aed5a377f722e6a52688",
       "owner_anchor": "eventController.handle(normalizeOpenCodeEvent(input?.event??input))",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",
@@ -35,7 +35,7 @@
     {
       "invariant": "continuation-port",
       "owner": "plugin/src/runtime/continuation/dispatcher.ts",
-      "owner_sha256": "5b4f989fac4670f38bb264b068116b296260ca44a8a6a0267baeb5ec59b3e3ef",
+      "owner_sha256": "18b196c5c3dc5f197a679926fd728f3f0ae05e945034f083ee050904386d7424",
       "owner_anchor": "Pick<HostPort,'continueSession'>",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",
@@ -53,7 +53,7 @@
     {
       "invariant": "runtime-service-injection",
       "owner": "plugin/src/runtime/application/runtime-services.ts",
-      "owner_sha256": "9217ac66e7a59c514002057b0f8154b08bef9b79b77b9dc7cbac83580538e8fa",
+      "owner_sha256": "a77335125a9b424c22a606b1765177eee93e9f7de0dde1fa23e3ea16c650a225",
       "owner_anchor": "export interface RuntimeServicePorts",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",
@@ -65,7 +65,7 @@
       "owner_sha256": "3a0f63b69b47b429b578489f1433a4170cf6fbd4c1a64c1ecd009f60bd2756b1",
       "owner_anchor": "export class ProcessSpawnPermissionError",
       "proof": "plugin/test/p2-opencode-pty-executor.test.mjs",
-      "proof_sha256": "d5fe4e13d882704d7a4443afdb4eb6ad9cb91a5f953e8050f35fff68e53a3167",
+      "proof_sha256": "e35c47f6deb71d4e2f8a3f7e14dde04513e7a7cb569d274e2804ecc8831e840c",
       "proof_anchor": "P2 spawn never silently executes native permission ask/deny"
     },
     {
@@ -80,16 +80,16 @@
     {
       "invariant": "missing-capability-fail-closed",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "4aefdeea9a786314ac380d757ffcc17b9355dd29b22e0a8e892399ce4e04e0e7",
+      "owner_sha256": "a79261104fd8c84cf1d825a45b23c300edd0819aaa345441f73863367e0bc598",
       "owner_anchor": "hostCapabilitySource:(()=>readonly HostCapabilityContract[])|readonly HostCapabilityContract[]=[]",
       "proof": "plugin/test/methodology-host-capability.test.mjs",
-      "proof_sha256": "cb9d608b1b8dc4a91e4e32eb1749a30213b7b507e82dbc9e2c6615a5fb3135c8",
-      "proof_anchor": "browser and visual methodologies require canonical browser-execution host capability"
+      "proof_sha256": "f4bec6d8e7e07e0f2901e9c6059af9e1e9773cf2feec184f43726a77f75ac74a",
+      "proof_anchor": "browser and visual methodologies require canonical runtime browser-execution resource"
     },
     {
       "invariant": "alternate-host-continuation-feasible",
       "owner": "plugin/src/runtime/host/port.ts",
-      "owner_sha256": "20571b8c87069a7e2bb9bfb7afa4ff346c691d0741f03aaf76467ead1f71aea9",
+      "owner_sha256": "c8fe676b993d08e42478e6ccbf97bb9810c1a57a1263b6601baee6ca5370c144",
       "owner_anchor": "continueSession(sessionID:string,text:string,metadata:Record<string,unknown>):Promise<boolean>",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",
@@ -98,7 +98,7 @@
     {
       "invariant": "alternate-host-task-feasible",
       "owner": "plugin/src/runtime/host/port.ts",
-      "owner_sha256": "20571b8c87069a7e2bb9bfb7afa4ff346c691d0741f03aaf76467ead1f71aea9",
+      "owner_sha256": "c8fe676b993d08e42478e6ccbf97bb9810c1a57a1263b6601baee6ca5370c144",
       "owner_anchor": "export interface ChildSessionPort",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",

@@ -5,13 +5,13 @@
   "section": 28,
   "status": "CLOSED_LOCAL_T4_BLOCKED",
   "current_source": {
-    "commit": "47f32c34033385cef0cc7f1b715e810bcfa17540",
-    "tree": "e58454210da35570a6d8381244792c9d6712bb72",
-    "version": "0.1.3"
+    "commit": "5cfc10f180dfe9d93dd59fcae9f40a318cbdac5e",
+    "tree": "1ecde4cc17b2550967713f54faea01897c546d95",
+    "version": "0.2.0"
   },
   "release_source": {
-    "commit": "798984f88ebc1cc720f8a6c27a646c9e6112a387",
-    "tree": "ec4e51f184b38eec6393ef10dc2ad98f61eaccbe",
+    "commit": "5cfc10f180dfe9d93dd59fcae9f40a318cbdac5e",
+    "tree": "1ecde4cc17b2550967713f54faea01897c546d95",
     "tag": null
   },
   "development_head": {
@@ -21,8 +21,8 @@
     "republish_same_version_forbidden": false
   },
   "certification_head": {
-    "commit": "47f32c34033385cef0cc7f1b715e810bcfa17540",
-    "tree": "e58454210da35570a6d8381244792c9d6712bb72"
+    "commit": "5cfc10f180dfe9d93dd59fcae9f40a318cbdac5e",
+    "tree": "1ecde4cc17b2550967713f54faea01897c546d95"
   },
   "historical_release": {
     "tag": "v0.1.0",
@@ -31,25 +31,24 @@
     "release_id": 370666032
   },
   "registry_observation": {
-    "date": "2026-08-16",
-    "package": "opencode-hi@0.1.3",
-    "view": "PREPUBLICATION",
-    "whoami": "huseyincig",
-    "publish_attempted": false,
-    "authority_granted": true,
-    "authority_condition": "effective only after all engineering/final certification completes"
+    "observed_at": "2026-08-19T17:54:45.174792+00:00",
+    "reference_host_registry_latest": "1.18.18",
+    "reference_sdk_registry_latest": "1.18.18",
+    "current_publication_receipt_present": false,
+    "authority_granted": false,
+    "authority_condition": "explicit current user authority required after final certification; this audit never grants publication authority"
   },
   "stages": [
     {
       "stage": "source-commit",
       "status": "PASS",
-      "detail": "798984f88ebc1cc720f8a6c27a646c9e6112a387",
+      "detail": "5cfc10f180dfe9d93dd59fcae9f40a318cbdac5e",
       "proof": "git HEAD"
     },
     {
       "stage": "version",
       "status": "PASS_NEW_RELEASE_IDENTITY",
-      "detail": "0.1.3",
+      "detail": "0.2.0",
       "proof": "VERSION/package/lock identity; historical v0.1.0 is immutable"
     },
     {
@@ -85,19 +84,19 @@
     {
       "stage": "tag",
       "status": "PENDING_FINAL_AUTHORIZED_PUBLICATION",
-      "detail": "historical v0.1.0 remains f1a2c1c4358e5a63656da7a585b6b5793d1ed3be; current candidate tag is v0.1.3",
-      "proof": "user authority effective only after final certification"
+      "detail": "historical v0.1.0 remains f1a2c1c4358e5a63656da7a585b6b5793d1ed3be; current candidate tag is v0.2.0",
+      "proof": "explicit current user authority required after final certification"
     },
     {
       "stage": "github-release",
       "status": "PENDING_FINAL_AUTHORIZED_PUBLICATION",
-      "detail": "historical v0.1.0 remains immutable; v0.1.3 publication waits for final certification",
-      "proof": "conditional user publication authority"
+      "detail": "historical v0.1.0 remains immutable; v0.2.0 publication waits for final certification",
+      "proof": "explicit current user publication authority required"
     },
     {
       "stage": "registry-publication",
       "status": "PENDING_FINAL_AUTHORIZED_PUBLICATION",
-      "detail": "opencode-hi@0.1.3 publication is authorized only after final certification",
+      "detail": "opencode-hi@0.2.0 publication is authorized only after final certification",
       "proof": "explicit conditional user authority"
     },
     {
@@ -125,9 +124,8 @@
     "historical_tag_distinct": true,
     "historical_release_source": true,
     "released_runtime_immutable": true,
-    "registry_still_unpublished": true,
-    "publish_not_attempted": true,
-    "no_current_tag_rewrite": true
+    "current_publication_receipt_absent": true,
+    "no_current_tag_present": true
   },
   "violations": [],
   "summary": {
@@ -137,11 +135,11 @@
     "violations": 0
   },
   "proof_hashes": {
-    "VERSION": "2d2454ef0edeb462a6ce8b25d387aaa74df08093d5cea0428a10ce55510c6326",
-    "package.json": "877d0b4461788f36459ab48d6afdb9b401318264bf424b8f1918ff1e06b5dd97",
-    "package-lock.json": "3ce22d386c7f0edeb613b3a9c12dbb0e6c9aeb1c736361e6aeb93a92269c915e",
-    "plugin/package-lock.json": "dd680d1660dd47a10068e22187d07eca1e553c808e0f077e83be1fec7b58b5de",
-    "data/validation/fresh-consumer-opencode-1.18.18.json": "50fa7c4f012498b9b5c3938884f9f054876e6b6c02f6fca038ba790d4cc2a757",
+    "VERSION": "1f930dd1f133c1f97a94fe3acb8db34372cf4c01ffdb2b3ff4ca72f9494121e9",
+    "package.json": "7d76c68d15082728fe0a7f0cc6dbf6faf9f87fa0d1c7b2398ab9ad81210ce7ea",
+    "package-lock.json": "924f0bb75f0e52b3c92d492e8d8d21214677cd86ee1147e02db993232c10b3db",
+    "plugin/package-lock.json": "d0a55df9ccb43fc2f83db55e2eae2a8ebad7e2a8a9f37022976157a5301aa006",
+    "data/validation/fresh-consumer-opencode-1.18.18.json": "5a57fecee9f68ecd36b6773a02278560c1edf13ae898ab1906fd4631aecccc20",
     "data/validation/release-status-0.1.0.json": "4ea5e44d7bca5562a30c9824fb680925417627d00165b2c4e36096f2ce60ef4a",
     ".github/workflows/npm-publish.yml": "fddeff0ad498142ab454a0df576328bdb061106ce7eddec3ae553e3f653572b5",
     "scripts/verify-npm-oidc-release.mjs": "d786803e0226f45d95b12804f885550ce614498b3017792d0fa5cbe219cf00c9"

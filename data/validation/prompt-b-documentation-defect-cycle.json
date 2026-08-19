@@ -14,30 +14,30 @@
       "step": "source-change",
       "status": "PASS",
       "owner": "scripts/generate-product-truth-inventory.py",
-      "owner_sha256": "deb03bfbdd0bbf6f0135b8051c52f46bdca190c1f4c58ef58cf90593826a3019",
+      "owner_sha256": "ab3a8c6c8b34858ca9662f38ba63806af2af04c60f7b9a498f3211e1a2e8780d",
       "owner_anchor": "owner_sha256",
       "proof": "data/validation/product-truth-inventory.json",
-      "proof_sha256": "f9923584699267baaf3d55b3d5f1f786be1b4f2acf737c508c32bd689e35d62b",
+      "proof_sha256": "678691ff1489a94a62d16f24b74680ab0a3292f369eacfd1b0a91c838c2a0470",
       "proof_anchor": "\"owner_sha256\""
     },
     {
       "step": "tests",
       "status": "PASS",
       "owner": "scripts/generate-product-truth-inventory.py",
-      "owner_sha256": "deb03bfbdd0bbf6f0135b8051c52f46bdca190c1f4c58ef58cf90593826a3019",
+      "owner_sha256": "ab3a8c6c8b34858ca9662f38ba63806af2af04c60f7b9a498f3211e1a2e8780d",
       "owner_anchor": "proof_paths",
       "proof": "data/validation/product-truth-inventory.json",
-      "proof_sha256": "f9923584699267baaf3d55b3d5f1f786be1b4f2acf737c508c32bd689e35d62b",
+      "proof_sha256": "678691ff1489a94a62d16f24b74680ab0a3292f369eacfd1b0a91c838c2a0470",
       "proof_anchor": "\"proof_paths\""
     },
     {
       "step": "docs-owner-impact-check",
       "status": "PASS",
       "owner": "data/documentation-ownership.json",
-      "owner_sha256": "bd3aab27ff5fe80fe1f41a3573e60a72146bdfecf8b45459b5cb2e5a3b3538a0",
+      "owner_sha256": "f39247aae9a8985af7ff62ed85f822c9952b97ad3f8b73357dd629df89cc1408",
       "owner_anchor": "one-current-area-one-public-owner",
       "proof": "data/validation/documentation-inventory.json",
-      "proof_sha256": "21bb06d9aed36cb64ddaaf9e79d54df4ec7b8853f7192a9a4927a896ed0e2c00",
+      "proof_sha256": "3d07fb931352117ce8d0e7a97498fc7ece698dc504f92481d3190539ce1e7fac",
       "proof_anchor": "\"canonical_ownership\""
     },
     {
@@ -47,17 +47,17 @@
       "owner_sha256": "4ae16928709af73e37efdddf3e845e9353154c238cf3b14642ef31d65b2b7054",
       "owner_anchor": "Generated from",
       "proof": "data/validation/documentation-parity.json",
-      "proof_sha256": "edac96beb02dd23718eccf15f7992510f8bd52807ae6fe94fe7b27d52f05d625",
+      "proof_sha256": "9c8766e7ef7e137690a97d6b4d9bf9bb81e892316d2a08f93bf78a926de37443",
       "proof_anchor": "\"status\": \"PASS\""
     },
     {
       "step": "doc-lint",
       "status": "PASS",
       "owner": "scripts/validate-documentation.py",
-      "owner_sha256": "35accf62c8bec555b69c386af5e0d8d5a6e64e6f8cd117c7163834201531dcbf",
+      "owner_sha256": "e82268a631b314da8f113d6d55d10d7b5405428e8492a64e57f8553b01f60ba5",
       "owner_anchor": "documentation parity",
       "proof": "data/validation/documentation-parity.json",
-      "proof_sha256": "edac96beb02dd23718eccf15f7992510f8bd52807ae6fe94fe7b27d52f05d625",
+      "proof_sha256": "9c8766e7ef7e137690a97d6b4d9bf9bb81e892316d2a08f93bf78a926de37443",
       "proof_anchor": "\"violations\": []"
     }
   ],

@@ -1,12 +1,12 @@
 {
-  "schema": 1,
+  "schema": 2,
   "kind": "PROMPT_B_PERFORMANCE_RESOURCE_BENCHMARK",
   "program": "PROMPT_B",
   "section": 35,
   "status": "PASS",
   "source_binding": {
-    "tested_git_commit": "317a0922c0c51f766a0d6bf22036e5d027330835",
-    "tested_git_tree": "a9223da1ecf23426bb8a919e4cf058ccbd6a122a"
+    "tested_git_commit": "76557cd3c239e991a068a26ba25c81f358c853b1",
+    "tested_git_tree": "7cced24eae88074bd8b006b1ee566f5fcbfd8795"
   },
   "metrics": {
     "startup": {
@@ -23,41 +23,31 @@
       "threshold": "<=250ms",
       "observed_bucket": "<=250ms"
     },
-    "skill_discovery_cache": {
-      "records": 27,
-      "cached_records": 27,
-      "full_scans": 1,
-      "fingerprint_checks": 1,
-      "cold": {
-        "status": "PASS",
-        "threshold": "<=500ms",
-        "observed_bucket": "<=500ms"
-      },
-      "cached": {
-        "status": "PASS",
-        "threshold": "<=500ms",
-        "observed_bucket": "<=500ms"
-      }
-    },
-    "pi_retrieval": {
-      "items": 500,
-      "queries": 50,
-      "top_k": 6,
+    "skill_selection": {
+      "iterations": 100,
+      "requested_per_iteration": 2,
+      "selected_total": 100,
       "status": "PASS",
       "threshold": "<=1000ms",
       "observed_bucket": "<=1000ms"
     },
-    "context_build": {
-      "input_chars": 100000,
-      "output_chars": 67000,
-      "action": "REDUCED",
+    "project_methodology_learning": {
+      "observations": 20,
+      "ready_at_observation": 2,
       "status": "PASS",
-      "threshold": "<=250ms",
-      "observed_bucket": "<=250ms"
+      "threshold": "<=1000ms",
+      "observed_bucket": "<=1000ms"
+    },
+    "context_projection": {
+      "iterations": 1000,
+      "total_projected_chars": 654000,
+      "status": "PASS",
+      "threshold": "<=500ms",
+      "observed_bucket": "<=500ms"
     },
     "persistence": {
       "cycles": 30,
-      "state_bytes": 5514,
+      "state_bytes": 6441,
       "status": "PASS",
       "threshold": "<=1000ms",
       "observed_bucket": "<=1000ms"
@@ -99,6 +89,6 @@
     }
   },
   "existing_policy_benchmark": "data/validation/benchmarks-0.1.0.json",
-  "claim_boundary": "Local deterministic/bounded resource benchmark. Timing is classified only into broad pass thresholds to keep canonical evidence stable; no provider wall-clock latency, provider billing, or fabricated exact token usage is claimed. Exact tokens originate only from provider usage observations.",
+  "claim_boundary": "Local deterministic/bounded resource benchmark over current Phase 2 hot paths. Timing is classified only into broad pass thresholds; no provider wall-clock latency, provider billing, or fabricated exact token usage is claimed. Exact tokens originate only from provider usage observations.",
   "optimization_decision": "NO_NEW_SCHEDULER_OR_WORK_STEALING_COMPLEXITY_WITHOUT_MEASURED_BENEFIT"
 }

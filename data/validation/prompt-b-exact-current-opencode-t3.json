@@ -5,47 +5,46 @@
   "section": 39,
   "status": "PASS",
   "current_version_observation": {
-    "tested_binary": "/home/node/.local/share/hi-opencode-1.18.18/node_modules/.bin/opencode",
+    "tested_binary": "/workspace/Reference/opencode-runtime/1.18.18/node_modules/opencode-linux-arm64/bin/opencode",
+    "tested_binary_sha256": "a63ef0c7271383e48ffe36c156b4146087bbbc97929dec40e8be95ed4f4d76ae",
     "tested_binary_version": "1.18.18",
-    "system_default_observed": "1.18.16",
-    "system_default_selected_for_t3": false,
-    "npm_registry_latest": "1.18.18",
-    "sdk_registry_latest": "1.18.18",
+    "registry_opencode_latest": "1.18.18",
+    "registry_sdk_latest": "1.18.18",
     "locked_sdk": "1.18.18",
-    "captured_at": "2026-08-16"
+    "captured_at": "2026-08-19T17:54:45.174792+00:00"
   },
-  "candidate_release": "0.1.3",
+  "candidate_release": "0.2.0",
   "fresh_consumer_receipt": "data/validation/fresh-consumer-opencode-1.18.18.json",
-  "fresh_consumer_sha256": "50fa7c4f012498b9b5c3938884f9f054876e6b6c02f6fca038ba790d4cc2a757",
-  "exact_source_commit": "798984f88ebc1cc720f8a6c27a646c9e6112a387",
-  "exact_source_tree": "ec4e51f184b38eec6393ef10dc2ad98f61eaccbe",
+  "fresh_consumer_sha256": "5a57fecee9f68ecd36b6773a02278560c1edf13ae898ab1906fd4631aecccc20",
+  "exact_source_commit": "5cfc10f180dfe9d93dd59fcae9f40a318cbdac5e",
+  "exact_source_tree": "1ecde4cc17b2550967713f54faea01897c546d95",
   "capability_evidence_mode": "CURRENT_EXACT_HOST_PACKAGE_PLUS_RUNTIME_EQUIVALENT_EXACT_T3",
   "compatibility_projection": "data/validation/compatibility-matrix-0.1.0.json",
-  "compatibility_sha256": "25ddee8346eb2394988848f16cb9b42ffd4f1a8fa47ddca9357ae4a507561a0a",
+  "compatibility_sha256": "c17c1480acc10465193bef379245d5b322c84a659a597e6c5962ab2cbd8618e8",
   "lifecycle_audit": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
-  "lifecycle_sha256": "3ab7d407343f67e9bc407ef348de98af48ac0b90e921b8a824fd1b56e8875a50",
+  "lifecycle_sha256": "71632091e85b2b797550e975246265339de54a82fe7d42ad84744974af64f336",
   "capabilities": {
     "process-lifecycle": {
-      "receipt": "data/validation/external-opencode-hi-0.1.1-process-1.18.18-head-ef41e3d.json",
-      "receipt_sha256": "fbc7cd4826ed6fed3b16f3c6fa1939c71196e1eba0f81995dfb986ee8b2f7589",
+      "receipt": "data/validation/external-opencode-hi-0.2.0-process-1.18.18-head-69d34dd.json",
+      "receipt_sha256": "9d1abff8984d0e48ebcb88a2e2d3846fc9de6a20e9d805bbcd91a9d26654231b",
       "status": "SUPPORTED_T3",
-      "receipt_source_commit": "ef41e3dd38dbc9c89a5cb871b7cb09135def95d8",
+      "receipt_source_commit": "69d34dd605f8cd20bea389c374304649d0c7fd1f",
       "runtime_equivalent_to_current": true,
       "runtime_hash_drift": []
     },
     "workspace-isolation-binding": {
-      "receipt": "data/validation/external-opencode-hi-0.1.1-workspace-1.18.18-head-ef41e3d.json",
-      "receipt_sha256": "9a30fe0c7e360fa4a20cd25d1319408e9e281d927a9d57af91d6bf61859f0bbc",
+      "receipt": "data/validation/external-opencode-hi-0.2.0-workspace-1.18.18-head-69d34dd.json",
+      "receipt_sha256": "1178ee7f153c23055c333e52a5485e4edf0e903d1f71614a542734e1c9835581",
       "status": "SUPPORTED_T3",
-      "receipt_source_commit": "ef41e3dd38dbc9c89a5cb871b7cb09135def95d8",
+      "receipt_source_commit": "69d34dd605f8cd20bea389c374304649d0c7fd1f",
       "runtime_equivalent_to_current": true,
       "runtime_hash_drift": []
     },
     "browser-execution": {
-      "receipt": "data/validation/external-opencode-hi-0.1.1-browser-1.18.18-head-ef41e3d.json",
-      "receipt_sha256": "befd324957a78d4d97ade0adbf80744f3b8fa896fbd83e432031e367533221e6",
+      "receipt": "data/validation/external-opencode-hi-0.2.0-browser-1.18.18-head-69d34dd.json",
+      "receipt_sha256": "7b1f3e6fb6400bb80ef3b3a969cbbebd8b116844a7290fce88893e39219a7847",
       "status": "SUPPORTED_T3",
-      "receipt_source_commit": "ef41e3dd38dbc9c89a5cb871b7cb09135def95d8",
+      "receipt_source_commit": "69d34dd605f8cd20bea389c374304649d0c7fd1f",
       "runtime_equivalent_to_current": true,
       "runtime_hash_drift": []
     }
@@ -57,5 +56,5 @@
     "violations": 0
   },
   "violations": [],
-  "claim_boundary": "Current candidate certification requires a fresh packed 0.1.2 artifact loaded by exact OpenCode 1.18.18 plus exact real-host T3 capability receipts whose complete capability-relevant runtime owner hashes are byte-identical to current source. Historical receipt prose or API presence alone is insufficient; receipt source commits remain explicit and are never relabeled as current."
+  "claim_boundary": "Current candidate certification requires a fresh packed 0.2.0 artifact loaded by exact OpenCode 1.18.18 plus exact real-host T3 capability receipts whose complete capability-relevant runtime owner hashes are byte-identical to current source. Registry latest observations are informational and do not silently change the pinned certified host. Historical receipt prose or API presence alone is insufficient; receipt source commits remain explicit and are never relabeled as current."
 }

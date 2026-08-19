@@ -5,18 +5,18 @@
   "section": 34,
   "status": "PASS",
   "source_binding": {
-    "tested_git_commit": "29d3024fb3640a97f244185a393eb133542fb735",
-    "tested_git_tree": "e685a589dcd06e8a300421b84cbad8fedb616222"
+    "tested_git_commit": "8a0ff20186c460397cb6e19fc81268bb64a289f0",
+    "tested_git_tree": "6449b1b30845c39f6dc50540294389c39a4ab1fb"
   },
   "terminal": {
-    "tests": 54,
-    "pass": 54,
+    "tests": 57,
+    "pass": 57,
     "fail": 0,
     "cancelled": 0,
     "skipped": 0,
     "todo": 0
   },
-  "known_node_teardown_normalized": true,
+  "known_node_teardown_normalized": false,
   "injections": [
     {
       "injection": "provider-timeout",
@@ -63,7 +63,7 @@
     {
       "injection": "workspace-failure",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",
+      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
       "proof_anchor": "PROMPT B workspace cleanup failure quarantines lease and records an explicit blocker",
       "status": "PASS"
     },
@@ -91,7 +91,7 @@
     {
       "injection": "browser-failure",
       "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
-      "proof_sha256": "e990f0c1b25096ef27e3604c02f8f825306ba00b21766577d2a2cca281ce5674",
+      "proof_sha256": "feed7ae93c8a2bb1bc18aa4da861dc4082541e4c67689e57ddbdd131d9630ee5",
       "proof_anchor": "PROMPT B browser navigation timeout and browser crash become explicit FAILED observations",
       "status": "PASS"
     },

@@ -17,7 +17,7 @@
     {
       "invariant": "continuation-not-approval",
       "owner": "plugin/src/hooks/chat-message.ts",
-      "owner_sha256": "355ff037f110a6e3af316071f9f143f73ae2bf11b42bc038a9c106d16f17c905",
+      "owner_sha256": "eeb7ca51d9f0e32593de2769fd4604732be71fd2b95449bc32f8a497e61b7c7a",
       "owner_anchor": "openDecision?.semantic_type==='authority_request'",
       "proof": "plugin/test/threat-model.test.mjs",
       "proof_sha256": "b8a17395fa90e84150eac450d842c6ee9ae3b4524f739d4f7669cabc594ffb32",
@@ -53,10 +53,10 @@
     {
       "invariant": "once-vs-reusable",
       "owner": "plugin/src/runtime/safety/project-authority.ts",
-      "owner_sha256": "07bab89edd6f5a874f198ccbba069c88f3553b7698252e6d21513fe5eb114dfa",
+      "owner_sha256": "51915d3dbf4d5051e1e60c2cc0726b892f9b97b1d58c8067c0afc03cf59fe175",
       "owner_anchor": "PersistentAuthorityClass",
       "proof": "plugin/test/project-authority-persistence.test.mjs",
-      "proof_sha256": "ec6a678f1951999f1ed51b01c8ca28353ae88b586ccfeb16b5efba5f3a75571b",
+      "proof_sha256": "44811b24d3aea72279145ede5da44f4e40af305b7cdbb82e077463945075ec05",
       "proof_anchor": "release-create persistent authority is distinct from git-push authority"
     },
     {
@@ -80,19 +80,19 @@
     {
       "invariant": "deny-precedence",
       "owner": "plugin/src/runtime/safety/project-authority.ts",
-      "owner_sha256": "07bab89edd6f5a874f198ccbba069c88f3553b7698252e6d21513fe5eb114dfa",
+      "owner_sha256": "51915d3dbf4d5051e1e60c2cc0726b892f9b97b1d58c8067c0afc03cf59fe175",
       "owner_anchor": "applyProjectAuthorityPermissions",
       "proof": "plugin/test/project-authority-persistence.test.mjs",
-      "proof_sha256": "ec6a678f1951999f1ed51b01c8ca28353ae88b586ccfeb16b5efba5f3a75571b",
+      "proof_sha256": "44811b24d3aea72279145ede5da44f4e40af305b7cdbb82e077463945075ec05",
       "proof_anchor": "user explicit deny is never weakened by persistent Hi grant"
     },
     {
       "invariant": "lower-level-cannot-widen-safety",
       "owner": "plugin/src/runtime/routing/execution-profile.ts",
-      "owner_sha256": "3d3f09f8d72578a28f303f28525279b562dd1575d91aaf51581c5ebb114b7451",
+      "owner_sha256": "b10cec6b7dc467a5fb61a818084f8be3140216a8c76b1b52afd718f44e071bad",
       "owner_anchor": "promptToolOverrides",
       "proof": "plugin/test/main-prompt-execution-profile-tools.test.mjs",
-      "proof_sha256": "5103898ef188d2a0e84854d647f5285147fd61188e0a08d4ea2488c96b8f3b82",
+      "proof_sha256": "e6eeafc888e82f75df1a2e6273ba54d01cc94f3284c82168449f16eb52326e6f",
       "proof_anchor": "prompt tool overrides only disable tools; they never turn a denied native permission into allow"
     },
     {
@@ -101,7 +101,7 @@
       "owner_sha256": "c9e47bee821cced0ae282f388e0561e0b06c6eddc34ffc9ad5ec9f8c1249714f",
       "owner_anchor": "external_directory",
       "proof": "plugin/test/p2-opencode-pty-executor.test.mjs",
-      "proof_sha256": "d5fe4e13d882704d7a4443afdb4eb6ad9cb91a5f953e8050f35fff68e53a3167",
+      "proof_sha256": "e35c47f6deb71d4e2f8a3f7e14dde04513e7a7cb569d274e2804ecc8831e840c",
       "proof_anchor": "P2 external cwd requires explicit external_directory allow and external effects require matching ExternalAction authority"
     },
     {
@@ -137,8 +137,8 @@
       "owner_sha256": "e42c5fa0a7e35ed1d1eb14ea4363c26029ceac8c552d495d221761a401e2814c",
       "owner_anchor": "ExternalCommandKind",
       "proof": "plugin/test/project-authority-persistence.test.mjs",
-      "proof_sha256": "ec6a678f1951999f1ed51b01c8ca28353ae88b586ccfeb16b5efba5f3a75571b",
-      "proof_anchor": "global ask does not spam autonomous local commit/merge steps; external push remains the single authority hinge"
+      "proof_sha256": "44811b24d3aea72279145ede5da44f4e40af305b7cdbb82e077463945075ec05",
+      "proof_anchor": "global host ASK remains authoritative for local and external actions even when Hi has a persistent grant"
     },
     {
       "invariant": "destructive-filesystem-boundary",
