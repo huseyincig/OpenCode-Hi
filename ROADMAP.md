@@ -487,7 +487,7 @@ Representative UI/browser tasks complete with bounded evidence, no cross-task se
 
 # Milestone 14 — Closed-Loop Supervision & Runtime Engineering
 
-**Status:** ACTIVE — 2026-08-19
+**Status:** COMPLETE — 2026-08-19
 
 **Goal:** make decision quality improve from bounded observations while hardening algorithmic/runtime efficiency.
 
@@ -511,9 +511,13 @@ Profiling and adversarial tests demonstrate the retained changes improve measure
 - Exact Git-archive build PASS + architecture lint `22/22 PASS` + plugin suite `1004/1004 PASS`.
 - Baseline decision-quality characterization proved wall-clock age was not used. The retained feedback cutover does not invent a TTL: model feedback now decays across material semantic `amendment`/`constraint` epochs while verification/non-material/stop/resume control events preserve same-task feedback; historical evidence is preserved and fresh same-epoch evidence can re-admit reranking. Exact comparator SHA-256 `5d5b580ce63809f5f0ec1f73981ce8ff5aea8a58338c6b92521b56c6fe76b861`; exact product commit `d90787b06cf6f1fe64e0656b10403825bd4b5114`; plugin suite `1010/1010 PASS`.
 - Canonical project methodologies remain explicit hash-bound project policy and are not silently disabled by elapsed wall time; historical derived READY candidates are inert until a fresh evidence-backed observation makes an uncovered candidate actionable again.
-- Remaining M14 gate: async cancellation/liveness, queue/backpressure and memory-retention audit on the exact retained checkpoint.
+- Final liveness/backpressure cutover: exact `d90787b` canonical-topology baseline proves waiter/timer, spawn-dedupe, queued cancel and cancelAll cleanup are bounded, while queue overflow leaves one created task + worker orphan. Retained commit `96267ce857eec53ae31d8549cd52c5eff7d88bf9` removes that orphan transactionally and preserves exact workspace ownership on cleanup failure. Exact comparator SHA-256 `c036d5de206954ce61deacbb01c2208900a8bb24a003495c06fff2eaf5e39e4f`.
+- Final exact Git-archive verification: build PASS, architecture lint `22/22 PASS`, M14 rollback `5/5 PASS`, full plugin suite `1015/1015 PASS`. Detailed evidence: `agent-archive/2026-08-19-m14-closed-loop-runtime-engineering.md`.
+- **M14 acceptance: COMPLETE.** No second durable state owner or speculative persistent cache/index was introduced.
 
 # Milestone 15 — Broad Production Corpus + Final Phase 2 Cutovers
+
+**Status:** ACTIVE — 2026-08-19
 
 **Goal:** decide whether the Semantic Autopilot is actually better on real work.
 
