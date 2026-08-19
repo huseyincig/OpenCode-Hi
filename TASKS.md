@@ -11,7 +11,7 @@
 
 ### M14 — Closed-Loop Supervision & Runtime Engineering
 
-M13 is complete. Archive: `agent-archive/2026-08-19-m13-browser-autopilot.md`. Final retained M13 product commit is `e0cb30f82947a22f0bedec4c69a9da1cf4f0ee1b`; exact immutable-image build/architecture/plugin verification is `1003/1003 PASS` with architecture lint `22/22 PASS`.
+M13 is complete. Archive: `agent-archive/2026-08-19-m13-browser-autopilot.md`. M14 first retained product checkpoint is `90805398287f86f9596abf16862ee49ced0262b3`; exact immutable-image verification is build PASS, architecture lint `22/22 PASS`, plugin suite `1004/1004 PASS`. Scheduler checkpoint: `agent-archive/2026-08-19-m14-scheduler-hotpath-checkpoint.md`.
 
 M14 must improve decision quality from bounded attributed observations and harden runtime efficiency only where measurement proves value. It must not create a second state owner, broad self-modifying policy, speculative cache/index layer, or optimization without a baseline.
 
@@ -36,4 +36,4 @@ M14 must improve decision quality from bounded attributed observations and harde
 
 ## Exact Next Action
 
-On exact retained M13 commit `e0cb30f`, characterize the current closed-loop feedback and runtime hot paths without changing product behavior: routing/model feedback admission and decay, methodology/procedure learning, scheduler/registry state scans, async wait/cancellation, and mission/task retention. Build a bounded profiling/ownership matrix, then select at most one first cutover from a mechanically demonstrated decision-quality or runtime-efficiency gap. Do not add speculative indexes or a second learning/state runtime.
+On exact retained M14 checkpoint `9080539`, design and test the smallest reversible decay/freshness admission rule for model feedback and project methodology learning. Baseline receipt `m14-baseline-characterization.json` proves 365-day-old observations still affect both routing and methodology admission, but no canonical Hi TTL/half-life exists. Preserve historical evidence/provenance and explicit/fixed user model authority; stale evidence should lose active decision weight rather than be destructively deleted. Do not copy an external memory TTL by analogy. Before retention, use adversarial fresh/stale/boundary attribution tests, a hash-bound baseline→candidate decision comparator, architecture lint and an exact immutable full suite.

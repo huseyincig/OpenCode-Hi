@@ -504,6 +504,13 @@ Representative UI/browser tasks complete with bounded evidence, no cross-task se
 
 Profiling and adversarial tests demonstrate the retained changes improve measured hot paths or decision quality without introducing a second state owner.
 
+### M14 progress — scheduler hot-path checkpoint — 2026-08-19
+
+- Retained product checkpoint `90805398287f86f9596abf16862ee49ced0262b3`: call-scoped prepared scheduling reuses invariant graph/dependency/conflict decisions during simulated admission without adding durable state.
+- Exact normalized baseline→candidate scheduler decisions remain equal across independent/conflict/fan-in/dependency fixtures; 128-unit 8-admission median improved `97.1031 -> 11.7242 ms` (`-87.93%`) and 256-unit improved `391.0434 -> 44.1929 ms` (`-88.70%`). Receipt SHA-256 `e1cd9a935adb23a61c8ff04fb14d8f162d0b57fb46e8f8a08195d05a84df3213`.
+- Exact Git-archive build PASS + architecture lint `22/22 PASS` + plugin suite `1004/1004 PASS`.
+- Baseline decision-quality characterization also proves model feedback and READY project-methodology admission are currently age-insensitive even at an adversarial 365-day observation age. That is the next M14 cutover; 365 days is evidence of the missing decay dimension, not a proposed policy horizon.
+
 # Milestone 15 — Broad Production Corpus + Final Phase 2 Cutovers
 
 **Goal:** decide whether the Semantic Autopilot is actually better on real work.
