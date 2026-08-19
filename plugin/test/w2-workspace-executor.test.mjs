@@ -20,9 +20,10 @@ const BASE='a'.repeat(40)
 const host={agent:PACKAGED_HI_AGENTS}
 function assess(store,sid){return store.applyInitialSemanticAssessment(sid,{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[]})}
 class FakeWorkspaceExecutor{
-  constructor(path='/tmp/hi-w2-workspace'){this.path=path;this.provisions=[];this.cleaned=[];this.reconciles=[];this.mode='ADOPTED'}
+  constructor(path='/tmp/hi-w2-workspace'){this.path=path;this.provisions=[];this.integrations=[];this.cleaned=[];this.reconciles=[];this.mode='ADOPTED';this.integrationError=undefined}
   async sourceBaseline(root){this.baselineRoot=root;return BASE}
   async provision(req){this.provisions.push(structuredClone(req));return{host_workspace_id:`ws_${this.provisions.length}`,workspace_path:this.path}}
+  async reintegrate(req){this.integrations.push(structuredClone(req));if(this.integrationError)throw this.integrationError;return{applied_files:[...req.expected_changed_files]}}
   async reconcile(lease){this.reconciles.push(lease.lease_id);if(this.mode==='ORPHANED')return{disposition:'ORPHANED',lease:{...lease,status:'ORPHANED',cleanup_state:'QUARANTINED'}};if(this.mode==='CLOSED')return{disposition:'CLOSED',lease:{...lease,status:'CLOSED',cleanup_state:'CLEANED'}};return{disposition:'ADOPTED',lease:{...lease,status:'ACTIVE',cleanup_state:'ACTIVE'}}}
   async cleanup(lease){this.cleaned.push(lease.lease_id)}
 }
@@ -93,6 +94,28 @@ test('W2 adapter fails closed for primary-path, repository-identity, or source-b
   }finally{rmSync(root,{recursive:true,force:true});rmSync(work,{recursive:true,force:true});rmSync(common,{recursive:true,force:true})}
 })
 
+test('M12 native workspace warp reintegrates exact scoped diff and preserves unrelated primary dirty state',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-m12-reintegrate-primary-')),work=join(dirname(root),`${basename(root)}-work`),calls=[]
+  const run=(args,cwd=root,input)=>{const r=spawnSync('git',args,{cwd,encoding:'utf8',input});assert.equal(r.status,0,String(r.stderr??r.stdout));return String(r.stdout??'').trim()}
+  try{
+    const {writeFileSync}=await import('node:fs');run(['init']);run(['config','user.email','hi@example.invalid']);run(['config','user.name','Hi Test']);writeFileSync(join(root,'a.txt'),'base\n');writeFileSync(join(root,'unrelated.txt'),'base\n');run(['add','.']);run(['commit','-m','base']);const head=run(['rev-parse','HEAD']);run(['worktree','add','--detach',work,'HEAD']);writeFileSync(join(work,'a.txt'),'isolated\n');writeFileSync(join(root,'unrelated.txt'),'user-dirty\n')
+    const workspace={list:async()=>({data:[{id:'ws_reintegrate',type:'worktree',directory:work}]}),create:async()=>({data:{id:'ws_reintegrate',type:'worktree',directory:work}}),remove:async()=>({data:{}}),warp:async p=>{calls.push(p);const dr=spawnSync('git',['diff','--binary','HEAD','--'],{cwd:work,encoding:'utf8'});assert.equal(dr.status,0,String(dr.stderr??dr.stdout));const ar=spawnSync('git',['apply','--whitespace=nowarn','-'],{cwd:root,encoding:'utf8',input:String(dr.stdout??'')});assert.equal(ar.status,0,String(ar.stderr??ar.stdout));return{data:undefined}}}
+    const adapter=new OpenCodeWorkspaceAdapter({v2:{experimental:{workspace}}},new URL('http://127.0.0.1:1'),root),lease={lease_id:'lease_r',mission_id:'m',task_id:'t',repository_root:root,base_ref:head,workspace_path:resolve(work),host_workspace_id:'ws_reintegrate',created_at:1,status:'ACTIVE',cleanup_state:'ACTIVE',source_baseline:head}
+    const out=await adapter.reintegrate({session_id:'child-reintegrate',lease,task_scope:['a.txt'],expected_changed_files:['a.txt']})
+    assert.deepEqual(out.applied_files,['a.txt']);assert.equal(readFileSync(join(root,'a.txt'),'utf8'),'isolated\n');assert.equal(readFileSync(join(root,'unrelated.txt'),'utf8'),'user-dirty\n');assert.equal(calls.length,1);assert.equal(calls[0].id,null);assert.equal(calls[0].sessionID,'child-reintegrate');assert.equal(calls[0].copyChanges,true)
+  }finally{spawnSync('git',['worktree','remove','--force',work],{cwd:root,encoding:'utf8'});rmSync(work,{recursive:true,force:true});rmSync(root,{recursive:true,force:true})}
+})
+
+test('M12 workspace reintegration refuses dirty primary target and never invokes native warp',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-m12-reintegrate-dirty-')),work=join(dirname(root),`${basename(root)}-work`);let warps=0
+  const run=(args,cwd=root)=>{const r=spawnSync('git',args,{cwd,encoding:'utf8'});assert.equal(r.status,0,String(r.stderr??r.stdout));return String(r.stdout??'').trim()}
+  try{
+    const {writeFileSync}=await import('node:fs');run(['init']);run(['config','user.email','hi@example.invalid']);run(['config','user.name','Hi Test']);writeFileSync(join(root,'a.txt'),'base\n');run(['add','.']);run(['commit','-m','base']);const head=run(['rev-parse','HEAD']);run(['worktree','add','--detach',work,'HEAD']);writeFileSync(join(work,'a.txt'),'isolated\n');writeFileSync(join(root,'a.txt'),'user-dirty\n')
+    const workspace={list:async()=>({data:[{id:'ws_dirty',type:'worktree',directory:work}]}),create:async()=>({data:{id:'ws_dirty',type:'worktree',directory:work}}),remove:async()=>({data:{}}),warp:async()=>{warps++;return{data:undefined}}},adapter=new OpenCodeWorkspaceAdapter({v2:{experimental:{workspace}}},new URL('http://127.0.0.1:1'),root),lease={lease_id:'lease_d',mission_id:'m',task_id:'t',repository_root:root,base_ref:head,workspace_path:resolve(work),host_workspace_id:'ws_dirty',created_at:1,status:'ACTIVE',cleanup_state:'ACTIVE',source_baseline:head}
+    await assert.rejects(()=>adapter.reintegrate({session_id:'child-dirty',lease,task_scope:['a.txt'],expected_changed_files:['a.txt']}),/refuses user\/current primary changes/);assert.equal(warps,0);assert.equal(readFileSync(join(root,'a.txt'),'utf8'),'user-dirty\n')
+  }finally{spawnSync('git',['worktree','remove','--force',work],{cwd:root,encoding:'utf8'});rmSync(work,{recursive:true,force:true});rmSync(root,{recursive:true,force:true})}
+})
+
 test('W2 ChildExecutionCoordinator binds workspaceID and exact returned directory; mismatch aborts child',async()=>{
   const created=[],aborted=[],root=mkdtempSync(join(tmpdir(),'hi-w2-bind-')),work=join(root,'work');mkdirSync(work)
   try{
@@ -130,6 +153,16 @@ test('W2 explicit isolated task provisions one lease, binds child workspace, pre
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
+
+test('M12 isolated DONE result reintegrates before settlement and reintegration failure remains BLOCKED with active lease',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-m12-runtime-reintegration-')),work=join(root,'work');mkdirSync(work);const created=[],fake=new FakeWorkspaceExecutor(work),wr=new WorkspaceRuntime(fake,root),rt=runtimeWithWorkspace(client(created,[],[],work),wr,root),store=new MissionStore(root),m=store.start('m12-runtime-reintegration','isolated implementation')
+  try{
+    assess(store,'m12-runtime-reintegration');const out=await rt.start(m,{objective:'isolated implementation',role:'coder',category:'quick',scope:['src/a.ts'],isolationRequired:true,isolationReason:'exact task write isolation'}),result={status:'DONE',summary:'done',changed_files:['src/a.ts'],evidence:[],open_issues:[],needs_context:[]}
+    const applied=await rt.reintegrateWorkspaceResult(m,out.worker_id,result);assert.equal(applied.status,'DONE');assert.deepEqual(applied.changed_files,['src/a.ts']);assert.equal(fake.integrations.length,1);assert.equal(fake.integrations[0].session_id,out.session_id);assert.equal(fake.integrations[0].lease.task_id,out.task_id)
+    fake.integrationError=new Error('native warp apply rejected');const blocked=await rt.reintegrateWorkspaceResult(m,out.worker_id,result);assert.equal(blocked.status,'BLOCKED');assert.ok(blocked.open_issues.some(x=>x===`workspace-reintegration-failed:${out.task_id}`));assert.equal(m.execution.workspace_leases[0].status,'ACTIVE');assert.equal(fake.cleaned.length,0)
+    await rt.cancel(m,out.worker_id)
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
 
 test('W2 constraint rebase fresh child cannot escape the existing workspace lease',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-w2-rebase-')),work=join(root,'work');mkdirSync(work);const created=[],prompts=[],aborted=[],fake=new FakeWorkspaceExecutor(work),wr=new WorkspaceRuntime(fake,root),rt=runtimeWithWorkspace(client(created,prompts,aborted,work),wr,root),store=new MissionStore(root),m=store.start('rebase','isolated rebase')
