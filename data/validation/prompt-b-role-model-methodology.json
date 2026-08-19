@@ -101,7 +101,7 @@
       "owner_sha256": "14da681b14b058aa3104cfb2f8f1cb78dfc2c75c2a7dc975748e1a49748d53d7",
       "owner_anchor": "reconcileMethodologyExits",
       "proof": "plugin/test/forensic-hardening.test.mjs",
-      "proof_sha256": "c06990b9b2274477c98523f93ee7c1c3c3bbb7261283230f0e4ece8139a66034",
+      "proof_sha256": "9357690f0a2fb9f6be872df8c6d381bd80441f80e4491887a1e22e0756efdb82",
       "proof_anchor": "parent direct methodology remains active until mission-scope fresh verification satisfies its exit contract"
     },
     {

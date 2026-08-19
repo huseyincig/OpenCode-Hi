@@ -12,7 +12,7 @@ Hi, mümkün olan en fazla agent/token/araç yerine iş için **minimum yeterli*
 
 ## Güncel ürün gerçeği
 
-Bu checkout uygulama/package sürümü olarak `0.2.0`'yi izler. Sürüm kimliğinin canonical sahibi `VERSION` dosyasıdır ve package metadata ile parity doğrulanır. Bir sürümün gerçekten yayımlanmış olup olmadığı mutable external state'tir; bunun authoritative kaynakları GitHub Releases ve npm registry'dir. Tarihsel `v0.1.1` ve `v0.1.0` release artifact'leri immutable kalır.
+Bu checkout uygulama/package sürümü olarak `0.2.1`'i izler. Sürüm kimliğinin canonical sahibi `VERSION` dosyasıdır ve package metadata ile parity doğrulanır. Bir sürümün gerçekten yayımlanmış olup olmadığı mutable external state'tir; bunun authoritative kaynakları GitHub Releases ve npm registry'dir. Tarihsel `v0.1.1` ve `v0.1.0` release artifact'leri immutable kalır.
 
 Güncel host/capability gerçeği elle yazılan metinden değil exact receipt'lerden üretilir. Ayrıntı için [Host Support](../../HOSTS.md) ve `data/validation/compatibility-matrix-0.1.0.json` kullanılır.
 
@@ -97,18 +97,18 @@ Mevcut `opencode.json` / `opencode.jsonc` içindeki `plugin` listesine şu spec'
 
 OpenCode'u yeniden başlatın. Git package'ı materialize etmek ve plugin'i yüklemek OpenCode'un sorumluluğudur. Güncel Hi source package'ı npm/Pacote'nin Git-dependency preparation açmasına neden olan root lifecycle adlarını taşımaz; `@opencode-ai/plugin` host peer'i optional olduğu için büyük host dependency zinciri tekrar kurulmaz.
 
-Immutable `v0.2.0` tag'i bu direct-Git packaging düzeltmesinden daha eskidir ve değiştirilmez. Yeni release bu düzeltmeyi açıkça taşıyana kadar current Git source spec'i yukarıdaki biçimde kullanın.
+Immutable `v0.2.0` tag'i bu direct-Git packaging düzeltmesinden daha eskidir ve değiştirilmez. `v0.2.1` bu düzeltmeyi taşır; unpinned Git source spec'i current repository source'u izler.
 
 ### npm registry
 
-Bu release'in exact registry kimliği `opencode-hi@0.2.0`'dir. Yayımlanan sürümler npm Trusted Publishing OIDC provenance kullanır ve recorded exact OpenCode host üzerinde acceptance ile doğrulanır.
+Bu release'in exact registry kimliği `opencode-hi@0.2.1`'dir. Yayımlanan sürümler npm Trusted Publishing OIDC provenance kullanır ve recorded exact OpenCode host üzerinde acceptance ile doğrulanır.
 
 Yeni bir proje repository checkout yapmadan exact package sürümünü kurabilir ve package içindeki setup CLI'ı kullanabilir:
 
 ```bash
-npm install --save-dev opencode-hi@0.2.0
-./node_modules/.bin/opencode-hi-setup plan /path/to/project --version 0.2.0
-./node_modules/.bin/opencode-hi-setup install /path/to/project --version 0.2.0
+npm install --save-dev opencode-hi@0.2.1
+./node_modules/.bin/opencode-hi-setup plan /path/to/project --version 0.2.1
+./node_modules/.bin/opencode-hi-setup install /path/to/project --version 0.2.1
 ./node_modules/.bin/opencode-hi-setup doctor /path/to/project
 ```
 

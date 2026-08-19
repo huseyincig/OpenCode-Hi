@@ -257,8 +257,9 @@ test('read-only manager cannot close implementation through hi_direct_progress e
 
 test('parent direct ownership accepts an automatically related sibling test file',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-direct-related-'))
+  const c=client();c.session.diff=async()=>({data:[{file:'src/a.test.ts'}]})
   try{
-    const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
+    const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:c});await hooks.config({})
     await hooks['chat.message']({sessionID:'s-related',message:{role:'user',parts:[{type:'text',text:'Update src/a.ts to add a greeting'}]}},{parts:[]}); await assessPluginMission(hooks,'s-related',{likely_targets:['src/a.ts']})
     await hooks['tool.execute.before']({sessionID:'s-related',tool:'write'},{args:{filePath:'src/a.test.ts'}})
     const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'implemented with focused test'},{sessionID:'s-related'}))
@@ -395,8 +396,9 @@ test('native skill content can provide review input for a read-only review missi
 
 test('parent direct methodology remains active until mission-scope fresh verification satisfies its exit contract',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-parent-methodology-exit-'))
+  const c=client();c.session.diff=async()=>({data:[{file:'src/a.ts'}]})
   try{
-    const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
+    const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:c});await hooks.config({})
     await hooks['chat.message']({sessionID:'s-parent-method',message:{role:'user',parts:[{type:'text',text:'Refactor src/a.ts without changing behavior'}]}},{parts:[]}); await assessPluginMission(hooks,'s-parent-method',{likely_targets:['src/a.ts'],likely_verification:['targeted-tests'],intent_signals:['intent.refactor']})
     await hooks['tool.execute.before']({sessionID:'s-parent-method',tool:'skill',args:{name:'hi-safe-refactoring'}},{args:{name:'hi-safe-refactoring'}})
     await hooks['tool.execute.after']({sessionID:'s-parent-method',tool:'skill',args:{name:'hi-safe-refactoring'}},'loaded methodology')

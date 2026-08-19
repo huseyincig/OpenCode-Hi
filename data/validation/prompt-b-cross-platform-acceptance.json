@@ -1,25 +1,27 @@
 {
-  "acceptance_receipt": "data/validation/cross-platform-acceptance-0.2.0.json",
-  "acceptance_sha256": "52b2742b47137330c6eaacbfa6212e5f46e4fbe963969b93529e1a0d203b354f",
-  "blockers": [],
-  "claim_boundary": "Current-source Windows/Linux certification is bound to the exact external CI source checkpoint. Subsequent evidence-only commits may consume it only while runtime/package material paths remain byte-identical to that checkpoint.",
+  "acceptance_receipt": "data/validation/cross-platform-acceptance-0.2.1.json",
+  "acceptance_sha256": null,
+  "blockers": [
+    "current-source-cross-platform-ci-receipt-missing"
+  ],
+  "claim_boundary": "Current-source Windows/Linux certification is external-CI gated. Missing current-version CI evidence is represented as PENDING_EXTERNAL_CI, never promoted to PASS; an invalid existing receipt fails closed.",
   "github_actions": {
-    "conclusion": "success",
-    "run_id": 32305085392,
-    "ubuntu_job_id": 96236000397,
-    "windows_job_id": 96236000218
+    "conclusion": null,
+    "run_id": null,
+    "ubuntu_job_id": null,
+    "windows_job_id": null
   },
   "kind": "PROMPT_B_CROSS_PLATFORM_ACCEPTANCE_AUDIT",
-  "linux_current_certified": true,
+  "linux_current_certified": false,
   "post_ci_material_drift": [],
   "program": "PROMPT_B",
   "schema": 1,
   "section": 38,
   "source_checkpoint": {
-    "commit": "7b3f4c096719130f7bee800253f207e38df7de6c",
-    "tree": "e9e33f419a8898220f105b5089309547d4f9866e"
+    "commit": null,
+    "tree": null
   },
-  "status": "PASS",
+  "status": "PENDING_EXTERNAL_CI",
   "summary": {
     "covered_surfaces": 7,
     "required_surfaces": 7,
@@ -53,7 +55,7 @@
     },
     {
       "proof": "tests/test_hi.py",
-      "proof_sha256": "b11d221232b7f7efffeabedd275483e777abbcf3ab4a1d61a4ecba019506a477",
+      "proof_sha256": "453c4d13ee80a9ef226980c14e1077ce600d6353b4da456cb969529851d6ce47",
       "surface": "filesystem"
     },
     {
@@ -63,6 +65,6 @@
     }
   ],
   "violations": [],
-  "windows_current_certified": true,
+  "windows_current_certified": false,
   "windows_historical_release_evidence": true
 }

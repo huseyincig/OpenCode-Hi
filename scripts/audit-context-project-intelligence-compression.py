@@ -2,6 +2,7 @@
 from pathlib import Path
 import hashlib,json,sys
 ROOT=Path(__file__).resolve().parents[1]
+version=(ROOT/'VERSION').read_text(encoding='utf-8').strip()
 OUT=ROOT/'data/validation/prompt-b-context-project-intelligence-compression.json'
 def sha(path):return hashlib.sha256((ROOT/path).read_bytes()).hexdigest()
 checks=[
@@ -33,7 +34,7 @@ ctx_bad=[str(x.relative_to(ROOT)) for x in ctx if 'addEvidence(' in x.read_text(
 if learning_bad:violations.append('project-methodology-learning-evidence-ownership:'+','.join(learning_bad))
 if ctx_bad:violations.append('context-evidence-ownership:'+','.join(ctx_bad))
 status='PASS' if not violations and len(rows)==len(checks) else 'FAIL'
-data={'schema':1,'kind':'PROMPT_B_CONTEXT_PROJECT_LEARNING_ADVERSARIAL_AUDIT','program':'PROMPT_B','section':10,'status':status,'invariants':rows,'static_guards':{'project_methodology_learning_evidence_owner_paths':learning_bad,'context_evidence_owner_paths':ctx_bad,'general_project_intelligence_retrieval_present':False,'compression_subsystem_present':False},'violations':violations,'summary':{'required':len(checks),'covered':len(checks)-sum(1 for v in violations if ':missing-' in v or ':owner-anchor-drift:' in v or ':proof-anchor-drift:' in v),'violations':len(violations)},'claim_boundary':'Current 0.2.0 context architecture: explicit consumer-bound ContextReference/Artifact state, bounded Mission runtime projection, deterministic duplicate pruning, and evidence-bound project methodology learning. Removed general Project Intelligence retrieval and CompressionArtifact subsystems are not certified as current product surfaces.'}
+data={'schema':1,'kind':'PROMPT_B_CONTEXT_PROJECT_LEARNING_ADVERSARIAL_AUDIT','program':'PROMPT_B','section':10,'status':status,'invariants':rows,'static_guards':{'project_methodology_learning_evidence_owner_paths':learning_bad,'context_evidence_owner_paths':ctx_bad,'general_project_intelligence_retrieval_present':False,'compression_subsystem_present':False},'violations':violations,'summary':{'required':len(checks),'covered':len(checks)-sum(1 for v in violations if ':missing-' in v or ':owner-anchor-drift:' in v or ':proof-anchor-drift:' in v),'violations':len(violations)},'claim_boundary':f'Current {version} context architecture: explicit consumer-bound ContextReference/Artifact state, bounded Mission runtime projection, deterministic duplicate pruning, and evidence-bound project methodology learning. Removed general Project Intelligence retrieval and CompressionArtifact subsystems are not certified as current product surfaces.'}
 OUT.parent.mkdir(parents=True,exist_ok=True);OUT.write_text(json.dumps(data,indent=2)+'\n')
 print(f"context/project-learning audit {status}: covered={data['summary']['covered']}/{len(checks)} violations={len(violations)}")
 if violations:print(json.dumps(data,indent=2))

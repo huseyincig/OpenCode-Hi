@@ -19,12 +19,12 @@ Canonical proje ayar dosyası:
 
 ### npm ile plugin kaydı
 
-Yayımlanmış paket için basit OpenCode kaydı:
+`0.2.1` release paketi için OpenCode kaydı:
 
 ```json
 {
   "plugin": [
-    "opencode-hi@0.2.0"
+    "opencode-hi@0.2.1"
   ]
 }
 ```
@@ -37,7 +37,7 @@ Setup CLI'ı projeye de kurmak istiyorsanız:
 
 ```powershell
 Set-Location C:\Projects\MyApp
-npm install --save-dev opencode-hi@0.2.0
+npm install --save-dev opencode-hi@0.2.1
 .\node_modules\.bin\opencode-hi-setup.cmd doctor C:\Projects\MyApp
 ```
 
@@ -45,7 +45,7 @@ npm install --save-dev opencode-hi@0.2.0
 
 ```bash
 cd /path/to/MyApp
-npm install --save-dev opencode-hi@0.2.0
+npm install --save-dev opencode-hi@0.2.1
 ./node_modules/.bin/opencode-hi-setup doctor "$PWD"
 ```
 
@@ -65,7 +65,7 @@ OpenCode'u yeniden başlatın. **Bu kurulum yolunda Bun/npm çalıştırmayın, 
 
 Güncel Hi source package'ı npm/Pacote'nin Git-dependency preparation başlatmasına neden olan root lifecycle script adlarını kullanmaz. `@opencode-ai/plugin` host peer'i optional tutulur; böylece yalnız type/host entegrasyonu için gereken büyük `effect` zinciri kullanıcı kurulumuna gereksiz yere eklenmez.
 
-Immutable `v0.2.0` tag'i bu packaging düzeltmesinden daha eskidir. O tag değiştirilmez; sonraki release düzeltmeyi açıkça taşıyana kadar current Git source spec'i yukarıdaki biçimde kullanın.
+Immutable `v0.2.0` tag'i bu packaging düzeltmesinden daha eskidir ve değiştirilmez. `v0.2.1` düzeltmeyi taşır; unpinned Git source spec'i current repository source'u izler.
 
 ## 1. Windows, Linux ve macOS ayar yolu
 
@@ -280,7 +280,7 @@ Bu yalnız Hi child task modelini tercih eder. Primary session modelini değişt
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["opencode-hi@0.2.0"],
+  "plugin": ["opencode-hi@0.2.1"],
   "model": "provider/model-x"
 }
 ```

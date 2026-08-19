@@ -1,11 +1,11 @@
 {
   "schema": 1,
-  "release": "0.2.0",
+  "release": "0.2.1",
   "kind": "DOCUMENTATION_TRUTH_INVENTORY",
   "status": "PASS",
   "policy": {
     "path": "data/documentation-ownership.json",
-    "sha256": "cb5659bcc457a0d02127ad4319f4160704811751cc9ac6179677a4a0f575585a"
+    "sha256": "d21adec0bb0ce5d27194c0248a4932e99bdfee578c9fc3858d5e4b06162aec85"
   },
   "summary": {
     "public_documents": 16,
@@ -117,7 +117,7 @@
     },
     {
       "area": "current-release-status",
-      "path": "data/validation/release-status-0.2.0.json"
+      "path": "data/validation/release-status-0.2.1.json"
     }
   ],
   "artifacts": [
@@ -147,7 +147,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "8ae5bcc7d5fdd6ba5c2d122267f46fdd5fa2323433b426b122a811e6eb9ae4f5",
+      "sha256": "d3ef825e2ff4fc65379c6363cfb40be479e5a8f638769f264822abc77be161a3",
       "area": "product-overview",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -163,7 +163,7 @@
     },
     {
       "path": "docs/CONFIGURATION.md",
-      "sha256": "8c1e7d5c149795a1840b3a3d8c6b6d0ae34ae8052b3feea261139462ce38a9b2",
+      "sha256": "7817c9650d16a61c61bc1a00a97f55bd25a3d60430a84492ff2c0ce6a0d2bc45",
       "area": "configuration-guide",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -187,7 +187,7 @@
     },
     {
       "path": "docs/INSTALLATION.md",
-      "sha256": "4f6cde1b5578507f392301857be747ed2d67d617acaf21e6786f62a5bada79a5",
+      "sha256": "40005e1552660e165a0b465d3748f0a37889354dd6e38deef77d31d86e04a69e",
       "area": "installation-configuration-lifecycle",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -203,7 +203,7 @@
     },
     {
       "path": "docs/RELEASE.md",
-      "sha256": "c460d10c0e7dcf1f433a2c1991768b29eadc35671c5854b72075c0b3426b1dcc",
+      "sha256": "685b51fc0cdc5216bf5ab3433c24df972faadc3b4e2e881058777424836aa140",
       "area": "release",
       "audience": "RELEASE_ENGINEER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -235,7 +235,7 @@
     },
     {
       "path": "docs/locales/tr/CONFIGURATION.md",
-      "sha256": "fe3b2cf828a551a4a3d27802ceafd39beae60fc5d9926eefdfe4c1e1afda3b74",
+      "sha256": "1dbd83c08a06b69289c6546b9505ccff8fbbb706a89422b7a21b1ff460666d1c",
       "area": "turkish-configuration-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",
@@ -243,7 +243,7 @@
     },
     {
       "path": "docs/locales/tr/README.md",
-      "sha256": "10c8e59183e9e7a2d754ab9c92270921b2fac62892cc80524d604a8d5e87a544",
+      "sha256": "11de486604e05c457f1f23ddf7a60ce9d0910cea54c5eef4b7271aadbd5a03c8",
       "area": "turkish-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",
@@ -258,8 +258,8 @@
       "lifecycle": "MACHINE_OWNER"
     },
     {
-      "path": "data/validation/release-status-0.2.0.json",
-      "sha256": "41c5e9e5d310b96ece8d1467eb255694f5243896dab0b1930408bae5b246122d",
+      "path": "data/validation/release-status-0.2.1.json",
+      "sha256": "fd647c0bb66b92744b14e1ce770b6f04f797eb8ddb97f9b3e840706dda8b9ce4",
       "area": "current-release-status",
       "lifecycle": "MACHINE_OWNER"
     }

@@ -12,7 +12,7 @@ Hi is designed to use the minimum sufficient topology, model, context and verifi
 
 ## Current product truth
 
-This checkout tracks application/package version `0.2.0`. Version identity is owned by `VERSION` and parity-validated against package metadata. Published availability is external state: GitHub Releases and the npm registry are authoritative for whether a given version has been released. Historical `v0.1.1` and `v0.1.0` release artifacts remain immutable.
+This checkout tracks application/package version `0.2.1`. Version identity is owned by `VERSION` and parity-validated against package metadata. Published availability is external state: GitHub Releases and the npm registry are authoritative for whether a given version has been released. Historical `v0.1.1` and `v0.1.0` release artifacts remain immutable.
 
 Current host capability truth is generated from exact receipts rather than hand-maintained here. See [Host Support](docs/HOSTS.md) and `data/validation/compatibility-matrix-0.1.0.json`.
 
@@ -97,18 +97,18 @@ Add this package spec to the existing `plugin` array in `opencode.json` / `openc
 
 Restart OpenCode. OpenCode's native package loader fetches/materializes the Git package and loads `plugin/dist/plugin.js`. The current source package intentionally avoids npm/Pacote Git-preparation lifecycle triggers and keeps the OpenCode host peer optional, so native Git installation does not open a nested package build/install just to prepare Hi.
 
-The immutable public `v0.2.0` tag predates this direct-Git packaging fix. Do not reinterpret or retag that historical release; use the current Git source spec above until a later release explicitly carries the fix.
+The immutable public `v0.2.0` tag predates this direct-Git packaging fix and remains historical. Release `v0.2.1` carries the correction; the unpinned Git source spec above follows current repository source.
 
 ### npm registry
 
-The exact registry identity for this release is `opencode-hi@0.2.0`. Published releases use npm Trusted Publishing OIDC provenance and are acceptance-checked on the recorded exact OpenCode host.
+The exact registry identity for this release is `opencode-hi@0.2.1`. Published releases use npm Trusted Publishing OIDC provenance and are acceptance-checked on the recorded exact OpenCode host.
 
 A fresh project can install the exact package version and use the package-provided setup CLI without a repository checkout:
 
 ```bash
-npm install --save-dev opencode-hi@0.2.0
-./node_modules/.bin/opencode-hi-setup plan /path/to/project --version 0.2.0
-./node_modules/.bin/opencode-hi-setup install /path/to/project --version 0.2.0
+npm install --save-dev opencode-hi@0.2.1
+./node_modules/.bin/opencode-hi-setup plan /path/to/project --version 0.2.1
+./node_modules/.bin/opencode-hi-setup install /path/to/project --version 0.2.1
 ./node_modules/.bin/opencode-hi-setup doctor /path/to/project
 ```
 

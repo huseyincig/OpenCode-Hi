@@ -21,12 +21,12 @@ If Hi is already visible in OpenCode, continue to [Platform paths](#1-platform-p
 
 ### npm/OpenCode package registration
 
-The simplest OpenCode registration for the published release is:
+The OpenCode package registration for release `0.2.1` is:
 
 ```json
 {
   "plugin": [
-    "opencode-hi@0.2.0"
+    "opencode-hi@0.2.1"
   ]
 }
 ```
@@ -39,7 +39,7 @@ If you also want the package-provided `opencode-hi-setup` CLI in the project, in
 
 ```powershell
 Set-Location C:\Projects\MyApp
-npm install --save-dev opencode-hi@0.2.0
+npm install --save-dev opencode-hi@0.2.1
 .\node_modules\.bin\opencode-hi-setup.cmd doctor C:\Projects\MyApp
 ```
 
@@ -47,7 +47,7 @@ npm install --save-dev opencode-hi@0.2.0
 
 ```bash
 cd /path/to/MyApp
-npm install --save-dev opencode-hi@0.2.0
+npm install --save-dev opencode-hi@0.2.1
 ./node_modules/.bin/opencode-hi-setup doctor "$PWD"
 ```
 
@@ -65,7 +65,7 @@ Windows, Linux and macOS use the same OpenCode package spec. Add it to the exist
 
 Restart OpenCode. **Do not create a wrapper and do not run Bun/npm for this install path.** OpenCode owns Git package materialization and plugin loading. The Hi package root avoids npm/Pacote Git-preparation lifecycle triggers; its OpenCode plugin peer is optional so the host's large type/runtime dependency graph is not redundantly installed.
 
-The immutable `v0.2.0` tag is older than this direct-Git packaging fix. Keep that release immutable; the unpinned Git source spec above follows current repository source until a later release explicitly contains the correction. See [Installation and Lifecycle](INSTALLATION.md) and [Host Support](HOSTS.md) for evidence boundaries.
+The immutable `v0.2.0` tag is older than this direct-Git packaging fix. Keep that release immutable; release `v0.2.1` contains the correction, while the unpinned Git source spec follows current repository source. See [Installation and Lifecycle](INSTALLATION.md) and [Host Support](HOSTS.md) for evidence boundaries.
 
 ## 1. Platform paths
 
@@ -354,7 +354,7 @@ In `opencode.json`:
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["opencode-hi@0.2.0"],
+  "plugin": ["opencode-hi@0.2.1"],
   "model": "provider/model-x"
 }
 ```

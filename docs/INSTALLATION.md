@@ -7,7 +7,7 @@ After the plugin loads, use the complete [Configuration Guide](CONFIGURATION.md)
 Türkçe kullanıcı rehberi: [Türkçe Kurulum ve Yapılandırma Rehberi](locales/tr/CONFIGURATION.md).
 
 1. **Git source distribution** — current source is designed for OpenCode's native package-plugin loader using one Git spec; no user-run Bun/npm materialization or wrapper is part of the install contract;
-2. **npm registry distribution** — immutable `opencode-hi@0.2.0` is published and T4-verified through Trusted Publishing OIDC provenance plus fresh-registry exact-host acceptance;
+2. **npm registry distribution** — `opencode-hi@0.2.1` is the release identity carrying this correction; registry availability and T4 status are verified from external publication receipts;
 3. **registration/lifecycle mechanics** — the package setup CLI remains available for npm-package registration/configuration workflows but is not required for the native Git source install.
 
 ## Prerequisites
@@ -36,27 +36,27 @@ Restart OpenCode. There is no separate `bun install`, `npm install`, `.opencode/
 
 The current source package is deliberately Git-install friendly: root package scripts avoid the lifecycle names that npm/Pacote treats as Git-dependency preparation triggers, while the `@opencode-ai/plugin` host peer is optional instead of being reinstalled with its large type/runtime graph. Exact OpenCode `1.18.18` native-host acceptance must observe the Git package load and Hi tool surface; Release Readiness also exercises the exact pushed SHA on Ubuntu and Windows.
 
-The immutable `v0.2.0` tag predates this packaging correction and remains historical. Do not move that tag or present it as containing the current direct-Git fix.
+The immutable `v0.2.0` tag predates this packaging correction and remains historical. Release `v0.2.1` carries the correction; never move or reinterpret `v0.2.0`.
 
 ## npm package registration
 
-For the current public release, OpenCode package configuration uses the exact package spec:
+For release `0.2.1`, OpenCode package configuration uses the exact package spec:
 
 ```json
 {
-  "plugin": ["opencode-hi@0.2.0"]
+  "plugin": ["opencode-hi@0.2.1"]
 }
 ```
 
 The setup CLI can plan and apply that registration without replacing unrelated configuration. The publishable package includes `scripts/native_plugin_setup.py`, `VERSION`, and the executable npm bin `opencode-hi-setup`. From a source checkout:
 
 ```bash
-python3 scripts/native_plugin_setup.py plan /path/to/project --version 0.2.0
-python3 scripts/native_plugin_setup.py install /path/to/project --version 0.2.0
+python3 scripts/native_plugin_setup.py plan /path/to/project --version 0.2.1
+python3 scripts/native_plugin_setup.py install /path/to/project --version 0.2.1
 python3 scripts/native_plugin_setup.py doctor /path/to/project
 ```
 
-The npm package exposes the same lifecycle as `opencode-hi-setup`. A fresh registry consumer has installed `opencode-hi@0.2.0` and loaded it on exact OpenCode `1.18.18`; this is current T4 evidence rather than a package-content-only claim.
+The npm package exposes the same lifecycle as `opencode-hi-setup`. Release T4 verification installs `opencode-hi@0.2.1` from the public registry and loads it on exact OpenCode `1.18.18`; package/runtime support is not claimed from package contents alone.
 
 `plan` is non-mutating. `install` is idempotent after Hi owns the exact registration. `doctor` validates registration/ownership/lifecycle state; it explicitly does **not** substitute for a real OpenCode runtime-load check.
 

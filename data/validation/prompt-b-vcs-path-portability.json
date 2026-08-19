@@ -95,7 +95,7 @@
       "owner_sha256": "bf299f887e618d824b9099281cd6e9e6321ff942faec9bba95d548d3e27c964b",
       "owner_anchor": "rollback",
       "proof": "plugin/test/forensic-hardening.test.mjs",
-      "proof_sha256": "c06990b9b2274477c98523f93ee7c1c3c3bbb7261283230f0e4ece8139a66034",
+      "proof_sha256": "9357690f0a2fb9f6be872df8c6d381bd80441f80e4491887a1e22e0756efdb82",
       "proof_anchor": "command rollback with unknown exit cannot close rollback gate"
     },
     {

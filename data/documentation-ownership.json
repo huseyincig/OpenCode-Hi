@@ -120,7 +120,7 @@
     },
     {
       "area": "current-release-status",
-      "path": "data/validation/release-status-0.2.0.json"
+      "path": "data/validation/release-status-0.2.1.json"
     }
   ]
 }

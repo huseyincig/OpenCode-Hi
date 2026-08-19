@@ -545,7 +545,7 @@ def test_prompt_a_first_use_docs_do_not_advertise_unavailable_registry_or_stale_
     for text in (readme,tr,install,config,tr_config):
         lowered=text.lower()
         assert 'v0.2.0' in text and ('predate' in lowered or 'older' in lowered or 'esk' in lowered)
-    assert 'opencode-hi@0.2.0' in install
+    assert f'opencode-hi@{V}' in install
     assert 'npm run build:plugin' in readme+tr+install
     assert f'`{V}`' in readme and 'Published availability is external state' in readme
     assert 'npm bootstrap publication is not yet complete' not in readme+install
