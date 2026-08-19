@@ -19,7 +19,7 @@ add('fixture-realism','scripts/generate-compatibility-matrix.py','External recei
 add('false-positive-resistance','scripts/run-node-test-suite.mjs','const knownLibuvTeardown=','data/validation/test-harness-isolation-0.1.0.json','SIGABRT is normalized only with exact uv__io_poll EEXIST signature')
 add('skipped-tests-audited','.github/workflows/release-readiness.yml','os: [ubuntu-latest, windows-latest]','tests/test_hi.py',"pytest.skip('symlink privilege varies on Windows')")
 add('timeout-handling','scripts/run-node-test-suite.mjs',"'--test-timeout=120000'",'scripts/run-node-test-suite.mjs','timeout:300000')
-add('test-isolation','scripts/run-node-test-suite.mjs','OPENCODE_HI_STATE_DIR','data/validation/test-harness-isolation-0.1.0.json','"home_hi_state_delta": 0')
+add('test-isolation','scripts/run-node-test-suite.mjs','OPENCODE_HI_STATE_DIR','data/validation/test-harness-isolation-0.1.0.json','"home_hi_state_delta"')
 add('cwd-independence','plugin/test/native-skill-catalog.test.mjs','fileURLToPath(import.meta.url)','data/validation/test-harness-isolation-0.1.0.json','"repo_root_cwd"')
 add('home-xdg-isolation','scripts/run-node-test-suite.mjs','XDG_STATE_HOME','data/validation/test-harness-isolation-0.1.0.json','"isolation_env"')
 add('platform-assumptions','.github/workflows/release-readiness.yml','windows-latest','plugin/test/real-hosted-release-transaction.test.mjs','mandatory Ubuntu release-readiness job')
@@ -40,7 +40,7 @@ static={
  'libuv_exception_strict': "result?.signal==='SIGABRT'" in runner and 'fail 0' in runner and 'cancelled 0' in runner and 'uv__io_poll' in runner,
  'runtime_never_assigns_real_host_acceptance': "verification_level:'REAL_HOST_ACCEPTANCE'" not in hostcap,
  'current_t3_receipt_backed': all((compat['current_reference_host']['capabilities'][k].get('status')=='SUPPORTED_T3' and isinstance(compat['current_reference_host']['capabilities'][k].get('receipt'),str) and (ROOT/compat['current_reference_host']['capabilities'][k]['receipt']).is_file()) for k in ('process-lifecycle','workspace-isolation-binding','browser-execution')),
- 'home_pollution_delta_zero': harness.get('canonical_suite_observation',{}).get('home_hi_state_delta')==0,
+ 'home_pollution_delta_zero': harness.get('canonical_suite_observation',{}).get('home_hi_state_delta')=={'entries':0,'bytes':0},
  'cwd_dual_run_green': all((lambda x: isinstance(x.get('tests'),int) and x.get('tests',0)>0 and x.get('pass')==x.get('tests') and x.get('fail')==0 and x.get('cancelled')==0)((harness.get('cwd_dual_run',{}).get(k,{}) or {})) for k in ('plugin_cwd','repo_root_cwd')),
 }
 for k,v in static.items():
