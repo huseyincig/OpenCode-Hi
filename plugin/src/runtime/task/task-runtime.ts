@@ -52,7 +52,7 @@ function inferObligationIds(m:MissionState,role:string,requiredEvidence:string[]
   if(requested.length)return requested.map(o=>o.id)
   const kinds:string[]=[]
   if(role==='coder')kinds.push('implementation')
-  if(['repository-explorer','architect'].includes(role)||role==='coder'&&['bug-fix','performance'].includes(m.identity.intent.taskKind))kinds.push('analysis')
+  if(['repository-explorer','architect'].includes(role)||role==='coder'&&['bug-fix','diagnosis','performance'].includes(m.identity.intent.taskKind))kinds.push('analysis')
   if(isHiReviewerRole(role))kinds.push('review')
   if(requiredEvidence.length)kinds.push('verification')
   const out:string[]=[]

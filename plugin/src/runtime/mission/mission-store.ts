@@ -29,7 +29,9 @@ function reconciledIntentMethodologySignals(assessment:SemanticIntentAssessment,
   if(assessment.likely_verification.length>0&&assessment.intent_signals.includes('intent.test-strategy')){suppressed.add('intent.test-strategy');runtimeSuppressed.push('intent.test-strategy')}
   const boundedDirectBugFix=assessment.task_kind==='bug-fix'&&assessment.scope==='local'&&assessment.dependency_class==='independent'&&['low','medium'].includes(assessment.risk)&&!assessment.required_capabilities.includes('source-verification')&&assessment.likely_targets.length>0&&assessment.likely_verification.length>0
   const debuggingBackedByDiagnosis=assessment.required_capabilities.includes('repository-analysis')
-  if(boundedDirectBugFix&&assessment.intent_signals.includes('intent.debugging')&&(assessment.ambiguity==='none'||!debuggingBackedByDiagnosis)){suppressed.add('intent.debugging');runtimeSuppressed.push('intent.debugging')}
+  const diagnosisOwnsRootCause=assessment.task_kind==='diagnosis'&&assessment.intent_signals.includes('intent.debugging')
+  if(diagnosisOwnsRootCause){suppressed.add('intent.debugging');runtimeSuppressed.push('intent.debugging')}
+  else if(boundedDirectBugFix&&assessment.intent_signals.includes('intent.debugging')&&(assessment.ambiguity==='none'||!debuggingBackedByDiagnosis)){suppressed.add('intent.debugging');runtimeSuppressed.push('intent.debugging')}
   if(explicitTestMutationForbidden(userText)){
     suppressed.add('intent.tdd')
     runtimeSuppressed.push('intent.tdd')
@@ -63,10 +65,10 @@ export class MissionStore {
     const explicitUserVerification=[...m.identity.intent.likelyVerification] as SemanticIntentAssessment['likely_verification'],boundedExplicitVerification=explicitUserVerification.length>0&&assessment.scope==='local'&&['low','medium'].includes(assessment.risk)&&assessment.task_kind!=='release-readiness',effectiveAssessment:SemanticIntentAssessment=boundedExplicitVerification?{...assessment,likely_verification:explicitUserVerification,user_verification:explicitUserVerification,verification_ceiling:true}:assessment
     m.identity.intent=assessedIntent(m.identity.intent,effectiveAssessment);m.identity.risk=m.identity.intent.risk;m.identity.objective=m.identity.intent.objective
     const reconciledSignals=reconciledIntentMethodologySignals(effectiveAssessment,m.identity.semantic_assessment.pending_text),obligations:Obligation[]=[],bugFixAnalysisRequired=m.identity.intent.taskKind==='bug-fix'&&(m.identity.intent.scope!=='local'||m.identity.intent.ambiguity!=='none'||reconciledSignals.active.includes('intent.debugging'))
-    if(bugFixAnalysisRequired||m.identity.intent.taskKind==='performance')obligations.push(obligation('o-analysis','analysis',m.identity.intent.taskKind==='bug-fix'?'Root cause understood':'Relevant performance bottleneck identified'))
-    if(m.identity.intent.taskKind!=='review'&&m.identity.intent.taskKind!=='release-readiness')obligations.push(obligation('o-implementation','implementation','Requested change completed'))
+    if(bugFixAnalysisRequired||m.identity.intent.taskKind==='performance'||m.identity.intent.taskKind==='diagnosis')obligations.push(obligation('o-analysis','analysis',m.identity.intent.taskKind==='performance'?'Relevant performance bottleneck identified':'Root cause understood'))
+    if(!['diagnosis','review','release-readiness'].includes(m.identity.intent.taskKind))obligations.push(obligation('o-implementation','implementation','Requested change completed'))
     if(m.identity.intent.taskKind==='review')obligations.push(obligation('o-review','review','Requested review completed',m.identity.intent.likelyVerification))
-    obligations.push(obligation('o-verification','verification',m.identity.intent.likelyVerification.join(', '),m.identity.intent.likelyVerification))
+    if(m.identity.intent.taskKind!=='diagnosis')obligations.push(obligation('o-verification','verification',m.identity.intent.likelyVerification.join(', '),m.identity.intent.likelyVerification))
     if(m.identity.intent.risk==='high')obligations.push(obligation('o-high-assurance','review','Security-sensitive change reviewed'))
     if(m.identity.intent.risk==='authority-boundary')obligations.push(obligation('o-authority','authority','External action explicitly authorized and completed'))
     m.execution.obligations=obligations

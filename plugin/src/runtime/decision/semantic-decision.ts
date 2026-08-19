@@ -50,7 +50,7 @@ function providerSurfacePhase(path:ExecutionPath):ProviderSurfacePhase{
 
 function capabilityIntent(intent:NormalizedMissionIntent,topology:TopologyDecision):SemanticCapabilityIntent{
   const caps=[...new Set(intent.requiredCapabilities)]
-  const writeTask=!['review','release-readiness'].includes(intent.taskKind)
+  const writeTask=!['diagnosis','review','release-readiness'].includes(intent.taskKind)
   const workspaceIsolationCandidate=writeTask&&intent.scope==='multi-stream'&&topology.mode==='multi-agent'
   return{
     required:caps,

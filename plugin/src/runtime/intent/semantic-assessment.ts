@@ -14,7 +14,7 @@ export type SemanticVerificationKind=typeof SEMANTIC_VERIFICATION_KINDS[number]
 export interface SemanticIntentAssessment{
   material:boolean
   message_kind:SemanticMessageKind
-  task_kind:'implementation'|'bug-fix'|'review'|'performance'|'release-readiness'
+  task_kind:'implementation'|'bug-fix'|'diagnosis'|'review'|'performance'|'release-readiness'
   scope:'local'|'multi-file'|'repo-wide'|'external'|'multi-stream'
   risk:Risk
   ambiguity:'none'|'resolvable'|'contract-critical'
@@ -72,7 +72,7 @@ export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessm
   const x=typeof raw==='string'?JSON.parse(raw):raw
   if(!x||typeof x!=='object'||Array.isArray(x))throw new Error('semantic assessment must be a JSON object')
   const v=x as Record<string,unknown>
-  const taskKinds=['implementation','bug-fix','review','performance','release-readiness'] as const
+  const taskKinds=['implementation','bug-fix','diagnosis','review','performance','release-readiness'] as const
   const scopes=['local','multi-file','repo-wide','external','multi-stream'] as const
   const risks=['low','medium','high','authority-boundary'] as const
   const ambiguities=['none','resolvable','contract-critical'] as const
