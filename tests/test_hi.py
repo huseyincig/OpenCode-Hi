@@ -150,7 +150,12 @@ def test_node_release_scripts_use_platform_safe_file_url_paths():
 def test_release_names_and_source_integrity(tmp_path):
     dist,src=_build(tmp_path); assert dist.is_file() and src.is_file()
     with zipfile.ZipFile(src) as z:n=set(z.namelist())
-    assert {'package.json','docs/locales/tr/README.md','plugin/package-lock.json','plugin/dist/plugin.js','docs/ARCHITECTURE.md','docs/INSTALLATION.md','docs/SKILLS.md','docs/VERIFICATION.md','.github/SECURITY.md','.github/CONTRIBUTING.md'}<=n
+    assert {'package.json','package-lock.json','docs/locales/tr/README.md','plugin/package-lock.json','plugin/dist/plugin.js','docs/ARCHITECTURE.md','docs/INSTALLATION.md','docs/SKILLS.md','docs/VERIFICATION.md','.github/SECURITY.md','.github/CONTRIBUTING.md'}<=n
+    manifest=json.loads((tmp_path/'dist'/f'RELEASE-MANIFEST-{V}.json').read_text(encoding='utf-8'))
+    assert manifest['supply_chain']['dependency_locks']==['package-lock.json','plugin/package-lock.json']
+    assert set(manifest['supply_chain']['dependency_lock_sha256'])=={'package-lock.json','plugin/package-lock.json'}
+    assert re.fullmatch(r'[a-f0-9]{64}',manifest['supply_chain']['dependency_graph_sha256'])
+
     assert 'README.tr.md' not in n and 'WORK-STATE.md' not in n and 'KURULUM.md' not in n
     assert not any(name.startswith('docs/engineering-constitution/') for name in n)
     assert not any(part == '.project-docs' for name in n for part in Path(name).parts)
@@ -967,13 +972,16 @@ def test_prompt_b_release_engineering_closes_t4_only_from_real_current_publicati
         assert all(d['checks'].values()) and d['release_source']['tag']==f'v{V}'
         pub=json.loads(pub_path.read_text(encoding='utf-8'))
         assert pub['status']=='PASS_T4' and pub['github_release']['status']=='PASS_T4' and pub['npm_registry']['status']=='PASS_T4' and pub['fresh_registry_consumer']['status']=='PASS_T4'
-        assert d['registry_observation']['view']=='PUBLISHED_T4' and d['registry_observation']['publish_attempted'] is True
+        assert d['registry_observation']['current_publication_receipt_present'] is True
     else:
         assert d['status']=='CLOSED_LOCAL_T4_BLOCKED' and d['summary']=={'stages':13,'local_pass_or_historical':8,'blocked_external_or_identity':5,'violations':0}
-        assert d['registry_observation']['view']=='PREPUBLICATION' and d['registry_observation']['publish_attempted'] is False
+        assert d['registry_observation']['current_publication_receipt_present'] is False
         assert d['release_source']['tag'] is None
     assert d['historical_release']['tag']=='v0.1.0' and d['historical_release']['github_status']=='PASS_T4'
-    assert d['registry_observation']['authority_granted'] is True and d['registry_observation']['authority_condition']=='effective only after all engineering/final certification completes'
+    assert d['registry_observation']['authority_granted'] is False
+    assert d['registry_observation']['authority_condition']=='explicit current user authority required after final certification; this audit never grants publication authority'
+    assert isinstance(d['registry_observation']['reference_host_registry_latest'],(str,type(None)))
+    assert isinstance(d['registry_observation']['reference_sdk_registry_latest'],(str,type(None)))
     for rel,digest in d['proof_hashes'].items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
 
 
@@ -1136,6 +1144,9 @@ def test_prompt_b_cross_platform_acceptance_is_fail_closed_and_evidence_bound():
         assert ga['windows']['status']=='completed' and ga['windows']['conclusion']=='success'
         assert d['violations']==[] and d['post_ci_material_drift']==[]
         assert d['linux_current_certified'] is True and d['windows_current_certified'] is True
+    elif d['status']=='PENDING_EXTERNAL_CI':
+        assert not receipt.exists() and d['violations']==[] and d['blockers']==['current-source-cross-platform-ci-receipt-missing']
+        assert d['linux_current_certified'] is False and d['windows_current_certified'] is False
     else:
         assert d['status']=='FAIL' and d['violations']
         assert d['linux_current_certified'] is False and d['windows_current_certified'] is False
@@ -1184,6 +1195,11 @@ def test_prompt_b_hygiene_audit_has_no_source_package_or_generated_artifact_leak
 
 @pytest.mark.evidence
 def test_prompt_b_final_certification_chain_is_truthful_coherent_and_tier_bound():
+    gates=ROOT/f'data/validation/final-gates-{V}.json'
+    if not gates.exists():
+        cert=ROOT/f'data/validation/final-system-certification-{V}.json'
+        if cert.exists(): assert json.loads(cert.read_text(encoding='utf-8')).get('status')!='CERTIFIED'
+        return
     f42=json.loads((ROOT/'data/validation/prompt-b-final-documentation-reaudit.json').read_text(encoding='utf-8'))
     assert f42['status']=='PASS' and f42['summary']['violations']==0 and f42['violations']==[]
     commit=f42['source_checkpoint']['commit']

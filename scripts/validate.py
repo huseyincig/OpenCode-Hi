@@ -224,7 +224,7 @@ try:
         for ref in x.get('behavioral_acceptance_refs',[]):
             if not (ROOT/'plugin/test'/ref).is_file():err(f'{oid}: missing config acceptance {ref}')
     if len(ids)!=len(set(ids)) or len(paths)!=len(set(paths)):err('duplicate Hi config option id/path')
-    if (sum(1 for x in options if x.get('classification')=='runtime'),sum(1 for x in options if x.get('classification')=='diagnostic'),sum(1 for x in options if x.get('classification')=='schema-marker'))!=(29,2,1):err('Hi config option classification inventory drift')
+    if (sum(1 for x in options if x.get('classification')=='runtime'),sum(1 for x in options if x.get('classification')=='diagnostic'),sum(1 for x in options if x.get('classification')=='schema-marker'))!=(26,2,1):err('Hi config option classification inventory drift')
 except Exception as e:err(f'bad Hi config option catalog: {e}')
 roles=sorted((ROOT/'roles').glob('*.md')); skills=sorted((ROOT/'skills').glob('*/SKILL.md'))
 try:
@@ -322,9 +322,9 @@ except Exception as e:err(f'bad PROMPT B Role/Model/Methodology receipt: {e}')
 
 try:
     cpc=json.loads((ROOT/'data/validation/prompt-b-context-project-intelligence-compression.json').read_text(encoding='utf-8'))
-    if cpc.get('schema')!=1 or cpc.get('kind')!='PROMPT_B_CONTEXT_PROJECT_INTELLIGENCE_COMPRESSION_ADVERSARIAL_AUDIT' or cpc.get('program')!='PROMPT_B' or cpc.get('section')!=10 or cpc.get('status')!='PASS':err('bad PROMPT B Context/PI/Compression audit receipt')
+    if cpc.get('schema')!=1 or cpc.get('kind')!='PROMPT_B_CONTEXT_PROJECT_LEARNING_ADVERSARIAL_AUDIT' or cpc.get('program')!='PROMPT_B' or cpc.get('section')!=10 or cpc.get('status')!='PASS':err('bad PROMPT B Context/PI/Compression audit receipt')
     if cpc.get('violations')!=[] or cpc.get('summary')!={'required':12,'covered':12,'violations':0}:err('PROMPT B Context/PI/Compression coverage drift')
-    expected={'context-consumer-binding','unknown-context-handle-fail-close','stale-context-exclusion','project-intelligence-retrieval-eligibility','compression-source-hash-binding','compression-consumer-isolation','compression-freshness-propagation','privacy-monotonicity','project-intelligence-not-evidence','context-compression-not-evidence','protected-state-budget-survival','cache-source-invalidation'}
+    expected={'context-consumer-binding','unknown-context-handle-fail-close','stale-context-exclusion','durable-artifact-source-provenance','durable-artifact-consumer-binding','durable-artifact-freshness-invalidation','artifact-privacy-boundary','mission-runtime-projection-bounded','provider-duplicate-pruning-state-bound','project-methodology-learning-evidence-binding','project-methodology-independent-readiness','context-project-learning-not-evidence'}
     rows=cpc.get('invariants',[])
     if {x.get('invariant') for x in rows if isinstance(x,dict)}!=expected or len(rows)!=12:err('PROMPT B Context/PI/Compression invariant inventory drift')
     for row in rows:
@@ -337,15 +337,14 @@ try:
         if row.get('owner_anchor') not in owner:err(f"PROMPT B Context/PI/Compression owner anchor drift: {row.get('invariant')}")
         if row.get('proof_anchor') not in proof:err(f"PROMPT B Context/PI/Compression proof anchor drift: {row.get('invariant')}")
     guards=cpc.get('static_guards',{})
-    if guards.get('project_intelligence_evidence_owner_paths')!=[] or guards.get('context_evidence_owner_paths')!=[] or guards.get('compression_exact_consumer_binding') is not True or guards.get('compression_unknown_freshness_rejected') is not True:err('PROMPT B Context/PI/Compression static guard drift')
-    if 'compression-cross-consumer-rescope' not in {x.get('id') for x in cpc.get('closed_defects',[]) if isinstance(x,dict)}:err('PROMPT B Context/PI/Compression closed defect receipt drift')
+    if guards!={'project_methodology_learning_evidence_owner_paths':[],'context_evidence_owner_paths':[],'general_project_intelligence_retrieval_present':False,'compression_subsystem_present':False}:err('PROMPT B Context/PI/Compression static guard drift')
 except Exception as e:err(f'bad PROMPT B Context/PI/Compression receipt: {e}')
 
 try:
     evc=json.loads((ROOT/'data/validation/prompt-b-evidence-verification-completion.json').read_text(encoding='utf-8'))
     if evc.get('schema')!=1 or evc.get('kind')!='PROMPT_B_EVIDENCE_VERIFICATION_COMPLETION_HOSTILE_AUDIT' or evc.get('program')!='PROMPT_B' or evc.get('section')!=9 or evc.get('status')!='PASS':err('bad PROMPT B Evidence/Verification/Completion audit receipt')
     if evc.get('violations')!=[] or evc.get('summary')!={'required':12,'covered':12,'violations':0}:err('PROMPT B Evidence/Verification/Completion coverage drift')
-    expected={'evidence-scope','evidence-freshness','source-revision','changed-file-ownership','mutation-invalidation','not-run-not-passed','worker-result-not-evidence','project-intelligence-not-evidence','context-summary-not-evidence','review-disposition','required-evidence-coverage','completion-obligation-reconciliation'}
+    expected={'evidence-scope','evidence-freshness','source-revision','changed-file-ownership','mutation-invalidation','not-run-not-passed','worker-result-not-evidence','project-methodology-learning-not-evidence','context-artifact-not-evidence','review-disposition','required-evidence-coverage','completion-obligation-reconciliation'}
     rows=evc.get('invariants',[])
     if {x.get('invariant') for x in rows if isinstance(x,dict)}!=expected or len(rows)!=12:err('PROMPT B Evidence/Verification/Completion invariant inventory drift')
     for row in rows:
@@ -735,19 +734,26 @@ except Exception as e:err(f'bad PROMPT B property/fuzz testing receipt: {e}')
 # PROMPT B §38 cross-platform acceptance certification
 try:
     c38=json.loads((ROOT/'data/validation/prompt-b-cross-platform-acceptance.json').read_text(encoding='utf-8'))
-    if c38.get('schema')!=1 or c38.get('kind')!='PROMPT_B_CROSS_PLATFORM_ACCEPTANCE_AUDIT' or c38.get('program')!='PROMPT_B' or c38.get('section')!=38 or c38.get('status')!='PASS':err('bad PROMPT B cross-platform audit identity/status')
-    if c38.get('summary')!={'required_surfaces':7,'covered_surfaces':7,'violations':0} or c38.get('violations')!=[]:err('PROMPT B cross-platform summary drift')
-    if c38.get('linux_current_certified') is not True or c38.get('windows_current_certified') is not True or c38.get('windows_historical_release_evidence') is not True:err('PROMPT B cross-platform certification boundary drift')
-    ar=c38.get('acceptance_receipt'); a=json.loads((ROOT/ar).read_text(encoding='utf-8'))
-    if ar!=f'data/validation/cross-platform-acceptance-{version}.json' or a.get('status')!='PASS':err('PROMPT B cross-platform current receipt drift')
-    ab=a.get('source_binding') or {}; cp=c38.get('source_checkpoint') or {}
-    if ab.get('tested_git_commit')!=cp.get('commit') or ab.get('tested_git_tree')!=cp.get('tree'):err('PROMPT B cross-platform source checkpoint drift')
-    ga=a.get('github_actions') or {}; w=ga.get('windows') or {}; u=ga.get('ubuntu') or {}
-    if ga.get('conclusion')!='success' or w.get('conclusion')!='success' or u.get('conclusion')!='success':err('PROMPT B cross-platform CI conclusion drift')
-    if c38.get('post_ci_material_drift')!=[]:err('PROMPT B cross-platform post-CI material drift')
+    if c38.get('schema')!=1 or c38.get('kind')!='PROMPT_B_CROSS_PLATFORM_ACCEPTANCE_AUDIT' or c38.get('program')!='PROMPT_B' or c38.get('section')!=38:err('bad PROMPT B cross-platform audit identity')
+    if c38.get('summary',{}).get('required_surfaces')!=7 or c38.get('summary',{}).get('covered_surfaces')!=7 or c38.get('windows_historical_release_evidence') is not True:err('PROMPT B cross-platform inventory drift')
     for row in c38.get('surfaces',[]):
         rel=row.get('proof');expected=row.get('proof_sha256')
         if not isinstance(rel,str) or not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B cross-platform proof hash drift: '+str(rel))
+    ar=c38.get('acceptance_receipt'); receipt=ROOT/ar if isinstance(ar,str) else None
+    if c38.get('status')=='PASS':
+        if c38.get('summary')!={'required_surfaces':7,'covered_surfaces':7,'violations':0} or c38.get('violations')!=[] or c38.get('blockers')!=[]:err('PROMPT B cross-platform PASS summary drift')
+        if c38.get('linux_current_certified') is not True or c38.get('windows_current_certified') is not True:err('PROMPT B cross-platform PASS certification boundary drift')
+        if ar!=f'data/validation/cross-platform-acceptance-{version}.json' or not receipt or not receipt.is_file():err('PROMPT B cross-platform current receipt missing')
+        else:
+            a=json.loads(receipt.read_text(encoding='utf-8'));ab=a.get('source_binding') or {};cp=c38.get('source_checkpoint') or {};ga=a.get('github_actions') or {};w=ga.get('windows') or {};u=ga.get('ubuntu') or {}
+            if a.get('status')!='PASS' or ab.get('tested_git_commit')!=cp.get('commit') or ab.get('tested_git_tree')!=cp.get('tree'):err('PROMPT B cross-platform source checkpoint drift')
+            if ga.get('conclusion')!='success' or w.get('conclusion')!='success' or u.get('conclusion')!='success':err('PROMPT B cross-platform CI conclusion drift')
+        if c38.get('post_ci_material_drift')!=[]:err('PROMPT B cross-platform post-CI material drift')
+    elif c38.get('status')=='PENDING_EXTERNAL_CI':
+        if receipt and receipt.exists():err('PROMPT B cross-platform pending despite current receipt')
+        if c38.get('violations')!=[] or c38.get('blockers')!=['current-source-cross-platform-ci-receipt-missing']:err('PROMPT B cross-platform pending blocker drift')
+        if c38.get('linux_current_certified') is not False or c38.get('windows_current_certified') is not False:err('PROMPT B cross-platform pending falsely certified')
+    else:err('PROMPT B cross-platform audit is neither PASS nor truthful PENDING_EXTERNAL_CI')
 except Exception as e:err(f'bad PROMPT B cross-platform acceptance receipt: {e}')
 
 # PROMPT B §37 developer journey acceptance certification
@@ -976,8 +982,9 @@ try:
     if not all((r28.get('checks') or {}).values()):err('PROMPT B release engineering check drift')
     for rel,expected in (r28.get('proof_hashes') or {}).items():
         if not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B release engineering proof hash drift: '+str(rel))
-    obs=r28.get('registry_observation',{}); expected_view='PUBLISHED_T4' if published else 'PREPUBLICATION'
-    if obs.get('view')!=expected_view or obs.get('publish_attempted') is not published or obs.get('authority_granted') is not True or obs.get('authority_condition')!='effective only after all engineering/final certification completes':err('PROMPT B release engineering authority boundary drift')
+    obs=r28.get('registry_observation',{})
+    if obs.get('current_publication_receipt_present') is not published or obs.get('authority_granted') is not False or obs.get('authority_condition')!='explicit current user authority required after final certification; this audit never grants publication authority':err('PROMPT B release engineering authority boundary drift')
+    if not isinstance(obs.get('reference_host_registry_latest'),(str,type(None))) or not isinstance(obs.get('reference_sdk_registry_latest'),(str,type(None))):err('PROMPT B release engineering registry observation drift')
     pub=json.loads((ROOT/'data/validation/release-publication-0.1.1.json').read_text(encoding='utf-8'))
     if pub.get('status')!='PASS_T4' or (pub.get('github_release') or {}).get('status')!='PASS_T4' or (pub.get('npm_registry') or {}).get('status')!='PASS_T4' or (pub.get('fresh_registry_consumer') or {}).get('status')!='PASS_T4':err('PROMPT B release publication T4 drift')
 except Exception as e:err(f'bad PROMPT B release engineering receipt: {e}')
@@ -996,47 +1003,56 @@ try:
     if not all((d29.get('static_guards') or {}).values()):err('PROMPT B documentation defect-cycle static guard drift')
 except Exception as e:err(f'bad PROMPT B documentation defect-cycle receipt: {e}')
 
-# PROMPT B §§42-47 final certification chain
-try:
-    f42=json.loads((ROOT/'data/validation/prompt-b-final-documentation-reaudit.json').read_text(encoding='utf-8'))
-    if f42.get('schema')!=1 or f42.get('kind')!='PROMPT_B_FINAL_DOCUMENTATION_REAUDIT' or f42.get('section')!=42 or f42.get('status')!='PASS':err('bad PROMPT B final documentation re-audit')
-    if f42.get('summary',{}).get('violations')!=0 or f42.get('violations')!=[]:err('PROMPT B final documentation re-audit incomplete')
-    f42commit=(f42.get('source_checkpoint') or {}).get('commit')
-    for row in f42.get('areas',[]):
-        rel=row.get('path'); expected=row.get('checkpoint_sha256'); expected_oid=row.get('checkpoint_blob_oid')
-        if not isinstance(rel,str):err('PROMPT B final documentation path invalid: '+str(rel));continue
+# PROMPT B §§42-47 final certification chain (post-final-gates only)
+final_gates_path=ROOT/f'data/validation/final-gates-{version}.json'
+if final_gates_path.exists():
+    try:
+        f42=json.loads((ROOT/'data/validation/prompt-b-final-documentation-reaudit.json').read_text(encoding='utf-8'))
+        if f42.get('schema')!=1 or f42.get('kind')!='PROMPT_B_FINAL_DOCUMENTATION_REAUDIT' or f42.get('section')!=42 or f42.get('status')!='PASS':err('bad PROMPT B final documentation re-audit')
+        if f42.get('summary',{}).get('violations')!=0 or f42.get('violations')!=[]:err('PROMPT B final documentation re-audit incomplete')
+        f42commit=(f42.get('source_checkpoint') or {}).get('commit')
+        for row in f42.get('areas',[]):
+            rel=row.get('path'); expected=row.get('checkpoint_sha256'); expected_oid=row.get('checkpoint_blob_oid')
+            if not isinstance(rel,str):err('PROMPT B final documentation path invalid: '+str(rel));continue
+            try:
+                if git_blob_sha256(f42commit,rel)!=expected or git_blob_oid(f42commit,rel)!=expected_oid:err('PROMPT B final documentation checkpoint drift: '+str(rel))
+            except Exception:err('PROMPT B final documentation checkpoint unavailable: '+str(rel))
+
+        f43=json.loads((ROOT/'data/validation/prompt-b-certification-evidence-tiers.json').read_text(encoding='utf-8'))
+        if f43.get('schema')!=1 or f43.get('kind')!='PROMPT_B_CERTIFICATION_EVIDENCE_TIERS' or f43.get('section')!=43 or f43.get('status')!='PASS':err('bad PROMPT B certification evidence tiers')
+        if f43.get('violations')!=[] or len(f43.get('claims') or [])!=7:err('PROMPT B certification evidence tier coverage drift')
+        ranks={'NONE':-1,'T0':0,'T1':1,'T2':2,'T3':3,'T4':4}
+        for row in f43.get('claims',[]):
+            if row.get('claim')!='external-publication' and ranks.get(row.get('available_tier'),-1)<ranks.get(row.get('required_tier'),99):err('PROMPT B insufficient evidence tier: '+str(row.get('claim')))
+
+        f44=json.loads((ROOT/f'data/validation/final-system-certification-{version}.json').read_text(encoding='utf-8'))
+        if f44.get('schema')!=1 or f44.get('kind')!='FINAL_SYSTEM_CERTIFICATION' or f44.get('section')!=44 or f44.get('release')!=version:err('bad final system certification identity')
+        if f44.get('status') not in {'PARTIAL','CERTIFIED'}:err('invalid final system certification state')
+        blockers=f44.get('blockers') or []
+        if f44.get('status')=='CERTIFIED' and blockers:err('CERTIFIED final system has blockers')
+        if f44.get('status')=='PARTIAL' and not blockers:err('PARTIAL final system has no blocker')
+        if f44.get('known_defect_count')!=0:err('final system certification has known defects')
+
+        f45=json.loads((ROOT/'data/validation/prompt-b-certification-vocabulary.json').read_text(encoding='utf-8'))
+        if f45.get('schema')!=1 or f45.get('kind')!='PROMPT_B_CERTIFICATION_VOCABULARY_AUDIT' or f45.get('section')!=45 or f45.get('status')!='PASS' or f45.get('violations')!=[]:err('bad PROMPT B certification vocabulary audit')
+        if f45.get('current_label')!=f44.get('status'):err('certification vocabulary/final status mismatch')
+
+        f46=json.loads((ROOT/'data/validation/prompt-b-final-product-quality.json').read_text(encoding='utf-8'))
+        if f46.get('schema')!=1 or f46.get('kind')!='PROMPT_B_FINAL_PRODUCT_QUALITY_AUDIT' or f46.get('section')!=46 or f46.get('status')!='PASS':err('bad PROMPT B final product quality audit')
+        if f46.get('summary')!={'required':10,'covered':10,'violations':0} or not all((f46.get('checks') or {}).values()):err('PROMPT B final product quality incomplete')
+
+        f47=json.loads((ROOT/'data/validation/prompt-b-final-mandatory-state.json').read_text(encoding='utf-8'))
+        if f47.get('schema')!=1 or f47.get('kind')!='PROMPT_B_FINAL_MANDATORY_END_STATE_AUDIT' or f47.get('section')!=47 or f47.get('status')!='PASS':err('bad PROMPT B final mandatory state audit')
+        if f47.get('summary')!={'required':12,'coherent':12,'violations':0} or not all((f47.get('coherence') or {}).values()):err('PROMPT B final mandatory state incoherent')
+        if f47.get('certification_state')!=f44.get('status'):err('final mandatory state/certification mismatch')
+    except Exception as e:err(f'bad PROMPT B §§42-47 final certification chain: {e}')
+
+else:
+    pre_final=ROOT/f'data/validation/final-system-certification-{version}.json'
+    if pre_final.exists():
         try:
-            if git_blob_sha256(f42commit,rel)!=expected or git_blob_oid(f42commit,rel)!=expected_oid:err('PROMPT B final documentation checkpoint drift: '+str(rel))
-        except Exception:err('PROMPT B final documentation checkpoint unavailable: '+str(rel))
-
-    f43=json.loads((ROOT/'data/validation/prompt-b-certification-evidence-tiers.json').read_text(encoding='utf-8'))
-    if f43.get('schema')!=1 or f43.get('kind')!='PROMPT_B_CERTIFICATION_EVIDENCE_TIERS' or f43.get('section')!=43 or f43.get('status')!='PASS':err('bad PROMPT B certification evidence tiers')
-    if f43.get('violations')!=[] or len(f43.get('claims') or [])!=7:err('PROMPT B certification evidence tier coverage drift')
-    ranks={'NONE':-1,'T0':0,'T1':1,'T2':2,'T3':3,'T4':4}
-    for row in f43.get('claims',[]):
-        if row.get('claim')!='external-publication' and ranks.get(row.get('available_tier'),-1)<ranks.get(row.get('required_tier'),99):err('PROMPT B insufficient evidence tier: '+str(row.get('claim')))
-
-    f44=json.loads((ROOT/f'data/validation/final-system-certification-{version}.json').read_text(encoding='utf-8'))
-    if f44.get('schema')!=1 or f44.get('kind')!='FINAL_SYSTEM_CERTIFICATION' or f44.get('section')!=44 or f44.get('release')!=version:err('bad final system certification identity')
-    if f44.get('status') not in {'PARTIAL','CERTIFIED'}:err('invalid final system certification state')
-    blockers=f44.get('blockers') or []
-    if f44.get('status')=='CERTIFIED' and blockers:err('CERTIFIED final system has blockers')
-    if f44.get('status')=='PARTIAL' and not blockers:err('PARTIAL final system has no blocker')
-    if f44.get('known_defect_count')!=0:err('final system certification has known defects')
-
-    f45=json.loads((ROOT/'data/validation/prompt-b-certification-vocabulary.json').read_text(encoding='utf-8'))
-    if f45.get('schema')!=1 or f45.get('kind')!='PROMPT_B_CERTIFICATION_VOCABULARY_AUDIT' or f45.get('section')!=45 or f45.get('status')!='PASS' or f45.get('violations')!=[]:err('bad PROMPT B certification vocabulary audit')
-    if f45.get('current_label')!=f44.get('status'):err('certification vocabulary/final status mismatch')
-
-    f46=json.loads((ROOT/'data/validation/prompt-b-final-product-quality.json').read_text(encoding='utf-8'))
-    if f46.get('schema')!=1 or f46.get('kind')!='PROMPT_B_FINAL_PRODUCT_QUALITY_AUDIT' or f46.get('section')!=46 or f46.get('status')!='PASS':err('bad PROMPT B final product quality audit')
-    if f46.get('summary')!={'required':10,'covered':10,'violations':0} or not all((f46.get('checks') or {}).values()):err('PROMPT B final product quality incomplete')
-
-    f47=json.loads((ROOT/'data/validation/prompt-b-final-mandatory-state.json').read_text(encoding='utf-8'))
-    if f47.get('schema')!=1 or f47.get('kind')!='PROMPT_B_FINAL_MANDATORY_END_STATE_AUDIT' or f47.get('section')!=47 or f47.get('status')!='PASS':err('bad PROMPT B final mandatory state audit')
-    if f47.get('summary')!={'required':12,'coherent':12,'violations':0} or not all((f47.get('coherence') or {}).values()):err('PROMPT B final mandatory state incoherent')
-    if f47.get('certification_state')!=f44.get('status'):err('final mandatory state/certification mismatch')
-except Exception as e:err(f'bad PROMPT B §§42-47 final certification chain: {e}')
+            if json.loads(pre_final.read_text(encoding='utf-8')).get('status')=='CERTIFIED':err('final system cannot be CERTIFIED before final canonical gates exist')
+        except Exception as e:err(f'bad pre-final certification state: {e}')
 
 for p in (ROOT/'data').rglob('*.json'):
     try:json.loads(p.read_text(encoding='utf-8'))

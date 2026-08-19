@@ -14,7 +14,7 @@ checks=[
  ('recovery-instructions','scripts/native_plugin_setup.py',"actions.append('Run the recover command",'tests/test_hi.py',"any('plan' in x and 'install' in x for x in out['actions'])"),
  ('config-errors','scripts/native_plugin_setup.py',"_bounded_cli_int('parallel-max',1,8)",'tests/test_hi.py','test_prompt_b_cli_reconfigure_rejects_out_of_range_and_malformed_limits'),
  ('permission-prompts','plugin/src/runtime/process/runtime.ts','auth.permission_request','plugin/test/p3-process-runtime-lifecycle.test.mjs','native permission ask uses exact ToolContext-style request once'),
- ('unsupported-capability-messages','plugin/src/runtime/readiness/preconditions.ts','OpenCode session.create is unavailable','plugin/test/methodology-host-capability.test.mjs','browser and visual methodologies require canonical browser-execution host capability'),
+ ('unsupported-capability-messages','plugin/src/runtime/readiness/preconditions.ts','OpenCode session.create is unavailable','plugin/test/methodology-host-capability.test.mjs','browser and visual methodologies require canonical runtime browser-execution resource'),
  ('truthful-nonmutating-blocked-state','scripts/native_plugin_setup.py','jsonc-safe-mutation-not-supported','tests/test_hi.py','test_prompt_b_cli_jsonc_plan_is_truthful_actionable_and_non_mutating'),
 ]
 violations=[];rows=[]

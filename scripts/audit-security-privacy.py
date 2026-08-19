@@ -16,7 +16,7 @@ checks=[
  ('environment-leaks','plugin/src/contracts/process.ts','ProcessContract','plugin/test/prompt-b-security-privacy-hostile.test.mjs','process environment is execution-ephemeral'),
  ('logs','plugin/src/runtime/ledger/ledger.ts','redactDurableText','plugin/test/prompt-b-security-privacy-hostile.test.mjs','durable ledger redacts nested tokens'),
  ('telemetry','plugin/src/runtime/telemetry/execution.ts','deriveEfficiencyMetrics','plugin/test/hi-core-evolution.test.mjs','telemetry'),
- ('external-memory','plugin/src/runtime/memory/provider.ts','DisabledMemoryProvider','plugin/test/hi-core-evolution.test.mjs','DisabledMemoryProvider'),
+ ('external-memory','plugin/src/runtime/context/artifact-store.ts','export class ContextArtifactStore','plugin/test/context-survival-hardening.test.mjs','without a generic project-memory injection layer'),
  ('mcp','plugin/src/runtime/host/capability-manifest.ts',"mcp:'NATIVE'",'plugin/test/main-prompt-coexistence-platform-batch.test.mjs','default plugin surface does not invent MCP runtime'),
  ('browser','plugin/src/opencode/playwright-browser-adapter.ts','safeLocalUrl','plugin/test/b3-playwright-browser-runtime.test.mjs','outside supported local scope'),
  ('subprocess','plugin/src/runtime/process/runtime.ts','evaluateProcessSpawnAuthority','plugin/test/p3-process-runtime-lifecycle.test.mjs','explicit permission deny never asks and never spawns'),
@@ -40,7 +40,6 @@ ledger=(ROOT/'plugin/src/runtime/ledger/ledger.ts').read_text(errors='replace')
 authority=(ROOT/'plugin/src/runtime/safety/authority.ts').read_text(errors='replace')
 process=(ROOT/'plugin/src/runtime/process/runtime.ts').read_text(errors='replace')
 telemetry='\n'.join(x.read_text(errors='replace') for x in (ROOT/'plugin/src/runtime/telemetry').glob('*.ts'))
-memory=(ROOT/'plugin/src/runtime/memory/provider.ts').read_text(errors='replace')
 pluginpkg=json.loads((ROOT/'plugin/package.json').read_text());rootpkg=json.loads((ROOT/'package.json').read_text());lock=json.loads((ROOT/'plugin/package-lock.json').read_text())
 lockpkgs=[v for k,v in lock.get('packages',{}).items() if k]
 prod='\n'.join(x.read_text(errors='replace') for x in (ROOT/'plugin/src').rglob('*.ts'))
@@ -50,8 +49,8 @@ guards={
  'authority_persists_redacted_action':'durableAction(c.action)' in authority,
  'process_shell_policy_runs_before_action_contract':process.index('evaluateShellCommand(commandLine)')<process.index('actionContract(commandLine'),
  'telemetry_has_no_network_sink':not re.search(r'\b(fetch|WebSocket|https?\s*[:(]|axios|request\s*\()',telemetry,re.I),
- 'external_memory_default_disabled':'class DisabledMemoryProvider' in memory and 'available:false' in memory,
- 'core_does_not_own_mcp_transport':not any(re.search(r'\bmcp\b',x.read_text(errors='replace'),re.I) for x in (ROOT/'plugin/src/runtime').rglob('*.ts') if x.name!='capability-manifest.ts'),
+ 'external_memory_provider_absent':not (ROOT/'plugin/src/runtime/memory').exists() and 'generic project-memory injection layer' in (ROOT/'plugin/test/context-survival-hardening.test.mjs').read_text(errors='replace'),
+ 'core_does_not_own_mcp_transport':not re.search(r'@modelcontextprotocol|\bMcp(?:Client|Server|Transport)\b|\bMCP(?:Client|Server|Transport)\b|createMcp(?:Client|Server|Transport)|startMcp(?:Client|Server)',prod),
  'no_install_postinstall_scripts':all(k not in (rootpkg.get('scripts') or {}) and k not in (pluginpkg.get('scripts') or {}) for k in ['install','preinstall','postinstall']),
  'lockfile_integrity_complete':lock.get('lockfileVersion')==3 and bool(lockpkgs) and all(bool(x.get('resolved')) and bool(x.get('integrity')) for x in lockpkgs),
  'script_allowlist_exact':pluginpkg.get('allowScripts')=={'msgpackr-extract@3.0.4':True},

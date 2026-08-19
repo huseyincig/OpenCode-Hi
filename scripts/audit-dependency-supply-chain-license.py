@@ -13,10 +13,10 @@ def row(inv,owner,oa,proof,pa):
 root=json.loads((ROOT/'package.json').read_text()); rlock=json.loads((ROOT/'package-lock.json').read_text()); plock=json.loads((ROOT/'plugin/package-lock.json').read_text())
 rows=[
  row('dependency-versions','package.json','"@opencode-ai/sdk": "1.18.18"','package-lock.json','"version": "1.18.18"'),
- row('lockfiles','scripts/release-build.py',"def dependency_lock_paths(root:Path)",'tests/test_hi.py',"dependency_locks']==['package-lock.json','plugin/package-lock.json']"),
+ row('lockfiles','scripts/release-build.py',"def dependency_lock_paths(root:Path)",'tests/test_hi.py',"manifest['supply_chain']['dependency_locks']==['package-lock.json','plugin/package-lock.json']"),
  row('direct-dependency-usage','plugin/src/opencode/client-adapter.ts',"@opencode-ai/sdk/v2/client",'data/validation/fresh-consumer-opencode-1.18.18.json','"consumer_resolution": true'),
  row('risky-install-scripts','package-lock.json','"hasInstallScript": true','THIRD_PARTY_NOTICES.md','msgpackr-extract'),
- row('provenance-integrity','scripts/release-build.py','dependency_graph_sha256','tests/test_hi.py','release_manifest_contains_dependency_sbom_and_supply_chain_digest'),
+ row('provenance-integrity','scripts/release-build.py','dependency_graph_sha256','tests/test_hi.py',"manifest['supply_chain']['dependency_graph_sha256']"),
  row('dependency-licenses','THIRD_PARTY_NOTICES.md','`playwright-core`','package-lock.json','"license": "Apache-2.0"'),
  row('source-reuse','THIRD_PARTY_NOTICES.md','license/provenance boundaries','docs/SECURITY-MODEL.md','trust boundaries'),
  row('release-permissions',' .github/workflows/npm-publish.yml'.strip(),'id-token: write','plugin/test/r1-npm-oidc-workflow.test.mjs','no long-lived npm token surface'),
