@@ -59,7 +59,7 @@ export function provisionalIntent(text:string,repo?:RepoContext):NormalizedMissi
   return{objective,likelyTargets:targets.length?targets:undefined,taskKind:'unclassified',scope:'local',risk:'medium',ambiguity:'resolvable',dependencyClass:'unknown',requiredCapabilities:[],requestedExternalActions:[],likelyVerification:explicitVerification,avoid}
 }
 function stringList(value:unknown,max=40):string[]{return Array.isArray(value)?[...new Set(value.filter(x=>typeof x==='string').map(x=>String(x).trim()).filter(Boolean))].slice(0,max):[]}
-function enumList<T extends readonly string[]>(value:unknown,allowed:T,max=40):T[number][]{const items=stringList(value,max),set=new Set<string>(allowed),unknown=items.filter(x=>!set.has(x));if(unknown.length)throw new Error(`unsupported semantic enum value(s): ${unknown.join(', ')}`);return items as T[number][]}
+function enumList<T extends readonly string[]>(value:unknown,allowed:T,max=40,field='semantic_enum'):T[number][]{const items=stringList(value,max),set=new Set<string>(allowed),unknown=items.filter(x=>!set.has(x));if(unknown.length)throw new Error(`unsupported ${field} value(s): ${unknown.join(', ')}`);return items as T[number][]}
 function intentSignalList(value:unknown):HiMethodologySignalName[]{
   const items=stringList(value,40),invalid=items.filter(name=>{
     const spec=(HI_METHODOLOGY_SIGNAL_CATALOG as Record<string,{producers:readonly string[]}>)[name]
@@ -83,16 +83,16 @@ export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessm
   const messageKind=take('message_kind',messageKinds)
   if(messageKind==='non-material'&&v.material!==false)throw new Error('non-material message must set material=false')
   if(messageKind!=='non-material'&&v.material!==true)throw new Error('material message kind must set material=true')
-  const risk=take('risk',risks),externalActions=enumList(v.requested_external_actions,SEMANTIC_EXTERNAL_ACTIONS,8)
+  const risk=take('risk',risks),externalActions=enumList(v.requested_external_actions,SEMANTIC_EXTERNAL_ACTIONS,8,'requested_external_actions')
   if(externalActions.length&&risk!=='authority-boundary')throw new Error('requested_external_actions require risk=authority-boundary')
   if(v.verification_ceiling!==undefined&&typeof v.verification_ceiling!=='boolean')throw new Error('verification_ceiling must be boolean')
-  const inferredVerification=enumList(v.likely_verification,SEMANTIC_VERIFICATION_KINDS,12),userVerification=enumList(v.user_verification,SEMANTIC_VERIFICATION_KINDS,12),verificationCeiling=v.verification_ceiling===true
+  const inferredVerification=enumList(v.likely_verification,SEMANTIC_VERIFICATION_KINDS,12,'likely_verification'),userVerification=enumList(v.user_verification,SEMANTIC_VERIFICATION_KINDS,12,'user_verification'),verificationCeiling=v.verification_ceiling===true
   if(verificationCeiling&&!userVerification.length)throw new Error('verification_ceiling requires at least one explicit user_verification kind')
   const effectiveVerification=verificationCeiling?userVerification:[...new Set([...userVerification,...inferredVerification])]
   const assessment:SemanticIntentAssessment={
     material:v.material,message_kind:messageKind,
     task_kind:take('task_kind',taskKinds),scope:take('scope',scopes),risk,ambiguity:take('ambiguity',ambiguities),dependency_class:take('dependency_class',dependencies),
-    required_capabilities:enumList(v.required_capabilities,SEMANTIC_CAPABILITIES),requested_external_actions:externalActions,likely_verification:effectiveVerification,user_verification:userVerification,verification_ceiling:verificationCeiling,likely_targets:semanticTargets(v.likely_targets,20),
+    required_capabilities:enumList(v.required_capabilities,SEMANTIC_CAPABILITIES,40,'required_capabilities'),requested_external_actions:externalActions,likely_verification:effectiveVerification,user_verification:userVerification,verification_ceiling:verificationCeiling,likely_targets:semanticTargets(v.likely_targets,20),
     intent_signals:intentSignalList(v.intent_signals),suppressed_intent_signals:intentSignalList(v.suppressed_intent_signals),
   }
   const materialTargets=materialSemanticTargets(assessment),localSequential=assessment.scope==='local'&&assessment.dependency_class==='sequential',boundedSingleMaterialTarget=assessment.scope==='multi-file'&&assessment.ambiguity==='none'&&assessment.dependency_class==='sequential'&&materialTargets.length===1&&assessment.likely_verification.length>0&&!assessment.required_capabilities.some(cap=>['multi-stream-delegation','source-verification','dependency-change','design-exploration'].includes(cap))

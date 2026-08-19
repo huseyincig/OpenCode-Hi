@@ -60,7 +60,7 @@ test('security and independent-review capabilities are bounded enum values',()=>
 })
 
 test('unsupported capability and non-intent signal values fail closed',()=>{
-  assert.throws(()=>parseSemanticIntentAssessment({...base,required_capabilities:['magic-review']}),/unsupported semantic enum/)
+  assert.throws(()=>parseSemanticIntentAssessment({...base,required_capabilities:['magic-review']}),/unsupported required_capabilities value\(s\): magic-review/)
   assert.throws(()=>parseSemanticIntentAssessment({...base,intent_signals:['surface.security']}),/unsupported semantic intent signal/)
 })
 
