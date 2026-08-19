@@ -386,7 +386,7 @@ Therefore the browser-unavailable primary schema gating candidate is **REJECTED*
 
 # Milestone 11 — Adaptive Decomposition, Model & Review Intelligence
 
-**Status:** ACTIVE — 2026-08-18
+**Status:** COMPLETE — 2026-08-19
 
 **Goal:** choose zero/one/many workers and light/heavy model classes from expected completion value rather than ceremony.
 
@@ -418,9 +418,19 @@ Model-routing evidence is complete for the declared pool on retained product com
 - repeated trivial child comparator: candidate MiMo parent + DeepSeek coder strict `3/3` vs baseline `2/3`; candidate wall `-12.61%`, input `-7.50%`, but model calls `+14.63%`, tools `+12.50%`, OpenCode-derived cost `+74.90%`; retention is correctness/predictability-driven, not a general efficiency claim;
 - aggregate SHA-256 `4c72018e3cd07c15d1c1ca4e33a0de6b66c69a0a3ccd95f8f398ef8b04ad534b`; retained manifest SHA-256 `80811c936f1bf8d2ed3bd0e4df8b003eb64a6fa33d0ce6a98d7e92139ffa518d`.
 
-M11 remains ACTIVE for the remaining model-role coverage, real-host empirical rerank/escalation, decomposition economics, and fresh-review intelligence.
+### M11 completion evidence — 2026-08-19
+
+- Final product commit: `1bf47ac4a51f5e30e30ca9269821e369fac9f332`; exact Git-archive verification build PASS + architecture lint `22/22 PASS` + plugin suite `977/977 PASS`.
+- Role/model routing, bounded empirical rerank and fallback/escalation evidence are archived in `agent-archive/2026-08-19-m11-adaptive-decomposition-model-review.md` together with exact aggregate hashes.
+- Clear local work retains zero-child DIRECT: one child had the same `3/3` correctness but materially higher wall/model/tool/token/cost overhead.
+- Generic independent micro fan-out is not preferred: two-child parallel was strict `2/3` vs one-child `3/3` and materially heavier.
+- Dependency/fan-in scheduler capability is retained for materially required graphs, not as a micro-task default: one-child and fan-in were both strict `2/3`, while fan-in was materially heavier; dependency failure correctly blocked fan-in admission.
+- Reviewer policy is risk-adaptive: low-risk direct review `3/3` with zero child; high-assurance review `3/3` with exactly one fresh MiMo-V2.5-Pro child. Fresh review is retained for assurance/independence, not economics.
+- No general model, parallelism, reviewer, or Hi-over-vanilla efficiency superiority claim is made.
 
 # Milestone 12 — Capability & Isolation Intelligence
+
+**Status:** ACTIVE — 2026-08-19
 
 **Goal:** dynamically choose native shell/process/workspace/MCP/browser capabilities while keeping Hi ownership narrow and exact.
 
