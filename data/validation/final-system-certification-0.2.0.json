@@ -6,8 +6,8 @@
   "status": "CERTIFIED",
   "release": "0.2.0",
   "certified_source_checkpoint": {
-    "commit": "ce972032b99c78dde64fc39119b117a6c47b1994",
-    "tree": "eddb49ab1b22b2f48e27f72684f36ddee324b499",
+    "commit": "13466e4bb15bc1d2f905798c917f4c1a7c191837",
+    "tree": "8b52e21802a43f09502ca4b58a1ab82f714b95e5",
     "note": "Source checkpoint attested by a subsequent evidence commit to avoid self-referential Git hashes."
   },
   "schema_versions": {

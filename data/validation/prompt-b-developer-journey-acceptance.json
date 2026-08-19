@@ -1,6 +1,6 @@
 {
   "acceptance_receipt": "data/validation/developer-journey-acceptance-0.1.0.json",
-  "acceptance_sha256": "b219c6d9e544d1ea2c6264467bcd23ee3405711b5025da7c852d4dd9f580ca57",
+  "acceptance_sha256": "1c7b59ecd7dd3d856f10d0499be0b54142787b1d38a68006006bae1893573a75",
   "claim_boundary": "Developer journey acceptance rejects parallel semantic owners and hand-maintained generated truth.",
   "kind": "PROMPT_B_DEVELOPER_JOURNEY_ACCEPTANCE_AUDIT",
   "program": "PROMPT_B",
