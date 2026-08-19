@@ -4,6 +4,7 @@ export interface BrowserExecutionContext {
   task_id:string
   execution_owner_ref:string
   executor_version:string
+  allowed_origins:string[]
   screenshot_artifact_ref?:string
 }
 export interface BrowserTarget { value:string }

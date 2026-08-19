@@ -33,7 +33,7 @@ test('M13 explicit MCP browser backend requires exact selected MCP and semantic 
 
 test('M13 visual task defaults to bounded Playwright and disables unselected MCP servers',async()=>{
   const prompts=[],m=mission('m13-local',['visual-qa']),rt=runtime(prompts,new Set(['host-capability:browser-execution']))
-  const out=await rt.start(m,{objective:'verify local UI',role:'visual-qa',category:'visual',scope:['src/view.tsx']})
+  const out=await rt.start(m,{objective:'verify local UI',role:'visual-qa',category:'visual',scope:['src/view.tsx'],browserAllowedOrigins:['http://127.0.0.1:4173']})
   const task=m.execution.tasks.find(t=>t.id===out.task_id);assert.equal(task.execution_profile.browser_backend,'bounded-playwright');assert.deepEqual(out.methodologies,['hi-browser-testing'])
   for(const id of HI_BROWSER_EXECUTION_TOOL_IDS)assert.equal(prompts[0].body.tools[id],undefined,id)
   assert.equal(prompts[0].body.tools['browser_*'],false);assert.equal(prompts[0].body.tools['docs_*'],false)
@@ -52,6 +52,6 @@ test('M13 selected MCP backend satisfies browser runtime resource without fabric
 
 test('M13 explicit local backend fails closed when bounded Playwright health is absent',async()=>{
   const prompts=[],m=mission('m13-local-missing',['visual-qa']),rt=runtime(prompts,new Set())
-  await assert.rejects(()=>rt.start(m,{objective:'verify local UI',role:'visual-qa',category:'visual',scope:['src/view.tsx'],browserBackend:'bounded-playwright'}),/bounded-playwright browser backend is unavailable/)
+  await assert.rejects(()=>rt.start(m,{objective:'verify local UI',role:'visual-qa',category:'visual',scope:['src/view.tsx'],browserBackend:'bounded-playwright',browserAllowedOrigins:['http://127.0.0.1:4173']}),/bounded-playwright browser backend is unavailable/)
   assert.equal(m.execution.tasks.length,0);assert.equal(prompts.length,0)
 })

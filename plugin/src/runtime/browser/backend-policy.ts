@@ -31,3 +31,22 @@ export function resolveBrowserBackend(input:{
   if(input.semanticCapabilities.includes('mcp')&&input.selectedMcpServers.length)return{backend:'mcp',reason:'local-browser-unavailable-task-selected-mcp-fallback'}
   return{reason:'browser-execution-resource-unavailable'}
 }
+
+
+function localHost(hostname:string):boolean{return hostname==='localhost'||hostname==='127.0.0.1'||hostname==='::1'||hostname==='[::1]'}
+export function normalizeBrowserAllowedOrigins(values:readonly string[]):string[]{
+  const out:string[]=[]
+  for(const raw of values){
+    let url:URL;try{url=new URL(String(raw).trim())}catch{throw new Error(`Browser allowed origin must be an absolute http(s) URL: ${raw}`)}
+    if(!['http:','https:'].includes(url.protocol))throw new Error(`Browser allowed origin must use http(s): ${raw}`)
+    if(url.username||url.password)throw new Error('Browser allowed origin cannot contain credentials')
+    if(!localHost(url.hostname))throw new Error(`Browser allowed origin is outside supported local scope: ${url.origin}`)
+    out.push(url.origin)
+  }
+  return[...new Set(out)].slice(0,8)
+}
+
+export function browserOriginsFromTargets(targets:readonly string[]):string[]{
+  const urls=targets.filter(x=>/^https?:\/\//i.test(String(x).trim()))
+  return normalizeBrowserAllowedOrigins(urls)
+}

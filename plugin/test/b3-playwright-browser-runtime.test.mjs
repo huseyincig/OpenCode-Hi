@@ -28,22 +28,23 @@ function fakePlaywright(){
     waitForTimeout:async()=>{},
     screenshot:async()=>new Uint8Array([137,80,78,71,1,2,3]),
     locator(selector){if(selector==='body')return{evaluate:async()=>({body:'Ready\nName',items:[{i:1,tag:'button',text:'Ready'},{i:2,tag:'input',text:'Name'}]})};return{click:async()=>{},fill:async value=>{page.lastFill=value}}},
-  };const browser={newContext:async()=>({newPage:async()=>page}),close:async()=>{page.closed=true}};sessions.push({browser,page});return browser}}
+  };const browserContext={routes:[],async route(pattern,handler){this.routes.push({pattern,handler})},newPage:async()=>page};const browser={newContext:async()=>browserContext,close:async()=>{page.closed=true}};sessions.push({browser,page,context:browserContext});return browser}}
   return{module:{chromium},launches,sessions}
 }
 const repoRoot=resolve(dirname(fileURLToPath(import.meta.url)),'../..')
-const ctx=(id,owner=`owner:${id}:1`)=>({task_id:id,execution_owner_ref:owner,executor_version:'hi-playwright-test'})
+const ctx=(id,owner=`owner:${id}:1`,origins=['http://127.0.0.1:4173'])=>({task_id:id,execution_owner_ref:owner,executor_version:'hi-playwright-test',allowed_origins:origins})
 
 test('B3 Playwright adapter is local-scope, task-isolated and emits bounded observations',async()=>{
   const pw=fakePlaywright(),adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module})
   assert.equal((await adapter.health()).available,true)
   const a=await adapter.open(ctx('t1'),'http://127.0.0.1:4173/')
-  const b=await adapter.open(ctx('t2'),'http://localhost:4174/')
+  const b=await adapter.open(ctx('t2',undefined,['http://localhost:4174']),'http://localhost:4174/')
   assert.equal(a.result,'OBSERVED');assert.equal(b.result,'OBSERVED');assert.ok(isBrowserObservationContract(a));assert.match(a.dom_summary,/@e1 <button> Ready/)
   assert.equal(pw.sessions.length,2)
   await adapter.click(ctx('t1'),{value:'@e1'});await adapter.type(ctx('t1'),{value:'@e2'},'hello')
   assert.equal(pw.sessions[0].page.lastFill,'hello');assert.equal(pw.sessions[1].page.lastFill,undefined)
   await assert.rejects(()=>adapter.navigate(ctx('t1'),'https://example.com/'),/outside supported local scope/)
+  await assert.rejects(()=>adapter.navigate(ctx('t1'),'http://127.0.0.1:4174/'),/outside the task plan/)
   await adapter.close(ctx('t1'));assert.equal(pw.sessions[0].page.closed,true);assert.equal(pw.sessions[1].page.closed,false)
   await adapter.dispose();assert.equal(pw.sessions[1].page.closed,true)
 })
@@ -71,8 +72,8 @@ test('PROMPT B browser snapshot refreshes client-side route state and fails clos
   await adapter.open(c,'http://127.0.0.1:4173/')
   pw.sessions[0].page._url='http://127.0.0.1:4173/client-route?step=2'
   const routed=await adapter.inspect(c);assert.equal(routed.result,'OBSERVED');assert.equal(routed.url,'http://127.0.0.1:4173/client-route?step=2')
-  pw.sessions[0].page._url='https://example.com/escaped'
-  const escaped=await adapter.inspect(c);assert.equal(escaped.result,'FAILED');assert.match(escaped.network_errors.join(' '),/outside supported local scope/)
+  pw.sessions[0].page._url='http://127.0.0.1:4174/escaped'
+  const escaped=await adapter.inspect(c);assert.equal(escaped.result,'FAILED');assert.match(escaped.network_errors.join(' '),/outside the task plan/)
   await adapter.dispose()
 })
 
@@ -80,8 +81,8 @@ test('B3 screenshot bytes are retained by the existing canonical artifact owner 
   const root=mkdtempSync(join(tmpdir(),'hi-browser-artifact-')),store=new ContextArtifactStore(root),pw=fakePlaywright()
   try{
     const adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module,persist_screenshot:(bytes,c)=>{const a=store.addBinary('browser-screenshot',`screenshot ${c.task_id}`,bytes,{extension:'png',mediaType:'image/png',producer:'hi-browser-executor',consumerRefs:[`task:${c.task_id}`]});return`hi-artifact:${a.artifact_id}`}})
-    await adapter.open(ctx('task_screen'),'http://127.0.0.1:3000/')
-    const shot=await adapter.screenshot(ctx('task_screen'))
+    await adapter.open(ctx('task_screen',undefined,['http://127.0.0.1:3000']),'http://127.0.0.1:3000/')
+    const shot=await adapter.screenshot(ctx('task_screen',undefined,['http://127.0.0.1:3000']))
     assert.equal(shot.result,'OBSERVED');assert.ok(isBrowserObservationContract(shot));assert.match(shot.screenshot_artifact_ref,/^hi-artifact:a_[a-f0-9]{24}$/)
     const id=shot.screenshot_artifact_ref.slice('hi-artifact:'.length),manifest=store.get(id);assert.ok(manifest);const meta=JSON.parse(manifest.content)
     const binary=durableArtifactBinaryPath(root,'browser-screenshot',id,'png');assert.equal(existsSync(binary),true);assert.equal(readFileSync(binary).length,7);assert.equal(meta.byte_size,7);assert.match(meta.byte_sha256,/^[a-f0-9]{64}$/)
@@ -113,7 +114,7 @@ test('B3 TaskRuntime admits browser methodology only when runtime health resourc
   const store=new MissionStore(process.cwd()),m=store.start('browser-ready','verify local browser')
   store.applyInitialSemanticAssessment('browser-ready',{material:true,message_kind:'mission',task_kind:'review',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['visual-review'],requested_external_actions:[],likely_verification:['visual-evidence'],likely_targets:['src/view.tsx'],intent_signals:['intent.browser'],suppressed_intent_signals:[]})
   m.methodology.methodology_needs.push({name:'hi-browser-testing',signal:'intent.browser',trigger_source:'task-intent',producer:'intent',reason:'browser acceptance',created_at:Date.now()})
-  const out=await runtime.start(m,{objective:'verify local browser',role:'visual-qa',category:'visual',scope:['src/view.tsx']})
+  const out=await runtime.start(m,{objective:'verify local browser',role:'visual-qa',category:'visual',scope:['src/view.tsx'],browserAllowedOrigins:['http://127.0.0.1:4173']})
   assert.equal(out.readiness,'READY');assert.deepEqual(out.methodologies,['hi-browser-testing']);assert.equal(created.length,1);assert.equal(prompts.length,1)
   for(const id of HI_BROWSER_EXECUTION_TOOL_IDS)assert.equal(prompts[0].body.tools[id],undefined,id)
   assert.equal(prompts[0].body.tools.hi_status,false);assert.equal(prompts[0].body.tools.edit,false)
@@ -131,7 +132,7 @@ test('PROMPT B browser observations capture bounded console and network failures
 })
 
 test('PROMPT B browser navigation timeout and browser crash become explicit FAILED observations',async()=>{
-  const timeoutModule={chromium:{launch:async()=>({newContext:async()=>({newPage:async()=>({setDefaultTimeout(){},on(){},goto:async()=>{throw new Error('Timeout 15000ms exceeded')},locator:()=>({evaluate:async()=>({body:'',items:[]})})})}),close:async()=>{}})}}
+  const timeoutModule={chromium:{launch:async()=>({newContext:async()=>({route:async()=>{},newPage:async()=>({setDefaultTimeout(){},on(){},goto:async()=>{throw new Error('Timeout 15000ms exceeded')},locator:()=>({evaluate:async()=>({body:'',items:[]})})})}),close:async()=>{}})}}
   const timed=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>timeoutModule}),timeoutResult=await timed.open(ctx('t-timeout'),'http://127.0.0.1:4173/')
   assert.equal(timeoutResult.result,'FAILED');assert.match(timeoutResult.network_errors.join(' '),/Timeout 15000ms exceeded/);await timed.dispose()
   const pw=fakePlaywright(),crashed=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module});await crashed.open(ctx('t-crash'),'http://127.0.0.1:4173/')
