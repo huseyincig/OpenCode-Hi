@@ -528,3 +528,11 @@ Use repeated isolated episodes spanning at least localized fixes, diagnosis, mul
 ### Final Rule
 
 Retain a Phase 2 subsystem only when it improves deterministic correctness/predictability or measured execution efficiency on its relevant task class. Do not claim general Hi superiority from a narrow corpus.
+
+
+### M15 progress — semantic authority correction — 2026-08-19
+
+- Corpus issue-discovery on product `96267ce`: localized production r1 strict PASS; r2 externally correct but strict FAIL because the assessor emitted `intent.tdd` despite explicit `Do not modify tests`, leaving a TDD methodology need/open settlement state.
+- Retained correction commit `e0f7d9118bfe729e35520ec01c5ac8ac41e424c8` reconciles only explicit test-mutation authority conflicts; it preserves raw signal provenance, verification context and genuine TDD behavior. Comparator SHA-256 `ed063ead0d0bb0325e0fa6128bc3fe608a356a60706d81bbd8a78a7e3224b871`.
+- Exact new-product verification: build PASS, architecture `22/22 PASS`, focused `5/5 PASS`, full suite `1020/1020 PASS`.
+- Old `96267ce` model receipts remain immutable discovery evidence. Broad final Phase 2 model corpus must use the new final identity `e0f7d91`; existing vanilla/Phase 1 episodes are reused when provenance remains comparable.

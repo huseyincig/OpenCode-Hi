@@ -11,7 +11,7 @@
 
 ### M15 — Broad Production Corpus + Final Phase 2 Cutovers
 
-M14 is complete. Archive: `agent-archive/2026-08-19-m14-closed-loop-runtime-engineering.md`. Final retained M14 product commit is `96267ce857eec53ae31d8549cd52c5eff7d88bf9`; exact immutable-image verification is build PASS, architecture lint `22/22 PASS`, rollback regression `5/5 PASS`, plugin suite `1015/1015 PASS`.
+M14 is complete. Archive: `agent-archive/2026-08-19-m14-closed-loop-runtime-engineering.md`. M14 final product was `96267ce857eec53ae31d8549cd52c5eff7d88bf9`. M15 corpus exposed and retained one semantic-authority correction; current final Phase 2 product is `e0f7d9118bfe729e35520ec01c5ac8ac41e424c8`, exact immutable-image verification build PASS, architecture lint `22/22 PASS`, focused authority regression `5/5 PASS`, plugin suite `1020/1020 PASS`. Checkpoint: `agent-archive/2026-08-19-m15-tdd-authority-correction.md`.
 
 M15 must decide whether retained Phase 2 semantics improve deterministic correctness/predictability or measured execution efficiency across a broader comparable real-work corpus. It must not convert narrow fixture wins into a general Hi-superiority claim.
 
@@ -52,4 +52,4 @@ Retain a Phase 2 subsystem only when it improves deterministic correctness/predi
 
 ## Exact Next Action
 
-Inventory the existing `/workspace/Reference/benchmarks/` and `/workspace/Reference/phase2-autopilot/` receipts against the M15 corpus cells before running anything new. Build a machine-readable coverage/provenance matrix that identifies which existing vanilla / Phase 1 / Phase 2 episodes are genuinely comparable, which are diagnostic-only, and which corpus cells remain missing. Prefer final retained product identities and exact archived images. Do not merge receipts that use incompatible acceptance, model, provider, fixture, or cost provenance. Only after this matrix exists, select the minimum missing repeated episodes needed for the final Phase 2 retain/revert decisions.
+Complete the new final Phase 2 `e0f7d91` localized-production arm for repetitions r1/r2/r3 using `/workspace/Reference/phase2-autopilot/run_m15_production_final_e0f7d91.py`; reuse historical M8 vanilla + retained Phase 1 3x and do not rerun them. Preserve prior `96267ce` r1 success/r2 strict failure as issue-discovery evidence only. Then update the corpus coverage matrix to the new final identity and run the already-prepared combined diagnosis/context fixture on vanilla / retained Phase 1 / current final Phase 2 with identical DeepSeek V4 Flash low role pinning. Only after those results decide whether the remaining multi-module/fan-in broad gap needs a minimal replay.
