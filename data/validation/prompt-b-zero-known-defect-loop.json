@@ -2,7 +2,7 @@
   "schema": 2,
   "kind": "PROMPT_B_ZERO_KNOWN_DEFECT_CLOSURE_LOOP",
   "source_checkpoint": {
-    "commit": "97a0680d06b9ee1f9af0a53c3f9dbbaa21236d7e"
+    "commit": "0af906eea8ca8446c6a36849a47dd96291b28332"
   },
   "program": "PROMPT_B",
   "section": 40,

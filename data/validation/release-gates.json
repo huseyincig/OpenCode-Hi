@@ -91,7 +91,7 @@
     "hygiene": {
       "status": "PASS",
       "receipt": "data/validation/prompt-b-hygiene.json",
-      "audited_source_commit": "97a0680d06b9ee1f9af0a53c3f9dbbaa21236d7e"
+      "audited_source_commit": "0af906eea8ca8446c6a36849a47dd96291b28332"
     }
   },
   "historical_receipts_not_valid_for_current_candidate": {
