@@ -61,7 +61,7 @@ function parsePolicy(raw: unknown): ProjectMethodologyPolicy | undefined {
   if (!['low','medium','high'].includes(String(value.composition_cost))) return undefined
   if (!validStringArray(value.useful_coexistence)||!validStringArray(value.conflicts)||!validStringArray(value.resource_requirements)) return undefined
   if (![...value.useful_coexistence,...value.conflicts].every(name=>/^hi-[a-z0-9-]+$/.test(name))) return undefined
-  if (!value.resource_requirements.every(resource=>/^host-capability:[a-z0-9-]+$/.test(resource))) return undefined
+  if (!value.resource_requirements.every(resource=>/^(?:host|runtime)-capability:[a-z0-9-]+$/.test(resource))) return undefined
   if (!['manual','project-intelligence'].includes(String(value.admission))) return undefined
   return value as unknown as ProjectMethodologyPolicy
 }

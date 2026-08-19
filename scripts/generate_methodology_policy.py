@@ -98,7 +98,7 @@ def main():
         unknown_roles=[role for role in compatible if role not in canonical_roles]
         if unknown_roles: raise ValueError(f'{name}: compatible_roles reference unknown roles {unknown_roles}')
         resources=list(dict.fromkeys(p.get('resource_requirements',[])))
-        if not all(isinstance(item,str) and re.fullmatch(r'host-capability:[a-z0-9-]+',item) for item in resources): raise ValueError(f'{name}: invalid resource_requirements {resources}')
+        if not all(isinstance(item,str) and re.fullmatch(r'(?:host|runtime)-capability:[a-z0-9-]+',item) for item in resources): raise ValueError(f'{name}: invalid resource_requirements {resources}')
         normalized.append({
           'name':name,
           'purpose':p['purpose'],

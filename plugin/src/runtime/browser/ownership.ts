@@ -22,6 +22,6 @@ export function resolveBrowserExecutionOwner(
   if(worker.role!=='visual-qa'||TERMINAL_WORKER.has(worker.status))return undefined
   if(!worker.selected_methodologies.some(name=>BROWSER_METHODOLOGIES.has(name)))return undefined
   const task=mission.execution.tasks.find(candidate=>candidate.id===worker.task_id)
-  if(!task||task.mission_id!==mission.identity.mission_id||task.worker_id!==worker.id||task.role!=='visual-qa'||TERMINAL_TASK.has(task.status))return undefined
+  if(!task||task.mission_id!==mission.identity.mission_id||task.worker_id!==worker.id||task.role!=='visual-qa'||TERMINAL_TASK.has(task.status)||task.execution_profile?.browser_backend==='mcp')return undefined
   return {worker,task}
 }

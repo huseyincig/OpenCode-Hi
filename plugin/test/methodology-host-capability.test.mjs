@@ -27,16 +27,16 @@ test('browser runtime resource is supported only after live health observation; 
   assert.match(cap?.forbidden_fake_behavior??'',/mock client.*T3\/REAL_HOST_ACCEPTANCE/i)
 })
 
-test('browser and visual methodologies require canonical browser-execution host capability',()=>{
+test('browser and visual methodologies require canonical runtime browser-execution resource',()=>{
   const catalog=builtinMethodologyCatalog()
   for(const name of ['hi-browser-testing','hi-visual-qa']){
     const policy=catalog.find(x=>x.name===name)
-    assert.deepEqual(policy?.resourceRequirements,['host-capability:browser-execution'])
+    assert.deepEqual(policy?.resourceRequirements,['runtime-capability:browser-execution'])
     const candidate={name,provider:'hi',path:`/tmp/${name}/SKILL.md`,valid:true,enabled:true,orchestrationRisk:false}
     const denied=resolveSkillPlan([name],[candidate],{[name]:'allow'},true,'visual-qa',catalog,new Set())
     assert.equal(denied.outcomes[0]?.outcome,'resource-unavailable')
     assert.deepEqual(denied.selected,[])
-    const supported=resolveSkillPlan([name],[candidate],{[name]:'allow'},true,'visual-qa',catalog,new Set(['host-capability:browser-execution']))
+    const supported=resolveSkillPlan([name],[candidate],{[name]:'allow'},true,'visual-qa',catalog,new Set(['runtime-capability:browser-execution']))
     assert.equal(supported.selected[0]?.name,name)
   }
 })

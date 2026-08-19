@@ -186,7 +186,7 @@
       ],
       "conflicts": [],
       "resource_requirements": [
-        "host-capability:browser-execution"
+        "runtime-capability:browser-execution"
       ],
       "compatible_roles": [
         "visual-qa"
@@ -881,7 +881,7 @@
       ],
       "conflicts": [],
       "resource_requirements": [
-        "host-capability:browser-execution"
+        "runtime-capability:browser-execution"
       ],
       "compatible_roles": [
         "visual-qa"
