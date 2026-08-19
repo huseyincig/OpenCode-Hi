@@ -9,6 +9,8 @@ export interface BrowserExecutionContext {
 export interface BrowserTarget { value:string }
 export interface BrowserInspectRequest { selector?:string }
 export interface BrowserWaitRequest { milliseconds:number }
+export type BrowserCleanupReason='cleaned'|'not-found'|'owner-mismatch'|'close-failed'
+export interface BrowserCleanupResult { cleaned:boolean;reason:BrowserCleanupReason;error?:string }
 export interface BrowserExecutor {
   health():Promise<{available:boolean;version?:string;reason?:string}>
   open(context:BrowserExecutionContext,url:string):Promise<BrowserObservationContract>
@@ -19,6 +21,7 @@ export interface BrowserExecutor {
   screenshot(context:BrowserExecutionContext):Promise<BrowserObservationContract>
   wait(context:BrowserExecutionContext,request:BrowserWaitRequest):Promise<BrowserObservationContract>
   close(context:BrowserExecutionContext):Promise<BrowserObservationContract>
+  cleanup(context:BrowserExecutionContext):Promise<BrowserCleanupResult>
 }
 
 
