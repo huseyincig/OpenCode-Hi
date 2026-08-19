@@ -5,8 +5,8 @@
   "section": 28,
   "status": "CLOSED_T4",
   "current_source": {
-    "commit": "ce972032b99c78dde64fc39119b117a6c47b1994",
-    "tree": "eddb49ab1b22b2f48e27f72684f36ddee324b499",
+    "commit": "1e9234932ba045efcc2b21d601d4dbc58181d6f9",
+    "tree": "ff422aa8ba3a721f17baef4b6fc5578fae6c4296",
     "version": "0.2.0"
   },
   "release_source": {
@@ -16,13 +16,33 @@
   },
   "development_head": {
     "post_release": true,
-    "runtime_drift_from_release": [],
-    "package_or_documentation_drift_from_release": [],
+    "runtime_drift_from_release": [
+      "plugin/dist/config/auto-init.js",
+      "plugin/dist/config/resolver.js",
+      "plugin/dist/config/routing-discovery.d.ts",
+      "plugin/dist/config/routing-discovery.js",
+      "plugin/dist/config/schema.d.ts",
+      "plugin/dist/config/schema.js",
+      "plugin/dist/generated/config-policy.d.ts",
+      "plugin/dist/generated/config-policy.js",
+      "plugin/src/config/auto-init.ts",
+      "plugin/src/config/resolver.ts",
+      "plugin/src/config/routing-discovery.ts",
+      "plugin/src/config/schema.ts",
+      "plugin/src/generated/config-policy.ts",
+      "scripts/native_plugin_setup.py"
+    ],
+    "package_or_documentation_drift_from_release": [
+      "README.md",
+      "docs/locales/tr/README.md"
+    ],
+    "current_version_already_published": true,
+    "next_release_version_required": true,
     "republish_same_version_forbidden": true
   },
   "certification_head": {
-    "commit": "ce972032b99c78dde64fc39119b117a6c47b1994",
-    "tree": "eddb49ab1b22b2f48e27f72684f36ddee324b499"
+    "commit": "1e9234932ba045efcc2b21d601d4dbc58181d6f9",
+    "tree": "ff422aa8ba3a721f17baef4b6fc5578fae6c4296"
   },
   "historical_release": {
     "tag": "v0.1.0",
@@ -124,6 +144,7 @@
     "historical_tag_distinct": true,
     "historical_release_source": true,
     "released_runtime_immutable": true,
+    "unreleased_runtime_change_declared": true,
     "current_tag_annotated": true,
     "current_tag_exact_source": true,
     "github_release_t4": true,
@@ -151,5 +172,5 @@
     "data/validation/release-publication-0.2.0.json": "34dcc8c85a5a880175e7c02d586adbb31db3e01a6a9d94465e72700af6665a58",
     "data/validation/t4-registry-exact-host-0.2.0.json": "197b45aa9fd9228cf923f0bc7ac2f9f287ab78fbfa839f997948d83e875fb7f6"
   },
-  "claim_boundary": "T4 certifies the immutable released tag/artifact, not every later documentation commit on main. A post-release development HEAD may advance documentation without mutating the published artifact; the same version must never be republished. Historical v0.1.0 remains immutable."
+  "claim_boundary": "T4 certifies the immutable released tag/artifact, not later development HEADs. Post-release documentation may advance freely; post-release runtime/package changes are Unreleased development that require a new version plus fresh current-source CI/T4 before publication. The same published version must never be republished. Historical v0.1.0 remains immutable."
 }

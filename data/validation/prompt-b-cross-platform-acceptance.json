@@ -1,25 +1,48 @@
 {
   "acceptance_receipt": "data/validation/cross-platform-acceptance-0.2.0.json",
   "acceptance_sha256": "3d8ebd632ffce08cbff9c04d0293e18664599d0edc6352c038357911772562a3",
-  "blockers": [],
-  "claim_boundary": "Current-source Windows/Linux certification is bound to the exact external CI source checkpoint. Subsequent evidence-only commits may consume it only while runtime/package material paths remain byte-identical to that checkpoint.",
+  "blockers": [
+    "current-source-cross-platform-ci-receipt-stale"
+  ],
+  "claim_boundary": "A prior exact-source Windows/Linux receipt remains valid historical evidence but does not certify the current material source. Current-source certification is PENDING_EXTERNAL_CI until a new exact-source CI receipt exists.",
   "github_actions": {
-    "conclusion": "success",
-    "run_id": 32289116515,
-    "ubuntu_job_id": 96185579576,
-    "windows_job_id": 96185579252
+    "conclusion": null,
+    "run_id": null,
+    "ubuntu_job_id": null,
+    "windows_job_id": null
   },
   "kind": "PROMPT_B_CROSS_PLATFORM_ACCEPTANCE_AUDIT",
-  "linux_current_certified": true,
-  "post_ci_material_drift": [],
+  "linux_current_certified": false,
+  "post_ci_material_drift": [
+    "plugin/dist/config/auto-init.js",
+    "plugin/dist/config/resolver.js",
+    "plugin/dist/config/routing-discovery.d.ts",
+    "plugin/dist/config/routing-discovery.js",
+    "plugin/dist/config/schema.d.ts",
+    "plugin/dist/config/schema.js",
+    "plugin/dist/generated/config-policy.d.ts",
+    "plugin/dist/generated/config-policy.js",
+    "plugin/src/config/auto-init.ts",
+    "plugin/src/config/resolver.ts",
+    "plugin/src/config/routing-discovery.ts",
+    "plugin/src/config/schema.ts",
+    "plugin/src/generated/config-policy.ts",
+    "scripts/native_plugin_setup.py"
+  ],
+  "prior_acceptance": {
+    "commit": "1e86e36eb47ba4fc574702590f6384603780d94e",
+    "run_id": 32289116515,
+    "sha256": "3d8ebd632ffce08cbff9c04d0293e18664599d0edc6352c038357911772562a3",
+    "tree": "b8b96ca679dd9c5e84f016d541225133b2e1d502"
+  },
   "program": "PROMPT_B",
   "schema": 1,
   "section": 38,
   "source_checkpoint": {
-    "commit": "1e86e36eb47ba4fc574702590f6384603780d94e",
-    "tree": "b8b96ca679dd9c5e84f016d541225133b2e1d502"
+    "commit": "1e9234932ba045efcc2b21d601d4dbc58181d6f9",
+    "tree": "ff422aa8ba3a721f17baef4b6fc5578fae6c4296"
   },
-  "status": "PASS",
+  "status": "PENDING_EXTERNAL_CI",
   "summary": {
     "covered_surfaces": 7,
     "required_surfaces": 7,
@@ -53,7 +76,7 @@
     },
     {
       "proof": "tests/test_hi.py",
-      "proof_sha256": "61b5579448d0879c26ae336202d18d9cf99b4eb718f7f8c5d138d474419e5780",
+      "proof_sha256": "b11d221232b7f7efffeabedd275483e777abbcf3ab4a1d61a4ecba019506a477",
       "surface": "filesystem"
     },
     {
@@ -63,6 +86,6 @@
     }
   ],
   "violations": [],
-  "windows_current_certified": true,
+  "windows_current_certified": false,
   "windows_historical_release_evidence": true
 }

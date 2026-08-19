@@ -47,7 +47,7 @@
       "owner_sha256": "ee3ed09654ad1a29a49bbe5cdb9a53a120bd95a9613bf8a5c70f10e101b72ba6",
       "owner_anchor": "os: [ubuntu-latest, windows-latest]",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "f061a01277c7537309815238532a879208405c76f8706dbe695ab3ae7fec5895",
+      "proof_sha256": "b11d221232b7f7efffeabedd275483e777abbcf3ab4a1d61a4ecba019506a477",
       "proof_anchor": "pytest.skip('symlink privilege varies on Windows')"
     },
     {
