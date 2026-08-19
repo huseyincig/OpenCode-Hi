@@ -12,7 +12,7 @@
     },
     "current_release_gates": {
       "path": "data/validation/release-gates.json",
-      "sha256": "bbd0636d19338866e4bb46003db1f10da40a41ba2de1d1cafdd141fec37984ba"
+      "sha256": "7919d9faa5f53cf89768af55b408480cb2c9694fd57ed6a38360ca642a37ac14"
     },
     "historical_v0_1_0_publication": {
       "path": "data/validation/release-publication-0.1.0.json",

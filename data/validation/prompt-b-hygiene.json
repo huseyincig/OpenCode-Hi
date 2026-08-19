@@ -4,7 +4,7 @@
   "program": "PROMPT_B",
   "section": 41,
   "status": "PASS",
-  "audited_source_commit": "5a36e98c6f50ba5a4303fac913696b1db4f90fb6",
+  "audited_source_commit": "97a0680d06b9ee1f9af0a53c3f9dbbaa21236d7e",
   "checks": {
     "clean_working_tree_outside_audit_artifacts": true,
     "accidental_backups": true,
@@ -21,14 +21,14 @@
   },
   "external_acceptance": {
     "documentation_projection_two_pass_sha256": "e801af1e78b371219651246dc5deda7c894d2706bf2dc14db116b5f593b8ef69",
-    "package_dry_run_files": 382,
+    "package_dry_run_files": 392,
     "package_dry_run_status": "PASS"
   },
   "proof_hashes": {
     "scripts/run-node-test-suite.mjs": "3f37ac8e8badc0807ea2ed2500fc7664cad04ce5f9d5ff26abecb9e55b385b89",
-    "data/validation/prompt-b-test-suite-audit.json": "341c491cac29e8dd9efcf29a875e4a01ae3a78828e2c5e85628677e1915c0c79",
-    "package.json": "877d0b4461788f36459ab48d6afdb9b401318264bf424b8f1918ff1e06b5dd97",
-    "plugin/package.json": "ff85a5d492f8d8beae9b29aba9d795f94098c11efb597c1c518ed16eb121e567"
+    "data/validation/prompt-b-test-suite-audit.json": "afdc483e867a1e19a190d0dd9dbc75e4ed6c9b35f9e88c71cc91e04d21d3d66e",
+    "package.json": "7d76c68d15082728fe0a7f0cc6dbf6faf9f87fa0d1c7b2398ab9ad81210ce7ea",
+    "plugin/package.json": "7f9986d6c981cb71f9d1967b1d62be55b6695b6e31f8eab97246f42c9c0b40b6"
   },
   "violations": []
 }
