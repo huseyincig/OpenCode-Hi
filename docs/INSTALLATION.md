@@ -2,6 +2,8 @@
 
 OpenCode-Hi's canonical package name is `opencode-hi`. Installation truth has separate distribution and host-loading layers:
 
+After the plugin loads, use the complete [Configuration Guide](CONFIGURATION.md) for Windows/Linux/macOS project paths, all supported runtime settings, role/model/fallback routing, variants, provider/model policy, concurrency, CLI/manual configuration, and troubleshooting.
+
 1. **npm registry distribution** — `opencode-hi@0.2.0` is published and T4-verified through Trusted Publishing OIDC provenance plus fresh-registry exact-host acceptance;
 2. **Git source distribution** — the public Git repository/tag can be materialized directly with Bun and loaded through OpenCode's local-plugin mechanism without using the npm registry;
 3. **registration/lifecycle mechanics** — npm-package registration is managed by `scripts/native_plugin_setup.py`; Git/local loading remains explicit so the helper never pretends an unsupported native Git resolver exists.

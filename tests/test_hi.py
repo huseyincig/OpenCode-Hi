@@ -42,7 +42,7 @@ def test_root_git_package_contract():
 def test_root_is_product_clean():
     assert not any((ROOT/x).exists() for x in ['KURULUM.md','RELEASE-READINESS.md','WORK-STATE.md','work-state.json','HI.cmd','HI.sh','HI-VALIDATE.cmd','HI-RELEASE-PREP.cmd','README.tr.md','CONTRIBUTING.md','SECURITY.md'])
     docs={p.relative_to(ROOT/'docs').as_posix() for p in (ROOT/'docs').rglob('*.md')}
-    assert docs=={'README.md','ARCHITECTURE.md','INSTALLATION.md','SKILLS.md','HOSTS.md','HUMAN-DECISIONS.md','VERIFICATION.md','SECURITY-MODEL.md','RELEASE.md','locales/tr/README.md'}
+    assert docs=={'README.md','ARCHITECTURE.md','INSTALLATION.md','CONFIGURATION.md','SKILLS.md','HOSTS.md','HUMAN-DECISIONS.md','VERIFICATION.md','SECURITY-MODEL.md','RELEASE.md','locales/tr/README.md'}
     assert not (ROOT/'docs/engineering-constitution').exists()
     ignore=(ROOT/'.gitignore').read_text(encoding='utf-8')
     assert '.project-docs/' in ignore
@@ -474,7 +474,7 @@ def test_prompt_a_documentation_inventory_classifies_all_truth_surfaces_and_has_
     inv=json.loads((ROOT/'data/validation/documentation-inventory.json').read_text(encoding='utf-8'))
     assert policy['schema']==1 and policy['type']=='hi-documentation-ownership'
     assert policy['policy']['rule']=='one-current-area-one-public-owner'
-    assert policy['policy']['public_docs_budget']==10 and policy['policy']['root_markdown_budget']==3
+    assert policy['policy']['public_docs_budget']==11 and policy['policy']['root_markdown_budget']==3
     assert inv['schema']==1 and inv['kind']=='DOCUMENTATION_TRUTH_INVENTORY' and inv['status']=='PASS'
     assert inv['violations']=={'missing':[],'duplicate_area':[],'budget_or_tracking':[]}
     areas=[x['area'] for x in policy['public_documents']+policy['machine_owners']]
@@ -483,7 +483,7 @@ def test_prompt_a_documentation_inventory_classifies_all_truth_surfaces_and_has_
     assert artifacts['README.md']['lifecycle']=='CANONICAL_CURRENT'
     assert artifacts['docs/locales/tr/README.md']['lifecycle']=='DERIVED_CURRENT'
     assert 'docs/engineering-constitution/15-ENGINEERING-CONSTITUTION.md' not in artifacts
-    assert inv['summary']['docs_markdown']==10 and inv['summary']['root_markdown']==3
+    assert inv['summary']['docs_markdown']==11 and inv['summary']['root_markdown']==3
     for item in policy['public_documents']+policy['machine_owners']:assert (ROOT/item['path']).is_file()
     assert hashlib.sha256((ROOT/inv['policy']['path']).read_bytes()).hexdigest()==inv['policy']['sha256']
 
@@ -529,6 +529,29 @@ def test_prompt_a_first_use_docs_do_not_advertise_unavailable_registry_or_stale_
     assert 'contains no raw stdout/stderr buffer' in arch
 
 
+def test_configuration_guide_covers_supported_variations_and_is_readme_linked():
+    readme=(ROOT/'README.md').read_text(encoding='utf-8')
+    guide=(ROOT/'docs/CONFIGURATION.md').read_text(encoding='utf-8')
+    assert '[Configuration Guide](docs/CONFIGURATION.md)' in readme
+    for platform in ['Windows','Linux','macOS']:
+        assert platform in guide
+    for role in ['working-manager','manager','coder','architect','repository-explorer','qa-reviewer','security-reviewer','visual-qa']:
+        assert f'`{role}`' in guide
+    for category in ['quick','standard','deep','visual','critical']:
+        assert f'`{category}`' in guide
+    for phrase in ['models.mode','models.default','models.roles','routing.roleModels','routing.roleVariants','routing.categoryModels','routing.categoryVariants','routing.allowedProviders','routing.deniedModels','parallel.max','execution.parallelism','maxFallbacks']:
+        assert phrase in guide
+    assert 'no general `allowedModels` whitelist' in guide
+    assert 'Current project model routing is applied by `TaskRuntime` when Hi dispatches **child workers**' in guide
+    assert 'does **not** currently prove or force the primary session model' in guide
+    assert '"model": "provider/model-x"' in guide
+    assert 'This requires configuring both ownership layers with the same model ID.' in guide
+    assert 'rejects incompatible same-name agent definitions as collisions' in guide
+    assert '.opencode/hi/policy/routing.json' in guide
+    options=json.loads((ROOT/'data/hi-config-options.json').read_text(encoding='utf-8'))['options']
+    assert all(f"`{x['path']}`" in guide for x in options)
+
+
 def test_prompt_a_constitution_separates_current_law_from_program_history():
     assert not (ROOT/'docs/engineering-constitution').exists()
     assert '.project-docs/' in (ROOT/'.gitignore').read_text(encoding='utf-8')
@@ -540,6 +563,7 @@ def test_prompt_a_constitution_separates_current_law_from_program_history():
 
 def test_prompt_a_generated_config_and_host_tables_are_catalog_receipt_derived():
     install=(ROOT/'docs/INSTALLATION.md').read_text(encoding='utf-8'); hosts=(ROOT/'docs/HOSTS.md').read_text(encoding='utf-8')
+    configuration=(ROOT/'docs/CONFIGURATION.md').read_text(encoding='utf-8')
     cfg=json.loads((ROOT/'data/hi-config-options.json').read_text(encoding='utf-8'))
     compat=json.loads((ROOT/'data/validation/compatibility-matrix-0.1.0.json').read_text(encoding='utf-8'))['current_reference_host']
     assert install.count('<!-- BEGIN GENERATED CONFIG REFERENCE -->')==1 and install.count('<!-- END GENERATED CONFIG REFERENCE -->')==1

@@ -20,7 +20,7 @@ def ok_receipt(rel):
 # §42 Final documentation re-audit
 checks={
  'README':'README.md','docs-index':'docs/README.md','architecture':'docs/ARCHITECTURE.md','HOSTS':'docs/HOSTS.md',
- 'installation':'docs/INSTALLATION.md','methodologies-skills':'docs/SKILLS.md','human-decisions':'docs/HUMAN-DECISIONS.md',
+ 'installation':'docs/INSTALLATION.md','configuration-guide':'docs/CONFIGURATION.md','methodologies-skills':'docs/SKILLS.md','human-decisions':'docs/HUMAN-DECISIONS.md',
  'security':'docs/SECURITY-MODEL.md','verification':'docs/VERIFICATION.md','release':'docs/RELEASE.md',
  'configuration':'data/validation/prompt-b-configuration.json','acceptance':'data/validation/prompt-b-user-journey-acceptance.json',
  'receipts':'data/validation/prompt-b-zero-known-defect-loop.json'}

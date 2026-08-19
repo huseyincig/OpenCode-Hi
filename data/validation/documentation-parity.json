@@ -6,7 +6,7 @@
   "inputs": {
     "documentation_ownership": {
       "path": "data/documentation-ownership.json",
-      "sha256": "f39247aae9a8985af7ff62ed85f822c9952b97ad3f8b73357dd629df89cc1408"
+      "sha256": "db57fa2aae954c068b1f7cfee7c7341ceeaed235c2c13a4f6972eacfe42b19ad"
     },
     "compatibility": {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
@@ -21,6 +21,7 @@
     "README.md",
     "docs/README.md",
     "docs/INSTALLATION.md",
+    "docs/CONFIGURATION.md",
     "docs/ARCHITECTURE.md",
     "docs/HOSTS.md",
     "docs/SKILLS.md",

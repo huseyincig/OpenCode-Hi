@@ -145,6 +145,8 @@ OpenCode accepted host üzerinde `.opencode/plugins/` ve local/file plugin loadi
 
 Install/upgrade/reconfigure/doctor/uninstall/rollback/recovery davranışı için [Installation and Lifecycle](../../INSTALLATION.md) belgesine bakın.
 
+**Plugin kurulduktan sonra:** Windows, Linux ve macOS yolları; tüm Hi ayarları; manager/worker role model eşlemesi; tek model, role başına model, çoklu fallback, variant, provider/model sınırları ve concurrency için eksiksiz [Configuration Guide](../../CONFIGURATION.md) belgesini kullanın.
+
 ## Configuration
 
 Hi configuration current-only ve fail-closed'dur. Canonical machine inventory `data/hi-config-options.json` dosyasıdır. Her runtime option validator, precedence, consumer, executable effect, documentation ve test ile bağlı olmalıdır. Unknown veya stale config sessizce compatibility feature olarak kabul edilmez.

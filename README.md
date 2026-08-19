@@ -147,6 +147,8 @@ After plugin configuration changes, restart OpenCode when the host does not hot-
 
 See [Installation and Lifecycle](docs/INSTALLATION.md) for Git/npm installation, upgrade, reconfigure, doctor, uninstall, rollback and recovery behavior.
 
+**Installed the plugin? Continue with the complete [Configuration Guide](docs/CONFIGURATION.md)** for Windows, Linux, macOS, every supported option, primary/worker roles, single-model and per-role routing, multiple fallback models, variants, provider/model policy, concurrency, CLI/manual configuration, and troubleshooting.
+
 ## Configuration
 
 Hi configuration is current-only and fail-closed. The canonical machine inventory is `data/hi-config-options.json`; each runtime option must have a validator, precedence, consumer, executable effect, documentation and tests. Unknown or stale configuration is not silently accepted as a compatibility feature.

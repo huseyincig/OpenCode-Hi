@@ -46,7 +46,7 @@ for name in required_root:
     if not (ROOT/name).is_file():err(f'required root file missing: {name}')
 for forbidden in ('KURULUM.md','RELEASE-READINESS.md','WORK-STATE.md','work-state.json','HI.cmd','HI.sh','HI-VALIDATE.cmd','HI-VALIDATE.sh','HI-RELEASE-PREP.cmd','HI-RELEASE-PREP.sh','docs/HI-TEST-LAB-HANDOFF.md','docs/FLOW-11-COVERAGE.md','docs/NATIVE-FIRST-10-COVERAGE.md','docs/MIGRATION-Hi-NEXT.md'):
     if (ROOT/forbidden).exists():err(f'non-product/legacy file present: {forbidden}')
-required_docs={'README.md','ARCHITECTURE.md','INSTALLATION.md','SKILLS.md','HOSTS.md','HUMAN-DECISIONS.md','RELEASE.md','VERIFICATION.md','SECURITY-MODEL.md','locales/tr/README.md'}
+required_docs={'README.md','ARCHITECTURE.md','INSTALLATION.md','CONFIGURATION.md','SKILLS.md','HOSTS.md','HUMAN-DECISIONS.md','RELEASE.md','VERIFICATION.md','SECURITY-MODEL.md','locales/tr/README.md'}
 actual_docs={p.relative_to(ROOT/'docs').as_posix() for p in (ROOT/'docs').rglob('*.md')}
 if actual_docs!=required_docs:err(f'docs set mismatch: {sorted(actual_docs)}')
 for rel in ('.github/CONTRIBUTING.md','.github/SECURITY.md','.github/SUPPORT.md','.github/pull_request_template.md','.github/ISSUE_TEMPLATE/bug_report.yml','.github/ISSUE_TEMPLATE/feature_request.yml'):

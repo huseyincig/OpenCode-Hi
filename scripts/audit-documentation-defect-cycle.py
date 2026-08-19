@@ -14,7 +14,7 @@ rows=[
  row('generated-parity-update','scripts/generate-documentation-projections.py','Generated from','data/validation/documentation-parity.json','"status": "PASS"'),
  row('doc-lint','scripts/validate-documentation.py','documentation parity','data/validation/documentation-parity.json','"violations": []'),
 ]
-pti=json.loads((ROOT/'data/validation/product-truth-inventory.json').read_text(encoding='utf-8'));di=json.loads((ROOT/'data/validation/documentation-inventory.json').read_text(encoding='utf-8'));dp=json.loads((ROOT/'data/validation/documentation-parity.json').read_text(encoding='utf-8'))
+pti=json.loads((ROOT/'data/validation/product-truth-inventory.json').read_text(encoding='utf-8'));di=json.loads((ROOT/'data/validation/documentation-inventory.json').read_text(encoding='utf-8'));dp=json.loads((ROOT/'data/validation/documentation-parity.json').read_text(encoding='utf-8'));doc_policy=json.loads((ROOT/'data/documentation-ownership.json').read_text(encoding='utf-8'))
 inv_src=(ROOT/'scripts/generate-documentation-inventory.py').read_text(encoding='utf-8'); parity_src=(ROOT/'scripts/validate-documentation.py').read_text(encoding='utf-8')
 static={
  'product_truth_areas_24':pti.get('status')=='PASS' and len(pti.get('areas',[]))==24,
@@ -23,7 +23,7 @@ static={
  'parity_pass':dp.get('status')=='PASS' and dp.get('violations')==[],
  'generated_dirty_guard':'GENERATED_ARTIFACT_DIRTY' in (ROOT/'scripts/architecture_lint.mjs').read_text(encoding='utf-8'),
  'generated_hand_edit_guard':'GENERATED_ARTIFACT_HAND_EDIT' in (ROOT/'scripts/architecture_lint.mjs').read_text(encoding='utf-8'),
- 'bounded_public_documentation':di.get('summary',{}).get('docs_markdown',999)<=10 and di.get('summary',{}).get('root_markdown',999)<=3,
+ 'bounded_public_documentation':di.get('summary',{}).get('docs_markdown',999)<=doc_policy.get('policy',{}).get('public_docs_budget',0) and di.get('summary',{}).get('root_markdown',999)<=doc_policy.get('policy',{}).get('root_markdown_budget',0),
  'platform_neutral_document_order':"artifacts.sort(key=lambda x:x['path'])" in inv_src and "for row in cfg.get('public_documents')" in parity_src,
 }
 viol=[x['step'] for x in rows if x['status']!='PASS']+[f'static:{k}' for k,v in static.items() if not v]

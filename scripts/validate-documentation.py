@@ -60,7 +60,7 @@ def main():
     for required in ('process-lifecycle','workspace-isolation-binding','browser-execution'):
         if (caps.get(required) or {}).get('status')!='SUPPORTED_T3':errors.append({'code':'DOC_HOST_SUPPORT_INPUT','detail':required})
     release=json.loads((ROOT/f'data/validation/release-status-{version}.json').read_text(encoding='utf-8'))
-    readme=(ROOT/'README.md').read_text(encoding='utf-8');install=(ROOT/'docs/INSTALLATION.md').read_text(encoding='utf-8');hosts=(ROOT/'docs/HOSTS.md').read_text(encoding='utf-8');arch=(ROOT/'docs/ARCHITECTURE.md').read_text(encoding='utf-8')
+    readme=(ROOT/'README.md').read_text(encoding='utf-8');install=(ROOT/'docs/INSTALLATION.md').read_text(encoding='utf-8');configuration=(ROOT/'docs/CONFIGURATION.md').read_text(encoding='utf-8');hosts=(ROOT/'docs/HOSTS.md').read_text(encoding='utf-8');arch=(ROOT/'docs/ARCHITECTURE.md').read_text(encoding='utf-8')
     candidate=release.get('candidate') or {}; npm_status=candidate.get('npm_status'); github_status=candidate.get('github_status')
     tr_path=ROOT/'docs/locales/tr/README.md'; tr=tr_path.read_text(encoding='utf-8') if tr_path.is_file() else ''
     if f'`{version}`' not in tr:errors.append({'code':'DOC_LOCALIZED_VERSION_DRIFT','path':'docs/locales/tr/README.md','expected':version})
@@ -71,8 +71,13 @@ def main():
         if f'opencode-hi@{version}' not in tr or re.search(stale_localized,tr,re.I):errors.append({'code':'DOC_LOCALIZED_RELEASE_DRIFT','path':'docs/locales/tr/README.md','expected':f'opencode-hi@{version} published'})
     if hosts.count('<!-- BEGIN GENERATED HOST CAPABILITY MATRIX -->')!=1 or hosts.count('<!-- END GENERATED HOST CAPABILITY MATRIX -->')!=1:errors.append({'code':'DOC_HOST_GENERATED_MARKER'})
     if install.count('<!-- BEGIN GENERATED CONFIG REFERENCE -->')!=1 or install.count('<!-- END GENERATED CONFIG REFERENCE -->')!=1:errors.append({'code':'DOC_CONFIG_GENERATED_MARKER'})
-    for option in json.loads((ROOT/'data/hi-config-options.json').read_text(encoding='utf-8')).get('options',[]):
-        if f"`{option.get('path')}`" not in install:errors.append({'code':'DOC_CONFIG_OPTION_OMITTED','detail':option.get('path')})
+    if configuration.count('<!-- BEGIN GENERATED CONFIG REFERENCE -->')!=1 or configuration.count('<!-- END GENERATED CONFIG REFERENCE -->')!=1:errors.append({'code':'DOC_CONFIGURATION_GUIDE_GENERATED_MARKER'})
+    options=json.loads((ROOT/'data/hi-config-options.json').read_text(encoding='utf-8')).get('options',[])
+    for option in options:
+        marker=f"`{option.get('path')}`"
+        if marker not in install:errors.append({'code':'DOC_CONFIG_OPTION_OMITTED','detail':option.get('path')})
+        if marker not in configuration:errors.append({'code':'DOC_CONFIGURATION_GUIDE_OPTION_OMITTED','detail':option.get('path')})
+    if '[Configuration Guide](docs/CONFIGURATION.md)' not in readme:errors.append({'code':'README_CONFIGURATION_GUIDE_LINK_MISSING'})
     for cap,row in caps.items():
         if f'`{cap}`' not in hosts or f"**{row.get('status')}**" not in hosts:errors.append({'code':'DOC_HOST_MATRIX_DRIFT','detail':cap})
     if 'only `TypeScriptSemanticContextAdapter`' not in hosts:errors.append({'code':'DOC_SEMANTIC_ADAPTER_BOUNDARY','path':'docs/HOSTS.md'})

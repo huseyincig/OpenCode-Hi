@@ -47,7 +47,7 @@
       "owner_sha256": "ee3ed09654ad1a29a49bbe5cdb9a53a120bd95a9613bf8a5c70f10e101b72ba6",
       "owner_anchor": "os: [ubuntu-latest, windows-latest]",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "22e46c6377a9991a8c1c1ba7dffec4973f7bc278e097ecc6a08a58ba3e999b25",
+      "proof_sha256": "61b5579448d0879c26ae336202d18d9cf99b4eb718f7f8c5d138d474419e5780",
       "proof_anchor": "pytest.skip('symlink privilege varies on Windows')"
     },
     {
@@ -110,7 +110,7 @@
       "owner_sha256": "ee3ed09654ad1a29a49bbe5cdb9a53a120bd95a9613bf8a5c70f10e101b72ba6",
       "owner_anchor": "windows-latest",
       "proof": "plugin/test/real-hosted-release-transaction.test.mjs",
-      "proof_sha256": "720c37ed824c2344b342ca580fd74ea3658bd4cf538848b631ce22e52ed62502",
+      "proof_sha256": "eeb5adaf2a80f8a5a837d7f8defdcf2e5c57c859e86ab59ab0351baadc836644",
       "proof_anchor": "mandatory Ubuntu release-readiness job"
     },
     {

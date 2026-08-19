@@ -34,30 +34,30 @@
       "step": "docs-owner-impact-check",
       "status": "PASS",
       "owner": "data/documentation-ownership.json",
-      "owner_sha256": "f39247aae9a8985af7ff62ed85f822c9952b97ad3f8b73357dd629df89cc1408",
+      "owner_sha256": "db57fa2aae954c068b1f7cfee7c7341ceeaed235c2c13a4f6972eacfe42b19ad",
       "owner_anchor": "one-current-area-one-public-owner",
       "proof": "data/validation/documentation-inventory.json",
-      "proof_sha256": "14111218acc946cc263a1d29a11d74f34d39ed9de76e57050290628278617d2b",
+      "proof_sha256": "1087e4b39289de68ca191ac9e6c3ee5629f4db81e156fdea175e04752177aaed",
       "proof_anchor": "\"canonical_ownership\""
     },
     {
       "step": "generated-parity-update",
       "status": "PASS",
       "owner": "scripts/generate-documentation-projections.py",
-      "owner_sha256": "4ae16928709af73e37efdddf3e845e9353154c238cf3b14642ef31d65b2b7054",
+      "owner_sha256": "edc482e179739db21b205286baced367c8d6ce714e0df9263f1efe2622327c1e",
       "owner_anchor": "Generated from",
       "proof": "data/validation/documentation-parity.json",
-      "proof_sha256": "6f30b9ceaa69915f5108719baf72ddc2a70757b6026ffcc1e66d219454550049",
+      "proof_sha256": "7722affc12950d9278e7645aab5cecf01d4a16368754995e50bcdf9be6e69594",
       "proof_anchor": "\"status\": \"PASS\""
     },
     {
       "step": "doc-lint",
       "status": "PASS",
       "owner": "scripts/validate-documentation.py",
-      "owner_sha256": "770fc7039072538cd372ae728e997c4c52360f3875f086be138d5672b216a5ba",
+      "owner_sha256": "e1a50b5609fe397654a650ab1bb7dc624997f3f6028d2b1b0eb2c9f4b4b071e3",
       "owner_anchor": "documentation parity",
       "proof": "data/validation/documentation-parity.json",
-      "proof_sha256": "6f30b9ceaa69915f5108719baf72ddc2a70757b6026ffcc1e66d219454550049",
+      "proof_sha256": "7722affc12950d9278e7645aab5cecf01d4a16368754995e50bcdf9be6e69594",
       "proof_anchor": "\"violations\": []"
     }
   ],

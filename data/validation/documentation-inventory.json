@@ -5,14 +5,14 @@
   "status": "PASS",
   "policy": {
     "path": "data/documentation-ownership.json",
-    "sha256": "f39247aae9a8985af7ff62ed85f822c9952b97ad3f8b73357dd629df89cc1408"
+    "sha256": "db57fa2aae954c068b1f7cfee7c7341ceeaed235c2c13a4f6972eacfe42b19ad"
   },
   "summary": {
-    "public_documents": 14,
-    "docs_markdown": 10,
+    "public_documents": 15,
+    "docs_markdown": 11,
     "root_markdown": 3,
     "machine_owners": 2,
-    "canonical_areas": 16
+    "canonical_areas": 17
   },
   "canonical_ownership": [
     {
@@ -30,6 +30,12 @@
     {
       "path": "docs/INSTALLATION.md",
       "area": "installation-configuration-lifecycle",
+      "audience": "USER",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "path": "docs/CONFIGURATION.md",
+      "area": "configuration-guide",
       "audience": "USER",
       "update_mode": "PARITY_VALIDATED"
     },
@@ -135,7 +141,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "b3309b49a0118023d4d79845dd5e603ad113cfe37d852e51b55ed8fbdd8bb23f",
+      "sha256": "b95ff3c546b9c0c9f08a56b251562d6fc0de0b0f6602438d92ab13ca39c9d457",
       "area": "product-overview",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -146,6 +152,14 @@
       "sha256": "f6e570bef2940a7984fc299fd02bea2e1a00fd6f0529663ea8473911d3948e88",
       "area": "architecture-execution-context-storage-privacy",
       "audience": "CONTRIBUTOR",
+      "lifecycle": "CANONICAL_CURRENT",
+      "update_mode": "PARITY_VALIDATED"
+    },
+    {
+      "path": "docs/CONFIGURATION.md",
+      "sha256": "cc1c8d79a4893aabf90ef132a389a84810fc047c804e7c4645f92f9e536846ff",
+      "area": "configuration-guide",
+      "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
       "update_mode": "PARITY_VALIDATED"
     },
@@ -167,7 +181,7 @@
     },
     {
       "path": "docs/INSTALLATION.md",
-      "sha256": "6f62018ab5e6632468fed196e72b4c98efa7fc074bc9950982876c2da6ee81e3",
+      "sha256": "bb4bed2bff33cf0bc7fe028926c1c02f004aa9f55b22faca6d75f35eae9eaf93",
       "area": "installation-configuration-lifecycle",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -175,7 +189,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256": "e354c460652cc978c2cfb50f127cb3465ae664765d842a77b917432bcd54addc",
+      "sha256": "c933c6a6896d2f68294b446d2273ca29101c1bc8f0ed7908791ea0e76ec64cfb",
       "area": "documentation-index",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -215,7 +229,7 @@
     },
     {
       "path": "docs/locales/tr/README.md",
-      "sha256": "2bee8fa047eaa0279135ba0dc538082c760a502ea22feeab85f6e1a21c2dc083",
+      "sha256": "c1bd6788eaf8253355683b791fb2a8eee460e75562ab32b79f573ad0a7d424ed",
       "area": "turkish-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",

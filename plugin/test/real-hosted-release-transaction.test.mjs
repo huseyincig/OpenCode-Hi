@@ -26,7 +26,7 @@ function req(method,path,body){return new Promise((resolve,reject)=>{const data=
 `);chmodSync(path,0o755)}
 
 test('real branch+annotated-tag push and hosted release HTTP transaction are remotely verified end to end',{skip:process.platform==='win32'?'POSIX executable shim is exercised by the mandatory Ubuntu release-readiness job':false},async()=>{
-  const root=mkdtempSync(join(tmpdir(),'hi-hosted-release-')), remote=join(root,'remote.git'), work=join(root,'work'), bin=join(root,'gh')
+  const root=mkdtempSync(join(tmpdir(),'hi-hosted-release-')), remote=join(root,'remote.git'), work=join(root,'work'), bin=join(root,'gh.cjs')
   execFileSync('git',['init','--bare','--initial-branch=main',remote]);execFileSync('git',['init','-b','main',work])
   git(work,'config','user.name','Hi Test');git(work,'config','user.email','hi@example.invalid')
   writeFileSync(join(work,'tracked.txt'),'release\n');git(work,'add','tracked.txt');git(work,'commit','-m','release candidate');git(work,'remote','add','origin',remote)

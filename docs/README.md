@@ -4,7 +4,8 @@ This directory contains the **current public product contract**. Historical reco
 
 ## Start here
 
-- [Installation and configuration](INSTALLATION.md)
+- [Installation and lifecycle](INSTALLATION.md)
+- [Complete configuration guide](CONFIGURATION.md)
 - [Architecture](ARCHITECTURE.md)
 - [Host support](HOSTS.md)
 - [Methodologies and skills](SKILLS.md)
