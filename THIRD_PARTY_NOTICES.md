@@ -6,7 +6,7 @@ OpenCode-Hi is an Apache-2.0 project. Third-party orchestration control planes a
 
 | Package | Relationship | License | Use |
 |---|---|---|---|
-| `@opencode-ai/plugin` `1.18.18` | host peer dependency | MIT | OpenCode native plugin API, types, and runtime contract |
+| `@opencode-ai/plugin` `1.18.18` | optional host peer dependency | MIT | OpenCode native plugin API/type contract; optional in the public package so the host dependency graph is not redundantly installed |
 | `@opencode-ai/sdk` `1.18.18` | direct runtime dependency | MIT | Exact OpenCode v2 client used by native session/PTY/workspace adapters |
 | `playwright-core` `1.62.1` | optional runtime dependency | Apache-2.0 | Browser execution adapter; runtime health remains explicit and no browser binary is bundled |
 | `typescript` | development dependency in the runtime workspace | Apache-2.0 | TypeScript compiler/build toolchain |

@@ -514,15 +514,39 @@ def test_prompt_a_documentation_parity_binds_current_docs_to_machine_truth_and_l
     assert 'docs:check' in pkg['scripts'] and 'npm run docs:check' in pkg['scripts']['check:product'] and pkg['scripts']['check']=='npm run check:product && npm run check:evidence'
 
 
+def test_direct_git_host_acceptance_archive_extraction_is_python311_compatible_and_traversal_safe(tmp_path):
+    import importlib.util, io, tarfile, zipfile
+    spec=importlib.util.spec_from_file_location('hi_direct_git_host',ROOT/'scripts/run-direct-git-host-acceptance.py');mod=importlib.util.module_from_spec(spec);spec.loader.exec_module(mod)
+    tar_path=tmp_path/'host.tar.gz'
+    payload=b'opencode-binary'
+    with tarfile.open(tar_path,'w:gz') as t:
+        info=tarfile.TarInfo('opencode');info.size=len(payload);t.addfile(info,io.BytesIO(payload))
+    tar_out=tmp_path/'tar-out';tar_out.mkdir();mod.safe_extract_tar(tar_path,tar_out)
+    assert (tar_out/'opencode').read_bytes()==payload
+    bad_tar=tmp_path/'bad.tar.gz'
+    with tarfile.open(bad_tar,'w:gz') as t:
+        info=tarfile.TarInfo('../escape');info.size=1;t.addfile(info,io.BytesIO(b'x'))
+    with pytest.raises(RuntimeError,match='unsafe archive member path'):mod.safe_extract_tar(bad_tar,tar_out)
+    zip_path=tmp_path/'host.zip'
+    with zipfile.ZipFile(zip_path,'w') as z:z.writestr('opencode.exe',payload)
+    zip_out=tmp_path/'zip-out';zip_out.mkdir();mod.safe_extract_zip(zip_path,zip_out)
+    assert (zip_out/'opencode.exe').read_bytes()==payload
+    bad_zip=tmp_path/'bad.zip'
+    with zipfile.ZipFile(bad_zip,'w') as z:z.writestr('../escape',b'x')
+    with pytest.raises(RuntimeError,match='unsafe archive member path'):mod.safe_extract_zip(bad_zip,zip_out)
+
+
 def test_prompt_a_first_use_docs_do_not_advertise_unavailable_registry_or_stale_capabilities():
-    readme=(ROOT/'README.md').read_text(encoding='utf-8'); tr=(ROOT/'docs/locales/tr/README.md').read_text(encoding='utf-8'); arch=(ROOT/'docs/ARCHITECTURE.md').read_text(encoding='utf-8'); install=(ROOT/'docs/INSTALLATION.md').read_text(encoding='utf-8')
+    readme=(ROOT/'README.md').read_text(encoding='utf-8'); tr=(ROOT/'docs/locales/tr/README.md').read_text(encoding='utf-8'); arch=(ROOT/'docs/ARCHITECTURE.md').read_text(encoding='utf-8'); install=(ROOT/'docs/INSTALLATION.md').read_text(encoding='utf-8'); config=(ROOT/'docs/CONFIGURATION.md').read_text(encoding='utf-8'); tr_config=(ROOT/'docs/locales/tr/CONFIGURATION.md').read_text(encoding='utf-8')
     direct_git='opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git'
-    pinned_git='git+https://github.com/huseyincig/OpenCode-Hi.git#v0.2.0'
-    for text in (readme,tr):
-        assert 'first coherent OpenCode-Hi candidate' not in text
-        assert direct_git in text and pinned_git in text
-        assert 'git dep preparation failed' in text
-    assert direct_git in install and pinned_git in install and 'opencode-hi@0.2.0' in install
+    for text in (readme,tr,install,config,tr_config):
+        assert direct_git in text
+        assert 'git dep preparation failed' not in text
+    for text in (readme,tr,install,config,tr_config):
+        lowered=text.lower()
+        assert 'v0.2.0' in text and ('predate' in lowered or 'older' in lowered or 'esk' in lowered)
+    assert 'opencode-hi@0.2.0' in install
+    assert 'npm run build:plugin' in readme+tr+install
     assert f'`{V}`' in readme and 'Published availability is external state' in readme
     assert 'npm bootstrap publication is not yet complete' not in readme+install
     assert 'ProcessContract' in arch and 'WorkspaceLease' in arch and 'BrowserObservation' in arch

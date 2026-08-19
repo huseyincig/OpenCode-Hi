@@ -15,7 +15,7 @@ rows=[
  row('dependency-versions','package.json','"@opencode-ai/sdk": "1.18.18"','package-lock.json','"version": "1.18.18"'),
  row('lockfiles','scripts/release-build.py',"def dependency_lock_paths(root:Path)",'tests/test_hi.py',"manifest['supply_chain']['dependency_locks']==['package-lock.json','plugin/package-lock.json']"),
  row('direct-dependency-usage','plugin/src/opencode/client-adapter.ts',"@opencode-ai/sdk/v2/client",'data/validation/fresh-consumer-opencode-1.18.18.json','"consumer_resolution": true'),
- row('risky-install-scripts','package-lock.json','"hasInstallScript": true','THIRD_PARTY_NOTICES.md','msgpackr-extract'),
+ row('risky-install-scripts','plugin/package-lock.json','"hasInstallScript": true','THIRD_PARTY_NOTICES.md','msgpackr-extract'),
  row('provenance-integrity','scripts/release-build.py','dependency_graph_sha256','tests/test_hi.py',"manifest['supply_chain']['dependency_graph_sha256']"),
  row('dependency-licenses','THIRD_PARTY_NOTICES.md','`playwright-core`','package-lock.json','"license": "Apache-2.0"'),
  row('source-reuse','THIRD_PARTY_NOTICES.md','license/provenance boundaries','docs/SECURITY-MODEL.md','trust boundaries'),
@@ -33,11 +33,14 @@ rm=lock_meta(rlock); pm=lock_meta(plock)
 static={
  'root_lock_v3':rlock.get('lockfileVersion')==3,
  'plugin_lock_v3':plock.get('lockfileVersion')==3,
- 'exact_distribution_versions':root.get('peerDependencies',{}).get('@opencode-ai/plugin')=='1.18.18' and root.get('dependencies',{}).get('@opencode-ai/sdk')=='1.18.18' and root.get('optionalDependencies',{}).get('playwright-core')=='1.62.1',
+ 'exact_distribution_versions':root.get('peerDependencies',{}).get('@opencode-ai/plugin')=='1.18.18' and root.get('peerDependenciesMeta',{}).get('@opencode-ai/plugin',{}).get('optional') is True and root.get('dependencies',{}).get('@opencode-ai/sdk')=='1.18.18' and root.get('optionalDependencies',{}).get('playwright-core')=='1.62.1',
  'registry_integrity_complete':not rm['registry_entries_missing_integrity'] and not pm['registry_entries_missing_integrity'],
- 'only_known_install_script':all(x['path'].endswith('node_modules/msgpackr-extract') and x['version']=='3.0.4' and x['license']=='MIT' for x in rm['install_scripts']+pm['install_scripts']),
+ 'distribution_lock_has_no_install_scripts':rm['install_scripts']==[],
+ 'only_known_build_lock_install_script':bool(pm['install_scripts']) and all(x['path'].endswith('node_modules/msgpackr-extract') and x['version']=='3.0.4' and x['license']=='MIT' for x in pm['install_scripts']),
  'release_uses_both_locks':'def dependency_lock_paths(root:Path)' in (ROOT/'scripts/release-build.py').read_text() and "return [rel for rel in ['package-lock.json','plugin/package-lock.json']" in (ROOT/'scripts/release-build.py').read_text(),
  'workflow_ignore_scripts_proof_publish':'npm pack --dry-run --json --ignore-scripts' in (ROOT/'.github/workflows/npm-publish.yml').read_text() and 'npm publish --ignore-scripts --access public' in (ROOT/'.github/workflows/npm-publish.yml').read_text(),
+ 'git_dependency_preparation_free':all(k not in (root.get('scripts') or {}) for k in ['postinstall','build','preinstall','install','prepack','prepare']),
+ 'host_plugin_peer_optional':root.get('peerDependenciesMeta',{}).get('@opencode-ai/plugin',{}).get('optional') is True and 'node_modules/@opencode-ai/plugin' not in (rlock.get('packages') or {}),
  'minimal_oidc_permissions':'id-token: write' in (ROOT/'.github/workflows/npm-publish.yml').read_text() and 'contents: read' in (ROOT/'.github/workflows/npm-publish.yml').read_text(),
 }
 if not all(static.values()): viol.extend('static:'+k for k,v in static.items() if not v)
@@ -45,7 +48,8 @@ out={'schema':1,'kind':'PROMPT_B_DEPENDENCY_SUPPLY_CHAIN_LICENSE_AUDIT','program
  {'id':'publishable-root-lock-missing','fix':'Publishable distribution dependency graph now has canonical root package-lock.json v3 with exact accepted runtime versions and registry integrity.'},
  {'id':'third-party-notices-runtime-drift','fix':'Notices now enumerate direct runtime SDK, host peer, optional Playwright, build TypeScript, and the audited optional msgpackr-extract install-script boundary.'},
  {'id':'release-pack-proof-prepack-output-corruption','fix':'Canonical check/build runs before a scripts-disabled pack proof; publish also uses --ignore-scripts against the same built tree.'},
- {'id':'single-lock-sbom-omitted-distribution-runtime','fix':'Release SBOM and release-chain verification deterministically bind both root distribution and plugin build/test lock graphs.'}],
+ {'id':'single-lock-sbom-omitted-distribution-runtime','fix':'Release SBOM and release-chain verification deterministically bind both root distribution and plugin build/test lock graphs.'},
+ {'id':'native-direct-git-pacote-preparation-trigger','fix':'Public root package removes npm/Pacote Git-preparation trigger script names, moves the explicit developer build to build:plugin, keeps the OpenCode host peer optional, and cross-platform Release Readiness exercises exact-SHA Git install plus exact OpenCode 1.18.18 native host loading.'}],
  'violations':viol,
  'claim_boundary':'Local deterministic supply-chain/license certification. npm audit is separately re-runnable against registry metadata; public npm publish remains authority-gated and is not performed by this audit.'}
 OUT.write_text(json.dumps(out,indent=2)+'\n')

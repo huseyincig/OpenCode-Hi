@@ -10,7 +10,7 @@ def row(inv,owner,oa,proof,pa):
     return {'invariant':inv,'status':'PASS' if ok else 'FAIL','owner':owner,'owner_sha256':sha(owner) if (ROOT/owner).is_file() else None,'owner_anchor':oa,'proof':proof,'proof_sha256':sha(proof) if (ROOT/proof).is_file() else None,'proof_anchor':pa}
 a=json.loads((ROOT/'data/validation/fresh-consumer-opencode-1.18.18.json').read_text())
 rows=[
- row('pack','package.json','"prepack": "npm run build"','data/validation/fresh-consumer-opencode-1.18.18.json','"installed_from_tarball": true'),
+ row('pack','.github/workflows/npm-publish.yml','npm pack --dry-run --json --ignore-scripts','data/validation/fresh-consumer-opencode-1.18.18.json','"installed_from_tarball": true'),
  row('fresh-temp-consumer','scripts/run-fresh-consumer-acceptance.py',"TemporaryDirectory(prefix='hi-b26-consumer-')",'data/validation/fresh-consumer-opencode-1.18.18.json','"project": "<temp>/consumer/project"'),
  row('install-packed-artifact','scripts/run-fresh-consumer-acceptance.py',"npm','install','--ignore-scripts'",'data/validation/fresh-consumer-opencode-1.18.18.json','"pack_install": true'),
  row('configure-packed-artifact','scripts/run-fresh-consumer-acceptance.py',"'reconfigure',str(project),'--primary-mode','manager'",'data/validation/fresh-consumer-opencode-1.18.18.json','"setup_reconfigure": true'),

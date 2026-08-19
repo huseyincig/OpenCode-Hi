@@ -6,43 +6,23 @@ After the plugin loads, use the complete [Configuration Guide](CONFIGURATION.md)
 
 Türkçe kullanıcı rehberi: [Türkçe Kurulum ve Yapılandırma Rehberi](locales/tr/CONFIGURATION.md).
 
-1. **npm registry distribution** — `opencode-hi@0.2.0` is published and T4-verified through Trusted Publishing OIDC provenance plus fresh-registry exact-host acceptance;
-2. **Git source distribution** — the public Git repository/tag can be materialized directly with Bun and loaded through OpenCode's local-plugin mechanism without using the npm registry;
-3. **registration/lifecycle mechanics** — npm-package registration is managed by `scripts/native_plugin_setup.py`; Git/local loading remains explicit so the helper never pretends an unsupported native Git resolver exists.
+1. **Git source distribution** — current source is designed for OpenCode's native package-plugin loader using one Git spec; no user-run Bun/npm materialization or wrapper is part of the install contract;
+2. **npm registry distribution** — immutable `opencode-hi@0.2.0` is published and T4-verified through Trusted Publishing OIDC provenance plus fresh-registry exact-host acceptance;
+3. **registration/lifecycle mechanics** — the package setup CLI remains available for npm-package registration/configuration workflows but is not required for the native Git source install.
 
 ## Prerequisites
 
-- a supported OpenCode host for the path being tested;
-- Bun for the verified Git-source/no-registry path;
-- Python 3 for the npm package setup CLI (the packed package exposes it as `opencode-hi-setup`; a source checkout may invoke the same script directly);
-- Node/npm only when using npm distribution or building the repository through its npm scripts;
+- a supported OpenCode host;
+- Git/network access from OpenCode to the public repository for the native Git path;
+- Python 3 only when using the optional package setup CLI;
+- Node/npm only when using npm distribution or developing/building the repository;
 - a project directory whose unrelated OpenCode/user configuration must be preserved.
 
 Current exact host support belongs to `data/validation/compatibility-matrix-0.1.0.json` and [Host Support](HOSTS.md).
 
-## Git source installation — no npm registry
+## Git source installation — recommended, no npm registry
 
-The verified OpenCode `1.18.18` Git path uses a project-local OpenCode dependency plus a local plugin wrapper:
-
-```bash
-mkdir -p .opencode/plugins
-cat > .opencode/package.json <<'JSON'
-{
-  "private": true,
-  "dependencies": {
-    "opencode-hi": "git+https://github.com/huseyincig/OpenCode-Hi.git#v0.2.0"
-  }
-}
-JSON
-cat > .opencode/plugins/opencode-hi.js <<'JS'
-export { default } from "opencode-hi"
-JS
-(cd .opencode && bun install)
-```
-
-Restart OpenCode after materialization. Exact-host acceptance against public `v0.2.0` on OpenCode `1.18.18` observed successful Git dependency import and `31` Hi tool IDs from the running host.
-
-The following direct package spec is also a valid Git package identifier and is intentionally shown for hosts/resolvers that support it:
+Add the package spec to the existing OpenCode configuration:
 
 ```json
 {
@@ -52,7 +32,11 @@ The following direct package spec is also a valid Git package identifier and is 
 }
 ```
 
-Compatibility boundary: OpenCode `1.18.18` does **not** pass native direct-Git plugin installation for that spec; its resolver reports `git dep preparation failed`. Stable OpenCode documentation currently promises npm package loading and local plugin loading, not direct Git package specs. Therefore the Git/Bun local-wrapper path above is the supported no-registry path for the accepted `1.18.18` host.
+Restart OpenCode. There is no separate `bun install`, `npm install`, `.opencode/package.json`, local wrapper, or manual `node_modules` step in this path: OpenCode owns package materialization and plugin loading.
+
+The current source package is deliberately Git-install friendly: root package scripts avoid the lifecycle names that npm/Pacote treats as Git-dependency preparation triggers, while the `@opencode-ai/plugin` host peer is optional instead of being reinstalled with its large type/runtime graph. Exact OpenCode `1.18.18` native-host acceptance must observe the Git package load and Hi tool surface; Release Readiness also exercises the exact pushed SHA on Ubuntu and Windows.
+
+The immutable `v0.2.0` tag predates this packaging correction and remains historical. Do not move that tag or present it as containing the current direct-Git fix.
 
 ## npm package registration
 
@@ -84,7 +68,7 @@ For repository development:
 
 ```bash
 npm ci --prefix plugin
-npm run build
+npm run build:plugin
 ```
 
 OpenCode supports project-local plugin files under `.opencode/plugins/` and local/file plugin loading. A runtime acceptance check must observe the built plugin actually loading, not merely a configuration file containing its path/spec.

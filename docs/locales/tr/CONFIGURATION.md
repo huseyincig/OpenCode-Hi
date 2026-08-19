@@ -49,51 +49,9 @@ npm install --save-dev opencode-hi@0.2.0
 ./node_modules/.bin/opencode-hi-setup doctor "$PWD"
 ```
 
-### npm registry kullanmadan Git ile kurulum
+### npm registry kullanmadan Git ile kurulum — önerilen
 
-Exact OpenCode `1.18.18` için doğrulanmış yol Git dependency'yi Bun ile `.opencode` altında materialize edip local plugin wrapper kullanmaktır.
-
-#### Windows PowerShell
-
-```powershell
-$Project = "C:\Projects\MyApp"
-New-Item -ItemType Directory -Force "$Project\.opencode\plugins" | Out-Null
-@'
-{
-  "private": true,
-  "dependencies": {
-    "opencode-hi": "git+https://github.com/huseyincig/OpenCode-Hi.git#v0.2.0"
-  }
-}
-'@ | Set-Content -Encoding utf8 "$Project\.opencode\package.json"
-'export { default } from "opencode-hi"' | Set-Content -Encoding utf8 "$Project\.opencode\plugins\opencode-hi.js"
-Push-Location "$Project\.opencode"
-bun install
-Pop-Location
-```
-
-#### Linux / macOS
-
-```bash
-PROJECT=/path/to/MyApp
-mkdir -p "$PROJECT/.opencode/plugins"
-cat > "$PROJECT/.opencode/package.json" <<'JSON'
-{
-  "private": true,
-  "dependencies": {
-    "opencode-hi": "git+https://github.com/huseyincig/OpenCode-Hi.git#v0.2.0"
-  }
-}
-JSON
-cat > "$PROJECT/.opencode/plugins/opencode-hi.js" <<'JS'
-export { default } from "opencode-hi"
-JS
-(cd "$PROJECT/.opencode" && bun install)
-```
-
-Kurulumdan sonra OpenCode'u yeniden başlatın.
-
-Bazı host/resolver sürümleri doğrudan Git package spec kabul edebilir:
+Windows, Linux ve macOS için aynı OpenCode package spec kullanılır. Mevcut `opencode.json` / `opencode.jsonc` içindeki `plugin` listesine ekleyin:
 
 ```json
 {
@@ -103,7 +61,11 @@ Bazı host/resolver sürümleri doğrudan Git package spec kabul edebilir:
 }
 ```
 
-Fakat exact OpenCode `1.18.18` üzerinde bu direct form certified değildir; native resolver `git dep preparation failed` ile başarısız olur. `1.18.18` için yukarıdaki Bun/local-plugin yolunu kullanın.
+OpenCode'u yeniden başlatın. **Bu kurulum yolunda Bun/npm çalıştırmayın, local wrapper oluşturmayın ve `node_modules` ile elle uğraşmayın.** Git dependency'yi materialize etmek ve plugin'i yüklemek OpenCode'un native package loader sorumluluğudur.
+
+Güncel Hi source package'ı npm/Pacote'nin Git-dependency preparation başlatmasına neden olan root lifecycle script adlarını kullanmaz. `@opencode-ai/plugin` host peer'i optional tutulur; böylece yalnız type/host entegrasyonu için gereken büyük `effect` zinciri kullanıcı kurulumuna gereksiz yere eklenmez.
+
+Immutable `v0.2.0` tag'i bu packaging düzeltmesinden daha eskidir. O tag değiştirilmez; sonraki release düzeltmeyi açıkça taşıyana kadar current Git source spec'i yukarıdaki biçimde kullanın.
 
 ## 1. Windows, Linux ve macOS ayar yolu
 

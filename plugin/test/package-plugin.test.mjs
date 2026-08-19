@@ -20,3 +20,28 @@ test('git package config hook registers packaged agents and skills', async()=>{
     await hooks.dispose?.()
   }finally{rmSync(dir,{recursive:true,force:true})}
 })
+
+test('public package manifest stays native direct-Git install friendly', async()=>{
+  const pkg=JSON.parse(await (await import('node:fs/promises')).readFile(new URL('../../package.json',import.meta.url),'utf8'))
+  const gitPreparationTriggers=['postinstall','build','preinstall','install','prepack','prepare']
+  for(const name of gitPreparationTriggers) assert.equal(pkg.scripts?.[name],undefined,`root script ${name} forces pacote git dependency preparation`)
+  assert.equal(pkg.scripts?.['build:plugin'],'npm --prefix plugin run build')
+  assert.equal(pkg.peerDependencies?.['@opencode-ai/plugin'],'1.18.18')
+  assert.equal(pkg.peerDependenciesMeta?.['@opencode-ai/plugin']?.optional,true)
+  assert.equal(pkg.dependencies?.['@opencode-ai/sdk'],'1.18.18')
+})
+
+test('release readiness exercises exact-sha native direct-Git install on every platform', async()=>{
+  const fs=await import('node:fs/promises')
+  const workflow=await fs.readFile(new URL('../../.github/workflows/release-readiness.yml',import.meta.url),'utf8')
+  assert.match(workflow,/Native direct-Git plugin install/)
+  assert.match(workflow,/opencode-hi@git\+https:\/\/github\.com\/\$\{\{ github\.repository \}\}\.git#\$\{\{ github\.sha \}\}/)
+  assert.match(workflow,/npm run test:direct-git-install/)
+})
+
+test('release readiness runs exact OpenCode native direct-Git host acceptance', async()=>{
+  const fs=await import('node:fs/promises')
+  const workflow=await fs.readFile(new URL('../../.github/workflows/release-readiness.yml',import.meta.url),'utf8')
+  assert.match(workflow,/Exact OpenCode 1\.18\.18 native direct-Git host load/)
+  assert.match(workflow,/npm run test:direct-git-host/)
+})

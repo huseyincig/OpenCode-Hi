@@ -6,6 +6,7 @@ All notable changes to OpenCode-Hi are documented here.
 
 - Simplifies model ownership: OpenCode owns the primary `manager` / `working-manager` session model, while Hi role-model routing accepts only the six child roles. Auto-init, project config resolution and setup CLI now enforce the same boundary.
 - Adds complete English and Turkish Windows/Linux/macOS installation and configuration guides, including primary-vs-child model ownership, single-model/per-role/fallback/variant/category/provider/concurrency recipes and generated canonical option references.
+- Makes current-source native direct-Git installation a first-class package contract: removes root npm/Pacote Git-preparation trigger script names, keeps the OpenCode host peer optional, shrinks the clean install graph, and adds exact-SHA Git materialization plus exact OpenCode 1.18.18 host-load acceptance to cross-platform Release Readiness. Immutable `v0.2.0` remains historical and is not retagged.
 
 ## 0.2.0
 

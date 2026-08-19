@@ -51,51 +51,9 @@ npm install --save-dev opencode-hi@0.2.0
 ./node_modules/.bin/opencode-hi-setup doctor "$PWD"
 ```
 
-### Git source without the npm registry
+### Git source without the npm registry — recommended
 
-For exact OpenCode `1.18.18`, the verified no-registry path is a Bun-materialized Git dependency plus an OpenCode local-plugin wrapper.
-
-#### Windows PowerShell
-
-```powershell
-$Project = "C:\Projects\MyApp"
-New-Item -ItemType Directory -Force "$Project\.opencode\plugins" | Out-Null
-@'
-{
-  "private": true,
-  "dependencies": {
-    "opencode-hi": "git+https://github.com/huseyincig/OpenCode-Hi.git#v0.2.0"
-  }
-}
-'@ | Set-Content -Encoding utf8 "$Project\.opencode\package.json"
-'export { default } from "opencode-hi"' | Set-Content -Encoding utf8 "$Project\.opencode\plugins\opencode-hi.js"
-Push-Location "$Project\.opencode"
-bun install
-Pop-Location
-```
-
-#### Linux / macOS
-
-```bash
-PROJECT=/path/to/MyApp
-mkdir -p "$PROJECT/.opencode/plugins"
-cat > "$PROJECT/.opencode/package.json" <<'JSON'
-{
-  "private": true,
-  "dependencies": {
-    "opencode-hi": "git+https://github.com/huseyincig/OpenCode-Hi.git#v0.2.0"
-  }
-}
-JSON
-cat > "$PROJECT/.opencode/plugins/opencode-hi.js" <<'JS'
-export { default } from "opencode-hi"
-JS
-(cd "$PROJECT/.opencode" && bun install)
-```
-
-Restart OpenCode after materialization. This route has exact-host acceptance on OpenCode `1.18.18` with the public `v0.2.0` tag.
-
-The direct Git package form is intentionally documented for hosts/resolvers that support it:
+Windows, Linux and macOS use the same OpenCode package spec. Add it to the existing `plugin` array in `opencode.json` / `opencode.jsonc`:
 
 ```json
 {
@@ -105,7 +63,9 @@ The direct Git package form is intentionally documented for hosts/resolvers that
 }
 ```
 
-It is **not certified on OpenCode 1.18.18**: that host's native Git package resolver fails with `git dep preparation failed`. On `1.18.18`, use the verified Bun/local-plugin route above. See [Installation and Lifecycle](INSTALLATION.md) and [Host Support](HOSTS.md) for the exact compatibility boundary.
+Restart OpenCode. **Do not create a wrapper and do not run Bun/npm for this install path.** OpenCode owns Git package materialization and plugin loading. The Hi package root avoids npm/Pacote Git-preparation lifecycle triggers; its OpenCode plugin peer is optional so the host's large type/runtime dependency graph is not redundantly installed.
+
+The immutable `v0.2.0` tag is older than this direct-Git packaging fix. Keep that release immutable; the unpinned Git source spec above follows current repository source until a later release explicitly contains the correction. See [Installation and Lifecycle](INSTALLATION.md) and [Host Support](HOSTS.md) for evidence boundaries.
 
 ## 1. Platform paths
 
