@@ -28,7 +28,7 @@
     "final_gates": {
       "status": "PASS",
       "receipt": "data/validation/final-gates-0.2.0.json",
-      "source_commit": "d5fa573b883b5f890a0dadc41e93d1e3015bcb77"
+      "source_commit": "ce972032b99c78dde64fc39119b117a6c47b1994"
     },
     "exact_host_t3": {
       "status": "PASS",

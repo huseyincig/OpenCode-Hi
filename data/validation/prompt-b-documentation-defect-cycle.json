@@ -37,7 +37,7 @@
       "owner_sha256": "f39247aae9a8985af7ff62ed85f822c9952b97ad3f8b73357dd629df89cc1408",
       "owner_anchor": "one-current-area-one-public-owner",
       "proof": "data/validation/documentation-inventory.json",
-      "proof_sha256": "bf6c2ef7002129c0c9388bbe6c0de1fe6ac8702141194425318bbba8cf09ed9e",
+      "proof_sha256": "2dfcc6f265b63fa74988a7b373ac1f5b854f88e061094e0de8f1af082221a165",
       "proof_anchor": "\"canonical_ownership\""
     },
     {
@@ -47,7 +47,7 @@
       "owner_sha256": "4ae16928709af73e37efdddf3e845e9353154c238cf3b14642ef31d65b2b7054",
       "owner_anchor": "Generated from",
       "proof": "data/validation/documentation-parity.json",
-      "proof_sha256": "6fe6e2b3494165c3246f872791003bb04d75209569f069a5e492bc80e0a43fdb",
+      "proof_sha256": "6f30b9ceaa69915f5108719baf72ddc2a70757b6026ffcc1e66d219454550049",
       "proof_anchor": "\"status\": \"PASS\""
     },
     {
@@ -57,7 +57,7 @@
       "owner_sha256": "e82268a631b314da8f113d6d55d10d7b5405428e8492a64e57f8553b01f60ba5",
       "owner_anchor": "documentation parity",
       "proof": "data/validation/documentation-parity.json",
-      "proof_sha256": "6fe6e2b3494165c3246f872791003bb04d75209569f069a5e492bc80e0a43fdb",
+      "proof_sha256": "6f30b9ceaa69915f5108719baf72ddc2a70757b6026ffcc1e66d219454550049",
       "proof_anchor": "\"violations\": []"
     }
   ],

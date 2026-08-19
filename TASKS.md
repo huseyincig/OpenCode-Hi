@@ -17,8 +17,8 @@ Final corpus coverage: `/workspace/Reference/phase2-autopilot/m15-corpus-coverag
 
 OpenCode `1.18.18` Git-source plugin installation remains an explicit host compatibility boundary: `opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git` installs through npm/Bun Git dependency mechanisms, but exact-host OpenCode native Git-plugin install/load does not pass. Do not document direct Git config as supported on `1.18.18` until an exact-host PASS exists.
 
-Public `origin/main` does not contain the local M15 final product until an explicitly authorized push occurs. No push/tag/release/npm publish has been performed.
+OpenCode-Hi `0.2.0` is published from immutable release source `a967aa618b062c92967475cf9e1e76be6c7cdeea`: public `origin/main` reached that exact source before tagging, annotated `v0.2.0` peels to it, GitHub Release `373295147` is published, and `opencode-hi@0.2.0` is npm `latest` through Trusted Publishing OIDC run `32292759001`. Current T4 evidence is `data/validation/release-publication-0.2.0.json` plus `data/validation/t4-registry-exact-host-0.2.0.json`.
 
 ## Exact Next Action
 
-No active roadmap milestone remains after M15. Stop unless the user defines new work or explicitly authorizes a release/publication/push action. Preserve unrelated dirty validation/release/script/routing/test files.
+No active roadmap milestone remains after M15. The `0.2.0` release/publication/T4 cycle is complete; do not republish or retag the immutable `v0.2.0` release. Stop unless the user defines new work. Preserve unrelated dirty validation/release/script/routing/test files.

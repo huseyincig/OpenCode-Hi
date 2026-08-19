@@ -34,8 +34,8 @@
   "current_local_evidence": {
     "source_checkpoint": {
       "status": "PASS",
-      "commit": "d5fa573b883b5f890a0dadc41e93d1e3015bcb77",
-      "tree": "63d583bcae7a38c3b4ad303bbd4fef3c1dd726c3"
+      "commit": "ce972032b99c78dde64fc39119b117a6c47b1994",
+      "tree": "eddb49ab1b22b2f48e27f72684f36ddee324b499"
     },
     "node": {
       "command": "npm --prefix plugin test",
@@ -52,7 +52,7 @@
     "final_gates": {
       "status": "PASS",
       "receipt": "data/validation/final-gates-0.2.0.json",
-      "source_commit": "d5fa573b883b5f890a0dadc41e93d1e3015bcb77"
+      "source_commit": "ce972032b99c78dde64fc39119b117a6c47b1994"
     },
     "fresh_consumer": {
       "status": "PASS",
@@ -76,11 +76,9 @@
       "github_actions_run": 32289116515
     },
     "final_system": {
-      "status": "PARTIAL",
+      "status": "CERTIFIED",
       "receipt": "data/validation/final-system-certification-0.2.0.json",
-      "blockers": [
-        "T4-current-release-publication-verification-pending"
-      ]
+      "blockers": []
     },
     "deterministic_release": {
       "status": "PASS",
@@ -90,7 +88,7 @@
     "hygiene": {
       "status": "PASS",
       "receipt": "data/validation/prompt-b-hygiene.json",
-      "audited_source_commit": "d5fa573b883b5f890a0dadc41e93d1e3015bcb77"
+      "audited_source_commit": "ce972032b99c78dde64fc39119b117a6c47b1994"
     },
     "final_publication": {
       "status": "PASS_T4",
