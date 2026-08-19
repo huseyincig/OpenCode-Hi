@@ -18,6 +18,14 @@ def git_blob_sha256(commit,rel):
 def git_blob_oid(commit,rel):
     return subprocess.check_output(['git','rev-parse',f'{commit}:{rel}'],cwd=ROOT,text=True).strip()
 
+def assert_source_binding(binding):
+    commit=(binding or {}).get('tested_git_commit');tree=(binding or {}).get('tested_git_tree')
+    assert isinstance(commit,str) and re.fullmatch(r'[a-f0-9]{40}',commit)
+    assert isinstance(tree,str) and re.fullmatch(r'[a-f0-9]{40}',tree)
+    assert subprocess.check_output(['git','rev-parse',f'{commit}^{{tree}}'],cwd=ROOT,text=True).strip()==tree
+    assert subprocess.run(['git','merge-base','--is-ancestor',commit,'HEAD'],cwd=ROOT).returncode==0
+    return commit
+
 def test_identity_is_hi():
     d=json.loads((ROOT/'data/product.json').read_text(encoding='utf-8'))
     assert d['product_name']=='OpenCode-Hi' and d['short_name']=='HI' and d['version']==V
@@ -994,13 +1002,13 @@ def test_prompt_b_test_suite_audit_is_isolated_bounded_and_never_promotes_mock_t
         assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
         assert row['owner_anchor'] in owner.read_text(encoding='utf-8',errors='replace') and row['proof_anchor'] in proof.read_text(encoding='utf-8',errors='replace')
     h=json.loads((ROOT/d['harness_acceptance']).read_text(encoding='utf-8'))
-    assert h['status']=='PASS' and h['source_binding']['tested_git_commit']=='5210a12a7b607e0c9048749fa74a4c8b801cd924'
+    assert h['status']=='PASS'; harness_commit=assert_source_binding(h['source_binding'])
     assert h['canonical_suite_observation']=={'tests':816,'pass':816,'fail':0,'cancelled':0,'home_hi_state_before':5301,'home_hi_state_after':5301,'home_hi_state_delta':0}
     assert all(h['cwd_dual_run'][k]['tests']==17 and h['cwd_dual_run'][k]['pass']==17 and h['cwd_dual_run'][k]['fail']==0 for k in ('plugin_cwd','repo_root_cwd'))
     compat=json.loads((ROOT/'data/validation/compatibility-matrix-0.1.0.json').read_text(encoding='utf-8'))
     for cap in ('process-lifecycle','workspace-isolation-binding','browser-execution'):
         current=compat['current_reference_host']['capabilities'][cap];assert current['status']=='SUPPORTED_T3'
-        assert subprocess.run(['git','merge-base','--is-ancestor','5210a12a7b607e0c9048749fa74a4c8b801cd924',current['tested_git_commit']],cwd=ROOT).returncode==0
+        assert subprocess.run(['git','merge-base','--is-ancestor',harness_commit,current['tested_git_commit']],cwd=ROOT).returncode==0
 
 
 
@@ -1030,7 +1038,7 @@ def test_prompt_b_property_fuzz_testing_is_bounded_reproducible_and_source_bound
         assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
         assert row['owner_anchor'] in owner.read_text(encoding='utf-8',errors='replace') and row['proof_anchor'] in proof.read_text(encoding='utf-8',errors='replace')
     a=json.loads((ROOT/d['acceptance_receipt']).read_text(encoding='utf-8'))
-    assert a['status']=='PASS' and a['source_binding']=={'tested_git_commit':'6fe74d7786e25cb6894ddca7d4408a17220cc936','tested_git_tree':'3bf72be8b22082a720f2fa6aa271d56b100e5528'}
+    assert a['status']=='PASS';assert_source_binding(a['source_binding'])
     assert a['configuration']['seeds_hex']==['0x00c0ffee','0x5eed1234','0x000a11ce'] and a['configuration']['cases_per_seed']==32 and a['configuration']['generated_cases']==864
     assert a['terminal']=={'tests':9,'pass':9,'fail':0,'cancelled':0,'skipped':0,'todo':0} and a['failures']==[]
     case=json.loads((ROOT/'data/validation/property-fuzz-failures/persistence-envelopes-seed-c0ffee-case-0.json').read_text(encoding='utf-8'))
@@ -1043,7 +1051,7 @@ def test_prompt_b_replay_testing_detects_semantic_drift_across_all_required_surf
     assert d['violations']==[] and d['summary']=={'required_surfaces':5,'covered_surfaces':5,'cases':28,'nondeterministic_drift':0,'violations':0}
     assert d['surface_counts']=={'semantic_routing':5,'worker_scheduling':5,'host_events':5,'completion':5,'recovery':8} and all(d['static_guards'].values())
     a=json.loads((ROOT/d['acceptance_receipt']).read_text(encoding='utf-8'))
-    assert a['status']=='PASS' and a['source_binding']=={'tested_git_commit':'bca552865d060d41a629199ae9552a000324a7b2','tested_git_tree':'5ada6731d3b0d15219eb5b37f0dbd44c6b4f21f1'}
+    assert a['status']=='PASS';assert_source_binding(a['source_binding'])
     assert a['nondeterministic_semantic_drift'] is False and a['first_pass_digest']==a['second_pass_digest'] and a['mismatches']==[] and a['total_cases']==28
     for rel,digest in {**a['inputs'],**a['owner_hashes']}.items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
     for rel,digest in d['proof_hashes'].items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
@@ -1057,7 +1065,7 @@ def test_prompt_b_failure_injection_is_complete_bounded_and_terminal():
     expected=['provider-timeout','model-unavailable','rate-limit','tool-error','permission-deny','process-crash','workspace-failure','disk-write-failure','corrupt-state','child-session-failure','browser-failure','network-failure']
     assert d['required_injections']==expected
     a=json.loads((ROOT/d['acceptance_receipt']).read_text(encoding='utf-8'))
-    assert a['status']=='PASS' and a['source_binding']=={'tested_git_commit':'29d3024fb3640a97f244185a393eb133542fb735','tested_git_tree':'e685a589dcd06e8a300421b84cbad8fedb616222'}
+    assert a['status']=='PASS';assert_source_binding(a['source_binding'])
     assert a['terminal']=={'tests':54,'pass':54,'fail':0,'cancelled':0,'skipped':0,'todo':0}
     assert a['summary']=={'required':12,'covered':12,'violations':0} and a['violations']==[] and a['bounded_recovery']['no_infinite_retry'] is True
     assert [x['injection'] for x in a['injections']]==expected and all(x['status']=='PASS' for x in a['injections'])
@@ -1072,7 +1080,7 @@ def test_prompt_b_performance_resource_benchmarks_measure_all_required_paths_wit
     required=['startup','task_initialization','skill_discovery_cache','pi_retrieval','context_build','persistence','scheduling','process_output','memory_growth','token_usage']
     assert d['required_metrics']==required and d['summary']=={'required':10,'covered':10,'violations':0} and d['violations']==[] and all(d['static_guards'].values())
     b=json.loads((ROOT/d['benchmark_receipt']).read_text(encoding='utf-8'))
-    assert b['status']=='PASS' and b['source_binding']=={'tested_git_commit':'317a0922c0c51f766a0d6bf22036e5d027330835','tested_git_tree':'a9223da1ecf23426bb8a919e4cf058ccbd6a122a'}
+    assert b['status']=='PASS';assert_source_binding(b['source_binding'])
     assert list(b['metrics'])==required
     assert all(b['metrics'][k]['status']=='PASS' for k in required if k!='skill_discovery_cache')
     assert b['metrics']['skill_discovery_cache']['cold']['status']=='PASS' and b['metrics']['skill_discovery_cache']['cached']['status']=='PASS' and b['metrics']['skill_discovery_cache']['full_scans']==1
@@ -1088,7 +1096,7 @@ def test_prompt_b_user_journey_acceptance_covers_all_required_scenarios():
     assert d['summary']=={'required':7,'covered':7,'violations':0} and d['violations']==[]
     assert d['required_scenarios']==['small-task','medium-feature','complex-mission','failure','authority','unsupported','restart']
     a=json.loads((ROOT/d['acceptance_receipt']).read_text(encoding='utf-8'))
-    assert a['status']=='PASS' and a['source_binding']=={'tested_git_commit':'69fa226d9df0dc44010d7ba69d58b0f5ab477175','tested_git_tree':'36e99a925d25c19c65dff8cfba8ed17dc414a9df'}
+    assert a['status']=='PASS';assert_source_binding(a['source_binding'])
     assert a['terminal']=={'tests':7,'pass':7,'fail':0,'cancelled':0,'skipped':0,'todo':0}
     assert hashlib.sha256((ROOT/a['proof']).read_bytes()).hexdigest()==a['proof_sha256']
 

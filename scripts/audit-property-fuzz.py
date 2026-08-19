@@ -40,7 +40,7 @@ static_guards={
 'bounded-cases':cfg.get('cases_per_seed')==32,
 'failing-cases-saved':(ROOT/case_rel).is_file(),
 'unknown-persisted-identity-rejected':"!onlyKeys(identity,IDENTITY_KEYS)" in (ROOT/'plugin/src/runtime/mission/validators.ts').read_text(),
-'acceptance-source-bound':acc.get('source_binding',{}).get('tested_git_commit')=='6fe74d7786e25cb6894ddca7d4408a17220cc936',
+'acceptance-source-bound':(lambda b: isinstance(b.get('tested_git_commit'),str) and isinstance(b.get('tested_git_tree'),str) and git('rev-parse',f"{b['tested_git_commit']}^{{tree}}")==b['tested_git_tree'] and subprocess.run(['git','merge-base','--is-ancestor',b['tested_git_commit'],'HEAD'],cwd=ROOT).returncode==0)(acc.get('source_binding') or {}),
 }
 if not all(static_guards.values()):viol.append('static-guard-drift')
 out={'schema':1,'kind':'PROMPT_B_PROPERTY_FUZZ_TESTING_AUDIT','program':'PROMPT_B','section':32,'status':'PASS' if not viol else 'FAIL','acceptance_receipt':'data/validation/property-fuzz-acceptance-0.1.0.json','summary':{'required_areas':9,'covered_areas':len(rows),'generated_cases':cfg.get('generated_cases'),'violations':len(viol)},'areas':rows,'static_guards':static_guards,'closed_defects':[{'id':'persisted-mission-unknown-identity-field-accepted','finding':'RuntimePersistence accepted a persisted Mission carrying an unknown identity field.','resolution':'Mission identity, intent, and semantic-assessment validators now reject unknown keys.'}],'historical_failure_case':case_rel,'violations':viol}

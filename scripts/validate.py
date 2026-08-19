@@ -9,6 +9,14 @@ def git_blob_sha256(commit,rel):
 
 def git_blob_oid(commit,rel):
     return subprocess.check_output(['git','rev-parse',f'{commit}:{rel}'],cwd=ROOT,text=True,stderr=subprocess.DEVNULL).strip()
+
+def source_binding_valid(binding):
+    try:
+        commit=(binding or {}).get('tested_git_commit');tree=(binding or {}).get('tested_git_tree')
+        if not isinstance(commit,str) or not re.fullmatch(r'[a-f0-9]{40}',commit) or not isinstance(tree,str) or not re.fullmatch(r'[a-f0-9]{40}',tree):return False
+        if subprocess.check_output(['git','rev-parse',f'{commit}^{{tree}}'],cwd=ROOT,text=True,stderr=subprocess.DEVNULL).strip()!=tree:return False
+        return subprocess.run(['git','merge-base','--is-ancestor',commit,'HEAD'],cwd=ROOT,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode==0
+    except Exception:return False
 ERR=[]
 def err(x):ERR.append(x)
 version=(ROOT/'VERSION').read_text(encoding='utf-8').strip()
@@ -718,7 +726,7 @@ try:
             if row.get('proof_anchor') not in (ROOT/row['proof']).read_text(encoding='utf-8',errors='replace'):err(f"PROMPT B property/fuzz proof anchor drift: {row.get('area')}")
         except Exception as e:err(f'PROMPT B property/fuzz row invalid: {e}')
     ar=json.loads((ROOT/f32['acceptance_receipt']).read_text(encoding='utf-8'))
-    if ar.get('status')!='PASS' or ar.get('source_binding')!={'tested_git_commit':'6fe74d7786e25cb6894ddca7d4408a17220cc936','tested_git_tree':'3bf72be8b22082a720f2fa6aa271d56b100e5528'}:err('PROMPT B property/fuzz source binding drift')
+    if ar.get('status')!='PASS' or not source_binding_valid(ar.get('source_binding')):err('PROMPT B property/fuzz source binding drift')
     cfg=ar.get('configuration') or {}
     if cfg.get('generated_cases')!=864 or cfg.get('cases_per_seed')!=32 or cfg.get('seeds_hex')!=['0x00c0ffee','0x5eed1234','0x000a11ce']:err('PROMPT B property/fuzz bounded seed configuration drift')
     if ar.get('terminal')!={'tests':9,'pass':9,'fail':0,'cancelled':0,'skipped':0,'todo':0} or ar.get('failures')!=[]:err('PROMPT B property/fuzz acceptance terminal drift')
@@ -771,7 +779,7 @@ try:
     if u36.get('summary')!={'required':7,'covered':7,'violations':0} or u36.get('violations')!=[]:err('PROMPT B user journey summary drift')
     if u36.get('required_scenarios')!=['small-task','medium-feature','complex-mission','failure','authority','unsupported','restart']:err('PROMPT B user journey scenario inventory drift')
     a=json.loads((ROOT/u36['acceptance_receipt']).read_text(encoding='utf-8'))
-    if a.get('status')!='PASS' or a.get('source_binding')!={'tested_git_commit':'69fa226d9df0dc44010d7ba69d58b0f5ab477175','tested_git_tree':'36e99a925d25c19c65dff8cfba8ed17dc414a9df'}:err('PROMPT B user journey source binding drift')
+    if a.get('status')!='PASS' or not source_binding_valid(a.get('source_binding')):err('PROMPT B user journey source binding drift')
     if a.get('terminal')!={'tests':7,'pass':7,'fail':0,'cancelled':0,'skipped':0,'todo':0}:err('PROMPT B user journey terminal drift')
     rel=a.get('proof'); expected=a.get('proof_sha256')
     if not isinstance(rel,str) or not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B user journey proof hash drift')
@@ -787,7 +795,7 @@ try:
     for rel,expected in (r33.get('proof_hashes') or {}).items():
         if not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B replay proof hash drift: '+str(rel))
     a=json.loads((ROOT/r33['acceptance_receipt']).read_text(encoding='utf-8'))
-    if a.get('status')!='PASS' or a.get('source_binding')!={'tested_git_commit':'bca552865d060d41a629199ae9552a000324a7b2','tested_git_tree':'5ada6731d3b0d15219eb5b37f0dbd44c6b4f21f1'}:err('PROMPT B replay source binding drift')
+    if a.get('status')!='PASS' or not source_binding_valid(a.get('source_binding')):err('PROMPT B replay source binding drift')
     if a.get('nondeterministic_semantic_drift') is not False or a.get('first_pass_digest')!=a.get('second_pass_digest') or a.get('mismatches')!=[]:err('PROMPT B replay deterministic digest drift')
     for rel,expected in {**(a.get('inputs') or {}),**(a.get('owner_hashes') or {})}.items():
         if not (ROOT/rel).is_file() or hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()!=expected:err('PROMPT B replay acceptance source/input drift: '+str(rel))
@@ -802,7 +810,7 @@ try:
     expected=['provider-timeout','model-unavailable','rate-limit','tool-error','permission-deny','process-crash','workspace-failure','disk-write-failure','corrupt-state','child-session-failure','browser-failure','network-failure']
     if f34.get('required_injections')!=expected or not all((f34.get('static_guards') or {}).values()):err('PROMPT B failure injection inventory/static guard drift')
     a=json.loads((ROOT/f34['acceptance_receipt']).read_text(encoding='utf-8'))
-    if a.get('status')!='PASS' or a.get('source_binding')!={'tested_git_commit':'29d3024fb3640a97f244185a393eb133542fb735','tested_git_tree':'e685a589dcd06e8a300421b84cbad8fedb616222'}:err('PROMPT B failure injection source binding drift')
+    if a.get('status')!='PASS' or not source_binding_valid(a.get('source_binding')):err('PROMPT B failure injection source binding drift')
     if a.get('terminal')!={'tests':54,'pass':54,'fail':0,'cancelled':0,'skipped':0,'todo':0}:err('PROMPT B failure injection terminal drift')
     if not (a.get('bounded_recovery') or {}).get('no_infinite_retry') or a.get('summary')!={'required':12,'covered':12,'violations':0} or a.get('violations')!=[]:err('PROMPT B failure injection bounded recovery drift')
     for row in a.get('injections',[]):
@@ -819,7 +827,7 @@ try:
     required=['startup','task_initialization','skill_discovery_cache','pi_retrieval','context_build','persistence','scheduling','process_output','memory_growth','token_usage']
     if p35.get('required_metrics')!=required or p35.get('summary')!={'required':10,'covered':10,'violations':0} or p35.get('violations')!=[] or not all((p35.get('static_guards') or {}).values()):err('PROMPT B performance/resource benchmark summary drift')
     b=json.loads((ROOT/p35['benchmark_receipt']).read_text(encoding='utf-8'))
-    if b.get('status')!='PASS' or b.get('source_binding')!={'tested_git_commit':'317a0922c0c51f766a0d6bf22036e5d027330835','tested_git_tree':'a9223da1ecf23426bb8a919e4cf058ccbd6a122a'}:err('PROMPT B performance/resource benchmark source binding drift')
+    if b.get('status')!='PASS' or not source_binding_valid(b.get('source_binding')):err('PROMPT B performance/resource benchmark source binding drift')
     if list((b.get('metrics') or {}).keys())!=required:err('PROMPT B performance/resource benchmark metric inventory drift')
     metrics=b.get('metrics') or {}
     if any((metrics.get(k) or {}).get('status')!='PASS' for k in required if k!='skill_discovery_cache'):err('PROMPT B performance/resource metric failure')

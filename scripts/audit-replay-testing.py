@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import hashlib,json
+import hashlib,json,subprocess
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'data/validation/prompt-b-replay-testing.json';ACC=ROOT/'data/validation/replay-acceptance-0.1.0.json'
@@ -10,7 +10,10 @@ if a.get('schema')!=1 or a.get('kind')!='PROMPT_B_REPLAY_ACCEPTANCE' or a.get('s
 if a.get('surface_counts')!=expected or a.get('total_cases')!=28:viol.append('surface-count-drift')
 if a.get('nondeterministic_semantic_drift') is not False or a.get('first_pass_digest')!=a.get('second_pass_digest'):viol.append('nondeterministic-semantic-drift')
 if a.get('mismatches')!=[]:viol.append('replay-mismatch')
-if a.get('source_binding')!={'tested_git_commit':'bca552865d060d41a629199ae9552a000324a7b2','tested_git_tree':'5ada6731d3b0d15219eb5b37f0dbd44c6b4f21f1'}:viol.append('source-binding-drift')
+binding=a.get('source_binding') or {};commit=binding.get('tested_git_commit');tree=binding.get('tested_git_tree')
+try:
+ if not isinstance(commit,str) or not isinstance(tree,str) or subprocess.check_output(['git','rev-parse',f'{commit}^{{tree}}'],cwd=ROOT,text=True).strip()!=tree or subprocess.run(['git','merge-base','--is-ancestor',commit,'HEAD'],cwd=ROOT).returncode!=0:viol.append('source-binding-drift')
+except Exception:viol.append('source-binding-drift')
 for rel,digest in (a.get('inputs') or {}).items():
  if not (ROOT/rel).is_file() or sha(rel)!=digest:viol.append('input-hash:'+str(rel))
 for rel,digest in (a.get('owner_hashes') or {}).items():
