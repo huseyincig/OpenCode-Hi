@@ -20,7 +20,7 @@ class FakeSocket {
 function meta(cursor){const body=new TextEncoder().encode(JSON.stringify({cursor}));const out=new Uint8Array(body.length+1);out[0]=0;out.set(body,1);return out}
 function host(permission={bash:{'*':'allow'},external_directory:{'*':'ask'}}){return{agent:{coder:{permission}}}}
 function baseRequest(extra={}){return{mission_id:'m_1',task_id:'t_1',worker_id:'w_1',role:'coder',command:'node',args:['-e','console.log(1)'],cwd:'/repo',authority_ref:'auth:unit',...extra}}
-function harness({permission,signal,processGroup,nativeArgsSuffix=[]}={}){
+function harness({permission,signal,processGroup,nativeArgsSuffix=[],initialMeta=true}={}){
   let nextPid=4100
   const sessions=new Map(),removed=[],sockets=[]
   const pty={
@@ -31,7 +31,7 @@ function harness({permission,signal,processGroup,nativeArgsSuffix=[]}={}){
     async connectToken({ptyID}){assert.ok(sessions.has(ptyID));return{data:{data:{ticket:`ticket-${ptyID}`,expires_in:10}}}},
   }
   const client={v2:{pty}}
-  const adapter=new OpenCodePtyAdapter(client,new URL('http://127.0.0.1:4096'),'/repo','/repo',()=>host(permission),url=>{const ws=new FakeSocket(url);sockets.push(ws);return ws},signal??(()=>{}),32,8,processGroup??(()=>undefined))
+  const adapter=new OpenCodePtyAdapter(client,new URL('http://127.0.0.1:4096'),'/repo','/repo',()=>host(permission),url=>{const ws=new FakeSocket(url);sockets.push(ws);if(initialMeta){const current=[...sessions.values()].at(-1),marker=current?.args?.find?.(x=>typeof x==='string'&&/^~HI:[a-f0-9]{16}~$/.test(x));queueMicrotask(()=>ws.message(meta(0)));if(marker)queueMicrotask(()=>ws.message(marker))}return ws},signal??(()=>{}),32,8,processGroup??(()=>undefined))
   return{adapter,sessions,removed,sockets,exit(ptyID,code=0){const info=sessions.get(ptyID);Object.assign(info,{status:'exited',exitCode:code})}}
 }
 
@@ -65,6 +65,25 @@ test('P2 external cwd requires explicit external_directory allow and external ef
   assert.equal(evaluateProcessSpawnAuthority(authorized,'/repo',host({bash:{'*':'allow'},external_directory:{'*':'ask'}})).decision,'ALLOW')
 })
 
+test('P2 POSIX launch barrier waits for initial cursor metadata before releasing the requested command',async()=>{
+  if(process.platform==='win32')return
+  const h=harness({initialMeta:false})
+  let settled=false
+  const pending=h.adapter.spawn(baseRequest()).then(value=>{settled=true;return value})
+  await new Promise(r=>setTimeout(r,0))
+  assert.equal(settled,false,'spawn must not release a POSIX command before initial PTY replay/cursor metadata')
+  const ws=h.sockets[0];assert.ok(ws);assert.deepEqual(ws.sent,[])
+  ws.message(meta(0))
+  await new Promise(r=>setTimeout(r,0));assert.equal(settled,false,'spawn must also wait for the internal barrier-ready marker')
+  const marker=[...h.sessions.values()].at(-1).args.find(x=>/^~HI:[a-f0-9]{16}~$/.test(x));assert.ok(marker);ws.message(marker)
+  const handle=await pending,info=h.sessions.get(handle.host_process_id)
+  assert.equal(info.command,'/usr/bin/env')
+  assert.deepEqual(info.args.slice(0,4),['sh','-c','stty -echo || exit 125; printf %s "$1"; shift; IFS= read -r _ || exit 125; stty echo || exit 125; exec "$@"','hi-opencode-pty-barrier'])
+  assert.match(info.args[4],/^~HI:[a-f0-9]{16}~$/)
+  assert.deepEqual(info.args.slice(5),['node','-e','console.log(1)'])
+  assert.deepEqual(ws.sent,['\n'])
+})
+
 test('P2 spawn binds native PID and ticketed websocket URL without raw output in ProcessContract',async()=>{
   const h=harness(),handle=await spawned(h)
   const ws=h.sockets[0]
@@ -77,7 +96,7 @@ test('P2 spawn binds native PID and ticketed websocket URL without raw output in
 test('P2 stdin write uses the live websocket and refuses write after exit',async()=>{
   const h=harness(),handle=await spawned(h);const ws=h.sockets[0]
   await h.adapter.write(handle.contract.process_id,'hello\n')
-  assert.deepEqual(ws.sent,['hello\n'])
+  assert.deepEqual(ws.sent,process.platform==='win32'?['hello\n']:['\n','hello\n'])
   h.exit(handle.host_process_id,0);ws.close()
   await h.adapter.wait(handle.contract.process_id)
   await assert.rejects(()=>h.adapter.write(handle.contract.process_id,'late'),/Cannot write/)
@@ -227,7 +246,7 @@ test('P3 spawn binds restart identity to native PTY command normalization rather
     async remove({ptyID}){h.sessions.delete(ptyID);return{data:undefined}},
     async connectToken({ptyID}){return{data:{data:{ticket:`ticket-${ptyID}`,expires_in:10}}}},
   }
-  const adapter=new OpenCodePtyAdapter({v2:{pty}},new URL('http://127.0.0.1:4096'),'/repo','/repo',()=>host(),url=>new FakeSocket(url),()=>{},32,8)
+  const adapter=new OpenCodePtyAdapter({v2:{pty}},new URL('http://127.0.0.1:4096'),'/repo','/repo',()=>host(),url=>{const ws=new FakeSocket(url);queueMicrotask(()=>ws.message(meta(0)));return ws},()=>{},32,8)
   const result=await adapter.reconcile(handle.contract)
   assert.equal(result.disposition,'ADOPTED')
   assert.equal(result.contract.pid,handle.contract.pid)
@@ -241,9 +260,20 @@ test('P3 restart reconcile adopts exact native PTY identity and restores live wr
     remove:async({ptyID})=>{h.removed.push(ptyID);h.sessions.delete(ptyID);return{data:undefined}},
     connectToken:async({ptyID})=>({data:{data:{ticket:`ticket-${ptyID}`,expires_in:10}}}),
     create:async()=>{throw new Error('must not create during reconcile')},
-  }}},new URL('http://127.0.0.1:4096'),'/repo','/repo',()=>host(),url=>{const ws=new FakeSocket(url);h.sockets.push(ws);return ws},()=>{},32,8)
+  }}},new URL('http://127.0.0.1:4096'),'/repo','/repo',()=>host(),url=>{const ws=new FakeSocket(url);h.sockets.push(ws);queueMicrotask(()=>ws.message(meta(0)));return ws},()=>{},32,8)
   const result=await fresh.reconcile(persisted);assert.equal(result.disposition,'ADOPTED');assert.equal(result.contract.pid,persisted.pid);assert.equal(fresh.list().length,1)
   await fresh.write(persisted.process_id,'after-restart\n');assert.deepEqual(h.sockets.at(-1).sent,['after-restart\n'])
+})
+
+test('P3 restart replay hides the internal POSIX launch marker while preserving pre-restart user output',async()=>{
+  if(process.platform==='win32')return
+  const h=harness(),handle=await spawned(h),persisted=structuredClone(handle.contract),native=h.sessions.get(handle.host_process_id),marker=native.args.find(x=>/^~HI:[a-f0-9]{16}~$/.test(x));assert.ok(marker)
+  const replay='READY_BEFORE_RESTART',pty={
+    list:async()=>({data:{data:[{...native}]}}),get:async()=>({data:{data:{...native}}}),remove:async()=>({data:undefined}),connectToken:async()=>({data:{data:{ticket:'ticket-replay',expires_in:10}}}),create:async()=>{throw new Error('must not create during reconcile')},
+  },sockets=[]
+  const fresh=new OpenCodePtyAdapter({v2:{pty}},new URL('http://127.0.0.1:4096'),'/repo','/repo',()=>host(),url=>{const ws=new FakeSocket(url);sockets.push(ws);queueMicrotask(()=>ws.message(marker+replay));queueMicrotask(()=>ws.message(meta(marker.length+replay.length)));return ws},()=>{},64,64)
+  const result=await fresh.reconcile(persisted);assert.equal(result.disposition,'ADOPTED')
+  const out=await fresh.read(persisted.process_id,{cursor:0,max_chars:64});assert.equal(out.text,replay);assert.doesNotMatch(out.text,/~HI:/);assert.equal(out.start_cursor,marker.length)
 })
 
 test('P3 restart reconcile quarantines same PID with changed command identity and never signals it',async()=>{

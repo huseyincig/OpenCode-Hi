@@ -13,6 +13,17 @@ async function bytes(value) { if (value instanceof ArrayBuffer)
     return new Uint8Array(value); if (ArrayBuffer.isView(value))
     return new Uint8Array(value.buffer, value.byteOffset, value.byteLength); if (typeof Blob !== 'undefined' && value instanceof Blob)
     return new Uint8Array(await value.arrayBuffer()); return undefined; }
+const POSIX_PTY_BARRIER_SCRIPT = 'stty -echo || exit 125; printf %s "$1"; shift; IFS= read -r _ || exit 125; stty echo || exit 125; exec "$@"';
+function launchPlan(request) {
+    if (process.platform === 'win32')
+        return { command: request.command, args: [...(request.args ?? [])] };
+    const markerDigest = createHash('sha256').update(`${request.cwd}\0${processCommandLine(request)}`).digest('hex').slice(0, 16), readyMarker = `~HI:${markerDigest}~`;
+    return { command: '/usr/bin/env', args: ['sh', '-c', POSIX_PTY_BARRIER_SCRIPT, 'hi-opencode-pty-barrier', readyMarker, request.command, ...(request.args ?? [])], release: '\n', readyMarker };
+}
+function nativeLaunchMarker(info) {
+    const args = info.args ?? [], marker = args[4];
+    return info.command === '/usr/bin/env' && args[0] === 'sh' && args[1] === '-c' && args[2] === POSIX_PTY_BARRIER_SCRIPT && args[3] === 'hi-opencode-pty-barrier' && typeof marker === 'string' && /^~HI:[a-f0-9]{16}~$/.test(marker) ? marker : undefined;
+}
 export function linuxProcessGroup(pid) {
     if (process.platform !== 'linux' || !Number.isInteger(pid) || pid <= 0)
         return undefined;
@@ -91,6 +102,15 @@ export class OpenCodePtyAdapter {
         state.availableEnd = end;
         state.availableStart = Math.max(0, end - state.buffer.length);
     }
+    #hideLaunchMarker(state, marker) {
+        const index = state.buffer.indexOf(marker);
+        if (index < 0)
+            return false;
+        const cut = index + marker.length;
+        state.buffer = state.buffer.slice(cut);
+        state.availableStart += cut;
+        return true;
+    }
     #settleExit(state) { if (state.exitSettled)
         return; state.exitSettled = true; if (state.timeoutTimer)
         clearTimeout(state.timeoutTimer); state.resolveExit({ contract: cloneContract(state.contract) }); }
@@ -157,18 +177,24 @@ export class OpenCodePtyAdapter {
             catch { }
         }
     }
-    async #connect(state, cursor) {
+    async #connect(state, cursor, readyMarker) {
         const ticket = await this.#ticket(state), socket = this.socketFactory(wsUrl(this.serverUrl, state.ptyID, this.directory, ticket, cursor));
         state.socket = socket;
         state.cursorKnown = false;
         state.beforeMetaChars = 0;
         await new Promise((resolve, reject) => {
-            let opened = false;
-            socket.addEventListener('message', (event) => { void this.#onFrame(state, event.data); });
-            socket.addEventListener('open', () => { opened = true; resolve(); }, { once: true });
-            socket.addEventListener('error', () => { if (!opened)
-                reject(new Error(`OpenCode PTY websocket failed for ${state.ptyID}`)); }, { once: true });
-            socket.addEventListener('close', () => { void this.#onSocketClose(state); }, { once: true });
+            let opened = false, settled = false;
+            const finish = (error) => { if (settled)
+                return; settled = true; clearTimeout(timer); error ? reject(error) : resolve(); };
+            const ready = () => { if (opened && state.cursorKnown && (!readyMarker || state.buffer.includes(readyMarker)))
+                finish(); };
+            const timer = setTimeout(() => finish(new Error(`OpenCode PTY websocket initial cursor timeout for ${state.ptyID}`)), 5000);
+            socket.addEventListener('message', (event) => { void this.#onFrame(state, event.data).then(ready, error => finish(error)); });
+            socket.addEventListener('open', () => { opened = true; ready(); }, { once: true });
+            socket.addEventListener('error', () => { if (!settled)
+                finish(new Error(`OpenCode PTY websocket failed for ${state.ptyID}`)); }, { once: true });
+            socket.addEventListener('close', () => { if (!settled)
+                finish(new Error(`OpenCode PTY websocket closed before initial cursor for ${state.ptyID}`)); void this.#onSocketClose(state); }, { once: true });
         });
     }
     async #onSocketClose(state) {
@@ -220,7 +246,7 @@ export class OpenCodePtyAdapter {
             throw new Error('Hi ProcessExecutor requires command, cwd and authority_ref');
         if (request.timeout_ms !== undefined && (!Number.isFinite(request.timeout_ms) || request.timeout_ms < 50 || request.timeout_ms > 24 * 60 * 60 * 1000))
             throw new Error('Hi ProcessExecutor timeout_ms must be between 50ms and 24h');
-        const raw = await this.#pty().create({ location: this.#location(), command: request.command, args: request.args ?? [], cwd: request.cwd, title: request.title, env: request.env }), info = nativeData(raw);
+        const launch = launchPlan(request), raw = await this.#pty().create({ location: this.#location(), command: launch.command, args: launch.args, cwd: request.cwd, title: request.title, env: request.env }), info = nativeData(raw);
         if (!info || info.status !== 'running' || !Number.isInteger(info.pid) || info.pid <= 0 || typeof info.id !== 'string')
             throw new Error('OpenCode PTY create did not return a running PID-bound session');
         const started = Date.now(), processGroup = this.resolveProcessGroup(info.pid), contract = { process_id: processID(), mission_id: request.mission_id, task_id: request.task_id, worker_id: request.worker_id, host: 'opencode', command_identity: processCommandIdentity({ host: 'opencode', command: processCommandLine({ command: info.command, args: info.args }), cwd: info.cwd }), cwd: info.cwd, pid: info.pid, ...(processGroup ? { process_group_id: processGroup } : {}), status: 'RUNNING', started_at: started, ...(request.timeout_ms ? { timeout_at: started + request.timeout_ms } : {}), output_artifact_refs: [], authority_ref: request.authority_ref, cleanup_state: 'ACTIVE' };
@@ -236,7 +262,14 @@ export class OpenCodePtyAdapter {
         const state = { contract, ptyID: info.id, buffer: '', availableStart: 0, availableEnd: 0, cursorKnown: false, beforeMetaChars: 0, timeoutRequested: false, exitPromise, resolveExit, rejectExit, exitSettled: false, reconnects: 0 };
         this.#states.set(contract.process_id, state);
         try {
-            await this.#connect(state, 0);
+            await this.#connect(state, 0, launch.readyMarker);
+            if (launch.readyMarker && !this.#hideLaunchMarker(state, launch.readyMarker))
+                throw new Error(`OpenCode PTY launch marker missing for ${state.ptyID}`);
+            if (launch.release && state.contract.status === 'RUNNING') {
+                if (!state.socket || state.socket.readyState !== 1)
+                    throw new Error(`OpenCode PTY websocket unavailable at launch release for ${state.ptyID}`);
+                state.socket.send(launch.release);
+            }
         }
         catch (error) {
             try {
@@ -320,6 +353,9 @@ export class OpenCodePtyAdapter {
             return { disposition: 'TERMINAL', contract: cloneContract(persisted) };
         }
         await this.#connect(state, 0);
+        const launchMarker = nativeLaunchMarker(exact);
+        if (launchMarker)
+            this.#hideLaunchMarker(state, launchMarker);
         return { disposition: 'ADOPTED', contract: cloneContract(persisted) };
     }
     snapshot(processId) { return cloneContract(this.#state(processId).contract); }

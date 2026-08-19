@@ -151,7 +151,7 @@
     },
     {
       "path": "docs/HOSTS.md",
-      "sha256": "578054aea5b3cd386b2f70224f664de9c9e6533ac29997dd12a00e8078c7f807",
+      "sha256": "7ffeb25bb828bd5428fabb2e996f60e9f6c4743010398f2a01f8369715ca6f3f",
       "area": "host-support",
       "audience": "OPERATOR",
       "lifecycle": "CANONICAL_CURRENT",
