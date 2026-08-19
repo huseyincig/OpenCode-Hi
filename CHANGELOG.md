@@ -2,6 +2,14 @@
 
 All notable changes to OpenCode-Hi are documented here.
 
+## 0.2.0
+
+- Introduces the Phase 2 Semantic Autopilot runtime: work-graph-first execution, semantic intent assessment, adaptive execution planning, stronger completion/continuation ownership, and bounded model/provider feedback.
+- Adds canonical diagnosis-only mission semantics, field-scoped semantic parser diagnostics, and stricter WorkerResult settlement compatibility while keeping narrative evidence fail-closed.
+- Hardens dependency/fan-in scheduling, queue rollback, workspace/process/browser supervision, MCP capability scoping, authority boundaries, and model/runtime recovery with deterministic settlement evidence.
+- Retains exact OpenCode 1.18.18 npm/local-package acceptance; direct Git-source plugin installation remains an explicit unsupported host boundary until exact-host proof exists.
+- M15 broad corpus closes with task-class-specific evidence only; this release does not claim general Hi superiority over vanilla OpenCode.
+
 ## 0.1.3
 
 - Corrected the npm Trusted Publishing workflow so canonical evidence verification installs its Python verification dependencies before running the full release gate.

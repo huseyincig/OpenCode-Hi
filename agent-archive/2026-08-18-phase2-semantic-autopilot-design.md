@@ -1,8 +1,10 @@
 # Phase 2 — Hi Semantic Autopilot & Decision Intelligence
 
-**Status:** ACTIVE DESIGN / IMPLEMENTATION REFERENCE
+> Historical design record. Current code, ROADMAP/TASKS state, current public documentation, and exact receipts supersede any planned/future wording below.
+
+**Status:** ARCHIVED DESIGN REFERENCE — M15 COMPLETE
 **Opened:** 2026-08-18
-**Phase 1 retained product:** `8f6b19098b1db0a739bb97f82537fcdc45896278`
+**Historical basis — Phase 1 retained product:** `8f6b19098b1db0a739bb97f82537fcdc45896278`
 
 ## 1. Purpose
 

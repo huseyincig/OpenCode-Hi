@@ -1,11 +1,11 @@
 {
   "schema": 1,
-  "release": "0.1.3",
+  "release": "0.2.0",
   "kind": "DOCUMENTATION_TRUTH_INVENTORY",
   "status": "PASS",
   "policy": {
     "path": "data/documentation-ownership.json",
-    "sha256": "bd3aab27ff5fe80fe1f41a3573e60a72146bdfecf8b45459b5cb2e5a3b3538a0"
+    "sha256": "f39247aae9a8985af7ff62ed85f822c9952b97ad3f8b73357dd629df89cc1408"
   },
   "summary": {
     "public_documents": 14,
@@ -105,7 +105,7 @@
     },
     {
       "area": "current-release-status",
-      "path": "data/validation/release-status-0.1.1.json"
+      "path": "data/validation/release-status-0.2.0.json"
     }
   ],
   "artifacts": [
@@ -135,7 +135,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "5b8134f23aa4f5dd8d74b3d2d676b5a80e1216e45f10c5d6483158dcb0c7cc2a",
+      "sha256": "b56d174ef4141aaf92801c4084f04e3c81410b7b22b93d32c497f1ab3d7eae54",
       "area": "product-overview",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -143,7 +143,7 @@
     },
     {
       "path": "docs/ARCHITECTURE.md",
-      "sha256": "73e235a5ad296706985598b6b4e870b7f4137bdc1f57608caa2a67a012d4cdac",
+      "sha256": "f6e570bef2940a7984fc299fd02bea2e1a00fd6f0529663ea8473911d3948e88",
       "area": "architecture-execution-context-storage-privacy",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
@@ -151,7 +151,7 @@
     },
     {
       "path": "docs/HOSTS.md",
-      "sha256": "999bfc95b1ed2be82e63bcbddbff24bf192a52019a8fc8865de5b93ac6b7bbe1",
+      "sha256": "578054aea5b3cd386b2f70224f664de9c9e6533ac29997dd12a00e8078c7f807",
       "area": "host-support",
       "audience": "OPERATOR",
       "lifecycle": "CANONICAL_CURRENT",
@@ -167,7 +167,7 @@
     },
     {
       "path": "docs/INSTALLATION.md",
-      "sha256": "cb12e36b65d8f2f64f578d878bc32ac832cdab1edaf92d59e88d2c3ab3f904f3",
+      "sha256": "936340c888e38ebc6e7b249d32568f9a2b036ca488413824e565c5d340a1f410",
       "area": "installation-configuration-lifecycle",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -183,7 +183,7 @@
     },
     {
       "path": "docs/RELEASE.md",
-      "sha256": "4010d8f7e62efc6b71252adf9394eb3201da00dbec29a19fc9d7a7a9a4002271",
+      "sha256": "ad4a5f484b3646fece8777da67ed4c49b9fd9b28a3ba8e2cd5c554650b6222a2",
       "area": "release",
       "audience": "RELEASE_ENGINEER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -199,7 +199,7 @@
     },
     {
       "path": "docs/SKILLS.md",
-      "sha256": "287c45f710194ab42c190f2b01037643b9c14fe22f3da955850db47faaa52767",
+      "sha256": "9a94134d72a9a07b22650067dbc8caf3187707e70ca64f58cd822afdd82b94de",
       "area": "methodologies-skills",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -215,7 +215,7 @@
     },
     {
       "path": "docs/locales/tr/README.md",
-      "sha256": "53856125bb5aa5bebae20e34d8b205732d9fe8d9a6aa63737dd511beec4ced90",
+      "sha256": "970fd44976c2ba9641dfebd6a183874ca99686ae7e05636e3e077aeff16b72c7",
       "area": "turkish-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",
@@ -230,8 +230,8 @@
       "lifecycle": "MACHINE_OWNER"
     },
     {
-      "path": "data/validation/release-status-0.1.1.json",
-      "sha256": "cafbc67f09022d4d6af11e636f63b603bd6d224f044c4f8e50b5b1a3af6f975d",
+      "path": "data/validation/release-status-0.2.0.json",
+      "sha256": "ca0a2290b5ecba9c05504516ed3a522dff4c88e026bf4f6ede157dce62f23093",
       "area": "current-release-status",
       "lifecycle": "MACHINE_OWNER"
     }
@@ -241,5 +241,5 @@
     "duplicate_area": [],
     "budget_or_tracking": []
   },
-  "classification_boundary": "Only the bounded public manifest owns current human documentation. Local engineering/history notes and Git history may inform maintainers but never own current product truth."
+  "classification_boundary": "Only the bounded public manifest owns current human documentation. Explicit engineering-state root Markdown, local engineering/history notes and Git history may inform maintainers but never own current product truth."
 }

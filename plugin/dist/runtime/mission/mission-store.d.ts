@@ -1,6 +1,6 @@
 import { type SemanticIntentAssessment } from '../intent/semantic-assessment.js';
 import { type NativeProjectContext } from '../intent/repo-context.js';
-import { type TopologyPolicyConfig } from '../execution/topology-policy.js';
+import type { TopologyPolicyConfig } from '../execution/topology-policy.js';
 import type { MissionState } from './types.js';
 export declare class MissionStore {
     #private;

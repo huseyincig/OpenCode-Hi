@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "release": "0.1.3",
+  "release": "0.2.0",
   "phases": {
     "plugin-shell": {
       "evidence": [
@@ -14,7 +14,7 @@
     },
     "mission-intent": {
       "evidence": [
-        "plugin/src/runtime/intent/normalize.ts",
+        "plugin/src/runtime/intent/semantic-assessment.ts",
         "plugin/src/runtime/intent/repo-context.ts",
         "plugin/src/runtime/mission/mission-store.ts",
         "plugin/src/runtime/mission/types.ts"
@@ -85,15 +85,9 @@
       ],
       "note": "Hi uses OpenCode native plugin manager; no custom package updater."
     },
-    "team-mode": {
-      "evidence": [
-        "plugin/src/runtime/team/team-runtime.ts",
-        "plugin/src/plugin.ts"
-      ]
-    },
     "hardening": {
       "evidence": [
-        "docs/THREAT-MODEL.md",
+        "docs/SECURITY-MODEL.md",
         "plugin/src/runtime/safety/authority.ts",
         "plugin/src/runtime/safety/idempotency.ts",
         "plugin/src/opencode/capabilities.ts",
@@ -108,6 +102,12 @@
         "plugin/src/runtime/skills/registry.ts",
         "scripts/native_plugin_setup.py",
         "data/hi-methodologies.json"
+      ]
+    },
+    "scheduler-parallel-topology": {
+      "evidence": [
+        "plugin/src/runtime/scheduler/planner.ts",
+        "plugin/src/plugin.ts"
       ]
     }
   },

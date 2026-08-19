@@ -40,7 +40,7 @@
       "visual-qa",
       "working-manager"
     ],
-    "config_option_count": 32
+    "config_option_count": 29
   },
   "path_audit": {
     "violations": [],
@@ -81,11 +81,11 @@
     },
     "product": {
       "path": "data/product.json",
-      "sha256": "a653835ea79023f4c6f2861b1ae884c53a49335bdad216f68b73a7693d629278"
+      "sha256": "6f547729dce1b5224ab1b3fff30ee1d11c4f8cc3b5d205c37825a194d3be1c00"
     },
     "config_catalog": {
       "path": "data/hi-config-options.json",
-      "sha256": "2d000aee52ea187a173ab8e068a1d5fb6e2cd14470e81a1e8684b33f57f35ddc"
+      "sha256": "d3d3801d6f1264e992a69ba74702bf8ce92cc6da5523c36b77c0be81efef72e7"
     },
     "role_catalog": {
       "path": "data/hi-roles.json",

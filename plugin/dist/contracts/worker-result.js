@@ -6,7 +6,7 @@ const STATUS_ALIAS = { DONE: 'DONE', PASS: 'DONE', SUCCESS: 'DONE', SUCCEEDED: '
 const KIND_SET = new Set(WORKER_EVIDENCE_KINDS);
 const OUTCOME_SET = new Set(['pending', 'passed', 'failed', 'environment-issue']);
 const RESULT_KEYS = new Set(['status', 'summary', 'changed_files', 'scope_expansions', 'evidence', 'findings', 'open_issues', 'needs_context', 'context_gap', 'failure_finding', 'methodology_observations']);
-const EVIDENCE_KEYS = new Set(['kind', 'summary', 'scope', 'pass', 'outcome', 'reason']);
+const EVIDENCE_KEYS = new Set(['kind', 'summary', 'scope', 'evidence_refs', 'pass', 'outcome', 'reason']);
 const OBS_KEYS = new Set(['key', 'procedure', 'trigger', 'do_not_trigger', 'exit_condition', 'evidence']);
 const EXPANSION_KEYS = new Set(['file', 'reason', 'necessary']);
 function record(v) { return Boolean(v) && typeof v === 'object' && !Array.isArray(v); }
@@ -18,6 +18,8 @@ export function isWorkerEvidenceContract(v) {
     if (!record(v) || !onlyKeys(v, EVIDENCE_KEYS) || typeof v.kind !== 'string' || !KIND_SET.has(v.kind) || typeof v.summary !== 'string')
         return false;
     if (v.scope !== undefined && !stringArray(v.scope))
+        return false;
+    if (v.evidence_refs !== undefined && (!stringArray(v.evidence_refs) || v.evidence_refs.length > 20))
         return false;
     if (v.pass !== undefined && typeof v.pass !== 'boolean')
         return false;
@@ -52,7 +54,7 @@ function normalizeEvidence(raw) {
     const values = Array.isArray(raw) ? raw : (record(raw) ? Object.entries(raw).map(([kind, value]) => ({ kind, summary: typeof value === 'string' ? value : JSON.stringify(value) })) : []);
     return values.slice(0, 40).flatMap((v) => { if (!record(v))
         return []; const kind = String(v.kind ?? ''); if (!KIND_SET.has(kind))
-        return []; const outcome = typeof v.outcome === 'string' && OUTCOME_SET.has(v.outcome) ? v.outcome : undefined; return [{ kind, summary: clip(v.summary, 1000), scope: Array.isArray(v.scope) ? v.scope.map(String).slice(0, 50) : undefined, pass: typeof v.pass === 'boolean' ? v.pass : undefined, outcome, reason: typeof v.reason === 'string' ? clip(v.reason, 1000) : undefined }]; });
+        return []; const outcome = typeof v.outcome === 'string' && OUTCOME_SET.has(v.outcome) ? v.outcome : undefined; return [{ kind, summary: clip(v.summary, 1000), scope: Array.isArray(v.scope) ? v.scope.map(String).slice(0, 50) : undefined, evidence_refs: Array.isArray(v.evidence_refs) ? [...new Set(v.evidence_refs.map(String).filter(Boolean))].slice(0, 20) : undefined, pass: typeof v.pass === 'boolean' ? v.pass : undefined, outcome, reason: typeof v.reason === 'string' ? clip(v.reason, 1000) : undefined }]; });
 }
 function normalizeMethodologyObservations(raw) {
     if (!Array.isArray(raw))

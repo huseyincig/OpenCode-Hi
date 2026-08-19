@@ -161,15 +161,17 @@ try:
     rs=json.loads((ROOT/f'data/validation/release-status-{version}.json').read_text(encoding='utf-8'))
     if rs.get('schema')!=1 or rs.get('kind')!='GENERATED_RELEASE_STATUS_PROJECTION':err('release status projection header invalid')
     if rs.get('release')!=version:err('release status projection release mismatch')
-    if rs.get('status') not in {'PREPUBLICATION_CERTIFIED_PENDING_T4','CERTIFIED_T4'}:err('release status projection current state drift')
+    if rs.get('status') not in {'PREPUBLICATION_CERTIFICATION_IN_PROGRESS','PREPUBLICATION_CERTIFIED_PENDING_T4','CERTIFIED_T4'}:err('release status projection current state drift')
     if (rs.get('historical_github_release') or {}).get('status')!='PASS_T4' or (rs.get('historical_github_release') or {}).get('tag')!='v0.1.0':err('historical release projection drift')
-    cand=rs.get('candidate') or {}; expected_npm={'PREPUBLICATION_CERTIFIED_PENDING_T4':'PENDING_T4','CERTIFIED_T4':'PASS_T4'}.get(rs.get('status'));
+    cand=rs.get('candidate') or {}; expected_npm={'PREPUBLICATION_CERTIFICATION_IN_PROGRESS':'PENDING_T4','PREPUBLICATION_CERTIFIED_PENDING_T4':'PENDING_T4','CERTIFIED_T4':'PASS_T4'}.get(rs.get('status'));
     if cand.get('npm_status')!=expected_npm or cand.get('publication_attempted')!=(rs.get('status')=='CERTIFIED_T4'):err('release status npm projection drift')
     if (rs.get('verification') or {}).get('persisted_test_count') is not False:err('release status must not persist test counts')
     host=rs.get('reference_host') or {}
     if (host.get('opencode_version'),host.get('platform'),host.get('architecture'))!=('1.18.18','linux','aarch64'):err('release status reference host drift')
     for cap in ('process-lifecycle','workspace-isolation-binding','browser-execution'):
-        if ((host.get('capabilities') or {}).get(cap) or {}).get('status')!='SUPPORTED_T3':err(f'release status {cap} drift')
+        if ((host.get('baseline_capabilities') or {}).get(cap) or {}).get('status')!='SUPPORTED_T3':err(f'release status baseline {cap} drift')
+    if not isinstance(host.get('candidate_certification'),dict):err('release status candidate certification missing')
+    if (rs.get('publication_authority') or {}).get('granted') is not False:err('release status must not self-grant publication authority')
     import hashlib
     for name,meta in (rs.get('inputs') or {}).items():
         rel=meta.get('path') if isinstance(meta,dict) else None;expected_sha=meta.get('sha256') if isinstance(meta,dict) else None

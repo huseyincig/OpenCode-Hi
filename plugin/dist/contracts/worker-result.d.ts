@@ -7,6 +7,7 @@ export interface WorkerEvidence {
     kind: WorkerEvidenceKind;
     summary: string;
     scope?: string[];
+    evidence_refs?: string[];
     pass?: boolean;
     outcome?: EvidenceOutcome;
     reason?: string;

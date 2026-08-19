@@ -57,8 +57,9 @@ export function verificationEconomyInstruction(m) {
     return `Verification contract: ${required}. Use repo-native commands with minimum sufficient scope; broaden only when changed surface, dependency impact, or a failed targeted check justifies it.`;
 }
 const STRONGER_EVIDENCE = { 'changed-surface-sanity': ['changed-surface-sanity', 'targeted-tests', 'typecheck', 'lint', 'build'], 'visual-check': ['visual-check', 'visual-evidence'], 'review-evidence': ['review-evidence'] };
-function kindMatches(required, actual) { const r = canonical(required), a = canonical(actual); if (r === a)
+export function verificationKindSatisfiesRequirement(required, actual) { const r = canonical(required), a = canonical(actual); if (r === a)
     return true; return Boolean(STRONGER_EVIDENCE[r]?.includes(a)); }
+export function verificationKindAdmittedForMission(m, actual) { const required = [...new Set(m.execution.verification_policy.requiredKinds.map(canonical))]; return required.length === 0 || required.some(kind => verificationKindSatisfiesRequirement(kind, actual)); }
 function evidenceAllowedForVerification(m, e, obligationID) {
     const workerSource = String(e.source ?? '').startsWith('worker:');
     if (workerSource && !m.execution.verification_policy.allowWorkerReportedEvidence && !String(e.source ?? '').includes(':reviewer'))
@@ -79,7 +80,7 @@ export function verificationEnvelopeFor(m, obligationID) {
     const requiredKinds = [...new Set((obligation?.requiredEvidence?.length ? obligation.requiredEvidence : p.requiredKinds).map(canonical))];
     const candidates = m.execution.evidence.items.filter(e => evidenceAllowedForVerification(m, e, obligationID));
     const checks = requiredKinds.map(kind => {
-        const matching = candidates.filter(e => kindMatches(kind, e.kind)).sort((a, b) => b.observed_at - a.observed_at);
+        const matching = candidates.filter(e => verificationKindSatisfiesRequirement(kind, e.kind)).sort((a, b) => b.observed_at - a.observed_at);
         if (!matching.length)
             return { kind, subject: obligation?.summary ?? m.identity.objective, result: 'not_run', evidence_refs: [], explanation: `No admissible evidence recorded for required verification kind: ${kind}` };
         const explicit = matching.find(e => e.outcome !== undefined || e.pass !== undefined);
@@ -143,10 +144,10 @@ export function reviewClaimsSatisfied(m) {
 export function latestBlockingVerificationEvidence(m, obligationID) { const obligation = obligationID ? m.execution.obligations.find(o => o.id === obligationID) : undefined, requiredKinds = [...new Set((obligation?.requiredEvidence?.length ? obligation.requiredEvidence : m.execution.verification_policy.requiredKinds).map(canonical))], current = [...m.execution.evidence.items].filter(e => !e.invalidated_at && evidenceAllowedForVerification(m, e, obligationID)).sort((a, b) => b.observed_at - a.observed_at); for (const e of current) {
     if (e.outcome !== 'environment-issue' && e.outcome !== 'failed')
         continue;
-    const matched = requiredKinds.filter(r => kindMatches(r, e.kind));
+    const matched = requiredKinds.filter(r => verificationKindSatisfiesRequirement(r, e.kind));
     if (!matched.length)
         continue;
-    const superseded = matched.every(r => current.some(candidate => candidate.observed_at > e.observed_at && candidate.outcome === 'passed' && candidate.pass !== false && kindMatches(r, candidate.kind)));
+    const superseded = matched.every(r => current.some(candidate => candidate.observed_at > e.observed_at && candidate.outcome === 'passed' && candidate.pass !== false && verificationKindSatisfiesRequirement(r, candidate.kind)));
     if (!superseded)
         return e;
 } return undefined; }

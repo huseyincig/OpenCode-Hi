@@ -67,7 +67,7 @@ export function buildMissionRuntimeProjection(m, worker) {
         next_action: nextAction(m, worker),
         execution: executionSummary(m, worker),
         blockers: blockerSummary(m),
-        obligations: m.execution.obligations.filter(o => o.status === 'open').slice(0, 8).map(o => `${o.id}:${clipText(o.summary, 300)}`),
+        obligations: m.execution.obligations.filter(o => o.status === 'open').slice(0, 8).map(o => `id=${o.id}; summary=${clipText(o.summary, 300)}`),
         active_methodologies: methodologySummary(m, worker),
         verification: verificationSummary(m),
         authority: authoritySummary(m),

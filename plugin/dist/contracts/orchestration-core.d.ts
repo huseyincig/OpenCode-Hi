@@ -19,15 +19,6 @@ export interface CapabilityResolution {
     semanticLoss: string[];
     reason: string[];
 }
-/**
- * Boundary implemented by OpenCode, another host, or a Hi-owned fallback.
- * Core code depends on capability semantics, never a host client/session API.
- */
-export interface CapabilityPort<Request = unknown, Result = unknown> {
-    readonly capability: string;
-    resolve(requirement: CapabilityRequirement): CapabilityResolution | Promise<CapabilityResolution>;
-    execute(request: Request): Promise<Result>;
-}
 export type WorkDependencyKind = 'requires';
 export interface DependencyEdge {
     from: string;
@@ -103,19 +94,6 @@ export declare function sameExecutionAttempt(a: Pick<ExecutionAttemptIdentity, '
 export declare function sameExecutionAttemptFence(a: Pick<ExecutionAttempt, 'executionUnitId' | 'attemptId' | 'runId' | 'generation' | 'workerId' | 'sessionId'>, b: Pick<ExecutionAttempt, 'executionUnitId' | 'attemptId' | 'runId' | 'generation' | 'workerId' | 'sessionId'>): boolean;
 export type ExecutionTransitionKind = 'DISPATCH' | 'SETTLEMENT' | 'EVIDENCE_COMMIT';
 export type ExecutionTransitionState = 'PREPARED' | 'COMMITTED' | 'UNKNOWN';
-export interface ExecutionTransitionReceipt {
-    receiptId: string;
-    missionId: string;
-    workNodeId: string;
-    executionUnitId: string;
-    attemptId: string;
-    runId: string;
-    generation: number;
-    transition: ExecutionTransitionKind;
-    state: ExecutionTransitionState;
-    observedAt: number;
-    stateHash?: string;
-}
 export declare function executionTransitionReceiptId(input: {
     missionId: string;
     workNodeId: string;

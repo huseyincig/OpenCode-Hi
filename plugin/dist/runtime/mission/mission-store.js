@@ -1,12 +1,10 @@
 import { assessedIntent, provisionalIntent } from '../intent/semantic-assessment.js';
 import { collectRepoContext } from '../intent/repo-context.js';
-import { continuationBudget, resolveCategory } from '../routing/category.js';
+import { continuationBudget } from '../routing/category.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { verificationPolicyFor } from '../verification/policy.js';
 import { syncMissionGates } from '../gates/gates.js';
-import { minimumTeamFor } from '../routing/minimum-team.js';
-import { decideAdaptiveExecution } from '../execution/adaptive-policy.js';
-import { decideTopology } from '../execution/topology-policy.js';
+import { decideSemanticExecution } from '../decision/semantic-decision.js';
 import { activateMethodologySignal, suppressIntentMethodologySignals } from '../methodology/activation.js';
 import { architectureMethodologySignals } from '../methodology/signals.js';
 import { resolveHumanDecision } from '../human-decision/runtime.js';
@@ -14,7 +12,17 @@ import { createSchedulerLifecycleState } from '../../contracts/orchestration-cor
 import { reduceSchedulerLifecycle } from '../scheduler/lifecycle.js';
 import { semanticProgressDelta, semanticProgressMade, semanticProgressSnapshot } from '../progress/semantic-progress.js';
 function obligation(id, kind, summary, requiredEvidence = []) { return { id, kind, summary, status: 'open', requiredEvidence }; }
-function reconciledIntentMethodologySignals(assessment) {
+function explicitTestMutationForbidden(text) {
+    const normalized = text.toLowerCase().replace(/[\u2018\u2019]/g, "'").replace(/\s+/g, ' ').trim();
+    if (!normalized)
+        return false;
+    return [
+        /\b(?:do not|don't|must not)\s+(?:modify|edit|change|write|add|create|update|touch)\s+(?:the\s+)?(?:tests?|test files?)\b/,
+        /\b(?:tests?|test files?)\s+(?:must|should)\s+(?:remain|stay)\s+unchanged\b/,
+        /\bwithout\s+(?:modifying|editing|changing|writing|adding|creating|updating|touching)\s+(?:the\s+)?(?:tests?|test files?)\b/,
+    ].some(pattern => pattern.test(normalized));
+}
+function reconciledIntentMethodologySignals(assessment, userText = '') {
     const suppressed = new Set(assessment.suppressed_intent_signals), runtimeSuppressed = [];
     if (assessment.dependency_class === 'independent-multi' && assessment.intent_signals.includes('intent.planning')) {
         suppressed.add('intent.planning');
@@ -24,7 +32,22 @@ function reconciledIntentMethodologySignals(assessment) {
         suppressed.add('intent.test-strategy');
         runtimeSuppressed.push('intent.test-strategy');
     }
-    return { active: assessment.intent_signals.filter(signal => !suppressed.has(signal)), suppressed: [...suppressed], runtimeSuppressed };
+    const boundedDirectBugFix = assessment.task_kind === 'bug-fix' && assessment.scope === 'local' && assessment.dependency_class === 'independent' && ['low', 'medium'].includes(assessment.risk) && !assessment.required_capabilities.includes('source-verification') && assessment.likely_targets.length > 0 && assessment.likely_verification.length > 0;
+    const debuggingBackedByDiagnosis = assessment.required_capabilities.includes('repository-analysis');
+    const diagnosisOwnsRootCause = assessment.task_kind === 'diagnosis' && assessment.intent_signals.includes('intent.debugging');
+    if (diagnosisOwnsRootCause) {
+        suppressed.add('intent.debugging');
+        runtimeSuppressed.push('intent.debugging');
+    }
+    else if (boundedDirectBugFix && assessment.intent_signals.includes('intent.debugging') && (assessment.ambiguity === 'none' || !debuggingBackedByDiagnosis)) {
+        suppressed.add('intent.debugging');
+        runtimeSuppressed.push('intent.debugging');
+    }
+    if (explicitTestMutationForbidden(userText)) {
+        suppressed.add('intent.tdd');
+        runtimeSuppressed.push('intent.tdd');
+    }
+    return { active: assessment.intent_signals.filter(signal => !suppressed.has(signal)), suppressed: [...suppressed], runtimeSuppressed: [...new Set(runtimeSuppressed)] };
 }
 export class MissionStore {
     #bySession = new Map();
@@ -64,46 +87,51 @@ export class MissionStore {
         m.identity.semantic_assessment.status = 'assessed';
         m.identity.semantic_assessment.assessed_at = now;
         if (!assessment.material) {
+            m.identity.intent = assessedIntent(m.identity.intent, assessment);
+            m.identity.risk = m.identity.intent.risk;
+            m.identity.objective = m.identity.intent.objective;
             m.identity.status = 'completed';
             m.execution.obligations = [];
             m.methodology.methodology_needs = [];
-            appendLedger(m, 'semantic.non-material', { payload: { revision: m.identity.semantic_assessment.revision, source: m.identity.semantic_assessment.source } });
+            appendLedger(m, 'semantic.non-material', { payload: { revision: m.identity.semantic_assessment.revision, source: m.identity.semantic_assessment.source, taskKind: m.identity.intent.taskKind, scope: m.identity.intent.scope, risk: m.identity.intent.risk } });
             syncMissionGates(m);
             m.identity.updated_at = now;
             this.syncProgressBaseline(m);
             return m;
         }
-        m.identity.intent = assessedIntent(m.identity.intent, assessment);
+        const explicitUserVerification = [...m.identity.intent.likelyVerification], boundedExplicitVerification = explicitUserVerification.length > 0 && assessment.scope === 'local' && ['low', 'medium'].includes(assessment.risk) && assessment.task_kind !== 'release-readiness', effectiveAssessment = boundedExplicitVerification ? { ...assessment, likely_verification: explicitUserVerification, user_verification: explicitUserVerification, verification_ceiling: true } : assessment;
+        m.identity.intent = assessedIntent(m.identity.intent, effectiveAssessment);
         m.identity.risk = m.identity.intent.risk;
         m.identity.objective = m.identity.intent.objective;
-        const obligations = [];
-        if (m.identity.intent.taskKind === 'bug-fix' || m.identity.intent.taskKind === 'performance')
-            obligations.push(obligation('o-analysis', 'analysis', m.identity.intent.taskKind === 'bug-fix' ? 'Root cause understood' : 'Relevant performance bottleneck identified'));
-        if (m.identity.intent.taskKind !== 'review' && m.identity.intent.taskKind !== 'release-readiness')
+        const reconciledSignals = reconciledIntentMethodologySignals(effectiveAssessment, m.identity.semantic_assessment.pending_text), obligations = [], bugFixAnalysisRequired = m.identity.intent.taskKind === 'bug-fix' && (m.identity.intent.scope !== 'local' || m.identity.intent.ambiguity !== 'none' || reconciledSignals.active.includes('intent.debugging'));
+        if (bugFixAnalysisRequired || m.identity.intent.taskKind === 'performance' || m.identity.intent.taskKind === 'diagnosis')
+            obligations.push(obligation('o-analysis', 'analysis', m.identity.intent.taskKind === 'performance' ? 'Relevant performance bottleneck identified' : 'Root cause understood'));
+        if (!['diagnosis', 'review', 'release-readiness'].includes(m.identity.intent.taskKind))
             obligations.push(obligation('o-implementation', 'implementation', 'Requested change completed'));
         if (m.identity.intent.taskKind === 'review')
             obligations.push(obligation('o-review', 'review', 'Requested review completed', m.identity.intent.likelyVerification));
-        obligations.push(obligation('o-verification', 'verification', m.identity.intent.likelyVerification.join(', '), m.identity.intent.likelyVerification));
+        if (m.identity.intent.taskKind !== 'diagnosis')
+            obligations.push(obligation('o-verification', 'verification', m.identity.intent.likelyVerification.join(', '), m.identity.intent.likelyVerification));
         if (m.identity.intent.risk === 'high')
             obligations.push(obligation('o-high-assurance', 'review', 'Security-sensitive change reviewed'));
         if (m.identity.intent.risk === 'authority-boundary')
             obligations.push(obligation('o-authority', 'authority', 'External action explicitly authorized and completed'));
         m.execution.obligations = obligations;
         m.execution.verification_policy = verificationPolicyFor(m.identity.intent);
-        const category = resolveCategory(m.identity.intent), team = minimumTeamFor(m.identity.intent, m.execution.verification_policy, m.execution.primary_mode), adaptive = decideAdaptiveExecution(m.identity.intent), topology = decideTopology(m.identity.intent, this.#getTopology());
-        m.execution.execution_mode = topology.executionMode;
-        m.execution.primary_mode = team.primary;
-        m.execution.adaptive_execution = { path: adaptive.path, reasons: adaptive.reasons };
-        m.execution.topology = { mode: topology.mode, parallelism: topology.parallelism, reason: topology.reason };
-        m.continuation.continuation_budget = continuationBudget(category);
+        const decision = decideSemanticExecution({ intent: m.identity.intent, verification: m.execution.verification_policy, primaryMode: m.execution.primary_mode, topology: this.#getTopology() });
+        m.execution.execution_mode = decision.topology.executionMode;
+        m.execution.primary_mode = decision.primary;
+        m.execution.adaptive_execution = { path: decision.executionPath, reasons: decision.executionReasons };
+        m.execution.topology = { mode: decision.topology.mode, parallelism: decision.topology.parallelism, reason: decision.topology.reason };
+        m.continuation.continuation_budget = decision.continuationBudget;
+        appendLedger(m, 'semantic.decision', { payload: { version: decision.version, path: decision.executionPath, topology: decision.topology.mode, parallelism: decision.topology.parallelism, primary: decision.primary, child_roles: decision.childRoles, model_class: decision.modelClass, fresh_reviewer: decision.assurance.freshReviewerRequired, isolation: decision.isolation.intent, provider_surface_phase: decision.providerSurfacePhase, reasons: decision.reasons } });
         m.methodology.methodology_needs = [];
-        const reconciledSignals = reconciledIntentMethodologySignals(assessment);
         for (const signal of reconciledSignals.active)
             activateMethodologySignal(m, this.#root, { signal, producer: 'intent', reason: 'Host primary semantic assessment reported this explicit intent signal.' });
         for (const signal of architectureMethodologySignals(m.identity.intent))
             activateMethodologySignal(m, this.#root, { signal: signal.name, producer: 'architecture', reason: signal.reason });
         syncMissionGates(m);
-        appendLedger(m, 'semantic.assessed', { payload: { revision: m.identity.semantic_assessment.revision, source: m.identity.semantic_assessment.source, taskKind: m.identity.intent.taskKind, scope: m.identity.intent.scope, risk: m.identity.intent.risk, ambiguity: m.identity.intent.ambiguity, dependencyClass: m.identity.intent.dependencyClass, capabilities: m.identity.intent.requiredCapabilities, intent_signals: assessment.intent_signals, effective_intent_signals: reconciledSignals.active, suppressed_intent_signals: assessment.suppressed_intent_signals, runtime_suppressed_intent_signals: reconciledSignals.runtimeSuppressed, technical_targets: m.identity.intent.likelyTargets ?? [] } });
+        appendLedger(m, 'semantic.assessed', { payload: { revision: m.identity.semantic_assessment.revision, source: m.identity.semantic_assessment.source, taskKind: m.identity.intent.taskKind, scope: m.identity.intent.scope, risk: m.identity.intent.risk, ambiguity: m.identity.intent.ambiguity, dependencyClass: m.identity.intent.dependencyClass, capabilities: m.identity.intent.requiredCapabilities, intent_signals: effectiveAssessment.intent_signals, effective_intent_signals: reconciledSignals.active, suppressed_intent_signals: effectiveAssessment.suppressed_intent_signals, runtime_suppressed_intent_signals: reconciledSignals.runtimeSuppressed, technical_targets: m.identity.intent.likelyTargets ?? [], technical_user_verification: explicitUserVerification, technical_verification_ceiling_applied: boundedExplicitVerification } });
         m.identity.updated_at = now;
         this.syncProgressBaseline(m);
         return m;
@@ -217,7 +245,7 @@ export class MissionStore {
         m.identity.intent = assessedIntent(m.identity.intent, assessment);
         m.identity.intent.objective = m.identity.objective;
         m.identity.risk = m.identity.intent.risk;
-        const reconciledSignals = reconciledIntentMethodologySignals(assessment);
+        const reconciledSignals = reconciledIntentMethodologySignals(assessment, text);
         if (reconciledSignals.suppressed.length)
             suppressIntentMethodologySignals(m, reconciledSignals.suppressed, `Host primary semantic follow-up superseded or runtime-reconciled intent methodology at revision ${m.identity.semantic_assessment.revision}.`);
         for (const signal of reconciledSignals.active)
@@ -229,13 +257,14 @@ export class MissionStore {
         m.execution.verification_policy = verificationPolicyFor(m.identity.intent);
         for (const signal of architectureMethodologySignals(m.identity.intent))
             activateMethodologySignal(m, this.#root, { signal: signal.name, producer: 'architecture', reason: signal.reason });
-        const category = resolveCategory(m.identity.intent), team = minimumTeamFor(m.identity.intent, m.execution.verification_policy, m.execution.primary_mode), adaptive = decideAdaptiveExecution(m.identity.intent, m), topology = decideTopology(m.identity.intent, this.#getTopology(), m);
-        m.execution.execution_mode = topology.executionMode;
-        m.execution.primary_mode = team.primary;
-        m.execution.adaptive_execution = { path: adaptive.path, reasons: adaptive.reasons };
-        m.execution.topology = { mode: topology.mode, parallelism: topology.parallelism, reason: topology.reason };
-        m.continuation.continuation_budget = Math.max(m.continuation.continuation_budget, continuationBudget(category));
+        const decision = decideSemanticExecution({ intent: m.identity.intent, verification: m.execution.verification_policy, primaryMode: m.execution.primary_mode, topology: this.#getTopology(), mission: m });
+        m.execution.execution_mode = decision.topology.executionMode;
+        m.execution.primary_mode = decision.primary;
+        m.execution.adaptive_execution = { path: decision.executionPath, reasons: decision.executionReasons };
+        m.execution.topology = { mode: decision.topology.mode, parallelism: decision.topology.parallelism, reason: decision.topology.reason };
+        m.continuation.continuation_budget = Math.max(m.continuation.continuation_budget, decision.continuationBudget);
         m.identity.status = 'active';
+        appendLedger(m, 'semantic.decision', { payload: { version: decision.version, revision: m.identity.semantic_assessment.revision, path: decision.executionPath, topology: decision.topology.mode, parallelism: decision.topology.parallelism, primary: decision.primary, child_roles: decision.childRoles, model_class: decision.modelClass, fresh_reviewer: decision.assurance.freshReviewerRequired, isolation: decision.isolation.intent, provider_surface_phase: decision.providerSurfacePhase, reasons: decision.reasons } });
         appendLedger(m, 'semantic.followup-assessed', { payload: { revision: m.identity.semantic_assessment.revision, message_kind: kind, taskKind: m.identity.intent.taskKind, scope: m.identity.intent.scope, risk: m.identity.intent.risk, ambiguity: m.identity.intent.ambiguity, dependencyClass: m.identity.intent.dependencyClass, intent_signals: assessment.intent_signals, effective_intent_signals: reconciledSignals.active, suppressed_intent_signals: assessment.suppressed_intent_signals, runtime_suppressed_intent_signals: reconciledSignals.runtimeSuppressed } });
         syncMissionGates(m);
         m.identity.updated_at = now;

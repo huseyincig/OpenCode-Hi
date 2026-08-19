@@ -21,8 +21,13 @@ required_steps={'Product build, architecture lint, Node acceptance, docs parity'
 for name,j in [('ubuntu',u),('windows',w)]:
  steps={x.get('name'):x.get('conclusion') for x in (j.get('steps') or [])}
  if any(steps.get(x)!='success' for x in required_steps):viol.append(name+'-required-step-not-success')
-if (u.get('node_summary') or {})!={'tests':848,'pass':848,'fail':0,'skipped':0}:viol.append('ubuntu-node-summary-drift')
-if (w.get('node_summary') or {})!={'tests':848,'pass':847,'fail':0,'skipped':1}:viol.append('windows-node-summary-drift')
+def valid_node_summary(value):
+ if not isinstance(value,dict):return False
+ try: tests=int(value.get('tests'));passed=int(value.get('pass'));failed=int(value.get('fail'));skipped=int(value.get('skipped'))
+ except Exception:return False
+ return tests>0 and failed==0 and passed>=0 and skipped>=0 and passed+skipped==tests
+if not valid_node_summary(u.get('node_summary')):viol.append('ubuntu-node-summary-drift')
+if not valid_node_summary(w.get('node_summary')):viol.append('windows-node-summary-drift')
 wf=(ROOT/'.github/workflows/release-readiness.yml').read_text(encoding='utf-8')
 if 'os: [ubuntu-latest, windows-latest]' not in wf or 'fetch-depth: 0' not in wf:viol.append('cross-platform-workflow-drift')
 material_prefixes=('plugin/src/','plugin/dist/','skills/')

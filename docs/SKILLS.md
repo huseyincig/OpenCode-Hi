@@ -24,8 +24,8 @@ OpenCode may discover other project or personal skills, but discovery does not g
 
 `hi-methodology-authoring` is used only when a reusable procedure is explicitly requested or repeated project evidence demonstrates a genuine methodology gap. One-off facts belong in Project Intelligence or evidence, not in a new methodology.
 
-## Skill catalog indexing
+## Native skill selection
 
-`SkillCatalogIndex` is the single runtime-scoped discovery cache used by Hi. On plugin configuration/startup it builds a bounded record for each discovered OpenCode skill containing the skill id/name, provider, `SKILL.md` path and realpath, mtime and SHA-256, parsed top-level frontmatter, pre-indexed bounded resource map, and validity state. This index does not replace OpenCode skill loading and does not change `MethodologyContract` ownership.
+Hi does not maintain a second persistent OpenCode skill index. `plugin/src/runtime/skills/registry.ts` derives bounded candidates only for methodologies already admitted by the canonical methodology catalog, validates provider/path/frontmatter/resource boundaries, applies the effective OpenCode skill permission map, and returns the minimum selected set. Built-in methodology metadata comes from generated policy; valid `hi-project-*` methodology policy/provenance may add project candidates.
 
-Normal task starts reuse the index instead of repeating full directory/resource discovery. The index refreshes when configured skill paths change, tracked skill/root/resource fingerprints drift, a relevant project methodology policy/provenance or skill surface changes, or the OpenCode config hook explicitly refreshes it. Resource reads remain constrained to the pre-indexed resource map; unrelated repository edits do not invalidate the skill catalog.
+Full `SKILL.md` content is still loaded through OpenCode's native skill primitive only after selection. Discovery by OpenCode alone grants no Hi activation authority, same-name/provider collisions fail closed, and unrelated skills are not copied into the Hi prompt surface.

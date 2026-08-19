@@ -1,6 +1,6 @@
 import type { OpenCodeClient } from './types.js';
 import type { WorkspaceLeaseContract } from '../contracts/workspace.js';
-import type { WorkspaceExecutor, WorkspaceProvisionRequest, WorkspaceProvisioned, WorkspaceReconcileResult } from '../runtime/workspace/executor.js';
+import type { WorkspaceExecutor, WorkspaceProvisionRequest, WorkspaceProvisioned, WorkspaceReintegrateRequest, WorkspaceReintegrated, WorkspaceReconcileResult } from '../runtime/workspace/executor.js';
 export interface GitWorkspaceInspection {
     head: string;
     common_dir: string;
@@ -20,6 +20,7 @@ export declare class OpenCodeWorkspaceAdapter implements WorkspaceExecutor {
     }>;
     sourceBaseline(repositoryRoot: string): Promise<string>;
     provision(request: WorkspaceProvisionRequest): Promise<WorkspaceProvisioned>;
+    reintegrate(request: WorkspaceReintegrateRequest): Promise<WorkspaceReintegrated>;
     reconcile(lease: WorkspaceLeaseContract): Promise<WorkspaceReconcileResult>;
     cleanup(lease: WorkspaceLeaseContract): Promise<void>;
 }

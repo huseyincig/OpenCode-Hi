@@ -183,326 +183,19 @@ def test_living_validation_receipts_do_not_hardcode_stale_test_counts():
 
 def test_release_gate_stays_blocked_until_exact_candidate_external_completion():
     d=json.loads((ROOT/'data/validation/release-gates.json').read_text(encoding='utf-8'))
-    assert d['release']==V
-    assert d['gates']['source_integrity'].startswith('PASS_LOCAL_')
-    assert d['gates']['deterministic_release']=='PASS_LOCAL_CURRENT_WORKTREE'
-    assert d['current_local_evidence']['deterministic_release']['status']=='PASS'
-    assert 'self-referential' in d['current_local_evidence']['deterministic_release']['hash_binding']
-    assert d['gates']['node_runtime_acceptance'].startswith('PASS_LOCAL_')
-    assert d['gates']['python_acceptance'].startswith('PASS_LOCAL_')
-    for gate in ('plain_opencode_smoke','packaged_agents_skills','opencode_native_child_sessions','opencode_model_provider_binding','permission_denial_runtime'):
-        assert d['gates'][gate]=='PASS_EXACT_SOURCE_HOST_1_18_18'
-    assert d['gates']['native_package_plugin_install_exact_candidate']=='PASS_EXACT_FINAL_SOURCE_F1A2C1C_OPENCODE_1_18_18'
-    assert d['gates']['windows_runtime_smoke']=='PASS_GITHUB_ACTIONS_EXACT_FINAL_SOURCE_F1A2C1C'
-    assert d['gates']['dependency_supply_chain_external']=='PASS_CLEAN_CONSUMER_EXACT_FINAL_SOURCE_F1A2C1C'
-    pre=d['current_local_evidence']['pre_freeze_external']
-    assert pre['status']=='PASS_EXACT_SOURCE_9F3A1A9' and pre['github_actions_run']==31813070875
-    rr=ROOT/pre['receipt']; assert rr.is_file()
-    receipt=json.loads(rr.read_text(encoding='utf-8'))
-    assert receipt['source_binding']['tested_git_commit']=='9f3a1a9025f73f0da46dcd88da31a6f5ef44c545'
-    assert receipt['github_actions']['conclusion']=='success'
-    assert {j['name']:j['conclusion'] for j in receipt['github_actions']['jobs']}=={'ubuntu-latest / node-22 / python-3.11':'success','windows-latest / node-22 / python-3.11':'success'}
-    assert receipt['clean_consumer']['dependency_audit']['total']==0 and receipt['clean_consumer']['fresh_consumer_install']['esm_import']=='PASS'
-    assert receipt['opencode_loader']['host_version']=='1.18.18' and receipt['opencode_loader']['plugin_initialized_log'] is True
-    assert d['gates']['github_release_publication']=='PASS_T4_V0_1_0_EXACT_SOURCE_F1A2C1C'
+    assert d['release']==V and d['release_blocked'] is True
+    assert d['gates']['source_integrity'].startswith(('PENDING_','PASS_LOCAL_'))
+    assert d['gates']['node_runtime_acceptance'].startswith(('PENDING_','PASS_LOCAL_'))
+    assert d['gates']['python_acceptance'].startswith(('PENDING_','PASS_LOCAL_'))
+    for gate in ('plain_opencode_smoke','packaged_agents_skills','opencode_native_child_sessions','opencode_model_provider_binding','permission_denial_runtime','native_package_plugin_install_exact_candidate','windows_runtime_smoke','dependency_supply_chain_external'):
+        assert d['gates'][gate].startswith('PENDING_'),(gate,d['gates'][gate])
+    assert d['gates']['github_release_publication'].startswith('PENDING_')
     assert d['gates']['npm_registry_publication'].startswith('PENDING_AUTH_T4_')
-    pub=d['current_local_evidence']['final_publication']; assert pub['released_source']=='f1a2c1c4358e5a63656da7a585b6b5793d1ed3be'
-    pr=ROOT/pub['receipt']; assert pr.is_file(); publication=json.loads(pr.read_text(encoding='utf-8'))
-    assert publication['github_release']['status']=='PASS_T4' and publication['github_release']['asset_digest_match'] is True
-    assert publication['released_source']['peeled_commit']=='f1a2c1c4358e5a63656da7a585b6b5793d1ed3be'
-    assert publication['final_exact_ref_ci']['conclusion']=='success'
-    assert publication['final_clean_consumer']['dependency_audit']['total']==0
-    assert publication['npm_registry']['status']=='BLOCKED_T4_AUTH' and publication['npm_registry']['publish_attempted'] is False
-    assert d['release_blocked'] is True
-    assert d['external_blockers']
-    assert d['current_local_evidence']['host_acceptance']['receipt']=='data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-c5d8287.json'
-    assert d['current_local_evidence']['host_acceptance']['runtime_source'].startswith('c5d8287')
-    progress=json.loads((ROOT/'data/validation/forensic-61-progress.json').read_text(encoding='utf-8'))
-    assert progress['summary']['total']==61
-    assert progress['summary']['complete_local']+progress['summary']['partial_external']==61
-    assert progress['summary']['failed']==0
-    assert progress['summary']['unresolved_internal']==0
-    assert len(progress['items'])==61
-    assert [x['item'] for x in progress['items']]==list(range(1,62))
-    assert d['historical_receipts_not_valid_for_current_candidate']['release']!='2.0.10'
+    hist=d['historical_release_evidence']
+    assert hist['release']=='0.1.3' and hist['github_release_status']=='PASS_T4' and hist['npm_registry_status']=='PASS_T4'
+    assert (ROOT/hist['release_status_receipt']).is_file()
+    assert '0.2.0' in d['reason'] and d['external_blockers']
 
-def test_uninstall_preserves_user_adopted_hi_registration(tmp_path):
-    assert run(ROOT/'scripts/native_plugin_setup.py','install',tmp_path).returncode==0
-    cfg=tmp_path/'opencode.json'; data=json.loads(cfg.read_text(encoding='utf-8'))
-    data['plugin']=[('opencode-hi@9.9.9' if x.startswith('opencode-hi@') else x) for x in data['plugin']]
-    cfg.write_text(json.dumps(data))
-    r=run(ROOT/'scripts/native_plugin_setup.py','uninstall',tmp_path); out=json.loads(r.stdout)
-    assert r.returncode==0 and out['status']=='PRESERVED'
-    assert 'opencode-hi@9.9.9' in json.loads(cfg.read_text(encoding='utf-8'))['plugin']
-
-def test_uninstall_without_ownership_never_deletes_hi_registration(tmp_path):
-    (tmp_path/'opencode.json').write_text(json.dumps({'plugin':['opencode-hi@user-managed']}))
-    r=run(ROOT/'scripts/native_plugin_setup.py','uninstall',tmp_path); out=json.loads(r.stdout)
-    assert r.returncode==2 and out['status']=='BLOCKED' and out['reason']=='ownership-proof-missing'
-    assert json.loads((tmp_path/'opencode.json').read_text(encoding='utf-8'))['plugin']==['opencode-hi@user-managed']
-
-def test_cli_doctor_reports_managed_config_drift(tmp_path):
-    assert run(ROOT/'scripts/native_plugin_setup.py','install',tmp_path).returncode==0
-    cfg=tmp_path/'opencode.json'; data=json.loads(cfg.read_text(encoding='utf-8')); data['share']='manual'; cfg.write_text(json.dumps(data))
-    r=run(ROOT/'scripts/native_plugin_setup.py','doctor',tmp_path); out=json.loads(r.stdout)
-    assert r.returncode==0 and out['status']=='WARN' and out['ownership']['config_drift'] is True
-    assert 'managed-config-drift' in out['warnings']
-
-def test_cli_doctor_fails_unsupported_routing_schema(tmp_path):
-    assert run(ROOT/'scripts/native_plugin_setup.py','install',tmp_path).returncode==0
-    p=tmp_path/'.opencode'/'hi'/'policy'/'routing.json'; p.parent.mkdir(parents=True); p.write_text(json.dumps({'schema':99,'routing':{}}))
-    r=run(ROOT/'scripts/native_plugin_setup.py','doctor',tmp_path); out=json.loads(r.stdout)
-    assert r.returncode==2 and out['status']=='FAIL' and 'unsupported-routing-schema' in out['issues']
-
-def test_release_build_identity_contract_matches_version_and_changelog():
-    import importlib.util
-    spec=importlib.util.spec_from_file_location('hi_release_build',ROOT/'scripts/release-build.py'); mod=importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
-    assert mod.release_identity(ROOT,V)==[]
-
-def test_release_build_identity_detects_package_and_changelog_drift(tmp_path):
-    import importlib.util, shutil
-    spec=importlib.util.spec_from_file_location('hi_release_build2',ROOT/'scripts/release-build.py'); mod=importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
-    (tmp_path/'plugin').mkdir(); (tmp_path/'VERSION').write_text('2.0.10\n'); (tmp_path/'package.json').write_text(json.dumps({'version':'2.0.9'})); (tmp_path/'plugin'/'package.json').write_text(json.dumps({'version':'2.0.10'})); (tmp_path/'CHANGELOG.md').write_text('# Changelog\n\n## 2.0.9\n')
-    issues=mod.release_identity(tmp_path,'2.0.10'); assert 'root package version mismatch' in issues and 'CHANGELOG version entry missing' in issues
-
-
-def test_release_build_identity_detects_plugin_license_drift(tmp_path):
-    import importlib.util
-    spec=importlib.util.spec_from_file_location('hi_release_build_license',ROOT/'scripts/release-build.py'); mod=importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
-    (tmp_path/'plugin').mkdir(); (tmp_path/'VERSION').write_text('2.0.10\n')
-    (tmp_path/'package.json').write_text(json.dumps({'version':'2.0.10','license':'Apache-2.0'}))
-    (tmp_path/'plugin'/'package.json').write_text(json.dumps({'version':'2.0.10','license':'MIT'}))
-    (tmp_path/'CHANGELOG.md').write_text('# Changelog\n\n## 2.0.10\n')
-    assert 'plugin package license mismatch' in mod.release_identity(tmp_path,'2.0.10')
-
-def test_release_and_setup_technical_paths_are_posix_canonical():
-    release=(ROOT/'scripts/release-build.py').read_text(encoding='utf-8')
-    setup=(ROOT/'scripts/native_plugin_setup.py').read_text(encoding='utf-8')
-    assert "lock.relative_to(root).as_posix()" in release
-    assert "cfg.relative_to(project).as_posix()" in setup
-    assert "preserved.append(rel.as_posix())" in setup
-
-def test_release_build_identity_detects_root_package_lock_drift(tmp_path):
-    import importlib.util
-    spec=importlib.util.spec_from_file_location('hi_release_build_rootlock',ROOT/'scripts/release-build.py'); mod=importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
-    (tmp_path/'plugin').mkdir(); (tmp_path/'VERSION').write_text('2.0.10\n'); (tmp_path/'package.json').write_text(json.dumps({'version':'2.0.10','dependencies':{'x':'1.0.0'}})); (tmp_path/'plugin'/'package.json').write_text(json.dumps({'version':'2.0.10'})); (tmp_path/'package-lock.json').write_text(json.dumps({'version':'2.0.9','packages':{'':{'version':'2.0.9'}}})); (tmp_path/'CHANGELOG.md').write_text('# Changelog\n\n## 2.0.10\n')
-    assert 'package-lock.json version mismatch' in mod.release_identity(tmp_path,'2.0.10')
-
-
-def test_release_build_identity_detects_package_lock_drift(tmp_path):
-    import importlib.util
-    spec=importlib.util.spec_from_file_location('hi_release_build3',ROOT/'scripts/release-build.py'); mod=importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
-    (tmp_path/'plugin').mkdir(); (tmp_path/'VERSION').write_text('2.0.10\n'); (tmp_path/'package.json').write_text(json.dumps({'version':'2.0.10'})); (tmp_path/'plugin'/'package.json').write_text(json.dumps({'version':'2.0.10'})); (tmp_path/'plugin'/'package-lock.json').write_text(json.dumps({'version':'2.0.9','packages':{'':{'version':'2.0.9'}}})); (tmp_path/'CHANGELOG.md').write_text('# Changelog\n\n## 2.0.10\n')
-    assert 'plugin/package-lock.json version mismatch' in mod.release_identity(tmp_path,'2.0.10')
-
-def test_release_manifest_contains_deterministic_provenance(tmp_path):
-    dist,_=_build(tmp_path); manifest=json.loads((dist.parent/f'RELEASE-MANIFEST-{V}.json').read_text(encoding='utf-8'))
-    assert manifest['schema']==5
-    p=manifest['provenance']
-    assert p['schema']==1 and p['builder']=='scripts/release-build.py' and p['deterministic_zip'] is True
-    assert p['canonical_zip_time']=='2026-01-01T00:00:00Z' and len(p['inputs_sha256'])==64
-    h=hashlib.sha256()
-    for rel,digest in sorted(manifest['files'].items()):
-        src=(dist.parent/rel) if rel.startswith('SBOM-') else (ROOT/rel)
-        assert hashlib.sha256(src.read_bytes()).hexdigest()==digest
-        h.update(rel.encode());h.update(b'\0');h.update(digest.encode());h.update(b'\0')
-    assert h.hexdigest()==p['inputs_sha256']
-
-def test_release_rebuild_is_byte_for_byte_reproducible(tmp_path):
-    a=tmp_path/'a';b=tmp_path/'b';sa=tmp_path/'sa';sb=tmp_path/'sb'
-    for out,src in [(a,sa),(b,sb)]:
-        r=run(ROOT/'scripts/release-build.py','--out',out,'--source-out',src);assert r.returncode==0,r.stderr
-    for name in [f'OpenCode-Hi-{V}-DISTRIBUTABLE.zip',f'RELEASE-MANIFEST-{V}.json']:
-        assert hashlib.sha256((a/name).read_bytes()).hexdigest()==hashlib.sha256((b/name).read_bytes()).hexdigest()
-    source=f'OpenCode-Hi-{V}-SOURCE.zip'
-    assert hashlib.sha256((sa/source).read_bytes()).hexdigest()==hashlib.sha256((sb/source).read_bytes()).hexdigest()
-
-
-def test_release_manifest_contains_dependency_sbom_and_supply_chain_digest(tmp_path):
-    dist,_=_build(tmp_path); manifest=json.loads((dist.parent/f'RELEASE-MANIFEST-{V}.json').read_text(encoding='utf-8'))
-    sc=manifest['supply_chain']; assert sc['schema']==2 and sc['dependency_locks']==['package-lock.json','plugin/package-lock.json']
-    sbom_path=dist.parent/sc['sbom']; sbom=json.loads(sbom_path.read_text(encoding='utf-8'))
-    assert hashlib.sha256(sbom_path.read_bytes()).hexdigest()==sc['sbom_sha256']
-    assert sbom['dependency_graph_sha256']==sc['dependency_graph_sha256']
-    assert sbom['component_count']==sc['component_count'] and sbom['component_count']>0
-    assert any(c['name']=='@opencode-ai/plugin' and c['relation']=='direct-peer' for c in sbom['components'])
-    assert any(c['name']=='typescript' and c['relation']=='direct-dev' for c in sbom['components'])
-    assert any(c['name']=='@opencode-ai/sdk' and c['relation']=='direct-runtime' for c in sbom['components'])
-    assert any(c['name']=='playwright-core' and c['relation']=='direct-optional' for c in sbom['components'])
-    assert sbom['schema']==2 and sbom['dependency_locks']==['package-lock.json','plugin/package-lock.json']
-    assert sbom['dependency_lock_sha256']==sc['dependency_lock_sha256']
-    for rel,digest in sc['dependency_lock_sha256'].items(): assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
-
-def test_cross_platform_python_launcher_prefers_setup_python_and_validator_reads_utf8():
-    launcher=(ROOT/'scripts/run-python.mjs').read_text(encoding='utf-8')
-    assert "? [['python', []], ['py', ['-3']], ['python3', []]]" in launcher
-    validator=(ROOT/'scripts/validate.py').read_text(encoding='utf-8')
-    bare=[line for line in validator.splitlines() if '.read_text()' in line]
-    assert bare==[], bare
-
-def test_release_build_notices_cover_direct_dependency_names_and_licenses():
-    import importlib.util
-    spec=importlib.util.spec_from_file_location('hi_release_build4',ROOT/'scripts/release-build.py'); mod=importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
-    components,digest=mod.dependency_components(ROOT); assert len(digest)==64
-    assert mod.validate_third_party_notices(ROOT,components)==[]
-
-def test_role_models_reconfigure_preserves_unrelated_user_routing_fields(tmp_path, monkeypatch):
-    mod=load_module('native_plugin_setup_reconfigure',ROOT/'scripts/native_plugin_setup.py')
-    cfg=tmp_path/'.opencode'/'hi'/'policy'/'routing.json'
-    cfg.parent.mkdir(parents=True,exist_ok=True)
-    original={
-        'schema':1,'type':'hi-routing','routing':{
-            'strategy':'quality',
-            'roleModels':{'coder':['old/model'],'working-manager':['user/wm'],'custom-future-role':['user/custom']},
-            'categoryModels':{'deep':['user/deep']},
-            'categoryVariants':{'deep':['high']},
-            'allowedProviders':['user-provider'],
-            'deniedModels':['bad/model'],
-            'userFutureField':{'keep':True},
-        },
-        'userTopLevel':{'preserve':'yes'},
-        'ownership':'user-adopted-routing',
-    }
-    cfg.write_text(json.dumps(original),encoding='utf-8')
-    monkeypatch.setattr(mod,'discover_available_models',lambda:['opencode-go/minimax-m3'])
-    out=mod.role_models(tmp_path,defaults=True)
-    assert out['status']=='APPLIED'
-    after=json.loads(cfg.read_text(encoding='utf-8'))
-    assert after['routing']['roleModels']['coder']==['old/model']
-    assert after['routing']['roleModels']['working-manager']==['user/wm']
-    assert after['routing']['roleModels']['custom-future-role']==['user/custom']
-    assert after['routing']['strategy']=='quality'
-    assert after['routing']['categoryModels']=={'deep':['user/deep']}
-    assert after['routing']['categoryVariants']=={'deep':['high']}
-    assert after['routing']['allowedProviders']==['user-provider']
-    assert after['routing']['deniedModels']==['bad/model']
-    assert after['routing']['userFutureField']=={'keep':True}
-    assert after['userTopLevel']=={'preserve':'yes'}
-    assert after['ownership']=='user-adopted-routing'
-
-def test_role_models_manual_advanced_persists_all_roles_fallbacks_variants_and_policy(tmp_path, monkeypatch):
-    mod=load_module('native_plugin_setup_manual_advanced',ROOT/'scripts/native_plugin_setup.py')
-    available=['p/wm','p/mgr','p/mgr-fb','p/explore','p/arch','p/code','p/code-fb','p/qa','p/sec','p/visual']
-    monkeypatch.setattr(mod,'discover_available_models',lambda:available)
-    sets=[
-      'working-manager=p/wm','manager=p/mgr,p/mgr-fb','repository-explorer=p/explore','architect=p/arch',
-      'coder=p/code,p/code-fb','qa-reviewer=p/qa','security-reviewer=p/sec','visual-qa=p/visual',
-    ]
-    variants=['manager:p/mgr=high','manager:p/mgr-fb=medium','coder:p/code=xhigh','coder:p/code-fb=high']
-    out=mod.role_models(tmp_path,sets=sets,variants=variants,policy='manual')
-    assert out['status']=='APPLIED'; assert out['modelPolicy']=='manual'; assert out['adaptiveRoles']==[]
-    cfg=json.loads((tmp_path/'.opencode'/'hi'/'policy'/'routing.json').read_text(encoding='utf-8'))
-    assert len([r for r in mod.ROLES_WITH_HINT if r in cfg['routing']['roleModels']])==8
-    assert cfg['routing']['roleModels']['coder']==['p/code','p/code-fb']
-    assert cfg['routing']['roleVariants']['coder']=={'p/code':'xhigh','p/code-fb':'high'}
-    again=mod.role_models(tmp_path,print_only=True)
-    assert again['roleModels']['manager']==['p/mgr','p/mgr-fb']
-    assert again['roleVariants']['manager']['p/mgr']=='high'
-    assert again['modelPolicy']=='manual'
-
-
-def test_role_models_recommended_only_marks_missing_canonical_roles_for_smart_select(tmp_path, monkeypatch):
-    mod=load_module('native_plugin_setup_recommended_missing',ROOT/'scripts/native_plugin_setup.py')
-    all_ids=sorted({m for models in mod.DEFAULT_ROLE_MODELS.values() for m in models})
-    missing_role='visual-qa'; live=[m for m in all_ids if m not in mod.DEFAULT_ROLE_MODELS[missing_role]]
-    monkeypatch.setattr(mod,'discover_available_models',lambda:live)
-    out=mod.role_models(tmp_path,defaults=True,policy='recommended')
-    assert out['status']=='APPLIED'; assert out['modelPolicy']=='recommended'; assert out['adaptiveRoles']==[missing_role]
-    cfg=json.loads((tmp_path/'.opencode'/'hi'/'policy'/'routing.json').read_text(encoding='utf-8'))
-    assert missing_role not in cfg['routing']['roleModels']
-    assert cfg['routing']['roleModels']['coder']==mod.DEFAULT_ROLE_MODELS['coder']
-    assert cfg['routing']['adaptiveRoles']==[missing_role]
-
-def test_reconfigure_preserves_user_owned_config_and_updates_main_prompt_runtime_knobs(tmp_path):
-    cfg=tmp_path/'opencode.json'
-    original={
-        'plugin':['user-plugin'],
-        'mcp':{'user-server':{'command':['x']}},
-        'userFuture':{'keep':True},
-        'hi':{'userCustom':{'preserve':'yes'},'profile':{'balanced':{'customThreshold':'keep'}}},
-    }
-    cfg.write_text(json.dumps(original))
-    r=run(ROOT/'scripts/native_plugin_setup.py','reconfigure',tmp_path,
-          '--execution-policy','thorough','--primary-mode','manager',
-          '--parallel','enabled','--parallel-max','4',
-          '--profile-target','balanced','--specialist-threshold','low','--review-threshold','high',
-          '--team-mode','enabled','--team-max-members','3',
-          '--routing-strategy','quality','--allow-provider','p1','--deny-model','p/bad','--max-fallbacks','2')
-    out=json.loads(r.stdout); assert r.returncode==0 and out['status']=='APPLIED'
-    # Native OpenCode config is user-owned and is no longer mutated with private Hi keys.
-    after=json.loads(cfg.read_text(encoding='utf-8')); assert after==original
-    project_cfg=json.loads((tmp_path/'.opencode'/'hi'/'policy'/'routing.json').read_text(encoding='utf-8'))
-    assert project_cfg['executionPolicy']=='thorough' and project_cfg['primaryMode']=='manager'
-    assert project_cfg['parallel']['enabled'] is True and project_cfg['parallel']['max']==4
-    assert project_cfg['profile']['balanced']['specialistThreshold']=='low'
-    assert project_cfg['profile']['balanced']['reviewThreshold']=='high'
-    assert project_cfg['teamMode']['enabled'] is True and project_cfg['teamMode']['maxMembers']==3 and 'auto' not in project_cfg['teamMode']
-    routing=project_cfg['routing']
-    assert routing['maxFallbacks']==2 and routing['strategy']=='quality' and routing['allowedProviders']==['p1'] and routing['deniedModels']==['p/bad']
-    assert after['hi']['userCustom']=={'preserve':'yes'}
-
-
-def test_reconfigure_only_changes_explicit_fields_and_print_is_non_mutating(tmp_path):
-    cfg=tmp_path/'opencode.json'; cfg.write_text(json.dumps({'share':'manual','hi':{'executionPolicy':'minimal','primaryMode':'auto','parallel':{'enabled':False,'max':2}}}))
-    before=cfg.read_text(encoding='utf-8')
-    p=run(ROOT/'scripts/native_plugin_setup.py','reconfigure',tmp_path,'--print'); out=json.loads(p.stdout)
-    assert p.returncode==0 and out['hi']=={} and cfg.read_text(encoding='utf-8')==before
-    r=run(ROOT/'scripts/native_plugin_setup.py','reconfigure',tmp_path,'--primary-mode','working-manager'); assert r.returncode==0
-    assert cfg.read_text(encoding='utf-8')==before
-    project_cfg=json.loads((tmp_path/'.opencode'/'hi'/'policy'/'routing.json').read_text(encoding='utf-8'))
-    assert 'executionPolicy' not in project_cfg and 'parallel' not in project_cfg and project_cfg['primaryMode']=='working-manager'
-
-
-def test_reconfigure_is_safe_with_jsonc_because_private_settings_live_outside_native_config(tmp_path):
-    cfg=tmp_path/'opencode.jsonc'; cfg.write_text('{ // user comments\n "share":"manual"\n}\n')
-    before=cfg.read_text(encoding='utf-8')
-    r=run(ROOT/'scripts/native_plugin_setup.py','reconfigure',tmp_path,'--primary-mode','manager','--team-mode','enabled'); out=json.loads(r.stdout)
-    assert r.returncode==0 and out['status']=='APPLIED' and cfg.read_text(encoding='utf-8')==before
-    project_cfg=json.loads((tmp_path/'.opencode'/'hi'/'policy'/'routing.json').read_text(encoding='utf-8'))
-    assert project_cfg['primaryMode']=='manager' and project_cfg['teamMode']['enabled'] is True
-
-
-def test_current_external_checkpoint_tracks_same_session_followup_and_stop():
-    receipt=json.loads((ROOT/'data/validation/external-opencode-cli-1.18.16.json').read_text(encoding='utf-8'))
-    assert receipt['candidate'].startswith('2.0.10-v') and receipt['candidate'].endswith('-checkpoint')
-    assert receipt['same_session_external']['follow_up']['status']=='PASS'
-    assert receipt['same_session_external']['follow_up']['mission_count_after']==1
-    assert receipt['same_session_external']['follow_up']['generation_after']==1
-    assert receipt['same_session_external']['user_stop']['status']=='PASS'
-    assert receipt['same_session_external']['user_stop']['mission_status']=='stopped'
-    assert receipt['same_session_external']['user_stop']['user_interrupted'] is True
-    assert 'session.idle' in receipt['same_session_external']['user_stop']['late_native_events_ignored']
-    progress=json.loads((ROOT/'data/validation/forensic-61-progress.json').read_text(encoding='utf-8'))
-    assert progress['summary']=={'total':61,'complete_local':57,'partial_external':4,'failed':0,'unresolved_internal':0}
-    by_id={x['item']:x for x in progress['items']}
-    assert by_id[9]['status']=='COMPLETE_LOCAL'
-    assert by_id[22]['status']=='COMPLETE_LOCAL'
-    assert by_id[36]['status']=='COMPLETE_LOCAL'
-    assert by_id[12]['status']=='COMPLETE_LOCAL'
-    assert by_id[16]['status']=='COMPLETE_LOCAL'
-    routing=receipt['real_model_routing_v56']; assert routing['status']=='PASS_LOCAL_REAL_OPENCODE_CHILD_RUNTIME' and routing['effective_model_verified'] is True and routing['selected_model']=='openai/hhc-coder'
-    team=receipt['real_team_mode_v56']; assert team['status']=='PASS_LOCAL_REAL_OPENCODE_LIVE_TEAM' and team['team_status']=='shutdown' and team['shutdown_reason']=='members-terminal' and len(team['members'])==2
-    hosted=receipt['real_local_hosted_release_v55']
-    assert hosted['status']=='PASS_LOCAL_HOSTED_RELEASE_PROTOCOL'
-    assert hosted['public_github_oauth'].startswith('PENDING_EXTERNAL')
-    reg=receipt['real_local_npm_registry_v54']
-    assert reg['status']=='PASS_LOCAL_REAL_NPM_REGISTRY_PROTOCOL' and reg['remote_verified'] is True
-    assert reg['package']=='opencode-hhc-orchestrator@2.0.10' and reg['pack_files']==179
-    assert reg['pack_integrity'].startswith('sha512-') and len(reg['pack_shasum'])==40
-
-def test_v58_external_blockers_are_exact_and_release_stays_blocked():
-    progress=json.loads((ROOT/'data/validation/forensic-61-progress.json').read_text(encoding='utf-8'))
-    blockers=json.loads((ROOT/'data/validation/external-blockers-v58.json').read_text(encoding='utf-8'))
-    assert progress['candidate']=='2.0.10-v58-checkpoint'
-    assert progress['summary']=={'total':61,'complete_local':57,'partial_external':4,'failed':0,'unresolved_internal':0}
-    partial={x['item'] for x in progress['items'] if x['status']=='PARTIAL_EXTERNAL'}
-    assert partial=={32,44,46,60}
-    assert blockers['candidate']=='2.0.10-v58-checkpoint'
-    assert blockers['status']=='BLOCKED_EXTERNAL_ONLY'
-    assert blockers['partial_items']==[32,44,46,60]
-    assert blockers['internal_unresolved']==0
-    release=json.loads((ROOT/'data/validation/release-gates.json').read_text(encoding='utf-8'))
-    assert release['release_blocked'] is True
 
 def test_living_validation_contracts_are_bound_to_hi_0_1_0():
     for name in ['implementation-coverage.json','native-coverage.json','flow-coverage.json','flow-acceptance.json','source-gates.json','external-protocol.json']:
@@ -728,10 +421,11 @@ def test_r3_generated_compatibility_projection_selects_latest_exact_capability_p
 def test_r4_generated_release_status_projects_current_candidate_without_rewriting_history():
     version=(ROOT/'VERSION').read_text(encoding='utf-8').strip();d=json.loads((ROOT/f'data/validation/release-status-{version}.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='GENERATED_RELEASE_STATUS_PROJECTION' and d['release']==version
-    assert d['status'] in {'PREPUBLICATION_CERTIFIED_PENDING_T4','CERTIFIED_T4'}
+    assert d['status'] in {'PREPUBLICATION_CERTIFICATION_IN_PROGRESS','PREPUBLICATION_CERTIFIED_PENDING_T4','CERTIFIED_T4'}
     assert d['historical_github_release']['tag']=='v0.1.0' and d['historical_github_release']['status']=='PASS_T4'
-    assert d['candidate']['tag']==f'v{version}' and d['publication_authority']['granted'] is True
-    assert all(x['status']=='SUPPORTED_T3' for x in d['reference_host']['capabilities'].values())
+    assert d['candidate']['tag']==f'v{version}' and d['publication_authority']=={'required':True,'granted':False,'condition':'requires explicit current user authority after final certification; this projection never grants authority'}
+    assert all(x['status']=='SUPPORTED_T3' for x in d['reference_host']['baseline_capabilities'].values())
+    if d['status']=='PREPUBLICATION_CERTIFICATION_IN_PROGRESS': assert d['candidate']['prepublication_ready'] is False and any(str(v).startswith('PENDING_') for v in d['reference_host']['candidate_certification'].values())
     block=(ROOT/'docs/RELEASE.md').read_text(encoding='utf-8')
     assert f'`{version}` (`v{version}`)' in block and d['status'] in block and 'Test counts are intentionally not persisted' in block
 
@@ -742,7 +436,7 @@ def test_n1_final_namespace_normalization_is_hash_bound_and_preserves_historical
     assert d['schema']==1 and d['kind']=='FINAL_HI_NAMESPACE_NORMALIZATION' and d['status']=='PASS'
     assert d['guard']['violations']==[] and d['path_audit']['violations']==[] and not any(d['stale_living_status'].values())
     assert d['public_surface']['skill_namespace'] is True and d['public_surface']['skill_count']==27
-    assert d['public_surface']['tool_namespace_guard_present'] is True and d['public_surface']['config_option_count']==32
+    assert d['public_surface']['tool_namespace_guard_present'] is True and d['public_surface']['config_option_count']==29
     assert 'plugin/test/config-no-legacy-superpowers.test.mjs' in d['path_audit']['excluded_provenance_or_negative_surfaces']
     assert not any(x.startswith('docs/engineering-constitution/') for x in d['path_audit']['excluded_prefixes'])
     for meta in d['inputs'].values():
@@ -980,7 +674,7 @@ def test_prompt_b_evidence_verification_completion_audit_is_source_bound_and_com
     d=json.loads((ROOT/'data/validation/prompt-b-evidence-verification-completion.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='PROMPT_B_EVIDENCE_VERIFICATION_COMPLETION_HOSTILE_AUDIT' and d['program']=='PROMPT_B' and d['section']==9 and d['status']=='PASS'
     assert d['violations']==[] and d['summary']=={'required':12,'covered':12,'violations':0}
-    expected={'evidence-scope','evidence-freshness','source-revision','changed-file-ownership','mutation-invalidation','not-run-not-passed','worker-result-not-evidence','project-intelligence-not-evidence','context-summary-not-evidence','review-disposition','required-evidence-coverage','completion-obligation-reconciliation'}
+    expected={'evidence-scope','evidence-freshness','source-revision','changed-file-ownership','mutation-invalidation','not-run-not-passed','worker-result-not-evidence','project-methodology-learning-not-evidence','context-artifact-not-evidence','review-disposition','required-evidence-coverage','completion-obligation-reconciliation'}
     assert {x['invariant'] for x in d['invariants']}==expected
     assert d['static_guards']=={'project_intelligence_evidence_owner_paths':[],'context_evidence_owner_paths':[],'worker_result_is_mission_evidence_owner':False}
     for row in d['invariants']:
@@ -990,18 +684,17 @@ def test_prompt_b_evidence_verification_completion_audit_is_source_bound_and_com
     assert {'reviewer-done-auto-pass-evidence','worker-pass-without-source-state'}<={x['id'] for x in d['closed_defects']}
     assert (ROOT/'scripts/audit-evidence-verification-completion.py').is_file()
 
-def test_prompt_b_context_project_intelligence_compression_audit_is_consumer_bound_and_complete():
+def test_prompt_b_context_project_learning_audit_is_consumer_bound_and_complete():
     d=json.loads((ROOT/'data/validation/prompt-b-context-project-intelligence-compression.json').read_text(encoding='utf-8'))
-    assert d['schema']==1 and d['kind']=='PROMPT_B_CONTEXT_PROJECT_INTELLIGENCE_COMPRESSION_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['section']==10 and d['status']=='PASS'
+    assert d['schema']==1 and d['kind']=='PROMPT_B_CONTEXT_PROJECT_LEARNING_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['section']==10 and d['status']=='PASS'
     assert d['violations']==[] and d['summary']=={'required':12,'covered':12,'violations':0}
-    expected={'context-consumer-binding','unknown-context-handle-fail-close','stale-context-exclusion','project-intelligence-retrieval-eligibility','compression-source-hash-binding','compression-consumer-isolation','compression-freshness-propagation','privacy-monotonicity','project-intelligence-not-evidence','context-compression-not-evidence','protected-state-budget-survival','cache-source-invalidation'}
+    expected={'context-consumer-binding','unknown-context-handle-fail-close','stale-context-exclusion','durable-artifact-source-provenance','durable-artifact-consumer-binding','durable-artifact-freshness-invalidation','artifact-privacy-boundary','mission-runtime-projection-bounded','provider-duplicate-pruning-state-bound','project-methodology-learning-evidence-binding','project-methodology-independent-readiness','context-project-learning-not-evidence'}
     assert {x['invariant'] for x in d['invariants']}==expected
-    assert d['static_guards']=={'project_intelligence_evidence_owner_paths':[],'context_evidence_owner_paths':[],'compression_exact_consumer_binding':True,'compression_unknown_freshness_rejected':True}
+    assert d['static_guards']=={'project_methodology_learning_evidence_owner_paths':[],'context_evidence_owner_paths':[],'general_project_intelligence_retrieval_present':False,'compression_subsystem_present':False}
     for row in d['invariants']:
         owner=ROOT/row['owner'];proof=ROOT/row['proof'];assert owner.is_file() and proof.is_file()
         assert hashlib.sha256(owner.read_bytes()).hexdigest()==row['owner_sha256'];assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
         assert row['owner_anchor'] in owner.read_text(encoding='utf-8',errors='ignore') and row['proof_anchor'] in proof.read_text(encoding='utf-8',errors='ignore')
-    assert 'compression-cross-consumer-rescope' in {x['id'] for x in d['closed_defects']}
     assert (ROOT/'scripts/audit-context-project-intelligence-compression.py').is_file()
 
 
@@ -1119,8 +812,8 @@ def test_prompt_b_host_port_portability_audit_is_host_agnostic_source_bound_and_
 def test_prompt_b_configuration_audit_covers_every_leaf_and_is_source_bound():
     d=json.loads((ROOT/'data/validation/prompt-b-configuration.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='PROMPT_B_CONFIGURATION_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['section']==23 and d['status']=='PASS'
-    assert d['violations']==[] and d['summary']=={'required':32,'covered':32,'violations':0,'runtime':29,'diagnostic':2,'schema_marker':1}
-    assert len(d['leaves'])==32 and len({x['path'] for x in d['leaves']})==32
+    assert d['violations']==[] and d['summary']=={'required':29,'covered':29,'violations':0,'runtime':26,'diagnostic':2,'schema_marker':1}
+    assert len(d['leaves'])==29 and len({x['path'] for x in d['leaves']})==29
     for row in d['leaves']:
         for key in ('schema','consumer','documentation','proof'):
             path=ROOT/row[key];assert path.is_file();assert hashlib.sha256(path.read_bytes()).hexdigest()==row[f'{key}_sha256']

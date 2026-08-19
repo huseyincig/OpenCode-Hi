@@ -15,13 +15,13 @@ const TYPECHECK_INVOCATION = new RegExp(`${SHELL_BOUNDARY}${PREFIX}(?:${PACKAGE}
 const LINT_INVOCATION = new RegExp(`${SHELL_BOUNDARY}${PREFIX}(?:${PACKAGE}\\s+(?:(?:run\\s+)?lint(?:\\b|:))|(?:npx\\s+)?eslint\\b|(?:python(?:3)?\\s+-m\\s+)?ruff(?:\\s+check)?\\b)`, 'i');
 const BUILD_INVOCATION = new RegExp(`${SHELL_BOUNDARY}${PREFIX}(?:${PACKAGE}\\s+(?:(?:run\\s+)?build(?:\\b|:))|cargo\\s+check\\b|go\\s+build\\b|dotnet\\s+build\\b|mvn(?:w)?\\s+(?:[^;&|]*\\s)?(?:package|verify)\\b|(?:gradle|\\.\/gradlew)\\s+(?:[^;&|]*\\s)?build\\b)`, 'i');
 const CHECK_INVOCATION = new RegExp(`${SHELL_BOUNDARY}${PREFIX}${PACKAGE}\\s+(?:(?:run\\s+)?check(?:\\b|:))`, 'i');
-function verificationKind(command) { if (TEST_INVOCATION.test(command))
+export function verificationCommandKind(command) { if (TEST_INVOCATION.test(command))
     return 'targeted-tests'; if (TYPECHECK_INVOCATION.test(command))
     return 'typecheck'; if (LINT_INVOCATION.test(command))
     return 'lint'; if (BUILD_INVOCATION.test(command))
     return 'build'; if (CHECK_INVOCATION.test(command))
     return 'changed-surface-sanity'; return undefined; }
-export function isVerificationCommand(command) { return verificationKind(command) !== undefined; }
+export function isVerificationCommand(command) { return verificationCommandKind(command) !== undefined; }
 export function toolMayMutate(tool, args) { return WRITE_TOOLS.has(tool) || (tool === 'bash' && shellMayMutate(typeof args?.command === 'string' ? args.command : '')); }
 function numericExit(output) { for (const v of [output?.metadata?.exit, output?.metadata?.exitCode, output?.metadata?.exit_code, output?.exit, output?.exitCode, output?.exit_code]) {
     if (typeof v === 'number' && Number.isFinite(v))
@@ -69,8 +69,8 @@ export function markMutation(mission, files = [], source = 'tool') {
     mission.vcs.changed_files = [...new Set([...mission.vcs.changed_files, ...changed])];
     appendLedger(mission, 'file.changed', { payload: { source, files: changed, evidence_invalidated: invalidated.slice(0, 100), verification_obligations_reopened: reopened, invalidation_mode: changed.length ? 'scope-overlap' : 'unknown-surface-fail-closed' } });
 }
-export function addEvidence(mission, input) { const item = { id: id(), observed_at: input.observed_at ?? Date.now(), kind: input.kind, summary: input.summary, scope: input.scope, source: input.source, source_session_id: input.source_session_id, source_state_hash: input.source_state_hash, task_id: input.task_id, obligation_ids: input.obligation_ids, producer_attempt: input.producer_attempt, pass: input.pass, outcome: input.outcome ?? (input.pass === true ? 'passed' : input.pass === false ? 'failed' : undefined), reason: input.reason, invalidated_at: input.invalidated_at }; mission.execution.evidence.items.push(item); if (mission.execution.evidence.items.length > 100)
-    mission.execution.evidence.items.splice(0, mission.execution.evidence.items.length - 100); refreshCompatibilityFreshness(mission); appendLedger(mission, item.outcome === 'failed' ? 'verification.fail' : item.outcome === 'environment-issue' ? 'verification.environment-issue' : 'verification.pass', { payload: { kind: item.kind, summary: item.summary, reason: item.reason, source_session_id: item.source_session_id, source_state_hash: item.source_state_hash, task_id: item.task_id, obligation_ids: item.obligation_ids } }); return item; }
+export function addEvidence(mission, input) { const item = { id: id(), observed_at: input.observed_at ?? Date.now(), kind: input.kind, summary: input.summary, scope: input.scope, source: input.source, source_session_id: input.source_session_id, source_state_hash: input.source_state_hash, task_id: input.task_id, obligation_ids: input.obligation_ids, evidence_refs: input.evidence_refs, producer_attempt: input.producer_attempt, pass: input.pass, outcome: input.outcome ?? (input.pass === true ? 'passed' : input.pass === false ? 'failed' : undefined), reason: input.reason, invalidated_at: input.invalidated_at }; mission.execution.evidence.items.push(item); if (mission.execution.evidence.items.length > 100)
+    mission.execution.evidence.items.splice(0, mission.execution.evidence.items.length - 100); refreshCompatibilityFreshness(mission); appendLedger(mission, item.outcome === 'failed' ? 'verification.fail' : item.outcome === 'environment-issue' ? 'verification.environment-issue' : 'verification.pass', { payload: { kind: item.kind, summary: item.summary, reason: item.reason, source_session_id: item.source_session_id, source_state_hash: item.source_state_hash, task_id: item.task_id, obligation_ids: item.obligation_ids, evidence_refs: item.evidence_refs } }); return item; }
 export function observeToolBefore(mission, tool, args, projectRoot) { if (WRITE_TOOLS.has(tool)) {
     const files = [args?.filePath, args?.path, args?.file].filter((x) => typeof x === 'string').map(x => normalizeProjectPath(x, projectRoot)).filter(Boolean);
     markMutation(mission, files, tool);
@@ -92,7 +92,7 @@ export function observeToolAfter(mission, tool, args, output, projectRoot) { if 
     if (text.trim() && (exit === undefined || exit === 0) && !/(error|failed)/i.test(text))
         addEvidence(mission, { kind: 'review-input', summary: 'Read-only command: ' + command.slice(0, 180), scope: [], source: 'bash', pass: true, outcome: 'passed' });
 } if (tool === 'bash') {
-    const kind = verificationKind(command);
+    const kind = verificationCommandKind(command);
     if (kind) {
         const text = typeof output === 'string' ? output : JSON.stringify(output ?? ''), out = outcomeOf(output, text), obligation_ids = mission.execution.obligations.filter(o => o.kind === 'verification' && o.status === 'open').map(o => o.id);
         addEvidence(mission, { kind, summary: command.slice(0, 180), scope: mission.vcs.changed_files, source: 'bash', obligation_ids, pass: out.outcome === 'passed' ? true : out.outcome === 'failed' ? false : undefined, outcome: out.outcome, reason: out.reason });

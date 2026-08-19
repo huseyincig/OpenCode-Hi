@@ -2,7 +2,7 @@ import type { HiMethodologySignalName } from '../../generated/methodology-policy
 import type { NormalizedMissionIntent, Risk } from '../mission/types.js';
 import type { RepoContext } from './repo-context.js';
 export type SemanticMessageKind = 'mission' | 'amendment' | 'constraint' | 'verification' | 'stop' | 'resume' | 'non-material';
-export declare const SEMANTIC_CAPABILITIES: readonly ["implementation", "repository-analysis", "review", "verification", "independent-review", "security-review", "visual-qa", "design-exploration", "multi-stream-delegation", "source-verification", "qa-review", "dependency-change"];
+export declare const SEMANTIC_CAPABILITIES: readonly ["implementation", "repository-analysis", "review", "verification", "independent-review", "security-review", "visual-qa", "design-exploration", "multi-stream-delegation", "source-verification", "qa-review", "dependency-change", "interactive-process", "mcp"];
 export type SemanticCapability = typeof SEMANTIC_CAPABILITIES[number];
 export declare const SEMANTIC_EXTERNAL_ACTIONS: readonly ["git-push", "release-create", "package-publish", "deploy"];
 export type SemanticExternalAction = typeof SEMANTIC_EXTERNAL_ACTIONS[number];
@@ -11,7 +11,7 @@ export type SemanticVerificationKind = typeof SEMANTIC_VERIFICATION_KINDS[number
 export interface SemanticIntentAssessment {
     material: boolean;
     message_kind: SemanticMessageKind;
-    task_kind: 'implementation' | 'bug-fix' | 'review' | 'performance' | 'release-readiness';
+    task_kind: 'implementation' | 'bug-fix' | 'diagnosis' | 'review' | 'performance' | 'release-readiness';
     scope: 'local' | 'multi-file' | 'repo-wide' | 'external' | 'multi-stream';
     risk: Risk;
     ambiguity: 'none' | 'resolvable' | 'contract-critical';
@@ -19,11 +19,16 @@ export interface SemanticIntentAssessment {
     required_capabilities: SemanticCapability[];
     requested_external_actions: SemanticExternalAction[];
     likely_verification: SemanticVerificationKind[];
+    user_verification: SemanticVerificationKind[];
+    verification_ceiling: boolean;
     likely_targets: string[];
     intent_signals: HiMethodologySignalName[];
     suppressed_intent_signals: HiMethodologySignalName[];
 }
 export declare function technicalTargets(text: string): string[];
+export declare function technicalVerificationKinds(text: string): SemanticVerificationKind[];
+export declare function semanticTargets(value: unknown, max?: number): string[];
+export declare function materialSemanticTargets(assessment: Pick<SemanticIntentAssessment, 'likely_targets' | 'likely_verification' | 'intent_signals'>): string[];
 export declare function provisionalIntent(text: string, repo?: RepoContext): NormalizedMissionIntent;
 export declare function parseSemanticIntentAssessment(raw: unknown): SemanticIntentAssessment;
 export declare function assessedIntent(current: NormalizedMissionIntent, assessment: SemanticIntentAssessment): NormalizedMissionIntent;

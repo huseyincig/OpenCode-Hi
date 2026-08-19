@@ -12,7 +12,7 @@ Hi, mümkün olan en fazla agent/token/araç yerine iş için **minimum yeterli*
 
 ## Güncel ürün gerçeği
 
-Bu checkout uygulama/package sürümü olarak `0.1.3`'yi izler. Sürüm kimliğinin canonical sahibi `VERSION` dosyasıdır ve package metadata ile parity doğrulanır. Bir sürümün gerçekten yayımlanmış olup olmadığı mutable external state'tir; bunun authoritative kaynakları GitHub Releases ve npm registry'dir. Tarihsel `v0.1.1` ve `v0.1.0` release artifact'leri immutable kalır.
+Bu checkout uygulama/package sürümü olarak `0.2.0`'yi izler. Sürüm kimliğinin canonical sahibi `VERSION` dosyasıdır ve package metadata ile parity doğrulanır. Bir sürümün gerçekten yayımlanmış olup olmadığı mutable external state'tir; bunun authoritative kaynakları GitHub Releases ve npm registry'dir. Tarihsel `v0.1.1` ve `v0.1.0` release artifact'leri immutable kalır.
 
 Güncel host/capability gerçeği elle yazılan metinden değil exact receipt'lerden üretilir. Ayrıntı için [Host Support](../../HOSTS.md) ve `data/validation/compatibility-matrix-0.1.0.json` kullanılır.
 
@@ -24,7 +24,7 @@ OpenCode-Hi native AI execution çevresine deterministic ürün semantiği ekler
 - direct, delegated ve bounded multi-agent execution;
 - Role, model, Methodology ve topology'nin birbirinden bağımsız seçimi;
 - exact Authority ve monotonic host Permission sınırları;
-- source-aware Context Governor, Project Intelligence ve TypeScript Semantic Context;
+- bounded Mission runtime projection, durable context artifactları, TypeScript Semantic Context ve evidence-backed project methodology learning;
 - lazy Methodology/skill discovery ve loading;
 - structured Evidence, VerificationEnvelope ve deterministic completion;
 - bounded recovery, WAIT ve authoritative STOP;
@@ -47,7 +47,7 @@ Mission -> TaskRuntime -> Worker
    |          |             |
    |          +--> Role / model / Methodology
    |          +--> Authority / Permission
-   |          +--> Context / Project Intelligence
+   |          +--> Context / methodology learning
    |          |
    |          v
    |       Hi HostPort
@@ -83,14 +83,14 @@ Exact host version/platform/architecture ve receipt bağlantıları için [Host 
 
 ### Registry dağıtımı
 
-Bu source/package sürümünün exact registry kimliği `opencode-hi@0.1.3`'dir. Release availability bu README'ye elle yazılmaz; npm/GitHub üzerinden doğrulanır. Yayımlanan sürümler npm Trusted Publishing OIDC provenance kullanır ve recorded exact OpenCode host üzerinde acceptance ile doğrulanır.
+Bu source/package sürümünün exact registry kimliği `opencode-hi@0.2.0`'dir. Release availability bu README'ye elle yazılmaz; npm/GitHub üzerinden doğrulanır. Yayımlanan sürümler npm Trusted Publishing OIDC provenance kullanır ve recorded exact OpenCode host üzerinde acceptance ile doğrulanır.
 
 Yeni bir proje repository checkout yapmadan exact package sürümünü kurabilir ve package içindeki setup CLI'ı kullanabilir:
 
 ```bash
-npm install --save-dev opencode-hi@0.1.3
-./node_modules/.bin/opencode-hi-setup plan /path/to/project --version 0.1.3
-./node_modules/.bin/opencode-hi-setup install /path/to/project --version 0.1.3
+npm install --save-dev opencode-hi@0.2.0
+./node_modules/.bin/opencode-hi-setup plan /path/to/project --version 0.2.0
+./node_modules/.bin/opencode-hi-setup install /path/to/project --version 0.2.0
 ./node_modules/.bin/opencode-hi-setup doctor /path/to/project
 ```
 
@@ -129,7 +129,7 @@ Role seçimi tek başına model seçmez; Methodology Authority veremez ve comple
 
 User'a ait dirty, staged ve unrelated dosyalar user-owned kalır. Broad reset/stash/checkout/restore veya `git add -A` güvenli ownership shortcut'ı değildir.
 
-**Evidence prose değildir.** Worker/model output, Context, Project Intelligence, Methodology content veya browser observation ikna edici görünse bile otomatik Evidence olmaz. Completion ancak current obligations ile fresh admissible proof deterministic olarak uzlaştığında kapanır.
+**Evidence prose değildir.** Worker/model output, Context, project methodology-learning state, Methodology content veya browser observation ikna edici görünse bile otomatik Evidence olmaz. Completion ancak current obligations ile fresh admissible proof deterministic olarak uzlaştığında kapanır.
 
 Ayrıntı için [Human Decisions and Authority](../../HUMAN-DECISIONS.md), [Verification](../../VERIFICATION.md) ve [Security model](../../SECURITY-MODEL.md) kullanın.
 

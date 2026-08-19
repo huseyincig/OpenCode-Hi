@@ -19,6 +19,7 @@ export interface EvidenceItem {
     source_state_hash?: string;
     task_id?: string;
     obligation_ids?: string[];
+    evidence_refs?: string[];
     producer_attempt?: EvidenceProducerAttempt;
     observed_at: number;
     invalidated_at?: number;

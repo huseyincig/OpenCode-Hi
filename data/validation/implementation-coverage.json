@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "release": "0.1.3",
+  "release": "0.2.0",
   "status": "SOURCE_COVERAGE_COMPLETE_EXTERNAL_VALIDATION_PENDING",
   "gaps": {
     "GAP-001": {
@@ -110,7 +110,7 @@
       "item": "Short-prompt intent normalization",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
-        "plugin/src/runtime/intent/normalize.ts",
+        "plugin/src/runtime/intent/semantic-assessment.ts",
         "plugin/src/runtime/intent/repo-context.ts",
         "plugin/src/runtime/readiness/preconditions.ts",
         "plugin/src/runtime/safety/authority.ts"
@@ -122,7 +122,7 @@
       "item": "Repo/conversation context enrichment",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
-        "plugin/src/runtime/intent/normalize.ts",
+        "plugin/src/runtime/intent/semantic-assessment.ts",
         "plugin/src/runtime/intent/repo-context.ts",
         "plugin/src/runtime/readiness/preconditions.ts",
         "plugin/src/runtime/safety/authority.ts"
@@ -134,7 +134,7 @@
       "item": "scope/risk/dependency classification",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
-        "plugin/src/runtime/intent/normalize.ts",
+        "plugin/src/runtime/intent/semantic-assessment.ts",
         "plugin/src/runtime/intent/repo-context.ts",
         "plugin/src/runtime/readiness/preconditions.ts",
         "plugin/src/runtime/safety/authority.ts"
@@ -146,7 +146,7 @@
       "item": "safe-default execution policy",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
-        "plugin/src/runtime/intent/normalize.ts",
+        "plugin/src/runtime/intent/semantic-assessment.ts",
         "plugin/src/runtime/intent/repo-context.ts",
         "plugin/src/runtime/readiness/preconditions.ts",
         "plugin/src/runtime/safety/authority.ts"
@@ -158,7 +158,7 @@
       "item": "contract-critical no-guess boundary",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
-        "plugin/src/runtime/intent/normalize.ts",
+        "plugin/src/runtime/intent/semantic-assessment.ts",
         "plugin/src/runtime/intent/repo-context.ts",
         "plugin/src/runtime/readiness/preconditions.ts",
         "plugin/src/runtime/safety/authority.ts"
@@ -170,7 +170,7 @@
       "item": "exact USER_ACTION_REQUIRED boundary",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
-        "plugin/src/runtime/intent/normalize.ts",
+        "plugin/src/runtime/intent/semantic-assessment.ts",
         "plugin/src/runtime/intent/repo-context.ts",
         "plugin/src/runtime/readiness/preconditions.ts",
         "plugin/src/runtime/safety/authority.ts"
@@ -218,7 +218,7 @@
     "CHK-010": {
       "id": "CHK-010",
       "section": "Routing",
-      "item": "0–3 skill selection",
+      "item": "0\u20133 skill selection",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/routing/capability-router.ts",
@@ -309,7 +309,7 @@
     "CHK-017": {
       "id": "CHK-017",
       "section": "Worker / Task",
-      "item": "Agent ≠ Worker",
+      "item": "Agent \u2260 Worker",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/task/task-runtime.ts",
@@ -1143,95 +1143,95 @@
     },
     "CHK-082": {
       "id": "CHK-082",
-      "section": "Parallel / Team",
+      "section": "Parallel / Scheduler topology",
       "item": "dependency/write-set-aware parallelism",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/scheduler/parallel-safety.ts",
         "plugin/src/runtime/scheduler/concurrency.ts",
-        "plugin/src/runtime/team/team-runtime.ts",
+        "plugin/src/runtime/scheduler/planner.ts",
         "plugin/src/runtime/routing/execution-mode.ts"
       ]
     },
     "CHK-083": {
       "id": "CHK-083",
-      "section": "Parallel / Team",
+      "section": "Parallel / Scheduler topology",
       "item": "parent-mediated parallel default",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/scheduler/parallel-safety.ts",
         "plugin/src/runtime/scheduler/concurrency.ts",
-        "plugin/src/runtime/team/team-runtime.ts",
+        "plugin/src/runtime/scheduler/planner.ts",
         "plugin/src/runtime/routing/execution-mode.ts"
       ]
     },
     "CHK-084": {
       "id": "CHK-084",
-      "section": "Parallel / Team",
+      "section": "Parallel / Scheduler topology",
       "item": "provider/model queue",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/scheduler/parallel-safety.ts",
         "plugin/src/runtime/scheduler/concurrency.ts",
-        "plugin/src/runtime/team/team-runtime.ts",
+        "plugin/src/runtime/scheduler/planner.ts",
         "plugin/src/runtime/routing/execution-mode.ts"
       ]
     },
     "CHK-085": {
       "id": "CHK-085",
-      "section": "Parallel / Team",
-      "item": "Team Mode exceptional",
+      "section": "Parallel / Scheduler topology",
+      "item": "scheduler-owned parallel topology; generic TeamRuntime removed",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/scheduler/parallel-safety.ts",
         "plugin/src/runtime/scheduler/concurrency.ts",
-        "plugin/src/runtime/team/team-runtime.ts",
+        "plugin/src/runtime/scheduler/planner.ts",
         "plugin/src/runtime/routing/execution-mode.ts"
       ]
     },
     "CHK-086": {
       "id": "CHK-086",
-      "section": "Parallel / Team",
-      "item": "hard team limits",
+      "section": "Parallel / Scheduler topology",
+      "item": "hard scheduler/topology limits",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/scheduler/parallel-safety.ts",
         "plugin/src/runtime/scheduler/concurrency.ts",
-        "plugin/src/runtime/team/team-runtime.ts",
+        "plugin/src/runtime/scheduler/planner.ts",
         "plugin/src/runtime/routing/execution-mode.ts"
       ]
     },
     "CHK-087": {
       "id": "CHK-087",
-      "section": "Parallel / Team",
-      "item": "no nested team",
+      "section": "Parallel / Scheduler topology",
+      "item": "no nested orchestration; recursive child task dispatch denied",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/scheduler/parallel-safety.ts",
         "plugin/src/runtime/scheduler/concurrency.ts",
-        "plugin/src/runtime/team/team-runtime.ts",
+        "plugin/src/runtime/scheduler/planner.ts",
         "plugin/src/runtime/routing/execution-mode.ts"
       ]
     },
     "CHK-088": {
       "id": "CHK-088",
-      "section": "Parallel / Team",
-      "item": "shared task state if Team enabled",
+      "section": "Parallel / Scheduler topology",
+      "item": "shared Mission Task/Worker state under parallel topology",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/scheduler/parallel-safety.ts",
         "plugin/src/runtime/scheduler/concurrency.ts",
-        "plugin/src/runtime/team/team-runtime.ts",
+        "plugin/src/runtime/scheduler/planner.ts",
         "plugin/src/runtime/routing/execution-mode.ts"
       ]
     },
     "CHK-089": {
       "id": "CHK-089",
-      "section": "Parallel / Team",
-      "item": "mailbox only if Team implementation needs it",
+      "section": "Parallel / Scheduler topology",
+      "item": "native child result/continuation; no generic Team mailbox",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
-        "plugin/src/runtime/team/team-runtime.ts",
+        "plugin/src/runtime/scheduler/planner.ts",
         "plugin/src/runtime/scheduler/parallel-safety.ts",
         "plugin/src/runtime/scheduler/concurrency.ts",
         "plugin/src/runtime/routing/execution-mode.ts"
@@ -1651,7 +1651,7 @@
     "CHK-123": {
       "id": "CHK-123",
       "section": "Product discipline",
-      "item": "evidence sufficient → stop immediately",
+      "item": "evidence sufficient \u2192 stop immediately",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/routing/execution-mode.ts",

@@ -11,6 +11,7 @@ import { createHash } from 'node:crypto';
 import { hostCapabilityByID } from '../../contracts/host-capability.js';
 import { registerTemporaryMutation, resolveRollback } from '../mutations/temporary-mutations.js';
 import { markMutation, normalizeProjectPath, addEvidence } from '../evidence/evidence-runtime.js';
+import { evidenceProducerAttemptForWorker } from '../evidence/applicability.js';
 import { assessChangedFileOwnership } from '../task/diff-ownership.js';
 import { replanVerificationForChangedSurface, verificationSatisfied } from '../verification/policy.js';
 import { collectRepoContext } from '../intent/repo-context.js';
@@ -18,6 +19,7 @@ import { bindParentMethodologyNeeds } from '../methodology/activation.js';
 import { reconcileMethodologyExits } from '../methodology/exit.js';
 import { evaluateCompletion } from '../completion/evaluator.js';
 import { primaryRoleCanDirectImplementation } from '../roles/catalog.js';
+import { inspectCurrentGitChangedFiles } from '../safety/staging-safety.js';
 import { nativeTool as tool } from '../../opencode/plugin-tool.js';
 import { assertHiToolNamespace } from '../../opencode/tool-namespace.js';
 import { normalizeBoundedProjectPath } from '../../contracts/common.js';
@@ -30,7 +32,7 @@ function optionalIdList(value) {
 function optionalScopeList(value) {
     if (value === undefined || value === null)
         return undefined;
-    const parts = (Array.isArray(value) ? value.map(String) : String(value).split(',')).map(x => x.trim()).filter(Boolean);
+    const rawParts = Array.isArray(value) ? value.map(String) : undefined, rawString = rawParts ? undefined : String(value), semicolonParts = rawString?.includes(';') ? rawString.split(';').map(x => x.trim()).filter(Boolean) : undefined, semicolonExact = semicolonParts?.length && semicolonParts.every(part => !/\s/.test(part) && Boolean(normalizeBoundedProjectPath(part))), parts = (rawParts ?? (semicolonExact ? semicolonParts : rawString.split(','))).map(x => x.trim()).filter(Boolean);
     if (!parts.length)
         return undefined;
     const out = [];
@@ -107,10 +109,12 @@ export function createHiToolSurface(input) {
             resolveRollback(m, item, false, String(error));
             return `Native revert failed: ${String(error)}`;
         } } });
-    const directProgressTool = tool({ description: 'Record bounded parent/Working-Manager direct progress. Implementation requires an owned observed mutation; direct review requires fresh review input and records explicit review-completion evidence. Does not bypass verification or review gates.', args: { summary: tool.schema.string(), obligation_id: tool.schema.string().optional(), scope_expansions: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
-            return 'No active Hi mission'; const rawArgs = a?.input && typeof a.input === 'object' && !Array.isArray(a.input) ? { ...a, ...a.input } : a, candidates = m.execution.obligations.filter(x => ['analysis', 'implementation', 'review'].includes(x.kind) && x.status === 'open'), requested = rawArgs?.obligation_id ? String(rawArgs.obligation_id) : undefined, exact = requested ? candidates.find(x => x.id === requested) : undefined, o = exact ?? (candidates.length === 1 ? candidates[0] : undefined), summary = String(rawArgs?.summary ?? '').trim().slice(0, 1000); if (!summary)
-            return 'BLOCKED: direct progress requires a non-empty bounded summary'; if (!o)
-            return candidates.length > 1 ? 'BLOCKED: multiple direct-progress obligations are open; specify obligation_id' : 'No open direct-progress obligation'; if (o.kind === 'review' && m.execution.verification_policy.requireReview)
+    const directProgressTool = tool({ description: 'Record one bounded parent/Working-Manager direct obligation. obligation_id must be the exact ID only (for example o-analysis), never ID+summary. Call separately for each completed obligation. scope_expansions, when needed, is a JSON array of {file,necessary,reason}. The result reports exact remaining obligations/methodology needs. Implementation requires owned mutation; direct review requires fresh review input. Does not bypass verification/review gates.', args: { summary: tool.schema.string(), obligation_id: tool.schema.string().optional(), scope_expansions: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+            return 'No active Hi mission'; if (m.identity.status === 'completed')
+            return JSON.stringify({ status: 'ALREADY_COMPLETED', completion_ready: true, next: null, verification_required: false, remaining_obligations: [], methodology_needs: [] }); const rawArgs = a?.input && typeof a.input === 'object' && !Array.isArray(a.input) ? { ...a, ...a.input } : a, candidates = m.execution.obligations.filter(x => ['analysis', 'implementation', 'review'].includes(x.kind) && x.status === 'open'), requested = rawArgs?.obligation_id ? String(rawArgs.obligation_id) : undefined, exact = requested ? candidates.find(x => x.id === requested) : undefined, semanticSingle = requested && !requested.startsWith('o-') && candidates.length === 1 ? candidates[0] : undefined, o = exact ?? semanticSingle ?? (!requested && candidates.length === 1 ? candidates[0] : undefined), summary = String(rawArgs?.summary ?? '').trim().slice(0, 1000), candidateIDs = candidates.map(x => x.id); if (!summary)
+            return 'BLOCKED: direct progress requires a non-empty bounded summary'; if (requested && !exact && requested.startsWith('o-'))
+            return JSON.stringify({ status: 'BLOCKED', reason: 'unknown-obligation-id', requested, candidate_ids: candidateIDs }); if (!o)
+            return candidates.length > 1 ? JSON.stringify({ status: 'BLOCKED', reason: 'obligation-id-required', candidate_ids: candidateIDs }) : 'No open direct-progress obligation'; if (o.kind === 'review' && m.execution.verification_policy.requireReview)
             return 'BLOCKED: independent reviewer required; direct parent progress cannot close this review obligation'; let directFiles = [...m.vcs.changed_files]; if (o.kind === 'implementation') {
             if (!primaryRoleCanDirectImplementation(m.execution.primary_mode))
                 return `BLOCKED: primary role ${m.execution.primary_mode} lacks canonical repository write authority for direct implementation progress`;
@@ -130,21 +134,41 @@ export function createHiToolSurface(input) {
                     return `BLOCKED: invalid scope_expansions: ${String(e)}`;
                 }
             }
+            let currentSource = 'historical-write-events';
             if (capabilities.sessionDiff && directFiles.length)
                 try {
-                    const current = new Set(nativeDiffFiles(await native.diff(m.identity.session_id), projectRoot));
-                    if (current.size)
-                        directFiles = directFiles.filter(file => current.has(file.replace(/\\/g, '/').replace(/^\.\//, '')));
+                    const raw = await native.diff(m.identity.session_id);
+                    if (raw !== undefined && raw !== null) {
+                        const current = new Set(nativeDiffFiles(raw, projectRoot));
+                        if (current.size) {
+                            directFiles = directFiles.filter(file => current.has(file.replace(/\\/g, '/').replace(/^\.\//, '')));
+                            currentSource = 'native-session-diff';
+                        }
+                    }
                 }
                 catch { }
             ;
+            if (currentSource === 'historical-write-events') {
+                const current = inspectCurrentGitChangedFiles(projectRoot);
+                if (current !== undefined) {
+                    const set = new Set(current);
+                    directFiles = directFiles.filter(file => set.has(file.replace(/\\/g, '/').replace(/^\.\//, '')));
+                    currentSource = 'git-status-fallback';
+                }
+            }
+            if (!directFiles.length) {
+                appendLedger(m, 'implementation.direct-progress-blocked', { payload: { reason: 'no-current-owned-diff', source: currentSource, historical: m.vcs.changed_files.slice(0, 30) } });
+                return JSON.stringify({ status: 'BLOCKED', reason: 'no-current-owned-diff', source: currentSource });
+            }
+            if (currentSource !== 'historical-write-events')
+                appendLedger(m, 'implementation.current-diff-reconciled', { payload: { source: currentSource, files: directFiles.slice(0, 30) } });
             const ownership = assessChangedFileOwnership(m.identity.intent.likelyTargets ?? [], directFiles, expansions, 'control-plane');
             if (m.identity.intent.scope === 'local' && ownership.collateral.length) {
                 const marker = `direct-diff-cleanliness:${ownership.collateral.slice(0, 12).sort().join(',')}`;
                 m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
                 appendLedger(m, 'implementation.direct-progress-blocked', { payload: { reason: 'changed-files-outside-requested-scope', collateral: ownership.collateral.slice(0, 30), expected: (m.identity.intent.likelyTargets ?? []).slice(0, 30) } });
                 syncMissionGates(m);
-                return JSON.stringify({ status: 'BLOCKED', reason: 'changed-files-outside-requested-scope', collateral: ownership.collateral, expected: m.identity.intent.likelyTargets ?? [] });
+                return JSON.stringify({ status: 'BLOCKED', reason: 'changed-files-outside-requested-scope', collateral: ownership.collateral, expected: m.identity.intent.likelyTargets ?? [], scope_expansions_schema: [{ file: 'project/relative/path', necessary: true, reason: 'why this file is required for the requested change' }] });
             }
             if (ownership.accepted.length)
                 appendLedger(m, 'scope.expansion.accepted', { payload: { owner: 'parent-direct', files: ownership.accepted.slice(0, 30) } });
@@ -160,16 +184,22 @@ export function createHiToolSurface(input) {
                 return 'BLOCKED: no fresh review input observed';
             const reviewVerification = m.execution.obligations.find(x => x.kind === 'verification' && x.status === 'open');
             addEvidence(m, { kind: 'review-evidence', summary, scope: [...new Set(freshInput.flatMap(e => e.scope ?? []))].slice(0, 50), source: 'parent:direct-review', obligation_ids: [o.id, ...(reviewVerification ? [reviewVerification.id] : [])], pass: true, outcome: 'passed' });
-        } o.status = 'closed'; o.closedAt = Date.now(); const progressEvent = o.kind === 'review' ? 'review.direct-progress' : o.kind === 'analysis' ? 'analysis.direct-progress' : 'implementation.direct-progress'; appendLedger(m, progressEvent, { payload: { summary: summary.slice(0, 500), obligation: o.id, changed_files: o.kind === 'implementation' ? directFiles.slice(-30) : [] } }); if (m.methodology.parent_loaded_methodologies.length)
+        } if (o.kind === 'analysis' && m.identity.intent.taskKind === 'diagnosis')
+            addEvidence(m, { kind: 'diagnostic-evidence', summary, scope: [...(m.identity.intent.likelyTargets ?? [])].slice(0, 50), source: 'parent:direct-diagnosis', obligation_ids: [o.id], pass: true, outcome: 'passed' }); o.status = 'closed'; o.closedAt = Date.now(); const progressEvent = o.kind === 'review' ? 'review.direct-progress' : o.kind === 'analysis' ? 'analysis.direct-progress' : 'implementation.direct-progress'; appendLedger(m, progressEvent, { payload: { summary: summary.slice(0, 500), obligation: o.id, changed_files: o.kind === 'implementation' ? directFiles.slice(-30) : [] } }); if (m.methodology.parent_loaded_methodologies.length)
             bindParentMethodologyNeeds(m, m.methodology.parent_loaded_methodologies, o.id); const verify = m.execution.obligations.find(x => x.kind === 'verification' && x.status === 'open'); if (verify && verificationSatisfied(m, verify.id).ok) {
             verify.status = 'closed';
             verify.closedAt = Date.now();
-        } reconcileMethodologyExits(m, projectRoot); syncMissionGates(m); return JSON.stringify({ status: 'RECORDED', verification_required: !evaluateCompletion(m).complete, changed_files: o.kind === 'implementation' ? directFiles.slice(-30) : [] }); } });
-    const startTool = tool({ description: 'Start one bounded Hi worker task, or resume the exact existing task when task_id is supplied. task_id resume never creates a replacement task.', args: { task_id: tool.schema.string().optional(), objective: tool.schema.string().optional(), role: tool.schema.string().optional(), category: tool.schema.string().optional(), model: tool.schema.string().optional(), model_variant: tool.schema.string().optional(), scope: tool.schema.string().optional(), constraints: tool.schema.string().optional(), dependencies: tool.schema.string().optional(), required_evidence: tool.schema.string().optional(), obligation_ids: tool.schema.string().optional(), context_artifact_ids: tool.schema.string().optional(), fork_from_session: tool.schema.string().optional(), isolation_required: tool.schema.boolean().optional(), isolation_reason: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
+        } reconcileMethodologyExits(m, projectRoot); syncMissionGates(m); const completion = evaluateCompletion(m), remaining = m.execution.obligations.filter(x => x.status === 'open').slice(0, 12).map(x => ({ id: x.id, kind: x.kind })), methodologyNeeds = [...new Set(m.methodology.methodology_needs.map(x => x.name))].slice(0, 12); return JSON.stringify({ status: 'RECORDED', completion_ready: completion.complete, next: completion.next ?? null, verification_required: completion.next === 'VERIFY' || remaining.some(x => x.kind === 'verification'), remaining_obligations: remaining, methodology_needs: methodologyNeeds, changed_files: o.kind === 'implementation' ? directFiles.slice(-30) : [] }); } });
+    const startTool = tool({ description: 'Start one bounded Hi worker task, or resume the exact existing task when task_id is supplied. For multiple scope paths, pass comma-separated project-relative paths; semicolon-separated paths are accepted for compatibility. task_id resume never creates a replacement task.', args: { task_id: tool.schema.string().optional(), objective: tool.schema.string().optional(), role: tool.schema.string().optional(), category: tool.schema.string().optional(), model: tool.schema.string().optional(), model_variant: tool.schema.string().optional(), scope: tool.schema.string().optional(), constraints: tool.schema.string().optional(), dependencies: tool.schema.string().optional(), required_evidence: tool.schema.string().optional(), obligation_ids: tool.schema.string().optional(), context_artifact_ids: tool.schema.string().optional(), fork_from_session: tool.schema.string().optional(), isolation_required: tool.schema.boolean().optional(), isolation_reason: tool.schema.string().optional(), mcp_servers: tool.schema.string().optional(), browser_backend: tool.schema.string().optional(), browser_allowed_origins: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
             return 'No active Hi mission'; try {
+            const completion = evaluateCompletion(m);
+            if (completion.complete) {
+                appendLedger(m, 'task.start-skipped', { payload: { reason: 'mission-already-complete' } });
+                return JSON.stringify({ status: 'SKIPPED', reason: 'mission-already-complete', completion_ready: true });
+            }
             if (a.task_id)
                 return JSON.stringify(await tasks.resume(m, String(a.task_id)));
-            const input = { ...a, forkFromSession: a.fork_from_session ? String(a.fork_from_session) : undefined, modelVariant: a.model_variant ? String(a.model_variant) : undefined, isolationRequired: a.isolation_required === true, isolationReason: a.isolation_reason ? String(a.isolation_reason) : undefined, scope: optionalScopeList(a.scope), constraints: a.constraints ? [String(a.constraints)] : undefined, dependencies: optionalIdList(a.dependencies), requiredEvidence: a.required_evidence ? String(a.required_evidence).split(',').map((x) => x.trim()).filter(Boolean) : undefined, obligationIds: a.obligation_ids ? String(a.obligation_ids).split(',').map((x) => x.trim()).filter(Boolean) : undefined, contextArtifactIds: a.context_artifact_ids ? String(a.context_artifact_ids).split(',').map((x) => x.trim()).filter(Boolean) : undefined };
+            const input = { ...a, forkFromSession: a.fork_from_session ? String(a.fork_from_session) : undefined, modelVariant: a.model_variant ? String(a.model_variant) : undefined, isolationRequired: a.isolation_required === true, isolationReason: a.isolation_reason ? String(a.isolation_reason) : undefined, mcpServers: a.mcp_servers ? String(a.mcp_servers).split(',').map((x) => x.trim()).filter(Boolean).slice(0, 8) : undefined, browserBackend: a.browser_backend ? String(a.browser_backend) : undefined, browserAllowedOrigins: a.browser_allowed_origins ? String(a.browser_allowed_origins).split(',').map((x) => x.trim()).filter(Boolean).slice(0, 8) : undefined, scope: optionalScopeList(a.scope), constraints: a.constraints ? [String(a.constraints)] : undefined, dependencies: optionalIdList(a.dependencies), requiredEvidence: a.required_evidence ? String(a.required_evidence).split(',').map((x) => x.trim()).filter(Boolean) : undefined, obligationIds: a.obligation_ids ? String(a.obligation_ids).split(',').map((x) => x.trim()).filter(Boolean) : undefined, contextArtifactIds: a.context_artifact_ids ? String(a.context_artifact_ids).split(',').map((x) => x.trim()).filter(Boolean) : undefined };
             if (m.execution.adaptive_execution?.path === 'DIRECT' && !m.execution.verification_policy.requireReview && ['qa-reviewer', 'security-reviewer'].includes(String(input.role ?? '')))
                 return JSON.stringify({ status: 'SKIPPED', reason: 'minimum-sufficient-direct-path: independent reviewer is not required' });
             return JSON.stringify(await tasks.start(m, input));
@@ -190,13 +220,14 @@ export function createHiToolSurface(input) {
     const browserContext = (taskID, c) => { const sid = String(c?.sessionID ?? ''); for (const m of store.all()) {
         const owner = resolveBrowserExecutionOwner(m, { sessionID: sid, taskID });
         if (owner)
-            return { m, w: owner.worker, cx: { task_id: taskID, execution_owner_ref: `${m.identity.mission_id}:${owner.worker.id}:${owner.worker.session_id}:${owner.worker.generation_at_spawn}`, executor_version: 'hi-playwright-browser@1' } };
+            return { m, w: owner.worker, t: owner.task, cx: { task_id: taskID, execution_owner_ref: `${m.identity.mission_id}:${owner.worker.id}:${owner.worker.session_id}:${owner.worker.generation_at_spawn}`, executor_version: 'hi-playwright-browser@1', allowed_origins: [...(owner.task.execution_profile?.browser_allowed_origins ?? [])] } };
     } throw new Error('Browser execution is allowed only for the active visual-qa worker/task with a selected browser/visual methodology'); };
+    const browserObservationResult = (x, observation) => { const stateHash = createHash('sha256').update(JSON.stringify(observation)).digest('hex'), evidence = addEvidence(x.m, { kind: 'browser-evidence', summary: `Browser ${String(observation?.action ?? 'observation')} ${String(observation?.result ?? 'UNKNOWN')} at ${String(observation?.url ?? 'unknown')}`.slice(0, 1000), scope: [...x.t.scope], source: `browser:${String(observation?.observation_id ?? 'unknown')}`, source_session_id: x.w.session_id, source_state_hash: stateHash, task_id: x.t.id, obligation_ids: [...x.t.obligation_ids], producer_attempt: evidenceProducerAttemptForWorker(x.m, x.w), outcome: observation?.result === 'FAILED' ? 'failed' : 'pending', pass: observation?.result === 'FAILED' ? false : undefined, reason: observation?.result === 'FAILED' ? 'browser-observation-failed' : 'browser-observation-only' }); appendLedger(x.m, 'browser.observation-recorded', { task_id: x.t.id, worker_id: x.w.id, payload: { observation_id: observation?.observation_id, evidence_ref: evidence.id, action: observation?.action, result: observation?.result } }); return JSON.stringify({ observation, evidence_ref: evidence.id }); };
     const browserOpenTool = tool({ description: 'Open a local HTTP(S) target through the bounded Hi browser executor.', args: { task_id: tool.schema.string(), url: tool.schema.string() }, execute: async (a, c) => { try {
             if (!browserExecutor)
                 return 'BLOCKED: browser executor unavailable';
             const x = browserContext(String(a.task_id), c);
-            return JSON.stringify(await browserExecutor.open(x.cx, String(a.url)));
+            return browserObservationResult(x, await browserExecutor.open(x.cx, String(a.url)));
         }
         catch (e) {
             return `Browser open blocked: ${String(e)}`;
@@ -205,7 +236,7 @@ export function createHiToolSurface(input) {
             if (!browserExecutor)
                 return 'BLOCKED: browser executor unavailable';
             const x = browserContext(String(a.task_id), c);
-            return JSON.stringify(await browserExecutor.navigate(x.cx, String(a.url)));
+            return browserObservationResult(x, await browserExecutor.navigate(x.cx, String(a.url)));
         }
         catch (e) {
             return `Browser navigate blocked: ${String(e)}`;
@@ -214,7 +245,7 @@ export function createHiToolSurface(input) {
             if (!browserExecutor)
                 return 'BLOCKED: browser executor unavailable';
             const x = browserContext(String(a.task_id), c);
-            return JSON.stringify(await browserExecutor.click(x.cx, { value: String(a.target) }));
+            return browserObservationResult(x, await browserExecutor.click(x.cx, { value: String(a.target) }));
         }
         catch (e) {
             return `Browser click blocked: ${String(e)}`;
@@ -223,7 +254,7 @@ export function createHiToolSurface(input) {
             if (!browserExecutor)
                 return 'BLOCKED: browser executor unavailable';
             const x = browserContext(String(a.task_id), c);
-            return JSON.stringify(await browserExecutor.type(x.cx, { value: String(a.target) }, String(a.value)));
+            return browserObservationResult(x, await browserExecutor.type(x.cx, { value: String(a.target) }, String(a.value)));
         }
         catch (e) {
             return `Browser type blocked: ${String(e)}`;
@@ -232,7 +263,7 @@ export function createHiToolSurface(input) {
             if (!browserExecutor)
                 return 'BLOCKED: browser executor unavailable';
             const x = browserContext(String(a.task_id), c);
-            return JSON.stringify(await browserExecutor.inspect(x.cx));
+            return browserObservationResult(x, await browserExecutor.inspect(x.cx));
         }
         catch (e) {
             return `Browser inspect blocked: ${String(e)}`;
@@ -241,7 +272,7 @@ export function createHiToolSurface(input) {
             if (!browserExecutor)
                 return 'BLOCKED: browser executor unavailable';
             const x = browserContext(String(a.task_id), c);
-            return JSON.stringify(await browserExecutor.screenshot(x.cx));
+            return browserObservationResult(x, await browserExecutor.screenshot(x.cx));
         }
         catch (e) {
             return `Browser screenshot blocked: ${String(e)}`;
@@ -250,7 +281,7 @@ export function createHiToolSurface(input) {
             if (!browserExecutor)
                 return 'BLOCKED: browser executor unavailable';
             const x = browserContext(String(a.task_id), c);
-            return JSON.stringify(await browserExecutor.wait(x.cx, { milliseconds: Number(a.milliseconds) }));
+            return browserObservationResult(x, await browserExecutor.wait(x.cx, { milliseconds: Number(a.milliseconds) }));
         }
         catch (e) {
             return `Browser wait blocked: ${String(e)}`;
@@ -259,13 +290,15 @@ export function createHiToolSurface(input) {
             if (!browserExecutor)
                 return 'BLOCKED: browser executor unavailable';
             const x = browserContext(String(a.task_id), c);
-            return JSON.stringify(await browserExecutor.close(x.cx));
+            return browserObservationResult(x, await browserExecutor.close(x.cx));
         }
         catch (e) {
             return `Browser close blocked: ${String(e)}`;
         } } });
     const processSpawnTool = tool({ description: 'Spawn one owned long-running process for an existing Hi worker/task through the native OpenCode PTY lifecycle. Native permission ask remains a real OpenCode permission request.', args: { worker_id: tool.schema.string(), command: tool.schema.string(), args_json: tool.schema.string().optional(), cwd: tool.schema.string().optional(), timeout_ms: tool.schema.number().optional(), title: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
-            return 'No active Hi mission'; let args; if (a.args_json) {
+            return 'No active Hi mission'; if (!m.identity.intent.requiredCapabilities.includes('interactive-process'))
+            return 'BLOCKED: persistent/interactive process lifecycle was not selected; use the native shell for bounded commands'; const processCapability = hostCapabilityByID(capabilities.contracts ?? [], 'process-lifecycle'); if (processCapability?.status !== 'SUPPORTED')
+            return 'BLOCKED: native process lifecycle is unavailable on the active OpenCode host'; let args; if (a.args_json) {
             try {
                 const parsed = JSON.parse(String(a.args_json));
                 if (!Array.isArray(parsed) || !parsed.every(x => typeof x === 'string'))

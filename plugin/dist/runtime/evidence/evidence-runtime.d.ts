@@ -1,5 +1,7 @@
 import type { EvidenceItem, MissionState } from '../mission/types.js';
+import type { MissionEvidenceKind } from '../../contracts/evidence.js';
 export declare function shellMayMutate(command: string): boolean;
+export declare function verificationCommandKind(command: string): MissionEvidenceKind | undefined;
 export declare function isVerificationCommand(command: string): boolean;
 export declare function toolMayMutate(tool: string, args: any): boolean;
 export declare function normalizeProjectPath(value: string, projectRoot?: string): string;

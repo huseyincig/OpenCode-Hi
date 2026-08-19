@@ -54,6 +54,22 @@ export class WorkspaceRuntime {
         return lease;
     }
     forTask(m, taskID) { return m.execution.workspace_leases.find(x => x.task_id === taskID && x.status !== 'CLOSED'); }
+    async reintegrate(m, taskID, sessionID, expectedChangedFiles) {
+        const task = m.execution.tasks.find(x => x.id === taskID), lease = this.forTask(m, taskID);
+        if (!task || !lease)
+            throw new Error(`Workspace reintegration requires exact task/lease ownership for ${taskID}`);
+        if (lease.status !== 'ACTIVE' || lease.cleanup_state !== 'ACTIVE')
+            throw new Error(`Workspace reintegration requires an active lease for ${taskID}`);
+        try {
+            const out = await this.executor.reintegrate({ session_id: sessionID, lease, task_scope: [...task.scope], expected_changed_files: [...expectedChangedFiles] });
+            appendLedger(m, 'workspace.reintegrated', { task_id: taskID, payload: { lease_id: lease.lease_id, session_id: sessionID, applied_files: out.applied_files.slice(0, 40), source_baseline: lease.source_baseline } });
+            return out.applied_files;
+        }
+        catch (error) {
+            appendLedger(m, 'workspace.reintegration-failed', { task_id: taskID, payload: { lease_id: lease.lease_id, session_id: sessionID, error: String(error) } });
+            throw error;
+        }
+    }
     async cleanup(m, leaseID) {
         const lease = m.execution.workspace_leases.find(x => x.lease_id === leaseID);
         if (!lease)

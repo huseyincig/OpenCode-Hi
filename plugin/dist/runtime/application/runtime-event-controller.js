@@ -133,6 +133,7 @@ export class RuntimeEventController {
             }
             if (ev.kind === 'session-error' || ev.kind === 'session-deleted') {
                 const detail = String(ev.properties?.error?.message ?? ev.properties?.error ?? ev.rawType);
+                await tasks.cleanupBrowserForTask(m, child.task_id, child.id);
                 if (ev.kind === 'session-error' && await tasks.recoverRuntimeFailure(m, child.id, detail)) {
                     store.updateProgress(m);
                     appendLedger(m, 'parent.wake', { worker_id: child.id, payload: { result: 'RUNTIME_FALLBACK', event: ev.rawType } });
@@ -178,9 +179,13 @@ export class RuntimeEventController {
                 if (!effective.ok)
                     result = { ...result, status: 'BLOCKED', summary: `Effective child model could not be verified against the selected execution model. ${effective.reason}`, open_issues: [...new Set([...(result.open_issues ?? []), effective.reason])], needs_context: [...new Set([...(result.needs_context ?? []), 'effective-model-reconcile: refresh runtime inventory/provider policy and resume with a verified role-selected model'])] };
                 result = await tasks.reconcileNativeResult(m, child.id, result);
+                result = await tasks.reintegrateWorkspaceResult(m, child.id, result);
                 tasks.applyResult(m, child.id, result);
-                if (['completed', 'failed', 'cancelled'].includes(child.status))
+                if (['completed', 'failed', 'cancelled'].includes(child.status)) {
+                    await tasks.cleanupBrowserForTask(m, child.task_id, child.id);
                     await tasks.cleanupWorkspaceForTask(m, child.task_id);
+                }
+                ;
                 if (['completed', 'failed', 'cancelled'].includes(child.status))
                     background.delete(child.id);
                 else

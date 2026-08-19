@@ -1,104 +1,55 @@
 {
   "schema": 6,
-  "release": "0.1.3",
+  "release": "0.2.0",
   "generated_at": "2026-08-14",
-  "candidate_status": "PROMPT_B_0_1_3_PREPUBLICATION_CERTIFICATION_IN_PROGRESS",
+  "candidate_status": "PROMPT_B_0_2_0_PREPUBLICATION_CERTIFICATION_IN_PROGRESS",
   "gates": {
-    "source_integrity": "PASS_LOCAL_CURRENT_SOURCE",
-    "deterministic_release": "PASS_LOCAL_CURRENT_WORKTREE",
-    "node_runtime_acceptance": "PASS_LOCAL_CURRENT_SOURCE",
-    "python_acceptance": "PASS_LOCAL_CURRENT_SOURCE",
-    "validator": "PASS_LOCAL_CURRENT_SOURCE",
-    "worktree_path_acceptance": "PASS_LOCAL",
-    "optional_tool_surface_economy": "PASS_LOCAL",
-    "native_skill_inventory": "PASS_LOCAL",
-    "native_methodology_ownership": "PASS_LOCAL",
-    "benchmark_policy_scenarios": "PASS_LOCAL",
-    "install_config_lifecycle": "PASS_HOST_CURRENT_WORKTREE",
-    "architecture_audit": "PASS_EXACT_SOURCE_HOST_1_18_18",
-    "plain_opencode_smoke": "PASS_EXACT_SOURCE_HOST_1_18_18",
-    "packaged_agents_skills": "PASS_EXACT_SOURCE_HOST_1_18_18",
-    "opencode_native_child_sessions": "PASS_EXACT_SOURCE_HOST_1_18_18",
-    "opencode_model_provider_binding": "PASS_EXACT_SOURCE_HOST_1_18_18",
-    "permission_denial_runtime": "PASS_EXACT_SOURCE_HOST_1_18_18",
-    "windows_runtime_smoke": "PASS_GITHUB_ACTIONS_EXACT_FINAL_SOURCE_F1A2C1C",
-    "dependency_supply_chain_external": "PASS_CLEAN_CONSUMER_EXACT_FINAL_SOURCE_F1A2C1C",
-    "filesystem_hygiene": "PASS_LOCAL_CURRENT_SOURCE",
-    "native_package_plugin_install_exact_candidate": "PASS_EXACT_FINAL_SOURCE_F1A2C1C_OPENCODE_1_18_18",
-    "github_release_publication": "PASS_T4_V0_1_0_EXACT_SOURCE_F1A2C1C",
-    "npm_registry_publication": "PENDING_AUTH_T4_OPENCODE_HI_0_1_0"
+    "source_integrity": "PENDING_LOCAL_0_2_0_CERTIFICATION",
+    "deterministic_release": "PENDING_LOCAL_0_2_0_CERTIFICATION",
+    "node_runtime_acceptance": "PENDING_LOCAL_0_2_0_CERTIFICATION",
+    "python_acceptance": "PENDING_LOCAL_0_2_0_CERTIFICATION",
+    "validator": "PENDING_LOCAL_0_2_0_CERTIFICATION",
+    "worktree_path_acceptance": "PENDING_LOCAL_0_2_0_CERTIFICATION",
+    "optional_tool_surface_economy": "PENDING_LOCAL_0_2_0_CERTIFICATION",
+    "native_skill_inventory": "PENDING_LOCAL_0_2_0_CERTIFICATION",
+    "native_methodology_ownership": "PENDING_LOCAL_0_2_0_CERTIFICATION",
+    "benchmark_policy_scenarios": "PENDING_LOCAL_0_2_0_CERTIFICATION",
+    "install_config_lifecycle": "PENDING_LOCAL_0_2_0_CERTIFICATION",
+    "architecture_audit": "PENDING_LOCAL_0_2_0_CERTIFICATION",
+    "plain_opencode_smoke": "PENDING_EXACT_SOURCE_HOST_1_18_18_0_2_0",
+    "packaged_agents_skills": "PENDING_EXACT_SOURCE_HOST_1_18_18_0_2_0",
+    "opencode_native_child_sessions": "PENDING_EXACT_SOURCE_HOST_1_18_18_0_2_0",
+    "opencode_model_provider_binding": "PENDING_EXACT_SOURCE_HOST_1_18_18_0_2_0",
+    "permission_denial_runtime": "PENDING_EXACT_SOURCE_HOST_1_18_18_0_2_0",
+    "windows_runtime_smoke": "PENDING_GITHUB_ACTIONS_EXACT_0_2_0_SOURCE",
+    "dependency_supply_chain_external": "PENDING_CLEAN_CONSUMER_EXACT_0_2_0_SOURCE",
+    "filesystem_hygiene": "PENDING_LOCAL_0_2_0_CERTIFICATION",
+    "native_package_plugin_install_exact_candidate": "PENDING_EXACT_SOURCE_HOST_1_18_18_0_2_0",
+    "github_release_publication": "PENDING_AUTH_T4_V0_2_0",
+    "npm_registry_publication": "PENDING_AUTH_T4_OPENCODE_HI_0_2_0"
   },
   "release_blocked": true,
-  "reason": "Current 0.1.1 source is undergoing final Prompt B certification. Historical v0.1.0 remains immutable. User publication authority is granted only after engineering/certification completes; T4 is not claimed before real push/tag/release/npm verification.",
+  "reason": "Current 0.2.0 source is undergoing final certification. Historical release/publication receipts remain immutable evidence and do not certify the 0.2.0 candidate.",
   "external_blockers": [
-    "final-certification-must-complete-before-authorized-0.1.1-publication"
+    "current-0.2.0-cross-platform-and-exact-host-certification-pending",
+    "final-publication-requires-explicit-authority-after-certification"
   ],
   "current_local_evidence": {
     "node": {
       "command": "npm --prefix plugin test",
-      "status": "PASS"
+      "status": "PENDING_CURRENT_0_2_0_SOURCE_CHECKPOINT"
     },
     "python": {
       "command": "python -m pytest -q tests/test_hi.py",
-      "status": "PASS"
+      "status": "PENDING_CURRENT_0_2_0_SOURCE_CHECKPOINT"
     },
     "validation": {
       "command": "python scripts/validate.py",
-      "status": "PASS"
-    },
-    "benchmarks": {
-      "command": "node scripts/run-benchmarks.mjs",
-      "status": "PASS",
-      "scenarios": 9,
-      "receipt": "data/validation/benchmarks-0.1.0.json"
-    },
-    "install_lifecycle": {
-      "status": "PASS",
-      "receipt": "data/validation/install-lifecycle-0.1.0.json"
-    },
-    "architecture_audit": {
-      "status": "PASS_LOCAL_WITH_EXTERNAL_HOST_GATES_PENDING",
-      "receipt": "data/validation/architecture-audit-0.1.0.json"
-    },
-    "filesystem_hygiene": {
-      "status": "PASS",
-      "receipt": "data/validation/filesystem-hygiene-0.1.0.json"
-    },
-    "final_acceptance": {
-      "status": "PASS_LOCAL_WITH_EXTERNAL_GATES_PENDING",
-      "receipt": "data/validation/final-acceptance-0.1.0.json"
-    },
-    "host_acceptance": {
-      "status": "PASS_EXACT_SOURCE_HOST_1_18_18",
-      "receipt": "data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-c5d8287.json",
-      "opencode_version": "1.18.18",
-      "runtime_source": "c5d8287a909b778b628bfdd20f84fb921e38b0e8"
+      "status": "PENDING_CURRENT_0_2_0_SOURCE_CHECKPOINT"
     },
     "deterministic_release": {
-      "status": "PASS",
-      "method": "two independent release-build runs with byte-for-byte identical outputs",
-      "hash_binding": "Artifact hashes are emitted by the post-freeze release build/manifest and are intentionally not embedded in this source-owned living receipt to avoid self-referential archive hashes."
-    },
-    "pre_freeze_external": {
-      "status": "PASS_EXACT_SOURCE_9F3A1A9",
-      "receipt": "data/validation/external-clean-consumer-0.1.0-head-9f3a1a9.json",
-      "source_commit": "9f3a1a9025f73f0da46dcd88da31a6f5ef44c545",
-      "github_actions_run": 31813070875,
-      "ubuntu_job": 94808107636,
-      "windows_job": 94808107727,
-      "clean_consumer_package": "PASS",
-      "dependency_vulnerabilities_total": 0,
-      "opencode_loader_1_18_18": "PASS"
-    },
-    "final_publication": {
-      "status": "GITHUB_RELEASE_PASS_NPM_BLOCKED_AUTH",
-      "receipt": "data/validation/release-publication-0.1.0.json",
-      "released_source": "f1a2c1c4358e5a63656da7a585b6b5793d1ed3be",
-      "github_actions_run": 31814631919,
-      "tag": "v0.1.0",
-      "release_id": 370666032,
-      "github_release_url": "https://github.com/huseyincig/OpenCode-Hi/releases/tag/v0.1.0",
-      "npm_publication": "BLOCKED_T4_AUTH"
+      "status": "PENDING_CURRENT_0_2_0_SOURCE_CHECKPOINT",
+      "hash_binding": "Final archive hashes are generated only after the source checkpoint is frozen; self-referential source/archive hashes are not embedded before that checkpoint."
     }
   },
   "historical_receipts_not_valid_for_current_candidate": {
@@ -110,5 +61,12 @@
       "data/validation/forensic-61-progress.json"
     ]
   },
-  "rule": "P7 exact-host evidence is immutable provenance. P8 release evidence must bind the final release-source commit/ref, CI/Windows result, clean-consumer installation, deterministic artifacts, and every real remote publication action."
+  "rule": "P7 exact-host evidence is immutable provenance. P8 release evidence must bind the final release-source commit/ref, CI/Windows result, clean-consumer installation, deterministic artifacts, and every real remote publication action.",
+  "historical_release_evidence": {
+    "release": "0.1.3",
+    "release_status_receipt": "data/validation/release-status-0.1.3.json",
+    "github_release_status": "PASS_T4",
+    "npm_registry_status": "PASS_T4",
+    "claim_boundary": "Historical 0.1.3 publication evidence is immutable provenance only and does not certify the 0.2.0 candidate."
+  }
 }

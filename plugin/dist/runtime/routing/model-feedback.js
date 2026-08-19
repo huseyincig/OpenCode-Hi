@@ -1,4 +1,28 @@
 const DEFAULT_WINDOW = 12;
+const MATERIAL_FEEDBACK_BOUNDARIES = new Set(['amendment', 'constraint']);
+function activeFeedbackGenerationFloor(m) {
+    const generationByRevision = new Map();
+    for (const event of m.execution.ledger) {
+        if (event.type !== 'semantic.followup-pending')
+            continue;
+        const revision = Number(event.payload?.revision), generation = Number(event.payload?.generation);
+        if (Number.isInteger(revision) && revision >= 2 && Number.isInteger(generation) && generation >= 1)
+            generationByRevision.set(revision, generation);
+    }
+    let floor = 1;
+    for (const event of m.execution.ledger) {
+        if (event.type !== 'semantic.followup-assessed' || !MATERIAL_FEEDBACK_BOUNDARIES.has(String(event.payload?.message_kind ?? '')))
+            continue;
+        const revision = Number(event.payload?.revision), generation = generationByRevision.get(revision);
+        if (generation !== undefined)
+            floor = Math.max(floor, generation);
+    }
+    return floor;
+}
+function eligibleFeedbackWorkers(m, role, category) {
+    const floor = activeFeedbackGenerationFloor(m);
+    return m.execution.workers.filter(w => (!role || w.role === role) && (!category || w.category === category) && (w.generation_at_spawn ?? 1) >= floor && ['completed', 'failed'].includes(w.status));
+}
 function retryCountForFinalModel(w, model) { return (w.fallback_history ?? []).filter(h => h.from === model).length; }
 function exactAttemptEvidence(m, w) {
     const generation = w.generation_at_spawn ?? m.continuation.generation, ordinal = w.attempt ?? 0;
@@ -14,14 +38,14 @@ function verificationOutcome(m, w) {
 }
 function confidence(samples) { return samples >= 8 ? 'high' : samples >= 4 ? 'medium' : samples >= 2 ? 'low' : 'insufficient'; }
 export function missionModelFeedbackObservations(m, role, category, window = DEFAULT_WINDOW) {
-    const eligible = m.execution.workers.filter(w => (!role || w.role === role) && (!category || w.category === category) && Boolean(w.effective_model ?? w.model) && ['completed', 'failed'].includes(w.status));
+    const eligible = eligibleFeedbackWorkers(m, role, category).filter(w => Boolean(w.effective_model ?? w.model));
     return eligible.sort((a, b) => (b.completed_at ?? b.updated_at ?? 0) - (a.completed_at ?? a.updated_at ?? 0)).slice(0, Math.max(1, Math.min(32, window))).map(w => {
         const model = String(w.effective_model ?? w.model), started = w.started_at, completed = w.completed_at, verification_outcome = verificationOutcome(m, w);
         return { model, role: w.role, category: w.category, success: w.status === 'completed' && verification_outcome !== 'failed', retry_count: retryCountForFinalModel(w, model), verification_outcome, ...(started && completed && completed >= started ? { latency_ms: completed - started } : {}), observed_at: completed ?? w.updated_at ?? m.identity.updated_at };
     });
 }
 export function deriveMissionModelFeedback(m, role, category, window = DEFAULT_WINDOW) {
-    const workers = m.execution.workers.filter(w => (!role || w.role === role) && (!category || w.category === category) && ['completed', 'failed'].includes(w.status)).sort((a, b) => (b.completed_at ?? b.updated_at ?? 0) - (a.completed_at ?? a.updated_at ?? 0)).slice(0, Math.max(1, Math.min(32, window)));
+    const workers = eligibleFeedbackWorkers(m, role, category).sort((a, b) => (b.completed_at ?? b.updated_at ?? 0) - (a.completed_at ?? a.updated_at ?? 0)).slice(0, Math.max(1, Math.min(32, window)));
     const observations = missionModelFeedbackObservations(m, role, category, window), failures = {}, successes = {}, retries = {}, samples = {}, average_latency_ms = {}, verification_passes = {}, verification_failures = {}, latencies = {};
     const inc = (r, id, n = 1) => r[id] = (r[id] ?? 0) + n;
     for (const o of observations) {

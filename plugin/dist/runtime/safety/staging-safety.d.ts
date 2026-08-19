@@ -9,6 +9,7 @@ export declare function commitHasDirectPathspec(command: string): boolean;
 export declare function mutatesGitIndex(command: string): boolean;
 export declare function recordPreexistingUserBaseline(m: MissionState, baseline: Record<string, string> | undefined): void;
 export declare function recordStagingInspection(m: MissionState, command: string, output: any): void;
+export declare function inspectCurrentGitChangedFiles(projectRoot?: string): string[] | undefined;
 export declare function recordGitStatusInspection(m: MissionState, command: string, output: any): void;
 export declare function invalidateGitTopologyProof(m: MissionState): void;
 export declare function beginGitTopologyMutation(m: MissionState, command: string): void;

@@ -96,6 +96,9 @@ export interface ExecutionProfile {
         required_evidence: string[];
     };
     tools: string[];
+    mcp_servers?: string[];
+    browser_backend?: 'bounded-playwright' | 'mcp';
+    browser_allowed_origins?: string[];
     model?: string;
     model_variant?: string;
     fallback_models: string[];

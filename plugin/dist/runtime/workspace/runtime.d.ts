@@ -11,6 +11,7 @@ export declare class WorkspaceRuntime {
     }): IsolationDecisionContract;
     provision(m: MissionState, task: MissionTask, decision: IsolationDecisionContract): Promise<WorkspaceLeaseContract>;
     forTask(m: MissionState, taskID: string): WorkspaceLeaseContract | undefined;
+    reintegrate(m: MissionState, taskID: string, sessionID: string, expectedChangedFiles: string[]): Promise<string[]>;
     cleanup(m: MissionState, leaseID: string): Promise<boolean>;
     cleanupTask(m: MissionState, taskID: string): Promise<boolean>;
     cleanupMission(m: MissionState): Promise<number>;

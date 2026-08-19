@@ -23,15 +23,6 @@ export interface CapabilityResolution {
   reason:string[]
 }
 
-/**
- * Boundary implemented by OpenCode, another host, or a Hi-owned fallback.
- * Core code depends on capability semantics, never a host client/session API.
- */
-export interface CapabilityPort<Request=unknown,Result=unknown> {
-  readonly capability:string
-  resolve(requirement:CapabilityRequirement):CapabilityResolution|Promise<CapabilityResolution>
-  execute(request:Request):Promise<Result>
-}
 
 export type WorkDependencyKind='requires'
 
@@ -112,19 +103,6 @@ export function sameExecutionAttemptFence(a:Pick<ExecutionAttempt,'executionUnit
 
 export type ExecutionTransitionKind='DISPATCH'|'SETTLEMENT'|'EVIDENCE_COMMIT'
 export type ExecutionTransitionState='PREPARED'|'COMMITTED'|'UNKNOWN'
-export interface ExecutionTransitionReceipt {
-  receiptId:string
-  missionId:string
-  workNodeId:string
-  executionUnitId:string
-  attemptId:string
-  runId:string
-  generation:number
-  transition:ExecutionTransitionKind
-  state:ExecutionTransitionState
-  observedAt:number
-  stateHash?:string
-}
 
 function receiptPart(value:string):string{return`${value.length}:${value}`}
 export function executionTransitionReceiptId(input:{missionId:string;workNodeId:string;attempt:ExecutionAttemptIdentity;transition:ExecutionTransitionKind}):string{

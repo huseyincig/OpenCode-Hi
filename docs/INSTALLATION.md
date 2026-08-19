@@ -97,9 +97,6 @@ Generated from `data/hi-config-options.json`. Do not hand-edit this table.
 | `parallel.max` | runtime | `3` | capacity | caps total concurrently acquired workers |
 | `parallel.providers` | runtime | `{}` | capacity | caps concurrent workers per provider |
 | `parallel.models` | runtime | `{}` | capacity | caps concurrent workers per model |
-| `teamMode.enabled` | runtime | `false` | constraint | enables Team Mode tools only when host worker-runtime is supported and permits team creation |
-| `teamMode.maxMembers` | runtime | `4` | capacity | caps distinct Team Mode members |
-| `teamMode.maxWallMinutes` | runtime | `45` | capacity | sets team expiry deadline and terminal expiration gate |
 | `profile.minimal.specialistThreshold` | runtime | `high` | preference | changes specialist dispatch threshold for the selected execution profile |
 | `profile.minimal.reviewThreshold` | runtime | `low` | preference | changes reviewer dispatch threshold for the selected execution profile |
 | `profile.balanced.specialistThreshold` | runtime | `medium` | preference | changes specialist dispatch threshold for the selected execution profile |
@@ -135,7 +132,7 @@ The helper preserves foreign plugins, MCP configuration, themes and unknown user
 python3 scripts/native_plugin_setup.py uninstall /path/to/project
 ```
 
-Uninstall removes only the registration/state owned by the setup lifecycle. Independently owned Hi project data such as policy, Project Intelligence, artifacts or OpenCode-native project skills is not deleted merely because the plugin registration is removed.
+Uninstall removes only the registration/state owned by the setup lifecycle. Independently owned Hi project data such as policy, project methodology-learning candidates, artifacts or OpenCode-native project skills is not deleted merely because the plugin registration is removed.
 
 ## One-step rollback
 

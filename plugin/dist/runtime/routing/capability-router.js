@@ -18,6 +18,8 @@ export function routeCapabilities(intent, profile = { specialistThreshold: 'medi
     }
     const reviewDominant = intent.taskKind === 'review' || has('review') || has('qa-review') || has('independent-review');
     const implementationDominant = intent.taskKind === 'implementation' || intent.taskKind === 'bug-fix' || has('implementation');
+    if (intent.taskKind === 'diagnosis')
+        return { role: 'repository-explorer', category: intent.scope === 'repo-wide' ? 'deep' : 'standard', capabilities: caps, reason: ['structured diagnosis task is read-only root-cause analysis'] };
     if (reviewDominant && !implementationDominant) {
         if (reviewT <= 1)
             return { role: 'qa-reviewer', category: intent.risk === 'high' ? 'critical' : 'standard', capabilities: caps, reason: ['structured review capability dominates task'] };

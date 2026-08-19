@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { appendLedger } from '../ledger/ledger.js';
 import { gitCommandParts } from './command-classifier.js';
 import { normalizeBoundedProjectPath } from '../../contracts/common.js';
@@ -55,6 +56,15 @@ function porcelainPaths(text) {
         }
     }
     return [...new Set(out.filter(Boolean))];
+}
+export function inspectCurrentGitChangedFiles(projectRoot) {
+    if (!projectRoot)
+        return undefined;
+    const r = spawnSync('git', ['-c', `safe.directory=${projectRoot}`, '-C', projectRoot, 'status', '--porcelain=v1', '--untracked-files=all'], { encoding: 'utf8' });
+    if (r.status !== 0 || typeof r.stdout !== 'string')
+        return undefined;
+    const files = porcelainPaths(r.stdout);
+    return files.includes('__INVALID_GIT_PATH__') ? undefined : files;
 }
 export function recordGitStatusInspection(m, command, output) {
     if (!isGitStatusInspection(command))

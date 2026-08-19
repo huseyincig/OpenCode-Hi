@@ -27,7 +27,7 @@ def main():
         machine_rows.append({'path':x['path'],'sha256':sha(p),'area':x['area'],'lifecycle':'MACHINE_OWNER'})
     artifacts.sort(key=lambda x:x['path']); machine_rows.sort(key=lambda x:x['path'])
     docs_count=sum(1 for x in artifacts if x['path'].startswith('docs/') and x['path'].endswith('.md'))
-    root_md=[p.name for p in ROOT.glob('*.md') if p.is_file()]
+    engineering=set(cfg['policy'].get('engineering_state_root_markdown') or []); root_md=[p.name for p in ROOT.glob('*.md') if p.is_file() and p.name not in engineering]
     budget=cfg['policy']['public_docs_budget']; root_budget=cfg['policy']['root_markdown_budget']
     budget_viol=[]
     if docs_count>budget:budget_viol.append(f'public-doc-budget:{docs_count}>{budget}')
@@ -44,7 +44,7 @@ def main():
       'summary':{'public_documents':len(artifacts),'docs_markdown':docs_count,'root_markdown':len(root_md),'machine_owners':len(machine_rows),'canonical_areas':len(areas)},
       'canonical_ownership':public+machine,'artifacts':artifacts,'machine_owners':machine_rows,
       'violations':{'missing':missing,'duplicate_area':duplicate,'budget_or_tracking':budget_viol},
-      'classification_boundary':'Only the bounded public manifest owns current human documentation. Local engineering/history notes and Git history may inform maintainers but never own current product truth.'}
+      'classification_boundary':'Only the bounded public manifest owns current human documentation. Explicit engineering-state root Markdown, local engineering/history notes and Git history may inform maintainers but never own current product truth.'}
     OUT.write_text(json.dumps(out,indent=2,ensure_ascii=False)+'\n',encoding='utf-8',newline='\n')
     print(f"documentation inventory {status}: public={len(artifacts)} docs={docs_count} root_md={len(root_md)} machine={len(machine_rows)}")
     if status!='PASS':print(json.dumps(out['violations'],indent=2,ensure_ascii=False))

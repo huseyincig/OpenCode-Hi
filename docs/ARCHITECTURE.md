@@ -35,14 +35,14 @@ TaskRuntime                                |
    +--> model routing                      |
    +--> Methodology selection/load         |
    +--> Authority / Permission             |
-   +--> Context / ProjectIntelligence      |
+   +--> Context / methodology learning     |
    |                                       |
    +--> ChildExecutionCoordinator          |
    |       |                               |
    |       +--> native child session       |
    |       +--> ProcessExecutor            |
    |       +--> WorkspaceRuntime           |
-   |       +--> BrowserRuntime             |
+   |       +--> BrowserExecutor            |
    |               |                       |
    |               v                       |
    |           OpenCodeHostPort            |
@@ -83,7 +83,7 @@ Hi owns:
 - Role semantics and PermissionProfile projection rules;
 - Methodology admission/selection/exit semantics;
 - model routing policy for constrained child execution;
-- Context, Project Intelligence and Artifact semantics;
+- Mission runtime context projection, durable ContextArtifact and project-methodology-learning semantics;
 - HumanDecision and exact-action Authority semantics;
 - ExternalAction classification and release transaction semantics;
 - ProcessContract, IsolationDecision/WorkspaceLease and BrowserObservation contracts;
@@ -111,13 +111,11 @@ A role cannot smuggle model identity, a Methodology cannot grant Authority, and 
 
 ## Context and information plane
 
-The Context Governor classifies provider-bound material as `PROTECTED`, `COMPRESSIBLE`, or `PURGEABLE`. Canonical session/product truth is not destructively rewritten to save tokens; provider projection is bounded separately.
+Provider-bound context is projected from current Mission state through `MissionRuntimeProjection`, bounded with explicit context budgets and privacy redaction. Duplicate provider tool outputs may be pruned only when their deterministic state/input/output signature proves equivalence; canonical Mission/session truth is not destructively rewritten.
 
-Project Intelligence is repository-scoped reusable context with source provenance/freshness. It never becomes Evidence or Authority. Hybrid retrieval uses lexical, path and source-ref graph signals with deterministic reciprocal-rank fusion.
+Durable reusable content uses `ContextArtifactStore` with source hashes, freshness and explicit consumer bindings. Project-scoped learning is intentionally narrower: `ProjectMethodologyLearningStore` records evidence-bound reusable HOW candidates and may activate methodology-authoring review only after independent observations; it is not a general repository knowledge/retrieval database and never becomes Evidence or Authority.
 
-Semantic Context is behind `SemanticContextAdapter`. The current explicit implementation is TypeScript/TSX only.
-
-Compression artifacts remain Context artifacts with source refs/hashes and freshness. They never become Evidence.
+Semantic Context is behind `SemanticContextAdapter`. The current explicit implementation is TypeScript/TSX only. Context artifacts and semantic summaries remain non-Evidence until separately admitted by verification policy.
 
 ## Authority and Permission
 
@@ -160,7 +158,7 @@ The supported claim is limited to the Hi-owned isolation chain proven by exact-h
 
 ## Browser execution
 
-`BrowserObservation` is observation provenance, not automatic Evidence. Production browser execution is behind `BrowserExecutor`/`BrowserRuntime` with target confinement, exact Task/Worker/session ownership, bounded observations and Artifact-backed screenshots.
+`BrowserObservation` is observation provenance, not automatic Evidence. Production browser execution is behind the `BrowserExecutor` port, task-bound backend policy/ownership checks, and the OpenCode `PlaywrightBrowserAdapter`, with local-origin confinement, exact Task/Worker/session ownership, bounded observations and Artifact-backed screenshots.
 
 Support is runtime-health-gated. Missing health removes the executable resource and preflight fails closed. A screenshot existing or MCP/tool discovery never creates browser PASS by itself; methodology-specific evidence must still reconcile.
 
@@ -195,7 +193,7 @@ Execution topology and model selection are bounded structured decisions. Small/l
 
 The first-class semantic adapter currently supports `typescript` and `typescriptreact` only. JavaScript, LSP-backed and Tree-sitter-backed semantic adapters are not implemented or advertised.
 
-Context is consumer-bound and budgeted. Durable context artifacts, semantic TypeScript context, and Project Intelligence are distinct from Evidence. Project Intelligence is source-linked, freshness-aware knowledge; stale or unrelated records are filtered before retrieval. Compression does not widen privacy or consumer scope.
+Context is consumer-bound and budgeted. Durable context artifacts and semantic TypeScript context are distinct from Evidence. Project-scoped learning is limited to evidence-bound methodology candidates under canonical storage ownership; it does not provide a general knowledge retrieval layer. Provider projection/pruning never widens privacy or consumer scope.
 
 ## Storage and filesystem ownership
 

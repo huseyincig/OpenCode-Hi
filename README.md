@@ -12,7 +12,7 @@ Hi is designed to use the minimum sufficient topology, model, context and verifi
 
 ## Current product truth
 
-This checkout tracks application/package version `0.1.3`. Version identity is owned by `VERSION` and parity-validated against package metadata. Published availability is external state: GitHub Releases and the npm registry are authoritative for whether a given version has been released. Historical `v0.1.1` and `v0.1.0` release artifacts remain immutable.
+This checkout tracks application/package version `0.2.0`. Version identity is owned by `VERSION` and parity-validated against package metadata. Published availability is external state: GitHub Releases and the npm registry are authoritative for whether a given version has been released. Historical `v0.1.1` and `v0.1.0` release artifacts remain immutable.
 
 Current host capability truth is generated from exact receipts rather than hand-maintained here. See [Host Support](docs/HOSTS.md) and `data/validation/compatibility-matrix-0.1.0.json`.
 
@@ -24,7 +24,7 @@ Hi adds deterministic semantics around native AI execution:
 - adaptive direct, delegated and bounded multi-agent execution;
 - independent Role, model, Methodology and topology decisions;
 - exact Authority and monotonic host Permission boundaries;
-- source-aware Context Governor, Project Intelligence and TypeScript Semantic Context;
+- bounded Mission runtime projection, durable context artifacts, TypeScript Semantic Context, and evidence-backed project methodology learning;
 - lazy methodology/skill discovery and loading;
 - structured Evidence, VerificationEnvelope and deterministic completion;
 - bounded recovery, WAIT and authoritative STOP;
@@ -47,7 +47,7 @@ Mission -> TaskRuntime -> Worker
    |          |             |
    |          +--> Role / model / Methodology
    |          +--> Authority / Permission
-   |          +--> Context / Project Intelligence
+   |          +--> Context / methodology learning
    |          |
    |          v
    |       Hi HostPort
@@ -83,14 +83,14 @@ Exact version/platform/architecture and receipt links belong to [Host Support](d
 
 ### Registry distribution
 
-For this source/package version, the exact registry identity is `opencode-hi@0.1.3`. Release availability itself is not hand-maintained in this README; verify it from npm/GitHub. Published releases use npm Trusted Publishing OIDC provenance and are acceptance-checked on the recorded exact OpenCode host.
+For this source/package version, the exact registry identity is `opencode-hi@0.2.0`. Release availability itself is not hand-maintained in this README; verify it from npm/GitHub. Published releases use npm Trusted Publishing OIDC provenance and are acceptance-checked on the recorded exact OpenCode host.
 
 A fresh project can install the exact package version and use the package-provided setup CLI without a repository checkout:
 
 ```bash
-npm install --save-dev opencode-hi@0.1.3
-./node_modules/.bin/opencode-hi-setup plan /path/to/project --version 0.1.3
-./node_modules/.bin/opencode-hi-setup install /path/to/project --version 0.1.3
+npm install --save-dev opencode-hi@0.2.0
+./node_modules/.bin/opencode-hi-setup plan /path/to/project --version 0.2.0
+./node_modules/.bin/opencode-hi-setup install /path/to/project --version 0.2.0
 ./node_modules/.bin/opencode-hi-setup doctor /path/to/project
 ```
 
@@ -133,7 +133,7 @@ Role selection does not itself select a model, and a Methodology cannot grant Au
 
 User dirty, staged and unrelated files remain user-owned. Hi never treats a broad reset/stash/checkout/restore or `git add -A` snapshot as a safe ownership shortcut.
 
-**Evidence is also different from prose.** Worker/model output, Context, Project Intelligence, Methodology content and browser observations do not become Evidence merely because they look convincing. Completion requires current obligations and fresh admissible proof to reconcile deterministically.
+**Evidence is also different from prose.** Worker/model output, Context, project methodology-learning state, Methodology content and browser observations do not become Evidence merely because they look convincing. Completion requires current obligations and fresh admissible proof to reconcile deterministically.
 
 See [Human Decisions and Authority](docs/HUMAN-DECISIONS.md), [Verification](docs/VERIFICATION.md), [Security model](docs/SECURITY-MODEL.md).
 

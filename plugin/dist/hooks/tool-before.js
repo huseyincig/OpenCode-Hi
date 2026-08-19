@@ -1,4 +1,4 @@
-import { isVerificationCommand, observeToolBefore, toolMayMutate } from '../runtime/evidence/evidence-runtime.js';
+import { isVerificationCommand, observeToolBefore, toolMayMutate, verificationCommandKind } from '../runtime/evidence/evidence-runtime.js';
 import { beginAuthorizedAction, claimAuthorizedAction, privilegedAction } from '../runtime/safety/authority.js';
 import { canonicalExternalCommand } from '../runtime/safety/command-classifier.js';
 import { matchRollback } from '../runtime/mutations/temporary-mutations.js';
@@ -9,6 +9,7 @@ import { assertChildMethodologyLoad, assertParentMethodologyLoad, requestedMetho
 import { evaluateShellCommand } from '../runtime/process/shell-policy.js';
 import { appendLedger } from '../runtime/ledger/ledger.js';
 import { openHumanDecision } from '../runtime/human-decision/runtime.js';
+import { verificationKindAdmittedForMission } from '../runtime/verification/policy.js';
 import { HI_BROWSER_EXECUTION_TOOL_IDS } from '../runtime/browser/executor.js';
 import { resolveBrowserExecutionOwner } from '../runtime/browser/ownership.js';
 export function createToolBeforeHook(store, background, projectRoot) {
@@ -41,6 +42,19 @@ export function createToolBeforeHook(store, background, projectRoot) {
             const allowed = new Set(['hi_intent_assess', 'hi_status', 'hi_ledger', 'hi_readiness']);
             if (!allowed.has(tool))
                 throw new Error(`Hi semantic gate: '${tool}' is blocked until the host primary submits the structured semantic assessment.`);
+        }
+        if (!child && m.identity.status === 'completed' && tool === 'bash' && typeof args?.command === 'string') {
+            const kind = verificationCommandKind(args.command);
+            if (kind)
+                throw new Error(`Hi mission already completed from fresh required evidence; additional verifier '${kind}' is not admitted. Stop instead of running more checks.`);
+        }
+        if (!child && m.identity.status === 'active' && ['DIRECT', 'EVIDENCE'].includes(m.execution.adaptive_execution?.path ?? '') && m.identity.intent.scope === 'local' && !['high', 'authority-boundary'].includes(m.identity.risk) && tool === 'bash' && typeof args?.command === 'string') {
+            const kind = verificationCommandKind(args.command);
+            if (kind && !verificationKindAdmittedForMission(m, kind)) {
+                const required = [...m.execution.verification_policy.requiredKinds];
+                appendLedger(m, 'verification.unrequired-command-blocked', { payload: { kind, required, command: String(args.command).slice(0, 180), reason: 'parent-local-minimum-sufficient-verification' } });
+                throw new Error(`Hi verification economy: '${kind}' is outside the required parent verification contract (${required.join(', ') || 'none'}). Run only required/stronger verification unless a failed required check, changed-surface replan, or semantic follow-up expands the contract.`);
+            }
         }
         if (tool === 'skill') {
             const name = requestedMethodologyName(args);

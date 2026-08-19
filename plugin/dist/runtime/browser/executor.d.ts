@@ -3,6 +3,7 @@ export interface BrowserExecutionContext {
     task_id: string;
     execution_owner_ref: string;
     executor_version: string;
+    allowed_origins: string[];
     screenshot_artifact_ref?: string;
 }
 export interface BrowserTarget {
@@ -13,6 +14,12 @@ export interface BrowserInspectRequest {
 }
 export interface BrowserWaitRequest {
     milliseconds: number;
+}
+export type BrowserCleanupReason = 'cleaned' | 'not-found' | 'owner-mismatch' | 'close-failed';
+export interface BrowserCleanupResult {
+    cleaned: boolean;
+    reason: BrowserCleanupReason;
+    error?: string;
 }
 export interface BrowserExecutor {
     health(): Promise<{
@@ -28,5 +35,6 @@ export interface BrowserExecutor {
     screenshot(context: BrowserExecutionContext): Promise<BrowserObservationContract>;
     wait(context: BrowserExecutionContext, request: BrowserWaitRequest): Promise<BrowserObservationContract>;
     close(context: BrowserExecutionContext): Promise<BrowserObservationContract>;
+    cleanup(context: BrowserExecutionContext): Promise<BrowserCleanupResult>;
 }
 export declare const HI_BROWSER_EXECUTION_TOOL_IDS: readonly ["hi_browser_open", "hi_browser_navigate", "hi_browser_click", "hi_browser_type", "hi_browser_inspect", "hi_browser_screenshot", "hi_browser_wait", "hi_browser_close"];

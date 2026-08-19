@@ -58,7 +58,7 @@ function parsePolicy(raw) {
         return undefined;
     if (![...value.useful_coexistence, ...value.conflicts].every(name => /^hi-[a-z0-9-]+$/.test(name)))
         return undefined;
-    if (!value.resource_requirements.every(resource => /^host-capability:[a-z0-9-]+$/.test(resource)))
+    if (!value.resource_requirements.every(resource => /^(?:host|runtime)-capability:[a-z0-9-]+$/.test(resource)))
         return undefined;
     if (!['manual', 'project-intelligence'].includes(String(value.admission)))
         return undefined;

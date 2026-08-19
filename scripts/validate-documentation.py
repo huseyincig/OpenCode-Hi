@@ -26,7 +26,7 @@ def main():
     # Public surface must remain bounded. Historical/internal docs are local-only and never required by CI.
     public_docs=[p for p in (ROOT/'docs').rglob('*.md') if p.is_file()]
     if len(public_docs)>cfg['policy']['public_docs_budget']:errors.append({'code':'DOC_BUDGET_EXCEEDED','detail':len(public_docs)})
-    root_md=[p for p in ROOT.glob('*.md') if p.is_file()]
+    engineering=set(cfg['policy'].get('engineering_state_root_markdown') or []); root_md=[p for p in ROOT.glob('*.md') if p.is_file() and p.name not in engineering]
     if len(root_md)>cfg['policy']['root_markdown_budget']:errors.append({'code':'ROOT_MD_BUDGET_EXCEEDED','detail':[p.name for p in root_md]})
     for forbidden in ('README.tr.md','CONTRIBUTING.md','SECURITY.md'):
         if (ROOT/forbidden).exists():errors.append({'code':'ROOT_DOC_SHOULD_MOVE_TO_SUPPORTED_LOCATION','path':forbidden})

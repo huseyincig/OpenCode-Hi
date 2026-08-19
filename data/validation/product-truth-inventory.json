@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "release": "0.1.3",
+  "release": "0.2.0",
   "kind": "PRODUCT_TRUTH_TRACE_INVENTORY",
   "status": "PASS",
   "claim_boundary": "Derived documentation/reconstruction trace map only; listed runtime/contracts remain semantic owners.",
@@ -9,7 +9,7 @@
       "area": "mission",
       "canonical_owner": "MissionStore",
       "owner_path": "plugin/src/runtime/mission/mission-store.ts",
-      "owner_sha256": "57d0bcb0ffbcf123f05ef1b5a7b0c0e44572f8b3566ad4d747ffffc088225a66",
+      "owner_sha256": "e3f8cbaaace00c14deb8ba889b39de232da9017f46a8fa8eab0c5cc78bdd583d",
       "producer_or_contract_paths": [
         "plugin/src/runtime/mission/types.ts",
         "plugin/src/runtime/mission/validators.ts"
@@ -27,7 +27,7 @@
       "area": "task-runtime",
       "canonical_owner": "TaskRuntime",
       "owner_path": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "4aefdeea9a786314ac380d757ffcc17b9355dd29b22e0a8e892399ce4e04e0e7",
+      "owner_sha256": "a79261104fd8c84cf1d825a45b23c300edd0819aaa345441f73863367e0bc598",
       "producer_or_contract_paths": [
         "plugin/src/runtime/task/contracts.ts"
       ],
@@ -46,7 +46,7 @@
       "area": "worker",
       "canonical_owner": "WorkerRuntime",
       "owner_path": "plugin/src/runtime/worker/worker-runtime.ts",
-      "owner_sha256": "c59e00d0f1d39831e07f3112350a5186b007bf8c67285d8f4708887b23fe7cd4",
+      "owner_sha256": "03708a10149b15668f3674ab7e64d2272cd491f1f9db101289798c6b080c10f8",
       "producer_or_contract_paths": [
         "plugin/src/contracts/worker.ts",
         "plugin/src/contracts/worker-result.ts"
@@ -80,12 +80,12 @@
     },
     {
       "area": "methodologies-skills",
-      "canonical_owner": "MethodologyContract",
+      "canonical_owner": "MethodologyContract + native skill selection",
       "owner_path": "data/hi-methodologies.json",
-      "owner_sha256": "17ef07947830e5497b6d3fda0f9568b041773d9f2903c0a623091a7939d3b4ca",
+      "owner_sha256": "99c3f4077187d58e83e96a6843727f163c0f4f3442e01e5ed9ebac89bbbd97fc",
       "producer_or_contract_paths": [
         "plugin/src/runtime/methodology/catalog.ts",
-        "plugin/src/runtime/skills/catalog-index.ts"
+        "plugin/src/runtime/skills/registry.ts"
       ],
       "consumer_or_executor_paths": [
         "plugin/src/runtime/methodology/activation.ts",
@@ -93,7 +93,7 @@
       ],
       "proof_paths": [
         "plugin/test/methodology-signal-contract.test.mjs",
-        "plugin/test/c7-skill-catalog-index.test.mjs"
+        "plugin/test/native-skill-catalog.test.mjs"
       ],
       "canonical_doc": "docs/SKILLS.md"
     },
@@ -101,7 +101,7 @@
       "area": "routing-models",
       "canonical_owner": "Hi routing/model resolver",
       "owner_path": "plugin/src/runtime/routing/model-resolver.ts",
-      "owner_sha256": "c388b8a83cb3f1b19a139ecd9d7a26acc91825d470a7f3ef616e2992fd8bfa71",
+      "owner_sha256": "7da55846861e46dd4e17c295ea250a33b18300662f290c73607f7cec1fdfc8ad",
       "producer_or_contract_paths": [
         "plugin/src/runtime/routing/execution-profile.ts",
         "plugin/src/runtime/routing/minimum-team.ts",
@@ -120,7 +120,7 @@
       "area": "configuration",
       "canonical_owner": "Hi config catalog/resolver",
       "owner_path": "data/hi-config-options.json",
-      "owner_sha256": "2d000aee52ea187a173ab8e068a1d5fb6e2cd14470e81a1e8684b33f57f35ddc",
+      "owner_sha256": "d3d3801d6f1264e992a69ba74702bf8ce92cc6da5523c36b77c0be81efef72e7",
       "producer_or_contract_paths": [
         "plugin/src/config/schema.ts",
         "plugin/src/config/resolver.ts"
@@ -192,21 +192,23 @@
     },
     {
       "area": "context",
-      "canonical_owner": "ContextGovernor",
-      "owner_path": "plugin/src/runtime/context/governor.ts",
-      "owner_sha256": "51da0d19f1997c522702849f6d6270f76dbdef1d1d4830253d49353a94cae8fd",
+      "canonical_owner": "MissionRuntimeProjection + ContextArtifactStore",
+      "owner_path": "plugin/src/runtime/context/mission-runtime-projection.ts",
+      "owner_sha256": "4f6089ab74dce4238c79afaeb079918b49c0a1c68a4a762d6eb8dcd110172f28",
       "producer_or_contract_paths": [
-        "plugin/src/runtime/context/mission-runtime-projection.ts",
         "plugin/src/runtime/context/budget-estimator.ts",
-        "plugin/src/runtime/context/artifact-store.ts"
+        "plugin/src/runtime/context/artifact-store.ts",
+        "plugin/src/runtime/context/provider-duplicate-pruning.ts"
       ],
       "consumer_or_executor_paths": [
-        "plugin/src/hooks/session-compacting.ts",
+        "plugin/src/hooks/system-transform.ts",
+        "plugin/src/hooks/messages-transform.ts",
         "plugin/src/runtime/task/task-runtime.ts"
       ],
       "proof_paths": [
         "plugin/test/context-survival-hardening.test.mjs",
-        "plugin/test/c4-context-budget-estimator.test.mjs"
+        "plugin/test/c4-context-budget-estimator.test.mjs",
+        "plugin/test/c1-mission-runtime-projection.test.mjs"
       ],
       "canonical_doc": "docs/ARCHITECTURE.md"
     },
@@ -229,18 +231,20 @@
     },
     {
       "area": "project-intelligence",
-      "canonical_owner": "ProjectIntelligence store/retrieval",
-      "owner_path": "plugin/src/runtime/project-intelligence/store.ts",
-      "owner_sha256": "331da9d64a4d7ea75bfb507b9751fbbd4c9a8a0cc17e682a0163b97e9a96c439",
+      "canonical_owner": "ProjectMethodologyLearningStore",
+      "owner_path": "plugin/src/runtime/project-intelligence/methodology-learning.ts",
+      "owner_sha256": "67cf632cdfa368ebb471c040eb85c840457ad979d0b7720d1129a97789d6ae75",
       "producer_or_contract_paths": [
-        "plugin/src/runtime/project-intelligence/retrieval.ts",
-        "plugin/src/contracts/project-intelligence.ts"
+        "plugin/src/runtime/project-intelligence/methodology-candidate.ts",
+        "plugin/src/contracts/storage-ownership.ts"
       ],
       "consumer_or_executor_paths": [
-        "plugin/src/runtime/task/task-runtime.ts"
+        "plugin/src/runtime/task/task-result-reconciler.ts",
+        "plugin/src/runtime/methodology/catalog.ts"
       ],
       "proof_paths": [
-        "plugin/test/c5-project-intelligence-hybrid-retrieval.test.mjs"
+        "plugin/test/project-methodology-admission-contract.test.mjs",
+        "plugin/test/storage-ownership-contract.test.mjs"
       ],
       "canonical_doc": "docs/ARCHITECTURE.md"
     },
@@ -248,7 +252,7 @@
       "area": "evidence-verification",
       "canonical_owner": "EvidenceRuntime + VerificationEnvelope",
       "owner_path": "plugin/src/runtime/evidence/evidence-runtime.ts",
-      "owner_sha256": "e48c410c0b8e575306e711578beb762ac8849cce5b679eca495751798b9b7112",
+      "owner_sha256": "5146ed0b607cf79d564abcdc358e7dcf5be7df8030ef1f9f50382232f62d10b3",
       "producer_or_contract_paths": [
         "plugin/src/contracts/evidence.ts",
         "plugin/src/contracts/verification-envelope.ts",
@@ -268,7 +272,7 @@
       "area": "completion-continuation",
       "canonical_owner": "Completion + continuation",
       "owner_path": "plugin/src/runtime/completion/evaluator.ts",
-      "owner_sha256": "72182965f77468244b1e3ea63749d2324008da60635e79dcce58e4f0740b4c10",
+      "owner_sha256": "a84becde3d024c4ef0242d916c83e644b4ad6c6bd3ba953f39086f5920254222",
       "producer_or_contract_paths": [
         "plugin/src/runtime/continuation/evaluator.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
@@ -321,21 +325,22 @@
     },
     {
       "area": "browser",
-      "canonical_owner": "BrowserObservation/Runtime",
+      "canonical_owner": "BrowserObservation + BrowserExecutor",
       "owner_path": "plugin/src/contracts/browser-observation.ts",
       "owner_sha256": "bdaa9047f895999a62039c17906bb8214c9af98394a0f68c1a311abc5f258624",
       "producer_or_contract_paths": [
-        "plugin/src/runtime/browser/runtime.ts",
         "plugin/src/runtime/browser/executor.ts",
+        "plugin/src/runtime/browser/backend-policy.ts",
         "plugin/src/runtime/browser/ownership.ts"
       ],
       "consumer_or_executor_paths": [
-        "plugin/src/opencode/playwright-browser-adapter.ts"
+        "plugin/src/opencode/playwright-browser-adapter.ts",
+        "plugin/src/runtime/application/hi-tool-surface.ts"
       ],
       "proof_paths": [
         "plugin/test/b1-browser-observation-contract.test.mjs",
         "plugin/test/b3-playwright-browser-runtime.test.mjs",
-        "plugin/test/b3-methodology-exit-evidence.test.mjs"
+        "plugin/test/m13-browser-backend-policy.test.mjs"
       ],
       "canonical_doc": "docs/HOSTS.md"
     },
@@ -343,7 +348,7 @@
       "area": "host-port",
       "canonical_owner": "OpenCodeHostPort",
       "owner_path": "plugin/src/opencode/host-port.ts",
-      "owner_sha256": "2669d5853b382ffcafaa0c963490bb3293c501aef350ea13f296b3641354d921",
+      "owner_sha256": "b6c2c85b647c3a61a247fb987932189dff3c36d20563121b1a7fe60f89605382",
       "producer_or_contract_paths": [
         "plugin/src/opencode/client-adapter.ts",
         "plugin/src/opencode/event-adapter.ts",
@@ -361,7 +366,7 @@
       "area": "persistence-storage",
       "canonical_owner": "Mission persistence + storage ownership",
       "owner_path": "plugin/src/runtime/state/persistence.ts",
-      "owner_sha256": "df655ecc93d395864046621ef31ae66882817fad34e7478e0be8b65b7376491d",
+      "owner_sha256": "f611defb9fe0f1a0d9370f789f524bf59de2c1f770e52572f9f8161b3c012ab2",
       "producer_or_contract_paths": [
         "plugin/src/runtime/state/snapshot.ts",
         "plugin/src/runtime/storage/ownership.ts",
@@ -408,7 +413,7 @@
       "area": "scheduler",
       "canonical_owner": "ConcurrencyScheduler",
       "owner_path": "plugin/src/runtime/scheduler/concurrency.ts",
-      "owner_sha256": "404b5c84f673eb79e83c6508b348a1615c8a3d8a3e25486da2ec571bc9406555",
+      "owner_sha256": "2f462e70c8701a5896b8986eccaa3a617a9de7d1c0cff6f0c4ed5c2bd1fe6a7f",
       "producer_or_contract_paths": [
         "plugin/src/runtime/scheduler/parallel-safety.ts"
       ],

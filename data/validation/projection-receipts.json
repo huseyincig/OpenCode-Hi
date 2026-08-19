@@ -7,7 +7,7 @@
         "id": "hi.methodology.catalog",
         "hash": {
           "algorithm": "sha256",
-          "value": "a448b29e63b0491445ad15cf62357c1f99167fd21daed2940c5da86ecd7bf0fe"
+          "value": "1d47c3bea076789198c05d5e1caf7fe353b2f4bc27fe18c25cf6f983a572b66b"
         }
       },
       {
@@ -48,7 +48,7 @@
         "id": "hi.config.catalog",
         "hash": {
           "algorithm": "sha256",
-          "value": "6c8d5401bc9c86d8bc286e52d1044c9ac1db3a71e8537d4b247246af6c95a33e"
+          "value": "4c5630b7f1e5169802500839f486d203adeb1bb3272bf62aa5a02088e2a8405f"
         }
       }
     ],
@@ -57,7 +57,7 @@
     "outputPath": "plugin/src/generated/config-policy.ts",
     "outputHash": {
       "algorithm": "sha256",
-      "value": "92588e9e83e9ac679d2117d73294962ce3db2b604f49e033e46ba8fd475582ed"
+      "value": "4962b6c774a1238b8016ed35bd6e543db9dd19ad9aab95fccf28095c94ea1a6a"
     }
   },
   {
@@ -68,7 +68,7 @@
         "id": "hi.methodology.catalog",
         "hash": {
           "algorithm": "sha256",
-          "value": "a448b29e63b0491445ad15cf62357c1f99167fd21daed2940c5da86ecd7bf0fe"
+          "value": "1d47c3bea076789198c05d5e1caf7fe353b2f4bc27fe18c25cf6f983a572b66b"
         }
       },
       {
@@ -84,7 +84,7 @@
     "outputPath": "plugin/src/generated/methodology-policy.ts",
     "outputHash": {
       "algorithm": "sha256",
-      "value": "974b52523bf554acb400e037076a14821995da19781f7d2c0d7c3dae26458fe4"
+      "value": "466a5592b02909dd5c4c80adf37fc8476fa260138da302d66f9c1d60fe3a59d7"
     }
   },
   {
@@ -277,7 +277,7 @@
         "id": "hi.methodology.hi-browser-testing",
         "hash": {
           "algorithm": "sha256",
-          "value": "b16426a62db570dca64c4f669127800eed532cd3fb7e459c7ff29c4fa4acc0d9"
+          "value": "f565d0571fa7cb95925cf91559f9f4d114e90d009aa35ef10aeb3cdcb7f0690a"
         }
       }
     ],
@@ -844,7 +844,7 @@
         "id": "hi.methodology.hi-visual-qa",
         "hash": {
           "algorithm": "sha256",
-          "value": "b1fbf1ffe5035cbfd1cf5938cd2ba7025c7222cde1d52ebfa772e5b93cbf89ab"
+          "value": "b0fd1d8592c521e6b1c78b1c24820ba403cd19ca179cc1bf372debd113a5d88a"
         }
       }
     ],

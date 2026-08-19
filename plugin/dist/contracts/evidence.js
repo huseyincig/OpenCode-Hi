@@ -2,7 +2,7 @@ import { WORKER_EVIDENCE_KINDS } from './evidence-kinds.js';
 export const MISSION_EVIDENCE_KINDS = [...WORKER_EVIDENCE_KINDS, 'review-input', 'lsp-diagnostics'];
 const KIND_SET = new Set(MISSION_EVIDENCE_KINDS);
 const OUTCOME_SET = new Set(['pending', 'passed', 'failed', 'environment-issue']);
-const KEYS = new Set(['id', 'kind', 'summary', 'scope', 'source', 'source_session_id', 'source_state_hash', 'task_id', 'obligation_ids', 'producer_attempt', 'observed_at', 'invalidated_at', 'pass', 'outcome', 'reason']);
+const KEYS = new Set(['id', 'kind', 'summary', 'scope', 'source', 'source_session_id', 'source_state_hash', 'task_id', 'obligation_ids', 'evidence_refs', 'producer_attempt', 'observed_at', 'invalidated_at', 'pass', 'outcome', 'reason']);
 function record(v) { return Boolean(v) && typeof v === 'object' && !Array.isArray(v); }
 function strings(v) { return Array.isArray(v) && v.every(x => typeof x === 'string'); }
 export function isEvidenceItemContract(v) {
@@ -12,6 +12,8 @@ export function isEvidenceItemContract(v) {
         if (v[key] !== undefined && typeof v[key] !== 'string')
             return false;
     if (v.obligation_ids !== undefined && !strings(v.obligation_ids))
+        return false;
+    if (v.evidence_refs !== undefined && (!strings(v.evidence_refs) || v.evidence_refs.length > 20))
         return false;
     if (v.producer_attempt !== undefined) {
         const p = v.producer_attempt;

@@ -17,8 +17,9 @@ import { runtimeSignal } from '../events/event-sink.js';
 import { syncMissionGates } from '../gates/gates.js';
 import { recordPreexistingUserBaseline } from '../safety/staging-safety.js';
 import { evaluateTaskPreconditions, TaskPreconditionError } from '../readiness/preconditions.js';
-import { effectiveExecutionSurface, promptToolOverrides } from '../routing/execution-profile.js';
+import { effectiveExecutionSurface, resolveMcpServerExposure, taskPromptToolOverrides } from '../routing/execution-profile.js';
 import { HI_BROWSER_EXECUTION_TOOL_IDS } from '../browser/executor.js';
+import { browserOriginsFromTargets, normalizeBrowserAllowedOrigins, resolveBrowserBackend } from '../browser/backend-policy.js';
 import { ProjectMethodologyLearningStore } from '../project-intelligence/methodology-learning.js';
 import { executionProfileFor } from '../../config/execution-policy.js';
 import { applyAdmittedProjectMethodologyPermissions } from '../methodology/host-permissions.js';
@@ -32,6 +33,9 @@ import { taskRuntimeAdmittedModel, taskRuntimeUnitDecision, reserveTaskRuntimeDi
 import { bindWorkerUsageObservation } from '../economics/usage-runtime.js';
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
 const MAX_QUEUE = 32;
+class TaskQueueCapacityError extends Error {
+    constructor() { super('Hi bounded dispatch queue is full'); this.name = 'TaskQueueCapacityError'; }
+}
 function inferObligationIds(m, role, requiredEvidence, explicit = []) {
     const requested = [...new Set(explicit)].map(id => m.execution.obligations.find(o => o.id === id && o.status === 'open')).filter(Boolean);
     const disallowed = requested.filter(o => !roleCanOwnObligation(role, o.kind));
@@ -42,7 +46,7 @@ function inferObligationIds(m, role, requiredEvidence, explicit = []) {
     const kinds = [];
     if (role === 'coder')
         kinds.push('implementation');
-    if (['repository-explorer', 'architect'].includes(role) || role === 'coder' && ['bug-fix', 'performance'].includes(m.identity.intent.taskKind))
+    if (['repository-explorer', 'architect'].includes(role) || role === 'coder' && ['bug-fix', 'diagnosis', 'performance'].includes(m.identity.intent.taskKind))
         kinds.push('analysis');
     if (isHiReviewerRole(role))
         kinds.push('review');
@@ -70,6 +74,7 @@ export class TaskRuntime {
     hostCapabilitySource;
     workspaceRuntime;
     extraHostResources;
+    browserExecutor;
     #queue = [];
     #draining = false;
     #methodologyLearning;
@@ -77,7 +82,7 @@ export class TaskRuntime {
     #results;
     #recovery;
     #scopedStores;
-    constructor(childHost, registry, scheduler, projectRoot, hiRoot, getConfig, getModels, getHostConfig, events, hostCapabilitySource = [], scopedStores, workspaceRuntime, extraHostResources = () => new Set()) {
+    constructor(childHost, registry, scheduler, projectRoot, hiRoot, getConfig, getModels, getHostConfig, events, hostCapabilitySource = [], scopedStores, workspaceRuntime, extraHostResources = () => new Set(), browserExecutor) {
         this.childHost = childHost;
         this.registry = registry;
         this.scheduler = scheduler;
@@ -90,10 +95,11 @@ export class TaskRuntime {
         this.hostCapabilitySource = hostCapabilitySource;
         this.workspaceRuntime = workspaceRuntime;
         this.extraHostResources = extraHostResources;
+        this.browserExecutor = browserExecutor;
         this.#scopedStores = scopedStores ?? createRuntimeScopedStores(projectRoot, hiRoot);
         this.#methodologyLearning = new ProjectMethodologyLearningStore(projectRoot);
         this.#child = new ChildExecutionCoordinator(childHost, registry);
-        this.#results = new TaskResultReconciler(scheduler, registry, projectRoot, events, this.#methodologyLearning, this.#child, (m, w, run) => this.queueTask(m, w, run), () => this.drainQueue(), this.#scopedStores);
+        this.#results = new TaskResultReconciler(scheduler, registry, projectRoot, events, this.#methodologyLearning, this.#child, getHostConfig, (m, w, run) => this.queueTask(m, w, run), () => this.drainQueue(), this.#scopedStores);
         this.#recovery = new TaskRecoveryCoordinator(scheduler, registry, projectRoot, getConfig, getModels, getHostConfig, events, this.#child, () => this.drainQueue(), (m, taskID) => this.workspaceBinding(m, taskID));
     }
     async sendProviderPrompt(sessionID, text, role, model, variant, tools) { return this.#child.sendProviderPrompt(sessionID, text, role, model, variant, tools); }
@@ -101,6 +107,27 @@ export class TaskRuntime {
     async abortNativeSession(m, sessionID, reason, workerID, taskID) { return this.#child.abortNativeSession(m, sessionID, reason, workerID, taskID); }
     async captureNativeDiff(worker, phase) { return this.#child.captureNativeDiff(worker, phase); }
     async reconcileNativeResult(m, workerID, result) { return this.#results.reconcileNativeResult(m, workerID, result); }
+    async reintegrateWorkspaceResult(m, workerID, result) {
+        const worker = m.execution.workers.find(w => w.id === workerID), task = worker ? m.execution.tasks.find(t => t.id === worker.task_id) : undefined, lease = task ? this.workspaceRuntime?.forTask(m, task.id) : undefined;
+        if (!worker || !task || !lease || isHiReadOnlyChildRole(worker.role) || result.status !== 'DONE' || !result.changed_files.length)
+            return result;
+        if (!worker.session_id) {
+            const marker = `workspace-reintegration-failed:${task.id}:session-missing`;
+            m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+            appendLedger(m, 'workspace.reintegration-blocked', { task_id: task.id, worker_id: worker.id, payload: { reason: 'session-missing', lease_id: lease.lease_id } });
+            return { ...result, status: 'BLOCKED', summary: 'Isolated write result cannot be reintegrated because the exact child session identity is missing.', open_issues: [...new Set([...result.open_issues, marker])], needs_context: [...new Set([...result.needs_context, 'preserve the isolated workspace lease and reconcile exact child/session ownership before retrying reintegration'])] };
+        }
+        try {
+            const applied = await this.workspaceRuntime.reintegrate(m, task.id, worker.session_id, result.changed_files);
+            return { ...result, changed_files: applied };
+        }
+        catch (error) {
+            const marker = `workspace-reintegration-failed:${task.id}`;
+            m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+            appendLedger(m, 'workspace.reintegration-blocked', { task_id: task.id, worker_id: worker.id, payload: { reason: String(error), lease_id: lease.lease_id, changed_files: result.changed_files.slice(0, 40) } });
+            return { ...result, status: 'BLOCKED', summary: `Isolated workspace result could not be safely reintegrated into the primary checkout. ${String(error)}`.slice(0, 1200), open_issues: [...new Set([...result.open_issues, marker])], needs_context: [...new Set([...result.needs_context, 'preserve the isolated workspace lease; reconcile primary dirty state/native workspace ownership before retrying'])] };
+        }
+    }
     noteUsage(m, workerID, usage) { const worker = m.execution.workers.find(w => w.id === workerID); if (worker)
         bindWorkerUsageObservation(m, worker, usage); }
     noteEffectiveModel(m, workerID, observed) { return this.#child.noteEffectiveModel(m, workerID, observed); }
@@ -110,6 +137,13 @@ export class TaskRuntime {
     workspaceBinding(m, taskID) { const required = m.execution.isolation_decisions.some(d => d.required && d.requested_by === `task:${taskID}`), lease = this.workspaceRuntime?.forTask(m, taskID); if (required && (!lease || lease.status !== 'ACTIVE' || lease.cleanup_state !== 'ACTIVE' || !lease.host_workspace_id))
         throw new Error(`Required workspace lease is not active for task ${taskID}`); return lease?.host_workspace_id && lease.status === 'ACTIVE' && lease.cleanup_state === 'ACTIVE' ? { workspaceID: lease.host_workspace_id, directory: lease.workspace_path } : undefined; }
     async cleanupWorkspaceForTask(m, taskID) { return this.workspaceRuntime ? this.workspaceRuntime.cleanupTask(m, taskID) : true; }
+    async cleanupBrowserForTask(m, taskID, workerID) { const worker = workerID ? m.execution.workers.find(w => w.id === workerID && w.task_id === taskID) : m.execution.workers.find(w => w.task_id === taskID); if (!this.browserExecutor || !worker?.session_id)
+        return true; const context = { task_id: taskID, execution_owner_ref: `${m.identity.mission_id}:${worker.id}:${worker.session_id}:${worker.generation_at_spawn ?? m.continuation.generation}`, executor_version: 'hi-playwright-browser@1', allowed_origins: [...(m.execution.tasks.find(t => t.id === taskID)?.execution_profile?.browser_allowed_origins ?? [])] }; const result = await this.browserExecutor.cleanup(context); if (result.reason === 'close-failed') {
+        const marker = `browser-cleanup-failed:${taskID}:${worker.id}`;
+        m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+        appendLedger(m, 'browser.cleanup-failed', { task_id: taskID, worker_id: worker.id, payload: { reason: result.reason, error: result.error } });
+        return false;
+    } appendLedger(m, result.reason === 'owner-mismatch' ? 'browser.cleanup-stale-owner' : 'browser.cleanup', { task_id: taskID, worker_id: worker.id, payload: { reason: result.reason, cleaned: result.cleaned } }); return true; }
     failedDeps(m, deps) { return deps.filter(id => { const status = m.execution.tasks.find(t => t.id === id)?.status; return status === 'failed' || status === 'cancelled'; }); }
     admittedModel(m, worker, chain) { return taskRuntimeAdmittedModel(m, worker, chain, this.scheduler); }
     reserveExistingSessionAttempt(m, worker, model) {
@@ -134,9 +168,35 @@ export class TaskRuntime {
         return { ok: true, reason: 'reserved-and-bound' };
     }
     queueTask(m, worker, run) { if (this.#queue.length >= MAX_QUEUE)
-        throw new Error('Hi bounded dispatch queue is full'); const t = m.execution.tasks.find(x => x.id === worker.task_id); worker.status = 'queued'; if (t)
+        throw new TaskQueueCapacityError(); const t = m.execution.tasks.find(x => x.id === worker.task_id); worker.status = 'queued'; if (t)
         t.status = 'queued'; if (!this.#queue.some(x => x.worker.id === worker.id))
         this.#queue.push({ mission: m, worker, run, created: Date.now() }); this.registry.set(worker); appendLedger(m, 'worker.queued', { task_id: t?.id, worker_id: worker.id, payload: { queue_depth: this.#queue.length } }); void this.events?.(runtimeSignal('worker.queued', m.identity.mission_id, { task_id: t?.id, worker_id: worker.id, payload: { queue_depth: this.#queue.length } })); syncMissionGates(m); }
+    async rollbackQueueCapacityRejection(m, task, worker) {
+        const cleaned = await this.cleanupWorkspaceForTask(m, task.id);
+        if (!cleaned) {
+            const marker = `queue-overflow-cleanup-failed:${task.id}`;
+            m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+            const now = Date.now();
+            worker.status = 'failed';
+            worker.completed_at = now;
+            task.status = 'blocked';
+            task.updated_at = now;
+            task.result = { status: 'BLOCKED', summary: 'Bounded dispatch queue rejected this task, but its isolated workspace could not be safely cleaned. Exact workspace ownership remains quarantined for explicit reconciliation.', changed_files: [], evidence: [], open_issues: [marker], needs_context: ['reconcile the quarantined task workspace before retrying or removing this task'] };
+            appendLedger(m, 'worker.queue-rejection-cleanup-blocked', { task_id: task.id, worker_id: worker.id, payload: { queue_depth: this.#queue.length, reason: 'workspace-cleanup-failed' } });
+            syncMissionGates(m);
+            return false;
+        }
+        m.execution.workspace_leases = m.execution.workspace_leases.filter(lease => lease.task_id !== task.id);
+        m.execution.isolation_decisions = m.execution.isolation_decisions.filter(decision => decision.requested_by !== `task:${task.id}`);
+        this.registry.delete(worker.id);
+        this.scheduler.release(worker.id);
+        releaseTaskRuntimeReservation(m, worker.id, 'CANCEL');
+        m.execution.workers = m.execution.workers.filter(item => item.id !== worker.id);
+        m.execution.tasks = m.execution.tasks.filter(item => item.id !== task.id);
+        appendLedger(m, 'worker.queue-rejected', { payload: { discarded_task_id: task.id, discarded_worker_id: worker.id, queue_depth: this.#queue.length, reason: 'bounded-dispatch-queue-full' } });
+        syncMissionGates(m);
+        return true;
+    }
     drainQueue() { if (this.#draining)
         return; this.#draining = true; queueMicrotask(async () => { try {
         let progress = true;
@@ -198,7 +258,20 @@ export class TaskRuntime {
             appendLedger(m, 'model.policy.rejected', { payload: { items: selected.rejected.slice(0, 20) } });
         if (selected.scores?.length)
             appendLedger(m, 'model.scored', { payload: { role, category, top: selected.scores.slice(0, 6), feedback } });
-        const taskMethodologyNeeds = m.methodology.methodology_needs.filter(need => (!need.task_id && !need.obligation_id) || (need.obligation_id && input.obligationIds?.includes(need.obligation_id))), catalog = methodologyCatalog(this.projectRoot), requestedMethodologyNames = methodologyNames(taskMethodologyNeeds), candidates = methodologySkillCandidates(requestedMethodologyNames, this.projectRoot, this.hiRoot, hostConfig, catalog), permissionMap = resolveSkillPermissionMap(hostConfig, role), skillToolEnabled = resolveSkillToolEnabled(hostConfig, role), surface = effectiveExecutionSurface(hostConfig, role, skillToolEnabled), hostCapabilities = typeof this.hostCapabilitySource === 'function' ? this.hostCapabilitySource() : Array.isArray(this.hostCapabilitySource) ? this.hostCapabilitySource : [], availableResources = new Set([...hostCapabilities.filter(item => item.status === 'SUPPORTED' && item.runtime_health_required !== true).map(item => `host-capability:${item.id}`), ...this.extraHostResources()]), skillPlan = resolveSkillPlan(requestedMethodologyNames, candidates, permissionMap, skillToolEnabled, role, catalog, availableResources), methodologies = skillPlan.selected.map(s => s.name), methodologyResourceFailures = skillPlan.outcomes.filter(item => item.outcome === 'resource-unavailable').map(item => item.name);
+        const taskMethodologyNeeds = m.methodology.methodology_needs.filter(need => input.resumeTaskId ? need.task_id === input.resumeTaskId || (!need.task_id && (!need.obligation_id || input.obligationIds?.includes(need.obligation_id))) : !need.task_id && (!need.obligation_id || input.obligationIds?.includes(need.obligation_id)));
+        const catalog = methodologyCatalog(this.projectRoot), requestedMethodologyNames = methodologyNames(taskMethodologyNeeds);
+        const requestedMcpServers = [...new Set(input.mcpServers ?? [])].map(x => String(x).trim()).filter(Boolean).slice(0, 8);
+        if (requestedMcpServers.length && !m.identity.intent.requiredCapabilities.includes('mcp'))
+            throw new Error('Exact MCP server use requires semantic capability mcp');
+        const mcpExposure = resolveMcpServerExposure(hostConfig, requestedMcpServers), extraResources = this.extraHostResources();
+        const browserRequested = role === 'visual-qa' && requestedMethodologyNames.some(name => ['hi-browser-testing', 'hi-visual-qa'].includes(name));
+        const browserDecision = resolveBrowserBackend({ role, browserRequested, requested: input.browserBackend, localBrowserAvailable: extraResources.has('host-capability:browser-execution'), semanticCapabilities: m.identity.intent.requiredCapabilities, selectedMcpServers: mcpExposure.selected });
+        const browserAllowedOrigins = normalizeBrowserAllowedOrigins(input.browserAllowedOrigins ?? browserOriginsFromTargets(taskIntent.likelyTargets ?? []));
+        if (browserDecision.backend === 'bounded-playwright' && browserRequested && !browserAllowedOrigins.length)
+            throw new Error('Bounded Playwright browser backend requires at least one exact allowed origin');
+        if (browserDecision.backend === 'mcp' && browserAllowedOrigins.length)
+            throw new Error('browser_allowed_origins belongs only to the bounded-playwright backend; MCP origin policy remains native-authoritative');
+        const candidates = methodologySkillCandidates(requestedMethodologyNames, this.projectRoot, this.hiRoot, hostConfig, catalog), permissionMap = resolveSkillPermissionMap(hostConfig, role), skillToolEnabled = resolveSkillToolEnabled(hostConfig, role), surface = effectiveExecutionSurface(hostConfig, role, skillToolEnabled), hostCapabilities = typeof this.hostCapabilitySource === 'function' ? this.hostCapabilitySource() : Array.isArray(this.hostCapabilitySource) ? this.hostCapabilitySource : [], availableResources = new Set([...hostCapabilities.filter(item => item.status === 'SUPPORTED' && item.runtime_health_required !== true).map(item => `host-capability:${item.id}`), ...extraResources, ...(browserDecision.backend ? ['runtime-capability:browser-execution'] : [])]), skillPlan = resolveSkillPlan(requestedMethodologyNames, candidates, permissionMap, skillToolEnabled, role, catalog, availableResources), methodologies = skillPlan.selected.map(s => s.name), methodologyResourceFailures = skillPlan.outcomes.filter(item => item.outcome === 'resource-unavailable').map(item => item.name);
         appendLedger(m, 'skill.resolved', { payload: { role, requested: skillPlan.requested, outcomes: skillPlan.outcomes } });
         void this.events?.(runtimeSignal('skill.resolved', m.identity.mission_id, { payload: { role, requested: skillPlan.requested, outcomes: skillPlan.outcomes } }));
         if (skillPlan.missing.length)
@@ -208,7 +281,7 @@ export class TaskRuntime {
         const requiredEvidence = input.requiredEvidence ?? m.execution.verification_policy.requiredKinds, obligationIds = inferObligationIds(m, role, requiredEvidence, input.obligationIds), isolationRequired = input.isolationRequired === true, isolationReason = String(input.isolationReason ?? '').trim();
         if (isolationRequired && !isolationReason)
             throw new Error('Hi isolated task requires a bounded isolation reason');
-        const constraints = [...new Set([...(m.execution.constraints ?? []), ...(input.constraints ?? []), ...(isolationRequired ? ['hi-isolation:git-worktree'] : [])])], desiredFingerprint = workerFingerprint(role, category, selected.primary, taskIntent.taskKind, objective, { scope, constraints, dependencies, requiredEvidence, obligationIds }), existing = input.resumeTaskId ? m.execution.workers.find(w => w.task_id === input.resumeTaskId && !['completed', 'failed', 'cancelled'].includes(w.status)) : m.execution.workers.find(w => w.fingerprint === desiredFingerprint && !['completed', 'failed', 'cancelled'].includes(w.status));
+        const constraints = [...new Set([...(m.execution.constraints ?? []), ...(input.constraints ?? []), ...(isolationRequired ? ['hi-isolation:git-worktree'] : []), ...mcpExposure.selected.map(name => `hi-mcp:${name}`), ...(browserDecision.backend ? [`hi-browser-backend:${browserDecision.backend}`] : []), ...browserAllowedOrigins.map(origin => `hi-browser-origin:${origin}`)])], desiredFingerprint = workerFingerprint(role, category, selected.primary, taskIntent.taskKind, objective, { scope, constraints, dependencies, requiredEvidence, obligationIds }), existing = input.resumeTaskId ? m.execution.workers.find(w => w.task_id === input.resumeTaskId && !['completed', 'failed', 'cancelled'].includes(w.status)) : m.execution.workers.find(w => w.fingerprint === desiredFingerprint && !['completed', 'failed', 'cancelled'].includes(w.status));
         if (input.resumeTaskId && !existing)
             throw new Error(`Hi task ${input.resumeTaskId} has no resumable worker`);
         const resumeCapable = Boolean(existing?.session_id), preflight = evaluateTaskPreconditions({ role, implementation: role === 'coder', dependencies: { unknown: unknownDependencies, failed: unavailableDependencies, incomplete: incompleteDependencies }, modelAvailable: Boolean(selected.primary), native: { childSession: resumeCapable || this.childHost.capabilities.create, prompt: this.childHost.capabilities.prompt }, hostConfig, methodologyResourceFailures, contractCriticalAmbiguity: m.identity.intent.ambiguity === 'contract-critical', authorityRequired: false });
@@ -256,7 +329,7 @@ export class TaskRuntime {
                 const protectedBaseline = Object.keys(m.vcs.preexisting_user_changes ?? {}).slice(0, 60);
                 beginWorkerAttempt(oldTask, existing);
                 this.recordModelProjection(existing, nextModel, resumeVariant);
-                await this.sendProviderPrompt(existing.session_id, clipText([`Hi corrective resume for existing task ${oldTask.id}.`, `Previous status: ${oldTask.result.status}.`, `Missing context: ${missing || 'none'}.`, `Open issues: ${issues || 'none'}.`, `Current user constraints: ${(oldTask.constraints ?? []).join(' | ') || 'none'}.`, `CURRENT FRESH EVIDENCE: ${freshEvidence || 'none'}.`, `METHODOLOGY EXIT REQUIREMENTS: ${resumeExitRequirements.join(' | ') || 'none'}.`, protectedBaseline.length ? `PRE-EXISTING USER DIRTY BASELINE: ${protectedBaseline.join(', ')}. Cleanup means restore these paths to their exact worker-start baseline, NOT to HEAD. Never discard user-owned edits with git checkout/reset/restore.` : 'Pre-existing user dirty baseline: none observed.', reviewScope, 'Resume from current session context. Apply the smallest correction. Do not restart planning or create sub-orchestrators. Return the structured WorkerResult again.'].filter(Boolean).join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), existing.role, nextModel === 'host-default' ? undefined : nextModel, resumeVariant, promptToolOverrides(oldTask.execution_profile?.tools ?? []));
+                await this.sendProviderPrompt(existing.session_id, clipText([`Hi corrective resume for existing task ${oldTask.id}.`, `Previous status: ${oldTask.result.status}.`, `Missing context: ${missing || 'none'}.`, `Open issues: ${issues || 'none'}.`, `Current user constraints: ${(oldTask.constraints ?? []).join(' | ') || 'none'}.`, `CURRENT FRESH EVIDENCE: ${freshEvidence || 'none'}.`, `METHODOLOGY EXIT REQUIREMENTS: ${resumeExitRequirements.join(' | ') || 'none'}.`, protectedBaseline.length ? `PRE-EXISTING USER DIRTY BASELINE: ${protectedBaseline.join(', ')}. Cleanup means restore these paths to their exact worker-start baseline, NOT to HEAD. Never discard user-owned edits with git checkout/reset/restore.` : 'Pre-existing user dirty baseline: none observed.', reviewScope, 'Resume from current session context. Apply the smallest correction. Do not restart planning or create sub-orchestrators. Return the structured WorkerResult again.'].filter(Boolean).join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), existing.role, nextModel === 'host-default' ? undefined : nextModel, resumeVariant, taskPromptToolOverrides(oldTask.execution_profile?.tools ?? [], this.getHostConfig(), oldTask.execution_profile?.mcp_servers ?? []));
                 existing.model_variant = resumeVariant;
                 existing.restart_reconcile_pending = false;
                 appendLedger(m, nextModel !== previousModel ? 'worker.model-escalated' : 'worker.resumed', { task_id: oldTask.id, worker_id: existing.id, payload: { status: oldTask.result.status, model: nextModel } });
@@ -267,10 +340,9 @@ export class TaskRuntime {
         if (unknownArtifactIds.length)
             throw new Error(`Unknown context artifact id(s): ${unknownArtifactIds.join(', ')}`);
         const contextArtifactStore = this.#scopedStores.contextArtifacts, selectedContextHandles = requestedArtifactIds.map(id => m.context.context_artifacts.find(a => a.id === id)).filter(Boolean), selectedContextReferences = selectedContextHandles.map(a => { const durableId = a.uri?.startsWith('hi-artifact:') ? a.uri.slice('hi-artifact:'.length) : undefined, stored = durableId ? contextArtifactStore.get(durableId) : undefined; return { source_ref: a.uri ?? `mission-context:${a.id}`, reason: 'explicit-task-selection', priority: 'normal', protection: 'COMPRESSIBLE', budget_cost: stored ? Math.min(stored.content.length, 3000) : Math.min((a.summary ?? a.title ?? a.kind).length, 3000), freshness: stored?.freshness ?? 'UNKNOWN', retention: 'task', privacy_class: stored?.privacy_class ?? 'project-private', kind: a.kind, title: a.title, summary: a.summary, content_hash: stored?.content_hash ?? a.sha256, source_handle_id: a.id }; });
-        const approvalGated = skillPlan.selected.filter(s => s.permission === 'ask').map(s => s.name), browserTools = role === 'visual-qa' && methodologies.some(name => ['hi-browser-testing', 'hi-visual-qa', 'hi-accessibility-review'].includes(name)) ? [...HI_BROWSER_EXECUTION_TOOL_IDS] : [], askGatedPermissionKeys = Object.entries(surface.permissions.decisions).filter(([, value]) => value === 'ask').map(([name]) => name), askGatedToolIds = new Set(askGatedPermissionKeys.flatMap(name => name === 'edit' ? ['edit', 'write', 'apply_patch'] : name === 'todowrite' ? ['todowrite', 'todoread'] : [name])), taskTools = [...surface.tools.filter(t => (t !== 'skill' || methodologies.length > 0) && !askGatedToolIds.has(t)), ...browserTools];
-        const profile = { role, category, task: { objective, scope: [...scope], dependencies: [...dependencies], required_evidence: [...requiredEvidence] }, tools: taskTools, model: selected.primary, model_variant: input.modelVariant ?? selected.primaryVariant, fallback_models: selected.fallbacks, fallback_variants: selected.fallbackVariants, fallback_reasons: selected.fallbackReasons, methodologies, permission_profile: { skill_tool_enabled: skillToolEnabled, skill_permissions: permissionMap ?? {}, external_effects: 'parent-only', recursive_task: 'deny', native: surface.permissions }, verification_policy: { ...m.execution.verification_policy, requiredKinds: [...m.execution.verification_policy.requiredKinds] }, max_context_chars: DEFAULT_CONTEXT_BUDGET.max_context_chars, max_handoff_chars: DEFAULT_CONTEXT_BUDGET.max_handoff_chars, max_result_chars: DEFAULT_CONTEXT_BUDGET.max_result_chars, max_artifacts: DEFAULT_CONTEXT_BUDGET.max_artifacts };
+        const approvalGated = skillPlan.selected.filter(s => s.permission === 'ask').map(s => s.name), browserTools = browserDecision.backend === 'bounded-playwright' && role === 'visual-qa' && methodologies.some(name => ['hi-browser-testing', 'hi-visual-qa', 'hi-accessibility-review'].includes(name)) ? [...HI_BROWSER_EXECUTION_TOOL_IDS] : [], askGatedPermissionKeys = Object.entries(surface.permissions.decisions).filter(([, value]) => value === 'ask').map(([name]) => name), askGatedToolIds = new Set(askGatedPermissionKeys.flatMap(name => name === 'edit' ? ['edit', 'write', 'apply_patch'] : name === 'todowrite' ? ['todowrite', 'todoread'] : [name])), taskTools = [...surface.tools.filter(t => (t !== 'skill' || methodologies.length > 0) && !askGatedToolIds.has(t)), ...browserTools];
+        const profile = { role, category, task: { objective, scope: [...scope], dependencies: [...dependencies], required_evidence: [...requiredEvidence] }, tools: taskTools, ...(mcpExposure.selected.length ? { mcp_servers: mcpExposure.selected } : {}), ...(browserDecision.backend ? { browser_backend: browserDecision.backend } : {}), ...(browserAllowedOrigins.length ? { browser_allowed_origins: browserAllowedOrigins } : {}), model: selected.primary, model_variant: input.modelVariant ?? selected.primaryVariant, fallback_models: selected.fallbacks, fallback_variants: selected.fallbackVariants, fallback_reasons: selected.fallbackReasons, methodologies, permission_profile: { skill_tool_enabled: skillToolEnabled, skill_permissions: permissionMap ?? {}, external_effects: 'parent-only', recursive_task: 'deny', native: surface.permissions }, verification_policy: { ...m.execution.verification_policy, requiredKinds: [...m.execution.verification_policy.requiredKinds] }, max_context_chars: DEFAULT_CONTEXT_BUDGET.max_context_chars, max_handoff_chars: DEFAULT_CONTEXT_BUDGET.max_handoff_chars, max_result_chars: DEFAULT_CONTEXT_BUDGET.max_result_chars, max_artifacts: DEFAULT_CONTEXT_BUDGET.max_artifacts };
         const task = createTask(m, { objective, role, category, scope, constraints, dependencies, requiredEvidence, obligationIds, contextReferences: selectedContextReferences, executionProfile: profile });
-        bindMethodologyNeeds(m, methodologies, { taskId: task.id, obligationIds: task.obligation_ids });
         if (isolationRequired) {
             if (!this.workspaceRuntime) {
                 task.status = 'blocked';
@@ -296,9 +368,11 @@ export class TaskRuntime {
         worker.requested_model_variant = input.modelVariant;
         worker.model_selection_reason = [...selected.reason];
         worker.fallback_history = [];
-        for (const ref of task.context_artifacts)
+        let acceptedTaskBound = false;
+        const bindAcceptedTask = () => { if (acceptedTaskBound)
+            return; bindMethodologyNeeds(m, methodologies, { taskId: task.id, obligationIds: task.obligation_ids }); for (const ref of task.context_artifacts)
             if (ref.source_ref.startsWith('hi-artifact:'))
-                contextArtifactStore.bindConsumer(ref.source_ref.slice('hi-artifact:'.length), task.id);
+                contextArtifactStore.bindConsumer(ref.source_ref.slice('hi-artifact:'.length), task.id); acceptedTaskBound = true; };
         const artifactContext = task.context_artifacts.map(a => { const id = a.source_ref.startsWith('hi-artifact:') ? a.source_ref.slice('hi-artifact:'.length) : undefined, stored = id ? contextArtifactStore.get(id) : undefined; if (stored?.freshness === 'FRESH')
             return `artifact:${stored.artifact_id}:${stored.summary}\n${clipText(stored.content, 3000)}`; if (stored)
             return `artifact-stale:${stored.artifact_id}:${stored.summary}`; return `${a.kind}:${a.title ?? a.source_handle_id ?? a.id}${a.summary ? ` — ${a.summary}` : ''}`; }), verificationHint = targetedVerificationHint(this.projectRoot, task.scope.length ? task.scope : (m.vcs.changed_files.length ? m.vcs.changed_files : m.identity.intent.likelyTargets ?? [])), semanticContexts = semanticContextsForTargets(this.projectRoot, task.scope, task.id, 3000), semanticContext = semanticContexts.map(renderSemanticContext), explicitRelevant = input.relevantContext ?? [], boundedRuntimeRelevant = [...(verificationHint ? [verificationHint] : []), ...semanticContext, ...artifactContext];
@@ -322,7 +396,7 @@ export class TaskRuntime {
         }
         const askGatedTools = [...askGatedPermissionKeys].sort(), askGatedInstruction = askGatedTools.length ? `host ask-gated tools are intentionally unavailable on this child surface: ${askGatedTools.join(', ')}. Do not wait or retry for them. If one is essential to implementation, return BLOCKED/NEEDS_CONTEXT with the exact required action; otherwise finish the allowed implementation and let Hi keep parent/control-plane verification open.` : undefined;
         const buildHandoff = () => { const preexisting = Object.keys(worker.native_diff_baseline ?? {}).slice(0, 60), core = workerHandoffText({ objective, scope: task.scope, constraints: clipList([...(task.constraints ?? []), 'minimum sufficient change', 'no unrequested publish/push/deploy', 'return compact evidence', askGatedInstruction ?? '', preexisting.length ? `pre-existing user dirty paths at worker start: ${preexisting.join(', ')}; preserve their exact baseline state unless the task explicitly requires changing them; never use git checkout/reset/restore in a way that discards user-owned edits` : 'no pre-existing native dirty paths were observed at worker start', verificationEconomyInstruction(m)], 5000), required_evidence: task.requiredEvidence, relevant_context: clipList(relevantForHandoff, profile.max_context_chars), methodologies: worker.selected_methodologies, methodology_exit_requirements: worker.selected_methodologies.flatMap(name => { const item = catalog.find(x => x.name === name); return item ? [`${name}: ${item.exitRequirements.join(', ')}`] : []; }), approval_gated_methodologies: approvalGated, expected_output: { status: true, summary: true, changed_files: true, scope_expansions: true, evidence: true, findings: isHiReviewerRole(worker.role) ? true : undefined, open_issues: true } }, profile.max_handoff_chars), full = [ownershipContract('child', worker.selected_methodologies), core].filter(Boolean).join('\n\n'); return clipText(full, profile.max_handoff_chars); };
-        const chain = [selected.primary, ...selected.fallbacks].filter((x) => Boolean(x)), toolOverrides = promptToolOverrides(profile.tools);
+        const chain = [selected.primary, ...selected.fallbacks].filter((x) => Boolean(x)), toolOverrides = taskPromptToolOverrides(profile.tools, this.getHostConfig(), profile.mcp_servers ?? []);
         const run = () => this.registry.dedupeSpawn(worker.fingerprint, async () => { let lastError = new Error('No runtime model available'); for (let i = 0; i < chain.length; i++) {
             if (m.identity.status !== 'active' || m.continuation.user_interrupted || worker.status === 'cancelled') {
                 worker.status = 'cancelled';
@@ -429,9 +503,22 @@ export class TaskRuntime {
             task.status = 'failed'; await this.cleanupWorkspaceForTask(m, task.id); appendLedger(m, 'worker.start.failed', { task_id: task.id, worker_id: worker.id, payload: { error: String(lastError), attempted_models: chain } }); throw lastError; });
         syncMissionGates(m);
         if (!this.admittedModel(m, worker, chain)) {
-            this.queueTask(m, worker, run);
+            try {
+                this.queueTask(m, worker, run);
+            }
+            catch (error) {
+                if (error instanceof TaskQueueCapacityError) {
+                    const rolledBack = await this.rollbackQueueCapacityRejection(m, task, worker);
+                    if (!rolledBack)
+                        throw new Error(`Hi bounded dispatch queue is full; rejected task ${task.id} remains BLOCKED because isolated workspace cleanup failed`);
+                }
+                throw error;
+            }
+            ;
+            bindAcceptedTask();
             return { task_id: task.id, worker_id: worker.id, model: worker.model, methodologies: worker.selected_methodologies, selection_reason: [...routed.reason, ...selected.reason, ...selected.fallbackReasons.map(x => `${x.model}:${x.reason}`), 'queued:runtime-capacity-or-prerequisite', ...skillPlan.reason], readiness: 'WAIT', preconditions: preflight.items };
         }
+        bindAcceptedTask();
         const spawned = await run();
         if (spawned.id !== worker.id) {
             const duplicateTask = m.execution.tasks.find(t => t.id === task.id);
@@ -456,7 +543,7 @@ export class TaskRuntime {
             throw new Error(`Hi task ${taskID} has no reusable child session`);
         if (worker.status !== 'ready' || !task.result || !['FIX_REQUIRED', 'NEEDS_CONTEXT', 'BLOCKED'].includes(task.result.status))
             throw new Error(`Hi task ${taskID} is not resumable from status ${task.status}/${task.result?.status ?? 'none'}`);
-        return this.start(m, { objective: task.objective, role: task.role, category: task.category, scope: [...task.scope], dependencies: [...task.dependencies], requiredEvidence: [...task.requiredEvidence], obligationIds: [...task.obligation_ids], model: worker.model, modelVariant: worker.model_variant, constraints: [...task.constraints], resumeTaskId: task.id });
+        return this.start(m, { objective: task.objective, role: task.role, category: task.category, scope: [...task.scope], dependencies: [...task.dependencies], requiredEvidence: [...task.requiredEvidence], obligationIds: [...task.obligation_ids], model: worker.model, modelVariant: worker.model_variant, constraints: [...task.constraints], mcpServers: [...(task.execution_profile?.mcp_servers ?? [])], browserBackend: task.execution_profile?.browser_backend, browserAllowedOrigins: [...(task.execution_profile?.browser_allowed_origins ?? [])], resumeTaskId: task.id });
     }
     async pauseForSemanticAssessment(m) {
         if (m.identity.semantic_assessment.status !== 'pending')
@@ -487,6 +574,7 @@ export class TaskRuntime {
                     appendLedger(m, 'worker.semantic-pause-blocked', { task_id: task.id, worker_id: worker.id, payload: { revision: m.identity.semantic_assessment.revision, reason: 'abort-unavailable' } });
                     continue;
                 }
+                await this.cleanupBrowserForTask(m, task.id, worker.id);
                 this.scheduler.release(worker.id);
                 releaseTaskRuntimeReservation(m, worker.id);
             }
@@ -531,7 +619,7 @@ export class TaskRuntime {
             this.registry.set(worker);
             beginWorkerAttempt(task, worker);
             this.recordModelProjection(worker, model, worker.model_variant);
-            await this.sendProviderPrompt(worker.session_id, clipText([`Hi semantic follow-up reconciliation for existing task ${task.id}.`, `Follow-up kind: ${messageKind}.`, `Current mission objective: ${m.identity.objective}`, `Current user constraints: ${(task.constraints ?? []).join(' | ') || 'none'}.`, `Still-selected methodologies: ${worker.selected_methodologies.join(', ') || 'none'}.`, 'Continue the SAME task/session from current context. Preserve completed work and evidence. Do not restart planning. If the follow-up creates separate work outside this task, report it rather than silently expanding scope. Return the normal structured WorkerResult.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), worker.role, model === 'host-default' ? undefined : model, worker.model_variant, promptToolOverrides(task.execution_profile?.tools ?? []));
+            await this.sendProviderPrompt(worker.session_id, clipText([`Hi semantic follow-up reconciliation for existing task ${task.id}.`, `Follow-up kind: ${messageKind}.`, `Current mission objective: ${m.identity.objective}`, `Current user constraints: ${(task.constraints ?? []).join(' | ') || 'none'}.`, `Still-selected methodologies: ${worker.selected_methodologies.join(', ') || 'none'}.`, 'Continue the SAME task/session from current context. Preserve completed work and evidence. Do not restart planning. If the follow-up creates separate work outside this task, report it rather than silently expanding scope. Return the normal structured WorkerResult.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), worker.role, model === 'host-default' ? undefined : model, worker.model_variant, taskPromptToolOverrides(task.execution_profile?.tools ?? [], this.getHostConfig(), task.execution_profile?.mcp_servers ?? []));
             appendLedger(m, 'worker.semantic-resumed', { task_id: task.id, worker_id: worker.id, payload: { revision: m.identity.semantic_assessment.revision, message_kind: messageKind, session_id: worker.session_id } });
             resumed++;
         }
@@ -584,6 +672,7 @@ export class TaskRuntime {
                 const stopped = await this.abortNativeSession(m, oldSession, 'constraint-rebase', worker.id, task.id);
                 if (!stopped)
                     throw new Error('OpenCode session abort unavailable for constraint rebase');
+                await this.cleanupBrowserForTask(m, task.id, worker.id);
             }
             catch (error) {
                 const marker = `constraint-abort-unavailable:${task.id}:${worker.id}`;
@@ -636,7 +725,7 @@ export class TaskRuntime {
                 const constraintExit = worker.selected_methodologies.flatMap(name => { const item = methodologyCatalog(this.projectRoot).find(x => x.name === name); return item ? [`${name}: ${item.exitRequirements.join(', ')}`] : []; });
                 const handoff = clipText([ownershipContract('child', worker.selected_methodologies), `Hi USER CONSTRAINT UPDATE for existing task ${task.id}.`, `OBJECTIVE: ${task.objective}`, `SCOPE: ${task.scope.join(', ') || 'bounded by objective'}`, `CURRENT USER CONSTRAINTS: ${task.constraints.join(' | ')}`, `OBSERVED CHANGED FILES SO FAR: ${m.vcs.changed_files.slice(-30).join(', ') || 'none'}`, `METHODOLOGY EXIT REQUIREMENTS: ${constraintExit.join(' | ') || 'none'}`, worker.selected_methodologies.length ? 'This is a fresh child session. Reload every still-selected methodology through the native skill tool before applying it.' : 'No methodology remains selected after the user constraint.', 'The previous child session was aborted because the user changed constraints. The latest constraint supersedes conflicting prior instructions. Do not write to prohibited surfaces. If prohibited files were already changed, report that explicitly; do not conceal or assume those edits are acceptable. Reconcile the existing task under the new constraint with the minimum safe change.', 'Return the normal structured WorkerResult.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars);
                 beginWorkerAttempt(task, worker);
-                await this.sendProviderPrompt(child.id, handoff, worker.role, model === 'host-default' ? undefined : model, variant, promptToolOverrides(task.execution_profile?.tools ?? []));
+                await this.sendProviderPrompt(child.id, handoff, worker.role, model === 'host-default' ? undefined : model, variant, taskPromptToolOverrides(task.execution_profile?.tools ?? [], this.getHostConfig(), task.execution_profile?.mcp_servers ?? []));
                 appendLedger(m, 'worker.constraint-rebased', { task_id: task.id, worker_id: worker.id, payload: { from_session: oldSession, to_session: worker.session_id, generation: m.continuation.generation, constraint: text.slice(0, 300) } });
                 void this.events?.(runtimeSignal('worker.constraint-rebased', m.identity.mission_id, { task_id: task.id, worker_id: worker.id, payload: { generation: m.continuation.generation } }));
                 reconciled++;
@@ -693,6 +782,7 @@ export class TaskRuntime {
             appendLedger(m, 'worker.cancel.blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: 'abort-unavailable' } });
             return false;
         }
+        await this.cleanupBrowserForTask(m, worker.task_id, worker.id);
     } const reservationRelease = releaseTaskRuntimeReservation(m, worker.id, 'CANCEL'); if (!reservationRelease.accepted) {
         appendLedger(m, 'worker.cancel.scheduler-blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: reservationRelease.reason } });
         return false;

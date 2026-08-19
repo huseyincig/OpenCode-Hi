@@ -8,7 +8,12 @@
     "generated_facts_must_name_machine_owner": true,
     "public_docs_budget": 10,
     "root_markdown_budget": 3,
-    "local_only_directory": ".project-docs/"
+    "local_only_directory": ".project-docs/",
+    "engineering_state_root_markdown": [
+      "PROTOCOL.md",
+      "ROADMAP.md",
+      "TASKS.md"
+    ]
   },
   "public_documents": [
     {
@@ -103,7 +108,7 @@
     },
     {
       "area": "current-release-status",
-      "path": "data/validation/release-status-0.1.1.json"
+      "path": "data/validation/release-status-0.2.0.json"
     }
   ]
 }

@@ -13,10 +13,11 @@ export declare class TaskResultReconciler {
     private readonly events;
     private readonly methodologyLearning;
     private readonly child;
+    private readonly getHostConfig;
     private readonly queueTaskCallback;
     private readonly drainQueueCallback;
     private readonly scopedStores;
-    constructor(scheduler: ConcurrencyScheduler, registry: BackgroundRegistry, projectRoot: string, events: RuntimeSignalSink | undefined, methodologyLearning: ProjectMethodologyLearningStore, child: ChildExecutionCoordinator, queueTaskCallback: QueueTask, drainQueueCallback: () => void, scopedStores: RuntimeScopedStores);
+    constructor(scheduler: ConcurrencyScheduler, registry: BackgroundRegistry, projectRoot: string, events: RuntimeSignalSink | undefined, methodologyLearning: ProjectMethodologyLearningStore, child: ChildExecutionCoordinator, getHostConfig: () => Record<string, unknown>, queueTaskCallback: QueueTask, drainQueueCallback: () => void, scopedStores: RuntimeScopedStores);
     private queueTask;
     private drainQueue;
     reconcileNativeResult(m: MissionState, workerID: string, result: WorkerResult): Promise<WorkerResult>;

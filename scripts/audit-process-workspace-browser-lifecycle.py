@@ -93,7 +93,7 @@ for x in B: row(14,*x)
 relevant={
  'process-lifecycle':['plugin/src/contracts/process.ts','plugin/src/runtime/process/executor.ts','plugin/src/runtime/process/runtime.ts','plugin/src/opencode/open-code-pty-adapter.ts','plugin/src/contracts/host-capability.ts'],
  'workspace-isolation-binding':['plugin/src/contracts/workspace.ts','plugin/src/runtime/workspace/executor.ts','plugin/src/runtime/workspace/runtime.ts','plugin/src/runtime/mission/validators.ts','plugin/src/opencode/open-code-workspace-adapter.ts','plugin/src/runtime/task/child-execution-coordinator.ts','plugin/src/contracts/host-capability.ts'],
- 'browser-execution':['plugin/src/contracts/browser-observation.ts','plugin/src/runtime/browser/executor.ts','plugin/src/runtime/browser/runtime.ts','plugin/src/runtime/browser/ownership.ts','plugin/src/opencode/playwright-browser-adapter.ts','plugin/src/runtime/application/hi-tool-surface.ts','plugin/src/contracts/host-capability.ts'],
+ 'browser-execution':['plugin/src/contracts/browser-observation.ts','plugin/src/runtime/browser/executor.ts','plugin/src/runtime/browser/backend-policy.ts','plugin/src/runtime/browser/ownership.ts','plugin/src/opencode/playwright-browser-adapter.ts','plugin/src/runtime/application/hi-tool-surface.ts','plugin/src/contracts/host-capability.ts'],
 }
 equiv={}
 for cap,paths in relevant.items():

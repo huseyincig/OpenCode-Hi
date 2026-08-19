@@ -4,7 +4,7 @@ import { classifyWorkerFailure } from '../worker/failure-classifier.js';
 import { methodologyCatalog } from '../methodology/catalog.js';
 import { ownershipContract } from '../skills/methodology.js';
 import { DEFAULT_CONTEXT_BUDGET, clipText } from '../context/budget.js';
-import { promptToolOverrides } from '../routing/execution-profile.js';
+import { taskPromptToolOverrides } from '../routing/execution-profile.js';
 import { beginWorkerAttempt } from '../worker/worker-runtime.js';
 import { recordPreexistingUserBaseline } from '../safety/staging-safety.js';
 import { appendLedger } from '../ledger/ledger.js';
@@ -113,7 +113,7 @@ export class TaskRecoveryCoordinator {
                 : `Hi stagnation recovery: continue the SAME task/session with policy escalation from ${previous ?? 'default'} to ${model ?? 'default'}. Preserve completed work and evidence. Do not restart planning.`;
             beginWorkerAttempt(task, worker);
             this.child.recordModelProjection(worker, model, variant);
-            await this.child.sendProviderPrompt(worker.session_id, clipText(`${instruction}\nReturn the normal structured WorkerResult.`, DEFAULT_CONTEXT_BUDGET.max_handoff_chars), worker.role, model === 'host-default' ? undefined : model, variant, promptToolOverrides(task.execution_profile?.tools ?? []));
+            await this.child.sendProviderPrompt(worker.session_id, clipText(`${instruction}\nReturn the normal structured WorkerResult.`, DEFAULT_CONTEXT_BUDGET.max_handoff_chars), worker.role, model === 'host-default' ? undefined : model, variant, taskPromptToolOverrides(task.execution_profile?.tools ?? [], this.getHostConfig(), task.execution_profile?.mcp_servers ?? []));
             recordRecoveryStrategy(m, { level: level, action: action }, 'started');
             appendLedger(m, 'worker.stagnation-recovery', { task_id: task.id, worker_id: worker.id, payload: { level, action, from: previous, to: model, variant, generation: m.continuation.generation } });
             void this.events?.(runtimeSignal('worker.recovered', m.identity.mission_id, { task_id: task.id, worker_id: worker.id, payload: { level, action, from: previous, to: model, variant } }));
@@ -217,7 +217,7 @@ export class TaskRecoveryCoordinator {
                 const exitRequirements = worker.selected_methodologies.flatMap(name => { const item = methodologyCatalog(this.projectRoot).find(x => x.name === name); return item ? [`${name}: ${item.exitRequirements.join(', ')}`] : []; });
                 const prompt = clipText([ownershipContract('child', worker.selected_methodologies), `Hi terminal runtime recovery for existing task ${task.id}.`, `Failure class: ${failure.kind}.`, `Previous failed session: ${failedSession}.`, `Fallback model: ${model}.`, `OBJECTIVE: ${task.objective}`, `SCOPE: ${task.scope.join(', ') || 'bounded by objective'}`, `CURRENT USER CONSTRAINTS: ${(task.constraints ?? []).join(' | ') || 'none'}.`, `OBSERVED CHANGED FILES SO FAR: ${m.vcs.changed_files.slice(-30).join(', ') || 'none'}`, `METHODOLOGY EXIT REQUIREMENTS: ${exitRequirements.join(' | ') || 'none'}`, worker.selected_methodologies.length ? 'This is a fresh child session. Reload every still-selected methodology through the native skill tool before applying it.' : 'No methodology is selected for this recovery.', 'Preserve already-observed repository changes and bounded evidence, but do not assume the failed session context is present. Inspect only the minimum current state needed to continue the SAME task. Do not restart top-level planning. Return the normal structured WorkerResult.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars);
                 beginWorkerAttempt(task, worker);
-                await this.child.sendProviderPrompt(recoverySessionID, prompt, worker.role, model === 'host-default' ? undefined : model, variant, promptToolOverrides(task.execution_profile?.tools ?? []));
+                await this.child.sendProviderPrompt(recoverySessionID, prompt, worker.role, model === 'host-default' ? undefined : model, variant, taskPromptToolOverrides(task.execution_profile?.tools ?? [], this.getHostConfig(), task.execution_profile?.mcp_servers ?? []));
                 appendLedger(m, 'worker.runtime-fallback', { task_id: task.id, worker_id: worker.id, payload: { from: previous, to: model, variant, reason: fallbackReason, failure_class: failure.kind, attempt: worker.runtime_recovery_attempt, from_session: failedSession, to_session: worker.session_id, session_mode: 'fresh' } });
                 return true;
             }

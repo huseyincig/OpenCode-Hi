@@ -10,6 +10,12 @@ function defaultInspect(directory) {
     const root = canonicalExisting(directory), head = git(root, ['rev-parse', 'HEAD']), rawCommon = git(root, ['rev-parse', '--path-format=absolute', '--git-common-dir']), common_dir = canonicalExisting(rawCommon), raw = git(root, ['worktree', 'list', '--porcelain', '-z']), worktrees = raw.split('\0').filter(x => x.startsWith('worktree ')).map(x => canonicalExisting(x.slice('worktree '.length)));
     return { head, common_dir, worktrees };
 }
+function relativeGitPaths(directory) {
+    const tracked = git(directory, ['diff', '--name-only', 'HEAD', '--']).split(/\r?\n/), untracked = git(directory, ['ls-files', '--others', '--exclude-standard', '--']).split(/\r?\n/);
+    return [...new Set([...tracked, ...untracked].map(x => x.trim().replaceAll('\\', '/').replace(/^\.\//, '')).filter(Boolean))].sort();
+}
+function ownsScope(scope, path) { const p = path.replaceAll('\\', '/').replace(/^\.\//, '').replace(/\/+$/, ''), items = scope.map(x => x.replaceAll('\\', '/').replace(/^\.\//, '').replace(/\/+$/, '')).filter(Boolean); return items.some(x => p === x || p.startsWith(`${x}/`)); }
+function sameStringSet(a, b) { return a.length === b.length && a.every((x, i) => x === b[i]); }
 function gitPathKey(path) {
     if (process.platform !== 'win32')
         return path;
@@ -47,15 +53,27 @@ export class OpenCodeWorkspaceAdapter {
         this.inspector = inspector;
     }
     #edge() { return this.client; }
+    #v2Workspace() {
+        if (!this.#v2Client && this.serverUrl)
+            this.#v2Client = createOpenCodeV2Client({ baseUrl: this.serverUrl.toString(), directory: this.directory });
+        return this.#v2Client?.experimental?.workspace;
+    }
     #workspace() {
         const injected = this.#edge()?.v2?.experimental?.workspace ?? this.#edge()?.experimental?.workspace;
         if (injected)
             return injected;
-        if (!this.#v2Client && this.serverUrl)
-            this.#v2Client = createOpenCodeV2Client({ baseUrl: this.serverUrl.toString(), directory: this.directory });
-        const api = this.#v2Client?.experimental?.workspace;
+        const api = this.#v2Workspace();
         if (!api || typeof api.create !== 'function' || typeof api.list !== 'function' || typeof api.remove !== 'function')
             throw new Error('OpenCode experimental workspace API unavailable');
+        return api;
+    }
+    #workspaceWarp() {
+        const injected = this.#edge()?.v2?.experimental?.workspace ?? this.#edge()?.experimental?.workspace;
+        if (typeof injected?.warp === 'function')
+            return injected;
+        const api = this.#v2Workspace();
+        if (!api || typeof api.warp !== 'function')
+            throw new Error('OpenCode native workspace warp/copyChanges API unavailable');
         return api;
     }
     async health() { try {
@@ -129,6 +147,44 @@ export class OpenCodeWorkspaceAdapter {
             ;
             throw error;
         }
+    }
+    async reintegrate(request) {
+        const { lease } = request;
+        if (lease.status !== 'ACTIVE' || lease.cleanup_state !== 'ACTIVE' || !lease.host_workspace_id)
+            throw new Error('Workspace reintegration requires one active exact lease');
+        const primary = this.inspector(lease.repository_root), workspace = this.inspector(lease.workspace_path);
+        if (primary.head !== lease.source_baseline)
+            throw new Error(`Primary source baseline drifted before workspace reintegration: expected ${lease.source_baseline}, observed ${primary.head}`);
+        if (workspace.head !== lease.source_baseline)
+            throw new Error(`Workspace source baseline drifted before reintegration: expected ${lease.source_baseline}, observed ${workspace.head}`);
+        if (!sameRepository(primary, workspace))
+            throw new Error('Workspace reintegration source is not the same Git common repository');
+        const actual = relativeGitPaths(lease.workspace_path), expected = [...new Set(request.expected_changed_files.map(x => x.trim().replaceAll('\\', '/').replace(/^\.\//, '')).filter(Boolean))].sort();
+        if (!actual.length)
+            throw new Error('Workspace reintegration has no actual changed files to apply');
+        if (!sameStringSet(actual, expected))
+            throw new Error(`Workspace reintegration changed-file mismatch: expected ${expected.join(',') || 'none'}, observed ${actual.join(',') || 'none'}`);
+        const outside = actual.filter(file => !ownsScope(request.task_scope, file));
+        if (outside.length)
+            throw new Error(`Workspace reintegration refuses out-of-scope changes: ${outside.join(',')}`);
+        const primaryBefore = relativeGitPaths(lease.repository_root), conflicts = actual.filter(file => primaryBefore.includes(file));
+        if (conflicts.length)
+            throw new Error(`Workspace reintegration refuses user/current primary changes on isolated task scope: ${conflicts.join(',')}`);
+        const api = this.#workspaceWarp();
+        let raw;
+        try {
+            raw = await api.warp({ directory: this.directory, id: null, sessionID: request.session_id, copyChanges: true });
+        }
+        catch (error) {
+            throw new Error(`OpenCode workspace reintegration failed before ownership could be verified: ${String(error)}`);
+        }
+        if (raw?.error)
+            throw new Error(`OpenCode workspace reintegration rejected: ${String(raw.error?.message ?? raw.error)}`);
+        const primaryAfter = relativeGitPaths(lease.repository_root), newPaths = primaryAfter.filter(file => !primaryBefore.includes(file));
+        const missing = actual.filter(file => !primaryAfter.includes(file)), unexpected = newPaths.filter(file => !actual.includes(file));
+        if (missing.length || unexpected.length)
+            throw new Error(`Workspace reintegration post-apply mismatch: missing=${missing.join(',') || 'none'} unexpected=${unexpected.join(',') || 'none'}`);
+        return { applied_files: actual };
     }
     async reconcile(lease) {
         const raw = await this.#workspace().list({ directory: this.directory }), items = nativeData(raw) ?? [], native = Array.isArray(items) ? items.find(x => x?.id === lease.host_workspace_id) : undefined;

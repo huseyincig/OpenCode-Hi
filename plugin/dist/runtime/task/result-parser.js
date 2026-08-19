@@ -71,7 +71,7 @@ export function parseWorkerResult(text) {
     const markdown = markdownWorkerResult(bounded);
     if (markdown)
         return markdown;
-    const status = bounded.match(/(?:^|\n)\s*(?:\*\*|__)?\s*STATUS\s*:\s*([A-Z_ -]+?)(?:\s*(?:\*\*|__))?\s*(?=\n|$)/i)?.[1]?.trim().replace(/[ -]+/g, '_'), summary = bounded.match(/(?:^|\n)\s*(?:\*\*|__)?\s*(?:SUMMARY|FINDINGS?)\s*:\s*(?:\*\*|__)?\s*([^\n]+)/i)?.[1]?.replace(/(?:\*\*|__)\s*$/, '').trim();
+    const status = bounded.match(/(?:^|\n)\s*(?:\*\*|__)?\s*STATUS\s*(?:\*\*|__)?\s*:\s*([A-Z_ -]+?)(?:\s*(?:\*\*|__))?\s*(?=\n|$)/i)?.[1]?.trim().replace(/[ -]+/g, '_'), summary = bounded.match(/(?:^|\n)\s*(?:\*\*|__)?\s*(?:SUMMARY|FINDINGS?)\s*(?:\*\*|__)?\s*:\s*([^\n]+)/i)?.[1]?.replace(/(?:\*\*|__)\s*$/, '').trim();
     if (status)
         return normalizeWorkerResult({ status, summary: summary ?? bounded.slice(0, 1000), open_issues: /USER_ACTION_REQUIRED/i.test(bounded) ? ['USER_ACTION_REQUIRED'] : [] });
     return normalizeWorkerResult({ status: 'FAILED', summary: bounded.slice(0, 1000), open_issues: ['Worker did not return parseable structured result'] });

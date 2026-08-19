@@ -65,6 +65,15 @@ export function effectiveExecutionSurface(hostConfig, role, skillToolEnabled) {
 }
 export const HI_CONTROL_TOOL_IDS = ['hi_doctor', 'hi_status', 'hi_metrics', 'hi_ledger', 'hi_readiness', 'hi_context_artifact_add', 'hi_context_artifacts', 'hi_temporary_mutation_register', 'hi_temporary_mutation_revert', 'hi_direct_progress', 'hi_task_start', 'hi_task_await', 'hi_task_peek', 'hi_task_list', 'hi_task_cancel', 'hi_process_spawn', 'hi_process_read', 'hi_process_write', 'hi_process_wait', 'hi_process_kill', 'hi_process_cleanup', 'hi_process_list'];
 export const KNOWN_BUILTIN_TOOL_IDS = ['bash', 'edit', 'write', 'apply_patch', 'read', 'grep', 'glob', 'list', 'lsp', 'skill', 'todowrite', 'todoread', 'webfetch', 'websearch', 'question', 'task'];
+function mcpServerPattern(name) { return name.replace(/[^a-zA-Z0-9_-]/g, '_') + '_*'; }
+export function resolveMcpServerExposure(hostConfig, selected = []) { const mcp = isRecord(hostConfig.mcp) ? hostConfig.mcp : {}, active = Object.entries(mcp).filter(([, value]) => !isRecord(value) || value.enabled !== false).map(([name]) => name).sort(), requested = [...new Set(selected.map(x => String(x).trim()).filter(Boolean))].sort(), missing = requested.filter(name => !active.includes(name)); if (missing.length)
+    throw new Error(`Requested MCP server(s) unavailable: ${missing.join(', ')}`); const byPattern = new Map(); for (const name of active) {
+    const pattern = mcpServerPattern(name);
+    byPattern.set(pattern, [...(byPattern.get(pattern) ?? []), name]);
+} const collisions = [...byPattern.entries()].filter(([, names]) => names.length > 1); if (collisions.length)
+    throw new Error(`MCP server tool namespace collision: ${collisions.map(([pattern, names]) => `${pattern}<=${names.join('|')}`).join(', ')}`); const keep = new Set(requested); return { configured: active, selected: requested, disabledPatterns: active.filter(name => !keep.has(name)).map(mcpServerPattern) }; }
+export function taskPromptToolOverrides(allowed, hostConfig, selectedMcpServers = []) { const out = promptToolOverrides(allowed), mcp = resolveMcpServerExposure(hostConfig, selectedMcpServers); for (const pattern of mcp.disabledPatterns)
+    out[pattern] = false; return out; }
 export function promptToolOverrides(allowed, hiToolNames = [...HI_CONTROL_TOOL_IDS]) { const keep = new Set(allowed); const out = {}; for (const id of KNOWN_BUILTIN_TOOL_IDS)
     if (!keep.has(id))
         out[id] = false; for (const id of hiToolNames)

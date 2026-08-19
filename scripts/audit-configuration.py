@@ -11,7 +11,7 @@ def get_path(root,path):
 catalog=json.loads((ROOT/'data/hi-config-options.json').read_text())
 options=catalog.get('options',[]);violations=[];rows=[]
 if catalog.get('schema')!=1 or catalog.get('type')!='hi-config-option-catalog': violations.append('catalog-header')
-if len(options)!=32: violations.append(f'catalog-count:{len(options)}')
+if len(options)!=29: violations.append(f'catalog-count:{len(options)}')
 paths=[x.get('path') for x in options]
 if len(paths)!=len(set(paths)): violations.append('duplicate-config-path')
 if any(x.get('owner')!='hi-config' for x in options): violations.append('duplicate-config-owner')
@@ -24,7 +24,6 @@ def consumer_for(path):
     if path.startswith('execution.'): return ('plugin/src/runtime/execution/topology-policy.ts','config.')
     if path.startswith('models.') or path.startswith('routing.'): return ('plugin/src/runtime/routing/model-resolver.ts','config.')
     if path.startswith('parallel.'): return ('plugin/src/runtime/application/runtime-services.ts','getConfig().parallel')
-    if path.startswith('teamMode.'): return ('plugin/src/runtime/team/team-runtime.ts','getConfig' if 'getConfig' in (ROOT/'plugin/src/runtime/team/team-runtime.ts').read_text(errors='replace') else 'TeamRuntime')
     if path.startswith('profile.'): return ('plugin/src/runtime/task/task-runtime.ts','cfg.profile')
     raise KeyError(path)
 # defaults are generated from the catalog and consumed via DEFAULT_HI_CONFIG.
@@ -47,7 +46,7 @@ for opt in options:
     rows.append({'path':path,'id':opt['id'],'classification':opt['classification'],'schema':'plugin/src/config/schema.ts','schema_sha256':sha('plugin/src/config/schema.ts'),'validator':opt['validator'],'default':opt['default'],'default_owner':'data/hi-config-options.json -> plugin/src/generated/config-policy.ts -> plugin/src/config/defaults.ts','precedence_order':opt['precedence_order'],'consumer':consumer,'consumer_sha256':sha(consumer),'consumer_anchor':anchor,'observable_effect':effect,'documentation':'docs/INSTALLATION.md','documentation_sha256':sha('docs/INSTALLATION.md'),'proof':proof,'proof_sha256':sha(proof),'safety_semantics':opt['safety_semantics']})
 resolver=(ROOT/'plugin/src/config/resolver.ts').read_text(errors='replace'); discovery=(ROOT/'plugin/src/config/routing-discovery.ts').read_text(errors='replace'); hostile=(ROOT/'plugin/test/routing-config-discovery.test.mjs').read_text(errors='replace'); configtest=(ROOT/'plugin/test/config.test.mjs').read_text(errors='replace'); defaults_src=(ROOT/'plugin/src/config/defaults.ts').read_text(errors='replace')
 guards={
- 'exact_32_unique_leaves':len(options)==32 and len(paths)==len(set(paths)),
+ 'exact_29_unique_leaves':len(options)==29 and len(paths)==len(set(paths)),
  'single_semantic_owner':all(x.get('owner')=='hi-config' for x in options),
  'generated_defaults_owned_by_catalog':'HI_CONFIG_DEFAULTS' in defaults_src and 'structuredClone' in defaults_src,
  'resolver_uses_canonical_defaults':'DEFAULT_HI_CONFIG.' in resolver,
@@ -62,8 +61,8 @@ guards={
 for k,v in guards.items():
     if not v: violations.append('static-guard:'+k)
 status='PASS' if not violations else 'FAIL'
-data={'schema':1,'kind':'PROMPT_B_CONFIGURATION_ADVERSARIAL_AUDIT','program':'PROMPT_B','section':23,'status':status,'leaves':rows,'static_guards':guards,'violations':violations,'summary':{'required':32,'covered':len(rows),'violations':len(violations),'runtime':sum(x['classification']=='runtime' for x in options),'diagnostic':sum(x['classification']=='diagnostic' for x in options),'schema_marker':sum(x['classification']=='schema-marker' for x in options)},'closed_defects':[{'id':'profile-unknown-config-injection','class':'UNKNOWN_CONFIG_ACCEPTED','fix':'Profile settings project only the two canonical threshold leaves and accept only low|medium|high.'},{'id':'block-level-precedence-widening','class':'LOWER_PRECEDENCE_SAFETY_WIDENING','fix':'Nested config resolution is per-leaf; absent/invalid project siblings no longer erase valid host constraints or preferences.'},{'id':'project-routing-synthetic-default-override','class':'DUPLICATE_CONFIG_OWNER','fix':'Project routing discovery returns sparse explicit validated overrides and no longer manufactures strategy/list/map defaults.'}],'claim_boundary':'A runtime config leaf is certified only when the canonical catalog, generated default, resolver/precedence path, executable or diagnostic consumer, generated documentation, and behavioral proof are all present. Unknown keys are ignored rather than admitted to canonical HiConfig; lower-precedence safety constraints are not silently widened by absent higher-precedence leaves.'}
+data={'schema':1,'kind':'PROMPT_B_CONFIGURATION_ADVERSARIAL_AUDIT','program':'PROMPT_B','section':23,'status':status,'leaves':rows,'static_guards':guards,'violations':violations,'summary':{'required':29,'covered':len(rows),'violations':len(violations),'runtime':sum(x['classification']=='runtime' for x in options),'diagnostic':sum(x['classification']=='diagnostic' for x in options),'schema_marker':sum(x['classification']=='schema-marker' for x in options)},'closed_defects':[{'id':'profile-unknown-config-injection','class':'UNKNOWN_CONFIG_ACCEPTED','fix':'Profile settings project only the two canonical threshold leaves and accept only low|medium|high.'},{'id':'block-level-precedence-widening','class':'LOWER_PRECEDENCE_SAFETY_WIDENING','fix':'Nested config resolution is per-leaf; absent/invalid project siblings no longer erase valid host constraints or preferences.'},{'id':'project-routing-synthetic-default-override','class':'DUPLICATE_CONFIG_OWNER','fix':'Project routing discovery returns sparse explicit validated overrides and no longer manufactures strategy/list/map defaults.'}],'claim_boundary':'A runtime config leaf is certified only when the canonical catalog, generated default, resolver/precedence path, executable or diagnostic consumer, generated documentation, and behavioral proof are all present. Unknown keys are ignored rather than admitted to canonical HiConfig; lower-precedence safety constraints are not silently widened by absent higher-precedence leaves.'}
 OUT.write_text(json.dumps(data,indent=2)+'\n')
-print(f"configuration audit {status}: covered={len(rows)}/32 violations={len(violations)}")
+print(f"configuration audit {status}: covered={len(rows)}/29 violations={len(violations)}")
 if violations: print('\n'.join(violations))
 sys.exit(0 if status=='PASS' else 1)

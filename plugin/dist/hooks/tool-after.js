@@ -1,13 +1,17 @@
 import { runtimeSignal } from '../runtime/events/event-sink.js';
 import { observeToolAfter } from '../runtime/evidence/evidence-runtime.js';
-import { verificationSatisfied } from '../runtime/verification/policy.js';
+import { verificationEnvelopeFor, verificationSatisfied } from '../runtime/verification/policy.js';
 import { completeAuthorizedAction, privilegedAction } from '../runtime/safety/authority.js';
-import { recordStagingInspection, recordGitStatusInspection, invalidateStagingProof, invalidateGitTopologyProof, completeGitTopologyMutation, clearGitTopologyOwnershipAfterCommit, isGitCommit, isGitTopologyMutation } from '../runtime/safety/staging-safety.js';
+import { recordStagingInspection, recordGitStatusInspection, invalidateStagingProof, invalidateGitTopologyProof, completeGitTopologyMutation, clearGitTopologyOwnershipAfterCommit, isGitCommit, isGitTopologyMutation, inspectCurrentGitChangedFiles } from '../runtime/safety/staging-safety.js';
 import { matchRollback, resolveRollback } from '../runtime/mutations/temporary-mutations.js';
 import { noteLocalReleaseMutation, notePrivilegedReleaseOutcome, recordRemoteReleaseVerification } from '../runtime/safety/release-chain.js';
 import { syncMissionGates } from '../runtime/gates/gates.js';
 import { recordChildMethodologyLoad, recordParentMethodologyLoad, requestedMethodologyName } from '../runtime/methodology/native-loading.js';
 import { reconcileMethodologyExits } from '../runtime/methodology/exit.js';
+import { assessChangedFileOwnership } from '../runtime/task/diff-ownership.js';
+import { primaryRoleCanDirectImplementation } from '../runtime/roles/catalog.js';
+import { evaluateCompletion } from '../runtime/completion/evaluator.js';
+import { appendLedger } from '../runtime/ledger/ledger.js';
 function outputText(output) { try {
     if (typeof output === 'string')
         return output;
@@ -32,6 +36,37 @@ function numericExit(output) { for (const v of [output?.metadata?.exit, output?.
 export function authorityOutcome(output, text) { const exit = numericExit(output); if (exit !== undefined)
     return exit === 0 ? 'success' : 'failure'; if (/(^|\n)\s*(fail|failed|error)|exit\s*code\s*[1-9]|timed?\s*out|timeout|transport|connection\s+(?:reset|lost|closed)|econn|socket\s+hang/i.test(text))
     return 'failure'; return 'unknown'; }
+function reconcileDeterministicDirectImplementation(m, projectRoot) {
+    if (m.identity.status !== 'active' || m.execution.adaptive_execution?.path !== 'DIRECT' || m.identity.intent.scope !== 'local' || !['low', 'medium'].includes(m.identity.risk) || !primaryRoleCanDirectImplementation(m.execution.primary_mode))
+        return false;
+    if (m.execution.tasks.some(t => !['completed', 'failed', 'cancelled'].includes(t.status)) || m.execution.workers.some(w => !['completed', 'failed', 'cancelled'].includes(w.status)))
+        return false;
+    const implementations = m.execution.obligations.filter(o => o.kind === 'implementation' && o.status === 'open');
+    if (implementations.length !== 1 || implementations[0].id !== 'o-implementation')
+        return false;
+    if (m.execution.obligations.some(o => o.kind === 'analysis' && o.status === 'open') || m.execution.verification_policy.requireReview || m.execution.obligations.some(o => ['review', 'authority'].includes(o.kind) && o.status === 'open') || m.methodology.methodology_needs.length)
+        return false;
+    const mutationAt = m.execution.evidence.last_mutation_at;
+    if (!mutationAt || !m.vcs.changed_files.length || !m.execution.verification_policy.requiredKinds.length || !verificationSatisfied(m).ok)
+        return false;
+    const envelope = verificationEnvelopeFor(m), postMutation = envelope.checks.length > 0 && envelope.checks.every(check => check.result === 'passed' && check.evidence_refs.some(ref => { const e = m.execution.evidence.items.find(item => item.id === ref); return Boolean(e && !e.invalidated_at && e.observed_at >= mutationAt); }));
+    if (!postMutation)
+        return false;
+    const current = inspectCurrentGitChangedFiles(projectRoot);
+    if (current === undefined)
+        return false;
+    const currentSet = new Set(current), directFiles = [...new Set(m.vcs.changed_files.map(file => file.replace(/\\/g, '/').replace(/^\.\//, '')).filter(file => currentSet.has(file)))];
+    if (!directFiles.length)
+        return false;
+    const ownership = assessChangedFileOwnership(m.identity.intent.likelyTargets ?? [], directFiles, [], 'control-plane');
+    if (ownership.collateral.length)
+        return false;
+    const o = implementations[0];
+    o.status = 'closed';
+    o.closedAt = Date.now();
+    appendLedger(m, 'implementation.direct-evidence-reconciled', { payload: { obligation: o.id, files: directFiles.slice(0, 30), evidence_refs: envelope.checks.flatMap(check => check.evidence_refs).slice(0, 30), source: 'current-git-diff+fresh-required-verification' } });
+    return true;
+}
 export function createToolAfterHook(store, background, events, projectRoot) {
     return async (input, output) => {
         const sid = input?.sessionID ?? input?.sessionId, child = sid && background ? background.list().find(w => w.session_id === sid) : undefined, m = child ? store.get(child.parent_session_id) : store.get(sid);
@@ -78,17 +113,18 @@ export function createToolAfterHook(store, background, events, projectRoot) {
                 completeAuthorizedAction(m, args.command, args?.cwd, ao, text);
             }
         }
-        const check = verificationSatisfied(m);
-        if (check.ok) {
-            const o = m.execution.obligations.find(x => x.kind === 'verification' && x.status === 'open');
-            if (o) {
+        for (const o of m.execution.obligations.filter(x => x.kind === 'verification' && x.status === 'open'))
+            if (verificationSatisfied(m, o.id).ok) {
                 o.status = 'closed';
                 o.closedAt = Date.now();
+                appendLedger(m, 'obligation.closed', { payload: { obligation: o.id, owner: 'tool-after-verification-evidence' } });
             }
-        }
+        const directReconciled = !child && reconcileDeterministicDirectImplementation(m, projectRoot);
         reconcileMethodologyExits(m, projectRoot);
         syncMissionGates(m);
+        if (directReconciled && evaluateCompletion(m).complete)
+            store.complete(sid);
         store.updateProgress(m);
-        void events?.(runtimeSignal('evidence.updated', m.identity.mission_id, { worker_id: child?.id, payload: { fresh: m.execution.evidence.fresh, items: m.execution.evidence.items.length } }));
+        void events?.(runtimeSignal('evidence.updated', m.identity.mission_id, { worker_id: child?.id, payload: { fresh: m.execution.evidence.fresh, items: m.execution.evidence.items.length, direct_reconciled: directReconciled } }));
     };
 }

@@ -15,6 +15,9 @@ catch {
     throw new Error('Browser URL must use http(s)'); if (u.username || u.password)
     throw new Error('Browser credentials in URL are forbidden'); if (!localHost(u.hostname))
     throw new Error(`Browser target is outside supported local scope: ${u.origin}`); return u.toString(); }
+function plannedUrl(c, value) { const url = safeLocalUrl(value), origin = new URL(url).origin, allowed = new Set(c.allowed_origins ?? []); if (!allowed.size)
+    throw new Error('Browser task has no allowed-origin plan'); if (!allowed.has(origin))
+    throw new Error(`Browser target origin is outside the task plan: ${origin}`); return url; }
 function targetRef(value) { const m = /^@e(\d{1,6})$/.exec(value); if (!m)
     throw new Error('Browser target must be an observed @eN reference'); return Number(m[1]); }
 function sha(text) { return createHash('sha256').update(text).digest('hex'); }
@@ -58,14 +61,21 @@ export class PlaywrightBrowserAdapter {
         this.sessions.delete(c.task_id);
     } if (!c.execution_owner_ref.trim())
         throw new Error('Browser execution owner identity is required'); if (!this.executablePath || !this.executableExists(this.executablePath))
-        throw new Error('Playwright Chromium executable is unavailable'); const { chromium } = await this.loadPlaywright(), browser = await chromium.launch({ executablePath: this.executablePath, headless: this.headless, args: ['--no-sandbox'] }), context = await browser.newContext({ acceptDownloads: false, ignoreHTTPSErrors: false }), page = await context.newPage(), s = { browser, page, refs: new Map(), consoleErrors: [], networkErrors: [], executionOwnerRef: c.execution_owner_ref }; page.setDefaultTimeout(this.timeoutMs); page.on('console', (msg) => { if (msg.type() === 'error')
+        throw new Error('Playwright Chromium executable is unavailable'); const { chromium } = await this.loadPlaywright(), browser = await chromium.launch({ executablePath: this.executablePath, headless: this.headless, args: ['--no-sandbox'] }), context = await browser.newContext({ acceptDownloads: false, ignoreHTTPSErrors: false }); if (typeof context.route !== 'function')
+        throw new Error('Playwright request routing is required for browser origin confinement'); await context.route('**/*', async (route) => { try {
+        plannedUrl(c, String(route.request().url()));
+        await route.continue();
+    }
+    catch {
+        await route.abort('blockedbyclient');
+    } }); const page = await context.newPage(), s = { browser, page, refs: new Map(), consoleErrors: [], networkErrors: [], executionOwnerRef: c.execution_owner_ref }; page.setDefaultTimeout(this.timeoutMs); page.on('console', (msg) => { if (msg.type() === 'error')
         s.consoleErrors.push(bounded(String(msg.text()), 1000)); if (s.consoleErrors.length > MAX_ERRORS)
         s.consoleErrors.splice(0, s.consoleErrors.length - MAX_ERRORS); }); page.on('requestfailed', (req) => { s.networkErrors.push(bounded(`${req.method()} ${req.url()} ${req.failure()?.errorText ?? 'failed'}`, 1000)); if (s.networkErrors.length > MAX_ERRORS)
         s.networkErrors.splice(0, s.networkErrors.length - MAX_ERRORS); }); page.on('download', (download) => void download.cancel().catch(() => { })); this.sessions.set(c.task_id, s); return s; }
     observation(c, s, action, url, result, dom, screenshotRef, error) { const timestamp = Date.now(), doc = dom ? sha(dom) : undefined, console_errors = s?.consoleErrors.slice(-MAX_ERRORS) ?? [], network_errors = [...(s?.networkErrors.slice(-MAX_ERRORS) ?? []), ...(error ? [bounded(error, 1000)] : [])].slice(-MAX_ERRORS), o = { observation_id: '', task_id: c.task_id, executor_version: c.executor_version, url, action, timestamp, ...(doc ? { document_identity: doc } : {}), ...(dom ? { dom_summary: bounded(dom) } : {}), console_errors, network_errors, ...(screenshotRef ? { screenshot_artifact_ref: screenshotRef } : {}), result }; o.observation_id = browserObservationId(o); return o; }
     async snapshot(c, action) { const s = this.sessions.get(c.task_id); if (!s?.url || s.executionOwnerRef !== c.execution_owner_ref)
         throw new Error('Browser session is not owned by the current execution identity'); try {
-        s.url = safeLocalUrl(String(s.page.url()));
+        s.url = plannedUrl(c, String(s.page.url()));
         const data = await s.page.locator('body').evaluate((body) => { const all = [...body.querySelectorAll('a,button,input,textarea,select,[role="button"],[tabindex]')].slice(0, 200); return { body: (body.innerText || '').slice(0, 12000), items: all.map((el, i) => ({ i: i + 1, tag: String(el.tagName || '').toLowerCase(), text: String(el.innerText || el.value || el.getAttribute?.('aria-label') || '').slice(0, 180) })) }; });
         s.refs = new Map(data.items.map((x) => [Number(x.i), `a,button,input,textarea,select,[role="button"],[tabindex] >> nth=${Number(x.i) - 1}`]));
         const rendered = [bounded(String(data.body), 3000), ...data.items.slice(0, 80).map((x) => `@e${x.i} <${x.tag}> ${x.text}`)].join('\n');
@@ -83,7 +93,7 @@ export class PlaywrightBrowserAdapter {
     catch (error) {
         return { available: false, reason: String(error) };
     } }
-    async open(c, url) { const u = safeLocalUrl(url); let s; try {
+    async open(c, url) { const u = plannedUrl(c, url); let s; try {
         s = await this.ensure(c);
         await s.page.goto(u, { waitUntil: 'domcontentloaded', timeout: this.timeoutMs });
         s.url = u;
@@ -92,7 +102,7 @@ export class PlaywrightBrowserAdapter {
     catch (error) {
         return this.observation(c, s, 'open', u, 'FAILED', undefined, undefined, String(error));
     } }
-    async navigate(c, url) { const u = safeLocalUrl(url); let s = this.sessions.get(c.task_id); try {
+    async navigate(c, url) { const u = plannedUrl(c, url); let s = this.sessions.get(c.task_id); try {
         s = await this.ensure(c);
         await s.page.goto(u, { waitUntil: 'domcontentloaded', timeout: this.timeoutMs });
         s.url = u;
@@ -139,11 +149,23 @@ export class PlaywrightBrowserAdapter {
     async close(c) { const s = this.sessions.get(c.task_id); if (!s?.url || s.executionOwnerRef !== c.execution_owner_ref)
         throw new Error('Browser session is not owned by the current execution identity'); const url = s.url; try {
         await s.browser.close();
-        this.sessions.delete(c.task_id);
+        if (this.sessions.get(c.task_id) === s)
+            this.sessions.delete(c.task_id);
         return this.observation(c, s, 'close', url, 'OBSERVED', 'browser session closed');
     }
     catch (error) {
         return this.observation(c, s, 'close', url, 'FAILED', undefined, undefined, String(error));
+    } }
+    async cleanup(c) { const s = this.sessions.get(c.task_id); if (!s)
+        return { cleaned: false, reason: 'not-found' }; if (s.executionOwnerRef !== c.execution_owner_ref)
+        return { cleaned: false, reason: 'owner-mismatch' }; try {
+        await s.browser.close();
+        if (this.sessions.get(c.task_id) === s)
+            this.sessions.delete(c.task_id);
+        return { cleaned: true, reason: 'cleaned' };
+    }
+    catch (error) {
+        return { cleaned: false, reason: 'close-failed', error: String(error) };
     } }
     async dispose() { for (const [id, s] of this.sessions) {
         try {

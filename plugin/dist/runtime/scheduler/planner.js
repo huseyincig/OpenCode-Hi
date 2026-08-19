@@ -54,7 +54,7 @@ function conflictDecision(snapshot, unit, nodeByID) {
     }
     return { blocking: [...new Set(blocking)], reasons };
 }
-function decideUnit(snapshot, unit, nodeByID) {
+function decideStaticUnit(snapshot, unit, nodeByID) {
     const node = nodeByID.get(unit.workNodeId);
     if (!node)
         return { executionUnitId: unit.id, disposition: 'BLOCKED_DEPENDENCY', reasons: [reason('unknown-dependency', unit.workNodeId)], blockingUnitIds: [], blockingDependencyIds: [unit.workNodeId] };
@@ -76,16 +76,40 @@ function decideUnit(snapshot, unit, nodeByID) {
     const conflict = conflictDecision(snapshot, unit, nodeByID);
     if (conflict.reasons.length)
         return { executionUnitId: unit.id, disposition: 'DEFERRED_CONFLICT', reasons: conflict.reasons, blockingUnitIds: conflict.blocking, blockingDependencyIds: [] };
-    const active = snapshot.graph.executionUnits.filter(other => other.id !== unit.id && (ACTIVE_TASK_STATUSES.has(nodeByID.get(other.workNodeId)?.status ?? '') || Boolean(other.attempt && ACTIVE_ATTEMPT_STATUSES.has(other.attempt.status)) || snapshot.capacity.running.some(slot => slot.executionUnitId === other.id))).length;
-    if (active >= snapshot.capacity.topology)
-        return { executionUnitId: unit.id, disposition: 'DEFERRED_CAPACITY', reasons: [reason('topology-capacity', String(snapshot.capacity.topology))], blockingUnitIds: [], blockingDependencyIds: [] };
-    const resource = resourceCapacity(snapshot, unit.id, snapshot.resolvedResources[unit.id]);
-    if (!resource.ok)
-        return { executionUnitId: unit.id, disposition: 'DEFERRED_CAPACITY', reasons: [resource.reason], blockingUnitIds: [], blockingDependencyIds: [] };
-    return { executionUnitId: unit.id, disposition: 'RUNNABLE', reasons: [reason('ready')], blockingUnitIds: [], blockingDependencyIds: [] };
+    return undefined;
+}
+/**
+ * Prepare graph-derived scheduling decisions once. The returned planner is pure and
+ * call-scoped: only capacity.running may vary between invocations. No runtime state is cached.
+ */
+export function createSchedulingPlanner(snapshot) {
+    const nodeByID = new Map(snapshot.graph.nodes.map(node => [node.id, node]));
+    const staticDecisions = new Map();
+    const intrinsicActive = new Set();
+    for (const unit of snapshot.graph.executionUnits) {
+        if (ACTIVE_TASK_STATUSES.has(nodeByID.get(unit.workNodeId)?.status ?? '') || Boolean(unit.attempt && ACTIVE_ATTEMPT_STATUSES.has(unit.attempt.status)))
+            intrinsicActive.add(unit.id);
+        staticDecisions.set(unit.id, decideStaticUnit(snapshot, unit, nodeByID));
+    }
+    return (capacity = snapshot.capacity) => {
+        const working = capacity === snapshot.capacity ? snapshot : { ...snapshot, capacity };
+        const active = new Set(intrinsicActive);
+        for (const slot of capacity.running)
+            active.add(slot.executionUnitId);
+        const units = snapshot.graph.executionUnits.map(unit => {
+            const fixed = staticDecisions.get(unit.id);
+            if (fixed)
+                return fixed;
+            const activeOthers = active.size - (active.has(unit.id) ? 1 : 0);
+            if (activeOthers >= capacity.topology)
+                return { executionUnitId: unit.id, disposition: 'DEFERRED_CAPACITY', reasons: [reason('topology-capacity', String(capacity.topology))], blockingUnitIds: [], blockingDependencyIds: [] };
+            const resource = resourceCapacity(working, unit.id, snapshot.resolvedResources[unit.id]);
+            if (!resource.ok)
+                return { executionUnitId: unit.id, disposition: 'DEFERRED_CAPACITY', reasons: [resource.reason], blockingUnitIds: [], blockingDependencyIds: [] };
+            return { executionUnitId: unit.id, disposition: 'RUNNABLE', reasons: [reason('ready')], blockingUnitIds: [], blockingDependencyIds: [] };
+        });
+        return { missionId: snapshot.graph.missionId, units };
+    };
 }
 /** Pure scheduling policy: no acquisition, queue mutation, host call, or session execution. */
-export function planScheduling(snapshot) {
-    const nodeByID = new Map(snapshot.graph.nodes.map(node => [node.id, node]));
-    return { missionId: snapshot.graph.missionId, units: snapshot.graph.executionUnits.map(unit => decideUnit(snapshot, unit, nodeByID)) };
-}
+export function planScheduling(snapshot) { return createSchedulingPlanner(snapshot)(); }

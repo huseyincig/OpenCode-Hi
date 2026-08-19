@@ -1,5 +1,5 @@
 import { type BrowserObservationContract } from '../contracts/browser-observation.js';
-import type { BrowserExecutionContext, BrowserExecutor, BrowserInspectRequest, BrowserTarget, BrowserWaitRequest } from '../runtime/browser/executor.js';
+import type { BrowserCleanupResult, BrowserExecutionContext, BrowserExecutor, BrowserInspectRequest, BrowserTarget, BrowserWaitRequest } from '../runtime/browser/executor.js';
 export interface PlaywrightBrowserAdapterOptions {
     executable_path?: string;
     headless?: boolean;
@@ -38,5 +38,6 @@ export declare class PlaywrightBrowserAdapter implements BrowserExecutor {
     screenshot(c: BrowserExecutionContext): Promise<BrowserObservationContract>;
     wait(c: BrowserExecutionContext, request: BrowserWaitRequest): Promise<BrowserObservationContract>;
     close(c: BrowserExecutionContext): Promise<BrowserObservationContract>;
+    cleanup(c: BrowserExecutionContext): Promise<BrowserCleanupResult>;
     dispose(): Promise<void>;
 }

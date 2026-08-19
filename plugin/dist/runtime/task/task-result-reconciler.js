@@ -14,10 +14,11 @@ import { openHumanDecision } from '../human-decision/runtime.js';
 import { runtimeSignal } from '../events/event-sink.js';
 import { syncMissionGates } from '../gates/gates.js';
 import { DEFAULT_CONTEXT_BUDGET, clipText } from '../context/budget.js';
-import { promptToolOverrides } from '../routing/execution-profile.js';
+import { taskPromptToolOverrides } from '../routing/execution-profile.js';
 import { diffDelta, normFile } from './child-execution-coordinator.js';
 import { taskRuntimeAdmittedModel, reserveTaskRuntimeDispatch, bindTaskRuntimeHost, beginTaskRuntimeSettlement, releaseTaskRuntimeReservation } from '../scheduler/task-runtime-adapter.js';
 import { executionAttemptIdentity } from '../../contracts/orchestration-core.js';
+import { evidenceClaimApplicability } from '../evidence/applicability.js';
 function providerOf(model) { return model && model !== 'host-default' && model.includes('/') ? model.slice(0, model.indexOf('/')) : undefined; }
 function resultDigest(result) { return createHash('sha256').update(JSON.stringify(result)).digest('hex'); }
 export class TaskResultReconciler {
@@ -27,16 +28,18 @@ export class TaskResultReconciler {
     events;
     methodologyLearning;
     child;
+    getHostConfig;
     queueTaskCallback;
     drainQueueCallback;
     scopedStores;
-    constructor(scheduler, registry, projectRoot, events, methodologyLearning, child, queueTaskCallback, drainQueueCallback, scopedStores) {
+    constructor(scheduler, registry, projectRoot, events, methodologyLearning, child, getHostConfig, queueTaskCallback, drainQueueCallback, scopedStores) {
         this.scheduler = scheduler;
         this.registry = registry;
         this.projectRoot = projectRoot;
         this.events = events;
         this.methodologyLearning = methodologyLearning;
         this.child = child;
+        this.getHostConfig = getHostConfig;
         this.queueTaskCallback = queueTaskCallback;
         this.drainQueueCallback = drainQueueCallback;
         this.scopedStores = scopedStores;
@@ -175,7 +178,7 @@ export class TaskResultReconciler {
                 try {
                     beginWorkerAttempt(loserTask, loser);
                     this.child.recordModelProjection(loser, model, loser.model_variant);
-                    await this.child.sendProviderPrompt(loser.session_id, clipText([`Hi runtime write-conflict reconciliation for existing task ${loserTask.id}.`, `Conflicting task ${winnerTask.id} has completed before this resume gate opened.`, `Conflicting files: ${overlap.join(', ')}`, `Current task objective: ${loserTask.objective}`, `Current user constraints: ${(loserTask.constraints ?? []).join(' | ') || 'none'}.`, 'Inspect the current diff/state first. Preserve valid work from the completed task. Reconcile only this task sequentially; do not blindly overwrite or restart planning. Re-run the required scoped verification and return the structured WorkerResult.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), loser.role, model === 'host-default' ? undefined : model, loser.model_variant, promptToolOverrides(loserTask.execution_profile?.tools ?? []));
+                    await this.child.sendProviderPrompt(loser.session_id, clipText([`Hi runtime write-conflict reconciliation for existing task ${loserTask.id}.`, `Conflicting task ${winnerTask.id} has completed before this resume gate opened.`, `Conflicting files: ${overlap.join(', ')}`, `Current task objective: ${loserTask.objective}`, `Current user constraints: ${(loserTask.constraints ?? []).join(' | ') || 'none'}.`, 'Inspect the current diff/state first. Preserve valid work from the completed task. Reconcile only this task sequentially; do not blindly overwrite or restart planning. Re-run the required scoped verification and return the structured WorkerResult.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), loser.role, model === 'host-default' ? undefined : model, loser.model_variant, taskPromptToolOverrides(loserTask.execution_profile?.tools ?? [], this.getHostConfig(), loserTask.execution_profile?.mcp_servers ?? []));
                     appendLedger(m, 'parallel.write-conflict.resumed', { task_id: loserTask.id, worker_id: loser.id, payload: { after_task: winnerTask.id, files: overlap.slice(0, 30) } });
                     return loser;
                 }
@@ -314,6 +317,20 @@ export class TaskResultReconciler {
             if (preExisting.length)
                 appendLedger(m, 'review.finding-pre-existing', { task_id: task.id, worker_id: worker.id, payload: { findings: preExisting.map(f => ({ id: f.id, severity: f.severity, scope: f.scope.slice(0, 20) })), policy: 'record-without-unrelated-mission-blocker' } });
         }
+        const browserProofKinds = new Set(['browser-evidence', 'visual-evidence', 'accessibility-evidence']);
+        const reconciledEvidence = effectiveResult.evidence.map(e => {
+            const claimedPassed = e.outcome === 'passed' || e.pass === true;
+            if (!claimedPassed || !browserProofKinds.has(e.kind))
+                return e;
+            const requested = [...new Set(e.evidence_refs ?? [])], support = requested.map(id => m.execution.evidence.items.find(item => item.id === id)).filter((item) => Boolean(item));
+            const valid = requested.length > 0 && support.length === requested.length && support.every(item => String(item.source ?? '').startsWith('browser:') && item.kind === 'browser-evidence' && !item.invalidated_at && item.outcome !== 'failed' && item.pass !== false && item.task_id === task.id && evidenceClaimApplicability(m, item).applicable);
+            if (valid)
+                return e;
+            appendLedger(m, 'browser.evidence-unbound', { task_id: task.id, worker_id: worker.id, payload: { kind: e.kind, requested_refs: requested.slice(0, 20), resolved_refs: support.map(item => item.id), reason: 'passed browser-derived proof requires current task/attempt browser observations' } });
+            const { pass: _pass, outcome: _outcome, ...rest } = e;
+            return { ...rest, outcome: 'pending', reason: 'browser-proof-unbound: passed browser/visual/accessibility proof requires current task/attempt browser observation evidence_refs' };
+        });
+        effectiveResult = { ...effectiveResult, evidence: reconciledEvidence };
         // Proof ownership: ingest worker-reported proof into the canonical Evidence owner before
         // methodology exit evaluation. A WorkerResult is not itself proof. If changed files were
         // only reported after the fact, mark that mutation first so same-result evidence is stale.
@@ -321,8 +338,10 @@ export class TaskResultReconciler {
         if (fallbackMutation)
             markMutation(m, fallbackMutationFiles, 'worker-result-fallback');
         const evidenceSource = isHiReadOnlyChildRole(worker.role) ? `worker:${worker.id}:reviewer` : `worker:${worker.id}`, attemptIdentity = executionAttemptIdentity({ executionUnitId: `eu:${task.id}`, workerId: worker.id, ordinal: worker.attempt, generation: worker.generation_at_spawn ?? m.continuation.generation }), producer_attempt = { worker_id: worker.id, execution_unit_id: attemptIdentity.executionUnitId, attempt_id: attemptIdentity.attemptId, run_id: attemptIdentity.runId, ordinal: attemptIdentity.ordinal, generation: attemptIdentity.generation };
-        for (const e of effectiveResult.evidence)
-            addEvidence(m, { kind: e.kind, summary: e.summary, scope: e.scope ?? effectiveResult.changed_files, source: evidenceSource, source_session_id: worker.session_id, source_state_hash: worker.native_state_hash, task_id: task.id, obligation_ids: task.obligation_ids, producer_attempt, pass: e.pass, outcome: e.outcome, reason: e.reason, invalidated_at: (cleanlinessMarker || fallbackMutation && !isHiReadOnlyChildRole(worker.role)) ? (m.execution.evidence.last_mutation_at ?? Date.now()) : undefined });
+        for (const e of effectiveResult.evidence) {
+            const refs = [...new Set(e.evidence_refs ?? [])], support = refs.map(id => m.execution.evidence.items.find(item => item.id === id)).filter((item) => Boolean(item)), browserStateHash = browserProofKinds.has(e.kind) && refs.length && support.length === refs.length ? createHash('sha256').update(support.map(item => `${item.id}:${item.source_state_hash ?? ''}`).join('\n')).digest('hex') : undefined;
+            addEvidence(m, { kind: e.kind, summary: e.summary, scope: e.scope ?? effectiveResult.changed_files, source: evidenceSource, source_session_id: worker.session_id, source_state_hash: browserStateHash ?? worker.native_state_hash, task_id: task.id, obligation_ids: task.obligation_ids, evidence_refs: refs.length ? refs : undefined, producer_attempt, pass: e.pass, outcome: e.outcome, reason: e.reason, invalidated_at: (cleanlinessMarker || fallbackMutation && !isHiReadOnlyChildRole(worker.role)) ? (m.execution.evidence.last_mutation_at ?? Date.now()) : undefined });
+        }
         if (effectiveResult.status === 'DONE' && (worker.loaded_methodologies?.length ?? 0) > 0) {
             const missingExit = [...new Set((worker.loaded_methodologies ?? []).flatMap(name => methodologyExitCheck(m, name, { task, worker, result: effectiveResult, projectRoot: this.projectRoot, scope: 'worker' }).missing))];
             if (missingExit.length) {

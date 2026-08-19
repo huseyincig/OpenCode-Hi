@@ -85,7 +85,7 @@ function validIntent(value) {
     if (!isRecord(value) || !onlyKeys(value, INTENT_KEYS))
         return false;
     return typeof value.objective === 'string'
-        && ['unclassified', 'implementation', 'bug-fix', 'review', 'performance', 'release-readiness'].includes(String(value.taskKind))
+        && ['unclassified', 'implementation', 'bug-fix', 'diagnosis', 'review', 'performance', 'release-readiness'].includes(String(value.taskKind))
         && ['local', 'multi-file', 'repo-wide', 'external', 'multi-stream'].includes(String(value.scope))
         && ['low', 'medium', 'high', 'authority-boundary'].includes(String(value.risk))
         && ['none', 'resolvable', 'contract-critical'].includes(String(value.ambiguity))

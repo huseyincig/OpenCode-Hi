@@ -1,33 +1,33 @@
 {
-  "acceptance_receipt": "data/validation/cross-platform-acceptance-0.1.3.json",
-  "acceptance_sha256": "45f6e9bf792d6b1a1e0bd0e5f00a39d4568cb5830b17e6765100450f148c0ad2",
+  "acceptance_receipt": "data/validation/cross-platform-acceptance-0.2.0.json",
+  "acceptance_sha256": null,
   "claim_boundary": "Current-source Windows/Linux certification is bound to the exact external CI source checkpoint. Subsequent evidence-only commits may consume it only while runtime/package material paths remain byte-identical to that checkpoint.",
   "github_actions": {
-    "conclusion": "success",
-    "run_id": 31964240756,
-    "ubuntu_job_id": 95206828447,
-    "windows_job_id": 95206828415
+    "conclusion": null,
+    "run_id": null,
+    "ubuntu_job_id": null,
+    "windows_job_id": null
   },
   "kind": "PROMPT_B_CROSS_PLATFORM_ACCEPTANCE_AUDIT",
-  "linux_current_certified": true,
+  "linux_current_certified": false,
   "post_ci_material_drift": [],
   "program": "PROMPT_B",
   "schema": 1,
   "section": 38,
   "source_checkpoint": {
-    "commit": "798984f88ebc1cc720f8a6c27a646c9e6112a387",
-    "tree": "ec4e51f184b38eec6393ef10dc2ad98f61eaccbe"
+    "commit": null,
+    "tree": null
   },
-  "status": "PASS",
+  "status": "FAIL",
   "summary": {
     "covered_surfaces": 7,
     "required_surfaces": 7,
-    "violations": 0
+    "violations": 9
   },
   "surfaces": [
     {
       "proof": "plugin/test/hi-acceptance-evolution.test.mjs",
-      "proof_sha256": "6f59dbe31af388e1cfaca863311ce0b5828b0e02df497571fe412e3a30f52080",
+      "proof_sha256": "91876a1764e729105c4ad89a527ed1da2d4d2d5ccc4943c99afb4a776d76b047",
       "surface": "shell-command-policy"
     },
     {
@@ -52,7 +52,7 @@
     },
     {
       "proof": "tests/test_hi.py",
-      "proof_sha256": "e6437b2b853dcd53d8d1b36c998d55620a17ba85fbca3bdfff2030b7556eb88f",
+      "proof_sha256": "a300b1429ae548b429841735615d8ba4ffb602dcf0abb834f4bc48cbd0ad5067",
       "surface": "filesystem"
     },
     {
@@ -61,7 +61,17 @@
       "surface": "packaging"
     }
   ],
-  "violations": [],
-  "windows_current_certified": true,
+  "violations": [
+    "status-drift",
+    "source-commit-missing",
+    "workflow-not-success",
+    "ubuntu-job-not-success",
+    "windows-job-not-success",
+    "ubuntu-required-step-not-success",
+    "windows-required-step-not-success",
+    "ubuntu-node-summary-drift",
+    "windows-node-summary-drift"
+  ],
+  "windows_current_certified": false,
   "windows_historical_release_evidence": true
 }

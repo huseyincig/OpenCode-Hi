@@ -31,7 +31,7 @@ export function createRuntimeServices(input) {
     let browserAvailable = false;
     const setBrowserAvailable = (value) => { browserAvailable = value; };
     const workspaceRuntime = new WorkspaceRuntime(ports.workspace, projectRoot);
-    const tasks = new TaskRuntime(ports.childSession, background, scheduler, projectRoot, packageRoot, getConfig, getModels, getHostConfig, eventSink, ports.hostCapabilities, scopedStores, workspaceRuntime, () => browserAvailable ? new Set(['host-capability:browser-execution']) : new Set());
+    const tasks = new TaskRuntime(ports.childSession, background, scheduler, projectRoot, packageRoot, getConfig, getModels, getHostConfig, eventSink, ports.hostCapabilities, scopedStores, workspaceRuntime, () => browserAvailable ? new Set(['host-capability:browser-execution']) : new Set(), browserExecutor);
     for (const m of store.all())
         for (const w of m.execution.workers)
             if (w.session_id && w.status === 'ready')

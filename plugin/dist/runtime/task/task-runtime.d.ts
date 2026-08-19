@@ -4,6 +4,8 @@ import { type AvailableModel } from '../routing/model-resolver.js';
 import { BackgroundRegistry } from '../background/registry.js';
 import { ConcurrencyScheduler } from '../scheduler/concurrency.js';
 import type { RuntimeSignalSink } from '../events/event-sink.js';
+import { type BrowserExecutor } from '../browser/executor.js';
+import { type BrowserBackend } from '../browser/backend-policy.js';
 import { type RuntimeScopedStores } from '../application/runtime-scoped-stores.js';
 import type { WorkspaceRuntime } from '../workspace/runtime.js';
 import type { ChildSessionPort } from '../host/port.js';
@@ -25,6 +27,9 @@ export interface StartTaskInput {
     forkFromSession?: string;
     isolationRequired?: boolean;
     isolationReason?: string;
+    mcpServers?: string[];
+    browserBackend?: BrowserBackend;
+    browserAllowedOrigins?: string[];
     resumeTaskId?: string;
 }
 export declare class TaskRuntime {
@@ -41,12 +46,14 @@ export declare class TaskRuntime {
     private readonly hostCapabilitySource;
     private readonly workspaceRuntime?;
     private readonly extraHostResources;
-    constructor(childHost: ChildSessionPort, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined, hostCapabilitySource?: (() => readonly HostCapabilityContract[]) | readonly HostCapabilityContract[], scopedStores?: RuntimeScopedStores, workspaceRuntime?: WorkspaceRuntime | undefined, extraHostResources?: () => ReadonlySet<string>);
+    private readonly browserExecutor?;
+    constructor(childHost: ChildSessionPort, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined, hostCapabilitySource?: (() => readonly HostCapabilityContract[]) | readonly HostCapabilityContract[], scopedStores?: RuntimeScopedStores, workspaceRuntime?: WorkspaceRuntime | undefined, extraHostResources?: () => ReadonlySet<string>, browserExecutor?: BrowserExecutor | undefined);
     private sendProviderPrompt;
     private recordModelProjection;
     private abortNativeSession;
     private captureNativeDiff;
     reconcileNativeResult(m: MissionState, workerID: string, result: WorkerResult): Promise<WorkerResult>;
+    reintegrateWorkspaceResult(m: MissionState, workerID: string, result: WorkerResult): Promise<WorkerResult>;
     noteUsage(m: MissionState, workerID: string, usage: HostUsageObservation): void;
     noteEffectiveModel(m: MissionState, workerID: string, observed?: {
         model?: string;
@@ -63,10 +70,12 @@ export declare class TaskRuntime {
     queueDepth(): number;
     private workspaceBinding;
     cleanupWorkspaceForTask(m: MissionState, taskID: string): Promise<boolean>;
+    cleanupBrowserForTask(m: MissionState, taskID: string, workerID?: string): Promise<boolean>;
     private failedDeps;
     private admittedModel;
     private reserveExistingSessionAttempt;
     private queueTask;
+    private rollbackQueueCapacityRejection;
     private drainQueue;
     start(m: MissionState, input?: StartTaskInput): Promise<{
         task_id: string;

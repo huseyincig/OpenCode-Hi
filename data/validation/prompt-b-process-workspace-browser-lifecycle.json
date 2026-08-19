@@ -7,7 +7,7 @@
     13,
     14
   ],
-  "status": "PASS",
+  "status": "FAIL",
   "invariants": [
     {
       "section": 12,
@@ -91,7 +91,7 @@
       "invariant": "wait",
       "level": "CONTROLLED",
       "owner": "plugin/src/runtime/continuation/evaluator.ts",
-      "owner_sha256": "9a0cd389595fe1579d843b04e48d03c625441ee656c9d1c7aa632c0d5163a03e",
+      "owner_sha256": "18ef44e9262368e1f6fcb4efaf5bd4a66c3091fb4a5a9b5aef7de6af32942dce",
       "owner_anchor": "waiting-process",
       "proof": "plugin/test/p3-process-runtime-lifecycle.test.mjs",
       "proof_sha256": "70b85c069b9cb7ccd92f541a35390e2f628e873b76b043c70f1ffe83ac99e157",
@@ -168,7 +168,7 @@
       "invariant": "evidence",
       "level": "CONTROLLED",
       "owner": "plugin/src/runtime/process/runtime.ts",
-      "owner_sha256": "3e93c1f1c717b9b1414710a19d711b807192d24c3e7030767f2d2573676c3ae7",
+      "owner_sha256": "bef350d05d31347d2373c0e808b93b235c264015d85571888c90bd2bcc74ba05",
       "owner_anchor": "kind:'diagnostic-evidence'",
       "proof": "plugin/test/p3-process-runtime-lifecycle.test.mjs",
       "proof_sha256": "70b85c069b9cb7ccd92f541a35390e2f628e873b76b043c70f1ffe83ac99e157",
@@ -190,10 +190,10 @@
       "invariant": "parent-death",
       "level": "CONTROLLED",
       "owner": "plugin/src/runtime/process/runtime.ts",
-      "owner_sha256": "3e93c1f1c717b9b1414710a19d711b807192d24c3e7030767f2d2573676c3ae7",
+      "owner_sha256": "bef350d05d31347d2373c0e808b93b235c264015d85571888c90bd2bcc74ba05",
       "owner_anchor": "stopMission",
       "proof": "plugin/test/p3-process-control-integration.test.mjs",
-      "proof_sha256": "b751f33c5866a288da8841e37b8ac63c081323289c6633ecec652acac29d6ec0",
+      "proof_sha256": "f311974099d72d27db45d0b76b4d12b9d631daefa8a84751beb7e7d2e9e640a0",
       "proof_anchor": "parent session deletion stops mission and process runtime"
     },
     {
@@ -256,7 +256,7 @@
       "invariant": "long-running-and-concurrent",
       "level": "CONTROLLED",
       "owner": "plugin/src/runtime/continuation/evaluator.ts",
-      "owner_sha256": "9a0cd389595fe1579d843b04e48d03c625441ee656c9d1c7aa632c0d5163a03e",
+      "owner_sha256": "18ef44e9262368e1f6fcb4efaf5bd4a66c3091fb4a5a9b5aef7de6af32942dce",
       "owner_anchor": "waiting-process",
       "proof": "plugin/test/p2-opencode-pty-executor.test.mjs",
       "proof_sha256": "d5fe4e13d882704d7a4443afdb4eb6ad9cb91a5f953e8050f35fff68e53a3167",
@@ -267,7 +267,7 @@
       "invariant": "isolation-decision",
       "level": "CONTROLLED",
       "owner": "plugin/src/runtime/workspace/runtime.ts",
-      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "decision(",
       "proof": "plugin/test/w1-workspace-contract.test.mjs",
       "proof_sha256": "954b7fce272007e14bd42c7897a049c8dc8abcbbccdb29e7cf2d281c725771c3",
@@ -289,7 +289,7 @@
       "invariant": "provision",
       "level": "T3",
       "owner": "plugin/src/runtime/workspace/runtime.ts",
-      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "async provision(",
       "proof": "data/validation/external-opencode-hi-0.1.1-workspace-1.18.18-head-ef41e3d.json",
       "proof_sha256": "9a30fe0c7e360fa4a20cd25d1319408e9e281d927a9d57af91d6bf61859f0bbc",
@@ -300,10 +300,10 @@
       "invariant": "task-worker-binding",
       "level": "CONTROLLED",
       "owner": "plugin/src/runtime/workspace/runtime.ts",
-      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "task_id:task.id",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",
+      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
       "proof_anchor": "explicit isolated task provisions one lease"
     },
     {
@@ -322,7 +322,7 @@
       "invariant": "observed-cwd-workspace-identity",
       "level": "T3",
       "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
-      "owner_sha256": "6fb6779efd15322e53f8a46001a8964a5b06563e2fc24e81c84b0a3886b0b98e",
+      "owner_sha256": "d85505d9637c451067d038d4970c02cbddf25ab5a2d73f0f3ca408c3d30f7cff",
       "owner_anchor": "workspacePath",
       "proof": "data/validation/external-opencode-hi-0.1.1-workspace-1.18.18-head-ef41e3d.json",
       "proof_sha256": "9a30fe0c7e360fa4a20cd25d1319408e9e281d927a9d57af91d6bf61859f0bbc",
@@ -333,7 +333,7 @@
       "invariant": "isolated-writes",
       "level": "T3",
       "owner": "plugin/src/runtime/workspace/runtime.ts",
-      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "workspace_path",
       "proof": "data/validation/external-opencode-hi-0.1.1-workspace-1.18.18-head-ef41e3d.json",
       "proof_sha256": "9a30fe0c7e360fa4a20cd25d1319408e9e281d927a9d57af91d6bf61859f0bbc",
@@ -344,7 +344,7 @@
       "invariant": "leased-verification",
       "level": "T3",
       "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
-      "owner_sha256": "6fb6779efd15322e53f8a46001a8964a5b06563e2fc24e81c84b0a3886b0b98e",
+      "owner_sha256": "d85505d9637c451067d038d4970c02cbddf25ab5a2d73f0f3ca408c3d30f7cff",
       "owner_anchor": "sourceBaseline",
       "proof": "data/validation/external-opencode-hi-0.1.1-workspace-1.18.18-head-ef41e3d.json",
       "proof_sha256": "9a30fe0c7e360fa4a20cd25d1319408e9e281d927a9d57af91d6bf61859f0bbc",
@@ -355,7 +355,7 @@
       "invariant": "reconcile",
       "level": "T3",
       "owner": "plugin/src/runtime/workspace/runtime.ts",
-      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "reconcileRestored",
       "proof": "data/validation/external-opencode-hi-0.1.1-workspace-1.18.18-head-ef41e3d.json",
       "proof_sha256": "9a30fe0c7e360fa4a20cd25d1319408e9e281d927a9d57af91d6bf61859f0bbc",
@@ -366,7 +366,7 @@
       "invariant": "cleanup",
       "level": "T3",
       "owner": "plugin/src/runtime/workspace/runtime.ts",
-      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "async cleanup(",
       "proof": "data/validation/external-opencode-hi-0.1.1-workspace-1.18.18-head-ef41e3d.json",
       "proof_sha256": "9a30fe0c7e360fa4a20cd25d1319408e9e281d927a9d57af91d6bf61859f0bbc",
@@ -377,10 +377,10 @@
       "invariant": "symlink-traversal",
       "level": "CONTROLLED",
       "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
-      "owner_sha256": "6fb6779efd15322e53f8a46001a8964a5b06563e2fc24e81c84b0a3886b0b98e",
+      "owner_sha256": "d85505d9637c451067d038d4970c02cbddf25ab5a2d73f0f3ca408c3d30f7cff",
       "owner_anchor": "realpathSync",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",
+      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
       "proof_anchor": "symlinked workspace escape is canonicalized and rejected"
     },
     {
@@ -388,10 +388,10 @@
       "invariant": "realpath",
       "level": "CONTROLLED",
       "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
-      "owner_sha256": "6fb6779efd15322e53f8a46001a8964a5b06563e2fc24e81c84b0a3886b0b98e",
+      "owner_sha256": "d85505d9637c451067d038d4970c02cbddf25ab5a2d73f0f3ca408c3d30f7cff",
       "owner_anchor": "canonicalExisting",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",
+      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
       "proof_anchor": "default Git inspector accepts an actual detached registered worktree"
     },
     {
@@ -399,10 +399,10 @@
       "invariant": "branch-collision",
       "level": "CONTROLLED",
       "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
-      "owner_sha256": "6fb6779efd15322e53f8a46001a8964a5b06563e2fc24e81c84b0a3886b0b98e",
+      "owner_sha256": "d85505d9637c451067d038d4970c02cbddf25ab5a2d73f0f3ca408c3d30f7cff",
       "owner_anchor": "type:'worktree'",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",
+      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
       "proof_anchor": "branch,undefined"
     },
     {
@@ -410,10 +410,10 @@
       "invariant": "nested-repository",
       "level": "CONTROLLED",
       "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
-      "owner_sha256": "6fb6779efd15322e53f8a46001a8964a5b06563e2fc24e81c84b0a3886b0b98e",
+      "owner_sha256": "d85505d9637c451067d038d4970c02cbddf25ab5a2d73f0f3ca408c3d30f7cff",
       "owner_anchor": "sameRepository",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",
+      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
       "proof_anchor": "same Git common repository"
     },
     {
@@ -421,10 +421,10 @@
       "invariant": "dirty-user-tree",
       "level": "CONTROLLED",
       "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
-      "owner_sha256": "6fb6779efd15322e53f8a46001a8964a5b06563e2fc24e81c84b0a3886b0b98e",
+      "owner_sha256": "d85505d9637c451067d038d4970c02cbddf25ab5a2d73f0f3ca408c3d30f7cff",
       "owner_anchor": "defaultInspect",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",
+      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
       "proof_anchor": "preserves pre-staged and unstaged user changes exactly"
     },
     {
@@ -432,10 +432,10 @@
       "invariant": "staged-user-files",
       "level": "CONTROLLED",
       "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
-      "owner_sha256": "6fb6779efd15322e53f8a46001a8964a5b06563e2fc24e81c84b0a3886b0b98e",
+      "owner_sha256": "d85505d9637c451067d038d4970c02cbddf25ab5a2d73f0f3ca408c3d30f7cff",
       "owner_anchor": "defaultInspect",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",
+      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
       "proof_anchor": "pre-staged and unstaged user changes exactly"
     },
     {
@@ -443,10 +443,10 @@
       "invariant": "concurrent-leases",
       "level": "CONTROLLED",
       "owner": "plugin/src/runtime/workspace/runtime.ts",
-      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "identityConflict",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",
+      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
       "proof_anchor": "concurrent lease identity collision is cleaned and rejected"
     },
     {
@@ -454,7 +454,7 @@
       "invariant": "persisted-duplicate-lease-identity",
       "level": "CONTROLLED",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "113bfe4fc6e72a97f8078c57c784473cfa2ddd4f68b1a051da1f24f650934e97",
+      "owner_sha256": "61ce2e9002580c6c12a7df3f3f5dc5894c92aaebce6a96b8676c72d7f791a6f4",
       "owner_anchor": "activeWorkspacePaths",
       "proof": "plugin/test/w1-workspace-contract.test.mjs",
       "proof_sha256": "954b7fce272007e14bd42c7897a049c8dc8abcbbccdb29e7cf2d281c725771c3",
@@ -465,10 +465,10 @@
       "invariant": "stale-lease",
       "level": "CONTROLLED",
       "owner": "plugin/src/runtime/workspace/runtime.ts",
-      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "status:'ORPHANED'",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",
+      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
       "proof_anchor": "restart adopts exact lease, quarantines missing owner"
     },
     {
@@ -476,7 +476,7 @@
       "invariant": "crash-restart",
       "level": "T3",
       "owner": "plugin/src/runtime/workspace/runtime.ts",
-      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "reconcileRestored",
       "proof": "data/validation/external-opencode-hi-0.1.1-workspace-1.18.18-head-ef41e3d.json",
       "proof_sha256": "9a30fe0c7e360fa4a20cd25d1319408e9e281d927a9d57af91d6bf61859f0bbc",
@@ -487,10 +487,10 @@
       "invariant": "cleanup-failure",
       "level": "CONTROLLED",
       "owner": "plugin/src/runtime/workspace/runtime.ts",
-      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "workspace.cleanup-failed",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",
+      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
       "proof_anchor": "workspace cleanup failure quarantines lease"
     },
     {
@@ -498,10 +498,10 @@
       "invariant": "merge-reconcile-conflict",
       "level": "CONTROLLED",
       "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
-      "owner_sha256": "6fb6779efd15322e53f8a46001a8964a5b06563e2fc24e81c84b0a3886b0b98e",
+      "owner_sha256": "d85505d9637c451067d038d4970c02cbddf25ab5a2d73f0f3ca408c3d30f7cff",
       "owner_anchor": "Source baseline changed",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",
+      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
       "proof_anchor": "source-baseline substitution"
     },
     {
@@ -509,10 +509,10 @@
       "invariant": "user-owned-changes",
       "level": "CONTROLLED",
       "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
-      "owner_sha256": "6fb6779efd15322e53f8a46001a8964a5b06563e2fc24e81c84b0a3886b0b98e",
+      "owner_sha256": "d85505d9637c451067d038d4970c02cbddf25ab5a2d73f0f3ca408c3d30f7cff",
       "owner_anchor": "worktree",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",
+      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
       "proof_anchor": "preserves pre-staged and unstaged user changes exactly"
     },
     {
@@ -520,10 +520,10 @@
       "invariant": "no-broad-staging-autocommit",
       "level": "CONTROLLED",
       "owner": "plugin/src/runtime/workspace/runtime.ts",
-      "owner_sha256": "00f2f64561d1734e764c6c2c7c4a3704f5217958159c6e00385c26eaece80e07",
+      "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "WorkspaceRuntime",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "5488006a0aa4afee175712da9e4d225cf9092f1e68076952efb8c6cbb4b5aa39",
+      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
       "proof_anchor": "no broad auto-snapshot staging"
     },
     {
@@ -531,7 +531,7 @@
       "invariant": "navigation",
       "level": "T3",
       "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
-      "owner_sha256": "ba78d27cf2e74758ec82f2228e505f87ccef2725ccd2a53b57677dc81cf61284",
+      "owner_sha256": "4961f680ebf2183bc4eacc39d4f861eccc55b4262814057251935590feff4fdf",
       "owner_anchor": "async navigate(",
       "proof": "data/validation/external-opencode-hi-0.1.1-browser-1.18.18-head-ef41e3d.json",
       "proof_sha256": "befd324957a78d4d97ade0adbf80744f3b8fa896fbd83e432031e367533221e6",
@@ -542,10 +542,10 @@
       "invariant": "dom-observation",
       "level": "CONTROLLED",
       "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
-      "owner_sha256": "ba78d27cf2e74758ec82f2228e505f87ccef2725ccd2a53b57677dc81cf61284",
+      "owner_sha256": "4961f680ebf2183bc4eacc39d4f861eccc55b4262814057251935590feff4fdf",
       "owner_anchor": "dom_summary",
       "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
-      "proof_sha256": "e990f0c1b25096ef27e3604c02f8f825306ba00b21766577d2a2cca281ce5674",
+      "proof_sha256": "feed7ae93c8a2bb1bc18aa4da861dc4082541e4c67689e57ddbdd131d9630ee5",
       "proof_anchor": "emits bounded observations"
     },
     {
@@ -553,10 +553,10 @@
       "invariant": "selectors",
       "level": "CONTROLLED",
       "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
-      "owner_sha256": "ba78d27cf2e74758ec82f2228e505f87ccef2725ccd2a53b57677dc81cf61284",
+      "owner_sha256": "4961f680ebf2183bc4eacc39d4f861eccc55b4262814057251935590feff4fdf",
       "owner_anchor": "targetRef",
       "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
-      "proof_sha256": "e990f0c1b25096ef27e3604c02f8f825306ba00b21766577d2a2cca281ce5674",
+      "proof_sha256": "feed7ae93c8a2bb1bc18aa4da861dc4082541e4c67689e57ddbdd131d9630ee5",
       "proof_anchor": "local-scope, task-isolated"
     },
     {
@@ -564,10 +564,10 @@
       "invariant": "console",
       "level": "CONTROLLED",
       "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
-      "owner_sha256": "ba78d27cf2e74758ec82f2228e505f87ccef2725ccd2a53b57677dc81cf61284",
+      "owner_sha256": "4961f680ebf2183bc4eacc39d4f861eccc55b4262814057251935590feff4fdf",
       "owner_anchor": "consoleErrors",
       "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
-      "proof_sha256": "e990f0c1b25096ef27e3604c02f8f825306ba00b21766577d2a2cca281ce5674",
+      "proof_sha256": "feed7ae93c8a2bb1bc18aa4da861dc4082541e4c67689e57ddbdd131d9630ee5",
       "proof_anchor": "capture bounded console and network failures"
     },
     {
@@ -575,10 +575,10 @@
       "invariant": "network",
       "level": "CONTROLLED",
       "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
-      "owner_sha256": "ba78d27cf2e74758ec82f2228e505f87ccef2725ccd2a53b57677dc81cf61284",
+      "owner_sha256": "4961f680ebf2183bc4eacc39d4f861eccc55b4262814057251935590feff4fdf",
       "owner_anchor": "networkErrors",
       "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
-      "proof_sha256": "e990f0c1b25096ef27e3604c02f8f825306ba00b21766577d2a2cca281ce5674",
+      "proof_sha256": "feed7ae93c8a2bb1bc18aa4da861dc4082541e4c67689e57ddbdd131d9630ee5",
       "proof_anchor": "capture bounded console and network failures"
     },
     {
@@ -586,7 +586,7 @@
       "invariant": "screenshot-artifact",
       "level": "T3",
       "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
-      "owner_sha256": "ba78d27cf2e74758ec82f2228e505f87ccef2725ccd2a53b57677dc81cf61284",
+      "owner_sha256": "4961f680ebf2183bc4eacc39d4f861eccc55b4262814057251935590feff4fdf",
       "owner_anchor": "persistScreenshot",
       "proof": "data/validation/external-opencode-hi-0.1.1-browser-1.18.18-head-ef41e3d.json",
       "proof_sha256": "befd324957a78d4d97ade0adbf80744f3b8fa896fbd83e432031e367533221e6",
@@ -597,10 +597,10 @@
       "invariant": "timeout",
       "level": "CONTROLLED",
       "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
-      "owner_sha256": "ba78d27cf2e74758ec82f2228e505f87ccef2725ccd2a53b57677dc81cf61284",
+      "owner_sha256": "4961f680ebf2183bc4eacc39d4f861eccc55b4262814057251935590feff4fdf",
       "owner_anchor": "timeoutMs",
       "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
-      "proof_sha256": "e990f0c1b25096ef27e3604c02f8f825306ba00b21766577d2a2cca281ce5674",
+      "proof_sha256": "feed7ae93c8a2bb1bc18aa4da861dc4082541e4c67689e57ddbdd131d9630ee5",
       "proof_anchor": "navigation timeout and browser crash become explicit FAILED"
     },
     {
@@ -608,10 +608,10 @@
       "invariant": "browser-crash",
       "level": "CONTROLLED",
       "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
-      "owner_sha256": "ba78d27cf2e74758ec82f2228e505f87ccef2725ccd2a53b57677dc81cf61284",
+      "owner_sha256": "4961f680ebf2183bc4eacc39d4f861eccc55b4262814057251935590feff4fdf",
       "owner_anchor": "result:'OBSERVED'|'FAILED'",
       "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
-      "proof_sha256": "e990f0c1b25096ef27e3604c02f8f825306ba00b21766577d2a2cca281ce5674",
+      "proof_sha256": "feed7ae93c8a2bb1bc18aa4da861dc4082541e4c67689e57ddbdd131d9630ee5",
       "proof_anchor": "browser crash become explicit FAILED observations"
     },
     {
@@ -619,7 +619,7 @@
       "invariant": "stale-element",
       "level": "T3",
       "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
-      "owner_sha256": "ba78d27cf2e74758ec82f2228e505f87ccef2725ccd2a53b57677dc81cf61284",
+      "owner_sha256": "4961f680ebf2183bc4eacc39d4f861eccc55b4262814057251935590feff4fdf",
       "owner_anchor": "latest bounded observation",
       "proof": "data/validation/external-opencode-hi-0.1.1-browser-1.18.18-head-ef41e3d.json",
       "proof_sha256": "befd324957a78d4d97ade0adbf80744f3b8fa896fbd83e432031e367533221e6",
@@ -630,7 +630,7 @@
       "invariant": "auth-state",
       "level": "T3",
       "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
-      "owner_sha256": "ba78d27cf2e74758ec82f2228e505f87ccef2725ccd2a53b57677dc81cf61284",
+      "owner_sha256": "4961f680ebf2183bc4eacc39d4f861eccc55b4262814057251935590feff4fdf",
       "owner_anchor": "executionOwnerRef",
       "proof": "data/validation/external-opencode-hi-0.1.1-browser-1.18.18-head-ef41e3d.json",
       "proof_sha256": "befd324957a78d4d97ade0adbf80744f3b8fa896fbd83e432031e367533221e6",
@@ -641,7 +641,7 @@
       "invariant": "dangerous-external-action",
       "level": "T3",
       "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
-      "owner_sha256": "ba78d27cf2e74758ec82f2228e505f87ccef2725ccd2a53b57677dc81cf61284",
+      "owner_sha256": "4961f680ebf2183bc4eacc39d4f861eccc55b4262814057251935590feff4fdf",
       "owner_anchor": "outside supported local scope",
       "proof": "data/validation/external-opencode-hi-0.1.1-browser-1.18.18-head-ef41e3d.json",
       "proof_sha256": "befd324957a78d4d97ade0adbf80744f3b8fa896fbd83e432031e367533221e6",
@@ -663,10 +663,10 @@
       "invariant": "methodology-interpretation",
       "level": "CONTROLLED",
       "owner": "plugin/src/runtime/methodology/exit.ts",
-      "owner_sha256": "e16430921a8e8e94654407294491df93af1f359a5e5b3d9568ee82a22cea78f3",
+      "owner_sha256": "fce41d3c3ba5498e9de68a339f861858b1f11d3e0242e7b15a9b689df39fa86b",
       "owner_anchor": "methodologyExitCheck",
       "proof": "plugin/test/b3-methodology-exit-evidence.test.mjs",
-      "proof_sha256": "92949a6c267de22bc5929897a6e61650f222bffad42dacf929e373c6cd6f680c",
+      "proof_sha256": "6a215a74640f03732efceb56c688686865e9d1b2652f7551e308655fce51a2e4",
       "proof_anchor": "outcome-less browser/visual evidence pending rather than implicit PASS"
     },
     {
@@ -674,10 +674,10 @@
       "invariant": "model-prose-not-visual-verification",
       "level": "CONTROLLED",
       "owner": "plugin/src/runtime/completion/evaluator.ts",
-      "owner_sha256": "72182965f77468244b1e3ea63749d2324008da60635e79dcce58e4f0740b4c10",
+      "owner_sha256": "a84becde3d024c4ef0242d916c83e644b4ad6c6bd3ba953f39086f5920254222",
       "owner_anchor": "open-obligations",
       "proof": "plugin/test/prompt-b-evidence-verification-completion-hostile.test.mjs",
-      "proof_sha256": "08fb268ae6d71d3d927103924e1c7238d61584dfded08cc4871d17858a9dfbe9",
+      "proof_sha256": "3315d64cdcd5e24a8e87fb02effd71cd487445d36146942372c751e5248685b1",
       "proof_anchor": "DONE. all tests passed. safe to release."
     }
   ],
@@ -686,29 +686,49 @@
       "receipt": "data/validation/external-opencode-hi-0.1.1-process-1.18.18-head-ef41e3d.json",
       "status": "SUPPORTED_T3",
       "tested_git_commit": "ef41e3dd38dbc9c89a5cb871b7cb09135def95d8",
-      "runtime_hash_drift": [],
-      "equivalent": true
+      "runtime_hash_drift": [
+        "plugin/src/runtime/process/runtime.ts",
+        "plugin/src/contracts/host-capability.ts"
+      ],
+      "equivalent": false
     },
     "workspace-isolation-binding": {
       "receipt": "data/validation/external-opencode-hi-0.1.1-workspace-1.18.18-head-ef41e3d.json",
       "status": "SUPPORTED_T3",
       "tested_git_commit": "ef41e3dd38dbc9c89a5cb871b7cb09135def95d8",
-      "runtime_hash_drift": [],
-      "equivalent": true
+      "runtime_hash_drift": [
+        "plugin/src/runtime/workspace/executor.ts",
+        "plugin/src/runtime/workspace/runtime.ts",
+        "plugin/src/runtime/mission/validators.ts",
+        "plugin/src/opencode/open-code-workspace-adapter.ts",
+        "plugin/src/contracts/host-capability.ts"
+      ],
+      "equivalent": false
     },
     "browser-execution": {
       "receipt": "data/validation/external-opencode-hi-0.1.1-browser-1.18.18-head-ef41e3d.json",
       "status": "SUPPORTED_T3",
       "tested_git_commit": "ef41e3dd38dbc9c89a5cb871b7cb09135def95d8",
-      "runtime_hash_drift": [],
-      "equivalent": true
+      "runtime_hash_drift": [
+        "plugin/src/runtime/browser/executor.ts",
+        "plugin/src/runtime/browser/backend-policy.ts",
+        "plugin/src/runtime/browser/ownership.ts",
+        "plugin/src/opencode/playwright-browser-adapter.ts",
+        "plugin/src/runtime/application/hi-tool-surface.ts",
+        "plugin/src/contracts/host-capability.ts"
+      ],
+      "equivalent": false
     }
   },
-  "violations": [],
+  "violations": [
+    "process-lifecycle:selected-T3-source-drift:['plugin/src/runtime/process/runtime.ts', 'plugin/src/contracts/host-capability.ts']",
+    "workspace-isolation-binding:selected-T3-source-drift:['plugin/src/runtime/workspace/executor.ts', 'plugin/src/runtime/workspace/runtime.ts', 'plugin/src/runtime/mission/validators.ts', 'plugin/src/opencode/open-code-workspace-adapter.ts', 'plugin/src/contracts/host-capability.ts']",
+    "browser-execution:selected-T3-source-drift:['plugin/src/runtime/browser/executor.ts', 'plugin/src/runtime/browser/backend-policy.ts', 'plugin/src/runtime/browser/ownership.ts', 'plugin/src/opencode/playwright-browser-adapter.ts', 'plugin/src/runtime/application/hi-tool-surface.ts', 'plugin/src/contracts/host-capability.ts']"
+  ],
   "summary": {
     "required": 61,
     "covered": 61,
-    "violations": 0,
+    "violations": 3,
     "by_section": {
       "12": {
         "required": 23,
