@@ -517,7 +517,7 @@ Profiling and adversarial tests demonstrate the retained changes improve measure
 
 # Milestone 15 — Broad Production Corpus + Final Phase 2 Cutovers
 
-**Status:** ACTIVE — 2026-08-19
+**Status:** COMPLETE — 2026-08-19
 
 **Goal:** decide whether the Semantic Autopilot is actually better on real work.
 
@@ -536,3 +536,16 @@ Retain a Phase 2 subsystem only when it improves deterministic correctness/predi
 - Retained correction commit `e0f7d9118bfe729e35520ec01c5ac8ac41e424c8` reconciles only explicit test-mutation authority conflicts; it preserves raw signal provenance, verification context and genuine TDD behavior. Comparator SHA-256 `ed063ead0d0bb0325e0fa6128bc3fe608a356a60706d81bbd8a78a7e3224b871`.
 - Exact new-product verification: build PASS, architecture `22/22 PASS`, focused `5/5 PASS`, full suite `1020/1020 PASS`.
 - Old `96267ce` model receipts remain immutable discovery evidence. Broad final Phase 2 model corpus must use the new final identity `e0f7d91`; existing vanilla/Phase 1 episodes are reused when provenance remains comparable.
+
+### M15 final acceptance — 2026-08-19
+
+- Final retained Phase 2 product: `1d0f6bc484b13f54fc4867228cf80f3491c324da`. Exact immutable-image build PASS, architecture lint `22/22 PASS`, parser/threat-model focused PASS, full plugin suite `1032/1032 PASS`.
+- Diagnosis/root-cause corpus: vanilla `3/3 VERIFIED_SUCCESS`; retained Phase 1 externally correct `3/3` but strict Hi `0/3`; retained diagnosis semantics + field-scoped parser diagnostics restore final Phase 2 to `3/3 VERIFIED_SUCCESS`.
+- Exact dependency/fan-in corpus: historical exact-fixture vanilla `3/3 VERIFIED_SUCCESS`; retained Phase 1 `2/3 VERIFIED_SUCCESS + 1 TIMEOUT`; final Phase 2 `1d0f6bc` `3/3 VERIFIED_SUCCESS`, exact A+B→C dependency/timing settlement `3/3`, duplicate dispatch zero `3/3`. Final aggregate SHA-256 `fd1d112a701fe79985e9e7da59b51ce2f480b639adf826d570121faf0328d124`; decision SHA-256 `4519049131baf578e9f88de4aad1bb110e9b826eef9159c7d8f13f56fa204066`.
+- Fan-in corpus exposed a canonical WorkerResult markdown compatibility defect shared by Phase 1 and the then-final Phase 2 parser. Retained `1d0f6bc` accepts `**status**: DONE` while keeping free prose and narrative evidence fail-closed; exact comparator SHA-256 `78b628cba4be307778348f5412ab09f8d9b86a379b203b5957ae7cff8898d085`.
+- Final component preservation on `1d0f6bc`: context-heavy, authority, provider-recovery, restart-stale, coexistence all PASS; aggregate SHA-256 `280f89f5460e537942895cfc99562833d1e2d589bcd72952aab7f2b38b278dc5`.
+- Browser/workspace/MCP final-integration ancestor remains `3/3 PASS` per cell; the later parser-only cutover does not touch those modules.
+- Coverage v5: `/workspace/Reference/phase2-autopilot/m15-corpus-coverage-v5.json`. All eight required M15 cells are complete or explicitly accounted by final component/integration contracts.
+- No general Hi superiority claim: vanilla remained externally correct and materially lighter on the synthetic fan-in task; Hi retention is based on deterministic settlement/dependency guarantees and relevant correctness/predictability improvements. Monetary values remain OpenCode-derived, not provider-billed.
+- Exact OpenCode `1.18.18` Git-source plugin resolver remains an explicit compatibility boundary: npm/Bun Git dependency installation passes, but native OpenCode Git-plugin install/load does not.
+- **M15 acceptance: COMPLETE.** The roadmap currently defines no M16 or later milestone; no new work is implied by this completion.
