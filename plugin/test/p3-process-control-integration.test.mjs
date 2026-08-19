@@ -7,6 +7,7 @@ import {detectOpenCodeCapabilities} from '../dist/opencode/capabilities.js'
 import {normalizeOpenCodeEvent} from '../dist/opencode/event-adapter.js'
 import {openHumanDecision} from '../dist/runtime/human-decision/runtime.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
+import {renderSemanticAssessmentGate} from '../dist/runtime/intent/semantic-assessment-gate.js'
 import {HI_CONTROL_TOOL_IDS,promptToolOverrides} from '../dist/runtime/routing/execution-profile.js'
 
 const INITIAL={material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]}
@@ -54,6 +55,11 @@ test('PROMPT B parent idle preserves an existing canonical operational HumanDeci
   await controller.handle(normalizeOpenCodeEvent({type:'session.idle',properties:{sessionID:'human-idle-preserve'}}))
   assert.equal(m.authority.human_decision.decision_id,original.decision_id);assert.equal(m.authority.human_decision.semantic_type,'operational_action');assert.equal(m.authority.human_decision.reason_code,'provider-repair');assert.equal(m.authority.human_decision.authority_ref,undefined)
   assert.ok(saves.length>=1)
+})
+
+test('M12 semantic gate separates capability IDs from methodology intent signals',()=>{
+  const store=new MissionStore(),m=store.start('m12-process-gate','start a development server and keep it running')
+  const gate=renderSemanticAssessmentGate(m);assert.match(gate,/interactive-process=persistent/);assert.match(gate,/capability-named signals reject/)
 })
 
 test('M12 bounded command mission cannot escalate into Hi PTY lifecycle without interactive-process capability',async()=>{
