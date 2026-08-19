@@ -1,7 +1,7 @@
 # OpenCode-Hi Active Task State
 
 **Project:** `/workspace/OpenCode-Hi`
-**Status:** ACTIVE — PHASE 2 / MILESTONE 13
+**Status:** ACTIVE — PHASE 2 / MILESTONE 14
 **Updated:** 2026-08-19
 **Global authority:** `/workspace/PROTOCOL.md`
 **Project policy:** `/workspace/OpenCode-Hi/PROTOCOL.md`
@@ -9,31 +9,31 @@
 
 ## Active Task
 
-### M13 — Browser Autopilot
+### M14 — Closed-Loop Supervision & Runtime Engineering
 
-M12 is complete. Archive: `agent-archive/2026-08-19-m12-capability-isolation-intelligence.md`. Final retained M12 product commit is `72c71504be3b71e82cd45837c0c1db13af68aa7f`; exact isolated build/architecture/plugin verification is `990/990 PASS`.
+M13 is complete. Archive: `agent-archive/2026-08-19-m13-browser-autopilot.md`. Final retained M13 product commit is `e0cb30f82947a22f0bedec4c69a9da1cf4f0ee1b`; exact immutable-image build/architecture/plugin verification is `1003/1003 PASS` with architecture lint `22/22 PASS`.
 
-M13 must evolve the existing bounded visual-verification browser executor into task-aware browser orchestration without building another browser engine. Backend choice must remain native-first/hybrid, task-bound, permission-safe, evidence-producing and cheaper only where measured.
+M14 must improve decision quality from bounded attributed observations and harden runtime efficiency only where measurement proves value. It must not create a second state owner, broad self-modifying policy, speculative cache/index layer, or optimization without a baseline.
 
-## M13 Acceptance
+## M14 Acceptance
 
-- backend policy chooses among existing bounded Playwright execution, OpenCode/MCP/native host capabilities, or another justified adapter from task/runtime evidence rather than a fixed browser backend;
-- route/navigation/action planning stays bounded by the exact task objective and allowed origins;
-- browser session/attempt ownership, cleanup and recovery cannot leak across tasks or generations;
-- DOM/text/screenshot/network/console observations remain bounded artifacts and become claim-linked evidence only through canonical evidence ownership;
-- browser→code feedback does not create a second task/orchestration runtime or bypass Hi completion/authority;
-- browser isolation is used only when state/cookie/concurrency semantics justify it;
-- retained changes improve deterministic correctness/predictability or measured browser-task economics without weakening M12/Phase 1 invariants.
+- routing/procedure learning uses bounded confidence, decay and attribution with reversible admission;
+- repeated broad state scans are replaced by bounded indexes only where profiling identifies a material hot path;
+- queue/fairness/backpressure/critical-path changes are retained only from measurable scheduler/runtime benefit;
+- cancellation/liveness and memory-retention behavior remains bounded under adversarial lifecycle cases;
+- Big-O/allocation claims are backed by actual profiling or bounded mechanical counters;
+- retained changes improve measured hot paths or decision quality without introducing another durable state owner.
 
 ## Required Verification
 
-- characterize current browser executor/ownership/tool exposure and exact OpenCode `1.18.18` host/browser/MCP seams before changing product behavior;
-- use current official upstream research where browser/MCP/native behavior may have changed;
-- focused browser ownership/evidence/session cleanup tests plus real browser/runtime probes for every retained backend seam;
-- repeated hash-bound comparator for any backend-selection or browser-autopilot policy cutover;
+- characterize existing routing/model/methodology feedback, scheduler/registry scans, async wait/cancellation and retained-state ownership before changing behavior;
+- use current upstream/runtime research where OpenCode lifecycle or host semantics materially affect a decision;
+- profile first, then change the smallest proven hot path or decision-quality defect;
+- use adversarial/failure tests for lifecycle, decay, stale attribution and state-owner boundaries;
+- use repeated hash-bound comparator for any learned-policy, scheduler or hot-path cutover;
 - architecture lint + exact isolated full plugin suite for retained product-code changes;
 - preserve unrelated dirty validation/release/script/routing/test files.
 
 ## Exact Next Action
 
-Characterize the retained browser stack on exact commit `72c7150`: `runtime/browser/executor`, browser ownership/tool guards, Playwright adapter, artifact/evidence boundary, visual-qa methodology/resource admission, and current OpenCode `1.18.18` MCP/native tool primitives. Build a task-class matrix for lightweight local visual verification vs persistent/stateful browser work, then define the smallest repeated real-browser comparator before changing backend-selection behavior. Do not turn M13 into a generic browser engine rewrite.
+On exact retained M13 commit `e0cb30f`, characterize the current closed-loop feedback and runtime hot paths without changing product behavior: routing/model feedback admission and decay, methodology/procedure learning, scheduler/registry state scans, async wait/cancellation, and mission/task retention. Build a bounded profiling/ownership matrix, then select at most one first cutover from a mechanically demonstrated decision-quality or runtime-efficiency gap. Do not add speculative indexes or a second learning/state runtime.

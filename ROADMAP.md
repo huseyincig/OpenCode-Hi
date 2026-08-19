@@ -457,7 +457,7 @@ Capability decisions are explainable, task-bound, testable, and do not widen nat
 
 # Milestone 13 — Browser Autopilot
 
-**Status:** ACTIVE — 2026-08-19
+**Status:** COMPLETE — 2026-08-19
 
 **Goal:** evolve browser support from visual-verification executor into task-aware, evidence-producing browser orchestration without building another browser engine.
 
@@ -474,7 +474,20 @@ Capability decisions are explainable, task-bound, testable, and do not widen nat
 
 Representative UI/browser tasks complete with bounded evidence, no cross-task session leakage, deterministic cleanup, and lower context cost for the lightweight backend on tasks where persistence is unnecessary.
 
+### M13 completion evidence — 2026-08-19
+
+- Final retained product commit: `e0cb30f82947a22f0bedec4c69a9da1cf4f0ee1b`; exact immutable-image build PASS + architecture lint `22/22 PASS` + plugin suite `1003/1003 PASS`.
+- Exact task-owned browser cleanup is generation/owner fenced; repeated real-browser comparator shows pre-cutover leakage `3/3` and retained cleanup `3/3`, receipt SHA-256 `4dc748b686697572c2d8ca009faa73803228c83405d377887f9f75c4b162b744`.
+- Backend selection is task/runtime bound: healthy bounded Playwright remains the lightweight default, while an explicitly selected configured MCP backend becomes native-authoritative without dual browser exposure; repeated real-host receipt SHA-256 `6d4a75200548a75daf767f4a099791f6e52326a7c06ce7442d94c677000dfaa4`.
+- Browser navigation/action scope is exact-origin confined; baseline cross-origin navigation succeeds `3/3`, retained candidate blocks both direct and click-induced cross-origin navigation `3/3`, receipt SHA-256 `fd2acab330641d963848be48e374bb1aa50987a0b7b5462c6ec15621dc6d2938`.
+- Browser evidence is canonical-observation/attempt linked and stale/ref-less proof fails closed; receipt SHA-256 `82923c4ee69dcc13ebeef3a585927527363a22b391b61c2fa841cc0607aba22d`.
+- Browser findings resume the same task/worker correction loop while prior-attempt observations become stale; receipt SHA-256 `73afa336d50c74af64fcde4077867d90aaafca007c1d11bf23365d0b1e9fc8e3`.
+- Lightweight context economics are mechanically retained: exact bounded browser surface is `8` tools / `2626` serialized schema bytes versus current `@playwright/mcp` `0.0.79` at `24` tools / `15921` bytes; MCP schema hash is stable across `3/3` independent handshakes, an `83.51%` backend-specific schema-byte reduction. This is a context-load proxy, not token or provider-billed-cost evidence. Receipt SHA-256 `763f3564491bdb2e477c43e85fb9f12e8fe7d79ecdd562548585a96ee928d15d`.
+- Detailed provenance: `agent-archive/2026-08-19-m13-browser-autopilot.md`.
+
 # Milestone 14 — Closed-Loop Supervision & Runtime Engineering
+
+**Status:** ACTIVE — 2026-08-19
 
 **Goal:** make decision quality improve from bounded observations while hardening algorithmic/runtime efficiency.
 
