@@ -430,7 +430,7 @@ Model-routing evidence is complete for the declared pool on retained product com
 
 # Milestone 12 — Capability & Isolation Intelligence
 
-**Status:** ACTIVE — 2026-08-19
+**Status:** COMPLETE — 2026-08-19
 
 **Goal:** dynamically choose native shell/process/workspace/MCP/browser capabilities while keeping Hi ownership narrow and exact.
 
@@ -446,7 +446,18 @@ Model-routing evidence is complete for the declared pool on retained product com
 
 Capability decisions are explainable, task-bound, testable, and do not widen native permissions or create duplicate generic runtimes.
 
+### M12 completion evidence — 2026-08-19
+
+- Final product commit: `72c71504be3b71e82cd45837c0c1db13af68aa7f`; exact Git-archive build PASS + architecture lint PASS + plugin suite `990/990 PASS`.
+- Exact isolated workspace reintegration through native OpenCode warp is retained only for justified isolated write tasks; aggregate SHA-256 `0f238e05a4829dd99ef92fc64ff89633b802ee157ab930aec4c33e9cf4dea4c1`.
+- Persistent/interactive process capability is retained: candidate selects `interactive-process` `3/3`, pre-policy baseline `0/3`; mechanical decision receipt SHA-256 `42432a093874d75e97c4ae24cac1ca27e590f47c88bfdb635d3301bbf1fb5f23`.
+- MCP exposure is native-permission/server scoped with no Hi allow widening; real-host aggregate SHA-256 `5fb4d956a186a41ac2306966d0adabb7d5d5d7c250e2f9afd6375a784b2532a9`.
+- Existing bounded browser owner remains unchanged; Browser Autopilot work is deferred to M13 rather than being inferred into M12.
+- Detailed provenance: `agent-archive/2026-08-19-m12-capability-isolation-intelligence.md`.
+
 # Milestone 13 — Browser Autopilot
+
+**Status:** ACTIVE — 2026-08-19
 
 **Goal:** evolve browser support from visual-verification executor into task-aware, evidence-producing browser orchestration without building another browser engine.
 

@@ -1,7 +1,7 @@
 # OpenCode-Hi Active Task State
 
 **Project:** `/workspace/OpenCode-Hi`
-**Status:** ACTIVE — PHASE 2 / MILESTONE 12
+**Status:** ACTIVE — PHASE 2 / MILESTONE 13
 **Updated:** 2026-08-19
 **Global authority:** `/workspace/PROTOCOL.md`
 **Project policy:** `/workspace/OpenCode-Hi/PROTOCOL.md`
@@ -9,41 +9,31 @@
 
 ## Active Task
 
-### M12 — Capability & Isolation Intelligence
+### M13 — Browser Autopilot
 
-M11 is complete. Archive: `agent-archive/2026-08-19-m11-adaptive-decomposition-model-review.md`. Current retained product commit before the M12 state checkpoint is `1bf47ac4a51f5e30e30ca9269821e369fac9f332`, exact isolated build/architecture/plugin verification `977/977 PASS`.
+M12 is complete. Archive: `agent-archive/2026-08-19-m12-capability-isolation-intelligence.md`. Final retained M12 product commit is `72c71504be3b71e82cd45837c0c1db13af68aa7f`; exact isolated build/architecture/plugin verification is `990/990 PASS`.
 
-M12 must dynamically choose native shell/process/workspace/MCP/browser capabilities while keeping Hi ownership narrow, task-bound and explainable. Native primitive + Hi semantic supervision remains the required architecture.
+M13 must evolve the existing bounded visual-verification browser executor into task-aware browser orchestration without building another browser engine. Backend choice must remain native-first/hybrid, task-bound, permission-safe, evidence-producing and cheaper only where measured.
 
-## Current Model/Test Policy
+## M13 Acceptance
 
-- routine tests, DIRECT control and benchmark parent: `opencode-go/mimo-v2.5` first;
-- coder/tool specialist: `opencode-go/deepseek-v4-flash`;
-- WorkGraph architect: `opencode-go/qwen3.7-plus`;
-- verifier/browser supervisor: `opencode-go/hy3`;
-- synthesis/recovery: `opencode-go/minimax-m2.7`;
-- adversarial validator: `opencode-go/qwen3.6-plus`;
-- principal fresh reviewer: `opencode-go/mimo-v2.5-pro`.
-
-Request counts supplied by the user remain planning ceilings, not observed provider remaining quota. Provider remaining is `UNKNOWN` unless mechanically observed. OpenCode-derived monetary cost is never provider-billed cost.
-
-## M12 Acceptance
-
-- capability requirement, runtime availability and semantic-guarantee decisions are explicit and mechanically inspectable;
-- workspace isolation is requested only for an exact task with a justified mutable-surface/lifecycle reason; generic worktree creation remains OpenCode-native;
-- long-lived process/PTY is selected only when interactive lifecycle is required; ordinary bounded commands remain native shell;
-- MCP/browser capability exposure/use is task-relevant and does not create a duplicate generic engine or silently widen permissions;
-- unavailable/insufficient native semantics fail closed or choose a bounded compatible fallback;
-- retained changes improve correctness/predictability or measured task-class economics without weakening Phase 1/M11 invariants.
+- backend policy chooses among existing bounded Playwright execution, OpenCode/MCP/native host capabilities, or another justified adapter from task/runtime evidence rather than a fixed browser backend;
+- route/navigation/action planning stays bounded by the exact task objective and allowed origins;
+- browser session/attempt ownership, cleanup and recovery cannot leak across tasks or generations;
+- DOM/text/screenshot/network/console observations remain bounded artifacts and become claim-linked evidence only through canonical evidence ownership;
+- browser→code feedback does not create a second task/orchestration runtime or bypass Hi completion/authority;
+- browser isolation is used only when state/cookie/concurrency semantics justify it;
+- retained changes improve deterministic correctness/predictability or measured browser-task economics without weakening M12/Phase 1 invariants.
 
 ## Required Verification
 
-- focused capability/isolation/process contract tests on exact committed images;
-- current OpenCode `1.18.18` runtime/source probes for any native seam used by M12, plus current official-source research only when host behavior is uncertain or changed;
-- repeated hash-bound real-host comparator for any retained isolation/capability policy change;
+- characterize current browser executor/ownership/tool exposure and exact OpenCode `1.18.18` host/browser/MCP seams before changing product behavior;
+- use current official upstream research where browser/MCP/native behavior may have changed;
+- focused browser ownership/evidence/session cleanup tests plus real browser/runtime probes for every retained backend seam;
+- repeated hash-bound comparator for any backend-selection or browser-autopilot policy cutover;
 - architecture lint + exact isolated full plugin suite for retained product-code changes;
 - preserve unrelated dirty validation/release/script/routing/test files.
 
 ## Exact Next Action
 
-Characterize the current M12 decision/ownership seams on the exact retained product: `runtime/decision/semantic-decision`, capability router/host capability contracts, workspace ownership/runtime, process runtime, browser executor/ownership and OpenCode adapter/capability probes. Separate generic native primitives from Hi semantic supervision. Start with workspace isolation: determine whether current policy can distinguish **shared checkout / no isolation** from **exact native workspace isolation** using task write-surface/lifecycle evidence, and define the smallest repeated real-host comparator before changing product behavior. Do not infer M13 browser-autopilot work early.
+Characterize the retained browser stack on exact commit `72c7150`: `runtime/browser/executor`, browser ownership/tool guards, Playwright adapter, artifact/evidence boundary, visual-qa methodology/resource admission, and current OpenCode `1.18.18` MCP/native tool primitives. Build a task-class matrix for lightweight local visual verification vs persistent/stateful browser work, then define the smallest repeated real-browser comparator before changing backend-selection behavior. Do not turn M13 into a generic browser engine rewrite.
