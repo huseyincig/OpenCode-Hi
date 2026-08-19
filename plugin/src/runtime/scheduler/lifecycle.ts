@@ -8,7 +8,7 @@ import type {
   SchedulingSnapshot,
 } from '../../contracts/orchestration-core.js'
 import { executionAttemptIdentity,sameExecutionAttempt,schedulerReservationId,validateWorkGraph } from '../../contracts/orchestration-core.js'
-import { planScheduling } from './planner.js'
+import { createSchedulingPlanner } from './planner.js'
 
 function clone<T>(value:T):T{return structuredClone(value)}
 function result(state:SchedulerLifecycleState,accepted:boolean,reason:string,reservation?:SchedulerReservation):SchedulerLifecycleResult{
@@ -108,22 +108,20 @@ export function planSchedulerAdmissions(snapshot:SchedulingSnapshot,state:Schedu
   const validation=validateWorkGraph(snapshot.graph)
   if(!validation.ok)return{ok:false,reasons:validation.reasons,executionUnitIds:[]}
   if(state.missionId!==snapshot.graph.missionId)return{ok:false,reasons:['scheduler-mission-mismatch'],executionUnitIds:[]}
-  const reserved=new Set(state.reservations.map(item=>item.executionUnitId)),selected:string[]=[]
+  const reserved=new Set(state.reservations.map(item=>item.executionUnitId)),selected:string[]=[],selectedSet=new Set<string>()
   let running=lifecycleRunning(state,snapshot)
-  const nodes=new Map(snapshot.graph.nodes.map(node=>[node.id,node]))
+  const nodes=new Map(snapshot.graph.nodes.map(node=>[node.id,node])),units=new Map(snapshot.graph.executionUnits.map(unit=>[unit.id,unit])),planner=createSchedulingPlanner(snapshot)
   while(selected.length<limit){
-    const working:SchedulingSnapshot={...snapshot,capacity:{...snapshot.capacity,running}}
-    const decision=planScheduling(working)
+    const decision=planner({...snapshot.capacity,running})
     const candidates=decision.units
-      .filter(item=>item.disposition==='RUNNABLE'&&!reserved.has(item.executionUnitId)&&!selected.includes(item.executionUnitId))
+      .filter(item=>item.disposition==='RUNNABLE'&&!reserved.has(item.executionUnitId)&&!selectedSet.has(item.executionUnitId))
       .sort((a,b)=>{
-        const au=snapshot.graph.executionUnits.find(unit=>unit.id===a.executionUnitId),bu=snapshot.graph.executionUnits.find(unit=>unit.id===b.executionUnitId)
-        const an=au?nodes.get(au.workNodeId):undefined,bn=bu?nodes.get(bu.workNodeId):undefined
+        const au=units.get(a.executionUnitId),bu=units.get(b.executionUnitId),an=au?nodes.get(au.workNodeId):undefined,bn=bu?nodes.get(bu.workNodeId):undefined
         return (an?.createdAt??0)-(bn?.createdAt??0)||a.executionUnitId.localeCompare(b.executionUnitId)
       })
     if(!candidates.length)break
     const chosen=candidates[0].executionUnitId
-    selected.push(chosen)
+    selected.push(chosen);selectedSet.add(chosen)
     running=[...running,{executionUnitId:chosen,...(snapshot.resolvedResources[chosen]??{})}]
   }
   return{ok:true,reasons:[],executionUnitIds:selected}
