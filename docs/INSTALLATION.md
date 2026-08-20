@@ -140,6 +140,7 @@ npm run release:preflight -- --sha "$(git rev-parse HEAD)"
 ```
 
 The preflight fails closed unless the SHA is current and clean, canonical source/evidence plus packed-doc checks are green and idempotent, version owners agree, the candidate tag/version are absent remotely, and the dry-run npm package has the expected identity/files.
+A committed compatibility/evidence projection may be older than HEAD only when it is an ancestor and **every** intervening change is confined to `data/validation/**` evidence attestation. Any source, docs, package, script, test, or runtime change invalidates that shortcut and requires regeneration.
 
 ## Reconfigure
 

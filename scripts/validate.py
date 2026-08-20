@@ -136,6 +136,13 @@ for old in ('feature-ledger-09-coverage.json','native-first-10-coverage.json','f
 try:
     cm=json.loads((ROOT/'data/validation/compatibility-matrix-0.1.0.json').read_text(encoding='utf-8'))
     if cm.get('schema')!=1 or cm.get('kind')!='GENERATED_RECEIPT_COMPATIBILITY_PROJECTION':err('compatibility projection header invalid')
+    generation_head=cm.get('generation_head'); current_head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
+    if not isinstance(generation_head,str) or not re.fullmatch(r'[a-f0-9]{40}',generation_head):err('compatibility projection generation head invalid')
+    elif subprocess.run(['git','merge-base','--is-ancestor',generation_head,current_head],cwd=ROOT,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode!=0:err('compatibility projection generation head is not an ancestor of current HEAD')
+    else:
+        changed=subprocess.check_output(['git','diff','--name-only',f'{generation_head}..{current_head}'],cwd=ROOT,text=True).splitlines()
+        material=[rel for rel in changed if not rel.startswith('data/validation/')]
+        if material:err('compatibility projection stale across non-evidence changes: '+','.join(material))
     cur=cm.get('current_reference_host') or {}
     if cur.get('opencode_version')!=host_target or cur.get('platform')!='linux' or cur.get('architecture')!='aarch64':err('compatibility current reference host drift')
     expected_caps={'process-lifecycle','workspace-isolation-binding','browser-execution'}

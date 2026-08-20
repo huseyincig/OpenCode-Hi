@@ -230,6 +230,8 @@ Before any future tag/push/release/publish step, contributors can run the exact-
 npm run release:preflight -- --sha "$(git rev-parse HEAD)"
 ```
 
+A committed evidence projection may be consumed from an ancestor checkpoint only when every intervening commit is evidence-only under `data/validation/**`. Any source, documentation, package, script, test, or runtime drift requires regeneration before the preflight can pass.
+
 It requires a clean committed SHA, runs the canonical source/evidence verification and packed-public-doc checks used by publication, verifies package/version identity plus local/remote tag and npm-version absence, then captures `npm pack --dry-run` identity. It fails if those checks generate uncommitted drift. It never creates a tag, pushes, creates a GitHub Release, or publishes to npm.
 
 See [Installation and Lifecycle](docs/INSTALLATION.md) for Git/npm installation, upgrade, reconfigure, doctor, uninstall, rollback and recovery behavior.
