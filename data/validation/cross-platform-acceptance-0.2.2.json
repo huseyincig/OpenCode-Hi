@@ -1,0 +1,230 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_CROSS_PLATFORM_CURRENT_SOURCE_CI_ACCEPTANCE",
+  "program": "PROMPT_B",
+  "section": 38,
+  "release": "0.2.2",
+  "status": "PASS",
+  "source_binding": {
+    "tested_git_commit": "eb823fddd9e7b31f7e6c765be3c899e58a726077",
+    "tested_git_tree": "79f3fedd701cad31b7883569a8063f72d21dcd4e"
+  },
+  "github_actions": {
+    "workflow": "Release Readiness",
+    "run_id": 32375874373,
+    "event": "push",
+    "head_branch": "main",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/huseyincig/OpenCode-Hi/actions/runs/32375874373",
+    "ubuntu": {
+      "job_id": 96447003316,
+      "status": "completed",
+      "conclusion": "success",
+      "required_steps": {
+        "Build deterministic release candidate": "success",
+        "Exact OpenCode 1.18.19 native direct-Git host load": "success",
+        "M16 packed npm package-runner bootstrap": "success",
+        "Native direct-Git plugin install": "success",
+        "Packed public documentation": "success",
+        "Product build, architecture lint, Node acceptance, docs parity": "success",
+        "Python product acceptance": "success",
+        "Verify release archives are readable": "success"
+      },
+      "node_summary": {
+        "tests": 1046,
+        "pass": 1046,
+        "fail": 0,
+        "skipped": 0
+      },
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "M16 packed npm package-runner bootstrap",
+          "conclusion": "success"
+        },
+        {
+          "name": "Native direct-Git plugin install",
+          "conclusion": "success"
+        },
+        {
+          "name": "Exact OpenCode 1.18.19 native direct-Git host load",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install Python verification dependencies",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install plugin dependencies",
+          "conclusion": "success"
+        },
+        {
+          "name": "Product build, architecture lint, Node acceptance, docs parity",
+          "conclusion": "success"
+        },
+        {
+          "name": "Packed public documentation",
+          "conclusion": "success"
+        },
+        {
+          "name": "Python product acceptance",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build deterministic release candidate",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify release archives are readable",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    },
+    "windows": {
+      "job_id": 96447002900,
+      "status": "completed",
+      "conclusion": "success",
+      "required_steps": {
+        "Build deterministic release candidate": "success",
+        "Exact OpenCode 1.18.19 native direct-Git host load": "success",
+        "M16 packed npm package-runner bootstrap": "success",
+        "Native direct-Git plugin install": "success",
+        "Packed public documentation": "success",
+        "Product build, architecture lint, Node acceptance, docs parity": "success",
+        "Python product acceptance": "success",
+        "Verify release archives are readable": "success"
+      },
+      "node_summary": {
+        "tests": 1046,
+        "pass": 1045,
+        "fail": 0,
+        "skipped": 1
+      },
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "M16 packed npm package-runner bootstrap",
+          "conclusion": "success"
+        },
+        {
+          "name": "Native direct-Git plugin install",
+          "conclusion": "success"
+        },
+        {
+          "name": "Exact OpenCode 1.18.19 native direct-Git host load",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install Python verification dependencies",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install plugin dependencies",
+          "conclusion": "success"
+        },
+        {
+          "name": "Product build, architecture lint, Node acceptance, docs parity",
+          "conclusion": "success"
+        },
+        {
+          "name": "Packed public documentation",
+          "conclusion": "success"
+        },
+        {
+          "name": "Python product acceptance",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build deterministic release candidate",
+          "conclusion": "success"
+        },
+        {
+          "name": "Verify release archives are readable",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    }
+  },
+  "portability_surfaces": [
+    "checkout",
+    "node-toolchain",
+    "python-toolchain",
+    "packed-npm-package-runner-bootstrap",
+    "native-direct-git-install",
+    "exact-opencode-direct-git-host-load",
+    "product-check",
+    "packed-public-documentation",
+    "python-product-acceptance",
+    "release-archive"
+  ],
+  "summary": {
+    "required_surfaces": 10,
+    "covered_surfaces": 10,
+    "violations": 0
+  },
+  "violations": [],
+  "claim_boundary": "Exact current-source dual-platform GitHub Actions acceptance for OpenCode 1.18.19. This receipt binds packed npm bootstrap, native direct-Git install, exact host load, product/package/Python/docs/archive checks to the recorded commit/tree; publication remains separate."
+}
