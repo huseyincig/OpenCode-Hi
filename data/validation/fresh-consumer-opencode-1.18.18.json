@@ -5,8 +5,8 @@
   "section": 26,
   "status": "PASS",
   "source": {
-    "commit": "1da3fe3cf3434689c9fcd1aad353107ed36b8fec",
-    "tree": "14762af6460604227df76a84bfa108e905e0e0c4"
+    "commit": "5af9124e771670a5b7d68745ff9b52a1d20fefce",
+    "tree": "7b28951aa31bfc68304f7a7cee7369ee43da8c0e"
   },
   "host": {
     "opencode": "1.18.18",
@@ -17,7 +17,7 @@
     "registry_observation": {
       "opencode_ai_latest": "1.18.18",
       "sdk_latest": "1.18.18",
-      "observed_at": "2026-08-20T05:38:17.980668+00:00"
+      "observed_at": "2026-08-20T05:59:01.212795+00:00"
     }
   },
   "package": {

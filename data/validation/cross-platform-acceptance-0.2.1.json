@@ -6,19 +6,19 @@
   "release": "0.2.1",
   "status": "PASS",
   "source_binding": {
-    "tested_git_commit": "1da3fe3cf3434689c9fcd1aad353107ed36b8fec",
-    "tested_git_tree": "14762af6460604227df76a84bfa108e905e0e0c4"
+    "tested_git_commit": "5af9124e771670a5b7d68745ff9b52a1d20fefce",
+    "tested_git_tree": "7b28951aa31bfc68304f7a7cee7369ee43da8c0e"
   },
   "github_actions": {
     "workflow": "Release Readiness",
-    "run_id": 32335788228,
+    "run_id": 32337246996,
     "event": "workflow_dispatch",
     "head_branch": "release/direct-git-0.2.1",
     "status": "completed",
     "conclusion": "success",
-    "url": "https://github.com/huseyincig/OpenCode-Hi/actions/runs/32335788228",
+    "url": "https://github.com/huseyincig/OpenCode-Hi/actions/runs/32337246996",
     "ubuntu": {
-      "job_id": 96324998456,
+      "job_id": 96329077186,
       "status": "completed",
       "conclusion": "success",
       "required_steps": {
@@ -31,8 +31,8 @@
         "Verify release archives are readable": "success"
       },
       "node_summary": {
-        "tests": 1039,
-        "pass": 1039,
+        "tests": 1040,
+        "pass": 1040,
         "fail": 0,
         "skipped": 0
       },
@@ -108,7 +108,7 @@
       ]
     },
     "windows": {
-      "job_id": 96324998648,
+      "job_id": 96329077299,
       "status": "completed",
       "conclusion": "success",
       "required_steps": {
@@ -121,8 +121,8 @@
         "Verify release archives are readable": "success"
       },
       "node_summary": {
-        "tests": 1039,
-        "pass": 1038,
+        "tests": 1040,
+        "pass": 1039,
         "fail": 0,
         "skipped": 1
       },
