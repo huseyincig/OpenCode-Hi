@@ -5,8 +5,8 @@
   "section": 42,
   "status": "PASS",
   "source_checkpoint": {
-    "commit": "4c1e9084da11ebc1fe2093abdfcf1e67456a7c2a",
-    "tree": "ce190e92ac8e1c33298e5381461476ad6ac86cb8"
+    "commit": "b2f1e71166c2e1159315bbe0008bbebe29af924e",
+    "tree": "f929242aed397ff10e926e0d5474c2b72d041f53"
   },
   "areas": [
     {
@@ -33,8 +33,8 @@
     {
       "area": "HOSTS",
       "path": "docs/HOSTS.md",
-      "checkpoint_sha256": "efc156286f471dfa9bd6696b02757ad5382d8399c35a6aaeec3db96eeae0fade",
-      "checkpoint_blob_oid": "23c82ac5f5db7cf2419b524bbda82c62b5e33f5d",
+      "checkpoint_sha256": "d5bfdd1359032baa2e2655597814773990d3e292dd29a62e747e91694fda23c5",
+      "checkpoint_blob_oid": "c1245ff577941393bd0f8d969c07e296256ed1f4",
       "status": "PASS"
     },
     {
@@ -103,28 +103,28 @@
     {
       "area": "acceptance",
       "path": "data/validation/prompt-b-user-journey-acceptance.json",
-      "checkpoint_sha256": "001233e9a296c8afbc94ed38d73bbad240ae9738830878909eca911b8ab56c66",
-      "checkpoint_blob_oid": "84a3b9c7b75dfc41644e50b4ad4a1517fd5922bc",
+      "checkpoint_sha256": "b83e31c064028cc340a71ddd22754ecac2a776f2baabe79b7ba9d48de03055d7",
+      "checkpoint_blob_oid": "06ebba4e432eefa5d51894f63db7fa540b5ddd7b",
       "status": "PASS"
     },
     {
       "area": "receipts",
       "path": "data/validation/prompt-b-zero-known-defect-loop.json",
-      "checkpoint_sha256": "12a1e8bc3a6180bfcef53dfdbfa24c1b13e21a4cf6af74b49371ffc1684b46bd",
-      "checkpoint_blob_oid": "7626e52e531ae8885c44a82a6c2a551feec62b11",
+      "checkpoint_sha256": "26cfc150b312bc2a40f87998db0ed7ab3c3ef339069dbe0d31f320726c84bcb4",
+      "checkpoint_blob_oid": "43f6079061399b207d6a677942f363045a023aed",
       "status": "PASS"
     }
   ],
   "documentation_parity": {
     "path": "data/validation/documentation-parity.json",
-    "checkpoint_sha256": "8170bb2c45ef2eaf01ae10ccf7d93c57fd0caa4e7c42e71d4f534dfe04eafb37",
-    "checkpoint_blob_oid": "1d934487a4e5f6bb98ed0e29966eee5860ae0ede",
+    "checkpoint_sha256": "58b10ba291b5fa1b2f60f886097151295b141dbdd632a6fe5a6bd477909dc3f1",
+    "checkpoint_blob_oid": "e75654eac3f51ad2f45ab4147ce7ca720a9a7392",
     "violations": 0
   },
   "documentation_inventory": {
     "path": "data/validation/documentation-inventory.json",
-    "checkpoint_sha256": "c3332421883107bf5125dd4b69645b7c5a8e6e6dc069478c1538575b9d2f9c55",
-    "checkpoint_blob_oid": "3461c367410863d4ec081fa0c731ecb24d85a5dd",
+    "checkpoint_sha256": "465afe3800dbd2b380d87b14287a6279de42714fc21d5fa0e85d1e6ab6aa26b1",
+    "checkpoint_blob_oid": "71695d20ae9f2957ffb86f86d46e1009fd03c281",
     "status": "PASS"
   },
   "summary": {
