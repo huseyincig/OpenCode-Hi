@@ -32,11 +32,13 @@ jobs:
           python-version: ${{ matrix.python }}
           cache: pip
           cache-dependency-path: requirements-dev.txt
+      - name: M16 packed npm package-runner bootstrap
+        run: npm run test:m16:packed-bootstrap
       - name: Native direct-Git plugin install
         env:
           OPENCODE_HI_GIT_SPEC: opencode-hi@git+https://github.com/${{ github.repository }}.git#${{ github.sha }}
         run: npm run test:direct-git-install
-      - name: Exact OpenCode 1.18.18 native direct-Git host load
+      - name: Exact OpenCode 1.18.19 native direct-Git host load
         env:
           OPENCODE_HI_GIT_SPEC: opencode-hi@git+https://github.com/${{ github.repository }}.git#${{ github.sha }}
         run: npm run test:direct-git-host
