@@ -4,7 +4,7 @@
   "program": "PROMPT_B",
   "section": 41,
   "status": "PASS",
-  "audited_source_commit": "7191ac763fe164f9b953ea6a22358ed1f3e9da81",
+  "audited_source_commit": "7c6d63a8454b2ce4b45428b130170be34788e2de",
   "checks": {
     "clean_working_tree_outside_audit_artifacts": true,
     "accidental_backups": true,
@@ -26,7 +26,7 @@
   },
   "proof_hashes": {
     "scripts/run-node-test-suite.mjs": "987692ec836f2b16c62f53c8cc4f4f14551bb35c33298e6d5d22eb8281b25f6c",
-    "data/validation/prompt-b-test-suite-audit.json": "aba769fbedc6d7d40ed352790e037d24702dd8a6cfaec7f8f95bfdf801789d3a",
+    "data/validation/prompt-b-test-suite-audit.json": "3bbb545f56265ac5cc749a418abf865619f8a20fc413496eb09b1b652429dd58",
     "package.json": "cf54e799329ca45c3a05e87192b67c4efb879f0bc5e79b7ddada0e16bc2c677d",
     "plugin/package.json": "8bc092d745e285349c0cddf45f6ee81fb09651f232089c19496949cff5639d1d"
   },
