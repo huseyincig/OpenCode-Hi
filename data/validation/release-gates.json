@@ -25,7 +25,7 @@
     "opencode_native_child_sessions": "PASS_T3_EXACT_HOST_1_18_19_PARENT_CHILD_BINDING",
     "opencode_model_provider_binding": "PASS_T3_EXACT_HOST_1_18_19_CONNECTED_RUNTIME_INVENTORY",
     "permission_denial_runtime": "PASS_T3_EXACT_HOST_1_18_19_FAIL_CLOSED_PREFLIGHT",
-    "windows_runtime_smoke": "PENDING_WINDOWS_DESKTOP_EXACT_OPENCODE_1_18_19",
+    "windows_runtime_smoke": "PASS_CROSS_PLATFORM_CURRENT_SOURCE_OPEN_CODE_1_18_19_UBUNTU_WINDOWS",
     "dependency_supply_chain_external": "PASS_CLEAN_PREPUBLICATION_PACKED_TARBALL_LOCAL_CONSUMER",
     "filesystem_hygiene": "PASS_LOCAL_CLEAN_EVIDENCE_COMMIT_HYGIENE_12_OF_12",
     "native_package_plugin_install_exact_candidate": "PASS_T3_PREPUBLICATION_PACKED_LOCAL_PACKAGE_SEAM_EXACT_OPENCODE_1_18_19_LINUX_AARCH64",
@@ -34,28 +34,27 @@
     "final_canonical_gates": "PASS_CURRENT_CLEAN_CHECKPOINT_PY102_NODE1046_ARCH22_DOCS0_VALIDATOR"
   },
   "release_blocked": true,
-  "reason": "All executable local 0.2.2 M16 engineering gates pass, including exact OpenCode 1.18.19 Linux/aarch64 T3, packed fresh-consumer, deterministic release, full evidence suite, hygiene and final canonical gates. Release certification remains PARTIAL only because Windows current-source external CI and real GitHub/npm T4 are not yet available.",
+  "reason": "All prepublication 0.2.2 engineering and certification gates pass, including exact OpenCode 1.18.19 Linux/aarch64 T3, packed fresh-consumer, deterministic release, full evidence suite, hygiene, current-source Ubuntu/Windows Release Readiness, and canonical final gates. Only real GitHub/npm T4 publication verification remains.",
   "external_blockers": [
-    "Exact OpenCode 1.18.19 Windows current-source execution has not yet been observed for the 0.2.2 candidate.",
-    "opencode-hi@0.2.2 has not been published to npm; fresh-registry T4 is unavailable.",
-    "v0.2.2 GitHub Release has not been published; immutable release-source T4 is unavailable."
+    "opencode-hi@0.2.2 has not yet been published to npm; fresh-registry T4 is unavailable.",
+    "v0.2.2 GitHub Release has not yet been published; immutable release-source T4 is unavailable."
   ],
   "current_local_evidence": {
     "source_checkpoint": {
       "status": "PASS",
-      "commit": "1e212e66448749d76654c63a69b515b4f3752357",
-      "tree": "053930f1367fb5f29e737a82acf881b0bcfb04cb",
-      "base_commit": "0e7d7093c6a4b95589bf686e3436e3faccff6611",
-      "branch": "m16/onboarding-model-inventory",
-      "note": "Current clean candidate source for fresh-consumer/local certification. Exact capability T3 receipts remain bound to their original source and are accepted only through byte-identical capability-runtime equivalence."
+      "commit": "7a34286c6686b4108af80e74fb9c15678815f2b3",
+      "tree": "c9da1930dd0f696dd94f5b41925a098eba041872",
+      "base_commit": "eb823fddd9e7b31f7e6c765be3c899e58a726077",
+      "branch": "release/0.2.2-bootstrap",
+      "note": "Clean evidence checkpoint carrying current-source cross-platform receipt; product/runtime material is unchanged from the exact CI source eb823fddd9e7b31f7e6c765be3c899e58a726077."
     },
     "node": {
       "command": "npm --prefix plugin run check",
-      "status": "PASS_LOCAL_CURRENT_RUNTIME_BYTES_1046_OF_1046_LAST_FULL_RUN"
+      "status": "PASS_LOCAL_CURRENT_RUNTIME_BYTES"
     },
     "python": {
       "command": "python -m pytest -q tests/test_hi.py",
-      "status": "PASS_FULL_EVIDENCE_102_OF_102"
+      "status": "PASS_FULL_EVIDENCE_CURRENT_SOURCE"
     },
     "validation": {
       "command": "python scripts/validate.py",
@@ -85,12 +84,13 @@
       "opencode_version": "1.18.19",
       "hi_tool_count": 31,
       "session_create": true,
-      "coder_projection": true
+      "coder_projection": true,
+      "source_commit": "eb823fddd9e7b31f7e6c765be3c899e58a726077"
     },
     "exact_t3": {
       "status": "PASS_EXACT_CURRENT_LINUX_AARCH64",
       "opencode_version": "1.18.19",
-      "source_commit": "1e212e66448749d76654c63a69b515b4f3752357",
+      "source_commit": "eb823fddd9e7b31f7e6c765be3c899e58a726077",
       "capabilities": [
         "process-lifecycle",
         "workspace-isolation-binding",
@@ -99,14 +99,16 @@
       "native_child_session_parent_binding": "PASS_T3",
       "permission_denial_preflight": "PASS_T3",
       "receipt": "data/validation/prompt-b-exact-current-opencode-t3.json",
-      "capability_receipt_source_commit": "09e99d251ec47f54803fb192738a50e0035ea060",
       "runtime_equivalent_to_current": true
     },
     "cross_platform": {
-      "status": "PENDING_EXTERNAL_CI",
-      "tested_source": null,
-      "github_actions_run": null,
-      "release_source_run": null,
+      "status": "PASS_CURRENT_SOURCE",
+      "tested_source": "eb823fddd9e7b31f7e6c765be3c899e58a726077",
+      "tested_tree": "79f3fedd701cad31b7883569a8063f72d21dcd4e",
+      "github_actions_run": 32375874373,
+      "ubuntu_job": 96447003316,
+      "windows_job": 96447002900,
+      "release_source_run": 32375874373,
       "local_surfaces": "PASS_7_OF_7"
     },
     "final_system": {
@@ -115,7 +117,6 @@
       "local_gates": "PASS",
       "final_gates_receipt": "data/validation/final-gates-0.2.2.json",
       "blockers": [
-        "Windows current-source external CI",
         "T4 publication verification"
       ]
     },
@@ -127,7 +128,7 @@
     "hygiene": {
       "status": "PASS",
       "receipt": "data/validation/prompt-b-hygiene.json",
-      "audited_source_commit": "34091b6a32156f3f9494bf9090db52ce70d4ff9f",
+      "audited_source_commit": "3e057cb929a7fa92b1f44429c9e648b866b87251",
       "checks": "12/12"
     },
     "final_publication": {

@@ -6,8 +6,8 @@
   "status": "PASS",
   "certification_state": "PARTIAL",
   "source_checkpoint": {
-    "commit": "ea96f002aac35919731b16330c886d2ee59cc8b6",
-    "tree": "6c3d7d446ac9b91c519d75387887139383340060"
+    "commit": "7a34286c6686b4108af80e74fb9c15678815f2b3",
+    "tree": "c9da1930dd0f696dd94f5b41925a098eba041872"
   },
   "coherence": {
     "source_contracts": true,
@@ -24,7 +24,6 @@
     "verification_docs": true
   },
   "external_blockers": [
-    "current-source-windows-acceptance-pending-external-ci",
     "T4-current-release-publication-verification-pending"
   ],
   "summary": {
