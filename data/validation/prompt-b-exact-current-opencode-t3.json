@@ -11,13 +11,13 @@
     "registry_opencode_latest": "1.18.19",
     "registry_sdk_latest": "1.18.19",
     "locked_sdk": "1.18.19",
-    "captured_at": "2026-08-20T14:07:01.941524+00:00"
+    "captured_at": "2026-08-20T14:48:26.446162+00:00"
   },
   "candidate_release": "0.2.2",
   "fresh_consumer_receipt": "data/validation/fresh-consumer-opencode-1.18.19.json",
-  "fresh_consumer_sha256": "376804d3f1685d8e88cd070e8e0d3fb54af24020a041a2b3bd92af47ea118de9",
-  "exact_source_commit": "6aed0ab046e65fd71b1307c65f80a6d99fc83d6b",
-  "exact_source_tree": "7c10bdba1f4e47494ac0bdc7e0d84bd78fa550c7",
+  "fresh_consumer_sha256": "16e10b2fc6e94a9e9e3e1fff67f6084022daf340b96725aa65191a60b74f4b37",
+  "exact_source_commit": "8c272c7800130b8554ab9b560f4f8943f90e0220",
+  "exact_source_tree": "15d973f17d7bbedff3827e3ce47fc97f4eecf4df",
   "capability_evidence_mode": "CURRENT_EXACT_HOST_PACKAGE_PLUS_RUNTIME_EQUIVALENT_EXACT_T3",
   "compatibility_projection": "data/validation/compatibility-matrix-0.1.0.json",
   "compatibility_sha256": "499d383de2c1379b6153d6bd86d69b2553a01a3f2e545b3d2de6490f0056e724",

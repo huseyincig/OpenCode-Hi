@@ -5,8 +5,8 @@
   "section": 28,
   "status": "CLOSED_T4",
   "current_source": {
-    "commit": "c151918f6b8d0ca32f46ee39fb2d8dbc21d61658",
-    "tree": "eeb9e466fa88e866985d56ce14f5f0a2585d667d",
+    "commit": "8c272c7800130b8554ab9b560f4f8943f90e0220",
+    "tree": "15d973f17d7bbedff3827e3ce47fc97f4eecf4df",
     "version": "0.2.2"
   },
   "release_source": {
@@ -15,16 +15,23 @@
     "tag": "v0.2.2"
   },
   "development_head": {
-    "post_release": false,
+    "post_release": true,
     "runtime_drift_from_release": [],
-    "package_or_documentation_drift_from_release": [],
+    "package_or_documentation_drift_from_release": [
+      "README.md",
+      "docs/INSTALLATION.md",
+      "docs/RELEASE.md",
+      "docs/assets/hi-logo.webp",
+      "docs/locales/tr/CONFIGURATION.md",
+      "docs/locales/tr/README.md"
+    ],
     "current_version_already_published": true,
     "next_release_version_required": false,
-    "republish_same_version_forbidden": false
+    "republish_same_version_forbidden": true
   },
   "certification_head": {
-    "commit": "c151918f6b8d0ca32f46ee39fb2d8dbc21d61658",
-    "tree": "eeb9e466fa88e866985d56ce14f5f0a2585d667d"
+    "commit": "8c272c7800130b8554ab9b560f4f8943f90e0220",
+    "tree": "15d973f17d7bbedff3827e3ce47fc97f4eecf4df"
   },
   "historical_release": {
     "tag": "v0.2.1",
@@ -32,7 +39,7 @@
     "status": "PASS_T4"
   },
   "registry_observation": {
-    "observed_at": "2026-08-20T14:07:01.941524+00:00",
+    "observed_at": "2026-08-20T14:48:26.446162+00:00",
     "reference_host_registry_latest": "1.18.19",
     "reference_sdk_registry_latest": "1.18.19",
     "current_publication_receipt_present": true,
@@ -43,7 +50,7 @@
     {
       "stage": "source-commit",
       "status": "PASS",
-      "detail": "6aed0ab046e65fd71b1307c65f80a6d99fc83d6b",
+      "detail": "8c272c7800130b8554ab9b560f4f8943f90e0220",
       "proof": "exact-current T3 source checkpoint"
     },
     {
@@ -146,7 +153,7 @@
     "package.json": "0c525b92080987befe6a838a92a2ae5fe603b74fbf10295e3f2ad4ec15544359",
     "package-lock.json": "1e221b67157198263b2ad5150f903a1c108616ab9750df6699c618ee5ea2b4ee",
     "plugin/package-lock.json": "722250df58cd08e94cdf61df6412ba0707b6f504986a4ff18a3e156b9e6dc6be",
-    "data/validation/fresh-consumer-opencode-1.18.19.json": "376804d3f1685d8e88cd070e8e0d3fb54af24020a041a2b3bd92af47ea118de9",
+    "data/validation/fresh-consumer-opencode-1.18.19.json": "16e10b2fc6e94a9e9e3e1fff67f6084022daf340b96725aa65191a60b74f4b37",
     "data/validation/release-status-0.2.1.json": "e6780dbb64272d0080f5eb47e0d2a8f0ecba2d825b61e2be5b2a9d2e1604fa98",
     ".github/workflows/npm-publish.yml": "fddeff0ad498142ab454a0df576328bdb061106ce7eddec3ae553e3f653572b5",
     "scripts/verify-npm-oidc-release.mjs": "e5f0fe255f2af83d7156ad8b5dd1f0e2e9d9a36a22fff03a68c6e1272529670f",
