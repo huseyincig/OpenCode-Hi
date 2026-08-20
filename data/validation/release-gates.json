@@ -5,11 +5,11 @@
   "candidate_status": "PROMPT_B_0_2_3_PREPUBLICATION_CERTIFICATION_IN_PROGRESS",
   "claim_boundary": "Current 0.2.3 candidate only. Exact OpenCode 1.18.19 Linux/aarch64 T3, fresh packed consumer, bounded browser self-bootstrap, deterministic release reproduction and current local audits are proven. Windows current-source CI, final clean-evidence gates and real GitHub/npm T4 remain pending and are not fabricated.",
   "gates": {
-    "source_integrity": "PASS_LOCAL_ISOLATED_COMMITTED_SOURCE_B9D7852",
+    "source_integrity": "PASS_LOCAL_ISOLATED_COMMITTED_SOURCE_3D8B2DF",
     "deterministic_release": "PASS_LOCAL_TWO_INDEPENDENT_BYTE_IDENTICAL_BUILDS",
     "node_runtime_acceptance": "PASS_LOCAL_CURRENT_RUNTIME_1068_OF_1068",
-    "python_acceptance": "PASS_LOCAL_FULL_CURRENT_CHECKPOINT",
-    "validator": "PASS_LOCAL_CURRENT_CHECKPOINT",
+    "python_acceptance": "PENDING_LOCAL_FULL_EVIDENCE_CURRENT_CHECKPOINT",
+    "validator": "PENDING_LOCAL_CURRENT_SOURCE_REBIND",
     "worktree_path_acceptance": "PASS_LOCAL_ISOLATED_WORKTREE_LEGACY_ROOT_PRESERVED",
     "optional_tool_surface_economy": "PASS_LOCAL_CURRENT_SOURCE",
     "native_skill_inventory": "PASS_LOCAL_CURRENT_SOURCE",
@@ -27,14 +27,14 @@
     "permission_denial_runtime": "PASS_T3_EXACT_HOST_1_18_19_FAIL_CLOSED_PREFLIGHT",
     "windows_runtime_smoke": "PENDING_EXTERNAL_CI_CURRENT_SOURCE_0_2_3",
     "dependency_supply_chain_external": "PASS_CLEAN_PREPUBLICATION_PACKED_TARBALL_LOCAL_CONSUMER",
-    "filesystem_hygiene": "PASS_LOCAL_CLEAN_EVIDENCE_CHECKPOINT",
+    "filesystem_hygiene": "PENDING_LOCAL_CLEAN_EVIDENCE_CHECKPOINT",
     "native_package_plugin_install_exact_candidate": "PASS_T3_PREPUBLICATION_PACKED_LOCAL_PACKAGE_SEAM_EXACT_OPENCODE_1_18_19_LINUX_AARCH64",
     "github_release_publication": "PENDING_T4_NOT_PUBLISHED",
     "npm_registry_publication": "PENDING_AUTH_T4_NOT_PUBLISHED",
-    "final_canonical_gates": "PASS_CURRENT_CLEAN_CHECKPOINT"
+    "final_canonical_gates": "PENDING_LOCAL_CURRENT_SOURCE"
   },
   "release_blocked": true,
-  "reason": "0.2.3 local engineering/certification gates pass, including bounded terminal setup/reconfigure UX, local release-preflight Python environment hardening, exact OpenCode 1.18.19 Linux/aarch64 T3, fresh packed consumer, deterministic release reproduction, hygiene and canonical final gates. Current-source Windows CI and real GitHub/npm T4 publication proof remain external.",
+  "reason": "0.2.3 current source passes local runtime/product, deterministic release, fresh packed consumer, exact OpenCode 1.18.19 Linux/aarch64 T3 and source-bound audits. Evidence-only compatibility attestation self-reference is closed. Full local evidence finalization remains pending; Windows current-source CI and T4 remain external.",
   "external_blockers": [
     "exact OpenCode 1.18.19 Windows current-source CI for 0.2.3 is not yet available.",
     "opencode-hi@0.2.3 has not been published to npm; fresh-registry T4 is unavailable.",
@@ -43,10 +43,10 @@
   "current_local_evidence": {
     "source_checkpoint": {
       "status": "PASS",
-      "commit": "b9d7852140c5ca65763d205b528aadf7c3e3d7ef",
-      "tree": "ea16c12cd8d6dfb20ac38450965ef7633ee615f5",
+      "commit": "3d8b2df200cabda4a8f69985f44160b86508f374",
+      "tree": "5848068f7f673f499d1d827b60e276754754f792",
       "branch": "fix/runtime-bounded-capabilities",
-      "note": "Current 0.2.3 source checkpoint including bounded terminal wizard and local preflight Python-environment hardening."
+      "note": "Current 0.2.3 source checkpoint including bounded setup/reconfigure UX, preflight Python routing, and evidence-only compatibility attestation hardening."
     },
     "node": {
       "command": "npm run check:product",
@@ -54,11 +54,11 @@
     },
     "python": {
       "command": "release-venv python -m pytest -q tests/test_hi.py",
-      "status": "PASS_FULL_EVIDENCE_CURRENT_CHECKPOINT"
+      "status": "PENDING_LOCAL_FULL_EVIDENCE_CURRENT_CHECKPOINT"
     },
     "validation": {
       "command": "release-venv python scripts/validate.py",
-      "status": "PASS_CURRENT_CHECKPOINT"
+      "status": "PENDING_LOCAL_CURRENT_SOURCE_REBIND"
     },
     "fresh_consumer": {
       "status": "PASS_PACKED_LOCAL_EXACT_HOST",
@@ -67,12 +67,12 @@
       "hi_tool_count": 31,
       "session_create": true,
       "coder_projection": true,
-      "source_commit": "b9d7852140c5ca65763d205b528aadf7c3e3d7ef"
+      "source_commit": "3d8b2df200cabda4a8f69985f44160b86508f374"
     },
     "exact_t3": {
       "status": "PASS_EXACT_CURRENT_LINUX_AARCH64",
       "opencode_version": "1.18.19",
-      "source_commit": "b9d7852140c5ca65763d205b528aadf7c3e3d7ef",
+      "source_commit": "3d8b2df200cabda4a8f69985f44160b86508f374",
       "capabilities": [
         "process-lifecycle",
         "workspace-isolation-binding",
@@ -93,9 +93,8 @@
       "method": "two independent exact-source release builds; four outputs byte-identical"
     },
     "hygiene": {
-      "status": "PASS",
-      "receipt": "data/validation/prompt-b-hygiene.json",
-      "audited_source_commit": "19a0ed3abbdbc5042303f285bd428f642c7e1ede"
+      "status": "PENDING_LOCAL_CLEAN_EVIDENCE_CHECKPOINT",
+      "receipt": "data/validation/prompt-b-hygiene.json"
     },
     "final_publication": {
       "status": "PENDING_T4",
@@ -107,10 +106,11 @@
       "registry_exact_host_receipt": null
     },
     "final_system": {
-      "status": "PARTIAL_PENDING_EXTERNAL",
+      "status": "PENDING_LOCAL_AND_EXTERNAL",
       "receipt": "data/validation/final-system-certification-0.2.3.json",
       "final_gates_receipt": "data/validation/final-gates-0.2.3.json",
       "blockers": [
+        "local evidence checkpoint/hygiene/full Python/final gates",
         "current-source Windows external CI",
         "real GitHub/npm T4 publication verification"
       ]

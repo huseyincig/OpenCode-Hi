@@ -2,7 +2,7 @@
   "schema": 2,
   "kind": "PROMPT_B_ZERO_KNOWN_DEFECT_CLOSURE_LOOP",
   "source_checkpoint": {
-    "commit": "19a0ed3abbdbc5042303f285bd428f642c7e1ede"
+    "commit": "3d8b2df200cabda4a8f69985f44160b86508f374"
   },
   "program": "PROMPT_B",
   "section": 40,
@@ -1602,7 +1602,7 @@
       "root_cause_record": "the initial exact-host archive extractor used the Python 3.12 tar filter keyword while Release Readiness provisions Python 3.11",
       "resolution": "the harness uses explicit SHA-bound traversal-safe tar/zip extraction that is compatible with Python 3.11 and rejects traversal and archive symlink surfaces",
       "regression_receipt": "tests/test_hi.py",
-      "regression_receipt_sha256": "67bb2d49f7351b66599a35894a1c8dfe05c2fc3e227a46d1b14024b901ddc110",
+      "regression_receipt_sha256": "b1317f9e31eb69a204b09dd8a3f758e81b9ddcce72b1520ef6f674e64606ad10",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1809,7 +1809,7 @@
       "root_cause_record": "a second validator block retained the pre-TeamMode-removal 32-leaf config count after the canonical catalog and primary audit moved to 29 leaves",
       "resolution": "all living config validation now requires the canonical 29-leaf split: 26 runtime, 2 diagnostic and 1 schema marker",
       "regression_receipt": "scripts/validate.py",
-      "regression_receipt_sha256": "6c5b24225e3ccccd53fa0e9bcfe8c1177f20dbb7ace4ebac36e7f3b84dded417",
+      "regression_receipt_sha256": "478e104443c77289f6cd5fcf01a0cd44280b8c57bd2832620098a4ec277d7d87",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1901,7 +1901,30 @@
       "root_cause_record": "multiple living acceptance validators required obsolete literal source commits while simultaneously requiring current proof hashes",
       "resolution": "living acceptance source binding now verifies exact recorded commit/tree objects and ancestor relation to the current candidate while owner/proof hashes continue to detect material drift",
       "regression_receipt": "scripts/validate.py",
-      "regression_receipt_sha256": "6c5b24225e3ccccd53fa0e9bcfe8c1177f20dbb7ace4ebac36e7f3b84dded417",
+      "regression_receipt_sha256": "478e104443c77289f6cd5fcf01a0cd44280b8c57bd2832620098a4ec277d7d87",
+      "closure_pipeline": [
+        "discover",
+        "classify",
+        "canonical-owner",
+        "root-cause",
+        "fix",
+        "regression-test",
+        "focused-verification",
+        "full-verification",
+        "docs-parity",
+        "local-commit",
+        "ledger",
+        "adjacent-reaudit"
+      ]
+    },
+    {
+      "id": "compatibility-projection-evidence-self-reference",
+      "classification": "VALIDATION_SOURCE_BINDING_DRIFT",
+      "canonical_owner": "scripts/validate.py",
+      "root_cause_record": "compatibility evidence required generation_head to equal current HEAD, making a committed final evidence attestation impossible because committing the projection necessarily advances HEAD",
+      "resolution": "compatibility generation is accepted only when its generation commit is an ancestor and every descendant change is confined to data/validation evidence; any source, docs, package, script, test or runtime drift still fails closed and requires regeneration",
+      "regression_receipt": "tests/test_hi.py",
+      "regression_receipt_sha256": "b1317f9e31eb69a204b09dd8a3f758e81b9ddcce72b1520ef6f674e64606ad10",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1919,9 +1942,9 @@
     }
   ],
   "summary": {
-    "recorded_findings": 83,
+    "recorded_findings": 84,
     "unresolved_known_defects": 0,
-    "closure_receipts_checked": 83,
+    "closure_receipts_checked": 84,
     "documentation_parity_violations": 0,
     "exact_t3_capabilities": 3,
     "lifecycle_invariants_pass": 61

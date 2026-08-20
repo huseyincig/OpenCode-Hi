@@ -77,7 +77,7 @@
       "owner_sha256": "05d0ac7352c100c56ab67c077938dedbea504dea437c7e800678a30d99f57f19",
       "owner_anchor": "def rollback(",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "67bb2d49f7351b66599a35894a1c8dfe05c2fc3e227a46d1b14024b901ddc110",
+      "proof_sha256": "b1317f9e31eb69a204b09dd8a3f758e81b9ddcce72b1520ef6f674e64606ad10",
       "proof_anchor": "test_r2_rollback_fails_closed_after_unrelated_post_operation_config_drift"
     },
     {
@@ -87,7 +87,7 @@
       "owner_sha256": "05d0ac7352c100c56ab67c077938dedbea504dea437c7e800678a30d99f57f19",
       "owner_anchor": "def recover(",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "67bb2d49f7351b66599a35894a1c8dfe05c2fc3e227a46d1b14024b901ddc110",
+      "proof_sha256": "b1317f9e31eb69a204b09dd8a3f758e81b9ddcce72b1520ef6f674e64606ad10",
       "proof_anchor": "test_r2_recover_completes_interrupted_upgrade_when_config_matches_recorded_after_state"
     },
     {
@@ -127,7 +127,7 @@
       "owner_sha256": "cf54e799329ca45c3a05e87192b67c4efb879f0bc5e79b7ddada0e16bc2c677d",
       "owner_anchor": "\"opencode-hi\": \"scripts/opencode-hi.mjs\"",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "67bb2d49f7351b66599a35894a1c8dfe05c2fc3e227a46d1b14024b901ddc110",
+      "proof_sha256": "b1317f9e31eb69a204b09dd8a3f758e81b9ddcce72b1520ef6f674e64606ad10",
       "proof_anchor": "test_prompt_b_publishable_package_carries_node_bootstrap_legacy_cli_and_direct_runtime_dependency_contract"
     },
     {
@@ -137,7 +137,7 @@
       "owner_sha256": "cf54e799329ca45c3a05e87192b67c4efb879f0bc5e79b7ddada0e16bc2c677d",
       "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.19\"",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "67bb2d49f7351b66599a35894a1c8dfe05c2fc3e227a46d1b14024b901ddc110",
+      "proof_sha256": "b1317f9e31eb69a204b09dd8a3f758e81b9ddcce72b1520ef6f674e64606ad10",
       "proof_anchor": "test_prompt_b_publishable_package_carries_node_bootstrap_legacy_cli_and_direct_runtime_dependency_contract"
     },
     {

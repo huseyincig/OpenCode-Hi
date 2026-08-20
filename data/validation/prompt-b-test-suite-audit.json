@@ -26,7 +26,7 @@
     {
       "invariant": "fixture-realism",
       "owner": "scripts/generate-compatibility-matrix.py",
-      "owner_sha256": "7261690f885214f6a82a4d1e69aa224024fa0b067c04d779ceffe6769db31f53",
+      "owner_sha256": "72ec5d51e94b911b44d96cf10b5cf19c907db1bbbef71fa8ee6dc2d10f72d1b1",
       "owner_anchor": "External receipts remain canonical evidence",
       "proof": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
       "proof_sha256": "f9bdb727432ba04c53be723063320acbcadbc6a4bab609d51fbe6c9a1bff9302",
@@ -38,7 +38,7 @@
       "owner_sha256": "987692ec836f2b16c62f53c8cc4f4f14551bb35c33298e6d5d22eb8281b25f6c",
       "owner_anchor": "const knownLibuvTeardown=",
       "proof": "data/validation/test-harness-isolation-0.1.0.json",
-      "proof_sha256": "beda0a14287137fdbe42359d971d6bf48eaa49c2c24111b417b76d4bfe2a885c",
+      "proof_sha256": "2e99ffdb6ae853b19a85438afcd1621e1992342a2a2619319fecb2b24e94279f",
       "proof_anchor": "SIGABRT is normalized only with exact uv__io_poll EEXIST signature"
     },
     {
@@ -47,7 +47,7 @@
       "owner_sha256": "57ee029bf201b2d97aa0ae6e5d5d7e32071f3508d41638adb546eb62bfecf0c5",
       "owner_anchor": "os: [ubuntu-latest, windows-latest]",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "67bb2d49f7351b66599a35894a1c8dfe05c2fc3e227a46d1b14024b901ddc110",
+      "proof_sha256": "b1317f9e31eb69a204b09dd8a3f758e81b9ddcce72b1520ef6f674e64606ad10",
       "proof_anchor": "pytest.skip('symlink privilege varies on Windows')"
     },
     {
@@ -65,7 +65,7 @@
       "owner_sha256": "987692ec836f2b16c62f53c8cc4f4f14551bb35c33298e6d5d22eb8281b25f6c",
       "owner_anchor": "OPENCODE_HI_STATE_DIR",
       "proof": "data/validation/test-harness-isolation-0.1.0.json",
-      "proof_sha256": "beda0a14287137fdbe42359d971d6bf48eaa49c2c24111b417b76d4bfe2a885c",
+      "proof_sha256": "2e99ffdb6ae853b19a85438afcd1621e1992342a2a2619319fecb2b24e94279f",
       "proof_anchor": "\"home_hi_state_delta\""
     },
     {
@@ -74,7 +74,7 @@
       "owner_sha256": "97829bf90a65fec515bfd6c01736f80a2b36e996a38d2fb565e129569407c3ac",
       "owner_anchor": "fileURLToPath(import.meta.url)",
       "proof": "data/validation/test-harness-isolation-0.1.0.json",
-      "proof_sha256": "beda0a14287137fdbe42359d971d6bf48eaa49c2c24111b417b76d4bfe2a885c",
+      "proof_sha256": "2e99ffdb6ae853b19a85438afcd1621e1992342a2a2619319fecb2b24e94279f",
       "proof_anchor": "\"repo_root_cwd\""
     },
     {
@@ -83,7 +83,7 @@
       "owner_sha256": "987692ec836f2b16c62f53c8cc4f4f14551bb35c33298e6d5d22eb8281b25f6c",
       "owner_anchor": "XDG_STATE_HOME",
       "proof": "data/validation/test-harness-isolation-0.1.0.json",
-      "proof_sha256": "beda0a14287137fdbe42359d971d6bf48eaa49c2c24111b417b76d4bfe2a885c",
+      "proof_sha256": "2e99ffdb6ae853b19a85438afcd1621e1992342a2a2619319fecb2b24e94279f",
       "proof_anchor": "\"isolation_env\""
     },
     {
@@ -92,7 +92,7 @@
       "owner_sha256": "987692ec836f2b16c62f53c8cc4f4f14551bb35c33298e6d5d22eb8281b25f6c",
       "owner_anchor": "GIT_CONFIG_NOSYSTEM",
       "proof": "data/validation/test-harness-isolation-0.1.0.json",
-      "proof_sha256": "beda0a14287137fdbe42359d971d6bf48eaa49c2c24111b417b76d4bfe2a885c",
+      "proof_sha256": "2e99ffdb6ae853b19a85438afcd1621e1992342a2a2619319fecb2b24e94279f",
       "proof_anchor": "GIT_CONFIG_NOSYSTEM"
     },
     {

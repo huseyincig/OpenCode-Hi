@@ -150,11 +150,11 @@
     "all_required_prompt_areas": true
   },
   "source_binding": {
-    "commit": "b9d7852140c5ca65763d205b528aadf7c3e3d7ef",
-    "tree": "ea16c12cd8d6dfb20ac38450965ef7633ee615f5"
+    "commit": "3d8b2df200cabda4a8f69985f44160b86508f374",
+    "tree": "5848068f7f673f499d1d827b60e276754754f792"
   },
   "proof_hashes": {
-    "data/validation/selective-mutation-testing-0.1.0.json": "1fbcf372ce7754210fafabfb9f7248df3d8a81ce4126631591ac1d22447db1ae",
+    "data/validation/selective-mutation-testing-0.1.0.json": "7883f459e389102176e9cf17eac3933dddd52ba447d0df9ef862b9fdb5b49ff4",
     "scripts/run-selective-mutations.mjs": "2b0151a68086eb1d34c1aa22149bd0fdb8e6511fef74560d1f4bf5792d9d39e1",
     "plugin/test/q2-critical-invariant-guards.test.mjs": "da74cbdd01a1498851ca49fa8a7d669d80e52970ec8b332c97f37da7e9107c9d",
     "plugin/src/contracts/common.ts": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",

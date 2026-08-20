@@ -5,7 +5,7 @@
   "section": 35,
   "status": "PASS",
   "benchmark_receipt": "data/validation/performance-resource-benchmarks-0.1.0.json",
-  "benchmark_sha256": "fb75f96eabc3a638ae6f3d4643391e2aab381d7b87021cd402de563f66b35d27",
+  "benchmark_sha256": "de824f2af2056ea3079a94be14dbe751b4b4b5646f7960bc30a22a523533d431",
   "required_metrics": [
     "startup",
     "task_initialization",

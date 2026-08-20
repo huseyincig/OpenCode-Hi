@@ -11,16 +11,16 @@
     "registry_opencode_latest": "1.18.19",
     "registry_sdk_latest": "1.18.19",
     "locked_sdk": "1.18.19",
-    "captured_at": "2026-08-20T19:11:32.046443+00:00"
+    "captured_at": "2026-08-20T19:29:52.755244+00:00"
   },
   "candidate_release": "0.2.3",
   "fresh_consumer_receipt": "data/validation/fresh-consumer-opencode-1.18.19.json",
-  "fresh_consumer_sha256": "24bee57fb3388ee104edb8d70abc0a2d22a1bbc72a5b0402a3ff64bf74ce3118",
-  "exact_source_commit": "b9d7852140c5ca65763d205b528aadf7c3e3d7ef",
-  "exact_source_tree": "ea16c12cd8d6dfb20ac38450965ef7633ee615f5",
+  "fresh_consumer_sha256": "73c67efd4003a939ebba42ea85fd3c0c6b89b11c6657288163f0f3617c3eba6f",
+  "exact_source_commit": "3d8b2df200cabda4a8f69985f44160b86508f374",
+  "exact_source_tree": "5848068f7f673f499d1d827b60e276754754f792",
   "capability_evidence_mode": "CURRENT_EXACT_HOST_PACKAGE_PLUS_RUNTIME_EQUIVALENT_EXACT_T3",
   "compatibility_projection": "data/validation/compatibility-matrix-0.1.0.json",
-  "compatibility_sha256": "9f62637e60e3af7299979645905cf51616634bba4de72dc5a9d268e99cf2518c",
+  "compatibility_sha256": "7c8cfb28a77ce5e43d2d92225c4f135211311f9273aa83df2d8060a8239ec031",
   "lifecycle_audit": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
   "lifecycle_sha256": "f9bdb727432ba04c53be723063320acbcadbc6a4bab609d51fbe6c9a1bff9302",
   "capabilities": {

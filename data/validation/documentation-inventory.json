@@ -147,7 +147,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "7c64c3e9e6c1eb8b20591d99c973786185bc01143e6278e0653e611aa18304b7",
+      "sha256": "8d9befeb115096038bdc982d218a7794d809f5f79b6408c551ea10a8d7591bee",
       "area": "product-overview",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -187,7 +187,7 @@
     },
     {
       "path": "docs/INSTALLATION.md",
-      "sha256": "7ff7fdc1a2d502d16da6aa231a8c6cdca79a8046ade030122e1e197cda0fc475",
+      "sha256": "8fd90de97931599e51a966991807d3308f046e902c08c3bce6121fe16286585c",
       "area": "installation-configuration-lifecycle",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -253,7 +253,7 @@
   "machine_owners": [
     {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
-      "sha256": "9f62637e60e3af7299979645905cf51616634bba4de72dc5a9d268e99cf2518c",
+      "sha256": "7c8cfb28a77ce5e43d2d92225c4f135211311f9273aa83df2d8060a8239ec031",
       "area": "supported-host-matrix",
       "lifecycle": "MACHINE_OWNER"
     },

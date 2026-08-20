@@ -74,7 +74,7 @@
       "owner_sha256": "05d0ac7352c100c56ab67c077938dedbea504dea437c7e800678a30d99f57f19",
       "owner_anchor": "_bounded_cli_int('parallel-max',1,8)",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "67bb2d49f7351b66599a35894a1c8dfe05c2fc3e227a46d1b14024b901ddc110",
+      "proof_sha256": "b1317f9e31eb69a204b09dd8a3f758e81b9ddcce72b1520ef6f674e64606ad10",
       "proof_anchor": "test_prompt_b_cli_reconfigure_rejects_out_of_range_and_malformed_limits"
     },
     {
@@ -101,7 +101,7 @@
       "owner_sha256": "05d0ac7352c100c56ab67c077938dedbea504dea437c7e800678a30d99f57f19",
       "owner_anchor": "jsonc-safe-mutation-not-supported",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "67bb2d49f7351b66599a35894a1c8dfe05c2fc3e227a46d1b14024b901ddc110",
+      "proof_sha256": "b1317f9e31eb69a204b09dd8a3f758e81b9ddcce72b1520ef6f674e64606ad10",
       "proof_anchor": "test_prompt_b_cli_jsonc_plan_is_truthful_actionable_and_non_mutating"
     }
   ],
