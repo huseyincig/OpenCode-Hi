@@ -2,7 +2,7 @@
   "schema": 2,
   "kind": "PROMPT_B_ZERO_KNOWN_DEFECT_CLOSURE_LOOP",
   "source_checkpoint": {
-    "commit": "4c1e9084da11ebc1fe2093abdfcf1e67456a7c2a"
+    "commit": "48fddce96b7b022f619941b185558ffcf2e6f902"
   },
   "program": "PROMPT_B",
   "section": 40,
@@ -1939,12 +1939,58 @@
         "ledger",
         "adjacent-reaudit"
       ]
+    },
+    {
+      "id": "verification-invalidated-evidence-timestamp-tie",
+      "classification": "RUNTIME_VERIFICATION_FRESHNESS_DEFECT",
+      "canonical_owner": "plugin/src/runtime/verification/policy.ts",
+      "root_cause_record": "verificationEnvelopeFor admitted invalidated evidence into same-kind candidate ordering, so an invalidated PASS and fresh replacement PASS sharing the same millisecond timestamp could select stale evidence and leave the verification obligation open",
+      "resolution": "verification envelopes exclude invalidated evidence before kind ordering; deterministic same-timestamp regression proves the fresh replacement satisfies the claim",
+      "regression_receipt": "plugin/test/verification-environment-hardening.test.mjs",
+      "regression_receipt_sha256": "3d6d2b9d16c2085e9c7952a5bb41e1d75e9a8506991ca5e365d263ea87a942a0",
+      "closure_pipeline": [
+        "discover",
+        "classify",
+        "canonical-owner",
+        "root-cause",
+        "fix",
+        "regression-test",
+        "focused-verification",
+        "full-verification",
+        "docs-parity",
+        "local-commit",
+        "ledger",
+        "adjacent-reaudit"
+      ]
+    },
+    {
+      "id": "playwright-cache-test-posix-literal-on-windows",
+      "classification": "CI_TEST_PORTABILITY_DEFECT",
+      "canonical_owner": "plugin/test/playwright-bootstrap.test.mjs",
+      "root_cause_record": "browser-cache tests compared host-native paths against POSIX literal separators while running on Windows",
+      "resolution": "cache path assertions use node:path join so the ownership invariant is platform-neutral without changing product cache semantics",
+      "regression_receipt": "plugin/test/playwright-bootstrap.test.mjs",
+      "regression_receipt_sha256": "0433e926b3ceaed427f54e72268009c7068d188dedbaec986720c0d1576404be",
+      "closure_pipeline": [
+        "discover",
+        "classify",
+        "canonical-owner",
+        "root-cause",
+        "fix",
+        "regression-test",
+        "focused-verification",
+        "full-verification",
+        "docs-parity",
+        "local-commit",
+        "ledger",
+        "adjacent-reaudit"
+      ]
     }
   ],
   "summary": {
-    "recorded_findings": 84,
+    "recorded_findings": 86,
     "unresolved_known_defects": 0,
-    "closure_receipts_checked": 84,
+    "closure_receipts_checked": 86,
     "documentation_parity_violations": 0,
     "exact_t3_capabilities": 3,
     "lifecycle_invariants_pass": 61

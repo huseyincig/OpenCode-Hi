@@ -5,13 +5,13 @@
   "section": 28,
   "status": "CLOSED_LOCAL_T4_BLOCKED",
   "current_source": {
-    "commit": "4c1e9084da11ebc1fe2093abdfcf1e67456a7c2a",
-    "tree": "ce190e92ac8e1c33298e5381461476ad6ac86cb8",
+    "commit": "48fddce96b7b022f619941b185558ffcf2e6f902",
+    "tree": "f7b3bf27f0411fbc818a8589c774045260d5ab70",
     "version": "0.2.3"
   },
   "release_source": {
-    "commit": "3d8b2df200cabda4a8f69985f44160b86508f374",
-    "tree": "5848068f7f673f499d1d827b60e276754754f792",
+    "commit": "48fddce96b7b022f619941b185558ffcf2e6f902",
+    "tree": "f7b3bf27f0411fbc818a8589c774045260d5ab70",
     "tag": null
   },
   "development_head": {
@@ -23,8 +23,8 @@
     "republish_same_version_forbidden": false
   },
   "certification_head": {
-    "commit": "4c1e9084da11ebc1fe2093abdfcf1e67456a7c2a",
-    "tree": "ce190e92ac8e1c33298e5381461476ad6ac86cb8"
+    "commit": "48fddce96b7b022f619941b185558ffcf2e6f902",
+    "tree": "f7b3bf27f0411fbc818a8589c774045260d5ab70"
   },
   "historical_release": {
     "tag": "v0.2.1",
@@ -32,7 +32,7 @@
     "status": "PASS_T4"
   },
   "registry_observation": {
-    "observed_at": "2026-08-20T19:29:52.755244+00:00",
+    "observed_at": "2026-08-20T20:19:10.394882+00:00",
     "reference_host_registry_latest": "1.18.19",
     "reference_sdk_registry_latest": "1.18.19",
     "current_publication_receipt_present": false,
@@ -43,7 +43,7 @@
     {
       "stage": "source-commit",
       "status": "PASS",
-      "detail": "3d8b2df200cabda4a8f69985f44160b86508f374",
+      "detail": "48fddce96b7b022f619941b185558ffcf2e6f902",
       "proof": "fresh exact-host source binding"
     },
     {
@@ -141,7 +141,7 @@
     "package.json": "cf54e799329ca45c3a05e87192b67c4efb879f0bc5e79b7ddada0e16bc2c677d",
     "package-lock.json": "6db0b63a847200c028a8adfe5ea0db951a487a461f9203100d7ad2d299f44a94",
     "plugin/package-lock.json": "8d6492dc6b1a528cf302ac7942024e084ebc1301a30290b799846a1eda9a853f",
-    "data/validation/fresh-consumer-opencode-1.18.19.json": "73c67efd4003a939ebba42ea85fd3c0c6b89b11c6657288163f0f3617c3eba6f",
+    "data/validation/fresh-consumer-opencode-1.18.19.json": "9d889f06082b873d60fe82b0fdc7a6aed5bd3996169a8d4990fde212e4287839",
     "data/validation/release-status-0.2.1.json": "e6780dbb64272d0080f5eb47e0d2a8f0ecba2d825b61e2be5b2a9d2e1604fa98",
     ".github/workflows/npm-publish.yml": "fddeff0ad498142ab454a0df576328bdb061106ce7eddec3ae553e3f653572b5",
     "scripts/verify-npm-oidc-release.mjs": "b39ef117a6464367d9bd817a0c35d0c7e55c15bcd26d40212e62e315719c8351",

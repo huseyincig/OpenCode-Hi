@@ -8,7 +8,7 @@
     {
       "invariant": "evidence-scope",
       "owner": "plugin/src/runtime/verification/policy.ts",
-      "owner_sha256": "47f3eeb3e25dc0c4d7d8d96758ad8a5c46be5fd1aafa03e990c7f1c86ac89163",
+      "owner_sha256": "68a5068adfeb60ebd19832e4def06caf1e0392802d278c789669c68ed7be8fb0",
       "owner_anchor": "evidenceAllowedForVerification",
       "proof": "plugin/test/obligation-ownership.test.mjs",
       "proof_sha256": "9a7bb41b7eaf0aabf23b8b25e510a7681f74dac498c9bb16d9d31a036e975a85",
@@ -17,7 +17,7 @@
     {
       "invariant": "evidence-freshness",
       "owner": "plugin/src/runtime/verification/policy.ts",
-      "owner_sha256": "47f3eeb3e25dc0c4d7d8d96758ad8a5c46be5fd1aafa03e990c7f1c86ac89163",
+      "owner_sha256": "68a5068adfeb60ebd19832e4def06caf1e0392802d278c789669c68ed7be8fb0",
       "owner_anchor": "freshness=p.requireFresh&&!requiredEvidenceFresh?'stale':'fresh'",
       "proof": "plugin/test/q2-critical-invariant-guards.test.mjs",
       "proof_sha256": "da74cbdd01a1498851ca49fa8a7d669d80e52970ec8b332c97f37da7e9107c9d",
@@ -53,7 +53,7 @@
     {
       "invariant": "not-run-not-passed",
       "owner": "plugin/src/runtime/verification/policy.ts",
-      "owner_sha256": "47f3eeb3e25dc0c4d7d8d96758ad8a5c46be5fd1aafa03e990c7f1c86ac89163",
+      "owner_sha256": "68a5068adfeb60ebd19832e4def06caf1e0392802d278c789669c68ed7be8fb0",
       "owner_anchor": "result:'not_run' as const",
       "proof": "plugin/test/verification-envelope-contract.test.mjs",
       "proof_sha256": "e5a9df85cb1661c663e7590bd6d2a3ed50433fcaf33778ef2df3b7543c428353",
@@ -98,7 +98,7 @@
     {
       "invariant": "required-evidence-coverage",
       "owner": "plugin/src/runtime/verification/policy.ts",
-      "owner_sha256": "47f3eeb3e25dc0c4d7d8d96758ad8a5c46be5fd1aafa03e990c7f1c86ac89163",
+      "owner_sha256": "68a5068adfeb60ebd19832e4def06caf1e0392802d278c789669c68ed7be8fb0",
       "owner_anchor": "requiredKinds",
       "proof": "plugin/test/verification-envelope-contract.test.mjs",
       "proof_sha256": "e5a9df85cb1661c663e7590bd6d2a3ed50433fcaf33778ef2df3b7543c428353",

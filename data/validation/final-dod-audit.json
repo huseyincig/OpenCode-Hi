@@ -6,20 +6,26 @@
   "release_blocked": true,
   "claim_boundary": "0.2.3 local implementation, exact Linux/aarch64 OpenCode 1.18.19 T3 and packed consumer are green. Current-source Windows CI, clean evidence checkpoint/final gates, and real T4 publication remain pending.",
   "source_checklist": {
-    "source": "0.2.3 runtime loop hardening, bounded Node setup/reconfigure, optional update UX, exact-SHA preflight and evidence-only attestation hardening",
+    "source": "0.2.3 runtime loop hardening, bounded Node setup/reconfigure, exact-SHA preflight, evidence-only attestation hardening, deterministic verification freshness, and Windows-portable browser cache tests",
     "internal_missing": [],
     "external_pending": [
       "exact OpenCode 1.18.19 Windows current-source CI",
       "GitHub release T4",
       "npm Trusted Publishing/fresh-registry exact-host T4"
     ],
-    "local_pending": []
+    "local_pending": [
+      "commit current evidence bundle",
+      "clean-worktree hygiene",
+      "full Python evidence suite",
+      "validator",
+      "final canonical gates"
+    ]
   },
   "local_acceptance": {
     "node": {
       "status": "PASS",
       "command": "npm run check:product",
-      "scope": "full runtime + architecture + Node setup + docs"
+      "scope": "full runtime 1069/1069 + architecture + Node setup + docs"
     },
     "node_setup": {
       "status": "PASS",
@@ -38,9 +44,8 @@
       ]
     },
     "python": {
-      "status": "PASS",
-      "command": "release-venv python -m pytest -q tests/test_hi.py",
-      "scope": "full product + evidence suite"
+      "status": "PENDING_FULL_EVIDENCE",
+      "command": "release-venv python -m pytest -q tests/test_hi.py"
     }
   },
   "product_truth": {
@@ -62,7 +67,7 @@
     "linux_aarch64": {
       "status": "PASS_EXACT_CURRENT_T3",
       "opencode": "1.18.19",
-      "source_commit": "3d8b2df200cabda4a8f69985f44160b86508f374",
+      "source_commit": "03a816f930e3172ec84f733bae081768e2ea1a14",
       "hi_tools": 31,
       "receipt": "data/validation/prompt-b-exact-current-opencode-t3.json",
       "runtime_equivalent_to_current": true
@@ -83,8 +88,9 @@
     "final_gates": "data/validation/final-gates-0.2.3.json"
   },
   "blockers": [
+    "local evidence finalization",
     "exact OpenCode 1.18.19 Windows current-source external CI",
     "real GitHub/npm T4 publication evidence"
   ],
-  "conclusion": "All executable local 0.2.3 engineering and certification gates pass. Final certification remains PARTIAL only because current-source Windows CI and real GitHub/npm T4 publication evidence remain external."
+  "conclusion": "Final public 0.2.3 source passes local runtime/product, deterministic release, fresh packed consumer and exact Linux/aarch64 T3 projection. Local evidence finalization remains in progress; Windows current-source CI and T4 remain external."
 }

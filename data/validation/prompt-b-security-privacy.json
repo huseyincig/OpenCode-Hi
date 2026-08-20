@@ -59,7 +59,7 @@
       "section": 20,
       "invariant": "malicious-repo-content",
       "owner": "plugin/src/runtime/verification/policy.ts",
-      "owner_sha256": "47f3eeb3e25dc0c4d7d8d96758ad8a5c46be5fd1aafa03e990c7f1c86ac89163",
+      "owner_sha256": "68a5068adfeb60ebd19832e4def06caf1e0392802d278c789669c68ed7be8fb0",
       "owner_anchor": "verificationSatisfied",
       "proof": "plugin/test/prompt-b-evidence-verification-completion-hostile.test.mjs",
       "proof_sha256": "3315d64cdcd5e24a8e87fb02effd71cd487445d36146942372c751e5248685b1",

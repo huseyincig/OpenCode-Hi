@@ -150,11 +150,11 @@
     "all_required_prompt_areas": true
   },
   "source_binding": {
-    "commit": "3d8b2df200cabda4a8f69985f44160b86508f374",
-    "tree": "5848068f7f673f499d1d827b60e276754754f792"
+    "commit": "03a816f930e3172ec84f733bae081768e2ea1a14",
+    "tree": "705f5832a7673cd1eafce87a3fa3dee6aebbff74"
   },
   "proof_hashes": {
-    "data/validation/selective-mutation-testing-0.1.0.json": "7883f459e389102176e9cf17eac3933dddd52ba447d0df9ef862b9fdb5b49ff4",
+    "data/validation/selective-mutation-testing-0.1.0.json": "4a64bb430463d31a16f96a3842251d0a89e9383b49b477bb65727b19fc33f2f8",
     "scripts/run-selective-mutations.mjs": "2b0151a68086eb1d34c1aa22149bd0fdb8e6511fef74560d1f4bf5792d9d39e1",
     "plugin/test/q2-critical-invariant-guards.test.mjs": "da74cbdd01a1498851ca49fa8a7d669d80e52970ec8b332c97f37da7e9107c9d",
     "plugin/src/contracts/common.ts": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
@@ -169,7 +169,7 @@
     "plugin/src/runtime/safety/authority.ts": "e81c16ad08a0392b4cb5094500dd046a2ef0d9bf731159817fc67d0a4c4c6378",
     "plugin/src/runtime/safety/project-authority.ts": "51915d3dbf4d5051e1e60c2cc0726b892f9b97b1d58c8067c0afc03cf59fe175",
     "plugin/src/runtime/state/persistence.ts": "f611defb9fe0f1a0d9370f789f524bf59de2c1f770e52572f9f8161b3c012ab2",
-    "plugin/src/runtime/verification/policy.ts": "47f3eeb3e25dc0c4d7d8d96758ad8a5c46be5fd1aafa03e990c7f1c86ac89163"
+    "plugin/src/runtime/verification/policy.ts": "68a5068adfeb60ebd19832e4def06caf1e0392802d278c789669c68ed7be8fb0"
   },
   "violations": [],
   "claim_boundary": "Selective mutation certification for PROMPT B §31. Compile errors are not kills. Every accepted mutant must compile and then fail the expected invariant guard. No broad mutation-coverage percentage is claimed."

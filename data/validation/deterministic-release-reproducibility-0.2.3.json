@@ -4,13 +4,13 @@
   "release": "0.2.3",
   "status": "PASS",
   "source": {
-    "commit": "3d8b2df200cabda4a8f69985f44160b86508f374",
-    "tree": "5848068f7f673f499d1d827b60e276754754f792"
+    "commit": "48fddce96b7b022f619941b185558ffcf2e6f902",
+    "tree": "f7b3bf27f0411fbc818a8589c774045260d5ab70"
   },
   "artifacts": {
-    "source/OpenCode-Hi-0.2.3-SOURCE.zip": "e62a4e027d20d3bce635ac24d218b5e9bfd6be462e5d4d043db1811c5f36d821",
-    "dist/RELEASE-MANIFEST-0.2.3.json": "f68dbeaa64ae910d98e67a1798bb649e79acfe641bb101f225f72c81346bc0e2",
-    "dist/OpenCode-Hi-0.2.3-DISTRIBUTABLE.zip": "5dd4529fa7b2584b3d3236283efb84219b019a8906b74a98ed4547ecb7d56c69",
+    "source/OpenCode-Hi-0.2.3-SOURCE.zip": "a654843e50791b7a792238725c9f4f53a272214e7144e789a81778af520ddc6a",
+    "dist/RELEASE-MANIFEST-0.2.3.json": "79a876d335b75b1241f5b037fdcc03f766040edbed8d601dc6c3173a37e42f00",
+    "dist/OpenCode-Hi-0.2.3-DISTRIBUTABLE.zip": "dadf8479da0770fd929d5ef612fffe9c6bed3c4d77a34489faf0f25f4198e89b",
     "dist/SBOM-0.2.3.json": "4ba609b80caa7bb1c2f343da2436e71d678772aa78131969ab5668576ce6b013"
   },
   "independent_builds": 2,

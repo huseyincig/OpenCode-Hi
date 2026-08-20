@@ -171,7 +171,7 @@
     },
     {
       "path": "docs/HOSTS.md",
-      "sha256": "efc156286f471dfa9bd6696b02757ad5382d8399c35a6aaeec3db96eeae0fade",
+      "sha256": "d5bfdd1359032baa2e2655597814773990d3e292dd29a62e747e91694fda23c5",
       "area": "host-support",
       "audience": "OPERATOR",
       "lifecycle": "CANONICAL_CURRENT",
@@ -253,7 +253,7 @@
   "machine_owners": [
     {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
-      "sha256": "7c1b2f37527429766fdb86b1071003f011ce8078dc007c9bc07959ff7092e539",
+      "sha256": "13c83c589bb3f7635dd9f98312de0967195e77ba8b44aa35f005fdfdf9377f2d",
       "area": "supported-host-matrix",
       "lifecycle": "MACHINE_OWNER"
     },
