@@ -58,9 +58,9 @@ test('missing verifier/toolchain is environment-issue, not product test failure'
   assert.equal(e.pass,undefined)
   const decision=evaluateIdle(m)
   assert.equal(decision.reason_code,'verification-environment-issue')
-  assert.equal(decision.decision,'RECOVER')
+  assert.equal(decision.decision,'USER_ACTION_REQUIRED')
   assert.equal(m.continuation.stagnation_count,0)
-  assert.match(decision.prompt,/do not modify product code merely to make an unavailable verifier run/i)
+  assert.equal(decision.prompt,undefined)
 })
 
 test('unstructured verification output with no exit signal is pending, never implicit PASS',()=>{

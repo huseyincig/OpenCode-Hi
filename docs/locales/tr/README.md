@@ -12,7 +12,7 @@ Hi, mümkün olan en fazla agent/token/araç yerine iş için **minimum yeterli*
 
 ## Güncel ürün gerçeği
 
-Güncel immutable public release `opencode-hi@0.2.2` / `v0.2.2`'dir. Sürüm kimliğinin canonical sahibi `VERSION` dosyasıdır ve package metadata ile parity doğrulanır. Public availability için authoritative kaynaklar GitHub Releases ve npm registry'dir. `0.2.2`; exact Git tag/source, başarılı Ubuntu/Windows Release Readiness, npm Trusted Publishing provenance ve fresh-registry exact OpenCode `1.18.19` kabulü ile doğrulanmıştır.
+Güncel immutable public release `opencode-hi@0.2.2` / `v0.2.2`'dir. Güncel development source ayrı `0.2.3` candidate kimliğini taşır; source metadata'da `0.2.3` yazması onu yayınlanmış yapmaz. Public availability için authoritative kaynaklar GitHub Releases ve npm registry'dir. Yayınlanmış `0.2.2`; exact Git tag/source, başarılı Ubuntu/Windows Release Readiness, npm Trusted Publishing provenance ve fresh-registry exact OpenCode `1.18.19` kabulü ile doğrulanmıştır.
 
 Güncel host/capability gerçeği elle yazılan metinden değil exact receipt'lerden üretilir. Ayrıntı için [Host Support](../../HOSTS.md) ve `data/validation/compatibility-matrix-0.1.0.json` kullanılır.
 
@@ -73,7 +73,7 @@ Machine-readable compatibility projection canonical mutable support görünümü
 
 - **Process lifecycle:** Hi-owned `ProcessContract` / `ProcessExecutor` yüzeyinde supported. PID-bound spawn, bounded IO, event-driven WAIT, timeout, kill, ayrı cleanup, restart adoption ve STOP reconciliation kapsanır.
 - **Workspace isolation:** Hi-owned `IsolationDecision` / `WorkspaceLease` / `WorkspaceRuntime` yüzeyinde supported. Required isolation alternate workspace'e bağlanır; verification aynı lease içinde yürür ve primary/user-dirty worktree korunur.
-- **Browser execution:** Hi-owned ve runtime-health-gated yüzeyde supported. BrowserObservation veya screenshot otomatik Evidence/PASS değildir.
+- **Browser execution:** Hi-owned ve runtime-health-gated yüzeyde supported. Mandatory local browser verification Chromium gerektirip executable bulunamadığında development `0.2.3` runtime pinned `playwright-core@1.62.1` üzerinden Hi-owned platform cache'e en fazla bir bounded bootstrap denemesi yapar. Bootstrap başarısız veya unavailable ise durum açık environment/capability blocker olur; aynı verification state synthetic continuation döngüsüne girmez. BrowserObservation veya screenshot otomatik Evidence/PASS değildir.
 - **HumanDecision:** chat transport supported. Deterministic structured OpenCode question-opening UI transport, accepted host API gerekli public opener'ı sağlamadığı için unsupported'dır.
 - **Semantic Context:** explicit first-class adapter yalnız TypeScript/TSX destekler. JavaScript, LSP ve Tree-sitter semantic adapter desteği ilan edilmez.
 

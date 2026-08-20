@@ -15,6 +15,7 @@ import {resolveHiConfig} from '../dist/config/resolver.js'
 import {PACKAGED_HI_AGENTS} from '../dist/generated/agent-config.js'
 import {openCodeHostCapabilityContracts,hostCapabilityByID} from '../dist/contracts/host-capability.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
+import {evaluateIdle} from '../dist/runtime/continuation/evaluator.js'
 
 const BASE='a'.repeat(40)
 const host={agent:PACKAGED_HI_AGENTS}
@@ -273,4 +274,15 @@ test('PROMPT B symlinked workspace escape is canonicalized and rejected when it 
     const adapter=new OpenCodeWorkspaceAdapter({v2:{experimental:{workspace}}},new URL('http://127.0.0.1:1'),root,inspect)
     await assert.rejects(()=>adapter.provision({mission_id:'m',task_id:'t',repository_root:root,source_baseline:BASE}),/same Git common repository/)
   }finally{rmSync(root,{recursive:true,force:true});rmSync(evil,{recursive:true,force:true});rmSync(common,{recursive:true,force:true})}
+})
+
+
+test('required isolation without a workspace runtime becomes one durable terminal capability state',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-w2-no-runtime-')),created=[]
+  try{
+    const rt=new TaskRuntime(opencodeChildPort(client(created,[],[],root)),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),root,root,()=>resolveHiConfig({}),()=>[],()=>host),store=new MissionStore(root),m=store.start('w2-no-runtime','isolated implementation');assess(store,'w2-no-runtime')
+    await assert.rejects(()=>rt.start(m,{objective:'isolated change',role:'coder',category:'quick',scope:['src/a.ts'],isolationRequired:true,isolationReason:'protect user dirty state'}),/USER_ACTION_REQUIRED: Hi WorkspaceExecutor is unavailable/)
+    assert.equal(created.length,0);assert.ok(m.execution.blockers.includes('capability-unavailable:workspace-isolation-binding'))
+    const decision=evaluateIdle(m);assert.equal(decision.decision,'USER_ACTION_REQUIRED');assert.equal(decision.reason_code,'capability-unavailable');assert.equal(decision.prompt,undefined)
+  }finally{rmSync(root,{recursive:true,force:true})}
 })

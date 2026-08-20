@@ -15,6 +15,14 @@ export interface DoctorRuntimeInfo {
     hostConfig?: Record<string, unknown>;
     openCodeVersion?: string;
     runtimeHostResources?: ReadonlySet<string>;
+    browserBootstrap?: {
+        available: boolean;
+        attempted?: boolean;
+        cachePath?: string;
+        version?: string;
+        executablePath?: string;
+        reason?: string;
+    };
 }
 export declare function runDoctor(config: HiConfig, store: MissionStore, directory?: string, info?: DoctorRuntimeInfo): DoctorCheck[];
 export declare function formatDoctor(c: DoctorCheck[]): string;

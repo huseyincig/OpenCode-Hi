@@ -34,7 +34,7 @@ test('M13 explicit MCP browser backend requires exact selected MCP and semantic 
 test('M13 visual task defaults to bounded Playwright and disables unselected MCP servers',async()=>{
   const prompts=[],m=mission('m13-local',['visual-qa']),rt=runtime(prompts,new Set(['host-capability:browser-execution']))
   const out=await rt.start(m,{objective:'verify local UI',role:'visual-qa',category:'visual',scope:['src/view.tsx'],browserAllowedOrigins:['http://127.0.0.1:4173']})
-  const task=m.execution.tasks.find(t=>t.id===out.task_id);assert.equal(task.execution_profile.browser_backend,'bounded-playwright');assert.deepEqual(out.methodologies,['hi-browser-testing'])
+  const task=m.execution.tasks.find(t=>t.id===out.task_id);assert.equal(task.execution_profile.browser_backend,'bounded-playwright');assert.deepEqual(out.methodologies,['hi-browser-testing','hi-visual-qa'])
   for(const id of HI_BROWSER_EXECUTION_TOOL_IDS)assert.equal(prompts[0].body.tools[id],undefined,id)
   assert.equal(prompts[0].body.tools['browser_*'],false);assert.equal(prompts[0].body.tools['docs_*'],false)
   assert.ok(task.constraints.includes('hi-browser-backend:bounded-playwright'))
@@ -43,15 +43,20 @@ test('M13 visual task defaults to bounded Playwright and disables unselected MCP
 test('M13 selected MCP backend satisfies browser runtime resource without fabricating local Hi browser tools',async()=>{
   const prompts=[],m=mission('m13-mcp',['visual-qa','mcp']),rt=runtime(prompts,new Set())
   const out=await rt.start(m,{objective:'verify UI through configured browser MCP',role:'visual-qa',category:'visual',scope:['src/view.tsx'],mcpServers:['browser'],browserBackend:'mcp'})
-  const task=m.execution.tasks.find(t=>t.id===out.task_id);assert.equal(task.execution_profile.browser_backend,'mcp');assert.deepEqual(task.execution_profile.mcp_servers,['browser']);assert.deepEqual(out.methodologies,['hi-browser-testing'])
+  const task=m.execution.tasks.find(t=>t.id===out.task_id);assert.equal(task.execution_profile.browser_backend,'mcp');assert.deepEqual(task.execution_profile.mcp_servers,['browser']);assert.deepEqual(out.methodologies,['hi-browser-testing','hi-visual-qa'])
   for(const id of HI_BROWSER_EXECUTION_TOOL_IDS)assert.equal(prompts[0].body.tools[id],false,id)
   assert.equal(prompts[0].body.tools['browser_*'],undefined);assert.equal(prompts[0].body.tools['docs_*'],false)
   assert.ok(task.constraints.includes('hi-browser-backend:mcp'));assert.ok(task.constraints.includes('hi-mcp:browser'))
   const worker=m.execution.workers.find(w=>w.id===out.worker_id);assert.ok(worker?.session_id);assert.equal(resolveBrowserExecutionOwner(m,{sessionID:worker.session_id,workerID:worker.id,taskID:task.id}),undefined,'MCP backend must never acquire the local Playwright execution owner')
 })
 
-test('M13 explicit local backend fails closed when bounded Playwright health is absent',async()=>{
+test('M13 explicit local backend records one durable browser capability blocker and verification environment issue',async()=>{
   const prompts=[],m=mission('m13-local-missing',['visual-qa']),rt=runtime(prompts,new Set())
-  await assert.rejects(()=>rt.start(m,{objective:'verify local UI',role:'visual-qa',category:'visual',scope:['src/view.tsx'],browserBackend:'bounded-playwright',browserAllowedOrigins:['http://127.0.0.1:4173']}),/bounded-playwright browser backend is unavailable/)
+  await assert.rejects(()=>rt.start(m,{objective:'verify local UI',role:'visual-qa',category:'visual',scope:['src/view.tsx'],browserBackend:'bounded-playwright',browserAllowedOrigins:['http://127.0.0.1:4173']}),/Required methodology host\/resource capability is unavailable/)
   assert.equal(m.execution.tasks.length,0);assert.equal(prompts.length,0)
+  assert.ok(m.execution.blockers.includes('capability-unavailable:browser-execution'))
+  assert.ok(m.execution.blockers.includes('capability-precondition:visual-qa:methodology-resource'))
+  const verify=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(verify)
+  const env=m.execution.evidence.items.find(e=>e.kind==='visual-evidence'&&e.outcome==='environment-issue')
+  assert.ok(env);assert.ok(env.obligation_ids?.includes(verify.id));assert.equal(env.reason,'capability-unavailable:browser-execution')
 })

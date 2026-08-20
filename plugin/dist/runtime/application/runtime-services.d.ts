@@ -22,6 +22,15 @@ export interface RuntimeServicePorts {
     process: ProcessExecutor;
     workspace: WorkspaceExecutor;
     createBrowser: (persist: (bytes: Uint8Array, context: BrowserExecutionContext) => string) => BrowserExecutor;
+    bootstrapBrowser?: () => Promise<{
+        available: boolean;
+        attempted?: boolean;
+        cachePath?: string;
+        version?: string;
+        executablePath?: string;
+        reason?: string;
+    }>;
+    onBrowserAvailability?: (available: boolean) => void;
 }
 export declare function createRuntimeServices(input: {
     ports: RuntimeServicePorts;
@@ -44,5 +53,22 @@ export declare function createRuntimeServices(input: {
     workspaceRuntime: WorkspaceRuntime;
     browserExecutor: BrowserExecutor;
     setBrowserAvailable: (value: boolean) => void;
+    ensureBrowserAvailable: () => Promise<{
+        available: boolean;
+        attempted: boolean;
+        reason?: undefined;
+    } | {
+        available: boolean;
+        attempted: boolean | undefined;
+        reason: string | undefined;
+    }>;
+    getBrowserBootstrapStatus: () => {
+        available: boolean;
+        attempted?: boolean;
+        cachePath?: string;
+        version?: string;
+        executablePath?: string;
+        reason?: string;
+    } | undefined;
     scopedStores: import("./runtime-scoped-stores.js").RuntimeScopedStores;
 };

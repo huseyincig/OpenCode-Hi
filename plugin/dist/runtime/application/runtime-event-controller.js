@@ -28,6 +28,25 @@ export class RuntimeEventController {
             state.configResolution = resolved.report;
             await host.log('info', 'Hi initial child-model recommendations ranked from effective runtime inventory', { reason, path: routing.path, configured_roles: routing.configuredRoles ?? 0, models: models.length });
         } };
+        const settleCanonicalParentWake = async (m, source) => { const decision = evaluateIdle(m); appendLedger(m, 'runtime.decision', { payload: { decision: decision.decision, reason: decision.reason, reason_code: decision.reason_code, source, stagnation_count: m.continuation.stagnation_count } }); if (decision.decision === 'STOP') {
+            const completion = evaluateCompletion(m);
+            if (completion.complete)
+                store.complete(m.identity.session_id);
+            return;
+        } if (decision.decision === 'USER_ACTION_REQUIRED') {
+            if (m.authority.human_decision?.status !== 'OPEN') {
+                const human = classifyRuntimeHumanDecision(decision.reason_code);
+                openHumanDecision(m, { ...human, reason_code: decision.reason_code, summary: decision.reason });
+            }
+            return;
+        } if (decision.decision === 'RECOVER' && decision.reason_code === 'stagnation-recovery') {
+            const match = /^stagnation-level-(\d+):/.exec(decision.reason), level = match ? Number(match[1]) : 0;
+            if (level && await tasks.recoverStagnation(m, level)) {
+                store.updateProgress(m);
+                return;
+            }
+        } if (decision.prompt && ['CONTINUE', 'RECONCILE', 'VERIFY', 'RECOVER'].includes(decision.decision))
+            await dispatchContinuation(host, m, decision.prompt, decision.reason); };
         if (ev.kind === 'installation-updated') {
             await refreshRuntimeInventoryAndRecommendedRouting('installation-updated');
             return;
@@ -160,7 +179,7 @@ export class RuntimeEventController {
                     openHumanDecision(m, { semantic_type: 'operational_action', reason_code: 'permission-failure', summary: `Native child permission failure requires user/runtime intervention before retry. ${detail.slice(0, 240)}`, task_id: child.task_id, worker_id: child.id, response_schema: { kind: 'external-action' } });
                 }
                 else if (automaticContinuationEnabled(state.config.executionPolicy) && !m.continuation.user_interrupted && !siblingPending.length)
-                    await dispatchContinuation(host, m, 'Hi child worker failed. Reconcile the failure, preserve completed work, and choose the minimum safe recovery. Do not duplicate completed tasks.', 'child-failed');
+                    await settleCanonicalParentWake(m, 'child-failed');
                 else if (siblingPending.length)
                     appendLedger(m, 'parent.wake.deferred', { worker_id: child.id, payload: { reason: 'sibling-workers-pending', pending: siblingPending.map(w => w.id).slice(0, 20) } });
                 persistence.save(store.all());
@@ -203,7 +222,7 @@ export class RuntimeEventController {
                 store.updateProgress(m);
                 appendLedger(m, 'parent.wake', { worker_id: child.id, payload: { result: result.status } });
                 if (automaticContinuationEnabled(state.config.executionPolicy) && !m.continuation.user_interrupted && !background.pendingFor(m.identity.session_id).length)
-                    await dispatchContinuation(host, m, 'Hi child result is ready. Reconcile it against current obligations. Prefer same-session corrective resume for NEEDS_CONTEXT/FIX_REQUIRED. Do not create duplicate tasks.', 'child-result-ready');
+                    await settleCanonicalParentWake(m, 'child-result-ready');
             }
             catch (e) {
                 tasks.fail(m, child.id, String(e));

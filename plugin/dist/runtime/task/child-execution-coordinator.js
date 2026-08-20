@@ -5,6 +5,7 @@ import { redactProviderContext } from '../privacy/boundary.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { reconcileModelExecutionIdentity } from '../../contracts/model.js';
 import { normalizeBoundedProjectPath } from '../../contracts/common.js';
+import { clearCapabilityUnavailable, markCapabilityUnavailable } from '../readiness/capability-failure.js';
 function normFile(value) { return normalizeBoundedProjectPath(value) ?? ''; }
 function nativeDiffMap(raw) {
     const items = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : [];
@@ -54,7 +55,21 @@ export class ChildExecutionCoordinator {
     } return created; }
     async sendProviderPrompt(sessionID, text, role, model, variant, tools) { const safe = redactProviderContext(text); return this.host.prompt(sessionID, safe.providerText, role, model, variant, tools); }
     recordModelProjection(worker, model, variant) { worker.projected_model = model ?? 'host-default'; worker.projected_model_variant = variant; worker.updated_at = Date.now(); }
-    async abortNativeSession(m, sessionID, reason, workerID, taskID) { const transport = await this.host.abort(sessionID); appendLedger(m, 'worker.session-abort', { task_id: taskID, worker_id: workerID, payload: { session_id: sessionID, reason, transport } }); return transport !== 'unavailable'; }
+    async abortNativeSession(m, sessionID, reason, workerID, taskID) { try {
+        const transport = await this.host.abort(sessionID);
+        appendLedger(m, 'worker.session-abort', { task_id: taskID, worker_id: workerID, payload: { session_id: sessionID, reason, transport } });
+        if (transport === 'unavailable') {
+            markCapabilityUnavailable(m, { capability: 'session-abort', reason: `OpenCode session abort is unavailable while ${reason}`, taskId: taskID, workerId: workerID });
+            return false;
+        }
+        clearCapabilityUnavailable(m, 'session-abort');
+        return true;
+    }
+    catch (error) {
+        appendLedger(m, 'worker.session-abort', { task_id: taskID, worker_id: workerID, payload: { session_id: sessionID, reason, transport: 'error', error: String(error) } });
+        markCapabilityUnavailable(m, { capability: 'session-abort', reason: `OpenCode session abort failed while ${reason}: ${String(error)}`, taskId: taskID, workerId: workerID });
+        return false;
+    } }
     async captureNativeDiff(worker, phase) {
         if (!worker.session_id || !this.host.capabilities.diff)
             return undefined;

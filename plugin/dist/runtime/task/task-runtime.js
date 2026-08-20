@@ -30,6 +30,7 @@ import { ChildExecutionCoordinator } from './child-execution-coordinator.js';
 import { TaskResultReconciler } from './task-result-reconciler.js';
 import { TaskRecoveryCoordinator } from './task-recovery-coordinator.js';
 import { taskRuntimeAdmittedModel, taskRuntimeUnitDecision, reserveTaskRuntimeDispatch, bindTaskRuntimeHost, releaseTaskRuntimeReservation, reconcileStoppedTaskRuntimeRestart } from '../scheduler/task-runtime-adapter.js';
+import { clearCapabilityUnavailable, markCapabilityUnavailable, markVerificationCapabilityUnavailable, reconcileTaskCapabilityPreconditions } from '../readiness/capability-failure.js';
 import { bindWorkerUsageObservation } from '../economics/usage-runtime.js';
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
 const MAX_QUEUE = 32;
@@ -75,6 +76,7 @@ export class TaskRuntime {
     workspaceRuntime;
     extraHostResources;
     browserExecutor;
+    ensureBrowserResource;
     #queue = [];
     #draining = false;
     #methodologyLearning;
@@ -82,7 +84,7 @@ export class TaskRuntime {
     #results;
     #recovery;
     #scopedStores;
-    constructor(childHost, registry, scheduler, projectRoot, hiRoot, getConfig, getModels, getHostConfig, events, hostCapabilitySource = [], scopedStores, workspaceRuntime, extraHostResources = () => new Set(), browserExecutor) {
+    constructor(childHost, registry, scheduler, projectRoot, hiRoot, getConfig, getModels, getHostConfig, events, hostCapabilitySource = [], scopedStores, workspaceRuntime, extraHostResources = () => new Set(), browserExecutor, ensureBrowserResource) {
         this.childHost = childHost;
         this.registry = registry;
         this.scheduler = scheduler;
@@ -96,6 +98,7 @@ export class TaskRuntime {
         this.workspaceRuntime = workspaceRuntime;
         this.extraHostResources = extraHostResources;
         this.browserExecutor = browserExecutor;
+        this.ensureBrowserResource = ensureBrowserResource;
         this.#scopedStores = scopedStores ?? createRuntimeScopedStores(projectRoot, hiRoot);
         this.#methodologyLearning = new ProjectMethodologyLearningStore(projectRoot);
         this.#child = new ChildExecutionCoordinator(childHost, registry);
@@ -263,9 +266,49 @@ export class TaskRuntime {
         const requestedMcpServers = [...new Set(input.mcpServers ?? [])].map(x => String(x).trim()).filter(Boolean).slice(0, 8);
         if (requestedMcpServers.length && !m.identity.intent.requiredCapabilities.includes('mcp'))
             throw new Error('Exact MCP server use requires semantic capability mcp');
-        const mcpExposure = resolveMcpServerExposure(hostConfig, requestedMcpServers), extraResources = this.extraHostResources();
+        let mcpExposure;
+        try {
+            mcpExposure = resolveMcpServerExposure(hostConfig, requestedMcpServers);
+            for (const name of requestedMcpServers)
+                clearCapabilityUnavailable(m, `mcp-server-${name}`);
+        }
+        catch (error) {
+            const message = String(error);
+            if (/Requested MCP server\(s\) unavailable:/i.test(message)) {
+                for (const name of requestedMcpServers)
+                    markCapabilityUnavailable(m, { capability: `mcp-server-${name}`, reason: message });
+                throw new Error(`USER_ACTION_REQUIRED: ${message}`);
+            }
+            markCapabilityUnavailable(m, { capability: 'mcp-tool-namespace', reason: message });
+            throw new Error(`USER_ACTION_REQUIRED: ${message}`);
+        }
+        const requiredEvidence = input.requiredEvidence ?? m.execution.verification_policy.requiredKinds, obligationIds = inferObligationIds(m, role, requiredEvidence, input.obligationIds);
+        let extraResources = this.extraHostResources();
         const browserRequested = role === 'visual-qa' && requestedMethodologyNames.some(name => ['hi-browser-testing', 'hi-visual-qa'].includes(name));
-        const browserDecision = resolveBrowserBackend({ role, browserRequested, requested: input.browserBackend, localBrowserAvailable: extraResources.has('host-capability:browser-execution'), semanticCapabilities: m.identity.intent.requiredCapabilities, selectedMcpServers: mcpExposure.selected });
+        let browserBootstrap;
+        if (browserRequested && !extraResources.has('host-capability:browser-execution') && this.ensureBrowserResource) {
+            browserBootstrap = await this.ensureBrowserResource();
+            appendLedger(m, 'browser.bootstrap', { payload: { available: browserBootstrap.available, attempted: browserBootstrap.attempted === true, reason: browserBootstrap.reason } });
+            if (browserBootstrap.available) {
+                extraResources = new Set([...extraResources, 'host-capability:browser-execution']);
+                clearCapabilityUnavailable(m, 'browser-execution');
+            }
+        }
+        let browserDecision;
+        try {
+            browserDecision = resolveBrowserBackend({ role, browserRequested, requested: input.browserBackend, localBrowserAvailable: extraResources.has('host-capability:browser-execution'), semanticCapabilities: m.identity.intent.requiredCapabilities, selectedMcpServers: mcpExposure.selected });
+        }
+        catch (error) {
+            if (!browserRequested || input.browserBackend !== 'bounded-playwright')
+                throw error;
+            browserDecision = { reason: 'browser-execution-resource-unavailable' };
+        }
+        if (browserRequested && !browserDecision.backend) {
+            const browserKinds = [...new Set(requiredEvidence.flatMap(kind => kind === 'visual-check' ? ['visual-evidence'] : ['visual-evidence', 'browser-evidence', 'accessibility-evidence'].includes(kind) ? [kind] : []))];
+            markVerificationCapabilityUnavailable(m, { capability: 'browser-execution', reason: browserBootstrap?.reason ?? browserDecision.reason, requiredKinds: browserKinds.length ? browserKinds : ['visual-evidence'], obligationIds });
+        }
+        else if (browserDecision.backend)
+            clearCapabilityUnavailable(m, 'browser-execution');
         const browserAllowedOrigins = normalizeBrowserAllowedOrigins(input.browserAllowedOrigins ?? browserOriginsFromTargets(taskIntent.likelyTargets ?? []));
         if (browserDecision.backend === 'bounded-playwright' && browserRequested && !browserAllowedOrigins.length)
             throw new Error('Bounded Playwright browser backend requires at least one exact allowed origin');
@@ -278,13 +321,14 @@ export class TaskRuntime {
             appendLedger(m, 'skill.fallback', { payload: { missing: skillPlan.missing, requested: skillPlan.requested, skillToolEnabled } });
         const scope = input.scope ?? (isHiReadOnlyChildRole(role) && m.vcs.changed_files.length ? m.vcs.changed_files : taskIntent.likelyTargets ?? []), dependencies = [...new Set(input.dependencies ?? [])];
         const unknownDependencies = dependencies.filter(id => !m.execution.tasks.some(t => t.id === id)), unavailableDependencies = this.failedDeps(m, dependencies), incompleteDependencies = dependencies.filter(id => { const t = m.execution.tasks.find(x => x.id === id); return Boolean(t) && t.status !== 'completed' && !unavailableDependencies.includes(id); });
-        const requiredEvidence = input.requiredEvidence ?? m.execution.verification_policy.requiredKinds, obligationIds = inferObligationIds(m, role, requiredEvidence, input.obligationIds), isolationRequired = input.isolationRequired === true, isolationReason = String(input.isolationReason ?? '').trim();
+        const isolationRequired = input.isolationRequired === true, isolationReason = String(input.isolationReason ?? '').trim();
         if (isolationRequired && !isolationReason)
             throw new Error('Hi isolated task requires a bounded isolation reason');
         const constraints = [...new Set([...(m.execution.constraints ?? []), ...(input.constraints ?? []), ...(isolationRequired ? ['hi-isolation:git-worktree'] : []), ...mcpExposure.selected.map(name => `hi-mcp:${name}`), ...(browserDecision.backend ? [`hi-browser-backend:${browserDecision.backend}`] : []), ...browserAllowedOrigins.map(origin => `hi-browser-origin:${origin}`)])], desiredFingerprint = workerFingerprint(role, category, selected.primary, taskIntent.taskKind, objective, { scope, constraints, dependencies, requiredEvidence, obligationIds }), existing = input.resumeTaskId ? m.execution.workers.find(w => w.task_id === input.resumeTaskId && !['completed', 'failed', 'cancelled'].includes(w.status)) : m.execution.workers.find(w => w.fingerprint === desiredFingerprint && !['completed', 'failed', 'cancelled'].includes(w.status));
         if (input.resumeTaskId && !existing)
             throw new Error(`Hi task ${input.resumeTaskId} has no resumable worker`);
         const resumeCapable = Boolean(existing?.session_id), preflight = evaluateTaskPreconditions({ role, implementation: role === 'coder', dependencies: { unknown: unknownDependencies, failed: unavailableDependencies, incomplete: incompleteDependencies }, modelAvailable: Boolean(selected.primary), native: { childSession: resumeCapable || this.childHost.capabilities.create, prompt: this.childHost.capabilities.prompt }, hostConfig, methodologyResourceFailures, contractCriticalAmbiguity: m.identity.intent.ambiguity === 'contract-critical', authorityRequired: false });
+        reconcileTaskCapabilityPreconditions(m, role, preflight);
         appendLedger(m, 'task.preflight', { payload: { role, decision: preflight.decision, resume_capable: resumeCapable, items: preflight.items.slice(0, 12) } });
         void this.events?.(runtimeSignal('task.preflight', m.identity.mission_id, { payload: { role, decision: preflight.decision, resume_capable: resumeCapable, items: preflight.items.slice(0, 12) } }));
         if (preflight.decision === 'RESOLVE' || preflight.decision === 'USER_ACTION_REQUIRED')
@@ -346,21 +390,22 @@ export class TaskRuntime {
         if (isolationRequired) {
             if (!this.workspaceRuntime) {
                 task.status = 'blocked';
-                const marker = `workspace-executor-unavailable:${task.id}`;
-                m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
-                throw new Error('Hi WorkspaceExecutor is unavailable for required isolation');
+                markCapabilityUnavailable(m, { capability: 'workspace-isolation-binding', reason: 'Hi WorkspaceExecutor is unavailable for required isolation', taskId: task.id });
+                throw new Error('USER_ACTION_REQUIRED: Hi WorkspaceExecutor is unavailable for required isolation');
             }
             const decision = this.workspaceRuntime.decision(m, task, { required: true, reason: isolationReason });
             try {
                 await this.workspaceRuntime.provision(m, task, decision);
+                clearCapabilityUnavailable(m, 'workspace-isolation-binding');
             }
             catch (error) {
                 task.status = 'blocked';
                 task.updated_at = Date.now();
                 const marker = `workspace-provision-failed:${task.id}`;
                 m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+                markCapabilityUnavailable(m, { capability: 'workspace-isolation-binding', reason: String(error), taskId: task.id });
                 appendLedger(m, 'workspace.provision-failed', { task_id: task.id, payload: { error: String(error) } });
-                throw error;
+                throw new Error(`USER_ACTION_REQUIRED: ${String(error)}`);
             }
         }
         const provenance = methodologyProvenance(skillPlan.selected), worker = createWorker(m, task, selected.primary, selected.fallbacks, methodologies, provenance);
@@ -409,6 +454,7 @@ export class TaskRuntime {
                 appendLedger(m, 'model.fallback.skipped', { task_id: task.id, worker_id: worker.id, payload: { model, reason: runtimeCandidate.reason, index: i, phase: 'dispatch-revalidation' } });
                 continue;
             }
+            clearCapabilityUnavailable(m, 'model-dispatch');
             const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler);
             if (!reservation.accepted) {
                 lastError = new Error(`Worker scheduler admission unavailable: ${reservation.reason}`);
@@ -495,7 +541,7 @@ export class TaskRuntime {
         } worker.status = 'failed'; const liveStatuses = chain.map(model => ({ model, ...runtimeModelCandidateStatus(model, this.getModels(), this.getConfig(), this.getHostConfig(), role) })); const policyUnavailable = liveStatuses.length > 0 && liveStatuses.every(x => !x.ok); if (policyUnavailable) {
             task.status = 'blocked';
             const marker = `model-dispatch-unavailable:${task.id}`;
-            m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+            markCapabilityUnavailable(m, { capability: 'model-dispatch', reason: 'No selected role model/fallback remains runtime-available and policy-permitted at dispatch time.', taskId: task.id, workerId: worker.id });
             task.result = { status: 'BLOCKED', summary: 'No selected role model/fallback remains runtime-available and policy-permitted at dispatch time.', changed_files: [], evidence: [], open_issues: [marker], needs_context: ['refresh provider/model inventory or routing/provider permissions'] };
             appendLedger(m, 'worker.start.model-unavailable', { task_id: task.id, worker_id: worker.id, payload: { attempted: liveStatuses } });
         }

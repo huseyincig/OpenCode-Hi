@@ -35,6 +35,8 @@ test('C1 parallel runtime projection makes scheduler-owned delegation explicit b
 test('C1 stable policy lives in generated OpenCode agent projections while dynamic state stays separate',()=>{
   assert.match(PACKAGED_HI_AGENTS['working-manager'].prompt,/## Hi Stable Control Policy/)
   assert.match(PACKAGED_HI_AGENTS.manager.prompt,/## Hi Stable Control Policy/)
+  assert.match(PACKAGED_HI_AGENTS['working-manager'].prompt,/Do not claim completion while obligations, blockers, authority gates or required fresh verification remain open\./)
+  assert.match(PACKAGED_HI_AGENTS.manager.prompt,/Do not claim completion while obligations, blockers, authority gates or required fresh verification remain open\./)
   assert.match(PACKAGED_HI_AGENTS.coder.prompt,/## Hi Stable Worker Policy/)
   const {m}=fixture(),before=renderMissionRuntimeProjection(buildMissionRuntimeProjection(m))
   m.identity.objective='changed objective';m.execution.blockers.push('new-blocker');m.authority.pending_permissions=1

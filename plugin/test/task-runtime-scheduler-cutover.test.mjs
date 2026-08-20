@@ -7,6 +7,7 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { startAssessedMission } from './helpers/semantic.mjs'
 import { resolveHiConfig } from '../dist/config/resolver.js'
 import { opencodeChildPort } from './helpers/host-port.mjs'
+import { evaluateIdle } from '../dist/runtime/continuation/evaluator.js'
 
 function workerResult(status='DONE'){return{status,summary:'done',changed_files:[],scope_expansions:[],evidence:[],open_issues:[],needs_context:[]}}
 function setup({prompt=async()=>{},abort=async()=>{},withAbort=true,onCreate}={}){
@@ -41,10 +42,24 @@ test('TaskRuntime cancellation releases the exact scheduler reservation only aft
   assert.equal(await runtime.cancel(m,started.worker_id),true);assert.equal(aborted,1);assert.equal(m.execution.scheduler.reservations.length,0);assert.equal(scheduler.running(),0)
 })
 
+test('TaskRuntime unavailable abort during cancellation is terminal instead of permanent worker WAIT',async()=>{
+  const {runtime,m,scheduler}=setup({withAbort:false});const started=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
+  assert.equal(await runtime.cancel(m,started.worker_id),false);assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(scheduler.running(),1)
+  const decision=evaluateIdle(m);assert.equal(decision.decision,'USER_ACTION_REQUIRED');assert.equal(decision.reason,'capability-unavailable:session-abort')
+})
+
+test('semantic quarantine with unavailable abort is terminal instead of hiding behind busy worker WAIT',async()=>{
+  const {runtime,m}=setup({withAbort:false});await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
+  m.identity.semantic_assessment={status:'pending',phase:'followup',revision:m.identity.semantic_assessment.revision+1,source:'host-primary',pending_text:'constraint'}
+  assert.equal(await runtime.pauseForSemanticAssessment(m),0);assert.ok(m.execution.blockers.includes('capability-unavailable:session-abort'))
+  const decision=evaluateIdle(m);assert.equal(decision.decision,'USER_ACTION_REQUIRED');assert.equal(decision.reason_code,'capability-unavailable')
+})
+
 test('TaskRuntime retains host-bound reservation when prompt failure cannot verify abort',async()=>{
   const {runtime,m,scheduler}=setup({prompt:async()=>{throw new Error('prompt transport failed')},withAbort:false})
   await assert.rejects(()=>runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']}),/reservation retained because host abort could not be verified/i)
   assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(m.execution.scheduler.reservations[0].phase,'RUNNING');assert.equal(scheduler.running(),1);assert.ok(m.execution.ledger.some(e=>e.type==='worker.start.abort-blocked'))
+  const decision=evaluateIdle(m);assert.equal(decision.decision,'USER_ACTION_REQUIRED');assert.equal(decision.reason_code,'capability-unavailable');assert.equal(decision.reason,'capability-unavailable:session-abort')
 })
 
 

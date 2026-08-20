@@ -25,6 +25,14 @@ export declare function createHiToolSurface(input: {
     native: HostNativeSessionPort;
     getModels: () => AvailableModel[];
     scopedStores: RuntimeScopedStores;
+    getBrowserBootstrapStatus?: () => {
+        available: boolean;
+        attempted?: boolean;
+        cachePath?: string;
+        version?: string;
+        executablePath?: string;
+        reason?: string;
+    } | undefined;
 }): {
     toolSurface: Record<string, unknown>;
     reconfigure: () => void;

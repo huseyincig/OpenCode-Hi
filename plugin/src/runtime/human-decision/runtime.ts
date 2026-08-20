@@ -34,6 +34,6 @@ export function classifyRuntimeHumanDecision(reasonCode:string):Pick<OpenHumanDe
   // authority_request directly with an exact authority_ref + protocol-bound response schema.
   if(reasonCode==='waiting-user-authority'||reasonCode.startsWith('authority'))return{semantic_type:'operational_action',response_schema:{kind:'external-action'}}
   if(reasonCode.includes('permission'))return{semantic_type:'operational_action',response_schema:{kind:'external-action'}}
-  if(reasonCode.includes('provider')||reasonCode.includes('runtime')||reasonCode.includes('budget')||reasonCode.includes('precondition')||reasonCode.includes('rollback'))return{semantic_type:'operational_action',response_schema:{kind:'external-action'}}
+  if(reasonCode.includes('provider')||reasonCode.includes('runtime')||reasonCode.includes('budget')||reasonCode.includes('precondition')||reasonCode.includes('rollback')||reasonCode.includes('environment')||reasonCode.includes('verification')||reasonCode.includes('capability')||reasonCode.includes('operational')||reasonCode.includes('blocker'))return{semantic_type:'operational_action',response_schema:{kind:'external-action'}}
   return{semantic_type:'value_judgment',response_schema:{kind:'free-text'}}
 }

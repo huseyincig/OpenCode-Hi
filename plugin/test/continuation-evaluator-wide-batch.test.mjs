@@ -131,6 +131,26 @@ test('failed child defers parent continuation while a sibling worker is still pe
   await hooks.dispose?.();rmSync(dir,{recursive:true,force:true})
 })
 
+test('child-result wake honors a terminal capability blocker instead of blindly continuing the parent',async()=>{
+  const dir=mkdtempSync(join(tmpdir(),'hi-child-wake-capability-'))
+  const {client,promptCalls}=baseClient(['child-capability'])
+  client.session.messages=async()=>({data:[{info:{role:'assistant'},parts:[{type:'text',text:JSON.stringify({status:'DONE',summary:'repository inspection complete',changed_files:[],evidence:[],open_issues:[],needs_context:[]})}]}]})
+  const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client});await hooks.config({})
+  try{
+    await hooks['chat.message']({sessionID:'parent-capability',message:{role:'user',parts:[{type:'text',text:'inspect the repository and keep a process available if needed'}]}},{parts:[]})
+    await assessPluginMission(hooks,'parent-capability',{task_kind:'review',required_capabilities:['repository-analysis','interactive-process'],likely_targets:['src/a.ts']})
+    const started=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'inspect repository',role:'repository-explorer',category:'quick',scope:'src/a.ts'},{sessionID:'parent-capability'}))
+    assert.ok(started.worker_id)
+    const processBlocked=JSON.parse(await hooks.tool.hi_process_spawn.execute({worker_id:started.worker_id,command:'node',args_json:'["server.js"]'},{sessionID:'parent-capability',directory:dir}))
+    assert.equal(processBlocked.status,'USER_ACTION_REQUIRED');assert.equal(processBlocked.blocker,'capability-unavailable:process-lifecycle')
+    assert.equal(promptCalls.filter(x=>x.path?.id==='parent-capability').length,0)
+    await hooks.event({event:{type:'session.idle',properties:{sessionID:'child-capability'}}})
+    assert.equal(promptCalls.filter(x=>x.path?.id==='parent-capability').length,0,'terminal capability state must suppress generic child-result continuation')
+    const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:160},{sessionID:'parent-capability'}))
+    assert.ok(ledger.events.some(e=>e.type==='user.action.required'&&e.payload?.reason_code==='capability-unavailable'))
+  }finally{await hooks.dispose?.();rmSync(dir,{recursive:true,force:true})}
+})
+
 test('late parent-session events after explicit STOP are ignored and cannot recreate permission wait',async()=>{
   const dir=mkdtempSync(join(tmpdir(),'hi-stop-late-'))
   const {client}=baseClient([])

@@ -83,3 +83,17 @@ test('P3 restart reconciliation adopts exact owner identity and quarantines orph
   const restored=structuredClone(m),freshFake=new FakeExecutor(),freshRuntime=new ProcessRuntime(freshFake,'/repo',()=>host());await freshRuntime.reconcileRestored([restored]);assert.equal(restored.execution.processes[0].status,'RUNNING');assert.equal(restored.execution.blockers.some(x=>x.startsWith('process-orphan:')),false)
   const orphaned=structuredClone(m),orphanFake=new FakeExecutor();orphanFake.reconcileMode='ORPHANED';const orphanRuntime=new ProcessRuntime(orphanFake,'/repo',()=>host());await orphanRuntime.reconcileRestored([orphaned]);assert.equal(orphaned.execution.processes[0].status,'ORPHANED');assert.equal(orphaned.execution.processes[0].cleanup_state,'QUARANTINED');assert.ok(orphaned.execution.blockers.includes(`process-orphan:${p.process_id}`));const decision=evaluateIdle(orphaned);worker.status='ready';assert.ok(['WAIT','USER_ACTION_REQUIRED'].includes(decision.decision))
 })
+
+
+test('P3 failed process lifecycle operations cannot masquerade as healthy RUNNING WAIT',async()=>{
+  const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host()),p=await runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo'});worker.status='ready'
+  const realKill=fake.kill.bind(fake);fake.kill=async()=>{throw new Error('PTY termination unavailable')}
+  await assert.rejects(()=>runtime.kill(m,p.process_id),/termination unavailable/);assert.ok(m.execution.blockers.includes(`process-termination-unverified:${p.process_id}`));let d=evaluateIdle(m);assert.equal(d.decision,'USER_ACTION_REQUIRED');assert.equal(d.reason_code,'operational-blocker')
+  fake.kill=realKill;const terminated=await runtime.kill(m,p.process_id);assert.equal(terminated.status,'TERMINATED');assert.equal(m.execution.blockers.includes(`process-termination-unverified:${p.process_id}`),false)
+  fake.cleanup=async()=>{throw new Error('cleanup transport unavailable')};await assert.rejects(()=>runtime.cleanup(m,p.process_id),/cleanup transport unavailable/);assert.ok(m.execution.blockers.includes(`process-cleanup:${p.process_id}`));d=evaluateIdle(m);assert.equal(d.decision,'USER_ACTION_REQUIRED');assert.equal(d.reason,`process-cleanup:${p.process_id}`)
+})
+
+test('P3 failed process wait is terminal until a later lifecycle observation changes state',async()=>{
+  const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host()),p=await runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo'});worker.status='ready'
+  fake.wait=async()=>{throw new Error('PTY wait transport unavailable')};await assert.rejects(()=>runtime.wait(m,p.process_id),/wait transport unavailable/);assert.ok(m.execution.blockers.includes(`process-wait-failed:${p.process_id}`));const d=evaluateIdle(m);assert.equal(d.decision,'USER_ACTION_REQUIRED');assert.equal(d.reason,`process-wait-failed:${p.process_id}`)
+})

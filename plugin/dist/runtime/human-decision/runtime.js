@@ -29,7 +29,7 @@ export function classifyRuntimeHumanDecision(reasonCode) {
         return { semantic_type: 'operational_action', response_schema: { kind: 'external-action' } };
     if (reasonCode.includes('permission'))
         return { semantic_type: 'operational_action', response_schema: { kind: 'external-action' } };
-    if (reasonCode.includes('provider') || reasonCode.includes('runtime') || reasonCode.includes('budget') || reasonCode.includes('precondition') || reasonCode.includes('rollback'))
+    if (reasonCode.includes('provider') || reasonCode.includes('runtime') || reasonCode.includes('budget') || reasonCode.includes('precondition') || reasonCode.includes('rollback') || reasonCode.includes('environment') || reasonCode.includes('verification') || reasonCode.includes('capability') || reasonCode.includes('operational') || reasonCode.includes('blocker'))
         return { semantic_type: 'operational_action', response_schema: { kind: 'external-action' } };
     return { semantic_type: 'value_judgment', response_schema: { kind: 'free-text' } };
 }

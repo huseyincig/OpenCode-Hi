@@ -36,8 +36,8 @@ checks=[
  (19,'unusable-readonly-root','plugin/src/runtime/state/persistence.ts','mkdirSync(dirname(this.path)','plugin/test/prompt-b-vcs-path-portability.test.mjs','unusable runtime state root fails visibly'),
  (19,'permission-denied-visible','plugin/src/runtime/state/persistence.ts','writeFileSync(tmp','plugin/test/prompt-b-vcs-path-portability.test.mjs','ENOTDIR'),
  (19,'home-xdg-localappdata','plugin/src/runtime/storage/locations.ts','XDG_STATE_HOME','plugin/test/prompt-b-vcs-path-portability.test.mjs','runtime state location honors explicit then XDG then LOCALAPPDATA'),
- (19,'browser-platform-cache','plugin/src/opencode/playwright-browser-adapter.ts','PLAYWRIGHT_BROWSERS_PATH','plugin/test/prompt-b-vcs-path-portability.test.mjs','browser executable discovery uses env/platform cache roots'),
- (19,'no-hardcoded-root-home','plugin/src/opencode/playwright-browser-adapter.ts','homedir()','plugin/test/prompt-b-vcs-path-portability.test.mjs','contains no host-user literal dependency'),
+ (19,'browser-platform-cache','plugin/src/runtime/browser/discovery.ts','PLAYWRIGHT_BROWSERS_PATH','plugin/test/prompt-b-vcs-path-portability.test.mjs','browser executable discovery uses env/platform cache roots'),
+ (19,'no-hardcoded-root-home','plugin/src/runtime/browser/discovery.ts','homedir()','plugin/test/prompt-b-vcs-path-portability.test.mjs','contains no host-user literal dependency'),
 ]
 violations=[];rows=[]
 for section,name,owner,oa,proof,pa in checks:
@@ -53,7 +53,9 @@ prod='\n'.join(p.read_text(errors='replace') for p in (ROOT/'plugin/src').rglob(
 common=(ROOT/'plugin/src/contracts/common.ts').read_text(errors='replace')
 worker=(ROOT/'plugin/src/contracts/worker-result.ts').read_text(errors='replace')
 evidence=(ROOT/'plugin/src/runtime/evidence/evidence-runtime.ts').read_text(errors='replace')
-browser=(ROOT/'plugin/src/opencode/playwright-browser-adapter.ts').read_text(errors='replace')
+browser_discovery=(ROOT/'plugin/src/runtime/browser/discovery.ts').read_text(errors='replace')
+browser_bootstrap=(ROOT/'plugin/src/runtime/browser/bootstrap.ts').read_text(errors='replace')
+browser=browser_discovery+'\n'+browser_bootstrap
 guards={
  'no_host_user_literal_dependency':('/root/' not in prod and '/home/node/' not in prod),
  'worker_changed_files_use_bounded_path':('normalizeBoundedProjectPath' in worker and 'changed_files' in worker),

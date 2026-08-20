@@ -1,7 +1,7 @@
 # OpenCode-Hi
 
 <p align="center">
-  <img src="docs/assets/hi-logo.webp" alt="OpenCode-Hi logo" width="420" />
+  <img src="docs/assets/hi-logo.webp" alt="OpenCode-Hi logo" width="256" />
 </p>
 
 [![npm version](https://img.shields.io/npm/v/opencode-hi.svg?style=flat-square&color=CB3837&logo=npm)](https://www.npmjs.com/package/opencode-hi)
@@ -61,7 +61,7 @@ Hi is designed to use the minimum sufficient topology, model, context and verifi
 
 ## Current product truth
 
-The current immutable public release is `opencode-hi@0.2.2` / `v0.2.2`. Version identity is owned by `VERSION` and parity-validated against package metadata; GitHub Releases and the npm registry remain authoritative for public availability. The `0.2.2` release is bound to its immutable Git tag/source, successful Ubuntu/Windows Release Readiness, npm Trusted Publishing provenance, and fresh-registry exact OpenCode `1.18.19` acceptance.
+The current immutable public release is `opencode-hi@0.2.2` / `v0.2.2`. The current development source has the distinct candidate identity `0.2.3`; it is **not** public merely because source metadata says `0.2.3`. GitHub Releases and the npm registry remain authoritative for public availability. The published `0.2.2` release stays bound to its immutable Git tag/source, successful Ubuntu/Windows Release Readiness, npm Trusted Publishing provenance, and fresh-registry exact OpenCode `1.18.19` acceptance.
 
 Current host capability truth is generated from exact receipts rather than hand-maintained here. See [Host Support](docs/HOSTS.md) and `data/validation/compatibility-matrix-0.1.0.json`.
 
@@ -122,7 +122,7 @@ The machine-readable compatibility projection is the canonical mutable support v
 
 - **Process lifecycle:** supported on the Hi-owned `ProcessContract` / `ProcessExecutor` surface. It covers PID-bound spawn, bounded IO, event-driven WAIT, timeout, kill, separate cleanup, restart adoption and STOP reconciliation. Arbitrary native/model-facing bash is not retroactively owned by Hi.
 - **Workspace isolation:** supported on the Hi-owned `IsolationDecision` / `WorkspaceLease` / `WorkspaceRuntime` surface. Required isolation provisions and binds an alternate workspace, verifies execution there, preserves the primary/user-dirty worktree and reconciles cleanup/restart fail-closed.
-- **Browser execution:** supported on the Hi-owned, runtime-health-gated browser surface. Browser observations and screenshots are not automatically Evidence or PASS.
+- **Browser execution:** supported on the Hi-owned, runtime-health-gated browser surface. When mandatory local browser verification needs Chromium and the executable is absent, the development `0.2.3` runtime performs at most one bounded bootstrap attempt through pinned `playwright-core@1.62.1` into a Hi-owned platform cache. A failed/unavailable bootstrap becomes explicit environment/capability state; it does not self-feed verification continuations. Browser observations and screenshots are never automatically Evidence or PASS.
 - **HumanDecision:** the chat transport is supported. A deterministic structured OpenCode question-opening UI transport is currently unsupported because the required public host opener is not exposed on the accepted host API.
 - **Semantic Context:** the explicit first-class adapter currently supports TypeScript/TSX only. JavaScript, LSP and Tree-sitter semantic adapters are not claimed.
 

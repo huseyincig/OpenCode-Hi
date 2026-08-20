@@ -160,7 +160,7 @@ The supported claim is limited to the Hi-owned isolation chain proven by exact-h
 
 `BrowserObservation` is observation provenance, not automatic Evidence. Production browser execution is behind the `BrowserExecutor` port, task-bound backend policy/ownership checks, and the OpenCode `PlaywrightBrowserAdapter`, with local-origin confinement, exact Task/Worker/session ownership, bounded observations and Artifact-backed screenshots.
 
-Support is runtime-health-gated. Missing health removes the executable resource and preflight fails closed. A screenshot existing or MCP/tool discovery never creates browser PASS by itself; methodology-specific evidence must still reconcile.
+Support is runtime-health-gated. In development `0.2.3`, an absent local Chromium executable can trigger one process-local, bounded bootstrap through the exact packaged `playwright-core` CLI into a Hi-owned platform cache. Bootstrap failure is memoized for the unchanged process/resource state and becomes explicit unavailable environment/capability state; it never creates an unbounded verification continuation. Missing health still removes the executable resource and preflight fails closed. A screenshot existing or MCP/tool discovery never creates browser PASS by itself; methodology-specific evidence must still reconcile.
 
 ## Human decisions
 

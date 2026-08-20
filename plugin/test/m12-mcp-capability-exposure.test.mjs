@@ -7,6 +7,7 @@ import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
 import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
+import {evaluateIdle} from '../dist/runtime/continuation/evaluator.js'
 
 const HOST={mcp:{docs:{type:'local',command:['node','docs.mjs'],enabled:true},browser:{type:'remote',url:'http://127.0.0.1:9/mcp',enabled:true},off:{type:'local',command:['node','off.mjs'],enabled:false}}}
 function assessed(store,id,caps=['implementation']){const m=store.start(id,'mcp exposure fixture');store.applyInitialSemanticAssessment(id,{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:caps,requested_external_actions:[],likely_verification:[],likely_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[]});return m}
@@ -24,3 +25,11 @@ test('M12 normal child prompt carries native wildcard denies for all configured 
 test('M12 exact selected MCP server requires semantic capability and persists task-bound selection',async()=>{const prompts=[],store=new MissionStore(),m=assessed(store,'m12-mcp-selected',['implementation','mcp']),rt=runtime(client(prompts));const out=await rt.start(m,{objective:'lookup docs through configured MCP',role:'coder',category:'quick',scope:['src/a.ts'],mcpServers:['docs']});const task=m.execution.tasks.find(t=>t.id===out.task_id);assert.deepEqual(task.execution_profile.mcp_servers,['docs']);assert.equal(prompts[0].body.tools['browser_*'],false);assert.equal(prompts[0].body.tools['docs_*'],undefined);assert.ok(task.constraints.includes('hi-mcp:docs'))})
 
 test('M12 MCP request fails before task creation without semantic capability',async()=>{const store=new MissionStore(),m=assessed(store,'m12-mcp-no-cap'),rt=runtime(client([]));await assert.rejects(()=>rt.start(m,{objective:'lookup docs',role:'coder',category:'quick',scope:['src/a.ts'],mcpServers:['docs']}),/semantic capability mcp/);assert.equal(m.execution.tasks.length,0)})
+
+
+test('M12 unavailable selected MCP server becomes one durable terminal capability state',async()=>{
+  const store=new MissionStore(),m=assessed(store,'m12-mcp-missing',['implementation','mcp']),rt=new TaskRuntime(opencodeChildPort(client([])),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({mcp:{}}))
+  await assert.rejects(()=>rt.start(m,{objective:'lookup docs',role:'coder',category:'quick',scope:['src/a.ts'],mcpServers:['missing']}),/USER_ACTION_REQUIRED:.*MCP server/i)
+  assert.equal(m.execution.tasks.length,0);assert.ok(m.execution.blockers.includes('capability-unavailable:mcp-server-missing'))
+  const decision=evaluateIdle(m);assert.equal(decision.decision,'USER_ACTION_REQUIRED');assert.equal(decision.reason_code,'capability-unavailable');assert.equal(decision.prompt,undefined)
+})

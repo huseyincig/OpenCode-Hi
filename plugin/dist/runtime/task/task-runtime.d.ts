@@ -47,7 +47,12 @@ export declare class TaskRuntime {
     private readonly workspaceRuntime?;
     private readonly extraHostResources;
     private readonly browserExecutor?;
-    constructor(childHost: ChildSessionPort, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined, hostCapabilitySource?: (() => readonly HostCapabilityContract[]) | readonly HostCapabilityContract[], scopedStores?: RuntimeScopedStores, workspaceRuntime?: WorkspaceRuntime | undefined, extraHostResources?: () => ReadonlySet<string>, browserExecutor?: BrowserExecutor | undefined);
+    private readonly ensureBrowserResource?;
+    constructor(childHost: ChildSessionPort, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined, hostCapabilitySource?: (() => readonly HostCapabilityContract[]) | readonly HostCapabilityContract[], scopedStores?: RuntimeScopedStores, workspaceRuntime?: WorkspaceRuntime | undefined, extraHostResources?: () => ReadonlySet<string>, browserExecutor?: BrowserExecutor | undefined, ensureBrowserResource?: (() => Promise<{
+        available: boolean;
+        attempted?: boolean;
+        reason?: string;
+    }>) | undefined);
     private sendProviderPrompt;
     private recordModelProjection;
     private abortNativeSession;

@@ -6,7 +6,7 @@ import { verificationPolicyFor } from '../verification/policy.js';
 import { syncMissionGates } from '../gates/gates.js';
 import { decideSemanticExecution } from '../decision/semantic-decision.js';
 import { activateMethodologySignal, suppressIntentMethodologySignals } from '../methodology/activation.js';
-import { architectureMethodologySignals } from '../methodology/signals.js';
+import { architectureMethodologySignals, requiredVerificationMethodologySignals } from '../methodology/signals.js';
 import { resolveHumanDecision } from '../human-decision/runtime.js';
 import { createSchedulerLifecycleState } from '../../contracts/orchestration-core.js';
 import { reduceSchedulerLifecycle } from '../scheduler/lifecycle.js';
@@ -130,6 +130,8 @@ export class MissionStore {
             activateMethodologySignal(m, this.#root, { signal, producer: 'intent', reason: 'Host primary semantic assessment reported this explicit intent signal.' });
         for (const signal of architectureMethodologySignals(m.identity.intent))
             activateMethodologySignal(m, this.#root, { signal: signal.name, producer: 'architecture', reason: signal.reason });
+        for (const signal of requiredVerificationMethodologySignals(m.identity.intent))
+            activateMethodologySignal(m, this.#root, { signal: signal.name, producer: 'verification', reason: signal.reason });
         syncMissionGates(m);
         appendLedger(m, 'semantic.assessed', { payload: { revision: m.identity.semantic_assessment.revision, source: m.identity.semantic_assessment.source, taskKind: m.identity.intent.taskKind, scope: m.identity.intent.scope, risk: m.identity.intent.risk, ambiguity: m.identity.intent.ambiguity, dependencyClass: m.identity.intent.dependencyClass, capabilities: m.identity.intent.requiredCapabilities, intent_signals: effectiveAssessment.intent_signals, effective_intent_signals: reconciledSignals.active, suppressed_intent_signals: effectiveAssessment.suppressed_intent_signals, runtime_suppressed_intent_signals: reconciledSignals.runtimeSuppressed, technical_targets: m.identity.intent.likelyTargets ?? [], technical_user_verification: explicitUserVerification, technical_verification_ceiling_applied: boundedExplicitVerification } });
         m.identity.updated_at = now;
@@ -257,6 +259,8 @@ export class MissionStore {
         m.execution.verification_policy = verificationPolicyFor(m.identity.intent);
         for (const signal of architectureMethodologySignals(m.identity.intent))
             activateMethodologySignal(m, this.#root, { signal: signal.name, producer: 'architecture', reason: signal.reason });
+        for (const signal of requiredVerificationMethodologySignals(m.identity.intent))
+            activateMethodologySignal(m, this.#root, { signal: signal.name, producer: 'verification', reason: signal.reason });
         const decision = decideSemanticExecution({ intent: m.identity.intent, verification: m.execution.verification_policy, primaryMode: m.execution.primary_mode, topology: this.#getTopology(), mission: m });
         m.execution.execution_mode = decision.topology.executionMode;
         m.execution.primary_mode = decision.primary;

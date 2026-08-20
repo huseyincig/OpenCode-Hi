@@ -8,6 +8,7 @@ import { appendLedger } from '../ledger/ledger.js'
 import { reconcileModelExecutionIdentity } from '../../contracts/model.js'
 import { normalizeBoundedProjectPath } from '../../contracts/common.js'
 import type { ChildSessionPort } from '../host/port.js'
+import {clearCapabilityUnavailable,markCapabilityUnavailable} from '../readiness/capability-failure.js'
 
 function normFile(value:string):string{return normalizeBoundedProjectPath(value)??''}
 function nativeDiffMap(raw:any):Record<string,string>{
@@ -30,7 +31,7 @@ export class ChildExecutionCoordinator{
   async createForTask(parentSessionID:string,title:string,role:string,model?:string,variant?:string,forkFromSession?:string,workspace?:ChildWorkspaceBinding){const created=await this.host.create({parentSessionID,title,role,model,variant,workspace,forkFromSession});const child=created.child;if(workspace&&(child?.workspaceID!==workspace.workspaceID||typeof child?.directory!=='string'||!samePath(child.directory,workspace.directory))){if(child?.id)try{await this.host.abort(String(child.id))}catch{};throw new Error(`Host child workspace binding mismatch: expected ${workspace.workspaceID} @ ${workspace.directory}, observed ${String(child?.workspaceID)} @ ${String(child?.directory)}`)}return created}
   async sendProviderPrompt(sessionID:string,text:string,role?:string,model?:string,variant?:string,tools?:Record<string,boolean>):Promise<unknown>{const safe=redactProviderContext(text);return this.host.prompt(sessionID,safe.providerText,role,model,variant,tools)}
   recordModelProjection(worker:WorkerState,model?:string,variant?:string):void{worker.projected_model=model??'host-default';worker.projected_model_variant=variant;worker.updated_at=Date.now()}
-  async abortNativeSession(m:MissionState,sessionID:string,reason:string,workerID?:string,taskID?:string):Promise<boolean>{const transport=await this.host.abort(sessionID);appendLedger(m,'worker.session-abort',{task_id:taskID,worker_id:workerID,payload:{session_id:sessionID,reason,transport}});return transport!=='unavailable'}
+  async abortNativeSession(m:MissionState,sessionID:string,reason:string,workerID?:string,taskID?:string):Promise<boolean>{try{const transport=await this.host.abort(sessionID);appendLedger(m,'worker.session-abort',{task_id:taskID,worker_id:workerID,payload:{session_id:sessionID,reason,transport}});if(transport==='unavailable'){markCapabilityUnavailable(m,{capability:'session-abort',reason:`OpenCode session abort is unavailable while ${reason}`,taskId:taskID,workerId:workerID});return false}clearCapabilityUnavailable(m,'session-abort');return true}catch(error){appendLedger(m,'worker.session-abort',{task_id:taskID,worker_id:workerID,payload:{session_id:sessionID,reason,transport:'error',error:String(error)}});markCapabilityUnavailable(m,{capability:'session-abort',reason:`OpenCode session abort failed while ${reason}: ${String(error)}`,taskId:taskID,workerId:workerID});return false}}
   async captureNativeDiff(worker:WorkerState,phase:'baseline'|'final'):Promise<Record<string,string>|undefined>{
     if(!worker.session_id||!this.host.capabilities.diff)return undefined
     try{

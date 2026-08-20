@@ -9,7 +9,7 @@ import { auditHiToolNamespace } from '../opencode/tool-namespace.js'
 import { knownHiCustomRoles } from '../runtime/routing/agent-reuse.js'
 
 export interface DoctorCheck { id:string; status:'pass'|'warn'|'fail'; machine_status?:'pass'|'info'|'action-required'|'not-applicable'; detail:string }
-export interface DoctorRuntimeInfo { models?:AvailableModel[]; resolution?:ConfigResolutionReport; capabilities?:HostCapabilityView; hostConfig?:Record<string,unknown>; openCodeVersion?:string; runtimeHostResources?:ReadonlySet<string> }
+export interface DoctorRuntimeInfo { models?:AvailableModel[]; resolution?:ConfigResolutionReport; capabilities?:HostCapabilityView; hostConfig?:Record<string,unknown>; openCodeVersion?:string; runtimeHostResources?:ReadonlySet<string>; browserBootstrap?:{available:boolean;attempted?:boolean;cachePath?:string;version?:string;executablePath?:string;reason?:string} }
 function providerCount(models:AvailableModel[]):number{return new Set(models.map(m=>m.provider).filter(Boolean)).size}
 function hiSpec(x:string):boolean{return x==='opencode-hi'||x.startsWith('opencode-hi@')||/OpenCode-Hi/i.test(x)}
 
@@ -50,6 +50,7 @@ export function runDoctor(config:HiConfig,store:MissionStore,directory?:string,i
     {id:'process-lifecycle',status:processCapability?.status==='SUPPORTED'?'pass':'warn',detail:capabilityDetail(processCapability)},
     {id:'workspace-isolation-binding',status:workspaceCapability?.status==='SUPPORTED'?'pass':'warn',detail:capabilityDetail(workspaceCapability)},
     {id:'browser-execution',status:browserCapability?.status==='SUPPORTED'&&(!browserCapability.runtime_health_required||info.runtimeHostResources?.has('host-capability:browser-execution'))?'pass':'warn',detail:`${capabilityDetail(browserCapability)}; runtime-available=${Boolean(info.runtimeHostResources?.has('host-capability:browser-execution'))}`},
+    {id:'browser-bootstrap',status:info.runtimeHostResources?.has('host-capability:browser-execution')?'pass':info.browserBootstrap?.attempted?'warn':'info' as any,detail:info.browserBootstrap?`available=${info.browserBootstrap.available}; attempted=${info.browserBootstrap.attempted===true}; version=${info.browserBootstrap.version??'unknown'}; cache=${info.browserBootstrap.cachePath??'unknown'}; executable=${info.browserBootstrap.executablePath??'none'}; reason=${info.browserBootstrap.reason??'none'}`:'not attempted; Chromium is prepared lazily on the first required visual/browser task'},
     {id:'native-session-diff-revert',status:c?.sessionDiff&&c?.sessionRevert?'pass':'warn',detail:c?`diff=${c.sessionDiff}; revert=${c.sessionRevert}; unrevert=${c.sessionUnrevert}; fork=${c.sessionFork}; summarize=${c.sessionSummarize}`:'native session capability snapshot unavailable'},
     {id:'structured-logging',status:c?.appLog?'pass':'warn',detail:c?.appLog?'OpenCode client.app.log available':'structured OpenCode logging unavailable; no custom log framework will be substituted'},
     {id:'permission-surface',status:project.permissionConfigured?'pass':'warn',detail:project.permissionConfigured?`OpenCode permission config detected; skill-specific=${project.skillPermissionConfigured}`:'No explicit OpenCode permission config detected; host defaults apply'},

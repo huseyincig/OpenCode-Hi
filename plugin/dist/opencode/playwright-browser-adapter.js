@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
-import { existsSync, readdirSync } from 'node:fs';
-import { homedir, platform } from 'node:os';
-import { join } from 'node:path';
+import { existsSync } from 'node:fs';
 import { browserObservationId } from '../contracts/browser-observation.js';
+import { discoverPlaywrightChromium } from '../runtime/browser/discovery.js';
+export { discoverPlaywrightChromium } from '../runtime/browser/discovery.js';
 const MAX_SUMMARY = 4000, MAX_ERRORS = 64;
 function bounded(v, max = MAX_SUMMARY) { return v.length <= max ? v : v.slice(0, max); }
 function localHost(hostname) { return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname === '[::1]'; }
@@ -21,37 +21,20 @@ function plannedUrl(c, value) { const url = safeLocalUrl(value), origin = new UR
 function targetRef(value) { const m = /^@e(\d{1,6})$/.exec(value); if (!m)
     throw new Error('Browser target must be an observed @eN reference'); return Number(m[1]); }
 function sha(text) { return createHash('sha256').update(text).digest('hex'); }
-function cacheCandidates(root) { try {
-    return readdirSync(root, { withFileTypes: true }).filter((x) => x.isDirectory() && /^chromium-/.test(x.name)).flatMap((x) => [join(root, x.name, 'chrome-linux', 'chrome'), join(root, x.name, 'chrome-linux64', 'chrome'), join(root, x.name, 'chrome-win', 'chrome.exe'), join(root, x.name, 'chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium')]);
-}
-catch {
-    return [];
-} }
-function executableCandidates() {
-    const explicit = process.env.HI_BROWSER_EXECUTABLE?.trim(), playwrightRoot = process.env.PLAYWRIGHT_BROWSERS_PATH?.trim(), home = homedir(), os = platform(), roots = [];
-    if (playwrightRoot && playwrightRoot !== '0')
-        roots.push(playwrightRoot);
-    if (process.env.XDG_CACHE_HOME?.trim())
-        roots.push(join(process.env.XDG_CACHE_HOME.trim(), 'ms-playwright'));
-    if (process.env.LOCALAPPDATA?.trim())
-        roots.push(join(process.env.LOCALAPPDATA.trim(), 'ms-playwright'));
-    if (os === 'darwin')
-        roots.push(join(home, 'Library', 'Caches', 'ms-playwright'));
-    else if (os !== 'win32')
-        roots.push(join(home, '.cache', 'ms-playwright'));
-    const out = [...new Set(roots)].flatMap(cacheCandidates);
-    return [...new Set([...(explicit ? [explicit] : []), ...out])];
-}
-export function discoverPlaywrightChromium(exists = existsSync) { return executableCandidates().find(exists); }
 export class PlaywrightBrowserAdapter {
     executablePath;
+    explicitExecutable;
+    browserCachePaths;
     headless;
     timeoutMs;
     persistScreenshot;
     loadPlaywright;
     executableExists;
     sessions = new Map();
-    constructor(options = {}) { this.executableExists = options.executable_exists ?? existsSync; this.executablePath = options.executable_path ?? discoverPlaywrightChromium(this.executableExists); this.headless = options.headless ?? true; this.timeoutMs = Math.min(Math.max(options.timeout_ms ?? 15000, 1000), 30000); this.persistScreenshot = options.persist_screenshot; this.loadPlaywright = options.load_playwright ?? (() => import('playwright-core')); }
+    constructor(options = {}) { this.executableExists = options.executable_exists ?? existsSync; this.explicitExecutable = Boolean(options.executable_path); this.browserCachePaths = [...new Set(options.browser_cache_paths ?? [])]; this.executablePath = options.executable_path ?? discoverPlaywrightChromium(this.executableExists, this.browserCachePaths); this.headless = options.headless ?? true; this.timeoutMs = Math.min(Math.max(options.timeout_ms ?? 15000, 1000), 30000); this.persistScreenshot = options.persist_screenshot; this.loadPlaywright = options.load_playwright ?? (() => import('playwright-core')); }
+    refreshExecutable() { if (this.executablePath && this.executableExists(this.executablePath))
+        return this.executablePath; if (this.explicitExecutable)
+        return undefined; this.executablePath = discoverPlaywrightChromium(this.executableExists, this.browserCachePaths); return this.executablePath; }
     async ensure(c) { const current = this.sessions.get(c.task_id); if (current && current.executionOwnerRef === c.execution_owner_ref)
         return current; if (current) {
         try {
@@ -60,8 +43,8 @@ export class PlaywrightBrowserAdapter {
         catch { }
         this.sessions.delete(c.task_id);
     } if (!c.execution_owner_ref.trim())
-        throw new Error('Browser execution owner identity is required'); if (!this.executablePath || !this.executableExists(this.executablePath))
-        throw new Error('Playwright Chromium executable is unavailable'); const { chromium } = await this.loadPlaywright(), browser = await chromium.launch({ executablePath: this.executablePath, headless: this.headless, args: ['--no-sandbox'] }), context = await browser.newContext({ acceptDownloads: false, ignoreHTTPSErrors: false }); if (typeof context.route !== 'function')
+        throw new Error('Browser execution owner identity is required'); const executablePath = this.refreshExecutable(); if (!executablePath)
+        throw new Error('Playwright Chromium executable is unavailable'); const { chromium } = await this.loadPlaywright(), browser = await chromium.launch({ executablePath, headless: this.headless, args: ['--no-sandbox'] }), context = await browser.newContext({ acceptDownloads: false, ignoreHTTPSErrors: false }); if (typeof context.route !== 'function')
         throw new Error('Playwright request routing is required for browser origin confinement'); await context.route('**/*', async (route) => { try {
         plannedUrl(c, String(route.request().url()));
         await route.continue();
@@ -85,10 +68,11 @@ export class PlaywrightBrowserAdapter {
         return this.observation(c, s, action, s.url, 'FAILED', undefined, undefined, String(error));
     } }
     async health() { try {
-        if (!this.executablePath || !this.executableExists(this.executablePath))
+        const executablePath = this.refreshExecutable();
+        if (!executablePath)
             return { available: false, reason: 'Playwright Chromium executable unavailable' };
         const pw = await this.loadPlaywright();
-        return { available: Boolean(pw?.chromium), version: `playwright-core:${this.executablePath}` };
+        return { available: Boolean(pw?.chromium), version: `playwright-core:${executablePath}` };
     }
     catch (error) {
         return { available: false, reason: String(error) };

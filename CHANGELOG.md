@@ -4,6 +4,13 @@ All notable changes to OpenCode-Hi are documented here.
 
 ## Unreleased
 
+## 0.2.3
+
+- Bounds verification/completion recovery when a required runtime capability is unavailable: mandatory visual/browser, MCP, model-dispatch, workspace, process, dependency and session-abort failures now resolve to durable terminal operational state instead of feeding unchanged synthetic continuations.
+- Routes `visual-check` through the canonical visual methodology/browser preflight, keeps verification evidence-owned, and makes `hi_direct_progress` return `EVIDENCE_REQUIRED` for verification obligations instead of allowing prose to close them.
+- Adds one-shot Chromium self-healing for the Hi-owned Playwright surface using pinned `playwright-core@1.62.1`, a Hi-owned platform cache, bounded bootstrap time, and failure deduplication; unavailable bootstrap remains an explicit environment/capability blocker rather than a retry loop.
+- Makes child-result parent wake re-enter the canonical completion/continuation evaluator and hardens failed process lifecycle/abort paths so unverified native ownership cannot masquerade as healthy `WAIT`.
+
 ## 0.2.2
 
 - Makes npm the normal-user bootstrap path with a Node-only `opencode-hi` package runner (`setup`, `update`, `doctor`, plus bounded recovery commands), while preserving the existing transactional ownership/provenance model and the legacy Python setup surface for compatibility.

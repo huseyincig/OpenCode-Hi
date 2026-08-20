@@ -124,6 +124,18 @@ test('parent direct progress can close an explicit analysis obligation without b
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
+test('direct progress on o-verification returns EVIDENCE_REQUIRED and cannot close verification with prose',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-direct-verification-owned-'))
+  try{
+    const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
+    await hooks['chat.message']({sessionID:'s-verification-owned',message:{role:'user',parts:[{type:'text',text:'Verify the focused behavior'}]}},{parts:[]});await assessPluginMission(hooks,'s-verification-owned',{task_kind:'review',required_capabilities:['review','verification'],likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
+    const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'I checked it manually and it is fine.',obligation_id:'o-verification'},{sessionID:'s-verification-owned'}))
+    assert.equal(result.status,'EVIDENCE_REQUIRED');assert.equal(result.reason,'verification-is-evidence-owned');assert.equal(result.obligation_id,'o-verification');assert.ok(result.missing_kinds.includes('targeted-tests'))
+    const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:120},{sessionID:'s-verification-owned'}));const verify=ledger.obligations.find(o=>o.id==='o-verification');assert.equal(verify.status,'open');assert.ok(ledger.events.some(e=>e.type==='verification.direct-progress-rejected'))
+    await hooks.dispose?.()
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
 test('direct analysis progress reports implementation as the remaining obligation after verification is already fresh',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-direct-analysis-after-verify-'))
   try{

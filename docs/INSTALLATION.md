@@ -24,6 +24,8 @@ If a task requires Hi-owned workspace isolation on OpenCode 1.18.19, enable that
 
 Normal setup does **not** require Git checkout, Bun, an external Python installation, a project `package.json`, or project-root `node_modules`. Python is only needed for the retained legacy/advanced helper commands that are explicitly documented as such below.
 
+For development candidate `0.2.3`, mandatory Hi-owned local browser verification also has a bounded first-use recovery path: if no usable Chromium executable is observed, Hi may invoke the package's pinned optional `playwright-core@1.62.1` CLI once to install Chromium into a Hi-owned cache (`HI_BROWSER_CACHE`, otherwise the platform cache root). It never installs browser files into the application project. A timeout, missing runtime package/CLI, network/install failure, or still-missing executable is recorded as unavailable environment/capability state and is not retried indefinitely on unchanged state.
+
 Current candidate compatibility targets exact OpenCode `1.18.19`. Historical T3 capability receipts remain provenance for the host versions they actually measured; current release-gate status belongs to [Release Engineering](RELEASE.md) and [Host Support](HOSTS.md).
 
 ## npm package runner — normal user path

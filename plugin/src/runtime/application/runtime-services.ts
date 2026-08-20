@@ -25,6 +25,8 @@ export interface RuntimeServicePorts{
   process:ProcessExecutor
   workspace:WorkspaceExecutor
   createBrowser:(persist:(bytes:Uint8Array,context:BrowserExecutionContext)=>string)=>BrowserExecutor
+  bootstrapBrowser?:()=>Promise<{available:boolean;attempted?:boolean;cachePath?:string;version?:string;executablePath?:string;reason?:string}>
+  onBrowserAvailability?:(available:boolean)=>void
 }
 
 export function createRuntimeServices(input:{ports:RuntimeServicePorts;projectRoot:string;packageRoot:string;getConfig:()=>HiConfig;getModels:()=>AvailableModel[];getHostConfig:()=>Record<string,unknown>}){
@@ -42,11 +44,13 @@ export function createRuntimeServices(input:{ports:RuntimeServicePorts;projectRo
   const scheduler=new ConcurrencyScheduler(()=>({global:getConfig().parallel.enabled?getConfig().parallel.max:1,providers:getConfig().parallel.providers,models:getConfig().parallel.models}))
   const eventSink:RuntimeSignalSink=ev=>{const m=store.all().find(x=>x.identity.mission_id===ev.mission_id);if(m)appendLedger(m,`event.${ev.type}`,{task_id:ev.task_id,worker_id:ev.worker_id,payload:ev.payload})}
   const browserExecutor=ports.createBrowser((bytes,c)=>{const a=scopedStores.contextArtifacts.addBinary('browser-screenshot',`Browser screenshot for ${c.task_id}`,bytes,{extension:'png',mediaType:'image/png',producer:'hi-browser-executor',consumerRefs:[`task:${c.task_id}`]});return`hi-artifact:${a.artifact_id}`})
-  let browserAvailable=false
-  const setBrowserAvailable=(value:boolean)=>{browserAvailable=value}
+  let browserAvailable=false,browserBootstrapStatus:{available:boolean;attempted?:boolean;cachePath?:string;version?:string;executablePath?:string;reason?:string}|undefined
+  const setBrowserAvailable=(value:boolean)=>{browserAvailable=value;ports.onBrowserAvailability?.(value)}
+  const ensureBrowserAvailable=async()=>{if(browserAvailable)return{available:true,attempted:false};if(ports.bootstrapBrowser)browserBootstrapStatus=await ports.bootstrapBrowser();const health=await browserExecutor.health();setBrowserAvailable(health.available);return{available:health.available,attempted:browserBootstrapStatus?.attempted,reason:health.available?undefined:(browserBootstrapStatus?.reason??health.reason)}}
+  const getBrowserBootstrapStatus=()=>browserBootstrapStatus?{...browserBootstrapStatus}:undefined
   const workspaceRuntime=new WorkspaceRuntime(ports.workspace,projectRoot)
-  const tasks=new TaskRuntime(ports.childSession,background,scheduler,projectRoot,packageRoot,getConfig,getModels,getHostConfig,eventSink,ports.hostCapabilities,scopedStores,workspaceRuntime,()=>browserAvailable?new Set(['host-capability:browser-execution']):new Set(),browserExecutor)
+  const tasks=new TaskRuntime(ports.childSession,background,scheduler,projectRoot,packageRoot,getConfig,getModels,getHostConfig,eventSink,ports.hostCapabilities,scopedStores,workspaceRuntime,()=>browserAvailable?new Set(['host-capability:browser-execution']):new Set(),browserExecutor,ensureBrowserAvailable)
   for(const m of store.all())for(const w of m.execution.workers)if(w.session_id&&w.status==='ready')background.set(w)
   const processRuntime=new ProcessRuntime(ports.process,projectRoot,getHostConfig)
-  return{store,background,humanDecisionTransport,persistence,scheduler,eventSink,tasks,processExecutor:ports.process,processRuntime,workspaceExecutor:ports.workspace,workspaceRuntime,browserExecutor,setBrowserAvailable,scopedStores}
+  return{store,background,humanDecisionTransport,persistence,scheduler,eventSink,tasks,processExecutor:ports.process,processRuntime,workspaceExecutor:ports.workspace,workspaceRuntime,browserExecutor,setBrowserAvailable,ensureBrowserAvailable,getBrowserBootstrapStatus,scopedStores}
 }

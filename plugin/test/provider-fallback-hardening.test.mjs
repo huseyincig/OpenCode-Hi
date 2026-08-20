@@ -7,6 +7,7 @@ import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {startAssessedMission} from './helpers/semantic.mjs'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
+import {evaluateIdle} from '../dist/runtime/continuation/evaluator.js'
 
 function setup(promptImpl=async()=>{},withAbort=true){
   const calls=[]
@@ -56,6 +57,7 @@ test('runtime fallback never spawns a replacement child when failed session abor
   assert.equal(calls.length,0)
   assert.ok(m.execution.blockers.some(x=>x.startsWith('runtime-fallback-abort-unavailable:')))
   assert.ok(m.execution.ledger.some(x=>x.type==='worker.runtime-fallback.abort-blocked'))
+  const decision=evaluateIdle(m);assert.equal(decision.decision,'USER_ACTION_REQUIRED');assert.equal(decision.reason_code,'capability-unavailable');assert.equal(decision.reason,'capability-unavailable:session-abort')
 })
 
 test('exhausted fallback chain becomes provider-failure blocker and resets stagnation',async()=>{

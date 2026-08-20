@@ -7,6 +7,7 @@ import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
 import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
 import { resolveHiConfig } from '../dist/config/resolver.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
+import {evaluateIdle} from '../dist/runtime/continuation/evaluator.js'
 
 function harness(){
   let n=0
@@ -66,4 +67,16 @@ test('successful worker result does not clear unrelated mission blockers',async(
   const started=await runtime.start(m,{objective:'local edit',role:'coder',category:'standard',scope:['src/a.ts']})
   runtime.applyResult(m,started.worker_id,done)
   assert.ok(m.execution.blockers.includes('external-authority:deploy'))
+})
+
+
+test('parallel write conflict with unavailable abort becomes terminal quiescence state',async()=>{
+  let n=0;const client={session:{create:async()=>({data:{id:`child-no-abort-${++n}`}}),promptAsync:async()=>({data:{}})}}
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:4})),process.cwd(),process.cwd(),()=>resolveHiConfig({parallel:{enabled:true,max:4}}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced']}],()=>({}))
+  const m=startAssessedMission(new MissionStore(),'runtime-conflict-no-abort','opaque parallel edits',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation']})
+  const a=await runtime.start(m,{objective:'edit A',role:'coder',category:'standard',scope:['src/a.ts']}),b=await runtime.start(m,{objective:'edit B',role:'coder',category:'standard',scope:['src/b.ts']})
+  const wa=m.execution.workers.find(w=>w.id===a.worker_id),wb=m.execution.workers.find(w=>w.id===b.worker_id);for(const w of [wa,wb]){w.selected_methodologies=[];w.loaded_methodologies=[];w.methodologies=[]}
+  await runtime.noteNativeWriteSet(m,wa.id,['src/shared.ts'],'session-diff','h1');await runtime.noteNativeWriteSet(m,wb.id,['src/shared.ts'],'session-diff','h2')
+  assert.equal(wb.status,'busy');assert.ok(m.execution.blockers.includes('capability-unavailable:session-abort'));assert.ok(m.execution.blockers.some(x=>x.startsWith('parallel-conflict-abort-unavailable:')))
+  const decision=evaluateIdle(m);assert.equal(decision.decision,'USER_ACTION_REQUIRED');assert.equal(decision.reason,'capability-unavailable:session-abort')
 })

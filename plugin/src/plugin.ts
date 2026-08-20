@@ -13,9 +13,9 @@ import { detectOpenCodeCapabilities } from './opencode/capabilities.js'
 import { OpenCodePtyAdapter } from './opencode/open-code-pty-adapter.js'
 import { OpenCodeWorkspaceAdapter } from './opencode/open-code-workspace-adapter.js'
 import { PlaywrightBrowserAdapter } from './opencode/playwright-browser-adapter.js'
+import { PlaywrightBrowserBootstrap } from './runtime/browser/bootstrap.js'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-
 export const HiPlugin:Plugin=async(ctx)=>{
   const packageRoot=resolve(dirname(fileURLToPath(import.meta.url)),'../..')
   const packagedSkillsDir=resolve(packageRoot,'skills')
@@ -26,11 +26,12 @@ export const HiPlugin:Plugin=async(ctx)=>{
   const childSession=createOpenCodeChildSessionPort(ctx.client,{serverUrl:ctx.serverUrl?.toString?.(),directory:ctx.directory})
   const processExecutor=new OpenCodePtyAdapter(ctx.client,ctx.serverUrl,ctx.directory,projectRoot,()=>state.hostConfig)
   const workspaceExecutor=new OpenCodeWorkspaceAdapter(ctx.client,ctx.serverUrl,ctx.directory)
+  const browserBootstrap=new PlaywrightBrowserBootstrap({package_root:packageRoot})
   const hostCapabilities=host.capabilities.contracts
   let processAvailable=false,workspaceAvailable=false,browserAvailable=false
   const refreshOwnedCapabilities=()=>{const observed=detectOpenCodeCapabilities(ctx.client,{processLifecycle:processAvailable,workspaceIsolation:workspaceAvailable,browserExecution:browserAvailable});hostCapabilities.splice(0,hostCapabilities.length,...observed.contracts)}
   refreshOwnedCapabilities()
-  const services=createRuntimeServices({ports:{nativeContext:{project:ctx.project,directory:ctx.directory,worktree:ctx.worktree},childSession,hostCapabilities,process:processExecutor,workspace:workspaceExecutor,createBrowser:persist=>new PlaywrightBrowserAdapter({persist_screenshot:persist})},projectRoot,packageRoot,getConfig:()=>state.config,getModels:host.getModels,getHostConfig:()=>state.hostConfig})
+  const services=createRuntimeServices({ports:{nativeContext:{project:ctx.project,directory:ctx.directory,worktree:ctx.worktree},childSession,hostCapabilities,process:processExecutor,workspace:workspaceExecutor,createBrowser:persist=>new PlaywrightBrowserAdapter({persist_screenshot:persist,browser_cache_paths:[browserBootstrap.cachePath]}),bootstrapBrowser:()=>browserBootstrap.ensure(),onBrowserAvailability:value=>{browserAvailable=value;refreshOwnedCapabilities()}},projectRoot,packageRoot,getConfig:()=>state.config,getModels:host.getModels,getHostConfig:()=>state.hostConfig})
   await services.workspaceRuntime.reconcileRestored(services.store.all())
   await services.processRuntime.reconcileRestored(services.store.all())
   const browserHealth=await services.browserExecutor.health();browserAvailable=browserHealth.available;services.setBrowserAvailable(browserAvailable);refreshOwnedCapabilities()
@@ -38,7 +39,7 @@ export const HiPlugin:Plugin=async(ctx)=>{
   services.persistence.save(services.store.all())
   const pendingNativePermissions=new Map<string,string[]>()
   const eventController=new RuntimeEventController({state,host,services,projectAuthority,pendingNativePermissions,projectRoot})
-  const {toolSurface,reconfigure}=createHiToolSurface({state,store:services.store,tasks:services.tasks,processRuntime:services.processRuntime,workspaceRuntime:services.workspaceRuntime,browserExecutor:services.browserExecutor,projectRoot,capabilities:host.capabilities,native:host.nativeSession,getModels:host.getModels,scopedStores:services.scopedStores})
+  const {toolSurface,reconfigure}=createHiToolSurface({state,store:services.store,tasks:services.tasks,processRuntime:services.processRuntime,workspaceRuntime:services.workspaceRuntime,browserExecutor:services.browserExecutor,projectRoot,capabilities:host.capabilities,native:host.nativeSession,getModels:host.getModels,scopedStores:services.scopedStores,getBrowserBootstrapStatus:services.getBrowserBootstrapStatus})
   void host.log('info','OpenCode-Hi plugin initialized',{directory:ctx.directory,models:host.getModels().length,restored:services.store.all().length,uncleanShutdown:services.persistence.lastLoadReport.uncleanShutdown===true,capabilities:host.capabilities,browser:browserHealth})
   // Acquire only after initialization succeeds so a failed init cannot leave a stale process-global lease.
   const instanceLease=acquireHiRuntimeInstance(String(projectRoot),ctx.client as object)

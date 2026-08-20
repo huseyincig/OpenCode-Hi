@@ -1,5 +1,6 @@
 import { type BrowserObservationContract } from '../contracts/browser-observation.js';
 import type { BrowserCleanupResult, BrowserExecutionContext, BrowserExecutor, BrowserInspectRequest, BrowserTarget, BrowserWaitRequest } from '../runtime/browser/executor.js';
+export { discoverPlaywrightChromium } from '../runtime/browser/discovery.js';
 export interface PlaywrightBrowserAdapterOptions {
     executable_path?: string;
     headless?: boolean;
@@ -7,10 +8,12 @@ export interface PlaywrightBrowserAdapterOptions {
     persist_screenshot?: (bytes: Uint8Array, context: BrowserExecutionContext) => string;
     load_playwright?: () => Promise<any>;
     executable_exists?: (path: string) => boolean;
+    browser_cache_paths?: string[];
 }
-export declare function discoverPlaywrightChromium(exists?: (path: string) => boolean): string | undefined;
 export declare class PlaywrightBrowserAdapter implements BrowserExecutor {
-    private readonly executablePath?;
+    private executablePath?;
+    private readonly explicitExecutable;
+    private readonly browserCachePaths;
     private readonly headless;
     private readonly timeoutMs;
     private readonly persistScreenshot?;
@@ -18,6 +21,7 @@ export declare class PlaywrightBrowserAdapter implements BrowserExecutor {
     private readonly executableExists;
     private readonly sessions;
     constructor(options?: PlaywrightBrowserAdapterOptions);
+    private refreshExecutable;
     private ensure;
     private observation;
     private snapshot;

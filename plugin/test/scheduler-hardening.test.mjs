@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import {startAssessedMission} from './helpers/semantic.mjs'
+import {evaluateIdle} from '../dist/runtime/continuation/evaluator.js'
 import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
 import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
@@ -79,6 +80,7 @@ test('queued dependent is removed from queue when prerequisite fails',async()=>{
   assert.equal(depTask?.status,'blocked')
   assert.equal(depWorker?.status,'failed')
   assert.match(depTask?.result?.open_issues?.[0]??'',/dependency-unavailable/)
+  const decision=evaluateIdle(m);assert.equal(decision.decision,'USER_ACTION_REQUIRED');assert.equal(decision.reason_code,'operational-blocker');assert.match(decision.reason,/^dependency-unavailable:/)
 })
 
 test('start rejects a dependency that is already failed/cancelled',async()=>{

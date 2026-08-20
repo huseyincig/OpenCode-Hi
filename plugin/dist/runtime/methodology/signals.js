@@ -52,6 +52,12 @@ export function verificationMethodologySignals(input) {
         add(out, 'verification.visual', 'Changed surface includes rendered UI that requires visual verification.');
     return out;
 }
+export function requiredVerificationMethodologySignals(intent) {
+    const out = [];
+    if (intent.likelyVerification.includes('visual-check'))
+        add(out, 'verification.visual', 'The mission verification contract explicitly requires visual-check evidence.');
+    return out;
+}
 export function architectureMethodologySignals(intent) {
     const out = [];
     if (intent.ambiguity === 'contract-critical')

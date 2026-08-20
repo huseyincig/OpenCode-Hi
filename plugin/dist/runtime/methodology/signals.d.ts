@@ -18,4 +18,5 @@ export declare function verificationMethodologySignals(input: {
     requireReview: boolean;
     changedFiles: string[];
 }): HiMethodologySignal[];
+export declare function requiredVerificationMethodologySignals(intent: NormalizedMissionIntent): HiMethodologySignal[];
 export declare function architectureMethodologySignals(intent: NormalizedMissionIntent): HiMethodologySignal[];

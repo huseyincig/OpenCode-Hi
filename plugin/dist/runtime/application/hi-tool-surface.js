@@ -3,6 +3,7 @@ import { compactLedgerReport } from '../ledger/report.js';
 import { aggregateMissionMetrics } from '../ledger/metrics.js';
 import { formatUserMissionStatus } from '../ledger/status.js';
 import { evaluatePreconditions, TaskPreconditionError } from '../readiness/preconditions.js';
+import { clearCapabilityUnavailable, firstCapabilityBlocker, markCapabilityUnavailable } from '../readiness/capability-failure.js';
 import { parseSemanticIntentAssessment } from '../intent/semantic-assessment.js';
 import { syncMissionGates } from '../gates/gates.js';
 import { appendLedger } from '../ledger/ledger.js';
@@ -13,7 +14,7 @@ import { registerTemporaryMutation, resolveRollback } from '../mutations/tempora
 import { markMutation, normalizeProjectPath, addEvidence } from '../evidence/evidence-runtime.js';
 import { evidenceProducerAttemptForWorker } from '../evidence/applicability.js';
 import { assessChangedFileOwnership } from '../task/diff-ownership.js';
-import { replanVerificationForChangedSurface, verificationSatisfied } from '../verification/policy.js';
+import { replanVerificationForChangedSurface, verificationEnvelopeFor, verificationSatisfied } from '../verification/policy.js';
 import { collectRepoContext } from '../intent/repo-context.js';
 import { bindParentMethodologyNeeds } from '../methodology/activation.js';
 import { reconcileMethodologyExits } from '../methodology/exit.js';
@@ -57,8 +58,8 @@ function optionalScopeList(value) {
 import { resolveBrowserExecutionOwner } from '../browser/ownership.js';
 function nativeDiffFiles(raw, projectRoot) { const items = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : []; return [...new Set(items.map((x) => typeof x?.file === 'string' ? x.file : typeof x?.path === 'string' ? x.path : '').filter((x) => Boolean(x)).map((x) => normalizeProjectPath(x, projectRoot)).filter(Boolean))]; }
 export function createHiToolSurface(input) {
-    const { state, store, tasks, processRuntime, workspaceRuntime, browserExecutor, projectRoot, capabilities, native, getModels, scopedStores } = input;
-    const doctorTool = tool({ description: 'Run OpenCode-Hi runtime/configuration health checks', args: {}, execute: async () => { const browserHealth = browserExecutor ? await browserExecutor.health() : { available: false }, runtimeHostResources = new Set(browserHealth.available ? ['host-capability:browser-execution'] : []); return formatDoctor(runDoctor(state.config, store, projectRoot, { models: getModels(), resolution: state.configResolution, capabilities, hostConfig: state.hostConfig, openCodeVersion: state.openCodeVersion, runtimeHostResources })); } });
+    const { state, store, tasks, processRuntime, workspaceRuntime, browserExecutor, projectRoot, capabilities, native, getModels, scopedStores, getBrowserBootstrapStatus } = input;
+    const doctorTool = tool({ description: 'Run OpenCode-Hi runtime/configuration health checks', args: {}, execute: async () => { const browserHealth = browserExecutor ? await browserExecutor.health() : { available: false }, runtimeHostResources = new Set(browserHealth.available ? ['host-capability:browser-execution'] : []); return formatDoctor(runDoctor(state.config, store, projectRoot, { models: getModels(), resolution: state.configResolution, capabilities, hostConfig: state.hostConfig, openCodeVersion: state.openCodeVersion, runtimeHostResources, browserBootstrap: getBrowserBootstrapStatus?.() })); } });
     const statusTool = tool({ description: 'Show compact user-facing Hi mission status. This intentionally excludes diagnostic logs and ledger payloads.', args: {}, execute: async (_args, c) => { const m = store.get(c?.sessionID); return m ? formatUserMissionStatus(m) : 'Hi: no active mission'; } });
     const metricsTool = tool({ description: 'Show aggregate Hi runtime metrics derived from bounded mission state. Token/cost telemetry is omitted unless the host provides it.', args: {}, execute: async () => JSON.stringify(aggregateMissionMetrics(store.all())) });
     const ledgerTool = tool({ description: 'Show a bounded Hi execution ledger/report on demand.', args: { limit: tool.schema.number().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(compactLedgerReport(m, a?.limit ?? 40)) : 'No active Hi mission'; } });
@@ -93,27 +94,44 @@ export function createHiToolSurface(input) {
             m.context.context_artifacts.splice(0, m.context.context_artifacts.length - 8); appendLedger(m, 'context-artifact.added', { payload: { id: item.id, kind: item.kind, sha256: item.sha256, durable: Boolean(stored), source_files: sourceFiles.slice(0, 16) } }); return JSON.stringify(item); } });
     const artifactsTool = tool({ description: 'List bounded Hi context artifact references.', args: {}, execute: async (_a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(m.context.context_artifacts) : 'No active Hi mission'; } });
     const mutationTool = tool({ description: 'Register a temporary execution mutation. Prefer native session revert for project-local tracked experiments; use an exact rollback command only for native-coverage gaps.', args: { kind: tool.schema.string(), description: tool.schema.string(), rollback_command: tool.schema.string().optional(), native_revert: tool.schema.boolean().optional(), session_id: tool.schema.string().optional(), message_id: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
-            return 'No active Hi mission'; const mode = a.native_revert ? 'native-revert' : 'command'; if (mode === 'native-revert' && hostCapabilityByID(capabilities.contracts, 'session-revert')?.status !== 'SUPPORTED')
-            return 'BLOCKED: OpenCode native session revert is unavailable'; return JSON.stringify(registerTemporaryMutation(m, { kind: String(a.kind), description: String(a.description), rollback_command: a.rollback_command ? String(a.rollback_command) : undefined, rollback_mode: mode, session_id: a.session_id ? String(a.session_id) : c?.sessionID, message_id: a.message_id ? String(a.message_id) : undefined })); } });
+            return 'No active Hi mission'; const mode = a.native_revert ? 'native-revert' : 'command'; if (mode === 'native-revert' && hostCapabilityByID(capabilities.contracts, 'session-revert')?.status !== 'SUPPORTED') {
+            const detail = 'OpenCode native session revert is unavailable';
+            const marker = markCapabilityUnavailable(m, { capability: 'session-revert', reason: detail });
+            return JSON.stringify({ status: 'USER_ACTION_REQUIRED', reason: 'capability-unavailable', capability: 'session-revert', blocker: marker, detail, alternative: 'register an exact command rollback when safe and available' });
+        } if (mode === 'native-revert')
+            clearCapabilityUnavailable(m, 'session-revert');
+        else if (!m.vcs.temporary_mutations.some(x => x.status === 'active' && x.rollback_mode === 'native-revert'))
+            clearCapabilityUnavailable(m, 'session-revert'); return JSON.stringify(registerTemporaryMutation(m, { kind: String(a.kind), description: String(a.description), rollback_command: a.rollback_command ? String(a.rollback_command) : undefined, rollback_mode: mode, session_id: a.session_id ? String(a.session_id) : c?.sessionID, message_id: a.message_id ? String(a.message_id) : undefined })); } });
     const nativeRollbackTool = tool({ description: 'Resolve a registered native-revert temporary mutation through OpenCode session.revert. Evidence remains stale until reverified.', args: { id: tool.schema.string() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
             return 'No active Hi mission'; const item = m.vcs.temporary_mutations.find(x => x.id === String(a.id)); if (!item)
             return 'Unknown temporary mutation'; if (item.rollback_mode !== 'native-revert')
             return 'BLOCKED: mutation uses command rollback'; const target = item.session_id ?? m.identity.session_id; const belongs = target === m.identity.session_id || m.execution.workers.some(w => w.session_id === target); if (!belongs)
             return 'BLOCKED: target session is outside this mission'; try {
             await native.revert(target, item.message_id);
+            clearCapabilityUnavailable(m, 'session-revert');
             resolveRollback(m, item, true, 'native session revert completed; verification must be refreshed');
             markMutation(m, m.vcs.changed_files, 'native-session-revert');
             return JSON.stringify({ status: 'ROLLED_BACK', id: item.id, session_id: target, evidence_fresh: false });
         }
         catch (error) {
-            resolveRollback(m, item, false, String(error));
-            return `Native revert failed: ${String(error)}`;
+            const detail = String(error);
+            resolveRollback(m, item, false, detail);
+            if (/unavailable/i.test(detail)) {
+                const marker = markCapabilityUnavailable(m, { capability: 'session-revert', reason: detail });
+                return JSON.stringify({ status: 'USER_ACTION_REQUIRED', reason: 'capability-unavailable', capability: 'session-revert', blocker: marker, detail });
+            }
+            return `Native revert failed: ${detail}`;
         } } });
     const directProgressTool = tool({ description: 'Record one bounded parent/Working-Manager direct obligation. obligation_id must be the exact ID only (for example o-analysis), never ID+summary. Call separately for each completed obligation. scope_expansions, when needed, is a JSON array of {file,necessary,reason}. The result reports exact remaining obligations/methodology needs. Implementation requires owned mutation; direct review requires fresh review input. Does not bypass verification/review gates.', args: { summary: tool.schema.string(), obligation_id: tool.schema.string().optional(), scope_expansions: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
             return 'No active Hi mission'; if (m.identity.status === 'completed')
-            return JSON.stringify({ status: 'ALREADY_COMPLETED', completion_ready: true, next: null, verification_required: false, remaining_obligations: [], methodology_needs: [] }); const rawArgs = a?.input && typeof a.input === 'object' && !Array.isArray(a.input) ? { ...a, ...a.input } : a, candidates = m.execution.obligations.filter(x => ['analysis', 'implementation', 'review'].includes(x.kind) && x.status === 'open'), requested = rawArgs?.obligation_id ? String(rawArgs.obligation_id) : undefined, exact = requested ? candidates.find(x => x.id === requested) : undefined, semanticSingle = requested && !requested.startsWith('o-') && candidates.length === 1 ? candidates[0] : undefined, o = exact ?? semanticSingle ?? (!requested && candidates.length === 1 ? candidates[0] : undefined), summary = String(rawArgs?.summary ?? '').trim().slice(0, 1000), candidateIDs = candidates.map(x => x.id); if (!summary)
-            return 'BLOCKED: direct progress requires a non-empty bounded summary'; if (requested && !exact && requested.startsWith('o-'))
-            return JSON.stringify({ status: 'BLOCKED', reason: 'unknown-obligation-id', requested, candidate_ids: candidateIDs }); if (!o)
+            return JSON.stringify({ status: 'ALREADY_COMPLETED', completion_ready: true, next: null, verification_required: false, remaining_obligations: [], methodology_needs: [] }); const rawArgs = a?.input && typeof a.input === 'object' && !Array.isArray(a.input) ? { ...a, ...a.input } : a, requested = rawArgs?.obligation_id ? String(rawArgs.obligation_id) : undefined, requestedOpen = requested ? m.execution.obligations.find(x => x.id === requested && x.status === 'open') : undefined, candidates = m.execution.obligations.filter(x => ['analysis', 'implementation', 'review'].includes(x.kind) && x.status === 'open'), exact = requested ? candidates.find(x => x.id === requested) : undefined, semanticSingle = requested && !requested.startsWith('o-') && candidates.length === 1 ? candidates[0] : undefined, o = exact ?? semanticSingle ?? (!requested && candidates.length === 1 ? candidates[0] : undefined), summary = String(rawArgs?.summary ?? '').trim().slice(0, 1000), candidateIDs = candidates.map(x => x.id); if (!summary)
+            return 'BLOCKED: direct progress requires a non-empty bounded summary'; if (requestedOpen?.kind === 'verification') {
+            const envelope = verificationEnvelopeFor(m, requestedOpen.id), missing = envelope.checks.filter(check => check.result !== 'passed').map(check => check.kind);
+            appendLedger(m, 'verification.direct-progress-rejected', { payload: { obligation: requestedOpen.id, missing, reason: 'verification-is-evidence-owned' } });
+            return JSON.stringify({ status: 'EVIDENCE_REQUIRED', reason: 'verification-is-evidence-owned', obligation_id: requestedOpen.id, required_kinds: [...requestedOpen.requiredEvidence ?? m.execution.verification_policy.requiredKinds], missing_kinds: missing, checks: envelope.checks });
+        } if (requested && !requestedOpen && requested.startsWith('o-'))
+            return JSON.stringify({ status: 'BLOCKED', reason: 'unknown-obligation-id', requested, candidate_ids: candidateIDs }); if (requestedOpen && !exact)
+            return JSON.stringify({ status: 'BLOCKED', reason: `direct-progress-does-not-own-${requestedOpen.kind}`, requested, candidate_ids: candidateIDs }); if (!o)
             return candidates.length > 1 ? JSON.stringify({ status: 'BLOCKED', reason: 'obligation-id-required', candidate_ids: candidateIDs }) : 'No open direct-progress obligation'; if (o.kind === 'review' && m.execution.verification_policy.requireReview)
             return 'BLOCKED: independent reviewer required; direct parent progress cannot close this review obligation'; let directFiles = [...m.vcs.changed_files]; if (o.kind === 'implementation') {
             if (!primaryRoleCanDirectImplementation(m.execution.primary_mode))
@@ -207,7 +225,8 @@ export function createHiToolSurface(input) {
         catch (e) {
             if (e instanceof TaskPreconditionError) {
                 appendLedger(m, 'worker.start.precondition', { payload: { decision: e.result.decision, items: e.result.items.slice(0, 12) } });
-                return JSON.stringify({ status: e.result.decision, preconditions: e.result.items });
+                const capability_blocker = firstCapabilityBlocker(m);
+                return JSON.stringify({ status: capability_blocker ? 'USER_ACTION_REQUIRED' : e.result.decision, preconditions: e.result.items, ...(capability_blocker ? { capability_blocker } : {}) });
             }
             appendLedger(m, 'worker.start.failed', { payload: { error: String(e) } });
             return `Task start failed: ${String(e)}`;
@@ -297,8 +316,10 @@ export function createHiToolSurface(input) {
         } } });
     const processSpawnTool = tool({ description: 'Spawn one owned long-running process for an existing Hi worker/task through the native OpenCode PTY lifecycle. Native permission ask remains a real OpenCode permission request.', args: { worker_id: tool.schema.string(), command: tool.schema.string(), args_json: tool.schema.string().optional(), cwd: tool.schema.string().optional(), timeout_ms: tool.schema.number().optional(), title: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
             return 'No active Hi mission'; if (!m.identity.intent.requiredCapabilities.includes('interactive-process'))
-            return 'BLOCKED: persistent/interactive process lifecycle was not selected; use the native shell for bounded commands'; const processCapability = hostCapabilityByID(capabilities.contracts ?? [], 'process-lifecycle'); if (processCapability?.status !== 'SUPPORTED')
-            return 'BLOCKED: native process lifecycle is unavailable on the active OpenCode host'; let args; if (a.args_json) {
+            return 'BLOCKED: persistent/interactive process lifecycle was not selected; use the native shell for bounded commands'; const processCapability = hostCapabilityByID(capabilities.contracts ?? [], 'process-lifecycle'); if (processCapability?.status !== 'SUPPORTED') {
+            const detail = 'native process lifecycle is unavailable on the active OpenCode host', marker = markCapabilityUnavailable(m, { capability: 'process-lifecycle', reason: detail, workerId: String(a.worker_id) });
+            return JSON.stringify({ status: 'USER_ACTION_REQUIRED', reason: 'capability-unavailable', capability: 'process-lifecycle', blocker: marker, detail });
+        } ; let args; if (a.args_json) {
             try {
                 const parsed = JSON.parse(String(a.args_json));
                 if (!Array.isArray(parsed) || !parsed.every(x => typeof x === 'string'))

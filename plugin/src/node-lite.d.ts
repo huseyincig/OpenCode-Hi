@@ -1,4 +1,4 @@
-declare const process: { cwd(): string; env: Record<string,string|undefined>; platform:string; kill(pid:number,signal?:string):boolean }
+declare const process: { cwd(): string; env: Record<string,string|undefined>; platform:string; execPath:string; kill(pid:number,signal?:string):boolean }
 declare module 'node:crypto' {
   export interface Hash { update(data:any): Hash; digest(encoding:'hex'): string }
   export function createHash(algorithm:string): Hash
@@ -27,7 +27,7 @@ declare module 'node:path' {
 
 declare module 'node:url' { export function fileURLToPath(url:any): string }
 declare module 'node:child_process' {
-  export interface ChildProcess { pid?: number; killed:boolean; kill(signal?:string):boolean; once(event:'exit', listener:(code:number|null)=>void):this }
+  export interface ChildProcess { pid?: number; killed:boolean; stdout?:{on(event:'data',listener:(chunk:any)=>void):any}; stderr?:{on(event:'data',listener:(chunk:any)=>void):any}; kill(signal?:string):boolean; once(event:'exit'|'close', listener:(code:number|null)=>void):this; once(event:'error',listener:(error:Error)=>void):this }
   export function spawn(command:string,args:string[],options?:any):ChildProcess
   export function spawnSync(command:string,args:string[],options?:any):{status:number|null;stdout?:string|Buffer;stderr?:string|Buffer}
 }

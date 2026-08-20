@@ -49,6 +49,12 @@ export function verificationMethodologySignals(input:{changed:boolean;scopeExpan
   return out
 }
 
+export function requiredVerificationMethodologySignals(intent:NormalizedMissionIntent):HiMethodologySignal[]{
+  const out:HiMethodologySignal[]=[]
+  if(intent.likelyVerification.includes('visual-check'))add(out,'verification.visual','The mission verification contract explicitly requires visual-check evidence.')
+  return out
+}
+
 export function architectureMethodologySignals(intent:NormalizedMissionIntent):HiMethodologySignal[]{
   const out:HiMethodologySignal[]=[]
   if(intent.ambiguity==='contract-critical')add(out,'architecture.contract-ambiguity','Structured mission state contains unresolved contract-critical ambiguity.')
