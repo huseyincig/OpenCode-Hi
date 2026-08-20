@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 import {execFileSync,spawnSync} from 'node:child_process'
 import {readFileSync} from 'node:fs'
+import {fileURLToPath} from 'node:url'
 
-const ROOT=new URL('..',import.meta.url).pathname.replace(/\/$/,'')
+const ROOT=fileURLToPath(new URL('..',import.meta.url)).replace(/[\\/]$/,'')
 const readJson=path=>JSON.parse(readFileSync(`${ROOT}/${path}`,'utf8'))
 const text=path=>readFileSync(`${ROOT}/${path}`,'utf8').trim()
 const git=(...args)=>execFileSync('git',args,{cwd:ROOT,encoding:'utf8'}).trim()
