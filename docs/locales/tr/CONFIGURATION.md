@@ -748,6 +748,7 @@ Unknown field destek anlamına gelmez.
 Common project kontrolü için artık legacy Python helper zorunlu değildir:
 
 ```bash
+npx --yes opencode-hi@0.2.3 reconfigure .
 npx --yes opencode-hi@0.2.3 state .
 npx --yes opencode-hi@0.2.3 reprofile . --profile balanced
 npx --yes opencode-hi@0.2.3 roles . --set coder=provider/model-a,provider/model-b
@@ -756,13 +757,14 @@ npx --yes opencode-hi@0.2.3 rotate . --role coder
 npx --yes opencode-hi@0.2.3 check-update .
 ```
 
+- `reconfigure` bounded Node wizard'ı yeniden açar; `primaryMode`, topology, execution profile, child-model policy ve routing strategy dışındaki alanları ezmez. İptal edilirse mutation yapmaz.
 - `state` read-only registration/ownership/routing özetidir; live Mission/provider execution truth için runtime `hi_status`, `hi_readiness`, `hi_doctor` kullanılır.
 - `reprofile` yalnız `executionPolicy` alanını değiştirir ve diğer project-owned routing alanlarını korur.
 - `roles` yalnız altı model-routed child role (`coder`, `architect`, `repository-explorer`, `qa-reviewer`, `security-reviewer`, `visual-qa`) için explicit model/fallback/variant yapraklarını değiştirir. `manager` ve `working-manager` primary model ownership OpenCode'a aittir.
 - `rotate` yalnız seçilen child role fallback model sırasını döndürür; credential, API key, provider hesabı veya primary model rotation değildir.
 - `check-update` npm registry metadata'sını read-only kontrol eder; project dosyalarını değiştirmez.
 
-Legacy Python `reconfigure` / `role-models`, Node CLI'ya henüz yansıtılmamış advanced/compatibility alanları için tutulur.
+`setup` / `install` gerçek terminalde aynı bounded wizard'ı açar; CI/non-TTY deterministic kalır ve `--non-interactive` kullanılabilir. Wizard setup anında live model inventory yoksa model ID uydurmaz. Legacy Python helper yalnız Node CLI'ya henüz yansıtılmamış advanced/compatibility alanları için tutulur.
 
 ## 27. Değişiklikten sonra doğrulama
 

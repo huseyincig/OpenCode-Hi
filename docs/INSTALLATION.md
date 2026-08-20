@@ -68,9 +68,10 @@ The npm package runner owns installation lifecycle only. Its canonical commands 
 | Command | Mutation | What it does |
 |---|---:|---|
 | `install` | bounded | development `0.2.3`: ensures exact registration through setup / safe owned update / NOOP |
-| `setup` | yes | strict first exact Hi-owned registration and ownership provenance |
+| `setup` | yes | strict first exact Hi-owned registration; development `0.2.3` also opens the bounded wizard on a real terminal |
 | `update` | yes | explicitly changes an existing Hi-owned registration to the requested exact release |
 | `doctor` | no | checks registration, ownership, config-hash drift, routing schema and pending lifecycle state |
+| `reconfigure` | routing only | development `0.2.3`: reopen the bounded terminal project wizard |
 | `state` | no | shows package/registration/routing state without claiming live Mission/provider truth |
 | `reprofile` | yes | changes only project-owned `executionPolicy` |
 | `roles` | bounded | prints or explicitly edits child-role model/fallback/variant mappings |
@@ -93,19 +94,21 @@ The loaded plugin is a different surface. Exact OpenCode 1.18.19 acceptance obse
 
 For published `0.2.2`, package `doctor` reports installation ownership/drift state; runtime `hi_status`, `hi_readiness`, and `hi_ledger` report live Mission state. Development `0.2.3` adds the Node-native package controls below for common profile/model-routing changes while keeping live Mission/provider truth in the loaded runtime.
 
-### Is setup fully interactive?
+### Is setup interactive?
 
-No. The current normal-user setup is deterministic and non-interactive by design:
+Published `0.2.2` remains deterministic. Development `0.2.3` is interactive **only when the package runner is attached to a real terminal**. CI and piped/non-TTY automation remain deterministic; `--non-interactive` makes that choice explicit. The wizard is intentionally bounded and does not own provider authentication or pretend that model IDs are live before OpenCode exposes the runtime inventory.
 
 ```text
-setup -> restart OpenCode -> package doctor -> runtime hi_doctor
+setup/install (TTY) -> primary/topology/profile/model-policy/strategy wizard -> restart -> package doctor -> runtime hi_doctor
+setup/install (non-TTY) -> deterministic registration -> restart -> package doctor -> runtime hi_doctor
 ```
 
-It does not present a wizard for provider/model/profile choices. Provider authentication and provider configuration remain OpenCode-owned. Hi consumes OpenCode's structured runtime provider state after the host loads, intersects it with `connected` provider IDs when available, then capability-filters and ranks child models. Initial child-role recommendations are generated once from that effective inventory; valid user routing is preserved thereafter.
+The wizard writes only existing canonical project-routing leaves: `primaryMode`, `executionPolicy`, `execution.topology` (+ bounded default capacity), `models.mode`, and `routing.strategy`. Adaptive model policy lets the runtime rank the effective connected inventory after OpenCode starts. Manual role-mapping policy suppresses automatic initial recommendation persistence; after restart use `hi_doctor` to inspect live availability and `roles` to set exact child-role candidates. Provider authentication and primary `manager` / `working-manager` model selection remain OpenCode-owned. `reconfigure` reopens the same wizard and preserves unrelated/unknown routing fields.
 
 Development `0.2.3` moves the most common project controls into the Node package runner:
 
 ```bash
+npx --yes opencode-hi@0.2.3 reconfigure .
 npx --yes opencode-hi@0.2.3 state .
 npx --yes opencode-hi@0.2.3 reprofile . --profile adaptive
 npx --yes opencode-hi@0.2.3 roles . --set coder=provider/model-a,provider/model-b
@@ -113,7 +116,7 @@ npx --yes opencode-hi@0.2.3 rotate . --role coder
 npx --yes opencode-hi@0.2.3 check-update .
 ```
 
-`state` is read-only and does not replace runtime `hi_status` / `hi_doctor`. `roles` accepts only the six Hi model-routed child roles; `manager` and `working-manager` remain OpenCode-owned primary model choices. `rotate` changes only an ordered child-model fallback prior and never touches credentials or provider keys. The retained Python `reconfigure` / `role-models` helper remains for advanced/compatibility options not yet mirrored by the Node CLI.
+`reconfigure` changes only canonical project routing policy and preserves unknown fields; cancelling it performs no mutation. `state` is read-only and does not replace runtime `hi_status` / `hi_doctor`. `roles` accepts only the six Hi model-routed child roles; `manager` and `working-manager` remain OpenCode-owned primary model choices. `rotate` changes only an ordered child-model fallback prior and never touches credentials or provider keys. The retained Python helper remains only for advanced/compatibility options not yet mirrored by the bounded Node CLI.
 
 ## Git/source path — contributor and CI compatibility
 
@@ -140,13 +143,21 @@ The preflight fails closed unless the SHA is current and clean, canonical source
 
 ## Reconfigure
 
-The setup helper exposes bounded current configuration options through `reconfigure`:
+For normal users on development `0.2.3`, reopen the bounded Node wizard:
 
 ```bash
-python3 scripts/native_plugin_setup.py reconfigure /path/to/project   --execution-policy adaptive   --primary-mode auto   --routing-strategy cost-quality
+npx --yes opencode-hi@0.2.3 reconfigure /path/to/project
 ```
 
-Additional bounded options include provider/model allow/deny rules, fallback limits, parallel/provider/model concurrency limits, profile thresholds and Team controls. The canonical complete option inventory is `data/hi-config-options.json`; documentation must not become a second mechanical config catalog.
+The wizard covers the common executable policy decisions and preserves unrelated routing fields. Cancelling it makes no mutation. For automation use the explicit bounded commands (`reprofile`, `roles`) or non-interactive setup/install.
+
+The retained Python helper is an **advanced/source-checkout compatibility surface** for lower-frequency fields not yet mirrored by the Node wizard, such as provider/model narrowing, fallback limits, detailed concurrency maps and profile thresholds:
+
+```bash
+python3 scripts/native_plugin_setup.py reconfigure /path/to/project --execution-policy adaptive --primary-mode auto --routing-strategy cost-quality
+```
+
+The canonical complete option inventory is `data/hi-config-options.json`; documentation must not become a second mechanical config catalog.
 
 Safety constraints are monotonic: a lower-precedence option cannot silently widen canonical Authority/Permission restrictions.
 

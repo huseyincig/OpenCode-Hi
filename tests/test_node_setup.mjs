@@ -40,6 +40,7 @@ test('M16 Node setup preserves foreign OpenCode config and writes exact owned re
     if(process.platform!=='win32')assert.equal(statSync(ownPath).mode&0o777,0o600)
     assert.throws(()=>readFileSync(join(root,'package-lock.json')))
     assert.throws(()=>statSync(join(root,'node_modules')))
+    assert.throws(()=>statSync(join(root,'.opencode','hi','policy','routing.json')),'non-TTY setup must leave runtime-ranked routing initialization pending')
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
@@ -100,7 +101,7 @@ test('M16 Node managed-state symlink escape is rejected when the platform permit
 
 test('M16 package-runner help is Node-native and exposes setup/update/doctor normal path',()=>{
   const out=execFileSync(process.execPath,[CLI,'--help'],{encoding:'utf8'})
-  assert.match(out,/npx opencode-hi setup/);assert.match(out,/npx opencode-hi update/);assert.match(out,/npx opencode-hi doctor/);for(const cmd of ['state','reprofile','roles','rotate','check-update'])assert.match(out,new RegExp(`npx opencode-hi ${cmd}`))
+  assert.match(out,/npx opencode-hi setup/);assert.match(out,/npx opencode-hi reconfigure/);assert.match(out,/--non-interactive/);assert.match(out,/npx opencode-hi update/);assert.match(out,/npx opencode-hi doctor/);for(const cmd of ['state','reprofile','roles','rotate','check-update'])assert.match(out,new RegExp(`npx opencode-hi ${cmd}`))
   assert.doesNotMatch(out,/python3/)
 })
 
@@ -146,6 +147,58 @@ test('0.2.3 check-update uses npm registry metadata without mutating project sta
     await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve)});const address=server.address();assert.ok(address&&typeof address==='object')
     const r=await runAsync(['check-update',root],{env:{...process.env,npm_config_registry:`http://127.0.0.1:${address.port}`}});assert.equal(r.status,0);assert.equal(r.json.status,'OK');assert.equal(r.json.current_version,'1.0.0');assert.equal(r.json.latest_version,'1.2.0');assert.equal(r.json.update_available,true);assert.match(r.json.recommended_command,/opencode-hi@1\.2\.0 install/);assert.equal(readFileSync(join(root,'opencode.json'),'utf8'),before)
   }finally{await new Promise(resolve=>server.close(()=>resolve()));rmSync(root,{recursive:true,force:true})}
+})
+
+
+
+async function runInteractive(args,answers){
+  const child=spawn(process.execPath,[CLI,...args],{env:process.env,stdio:['pipe','pipe','pipe']});let stdout='',stderr=''
+  child.stdout.setEncoding('utf8');child.stderr.setEncoding('utf8');child.stdout.on('data',x=>stdout+=x);child.stderr.on('data',x=>stderr+=x)
+  child.stdin.end(answers.join('\n')+'\n')
+  const status=await new Promise(resolve=>child.once('close',resolve));let json
+  try{json=JSON.parse(stdout)}catch{assert.fail(`Interactive CLI did not return final JSON: rc=${status}\nstdout=${stdout}\nstderr=${stderr}`)}
+  return{status,stdout,stderr,json}
+}
+
+test('0.2.3 interactive setup configures canonical primary topology profile and model policy without inventing runtime inventory',async()=>{
+  const root=project();try{
+    config(root,{plugin:['foreign@1'],custom:{keep:true}})
+    const r=await runInteractive(['setup',root,'--version','1.0.0','--interactive'],[
+      '',       // primaryMode=auto
+      '3',      // topology=multi-agent
+      '3',      // executionPolicy=thorough
+      '2',      // model policy=manual role mapping later
+      '1',      // routing strategy=cost-quality
+      'y',
+    ])
+    assert.equal(r.status,0);assert.equal(r.json.status,'APPLIED');assert.equal(r.json.plugin_spec,'opencode-hi@1.0.0');assert.equal(r.json.configuration.status,'APPLIED')
+    assert.match(r.stderr,/Primary working mode/i);assert.match(r.stderr,/Task topology/i);assert.match(r.stderr,/Child model routing/i)
+    const doc=JSON.parse(readFileSync(join(root,'.opencode','hi','policy','routing.json'),'utf8'))
+    assert.equal(doc.primaryMode,'auto');assert.equal(doc.execution.topology,'multi-agent');assert.equal(doc.execution.maxAgents,4);assert.equal(doc.execution.parallelism,2)
+    assert.equal(doc.executionPolicy,'thorough');assert.equal(doc.models.mode,'role-mapped');assert.equal(doc.routing.strategy,'cost-quality')
+    assert.deepEqual(JSON.parse(readFileSync(join(root,'opencode.json'),'utf8')).custom,{keep:true})
+    assert.match(r.json.configuration.next,/roles/i)
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+test('0.2.3 reconfigure wizard preserves unknown routing fields and cancellation is mutation-free',async()=>{
+  const root=project();try{
+    config(root,{plugin:[]});assert.equal(run('install',root,'--version','1.0.0').status,0)
+    const routing=join(root,'.opencode','hi','policy','routing.json');mkdirSync(join(root,'.opencode','hi','policy'),{recursive:true});writeFileSync(routing,JSON.stringify({schema:1,type:'hi-routing',primaryMode:'manager',executionPolicy:'minimal',unknownTop:{keep:true},execution:{topology:'single-agent',maxAgents:1,parallelism:1,future:'keep'},models:{mode:'adaptive',future:'keep'},routing:{strategy:'quality',futureField:{keep:true},roleModels:{coder:['p/a']}}},null,2)+'\n')
+    const before=readFileSync(routing,'utf8')
+    const cancelled=await runInteractive(['reconfigure',root,'--interactive'],['','','','','','n']);assert.equal(cancelled.status,0);assert.equal(cancelled.json.status,'CANCELLED');assert.equal(readFileSync(routing,'utf8'),before)
+    const applied=await runInteractive(['reconfigure',root,'--interactive'],[
+      '2', // working-manager
+      '1', // adaptive topology
+      '4', // adaptive execution policy
+      '1', // adaptive models
+      '3', // cost strategy
+      'y',
+    ])
+    assert.equal(applied.status,0);assert.equal(applied.json.status,'APPLIED')
+    const doc=JSON.parse(readFileSync(routing,'utf8'));assert.equal(doc.primaryMode,'working-manager');assert.equal(doc.execution.topology,'adaptive');assert.equal(doc.execution.maxAgents,4);assert.equal(doc.execution.parallelism,2);assert.equal(doc.executionPolicy,'adaptive');assert.equal(doc.models.mode,'adaptive');assert.equal(doc.routing.strategy,'cost')
+    assert.deepEqual(doc.unknownTop,{keep:true});assert.equal(doc.execution.future,'keep');assert.equal(doc.models.future,'keep');assert.deepEqual(doc.routing.futureField,{keep:true});assert.deepEqual(doc.routing.roleModels.coder,['p/a'])
+  }finally{rmSync(root,{recursive:true,force:true})}
 })
 
 test('0.2.3 exact-SHA release preflight is fail-closed and contains no publication mutation command',()=>{

@@ -19,6 +19,7 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { get as httpGet } from 'node:http'
 import { get as httpsGet } from 'node:https'
+import { createInterface } from 'node:readline/promises'
 
 const PRODUCT='OpenCode-Hi'
 const SHORT='HI'
@@ -280,6 +281,80 @@ function rotateRole(project,role){
   writeRouting(project,state,{...state.doc,routing:{...rr,roleModels:nextModels}})
   return{status:'APPLIED',product:PRODUCT,project,config:state.path,role,before:models,after:rotated,restart_required:true,note:'rotate changes only this child role fallback order; it never rotates credentials, provider keys, or primary OpenCode models.'}
 }
+
+function canonicalChoice(value,allowed,fallback){return allowed.includes(value)?value:fallback}
+async function askChoice(rl,label,choices,current){
+  const defaultIndex=Math.max(0,choices.findIndex(x=>x.value===current)),shown=defaultIndex+1
+  for(let attempt=0;attempt<3;attempt++){
+    const lines=choices.map((x,i)=>`  ${i+1}. ${x.label}${i===defaultIndex?' [default]':''}`).join('\n')
+    const raw=(await rl.question(`${label}\n${lines}\nChoose [${shown}]: `)).trim()
+    if(!raw)return choices[defaultIndex].value
+    const index=Number(raw)-1
+    if(Number.isInteger(index)&&choices[index])return choices[index].value
+    process.stderr.write('Invalid choice. Enter one of the listed numbers.\n')
+  }
+  throw new SetupError('interactive-choice-retry-exhausted',{detail:label,action:'Run the command again and choose one of the listed options.'})
+}
+async function askConfirm(rl,label,defaultYes=true){
+  for(let attempt=0;attempt<3;attempt++){
+    const raw=(await rl.question(`${label} ${defaultYes?'[Y/n]':'[y/N]'}: `)).trim().toLowerCase()
+    if(!raw)return defaultYes
+    if(['y','yes'].includes(raw))return true
+    if(['n','no'].includes(raw))return false
+    process.stderr.write('Please answer y or n.\n')
+  }
+  throw new SetupError('interactive-confirm-retry-exhausted',{action:'Run the command again and answer y or n.'})
+}
+function wizardDefaults(project){
+  const state=routingState(project),doc=state.doc,execution=doc.execution&&typeof doc.execution==='object'&&!Array.isArray(doc.execution)?doc.execution:{},models=doc.models&&typeof doc.models==='object'&&!Array.isArray(doc.models)?doc.models:{},routing=doc.routing&&typeof doc.routing==='object'&&!Array.isArray(doc.routing)?doc.routing:{}
+  return{state,answers:{
+    primaryMode:canonicalChoice(doc.primaryMode,['auto','working-manager','manager'],'auto'),
+    topology:canonicalChoice(execution.topology,['adaptive','single-agent','multi-agent'],'adaptive'),
+    executionPolicy:canonicalChoice(doc.executionPolicy,EXECUTION_POLICIES,'adaptive'),
+    modelMode:canonicalChoice(models.mode,['adaptive','role-mapped'],'adaptive'),
+    strategy:canonicalChoice(routing.strategy,['cost-quality','quality','cost'],'cost-quality'),
+  }}
+}
+async function collectWizard(project){
+  const {state,answers:current}=wizardDefaults(project)
+  let rl
+  if(process.stdin.isTTY){rl=createInterface({input:process.stdin,output:process.stderr,terminal:Boolean(process.stderr.isTTY)})}
+  else{
+    let text='';for await(const chunk of process.stdin){if(text.length<65536)text+=String(chunk)}
+    const lines=text.replace(/\r/g,'').split('\n');let index=0
+    rl={question:async prompt=>{process.stderr.write(prompt);if(index>=lines.length)throw new SetupError('interactive-input-exhausted',{action:'Provide one bounded answer per wizard question, or run in a terminal.'});return lines[index++]??''},close:()=>{}}
+  }
+  try{
+    process.stderr.write(`\n${PRODUCT} project configuration\nProject: ${project}\n\n`)
+    const primaryMode=await askChoice(rl,'Primary working mode',[{value:'auto',label:'Auto — Hi chooses Manager/Working Manager behavior from the task'},{value:'working-manager',label:'Working Manager — prefer direct work, delegate when needed'},{value:'manager',label:'Manager — prefer coordination/delegation'}],current.primaryMode)
+    const topology=await askChoice(rl,'Task topology',[{value:'adaptive',label:'Adaptive — single or multi-agent according to task structure'},{value:'single-agent',label:'Single-agent — force one execution stream'},{value:'multi-agent',label:'Multi-agent — allow bounded parallel specialist streams'}],current.topology)
+    const executionPolicy=await askChoice(rl,'Execution profile',[{value:'minimal',label:'Minimal — higher specialist threshold'},{value:'balanced',label:'Balanced — general-purpose fixed profile'},{value:'thorough',label:'Thorough — stronger specialist/review preference'},{value:'adaptive',label:'Adaptive — task/risk-aware profile selection'},{value:'manual',label:'Manual — balanced routing baseline without automatic continuation'}],current.executionPolicy)
+    const modelMode=await askChoice(rl,'Child model routing',[{value:'adaptive',label:'Adaptive — Hi ranks effective connected OpenCode models at runtime'},{value:'role-mapped',label:'Manual role mapping later — suppress automatic initial role recommendation persistence'}],current.modelMode)
+    const strategy=await askChoice(rl,'Adaptive model scoring strategy',[{value:'cost-quality',label:'Cost + quality balance'},{value:'quality',label:'Quality first'},{value:'cost',label:'Cost first'}],current.strategy)
+    const confirmed=await askConfirm(rl,'Apply this project configuration?',true)
+    return{state,answers:{primaryMode,topology,executionPolicy,modelMode,strategy},confirmed}
+  }finally{rl.close()}
+}
+function applyWizardRouting(project,wizard){
+  const {state,answers}=wizard,doc=state.doc,currentExecution=doc.execution&&typeof doc.execution==='object'&&!Array.isArray(doc.execution)?doc.execution:{},currentModels=doc.models&&typeof doc.models==='object'&&!Array.isArray(doc.models)?doc.models:{},currentRouting=doc.routing&&typeof doc.routing==='object'&&!Array.isArray(doc.routing)?doc.routing:{}
+  const sameTopology=currentExecution.topology===answers.topology
+  const maxAgents=answers.topology==='single-agent'?1:sameTopology&&Number.isInteger(currentExecution.maxAgents)&&currentExecution.maxAgents>=1&&currentExecution.maxAgents<=8?currentExecution.maxAgents:4
+  const parallelism=answers.topology==='single-agent'?1:sameTopology&&Number.isInteger(currentExecution.parallelism)&&currentExecution.parallelism>=1&&currentExecution.parallelism<=8?currentExecution.parallelism:2
+  const nextDoc={...doc,primaryMode:answers.primaryMode,executionPolicy:answers.executionPolicy,execution:{...currentExecution,topology:answers.topology,maxAgents,parallelism},models:{...currentModels,mode:answers.modelMode},routing:{...currentRouting,strategy:answers.strategy}}
+  const semanticBefore=JSON.stringify({primaryMode:doc.primaryMode??'auto',executionPolicy:doc.executionPolicy??'adaptive',execution:{topology:currentExecution.topology??'adaptive',maxAgents:currentExecution.maxAgents??4,parallelism:currentExecution.parallelism??2},models:{mode:currentModels.mode??'adaptive'},routing:{strategy:currentRouting.strategy??'cost-quality'}})
+  const semanticAfter=JSON.stringify({primaryMode:answers.primaryMode,executionPolicy:answers.executionPolicy,execution:{topology:answers.topology,maxAgents,parallelism},models:{mode:answers.modelMode},routing:{strategy:answers.strategy}})
+  if(state.exists&&semanticBefore===semanticAfter)return{status:'NOOP',product:PRODUCT,project,config:state.path,configuration:answers,reason:'configuration-already-matches',restart_required:false,next:answers.modelMode==='role-mapped'?`Restart OpenCode, inspect the effective model inventory with hi_doctor, then configure child roles with: npx --yes ${PACKAGE}@${packageVersion} roles ${JSON.stringify(project)} --set ROLE=MODEL[,FALLBACK...]`:'Restart OpenCode so Hi can use the selected policy with the effective runtime inventory.'}
+  const next=writeRouting(project,state,nextDoc)
+  return{status:'APPLIED',product:PRODUCT,project,config:state.path,configuration:{primaryMode:next.primaryMode,executionPolicy:next.executionPolicy,topology:next.execution.topology,maxAgents:next.execution.maxAgents,parallelism:next.execution.parallelism,modelMode:next.models.mode,strategy:next.routing.strategy},restart_required:true,next:answers.modelMode==='role-mapped'?`Restart OpenCode, inspect the effective model inventory with hi_doctor, then configure child roles with: npx --yes ${PACKAGE}@${packageVersion} roles ${JSON.stringify(project)} --set ROLE=MODEL[,FALLBACK...]`:'Restart OpenCode. Hi will rank eligible connected child models from the effective runtime inventory; use hi_doctor to inspect the live inventory.'}
+}
+async function configureWizard(project){
+  const d=doctor(project)
+  if(d.issues?.includes('hi-plugin-not-registered'))throw new SetupError('hi-plugin-not-registered',{path:d.config,action:`Run: npx --yes ${PACKAGE}@${packageVersion} setup ${JSON.stringify(project)} first.`})
+  const wizard=await collectWizard(project)
+  if(!wizard.confirmed)return{status:'CANCELLED',product:PRODUCT,project,mutation_performed:false}
+  return applyWizardRouting(project,wizard)
+}
+
 function registeredVersion(spec){const m=typeof spec==='string'?spec.match(/^opencode-hi@(\d+\.\d+\.\d+)$/):null;return m?.[1]}
 function compareSemver(a,b){const pa=String(a).split('.').map(Number),pb=String(b).split('.').map(Number);if(pa.length!==3||pb.length!==3||[...pa,...pb].some(x=>!Number.isInteger(x)))return null;for(let i=0;i<3;i++)if(pa[i]!==pb[i])return pa[i]<pb[i]?-1:1;return 0}
 function registryLatest(timeoutMs=5000){
@@ -294,20 +369,25 @@ async function checkUpdate(project){
 }
 
 function parseArgs(argv){
-  const args=[...argv],command=args.shift()??'help';let project='.',version,profile,role;const sets=[],variants=[];let printOnly=false
+  const args=[...argv],command=args.shift()??'help';let project='.',version,profile,role,interactive;const sets=[],variants=[];let printOnly=false
   if(args[0]&&!args[0].startsWith('-'))project=args.shift()
-  while(args.length){const flag=args.shift();if(flag==='--version'){version=args.shift();if(!version)throw new SetupError('missing-version-value',{action:'Use --version <exact-version>.'})}else if(flag==='--profile'){profile=args.shift();if(!profile)throw new SetupError('profile-required')}else if(flag==='--role'){role=args.shift();if(!role)throw new SetupError('role-required')}else if(flag==='--set'){const v=args.shift();if(!v)throw new SetupError('invalid-role-set');sets.push(v)}else if(flag==='--variant'){const v=args.shift();if(!v)throw new SetupError('invalid-role-variant');variants.push(v)}else if(flag==='--print'){printOnly=true}else throw new SetupError('unsupported-cli-argument',{detail:String(flag),action:'Run: npx opencode-hi --help'})}
-  return{command,project:projectPath(project),version,profile,role,sets,variants,printOnly}
+  while(args.length){const flag=args.shift();if(flag==='--version'){version=args.shift();if(!version)throw new SetupError('missing-version-value',{action:'Use --version <exact-version>.'})}else if(flag==='--profile'){profile=args.shift();if(!profile)throw new SetupError('profile-required')}else if(flag==='--role'){role=args.shift();if(!role)throw new SetupError('role-required')}else if(flag==='--set'){const v=args.shift();if(!v)throw new SetupError('invalid-role-set');sets.push(v)}else if(flag==='--variant'){const v=args.shift();if(!v)throw new SetupError('invalid-role-variant');variants.push(v)}else if(flag==='--interactive'){if(interactive===false)throw new SetupError('conflicting-interactive-flags');interactive=true}else if(flag==='--non-interactive'){if(interactive===true)throw new SetupError('conflicting-interactive-flags');interactive=false}else if(flag==='--print'){printOnly=true}else throw new SetupError('unsupported-cli-argument',{detail:String(flag),action:'Run: npx opencode-hi --help'})}
+  return{command,project:projectPath(project),version,profile,role,sets,variants,printOnly,interactive}
 }
-function usage(){return `${PRODUCT} npm bootstrap and project controls\n\nUsage:\n  npx ${PACKAGE} install [project] [--version X]   # ensure exact Hi registration (setup or safe owned update)\n  npx ${PACKAGE} setup [project] [--version X]     # strict first installation\n  npx ${PACKAGE} update [project] [--version X]\n  npx ${PACKAGE} doctor [project]\n  npx ${PACKAGE} state [project]\n  npx ${PACKAGE} reprofile [project] --profile <minimal|balanced|thorough|adaptive|manual>\n  npx ${PACKAGE} roles [project] [--set ROLE=MODEL[,FALLBACK...]] [--variant ROLE:MODEL=VARIANT]\n  npx ${PACKAGE} rotate [project] --role <child-role>\n  npx ${PACKAGE} check-update [project]\n  npx ${PACKAGE} plan [project] [--version X]\n  npx ${PACKAGE} rollback [project]\n  npx ${PACKAGE} recover [project]\n\nThe friendly path is install -> restart OpenCode -> doctor/state. install is idempotent and safely updates only a matching Hi-owned older registration. The package runner never creates project-root node_modules. Provider authentication and primary model selection remain OpenCode-owned.\n`}
+function usage(){return `${PRODUCT} npm bootstrap and project controls\n\nUsage:\n  npx ${PACKAGE} install [project] [--version X]   # ensure exact Hi registration (setup or safe owned update)\n  npx ${PACKAGE} setup [project] [--version X]     # strict first installation; interactive in a terminal\n  npx ${PACKAGE} reconfigure [project]               # reopen the project configuration wizard\n  npx ${PACKAGE} update [project] [--version X]\n  npx ${PACKAGE} doctor [project]\n  npx ${PACKAGE} state [project]\n  npx ${PACKAGE} reprofile [project] --profile <minimal|balanced|thorough|adaptive|manual>\n  npx ${PACKAGE} roles [project] [--set ROLE=MODEL[,FALLBACK...]] [--variant ROLE:MODEL=VARIANT]\n  npx ${PACKAGE} rotate [project] --role <child-role>\n  npx ${PACKAGE} check-update [project]\n  npx ${PACKAGE} plan [project] [--version X]\n  npx ${PACKAGE} rollback [project]\n  npx ${PACKAGE} recover [project]\n\nThe friendly path is setup/install (interactive in a terminal) -> restart OpenCode -> doctor/state. Use --non-interactive for automation. install is idempotent and safely updates only a matching Hi-owned older registration. The package runner never creates project-root node_modules. Provider authentication and primary model selection remain OpenCode-owned.\n`}
 
 async function main(){
   let out
   try{
-    const {command,project,version,profile,role,sets,variants}=parseArgs(process.argv.slice(2))
+    const {command,project,version,profile,role,sets,variants,interactive}=parseArgs(process.argv.slice(2))
     if(command==='help'||command==='--help'||command==='-h'){process.stdout.write(usage());return 0}
-    if(command==='install')out=install(project,version)
-    else if(command==='setup')out=setup(project,version)
+    const terminalInteractive=interactive??Boolean(process.stdin.isTTY&&process.stderr.isTTY)
+    if(command==='install'||command==='setup'){
+      let wizard
+      if(terminalInteractive){wizard=await collectWizard(project);if(!wizard.confirmed){out={status:'CANCELLED',product:PRODUCT,project,mutation_performed:false}}}
+      if(!out){const registration=command==='install'?install(project,version):setup(project,version);if(wizard){const configuration=applyWizardRouting(project,wizard);out={...registration,configuration}}else out=registration}
+    }
+    else if(command==='reconfigure'||command==='configure'){if(interactive===false)throw new SetupError('interactive-terminal-required',{action:'Run reconfigure in a terminal, or use the bounded non-interactive commands reprofile/roles.'});if(!(interactive??Boolean(process.stdin.isTTY&&process.stderr.isTTY)))throw new SetupError('interactive-terminal-required',{action:'Run this command from an interactive terminal. For scripted tests/automation, pass --interactive and provide bounded answers on stdin.'});out=await configureWizard(project)}
     else if(command==='update'||command==='upgrade')out=update(project,version)
     else if(command==='doctor')out=doctor(project)
     else if(command==='state')out=stateView(project)

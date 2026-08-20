@@ -89,7 +89,7 @@ OpenCode-Hi'nin normal kullanıcı yolu npm-registry-first'tür. `0.2.2` adayı 
 Projeye npm dependency eklemek yerine package-runner ile OpenCode kaydını oluşturun. Proje klasörünün içinde en kısa komut:
 
 ```bash
-npx --yes opencode-hi@latest install .
+npx --yes opencode-hi@latest setup .
 ```
 
 Bu komut proje kökündeki `opencode.json` dosyasını oluşturur veya mevcut dosyayı koruyarak exact Hi kaydını ekler. Hi-owned lifecycle/provenance dosyaları `.opencode/hi/**` altında kalır; proje köküne `package.json`, `package-lock.json` veya kalıcı `node_modules` saçmaz.
@@ -118,6 +118,7 @@ Package lifecycle ile yüklü OpenCode runtime yüzeyi ayrıdır. Published `0.2
 
 - `install`: development `0.2.3` için exact registration'ı setup / safe owned update / NOOP ile ensure eder.
 - `setup`: strict ilk exact Hi-owned registration/provenance kaydını oluşturur.
+- `reconfigure`: development `0.2.3` için bounded project wizard'ı yeniden açar.
 - `update`: Hi'nin sahip olduğu kaydı hedef exact sürüme açıkça taşır.
 - `doctor`: registration, ownership, drift ve pending lifecycle state'i statik olarak kontrol eder.
 - `state`: package/project registration + routing state'ini read-only gösterir; live Mission state değildir.
@@ -131,9 +132,10 @@ Package lifecycle ile yüklü OpenCode runtime yüzeyi ayrıdır. Published `0.2
 
 Plugin yüklendikten sonra **31 adet `hi_*` runtime tool** vardır. Kullanıcıya en yakın durum/diagnostic araçları `hi_doctor`, `hi_status`, `hi_readiness`, `hi_metrics` ve `hi_ledger`'dır; diğerleri task/worker, process, browser, context artifact, temporary mutation ve semantic control için bounded primitive'lerdir.
 
-Güncel published `0.2.2` sürümünde kurulum ownership/drift durumu package `doctor` ile; canlı Mission durumu runtime `hi_status`, `hi_readiness` ve `hi_ledger` ile görülür. Development `0.2.3` ayrıca Node-only `state`, `reprofile`, `roles`, `rotate`, `check-update` komutlarını ekler.
+Güncel published `0.2.2` sürümünde kurulum ownership/drift durumu package `doctor` ile; canlı Mission durumu runtime `hi_status`, `hi_readiness` ve `hi_ledger` ile görülür. Development `0.2.3` ayrıca terminalde bounded `setup/install` wizard, `reconfigure`, `state`, `reprofile`, `roles`, `rotate`, `check-update` komutlarını ekler.
 
 ```bash
+npx --yes opencode-hi@0.2.3 reconfigure .
 npx --yes opencode-hi@0.2.3 state .
 npx --yes opencode-hi@0.2.3 reprofile . --profile balanced
 npx --yes opencode-hi@0.2.3 roles . --set coder=provider/model-a,provider/model-b
@@ -141,13 +143,14 @@ npx --yes opencode-hi@0.2.3 rotate . --role coder
 npx --yes opencode-hi@0.2.3 check-update .
 ```
 
-Normal kurulum bugün tam interaktif wizard değildir. Akış bilinçli olarak deterministic'tir:
+Published `0.2.2` setup akışı deterministic kalır. Development `0.2.3`, gerçek terminal algılandığında bounded soru-cevap wizard açar; CI/non-TTY kullanımında deterministic davranış korunur ve `--non-interactive` ile açıkça seçilebilir:
 
 ```text
-setup -> OpenCode restart -> package doctor -> runtime hi_doctor
+setup/install (TTY) -> project wizard -> OpenCode restart -> package doctor -> runtime hi_doctor
+setup/install (CI/non-TTY) -> deterministic registration -> restart -> doctor -> hi_doctor
 ```
 
-Kurulum sırasında provider/model/profile/concurrency seçim ekranı açılmaz. Provider authentication/configuration OpenCode-owned kalır. Hi, ilk effective runtime inventory geldiğinde yalnız gerçekten effective-enabled ve role-eligible child modelleri rank eder, ilk önerileri bir kez yazar; kullanıcı daha sonra bu routing'i değiştirebilir ve sonraki update/refresh geçerli tercihi ezmez. Common project controls development `0.2.3` ile Node-native'dir; legacy Python `reconfigure` / `role-models` helper yalnız henüz Node CLI'ya taşınmamış advanced/compatibility alanları için tutulur.
+Wizard yalnız mevcut canonical Hi ayarlarını sorar: `primaryMode`, `execution.topology`, `executionPolicy`, child-model policy ve `routing.strategy`. Provider authentication ve primary `manager` / `working-manager` model seçimi OpenCode-owned kalır. Setup anında live OpenCode model inventory yoksa wizard model ID uydurmaz. Adaptive seçen kullanıcıda Hi ilk effective runtime inventory'den eligible modelleri rank eder; manuel role mapping seçilirse otomatik ilk recommendation persistence bastırılır ve restart sonrası `hi_doctor` + `roles` ile exact child model adayları ayarlanır. Aynı wizard `reconfigure` ile tekrar açılır. Legacy Python helper yalnız advanced/compatibility alanları içindir.
 
 `0.2.2` yayınlanmıştır; npm Trusted Publishing ve fresh-registry exact OpenCode `1.18.19` T4 doğrulaması tamamlanmıştır.
 

@@ -776,9 +776,17 @@ Important exceptions/composition rules:
 
 Project configuration can narrow behavior but cannot override OpenCode permission/authority/provider denials.
 
-## 23. Advanced legacy Python CLI configuration
+## 23. Node configuration wizard and advanced legacy Python CLI
 
-The development `0.2.3` Node package runner covers the normal lifecycle plus common project controls: `install`, `setup`, `update`, `doctor`, `state`, `reprofile`, `roles`, `rotate`, `check-update`, `plan`, `rollback`, and `recover`. `reprofile` owns only `executionPolicy`; `roles` owns explicit child-role model/fallback/variant leaves; `rotate` only rotates one child role's fallback order. Provider authentication and `manager` / `working-manager` primary model selection remain OpenCode-owned. The older Python helper remains for advanced/manual fields that are not yet mirrored by these bounded Node commands.
+Normal development `0.2.3` project reconfiguration is Node-native:
+
+```bash
+npx --yes opencode-hi@0.2.3 reconfigure .
+```
+
+The bounded wizard covers `primaryMode`, `execution.topology`, `executionPolicy`, child `models.mode`, and `routing.strategy`. `setup` and `install` open the same wizard automatically only on a real terminal; CI/non-TTY remains deterministic and can use `--non-interactive`. The wizard never lists or fabricates model IDs before the loaded OpenCode runtime exposes the effective inventory. Cancelling the wizard performs no mutation.
+
+The development `0.2.3` Node package runner covers the normal lifecycle plus common project controls: terminal `setup`/`install` wizard, `reconfigure`, `update`, `doctor`, `state`, `reprofile`, `roles`, `rotate`, `check-update`, `plan`, `rollback`, and `recover`. `reprofile` owns only `executionPolicy`; `roles` owns explicit child-role model/fallback/variant leaves; `rotate` only rotates one child role's fallback order. Provider authentication and `manager` / `working-manager` primary model selection remain OpenCode-owned. The older Python helper remains only for advanced/manual fields that are not yet mirrored by these bounded Node commands.
 
 If you deliberately install the package locally for this advanced helper, the following examples apply.
 

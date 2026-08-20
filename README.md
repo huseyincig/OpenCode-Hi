@@ -20,7 +20,7 @@
 Run this **inside the project you want OpenCode-Hi to manage**:
 
 ```bash
-npx --yes opencode-hi@latest install .
+npx --yes opencode-hi@latest setup .
 ```
 
 That is the clean project-registration path. It creates or preserves the project-root `opencode.json` and adds the exact published Hi package, for example:
@@ -50,6 +50,8 @@ npx --yes opencode-hi@latest update .
 ```
 
 Published `0.2.2` keeps `install` as the first-install alias of `setup` and uses explicit `update` for an owned upgrade. Development candidate `0.2.3` upgrades the friendly `install` command to **ensure** semantics: no ownership means first setup, matching ownership at the target is `NOOP`, and a matching Hi-owned older registration is upgraded safely. `setup` remains the strict first-install command. All paths preserve unrelated OpenCode configuration and fail closed on ownership/config drift.
+
+Development `0.2.3` also makes `setup`/`install` **interactive only when attached to a real terminal**. The bounded wizard configures the existing canonical `primaryMode`, execution topology, execution profile, child-model policy, and routing strategy. Provider authentication and the live model inventory remain OpenCode-owned; the wizard never invents model IDs. CI/piped automation stays deterministic and non-interactive, or can request that behavior explicitly with `--non-interactive`. Reopen the same project wizard later with `npx --yes opencode-hi@0.2.3 reconfigure .`.
 
 OpenCode-Hi is the semantic and execution-control plane for evidence-aware AI software engineering on OpenCode. Hi owns the meaning of the work—Mission, Task, Worker, Role, Methodology, Authority, Evidence, Verification, recovery and completion—while OpenCode remains the primary native execution host for sessions, models, tools, permissions, PTY, workspace and other host primitives.
 
@@ -164,9 +166,10 @@ The package runner and the loaded OpenCode plugin are deliberately separate comm
 | Package command | Purpose |
 |---|---|
 | `install` | development `0.2.3`: ensure the target exact Hi registration (first setup, safe owned update, or NOOP) |
-| `setup` | strict first Hi-owned exact plugin registration |
+| `setup` | strict first Hi-owned exact plugin registration; development `0.2.3` opens the bounded project wizard when attached to a terminal |
 | `update` | explicitly move an already Hi-owned registration to the requested exact release; `upgrade` is an accepted alias |
 | `doctor` | static registration/ownership/drift/transaction check |
+| `reconfigure` | development `0.2.3`: reopen the bounded project configuration wizard |
 | `state` | read-only package/project registration + routing summary; live Mission state remains runtime-owned |
 | `reprofile` | change only `executionPolicy` in project-owned routing state |
 | `roles` | print/set explicit child-role model/fallback/variant mappings |
@@ -183,6 +186,7 @@ For current published `0.2.2`, installation ownership is inspected with package 
 Examples for the `0.2.3` candidate:
 
 ```bash
+npx --yes opencode-hi@0.2.3 reconfigure .
 npx --yes opencode-hi@0.2.3 state .
 npx --yes opencode-hi@0.2.3 reprofile . --profile balanced
 npx --yes opencode-hi@0.2.3 roles . --set coder=provider/model-a,provider/model-b
@@ -192,13 +196,14 @@ npx --yes opencode-hi@0.2.3 check-update .
 
 `rotate` only changes the ordered model fallback prior for the named Hi child role. It is not credential, API-key, provider-account, or primary-model rotation. `manager` and `working-manager` model ownership remains OpenCode-native.
 
-The normal setup path remains deliberately deterministic rather than provider-auth interactive:
+Published `0.2.2` keeps setup deterministic. Development `0.2.3` adds a bounded terminal wizard without taking over provider authentication or fabricating model availability:
 
 ```text
-setup -> restart OpenCode -> package doctor -> runtime hi_doctor
+setup/install (TTY) -> project wizard -> restart OpenCode -> package doctor -> runtime hi_doctor
+setup/install (CI/non-TTY) -> deterministic registration -> restart -> doctor -> hi_doctor
 ```
 
-It does not run a wizard that asks you to select providers, models, roles, concurrency, and execution profiles during installation. On first effective OpenCode runtime inventory, Hi automatically ranks only effective-enabled, role-eligible child models and persists one-shot initial recommendations; you can edit those choices afterward and later refresh/update will not overwrite a valid user routing file. Provider authentication remains OpenCode-owned. Common Hi project controls are Node-native in development `0.2.3`; the retained Python `reconfigure` / `role-models` helper remains only as a compatibility/advanced surface.
+The wizard asks only about canonical Hi policy that is already executable: primary mode (`auto` / `working-manager` / `manager`), topology (`adaptive` / `single-agent` / `multi-agent`), execution profile, child-model policy, and cost/quality routing strategy. Choosing adaptive child models lets the loaded runtime rank the effective connected OpenCode inventory. Choosing manual role mapping suppresses automatic initial recommendation persistence; after restart, inspect the live inventory with `hi_doctor` and set exact child-role candidates with `roles`. `manager` / `working-manager` primary model selection and provider authentication remain OpenCode-owned. Use `reconfigure` to reopen the same wizard later; use `--non-interactive` for automation. The retained Python helper is advanced/compatibility only.
 
 Published availability is external state, not inferred from source version metadata alone. For `0.2.2`, GitHub Release, npm Trusted Publishing/provenance, and fresh-registry exact-host verification are complete.
 
