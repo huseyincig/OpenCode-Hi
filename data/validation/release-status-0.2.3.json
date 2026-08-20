@@ -8,11 +8,11 @@
   "inputs": {
     "compatibility_baseline": {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
-      "sha256": "c8c623d38361c0169c7dfec0324aa96a62a2b926b5ed359d334bb4ef5e78b6e9"
+      "sha256": "a4166afdd825b18defc891653875f3015c2021227ba7c042a9a80638bd7d4088"
     },
     "current_release_gates": {
       "path": "data/validation/release-gates.json",
-      "sha256": "1a5c726c818f9cccc38e4c6e8eaa08c9753cb982f81e4c8ac9bbd44acb72bc8e"
+      "sha256": "c4e51c712a58ee444dcd0605963c749b2ace5c062af99a0afc96dfa641cf23f3"
     },
     "historical_v0_1_0_publication": {
       "path": "data/validation/release-publication-0.1.0.json",

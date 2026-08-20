@@ -5,8 +5,8 @@
   "section": 30,
   "status": "PASS",
   "source_binding": {
-    "tested_git_commit": "c0f09f54a93e6863fbfbfec6faa28649e2e4eb70",
-    "tested_git_tree": "f3b5706ec4e00b47917e69a6222cdd8cb93c6980",
+    "tested_git_commit": "b9d7852140c5ca65763d205b528aadf7c3e3d7ef",
+    "tested_git_tree": "ea16c12cd8d6dfb20ac38450965ef7633ee615f5",
     "runner": "scripts/run-node-test-suite.mjs",
     "runner_sha256": "987692ec836f2b16c62f53c8cc4f4f14551bb35c33298e6d5d22eb8281b25f6c"
   },

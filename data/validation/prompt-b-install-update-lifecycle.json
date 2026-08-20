@@ -17,7 +17,7 @@
       "owner_sha256": "768a2dbb83136c4b3f873d0494ecd5095916643d980cf0154ce25f361f6033fc",
       "owner_anchor": "function setup(project,version)",
       "proof": "tests/test_node_setup.mjs",
-      "proof_sha256": "7df50935bba602df47a37b8af537ba48efb003779673955ea5de90c93c78f135",
+      "proof_sha256": "4217f7ca55f5e069e750d49dea20b6be446f9a204aab29ec3e0585de3e9ab757",
       "proof_anchor": "M16 Node setup preserves foreign OpenCode config"
     },
     {
@@ -27,7 +27,7 @@
       "owner_sha256": "768a2dbb83136c4b3f873d0494ecd5095916643d980cf0154ce25f361f6033fc",
       "owner_anchor": "function doctor(project)",
       "proof": "tests/test_node_setup.mjs",
-      "proof_sha256": "7df50935bba602df47a37b8af537ba48efb003779673955ea5de90c93c78f135",
+      "proof_sha256": "4217f7ca55f5e069e750d49dea20b6be446f9a204aab29ec3e0585de3e9ab757",
       "proof_anchor": "M16 Node doctor distinguishes package registration truth from pending effective runtime routing"
     },
     {
@@ -47,7 +47,7 @@
       "owner_sha256": "768a2dbb83136c4b3f873d0494ecd5095916643d980cf0154ce25f361f6033fc",
       "owner_anchor": "function update(project,version)",
       "proof": "tests/test_node_setup.mjs",
-      "proof_sha256": "7df50935bba602df47a37b8af537ba48efb003779673955ea5de90c93c78f135",
+      "proof_sha256": "4217f7ca55f5e069e750d49dea20b6be446f9a204aab29ec3e0585de3e9ab757",
       "proof_anchor": "M16 Node setup is idempotent and update changes only the owned Hi spec"
     },
     {
