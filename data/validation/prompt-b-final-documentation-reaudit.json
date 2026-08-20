@@ -5,8 +5,8 @@
   "section": 42,
   "status": "PASS",
   "source_checkpoint": {
-    "commit": "b2f1e71166c2e1159315bbe0008bbebe29af924e",
-    "tree": "f929242aed397ff10e926e0d5474c2b72d041f53"
+    "commit": "4bcbde77f4cbad87f6eec390a296ae5b3eeb5eaa",
+    "tree": "4e4212538205e4f02d40128e9524328ee715821b"
   },
   "areas": [
     {
@@ -110,21 +110,21 @@
     {
       "area": "receipts",
       "path": "data/validation/prompt-b-zero-known-defect-loop.json",
-      "checkpoint_sha256": "26cfc150b312bc2a40f87998db0ed7ab3c3ef339069dbe0d31f320726c84bcb4",
-      "checkpoint_blob_oid": "43f6079061399b207d6a677942f363045a023aed",
+      "checkpoint_sha256": "9ea76d971b57f2dcff4cbd6fa8578c2cc697a0dc2f9091a21ee14974266e0690",
+      "checkpoint_blob_oid": "d839717abf400a75e22fa0a4bee9f35d40c30226",
       "status": "PASS"
     }
   ],
   "documentation_parity": {
     "path": "data/validation/documentation-parity.json",
-    "checkpoint_sha256": "58b10ba291b5fa1b2f60f886097151295b141dbdd632a6fe5a6bd477909dc3f1",
-    "checkpoint_blob_oid": "e75654eac3f51ad2f45ab4147ce7ca720a9a7392",
+    "checkpoint_sha256": "cfa09dc283ab05ab24f13f259e410ce00746c7a2875f8bb06e1e872201107ca5",
+    "checkpoint_blob_oid": "492506deda558b374e3f6a29ec7784f070cfc967",
     "violations": 0
   },
   "documentation_inventory": {
     "path": "data/validation/documentation-inventory.json",
-    "checkpoint_sha256": "465afe3800dbd2b380d87b14287a6279de42714fc21d5fa0e85d1e6ab6aa26b1",
-    "checkpoint_blob_oid": "71695d20ae9f2957ffb86f86d46e1009fd03c281",
+    "checkpoint_sha256": "583633ff5c8b20bdc260716dae45df4e2414a1fdec25511098a38e97931301d1",
+    "checkpoint_blob_oid": "6ac143782fa33ce7fbf2d52cb41b75d684e1d3ff",
     "status": "PASS"
   },
   "summary": {

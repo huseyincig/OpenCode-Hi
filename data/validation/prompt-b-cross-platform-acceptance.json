@@ -1,27 +1,25 @@
 {
   "acceptance_receipt": "data/validation/cross-platform-acceptance-0.2.3.json",
-  "acceptance_sha256": null,
-  "blockers": [
-    "current-source-cross-platform-ci-receipt-missing"
-  ],
-  "claim_boundary": "Current-source Windows/Linux certification is external-CI gated. Missing current-version CI evidence is represented as PENDING_EXTERNAL_CI, never promoted to PASS; an invalid existing receipt fails closed.",
+  "acceptance_sha256": "ce3f0afd1c764799a0c0f3af915118318961a3992331d9cfe66002f949c58fae",
+  "blockers": [],
+  "claim_boundary": "Current-source Windows/Linux certification is bound to the exact external CI source checkpoint. Subsequent evidence-only commits may consume it only while runtime/package material paths remain byte-identical to that checkpoint.",
   "github_actions": {
-    "conclusion": null,
-    "run_id": null,
-    "ubuntu_job_id": null,
-    "windows_job_id": null
+    "conclusion": "success",
+    "run_id": 32414388394,
+    "ubuntu_job_id": 96572080152,
+    "windows_job_id": 96572080462
   },
   "kind": "PROMPT_B_CROSS_PLATFORM_ACCEPTANCE_AUDIT",
-  "linux_current_certified": false,
+  "linux_current_certified": true,
   "post_ci_material_drift": [],
   "program": "PROMPT_B",
   "schema": 1,
   "section": 38,
   "source_checkpoint": {
-    "commit": null,
-    "tree": null
+    "commit": "4bcbde77f4cbad87f6eec390a296ae5b3eeb5eaa",
+    "tree": "4e4212538205e4f02d40128e9524328ee715821b"
   },
-  "status": "PENDING_EXTERNAL_CI",
+  "status": "PASS",
   "summary": {
     "covered_surfaces": 7,
     "required_surfaces": 7,
@@ -65,6 +63,6 @@
     }
   ],
   "violations": [],
-  "windows_current_certified": false,
+  "windows_current_certified": true,
   "windows_historical_release_evidence": true
 }

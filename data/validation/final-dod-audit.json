@@ -9,7 +9,6 @@
     "source": "0.2.3 runtime loop hardening, bounded Node setup/reconfigure, exact-SHA preflight, evidence-only attestation hardening, deterministic verification freshness, and Windows-portable browser cache tests",
     "internal_missing": [],
     "external_pending": [
-      "exact OpenCode 1.18.19 Windows current-source CI",
       "GitHub release T4",
       "npm Trusted Publishing/fresh-registry exact-host T4"
     ],
@@ -80,11 +79,11 @@
     "publication_authorized_or_performed": false,
     "deterministic_release": "data/validation/deterministic-release-reproducibility-0.2.3.json",
     "current_validator": "PASS",
-    "final_gates": "data/validation/final-gates-0.2.3.json"
+    "final_gates": "data/validation/final-gates-0.2.3.json",
+    "cross_platform": "data/validation/cross-platform-acceptance-0.2.3.json"
   },
   "blockers": [
-    "exact OpenCode 1.18.19 Windows current-source external CI",
     "real GitHub/npm T4 publication evidence"
   ],
-  "conclusion": "All executable local 0.2.3 engineering and certification gates pass after current-source CI findings were closed. Final certification remains PARTIAL only because current-source Windows CI and real GitHub/npm T4 publication evidence remain external."
+  "conclusion": "All prepublication 0.2.3 engineering and certification gates pass, including exact current-source Ubuntu/Windows external CI. Only real GitHub/npm/fresh-registry T4 publication evidence remains."
 }

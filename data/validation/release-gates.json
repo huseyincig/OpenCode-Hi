@@ -25,7 +25,7 @@
     "opencode_native_child_sessions": "PASS_T3_EXACT_HOST_1_18_19_PARENT_CHILD_BINDING",
     "opencode_model_provider_binding": "PASS_T3_EXACT_HOST_1_18_19_CONNECTED_RUNTIME_INVENTORY",
     "permission_denial_runtime": "PASS_T3_EXACT_HOST_1_18_19_FAIL_CLOSED_PREFLIGHT",
-    "windows_runtime_smoke": "PENDING_EXTERNAL_CI_CURRENT_SOURCE_0_2_3",
+    "windows_runtime_smoke": "PASS_CROSS_PLATFORM_CURRENT_SOURCE_0_2_3_EXACT_4BCBDE7",
     "dependency_supply_chain_external": "PASS_CLEAN_PREPUBLICATION_PACKED_TARBALL_LOCAL_CONSUMER",
     "filesystem_hygiene": "PASS_LOCAL_CLEAN_EVIDENCE_CHECKPOINT",
     "native_package_plugin_install_exact_candidate": "PASS_T3_PREPUBLICATION_PACKED_LOCAL_PACKAGE_SEAM_EXACT_OPENCODE_1_18_19_LINUX_AARCH64",
@@ -34,7 +34,7 @@
     "final_canonical_gates": "PASS_CURRENT_CLEAN_CHECKPOINT"
   },
   "release_blocked": true,
-  "reason": "0.2.3 local engineering/certification gates pass after closing current-source Release Readiness findings. Windows current-source CI and real GitHub/npm T4 remain external.",
+  "reason": "0.2.3 prepublication engineering/certification gates pass, including exact current-source Ubuntu/Windows Release Readiness run 32414388394. Real GitHub/npm/fresh-registry T4 publication proof remains pending.",
   "external_blockers": [
     "exact OpenCode 1.18.19 Windows current-source CI for 0.2.3 is not yet available.",
     "opencode-hi@0.2.3 has not been published to npm; fresh-registry T4 is unavailable.",
@@ -83,9 +83,15 @@
       "browser_self_bootstrap": "PASS_PINNED_PLAYWRIGHT_CORE_1_62_1_HI_OWNED_CACHE"
     },
     "cross_platform": {
-      "status": "PENDING_EXTERNAL_CI",
-      "receipt": "data/validation/prompt-b-cross-platform-acceptance.json",
-      "windows_current": false,
+      "status": "PASS_CURRENT_SOURCE_CI",
+      "receipt": "data/validation/cross-platform-acceptance-0.2.3.json",
+      "audit_receipt": "data/validation/prompt-b-cross-platform-acceptance.json",
+      "source_commit": "4bcbde77f4cbad87f6eec390a296ae5b3eeb5eaa",
+      "source_tree": "4e4212538205e4f02d40128e9524328ee715821b",
+      "github_actions_run": 32414388394,
+      "ubuntu_job": 96572080152,
+      "windows_job": 96572080462,
+      "windows_current": true,
       "historical_failed_run": 32411734210
     },
     "deterministic_release": {
@@ -108,11 +114,10 @@
       "registry_exact_host_receipt": null
     },
     "final_system": {
-      "status": "PARTIAL_PENDING_EXTERNAL",
+      "status": "PREPUBLICATION_CERTIFIED_PENDING_T4",
       "receipt": "data/validation/final-system-certification-0.2.3.json",
       "final_gates_receipt": "data/validation/final-gates-0.2.3.json",
       "blockers": [
-        "current-source Windows external CI",
         "real GitHub/npm T4 publication verification"
       ]
     }

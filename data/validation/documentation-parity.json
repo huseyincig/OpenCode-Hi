@@ -14,7 +14,7 @@
     },
     "release_status": {
       "path": "data/validation/release-status-0.2.3.json",
-      "sha256": "6482030832708194e6da7b2f3f537f4748a9f889d2fced9a676e4c93d06cf93f"
+      "sha256": "c5c51c8cc0ec8da226277677b787794b8256b84bbf821f1d094198fc5b1c71b0"
     }
   },
   "checked_current_documents": [

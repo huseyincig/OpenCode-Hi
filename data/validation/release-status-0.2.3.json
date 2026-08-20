@@ -12,14 +12,14 @@
     },
     "current_release_gates": {
       "path": "data/validation/release-gates.json",
-      "sha256": "c5ac9a220267ff7a8035ff12fba3dad3f5fa5918c25fe9c096efc28dd52449fd"
+      "sha256": "f393a5edc9b51c334e9f4f59598d9dfdb809b2e95e94cc71d8a9bdd23a172a8e"
     },
     "historical_v0_1_0_publication": {
       "path": "data/validation/release-publication-0.1.0.json",
       "sha256": "b0b9509dea487a6403d075d3ca18e8081285af4c053605d7f8f6438ad3d9798a"
     }
   },
-  "status": "PREPUBLICATION_CERTIFICATION_IN_PROGRESS",
+  "status": "PREPUBLICATION_CERTIFIED_PENDING_T4",
   "release_blocked": true,
   "publication_authority": {
     "required": true,
@@ -37,7 +37,7 @@
     "github_status": "PENDING_T4",
     "npm_status": "PENDING_T4",
     "publication_attempted": false,
-    "prepublication_ready": false
+    "prepublication_ready": true
   },
   "reference_host": {
     "opencode_version": "1.18.19",
@@ -65,7 +65,7 @@
       "process-lifecycle": "PASS_T3_PREPUBLICATION_PACKED_EXACT_OPENCODE_1_18_19_LINUX_AARCH64",
       "workspace-isolation-binding": "PASS_T3_PREPUBLICATION_PACKED_LOCAL_PACKAGE_SEAM_EXACT_OPENCODE_1_18_19_LINUX_AARCH64",
       "browser-execution": "PASS_T3_PREPUBLICATION_PACKED_31_HI_TOOLS_EXACT_OPENCODE_1_18_19_LINUX_AARCH64",
-      "windows": "PENDING_EXTERNAL_CI_CURRENT_SOURCE_0_2_3",
+      "windows": "PASS_CROSS_PLATFORM_CURRENT_SOURCE_0_2_3_EXACT_4BCBDE7",
       "clean_consumer": "PASS_CLEAN_PREPUBLICATION_PACKED_TARBALL_LOCAL_CONSUMER"
     }
   },
