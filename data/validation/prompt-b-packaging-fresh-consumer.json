@@ -13,11 +13,11 @@
     {
       "invariant": "pack",
       "status": "PASS",
-      "owner": "package.json",
-      "owner_sha256": "7d76c68d15082728fe0a7f0cc6dbf6faf9f87fa0d1c7b2398ab9ad81210ce7ea",
-      "owner_anchor": "\"prepack\": \"npm run build\"",
+      "owner": ".github/workflows/npm-publish.yml",
+      "owner_sha256": "fddeff0ad498142ab454a0df576328bdb061106ce7eddec3ae553e3f653572b5",
+      "owner_anchor": "npm pack --dry-run --json --ignore-scripts",
       "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
-      "proof_sha256": "5a57fecee9f68ecd36b6773a02278560c1edf13ae898ab1906fd4631aecccc20",
+      "proof_sha256": "3d6cf27e094afbcc6265673eecda14d013c60007457b93ad7f1c24255573e824",
       "proof_anchor": "\"installed_from_tarball\": true"
     },
     {
@@ -27,7 +27,7 @@
       "owner_sha256": "d87b55d6cb49a962a5fe6535f194e7bbadb0f6bc3f72fab5a09941fc3dc4ab93",
       "owner_anchor": "TemporaryDirectory(prefix='hi-b26-consumer-')",
       "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
-      "proof_sha256": "5a57fecee9f68ecd36b6773a02278560c1edf13ae898ab1906fd4631aecccc20",
+      "proof_sha256": "3d6cf27e094afbcc6265673eecda14d013c60007457b93ad7f1c24255573e824",
       "proof_anchor": "\"project\": \"<temp>/consumer/project\""
     },
     {
@@ -37,7 +37,7 @@
       "owner_sha256": "d87b55d6cb49a962a5fe6535f194e7bbadb0f6bc3f72fab5a09941fc3dc4ab93",
       "owner_anchor": "npm','install','--ignore-scripts'",
       "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
-      "proof_sha256": "5a57fecee9f68ecd36b6773a02278560c1edf13ae898ab1906fd4631aecccc20",
+      "proof_sha256": "3d6cf27e094afbcc6265673eecda14d013c60007457b93ad7f1c24255573e824",
       "proof_anchor": "\"pack_install\": true"
     },
     {
@@ -47,7 +47,7 @@
       "owner_sha256": "d87b55d6cb49a962a5fe6535f194e7bbadb0f6bc3f72fab5a09941fc3dc4ab93",
       "owner_anchor": "'reconfigure',str(project),'--primary-mode','manager'",
       "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
-      "proof_sha256": "5a57fecee9f68ecd36b6773a02278560c1edf13ae898ab1906fd4631aecccc20",
+      "proof_sha256": "3d6cf27e094afbcc6265673eecda14d013c60007457b93ad7f1c24255573e824",
       "proof_anchor": "\"setup_reconfigure\": true"
     },
     {
@@ -57,7 +57,7 @@
       "owner_sha256": "d87b55d6cb49a962a5fe6535f194e7bbadb0f6bc3f72fab5a09941fc3dc4ab93",
       "owner_anchor": "opencode_bin,'serve'",
       "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
-      "proof_sha256": "5a57fecee9f68ecd36b6773a02278560c1edf13ae898ab1906fd4631aecccc20",
+      "proof_sha256": "3d6cf27e094afbcc6265673eecda14d013c60007457b93ad7f1c24255573e824",
       "proof_anchor": "\"exact_host_version\": true"
     },
     {
@@ -67,17 +67,17 @@
       "owner_sha256": "d87b55d6cb49a962a5fe6535f194e7bbadb0f6bc3f72fab5a09941fc3dc4ab93",
       "owner_anchor": "'/experimental/tool/ids?'",
       "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
-      "proof_sha256": "5a57fecee9f68ecd36b6773a02278560c1edf13ae898ab1906fd4631aecccc20",
+      "proof_sha256": "3d6cf27e094afbcc6265673eecda14d013c60007457b93ad7f1c24255573e824",
       "proof_anchor": "\"hi_tool_count\":"
     },
     {
       "invariant": "no-hidden-dev-dependency",
       "status": "PASS",
       "owner": "package.json",
-      "owner_sha256": "7d76c68d15082728fe0a7f0cc6dbf6faf9f87fa0d1c7b2398ab9ad81210ce7ea",
+      "owner_sha256": "958c480187d6eee2847301a52f03b811fde7bbb85bc62225b079f7ef520df579",
       "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.18\"",
       "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
-      "proof_sha256": "5a57fecee9f68ecd36b6773a02278560c1edf13ae898ab1906fd4631aecccc20",
+      "proof_sha256": "3d6cf27e094afbcc6265673eecda14d013c60007457b93ad7f1c24255573e824",
       "proof_anchor": "\"consumer_resolution\": true"
     },
     {
@@ -87,7 +87,7 @@
       "owner_sha256": "d87b55d6cb49a962a5fe6535f194e7bbadb0f6bc3f72fab5a09941fc3dc4ab93",
       "owner_anchor": "'no_source_tree_in_server_log'",
       "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
-      "proof_sha256": "5a57fecee9f68ecd36b6773a02278560c1edf13ae898ab1906fd4631aecccc20",
+      "proof_sha256": "3d6cf27e094afbcc6265673eecda14d013c60007457b93ad7f1c24255573e824",
       "proof_anchor": "\"no_source_tree_in_server_log\": true"
     }
   ],

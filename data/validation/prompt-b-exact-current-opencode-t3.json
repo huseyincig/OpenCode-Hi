@@ -5,19 +5,19 @@
   "section": 39,
   "status": "PASS",
   "current_version_observation": {
-    "tested_binary": "/workspace/Reference/opencode-runtime/1.18.18/node_modules/opencode-linux-arm64/bin/opencode",
+    "tested_binary": "/workspace/OpenCode-Hi/.agent-work/tools/opencode-1.18.18/opencode",
     "tested_binary_sha256": "a63ef0c7271383e48ffe36c156b4146087bbbc97929dec40e8be95ed4f4d76ae",
     "tested_binary_version": "1.18.18",
     "registry_opencode_latest": "1.18.18",
     "registry_sdk_latest": "1.18.18",
     "locked_sdk": "1.18.18",
-    "captured_at": "2026-08-19T17:54:45.174792+00:00"
+    "captured_at": "2026-08-20T05:38:17.980668+00:00"
   },
-  "candidate_release": "0.2.0",
+  "candidate_release": "0.2.1",
   "fresh_consumer_receipt": "data/validation/fresh-consumer-opencode-1.18.18.json",
-  "fresh_consumer_sha256": "5a57fecee9f68ecd36b6773a02278560c1edf13ae898ab1906fd4631aecccc20",
-  "exact_source_commit": "5cfc10f180dfe9d93dd59fcae9f40a318cbdac5e",
-  "exact_source_tree": "1ecde4cc17b2550967713f54faea01897c546d95",
+  "fresh_consumer_sha256": "3d6cf27e094afbcc6265673eecda14d013c60007457b93ad7f1c24255573e824",
+  "exact_source_commit": "1da3fe3cf3434689c9fcd1aad353107ed36b8fec",
+  "exact_source_tree": "14762af6460604227df76a84bfa108e905e0e0c4",
   "capability_evidence_mode": "CURRENT_EXACT_HOST_PACKAGE_PLUS_RUNTIME_EQUIVALENT_EXACT_T3",
   "compatibility_projection": "data/validation/compatibility-matrix-0.1.0.json",
   "compatibility_sha256": "c17c1480acc10465193bef379245d5b322c84a659a597e6c5962ab2cbd8618e8",
@@ -56,5 +56,5 @@
     "violations": 0
   },
   "violations": [],
-  "claim_boundary": "Current candidate certification requires a fresh packed 0.2.0 artifact loaded by exact OpenCode 1.18.18 plus exact real-host T3 capability receipts whose complete capability-relevant runtime owner hashes are byte-identical to current source. Registry latest observations are informational and do not silently change the pinned certified host. Historical receipt prose or API presence alone is insufficient; receipt source commits remain explicit and are never relabeled as current."
+  "claim_boundary": "Current candidate certification requires a fresh packed 0.2.1 artifact loaded by exact OpenCode 1.18.18 plus exact real-host T3 capability receipts whose complete capability-relevant runtime owner hashes are byte-identical to current source. Registry latest observations are informational and do not silently change the pinned certified host. Historical receipt prose or API presence alone is insufficient; receipt source commits remain explicit and are never relabeled as current."
 }

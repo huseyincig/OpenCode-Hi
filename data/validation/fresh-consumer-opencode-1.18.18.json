@@ -5,24 +5,24 @@
   "section": 26,
   "status": "PASS",
   "source": {
-    "commit": "5cfc10f180dfe9d93dd59fcae9f40a318cbdac5e",
-    "tree": "1ecde4cc17b2550967713f54faea01897c546d95"
+    "commit": "1da3fe3cf3434689c9fcd1aad353107ed36b8fec",
+    "tree": "14762af6460604227df76a84bfa108e905e0e0c4"
   },
   "host": {
     "opencode": "1.18.18",
     "platform": "linux",
     "architecture": "aarch64",
-    "binary": "/workspace/Reference/opencode-runtime/1.18.18/node_modules/opencode-linux-arm64/bin/opencode",
+    "binary": "/workspace/OpenCode-Hi/.agent-work/tools/opencode-1.18.18/opencode",
     "binary_sha256": "a63ef0c7271383e48ffe36c156b4146087bbbc97929dec40e8be95ed4f4d76ae",
     "registry_observation": {
       "opencode_ai_latest": "1.18.18",
       "sdk_latest": "1.18.18",
-      "observed_at": "2026-08-19T17:54:45.174792+00:00"
+      "observed_at": "2026-08-20T05:38:17.980668+00:00"
     }
   },
   "package": {
-    "release": "0.2.0",
-    "tarball_name": "opencode-hi-0.2.0.tgz",
+    "release": "0.2.1",
+    "tarball_name": "opencode-hi-0.2.1.tgz",
     "installed_from_tarball": true,
     "resolved_entrypoint": "file://<temp>/consumer/node_modules/opencode-hi/plugin/dist/plugin.js"
   },
