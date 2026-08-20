@@ -5,8 +5,8 @@
   "section": 32,
   "status": "PASS",
   "source_binding": {
-    "tested_git_commit": "eb823fddd9e7b31f7e6c765be3c899e58a726077",
-    "tested_git_tree": "79f3fedd701cad31b7883569a8063f72d21dcd4e"
+    "tested_git_commit": "3026b5c40f416fa8bf5ab2a285646a3f6ea39e96",
+    "tested_git_tree": "9ba63da6c4c9b56c7bfcdc340e75d9f12f09fa72"
   },
   "configuration": {
     "seeds": [

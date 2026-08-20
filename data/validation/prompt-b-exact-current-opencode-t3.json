@@ -11,40 +11,40 @@
     "registry_opencode_latest": "1.18.19",
     "registry_sdk_latest": "1.18.19",
     "locked_sdk": "1.18.19",
-    "captured_at": "2026-08-20T14:48:26.446162+00:00"
+    "captured_at": "2026-08-20T18:03:11.229833+00:00"
   },
-  "candidate_release": "0.2.2",
+  "candidate_release": "0.2.3",
   "fresh_consumer_receipt": "data/validation/fresh-consumer-opencode-1.18.19.json",
-  "fresh_consumer_sha256": "16e10b2fc6e94a9e9e3e1fff67f6084022daf340b96725aa65191a60b74f4b37",
-  "exact_source_commit": "8c272c7800130b8554ab9b560f4f8943f90e0220",
-  "exact_source_tree": "15d973f17d7bbedff3827e3ce47fc97f4eecf4df",
+  "fresh_consumer_sha256": "e10524bb02ea4b38a2bac1d3f91eab445f1e6a653221892f2b012a6abab1669c",
+  "exact_source_commit": "3026b5c40f416fa8bf5ab2a285646a3f6ea39e96",
+  "exact_source_tree": "9ba63da6c4c9b56c7bfcdc340e75d9f12f09fa72",
   "capability_evidence_mode": "CURRENT_EXACT_HOST_PACKAGE_PLUS_RUNTIME_EQUIVALENT_EXACT_T3",
   "compatibility_projection": "data/validation/compatibility-matrix-0.1.0.json",
-  "compatibility_sha256": "499d383de2c1379b6153d6bd86d69b2553a01a3f2e545b3d2de6490f0056e724",
+  "compatibility_sha256": "7619490a735d57b82046e8e82293f8e504c9a0da79ce60f2d7bc914d4ac7f0bb",
   "lifecycle_audit": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
-  "lifecycle_sha256": "18a664b2208c276448d37fd2a3216ef781dabd2a21c3eaa5f70ff3b1169c5b85",
+  "lifecycle_sha256": "87cf97b02406124ccff6995a20e5b6244ffbcb48c6176d07bf7648b7e931ec69",
   "capabilities": {
     "process-lifecycle": {
-      "receipt": "data/validation/external-opencode-hi-0.2.2-process-1.18.19-head-09e99d2.json",
-      "receipt_sha256": "67c7308917ae9541d72c9947623a9998aced026c35bd53dc2e55c4e03808ab46",
+      "receipt": "data/validation/external-opencode-hi-0.2.3-process-1.18.19-head-d741c1a.json",
+      "receipt_sha256": "9348a431241a35d9c4a3e0d9fc03f4f582d2a904c7fbcf205093e3edde6b672b",
       "status": "SUPPORTED_T3",
-      "receipt_source_commit": "09e99d251ec47f54803fb192738a50e0035ea060",
+      "receipt_source_commit": "d741c1a4870bb9afa38b99ae5fb62b4c328c731f",
       "runtime_equivalent_to_current": true,
       "runtime_hash_drift": []
     },
     "workspace-isolation-binding": {
-      "receipt": "data/validation/external-opencode-hi-0.2.2-workspace-1.18.19-head-09e99d2.json",
-      "receipt_sha256": "79b15f81dcdce779c5aa0873a906448b285c841d0d3f616801bf7bb94482643e",
+      "receipt": "data/validation/external-opencode-hi-0.2.3-workspace-1.18.19-head-d741c1a.json",
+      "receipt_sha256": "e834b3e2a17a7e49a82167cd3e6f48a68c33c53acf1b15c33f3a66944b6baa96",
       "status": "SUPPORTED_T3",
-      "receipt_source_commit": "09e99d251ec47f54803fb192738a50e0035ea060",
+      "receipt_source_commit": "d741c1a4870bb9afa38b99ae5fb62b4c328c731f",
       "runtime_equivalent_to_current": true,
       "runtime_hash_drift": []
     },
     "browser-execution": {
-      "receipt": "data/validation/external-opencode-hi-0.2.2-browser-1.18.19-head-09e99d2.json",
-      "receipt_sha256": "cebab24147700148e87ac032fe9cfac6d0edc359126673317e724b7ca63ffcc8",
+      "receipt": "data/validation/external-opencode-hi-0.2.3-browser-1.18.19-head-d741c1a.json",
+      "receipt_sha256": "82bb79bb2b47626f1073612ec4ae11996ff6b114411f41d2593be4dfaa988fc5",
       "status": "SUPPORTED_T3",
-      "receipt_source_commit": "09e99d251ec47f54803fb192738a50e0035ea060",
+      "receipt_source_commit": "d741c1a4870bb9afa38b99ae5fb62b4c328c731f",
       "runtime_equivalent_to_current": true,
       "runtime_hash_drift": []
     }
@@ -56,5 +56,5 @@
     "violations": 0
   },
   "violations": [],
-  "claim_boundary": "Current candidate certification requires a fresh packed 0.2.2 artifact loaded by exact OpenCode 1.18.19 plus exact real-host T3 capability receipts whose complete capability-relevant runtime owner hashes are byte-identical to current source. API presence alone is insufficient. Historical receipts are immutable provenance and are never relabeled as current. The target comes from the exact root SDK/plugin pin. Registry latest observations are informational only."
+  "claim_boundary": "Current candidate certification requires a fresh packed 0.2.3 artifact loaded by exact OpenCode 1.18.19 plus exact real-host T3 capability receipts whose complete capability-relevant runtime owner hashes are byte-identical to current source. API presence alone is insufficient. Historical receipts are immutable provenance and are never relabeled as current. The target comes from the exact root SDK/plugin pin. Registry latest observations are informational only."
 }

@@ -8,7 +8,7 @@
     {
       "invariant": "role-agent-model-methodology-separation",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "475ae7ee8d93030ddf6b35463f6ba2120e8e4319b933410e64fb34902663df8a",
+      "owner_sha256": "b74685c24dd9e3ffc8b2e40d898f07c80d93a11a1c1ac58c4984f567d8a5663b",
       "owner_anchor": "worker.requested_model=input.model",
       "proof": "plugin/test/model-contract.test.mjs",
       "proof_sha256": "c4550067e1f883572c3e7b77d254853f95904a4c7e8b44ef9e5a53b084115f45",
@@ -26,7 +26,7 @@
     {
       "invariant": "host-contradiction-handling",
       "owner": "plugin/src/runtime/task/child-execution-coordinator.ts",
-      "owner_sha256": "819e27671224e9f7bca8e70b7a2638d74c79164f04bcc5e5e647c0d5818d9817",
+      "owner_sha256": "669f3cdcfc0d2eb1a39686af77d8f84a8f37cfdc07bc6c831def91cee690c293",
       "owner_anchor": "identity.status==='model-mismatch'",
       "proof": "plugin/test/main-prompt-model-evidence.test.mjs",
       "proof_sha256": "a7862e33d86854257f07398e00960c1b30da5090109480b682eea89eec19a448",
@@ -47,7 +47,7 @@
       "owner_sha256": "d33108e8ed9d6eaebfffbbc796302eb90f1e94294b4aa6e00821b79b94572759",
       "owner_anchor": "recoverRuntimeFailure",
       "proof": "plugin/test/provider-fallback-hardening.test.mjs",
-      "proof_sha256": "a25a8720db82be6d1e03c87a8747534ffb41041f63b3a71378d9ab922c546c87",
+      "proof_sha256": "efdeafb214d36b4553a8125477a843d446baae031ae24cf849564e003cdc8473",
       "proof_anchor": "second provider failure advances to next fallback rather than returning to prior model"
     },
     {
@@ -101,7 +101,7 @@
       "owner_sha256": "14da681b14b058aa3104cfb2f8f1cb78dfc2c75c2a7dc975748e1a49748d53d7",
       "owner_anchor": "reconcileMethodologyExits",
       "proof": "plugin/test/forensic-hardening.test.mjs",
-      "proof_sha256": "9357690f0a2fb9f6be872df8c6d381bd80441f80e4491887a1e22e0756efdb82",
+      "proof_sha256": "28c5eaac0b621d1e7de12b824b15a25ba93480725df359791a1bc87866288f64",
       "proof_anchor": "parent direct methodology remains active until mission-scope fresh verification satisfies its exit contract"
     },
     {

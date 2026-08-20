@@ -71,7 +71,7 @@
     {
       "invariant": "out-of-order-callback",
       "owner": "plugin/src/runtime/task/child-execution-coordinator.ts",
-      "owner_sha256": "819e27671224e9f7bca8e70b7a2638d74c79164f04bcc5e5e647c0d5818d9817",
+      "owner_sha256": "669f3cdcfc0d2eb1a39686af77d8f84a8f37cfdc07bc6c831def91cee690c293",
       "proof": "plugin/test/prompt-b-mission-task-worker-adversarial.test.mjs",
       "proof_sha256": "551721963314f48940e8877b89d9f99f793931167015d6a104b173bde8c16cb5",
       "owner_anchor": "matches.length===1",
@@ -89,9 +89,9 @@
     {
       "invariant": "task-cancellation",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "475ae7ee8d93030ddf6b35463f6ba2120e8e4319b933410e64fb34902663df8a",
+      "owner_sha256": "b74685c24dd9e3ffc8b2e40d898f07c80d93a11a1c1ac58c4984f567d8a5663b",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "1e4929ed8156ba5a253c1ae50feb3d6c243c452990248114f85c3d0e0a1c142d",
+      "proof_sha256": "202bb2686ca843c5ce838dfe098727f5a83e3d6afa5a496aaf73d2464e497c51",
       "owner_anchor": "async cancel(m:MissionState",
       "proof_anchor": "W2 explicit isolated task provisions one lease, binds child workspace, preserves deny permission, and cleanup follows child abort"
     },
@@ -107,9 +107,9 @@
     {
       "invariant": "dependency-unblock",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "475ae7ee8d93030ddf6b35463f6ba2120e8e4319b933410e64fb34902663df8a",
+      "owner_sha256": "b74685c24dd9e3ffc8b2e40d898f07c80d93a11a1c1ac58c4984f567d8a5663b",
       "proof": "plugin/test/scheduler-hardening.test.mjs",
-      "proof_sha256": "4f34d1dee8001c1434d403ce0fae27f4a23972af70f3f2eae17bb683cfbfcd52",
+      "proof_sha256": "b379faa79ce363a9b47d338958670e583eae85245f99211f9950a15dadb9182d",
       "owner_anchor": "drainQueue",
       "proof_anchor": "queued dependent is removed from queue when prerequisite fails"
     },
@@ -118,7 +118,7 @@
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
       "owner_sha256": "14da681b14b058aa3104cfb2f8f1cb78dfc2c75c2a7dc975748e1a49748d53d7",
       "proof": "plugin/test/runtime-write-conflict.test.mjs",
-      "proof_sha256": "2384c70914522d59854ad9132e07ae6b180fe7e5615105d125ec7a5c8449ba84",
+      "proof_sha256": "c79dc13def3bc9a9c129a81908b27e7252263b5f21ff69b1a181a77fd22340af",
       "owner_anchor": "parallel.write-conflict.quarantined",
       "proof_anchor": "runtime-discovered overlapping writes quarantine the later writer and serialize its resume"
     },

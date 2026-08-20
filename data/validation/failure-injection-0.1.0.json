@@ -5,12 +5,12 @@
   "section": 34,
   "status": "PASS",
   "source_binding": {
-    "tested_git_commit": "eb823fddd9e7b31f7e6c765be3c899e58a726077",
-    "tested_git_tree": "79f3fedd701cad31b7883569a8063f72d21dcd4e"
+    "tested_git_commit": "3026b5c40f416fa8bf5ab2a285646a3f6ea39e96",
+    "tested_git_tree": "9ba63da6c4c9b56c7bfcdc340e75d9f12f09fa72"
   },
   "terminal": {
-    "tests": 58,
-    "pass": 58,
+    "tests": 61,
+    "pass": 61,
     "fail": 0,
     "cancelled": 0,
     "skipped": 0,
@@ -35,7 +35,7 @@
     {
       "injection": "rate-limit",
       "proof": "plugin/test/provider-fallback-hardening.test.mjs",
-      "proof_sha256": "a25a8720db82be6d1e03c87a8747534ffb41041f63b3a71378d9ab922c546c87",
+      "proof_sha256": "efdeafb214d36b4553a8125477a843d446baae031ae24cf849564e003cdc8473",
       "proof_anchor": "provider failure creates a fresh child on first fallback without stagnation",
       "status": "PASS"
     },
@@ -49,21 +49,21 @@
     {
       "injection": "permission-deny",
       "proof": "plugin/test/p3-process-runtime-lifecycle.test.mjs",
-      "proof_sha256": "70b85c069b9cb7ccd92f541a35390e2f628e873b76b043c70f1ffe83ac99e157",
+      "proof_sha256": "8bb01962004d090b1bc93ab5afff1897590f834d2fb04d4d05d5a494b9e277ba",
       "proof_anchor": "P3 explicit permission deny never asks and never spawns",
       "status": "PASS"
     },
     {
       "injection": "process-crash",
       "proof": "plugin/test/p3-process-runtime-lifecycle.test.mjs",
-      "proof_sha256": "70b85c069b9cb7ccd92f541a35390e2f628e873b76b043c70f1ffe83ac99e157",
+      "proof_sha256": "8bb01962004d090b1bc93ab5afff1897590f834d2fb04d4d05d5a494b9e277ba",
       "proof_anchor": "P3 restart reconciliation adopts exact owner identity and quarantines orphan without signalling it",
       "status": "PASS"
     },
     {
       "injection": "workspace-failure",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "1e4929ed8156ba5a253c1ae50feb3d6c243c452990248114f85c3d0e0a1c142d",
+      "proof_sha256": "202bb2686ca843c5ce838dfe098727f5a83e3d6afa5a496aaf73d2464e497c51",
       "proof_anchor": "PROMPT B workspace cleanup failure quarantines lease and records an explicit blocker",
       "status": "PASS"
     },

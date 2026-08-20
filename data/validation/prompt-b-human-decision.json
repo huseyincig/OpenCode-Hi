@@ -8,7 +8,7 @@
     {
       "invariant": "semantic-decision-not-transport",
       "owner": "plugin/src/runtime/human-decision/runtime.ts",
-      "owner_sha256": "637bbdc5cdb04b534066ba85a58d2113f5678506ae5e99045220d52a1005c9b1",
+      "owner_sha256": "11dd4505ce66b339a5fc9b44200431de37d96b96b2fd494a1872a8528b415618",
       "owner_anchor": "m.authority.human_decision=decision",
       "proof": "plugin/test/h1-human-decision-transport.test.mjs",
       "proof_sha256": "9567c851068b6472e0a704d561143bcfdfa11860d8367b01527d729cdd8e6250",
@@ -26,7 +26,7 @@
     {
       "invariant": "freeform-bounded-to-semantic-plane",
       "owner": "plugin/src/runtime/human-decision/runtime.ts",
-      "owner_sha256": "637bbdc5cdb04b534066ba85a58d2113f5678506ae5e99045220d52a1005c9b1",
+      "owner_sha256": "11dd4505ce66b339a5fc9b44200431de37d96b96b2fd494a1872a8528b415618",
       "owner_anchor": "return{semantic_type:'value_judgment',response_schema:{kind:'free-text'}}",
       "proof": "plugin/test/human-decision-contract.test.mjs",
       "proof_sha256": "4cfd2b71345e15d1a5f86b0bade77fcb66d52d2c0e9b6ab9eb1c802723437d49",
@@ -80,7 +80,7 @@
     {
       "invariant": "restart-no-transport-replay",
       "owner": "plugin/src/runtime/application/runtime-services.ts",
-      "owner_sha256": "a77335125a9b424c22a606b1765177eee93e9f7de0dde1fa23e3ea16c650a225",
+      "owner_sha256": "49d7824634a072da13f27f8ea225e496f333a1112a92ac0545d92190bf260745",
       "owner_anchor": "new ChatHumanDecisionTransport()",
       "proof": "plugin/test/h1-human-decision-transport.test.mjs",
       "proof_sha256": "9567c851068b6472e0a704d561143bcfdfa11860d8367b01527d729cdd8e6250",
@@ -107,7 +107,7 @@
     {
       "invariant": "source-resolvable-not-asked",
       "owner": "plugin/src/runtime/continuation/evaluator.ts",
-      "owner_sha256": "18ef44e9262368e1f6fcb4efaf5bd4a66c3091fb4a5a9b5aef7de6af32942dce",
+      "owner_sha256": "820518f3b793092f208421295492bae3a441dfc1f50db49311dbee198c48bd94",
       "owner_anchor": "Resolve the contract-critical ambiguity from repository structure",
       "proof": "plugin/test/main-prompt-delegation-preconditions.test.mjs",
       "proof_sha256": "73f749171d427a7524b2b105002b786bce5d25a84085ba20d394a851395cb3db",
@@ -125,10 +125,10 @@
     {
       "invariant": "idle-does-not-reclassify-open-decision",
       "owner": "plugin/src/runtime/application/runtime-event-controller.ts",
-      "owner_sha256": "28ac259056c608a359f76686a941882b1ceabae8f9ce102bcc6a56d64702a426",
+      "owner_sha256": "9688df8d5962961d2b1dd6f33548e2c318c74ea566c3e581eec68554bff0037c",
       "owner_anchor": "m.authority.human_decision?.status!=='OPEN'",
       "proof": "plugin/test/p3-process-control-integration.test.mjs",
-      "proof_sha256": "f311974099d72d27db45d0b76b4d12b9d631daefa8a84751beb7e7d2e9e640a0",
+      "proof_sha256": "2f9011d0ae6dcf9f45c415a0f9c36865e92bd0284789d315c5c050bfb0bb7d14",
       "proof_anchor": "parent idle preserves an existing canonical operational HumanDecision"
     },
     {

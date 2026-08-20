@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "release": "0.2.2",
+  "release": "0.2.3",
   "kind": "PRODUCT_TRUTH_TRACE_INVENTORY",
   "status": "PASS",
   "claim_boundary": "Derived documentation/reconstruction trace map only; listed runtime/contracts remain semantic owners.",
@@ -9,7 +9,7 @@
       "area": "mission",
       "canonical_owner": "MissionStore",
       "owner_path": "plugin/src/runtime/mission/mission-store.ts",
-      "owner_sha256": "e3f8cbaaace00c14deb8ba889b39de232da9017f46a8fa8eab0c5cc78bdd583d",
+      "owner_sha256": "43be1f33d97be5e5be09d1ad80caa2f2ea95b8dcbf3dce693ac50a3534a50f0c",
       "producer_or_contract_paths": [
         "plugin/src/runtime/mission/types.ts",
         "plugin/src/runtime/mission/validators.ts"
@@ -27,7 +27,7 @@
       "area": "task-runtime",
       "canonical_owner": "TaskRuntime",
       "owner_path": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "475ae7ee8d93030ddf6b35463f6ba2120e8e4319b933410e64fb34902663df8a",
+      "owner_sha256": "b74685c24dd9e3ffc8b2e40d898f07c80d93a11a1c1ac58c4984f567d8a5663b",
       "producer_or_contract_paths": [
         "plugin/src/runtime/task/contracts.ts"
       ],
@@ -385,7 +385,7 @@
       "area": "install-lifecycle",
       "canonical_owner": "opencode-hi Node package runner",
       "owner_path": "scripts/opencode-hi.mjs",
-      "owner_sha256": "48abe89dcf51bfc6acb7b2f766f4f9e697471951109a5bb5fcfe14b4a946caf9",
+      "owner_sha256": "44225ab98727668a410b057e1a618c25ed724e275a9ca36a8e64d79dfe40126f",
       "producer_or_contract_paths": [
         "scripts/native_plugin_setup.py"
       ],

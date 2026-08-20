@@ -17,7 +17,7 @@
     {
       "invariant": "unknown-context-handle-fail-close",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "475ae7ee8d93030ddf6b35463f6ba2120e8e4319b933410e64fb34902663df8a",
+      "owner_sha256": "b74685c24dd9e3ffc8b2e40d898f07c80d93a11a1c1ac58c4984f567d8a5663b",
       "owner_anchor": "Unknown context artifact id(s)",
       "proof": "plugin/test/context-survival-hardening.test.mjs",
       "proof_sha256": "238c6269ef500468db62f379ff2296a81e5e802a35de6e9925ac060f313a29cd",
@@ -26,7 +26,7 @@
     {
       "invariant": "stale-context-exclusion",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "475ae7ee8d93030ddf6b35463f6ba2120e8e4319b933410e64fb34902663df8a",
+      "owner_sha256": "b74685c24dd9e3ffc8b2e40d898f07c80d93a11a1c1ac58c4984f567d8a5663b",
       "owner_anchor": "stored?.freshness==='FRESH'",
       "proof": "plugin/test/context-survival-hardening.test.mjs",
       "proof_sha256": "238c6269ef500468db62f379ff2296a81e5e802a35de6e9925ac060f313a29cd",
@@ -74,7 +74,7 @@
       "owner_sha256": "4f6089ab74dce4238c79afaeb079918b49c0a1c68a4a762d6eb8dcd110172f28",
       "owner_anchor": "clipText",
       "proof": "plugin/test/c1-mission-runtime-projection.test.mjs",
-      "proof_sha256": "2f82f7030ad294c2a763a8e7ace2cf9a43fd7618f84640357a96904330eda0ed",
+      "proof_sha256": "438e644f81400755e7ce7800d7bdcf5f74a9c91346163b0ab472c356489784bf",
       "proof_anchor": "Hi MISSION RUNTIME PROJECTION"
     },
     {
@@ -126,5 +126,5 @@
     "covered": 12,
     "violations": 0
   },
-  "claim_boundary": "Current 0.2.2 context architecture: explicit consumer-bound ContextReference/Artifact state, bounded Mission runtime projection, deterministic duplicate pruning, and evidence-bound project methodology learning. Removed general Project Intelligence retrieval and CompressionArtifact subsystems are not certified as current product surfaces."
+  "claim_boundary": "Current 0.2.3 context architecture: explicit consumer-bound ContextReference/Artifact state, bounded Mission runtime projection, deterministic duplicate pruning, and evidence-bound project methodology learning. Removed general Project Intelligence retrieval and CompressionArtifact subsystems are not certified as current product surfaces."
 }

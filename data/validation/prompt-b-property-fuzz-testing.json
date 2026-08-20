@@ -42,7 +42,7 @@
     {
       "area": "event-ordering",
       "owner": "plugin/src/runtime/application/runtime-event-controller.ts",
-      "owner_sha256": "28ac259056c608a359f76686a941882b1ceabae8f9ce102bcc6a56d64702a426",
+      "owner_sha256": "9688df8d5962961d2b1dd6f33548e2c318c74ea566c3e581eec68554bff0037c",
       "owner_anchor": "ev.kind==='permission-asked'",
       "proof": "plugin/test/q4-property-fuzz.test.mjs",
       "proof_sha256": "5b73eee33e6a745e2b740878a3619685fd2ad3cd98224d68f855bfb5717409dd",

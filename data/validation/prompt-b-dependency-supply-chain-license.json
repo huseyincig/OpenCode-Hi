@@ -14,10 +14,10 @@
       "invariant": "dependency-versions",
       "status": "PASS",
       "owner": "package.json",
-      "owner_sha256": "0c525b92080987befe6a838a92a2ae5fe603b74fbf10295e3f2ad4ec15544359",
+      "owner_sha256": "cf54e799329ca45c3a05e87192b67c4efb879f0bc5e79b7ddada0e16bc2c677d",
       "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.19\"",
       "proof": "package-lock.json",
-      "proof_sha256": "1e221b67157198263b2ad5150f903a1c108616ab9750df6699c618ee5ea2b4ee",
+      "proof_sha256": "6db0b63a847200c028a8adfe5ea0db951a487a461f9203100d7ad2d299f44a94",
       "proof_anchor": "\"version\": \"1.18.19\""
     },
     {
@@ -27,7 +27,7 @@
       "owner_sha256": "72572d3cb90e53147cb079e8ecdefc2abff7e75c0a55d1b1d5bf0adad027707b",
       "owner_anchor": "def dependency_lock_paths(root:Path)",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "9e199f652ac87fa49999ab84e5051cc9522ddd7c418c7b4d33935346043557f7",
+      "proof_sha256": "67bb2d49f7351b66599a35894a1c8dfe05c2fc3e227a46d1b14024b901ddc110",
       "proof_anchor": "manifest['supply_chain']['dependency_locks']==['package-lock.json','plugin/package-lock.json']"
     },
     {
@@ -37,14 +37,14 @@
       "owner_sha256": "4a9b21b80d1ec752dbc442e234f808cde7ff7e332cd5f7284da36d9e6bb180c7",
       "owner_anchor": "@opencode-ai/sdk/v2/client",
       "proof": "data/validation/fresh-consumer-opencode-1.18.19.json",
-      "proof_sha256": "16e10b2fc6e94a9e9e3e1fff67f6084022daf340b96725aa65191a60b74f4b37",
+      "proof_sha256": "e10524bb02ea4b38a2bac1d3f91eab445f1e6a653221892f2b012a6abab1669c",
       "proof_anchor": "\"consumer_resolution\": true"
     },
     {
       "invariant": "risky-install-scripts",
       "status": "PASS",
       "owner": "plugin/package-lock.json",
-      "owner_sha256": "722250df58cd08e94cdf61df6412ba0707b6f504986a4ff18a3e156b9e6dc6be",
+      "owner_sha256": "8d6492dc6b1a528cf302ac7942024e084ebc1301a30290b799846a1eda9a853f",
       "owner_anchor": "\"hasInstallScript\": true",
       "proof": "THIRD_PARTY_NOTICES.md",
       "proof_sha256": "9d1212a0bae8cb0235713b396ac3e11933a0998388f2ec15ca1ba4305481e569",
@@ -57,7 +57,7 @@
       "owner_sha256": "72572d3cb90e53147cb079e8ecdefc2abff7e75c0a55d1b1d5bf0adad027707b",
       "owner_anchor": "dependency_graph_sha256",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "9e199f652ac87fa49999ab84e5051cc9522ddd7c418c7b4d33935346043557f7",
+      "proof_sha256": "67bb2d49f7351b66599a35894a1c8dfe05c2fc3e227a46d1b14024b901ddc110",
       "proof_anchor": "manifest['supply_chain']['dependency_graph_sha256']"
     },
     {
@@ -67,7 +67,7 @@
       "owner_sha256": "9d1212a0bae8cb0235713b396ac3e11933a0998388f2ec15ca1ba4305481e569",
       "owner_anchor": "`playwright-core`",
       "proof": "package-lock.json",
-      "proof_sha256": "1e221b67157198263b2ad5150f903a1c108616ab9750df6699c618ee5ea2b4ee",
+      "proof_sha256": "6db0b63a847200c028a8adfe5ea0db951a487a461f9203100d7ad2d299f44a94",
       "proof_anchor": "\"license\": \"Apache-2.0\""
     },
     {

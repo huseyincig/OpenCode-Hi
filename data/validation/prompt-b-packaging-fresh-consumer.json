@@ -16,7 +16,7 @@
       "owner_sha256": "179a28fdf78f464f05e6df53012ad0c62f38d5a518b9c6fda2db5bbd899f17ff",
       "owner_anchor": "'npm','pack'",
       "proof": "data/validation/fresh-consumer-opencode-1.18.19.json",
-      "proof_sha256": "16e10b2fc6e94a9e9e3e1fff67f6084022daf340b96725aa65191a60b74f4b37",
+      "proof_sha256": "e10524bb02ea4b38a2bac1d3f91eab445f1e6a653221892f2b012a6abab1669c",
       "proof_anchor": "\"installed_from_tarball\": true",
       "status": "PASS"
     },
@@ -26,7 +26,7 @@
       "owner_sha256": "179a28fdf78f464f05e6df53012ad0c62f38d5a518b9c6fda2db5bbd899f17ff",
       "owner_anchor": "WORK=AGENT_WORK/'acceptance'",
       "proof": "data/validation/fresh-consumer-opencode-1.18.19.json",
-      "proof_sha256": "16e10b2fc6e94a9e9e3e1fff67f6084022daf340b96725aa65191a60b74f4b37",
+      "proof_sha256": "e10524bb02ea4b38a2bac1d3f91eab445f1e6a653221892f2b012a6abab1669c",
       "proof_anchor": "\"project\": \"<acceptance>/consumer/project\"",
       "status": "PASS"
     },
@@ -36,7 +36,7 @@
       "owner_sha256": "179a28fdf78f464f05e6df53012ad0c62f38d5a518b9c6fda2db5bbd899f17ff",
       "owner_anchor": "'npm','install'",
       "proof": "data/validation/fresh-consumer-opencode-1.18.19.json",
-      "proof_sha256": "16e10b2fc6e94a9e9e3e1fff67f6084022daf340b96725aa65191a60b74f4b37",
+      "proof_sha256": "e10524bb02ea4b38a2bac1d3f91eab445f1e6a653221892f2b012a6abab1669c",
       "proof_anchor": "\"pack_install\": true",
       "status": "PASS"
     },
@@ -46,7 +46,7 @@
       "owner_sha256": "179a28fdf78f464f05e6df53012ad0c62f38d5a518b9c6fda2db5bbd899f17ff",
       "owner_anchor": "'setup',str(bootstrap)",
       "proof": "data/validation/fresh-consumer-opencode-1.18.19.json",
-      "proof_sha256": "16e10b2fc6e94a9e9e3e1fff67f6084022daf340b96725aa65191a60b74f4b37",
+      "proof_sha256": "e10524bb02ea4b38a2bac1d3f91eab445f1e6a653221892f2b012a6abab1669c",
       "proof_anchor": "\"node_setup\": true",
       "status": "PASS"
     },
@@ -56,7 +56,7 @@
       "owner_sha256": "179a28fdf78f464f05e6df53012ad0c62f38d5a518b9c6fda2db5bbd899f17ff",
       "owner_anchor": "opencode_bin,'serve'",
       "proof": "data/validation/fresh-consumer-opencode-1.18.19.json",
-      "proof_sha256": "16e10b2fc6e94a9e9e3e1fff67f6084022daf340b96725aa65191a60b74f4b37",
+      "proof_sha256": "e10524bb02ea4b38a2bac1d3f91eab445f1e6a653221892f2b012a6abab1669c",
       "proof_anchor": "\"exact_host_version\": true",
       "status": "PASS"
     },
@@ -66,17 +66,17 @@
       "owner_sha256": "179a28fdf78f464f05e6df53012ad0c62f38d5a518b9c6fda2db5bbd899f17ff",
       "owner_anchor": "'/experimental/tool/ids?'",
       "proof": "data/validation/fresh-consumer-opencode-1.18.19.json",
-      "proof_sha256": "16e10b2fc6e94a9e9e3e1fff67f6084022daf340b96725aa65191a60b74f4b37",
+      "proof_sha256": "e10524bb02ea4b38a2bac1d3f91eab445f1e6a653221892f2b012a6abab1669c",
       "proof_anchor": "\"hi_tool_count\": 31",
       "status": "PASS"
     },
     {
       "invariant": "no-hidden-dev-dependency",
       "owner": "package.json",
-      "owner_sha256": "0c525b92080987befe6a838a92a2ae5fe603b74fbf10295e3f2ad4ec15544359",
+      "owner_sha256": "cf54e799329ca45c3a05e87192b67c4efb879f0bc5e79b7ddada0e16bc2c677d",
       "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.19\"",
       "proof": "data/validation/fresh-consumer-opencode-1.18.19.json",
-      "proof_sha256": "16e10b2fc6e94a9e9e3e1fff67f6084022daf340b96725aa65191a60b74f4b37",
+      "proof_sha256": "e10524bb02ea4b38a2bac1d3f91eab445f1e6a653221892f2b012a6abab1669c",
       "proof_anchor": "\"consumer_resolution\": true",
       "status": "PASS"
     },
@@ -86,7 +86,7 @@
       "owner_sha256": "179a28fdf78f464f05e6df53012ad0c62f38d5a518b9c6fda2db5bbd899f17ff",
       "owner_anchor": "'no_source_tree_in_server_log'",
       "proof": "data/validation/fresh-consumer-opencode-1.18.19.json",
-      "proof_sha256": "16e10b2fc6e94a9e9e3e1fff67f6084022daf340b96725aa65191a60b74f4b37",
+      "proof_sha256": "e10524bb02ea4b38a2bac1d3f91eab445f1e6a653221892f2b012a6abab1669c",
       "proof_anchor": "\"no_source_tree_in_server_log\": true",
       "status": "PASS"
     }

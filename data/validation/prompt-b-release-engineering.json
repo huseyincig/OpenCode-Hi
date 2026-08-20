@@ -3,35 +3,28 @@
   "kind": "PROMPT_B_RELEASE_ENGINEERING_AUDIT",
   "program": "PROMPT_B",
   "section": 28,
-  "status": "CLOSED_T4",
+  "status": "CLOSED_LOCAL_T4_BLOCKED",
   "current_source": {
-    "commit": "8c272c7800130b8554ab9b560f4f8943f90e0220",
-    "tree": "15d973f17d7bbedff3827e3ce47fc97f4eecf4df",
-    "version": "0.2.2"
+    "commit": "3026b5c40f416fa8bf5ab2a285646a3f6ea39e96",
+    "tree": "9ba63da6c4c9b56c7bfcdc340e75d9f12f09fa72",
+    "version": "0.2.3"
   },
   "release_source": {
-    "commit": "c151918f6b8d0ca32f46ee39fb2d8dbc21d61658",
-    "tree": "eeb9e466fa88e866985d56ce14f5f0a2585d667d",
-    "tag": "v0.2.2"
+    "commit": "3026b5c40f416fa8bf5ab2a285646a3f6ea39e96",
+    "tree": "9ba63da6c4c9b56c7bfcdc340e75d9f12f09fa72",
+    "tag": null
   },
   "development_head": {
-    "post_release": true,
+    "post_release": false,
     "runtime_drift_from_release": [],
-    "package_or_documentation_drift_from_release": [
-      "README.md",
-      "docs/INSTALLATION.md",
-      "docs/RELEASE.md",
-      "docs/assets/hi-logo.webp",
-      "docs/locales/tr/CONFIGURATION.md",
-      "docs/locales/tr/README.md"
-    ],
-    "current_version_already_published": true,
+    "package_or_documentation_drift_from_release": [],
+    "current_version_already_published": false,
     "next_release_version_required": false,
-    "republish_same_version_forbidden": true
+    "republish_same_version_forbidden": false
   },
   "certification_head": {
-    "commit": "8c272c7800130b8554ab9b560f4f8943f90e0220",
-    "tree": "15d973f17d7bbedff3827e3ce47fc97f4eecf4df"
+    "commit": "3026b5c40f416fa8bf5ab2a285646a3f6ea39e96",
+    "tree": "9ba63da6c4c9b56c7bfcdc340e75d9f12f09fa72"
   },
   "historical_release": {
     "tag": "v0.2.1",
@@ -39,10 +32,10 @@
     "status": "PASS_T4"
   },
   "registry_observation": {
-    "observed_at": "2026-08-20T14:48:26.446162+00:00",
+    "observed_at": "2026-08-20T18:03:11.229833+00:00",
     "reference_host_registry_latest": "1.18.19",
     "reference_sdk_registry_latest": "1.18.19",
-    "current_publication_receipt_present": true,
+    "current_publication_receipt_present": false,
     "authority_granted": false,
     "authority_condition": "explicit current user authority required after final certification; this audit never grants publication authority"
   },
@@ -50,32 +43,32 @@
     {
       "stage": "source-commit",
       "status": "PASS",
-      "detail": "8c272c7800130b8554ab9b560f4f8943f90e0220",
-      "proof": "exact-current T3 source checkpoint"
+      "detail": "3026b5c40f416fa8bf5ab2a285646a3f6ea39e96",
+      "proof": "fresh exact-host source binding"
     },
     {
       "stage": "version",
       "status": "PASS_NEW_RELEASE_IDENTITY",
-      "detail": "0.2.2",
-      "proof": "VERSION/package/lock identity"
+      "detail": "0.2.3",
+      "proof": "v0.2.1 immutable; current candidate distinct"
     },
     {
       "stage": "build",
       "status": "PASS",
       "detail": "canonical build green",
-      "proof": "canonical final gates"
+      "proof": "current product gates"
     },
     {
       "stage": "tests",
       "status": "PASS",
       "detail": "current suites green",
-      "proof": "validator + product gates"
+      "proof": "current product gates"
     },
     {
       "stage": "packed-artifact",
       "status": "PASS",
-      "detail": "fresh pack equals registry artifact",
-      "proof": "data/validation/release-publication-0.2.2.json"
+      "detail": "current packed artifact acceptance",
+      "proof": "data/validation/fresh-consumer-opencode-1.18.19.json"
     },
     {
       "stage": "fresh-install",
@@ -87,43 +80,43 @@
       "stage": "T3",
       "status": "PASS",
       "detail": "exact OpenCode 1.18.19 packed consumer + current capability T3",
-      "proof": "exact-current T3 audit"
+      "proof": "data/validation/prompt-b-exact-current-opencode-t3.json"
     },
     {
       "stage": "tag",
-      "status": "PASS_T4",
-      "detail": "v0.2.2",
-      "proof": "data/validation/release-publication-0.2.2.json"
+      "status": "PENDING_FINAL_AUTHORIZED_PUBLICATION",
+      "detail": "v0.2.1 remains immutable; v0.2.3 absent",
+      "proof": "explicit current user authority required"
     },
     {
       "stage": "github-release",
-      "status": "PASS_T4",
-      "detail": "GitHub Release v0.2.2",
-      "proof": "data/validation/release-publication-0.2.2.json"
+      "status": "PENDING_FINAL_AUTHORIZED_PUBLICATION",
+      "detail": "v0.2.3 not published",
+      "proof": "explicit current user publication authority required"
     },
     {
       "stage": "registry-publication",
-      "status": "PASS_T4",
-      "detail": "opencode-hi@0.2.2",
-      "proof": "data/validation/release-publication-0.2.2.json"
+      "status": "PENDING_FINAL_AUTHORIZED_PUBLICATION",
+      "detail": "opencode-hi@0.2.3 not published",
+      "proof": "explicit current user publication authority required"
     },
     {
       "stage": "registry-integrity",
-      "status": "PASS_T4",
-      "detail": "integrity/provenance exact-source bound",
-      "proof": "data/validation/release-publication-0.2.2.json"
+      "status": "BLOCKED_UPSTREAM_PUBLICATION",
+      "detail": "cannot verify current registry artifact before publication",
+      "proof": "current-version publication absent"
     },
     {
       "stage": "fresh-registry-install",
-      "status": "PASS_T4",
-      "detail": "exact OpenCode 1.18.19 fresh registry consumer",
-      "proof": "data/validation/t4-registry-exact-host-0.2.2.json"
+      "status": "BLOCKED_UPSTREAM_PUBLICATION",
+      "detail": "current registry package absent",
+      "proof": "current-version publication absent"
     },
     {
       "stage": "T4-receipt",
-      "status": "PASS_T4",
-      "detail": "real publication evidence complete",
-      "proof": "data/validation/release-publication-0.2.2.json"
+      "status": "PENDING_REAL_PUBLICATION_PROOF",
+      "detail": "no fabricated T4",
+      "proof": "real GitHub/npm publication required"
     }
   ],
   "checks": {
@@ -133,33 +126,26 @@
     "historical_release_source": true,
     "released_runtime_immutable": true,
     "unreleased_runtime_change_declared": true,
-    "current_tag_annotated": true,
-    "current_tag_exact_source": true,
-    "github_release_t4": true,
-    "registry_published_t4": true,
-    "registry_integrity_t4": true,
-    "fresh_registry_t4": true,
-    "publication_receipt_t4": true
+    "current_publication_receipt_absent": true,
+    "no_current_tag_present": true
   },
   "violations": [],
   "summary": {
     "stages": 13,
-    "local_pass_or_historical": 13,
-    "blocked_external_or_identity": 0,
+    "local_pass_or_historical": 8,
+    "blocked_external_or_identity": 5,
     "violations": 0
   },
   "proof_hashes": {
-    "VERSION": "998f6b887ed7a6ef44e84210d0237b715bed42ea7254f48dc418afec0a484103",
-    "package.json": "0c525b92080987befe6a838a92a2ae5fe603b74fbf10295e3f2ad4ec15544359",
-    "package-lock.json": "1e221b67157198263b2ad5150f903a1c108616ab9750df6699c618ee5ea2b4ee",
-    "plugin/package-lock.json": "722250df58cd08e94cdf61df6412ba0707b6f504986a4ff18a3e156b9e6dc6be",
-    "data/validation/fresh-consumer-opencode-1.18.19.json": "16e10b2fc6e94a9e9e3e1fff67f6084022daf340b96725aa65191a60b74f4b37",
+    "VERSION": "3ab94c04d24986f3af288ba1cda2c0bbddbc5a89dff097182805f54578e1ea75",
+    "package.json": "cf54e799329ca45c3a05e87192b67c4efb879f0bc5e79b7ddada0e16bc2c677d",
+    "package-lock.json": "6db0b63a847200c028a8adfe5ea0db951a487a461f9203100d7ad2d299f44a94",
+    "plugin/package-lock.json": "8d6492dc6b1a528cf302ac7942024e084ebc1301a30290b799846a1eda9a853f",
+    "data/validation/fresh-consumer-opencode-1.18.19.json": "e10524bb02ea4b38a2bac1d3f91eab445f1e6a653221892f2b012a6abab1669c",
     "data/validation/release-status-0.2.1.json": "e6780dbb64272d0080f5eb47e0d2a8f0ecba2d825b61e2be5b2a9d2e1604fa98",
     ".github/workflows/npm-publish.yml": "fddeff0ad498142ab454a0df576328bdb061106ce7eddec3ae553e3f653572b5",
-    "scripts/verify-npm-oidc-release.mjs": "e5f0fe255f2af83d7156ad8b5dd1f0e2e9d9a36a22fff03a68c6e1272529670f",
-    "scripts/run-exact-current-host-t3.mjs": "5d85f698c7a2db0f5ab779a307f6fd976af9c3f08ba63be4034eaaac734ea03e",
-    "data/validation/release-publication-0.2.2.json": "8f4909ad90f491a4f31cc17e2f383cf612bc803dc6a7b95002409caf3c9164ca",
-    "data/validation/t4-registry-exact-host-0.2.2.json": "22723393af144b57a88591770e1385942947b15c5999ccc746578d56d9028762"
+    "scripts/verify-npm-oidc-release.mjs": "b39ef117a6464367d9bd817a0c35d0c7e55c15bcd26d40212e62e315719c8351",
+    "scripts/run-exact-current-host-t3.mjs": "b166c45debd2d106b1bd4843c7cd905773a3b0cf020163ae8d46a7f5acf75ae1"
   },
   "claim_boundary": "Current local release engineering is bound to exact OpenCode 1.18.19, derived from the exact root SDK/plugin pin. T4 never becomes true without real GitHub/npm publication evidence and explicit current publication authority. v0.2.1 remains immutable."
 }

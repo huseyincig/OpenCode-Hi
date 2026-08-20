@@ -5,14 +5,14 @@
   "section": 30,
   "status": "PASS",
   "source_binding": {
-    "tested_git_commit": "1e86e36eb47ba4fc574702590f6384603780d94e",
-    "tested_git_tree": "b8b96ca679dd9c5e84f016d541225133b2e1d502",
+    "tested_git_commit": "3026b5c40f416fa8bf5ab2a285646a3f6ea39e96",
+    "tested_git_tree": "9ba63da6c4c9b56c7bfcdc340e75d9f12f09fa72",
     "runner": "scripts/run-node-test-suite.mjs",
     "runner_sha256": "987692ec836f2b16c62f53c8cc4f4f14551bb35c33298e6d5d22eb8281b25f6c"
   },
   "canonical_suite_observation": {
-    "tests": 1034,
-    "pass": 1034,
+    "tests": 1068,
+    "pass": 1068,
     "fail": 0,
     "cancelled": 0,
     "skipped": 0,

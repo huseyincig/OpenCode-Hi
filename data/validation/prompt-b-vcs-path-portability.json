@@ -25,7 +25,7 @@
       "owner_sha256": "2206b17bd9e558cec931b743cae388b078c8505a0c76c5c13cf05e060aada785",
       "owner_anchor": "recordStagingInspection",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "1e4929ed8156ba5a253c1ae50feb3d6c243c452990248114f85c3d0e0a1c142d",
+      "proof_sha256": "202bb2686ca843c5ce838dfe098727f5a83e3d6afa5a496aaf73d2464e497c51",
       "proof_anchor": "preserves pre-staged and unstaged user changes exactly"
     },
     {
@@ -35,7 +35,7 @@
       "owner_sha256": "24e803722ab51227b5c61799484fcbac507583902680ec1ee07c817211015731",
       "owner_anchor": "defaultInspect",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "1e4929ed8156ba5a253c1ae50feb3d6c243c452990248114f85c3d0e0a1c142d",
+      "proof_sha256": "202bb2686ca843c5ce838dfe098727f5a83e3d6afa5a496aaf73d2464e497c51",
       "proof_anchor": "untracked user"
     },
     {
@@ -55,7 +55,7 @@
       "owner_sha256": "14da681b14b058aa3104cfb2f8f1cb78dfc2c75c2a7dc975748e1a49748d53d7",
       "owner_anchor": "parallel.write-conflict.quarantined",
       "proof": "plugin/test/runtime-write-conflict.test.mjs",
-      "proof_sha256": "2384c70914522d59854ad9132e07ae6b180fe7e5615105d125ec7a5c8449ba84",
+      "proof_sha256": "c79dc13def3bc9a9c129a81908b27e7252263b5f21ff69b1a181a77fd22340af",
       "proof_anchor": "overlapping writes quarantine the later writer"
     },
     {
@@ -95,7 +95,7 @@
       "owner_sha256": "bf299f887e618d824b9099281cd6e9e6321ff942faec9bba95d548d3e27c964b",
       "owner_anchor": "rollback",
       "proof": "plugin/test/forensic-hardening.test.mjs",
-      "proof_sha256": "9357690f0a2fb9f6be872df8c6d381bd80441f80e4491887a1e22e0756efdb82",
+      "proof_sha256": "28c5eaac0b621d1e7de12b824b15a25ba93480725df359791a1bc87866288f64",
       "proof_anchor": "command rollback with unknown exit cannot close rollback gate"
     },
     {
@@ -105,7 +105,7 @@
       "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "reconcileRestored",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "1e4929ed8156ba5a253c1ae50feb3d6c243c452990248114f85c3d0e0a1c142d",
+      "proof_sha256": "202bb2686ca843c5ce838dfe098727f5a83e3d6afa5a496aaf73d2464e497c51",
       "proof_anchor": "restart adopts exact lease, quarantines missing owner without recreation"
     },
     {
@@ -132,7 +132,7 @@
       "section": 18,
       "invariant": "no-blind-reset-stash-restore",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "475ae7ee8d93030ddf6b35463f6ba2120e8e4319b933410e64fb34902663df8a",
+      "owner_sha256": "b74685c24dd9e3ffc8b2e40d898f07c80d93a11a1c1ac58c4984f567d8a5663b",
       "owner_anchor": "never use git checkout/reset/restore",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
       "proof_sha256": "5852e6f963942e284c3e4d1fa418a75367c7e418e9ebe6ed51176371774a4f8a",
@@ -165,7 +165,7 @@
       "owner_sha256": "24e803722ab51227b5c61799484fcbac507583902680ec1ee07c817211015731",
       "owner_anchor": "realpathSync",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "1e4929ed8156ba5a253c1ae50feb3d6c243c452990248114f85c3d0e0a1c142d",
+      "proof_sha256": "202bb2686ca843c5ce838dfe098727f5a83e3d6afa5a496aaf73d2464e497c51",
       "proof_anchor": "symlinked workspace escape is canonicalized and rejected"
     },
     {
@@ -245,7 +245,7 @@
       "owner_sha256": "2206b17bd9e558cec931b743cae388b078c8505a0c76c5c13cf05e060aada785",
       "owner_anchor": "porcelainPaths",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "1e4929ed8156ba5a253c1ae50feb3d6c243c452990248114f85c3d0e0a1c142d",
+      "proof_sha256": "202bb2686ca843c5ce838dfe098727f5a83e3d6afa5a496aaf73d2464e497c51",
       "proof_anchor": "untracked user.txt"
     },
     {
@@ -301,8 +301,8 @@
     {
       "section": 19,
       "invariant": "browser-platform-cache",
-      "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
-      "owner_sha256": "4961f680ebf2183bc4eacc39d4f861eccc55b4262814057251935590feff4fdf",
+      "owner": "plugin/src/runtime/browser/discovery.ts",
+      "owner_sha256": "1b869e24b7b5a841b08858f8ade73bec77d8784e5499ab566c6d9977d430162d",
       "owner_anchor": "PLAYWRIGHT_BROWSERS_PATH",
       "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
       "proof_sha256": "cd9db87fa287d03c7ea993726674bb186de9f0cb4e69f301b14b8fa0812657a1",
@@ -311,8 +311,8 @@
     {
       "section": 19,
       "invariant": "no-hardcoded-root-home",
-      "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
-      "owner_sha256": "4961f680ebf2183bc4eacc39d4f861eccc55b4262814057251935590feff4fdf",
+      "owner": "plugin/src/runtime/browser/discovery.ts",
+      "owner_sha256": "1b869e24b7b5a841b08858f8ade73bec77d8784e5499ab566c6d9977d430162d",
       "owner_anchor": "homedir()",
       "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
       "proof_sha256": "cd9db87fa287d03c7ea993726674bb186de9f0cb4e69f301b14b8fa0812657a1",

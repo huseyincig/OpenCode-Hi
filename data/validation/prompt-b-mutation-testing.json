@@ -150,17 +150,17 @@
     "all_required_prompt_areas": true
   },
   "source_binding": {
-    "commit": "eb823fddd9e7b31f7e6c765be3c899e58a726077",
-    "tree": "79f3fedd701cad31b7883569a8063f72d21dcd4e"
+    "commit": "3026b5c40f416fa8bf5ab2a285646a3f6ea39e96",
+    "tree": "9ba63da6c4c9b56c7bfcdc340e75d9f12f09fa72"
   },
   "proof_hashes": {
-    "data/validation/selective-mutation-testing-0.1.0.json": "5df582ee6b74cec973f8a8f4530c8dc85dcad15ab6accf7fcea40d400edc1e72",
+    "data/validation/selective-mutation-testing-0.1.0.json": "d9773c662202285f65472ac3987b8a9522a6bb09cf41f669afd2ea7884c0452d",
     "scripts/run-selective-mutations.mjs": "2b0151a68086eb1d34c1aa22149bd0fdb8e6511fef74560d1f4bf5792d9d39e1",
     "plugin/test/q2-critical-invariant-guards.test.mjs": "da74cbdd01a1498851ca49fa8a7d669d80e52970ec8b332c97f37da7e9107c9d",
     "plugin/src/contracts/common.ts": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
     "plugin/src/contracts/storage-ownership.ts": "29b8238c9b410b268c7e442b713c58a2b7d0b36c7a6cc857c72f6ca2a12d740a",
     "plugin/src/hooks/tool-before.ts": "1b02de643876bdc1960fb264a19f6c60ccd5c9bdebba9e2b1d82594a1ce15aa0",
-    "plugin/src/runtime/continuation/evaluator.ts": "18ef44e9262368e1f6fcb4efaf5bd4a66c3091fb4a5a9b5aef7de6af32942dce",
+    "plugin/src/runtime/continuation/evaluator.ts": "820518f3b793092f208421295492bae3a441dfc1f50db49311dbee198c48bd94",
     "plugin/src/runtime/evidence/evidence-runtime.ts": "5146ed0b607cf79d564abcdc358e7dcf5be7df8030ef1f9f50382232f62d10b3",
     "plugin/src/runtime/host/capability-manifest.ts": "f21c6869ad7545d1b8e205a1f8917e7278dddb47c6193d8febe5612c3e4653f8",
     "plugin/src/runtime/process/authority.ts": "c9e47bee821cced0ae282f388e0561e0b06c6eddc34ffc9ad5ec9f8c1249714f",
