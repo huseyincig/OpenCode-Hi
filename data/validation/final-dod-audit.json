@@ -14,21 +14,18 @@
       "npm Trusted Publishing/fresh-registry exact-host T4"
     ],
     "local_pending": [
-      "clean evidence-commit hygiene",
-      "full Python/evidence suite and final canonical gates"
+      "full Python evidence suite and final canonical gates"
     ]
   },
   "local_acceptance": {
     "node": {
       "status": "PASS",
       "command": "scripts/run-test-harness-isolation.py",
-      "scope": "full runtime suite plus dual-cwd isolation",
-      "tests": 1068
+      "scope": "full runtime suite plus dual-cwd isolation"
     },
     "node_setup": {
       "status": "PASS",
-      "command": "npm run test:node:setup",
-      "tests": 13
+      "command": "npm run test:node:setup"
     },
     "fresh_consumer": {
       "status": "PASS",
@@ -42,8 +39,8 @@
       ]
     },
     "python": {
-      "status": "PENDING_FINAL_FULL_SUITE",
-      "command": "python -m pytest -q tests/test_hi.py"
+      "status": "PASS_PRODUCT",
+      "command": "release-venv python -m pytest -q -m not-evidence tests/test_hi.py"
     }
   },
   "product_truth": {
@@ -86,7 +83,7 @@
   },
   "blockers": [
     "exact OpenCode 1.18.19 Windows current-source external CI",
-    "clean evidence checkpoint/final canonical gates",
+    "full Python evidence suite/final canonical gates",
     "real GitHub/npm T4 publication evidence"
   ],
   "conclusion": "0.2.3 implementation and local exact-host engineering evidence are green. Release certification remains PARTIAL/prepublication until current-source Windows CI, clean final gates and real T4 publication proof are available."
