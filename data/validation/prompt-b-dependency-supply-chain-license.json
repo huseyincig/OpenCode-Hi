@@ -37,7 +37,7 @@
       "owner_sha256": "4a9b21b80d1ec752dbc442e234f808cde7ff7e332cd5f7284da36d9e6bb180c7",
       "owner_anchor": "@opencode-ai/sdk/v2/client",
       "proof": "data/validation/fresh-consumer-opencode-1.18.19.json",
-      "proof_sha256": "97f9f2e2c1736be3f02cf0d5f633af25266ef662985b15d722add16ccf57203b",
+      "proof_sha256": "376804d3f1685d8e88cd070e8e0d3fb54af24020a041a2b3bd92af47ea118de9",
       "proof_anchor": "\"consumer_resolution\": true"
     },
     {

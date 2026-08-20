@@ -42,11 +42,11 @@
   "current_local_evidence": {
     "source_checkpoint": {
       "status": "PASS",
-      "commit": "7a34286c6686b4108af80e74fb9c15678815f2b3",
-      "tree": "c9da1930dd0f696dd94f5b41925a098eba041872",
+      "commit": "6aed0ab046e65fd71b1307c65f80a6d99fc83d6b",
+      "tree": "7c10bdba1f4e47494ac0bdc7e0d84bd78fa550c7",
       "base_commit": "eb823fddd9e7b31f7e6c765be3c899e58a726077",
       "branch": "release/0.2.2-bootstrap",
-      "note": "Clean evidence checkpoint carrying current-source cross-platform receipt; product/runtime material is unchanged from the exact CI source eb823fddd9e7b31f7e6c765be3c899e58a726077."
+      "note": "Exact public-doc/package source checkpoint validated by fresh canonical gates and fresh packed-consumer; subsequent evidence-only commits do not alter npm package material."
     },
     "node": {
       "command": "npm --prefix plugin run check",
@@ -85,12 +85,12 @@
       "hi_tool_count": 31,
       "session_create": true,
       "coder_projection": true,
-      "source_commit": "eb823fddd9e7b31f7e6c765be3c899e58a726077"
+      "source_commit": "6aed0ab046e65fd71b1307c65f80a6d99fc83d6b"
     },
     "exact_t3": {
       "status": "PASS_EXACT_CURRENT_LINUX_AARCH64",
       "opencode_version": "1.18.19",
-      "source_commit": "eb823fddd9e7b31f7e6c765be3c899e58a726077",
+      "source_commit": "6aed0ab046e65fd71b1307c65f80a6d99fc83d6b",
       "capabilities": [
         "process-lifecycle",
         "workspace-isolation-binding",
