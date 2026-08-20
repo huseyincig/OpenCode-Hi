@@ -1,6 +1,5 @@
-// Doctor deepening regression guard (2.0.7).
-// Verifies the new doctor checks:
-// 1. `model-inventory` now reports the first 8 model ids, not just the count.
+// Doctor model-inventory regression guard.
+// M16 requires the effective inventory to remain visible without an arbitrary eight-model presentation cap.
 
 import test from 'node:test'
 import assert from 'node:assert/strict'
@@ -57,7 +56,22 @@ test('Gap #16: model-inventory with empty inventory passes warn', () => {
     const checks = runDoctor(cfg, store, project, { models: [] })
     const inv = checks.find(c => c.id === 'model-inventory')
     assert.equal(inv.status, 'warn')
-    assert.match(inv.detail, /0 runtime/)
+    assert.match(inv.detail, /0 effective runtime/)
   } finally { rmSync(project, { recursive: true, force: true }) }
 })
 
+
+
+test('M16 model-inventory presentation includes entries beyond eight', () => {
+  const project = makeProject()
+  try {
+    const cfg = makeDefaultHiConfig()
+    const store = new MissionStore()
+    const mockModels = Array.from({length:12},(_,i)=>({id:'provider/model-'+String(i+1),provider:'provider',tags:['balanced']}))
+    const inv = runDoctor(cfg, store, project, { models: mockModels }).find(c => c.id === 'model-inventory')
+    assert.ok(inv)
+    assert.match(inv.detail, /12 effective runtime model\(s\)/)
+    assert.match(inv.detail, /provider\/model-12/)
+    assert.doesNotMatch(inv.detail, /first 8/)
+  } finally { rmSync(project, { recursive: true, force: true }) }
+})

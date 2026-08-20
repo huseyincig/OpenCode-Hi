@@ -1,0 +1,121 @@
+{
+  "schema": 1,
+  "milestone": "M16",
+  "host": {
+    "opencode_version": "1.18.19",
+    "binary_sha256": "c34a30f5567f989d9a089cc4a0bf5860d81273fc6644de96671bd5cbe5dd31ec",
+    "source_tag": "v1.18.19",
+    "source_commit": "2b72179c663cadcb54f54d9f19221b3fb3d11fb6"
+  },
+  "gates": [
+    {
+      "id": "model-cli-json",
+      "classification": "FALSIFIED",
+      "claim": "OpenCode 1.18.19 exposes opencode models --json.",
+      "evidence": ["exact 1.18.19 models --help has no --json option", "opencode models --json --pure exits 1 and prints help"]
+    },
+    {
+      "id": "model-cli-effective-filtering",
+      "classification": "CONFIRMED",
+      "claim": "Plain opencode models reflects provider allow/deny and 1.18.19 model whitelist/blacklist filtering.",
+      "evidence": ["baseline=7 opencode models", "enabled_providers=[] => 0", "disabled_providers=[opencode] => 0", "opencode blacklist big-pickle => 6", "opencode whitelist big-pickle => 1"]
+    },
+    {
+      "id": "model-cli-auth-proof",
+      "classification": "FALSIFIED",
+      "claim": "Presence in opencode models alone proves provider authentication or a successful remote model call.",
+      "evidence": ["config-defined customx/m1 with unreachable baseURL and no credential is still listed by opencode models"]
+    },
+    {
+      "id": "model-disabled-field-1.18.19",
+      "classification": "FALSIFIED",
+      "claim": "OpenCode 1.18.19 model config supports model.disabled=true as the model picker filter.",
+      "evidence": ["exact v1.18.19 ConfigProviderV1.Model schema has no model.disabled", "exact provider runtime filters models with provider.whitelist/provider.blacklist", "variant.disabled exists only for model variants"]
+    },
+    {
+      "id": "provider-api-structured-inventory",
+      "classification": "CONFIRMED",
+      "claim": "OpenCode 1.18.19 provider.list/provider HTTP shape exposes catalog/all providers, connected provider IDs, runtime-overridden model sets, and model capability metadata.",
+      "evidence": ["isolated /provider returned all_count=192 but connected=[opencode]", "connected opencode runtime model set contained exactly 7 models", "mimo-v2.5-free and muse-spark-1.2-contributor-free reported capabilities.input.image=true"]
+    },
+    {
+      "id": "effective-inventory-definition",
+      "classification": "CONFIRMED",
+      "claim": "For OpenCode 1.18.19, Hi can define effective runtime inventory as models from provider.list all/providers intersected with connected when the host exposes connected, then apply Hi role/policy/capability eligibility.",
+      "evidence": ["exact provider HTTP handler separately returns all and connected", "existing Hi host-port already intersects connected when present", "exact CLI/source confirms provider state has already applied enabled_providers, disabled_providers, whitelist, blacklist, alpha/deprecated pruning"]
+    },
+    {
+      "id": "visual-capability-preservation",
+      "classification": "FALSIFIED",
+      "claim": "Current Hi runtime preserves OpenCode image-input capability into its model capability profile.",
+      "evidence": ["OpenCode /provider supplies capabilities.input.image", "current plugin/src/opencode/host-port.ts normalizes id/provider/cost/quality/write/tags/variants only and drops capabilities"]
+    },
+    {
+      "id": "plain-local-npm-bootstrap",
+      "classification": "FALSIFIED",
+      "claim": "Plain local npm install is project-root-clean enough for the normal Hi bootstrap path.",
+      "evidence": ["isolated explicit-prefix equivalent created package.json, package-lock.json and 624 files under node_modules"]
+    },
+    {
+      "id": "opencode-prefix-bootstrap",
+      "classification": "FALSIFIED",
+      "claim": "Installing the package directly with .opencode as npm prefix preserves Hi-only ownership and low project materialization.",
+      "evidence": ["created .opencode/package.json, .opencode/package-lock.json and 624 files under .opencode/node_modules", "Hi ownership contract is .opencode/hi/**, not the whole .opencode runtime namespace"]
+    },
+    {
+      "id": "hi-prefix-bootstrap",
+      "classification": "CONFIRMED",
+      "claim": "An npm prefix under .opencode/hi/bootstrap can confine package materialization to Hi-owned storage.",
+      "evidence": ["created only .opencode/hi/bootstrap subtree", "still materialized 624 files and persistent node_modules, so it is technically viable but heavier than package-runner bootstrap"]
+    },
+    {
+      "id": "npx-package-runner-bootstrap-linux",
+      "classification": "CONFIRMED",
+      "claim": "Package-runner bootstrap can register exact Hi version without node_modules/package files in the application root.",
+      "evidence": ["npx opencode-hi@0.2.1 plan left application project empty", "npx opencode-hi@0.2.1 install wrote only opencode.json plus .opencode/hi/provenance setup files before host startup", "registration was exact opencode-hi@0.2.1"]
+    },
+    {
+      "id": "current-npx-bootstrap-node-only-cross-platform",
+      "classification": "INCONCLUSIVE",
+      "claim": "The released 0.2.1 package-runner bootstrap works on Windows without an external Python prerequisite.",
+      "evidence": ["package.json bin points to scripts/native_plugin_setup.py with python3 shebang", "Linux package-runner works", "Windows exact execution not yet recertified"],
+      "decision": "M16 implementation should replace the public bootstrap bin with a Node entrypoint before Windows recertification."
+    },
+    {
+      "id": "native-registry-cache-bootstrap-1.18.19",
+      "classification": "CONFIRMED",
+      "claim": "OpenCode 1.18.19 can load exact registry opencode-hi@0.2.1 via its native package cache without lifecycle scripts.",
+      "evidence": ["exact source @opencode-ai/core/npm uses global cache/packages/<sanitized-spec> and Arborist ignoreScripts=true", "runtime cache materialized opencode/packages/opencode-hi@0.2.1", "exact 1.18.19 host exposed 31/31 hi_* tools"]
+    },
+    {
+      "id": "host-owned-opencode-node-modules",
+      "classification": "CONFIRMED",
+      "claim": "When a project .opencode directory exists, OpenCode 1.18.19 itself may create host-owned .opencode/.gitignore and .opencode/node_modules for @opencode-ai/plugin.",
+      "evidence": ["exact Config.ensureGitignore + npmSvc.install source", "empty baseline project with no .opencode stayed empty", "Hi-registered project with .opencode/hi provenance gained host-owned .opencode/node_modules during host startup"]
+    },
+    {
+      "id": "transactional-update-core",
+      "classification": "CONFIRMED",
+      "claim": "Existing Hi ownership/transaction lifecycle can safely underpin M16 update semantics.",
+      "evidence": ["controlled 0.2.0 -> 0.2.1 upgrade changed only exact Hi plugin spec", "foreign plugin, enabled_providers and unknown user field were preserved", "rollback provenance remained available"]
+    },
+    {
+      "id": "opencode-1.18.19-linux-plugin-compat",
+      "classification": "CONFIRMED",
+      "claim": "Published opencode-hi@0.2.1 initializes on exact OpenCode 1.18.19 Linux ARM64 and exposes the expected 31-tool surface.",
+      "evidence": ["exact host version 1.18.19", "tool endpoint total=45 hi_count=31", "plugin initialized with providerInventory=true"]
+    },
+    {
+      "id": "opencode-1.18.19-windows-desktop-certification",
+      "classification": "INCONCLUSIVE",
+      "claim": "M16 behavior is certified on exact OpenCode Desktop 1.18.19 Windows.",
+      "evidence": ["not executed yet; required after implementation"]
+    }
+  ],
+  "architecture_decision": {
+    "bootstrap": "Use a Node-based npm package-runner as the one-shot normal-user bootstrap/update entrypoint; register an exact opencode-hi@VERSION in opencode.json; let OpenCode own registry package cache/materialization. Do not use project-root npm install, Git checkout, Bun wrapper, or persistent package materialization as the default path.",
+    "model_inventory": "Use OpenCode provider.list structured runtime inventory; intersect connected provider IDs when exposed; preserve exact host model capability metadata; apply Hi policy and role capability eligibility after host filtering. Do not scrape the full catalog and do not use the 0.2.1 opencode models --json fallback path.",
+    "update": "Reuse transactional registration ownership/rollback semantics; update only the exact Hi plugin spec and Hi-owned state; preserve user/foreign config.",
+    "host_owned_state": "Treat .opencode/node_modules and .opencode/.gitignore created by OpenCode as host-owned, not Hi-owned project state."
+  }
+}

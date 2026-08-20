@@ -101,7 +101,7 @@ test('M11 admitted empirical feedback may rerank configured role priors without 
   const r = resolveModel('standard', inventory, cfg, undefined, 'coder', undefined, feedback)
   assert.equal(r.primary, 'p/b')
   assert.ok(r.reason.includes('empirical-feedback-reranked-configured-priors'))
-  assert.ok(!r.reason.some(x => x.includes('recommended-fast-path')))
+  assert.ok(!r.reason.some(x => x.includes('configured-role-prior-fast-path')))
   assert.deepEqual([r.primary, ...r.fallbacks].slice(0, 2), ['p/b', 'p/a'])
 })
 
@@ -114,7 +114,7 @@ test('M11 sparse feedback keeps configured role prior on the no-scoring fast pat
   const feedback = { samples: { 'p/a': 1 }, failures: { 'p/a': 1 }, confidence: { 'p/a': 'insufficient' } }
   const r = resolveModel('standard', inventory, cfg, undefined, 'coder', undefined, feedback)
   assert.equal(r.primary, 'p/a')
-  assert.ok(r.reason.some(x => x.includes('recommended-fast-path')))
+  assert.ok(r.reason.some(x => x.includes('configured-role-prior-fast-path')))
 })
 
 test('M11 explicit model override remains authoritative over admitted empirical role feedback', () => {
@@ -130,7 +130,7 @@ test('M11 explicit model override remains authoritative over admitted empirical 
   assert.ok(!r.reason.includes('empirical-feedback-reranked-configured-priors'))
 })
 
-test('M11 live OpenCode Go inventory uses the canonical default coder prior without persisted project routing', () => {
+test('M16 no persisted role mapping means normal scoring can choose any effective provider', () => {
   const inventory = [
     { id: 'opencode-go/mimo-v2.5', provider: 'opencode-go', tags: ['fast','cheap','balanced'], quality: 5 },
     { id: 'opencode-go/deepseek-v4-flash', provider: 'opencode-go', tags: ['fast','cheap','coding'], quality: 5 },
@@ -140,7 +140,26 @@ test('M11 live OpenCode Go inventory uses the canonical default coder prior with
   ]
   const cfg = cfgWith({})
   const r = resolveModel('quick', inventory, cfg, undefined, 'coder', {})
-  assert.equal(r.primary, 'opencode-go/deepseek-v4-flash')
-  assert.ok(r.reason.includes('default role prior:coder'))
-  assert.ok(r.reason.some(x => x.includes('recommended-fast-path')))
+  assert.equal(r.primary, 'opencode/laguna-s-2.1-free')
+  assert.ok(r.reason.includes('cost-quality scoring'))
+  assert.ok(!r.reason.some(x => x.includes('role prior')))
+  assert.ok(!r.reason.some(x => x.includes('configured-role-prior-fast-path')))
+})
+
+
+test('M16 visual-qa rejects non-vision runtime models before ranking and admits only explicit vision capability', () => {
+  const inventory = [
+    { id: 'p/text-only', provider: 'p', tags: ['coding'], quality: 100, visionCapable: false },
+    { id: 'p/vision', provider: 'p', tags: ['coding'], quality: 1, visionCapable: true },
+  ]
+  const cfg = cfgWith({ 'visual-qa': ['p/text-only', 'p/vision'] })
+  const r = resolveModel('visual', inventory, cfg, undefined, 'visual-qa', {})
+  assert.equal(r.primary, 'p/vision')
+  assert.ok(r.rejected.some(x => x.id === 'p/text-only' && x.reason === 'role-capability-missing:vision'))
+})
+
+test('M16 visual-qa does not fall through to unverified host-default when runtime inventory is unavailable', () => {
+  const cfg = cfgWith({})
+  const r = resolveModel('visual', [], cfg, undefined, 'visual-qa', {})
+  assert.equal(r.primary, undefined)
 })

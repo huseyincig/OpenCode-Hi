@@ -1,0 +1,113 @@
+{
+  "schema": 1,
+  "release": "0.2.2",
+  "generated_at": "2026-08-20T11:11:49.974Z",
+  "publication_authority": {
+    "condition": "EXPLICIT_CURRENT_USER_AUTHORITY_REQUIRED_AFTER_FINAL_CERTIFICATION",
+    "authorized": false,
+    "attempted_in_candidate_t3": false
+  },
+  "status": "PASS_EXACT_CURRENT_WORKSPACE_ISOLATION_T3_RELEASE_0_2_2",
+  "source_binding": {
+    "tested_git_commit": "4b56173976a0fb1508dc22348e2926cb7af0adf4",
+    "tested_git_tree": "67574e15eb43559c55bb0248797c7c69528bf43c",
+    "worktree": "/workspace/OpenCode-Hi/.agent-work/worktrees/m16-onboarding",
+    "state": "CLEAN_COMMITTED_SOURCE",
+    "exact_candidate": true,
+    "runtime_hashes": {
+      "plugin/src/contracts/workspace.ts": "d2ed1d517537201302344aa3061f149b044ad85b6909fe85ec876904ea9b496a",
+      "plugin/src/runtime/workspace/executor.ts": "8d476a52d8b17b250c9ef8eb604f739cd1093f8edbcccb4bc56954ab80275836",
+      "plugin/src/runtime/workspace/runtime.ts": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
+      "plugin/src/runtime/mission/validators.ts": "61ce2e9002580c6c12a7df3f3f5dc5894c92aaebce6a96b8676c72d7f791a6f4",
+      "plugin/src/opencode/open-code-workspace-adapter.ts": "24e803722ab51227b5c61799484fcbac507583902680ec1ee07c817211015731",
+      "plugin/src/runtime/task/child-execution-coordinator.ts": "819e27671224e9f7bca8e70b7a2638d74c79164f04bcc5e5e647c0d5818d9817",
+      "plugin/src/contracts/host-capability.ts": "6296832cd6f5b73f234f2b41e86177525146a5b452d5def7b58c61515ef9e1af"
+    },
+    "note": "Fresh exact-source Workspace T3 acceptance on frozen 0.2.2 candidate, including exact child binding, primary-state preservation, lease verification, restart adoption and cleanup."
+  },
+  "host": {
+    "os": "linux",
+    "arch": "aarch64",
+    "opencode_version": "1.18.19",
+    "opencode_binary": "/workspace/OpenCode-Hi/.agent-work/tools/opencode-1.18.19/node_modules/opencode-linux-arm64/bin/opencode",
+    "opencode_binary_sha256": "c34a30f5567f989d9a089cc4a0bf5860d81273fc6644de96671bd5cbe5dd31ec",
+    "server": "ephemeral-user-space-exact-1.18.19",
+    "workspace_feature_flag": "OPENCODE_EXPERIMENTAL_WORKSPACES=true"
+  },
+  "gates": {
+    "workspace_runtime_canonical_decision": "PASS_CONTROLLED",
+    "workspace_create": "PASS_T3",
+    "workspace_source_baseline": "PASS_T3",
+    "workspace_child_id_directory_binding": "PASS_T3",
+    "workspace_observed_cwd_identity": "PASS_T3",
+    "workspace_write_isolation": "PASS_T3",
+    "workspace_primary_preservation": "PASS_T3",
+    "workspace_cleanup": "PASS_T3",
+    "workspace_host_cleanup_empty": "PASS_T3",
+    "workspace_verification": "PASS_T3",
+    "workspace_restart_adoption": "PASS_T3",
+    "workspace_orphan_quarantine": "PASS_CONTROLLED",
+    "workspace_no_recreation": "PASS_CONTROLLED",
+    "workspace_persisted_identity_strictness": "PASS_CONTROLLED",
+    "workspace_isolation_binding": "SUPPORTED_T3"
+  },
+  "evidence": {
+    "real_host": {
+      "health": {
+        "available": true,
+        "detail": "OpenCode experimental workspace list observed with workspace support enabled"
+      },
+      "baseline": "4b56173976a0fb1508dc22348e2926cb7af0adf4",
+      "provisioned": {
+        "host_workspace_id": "wrk_01edeb0c7001SlNUjjeATzgRIK",
+        "workspace_path": "/workspace/OpenCode-Hi/.agent-work/worktrees/m16-onboarding/.agent-work/acceptance/exact-current-host-t3-1.18.19-4b56173/xdg/data/opencode/worktree/3bf2323c91f9e2c5ddacccaa9ce7e30cb30bb5af/kind-sailor"
+      },
+      "child": {
+        "id": "ses_fe1214e5affe4Zw2kGKn87q9mx",
+        "workspaceID": "wrk_01edeb0c7001SlNUjjeATzgRIK",
+        "directory": "/workspace/OpenCode-Hi/.agent-work/worktrees/m16-onboarding/.agent-work/acceptance/exact-current-host-t3-1.18.19-4b56173/xdg/data/opencode/worktree/3bf2323c91f9e2c5ddacccaa9ce7e30cb30bb5af/kind-sailor"
+      },
+      "child_exact": true,
+      "isolated": true,
+      "primary_preserved": true,
+      "reconcile": "ADOPTED",
+      "cleanup": true,
+      "verification": {
+        "rc": 0,
+        "stdout": "",
+        "stderr": "",
+        "cwd": "/workspace/OpenCode-Hi/.agent-work/worktrees/m16-onboarding/.agent-work/acceptance/exact-current-host-t3-1.18.19-4b56173/xdg/data/opencode/worktree/3bf2323c91f9e2c5ddacccaa9ce7e30cb30bb5af/nimble-circuit",
+        "baseline": "4b56173976a0fb1508dc22348e2926cb7af0adf4",
+        "host_workspace_id": "wrk_01edeb30c001Y9c2YYClondQnQ",
+        "cleanup": true
+      }
+    },
+    "controlled_boundaries": {
+      "orphan_quarantine_and_no_recreation": "plugin/test/w2-workspace-executor.test.mjs",
+      "persisted_identity_strictness": "plugin/test/w1-workspace-contract.test.mjs"
+    },
+    "raw_artifacts": {
+      "workspace": {
+        "path": "/workspace/OpenCode-Hi/.agent-work/worktrees/m16-onboarding/.agent-work/acceptance/exact-current-host-t3-1.18.19-4b56173/workspace.json",
+        "sha256": "9c1f2ebe17cd1ecb75bcb749eba76c33cfa62b5f18c8e038d7366f8b8065bb4e"
+      },
+      "verification": {
+        "path": "/workspace/OpenCode-Hi/.agent-work/worktrees/m16-onboarding/.agent-work/acceptance/exact-current-host-t3-1.18.19-4b56173/workspace-verify.json",
+        "sha256": "8ed6f7b85eafb025d5f03192e39042362a10842f24e3a46b483426ab07f6f226"
+      }
+    }
+  },
+  "limitations": [
+    "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution.",
+    "OpenCode 1.18.19 workspace support must be enabled before host startup with OPENCODE_EXPERIMENTAL_WORKSPACES=true (or the broader OPENCODE_EXPERIMENTAL flag when no explicit workspace override is set).",
+    "Exact T3 applies only to OpenCode 1.18.19 on linux/aarch64 and exact source 4b56173976a0fb1508dc22348e2926cb7af0adf4."
+  ],
+  "capability_limitations": {
+    "workspace-isolation-binding": [
+      "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution.",
+      "OpenCode workspace support must be enabled before host startup.",
+      "Exact T3 applies only to OpenCode 1.18.19 on linux/aarch64 and exact source 4b56173976a0fb1508dc22348e2926cb7af0adf4."
+    ]
+  },
+  "rule": "API existence or historical receipts do not certify this result; actual frozen-candidate workspace/session invocation with the host workspace feature enabled and lease-local verification were required."
+}

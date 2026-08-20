@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "kind": "M16_DETERMINISTIC_RELEASE_REPRODUCIBILITY",
+  "release": "0.2.2",
+  "status": "PASS",
+  "source": {
+    "commit": "1e212e66448749d76654c63a69b515b4f3752357",
+    "tree": "053930f1367fb5f29e737a82acf881b0bcfb04cb"
+  },
+  "artifacts": {
+    "source/OpenCode-Hi-0.2.2-SOURCE.zip": "d0e150a44e4229caeef7777e3bdaeaeaa5065293f68fe86612db249d012fbb0e",
+    "dist/RELEASE-MANIFEST-0.2.2.json": "aeae8f2ed1b240e736b3116b5001be8e6d21f83015bc3ed9d49817b34f8f201f",
+    "dist/OpenCode-Hi-0.2.2-DISTRIBUTABLE.zip": "0cfd2b5dbc2d0fbbe398486c0a7f91d1899e5a0a76cda31e1ac597abe02ef24e",
+    "dist/SBOM-0.2.2.json": "59dac06fa89220ca83e6faecd4a795a433af98dc3d113f5d53e12c45bacd8b01"
+  },
+  "independent_builds": 2,
+  "mismatches": [],
+  "claim_boundary": "Two independent deterministic release builds from the same clean source checkpoint produced byte-identical release outputs under project-owned staging."
+}

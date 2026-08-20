@@ -81,38 +81,60 @@ Exact host version/platform/architecture ve receipt bağlantıları için [Host 
 
 ## Kurulum ve ilk kullanım
 
-OpenCode-Hi doğrudan Git source veya npm registry üzerinden kullanılabilir. **Önerilen Git kurulumunda kullanıcı Bun/npm çalıştırmaz, wrapper oluşturmaz ve `node_modules` yönetmez.**
+OpenCode-Hi'nin normal kullanıcı yolu npm-registry-first'tür. `0.2.2` adayı için tek seferlik Node package-runner kullanılır; repository checkout, Bun, harici Python, proje köküne `npm install`, proje `package.json`/lock veya kalıcı root `node_modules` gerekmez.
 
-### Git source — önerilen, npm registry gerektirmez
+### npm registry — normal kullanıcı yolu
 
-Mevcut `opencode.json` / `opencode.jsonc` içindeki `plugin` listesine şu spec'i ekleyin:
-
-```json
-{
-  "plugin": [
-    "opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git"
-  ]
-}
-```
-
-OpenCode'u yeniden başlatın. Git package'ı materialize etmek ve plugin'i yüklemek OpenCode'un sorumluluğudur. Güncel Hi source package'ı npm/Pacote'nin Git-dependency preparation açmasına neden olan root lifecycle adlarını taşımaz; `@opencode-ai/plugin` host peer'i optional olduğu için büyük host dependency zinciri tekrar kurulmaz.
-
-Immutable `v0.2.0` tag'i bu direct-Git packaging düzeltmesinden daha eskidir ve değiştirilmez. `v0.2.1` bu düzeltmeyi taşır; unpinned Git source spec'i current repository source'u izler.
-
-### npm registry
-
-Bu release'in exact registry kimliği `opencode-hi@0.2.1`'dir. Yayımlanan sürümler npm Trusted Publishing OIDC provenance kullanır ve recorded exact OpenCode host üzerinde acceptance ile doğrulanır.
-
-Yeni bir proje repository checkout yapmadan exact package sürümünü kurabilir ve package içindeki setup CLI'ı kullanabilir:
+Exact release'i projeye bağımlılık olarak kurmak yerine package-runner ile kaydedin:
 
 ```bash
-npm install --save-dev opencode-hi@0.2.1
-./node_modules/.bin/opencode-hi-setup plan /path/to/project --version 0.2.1
-./node_modules/.bin/opencode-hi-setup install /path/to/project --version 0.2.1
-./node_modules/.bin/opencode-hi-setup doctor /path/to/project
+npx --yes opencode-hi@0.2.2 setup /path/to/project
 ```
 
-Registration/doctor ile runtime loading farklıdır. Published-release T4 evidence fresh-registry installation ve exact-host loading doğrulamasını içerir; güncel evidence ayrıntıları Release Engineering dokümanında tutulur.
+Sonra OpenCode'u yeniden başlatın. Registry package cache/materialization ve native plugin loading OpenCode'un sorumluluğundadır. Statik registration/ownership kontrolü için:
+
+```bash
+npx --yes opencode-hi@0.2.2 doctor /path/to/project
+```
+
+Yüklenmiş OpenCode oturumunda canlı provider/model inventory ve runtime capability gerçeği için `hi_doctor` kullanın. Package `doctor`, bir modelin credential'ının geçerli olduğunu veya remote inference'ın başarılı olduğunu varsaymaz.
+
+Hi'nin sahip olduğu mevcut exact kaydı yeni sürüme taşımak için hedef sürümün runner'ını kullanın:
+
+```bash
+npx --yes opencode-hi@0.2.2 update /path/to/project
+```
+
+`setup`/`update` yalnız exact Hi plugin kaydı ile `.opencode/hi/**` altındaki Hi-owned provenance'ı değiştirir; foreign plugin/provider/MCP ve bilinmeyen kullanıcı alanlarını korur. OpenCode kendi plugin runtime'ı için `.opencode/.gitignore`, `.opencode/package.json` veya `.opencode/node_modules` oluşturabilir; bunlar Hi-owned bootstrap state değildir.
+
+### Komut yüzeyleri ve interaktif kurulum sınırı
+
+Package lifecycle ile yüklü OpenCode runtime yüzeyi ayrıdır. Normal package komutları `setup`, `update`, `doctor`, `plan`, `rollback`, `recover` şeklindedir. `install`, `setup` alias'ıdır; `upgrade`, `update` alias'ıdır.
+
+- `setup`: ilk exact Hi-owned registration/provenance kaydını oluşturur.
+- `update`: Hi'nin sahip olduğu kaydı hedef exact sürüme taşır.
+- `doctor`: registration, ownership, drift ve pending lifecycle state'i statik olarak kontrol eder.
+- `plan`: değişikliği uygulamadan exact before/after planını gösterir.
+- `rollback`: hash'ler hâlâ eşleşiyorsa tek kayıtlı rollback noktasını geri alır.
+- `recover`: yalnız kayıtlı yarım setup/update transaction'ını uzlaştırır.
+
+Plugin yüklendikten sonra **31 adet `hi_*` runtime tool** vardır. Kullanıcıya en yakın durum/diagnostic araçları `hi_doctor`, `hi_status`, `hi_readiness`, `hi_metrics` ve `hi_ledger`'dır; diğerleri task/worker, process, browser, context artifact, temporary mutation ve semantic control için bounded primitive'lerdir.
+
+Bu sürümde `hi_state`, `hi_rotate` veya `hi_reprofile` diye bir komut/tool **yoktur**. Canlı Mission state için `hi_status` / `hi_readiness` / `hi_ledger`; kurulum ownership state için package `doctor` kullanılır.
+
+Normal kurulum bugün tam interaktif wizard değildir. Akış bilinçli olarak deterministic'tir:
+
+```text
+setup -> OpenCode restart -> package doctor -> runtime hi_doctor
+```
+
+Kurulum sırasında provider/model/profile/concurrency seçim ekranı açılmaz. Provider authentication/configuration OpenCode-owned kalır. Hi, ilk effective runtime inventory geldiğinde yalnız gerçekten effective-enabled ve role-eligible child modelleri rank eder, ilk önerileri bir kez yazar; kullanıcı daha sonra bu routing'i değiştirebilir ve sonraki update/refresh geçerli tercihi ezmez. Gelişmiş `reconfigure` / `role-models` işlemleri legacy Python helper'dadır ve normal npm onboarding için zorunlu değildir.
+
+`0.2.2` source tree şu anda pre-publication candidate'dır. npm registry publication ve fresh-registry T4 receipt oluşmadan public availability ilan edilmez.
+
+### Git/source — contributor ve geliştirme yolu
+
+Direct Git/local loading geliştirme ve CI compatibility için kullanılabilir fakat normal kullanıcı onboarding yolu değildir. Reproducible kabulde exact SHA/spec kullanılmalı ve OpenCode'un plugin'i gerçekten yüklediği gözlenmelidir.
 
 ### Source development
 

@@ -175,7 +175,7 @@ export class TaskRecoveryCoordinator {
         task.status = 'waiting';
         this.registry.set(worker);
         for (const model of candidates) {
-            const runtimeCandidate = runtimeModelCandidateStatus(model, this.getModels(), this.getConfig(), this.getHostConfig());
+            const runtimeCandidate = runtimeModelCandidateStatus(model, this.getModels(), this.getConfig(), this.getHostConfig(), worker.role);
             if (!runtimeCandidate.ok) {
                 appendLedger(m, 'worker.runtime-fallback.skipped', { task_id: task.id, worker_id: worker.id, payload: { model, reason: runtimeCandidate.reason, failure_class: failure.kind, phase: 'runtime-policy-revalidation' } });
                 continue;

@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "kind": "M16_PACKED_BOOTSTRAP_EXACT_HOST_PREPUBLICATION",
+  "status": "PASS",
+  "candidate": "0.2.2",
+  "host": {
+    "opencode": "1.18.19",
+    "platform": "linux",
+    "architecture": "aarch64"
+  },
+  "tarball": {
+    "name": "opencode-hi-0.2.2.tgz",
+    "sha256": "8826d0427ae381657a3b1d97cc5be1241d6f53544274dc97b9ab0cd0d07cb5f8",
+    "node_cli_mode": "0o755",
+    "legacy_python_mode": "0o755"
+  },
+  "package_runner": {
+    "status": "APPLIED",
+    "plugin_spec": "opencode-hi@0.2.2",
+    "project_entries": [
+      ".opencode",
+      ".opencode/hi",
+      ".opencode/hi/provenance",
+      ".opencode/hi/provenance/setup-rollback.json",
+      ".opencode/hi/provenance/setup.json",
+      "opencode.json"
+    ],
+    "root_package_json": false,
+    "root_package_lock": false,
+    "root_node_modules": false
+  },
+  "exact_host_local_package_seam": {
+    "hi_tool_count": 31,
+    "required_tools_present": true
+  },
+  "claim_boundary": "Current dirty-worktree candidate tarball package-runner and exact OpenCode 1.18.19 local-package runtime acceptance only. Source identity will be bound by the subsequent local checkpoint commit; opencode-hi@0.2.2 is not published, so fresh-registry/native-cache T4 remains unclaimed."
+}

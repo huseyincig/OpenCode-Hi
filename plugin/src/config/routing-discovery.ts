@@ -68,7 +68,7 @@ export function loadProjectRoutingConfig(projectRoot: string): Partial<HiConfig>
       if(Object.keys(mapped).length)routing[key]=mapped
     }
   }
-  for (const key of ['allowedProviders','deniedModels'] as const) if(Array.isArray(r[key])) { const xs=r[key]!.filter((x):x is string=>typeof x==='string'&&x.trim().length>0).map(x=>x.trim()); routing[key]=[...new Set(xs)].slice(0,8) }
+  for (const key of ['allowedProviders','deniedModels'] as const) if(Array.isArray(r[key])) { const xs=r[key]!.filter((x):x is string=>typeof x==='string'&&x.trim().length>0).map(x=>x.trim()); routing[key]=[...new Set(xs)] }
   if(typeof r.maxFallbacks==='number'&&Number.isFinite(r.maxFallbacks))routing.maxFallbacks=Math.max(0,Math.min(6,Math.floor(r.maxFallbacks)))
   const out:Partial<HiConfig> = {}
   if(Object.keys(routing).length)out.routing=routing as Partial<HiConfig['routing']> as HiConfig['routing']

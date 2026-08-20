@@ -3,6 +3,10 @@ import { realpathSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createOpencodeClient as createOpenCodeV2Client } from '@opencode-ai/sdk/v2/client';
 function nativeData(value) { const first = value && typeof value === 'object' && 'data' in value ? value.data : value; return (first && typeof first === 'object' && 'data' in first ? first.data : first); }
+export function openCodeExperimentalWorkspacesEnabled(env = process.env) {
+    const direct = env.OPENCODE_EXPERIMENTAL_WORKSPACES, value = (direct === undefined ? env.OPENCODE_EXPERIMENTAL : direct)?.toLowerCase();
+    return value === 'true' || value === '1';
+}
 function git(directory, args) { const r = spawnSync('git', ['-C', directory, ...args], { encoding: 'utf8' }); if (r.status !== 0)
     throw new Error(`Git workspace inspection failed: ${String(r.stderr ?? r.stdout ?? 'unknown error')}`); return String(r.stdout ?? '').trim(); }
 function canonicalExisting(path) { return realpathSync(resolve(path)); }
@@ -76,9 +80,10 @@ export class OpenCodeWorkspaceAdapter {
             throw new Error('OpenCode native workspace warp/copyChanges API unavailable');
         return api;
     }
-    async health() { try {
+    async health() { if (!openCodeExperimentalWorkspacesEnabled())
+        return { available: false, detail: 'OpenCode experimental workspace support is disabled; set OPENCODE_EXPERIMENTAL_WORKSPACES=true before starting OpenCode' }; try {
         await this.#workspace().list({ directory: this.directory });
-        return { available: true, detail: 'OpenCode experimental workspace list observed' };
+        return { available: true, detail: 'OpenCode experimental workspace list observed with workspace support enabled' };
     }
     catch (error) {
         return { available: false, detail: String(error) };
@@ -121,6 +126,8 @@ export class OpenCodeWorkspaceAdapter {
         throw new Error(`OpenCode workspace create failed and lost-ack reconciliation was ${valid.length ? 'ambiguous' : 'unproven'}: ${String(cause)}`);
     }
     async provision(request) {
+        if (!openCodeExperimentalWorkspacesEnabled())
+            throw new Error('OpenCode experimental workspace support is disabled; set OPENCODE_EXPERIMENTAL_WORKSPACES=true before starting OpenCode');
         const before = this.inspector(request.repository_root);
         if (before.head !== request.source_baseline)
             throw new Error('Source baseline changed before OpenCode workspace provisioning');

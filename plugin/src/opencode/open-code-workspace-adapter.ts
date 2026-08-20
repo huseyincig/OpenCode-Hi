@@ -10,6 +10,10 @@ interface NativeWorkspace{id:string;type:string;name?:string;branch?:string|null
 export interface GitWorkspaceInspection{head:string;common_dir:string;worktrees:string[]}
 export type GitWorkspaceInspector=(directory:string)=>GitWorkspaceInspection
 function nativeData<T>(value:any):T{const first=value&&typeof value==='object'&&'data'in value?value.data:value;return(first&&typeof first==='object'&&'data'in first?first.data:first) as T}
+export function openCodeExperimentalWorkspacesEnabled(env:Record<string,string|undefined>=process.env):boolean{
+  const direct=env.OPENCODE_EXPERIMENTAL_WORKSPACES,value=(direct===undefined?env.OPENCODE_EXPERIMENTAL:direct)?.toLowerCase()
+  return value==='true'||value==='1'
+}
 function git(directory:string,args:string[]):string{const r=spawnSync('git',['-C',directory,...args],{encoding:'utf8'});if(r.status!==0)throw new Error(`Git workspace inspection failed: ${String(r.stderr??r.stdout??'unknown error')}`);return String(r.stdout??'').trim()}
 function canonicalExisting(path:string):string{return realpathSync(resolve(path))}
 function defaultInspect(directory:string):GitWorkspaceInspection{
@@ -54,7 +58,7 @@ export class OpenCodeWorkspaceAdapter implements WorkspaceExecutor{
     const api=this.#v2Workspace();if(!api||typeof api.warp!=='function')throw new Error('OpenCode native workspace warp/copyChanges API unavailable')
     return api
   }
-  async health():Promise<{available:boolean;detail:string}>{try{await this.#workspace().list({directory:this.directory});return{available:true,detail:'OpenCode experimental workspace list observed'}}catch(error){return{available:false,detail:String(error)}}}
+  async health():Promise<{available:boolean;detail:string}>{if(!openCodeExperimentalWorkspacesEnabled())return{available:false,detail:'OpenCode experimental workspace support is disabled; set OPENCODE_EXPERIMENTAL_WORKSPACES=true before starting OpenCode'};try{await this.#workspace().list({directory:this.directory});return{available:true,detail:'OpenCode experimental workspace list observed with workspace support enabled'}}catch(error){return{available:false,detail:String(error)}}}
   async sourceBaseline(repositoryRoot:string):Promise<string>{const observed=this.inspector(repositoryRoot).head;if(!/^[a-f0-9]{40}(?:[a-f0-9]{24})?$/.test(observed))throw new Error('Git source baseline is not an exact object id');return observed}
   #validate(native:NativeWorkspace,request:{repository_root:string;source_baseline:string;expected_path?:string;expected_id?:string;require_baseline?:boolean}):WorkspaceProvisioned{
     if(!native||typeof native.id!=='string'||!native.id.trim()||native.type!=='worktree'||typeof native.directory!=='string'||!native.directory.trim())throw new Error('OpenCode workspace response is not a bounded worktree identity')
@@ -78,6 +82,7 @@ export class OpenCodeWorkspaceAdapter implements WorkspaceExecutor{
     throw new Error(`OpenCode workspace create failed and lost-ack reconciliation was ${valid.length?'ambiguous':'unproven'}: ${String(cause)}`)
   }
   async provision(request:WorkspaceProvisionRequest):Promise<WorkspaceProvisioned>{
+    if(!openCodeExperimentalWorkspacesEnabled())throw new Error('OpenCode experimental workspace support is disabled; set OPENCODE_EXPERIMENTAL_WORKSPACES=true before starting OpenCode')
     const before=this.inspector(request.repository_root);if(before.head!==request.source_baseline)throw new Error('Source baseline changed before OpenCode workspace provisioning')
     const beforeIDs=new Set((await this.#listNative()).map(x=>x?.id).filter((x):x is string=>typeof x==='string'&&Boolean(x)))
     let raw:any

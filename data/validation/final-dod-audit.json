@@ -1,69 +1,98 @@
 {
   "schema": 2,
-  "release": "0.2.1",
-  "generated_at": "2026-08-19",
-  "basis": "OpenCode-Hi 0.2.1 native direct-Git packaging correction and release-preparation contracts",
+  "release": "0.2.2",
+  "generated_at": "2026-08-20",
   "internal_status": "LOCAL_IMPLEMENTATION_AND_IN_PROCESS_ACCEPTANCE_COMPLETE",
+  "release_blocked": true,
+  "claim_boundary": "Current 0.2.2 local engineering evidence is bound to exact OpenCode 1.18.19 Linux/aarch64 and current committed source. Windows current-source CI and T4 publication remain external; clean evidence-commit hygiene/final canonical gates remain the only local closure step.",
   "source_checklist": {
-    "total": 132,
-    "status_counts": {
-      "LOCAL_IMPLEMENTED_OR_POLICY_SATISFIED": 128,
-      "EXTERNAL_OR_USER_OWNED_ACTION_PENDING": 0,
-      "EXTERNAL_OR_USER_OWNED_ACTION_COMPLETE": 4
-    },
-    "internal_missing": []
+    "source": "PROMPT B plus M16 authority files and data/validation/m16-research-gates-0.2.2.json",
+    "internal_missing": [],
+    "external_pending": [
+      "exact OpenCode 1.18.19 Windows current-source CI",
+      "GitHub release T4",
+      "npm Trusted Publishing/fresh-registry exact-host T4"
+    ],
+    "local_pending": []
   },
   "local_acceptance": {
     "node": {
-      "command": "npm --prefix plugin test",
-      "status": "PASS"
+      "status": "PASS",
+      "command": "npm --prefix plugin run check",
+      "scope": "full plugin build/test/check"
     },
     "python": {
-      "command": "python -m pytest -q tests/test_hi.py",
-      "status": "PASS"
-    },
-    "source_validation": {
-      "command": "python scripts/validate.py",
-      "status": "PASS"
-    },
-    "final_gates": {
       "status": "PASS",
-      "receipt": "data/validation/final-gates-0.2.1.json",
-      "source_commit": "5af9124e771670a5b7d68745ff9b52a1d20fefce"
+      "command": "python -m pytest -q -m 'not evidence' tests/test_hi.py",
+      "scope": "product/non-evidence acceptance; external/source-bound evidence tests intentionally excluded"
     },
-    "exact_host_t3": {
+    "node_setup": {
       "status": "PASS",
-      "receipt": "data/validation/prompt-b-exact-current-opencode-t3.json",
-      "opencode_version": "1.18.18"
+      "command": "npm run test:node:setup"
     },
-    "fresh_consumer": {
+    "packed_bootstrap": {
       "status": "PASS",
-      "receipt": "data/validation/fresh-consumer-opencode-1.18.18.json"
+      "command": "npm run test:m16:packed-bootstrap",
+      "receipt": "data/validation/m16-packed-prepublication-0.2.2.json"
     },
-    "deterministic_release": {
-      "command": "python scripts/release-build.py --out <out> --source-out <source-out>",
-      "status": "PASS"
+    "documentation": {
+      "status": "PASS",
+      "commands": [
+        "npm run docs:check",
+        "npm run docs:pack-check"
+      ]
+    },
+    "m16_research": {
+      "status": "PASS",
+      "receipt": "data/validation/m16-research-gates-0.2.2.json",
+      "host": "OpenCode 1.18.19",
+      "note": "Product code was changed only after the mechanical CONFIRMED/FALSIFIED/INCONCLUSIVE research gate."
     }
   },
-  "external_only_pending": [],
-  "external_blockers": [],
-  "release_blocked": false,
-  "known_internal_blocking_findings": [],
-  "historical_v58_provenance": [
-    "data/validation/forensic-61-progress.json",
-    "data/validation/external-blockers-v58.json",
-    "data/validation/external-opencode-cli-1.18.16.json"
-  ],
-  "rule": "Historical v0.2.0 and earlier receipts remain immutable provenance only. They do not certify the current OpenCode-Hi 0.2.1 candidate.",
-  "historical_release_evidence": {
-    "release": "0.1.3",
-    "release_status_receipt": "data/validation/release-status-0.1.3.json",
-    "status": "CERTIFIED_T4"
+  "m16_product_truth": {
+    "normal_user_bootstrap": "Node npm package-runner; exact opencode-hi@VERSION registration; no project-root package install",
+    "legacy_python_surface": "retained for compatibility/advanced commands, not required by normal onboarding",
+    "model_inventory": "OpenCode structured provider inventory; connected intersection when exposed; no bundled catalog fallback",
+    "opencode_1_18_19_model_filter": "enabled/disabled providers plus provider whitelist/blacklist; no model-level disabled picker field",
+    "initial_recommendation_policy": {
+      "hard_coded_provider_model_ids": false,
+      "source": "first effective runtime inventory",
+      "selection": "canonical role/category cost-quality scoring after provider/model/capability filtering",
+      "persistence": "one-shot project role preference; later valid user routing is preserved across refresh/update"
+    },
+    "visual_qa": "explicit image-input capability required before ranking and revalidated at dispatch/fallback",
+    "model_list_cap": "none; arbitrary seven/eight model truncation removed",
+    "host_owned_state": ".opencode/.gitignore, .opencode/package.json and .opencode/node_modules may be OpenCode-owned and are not Hi lifecycle ownership"
   },
-  "final_publication": {
-    "status": "PASS_T4",
-    "receipt": "data/validation/release-publication-0.2.1.json",
-    "released_source": "5cd86a5fbad109f5c532e315f9f01739ec426a8c",
-    "tag": "v0.2.1"
-  }
+  "current_exact_host_prepublication": {
+    "linux_aarch64": {
+      "status": "PASS_EXACT_CURRENT_T3",
+      "opencode": "1.18.19",
+      "source_commit": "1e212e66448749d76654c63a69b515b4f3752357",
+      "hi_tools": 31,
+      "native_child_session_parent_binding": "PASS_T3",
+      "permission_denial_preflight": "PASS_T3",
+      "receipt": "data/validation/prompt-b-exact-current-opencode-t3.json",
+      "capability_receipt_source_commit": "09e99d251ec47f54803fb192738a50e0035ea060",
+      "runtime_equivalent_to_current": true
+    },
+    "windows_desktop": {
+      "status": "PENDING_EXTERNAL_CI",
+      "opencode": "1.18.19",
+      "reason": "No current 0.2.2 Windows current-source execution receipt exists."
+    }
+  },
+  "release_evidence": {
+    "release_gates": "data/validation/release-gates.json",
+    "generated_status": "data/validation/release-status-0.2.2.json",
+    "historical_0_2_1_t4_is_current": false,
+    "publication_authorized_or_performed": false,
+    "deterministic_release": "data/validation/deterministic-release-reproducibility-0.2.2.json",
+    "current_validator": "PASS"
+  },
+  "blockers": [
+    "exact OpenCode 1.18.19 Windows current-source external CI",
+    "real GitHub/npm T4 publication evidence"
+  ],
+  "conclusion": "All executable local 0.2.2 engineering and certification gates pass. Final system certification is PARTIAL only because exact OpenCode 1.18.19 Windows current-source CI and real GitHub/npm T4 publication evidence remain external."
 }

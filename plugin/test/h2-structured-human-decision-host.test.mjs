@@ -5,7 +5,7 @@ import {openCodeHostCapabilityContracts,hostCapabilityByID} from '../dist/contra
 
 const all={childSessions:true,asyncPrompt:true,syncPrompt:true,abort:true,providerInventory:true,appLog:true,sessionStatus:true,childSessionList:true,sessionTodo:true,sessionDiff:true,sessionFork:true,sessionSummarize:true,sessionRevert:true,sessionUnrevert:true}
 
-test('H2 OpenCode 1.18.18 public question API can list/reply/reject but cannot directly open a structured question',()=>{
+test('H2 current OpenCode public question API can list/reply/reject but cannot directly open a structured question',()=>{
   const sdk=readFileSync(new URL('../node_modules/@opencode-ai/sdk/dist/v2/gen/sdk.gen.d.ts',import.meta.url),'utf8')
   const start=sdk.indexOf('export declare class Question extends HeyApiClient')
   const end=sdk.indexOf('export declare class Permission extends HeyApiClient',start)

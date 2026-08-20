@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {mkdtempSync,mkdirSync,rmSync} from 'node:fs'
+import {mkdtempSync,mkdirSync,rmSync,readFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {createRequire} from 'node:module'
@@ -13,8 +13,11 @@ const clone=x=>structuredClone(x)
 function root(){return mkdtempSync(join(tmpdir(),'hi-composition-'))}
 
 test('current project OpenCode plugin SDK stays explicitly pinned to the verified V1 config-hook compatibility target',()=>{
-  const pkg=require('../node_modules/@opencode-ai/plugin/package.json')
-  assert.equal(pkg.version,'1.18.18')
+  const rootPackage=JSON.parse(readFileSync(new URL('../../package.json',import.meta.url),'utf8'))
+  const target=rootPackage.dependencies['@opencode-ai/sdk']
+  const installed=JSON.parse(readFileSync(new URL('../node_modules/@opencode-ai/plugin/package.json',import.meta.url),'utf8'))
+  assert.equal(rootPackage.peerDependencies['@opencode-ai/plugin'],target)
+  assert.equal(installed.version,target)
 })
 
 test('composition probe isolates V1 config projection from V2 domain-config shapes without copying either full schema',()=>{

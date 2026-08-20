@@ -3,28 +3,33 @@ import assert from 'node:assert/strict'
 import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync} from 'node:fs'
 import {join} from 'node:path'
 import {tmpdir} from 'node:os'
-import {DEFAULT_ROLE_MODELS_OPENCODE_GO,ensureProjectRoutingConfig} from '../dist/config/auto-init.js'
+import {ensureProjectRoutingConfig} from '../dist/config/auto-init.js'
+import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {resolveHiConfig} from '../dist/config/resolver.js'
-import {resolveModel} from '../dist/runtime/routing/model-resolver.js'
+import {recommendInitialRoleModels,resolveModel} from '../dist/runtime/routing/model-resolver.js'
 
-const ALL=[...new Set(Object.values(DEFAULT_ROLE_MODELS_OPENCODE_GO).flat())]
+const ALL_CHILD_ROLES=['architect','coder','qa-reviewer','repository-explorer','security-reviewer','visual-qa']
 function project(){return mkdtempSync(join(tmpdir(),'hi-model-setup-'))}
+function inventory(){return[
+ {id:'alpha/general',provider:'alpha',tags:['balanced','reasoning','coding','high-assurance'],quality:9,cost:.2,visionCapable:false,variants:['low','medium','high']},
+ {id:'beta/economy',provider:'beta',tags:['balanced','fast','cheap'],quality:4,cost:.05,visionCapable:false,variants:['low','medium']},
+ {id:'vision/eye',provider:'vision',tags:['balanced','reasoning','coding','high-assurance'],quality:8,cost:.3,visionCapable:true,variants:['medium','high']},
+]}
 
-test('recommended setup persists only the 6 model-routed child roles when curated inventory is available',()=>{
+test('M16 first runtime inventory ranks and persists data-driven initial recommendations for child roles',()=>{
  const p=project();try{
-  const r=ensureProjectRoutingConfig(p,ALL);assert.equal(r.created,true);assert.equal(r.configuredRoles,6)
-  const raw=JSON.parse(readFileSync(r.path,'utf8'));assert.equal(raw.routing.modelPolicy,'recommended');assert.deepEqual(raw.routing.adaptiveRoles,[]);assert.equal(Object.keys(raw.routing.roleModels).length,6);assert.equal(raw.routing.roleModels.manager,undefined);assert.equal(raw.routing.roleModels['working-manager'],undefined)
-  const first=resolveHiConfig({},p),second=resolveHiConfig({},p);assert.deepEqual(second.routing.roleModels,first.routing.roleModels);assert.equal('modelPolicy' in second.routing,false);assert.equal('adaptiveRoles' in second.routing,false)
+  const models=inventory(),recommendations=recommendInitialRoleModels(models,structuredClone(DEFAULT_HI_CONFIG));const r=ensureProjectRoutingConfig(p,recommendations);assert.equal(r.created,true);assert.equal(r.configuredRoles,6)
+  const raw=JSON.parse(readFileSync(r.path,'utf8'));assert.equal(raw.routing.modelPolicy,'recommended');assert.deepEqual(raw.routing.adaptiveRoles,[]);assert.deepEqual(Object.keys(raw.routing.roleModels).sort(),ALL_CHILD_ROLES);assert.equal(raw.routing.roleModels.manager,undefined);assert.equal(raw.routing.roleModels['working-manager'],undefined)
+  assert.equal(raw.routing.roleModels.coder[0],'alpha/general');assert.equal(raw.routing.roleModels['visual-qa'][0],'vision/eye')
+  const cfg=resolveHiConfig({},p),coder=resolveModel('standard',models,cfg,undefined,'coder'),visual=resolveModel('visual',models,cfg,undefined,'visual-qa');assert.equal(coder.primary,'alpha/general');assert.equal(visual.primary,'vision/eye');assert.ok(coder.reason.some(x=>x.includes('configured-role-prior-fast-path')))
  }finally{rmSync(p,{recursive:true,force:true})}
 })
 
-test('recommended setup marks only unavailable roles for smart select without reranking configured roles',()=>{
+test('M16 later user routing choice is preserved and automatic ranking does not overwrite it',()=>{
  const p=project();try{
-  const missing='visual-qa',live=ALL.filter(x=>!DEFAULT_ROLE_MODELS_OPENCODE_GO[missing].includes(x));const r=ensureProjectRoutingConfig(p,live)
-  const raw=JSON.parse(readFileSync(r.path,'utf8'));assert.deepEqual(raw.routing.adaptiveRoles,[missing]);assert.ok(raw.routing.roleModels.coder);assert.equal(raw.routing.roleModels[missing],undefined)
-  const cfg=resolveHiConfig({},p);const inventory=live.map(id=>({id,quality:5,variants:['low','medium','high']})).concat([{id:'other/visual',quality:9,tags:['vision','coding'],variants:['high']}])
-  const coder=resolveModel('standard',inventory,cfg,undefined,'coder');assert.ok(coder.reason.some(x=>x.includes('recommended-fast-path')))
-  const visual=resolveModel('visual',inventory,cfg,undefined,missing);assert.equal(visual.primary,'other/visual');assert.ok(!visual.reason.some(x=>x.includes('recommended-fast-path')))
+  const models=inventory(),initial=recommendInitialRoleModels(models,structuredClone(DEFAULT_HI_CONFIG));const first=ensureProjectRoutingConfig(p,initial);const raw=JSON.parse(readFileSync(first.path,'utf8'));raw.routing.roleModels.coder=['beta/economy'];raw.routing.modelPolicy='manual';writeFileSync(first.path,JSON.stringify(raw,null,2)+'\n')
+  const changedModels=models.map(m=>m.id==='vision/eye'?{...m,quality:50}:m),later=recommendInitialRoleModels(changedModels,structuredClone(DEFAULT_HI_CONFIG));const second=ensureProjectRoutingConfig(p,later);assert.equal(second.created,false)
+  const cfg=resolveHiConfig({},p);assert.deepEqual(cfg.routing.roleModels.coder,['beta/economy']);const selected=resolveModel('standard',changedModels,cfg,undefined,'coder');assert.equal(selected.primary,'beta/economy')
  }finally{rmSync(p,{recursive:true,force:true})}
 })
 

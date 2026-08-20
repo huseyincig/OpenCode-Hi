@@ -1,0 +1,119 @@
+{
+  "schema": 1,
+  "release": "0.2.2",
+  "generated_at": "2026-08-20T12:48:41.278Z",
+  "publication_authority": {
+    "condition": "EXPLICIT_CURRENT_USER_AUTHORITY_REQUIRED_AFTER_FINAL_CERTIFICATION",
+    "authorized": false,
+    "attempted_in_candidate_t3": false
+  },
+  "status": "PASS_EXACT_CURRENT_BROWSER_EXECUTION_T3_RELEASE_0_2_2",
+  "source_binding": {
+    "tested_git_commit": "09e99d251ec47f54803fb192738a50e0035ea060",
+    "tested_git_tree": "2f3b1ca395f1bea11fcf7e03c4afab3225651c8a",
+    "worktree": "/workspace/OpenCode-Hi/.agent-work/worktrees/m16-onboarding",
+    "state": "CLEAN_COMMITTED_SOURCE",
+    "exact_candidate": true,
+    "runtime_hashes": {
+      "plugin/src/contracts/browser-observation.ts": "bdaa9047f895999a62039c17906bb8214c9af98394a0f68c1a311abc5f258624",
+      "plugin/src/runtime/browser/executor.ts": "51490e8a470aaa1b8dc39f5c92a77a52822530c76364edf5087e549ea3dba67b",
+      "plugin/src/runtime/browser/backend-policy.ts": "34df48c08eeee2c05fdb36a34db30d19b7fb84c4c9e9a7102e522a54b26ce3c5",
+      "plugin/src/runtime/browser/ownership.ts": "f8c82c1d0e302ce8667620f77aee3ef827f3a0713b8f0aa526c20d2ea59bf121",
+      "plugin/src/opencode/playwright-browser-adapter.ts": "4961f680ebf2183bc4eacc39d4f861eccc55b4262814057251935590feff4fdf",
+      "plugin/src/runtime/application/hi-tool-surface.ts": "089d25284b1c638caa7a31fd357b737ce2e247c42331420fb3afede924999363",
+      "plugin/src/contracts/host-capability.ts": "6296832cd6f5b73f234f2b41e86177525146a5b452d5def7b58c61515ef9e1af"
+    },
+    "note": "Fresh exact-source real-Chromium Browser T3 acceptance on frozen 0.2.2 candidate using an explicit allowed-origin execution plan."
+  },
+  "host": {
+    "os": "linux",
+    "arch": "aarch64",
+    "opencode_version": "1.18.19",
+    "opencode_binary": "/workspace/OpenCode-Hi/.agent-work/tools/opencode-1.18.19/node_modules/opencode-linux-arm64/bin/opencode",
+    "opencode_binary_sha256": "c34a30f5567f989d9a089cc4a0bf5860d81273fc6644de96671bd5cbe5dd31ec",
+    "server": "local-http-fixture",
+    "browser_engine": "playwright-core Chromium",
+    "browser_executable": "/workspace/OpenCode-Hi/.agent-work/tools/ms-playwright/chromium-1234/chrome-linux/chrome",
+    "browser_version": "Chromium 151.0.7922.34"
+  },
+  "gates": {
+    "browser_executor_health": "PASS_T3",
+    "browser_dynamic_route_state": "PASS_T3",
+    "browser_stale_element_rejection": "PASS_T3",
+    "browser_auth_state_reset": "PASS_T3",
+    "browser_execution_owner_isolation": "PASS_T3",
+    "browser_screenshot_artifact": "PASS_T3",
+    "browser_external_target_rejection": "PASS_T3",
+    "browser_credential_url_rejection": "PASS_T3",
+    "browser_arbitrary_selector_rejection": "PASS_T3",
+    "browser_observation_not_evidence": "PASS_CONTROLLED",
+    "browser_execution": "SUPPORTED_T3"
+  },
+  "evidence": {
+    "real_host_browser": {
+      "health": {
+        "available": true,
+        "version": "playwright-core:/workspace/OpenCode-Hi/.agent-work/tools/ms-playwright/chromium-1234/chrome-linux/chrome"
+      },
+      "opened": {
+        "result": "OBSERVED",
+        "dom": "Route\nroute-a\nauth:anonymous\nGo\n@e1 <button> Go\n@e2 <input> auth",
+        "url": "http://127.0.0.1:37611/"
+      },
+      "typed": {
+        "result": "OBSERVED",
+        "dom": "Route\nroute-a\nauth:AUTH_CURRENT\nGo\n@e1 <button> Go\n@e2 <input> AUTH_CURRENT"
+      },
+      "clicked": {
+        "result": "OBSERVED",
+        "dom": "Route\nroute-b\n@e1 <input> AUTH_CURRENT",
+        "url": "http://127.0.0.1:37611/?route=b"
+      },
+      "stale": true,
+      "staleErr": "Error: Browser target was not present in the latest bounded observation",
+      "screenshot": {
+        "result": "OBSERVED",
+        "ref": "hi-artifact:current-t3-shot",
+        "file": true,
+        "bytes": 8826
+      },
+      "external": true,
+      "credential": true,
+      "selector": true,
+      "fresh": {
+        "result": "OBSERVED",
+        "dom": "Route\nroute-a\nauth:anonymous\nGo\n@e1 <button> Go\n@e2 <input> auth",
+        "hasOldAuth": false
+      },
+      "oldOwner": true,
+      "close": "OBSERVED"
+    },
+    "execution_plan": {
+      "allowed_origins": [
+        "http://127.0.0.1:37611"
+      ],
+      "claim": "Explicit task-bound origin plan; an empty plan fails closed."
+    },
+    "raw_artifacts": {
+      "browser": {
+        "path": "/workspace/OpenCode-Hi/.agent-work/acceptance/exact-current-host-t3-1.18.19-09e99d2/browser.json",
+        "sha256": "32aa377f818d59c52c42c05da8a55b8a296645aad197a61e43b8d2deb9f9f768"
+      },
+      "screenshot": {
+        "path": "/workspace/OpenCode-Hi/.agent-work/acceptance/exact-current-host-t3-1.18.19-09e99d2/browser-artifacts/shot.png",
+        "sha256": "08f6a273628551003d5fb2714005a0948a4bf05840f32cd32c6239c2f6e25710"
+      }
+    }
+  },
+  "limitations": [
+    "Browser execution remains task-plan local-http(s) scoped and rejects credential-bearing URLs and arbitrary selectors.",
+    "Exact T3 applies only to OpenCode 1.18.19 on linux/aarch64 with real Chromium and exact source 09e99d251ec47f54803fb192738a50e0035ea060."
+  ],
+  "capability_limitations": {
+    "browser-execution": [
+      "Browser execution remains task-plan local-http(s) scoped and rejects credential-bearing URLs and arbitrary selectors.",
+      "Exact T3 applies only to OpenCode 1.18.19 on linux/aarch64 with real Chromium and exact source 09e99d251ec47f54803fb192738a50e0035ea060."
+    ]
+  },
+  "rule": "API existence or historical receipts do not certify this result; actual frozen-candidate Chromium invocation with explicit allowed-origin policy was required."
+}

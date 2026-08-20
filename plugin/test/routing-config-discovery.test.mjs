@@ -239,3 +239,17 @@ test('PROMPT B §23 safety constraints compose monotonically across host and pro
     assert.deepEqual(cfg.parallel.models,{'q/m':1})
   } finally { rmSync(project,{recursive:true,force:true}) }
 })
+
+
+test('M16 routing model/provider lists preserve more than eight explicit entries', () => {
+  const project=makeProject();try{
+    const providers=Array.from({length:12},(_,i)=>'provider-'+String(i+1))
+    const denied=Array.from({length:12},(_,i)=>'provider/model-'+String(i+1))
+    const roleModels=Array.from({length:12},(_,i)=>'provider/coder-'+String(i+1))
+    writeRouting(project,{schema:1,type:'hi-routing',routing:{allowedProviders:providers,deniedModels:denied,roleModels:{coder:roleModels}}})
+    const cfg=resolveHiConfig({},project)
+    assert.deepEqual(cfg.routing.allowedProviders,providers)
+    assert.deepEqual(cfg.routing.deniedModels,denied)
+    assert.deepEqual(cfg.routing.roleModels.coder,roleModels)
+  }finally{rmSync(project,{recursive:true,force:true})}
+})

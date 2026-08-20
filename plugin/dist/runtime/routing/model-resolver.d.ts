@@ -1,5 +1,6 @@
 import type { Category } from '../mission/types.js';
 import type { HiConfig } from '../../config/schema.js';
+import { type ModelRoutedChildRole } from '../../config/schema.js';
 import type { ModelCapabilityProfile } from '../../contracts/model.js';
 export type AvailableModel = ModelCapabilityProfile;
 export interface ModelFallbackReason {
@@ -45,5 +46,6 @@ export interface RuntimeModelCandidateStatus {
     ok: boolean;
     reason?: string;
 }
-export declare function runtimeModelCandidateStatus(id: string, availableInput: AvailableModel[], config: HiConfig, hostConfig?: Record<string, unknown>): RuntimeModelCandidateStatus;
+export declare function runtimeModelCandidateStatus(id: string, availableInput: AvailableModel[], config: HiConfig, hostConfig?: Record<string, unknown>, role?: string): RuntimeModelCandidateStatus;
 export declare function resolveModel(category: Category, availableInput: AvailableModel[], config: HiConfig, explicit?: string, role?: string, hostConfig?: Record<string, unknown>, feedback?: MissionModelFeedback): ModelResolution;
+export declare function recommendInitialRoleModels(available: AvailableModel[], config: HiConfig, hostConfig?: Record<string, unknown>): Partial<Record<ModelRoutedChildRole, string[]>>;

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
-import hashlib,json,sys
+import hashlib,json,re,sys
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'data/validation/prompt-b-process-workspace-browser-lifecycle.json'
 def sha(rel):return hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()
@@ -13,6 +13,8 @@ def row(section,name,owner,oa,proof,pa,level='CONTROLLED'):
  if pa not in pt:violations.append(f'{section}:{name}:proof-anchor-drift:{pa}')
  rows.append({'section':section,'invariant':name,'level':level,'owner':owner,'owner_sha256':sha(owner),'owner_anchor':oa,'proof':proof,'proof_sha256':sha(proof),'proof_anchor':pa})
 violations=[];rows=[]
+pkg=json.loads((ROOT/'package.json').read_text());target=str((pkg.get('dependencies') or {}).get('@opencode-ai/sdk') or '').strip();peer=str((pkg.get('peerDependencies') or {}).get('@opencode-ai/plugin') or '').strip()
+if not re.fullmatch(r'\d+\.\d+\.\d+',target) or peer!=target:violations.append('exact-host-target-pin-drift')
 cm=json.loads((ROOT/'data/validation/compatibility-matrix-0.1.0.json').read_text())
 caps=cm['current_reference_host']['capabilities']
 pr=caps['process-lifecycle']['receipt'];wr=caps['workspace-isolation-binding']['receipt'];br=caps['browser-execution']['receipt']
@@ -106,7 +108,7 @@ for cap,paths in relevant.items():
 expected={12:len(P),13:len(W),14:len(B)}
 covered={s:sum(1 for r in rows if r['section']==s) for s in expected}
 status='PASS' if not violations and covered==expected else 'FAIL'
-data={'schema':1,'kind':'PROMPT_B_PROCESS_WORKSPACE_BROWSER_LIFECYCLE_ADVERSARIAL_AUDIT','program':'PROMPT_B','sections':[12,13,14],'status':status,'invariants':rows,'capability_source_equivalence':equiv,'violations':violations,'summary':{'required':sum(expected.values()),'covered':len(rows),'violations':len(violations),'by_section':{str(k):{'required':v,'covered':covered[k]} for k,v in expected.items()}},'closed_defects':[{'id':'browser-cross-execution-owner-state-leak','fix':'Browser sessions are bound to exact execution_owner_ref and stale owners are rejected/reset.'},{'id':'workspace-forged-isolation-decision','fix':'Workspace provision requires canonical Mission-owned exact-Task IsolationDecision.'},{'id':'process-kill-failure-false-termination','fix':'Kill/timeout semantic flags are committed only after successful signal delivery.'},{'id':'process-group-unverified-signal','fix':'Linux process-group signalling requires independently observed isolated pgrp==owned PID and fails closed on drift.'},{'id':'duplicate-active-workspace-identity','fix':'Different Tasks cannot own the same active workspace path or host workspace ID; collision is cleaned/rejected and persisted duplicates fail validation.'}],'claim_boundary':'SUPPORTED_T3 is accepted only with exact OpenCode 1.18.18 receipt evidence and byte-identical current capability owner/executor hashes. Controlled hostile tests close deterministic local semantics that do not require a live host.'}
+data={'schema':1,'kind':'PROMPT_B_PROCESS_WORKSPACE_BROWSER_LIFECYCLE_ADVERSARIAL_AUDIT','program':'PROMPT_B','sections':[12,13,14],'status':status,'invariants':rows,'capability_source_equivalence':equiv,'violations':violations,'summary':{'required':sum(expected.values()),'covered':len(rows),'violations':len(violations),'by_section':{str(k):{'required':v,'covered':covered[k]} for k,v in expected.items()}},'closed_defects':[{'id':'browser-cross-execution-owner-state-leak','fix':'Browser sessions are bound to exact execution_owner_ref and stale owners are rejected/reset.'},{'id':'workspace-forged-isolation-decision','fix':'Workspace provision requires canonical Mission-owned exact-Task IsolationDecision.'},{'id':'process-kill-failure-false-termination','fix':'Kill/timeout semantic flags are committed only after successful signal delivery.'},{'id':'process-group-unverified-signal','fix':'Linux process-group signalling requires independently observed isolated pgrp==owned PID and fails closed on drift.'},{'id':'duplicate-active-workspace-identity','fix':'Different Tasks cannot own the same active workspace path or host workspace ID; collision is cleaned/rejected and persisted duplicates fail validation.'}],'claim_boundary':f'SUPPORTED_T3 is accepted only with exact OpenCode {target} receipt evidence and byte-identical current capability owner/executor hashes. The target is derived from the exact root SDK/plugin pin. Controlled hostile tests close deterministic local semantics that do not require a live host.'}
 OUT.write_text(json.dumps(data,indent=2)+'\n')
 print(f"lifecycle audit {status}: covered={len(rows)}/{sum(expected.values())} violations={len(violations)}")
 if violations: print(json.dumps(data,indent=2))

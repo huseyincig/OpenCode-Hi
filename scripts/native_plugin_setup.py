@@ -17,30 +17,11 @@ SETUP_STATE_SCHEMA=1
 HI_PROJECT_DIR=Path('.opencode/hi')
 ROUTING_CONFIG=HI_PROJECT_DIR/'policy'/'routing.json'
 
-# Default provider fallback when OpenCode env is not queryable from this script.
-# Mirrors the HI defaults documented in docs/INSTALLATION.md.
-DEFAULT_PROVIDER_MODELS=[
-    'opencode-go/minimax-m3',
-    'opencode-go/minimax-m3-high',
-    'opencode-go/minimax-m3-low',
-    'opencode-go/qwen3.7-plus',
-    'opencode-go/deepseek-v4-pro',
-]
-
-# Roles with explicit per-role model mapping hints. Other roles fall back to
-# scoring + provider selection without an explicit roleModels entry.
+# Roles with explicit per-role model mapping support. M16 does not fabricate
+# an offline provider/model catalog: availability comes from the effective
+# OpenCode runtime only.
 ROLES_WITH_HINT=['repository-explorer','architect','coder','qa-reviewer','security-reviewer','visual-qa']
 PRIMARY_ROLES={'working-manager','manager'}
-
-DEFAULT_ROLE_MODELS={
- 'repository-explorer':['opencode-go/deepseek-v4-flash'],
- 'architect':['opencode-go/glm-5.2'],
- 'coder':['opencode-go/deepseek-v4-pro'],
- 'qa-reviewer':['opencode-go/qwen3.7-plus'],
- 'security-reviewer':['opencode-go/glm-5.2'],
- 'visual-qa':['opencode-go/mimo-v2.5'],
-}
-DEFAULT_ROLE_MODEL='opencode-go/minimax-m3'
 
 ROUTING_SCHEMA=1
 EXECUTION_POLICIES={'minimal','balanced','thorough','adaptive','manual'}
@@ -303,48 +284,42 @@ def doctor(project:Path)->dict:
     if routing_path.exists() and routing_schema!=ROUTING_SCHEMA:issues.append('unsupported-routing-schema')
     if transaction_path.exists():issues.append('pending-setup-transaction')
     actions=[]
-    if 'hi-plugin-not-registered' in issues:actions.append('Run: python3 scripts/native_plugin_setup.py plan <project>, then install after reviewing the plan.')
+    if 'hi-plugin-not-registered' in issues:actions.append('Run: npx opencode-hi plan <project>, then npx opencode-hi setup <project> after reviewing the plan.')
     if 'duplicate-hi-registration' in issues:actions.append('Remove the duplicate/conflicting Hi registration; keep one exact owned plugin entry.')
     if 'unsupported-routing-schema' in issues:actions.append(f'Repair or regenerate {routing_path}; only routing schema {ROUTING_SCHEMA} is supported.')
-    if 'pending-setup-transaction' in issues:actions.append('Run the recover command before any further setup mutation.')
+    if 'pending-setup-transaction' in issues:actions.append('Run: npx opencode-hi recover <project> before any further setup mutation.')
     if 'ownership-proof-missing' in warnings:actions.append('Do not upgrade/uninstall as Hi-owned until ownership is re-established; inspect the existing registration first.')
     if 'managed-config-drift' in warnings:actions.append('Review user changes before rollback/upgrade; setup will not overwrite drift blindly.')
     return {'status':'FAIL' if issues else ('WARN' if warnings else 'OK'),'product':PRODUCT,'short':SHORT,'config':str(cfg),'hi_specs':hi,'ownership':{'state':'missing' if not own_path.exists() else ('healthy' if own else 'invalid'),'schema':own.get('schema'),'config_drift':config_drift},'lifecycle':{'transaction_pending':transaction_path.exists(),'rollback_available':rollback_path.exists()},'routing':{'path':str(routing_path),'schema':routing_schema,'valid':not routing_path.exists() or routing_schema==ROUTING_SCHEMA},'issues':issues,'warnings':warnings,'actions':actions,'note':'Registration/ownership doctor is static; actual plugin/agent/native-skill/model load must be verified in OpenCode runtime.'}
 
 def discover_available_models()->list[str]:
-    """Best-effort enumeration of currently available models.
+    """Enumerate the effective OpenCode model IDs without catalog fallback.
 
-    Tries in order:
-      1. `opencode models --json` (if the binary is on PATH)
-      2. parsing the HI plugin cache config.json (last resort, manifest only)
-      3. fallback DEFAULT_PROVIDER_MODELS
+    OpenCode 1.18.19 does not implement `models --json`; `models --pure`
+    prints the runtime-filtered IDs after provider allow/deny and model
+    whitelist/blacklist handling. If that host query is unavailable, return an
+    empty inventory rather than pretending a bundled catalog is enabled.
     """
     try:
-        out=subprocess.run(['opencode','models','--json'],capture_output=True,text=True,timeout=10)
-        if out.returncode==0 and out.stdout.strip().startswith('['):
-            data=json.loads(out.stdout)
-            if isinstance(data,list):
-                ids=[]
-                for m in data:
-                    if isinstance(m,dict) and isinstance(m.get('id'),str):ids.append(m['id'])
-                    elif isinstance(m,str):ids.append(m)
-                if ids:return sorted({i for i in ids if i.strip()})
-    except Exception:pass
-    # Fallback: read HI plugin cache manifest if it ships a model list
-    try:
-        m=json.loads((ROOT/'plugin/package.json').read_text())
-    except Exception:return list(DEFAULT_PROVIDER_MODELS)
-    # Plugin package itself doesn't enumerate OpenCode inventory; fall through.
-    return list(DEFAULT_PROVIDER_MODELS)
+        out=subprocess.run(['opencode','models','--pure'],capture_output=True,text=True,timeout=15)
+        if out.returncode==0:
+            ids=[]
+            for raw in out.stdout.splitlines():
+                model=raw.strip()
+                if model and '/' in model and not any(ch.isspace() for ch in model):ids.append(model)
+            return list(dict.fromkeys(ids))
+    except (OSError,subprocess.SubprocessError):pass
+    return []
 
 def _prompt_model_selection(role:str,available:list[str],defaults_by_role:dict[str,list[str]])->list[str]:
+    defaults=defaults_by_role.get(role,[])
     print(f"\n  Role: {role}")
-    print(f"    default: {' / '.join(defaults_by_role.get(role,[DEFAULT_ROLE_MODEL]))}")
+    print(f"    default: {' / '.join(defaults) if defaults else 'adaptive (no fixed model)'}")
     print(f"    available:")
     for i,m in enumerate(available,1):
         print(f"      {i:>3}. {m}")
-    raw=input("    select [comma-separated numbers | d=default | 0=none | a=abort] > ").strip()
-    if raw=='' or raw.lower()=='d':return list(defaults_by_role.get(role,[DEFAULT_ROLE_MODEL]))
+    raw=input("    select [comma-separated numbers | d=default/adaptive | 0=none | a=abort] > ").strip()
+    if raw=='' or raw.lower()=='d':return list(defaults)
     if raw=='0':return []
     if raw.lower()=='a':sys.exit(0)
     selected=[]
@@ -357,7 +332,7 @@ def _prompt_model_selection(role:str,available:list[str],defaults_by_role:dict[s
         if 1<=idx<=len(available):
             sel=available[idx-1]
             if sel not in selected:selected.append(sel)
-    return selected or list(defaults_by_role.get(role,[DEFAULT_ROLE_MODEL]))
+    return selected or list(defaults)
 
 def _validate_model_routed_role(role:str)->None:
     if role in PRIMARY_ROLES:
@@ -396,6 +371,9 @@ def role_models(project:Path,list_available:bool=False,defaults:bool=False,print
     if list_available:
         return {'status':'OK','product':PRODUCT,'available':available,'config':str(cfg),'note':'Use without --list-available to assign models.'}
 
+    if defaults and policy=='recommended':
+        return {'status':'DEFERRED','product':PRODUCT,'config':str(cfg),'roleModels':{k:list(v) for k,v in existing_models.items() if k in ROLES_WITH_HINT and isinstance(v,list)},'modelPolicy':existing_routing.get('modelPolicy','adaptive'),'reason':'runtime-ranking-required','action':'Restart OpenCode. Hi will rank effective-enabled role-eligible models with the canonical runtime scoring logic and persist one-shot initial recommendations only when no user model routing already exists.','available_models_observed':available}
+
     if not sets and not defaults:
         print(f"\n=== {PRODUCT} — Role Models Setup ===")
         print(f"Project: {project}")
@@ -404,8 +382,8 @@ def role_models(project:Path,list_available:bool=False,defaults:bool=False,print
         if existing_models: print(f"Existing roleModels will be shown as default. Override per role.\n")
         else: print(f"No existing roleModels. Will write defaults unless you customise.\n")
 
-    defaults_by_role={r:list(DEFAULT_ROLE_MODELS.get(r,[DEFAULT_ROLE_MODEL])) for r in ROLES_WITH_HINT}
-    if existing_models:
+    defaults_by_role={r:list(existing_models.get(r,[])) if isinstance(existing_models.get(r),list) else [] for r in ROLES_WITH_HINT}
+    if existing_models and not (defaults and policy=='recommended'):
         for r,ms in existing_models.items():defaults_by_role[r]=list(ms)
 
     # Preserve forward-compatible unknown mappings, but remove obsolete primary-role
@@ -421,7 +399,7 @@ def role_models(project:Path,list_available:bool=False,defaults:bool=False,print
         for item in sets:
             if '=' not in item: continue
             role,models=item.split('=',1); role=role.strip(); _validate_model_routed_role(role); vals=[x.strip() for x in models.split(',') if x.strip()]
-            if role and vals:new_roleModels[role]=vals[:7]
+            if role and vals:new_roleModels[role]=vals
     elif defaults:
         # Recommended setup validates defaults against the discovered inventory.
         # Missing roles are explicitly marked for Smart Select rather than
@@ -437,7 +415,7 @@ def role_models(project:Path,list_available:bool=False,defaults:bool=False,print
         except (EOFError,KeyboardInterrupt):
             return {'status':'ABORTED','product':PRODUCT,'reason':'user interrupted selection','config':str(cfg)}
 
-    if not new_roleModels:
+    if not new_roleModels and not (defaults and policy=='recommended'):
         return {'status':'NOT_CONFIGURED','product':PRODUCT,'reason':'no role models selected','config':str(cfg)}
 
     # Reconfigure is an in-place, ownership-safe edit. Preserve every
@@ -480,7 +458,7 @@ def role_models(project:Path,list_available:bool=False,defaults:bool=False,print
         'modelPolicy':next_routing['modelPolicy'],
         'adaptiveRoles':next_routing.get('adaptiveRoles',[]),
         'before_sha256':before_sha,
-        'after_sha256':sha_text(merged['routing']['roleModels'] and json.dumps(merged,sort_keys=True) or ''),
+        'after_sha256':sha_text(dump(merged)),
         'restart_required':True,
         'next':'Restart OpenCode. HI runtime will pick up roleModels from this file on next mission start.',
         'available_models_used':available,

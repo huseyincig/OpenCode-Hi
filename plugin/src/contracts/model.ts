@@ -7,6 +7,7 @@ export interface ModelCapabilityProfile {
   cost?:number
   quality?:number
   writeCapable?:boolean
+  visionCapable?:boolean
   tags?:string[]
   expectedTurns?:number
   contextOverhead?:number
@@ -18,6 +19,7 @@ export interface NormalizedModelCapabilityProfile extends ModelCapabilityProfile
   cost:number
   quality:number
   writeCapable:boolean
+  visionCapable:boolean
   tags:string[]
   variants:string[]
   source:'runtime-inventory'|'configured'|'synthetic-host-default'
@@ -58,6 +60,8 @@ export function normalizeModelCapabilityProfile(value:unknown,source:NormalizedM
   const provider=r.provider===undefined?undefined:assertNonEmptyString(r.provider,`${field}.provider`).trim()
   const writeCapable=r.writeCapable===undefined?true:r.writeCapable
   if(typeof writeCapable!=='boolean')throw new ContractValidationError(`${field}.writeCapable`,'must be boolean')
+  const visionCapable=r.visionCapable===undefined?false:r.visionCapable
+  if(typeof visionCapable!=='boolean')throw new ContractValidationError(`${field}.visionCapable`,'must be boolean')
   const expectedTurns=positiveOptional(r.expectedTurns,`${field}.expectedTurns`)
   const contextOverhead=positiveOptional(r.contextOverhead,`${field}.contextOverhead`)
   return{
@@ -66,6 +70,7 @@ export function normalizeModelCapabilityProfile(value:unknown,source:NormalizedM
     cost:finiteNonNegative(r.cost,0,`${field}.cost`),
     quality:finiteNonNegative(r.quality,0,`${field}.quality`),
     writeCapable,
+    visionCapable,
     tags:stringList(r.tags,`${field}.tags`),
     ...(expectedTurns===undefined?{}:{expectedTurns}),
     ...(contextOverhead===undefined?{}:{contextOverhead}),

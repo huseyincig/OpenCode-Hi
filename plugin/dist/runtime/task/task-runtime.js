@@ -403,7 +403,7 @@ export class TaskRuntime {
                 task.status = 'cancelled';
                 throw new Error('Mission stopped before worker dispatch');
             }
-            const model = chain[i], variant = model === selected.primary ? (input.modelVariant ?? selected.primaryVariant) : selected.fallbackVariants[model], provider = providerOf(model), runtimeCandidate = runtimeModelCandidateStatus(model, this.getModels(), this.getConfig(), this.getHostConfig());
+            const model = chain[i], variant = model === selected.primary ? (input.modelVariant ?? selected.primaryVariant) : selected.fallbackVariants[model], provider = providerOf(model), runtimeCandidate = runtimeModelCandidateStatus(model, this.getModels(), this.getConfig(), this.getHostConfig(), role);
             if (!runtimeCandidate.ok) {
                 lastError = new Error(`Runtime model candidate rejected at dispatch: ${model}: ${runtimeCandidate.reason}`);
                 appendLedger(m, 'model.fallback.skipped', { task_id: task.id, worker_id: worker.id, payload: { model, reason: runtimeCandidate.reason, index: i, phase: 'dispatch-revalidation' } });
@@ -492,7 +492,7 @@ export class TaskRuntime {
                 worker.status = 'created';
                 task.status = 'created';
             }
-        } worker.status = 'failed'; const liveStatuses = chain.map(model => ({ model, ...runtimeModelCandidateStatus(model, this.getModels(), this.getConfig(), this.getHostConfig()) })); const policyUnavailable = liveStatuses.length > 0 && liveStatuses.every(x => !x.ok); if (policyUnavailable) {
+        } worker.status = 'failed'; const liveStatuses = chain.map(model => ({ model, ...runtimeModelCandidateStatus(model, this.getModels(), this.getConfig(), this.getHostConfig(), role) })); const policyUnavailable = liveStatuses.length > 0 && liveStatuses.every(x => !x.ok); if (policyUnavailable) {
             task.status = 'blocked';
             const marker = `model-dispatch-unavailable:${task.id}`;
             m.execution.blockers = [...new Set([...m.execution.blockers, marker])];

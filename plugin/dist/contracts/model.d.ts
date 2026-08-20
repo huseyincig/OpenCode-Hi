@@ -4,6 +4,7 @@ export interface ModelCapabilityProfile {
     cost?: number;
     quality?: number;
     writeCapable?: boolean;
+    visionCapable?: boolean;
     tags?: string[];
     expectedTurns?: number;
     contextOverhead?: number;
@@ -14,6 +15,7 @@ export interface NormalizedModelCapabilityProfile extends ModelCapabilityProfile
     cost: number;
     quality: number;
     writeCapable: boolean;
+    visionCapable: boolean;
     tags: string[];
     variants: string[];
     source: 'runtime-inventory' | 'configured' | 'synthetic-host-default';

@@ -32,7 +32,7 @@
       "claim": "runtime-wiring-fresh-consumer",
       "required_tier": "T2",
       "available_tier": "T3",
-      "evidence": "data/validation/fresh-consumer-opencode-1.18.18.json",
+      "evidence": "data/validation/fresh-consumer-opencode-1.18.19.json",
       "evidence_exists": true,
       "sufficient": true
     },
@@ -40,7 +40,7 @@
       "claim": "process-lifecycle",
       "required_tier": "T3",
       "available_tier": "T3",
-      "evidence": "data/validation/external-opencode-hi-0.2.0-process-1.18.18-head-69d34dd.json",
+      "evidence": "data/validation/external-opencode-hi-0.2.2-process-1.18.19-head-09e99d2.json",
       "evidence_exists": true,
       "sufficient": true
     },
@@ -48,7 +48,7 @@
       "claim": "workspace-isolation-binding",
       "required_tier": "T3",
       "available_tier": "T3",
-      "evidence": "data/validation/external-opencode-hi-0.2.0-workspace-1.18.18-head-69d34dd.json",
+      "evidence": "data/validation/external-opencode-hi-0.2.2-workspace-1.18.19-head-09e99d2.json",
       "evidence_exists": true,
       "sufficient": true
     },
@@ -56,23 +56,23 @@
       "claim": "browser-execution",
       "required_tier": "T3",
       "available_tier": "T3",
-      "evidence": "data/validation/external-opencode-hi-0.2.0-browser-1.18.18-head-69d34dd.json",
+      "evidence": "data/validation/external-opencode-hi-0.2.2-browser-1.18.19-head-09e99d2.json",
       "evidence_exists": true,
       "sufficient": true
     },
     {
       "claim": "external-publication",
       "required_tier": "T4",
-      "available_tier": "T4",
-      "evidence": "data/validation/release-publication-0.2.1.json",
-      "evidence_exists": true,
-      "sufficient": true
+      "available_tier": "NONE",
+      "evidence": "data/validation/release-publication-0.2.2.json",
+      "evidence_exists": false,
+      "sufficient": false
     }
   ],
   "summary": {
     "claims": 7,
-    "locally_sufficient": 7,
-    "pending_t4": false,
+    "locally_sufficient": 6,
+    "pending_t4": true,
     "violations": 0
   },
   "violations": [],

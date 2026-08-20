@@ -5,6 +5,9 @@ import { addEvidence, markMutation, normalizeProjectPath } from '../evidence/evi
 import { evidenceProducerAttemptForWorker } from '../evidence/applicability.js'
 import { parseWorkerResult } from '../task/result-parser.js'
 import { automaticContinuationEnabled, adaptiveIdleEvaluatorEnabled } from '../../config/execution-policy.js'
+import { ensureProjectRoutingConfig } from '../../config/auto-init.js'
+import { recommendInitialRoleModels } from '../routing/model-resolver.js'
+import { resolveHiConfigWithReport } from '../../config/resolver.js'
 import { dispatchContinuation } from '../continuation/dispatcher.js'
 import { classifyRuntimeHumanDecision,openHumanDecision } from '../human-decision/runtime.js'
 import { runtimeSignal } from '../events/event-sink.js'
@@ -21,8 +24,9 @@ export class RuntimeEventController{
     const {state,host,services,projectAuthority,pendingNativePermissions,projectRoot}=this.deps
     const {store,background,persistence,tasks,processRuntime,workspaceRuntime,eventSink,scopedStores}=services
 
-    if(ev.kind==='installation-updated'){await host.refreshRuntimeInventory('installation-updated');return}
-    if(ev.rawType==='server.connected'){await host.refreshRuntimeInventory('server-connected');return}
+    const refreshRuntimeInventoryAndRecommendedRouting=async(reason:string)=>{await host.refreshRuntimeInventory(reason);const models=host.getModels(),hasExplicitModelRouting=Object.keys(state.config.routing.roleModels).length>0||Object.keys(state.config.routing.categoryModels).length>0||state.config.models.mode!=='adaptive';if(hasExplicitModelRouting)return;const recommendations=recommendInitialRoleModels(models,state.config,state.hostConfig);const routing=ensureProjectRoutingConfig(projectRoot,recommendations);if(routing.created){const resolved=resolveHiConfigWithReport(state.hostConfig.hi,projectRoot);state.config=resolved.config;state.configResolution=resolved.report;await host.log('info','Hi initial child-model recommendations ranked from effective runtime inventory',{reason,path:routing.path,configured_roles:routing.configuredRoles??0,models:models.length})}}
+    if(ev.kind==='installation-updated'){await refreshRuntimeInventoryAndRecommendedRouting('installation-updated');return}
+    if(ev.rawType==='server.connected'){await refreshRuntimeInventoryAndRecommendedRouting('server-connected');return}
     const sid=ev.sessionID;if(!sid)return
     const nativePermissionID=ev.permission?.id
     if(ev.kind==='permission-asked'&&nativePermissionID)pendingNativePermissions.set(nativePermissionID,ev.permission?.patterns??[])

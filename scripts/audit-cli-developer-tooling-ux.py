@@ -5,13 +5,13 @@ ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'data/validation/prompt-b-cli-developer-tooling-ux.json'
 def sha(rel):return hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()
 checks=[
- ('installation','scripts/native_plugin_setup.py',"'install':lambda:install",'tests/test_hi.py','test_prompt_b_cli_malformed_config_fails_closed_without_overwrite'),
- ('first-run','scripts/native_plugin_setup.py',"'action':action",'tests/test_hi.py','test_prompt_b_cli_first_run_doctor_supplies_recovery_action'),
- ('doctor-diagnostics','scripts/native_plugin_setup.py','def doctor(project:Path)', 'tests/test_hi.py','test_prompt_b_cli_first_run_doctor_supplies_recovery_action'),
- ('help','scripts/native_plugin_setup.py','argparse.ArgumentParser', 'tests/test_hi.py','test_setup_help_and_command_surface' if 'test_setup_help_and_command_surface' in (ROOT/'tests/test_hi.py').read_text(errors='replace') else 'native_plugin_setup.py'),
- ('command-inventory','scripts/native_plugin_setup.py',"choices=['plan','install','upgrade','doctor','uninstall','rollback','recover','role-models','reconfigure']",'scripts/run-install-lifecycle.py','m.rollback(project)'),
- ('bounded-errors-no-stack','scripts/native_plugin_setup.py',"e.detail[:500]",'tests/test_hi.py',"'Traceback' not in r.stdout"),
- ('recovery-instructions','scripts/native_plugin_setup.py',"actions.append('Run the recover command",'tests/test_hi.py',"any('plan' in x and 'install' in x for x in out['actions'])"),
+ ('installation','scripts/opencode-hi.mjs',"if(command==='setup'||command==='install')",'tests/test_node_setup.mjs','M16 Node setup preserves foreign OpenCode config'),
+ ('first-run','scripts/opencode-hi.mjs',"routing_initialization:'pending-effective-runtime-inventory'",'tests/test_node_setup.mjs','M16 Node doctor distinguishes package registration truth from pending effective runtime routing'),
+ ('doctor-diagnostics','scripts/opencode-hi.mjs','function doctor(project)', 'tests/test_node_setup.mjs','M16 Node doctor distinguishes package registration truth from pending effective runtime routing'),
+ ('help','scripts/opencode-hi.mjs','function usage()', 'tests/test_node_setup.mjs','M16 package-runner help is Node-native'),
+ ('command-inventory','scripts/opencode-hi.mjs','<setup|update|doctor|plan|rollback|recover>','tests/test_node_setup.mjs','M16 package-runner help is Node-native'),
+ ('bounded-errors-no-stack','scripts/opencode-hi.mjs','slice(0,500)','tests/test_node_setup.mjs','CLI did not return JSON'),
+ ('recovery-instructions','scripts/opencode-hi.mjs','Run: npx opencode-hi recover <project>','tests/test_node_setup.mjs','M16 Node setup is idempotent and update changes only the owned Hi spec'),
  ('config-errors','scripts/native_plugin_setup.py',"_bounded_cli_int('parallel-max',1,8)",'tests/test_hi.py','test_prompt_b_cli_reconfigure_rejects_out_of_range_and_malformed_limits'),
  ('permission-prompts','plugin/src/runtime/process/runtime.ts','auth.permission_request','plugin/test/p3-process-runtime-lifecycle.test.mjs','native permission ask uses exact ToolContext-style request once'),
  ('unsupported-capability-messages','plugin/src/runtime/readiness/preconditions.ts','OpenCode session.create is unavailable','plugin/test/methodology-host-capability.test.mjs','browser and visual methodologies require canonical runtime browser-execution resource'),
@@ -26,18 +26,18 @@ for name,owner,oa,proof,pa in checks:
     if oa not in ot:violations.append(f'{name}:owner-anchor-drift:{oa}')
     if pa not in pt:violations.append(f'{name}:proof-anchor-drift:{pa}')
     rows.append({'invariant':name,'owner':owner,'owner_sha256':sha(owner),'owner_anchor':oa,'proof':proof,'proof_sha256':sha(proof),'proof_anchor':pa})
-setup=(ROOT/'scripts/native_plugin_setup.py').read_text(errors='replace');docs=(ROOT/'docs/INSTALLATION.md').read_text(errors='replace');pre=(ROOT/'plugin/src/runtime/readiness/preconditions.ts').read_text(errors='replace')
+setup=(ROOT/'scripts/native_plugin_setup.py').read_text(errors='replace');node_cli=(ROOT/'scripts/opencode-hi.mjs').read_text(errors='replace');docs=(ROOT/'docs/INSTALLATION.md').read_text(errors='replace');pre=(ROOT/'plugin/src/runtime/readiness/preconditions.ts').read_text(errors='replace')
 guards={
- 'structured_blocked_exit_code':"return 2 if out.get('status') in ('BLOCKED','FAIL') else 0" in setup,
- 'malformed_json_fail_closed':"raise SetupInputError('invalid-json-input'" in setup,
- 'jsonc_no_rewrite':'jsonc-safe-mutation-not-supported' in setup,
+ 'structured_blocked_exit_code':"['BLOCKED','FAIL'].includes(out?.status)?2:0" in node_cli,
+ 'malformed_json_fail_closed':"new SetupError('invalid-json-input'" in node_cli,
+ 'jsonc_no_rewrite':'jsonc-safe-mutation-not-supported' in node_cli,
  'bounded_cli_scalar_validation':all(x in setup for x in ["max-fallbacks',0,6","parallel-max',1,8","team-max-members',2,8","team-wall-minutes',1,240"]),
- 'bounded_error_detail':'[:500]' in setup,
- 'doctor_actions':'actions' in setup and 'pending-setup-transaction' in setup,
- 'install_next_step':'Restart OpenCode, then verify HI tools' in setup,
+ 'bounded_error_detail':'slice(0,500)' in node_cli,
+ 'doctor_actions':'actions' in node_cli and 'pending-setup-transaction' in node_cli,
+ 'install_next_step':'Restart OpenCode. Hi will initialize recommended child routing only from the effective runtime inventory' in node_cli,
  'permission_ask_authoritative':'permission_request' in (ROOT/'plugin/src/runtime/process/authority.ts').read_text(errors='replace'),
  'unsupported_capability_resolve':'RESOLVE' in pre and 'unavailable' in pre,
- 'docs_operator_commands':all(cmd in docs for cmd in [' plan ',' install ',' doctor ',' rollback ',' recover ',' reconfigure ']) or all(f' {cmd}' in docs for cmd in ['plan','install','doctor','rollback','recover','reconfigure']),
+ 'docs_operator_commands':all(f'opencode-hi@0.2.2 {cmd}' in docs for cmd in ['setup','update','doctor','rollback','recover']) and 'native_plugin_setup.py reconfigure' in docs,
 }
 for k,v in guards.items():
     if not v:violations.append('static-guard:'+k)

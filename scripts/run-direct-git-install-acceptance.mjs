@@ -22,8 +22,8 @@ const target=path.join(work,'node_modules','opencode-hi')
 const pkg=JSON.parse(await readFile(path.join(target,'package.json'),'utf8'))
 const forbidden=['postinstall','build','preinstall','install','prepack','prepare'].filter(k=>pkg.scripts?.[k])
 if(forbidden.length)throw new Error(`installed Git package contains preparation-trigger scripts: ${forbidden.join(',')}`)
-if(pkg.peerDependencies?.['@opencode-ai/plugin']!=='1.18.18'||pkg.peerDependenciesMeta?.['@opencode-ai/plugin']?.optional!==true)throw new Error('OpenCode host plugin peer is not optional')
-if(pkg.dependencies?.['@opencode-ai/sdk']!=='1.18.18')throw new Error('runtime SDK dependency drift')
+if(pkg.peerDependencies?.['@opencode-ai/plugin']!=='1.18.19'||pkg.peerDependenciesMeta?.['@opencode-ai/plugin']?.optional!==true)throw new Error('OpenCode host plugin peer is not optional or does not match exact 1.18.19')
+if(pkg.dependencies?.['@opencode-ai/sdk']!=='1.18.19')throw new Error('runtime SDK dependency drift from exact 1.18.19')
 try{await readFile(path.join(work,'node_modules','effect','package.json'),'utf8');throw new Error('type-only host peer dependency graph unexpectedly installed effect')}catch(e){if(e?.code!=='ENOENT')throw e}
 const entry=new URL(pkg.main,pathToFileURL(target+path.sep)).href
 const mod=await import(entry)

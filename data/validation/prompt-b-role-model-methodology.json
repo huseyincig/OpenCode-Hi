@@ -8,19 +8,19 @@
     {
       "invariant": "role-agent-model-methodology-separation",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "a79261104fd8c84cf1d825a45b23c300edd0819aaa345441f73863367e0bc598",
+      "owner_sha256": "475ae7ee8d93030ddf6b35463f6ba2120e8e4319b933410e64fb34902663df8a",
       "owner_anchor": "worker.requested_model=input.model",
       "proof": "plugin/test/model-contract.test.mjs",
-      "proof_sha256": "56be752a4527d0347fcaa938a269c2e011793a529efd5e41975e0943e11abb5c",
+      "proof_sha256": "c4550067e1f883572c3e7b77d254853f95904a4c7e8b44ef9e5a53b084115f45",
       "proof_anchor": "model execution identity keeps requested selected projected observed and effective phases distinct"
     },
     {
       "invariant": "requested-selected-projected-observed-model",
       "owner": "plugin/src/contracts/model.ts",
-      "owner_sha256": "a7391fb2db0e149aece688393aa93226922ab788f6e4597850e7894b6bf9b38e",
+      "owner_sha256": "ea83119c25739539ff915339271c1bad899a1926f21f3fbec761aaeefe0648ec",
       "owner_anchor": "reconcileModelExecutionIdentity",
       "proof": "plugin/test/main-prompt-model-evidence.test.mjs",
-      "proof_sha256": "f17b080fe3d44904766a1568d3b49e8ef48afec5331c659e751cb357c1d65519",
+      "proof_sha256": "a7862e33d86854257f07398e00960c1b30da5090109480b682eea89eec19a448",
       "proof_anchor": "projected model mismatch is a first-class blocker even when observed model matches selection"
     },
     {
@@ -29,7 +29,7 @@
       "owner_sha256": "819e27671224e9f7bca8e70b7a2638d74c79164f04bcc5e5e647c0d5818d9817",
       "owner_anchor": "identity.status==='model-mismatch'",
       "proof": "plugin/test/main-prompt-model-evidence.test.mjs",
-      "proof_sha256": "f17b080fe3d44904766a1568d3b49e8ef48afec5331c659e751cb357c1d65519",
+      "proof_sha256": "a7862e33d86854257f07398e00960c1b30da5090109480b682eea89eec19a448",
       "proof_anchor": "effective model mismatch blocks DONE and preserves the obligation for reconciliation"
     },
     {
@@ -44,7 +44,7 @@
     {
       "invariant": "model-fallback",
       "owner": "plugin/src/runtime/task/task-recovery-coordinator.ts",
-      "owner_sha256": "52fda2ededee4d2c75b45842590b406e957131a9ced214559e9fb2ee8ce10f1d",
+      "owner_sha256": "d33108e8ed9d6eaebfffbbc796302eb90f1e94294b4aa6e00821b79b94572759",
       "owner_anchor": "recoverRuntimeFailure",
       "proof": "plugin/test/provider-fallback-hardening.test.mjs",
       "proof_sha256": "a25a8720db82be6d1e03c87a8747534ffb41041f63b3a71378d9ab922c546c87",

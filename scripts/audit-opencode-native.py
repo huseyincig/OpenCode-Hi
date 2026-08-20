@@ -3,8 +3,10 @@ from __future__ import annotations
 import argparse,hashlib,json,subprocess,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
-EXPECTED_VERSION='1.18.18'
-DEFAULT_COMMIT='v1.18.18'
+PKG=json.loads((ROOT/'package.json').read_text(encoding='utf-8'))
+EXPECTED_VERSION=str((PKG.get('dependencies') or {}).get('@opencode-ai/sdk') or '').strip()
+if EXPECTED_VERSION!=str((PKG.get('peerDependencies') or {}).get('@opencode-ai/plugin') or '').strip():raise RuntimeError('exact OpenCode target pin drift')
+DEFAULT_COMMIT=f'v{EXPECTED_VERSION}'
 SOURCES={
  'plugin-hooks':'packages/plugin/src/index.ts',
  'session':'packages/opencode/src/session/session.ts',
@@ -70,6 +72,6 @@ def main()->int:
       'upstream_blob_sha256':{k:{'path':v,'sha256':hashlib.sha256(blob(upstream,commit,v)).hexdigest()} for k,v in SOURCES.items()},
       'decisions':decisions,'missing_hi_paths':missing,
       'summary':{'surfaces':len(decisions),'remove_custom_mechanism':sum(d['hi_decision'].startswith('REMOVE') for d in decisions),'keep_thin_or_stronger':sum(d['hi_decision'].startswith('KEEP') for d in decisions),'unsupported':sum(d['hi_decision'].startswith('UNSUPPORTED') for d in decisions)},
-      'claim_boundary':'Exact source re-evaluation for OpenCode 1.18.18 at the recorded commit. Native availability does not transfer Hi semantic ownership.'}
+      'claim_boundary':f'Exact source re-evaluation for OpenCode {EXPECTED_VERSION} at the recorded commit. The target is derived from the exact root SDK/plugin pin. Native availability does not transfer Hi semantic ownership.'}
     path=ROOT/a.output;path.write_text(json.dumps(out,indent=2,ensure_ascii=False)+'\n');print(f"native reevaluation {out['status']}: surfaces={len(decisions)} missing={len(missing)} commit={commit}");return 0 if not missing else 1
 if __name__=='__main__':sys.exit(main())

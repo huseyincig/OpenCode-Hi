@@ -14,11 +14,11 @@
       "invariant": "dependency-versions",
       "status": "PASS",
       "owner": "package.json",
-      "owner_sha256": "958c480187d6eee2847301a52f03b811fde7bbb85bc62225b079f7ef520df579",
-      "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.18\"",
+      "owner_sha256": "0c525b92080987befe6a838a92a2ae5fe603b74fbf10295e3f2ad4ec15544359",
+      "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.19\"",
       "proof": "package-lock.json",
-      "proof_sha256": "1bd4363b3c70a56c52de561e7cd9f4f05acd22991ab5fd044dc9d46569c41bc8",
-      "proof_anchor": "\"version\": \"1.18.18\""
+      "proof_sha256": "1e221b67157198263b2ad5150f903a1c108616ab9750df6699c618ee5ea2b4ee",
+      "proof_anchor": "\"version\": \"1.18.19\""
     },
     {
       "invariant": "lockfiles",
@@ -27,7 +27,7 @@
       "owner_sha256": "72572d3cb90e53147cb079e8ecdefc2abff7e75c0a55d1b1d5bf0adad027707b",
       "owner_anchor": "def dependency_lock_paths(root:Path)",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "9f3f606c685e8bbe2fcfbb0f7ec06e0ad248f959d5bfc934ab006f07b1481c16",
+      "proof_sha256": "1b4e53f0563582813da4bd9bb0eb53cbff4e3edb6adaa6a34052f8f564a47175",
       "proof_anchor": "manifest['supply_chain']['dependency_locks']==['package-lock.json','plugin/package-lock.json']"
     },
     {
@@ -36,15 +36,15 @@
       "owner": "plugin/src/opencode/client-adapter.ts",
       "owner_sha256": "4a9b21b80d1ec752dbc442e234f808cde7ff7e332cd5f7284da36d9e6bb180c7",
       "owner_anchor": "@opencode-ai/sdk/v2/client",
-      "proof": "data/validation/fresh-consumer-opencode-1.18.18.json",
-      "proof_sha256": "9426110fbdb79fee03d0f32e189cf3e302143305666098e7905075b81d512d8a",
+      "proof": "data/validation/fresh-consumer-opencode-1.18.19.json",
+      "proof_sha256": "eaee5a3269f409dc6aa6066c9090a04b3ac2f73b79db56582f9a27cbe1b6fcd2",
       "proof_anchor": "\"consumer_resolution\": true"
     },
     {
       "invariant": "risky-install-scripts",
       "status": "PASS",
       "owner": "plugin/package-lock.json",
-      "owner_sha256": "4c59987e843685f11e4bb2717e44ffd9fde87775385868f57fbe54fab27a7235",
+      "owner_sha256": "722250df58cd08e94cdf61df6412ba0707b6f504986a4ff18a3e156b9e6dc6be",
       "owner_anchor": "\"hasInstallScript\": true",
       "proof": "THIRD_PARTY_NOTICES.md",
       "proof_sha256": "9d1212a0bae8cb0235713b396ac3e11933a0998388f2ec15ca1ba4305481e569",
@@ -57,7 +57,7 @@
       "owner_sha256": "72572d3cb90e53147cb079e8ecdefc2abff7e75c0a55d1b1d5bf0adad027707b",
       "owner_anchor": "dependency_graph_sha256",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "9f3f606c685e8bbe2fcfbb0f7ec06e0ad248f959d5bfc934ab006f07b1481c16",
+      "proof_sha256": "1b4e53f0563582813da4bd9bb0eb53cbff4e3edb6adaa6a34052f8f564a47175",
       "proof_anchor": "manifest['supply_chain']['dependency_graph_sha256']"
     },
     {
@@ -67,7 +67,7 @@
       "owner_sha256": "9d1212a0bae8cb0235713b396ac3e11933a0998388f2ec15ca1ba4305481e569",
       "owner_anchor": "`playwright-core`",
       "proof": "package-lock.json",
-      "proof_sha256": "1bd4363b3c70a56c52de561e7cd9f4f05acd22991ab5fd044dc9d46569c41bc8",
+      "proof_sha256": "1e221b67157198263b2ad5150f903a1c108616ab9750df6699c618ee5ea2b4ee",
       "proof_anchor": "\"license\": \"Apache-2.0\""
     },
     {
@@ -87,7 +87,7 @@
       "owner_sha256": "fddeff0ad498142ab454a0df576328bdb061106ce7eddec3ae553e3f653572b5",
       "owner_anchor": "id-token: write",
       "proof": "plugin/test/r1-npm-oidc-workflow.test.mjs",
-      "proof_sha256": "2a504e0bdc6331a2ad4889557052910e4fb52de283abc4ceceff2fc358312ed2",
+      "proof_sha256": "8a1a06418567696e211d842e9be6686d381df50c31033bc3439dac53a310af35",
       "proof_anchor": "no long-lived npm token surface"
     }
   ],
@@ -142,7 +142,7 @@
     },
     {
       "id": "native-direct-git-pacote-preparation-trigger",
-      "fix": "Public root package removes npm/Pacote Git-preparation trigger script names, moves the explicit developer build to build:plugin, keeps the OpenCode host peer optional, and cross-platform Release Readiness exercises exact-SHA Git install plus exact OpenCode 1.18.18 native host loading."
+      "fix": "Public root package removes npm/Pacote Git-preparation trigger script names, moves the explicit developer build to build:plugin, keeps the OpenCode host peer optional, and cross-platform Release Readiness exercises the M16 packed npm bootstrap plus exact-SHA Git compatibility loading against exact OpenCode 1.18.19."
     }
   ],
   "violations": [],

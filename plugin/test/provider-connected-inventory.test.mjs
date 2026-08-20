@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, rmSync, readFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import HiPlugin from '../dist/plugin.js'
@@ -30,16 +30,25 @@ test('runtime inventory exposes only models from OpenCode connected providers wh
     connected:['opencode-go'],
     all:[
       {id:'zhipuai',models:[{id:'px-unavailable'}]},
-      {id:'opencode-go',models:[{id:'deepseek-v4-flash'}]},
+      {id:'opencode-go',models:[{id:'deepseek-v4-flash',capabilities:{input:{image:false}}}]},
     ],
   }
   const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:clientWithProviderShape(raw)})
   await hooks.config({})
   await hooks.event({event:{type:'server.connected',properties:{}}})
   const doctor=String(await hooks.tool.hi_doctor.execute({},{}))
-  assert.match(doctor,/model-inventory: 1 runtime model\(s\)/)
+  assert.match(doctor,/model-inventory: 1 effective runtime model\(s\)/)
   assert.match(doctor,/opencode-go\/deepseek-v4-flash/)
   assert.doesNotMatch(doctor,/zhipuai\/px-unavailable/)
+  const routing=JSON.parse(readFileSync(join(root,'.opencode','hi','policy','routing.json'),'utf8'))
+  assert.deepEqual(routing.routing.roleModels,{
+    coder:['opencode-go/deepseek-v4-flash'],
+    architect:['opencode-go/deepseek-v4-flash'],
+    'repository-explorer':['opencode-go/deepseek-v4-flash'],
+    'qa-reviewer':['opencode-go/deepseek-v4-flash'],
+    'security-reviewer':['opencode-go/deepseek-v4-flash'],
+  })
+  assert.deepEqual(routing.routing.adaptiveRoles,['visual-qa'])
   await hooks.dispose?.()
   rmSync(root,{recursive:true,force:true})
 })
@@ -51,7 +60,7 @@ test('runtime inventory preserves host shapes that do not expose a connected-pro
   await hooks.config({})
   await hooks.event({event:{type:'server.connected',properties:{}}})
   const doctor=String(await hooks.tool.hi_doctor.execute({},{}))
-  assert.match(doctor,/model-inventory: 1 runtime model\(s\)/)
+  assert.match(doctor,/model-inventory: 1 effective runtime model\(s\)/)
   assert.match(doctor,/p\/m/)
   await hooks.dispose?.()
   rmSync(root,{recursive:true,force:true})
@@ -67,11 +76,22 @@ test('successful refresh to zero connected models clears stale inventory',async(
   await hooks.config({})
   await hooks.event({event:{type:'server.connected',properties:{}}})
   let doctor=String(await hooks.tool.hi_doctor.execute({},{}))
-  assert.match(doctor,/model-inventory: 1 runtime model\(s\)/)
+  assert.match(doctor,/model-inventory: 1 effective runtime model\(s\)/)
   raw={connected:[],all:[{id:'p',models:[{id:'m'}]}]}
   await hooks.event({event:{type:'installation.updated',properties:{}}})
   doctor=String(await hooks.tool.hi_doctor.execute({},{}))
-  assert.match(doctor,/model-inventory: 0 runtime model\(s\)/)
+  assert.match(doctor,/model-inventory: 0 effective runtime model\(s\)/)
   assert.doesNotMatch(doctor,/p\/m/)
+  await hooks.dispose?.();rmSync(root,{recursive:true,force:true})
+})
+
+
+test('runtime initial recommendation never shadows an existing host-level user role mapping',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-provider-user-routing-'))
+  const raw={connected:['p'],all:[{id:'p',models:[{id:'user-model'},{id:'other-model'}]}]}
+  const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:clientWithProviderShape(raw)})
+  await hooks.config({hi:{routing:{roleModels:{coder:['p/user-model']}}}})
+  await hooks.event({event:{type:'server.connected',properties:{}}})
+  assert.equal(existsSync(join(root,'.opencode','hi','policy','routing.json')),false)
   await hooks.dispose?.();rmSync(root,{recursive:true,force:true})
 })

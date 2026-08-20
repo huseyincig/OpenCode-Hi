@@ -4,7 +4,7 @@ import {normalizeModelCapabilityProfile,reconcileModelExecutionIdentity} from '.
 
 test('runtime model capability profile normalizes bounded host facts without inventing capability',()=>{
   const p=normalizeModelCapabilityProfile({id:'provider/model-x',provider:'provider',cost:1.5,quality:7,writeCapable:true,tags:['coding','coding'],variants:['high','low']})
-  assert.deepEqual(p,{id:'provider/model-x',provider:'provider',cost:1.5,quality:7,writeCapable:true,tags:['coding'],variants:['high','low'],source:'runtime-inventory'})
+  assert.deepEqual(p,{id:'provider/model-x',provider:'provider',cost:1.5,quality:7,writeCapable:true,visionCapable:false,tags:['coding'],variants:['high','low'],source:'runtime-inventory'})
   assert.equal(p.expectedTurns,undefined)
   assert.equal(p.contextOverhead,undefined)
 })
@@ -12,6 +12,7 @@ test('runtime model capability profile normalizes bounded host facts without inv
 test('model capability profile rejects invalid numeric and quirk facts',()=>{
   assert.throws(()=>normalizeModelCapabilityProfile({id:'x',cost:-1}),/cost/)
   assert.throws(()=>normalizeModelCapabilityProfile({id:'x',expectedTurns:0}),/expectedTurns/)
+  assert.throws(()=>normalizeModelCapabilityProfile({id:'x',visionCapable:'yes'}),/visionCapable/)
 })
 
 test('model execution identity keeps requested selected projected observed and effective phases distinct',()=>{

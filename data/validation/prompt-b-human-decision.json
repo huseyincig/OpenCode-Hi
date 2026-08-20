@@ -125,7 +125,7 @@
     {
       "invariant": "idle-does-not-reclassify-open-decision",
       "owner": "plugin/src/runtime/application/runtime-event-controller.ts",
-      "owner_sha256": "d6e57e53d26b1d631f89e69cf428a4ca616a1eb7eef09cc4e56642d03470edaf",
+      "owner_sha256": "28ac259056c608a359f76686a941882b1ceabae8f9ce102bcc6a56d64702a426",
       "owner_anchor": "m.authority.human_decision?.status!=='OPEN'",
       "proof": "plugin/test/p3-process-control-integration.test.mjs",
       "proof_sha256": "f311974099d72d27db45d0b76b4d12b9d631daefa8a84751beb7e7d2e9e640a0",
@@ -137,7 +137,7 @@
       "owner_sha256": "6296832cd6f5b73f234f2b41e86177525146a5b452d5def7b58c61515ef9e1af",
       "owner_anchor": "unsupported('structured-human-decision-transport'",
       "proof": "plugin/test/h2-structured-human-decision-host.test.mjs",
-      "proof_sha256": "2d4584d3e994c00a350107ac3ad4bd066e93bb6c208f3eada7c0c97550f3d259",
+      "proof_sha256": "d22c14a5817e8673f5737e460a5e1ce720f261d973d0b83533e1990c1f4b18b0",
       "proof_anchor": "structured host UI remains unsupported"
     }
   ],

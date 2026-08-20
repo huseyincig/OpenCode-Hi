@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "kind": "FINAL_CANONICAL_GATES",
+  "release": "0.2.2",
+  "status": "PASS",
+  "source_checkpoint": {
+    "commit": "ea96f002aac35919731b16330c886d2ee59cc8b6",
+    "tree": "6c3d7d446ac9b91c519d75387887139383340060"
+  },
+  "counts": {
+    "python": 102,
+    "node": 1046,
+    "architecture": 22,
+    "documentation_parity_violations": 0
+  },
+  "checks": {
+    "python": true,
+    "build": true,
+    "node": true,
+    "architecture": true,
+    "docs": true,
+    "validator": true
+  },
+  "returncodes": {
+    "python": 0,
+    "build": 0,
+    "node": 0,
+    "architecture": 0,
+    "docs": 0,
+    "validator": 0
+  },
+  "claim_boundary": "Fresh canonical final gates at the recorded clean source checkpoint; counts are parsed from terminal PASS summaries, not hand-maintained prose."
+}

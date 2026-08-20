@@ -17,7 +17,7 @@
     {
       "invariant": "unknown-context-handle-fail-close",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "a79261104fd8c84cf1d825a45b23c300edd0819aaa345441f73863367e0bc598",
+      "owner_sha256": "475ae7ee8d93030ddf6b35463f6ba2120e8e4319b933410e64fb34902663df8a",
       "owner_anchor": "Unknown context artifact id(s)",
       "proof": "plugin/test/context-survival-hardening.test.mjs",
       "proof_sha256": "238c6269ef500468db62f379ff2296a81e5e802a35de6e9925ac060f313a29cd",
@@ -26,7 +26,7 @@
     {
       "invariant": "stale-context-exclusion",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "a79261104fd8c84cf1d825a45b23c300edd0819aaa345441f73863367e0bc598",
+      "owner_sha256": "475ae7ee8d93030ddf6b35463f6ba2120e8e4319b933410e64fb34902663df8a",
       "owner_anchor": "stored?.freshness==='FRESH'",
       "proof": "plugin/test/context-survival-hardening.test.mjs",
       "proof_sha256": "238c6269ef500468db62f379ff2296a81e5e802a35de6e9925ac060f313a29cd",
@@ -126,5 +126,5 @@
     "covered": 12,
     "violations": 0
   },
-  "claim_boundary": "Current 0.2.0 context architecture: explicit consumer-bound ContextReference/Artifact state, bounded Mission runtime projection, deterministic duplicate pruning, and evidence-bound project methodology learning. Removed general Project Intelligence retrieval and CompressionArtifact subsystems are not certified as current product surfaces."
+  "claim_boundary": "Current 0.2.2 context architecture: explicit consumer-bound ContextReference/Artifact state, bounded Mission runtime projection, deterministic duplicate pruning, and evidence-bound project methodology learning. Removed general Project Intelligence retrieval and CompressionArtifact subsystems are not certified as current product surfaces."
 }

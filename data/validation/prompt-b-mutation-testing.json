@@ -150,11 +150,11 @@
     "all_required_prompt_areas": true
   },
   "source_binding": {
-    "commit": "8a0ff20186c460397cb6e19fc81268bb64a289f0",
-    "tree": "6449b1b30845c39f6dc50540294389c39a4ab1fb"
+    "commit": "4b56173976a0fb1508dc22348e2926cb7af0adf4",
+    "tree": "67574e15eb43559c55bb0248797c7c69528bf43c"
   },
   "proof_hashes": {
-    "data/validation/selective-mutation-testing-0.1.0.json": "058204b6f1e16d7d565dc1e737f9ecb591578feccdb0e65cf33a4b621a8d0da5",
+    "data/validation/selective-mutation-testing-0.1.0.json": "88556de59bd1164434da61cb97bbef2d4b2bb96324c3ae0f0f0f3c659fd781db",
     "scripts/run-selective-mutations.mjs": "2b0151a68086eb1d34c1aa22149bd0fdb8e6511fef74560d1f4bf5792d9d39e1",
     "plugin/test/q2-critical-invariant-guards.test.mjs": "da74cbdd01a1498851ca49fa8a7d669d80e52970ec8b332c97f37da7e9107c9d",
     "plugin/src/contracts/common.ts": "7d393dfea46f080252623bff40de5d423883ace1c38906e4a653d85186748172",
@@ -165,7 +165,7 @@
     "plugin/src/runtime/host/capability-manifest.ts": "f21c6869ad7545d1b8e205a1f8917e7278dddb47c6193d8febe5612c3e4653f8",
     "plugin/src/runtime/process/authority.ts": "c9e47bee821cced0ae282f388e0561e0b06c6eddc34ffc9ad5ec9f8c1249714f",
     "plugin/src/runtime/roles/catalog.ts": "6fc73f6187dca87b946a4f80d81759e3abf0586c7731da35cadf24c0ed6b7544",
-    "plugin/src/runtime/routing/model-resolver.ts": "7da55846861e46dd4e17c295ea250a33b18300662f290c73607f7cec1fdfc8ad",
+    "plugin/src/runtime/routing/model-resolver.ts": "818ed7d62c6473b969dbf9760edef25ec020709725c0feaa64e89167a4284ba9",
     "plugin/src/runtime/safety/authority.ts": "e81c16ad08a0392b4cb5094500dd046a2ef0d9bf731159817fc67d0a4c4c6378",
     "plugin/src/runtime/safety/project-authority.ts": "51915d3dbf4d5051e1e60c2cc0726b892f9b97b1d58c8067c0afc03cf59fe175",
     "plugin/src/runtime/state/persistence.ts": "f611defb9fe0f1a0d9370f789f524bf59de2c1f770e52572f9f8161b3c012ab2",

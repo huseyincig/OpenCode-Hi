@@ -81,7 +81,7 @@
     },
     "product": {
       "path": "data/product.json",
-      "sha256": "4a9879e62a568cf15fd3c33bffcb709fa659fad1fcf83dc0e0cb36ccb753c55b"
+      "sha256": "4b1632f6c52798a8ca56eca3a2febb170a43363895394ab5c2918a5daa45b2ca"
     },
     "config_catalog": {
       "path": "data/hi-config-options.json",

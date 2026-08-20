@@ -7,6 +7,7 @@ export interface GitWorkspaceInspection {
     worktrees: string[];
 }
 export type GitWorkspaceInspector = (directory: string) => GitWorkspaceInspection;
+export declare function openCodeExperimentalWorkspacesEnabled(env?: Record<string, string | undefined>): boolean;
 export declare class OpenCodeWorkspaceAdapter implements WorkspaceExecutor {
     #private;
     readonly client: OpenCodeClient;

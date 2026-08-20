@@ -1,6 +1,6 @@
 {
   "name": "opencode-hi-runtime",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "OpenCode-Hi TypeScript runtime workspace",
   "type": "module",
   "main": "dist/plugin.js",
@@ -31,7 +31,7 @@
     "@opencode-ai/plugin": ">=1.14.0"
   },
   "devDependencies": {
-    "@opencode-ai/plugin": "^1.18.18",
+    "@opencode-ai/plugin": "^1.18.19",
     "typescript": "^5.8.0"
   },
   "license": "Apache-2.0",

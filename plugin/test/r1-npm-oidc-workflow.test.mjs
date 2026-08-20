@@ -37,7 +37,7 @@ test('R1 workflow fails closed on exact annotated tag/source/package identity be
   assert.equal(pkg.repository.url,'git+https://github.com/huseyincig/OpenCode-Hi.git')
   assert.equal(pkg.publishConfig.access,'public')
   assert.match(verifier,/rootLockVersion/)
-  assert.match(verifier,/root @opencode-ai\/sdk dependency must equal accepted 1\.18\.18/)
+  assert.match(verifier,/root @opencode-ai\/sdk dependency must equal accepted 1\.18\.19/)
 })
 
 test('R1 registry proof requires fresh pack integrity and shasum equality before fresh-consumer acceptance',()=>{

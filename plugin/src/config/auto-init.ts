@@ -1,74 +1,66 @@
-// Auto-init: when `.opencode/hi/policy/routing.json` is missing in the
-// project root, write a sensible default based on the opencode-go
-// provider family. This makes per-role model routing work out of
-// the box without the user having to run
-// `native_plugin_setup.py role-models --defaults` first.
+// Runtime routing bootstrap for projects that do not yet have
+// `.opencode/hi/policy/routing.json`.
 //
-// The default is opencode-go-aware but not vendor-locking: the
-// runtime's model-resolver only treats these as preferred, not as
-// hard requirements. If the opencode-go provider is not in the
-// runtime inventory, scoring fallback still applies. The defaults
-// are written to disk only when no file exists, so user overrides
-// are preserved across runs.
+// M16 deliberately does not persist catalog guesses or vendor/model IDs.
+// Initial child-role recommendations are supplied by the runtime only after
+// OpenCode exposes the effective inventory and Hi ranks eligible models.
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { MODEL_ROUTED_CHILD_ROLES } from './schema.js'
+import { MODEL_ROUTED_CHILD_ROLES, type ModelRoutedChildRole } from './schema.js'
 import { dirname, join } from 'node:path'
 
-export const DEFAULT_ROLE_MODELS_OPENCODE_GO: Record<string, string[]> = {
-  coder: ['opencode-go/deepseek-v4-flash','opencode-go/mimo-v2.5','opencode-go/qwen3.7-plus','opencode-go/mimo-v2.5-pro'],
-  'security-reviewer': ['opencode-go/mimo-v2.5-pro','opencode-go/qwen3.6-plus','opencode-go/hy3'],
-  'qa-reviewer': ['opencode-go/hy3','opencode-go/qwen3.6-plus','opencode-go/mimo-v2.5-pro'],
-  architect: ['opencode-go/qwen3.7-plus','opencode-go/minimax-m2.7','opencode-go/mimo-v2.5-pro'],
-  'visual-qa': ['opencode-go/hy3','opencode-go/mimo-v2.5','opencode-go/qwen3.6-plus'],
-  'repository-explorer': ['opencode-go/mimo-v2.5','opencode-go/deepseek-v4-flash','opencode-go/qwen3.7-plus'],
-}
-for(const role of Object.keys(DEFAULT_ROLE_MODELS_OPENCODE_GO))if(!(MODEL_ROUTED_CHILD_ROLES as readonly string[]).includes(role))throw new Error(`Non-child role in model defaults: ${role}`)
-
 export const DEFAULT_STRATEGY: 'cost-quality' = 'cost-quality'
+export type InitialRoleRecommendations = Partial<Record<ModelRoutedChildRole,string[]>>
 
-export function defaultProjectRoutingConfig(availableModelIDs?: string[]): {
+function normalizeRecommendations(input:InitialRoleRecommendations):Record<string,string[]>{
+  const out:Record<string,string[]>={}
+  for(const role of MODEL_ROUTED_CHILD_ROLES){const ids=[...new Set(input[role]??[])].filter(Boolean);if(ids.length)out[role]=ids}
+  return out
+}
+
+export function defaultProjectRoutingConfig(initialRecommendations:InitialRoleRecommendations = {}): {
   schema: 1
   type: 'hi-routing'
   routing: { strategy: 'cost-quality'; modelPolicy:'recommended'; roleModels: Record<string, string[]>; roleVariants:Record<string,Record<string,string>>; adaptiveRoles:string[] }
   applied_at: number
   applied_by: string
 } {
+  const roleModels=normalizeRecommendations(initialRecommendations)
+  const adaptiveRoles=(MODEL_ROUTED_CHILD_ROLES as readonly string[]).filter(role=>!roleModels[role]?.length)
   return {
     schema: 1,
     type: 'hi-routing',
     routing: {
       strategy: DEFAULT_STRATEGY,
       modelPolicy: 'recommended',
-      roleModels: Object.fromEntries(Object.entries(DEFAULT_ROLE_MODELS_OPENCODE_GO).map(([role, ids])=>[role, availableModelIDs !== undefined ? ids.filter(id=>availableModelIDs.includes(id)) : [...ids]]).filter(([,ids])=>(ids as string[]).length>0)),
+      roleModels,
       roleVariants: {},
-      adaptiveRoles: availableModelIDs === undefined ? [] : Object.entries(DEFAULT_ROLE_MODELS_OPENCODE_GO).filter(([,ids])=>!ids.some(id=>availableModelIDs.includes(id))).map(([role])=>role),
+      adaptiveRoles,
     },
     applied_at: Date.now(),
     applied_by: 'opencode-hi',
   }
 }
 
-export function ensureProjectRoutingConfig(projectRoot: string, availableModelIDs?: string[]): { created: boolean; path: string; configuredRoles?: number; reason?: string } {
+export function ensureProjectRoutingConfig(projectRoot: string, initialRecommendations?: InitialRoleRecommendations): { created: boolean; path: string; configuredRoles?: number; reason?: string } {
   const path = join(projectRoot, '.opencode', 'hi', 'policy', 'routing.json')
   if (existsSync(path)) {
     try {
       const current=JSON.parse(readFileSync(path,'utf8'))
       if(current?.schema===1&&current?.type==='hi-routing'&&current.routing&&typeof current.routing==='object')return{created:false,path}
-      if(current?.schema===1&&current?.type==='hi-routing'){
-        const next=defaultProjectRoutingConfig(availableModelIDs),configuredRoles=Object.keys(next.routing.roleModels).length
-        if(availableModelIDs !== undefined && configuredRoles===0)return{created:false,path,configuredRoles:0,reason:'runtime-inventory-has-no-curated-recommended-models'}
+      if(current?.schema===1&&current?.type==='hi-routing'&&initialRecommendations!==undefined){
+        const next=defaultProjectRoutingConfig(initialRecommendations),configuredRoles=Object.keys(next.routing.roleModels).length
         current.routing=next.routing;current.applied_at=next.applied_at;current.applied_by=next.applied_by
         writeFileSync(path,JSON.stringify(current,null,2)+'\n','utf8')
-        return{created:true,path,configuredRoles,reason:availableModelIDs !== undefined?'inventory-validated-recommended-models-merged-with-project-settings':'offline-defaults-merged-with-project-settings'}
+        return{created:true,path,configuredRoles,reason:'inventory-ranked-initial-policy-merged-with-project-settings'}
       }
     } catch {}
     return { created: false, path }
   }
-  const next=defaultProjectRoutingConfig(availableModelIDs)
+  if(initialRecommendations===undefined)return{created:false,path,configuredRoles:0,reason:'runtime-inventory-required-for-initial-recommendation'}
+  const next=defaultProjectRoutingConfig(initialRecommendations)
   const configuredRoles=Object.keys(next.routing.roleModels).length
-  if(availableModelIDs !== undefined && configuredRoles===0)return { created:false, path, configuredRoles:0, reason:'runtime-inventory-has-no-curated-recommended-models' }
   mkdirSync(dirname(path), { recursive: true })
   writeFileSync(path, JSON.stringify(next, null, 2) + '\n', 'utf8')
-  return { created: true, path, configuredRoles, reason:availableModelIDs !== undefined?'inventory-validated-recommended-models':'offline-defaults' }
+  return { created: true, path, configuredRoles, reason:'inventory-ranked-initial-policy' }
 }

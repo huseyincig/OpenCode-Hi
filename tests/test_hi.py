@@ -4,6 +4,9 @@ from pathlib import Path
 import pytest
 ROOT=Path(__file__).resolve().parents[1]
 V=(ROOT/'VERSION').read_text(encoding='utf-8').strip()
+PKG=json.loads((ROOT/'package.json').read_text(encoding='utf-8'))
+HOST_TARGET=PKG['dependencies']['@opencode-ai/sdk']
+assert PKG['peerDependencies']['@opencode-ai/plugin']==HOST_TARGET
 
 def run(*args):return subprocess.run([sys.executable,*map(str,args)],text=True,capture_output=True)
 def load_module(name,path):
@@ -32,11 +35,11 @@ def test_identity_is_hi():
     assert d['plugin_package']=='opencode-hi' and d['repository']=='https://github.com/huseyincig/OpenCode-Hi'
 
 def test_root_git_package_contract():
-    d=json.loads((ROOT/'package.json').read_text(encoding='utf-8')); assert d['name']=='opencode-hi' and d['version']==V
-    assert d['main']=='plugin/dist/plugin.js' and (ROOT/d['main']).is_file() and {'skills','scripts/native_plugin_setup.py','VERSION','docs','.github/CONTRIBUTING.md','.github/SECURITY.md','.github/SUPPORT.md'}<=set(d['files'])
-    assert d['bin']=={'opencode-hi-setup':'scripts/native_plugin_setup.py'}
-    assert d['peerDependencies']['@opencode-ai/plugin']=='1.18.18'
-    assert d['dependencies']=={'@opencode-ai/sdk':'1.18.18'}
+    d=PKG; assert d['name']=='opencode-hi' and d['version']==V
+    assert d['main']=='plugin/dist/plugin.js' and (ROOT/d['main']).is_file() and {'skills','scripts/native_plugin_setup.py','scripts/opencode-hi.mjs','VERSION','docs','.github/CONTRIBUTING.md','.github/SECURITY.md','.github/SUPPORT.md'}<=set(d['files'])
+    assert d['bin']=={'opencode-hi':'scripts/opencode-hi.mjs','hi':'scripts/opencode-hi.mjs','opencode-hi-setup':'scripts/native_plugin_setup.py'}
+    assert d['peerDependencies']['@opencode-ai/plugin']==HOST_TARGET
+    assert d['dependencies']=={'@opencode-ai/sdk':HOST_TARGET}
     assert d['optionalDependencies']['playwright-core']=='1.62.1'
 
 def test_root_is_product_clean():
@@ -414,17 +417,18 @@ def test_r2_install_lifecycle_receipt_covers_full_local_recovery_contract():
     assert (ROOT/'scripts/run-install-lifecycle.py').is_file()
 
 
+@pytest.mark.evidence
 def test_r3_generated_compatibility_projection_selects_latest_exact_capability_proofs_without_erasing_history():
     d=json.loads((ROOT/'data/validation/compatibility-matrix-0.1.0.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='GENERATED_RECEIPT_COMPATIBILITY_PROJECTION'
-    cur=d['current_reference_host'];assert (cur['opencode_version'],cur['platform'],cur['architecture'])==('1.18.18','linux','aarch64')
+    cur=d['current_reference_host'];assert (cur['opencode_version'],cur['platform'],cur['architecture'])==(HOST_TARGET,'linux','aarch64')
     caps=cur['capabilities'];q39=json.loads((ROOT/'data/validation/prompt-b-exact-current-opencode-t3.json').read_text(encoding='utf-8'));exact=q39['exact_source_commit'];short=exact[:7]
     for cap,kind in [('process-lifecycle','process'),('workspace-isolation-binding','workspace'),('browser-execution','browser')]:
         qcap=q39['capabilities'][cap]
         assert caps[cap]['status']=='SUPPORTED_T3' and caps[cap]['tested_git_commit']==qcap['receipt_source_commit']
         assert caps[cap]['receipt']==qcap['receipt'] and qcap['runtime_equivalent_to_current'] is True and qcap['runtime_hash_drift']==[]
         receipt_short=qcap['receipt_source_commit'][:7]
-        assert caps[cap]['receipt'].endswith(f'{kind}-1.18.18-head-{receipt_short}.json')
+        assert caps[cap]['receipt'].endswith(f'{kind}-{HOST_TARGET}-head-{receipt_short}.json')
     superseded={x['receipt']:x for x in d['history']}
     assert superseded['data/validation/external-opencode-hi-0.1.0-host-1.18.18-head-bc85854.json']['classification']=='HISTORICAL_EXACT_PROOF'
     assert superseded['data/validation/external-opencode-hi-0.1.0-workspace-1.18.18-head-92812a1.json']['classification']=='HISTORICAL_EXACT_PROOF'
@@ -536,19 +540,19 @@ def test_direct_git_host_acceptance_archive_extraction_is_python311_compatible_a
     with pytest.raises(RuntimeError,match='unsafe archive member path'):mod.safe_extract_zip(bad_zip,zip_out)
 
 
-def test_prompt_a_first_use_docs_do_not_advertise_unavailable_registry_or_stale_capabilities():
+def test_m16_first_use_docs_are_npm_runner_first_and_truthful_about_prepublication():
     readme=(ROOT/'README.md').read_text(encoding='utf-8'); tr=(ROOT/'docs/locales/tr/README.md').read_text(encoding='utf-8'); arch=(ROOT/'docs/ARCHITECTURE.md').read_text(encoding='utf-8'); install=(ROOT/'docs/INSTALLATION.md').read_text(encoding='utf-8'); config=(ROOT/'docs/CONFIGURATION.md').read_text(encoding='utf-8'); tr_config=(ROOT/'docs/locales/tr/CONFIGURATION.md').read_text(encoding='utf-8')
-    direct_git='opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git'
+    exact=f'opencode-hi@{V}'
     for text in (readme,tr,install,config,tr_config):
-        assert direct_git in text
+        assert exact in text
+        assert 'npx --yes' in text
         assert 'git dep preparation failed' not in text
-    for text in (readme,tr,install,config,tr_config):
-        lowered=text.lower()
-        assert 'v0.2.0' in text and ('predate' in lowered or 'older' in lowered or 'esk' in lowered)
-    assert f'opencode-hi@{V}' in install
+    combined=(readme+tr+install+config+tr_config).lower()
+    assert 'normal user' in combined or 'normal kullanıcı' in combined
+    assert 'pre-publication' in combined or 'prepublication' in combined
+    assert 'project-root `node_modules`' in readme or 'root `node_modules`' in readme
     assert 'npm run build:plugin' in readme+tr+install
-    assert f'`{V}`' in readme and 'Published availability is external state' in readme
-    assert 'npm bootstrap publication is not yet complete' not in readme+install
+    assert f'`{V}`' in readme
     assert 'ProcessContract' in arch and 'WorkspaceLease' in arch and 'BrowserObservation' in arch
     assert 'contains no raw stdout/stderr buffer' in arch
 
@@ -572,6 +576,50 @@ def test_role_models_cli_rejects_primary_role_model_assignment_and_accepts_child
     current=json.loads(printed.stdout)
     assert current['roleModels']=={'coder':['provider/code','provider/fallback']}
     assert current['ignoredRoleModelRoles']==['manager','unknown']
+
+
+def test_m16_python_model_discovery_uses_plain_effective_opencode_inventory_without_catalog_fallback(monkeypatch):
+    mod=load_module('native_plugin_setup_m16_models',ROOT/'scripts/native_plugin_setup.py')
+    calls=[]
+    class Result:
+        returncode=0
+        stdout='\n'.join([f'provider/model-{i}' for i in range(1,13)])+'\n'
+    def fake_run(argv,**kwargs):calls.append((argv,kwargs));return Result()
+    monkeypatch.setattr(mod.subprocess,'run',fake_run)
+    assert mod.discover_available_models()==[f'provider/model-{i}' for i in range(1,13)]
+    assert calls[0][0]==['opencode','models','--pure']
+    class Failed:
+        returncode=1
+        stdout=''
+    monkeypatch.setattr(mod.subprocess,'run',lambda *a,**k:Failed())
+    assert mod.discover_available_models()==[]
+
+
+def test_m16_python_recommended_defaults_defer_to_runtime_scoring_without_vendor_model_ids(tmp_path,monkeypatch):
+    mod=load_module('native_plugin_setup_m16_recommended',ROOT/'scripts/native_plugin_setup.py')
+    monkeypatch.setattr(mod,'discover_available_models',lambda:['alpha/model-a','beta/model-b','vision/model-c'])
+    out=mod.role_models(tmp_path,defaults=True,policy='recommended')
+    assert out['status']=='DEFERRED' and out['reason']=='runtime-ranking-required'
+    assert out['roleModels']=={} and out['available_models_observed']==['alpha/model-a','beta/model-b','vision/model-c']
+    assert 'canonical runtime scoring logic' in out['action']
+    assert not (tmp_path/'.opencode/hi/policy/routing.json').exists()
+
+
+def test_m16_python_recommended_defaults_never_overwrite_existing_user_role_models(tmp_path,monkeypatch):
+    mod=load_module('native_plugin_setup_m16_existing',ROOT/'scripts/native_plugin_setup.py')
+    cfg=tmp_path/'.opencode/hi/policy/routing.json';cfg.parent.mkdir(parents=True)
+    original={'schema':1,'type':'hi-routing','routing':{'strategy':'quality','modelPolicy':'manual','roleModels':{'coder':['user/model']},'roleVariants':{},'adaptiveRoles':[]}}
+    cfg.write_text(json.dumps(original,indent=2)+'\n',encoding='utf-8')
+    monkeypatch.setattr(mod,'discover_available_models',lambda:['other/new-model'])
+    before=cfg.read_text(encoding='utf-8');out=mod.role_models(tmp_path,defaults=True,policy='recommended')
+    assert out['status']=='DEFERRED' and out['roleModels']=={'coder':['user/model']}
+    assert cfg.read_text(encoding='utf-8')==before
+
+
+def test_m16_python_manual_role_model_chain_is_not_arbitrarily_capped_at_seven(tmp_path):
+    script=ROOT/'scripts/native_plugin_setup.py';models=[f'provider/model-{i}' for i in range(1,13)]
+    r=run(script,'role-models',tmp_path,'--set','coder='+','.join(models),'--policy','manual');out=json.loads(r.stdout)
+    assert r.returncode==0 and out['roleModels']['coder']==models
 
 
 def test_configuration_guide_covers_supported_variations_and_is_readme_linked():
@@ -710,7 +758,7 @@ def test_prompt_b_internal_exports_have_a_repository_consumer():
 def test_prompt_b_exact_current_opencode_native_reevaluation_is_source_bound_and_fail_closed():
     d=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION' and d['program']=='PROMPT_B' and d['status']=='PASS'
-    obs=d['opencode'];assert obs['version']=='1.18.18' and obs['source_ref']=='v1.18.18' and re.fullmatch(r'[a-f0-9]{40}',obs['source_commit']) and obs['source_worktree_used'] is False and obs['source_read_mode']=='git-blob'
+    obs=d['opencode'];assert obs['version']==HOST_TARGET and obs['source_ref']==f'v{HOST_TARGET}' and re.fullmatch(r'[a-f0-9]{40}',obs['source_commit']) and obs['source_worktree_used'] is False and obs['source_read_mode']=='git-blob'
     assert d['missing_hi_paths']==[]
     assert d['summary']=={'surfaces':12,'remove_custom_mechanism':0,'keep_thin_or_stronger':11,'unsupported':1}
     decisions={x['surface']:x for x in d['decisions']}
@@ -956,7 +1004,7 @@ def test_prompt_b_cli_reconfigure_rejects_out_of_range_and_malformed_limits(tmp_
 def test_prompt_b_cli_first_run_doctor_supplies_recovery_action(tmp_path):
     r=run(ROOT/'scripts/native_plugin_setup.py','doctor',tmp_path);out=json.loads(r.stdout)
     assert r.returncode==2 and out['status']=='FAIL' and 'hi-plugin-not-registered' in out['issues']
-    assert any('plan' in x and 'install' in x for x in out['actions'])
+    assert any('npx opencode-hi' in x and 'setup' in x for x in out['actions'])
     assert 'Traceback' not in r.stdout+r.stderr
 
 
@@ -975,12 +1023,12 @@ def test_prompt_b_cli_developer_tooling_ux_audit_is_actionable_bounded_and_sourc
     assert {'malformed-opencode-config-silent-overwrite-risk','reconfigure-invalid-limit-accepted','blocked-plan-missing-recovery-guidance'}<={x['id'] for x in d['closed_defects']}
 
 
-def test_prompt_b_publishable_package_carries_setup_cli_and_direct_runtime_dependency_contract():
+def test_prompt_b_publishable_package_carries_node_bootstrap_legacy_cli_and_direct_runtime_dependency_contract():
     pkg=json.loads((ROOT/'package.json').read_text(encoding='utf-8'))
-    assert pkg['bin']=={'opencode-hi-setup':'scripts/native_plugin_setup.py'}
-    assert {'plugin/dist','skills','scripts/native_plugin_setup.py','VERSION'}<=set(pkg['files'])
-    assert pkg['peerDependencies']['@opencode-ai/plugin']=='1.18.18'
-    assert pkg['dependencies']['@opencode-ai/sdk']=='1.18.18'
+    assert pkg['bin']=={'opencode-hi':'scripts/opencode-hi.mjs','hi':'scripts/opencode-hi.mjs','opencode-hi-setup':'scripts/native_plugin_setup.py'}
+    assert {'plugin/dist','skills','scripts/opencode-hi.mjs','scripts/native_plugin_setup.py','VERSION'}<=set(pkg['files'])
+    assert pkg['peerDependencies']['@opencode-ai/plugin']=='1.18.19'
+    assert pkg['dependencies']['@opencode-ai/sdk']=='1.18.19'
     assert pkg['optionalDependencies']['playwright-core']=='1.62.1'
     setup=ROOT/'scripts/native_plugin_setup.py'
     if os.name=='nt':
@@ -1027,7 +1075,7 @@ def test_prompt_b_packaging_fresh_consumer_audit_is_exact_host_and_source_tree_i
         assert hashlib.sha256(proof.read_bytes()).hexdigest()==row['proof_sha256']
         assert row['owner_anchor'] in owner.read_text(encoding='utf-8',errors='replace') and row['proof_anchor'] in proof.read_text(encoding='utf-8',errors='replace')
     assert all(d['static_guards'].values())
-    a=json.loads((ROOT/d['acceptance_receipt']).read_text(encoding='utf-8'));assert a['status']=='PASS' and a['host']['opencode']=='1.18.18' and a['host']['platform']=='linux' and a['host']['architecture']=='aarch64' and re.fullmatch(r'[a-f0-9]{64}',a['host']['binary_sha256'])
+    a=json.loads((ROOT/d['acceptance_receipt']).read_text(encoding='utf-8'));assert a['status']=='PASS' and a['host']['opencode']==HOST_TARGET and a['host']['platform']=='linux' and a['host']['architecture']=='aarch64' and re.fullmatch(r'[a-f0-9]{64}',a['host']['binary_sha256'])
     assert a['checks']['consumer_resolution'] is True and a['checks']['no_source_tree_in_server_log'] is True
     assert a['material_runtime']['hi_tool_count']>=10 and {'hi_doctor','hi_status','hi_task_start'}<=set(a['material_runtime']['hi_tools'])
     assert a['material_runtime']['provider_run']['attempted'] is False
@@ -1069,7 +1117,7 @@ def test_prompt_b_release_engineering_closes_t4_only_from_real_current_publicati
         assert d['status']=='CLOSED_LOCAL_T4_BLOCKED' and d['summary']=={'stages':13,'local_pass_or_historical':8,'blocked_external_or_identity':5,'violations':0}
         assert d['registry_observation']['current_publication_receipt_present'] is False
         assert d['release_source']['tag'] is None
-    assert d['historical_release']['tag']=='v0.1.0' and d['historical_release']['github_status']=='PASS_T4'
+    assert d['historical_release']['tag']=='v0.2.1' and d['historical_release']['status']=='PASS_T4'
     assert d['registry_observation']['authority_granted'] is False
     assert d['registry_observation']['authority_condition']=='explicit current user authority required after final certification; this audit never grants publication authority'
     assert isinstance(d['registry_observation']['reference_host_registry_latest'],(str,type(None)))
@@ -1113,6 +1161,7 @@ def test_prompt_b_test_suite_audit_is_isolated_bounded_and_never_promotes_mock_t
 
 
 
+@pytest.mark.evidence
 def test_prompt_b_mutation_testing_kills_all_critical_mutants_without_compile_only_credit():
     d=json.loads((ROOT/'data/validation/prompt-b-mutation-testing.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='PROMPT_B_MUTATION_TESTING_AUDIT' and d['program']=='PROMPT_B' and d['section']==31 and d['status']=='PASS'
@@ -1126,6 +1175,7 @@ def test_prompt_b_mutation_testing_kills_all_critical_mutants_without_compile_on
     for rel,digest in d['proof_hashes'].items():assert hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()==digest
 
 
+@pytest.mark.evidence
 def test_prompt_b_property_fuzz_testing_is_bounded_reproducible_and_source_bound():
     d=json.loads((ROOT/'data/validation/prompt-b-property-fuzz-testing.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='PROMPT_B_PROPERTY_FUZZ_TESTING_AUDIT' and d['program']=='PROMPT_B' and d['section']==32 and d['status']=='PASS'
@@ -1159,6 +1209,7 @@ def test_prompt_b_replay_testing_detects_semantic_drift_across_all_required_surf
 
 
 
+@pytest.mark.evidence
 def test_prompt_b_failure_injection_is_complete_bounded_and_terminal():
     d=json.loads((ROOT/'data/validation/prompt-b-failure-injection.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='PROMPT_B_FAILURE_INJECTION_AUDIT' and d['program']=='PROMPT_B' and d['section']==34 and d['status']=='PASS'
@@ -1219,6 +1270,7 @@ def test_prompt_b_developer_journey_acceptance_has_obvious_single_owners():
     assert hashlib.sha256((ROOT/a['proof']).read_bytes()).hexdigest()==a['proof_sha256']
 
 
+@pytest.mark.evidence
 def test_prompt_b_cross_platform_acceptance_is_fail_closed_and_evidence_bound():
     d=json.loads((ROOT/'data/validation/prompt-b-cross-platform-acceptance.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='PROMPT_B_CROSS_PLATFORM_ACCEPTANCE_AUDIT' and d['program']=='PROMPT_B' and d['section']==38
@@ -1263,7 +1315,7 @@ def test_prompt_b_exact_current_opencode_t3_is_fresh_source_bound_and_not_inferr
     assert d['summary']=={'required_capabilities':3,'exact_current_capabilities':3,'lifecycle_invariants':61,'violations':0} and d['violations']==[]
     assert re.fullmatch(r'[a-f0-9]{40}',d['exact_source_commit']) and re.fullmatch(r'[a-f0-9]{40}',d['exact_source_tree'])
     assert d['candidate_release']==(ROOT/'VERSION').read_text(encoding='utf-8').strip()
-    obs=d['current_version_observation'];assert obs['tested_binary_version']=='1.18.18' and re.fullmatch(r'[a-f0-9]{64}',obs['tested_binary_sha256']) and isinstance(obs['registry_opencode_latest'],(str,type(None))) and isinstance(obs['registry_sdk_latest'],(str,type(None))) and obs['locked_sdk']=='1.18.18'
+    obs=d['current_version_observation'];assert obs['tested_binary_version']==HOST_TARGET and re.fullmatch(r'[a-f0-9]{64}',obs['tested_binary_sha256']) and isinstance(obs['registry_opencode_latest'],(str,type(None))) and isinstance(obs['registry_sdk_latest'],(str,type(None))) and obs['locked_sdk']==HOST_TARGET
     fresh=json.loads((ROOT/d['fresh_consumer_receipt']).read_text(encoding='utf-8'));assert fresh['status']=='PASS' and fresh['source']['commit']==d['exact_source_commit'] and fresh['package']['release']==d['candidate_release']
     assert {x['status'] for x in d['capabilities'].values()}=={'SUPPORTED_T3'}
     assert d['capability_evidence_mode']=='CURRENT_EXACT_HOST_PACKAGE_PLUS_RUNTIME_EQUIVALENT_EXACT_T3'

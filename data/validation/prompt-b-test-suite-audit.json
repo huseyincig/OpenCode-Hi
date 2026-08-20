@@ -8,7 +8,7 @@
     {
       "invariant": "harness-invocation",
       "owner": "plugin/package.json",
-      "owner_sha256": "cf044a6ab01b5402604c33b7a1a76a7c98e917cd023b2736568e8fee8652383d",
+      "owner_sha256": "8b227a4e66a00c1e67942ef2d69e421bc639d26fad1dd282c861b9c07b39eed3",
       "owner_anchor": "node ../scripts/run-node-test-suite.mjs",
       "proof": "scripts/run-node-test-suite.mjs",
       "proof_sha256": "987692ec836f2b16c62f53c8cc4f4f14551bb35c33298e6d5d22eb8281b25f6c",
@@ -29,7 +29,7 @@
       "owner_sha256": "afd758b103c9e66d2a01237a54ae877071e854ce8bcabbade24f366b2b2c7ede",
       "owner_anchor": "External receipts remain canonical evidence",
       "proof": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
-      "proof_sha256": "71632091e85b2b797550e975246265339de54a82fe7d42ad84744974af64f336",
+      "proof_sha256": "18a664b2208c276448d37fd2a3216ef781dabd2a21c3eaa5f70ff3b1169c5b85",
       "proof_anchor": "\"covered\": 61"
     },
     {
@@ -44,10 +44,10 @@
     {
       "invariant": "skipped-tests-audited",
       "owner": ".github/workflows/release-readiness.yml",
-      "owner_sha256": "6ab917ba7dad499d0c57985d44b897d8a6618aa5ea6abe154c6fb986534b52a5",
+      "owner_sha256": "57ee029bf201b2d97aa0ae6e5d5d7e32071f3508d41638adb546eb62bfecf0c5",
       "owner_anchor": "os: [ubuntu-latest, windows-latest]",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "9f3f606c685e8bbe2fcfbb0f7ec06e0ad248f959d5bfc934ab006f07b1481c16",
+      "proof_sha256": "1b4e53f0563582813da4bd9bb0eb53cbff4e3edb6adaa6a34052f8f564a47175",
       "proof_anchor": "pytest.skip('symlink privilege varies on Windows')"
     },
     {
@@ -107,7 +107,7 @@
     {
       "invariant": "platform-assumptions",
       "owner": ".github/workflows/release-readiness.yml",
-      "owner_sha256": "6ab917ba7dad499d0c57985d44b897d8a6618aa5ea6abe154c6fb986534b52a5",
+      "owner_sha256": "57ee029bf201b2d97aa0ae6e5d5d7e32071f3508d41638adb546eb62bfecf0c5",
       "owner_anchor": "windows-latest",
       "proof": "plugin/test/real-hosted-release-transaction.test.mjs",
       "proof_sha256": "eeb5adaf2a80f8a5a837d7f8defdcf2e5c57c859e86ab59ab0351baadc836644",

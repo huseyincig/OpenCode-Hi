@@ -6,61 +6,91 @@ After the plugin loads, use the complete [Configuration Guide](CONFIGURATION.md)
 
 Türkçe kullanıcı rehberi: [Türkçe Kurulum ve Yapılandırma Rehberi](locales/tr/CONFIGURATION.md).
 
-1. **Git source distribution** — current source is designed for OpenCode's native package-plugin loader using one Git spec; no user-run Bun/npm materialization or wrapper is part of the install contract;
-2. **npm registry distribution** — `opencode-hi@0.2.1` is the release identity carrying this correction; registry availability and T4 status are verified from external publication receipts;
-3. **registration/lifecycle mechanics** — the package setup CLI remains available for npm-package registration/configuration workflows but is not required for the native Git source install.
+1. **npm registry distribution — normal user path** — the package runner performs a one-shot registration/update without a repository checkout or project-root package installation;
+2. **OpenCode native loading** — OpenCode owns package cache/materialization and plugin execution after restart;
+3. **Hi lifecycle ownership** — Hi owns only its exact plugin registration plus `.opencode/hi/**` provenance/policy state; unrelated OpenCode/user configuration stays user/host-owned;
+4. **Git/source distribution — contributor path** — direct Git/local loading remains a development and CI compatibility surface, not the default onboarding path.
 
 ## Prerequisites
 
+Normal users need:
+
 - a supported OpenCode host;
-- Git/network access from OpenCode to the public repository for the native Git path;
-- Python 3 only when using the optional package setup CLI;
-- Node/npm only when using npm distribution or developing/building the repository;
+- Node/npm with `npx` available;
+- registry/network access for the selected `opencode-hi` release;
 - a project directory whose unrelated OpenCode/user configuration must be preserved.
 
-Current exact host support belongs to `data/validation/compatibility-matrix-0.1.0.json` and [Host Support](HOSTS.md).
+If a task requires Hi-owned workspace isolation on OpenCode 1.18.19, enable that host primitive **before starting OpenCode** with `OPENCODE_EXPERIMENTAL_WORKSPACES=true`. OpenCode also treats `OPENCODE_EXPERIMENTAL=true` as the fallback when the workspace-specific variable is unset; an explicit workspace-specific false value overrides the broad flag. Hi otherwise remains usable, but reports workspace isolation unavailable and fails isolation preflight closed instead of creating an unmanaged worktree.
 
-## Git source installation — recommended, no npm registry
+Normal setup does **not** require Git checkout, Bun, an external Python installation, a project `package.json`, or project-root `node_modules`. Python is only needed for the retained legacy/advanced helper commands that are explicitly documented as such below.
 
-Add the package spec to the existing OpenCode configuration:
+Current candidate compatibility targets exact OpenCode `1.18.19`. Historical T3 capability receipts remain provenance for the host versions they actually measured; current release-gate status belongs to [Release Engineering](RELEASE.md) and [Host Support](HOSTS.md).
 
-```json
-{
-  "plugin": [
-    "opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git"
-  ]
-}
-```
+## npm package runner — normal user path
 
-Restart OpenCode. There is no separate `bun install`, `npm install`, `.opencode/package.json`, local wrapper, or manual `node_modules` step in this path: OpenCode owns package materialization and plugin loading.
-
-The current source package is deliberately Git-install friendly: root package scripts avoid the lifecycle names that npm/Pacote treats as Git-dependency preparation triggers, while the `@opencode-ai/plugin` host peer is optional instead of being reinstalled with its large type/runtime graph. Exact OpenCode `1.18.18` native-host acceptance must observe the Git package load and Hi tool surface; Release Readiness also exercises the exact pushed SHA on Ubuntu and Windows.
-
-The immutable `v0.2.0` tag predates this packaging correction and remains historical. Release `v0.2.1` carries the correction; never move or reinterpret `v0.2.0`.
-
-## npm package registration
-
-For release `0.2.1`, OpenCode package configuration uses the exact package spec:
-
-```json
-{
-  "plugin": ["opencode-hi@0.2.1"]
-}
-```
-
-The setup CLI can plan and apply that registration without replacing unrelated configuration. The publishable package includes `scripts/native_plugin_setup.py`, `VERSION`, and the executable npm bin `opencode-hi-setup`. From a source checkout:
+For release `0.2.2`, register the exact package without installing it into the application project:
 
 ```bash
-python3 scripts/native_plugin_setup.py plan /path/to/project --version 0.2.1
-python3 scripts/native_plugin_setup.py install /path/to/project --version 0.2.1
-python3 scripts/native_plugin_setup.py doctor /path/to/project
+npx --yes opencode-hi@0.2.2 setup /path/to/project
 ```
 
-The npm package exposes the same lifecycle as `opencode-hi-setup`. Release T4 verification installs `opencode-hi@0.2.1` from the public registry and loads it on exact OpenCode `1.18.18`; package/runtime support is not claimed from package contents alone.
+`setup` preserves foreign plugins, providers, MCP configuration, themes and unknown user fields. It writes one exact `opencode-hi@0.2.2` plugin entry plus Hi-owned provenance under `.opencode/hi/provenance/**`. It does not create an application-root `package.json`, `package-lock.json`, or `node_modules`.
 
-`plan` is non-mutating. `install` is idempotent after Hi owns the exact registration. `doctor` validates registration/ownership/lifecycle state; it explicitly does **not** substitute for a real OpenCode runtime-load check.
+If the project uses only `opencode.jsonc`, setup fails closed instead of rewriting comments. Maintain an `opencode.json` registration explicitly or convert the configuration deliberately; Hi does not silently rewrite JSONC.
 
-For a local npm install, `./node_modules/.bin/opencode-hi-setup` can be used directly.
+Restart OpenCode after setup. OpenCode then owns registry package cache/materialization and plugin loading. OpenCode 1.18.19 may create host-owned `.opencode/.gitignore`, `.opencode/package.json`, or `.opencode/node_modules` while preparing its plugin runtime; these are **not** Hi-owned bootstrap files and must not be treated as Hi lifecycle state.
+
+After restart:
+
+```bash
+npx --yes opencode-hi@0.2.2 doctor /path/to/project
+```
+
+Package `doctor` checks registration, ownership, drift and pending lifecycle state. It deliberately does not claim provider authentication, successful model calls, or live runtime capability. Run the loaded in-runtime `hi_doctor` tool for effective provider/model inventory and runtime capability truth.
+
+The source tree can describe `0.2.2` before publication, but public-registry availability is not considered proven until npm Trusted Publishing plus fresh-registry/exact-host receipts exist.
+
+## Command reference and interaction model
+
+The npm package runner owns installation lifecycle only. Its canonical commands are:
+
+| Command | Mutation | What it does |
+|---|---:|---|
+| `setup` | yes | creates the first exact Hi-owned registration and ownership provenance |
+| `update` | yes | changes an existing Hi-owned registration to the requested exact release |
+| `doctor` | no | checks registration, ownership, config-hash drift, routing schema and pending lifecycle state |
+| `plan` | no | returns the exact before/after registration plan and blocks conflicts |
+| `rollback` | yes | restores one recorded lifecycle point only when current hashes still match |
+| `recover` | bounded | reconciles only a recorded interrupted setup/update transaction |
+
+`install` is an alias of `setup`; `upgrade` is an alias of `update`. The documented normal path stays `setup` / `update`.
+
+The loaded plugin is a different surface. Exact OpenCode 1.18.19 acceptance observes 31 runtime tools:
+
+- diagnostics/state: `hi_doctor`, `hi_status`, `hi_readiness`, `hi_metrics`, `hi_ledger`;
+- semantic/control: `hi_intent_assess`, `hi_direct_progress`;
+- context and reversible mutation: `hi_context_artifact_add`, `hi_context_artifacts`, `hi_temporary_mutation_register`, `hi_temporary_mutation_revert`;
+- bounded task/worker control: `hi_task_start`, `hi_task_await`, `hi_task_peek`, `hi_task_list`, `hi_task_cancel`;
+- bounded process control: `hi_process_spawn`, `hi_process_read`, `hi_process_write`, `hi_process_wait`, `hi_process_kill`, `hi_process_cleanup`, `hi_process_list`;
+- bounded browser control: `hi_browser_open`, `hi_browser_navigate`, `hi_browser_click`, `hi_browser_type`, `hi_browser_inspect`, `hi_browser_screenshot`, `hi_browser_wait`, `hi_browser_close`.
+
+There is no current `hi_state`, `hi_rotate`, or `hi_reprofile` tool. Live Mission state belongs to `hi_status` / `hi_readiness` / `hi_ledger`; installation ownership state belongs to package `doctor`.
+
+### Is setup fully interactive?
+
+No. The current normal-user setup is deterministic and non-interactive by design:
+
+```text
+setup -> restart OpenCode -> package doctor -> runtime hi_doctor
+```
+
+It does not present a wizard for provider/model/profile choices. Provider authentication and provider configuration remain OpenCode-owned. Hi consumes OpenCode's structured runtime provider state after the host loads, intersects it with `connected` provider IDs when available, then capability-filters and ranks child models. Initial child-role recommendations are generated once from that effective inventory; valid user routing is preserved thereafter.
+
+Advanced/manual changes such as execution policy, routing strategy, concurrency and explicit role-model mappings are available through the retained Python `reconfigure` / `role-models` helper below. They are not required for normal npm installation.
+
+## Git/source path — contributor and CI compatibility
+
+Direct Git or local plugin loading remains supported for development/CI. Use an exact repository SHA/spec for reproducible acceptance and verify that the host actually loads the plugin. Unpinned Git source is not a release identity and is no longer the normal-user installation recommendation.
 
 ## Development/source loading
 
@@ -136,17 +166,27 @@ python3 scripts/native_plugin_setup.py role-models /path/to/project --list-avail
 
 The command supports explicit model/fallback/variant mappings for the six Hi child roles only: `coder`, `architect`, `repository-explorer`, `qa-reviewer`, `security-reviewer`, and `visual-qa`. `manager` and `working-manager` remain primary OpenCode roles and are not valid Hi role-model targets; their primary model is selected through OpenCode. Role remains distinct from model; configuring one does not merge their semantic ownership.
 
-## Upgrade
+For OpenCode `1.18.19`, Hi's runtime inventory comes from OpenCode's structured provider state and is intersected with the host's `connected` provider IDs when that field is exposed. OpenCode has already applied `enabled_providers`, `disabled_providers`, provider `whitelist`/`blacklist`, alpha/deprecated filtering and runtime provider overrides before Hi ranks child models. Hi does not scrape the full models.dev catalog and does not fabricate an offline model list when the host inventory is unavailable.
 
-Upgrade requires active Hi setup ownership and the exact currently owned package spec:
+OpenCode `1.18.19` does **not** have a model-level `disabled: true` picker filter; model filtering for this host version is provider `whitelist` / `blacklist`. Do not copy newer-schema `model.disabled` examples into a 1.18.19 configuration.
+
+Hi does not ship a fixed provider/model recommendation. On the first effective OpenCode runtime inventory, it filters to enabled/policy-allowed models, applies hard role capability requirements, and uses the canonical cost/quality scorer to choose a one-shot initial recommendation for each eligible child role. The selected IDs therefore depend on the models you actually enabled. `visual-qa` additionally requires an explicit host-reported image-input capability; a text-only model or unverified `host-default` is rejected before ranking and again before dispatch. Once the generated routing file exists, those role choices are user-editable preferences and later update/inventory refresh does not overwrite them.
+
+There is no arbitrary eight-model cap in current routing or doctor output. A model appearing in OpenCode's runtime inventory means it passed the host's configuration/inventory construction; it does **not** by itself prove credentials or a successful remote inference call.
+
+## Update
+
+Update requires active Hi setup ownership and the exact currently owned package spec. Run the target release's package runner; for `0.2.2`:
 
 ```bash
-python3 scripts/native_plugin_setup.py upgrade /path/to/project --version <new-version>
+npx --yes opencode-hi@0.2.2 update /path/to/project
 ```
 
-The helper preserves foreign plugins, MCP configuration, themes and unknown user fields. It does not treat an arbitrary pre-existing `opencode-hi` entry as permission to rewrite it.
+The command preserves foreign plugins, providers, MCP configuration, themes and unknown user fields. It does not treat an arbitrary pre-existing `opencode-hi` entry as permission to rewrite it, and it refuses owned-config drift rather than overwriting user changes.
 
-## Uninstall
+## Uninstall — legacy/advanced helper
+
+Uninstall is not part of the M16 normal-user three-command surface. When explicit removal is required, the retained Python helper remains available from a source checkout or Python-capable package environment:
 
 ```bash
 python3 scripts/native_plugin_setup.py uninstall /path/to/project
@@ -156,20 +196,20 @@ Uninstall removes only the registration/state owned by the setup lifecycle. Inde
 
 ## One-step rollback
 
-Each successful setup mutation leaves one bounded rollback point:
+Each successful setup/update mutation leaves one bounded rollback point:
 
 ```bash
-python3 scripts/native_plugin_setup.py rollback /path/to/project
+npx --yes opencode-hi@0.2.2 rollback /path/to/project
 ```
 
 Rollback applies only while the post-operation configuration still matches the recorded hash. If the user changed the configuration afterward, rollback fails closed instead of overwriting that work. A fresh-install rollback restores prior configuration-file absence when the file did not exist before installation.
 
 ## Crash recovery
 
-A pending install/upgrade/uninstall transaction blocks new setup mutation until it is reconciled:
+A pending setup/update transaction blocks new lifecycle mutation until it is reconciled:
 
 ```bash
-python3 scripts/native_plugin_setup.py recover /path/to/project
+npx --yes opencode-hi@0.2.2 recover /path/to/project
 ```
 
 Recovery completes/discards only a recorded before/after state it can prove. Ambiguous drift is blocked.

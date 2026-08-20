@@ -1,78 +1,65 @@
-// Default roleModels regression guard (2.0.10).
-// Verifies that auto-init writes the correct default per-role map
-// when `.opencode/hi/policy/routing.json` does not yet exist.
-
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtempSync, mkdirSync, rmSync, existsSync, readFileSync } from 'node:fs'
+import { mkdtempSync, rmSync, existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { ensureProjectRoutingConfig, DEFAULT_ROLE_MODELS_OPENCODE_GO } from '../dist/config/auto-init.js'
+import { ensureProjectRoutingConfig } from '../dist/config/auto-init.js'
+import { DEFAULT_HI_CONFIG } from '../dist/config/defaults.js'
+import { recommendInitialRoleModels } from '../dist/runtime/routing/model-resolver.js'
 
-function makeProject() {
-  return mkdtempSync(join(tmpdir(), 'hi-routing-defaults-'))
-}
+function makeProject() { return mkdtempSync(join(tmpdir(), 'hi-routing-defaults-')) }
+const ALL_CHILD_ROLES=['coder','architect','repository-explorer','qa-reviewer','security-reviewer','visual-qa']
+function cfg(){return structuredClone(DEFAULT_HI_CONFIG)}
 
-test('default roleModels contains only model-routed child roles', () => {
-  // Only Hi child roles are model-routed by TaskRuntime. Primary manager roles stay OpenCode-owned.
-  // Runtime auto-init validates these IDs against the live OpenCode inventory before persisting.
-  assert.deepEqual(DEFAULT_ROLE_MODELS_OPENCODE_GO, {
-    coder: ['opencode-go/deepseek-v4-flash','opencode-go/mimo-v2.5','opencode-go/qwen3.7-plus','opencode-go/mimo-v2.5-pro'],
-    'security-reviewer': ['opencode-go/mimo-v2.5-pro','opencode-go/qwen3.6-plus','opencode-go/hy3'],
-    'qa-reviewer': ['opencode-go/hy3','opencode-go/qwen3.6-plus','opencode-go/mimo-v2.5-pro'],
-    architect: ['opencode-go/qwen3.7-plus','opencode-go/minimax-m2.7','opencode-go/mimo-v2.5-pro'],
-    'visual-qa': ['opencode-go/hy3','opencode-go/mimo-v2.5','opencode-go/qwen3.6-plus'],
-    'repository-explorer': ['opencode-go/mimo-v2.5','opencode-go/deepseek-v4-flash','opencode-go/qwen3.7-plus'],
-  })
+test('M16 initial recommendations are derived from effective model scoring, not built-in provider/model IDs', () => {
+  const inventory=[
+    {id:'alpha/general',provider:'alpha',tags:['balanced','reasoning','coding','high-assurance'],quality:9,cost:.2,visionCapable:false},
+    {id:'beta/general',provider:'beta',tags:['balanced','reasoning','coding','high-assurance'],quality:3,cost:.1,visionCapable:false},
+    {id:'vision/eye',provider:'vision',tags:['balanced','reasoning','coding','high-assurance'],quality:8,cost:.3,visionCapable:true},
+  ]
+  const first=recommendInitialRoleModels(inventory,cfg())
+  assert.equal(first.coder?.[0],'alpha/general')
+  assert.equal(first['qa-reviewer']?.[0],'alpha/general')
+  assert.equal(first['visual-qa']?.[0],'vision/eye')
+  const changed=inventory.map(model=>model.id==='beta/general'?{...model,quality:30}:model)
+  const second=recommendInitialRoleModels(changed,cfg())
+  assert.equal(second.coder?.[0],'beta/general')
+  assert.equal(second['qa-reviewer']?.[0],'beta/general')
 })
 
-test('ensureProjectRoutingConfig writes the default file when missing', () => {
-  const project = makeProject()
-  try {
-    const result = ensureProjectRoutingConfig(project)
-    assert.equal(result.created, true)
-    assert.equal(result.path, join(project, '.opencode', 'hi', 'policy', 'routing.json'))
-    const content = JSON.parse(readFileSync(result.path, 'utf8'))
-    assert.equal(content.schema, 1)
-    assert.equal(content.type, 'hi-routing')
-    assert.equal(content.routing.strategy, 'cost-quality')
-    assert.deepEqual(content.routing.roleModels, DEFAULT_ROLE_MODELS_OPENCODE_GO)
-    assert.equal(content.applied_by, 'opencode-hi')
-  } finally { rmSync(project, { recursive: true, force: true }) }
-})
-
-test('ensureProjectRoutingConfig is idempotent on a second call', () => {
-  const project = makeProject()
-  try {
-    const first = ensureProjectRoutingConfig(project)
-    const second = ensureProjectRoutingConfig(project)
-    assert.equal(first.created, true)
-    assert.equal(second.created, false, 'second call must not overwrite')
-  } finally { rmSync(project, { recursive: true, force: true }) }
-})
-
-
-test('inventory-aware auto-init persists only live curated recommendations', () => {
-  const project = makeProject()
-  try {
-    const live=['opencode-go/mimo-v2.5','opencode-go/deepseek-v4-flash']
-    const result=ensureProjectRoutingConfig(project,live)
-    assert.equal(result.created,true)
-    const content=JSON.parse(readFileSync(result.path,'utf8'))
-    assert.deepEqual(content.routing.roleModels,{
-      coder:['opencode-go/deepseek-v4-flash','opencode-go/mimo-v2.5'],
-      'visual-qa':['opencode-go/mimo-v2.5'],
-      'repository-explorer':['opencode-go/mimo-v2.5','opencode-go/deepseek-v4-flash'],
-    })
-  } finally { rmSync(project,{recursive:true,force:true}) }
-})
-
-test('inventory-aware auto-init does not persist unavailable model guesses', () => {
-  const project=makeProject()
-  try {
-    const result=ensureProjectRoutingConfig(project,['other-provider/model-x'])
+test('M16 auto-init refuses to persist a recommendation before effective runtime ranking exists', () => {
+  const project=makeProject();try{
+    const result=ensureProjectRoutingConfig(project)
     assert.equal(result.created,false)
-    assert.equal(result.reason,'runtime-inventory-has-no-curated-recommended-models')
+    assert.equal(result.reason,'runtime-inventory-required-for-initial-recommendation')
     assert.equal(existsSync(result.path),false)
-  } finally { rmSync(project,{recursive:true,force:true}) }
+  }finally{rmSync(project,{recursive:true,force:true})}
+})
+
+test('M16 auto-init persists runtime-ranked recommendations and leaves ineligible roles adaptive', () => {
+  const project=makeProject();try{
+    const recommendations={coder:['alpha/general'],'qa-reviewer':['alpha/general'],'visual-qa':['vision/eye']}
+    const result=ensureProjectRoutingConfig(project,recommendations)
+    assert.equal(result.created,true)
+    assert.equal(result.configuredRoles,3)
+    const content=JSON.parse(readFileSync(result.path,'utf8'))
+    assert.equal(content.schema,1)
+    assert.equal(content.type,'hi-routing')
+    assert.equal(content.routing.strategy,'cost-quality')
+    assert.equal(content.routing.modelPolicy,'recommended')
+    assert.deepEqual(content.routing.roleModels,recommendations)
+    assert.deepEqual(content.routing.adaptiveRoles,ALL_CHILD_ROLES.filter(x=>!recommendations[x]))
+    assert.equal(content.applied_by,'opencode-hi')
+  }finally{rmSync(project,{recursive:true,force:true})}
+})
+
+test('M16 generated initial recommendations are one-shot and never overwrite later user choices', () => {
+  const project=makeProject();try{
+    const first=ensureProjectRoutingConfig(project,{coder:['alpha/first']})
+    const before=readFileSync(first.path,'utf8')
+    const second=ensureProjectRoutingConfig(project,{coder:['beta/later'],'qa-reviewer':['beta/reviewer']})
+    assert.equal(first.created,true)
+    assert.equal(second.created,false)
+    assert.equal(readFileSync(first.path,'utf8'),before)
+  }finally{rmSync(project,{recursive:true,force:true})}
 })

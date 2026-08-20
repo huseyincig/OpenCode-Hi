@@ -89,16 +89,16 @@
     {
       "invariant": "task-cancellation",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "a79261104fd8c84cf1d825a45b23c300edd0819aaa345441f73863367e0bc598",
+      "owner_sha256": "475ae7ee8d93030ddf6b35463f6ba2120e8e4319b933410e64fb34902663df8a",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
+      "proof_sha256": "1e4929ed8156ba5a253c1ae50feb3d6c243c452990248114f85c3d0e0a1c142d",
       "owner_anchor": "async cancel(m:MissionState",
       "proof_anchor": "W2 explicit isolated task provisions one lease, binds child workspace, preserves deny permission, and cleanup follows child abort"
     },
     {
       "invariant": "task-recovery",
       "owner": "plugin/src/runtime/task/task-recovery-coordinator.ts",
-      "owner_sha256": "52fda2ededee4d2c75b45842590b406e957131a9ced214559e9fb2ee8ce10f1d",
+      "owner_sha256": "d33108e8ed9d6eaebfffbbc796302eb90f1e94294b4aa6e00821b79b94572759",
       "proof": "plugin/test/crash-restart-survival.test.mjs",
       "proof_sha256": "3a4196a54f17ee9edb281c81055f41fe638e0150590ebfc6f1b4d5636ac86ba9",
       "owner_anchor": "recoverRuntimeFailure",
@@ -107,7 +107,7 @@
     {
       "invariant": "dependency-unblock",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "a79261104fd8c84cf1d825a45b23c300edd0819aaa345441f73863367e0bc598",
+      "owner_sha256": "475ae7ee8d93030ddf6b35463f6ba2120e8e4319b933410e64fb34902663df8a",
       "proof": "plugin/test/scheduler-hardening.test.mjs",
       "proof_sha256": "4f34d1dee8001c1434d403ce0fae27f4a23972af70f3f2eae17bb683cfbfcd52",
       "owner_anchor": "drainQueue",

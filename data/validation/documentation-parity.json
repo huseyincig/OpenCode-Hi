@@ -1,20 +1,20 @@
 {
   "schema": 1,
-  "release": "0.2.1",
+  "release": "0.2.2",
   "kind": "DOCUMENTATION_PARITY",
   "status": "PASS",
   "inputs": {
     "documentation_ownership": {
       "path": "data/documentation-ownership.json",
-      "sha256": "d21adec0bb0ce5d27194c0248a4932e99bdfee578c9fc3858d5e4b06162aec85"
+      "sha256": "def8950d64b50eab1dff2ff705f87a03ffb9eb9a7ce573737005477f9af49e41"
     },
     "compatibility": {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
-      "sha256": "c17c1480acc10465193bef379245d5b322c84a659a597e6c5962ab2cbd8618e8"
+      "sha256": "499d383de2c1379b6153d6bd86d69b2553a01a3f2e545b3d2de6490f0056e724"
     },
     "release_status": {
-      "path": "data/validation/release-status-0.2.1.json",
-      "sha256": "e6780dbb64272d0080f5eb47e0d2a8f0ecba2d825b61e2be5b2a9d2e1604fa98"
+      "path": "data/validation/release-status-0.2.2.json",
+      "sha256": "3951279f23d61f43e086c93b3033e9558e44268c1f19d63f8d9ee60e0c88cc6e"
     }
   },
   "checked_current_documents": [

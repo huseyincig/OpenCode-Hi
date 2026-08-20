@@ -42,7 +42,7 @@
     {
       "area": "event-ordering",
       "owner": "plugin/src/runtime/application/runtime-event-controller.ts",
-      "owner_sha256": "d6e57e53d26b1d631f89e69cf428a4ca616a1eb7eef09cc4e56642d03470edaf",
+      "owner_sha256": "28ac259056c608a359f76686a941882b1ceabae8f9ce102bcc6a56d64702a426",
       "owner_anchor": "ev.kind==='permission-asked'",
       "proof": "plugin/test/q4-property-fuzz.test.mjs",
       "proof_sha256": "5b73eee33e6a745e2b740878a3619685fd2ad3cd98224d68f855bfb5717409dd",
@@ -60,7 +60,7 @@
     {
       "area": "config",
       "owner": "plugin/src/config/resolver.ts",
-      "owner_sha256": "ba7593ba17038cba103d460b97c78bf6530e0e6588ca15cbece576d7347a1115",
+      "owner_sha256": "ce27c09e189d3ffb70473af8d8ca57cc6343a7b51d3fa21a5f7ac802c69e223f",
       "owner_anchor": "resolveHiConfigWithReport",
       "proof": "plugin/test/q4-property-fuzz.test.mjs",
       "proof_sha256": "5b73eee33e6a745e2b740878a3619685fd2ad3cd98224d68f855bfb5717409dd",

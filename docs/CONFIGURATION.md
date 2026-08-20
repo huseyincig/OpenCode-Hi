@@ -19,53 +19,31 @@ The mechanical option inventory is `data/hi-config-options.json`. The generated 
 
 If Hi is already visible in OpenCode, continue to [Platform paths](#1-platform-paths). Installation and configuration are separate: installation makes the plugin load; `routing.json` controls Hi behavior after it loads.
 
-### npm/OpenCode package registration
+### npm package runner — normal user path
 
-The OpenCode package registration for release `0.2.1` is:
-
-```json
-{
-  "plugin": [
-    "opencode-hi@0.2.1"
-  ]
-}
-```
-
-Put that entry in the project's OpenCode configuration without deleting unrelated plugins/settings. Restart OpenCode and verify that Hi tools are visible.
-
-If you also want the package-provided `opencode-hi-setup` CLI in the project, install the npm package as a development dependency:
-
-#### Windows PowerShell
-
-```powershell
-Set-Location C:\Projects\MyApp
-npm install --save-dev opencode-hi@0.2.1
-.\node_modules\.bin\opencode-hi-setup.cmd doctor C:\Projects\MyApp
-```
-
-#### Linux / macOS
+Windows, Linux and macOS use the same Node-based package runner. For release `0.2.2`:
 
 ```bash
-cd /path/to/MyApp
-npm install --save-dev opencode-hi@0.2.1
-./node_modules/.bin/opencode-hi-setup doctor "$PWD"
+npx --yes opencode-hi@0.2.2 setup /path/to/MyApp
 ```
 
-### Git source without the npm registry — recommended
+On Windows PowerShell the project path can be native Windows syntax:
 
-Windows, Linux and macOS use the same OpenCode package spec. Add it to the existing `plugin` array in `opencode.json` / `opencode.jsonc`:
-
-```json
-{
-  "plugin": [
-    "opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git"
-  ]
-}
+```powershell
+npx --yes opencode-hi@0.2.2 setup C:\Projects\MyApp
 ```
 
-Restart OpenCode. **Do not create a wrapper and do not run Bun/npm for this install path.** OpenCode owns Git package materialization and plugin loading. The Hi package root avoids npm/Pacote Git-preparation lifecycle triggers; its OpenCode plugin peer is optional so the host's large type/runtime dependency graph is not redundantly installed.
+The command preserves unrelated OpenCode settings and registers the exact package spec. It does not install a project development dependency, create application-root package metadata, or require an external Python interpreter. Restart OpenCode, then run:
 
-The immutable `v0.2.0` tag is older than this direct-Git packaging fix. Keep that release immutable; release `v0.2.1` contains the correction, while the unpinned Git source spec follows current repository source. See [Installation and Lifecycle](INSTALLATION.md) and [Host Support](HOSTS.md) for evidence boundaries.
+```bash
+npx --yes opencode-hi@0.2.2 doctor /path/to/MyApp
+```
+
+Use the in-runtime `hi_doctor` tool after the plugin loads to inspect the live effective provider/model inventory. Static package `doctor` verifies registration/ownership, not provider authentication or successful model execution.
+
+### Git/source loading — contributor path
+
+Direct Git/local loading remains available for source development and CI compatibility, but it is not the normal-user onboarding recommendation. Reproducible acceptance should use an exact repository SHA/spec and must verify that OpenCode actually loaded the plugin. See [Installation and Lifecycle](INSTALLATION.md) and [Host Support](HOSTS.md) for the evidence boundaries.
 
 ## 1. Platform paths
 
@@ -97,7 +75,7 @@ Restart OpenCode after changing project routing configuration when the host does
 
 ## 2. Do I need to configure anything?
 
-No. Hi has built-in defaults and can operate without a hand-written file. When the project routing file is missing, Hi may create a schema-1 `hi-routing` file containing inventory-aware recommended role models. Those recommendations are **preferences**, not vendor locks: unavailable recommended models are filtered by runtime inventory/policy and normal routing can continue with eligible models.
+No. Hi can operate without a hand-written routing file. On the first effective runtime inventory, Hi filters to effective-enabled, role-eligible models and uses the same runtime cost/quality scoring logic to create one-shot initial child-role recommendations. There are **no built-in provider/model IDs** in that recommendation step. The persisted choices are preferences and remain user-editable; later automatic refresh/update does not overwrite a valid existing routing file.
 
 Core built-in defaults are:
 
@@ -266,7 +244,7 @@ OpenCode's supported project/global default-model control is the root `model` fi
 
 See the official OpenCode model guide: <https://opencode.ai/docs/models/>. OpenCode also supports model properties on user-defined agent configurations, but **do not redeclare canonical Hi agent IDs** such as `manager` or `working-manager` just to set a model: Hi protects its injected role contracts and rejects incompatible same-name agent definitions as collisions. See <https://opencode.ai/docs/agents/> for the host's generic agent model mechanism.
 
-Auto-init writes recommendations for the six child roles only. `opencode-hi-setup role-models --set manager=...` or `working-manager=...` is blocked with an action telling you to choose the primary model in OpenCode instead.
+M16 auto-init waits for OpenCode's effective runtime inventory before writing any initial role recommendation. For each Hi-routed child role, it applies provider/model policy and hard role-capability filters first, then uses the canonical runtime cost/quality scorer to choose the initial model from the models that are actually effective-enabled at that moment. No provider or model ID is hard-coded as the recommendation. `visual-qa` can only receive a recommendation from models with explicit image-input capability. Once the routing file exists, its role choices are user-owned preferences: later inventory refreshes and updates do not replace them. The retained advanced `opencode-hi-setup role-models --set manager=...` / `working-manager=...` commands are still blocked with an action telling you to choose the primary model in OpenCode instead.
 
 ## 7. Model-routing controls: which mechanism should I use?
 
@@ -285,6 +263,14 @@ visual-qa
 
 `manager` and `working-manager` remain valid values of `primaryMode`, but they are not valid model-map targets.
 
+### 7.0 Effective runtime inventory on OpenCode 1.18.19
+
+Hi does not treat the full provider/model catalog as usable inventory. It consumes OpenCode's structured provider state, intersects the provider set with the host's `connected` IDs when exposed, preserves host model capability metadata, and then applies Hi's own provider/model/role policy. OpenCode 1.18.19 has already applied `enabled_providers`, `disabled_providers`, provider `whitelist` / `blacklist`, alpha/deprecated filtering and provider runtime overrides before this ranking step.
+
+For this exact host version, model-level `disabled: true` is not the picker filter; use the provider `whitelist` / `blacklist` mechanism for OpenCode-side model filtering. Hi also has no arbitrary eight-model display or routing cap.
+
+A model being present in the inventory is not proof that credentials are valid or that a remote inference has succeeded. Conversely, when inventory is unavailable Hi does not invent a bundled fallback catalog. `visual-qa` has a stronger rule: the chosen model must explicitly report image-input capability. Text-only candidates and an unverified `host-default` are rejected before ranking and revalidated again at dispatch/fallback time.
+
 ### 7.1 `models.mode`: project-level child-model preference
 
 `models.mode` accepts `adaptive`, `fixed`, or `role-mapped`.
@@ -297,7 +283,7 @@ These are **child-routing preferences/overrides**, not model allowlists. If the 
 
 ### 7.2 `routing.roleModels`: ordered role candidates and fallback priors
 
-`routing.roleModels` accepts an ordered array for each supported child role. It is an ordered **routing prior**, not an unconditional hard order. When all configured role candidates are live/policy-allowed and bounded feedback is still sparse, the recommended fast path preserves the configured order. If candidates are unavailable/rejected or enough admitted feedback exists, eligible configured candidates can be reranked by the normal routing logic. Fallback output is still bounded by `routing.maxFallbacks`.
+`routing.roleModels` accepts an ordered array for each supported child role. It is an ordered **routing prior**, not an unconditional hard order. The first runtime-generated recommendation is written here too, so after that point the same field becomes the user's editable preference surface. When all configured candidates are live/policy-allowed and bounded feedback is still sparse, the configured-role prior fast path preserves the configured order. If candidates are unavailable/rejected or enough admitted feedback exists, eligible configured candidates can be reranked by the normal routing logic. Fallback output is still bounded by `routing.maxFallbacks`.
 
 Example:
 
@@ -354,7 +340,7 @@ In `opencode.json`:
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["opencode-hi@0.2.1"],
+  "plugin": ["opencode-hi@0.2.2"],
   "model": "provider/model-x"
 }
 ```
@@ -790,7 +776,11 @@ Important exceptions/composition rules:
 
 Project configuration can narrow behavior but cannot override OpenCode permission/authority/provider denials.
 
-## 23. CLI configuration from an npm installation
+## 23. Advanced legacy Python CLI configuration
+
+The M16 normal-user package runner intentionally keeps the public lifecycle small: `setup`, `update`, `doctor`, `plan`, `rollback`, and `recover`. The older Python helper remains for advanced/manual configuration workflows such as `reconfigure` and `role-models`. These commands require Python and are **not** prerequisites for normal npm onboarding.
+
+If you deliberately install the package locally for this advanced helper, the following examples apply.
 
 If installed from npm into the project:
 
@@ -858,6 +848,8 @@ List models visible to the helper:
 ./node_modules/.bin/opencode-hi-setup role-models /path/to/MyApp --list-available
 ```
 
+On OpenCode 1.18.19 this legacy helper calls `opencode models --pure`. It returns the complete host-filtered ID list it can observe and returns an empty list if the host query is unavailable; it does not fall back to a bundled OpenCode-Go catalog. This helper list is still not authentication proof; live Hi routing uses the structured runtime provider inventory described above.
+
 Set one or multiple candidates for roles:
 
 ```bash
@@ -870,11 +862,11 @@ Set one or multiple candidates for roles:
 
 On PowerShell use the same arguments with `.cmd` and Windows path syntax.
 
-`--set ROLE=PRIMARY,FALLBACK1,FALLBACK2` writes `routing.roleModels`. `--variant ROLE:MODEL=VARIANT` writes `routing.roleVariants`. The CLI bounds each explicit `--set` role list and preserves routing fields it does not own.
+`--set ROLE=PRIMARY,FALLBACK1,FALLBACK2` writes `routing.roleModels`. `--variant ROLE:MODEL=VARIANT` writes `routing.roleVariants`. Current M16 preserves the complete de-duplicated ordered role list rather than truncating it to an arbitrary seven/eight-entry limit, and it preserves routing fields it does not own.
 
 Primary-role assignments are intentionally rejected. For example, `--set manager=provider/model` returns `BLOCKED` with reason `role-model-primary-owned-by-opencode`.
 
-`--defaults --policy recommended` writes inventory-validated recommended role mappings. Recommended defaults are preferences; unavailable models are not forced into runtime use.
+`--defaults --policy recommended` in the legacy Python helper no longer invents or duplicates model ranking from an ID-only CLI list. It returns `DEFERRED` and tells you to restart OpenCode so the canonical runtime can rank the effective-enabled model metadata and create the one-shot initial recommendations. Use `--set ROLE=...` when you want to replace those recommendations manually.
 
 The role-model CLI accepts only `coder`, `architect`, `repository-explorer`, `qa-reviewer`, `security-reviewer`, and `visual-qa`. Attempts to assign `manager` or `working-manager` are blocked because primary model ownership belongs to OpenCode.
 
@@ -926,7 +918,7 @@ Possible reasons include:
 - native OpenCode provider policy denies/disables the provider;
 - model is marked non-write-capable for a write-capable route;
 - an explicit task model or stronger project model mode takes precedence;
-- bounded feedback/scoring reorders candidates when the recommended fast path no longer applies.
+- bounded feedback/scoring reorders candidates when the configured-role prior fast path no longer applies.
 
 ### My first role model is unavailable
 

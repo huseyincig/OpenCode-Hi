@@ -63,7 +63,7 @@ export function loadProjectRoutingConfig(projectRoot) {
     for (const key of ['allowedProviders', 'deniedModels'])
         if (Array.isArray(r[key])) {
             const xs = r[key].filter((x) => typeof x === 'string' && x.trim().length > 0).map(x => x.trim());
-            routing[key] = [...new Set(xs)].slice(0, 8);
+            routing[key] = [...new Set(xs)];
         }
     if (typeof r.maxFallbacks === 'number' && Number.isFinite(r.maxFallbacks))
         routing.maxFallbacks = Math.max(0, Math.min(6, Math.floor(r.maxFallbacks)));

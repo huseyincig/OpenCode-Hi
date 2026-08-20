@@ -9,7 +9,7 @@ function validNumber(raw) { return typeof raw === 'number' && Number.isFinite(ra
 function bounded(raw, fallback, min, max) { return validNumber(raw) ? Math.max(min, Math.min(max, Math.floor(raw))) : fallback; }
 function boundedLayer(high, low, fallback, min, max) { return validNumber(high) ? bounded(high, fallback, min, max) : validNumber(low) ? bounded(low, fallback, min, max) : fallback; }
 function modelList(raw) { if (typeof raw === 'string')
-    raw = [raw]; return Array.isArray(raw) ? [...new Set(raw.filter((x) => typeof x === 'string' && x.trim().length > 0).map(x => x.trim()))].slice(0, 8) : []; }
+    raw = [raw]; return Array.isArray(raw) ? [...new Set(raw.filter((x) => typeof x === 'string' && x.trim().length > 0).map(x => x.trim()))] : []; }
 function roleModels(raw) { if (!isRecord(raw))
     return {}; const out = {}; for (const [k, v] of Object.entries(raw)) {
     if (!isModelRoutedChildRole(k))

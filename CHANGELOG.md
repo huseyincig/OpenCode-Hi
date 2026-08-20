@@ -4,6 +4,15 @@ All notable changes to OpenCode-Hi are documented here.
 
 ## Unreleased
 
+## 0.2.2
+
+- Makes npm the normal-user bootstrap path with a Node-only `opencode-hi` package runner (`setup`, `update`, `doctor`, plus bounded recovery commands), while preserving the existing transactional ownership/provenance model and the legacy Python setup surface for compatibility.
+- Moves initial child-model routing to OpenCode's effective runtime provider inventory: Hi no longer fabricates an offline provider catalog, no longer depends on the unsupported OpenCode 1.18.19 `models --json` shape, and no longer truncates configured or reported model lists at eight entries.
+- Preserves host-reported image-input capability and makes it a hard prerequisite for `visual-qa`; a visual task will not silently fall through to a text-only or unverified host-default model.
+- Removes hard-coded child-role model recommendations. On first effective inventory, Hi now ranks the models the user actually enabled with the canonical role/category cost-quality scorer, persists one-shot initial child-role preferences, preserves later user edits across refresh/update, and keeps `manager` / `working-manager` model ownership OpenCode-native.
+- Retargets the package SDK/plugin compatibility identity to exact OpenCode 1.18.19. Linux/aarch64 pre-publication packed-artifact acceptance is verified locally; Windows Desktop 1.18.19 and fresh-registry 0.2.2 acceptance remain release gates and are not claimed by this source state.
+- Makes OpenCode 1.18.19 workspace-isolation health/preflight respect the host's `OPENCODE_EXPERIMENTAL_WORKSPACES` gate, avoiding false-positive capability health and failing closed before the host can materialize an unowned worktree when workspace support is disabled.
+
 ## 0.2.1
 
 - Simplifies model ownership: OpenCode owns the primary `manager` / `working-manager` session model, while Hi role-model routing accepts only the six child roles. Auto-init, project config resolution and setup CLI now enforce the same boundary.

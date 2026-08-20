@@ -7,74 +7,74 @@
   "invariants": [
     {
       "invariant": "installation",
-      "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
-      "owner_anchor": "'install':lambda:install",
-      "proof": "tests/test_hi.py",
-      "proof_sha256": "9f3f606c685e8bbe2fcfbb0f7ec06e0ad248f959d5bfc934ab006f07b1481c16",
-      "proof_anchor": "test_prompt_b_cli_malformed_config_fails_closed_without_overwrite"
+      "owner": "scripts/opencode-hi.mjs",
+      "owner_sha256": "48abe89dcf51bfc6acb7b2f766f4f9e697471951109a5bb5fcfe14b4a946caf9",
+      "owner_anchor": "if(command==='setup'||command==='install')",
+      "proof": "tests/test_node_setup.mjs",
+      "proof_sha256": "e25d08281a865708224a287bc72c7605ea44e8b8217a1d4016f85445498b9e13",
+      "proof_anchor": "M16 Node setup preserves foreign OpenCode config"
     },
     {
       "invariant": "first-run",
-      "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
-      "owner_anchor": "'action':action",
-      "proof": "tests/test_hi.py",
-      "proof_sha256": "9f3f606c685e8bbe2fcfbb0f7ec06e0ad248f959d5bfc934ab006f07b1481c16",
-      "proof_anchor": "test_prompt_b_cli_first_run_doctor_supplies_recovery_action"
+      "owner": "scripts/opencode-hi.mjs",
+      "owner_sha256": "48abe89dcf51bfc6acb7b2f766f4f9e697471951109a5bb5fcfe14b4a946caf9",
+      "owner_anchor": "routing_initialization:'pending-effective-runtime-inventory'",
+      "proof": "tests/test_node_setup.mjs",
+      "proof_sha256": "e25d08281a865708224a287bc72c7605ea44e8b8217a1d4016f85445498b9e13",
+      "proof_anchor": "M16 Node doctor distinguishes package registration truth from pending effective runtime routing"
     },
     {
       "invariant": "doctor-diagnostics",
-      "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
-      "owner_anchor": "def doctor(project:Path)",
-      "proof": "tests/test_hi.py",
-      "proof_sha256": "9f3f606c685e8bbe2fcfbb0f7ec06e0ad248f959d5bfc934ab006f07b1481c16",
-      "proof_anchor": "test_prompt_b_cli_first_run_doctor_supplies_recovery_action"
+      "owner": "scripts/opencode-hi.mjs",
+      "owner_sha256": "48abe89dcf51bfc6acb7b2f766f4f9e697471951109a5bb5fcfe14b4a946caf9",
+      "owner_anchor": "function doctor(project)",
+      "proof": "tests/test_node_setup.mjs",
+      "proof_sha256": "e25d08281a865708224a287bc72c7605ea44e8b8217a1d4016f85445498b9e13",
+      "proof_anchor": "M16 Node doctor distinguishes package registration truth from pending effective runtime routing"
     },
     {
       "invariant": "help",
-      "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
-      "owner_anchor": "argparse.ArgumentParser",
-      "proof": "tests/test_hi.py",
-      "proof_sha256": "9f3f606c685e8bbe2fcfbb0f7ec06e0ad248f959d5bfc934ab006f07b1481c16",
-      "proof_anchor": "native_plugin_setup.py"
+      "owner": "scripts/opencode-hi.mjs",
+      "owner_sha256": "48abe89dcf51bfc6acb7b2f766f4f9e697471951109a5bb5fcfe14b4a946caf9",
+      "owner_anchor": "function usage()",
+      "proof": "tests/test_node_setup.mjs",
+      "proof_sha256": "e25d08281a865708224a287bc72c7605ea44e8b8217a1d4016f85445498b9e13",
+      "proof_anchor": "M16 package-runner help is Node-native"
     },
     {
       "invariant": "command-inventory",
-      "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
-      "owner_anchor": "choices=['plan','install','upgrade','doctor','uninstall','rollback','recover','role-models','reconfigure']",
-      "proof": "scripts/run-install-lifecycle.py",
-      "proof_sha256": "4a3a60ac330f02d7425946a1fea3e3da0fb1040867b94a40ba0e176937973cc4",
-      "proof_anchor": "m.rollback(project)"
+      "owner": "scripts/opencode-hi.mjs",
+      "owner_sha256": "48abe89dcf51bfc6acb7b2f766f4f9e697471951109a5bb5fcfe14b4a946caf9",
+      "owner_anchor": "<setup|update|doctor|plan|rollback|recover>",
+      "proof": "tests/test_node_setup.mjs",
+      "proof_sha256": "e25d08281a865708224a287bc72c7605ea44e8b8217a1d4016f85445498b9e13",
+      "proof_anchor": "M16 package-runner help is Node-native"
     },
     {
       "invariant": "bounded-errors-no-stack",
-      "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
-      "owner_anchor": "e.detail[:500]",
-      "proof": "tests/test_hi.py",
-      "proof_sha256": "9f3f606c685e8bbe2fcfbb0f7ec06e0ad248f959d5bfc934ab006f07b1481c16",
-      "proof_anchor": "'Traceback' not in r.stdout"
+      "owner": "scripts/opencode-hi.mjs",
+      "owner_sha256": "48abe89dcf51bfc6acb7b2f766f4f9e697471951109a5bb5fcfe14b4a946caf9",
+      "owner_anchor": "slice(0,500)",
+      "proof": "tests/test_node_setup.mjs",
+      "proof_sha256": "e25d08281a865708224a287bc72c7605ea44e8b8217a1d4016f85445498b9e13",
+      "proof_anchor": "CLI did not return JSON"
     },
     {
       "invariant": "recovery-instructions",
-      "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
-      "owner_anchor": "actions.append('Run the recover command",
-      "proof": "tests/test_hi.py",
-      "proof_sha256": "9f3f606c685e8bbe2fcfbb0f7ec06e0ad248f959d5bfc934ab006f07b1481c16",
-      "proof_anchor": "any('plan' in x and 'install' in x for x in out['actions'])"
+      "owner": "scripts/opencode-hi.mjs",
+      "owner_sha256": "48abe89dcf51bfc6acb7b2f766f4f9e697471951109a5bb5fcfe14b4a946caf9",
+      "owner_anchor": "Run: npx opencode-hi recover <project>",
+      "proof": "tests/test_node_setup.mjs",
+      "proof_sha256": "e25d08281a865708224a287bc72c7605ea44e8b8217a1d4016f85445498b9e13",
+      "proof_anchor": "M16 Node setup is idempotent and update changes only the owned Hi spec"
     },
     {
       "invariant": "config-errors",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
+      "owner_sha256": "05d0ac7352c100c56ab67c077938dedbea504dea437c7e800678a30d99f57f19",
       "owner_anchor": "_bounded_cli_int('parallel-max',1,8)",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "9f3f606c685e8bbe2fcfbb0f7ec06e0ad248f959d5bfc934ab006f07b1481c16",
+      "proof_sha256": "1b4e53f0563582813da4bd9bb0eb53cbff4e3edb6adaa6a34052f8f564a47175",
       "proof_anchor": "test_prompt_b_cli_reconfigure_rejects_out_of_range_and_malformed_limits"
     },
     {
@@ -98,10 +98,10 @@
     {
       "invariant": "truthful-nonmutating-blocked-state",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
+      "owner_sha256": "05d0ac7352c100c56ab67c077938dedbea504dea437c7e800678a30d99f57f19",
       "owner_anchor": "jsonc-safe-mutation-not-supported",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "9f3f606c685e8bbe2fcfbb0f7ec06e0ad248f959d5bfc934ab006f07b1481c16",
+      "proof_sha256": "1b4e53f0563582813da4bd9bb0eb53cbff4e3edb6adaa6a34052f8f564a47175",
       "proof_anchor": "test_prompt_b_cli_jsonc_plan_is_truthful_actionable_and_non_mutating"
     }
   ],

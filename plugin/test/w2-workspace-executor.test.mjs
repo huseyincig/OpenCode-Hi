@@ -4,7 +4,7 @@ import {mkdtempSync,mkdirSync,rmSync,readFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {basename,dirname,join,resolve} from 'node:path'
 import {spawnSync} from 'node:child_process'
-import {OpenCodeWorkspaceAdapter} from '../dist/opencode/open-code-workspace-adapter.js'
+import {OpenCodeWorkspaceAdapter,openCodeExperimentalWorkspacesEnabled} from '../dist/opencode/open-code-workspace-adapter.js'
 import {WorkspaceRuntime} from '../dist/runtime/workspace/runtime.js'
 import {ChildExecutionCoordinator} from '../dist/runtime/task/child-execution-coordinator.js'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
@@ -18,6 +18,7 @@ import {opencodeChildPort} from './helpers/host-port.mjs'
 
 const BASE='a'.repeat(40)
 const host={agent:PACKAGED_HI_AGENTS}
+process.env.OPENCODE_EXPERIMENTAL_WORKSPACES='true'
 function assess(store,sid){return store.applyInitialSemanticAssessment(sid,{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[]})}
 class FakeWorkspaceExecutor{
   constructor(path='/tmp/hi-w2-workspace'){this.path=path;this.provisions=[];this.integrations=[];this.cleaned=[];this.reconciles=[];this.mode='ADOPTED';this.integrationError=undefined}
@@ -32,6 +33,27 @@ function client(created=[],prompts=[],aborted=[],workspacePath='/tmp/hi-w2-works
   promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async req=>{aborted.push(req);return{data:true}},diff:async()=>({data:[]})
 }}}
 function runtimeWithWorkspace(c,workspaceRuntime,root=process.cwd()){return new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),root,root,()=>resolveHiConfig({}),()=>[],()=>host,undefined,{},undefined,workspaceRuntime)}
+
+test('W3 OpenCode experimental workspace flag semantics and adapter preflight fail closed',async()=>{
+  assert.equal(openCodeExperimentalWorkspacesEnabled({}),false)
+  assert.equal(openCodeExperimentalWorkspacesEnabled({OPENCODE_EXPERIMENTAL:'1'}),true)
+  assert.equal(openCodeExperimentalWorkspacesEnabled({OPENCODE_EXPERIMENTAL:'true',OPENCODE_EXPERIMENTAL_WORKSPACES:'false'}),false)
+  assert.equal(openCodeExperimentalWorkspacesEnabled({OPENCODE_EXPERIMENTAL_WORKSPACES:'true'}),true)
+  const priorWorkspace=process.env.OPENCODE_EXPERIMENTAL_WORKSPACES,priorExperimental=process.env.OPENCODE_EXPERIMENTAL
+  delete process.env.OPENCODE_EXPERIMENTAL_WORKSPACES;delete process.env.OPENCODE_EXPERIMENTAL
+  let listed=0,created=0
+  try{
+    const workspace={list:async()=>{listed++;return{data:[]}},create:async()=>{created++;return{data:{}}},remove:async()=>({data:{}})}
+    const adapter=new OpenCodeWorkspaceAdapter({v2:{experimental:{workspace}}},new URL('http://127.0.0.1:1'),'/tmp')
+    const health=await adapter.health();assert.equal(health.available,false);assert.match(health.detail,/OPENCODE_EXPERIMENTAL_WORKSPACES=true/)
+    await assert.rejects(()=>adapter.provision({mission_id:'m',task_id:'t',repository_root:'/tmp',source_baseline:BASE}),/experimental workspace support is disabled/)
+    assert.equal(listed,0);assert.equal(created,0)
+  }finally{
+    if(priorWorkspace===undefined)delete process.env.OPENCODE_EXPERIMENTAL_WORKSPACES;else process.env.OPENCODE_EXPERIMENTAL_WORKSPACES=priorWorkspace
+    if(priorExperimental===undefined)delete process.env.OPENCODE_EXPERIMENTAL;else process.env.OPENCODE_EXPERIMENTAL=priorExperimental
+    process.env.OPENCODE_EXPERIMENTAL_WORKSPACES='true'
+  }
+})
 
 test('W2 OpenCode adapter provisions only the builtin worktree type and binds exact Git repository identity',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-w2-primary-')),work=mkdtempSync(join(tmpdir(),'hi-w2-worktree-')),common=mkdtempSync(join(tmpdir(),'hi-w2-common-')),calls=[]

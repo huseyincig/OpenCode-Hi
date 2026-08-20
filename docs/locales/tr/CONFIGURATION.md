@@ -17,55 +17,35 @@ Canonical proje ayar dosyası:
 
 ## 0. Önce Hi'yi kurun/yükleyin
 
-### npm ile plugin kaydı
+### npm package-runner — normal kullanıcı yolu
 
-`0.2.1` release paketi için OpenCode kaydı:
-
-```json
-{
-  "plugin": [
-    "opencode-hi@0.2.1"
-  ]
-}
-```
-
-Bu satırı mevcut `opencode.json` ayarlarınızı silmeden ekleyin. Kurulumdan sonra OpenCode'u yeniden başlatın ve Hi tool'larının göründüğünü doğrulayın.
-
-Setup CLI'ı projeye de kurmak istiyorsanız:
-
-#### Windows PowerShell
-
-```powershell
-Set-Location C:\Projects\MyApp
-npm install --save-dev opencode-hi@0.2.1
-.\node_modules\.bin\opencode-hi-setup.cmd doctor C:\Projects\MyApp
-```
-
-#### Linux / macOS
+Windows, Linux ve macOS'ta aynı Node tabanlı package-runner kullanılır. `0.2.2` adayı için:
 
 ```bash
-cd /path/to/MyApp
-npm install --save-dev opencode-hi@0.2.1
-./node_modules/.bin/opencode-hi-setup doctor "$PWD"
+npx --yes opencode-hi@0.2.2 setup /path/to/MyApp
 ```
 
-### npm registry kullanmadan Git ile kurulum — önerilen
+Windows PowerShell örneği:
 
-Windows, Linux ve macOS için aynı OpenCode package spec kullanılır. Mevcut `opencode.json` / `opencode.jsonc` içindeki `plugin` listesine ekleyin:
-
-```json
-{
-  "plugin": [
-    "opencode-hi@git+https://github.com/huseyincig/OpenCode-Hi.git"
-  ]
-}
+```powershell
+npx --yes opencode-hi@0.2.2 setup C:\Projects\MyApp
 ```
 
-OpenCode'u yeniden başlatın. **Bu kurulum yolunda Bun/npm çalıştırmayın, local wrapper oluşturmayın ve `node_modules` ile elle uğraşmayın.** Git dependency'yi materialize etmek ve plugin'i yüklemek OpenCode'un native package loader sorumluluğudur.
+Komut mevcut OpenCode ayarlarınızı koruyarak exact Hi package kaydını ekler. Projeye development dependency kurmaz; application-root `package.json`, lock veya `node_modules` oluşturmaz ve harici Python gerektirmez.
 
-Güncel Hi source package'ı npm/Pacote'nin Git-dependency preparation başlatmasına neden olan root lifecycle script adlarını kullanmaz. `@opencode-ai/plugin` host peer'i optional tutulur; böylece yalnız type/host entegrasyonu için gereken büyük `effect` zinciri kullanıcı kurulumuna gereksiz yere eklenmez.
+Kurulumdan sonra OpenCode'u yeniden başlatın. Statik registration/ownership kontrolü için:
 
-Immutable `v0.2.0` tag'i bu packaging düzeltmesinden daha eskidir ve değiştirilmez. `v0.2.1` düzeltmeyi taşır; unpinned Git source spec'i current repository source'u izler.
+```bash
+npx --yes opencode-hi@0.2.2 doctor /path/to/MyApp
+```
+
+Canlı provider/model inventory ve runtime capability doğrulaması için yüklenmiş OpenCode oturumundaki `hi_doctor` kullanılmalıdır. Package `doctor` provider authentication veya başarılı remote model çağrısı kanıtı değildir.
+
+### Git/source loading — contributor yolu
+
+Direct Git/local loading source development ve CI compatibility için kullanılabilir; normal kullanıcı onboarding yolu değildir. Tekrarlanabilir acceptance için exact repository SHA/spec kullanın ve OpenCode'un plugin'i gerçekten yüklediğini doğrulayın.
+
+> OpenCode 1.18.19 model gerçeği: Hi structured provider inventory kullanır ve host `connected` provider kimliklerini sunuyorsa bunlarla kesiştirir. Bu host sürümünde model-level `disabled: true` picker filtresi yoktur; OpenCode tarafındaki model filtresi provider `whitelist` / `blacklist` üzerinden çalışır. Hi katalog fallback'i üretmez ve sekiz modelde kesmez. `visual-qa` yalnız host'un açıkça image-input capability verdiği modelle çalışır; text-only veya capability'si doğrulanmamış `host-default` kabul edilmez.
 
 ## 1. Windows, Linux ve macOS ayar yolu
 
@@ -95,9 +75,9 @@ Ayar değişikliğinden sonra host hot-reload yapmıyorsa OpenCode'u yeniden ba�
 
 ## 2. Ayar dosyası zorunlu mu?
 
-Hayır. Hi built-in defaultlarla çalışabilir. Proje `routing.json` dosyası yoksa auto-init runtime model inventory'sine göre yalnız **altı child role** için önerilen model tercihleri oluşturabilir.
+Hayır. Hi elle yazılmış bir routing dosyası olmadan çalışabilir. İlk effective runtime model inventory geldiğinde yalnız gerçekten enabled/policy-allowed ve role-eligible modelleri alır; aynı canonical cost/quality scoring mantığıyla altı child role için tek seferlik başlangıç önerilerini hesaplar. Kod içinde sabit provider/model ID önerisi yoktur.
 
-Bu öneriler hard lock değildir. Model runtime'da yoksa veya policy tarafından reddedilirse normal eligible routing devam eder.
+Bu ilk seçimler hard lock değildir. `routing.json` oluşturulduktan sonra kullanıcı tercihi olarak düzenlenebilir; sonraki inventory refresh veya update geçerli mevcut role seçimlerini ezmez. `visual-qa` için ayrıca host tarafından doğrulanmış image-input capability gerekir.
 
 Proje dosyasının envelope'u:
 

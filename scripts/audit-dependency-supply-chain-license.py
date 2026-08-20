@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib,json,subprocess,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
+pkg=json.loads((ROOT/'package.json').read_text());TARGET=str((pkg.get('dependencies') or {}).get('@opencode-ai/sdk') or '').strip();FRESH=f'data/validation/fresh-consumer-opencode-{TARGET}.json'
 OUT=ROOT/'data/validation/prompt-b-dependency-supply-chain-license.json'
 def sha(rel): return hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()
 def row(inv,owner,oa,proof,pa):
@@ -12,9 +13,9 @@ def row(inv,owner,oa,proof,pa):
     return {'invariant':inv,'status':'PASS' if ok else 'FAIL','owner':owner,'owner_sha256':sha(owner) if (ROOT/owner).is_file() else None,'owner_anchor':oa,'proof':proof,'proof_sha256':sha(proof) if (ROOT/proof).is_file() else None,'proof_anchor':pa}
 root=json.loads((ROOT/'package.json').read_text()); rlock=json.loads((ROOT/'package-lock.json').read_text()); plock=json.loads((ROOT/'plugin/package-lock.json').read_text())
 rows=[
- row('dependency-versions','package.json','"@opencode-ai/sdk": "1.18.18"','package-lock.json','"version": "1.18.18"'),
+ row('dependency-versions','package.json',f'"@opencode-ai/sdk": "{TARGET}"','package-lock.json',f'"version": "{TARGET}"'),
  row('lockfiles','scripts/release-build.py',"def dependency_lock_paths(root:Path)",'tests/test_hi.py',"manifest['supply_chain']['dependency_locks']==['package-lock.json','plugin/package-lock.json']"),
- row('direct-dependency-usage','plugin/src/opencode/client-adapter.ts',"@opencode-ai/sdk/v2/client",'data/validation/fresh-consumer-opencode-1.18.18.json','"consumer_resolution": true'),
+ row('direct-dependency-usage','plugin/src/opencode/client-adapter.ts',"@opencode-ai/sdk/v2/client",FRESH,'"consumer_resolution": true'),
  row('risky-install-scripts','plugin/package-lock.json','"hasInstallScript": true','THIRD_PARTY_NOTICES.md','msgpackr-extract'),
  row('provenance-integrity','scripts/release-build.py','dependency_graph_sha256','tests/test_hi.py',"manifest['supply_chain']['dependency_graph_sha256']"),
  row('dependency-licenses','THIRD_PARTY_NOTICES.md','`playwright-core`','package-lock.json','"license": "Apache-2.0"'),
@@ -33,7 +34,7 @@ rm=lock_meta(rlock); pm=lock_meta(plock)
 static={
  'root_lock_v3':rlock.get('lockfileVersion')==3,
  'plugin_lock_v3':plock.get('lockfileVersion')==3,
- 'exact_distribution_versions':root.get('peerDependencies',{}).get('@opencode-ai/plugin')=='1.18.18' and root.get('peerDependenciesMeta',{}).get('@opencode-ai/plugin',{}).get('optional') is True and root.get('dependencies',{}).get('@opencode-ai/sdk')=='1.18.18' and root.get('optionalDependencies',{}).get('playwright-core')=='1.62.1',
+ 'exact_distribution_versions':root.get('peerDependencies',{}).get('@opencode-ai/plugin')==TARGET and root.get('peerDependenciesMeta',{}).get('@opencode-ai/plugin',{}).get('optional') is True and root.get('dependencies',{}).get('@opencode-ai/sdk')==TARGET and root.get('optionalDependencies',{}).get('playwright-core')=='1.62.1',
  'registry_integrity_complete':not rm['registry_entries_missing_integrity'] and not pm['registry_entries_missing_integrity'],
  'distribution_lock_has_no_install_scripts':rm['install_scripts']==[],
  'only_known_build_lock_install_script':bool(pm['install_scripts']) and all(x['path'].endswith('node_modules/msgpackr-extract') and x['version']=='3.0.4' and x['license']=='MIT' for x in pm['install_scripts']),
@@ -49,7 +50,7 @@ out={'schema':1,'kind':'PROMPT_B_DEPENDENCY_SUPPLY_CHAIN_LICENSE_AUDIT','program
  {'id':'third-party-notices-runtime-drift','fix':'Notices now enumerate direct runtime SDK, host peer, optional Playwright, build TypeScript, and the audited optional msgpackr-extract install-script boundary.'},
  {'id':'release-pack-proof-prepack-output-corruption','fix':'Canonical check/build runs before a scripts-disabled pack proof; publish also uses --ignore-scripts against the same built tree.'},
  {'id':'single-lock-sbom-omitted-distribution-runtime','fix':'Release SBOM and release-chain verification deterministically bind both root distribution and plugin build/test lock graphs.'},
- {'id':'native-direct-git-pacote-preparation-trigger','fix':'Public root package removes npm/Pacote Git-preparation trigger script names, moves the explicit developer build to build:plugin, keeps the OpenCode host peer optional, and cross-platform Release Readiness exercises exact-SHA Git install plus exact OpenCode 1.18.18 native host loading.'}],
+ {'id':'native-direct-git-pacote-preparation-trigger','fix':'Public root package removes npm/Pacote Git-preparation trigger script names, moves the explicit developer build to build:plugin, keeps the OpenCode host peer optional, and cross-platform Release Readiness exercises the M16 packed npm bootstrap plus exact-SHA Git compatibility loading against exact OpenCode 1.18.19.'}],
  'violations':viol,
  'claim_boundary':'Local deterministic supply-chain/license certification. npm audit is separately re-runnable against registry metadata; public npm publish remains authority-gated and is not performed by this audit.'}
 OUT.write_text(json.dumps(out,indent=2)+'\n')

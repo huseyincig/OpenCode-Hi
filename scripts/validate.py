@@ -26,6 +26,8 @@ expected={'product_name':'OpenCode-Hi','short_name':'HI','version':version,'repo
 for k,v in expected.items():
     if identity.get(k)!=v:err(f'product identity {k}: {identity.get(k)!r} != {v!r}')
 pkg=json.loads((ROOT/'package.json').read_text(encoding='utf-8'))
+host_target=str((pkg.get('dependencies') or {}).get('@opencode-ai/sdk') or '').strip();host_peer=str((pkg.get('peerDependencies') or {}).get('@opencode-ai/plugin') or '').strip()
+if not re.fullmatch(r'\d+\.\d+\.\d+',host_target) or host_peer!=host_target:err('exact OpenCode certification target pin drift')
 if pkg.get('name')!='opencode-hi' or pkg.get('version')!=version:err('root package identity/version mismatch')
 if pkg.get('main')!='plugin/dist/plugin.js' or not (ROOT/pkg['main']).is_file():err('root plugin entrypoint missing')
 pp=json.loads((ROOT/'plugin/package.json').read_text(encoding='utf-8'))
@@ -135,7 +137,7 @@ try:
     cm=json.loads((ROOT/'data/validation/compatibility-matrix-0.1.0.json').read_text(encoding='utf-8'))
     if cm.get('schema')!=1 or cm.get('kind')!='GENERATED_RECEIPT_COMPATIBILITY_PROJECTION':err('compatibility projection header invalid')
     cur=cm.get('current_reference_host') or {}
-    if cur.get('opencode_version')!='1.18.18' or cur.get('platform')!='linux' or cur.get('architecture')!='aarch64':err('compatibility current reference host drift')
+    if cur.get('opencode_version')!=host_target or cur.get('platform')!='linux' or cur.get('architecture')!='aarch64':err('compatibility current reference host drift')
     expected_caps={'process-lifecycle','workspace-isolation-binding','browser-execution'}
     caps=cur.get('capabilities') or {}
     if set(caps)!=expected_caps:err('compatibility current capability set drift')
@@ -175,7 +177,7 @@ try:
     if cand.get('npm_status')!=expected_npm or cand.get('publication_attempted')!=(rs.get('status')=='CERTIFIED_T4'):err('release status npm projection drift')
     if (rs.get('verification') or {}).get('persisted_test_count') is not False:err('release status must not persist test counts')
     host=rs.get('reference_host') or {}
-    if (host.get('opencode_version'),host.get('platform'),host.get('architecture'))!=('1.18.18','linux','aarch64'):err('release status reference host drift')
+    if (host.get('opencode_version'),host.get('platform'),host.get('architecture'))!=(host_target,'linux','aarch64'):err('release status reference host drift')
     for cap in ('process-lifecycle','workspace-isolation-binding','browser-execution'):
         if ((host.get('baseline_capabilities') or {}).get(cap) or {}).get('status')!='SUPPORTED_T3':err(f'release status baseline {cap} drift')
     if not isinstance(host.get('candidate_certification'),dict):err('release status candidate certification missing')
@@ -658,7 +660,7 @@ try:
     else:
         a=json.loads((ROOT/ar).read_text(encoding='utf-8'))
         host=a.get('host') or {}
-        if a.get('status')!='PASS' or host.get('opencode')!='1.18.18' or host.get('platform')!='linux' or host.get('architecture')!='aarch64' or not isinstance(host.get('binary_sha256'),str) or len(host.get('binary_sha256'))!=64:err('PROMPT B fresh consumer exact-host acceptance drift')
+        if a.get('status')!='PASS' or host.get('opencode')!=host_target or host.get('platform')!='linux' or host.get('architecture')!='aarch64' or not isinstance(host.get('binary_sha256'),str) or len(host.get('binary_sha256'))!=64:err('PROMPT B fresh consumer exact-host acceptance drift')
         if not all((a.get('checks') or {}).values()):err('PROMPT B fresh consumer acceptance check drift')
 except Exception as e:err(f'bad PROMPT B packaging/fresh consumer receipt: {e}')
 
@@ -911,7 +913,7 @@ try:
     if q39.get('schema')!=1 or q39.get('kind')!='PROMPT_B_EXACT_CURRENT_OPENCODE_T3_AUDIT' or q39.get('program')!='PROMPT_B' or q39.get('section')!=39 or q39.get('status')!='PASS':err('bad PROMPT B exact-current OpenCode T3 receipt identity/status')
     if q39.get('summary')!={'required_capabilities':3,'exact_current_capabilities':3,'lifecycle_invariants':61,'violations':0} or q39.get('violations')!=[]:err('PROMPT B exact-current OpenCode T3 summary drift')
     obs=q39.get('current_version_observation') or {}
-    if obs.get('tested_binary_version')!='1.18.18' or obs.get('locked_sdk')!='1.18.18' or not isinstance(obs.get('tested_binary_sha256'),str) or len(obs.get('tested_binary_sha256'))!=64:err('PROMPT B exact-current OpenCode version observation drift')
+    if obs.get('tested_binary_version')!=host_target or obs.get('locked_sdk')!=host_target or not isinstance(obs.get('tested_binary_sha256'),str) or len(obs.get('tested_binary_sha256'))!=64:err('PROMPT B exact-current OpenCode version observation drift')
     if q39.get('candidate_release')!=version:err('PROMPT B exact-current candidate release drift')
     if not re.fullmatch(r'[a-f0-9]{40}',str(q39.get('exact_source_commit',''))) or not re.fullmatch(r'[a-f0-9]{40}',str(q39.get('exact_source_tree',''))):err('PROMPT B exact-current source binding invalid')
     fresh39=json.loads((ROOT/q39.get('fresh_consumer_receipt','')).read_text(encoding='utf-8'))
@@ -932,7 +934,7 @@ try:
     nr=json.loads((ROOT/'data/validation/opencode-native-reevaluation.json').read_text(encoding='utf-8'))
     if nr.get('schema')!=1 or nr.get('kind')!='EXACT_CURRENT_OPENCODE_NATIVE_REEVALUATION' or nr.get('program')!='PROMPT_B' or nr.get('status')!='PASS':err('bad PROMPT B native reevaluation receipt identity/status')
     oc=nr.get('opencode',{})
-    if oc.get('version')!='1.18.18' or oc.get('source_ref')!='v1.18.18' or not isinstance(oc.get('source_commit'),str) or not re.fullmatch(r'[a-f0-9]{40}',oc.get('source_commit')) or oc.get('source_worktree_used') is not False or oc.get('source_read_mode')!='git-blob':err('PROMPT B native reevaluation exact-source identity drift')
+    if oc.get('version')!=host_target or oc.get('source_ref')!=f'v{host_target}' or not isinstance(oc.get('source_commit'),str) or not re.fullmatch(r'[a-f0-9]{40}',oc.get('source_commit')) or oc.get('source_worktree_used') is not False or oc.get('source_read_mode')!='git-blob':err('PROMPT B native reevaluation exact-source identity drift')
     decisions=nr.get('decisions',[])
     expected={'sessions','task-delegation','permission','tool-events','lsp','pty','workspace','provider-model-observation','skill-loading','lifecycle-events','human-decision-structured-open','compaction'}
     surfaces={x.get('surface') for x in decisions if isinstance(x,dict)}

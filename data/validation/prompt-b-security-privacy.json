@@ -19,10 +19,10 @@
       "section": 20,
       "invariant": "symlink-escape",
       "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
-      "owner_sha256": "d85505d9637c451067d038d4970c02cbddf25ab5a2d73f0f3ca408c3d30f7cff",
+      "owner_sha256": "24e803722ab51227b5c61799484fcbac507583902680ec1ee07c817211015731",
       "owner_anchor": "realpathSync",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
+      "proof_sha256": "1e4929ed8156ba5a253c1ae50feb3d6c243c452990248114f85c3d0e0a1c142d",
       "proof_anchor": "symlinked workspace escape is canonicalized and rejected"
     },
     {
@@ -142,7 +142,7 @@
       "owner_sha256": "4961f680ebf2183bc4eacc39d4f861eccc55b4262814057251935590feff4fdf",
       "owner_anchor": "safeLocalUrl",
       "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
-      "proof_sha256": "feed7ae93c8a2bb1bc18aa4da861dc4082541e4c67689e57ddbdd131d9630ee5",
+      "proof_sha256": "73c74994bcb76f36f04115cf26a08c36ca93f0620e52fadf9a0a28c8fa31282a",
       "proof_anchor": "outside supported local scope"
     },
     {
@@ -159,7 +159,7 @@
       "section": 20,
       "invariant": "package-scripts",
       "owner": "package.json",
-      "owner_sha256": "958c480187d6eee2847301a52f03b811fde7bbb85bc62225b079f7ef520df579",
+      "owner_sha256": "0c525b92080987befe6a838a92a2ae5fe603b74fbf10295e3f2ad4ec15544359",
       "owner_anchor": "\"build:plugin\": \"npm --prefix plugin run build\"",
       "proof": ".github/workflows/npm-publish.yml",
       "proof_sha256": "fddeff0ad498142ab454a0df576328bdb061106ce7eddec3ae553e3f653572b5",
@@ -169,7 +169,7 @@
       "section": 20,
       "invariant": "dependency-confusion",
       "owner": "plugin/package-lock.json",
-      "owner_sha256": "4c59987e843685f11e4bb2717e44ffd9fde87775385868f57fbe54fab27a7235",
+      "owner_sha256": "722250df58cd08e94cdf61df6412ba0707b6f504986a4ff18a3e156b9e6dc6be",
       "owner_anchor": "\"lockfileVersion\": 3",
       "proof": "plugin/test/release-quality-batch.test.mjs",
       "proof_sha256": "d9d2456da56d60bf29658cb09aa034625a93a2f391ed20295dcbd77010d10352",

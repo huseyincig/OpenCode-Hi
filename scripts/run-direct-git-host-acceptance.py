@@ -4,15 +4,15 @@ import hashlib,json,os,platform,shutil,socket,subprocess,sys,tarfile,time,urllib
 from pathlib import Path,PurePosixPath
 
 ROOT=Path(__file__).resolve().parents[1]
-HOST_VERSION='1.18.18'
+HOST_VERSION='1.18.19'
 ASSETS={
- ('linux','x86_64'):('opencode-linux-x64.tar.gz','0cddc222418b8553669905a8980c0cda7088f00da24d83d6ac76b01c9fdb2aaf','opencode'),
- ('linux','amd64'):('opencode-linux-x64.tar.gz','0cddc222418b8553669905a8980c0cda7088f00da24d83d6ac76b01c9fdb2aaf','opencode'),
- ('linux','aarch64'):('opencode-linux-arm64.tar.gz','dcb1b5ec5687b43f87749560021f9203f3809e0ce5ae44ff9be8ae17083fe4ba','opencode'),
- ('linux','arm64'):('opencode-linux-arm64.tar.gz','dcb1b5ec5687b43f87749560021f9203f3809e0ce5ae44ff9be8ae17083fe4ba','opencode'),
- ('win32','amd64'):('opencode-windows-x64.zip','c6d265376fdb93164013671b0cf402410184f73c34fc15d82d40a16a745b15f4','opencode.exe'),
- ('win32','x86_64'):('opencode-windows-x64.zip','c6d265376fdb93164013671b0cf402410184f73c34fc15d82d40a16a745b15f4','opencode.exe'),
- ('win32','arm64'):('opencode-windows-arm64.zip','0d34d837ea3b5e10349d8550318083040a8b4c061d3faaa4eabd339984aa49b0','opencode.exe'),
+ ('linux','x86_64'):('opencode-linux-x64.tar.gz','7bb35487c55f9957f5d91ae60be6fa49fc8f74629c210c1719ed75fdbf7e2bd9','opencode'),
+ ('linux','amd64'):('opencode-linux-x64.tar.gz','7bb35487c55f9957f5d91ae60be6fa49fc8f74629c210c1719ed75fdbf7e2bd9','opencode'),
+ ('linux','aarch64'):('opencode-linux-arm64.tar.gz','506f98a1f618551f1f6fc5dcf591f824bef9d6819d40b27928ad7febcb7c363b','opencode'),
+ ('linux','arm64'):('opencode-linux-arm64.tar.gz','506f98a1f618551f1f6fc5dcf591f824bef9d6819d40b27928ad7febcb7c363b','opencode'),
+ ('win32','amd64'):('opencode-windows-x64.zip','4381328bf6d611996c33d98daef27e89d274cb8391709fa1e36723f1d2899877','opencode.exe'),
+ ('win32','x86_64'):('opencode-windows-x64.zip','4381328bf6d611996c33d98daef27e89d274cb8391709fa1e36723f1d2899877','opencode.exe'),
+ ('win32','arm64'):('opencode-windows-arm64.zip','2e74619988a54f76837370862c0761c6595a1224ce4cd6da588975e1396a33a7','opencode.exe'),
 }
 
 def sha256(path:Path)->str:

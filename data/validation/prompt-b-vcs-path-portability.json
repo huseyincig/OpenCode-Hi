@@ -25,17 +25,17 @@
       "owner_sha256": "2206b17bd9e558cec931b743cae388b078c8505a0c76c5c13cf05e060aada785",
       "owner_anchor": "recordStagingInspection",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
+      "proof_sha256": "1e4929ed8156ba5a253c1ae50feb3d6c243c452990248114f85c3d0e0a1c142d",
       "proof_anchor": "preserves pre-staged and unstaged user changes exactly"
     },
     {
       "section": 18,
       "invariant": "untracked-files",
       "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
-      "owner_sha256": "d85505d9637c451067d038d4970c02cbddf25ab5a2d73f0f3ca408c3d30f7cff",
+      "owner_sha256": "24e803722ab51227b5c61799484fcbac507583902680ec1ee07c817211015731",
       "owner_anchor": "defaultInspect",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
+      "proof_sha256": "1e4929ed8156ba5a253c1ae50feb3d6c243c452990248114f85c3d0e0a1c142d",
       "proof_anchor": "untracked user"
     },
     {
@@ -105,7 +105,7 @@
       "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "reconcileRestored",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
+      "proof_sha256": "1e4929ed8156ba5a253c1ae50feb3d6c243c452990248114f85c3d0e0a1c142d",
       "proof_anchor": "restart adopts exact lease, quarantines missing owner without recreation"
     },
     {
@@ -132,7 +132,7 @@
       "section": 18,
       "invariant": "no-blind-reset-stash-restore",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "a79261104fd8c84cf1d825a45b23c300edd0819aaa345441f73863367e0bc598",
+      "owner_sha256": "475ae7ee8d93030ddf6b35463f6ba2120e8e4319b933410e64fb34902663df8a",
       "owner_anchor": "never use git checkout/reset/restore",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
       "proof_sha256": "5852e6f963942e284c3e4d1fa418a75367c7e418e9ebe6ed51176371774a4f8a",
@@ -162,10 +162,10 @@
       "section": 19,
       "invariant": "symlinks",
       "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
-      "owner_sha256": "d85505d9637c451067d038d4970c02cbddf25ab5a2d73f0f3ca408c3d30f7cff",
+      "owner_sha256": "24e803722ab51227b5c61799484fcbac507583902680ec1ee07c817211015731",
       "owner_anchor": "realpathSync",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
+      "proof_sha256": "1e4929ed8156ba5a253c1ae50feb3d6c243c452990248114f85c3d0e0a1c142d",
       "proof_anchor": "symlinked workspace escape is canonicalized and rejected"
     },
     {
@@ -245,7 +245,7 @@
       "owner_sha256": "2206b17bd9e558cec931b743cae388b078c8505a0c76c5c13cf05e060aada785",
       "owner_anchor": "porcelainPaths",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "6e7ec4315076386cae716392bfd124ec6ec31fda0ed94dce014d8d456c5d7610",
+      "proof_sha256": "1e4929ed8156ba5a253c1ae50feb3d6c243c452990248114f85c3d0e0a1c142d",
       "proof_anchor": "untracked user.txt"
     },
     {

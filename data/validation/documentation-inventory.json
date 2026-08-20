@@ -1,11 +1,11 @@
 {
   "schema": 1,
-  "release": "0.2.1",
+  "release": "0.2.2",
   "kind": "DOCUMENTATION_TRUTH_INVENTORY",
   "status": "PASS",
   "policy": {
     "path": "data/documentation-ownership.json",
-    "sha256": "d21adec0bb0ce5d27194c0248a4932e99bdfee578c9fc3858d5e4b06162aec85"
+    "sha256": "def8950d64b50eab1dff2ff705f87a03ffb9eb9a7ce573737005477f9af49e41"
   },
   "summary": {
     "public_documents": 16,
@@ -117,7 +117,7 @@
     },
     {
       "area": "current-release-status",
-      "path": "data/validation/release-status-0.2.1.json"
+      "path": "data/validation/release-status-0.2.2.json"
     }
   ],
   "artifacts": [
@@ -147,7 +147,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "d3ef825e2ff4fc65379c6363cfb40be479e5a8f638769f264822abc77be161a3",
+      "sha256": "769486dbea1d0844c751a90a06d86a48e3359e73127f4938072ad3988f9becd7",
       "area": "product-overview",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -163,7 +163,7 @@
     },
     {
       "path": "docs/CONFIGURATION.md",
-      "sha256": "7817c9650d16a61c61bc1a00a97f55bd25a3d60430a84492ff2c0ce6a0d2bc45",
+      "sha256": "911537a145c280753e9ba4c8781ebfa1a8e2c53e73da548379109eab2ce08a8d",
       "area": "configuration-guide",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -171,7 +171,7 @@
     },
     {
       "path": "docs/HOSTS.md",
-      "sha256": "e379a86d19703bcffb9175663af28591b65aa9321ced9744661f9803d0875447",
+      "sha256": "ab398ae34faf16736562997584d0b4842df1e098e0b03fcb4e94140ef0de83d3",
       "area": "host-support",
       "audience": "OPERATOR",
       "lifecycle": "CANONICAL_CURRENT",
@@ -187,7 +187,7 @@
     },
     {
       "path": "docs/INSTALLATION.md",
-      "sha256": "40005e1552660e165a0b465d3748f0a37889354dd6e38deef77d31d86e04a69e",
+      "sha256": "76e73b794f277b5f3cafed2b327b3bfc3c7c1ba736882b0d3251e8eaf4e7acf4",
       "area": "installation-configuration-lifecycle",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -203,7 +203,7 @@
     },
     {
       "path": "docs/RELEASE.md",
-      "sha256": "265ee3df107672c55dd2149b58da291d223bf6ea4da15529253755702c8ebc4e",
+      "sha256": "b9a1fcf1049e4a2b8741d037b2f788389668ebd3bd5cc866e12d3e31a7940f12",
       "area": "release",
       "audience": "RELEASE_ENGINEER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -235,7 +235,7 @@
     },
     {
       "path": "docs/locales/tr/CONFIGURATION.md",
-      "sha256": "1dbd83c08a06b69289c6546b9505ccff8fbbb706a89422b7a21b1ff460666d1c",
+      "sha256": "a175ec9f99b836ed9ad386b3bdcf101107c98150f4b34170ed7e5240ac505a45",
       "area": "turkish-configuration-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",
@@ -243,7 +243,7 @@
     },
     {
       "path": "docs/locales/tr/README.md",
-      "sha256": "11de486604e05c457f1f23ddf7a60ce9d0910cea54c5eef4b7271aadbd5a03c8",
+      "sha256": "fe1d7e707fd7ba170ed069c66abe4b5302096e3051fe3a6c8ea9bad32d8438ee",
       "area": "turkish-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",
@@ -253,13 +253,13 @@
   "machine_owners": [
     {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
-      "sha256": "c17c1480acc10465193bef379245d5b322c84a659a597e6c5962ab2cbd8618e8",
+      "sha256": "499d383de2c1379b6153d6bd86d69b2553a01a3f2e545b3d2de6490f0056e724",
       "area": "supported-host-matrix",
       "lifecycle": "MACHINE_OWNER"
     },
     {
-      "path": "data/validation/release-status-0.2.1.json",
-      "sha256": "e6780dbb64272d0080f5eb47e0d2a8f0ecba2d825b61e2be5b2a9d2e1604fa98",
+      "path": "data/validation/release-status-0.2.2.json",
+      "sha256": "3951279f23d61f43e086c93b3033e9558e44268c1f19d63f8d9ee60e0c88cc6e",
       "area": "current-release-status",
       "lifecycle": "MACHINE_OWNER"
     }

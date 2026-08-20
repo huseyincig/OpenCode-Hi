@@ -13,28 +13,28 @@
     {
       "invariant": "fresh-install",
       "status": "PASS",
-      "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
-      "owner_anchor": "def install(",
-      "proof": "data/validation/install-lifecycle-0.1.0.json",
-      "proof_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
-      "proof_anchor": "\"install\": \"APPLIED\""
+      "owner": "scripts/opencode-hi.mjs",
+      "owner_sha256": "48abe89dcf51bfc6acb7b2f766f4f9e697471951109a5bb5fcfe14b4a946caf9",
+      "owner_anchor": "function setup(project,version)",
+      "proof": "tests/test_node_setup.mjs",
+      "proof_sha256": "e25d08281a865708224a287bc72c7605ea44e8b8217a1d4016f85445498b9e13",
+      "proof_anchor": "M16 Node setup preserves foreign OpenCode config"
     },
     {
       "invariant": "first-run-doctor",
       "status": "PASS",
-      "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
-      "owner_anchor": "def doctor(",
-      "proof": "data/validation/install-lifecycle-0.1.0.json",
-      "proof_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
-      "proof_anchor": "\"doctor_installed\": \"OK\""
+      "owner": "scripts/opencode-hi.mjs",
+      "owner_sha256": "48abe89dcf51bfc6acb7b2f766f4f9e697471951109a5bb5fcfe14b4a946caf9",
+      "owner_anchor": "function doctor(project)",
+      "proof": "tests/test_node_setup.mjs",
+      "proof_sha256": "e25d08281a865708224a287bc72c7605ea44e8b8217a1d4016f85445498b9e13",
+      "proof_anchor": "M16 Node doctor distinguishes package registration truth from pending effective runtime routing"
     },
     {
       "invariant": "configure-reconfigure",
       "status": "PASS",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
+      "owner_sha256": "05d0ac7352c100c56ab67c077938dedbea504dea437c7e800678a30d99f57f19",
       "owner_anchor": "def reconfigure(",
       "proof": "data/validation/install-lifecycle-0.1.0.json",
       "proof_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
@@ -43,18 +43,18 @@
     {
       "invariant": "owned-update-version-detection",
       "status": "PASS",
-      "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
-      "owner_anchor": "def upgrade(",
-      "proof": "tests/test_hi.py",
-      "proof_sha256": "9f3f606c685e8bbe2fcfbb0f7ec06e0ad248f959d5bfc934ab006f07b1481c16",
-      "proof_anchor": "test_r2_owned_upgrade_and_one_step_rollback_preserve_foreign_config"
+      "owner": "scripts/opencode-hi.mjs",
+      "owner_sha256": "48abe89dcf51bfc6acb7b2f766f4f9e697471951109a5bb5fcfe14b4a946caf9",
+      "owner_anchor": "function update(project,version)",
+      "proof": "tests/test_node_setup.mjs",
+      "proof_sha256": "e25d08281a865708224a287bc72c7605ea44e8b8217a1d4016f85445498b9e13",
+      "proof_anchor": "M16 Node setup is idempotent and update changes only the owned Hi spec"
     },
     {
       "invariant": "uninstall",
       "status": "PASS",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
+      "owner_sha256": "05d0ac7352c100c56ab67c077938dedbea504dea437c7e800678a30d99f57f19",
       "owner_anchor": "def uninstall(",
       "proof": "data/validation/install-lifecycle-0.1.0.json",
       "proof_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
@@ -74,20 +74,20 @@
       "invariant": "rollback-truth",
       "status": "PASS",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
+      "owner_sha256": "05d0ac7352c100c56ab67c077938dedbea504dea437c7e800678a30d99f57f19",
       "owner_anchor": "def rollback(",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "9f3f606c685e8bbe2fcfbb0f7ec06e0ad248f959d5bfc934ab006f07b1481c16",
+      "proof_sha256": "1b4e53f0563582813da4bd9bb0eb53cbff4e3edb6adaa6a34052f8f564a47175",
       "proof_anchor": "test_r2_rollback_fails_closed_after_unrelated_post_operation_config_drift"
     },
     {
       "invariant": "partial-install-recovery",
       "status": "PASS",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
+      "owner_sha256": "05d0ac7352c100c56ab67c077938dedbea504dea437c7e800678a30d99f57f19",
       "owner_anchor": "def recover(",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "9f3f606c685e8bbe2fcfbb0f7ec06e0ad248f959d5bfc934ab006f07b1481c16",
+      "proof_sha256": "1b4e53f0563582813da4bd9bb0eb53cbff4e3edb6adaa6a34052f8f564a47175",
       "proof_anchor": "test_r2_recover_completes_interrupted_upgrade_when_config_matches_recorded_after_state"
     },
     {
@@ -114,7 +114,7 @@
       "invariant": "setup-state-permissions",
       "status": "PASS",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "dbd76228023a254495c960a4db7f873b9ec554cbbd99f2362f352c7c2a4c2d6e",
+      "owner_sha256": "05d0ac7352c100c56ab67c077938dedbea504dea437c7e800678a30d99f57f19",
       "owner_anchor": "def _write_state(",
       "proof": "data/validation/install-lifecycle-0.1.0.json",
       "proof_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
@@ -124,21 +124,21 @@
       "invariant": "publishable-setup-cli-contract",
       "status": "PASS",
       "owner": "package.json",
-      "owner_sha256": "958c480187d6eee2847301a52f03b811fde7bbb85bc62225b079f7ef520df579",
-      "owner_anchor": "\"opencode-hi-setup\"",
+      "owner_sha256": "0c525b92080987befe6a838a92a2ae5fe603b74fbf10295e3f2ad4ec15544359",
+      "owner_anchor": "\"opencode-hi\": \"scripts/opencode-hi.mjs\"",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "9f3f606c685e8bbe2fcfbb0f7ec06e0ad248f959d5bfc934ab006f07b1481c16",
-      "proof_anchor": "test_prompt_b_publishable_package_carries_setup_cli_and_direct_runtime_dependency_contract"
+      "proof_sha256": "1b4e53f0563582813da4bd9bb0eb53cbff4e3edb6adaa6a34052f8f564a47175",
+      "proof_anchor": "test_prompt_b_publishable_package_carries_node_bootstrap_legacy_cli_and_direct_runtime_dependency_contract"
     },
     {
       "invariant": "no-source-tree-runtime-dependency",
       "status": "PASS",
       "owner": "package.json",
-      "owner_sha256": "958c480187d6eee2847301a52f03b811fde7bbb85bc62225b079f7ef520df579",
-      "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.18\"",
+      "owner_sha256": "0c525b92080987befe6a838a92a2ae5fe603b74fbf10295e3f2ad4ec15544359",
+      "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.19\"",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "9f3f606c685e8bbe2fcfbb0f7ec06e0ad248f959d5bfc934ab006f07b1481c16",
-      "proof_anchor": "test_prompt_b_publishable_package_carries_setup_cli_and_direct_runtime_dependency_contract"
+      "proof_sha256": "1b4e53f0563582813da4bd9bb0eb53cbff4e3edb6adaa6a34052f8f564a47175",
+      "proof_anchor": "test_prompt_b_publishable_package_carries_node_bootstrap_legacy_cli_and_direct_runtime_dependency_contract"
     },
     {
       "invariant": "runtime-run-is-separate-exact-host-boundary",
@@ -147,7 +147,7 @@
       "owner_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
       "owner_anchor": "\"external_host_status\": \"SEPARATE_T3_BOUNDARY\"",
       "proof": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
-      "proof_sha256": "71632091e85b2b797550e975246265339de54a82fe7d42ad84744974af64f336",
+      "proof_sha256": "18a664b2208c276448d37fd2a3216ef781dabd2a21c3eaa5f70ff3b1169c5b85",
       "proof_anchor": "\"status\": \"PASS\""
     }
   ],
@@ -167,7 +167,7 @@
     },
     {
       "id": "packed-setup-cli-missing",
-      "resolution": "Publishable package now carries executable opencode-hi-setup plus VERSION."
+      "resolution": "Publishable package now carries the executable Node opencode-hi/hi package runner, retains opencode-hi-setup for compatibility, and carries VERSION."
     },
     {
       "id": "root-runtime-dependency-contract-missing",

@@ -11,10 +11,10 @@ def row(inv,owner,oa,proof,pa):
 lifecycle=json.loads((ROOT/'data/validation/install-lifecycle-0.1.0.json').read_text())
 ops=lifecycle.get('operations',{}); assertions=lifecycle.get('assertions',{}); sec=lifecycle.get('state_security',{})
 rows=[
- row('fresh-install','scripts/native_plugin_setup.py','def install(','data/validation/install-lifecycle-0.1.0.json','"install": "APPLIED"'),
- row('first-run-doctor','scripts/native_plugin_setup.py','def doctor(','data/validation/install-lifecycle-0.1.0.json','"doctor_installed": "OK"'),
+ row('fresh-install','scripts/opencode-hi.mjs','function setup(project,version)','tests/test_node_setup.mjs','M16 Node setup preserves foreign OpenCode config'),
+ row('first-run-doctor','scripts/opencode-hi.mjs','function doctor(project)','tests/test_node_setup.mjs','M16 Node doctor distinguishes package registration truth from pending effective runtime routing'),
  row('configure-reconfigure','scripts/native_plugin_setup.py','def reconfigure(','data/validation/install-lifecycle-0.1.0.json','"reconfigure": "APPLIED"'),
- row('owned-update-version-detection','scripts/native_plugin_setup.py','def upgrade(','tests/test_hi.py','test_r2_owned_upgrade_and_one_step_rollback_preserve_foreign_config'),
+ row('owned-update-version-detection','scripts/opencode-hi.mjs','function update(project,version)','tests/test_node_setup.mjs','M16 Node setup is idempotent and update changes only the owned Hi spec'),
  row('uninstall','scripts/native_plugin_setup.py','def uninstall(','data/validation/install-lifecycle-0.1.0.json','"uninstall": "APPLIED"'),
  row('reinstall','scripts/run-install-lifecycle.py',"reinstall=m.install(project,'0.1.0')",'data/validation/install-lifecycle-0.1.0.json','"reinstall": "APPLIED"'),
  row('rollback-truth','scripts/native_plugin_setup.py','def rollback(','tests/test_hi.py','test_r2_rollback_fails_closed_after_unrelated_post_operation_config_drift'),
@@ -22,8 +22,8 @@ rows=[
  row('user-config-preservation','scripts/run-install-lifecycle.py',"foreign_config_preserved_through_reinstall",'data/validation/install-lifecycle-0.1.0.json','"foreign_config_preserved_through_reinstall": true'),
  row('stale-state-cleanup','scripts/run-install-lifecycle.py','no_stale_setup_ownership_after_cleanup','data/validation/install-lifecycle-0.1.0.json','"no_stale_setup_ownership_after_cleanup": true'),
  row('setup-state-permissions','scripts/native_plugin_setup.py','def _write_state(','data/validation/install-lifecycle-0.1.0.json','"reinstall_setup_json_mode": "0o600"'),
- row('publishable-setup-cli-contract','package.json','"opencode-hi-setup"','tests/test_hi.py','test_prompt_b_publishable_package_carries_setup_cli_and_direct_runtime_dependency_contract'),
- row('no-source-tree-runtime-dependency','package.json','"@opencode-ai/sdk": "1.18.18"','tests/test_hi.py','test_prompt_b_publishable_package_carries_setup_cli_and_direct_runtime_dependency_contract'),
+ row('publishable-setup-cli-contract','package.json','"opencode-hi": "scripts/opencode-hi.mjs"','tests/test_hi.py','test_prompt_b_publishable_package_carries_node_bootstrap_legacy_cli_and_direct_runtime_dependency_contract'),
+ row('no-source-tree-runtime-dependency','package.json','"@opencode-ai/sdk": "1.18.19"','tests/test_hi.py','test_prompt_b_publishable_package_carries_node_bootstrap_legacy_cli_and_direct_runtime_dependency_contract'),
  row('runtime-run-is-separate-exact-host-boundary','data/validation/install-lifecycle-0.1.0.json','"external_host_status": "SEPARATE_T3_BOUNDARY"','data/validation/prompt-b-process-workspace-browser-lifecycle.json','"status": "PASS"'),
 ]
 # dynamic lifecycle truth guards
@@ -33,8 +33,8 @@ static={
  'all_lifecycle_assertions_true':bool(assertions) and all(assertions.values()),
  'state_files_restrictive':sec.get('setup_json_mode')=='0o600' and sec.get('rollback_mode_after_install')=='0o600' and sec.get('reinstall_setup_json_mode')=='0o600' and sec.get('rollback_mode_after_reinstall')=='0o600',
  'state_contains_no_config_body':sec.get('transaction_contains_config_body') is False and sec.get('rollback_contains_config_body') is False,
- 'package_setup_bin_declared':json.loads((ROOT/'package.json').read_text()).get('bin')=={'opencode-hi-setup':'scripts/native_plugin_setup.py'},
- 'package_setup_script_executable':bool((ROOT/'scripts/native_plugin_setup.py').stat().st_mode & 0o111),
+ 'package_setup_bin_declared':json.loads((ROOT/'package.json').read_text()).get('bin')=={'opencode-hi':'scripts/opencode-hi.mjs','hi':'scripts/opencode-hi.mjs','opencode-hi-setup':'scripts/native_plugin_setup.py'},
+ 'package_setup_script_executable':bool((ROOT/'scripts/opencode-hi.mjs').stat().st_mode & 0o111) and bool((ROOT/'scripts/native_plugin_setup.py').stat().st_mode & 0o111),
  'runtime_t3_separate':lifecycle.get('external_host_status')=='SEPARATE_T3_BOUNDARY',
 }
 viol=[]
@@ -44,7 +44,7 @@ for k,v in static.items():
     if not v:viol.append(f'static:{k}')
 closed=[
  {'id':'lifecycle-missing-reinstall','resolution':'Local lifecycle receipt now exercises reinstall, doctor and final clean uninstall.'},
- {'id':'packed-setup-cli-missing','resolution':'Publishable package now carries executable opencode-hi-setup plus VERSION.'},
+ {'id':'packed-setup-cli-missing','resolution':'Publishable package now carries the executable Node opencode-hi/hi package runner, retains opencode-hi-setup for compatibility, and carries VERSION.'},
  {'id':'root-runtime-dependency-contract-missing','resolution':'Root package explicitly declares host peer, direct SDK dependency and optional playwright-core runtime dependency.'},
 ]
 out={'schema':1,'kind':'PROMPT_B_INSTALL_UPDATE_LIFECYCLE_ADVERSARIAL_AUDIT','program':'PROMPT_B','section':25,'status':'PASS' if not viol else 'FAIL','summary':{'required':len(rows),'covered':sum(r['status']=='PASS' for r in rows),'violations':len(viol)},'invariants':rows,'static_guards':static,'closed_defects':closed,'claim_boundary':'Local lifecycle/package-content contract plus exact-host runtime proof reference. This does not claim npm publication or replace §26 fresh-consumer exact-host acceptance.','violations':viol}

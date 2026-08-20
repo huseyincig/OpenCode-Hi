@@ -23,7 +23,7 @@ test('role primary missing does not claim recommended fast path; configured live
   const r=resolveModel('standard',inventory,cfg,undefined,'coder',{})
   assert.equal(r.primary,'p/live')
   assert.ok(r.reason.some(x=>x.includes('role-primary-unavailable-or-policy-rejected:p/missing')))
-  assert.ok(!r.reason.some(x=>x.includes('recommended-fast-path')))
+  assert.ok(!r.reason.some(x=>x.includes('configured-role-prior-fast-path')))
 })
 
 test('dispatch revalidates provider policy and skips a provider denied after initial role resolution',async()=>{
