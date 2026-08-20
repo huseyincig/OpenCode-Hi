@@ -6,8 +6,8 @@
   "status": "CERTIFIED",
   "release": "0.2.3",
   "certified_source_checkpoint": {
-    "commit": "7b4b4f2600c84ef3d5b3281dc3ae4536ae64f48b",
-    "tree": "b357a3f3f8c0c424b4e34fda3feb6de3681a639f",
+    "commit": "324e79c9670287d46757ff13e9944e299c4c126c",
+    "tree": "8391a9d35ed50859761eec1748260e4734e9096c",
     "note": "Source checkpoint attested by a subsequent evidence commit to avoid self-referential Git hashes."
   },
   "schema_versions": {
@@ -25,7 +25,7 @@
         "receipt": "data/validation/external-opencode-hi-0.2.3-process-1.18.19-head-03a816f.json",
         "source_rank": 420,
         "reachable_from_head": true,
-        "head_distance": 4,
+        "head_distance": 6,
         "scope_limitations": [
           "Exact T3 applies only to OpenCode 1.18.19 on linux/aarch64 and exact source 03a816f930e3172ec84f733bae081768e2ea1a14.",
           "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted; arbitrary model-facing shell jobs are outside this claim."
@@ -37,7 +37,7 @@
         "receipt": "data/validation/external-opencode-hi-0.2.3-workspace-1.18.19-head-03a816f.json",
         "source_rank": 420,
         "reachable_from_head": true,
-        "head_distance": 4,
+        "head_distance": 6,
         "scope_limitations": [
           "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution.",
           "OpenCode workspace support must be enabled before host startup.",
@@ -50,7 +50,7 @@
         "receipt": "data/validation/external-opencode-hi-0.2.3-browser-1.18.19-head-03a816f.json",
         "source_rank": 420,
         "reachable_from_head": true,
-        "head_distance": 4,
+        "head_distance": 6,
         "scope_limitations": [
           "Browser execution remains task-plan local-http(s) scoped and rejects credential-bearing URLs and arbitrary selectors.",
           "Exact T3 applies only to OpenCode 1.18.19 on linux/aarch64 with real Chromium and exact source 03a816f930e3172ec84f733bae081768e2ea1a14."

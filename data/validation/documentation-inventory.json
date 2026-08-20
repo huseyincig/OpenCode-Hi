@@ -253,7 +253,7 @@
   "machine_owners": [
     {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
-      "sha256": "c82b997236229312ccdfe4ee8e6fe049225f313dad54fe02ffd4f972d023ad88",
+      "sha256": "5c729eeec5916bb1d7f367f5d81b4a054f993c7436cc408e998d0fdd8576005a",
       "area": "supported-host-matrix",
       "lifecycle": "MACHINE_OWNER"
     },

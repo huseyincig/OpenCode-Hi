@@ -4,11 +4,11 @@
   "release": "0.2.3",
   "status": "PASS",
   "source": {
-    "commit": "1402901946ad6ef6bdb34e8a323420dccb28e7a9",
-    "tree": "06406670b38a9f21096dd01163140b362132fb55"
+    "commit": "324e79c9670287d46757ff13e9944e299c4c126c",
+    "tree": "8391a9d35ed50859761eec1748260e4734e9096c"
   },
   "artifacts": {
-    "source/OpenCode-Hi-0.2.3-SOURCE.zip": "f149dc0b557c8b3b9f7cc956cffe8a00e594b7397e611c195fc8a8a94df8bc80",
+    "source/OpenCode-Hi-0.2.3-SOURCE.zip": "5cd34bd773eb1c4151ef981aee3a00690f8551e1925b12745dd091d82c9f4431",
     "dist/RELEASE-MANIFEST-0.2.3.json": "79a876d335b75b1241f5b037fdcc03f766040edbed8d601dc6c3173a37e42f00",
     "dist/OpenCode-Hi-0.2.3-DISTRIBUTABLE.zip": "dadf8479da0770fd929d5ef612fffe9c6bed3c4d77a34489faf0f25f4198e89b",
     "dist/SBOM-0.2.3.json": "4ba609b80caa7bb1c2f343da2436e71d678772aa78131969ab5668576ce6b013"
