@@ -29,7 +29,7 @@
       "owner_sha256": "7261690f885214f6a82a4d1e69aa224024fa0b067c04d779ceffe6769db31f53",
       "owner_anchor": "External receipts remain canonical evidence",
       "proof": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
-      "proof_sha256": "87cf97b02406124ccff6995a20e5b6244ffbcb48c6176d07bf7648b7e931ec69",
+      "proof_sha256": "f9bdb727432ba04c53be723063320acbcadbc6a4bab609d51fbe6c9a1bff9302",
       "proof_anchor": "\"covered\": 61"
     },
     {
@@ -38,7 +38,7 @@
       "owner_sha256": "987692ec836f2b16c62f53c8cc4f4f14551bb35c33298e6d5d22eb8281b25f6c",
       "owner_anchor": "const knownLibuvTeardown=",
       "proof": "data/validation/test-harness-isolation-0.1.0.json",
-      "proof_sha256": "f3aed4bf1b3303a316a69877b84478a8f5f376ab49e3e5e10a7be7b2f29e090a",
+      "proof_sha256": "9d504eb99629093a25fd2cbf36aa1b8870ef843718505d508f23d6d26dffd2e2",
       "proof_anchor": "SIGABRT is normalized only with exact uv__io_poll EEXIST signature"
     },
     {
@@ -65,7 +65,7 @@
       "owner_sha256": "987692ec836f2b16c62f53c8cc4f4f14551bb35c33298e6d5d22eb8281b25f6c",
       "owner_anchor": "OPENCODE_HI_STATE_DIR",
       "proof": "data/validation/test-harness-isolation-0.1.0.json",
-      "proof_sha256": "f3aed4bf1b3303a316a69877b84478a8f5f376ab49e3e5e10a7be7b2f29e090a",
+      "proof_sha256": "9d504eb99629093a25fd2cbf36aa1b8870ef843718505d508f23d6d26dffd2e2",
       "proof_anchor": "\"home_hi_state_delta\""
     },
     {
@@ -74,7 +74,7 @@
       "owner_sha256": "97829bf90a65fec515bfd6c01736f80a2b36e996a38d2fb565e129569407c3ac",
       "owner_anchor": "fileURLToPath(import.meta.url)",
       "proof": "data/validation/test-harness-isolation-0.1.0.json",
-      "proof_sha256": "f3aed4bf1b3303a316a69877b84478a8f5f376ab49e3e5e10a7be7b2f29e090a",
+      "proof_sha256": "9d504eb99629093a25fd2cbf36aa1b8870ef843718505d508f23d6d26dffd2e2",
       "proof_anchor": "\"repo_root_cwd\""
     },
     {
@@ -83,7 +83,7 @@
       "owner_sha256": "987692ec836f2b16c62f53c8cc4f4f14551bb35c33298e6d5d22eb8281b25f6c",
       "owner_anchor": "XDG_STATE_HOME",
       "proof": "data/validation/test-harness-isolation-0.1.0.json",
-      "proof_sha256": "f3aed4bf1b3303a316a69877b84478a8f5f376ab49e3e5e10a7be7b2f29e090a",
+      "proof_sha256": "9d504eb99629093a25fd2cbf36aa1b8870ef843718505d508f23d6d26dffd2e2",
       "proof_anchor": "\"isolation_env\""
     },
     {
@@ -92,7 +92,7 @@
       "owner_sha256": "987692ec836f2b16c62f53c8cc4f4f14551bb35c33298e6d5d22eb8281b25f6c",
       "owner_anchor": "GIT_CONFIG_NOSYSTEM",
       "proof": "data/validation/test-harness-isolation-0.1.0.json",
-      "proof_sha256": "f3aed4bf1b3303a316a69877b84478a8f5f376ab49e3e5e10a7be7b2f29e090a",
+      "proof_sha256": "9d504eb99629093a25fd2cbf36aa1b8870ef843718505d508f23d6d26dffd2e2",
       "proof_anchor": "GIT_CONFIG_NOSYSTEM"
     },
     {

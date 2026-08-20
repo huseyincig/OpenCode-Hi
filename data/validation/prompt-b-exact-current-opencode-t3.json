@@ -11,40 +11,40 @@
     "registry_opencode_latest": "1.18.19",
     "registry_sdk_latest": "1.18.19",
     "locked_sdk": "1.18.19",
-    "captured_at": "2026-08-20T18:03:11.229833+00:00"
+    "captured_at": "2026-08-20T18:57:50.481138+00:00"
   },
   "candidate_release": "0.2.3",
   "fresh_consumer_receipt": "data/validation/fresh-consumer-opencode-1.18.19.json",
-  "fresh_consumer_sha256": "e10524bb02ea4b38a2bac1d3f91eab445f1e6a653221892f2b012a6abab1669c",
-  "exact_source_commit": "3026b5c40f416fa8bf5ab2a285646a3f6ea39e96",
-  "exact_source_tree": "9ba63da6c4c9b56c7bfcdc340e75d9f12f09fa72",
+  "fresh_consumer_sha256": "4b0e3a60dc51a2df1b7707ab39a0a388dae816f7e2de9d47123808f4f128fbc9",
+  "exact_source_commit": "02b2be062a2b47fabaf6af5d6a3261a5fd601629",
+  "exact_source_tree": "daa1d174d00b501206b41033ae58ea6754ea8e5c",
   "capability_evidence_mode": "CURRENT_EXACT_HOST_PACKAGE_PLUS_RUNTIME_EQUIVALENT_EXACT_T3",
   "compatibility_projection": "data/validation/compatibility-matrix-0.1.0.json",
-  "compatibility_sha256": "f9e9f98d53c9b00df934af58d67ea4fb437fa068b0799ba9da5a70198978a8d9",
+  "compatibility_sha256": "a2420bbe3a3bcc1950ff05a0e2792993153534c5873c958b2747206949265046",
   "lifecycle_audit": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
-  "lifecycle_sha256": "87cf97b02406124ccff6995a20e5b6244ffbcb48c6176d07bf7648b7e931ec69",
+  "lifecycle_sha256": "f9bdb727432ba04c53be723063320acbcadbc6a4bab609d51fbe6c9a1bff9302",
   "capabilities": {
     "process-lifecycle": {
-      "receipt": "data/validation/external-opencode-hi-0.2.3-process-1.18.19-head-d741c1a.json",
-      "receipt_sha256": "9348a431241a35d9c4a3e0d9fc03f4f582d2a904c7fbcf205093e3edde6b672b",
+      "receipt": "data/validation/external-opencode-hi-0.2.3-process-1.18.19-head-c0f09f5.json",
+      "receipt_sha256": "b27b065558bbfb9110839a2f30d271b9ffac68629668a070036c03337cb8164b",
       "status": "SUPPORTED_T3",
-      "receipt_source_commit": "d741c1a4870bb9afa38b99ae5fb62b4c328c731f",
+      "receipt_source_commit": "c0f09f54a93e6863fbfbfec6faa28649e2e4eb70",
       "runtime_equivalent_to_current": true,
       "runtime_hash_drift": []
     },
     "workspace-isolation-binding": {
-      "receipt": "data/validation/external-opencode-hi-0.2.3-workspace-1.18.19-head-d741c1a.json",
-      "receipt_sha256": "e834b3e2a17a7e49a82167cd3e6f48a68c33c53acf1b15c33f3a66944b6baa96",
+      "receipt": "data/validation/external-opencode-hi-0.2.3-workspace-1.18.19-head-c0f09f5.json",
+      "receipt_sha256": "42fcab280301078e7e1d3557652032cdfdfabd8af3d6c6b2c28a81f191314d05",
       "status": "SUPPORTED_T3",
-      "receipt_source_commit": "d741c1a4870bb9afa38b99ae5fb62b4c328c731f",
+      "receipt_source_commit": "c0f09f54a93e6863fbfbfec6faa28649e2e4eb70",
       "runtime_equivalent_to_current": true,
       "runtime_hash_drift": []
     },
     "browser-execution": {
-      "receipt": "data/validation/external-opencode-hi-0.2.3-browser-1.18.19-head-d741c1a.json",
-      "receipt_sha256": "82bb79bb2b47626f1073612ec4ae11996ff6b114411f41d2593be4dfaa988fc5",
+      "receipt": "data/validation/external-opencode-hi-0.2.3-browser-1.18.19-head-c0f09f5.json",
+      "receipt_sha256": "ffcb91fe04c1aab7e4b84ebfe0c0d611dcdf35ef1ca5f0294732bd9b285acb81",
       "status": "SUPPORTED_T3",
-      "receipt_source_commit": "d741c1a4870bb9afa38b99ae5fb62b4c328c731f",
+      "receipt_source_commit": "c0f09f54a93e6863fbfbfec6faa28649e2e4eb70",
       "runtime_equivalent_to_current": true,
       "runtime_hash_drift": []
     }

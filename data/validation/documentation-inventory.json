@@ -147,7 +147,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "cd02c66a7f730c14d9a1b83cda5054de0293519f00f3f16d33dac56dec9052c6",
+      "sha256": "7c64c3e9e6c1eb8b20591d99c973786185bc01143e6278e0653e611aa18304b7",
       "area": "product-overview",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -163,7 +163,7 @@
     },
     {
       "path": "docs/CONFIGURATION.md",
-      "sha256": "d0cd64ca2bdd0014cbe1e6dbaf5e7d604008348685a43445bff99fbc57d9300d",
+      "sha256": "6570178da280c20edcd9262a6907a8a6c55f6fea5b943efe4b0a0a57fe310818",
       "area": "configuration-guide",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -171,7 +171,7 @@
     },
     {
       "path": "docs/HOSTS.md",
-      "sha256": "6d2235bbe8515c334384efc2e8c46271d762781503345e836f416973a0e32636",
+      "sha256": "efc156286f471dfa9bd6696b02757ad5382d8399c35a6aaeec3db96eeae0fade",
       "area": "host-support",
       "audience": "OPERATOR",
       "lifecycle": "CANONICAL_CURRENT",
@@ -187,7 +187,7 @@
     },
     {
       "path": "docs/INSTALLATION.md",
-      "sha256": "0ecbcee27a45d0687e1d2ab0fc526ccfde584860b131e0a34520630a989db80d",
+      "sha256": "7ff7fdc1a2d502d16da6aa231a8c6cdca79a8046ade030122e1e197cda0fc475",
       "area": "installation-configuration-lifecycle",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -235,7 +235,7 @@
     },
     {
       "path": "docs/locales/tr/CONFIGURATION.md",
-      "sha256": "d60885806982314946a29c067b2faf435f2849199bd4c9a201780dfd0b92e2aa",
+      "sha256": "21babc883e08a79c1c76574bcd1c83c1aba3968dd41450701ab5fdaa9677c710",
       "area": "turkish-configuration-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",
@@ -243,7 +243,7 @@
     },
     {
       "path": "docs/locales/tr/README.md",
-      "sha256": "c0d32737640dec1d0500002c61d396e6376c4e99bc7085a70cb4c1bb745c1a50",
+      "sha256": "bd8397a1df40da85cea94df3a864a5016db6d64b797fd96f88a07353d324e302",
       "area": "turkish-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",
@@ -253,7 +253,7 @@
   "machine_owners": [
     {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
-      "sha256": "f9e9f98d53c9b00df934af58d67ea4fb437fa068b0799ba9da5a70198978a8d9",
+      "sha256": "a2420bbe3a3bcc1950ff05a0e2792993153534c5873c958b2747206949265046",
       "area": "supported-host-matrix",
       "lifecycle": "MACHINE_OWNER"
     },

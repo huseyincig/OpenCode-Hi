@@ -8,11 +8,11 @@
   "inputs": {
     "compatibility_baseline": {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
-      "sha256": "f9e9f98d53c9b00df934af58d67ea4fb437fa068b0799ba9da5a70198978a8d9"
+      "sha256": "a2420bbe3a3bcc1950ff05a0e2792993153534c5873c958b2747206949265046"
     },
     "current_release_gates": {
       "path": "data/validation/release-gates.json",
-      "sha256": "5aab1f36d575de8c1744b691519d3ba9862143075888c46af05ae0f20515fd03"
+      "sha256": "221ece80cb3866a72dd5c6a8cbbb3200f53ccf6a0050033ae0ab0b7fdfc6107f"
     },
     "historical_v0_1_0_publication": {
       "path": "data/validation/release-publication-0.1.0.json",
@@ -47,18 +47,18 @@
     "baseline_capabilities": {
       "process-lifecycle": {
         "status": "SUPPORTED_T3",
-        "receipt": "data/validation/external-opencode-hi-0.2.3-process-1.18.19-head-d741c1a.json",
-        "tested_git_commit": "d741c1a4870bb9afa38b99ae5fb62b4c328c731f"
+        "receipt": "data/validation/external-opencode-hi-0.2.3-process-1.18.19-head-c0f09f5.json",
+        "tested_git_commit": "c0f09f54a93e6863fbfbfec6faa28649e2e4eb70"
       },
       "workspace-isolation-binding": {
         "status": "SUPPORTED_T3",
-        "receipt": "data/validation/external-opencode-hi-0.2.3-workspace-1.18.19-head-d741c1a.json",
-        "tested_git_commit": "d741c1a4870bb9afa38b99ae5fb62b4c328c731f"
+        "receipt": "data/validation/external-opencode-hi-0.2.3-workspace-1.18.19-head-c0f09f5.json",
+        "tested_git_commit": "c0f09f54a93e6863fbfbfec6faa28649e2e4eb70"
       },
       "browser-execution": {
         "status": "SUPPORTED_T3",
-        "receipt": "data/validation/external-opencode-hi-0.2.3-browser-1.18.19-head-d741c1a.json",
-        "tested_git_commit": "d741c1a4870bb9afa38b99ae5fb62b4c328c731f"
+        "receipt": "data/validation/external-opencode-hi-0.2.3-browser-1.18.19-head-c0f09f5.json",
+        "tested_git_commit": "c0f09f54a93e6863fbfbfec6faa28649e2e4eb70"
       }
     },
     "candidate_certification": {

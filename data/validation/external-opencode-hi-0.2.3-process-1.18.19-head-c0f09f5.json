@@ -1,0 +1,321 @@
+{
+  "schema": 1,
+  "release": "0.2.3",
+  "generated_at": "2026-08-20T18:51:14.513Z",
+  "publication_authority": {
+    "condition": "EXPLICIT_CURRENT_USER_AUTHORITY_REQUIRED_AFTER_FINAL_CERTIFICATION",
+    "authorized": false,
+    "attempted_in_candidate_t3": false
+  },
+  "status": "PASS_EXACT_CURRENT_PROCESS_LIFECYCLE_T3_RELEASE_0_2_3",
+  "source_binding": {
+    "tested_git_commit": "c0f09f54a93e6863fbfbfec6faa28649e2e4eb70",
+    "tested_git_tree": "f3b5706ec4e00b47917e69a6222cdd8cb93c6980",
+    "worktree": "/workspace/OpenCode-Hi/.agent-work/worktrees/runtime-bounded-capabilities",
+    "state": "CLEAN_COMMITTED_SOURCE",
+    "exact_candidate": true,
+    "runtime_hashes": {
+      "plugin/src/contracts/process.ts": "baa22ab538d5b0e16c09d2f5234d8fa13253881a608e3fbb6102833adff963fd",
+      "plugin/src/runtime/process/executor.ts": "3a0f63b69b47b429b578489f1433a4170cf6fbd4c1a64c1ecd009f60bd2756b1",
+      "plugin/src/runtime/process/runtime.ts": "84d4598bead6be2b9cbf43ee4fb23d5381419a26cb8b5dc27b4e53bda21449b7",
+      "plugin/src/opencode/open-code-pty-adapter.ts": "68d4da52acac49163aa7d4aaa8eb09269c04def8d136d0d3c0493a51701eb4fb",
+      "plugin/src/contracts/host-capability.ts": "6296832cd6f5b73f234f2b41e86177525146a5b452d5def7b58c61515ef9e1af"
+    },
+    "note": "Fresh exact-source Process T3 acceptance on frozen 0.2.3 candidate, including repeated short-lived PTY output capture and restart replay marker confinement."
+  },
+  "host": {
+    "os": "linux",
+    "arch": "aarch64",
+    "opencode_version": "1.18.19",
+    "opencode_binary": "/workspace/OpenCode-Hi/.agent-work/tools/opencode-1.18.19/node_modules/opencode-linux-arm64/bin/opencode",
+    "opencode_binary_sha256": "c34a30f5567f989d9a089cc4a0bf5860d81273fc6644de96671bd5cbe5dd31ec",
+    "server": "ephemeral-user-space-exact-1.18.19"
+  },
+  "gates": {
+    "process_runtime_mission_owned": "PASS_CONTROLLED",
+    "permission_denial_preflight": "PASS_T3",
+    "native_child_session_parent_binding": "PASS_T3",
+    "process_spawn_pid": "PASS_T3",
+    "process_quick_exit_before_observation": "PASS_T3",
+    "process_nonzero_exit": "PASS_T3",
+    "process_huge_unread_output_bounded": "PASS_T3",
+    "process_concurrent_isolation": "PASS_T3",
+    "process_group_identity": "PASS_T3",
+    "process_timeout_group_signal": "PASS_T3",
+    "process_kill_cleanup": "PASS_T3",
+    "process_restart_adoption": "PASS_T3",
+    "process_host_cleanup_empty": "PASS_T3",
+    "process_lifecycle": "SUPPORTED_T3"
+  },
+  "evidence": {
+    "real_host": {
+      "health": {
+        "available": true,
+        "detail": "OpenCode canonical v2 PTY list observed"
+      },
+      "permission_deny": {
+        "blocked": true,
+        "error": "ProcessSpawnPermissionError: Hi ProcessExecutor spawn deny: bash-permission:deny",
+        "local_processes": 0
+      },
+      "main": {
+        "status": "EXITED",
+        "exit": 0,
+        "text": "RUNTIME_CURRENT_OK",
+        "pid": 104664,
+        "group": 104664
+      },
+      "nonzero": {
+        "status": "EXITED",
+        "exit": 7,
+        "text": "boom",
+        "pid": 104674,
+        "group": 104674
+      },
+      "huge": {
+        "status": "EXITED",
+        "exit": 0,
+        "chars": 1048597,
+        "buffered": 262144,
+        "truncated": true
+      },
+      "concurrent": {
+        "a": "ALPHA",
+        "b": "BETA",
+        "distinct": true
+      },
+      "timeout": {
+        "status": "TIMED_OUT",
+        "reason": "timeout-policy",
+        "pid": 104704,
+        "group": 104704
+      },
+      "remaining": 0,
+      "quick_exit_repetitions": {
+        "total": 20,
+        "passed": 20,
+        "results": [
+          {
+            "i": 0,
+            "status": "EXITED",
+            "exit": 0,
+            "text": "QUICK_BARRIER_0_OK",
+            "end": 39,
+            "pid": 104711,
+            "group": 104711
+          },
+          {
+            "i": 1,
+            "status": "EXITED",
+            "exit": 0,
+            "text": "QUICK_BARRIER_1_OK",
+            "end": 39,
+            "pid": 104718,
+            "group": 104718
+          },
+          {
+            "i": 2,
+            "status": "EXITED",
+            "exit": 0,
+            "text": "QUICK_BARRIER_2_OK",
+            "end": 39,
+            "pid": 104725,
+            "group": 104725
+          },
+          {
+            "i": 3,
+            "status": "EXITED",
+            "exit": 0,
+            "text": "QUICK_BARRIER_3_OK",
+            "end": 39,
+            "pid": 104732,
+            "group": 104732
+          },
+          {
+            "i": 4,
+            "status": "EXITED",
+            "exit": 0,
+            "text": "QUICK_BARRIER_4_OK",
+            "end": 39,
+            "pid": 104739,
+            "group": 104739
+          },
+          {
+            "i": 5,
+            "status": "EXITED",
+            "exit": 0,
+            "text": "QUICK_BARRIER_5_OK",
+            "end": 39,
+            "pid": 104746,
+            "group": 104746
+          },
+          {
+            "i": 6,
+            "status": "EXITED",
+            "exit": 0,
+            "text": "QUICK_BARRIER_6_OK",
+            "end": 39,
+            "pid": 104753,
+            "group": 104753
+          },
+          {
+            "i": 7,
+            "status": "EXITED",
+            "exit": 0,
+            "text": "QUICK_BARRIER_7_OK",
+            "end": 39,
+            "pid": 104760,
+            "group": 104760
+          },
+          {
+            "i": 8,
+            "status": "EXITED",
+            "exit": 0,
+            "text": "QUICK_BARRIER_8_OK",
+            "end": 39,
+            "pid": 104767,
+            "group": 104767
+          },
+          {
+            "i": 9,
+            "status": "EXITED",
+            "exit": 0,
+            "text": "QUICK_BARRIER_9_OK",
+            "end": 39,
+            "pid": 104774,
+            "group": 104774
+          },
+          {
+            "i": 10,
+            "status": "EXITED",
+            "exit": 0,
+            "text": "QUICK_BARRIER_10_OK",
+            "end": 40,
+            "pid": 104781,
+            "group": 104781
+          },
+          {
+            "i": 11,
+            "status": "EXITED",
+            "exit": 0,
+            "text": "QUICK_BARRIER_11_OK",
+            "end": 40,
+            "pid": 104788,
+            "group": 104788
+          },
+          {
+            "i": 12,
+            "status": "EXITED",
+            "exit": 0,
+            "text": "QUICK_BARRIER_12_OK",
+            "end": 40,
+            "pid": 104795,
+            "group": 104795
+          },
+          {
+            "i": 13,
+            "status": "EXITED",
+            "exit": 0,
+            "text": "QUICK_BARRIER_13_OK",
+            "end": 40,
+            "pid": 104803,
+            "group": 104803
+          },
+          {
+            "i": 14,
+            "status": "EXITED",
+            "exit": 0,
+            "text": "QUICK_BARRIER_14_OK",
+            "end": 40,
+            "pid": 104822,
+            "group": 104822
+          },
+          {
+            "i": 15,
+            "status": "EXITED",
+            "exit": 0,
+            "text": "QUICK_BARRIER_15_OK",
+            "end": 40,
+            "pid": 104829,
+            "group": 104829
+          },
+          {
+            "i": 16,
+            "status": "EXITED",
+            "exit": 0,
+            "text": "QUICK_BARRIER_16_OK",
+            "end": 40,
+            "pid": 104836,
+            "group": 104836
+          },
+          {
+            "i": 17,
+            "status": "EXITED",
+            "exit": 0,
+            "text": "QUICK_BARRIER_17_OK",
+            "end": 40,
+            "pid": 104843,
+            "group": 104843
+          },
+          {
+            "i": 18,
+            "status": "EXITED",
+            "exit": 0,
+            "text": "QUICK_BARRIER_18_OK",
+            "end": 40,
+            "pid": 104850,
+            "group": 104850
+          },
+          {
+            "i": 19,
+            "status": "EXITED",
+            "exit": 0,
+            "text": "QUICK_BARRIER_19_OK",
+            "end": 40,
+            "pid": 104857,
+            "group": 104857
+          }
+        ]
+      },
+      "restart": {
+        "disposition": "ADOPTED",
+        "status": "RUNNING",
+        "text_before": "RESTART_CURRENT_READY",
+        "text_after": "RESTART_CURRENT_READY",
+        "killed": "TERMINATED",
+        "killed_reason": "signal:SIGTERM",
+        "remaining": 0
+      }
+    },
+    "raw_artifacts": {
+      "main": {
+        "path": "/workspace/OpenCode-Hi/.agent-work/acceptance/exact-current-host-t3-1.18.19-c0f09f5/process-main.json",
+        "sha256": "4ed0e61ee48a54b12ec84a5e9855d13e9fe1267560398ec81fea586874e8b186"
+      },
+      "quick20": {
+        "path": "/workspace/OpenCode-Hi/.agent-work/acceptance/exact-current-host-t3-1.18.19-c0f09f5/quick20.json",
+        "sha256": "864ce01a21ed4bc88f92cb817d795bd0ba02bbc985251047ec15ecdb67bbc92f"
+      },
+      "restart": {
+        "path": "/workspace/OpenCode-Hi/.agent-work/acceptance/exact-current-host-t3-1.18.19-c0f09f5/process-adopt.json",
+        "sha256": "4a824eaaf4640c972a8e38eadee0ee1e935201016865fc2860da3e5393b9375d"
+      },
+      "native_child_session": {
+        "path": "/workspace/OpenCode-Hi/.agent-work/acceptance/exact-current-host-t3-1.18.19-c0f09f5/native-child-session.json",
+        "sha256": "e526d5e82b6c1dbd43231938e8dff18f11fd7c3e413b9cf4fa65b55896f655bc"
+      }
+    }
+  },
+  "limitations": [
+    "Exact T3 applies only to OpenCode 1.18.19 on linux/aarch64 and exact source c0f09f54a93e6863fbfbfec6faa28649e2e4eb70.",
+    "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted; arbitrary model-facing shell jobs are outside this claim.",
+    "The attach-ready launch barrier is certified on the POSIX reference-host path; this receipt does not claim equivalent Windows PTY behavior."
+  ],
+  "capability_limitations": {
+    "process-lifecycle": [
+      "Exact T3 applies only to OpenCode 1.18.19 on linux/aarch64 and exact source c0f09f54a93e6863fbfbfec6faa28649e2e4eb70.",
+      "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted; arbitrary model-facing shell jobs are outside this claim."
+    ]
+  },
+  "rule": "API existence, historical receipts, or successful process exit alone do not certify this result; actual frozen-candidate host invocation and captured user-visible output were required."
+}

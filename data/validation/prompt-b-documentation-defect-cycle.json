@@ -17,7 +17,7 @@
       "owner_sha256": "ce1fd7f7f2fc2e1d82d257f54897c01dda80eab2639134519505d9fa989bad7b",
       "owner_anchor": "owner_sha256",
       "proof": "data/validation/product-truth-inventory.json",
-      "proof_sha256": "684a8feced325cc73923b483448a83d9d3a22c6c6e2b61eac0c5b9caa472dd4c",
+      "proof_sha256": "3abf2c4f785574fb1bb4e79d4f7b4f216055e839b781385656ed6163509caef5",
       "proof_anchor": "\"owner_sha256\""
     },
     {
@@ -27,7 +27,7 @@
       "owner_sha256": "ce1fd7f7f2fc2e1d82d257f54897c01dda80eab2639134519505d9fa989bad7b",
       "owner_anchor": "proof_paths",
       "proof": "data/validation/product-truth-inventory.json",
-      "proof_sha256": "684a8feced325cc73923b483448a83d9d3a22c6c6e2b61eac0c5b9caa472dd4c",
+      "proof_sha256": "3abf2c4f785574fb1bb4e79d4f7b4f216055e839b781385656ed6163509caef5",
       "proof_anchor": "\"proof_paths\""
     },
     {
@@ -37,7 +37,7 @@
       "owner_sha256": "def8950d64b50eab1dff2ff705f87a03ffb9eb9a7ce573737005477f9af49e41",
       "owner_anchor": "one-current-area-one-public-owner",
       "proof": "data/validation/documentation-inventory.json",
-      "proof_sha256": "a1631c12e85b5a53bd6de04ee2301f7caa509ddf0d9a53e3f870dfa1a4ae9bc8",
+      "proof_sha256": "d023e7b665aaf4d9b9fb99e607af9075831a3e51abe9ef0b21485a90d3f005ef",
       "proof_anchor": "\"canonical_ownership\""
     },
     {
@@ -47,7 +47,7 @@
       "owner_sha256": "d28be108c398a85b956fe702e75002975f29e85074205dea7192de9307883c15",
       "owner_anchor": "Generated from",
       "proof": "data/validation/documentation-parity.json",
-      "proof_sha256": "e8c336f0ee302e78599b0e82ddebc7d9ea0ef6e38a90ce23a9a877447d3a8a58",
+      "proof_sha256": "dd4bc07741cd2f8cafb248904361617d0590ff7ba24fa8d6eb8046e402e7fde1",
       "proof_anchor": "\"status\": \"PASS\""
     },
     {
@@ -57,7 +57,7 @@
       "owner_sha256": "85298e6a9869f3ad199cdfaec0d6435c2daf84abb8770b14e1c53586df145aba",
       "owner_anchor": "documentation parity",
       "proof": "data/validation/documentation-parity.json",
-      "proof_sha256": "e8c336f0ee302e78599b0e82ddebc7d9ea0ef6e38a90ce23a9a877447d3a8a58",
+      "proof_sha256": "dd4bc07741cd2f8cafb248904361617d0590ff7ba24fa8d6eb8046e402e7fde1",
       "proof_anchor": "\"violations\": []"
     }
   ],
