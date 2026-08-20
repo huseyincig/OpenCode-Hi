@@ -1,14 +1,19 @@
 #!/usr/bin/env node
 import {execFileSync,spawnSync} from 'node:child_process'
-import {readFileSync} from 'node:fs'
+import {existsSync,readFileSync} from 'node:fs'
 import {fileURLToPath} from 'node:url'
+import {dirname,join} from 'node:path'
 
 const ROOT=fileURLToPath(new URL('..',import.meta.url)).replace(/[\\/]$/,'')
 const readJson=path=>JSON.parse(readFileSync(`${ROOT}/${path}`,'utf8'))
 const text=path=>readFileSync(`${ROOT}/${path}`,'utf8').trim()
 const git=(...args)=>execFileSync('git',args,{cwd:ROOT,encoding:'utf8'}).trim()
+const gitCommonDir=git('rev-parse','--path-format=absolute','--git-common-dir')
+const repositoryRoot=dirname(gitCommonDir)
+const releasePython=process.platform==='win32'?join(repositoryRoot,'.agent-work','venv-release','Scripts','python.exe'):join(repositoryRoot,'.agent-work','venv-release','bin','python')
+const executionEnv={...process.env,...(!process.env.OPENCODE_HI_PYTHON&&existsSync(releasePython)?{OPENCODE_HI_PYTHON:releasePython}:{})}
 function blocked(reason,detail){process.stdout.write(JSON.stringify({status:'BLOCKED',kind:'EXACT_SHA_NO_PUBLISH_PREFLIGHT',reason,...(detail?{detail}:{}),mutation_performed:false},null,2)+'\n');process.exit(2)}
-function run(command,args,timeout=30000){return spawnSync(command,args,{cwd:ROOT,encoding:'utf8',timeout,maxBuffer:32*1024*1024})}
+function run(command,args,timeout=30000){return spawnSync(command,args,{cwd:ROOT,encoding:'utf8',timeout,maxBuffer:32*1024*1024,env:executionEnv})}
 function gate(name,command,args,timeout=900000){const r=run(command,args,timeout);if(r.status!==0)blocked(`${name}-failed`,`${(r.stdout||'').slice(-2500)}\n${(r.stderr||'').slice(-2500)}`);return{name,status:'PASS'}}
 
 const args=process.argv.slice(2);let expected

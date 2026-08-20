@@ -201,6 +201,21 @@ test('0.2.3 reconfigure wizard preserves unknown routing fields and cancellation
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
+
+
+test('0.2.3 release preflight can route canonical checks through an explicit Python interpreter without host-path hardcoding',t=>{
+  const runner=join(ROOT,'scripts','run-python.mjs'),preflight=readFileSync(join(ROOT,'scripts','release-preflight.mjs'),'utf8'),runnerSource=readFileSync(runner,'utf8')
+  assert.match(runnerSource,/OPENCODE_HI_PYTHON/)
+  assert.match(preflight,/OPENCODE_HI_PYTHON/)
+  assert.match(preflight,/venv-release/)
+  assert.match(preflight,/git-common-dir/)
+  const candidates=process.platform==='win32'?['python','python3']:['python3','python']
+  const py=candidates.find(cmd=>spawnSync(cmd,['--version'],{stdio:'ignore'}).status===0)
+  if(!py){t.skip('no Python interpreter available for override probe');return}
+  const r=spawnSync(process.execPath,[runner,'-c',"print('HI_PY_OVERRIDE_OK')"],{cwd:ROOT,encoding:'utf8',env:{...process.env,OPENCODE_HI_PYTHON:py}})
+  assert.equal(r.status,0,`${r.stdout}\n${r.stderr}`);assert.match(r.stdout,/HI_PY_OVERRIDE_OK/)
+})
+
 test('0.2.3 exact-SHA release preflight is fail-closed and contains no publication mutation command',()=>{
   const path=join(ROOT,'scripts','release-preflight.mjs'),source=readFileSync(path,'utf8')
   for(const forbidden of ['npm publish','git push','gh release create','git tag -','git tag v'])assert.equal(source.includes(forbidden),false,forbidden)

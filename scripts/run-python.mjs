@@ -7,9 +7,12 @@ if (!args.length) {
   console.error('usage: node scripts/run-python.mjs <script-or-python-args...>')
   process.exit(2)
 }
-const candidates = process.platform === 'win32'
-  ? [['python', []], ['py', ['-3']], ['python3', []]]
-  : [['python3', []], ['python', []]]
+const explicitPython = String(process.env.OPENCODE_HI_PYTHON || '').trim()
+const candidates = explicitPython
+  ? [[explicitPython, []]]
+  : process.platform === 'win32'
+    ? [['python', []], ['py', ['-3']], ['python3', []]]
+    : [['python3', []], ['python', []]]
 let last
 for (const [cmd, prefix] of candidates) {
   const probe = spawnSync(cmd, [...prefix, '--version'], { stdio: 'ignore' })
