@@ -62,6 +62,7 @@ Hi is designed to use the minimum sufficient topology, model, context and verifi
 ## Current product truth
 
 The current immutable public release is `opencode-hi@0.2.2` / `v0.2.2`. The current development source has the distinct candidate identity `0.2.3`; it is **not** public merely because source metadata says `0.2.3`. GitHub Releases and the npm registry remain authoritative for public availability. The published `0.2.2` release stays bound to its immutable Git tag/source, successful Ubuntu/Windows Release Readiness, npm Trusted Publishing provenance, and fresh-registry exact OpenCode `1.18.19` acceptance.
+The current repository source is `opencode-hi@0.2.3`, a **prepublication development candidate**. It is not the published npm/GitHub release and must not be presented as T4-certified until its own release gates complete.
 
 Current host capability truth is generated from exact receipts rather than hand-maintained here. See [Host Support](docs/HOSTS.md) and `data/validation/compatibility-matrix-0.1.0.json`.
 

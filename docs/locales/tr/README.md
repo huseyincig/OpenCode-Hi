@@ -13,6 +13,7 @@ Hi, mümkün olan en fazla agent/token/araç yerine iş için **minimum yeterli*
 ## Güncel ürün gerçeği
 
 Güncel immutable public release `opencode-hi@0.2.2` / `v0.2.2`'dir. Güncel development source ayrı `0.2.3` candidate kimliğini taşır; source metadata'da `0.2.3` yazması onu yayınlanmış yapmaz. Public availability için authoritative kaynaklar GitHub Releases ve npm registry'dir. Yayınlanmış `0.2.2`; exact Git tag/source, başarılı Ubuntu/Windows Release Readiness, npm Trusted Publishing provenance ve fresh-registry exact OpenCode `1.18.19` kabulü ile doğrulanmıştır.
+Repository'deki güncel kaynak `opencode-hi@0.2.3` **prepublication development candidate**'dır; kendi release gate'leri kapanmadan npm/GitHub'da yayınlanmış veya T4-certified sayılmaz.
 
 Güncel host/capability gerçeği elle yazılan metinden değil exact receipt'lerden üretilir. Ayrıntı için [Host Support](../../HOSTS.md) ve `data/validation/compatibility-matrix-0.1.0.json` kullanılır.
 
