@@ -5,11 +5,11 @@ ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'data/validation/prompt-b-cli-developer-tooling-ux.json'
 def sha(rel):return hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()
 checks=[
- ('installation','scripts/opencode-hi.mjs',"if(command==='setup'||command==='install')",'tests/test_node_setup.mjs','M16 Node setup preserves foreign OpenCode config'),
+ ('installation','scripts/opencode-hi.mjs','function install(project,version)','tests/test_node_setup.mjs','0.2.3 friendly install ensures an owned registration while setup remains strict first-install'),
  ('first-run','scripts/opencode-hi.mjs',"routing_initialization:'pending-effective-runtime-inventory'",'tests/test_node_setup.mjs','M16 Node doctor distinguishes package registration truth from pending effective runtime routing'),
  ('doctor-diagnostics','scripts/opencode-hi.mjs','function doctor(project)', 'tests/test_node_setup.mjs','M16 Node doctor distinguishes package registration truth from pending effective runtime routing'),
  ('help','scripts/opencode-hi.mjs','function usage()', 'tests/test_node_setup.mjs','M16 package-runner help is Node-native'),
- ('command-inventory','scripts/opencode-hi.mjs','<setup|update|doctor|plan|rollback|recover>','tests/test_node_setup.mjs','M16 package-runner help is Node-native'),
+ ('command-inventory','scripts/opencode-hi.mjs','npx ${PACKAGE} check-update [project]','tests/test_node_setup.mjs','M16 package-runner help is Node-native'),
  ('bounded-errors-no-stack','scripts/opencode-hi.mjs','slice(0,500)','tests/test_node_setup.mjs','CLI did not return JSON'),
  ('recovery-instructions','scripts/opencode-hi.mjs','Run: npx opencode-hi recover <project>','tests/test_node_setup.mjs','M16 Node setup is idempotent and update changes only the owned Hi spec'),
  ('config-errors','scripts/native_plugin_setup.py',"_bounded_cli_int('parallel-max',1,8)",'tests/test_hi.py','test_prompt_b_cli_reconfigure_rejects_out_of_range_and_malformed_limits'),
