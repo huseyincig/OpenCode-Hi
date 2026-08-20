@@ -4,7 +4,7 @@
   "program": "PROMPT_B",
   "section": 41,
   "status": "PASS",
-  "audited_source_commit": "34091b6a32156f3f9494bf9090db52ce70d4ff9f",
+  "audited_source_commit": "3e057cb929a7fa92b1f44429c9e648b866b87251",
   "checks": {
     "clean_working_tree_outside_audit_artifacts": true,
     "accidental_backups": true,
