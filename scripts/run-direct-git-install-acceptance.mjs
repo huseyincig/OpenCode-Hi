@@ -12,9 +12,12 @@ const spec=process.env.OPENCODE_HI_GIT_SPEC || (repository&&sha ? `opencode-hi@g
 if(!spec){console.error('direct-Git acceptance requires OPENCODE_HI_GIT_SPEC or GITHUB_REPOSITORY + GITHUB_SHA');process.exit(2)}
 await rm(work,{recursive:true,force:true});await mkdir(work,{recursive:true})
 await writeFile(path.join(work,'package.json'),JSON.stringify({private:true},null,2)+'\n','utf8')
-const npm=process.platform==='win32'?'npm.cmd':'npm'
-const install=spawnSync(npm,['install','--ignore-scripts','--no-audit','--no-fund','--save-exact',spec],{cwd:work,encoding:'utf8',env:{...process.env,npm_config_cache:path.join(root,'.agent-work','cache','direct-git-install')}})
-if(install.status!==0){process.stderr.write(install.stdout||'');process.stderr.write(install.stderr||'');process.exit(install.status||1)}
+const npmExecPath=process.env.npm_execpath
+const npmCommand=npmExecPath?process.execPath:(process.platform==='win32'?'npm.cmd':'npm')
+const npmArgs=npmExecPath?[npmExecPath,'install','--ignore-scripts','--no-audit','--no-fund','--save-exact',spec]:['install','--ignore-scripts','--no-audit','--no-fund','--save-exact',spec]
+const install=spawnSync(npmCommand,npmArgs,{cwd:work,encoding:'utf8',env:{...process.env,npm_config_cache:path.join(root,'.agent-work','cache','direct-git-install')}})
+if(install.error){console.error(`direct-Git acceptance could not launch npm: ${install.error.stack||install.error}`);process.exit(1)}
+if(install.status!==0){process.stderr.write(install.stdout||'');process.stderr.write(install.stderr||'');process.exit(install.status??1)}
 const target=path.join(work,'node_modules','opencode-hi')
 const pkg=JSON.parse(await readFile(path.join(target,'package.json'),'utf8'))
 const forbidden=['postinstall','build','preinstall','install','prepack','prepare'].filter(k=>pkg.scripts?.[k])

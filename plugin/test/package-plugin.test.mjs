@@ -31,6 +31,14 @@ test('public package manifest stays native direct-Git install friendly', async()
   assert.equal(pkg.dependencies?.['@opencode-ai/sdk'],'1.18.18')
 })
 
+test('direct-Git acceptance invokes the active npm JS entrypoint portably and surfaces spawn failures', async()=>{
+  const fs=await import('node:fs/promises')
+  const script=await fs.readFile(new URL('../../scripts/run-direct-git-install-acceptance.mjs',import.meta.url),'utf8')
+  assert.match(script,/process\.env\.npm_execpath/)
+  assert.match(script,/npmExecPath\?process\.execPath/)
+  assert.match(script,/install\.error/)
+})
+
 test('release readiness exercises exact-sha native direct-Git install on every platform', async()=>{
   const fs=await import('node:fs/promises')
   const workflow=await fs.readFile(new URL('../../.github/workflows/release-readiness.yml',import.meta.url),'utf8')
