@@ -260,7 +260,7 @@ Bu yalnız Hi child task modelini tercih eder. Primary session modelini değişt
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["opencode-hi@0.2.1"],
+  "plugin": ["opencode-hi@0.2.2"],
   "model": "provider/model-x"
 }
 ```

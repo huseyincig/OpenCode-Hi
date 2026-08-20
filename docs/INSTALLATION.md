@@ -28,13 +28,22 @@ Current candidate compatibility targets exact OpenCode `1.18.19`. Historical T3 
 
 ## npm package runner — normal user path
 
-For release `0.2.2`, register the exact package without installing it into the application project:
+For release `0.2.2`, register the exact package without installing it as an npm dependency of the application project. The shortest first-install form is:
+
+```bash
+cd /path/to/project
+npx --yes opencode-hi@0.2.2 install .
+```
+
+`install` is the friendly first-install alias of `setup`. It preserves foreign plugins, providers, MCP configuration, themes and unknown user fields. It creates or preserves the project-root `opencode.json` and writes one exact `opencode-hi@0.2.2` plugin entry plus Hi-owned provenance under `.opencode/hi/provenance/**`. It does not create an application-root `package.json`, `package-lock.json`, or persistent root `node_modules`.
+
+Do **not** substitute `npm i opencode-hi` for this command. Plain `npm i` is npm dependency installation: it creates/updates project npm state (`package.json`, `package-lock.json`, `node_modules`) and does not perform Hi's OpenCode registration/provenance setup.
+
+The equivalent explicit `setup` spelling is also supported and documented:
 
 ```bash
 npx --yes opencode-hi@0.2.2 setup /path/to/project
 ```
-
-`setup` preserves foreign plugins, providers, MCP configuration, themes and unknown user fields. It writes one exact `opencode-hi@0.2.2` plugin entry plus Hi-owned provenance under `.opencode/hi/provenance/**`. It does not create an application-root `package.json`, `package-lock.json`, or `node_modules`.
 
 If the project uses only `opencode.jsonc`, setup fails closed instead of rewriting comments. Maintain an `opencode.json` registration explicitly or convert the configuration deliberately; Hi does not silently rewrite JSONC.
 
@@ -48,7 +57,7 @@ npx --yes opencode-hi@0.2.2 doctor /path/to/project
 
 Package `doctor` checks registration, ownership, drift and pending lifecycle state. It deliberately does not claim provider authentication, successful model calls, or live runtime capability. Run the loaded in-runtime `hi_doctor` tool for effective provider/model inventory and runtime capability truth.
 
-The source tree can describe `0.2.2` before publication, but public-registry availability is not considered proven until npm Trusted Publishing plus fresh-registry/exact-host receipts exist.
+Release `0.2.2` is published and its npm Trusted Publishing plus fresh-registry exact OpenCode `1.18.19` verification is complete.
 
 ## Command reference and interaction model
 
@@ -74,7 +83,7 @@ The loaded plugin is a different surface. Exact OpenCode 1.18.19 acceptance obse
 - bounded process control: `hi_process_spawn`, `hi_process_read`, `hi_process_write`, `hi_process_wait`, `hi_process_kill`, `hi_process_cleanup`, `hi_process_list`;
 - bounded browser control: `hi_browser_open`, `hi_browser_navigate`, `hi_browser_click`, `hi_browser_type`, `hi_browser_inspect`, `hi_browser_screenshot`, `hi_browser_wait`, `hi_browser_close`.
 
-There is no current `hi_state`, `hi_rotate`, or `hi_reprofile` tool. Live Mission state belongs to `hi_status` / `hi_readiness` / `hi_ledger`; installation ownership state belongs to package `doctor`.
+For current `0.2.2`, package `doctor` reports installation ownership/drift state; runtime `hi_status`, `hi_readiness`, and `hi_ledger` report live Mission state. Profile and model-routing changes use the configuration commands/file documented below.
 
 ### Is setup fully interactive?
 

@@ -4,10 +4,10 @@
   "program": "PROMPT_B",
   "section": 47,
   "status": "PASS",
-  "certification_state": "PARTIAL",
+  "certification_state": "CERTIFIED",
   "source_checkpoint": {
-    "commit": "6aed0ab046e65fd71b1307c65f80a6d99fc83d6b",
-    "tree": "7c10bdba1f4e47494ac0bdc7e0d84bd78fa550c7"
+    "commit": "c151918f6b8d0ca32f46ee39fb2d8dbc21d61658",
+    "tree": "eeb9e466fa88e866985d56ce14f5f0a2585d667d"
   },
   "coherence": {
     "source_contracts": true,
@@ -23,9 +23,7 @@
     "security_docs": true,
     "verification_docs": true
   },
-  "external_blockers": [
-    "T4-current-release-publication-verification-pending"
-  ],
+  "external_blockers": [],
   "summary": {
     "required": 12,
     "coherent": 12,

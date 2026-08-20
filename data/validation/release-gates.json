@@ -2,7 +2,7 @@
   "schema": 7,
   "release": "0.2.2",
   "generated_at": "2026-08-20",
-  "candidate_status": "PROMPT_B_0_2_2_PREPUBLICATION_CERTIFICATION_IN_PROGRESS",
+  "candidate_status": "PROMPT_B_0_2_2_CERTIFIED_T4",
   "claim_boundary": "Current 0.2.2 M16 candidate only. Linux/aarch64 exact OpenCode 1.18.19 T3, packed fresh-consumer, deterministic release reproduction and current validator are locally proven. Windows current-source CI and real GitHub/npm T4 remain external and are not fabricated.",
   "gates": {
     "source_integrity": "PASS_LOCAL_ISOLATED_COMMITTED_SOURCE_09E99D2",
@@ -29,16 +29,13 @@
     "dependency_supply_chain_external": "PASS_CLEAN_PREPUBLICATION_PACKED_TARBALL_LOCAL_CONSUMER",
     "filesystem_hygiene": "PASS_LOCAL_CLEAN_EVIDENCE_COMMIT_HYGIENE_12_OF_12",
     "native_package_plugin_install_exact_candidate": "PASS_T3_PREPUBLICATION_PACKED_LOCAL_PACKAGE_SEAM_EXACT_OPENCODE_1_18_19_LINUX_AARCH64",
-    "github_release_publication": "PENDING_T4_NOT_PUBLISHED",
-    "npm_registry_publication": "PENDING_AUTH_T4_NOT_PUBLISHED",
+    "github_release_publication": "PASS_T4_V0_2_2_EXACT_SOURCE_C151918",
+    "npm_registry_publication": "PASS_T4_OPENCODE_HI_0_2_2",
     "final_canonical_gates": "PASS_CURRENT_CLEAN_CHECKPOINT_PY102_NODE1046_ARCH22_DOCS0_VALIDATOR"
   },
-  "release_blocked": true,
-  "reason": "All prepublication 0.2.2 engineering and certification gates pass, including exact OpenCode 1.18.19 Linux/aarch64 T3, packed fresh-consumer, deterministic release, full evidence suite, hygiene, current-source Ubuntu/Windows Release Readiness, and canonical final gates. Only real GitHub/npm T4 publication verification remains.",
-  "external_blockers": [
-    "opencode-hi@0.2.2 has not yet been published to npm; fresh-registry T4 is unavailable.",
-    "v0.2.2 GitHub Release has not yet been published; immutable release-source T4 is unavailable."
-  ],
+  "release_blocked": false,
+  "reason": "OpenCode-Hi 0.2.2 publication is complete: immutable annotated v0.2.2 peels to the exact released source, current-source Ubuntu/Windows Release Readiness and Evidence certification succeeded, GitHub Release is published, npm Trusted Publishing OIDC succeeded, registry integrity/shasum and Sigstore provenance match the exact tag/source, and fresh registry acceptance passed under exact OpenCode 1.18.19.",
+  "external_blockers": [],
   "current_local_evidence": {
     "source_checkpoint": {
       "status": "PASS",
@@ -102,23 +99,21 @@
       "runtime_equivalent_to_current": true
     },
     "cross_platform": {
-      "status": "PASS_CURRENT_SOURCE",
-      "tested_source": "eb823fddd9e7b31f7e6c765be3c899e58a726077",
-      "tested_tree": "79f3fedd701cad31b7883569a8063f72d21dcd4e",
-      "github_actions_run": 32375874373,
-      "ubuntu_job": 96447003316,
-      "windows_job": 96447002900,
-      "release_source_run": 32375874373,
-      "local_surfaces": "PASS_7_OF_7"
+      "status": "PASS_CURRENT_RELEASE_SOURCE",
+      "tested_source": "c151918f6b8d0ca32f46ee39fb2d8dbc21d61658",
+      "tested_tree": "eeb9e466fa88e866985d56ce14f5f0a2585d667d",
+      "github_actions_run": 32378523544,
+      "ubuntu_job": 96455679595,
+      "windows_job": 96455679251,
+      "evidence_job": 96457622668,
+      "local_surfaces": "PASS_RELEASE_READINESS_CURRENT_SOURCE"
     },
     "final_system": {
-      "status": "PARTIAL",
+      "status": "CERTIFIED",
       "receipt": "data/validation/final-system-certification-0.2.2.json",
       "local_gates": "PASS",
       "final_gates_receipt": "data/validation/final-gates-0.2.2.json",
-      "blockers": [
-        "T4 publication verification"
-      ]
+      "blockers": []
     },
     "deterministic_release": {
       "status": "PASS",
@@ -132,13 +127,13 @@
       "checks": "12/12"
     },
     "final_publication": {
-      "status": "PENDING_T4",
-      "receipt": null,
-      "released_source": null,
-      "tag": null,
-      "release_id": null,
-      "github_actions_publish_run": null,
-      "registry_exact_host_receipt": null
+      "status": "PASS_T4",
+      "receipt": "data/validation/release-publication-0.2.2.json",
+      "released_source": "c151918f6b8d0ca32f46ee39fb2d8dbc21d61658",
+      "tag": "v0.2.2",
+      "release_id": 373791125,
+      "github_actions_publish_run": 32379321127,
+      "registry_exact_host_receipt": "data/validation/t4-registry-exact-host-0.2.2.json"
     }
   },
   "historical_receipts_not_valid_for_current_candidate": {

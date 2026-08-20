@@ -147,7 +147,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "769486dbea1d0844c751a90a06d86a48e3359e73127f4938072ad3988f9becd7",
+      "sha256": "2b43c2e71d4df0173fc676886dc9b8d15c47c2df2120aedb87a56e9e93da414e",
       "area": "product-overview",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -187,7 +187,7 @@
     },
     {
       "path": "docs/INSTALLATION.md",
-      "sha256": "76e73b794f277b5f3cafed2b327b3bfc3c7c1ba736882b0d3251e8eaf4e7acf4",
+      "sha256": "b12df2f1b5c09ead32db0deba4339b43cb40a885625e6b6c6157616cd03043da",
       "area": "installation-configuration-lifecycle",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -203,7 +203,7 @@
     },
     {
       "path": "docs/RELEASE.md",
-      "sha256": "f0ba2d8cfe192d82a3ea3e29e9dbf76591ba182a64a40a5887cf43af11554596",
+      "sha256": "a1539497c7d33c458617bf68056b789d138a881be7366741a8c4498014efae62",
       "area": "release",
       "audience": "RELEASE_ENGINEER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -235,7 +235,7 @@
     },
     {
       "path": "docs/locales/tr/CONFIGURATION.md",
-      "sha256": "a175ec9f99b836ed9ad386b3bdcf101107c98150f4b34170ed7e5240ac505a45",
+      "sha256": "606cf422ae0a30d3f726b5ef1710d16c6ed743b06627c84cdfbd2ea623227db7",
       "area": "turkish-configuration-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",
@@ -243,7 +243,7 @@
     },
     {
       "path": "docs/locales/tr/README.md",
-      "sha256": "fe1d7e707fd7ba170ed069c66abe4b5302096e3051fe3a6c8ea9bad32d8438ee",
+      "sha256": "ac8b3300fb0945d023969462c02045192bf8d4002dec4dd959c023fd2e5a916e",
       "area": "turkish-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",
@@ -259,7 +259,7 @@
     },
     {
       "path": "data/validation/release-status-0.2.2.json",
-      "sha256": "c6c77a1b46b2bebb3681e3ab24eafcd6451e81af8f730719fb96177e7da4657d",
+      "sha256": "f898b904b1f6e71b6ffbaac2cd05864694b2ebc81f8d60a98b6917db5dced1c5",
       "area": "current-release-status",
       "lifecycle": "MACHINE_OWNER"
     }

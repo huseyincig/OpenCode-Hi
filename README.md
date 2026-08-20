@@ -15,6 +15,42 @@
 
 [Türkçe README](docs/locales/tr/README.md)
 
+## Install in 20 seconds
+
+Run this **inside the project you want OpenCode-Hi to manage**:
+
+```bash
+npx --yes opencode-hi@latest install .
+```
+
+That is the clean project-registration path. It creates or preserves the project-root `opencode.json` and adds the exact published Hi package, for example:
+
+```json
+{
+  "plugin": [
+    "opencode-hi@0.2.2"
+  ]
+}
+```
+
+Hi-owned lifecycle/provenance files stay under `.opencode/hi/**`. The command does **not** create a project-root `package.json`, `package-lock.json`, or persistent root `node_modules`.
+
+> **Do not use `npm i opencode-hi` as the OpenCode project setup command.** Plain `npm i` is npm dependency installation: it creates/updates `package.json`, `package-lock.json`, and `node_modules`, and it does not write `opencode.json` or `.opencode/hi/**` for you.
+
+Then restart OpenCode and verify the installation:
+
+```bash
+npx --yes opencode-hi@latest doctor .
+```
+
+For the published `0.2.2` CLI, an existing Hi-owned older registration is upgraded explicitly with:
+
+```bash
+npx --yes opencode-hi@latest update .
+```
+
+`install` is the friendly first-install alias of `setup`; `update` is the explicit owned-version upgrade operation in `0.2.2`. Both preserve unrelated OpenCode configuration and fail closed on ownership/config drift.
+
 OpenCode-Hi is the semantic and execution-control plane for evidence-aware AI software engineering on OpenCode. Hi owns the meaning of the work—Mission, Task, Worker, Role, Methodology, Authority, Evidence, Verification, recovery and completion—while OpenCode remains the primary native execution host for sessions, models, tools, permissions, PTY, workspace and other host primitives.
 
 The core rule is simple:
@@ -25,7 +61,7 @@ Hi is designed to use the minimum sufficient topology, model, context and verifi
 
 ## Current product truth
 
-This checkout tracks application/package candidate `0.2.2`. The latest immutable public release remains `opencode-hi@0.2.1` / `v0.2.1` until a newer release is actually published. Version identity is owned by `VERSION` and parity-validated against package metadata; GitHub Releases and the npm registry remain authoritative for public availability.
+The current immutable public release is `opencode-hi@0.2.2` / `v0.2.2`. Version identity is owned by `VERSION` and parity-validated against package metadata; GitHub Releases and the npm registry remain authoritative for public availability. The `0.2.2` release is bound to its immutable Git tag/source, successful Ubuntu/Windows Release Readiness, npm Trusted Publishing provenance, and fresh-registry exact OpenCode `1.18.19` acceptance.
 
 Current host capability truth is generated from exact receipts rather than hand-maintained here. See [Host Support](docs/HOSTS.md) and `data/validation/compatibility-matrix-0.1.0.json`.
 
@@ -135,7 +171,7 @@ The package runner and the loaded OpenCode plugin are deliberately separate comm
 
 After OpenCode loads the plugin, the runtime exposes **31 `hi_*` tools**. The main user-facing diagnostics are `hi_doctor`, `hi_status`, `hi_readiness`, `hi_metrics`, and `hi_ledger`. The remaining tools are bounded control-plane primitives for task/worker dispatch, process execution, browser execution, context artifacts, temporary mutations, semantic assessment, and direct progress. The exact loaded tool IDs are host-verifiable through OpenCode's documented `/experimental/tool/ids` endpoint.
 
-There is currently **no `hi_state`, `hi_rotate`, or `hi_reprofile` command/tool** in this release. State inspection is split intentionally: package `doctor` checks installation ownership, while runtime `hi_status` / `hi_readiness` / `hi_ledger` expose live mission state.
+For current `0.2.2`, installation ownership is inspected with package `doctor`; live Mission state is inspected with runtime `hi_status`, `hi_readiness`, and `hi_ledger`. Model/profile changes use the documented routing/configuration surfaces below.
 
 The normal setup path is intentionally **non-interactive** today:
 
@@ -145,7 +181,7 @@ setup -> restart OpenCode -> package doctor -> runtime hi_doctor
 
 It does not run a wizard that asks you to select providers, models, roles, concurrency, and execution profiles during installation. On first effective OpenCode runtime inventory, Hi automatically ranks only effective-enabled, role-eligible child models and persists one-shot initial recommendations; you can edit those choices afterward and later refresh/update will not overwrite a valid user routing file. Advanced/manual `reconfigure` and `role-models` operations remain in the retained Python helper and are not prerequisites for normal npm onboarding.
 
-The `0.2.2` source tree is a pre-publication candidate until its npm Trusted Publishing and fresh-registry receipts exist. Do not infer registry publication from source version metadata alone.
+Published availability is external state, not inferred from source version metadata alone. For `0.2.2`, GitHub Release, npm Trusted Publishing/provenance, and fresh-registry exact-host verification are complete.
 
 ### Git source — contributor/development compatibility path
 

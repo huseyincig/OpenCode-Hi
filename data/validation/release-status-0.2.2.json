@@ -12,15 +12,19 @@
     },
     "current_release_gates": {
       "path": "data/validation/release-gates.json",
-      "sha256": "0d233ab534bae48fd2e6e42d8e5ec74d22a84c157dd33e9c6ace1398d715bd18"
+      "sha256": "b90867c4a7823038833a1805919058726ea9deed119bea4e6e0a06fe9c519f64"
     },
     "historical_v0_1_0_publication": {
       "path": "data/validation/release-publication-0.1.0.json",
       "sha256": "b0b9509dea487a6403d075d3ca18e8081285af4c053605d7f8f6438ad3d9798a"
+    },
+    "current_publication": {
+      "path": "data/validation/release-publication-0.2.2.json",
+      "sha256": "8f4909ad90f491a4f31cc17e2f383cf612bc803dc6a7b95002409caf3c9164ca"
     }
   },
-  "status": "PREPUBLICATION_CERTIFIED_PENDING_T4",
-  "release_blocked": true,
+  "status": "CERTIFIED_T4",
+  "release_blocked": false,
   "publication_authority": {
     "required": true,
     "granted": false,
@@ -34,9 +38,9 @@
   "candidate": {
     "version": "0.2.2",
     "tag": "v0.2.2",
-    "github_status": "PENDING_T4",
-    "npm_status": "PENDING_T4",
-    "publication_attempted": false,
+    "github_status": "PASS_T4",
+    "npm_status": "PASS_T4",
+    "publication_attempted": true,
     "prepublication_ready": true
   },
   "reference_host": {

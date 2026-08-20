@@ -3,16 +3,12 @@
   "release": "0.2.2",
   "generated_at": "2026-08-20",
   "internal_status": "LOCAL_IMPLEMENTATION_AND_IN_PROCESS_ACCEPTANCE_COMPLETE",
-  "release_blocked": true,
-  "claim_boundary": "Current 0.2.2 local engineering evidence is bound to exact OpenCode 1.18.19 Linux/aarch64 and current committed source. Windows current-source CI and T4 publication remain external; clean evidence-commit hygiene/final canonical gates remain the only local closure step.",
+  "release_blocked": false,
+  "claim_boundary": "OpenCode-Hi 0.2.2 is published and T4-verified. Local exact OpenCode 1.18.19 Linux/aarch64 T3, current-source Ubuntu/Windows release readiness, immutable GitHub release, npm Trusted Publishing/provenance, and fresh-registry exact-host acceptance are all independently recorded.",
   "source_checklist": {
     "source": "PROMPT B plus M16 authority files and data/validation/m16-research-gates-0.2.2.json",
     "internal_missing": [],
-    "external_pending": [
-      "exact OpenCode 1.18.19 Windows current-source CI",
-      "GitHub release T4",
-      "npm Trusted Publishing/fresh-registry exact-host T4"
-    ],
+    "external_pending": [],
     "local_pending": []
   },
   "local_acceptance": {
@@ -77,22 +73,24 @@
       "runtime_equivalent_to_current": true
     },
     "windows_desktop": {
-      "status": "PENDING_EXTERNAL_CI",
+      "status": "PASS_CURRENT_RELEASE_SOURCE",
       "opencode": "1.18.19",
-      "reason": "No current 0.2.2 Windows current-source execution receipt exists."
+      "source_commit": "c151918f6b8d0ca32f46ee39fb2d8dbc21d61658",
+      "github_actions_run": 32378523544,
+      "windows_job_id": 96455679251,
+      "reason": "Current release source passed the Windows Release Readiness matrix including exact OpenCode 1.18.19 native direct-Git host load and product/package acceptance."
     }
   },
   "release_evidence": {
     "release_gates": "data/validation/release-gates.json",
     "generated_status": "data/validation/release-status-0.2.2.json",
     "historical_0_2_1_t4_is_current": false,
-    "publication_authorized_or_performed": false,
+    "publication_authorized_or_performed": true,
     "deterministic_release": "data/validation/deterministic-release-reproducibility-0.2.2.json",
-    "current_validator": "PASS"
+    "current_validator": "PASS",
+    "publication_receipt": "data/validation/release-publication-0.2.2.json",
+    "registry_exact_host_receipt": "data/validation/t4-registry-exact-host-0.2.2.json"
   },
-  "blockers": [
-    "exact OpenCode 1.18.19 Windows current-source external CI",
-    "real GitHub/npm T4 publication evidence"
-  ],
-  "conclusion": "All executable local 0.2.2 engineering and certification gates pass. Final system certification is PARTIAL only because exact OpenCode 1.18.19 Windows current-source CI and real GitHub/npm T4 publication evidence remain external."
+  "blockers": [],
+  "conclusion": "OpenCode-Hi 0.2.2 is fully published and T4-verified with zero current release blockers: exact-host Linux T3, current-source Ubuntu/Windows CI, immutable GitHub Release, npm Trusted Publishing/provenance and fresh-registry exact OpenCode 1.18.19 acceptance are complete."
 }

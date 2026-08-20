@@ -540,7 +540,7 @@ def test_direct_git_host_acceptance_archive_extraction_is_python311_compatible_a
     with pytest.raises(RuntimeError,match='unsafe archive member path'):mod.safe_extract_zip(bad_zip,zip_out)
 
 
-def test_m16_first_use_docs_are_npm_runner_first_and_truthful_about_prepublication():
+def test_m16_first_use_docs_are_npm_runner_first_and_truthful_about_publication_state():
     readme=(ROOT/'README.md').read_text(encoding='utf-8'); tr=(ROOT/'docs/locales/tr/README.md').read_text(encoding='utf-8'); arch=(ROOT/'docs/ARCHITECTURE.md').read_text(encoding='utf-8'); install=(ROOT/'docs/INSTALLATION.md').read_text(encoding='utf-8'); config=(ROOT/'docs/CONFIGURATION.md').read_text(encoding='utf-8'); tr_config=(ROOT/'docs/locales/tr/CONFIGURATION.md').read_text(encoding='utf-8')
     exact=f'opencode-hi@{V}'
     for text in (readme,tr,install,config,tr_config):
@@ -549,7 +549,12 @@ def test_m16_first_use_docs_are_npm_runner_first_and_truthful_about_prepublicati
         assert 'git dep preparation failed' not in text
     combined=(readme+tr+install+config+tr_config).lower()
     assert 'normal user' in combined or 'normal kullanıcı' in combined
-    assert 'pre-publication' in combined or 'prepublication' in combined
+    published=(ROOT/f'data/validation/release-publication-{V}.json').is_file()
+    if published:
+        assert 'published' in combined or 'yayınlan' in combined
+        assert 'trusted publishing' in combined and 'fresh-registry' in combined
+    else:
+        assert 'pre-publication' in combined or 'prepublication' in combined
     assert 'project-root `node_modules`' in readme or 'root `node_modules`' in readme
     assert 'npm run build:plugin' in readme+tr+install
     assert f'`{V}`' in readme

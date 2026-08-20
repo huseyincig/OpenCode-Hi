@@ -12,7 +12,7 @@ Hi, mümkün olan en fazla agent/token/araç yerine iş için **minimum yeterli*
 
 ## Güncel ürün gerçeği
 
-Bu checkout uygulama/package sürümü olarak `0.2.1`'i izler. Sürüm kimliğinin canonical sahibi `VERSION` dosyasıdır ve package metadata ile parity doğrulanır. Bir sürümün gerçekten yayımlanmış olup olmadığı mutable external state'tir; bunun authoritative kaynakları GitHub Releases ve npm registry'dir. Tarihsel `v0.1.1` ve `v0.1.0` release artifact'leri immutable kalır.
+Güncel immutable public release `opencode-hi@0.2.2` / `v0.2.2`'dir. Sürüm kimliğinin canonical sahibi `VERSION` dosyasıdır ve package metadata ile parity doğrulanır. Public availability için authoritative kaynaklar GitHub Releases ve npm registry'dir. `0.2.2`; exact Git tag/source, başarılı Ubuntu/Windows Release Readiness, npm Trusted Publishing provenance ve fresh-registry exact OpenCode `1.18.19` kabulü ile doğrulanmıştır.
 
 Güncel host/capability gerçeği elle yazılan metinden değil exact receipt'lerden üretilir. Ayrıntı için [Host Support](../../HOSTS.md) ve `data/validation/compatibility-matrix-0.1.0.json` kullanılır.
 
@@ -85,11 +85,15 @@ OpenCode-Hi'nin normal kullanıcı yolu npm-registry-first'tür. `0.2.2` adayı 
 
 ### npm registry — normal kullanıcı yolu
 
-Exact release'i projeye bağımlılık olarak kurmak yerine package-runner ile kaydedin:
+Projeye npm dependency eklemek yerine package-runner ile OpenCode kaydını oluşturun. Proje klasörünün içinde en kısa komut:
 
 ```bash
-npx --yes opencode-hi@0.2.2 setup /path/to/project
+npx --yes opencode-hi@latest install .
 ```
+
+Bu komut proje kökündeki `opencode.json` dosyasını oluşturur veya mevcut dosyayı koruyarak exact Hi kaydını ekler. Hi-owned lifecycle/provenance dosyaları `.opencode/hi/**` altında kalır; proje köküne `package.json`, `package-lock.json` veya kalıcı `node_modules` saçmaz.
+
+> OpenCode projesini hazırlamak için `npm i opencode-hi` kullanmayın. Düz `npm i`, npm dependency kurulumu yapar; proje npm dosyalarını/node_modules'u oluşturur ve Hi'nin `opencode.json` + `.opencode/hi/**` setup işlemini yapmaz.
 
 Sonra OpenCode'u yeniden başlatın. Registry package cache/materialization ve native plugin loading OpenCode'un sorumluluğundadır. Statik registration/ownership kontrolü için:
 
@@ -120,7 +124,7 @@ Package lifecycle ile yüklü OpenCode runtime yüzeyi ayrıdır. Normal package
 
 Plugin yüklendikten sonra **31 adet `hi_*` runtime tool** vardır. Kullanıcıya en yakın durum/diagnostic araçları `hi_doctor`, `hi_status`, `hi_readiness`, `hi_metrics` ve `hi_ledger`'dır; diğerleri task/worker, process, browser, context artifact, temporary mutation ve semantic control için bounded primitive'lerdir.
 
-Bu sürümde `hi_state`, `hi_rotate` veya `hi_reprofile` diye bir komut/tool **yoktur**. Canlı Mission state için `hi_status` / `hi_readiness` / `hi_ledger`; kurulum ownership state için package `doctor` kullanılır.
+Güncel `0.2.2` sürümünde kurulum ownership/drift durumu package `doctor` ile; canlı Mission durumu runtime `hi_status`, `hi_readiness` ve `hi_ledger` ile görülür. Profil ve model routing değişiklikleri aşağıdaki configuration yüzeylerinden yapılır.
 
 Normal kurulum bugün tam interaktif wizard değildir. Akış bilinçli olarak deterministic'tir:
 
@@ -130,7 +134,7 @@ setup -> OpenCode restart -> package doctor -> runtime hi_doctor
 
 Kurulum sırasında provider/model/profile/concurrency seçim ekranı açılmaz. Provider authentication/configuration OpenCode-owned kalır. Hi, ilk effective runtime inventory geldiğinde yalnız gerçekten effective-enabled ve role-eligible child modelleri rank eder, ilk önerileri bir kez yazar; kullanıcı daha sonra bu routing'i değiştirebilir ve sonraki update/refresh geçerli tercihi ezmez. Gelişmiş `reconfigure` / `role-models` işlemleri legacy Python helper'dadır ve normal npm onboarding için zorunlu değildir.
 
-`0.2.2` source tree şu anda pre-publication candidate'dır. npm registry publication ve fresh-registry T4 receipt oluşmadan public availability ilan edilmez.
+`0.2.2` yayınlanmıştır; npm Trusted Publishing ve fresh-registry exact OpenCode `1.18.19` T4 doğrulaması tamamlanmıştır.
 
 ### Git/source — contributor ve geliştirme yolu
 
