@@ -2,95 +2,89 @@
   "schema": 6,
   "release": "0.2.1",
   "generated_at": "2026-08-19",
-  "candidate_status": "PROMPT_B_0_2_1_PREPUBLICATION_CERTIFICATION_IN_PROGRESS",
+  "candidate_status": "PROMPT_B_0_2_1_CERTIFIED_T4",
   "gates": {
-    "source_integrity": "PENDING_LOCAL_0_2_1",
-    "deterministic_release": "PENDING_LOCAL_0_2_1",
-    "node_runtime_acceptance": "PENDING_LOCAL_0_2_1",
-    "python_acceptance": "PENDING_LOCAL_0_2_1",
-    "validator": "PENDING_LOCAL_0_2_1",
-    "worktree_path_acceptance": "PENDING_LOCAL_0_2_1",
-    "optional_tool_surface_economy": "PENDING_LOCAL_0_2_1",
-    "native_skill_inventory": "PENDING_LOCAL_0_2_1",
-    "native_methodology_ownership": "PENDING_LOCAL_0_2_1",
-    "benchmark_policy_scenarios": "PENDING_LOCAL_0_2_1",
-    "install_config_lifecycle": "PENDING_LOCAL_0_2_1",
-    "architecture_audit": "PENDING_LOCAL_0_2_1",
-    "plain_opencode_smoke": "PENDING_T3_EXACT_SOURCE_0_2_1",
-    "packaged_agents_skills": "PENDING_T3_EXACT_SOURCE_0_2_1",
-    "opencode_native_child_sessions": "PENDING_T3_EXACT_SOURCE_0_2_1",
-    "opencode_model_provider_binding": "PENDING_T3_EXACT_SOURCE_0_2_1",
-    "permission_denial_runtime": "PENDING_T3_EXACT_SOURCE_0_2_1",
-    "windows_runtime_smoke": "PENDING_CROSS_PLATFORM_EXACT_SOURCE_0_2_1",
-    "dependency_supply_chain_external": "PENDING_CLEAN_CONSUMER_EXACT_SOURCE_0_2_1",
-    "filesystem_hygiene": "PENDING_LOCAL_0_2_1",
-    "native_package_plugin_install_exact_candidate": "PENDING_T3_EXACT_SOURCE_0_2_1",
-    "github_release_publication": "PENDING_T4_GITHUB_RELEASE_0_2_1",
-    "npm_registry_publication": "PENDING_AUTH_T4_NPM_REGISTRY_0_2_1"
+    "source_integrity": "PASS_LOCAL_CURRENT_SOURCE",
+    "deterministic_release": "PASS_LOCAL_CURRENT_SOURCE",
+    "node_runtime_acceptance": "PASS_LOCAL_CURRENT_SOURCE",
+    "python_acceptance": "PASS_LOCAL_CURRENT_SOURCE",
+    "validator": "PASS_LOCAL_CURRENT_SOURCE",
+    "worktree_path_acceptance": "PASS_LOCAL_CURRENT_SOURCE",
+    "optional_tool_surface_economy": "PASS_LOCAL_CURRENT_SOURCE",
+    "native_skill_inventory": "PASS_LOCAL_CURRENT_SOURCE",
+    "native_methodology_ownership": "PASS_LOCAL_CURRENT_SOURCE",
+    "benchmark_policy_scenarios": "PASS_LOCAL_CURRENT_SOURCE",
+    "install_config_lifecycle": "PASS_LOCAL_CURRENT_SOURCE",
+    "architecture_audit": "PASS_LOCAL_CURRENT_SOURCE",
+    "plain_opencode_smoke": "PASS_T3_EXACT_SOURCE_0_2_1",
+    "packaged_agents_skills": "PASS_T3_EXACT_SOURCE_0_2_1",
+    "opencode_native_child_sessions": "PASS_T3_EXACT_SOURCE_0_2_1",
+    "opencode_model_provider_binding": "PASS_T3_EXACT_SOURCE_0_2_1",
+    "permission_denial_runtime": "PASS_T3_EXACT_SOURCE_0_2_1",
+    "windows_runtime_smoke": "PASS_CROSS_PLATFORM_EXACT_SOURCE_0_2_1",
+    "dependency_supply_chain_external": "PASS_CLEAN_CONSUMER_EXACT_SOURCE_0_2_1",
+    "filesystem_hygiene": "PASS_LOCAL_CURRENT_SOURCE",
+    "native_package_plugin_install_exact_candidate": "PASS_T3_EXACT_SOURCE_0_2_1",
+    "github_release_publication": "PASS_T4_V0_2_1_EXACT_SOURCE_5CD86A5",
+    "npm_registry_publication": "PASS_T4_OPENCODE_HI_0_2_1"
   },
-  "release_blocked": true,
-  "reason": "OpenCode-Hi 0.2.1 is a new candidate carrying the native direct-Git packaging correction. Immutable v0.2.0 publication evidence remains historical only; 0.2.1 requires fresh local verification, exact-source Windows/Ubuntu CI, clean-consumer/exact-host acceptance, and new GitHub/npm T4 publication proof.",
-  "external_blockers": [
-    "current-source-cross-platform-ci-pending",
-    "current-release-github-publication-pending",
-    "current-release-npm-publication-pending"
-  ],
+  "release_blocked": false,
+  "reason": "OpenCode-Hi 0.2.1 publication is complete: immutable annotated v0.2.1 peels to 5cd86a5fbad109f5c532e315f9f01739ec426a8c, Ubuntu/Windows Release Readiness and Evidence certification succeeded, GitHub Release 373519753 is published, npm Trusted Publishing OIDC run 32338379253 succeeded, registry integrity/shasum and Sigstore provenance match the exact tag/source, and fresh registry acceptance passed under exact OpenCode 1.18.18.",
+  "external_blockers": [],
   "current_local_evidence": {
     "source_checkpoint": {
-      "status": "PENDING_COMMIT",
-      "commit": null,
-      "tree": null
+      "status": "PASS",
+      "commit": "5cd86a5fbad109f5c532e315f9f01739ec426a8c",
+      "tree": "bee46a57f5004a56d0c5f3b7f0c18af2d0e45916"
     },
     "node": {
       "command": "npm --prefix plugin test",
-      "status": "PENDING_LOCAL"
+      "status": "PASS"
     },
     "python": {
       "command": "python -m pytest -q tests/test_hi.py",
-      "status": "PENDING_LOCAL"
+      "status": "PASS"
     },
     "validation": {
       "command": "python scripts/validate.py",
-      "status": "PENDING_LOCAL"
+      "status": "PASS"
     },
     "final_gates": {
-      "status": "PENDING_LOCAL",
+      "status": "PASS",
       "receipt": "data/validation/final-gates-0.2.1.json",
-      "source_commit": null
+      "source_commit": "5af9124e771670a5b7d68745ff9b52a1d20fefce"
     },
     "fresh_consumer": {
-      "status": "PENDING_LOCAL",
+      "status": "PASS",
       "receipt": "data/validation/fresh-consumer-opencode-1.18.18.json",
       "opencode_version": "1.18.18"
     },
     "exact_t3": {
-      "status": "PENDING_LOCAL",
+      "status": "PASS",
       "receipt": "data/validation/prompt-b-exact-current-opencode-t3.json",
-      "capabilities": null
+      "capabilities": 3
     },
     "zero_known_defect": {
-      "status": "PENDING_LOCAL",
+      "status": "PASS",
       "receipt": "data/validation/prompt-b-zero-known-defect-loop.json",
-      "unresolved": null
+      "unresolved": 0
     },
     "cross_platform": {
-      "status": "PENDING_EXTERNAL_CI",
+      "status": "PASS",
       "receipt": "data/validation/prompt-b-cross-platform-acceptance.json",
-      "tested_source": null,
-      "github_actions_run": null
+      "tested_source": "5af9124e771670a5b7d68745ff9b52a1d20fefce",
+      "github_actions_run": 32337246996,
+      "release_source_run": 32337906224
     },
     "final_system": {
-      "status": "PENDING_LOCAL",
+      "status": "CERTIFIED",
       "receipt": "data/validation/final-system-certification-0.2.1.json",
-      "blockers": [
-        "current-source-windows-acceptance-pending-external-ci",
-        "current-release-t4-pending"
-      ]
+      "blockers": []
     },
     "deterministic_release": {
-      "status": "PENDING_LOCAL",
-      "method": "two independent release-build runs",
-      "hash_binding": "Candidate hashes are generated only after source/evidence bytes are finalized."
+      "status": "PASS",
+      "method": "Release Readiness deterministic release candidate plus npm pack/registry digest equality",
+      "hash_binding": "Published npm integrity and shasum equal the fresh pack proof from immutable v0.2.1 source."
     },
     "hygiene": {
       "status": "PENDING_LOCAL",
@@ -98,12 +92,12 @@
       "audited_source_commit": null
     },
     "final_publication": {
-      "status": "PENDING_T4",
+      "status": "PASS_T4",
       "receipt": "data/validation/release-publication-0.2.1.json",
-      "released_source": null,
+      "released_source": "5cd86a5fbad109f5c532e315f9f01739ec426a8c",
       "tag": "v0.2.1",
-      "release_id": null,
-      "github_actions_publish_run": null,
+      "release_id": 373519753,
+      "github_actions_publish_run": 32338379253,
       "registry_exact_host_receipt": "data/validation/t4-registry-exact-host-0.2.1.json"
     }
   },
@@ -122,6 +116,6 @@
     "release_status_receipt": "data/validation/release-status-0.1.3.json",
     "github_release_status": "PASS_T4",
     "npm_registry_status": "PASS_T4",
-    "claim_boundary": "Historical 0.1.3 publication evidence is immutable provenance only and does not certify the 0.2.0 candidate."
+    "claim_boundary": "Historical 0.1.3 publication evidence is immutable provenance only and does not certify the 0.2.1 release; current 0.2.1 T4 has its own exact publication receipt."
   }
 }

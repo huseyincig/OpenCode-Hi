@@ -63,16 +63,16 @@
     {
       "claim": "external-publication",
       "required_tier": "T4",
-      "available_tier": "NONE",
+      "available_tier": "T4",
       "evidence": "data/validation/release-publication-0.2.1.json",
-      "evidence_exists": false,
-      "sufficient": false
+      "evidence_exists": true,
+      "sufficient": true
     }
   ],
   "summary": {
     "claims": 7,
-    "locally_sufficient": 6,
-    "pending_t4": true,
+    "locally_sufficient": 7,
+    "pending_t4": false,
     "violations": 0
   },
   "violations": [],

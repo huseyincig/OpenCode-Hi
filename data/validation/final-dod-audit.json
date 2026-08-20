@@ -8,52 +8,46 @@
     "total": 132,
     "status_counts": {
       "LOCAL_IMPLEMENTED_OR_POLICY_SATISFIED": 128,
-      "EXTERNAL_OR_USER_OWNED_ACTION_PENDING": 4
+      "EXTERNAL_OR_USER_OWNED_ACTION_PENDING": 0,
+      "EXTERNAL_OR_USER_OWNED_ACTION_COMPLETE": 4
     },
     "internal_missing": []
   },
   "local_acceptance": {
     "node": {
       "command": "npm --prefix plugin test",
-      "status": "PENDING"
+      "status": "PASS"
     },
     "python": {
       "command": "python -m pytest -q tests/test_hi.py",
-      "status": "PENDING"
+      "status": "PASS"
     },
     "source_validation": {
       "command": "python scripts/validate.py",
-      "status": "PENDING"
+      "status": "PASS"
     },
     "final_gates": {
-      "status": "PENDING",
+      "status": "PASS",
       "receipt": "data/validation/final-gates-0.2.1.json",
-      "source_commit": null
+      "source_commit": "5af9124e771670a5b7d68745ff9b52a1d20fefce"
     },
     "exact_host_t3": {
-      "status": "PENDING",
+      "status": "PASS",
       "receipt": "data/validation/prompt-b-exact-current-opencode-t3.json",
       "opencode_version": "1.18.18"
     },
     "fresh_consumer": {
-      "status": "PENDING",
+      "status": "PASS",
       "receipt": "data/validation/fresh-consumer-opencode-1.18.18.json"
     },
     "deterministic_release": {
       "command": "python scripts/release-build.py --out <out> --source-out <source-out>",
-      "status": "PENDING"
+      "status": "PASS"
     }
   },
-  "external_only_pending": [
-    "current-source-cross-platform-ci",
-    "github-release-publication",
-    "npm-registry-publication"
-  ],
-  "external_blockers": [
-    "current-source-cross-platform-ci-pending",
-    "current-release-t4-pending"
-  ],
-  "release_blocked": true,
+  "external_only_pending": [],
+  "external_blockers": [],
+  "release_blocked": false,
   "known_internal_blocking_findings": [],
   "historical_v58_provenance": [
     "data/validation/forensic-61-progress.json",
@@ -67,9 +61,9 @@
     "status": "CERTIFIED_T4"
   },
   "final_publication": {
-    "status": "PENDING_T4",
+    "status": "PASS_T4",
     "receipt": "data/validation/release-publication-0.2.1.json",
-    "released_source": null,
+    "released_source": "5cd86a5fbad109f5c532e315f9f01739ec426a8c",
     "tag": "v0.2.1"
   }
 }

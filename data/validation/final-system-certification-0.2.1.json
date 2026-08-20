@@ -3,11 +3,11 @@
   "kind": "FINAL_SYSTEM_CERTIFICATION",
   "program": "PROMPT_B",
   "section": 44,
-  "status": "PARTIAL",
+  "status": "CERTIFIED",
   "release": "0.2.1",
   "certified_source_checkpoint": {
-    "commit": "2fb464d0c5feb00caed76661339f52b7bd396868",
-    "tree": "6cbba6fe2aa2571074f84a8de6563b17e77b6d75",
+    "commit": "5cd86a5fbad109f5c532e315f9f01739ec426a8c",
+    "tree": "bee46a57f5004a56d0c5f3b7f0c18af2d0e45916",
     "note": "Source checkpoint attested by a subsequent evidence commit to avoid self-referential Git hashes."
   },
   "schema_versions": {
@@ -103,9 +103,7 @@
     "T4 is impossible before real GitHub/npm publication and is not fabricated"
   ],
   "known_defect_count": 0,
-  "blockers": [
-    "T4-current-release-publication-verification-pending"
-  ],
+  "blockers": [],
   "current_projections": {
     "data/validation/prompt-b-final-documentation-reaudit.json": {
       "projection": "current-attestation",
@@ -193,7 +191,7 @@
     },
     "data/validation/release-status-0.2.1.json": {
       "projection": "current-attestation",
-      "status": "PREPUBLICATION_CERTIFICATION_IN_PROGRESS"
+      "status": "CERTIFIED_T4"
     },
     "data/validation/final-gates-0.2.1.json": {
       "projection": "current-attestation",

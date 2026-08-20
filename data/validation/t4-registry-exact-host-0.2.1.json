@@ -1,0 +1,74 @@
+{
+  "schema": 1,
+  "kind": "T4_REGISTRY_EXACT_HOST_ACCEPTANCE",
+  "status": "PASS",
+  "release": "0.2.1",
+  "registry": {
+    "version": "0.2.1",
+    "dist.integrity": "sha512-5+zJ8l3Q3rVNNOPgBeC1yUVCRTas2n7LI0Iq1gYBgHLlJR6ZhN8DV3/mlBo8nGNrS0e6aTOL8ydpYvQWI74oPg==",
+    "dist.shasum": "c19678d35be08bfaceaec9ae9873fa347bc10b24",
+    "dist.attestations": {
+      "url": "https://registry.npmjs.org/-/npm/v1/attestations/opencode-hi@0.2.1",
+      "provenance": {
+        "predicateType": "https://slsa.dev/provenance/v1"
+      }
+    }
+  },
+  "consumer": {
+    "resolved_entrypoint": "file://<temp>/consumer/node_modules/opencode-hi/plugin/dist/plugin.js",
+    "hi_tool_count": 31,
+    "hi_tools": [
+      "hi_browser_click",
+      "hi_browser_close",
+      "hi_browser_inspect",
+      "hi_browser_navigate",
+      "hi_browser_open",
+      "hi_browser_screenshot",
+      "hi_browser_type",
+      "hi_browser_wait",
+      "hi_context_artifact_add",
+      "hi_context_artifacts",
+      "hi_direct_progress",
+      "hi_doctor",
+      "hi_intent_assess",
+      "hi_ledger",
+      "hi_metrics",
+      "hi_process_cleanup",
+      "hi_process_kill",
+      "hi_process_list",
+      "hi_process_read",
+      "hi_process_spawn",
+      "hi_process_wait",
+      "hi_process_write",
+      "hi_readiness",
+      "hi_status",
+      "hi_task_await",
+      "hi_task_cancel",
+      "hi_task_list",
+      "hi_task_peek",
+      "hi_task_start",
+      "hi_temporary_mutation_register",
+      "hi_temporary_mutation_revert"
+    ],
+    "coder_agent_observed": true,
+    "session_created": true
+  },
+  "host": {
+    "opencode": "1.18.18",
+    "binary": "/workspace/OpenCode-Hi/.agent-work/tools/opencode-1.18.18/opencode",
+    "binary_sha256": "a63ef0c7271383e48ffe36c156b4146087bbbc97929dec40e8be95ed4f4d76ae",
+    "platform": "linux",
+    "architecture": "aarch64"
+  },
+  "checks": {
+    "registry_install": true,
+    "setup_reconfigure": true,
+    "consumer_resolution": true,
+    "exact_host_version": true,
+    "server_tool_ids": true,
+    "agent_projection": true,
+    "session_create": true,
+    "no_source_tree_in_server_log": true
+  },
+  "claim_boundary": "Fresh install from the public npm registry, isolated from the source tree, loaded through exact OpenCode 1.18.18 on Linux/aarch64. Provider-backed chat is outside this registry/runtime T4 acceptance; tool registration, native agent projection and session creation are provider-independent."
+}

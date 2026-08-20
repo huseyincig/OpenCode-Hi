@@ -219,7 +219,7 @@ def test_release_gate_tracks_exact_candidate_external_completion_without_fabrica
         assert d['external_blockers']
     hist=d['historical_release_evidence']
     assert hist['release']=='0.1.3' and hist['github_release_status']=='PASS_T4' and hist['npm_registry_status']=='PASS_T4'
-    assert (ROOT/hist['release_status_receipt']).is_file() and '0.2.0' in d['reason']
+    assert (ROOT/hist['release_status_receipt']).is_file() and V in d['reason']
 
 
 def test_living_validation_contracts_are_bound_to_hi_0_1_0():
@@ -231,7 +231,7 @@ def test_living_validation_contracts_are_bound_to_hi_0_1_0():
 
 def test_current_release_evidence_does_not_relabel_historical_receipts():
     gates=json.loads((ROOT/'data/validation/release-gates.json').read_text(encoding='utf-8'))
-    assert gates['candidate_status']==f"PROMPT_B_{V.replace('.','_')}_PREPUBLICATION_CERTIFICATION_IN_PROGRESS"
+    pub=(ROOT/f'data/validation/release-publication-{V}.json').is_file(); expected=f"PROMPT_B_{V.replace('.','_')}_{'CERTIFIED_T4' if pub else 'PREPUBLICATION_CERTIFICATION_IN_PROGRESS'}"; assert gates['candidate_status']==expected
     assert 'benchmarks' not in gates['current_local_evidence'] and 'install_lifecycle' not in gates['current_local_evidence']
     assert gates['historical_receipts_not_valid_for_current_candidate']['release']=='2.0.10-v58'
     assert gates['historical_release_evidence']['release']=='0.1.3'

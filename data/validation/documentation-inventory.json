@@ -203,7 +203,7 @@
     },
     {
       "path": "docs/RELEASE.md",
-      "sha256": "685b51fc0cdc5216bf5ab3433c24df972faadc3b4e2e881058777424836aa140",
+      "sha256": "265ee3df107672c55dd2149b58da291d223bf6ea4da15529253755702c8ebc4e",
       "area": "release",
       "audience": "RELEASE_ENGINEER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -259,7 +259,7 @@
     },
     {
       "path": "data/validation/release-status-0.2.1.json",
-      "sha256": "fd647c0bb66b92744b14e1ce770b6f04f797eb8ddb97f9b3e840706dda8b9ce4",
+      "sha256": "e6780dbb64272d0080f5eb47e0d2a8f0ecba2d825b61e2be5b2a9d2e1604fa98",
       "area": "current-release-status",
       "lifecycle": "MACHINE_OWNER"
     }

@@ -12,15 +12,19 @@
     },
     "current_release_gates": {
       "path": "data/validation/release-gates.json",
-      "sha256": "5e9b3f0b0144e597770dfa883e9fd47a23fe92507e04375a19edc6603a7589a6"
+      "sha256": "b96817d5f5245082878e085e7514f52a0598c5b2d9edb67b9c965c2cce0a5590"
     },
     "historical_v0_1_0_publication": {
       "path": "data/validation/release-publication-0.1.0.json",
       "sha256": "b0b9509dea487a6403d075d3ca18e8081285af4c053605d7f8f6438ad3d9798a"
+    },
+    "current_publication": {
+      "path": "data/validation/release-publication-0.2.1.json",
+      "sha256": "9f18a75b27f51b438c2cee97799ac869bb14302ee3ac00b6d9af76df239afb46"
     }
   },
-  "status": "PREPUBLICATION_CERTIFICATION_IN_PROGRESS",
-  "release_blocked": true,
+  "status": "CERTIFIED_T4",
+  "release_blocked": false,
   "publication_authority": {
     "required": true,
     "granted": false,
@@ -34,10 +38,10 @@
   "candidate": {
     "version": "0.2.1",
     "tag": "v0.2.1",
-    "github_status": "PENDING_T4",
-    "npm_status": "PENDING_T4",
-    "publication_attempted": false,
-    "prepublication_ready": false
+    "github_status": "PASS_T4",
+    "npm_status": "PASS_T4",
+    "publication_attempted": true,
+    "prepublication_ready": true
   },
   "reference_host": {
     "opencode_version": "1.18.18",
@@ -62,11 +66,11 @@
       }
     },
     "candidate_certification": {
-      "process-lifecycle": "PENDING_T3_EXACT_SOURCE_0_2_1",
-      "workspace-isolation-binding": "PENDING_T3_EXACT_SOURCE_0_2_1",
-      "browser-execution": "PENDING_T3_EXACT_SOURCE_0_2_1",
-      "windows": "PENDING_CROSS_PLATFORM_EXACT_SOURCE_0_2_1",
-      "clean_consumer": "PENDING_CLEAN_CONSUMER_EXACT_SOURCE_0_2_1"
+      "process-lifecycle": "PASS_T3_EXACT_SOURCE_0_2_1",
+      "workspace-isolation-binding": "PASS_T3_EXACT_SOURCE_0_2_1",
+      "browser-execution": "PASS_T3_EXACT_SOURCE_0_2_1",
+      "windows": "PASS_CROSS_PLATFORM_EXACT_SOURCE_0_2_1",
+      "clean_consumer": "PASS_CLEAN_CONSUMER_EXACT_SOURCE_0_2_1"
     }
   },
   "verification": {
