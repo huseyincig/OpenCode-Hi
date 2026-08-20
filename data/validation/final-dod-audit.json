@@ -13,13 +13,7 @@
       "GitHub release T4",
       "npm Trusted Publishing/fresh-registry exact-host T4"
     ],
-    "local_pending": [
-      "commit current evidence bundle",
-      "clean-worktree hygiene",
-      "full Python evidence suite",
-      "validator",
-      "final canonical gates"
-    ]
+    "local_pending": []
   },
   "local_acceptance": {
     "node": {
@@ -44,8 +38,9 @@
       ]
     },
     "python": {
-      "status": "PENDING_FULL_EVIDENCE",
-      "command": "release-venv python -m pytest -q tests/test_hi.py"
+      "status": "PASS",
+      "command": "release-venv python -m pytest -q tests/test_hi.py",
+      "scope": "full product + evidence suite"
     }
   },
   "product_truth": {
@@ -88,9 +83,8 @@
     "final_gates": "data/validation/final-gates-0.2.3.json"
   },
   "blockers": [
-    "local evidence finalization",
     "exact OpenCode 1.18.19 Windows current-source external CI",
     "real GitHub/npm T4 publication evidence"
   ],
-  "conclusion": "Current 0.2.3 source passes runtime/product, deterministic release, fresh packed consumer and exact Linux/aarch64 T3. Local evidence finalization remains in progress; Windows current-source CI and T4 remain external."
+  "conclusion": "All executable local 0.2.3 engineering and certification gates pass. Final certification remains PARTIAL only because current-source Windows CI and real GitHub/npm T4 publication evidence remain external."
 }

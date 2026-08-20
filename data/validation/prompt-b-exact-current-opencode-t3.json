@@ -20,7 +20,7 @@
   "exact_source_tree": "5848068f7f673f499d1d827b60e276754754f792",
   "capability_evidence_mode": "CURRENT_EXACT_HOST_PACKAGE_PLUS_RUNTIME_EQUIVALENT_EXACT_T3",
   "compatibility_projection": "data/validation/compatibility-matrix-0.1.0.json",
-  "compatibility_sha256": "7c8cfb28a77ce5e43d2d92225c4f135211311f9273aa83df2d8060a8239ec031",
+  "compatibility_sha256": "7c1b2f37527429766fdb86b1071003f011ce8078dc007c9bc07959ff7092e539",
   "lifecycle_audit": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
   "lifecycle_sha256": "f9bdb727432ba04c53be723063320acbcadbc6a4bab609d51fbe6c9a1bff9302",
   "capabilities": {
