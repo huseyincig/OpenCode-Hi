@@ -24,7 +24,7 @@ import { primaryRoleCanDirectImplementation } from '../roles/catalog.js'
 import { inspectCurrentGitChangedFiles } from '../safety/staging-safety.js'
 import { nativeTool as tool } from '../../opencode/plugin-tool.js'
 import { assertHiToolNamespace } from '../../opencode/tool-namespace.js'
-import type { HiConfig,ConfigResolutionReport } from '../../config/schema.js'
+import { MODEL_ROUTED_CHILD_ROLES, isModelRoutedChildRole, type HiConfig, type ConfigResolutionReport } from '../../config/schema.js'
 import { normalizeBoundedProjectPath } from '../../contracts/common.js'
 
 function optionalIdList(value:unknown):string[]|undefined{
@@ -48,12 +48,14 @@ function optionalScopeList(value:unknown):string[]|undefined{
   }
   return out.length?[...new Set(out)]:undefined
 }
-import type { AvailableModel } from '../routing/model-resolver.js'
+import { runtimeModelCandidateStatus, type AvailableModel } from '../routing/model-resolver.js'
 import type { MissionStore } from '../mission/mission-store.js'
 import type { TaskRuntime } from '../task/task-runtime.js'
 import type { ProcessRuntime } from '../process/runtime.js'
 import type { WorkspaceRuntime } from '../workspace/runtime.js'
 import type { BrowserExecutor } from '../browser/executor.js'
+import { setProjectRoleModels } from '../../config/auto-init.js'
+import { resolveHiConfigWithReport } from '../../config/resolver.js'
 import { resolveBrowserExecutionOwner } from '../browser/ownership.js'
 import type { HostCapabilityView,HostNativeSessionPort } from '../host/port.js'
 import type { RuntimeScopedStores } from './runtime-scoped-stores.js'
@@ -66,6 +68,17 @@ export function createHiToolSurface(input:{state:PluginRuntimeState;store:Missio
   const {state,store,tasks,processRuntime,workspaceRuntime,browserExecutor,projectRoot,capabilities,native,getModels,scopedStores,getBrowserBootstrapStatus}=input
   const doctorTool=tool({description:'Run OpenCode-Hi runtime/configuration health checks',args:{},execute:async()=>{const browserHealth=browserExecutor?await browserExecutor.health():{available:false},runtimeHostResources=new Set<string>(browserHealth.available?['host-capability:browser-execution']:[]);return formatDoctor(runDoctor(state.config,store,projectRoot,{models:getModels(),resolution:state.configResolution,capabilities,hostConfig:state.hostConfig,openCodeVersion:state.openCodeVersion,runtimeHostResources,browserBootstrap:getBrowserBootstrapStatus?.()}))}})
   const statusTool=tool({description:'Show compact user-facing Hi mission status. This intentionally excludes diagnostic logs and ledger payloads.',args:{},execute:async(_args:unknown,c:any)=>{const m=store.get(c?.sessionID);return m?formatUserMissionStatus(m):'Hi: no active mission'}})
+  const roleModelsTool=tool({description:'Configure Hi child-role models from chat using only the effective connected OpenCode runtime inventory. Use action=list first when the user asks to configure role models; action=set persists an explicit role model/fallback list; action=clear returns one role to adaptive routing. Primary manager/working-manager models remain OpenCode-owned.',args:{action:tool.schema.string(),role:tool.schema.string().optional(),models:tool.schema.string().optional()},execute:async(a:any)=>{
+    const action=String(a?.action??'list').trim().toLowerCase(),available=getModels(),configured=state.config.routing.roleModels??{},modelRows=available.map(model=>({id:model.id,provider:model.provider??null,vision:model.visionCapable===true,variants:model.variants??[]}))
+    const roles=Object.fromEntries(MODEL_ROUTED_CHILD_ROLES.map(role=>[role,configured[role]?.[0]??null]))
+    if(action==='list')return JSON.stringify({status:'OK',models:modelRows,roles,role_models:Object.fromEntries(MODEL_ROUTED_CHILD_ROLES.map(role=>[role,configured[role]??[]])),note:'Only effective connected OpenCode models are listed. Tell me which model(s) each child role should use; primary Manager/Working Manager model selection stays in OpenCode.'})
+    const role=String(a?.role??'').trim();if(!isModelRoutedChildRole(role))return JSON.stringify({status:'BLOCKED',reason:'unsupported-child-role',allowed_roles:MODEL_ROUTED_CHILD_ROLES})
+    if(action==='clear'){setProjectRoleModels(projectRoot,role,[]);const resolved=resolveHiConfigWithReport(state.hostConfig.hi,projectRoot);state.config=resolved.config;state.configResolution=resolved.report;return JSON.stringify({status:'APPLIED',role,role_models:state.config.routing.roleModels,note:'Role returned to adaptive runtime routing.'})}
+    if(action!=='set')return JSON.stringify({status:'BLOCKED',reason:'unsupported-action',allowed_actions:['list','set','clear']})
+    const requested=[...new Set(String(a?.models??'').split(',').map((x:string)=>x.trim()).filter(Boolean))];if(!requested.length)return JSON.stringify({status:'BLOCKED',reason:'model-list-empty'})
+    const rejected=requested.map(id=>({id,...runtimeModelCandidateStatus(id,available,state.config,state.hostConfig,role)})).filter(x=>!x.ok);if(rejected.length){const vision=rejected.some(x=>String(x.reason).includes('vision'));return JSON.stringify({status:'BLOCKED',reason:vision?'role-requires-vision-capable-model':'model-unavailable-or-policy-rejected',role,rejected,available_models:modelRows})}
+    setProjectRoleModels(projectRoot,role,requested);const resolved=resolveHiConfigWithReport(state.hostConfig.hi,projectRoot);state.config=resolved.config;state.configResolution=resolved.report;return JSON.stringify({status:'APPLIED',role,models:requested,role_models:state.config.routing.roleModels,restart_required:false,note:'The active Hi runtime now uses this explicit child-role mapping for new worker dispatches.'})
+  }})
   const metricsTool=tool({description:'Show aggregate Hi runtime metrics derived from bounded mission state. Token/cost telemetry is omitted unless the host provides it.',args:{},execute:async()=>JSON.stringify(aggregateMissionMetrics(store.all()))})
   const ledgerTool=tool({description:'Show a bounded Hi execution ledger/report on demand.',args:{limit:tool.schema.number().optional()},execute:async(a:any,c:any)=>{const m=store.get(c?.sessionID);return m?JSON.stringify(compactLedgerReport(m,a?.limit??40)):'No active Hi mission'}})
   const readinessTool=tool({description:'Show machine-readable Hi mission readiness/preconditions and gates.',args:{},execute:async(_a:any,c:any)=>{const m=store.get(c?.sessionID);return m?JSON.stringify(evaluatePreconditions(m)):'No active Hi mission'}})
@@ -97,7 +110,7 @@ export function createHiToolSurface(input:{state:PluginRuntimeState;store:Missio
   const processKillTool=tool({description:'Terminate one owned running Hi process after native PID identity revalidation.',args:{id:tool.schema.string(),signal:tool.schema.string().optional()},execute:async(a:any,c:any)=>{const m=store.get(c?.sessionID);if(!m)return'No active Hi mission';const signal=String(a.signal??'SIGTERM');if(!['SIGTERM','SIGINT'].includes(signal))return'BLOCKED: signal must be SIGTERM or SIGINT';try{return JSON.stringify(await processRuntime.kill(m,String(a.id),signal as 'SIGTERM'|'SIGINT'))}catch(error){return`Process kill failed: ${String(error)}`}}})
   const processCleanupTool=tool({description:'Cleanup one owned terminal Hi process. Cleanup cannot terminate a running process.',args:{id:tool.schema.string()},execute:async(a:any,c:any)=>{const m=store.get(c?.sessionID);if(!m)return'No active Hi mission';try{await processRuntime.cleanup(m,String(a.id));return'OK'}catch(error){return`Process cleanup failed: ${String(error)}`}}})
   const processListTool=tool({description:'List bounded durable Hi process contracts for the current mission.',args:{},execute:async(_a:any,c:any)=>{const m=store.get(c?.sessionID);return m?JSON.stringify(processRuntime.list(m)):'No active Hi mission'}})
-  const toolSurface:Record<string,unknown>={hi_doctor:doctorTool,hi_status:statusTool,hi_metrics:metricsTool,hi_ledger:ledgerTool,hi_readiness:readinessTool,hi_intent_assess:intentAssessTool,hi_context_artifact_add:artifactAddTool,hi_context_artifacts:artifactsTool,hi_temporary_mutation_register:mutationTool,hi_temporary_mutation_revert:nativeRollbackTool,hi_direct_progress:directProgressTool,hi_task_start:startTool,hi_task_await:awaitTool,hi_task_peek:peekTool,hi_task_list:listTool,hi_task_cancel:cancelTool,hi_process_spawn:processSpawnTool,hi_process_read:processReadTool,hi_process_write:processWriteTool,hi_process_wait:processWaitTool,hi_process_kill:processKillTool,hi_process_cleanup:processCleanupTool,hi_process_list:processListTool,hi_browser_open:browserOpenTool,hi_browser_navigate:browserNavigateTool,hi_browser_click:browserClickTool,hi_browser_type:browserTypeTool,hi_browser_inspect:browserInspectTool,hi_browser_screenshot:browserScreenshotTool,hi_browser_wait:browserWaitTool,hi_browser_close:browserCloseTool}
+  const toolSurface:Record<string,unknown>={hi_doctor:doctorTool,hi_status:statusTool,hi_role_models:roleModelsTool,hi_metrics:metricsTool,hi_ledger:ledgerTool,hi_readiness:readinessTool,hi_intent_assess:intentAssessTool,hi_context_artifact_add:artifactAddTool,hi_context_artifacts:artifactsTool,hi_temporary_mutation_register:mutationTool,hi_temporary_mutation_revert:nativeRollbackTool,hi_direct_progress:directProgressTool,hi_task_start:startTool,hi_task_await:awaitTool,hi_task_peek:peekTool,hi_task_list:listTool,hi_task_cancel:cancelTool,hi_process_spawn:processSpawnTool,hi_process_read:processReadTool,hi_process_write:processWriteTool,hi_process_wait:processWaitTool,hi_process_kill:processKillTool,hi_process_cleanup:processCleanupTool,hi_process_list:processListTool,hi_browser_open:browserOpenTool,hi_browser_navigate:browserNavigateTool,hi_browser_click:browserClickTool,hi_browser_type:browserTypeTool,hi_browser_inspect:browserInspectTool,hi_browser_screenshot:browserScreenshotTool,hi_browser_wait:browserWaitTool,hi_browser_close:browserCloseTool}
   assertHiToolNamespace(Object.keys(toolSurface))
   const reconfigure=()=>{}
   return {toolSurface,reconfigure}

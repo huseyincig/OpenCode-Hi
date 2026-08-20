@@ -19,7 +19,7 @@ Canonical proje ayar dosyası:
 
 ### npm package-runner — normal kullanıcı yolu
 
-Windows, Linux ve macOS'ta aynı Node tabanlı package-runner kullanılır. Immutable yayınlanmış sürüm `opencode-hi@0.2.2` olarak kalır; repository'deki güncel development candidate `opencode-hi@0.2.3`'tür ve external release gate'leri kapanmadan registry'de yayınlanmış sayılmaz. `0.2.2` için:
+Windows, Linux ve macOS'ta aynı Node tabanlı package-runner kullanılır. Immutable yayınlanmış sürüm `opencode-hi@0.2.3`'tür; repository'deki güncel development candidate `opencode-hi@0.2.4`'tür ve external release gate'leri kapanmadan registry'de yayınlanmış sayılmaz. `0.2.2` için:
 
 ```bash
 npx --yes opencode-hi@0.2.2 setup /path/to/MyApp
@@ -743,28 +743,28 @@ gibi CLI'da tek tek flag'i olmayan full surface gerektiğinde.
 
 Unknown field destek anlamına gelmez.
 
-## 26.1 Development `0.2.3` Node package komutları
+## 26.1 Development `0.2.4` Node package komutları
 
 Common project kontrolü için artık legacy Python helper zorunlu değildir:
 
 ```bash
-npx --yes opencode-hi@0.2.3 reconfigure .
-npx --yes opencode-hi@0.2.3 state .
-npx --yes opencode-hi@0.2.3 reprofile . --profile balanced
-npx --yes opencode-hi@0.2.3 roles . --set coder=provider/model-a,provider/model-b
-npx --yes opencode-hi@0.2.3 roles . --variant coder:provider/model-a=high
-npx --yes opencode-hi@0.2.3 rotate . --role coder
-npx --yes opencode-hi@0.2.3 check-update .
+npx --yes opencode-hi@0.2.4 reconfigure .
+npx --yes opencode-hi@0.2.4 state .
+npx --yes opencode-hi@0.2.4 reprofile . --profile balanced
+npx --yes opencode-hi@0.2.4 roles . --set coder=provider/model-a,provider/model-b
+npx --yes opencode-hi@0.2.4 roles . --variant coder:provider/model-a=high
+npx --yes opencode-hi@0.2.4 rotate . --role coder
+npx --yes opencode-hi@0.2.4 check-update .
 ```
 
-- `reconfigure` bounded Node wizard'ı yeniden açar; `primaryMode`, topology, execution profile, child-model policy ve routing strategy dışındaki alanları ezmez. İptal edilirse mutation yapmaz.
+- `reconfigure` normal kullanıcı için yalnız `primaryMode` sorusunu yeniden açar. Topology, execution profile, specialist threshold, parallelism ve model scoring normal kullanıcı ayarı değildir; Hi runtime bunları göreve göre yönetir. İptal edilirse mutation yapmaz.
 - `state` read-only registration/ownership/routing özetidir; live Mission/provider execution truth için runtime `hi_status`, `hi_readiness`, `hi_doctor` kullanılır.
 - `reprofile` yalnız `executionPolicy` alanını değiştirir ve diğer project-owned routing alanlarını korur.
 - `roles` yalnız altı model-routed child role (`coder`, `architect`, `repository-explorer`, `qa-reviewer`, `security-reviewer`, `visual-qa`) için explicit model/fallback/variant yapraklarını değiştirir. `manager` ve `working-manager` primary model ownership OpenCode'a aittir.
 - `rotate` yalnız seçilen child role fallback model sırasını döndürür; credential, API key, provider hesabı veya primary model rotation değildir.
 - `check-update` npm registry metadata'sını read-only kontrol eder; project dosyalarını değiştirmez.
 
-`setup` / `install` gerçek terminalde aynı bounded wizard'ı açar; CI/non-TTY deterministic kalır ve `--non-interactive` kullanılabilir. Wizard setup anında live model inventory yoksa model ID uydurmaz. Legacy Python helper yalnız Node CLI'ya henüz yansıtılmamış advanced/compatibility alanları için tutulur.
+`setup` / `install` gerçek terminalde yalnız primary mode (`Auto`, `Working Manager`, `Manager`) sorar; CI/non-TTY deterministic kalır ve `--non-interactive` kullanılabilir. OpenCode açıldıktan sonra sohbete **“Hi rol modellerini ayarla”** yaz. Runtime `hi_role_models` yalnız gerçekten bağlı/aktif modelleri listeler ve `coder`, `architect`, `repository-explorer`, `qa-reviewer`, `security-reviewer`, `visual-qa` rollerine istediğin model/fallback sırasını kaydeder. `visual-qa` için vision capability zorunludur.
 
 ## 27. Değişiklikten sonra doğrulama
 

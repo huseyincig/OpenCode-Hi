@@ -80,6 +80,13 @@ test('same-session corrective resume preserves the original execution tool surfa
   assert.match(JSON.stringify(prompts[1]),/METHODOLOGY EXIT REQUIREMENTS: hi-test-driven-development: task-success, no-open-issues, targeted-test-evidence/)
 })
 
+test('parent can open chat role-model configuration before semantic mission assessment while other execution tools stay gated',async()=>{
+  const store=new MissionStore(process.cwd());store.start('parent-config','Hi rol modellerini ayarla')
+  const hook=createToolBeforeHook(store)
+  await hook({sessionID:'parent-config',tool:'hi_role_models'},{args:{action:'list'}})
+  await assert.rejects(()=>hook({sessionID:'parent-config',tool:'hi_task_start'},{args:{objective:'x'}}),/semantic gate/)
+})
+
 test('child workers cannot invoke any Hi control-plane custom tool, including completion and cancellation surfaces',async()=>{
   const store=new MissionStore(process.cwd()),m=store.start('parent','implement')
   m.execution.tasks.push({id:'t',objective:'x',status:'running',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],worker_id:'w',created_at:Date.now(),updated_at:Date.now()})

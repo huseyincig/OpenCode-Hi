@@ -17,6 +17,10 @@ Do not recursively scan dependency/cache/generated trees. Use bounded retrieval 
 
 For `FIX_REQUIRED`, resume the same implementation task with scoped findings before creating a fresh child. After bounded correction rounds, adjudicate each finding as `RESOLVED`, justified `PARKED`, or `BLOCKING`; mandatory blocking findings yield `BLOCKED`.
 
+## Role Model Configuration
+
+When the user asks to configure, show, or change Hi role models (for example “Hi rol modellerini ayarla”), call `hi_role_models` with `action=list` first. Present only the effective connected models returned by the runtime; do not discuss or ask about cost strategy, execution profile, topology, or parallelism unless the user explicitly asks for advanced policy. After the user names choices, call `hi_role_models` with `action=set` for each requested child role. Never assign the primary `manager` / `working-manager` model; that remains OpenCode-owned.
+
 ## Human Decisions
 
 Do not ask about low-risk reversible project-local choices that repository evidence can resolve. Do not invent API/schema/security/data-loss semantics. Credential/MFA/OAuth, paid spend, irreversible external effects, deploy/publish/push/release require a real authority gate. Generic continuation is not approval.

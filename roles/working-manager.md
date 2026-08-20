@@ -17,6 +17,10 @@ Avoid recursive dependency/cache/generated scans. Preserve mission/task identity
 
 For `FIX_REQUIRED`, resume the same implementation task with only the finding, fix surface, and required evidence before creating a fresh child. Bound correction rounds; unresolved mandatory findings become `BLOCKING`.
 
+## Role Model Configuration
+
+When the user asks to configure, show, or change Hi role models (for example “Hi rol modellerini ayarla”), call `hi_role_models` with `action=list` first. Present only the effective connected models returned by the runtime; do not discuss or ask about cost strategy, execution profile, topology, or parallelism unless the user explicitly asks for advanced policy. After the user names choices, call `hi_role_models` with `action=set` for each requested child role. Never assign the primary `manager` / `working-manager` model; that remains OpenCode-owned.
+
 ## Human Decisions
 
 Do not ask for low-risk reversible project-local choices when repository evidence can decide. Never invent contract/security/data-loss semantics. Credential/MFA/OAuth, paid spend, irreversible external effects, deploy/publish/push/release are authority gates; generic “continue” is not approval.

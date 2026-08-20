@@ -21,7 +21,7 @@ If Hi is already visible in OpenCode, continue to [Platform paths](#1-platform-p
 
 ### npm package runner — normal user path
 
-Windows, Linux and macOS use the same Node-based package runner. The immutable published release remains `opencode-hi@0.2.2`; the current repository development candidate is `opencode-hi@0.2.3` and is not registry-published until its external release gates close. For release `0.2.2`:
+Windows, Linux and macOS use the same Node-based package runner. The immutable published release is `opencode-hi@0.2.3`; the current repository development candidate is `opencode-hi@0.2.4` and is not registry-published until its external release gates close. For release `0.2.2`:
 
 ```bash
 npx --yes opencode-hi@0.2.2 setup /path/to/MyApp
@@ -778,15 +778,15 @@ Project configuration can narrow behavior but cannot override OpenCode permissio
 
 ## 23. Node configuration wizard and advanced legacy Python CLI
 
-Normal development `0.2.3` project reconfiguration is Node-native:
+Normal development `0.2.4` project reconfiguration is Node-native:
 
 ```bash
-npx --yes opencode-hi@0.2.3 reconfigure .
+npx --yes opencode-hi@0.2.4 reconfigure .
 ```
 
-The bounded wizard covers `primaryMode`, `execution.topology`, `executionPolicy`, child `models.mode`, and `routing.strategy`. `setup` and `install` open the same wizard automatically only on a real terminal; CI/non-TTY remains deterministic and can use `--non-interactive`. The wizard never lists or fabricates model IDs before the loaded OpenCode runtime exposes the effective inventory. Cancelling the wizard performs no mutation.
+The normal-user wizard covers only `primaryMode` (`auto`, `working-manager`, `manager`). `setup` and `install` open it only on a real terminal; CI/non-TTY remains deterministic with `--non-interactive`. Topology, execution profile, specialist thresholds, parallelism and scoring strategy stay internal. After OpenCode loads, type **“Hi rol modellerini ayarla”** in chat; `hi_role_models` lists only effective connected models and writes explicit child-role mappings. Cancelling the wizard performs no mutation.
 
-The development `0.2.3` Node package runner covers the normal lifecycle plus common project controls: terminal `setup`/`install` wizard, `reconfigure`, `update`, `doctor`, `state`, `reprofile`, `roles`, `rotate`, `check-update`, `plan`, `rollback`, and `recover`. `reprofile` owns only `executionPolicy`; `roles` owns explicit child-role model/fallback/variant leaves; `rotate` only rotates one child role's fallback order. Provider authentication and `manager` / `working-manager` primary model selection remain OpenCode-owned. The older Python helper remains only for advanced/manual fields that are not yet mirrored by these bounded Node commands.
+The development `0.2.4` Node package runner covers the normal lifecycle plus common project controls: terminal `setup`/`install` wizard, `reconfigure`, `update`, `doctor`, `state`, `reprofile`, `roles`, `rotate`, `check-update`, `plan`, `rollback`, and `recover`. `reprofile` owns only `executionPolicy`; `roles` owns explicit child-role model/fallback/variant leaves; `rotate` only rotates one child role's fallback order. Provider authentication and `manager` / `working-manager` primary model selection remain OpenCode-owned. The older Python helper remains only for advanced/manual fields that are not yet mirrored by these bounded Node commands.
 
 If you deliberately install the package locally for this advanced helper, the following examples apply.
 

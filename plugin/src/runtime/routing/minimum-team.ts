@@ -8,7 +8,12 @@ export function minimumTeamFor(intent:NormalizedMissionIntent, verification?:Ver
   const localImplementation=intent.scope==='local'&&intent.risk==='low'&&intent.taskKind==='implementation'&&!caps.has('visual-qa')&&!caps.has('design-exploration')
   const localReview=intent.scope==='local'&&intent.risk==='low'&&intent.taskKind==='review'&&!reviewRequired
   const localDiagnosis=intent.scope==='local'&&intent.risk==='low'&&intent.taskKind==='diagnosis'
-  if(localImplementation||localReview||localDiagnosis){const primary=primaryMode==='auto'?'working-manager':primaryMode;const reason=localReview?'local low-risk review is directly evidentiary':localDiagnosis?'local low-risk diagnosis is directly evidentiary':'local low-risk change is directly executable';return{primary,direct:primary==='working-manager',roles:[],reason:[reason,'minimum-team:0-child',primaryMode==='auto'?'primary:auto-working-manager':`primary:forced-${primary}`]}}
+  if(localImplementation||localReview||localDiagnosis){
+    const primary=primaryMode==='auto'?'working-manager':primaryMode
+    const reason=localReview?'local low-risk review is directly evidentiary':localDiagnosis?'local low-risk diagnosis is directly evidentiary':'local low-risk change is directly executable'
+    if(primary==='manager'&&localImplementation)return{primary,direct:false,roles:['coder'],reason:[reason,'minimum-team:1-child','read-only-manager-requires-coder','primary:forced-manager']}
+    return{primary,direct:primary==='working-manager',roles:[],reason:[reason,'minimum-team:0-child',primaryMode==='auto'?'primary:auto-working-manager':`primary:forced-${primary}`]}
+  }
   const roles:string[]=[]
   const implementation=!['diagnosis','review','release-readiness'].includes(intent.taskKind)
   if(intent.scope==='repo-wide'&&caps.has('design-exploration'))roles.push('architect')

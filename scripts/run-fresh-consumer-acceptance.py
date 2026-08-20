@@ -88,7 +88,7 @@ def main()->int:
     'node_setup':setup.returncode==0 and setup_cfg.get('plugin')==[expected_spec],
     'node_setup_no_application_root_node_project':setup_clean,
     'consumer_resolution':bool(resolved) and resolved.startswith('file://'+packed_entry_root+'/') and resolved!='file://'+source_entrypoint,
-    'server_tool_ids':len(hi_ids)==31 and {'hi_doctor','hi_status','hi_task_start'}.issubset(set(hi_ids)),
+    'server_tool_ids':len(hi_ids)==32 and {'hi_doctor','hi_status','hi_task_start'}.issubset(set(hi_ids)),
     'agent_projection':isinstance(coder,dict) and coder.get('name')=='coder' and coder.get('mode')=='subagent' and coder.get('description')=='Implements scoped changes and produces test and behavior evidence',
     'session_create':isinstance(session_data,dict) and not session_data.get('error') and bool(session_data.get('id')),
     'no_source_tree_in_server_log':source_entrypoint not in log_text,

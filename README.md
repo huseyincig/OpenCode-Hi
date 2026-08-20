@@ -43,15 +43,15 @@ Then restart OpenCode and verify the installation:
 npx --yes opencode-hi@latest doctor .
 ```
 
-For the published `0.2.2` CLI, an existing Hi-owned older registration is upgraded explicitly with:
+For the published `0.2.3` CLI, an existing Hi-owned older registration is upgraded explicitly with:
 
 ```bash
 npx --yes opencode-hi@latest update .
 ```
 
-Published `0.2.2` keeps `install` as the first-install alias of `setup` and uses explicit `update` for an owned upgrade. Development candidate `0.2.3` upgrades the friendly `install` command to **ensure** semantics: no ownership means first setup, matching ownership at the target is `NOOP`, and a matching Hi-owned older registration is upgraded safely. `setup` remains the strict first-install command. All paths preserve unrelated OpenCode configuration and fail closed on ownership/config drift.
+Published `0.2.3` and development candidate `0.2.4` use the friendly `install` command with **ensure** semantics: no ownership means first setup, matching ownership at the target is `NOOP`, and a matching Hi-owned older registration is upgraded safely. `setup` remains the strict first-install command. All paths preserve unrelated OpenCode configuration and fail closed on ownership/config drift.
 
-Development `0.2.3` also makes `setup`/`install` **interactive only when attached to a real terminal**. The bounded wizard configures the existing canonical `primaryMode`, execution topology, execution profile, child-model policy, and routing strategy. Provider authentication and the live model inventory remain OpenCode-owned; the wizard never invents model IDs. CI/piped automation stays deterministic and non-interactive, or can request that behavior explicitly with `--non-interactive`. Reopen the same project wizard later with `npx --yes opencode-hi@0.2.3 reconfigure .`.
+Development `0.2.4` keeps `setup`/`install` interactive only on a real terminal, but the normal-user wizard asks just one policy question: `Auto`, `Working Manager`, or `Manager`. Topology, execution depth, specialist thresholds, parallelism, and model-scoring strategy are internal Hi runtime decisions. Provider authentication and the live model inventory remain OpenCode-owned. After OpenCode starts, type **“Hi rol modellerini ayarla”** in chat; Hi uses `hi_role_models` to list only effective connected models and persist explicit child-role choices. CI/piped automation remains deterministic with `--non-interactive`. Reopen the primary-mode question with `npx --yes opencode-hi@0.2.4 reconfigure .`.
 
 OpenCode-Hi is the semantic and execution-control plane for evidence-aware AI software engineering on OpenCode. Hi owns the meaning of the work—Mission, Task, Worker, Role, Methodology, Authority, Evidence, Verification, recovery and completion—while OpenCode remains the primary native execution host for sessions, models, tools, permissions, PTY, workspace and other host primitives.
 
@@ -63,8 +63,8 @@ Hi is designed to use the minimum sufficient topology, model, context and verifi
 
 ## Current product truth
 
-The current immutable public release is `opencode-hi@0.2.2` / `v0.2.2`. The current development source has the distinct candidate identity `0.2.3`; it is **not** public merely because source metadata says `0.2.3`. GitHub Releases and the npm registry remain authoritative for public availability. The published `0.2.2` release stays bound to its immutable Git tag/source, successful Ubuntu/Windows Release Readiness, npm Trusted Publishing provenance, and fresh-registry exact OpenCode `1.18.19` acceptance.
-The current repository source is `opencode-hi@0.2.3`, a **prepublication development candidate**. It is not the published npm/GitHub release and must not be presented as T4-certified until its own release gates complete.
+The current immutable public release is `opencode-hi@0.2.3` / `v0.2.3`. The current development source has the distinct candidate identity `0.2.4`; it is **not** public merely because source metadata says `0.2.4`. GitHub Releases and the npm registry remain authoritative for public availability. The published `0.2.3` release stays bound to its immutable Git tag/source, successful Ubuntu/Windows Release Readiness, npm Trusted Publishing provenance, and fresh-registry exact OpenCode `1.18.19` acceptance.
+The current repository source is `opencode-hi@0.2.4`, a **prepublication development candidate**. It is not the published npm/GitHub release and must not be presented as T4-certified until its own release gates complete.
 
 Current host capability truth is generated from exact receipts rather than hand-maintained here. See [Host Support](docs/HOSTS.md) and `data/validation/compatibility-matrix-0.1.0.json`.
 
@@ -125,7 +125,7 @@ The machine-readable compatibility projection is the canonical mutable support v
 
 - **Process lifecycle:** supported on the Hi-owned `ProcessContract` / `ProcessExecutor` surface. It covers PID-bound spawn, bounded IO, event-driven WAIT, timeout, kill, separate cleanup, restart adoption and STOP reconciliation. Arbitrary native/model-facing bash is not retroactively owned by Hi.
 - **Workspace isolation:** supported on the Hi-owned `IsolationDecision` / `WorkspaceLease` / `WorkspaceRuntime` surface. Required isolation provisions and binds an alternate workspace, verifies execution there, preserves the primary/user-dirty worktree and reconciles cleanup/restart fail-closed.
-- **Browser execution:** supported on the Hi-owned, runtime-health-gated browser surface. When mandatory local browser verification needs Chromium and the executable is absent, the development `0.2.3` runtime performs at most one bounded bootstrap attempt through pinned `playwright-core@1.62.1` into a Hi-owned platform cache. A failed/unavailable bootstrap becomes explicit environment/capability state; it does not self-feed verification continuations. Browser observations and screenshots are never automatically Evidence or PASS.
+- **Browser execution:** supported on the Hi-owned, runtime-health-gated browser surface. When mandatory local browser verification needs Chromium and the executable is absent, the development `0.2.4` runtime performs at most one bounded bootstrap attempt through pinned `playwright-core@1.62.1` into a Hi-owned platform cache. A failed/unavailable bootstrap becomes explicit environment/capability state; it does not self-feed verification continuations. Browser observations and screenshots are never automatically Evidence or PASS.
 - **HumanDecision:** the chat transport is supported. A deterministic structured OpenCode question-opening UI transport is currently unsupported because the required public host opener is not exposed on the accepted host API.
 - **Semantic Context:** the explicit first-class adapter currently supports TypeScript/TSX only. JavaScript, LSP and Tree-sitter semantic adapters are not claimed.
 
@@ -165,11 +165,11 @@ The package runner and the loaded OpenCode plugin are deliberately separate comm
 
 | Package command | Purpose |
 |---|---|
-| `install` | development `0.2.3`: ensure the target exact Hi registration (first setup, safe owned update, or NOOP) |
-| `setup` | strict first Hi-owned exact plugin registration; development `0.2.3` opens the bounded project wizard when attached to a terminal |
+| `install` | development `0.2.4`: ensure the target exact Hi registration (first setup, safe owned update, or NOOP) |
+| `setup` | strict first Hi-owned exact plugin registration; development `0.2.4` opens the bounded project wizard when attached to a terminal |
 | `update` | explicitly move an already Hi-owned registration to the requested exact release; `upgrade` is an accepted alias |
 | `doctor` | static registration/ownership/drift/transaction check |
-| `reconfigure` | development `0.2.3`: reopen the bounded project configuration wizard |
+| `reconfigure` | development `0.2.4`: reopen the bounded project configuration wizard |
 | `state` | read-only package/project registration + routing summary; live Mission state remains runtime-owned |
 | `reprofile` | change only `executionPolicy` in project-owned routing state |
 | `roles` | print/set explicit child-role model/fallback/variant mappings |
@@ -181,29 +181,29 @@ The package runner and the loaded OpenCode plugin are deliberately separate comm
 
 After OpenCode loads the plugin, the runtime exposes **31 `hi_*` tools**. The main user-facing diagnostics are `hi_doctor`, `hi_status`, `hi_readiness`, `hi_metrics`, and `hi_ledger`. The remaining tools are bounded control-plane primitives for task/worker dispatch, process execution, browser execution, context artifacts, temporary mutations, semantic assessment, and direct progress. The exact loaded tool IDs are host-verifiable through OpenCode's documented `/experimental/tool/ids` endpoint.
 
-For current published `0.2.2`, installation ownership is inspected with package `doctor`; live Mission state is inspected with runtime `hi_status`, `hi_readiness`, and `hi_ledger`. Development `0.2.3` additionally exposes Node-only `state`, `reprofile`, `roles`, `rotate`, and `check-update` package commands so common project configuration no longer requires the legacy Python helper.
+For current published `0.2.3`, installation ownership is inspected with package `doctor`; live Mission state is inspected with runtime `hi_status`, `hi_readiness`, and `hi_ledger`. Development `0.2.4` additionally exposes Node-only `state`, `reprofile`, `roles`, `rotate`, and `check-update` package commands so common project configuration no longer requires the legacy Python helper.
 
-Examples for the `0.2.3` candidate:
+Examples for the `0.2.4` candidate:
 
 ```bash
-npx --yes opencode-hi@0.2.3 reconfigure .
-npx --yes opencode-hi@0.2.3 state .
-npx --yes opencode-hi@0.2.3 reprofile . --profile balanced
-npx --yes opencode-hi@0.2.3 roles . --set coder=provider/model-a,provider/model-b
-npx --yes opencode-hi@0.2.3 rotate . --role coder
-npx --yes opencode-hi@0.2.3 check-update .
+npx --yes opencode-hi@0.2.4 reconfigure .
+npx --yes opencode-hi@0.2.4 state .
+npx --yes opencode-hi@0.2.4 reprofile . --profile balanced
+npx --yes opencode-hi@0.2.4 roles . --set coder=provider/model-a,provider/model-b
+npx --yes opencode-hi@0.2.4 rotate . --role coder
+npx --yes opencode-hi@0.2.4 check-update .
 ```
 
 `rotate` only changes the ordered model fallback prior for the named Hi child role. It is not credential, API-key, provider-account, or primary-model rotation. `manager` and `working-manager` model ownership remains OpenCode-native.
 
-Published `0.2.2` keeps setup deterministic. Development `0.2.3` adds a bounded terminal wizard without taking over provider authentication or fabricating model availability:
+Published `0.2.3` keeps setup deterministic. Development `0.2.4` adds a bounded terminal wizard without taking over provider authentication or fabricating model availability:
 
 ```text
 setup/install (TTY) -> project wizard -> restart OpenCode -> package doctor -> runtime hi_doctor
 setup/install (CI/non-TTY) -> deterministic registration -> restart -> doctor -> hi_doctor
 ```
 
-The wizard asks only about canonical Hi policy that is already executable: primary mode (`auto` / `working-manager` / `manager`), topology (`adaptive` / `single-agent` / `multi-agent`), execution profile, child-model policy, and cost/quality routing strategy. Choosing adaptive child models lets the loaded runtime rank the effective connected OpenCode inventory. Choosing manual role mapping suppresses automatic initial recommendation persistence; after restart, inspect the live inventory with `hi_doctor` and set exact child-role candidates with `roles`. `manager` / `working-manager` primary model selection and provider authentication remain OpenCode-owned. Use `reconfigure` to reopen the same wizard later; use `--non-interactive` for automation. The retained Python helper is advanced/compatibility only.
+The normal-user wizard asks only for primary behavior (`auto` / `working-manager` / `manager`). Hi owns task topology, specialist selection, verification depth, parallelism, and adaptive model scoring internally. After restart, type **“Hi rol modellerini ayarla”** in the OpenCode chat. The runtime `hi_role_models` tool lists only effective connected models and can save explicit child-role model/fallback mappings; `visual-qa` only accepts vision-capable models. `manager` / `working-manager` primary model selection and provider authentication remain OpenCode-owned. Use `reconfigure` to reopen only the primary-mode question; use `--non-interactive` for automation. The package `roles` command remains a deterministic CLI fallback.
 
 Published availability is external state, not inferred from source version metadata alone. For `0.2.2`, GitHub Release, npm Trusted Publishing/provenance, and fresh-registry exact-host verification are complete.
 

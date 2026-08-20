@@ -15,6 +15,12 @@ test('small local low-risk implementation uses Working Manager direct path with 
   assert.equal(m.execution.primary_mode,'working-manager');assert.equal(m.execution.workers.length,0)
 })
 
+test('forced Manager delegates even a small local implementation to coder because Manager is read-only',()=>{
+  const i=intent(),d=minimumTeamFor(i,verificationPolicyFor(i),'manager')
+  assert.equal(d.primary,'manager');assert.equal(d.direct,false);assert.deepEqual(d.roles,['coder'])
+  assert.match(d.reason.join(' '),/forced-manager/)
+})
+
 test('security-sensitive implementation remains write-capable and adds independent security assurance',()=>{
   const i=intent({risk:'high',requiredCapabilities:['implementation','security-review','independent-review']})
   assert.equal(routeCapabilities(i).role,'coder')

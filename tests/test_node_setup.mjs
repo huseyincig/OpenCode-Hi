@@ -106,7 +106,7 @@ test('M16 package-runner help is Node-native and exposes setup/update/doctor nor
 })
 
 
-test('0.2.3 friendly install ensures an owned registration while setup remains strict first-install',()=>{
+test('0.2.4 friendly install ensures an owned registration while setup remains strict first-install',()=>{
   const root=project();try{
     config(root,{plugin:['foreign@1'],custom:{keep:true}})
     const first=run('install',root,'--version','1.0.0');assert.equal(first.status,0);assert.equal(first.json.status,'APPLIED');assert.equal(first.json.operation,'install')
@@ -116,11 +116,11 @@ test('0.2.3 friendly install ensures an owned registration while setup remains s
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('0.2.3 state is read-only and reprofile changes only executionPolicy',()=>{
+test('0.2.4 state is read-only and reprofile changes only executionPolicy',()=>{
   const root=project();try{
     config(root,{plugin:[]});assert.equal(run('install',root,'--version','1.0.0').status,0)
     const routing=join(root,'.opencode','hi','policy','routing.json');mkdirSync(join(root,'.opencode','hi','policy'),{recursive:true});writeFileSync(routing,JSON.stringify({schema:1,type:'hi-routing',executionPolicy:'minimal',foreignTop:{keep:true},routing:{strategy:'quality',futureField:{keep:true}}},null,2)+'\n')
-    const before=readFileSync(routing,'utf8'),state=run('state',root);assert.equal(state.status,0);assert.equal(state.json.package_runner_version,'0.2.3');assert.equal(state.json.registered_plugin_spec,'opencode-hi@1.0.0');assert.equal(state.json.routing.execution_policy,'minimal');assert.equal(readFileSync(routing,'utf8'),before)
+    const before=readFileSync(routing,'utf8'),state=run('state',root);assert.equal(state.status,0);assert.equal(state.json.package_runner_version,'0.2.4');assert.equal(state.json.registered_plugin_spec,'opencode-hi@1.0.0');assert.equal(state.json.routing.execution_policy,'minimal');assert.equal(readFileSync(routing,'utf8'),before)
     const changed=run('reprofile',root,'--profile','adaptive');assert.equal(changed.status,0);assert.equal(changed.json.status,'APPLIED');assert.equal(changed.json.to_execution_policy,'adaptive')
     const doc=JSON.parse(readFileSync(routing,'utf8'));assert.equal(doc.executionPolicy,'adaptive');assert.deepEqual(doc.foreignTop,{keep:true});assert.equal(doc.routing.strategy,'quality');assert.deepEqual(doc.routing.futureField,{keep:true})
     assert.equal(run('reprofile',root,'--profile','adaptive').json.status,'NOOP')
@@ -128,7 +128,7 @@ test('0.2.3 state is read-only and reprofile changes only executionPolicy',()=>{
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('0.2.3 roles and rotate mutate only explicit child routing leaves and reject primary role ownership',()=>{
+test('0.2.4 roles and rotate mutate only explicit child routing leaves and reject primary role ownership',()=>{
   const root=project();try{
     config(root,{plugin:[]});assert.equal(run('install',root).status,0)
     const routing=join(root,'.opencode','hi','policy','routing.json');mkdirSync(join(root,'.opencode','hi','policy'),{recursive:true});writeFileSync(routing,JSON.stringify({schema:1,type:'hi-routing',unknownTop:'keep',routing:{strategy:'cost-quality',futureField:{keep:true},roleModels:{'future-role':['future/model']},roleVariants:{'future-role':{'future/model':'x'}}}},null,2)+'\n')
@@ -140,7 +140,7 @@ test('0.2.3 roles and rotate mutate only explicit child routing leaves and rejec
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('0.2.3 check-update uses npm registry metadata without mutating project state',async()=>{
+test('0.2.4 check-update uses npm registry metadata without mutating project state',async()=>{
   const root=project(),server=createServer((req,res)=>{assert.equal(req.url,'/opencode-hi/latest');res.setHeader('content-type','application/json');res.end(JSON.stringify({name:'opencode-hi',version:'1.2.0'}))})
   try{
     config(root,{plugin:[]});assert.equal(run('install',root,'--version','1.0.0').status,0);const before=readFileSync(join(root,'opencode.json'),'utf8')
@@ -160,50 +160,36 @@ async function runInteractive(args,answers){
   return{status,stdout,stderr,json}
 }
 
-test('0.2.3 interactive setup configures canonical primary topology profile and model policy without inventing runtime inventory',async()=>{
+test('interactive setup asks only primary mode; specialist/model policy stays internal until runtime chat configuration',async()=>{
   const root=project();try{
     config(root,{plugin:['foreign@1'],custom:{keep:true}})
     const r=await runInteractive(['setup',root,'--version','1.0.0','--interactive'],[
-      '',       // primaryMode=auto
-      '3',      // topology=multi-agent
-      '3',      // executionPolicy=thorough
-      '2',      // model policy=manual role mapping later
-      '1',      // routing strategy=cost-quality
+      '3', // manager
       'y',
     ])
     assert.equal(r.status,0);assert.equal(r.json.status,'APPLIED');assert.equal(r.json.plugin_spec,'opencode-hi@1.0.0');assert.equal(r.json.configuration.status,'APPLIED')
-    assert.match(r.stderr,/Primary working mode/i);assert.match(r.stderr,/Task topology/i);assert.match(r.stderr,/Child model routing/i)
+    assert.match(r.stderr,/Primary working mode/i);assert.doesNotMatch(r.stderr,/Task topology|Execution profile|Child model routing|Routing strategy/i)
     const doc=JSON.parse(readFileSync(join(root,'.opencode','hi','policy','routing.json'),'utf8'))
-    assert.equal(doc.primaryMode,'auto');assert.equal(doc.execution.topology,'multi-agent');assert.equal(doc.execution.maxAgents,4);assert.equal(doc.execution.parallelism,2)
-    assert.equal(doc.executionPolicy,'thorough');assert.equal(doc.models.mode,'role-mapped');assert.equal(doc.routing.strategy,'cost-quality')
+    assert.equal(doc.primaryMode,'manager');assert.equal(doc.executionPolicy,undefined);assert.equal(doc.execution,undefined);assert.equal(doc.models,undefined);assert.equal(doc.routing?.strategy,undefined)
     assert.deepEqual(JSON.parse(readFileSync(join(root,'opencode.json'),'utf8')).custom,{keep:true})
-    assert.match(r.json.configuration.next,/roles/i)
+    assert.match(r.json.configuration.next,/Hi rol modellerini ayarla|hi_role_models/i)
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('0.2.3 reconfigure wizard preserves unknown routing fields and cancellation is mutation-free',async()=>{
+test('reconfigure changes only primary mode and preserves all advanced/unknown routing fields',async()=>{
   const root=project();try{
     config(root,{plugin:[]});assert.equal(run('install',root,'--version','1.0.0').status,0)
     const routing=join(root,'.opencode','hi','policy','routing.json');mkdirSync(join(root,'.opencode','hi','policy'),{recursive:true});writeFileSync(routing,JSON.stringify({schema:1,type:'hi-routing',primaryMode:'manager',executionPolicy:'minimal',unknownTop:{keep:true},execution:{topology:'single-agent',maxAgents:1,parallelism:1,future:'keep'},models:{mode:'adaptive',future:'keep'},routing:{strategy:'quality',futureField:{keep:true},roleModels:{coder:['p/a']}}},null,2)+'\n')
     const before=readFileSync(routing,'utf8')
-    const cancelled=await runInteractive(['reconfigure',root,'--interactive'],['','','','','','n']);assert.equal(cancelled.status,0);assert.equal(cancelled.json.status,'CANCELLED');assert.equal(readFileSync(routing,'utf8'),before)
-    const applied=await runInteractive(['reconfigure',root,'--interactive'],[
-      '2', // working-manager
-      '1', // adaptive topology
-      '4', // adaptive execution policy
-      '1', // adaptive models
-      '3', // cost strategy
-      'y',
-    ])
-    assert.equal(applied.status,0);assert.equal(applied.json.status,'APPLIED')
-    const doc=JSON.parse(readFileSync(routing,'utf8'));assert.equal(doc.primaryMode,'working-manager');assert.equal(doc.execution.topology,'adaptive');assert.equal(doc.execution.maxAgents,4);assert.equal(doc.execution.parallelism,2);assert.equal(doc.executionPolicy,'adaptive');assert.equal(doc.models.mode,'adaptive');assert.equal(doc.routing.strategy,'cost')
+    const cancelled=await runInteractive(['reconfigure',root,'--interactive'],['','n']);assert.equal(cancelled.status,0);assert.equal(cancelled.json.status,'CANCELLED');assert.equal(readFileSync(routing,'utf8'),before)
+    const applied=await runInteractive(['reconfigure',root,'--interactive'],['2','y'])
+    assert.equal(applied.status,0);assert.equal(applied.json.status,'APPLIED');assert.doesNotMatch(applied.stderr,/Task topology|Execution profile|Child model routing|Routing strategy/i)
+    const doc=JSON.parse(readFileSync(routing,'utf8'));assert.equal(doc.primaryMode,'working-manager');assert.equal(doc.executionPolicy,'minimal');assert.equal(doc.execution.topology,'single-agent');assert.equal(doc.models.mode,'adaptive');assert.equal(doc.routing.strategy,'quality')
     assert.deepEqual(doc.unknownTop,{keep:true});assert.equal(doc.execution.future,'keep');assert.equal(doc.models.future,'keep');assert.deepEqual(doc.routing.futureField,{keep:true});assert.deepEqual(doc.routing.roleModels.coder,['p/a'])
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-
-
-test('0.2.3 release preflight can route canonical checks through an explicit Python interpreter without host-path hardcoding',t=>{
+test('0.2.4 release preflight can route canonical checks through an explicit Python interpreter without host-path hardcoding',t=>{
   const runner=join(ROOT,'scripts','run-python.mjs'),preflight=readFileSync(join(ROOT,'scripts','release-preflight.mjs'),'utf8'),runnerSource=readFileSync(runner,'utf8')
   assert.match(runnerSource,/OPENCODE_HI_PYTHON/)
   assert.match(preflight,/OPENCODE_HI_PYTHON/)
@@ -216,7 +202,7 @@ test('0.2.3 release preflight can route canonical checks through an explicit Pyt
   assert.equal(r.status,0,`${r.stdout}\n${r.stderr}`);assert.match(r.stdout,/HI_PY_OVERRIDE_OK/)
 })
 
-test('0.2.3 exact-SHA release preflight is fail-closed and contains no publication mutation command',()=>{
+test('0.2.4 exact-SHA release preflight is fail-closed and contains no publication mutation command',()=>{
   const path=join(ROOT,'scripts','release-preflight.mjs'),source=readFileSync(path,'utf8')
   for(const forbidden of ['npm publish','git push','gh release create','git tag -','git tag v'])assert.equal(source.includes(forbidden),false,forbidden)
   for(const required of ["['run','check']","['run','docs:pack-check']","['pack','--dry-run','--json','--ignore-scripts']","['scripts/verify-npm-oidc-release.mjs','identity']"])assert.equal(source.includes(required),true,required)

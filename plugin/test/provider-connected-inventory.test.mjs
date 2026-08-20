@@ -95,3 +95,23 @@ test('runtime initial recommendation never shadows an existing host-level user r
   assert.equal(existsSync(join(root,'.opencode','hi','policy','routing.json')),false)
   await hooks.dispose?.();rmSync(root,{recursive:true,force:true})
 })
+
+
+test('chat-facing hi_role_models lists only effective connected models and persists explicit child-role choices',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-role-model-chat-'))
+  const raw={connected:['p'],all:[{id:'p',models:[{id:'code'},{id:'vision',capabilities:{input:{image:true}}}]},{id:'offline',models:[{id:'nope'}]}]}
+  const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:clientWithProviderShape(raw)})
+  await hooks.config({})
+  await hooks.event({event:{type:'server.connected',properties:{}}})
+  const listed=JSON.parse(String(await hooks.tool.hi_role_models.execute({action:'list'},{})))
+  assert.equal(listed.status,'OK');assert.deepEqual(listed.models.map(x=>x.id),['p/code','p/vision']);assert.equal(listed.roles.coder,'p/code')
+  const setCoder=JSON.parse(String(await hooks.tool.hi_role_models.execute({action:'set',role:'coder',models:'p/vision,p/code'},{})))
+  assert.equal(setCoder.status,'APPLIED');assert.deepEqual(setCoder.role_models.coder,['p/vision','p/code'])
+  const blockedVisual=JSON.parse(String(await hooks.tool.hi_role_models.execute({action:'set',role:'visual-qa',models:'p/code'},{})))
+  assert.equal(blockedVisual.status,'BLOCKED');assert.match(blockedVisual.reason,/vision/i)
+  const setVisual=JSON.parse(String(await hooks.tool.hi_role_models.execute({action:'set',role:'visual-qa',models:'p/vision'},{})))
+  assert.equal(setVisual.status,'APPLIED');assert.deepEqual(setVisual.role_models['visual-qa'],['p/vision'])
+  const routing=JSON.parse(readFileSync(join(root,'.opencode','hi','policy','routing.json'),'utf8'))
+  assert.deepEqual(routing.routing.roleModels.coder,['p/vision','p/code']);assert.deepEqual(routing.routing.roleModels['visual-qa'],['p/vision'])
+  await hooks.dispose?.();rmSync(root,{recursive:true,force:true})
+})

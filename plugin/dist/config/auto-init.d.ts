@@ -20,3 +20,7 @@ export declare function ensureProjectRoutingConfig(projectRoot: string, initialR
     configuredRoles?: number;
     reason?: string;
 };
+export declare function setProjectRoleModels(projectRoot: string, role: ModelRoutedChildRole, models: string[]): {
+    path: string;
+    roleModels: Record<string, string[]>;
+};

@@ -39,7 +39,7 @@ export function createToolBeforeHook(store, background, projectRoot) {
             throw new Error(`Hi topology guard: parent direct mutation via '${tool}' is disabled for parallel execution; create bounded disjoint work units with hi_task_start.`);
         }
         if (m.identity.semantic_assessment.status === 'pending') {
-            const allowed = new Set(['hi_intent_assess', 'hi_status', 'hi_ledger', 'hi_readiness']);
+            const allowed = new Set(['hi_intent_assess', 'hi_status', 'hi_ledger', 'hi_readiness', 'hi_role_models']);
             if (!allowed.has(tool))
                 throw new Error(`Hi semantic gate: '${tool}' is blocked until the host primary submits the structured semantic assessment.`);
         }

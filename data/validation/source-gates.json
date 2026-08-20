@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "release": "0.2.3",
+  "release": "0.2.4",
   "phases": {
     "plugin-shell": {
       "evidence": [

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "release": "0.2.3",
+  "release": "0.2.4",
   "role": "end-to-end flow consistency map; flows may evolve when source/runtime evidence justifies a better design",
   "groups": {
     "understand-execution-policy-authority": {

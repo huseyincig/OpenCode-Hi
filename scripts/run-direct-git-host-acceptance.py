@@ -109,7 +109,7 @@ def main()->int:
  hi=sorted(x for x in rows if isinstance(x,str) and x.startswith('hi_'))
  text=log.read_text(encoding='utf-8',errors='replace') if log.exists() else ''
  errors=[x for x in text.splitlines() if 'Failed to install plugin' in x or 'git dep preparation failed' in x or 'failed to load plugin' in x]
- status='PASS' if len(hi)==31 and {'hi_doctor','hi_status','hi_task_start'}<=set(hi) and not errors else 'FAIL'
+ status='PASS' if len(hi)==32 and {'hi_doctor','hi_status','hi_task_start'}<=set(hi) and not errors else 'FAIL'
  result={'status':status,'kind':'DIRECT_GIT_EXACT_OPENCODE_HOST_ACCEPTANCE','opencode':version,'platform':sys.platform,'architecture':platform.machine().lower(),'binary_sha256':sha256(binary),'spec':spec,'hi_tool_count':len(hi),'hi_tools':hi,'install_or_load_errors':errors[-20:],'last_probe_error':last_error}
  print(json.dumps(result,indent=2,ensure_ascii=False))
  (work/'result.json').write_text(json.dumps(result,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')

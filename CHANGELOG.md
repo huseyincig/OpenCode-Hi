@@ -4,6 +4,12 @@ All notable changes to OpenCode-Hi are documented here.
 
 ## Unreleased
 
+## 0.2.4
+
+- Simplifies normal setup/reconfigure UX: the terminal wizard now asks only which primary behavior to use (`Auto`, `Working Manager`, or `Manager`). Topology, execution profile, model scoring/cost strategy, parallelism, and specialist thresholds remain internal Hi runtime policy rather than normal-user setup questions.
+- Adds chat-native `hi_role_models` configuration. From an OpenCode conversation, “Hi rol modellerini ayarla” can list only the effective connected runtime models and persist explicit child-role model/fallback choices for `coder`, `architect`, `repository-explorer`, `qa-reviewer`, `security-reviewer`, and `visual-qa`. `visual-qa` rejects non-vision models; primary Manager/Working Manager model ownership remains OpenCode-native.
+- Fixes forced `Manager` mode for small local implementation work: because Manager is read-only, Hi now plans a `coder` child instead of producing a zero-child non-direct execution state.
+
 ## 0.2.3
 
 - Fixes a verification freshness race where invalidated evidence and its fresh replacement could share one millisecond timestamp; invalidated evidence is now excluded from verification candidate selection. Also makes Playwright cache-path regression assertions platform-neutral on Windows.

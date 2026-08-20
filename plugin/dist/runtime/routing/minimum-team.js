@@ -7,6 +7,8 @@ export function minimumTeamFor(intent, verification, primaryMode = 'auto') {
     if (localImplementation || localReview || localDiagnosis) {
         const primary = primaryMode === 'auto' ? 'working-manager' : primaryMode;
         const reason = localReview ? 'local low-risk review is directly evidentiary' : localDiagnosis ? 'local low-risk diagnosis is directly evidentiary' : 'local low-risk change is directly executable';
+        if (primary === 'manager' && localImplementation)
+            return { primary, direct: false, roles: ['coder'], reason: [reason, 'minimum-team:1-child', 'read-only-manager-requires-coder', 'primary:forced-manager'] };
         return { primary, direct: primary === 'working-manager', roles: [], reason: [reason, 'minimum-team:0-child', primaryMode === 'auto' ? 'primary:auto-working-manager' : `primary:forced-${primary}`] };
     }
     const roles = [];

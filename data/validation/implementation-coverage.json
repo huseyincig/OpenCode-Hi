@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "release": "0.2.3",
+  "release": "0.2.4",
   "status": "SOURCE_COVERAGE_COMPLETE_EXTERNAL_VALIDATION_PENDING",
   "gaps": {
     "GAP-001": {
@@ -218,7 +218,7 @@
     "CHK-010": {
       "id": "CHK-010",
       "section": "Routing",
-      "item": "0\u20133 skill selection",
+      "item": "0–3 skill selection",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/routing/capability-router.ts",
@@ -309,7 +309,7 @@
     "CHK-017": {
       "id": "CHK-017",
       "section": "Worker / Task",
-      "item": "Agent \u2260 Worker",
+      "item": "Agent ≠ Worker",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/task/task-runtime.ts",
@@ -1651,7 +1651,7 @@
     "CHK-123": {
       "id": "CHK-123",
       "section": "Product discipline",
-      "item": "evidence sufficient \u2192 stop immediately",
+      "item": "evidence sufficient → stop immediately",
       "status": "IMPLEMENTED_SOURCE_EXTERNAL_VALIDATION_PENDING",
       "evidence": [
         "plugin/src/runtime/routing/execution-mode.ts",

@@ -59,7 +59,7 @@ export function effectiveExecutionSurface(hostConfig:Record<string,unknown>,role
   return{tools:[...new Set(tools)].sort(),permissions:{mode:def?.mode?String(def.mode):undefined,decisions,source:def?'effective-opencode-agent':'hi-default-invariants'}}
 }
 
-export const HI_CONTROL_TOOL_IDS=['hi_doctor','hi_status','hi_metrics','hi_ledger','hi_readiness','hi_context_artifact_add','hi_context_artifacts','hi_temporary_mutation_register','hi_temporary_mutation_revert','hi_direct_progress','hi_task_start','hi_task_await','hi_task_peek','hi_task_list','hi_task_cancel','hi_process_spawn','hi_process_read','hi_process_write','hi_process_wait','hi_process_kill','hi_process_cleanup','hi_process_list'] as const
+export const HI_CONTROL_TOOL_IDS=['hi_doctor','hi_status','hi_role_models','hi_metrics','hi_ledger','hi_readiness','hi_context_artifact_add','hi_context_artifacts','hi_temporary_mutation_register','hi_temporary_mutation_revert','hi_direct_progress','hi_task_start','hi_task_await','hi_task_peek','hi_task_list','hi_task_cancel','hi_process_spawn','hi_process_read','hi_process_write','hi_process_wait','hi_process_kill','hi_process_cleanup','hi_process_list'] as const
 export const KNOWN_BUILTIN_TOOL_IDS=['bash','edit','write','apply_patch','read','grep','glob','list','lsp','skill','todowrite','todoread','webfetch','websearch','question','task'] as const
 export interface McpServerExposure{configured:string[];selected:string[];disabledPatterns:string[]}
 function mcpServerPattern(name:string):string{return name.replace(/[^a-zA-Z0-9_-]/g,'_')+'_*'}

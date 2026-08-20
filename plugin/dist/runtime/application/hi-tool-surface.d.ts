@@ -1,5 +1,5 @@
-import type { HiConfig, ConfigResolutionReport } from '../../config/schema.js';
-import type { AvailableModel } from '../routing/model-resolver.js';
+import { type HiConfig, type ConfigResolutionReport } from '../../config/schema.js';
+import { type AvailableModel } from '../routing/model-resolver.js';
 import type { MissionStore } from '../mission/mission-store.js';
 import type { TaskRuntime } from '../task/task-runtime.js';
 import type { ProcessRuntime } from '../process/runtime.js';

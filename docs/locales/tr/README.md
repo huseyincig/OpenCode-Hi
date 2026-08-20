@@ -13,7 +13,7 @@ Hi, mümkün olan en fazla agent/token/araç yerine iş için **minimum yeterli*
 ## Güncel ürün gerçeği
 
 Güncel immutable public release `opencode-hi@0.2.2` / `v0.2.2`'dir. Güncel development source ayrı `0.2.3` candidate kimliğini taşır; source metadata'da `0.2.3` yazması onu yayınlanmış yapmaz. Public availability için authoritative kaynaklar GitHub Releases ve npm registry'dir. Yayınlanmış `0.2.2`; exact Git tag/source, başarılı Ubuntu/Windows Release Readiness, npm Trusted Publishing provenance ve fresh-registry exact OpenCode `1.18.19` kabulü ile doğrulanmıştır.
-Repository'deki güncel kaynak `opencode-hi@0.2.3` **prepublication development candidate**'dır; kendi release gate'leri kapanmadan npm/GitHub'da yayınlanmış veya T4-certified sayılmaz.
+Yayınlanmış immutable sürüm `opencode-hi@0.2.3` / `v0.2.3`'tür. Repository'deki güncel kaynak `opencode-hi@0.2.4` **prepublication development candidate**'dır; kendi release gate'leri kapanmadan npm/GitHub'da yayınlanmış veya T4-certified sayılmaz.
 
 Güncel host/capability gerçeği elle yazılan metinden değil exact receipt'lerden üretilir. Ayrıntı için [Host Support](../../HOSTS.md) ve `data/validation/compatibility-matrix-0.1.0.json` kullanılır.
 
@@ -132,12 +132,12 @@ Package lifecycle ile yüklü OpenCode runtime yüzeyi ayrıdır. Published `0.2
 
 Plugin yüklendikten sonra **31 adet `hi_*` runtime tool** vardır. Kullanıcıya en yakın durum/diagnostic araçları `hi_doctor`, `hi_status`, `hi_readiness`, `hi_metrics` ve `hi_ledger`'dır; diğerleri task/worker, process, browser, context artifact, temporary mutation ve semantic control için bounded primitive'lerdir.
 
-Güncel published `0.2.2` sürümünde kurulum ownership/drift durumu package `doctor` ile; canlı Mission durumu runtime `hi_status`, `hi_readiness` ve `hi_ledger` ile görülür. Development `0.2.3` ayrıca terminalde bounded `setup/install` wizard, `reconfigure`, `state`, `reprofile`, `roles`, `rotate`, `check-update` komutlarını ekler.
+Güncel published `0.2.3` sürümünde kurulum ownership/drift durumu package `doctor` ile; canlı Mission durumu runtime `hi_status`, `hi_readiness` ve `hi_ledger` ile görülür. Development `0.2.4` normal setup/reconfigure akışını yalnız primary mode sorusuna indirir; rol-model eşlemesi OpenCode sohbetinde `hi_role_models` üzerinden yapılır. `state`, `reprofile`, `roles`, `rotate`, `check-update` deterministik CLI fallback olarak kalır.
 
 ```bash
 npx --yes opencode-hi@0.2.3 reconfigure .
 npx --yes opencode-hi@0.2.3 state .
-npx --yes opencode-hi@0.2.3 reprofile . --profile balanced
+npx --yes opencode-hi@0.2.4 reprofile . --profile balanced
 npx --yes opencode-hi@0.2.3 roles . --set coder=provider/model-a,provider/model-b
 npx --yes opencode-hi@0.2.3 rotate . --role coder
 npx --yes opencode-hi@0.2.3 check-update .

@@ -306,14 +306,8 @@ async function askConfirm(rl,label,defaultYes=true){
   throw new SetupError('interactive-confirm-retry-exhausted',{action:'Run the command again and answer y or n.'})
 }
 function wizardDefaults(project){
-  const state=routingState(project),doc=state.doc,execution=doc.execution&&typeof doc.execution==='object'&&!Array.isArray(doc.execution)?doc.execution:{},models=doc.models&&typeof doc.models==='object'&&!Array.isArray(doc.models)?doc.models:{},routing=doc.routing&&typeof doc.routing==='object'&&!Array.isArray(doc.routing)?doc.routing:{}
-  return{state,answers:{
-    primaryMode:canonicalChoice(doc.primaryMode,['auto','working-manager','manager'],'auto'),
-    topology:canonicalChoice(execution.topology,['adaptive','single-agent','multi-agent'],'adaptive'),
-    executionPolicy:canonicalChoice(doc.executionPolicy,EXECUTION_POLICIES,'adaptive'),
-    modelMode:canonicalChoice(models.mode,['adaptive','role-mapped'],'adaptive'),
-    strategy:canonicalChoice(routing.strategy,['cost-quality','quality','cost'],'cost-quality'),
-  }}
+  const state=routingState(project),doc=state.doc
+  return{state,answers:{primaryMode:canonicalChoice(doc.primaryMode,['auto','working-manager','manager'],'auto')}}
 }
 async function collectWizard(project){
   const {state,answers:current}=wizardDefaults(project)
@@ -326,26 +320,18 @@ async function collectWizard(project){
   }
   try{
     process.stderr.write(`\n${PRODUCT} project configuration\nProject: ${project}\n\n`)
-    const primaryMode=await askChoice(rl,'Primary working mode',[{value:'auto',label:'Auto — Hi chooses Manager/Working Manager behavior from the task'},{value:'working-manager',label:'Working Manager — prefer direct work, delegate when needed'},{value:'manager',label:'Manager — prefer coordination/delegation'}],current.primaryMode)
-    const topology=await askChoice(rl,'Task topology',[{value:'adaptive',label:'Adaptive — single or multi-agent according to task structure'},{value:'single-agent',label:'Single-agent — force one execution stream'},{value:'multi-agent',label:'Multi-agent — allow bounded parallel specialist streams'}],current.topology)
-    const executionPolicy=await askChoice(rl,'Execution profile',[{value:'minimal',label:'Minimal — higher specialist threshold'},{value:'balanced',label:'Balanced — general-purpose fixed profile'},{value:'thorough',label:'Thorough — stronger specialist/review preference'},{value:'adaptive',label:'Adaptive — task/risk-aware profile selection'},{value:'manual',label:'Manual — balanced routing baseline without automatic continuation'}],current.executionPolicy)
-    const modelMode=await askChoice(rl,'Child model routing',[{value:'adaptive',label:'Adaptive — Hi ranks effective connected OpenCode models at runtime'},{value:'role-mapped',label:'Manual role mapping later — suppress automatic initial role recommendation persistence'}],current.modelMode)
-    const strategy=await askChoice(rl,'Adaptive model scoring strategy',[{value:'cost-quality',label:'Cost + quality balance'},{value:'quality',label:'Quality first'},{value:'cost',label:'Cost first'}],current.strategy)
+    const primaryMode=await askChoice(rl,'Primary working mode',[{value:'auto',label:'Auto — Hi chooses Manager/Working Manager behavior from the task'},{value:'working-manager',label:'Working Manager — work directly when appropriate and delegate specialists when useful'},{value:'manager',label:'Manager — coordinate work and delegate implementation to child agents'}],current.primaryMode)
+    process.stderr.write('\nSpecialist selection, topology, verification depth and model scoring are Hi runtime internals. They are not normal-user setup questions.\nAfter OpenCode starts, type “Hi rol modellerini ayarla” in chat to assign effective connected models to child roles.\n\n')
     const confirmed=await askConfirm(rl,'Apply this project configuration?',true)
-    return{state,answers:{primaryMode,topology,executionPolicy,modelMode,strategy},confirmed}
+    return{state,answers:{primaryMode},confirmed}
   }finally{rl.close()}
 }
 function applyWizardRouting(project,wizard){
-  const {state,answers}=wizard,doc=state.doc,currentExecution=doc.execution&&typeof doc.execution==='object'&&!Array.isArray(doc.execution)?doc.execution:{},currentModels=doc.models&&typeof doc.models==='object'&&!Array.isArray(doc.models)?doc.models:{},currentRouting=doc.routing&&typeof doc.routing==='object'&&!Array.isArray(doc.routing)?doc.routing:{}
-  const sameTopology=currentExecution.topology===answers.topology
-  const maxAgents=answers.topology==='single-agent'?1:sameTopology&&Number.isInteger(currentExecution.maxAgents)&&currentExecution.maxAgents>=1&&currentExecution.maxAgents<=8?currentExecution.maxAgents:4
-  const parallelism=answers.topology==='single-agent'?1:sameTopology&&Number.isInteger(currentExecution.parallelism)&&currentExecution.parallelism>=1&&currentExecution.parallelism<=8?currentExecution.parallelism:2
-  const nextDoc={...doc,primaryMode:answers.primaryMode,executionPolicy:answers.executionPolicy,execution:{...currentExecution,topology:answers.topology,maxAgents,parallelism},models:{...currentModels,mode:answers.modelMode},routing:{...currentRouting,strategy:answers.strategy}}
-  const semanticBefore=JSON.stringify({primaryMode:doc.primaryMode??'auto',executionPolicy:doc.executionPolicy??'adaptive',execution:{topology:currentExecution.topology??'adaptive',maxAgents:currentExecution.maxAgents??4,parallelism:currentExecution.parallelism??2},models:{mode:currentModels.mode??'adaptive'},routing:{strategy:currentRouting.strategy??'cost-quality'}})
-  const semanticAfter=JSON.stringify({primaryMode:answers.primaryMode,executionPolicy:answers.executionPolicy,execution:{topology:answers.topology,maxAgents,parallelism},models:{mode:answers.modelMode},routing:{strategy:answers.strategy}})
-  if(state.exists&&semanticBefore===semanticAfter)return{status:'NOOP',product:PRODUCT,project,config:state.path,configuration:answers,reason:'configuration-already-matches',restart_required:false,next:answers.modelMode==='role-mapped'?`Restart OpenCode, inspect the effective model inventory with hi_doctor, then configure child roles with: npx --yes ${PACKAGE}@${packageVersion} roles ${JSON.stringify(project)} --set ROLE=MODEL[,FALLBACK...]`:'Restart OpenCode so Hi can use the selected policy with the effective runtime inventory.'}
-  const next=writeRouting(project,state,nextDoc)
-  return{status:'APPLIED',product:PRODUCT,project,config:state.path,configuration:{primaryMode:next.primaryMode,executionPolicy:next.executionPolicy,topology:next.execution.topology,maxAgents:next.execution.maxAgents,parallelism:next.execution.parallelism,modelMode:next.models.mode,strategy:next.routing.strategy},restart_required:true,next:answers.modelMode==='role-mapped'?`Restart OpenCode, inspect the effective model inventory with hi_doctor, then configure child roles with: npx --yes ${PACKAGE}@${packageVersion} roles ${JSON.stringify(project)} --set ROLE=MODEL[,FALLBACK...]`:'Restart OpenCode. Hi will rank eligible connected child models from the effective runtime inventory; use hi_doctor to inspect the live inventory.'}
+  const {state,answers}=wizard,doc=state.doc
+  const before=canonicalChoice(doc.primaryMode,['auto','working-manager','manager'],'auto')
+  if(state.exists&&before===answers.primaryMode)return{status:'NOOP',product:PRODUCT,project,config:state.path,configuration:{primaryMode:answers.primaryMode},reason:'configuration-already-matches',restart_required:false,next:'In OpenCode chat, type “Hi rol modellerini ayarla” to view effective connected models and assign child roles.'}
+  const next=writeRouting(project,state,{...doc,primaryMode:answers.primaryMode})
+  return{status:'APPLIED',product:PRODUCT,project,config:state.path,configuration:{primaryMode:next.primaryMode},restart_required:true,next:'Restart OpenCode, then type “Hi rol modellerini ayarla” in chat. Hi will show only effective connected models and can assign them to coder/architect/repository-explorer/qa-reviewer/security-reviewer/visual-qa.'}
 }
 async function configureWizard(project){
   const d=doctor(project)

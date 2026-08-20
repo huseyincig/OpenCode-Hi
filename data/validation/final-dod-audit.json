@@ -1,15 +1,26 @@
 {
   "schema": 2,
-  "release": "0.2.3",
+  "release": "0.2.4",
   "generated_at": "2026-08-20",
-  "internal_status": "LOCAL_IMPLEMENTATION_AND_IN_PROCESS_ACCEPTANCE_COMPLETE",
-  "release_blocked": false,
-  "claim_boundary": "0.2.3 local implementation, exact Linux/aarch64 OpenCode 1.18.19 T3 and packed consumer are green. Current-source Windows CI, clean evidence checkpoint/final gates, and real T4 publication remain pending.",
+  "internal_status": "IMPLEMENTATION_VERIFIED_LOCAL_EVIDENCE_IN_PROGRESS",
+  "release_blocked": true,
+  "claim_boundary": "0.2.4 chat-first child-role model assignment and Manager delegation fixes are implemented and Node-verified. Committed-source/Python/exact-host/cross-platform/T4 certification is not yet complete.",
   "source_checklist": {
-    "source": "0.2.3 runtime loop hardening, bounded Node setup/reconfigure, exact-SHA preflight, evidence-only attestation hardening, deterministic verification freshness, and Windows-portable browser cache tests",
-    "internal_missing": [],
-    "external_pending": [],
-    "local_pending": []
+    "source": "0.2.4 role-model chat UX, simplified primary-mode wizard, forced Manager coder delegation",
+    "internal_missing": [
+      "committed-source evidence finalization",
+      "Python/validator finalization",
+      "fresh packed exact-host T3"
+    ],
+    "external_pending": [
+      "current-source Windows CI",
+      "GitHub/npm T4 publication"
+    ],
+    "local_pending": [
+      "source commit",
+      "clean evidence checkpoint",
+      "final canonical gates"
+    ]
   },
   "local_acceptance": {
     "node": {
@@ -40,7 +51,7 @@
     }
   },
   "product_truth": {
-    "normal_user_bootstrap": "Node npm package-runner; development 0.2.3 install safely ensures exact owned registration without project-root npm dependency installation",
+    "normal_user_bootstrap": "Node npm package-runner; 0.2.4 terminal wizard asks only primary mode; child-role models are configured from OpenCode chat via effective runtime inventory.",
     "common_project_controls": [
       "state",
       "reprofile",
@@ -50,7 +61,7 @@
     ],
     "provider_authentication": "OpenCode-owned",
     "primary_model_ownership": "OpenCode-owned manager/working-manager",
-    "child_model_routing": "Hi-owned six child roles only",
+    "child_model_routing": "Hi-owned six child roles; chat-native hi_role_models list/set/clear plus deterministic CLI fallback",
     "browser_recovery": "one-shot bounded pinned playwright-core 1.62.1 Chromium bootstrap into Hi-owned cache; unchanged failure becomes terminal environment/capability state",
     "php_wordpress_wasm": "planned optional verification/runtime provider; deprecated wp-now is not a current dependency"
   },
@@ -71,15 +82,14 @@
   },
   "release_evidence": {
     "release_gates": "data/validation/release-gates.json",
-    "generated_status": "data/validation/release-status-0.2.3.json",
-    "historical_0_2_2_t4_is_current": false,
-    "publication_authorized_or_performed": true,
-    "deterministic_release": "data/validation/deterministic-release-reproducibility-0.2.3.json",
-    "current_validator": "PASS",
-    "final_gates": "data/validation/final-gates-0.2.3.json",
-    "cross_platform": "data/validation/cross-platform-acceptance-0.2.3.json",
-    "publication": "data/validation/release-publication-0.2.3.json"
+    "generated_status": "data/validation/release-status-0.2.4.json",
+    "historical_0_2_3_t4_is_current": false,
+    "publication_authorized_or_performed": false
   },
-  "blockers": [],
-  "conclusion": "0.2.3 is fully T4-certified: local/current-source gates, exact release-source Ubuntu/Windows CI, GitHub Release, npm Trusted Publishing/provenance, and independent fresh-registry exact-host acceptance all pass."
+  "blockers": [
+    "local certification incomplete",
+    "current-source Windows CI pending",
+    "T4 pending"
+  ],
+  "conclusion": "0.2.4 implementation is locally Node-verified but not yet release-certified."
 }
