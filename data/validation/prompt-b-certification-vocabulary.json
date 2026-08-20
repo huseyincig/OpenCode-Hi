@@ -4,12 +4,11 @@
   "program": "PROMPT_B",
   "section": 45,
   "status": "PASS",
-  "current_label": "PARTIAL",
-  "blockers": [
-    "T4-current-release-publication-verification-pending"
-  ],
+  "current_label": "CERTIFIED",
+  "blockers": [],
   "allowed_positive_labels": [
-    "ZERO KNOWN DEFECT (audited scope)",
+    "CERTIFIED",
+    "ZERO KNOWN DEFECT",
     "RELEASE-GRADE ENGINEERING",
     "DOCUMENTATION-SOURCE PARITY VERIFIED"
   ],

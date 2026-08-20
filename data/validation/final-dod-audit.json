@@ -3,15 +3,12 @@
   "release": "0.2.3",
   "generated_at": "2026-08-20",
   "internal_status": "LOCAL_IMPLEMENTATION_AND_IN_PROCESS_ACCEPTANCE_COMPLETE",
-  "release_blocked": true,
+  "release_blocked": false,
   "claim_boundary": "0.2.3 local implementation, exact Linux/aarch64 OpenCode 1.18.19 T3 and packed consumer are green. Current-source Windows CI, clean evidence checkpoint/final gates, and real T4 publication remain pending.",
   "source_checklist": {
     "source": "0.2.3 runtime loop hardening, bounded Node setup/reconfigure, exact-SHA preflight, evidence-only attestation hardening, deterministic verification freshness, and Windows-portable browser cache tests",
     "internal_missing": [],
-    "external_pending": [
-      "GitHub release T4",
-      "npm Trusted Publishing/fresh-registry exact-host T4"
-    ],
+    "external_pending": [],
     "local_pending": []
   },
   "local_acceptance": {
@@ -76,14 +73,13 @@
     "release_gates": "data/validation/release-gates.json",
     "generated_status": "data/validation/release-status-0.2.3.json",
     "historical_0_2_2_t4_is_current": false,
-    "publication_authorized_or_performed": false,
+    "publication_authorized_or_performed": true,
     "deterministic_release": "data/validation/deterministic-release-reproducibility-0.2.3.json",
     "current_validator": "PASS",
     "final_gates": "data/validation/final-gates-0.2.3.json",
-    "cross_platform": "data/validation/cross-platform-acceptance-0.2.3.json"
+    "cross_platform": "data/validation/cross-platform-acceptance-0.2.3.json",
+    "publication": "data/validation/release-publication-0.2.3.json"
   },
-  "blockers": [
-    "real GitHub/npm T4 publication evidence"
-  ],
-  "conclusion": "All prepublication 0.2.3 engineering and certification gates pass, including exact current-source Ubuntu/Windows external CI. Only real GitHub/npm/fresh-registry T4 publication evidence remains."
+  "blockers": [],
+  "conclusion": "0.2.3 is fully T4-certified: local/current-source gates, exact release-source Ubuntu/Windows CI, GitHub Release, npm Trusted Publishing/provenance, and independent fresh-registry exact-host acceptance all pass."
 }

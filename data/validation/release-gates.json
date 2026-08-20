@@ -2,7 +2,7 @@
   "schema": 7,
   "release": "0.2.3",
   "generated_at": "2026-08-20",
-  "candidate_status": "PROMPT_B_0_2_3_PREPUBLICATION_CERTIFICATION_IN_PROGRESS",
+  "candidate_status": "PROMPT_B_0_2_3_CERTIFIED_T4",
   "claim_boundary": "Current 0.2.3 candidate only. Exact OpenCode 1.18.19 Linux/aarch64 T3, fresh packed consumer, bounded browser self-bootstrap, deterministic release reproduction and current local audits are proven. Windows current-source CI, final clean-evidence gates and real GitHub/npm T4 remain pending and are not fabricated.",
   "gates": {
     "source_integrity": "PASS_LOCAL_ISOLATED_COMMITTED_SOURCE_48FDDCE",
@@ -25,21 +25,17 @@
     "opencode_native_child_sessions": "PASS_T3_EXACT_HOST_1_18_19_PARENT_CHILD_BINDING",
     "opencode_model_provider_binding": "PASS_T3_EXACT_HOST_1_18_19_CONNECTED_RUNTIME_INVENTORY",
     "permission_denial_runtime": "PASS_T3_EXACT_HOST_1_18_19_FAIL_CLOSED_PREFLIGHT",
-    "windows_runtime_smoke": "PASS_CROSS_PLATFORM_CURRENT_SOURCE_0_2_3_EXACT_4BCBDE7",
+    "windows_runtime_smoke": "PASS_CROSS_PLATFORM_CURRENT_SOURCE_0_2_3_EXACT_RELEASE_SOURCE",
     "dependency_supply_chain_external": "PASS_CLEAN_PREPUBLICATION_PACKED_TARBALL_LOCAL_CONSUMER",
     "filesystem_hygiene": "PASS_LOCAL_CLEAN_EVIDENCE_CHECKPOINT",
     "native_package_plugin_install_exact_candidate": "PASS_T3_PREPUBLICATION_PACKED_LOCAL_PACKAGE_SEAM_EXACT_OPENCODE_1_18_19_LINUX_AARCH64",
-    "github_release_publication": "PENDING_T4_NOT_PUBLISHED",
-    "npm_registry_publication": "PENDING_AUTH_T4_NOT_PUBLISHED",
+    "github_release_publication": "PASS_T4_GITHUB_RELEASE_V0_2_3",
+    "npm_registry_publication": "PASS_T4_NPM_REGISTRY_0_2_3",
     "final_canonical_gates": "PASS_CURRENT_CLEAN_CHECKPOINT"
   },
-  "release_blocked": true,
-  "reason": "0.2.3 prepublication engineering/certification gates pass, including exact current-source Ubuntu/Windows Release Readiness run 32414388394. Real GitHub/npm/fresh-registry T4 publication proof remains pending.",
-  "external_blockers": [
-    "exact OpenCode 1.18.19 Windows current-source CI for 0.2.3 is not yet available.",
-    "opencode-hi@0.2.3 has not been published to npm; fresh-registry T4 is unavailable.",
-    "v0.2.3 GitHub Release has not been published; immutable release-source T4 is unavailable."
-  ],
+  "release_blocked": false,
+  "reason": "0.2.3 is published and T4-certified: exact release-source Ubuntu/Windows Release Readiness, annotated GitHub tag/release, npm Trusted Publishing OIDC with matching pack integrity/shasum and SLSA provenance, plus independent fresh-registry exact OpenCode 1.18.19 acceptance.",
+  "external_blockers": [],
   "current_local_evidence": {
     "source_checkpoint": {
       "status": "PASS",
@@ -83,16 +79,17 @@
       "browser_self_bootstrap": "PASS_PINNED_PLAYWRIGHT_CORE_1_62_1_HI_OWNED_CACHE"
     },
     "cross_platform": {
-      "status": "PASS_CURRENT_SOURCE_CI",
+      "status": "PASS_CURRENT_RELEASE_SOURCE_CI",
       "receipt": "data/validation/cross-platform-acceptance-0.2.3.json",
       "audit_receipt": "data/validation/prompt-b-cross-platform-acceptance.json",
-      "source_commit": "4bcbde77f4cbad87f6eec390a296ae5b3eeb5eaa",
-      "source_tree": "4e4212538205e4f02d40128e9524328ee715821b",
-      "github_actions_run": 32414388394,
-      "ubuntu_job": 96572080152,
-      "windows_job": 96572080462,
+      "source_commit": "7b4b4f2600c84ef3d5b3281dc3ae4536ae64f48b",
+      "source_tree": "b357a3f3f8c0c424b4e34fda3feb6de3681a639f",
+      "github_actions_run": 32417595836,
+      "ubuntu_job": 96582179456,
+      "windows_job": 96582179231,
       "windows_current": true,
-      "historical_failed_run": 32411734210
+      "historical_failed_run": 32411734210,
+      "evidence_job": 96583889734
     },
     "deterministic_release": {
       "status": "PASS",
@@ -105,21 +102,19 @@
       "audited_source_commit": "b2f1e71166c2e1159315bbe0008bbebe29af924e"
     },
     "final_publication": {
-      "status": "PENDING_T4",
-      "receipt": null,
-      "released_source": null,
-      "tag": null,
-      "release_id": null,
-      "github_actions_publish_run": null,
-      "registry_exact_host_receipt": null
+      "status": "PASS_T4",
+      "receipt": "data/validation/release-publication-0.2.3.json",
+      "released_source": "7b4b4f2600c84ef3d5b3281dc3ae4536ae64f48b",
+      "tag": "v0.2.3",
+      "release_id": 374021946,
+      "github_actions_publish_run": 32416060036,
+      "registry_exact_host_receipt": "data/validation/t4-registry-exact-host-0.2.3.json"
     },
     "final_system": {
-      "status": "PREPUBLICATION_CERTIFIED_PENDING_T4",
+      "status": "CERTIFIED_T4",
       "receipt": "data/validation/final-system-certification-0.2.3.json",
       "final_gates_receipt": "data/validation/final-gates-0.2.3.json",
-      "blockers": [
-        "real GitHub/npm T4 publication verification"
-      ]
+      "blockers": []
     }
   },
   "historical_previous_release_evidence": {

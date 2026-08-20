@@ -203,7 +203,7 @@
     },
     {
       "path": "docs/RELEASE.md",
-      "sha256": "d78b0f1e9d11a3a3089576caf5a2adbba392b1b6fbfb41627898cfdfaf4f1451",
+      "sha256": "b54fcd14677d5329d50840a0d8395cb72d302c0a4ae7f088c6af363b1410f9e3",
       "area": "release",
       "audience": "RELEASE_ENGINEER",
       "lifecycle": "CANONICAL_CURRENT",

@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "kind": "CURRENT_RELEASE_T4_PUBLICATION",
+  "release": "0.2.3",
+  "status": "PASS_T4",
+  "released_source": {
+    "git_commit": "7b4b4f2600c84ef3d5b3281dc3ae4536ae64f48b",
+    "git_tree": "b357a3f3f8c0c424b4e34fda3feb6de3681a639f",
+    "annotated_tag": "v0.2.3",
+    "tag_object": "68d785f72594c58fab40f5da908c5920e02e8779",
+    "tag_object_type": "tag"
+  },
+  "release_readiness": {
+    "status": "PASS_T4",
+    "run_id": 32417595836,
+    "source_commit": "7b4b4f2600c84ef3d5b3281dc3ae4536ae64f48b",
+    "ubuntu_job_id": 96582179456,
+    "windows_job_id": 96582179231,
+    "evidence_job_id": 96583889734,
+    "jobs": {
+      "windows-latest / node-22 / python-3.11": "success",
+      "ubuntu-latest / node-22 / python-3.11": "success",
+      "Evidence certification": "success"
+    }
+  },
+  "github_release": {
+    "status": "PASS_T4",
+    "release_id": 374021946,
+    "tag": "v0.2.3",
+    "published_at": "2026-08-20T20:48:14Z",
+    "draft": false,
+    "prerelease": false,
+    "url": "https://github.com/huseyincig/OpenCode-Hi/releases/tag/v0.2.3",
+    "tag_peels_to_released_source": true
+  },
+  "npm_registry": {
+    "status": "PASS_T4",
+    "package": "opencode-hi",
+    "version": "0.2.3",
+    "latest": "0.2.3",
+    "integrity": "sha512-PQAQJJpgqgHh0AN9RtnqZePDHx9VeiXe7zi73umy47qRovPvo4QgkSj6ZxYiSbvE2gyM8LRfhreklWZLatVVvA==",
+    "shasum": "a3403a99c22b773899638754060778821831da4f",
+    "gitHead": "7b4b4f2600c84ef3d5b3281dc3ae4536ae64f48b",
+    "tarball": "https://registry.npmjs.org/opencode-hi/-/opencode-hi-0.2.3.tgz",
+    "pack_integrity_match": true,
+    "pack_shasum_match": true,
+    "provenance_status": "PASS",
+    "attestations_url": "https://registry.npmjs.org/-/npm/v1/attestations/opencode-hi@0.2.3",
+    "attestation_subject_sha512": "3d0010249a60aa01e1d0037d46d9ea65e3c31f1f557a25deef38bbdee9b2e3ba91a2f3efa384209128fa67162249bbc4da0c8cf0b45f86b7a495664b6ad555bc",
+    "provenance": {
+      "predicate_type": "https://slsa.dev/provenance/v1",
+      "workflow": {
+        "ref": "refs/tags/v0.2.3",
+        "repository": "https://github.com/huseyincig/OpenCode-Hi",
+        "path": ".github/workflows/npm-publish.yml"
+      },
+      "git_commit": "7b4b4f2600c84ef3d5b3281dc3ae4536ae64f48b",
+      "invocation_id": "https://github.com/huseyincig/OpenCode-Hi/actions/runs/32416060036/attempts/1",
+      "transparency_log_index": "2538100612"
+    },
+    "publish_attestation": {
+      "predicate_type": "https://github.com/npm/attestation/tree/main/specs/publish/v0.1",
+      "transparency_log_index": "2538101444"
+    }
+  },
+  "oidc_publication": {
+    "status": "PASS_T4",
+    "workflow_run_id": 32416060036,
+    "run_attempt": 1,
+    "job_id": 96577351352,
+    "source_commit": "7b4b4f2600c84ef3d5b3281dc3ae4536ae64f48b",
+    "publish_step_conclusion": "success",
+    "workflow_overall_conclusion": "success",
+    "post_publish_verification_step": "success",
+    "fresh_consumer_step": "success",
+    "classification": "PUBLICATION_AND_BOUNDED_POST_PUBLISH_VERIFICATION_SUCCEEDED"
+  },
+  "fresh_registry_consumer": {
+    "status": "PASS_T4",
+    "receipt": "data/validation/t4-registry-exact-host-0.2.3.json",
+    "exact_opencode": "1.18.19",
+    "hi_tool_count": 31,
+    "session_created": true
+  },
+  "claim_boundary": "T4 binds immutable v0.2.3 GitHub release/tag, exact-source Release Readiness run 32417595836, successful npm Trusted Publishing OIDC publication, exact registry pack digest equality, npm/Sigstore provenance tied to v0.2.3 and source commit 7b4b4f2600c84ef3d5b3281dc3ae4536ae64f48b, successful bounded registry verification/fresh npm consumer, and an independent fresh registry consumer loaded by exact OpenCode 1.18.19 on Linux/aarch64."
+}
