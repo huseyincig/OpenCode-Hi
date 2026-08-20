@@ -21,7 +21,7 @@ If Hi is already visible in OpenCode, continue to [Platform paths](#1-platform-p
 
 ### npm package runner — normal user path
 
-Windows, Linux and macOS use the same Node-based package runner. For release `0.2.2`:
+Windows, Linux and macOS use the same Node-based package runner. The immutable published release remains `opencode-hi@0.2.2`; the current repository development candidate is `opencode-hi@0.2.3` and is not registry-published until its external release gates close. For release `0.2.2`:
 
 ```bash
 npx --yes opencode-hi@0.2.2 setup /path/to/MyApp

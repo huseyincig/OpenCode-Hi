@@ -19,7 +19,7 @@ Canonical proje ayar dosyası:
 
 ### npm package-runner — normal kullanıcı yolu
 
-Windows, Linux ve macOS'ta aynı Node tabanlı package-runner kullanılır. `0.2.2` adayı için:
+Windows, Linux ve macOS'ta aynı Node tabanlı package-runner kullanılır. Immutable yayınlanmış sürüm `opencode-hi@0.2.2` olarak kalır; repository'deki güncel development candidate `opencode-hi@0.2.3`'tür ve external release gate'leri kapanmadan registry'de yayınlanmış sayılmaz. `0.2.2` için:
 
 ```bash
 npx --yes opencode-hi@0.2.2 setup /path/to/MyApp
