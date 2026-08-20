@@ -113,18 +113,32 @@ npx --yes opencode-hi@0.2.2 update /path/to/project
 
 ### Komut yüzeyleri ve interaktif kurulum sınırı
 
-Package lifecycle ile yüklü OpenCode runtime yüzeyi ayrıdır. Normal package komutları `setup`, `update`, `doctor`, `plan`, `rollback`, `recover` şeklindedir. `install`, `setup` alias'ıdır; `upgrade`, `update` alias'ıdır.
+Package lifecycle ile yüklü OpenCode runtime yüzeyi ayrıdır. Published `0.2.2` için `install`, `setup` alias'ıdır. Development `0.2.3` ile `install` güvenli **ensure** davranışı kazanır: ownership yoksa setup, aynı exact owned sürümde NOOP, Hi-owned eski sürümde aynı drift/ownership guard'lı update. `setup` strict ilk kurulum olarak kalır.
 
-- `setup`: ilk exact Hi-owned registration/provenance kaydını oluşturur.
-- `update`: Hi'nin sahip olduğu kaydı hedef exact sürüme taşır.
+- `install`: development `0.2.3` için exact registration'ı setup / safe owned update / NOOP ile ensure eder.
+- `setup`: strict ilk exact Hi-owned registration/provenance kaydını oluşturur.
+- `update`: Hi'nin sahip olduğu kaydı hedef exact sürüme açıkça taşır.
 - `doctor`: registration, ownership, drift ve pending lifecycle state'i statik olarak kontrol eder.
+- `state`: package/project registration + routing state'ini read-only gösterir; live Mission state değildir.
+- `reprofile`: yalnız project-owned `executionPolicy` alanını değiştirir.
+- `roles`: altı Hi child role için explicit model/fallback/variant eşlemesini gösterir/değiştirir.
+- `rotate`: yalnız seçilen child role model fallback sırasını döndürür; credential/API key rotation değildir.
+- `check-update`: npm latest metadata'yı okuyup advisory verir; project'i değiştirmez.
 - `plan`: değişikliği uygulamadan exact before/after planını gösterir.
 - `rollback`: hash'ler hâlâ eşleşiyorsa tek kayıtlı rollback noktasını geri alır.
 - `recover`: yalnız kayıtlı yarım setup/update transaction'ını uzlaştırır.
 
 Plugin yüklendikten sonra **31 adet `hi_*` runtime tool** vardır. Kullanıcıya en yakın durum/diagnostic araçları `hi_doctor`, `hi_status`, `hi_readiness`, `hi_metrics` ve `hi_ledger`'dır; diğerleri task/worker, process, browser, context artifact, temporary mutation ve semantic control için bounded primitive'lerdir.
 
-Güncel `0.2.2` sürümünde kurulum ownership/drift durumu package `doctor` ile; canlı Mission durumu runtime `hi_status`, `hi_readiness` ve `hi_ledger` ile görülür. Profil ve model routing değişiklikleri aşağıdaki configuration yüzeylerinden yapılır.
+Güncel published `0.2.2` sürümünde kurulum ownership/drift durumu package `doctor` ile; canlı Mission durumu runtime `hi_status`, `hi_readiness` ve `hi_ledger` ile görülür. Development `0.2.3` ayrıca Node-only `state`, `reprofile`, `roles`, `rotate`, `check-update` komutlarını ekler.
+
+```bash
+npx --yes opencode-hi@0.2.3 state .
+npx --yes opencode-hi@0.2.3 reprofile . --profile balanced
+npx --yes opencode-hi@0.2.3 roles . --set coder=provider/model-a,provider/model-b
+npx --yes opencode-hi@0.2.3 rotate . --role coder
+npx --yes opencode-hi@0.2.3 check-update .
+```
 
 Normal kurulum bugün tam interaktif wizard değildir. Akış bilinçli olarak deterministic'tir:
 
@@ -132,7 +146,7 @@ Normal kurulum bugün tam interaktif wizard değildir. Akış bilinçli olarak d
 setup -> OpenCode restart -> package doctor -> runtime hi_doctor
 ```
 
-Kurulum sırasında provider/model/profile/concurrency seçim ekranı açılmaz. Provider authentication/configuration OpenCode-owned kalır. Hi, ilk effective runtime inventory geldiğinde yalnız gerçekten effective-enabled ve role-eligible child modelleri rank eder, ilk önerileri bir kez yazar; kullanıcı daha sonra bu routing'i değiştirebilir ve sonraki update/refresh geçerli tercihi ezmez. Gelişmiş `reconfigure` / `role-models` işlemleri legacy Python helper'dadır ve normal npm onboarding için zorunlu değildir.
+Kurulum sırasında provider/model/profile/concurrency seçim ekranı açılmaz. Provider authentication/configuration OpenCode-owned kalır. Hi, ilk effective runtime inventory geldiğinde yalnız gerçekten effective-enabled ve role-eligible child modelleri rank eder, ilk önerileri bir kez yazar; kullanıcı daha sonra bu routing'i değiştirebilir ve sonraki update/refresh geçerli tercihi ezmez. Common project controls development `0.2.3` ile Node-native'dir; legacy Python `reconfigure` / `role-models` helper yalnız henüz Node CLI'ya taşınmamış advanced/compatibility alanları için tutulur.
 
 `0.2.2` yayınlanmıştır; npm Trusted Publishing ve fresh-registry exact OpenCode `1.18.19` T4 doğrulaması tamamlanmıştır.
 

@@ -30,6 +30,13 @@ function identity(){
   if(pkg.publishConfig?.access!=='public')fail('publishConfig.access must be public')
 }
 
+if(mode==='identity'){
+  identity()
+  const head=git('rev-parse','HEAD')
+  console.log(JSON.stringify({status:'PASS',name:pkg.name,version,head,repository:pkg.repository.url}))
+  process.exit(0)
+}
+
 if(mode==='preflight'){
   identity()
   const tag=args[0]
@@ -67,4 +74,4 @@ if(mode==='registry'){
   process.exit(0)
 }
 
-fail('usage: verify-npm-oidc-release.mjs preflight <tag> | registry <pack.json> <view.json>')
+fail('usage: verify-npm-oidc-release.mjs identity | preflight <tag> | registry <pack.json> <view.json>')

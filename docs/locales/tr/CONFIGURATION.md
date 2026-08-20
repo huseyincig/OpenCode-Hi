@@ -743,6 +743,27 @@ gibi CLI'da tek tek flag'i olmayan full surface gerektiğinde.
 
 Unknown field destek anlamına gelmez.
 
+## 26.1 Development `0.2.3` Node package komutları
+
+Common project kontrolü için artık legacy Python helper zorunlu değildir:
+
+```bash
+npx --yes opencode-hi@0.2.3 state .
+npx --yes opencode-hi@0.2.3 reprofile . --profile balanced
+npx --yes opencode-hi@0.2.3 roles . --set coder=provider/model-a,provider/model-b
+npx --yes opencode-hi@0.2.3 roles . --variant coder:provider/model-a=high
+npx --yes opencode-hi@0.2.3 rotate . --role coder
+npx --yes opencode-hi@0.2.3 check-update .
+```
+
+- `state` read-only registration/ownership/routing özetidir; live Mission/provider execution truth için runtime `hi_status`, `hi_readiness`, `hi_doctor` kullanılır.
+- `reprofile` yalnız `executionPolicy` alanını değiştirir ve diğer project-owned routing alanlarını korur.
+- `roles` yalnız altı model-routed child role (`coder`, `architect`, `repository-explorer`, `qa-reviewer`, `security-reviewer`, `visual-qa`) için explicit model/fallback/variant yapraklarını değiştirir. `manager` ve `working-manager` primary model ownership OpenCode'a aittir.
+- `rotate` yalnız seçilen child role fallback model sırasını döndürür; credential, API key, provider hesabı veya primary model rotation değildir.
+- `check-update` npm registry metadata'sını read-only kontrol eder; project dosyalarını değiştirmez.
+
+Legacy Python `reconfigure` / `role-models`, Node CLI'ya henüz yansıtılmamış advanced/compatibility alanları için tutulur.
+
 ## 27. Değişiklikten sonra doğrulama
 
 1. `routing.json` kaydedin.

@@ -17,6 +17,8 @@ import {
 import { createHash } from 'node:crypto'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { get as httpGet } from 'node:http'
+import { get as httpsGet } from 'node:https'
 
 const PRODUCT='OpenCode-Hi'
 const SHORT='HI'
@@ -28,6 +30,9 @@ const OWNERSHIP='.opencode/hi/provenance/setup.json'
 const TRANSACTION='.opencode/hi/provenance/setup-transaction.json'
 const ROLLBACK='.opencode/hi/provenance/setup-rollback.json'
 const ROUTING='.opencode/hi/policy/routing.json'
+const CHILD_ROLES=['coder','architect','repository-explorer','qa-reviewer','security-reviewer','visual-qa']
+const PRIMARY_ROLES=['manager','working-manager']
+const EXECUTION_POLICIES=['minimal','balanced','thorough','adaptive','manual']
 const scriptDir=dirname(fileURLToPath(import.meta.url))
 const packageRoot=resolve(scriptDir,'..')
 const packageVersion=JSON.parse(readFileSync(join(packageRoot,'package.json'),'utf8')).version
@@ -148,6 +153,11 @@ function setup(project,version){
   return {...out,product:PRODUCT,routing_initialization:'pending-effective-runtime-inventory',next:'Restart OpenCode. Hi will initialize recommended child routing only from the effective runtime inventory; then run npx opencode-hi doctor <project> and the in-runtime hi_doctor tool.'}
 }
 
+function install(project,version){
+  const ownPath=join(project,OWNERSHIP)
+  return existsSync(ownPath)?update(project,version):setup(project,version)
+}
+
 function update(project,version){
   const cfg=configPath(project),ownPath=join(project,OWNERSHIP),target=hiSpec(version)
   mutationGuard(project,cfg,ownPath);jsoncBlocked(cfg)
@@ -222,22 +232,89 @@ function doctor(project){
   return{status:issues.length?'FAIL':warnings.length?'WARN':'OK',product:PRODUCT,short:SHORT,config:cfg,hi_specs:hi,ownership:{state:!existsSync(ownPath)?'missing':ownership&&Object.keys(ownership).length?'healthy':'invalid',schema:ownership.schema,config_drift:configDrift},lifecycle:{transaction_pending:existsSync(txPath),rollback_available:existsSync(rbPath)},routing:{path:routingPath,schema:routingSchema,valid:!existsSync(routingPath)||routingSchema===ROUTING_SCHEMA,initialization:!existsSync(routingPath)?'pending-effective-runtime':'present'},issues,warnings,actions,note:'This package CLI verifies registration/ownership. Effective provider/model capability truth is verified by the loaded OpenCode runtime and the hi_doctor tool.'}
 }
 
-function parseArgs(argv){
-  const args=[...argv],command=args.shift()??'help';let project='.',version
-  if(args[0]&&!args[0].startsWith('-'))project=args.shift()
-  while(args.length){const flag=args.shift();if(flag==='--version'){version=args.shift();if(!version)throw new SetupError('missing-version-value',{action:'Use --version <exact-version>.'})}else throw new SetupError('unsupported-cli-argument',{detail:String(flag),action:'Supported form: npx opencode-hi <setup|update|doctor|plan|rollback|recover> [project] [--version X].'})}
-  return{command,project:projectPath(project),version}
+function routingState(project){
+  const path=join(project,ROUTING);assertManaged(project,path)
+  if(!existsSync(path))return{path,exists:false,doc:{schema:ROUTING_SCHEMA,type:'hi-routing',routing:{}}}
+  const doc=load(path)
+  if(doc.schema!==ROUTING_SCHEMA)throw new SetupError('unsupported-routing-schema',{path,detail:`observed=${doc.schema??'missing'} expected=${ROUTING_SCHEMA}`,action:`Repair or regenerate ${path}; only routing schema ${ROUTING_SCHEMA} is supported.`})
+  if(doc.routing!==undefined&&(!doc.routing||typeof doc.routing!=='object'||Array.isArray(doc.routing)))throw new SetupError('invalid-routing-shape',{path,detail:'routing must be an object'})
+  return{path,exists:true,doc}
 }
-function usage(){return `${PRODUCT} npm bootstrap\n\nUsage:\n  npx ${PACKAGE} setup [project] [--version X]\n  npx ${PACKAGE} update [project] [--version X]\n  npx ${PACKAGE} doctor [project]\n  npx ${PACKAGE} plan [project] [--version X]\n  npx ${PACKAGE} rollback [project]\n  npx ${PACKAGE} recover [project]\n\nThe normal path is setup -> restart OpenCode -> doctor. The package runner does not install project-root node_modules.\n`}
+function writeRouting(project,state,doc){
+  assertManaged(project,state.path)
+  const next={...doc,schema:ROUTING_SCHEMA,type:doc.type??'hi-routing',applied_at:now(),applied_by:PACKAGE,ownership:doc.ownership??'project-routing-user-reconfigurable'}
+  atomicWrite(state.path,dump(next),modeFor(state.path,0o600));return next
+}
+function stateView(project){
+  const d=doctor(project),route=routingState(project),rr=route.doc.routing&&typeof route.doc.routing==='object'?route.doc.routing:{},roleModels=rr.roleModels&&typeof rr.roleModels==='object'&&!Array.isArray(rr.roleModels)?rr.roleModels:{}
+  const registered=d.hi_specs?.length===1?d.hi_specs[0]:null
+  return{status:d.status,product:PRODUCT,short:SHORT,project,package_runner_version:packageVersion,registered_plugin_spec:registered,registration:{config:d.config,hi_specs:d.hi_specs,ownership:d.ownership,lifecycle:d.lifecycle},routing:{path:route.path,configured:route.exists,execution_policy:route.doc.executionPolicy??null,primary_mode:route.doc.primaryMode??null,strategy:rr.strategy??null,role_models:Object.fromEntries(CHILD_ROLES.flatMap(role=>Array.isArray(roleModels[role])?[[role,roleModels[role]]]:[]))},issues:d.issues,warnings:d.warnings,actions:d.actions,note:'state is read-only package/project state. Live Mission/provider/model execution truth remains owned by in-runtime hi_status/hi_readiness/hi_doctor.'}
+}
+function reprofile(project,profile){
+  if(!profile)throw new SetupError('profile-required',{action:`Use --profile ${EXECUTION_POLICIES.join('|')}.`})
+  if(!EXECUTION_POLICIES.includes(profile))throw new SetupError('unsupported-execution-profile',{detail:profile,action:`Use one of: ${EXECUTION_POLICIES.join(', ')}.`})
+  const state=routingState(project),before=state.doc.executionPolicy??null
+  if(before===profile)return{status:'NOOP',product:PRODUCT,project,config:state.path,execution_policy:profile,reason:'already-at-profile'}
+  const next=writeRouting(project,state,{...state.doc,executionPolicy:profile})
+  return{status:'APPLIED',product:PRODUCT,project,config:state.path,from_execution_policy:before,to_execution_policy:next.executionPolicy,restart_required:true,note:'Only executionPolicy changed; unrelated routing/OpenCode fields were preserved.'}
+}
+function assertChildRole(role){
+  if(PRIMARY_ROLES.includes(role))throw new SetupError('role-model-primary-owned-by-opencode',{detail:role,action:'Choose manager/working-manager primary model in OpenCode. Hi role routing owns only child roles.'})
+  if(!CHILD_ROLES.includes(role))throw new SetupError('unsupported-role-model',{detail:role,action:`Use one of: ${CHILD_ROLES.join(', ')}.`})
+}
+function roleView(doc){const rr=doc.routing&&typeof doc.routing==='object'?doc.routing:{},models=rr.roleModels&&typeof rr.roleModels==='object'&&!Array.isArray(rr.roleModels)?rr.roleModels:{},variants=rr.roleVariants&&typeof rr.roleVariants==='object'&&!Array.isArray(rr.roleVariants)?rr.roleVariants:{};return{roleModels:Object.fromEntries(CHILD_ROLES.flatMap(role=>Array.isArray(models[role])?[[role,[...models[role]]]]:[])),roleVariants:Object.fromEntries(CHILD_ROLES.flatMap(role=>variants[role]&&typeof variants[role]==='object'&&!Array.isArray(variants[role])?[[role,{...variants[role]}]]:[]))}}
+function roles(project,sets=[],variants=[]){
+  const state=routingState(project),view=roleView(state.doc)
+  if(!sets.length&&!variants.length)return{status:state.exists?'OK':'NOT_CONFIGURED',product:PRODUCT,project,config:state.path,...view,note:'Hi role-model routing applies only to six child roles; manager/working-manager primary model ownership stays in OpenCode.'}
+  const rr=state.doc.routing&&typeof state.doc.routing==='object'?{...state.doc.routing}:{},rawModels=rr.roleModels&&typeof rr.roleModels==='object'&&!Array.isArray(rr.roleModels)?rr.roleModels:{},rawVariants=rr.roleVariants&&typeof rr.roleVariants==='object'&&!Array.isArray(rr.roleVariants)?rr.roleVariants:{},roleModels={...rawModels},roleVariants={...rawVariants}
+  for(const item of sets){const at=item.indexOf('=');if(at<1)throw new SetupError('invalid-role-set',{detail:item,action:'Use --set ROLE=MODEL[,FALLBACK...].'});const role=item.slice(0,at).trim();assertChildRole(role);const models=[...new Set(item.slice(at+1).split(',').map(x=>x.trim()).filter(Boolean))];if(!models.length)throw new SetupError('role-model-list-empty',{detail:role});roleModels[role]=models}
+  for(const item of variants){const at=item.indexOf('='),colon=item.indexOf(':');if(at<1||colon<1||colon>at)throw new SetupError('invalid-role-variant',{detail:item,action:'Use --variant ROLE:MODEL=VARIANT.'});const role=item.slice(0,colon).trim(),model=item.slice(colon+1,at).trim(),variant=item.slice(at+1).trim();assertChildRole(role);if(!model||!variant)throw new SetupError('invalid-role-variant',{detail:item});roleVariants[role]={...(roleVariants[role]??{}),[model]:variant}}
+  const next=writeRouting(project,state,{...state.doc,routing:{...rr,roleModels,roleVariants}}),nextView=roleView(next)
+  return{status:'APPLIED',product:PRODUCT,project,config:state.path,...nextView,restart_required:true,note:'Only explicit child role model/variant mappings changed; unrelated routing/OpenCode fields were preserved.'}
+}
+function rotateRole(project,role){
+  if(!role)throw new SetupError('role-required',{action:`Use --role ${CHILD_ROLES.join('|')}.`});assertChildRole(role)
+  const state=routingState(project),view=roleView(state.doc),models=view.roleModels[role]??[]
+  if(models.length<2)return{status:'NOOP',product:PRODUCT,project,config:state.path,role,models,reason:'fewer-than-two-configured-role-models'}
+  const rotated=[...models.slice(1),models[0]],rr={...(state.doc.routing??{})},rawModels=rr.roleModels&&typeof rr.roleModels==='object'&&!Array.isArray(rr.roleModels)?rr.roleModels:{},nextModels={...rawModels,[role]:rotated}
+  writeRouting(project,state,{...state.doc,routing:{...rr,roleModels:nextModels}})
+  return{status:'APPLIED',product:PRODUCT,project,config:state.path,role,before:models,after:rotated,restart_required:true,note:'rotate changes only this child role fallback order; it never rotates credentials, provider keys, or primary OpenCode models.'}
+}
+function registeredVersion(spec){const m=typeof spec==='string'?spec.match(/^opencode-hi@(\d+\.\d+\.\d+)$/):null;return m?.[1]}
+function compareSemver(a,b){const pa=String(a).split('.').map(Number),pb=String(b).split('.').map(Number);if(pa.length!==3||pb.length!==3||[...pa,...pb].some(x=>!Number.isInteger(x)))return null;for(let i=0;i<3;i++)if(pa[i]!==pb[i])return pa[i]<pb[i]?-1:1;return 0}
+function registryLatest(timeoutMs=5000){
+  const base=String(process.env.npm_config_registry||'https://registry.npmjs.org').replace(/\/+$/,'')+'/'
+  const url=new URL(`${base}${PACKAGE}/latest`),getter=url.protocol==='http:'?httpGet:httpsGet
+  return new Promise((resolveLatest,rejectLatest)=>{const req=getter(url,{headers:{accept:'application/json','user-agent':`${PACKAGE}/${packageVersion}`}},res=>{let text='';res.setEncoding('utf8');res.on('data',chunk=>{if(text.length<200000)text+=chunk});res.on('end',()=>{if((res.statusCode??500)>=400)return rejectLatest(new Error(`registry-http-${res.statusCode}`));try{const body=JSON.parse(text),v=body?.version;if(typeof v!=='string')throw new Error('registry-version-missing');resolveLatest(v)}catch(e){rejectLatest(e)}})});req.setTimeout(timeoutMs,()=>req.destroy(new Error('registry-timeout')));req.on('error',rejectLatest)})
+}
+async function checkUpdate(project){
+  const d=doctor(project),registered=d.hi_specs?.length===1?d.hi_specs[0]:null,current=registeredVersion(registered)??packageVersion
+  try{const latest=await registryLatest(),cmp=compareSemver(current,latest),available=cmp===-1;return{status:'OK',product:PRODUCT,project,package_runner_version:packageVersion,registered_plugin_spec:registered,current_version:current,latest_version:latest,update_available:available,...(available?{recommended_command:`npx --yes ${PACKAGE}@${latest} install ${JSON.stringify(project)}`}:{recommended_command:null}),note:'check-update is advisory and never mutates registration or project files.'}}
+  catch(error){return{status:'WARN',product:PRODUCT,project,package_runner_version:packageVersion,registered_plugin_spec:registered,current_version:current,latest_version:null,update_available:null,reason:'registry-check-unavailable',detail:String(error).slice(0,300),note:'No project state was changed. Retry check-update when npm registry access is available.'}}
+}
 
-function main(){
+function parseArgs(argv){
+  const args=[...argv],command=args.shift()??'help';let project='.',version,profile,role;const sets=[],variants=[];let printOnly=false
+  if(args[0]&&!args[0].startsWith('-'))project=args.shift()
+  while(args.length){const flag=args.shift();if(flag==='--version'){version=args.shift();if(!version)throw new SetupError('missing-version-value',{action:'Use --version <exact-version>.'})}else if(flag==='--profile'){profile=args.shift();if(!profile)throw new SetupError('profile-required')}else if(flag==='--role'){role=args.shift();if(!role)throw new SetupError('role-required')}else if(flag==='--set'){const v=args.shift();if(!v)throw new SetupError('invalid-role-set');sets.push(v)}else if(flag==='--variant'){const v=args.shift();if(!v)throw new SetupError('invalid-role-variant');variants.push(v)}else if(flag==='--print'){printOnly=true}else throw new SetupError('unsupported-cli-argument',{detail:String(flag),action:'Run: npx opencode-hi --help'})}
+  return{command,project:projectPath(project),version,profile,role,sets,variants,printOnly}
+}
+function usage(){return `${PRODUCT} npm bootstrap and project controls\n\nUsage:\n  npx ${PACKAGE} install [project] [--version X]   # ensure exact Hi registration (setup or safe owned update)\n  npx ${PACKAGE} setup [project] [--version X]     # strict first installation\n  npx ${PACKAGE} update [project] [--version X]\n  npx ${PACKAGE} doctor [project]\n  npx ${PACKAGE} state [project]\n  npx ${PACKAGE} reprofile [project] --profile <minimal|balanced|thorough|adaptive|manual>\n  npx ${PACKAGE} roles [project] [--set ROLE=MODEL[,FALLBACK...]] [--variant ROLE:MODEL=VARIANT]\n  npx ${PACKAGE} rotate [project] --role <child-role>\n  npx ${PACKAGE} check-update [project]\n  npx ${PACKAGE} plan [project] [--version X]\n  npx ${PACKAGE} rollback [project]\n  npx ${PACKAGE} recover [project]\n\nThe friendly path is install -> restart OpenCode -> doctor/state. install is idempotent and safely updates only a matching Hi-owned older registration. The package runner never creates project-root node_modules. Provider authentication and primary model selection remain OpenCode-owned.\n`}
+
+async function main(){
   let out
   try{
-    const {command,project,version}=parseArgs(process.argv.slice(2))
+    const {command,project,version,profile,role,sets,variants}=parseArgs(process.argv.slice(2))
     if(command==='help'||command==='--help'||command==='-h'){process.stdout.write(usage());return 0}
-    if(command==='setup'||command==='install')out=setup(project,version)
+    if(command==='install')out=install(project,version)
+    else if(command==='setup')out=setup(project,version)
     else if(command==='update'||command==='upgrade')out=update(project,version)
     else if(command==='doctor')out=doctor(project)
+    else if(command==='state')out=stateView(project)
+    else if(command==='reprofile')out=reprofile(project,profile)
+    else if(command==='roles')out=roles(project,sets,variants)
+    else if(command==='rotate')out=rotateRole(project,role)
+    else if(command==='check-update')out=await checkUpdate(project)
     else if(command==='plan')out=plan(project,version)
     else if(command==='rollback')out=rollback(project)
     else if(command==='recover')out=recover(project)
@@ -250,4 +327,4 @@ function main(){
   return ['BLOCKED','FAIL'].includes(out?.status)?2:0
 }
 
-process.exitCode=main()
+process.exitCode=await main()

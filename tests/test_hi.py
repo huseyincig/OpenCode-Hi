@@ -423,9 +423,12 @@ def test_r3_generated_compatibility_projection_selects_latest_exact_capability_p
     assert d['schema']==1 and d['kind']=='GENERATED_RECEIPT_COMPATIBILITY_PROJECTION'
     cur=d['current_reference_host'];assert (cur['opencode_version'],cur['platform'],cur['architecture'])==(HOST_TARGET,'linux','aarch64')
     caps=cur['capabilities'];q39=json.loads((ROOT/'data/validation/prompt-b-exact-current-opencode-t3.json').read_text(encoding='utf-8'));exact=q39['exact_source_commit'];short=exact[:7]
+    head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(); assert d['generation_head']==head
     for cap,kind in [('process-lifecycle','process'),('workspace-isolation-binding','workspace'),('browser-execution','browser')]:
         qcap=q39['capabilities'][cap]
         assert caps[cap]['status']=='SUPPORTED_T3' and caps[cap]['tested_git_commit']==qcap['receipt_source_commit']
+        assert caps[cap]['reachable_from_head'] is True and caps[cap]['head_distance']>=0
+        assert subprocess.run(['git','merge-base','--is-ancestor',caps[cap]['tested_git_commit'],head],cwd=ROOT).returncode==0
         assert caps[cap]['receipt']==qcap['receipt'] and qcap['runtime_equivalent_to_current'] is True and qcap['runtime_hash_drift']==[]
         receipt_short=qcap['receipt_source_commit'][:7]
         assert caps[cap]['receipt'].endswith(f'{kind}-{HOST_TARGET}-head-{receipt_short}.json')

@@ -1,10 +1,11 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {execFileSync,spawnSync} from 'node:child_process'
+import {execFileSync,spawn,spawnSync} from 'node:child_process'
 import {mkdtempSync,mkdirSync,readFileSync,rmSync,statSync,symlinkSync,writeFileSync} from 'node:fs'
 import {join,resolve} from 'node:path'
 import {tmpdir} from 'node:os'
 import {fileURLToPath} from 'node:url'
+import {createServer} from 'node:http'
 
 const ROOT=resolve(fileURLToPath(new URL('..',import.meta.url)))
 const CLI=join(ROOT,'scripts','opencode-hi.mjs')
@@ -15,6 +16,13 @@ function run(...args){
   let json
   try{json=JSON.parse(r.stdout)}catch{assert.fail(`CLI did not return JSON: rc=${r.status}\nstdout=${r.stdout}\nstderr=${r.stderr}`)}
   return{...r,json}
+}
+async function runAsync(args,{env=process.env}={}){
+  const child=spawn(process.execPath,[CLI,...args],{env,stdio:['ignore','pipe','pipe']});let stdout='',stderr=''
+  child.stdout.setEncoding('utf8');child.stderr.setEncoding('utf8');child.stdout.on('data',x=>stdout+=x);child.stderr.on('data',x=>stderr+=x)
+  const status=await new Promise(resolve=>child.once('close',resolve));let json
+  try{json=JSON.parse(stdout)}catch{assert.fail(`CLI did not return JSON: rc=${status}\nstdout=${stdout}\nstderr=${stderr}`)}
+  return{status,stdout,stderr,json}
 }
 function config(root,value={}){writeFileSync(join(root,'opencode.json'),JSON.stringify(value,null,2)+'\n')}
 
@@ -92,6 +100,59 @@ test('M16 Node managed-state symlink escape is rejected when the platform permit
 
 test('M16 package-runner help is Node-native and exposes setup/update/doctor normal path',()=>{
   const out=execFileSync(process.execPath,[CLI,'--help'],{encoding:'utf8'})
-  assert.match(out,/npx opencode-hi setup/);assert.match(out,/npx opencode-hi update/);assert.match(out,/npx opencode-hi doctor/)
+  assert.match(out,/npx opencode-hi setup/);assert.match(out,/npx opencode-hi update/);assert.match(out,/npx opencode-hi doctor/);for(const cmd of ['state','reprofile','roles','rotate','check-update'])assert.match(out,new RegExp(`npx opencode-hi ${cmd}`))
   assert.doesNotMatch(out,/python3/)
+})
+
+
+test('0.2.3 friendly install ensures an owned registration while setup remains strict first-install',()=>{
+  const root=project();try{
+    config(root,{plugin:['foreign@1'],custom:{keep:true}})
+    const first=run('install',root,'--version','1.0.0');assert.equal(first.status,0);assert.equal(first.json.status,'APPLIED');assert.equal(first.json.operation,'install')
+    const ensured=run('install',root,'--version','1.0.1');assert.equal(ensured.status,0);assert.equal(ensured.json.status,'APPLIED');assert.equal(ensured.json.operation,'upgrade');assert.equal(ensured.json.from_plugin_spec,'opencode-hi@1.0.0');assert.equal(ensured.json.to_plugin_spec,'opencode-hi@1.0.1')
+    assert.deepEqual(JSON.parse(readFileSync(join(root,'opencode.json'),'utf8')),{plugin:['foreign@1','opencode-hi@1.0.1'],custom:{keep:true}})
+    const strict=run('setup',root,'--version','1.0.2');assert.equal(strict.status,2);assert.equal(strict.json.reason,'existing-owned-install-use-update')
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+test('0.2.3 state is read-only and reprofile changes only executionPolicy',()=>{
+  const root=project();try{
+    config(root,{plugin:[]});assert.equal(run('install',root,'--version','1.0.0').status,0)
+    const routing=join(root,'.opencode','hi','policy','routing.json');mkdirSync(join(root,'.opencode','hi','policy'),{recursive:true});writeFileSync(routing,JSON.stringify({schema:1,type:'hi-routing',executionPolicy:'minimal',foreignTop:{keep:true},routing:{strategy:'quality',futureField:{keep:true}}},null,2)+'\n')
+    const before=readFileSync(routing,'utf8'),state=run('state',root);assert.equal(state.status,0);assert.equal(state.json.package_runner_version,'0.2.3');assert.equal(state.json.registered_plugin_spec,'opencode-hi@1.0.0');assert.equal(state.json.routing.execution_policy,'minimal');assert.equal(readFileSync(routing,'utf8'),before)
+    const changed=run('reprofile',root,'--profile','adaptive');assert.equal(changed.status,0);assert.equal(changed.json.status,'APPLIED');assert.equal(changed.json.to_execution_policy,'adaptive')
+    const doc=JSON.parse(readFileSync(routing,'utf8'));assert.equal(doc.executionPolicy,'adaptive');assert.deepEqual(doc.foreignTop,{keep:true});assert.equal(doc.routing.strategy,'quality');assert.deepEqual(doc.routing.futureField,{keep:true})
+    assert.equal(run('reprofile',root,'--profile','adaptive').json.status,'NOOP')
+    const bad=run('reprofile',root,'--profile','turbo');assert.equal(bad.status,2);assert.equal(bad.json.reason,'unsupported-execution-profile')
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+test('0.2.3 roles and rotate mutate only explicit child routing leaves and reject primary role ownership',()=>{
+  const root=project();try{
+    config(root,{plugin:[]});assert.equal(run('install',root).status,0)
+    const routing=join(root,'.opencode','hi','policy','routing.json');mkdirSync(join(root,'.opencode','hi','policy'),{recursive:true});writeFileSync(routing,JSON.stringify({schema:1,type:'hi-routing',unknownTop:'keep',routing:{strategy:'cost-quality',futureField:{keep:true},roleModels:{'future-role':['future/model']},roleVariants:{'future-role':{'future/model':'x'}}}},null,2)+'\n')
+    const set=run('roles',root,'--set','coder=p/a,p/b,p/c','--variant','coder:p/a=high');assert.equal(set.status,0);assert.equal(set.json.status,'APPLIED');assert.deepEqual(set.json.roleModels.coder,['p/a','p/b','p/c']);assert.equal(set.json.roleVariants.coder['p/a'],'high')
+    let doc=JSON.parse(readFileSync(routing,'utf8'));assert.equal(doc.unknownTop,'keep');assert.deepEqual(doc.routing.futureField,{keep:true});assert.deepEqual(doc.routing.roleModels['future-role'],['future/model']);assert.equal(doc.routing.roleVariants['future-role']['future/model'],'x')
+    const rotated=run('rotate',root,'--role','coder');assert.equal(rotated.status,0);assert.deepEqual(rotated.json.before,['p/a','p/b','p/c']);assert.deepEqual(rotated.json.after,['p/b','p/c','p/a'])
+    doc=JSON.parse(readFileSync(routing,'utf8'));assert.deepEqual(doc.routing.roleModels.coder,['p/b','p/c','p/a']);assert.deepEqual(doc.routing.roleModels['future-role'],['future/model']);assert.equal(doc.routing.roleVariants.coder['p/a'],'high')
+    const primary=run('roles',root,'--set','manager=p/main');assert.equal(primary.status,2);assert.equal(primary.json.reason,'role-model-primary-owned-by-opencode')
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+test('0.2.3 check-update uses npm registry metadata without mutating project state',async()=>{
+  const root=project(),server=createServer((req,res)=>{assert.equal(req.url,'/opencode-hi/latest');res.setHeader('content-type','application/json');res.end(JSON.stringify({name:'opencode-hi',version:'1.2.0'}))})
+  try{
+    config(root,{plugin:[]});assert.equal(run('install',root,'--version','1.0.0').status,0);const before=readFileSync(join(root,'opencode.json'),'utf8')
+    await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve)});const address=server.address();assert.ok(address&&typeof address==='object')
+    const r=await runAsync(['check-update',root],{env:{...process.env,npm_config_registry:`http://127.0.0.1:${address.port}`}});assert.equal(r.status,0);assert.equal(r.json.status,'OK');assert.equal(r.json.current_version,'1.0.0');assert.equal(r.json.latest_version,'1.2.0');assert.equal(r.json.update_available,true);assert.match(r.json.recommended_command,/opencode-hi@1\.2\.0 install/);assert.equal(readFileSync(join(root,'opencode.json'),'utf8'),before)
+  }finally{await new Promise(resolve=>server.close(()=>resolve()));rmSync(root,{recursive:true,force:true})}
+})
+
+test('0.2.3 exact-SHA release preflight is fail-closed and contains no publication mutation command',()=>{
+  const path=join(ROOT,'scripts','release-preflight.mjs'),source=readFileSync(path,'utf8')
+  for(const forbidden of ['npm publish','git push','gh release create','git tag -','git tag v'])assert.equal(source.includes(forbidden),false,forbidden)
+  for(const required of ["['run','check']","['run','docs:pack-check']","['pack','--dry-run','--json','--ignore-scripts']","['scripts/verify-npm-oidc-release.mjs','identity']"])assert.equal(source.includes(required),true,required)
+  const verifier=readFileSync(join(ROOT,'scripts','verify-npm-oidc-release.mjs'),'utf8');assert.match(verifier,/mode==='identity'/)
+  const r=spawnSync(process.execPath,[path,'--sha','0000000000000000000000000000000000000000'],{cwd:ROOT,encoding:'utf8'});assert.equal(r.status,2);const out=JSON.parse(r.stdout);assert.equal(out.status,'BLOCKED');assert.equal(out.reason,'head-sha-mismatch');assert.equal(out.mutation_performed,false)
+  assert.equal(JSON.parse(readFileSync(join(ROOT,'package.json'),'utf8')).scripts['release:preflight'],'node scripts/release-preflight.mjs')
 })

@@ -58,7 +58,8 @@
     "docs:pack-check": "node scripts/run-python.mjs scripts/audit-packed-public-docs.py",
     "build:plugin": "npm --prefix plugin run build",
     "test:direct-git-install": "node scripts/run-direct-git-install-acceptance.mjs",
-    "test:direct-git-host": "node scripts/run-python.mjs scripts/run-direct-git-host-acceptance.py"
+    "test:direct-git-host": "node scripts/run-python.mjs scripts/run-direct-git-host-acceptance.py",
+    "release:preflight": "node scripts/release-preflight.mjs"
   },
   "publishConfig": {
     "access": "public"

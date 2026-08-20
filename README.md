@@ -49,7 +49,7 @@ For the published `0.2.2` CLI, an existing Hi-owned older registration is upgrad
 npx --yes opencode-hi@latest update .
 ```
 
-`install` is the friendly first-install alias of `setup`; `update` is the explicit owned-version upgrade operation in `0.2.2`. Both preserve unrelated OpenCode configuration and fail closed on ownership/config drift.
+Published `0.2.2` keeps `install` as the first-install alias of `setup` and uses explicit `update` for an owned upgrade. Development candidate `0.2.3` upgrades the friendly `install` command to **ensure** semantics: no ownership means first setup, matching ownership at the target is `NOOP`, and a matching Hi-owned older registration is upgraded safely. `setup` remains the strict first-install command. All paths preserve unrelated OpenCode configuration and fail closed on ownership/config drift.
 
 OpenCode-Hi is the semantic and execution-control plane for evidence-aware AI software engineering on OpenCode. Hi owns the meaning of the work—Mission, Task, Worker, Role, Methodology, Authority, Evidence, Verification, recovery and completion—while OpenCode remains the primary native execution host for sessions, models, tools, permissions, PTY, workspace and other host primitives.
 
@@ -162,24 +162,42 @@ The package runner and the loaded OpenCode plugin are deliberately separate comm
 
 | Package command | Purpose |
 |---|---|
-| `setup` | first Hi-owned exact plugin registration; `install` is an accepted alias |
-| `update` | move an already Hi-owned registration to the requested exact release; `upgrade` is an accepted alias |
+| `install` | development `0.2.3`: ensure the target exact Hi registration (first setup, safe owned update, or NOOP) |
+| `setup` | strict first Hi-owned exact plugin registration |
+| `update` | explicitly move an already Hi-owned registration to the requested exact release; `upgrade` is an accepted alias |
 | `doctor` | static registration/ownership/drift/transaction check |
+| `state` | read-only package/project registration + routing summary; live Mission state remains runtime-owned |
+| `reprofile` | change only `executionPolicy` in project-owned routing state |
+| `roles` | print/set explicit child-role model/fallback/variant mappings |
+| `rotate` | rotate one child role's configured fallback order; never credentials/provider keys |
+| `check-update` | read npm registry version metadata and report an advisory; never mutates the project |
 | `plan` | preview the exact registration mutation without applying it |
 | `rollback` | restore the one recorded lifecycle rollback point when hashes still match |
 | `recover` | reconcile a recorded interrupted setup/update transaction |
 
 After OpenCode loads the plugin, the runtime exposes **31 `hi_*` tools**. The main user-facing diagnostics are `hi_doctor`, `hi_status`, `hi_readiness`, `hi_metrics`, and `hi_ledger`. The remaining tools are bounded control-plane primitives for task/worker dispatch, process execution, browser execution, context artifacts, temporary mutations, semantic assessment, and direct progress. The exact loaded tool IDs are host-verifiable through OpenCode's documented `/experimental/tool/ids` endpoint.
 
-For current `0.2.2`, installation ownership is inspected with package `doctor`; live Mission state is inspected with runtime `hi_status`, `hi_readiness`, and `hi_ledger`. Model/profile changes use the documented routing/configuration surfaces below.
+For current published `0.2.2`, installation ownership is inspected with package `doctor`; live Mission state is inspected with runtime `hi_status`, `hi_readiness`, and `hi_ledger`. Development `0.2.3` additionally exposes Node-only `state`, `reprofile`, `roles`, `rotate`, and `check-update` package commands so common project configuration no longer requires the legacy Python helper.
 
-The normal setup path is intentionally **non-interactive** today:
+Examples for the `0.2.3` candidate:
+
+```bash
+npx --yes opencode-hi@0.2.3 state .
+npx --yes opencode-hi@0.2.3 reprofile . --profile balanced
+npx --yes opencode-hi@0.2.3 roles . --set coder=provider/model-a,provider/model-b
+npx --yes opencode-hi@0.2.3 rotate . --role coder
+npx --yes opencode-hi@0.2.3 check-update .
+```
+
+`rotate` only changes the ordered model fallback prior for the named Hi child role. It is not credential, API-key, provider-account, or primary-model rotation. `manager` and `working-manager` model ownership remains OpenCode-native.
+
+The normal setup path remains deliberately deterministic rather than provider-auth interactive:
 
 ```text
 setup -> restart OpenCode -> package doctor -> runtime hi_doctor
 ```
 
-It does not run a wizard that asks you to select providers, models, roles, concurrency, and execution profiles during installation. On first effective OpenCode runtime inventory, Hi automatically ranks only effective-enabled, role-eligible child models and persists one-shot initial recommendations; you can edit those choices afterward and later refresh/update will not overwrite a valid user routing file. Advanced/manual `reconfigure` and `role-models` operations remain in the retained Python helper and are not prerequisites for normal npm onboarding.
+It does not run a wizard that asks you to select providers, models, roles, concurrency, and execution profiles during installation. On first effective OpenCode runtime inventory, Hi automatically ranks only effective-enabled, role-eligible child models and persists one-shot initial recommendations; you can edit those choices afterward and later refresh/update will not overwrite a valid user routing file. Provider authentication remains OpenCode-owned. Common Hi project controls are Node-native in development `0.2.3`; the retained Python `reconfigure` / `role-models` helper remains only as a compatibility/advanced surface.
 
 Published availability is external state, not inferred from source version metadata alone. For `0.2.2`, GitHub Release, npm Trusted Publishing/provenance, and fresh-registry exact-host verification are complete.
 
@@ -199,6 +217,14 @@ npm run build:plugin
 OpenCode supports project-local plugins under `.opencode/plugins/` and local/file plugin loading on the accepted host. Runtime verification must confirm the plugin, Hi agents, tools and native skills actually load.
 
 After plugin configuration changes, restart OpenCode when the host does not hot-reload them.
+
+Before any future tag/push/release/publish step, contributors can run the exact-SHA read-only preflight:
+
+```bash
+npm run release:preflight -- --sha "$(git rev-parse HEAD)"
+```
+
+It requires a clean committed SHA, runs the canonical source/evidence verification and packed-public-doc checks used by publication, verifies package/version identity plus local/remote tag and npm-version absence, then captures `npm pack --dry-run` identity. It fails if those checks generate uncommitted drift. It never creates a tag, pushes, creates a GitHub Release, or publishes to npm.
 
 See [Installation and Lifecycle](docs/INSTALLATION.md) for Git/npm installation, upgrade, reconfigure, doctor, uninstall, rollback and recovery behavior.
 

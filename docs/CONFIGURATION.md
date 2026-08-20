@@ -778,7 +778,7 @@ Project configuration can narrow behavior but cannot override OpenCode permissio
 
 ## 23. Advanced legacy Python CLI configuration
 
-The M16 normal-user package runner intentionally keeps the public lifecycle small: `setup`, `update`, `doctor`, `plan`, `rollback`, and `recover`. The older Python helper remains for advanced/manual configuration workflows such as `reconfigure` and `role-models`. These commands require Python and are **not** prerequisites for normal npm onboarding.
+The development `0.2.3` Node package runner covers the normal lifecycle plus common project controls: `install`, `setup`, `update`, `doctor`, `state`, `reprofile`, `roles`, `rotate`, `check-update`, `plan`, `rollback`, and `recover`. `reprofile` owns only `executionPolicy`; `roles` owns explicit child-role model/fallback/variant leaves; `rotate` only rotates one child role's fallback order. Provider authentication and `manager` / `working-manager` primary model selection remain OpenCode-owned. The older Python helper remains for advanced/manual fields that are not yet mirrored by these bounded Node commands.
 
 If you deliberately install the package locally for this advanced helper, the following examples apply.
 
