@@ -83,9 +83,10 @@ export function verificationEnvelopeFor(m, obligationID) {
         const matching = candidates.filter(e => verificationKindSatisfiesRequirement(kind, e.kind)).sort((a, b) => b.observed_at - a.observed_at);
         if (!matching.length)
             return { kind, subject: obligation?.summary ?? m.identity.objective, result: 'not_run', evidence_refs: [], explanation: `No admissible evidence recorded for required verification kind: ${kind}` };
-        const explicit = matching.find(e => e.outcome !== undefined || e.pass !== undefined);
+        const live = matching.filter(e => !e.invalidated_at), selected = live.length ? live : matching;
+        const explicit = selected.find(e => e.outcome !== undefined || e.pass !== undefined);
         if (!explicit)
-            return { kind, subject: obligation?.summary ?? m.identity.objective, result: 'pending', evidence_refs: matching.map(e => e.id).slice(0, 12), explanation: 'Evidence exists but no explicit verification outcome was recorded' };
+            return { kind, subject: obligation?.summary ?? m.identity.objective, result: 'pending', evidence_refs: selected.map(e => e.id).slice(0, 12), explanation: 'Evidence exists but no explicit verification outcome was recorded' };
         const result = verificationResult(explicit);
         return { kind, subject: obligation?.summary ?? m.identity.objective, result, evidence_refs: [explicit.id], explanation: result === 'passed' ? undefined : (explicit.reason ?? explicit.summary) };
     });

@@ -39,6 +39,15 @@ test('mutation reopens a closed verification claim and fresh verifier evidence c
   const fresh=m.execution.evidence.items.at(-1);assert.equal(fresh.kind,'targeted-tests');assert.ok(fresh.obligation_ids?.includes(verification.id));assert.equal(fresh.invalidated_at,undefined);assert.equal(verification.status,'closed');assert.equal(verificationSatisfied(m,verification.id).ok,true)
 })
 
+test('fresh verification wins when invalidated and replacement evidence share the same timestamp',()=>{
+  const m=mission(),verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(verification)
+  const at=Date.now()
+  const stale=addEvidence(m,{kind:'targeted-tests',summary:'old pass',scope:['src/a.ts'],source:'bash',obligation_ids:[verification.id],pass:true,outcome:'passed',observed_at:at})
+  stale.invalidated_at=at
+  addEvidence(m,{kind:'targeted-tests',summary:'fresh pass',scope:['src/a.ts'],source:'bash',obligation_ids:[verification.id],pass:true,outcome:'passed',observed_at:at})
+  assert.equal(verificationSatisfied(m,verification.id).ok,true)
+})
+
 test('structured nonzero verifier exit is FAILED even when stdout looks benign',()=>{
   const m=mission()
   observeToolAfter(m,'bash',{command:'npm test'},{output:'Test run completed',metadata:{exit:1}})

@@ -6,6 +6,7 @@ All notable changes to OpenCode-Hi are documented here.
 
 ## 0.2.3
 
+- Fixes a verification freshness race where invalidated evidence and its fresh replacement could share one millisecond timestamp; invalidated evidence is now excluded from verification candidate selection. Also makes Playwright cache-path regression assertions platform-neutral on Windows.
 - Bounds verification/completion recovery when a required runtime capability is unavailable: mandatory visual/browser, MCP, model-dispatch, workspace, process, dependency and session-abort failures now resolve to durable terminal operational state instead of feeding unchanged synthetic continuations.
 - Routes `visual-check` through the canonical visual methodology/browser preflight, keeps verification evidence-owned, and makes `hi_direct_progress` return `EVIDENCE_REQUIRED` for verification obligations instead of allowing prose to close them.
 - Adds one-shot Chromium self-healing for the Hi-owned Playwright surface using pinned `playwright-core@1.62.1`, a Hi-owned platform cache, bounded bootstrap time, and failure deduplication; unavailable bootstrap remains an explicit environment/capability blocker rather than a retry loop.

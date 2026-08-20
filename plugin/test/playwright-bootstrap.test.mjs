@@ -30,10 +30,10 @@ test('adapter refreshes discovery after a lazy bootstrap creates the executable'
 
 test('Hi-owned browser cache is outside the application project by default',()=>{
   const cache=hiPlaywrightCachePath('1.62.1',{...process.env,HI_BROWSER_CACHE:undefined,XDG_CACHE_HOME:undefined},'/home/tester','linux')
-  assert.equal(cache,'/home/tester/.cache/opencode-hi/playwright/1.62.1')
+  assert.equal(cache,join('/home/tester','.cache','opencode-hi','playwright','1.62.1'))
 })
 
 test('Hi-owned browser cache honors an explicit XDG cache root without touching the application project',()=>{
   const cache=hiPlaywrightCachePath('1.62.1',{HI_BROWSER_CACHE:undefined,XDG_CACHE_HOME:'/var/tmp/xdg-hi'},'/home/tester','linux')
-  assert.equal(cache,'/var/tmp/xdg-hi/opencode-hi/playwright/1.62.1')
+  assert.equal(cache,join('/var/tmp/xdg-hi','opencode-hi','playwright','1.62.1'))
 })
