@@ -1,13 +1,13 @@
 {
   "acceptance_receipt": "data/validation/cross-platform-acceptance-0.2.4.json",
-  "acceptance_sha256": "1e0b0f10352a40a94affd09ea5d90120aa29338d22fbdc935edf3ae2f19975bf",
+  "acceptance_sha256": "c9ff7ca0719cbe32e953be639962a721dc5e69580959582d65684703d3e5a85b",
   "blockers": [],
   "claim_boundary": "Current-source Windows/Linux certification is bound to the exact external CI source checkpoint. Subsequent evidence-only commits may consume it only while runtime/package material paths remain byte-identical to that checkpoint.",
   "github_actions": {
     "conclusion": "success",
-    "run_id": 32593887685,
-    "ubuntu_job_id": 97081767595,
-    "windows_job_id": 97081767430
+    "run_id": 32597301090,
+    "ubuntu_job_id": 97090192100,
+    "windows_job_id": 97090192026
   },
   "kind": "PROMPT_B_CROSS_PLATFORM_ACCEPTANCE_AUDIT",
   "linux_current_certified": true,
@@ -16,8 +16,8 @@
   "schema": 1,
   "section": 38,
   "source_checkpoint": {
-    "commit": "79b10dc793c97672c92d2815cc342983a431e2c4",
-    "tree": "ec0a32c396870cf49ec2006e5eb2cde056d2a83e"
+    "commit": "ed9181b208b2992ebe04df5c48f7481f7f732c84",
+    "tree": "c7fb1bc7d8a3c7a5c6e05979ac0fbc22961c36eb"
   },
   "status": "PASS",
   "summary": {

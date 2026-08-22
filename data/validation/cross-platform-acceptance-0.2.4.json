@@ -6,19 +6,19 @@
   "release": "0.2.4",
   "status": "PASS",
   "source_binding": {
-    "tested_git_commit": "79b10dc793c97672c92d2815cc342983a431e2c4",
-    "tested_git_tree": "ec0a32c396870cf49ec2006e5eb2cde056d2a83e"
+    "tested_git_commit": "ed9181b208b2992ebe04df5c48f7481f7f732c84",
+    "tested_git_tree": "c7fb1bc7d8a3c7a5c6e05979ac0fbc22961c36eb"
   },
   "github_actions": {
     "workflow": "Release Readiness",
-    "run_id": 32593887685,
+    "run_id": 32597301090,
     "event": "workflow_dispatch",
     "head_branch": "fix/role-model-ux",
     "status": "completed",
     "conclusion": "success",
-    "url": "https://github.com/huseyincig/OpenCode-Hi/actions/runs/32593887685",
+    "url": "https://github.com/huseyincig/OpenCode-Hi/actions/runs/32597301090",
     "ubuntu": {
-      "job_id": 97081767595,
+      "job_id": 97090192100,
       "status": "completed",
       "conclusion": "success",
       "required_steps": {
@@ -32,8 +32,8 @@
         "Verify release archives are readable": "success"
       },
       "node_summary": {
-        "tests": 1202,
-        "pass": 1202,
+        "tests": 1204,
+        "pass": 1204,
         "fail": 0,
         "skipped": 0
       },
@@ -113,7 +113,7 @@
       ]
     },
     "windows": {
-      "job_id": 97081767430,
+      "job_id": 97090192026,
       "status": "completed",
       "conclusion": "success",
       "required_steps": {
@@ -127,8 +127,8 @@
         "Verify release archives are readable": "success"
       },
       "node_summary": {
-        "tests": 1202,
-        "pass": 1201,
+        "tests": 1204,
+        "pass": 1203,
         "fail": 0,
         "skipped": 1
       },
@@ -208,7 +208,7 @@
       ]
     },
     "evidence": {
-      "job_id": 97082323920,
+      "job_id": 97090735238,
       "status": "completed",
       "conclusion": "success"
     }
