@@ -4,11 +4,13 @@
   "program": "PROMPT_B",
   "section": 45,
   "status": "PASS",
-  "current_label": "CERTIFIED",
-  "blockers": [],
+  "current_label": "PARTIAL",
+  "blockers": [
+    "current-source-windows-acceptance-pending-external-ci",
+    "T4-current-release-publication-verification-pending"
+  ],
   "allowed_positive_labels": [
-    "CERTIFIED",
-    "ZERO KNOWN DEFECT",
+    "ZERO KNOWN DEFECT (audited scope)",
     "RELEASE-GRADE ENGINEERING",
     "DOCUMENTATION-SOURCE PARITY VERIFIED"
   ],

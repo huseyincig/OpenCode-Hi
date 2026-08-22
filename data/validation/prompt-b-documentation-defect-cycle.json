@@ -47,7 +47,7 @@
       "owner_sha256": "d28be108c398a85b956fe702e75002975f29e85074205dea7192de9307883c15",
       "owner_anchor": "Generated from",
       "proof": "data/validation/documentation-parity.json",
-      "proof_sha256": "9c44d4d3207996b0d5012cb2c877f1401b5a3a47a27bafe3881034649f65f4d4",
+      "proof_sha256": "f658804040ff2252d3382eea0cac7881643fd7391bd6d43021ef3b58a10af7c4",
       "proof_anchor": "\"status\": \"PASS\""
     },
     {
@@ -57,7 +57,7 @@
       "owner_sha256": "85298e6a9869f3ad199cdfaec0d6435c2daf84abb8770b14e1c53586df145aba",
       "owner_anchor": "documentation parity",
       "proof": "data/validation/documentation-parity.json",
-      "proof_sha256": "9c44d4d3207996b0d5012cb2c877f1401b5a3a47a27bafe3881034649f65f4d4",
+      "proof_sha256": "f658804040ff2252d3382eea0cac7881643fd7391bd6d43021ef3b58a10af7c4",
       "proof_anchor": "\"violations\": []"
     }
   ],

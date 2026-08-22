@@ -12,9 +12,7 @@
       "exact OpenCode 1.18.21 Windows current-source CI",
       "GitHub Release/npm Trusted Publishing/fresh-registry T4"
     ],
-    "local_pending": [
-      "final canonical gates and \u00a7\u00a742-47 attestation"
-    ]
+    "local_pending": []
   },
   "local_acceptance": {
     "node": {
@@ -39,8 +37,9 @@
       ]
     },
     "python": {
-      "status": "PENDING_FINAL_FULL_SUITE",
-      "command": "release-venv python -m pytest -q tests/test_hi.py"
+      "status": "PASS",
+      "command": "release-venv python -m pytest -q tests/test_hi.py",
+      "scope": "full product + evidence suite; 105/105 at final gate checkpoint"
     }
   },
   "product_truth": {
@@ -79,13 +78,12 @@
     "historical_0_2_3_t4_is_current": false,
     "publication_authorized_or_performed": false,
     "deterministic_release": "data/validation/deterministic-release-reproducibility-0.2.4.json",
-    "current_validator": "PENDING_FINAL",
+    "current_validator": "PASS",
     "final_gates": "data/validation/final-gates-0.2.4.json"
   },
   "blockers": [
-    "final canonical gates and \u00a7\u00a742-47 attestation",
     "exact OpenCode 1.18.21 Windows current-source external CI",
     "real GitHub/npm T4 publication evidence"
   ],
-  "conclusion": "0.2.4 exact source/docs, local package/T3 evidence, hygiene and zero-known-defect are green. Only final canonical gates remain local; Windows current-source CI and T4 remain external."
+  "conclusion": "All executable local 0.2.4 engineering and certification gates pass. Final system state remains PARTIAL only because current-source Windows CI and real GitHub/npm T4 publication evidence remain external."
 }
