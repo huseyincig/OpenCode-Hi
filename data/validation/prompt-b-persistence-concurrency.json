@@ -272,10 +272,10 @@
       "section": 17,
       "invariant": "retry-circuit",
       "owner": "plugin/src/runtime/continuation/dispatcher.ts",
-      "owner_sha256": "18b196c5c3dc5f197a679926fd728f3f0ae05e945034f083ee050904386d7424",
+      "owner_sha256": "970d898efa78774f4ebfe8692959243b2bca968c50ab5ef28970d407d5fbe16b",
       "owner_anchor": "continuation_failure_count",
       "proof": "plugin/test/continuation-evaluator-wide-batch.test.mjs",
-      "proof_sha256": "d10c463edd1d96d7ec1772e7f131d63a359db71e861681825db1231501dac250",
+      "proof_sha256": "081e1a711de7627d08f976b5f29aec3d8d8c202889caead9269a84c53842ccc4",
       "proof_anchor": "continuation transport failures use a separate bounded runtime retry budget"
     },
     {

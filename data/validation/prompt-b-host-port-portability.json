@@ -8,7 +8,7 @@
     {
       "invariant": "host-port-hi-needs-not-sdk",
       "owner": "plugin/src/runtime/host/port.ts",
-      "owner_sha256": "83cfb53545046c37fbd216cc3a6927f941b671dabd1656a8edd4add42c134fe9",
+      "owner_sha256": "ada6a0ea214b68be4c067d0e24c6c43ea6b5bfc7384fa1332bb85989f941f7f0",
       "owner_anchor": "export interface HostPort",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
@@ -35,8 +35,8 @@
     {
       "invariant": "continuation-port",
       "owner": "plugin/src/runtime/continuation/dispatcher.ts",
-      "owner_sha256": "18b196c5c3dc5f197a679926fd728f3f0ae05e945034f083ee050904386d7424",
-      "owner_anchor": "Pick<HostPort,'continueSession'>",
+      "owner_sha256": "970d898efa78774f4ebfe8692959243b2bca968c50ab5ef28970d407d5fbe16b",
+      "owner_anchor": "Pick<HostPort,'continueSession'|'sessionStatus'>",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
       "proof_anchor": "alternate host continuation port preserves Mission continuation semantics without OpenCode shapes"
@@ -89,7 +89,7 @@
     {
       "invariant": "alternate-host-continuation-feasible",
       "owner": "plugin/src/runtime/host/port.ts",
-      "owner_sha256": "83cfb53545046c37fbd216cc3a6927f941b671dabd1656a8edd4add42c134fe9",
+      "owner_sha256": "ada6a0ea214b68be4c067d0e24c6c43ea6b5bfc7384fa1332bb85989f941f7f0",
       "owner_anchor": "continueSession(sessionID:string,text:string,metadata:Record<string,unknown>):Promise<boolean>",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
@@ -98,7 +98,7 @@
     {
       "invariant": "alternate-host-task-feasible",
       "owner": "plugin/src/runtime/host/port.ts",
-      "owner_sha256": "83cfb53545046c37fbd216cc3a6927f941b671dabd1656a8edd4add42c134fe9",
+      "owner_sha256": "ada6a0ea214b68be4c067d0e24c6c43ea6b5bfc7384fa1332bb85989f941f7f0",
       "owner_anchor": "export interface ChildSessionPort",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
