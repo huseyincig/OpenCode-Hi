@@ -130,12 +130,25 @@ def test_plugin_install_script_allowlist_is_exact():
 def test_validator_rejects_nested_project_runtime_state(tmp_path):
     import shutil
     probe=tmp_path/'repo'
-    shutil.copytree(ROOT,probe,ignore=shutil.ignore_patterns('node_modules','dist','.pytest_cache','__pycache__'))
+    shutil.copytree(ROOT,probe,ignore=shutil.ignore_patterns('node_modules','dist','.pytest_cache','__pycache__','.agent-work'))
     leaked=probe/'plugin'/'.opencode'/'.hi'
     leaked.mkdir(parents=True,exist_ok=True)
     (leaked/'runtime-state.json').write_text('{}')
     r=subprocess.run([sys.executable,str(probe/'scripts/validate.py')],text=True,capture_output=True,cwd=probe)
     assert r.returncode!=0 and 'nested project-local runtime directory' in (r.stdout+r.stderr)
+
+def test_validator_ignores_agent_work_research_state(tmp_path):
+    import shutil
+    probe=tmp_path/'repo'
+    shutil.copytree(ROOT,probe,ignore=shutil.ignore_patterns('node_modules','dist','.pytest_cache','__pycache__','.agent-work'))
+    retained=probe/'.agent-work'/'external'/'repos'/'reference'
+    (retained/'.opencode').mkdir(parents=True,exist_ok=True)
+    (retained/'historical-note.md').write_text('Hi Next\nfeature-ledger-09\n')
+    dist=probe/'plugin'/'dist'; dist.mkdir(parents=True,exist_ok=True); (dist/'plugin.js').write_text('// fixture')
+    r=subprocess.run([sys.executable,str(probe/'scripts/validate.py')],text=True,capture_output=True,cwd=probe)
+    output=r.stdout+r.stderr
+    assert '.agent-work/external/repos/reference/.opencode' not in output
+    assert '.agent-work/external/repos/reference/historical-note.md' not in output
 
 def _build(tmp_path):
     out=tmp_path/'dist';src=tmp_path/'source';r=run(ROOT/'scripts/release-build.py','--out',out,'--source-out',src);assert r.returncode==0,r.stderr

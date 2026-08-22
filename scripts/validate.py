@@ -56,6 +56,9 @@ for rel in ('.github/CONTRIBUTING.md','.github/SECURITY.md','.github/SUPPORT.md'
 # Project-local runtime state/config is allowed only at repository root during development.
 # Nested .opencode directories are product-source contamination (typically leaked test/runtime state).
 for op in ROOT.rglob('.opencode'):
+    rel_parts=op.relative_to(ROOT).parts
+    if '.agent-work' in rel_parts:
+        continue
     if op.is_dir() and op.parent != ROOT:
         err(f'nested project-local runtime directory present in product source: {op.relative_to(ROOT).as_posix()}')
 
@@ -64,7 +67,7 @@ legacy=[r'Hi AI Team Kit',r'Hi Next',r'Hi-NEXTGEN',r'Hi-AI-Team-Kit',r'hi-next\.
 allow={'scripts/validate.py','tests/test_hi.py'}
 for p in ROOT.rglob('*'):
     # .opencode/ is the project-local runtime control plane (e.g. Hi-AI-Team-Kit bootstrap); the root .gitignore declares it never part of HI product source.
-    if not p.is_file() or any(x in p.parts for x in ('.git','node_modules','dist','.opencode')):continue
+    if not p.is_file() or any(x in p.parts for x in ('.git','node_modules','dist','.opencode','.agent-work')):continue
     rel=p.relative_to(ROOT).as_posix()
     if rel in allow:continue
     try:t=p.read_text(encoding='utf-8')
