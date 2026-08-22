@@ -198,7 +198,7 @@
     },
     {
       "expected": {
-        "action": "model-escalation",
+        "action": "same-worker-resume",
         "level": 2
       },
       "id": "recovery-2",
