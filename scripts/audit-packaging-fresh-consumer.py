@@ -18,13 +18,13 @@ row('fresh-project-owned-consumer','scripts/run-fresh-consumer-acceptance.py',"W
 row('install-packed-artifact','scripts/run-fresh-consumer-acceptance.py',"'npm','install'",fresh_rel,'"pack_install": true')
 row('normal-node-setup','scripts/run-fresh-consumer-acceptance.py',"'setup',str(bootstrap)",fresh_rel,'"node_setup": true')
 row('start-exact-opencode','scripts/run-fresh-consumer-acceptance.py',"opencode_bin,'serve'",fresh_rel,'"exact_host_version": true')
-row('execute-material-hi-runtime','scripts/run-fresh-consumer-acceptance.py',"'/experimental/tool/ids?'",fresh_rel,'"hi_tool_count": 32')
+row('execute-material-hi-runtime','scripts/run-fresh-consumer-acceptance.py',"'server_tool_ids':hi_ids==expected_hi_ids",fresh_rel,'"server_tool_ids": true')
 row('no-hidden-dev-dependency','package.json',f'"@opencode-ai/sdk": "{target}"',fresh_rel,'"consumer_resolution": true')
 row('no-repository-relative-runtime-path','scripts/run-fresh-consumer-acceptance.py',"'no_source_tree_in_server_log'",fresh_rel,'"no_source_tree_in_server_log": true')
 static={
  'exact_host':a.get('status')=='PASS' and (a.get('host') or {}).get('opencode')==target and (a.get('host') or {}).get('platform')=='linux' and (a.get('host') or {}).get('architecture')=='aarch64' and bool((a.get('host') or {}).get('binary_sha256')),
  'all_acceptance_checks':all(checks.values()),
- 'hi_tools_exact':runtime.get('hi_tool_count')==32,
+ 'hi_tools_exact':checks.get('server_tool_ids') is True and runtime.get('hi_tools')==runtime.get('expected_hi_tools'),
  'session_material_path':(runtime.get('session') or {}).get('created') is True and (runtime.get('session') or {}).get('version')==target,
  'node_setup_clean':checks.get('node_setup') is True and checks.get('node_setup_no_application_root_node_project') is True,
 }

@@ -2,8 +2,10 @@
 from __future__ import annotations
 import hashlib,json,os,platform,re,shutil,socket,subprocess,sys,tarfile,time,urllib.parse,urllib.request,zipfile
 from pathlib import Path,PurePosixPath
+import importlib.util
 
 ROOT=Path(__file__).resolve().parents[1]
+_inv_spec=importlib.util.spec_from_file_location('hi_runtime_tool_inventory',ROOT/'scripts/hi-runtime-tool-inventory.py');_inv=importlib.util.module_from_spec(_inv_spec);_inv_spec.loader.exec_module(_inv);expected_hi_runtime_tools=_inv.expected_hi_runtime_tools
 PKG=json.loads((ROOT/'package.json').read_text(encoding='utf-8'))
 HOST_VERSION=str((PKG.get('dependencies') or {}).get('@opencode-ai/sdk') or '').strip()
 if not re.fullmatch(r'\d+\.\d+\.\d+',HOST_VERSION) or (PKG.get('peerDependencies') or {}).get('@opencode-ai/plugin')!=HOST_VERSION:raise RuntimeError(f'exact current host target drift: {HOST_VERSION or "<missing>"}')
@@ -105,7 +107,7 @@ def main()->int:
   for _ in range(240):
    if proc.poll() is not None:break
    try:
-    q=urllib.parse.urlencode({'directory':str(project)});ids=get_json(f'http://127.0.0.1:{port}/experimental/tool/ids?{q}',2);break
+    q=urllib.parse.urlencode({'directory':str(project)});ids=get_json(f'http://127.0.0.1:{port}/experimental/tool/ids?{q}',2);last_error=None;break
    except Exception as e:last_error=str(e);time.sleep(.25)
  finally:
   try:proc.terminate();proc.wait(timeout=5)
@@ -113,11 +115,11 @@ def main()->int:
    try:proc.kill()
    except Exception:pass
  rows=ids if isinstance(ids,list) else (ids.get('data') if isinstance(ids,dict) else [])
- hi=sorted(x for x in rows if isinstance(x,str) and x.startswith('hi_'))
+ hi=sorted(x for x in rows if isinstance(x,str) and x.startswith('hi_'));expected_hi=expected_hi_runtime_tools(ROOT)
  text=log.read_text(encoding='utf-8',errors='replace') if log.exists() else ''
  errors=[x for x in text.splitlines() if 'Failed to install plugin' in x or 'git dep preparation failed' in x or 'failed to load plugin' in x]
- status='PASS' if len(hi)==32 and {'hi_doctor','hi_status','hi_task_start'}<=set(hi) and not errors else 'FAIL'
- result={'status':status,'kind':'DIRECT_GIT_EXACT_OPENCODE_HOST_ACCEPTANCE','opencode':version,'platform':sys.platform,'architecture':platform.machine().lower(),'binary_sha256':sha256(binary),'spec':spec,'hi_tool_count':len(hi),'hi_tools':hi,'install_or_load_errors':errors[-20:],'last_probe_error':last_error}
+ status='PASS' if hi==expected_hi and not errors else 'FAIL'
+ result={'status':status,'kind':'DIRECT_GIT_EXACT_OPENCODE_HOST_ACCEPTANCE','opencode':version,'platform':sys.platform,'architecture':platform.machine().lower(),'binary_sha256':sha256(binary),'spec':spec,'hi_tool_count':len(hi),'hi_tools':hi,'expected_hi_tool_count':len(expected_hi),'expected_hi_tools':expected_hi,'install_or_load_errors':errors[-20:],'last_probe_error':last_error}
  print(json.dumps(result,indent=2,ensure_ascii=False))
  (work/'result.json').write_text(json.dumps(result,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
  if status!='PASS':print('\n'.join(text.splitlines()[-160:]),file=sys.stderr)
