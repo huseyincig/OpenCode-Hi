@@ -3,9 +3,9 @@
   "kind": "PROMPT_B_FAILURE_INJECTION_AUDIT",
   "program": "PROMPT_B",
   "section": 34,
-  "status": "FAIL",
+  "status": "PASS",
   "acceptance_receipt": "data/validation/failure-injection-0.1.0.json",
-  "acceptance_sha256": "bb623418130428d1b40109e028aca97fc154138b4885a5a40d689d90aed9ed2f",
+  "acceptance_sha256": "0df2f980f0572d5385de2991ed9ad059c4f0473de8c3a21565c0e782d09e5b0b",
   "required_injections": [
     "provider-timeout",
     "model-unavailable",
@@ -23,7 +23,7 @@
   "summary": {
     "required": 12,
     "covered": 12,
-    "violations": 6
+    "violations": 0
   },
   "static_guards": {
     "provider-fallback-bounded": true,
@@ -34,13 +34,6 @@
     "corrupt-state-fail-closed": true,
     "browser-wait-bounded": true
   },
-  "violations": [
-    "proof-hash-drift:plugin/test/q5-failure-injection.test.mjs",
-    "proof-hash-drift:plugin/test/q5-failure-injection.test.mjs",
-    "proof-hash-drift:plugin/test/provider-fallback-hardening.test.mjs",
-    "proof-hash-drift:plugin/test/q5-failure-injection.test.mjs",
-    "proof-hash-drift:plugin/test/q5-failure-injection.test.mjs",
-    "proof-hash-drift:plugin/test/q5-failure-injection.test.mjs"
-  ],
+  "violations": [],
   "claim_boundary": "Controlled failure injection certifies bounded failure semantics and terminal behavior; it does not fabricate live-provider or external T3 evidence."
 }

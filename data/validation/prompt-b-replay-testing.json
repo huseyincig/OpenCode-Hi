@@ -3,14 +3,14 @@
   "kind": "PROMPT_B_REPLAY_TESTING_AUDIT",
   "program": "PROMPT_B",
   "section": 33,
-  "status": "FAIL",
+  "status": "PASS",
   "acceptance_receipt": "data/validation/replay-acceptance-0.1.0.json",
   "summary": {
     "required_surfaces": 5,
     "covered_surfaces": 5,
     "cases": 28,
     "nondeterministic_drift": 0,
-    "violations": 4
+    "violations": 0
   },
   "surface_counts": {
     "semantic_routing": 5,
@@ -21,7 +21,7 @@
   },
   "proof_hashes": {
     "scripts/run-replay-acceptance.mjs": "14dbcbee9ec5de34e967ed2e9ced9946fb093c0a1d535beb060e5ed7d110c13f",
-    "data/validation/replay-corpus.json": "a41d2de33a4aad392f2a3b554cbb3bd3ab8deb63973ce63b9f6c1d2857973033",
+    "data/validation/replay-corpus.json": "6130969ed538e9a8893ba45fbb2318c2e05ec0138f6ac5b20af166fdb1fd5c15",
     "data/validation/decision-replay/semantic-routing.jsonl": "07d461dc8b088db319ae2bb1816a875914f2db4a3aec1f4d8e0a71c1f8fd1bf0"
   },
   "static_guards": {
@@ -33,11 +33,6 @@
     "recovery": true,
     "two-pass-drift-detection": true
   },
-  "violations": [
-    "owner-hash:plugin/src/runtime/verification/policy.ts",
-    "owner-hash:plugin/src/opencode/event-adapter.ts",
-    "owner-hash:plugin/src/runtime/completion/evaluator.ts",
-    "owner-hash:plugin/src/runtime/continuation/recovery.ts"
-  ],
+  "violations": [],
   "claim_boundary": "Replay certification covers deterministic semantic/routing decisions, worker scheduler decisions, host event normalization, completion decisions, and bounded recovery. Any replay output mismatch or two-pass digest drift fails the audit; this is not live-host/provider evidence."
 }

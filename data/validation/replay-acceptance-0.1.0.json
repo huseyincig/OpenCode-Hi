@@ -5,11 +5,11 @@
   "section": 33,
   "status": "PASS",
   "source_binding": {
-    "tested_git_commit": "c3bc16ae42ecb06ded7ecb187794e56cb0a2e83d",
-    "tested_git_tree": "30128a37406974116f52ca087658bf3ed376d4e2"
+    "tested_git_commit": "fe64d24dbb2304e4e323ed07882229e24a8a3f2e",
+    "tested_git_tree": "82f1c1f7f4d69044c2a24a6b2555a7bfda214979"
   },
   "inputs": {
-    "data/validation/replay-corpus.json": "a41d2de33a4aad392f2a3b554cbb3bd3ab8deb63973ce63b9f6c1d2857973033",
+    "data/validation/replay-corpus.json": "6130969ed538e9a8893ba45fbb2318c2e05ec0138f6ac5b20af166fdb1fd5c15",
     "data/validation/decision-replay/semantic-routing.jsonl": "07d461dc8b088db319ae2bb1816a875914f2db4a3aec1f4d8e0a71c1f8fd1bf0"
   },
   "owner_hashes": {
@@ -17,11 +17,11 @@
     "plugin/src/runtime/routing/execution-mode.ts": "fd8fe07e960ec2e148d5b8935ad34e0efcecb290a6e819eb6581e03f92f62f51",
     "plugin/src/runtime/routing/minimum-team.ts": "08f40b0bd9dc5a9f044b53bacccad68118dc61791f2645ca7bf910f7742a643e",
     "plugin/src/runtime/execution/topology-policy.ts": "7d5fdb628c9ef4ba96be5bf6de876f291e28775bd47e2ea5438a0c57680b4ffe",
-    "plugin/src/runtime/verification/policy.ts": "68a5068adfeb60ebd19832e4def06caf1e0392802d278c789669c68ed7be8fb0",
+    "plugin/src/runtime/verification/policy.ts": "e086871427160e9b2f5d2677c8964ecea0d24965f298f48295b56bff2341a669",
     "plugin/src/runtime/scheduler/concurrency.ts": "2f462e70c8701a5896b8986eccaa3a617a9de7d1c0cff6f0c4ed5c2bd1fe6a7f",
-    "plugin/src/opencode/event-adapter.ts": "59ffd9afcdda8f293484bcd1b5ba9672e7687f1f431f1b19bfd2dac2f158aca4",
-    "plugin/src/runtime/completion/evaluator.ts": "a84becde3d024c4ef0242d916c83e644b4ad6c6bd3ba953f39086f5920254222",
-    "plugin/src/runtime/continuation/recovery.ts": "f37a167f444801fb8130a6090ee4980200e980bc46bc28740fb05532a92c0cc3"
+    "plugin/src/opencode/event-adapter.ts": "ca5ff8a07a7e94ca5fe484a0e3caca9f987d628d3396a806e7e35a56036dc6dd",
+    "plugin/src/runtime/completion/evaluator.ts": "b3afcdaa1ab177368b06d44192ba5de90d3f8ddfca646f6892a15e11cf935f6d",
+    "plugin/src/runtime/continuation/recovery.ts": "2ca13126564475c8dd8d7743bba7b8d50f3d48555b3d22d76686697d86b1000c"
   },
   "surface_counts": {
     "semantic_routing": 5,
@@ -31,8 +31,8 @@
     "recovery": 8
   },
   "total_cases": 28,
-  "first_pass_digest": "6b9b41f91325a49e50bdc3c786f0bb4237d9a2e866db60e9dc115e3dcf69ce39",
-  "second_pass_digest": "6b9b41f91325a49e50bdc3c786f0bb4237d9a2e866db60e9dc115e3dcf69ce39",
+  "first_pass_digest": "0714dfbd84221e05e48ab47aa0486b3798e551064176366c5e9197c24da52633",
+  "second_pass_digest": "0714dfbd84221e05e48ab47aa0486b3798e551064176366c5e9197c24da52633",
   "nondeterministic_semantic_drift": false,
   "mismatches": [],
   "claim_boundary": "Machine-readable deterministic replay over canonical semantic/routing, scheduler, host-event normalization, completion, and recovery owners. Replay detects semantic output drift; it is not live-provider/T3 evidence."

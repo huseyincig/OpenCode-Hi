@@ -3,11 +3,11 @@
   "kind": "PROMPT_B_INSTALL_UPDATE_LIFECYCLE_ADVERSARIAL_AUDIT",
   "program": "PROMPT_B",
   "section": 25,
-  "status": "FAIL",
+  "status": "PASS",
   "summary": {
     "required": 14,
-    "covered": 13,
-    "violations": 1
+    "covered": 14,
+    "violations": 0
   },
   "invariants": [
     {
@@ -34,7 +34,7 @@
       "invariant": "configure-reconfigure",
       "status": "PASS",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "ba0607d82d669781cc9557e68f0467c789978ed6f983bb6aa1eeda89815c7cb4",
+      "owner_sha256": "d3efd25ceffe78b779576516ba36ef284b338737774a8010cb65a996150ead1a",
       "owner_anchor": "def reconfigure(",
       "proof": "data/validation/install-lifecycle-0.1.0.json",
       "proof_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
@@ -54,7 +54,7 @@
       "invariant": "uninstall",
       "status": "PASS",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "ba0607d82d669781cc9557e68f0467c789978ed6f983bb6aa1eeda89815c7cb4",
+      "owner_sha256": "d3efd25ceffe78b779576516ba36ef284b338737774a8010cb65a996150ead1a",
       "owner_anchor": "def uninstall(",
       "proof": "data/validation/install-lifecycle-0.1.0.json",
       "proof_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
@@ -74,20 +74,20 @@
       "invariant": "rollback-truth",
       "status": "PASS",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "ba0607d82d669781cc9557e68f0467c789978ed6f983bb6aa1eeda89815c7cb4",
+      "owner_sha256": "d3efd25ceffe78b779576516ba36ef284b338737774a8010cb65a996150ead1a",
       "owner_anchor": "def rollback(",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "3996254a759df4b40234960abf251f31c55102b463f00d73c3cc6456b981764e",
+      "proof_sha256": "52534326d5ef8c1ad4664b0122f7dbf0bb583cbcd63016844b92566abe21722d",
       "proof_anchor": "test_r2_rollback_fails_closed_after_unrelated_post_operation_config_drift"
     },
     {
       "invariant": "partial-install-recovery",
       "status": "PASS",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "ba0607d82d669781cc9557e68f0467c789978ed6f983bb6aa1eeda89815c7cb4",
+      "owner_sha256": "d3efd25ceffe78b779576516ba36ef284b338737774a8010cb65a996150ead1a",
       "owner_anchor": "def recover(",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "3996254a759df4b40234960abf251f31c55102b463f00d73c3cc6456b981764e",
+      "proof_sha256": "52534326d5ef8c1ad4664b0122f7dbf0bb583cbcd63016844b92566abe21722d",
       "proof_anchor": "test_r2_recover_completes_interrupted_upgrade_when_config_matches_recorded_after_state"
     },
     {
@@ -114,7 +114,7 @@
       "invariant": "setup-state-permissions",
       "status": "PASS",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "ba0607d82d669781cc9557e68f0467c789978ed6f983bb6aa1eeda89815c7cb4",
+      "owner_sha256": "d3efd25ceffe78b779576516ba36ef284b338737774a8010cb65a996150ead1a",
       "owner_anchor": "def _write_state(",
       "proof": "data/validation/install-lifecycle-0.1.0.json",
       "proof_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
@@ -124,30 +124,30 @@
       "invariant": "publishable-setup-cli-contract",
       "status": "PASS",
       "owner": "package.json",
-      "owner_sha256": "252124a59c15a661891c9ef41100c7718094c40eefc89fb4e22a00b3d7187d15",
+      "owner_sha256": "3c390257a4a1b18c7a24f82b576b8b27f0638be1e2a11b2e766cc8e85e1bead0",
       "owner_anchor": "\"opencode-hi\": \"scripts/opencode-hi.mjs\"",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "3996254a759df4b40234960abf251f31c55102b463f00d73c3cc6456b981764e",
+      "proof_sha256": "52534326d5ef8c1ad4664b0122f7dbf0bb583cbcd63016844b92566abe21722d",
       "proof_anchor": "test_prompt_b_publishable_package_carries_node_bootstrap_legacy_cli_and_direct_runtime_dependency_contract"
     },
     {
       "invariant": "no-source-tree-runtime-dependency",
       "status": "PASS",
       "owner": "package.json",
-      "owner_sha256": "252124a59c15a661891c9ef41100c7718094c40eefc89fb4e22a00b3d7187d15",
-      "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.20\"",
+      "owner_sha256": "3c390257a4a1b18c7a24f82b576b8b27f0638be1e2a11b2e766cc8e85e1bead0",
+      "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.21\"",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "3996254a759df4b40234960abf251f31c55102b463f00d73c3cc6456b981764e",
+      "proof_sha256": "52534326d5ef8c1ad4664b0122f7dbf0bb583cbcd63016844b92566abe21722d",
       "proof_anchor": "test_prompt_b_publishable_package_carries_node_bootstrap_legacy_cli_and_direct_runtime_dependency_contract"
     },
     {
       "invariant": "runtime-run-is-separate-exact-host-boundary",
-      "status": "FAIL",
+      "status": "PASS",
       "owner": "data/validation/install-lifecycle-0.1.0.json",
       "owner_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
       "owner_anchor": "\"external_host_status\": \"SEPARATE_T3_BOUNDARY\"",
       "proof": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
-      "proof_sha256": "cd1a00230fd527cd39b8802fa12a74fb745749f43b562b1da11b3bea9f6c5818",
+      "proof_sha256": "5a9481805f4ea735994b6eb121a14e9effacab92576ff1fb2bea70907d11179c",
       "proof_anchor": "\"status\": \"PASS\""
     }
   ],
@@ -175,7 +175,5 @@
     }
   ],
   "claim_boundary": "Local lifecycle/package-content contract plus exact-host runtime proof reference. This does not claim npm publication or replace §26 fresh-consumer exact-host acceptance.",
-  "violations": [
-    "runtime-run-is-separate-exact-host-boundary:anchor-drift"
-  ]
+  "violations": []
 }

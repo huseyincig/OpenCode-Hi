@@ -15,8 +15,8 @@
       "owner": "scripts/run-fresh-consumer-acceptance.py",
       "owner_sha256": "8bf5c32ba548d6c04f555b7e1dc227b41ca678d7bcccb39eebf4011fdf7f0f70",
       "owner_anchor": "'npm','pack'",
-      "proof": "data/validation/fresh-consumer-opencode-1.18.19.json",
-      "proof_sha256": "13ec5362e228c620384572c131392b8fb2b7694312290f7f28c61dcf8e17381d",
+      "proof": "data/validation/fresh-consumer-opencode-1.18.21.json",
+      "proof_sha256": "e6947ae96de8e111cde5deb094953a87ae6094c04affa4cff2e82d353eeb8289",
       "proof_anchor": "\"installed_from_tarball\": true",
       "status": "PASS"
     },
@@ -25,8 +25,8 @@
       "owner": "scripts/run-fresh-consumer-acceptance.py",
       "owner_sha256": "8bf5c32ba548d6c04f555b7e1dc227b41ca678d7bcccb39eebf4011fdf7f0f70",
       "owner_anchor": "WORK=AGENT_WORK/'acceptance'",
-      "proof": "data/validation/fresh-consumer-opencode-1.18.19.json",
-      "proof_sha256": "13ec5362e228c620384572c131392b8fb2b7694312290f7f28c61dcf8e17381d",
+      "proof": "data/validation/fresh-consumer-opencode-1.18.21.json",
+      "proof_sha256": "e6947ae96de8e111cde5deb094953a87ae6094c04affa4cff2e82d353eeb8289",
       "proof_anchor": "\"project\": \"<acceptance>/consumer/project\"",
       "status": "PASS"
     },
@@ -35,8 +35,8 @@
       "owner": "scripts/run-fresh-consumer-acceptance.py",
       "owner_sha256": "8bf5c32ba548d6c04f555b7e1dc227b41ca678d7bcccb39eebf4011fdf7f0f70",
       "owner_anchor": "'npm','install'",
-      "proof": "data/validation/fresh-consumer-opencode-1.18.19.json",
-      "proof_sha256": "13ec5362e228c620384572c131392b8fb2b7694312290f7f28c61dcf8e17381d",
+      "proof": "data/validation/fresh-consumer-opencode-1.18.21.json",
+      "proof_sha256": "e6947ae96de8e111cde5deb094953a87ae6094c04affa4cff2e82d353eeb8289",
       "proof_anchor": "\"pack_install\": true",
       "status": "PASS"
     },
@@ -45,8 +45,8 @@
       "owner": "scripts/run-fresh-consumer-acceptance.py",
       "owner_sha256": "8bf5c32ba548d6c04f555b7e1dc227b41ca678d7bcccb39eebf4011fdf7f0f70",
       "owner_anchor": "'setup',str(bootstrap)",
-      "proof": "data/validation/fresh-consumer-opencode-1.18.19.json",
-      "proof_sha256": "13ec5362e228c620384572c131392b8fb2b7694312290f7f28c61dcf8e17381d",
+      "proof": "data/validation/fresh-consumer-opencode-1.18.21.json",
+      "proof_sha256": "e6947ae96de8e111cde5deb094953a87ae6094c04affa4cff2e82d353eeb8289",
       "proof_anchor": "\"node_setup\": true",
       "status": "PASS"
     },
@@ -55,8 +55,8 @@
       "owner": "scripts/run-fresh-consumer-acceptance.py",
       "owner_sha256": "8bf5c32ba548d6c04f555b7e1dc227b41ca678d7bcccb39eebf4011fdf7f0f70",
       "owner_anchor": "opencode_bin,'serve'",
-      "proof": "data/validation/fresh-consumer-opencode-1.18.19.json",
-      "proof_sha256": "13ec5362e228c620384572c131392b8fb2b7694312290f7f28c61dcf8e17381d",
+      "proof": "data/validation/fresh-consumer-opencode-1.18.21.json",
+      "proof_sha256": "e6947ae96de8e111cde5deb094953a87ae6094c04affa4cff2e82d353eeb8289",
       "proof_anchor": "\"exact_host_version\": true",
       "status": "PASS"
     },
@@ -65,18 +65,18 @@
       "owner": "scripts/run-fresh-consumer-acceptance.py",
       "owner_sha256": "8bf5c32ba548d6c04f555b7e1dc227b41ca678d7bcccb39eebf4011fdf7f0f70",
       "owner_anchor": "'/experimental/tool/ids?'",
-      "proof": "data/validation/fresh-consumer-opencode-1.18.19.json",
-      "proof_sha256": "13ec5362e228c620384572c131392b8fb2b7694312290f7f28c61dcf8e17381d",
+      "proof": "data/validation/fresh-consumer-opencode-1.18.21.json",
+      "proof_sha256": "e6947ae96de8e111cde5deb094953a87ae6094c04affa4cff2e82d353eeb8289",
       "proof_anchor": "\"hi_tool_count\": 32",
       "status": "PASS"
     },
     {
       "invariant": "no-hidden-dev-dependency",
       "owner": "package.json",
-      "owner_sha256": "c17ba40d902e1d63ef749e241f55b45817cf0f6d451a7a3eaf8f3a420b912a9b",
-      "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.19\"",
-      "proof": "data/validation/fresh-consumer-opencode-1.18.19.json",
-      "proof_sha256": "13ec5362e228c620384572c131392b8fb2b7694312290f7f28c61dcf8e17381d",
+      "owner_sha256": "3c390257a4a1b18c7a24f82b576b8b27f0638be1e2a11b2e766cc8e85e1bead0",
+      "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.21\"",
+      "proof": "data/validation/fresh-consumer-opencode-1.18.21.json",
+      "proof_sha256": "e6947ae96de8e111cde5deb094953a87ae6094c04affa4cff2e82d353eeb8289",
       "proof_anchor": "\"consumer_resolution\": true",
       "status": "PASS"
     },
@@ -85,8 +85,8 @@
       "owner": "scripts/run-fresh-consumer-acceptance.py",
       "owner_sha256": "8bf5c32ba548d6c04f555b7e1dc227b41ca678d7bcccb39eebf4011fdf7f0f70",
       "owner_anchor": "'no_source_tree_in_server_log'",
-      "proof": "data/validation/fresh-consumer-opencode-1.18.19.json",
-      "proof_sha256": "13ec5362e228c620384572c131392b8fb2b7694312290f7f28c61dcf8e17381d",
+      "proof": "data/validation/fresh-consumer-opencode-1.18.21.json",
+      "proof_sha256": "e6947ae96de8e111cde5deb094953a87ae6094c04affa4cff2e82d353eeb8289",
       "proof_anchor": "\"no_source_tree_in_server_log\": true",
       "status": "PASS"
     }
@@ -98,7 +98,7 @@
     "session_material_path": true,
     "node_setup_clean": true
   },
-  "acceptance_receipt": "data/validation/fresh-consumer-opencode-1.18.19.json",
-  "claim_boundary": "Exact OpenCode 1.18.19 fresh-consumer package/runtime acceptance from a packed artifact, with the target derived from the exact root SDK/plugin pin. Host-load uses an isolated local packed wrapper while normal-user Node setup is independently exercised from the same artifact. Provider-backed chat is not claimed.",
+  "acceptance_receipt": "data/validation/fresh-consumer-opencode-1.18.21.json",
+  "claim_boundary": "Exact OpenCode 1.18.21 fresh-consumer package/runtime acceptance from a packed artifact, with the target derived from the exact root SDK/plugin pin. Host-load uses an isolated local packed wrapper while normal-user Node setup is independently exercised from the same artifact. Provider-backed chat is not claimed.",
   "violations": []
 }

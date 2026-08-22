@@ -1,0 +1,103 @@
+{
+  "schema": 1,
+  "kind": "PROMPT_B_FRESH_CONSUMER_EXACT_HOST_ACCEPTANCE",
+  "program": "PROMPT_B",
+  "section": 26,
+  "status": "PASS",
+  "source": {
+    "commit": "fe64d24dbb2304e4e323ed07882229e24a8a3f2e",
+    "tree": "82f1c1f7f4d69044c2a24a6b2555a7bfda214979"
+  },
+  "host": {
+    "opencode": "1.18.21",
+    "platform": "linux",
+    "architecture": "aarch64",
+    "binary": "/workspace/OpenCode-Hi/.agent-work/tools/opencode-1.18.21/opencode",
+    "binary_sha256": "9fed41e7a1a81fad7f549bd1a540cf5a60370a97ed7010c3b1b1658d04eaaf9e",
+    "registry_observation": {
+      "opencode_ai_latest": "1.18.21",
+      "sdk_latest": "1.18.21",
+      "observed_at": "2026-08-22T11:19:04.931417+00:00"
+    }
+  },
+  "package": {
+    "release": "0.2.4",
+    "tarball_name": "opencode-hi-0.2.4.tgz",
+    "tarball_sha256": "a5a33d4c23d57d5e4b5927c18bf1d39a82a95912cb1581581fbc4747e09ea862",
+    "installed_from_tarball": true,
+    "resolved_entrypoint": "file://<acceptance>/consumer/node_modules/opencode-hi/plugin/dist/plugin.js"
+  },
+  "consumer": {
+    "project": "<acceptance>/consumer/project",
+    "wrapper": ".opencode/plugins/hi-packed.js",
+    "node_setup_project": "<acceptance>/bootstrap-project",
+    "node_setup_rc": 0
+  },
+  "material_runtime": {
+    "hi_tool_count": 32,
+    "hi_tools": [
+      "hi_browser_click",
+      "hi_browser_close",
+      "hi_browser_inspect",
+      "hi_browser_navigate",
+      "hi_browser_open",
+      "hi_browser_screenshot",
+      "hi_browser_type",
+      "hi_browser_wait",
+      "hi_context_artifact_add",
+      "hi_context_artifacts",
+      "hi_direct_progress",
+      "hi_doctor",
+      "hi_intent_assess",
+      "hi_ledger",
+      "hi_metrics",
+      "hi_process_cleanup",
+      "hi_process_kill",
+      "hi_process_list",
+      "hi_process_read",
+      "hi_process_spawn",
+      "hi_process_wait",
+      "hi_process_write",
+      "hi_readiness",
+      "hi_role_models",
+      "hi_status",
+      "hi_task_await",
+      "hi_task_cancel",
+      "hi_task_list",
+      "hi_task_peek",
+      "hi_task_start",
+      "hi_temporary_mutation_register",
+      "hi_temporary_mutation_revert"
+    ],
+    "agent_endpoint_count": 15,
+    "coder_agent_observed": true,
+    "coder_projection": {
+      "name": "coder",
+      "mode": "subagent",
+      "description": "Implements scoped changes and produces test and behavior evidence",
+      "native": false,
+      "hidden": null
+    },
+    "session": {
+      "created": true,
+      "version": "1.18.21",
+      "directory": "<acceptance>/consumer/project"
+    },
+    "provider_run": {
+      "attempted": false,
+      "reason": "provider-backed chat is outside fresh package/runtime acceptance and isolated HOME does not borrow user provider credentials"
+    }
+  },
+  "checks": {
+    "pack_install": true,
+    "node_setup": true,
+    "node_setup_no_application_root_node_project": true,
+    "consumer_resolution": true,
+    "server_tool_ids": true,
+    "agent_projection": true,
+    "session_create": true,
+    "no_source_tree_in_server_log": true,
+    "exact_host_version": true
+  },
+  "claim_boundary": "Fresh packed artifact installed outside source tree and loaded by exact OpenCode 1.18.21 through its native local-plugin seam. Normal-user Node setup is independently exercised from the same packed artifact. Provider-backed model execution is outside package/runtime acceptance; tool registration, config/agent projection and session material path are provider-independent."
+}
