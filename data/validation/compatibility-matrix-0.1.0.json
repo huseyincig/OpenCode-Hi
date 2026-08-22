@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "release": "0.1.0",
-  "generation_head": "fe64d24dbb2304e4e323ed07882229e24a8a3f2e",
+  "generation_head": "ee5c8176c02da8297c7fa65b60198c4ac010972c",
   "kind": "GENERATED_RECEIPT_COMPATIBILITY_PROJECTION",
   "generated_at": "2026-08-22T11:18:44.132Z",
   "generator": "scripts/generate-compatibility-matrix.py",
@@ -19,7 +19,7 @@
         "receipt": "data/validation/external-opencode-hi-0.2.4-process-1.18.21-head-fe64d24.json",
         "source_rank": 431,
         "reachable_from_head": true,
-        "head_distance": 0,
+        "head_distance": 2,
         "scope_limitations": [
           "Exact T3 applies only to OpenCode 1.18.21 on linux/aarch64 and exact source fe64d24dbb2304e4e323ed07882229e24a8a3f2e.",
           "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted; arbitrary model-facing shell jobs are outside this claim."
@@ -31,7 +31,7 @@
         "receipt": "data/validation/external-opencode-hi-0.2.4-workspace-1.18.21-head-fe64d24.json",
         "source_rank": 431,
         "reachable_from_head": true,
-        "head_distance": 0,
+        "head_distance": 2,
         "scope_limitations": [
           "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution.",
           "OpenCode workspace support must be enabled before host startup.",
@@ -44,7 +44,7 @@
         "receipt": "data/validation/external-opencode-hi-0.2.4-browser-1.18.21-head-fe64d24.json",
         "source_rank": 431,
         "reachable_from_head": true,
-        "head_distance": 0,
+        "head_distance": 2,
         "scope_limitations": [
           "Browser execution remains task-plan local-http(s) scoped and rejects credential-bearing URLs and arbitrary selectors.",
           "Exact T3 applies only to OpenCode 1.18.21 on linux/aarch64 with real Chromium and exact source fe64d24dbb2304e4e323ed07882229e24a8a3f2e."
@@ -84,7 +84,7 @@
       },
       "limitations": [],
       "source_rank": 42,
-      "head_distance": 389,
+      "head_distance": 391,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -110,7 +110,7 @@
         "browser-execution remains UNSUPPORTED because Hi has no deterministic browser executor/evidence adapter"
       ],
       "source_rank": 68,
-      "head_distance": 363,
+      "head_distance": 365,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -136,7 +136,7 @@
         "browser-execution remains UNSUPPORTED until B1/B2/B3 provide deterministic executor/evidence ownership and exact T3 proof."
       ],
       "source_rank": 103,
-      "head_distance": 328,
+      "head_distance": 330,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -161,7 +161,7 @@
         "browser-execution remains UNSUPPORTED until B1/B2/B3 provide deterministic browser executor/evidence ownership and exact T3 proof."
       ],
       "source_rank": 108,
-      "head_distance": 323,
+      "head_distance": 325,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -185,7 +185,7 @@
         "This receipt must be re-audited before final readiness if host/runtime availability changes."
       ],
       "source_rank": 113,
-      "head_distance": 318,
+      "head_distance": 320,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -211,7 +211,7 @@
         "The exact support claim is bound to OpenCode 1.18.18 and tested runtime source 476590e500949ec6c2416c1502beaa9be4217d9f; later host/runtime-source changes require reacceptance."
       ],
       "source_rank": 123,
-      "head_distance": 308,
+      "head_distance": 310,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -240,7 +240,7 @@
         "BrowserObservation and screenshot artifacts remain observations/artifacts only; they are not Verification Evidence without explicit admissible passed Evidence."
       ],
       "source_rank": 142,
-      "head_distance": 289,
+      "head_distance": 291,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -263,7 +263,7 @@
         "Exact T3 applies to OpenCode 1.18.18 on linux/aarch64 and tested Workspace runtime source 47a3502ab7176d9e008ed7b68ad0a3eb93803783."
       ],
       "source_rank": 143,
-      "head_distance": 288,
+      "head_distance": 290,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -286,7 +286,7 @@
         "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64."
       ],
       "source_rank": 147,
-      "head_distance": 284,
+      "head_distance": 286,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -309,7 +309,7 @@
         "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 with real Chromium."
       ],
       "source_rank": 148,
-      "head_distance": 283,
+      "head_distance": 285,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -332,7 +332,7 @@
         "Environment values are execution-ephemeral native spawn input and are not part of durable ProcessContract or this receipt."
       ],
       "source_rank": 150,
-      "head_distance": 281,
+      "head_distance": 283,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -355,7 +355,7 @@
         "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 with real Chromium and current execution-owner isolation bytes."
       ],
       "source_rank": 153,
-      "head_distance": 278,
+      "head_distance": 280,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -378,7 +378,7 @@
         "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted; foreign processes are not adopted by PID alone."
       ],
       "source_rank": 153,
-      "head_distance": 278,
+      "head_distance": 280,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -401,7 +401,7 @@
         "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 and generic ChildSessionPort binding remained exact."
       ],
       "source_rank": 153,
-      "head_distance": 278,
+      "head_distance": 280,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -424,7 +424,7 @@
         "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 with real Chromium and source 5210a12a7b607e0c9048749fa74a4c8b801cd924; runtime mocks cannot promote T3."
       ],
       "source_rank": 162,
-      "head_distance": 269,
+      "head_distance": 271,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -447,7 +447,7 @@
         "Runtime HostCapability remains OBSERVED-only; this external receipt owns T3 certification."
       ],
       "source_rank": 162,
-      "head_distance": 269,
+      "head_distance": 271,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -470,7 +470,7 @@
         "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 and source 5210a12a7b607e0c9048749fa74a4c8b801cd924; runtime mocks cannot promote T3."
       ],
       "source_rank": 162,
-      "head_distance": 269,
+      "head_distance": 271,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -493,7 +493,7 @@
         "Exact T3 host acceptance was OpenCode 1.18.18 on linux/aarch64 and source 6fe74d7786e25cb6894ddca7d4408a17220cc936; runtime mocks cannot promote T3."
       ],
       "source_rank": 166,
-      "head_distance": 265,
+      "head_distance": 267,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -516,7 +516,7 @@
         "Exact T3 applies only to OpenCode 1.18.18 on linux/aarch64 with real Chromium and exact source aa9a402f04fc40d53823c3e1b5e0190362dc5e75."
       ],
       "source_rank": 178,
-      "head_distance": 253,
+      "head_distance": 255,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -539,7 +539,7 @@
         "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted."
       ],
       "source_rank": 178,
-      "head_distance": 253,
+      "head_distance": 255,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -562,7 +562,7 @@
         "Exact T3 applies only to OpenCode 1.18.18 on linux/aarch64 and exact source aa9a402f04fc40d53823c3e1b5e0190362dc5e75."
       ],
       "source_rank": 178,
-      "head_distance": 253,
+      "head_distance": 255,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -585,7 +585,7 @@
         "Exact T3 applies only to OpenCode 1.18.18 on linux/aarch64 with real Chromium and exact source 3ca843d1443e94860f247fb5ac9b5192e391fec1."
       ],
       "source_rank": 185,
-      "head_distance": 246,
+      "head_distance": 248,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -608,7 +608,7 @@
         "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted; arbitrary model-facing shell jobs are outside this claim."
       ],
       "source_rank": 185,
-      "head_distance": 246,
+      "head_distance": 248,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -631,7 +631,7 @@
         "Exact T3 applies only to OpenCode 1.18.18 on linux/aarch64 and exact source 3ca843d1443e94860f247fb5ac9b5192e391fec1."
       ],
       "source_rank": 185,
-      "head_distance": 246,
+      "head_distance": 248,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -654,7 +654,7 @@
         "Exact T3 applies only to OpenCode 1.18.18 on linux/aarch64 with real Chromium and exact source 8bc3f56b200d88c137270280fd5d40c256dbb7fd."
       ],
       "source_rank": 217,
-      "head_distance": 214,
+      "head_distance": 216,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -677,7 +677,7 @@
         "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted; arbitrary model-facing shell jobs are outside this claim."
       ],
       "source_rank": 217,
-      "head_distance": 214,
+      "head_distance": 216,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -700,7 +700,7 @@
         "Exact T3 applies only to OpenCode 1.18.18 on linux/aarch64 and exact source 8bc3f56b200d88c137270280fd5d40c256dbb7fd."
       ],
       "source_rank": 217,
-      "head_distance": 214,
+      "head_distance": 216,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -723,7 +723,7 @@
         "Exact T3 applies only to OpenCode 1.18.18 on linux/aarch64 with real Chromium and exact source b8973df961bd45d11b5c4a55e7c55da419605a95."
       ],
       "source_rank": 223,
-      "head_distance": 208,
+      "head_distance": 210,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -746,7 +746,7 @@
         "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted; arbitrary model-facing shell jobs are outside this claim."
       ],
       "source_rank": 223,
-      "head_distance": 208,
+      "head_distance": 210,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -769,7 +769,7 @@
         "Exact T3 applies only to OpenCode 1.18.18 on linux/aarch64 and exact source b8973df961bd45d11b5c4a55e7c55da419605a95."
       ],
       "source_rank": 223,
-      "head_distance": 208,
+      "head_distance": 210,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -792,7 +792,7 @@
         "Exact T3 applies only to OpenCode 1.18.18 on linux/aarch64 with real Chromium and exact source 0f35d83db2280cc8b1097db6455e70acce741dc7."
       ],
       "source_rank": 228,
-      "head_distance": 203,
+      "head_distance": 205,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -815,7 +815,7 @@
         "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted; arbitrary model-facing shell jobs are outside this claim."
       ],
       "source_rank": 228,
-      "head_distance": 203,
+      "head_distance": 205,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -838,7 +838,7 @@
         "Exact T3 applies only to OpenCode 1.18.18 on linux/aarch64 and exact source 0f35d83db2280cc8b1097db6455e70acce741dc7."
       ],
       "source_rank": 228,
-      "head_distance": 203,
+      "head_distance": 205,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -861,7 +861,7 @@
         "Exact T3 applies only to OpenCode 1.18.18 on linux/aarch64 with real Chromium and exact source ef41e3dd38dbc9c89a5cb871b7cb09135def95d8."
       ],
       "source_rank": 237,
-      "head_distance": 194,
+      "head_distance": 196,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -884,7 +884,7 @@
         "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted; arbitrary model-facing shell jobs are outside this claim."
       ],
       "source_rank": 237,
-      "head_distance": 194,
+      "head_distance": 196,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -907,7 +907,7 @@
         "Exact T3 applies only to OpenCode 1.18.18 on linux/aarch64 and exact source ef41e3dd38dbc9c89a5cb871b7cb09135def95d8."
       ],
       "source_rank": 237,
-      "head_distance": 194,
+      "head_distance": 196,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -930,7 +930,7 @@
         "Exact T3 applies only to OpenCode 1.18.18 on linux/aarch64 with real Chromium and exact source 69d34dd605f8cd20bea389c374304649d0c7fd1f."
       ],
       "source_rank": 357,
-      "head_distance": 74,
+      "head_distance": 76,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -954,7 +954,7 @@
         "The attach-ready launch barrier is certified on the POSIX reference-host path; this receipt does not claim equivalent Windows PTY behavior."
       ],
       "source_rank": 357,
-      "head_distance": 74,
+      "head_distance": 76,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -977,7 +977,7 @@
         "Exact T3 applies only to OpenCode 1.18.18 on linux/aarch64 and exact source 69d34dd605f8cd20bea389c374304649d0c7fd1f."
       ],
       "source_rank": 357,
-      "head_distance": 74,
+      "head_distance": 76,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -1142,7 +1142,7 @@
         "Exact T3 applies only to OpenCode 1.18.19 on linux/aarch64 with real Chromium and exact source d741c1a4870bb9afa38b99ae5fb62b4c328c731f."
       ],
       "source_rank": 401,
-      "head_distance": 30,
+      "head_distance": 32,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -1166,7 +1166,7 @@
         "The attach-ready launch barrier is certified on the POSIX reference-host path; this receipt does not claim equivalent Windows PTY behavior."
       ],
       "source_rank": 401,
-      "head_distance": 30,
+      "head_distance": 32,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -1190,7 +1190,7 @@
         "Exact T3 applies only to OpenCode 1.18.19 on linux/aarch64 and exact source d741c1a4870bb9afa38b99ae5fb62b4c328c731f."
       ],
       "source_rank": 401,
-      "head_distance": 30,
+      "head_distance": 32,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -1213,7 +1213,7 @@
         "Exact T3 applies only to OpenCode 1.18.19 on linux/aarch64 with real Chromium and exact source c0f09f54a93e6863fbfbfec6faa28649e2e4eb70."
       ],
       "source_rank": 410,
-      "head_distance": 21,
+      "head_distance": 23,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -1237,7 +1237,7 @@
         "The attach-ready launch barrier is certified on the POSIX reference-host path; this receipt does not claim equivalent Windows PTY behavior."
       ],
       "source_rank": 410,
-      "head_distance": 21,
+      "head_distance": 23,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -1261,7 +1261,7 @@
         "Exact T3 applies only to OpenCode 1.18.19 on linux/aarch64 and exact source c0f09f54a93e6863fbfbfec6faa28649e2e4eb70."
       ],
       "source_rank": 410,
-      "head_distance": 21,
+      "head_distance": 23,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -1284,7 +1284,7 @@
         "Exact T3 applies only to OpenCode 1.18.19 on linux/aarch64 with real Chromium and exact source 03a816f930e3172ec84f733bae081768e2ea1a14."
       ],
       "source_rank": 420,
-      "head_distance": 11,
+      "head_distance": 13,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -1308,7 +1308,7 @@
         "The attach-ready launch barrier is certified on the POSIX reference-host path; this receipt does not claim equivalent Windows PTY behavior."
       ],
       "source_rank": 420,
-      "head_distance": 11,
+      "head_distance": 13,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -1332,7 +1332,7 @@
         "Exact T3 applies only to OpenCode 1.18.19 on linux/aarch64 and exact source 03a816f930e3172ec84f733bae081768e2ea1a14."
       ],
       "source_rank": 420,
-      "head_distance": 11,
+      "head_distance": 13,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -1355,7 +1355,7 @@
         "Exact T3 applies only to OpenCode 1.18.19 on linux/aarch64 with real Chromium and exact source c3bc16ae42ecb06ded7ecb187794e56cb0a2e83d."
       ],
       "source_rank": 429,
-      "head_distance": 2,
+      "head_distance": 4,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -1379,7 +1379,7 @@
         "The attach-ready launch barrier is certified on the POSIX reference-host path; this receipt does not claim equivalent Windows PTY behavior."
       ],
       "source_rank": 429,
-      "head_distance": 2,
+      "head_distance": 4,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -1403,7 +1403,7 @@
         "Exact T3 applies only to OpenCode 1.18.19 on linux/aarch64 and exact source c3bc16ae42ecb06ded7ecb187794e56cb0a2e83d."
       ],
       "source_rank": 429,
-      "head_distance": 2,
+      "head_distance": 4,
       "reachable_from_head": true,
       "current_for_capabilities": [],
       "classification": "HISTORICAL_EXACT_PROOF"
@@ -1426,7 +1426,7 @@
         "Exact T3 applies only to OpenCode 1.18.21 on linux/aarch64 with real Chromium and exact source fe64d24dbb2304e4e323ed07882229e24a8a3f2e."
       ],
       "source_rank": 431,
-      "head_distance": 0,
+      "head_distance": 2,
       "reachable_from_head": true,
       "current_for_capabilities": [
         "browser-execution"
@@ -1452,7 +1452,7 @@
         "The attach-ready launch barrier is certified on the POSIX reference-host path; this receipt does not claim equivalent Windows PTY behavior."
       ],
       "source_rank": 431,
-      "head_distance": 0,
+      "head_distance": 2,
       "reachable_from_head": true,
       "current_for_capabilities": [
         "process-lifecycle"
@@ -1478,7 +1478,7 @@
         "Exact T3 applies only to OpenCode 1.18.21 on linux/aarch64 and exact source fe64d24dbb2304e4e323ed07882229e24a8a3f2e."
       ],
       "source_rank": 431,
-      "head_distance": 0,
+      "head_distance": 2,
       "reachable_from_head": true,
       "current_for_capabilities": [
         "workspace-isolation-binding"
