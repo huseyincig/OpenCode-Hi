@@ -8,7 +8,7 @@
   "inputs": {
     "compatibility_baseline": {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
-      "sha256": "e0728ec5b96d84f06b19a8cb20d22bfebac97cd9babb1126fa1e22832f13ae4e"
+      "sha256": "e636a5b4e179770b113d84dc9f1849537a3dc5b29da21cbe8d8c6e5c483eccbd"
     },
     "current_release_gates": {
       "path": "data/validation/release-gates.json",

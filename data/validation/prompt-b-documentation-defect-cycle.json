@@ -34,10 +34,10 @@
       "step": "docs-owner-impact-check",
       "status": "PASS",
       "owner": "data/documentation-ownership.json",
-      "owner_sha256": "def8950d64b50eab1dff2ff705f87a03ffb9eb9a7ce573737005477f9af49e41",
+      "owner_sha256": "5be69641560b78658322356840e5ef90ad8e036f7d753dd771bb21a127e7e1d2",
       "owner_anchor": "one-current-area-one-public-owner",
       "proof": "data/validation/documentation-inventory.json",
-      "proof_sha256": "3804dac60e17a68dc7577990ab50e07590a2d7d270b486b29a43a2576cf4a72a",
+      "proof_sha256": "f8de19eb67e02844b88779f4357bad89625554cab748bf8ec5199deff0c6b063",
       "proof_anchor": "\"canonical_ownership\""
     },
     {
@@ -47,7 +47,7 @@
       "owner_sha256": "d28be108c398a85b956fe702e75002975f29e85074205dea7192de9307883c15",
       "owner_anchor": "Generated from",
       "proof": "data/validation/documentation-parity.json",
-      "proof_sha256": "09c885cab44f68dc2f1a8ffed100caa6cbc1bb8cd84caacb0c68c9db025b192b",
+      "proof_sha256": "93369b9150569d8d0a6be5bff40ac88ab51fc47a71f4c3c98caefce1899ebeb9",
       "proof_anchor": "\"status\": \"PASS\""
     },
     {
@@ -57,7 +57,7 @@
       "owner_sha256": "85298e6a9869f3ad199cdfaec0d6435c2daf84abb8770b14e1c53586df145aba",
       "owner_anchor": "documentation parity",
       "proof": "data/validation/documentation-parity.json",
-      "proof_sha256": "09c885cab44f68dc2f1a8ffed100caa6cbc1bb8cd84caacb0c68c9db025b192b",
+      "proof_sha256": "93369b9150569d8d0a6be5bff40ac88ab51fc47a71f4c3c98caefce1899ebeb9",
       "proof_anchor": "\"violations\": []"
     }
   ],

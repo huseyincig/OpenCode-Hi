@@ -14,8 +14,8 @@
   "schema": 1,
   "section": 37,
   "source_binding": {
-    "tested_git_commit": "9d0cb14ec4971df3d1984fd295c497224ca684ce",
-    "tested_git_tree": "214a3e2f95114927359baa8c59fd565618d37cac"
+    "tested_git_commit": "b067c23dc54636e3dbeb2a453a46b38dcf8c231e",
+    "tested_git_tree": "ab6824f93b0bdd3b026c26ead839b1eac01102e8"
   },
   "status": "PASS",
   "terminal": {
