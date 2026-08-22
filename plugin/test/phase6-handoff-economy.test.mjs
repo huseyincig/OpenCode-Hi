@@ -36,9 +36,11 @@ test('Phase 6 methodology and visual proof rules are lazy and task-specific',()=
   assert.match(methodology,/METHODOLOGY EXIT REQUIREMENTS: hi-test-driven-development/)
   assert.match(methodology,/Methodology exits require fresh passed structured evidence/)
   const visual=workerHandoffText({...base,required_evidence:['visual-evidence'],methodologies:['hi-browser-testing','hi-visual-qa'],methodology_exit_requirements:['hi-browser-testing: task-success, no-open-issues, browser-evidence','hi-visual-qa: task-success, no-open-issues, visual-evidence'],expected_output:{...base.expected_output,findings:true}})
+  assert.match(visual,/evidence\.kind="visual-evidence"/)
   assert.match(visual,/evidence\.outcome="passed"/)
   assert.match(visual,/Never manufacture PASS from a BrowserObservation or screenshot alone/)
-  assert.match(visual,/actual Hi browser observation/)
+  assert.match(visual,/actual Hi browser evidence_ref/)
+  assert.match(visual,/Return the WorkerResult directly in assistant text/)
 })
 
 test('Phase 6 reviewer-only finding schema is not paid by ordinary coder handoffs',()=>{

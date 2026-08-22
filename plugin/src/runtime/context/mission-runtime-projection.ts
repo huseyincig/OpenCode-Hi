@@ -1,7 +1,7 @@
 import type { MissionState,WorkerState } from '../mission/types.js'
 import { clipText } from './budget.js'
 import { syncMissionGates } from '../gates/gates.js'
-import { projectControlDecision } from '../completion/control-projection.js'
+import { controlDecisionInstruction,projectControlDecision } from '../completion/control-projection.js'
 
 export interface MissionRuntimeProjection {
   objective:string
@@ -25,13 +25,10 @@ function methodologySummary(m:MissionState,worker?:WorkerState):string[]{
   return compactList(m.methodology.parent_loaded_methodologies??[],8)
 }
 function nextAction(m:MissionState,worker?:WorkerState,projectRoot?:string):string{
-  if(m.continuation.pending_nudge?.instruction){syncMissionGates(m,projectRoot);return clipText(m.continuation.pending_nudge.instruction,600)}
-  const decision=projectControlDecision(m,projectRoot)
-  if(decision.action==='WAIT'){const exact=worker&&['created','queued','starting','busy'].includes(worker.status)?`worker:${worker.id}:${worker.status}`:decision.wait_for[0];return `wait:${exact??'active-runtime'}`}
-  if(decision.action==='VERIFY'){const missing=[...new Set(decision.missing_evidence.map(x=>x.kind))].join(',')||'required-evidence',route=decision.verification_route_status==='available'?`route=${decision.verification_routes.map(x=>x.command).join(' || ')}`:decision.verification_route_status==='none'?'route=none; no-admissible-repo-native-verifier; report-gap-and-stop':'route=unknown';return `verify:${missing}; ${route}; evidence-owned; do-not-use=${decision.ineffective_actions.join(',')}`}
-  if(decision.action==='USER_ACTION_REQUIRED')return 'user-action:canonical-gate'
-  if(decision.action==='RECONCILE')return 'reconcile:canonical-state'
-  if(decision.action==='DONE')return 'stop:mission-complete'
+  const decision=projectControlDecision(m,projectRoot),canonical=controlDecisionInstruction(m,decision)
+  if(m.continuation.pending_nudge?.instruction){syncMissionGates(m,projectRoot);return clipText(`${canonical}; runtime-note=${m.continuation.pending_nudge.instruction}`,900)}
+  if(decision.action!=='CONTINUE')return canonical
+  if(canonical!=='continue:canonical-open-obligation; use the existing owner/tool for the remaining obligation; do not restart planning')return canonical
   if(!worker&&m.execution.execution_mode==='parallel'&&m.execution.tasks.length===0)return 'delegate:parallel-work-via-hi_task_start'
   if(!worker&&m.methodology.methodology_needs.length){const need=m.methodology.methodology_needs[0];return `methodology:${need.name}:${clipText(need.reason,260)}`}
   return 'continue:canonical-open-obligation'

@@ -66,6 +66,8 @@ export function collectRepoContext(root, nativeContext = {}) {
     for (const name of ['README.md', 'AGENTS.md', 'CONTRIBUTING.md', 'opencode.json', 'opencode.jsonc'])
         if (has(nativeRoot, name))
             markers.push(name);
+    if (has(nativeRoot, '.opencode'))
+        markers.push('.opencode/');
     try {
         const top = readdirSync(nativeRoot, { withFileTypes: true }).filter((x) => x.isDirectory()).map((x) => x.name);
         for (const name of ['src', 'app', 'packages', 'apps', 'lib', 'test', 'tests'])

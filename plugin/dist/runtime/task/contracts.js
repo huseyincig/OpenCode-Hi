@@ -21,7 +21,7 @@ export function workerHandoffText(h, maxChars = DEFAULT_CONTEXT_BUDGET.max_hando
         reviewFindingInstruction,
         'Optional signals only when supported: context_gap=scope|iterative|none; failure_finding=ci-build|unknown-root-cause|none.',
         exitRequirements.length ? 'Methodology exits require fresh passed structured evidence; summary wording alone never satisfies an exit. targeted-test-evidence may use evidence.kind=targeted-tests.' : '',
-        visualProof ? 'Set evidence.outcome="passed" (or pass=true) only after the claimed check actually passes. Never manufacture PASS from a BrowserObservation or screenshot alone; browser/visual/accessibility PASS must cite the actual Hi browser observation(s) in evidence_refs.' : '',
+        visualProof ? 'For visual-check / hi-visual-qa, emit evidence.kind="visual-evidence" with evidence.outcome="passed" only after the claimed browser-visible state actually passes; include the actual Hi browser evidence_ref values in evidence_refs. Never manufacture PASS from a BrowserObservation or screenshot alone. Return the WorkerResult directly in assistant text; never write a temporary/result JSON file.' : '',
         'Optional methodology_observations only for reusable project-specific HOW; cite exact returned evidence.kind values, never project facts, one-off evidence, or control-plane policy.',
         'For changed files outside SCOPE, return scope_expansions {file, necessary, reason}; otherwise remove collateral changes before DONE.'
     ].filter(Boolean);

@@ -9,7 +9,7 @@
       "area": "mission",
       "canonical_owner": "MissionStore",
       "owner_path": "plugin/src/runtime/mission/mission-store.ts",
-      "owner_sha256": "3a0dc35143aa67d18b6ed1fef90f08937083d686d5623c42027811e72ab03a1b",
+      "owner_sha256": "69941c09ccf43778c836fc0935f5136f70b6d8c315a3d6ae6cc2073c8b760008",
       "producer_or_contract_paths": [
         "plugin/src/runtime/mission/types.ts",
         "plugin/src/runtime/mission/validators.ts"
@@ -27,7 +27,7 @@
       "area": "task-runtime",
       "canonical_owner": "TaskRuntime",
       "owner_path": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "5e2abe1f85175657a15e2d0ca8d3004a4fe7ead87e27386c1e475a4b1ddb6843",
+      "owner_sha256": "9bece4d1cf209e71da5565d667ec5f0c5eedaba41e7a3a5738788730100bf2d5",
       "producer_or_contract_paths": [
         "plugin/src/runtime/task/contracts.ts"
       ],
@@ -101,7 +101,7 @@
       "area": "routing-models",
       "canonical_owner": "Hi routing/model resolver",
       "owner_path": "plugin/src/runtime/routing/model-resolver.ts",
-      "owner_sha256": "52bdaaa9b382d34c2dbf8c1be064f326e39ad0c6b9204bdbd9e44b169115685e",
+      "owner_sha256": "e59fbc058f95e457acdcf53f74d69c9706a24a7da8c4f6e8aae4b45705c450bc",
       "producer_or_contract_paths": [
         "plugin/src/runtime/routing/execution-profile.ts",
         "plugin/src/runtime/routing/minimum-team.ts",
@@ -194,7 +194,7 @@
       "area": "context",
       "canonical_owner": "MissionRuntimeProjection + ContextArtifactStore",
       "owner_path": "plugin/src/runtime/context/mission-runtime-projection.ts",
-      "owner_sha256": "cd1211557db86d81fd4ca3c353a23597a82bf672d8185dc1a10039fe83e73c2c",
+      "owner_sha256": "b69ccbc0f5fb97fbe25b37b91b02bcdbd610391fc3e6b1e31bb17ccd42f17688",
       "producer_or_contract_paths": [
         "plugin/src/runtime/context/budget-estimator.ts",
         "plugin/src/runtime/context/artifact-store.ts",
@@ -272,7 +272,7 @@
       "area": "completion-continuation",
       "canonical_owner": "Completion + continuation",
       "owner_path": "plugin/src/runtime/completion/evaluator.ts",
-      "owner_sha256": "b3afcdaa1ab177368b06d44192ba5de90d3f8ddfca646f6892a15e11cf935f6d",
+      "owner_sha256": "78af108c2539f62e3ebd3af1522939fe50fa6ede39409c4f3193268753be8489",
       "producer_or_contract_paths": [
         "plugin/src/runtime/continuation/evaluator.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
@@ -327,7 +327,7 @@
       "area": "browser",
       "canonical_owner": "BrowserObservation + BrowserExecutor",
       "owner_path": "plugin/src/contracts/browser-observation.ts",
-      "owner_sha256": "bdaa9047f895999a62039c17906bb8214c9af98394a0f68c1a311abc5f258624",
+      "owner_sha256": "aaf9308a7b91283a5450d3468919a1043c32291a6f3c85cc7fd72f20fde7bbae",
       "producer_or_contract_paths": [
         "plugin/src/runtime/browser/executor.ts",
         "plugin/src/runtime/browser/backend-policy.ts",

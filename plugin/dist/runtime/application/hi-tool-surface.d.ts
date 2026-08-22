@@ -5,6 +5,7 @@ import type { TaskRuntime } from '../task/task-runtime.js';
 import type { ProcessRuntime } from '../process/runtime.js';
 import type { WorkspaceRuntime } from '../workspace/runtime.js';
 import type { BrowserExecutor } from '../browser/executor.js';
+import type { LocalPreviewManager } from '../browser/local-preview.js';
 import type { HostCapabilityView, HostNativeSessionPort } from '../host/port.js';
 import type { RuntimeScopedStores } from './runtime-scoped-stores.js';
 export interface PluginRuntimeState {
@@ -20,7 +21,9 @@ export declare function createHiToolSurface(input: {
     processRuntime: ProcessRuntime;
     workspaceRuntime?: WorkspaceRuntime;
     browserExecutor?: BrowserExecutor;
+    previewManager?: LocalPreviewManager;
     projectRoot: string;
+    workingDirectory?: string;
     capabilities: HostCapabilityView;
     native: HostNativeSessionPort;
     getModels: () => AvailableModel[];

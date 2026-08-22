@@ -117,3 +117,18 @@ test('hi_task_start canonicalizes semicolon-separated multi-path scope before sc
     await hooks.dispose?.()
   }finally{rmSync(root,{recursive:true,force:true})}
 })
+
+
+test('hi_task_start accepts OpenCode nested input shape without losing role category scope or obligation binding',async()=>{
+  const root=temp('hi-start-nested-input-');let child=0
+  const c={app:{log:async()=>{}},provider:{list:async()=>({data:[]})},session:{create:async()=>({data:{id:`nested-child-${++child}`}}),promptAsync:async()=>({data:{}}),diff:async()=>({data:[]}),abort:async()=>({data:{}})}}
+  try{
+    const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:c});await hooks.config({})
+    const sid='nested-parent';await hooks['chat.message']({sessionID:sid,message:{role:'user',parts:[{type:'text',text:'Change src/a.ts'}]}},{parts:[]});await assessPluginMission(hooks,sid,{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['implementation'],likely_verification:[],likely_targets:['src/a.ts']})
+    const out=JSON.parse(await hooks.tool.hi_task_start.execute({input:{objective:'bounded change',role:'coder',category:'quick',scope:'src/a.ts',obligation_ids:'o-implementation'}},{sessionID:sid}))
+    assert.ok(out.task_id);assert.equal(out.control.action,'WAIT')
+    const listed=JSON.parse(await hooks.tool.hi_task_list.execute({},{sessionID:sid})),task=listed.find(x=>x.task.id===out.task_id)?.task
+    assert.equal(task.role,'coder');assert.equal(task.category,'quick');assert.deepEqual(task.scope,['src/a.ts']);assert.deepEqual(task.requiredEvidence,[]);assert.deepEqual(task.obligation_ids,['o-implementation'])
+    await hooks.dispose?.()
+  }finally{rmSync(root,{recursive:true,force:true})}
+})

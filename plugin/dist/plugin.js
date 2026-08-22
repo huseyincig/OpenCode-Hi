@@ -41,10 +41,10 @@ export const HiPlugin = async (ctx) => {
     services.persistence.save(services.store.all());
     const pendingNativePermissions = new Map();
     const eventController = new RuntimeEventController({ state, host, services, projectAuthority, pendingNativePermissions, projectRoot });
-    const { toolSurface, reconfigure } = createHiToolSurface({ state, store: services.store, tasks: services.tasks, processRuntime: services.processRuntime, workspaceRuntime: services.workspaceRuntime, browserExecutor: services.browserExecutor, projectRoot, capabilities: host.capabilities, native: host.nativeSession, getModels: host.getModels, scopedStores: services.scopedStores, getBrowserBootstrapStatus: services.getBrowserBootstrapStatus });
+    const { toolSurface, reconfigure } = createHiToolSurface({ state, store: services.store, tasks: services.tasks, processRuntime: services.processRuntime, workspaceRuntime: services.workspaceRuntime, browserExecutor: services.browserExecutor, previewManager: services.previewManager, projectRoot, workingDirectory: ctx.directory, capabilities: host.capabilities, native: host.nativeSession, getModels: host.getModels, scopedStores: services.scopedStores, getBrowserBootstrapStatus: services.getBrowserBootstrapStatus });
     void host.log('info', 'OpenCode-Hi plugin initialized', { directory: ctx.directory, models: host.getModels().length, restored: services.store.all().length, uncleanShutdown: services.persistence.lastLoadReport.uncleanShutdown === true, capabilities: host.capabilities, browser: browserHealth });
     // Acquire only after initialization succeeds so a failed init cannot leave a stale process-global lease.
     const instanceLease = acquireHiRuntimeInstance(String(projectRoot), ctx.client);
-    return createOpenCodeHooks({ state, host, services, projectRoot, packagedSkillsDir, projectAuthority, toolSurface, reconfigureToolSurface: reconfigure, eventController, instanceLease });
+    return createOpenCodeHooks({ state, host, services, projectRoot, workingDirectory: ctx.directory, packagedSkillsDir, projectAuthority, toolSurface, reconfigureToolSurface: reconfigure, eventController, instanceLease });
 };
 export default HiPlugin;

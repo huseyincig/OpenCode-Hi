@@ -114,6 +114,15 @@ export class PlaywrightBrowserAdapter {
     catch (error) {
         return this.observation(c, s, 'type', s.url, 'FAILED', undefined, undefined, String(error));
     } }
+    async key(c, request) { const s = this.sessions.get(c.task_id); if (!s?.url || s.executionOwnerRef !== c.execution_owner_ref)
+        throw new Error('Browser session is not owned by the current execution identity'); const key = String(request.key ?? '').trim(); if (!/^(?:ArrowLeft|ArrowRight|ArrowUp|ArrowDown|Enter|Space|Escape|Tab|Backspace|Delete|Home|End|PageUp|PageDown|[A-Za-z0-9])$/.test(key))
+        throw new Error('Browser key must be one bounded navigation/action key or one alphanumeric key'); try {
+        await s.page.keyboard.press(key);
+        return this.snapshot(c, 'key');
+    }
+    catch (error) {
+        return this.observation(c, s, 'key', s.url, 'FAILED', undefined, undefined, String(error));
+    } }
     async inspect(c, request = {}) { if (request.selector)
         throw new Error('Playwright browser adapter does not expose arbitrary selector inspection'); return this.snapshot(c, 'inspect'); }
     async screenshot(c) { const s = this.sessions.get(c.task_id); if (!s?.url || s.executionOwnerRef !== c.execution_owner_ref)

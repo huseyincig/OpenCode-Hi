@@ -54,7 +54,7 @@ function normalizeEvidence(raw) {
     const values = Array.isArray(raw) ? raw : (record(raw) ? Object.entries(raw).map(([kind, value]) => ({ kind, summary: typeof value === 'string' ? value : JSON.stringify(value) })) : []);
     return values.slice(0, 40).flatMap((v) => { if (!record(v))
         return []; const kind = String(v.kind ?? ''); if (!KIND_SET.has(kind))
-        return []; const outcome = typeof v.outcome === 'string' && OUTCOME_SET.has(v.outcome) ? v.outcome : undefined; return [{ kind, summary: clip(v.summary, 1000), scope: Array.isArray(v.scope) ? v.scope.map(String).slice(0, 50) : undefined, evidence_refs: Array.isArray(v.evidence_refs) ? [...new Set(v.evidence_refs.map(String).filter(Boolean))].slice(0, 20) : undefined, pass: typeof v.pass === 'boolean' ? v.pass : undefined, outcome, reason: typeof v.reason === 'string' ? clip(v.reason, 1000) : undefined }]; });
+        return []; const outcome = typeof v.outcome === 'string' && OUTCOME_SET.has(v.outcome) ? v.outcome : undefined, rawRefs = Array.isArray(v.evidence_refs) ? v.evidence_refs : Array.isArray(v.refs) ? v.refs : undefined, summarySource = typeof v.summary === 'string' ? v.summary : typeof v.description === 'string' ? v.description : typeof v.detail === 'string' ? v.detail : ''; return [{ kind, summary: clip(summarySource, 1000), scope: Array.isArray(v.scope) ? v.scope.map(String).slice(0, 50) : undefined, evidence_refs: rawRefs ? [...new Set(rawRefs.map(String).filter(Boolean))].slice(0, 20) : undefined, pass: typeof v.pass === 'boolean' ? v.pass : undefined, outcome, reason: typeof v.reason === 'string' ? clip(v.reason, 1000) : undefined }]; });
 }
 function normalizeMethodologyObservations(raw) {
     if (!Array.isArray(raw))

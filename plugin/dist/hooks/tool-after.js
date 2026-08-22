@@ -72,7 +72,7 @@ function reconcileDeterministicDirectImplementation(m, projectRoot) {
     appendLedger(m, 'implementation.direct-evidence-reconciled', { payload: { obligation: o.id, files: directFiles.slice(0, 30), evidence_refs: envelope.checks.flatMap(check => check.evidence_refs).slice(0, 30), source: 'current-git-diff+fresh-required-verification' } });
     return true;
 }
-export function createToolAfterHook(store, background, events, projectRoot) {
+export function createToolAfterHook(store, background, events, projectRoot, workingDirectory) {
     return async (input, output) => {
         const sid = input?.sessionID ?? input?.sessionId, child = sid && background ? background.list().find(w => w.session_id === sid) : undefined, m = child ? store.get(child.parent_session_id) : store.get(sid);
         if (!m)
@@ -81,7 +81,8 @@ export function createToolAfterHook(store, background, events, projectRoot) {
             return;
         const tool = String(input?.tool ?? ''), args = input?.args ?? {}, text = outputText(output);
         const childTask = child ? m.execution.tasks.find(t => t.id === child.task_id) : undefined, childVerificationOwner = child && childTask ? { source: `bash:child:${child.id}`, trusted_source_class: 'host-tool-observation', source_session_id: String(sid), task_id: childTask.id, obligation_ids: childTask.obligation_ids.filter(id => m.execution.obligations.some(o => o.id === id && o.kind === 'verification')), scope: [...childTask.scope], producer_attempt: evidenceProducerAttemptForWorker(m, child) } : undefined;
-        observeToolAfter(m, tool, args, output, projectRoot, childVerificationOwner);
+        const evidenceRoot = m.identity.intent.scope === 'local' ? (workingDirectory ?? projectRoot) : projectRoot;
+        observeToolAfter(m, tool, args, output, evidenceRoot, childVerificationOwner);
         if (tool === 'skill') {
             const name = requestedMethodologyName(args);
             if (name) {
@@ -120,15 +121,15 @@ export function createToolAfterHook(store, background, events, projectRoot) {
             }
         }
         for (const o of m.execution.obligations.filter(x => x.kind === 'verification' && x.status === 'open'))
-            if (verificationSatisfied(m, o.id, projectRoot).ok) {
+            if (verificationSatisfied(m, o.id, evidenceRoot).ok) {
                 o.status = 'closed';
                 o.closedAt = Date.now();
                 appendLedger(m, 'obligation.closed', { payload: { obligation: o.id, owner: 'tool-after-verification-evidence' } });
             }
-        const directReconciled = !child && reconcileDeterministicDirectImplementation(m, projectRoot);
-        reconcileMethodologyExits(m, projectRoot);
-        syncMissionGates(m, projectRoot);
-        if (directReconciled && evaluateCompletion(m, projectRoot).complete)
+        const directReconciled = !child && reconcileDeterministicDirectImplementation(m, evidenceRoot);
+        reconcileMethodologyExits(m, evidenceRoot);
+        syncMissionGates(m, evidenceRoot);
+        if (directReconciled && evaluateCompletion(m, evidenceRoot).complete)
             store.complete(sid);
         store.updateProgress(m);
         void events?.(runtimeSignal('evidence.updated', m.identity.mission_id, { worker_id: child?.id, payload: { fresh: m.execution.evidence.fresh, items: m.execution.evidence.items.length, direct_reconciled: directReconciled } }));

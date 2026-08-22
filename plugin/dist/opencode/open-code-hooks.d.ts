@@ -8,6 +8,7 @@ export declare function createOpenCodeHooks(input: {
     host: HostPort;
     services: ReturnType<typeof createRuntimeServices>;
     projectRoot: string;
+    workingDirectory?: string;
     packagedSkillsDir: string;
     projectAuthority: ProjectAuthorityStore;
     toolSurface: Record<string, unknown>;
@@ -23,6 +24,7 @@ export declare function createOpenCodeHooks(input: {
     'chat.message': (input: any, output: any) => Promise<void>;
     'experimental.chat.messages.transform': (input: any, output: any) => Promise<void>;
     'experimental.chat.system.transform': (input: any, output: any) => Promise<void>;
+    'experimental.text.complete': (input: any, output: any) => Promise<void>;
     'experimental.session.compacting': (input: any, output: any) => Promise<void>;
     'tool.execute.before': (input: any, output: any) => Promise<void>;
     'tool.execute.after': (input: any, output: any) => Promise<void>;

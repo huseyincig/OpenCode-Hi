@@ -75,7 +75,7 @@ Ayar değişikliğinden sonra host hot-reload yapmıyorsa OpenCode'u yeniden ba�
 
 ## 2. Ayar dosyası zorunlu mu?
 
-Hayır. Hi elle yazılmış bir routing dosyası olmadan çalışabilir. Runtime'da OpenCode'un gerçekten bağlı/effective model inventory'sini provider/model policy ve hard role capability filtrelerinden geçirir. Explicit task model, sıralı `routing.roleModels` tercihi veya OpenCode agent modeli yoksa Hi canlı inventory üzerinden **ephemeral capability/variant önerisi** yapar. Kod içinde sabit provider/model ID önerisi yoktur; otomatik seçim proje tercihine yazılmaz ve cost/quality/feedback telemetrisi seçimi sessizce yeniden sıralamaz.
+Hayır. Hi elle yazılmış bir routing dosyası olmadan çalışabilir. Runtime'da OpenCode'un gerçekten bağlı/effective model inventory'sini provider/model policy ve hard role capability filtrelerinden geçirir. Sıralı `routing.roleModels` kullanıcı tercihi, agent tarafından verilen task-model ipucu veya OpenCode agent modeli yoksa Hi canlı inventory üzerinden **ephemeral capability/variant önerisi** yapar. Kalıcı `routing.roleModels` tercihi modelin ürettiği task-model ipucundan üstündür ve onun tarafından bypass edilemez. Kod içinde sabit provider/model ID önerisi yoktur; otomatik seçim proje tercihine yazılmaz ve cost/quality/feedback telemetrisi seçimi sessizce yeniden sıralamaz.
 
 `visual-qa` için ayrıca host tarafından doğrulanmış image-input capability gerekir. Kalıcı role tercihi yalnız kullanıcı açıkça `hi_role_models` veya `roles/role-models --set` ile yazdığında oluşur.
 

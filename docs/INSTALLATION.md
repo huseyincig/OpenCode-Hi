@@ -90,7 +90,7 @@ The loaded plugin is a different surface. Exact OpenCode 1.18.19 acceptance obse
 - context and reversible mutation: `hi_context_artifact_add`, `hi_context_artifacts`, `hi_temporary_mutation_register`, `hi_temporary_mutation_revert`;
 - bounded task/worker control: `hi_task_start`, `hi_task_await`, `hi_task_peek`, `hi_task_list`, `hi_task_cancel`;
 - bounded process control: `hi_process_spawn`, `hi_process_read`, `hi_process_write`, `hi_process_wait`, `hi_process_kill`, `hi_process_cleanup`, `hi_process_list`;
-- bounded browser control: `hi_browser_open`, `hi_browser_navigate`, `hi_browser_click`, `hi_browser_type`, `hi_browser_inspect`, `hi_browser_screenshot`, `hi_browser_wait`, `hi_browser_close`.
+- bounded browser control: `hi_browser_preview_open`, `hi_browser_open`, `hi_browser_navigate`, `hi_browser_click`, `hi_browser_type`, `hi_browser_key`, `hi_browser_inspect`, `hi_browser_screenshot`, `hi_browser_wait`, `hi_browser_close`.
 
 For published `0.2.3`, package `doctor` reports installation ownership/drift state; runtime `hi_status`, `hi_readiness`, and `hi_ledger` report live Mission state. Development `0.2.4` adds the Node-native package controls below for common profile/model-routing changes while keeping live Mission/provider truth in the loaded runtime.
 
@@ -217,7 +217,7 @@ For OpenCode `1.18.21`, Hi's runtime inventory comes from OpenCode's structured 
 
 OpenCode `1.18.21` does **not** have a model-level `disabled: true` picker filter; model filtering for this host version is provider `whitelist` / `blacklist`. Do not copy newer-schema `model.disabled` examples into a 1.18.21 configuration.
 
-Hi does not ship a fixed provider/model recommendation. At runtime it filters OpenCode's effective connected inventory through provider/model policy and hard role capability requirements. With no explicit task model, explicit ordered Hi role mapping, or OpenCode agent model, Hi makes an **ephemeral capability/variant recommendation** from that live inventory. The automatic result is never written to project routing state, and cost/quality/feedback telemetry does not reorder it. `visual-qa` additionally requires explicit host-reported image-input capability; a text-only model or unverified `host-default` is rejected before selection and again before dispatch.
+Hi does not ship a fixed provider/model recommendation. At runtime it filters OpenCode's effective connected inventory through provider/model policy and hard role capability requirements. With no explicit ordered Hi role mapping, agent-supplied per-task model hint, or OpenCode agent model, Hi makes an **ephemeral capability/variant recommendation** from that live inventory. A persisted `routing.roleModels` choice is authoritative over a model-generated task hint. The automatic result is never written to project routing state, and cost/quality/feedback telemetry does not reorder it. `visual-qa` additionally requires explicit host-reported image-input capability; a text-only model or unverified `host-default` is rejected before selection and again before dispatch.
 
 There is no arbitrary eight-model cap in current routing or doctor output. A model appearing in OpenCode's runtime inventory means it passed the host's configuration/inventory construction; it does **not** by itself prove credentials or a successful remote inference call.
 

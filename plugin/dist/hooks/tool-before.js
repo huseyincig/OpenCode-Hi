@@ -12,8 +12,9 @@ import { openHumanDecision } from '../runtime/human-decision/runtime.js';
 import { verificationKindAdmittedForMission } from '../runtime/verification/policy.js';
 import { HI_BROWSER_EXECUTION_TOOL_IDS } from '../runtime/browser/executor.js';
 import { resolveBrowserExecutionOwner } from '../runtime/browser/ownership.js';
+import { isHiReadOnlyChildRole } from '../runtime/roles/catalog.js';
 const NON_MATERIAL_CONTROL_TOOLS = new Set(['hi_intent_assess', 'hi_status', 'hi_ledger', 'hi_readiness', 'hi_role_models']);
-export function createToolBeforeHook(store, background, projectRoot) {
+export function createToolBeforeHook(store, background, projectRoot, workingDirectory) {
     return async (input, output) => {
         const sid = input?.sessionID ?? input?.sessionId, child = sid && background ? background.list().find(w => w.session_id === sid) : undefined, m = child ? store.get(child.parent_session_id) : store.get(sid);
         if (!m)
@@ -23,6 +24,10 @@ export function createToolBeforeHook(store, background, projectRoot) {
         const tool = String(input?.tool ?? ''), args = output?.args ?? input?.args ?? {};
         if (!child && !NON_MATERIAL_CONTROL_TOOLS.has(tool) && store.reopenContradictedNonMaterial(String(sid), tool))
             throw new Error(`Hi non-material conclusion contradicted by work tool '${tool}'; initial semantic assessment was reopened and the tool was blocked before execution.`);
+        if (child && isHiReadOnlyChildRole(child.role) && toolMayMutate(tool, args)) {
+            appendLedger(m, 'worker.read-only-mutation-blocked', { task_id: child.task_id, worker_id: child.id, payload: { role: child.role, tool, reason: 'read-only-role-contract' } });
+            throw new Error(`Hi read-only role guard: ${child.role} cannot perform mutating '${tool}' execution. Use read/browser observations only and return the structured WorkerResult directly in assistant text; do not create temporary result files.`);
+        }
         if (child && tool.startsWith('hi_')) {
             const browserTool = HI_BROWSER_EXECUTION_TOOL_IDS.includes(tool);
             if (browserTool) {
@@ -32,6 +37,12 @@ export function createToolBeforeHook(store, background, projectRoot) {
             }
             else
                 throw new Error(`Hi ownership guard: child workers cannot invoke Hi control-plane tool '${tool}'.`);
+        }
+        if (!child && m.identity.status === 'active' && HI_BROWSER_EXECUTION_TOOL_IDS.includes(tool)) {
+            const visual = m.execution.tasks.find(t => t.role === 'visual-qa' && !['completed', 'failed', 'cancelled', 'blocked'].includes(t.status));
+            if (visual)
+                throw new Error(`Hi browser ownership: parent cannot invoke '${tool}' for visual task ${visual.id}; call hi_task_await with id=${visual.id} and let that visual-qa child own browser execution.`);
+            throw new Error(`Hi browser ownership: parent cannot invoke '${tool}'; start the required visual-qa task with hi_task_start and let the child own browser execution.`);
         }
         if (m.identity.status === 'active' && tool === 'task') {
             appendLedger(m, 'orchestration.native-task-blocked', { worker_id: child?.id, payload: { owner: child ? 'child' : 'parent', required_tool: 'hi_task_start' } });
@@ -45,6 +56,12 @@ export function createToolBeforeHook(store, background, projectRoot) {
             const allowed = new Set(['hi_intent_assess', 'hi_status', 'hi_ledger', 'hi_readiness', 'hi_role_models']);
             if (!allowed.has(tool))
                 throw new Error(`Hi semantic gate: '${tool}' is blocked until the host primary submits the structured semantic assessment.`);
+        }
+        if (tool === 'hi_role_models' && m.identity.semantic_assessment.status === 'assessed' && m.identity.status === 'active')
+            throw new Error(`Hi model-tool economy: hi_role_models is a user configuration surface, not a runtime discovery step. Runtime child routing consumes the connected model inventory internally; do not list models during an assessed mission.`);
+        if (!child && tool === 'todowrite' && m.identity.status === 'active' && m.identity.semantic_assessment.status === 'assessed' && m.identity.intent.scope === 'local' && m.identity.risk === 'low' && m.execution.execution_mode === 'single' && ['DIRECT', 'EVIDENCE'].includes(m.execution.adaptive_execution?.path ?? '')) {
+            appendLedger(m, 'tool.economy-blocked', { payload: { tool: 'todowrite', reason: 'low-risk-local-direct-mission-uses-canonical-obligations' } });
+            throw new Error(`Hi tool economy: native todos are unnecessary for this low-risk local direct mission. Use Hi canonical obligations/control state instead; do not create a parallel todo plan.`);
         }
         if (!child && m.identity.status === 'completed' && tool === 'bash' && typeof args?.command === 'string') {
             const kind = verificationCommandKind(args.command);
@@ -105,7 +122,8 @@ export function createToolBeforeHook(store, background, projectRoot) {
         }
         if (m.identity.status !== 'active' && !matchRollback(m, String(args?.command ?? '')))
             return;
-        observeToolBefore(m, tool, args, projectRoot);
+        const evidenceRoot = m.identity.intent.scope === 'local' ? (workingDirectory ?? projectRoot) : projectRoot;
+        observeToolBefore(m, tool, args, evidenceRoot);
         store.updateProgress(m);
     };
 }

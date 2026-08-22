@@ -23,7 +23,7 @@ import { browserOriginsFromTargets, normalizeBrowserAllowedOrigins, resolveBrows
 import { ProjectMethodologyLearningStore } from '../project-intelligence/methodology-learning.js';
 import { executionProfileFor } from '../../config/execution-policy.js';
 import { applyAdmittedProjectMethodologyPermissions } from '../methodology/host-permissions.js';
-import { isHiChildRole, isHiReadOnlyChildRole, isHiReviewerRole, roleCanOwnObligation } from '../roles/catalog.js';
+import { HI_CHILD_ROLES, isHiChildRole, isHiReadOnlyChildRole, isHiReviewerRole, roleCanOwnObligation } from '../roles/catalog.js';
 import { renderSemanticContext, semanticContextsForTargets } from '../semantic/typescript-context.js';
 import { createRuntimeScopedStores } from '../application/runtime-scoped-stores.js';
 import { ChildExecutionCoordinator } from './child-execution-coordinator.js';
@@ -80,6 +80,7 @@ export class TaskRuntime {
     browserExecutor;
     ensureBrowserResource;
     readAssistantResult;
+    previewManager;
     #queue = [];
     #draining = false;
     #methodologyLearning;
@@ -87,7 +88,7 @@ export class TaskRuntime {
     #results;
     #recovery;
     #scopedStores;
-    constructor(childHost, registry, scheduler, projectRoot, hiRoot, getConfig, getModels, getHostConfig, events, hostCapabilitySource = [], scopedStores, workspaceRuntime, extraHostResources = () => new Set(), browserExecutor, ensureBrowserResource, readAssistantResult) {
+    constructor(childHost, registry, scheduler, projectRoot, hiRoot, getConfig, getModels, getHostConfig, events, hostCapabilitySource = [], scopedStores, workspaceRuntime, extraHostResources = () => new Set(), browserExecutor, ensureBrowserResource, readAssistantResult, previewManager) {
         this.childHost = childHost;
         this.registry = registry;
         this.scheduler = scheduler;
@@ -103,6 +104,7 @@ export class TaskRuntime {
         this.browserExecutor = browserExecutor;
         this.ensureBrowserResource = ensureBrowserResource;
         this.readAssistantResult = readAssistantResult;
+        this.previewManager = previewManager;
         this.#scopedStores = scopedStores ?? createRuntimeScopedStores(projectRoot, hiRoot);
         this.#methodologyLearning = new ProjectMethodologyLearningStore(projectRoot);
         this.#child = new ChildExecutionCoordinator(childHost, registry);
@@ -203,7 +205,7 @@ export class TaskRuntime {
     workspaceBinding(m, taskID) { const required = m.execution.isolation_decisions.some(d => d.required && d.requested_by === `task:${taskID}`), lease = this.workspaceRuntime?.forTask(m, taskID); if (required && (!lease || lease.status !== 'ACTIVE' || lease.cleanup_state !== 'ACTIVE' || !lease.host_workspace_id))
         throw new Error(`Required workspace lease is not active for task ${taskID}`); return lease?.host_workspace_id && lease.status === 'ACTIVE' && lease.cleanup_state === 'ACTIVE' ? { workspaceID: lease.host_workspace_id, directory: lease.workspace_path } : undefined; }
     async cleanupWorkspaceForTask(m, taskID) { return this.workspaceRuntime ? this.workspaceRuntime.cleanupTask(m, taskID) : true; }
-    async cleanupBrowserForTask(m, taskID, workerID) { const worker = workerID ? m.execution.workers.find(w => w.id === workerID && w.task_id === taskID) : m.execution.workers.find(w => w.task_id === taskID); if (!this.browserExecutor || !worker?.session_id)
+    async cleanupBrowserForTask(m, taskID, workerID) { await this.previewManager?.stop(taskID); const worker = workerID ? m.execution.workers.find(w => w.id === workerID && w.task_id === taskID) : m.execution.workers.find(w => w.task_id === taskID); if (!this.browserExecutor || !worker?.session_id)
         return true; const context = { task_id: taskID, execution_owner_ref: `${m.identity.mission_id}:${worker.id}:${worker.session_id}:${worker.generation_at_spawn ?? m.continuation.generation}`, executor_version: 'hi-playwright-browser@1', allowed_origins: [...(m.execution.tasks.find(t => t.id === taskID)?.execution_profile?.browser_allowed_origins ?? [])] }; const result = await this.browserExecutor.cleanup(context); if (result.reason === 'close-failed') {
         const marker = `browser-cleanup-failed:${taskID}:${worker.id}`;
         m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
@@ -369,7 +371,10 @@ export class TaskRuntime {
             throw new Error('Hi semantic assessment is pending; assess mission intent before starting a worker');
         const objective = input.objective?.trim() || m.identity.objective;
         const taskIntent = m.identity.intent;
-        const cfg = this.getConfig(), routingProfile = cfg.profile[executionProfileFor(cfg.executionPolicy, taskIntent)], routed = routeCapabilities(taskIntent, { specialistThreshold: routingProfile.specialistThreshold, reviewThreshold: routingProfile.reviewThreshold }), defaultCategory = resolveCategory(taskIntent), category = (CATEGORIES.has(String(input.category)) ? input.category : (routed.category ?? defaultCategory)), defaultRole = isHiChildRole(routed.role) ? routed.role : 'coder', role = isHiChildRole(String(input.role)) ? String(input.role) : defaultRole;
+        const cfg = this.getConfig(), routingProfile = cfg.profile[executionProfileFor(cfg.executionPolicy, taskIntent)], routed = routeCapabilities(taskIntent, { specialistThreshold: routingProfile.specialistThreshold, reviewThreshold: routingProfile.reviewThreshold }), defaultCategory = resolveCategory(taskIntent), category = (CATEGORIES.has(String(input.category)) ? input.category : (routed.category ?? defaultCategory)), defaultRole = isHiChildRole(routed.role) ? routed.role : 'coder', requestedRole = String(input.role ?? '').trim();
+        if (requestedRole && !isHiChildRole(requestedRole))
+            throw new Error(`Unsupported Hi child role '${requestedRole}'. Use one of: ${HI_CHILD_ROLES.join(', ')}`);
+        const role = isHiChildRole(requestedRole) ? requestedRole : defaultRole;
         const hostConfig = this.getHostConfig();
         applyAdmittedProjectMethodologyPermissions(hostConfig, this.projectRoot);
         const selected = resolveModel(category, this.getModels(), this.getConfig(), input.model, role, hostConfig);
@@ -424,8 +429,8 @@ export class TaskRuntime {
         else if (browserDecision.backend)
             clearCapabilityUnavailable(m, 'browser-execution');
         const browserAllowedOrigins = normalizeBrowserAllowedOrigins(input.browserAllowedOrigins ?? browserOriginsFromTargets(taskIntent.likelyTargets ?? []));
-        if (browserDecision.backend === 'bounded-playwright' && browserRequested && !browserAllowedOrigins.length)
-            throw new Error('Bounded Playwright browser backend requires at least one exact allowed origin');
+        if (browserDecision.backend === 'bounded-playwright' && browserRequested && !browserAllowedOrigins.length && !this.previewManager)
+            throw new Error('Bounded Playwright browser backend requires at least one exact allowed origin or the Hi-owned local preview capability');
         if (browserDecision.backend === 'mcp' && browserAllowedOrigins.length)
             throw new Error('browser_allowed_origins belongs only to the bounded-playwright backend; MCP origin policy remains native-authoritative');
         const candidates = methodologySkillCandidates(requestedMethodologyNames, this.projectRoot, this.hiRoot, hostConfig, catalog), permissionMap = resolveSkillPermissionMap(hostConfig, role), skillToolEnabled = resolveSkillToolEnabled(hostConfig, role), surface = effectiveExecutionSurface(hostConfig, role, skillToolEnabled), hostCapabilities = typeof this.hostCapabilitySource === 'function' ? this.hostCapabilitySource() : Array.isArray(this.hostCapabilitySource) ? this.hostCapabilitySource : [], availableResources = new Set([...hostCapabilities.filter(item => item.status === 'SUPPORTED' && item.runtime_health_required !== true).map(item => `host-capability:${item.id}`), ...extraResources, ...(browserDecision.backend ? ['runtime-capability:browser-execution'] : [])]), skillPlan = resolveSkillPlan(requestedMethodologyNames, candidates, permissionMap, skillToolEnabled, role, catalog, availableResources), methodologies = skillPlan.selected.map(s => s.name), methodologyResourceFailures = skillPlan.outcomes.filter(item => item.outcome === 'resource-unavailable').map(item => item.name);
@@ -525,9 +530,10 @@ export class TaskRuntime {
             return; bindMethodologyNeeds(m, methodologies, { taskId: task.id, obligationIds: task.obligation_ids }); for (const ref of task.context_artifacts)
             if (ref.source_ref.startsWith('hi-artifact:'))
                 contextArtifactStore.bindConsumer(ref.source_ref.slice('hi-artifact:'.length), task.id); acceptedTaskBound = true; };
+        const localPreviewHint = role === 'visual-qa' && browserDecision.backend === 'bounded-playwright' && this.previewManager && !browserAllowedOrigins.length ? `LOCAL STATIC PREVIEW: task_id=${task.id}. For a task-scoped local HTML target, call hi_browser_preview_open with task_id=${task.id} and the exact project-relative path before inspect/click/screenshot. This Hi-owned loopback preview writes no project files and owns cleanup.` : undefined;
         const artifactContext = task.context_artifacts.map(a => { const id = a.source_ref.startsWith('hi-artifact:') ? a.source_ref.slice('hi-artifact:'.length) : undefined, stored = id ? contextArtifactStore.get(id) : undefined; if (stored?.freshness === 'FRESH')
             return `artifact:${stored.artifact_id}:${stored.summary}\n${clipText(stored.content, 3000)}`; if (stored)
-            return `artifact-stale:${stored.artifact_id}:${stored.summary}`; return `${a.kind}:${a.title ?? a.source_handle_id ?? a.id}${a.summary ? ` — ${a.summary}` : ''}`; }), verificationHint = targetedVerificationHint(this.projectRoot, task.scope.length ? task.scope : (m.vcs.changed_files.length ? m.vcs.changed_files : m.identity.intent.likelyTargets ?? [])), semanticContexts = semanticContextsForTargets(this.projectRoot, task.scope, task.id, 3000), semanticContext = semanticContexts.map(renderSemanticContext), explicitRelevant = input.relevantContext ?? [], boundedRuntimeRelevant = [...(verificationHint ? [verificationHint] : []), ...semanticContext, ...artifactContext];
+            return `artifact-stale:${stored.artifact_id}:${stored.summary}`; return `${a.kind}:${a.title ?? a.source_handle_id ?? a.id}${a.summary ? ` — ${a.summary}` : ''}`; }), verificationHint = targetedVerificationHint(this.projectRoot, task.scope.length ? task.scope : (m.vcs.changed_files.length ? m.vcs.changed_files : m.identity.intent.likelyTargets ?? [])), semanticContexts = semanticContextsForTargets(this.projectRoot, task.scope, task.id, 3000), semanticContext = semanticContexts.map(renderSemanticContext), explicitRelevant = input.relevantContext ?? [], boundedRuntimeRelevant = [...(localPreviewHint ? [localPreviewHint] : []), ...(verificationHint ? [verificationHint] : []), ...semanticContext, ...artifactContext];
         if (semanticContexts.length)
             appendLedger(m, 'context.semantic-selected', { task_id: task.id, payload: { items: semanticContexts.slice(0, 6).map(x => ({ id: x.id, source_ref: x.source_ref, source_hash: x.source_hash.slice(0, 16), symbols: x.symbols.length, chars: x.budget.used_chars })), total_chars: semanticContexts.reduce((n, x) => n + x.budget.used_chars, 0) } });
         let nativeSummary, relevantForHandoff = [...explicitRelevant, ...boundedRuntimeRelevant];

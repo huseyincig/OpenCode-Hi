@@ -85,6 +85,15 @@ function resolution(primary:string|undefined,category:Category,available:Availab
 export function resolveModel(category:Category,availableInput:AvailableModel[],config:HiConfig,explicit?:string,role?:string,hostConfig?:Record<string,unknown>,_feedback?:MissionModelFeedback):ModelResolution{
   const {allowed:available,rejected,nativePolicySources}=policyFilter(availableInput,config,hostConfig,role),reason:string[]=[]
   if(!availableInput.length){const deniedDefault=config.routing.deniedModels.includes('host-default');if(!explicit&&!config.routing.roleModels[role??'']?.length&&!deniedDefault&&!config.routing.allowedProviders.length&&!requiredRoleCapability(role))return resolution('host-default',category,available,config,role,['runtime inventory unavailable','policy permits host-default compatibility delegation'],rejected,[],undefined,nativePolicySources)}
+  const roleConfigured=role?config.routing.roleModels[role]??[]:[]
+  if(roleConfigured.length){
+    if(explicit&&explicit!==roleConfigured[0])reason.push(`task model override ignored because explicit role mapping is authoritative:${explicit}`)
+    const eligible=roleConfigured.filter(id=>available.some(m=>m.id===id))
+    for(const id of roleConfigured)if(!eligible.includes(id))reason.push(`role-mapped-model-unavailable-or-policy-rejected:${id}`)
+    if(!eligible.length){reason.push(`explicit role mapping has no eligible model:${role}`);return resolution(undefined,category,available,config,role,reason,rejected,[],undefined,nativePolicySources)}
+    const primary=eligible[0],fallbacks=eligible.slice(1,1+config.routing.maxFallbacks);reason.push(`explicit ordered role mapping:${role}`,'runtime available','policy allowed')
+    return resolution(primary,category,available,config,role,reason,rejected,fallbacks,undefined,nativePolicySources)
+  }
   if(explicit){
     if(explicit==='host-default'){
       const status=runtimeModelCandidateStatus(explicit,availableInput,config,hostConfig,role)
@@ -94,14 +103,6 @@ export function resolveModel(category:Category,availableInput:AvailableModel[],c
     if(available.some(m=>m.id===explicit))return resolution(explicit,category,available,config,role,['explicit task model','runtime available','policy allowed'],rejected,[],undefined,nativePolicySources)
     reason.push(availableInput.some(m=>m.id===explicit)?'explicit task model rejected by routing/provider policy':'explicit task model unavailable')
     return resolution(undefined,category,available,config,role,reason,rejected,[],undefined,nativePolicySources)
-  }
-  const roleConfigured=role?config.routing.roleModels[role]??[]:[]
-  if(roleConfigured.length){
-    const eligible=roleConfigured.filter(id=>available.some(m=>m.id===id))
-    for(const id of roleConfigured)if(!eligible.includes(id))reason.push(`role-mapped-model-unavailable-or-policy-rejected:${id}`)
-    if(!eligible.length){reason.push(`explicit role mapping has no eligible model:${role}`);return resolution(undefined,category,available,config,role,reason,rejected,[],undefined,nativePolicySources)}
-    const primary=eligible[0],fallbacks=eligible.slice(1,1+config.routing.maxFallbacks);reason.push(`explicit ordered role mapping:${role}`,'runtime available','policy allowed')
-    return resolution(primary,category,available,config,role,reason,rejected,fallbacks,undefined,nativePolicySources)
   }
   const host=hostAgentModel(hostConfig,role)
   if(host?.model){

@@ -163,7 +163,7 @@
     },
     {
       "path": "docs/CONFIGURATION.md",
-      "sha256": "3ef7d42fe2f4df1460731607887dc0de0891c56467ce66c5b8522ce38b04b968",
+      "sha256": "92e43c1d671e196a06f5b5322bf5410062d9a333d51397c3b67b3dd63745d00d",
       "area": "configuration-guide",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -187,7 +187,7 @@
     },
     {
       "path": "docs/INSTALLATION.md",
-      "sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "area": "installation-configuration-lifecycle",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -235,7 +235,7 @@
     },
     {
       "path": "docs/locales/tr/CONFIGURATION.md",
-      "sha256": "48bf6cfde3433f1e49022f1d8124f8c8c249b0416b092627821864d698b445e8",
+      "sha256": "d889a40c65f2455ae638d1706e59305e2995dd5dae9134204899e6059b22a584",
       "area": "turkish-configuration-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",

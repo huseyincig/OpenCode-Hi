@@ -34,6 +34,7 @@ export function collectRepoContext(root:string,nativeContext:NativeProjectContex
   if(has(nativeRoot,'go.mod')){ecosystems.push('go');markers.push('go.mod');likelyVerification.push('go test')}
   if(has(nativeRoot,'composer.json')){ecosystems.push('php');markers.push('composer.json')}
   for(const name of ['README.md','AGENTS.md','CONTRIBUTING.md','opencode.json','opencode.jsonc'])if(has(nativeRoot,name))markers.push(name)
+  if(has(nativeRoot,'.opencode'))markers.push('.opencode/')
   try{const top=readdirSync(nativeRoot,{withFileTypes:true}).filter((x:any)=>x.isDirectory()).map((x:any)=>x.name);for(const name of ['src','app','packages','apps','lib','test','tests'])if(top.includes(name))markers.push(`${name}/`)}catch{}
   const p=nativeContext.project??{},vcs=String(p?.vcs??p?.versionControl??p?.scm??'').toLowerCase()||undefined,git=Boolean(vcs?.includes('git')||has(nativeRoot,'.git'))
   return {root:nativeRoot,name:String(p?.name??p?.id??basename(nativeRoot)),ecosystems:[...new Set(ecosystems)],markers:[...new Set(markers)].slice(0,16),likelyVerification:[...new Set(likelyVerification)].slice(0,8),git,native:{directory:nativeContext.directory,worktree:nativeContext.worktree,projectID:p?.id?String(p.id):undefined,vcs}}

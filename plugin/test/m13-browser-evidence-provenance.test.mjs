@@ -47,3 +47,16 @@ test('M13 browser observation reference from a prior worker attempt cannot satis
   runtime().applyResult(f.m,f.worker.id,{status:'DONE',summary:'stale browser proof',changed_files:[],evidence:[{kind:'browser-evidence',summary:'stale claim',scope:['src/view.tsx'],evidence_refs:[out.evidence_ref],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
   assert.equal(f.task.result.status,'FIX_REQUIRED');assert.equal(f.task.result.evidence[0].outcome,'pending');assert.match(f.task.result.evidence[0].reason,/browser-proof-unbound/)
 })
+
+
+test('M13 current-attempt browser observation id alias bo_... normalizes to canonical evidence ref',async()=>{
+  const f=fixture('m13-proof-bo-alias'),toolSurface=surface(f,{inspect:async()=>observation(f.task.id),health:async()=>({available:true})});const out=JSON.parse(await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id}))
+  runtime().applyResult(f.m,f.worker.id,{status:'DONE',summary:'browser verified via observation id alias',changed_files:[],evidence:[{kind:'browser-evidence',summary:'verified against exact browser observation id',scope:['src/view.tsx'],evidence_refs:[out.observation.observation_id],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
+  assert.equal(f.task.result.status,'DONE');assert.deepEqual(f.task.result.evidence[0].evidence_refs,[out.evidence_ref]);const normalized=f.m.execution.ledger.find(e=>e.type==='browser.evidence-ref-normalized');assert.ok(normalized);assert.deepEqual(normalized.payload.from,[out.observation.observation_id]);assert.deepEqual(normalized.payload.to,[out.evidence_ref])
+})
+
+test('M13 stale prior-attempt browser observation id alias remains fail-closed',async()=>{
+  const f=fixture('m13-proof-bo-stale'),toolSurface=surface(f,{inspect:async()=>observation(f.task.id),health:async()=>({available:true})});const out=JSON.parse(await toolSurface.hi_browser_inspect.execute({task_id:f.task.id},{sessionID:f.worker.session_id}));beginWorkerAttempt(f.task,f.worker)
+  runtime().applyResult(f.m,f.worker.id,{status:'DONE',summary:'stale observation-id alias',changed_files:[],evidence:[{kind:'browser-evidence',summary:'stale claim',scope:['src/view.tsx'],evidence_refs:[out.observation.observation_id],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
+  assert.equal(f.task.result.status,'FIX_REQUIRED');assert.equal(f.task.result.evidence[0].outcome,'pending');assert.match(f.task.result.evidence[0].reason,/browser-proof-unbound/);assert.equal(f.m.execution.ledger.some(e=>e.type==='browser.evidence-ref-normalized'),false)
+})

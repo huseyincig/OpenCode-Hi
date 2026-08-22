@@ -28,3 +28,5 @@ export interface ControlDecisionProjection {
  * prevent consumers from rediscovering a decision that Hi already knows.
  */
 export declare function projectControlDecision(m: MissionState, projectRoot?: string): ControlDecisionProjection;
+/** One canonical model-facing instruction derived from the read-only control decision. */
+export declare function controlDecisionInstruction(m: MissionState, decision: ControlDecisionProjection): string;

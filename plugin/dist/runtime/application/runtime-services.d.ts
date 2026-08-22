@@ -15,6 +15,7 @@ import { TaskRuntime } from '../task/task-runtime.js';
 import { ProcessRuntime } from '../process/runtime.js';
 import { WorkspaceRuntime } from '../workspace/runtime.js';
 import { ChatHumanDecisionTransport } from '../human-decision/transport.js';
+import { LocalPreviewManager } from '../browser/local-preview.js';
 export interface RuntimeServicePorts {
     nativeContext: NativeProjectContext;
     childSession: ChildSessionPort;
@@ -71,5 +72,6 @@ export declare function createRuntimeServices(input: {
         executablePath?: string;
         reason?: string;
     } | undefined;
+    previewManager: LocalPreviewManager;
     scopedStores: import("./runtime-scoped-stores.js").RuntimeScopedStores;
 };

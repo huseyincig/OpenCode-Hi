@@ -22,10 +22,11 @@ import {opencodeChildPort} from './helpers/host-port.mjs'
 function fakePlaywright(){
   const launches=[],sessions=[]
   const chromium={launch:async options=>{launches.push(options);const page={
-    _url:'about:blank',events:new Map(),lastFill:undefined,closed:false,
+    _url:'about:blank',events:new Map(),lastFill:undefined,lastKey:undefined,closed:false,
     url(){return this._url},setDefaultTimeout(){},on(name,fn){this.events.set(name,fn)},
     async goto(url){this._url=url},
     waitForTimeout:async()=>{},
+    keyboard:{press:async key=>{page.lastKey=key}},
     screenshot:async()=>new Uint8Array([137,80,78,71,1,2,3]),
     locator(selector){if(selector==='body')return{evaluate:async()=>({body:'Ready\nName',items:[{i:1,tag:'button',text:'Ready'},{i:2,tag:'input',text:'Name'}]})};return{click:async()=>{},fill:async value=>{page.lastFill=value}}},
   };const browserContext={routes:[],async route(pattern,handler){this.routes.push({pattern,handler})},newPage:async()=>page};const browser={newContext:async()=>browserContext,close:async()=>{page.closed=true}};sessions.push({browser,page,context:browserContext});return browser}}
@@ -41,8 +42,8 @@ test('B3 Playwright adapter is local-scope, task-isolated and emits bounded obse
   const b=await adapter.open(ctx('t2',undefined,['http://localhost:4174']),'http://localhost:4174/')
   assert.equal(a.result,'OBSERVED');assert.equal(b.result,'OBSERVED');assert.ok(isBrowserObservationContract(a));assert.match(a.dom_summary,/@e1 <button> Ready/)
   assert.equal(pw.sessions.length,2)
-  await adapter.click(ctx('t1'),{value:'@e1'});await adapter.type(ctx('t1'),{value:'@e2'},'hello')
-  assert.equal(pw.sessions[0].page.lastFill,'hello');assert.equal(pw.sessions[1].page.lastFill,undefined)
+  await adapter.click(ctx('t1'),{value:'@e1'});await adapter.type(ctx('t1'),{value:'@e2'},'hello');const key=await adapter.key(ctx('t1'),{key:'ArrowRight'})
+  assert.equal(key.action,'key');assert.equal(key.result,'OBSERVED');assert.equal(pw.sessions[0].page.lastKey,'ArrowRight');assert.equal(pw.sessions[0].page.lastFill,'hello');assert.equal(pw.sessions[1].page.lastFill,undefined)
   await assert.rejects(()=>adapter.navigate(ctx('t1'),'https://example.com/'),/outside supported local scope/)
   await assert.rejects(()=>adapter.navigate(ctx('t1'),'http://127.0.0.1:4174/'),/outside the task plan/)
   await adapter.close(ctx('t1'));assert.equal(pw.sessions[0].page.closed,true);assert.equal(pw.sessions[1].page.closed,false)
@@ -143,4 +144,10 @@ test('PROMPT B browser navigation timeout and browser crash become explicit FAIL
 test('PROMPT B browser wait bounds fail closed instead of permitting unbounded visual execution',async()=>{
   const pw=fakePlaywright(),adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module});await adapter.open(ctx('t-wait'),'http://127.0.0.1:4173/')
   await assert.rejects(()=>adapter.wait(ctx('t-wait'),{milliseconds:-1}),/0\.\.30000ms/);await assert.rejects(()=>adapter.wait(ctx('t-wait'),{milliseconds:30001}),/0\.\.30000ms/);await adapter.close(ctx('t-wait'))
+})
+
+
+test('B3 bounded browser keyboard primitive admits game/navigation keys and rejects arbitrary chords',async()=>{
+  const pw=fakePlaywright(),adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module});const c=ctx('t-key')
+  await adapter.open(c,'http://127.0.0.1:4173/');const left=await adapter.key(c,{key:'ArrowLeft'});const restart=await adapter.key(c,{key:'R'});assert.equal(left.action,'key');assert.equal(restart.result,'OBSERVED');assert.equal(pw.sessions[0].page.lastKey,'R');await assert.rejects(()=>adapter.key(c,{key:'Control+L'}),/bounded navigation\/action key/);await adapter.close(c)
 })

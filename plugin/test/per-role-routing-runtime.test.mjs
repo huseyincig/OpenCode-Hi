@@ -36,19 +36,20 @@ test('explicit role mapping with no eligible model fails closed',()=>{
   assert.ok(r.reason.includes('explicit role mapping has no eligible model:coder'))
 })
 
-test('explicit task model outranks role mapping and host agent model',()=>{
+test('explicit user role mapping outranks agent-supplied task model and host agent model',()=>{
   const cfg=cfgWith({coder:['p/code']})
   const host={agent:{coder:{model:'p/reason'}}}
   const r=resolveModel('standard',INVENTORY,cfg,'p/fast','coder',host)
-  assert.equal(r.primary,'p/fast')
-  assert.ok(r.reason.includes('explicit task model'))
+  assert.equal(r.primary,'p/code')
+  assert.ok(r.reason.includes('explicit ordered role mapping:coder'))
+  assert.ok(r.reason.some(x=>x.includes('task model override ignored because explicit role mapping is authoritative:p/fast')))
 })
 
-test('unavailable explicit task model fails closed instead of substituting another model',()=>{
+test('unavailable agent-supplied task model cannot bypass an explicit user role mapping',()=>{
   const cfg=cfgWith({coder:['p/code']})
   const r=resolveModel('standard',INVENTORY,cfg,'p/missing','coder',{agent:{coder:{model:'p/reason'}}})
-  assert.equal(r.primary,undefined)
-  assert.ok(r.reason.includes('explicit task model unavailable'))
+  assert.equal(r.primary,'p/code')
+  assert.ok(r.reason.some(x=>x.includes('task model override ignored because explicit role mapping is authoritative:p/missing')))
 })
 
 test('OpenCode explicit agent model is the fallback owner when Hi has no role preference',()=>{

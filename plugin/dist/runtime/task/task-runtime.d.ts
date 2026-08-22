@@ -12,6 +12,7 @@ import type { WorkspaceRuntime } from '../workspace/runtime.js';
 import type { ChildSessionPort, HostAssistantError, HostAssistantResult } from '../host/port.js';
 import type { HostCapabilityContract } from '../../contracts/host-capability.js';
 import type { HostUsageObservation } from '../../contracts/execution-usage.js';
+import type { LocalPreviewManager } from '../browser/local-preview.js';
 export interface StartTaskInput {
     objective?: string;
     role?: string;
@@ -50,11 +51,12 @@ export declare class TaskRuntime {
     private readonly browserExecutor?;
     private readonly ensureBrowserResource?;
     private readonly readAssistantResult?;
+    private readonly previewManager?;
     constructor(childHost: ChildSessionPort, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined, hostCapabilitySource?: (() => readonly HostCapabilityContract[]) | readonly HostCapabilityContract[], scopedStores?: RuntimeScopedStores, workspaceRuntime?: WorkspaceRuntime | undefined, extraHostResources?: () => ReadonlySet<string>, browserExecutor?: BrowserExecutor | undefined, ensureBrowserResource?: (() => Promise<{
         available: boolean;
         attempted?: boolean;
         reason?: string;
-    }>) | undefined, readAssistantResult?: ((sessionID: string, limit?: number) => Promise<HostAssistantResult>) | undefined);
+    }>) | undefined, readAssistantResult?: ((sessionID: string, limit?: number) => Promise<HostAssistantResult>) | undefined, previewManager?: LocalPreviewManager | undefined);
     private sendProviderPrompt;
     private recordModelProjection;
     private abortNativeSession;

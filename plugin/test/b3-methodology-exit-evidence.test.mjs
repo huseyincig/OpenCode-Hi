@@ -35,4 +35,5 @@ test('B3 worker handoff tells browser reviewers that methodology evidence must b
   const text=workerHandoffText({objective:'visual',scope:['http://127.0.0.1:47841/'],constraints:[],required_evidence:['visual-check'],relevant_context:[],methodologies:['hi-browser-testing','hi-visual-qa'],methodology_exit_requirements:['hi-browser-testing: task-success, no-open-issues, browser-evidence','hi-visual-qa: task-success, no-open-issues, visual-evidence'],expected_output:{status:true,summary:true,changed_files:true,scope_expansions:true,evidence:true,findings:true,open_issues:true}});
   assert.match(text,/evidence\.outcome=\"passed\"/);
   assert.match(text,/Never manufacture PASS from a BrowserObservation or screenshot alone/);
+  assert.match(text,/evidence\.kind=\"visual-evidence\"/);assert.match(text,/Return the WorkerResult directly in assistant text/);
 });

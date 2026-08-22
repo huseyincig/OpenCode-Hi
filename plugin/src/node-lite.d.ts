@@ -8,6 +8,7 @@ declare module 'node:fs' {
   export function existsSync(path:any): boolean
   export function readFileSync(path:any): any
   export function readFileSync(path:any, encoding:'utf8'): string
+  export function createReadStream(path:any): { on(event:'error',listener:(error:Error)=>void):any; pipe(destination:any):any }
   export function readdirSync(path:any, options?:any): any[]
   export function realpathSync(path:any): string
   export function mkdirSync(path:any, options?:any): any
@@ -27,6 +28,7 @@ declare module 'node:path' {
   export function basename(path:string, suffix?:string): string
   export function dirname(path:string): string
   export function relative(from:string,to:string): string
+  export function extname(path:string): string
   export const sep: string
 }
 
@@ -38,3 +40,16 @@ declare module 'node:child_process' {
 }
 declare module 'node:os' { export function tmpdir(): string; export function homedir(): string; export function platform(): string }
 declare const Buffer: { allocUnsafe(size:number): any }
+declare module 'node:http' {
+  export interface Server {
+    listen(port:number,host:string,listener:()=>void):this
+    once(event:'error',listener:(error:Error)=>void):this
+    off(event:'error',listener:(error:Error)=>void):this
+    close(listener?:()=>void):this
+    address(): string | {port:number} | null
+    unref():this
+  }
+  export interface IncomingMessage { method?:string; url?:string }
+  export interface ServerResponse { headersSent:boolean; setHeader(name:string,value:string):void; writeHead(status:number,headers?:Record<string,string>):this; end(data?:string):void }
+  export function createServer(listener:(req:IncomingMessage,res:ServerResponse)=>void):Server
+}

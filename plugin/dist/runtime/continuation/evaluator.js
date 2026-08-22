@@ -1,4 +1,5 @@
 import { evaluateCompletion } from '../completion/evaluator.js';
+import { controlDecisionInstruction, projectControlDecision } from '../completion/control-projection.js';
 import { recoveryPlan } from './recovery.js';
 import { evaluatePreconditions } from '../readiness/preconditions.js';
 import { latestBlockingVerificationEvidence } from '../verification/policy.js';
@@ -101,9 +102,16 @@ export function evaluateIdle(m, now = Date.now(), projectRoot) {
             setRuntimeNudge(m, instruction, 'verification-failed');
             return { decision: 'RECOVER', reason: latest.reason ?? 'verification-failed', reason_code: 'verification-failed', prompt: continuationPrompt(m, instruction) };
         }
-        const instruction = 'Verification is required and current evidence is stale or missing. Run the minimum sufficient verification. If the required verifier/capability is unavailable, record that exact environment limitation instead of retrying the same tool.';
+        const instruction = controlDecisionInstruction(m, projectControlDecision(m, projectRoot));
         setRuntimeNudge(m, instruction, 'verification-pending');
         return { decision: 'VERIFY', reason: 'verification-pending', reason_code: 'verification-pending', prompt: continuationPrompt(m, instruction) };
+    }
+    if (completion.next === 'CONTINUE' && m.continuation.stagnation_count === 0) {
+        const instruction = controlDecisionInstruction(m, projectControlDecision(m, projectRoot));
+        if (!instruction.startsWith('continue:canonical-open-obligation')) {
+            setRuntimeNudge(m, instruction, 'open-obligation');
+            return { decision: 'CONTINUE', reason: 'open-obligation', reason_code: 'open-obligation', prompt: continuationPrompt(m, instruction) };
+        }
     }
     const recovery = recoveryPlan(m);
     if (recovery.action === 'user-action')

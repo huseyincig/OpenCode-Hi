@@ -14,6 +14,18 @@ import { createSchedulerLifecycleState } from '../../contracts/orchestration-cor
 import { reduceSchedulerLifecycle } from '../scheduler/lifecycle.js'
 import { semanticProgressDelta,semanticProgressMade,semanticProgressSnapshot } from '../progress/semantic-progress.js'
 function obligation(id:string,kind:Obligation['kind'],summary:string,requiredEvidence:string[]=[],requiredTargets:string[]=[]):Obligation{return{id,kind,summary,status:'open',requiredEvidence,...(requiredTargets.length?{requiredTargets:[...new Set(requiredTargets)]}:{})}}
+function explicitTestFirstRequested(text:string):boolean{
+  const normalized=text.toLowerCase().replace(/[\u2018\u2019]/g,"'").replace(/\s+/g,' ').trim()
+  if(!normalized)return false
+  return [
+    /\b(?:tdd|test[- ]?driven development|red[- ]green[- ]refactor|test[- ]first)\b/,
+    /\b(?:write|add|create)\s+(?:the\s+)?(?:failing\s+)?tests?\s+(?:first|before\s+(?:implementation|coding|code))\b/,
+    /\btests?\s+before\s+(?:implementation|coding|code)\b/,
+    /(?:önce|ilk olarak)\s+(?:başarısız\s+)?test(?:i|leri|leri)?\s+(?:yaz|oluştur)/i,
+    /test(?:i|leri)?\s+(?:önce|ilk)\s+(?:yaz|oluştur)/i,
+    /kırmızı[- ]yeşil[- ]refactor/i,
+  ].some(pattern=>pattern.test(normalized))
+}
 function explicitTestMutationForbidden(text:string):boolean{
   const normalized=text.toLowerCase().replace(/[\u2018\u2019]/g,"'").replace(/\s+/g,' ').trim()
   if(!normalized)return false
@@ -42,15 +54,15 @@ function reconciledIntentMethodologySignals(assessment:SemanticIntentAssessment,
   const diagnosisOwnsRootCause=assessment.task_kind==='diagnosis'&&assessment.intent_signals.includes('intent.debugging')
   if(diagnosisOwnsRootCause){suppressed.add('intent.debugging');runtimeSuppressed.push('intent.debugging')}
   else if(boundedDirectBugFix&&assessment.intent_signals.includes('intent.debugging')&&(assessment.ambiguity==='none'||!debuggingBackedByDiagnosis)){suppressed.add('intent.debugging');runtimeSuppressed.push('intent.debugging')}
-  if(explicitTestMutationForbidden(userText)){
+  if(assessment.intent_signals.includes('intent.tdd')&&(!explicitTestFirstRequested(userText)||explicitTestMutationForbidden(userText))){
     suppressed.add('intent.tdd')
     runtimeSuppressed.push('intent.tdd')
   }
   return{active:assessment.intent_signals.filter(signal=>!suppressed.has(signal)),suppressed:[...suppressed],runtimeSuppressed:[...new Set(runtimeSuppressed)]}
 }
 export class MissionStore {
-  readonly #bySession=new Map<string,MissionState>();readonly #root:string;readonly #repo:RepoContext;readonly #getPrimaryMode:()=> 'auto'|'working-manager'|'manager';readonly #getTopology:()=>TopologyPolicyConfig
-  constructor(root=process.cwd(),nativeContext:NativeProjectContext={},getPrimaryMode:()=> 'auto'|'working-manager'|'manager'=()=> 'auto',getTopology:()=>TopologyPolicyConfig=()=>({mode:'adaptive',maxAgents:4,parallelism:2})){this.#root=root;this.#repo=collectRepoContext(root,nativeContext);this.#getPrimaryMode=getPrimaryMode;this.#getTopology=getTopology}
+  readonly #bySession=new Map<string,MissionState>();readonly #root:string;readonly #repo:RepoContext;readonly #workingRepo:RepoContext;readonly #getPrimaryMode:()=> 'auto'|'working-manager'|'manager';readonly #getTopology:()=>TopologyPolicyConfig
+  constructor(root=process.cwd(),nativeContext:NativeProjectContext={},getPrimaryMode:()=> 'auto'|'working-manager'|'manager'=()=> 'auto',getTopology:()=>TopologyPolicyConfig=()=>({mode:'adaptive',maxAgents:4,parallelism:2})){this.#root=root;this.#repo=collectRepoContext(root,nativeContext);this.#workingRepo=nativeContext.directory?collectRepoContext(nativeContext.directory):this.#repo;this.#getPrimaryMode=getPrimaryMode;this.#getTopology=getTopology}
   start(sessionID:string,userText:string,observedPrimary?:MissionState['execution']['primary_mode']):MissionState{
     const intent=provisionalIntent(userText,this.#repo),now=Date.now(),primaryConfigured=this.#getPrimaryMode(),primary:MissionState['execution']['primary_mode']=observedPrimary??(primaryConfigured==='manager'?'manager':'working-manager')
     const missionID=`m_${now.toString(36)}_${Math.random().toString(36).slice(2,10)}`
@@ -74,7 +86,7 @@ export class MissionStore {
     if(nonMaterialIndicators.length)throw new Error(`Hi initial non-material assessment contains material execution indicators: ${nonMaterialIndicators.join(', ')}`)
     const now=Date.now();m.identity.semantic_assessment.status='assessed';m.identity.semantic_assessment.assessed_at=now
     if(!assessment.material){m.identity.intent=assessedIntent(m.identity.intent,assessment);m.identity.risk=m.identity.intent.risk;m.identity.objective=m.identity.intent.objective;m.identity.status='completed';m.execution.obligations=[];m.methodology.methodology_needs=[];appendLedger(m,'semantic.non-material',{payload:{revision:m.identity.semantic_assessment.revision,source:m.identity.semantic_assessment.source,taskKind:m.identity.intent.taskKind,scope:m.identity.intent.scope,risk:m.identity.intent.risk}});syncMissionGates(m);m.identity.updated_at=now;this.syncProgressBaseline(m);return m}
-    const verificationResolution=resolveAdaptiveVerificationAssessment(assessment,m.identity.semantic_assessment.pending_text),effectiveAssessment=verificationResolution.assessment,explicitUserVerification=verificationResolution.explicitUserVerification,boundedExplicitVerification=verificationResolution.ceilingApplied
+    const verificationResolution=resolveAdaptiveVerificationAssessment(assessment,m.identity.semantic_assessment.pending_text,this.#workingRepo),effectiveAssessment=verificationResolution.assessment,explicitUserVerification=verificationResolution.explicitUserVerification,boundedExplicitVerification=verificationResolution.ceilingApplied
     m.identity.intent=assessedIntent(m.identity.intent,effectiveAssessment);m.identity.risk=m.identity.intent.risk;m.identity.objective=m.identity.intent.objective
     const requiredMaterialTargets=userRequiredMaterialTargets(m.identity.semantic_assessment.pending_text,effectiveAssessment)
     const reconciledSignals=reconciledIntentMethodologySignals(effectiveAssessment,m.identity.semantic_assessment.pending_text),obligations:Obligation[]=[],bugFixAnalysisRequired=m.identity.intent.taskKind==='bug-fix'&&(m.identity.intent.scope!=='local'||m.identity.intent.ambiguity!=='none'||reconciledSignals.active.includes('intent.debugging'))
@@ -124,7 +136,7 @@ export class MissionStore {
     if(assessment.message_kind==='non-material'){appendLedger(m,'semantic.followup-non-material',{payload:{revision:m.identity.semantic_assessment.revision}});syncMissionGates(m);m.identity.updated_at=now;this.syncProgressBaseline(m);return m}
     if(assessment.message_kind==='stop'){m.continuation.user_interrupted=true;m.continuation.interrupted_at=now;m.continuation.interrupted_reason='semantic-user-stop';m.identity.status='stopped';appendLedger(m,'mission.stopped',{payload:{reason:'semantic-user-stop',generation:m.continuation.generation}});syncMissionGates(m);m.identity.updated_at=now;this.syncProgressBaseline(m);return m}
     if(assessment.message_kind==='resume'){m.continuation.user_interrupted=false;m.continuation.interrupted_reason=undefined;m.continuation.resumed_at=now;m.identity.status='active';appendLedger(m,'mission.resumed',{payload:{reason:'semantic-user-resume',generation:m.continuation.generation}});syncMissionGates(m);m.identity.updated_at=now;this.syncProgressBaseline(m);return m}
-    const verificationResolution=resolveAdaptiveVerificationAssessment(assessment,text),effectiveAssessment=verificationResolution.assessment,kind=effectiveAssessment.message_kind
+    const verificationResolution=resolveAdaptiveVerificationAssessment(assessment,text,this.#workingRepo),effectiveAssessment=verificationResolution.assessment,kind=effectiveAssessment.message_kind
     if(kind==='constraint'){m.execution.constraints??=[];if(!m.execution.constraints.includes(text))m.execution.constraints.push(text);m.identity.objective=`${m.identity.objective}\nConstraint: ${text}`.slice(0,9000);for(const task of m.execution.tasks.filter(t=>!['completed','failed','cancelled'].includes(t.status))){task.constraints??=[];if(!task.constraints.includes(text))task.constraints.push(text);task.updated_at=now}}
     else if(kind==='verification'){m.identity.objective=`${m.identity.objective}\nFollow-up verification: ${text}`.slice(0,9000);let verify=m.execution.obligations.find(o=>o.kind==='verification');if(!verify){verify=obligation('o-followup-verification-r'+m.identity.semantic_assessment.revision,'verification',`User verification follow-up: ${text.slice(0,500)}`,effectiveAssessment.likely_verification);m.execution.obligations.push(verify)}else{verify.status='open';verify.closedAt=undefined;verify.requiredEvidence=[...effectiveAssessment.likely_verification];verify.summary=`${verify.summary}; ${text.slice(0,300)}`.slice(0,700)}}
     else{m.identity.objective=`${m.identity.objective}\nFollow-up: ${text}`.slice(0,9000);m.execution.obligations.push(obligation('o-followup-r'+m.identity.semantic_assessment.revision,'implementation',`User follow-up: ${text.slice(0,500)}`,[],userRequiredMaterialTargets(text,effectiveAssessment)))}

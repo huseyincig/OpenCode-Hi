@@ -12,6 +12,19 @@ import { createSchedulerLifecycleState } from '../../contracts/orchestration-cor
 import { reduceSchedulerLifecycle } from '../scheduler/lifecycle.js';
 import { semanticProgressDelta, semanticProgressMade, semanticProgressSnapshot } from '../progress/semantic-progress.js';
 function obligation(id, kind, summary, requiredEvidence = [], requiredTargets = []) { return { id, kind, summary, status: 'open', requiredEvidence, ...(requiredTargets.length ? { requiredTargets: [...new Set(requiredTargets)] } : {}) }; }
+function explicitTestFirstRequested(text) {
+    const normalized = text.toLowerCase().replace(/[\u2018\u2019]/g, "'").replace(/\s+/g, ' ').trim();
+    if (!normalized)
+        return false;
+    return [
+        /\b(?:tdd|test[- ]?driven development|red[- ]green[- ]refactor|test[- ]first)\b/,
+        /\b(?:write|add|create)\s+(?:the\s+)?(?:failing\s+)?tests?\s+(?:first|before\s+(?:implementation|coding|code))\b/,
+        /\btests?\s+before\s+(?:implementation|coding|code)\b/,
+        /(?:önce|ilk olarak)\s+(?:başarısız\s+)?test(?:i|leri|leri)?\s+(?:yaz|oluştur)/i,
+        /test(?:i|leri)?\s+(?:önce|ilk)\s+(?:yaz|oluştur)/i,
+        /kırmızı[- ]yeşil[- ]refactor/i,
+    ].some(pattern => pattern.test(normalized));
+}
 function explicitTestMutationForbidden(text) {
     const normalized = text.toLowerCase().replace(/[\u2018\u2019]/g, "'").replace(/\s+/g, ' ').trim();
     if (!normalized)
@@ -59,7 +72,7 @@ function reconciledIntentMethodologySignals(assessment, userText = '') {
         suppressed.add('intent.debugging');
         runtimeSuppressed.push('intent.debugging');
     }
-    if (explicitTestMutationForbidden(userText)) {
+    if (assessment.intent_signals.includes('intent.tdd') && (!explicitTestFirstRequested(userText) || explicitTestMutationForbidden(userText))) {
         suppressed.add('intent.tdd');
         runtimeSuppressed.push('intent.tdd');
     }
@@ -69,9 +82,10 @@ export class MissionStore {
     #bySession = new Map();
     #root;
     #repo;
+    #workingRepo;
     #getPrimaryMode;
     #getTopology;
-    constructor(root = process.cwd(), nativeContext = {}, getPrimaryMode = () => 'auto', getTopology = () => ({ mode: 'adaptive', maxAgents: 4, parallelism: 2 })) { this.#root = root; this.#repo = collectRepoContext(root, nativeContext); this.#getPrimaryMode = getPrimaryMode; this.#getTopology = getTopology; }
+    constructor(root = process.cwd(), nativeContext = {}, getPrimaryMode = () => 'auto', getTopology = () => ({ mode: 'adaptive', maxAgents: 4, parallelism: 2 })) { this.#root = root; this.#repo = collectRepoContext(root, nativeContext); this.#workingRepo = nativeContext.directory ? collectRepoContext(nativeContext.directory) : this.#repo; this.#getPrimaryMode = getPrimaryMode; this.#getTopology = getTopology; }
     start(sessionID, userText, observedPrimary) {
         const intent = provisionalIntent(userText, this.#repo), now = Date.now(), primaryConfigured = this.#getPrimaryMode(), primary = observedPrimary ?? (primaryConfigured === 'manager' ? 'manager' : 'working-manager');
         const missionID = `m_${now.toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
@@ -118,7 +132,7 @@ export class MissionStore {
             this.syncProgressBaseline(m);
             return m;
         }
-        const verificationResolution = resolveAdaptiveVerificationAssessment(assessment, m.identity.semantic_assessment.pending_text), effectiveAssessment = verificationResolution.assessment, explicitUserVerification = verificationResolution.explicitUserVerification, boundedExplicitVerification = verificationResolution.ceilingApplied;
+        const verificationResolution = resolveAdaptiveVerificationAssessment(assessment, m.identity.semantic_assessment.pending_text, this.#workingRepo), effectiveAssessment = verificationResolution.assessment, explicitUserVerification = verificationResolution.explicitUserVerification, boundedExplicitVerification = verificationResolution.ceilingApplied;
         m.identity.intent = assessedIntent(m.identity.intent, effectiveAssessment);
         m.identity.risk = m.identity.intent.risk;
         m.identity.objective = m.identity.intent.objective;
@@ -255,7 +269,7 @@ export class MissionStore {
             this.syncProgressBaseline(m);
             return m;
         }
-        const verificationResolution = resolveAdaptiveVerificationAssessment(assessment, text), effectiveAssessment = verificationResolution.assessment, kind = effectiveAssessment.message_kind;
+        const verificationResolution = resolveAdaptiveVerificationAssessment(assessment, text, this.#workingRepo), effectiveAssessment = verificationResolution.assessment, kind = effectiveAssessment.message_kind;
         if (kind === 'constraint') {
             m.execution.constraints ??= [];
             if (!m.execution.constraints.includes(text))

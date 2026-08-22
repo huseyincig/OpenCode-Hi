@@ -114,14 +114,17 @@ export class TaskResultReconciler{
     const previousIssues=task.result?.open_issues??[];if(previousIssues.length)m.execution.blockers=m.execution.blockers.filter(b=>!previousIssues.includes(b)||m.execution.tasks.some(other=>other.id!==task.id&&other.result?.status!=='DONE'&&(other.result?.open_issues??[]).includes(b)))
 
     const previousCollateral=[...(task.diff_cleanliness?.collateral??[])]
-    const ownership=isHiReadOnlyChildRole(worker.role)&&result.changed_files.length
-      ? {outside:[...result.changed_files],accepted:[],collateral:[...result.changed_files]}
-      : assessDiffOwnership(task,result)
+    const readOnlyRole=isHiReadOnlyChildRole(worker.role),readOnlyNativeDelta=readOnlyRole&&worker.native_diff_final?diffDelta(worker.native_diff_baseline??{},worker.native_diff_final):undefined,readOnlyObservedMutation=readOnlyRole&&(observedMutationDuringWorker||(worker.write_set?.length??0)>0||(readOnlyNativeDelta?.length??0)>0)
+    let normalizedResult=result
+    if(readOnlyRole&&result.changed_files.length&&!readOnlyObservedMutation&&readOnlyNativeDelta!==undefined){appendLedger(m,'worker.read-only-changed-files-claim-ignored',{task_id:task.id,worker_id:worker.id,payload:{reported:result.changed_files.slice(0,40),reason:'native-diff-proves-zero-read-only-mutation'}});normalizedResult={...result,changed_files:[]}}
+    const ownership=readOnlyRole&&normalizedResult.changed_files.length
+      ? {outside:[...normalizedResult.changed_files],accepted:[],collateral:[...normalizedResult.changed_files]}
+      : assessDiffOwnership(task,normalizedResult)
     if(ownership.accepted.length){
       task.diff_cleanliness={collateral:previousCollateral,accepted_expansions:[...new Set([...(task.diff_cleanliness?.accepted_expansions??[]),...ownership.accepted])]}
     }
     const cleanlinessMarker=ownership.collateral.length?`diff-cleanliness:${task.id}:${ownership.collateral.slice(0,12).sort().join(',')}`:undefined
-    const claimedReverted=previousCollateral.filter(file=>!new Set(result.changed_files.map(normFile)).has(normFile(file)))
+    const claimedReverted=previousCollateral.filter(file=>!new Set(normalizedResult.changed_files.map(normFile)).has(normFile(file)))
     const verifiedReverts=new Set((task.diff_cleanliness?.native_verified_reverts??[]).map(normFile))
     const unverifiedReverts=!cleanlinessMarker?claimedReverted.filter(file=>!verifiedReverts.has(normFile(file))):[]
     const cleanupMarker=unverifiedReverts.length?`cleanup-unverified:${task.id}:${unverifiedReverts.slice(0,12).sort().join(',')}`:undefined
@@ -137,7 +140,7 @@ export class TaskResultReconciler{
       summary:`Cleanup was reported but deterministic native diff evidence is still required for: ${unverifiedReverts.slice(0,12).join(', ')}.`,
       open_issues:[...new Set([...result.open_issues,cleanupMarker])],
       needs_context:[...new Set([...result.needs_context,'cleanup-verification: do not close collateral-diff blockers from WorkerResult claims alone; provide native/session diff confirmation'])]
-    }:result
+    }:normalizedResult
     const missingMethodologyLoads=effectiveResult.status==='DONE'?(worker.selected_methodologies??[]).filter(name=>!(worker.loaded_methodologies??[]).includes(name)):[]
     if(missingMethodologyLoads.length){
       const marker=`methodology-not-loaded:${task.id}:${missingMethodologyLoads.join(',')}`
@@ -149,7 +152,7 @@ export class TaskResultReconciler{
       appendLedger(m,'diff.cleanliness.blocked',{task_id:task.id,worker_id:worker.id,payload:{collateral:ownership.collateral.slice(0,40),outside:ownership.outside.slice(0,40),role:worker.role}})
       void this.events?.(runtimeSignal('diff.cleanliness.blocked',m.identity.mission_id,{task_id:task.id,worker_id:worker.id,payload:{collateral:ownership.collateral.slice(0,40)}}))
     }else if(previousCollateral.length&&!cleanupMarker){
-      const stillChanged=new Set(result.changed_files.map(normFile))
+      const stillChanged=new Set(normalizedResult.changed_files.map(normFile))
       const reverted=previousCollateral.filter(file=>!stillChanged.has(normFile(file))&&verifiedReverts.has(normFile(file)))
       if(reverted.length){
         m.vcs.changed_files=m.vcs.changed_files.filter(file=>!reverted.includes(file)||m.execution.tasks.some(t=>t.id!==task.id&&(t.result?.changed_files??[]).includes(file)))
@@ -182,9 +185,9 @@ export class TaskResultReconciler{
       const claimedPassed=e.outcome==='passed'||e.pass===true
       if(claimedPassed&&genericVerifierClaimKinds.has(e.kind)){appendLedger(m,'verification.worker-claim-unverified',{task_id:task.id,worker_id:worker.id,payload:{kind:e.kind,reason:'worker-result-is-claim-not-host-observation'}});const {pass:_pass,outcome:_outcome,...rest}=e;return{...rest,outcome:'pending' as const,reason:'worker-claim-unverified: canonical PASS requires an exact runtime/host verification observation'}}
       if(!claimedPassed||!browserProofKinds.has(e.kind))return e
-      const requested=[...new Set(e.evidence_refs??[])],support=requested.map(id=>m.execution.evidence.items.find(item=>item.id===id)).filter((item):item is NonNullable<typeof item>=>Boolean(item))
+      const rawRequested=[...new Set(e.evidence_refs??[])],requested=rawRequested.map(id=>{if(!id.startsWith('bo_'))return id;const match=m.execution.evidence.items.find(item=>item.task_id===task.id&&String(item.source??'')===`browser:${id}`&&item.kind==='browser-evidence'&&!item.invalidated_at&&evidenceClaimApplicability(m,item).applicable);return match?.id??id}),support=requested.map(id=>m.execution.evidence.items.find(item=>item.id===id)).filter((item):item is NonNullable<typeof item>=>Boolean(item))
       const valid=requested.length>0&&support.length===requested.length&&support.every(item=>String(item.source??'').startsWith('browser:')&&item.kind==='browser-evidence'&&!item.invalidated_at&&item.outcome!=='failed'&&item.pass!==false&&item.task_id===task.id&&evidenceClaimApplicability(m,item).applicable)
-      if(valid)return e
+      if(valid){if(rawRequested.some((id,i)=>id!==requested[i]))appendLedger(m,'browser.evidence-ref-normalized',{task_id:task.id,worker_id:worker.id,payload:{from:rawRequested.slice(0,20),to:requested.slice(0,20),policy:'same-task-current-observation-only'}});return{...e,evidence_refs:requested}}
       appendLedger(m,'browser.evidence-unbound',{task_id:task.id,worker_id:worker.id,payload:{kind:e.kind,requested_refs:requested.slice(0,20),resolved_refs:support.map(item=>item.id),reason:'passed browser-derived proof requires current task/attempt browser observations'}})
       const {pass:_pass,outcome:_outcome,...rest}=e
       return{...rest,outcome:'pending' as const,reason:'browser-proof-unbound: passed browser/visual/accessibility proof requires current task/attempt browser observation evidence_refs'}

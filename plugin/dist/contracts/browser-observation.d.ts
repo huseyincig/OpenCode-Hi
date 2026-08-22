@@ -1,4 +1,4 @@
-export declare const BROWSER_OBSERVATION_ACTIONS: readonly ["open", "navigate", "click", "type", "inspect", "screenshot", "wait", "close"];
+export declare const BROWSER_OBSERVATION_ACTIONS: readonly ["open", "navigate", "click", "type", "key", "inspect", "screenshot", "wait", "close"];
 export type BrowserObservationAction = typeof BROWSER_OBSERVATION_ACTIONS[number];
 export declare const BROWSER_OBSERVATION_RESULTS: readonly ["OBSERVED", "FAILED"];
 export type BrowserObservationResult = typeof BROWSER_OBSERVATION_RESULTS[number];

@@ -9,6 +9,7 @@ import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {PACKAGED_HI_AGENTS} from '../dist/generated/agent-config.js'
 import {HI_BROWSER_EXECUTION_TOOL_IDS} from '../dist/runtime/browser/executor.js'
 import {resolveBrowserExecutionOwner} from '../dist/runtime/browser/ownership.js'
+import {LocalPreviewManager} from '../dist/runtime/browser/local-preview.js'
 import {resolve,dirname} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {opencodeChildPort} from './helpers/host-port.mjs'
@@ -59,4 +60,15 @@ test('M13 explicit local backend records one durable browser capability blocker 
   const verify=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(verify)
   const env=m.execution.evidence.items.find(e=>e.kind==='visual-evidence'&&e.outcome==='environment-issue')
   assert.ok(env);assert.ok(env.obligation_ids?.includes(verify.id));assert.equal(env.reason,'capability-unavailable:browser-execution')
+})
+
+
+test('M13 local visual task can defer origin creation to Hi-owned preview and receives exact preview handoff',async()=>{
+  const prompts=[],m=mission('m13-preview',['visual-qa']),preview=new LocalPreviewManager(repoRoot)
+  const rt=new TaskRuntime(opencodeChildPort(client(prompts)),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>structuredClone(HOST),undefined,{},undefined,undefined,()=>new Set(['host-capability:browser-execution']),undefined,undefined,undefined,preview)
+  const out=await rt.start(m,{objective:'verify local static UI',role:'visual-qa',category:'visual',scope:['src/view.tsx']})
+  const task=m.execution.tasks.find(t=>t.id===out.task_id);assert.equal(task.execution_profile.browser_backend,'bounded-playwright');assert.deepEqual(task.execution_profile.browser_allowed_origins,undefined)
+  const prompt=JSON.stringify(prompts[0]);assert.match(prompt,new RegExp(`LOCAL STATIC PREVIEW: task_id=${out.task_id}`));assert.match(prompt,/hi_browser_preview_open/)
+  assert.equal(preview.active(out.task_id),false,'preview starts only when the visual worker requests the scoped local target')
+  await preview.dispose()
 })

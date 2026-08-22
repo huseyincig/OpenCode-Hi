@@ -46,3 +46,31 @@ test('M13 browser finding feeds the same visual task/session correction loop and
   assert.equal(evidenceClaimApplicability(m,observationEvidence).applicable,false,'prior browser observation must not prove the correction attempt')
   assert.match(JSON.stringify(prompts[1]),/Hi corrective resume for existing task/);assert.match(JSON.stringify(prompts[1]),/review-finding:rf-browser-overlap/)
 })
+
+
+test('read-only worker self-reported changed_files is ignored when native diff proves zero mutation',async()=>{
+  const created=[],prompts=[],c=client(created,prompts),host={agent:PACKAGED_HI_AGENTS}
+  const registry=new BackgroundRegistry(),scheduler=new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}}))
+  const runtime=new TaskRuntime(opencodeChildPort(c),registry,scheduler,repoRoot,repoRoot,()=>resolveHiConfig({},repoRoot),()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>host)
+  const store=new MissionStore(repoRoot),m=store.start('readonly-claim-zero-diff','inspect one file without changing it')
+  store.applyInitialSemanticAssessment('readonly-claim-zero-diff',{material:true,message_kind:'mission',task_kind:'analysis',scope:'local',risk:'low',ambiguity:'high',dependency_class:'independent',required_capabilities:['repository-exploration'],requested_external_actions:[],likely_verification:[],likely_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[]})
+  const started=await runtime.start(m,{objective:'inspect src/a.ts',role:'repository-explorer',category:'quick',scope:['src/a.ts']})
+  const task=m.execution.tasks.find(t=>t.id===started.task_id),worker=m.execution.workers.find(w=>w.id===started.worker_id);assert.ok(task);assert.ok(worker)
+  worker.native_diff_baseline={};worker.native_diff_final={};worker.write_set=[]
+  runtime.applyResult(m,worker.id,{status:'DONE',summary:'Read-only inspection complete.',changed_files:['src/a.ts'],scope_expansions:[],evidence:[],open_issues:[],needs_context:[]})
+  assert.equal(task.result?.status,'DONE');assert.deepEqual(task.result?.changed_files,[])
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.read-only-changed-files-claim-ignored'&&e.worker_id===worker.id))
+})
+
+test('read-only worker still fails closed when native diff proves a real mutation',async()=>{
+  const created=[],prompts=[],c=client(created,prompts),host={agent:PACKAGED_HI_AGENTS}
+  const registry=new BackgroundRegistry(),scheduler=new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}}))
+  const runtime=new TaskRuntime(opencodeChildPort(c),registry,scheduler,repoRoot,repoRoot,()=>resolveHiConfig({},repoRoot),()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>host)
+  const store=new MissionStore(repoRoot),m=store.start('readonly-claim-real-diff','inspect one file without changing it')
+  store.applyInitialSemanticAssessment('readonly-claim-real-diff',{material:true,message_kind:'mission',task_kind:'analysis',scope:'local',risk:'low',ambiguity:'high',dependency_class:'independent',required_capabilities:['repository-exploration'],requested_external_actions:[],likely_verification:[],likely_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[]})
+  const started=await runtime.start(m,{objective:'inspect src/a.ts',role:'repository-explorer',category:'quick',scope:['src/a.ts']})
+  const task=m.execution.tasks.find(t=>t.id===started.task_id),worker=m.execution.workers.find(w=>w.id===started.worker_id);assert.ok(task);assert.ok(worker)
+  worker.native_diff_baseline={};worker.native_diff_final={'src/a.ts':'changed'};worker.write_set=['src/a.ts']
+  runtime.applyResult(m,worker.id,{status:'DONE',summary:'Read-only inspection complete.',changed_files:['src/a.ts'],scope_expansions:[],evidence:[],open_issues:[],needs_context:[]})
+  assert.equal(task.result?.status,'FIX_REQUIRED');assert.ok(task.result?.open_issues.some(x=>x.startsWith('diff-cleanliness:')))
+})

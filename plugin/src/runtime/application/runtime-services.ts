@@ -17,6 +17,7 @@ import {createRuntimeScopedStores} from './runtime-scoped-stores.js'
 import {ProcessRuntime} from '../process/runtime.js'
 import {WorkspaceRuntime} from '../workspace/runtime.js'
 import {ChatHumanDecisionTransport} from '../human-decision/transport.js'
+import {LocalPreviewManager} from '../browser/local-preview.js'
 
 export interface RuntimeServicePorts{
   nativeContext:NativeProjectContext
@@ -50,8 +51,9 @@ export function createRuntimeServices(input:{ports:RuntimeServicePorts;projectRo
   const ensureBrowserAvailable=async()=>{if(browserAvailable)return{available:true,attempted:false};if(ports.bootstrapBrowser)browserBootstrapStatus=await ports.bootstrapBrowser();const health=await browserExecutor.health();setBrowserAvailable(health.available);return{available:health.available,attempted:browserBootstrapStatus?.attempted,reason:health.available?undefined:(browserBootstrapStatus?.reason??health.reason)}}
   const getBrowserBootstrapStatus=()=>browserBootstrapStatus?{...browserBootstrapStatus}:undefined
   const workspaceRuntime=new WorkspaceRuntime(ports.workspace,projectRoot)
-  const tasks=new TaskRuntime(ports.childSession,background,scheduler,projectRoot,packageRoot,getConfig,getModels,getHostConfig,eventSink,ports.hostCapabilities,scopedStores,workspaceRuntime,()=>browserAvailable?new Set(['host-capability:browser-execution']):new Set(),browserExecutor,ensureBrowserAvailable,ports.readAssistantResult)
+  const previewManager=new LocalPreviewManager(ports.nativeContext.directory??projectRoot)
+  const tasks=new TaskRuntime(ports.childSession,background,scheduler,projectRoot,packageRoot,getConfig,getModels,getHostConfig,eventSink,ports.hostCapabilities,scopedStores,workspaceRuntime,()=>browserAvailable?new Set(['host-capability:browser-execution']):new Set(),browserExecutor,ensureBrowserAvailable,ports.readAssistantResult,previewManager)
   for(const m of store.all())for(const w of m.execution.workers)if(w.session_id&&w.status==='ready')background.set(w)
   const processRuntime=new ProcessRuntime(ports.process,projectRoot,getHostConfig)
-  return{store,background,humanDecisionTransport,persistence,scheduler,eventSink,tasks,processExecutor:ports.process,processRuntime,workspaceExecutor:ports.workspace,workspaceRuntime,browserExecutor,setBrowserAvailable,ensureBrowserAvailable,getBrowserBootstrapStatus,scopedStores}
+  return{store,background,humanDecisionTransport,persistence,scheduler,eventSink,tasks,processExecutor:ports.process,processRuntime,workspaceExecutor:ports.workspace,workspaceRuntime,browserExecutor,setBrowserAvailable,ensureBrowserAvailable,getBrowserBootstrapStatus,previewManager,scopedStores}
 }

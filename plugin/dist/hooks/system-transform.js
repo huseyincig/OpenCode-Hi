@@ -2,7 +2,8 @@ import { renderSemanticAssessmentGate } from '../runtime/intent/semantic-assessm
 import { buildMissionRuntimeProjection, renderMissionRuntimeProjection } from '../runtime/context/mission-runtime-projection.js';
 import { redactProviderContext } from '../runtime/privacy/boundary.js';
 import { appendLedger } from '../runtime/ledger/ledger.js';
-export function createSystemTransformHook(store, background, projectRoot) { return async (input, output) => { if (isNativeHousekeeping(input, output))
+import { resolve } from 'node:path';
+export function createSystemTransformHook(store, background, projectRoot, workingDirectory) { return async (input, output) => { if (isNativeHousekeeping(input, output))
     return; const sid = input?.sessionID ?? input?.sessionId, child = sid && background ? background.list().find(w => w.session_id === sid) : undefined, m = child ? store.get(child.parent_session_id) : store.get(sid); if (!m || !Array.isArray(output?.system))
     return; if (!child && m.identity.status === 'completed') {
     const terminal = 'Hi MISSION COMPLETE: required evidence and obligations are closed. Stop; do not invoke more tools.';
@@ -19,7 +20,7 @@ export function createSystemTransformHook(store, background, projectRoot) { retu
     output.system.push(gate);
     return;
 } if (child && ((child.parent_mission_id !== undefined && child.parent_mission_id !== m.identity.mission_id) || (child.generation_at_spawn !== undefined && child.generation_at_spawn !== m.continuation.generation)))
-    return; const worker = child ? m.execution.workers.find(w => w.id === child.id) : undefined, projection = buildMissionRuntimeProjection(m, worker, projectRoot), text = redactProviderContext(renderMissionRuntimeProjection(projection)).providerText; if (output.system.includes(text))
+    return; const worker = child ? m.execution.workers.find(w => w.id === child.id) : undefined, projection = buildMissionRuntimeProjection(m, worker, projectRoot), localBoundary = !child && m.identity.intent.scope === 'local' && ['low', 'medium'].includes(m.identity.risk) && workingDirectory && projectRoot && resolve(workingDirectory) !== resolve(projectRoot) ? `\nHi LOCAL OBSERVATION BOUNDARY: current working directory (${resolve(workingDirectory)}) is the primary evidence surface. Do not inspect the parent/worktree root (${resolve(projectRoot)}) merely for orientation. Expand there only when a concrete unresolved target, dependency, repository contract, or configuration requires it; otherwise stay inside the working directory and likely targets.` : '', text = redactProviderContext(renderMissionRuntimeProjection(projection) + localBoundary).providerText; if (output.system.includes(text))
     return; if (output.system.some((x) => typeof x === 'string' && x.includes('Hi MISSION RUNTIME PROJECTION')))
     appendLedger(m, 'host.composition-collision', { task_id: worker?.task_id, worker_id: worker?.id, payload: { surface: 'system-transform', reason: 'hi-runtime-marker-without-canonical-projection' } }); output.system.push(text); }; }
 const NATIVE_HOUSEKEEPING_AGENTS = new Set(['title', 'summary', 'compaction']);

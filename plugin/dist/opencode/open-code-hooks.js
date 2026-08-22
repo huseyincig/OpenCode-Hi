@@ -6,13 +6,14 @@ import { createMessagesTransformHook } from '../hooks/messages-transform.js';
 import { createSystemTransformHook } from '../hooks/system-transform.js';
 import { createToolBeforeHook } from '../hooks/tool-before.js';
 import { createToolAfterHook } from '../hooks/tool-after.js';
+import { createTextCompleteHook } from '../hooks/text-complete.js';
 import { appendLedger } from '../runtime/ledger/ledger.js';
 import { normalizeOpenCodeEvent } from './event-adapter.js';
 import { ExperimentalOpenCodeAdapter } from './experimental-adapter.js';
 import { syncHumanDecisionTransport } from '../runtime/human-decision/transport.js';
 export function createOpenCodeHooks(input) {
-    const { state, host, services, projectRoot, packagedSkillsDir, projectAuthority, toolSurface, reconfigureToolSurface, eventController, instanceLease } = input;
-    const { store, background, humanDecisionTransport, persistence, tasks, processRuntime, browserExecutor, eventSink } = services;
+    const { state, host, services, projectRoot, workingDirectory, packagedSkillsDir, projectAuthority, toolSurface, reconfigureToolSurface, eventController, instanceLease } = input;
+    const { store, background, humanDecisionTransport, persistence, tasks, processRuntime, browserExecutor, previewManager, eventSink } = services;
     const experimental = new ExperimentalOpenCodeAdapter(store, background);
     return {
         name: 'opencode-hi',
@@ -48,7 +49,13 @@ export function createOpenCodeHooks(input) {
             persistence.save(store.all());
         } },
         'experimental.chat.messages.transform': createMessagesTransformHook(store, background),
-        'experimental.chat.system.transform': createSystemTransformHook(store, background, projectRoot),
+        'experimental.chat.system.transform': createSystemTransformHook(store, background, projectRoot, workingDirectory),
+        'experimental.text.complete': async (input, output) => { try {
+            await createTextCompleteHook(store, background, projectRoot)(input, output);
+        }
+        finally {
+            persistence.save(store.all());
+        } },
         'experimental.session.compacting': async (input, output) => { try {
             await experimental.compacting()(input, output);
         }
@@ -56,7 +63,7 @@ export function createOpenCodeHooks(input) {
             persistence.save(store.all());
         } },
         'tool.execute.before': async (input, output) => { try {
-            await createToolBeforeHook(store, background, projectRoot)(input, output);
+            await createToolBeforeHook(store, background, projectRoot, workingDirectory)(input, output);
         }
         finally {
             for (const m of store.all())
@@ -64,7 +71,7 @@ export function createOpenCodeHooks(input) {
             persistence.save(store.all());
         } },
         'tool.execute.after': async (input, output) => { try {
-            await createToolAfterHook(store, background, eventSink, projectRoot)(input, output);
+            await createToolAfterHook(store, background, eventSink, projectRoot, workingDirectory)(input, output);
         }
         finally {
             for (const m of store.all())
@@ -81,6 +88,7 @@ export function createOpenCodeHooks(input) {
             const browserDisposable = browserExecutor;
             if (browserDisposable.dispose)
                 await browserDisposable.dispose();
+            await previewManager.dispose();
             persistence.markCleanShutdown(store.all());
         }
         finally {

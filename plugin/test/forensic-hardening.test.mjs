@@ -118,7 +118,7 @@ test('parent direct progress can close an explicit analysis obligation without b
     await hooks['chat.message']({sessionID:'s-analysis',message:{role:'user',parts:[{type:'text',text:'Fix the parser bug and verify it'}]}},{parts:[]});await assessPluginMission(hooks,'s-analysis',{task_kind:'bug-fix',scope:'local',ambiguity:'resolvable',dependency_class:'independent',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/parser.ts']})
     const empty=String(await hooks.tool.hi_direct_progress.execute({summary:'   ',obligation_id:'o-analysis'},{sessionID:'s-analysis'}));assert.match(empty,/non-empty bounded summary/)
     const wrong=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Root cause known.',obligation_id:'o-analysis:Root cause understood'},{sessionID:'s-analysis'}));assert.equal(wrong.reason,'unknown-obligation-id');assert.deepEqual(wrong.candidate_ids,['o-analysis','o-implementation'])
-    const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Root cause isolated to the parser branch condition.',obligation_id:'o-analysis'},{sessionID:'s-analysis'}));assert.equal(result.status,'RECORDED');assert.deepEqual(result.changed_files,[]);assert.equal(result.completion_ready,false);assert.equal(result.next,'VERIFY');assert.equal(result.verification_required,true);assert.deepEqual(result.remaining_obligations,[{id:'o-implementation',kind:'implementation'},{id:'o-verification',kind:'verification'}]);assert.deepEqual(result.methodology_needs,[])
+    const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Root cause isolated to the parser branch condition.',obligation_id:'o-analysis'},{sessionID:'s-analysis'}));assert.equal(result.status,'RECORDED');assert.deepEqual(result.changed_files,[]);assert.equal(result.completion_ready,false);assert.equal(result.next,'CONTINUE');assert.equal(result.verification_required,true);assert.deepEqual(result.remaining_obligations,[{id:'o-implementation',kind:'implementation'},{id:'o-verification',kind:'verification'}]);assert.deepEqual(result.methodology_needs,[])
     const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:'s-analysis'}));const obligations=Object.fromEntries(ledger.obligations.map(o=>[o.id,o.status]));assert.equal(obligations['o-analysis'],'closed');assert.equal(obligations['o-implementation'],'open');assert.equal(obligations['o-verification'],'open');assert.ok(ledger.events.some(e=>e.type==='analysis.direct-progress'))
     await hooks.dispose?.()
   }finally{rmSync(root,{recursive:true,force:true})}
@@ -229,6 +229,22 @@ test('parent direct progress closes multi-target implementation only after every
     assert.equal(ledger.status,'completed');assert.ok(ledger.obligations.every(o=>o.status==='closed'));assert.ok(!ledger.events.some(e=>e.type==='implementation.required-targets-uncovered'))
     await hooks.dispose?.()
   }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+test('parent direct progress uses the OpenCode working directory as local evidence root even when the parent worktree ignores it',async()=>{
+  const worktree=mkdtempSync(join(tmpdir(),'hi-direct-worktree-root-')),directory=join(worktree,'.agent-work','local-project')
+  try{
+    mkdirSync(directory,{recursive:true});writeFileSync(join(worktree,'.gitignore'),'.agent-work/\n')
+    for(const args of [['init','-q'],['config','user.name','Hi Test'],['config','user.email','hi@example.invalid'],['add','.gitignore'],['commit','-qm','baseline']]){const r=spawnSync('git',['-C',worktree,...args],{encoding:'utf8'});assert.equal(r.status,0,String(r.stderr??''))}
+    const c=client();delete c.session.diff
+    const hooks=await HiPlugin({directory,worktree,project:{vcs:'git'},client:c});await hooks.config({})
+    const sid='s-working-root';await hooks['chat.message']({sessionID:sid,message:{role:'user',parts:[{type:'text',text:'Create index.html only'}]}},{parts:[]});await assessPluginMission(hooks,sid,{task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],likely_targets:['index.html'],likely_verification:[]})
+    writeFileSync(join(directory,'index.html'),'<!doctype html><canvas></canvas>\n');await hooks['tool.execute.before']({sessionID:sid,tool:'write'},{args:{filePath:join(directory,'index.html')}})
+    const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Created the requested single-file HTML.',obligation_id:'o-implementation'},{sessionID:sid}))
+    assert.equal(result.status,'RECORDED',JSON.stringify(result));assert.deepEqual(result.changed_files,['index.html'])
+    const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:sid}));assert.ok(ledger.events.some(e=>e.type==='implementation.current-diff-reconciled'&&e.payload?.source==='working-directory-current-files'))
+    await hooks.dispose?.()
+  }finally{rmSync(worktree,{recursive:true,force:true})}
 })
 
 test('parent direct progress normalizes native absolute project paths before ownership comparison',async()=>{
@@ -511,4 +527,19 @@ test('parent direct methodology remains active until mission-scope fresh verific
     assert.ok(afterVerification.events.some(e=>e.type==='methodology.resolved'&&e.payload?.name==='hi-safe-refactoring'))
     await hooks.dispose?.()
   }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+
+test('worker evidence compatibility normalizes refs/description aliases without bypassing canonical evidence validation',()=>{
+  const result=parseWorkerResult(JSON.stringify({status:'DONE',summary:'visual pass',changed_files:[],evidence:[{kind:'visual-evidence',outcome:'passed',description:'browser state verified',refs:['ev_a','ev_a','ev_b']}],open_issues:[],needs_context:[]}))
+  assert.equal(result.status,'DONE');assert.equal(result.evidence.length,1);assert.equal(result.evidence[0].summary,'browser state verified');assert.deepEqual(result.evidence[0].evidence_refs,['ev_a','ev_b']);assert.equal(result.evidence[0].outcome,'passed')
+})
+
+
+test('direct progress recovers current Git changed surface after mutating shell when file event attribution is delayed',async()=>{
+  const {mkdtempSync,mkdirSync,writeFileSync,rmSync}=await import('node:fs');const {tmpdir}=await import('node:os');const {join}=await import('node:path');const {spawnSync}=await import('node:child_process');const HiPlugin=(await import('../dist/plugin.js')).default
+  const root=mkdtempSync(join(tmpdir(),'hi-shell-surface-'));mkdirSync(join(root,'.opencode'),{recursive:true});writeFileSync(join(root,'.gitignore'),'.opencode/\n')
+  for(const args of [['init','-q'],['config','user.name','Hi Test'],['config','user.email','hi@example.invalid'],['add','.gitignore'],['commit','-qm','baseline']]){const r=spawnSync('git',['-C',root,...args],{encoding:'utf8'});assert.equal(r.status,0,String(r.stderr??''))}
+  const client={app:{log:async()=>{}},provider:{list:async()=>({data:[]})},session:{diff:async()=>({data:[]}),create:async()=>({data:{id:'child'}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:true})}}
+  try{const hooks=await HiPlugin({directory:root,worktree:root,project:{vcs:'git'},client});await hooks.config({});const sid='shell-surface';await hooks['chat.message']({sessionID:sid,message:{role:'user',parts:[{type:'text',text:'Create index.html only'}]}},{parts:[]});const {assessPluginMission}=await import('./helpers/semantic.mjs');await assessPluginMission(hooks,sid,{task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],likely_targets:['index.html'],likely_verification:[]});await hooks['tool.execute.before']({sessionID:sid,tool:'bash'},{args:{command:"cat > index.html <<'EOF'\n<html></html>\nEOF"}});writeFileSync(join(root,'index.html'),'<html></html>\n');const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Created index.html',obligation_id:'o-implementation'},{sessionID:sid}));assert.equal(result.status,'RECORDED',JSON.stringify(result));assert.deepEqual(result.changed_files,['index.html']);const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:sid}));assert.ok(ledger.events.some(e=>e.type==='implementation.changed-surface-recovered'&&e.payload?.files?.includes('index.html')));await hooks.dispose?.()}finally{rmSync(root,{recursive:true,force:true})}
 })
