@@ -6,8 +6,8 @@
   "status": "PARTIAL",
   "release": "0.2.4",
   "certified_source_checkpoint": {
-    "commit": "e96a3c5604d5bef35b9538fbb76f1c59ea84c0e8",
-    "tree": "bee6a91dba68de1d4e2a195e7d27bfc8111d1f3c",
+    "commit": "6665612b1d53effcbac2c725dcc803b90dcb9f3f",
+    "tree": "b41902ecd685875ad12dda6a3da0f5f23d53df7a",
     "note": "Source checkpoint attested by a subsequent evidence commit to avoid self-referential Git hashes."
   },
   "schema_versions": {
@@ -25,7 +25,7 @@
         "receipt": "data/validation/external-opencode-hi-0.2.4-process-1.18.21-head-46b5dd7.json",
         "source_rank": 442,
         "reachable_from_head": true,
-        "head_distance": 5,
+        "head_distance": 13,
         "scope_limitations": [
           "Exact T3 applies only to OpenCode 1.18.21 on linux/aarch64 and exact source 46b5dd71bb18378e9436a3ad4f74221fce6c9d6a.",
           "Only Hi-owned ProcessRuntime/OpenCode PTY lifecycle is promoted; arbitrary model-facing shell jobs are outside this claim."
@@ -37,7 +37,7 @@
         "receipt": "data/validation/external-opencode-hi-0.2.4-workspace-1.18.21-head-46b5dd7.json",
         "source_rank": 442,
         "reachable_from_head": true,
-        "head_distance": 5,
+        "head_distance": 13,
         "scope_limitations": [
           "Workspace support applies only to canonical Mission-owned IsolationDecision/WorkspaceLease execution.",
           "OpenCode workspace support must be enabled before host startup.",
@@ -50,7 +50,7 @@
         "receipt": "data/validation/external-opencode-hi-0.2.4-browser-1.18.21-head-46b5dd7.json",
         "source_rank": 442,
         "reachable_from_head": true,
-        "head_distance": 5,
+        "head_distance": 13,
         "scope_limitations": [
           "Browser execution remains task-plan local-http(s) scoped and rejects credential-bearing URLs and arbitrary selectors.",
           "Exact T3 applies only to OpenCode 1.18.21 on linux/aarch64 with real Chromium and exact source 46b5dd71bb18378e9436a3ad4f74221fce6c9d6a."
@@ -64,7 +64,7 @@
   },
   "test_totals": {
     "python": 105,
-    "node": 1202,
+    "node": 1204,
     "architecture": 22,
     "documentation_parity_violations": 0
   },
