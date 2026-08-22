@@ -24,9 +24,9 @@ If a task requires Hi-owned workspace isolation on OpenCode 1.18.21, enable that
 
 Normal setup does **not** require Git checkout, Bun, an external Python installation, a project `package.json`, or project-root `node_modules`. Python is only needed for the retained legacy/advanced helper commands that are explicitly documented as such below.
 
-For development candidate `0.2.4`, mandatory Hi-owned local browser verification also has a bounded first-use recovery path: if no usable Chromium executable is observed, Hi may invoke the package's pinned optional `playwright-core@1.62.1` CLI once to install Chromium into a Hi-owned cache (`HI_BROWSER_CACHE`, otherwise the platform cache root). It never installs browser files into the application project. A timeout, missing runtime package/CLI, network/install failure, or still-missing executable is recorded as unavailable environment/capability state and is not retried indefinitely on unchanged state.
+For published `0.2.4`, mandatory Hi-owned local browser verification also has a bounded first-use recovery path: if no usable Chromium executable is observed, Hi may invoke the package's pinned optional `playwright-core@1.62.1` CLI once to install Chromium into a Hi-owned cache (`HI_BROWSER_CACHE`, otherwise the platform cache root). It never installs browser files into the application project. A timeout, missing runtime package/CLI, network/install failure, or still-missing executable is recorded as unavailable environment/capability state and is not retried indefinitely on unchanged state.
 
-Current development compatibility target is exact OpenCode `1.18.21`. Historical and still-current full-T3 capability receipts remain provenance for the host versions they actually measured; do not reinterpret an older 1.18.19 receipt as 1.18.21 evidence. Current release-gate status belongs to [Release Engineering](RELEASE.md) and [Host Support](HOSTS.md).
+Current published compatibility target is exact OpenCode `1.18.21`. Historical and still-current full-T3 capability receipts remain provenance for the host versions they actually measured; do not reinterpret an older 1.18.19 receipt as 1.18.21 evidence. Current release-gate status belongs to [Release Engineering](RELEASE.md) and [Host Support](HOSTS.md).
 
 ## npm package runner — normal user path
 
@@ -37,7 +37,7 @@ cd /path/to/project
 npx --yes opencode-hi@0.2.2 install .
 ```
 
-In published `0.2.3`, `install` is the friendly first-install alias of `setup`. In development `0.2.4`, `install` becomes the safe **ensure** command: it performs first setup when no Hi ownership exists, returns `NOOP` at the same exact owned version, and delegates to the same ownership/drift-guarded update path for an older Hi-owned registration. `setup` remains strict first-install. These commands preserve foreign plugins, providers, MCP configuration, themes and unknown user fields. It creates or preserves the project-root `opencode.json` and writes one exact target `opencode-hi@<version>` plugin entry plus Hi-owned provenance under `.opencode/hi/provenance/**`. It does not create an application-root `package.json`, `package-lock.json`, or persistent root `node_modules`.
+In published `0.2.3`, `install` is the friendly first-install alias of `setup`. In published `0.2.4`, `install` becomes the safe **ensure** command: it performs first setup when no Hi ownership exists, returns `NOOP` at the same exact owned version, and delegates to the same ownership/drift-guarded update path for an older Hi-owned registration. `setup` remains strict first-install. These commands preserve foreign plugins, providers, MCP configuration, themes and unknown user fields. It creates or preserves the project-root `opencode.json` and writes one exact target `opencode-hi@<version>` plugin entry plus Hi-owned provenance under `.opencode/hi/provenance/**`. It does not create an application-root `package.json`, `package-lock.json`, or persistent root `node_modules`.
 
 Do **not** substitute `npm i opencode-hi` for this command. Plain `npm i` is npm dependency installation: it creates/updates project npm state (`package.json`, `package-lock.json`, `node_modules`) and does not perform Hi's OpenCode registration/provenance setup.
 
@@ -67,11 +67,11 @@ The npm package runner owns installation lifecycle only. Its canonical commands 
 
 | Command | Mutation | What it does |
 |---|---:|---|
-| `install` | bounded | development `0.2.4`: ensures exact registration through setup / safe owned update / NOOP |
-| `setup` | yes | strict first exact Hi-owned registration; development `0.2.4` also opens the bounded wizard on a real terminal |
+| `install` | bounded | published `0.2.4`: ensures exact registration through setup / safe owned update / NOOP |
+| `setup` | yes | strict first exact Hi-owned registration; published `0.2.4` also opens the bounded wizard on a real terminal |
 | `update` | yes | explicitly changes an existing Hi-owned registration to the requested exact release |
 | `doctor` | no | checks registration, ownership, config-hash drift, routing schema and pending lifecycle state |
-| `reconfigure` | routing only | development `0.2.4`: reopen the bounded terminal project wizard |
+| `reconfigure` | routing only | published `0.2.4`: reopen the bounded terminal project wizard |
 | `state` | no | shows package/registration/routing state without claiming live Mission/provider truth |
 | `reprofile` | yes | changes only project-owned `executionPolicy` |
 | `roles` | bounded | prints or explicitly edits child-role model/fallback/variant mappings |
@@ -81,9 +81,9 @@ The npm package runner owns installation lifecycle only. Its canonical commands 
 | `rollback` | yes | restores one recorded lifecycle point only when current hashes still match |
 | `recover` | bounded | reconciles only a recorded interrupted setup/update transaction |
 
-Published `0.2.3` treats `install` as a `setup` alias. Development `0.2.4` gives `install` ensure semantics while keeping `setup` strict; `upgrade` remains an `update` alias.
+Published `0.2.4` gives `install` ensure semantics while keeping `setup` strict; `upgrade` remains an `update` alias.
 
-The loaded plugin is a different surface. Exact OpenCode 1.18.19 acceptance observes 31 runtime tools:
+The loaded plugin is a different surface. Exact OpenCode 1.18.21 acceptance observes 34 runtime tools:
 
 - diagnostics/state: `hi_doctor`, `hi_status`, `hi_readiness`, `hi_metrics`, `hi_ledger`;
 - semantic/control: `hi_intent_assess`, `hi_direct_progress`;
@@ -92,11 +92,11 @@ The loaded plugin is a different surface. Exact OpenCode 1.18.19 acceptance obse
 - bounded process control: `hi_process_spawn`, `hi_process_read`, `hi_process_write`, `hi_process_wait`, `hi_process_kill`, `hi_process_cleanup`, `hi_process_list`;
 - bounded browser control: `hi_browser_preview_open`, `hi_browser_open`, `hi_browser_navigate`, `hi_browser_click`, `hi_browser_type`, `hi_browser_key`, `hi_browser_inspect`, `hi_browser_screenshot`, `hi_browser_wait`, `hi_browser_close`.
 
-For published `0.2.3`, package `doctor` reports installation ownership/drift state; runtime `hi_status`, `hi_readiness`, and `hi_ledger` report live Mission state. Development `0.2.4` adds the Node-native package controls below for common profile/model-routing changes while keeping live Mission/provider truth in the loaded runtime.
+For published `0.2.4`, package `doctor` reports installation ownership/drift state; runtime `hi_status`, `hi_readiness`, and `hi_ledger` report live Mission state. Published `0.2.4` also exposes the Node-native package controls below for common profile/model-routing changes while keeping live Mission/provider truth in the loaded runtime.
 
 ### Is setup interactive?
 
-Published `0.2.3` remains deterministic. Development `0.2.4` is interactive **only when the package runner is attached to a real terminal**. CI and piped/non-TTY automation remain deterministic; `--non-interactive` makes that choice explicit. The wizard is intentionally bounded and does not own provider authentication or pretend that model IDs are live before OpenCode exposes the runtime inventory.
+Published `0.2.4` is interactive **only when the package runner is attached to a real terminal**. CI and piped/non-TTY automation remain deterministic; `--non-interactive` makes that choice explicit. The wizard is intentionally bounded and does not own provider authentication or pretend that model IDs are live before OpenCode exposes the runtime inventory.
 
 ```text
 setup/install (TTY) -> choose primary mode -> restart -> type “Hi rol modellerini ayarla” in chat -> runtime hi_doctor
@@ -105,7 +105,7 @@ setup/install (non-TTY) -> deterministic registration -> restart -> package doct
 
 The normal-user wizard writes only `primaryMode`. Task topology, execution depth, specialist thresholds, and parallelism remain Hi runtime internals. After restart, type **“Hi rol modellerini ayarla”** in OpenCode chat: `hi_role_models` lists the effective connected runtime inventory and persists only explicit ordered child-role model/fallback choices. Without an explicit Hi mapping, the OpenCode agent model is used when configured; otherwise Hi makes an ephemeral capability/variant recommendation from the live inventory. Automatic choices are never persisted and cost/quality/feedback telemetry does not reorder them. `visual-qa` accepts only vision-capable models. Provider authentication and primary `manager` / `working-manager` model selection remain OpenCode-owned. `reconfigure` changes only `primaryMode` and preserves all advanced/unknown routing fields.
 
-Development `0.2.4` moves the most common project controls into the Node package runner:
+Published `0.2.4` moves the most common project controls into the Node package runner:
 
 ```bash
 npx --yes opencode-hi@0.2.4 reconfigure .
@@ -144,7 +144,7 @@ A committed compatibility/evidence projection may be older than HEAD only when i
 
 ## Reconfigure
 
-For normal users on development `0.2.4`, reopen the bounded Node wizard:
+For normal users on published `0.2.4`, reopen the bounded Node wizard:
 
 ```bash
 npx --yes opencode-hi@0.2.4 reconfigure /path/to/project

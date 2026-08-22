@@ -3,15 +3,12 @@
   "release": "0.2.4",
   "generated_at": "2026-08-22",
   "internal_status": "LOCAL_IMPLEMENTATION_AND_IN_PROCESS_ACCEPTANCE_COMPLETE",
-  "release_blocked": true,
-  "claim_boundary": "0.2.4 exact source/docs checkpoint b7689bb is frozen. Packed fresh-consumer, deterministic release and exact OpenCode 1.18.21 Linux/aarch64 T3 are green; clean evidence-checkpoint hygiene/final canonical gates remain local, while Windows current-source CI and real GitHub/npm T4 remain external.",
+  "release_blocked": false,
+  "claim_boundary": "OpenCode-Hi 0.2.4 is published and T4-verified against exact source 19bcb4e7adf9d71b851c82cf5f74210e4ca56eb0. Ubuntu/Windows readiness, GitHub Release, npm Trusted Publishing/provenance, registry digest equality and fresh-registry exact OpenCode 1.18.21 acceptance pass. The immutable package contains a recorded numeric tool-count prose defect; current dev source fixes it and adds a parity guard without retagging or republishing 0.2.4.",
   "source_checklist": {
     "source": "0.2.4 orchestration hardening, chat-native child-role model routing, exact OpenCode 1.18.21 compatibility/churn control and current certification architecture",
     "internal_missing": [],
-    "external_pending": [
-      "exact OpenCode 1.18.21 Windows current-source CI",
-      "GitHub Release/npm Trusted Publishing/fresh-registry T4"
-    ],
+    "external_pending": [],
     "local_pending": []
   },
   "local_acceptance": {
@@ -59,31 +56,36 @@
   },
   "current_exact_host_prepublication": {
     "linux_aarch64": {
-      "status": "PASS_EXACT_CURRENT_T3",
+      "status": "PASS_T4_FRESH_REGISTRY_EXACT_HOST",
       "opencode": "1.18.21",
-      "source_commit": "b7689bbad0436c7e789f67f8667543108623aaa2",
-      "hi_tools": 32,
-      "receipt": "data/validation/prompt-b-exact-current-opencode-t3.json",
+      "source_commit": "19bcb4e7adf9d71b851c82cf5f74210e4ca56eb0",
+      "hi_tools": 34,
+      "receipt": "data/validation/t4-registry-exact-host-0.2.4.json",
       "runtime_equivalent_to_current": true
     },
     "windows_desktop": {
-      "status": "PENDING_EXTERNAL_CI",
+      "status": "PASS_CURRENT_RELEASE_SOURCE",
       "opencode": "1.18.21",
-      "reason": "No current 0.2.4 Windows exact-source Release Readiness receipt exists."
+      "source_commit": "19bcb4e7adf9d71b851c82cf5f74210e4ca56eb0",
+      "github_actions_run": 32599313513,
+      "windows_job_id": 97095097166,
+      "reason": "Exact release source passed Windows Release Readiness."
     }
   },
   "release_evidence": {
     "release_gates": "data/validation/release-gates.json",
     "generated_status": "data/validation/release-status-0.2.4.json",
     "historical_0_2_3_t4_is_current": false,
-    "publication_authorized_or_performed": false,
+    "publication_authorized_or_performed": true,
     "deterministic_release": "data/validation/deterministic-release-reproducibility-0.2.4.json",
     "current_validator": "PASS",
-    "final_gates": "data/validation/final-gates-0.2.4.json"
+    "final_gates": "data/validation/final-gates-0.2.4.json",
+    "publication_receipt": "data/validation/release-publication-0.2.4.json",
+    "registry_exact_host_receipt": "data/validation/t4-registry-exact-host-0.2.4.json",
+    "released_source": "19bcb4e7adf9d71b851c82cf5f74210e4ca56eb0",
+    "github_release_id": 375060853,
+    "publish_workflow_run": 32603952366
   },
-  "blockers": [
-    "exact OpenCode 1.18.21 Windows current-source external CI",
-    "real GitHub/npm T4 publication evidence"
-  ],
-  "conclusion": "All executable local 0.2.4 engineering and certification gates pass. Final system state remains PARTIAL only because current-source Windows CI and real GitHub/npm T4 publication evidence remain external."
+  "blockers": [],
+  "conclusion": "0.2.4 publication/T4 is complete with exact-source cross-platform, GitHub Release, npm Trusted Publishing/provenance, registry integrity and fresh-registry exact-host acceptance. Current dev also corrects the discovered immutable-package tool-count prose drift and guards against recurrence."
 }

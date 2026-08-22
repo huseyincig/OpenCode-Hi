@@ -12,15 +12,19 @@
     },
     "current_release_gates": {
       "path": "data/validation/release-gates.json",
-      "sha256": "89bbcd04d7ff3561bf01223c1474cfda89e4b735ae54e82562735cfb0f1819b3"
+      "sha256": "b85dcfdd7d56b8d8a8cdfc7ff6612c104ea33b6279cad2a6a7558d85654fe0bf"
     },
     "historical_v0_1_0_publication": {
       "path": "data/validation/release-publication-0.1.0.json",
       "sha256": "b0b9509dea487a6403d075d3ca18e8081285af4c053605d7f8f6438ad3d9798a"
+    },
+    "current_publication": {
+      "path": "data/validation/release-publication-0.2.4.json",
+      "sha256": "324acbd185afad61e1116efbdceeefc51cf85f92f4492d2a37132e2e09c405a6"
     }
   },
-  "status": "PREPUBLICATION_CERTIFIED_PENDING_T4",
-  "release_blocked": true,
+  "status": "CERTIFIED_T4",
+  "release_blocked": false,
   "publication_authority": {
     "required": true,
     "granted": false,
@@ -34,9 +38,9 @@
   "candidate": {
     "version": "0.2.4",
     "tag": "v0.2.4",
-    "github_status": "PENDING_T4",
-    "npm_status": "PENDING_T4",
-    "publication_attempted": false,
+    "github_status": "PASS_T4",
+    "npm_status": "PASS_T4",
+    "publication_attempted": true,
     "prepublication_ready": true
   },
   "reference_host": {
@@ -65,7 +69,7 @@
       "process-lifecycle": "PASS_T3_EXACT_HOST_1_18_21_LINUX_AARCH64",
       "workspace-isolation-binding": "PASS_T3_PREPUBLICATION_PACKED_LOCAL_PACKAGE_SEAM_EXACT_OPENCODE_1_18_21_LINUX_AARCH64",
       "browser-execution": "PASS_T3_PACKED_34_HI_TOOLS_0_2_4",
-      "windows": "PASS_CROSS_PLATFORM_EXACT_SHA_79B10DC",
+      "windows": "PASS_CROSS_PLATFORM_EXACT_RELEASE_SOURCE_0_2_4",
       "clean_consumer": "PASS_CLEAN_PREPUBLICATION_PACKED_TARBALL_LOCAL_CONSUMER",
       "final-canonical": "PASS_CURRENT_CHECKPOINT_PY105_NODE1202_ARCH22_DOCS0_VALIDATOR"
     }

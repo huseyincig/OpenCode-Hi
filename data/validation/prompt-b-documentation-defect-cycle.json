@@ -47,17 +47,17 @@
       "owner_sha256": "d28be108c398a85b956fe702e75002975f29e85074205dea7192de9307883c15",
       "owner_anchor": "Generated from",
       "proof": "data/validation/documentation-parity.json",
-      "proof_sha256": "93369b9150569d8d0a6be5bff40ac88ab51fc47a71f4c3c98caefce1899ebeb9",
+      "proof_sha256": "0c7e4904bae57b60333548f7c7881575eb1b94307fa54c671adcb672ba053e92",
       "proof_anchor": "\"status\": \"PASS\""
     },
     {
       "step": "doc-lint",
       "status": "PASS",
       "owner": "scripts/validate-documentation.py",
-      "owner_sha256": "85298e6a9869f3ad199cdfaec0d6435c2daf84abb8770b14e1c53586df145aba",
+      "owner_sha256": "87cba21c14c325f8611a45e9a91bc07ac4a364aea0f28bb959e1636bd301db09",
       "owner_anchor": "documentation parity",
       "proof": "data/validation/documentation-parity.json",
-      "proof_sha256": "93369b9150569d8d0a6be5bff40ac88ab51fc47a71f4c3c98caefce1899ebeb9",
+      "proof_sha256": "0c7e4904bae57b60333548f7c7881575eb1b94307fa54c671adcb672ba053e92",
       "proof_anchor": "\"violations\": []"
     }
   ],

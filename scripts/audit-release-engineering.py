@@ -54,7 +54,21 @@ runtime_drift=changed_paths(release_commit,cert_head,runtime_paths) if t4 else [
 fresh_is_ancestor=subprocess.run(['git','merge-base','--is-ancestor',str(head),cert_head],cwd=ROOT,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode==0 if head else False
 fresh_tree_exact=bool(head and tree and subprocess.run(['git','rev-parse','--verify','--quiet',f'{head}^{{tree}}'],cwd=ROOT,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode==0 and sh('git','rev-parse',f'{head}^{{tree}}')==tree)
 fresh_material_drift=changed_paths(head,cert_head,fresh_material_paths) if fresh_is_ancestor else ['fresh-source-not-ancestor']
-fresh_source_binding=fresh_tree_exact and fresh_is_ancestor and not fresh_material_drift
+prepublication_fresh_binding=fresh_tree_exact and fresh_is_ancestor and not fresh_material_drift
+published_fresh_binding=False
+if t4:
+    rs=pub.get('released_source') or {}; npm=pub.get('npm_registry') or {}; fr=pub.get('fresh_registry_consumer') or {}
+    t4_receipt=load(f'data/validation/t4-registry-exact-host-{version}.json')
+    published_fresh_binding=(
+      rs.get('git_commit')==release_commit
+      and npm.get('gitHead')==release_commit
+      and (t4_receipt.get('registry') or {}).get('gitHead')==release_commit
+      and t4_receipt.get('status')=='PASS'
+      and all((t4_receipt.get('checks') or {}).values())
+      and (t4_receipt.get('host') or {}).get('opencode')==target
+      and fr.get('exact_opencode')==target
+    )
+fresh_source_binding=published_fresh_binding if t4 else prepublication_fresh_binding
 historical_source=((historical.get('github') or {}).get('released_source') or (historical.get('source') or {}).get('commit'))
 checks={
  'fresh_source_binding':fresh_source_binding,

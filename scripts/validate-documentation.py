@@ -63,6 +63,18 @@ def main():
     readme=(ROOT/'README.md').read_text(encoding='utf-8');install=(ROOT/'docs/INSTALLATION.md').read_text(encoding='utf-8');configuration=(ROOT/'docs/CONFIGURATION.md').read_text(encoding='utf-8');configuration_tr=(ROOT/'docs/locales/tr/CONFIGURATION.md').read_text(encoding='utf-8');hosts=(ROOT/'docs/HOSTS.md').read_text(encoding='utf-8');arch=(ROOT/'docs/ARCHITECTURE.md').read_text(encoding='utf-8')
     candidate=release.get('candidate') or {}; npm_status=candidate.get('npm_status'); github_status=candidate.get('github_status')
     tr_path=ROOT/'docs/locales/tr/README.md'; tr=tr_path.read_text(encoding='utf-8') if tr_path.is_file() else ''
+    release_gates=json.loads((ROOT/'data/validation/release-gates.json').read_text(encoding='utf-8'))
+    expected_tool_count=((release_gates.get('current_local_evidence') or {}).get('fresh_consumer') or {}).get('expected_hi_tool_count')
+    if not isinstance(expected_tool_count,int) or expected_tool_count<=0:
+        errors.append({'code':'DOC_RUNTIME_TOOL_COUNT_INPUT','expected':'positive current expected_hi_tool_count'})
+    else:
+        tool_count_claims=[
+          ('README.md',readme,rf'\*\*{expected_tool_count} `hi_\*` tools\*\*'),
+          ('docs/INSTALLATION.md',install,rf'observes {expected_tool_count} runtime tools'),
+          ('docs/locales/tr/README.md',tr,rf'\*\*{expected_tool_count} adet `hi_\*` runtime tool\*\*'),
+        ]
+        for path,text,pattern in tool_count_claims:
+            if not re.search(pattern,text):errors.append({'code':'DOC_RUNTIME_TOOL_COUNT_DRIFT','path':path,'expected':expected_tool_count})
     if f'`{version}`' not in tr:errors.append({'code':'DOC_LOCALIZED_VERSION_DRIFT','path':'docs/locales/tr/README.md','expected':version})
     stale_localized=r'npm bootstrap|registry package oluşana kadar|npm[^\n]{0,180}(henüz|mevcut değildir|açık değildir|blocked|not yet|unavailable)|release-status-0\.1\.0'
     if npm_status=='PASS_T4' and github_status=='PASS_T4':

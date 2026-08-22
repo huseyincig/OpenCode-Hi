@@ -2,8 +2,8 @@
   "schema": 7,
   "release": "0.2.4",
   "generated_at": "2026-08-22",
-  "candidate_status": "PROMPT_B_0_2_4_PREPUBLICATION_CERTIFICATION_IN_PROGRESS",
-  "claim_boundary": "Current 0.2.4 candidate only. Local/product, exact OpenCode 1.18.21 Linux/aarch64 T3, packed fresh-consumer, and exact-source Ubuntu/Windows CI are proven. Real GitHub/npm T4 publication remains external and is not fabricated.",
+  "candidate_status": "PROMPT_B_0_2_4_CERTIFIED_T4",
+  "claim_boundary": "0.2.4 is published and T4-bound to immutable v0.2.4 source, exact-source cross-platform readiness, npm Trusted Publishing/provenance, registry digest equality and fresh-registry exact OpenCode 1.18.21 acceptance. The immutable published README retained a numeric 31-tool prose defect; current dev corrects that prose to the source-bound 34-tool inventory and adds a regression guard without rewriting the published artifact.",
   "gates": {
     "source_integrity": "PASS_LOCAL_ISOLATED_COMMITTED_SOURCE_B7689BB",
     "deterministic_release": "PASS_LOCAL_TWO_INDEPENDENT_BYTE_IDENTICAL_BUILDS",
@@ -25,20 +25,17 @@
     "opencode_native_child_sessions": "PASS_T3_EXACT_HOST_1_18_21_NATIVE_CHILD_SESSION",
     "opencode_model_provider_binding": "PASS_T3_EXACT_HOST_1_18_21_PROVIDER_BINDING",
     "permission_denial_runtime": "PASS_T3_EXACT_HOST_1_18_21_FAIL_CLOSED_PERMISSION",
-    "windows_runtime_smoke": "PASS_CROSS_PLATFORM_EXACT_SHA_79B10DC",
+    "windows_runtime_smoke": "PASS_CROSS_PLATFORM_EXACT_RELEASE_SOURCE_0_2_4",
     "dependency_supply_chain_external": "PASS_CLEAN_PREPUBLICATION_PACKED_TARBALL_LOCAL_CONSUMER",
     "filesystem_hygiene": "PASS_LOCAL_CLEAN_EVIDENCE_CHECKPOINT_12_OF_12",
     "native_package_plugin_install_exact_candidate": "PASS_T3_PREPUBLICATION_PACKED_LOCAL_PACKAGE_SEAM_EXACT_OPENCODE_1_18_21_LINUX_AARCH64",
-    "github_release_publication": "PENDING_T4_NOT_PUBLISHED",
-    "npm_registry_publication": "PENDING_AUTH_T4_NOT_PUBLISHED",
+    "github_release_publication": "PASS_T4_GITHUB_RELEASE_V0_2_4",
+    "npm_registry_publication": "PASS_T4_NPM_REGISTRY_0_2_4",
     "final_canonical_gates": "PASS_CURRENT_CHECKPOINT_PY105_NODE1202_ARCH22_DOCS0_VALIDATOR"
   },
-  "release_blocked": true,
-  "reason": "0.2.4 executable engineering/certification gates are locally closed, including exact OpenCode 1.18.21 T3, packed fresh-consumer and exact-source Ubuntu/Windows Release Readiness. Only real GitHub/npm T4 publication verification remains external.",
-  "external_blockers": [
-    "opencode-hi@0.2.4 has not been published to npm; fresh-registry T4 is unavailable.",
-    "v0.2.4 GitHub Release has not been published; immutable release-source T4 is unavailable."
-  ],
+  "release_blocked": false,
+  "reason": "OpenCode-Hi 0.2.4 publication is complete: immutable annotated v0.2.4 peels to the exact released source, exact-source Ubuntu/Windows Release Readiness and Evidence certification succeeded, GitHub Release is published, npm Trusted Publishing OIDC succeeded, registry integrity/shasum and SLSA provenance match the exact tag/source, and fresh-registry exact OpenCode 1.18.21 acceptance passed.",
+  "external_blockers": [],
   "current_local_evidence": {
     "source_checkpoint": {
       "status": "PASS",
@@ -80,10 +77,14 @@
       "runtime_equivalent_to_current": true
     },
     "cross_platform": {
-      "status": "PASS",
+      "status": "PASS_CURRENT_RELEASE_SOURCE",
       "receipt": "data/validation/prompt-b-cross-platform-acceptance.json",
-      "source_commit": "79b10dc793c97672c92d2815cc342983a431e2c4",
-      "run_id": 32593887685,
+      "source_commit": "19bcb4e7adf9d71b851c82cf5f74210e4ca56eb0",
+      "source_tree": "8fa30af9d08a3def9f9abdd416704ae3cbc81a89",
+      "run_id": 32599313513,
+      "ubuntu_job": 97095097284,
+      "windows_job": 97095097166,
+      "evidence_job": 97095632652,
       "windows_current": true,
       "linux_current": true
     },
@@ -107,6 +108,15 @@
       "blockers": [
         "real GitHub/npm T4 publication verification"
       ]
+    },
+    "final_publication": {
+      "status": "PASS_T4",
+      "receipt": "data/validation/release-publication-0.2.4.json",
+      "released_source": "19bcb4e7adf9d71b851c82cf5f74210e4ca56eb0",
+      "tag": "v0.2.4",
+      "release_id": 375060853,
+      "github_actions_publish_run": 32603952366,
+      "registry_exact_host_receipt": "data/validation/t4-registry-exact-host-0.2.4.json"
     }
   },
   "historical_previous_release_evidence": {

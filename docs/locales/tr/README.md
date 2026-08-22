@@ -12,8 +12,7 @@ Hi, mümkün olan en fazla agent/token/araç yerine iş için **minimum yeterli*
 
 ## Güncel ürün gerçeği
 
-Güncel immutable public release `opencode-hi@0.2.2` / `v0.2.2`'dir. Güncel development source ayrı `0.2.3` candidate kimliğini taşır; source metadata'da `0.2.3` yazması onu yayınlanmış yapmaz. Public availability için authoritative kaynaklar GitHub Releases ve npm registry'dir. Yayınlanmış `0.2.2`; exact Git tag/source, başarılı Ubuntu/Windows Release Readiness, npm Trusted Publishing provenance ve fresh-registry exact OpenCode `1.18.19` kabulü ile doğrulanmıştır.
-Yayınlanmış immutable sürüm `opencode-hi@0.2.3` / `v0.2.3`'tür. Repository'deki güncel kaynak `opencode-hi@0.2.4` **prepublication development candidate**'dır; kendi release gate'leri kapanmadan npm/GitHub'da yayınlanmış veya T4-certified sayılmaz.
+Güncel immutable public release `opencode-hi@0.2.4` / `v0.2.4`'tür. GitHub Releases ve npm registry public availability için authoritative kaynaklardır. Yayınlanmış `0.2.4`; exact Git tag/source `19bcb4e7adf9d71b851c82cf5f74210e4ca56eb0`, başarılı Ubuntu/Windows Release Readiness, npm Trusted Publishing provenance, registry digest eşitliği ve fresh-registry exact OpenCode `1.18.21` kabulü ile doğrulanmıştır. `dev` branch'i aktif post-release geliştirme hattıdır; `main` stabil yayımlanmış 0.2.4 kaynak hattını korur.
 
 Güncel host/capability gerçeği elle yazılan metinden değil exact receipt'lerden üretilir. Ayrıntı için [Host Support](../../HOSTS.md) ve `data/validation/compatibility-matrix-0.1.0.json` kullanılır.
 
@@ -74,7 +73,7 @@ Machine-readable compatibility projection canonical mutable support görünümü
 
 - **Process lifecycle:** Hi-owned `ProcessContract` / `ProcessExecutor` yüzeyinde supported. PID-bound spawn, bounded IO, event-driven WAIT, timeout, kill, ayrı cleanup, restart adoption ve STOP reconciliation kapsanır.
 - **Workspace isolation:** Hi-owned `IsolationDecision` / `WorkspaceLease` / `WorkspaceRuntime` yüzeyinde supported. Required isolation alternate workspace'e bağlanır; verification aynı lease içinde yürür ve primary/user-dirty worktree korunur.
-- **Browser execution:** Hi-owned ve runtime-health-gated yüzeyde supported. Mandatory local browser verification Chromium gerektirip executable bulunamadığında development `0.2.3` runtime pinned `playwright-core@1.62.1` üzerinden Hi-owned platform cache'e en fazla bir bounded bootstrap denemesi yapar. Bootstrap başarısız veya unavailable ise durum açık environment/capability blocker olur; aynı verification state synthetic continuation döngüsüne girmez. BrowserObservation veya screenshot otomatik Evidence/PASS değildir.
+- **Browser execution:** Hi-owned ve runtime-health-gated yüzeyde supported. Mandatory local browser verification Chromium gerektirip executable bulunamadığında published `0.2.4` runtime pinned `playwright-core@1.62.1` üzerinden Hi-owned platform cache'e en fazla bir bounded bootstrap denemesi yapar. Bootstrap başarısız veya unavailable ise durum açık environment/capability blocker olur; aynı verification state synthetic continuation döngüsüne girmez. BrowserObservation veya screenshot otomatik Evidence/PASS değildir.
 - **HumanDecision:** chat transport supported. Deterministic structured OpenCode question-opening UI transport, accepted host API gerekli public opener'ı sağlamadığı için unsupported'dır.
 - **Semantic Context:** explicit first-class adapter yalnız TypeScript/TSX destekler. JavaScript, LSP ve Tree-sitter semantic adapter desteği ilan edilmez.
 
@@ -114,11 +113,11 @@ npx --yes opencode-hi@0.2.2 update /path/to/project
 
 ### Komut yüzeyleri ve interaktif kurulum sınırı
 
-Package lifecycle ile yüklü OpenCode runtime yüzeyi ayrıdır. Published `0.2.2` için `install`, `setup` alias'ıdır. Development `0.2.3` ile `install` güvenli **ensure** davranışı kazanır: ownership yoksa setup, aynı exact owned sürümde NOOP, Hi-owned eski sürümde aynı drift/ownership guard'lı update. `setup` strict ilk kurulum olarak kalır.
+Package lifecycle ile yüklü OpenCode runtime yüzeyi ayrıdır. Published `0.2.4` ile `install` güvenli **ensure** davranışına sahiptir: ownership yoksa setup, aynı exact owned sürümde NOOP, Hi-owned eski sürümde aynı drift/ownership guard'lı update. `setup` strict ilk kurulum olarak kalır.
 
-- `install`: development `0.2.3` için exact registration'ı setup / safe owned update / NOOP ile ensure eder.
+- `install`: published `0.2.4` için exact registration'ı setup / safe owned update / NOOP ile ensure eder.
 - `setup`: strict ilk exact Hi-owned registration/provenance kaydını oluşturur.
-- `reconfigure`: development `0.2.3` için bounded project wizard'ı yeniden açar.
+- `reconfigure`: published `0.2.4` için bounded project wizard'ı yeniden açar.
 - `update`: Hi'nin sahip olduğu kaydı hedef exact sürüme açıkça taşır.
 - `doctor`: registration, ownership, drift ve pending lifecycle state'i statik olarak kontrol eder.
 - `state`: package/project registration + routing state'ini read-only gösterir; live Mission state değildir.
@@ -130,9 +129,9 @@ Package lifecycle ile yüklü OpenCode runtime yüzeyi ayrıdır. Published `0.2
 - `rollback`: hash'ler hâlâ eşleşiyorsa tek kayıtlı rollback noktasını geri alır.
 - `recover`: yalnız kayıtlı yarım setup/update transaction'ını uzlaştırır.
 
-Plugin yüklendikten sonra **31 adet `hi_*` runtime tool** vardır. Kullanıcıya en yakın durum/diagnostic araçları `hi_doctor`, `hi_status`, `hi_readiness`, `hi_metrics` ve `hi_ledger`'dır; diğerleri task/worker, process, browser, context artifact, temporary mutation ve semantic control için bounded primitive'lerdir.
+Plugin yüklendikten sonra **34 adet `hi_*` runtime tool** vardır. Kullanıcıya en yakın durum/diagnostic araçları `hi_doctor`, `hi_status`, `hi_readiness`, `hi_metrics` ve `hi_ledger`'dır; diğerleri task/worker, process, browser, context artifact, temporary mutation ve semantic control için bounded primitive'lerdir.
 
-Güncel published `0.2.3` sürümünde kurulum ownership/drift durumu package `doctor` ile; canlı Mission durumu runtime `hi_status`, `hi_readiness` ve `hi_ledger` ile görülür. Development `0.2.4` normal setup/reconfigure akışını yalnız primary mode sorusuna indirir; rol-model eşlemesi OpenCode sohbetinde `hi_role_models` üzerinden yapılır. `state`, `reprofile`, `roles`, `rotate`, `check-update` deterministik CLI fallback olarak kalır.
+Güncel published `0.2.4` sürümünde kurulum ownership/drift durumu package `doctor` ile; canlı Mission durumu runtime `hi_status`, `hi_readiness` ve `hi_ledger` ile görülür. `0.2.4` normal setup/reconfigure akışını yalnız primary mode sorusuna indirir; rol-model eşlemesi OpenCode sohbetinde `hi_role_models` üzerinden yapılır. `state`, `reprofile`, `roles`, `rotate`, `check-update` deterministik CLI fallback olarak kalır.
 
 ```bash
 npx --yes opencode-hi@0.2.3 reconfigure .
@@ -143,7 +142,7 @@ npx --yes opencode-hi@0.2.3 rotate . --role coder
 npx --yes opencode-hi@0.2.3 check-update .
 ```
 
-Published `0.2.2` setup akışı deterministic kalır. Development `0.2.3`, gerçek terminal algılandığında bounded soru-cevap wizard açar; CI/non-TTY kullanımında deterministic davranış korunur ve `--non-interactive` ile açıkça seçilebilir:
+Published `0.2.4` setup akışı CI/non-TTY kullanımında deterministic kalır. gerçek terminal algılandığında bounded soru-cevap wizard açar ve `--non-interactive` ile deterministic yol açıkça seçilebilir:
 
 ```text
 setup/install (TTY) -> project wizard -> OpenCode restart -> package doctor -> runtime hi_doctor

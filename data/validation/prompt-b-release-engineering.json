@@ -3,28 +3,28 @@
   "kind": "PROMPT_B_RELEASE_ENGINEERING_AUDIT",
   "program": "PROMPT_B",
   "section": 28,
-  "status": "CLOSED_LOCAL_T4_BLOCKED",
+  "status": "CLOSED_T4",
   "current_source": {
-    "commit": "ff922d391584f63a6a9f29e4426e6a5702c65286",
-    "tree": "9e2ed34642840c4712bdbc1aa2e917dc9f783d10",
+    "commit": "aab0eed0763fe36d846fb9559090a5604f018a74",
+    "tree": "8cd69be1353e0a88c62ec5910fadc8f465d4ed88",
     "version": "0.2.4"
   },
   "release_source": {
-    "commit": "ff922d391584f63a6a9f29e4426e6a5702c65286",
-    "tree": "9e2ed34642840c4712bdbc1aa2e917dc9f783d10",
-    "tag": null
+    "commit": "19bcb4e7adf9d71b851c82cf5f74210e4ca56eb0",
+    "tree": "8fa30af9d08a3def9f9abdd416704ae3cbc81a89",
+    "tag": "v0.2.4"
   },
   "development_head": {
-    "post_release": false,
+    "post_release": true,
     "runtime_drift_from_release": [],
     "package_or_documentation_drift_from_release": [],
-    "current_version_already_published": false,
+    "current_version_already_published": true,
     "next_release_version_required": false,
-    "republish_same_version_forbidden": false
+    "republish_same_version_forbidden": true
   },
   "certification_head": {
-    "commit": "ff922d391584f63a6a9f29e4426e6a5702c65286",
-    "tree": "9e2ed34642840c4712bdbc1aa2e917dc9f783d10"
+    "commit": "aab0eed0763fe36d846fb9559090a5604f018a74",
+    "tree": "8cd69be1353e0a88c62ec5910fadc8f465d4ed88"
   },
   "historical_release": {
     "tag": "v0.2.1",
@@ -35,7 +35,7 @@
     "observed_at": "2026-08-22T19:25:20.932494+00:00",
     "reference_host_registry_latest": "1.18.21",
     "reference_sdk_registry_latest": "1.18.21",
-    "current_publication_receipt_present": false,
+    "current_publication_receipt_present": true,
     "authority_granted": false,
     "authority_condition": "explicit current user authority required after final certification; this audit never grants publication authority"
   },
@@ -44,31 +44,31 @@
       "stage": "source-commit",
       "status": "PASS",
       "detail": "ff922d391584f63a6a9f29e4426e6a5702c65286",
-      "proof": "fresh exact-host source binding"
+      "proof": "exact-current T3 source checkpoint"
     },
     {
       "stage": "version",
       "status": "PASS_NEW_RELEASE_IDENTITY",
       "detail": "0.2.4",
-      "proof": "v0.2.1 immutable; current candidate distinct"
+      "proof": "VERSION/package/lock identity"
     },
     {
       "stage": "build",
       "status": "PASS",
       "detail": "canonical build green",
-      "proof": "current product gates"
+      "proof": "canonical final gates"
     },
     {
       "stage": "tests",
       "status": "PASS",
       "detail": "current suites green",
-      "proof": "current product gates"
+      "proof": "validator + product gates"
     },
     {
       "stage": "packed-artifact",
       "status": "PASS",
-      "detail": "current packed artifact acceptance",
-      "proof": "data/validation/fresh-consumer-opencode-1.18.21.json"
+      "detail": "fresh pack equals registry artifact",
+      "proof": "data/validation/release-publication-0.2.4.json"
     },
     {
       "stage": "fresh-install",
@@ -80,43 +80,43 @@
       "stage": "T3",
       "status": "PASS",
       "detail": "exact OpenCode 1.18.21 packed consumer + current capability T3",
-      "proof": "data/validation/prompt-b-exact-current-opencode-t3.json"
+      "proof": "exact-current T3 audit"
     },
     {
       "stage": "tag",
-      "status": "PENDING_FINAL_AUTHORIZED_PUBLICATION",
-      "detail": "v0.2.1 remains immutable; v0.2.4 absent",
-      "proof": "explicit current user authority required"
+      "status": "PASS_T4",
+      "detail": "v0.2.4",
+      "proof": "data/validation/release-publication-0.2.4.json"
     },
     {
       "stage": "github-release",
-      "status": "PENDING_FINAL_AUTHORIZED_PUBLICATION",
-      "detail": "v0.2.4 not published",
-      "proof": "explicit current user publication authority required"
+      "status": "PASS_T4",
+      "detail": "GitHub Release v0.2.4",
+      "proof": "data/validation/release-publication-0.2.4.json"
     },
     {
       "stage": "registry-publication",
-      "status": "PENDING_FINAL_AUTHORIZED_PUBLICATION",
-      "detail": "opencode-hi@0.2.4 not published",
-      "proof": "explicit current user publication authority required"
+      "status": "PASS_T4",
+      "detail": "opencode-hi@0.2.4",
+      "proof": "data/validation/release-publication-0.2.4.json"
     },
     {
       "stage": "registry-integrity",
-      "status": "BLOCKED_UPSTREAM_PUBLICATION",
-      "detail": "cannot verify current registry artifact before publication",
-      "proof": "current-version publication absent"
+      "status": "PASS_T4",
+      "detail": "integrity/provenance exact-source bound",
+      "proof": "data/validation/release-publication-0.2.4.json"
     },
     {
       "stage": "fresh-registry-install",
-      "status": "BLOCKED_UPSTREAM_PUBLICATION",
-      "detail": "current registry package absent",
-      "proof": "current-version publication absent"
+      "status": "PASS_T4",
+      "detail": "exact OpenCode 1.18.21 fresh registry consumer",
+      "proof": "data/validation/t4-registry-exact-host-0.2.4.json"
     },
     {
       "stage": "T4-receipt",
-      "status": "PENDING_REAL_PUBLICATION_PROOF",
-      "detail": "no fabricated T4",
-      "proof": "real GitHub/npm publication required"
+      "status": "PASS_T4",
+      "detail": "real publication evidence complete",
+      "proof": "data/validation/release-publication-0.2.4.json"
     }
   ],
   "checks": {
@@ -126,14 +126,19 @@
     "historical_release_source": true,
     "released_runtime_immutable": true,
     "unreleased_runtime_change_declared": true,
-    "current_publication_receipt_absent": true,
-    "no_current_tag_present": true
+    "current_tag_annotated": true,
+    "current_tag_exact_source": true,
+    "github_release_t4": true,
+    "registry_published_t4": true,
+    "registry_integrity_t4": true,
+    "fresh_registry_t4": true,
+    "publication_receipt_t4": true
   },
   "violations": [],
   "summary": {
     "stages": 13,
-    "local_pass_or_historical": 8,
-    "blocked_external_or_identity": 5,
+    "local_pass_or_historical": 13,
+    "blocked_external_or_identity": 0,
     "violations": 0
   },
   "proof_hashes": {
@@ -145,7 +150,9 @@
     "data/validation/release-status-0.2.1.json": "e6780dbb64272d0080f5eb47e0d2a8f0ecba2d825b61e2be5b2a9d2e1604fa98",
     ".github/workflows/npm-publish.yml": "fddeff0ad498142ab454a0df576328bdb061106ce7eddec3ae553e3f653572b5",
     "scripts/verify-npm-oidc-release.mjs": "c5c099689d29081f77ce2fd8d4fc0324c5d98d7de2a8c75329448553a0274c72",
-    "scripts/run-exact-current-host-t3.mjs": "7f74c158da8c3f3ec22dad32ee179ef5b724e181e019dc8f810ecd7f4d789779"
+    "scripts/run-exact-current-host-t3.mjs": "7f74c158da8c3f3ec22dad32ee179ef5b724e181e019dc8f810ecd7f4d789779",
+    "data/validation/release-publication-0.2.4.json": "324acbd185afad61e1116efbdceeefc51cf85f92f4492d2a37132e2e09c405a6",
+    "data/validation/t4-registry-exact-host-0.2.4.json": "ee9ba021f07aca9e9c01faa747efa6d3585a9deb91bb934854d47eab3bceb2c7"
   },
   "claim_boundary": "Current local release engineering is bound to exact OpenCode 1.18.21, derived from the exact root SDK/plugin pin. T4 never becomes true without real GitHub/npm publication evidence and explicit current publication authority. v0.2.1 remains immutable."
 }
