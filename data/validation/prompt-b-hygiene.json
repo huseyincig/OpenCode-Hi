@@ -3,20 +3,20 @@
   "kind": "PROMPT_B_HYGIENE_AUDIT",
   "program": "PROMPT_B",
   "section": 41,
-  "status": "FAIL",
-  "audited_source_commit": "c3bc16ae42ecb06ded7ecb187794e56cb0a2e83d",
+  "status": "PASS",
+  "audited_source_commit": "71a4a58eafec433563a707bcd880d27d269f24f6",
   "checks": {
-    "clean_working_tree_outside_audit_artifacts": false,
+    "clean_working_tree_outside_audit_artifacts": true,
     "accidental_backups": true,
     "stale_temp_files": true,
-    "nested_runtime_state_leakage": false,
-    "stray_logs": false,
+    "nested_runtime_state_leakage": true,
+    "stray_logs": true,
     "debug_prints": true,
     "dead_fixture_guard": true,
     "obsolete_todo_fixme": true,
     "committed_secrets": true,
     "generated_outputs_idempotent": true,
-    "dist_source_match": false,
+    "dist_source_match": true,
     "package_artifacts_clean": true
   },
   "external_acceptance": {
@@ -26,14 +26,9 @@
   },
   "proof_hashes": {
     "scripts/run-node-test-suite.mjs": "987692ec836f2b16c62f53c8cc4f4f14551bb35c33298e6d5d22eb8281b25f6c",
-    "data/validation/prompt-b-test-suite-audit.json": "3878e64793c2e5a16b084ff1619f46a2905aca33b23ee10df032a76f0a58cff1",
-    "package.json": "c17ba40d902e1d63ef749e241f55b45817cf0f6d451a7a3eaf8f3a420b912a9b",
-    "plugin/package.json": "a874b7ddeab289291eb4295dc942b3deb6d0dc76aec028344e605e24c531bb63"
+    "data/validation/prompt-b-test-suite-audit.json": "aa7356e541a65e7f178f479186ca06911809a3b15cefa2fe829360ed779c5c24",
+    "package.json": "3c390257a4a1b18c7a24f82b576b8b27f0638be1e2a11b2e766cc8e85e1bead0",
+    "plugin/package.json": "b84e5b55324d02bd5468e0ab9d637bc92850536671411926f5e8d21c8d78f19d"
   },
-  "violations": [
-    "working-tree-dirty-outside-hygiene-artifacts: M CHANGELOG.md, M README.md, M THIRD_PARTY_NOTICES.md, M data/hi-config-options.json, M data/validation/adversarial-threat-matrix.json, M data/validation/compatibility-matrix-0.1.0.json, M data/validation/decision-replay/model-routing.jsonl, M data/validation/documentation-inventory.json, M data/validation/documentation-parity.json, M data/validation/fresh-consumer-opencode-1.18.19.json, M data/validation/namespace-normalization-0.1.0.json, M data/validation/product-truth-inventory.json, M data/validation/projection-receipts.json, M data/validation/prompt-b-authority-permission-external-action.json, M data/validation/prompt-b-cli-developer-tooling-ux.json, M data/validation/prompt-b-configuration.json, M data/validation/prompt-b-context-project-intelligence-compression.json, M data/validation/prompt-b-dependency-supply-chain-license.json, M data/validation/prompt-b-documentation-defect-cycle.json, M data/validation/prompt-b-evidence-verification-completion.json",
-    "nested-runtime-state-leak:.agent-work/precert-verification-overselection/real-mimo-r1/state/projects/9586e4b372964ca40ccdf12c/runtime-state.json,.agent-work/precert-verification-overselection/real-mimo-final-r1/state/projects/9586e4b372964ca40ccdf12c/runtime-state.json",
-    "stray-logs:.agent-work/phase6-control-build-r1.log,.agent-work/phase7-unknown-surface-build-r1.log,.agent-work/phase6-economy-build-r1.log,.agent-work/phase7-unknown-surface-focused-r1.log,.agent-work/phase6-product-gate-r1.log,.agent-work/phase7-isolation-focused-r3.log,.agent-work/phase7-isolation-product-gate-r2.log,.agent-work/phase6-control-build-r2.log,.agent-work/phase6-economy-affected-r1.log,.agent-work/phase6-control-affected-r1.log,.agent-work/phase7-dependency-dataflow-affected-r1.log,.agent-work/phase6-docs-pack-r1.log,.agent-work/phase7-isolation-product-gate-r1.log,.agent-work/phase7-benchmark-schema-focused-r1.log,.agent-work/phase7-benchmark-schema-build-r1.log,.agent-work/phase6-control-affected-r2.log,.agent-work/phase7-verifier-route-focused-r1.log,.agent-work/phase7-isolation-docs-pack-r1.log,.agent-work/phase7-unknown-surface-focused-r2.log,.agent-work/phase6-control-focused-r1.log",
-    "dist-source-mismatch"
-  ]
+  "violations": []
 }
