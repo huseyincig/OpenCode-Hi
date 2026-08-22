@@ -4,7 +4,7 @@
   "generated_at": "2026-08-22",
   "internal_status": "LOCAL_IMPLEMENTATION_AND_IN_PROCESS_ACCEPTANCE_COMPLETE",
   "release_blocked": true,
-  "claim_boundary": "0.2.4 implementation and exact OpenCode 1.18.21 Linux/aarch64 T3 are locally green. Final public-doc/package checkpoint plus final canonical evidence remain local work; current-source Windows CI and real GitHub/npm T4 remain external and are not fabricated.",
+  "claim_boundary": "0.2.4 exact source/docs checkpoint b7689bb is frozen. Packed fresh-consumer, deterministic release and exact OpenCode 1.18.21 Linux/aarch64 T3 are green; clean evidence-checkpoint hygiene/final canonical gates remain local, while Windows current-source CI and real GitHub/npm T4 remain external.",
   "source_checklist": {
     "source": "0.2.4 orchestration hardening, chat-native child-role model routing, exact OpenCode 1.18.21 compatibility/churn control and current certification architecture",
     "internal_missing": [],
@@ -13,8 +13,7 @@
       "GitHub Release/npm Trusted Publishing/fresh-registry T4"
     ],
     "local_pending": [
-      "final public-documentation/package checkpoint",
-      "fresh packed-consumer and deterministic-release recheck",
+      "clean evidence checkpoint and hygiene re-audit",
       "final canonical gates and \u00a7\u00a742-47 attestation"
     ]
   },
@@ -29,8 +28,9 @@
       "command": "npm run test:node:setup"
     },
     "fresh_consumer": {
-      "status": "PENDING_RECHECK_AFTER_FINAL_DOC_CHECKPOINT",
-      "receipt": "data/validation/fresh-consumer-opencode-1.18.21.json"
+      "status": "PASS",
+      "receipt": "data/validation/fresh-consumer-opencode-1.18.21.json",
+      "source_commit": "b7689bbad0436c7e789f67f8667543108623aaa2"
     },
     "documentation": {
       "status": "PASS_CURRENT_CONTENT",
@@ -63,7 +63,7 @@
     "linux_aarch64": {
       "status": "PASS_EXACT_CURRENT_T3",
       "opencode": "1.18.21",
-      "source_commit": "fe64d24dbb2304e4e323ed07882229e24a8a3f2e",
+      "source_commit": "b7689bbad0436c7e789f67f8667543108623aaa2",
       "hi_tools": 32,
       "receipt": "data/validation/prompt-b-exact-current-opencode-t3.json",
       "runtime_equivalent_to_current": true
@@ -84,9 +84,9 @@
     "final_gates": "data/validation/final-gates-0.2.4.json"
   },
   "blockers": [
-    "final public-doc/package checkpoint and local final gates",
+    "clean evidence checkpoint/hygiene/final canonical gates",
     "exact OpenCode 1.18.21 Windows current-source external CI",
     "real GitHub/npm T4 publication evidence"
   ],
-  "conclusion": "0.2.4 implementation and local exact-host engineering evidence are green. Final local certification is being rebound after the current documentation/package checkpoint; Windows current-source CI and T4 remain external."
+  "conclusion": "0.2.4 exact source/docs and local package/T3 evidence are green. Only clean evidence-finalization plus final canonical gates remain local; Windows current-source CI and T4 remain external."
 }

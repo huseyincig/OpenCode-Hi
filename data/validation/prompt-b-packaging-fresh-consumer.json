@@ -16,7 +16,7 @@
       "owner_sha256": "8bf5c32ba548d6c04f555b7e1dc227b41ca678d7bcccb39eebf4011fdf7f0f70",
       "owner_anchor": "'npm','pack'",
       "proof": "data/validation/fresh-consumer-opencode-1.18.21.json",
-      "proof_sha256": "e6947ae96de8e111cde5deb094953a87ae6094c04affa4cff2e82d353eeb8289",
+      "proof_sha256": "93853df73355150f47de9e34edf81e20308732ecee90d8b1405f2cf4067c8ac1",
       "proof_anchor": "\"installed_from_tarball\": true",
       "status": "PASS"
     },
@@ -26,7 +26,7 @@
       "owner_sha256": "8bf5c32ba548d6c04f555b7e1dc227b41ca678d7bcccb39eebf4011fdf7f0f70",
       "owner_anchor": "WORK=AGENT_WORK/'acceptance'",
       "proof": "data/validation/fresh-consumer-opencode-1.18.21.json",
-      "proof_sha256": "e6947ae96de8e111cde5deb094953a87ae6094c04affa4cff2e82d353eeb8289",
+      "proof_sha256": "93853df73355150f47de9e34edf81e20308732ecee90d8b1405f2cf4067c8ac1",
       "proof_anchor": "\"project\": \"<acceptance>/consumer/project\"",
       "status": "PASS"
     },
@@ -36,7 +36,7 @@
       "owner_sha256": "8bf5c32ba548d6c04f555b7e1dc227b41ca678d7bcccb39eebf4011fdf7f0f70",
       "owner_anchor": "'npm','install'",
       "proof": "data/validation/fresh-consumer-opencode-1.18.21.json",
-      "proof_sha256": "e6947ae96de8e111cde5deb094953a87ae6094c04affa4cff2e82d353eeb8289",
+      "proof_sha256": "93853df73355150f47de9e34edf81e20308732ecee90d8b1405f2cf4067c8ac1",
       "proof_anchor": "\"pack_install\": true",
       "status": "PASS"
     },
@@ -46,7 +46,7 @@
       "owner_sha256": "8bf5c32ba548d6c04f555b7e1dc227b41ca678d7bcccb39eebf4011fdf7f0f70",
       "owner_anchor": "'setup',str(bootstrap)",
       "proof": "data/validation/fresh-consumer-opencode-1.18.21.json",
-      "proof_sha256": "e6947ae96de8e111cde5deb094953a87ae6094c04affa4cff2e82d353eeb8289",
+      "proof_sha256": "93853df73355150f47de9e34edf81e20308732ecee90d8b1405f2cf4067c8ac1",
       "proof_anchor": "\"node_setup\": true",
       "status": "PASS"
     },
@@ -56,7 +56,7 @@
       "owner_sha256": "8bf5c32ba548d6c04f555b7e1dc227b41ca678d7bcccb39eebf4011fdf7f0f70",
       "owner_anchor": "opencode_bin,'serve'",
       "proof": "data/validation/fresh-consumer-opencode-1.18.21.json",
-      "proof_sha256": "e6947ae96de8e111cde5deb094953a87ae6094c04affa4cff2e82d353eeb8289",
+      "proof_sha256": "93853df73355150f47de9e34edf81e20308732ecee90d8b1405f2cf4067c8ac1",
       "proof_anchor": "\"exact_host_version\": true",
       "status": "PASS"
     },
@@ -66,7 +66,7 @@
       "owner_sha256": "8bf5c32ba548d6c04f555b7e1dc227b41ca678d7bcccb39eebf4011fdf7f0f70",
       "owner_anchor": "'/experimental/tool/ids?'",
       "proof": "data/validation/fresh-consumer-opencode-1.18.21.json",
-      "proof_sha256": "e6947ae96de8e111cde5deb094953a87ae6094c04affa4cff2e82d353eeb8289",
+      "proof_sha256": "93853df73355150f47de9e34edf81e20308732ecee90d8b1405f2cf4067c8ac1",
       "proof_anchor": "\"hi_tool_count\": 32",
       "status": "PASS"
     },
@@ -76,7 +76,7 @@
       "owner_sha256": "3c390257a4a1b18c7a24f82b576b8b27f0638be1e2a11b2e766cc8e85e1bead0",
       "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.21\"",
       "proof": "data/validation/fresh-consumer-opencode-1.18.21.json",
-      "proof_sha256": "e6947ae96de8e111cde5deb094953a87ae6094c04affa4cff2e82d353eeb8289",
+      "proof_sha256": "93853df73355150f47de9e34edf81e20308732ecee90d8b1405f2cf4067c8ac1",
       "proof_anchor": "\"consumer_resolution\": true",
       "status": "PASS"
     },
@@ -86,7 +86,7 @@
       "owner_sha256": "8bf5c32ba548d6c04f555b7e1dc227b41ca678d7bcccb39eebf4011fdf7f0f70",
       "owner_anchor": "'no_source_tree_in_server_log'",
       "proof": "data/validation/fresh-consumer-opencode-1.18.21.json",
-      "proof_sha256": "e6947ae96de8e111cde5deb094953a87ae6094c04affa4cff2e82d353eeb8289",
+      "proof_sha256": "93853df73355150f47de9e34edf81e20308732ecee90d8b1405f2cf4067c8ac1",
       "proof_anchor": "\"no_source_tree_in_server_log\": true",
       "status": "PASS"
     }

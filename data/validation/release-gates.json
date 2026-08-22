@@ -5,8 +5,8 @@
   "candidate_status": "PROMPT_B_0_2_4_PREPUBLICATION_CERTIFICATION_IN_PROGRESS",
   "claim_boundary": "Current 0.2.4 candidate only. Exact OpenCode 1.18.21 Linux/aarch64 T3 and current local runtime/audits are proven. Final public-doc/package checkpoint, fresh packed-consumer/deterministic-release recheck and final canonical gates remain local; current-source Windows CI and real GitHub/npm T4 remain external and are not fabricated.",
   "gates": {
-    "source_integrity": "PENDING_LOCAL_FINAL_DOC_CHECKPOINT_0_2_4",
-    "deterministic_release": "PENDING_LOCAL_FINAL_DOC_RECHECK_0_2_4",
+    "source_integrity": "PASS_LOCAL_ISOLATED_COMMITTED_SOURCE_B7689BB",
+    "deterministic_release": "PASS_LOCAL_TWO_INDEPENDENT_BYTE_IDENTICAL_BUILDS",
     "node_runtime_acceptance": "PASS_LOCAL_CURRENT_RUNTIME",
     "python_acceptance": "PENDING_LOCAL_FINAL_CANONICAL_GATES_0_2_4",
     "validator": "PENDING_LOCAL_FINAL_CANONICAL_GATES_0_2_4",
@@ -26,15 +26,15 @@
     "opencode_model_provider_binding": "PASS_T3_EXACT_HOST_1_18_21_PROVIDER_BINDING",
     "permission_denial_runtime": "PASS_T3_EXACT_HOST_1_18_21_FAIL_CLOSED_PERMISSION",
     "windows_runtime_smoke": "PENDING_EXTERNAL_CI_CURRENT_SOURCE_0_2_4",
-    "dependency_supply_chain_external": "PENDING_CLEAN_FINAL_DOC_PACKED_CONSUMER_0_2_4",
-    "filesystem_hygiene": "PENDING_LOCAL_FINAL_DOC_EVIDENCE_CHECKPOINT_0_2_4",
+    "dependency_supply_chain_external": "PASS_CLEAN_PREPUBLICATION_PACKED_TARBALL_LOCAL_CONSUMER",
+    "filesystem_hygiene": "PENDING_LOCAL_CLEAN_EVIDENCE_CHECKPOINT_0_2_4",
     "native_package_plugin_install_exact_candidate": "PASS_T3_PREPUBLICATION_PACKED_LOCAL_PACKAGE_SEAM_EXACT_OPENCODE_1_18_21_LINUX_AARCH64",
     "github_release_publication": "PENDING_T4_NOT_PUBLISHED",
     "npm_registry_publication": "PENDING_AUTH_T4_NOT_PUBLISHED",
     "final_canonical_gates": "PENDING_LOCAL_FINAL_CLEAN_CHECKPOINT_0_2_4"
   },
   "release_blocked": true,
-  "reason": "0.2.4 runtime/T3/replay/failure/lifecycle audits are green on exact OpenCode 1.18.21. Final public documentation/package material is being checkpointed before the final fresh-consumer/deterministic-release/canonical-gate pass; current-source Windows CI and real GitHub/npm T4 remain pending.",
+  "reason": "0.2.4 source/docs are frozen at b7689bb. Exact OpenCode 1.18.21 packed fresh-consumer, deterministic two-build release reproducibility, dependency/package audits and exact-current T3 are green. Clean evidence-checkpoint hygiene and canonical final gates remain local; current-source Windows CI and real GitHub/npm T4 remain external.",
   "external_blockers": [
     "exact OpenCode 1.18.21 Windows current-source CI for 0.2.4 is not yet available.",
     "opencode-hi@0.2.4 has not been published to npm; fresh-registry T4 is unavailable.",
@@ -42,9 +42,11 @@
   ],
   "current_local_evidence": {
     "source_checkpoint": {
-      "status": "PENDING_FINAL_DOC_COMMIT",
+      "status": "PASS",
+      "commit": "b7689bbad0436c7e789f67f8667543108623aaa2",
+      "tree": "647e0bd918454a5782f96302c3093cf59ef9ab7f",
       "branch": "fix/role-model-ux",
-      "note": "Runtime source is frozen; current generated host/release documentation must be committed before final package-material acceptance."
+      "note": "Exact source/docs checkpoint for final package and certification evidence; subsequent local evidence commits must not alter package/runtime material."
     },
     "node": {
       "command": "npm run check:product",
@@ -59,14 +61,17 @@
       "status": "PENDING_FINAL_CANONICAL_GATES"
     },
     "fresh_consumer": {
-      "status": "PENDING_RECHECK_AFTER_FINAL_DOC_CHECKPOINT",
+      "status": "PASS",
+      "receipt": "data/validation/fresh-consumer-opencode-1.18.21.json",
       "opencode_version": "1.18.21",
-      "expected_hi_tool_count": 32
+      "expected_hi_tool_count": 32,
+      "source_commit": "b7689bbad0436c7e789f67f8667543108623aaa2"
     },
     "exact_t3": {
       "status": "PASS_EXACT_CURRENT_LINUX_AARCH64",
       "opencode_version": "1.18.21",
-      "source_commit": "fe64d24dbb2304e4e323ed07882229e24a8a3f2e",
+      "source_commit": "b7689bbad0436c7e789f67f8667543108623aaa2",
+      "capability_receipt_source_commit": "fe64d24dbb2304e4e323ed07882229e24a8a3f2e",
       "capabilities": [
         "process-lifecycle",
         "workspace-isolation-binding",
@@ -81,17 +86,19 @@
       "windows_current": false
     },
     "deterministic_release": {
-      "status": "PENDING_RECHECK_AFTER_FINAL_DOC_CHECKPOINT",
-      "receipt": "data/validation/deterministic-release-reproducibility-0.2.4.json"
+      "status": "PASS",
+      "receipt": "data/validation/deterministic-release-reproducibility-0.2.4.json",
+      "source_commit": "b7689bbad0436c7e789f67f8667543108623aaa2",
+      "method": "two independent exact-source release builds; four outputs byte-identical"
     },
     "hygiene": {
-      "status": "PENDING_RECHECK_AFTER_FINAL_DOC_CHECKPOINT",
+      "status": "PENDING_CLEAN_EVIDENCE_COMMIT",
       "receipt": "data/validation/prompt-b-hygiene.json"
     },
     "final_system": {
       "status": "PENDING_LOCAL_AND_EXTERNAL",
       "blockers": [
-        "final public-doc/package checkpoint and local final gates",
+        "clean evidence checkpoint/hygiene/final canonical gates",
         "current-source Windows external CI",
         "real GitHub/npm T4 publication verification"
       ]

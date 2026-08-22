@@ -8,11 +8,11 @@
   "inputs": {
     "compatibility_baseline": {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
-      "sha256": "d99e7d922935e8da1f1f0caf4917a47492a44e50c50a08e91797abb1de1d54dc"
+      "sha256": "90846b9e603f5e8494df6b25fd4a4e09bd760f4c47813118ca95b48c7fc13b1e"
     },
     "current_release_gates": {
       "path": "data/validation/release-gates.json",
-      "sha256": "d7c03633e68443ce4208e112f9dba9b8ec6747fb48dafbe3ef3b2aa018c210dd"
+      "sha256": "8c227ce8c766c10fcbbede628ef63502b8628616545c5b10772066d76bdc0edf"
     },
     "historical_v0_1_0_publication": {
       "path": "data/validation/release-publication-0.1.0.json",
@@ -66,7 +66,7 @@
       "workspace-isolation-binding": "PASS_T3_PREPUBLICATION_PACKED_LOCAL_PACKAGE_SEAM_EXACT_OPENCODE_1_18_21_LINUX_AARCH64",
       "browser-execution": "PASS_T3_PACKED_32_HI_TOOLS_0_2_4",
       "windows": "PENDING_EXTERNAL_CI_CURRENT_SOURCE_0_2_4",
-      "clean_consumer": "PENDING_CLEAN_FINAL_DOC_PACKED_CONSUMER_0_2_4"
+      "clean_consumer": "PASS_CLEAN_PREPUBLICATION_PACKED_TARBALL_LOCAL_CONSUMER"
     }
   },
   "verification": {
