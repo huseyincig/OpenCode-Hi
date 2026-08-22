@@ -13,7 +13,6 @@
       "GitHub Release/npm Trusted Publishing/fresh-registry T4"
     ],
     "local_pending": [
-      "clean evidence checkpoint and hygiene re-audit",
       "final canonical gates and \u00a7\u00a742-47 attestation"
     ]
   },
@@ -84,9 +83,9 @@
     "final_gates": "data/validation/final-gates-0.2.4.json"
   },
   "blockers": [
-    "clean evidence checkpoint/hygiene/final canonical gates",
+    "final canonical gates and \u00a7\u00a742-47 attestation",
     "exact OpenCode 1.18.21 Windows current-source external CI",
     "real GitHub/npm T4 publication evidence"
   ],
-  "conclusion": "0.2.4 exact source/docs and local package/T3 evidence are green. Only clean evidence-finalization plus final canonical gates remain local; Windows current-source CI and T4 remain external."
+  "conclusion": "0.2.4 exact source/docs, local package/T3 evidence, hygiene and zero-known-defect are green. Only final canonical gates remain local; Windows current-source CI and T4 remain external."
 }

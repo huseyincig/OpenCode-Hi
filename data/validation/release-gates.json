@@ -27,14 +27,14 @@
     "permission_denial_runtime": "PASS_T3_EXACT_HOST_1_18_21_FAIL_CLOSED_PERMISSION",
     "windows_runtime_smoke": "PENDING_EXTERNAL_CI_CURRENT_SOURCE_0_2_4",
     "dependency_supply_chain_external": "PASS_CLEAN_PREPUBLICATION_PACKED_TARBALL_LOCAL_CONSUMER",
-    "filesystem_hygiene": "PENDING_LOCAL_CLEAN_EVIDENCE_CHECKPOINT_0_2_4",
+    "filesystem_hygiene": "PASS_LOCAL_CLEAN_EVIDENCE_CHECKPOINT_12_OF_12",
     "native_package_plugin_install_exact_candidate": "PASS_T3_PREPUBLICATION_PACKED_LOCAL_PACKAGE_SEAM_EXACT_OPENCODE_1_18_21_LINUX_AARCH64",
     "github_release_publication": "PENDING_T4_NOT_PUBLISHED",
     "npm_registry_publication": "PENDING_AUTH_T4_NOT_PUBLISHED",
-    "final_canonical_gates": "PENDING_LOCAL_FINAL_CLEAN_CHECKPOINT_0_2_4"
+    "final_canonical_gates": "PENDING_LOCAL_FINAL_CANONICAL_GATES_0_2_4"
   },
   "release_blocked": true,
-  "reason": "0.2.4 source/docs are frozen at b7689bb. Exact OpenCode 1.18.21 packed fresh-consumer, deterministic two-build release reproducibility, dependency/package audits and exact-current T3 are green. Clean evidence-checkpoint hygiene and canonical final gates remain local; current-source Windows CI and real GitHub/npm T4 remain external.",
+  "reason": "0.2.4 exact source/docs, packed fresh-consumer, deterministic release, exact OpenCode 1.18.21 T3, dependency/package audits, hygiene 12/12 and zero-known-defect 86/86 are green. Only canonical final gates remain local; current-source Windows CI and real GitHub/npm T4 remain external.",
   "external_blockers": [
     "exact OpenCode 1.18.21 Windows current-source CI for 0.2.4 is not yet available.",
     "opencode-hi@0.2.4 has not been published to npm; fresh-registry T4 is unavailable.",
@@ -92,13 +92,15 @@
       "method": "two independent exact-source release builds; four outputs byte-identical"
     },
     "hygiene": {
-      "status": "PENDING_CLEAN_EVIDENCE_COMMIT",
-      "receipt": "data/validation/prompt-b-hygiene.json"
+      "status": "PASS",
+      "receipt": "data/validation/prompt-b-hygiene.json",
+      "audited_source_commit": "b82c585ab5ce0b83ccab3b4b6e387d3ed4e3276a",
+      "checks": "12/12"
     },
     "final_system": {
-      "status": "PENDING_LOCAL_AND_EXTERNAL",
+      "status": "PENDING_FINAL_CANONICAL_GATES_AND_EXTERNAL",
       "blockers": [
-        "clean evidence checkpoint/hygiene/final canonical gates",
+        "final canonical gates and \u00a7\u00a742-47 attestation",
         "current-source Windows external CI",
         "real GitHub/npm T4 publication verification"
       ]
