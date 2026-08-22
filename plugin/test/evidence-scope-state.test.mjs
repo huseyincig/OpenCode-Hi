@@ -65,7 +65,7 @@ test('scope-bound review freshness is coherent across completion gates readiness
     const gates=syncMissionGates(m,root);assert.equal(gates.find(g=>g.id==='gate-verification')?.status,'open');assert.equal(gates.find(g=>g.id==='gate-reviewer')?.status,'open')
     const readiness=evaluatePreconditions(m,root);assert.equal(readiness.items.find(g=>g.id==='gate-verification')?.status,'waiting');assert.equal(readiness.items.find(g=>g.id==='gate-reviewer')?.status,'waiting')
     const projection=buildMissionRuntimeProjection(m,undefined,root);assert.match(projection.next_action,/^verify:review-evidence/);assert.ok(projection.blockers.some(x=>x.includes('gate:gate-verification:open')));assert.ok(projection.blockers.some(x=>x.includes('gate:gate-reviewer:open')));assert.match(projection.verification,/evidence=stale/)
-    const idle=evaluateIdle(m,Date.now()+1000,root);assert.equal(idle.decision,'VERIFY');assert.equal(idle.reason_code,'verification-pending');assert.equal(m.execution.gates.find(g=>g.id==='gate-verification')?.status,'open');assert.equal(m.execution.gates.find(g=>g.id==='gate-reviewer')?.status,'open');assert.match(idle.prompt??'',/current evidence is stale or missing/)
+    const idle=evaluateIdle(m,Date.now()+1000,root);assert.equal(idle.decision,'VERIFY');assert.equal(idle.reason_code,'verification-pending');assert.equal(m.execution.gates.find(g=>g.id==='gate-verification')?.status,'open');assert.equal(m.execution.gates.find(g=>g.id==='gate-reviewer')?.status,'open');assert.match(idle.prompt??'',/verify:review-evidence/);assert.match(idle.prompt??'',/no-admissible-repo-native-verifier/)
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 

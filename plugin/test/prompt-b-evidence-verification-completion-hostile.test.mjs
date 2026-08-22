@@ -24,7 +24,7 @@ test('PROMPT B hostile DONE and all-tests-passed prose cannot replace verificati
   assert.equal(implementation.status,'open');assert.equal(verification.status,'open')
   assert.ok(m.execution.ledger.some(e=>e.type==='implementation.required-targets-uncovered'&&e.payload?.missing?.includes('src/a.ts')))
   assert.deepEqual(verificationSatisfied(m,verification.id),{ok:false,missing:['targeted-tests']})
-  const completion=evaluateCompletion(m);assert.equal(completion.complete,false);assert.equal(completion.next,'VERIFY')
+  const completion=evaluateCompletion(m);assert.equal(completion.complete,false);assert.equal(completion.next,'CONTINUE','open implementation ownership must precede verification even when hostile prose claims DONE')
 })
 
 test('PROMPT B worker PASS evidence without exact source-state identity cannot satisfy verification',()=>{

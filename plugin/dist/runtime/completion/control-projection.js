@@ -88,11 +88,11 @@ export function controlDecisionInstruction(m, decision) {
     const openWork = m.execution.obligations.find(o => o.status === 'open' && (o.kind === 'analysis' || o.kind === 'implementation'));
     if (openWork) {
         if (m.execution.execution_mode === 'parallel')
-            return `continue:${openWork.id}; delegate the bounded work through hi_task_start; do not mutate from the parent`;
+            return `continue:${openWork.id}; delegate via hi_task_start; parent must not mutate`;
         if (openWork.kind === 'implementation' && primaryRoleCanDirectImplementation(m.execution.primary_mode) && ['DIRECT', 'EVIDENCE'].includes(m.execution.adaptive_execution?.path ?? ''))
-            return `continue:${openWork.id}; perform the minimum owned mutation, then call hi_direct_progress with obligation_id=${openWork.id} after the requested change is actually complete; do not emit a terminal answer before it returns RECORDED`;
+            return `continue:${openWork.id}; complete minimum owned mutation; then hi_direct_progress obligation_id=${openWork.id}; no terminal answer before RECORDED`;
         if (openWork.kind === 'analysis')
-            return `continue:${openWork.id}; gather only the evidence needed to resolve the analysis, then call hi_direct_progress with obligation_id=${openWork.id}; do not start verification first`;
+            return `continue:${openWork.id}; gather needed evidence; then hi_direct_progress obligation_id=${openWork.id}; do not verify first`;
         return `continue:${openWork.id}; satisfy this canonical obligation before verification`;
     }
     return 'continue:canonical-open-obligation; use the existing owner/tool for the remaining obligation; do not restart planning';

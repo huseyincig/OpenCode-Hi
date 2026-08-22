@@ -10,6 +10,7 @@ function mission(){
   const s=new MissionStore(process.cwd())
   const m=startAssessedMission(s,`s-${Math.random()}`,'opaque bug',{task_kind:'bug-fix',likely_verification:['targeted-tests']})
   m.execution.evidence.last_mutation_at=Date.now()-10
+  const implementation=m.execution.obligations.find(o=>o.kind==='implementation');if(implementation){implementation.status='closed';implementation.closedAt=Date.now()}
   return m
 }
 

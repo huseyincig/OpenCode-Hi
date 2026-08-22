@@ -304,6 +304,12 @@ export class MissionStore {
         m.identity.intent.objective = m.identity.objective;
         m.identity.risk = m.identity.intent.risk;
         const reconciledSignals = reconciledIntentMethodologySignals(effectiveAssessment, text);
+        if (explicitTestMutationForbidden(text) && m.methodology.methodology_needs.some(x => x.signal === 'intent.tdd')) {
+            if (!reconciledSignals.suppressed.includes('intent.tdd'))
+                reconciledSignals.suppressed.push('intent.tdd');
+            if (!reconciledSignals.runtimeSuppressed.includes('intent.tdd'))
+                reconciledSignals.runtimeSuppressed.push('intent.tdd');
+        }
         if (reconciledSignals.suppressed.length)
             suppressIntentMethodologySignals(m, reconciledSignals.suppressed, `Host primary semantic follow-up superseded or runtime-reconciled intent methodology at revision ${m.identity.semantic_assessment.revision}.`);
         for (const signal of reconciledSignals.active)

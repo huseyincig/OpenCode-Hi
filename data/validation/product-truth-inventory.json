@@ -9,7 +9,7 @@
       "area": "mission",
       "canonical_owner": "MissionStore",
       "owner_path": "plugin/src/runtime/mission/mission-store.ts",
-      "owner_sha256": "69941c09ccf43778c836fc0935f5136f70b6d8c315a3d6ae6cc2073c8b760008",
+      "owner_sha256": "bfb38e6dda3c4b8f2dec4738add958ffac7e69f36177c84c08c2cde1e5e5c758",
       "producer_or_contract_paths": [
         "plugin/src/runtime/mission/types.ts",
         "plugin/src/runtime/mission/validators.ts"

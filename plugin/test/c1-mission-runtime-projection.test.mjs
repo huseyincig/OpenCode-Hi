@@ -29,7 +29,7 @@ test('C1 MissionRuntimeProjection exposes only the bounded dynamic runtime field
 test('C1 parallel runtime projection makes scheduler-owned delegation explicit before parent mutation',()=>{
   const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'c1-parallel','independent fixes',{scope:'multi-file',dependency_class:'independent-multi',required_capabilities:['implementation','verification']})
   const p=buildMissionRuntimeProjection(m),text=renderMissionRuntimeProjection(p)
-  assert.equal(m.execution.execution_mode,'parallel');assert.equal(p.next_action,'delegate:parallel-work-via-hi_task_start');assert.match(p.execution,/mode=parallel/);assert.match(p.execution,/parent-delegation-only/);assert.match(text,/Execution: mode=parallel/)
+  assert.equal(m.execution.execution_mode,'parallel');assert.match(p.next_action,/^continue:o-implementation; delegate via hi_task_start; parent must not mutate$/);assert.match(p.execution,/mode=parallel/);assert.match(p.execution,/parent-delegation-only/);assert.match(text,/Execution: mode=parallel/)
 })
 
 test('C1 stable policy lives in generated OpenCode agent projections while dynamic state stays separate',()=>{
