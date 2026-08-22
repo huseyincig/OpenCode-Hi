@@ -1,7 +1,7 @@
 import { normalizeModelCapabilityProfile } from '../contracts/model.js';
 import { detectOpenCodeCapabilities } from './capabilities.js';
 import { NativeOpenCodeAdapter } from './native-adapter.js';
-import { lastAssistantError, lastAssistantModel, lastAssistantText, lastAssistantUsage, listAvailableModels, listMessages, listProviders, sendSyntheticContinuation } from './client-adapter.js';
+import { lastAssistantError, lastAssistantModel, lastAssistantText, lastAssistantUsage, listAvailableModels, listMessages, listProviders, readSessionRuntimeStatus, sendSyntheticContinuation } from './client-adapter.js';
 function providerModels(raw) {
     const edge = raw;
     const root = edge?.all ?? edge?.providers ?? edge ?? [];
@@ -83,6 +83,7 @@ export function createHostPort(ctx) {
         return inventoryRefresh;
     };
     const readAssistantResult = async (sessionID, limit = 12) => { const messages = await listMessages(ctx.client, sessionID, limit); return { text: lastAssistantText(messages), model: lastAssistantModel(messages), usage: lastAssistantUsage(messages), error: lastAssistantError(messages) }; };
+    const sessionStatus = (sessionID) => readSessionRuntimeStatus(ctx.client, sessionID, { serverUrl: ctx.serverUrl ? String(ctx.serverUrl) : undefined, directory: ctx.directory });
     const continueSession = (sessionID, text, metadata) => sendSyntheticContinuation(ctx.client, sessionID, text, metadata);
-    return { capabilities, nativeSession: { diff: (sessionID) => native.diff(sessionID), revert: (sessionID, messageID) => native.revert(sessionID, messageID) }, log, refreshRuntimeInventory, getModels: () => models, readAssistantResult, continueSession };
+    return { capabilities, nativeSession: { diff: (sessionID) => native.diff(sessionID), revert: (sessionID, messageID) => native.revert(sessionID, messageID) }, log, refreshRuntimeInventory, getModels: () => models, readAssistantResult, sessionStatus, continueSession };
 }

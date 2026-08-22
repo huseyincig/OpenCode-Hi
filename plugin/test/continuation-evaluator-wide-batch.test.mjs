@@ -66,12 +66,14 @@ test('semantic generation guard prevents an old continuation from clearing a new
   const first=dispatchContinuation(continuationPort(client),m,'first','first')
   const firstID=m.continuation.active_action_id
   assert.ok(firstID)
+  await Promise.resolve() // host-status admission resolves before the transport prompt begins
   // A semantic follow-up invalidates the previous continuation action.
   applyStructuredFollowup(store,'s','opaque verification follow-up',{message_kind:'verification',likely_verification:['targeted-tests']})
   assert.equal(m.continuation.active_action_id,undefined)
   const second=dispatchContinuation(continuationPort(client),m,'second','second')
   const secondID=m.continuation.active_action_id
   assert.ok(secondID&&secondID!==firstID)
+  await Promise.resolve() // second host-status admission resolves independently
   resolve1({data:{}})
   assert.equal(await first,false)
   assert.equal(m.continuation.active_action_id,secondID)
@@ -110,6 +112,31 @@ test('plugin parent idle while permission/worker wait preserves stagnation_count
   report=JSON.parse(await hooks.tool.hi_ledger.execute({limit:120},{sessionID:'p1'}));last=[...report.events].reverse().find(e=>e.type==='runtime.decision')
   assert.equal(last.payload.reason_code,'waiting-worker');assert.equal(last.payload.stagnation_count,0)
   await hooks.dispose?.();rmSync(dir,{recursive:true,force:true})
+})
+
+test('child terminal wake is deferred while parent is busy and delivered exactly once on parent idle',async()=>{
+  const dir=mkdtempSync(join(tmpdir(),'hi-parent-busy-wake-'))
+  const {client,promptCalls}=baseClient(['child-busy-wake'])
+  const statusMap={parent:{type:'busy'}}
+  client.session.status=async()=>({data:statusMap})
+  const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client});await hooks.config({})
+  try{
+    await hooks['chat.message']({sessionID:'parent',message:{role:'user',parts:[{type:'text',text:'inspect the repository'}]}},{parts:[]})
+    await assessPluginMission(hooks,'parent',{task_kind:'review',required_capabilities:['repository-analysis'],likely_verification:[]})
+    const started=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'inspect repository',role:'repository-explorer',category:'quick'},{sessionID:'parent'}))
+    assert.ok(started.worker_id)
+    await hooks.event({event:{type:'session.error',properties:{sessionID:'child-busy-wake',error:{message:'worker reasoning failed'}}}})
+    assert.equal(promptCalls.filter(x=>x.path?.id==='parent').length,0,'busy parent must not receive a synthetic continuation')
+    let ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:180},{sessionID:'parent'}))
+    assert.ok(ledger.events.some(e=>e.type==='continuation.deferred'&&e.payload?.reason==='parent-session-active'&&e.payload?.host_status==='busy'))
+    delete statusMap.parent
+    await hooks.event({event:{type:'session.idle',properties:{sessionID:'parent'}}})
+    assert.equal(promptCalls.filter(x=>x.path?.id==='parent').length,1,'parent idle must deliver exactly one canonical continuation')
+    await hooks.event({event:{type:'session.idle',properties:{sessionID:'parent'}}})
+    assert.equal(promptCalls.filter(x=>x.path?.id==='parent').length,1,'continuation lock must prevent duplicate delivery from a repeated idle callback')
+    ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:220},{sessionID:'parent'}))
+    assert.equal(ledger.events.filter(e=>e.type==='continuation.deferred'&&e.payload?.reason==='parent-session-active').length,1)
+  }finally{await hooks.dispose?.();rmSync(dir,{recursive:true,force:true})}
 })
 
 test('failed child defers parent continuation while a sibling worker is still pending',async()=>{

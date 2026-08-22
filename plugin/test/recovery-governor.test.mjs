@@ -46,10 +46,18 @@ test('unknown consequential release outcome blocks automatic recovery until reco
   assert.equal(m.continuation.stagnation_count,0)
 })
 
+test('busy parent session defers synthetic continuation without counting a transport failure',async()=>{
+  const {m}=mission('rg-busy-parent');const calls=[]
+  const host={sessionStatus:async()=>'busy',continueSession:async(...args)=>{calls.push(args);return true}}
+  const ok=await dispatchContinuation(host,m,'continue safely','child-result-ready')
+  assert.equal(ok,false);assert.equal(calls.length,0);assert.equal(m.continuation.continuation_failure_count??0,0)
+  assert.ok(m.execution.ledger.some(e=>e.type==='continuation.deferred'&&e.payload?.reason==='parent-session-active'&&e.payload?.host_status==='busy'))
+})
+
 test('delivered stagnation continuation records the exact strategy decision state',async()=>{
   const {m}=mission('rg-dispatch');m.continuation.stagnation_count=3
   const plan=recoveryPlan(m);assert.equal(plan.action,'narrow-task')
-  const calls=[];const host={continueSession:async(...args)=>{calls.push(args);return true}}
+  const calls=[];const host={sessionStatus:async()=>'idle',continueSession:async(...args)=>{calls.push(args);return true}}
   const ok=await dispatchContinuation(host,m,plan.prompt,`stagnation-level-${plan.level}:${plan.action}`)
   assert.equal(ok,true);assert.equal(calls.length,1)
   const last=m.continuation.recovery_history?.at(-1);assert.equal(last.action,'narrow-task');assert.equal(last.level,3);assert.equal(last.outcome,'started');assert.equal(last.progress_signature,m.continuation.semantic_progress_snapshot.state_hash)

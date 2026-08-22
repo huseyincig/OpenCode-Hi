@@ -2,13 +2,13 @@ import {createOpenCodeChildSessionPort} from '../../dist/opencode/child-session-
 import {sendSyntheticContinuation} from '../../dist/opencode/client-adapter.js'
 
 export const opencodeChildPort=(client={},lifecycle={})=>createOpenCodeChildSessionPort(client,lifecycle)
-export const continuationPort=(client={})=>({continueSession:(sessionID,text,metadata)=>sendSyntheticContinuation(client,sessionID,text,metadata)})
+export const continuationPort=(client={})=>({sessionStatus:async()=> 'idle',continueSession:(sessionID,text,metadata)=>sendSyntheticContinuation(client,sessionID,text,metadata)})
 
 
 export const makeHostPort=(overrides={})=>({
   capabilities:{childSessions:false,asyncPrompt:false,syncPrompt:false,abort:false,providerInventory:false,appLog:false,sessionStatus:false,childSessionList:false,sessionTodo:false,sessionDiff:false,sessionFork:false,sessionSummarize:false,sessionRevert:false,sessionUnrevert:false,workerRuntime:false,degraded:[],contracts:[]},
   nativeSession:{diff:async()=>undefined,revert:async()=>undefined},
-  log:async()=>{},refreshRuntimeInventory:async()=>0,getModels:()=>[],readAssistantResult:async()=>({text:''}),continueSession:async()=>false,
+  log:async()=>{},refreshRuntimeInventory:async()=>0,getModels:()=>[],readAssistantResult:async()=>({text:''}),sessionStatus:async()=>'idle',continueSession:async()=>false,
   ...overrides,
 })
 
