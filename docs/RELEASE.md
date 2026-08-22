@@ -15,7 +15,7 @@ The block below is generator-owned. Do not hand-edit current release status, cur
 - Historical `v0.1.0` remains immutable and is not retagged or source-substituted.
 - GitHub candidate: **PENDING_T4**; npm candidate: **PENDING_T4**.
 - Prepublication certification is still in progress; publication is not authorized by this projection.
-- Reference host baseline: OpenCode `1.18.19` on `linux/aarch64`; historical capability receipts are baseline provenance only. Current candidate exact-source status comes from `data/validation/release-gates.json`.
+- Reference host baseline: OpenCode `1.18.21` on `linux/aarch64`; historical capability receipts are baseline provenance only. Current candidate exact-source status comes from `data/validation/release-gates.json`.
 - Test counts are intentionally not persisted here; final certification owns fresh totals.
 - Machine source: `data/validation/release-status-0.2.4.json`.
 <!-- END GENERATED RELEASE STATUS -->

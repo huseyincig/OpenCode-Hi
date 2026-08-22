@@ -8,13 +8,13 @@ A capability manifest resolves host features as `NATIVE`, `SAFE_EMULATION`, `DEG
 ## Exact accepted capability matrix
 
 <!-- BEGIN GENERATED HOST CAPABILITY MATRIX -->
-Generated from `data/validation/compatibility-matrix-0.1.0.json`. Current recorded exact host: OpenCode `1.18.19` on `linux/aarch64`.
+Generated from `data/validation/compatibility-matrix-0.1.0.json`. Current recorded exact host: OpenCode `1.18.21` on `linux/aarch64`.
 
 | Hi capability | Status | Exact source | Receipt |
 |---|---|---|---|
-| `browser-execution` | **SUPPORTED_T3** | `c3bc16ae42ecb06ded7ecb187794e56cb0a2e83d` | `data/validation/external-opencode-hi-0.2.4-browser-1.18.19-head-c3bc16a.json` |
-| `process-lifecycle` | **SUPPORTED_T3** | `c3bc16ae42ecb06ded7ecb187794e56cb0a2e83d` | `data/validation/external-opencode-hi-0.2.4-process-1.18.19-head-c3bc16a.json` |
-| `workspace-isolation-binding` | **SUPPORTED_T3** | `c3bc16ae42ecb06ded7ecb187794e56cb0a2e83d` | `data/validation/external-opencode-hi-0.2.4-workspace-1.18.19-head-c3bc16a.json` |
+| `browser-execution` | **SUPPORTED_T3** | `fe64d24dbb2304e4e323ed07882229e24a8a3f2e` | `data/validation/external-opencode-hi-0.2.4-browser-1.18.21-head-fe64d24.json` |
+| `process-lifecycle` | **SUPPORTED_T3** | `fe64d24dbb2304e4e323ed07882229e24a8a3f2e` | `data/validation/external-opencode-hi-0.2.4-process-1.18.21-head-fe64d24.json` |
+| `workspace-isolation-binding` | **SUPPORTED_T3** | `fe64d24dbb2304e4e323ed07882229e24a8a3f2e` | `data/validation/external-opencode-hi-0.2.4-workspace-1.18.21-head-fe64d24.json` |
 
 This table is a projection, not evidence ownership: the referenced exact receipts remain the capability proof. Historical negative/older receipts remain preserved in the generated compatibility history.
 <!-- END GENERATED HOST CAPABILITY MATRIX -->

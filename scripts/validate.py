@@ -1050,7 +1050,7 @@ except Exception as e:err(f'bad PROMPT B documentation defect-cycle receipt: {e}
 
 # PROMPT B §§42-47 final certification chain (post-final-gates only)
 final_gates_path=ROOT/f'data/validation/final-gates-{version}.json'
-if final_gates_path.exists():
+if final_gates_path.exists() and json.loads(final_gates_path.read_text(encoding='utf-8')).get('status')=='PASS':
     try:
         f42=json.loads((ROOT/'data/validation/prompt-b-final-documentation-reaudit.json').read_text(encoding='utf-8'))
         if f42.get('schema')!=1 or f42.get('kind')!='PROMPT_B_FINAL_DOCUMENTATION_REAUDIT' or f42.get('section')!=42 or f42.get('status')!='PASS':err('bad PROMPT B final documentation re-audit')

@@ -1,53 +1,47 @@
 {
   "schema": 2,
   "release": "0.2.4",
-  "generated_at": "2026-08-20",
-  "internal_status": "IMPLEMENTATION_VERIFIED_LOCAL_EVIDENCE_IN_PROGRESS",
+  "generated_at": "2026-08-22",
+  "internal_status": "LOCAL_IMPLEMENTATION_AND_IN_PROCESS_ACCEPTANCE_COMPLETE",
   "release_blocked": true,
-  "claim_boundary": "0.2.4 chat-first child-role model assignment and Manager delegation fixes are implemented and Node-verified. Committed-source/Python/exact-host/cross-platform/T4 certification is not yet complete.",
+  "claim_boundary": "0.2.4 implementation and exact OpenCode 1.18.21 Linux/aarch64 T3 are locally green. Final public-doc/package checkpoint plus final canonical evidence remain local work; current-source Windows CI and real GitHub/npm T4 remain external and are not fabricated.",
   "source_checklist": {
-    "source": "0.2.4 role-model chat UX, simplified primary-mode wizard, forced Manager coder delegation",
-    "internal_missing": [
-      "committed-source evidence finalization",
-      "Python/validator finalization",
-      "fresh packed exact-host T3"
-    ],
+    "source": "0.2.4 orchestration hardening, chat-native child-role model routing, exact OpenCode 1.18.21 compatibility/churn control and current certification architecture",
+    "internal_missing": [],
     "external_pending": [
-      "current-source Windows CI",
-      "GitHub/npm T4 publication"
+      "exact OpenCode 1.18.21 Windows current-source CI",
+      "GitHub Release/npm Trusted Publishing/fresh-registry T4"
     ],
     "local_pending": [
-      "source commit",
-      "clean evidence checkpoint",
-      "final canonical gates"
+      "final public-documentation/package checkpoint",
+      "fresh packed-consumer and deterministic-release recheck",
+      "final canonical gates and \u00a7\u00a742-47 attestation"
     ]
   },
   "local_acceptance": {
     "node": {
       "status": "PASS",
       "command": "npm run check:product",
-      "scope": "full runtime 1069/1069 + architecture + Node setup + docs"
+      "scope": "full current runtime/product + architecture + setup + docs"
     },
     "node_setup": {
       "status": "PASS",
-      "command": "npm run test:node:setup",
-      "scope": "package lifecycle + wizard + release-preflight controls"
+      "command": "npm run test:node:setup"
     },
     "fresh_consumer": {
-      "status": "PASS",
-      "receipt": "data/validation/fresh-consumer-opencode-1.18.19.json"
+      "status": "PENDING_RECHECK_AFTER_FINAL_DOC_CHECKPOINT",
+      "receipt": "data/validation/fresh-consumer-opencode-1.18.21.json"
     },
     "documentation": {
-      "status": "PASS",
+      "status": "PASS_CURRENT_CONTENT",
       "commands": [
         "npm run docs:check",
         "npm run docs:pack-check"
       ]
     },
     "python": {
-      "status": "PASS",
-      "command": "release-venv python -m pytest -q tests/test_hi.py",
-      "scope": "full product + evidence suite"
+      "status": "PENDING_FINAL_FULL_SUITE",
+      "command": "release-venv python -m pytest -q tests/test_hi.py"
     }
   },
   "product_truth": {
@@ -68,28 +62,31 @@
   "current_exact_host_prepublication": {
     "linux_aarch64": {
       "status": "PASS_EXACT_CURRENT_T3",
-      "opencode": "1.18.19",
-      "source_commit": "03a816f930e3172ec84f733bae081768e2ea1a14",
-      "hi_tools": 31,
+      "opencode": "1.18.21",
+      "source_commit": "fe64d24dbb2304e4e323ed07882229e24a8a3f2e",
+      "hi_tools": 32,
       "receipt": "data/validation/prompt-b-exact-current-opencode-t3.json",
       "runtime_equivalent_to_current": true
     },
     "windows_desktop": {
       "status": "PENDING_EXTERNAL_CI",
-      "opencode": "1.18.19",
-      "reason": "No current 0.2.3 Windows exact-source Release Readiness receipt exists."
+      "opencode": "1.18.21",
+      "reason": "No current 0.2.4 Windows exact-source Release Readiness receipt exists."
     }
   },
   "release_evidence": {
     "release_gates": "data/validation/release-gates.json",
     "generated_status": "data/validation/release-status-0.2.4.json",
     "historical_0_2_3_t4_is_current": false,
-    "publication_authorized_or_performed": false
+    "publication_authorized_or_performed": false,
+    "deterministic_release": "data/validation/deterministic-release-reproducibility-0.2.4.json",
+    "current_validator": "PENDING_FINAL",
+    "final_gates": "data/validation/final-gates-0.2.4.json"
   },
   "blockers": [
-    "local certification incomplete",
-    "current-source Windows CI pending",
-    "T4 pending"
+    "final public-doc/package checkpoint and local final gates",
+    "exact OpenCode 1.18.21 Windows current-source external CI",
+    "real GitHub/npm T4 publication evidence"
   ],
-  "conclusion": "0.2.4 implementation is locally Node-verified but not yet release-certified."
+  "conclusion": "0.2.4 implementation and local exact-host engineering evidence are green. Final local certification is being rebound after the current documentation/package checkpoint; Windows current-source CI and T4 remain external."
 }

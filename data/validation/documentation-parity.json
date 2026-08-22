@@ -10,11 +10,11 @@
     },
     "compatibility": {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
-      "sha256": "e1204ba72a2116c40b86b00f21c004307b6fe129e7a7767f0fbfe6e355fd9504"
+      "sha256": "d99e7d922935e8da1f1f0caf4917a47492a44e50c50a08e91797abb1de1d54dc"
     },
     "release_status": {
       "path": "data/validation/release-status-0.2.4.json",
-      "sha256": "1a8abf6b61b5f3b6ee0a1b286dbf8d0729c6661070e65459497918d67ea436a0"
+      "sha256": "0743715684c50c7f6842366e25f4ff632f51ca9621588598aff07b8d925395e1"
     }
   },
   "checked_current_documents": [

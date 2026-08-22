@@ -4,9 +4,9 @@
   "program": "PROMPT_B",
   "status": "PASS",
   "opencode": {
-    "version": "1.18.19",
-    "source_ref": "v1.18.19",
-    "source_commit": "2b72179c663cadcb54f54d9f19221b3fb3d11fb6",
+    "version": "1.18.21",
+    "source_ref": "v1.18.21",
+    "source_commit": "826d9ad46a22bef0294998e08daa3c4904fea28f",
     "source_worktree_used": false,
     "source_read_mode": "git-blob"
   },
@@ -21,7 +21,7 @@
     },
     "task": {
       "path": "packages/opencode/src/tool/task.ts",
-      "sha256": "15d4c367f3e5373375ca6a7ea8ff8f650cb0f95f914f5886760559526add31ac"
+      "sha256": "db09fa5868ad3ecfdd83aa2bb7243f85e9e2cd13d0b19fd6f307f7a337b2b36e"
     },
     "permission": {
       "path": "packages/opencode/src/permission/index.ts",
@@ -61,7 +61,7 @@
     },
     "package": {
       "path": "packages/opencode/package.json",
-      "sha256": "8a130e3b77309b7fcf87d13219ad630668cfb14e548a07c54f452fe717cee62d"
+      "sha256": "a060a57cd89542aeffd7f478666dfe6fe3dcbabbad85aa37cffdd75f223c1c5e"
     }
   },
   "decisions": [
@@ -195,5 +195,5 @@
     "keep_thin_or_stronger": 11,
     "unsupported": 1
   },
-  "claim_boundary": "Exact source re-evaluation for OpenCode 1.18.19 at the recorded commit. The target is derived from the exact root SDK/plugin pin. Native availability does not transfer Hi semantic ownership."
+  "claim_boundary": "Exact source re-evaluation for OpenCode 1.18.21 at the recorded commit. The target is derived from the exact root SDK/plugin pin. Native availability does not transfer Hi semantic ownership."
 }

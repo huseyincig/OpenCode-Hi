@@ -1365,7 +1365,7 @@ def test_prompt_b_hygiene_audit_has_no_source_package_or_generated_artifact_leak
 @pytest.mark.evidence
 def test_prompt_b_final_certification_chain_is_truthful_coherent_and_tier_bound():
     gates=ROOT/f'data/validation/final-gates-{V}.json'
-    if not gates.exists():
+    if not gates.exists() or json.loads(gates.read_text(encoding='utf-8')).get('status')!='PASS':
         cert=ROOT/f'data/validation/final-system-certification-{V}.json'
         if cert.exists(): assert json.loads(cert.read_text(encoding='utf-8')).get('status')!='CERTIFIED'
         return

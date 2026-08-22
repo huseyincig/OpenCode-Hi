@@ -71,10 +71,10 @@
     {
       "invariant": "config-errors",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "ba0607d82d669781cc9557e68f0467c789978ed6f983bb6aa1eeda89815c7cb4",
+      "owner_sha256": "d3efd25ceffe78b779576516ba36ef284b338737774a8010cb65a996150ead1a",
       "owner_anchor": "_bounded_cli_int('parallel-max',1,8)",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "3996254a759df4b40234960abf251f31c55102b463f00d73c3cc6456b981764e",
+      "proof_sha256": "30785659cb0ff0d1de20117f0abe7342a95a8e6b5a49bd5379fdb9d5ea96b66a",
       "proof_anchor": "test_prompt_b_cli_reconfigure_rejects_out_of_range_and_malformed_limits"
     },
     {
@@ -98,10 +98,10 @@
     {
       "invariant": "truthful-nonmutating-blocked-state",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "ba0607d82d669781cc9557e68f0467c789978ed6f983bb6aa1eeda89815c7cb4",
+      "owner_sha256": "d3efd25ceffe78b779576516ba36ef284b338737774a8010cb65a996150ead1a",
       "owner_anchor": "jsonc-safe-mutation-not-supported",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "3996254a759df4b40234960abf251f31c55102b463f00d73c3cc6456b981764e",
+      "proof_sha256": "30785659cb0ff0d1de20117f0abe7342a95a8e6b5a49bd5379fdb9d5ea96b66a",
       "proof_anchor": "test_prompt_b_cli_jsonc_plan_is_truthful_actionable_and_non_mutating"
     }
   ],

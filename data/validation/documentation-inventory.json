@@ -171,7 +171,7 @@
     },
     {
       "path": "docs/HOSTS.md",
-      "sha256": "5867479d99d7644ee3fd27876c2027c227bb539b546e550f3ca70cb8b9894eda",
+      "sha256": "4e446dbb9ae97097e1fb0e80d0e589e6224182864a9c63ee1c4a18b7844b417b",
       "area": "host-support",
       "audience": "OPERATOR",
       "lifecycle": "CANONICAL_CURRENT",
@@ -203,7 +203,7 @@
     },
     {
       "path": "docs/RELEASE.md",
-      "sha256": "152b04add5c0972486ac79e03fa0d47de4bf9d41cd35840d408993691651887b",
+      "sha256": "029c0d5c7060aa0ea1dd1310cdc50f8aca0254c91818c70b8cee1007cb244d12",
       "area": "release",
       "audience": "RELEASE_ENGINEER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -253,7 +253,7 @@
   "machine_owners": [
     {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
-      "sha256": "e1204ba72a2116c40b86b00f21c004307b6fe129e7a7767f0fbfe6e355fd9504",
+      "sha256": "d99e7d922935e8da1f1f0caf4917a47492a44e50c50a08e91797abb1de1d54dc",
       "area": "supported-host-matrix",
       "lifecycle": "MACHINE_OWNER"
     },
