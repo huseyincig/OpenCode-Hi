@@ -23,7 +23,7 @@
       "consumer_anchor": "suppliedSchema",
       "observable_effect": "reports noncanonical supplied schema while runtime remains current-only",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/config.test.mjs",
       "proof_sha256": "e5e04c38cc5b992db0a7298eabdbed9b8dee2f673eb4af61796960d6ca771b5a",
       "safety_semantics": "constraint"
@@ -47,7 +47,7 @@
       "consumer_anchor": "executionProfileFor",
       "observable_effect": "selects minimal/balanced/thorough routing profile and automatic/adaptive continuation behavior",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/stage2-role-contract.test.mjs",
       "proof_sha256": "d058c527e63d4c8c9ecff85ad6c8457cd03d3d1af7edaf36c211dee58afd18cb",
       "safety_semantics": "preference"
@@ -67,11 +67,11 @@
         "project-routing-policy"
       ],
       "consumer": "plugin/src/runtime/application/runtime-services.ts",
-      "consumer_sha256": "7edd3d7a0b85f5a52edb0687f3ae3491ca5213e5d02d1c7042e3bd19b460ae07",
+      "consumer_sha256": "053eceb9239e3fbfffec9b2832b390663fc365a5eff897f5bd7ffb1952a31910",
       "consumer_anchor": "primaryMode",
       "observable_effect": "selects/forces primary agent and direct-vs-delegated minimum-team behavior",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/main-prompt-final-reconfigure.test.mjs",
       "proof_sha256": "f817e739c45e0ecca1c119ea77fb0c20cfe3cbdb711847a187af7adac3f59791",
       "safety_semantics": "preference"
@@ -94,7 +94,7 @@
       "consumer_anchor": "config.compatibility",
       "observable_effect": "changes unsupported/unvalidated host compatibility findings from warning to failure under strict mode",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/doctor-deepening.test.mjs",
       "proof_sha256": "69d57d73e35b951b859462d5e63aa6c26426838f9eac1d707e0ad17958a6dce3",
       "safety_semantics": "constraint"
@@ -117,7 +117,7 @@
       "consumer_anchor": "config.compatibility",
       "observable_effect": "matches observed OpenCode version against the validated-version inventory",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/doctor-deepening.test.mjs",
       "proof_sha256": "69d57d73e35b951b859462d5e63aa6c26426838f9eac1d707e0ad17958a6dce3",
       "safety_semantics": "constraint"
@@ -141,7 +141,7 @@
       "consumer_anchor": "config.",
       "observable_effect": "forces/adapts single-agent versus multi-agent mission topology",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/hi-acceptance-evolution.test.mjs",
       "proof_sha256": "13183fcb9ab30c6580cca1c771c2489e50d9f06c9361cb1ea2e87100eda29eb0",
       "safety_semantics": "constraint"
@@ -165,7 +165,7 @@
       "consumer_anchor": "config.",
       "observable_effect": "caps topology agent count; value 1 is an executable single-agent ceiling",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/hi-core-evolution.test.mjs",
       "proof_sha256": "794ad3473cc7749e87b9a53594e702d18ae008418971258b6d82a6e6eb69d38b",
       "safety_semantics": "capacity"
@@ -189,7 +189,7 @@
       "consumer_anchor": "config.",
       "observable_effect": "caps parallel streams inside selected mission topology",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/hi-core-evolution.test.mjs",
       "proof_sha256": "794ad3473cc7749e87b9a53594e702d18ae008418971258b6d82a6e6eb69d38b",
       "safety_semantics": "capacity"
@@ -213,7 +213,7 @@
       "consumer_anchor": "legacyRoutingDiagnostics",
       "observable_effect": "parses the legacy model-selection mode for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/config-executable-effect.test.mjs",
       "proof_sha256": "6c3e4c43a674d5d11f77b2502a7e4961fa89217a750a1633e84a8ac8732df28a",
       "safety_semantics": "preference"
@@ -237,7 +237,7 @@
       "consumer_anchor": "legacyRoutingDiagnostics",
       "observable_effect": "parses the legacy fixed-model value for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/config-executable-effect.test.mjs",
       "proof_sha256": "6c3e4c43a674d5d11f77b2502a7e4961fa89217a750a1633e84a8ac8732df28a",
       "safety_semantics": "preference"
@@ -261,7 +261,7 @@
       "consumer_anchor": "legacyRoutingDiagnostics",
       "observable_effect": "parses the legacy role-model map for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/config-executable-effect.test.mjs",
       "proof_sha256": "6c3e4c43a674d5d11f77b2502a7e4961fa89217a750a1633e84a8ac8732df28a",
       "safety_semantics": "preference"
@@ -285,7 +285,7 @@
       "consumer_anchor": "legacyRoutingDiagnostics",
       "observable_effect": "parses the legacy cost/quality strategy for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/config-executable-effect.test.mjs",
       "proof_sha256": "6c3e4c43a674d5d11f77b2502a7e4961fa89217a750a1633e84a8ac8732df28a",
       "safety_semantics": "preference"
@@ -309,7 +309,7 @@
       "consumer_anchor": "legacyRoutingDiagnostics",
       "observable_effect": "parses legacy category model lists for compatibility, reports them in config resolution diagnostics, and gives them no model-routing authority",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/config-executable-effect.test.mjs",
       "proof_sha256": "6c3e4c43a674d5d11f77b2502a7e4961fa89217a750a1633e84a8ac8732df28a",
       "safety_semantics": "preference"
@@ -329,11 +329,11 @@
         "project-routing-policy"
       ],
       "consumer": "plugin/src/runtime/routing/model-resolver.ts",
-      "consumer_sha256": "52bdaaa9b382d34c2dbf8c1be064f326e39ad0c6b9204bdbd9e44b169115685e",
+      "consumer_sha256": "e59fbc058f95e457acdcf53f74d69c9706a24a7da8c4f6e8aae4b45705c450bc",
       "consumer_anchor": "config.",
       "observable_effect": "changes selected native model variant by task category",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/routing-config-discovery.test.mjs",
       "proof_sha256": "f112d65110c7618e639dd5058daeee2b7154304b2dd32483f95bd5d5f8b65e71",
       "safety_semantics": "preference"
@@ -353,13 +353,13 @@
         "project-routing-policy"
       ],
       "consumer": "plugin/src/runtime/routing/model-resolver.ts",
-      "consumer_sha256": "52bdaaa9b382d34c2dbf8c1be064f326e39ad0c6b9204bdbd9e44b169115685e",
+      "consumer_sha256": "e59fbc058f95e457acdcf53f74d69c9706a24a7da8c4f6e8aae4b45705c450bc",
       "consumer_anchor": "config.",
       "observable_effect": "selects configured child-role candidates in explicit order after hard eligibility filters and before host-agent/automatic selection; primary manager roles are excluded",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/per-role-routing-runtime.test.mjs",
-      "proof_sha256": "8dce8508d3098d173565f0083e271d15b18d11fd78fd01180a982dbfc0ec171a",
+      "proof_sha256": "8c39a03b99521d11fe73c85aac2578bb083881daae26c605c13ca580ad8dee8a",
       "safety_semantics": "preference"
     },
     {
@@ -377,11 +377,11 @@
         "project-routing-policy"
       ],
       "consumer": "plugin/src/runtime/routing/model-resolver.ts",
-      "consumer_sha256": "52bdaaa9b382d34c2dbf8c1be064f326e39ad0c6b9204bdbd9e44b169115685e",
+      "consumer_sha256": "e59fbc058f95e457acdcf53f74d69c9706a24a7da8c4f6e8aae4b45705c450bc",
       "consumer_anchor": "config.",
       "observable_effect": "changes selected native variant for a specific child-role/model pair; primary manager roles are excluded",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/main-prompt-model-setup-persistence.test.mjs",
       "proof_sha256": "277e99e50b9efe9ba4d9c85c2f9464f9a296b2a562e7f3d8fad7d665e4dcf0fa",
       "safety_semantics": "preference"
@@ -401,11 +401,11 @@
         "project-routing-policy"
       ],
       "consumer": "plugin/src/runtime/routing/model-resolver.ts",
-      "consumer_sha256": "52bdaaa9b382d34c2dbf8c1be064f326e39ad0c6b9204bdbd9e44b169115685e",
+      "consumer_sha256": "e59fbc058f95e457acdcf53f74d69c9706a24a7da8c4f6e8aae4b45705c450bc",
       "consumer_anchor": "config.",
       "observable_effect": "bounds fallback candidate count",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/main-prompt-variant-fallback-concurrency.test.mjs",
       "proof_sha256": "bfacc8875f480b722b40b2486dbc6119177c65612f5d970f77e5237b259b4602",
       "safety_semantics": "capacity"
@@ -425,11 +425,11 @@
         "project-routing-policy:narrowing-compose"
       ],
       "consumer": "plugin/src/runtime/routing/model-resolver.ts",
-      "consumer_sha256": "52bdaaa9b382d34c2dbf8c1be064f326e39ad0c6b9204bdbd9e44b169115685e",
+      "consumer_sha256": "e59fbc058f95e457acdcf53f74d69c9706a24a7da8c4f6e8aae4b45705c450bc",
       "consumer_anchor": "config.",
       "observable_effect": "narrows eligible providers and disables unconstrained host-default fallback when nonempty",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/routing-config-discovery.test.mjs",
       "proof_sha256": "f112d65110c7618e639dd5058daeee2b7154304b2dd32483f95bd5d5f8b65e71",
       "safety_semantics": "constraint"
@@ -449,11 +449,11 @@
         "project-routing-policy:narrowing-compose"
       ],
       "consumer": "plugin/src/runtime/routing/model-resolver.ts",
-      "consumer_sha256": "52bdaaa9b382d34c2dbf8c1be064f326e39ad0c6b9204bdbd9e44b169115685e",
+      "consumer_sha256": "e59fbc058f95e457acdcf53f74d69c9706a24a7da8c4f6e8aae4b45705c450bc",
       "consumer_anchor": "config.",
       "observable_effect": "denies exact models and composes project/raw denies monotonically",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/routing-config-discovery.test.mjs",
       "proof_sha256": "f112d65110c7618e639dd5058daeee2b7154304b2dd32483f95bd5d5f8b65e71",
       "safety_semantics": "constraint"
@@ -473,11 +473,11 @@
         "project-routing-policy"
       ],
       "consumer": "plugin/src/runtime/application/runtime-services.ts",
-      "consumer_sha256": "7edd3d7a0b85f5a52edb0687f3ae3491ca5213e5d02d1c7042e3bd19b460ae07",
+      "consumer_sha256": "053eceb9239e3fbfffec9b2832b390663fc365a5eff897f5bd7ffb1952a31910",
       "consumer_anchor": "getConfig().parallel",
       "observable_effect": "sets global scheduler capacity to one when disabled",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/config-executable-effect.test.mjs",
       "proof_sha256": "6c3e4c43a674d5d11f77b2502a7e4961fa89217a750a1633e84a8ac8732df28a",
       "safety_semantics": "capacity"
@@ -497,11 +497,11 @@
         "project-routing-policy"
       ],
       "consumer": "plugin/src/runtime/application/runtime-services.ts",
-      "consumer_sha256": "7edd3d7a0b85f5a52edb0687f3ae3491ca5213e5d02d1c7042e3bd19b460ae07",
+      "consumer_sha256": "053eceb9239e3fbfffec9b2832b390663fc365a5eff897f5bd7ffb1952a31910",
       "consumer_anchor": "getConfig().parallel",
       "observable_effect": "caps total concurrently acquired workers",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/config.test.mjs",
       "proof_sha256": "e5e04c38cc5b992db0a7298eabdbed9b8dee2f673eb4af61796960d6ca771b5a",
       "safety_semantics": "capacity"
@@ -521,11 +521,11 @@
         "project-routing-policy"
       ],
       "consumer": "plugin/src/runtime/application/runtime-services.ts",
-      "consumer_sha256": "7edd3d7a0b85f5a52edb0687f3ae3491ca5213e5d02d1c7042e3bd19b460ae07",
+      "consumer_sha256": "053eceb9239e3fbfffec9b2832b390663fc365a5eff897f5bd7ffb1952a31910",
       "consumer_anchor": "getConfig().parallel",
       "observable_effect": "caps concurrent workers per provider",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/config-executable-effect.test.mjs",
       "proof_sha256": "6c3e4c43a674d5d11f77b2502a7e4961fa89217a750a1633e84a8ac8732df28a",
       "safety_semantics": "capacity"
@@ -545,11 +545,11 @@
         "project-routing-policy"
       ],
       "consumer": "plugin/src/runtime/application/runtime-services.ts",
-      "consumer_sha256": "7edd3d7a0b85f5a52edb0687f3ae3491ca5213e5d02d1c7042e3bd19b460ae07",
+      "consumer_sha256": "053eceb9239e3fbfffec9b2832b390663fc365a5eff897f5bd7ffb1952a31910",
       "consumer_anchor": "getConfig().parallel",
       "observable_effect": "caps concurrent workers per model",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/main-prompt-variant-fallback-concurrency.test.mjs",
       "proof_sha256": "bfacc8875f480b722b40b2486dbc6119177c65612f5d970f77e5237b259b4602",
       "safety_semantics": "capacity"
@@ -569,11 +569,11 @@
         "project-routing-policy"
       ],
       "consumer": "plugin/src/runtime/task/task-runtime.ts",
-      "consumer_sha256": "5e2abe1f85175657a15e2d0ca8d3004a4fe7ead87e27386c1e475a4b1ddb6843",
+      "consumer_sha256": "9bece4d1cf209e71da5565d667ec5f0c5eedaba41e7a3a5738788730100bf2d5",
       "consumer_anchor": "cfg.profile",
       "observable_effect": "changes specialist dispatch threshold for the selected execution profile",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/profile-aware-router.test.mjs",
       "proof_sha256": "72ee89319b61c1d0a6ab69f2a85881e3093747cf4e7aa545ae443b35a644e899",
       "safety_semantics": "preference"
@@ -593,11 +593,11 @@
         "project-routing-policy"
       ],
       "consumer": "plugin/src/runtime/task/task-runtime.ts",
-      "consumer_sha256": "5e2abe1f85175657a15e2d0ca8d3004a4fe7ead87e27386c1e475a4b1ddb6843",
+      "consumer_sha256": "9bece4d1cf209e71da5565d667ec5f0c5eedaba41e7a3a5738788730100bf2d5",
       "consumer_anchor": "cfg.profile",
       "observable_effect": "changes reviewer dispatch threshold for the selected execution profile",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/profile-aware-router.test.mjs",
       "proof_sha256": "72ee89319b61c1d0a6ab69f2a85881e3093747cf4e7aa545ae443b35a644e899",
       "safety_semantics": "preference"
@@ -617,11 +617,11 @@
         "project-routing-policy"
       ],
       "consumer": "plugin/src/runtime/task/task-runtime.ts",
-      "consumer_sha256": "5e2abe1f85175657a15e2d0ca8d3004a4fe7ead87e27386c1e475a4b1ddb6843",
+      "consumer_sha256": "9bece4d1cf209e71da5565d667ec5f0c5eedaba41e7a3a5738788730100bf2d5",
       "consumer_anchor": "cfg.profile",
       "observable_effect": "changes specialist dispatch threshold for the selected execution profile",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/profile-aware-router.test.mjs",
       "proof_sha256": "72ee89319b61c1d0a6ab69f2a85881e3093747cf4e7aa545ae443b35a644e899",
       "safety_semantics": "preference"
@@ -641,11 +641,11 @@
         "project-routing-policy"
       ],
       "consumer": "plugin/src/runtime/task/task-runtime.ts",
-      "consumer_sha256": "5e2abe1f85175657a15e2d0ca8d3004a4fe7ead87e27386c1e475a4b1ddb6843",
+      "consumer_sha256": "9bece4d1cf209e71da5565d667ec5f0c5eedaba41e7a3a5738788730100bf2d5",
       "consumer_anchor": "cfg.profile",
       "observable_effect": "changes reviewer dispatch threshold for the selected execution profile",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/profile-aware-router.test.mjs",
       "proof_sha256": "72ee89319b61c1d0a6ab69f2a85881e3093747cf4e7aa545ae443b35a644e899",
       "safety_semantics": "preference"
@@ -665,11 +665,11 @@
         "project-routing-policy"
       ],
       "consumer": "plugin/src/runtime/task/task-runtime.ts",
-      "consumer_sha256": "5e2abe1f85175657a15e2d0ca8d3004a4fe7ead87e27386c1e475a4b1ddb6843",
+      "consumer_sha256": "9bece4d1cf209e71da5565d667ec5f0c5eedaba41e7a3a5738788730100bf2d5",
       "consumer_anchor": "cfg.profile",
       "observable_effect": "changes specialist dispatch threshold for the selected execution profile",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/profile-aware-router.test.mjs",
       "proof_sha256": "72ee89319b61c1d0a6ab69f2a85881e3093747cf4e7aa545ae443b35a644e899",
       "safety_semantics": "preference"
@@ -689,11 +689,11 @@
         "project-routing-policy"
       ],
       "consumer": "plugin/src/runtime/task/task-runtime.ts",
-      "consumer_sha256": "5e2abe1f85175657a15e2d0ca8d3004a4fe7ead87e27386c1e475a4b1ddb6843",
+      "consumer_sha256": "9bece4d1cf209e71da5565d667ec5f0c5eedaba41e7a3a5738788730100bf2d5",
       "consumer_anchor": "cfg.profile",
       "observable_effect": "changes reviewer dispatch threshold for the selected execution profile",
       "documentation": "docs/INSTALLATION.md",
-      "documentation_sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
+      "documentation_sha256": "4afa87f761cfb9413bf3a7dddd414ab042481f710789ad7e115bb62a146b1ca2",
       "proof": "plugin/test/profile-aware-router.test.mjs",
       "proof_sha256": "72ee89319b61c1d0a6ab69f2a85881e3093747cf4e7aa545ae443b35a644e899",
       "safety_semantics": "preference"

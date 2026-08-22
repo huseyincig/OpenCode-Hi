@@ -98,7 +98,7 @@
     {
       "invariant": "selected-not-loaded",
       "owner": "plugin/src/runtime/methodology/native-loading.ts",
-      "owner_sha256": "67ca10a2f409d7220a64a45418c976b7510de4267b2b1096ebff96117e77b6d8",
+      "owner_sha256": "d8f8e682af9c70d8d0ee9d2ce1bc52d6b6f8861828739dd8816df9652ed4dd2b",
       "owner_anchor": "assertChildMethodologyLoad",
       "proof": "plugin/test/prompt-b-skills-methodology-security-hostile.test.mjs",
       "proof_sha256": "c0686cd0712593810f9c994480acbe6c6b380d688a60ebd381e78768928f9004",

@@ -62,7 +62,7 @@
       "owner_sha256": "e086871427160e9b2f5d2677c8964ecea0d24965f298f48295b56bff2341a669",
       "owner_anchor": "verificationSatisfied",
       "proof": "plugin/test/prompt-b-evidence-verification-completion-hostile.test.mjs",
-      "proof_sha256": "bec96bd818a6cc0343fc76379100041c52eacabbecab998acb9c4959aac85f22",
+      "proof_sha256": "cbc59f605a1a205fc92bac9f848d8f1ebe0442e36ae20dd21628ca1ad9247db4",
       "proof_anchor": "DONE. all tests passed. safe to release."
     },
     {
@@ -132,17 +132,17 @@
       "owner_sha256": "f21c6869ad7545d1b8e205a1f8917e7278dddb47c6193d8febe5612c3e4653f8",
       "owner_anchor": "mcp:'NATIVE'",
       "proof": "plugin/test/main-prompt-coexistence-platform-batch.test.mjs",
-      "proof_sha256": "e5cf9669fbaaf97d8693aedbad0f52aa25a23612e764cbf87312d9b4a8237f36",
+      "proof_sha256": "4924eacef79ff1b920899c9b55c1eb73f24232f9ec08e5a06c9778cfaecd699d",
       "proof_anchor": "default plugin surface does not invent MCP runtime"
     },
     {
       "section": 20,
       "invariant": "browser",
       "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
-      "owner_sha256": "938b1b917a20921df9849c2945a5f33033a26c1924ab702006a9f1e081ff99e6",
+      "owner_sha256": "2e288fd3361c9f77e52f9e761b7c1e4b91eb2b50ca2489853ffa3568c6804856",
       "owner_anchor": "safeLocalUrl",
       "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
-      "proof_sha256": "73c74994bcb76f36f04115cf26a08c36ca93f0620e52fadf9a0a28c8fa31282a",
+      "proof_sha256": "d0c1c65c6902bd64fa717b6a7983ef94b98f1497179679ac0fe1c9ea53c8f545",
       "proof_anchor": "outside supported local scope"
     },
     {

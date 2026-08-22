@@ -17,7 +17,7 @@
     {
       "invariant": "unknown-context-handle-fail-close",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "5e2abe1f85175657a15e2d0ca8d3004a4fe7ead87e27386c1e475a4b1ddb6843",
+      "owner_sha256": "9bece4d1cf209e71da5565d667ec5f0c5eedaba41e7a3a5738788730100bf2d5",
       "owner_anchor": "Unknown context artifact id(s)",
       "proof": "plugin/test/context-survival-hardening.test.mjs",
       "proof_sha256": "238c6269ef500468db62f379ff2296a81e5e802a35de6e9925ac060f313a29cd",
@@ -26,7 +26,7 @@
     {
       "invariant": "stale-context-exclusion",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "5e2abe1f85175657a15e2d0ca8d3004a4fe7ead87e27386c1e475a4b1ddb6843",
+      "owner_sha256": "9bece4d1cf209e71da5565d667ec5f0c5eedaba41e7a3a5738788730100bf2d5",
       "owner_anchor": "stored?.freshness==='FRESH'",
       "proof": "plugin/test/context-survival-hardening.test.mjs",
       "proof_sha256": "238c6269ef500468db62f379ff2296a81e5e802a35de6e9925ac060f313a29cd",
@@ -71,10 +71,10 @@
     {
       "invariant": "mission-runtime-projection-bounded",
       "owner": "plugin/src/runtime/context/mission-runtime-projection.ts",
-      "owner_sha256": "cd1211557db86d81fd4ca3c353a23597a82bf672d8185dc1a10039fe83e73c2c",
+      "owner_sha256": "b69ccbc0f5fb97fbe25b37b91b02bcdbd610391fc3e6b1e31bb17ccd42f17688",
       "owner_anchor": "clipText",
       "proof": "plugin/test/c1-mission-runtime-projection.test.mjs",
-      "proof_sha256": "438e644f81400755e7ce7800d7bdcf5f74a9c91346163b0ab472c356489784bf",
+      "proof_sha256": "5f42e49e753207086b5e26b7f17ed66887d3535c3d5168008c387d70b420ea30",
       "proof_anchor": "Hi MISSION RUNTIME PROJECTION"
     },
     {

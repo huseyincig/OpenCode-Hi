@@ -5,8 +5,8 @@
   "section": 26,
   "status": "PASS",
   "source": {
-    "commit": "b7689bbad0436c7e789f67f8667543108623aaa2",
-    "tree": "647e0bd918454a5782f96302c3093cf59ef9ab7f"
+    "commit": "ff922d391584f63a6a9f29e4426e6a5702c65286",
+    "tree": "9e2ed34642840c4712bdbc1aa2e917dc9f783d10"
   },
   "host": {
     "opencode": "1.18.21",
@@ -17,13 +17,13 @@
     "registry_observation": {
       "opencode_ai_latest": "1.18.21",
       "sdk_latest": "1.18.21",
-      "observed_at": "2026-08-22T11:53:49.829123+00:00"
+      "observed_at": "2026-08-22T19:25:20.932494+00:00"
     }
   },
   "package": {
     "release": "0.2.4",
     "tarball_name": "opencode-hi-0.2.4.tgz",
-    "tarball_sha256": "2b47adf8d48b9ea135071d15b407133560a057c7a8c3c25d2e48a042c582ac1a",
+    "tarball_sha256": "940295713488720dca9802fd484b84bd65923a032abe27bdfb252dd7cfc671fe",
     "installed_from_tarball": true,
     "resolved_entrypoint": "file://<acceptance>/consumer/node_modules/opencode-hi/plugin/dist/plugin.js"
   },
@@ -34,13 +34,52 @@
     "node_setup_rc": 0
   },
   "material_runtime": {
-    "hi_tool_count": 32,
+    "hi_tool_count": 34,
     "hi_tools": [
       "hi_browser_click",
       "hi_browser_close",
       "hi_browser_inspect",
+      "hi_browser_key",
       "hi_browser_navigate",
       "hi_browser_open",
+      "hi_browser_preview_open",
+      "hi_browser_screenshot",
+      "hi_browser_type",
+      "hi_browser_wait",
+      "hi_context_artifact_add",
+      "hi_context_artifacts",
+      "hi_direct_progress",
+      "hi_doctor",
+      "hi_intent_assess",
+      "hi_ledger",
+      "hi_metrics",
+      "hi_process_cleanup",
+      "hi_process_kill",
+      "hi_process_list",
+      "hi_process_read",
+      "hi_process_spawn",
+      "hi_process_wait",
+      "hi_process_write",
+      "hi_readiness",
+      "hi_role_models",
+      "hi_status",
+      "hi_task_await",
+      "hi_task_cancel",
+      "hi_task_list",
+      "hi_task_peek",
+      "hi_task_start",
+      "hi_temporary_mutation_register",
+      "hi_temporary_mutation_revert"
+    ],
+    "expected_hi_tool_count": 34,
+    "expected_hi_tools": [
+      "hi_browser_click",
+      "hi_browser_close",
+      "hi_browser_inspect",
+      "hi_browser_key",
+      "hi_browser_navigate",
+      "hi_browser_open",
+      "hi_browser_preview_open",
       "hi_browser_screenshot",
       "hi_browser_type",
       "hi_browser_wait",

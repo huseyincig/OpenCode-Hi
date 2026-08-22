@@ -5,12 +5,12 @@
   "section": 34,
   "status": "PASS",
   "source_binding": {
-    "tested_git_commit": "fe64d24dbb2304e4e323ed07882229e24a8a3f2e",
-    "tested_git_tree": "82f1c1f7f4d69044c2a24a6b2555a7bfda214979"
+    "tested_git_commit": "ff922d391584f63a6a9f29e4426e6a5702c65286",
+    "tested_git_tree": "9e2ed34642840c4712bdbc1aa2e917dc9f783d10"
   },
   "terminal": {
-    "tests": 67,
-    "pass": 67,
+    "tests": 68,
+    "pass": 68,
     "fail": 0,
     "cancelled": 0,
     "skipped": 0,
@@ -91,7 +91,7 @@
     {
       "injection": "browser-failure",
       "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
-      "proof_sha256": "73c74994bcb76f36f04115cf26a08c36ca93f0620e52fadf9a0a28c8fa31282a",
+      "proof_sha256": "d0c1c65c6902bd64fa717b6a7983ef94b98f1497179679ac0fe1c9ea53c8f545",
       "proof_anchor": "PROMPT B browser navigation timeout and browser crash become explicit FAILED observations",
       "status": "PASS"
     },

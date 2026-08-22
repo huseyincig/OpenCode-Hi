@@ -26,7 +26,7 @@
     {
       "invariant": "normalized-event-boundary",
       "owner": "plugin/src/opencode/open-code-hooks.ts",
-      "owner_sha256": "c3c208e4e18d6b6d81efd225b2ddb54a54f68cf6f7e5aed5a377f722e6a52688",
+      "owner_sha256": "2a84e5bb86d818d204d779887ff439f13b57f499f990b82920dff89848d90a03",
       "owner_anchor": "eventController.handle(normalizeOpenCodeEvent(input?.event??input))",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
@@ -53,7 +53,7 @@
     {
       "invariant": "runtime-service-injection",
       "owner": "plugin/src/runtime/application/runtime-services.ts",
-      "owner_sha256": "7edd3d7a0b85f5a52edb0687f3ae3491ca5213e5d02d1c7042e3bd19b460ae07",
+      "owner_sha256": "053eceb9239e3fbfffec9b2832b390663fc365a5eff897f5bd7ffb1952a31910",
       "owner_anchor": "export interface RuntimeServicePorts",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
@@ -80,7 +80,7 @@
     {
       "invariant": "missing-capability-fail-closed",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "5e2abe1f85175657a15e2d0ca8d3004a4fe7ead87e27386c1e475a4b1ddb6843",
+      "owner_sha256": "9bece4d1cf209e71da5565d667ec5f0c5eedaba41e7a3a5738788730100bf2d5",
       "owner_anchor": "hostCapabilitySource:(()=>readonly HostCapabilityContract[])|readonly HostCapabilityContract[]=[]",
       "proof": "plugin/test/methodology-host-capability.test.mjs",
       "proof_sha256": "f4bec6d8e7e07e0f2901e9c6059af9e1e9773cf2feec184f43726a77f75ac74a",

@@ -5,7 +5,7 @@
   "section": 34,
   "status": "PASS",
   "acceptance_receipt": "data/validation/failure-injection-0.1.0.json",
-  "acceptance_sha256": "0df2f980f0572d5385de2991ed9ad059c4f0473de8c3a21565c0e782d09e5b0b",
+  "acceptance_sha256": "4c54d8ce5a006ddd7bd4b30adddd1739c63526c58501d2f703d33e3efad92af2",
   "required_injections": [
     "provider-timeout",
     "model-unavailable",

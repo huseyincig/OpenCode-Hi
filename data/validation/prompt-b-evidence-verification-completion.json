@@ -35,7 +35,7 @@
     {
       "invariant": "changed-file-ownership",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "58ca8a5f218cd2b6120fd5f190be728356eaf3052f67b4ce9ae8a93bf006fbe2",
+      "owner_sha256": "f9b11a41519943fb4fde8f3dd09b8f45647434b6a1aac330fccff28875a831c0",
       "owner_anchor": "native.diff.mismatch",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
       "proof_sha256": "7327fe78731d41853b8d3897794cc5955395cd98e08f662c8bb1af86edd6d71e",
@@ -62,10 +62,10 @@
     {
       "invariant": "worker-result-not-evidence",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "58ca8a5f218cd2b6120fd5f190be728356eaf3052f67b4ce9ae8a93bf006fbe2",
+      "owner_sha256": "f9b11a41519943fb4fde8f3dd09b8f45647434b6a1aac330fccff28875a831c0",
       "owner_anchor": "WorkerResult evidence stays task-result provenance. It is never copied wholesale",
       "proof": "plugin/test/prompt-b-evidence-verification-completion-hostile.test.mjs",
-      "proof_sha256": "bec96bd818a6cc0343fc76379100041c52eacabbecab998acb9c4959aac85f22",
+      "proof_sha256": "cbc59f605a1a205fc92bac9f848d8f1ebe0442e36ae20dd21628ca1ad9247db4",
       "proof_anchor": "PROMPT B hostile DONE and all-tests-passed prose cannot replace verification Evidence"
     },
     {
@@ -89,7 +89,7 @@
     {
       "invariant": "review-disposition",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "58ca8a5f218cd2b6120fd5f190be728356eaf3052f67b4ce9ae8a93bf006fbe2",
+      "owner_sha256": "f9b11a41519943fb4fde8f3dd09b8f45647434b6a1aac330fccff28875a831c0",
       "owner_anchor": "review.claim-unproven",
       "proof": "plugin/test/obligation-ownership.test.mjs",
       "proof_sha256": "c83e91c8e32f919be12e16d33f692d964038e90fb1002346aeb19e96f2950a30",
@@ -107,10 +107,10 @@
     {
       "invariant": "completion-obligation-reconciliation",
       "owner": "plugin/src/runtime/completion/evaluator.ts",
-      "owner_sha256": "b3afcdaa1ab177368b06d44192ba5de90d3f8ddfca646f6892a15e11cf935f6d",
+      "owner_sha256": "78af108c2539f62e3ebd3af1522939fe50fa6ede39409c4f3193268753be8489",
       "owner_anchor": "open-obligations",
       "proof": "plugin/test/prompt-b-evidence-verification-completion-hostile.test.mjs",
-      "proof_sha256": "bec96bd818a6cc0343fc76379100041c52eacabbecab998acb9c4959aac85f22",
+      "proof_sha256": "cbc59f605a1a205fc92bac9f848d8f1ebe0442e36ae20dd21628ca1ad9247db4",
       "proof_anchor": "PROMPT B hostile DONE and all-tests-passed prose cannot replace verification Evidence"
     }
   ],
