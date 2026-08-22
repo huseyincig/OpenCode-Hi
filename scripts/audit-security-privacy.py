@@ -57,7 +57,7 @@ guards={
  'script_allowlist_exact':pluginpkg.get('allowScripts')=={'msgpackr-extract@3.0.4':True},
  'env_not_in_process_contract':'env?:' not in (ROOT/'plugin/src/contracts/process.ts').read_text(errors='replace'),
  'provider_child_prompt_redacted':'redactProviderContext(text)' in (ROOT/'plugin/src/runtime/task/child-execution-coordinator.ts').read_text(errors='replace'),
- 'provider_system_projection_redacted':'redactProviderContext(renderMissionRuntimeProjection(projection)).providerText' in (ROOT/'plugin/src/hooks/system-transform.ts').read_text(errors='replace'),
+ 'provider_system_projection_redacted':bool(re.search(r'redactProviderContext\(renderMissionRuntimeProjection\(projection\)(?:\+localBoundary)?\)\.providerText',(ROOT/'plugin/src/hooks/system-transform.ts').read_text(errors='replace'))),
  'no_host_user_literals':'/root/' not in prod and '/home/node/' not in prod,
 }
 for k,v in guards.items():
