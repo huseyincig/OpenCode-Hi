@@ -203,7 +203,7 @@
     },
     {
       "path": "docs/RELEASE.md",
-      "sha256": "029c0d5c7060aa0ea1dd1310cdc50f8aca0254c91818c70b8cee1007cb244d12",
+      "sha256": "e9b67eb28f54ec7f2789de60334129d8905e83c05182f6953a92315421ed3fbb",
       "area": "release",
       "audience": "RELEASE_ENGINEER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -253,7 +253,7 @@
   "machine_owners": [
     {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
-      "sha256": "e60fc6d6ba455c8177007eca4dcc94a0d0a4f0c5e4c3ea186ac73359ce835e88",
+      "sha256": "03c56c5aad689562d63dc10af80762a96c22a5049f4921f107032a802fe0d472",
       "area": "supported-host-matrix",
       "lifecycle": "MACHINE_OWNER"
     },

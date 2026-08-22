@@ -8,18 +8,18 @@
   "inputs": {
     "compatibility_baseline": {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
-      "sha256": "e60fc6d6ba455c8177007eca4dcc94a0d0a4f0c5e4c3ea186ac73359ce835e88"
+      "sha256": "03c56c5aad689562d63dc10af80762a96c22a5049f4921f107032a802fe0d472"
     },
     "current_release_gates": {
       "path": "data/validation/release-gates.json",
-      "sha256": "9b61f7b6f0dda82f5c6be86acb96cc63bdbdf7d33f670f6fb209b34a247e2af4"
+      "sha256": "89bbcd04d7ff3561bf01223c1474cfda89e4b735ae54e82562735cfb0f1819b3"
     },
     "historical_v0_1_0_publication": {
       "path": "data/validation/release-publication-0.1.0.json",
       "sha256": "b0b9509dea487a6403d075d3ca18e8081285af4c053605d7f8f6438ad3d9798a"
     }
   },
-  "status": "PREPUBLICATION_CERTIFICATION_IN_PROGRESS",
+  "status": "PREPUBLICATION_CERTIFIED_PENDING_T4",
   "release_blocked": true,
   "publication_authority": {
     "required": true,
@@ -37,7 +37,7 @@
     "github_status": "PENDING_T4",
     "npm_status": "PENDING_T4",
     "publication_attempted": false,
-    "prepublication_ready": false
+    "prepublication_ready": true
   },
   "reference_host": {
     "opencode_version": "1.18.21",
@@ -64,9 +64,10 @@
     "candidate_certification": {
       "process-lifecycle": "PASS_T3_EXACT_HOST_1_18_21_LINUX_AARCH64",
       "workspace-isolation-binding": "PASS_T3_PREPUBLICATION_PACKED_LOCAL_PACKAGE_SEAM_EXACT_OPENCODE_1_18_21_LINUX_AARCH64",
-      "browser-execution": "PASS_T3_PACKED_32_HI_TOOLS_0_2_4",
-      "windows": "PENDING_EXTERNAL_CI_CURRENT_SOURCE_0_2_4",
-      "clean_consumer": "PASS_CLEAN_PREPUBLICATION_PACKED_TARBALL_LOCAL_CONSUMER"
+      "browser-execution": "PASS_T3_PACKED_34_HI_TOOLS_0_2_4",
+      "windows": "PASS_CROSS_PLATFORM_EXACT_SHA_79B10DC",
+      "clean_consumer": "PASS_CLEAN_PREPUBLICATION_PACKED_TARBALL_LOCAL_CONSUMER",
+      "final-canonical": "PASS_CURRENT_CHECKPOINT_PY105_NODE1202_ARCH22_DOCS0_VALIDATOR"
     }
   },
   "verification": {

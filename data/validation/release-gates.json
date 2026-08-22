@@ -3,7 +3,7 @@
   "release": "0.2.4",
   "generated_at": "2026-08-22",
   "candidate_status": "PROMPT_B_0_2_4_PREPUBLICATION_CERTIFICATION_IN_PROGRESS",
-  "claim_boundary": "Current 0.2.4 candidate only. Exact OpenCode 1.18.21 Linux/aarch64 T3 and current local runtime/audits are proven. Final public-doc/package checkpoint, fresh packed-consumer/deterministic-release recheck and final canonical gates remain local; current-source Windows CI and real GitHub/npm T4 remain external and are not fabricated.",
+  "claim_boundary": "Current 0.2.4 candidate only. Local/product, exact OpenCode 1.18.21 Linux/aarch64 T3, packed fresh-consumer, and exact-source Ubuntu/Windows CI are proven. Real GitHub/npm T4 publication remains external and is not fabricated.",
   "gates": {
     "source_integrity": "PASS_LOCAL_ISOLATED_COMMITTED_SOURCE_B7689BB",
     "deterministic_release": "PASS_LOCAL_TWO_INDEPENDENT_BYTE_IDENTICAL_BUILDS",
@@ -21,32 +21,31 @@
     "visual_model_capability_gate": "PASS_LOCAL_HOST_IMAGE_CAPABILITY_HARD_FILTER_AND_DISPATCH_REVALIDATION",
     "model_inventory_no_arbitrary_cap": "PASS_LOCAL_COMPLETE_EFFECTIVE_LIST_NO_EIGHT_MODEL_TRUNCATION",
     "plain_opencode_smoke": "PASS_T3_EXACT_HOST_1_18_21_LINUX_AARCH64",
-    "packaged_agents_skills": "PASS_T3_PACKED_32_HI_TOOLS_0_2_4",
+    "packaged_agents_skills": "PASS_T3_PACKED_34_HI_TOOLS_0_2_4",
     "opencode_native_child_sessions": "PASS_T3_EXACT_HOST_1_18_21_NATIVE_CHILD_SESSION",
     "opencode_model_provider_binding": "PASS_T3_EXACT_HOST_1_18_21_PROVIDER_BINDING",
     "permission_denial_runtime": "PASS_T3_EXACT_HOST_1_18_21_FAIL_CLOSED_PERMISSION",
-    "windows_runtime_smoke": "PENDING_EXTERNAL_CI_CURRENT_SOURCE_0_2_4",
+    "windows_runtime_smoke": "PASS_CROSS_PLATFORM_EXACT_SHA_79B10DC",
     "dependency_supply_chain_external": "PASS_CLEAN_PREPUBLICATION_PACKED_TARBALL_LOCAL_CONSUMER",
     "filesystem_hygiene": "PASS_LOCAL_CLEAN_EVIDENCE_CHECKPOINT_12_OF_12",
     "native_package_plugin_install_exact_candidate": "PASS_T3_PREPUBLICATION_PACKED_LOCAL_PACKAGE_SEAM_EXACT_OPENCODE_1_18_21_LINUX_AARCH64",
     "github_release_publication": "PENDING_T4_NOT_PUBLISHED",
     "npm_registry_publication": "PENDING_AUTH_T4_NOT_PUBLISHED",
-    "final_canonical_gates": "PASS_CURRENT_CLEAN_CHECKPOINT_PY105_NODE1172_ARCH22_DOCS0_VALIDATOR"
+    "final_canonical_gates": "PASS_CURRENT_CHECKPOINT_PY105_NODE1202_ARCH22_DOCS0_VALIDATOR"
   },
   "release_blocked": true,
-  "reason": "0.2.4 all executable local engineering/certification gates pass: exact source/docs, packed fresh-consumer, deterministic release, exact OpenCode 1.18.21 T3, dependency/package audits, hygiene 12/12, zero-known-defect 86/86, Python 105/105, Node 1172/1172, architecture 22/22, docs parity 0 and validator. Only current-source Windows CI and real GitHub/npm T4 remain external.",
+  "reason": "0.2.4 executable engineering/certification gates are locally closed, including exact OpenCode 1.18.21 T3, packed fresh-consumer and exact-source Ubuntu/Windows Release Readiness. Only real GitHub/npm T4 publication verification remains external.",
   "external_blockers": [
-    "exact OpenCode 1.18.21 Windows current-source CI for 0.2.4 is not yet available.",
     "opencode-hi@0.2.4 has not been published to npm; fresh-registry T4 is unavailable.",
     "v0.2.4 GitHub Release has not been published; immutable release-source T4 is unavailable."
   ],
   "current_local_evidence": {
     "source_checkpoint": {
       "status": "PASS",
-      "commit": "b7689bbad0436c7e789f67f8667543108623aaa2",
-      "tree": "647e0bd918454a5782f96302c3093cf59ef9ab7f",
+      "commit": "79b10dc793c97672c92d2815cc342983a431e2c4",
+      "tree": "ec0a32c396870cf49ec2006e5eb2cde056d2a83e",
       "branch": "fix/role-model-ux",
-      "note": "Exact source/docs checkpoint for final package and certification evidence; subsequent local evidence commits must not alter package/runtime material."
+      "note": "Exact dual-platform CI checkpoint; subsequent evidence-only descendants may consume this receipt while material source/package paths remain unchanged."
     },
     "node": {
       "command": "npm run check:product",
@@ -64,14 +63,14 @@
       "status": "PASS",
       "receipt": "data/validation/fresh-consumer-opencode-1.18.21.json",
       "opencode_version": "1.18.21",
-      "expected_hi_tool_count": 32,
-      "source_commit": "b7689bbad0436c7e789f67f8667543108623aaa2"
+      "expected_hi_tool_count": 34,
+      "source_commit": "ff922d391584f63a6a9f29e4426e6a5702c65286"
     },
     "exact_t3": {
       "status": "PASS_EXACT_CURRENT_LINUX_AARCH64",
       "opencode_version": "1.18.21",
-      "source_commit": "b7689bbad0436c7e789f67f8667543108623aaa2",
-      "capability_receipt_source_commit": "fe64d24dbb2304e4e323ed07882229e24a8a3f2e",
+      "source_commit": "ff922d391584f63a6a9f29e4426e6a5702c65286",
+      "capability_receipt_source_commit": "46b5dd71bb18378e9436a3ad4f74221fce6c9d6a",
       "capabilities": [
         "process-lifecycle",
         "workspace-isolation-binding",
@@ -81,9 +80,12 @@
       "runtime_equivalent_to_current": true
     },
     "cross_platform": {
-      "status": "PENDING_EXTERNAL_CI",
+      "status": "PASS",
       "receipt": "data/validation/prompt-b-cross-platform-acceptance.json",
-      "windows_current": false
+      "source_commit": "79b10dc793c97672c92d2815cc342983a431e2c4",
+      "run_id": 32593887685,
+      "windows_current": true,
+      "linux_current": true
     },
     "deterministic_release": {
       "status": "PASS",
@@ -98,11 +100,11 @@
       "checks": "12/12"
     },
     "final_system": {
-      "status": "PARTIAL_PENDING_EXTERNAL",
+      "status": "PARTIAL_T4_ONLY",
       "receipt": "data/validation/final-system-certification-0.2.4.json",
       "final_gates_receipt": "data/validation/final-gates-0.2.4.json",
+      "source_commit": "a25d86958dc4d95c1a5729a473065eb40af2ad73",
       "blockers": [
-        "current-source Windows external CI",
         "real GitHub/npm T4 publication verification"
       ]
     }
