@@ -12,6 +12,7 @@ import { openHumanDecision } from '../runtime/human-decision/runtime.js';
 import { verificationKindAdmittedForMission } from '../runtime/verification/policy.js';
 import { HI_BROWSER_EXECUTION_TOOL_IDS } from '../runtime/browser/executor.js';
 import { resolveBrowserExecutionOwner } from '../runtime/browser/ownership.js';
+const NON_MATERIAL_CONTROL_TOOLS = new Set(['hi_intent_assess', 'hi_status', 'hi_ledger', 'hi_readiness', 'hi_role_models']);
 export function createToolBeforeHook(store, background, projectRoot) {
     return async (input, output) => {
         const sid = input?.sessionID ?? input?.sessionId, child = sid && background ? background.list().find(w => w.session_id === sid) : undefined, m = child ? store.get(child.parent_session_id) : store.get(sid);
@@ -20,6 +21,8 @@ export function createToolBeforeHook(store, background, projectRoot) {
         if (child && ((child.parent_mission_id !== undefined && child.parent_mission_id !== m.identity.mission_id) || (child.generation_at_spawn !== undefined && child.generation_at_spawn !== m.continuation.generation)))
             return;
         const tool = String(input?.tool ?? ''), args = output?.args ?? input?.args ?? {};
+        if (!child && !NON_MATERIAL_CONTROL_TOOLS.has(tool) && store.reopenContradictedNonMaterial(String(sid), tool))
+            throw new Error(`Hi non-material conclusion contradicted by work tool '${tool}'; initial semantic assessment was reopened and the tool was blocked before execution.`);
         if (child && tool.startsWith('hi_')) {
             const browserTool = HI_BROWSER_EXECUTION_TOOL_IDS.includes(tool);
             if (browserTool) {

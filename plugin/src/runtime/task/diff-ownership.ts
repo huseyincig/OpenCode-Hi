@@ -12,6 +12,12 @@ function autoRelated(file:string,scope:string[]):boolean{
   return false
 }
 export interface DiffOwnershipAssessment{outside:string[];accepted:string[];collateral:string[]}
+export interface RequiredTargetCoverage{required:string[];covered:string[];missing:string[]}
+export function assessRequiredTargetCoverage(requiredInput:string[],changedInput:string[]):RequiredTargetCoverage{
+  const required=[...new Set(requiredInput.map(norm).filter(Boolean))],changed=[...new Set(changedInput.map(norm).filter(Boolean))]
+  const covered=required.filter(target=>changed.some(file=>within(file,target)))
+  return{required,covered,missing:required.filter(target=>!covered.includes(target))}
+}
 export interface ScopeExpansionClaim{file:string;reason:string;necessary:boolean}
 export type ScopeExpansionAuthority='worker-proposal'|'control-plane'
 export function assessChangedFileOwnership(scopeInput:string[],changedInput:string[],scopeExpansions:ScopeExpansionClaim[]=[],authority:ScopeExpansionAuthority='worker-proposal'):DiffOwnershipAssessment{

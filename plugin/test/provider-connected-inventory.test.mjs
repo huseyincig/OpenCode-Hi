@@ -4,6 +4,7 @@ import { mkdtempSync, rmSync, readFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import HiPlugin from '../dist/plugin.js'
+import { createHostPort } from '../dist/opencode/host-port.js'
 
 function clientWithProviderShape(raw){
   return {
@@ -40,15 +41,7 @@ test('runtime inventory exposes only models from OpenCode connected providers wh
   assert.match(doctor,/model-inventory: 1 effective runtime model\(s\)/)
   assert.match(doctor,/opencode-go\/deepseek-v4-flash/)
   assert.doesNotMatch(doctor,/zhipuai\/px-unavailable/)
-  const routing=JSON.parse(readFileSync(join(root,'.opencode','hi','policy','routing.json'),'utf8'))
-  assert.deepEqual(routing.routing.roleModels,{
-    coder:['opencode-go/deepseek-v4-flash'],
-    architect:['opencode-go/deepseek-v4-flash'],
-    'repository-explorer':['opencode-go/deepseek-v4-flash'],
-    'qa-reviewer':['opencode-go/deepseek-v4-flash'],
-    'security-reviewer':['opencode-go/deepseek-v4-flash'],
-  })
-  assert.deepEqual(routing.routing.adaptiveRoles,['visual-qa'])
+  assert.equal(existsSync(join(root,'.opencode','hi','policy','routing.json')),false,'runtime inventory refresh must not persist inferred role preferences')
   await hooks.dispose?.()
   rmSync(root,{recursive:true,force:true})
 })
@@ -104,7 +97,7 @@ test('chat-facing hi_role_models lists only effective connected models and persi
   await hooks.config({})
   await hooks.event({event:{type:'server.connected',properties:{}}})
   const listed=JSON.parse(String(await hooks.tool.hi_role_models.execute({action:'list'},{})))
-  assert.equal(listed.status,'OK');assert.deepEqual(listed.models.map(x=>x.id),['p/code','p/vision']);assert.equal(listed.roles.coder,'p/code')
+  assert.equal(listed.status,'OK');assert.deepEqual(listed.models.map(x=>x.id),['p/code','p/vision']);assert.equal(listed.roles.coder,null);assert.deepEqual(listed.role_models.coder,[]);assert.equal(existsSync(join(root,'.opencode','hi','policy','routing.json')),false)
   const setCoder=JSON.parse(String(await hooks.tool.hi_role_models.execute({action:'set',role:'coder',models:'p/vision,p/code'},{})))
   assert.equal(setCoder.status,'APPLIED');assert.deepEqual(setCoder.role_models.coder,['p/vision','p/code'])
   const blockedVisual=JSON.parse(String(await hooks.tool.hi_role_models.execute({action:'set',role:'visual-qa',models:'p/code'},{})))
@@ -114,4 +107,37 @@ test('chat-facing hi_role_models lists only effective connected models and persi
   const routing=JSON.parse(readFileSync(join(root,'.opencode','hi','policy','routing.json'),'utf8'))
   assert.deepEqual(routing.routing.roleModels.coder,['p/vision','p/code']);assert.deepEqual(routing.routing.roleModels['visual-qa'],['p/vision'])
   await hooks.dispose?.();rmSync(root,{recursive:true,force:true})
+})
+
+
+test('runtime inventory prefers OpenCode directory-scoped available models over connected provider catalog models',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-provider-v2-available-'))
+  const raw={connected:['p'],all:[{id:'p',models:[{id:'active'},{id:'disabled'}]}]}
+  const client=clientWithProviderShape(raw),priorFetch=globalThis.fetch
+  globalThis.fetch=async(request)=>{
+    const url=new URL(typeof request==='string'?request:request.url);assert.equal(url.pathname,'/api/model')
+    return new Response(JSON.stringify({location:{directory:root},data:[{id:'active',providerID:'p',family:'code',name:'Active',api:{id:'active',type:'native',settings:{}},capabilities:{tools:true,input:['text','image'],output:['text']},request:{headers:{},body:{}},variants:[{id:'high',headers:{},body:{}}],time:{released:Date.now()},cost:[{input:1,output:2,cache:{read:0,write:0}}],status:'active',enabled:true,limit:{context:1000,output:100}}]}),{status:200,headers:{'content-type':'application/json'}})
+  }
+  try{
+    const host=createHostPort({directory:root,worktree:root,project:{},serverUrl:new URL('http://opencode.test'),client,experimental_workspace:{register(){}},$:()=>{}})
+    assert.equal(await host.refreshRuntimeInventory('test'),1)
+    assert.deepEqual(host.getModels().map(x=>x.id),['p/active'])
+    assert.equal(host.getModels()[0]?.visionCapable,true);assert.deepEqual(host.getModels()[0]?.variants,['high'])
+  }finally{globalThis.fetch=priorFetch;rmSync(root,{recursive:true,force:true})}
+})
+
+
+test('successful directory-scoped empty available-model list stays empty instead of resurrecting provider catalog models',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-provider-v2-empty-'))
+  const raw={connected:['p'],all:[{id:'p',models:[{id:'catalog-only'}]}]}
+  const client=clientWithProviderShape(raw),priorFetch=globalThis.fetch
+  globalThis.fetch=async(request)=>{
+    const url=new URL(typeof request==='string'?request:request.url);assert.equal(url.pathname,'/api/model')
+    return new Response(JSON.stringify({location:{directory:root},data:[]}),{status:200,headers:{'content-type':'application/json'}})
+  }
+  try{
+    const host=createHostPort({directory:root,worktree:root,project:{},serverUrl:new URL('http://opencode.test'),client,experimental_workspace:{register(){}},$:()=>{}})
+    assert.equal(await host.refreshRuntimeInventory('test-empty'),0)
+    assert.deepEqual(host.getModels(),[])
+  }finally{globalThis.fetch=priorFetch;rmSync(root,{recursive:true,force:true})}
 })

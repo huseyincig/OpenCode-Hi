@@ -31,7 +31,7 @@
     "@opencode-ai/plugin": ">=1.14.0"
   },
   "devDependencies": {
-    "@opencode-ai/plugin": "^1.18.19",
+    "@opencode-ai/plugin": "1.18.21",
     "typescript": "^5.8.0"
   },
   "license": "Apache-2.0",

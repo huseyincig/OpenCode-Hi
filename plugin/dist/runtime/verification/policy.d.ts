@@ -13,21 +13,21 @@ export declare function replanVerificationForChangedSurface(m: MissionState, tas
 export declare function verificationEconomyInstruction(m: MissionState): string;
 export declare function verificationKindSatisfiesRequirement(required: string, actual: string): boolean;
 export declare function verificationKindAdmittedForMission(m: MissionState, actual: string): boolean;
-export declare function verificationEnvelopeFor(m: MissionState, obligationID?: string): VerificationEnvelope;
-export declare function verificationSatisfied(m: MissionState, obligationID?: string): {
+export declare function verificationEnvelopeFor(m: MissionState, obligationID?: string, projectRoot?: string): VerificationEnvelope;
+export declare function verificationSatisfied(m: MissionState, obligationID?: string, projectRoot?: string): {
     ok: boolean;
     missing: string[];
 };
-export declare function verificationClaimsSatisfied(m: MissionState): {
+export declare function verificationClaimsSatisfied(m: MissionState, projectRoot?: string): {
     ok: boolean;
     missing: string[];
 };
-export declare function reviewObligationSatisfied(m: MissionState, obligationID: string): {
+export declare function reviewObligationSatisfied(m: MissionState, obligationID: string, projectRoot?: string): {
     ok: boolean;
     reason?: string;
     evidence_id?: string;
 };
-export declare function reviewClaimsSatisfied(m: MissionState): {
+export declare function reviewClaimsSatisfied(m: MissionState, projectRoot?: string): {
     ok: boolean;
     missing: string[];
 };

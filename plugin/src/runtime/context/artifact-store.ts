@@ -4,6 +4,9 @@ import { dirname, join } from 'node:path'
 import { durableArtifactBinaryPath, durableArtifactPath, hiProjectRoot } from '../storage/ownership.js'
 import { artifactContentHash,isArtifactContract,newArtifactId,type ArtifactContract,type ArtifactPrivacyClass } from '../../contracts/artifact.js'
 
+function canonicalSources(files:readonly string[]):string[]{return[...new Set(files.map(file=>file.trim().replace(/\\/g,'/').replace(/^\.\//,'')).filter(Boolean))].sort()}
+function sameSources(a:readonly string[],b:readonly string[]):boolean{const x=canonicalSources(a),y=canonicalSources(b);return x.length===y.length&&x.every((value,index)=>value===y[index])}
+
 export class ContextArtifactStore{
   readonly #items=new Map<string,ArtifactContract>()
   constructor(readonly projectRoot?:string){this.#load()}
@@ -24,6 +27,13 @@ export class ContextArtifactStore{
     const path=durableArtifactPath(this.projectRoot,item.kind,item.artifact_id);mkdirSync(dirname(path),{recursive:true});writeFileSync(path,JSON.stringify(item,null,2)+'\n','utf8')
   }
   #put(item:ArtifactContract):ArtifactContract{this.#items.set(item.artifact_id,item);this.#persist(item);return structuredClone(item)}
+  #reusable(input:{kind:string;contentHash:string;summary:string;producer:string;sourceFiles:string[];retentionClass:ArtifactContract['retention_class'];privacyClass:ArtifactPrivacyClass;consumerRefs:string[]}):ArtifactContract|undefined{
+    const existing=[...this.#items.values()].find(item=>item.freshness==='FRESH'&&item.kind===input.kind&&item.content_hash===input.contentHash&&item.summary===input.summary&&item.producer===input.producer&&item.retention_class===input.retentionClass&&item.privacy_class===input.privacyClass&&sameSources(item.provenance.source_files,input.sourceFiles))
+    if(!existing)return undefined
+    const merged=[...new Set([...existing.consumer_refs,...input.consumerRefs])]
+    if(merged.length!==existing.consumer_refs.length){existing.consumer_refs=merged;this.#persist(existing)}
+    return structuredClone(existing)
+  }
     addBinary(kind:string,summary:string,bytes:Uint8Array,options:{extension:string;mediaType:string;producer?:string;privacyClass?:ArtifactPrivacyClass;consumerRefs?:string[]}):ArtifactContract{
     if(!this.projectRoot)throw new Error('Binary artifact persistence requires a project root')
     if(!bytes.byteLength||bytes.byteLength>10*1024*1024)throw new Error('Binary artifact must be 1 byte..10 MiB')
@@ -36,17 +46,15 @@ export class ContextArtifactStore{
     return this.#put(item)
   }
     add(kind:string,summary:string,content:string,sourceFiles:string[]=[],options:{producer?:string;privacyClass?:ArtifactPrivacyClass;consumerRefs?:string[]}={}):ArtifactContract{
-    const item:ArtifactContract={
-      artifact_id:newArtifactId(),kind,content_ref:'inline-body',content,content_hash:artifactContentHash(content),summary,
-      producer:options.producer??'context-artifact-store',provenance:{source_files:[...new Set(sourceFiles)].slice(0,32)},created_at:Date.now(),
-      retention_class:this.projectRoot?'project':'session',privacy_class:options.privacyClass??'project-private',consumer_refs:[...new Set(options.consumerRefs??[])].slice(0,32),freshness:'FRESH'
-    }
+    const contentHash=artifactContentHash(content),producer=options.producer??'context-artifact-store',sources=canonicalSources(sourceFiles).slice(0,32),retentionClass=this.projectRoot?'project' as const:'session' as const,privacyClass=options.privacyClass??'project-private',consumerRefs=[...new Set(options.consumerRefs??[])].slice(0,32)
+    const reusable=this.#reusable({kind,contentHash,summary,producer,sourceFiles:sources,retentionClass,privacyClass,consumerRefs});if(reusable)return reusable
+    const item:ArtifactContract={artifact_id:newArtifactId(),kind,content_ref:'inline-body',content,content_hash:contentHash,summary,producer,provenance:{source_files:sources},created_at:Date.now(),retention_class:retentionClass,privacy_class:privacyClass,consumer_refs:consumerRefs,freshness:'FRESH'}
     return this.#put(item)
   }
   get(id:string):ArtifactContract|undefined{const a=this.#items.get(id);return a?structuredClone(a):undefined}
   bindConsumer(id:string,consumerRef:string):ArtifactContract|undefined{const a=this.#items.get(id);if(!a)return undefined;a.consumer_refs=[...new Set([...a.consumer_refs,consumerRef])].slice(0,64);this.#persist(a);return structuredClone(a)}
   invalidateChanged(files:string[]):number{
-    const changed=new Set(files);let n=0
+    const changed=new Set(canonicalSources(files));let n=0
     for(const a of this.#items.values())if(a.freshness==='FRESH'&&a.provenance.source_files.some(f=>changed.has(f))){a.freshness='POTENTIALLY_STALE';this.#persist(a);n++}
     return n
   }

@@ -4,4 +4,4 @@ export interface CompletionCheck {
     reasons: string[];
     next?: 'VERIFY' | 'RECONCILE' | 'USER_ACTION_REQUIRED' | 'CONTINUE';
 }
-export declare function evaluateCompletion(m: MissionState): CompletionCheck;
+export declare function evaluateCompletion(m: MissionState, projectRoot?: string): CompletionCheck;

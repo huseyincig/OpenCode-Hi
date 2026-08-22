@@ -10,7 +10,7 @@ export interface RecoveryPlan{
 function planForLevel(level:0|1|2|3|4|5|6):RecoveryPlan{
   if(level===0)return{level:0,action:'continue',prompt:'Continue the next open obligation from current state.'}
   if(level===1)return{level:1,action:'same-worker-resume',prompt:'Resume the latest reusable worker session with a narrowly scoped corrective instruction.'}
-  if(level===2)return{level:2,action:'model-escalation',prompt:'Keep the same task/session when possible, but escalate to the next policy-allowed stronger category/model. Preserve current context and evidence.'}
+  if(level===2)return{level:2,action:'same-worker-resume',prompt:'Resume the SAME task/session/model with a materially different corrective hypothesis or action. Preserve completed work and evidence; do not restart top-level planning or change models.'}
   if(level===3)return{level:3,action:'narrow-task',prompt:'Decompose the blocked obligation into one smaller independently verifiable task.'}
   if(level===4)return{level:4,action:'alternate-plan',prompt:'Re-plan only the blocked obligation using a materially different bounded strategy. Preserve completed tasks, current evidence, and the same mission contract.'}
   if(level===5)return{level:5,action:'fresh-worker',prompt:'Current context/strategy is exhausted. Use one bounded fresh worker if justified, carrying only the blocker, completed-work summary, affected scope, and evidence.'}

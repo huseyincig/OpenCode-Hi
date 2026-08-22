@@ -2,7 +2,7 @@ import type {HiConfig} from '../../config/schema.js'
 import type {AvailableModel} from '../routing/model-resolver.js'
 import type {RuntimeSignalSink} from '../events/event-sink.js'
 import type {NativeProjectContext} from '../intent/repo-context.js'
-import type {ChildSessionPort} from '../host/port.js'
+import type {ChildSessionPort,HostAssistantResult} from '../host/port.js'
 import type {HostCapabilityContract} from '../../contracts/host-capability.js'
 import type {ProcessExecutor} from '../process/executor.js'
 import type {WorkspaceExecutor} from '../workspace/executor.js'
@@ -21,6 +21,7 @@ import {ChatHumanDecisionTransport} from '../human-decision/transport.js'
 export interface RuntimeServicePorts{
   nativeContext:NativeProjectContext
   childSession:ChildSessionPort
+  readAssistantResult?:(sessionID:string,limit?:number)=>Promise<HostAssistantResult>
   hostCapabilities:readonly HostCapabilityContract[]
   process:ProcessExecutor
   workspace:WorkspaceExecutor
@@ -49,7 +50,7 @@ export function createRuntimeServices(input:{ports:RuntimeServicePorts;projectRo
   const ensureBrowserAvailable=async()=>{if(browserAvailable)return{available:true,attempted:false};if(ports.bootstrapBrowser)browserBootstrapStatus=await ports.bootstrapBrowser();const health=await browserExecutor.health();setBrowserAvailable(health.available);return{available:health.available,attempted:browserBootstrapStatus?.attempted,reason:health.available?undefined:(browserBootstrapStatus?.reason??health.reason)}}
   const getBrowserBootstrapStatus=()=>browserBootstrapStatus?{...browserBootstrapStatus}:undefined
   const workspaceRuntime=new WorkspaceRuntime(ports.workspace,projectRoot)
-  const tasks=new TaskRuntime(ports.childSession,background,scheduler,projectRoot,packageRoot,getConfig,getModels,getHostConfig,eventSink,ports.hostCapabilities,scopedStores,workspaceRuntime,()=>browserAvailable?new Set(['host-capability:browser-execution']):new Set(),browserExecutor,ensureBrowserAvailable)
+  const tasks=new TaskRuntime(ports.childSession,background,scheduler,projectRoot,packageRoot,getConfig,getModels,getHostConfig,eventSink,ports.hostCapabilities,scopedStores,workspaceRuntime,()=>browserAvailable?new Set(['host-capability:browser-execution']):new Set(),browserExecutor,ensureBrowserAvailable,ports.readAssistantResult)
   for(const m of store.all())for(const w of m.execution.workers)if(w.session_id&&w.status==='ready')background.set(w)
   const processRuntime=new ProcessRuntime(ports.process,projectRoot,getHostConfig)
   return{store,background,humanDecisionTransport,persistence,scheduler,eventSink,tasks,processExecutor:ports.process,processRuntime,workspaceExecutor:ports.workspace,workspaceRuntime,browserExecutor,setBrowserAvailable,ensureBrowserAvailable,getBrowserBootstrapStatus,scopedStores}

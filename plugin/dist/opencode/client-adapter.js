@@ -87,26 +87,113 @@ function lifecycleHeaders(directory) {
     }
     return headers;
 }
-export async function abortSession(client, sessionID, endpoint = {}) {
-    const edge = client;
-    if (endpoint.serverUrl) {
+export function sessionRuntimeStatusFromStatus(value, sessionID) {
+    const statusMap = dataOf(value);
+    if (!statusMap || typeof statusMap !== 'object' || Array.isArray(statusMap))
+        return 'unknown';
+    const status = statusMap[sessionID];
+    // Exact OpenCode 1.18.19 removes idle sessions from the status map; absence is canonical idle.
+    if (status === undefined)
+        return 'idle';
+    if (!status || typeof status !== 'object')
+        return 'unknown';
+    const type = String(status.type ?? '').toLowerCase();
+    return type === 'idle' || type === 'busy' || type === 'retry' ? type : 'unknown';
+}
+function sessionIdleFromStatus(value, sessionID) { const status = sessionRuntimeStatusFromStatus(value, sessionID); return status === 'idle' ? true : status === 'busy' || status === 'retry' ? false : undefined; }
+export async function readSessionRuntimeStatus(client, sessionID, endpoint = {}) {
+    const edge = client, call = edge?.session?.status;
+    if (typeof call === 'function') {
         try {
-            const base = endpoint.serverUrl.replace(/\/$/, '');
-            const response = await fetch(`${base}/session/${encodeURIComponent(sessionID)}/abort`, { method: 'POST', headers: lifecycleHeaders(endpoint.directory), signal: AbortSignal.timeout(5000) });
-            if (response.ok)
-                return 'server';
+            const status = sessionRuntimeStatusFromStatus(await call.call(edge.session), sessionID);
+            if (status !== 'unknown')
+                return status;
         }
         catch { }
     }
-    if (typeof edge?.session?.abort === 'function') {
-        await edge.session.abort({ path: { id: sessionID } });
-        return 'client';
+    if (endpoint.serverUrl) {
+        try {
+            const base = endpoint.serverUrl.replace(/\/$/, ''), url = new URL(`${base}/session/status`);
+            if (endpoint.directory)
+                url.searchParams.set('directory', endpoint.directory);
+            const response = await fetch(url, { method: 'GET', headers: lifecycleHeaders(), signal: AbortSignal.timeout(5000) });
+            if (!response.ok)
+                return 'unknown';
+            return sessionRuntimeStatusFromStatus(await response.json(), sessionID);
+        }
+        catch {
+            return 'unknown';
+        }
     }
-    return 'unavailable';
+    return 'unknown';
+}
+async function reconcileServerAbort(base, sessionID, directory) {
+    try {
+        const response = await fetch(`${base}/session/status`, { method: 'GET', headers: lifecycleHeaders(directory), signal: AbortSignal.timeout(5000) });
+        if (!response.ok)
+            return false;
+        return sessionIdleFromStatus(await response.json(), sessionID) === true;
+    }
+    catch {
+        return false;
+    }
+}
+async function reconcileClientAbort(edge, sessionID) {
+    if (typeof edge?.session?.status !== 'function')
+        return false;
+    try {
+        return sessionIdleFromStatus(await edge.session.status(), sessionID) === true;
+    }
+    catch {
+        return false;
+    }
+}
+export async function abortSession(client, sessionID, endpoint = {}) {
+    const edge = client;
+    if (endpoint.serverUrl) {
+        const base = endpoint.serverUrl.replace(/\/$/, '');
+        try {
+            const response = await fetch(`${base}/session/${encodeURIComponent(sessionID)}/abort`, { method: 'POST', headers: lifecycleHeaders(endpoint.directory), signal: AbortSignal.timeout(5000) });
+            if (response.ok) {
+                try {
+                    if (await response.json() === true)
+                        return 'server';
+                }
+                catch { }
+            }
+        }
+        catch { }
+        return await reconcileServerAbort(base, sessionID, endpoint.directory) ? 'server-reconciled' : 'unavailable';
+    }
+    if (typeof edge?.session?.abort !== 'function')
+        return 'unavailable';
+    try {
+        const result = await edge.session.abort({ path: { id: sessionID } });
+        if ((result === true || dataOf(result) === true) && !(result && typeof result === 'object' && result.error))
+            return 'client';
+    }
+    catch { }
+    return await reconcileClientAbort(edge, sessionID) ? 'client-reconciled' : 'unavailable';
 }
 export async function listProviders(client) { const edge = client; if (typeof edge?.provider?.list === 'function')
     return dataOf(await edge.provider.list()); if (typeof edge?.config?.providers === 'function')
     return dataOf(await edge.config.providers()); return undefined; }
+export async function listAvailableModels(endpoint = {}) {
+    if (!endpoint.serverUrl)
+        return undefined;
+    try {
+        const client = createOpenCodeV2Client({ baseUrl: endpoint.serverUrl, directory: endpoint.directory, headers: lifecycleHeaders(endpoint.directory) }), model = client?.v2?.model;
+        if (!model || typeof model.list !== 'function')
+            return undefined;
+        const payload = dataOf(await model.list(endpoint.directory ? { location: { directory: endpoint.directory } } : undefined));
+        if (Array.isArray(payload))
+            return payload;
+        return Array.isArray(payload?.data) ? payload.data : undefined;
+    }
+    catch {
+        return undefined;
+    }
+}
 export function eventSessionID(event) { return event?.properties?.sessionID ?? event?.properties?.sessionId ?? event?.properties?.id ?? event?.properties?.info?.id ?? event?.sessionID; }
 export function lastAssistantText(messages) { for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i];
@@ -118,6 +205,19 @@ export function lastAssistantText(messages) { for (let i = messages.length - 1; 
     if (text)
         return text;
 } return ''; }
+export function assistantErrorEvidence(value) { if (value == null)
+    return undefined; if (typeof value === 'string') {
+    const message = value.trim();
+    return message ? { message } : undefined;
+} if (typeof value !== 'object')
+    return undefined; const name = typeof value.name === 'string' && value.name.trim() ? value.name.trim() : undefined, data = value.data && typeof value.data === 'object' ? value.data : value, messageCandidates = [value.message, data?.message, value.error?.message, value.cause?.message], message = messageCandidates.find(x => typeof x === 'string' && x.trim())?.trim(), isRetryable = typeof data?.isRetryable === 'boolean' ? data.isRetryable : undefined, statusCode = Number.isInteger(data?.statusCode) && data.statusCode >= 0 ? data.statusCode : undefined; if (!message && !name)
+    return undefined; return { ...(name ? { name } : {}), message: message ?? name, ...(isRetryable !== undefined ? { isRetryable } : {}), ...(statusCode !== undefined ? { statusCode } : {}) }; }
+export function lastAssistantError(messages) { for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i], info = msg?.info ?? msg?.message ?? msg;
+    if (info?.role && info.role !== 'assistant')
+        continue;
+    return assistantErrorEvidence(info?.error ?? msg?.error);
+} return undefined; }
 export function lastAssistantModel(messages) {
     for (let i = messages.length - 1; i >= 0; i--) {
         const msg = messages[i], info = msg?.info ?? msg?.message ?? msg;

@@ -194,7 +194,7 @@
     {
       "id": "config.models-mode",
       "path": "models.mode",
-      "classification": "runtime",
+      "classification": "diagnostic",
       "type": "enum",
       "default": "adaptive",
       "owner": "hi-config",
@@ -209,16 +209,17 @@
       ],
       "validator": "model-selection-mode-enum",
       "safety_semantics": "preference",
-      "runtime_consumer": "runtime/routing/model-resolver.resolveModel",
-      "executor_effect": "switches adaptive scoring versus fixed or role-mapped model preference",
       "behavioral_acceptance_refs": [
-        "hi-acceptance-evolution.test.mjs"
-      ]
+        "config-executable-effect.test.mjs"
+      ],
+      "diagnostic_consumer": "config/resolver.resolveHiConfigWithReport -> legacyRoutingDiagnostics",
+      "diagnostic_effect": "parses the legacy model-selection mode for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority",
+      "doctor_projection": "config-resolution-notes"
     },
     {
       "id": "config.models-default",
       "path": "models.default",
-      "classification": "runtime",
+      "classification": "diagnostic",
       "type": "string",
       "default": "auto",
       "owner": "hi-config",
@@ -233,16 +234,17 @@
       ],
       "validator": "non-empty-model-id-or-auto",
       "safety_semantics": "preference",
-      "runtime_consumer": "runtime/routing/model-resolver.resolveModel",
-      "executor_effect": "provides fixed project model when models.mode=fixed",
       "behavioral_acceptance_refs": [
-        "hi-acceptance-evolution.test.mjs"
-      ]
+        "config-executable-effect.test.mjs"
+      ],
+      "diagnostic_consumer": "config/resolver.resolveHiConfigWithReport -> legacyRoutingDiagnostics",
+      "diagnostic_effect": "parses the legacy fixed-model value for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority",
+      "doctor_projection": "config-resolution-notes"
     },
     {
       "id": "config.models-roles",
       "path": "models.roles",
-      "classification": "runtime",
+      "classification": "diagnostic",
       "type": "string-map",
       "default": {},
       "owner": "hi-config",
@@ -257,16 +259,17 @@
       ],
       "validator": "model-id-map",
       "safety_semantics": "preference",
-      "runtime_consumer": "runtime/routing/model-resolver.resolveModel",
-      "executor_effect": "provides project child-role-specific model when models.mode=role-mapped; primary manager models remain OpenCode-owned",
       "behavioral_acceptance_refs": [
-        "per-role-routing-runtime.test.mjs"
-      ]
+        "config-executable-effect.test.mjs"
+      ],
+      "diagnostic_consumer": "config/resolver.resolveHiConfigWithReport -> legacyRoutingDiagnostics",
+      "diagnostic_effect": "parses the legacy role-model map for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority",
+      "doctor_projection": "config-resolution-notes"
     },
     {
       "id": "config.routing-strategy",
       "path": "routing.strategy",
-      "classification": "runtime",
+      "classification": "diagnostic",
       "type": "enum",
       "default": "cost-quality",
       "owner": "hi-config",
@@ -281,16 +284,17 @@
       ],
       "validator": "routing-strategy-enum",
       "safety_semantics": "preference",
-      "runtime_consumer": "runtime/routing/model-resolver.resolveModel",
-      "executor_effect": "changes model scoring between quality, cost, and cost-quality",
       "behavioral_acceptance_refs": [
-        "main-prompt-adaptive-selection-completion-cost.test.mjs"
-      ]
+        "config-executable-effect.test.mjs"
+      ],
+      "diagnostic_consumer": "config/resolver.resolveHiConfigWithReport -> legacyRoutingDiagnostics",
+      "diagnostic_effect": "parses the legacy cost/quality strategy for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority",
+      "doctor_projection": "config-resolution-notes"
     },
     {
       "id": "config.routing-category-models",
       "path": "routing.categoryModels",
-      "classification": "runtime",
+      "classification": "diagnostic",
       "type": "string-list-map",
       "default": {},
       "owner": "hi-config",
@@ -305,11 +309,12 @@
       ],
       "validator": "category-model-map",
       "safety_semantics": "preference",
-      "runtime_consumer": "runtime/routing/model-resolver.resolveModel",
-      "executor_effect": "prepends configured category candidates before scored models",
       "behavioral_acceptance_refs": [
-        "per-role-routing-runtime.test.mjs"
-      ]
+        "config-executable-effect.test.mjs"
+      ],
+      "diagnostic_consumer": "config/resolver.resolveHiConfigWithReport -> legacyRoutingDiagnostics",
+      "diagnostic_effect": "parses legacy category model lists for compatibility, reports them in config resolution diagnostics, and gives them no model-routing authority",
+      "doctor_projection": "config-resolution-notes"
     },
     {
       "id": "config.routing-category-variants",
@@ -354,7 +359,7 @@
       "validator": "role-model-map",
       "safety_semantics": "preference",
       "runtime_consumer": "runtime/routing/model-resolver.resolveModel",
-      "executor_effect": "prepends configured child-role candidates before category/scored models; primary manager roles are excluded",
+      "executor_effect": "selects configured child-role candidates in explicit order after hard eligibility filters and before host-agent/automatic selection; primary manager roles are excluded",
       "behavioral_acceptance_refs": [
         "per-role-routing-runtime.test.mjs"
       ]

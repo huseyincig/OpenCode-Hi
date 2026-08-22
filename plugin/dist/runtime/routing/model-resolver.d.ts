@@ -19,18 +19,8 @@ export interface ModelResolution {
         id: string;
         reason: string;
     }>;
-    scores?: Array<{
-        model: string;
-        score: number;
-        expected_completion_cost: number;
-        expected_completion_cost_basis: 'heuristic';
-        failure_penalty: number;
-        success_credit: number;
-        verification_adjustment: number;
-        feedback_confidence: string;
-        observed_latency_ms?: number;
-    }>;
 }
+/** Telemetry shape retained for compatibility; it is not routing authority in the 0.2.4 resolver. */
 export interface MissionModelFeedback {
     failures?: Record<string, number>;
     successes?: Record<string, number>;
@@ -47,5 +37,6 @@ export interface RuntimeModelCandidateStatus {
     reason?: string;
 }
 export declare function runtimeModelCandidateStatus(id: string, availableInput: AvailableModel[], config: HiConfig, hostConfig?: Record<string, unknown>, role?: string): RuntimeModelCandidateStatus;
-export declare function resolveModel(category: Category, availableInput: AvailableModel[], config: HiConfig, explicit?: string, role?: string, hostConfig?: Record<string, unknown>, feedback?: MissionModelFeedback): ModelResolution;
+export declare function resolveModel(category: Category, availableInput: AvailableModel[], config: HiConfig, explicit?: string, role?: string, hostConfig?: Record<string, unknown>, _feedback?: MissionModelFeedback): ModelResolution;
+/** Pure preview only. Runtime inventory refresh must never persist these inferred choices. */
 export declare function recommendInitialRoleModels(available: AvailableModel[], config: HiConfig, hostConfig?: Record<string, unknown>): Partial<Record<ModelRoutedChildRole, string[]>>;

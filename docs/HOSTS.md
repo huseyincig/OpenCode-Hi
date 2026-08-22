@@ -12,9 +12,9 @@ Generated from `data/validation/compatibility-matrix-0.1.0.json`. Current record
 
 | Hi capability | Status | Exact source | Receipt |
 |---|---|---|---|
-| `browser-execution` | **SUPPORTED_T3** | `03a816f930e3172ec84f733bae081768e2ea1a14` | `data/validation/external-opencode-hi-0.2.3-browser-1.18.19-head-03a816f.json` |
-| `process-lifecycle` | **SUPPORTED_T3** | `03a816f930e3172ec84f733bae081768e2ea1a14` | `data/validation/external-opencode-hi-0.2.3-process-1.18.19-head-03a816f.json` |
-| `workspace-isolation-binding` | **SUPPORTED_T3** | `03a816f930e3172ec84f733bae081768e2ea1a14` | `data/validation/external-opencode-hi-0.2.3-workspace-1.18.19-head-03a816f.json` |
+| `browser-execution` | **SUPPORTED_T3** | `c3bc16ae42ecb06ded7ecb187794e56cb0a2e83d` | `data/validation/external-opencode-hi-0.2.4-browser-1.18.19-head-c3bc16a.json` |
+| `process-lifecycle` | **SUPPORTED_T3** | `c3bc16ae42ecb06ded7ecb187794e56cb0a2e83d` | `data/validation/external-opencode-hi-0.2.4-process-1.18.19-head-c3bc16a.json` |
+| `workspace-isolation-binding` | **SUPPORTED_T3** | `c3bc16ae42ecb06ded7ecb187794e56cb0a2e83d` | `data/validation/external-opencode-hi-0.2.4-workspace-1.18.19-head-c3bc16a.json` |
 
 This table is a projection, not evidence ownership: the referenced exact receipts remain the capability proof. Historical negative/older receipts remain preserved in the generated compatibility history.
 <!-- END GENERATED HOST CAPABILITY MATRIX -->

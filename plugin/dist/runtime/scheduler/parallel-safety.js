@@ -15,6 +15,10 @@ export function parallelSafety(existing, candidate) { const reasons = []; const 
         reasons.push(`dependency:${task.id}`);
         continue;
     }
+    if (!candidateRead && !taskRead && (!candidate.scope.length || !task.scope.length)) {
+        reasons.push(`unknown-mutable-surface:${task.id}`);
+        continue;
+    }
     if (same.length && !(candidateRead && taskRead))
         reasons.push(`write-scope-overlap:${task.id}:${same.join(',')}`);
     if (!candidateRead && !taskRead && task.scope.some(x => /migration|schema|lockfile|package-lock|pnpm-lock|yarn.lock/i.test(x)) && candidate.scope.some(y => task.scope.some(x => sameSurface(x, y))))

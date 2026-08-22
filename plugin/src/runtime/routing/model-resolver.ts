@@ -6,13 +6,14 @@ import type { ModelCapabilityProfile } from '../../contracts/model.js'
 
 export type AvailableModel=ModelCapabilityProfile
 export interface ModelFallbackReason{model:string;variant?:string;reason:string}
-export interface ModelResolution{primary?:string;primaryVariant?:string;fallbacks:string[];fallbackVariants:Record<string,string|undefined>;reason:string[];fallbackReasons:ModelFallbackReason[];rejected:Array<{id:string;reason:string}>;scores?:Array<{model:string;score:number;expected_completion_cost:number;expected_completion_cost_basis:'heuristic';failure_penalty:number;success_credit:number;verification_adjustment:number;feedback_confidence:string;observed_latency_ms?:number}>}
+export interface ModelResolution{primary?:string;primaryVariant?:string;fallbacks:string[];fallbackVariants:Record<string,string|undefined>;reason:string[];fallbackReasons:ModelFallbackReason[];rejected:Array<{id:string;reason:string}>}
+/** Telemetry shape retained for compatibility; it is not routing authority in the 0.2.4 resolver. */
 export interface MissionModelFeedback{failures?:Record<string,number>;successes?:Record<string,number>;retries?:Record<string,number>;samples?:Record<string,number>;confidence?:Record<string,'insufficient'|'low'|'medium'|'high'>;average_latency_ms?:Record<string,number>;verification_passes?:Record<string,number>;verification_failures?:Record<string,number>;window_size?:number}
 export interface RuntimeModelCandidateStatus{ok:boolean;reason?:string}
-const CATEGORY_TAG:Record<Category,string[]>={quick:['fast','cheap'],standard:['balanced'],deep:['reasoning','coding'],visual:['vision','coding'],critical:['reasoning','high-assurance']}
-const EXPECTED:Record<Category,{turns:number;context:number}>={quick:{turns:2,context:.5},standard:{turns:4,context:1},deep:{turns:7,context:1.5},visual:{turns:5,context:1.2},critical:{turns:8,context:1.7}}
+const AUTOMATIC_CAPABILITY_PREFERENCE:Record<Category,string[]>={quick:['fast','coding'],standard:['coding','balanced'],deep:['reasoning','coding'],visual:['coding','reasoning'],critical:['high-assurance','reasoning','coding']}
 const VARIANT_PREFERENCE:Record<Category,string[]>={quick:['low','minimal','none'],standard:['medium','low','none'],deep:['high','xhigh','medium'],visual:['high','medium','xhigh'],critical:['xhigh','max','high']}
 const INITIAL_RECOMMENDATION_CATEGORY:Record<ModelRoutedChildRole,Category>={coder:'standard',architect:'deep','repository-explorer':'standard','qa-reviewer':'critical','security-reviewer':'critical','visual-qa':'visual'}
+function record(value:unknown):Record<string,unknown>|undefined{return value&&typeof value==='object'&&!Array.isArray(value)?value as Record<string,unknown>:undefined}
 function providerOf(m:AvailableModel):string|undefined{return m.provider??(m.id.includes('/')?m.id.slice(0,m.id.indexOf('/')):undefined)}
 function requiredRoleCapability(role?:string):'vision'|undefined{return role==='visual-qa'?'vision':undefined}
 function roleCapabilityEligible(model:AvailableModel,role?:string):{ok:boolean;reason?:string}{const required=requiredRoleCapability(role);if(required==='vision'&&model.visionCapable!==true)return{ok:false,reason:'role-capability-missing:vision'};return{ok:true}}
@@ -29,7 +30,6 @@ function policyFilter(available:AvailableModel[],config:HiConfig,hostConfig?:Rec
   }
   return{allowed,rejected,nativePolicySources:native.source}
 }
-function uniqueRuntime(ids:string[],available:AvailableModel[]):string[]{const live=new Set(available.map(m=>m.id));return[...new Set(ids)].filter(id=>live.has(id))}
 export function runtimeModelCandidateStatus(id:string,availableInput:AvailableModel[],config:HiConfig,hostConfig?:Record<string,unknown>,role?:string):RuntimeModelCandidateStatus{
   if(id==='host-default'){
     if(requiredRoleCapability(role))return{ok:false,reason:`host-default-unverified-role-capability:${requiredRoleCapability(role)}`}
@@ -42,44 +42,85 @@ export function runtimeModelCandidateStatus(id:string,availableInput:AvailableMo
   const candidate=found??{id,provider:providerOf({id}),writeCapable:true};const checked=policyFilter([candidate],config,hostConfig,role);if(checked.allowed.length)return{ok:true,reason:found?'runtime-model-available':'runtime-inventory-unavailable-pre-resolved-candidate'}
   return{ok:false,reason:checked.rejected[0]?.reason??'routing-policy-rejected'}
 }
-function chooseVariant(category:Category,model:AvailableModel|undefined,config:HiConfig,role?:string):string|undefined{if(!model?.variants?.length)return undefined;const rolePreferred=role&&model?config.routing.roleVariants?.[role]?.[model.id]:undefined;const preferred=[...(rolePreferred?[rolePreferred]:[]),...(config.routing.categoryVariants?.[category]??[]),...VARIANT_PREFERENCE[category]];for(const v of preferred)if(model.variants.includes(v))return v;return model.variants[0]}
-function feedbackConfidenceFor(id:string,feedback:MissionModelFeedback):'insufficient'|'low'|'medium'|'high'{const samples=Math.max(0,feedback.samples?.[id]??0);return feedback.confidence?.[id]??(samples>=8?'high':samples>=4?'medium':samples>=2?'low':'insufficient')}
-export function resolveModel(category:Category,availableInput:AvailableModel[],config:HiConfig,explicit?:string,role?:string,hostConfig?:Record<string,unknown>,feedback:MissionModelFeedback={}):ModelResolution{
-  const {allowed:available,rejected,nativePolicySources}=policyFilter(availableInput,config,hostConfig,role),reason:string[]=[],preferred:string[]=[]
-  if(!availableInput.length){const deniedDefault=config.routing.deniedModels.includes('host-default');if(!deniedDefault&&!config.routing.allowedProviders.length&&!requiredRoleCapability(role)){return{primary:'host-default',fallbacks:[],fallbackVariants:{},reason:['runtime inventory unavailable','policy permits host-default compatibility delegation'],fallbackReasons:[],rejected}}}
-  if(explicit){if(available.some(m=>m.id===explicit)){preferred.push(explicit);reason.push('explicit override','runtime available','policy allowed')}else if(availableInput.some(m=>m.id===explicit))reason.push('explicit override rejected by routing/provider policy; fallback constrained to policy');else reason.push('explicit override unavailable; fallback allowed')}
-  const projectModel=config.models?.mode==='fixed'&&config.models.default!=='auto'?config.models.default:config.models?.mode==='role-mapped'&&role?config.models.roles[role]:undefined
-  if(!explicit&&projectModel){preferred.push(projectModel);reason.push(config.models?.mode==='fixed'?'project fixed-model override':`project role-model override:${role}`)}
-  const roleConfigured=role?config.routing.roleModels[role]??[]:[];if(roleConfigured.length){preferred.push(...roleConfigured);reason.push(`role override:${role}`)}const categoryConfigured=config.routing.categoryModels[category]??[];if(categoryConfigured.length){preferred.push(...categoryConfigured);reason.push(`category override:${category}`)}
-  const preferredLive=uniqueRuntime(preferred,available),configuredLive=uniqueRuntime([...roleConfigured,...categoryConfigured],available),wanted=CATEGORY_TAG[category],expected=EXPECTED[category],configuredFeedbackAdmitted=explicit===undefined&&projectModel===undefined&&configuredLive.some(id=>feedbackConfidenceFor(id,feedback)!=='insufficient')
-  if(roleConfigured.length&&roleConfigured[0]&&!available.some(m=>m.id===roleConfigured[0]))reason.push(`role-primary-unavailable-or-policy-rejected:${roleConfigured[0]}`)
-  const preferredAllAvailable=roleConfigured.length>0&&roleConfigured.every(id=>available.some(m=>m.id===id))
-  if(preferredAllAvailable&&roleConfigured.length>0&&explicit===undefined&&projectModel===undefined&&categoryConfigured.length===0&&!configuredFeedbackAdmitted){
-    const primary=preferredLive[0]
-    const fallbacks=preferredLive.slice(1,1+config.routing.maxFallbacks)
-    const byId=new Map(available.map(m=>[m.id,m]))
-    const primaryVariant=chooseVariant(category,byId.get(primary),config,role)
-    const fallbackVariants:Record<string,string|undefined>={}
-    for(const id of fallbacks)fallbackVariants[id]=chooseVariant(category,byId.get(id),config,role)
-    if(!reason.length)reason.push(`${category} category`)
-    reason.push('configured-role-prior-fast-path:role-override-available,skip-scoring','write-capable','runtime available','routing policy allowed',primaryVariant?`variant:${primaryVariant}`:'variant:host/default',`fallbacks=${fallbacks.length}`)
-    if(nativePolicySources.length)reason.push(`host-provider-policy:${nativePolicySources.join('+')}`)
-    const fallbackReasons=fallbacks.map((model,i)=>({model,variant:fallbackVariants[model],reason:`fallback-${i+1}: role-configured alternative${fallbackVariants[model]?`; variant=${fallbackVariants[model]}`:''}`}))
-    return{primary,primaryVariant,fallbacks,fallbackVariants,reason,fallbackReasons,rejected}
-  }
-  const scored=available.map(m=>{const tags=[...(m.tags??[]),...(m.visionCapable===true?['vision']:[])],tagScore=wanted.filter(t=>tags.includes(t)).length*4,quality=m.quality??0,cost=Math.max(0,m.cost??0),turns=Math.max(1,m.expectedTurns??expected.turns),context=Math.max(0,m.contextOverhead??expected.context),rawFailures=Math.max(0,feedback.failures?.[m.id]??0),rawRetries=Math.max(0,feedback.retries?.[m.id]??0),rawSuccesses=Math.max(0,feedback.successes?.[m.id]??0),signalCount=feedback.samples?.[m.id]!==undefined?Math.max(0,feedback.samples[m.id]??0):rawFailures+rawSuccesses,feedbackConfidence=feedback.confidence?.[m.id]??(signalCount>=8?'high':signalCount>=4?'medium':signalCount>=2?'low':'insufficient'),admitted=feedbackConfidence!=='insufficient',failures=admitted?rawFailures:0,retries=admitted?rawRetries:0,successes=admitted?rawSuccesses:0,verificationPasses=admitted?Math.max(0,feedback.verification_passes?.[m.id]??0):0,verificationFailures=admitted?Math.max(0,feedback.verification_failures?.[m.id]??0):0,failurePenalty=(failures*1.75)+(retries*.85),successCredit=Math.min(2,successes*.35),verificationAdjustment=Math.max(-1,Math.min(1,(verificationPasses-verificationFailures)*.25)),retryMultiplier=1+(failures*.6)+(retries*.35),expectedCompletionCost=(cost+.08*turns+.2*context)*retryMultiplier,strategy=config.routing.strategy==='quality'?quality*2:config.routing.strategy==='cost'?-expectedCompletionCost*2:quality-expectedCompletionCost;return{model:m,score:tagScore+strategy-failurePenalty+successCredit+verificationAdjustment,turns,context,expectedCompletionCost,failurePenalty,successCredit,verificationAdjustment,feedbackConfidence,observedLatencyMs:feedback.average_latency_ms?.[m.id]}}).sort((a,b)=>b.score-a.score)
-  const scoreByModel=new Map(scored.map(x=>[x.model.id,x.score] as const)),evidenceOrderedConfigured=configuredFeedbackAdmitted?[...configuredLive].sort((a,b)=>(scoreByModel.get(b)??-Infinity)-(scoreByModel.get(a)??-Infinity)):configuredLive,preferredOrder=configuredFeedbackAdmitted?evidenceOrderedConfigured:preferredLive,ordered=[...new Set([...preferredOrder,...scored.map(x=>x.model.id)])],primary=ordered[0],fallbacks=ordered.slice(1,1+config.routing.maxFallbacks),byId=new Map(available.map(m=>[m.id,m])),primaryVariant=chooseVariant(category,byId.get(primary),config,role),fallbackVariants:Record<string,string|undefined>={}
+function chooseVariant(category:Category,model:AvailableModel|undefined,config:HiConfig,role?:string,hostVariant?:string):string|undefined{
+  if(!model?.variants?.length)return hostVariant
+  if(hostVariant)return model.variants.includes(hostVariant)?hostVariant:undefined
+  const rolePreferred=role?config.routing.roleVariants?.[role]?.[model.id]:undefined,preferred=[...(rolePreferred?[rolePreferred]:[]),...(config.routing.categoryVariants?.[category]??[]),...VARIANT_PREFERENCE[category]]
+  for(const v of preferred)if(model.variants.includes(v))return v
+  return model.variants[0]
+}
+function hostAgentModel(hostConfig:Record<string,unknown>|undefined,role?:string):{model?:string;variant?:string}|undefined{
+  if(!role)return undefined
+  const agents=record(hostConfig?.agent),agent=agents?record(agents[role]):undefined;if(!agent)return undefined
+  const raw=agent.model;let model:string|undefined
+  if(typeof raw==='string'&&raw.trim())model=raw.trim()
+  else{const value=record(raw),provider=typeof value?.providerID==='string'?value.providerID:typeof value?.providerId==='string'?value.providerId:undefined,id=typeof value?.modelID==='string'?value.modelID:typeof value?.modelId==='string'?value.modelId:typeof value?.id==='string'?value.id:undefined;if(provider&&id)model=`${provider}/${id}`}
+  const variant=typeof agent.variant==='string'&&agent.variant.trim()?agent.variant.trim():undefined
+  return model||variant?{model,variant}:undefined
+}
+interface AutomaticCandidateRank{model:AvailableModel;index:number;capabilities:number[];variantRank:number;matched:string[];variantFit?:string}
+function automaticCandidateRank(category:Category,model:AvailableModel,index:number):AutomaticCandidateRank{
+  const wanted=AUTOMATIC_CAPABILITY_PREFERENCE[category],tags=new Set([...(model.tags??[]),...(model.visionCapable===true?['vision']:[])]),capabilities=wanted.map(tag=>tags.has(tag)?1:0),variants=new Set(model.variants??[]),variantPreferences=VARIANT_PREFERENCE[category]
+  let variantRank=variantPreferences.length+1,variantFit:string|undefined
+  for(let i=0;i<variantPreferences.length;i++)if(variants.has(variantPreferences[i])){variantRank=i;variantFit=variantPreferences[i];break}
+  return{model,index,capabilities,variantRank,matched:wanted.filter(tag=>tags.has(tag)),variantFit}
+}
+function compareAutomaticCandidate(a:AutomaticCandidateRank,b:AutomaticCandidateRank):number{
+  for(let i=0;i<Math.max(a.capabilities.length,b.capabilities.length);i++){const av=a.capabilities[i]??0,bv=b.capabilities[i]??0;if(av!==bv)return bv-av}
+  if(a.variantRank!==b.variantRank)return a.variantRank-b.variantRank
+  return a.index-b.index
+}
+function automaticRecommendation(category:Category,available:AvailableModel[]):{ordered:AvailableModel[];reason:string[]}{
+  const ranked=available.map((model,index)=>automaticCandidateRank(category,model,index)).sort(compareAutomaticCandidate),top=ranked[0]
+  const explanation=top?.matched.length?`capability-priority:${top.matched.join('>')}`:'capability-priority:inventory-order'
+  return{ordered:ranked.map(x=>x.model),reason:[`${category} capability recommendation`,'ephemeral automatic selection',explanation,...(top?.variantFit?[`variant-fit:${top.variantFit}`]:[]),'cost/quality/feedback are not routing authority','not persisted as user preference']}
+}
+function resolution(primary:string|undefined,category:Category,available:AvailableModel[],config:HiConfig,role:string|undefined,reason:string[],rejected:Array<{id:string;reason:string}>,fallbacks:string[]=[],hostVariant?:string,nativePolicySources:string[]=[]):ModelResolution{
+  const byId=new Map(available.map(m=>[m.id,m])),primaryModel=primary?byId.get(primary):undefined,primaryVariant=primary?chooseVariant(category,primaryModel,config,role,hostVariant):undefined,fallbackVariants:Record<string,string|undefined>={}
   for(const id of fallbacks)fallbackVariants[id]=chooseVariant(category,byId.get(id),config,role)
-  if(!reason.length)reason.push(`${category} category`);if(configuredFeedbackAdmitted)reason.push('empirical-feedback-reranked-configured-priors');reason.push('write-capable','runtime available','routing policy allowed',`${config.routing.strategy} scoring`,`expected-completion-cost-aware`,`expected-completion-cost-basis:heuristic`,`bounded-window-model-feedback-aware`,primaryVariant?`variant:${primaryVariant}`:'variant:host/default',`fallbacks=${fallbacks.length}`);if(nativePolicySources.length)reason.push(`host-provider-policy:${nativePolicySources.join('+')}`)
-  const fallbackReasons=fallbacks.map((model,i)=>({model,variant:fallbackVariants[model],reason:`fallback-${i+1}: policy-allowed alternate preserving ${category} capability after higher-ranked model${fallbackVariants[model]?`; variant=${fallbackVariants[model]}`:''}`}))
-  return{primary,primaryVariant,fallbacks,fallbackVariants,reason,fallbackReasons,rejected,scores:scored.slice(0,12).map(x=>({model:x.model.id,score:Number(x.score.toFixed(4)),expected_completion_cost:Number(x.expectedCompletionCost.toFixed(4)),expected_completion_cost_basis:'heuristic',failure_penalty:Number(x.failurePenalty.toFixed(4)),success_credit:Number(x.successCredit.toFixed(4)),verification_adjustment:Number(x.verificationAdjustment.toFixed(4)),feedback_confidence:x.feedbackConfidence,...(x.observedLatencyMs!==undefined?{observed_latency_ms:x.observedLatencyMs}:{})}))}
+  if(nativePolicySources.length)reason.push(`host-provider-policy:${nativePolicySources.join('+')}`)
+  const fallbackReasons=fallbacks.map((model,i)=>({model,variant:fallbackVariants[model],reason:`fallback-${i+1}: explicit role-mapping order${fallbackVariants[model]?`; variant=${fallbackVariants[model]}`:''}`}))
+  return{primary,primaryVariant,fallbacks,fallbackVariants,reason,fallbackReasons,rejected}
+}
+export function resolveModel(category:Category,availableInput:AvailableModel[],config:HiConfig,explicit?:string,role?:string,hostConfig?:Record<string,unknown>,_feedback?:MissionModelFeedback):ModelResolution{
+  const {allowed:available,rejected,nativePolicySources}=policyFilter(availableInput,config,hostConfig,role),reason:string[]=[]
+  if(!availableInput.length){const deniedDefault=config.routing.deniedModels.includes('host-default');if(!explicit&&!config.routing.roleModels[role??'']?.length&&!deniedDefault&&!config.routing.allowedProviders.length&&!requiredRoleCapability(role))return resolution('host-default',category,available,config,role,['runtime inventory unavailable','policy permits host-default compatibility delegation'],rejected,[],undefined,nativePolicySources)}
+  if(explicit){
+    if(explicit==='host-default'){
+      const status=runtimeModelCandidateStatus(explicit,availableInput,config,hostConfig,role)
+      if(status.ok)return resolution(explicit,category,available,config,role,['existing host-default child binding','policy allowed'],rejected,[],undefined,nativePolicySources)
+      return resolution(undefined,category,available,config,role,[`existing host-default child binding rejected:${status.reason??'routing-policy-rejected'}`],rejected,[],undefined,nativePolicySources)
+    }
+    if(available.some(m=>m.id===explicit))return resolution(explicit,category,available,config,role,['explicit task model','runtime available','policy allowed'],rejected,[],undefined,nativePolicySources)
+    reason.push(availableInput.some(m=>m.id===explicit)?'explicit task model rejected by routing/provider policy':'explicit task model unavailable')
+    return resolution(undefined,category,available,config,role,reason,rejected,[],undefined,nativePolicySources)
+  }
+  const roleConfigured=role?config.routing.roleModels[role]??[]:[]
+  if(roleConfigured.length){
+    const eligible=roleConfigured.filter(id=>available.some(m=>m.id===id))
+    for(const id of roleConfigured)if(!eligible.includes(id))reason.push(`role-mapped-model-unavailable-or-policy-rejected:${id}`)
+    if(!eligible.length){reason.push(`explicit role mapping has no eligible model:${role}`);return resolution(undefined,category,available,config,role,reason,rejected,[],undefined,nativePolicySources)}
+    const primary=eligible[0],fallbacks=eligible.slice(1,1+config.routing.maxFallbacks);reason.push(`explicit ordered role mapping:${role}`,'runtime available','policy allowed')
+    return resolution(primary,category,available,config,role,reason,rejected,fallbacks,undefined,nativePolicySources)
+  }
+  const host=hostAgentModel(hostConfig,role)
+  if(host?.model){
+    if(available.some(m=>m.id===host.model)){
+      const selected=resolution(host.model,category,available,config,role,['OpenCode agent explicit model','runtime available','policy allowed'],rejected,[],host.variant,nativePolicySources)
+      if(host.variant&&available.find(m=>m.id===host.model)?.variants?.length&&!selected.primaryVariant){selected.primary=undefined;selected.reason.push(`OpenCode agent explicit variant unavailable:${host.variant}`)}
+      return selected
+    }
+    reason.push(`OpenCode agent explicit model unavailable-or-policy-rejected:${host.model}`)
+    return resolution(undefined,category,available,config,role,reason,rejected,[],host.variant,nativePolicySources)
+  }
+  const automatic=automaticRecommendation(category,available),primary=automatic.ordered[0]?.id
+  reason.push(...automatic.reason)
+  return resolution(primary,category,available,config,role,reason,rejected,[],undefined,nativePolicySources)
 }
 
+/** Pure preview only. Runtime inventory refresh must never persist these inferred choices. */
 export function recommendInitialRoleModels(available:AvailableModel[],config:HiConfig,hostConfig?:Record<string,unknown>):Partial<Record<ModelRoutedChildRole,string[]>>{
   const out:Partial<Record<ModelRoutedChildRole,string[]>>={}
-  for(const role of MODEL_ROUTED_CHILD_ROLES){
-    const selected=resolveModel(INITIAL_RECOMMENDATION_CATEGORY[role],available,config,undefined,role,hostConfig)
-    if(selected.primary&&selected.primary!=='host-default')out[role]=[selected.primary]
-  }
+  for(const role of MODEL_ROUTED_CHILD_ROLES){const selected=resolveModel(INITIAL_RECOMMENDATION_CATEGORY[role],available,config,undefined,role,hostConfig);if(selected.primary&&selected.primary!=='host-default')out[role]=[selected.primary]}
   return out
 }

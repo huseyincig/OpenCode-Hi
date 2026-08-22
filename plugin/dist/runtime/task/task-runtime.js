@@ -1,10 +1,10 @@
 import { resolveCategory } from '../routing/category.js';
 import { resolveModel, runtimeModelCandidateStatus } from '../routing/model-resolver.js';
-import { deriveMissionModelFeedback } from '../routing/model-feedback.js';
 import { methodologySkillCandidates, resolveSkillPlan } from '../skills/registry.js';
 import { resolveSkillPermissionMap, resolveSkillToolEnabled } from '../skills/permissions.js';
 import { createTask, createWorker, beginWorkerAttempt, workerFingerprint } from '../worker/worker-runtime.js';
 import { workerHandoffText } from './contracts.js';
+import { parseWorkerResult } from './result-parser.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { routeCapabilities } from '../routing/capability-router.js';
 import { verificationEconomyInstruction } from '../verification/policy.js';
@@ -27,11 +27,13 @@ import { isHiChildRole, isHiReadOnlyChildRole, isHiReviewerRole, roleCanOwnOblig
 import { renderSemanticContext, semanticContextsForTargets } from '../semantic/typescript-context.js';
 import { createRuntimeScopedStores } from '../application/runtime-scoped-stores.js';
 import { ChildExecutionCoordinator } from './child-execution-coordinator.js';
+import { admitHostTerminalEvent } from './host-child-binding.js';
 import { TaskResultReconciler } from './task-result-reconciler.js';
 import { TaskRecoveryCoordinator } from './task-recovery-coordinator.js';
-import { taskRuntimeAdmittedModel, taskRuntimeUnitDecision, reserveTaskRuntimeDispatch, bindTaskRuntimeHost, releaseTaskRuntimeReservation, reconcileStoppedTaskRuntimeRestart } from '../scheduler/task-runtime-adapter.js';
+import { taskRuntimeAdmittedModel, taskRuntimeUnitDecision, reserveTaskRuntimeDispatch, bindTaskRuntimeHost, releaseTaskRuntimeReservation, reconcileTaskRuntimeRestart } from '../scheduler/task-runtime-adapter.js';
 import { clearCapabilityUnavailable, markCapabilityUnavailable, markVerificationCapabilityUnavailable, reconcileTaskCapabilityPreconditions } from '../readiness/capability-failure.js';
 import { bindWorkerUsageObservation } from '../economics/usage-runtime.js';
+import { DependencyOutcomeProjectionError, projectDirectDependencyOutcomes, renderDirectDependencyOutcomeContext } from '../execution/dependency-outcome-projection.js';
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
 const MAX_QUEUE = 32;
 class TaskQueueCapacityError extends Error {
@@ -77,6 +79,7 @@ export class TaskRuntime {
     extraHostResources;
     browserExecutor;
     ensureBrowserResource;
+    readAssistantResult;
     #queue = [];
     #draining = false;
     #methodologyLearning;
@@ -84,7 +87,7 @@ export class TaskRuntime {
     #results;
     #recovery;
     #scopedStores;
-    constructor(childHost, registry, scheduler, projectRoot, hiRoot, getConfig, getModels, getHostConfig, events, hostCapabilitySource = [], scopedStores, workspaceRuntime, extraHostResources = () => new Set(), browserExecutor, ensureBrowserResource) {
+    constructor(childHost, registry, scheduler, projectRoot, hiRoot, getConfig, getModels, getHostConfig, events, hostCapabilitySource = [], scopedStores, workspaceRuntime, extraHostResources = () => new Set(), browserExecutor, ensureBrowserResource, readAssistantResult) {
         this.childHost = childHost;
         this.registry = registry;
         this.scheduler = scheduler;
@@ -99,6 +102,7 @@ export class TaskRuntime {
         this.extraHostResources = extraHostResources;
         this.browserExecutor = browserExecutor;
         this.ensureBrowserResource = ensureBrowserResource;
+        this.readAssistantResult = readAssistantResult;
         this.#scopedStores = scopedStores ?? createRuntimeScopedStores(projectRoot, hiRoot);
         this.#methodologyLearning = new ProjectMethodologyLearningStore(projectRoot);
         this.#child = new ChildExecutionCoordinator(childHost, registry);
@@ -135,7 +139,66 @@ export class TaskRuntime {
         bindWorkerUsageObservation(m, worker, usage); }
     noteEffectiveModel(m, workerID, observed) { return this.#child.noteEffectiveModel(m, workerID, observed); }
     resolveChildCallback(sessionID) { return this.#child.resolveCallbackWorker(sessionID); }
+    admitTerminalEvent(m, worker) { return admitHostTerminalEvent(m, worker, this.childHost); }
+    async settleHostIdleRuntimeError(m, worker, error) {
+        const task = m.execution.tasks.find(t => t.id === worker.task_id);
+        if (!task)
+            return { applied: false, reason: 'task-not-found' };
+        const detail = [error.name, error.message].filter(Boolean).join(': ');
+        await this.cleanupBrowserForTask(m, worker.task_id, worker.id);
+        const recovery = await this.#recovery.recoverHostTerminalFailure(m, worker.id, error);
+        worker.restart_reconcile_pending = false;
+        if (recovery === 'RECOVERED')
+            return { applied: true, reason: 'host-idle-runtime-fallback', wakeResult: 'RUNTIME_FALLBACK', failureKind: worker.last_runtime_failure_kind };
+        if (recovery === 'QUARANTINED')
+            return { applied: true, reason: 'host-idle-runtime-fallback-quarantined', wakeResult: 'QUARANTINED', failureKind: worker.last_runtime_failure_kind };
+        if (task.status === 'blocked') {
+            await this.cleanupWorkspaceForTask(m, worker.task_id);
+            return { applied: true, reason: 'host-idle-runtime-blocked', wakeResult: 'BLOCKED', failureKind: worker.last_runtime_failure_kind };
+        }
+        this.fail(m, worker.id, detail);
+        await this.cleanupWorkspaceForTask(m, worker.task_id);
+        return { applied: true, reason: 'host-idle-runtime-failed', wakeResult: 'FAILED', failureKind: worker.last_runtime_failure_kind };
+    }
+    async settleHostIdleAssistantResult(m, worker, assistant) {
+        const task = m.execution.tasks.find(t => t.id === worker.task_id);
+        if (!task)
+            return { applied: false, reason: 'task-not-found' };
+        if (assistant.usage)
+            this.noteUsage(m, worker.id, assistant.usage);
+        if (assistant.error)
+            return this.settleHostIdleRuntimeError(m, worker, assistant.error);
+        if (!assistant.model && !assistant.text)
+            return { applied: false, reason: 'assistant-result-not-ready' };
+        const effective = this.noteEffectiveModel(m, worker.id, assistant.model ? { ...assistant.model, source: 'assistant-message-metadata' } : undefined);
+        let result = parseWorkerResult(assistant.text);
+        if (!effective.ok)
+            result = { ...result, status: 'BLOCKED', summary: `Effective child model could not be verified against the selected execution model. ${effective.reason}`, open_issues: [...new Set([...(result.open_issues ?? []), effective.reason])], needs_context: [...new Set([...(result.needs_context ?? []), 'effective-model-reconcile: refresh runtime inventory/provider policy and resume with a verified role-selected model'])] };
+        result = await this.reconcileNativeResult(m, worker.id, result);
+        result = await this.reintegrateWorkspaceResult(m, worker.id, result);
+        this.applyResult(m, worker.id, result);
+        worker.restart_reconcile_pending = false;
+        if (['completed', 'failed', 'cancelled'].includes(worker.status)) {
+            await this.cleanupBrowserForTask(m, worker.task_id, worker.id);
+            await this.cleanupWorkspaceForTask(m, worker.task_id);
+            this.registry.delete(worker.id);
+        }
+        else
+            this.registry.set(worker);
+        return { applied: true, reason: 'assistant-result-applied', result };
+    }
     childCallbackDisposition(m, worker) { return this.#recovery.callbackDisposition(m, worker); }
+    async reconcileRestoredChildren(m) { let reconciled = 0; for (const worker of m.execution.workers.filter(w => w.restart_reconcile_pending && Boolean(w.session_id))) {
+        const task = m.execution.tasks.find(t => t.id === worker.task_id);
+        if (!task)
+            continue;
+        const beforePending = worker.restart_reconcile_pending, beforeStatus = worker.status, beforeTaskStatus = task.status, beforeSchedulerRevision = m.execution.scheduler?.revision ?? 0;
+        await this.reconcileRestartBeforeResume(m, worker, task);
+        if (worker.restart_reconcile_pending !== beforePending || worker.status !== beforeStatus || task.status !== beforeTaskStatus || (m.execution.scheduler?.revision ?? 0) !== beforeSchedulerRevision)
+            reconciled++;
+    } if (reconciled)
+        syncMissionGates(m); return reconciled; }
+    pendingExecutionWorkers(m, excludeWorkerID) { const reserved = new Set((m.execution.scheduler?.reservations ?? []).map(item => item.workerId)), queued = new Set(this.#queue.filter(item => item.mission.identity.mission_id === m.identity.mission_id).map(item => item.worker.id)); return m.execution.workers.filter(worker => worker.id !== excludeWorkerID && (reserved.has(worker.id) || queued.has(worker.id))); }
     queueDepth() { return this.#queue.length; }
     workspaceBinding(m, taskID) { const required = m.execution.isolation_decisions.some(d => d.required && d.requested_by === `task:${taskID}`), lease = this.workspaceRuntime?.forTask(m, taskID); if (required && (!lease || lease.status !== 'ACTIVE' || lease.cleanup_state !== 'ACTIVE' || !lease.host_workspace_id))
         throw new Error(`Required workspace lease is not active for task ${taskID}`); return lease?.host_workspace_id && lease.status === 'ACTIVE' && lease.cleanup_state === 'ACTIVE' ? { workspaceID: lease.host_workspace_id, directory: lease.workspace_path } : undefined; }
@@ -148,6 +211,7 @@ export class TaskRuntime {
         return false;
     } appendLedger(m, result.reason === 'owner-mismatch' ? 'browser.cleanup-stale-owner' : 'browser.cleanup', { task_id: taskID, worker_id: worker.id, payload: { reason: result.reason, cleaned: result.cleaned } }); return true; }
     failedDeps(m, deps) { return deps.filter(id => { const status = m.execution.tasks.find(t => t.id === id)?.status; return status === 'failed' || status === 'cancelled'; }); }
+    async blockDependencyOutcome(m, task, worker, error) { worker.status = 'failed'; task.status = 'blocked'; task.updated_at = Date.now(); const marker = `dependency-outcome-unavailable:${task.id}`; task.result = { status: 'BLOCKED', summary: `Direct dependency outcome could not be projected safely before dispatch: ${error.message}`.slice(0, 1200), changed_files: [], evidence: [], open_issues: [marker], needs_context: ['reconcile completed dependency result/worker attempt identity before dispatch'] }; m.execution.blockers = [...new Set([...m.execution.blockers, marker])]; this.registry.delete(worker.id); this.scheduler.release(worker.id); releaseTaskRuntimeReservation(m, worker.id); await this.cleanupWorkspaceForTask(m, task.id); appendLedger(m, 'worker.dependency-outcome-blocked', { task_id: task.id, worker_id: worker.id, payload: { reason: error.message, dependencies: [...task.dependencies] } }); syncMissionGates(m); }
     admittedModel(m, worker, chain) { return taskRuntimeAdmittedModel(m, worker, chain, this.scheduler); }
     reserveExistingSessionAttempt(m, worker, model) {
         if (!model || !worker.session_id)
@@ -169,6 +233,58 @@ export class TaskRuntime {
             return { ok: false, reason: bound.reason };
         }
         return { ok: true, reason: 'reserved-and-bound' };
+    }
+    async reconcileRestartBeforeResume(m, worker, task) {
+        if (!worker.restart_reconcile_pending)
+            return 'CONTINUE';
+        const observed = await this.admitTerminalEvent(m, worker);
+        if (observed.decision === 'WAIT') {
+            const reconciled = reconcileTaskRuntimeRestart(m, worker, 'ACTIVE');
+            if (!reconciled.accepted) {
+                appendLedger(m, 'scheduler.restart-reconcile-blocked', { task_id: task.id, worker_id: worker.id, payload: { reason: reconciled.reason, session_id: worker.session_id, host_status: observed.hostStatus } });
+                return 'WAIT';
+            }
+            worker.restart_reconcile_pending = false;
+            worker.status = 'busy';
+            task.status = 'running';
+            this.registry.set(worker);
+            appendLedger(m, 'scheduler.restart-reconciled', { task_id: task.id, worker_id: worker.id, payload: { session_id: worker.session_id, outcome: 'host-active', host_status: observed.hostStatus, attempt_id: observed.binding?.attempt.attemptId } });
+            return 'WAIT';
+        }
+        if (observed.decision !== 'ACCEPT') {
+            const reconciled = reconcileTaskRuntimeRestart(m, worker, 'UNKNOWN');
+            appendLedger(m, 'scheduler.restart-reconcile-deferred', { task_id: task.id, worker_id: worker.id, payload: { reason: observed.reason, session_id: worker.session_id, host_status: observed.hostStatus, scheduler_reason: reconciled.reason, attempt_id: observed.binding?.attempt.attemptId } });
+            return 'WAIT';
+        }
+        const reconciled = reconcileTaskRuntimeRestart(m, worker, 'TERMINAL');
+        if (!reconciled.accepted) {
+            appendLedger(m, 'scheduler.restart-reconcile-blocked', { task_id: task.id, worker_id: worker.id, payload: { reason: reconciled.reason, session_id: worker.session_id, host_status: observed.hostStatus } });
+            return 'WAIT';
+        }
+        appendLedger(m, 'scheduler.restart-reconciled', { task_id: task.id, worker_id: worker.id, payload: { session_id: worker.session_id, outcome: 'host-idle-result-pending', host_status: observed.hostStatus, attempt_id: observed.binding?.attempt.attemptId } });
+        if (!this.readAssistantResult) {
+            appendLedger(m, 'worker.restart-result-deferred', { task_id: task.id, worker_id: worker.id, payload: { reason: 'assistant-result-reader-unavailable', session_id: worker.session_id } });
+            return 'WAIT';
+        }
+        let assistant;
+        try {
+            assistant = await this.readAssistantResult(worker.session_id, 12);
+        }
+        catch (error) {
+            appendLedger(m, 'worker.restart-result-deferred', { task_id: task.id, worker_id: worker.id, payload: { reason: 'assistant-result-read-failed', session_id: worker.session_id, error: String(error) } });
+            return 'WAIT';
+        }
+        const settled = await this.settleHostIdleAssistantResult(m, worker, assistant);
+        if (!settled.applied) {
+            appendLedger(m, 'worker.restart-result-deferred', { task_id: task.id, worker_id: worker.id, payload: { reason: settled.reason, session_id: worker.session_id } });
+            return 'WAIT';
+        }
+        const recoveredResult = settled.wakeResult ?? settled.result?.status ?? 'UNKNOWN';
+        worker.restart_reconcile_pending = false;
+        appendLedger(m, 'worker.restart-result-recovered', { task_id: task.id, worker_id: worker.id, payload: { session_id: worker.session_id, result: recoveredResult, attempt_id: observed.binding?.attempt.attemptId } });
+        if (settled.wakeResult === 'RUNTIME_FALLBACK' || settled.wakeResult === 'QUARANTINED')
+            return 'WAIT';
+        return ['completed', 'failed', 'cancelled'].includes(worker.status) || settled.wakeResult === 'BLOCKED' ? 'TERMINAL' : 'CONTINUE';
     }
     queueTask(m, worker, run) { if (this.#queue.length >= MAX_QUEUE)
         throw new TaskQueueCapacityError(); const t = m.execution.tasks.find(x => x.id === worker.task_id); worker.status = 'queued'; if (t)
@@ -256,11 +372,9 @@ export class TaskRuntime {
         const cfg = this.getConfig(), routingProfile = cfg.profile[executionProfileFor(cfg.executionPolicy, taskIntent)], routed = routeCapabilities(taskIntent, { specialistThreshold: routingProfile.specialistThreshold, reviewThreshold: routingProfile.reviewThreshold }), defaultCategory = resolveCategory(taskIntent), category = (CATEGORIES.has(String(input.category)) ? input.category : (routed.category ?? defaultCategory)), defaultRole = isHiChildRole(routed.role) ? routed.role : 'coder', role = isHiChildRole(String(input.role)) ? String(input.role) : defaultRole;
         const hostConfig = this.getHostConfig();
         applyAdmittedProjectMethodologyPermissions(hostConfig, this.projectRoot);
-        const feedback = deriveMissionModelFeedback(m, role, category), selected = resolveModel(category, this.getModels(), this.getConfig(), input.model, role, hostConfig, feedback);
+        const selected = resolveModel(category, this.getModels(), this.getConfig(), input.model, role, hostConfig);
         if (selected.rejected.length)
             appendLedger(m, 'model.policy.rejected', { payload: { items: selected.rejected.slice(0, 20) } });
-        if (selected.scores?.length)
-            appendLedger(m, 'model.scored', { payload: { role, category, top: selected.scores.slice(0, 6), feedback } });
         const taskMethodologyNeeds = m.methodology.methodology_needs.filter(need => input.resumeTaskId ? need.task_id === input.resumeTaskId || (!need.task_id && (!need.obligation_id || input.obligationIds?.includes(need.obligation_id))) : !need.task_id && (!need.obligation_id || input.obligationIds?.includes(need.obligation_id)));
         const catalog = methodologyCatalog(this.projectRoot), requestedMethodologyNames = methodologyNames(taskMethodologyNeeds);
         const requestedMcpServers = [...new Set(input.mcpServers ?? [])].map(x => String(x).trim()).filter(Boolean).slice(0, 8);
@@ -339,18 +453,11 @@ export class TaskRuntime {
             if (existing.status === 'ready' && existing.session_id && oldTask?.result && ['FIX_REQUIRED', 'NEEDS_CONTEXT', 'BLOCKED'].includes(oldTask.result.status)) {
                 const chain = [selected.primary, ...selected.fallbacks].filter((x) => Boolean(x));
                 if (existing.restart_reconcile_pending) {
-                    const stopped = await this.abortNativeSession(m, existing.session_id, 'restart-reconcile-quiesce', existing.id, oldTask?.id);
-                    if (!stopped) {
-                        appendLedger(m, 'scheduler.restart-reconcile-blocked', { task_id: oldTask?.id, worker_id: existing.id, payload: { reason: 'abort-unavailable', session_id: existing.session_id } });
-                        throw new Error('Worker restart reconciliation requires a verified host abort before resume');
-                    }
-                    const reconciled = reconcileStoppedTaskRuntimeRestart(m, existing);
-                    if (!reconciled.accepted) {
-                        appendLedger(m, 'scheduler.restart-reconcile-blocked', { task_id: oldTask?.id, worker_id: existing.id, payload: { reason: reconciled.reason, session_id: existing.session_id } });
-                        throw new Error(`Worker restart scheduler reconciliation failed: ${reconciled.reason}`);
-                    }
-                    this.scheduler.release(existing.id);
-                    appendLedger(m, 'scheduler.restart-reconciled', { task_id: oldTask?.id, worker_id: existing.id, payload: { session_id: existing.session_id, outcome: 'terminal-aborted-before-resume' } });
+                    const restart = await this.reconcileRestartBeforeResume(m, existing, oldTask);
+                    if (restart === 'WAIT')
+                        return { task_id: oldTask.id, worker_id: existing.id, session_id: existing.session_id, model: existing.model, methodologies: existing.selected_methodologies, selection_reason: ['restart-reconciliation:host-truth-pending-or-active'], readiness: 'WAIT', preconditions: preflight.items };
+                    if (restart === 'TERMINAL')
+                        return { task_id: oldTask.id, worker_id: existing.id, session_id: existing.session_id, model: existing.model, methodologies: existing.selected_methodologies, selection_reason: ['restart-reconciliation:terminal-result-recovered'], readiness: 'READY', preconditions: preflight.items };
                 }
                 const nextModel = this.admittedModel(m, existing, chain) ?? existing.model;
                 if (!nextModel)
@@ -384,7 +491,7 @@ export class TaskRuntime {
         if (unknownArtifactIds.length)
             throw new Error(`Unknown context artifact id(s): ${unknownArtifactIds.join(', ')}`);
         const contextArtifactStore = this.#scopedStores.contextArtifacts, selectedContextHandles = requestedArtifactIds.map(id => m.context.context_artifacts.find(a => a.id === id)).filter(Boolean), selectedContextReferences = selectedContextHandles.map(a => { const durableId = a.uri?.startsWith('hi-artifact:') ? a.uri.slice('hi-artifact:'.length) : undefined, stored = durableId ? contextArtifactStore.get(durableId) : undefined; return { source_ref: a.uri ?? `mission-context:${a.id}`, reason: 'explicit-task-selection', priority: 'normal', protection: 'COMPRESSIBLE', budget_cost: stored ? Math.min(stored.content.length, 3000) : Math.min((a.summary ?? a.title ?? a.kind).length, 3000), freshness: stored?.freshness ?? 'UNKNOWN', retention: 'task', privacy_class: stored?.privacy_class ?? 'project-private', kind: a.kind, title: a.title, summary: a.summary, content_hash: stored?.content_hash ?? a.sha256, source_handle_id: a.id }; });
-        const approvalGated = skillPlan.selected.filter(s => s.permission === 'ask').map(s => s.name), browserTools = browserDecision.backend === 'bounded-playwright' && role === 'visual-qa' && methodologies.some(name => ['hi-browser-testing', 'hi-visual-qa', 'hi-accessibility-review'].includes(name)) ? [...HI_BROWSER_EXECUTION_TOOL_IDS] : [], askGatedPermissionKeys = Object.entries(surface.permissions.decisions).filter(([, value]) => value === 'ask').map(([name]) => name), askGatedToolIds = new Set(askGatedPermissionKeys.flatMap(name => name === 'edit' ? ['edit', 'write', 'apply_patch'] : name === 'todowrite' ? ['todowrite', 'todoread'] : [name])), taskTools = [...surface.tools.filter(t => (t !== 'skill' || methodologies.length > 0) && !askGatedToolIds.has(t)), ...browserTools];
+        const approvalGated = skillPlan.selected.filter(s => s.permission === 'ask').map(s => s.name), browserTools = browserDecision.backend === 'bounded-playwright' && role === 'visual-qa' && methodologies.some(name => ['hi-browser-testing', 'hi-visual-qa', 'hi-accessibility-review'].includes(name)) ? [...HI_BROWSER_EXECUTION_TOOL_IDS] : [], askGatedPermissionKeys = Object.entries(surface.permissions.decisions).filter(([, value]) => value === 'ask').map(([name]) => name), taskTools = [...surface.tools.filter(t => (t !== 'skill' || methodologies.length > 0)), ...browserTools];
         const profile = { role, category, task: { objective, scope: [...scope], dependencies: [...dependencies], required_evidence: [...requiredEvidence] }, tools: taskTools, ...(mcpExposure.selected.length ? { mcp_servers: mcpExposure.selected } : {}), ...(browserDecision.backend ? { browser_backend: browserDecision.backend } : {}), ...(browserAllowedOrigins.length ? { browser_allowed_origins: browserAllowedOrigins } : {}), model: selected.primary, model_variant: input.modelVariant ?? selected.primaryVariant, fallback_models: selected.fallbacks, fallback_variants: selected.fallbackVariants, fallback_reasons: selected.fallbackReasons, methodologies, permission_profile: { skill_tool_enabled: skillToolEnabled, skill_permissions: permissionMap ?? {}, external_effects: 'parent-only', recursive_task: 'deny', native: surface.permissions }, verification_policy: { ...m.execution.verification_policy, requiredKinds: [...m.execution.verification_policy.requiredKinds] }, max_context_chars: DEFAULT_CONTEXT_BUDGET.max_context_chars, max_handoff_chars: DEFAULT_CONTEXT_BUDGET.max_handoff_chars, max_result_chars: DEFAULT_CONTEXT_BUDGET.max_result_chars, max_artifacts: DEFAULT_CONTEXT_BUDGET.max_artifacts };
         const task = createTask(m, { objective, role, category, scope, constraints, dependencies, requiredEvidence, obligationIds, contextReferences: selectedContextReferences, executionProfile: profile });
         if (isolationRequired) {
@@ -439,10 +546,20 @@ export class TaskRuntime {
             if (!nativeSummary)
                 relevantForHandoff = clipList(relevantForHandoff, profile.max_context_chars);
         }
-        const askGatedTools = [...askGatedPermissionKeys].sort(), askGatedInstruction = askGatedTools.length ? `host ask-gated tools are intentionally unavailable on this child surface: ${askGatedTools.join(', ')}. Do not wait or retry for them. If one is essential to implementation, return BLOCKED/NEEDS_CONTEXT with the exact required action; otherwise finish the allowed implementation and let Hi keep parent/control-plane verification open.` : undefined;
-        const buildHandoff = () => { const preexisting = Object.keys(worker.native_diff_baseline ?? {}).slice(0, 60), core = workerHandoffText({ objective, scope: task.scope, constraints: clipList([...(task.constraints ?? []), 'minimum sufficient change', 'no unrequested publish/push/deploy', 'return compact evidence', askGatedInstruction ?? '', preexisting.length ? `pre-existing user dirty paths at worker start: ${preexisting.join(', ')}; preserve their exact baseline state unless the task explicitly requires changing them; never use git checkout/reset/restore in a way that discards user-owned edits` : 'no pre-existing native dirty paths were observed at worker start', verificationEconomyInstruction(m)], 5000), required_evidence: task.requiredEvidence, relevant_context: clipList(relevantForHandoff, profile.max_context_chars), methodologies: worker.selected_methodologies, methodology_exit_requirements: worker.selected_methodologies.flatMap(name => { const item = catalog.find(x => x.name === name); return item ? [`${name}: ${item.exitRequirements.join(', ')}`] : []; }), approval_gated_methodologies: approvalGated, expected_output: { status: true, summary: true, changed_files: true, scope_expansions: true, evidence: true, findings: isHiReviewerRole(worker.role) ? true : undefined, open_issues: true } }, profile.max_handoff_chars), full = [ownershipContract('child', worker.selected_methodologies), core].filter(Boolean).join('\n\n'); return clipText(full, profile.max_handoff_chars); };
+        const askGatedTools = [...askGatedPermissionKeys].sort(), askGatedInstruction = askGatedTools.length ? `host ask-gated tools remain available under OpenCode native permission control: ${askGatedTools.join(', ')}. Use them only when materially required. If OpenCode denies a required action, do not retry or bypass the denial; return BLOCKED/NEEDS_CONTEXT with the exact required action.` : undefined;
+        const buildHandoff = (dependencyContext) => { const preexisting = Object.keys(worker.native_diff_baseline ?? {}).slice(0, 60), dispatchRelevant = dependencyContext ? [dependencyContext, ...relevantForHandoff] : relevantForHandoff, core = workerHandoffText({ objective, scope: task.scope, constraints: clipList([...(task.constraints ?? []), 'minimum sufficient change', 'no unrequested publish/push/deploy', 'return compact evidence', askGatedInstruction ?? '', preexisting.length ? `pre-existing user dirty paths at worker start: ${preexisting.join(', ')}; preserve their exact baseline state unless the task explicitly requires changing them; never use git checkout/reset/restore in a way that discards user-owned edits` : 'no pre-existing native dirty paths were observed at worker start', verificationEconomyInstruction(m)], 5000), required_evidence: task.requiredEvidence, relevant_context: clipList(dispatchRelevant, profile.max_context_chars), methodologies: worker.selected_methodologies, methodology_exit_requirements: worker.selected_methodologies.flatMap(name => { const item = catalog.find(x => x.name === name); return item ? [`${name}: ${item.exitRequirements.join(', ')}`] : []; }), approval_gated_methodologies: approvalGated, expected_output: { status: true, summary: true, changed_files: true, scope_expansions: true, evidence: true, findings: isHiReviewerRole(worker.role) ? true : undefined, open_issues: true } }, profile.max_handoff_chars), full = [ownershipContract('child', worker.selected_methodologies), core].filter(Boolean).join('\n\n'); return clipText(full, profile.max_handoff_chars); };
         const chain = [selected.primary, ...selected.fallbacks].filter((x) => Boolean(x)), toolOverrides = taskPromptToolOverrides(profile.tools, this.getHostConfig(), profile.mcp_servers ?? []);
-        const run = () => this.registry.dedupeSpawn(worker.fingerprint, async () => { let lastError = new Error('No runtime model available'); for (let i = 0; i < chain.length; i++) {
+        const run = () => this.registry.dedupeSpawn(worker.fingerprint, async () => { let dependencyContext; try {
+            const outcomes = projectDirectDependencyOutcomes(m, task);
+            dependencyContext = renderDirectDependencyOutcomeContext(outcomes, Math.min(5000, profile.max_context_chars));
+            if (dependencyContext)
+                appendLedger(m, 'dependency.outcomes-projected', { task_id: task.id, worker_id: worker.id, payload: { dependencies: outcomes.map(item => item.task_id), chars: dependencyContext.length, evidence_authority: false } });
+        }
+        catch (error) {
+            if (error instanceof DependencyOutcomeProjectionError)
+                await this.blockDependencyOutcome(m, task, worker, error);
+            throw error;
+        } let lastError = new Error('No runtime model available'); for (let i = 0; i < chain.length; i++) {
             if (m.identity.status !== 'active' || m.continuation.user_interrupted || worker.status === 'cancelled') {
                 worker.status = 'cancelled';
                 task.status = 'cancelled';
@@ -503,7 +620,12 @@ export class TaskRuntime {
                 }
                 void this.events?.(runtimeSignal('worker.started', m.identity.mission_id, { task_id: task.id, worker_id: worker.id, payload: { model, variant, role } }));
                 appendLedger(m, 'worker.started', { task_id: task.id, worker_id: worker.id, payload: { session_id: worker.session_id, model, variant, index: i, reason: i === 0 ? (input.modelVariant ? [...selected.reason, 'user-specified-variant'] : selected.reason) : [selected.fallbackReasons[i - 1]?.reason ?? 'runtime fallback', `fallback-index:${i}`] } });
-                const handoff = buildHandoff();
+                const refreshedOutcomes = projectDirectDependencyOutcomes(m, task), refreshedDependencyContext = renderDirectDependencyOutcomeContext(refreshedOutcomes, Math.min(5000, profile.max_context_chars));
+                if (refreshedDependencyContext !== dependencyContext) {
+                    appendLedger(m, 'dependency.outcomes-refreshed', { task_id: task.id, worker_id: worker.id, payload: { dependencies: refreshedOutcomes.map(item => item.task_id), previous_chars: dependencyContext?.length ?? 0, current_chars: refreshedDependencyContext?.length ?? 0 } });
+                    dependencyContext = refreshedDependencyContext;
+                }
+                const handoff = buildHandoff(dependencyContext);
                 appendLedger(m, 'worker.handoff', { task_id: task.id, worker_id: worker.id, payload: { chars: handoff.length, methodologies: worker.selected_methodologies.length, tools: profile.tools.slice(0, 20), permission_source: profile.permission_profile.native?.source, context_budget: profile.max_context_chars, handoff_budget: profile.max_handoff_chars, result_budget: profile.max_result_chars } });
                 beginWorkerAttempt(task, worker);
                 await this.sendProviderPrompt(worker.session_id, handoff, role, model === 'host-default' ? undefined : model, variant, toolOverrides);
@@ -528,6 +650,10 @@ export class TaskRuntime {
                 }
                 this.scheduler.release(worker.id);
                 releaseTaskRuntimeReservation(m, worker.id);
+                if (error instanceof DependencyOutcomeProjectionError) {
+                    await this.blockDependencyOutcome(m, task, worker, error);
+                    throw error;
+                }
                 if (m.identity.status !== 'active' || m.continuation.user_interrupted || worker.status === 'cancelled') {
                     worker.status = 'cancelled';
                     task.status = 'cancelled';
@@ -810,7 +936,6 @@ export class TaskRuntime {
     noteNativeStatus(m, workerID, status) { this.#results.noteNativeStatus(m, workerID, status); }
     applyResult(m, workerID, result) { this.#results.applyResult(m, workerID, result); }
     async recoverStagnation(m, level) { return this.#recovery.recoverStagnation(m, level); }
-    async recoverRuntimeFailure(m, workerID, error) { return this.#recovery.recoverRuntimeFailure(m, workerID, error); }
     fail(m, workerID, error) { this.#recovery.fail(m, workerID, error); }
     peek(m, id) { const task = m.execution.tasks.find(t => t.id === id), worker = m.execution.workers.find(w => w.id === id || w.id === task?.worker_id); return { task, worker }; }
     async awaitTask(m, id, timeoutMs = 30_000) { let current = this.peek(m, id), status = current?.task?.status ?? current?.worker?.status ?? 'unknown'; if (['completed', 'failed', 'cancelled', 'blocked'].includes(status))

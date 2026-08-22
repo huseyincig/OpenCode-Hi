@@ -12,6 +12,7 @@ import { isIsolationDecisionContract,isWorkspaceLeaseContract } from '../../cont
 import { isSchedulerLifecycleState } from '../../contracts/orchestration-core.js'
 import { isProgressDelta,isSemanticProgressSnapshot } from '../progress/semantic-progress.js'
 import { isRecoveryStrategyRecord } from '../continuation/recovery-governor.js'
+import { normalizeBoundedProjectPath } from '../../contracts/common.js'
 
 function isRecord(value:unknown):value is Record<string,unknown>{return Boolean(value)&&typeof value==='object'&&!Array.isArray(value)}
 function stringArray(value:unknown):value is string[]{return Array.isArray(value)&&value.every(item=>typeof item==='string')}
@@ -27,6 +28,7 @@ const GATE_STATUSES=new Set(['open','ready','blocked','closed'])
 function validObligation(value:unknown):boolean{
   if(!isRecord(value)||typeof value.id!=='string'||typeof value.status!=='string'||!OBLIGATION_STATUSES.has(value.status)||typeof value.kind!=='string'||!OBLIGATION_KINDS.has(value.kind)||typeof value.summary!=='string')return false
   if(value.requiredEvidence!==undefined&&(!stringArray(value.requiredEvidence)||!value.requiredEvidence.every(kind=>(SEMANTIC_VERIFICATION_KINDS as readonly string[]).includes(kind))))return false
+  if(value.requiredTargets!==undefined&&(!stringArray(value.requiredTargets)||value.kind!=='implementation'||!value.requiredTargets.every(target=>normalizeBoundedProjectPath(target)===target)))return false
   if(value.blocker!==undefined&&typeof value.blocker!=='string')return false
   if(value.closedAt!==undefined&&typeof value.closedAt!=='number')return false
   return true

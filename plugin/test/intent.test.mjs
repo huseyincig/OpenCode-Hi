@@ -14,6 +14,8 @@ test('provisional intent remains semantically unclassified and only preserves te
 
 test('technical target extraction parses machine-like paths without classifying user semantics',()=>{
   assert.deepEqual(technicalTargets('foo/bar.ts README.md package.json'),['foo/bar.ts','README.md','package.json'])
+  assert.deepEqual(technicalTargets('Change src/a.ts and src/b.ts. Then inspect packages/v1.2/foo.test.ts...'),['src/a.ts','src/b.ts','packages/v1.2/foo.test.ts'])
+  assert.deepEqual(technicalTargets('Use README.md, src/a.ts; and (src/b.ts).'),['README.md','src/a.ts','src/b.ts'])
 })
 
 test('semantic targets normalize prose-wrapped project paths and preserve browser URLs',()=>{
@@ -85,6 +87,16 @@ test('semantic assessment preserves a real sequential multi-file bug-fix when mu
 test('semantic assessment does not reject incomplete sequential evidence when ambiguity remains resolvable',()=>{
   const a=parseSemanticIntentAssessment({...base,task_kind:'bug-fix',scope:'multi-file',risk:'low',ambiguity:'resolvable',dependency_class:'sequential',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/parser.ts']})
   assert.equal(a.ambiguity,'resolvable');assert.equal(a.dependency_class,'sequential')
+})
+
+test('resolved multi-file material change cannot omit the second material target',()=>{
+  assert.throws(()=>parseSemanticIntentAssessment({...base,task_kind:'implementation',scope:'multi-file',risk:'low',ambiguity:'none',dependency_class:'independent',likely_targets:['src/a.ts']}),/at least two material targets/)
+})
+
+test('resolved local material change rejects a second material target unless explicit TDD owns the source-plus-test pair',()=>{
+  assert.throws(()=>parseSemanticIntentAssessment({...base,task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',likely_targets:['src/a.ts','src/context.ts']}),/cannot declare multiple material targets/)
+  const tdd=parseSemanticIntentAssessment({...base,task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',likely_verification:['targeted-tests'],likely_targets:['src/a.ts','test/a.test.ts'],intent_signals:['intent.tdd']})
+  assert.deepEqual(materialSemanticTargets(tdd),['src/a.ts','test/a.test.ts'])
 })
 
 test('local sequential classification canonicalizes to one independent material work unit after assessment',()=>{

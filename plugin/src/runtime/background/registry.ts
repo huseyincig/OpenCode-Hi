@@ -21,7 +21,6 @@ export class BackgroundRegistry {
       if(!this.#workers.has(id))finish(true)
     })
   }
-  pendingFor(parent: string): WorkerState[] { return this.list().filter(w => w.parent_session_id === parent && ['created','queued','starting','busy'].includes(w.status)) }
   async dedupeSpawn(fingerprint: string, spawn: () => Promise<WorkerState>): Promise<WorkerState> {
     const existing = this.#spawn.get(fingerprint); if (existing) return existing
     const p = spawn().finally(() => this.#spawn.delete(fingerprint)); this.#spawn.set(fingerprint, p); return p

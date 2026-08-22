@@ -20,13 +20,13 @@ Normal users need:
 - registry/network access for the selected `opencode-hi` release;
 - a project directory whose unrelated OpenCode/user configuration must be preserved.
 
-If a task requires Hi-owned workspace isolation on OpenCode 1.18.19, enable that host primitive **before starting OpenCode** with `OPENCODE_EXPERIMENTAL_WORKSPACES=true`. OpenCode also treats `OPENCODE_EXPERIMENTAL=true` as the fallback when the workspace-specific variable is unset; an explicit workspace-specific false value overrides the broad flag. Hi otherwise remains usable, but reports workspace isolation unavailable and fails isolation preflight closed instead of creating an unmanaged worktree.
+If a task requires Hi-owned workspace isolation on OpenCode 1.18.21, enable that host primitive **before starting OpenCode** with `OPENCODE_EXPERIMENTAL_WORKSPACES=true`. OpenCode also treats `OPENCODE_EXPERIMENTAL=true` as the fallback when the workspace-specific variable is unset; an explicit workspace-specific false value overrides the broad flag. Hi otherwise remains usable, but reports workspace isolation unavailable and fails isolation preflight closed instead of creating an unmanaged worktree.
 
 Normal setup does **not** require Git checkout, Bun, an external Python installation, a project `package.json`, or project-root `node_modules`. Python is only needed for the retained legacy/advanced helper commands that are explicitly documented as such below.
 
 For development candidate `0.2.4`, mandatory Hi-owned local browser verification also has a bounded first-use recovery path: if no usable Chromium executable is observed, Hi may invoke the package's pinned optional `playwright-core@1.62.1` CLI once to install Chromium into a Hi-owned cache (`HI_BROWSER_CACHE`, otherwise the platform cache root). It never installs browser files into the application project. A timeout, missing runtime package/CLI, network/install failure, or still-missing executable is recorded as unavailable environment/capability state and is not retried indefinitely on unchanged state.
 
-Current candidate compatibility targets exact OpenCode `1.18.19`. Historical T3 capability receipts remain provenance for the host versions they actually measured; current release-gate status belongs to [Release Engineering](RELEASE.md) and [Host Support](HOSTS.md).
+Current development compatibility target is exact OpenCode `1.18.21`. Historical and still-current full-T3 capability receipts remain provenance for the host versions they actually measured; do not reinterpret an older 1.18.19 receipt as 1.18.21 evidence. Current release-gate status belongs to [Release Engineering](RELEASE.md) and [Host Support](HOSTS.md).
 
 ## npm package runner — normal user path
 
@@ -103,7 +103,7 @@ setup/install (TTY) -> choose primary mode -> restart -> type “Hi rol modeller
 setup/install (non-TTY) -> deterministic registration -> restart -> package doctor -> runtime hi_doctor
 ```
 
-The normal-user wizard writes only `primaryMode`. Task topology, execution depth, specialist thresholds, parallelism, and adaptive scoring remain Hi runtime internals. After restart, type **“Hi rol modellerini ayarla”** in OpenCode chat: `hi_role_models` lists the effective connected runtime inventory and persists explicit child-role model/fallback choices. `visual-qa` accepts only vision-capable models. Provider authentication and primary `manager` / `working-manager` model selection remain OpenCode-owned. `reconfigure` changes only `primaryMode` and preserves all advanced/unknown routing fields.
+The normal-user wizard writes only `primaryMode`. Task topology, execution depth, specialist thresholds, and parallelism remain Hi runtime internals. After restart, type **“Hi rol modellerini ayarla”** in OpenCode chat: `hi_role_models` lists the effective connected runtime inventory and persists only explicit ordered child-role model/fallback choices. Without an explicit Hi mapping, the OpenCode agent model is used when configured; otherwise Hi makes an ephemeral capability/variant recommendation from the live inventory. Automatic choices are never persisted and cost/quality/feedback telemetry does not reorder them. `visual-qa` accepts only vision-capable models. Provider authentication and primary `manager` / `working-manager` model selection remain OpenCode-owned. `reconfigure` changes only `primaryMode` and preserves all advanced/unknown routing fields.
 
 Development `0.2.4` moves the most common project controls into the Node package runner:
 
@@ -152,10 +152,10 @@ npx --yes opencode-hi@0.2.4 reconfigure /path/to/project
 
 The wizard covers the common executable policy decisions and preserves unrelated routing fields. Cancelling it makes no mutation. For automation use the explicit bounded commands (`reprofile`, `roles`) or non-interactive setup/install.
 
-The retained Python helper is an **advanced/source-checkout compatibility surface** for lower-frequency fields not yet mirrored by the Node wizard, such as provider/model narrowing, fallback limits, detailed concurrency maps and profile thresholds:
+The retained Python helper is an **advanced/source-checkout compatibility surface** for lower-frequency executable fields not yet mirrored by the Node wizard, such as provider/model narrowing, fallback limits, detailed concurrency maps and profile thresholds. Legacy `models.mode`, `models.default`, `models.roles`, `routing.strategy`, and `routing.categoryModels` inputs are accepted only for compatibility diagnostics in `0.2.4`; they do not control model choice:
 
 ```bash
-python3 scripts/native_plugin_setup.py reconfigure /path/to/project --execution-policy adaptive --primary-mode auto --routing-strategy cost-quality
+python3 scripts/native_plugin_setup.py reconfigure /path/to/project --execution-policy adaptive --primary-mode auto --max-fallbacks 2
 ```
 
 The canonical complete option inventory is `data/hi-config-options.json`; documentation must not become a second mechanical config catalog.
@@ -179,13 +179,13 @@ Generated from `data/hi-config-options.json`. Do not hand-edit this table.
 | `execution.topology` | runtime | `adaptive` | constraint | forces/adapts single-agent versus multi-agent mission topology |
 | `execution.maxAgents` | runtime | `4` | capacity | caps topology agent count; value 1 is an executable single-agent ceiling |
 | `execution.parallelism` | runtime | `2` | capacity | caps parallel streams inside selected mission topology |
-| `models.mode` | runtime | `adaptive` | preference | switches adaptive scoring versus fixed or role-mapped model preference |
-| `models.default` | runtime | `auto` | preference | provides fixed project model when models.mode=fixed |
-| `models.roles` | runtime | `{}` | preference | provides project child-role-specific model when models.mode=role-mapped; primary manager models remain OpenCode-owned |
-| `routing.strategy` | runtime | `cost-quality` | preference | changes model scoring between quality, cost, and cost-quality |
-| `routing.categoryModels` | runtime | `{}` | preference | prepends configured category candidates before scored models |
+| `models.mode` | diagnostic | `adaptive` | preference | parses the legacy model-selection mode for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority |
+| `models.default` | diagnostic | `auto` | preference | parses the legacy fixed-model value for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority |
+| `models.roles` | diagnostic | `{}` | preference | parses the legacy role-model map for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority |
+| `routing.strategy` | diagnostic | `cost-quality` | preference | parses the legacy cost/quality strategy for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority |
+| `routing.categoryModels` | diagnostic | `{}` | preference | parses legacy category model lists for compatibility, reports them in config resolution diagnostics, and gives them no model-routing authority |
 | `routing.categoryVariants` | runtime | `{}` | preference | changes selected native model variant by task category |
-| `routing.roleModels` | runtime | `{}` | preference | prepends configured child-role candidates before category/scored models; primary manager roles are excluded |
+| `routing.roleModels` | runtime | `{}` | preference | selects configured child-role candidates in explicit order after hard eligibility filters and before host-agent/automatic selection; primary manager roles are excluded |
 | `routing.roleVariants` | runtime | `{}` | preference | changes selected native variant for a specific child-role/model pair; primary manager roles are excluded |
 | `routing.maxFallbacks` | runtime | `3` | capacity | bounds fallback candidate count |
 | `routing.allowedProviders` | runtime | `[]` | constraint | narrows eligible providers and disables unconstrained host-default fallback when nonempty |
@@ -213,11 +213,11 @@ python3 scripts/native_plugin_setup.py role-models /path/to/project --list-avail
 
 The command supports explicit model/fallback/variant mappings for the six Hi child roles only: `coder`, `architect`, `repository-explorer`, `qa-reviewer`, `security-reviewer`, and `visual-qa`. `manager` and `working-manager` remain primary OpenCode roles and are not valid Hi role-model targets; their primary model is selected through OpenCode. Role remains distinct from model; configuring one does not merge their semantic ownership.
 
-For OpenCode `1.18.19`, Hi's runtime inventory comes from OpenCode's structured provider state and is intersected with the host's `connected` provider IDs when that field is exposed. OpenCode has already applied `enabled_providers`, `disabled_providers`, provider `whitelist`/`blacklist`, alpha/deprecated filtering and runtime provider overrides before Hi ranks child models. Hi does not scrape the full models.dev catalog and does not fabricate an offline model list when the host inventory is unavailable.
+For OpenCode `1.18.21`, Hi's runtime inventory comes from OpenCode's structured provider state and is intersected with the host's `connected` provider IDs when that field is exposed. OpenCode has already applied `enabled_providers`, `disabled_providers`, provider `whitelist`/`blacklist`, alpha/deprecated filtering and runtime provider overrides before Hi selects child models. Hi does not scrape the full models.dev catalog and does not fabricate an offline model list when the host inventory is unavailable.
 
-OpenCode `1.18.19` does **not** have a model-level `disabled: true` picker filter; model filtering for this host version is provider `whitelist` / `blacklist`. Do not copy newer-schema `model.disabled` examples into a 1.18.19 configuration.
+OpenCode `1.18.21` does **not** have a model-level `disabled: true` picker filter; model filtering for this host version is provider `whitelist` / `blacklist`. Do not copy newer-schema `model.disabled` examples into a 1.18.21 configuration.
 
-Hi does not ship a fixed provider/model recommendation. On the first effective OpenCode runtime inventory, it filters to enabled/policy-allowed models, applies hard role capability requirements, and uses the canonical cost/quality scorer to choose a one-shot initial recommendation for each eligible child role. The selected IDs therefore depend on the models you actually enabled. `visual-qa` additionally requires an explicit host-reported image-input capability; a text-only model or unverified `host-default` is rejected before ranking and again before dispatch. Once the generated routing file exists, those role choices are user-editable preferences and later update/inventory refresh does not overwrite them.
+Hi does not ship a fixed provider/model recommendation. At runtime it filters OpenCode's effective connected inventory through provider/model policy and hard role capability requirements. With no explicit task model, explicit ordered Hi role mapping, or OpenCode agent model, Hi makes an **ephemeral capability/variant recommendation** from that live inventory. The automatic result is never written to project routing state, and cost/quality/feedback telemetry does not reorder it. `visual-qa` additionally requires explicit host-reported image-input capability; a text-only model or unverified `host-default` is rejected before selection and again before dispatch.
 
 There is no arbitrary eight-model cap in current routing or doctor output. A model appearing in OpenCode's runtime inventory means it passed the host's configuration/inventory construction; it does **not** by itself prove credentials or a successful remote inference call.
 

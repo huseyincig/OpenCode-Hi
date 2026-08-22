@@ -4,6 +4,12 @@ export interface DiffOwnershipAssessment {
     accepted: string[];
     collateral: string[];
 }
+export interface RequiredTargetCoverage {
+    required: string[];
+    covered: string[];
+    missing: string[];
+}
+export declare function assessRequiredTargetCoverage(requiredInput: string[], changedInput: string[]): RequiredTargetCoverage;
 export interface ScopeExpansionClaim {
     file: string;
     reason: string;

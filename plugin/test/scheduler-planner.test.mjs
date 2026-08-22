@@ -19,7 +19,7 @@ function unitID(task){return`eu:${task.id}`}
 function decision(plan,id){return plan.units.find(x=>x.executionUnitId===id)}
 
 test('planner classifies ready, waiting and failed dependencies deterministically',()=>{
-  const m=mission('dep-classify'),a=createTask(m,{objective:'a',role:'coder',category:'standard'}),b=createTask(m,{objective:'b',role:'coder',category:'standard',dependencies:[a.id]})
+  const m=mission('dep-classify'),a=createTask(m,{objective:'a',role:'coder',category:'standard',scope:['a']}),b=createTask(m,{objective:'b',role:'coder',category:'standard',scope:['b'],dependencies:[a.id]})
   let plan=planScheduling(snapshot(m));assert.equal(decision(plan,unitID(a)).disposition,'RUNNABLE');assert.equal(decision(plan,unitID(b)).disposition,'WAITING_DEPENDENCY')
   a.status='failed';plan=planScheduling(snapshot(m));assert.equal(decision(plan,unitID(b)).disposition,'BLOCKED_DEPENDENCY');assert.equal(decision(plan,unitID(b)).reasons[0].code,'dependency-failed')
   const corrupted=snapshot(m);corrupted.graph.executionUnits.find(x=>x.workNodeId===b.id).dependencies=['missing'];plan=planScheduling(corrupted);assert.equal(decision(plan,unitID(b)).reasons[0].code,'unknown-dependency')

@@ -36,7 +36,8 @@ test('A6 raw host event normalization occurs at OpenCode hook boundary, not sema
   const hooks=source('opencode/open-code-hooks.ts'),controller=source('runtime/application/runtime-event-controller.ts')
   assert.match(hooks,/normalizeOpenCodeEvent/)
   assert.match(hooks,/eventController\.handle\(normalizeOpenCodeEvent\(input\?\.event\?\?input\)\)/)
-  assert.doesNotMatch(controller,/normalizeOpenCodeEvent|event-adapter|client-adapter|OpenCode/)
+  assert.doesNotMatch(controller,/normalizeOpenCodeEvent|event-adapter|client-adapter|@opencode-ai|ctx\.client/)
+  assert.match(controller,/HostEvent,HostPort/,'semantic controller consumes only the normalized host contract')
 })
 
 test('A6 runtime composition accepts injected host-semantic executors instead of constructing OpenCode adapters',()=>{

@@ -25,11 +25,11 @@ function route(m,explicit){const feedback=deriveMissionModelFeedback(m,'coder','
 
 test('M14 model feedback survives control-only verification follow-up but decays across material amendment',()=>{
   const {store,m}=mission('m14-epoch-amend');addFailure(m,'old-1');addFailure(m,'old-2',m.continuation.generation,Date.now()+1)
-  assert.equal(route(m).resolution.primary,'p/b')
+  assert.equal(route(m).feedback.confidence['p/a'],'low');assert.equal(route(m).resolution.primary,'p/a','feedback is telemetry and explicit role order remains authoritative')
   applyStructuredFollowup(store,m.identity.session_id,'run one more verifier',{message_kind:'verification',likely_verification:['targeted-tests']})
-  assert.equal(m.continuation.generation,2);assert.equal(route(m).feedback.confidence['p/a'],'low');assert.equal(route(m).resolution.primary,'p/b','verification-only control change must not erase implementation model evidence')
+  assert.equal(m.continuation.generation,2);assert.equal(route(m).feedback.confidence['p/a'],'low');assert.equal(route(m).resolution.primary,'p/a','verification-only control change must preserve telemetry without rerouting')
   applyStructuredFollowup(store,m.identity.session_id,'also change the bounded implementation',{message_kind:'amendment'})
-  assert.equal(m.continuation.generation,3);assert.equal(route(m).feedback.samples['p/a'],undefined);assert.equal(route(m).resolution.primary,'p/a','pre-amendment feedback must lose active rerank weight')
+  assert.equal(m.continuation.generation,3);assert.equal(route(m).feedback.samples['p/a'],undefined);assert.equal(route(m).resolution.primary,'p/a','pre-amendment feedback must leave the active telemetry window')
   assert.equal(m.execution.workers.filter(w=>w.id.startsWith('old-')).length,2,'historical worker evidence is preserved, not deleted')
 })
 
@@ -38,21 +38,21 @@ test('M14 material constraint decays prior feedback and fresh same-epoch evidenc
   applyStructuredFollowup(store,m.identity.session_id,'do not touch tests',{message_kind:'constraint'})
   assert.equal(route(m).resolution.primary,'p/a')
   addFailure(m,'fresh-1',m.continuation.generation,Date.now()+2);assert.equal(route(m).feedback.confidence['p/a'],'insufficient')
-  addFailure(m,'fresh-2',m.continuation.generation,Date.now()+3);assert.equal(route(m).feedback.confidence['p/a'],'low');assert.equal(route(m).resolution.primary,'p/b')
+  addFailure(m,'fresh-2',m.continuation.generation,Date.now()+3);assert.equal(route(m).feedback.confidence['p/a'],'low');assert.equal(route(m).resolution.primary,'p/a','fresh feedback may be analyzed without rerouting explicit role order')
 })
 
 test('M14 non-material and stop/resume lifecycle generations do not decay model feedback',()=>{
   const {store,m}=mission('m14-epoch-control');addFailure(m,'old-1');addFailure(m,'old-2',m.continuation.generation,Date.now()+1)
   applyStructuredFollowup(store,m.identity.session_id,'thanks',{material:false,message_kind:'non-material'})
-  assert.equal(route(m).resolution.primary,'p/b')
+  assert.equal(route(m).resolution.primary,'p/a')
   store.stop(m.identity.session_id,'fixture-stop');store.resume(m.identity.session_id,'fixture-resume')
-  assert.equal(route(m).feedback.confidence['p/a'],'low');assert.equal(route(m).resolution.primary,'p/b')
+  assert.equal(route(m).feedback.confidence['p/a'],'low');assert.equal(route(m).resolution.primary,'p/a','stop/resume preserves feedback telemetry without making it routing authority')
 })
 
 test('M14 unattributed legacy generation fails closed after a material semantic boundary',()=>{
   const {store,m}=mission('m14-epoch-legacy');addFailure(m,'legacy-1');addFailure(m,'legacy-2',m.continuation.generation,Date.now()+1)
   for(const worker of m.execution.workers)delete worker.generation_at_spawn
-  assert.equal(route(m).resolution.primary,'p/b','legacy generation may participate before any material boundary')
+  assert.equal(route(m).feedback.confidence['p/a'],'low','legacy generation may participate in telemetry before any material boundary');assert.equal(route(m).resolution.primary,'p/a')
   applyStructuredFollowup(store,m.identity.session_id,'materially amend the implementation',{message_kind:'amendment'})
   assert.equal(route(m).feedback.samples['p/a'],undefined);assert.equal(route(m).resolution.primary,'p/a')
 })

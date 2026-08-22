@@ -7,8 +7,9 @@ import type { RuntimeSignalSink } from '../events/event-sink.js';
 import { type BrowserExecutor } from '../browser/executor.js';
 import { type BrowserBackend } from '../browser/backend-policy.js';
 import { type RuntimeScopedStores } from '../application/runtime-scoped-stores.js';
+import { type HostTerminalEventAdmission } from './host-child-binding.js';
 import type { WorkspaceRuntime } from '../workspace/runtime.js';
-import type { ChildSessionPort } from '../host/port.js';
+import type { ChildSessionPort, HostAssistantError, HostAssistantResult } from '../host/port.js';
 import type { HostCapabilityContract } from '../../contracts/host-capability.js';
 import type { HostUsageObservation } from '../../contracts/execution-usage.js';
 export interface StartTaskInput {
@@ -48,11 +49,12 @@ export declare class TaskRuntime {
     private readonly extraHostResources;
     private readonly browserExecutor?;
     private readonly ensureBrowserResource?;
+    private readonly readAssistantResult?;
     constructor(childHost: ChildSessionPort, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined, hostCapabilitySource?: (() => readonly HostCapabilityContract[]) | readonly HostCapabilityContract[], scopedStores?: RuntimeScopedStores, workspaceRuntime?: WorkspaceRuntime | undefined, extraHostResources?: () => ReadonlySet<string>, browserExecutor?: BrowserExecutor | undefined, ensureBrowserResource?: (() => Promise<{
         available: boolean;
         attempted?: boolean;
         reason?: string;
-    }>) | undefined);
+    }>) | undefined, readAssistantResult?: ((sessionID: string, limit?: number) => Promise<HostAssistantResult>) | undefined);
     private sendProviderPrompt;
     private recordModelProjection;
     private abortNativeSession;
@@ -71,14 +73,32 @@ export declare class TaskRuntime {
         reason: string;
     };
     resolveChildCallback(sessionID: string): WorkerState | undefined;
+    admitTerminalEvent(m: MissionState, worker: WorkerState): Promise<HostTerminalEventAdmission>;
+    settleHostIdleRuntimeError(m: MissionState, worker: WorkerState, error: HostAssistantError): Promise<{
+        applied: boolean;
+        reason: string;
+        wakeResult?: 'RUNTIME_FALLBACK' | 'QUARANTINED' | 'FAILED' | 'BLOCKED';
+        failureKind?: WorkerState['last_runtime_failure_kind'];
+    }>;
+    settleHostIdleAssistantResult(m: MissionState, worker: WorkerState, assistant: HostAssistantResult): Promise<{
+        applied: boolean;
+        reason: string;
+        result?: WorkerResult;
+        wakeResult?: 'RUNTIME_FALLBACK' | 'QUARANTINED' | 'FAILED' | 'BLOCKED';
+        failureKind?: WorkerState['last_runtime_failure_kind'];
+    }>;
     childCallbackDisposition(m: MissionState, worker: WorkerState): import("./task-recovery-coordinator.js").ChildCallbackDisposition;
+    reconcileRestoredChildren(m: MissionState): Promise<number>;
+    pendingExecutionWorkers(m: MissionState, excludeWorkerID?: string): WorkerState[];
     queueDepth(): number;
     private workspaceBinding;
     cleanupWorkspaceForTask(m: MissionState, taskID: string): Promise<boolean>;
     cleanupBrowserForTask(m: MissionState, taskID: string, workerID?: string): Promise<boolean>;
     private failedDeps;
+    private blockDependencyOutcome;
     private admittedModel;
     private reserveExistingSessionAttempt;
+    private reconcileRestartBeforeResume;
     private queueTask;
     private rollbackQueueCapacityRejection;
     private drainQueue;
@@ -117,7 +137,6 @@ export declare class TaskRuntime {
     noteNativeStatus(m: MissionState, workerID: string, status: string): void;
     applyResult(m: MissionState, workerID: string, result: WorkerResult): void;
     recoverStagnation(m: MissionState, level: number): Promise<boolean>;
-    recoverRuntimeFailure(m: MissionState, workerID: string, error: string): Promise<boolean>;
     fail(m: MissionState, workerID: string, error: string): void;
     peek(m: MissionState, id: string): any;
     awaitTask(m: MissionState, id: string, timeoutMs?: number): Promise<any>;

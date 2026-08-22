@@ -2,7 +2,7 @@ import { isExecutionTokenUsage } from './execution-usage.js';
 export const COMPARATIVE_BENCHMARK_SCHEMA = 1;
 const SYSTEM_KINDS = new Set(['VANILLA_OPENCODE', 'OPENCODE_HI_BASELINE', 'OPENCODE_HI_CURRENT', 'EXTERNAL_BASELINE']);
 const EPISODE_KINDS = new Set(['DETERMINISTIC_FIXTURE', 'REAL_HOST_EPISODE', 'POLICY_ABLATION']);
-const SCENARIOS = new Set(['trivial-localized-work', 'failing-test-fix', 'independent-parallel-work', 'dependency-fan-in', 'mutable-surface-conflict', 'misleading-done', 'mutation-after-verification', 'provider-child-failure', 'restart-stale-callback', 'authority-ambiguous-replay', 'context-heavy-investigation', 'plugin-config-coexistence', 'production-commit-task']);
+const SCENARIOS = new Set(['trivial-localized-work', 'failing-test-fix', 'independent-parallel-work', 'dependency-fan-in', 'mutable-surface-conflict', 'verification-route-unavailable', 'independent-review-required', 'misleading-done', 'mutation-after-verification', 'provider-child-failure', 'restart-stale-callback', 'authority-ambiguous-replay', 'context-heavy-investigation', 'plugin-config-coexistence', 'production-commit-task']);
 const CHECKS = new Set(['PASS', 'FAIL', 'BLOCKED', 'NOT_RUN']);
 const RESULTS = new Set(['VERIFIED_SUCCESS', 'VERIFIED_FAILURE', 'BLOCKED_ENVIRONMENT', 'BLOCKED_AUTHORITY', 'TIMEOUT', 'INVALID_RECEIPT']);
 const RECEIPT_KEYS = new Set(['schema', 'episode_kind', 'claim_boundary', 'episode_id', 'repetition', 'system', 'task', 'model', 'started_at', 'ended_at', 'deterministic_checks', 'evidence', 'completion_decision', 'failure_injections', 'control_plane', 'economics', 'artifacts', 'result']);

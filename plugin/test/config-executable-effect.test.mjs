@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {resolveHiConfig} from '../dist/config/resolver.js'
+import {resolveHiConfig,resolveHiConfigWithReport} from '../dist/config/resolver.js'
 import {decideTopology} from '../dist/runtime/execution/topology-policy.js'
 import {resolveModel} from '../dist/runtime/routing/model-resolver.js'
 import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
@@ -24,12 +24,13 @@ test('BA03 execution capacity config changes real topology and scheduler decisio
   assert.match(scoped.canStart('c','q','p\/m').reason,/model-capacity/)
 })
 
-test('BA03 routing constraints and execution profile config change real model/role selection',()=>{
-  const models=[{id:'p/cheap',provider:'p',quality:4,cost:1,writeCapable:true},{id:'q/strong',provider:'q',quality:9,cost:4,writeCapable:true}]
-  const unrestricted=resolveHiConfig({routing:{strategy:'cost',allowedProviders:[]}})
-  const constrained=resolveHiConfig({routing:{strategy:'cost',allowedProviders:['q']}})
-  assert.equal(resolveModel('standard',models,unrestricted,undefined,'coder').primary,'p/cheap')
-  assert.equal(resolveModel('standard',models,constrained,undefined,'coder').primary,'q/strong')
+test('BA03 routing constraints execute while legacy scoring/model-mode fields are diagnostic-only',()=>{
+  const models=[{id:'p/code',provider:'p',tags:['coding'],quality:1,cost:50,writeCapable:true},{id:'q/generic',provider:'q',tags:['balanced'],quality:99,cost:.01,writeCapable:true}]
+  const legacy=resolveHiConfigWithReport({models:{mode:'fixed',default:'q/generic',roles:{coder:'q/generic'}},routing:{strategy:'cost',categoryModels:{standard:['q/generic']},allowedProviders:[]}})
+  assert.equal(resolveModel('standard',models,legacy.config,undefined,'coder').primary,'p/code','legacy cost/fixed/category fields cannot override capability routing')
+  for(const path of ['models.mode','models.default','models.roles','routing.strategy','routing.categoryModels'])assert.ok(legacy.report.notes.some(note=>note.includes(path)&&note.includes('diagnostics only')),path)
+  const constrained=resolveHiConfig({routing:{allowedProviders:['q']}})
+  assert.equal(resolveModel('standard',models,constrained,undefined,'coder').primary,'q/generic','provider constraint remains executable')
   const design={...intent,scope:'local',risk:'low',requiredCapabilities:['design-exploration']}
   const minimal=resolveHiConfig({executionPolicy:'minimal'}),thorough=resolveHiConfig({executionPolicy:'thorough'})
   const minProfile=minimal.profile[executionProfileFor(minimal.executionPolicy,design)],thoroughProfile=thorough.profile[executionProfileFor(thorough.executionPolicy,design)]

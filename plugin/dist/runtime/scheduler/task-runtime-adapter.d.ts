@@ -16,5 +16,5 @@ export declare function reserveTaskRuntimeDispatch(m: MissionState, worker: Work
 export declare function bindTaskRuntimeHost(m: MissionState, workerID: string, hostExecutionId: string, at?: number): SchedulerLifecycleResult;
 export declare function beginTaskRuntimeSettlement(m: MissionState, worker: WorkerState, at?: number): SchedulerLifecycleResult;
 export declare function releaseTaskRuntimeReservation(m: MissionState, workerID: string, kind?: 'RELEASE' | 'CANCEL', at?: number): SchedulerLifecycleResult;
-export declare function reconcileStoppedTaskRuntimeRestart(m: MissionState, worker: WorkerState, at?: number): SchedulerLifecycleResult;
+export declare function reconcileTaskRuntimeRestart(m: MissionState, worker: WorkerState, outcome: 'ACTIVE' | 'TERMINAL' | 'UNKNOWN', at?: number): SchedulerLifecycleResult;
 export declare function taskRuntimeReservation(m: MissionState, workerID: string): SchedulerReservation | undefined;

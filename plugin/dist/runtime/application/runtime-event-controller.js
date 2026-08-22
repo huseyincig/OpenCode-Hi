@@ -3,16 +3,20 @@ import { authorityClassForPatterns } from '../safety/project-authority.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { addEvidence, markMutation, normalizeProjectPath } from '../evidence/evidence-runtime.js';
 import { evidenceProducerAttemptForWorker } from '../evidence/applicability.js';
-import { parseWorkerResult } from '../task/result-parser.js';
 import { automaticContinuationEnabled, adaptiveIdleEvaluatorEnabled } from '../../config/execution-policy.js';
-import { ensureProjectRoutingConfig } from '../../config/auto-init.js';
-import { recommendInitialRoleModels } from '../routing/model-resolver.js';
-import { resolveHiConfigWithReport } from '../../config/resolver.js';
 import { dispatchContinuation } from '../continuation/dispatcher.js';
 import { classifyRuntimeHumanDecision, openHumanDecision } from '../human-decision/runtime.js';
 import { runtimeSignal } from '../events/event-sink.js';
 import { evaluateIdle, shouldCountStagnation } from '../continuation/evaluator.js';
 import { evaluateCompletion } from '../completion/evaluator.js';
+function resetCompactionSensitiveRecovery(m, sessionID, workerID) {
+    const priorStagnation = m.continuation.stagnation_count, priorRecoveryCount = m.continuation.recovery_history?.length ?? 0, stagnationNudgeCleared = Boolean(m.continuation.pending_nudge?.reason.startsWith('stagnation-level-'));
+    m.continuation.stagnation_count = 0;
+    m.continuation.recovery_history = [];
+    if (stagnationNudgeCleared)
+        m.continuation.pending_nudge = undefined;
+    appendLedger(m, 'session.compacted', { worker_id: workerID, payload: { source: 'native-event', session_id: sessionID, stagnation_reset_from: priorStagnation, recovery_history_cleared: priorRecoveryCount, stagnation_nudge_cleared: stagnationNudgeCleared, semantic_progress_preserved: true } });
+}
 export class RuntimeEventController {
     deps;
     constructor(deps) {
@@ -20,16 +24,10 @@ export class RuntimeEventController {
     }
     async handle(ev) {
         const { state, host, services, projectAuthority, pendingNativePermissions, projectRoot } = this.deps;
-        const { store, background, persistence, tasks, processRuntime, workspaceRuntime, eventSink, scopedStores } = services;
-        const refreshRuntimeInventoryAndRecommendedRouting = async (reason) => { await host.refreshRuntimeInventory(reason); const models = host.getModels(), hasExplicitModelRouting = Object.keys(state.config.routing.roleModels).length > 0 || Object.keys(state.config.routing.categoryModels).length > 0 || state.config.models.mode !== 'adaptive'; if (hasExplicitModelRouting)
-            return; const recommendations = recommendInitialRoleModels(models, state.config, state.hostConfig); const routing = ensureProjectRoutingConfig(projectRoot, recommendations); if (routing.created) {
-            const resolved = resolveHiConfigWithReport(state.hostConfig.hi, projectRoot);
-            state.config = resolved.config;
-            state.configResolution = resolved.report;
-            await host.log('info', 'Hi initial child-model recommendations ranked from effective runtime inventory', { reason, path: routing.path, configured_roles: routing.configuredRoles ?? 0, models: models.length });
-        } };
-        const settleCanonicalParentWake = async (m, source) => { const decision = evaluateIdle(m); appendLedger(m, 'runtime.decision', { payload: { decision: decision.decision, reason: decision.reason, reason_code: decision.reason_code, source, stagnation_count: m.continuation.stagnation_count } }); if (decision.decision === 'STOP') {
-            const completion = evaluateCompletion(m);
+        const { store, persistence, tasks, processRuntime, workspaceRuntime, eventSink, scopedStores } = services;
+        const refreshRuntimeInventory = async (reason) => { await host.refreshRuntimeInventory(reason); await host.log('debug', 'Hi refreshed OpenCode-owned runtime model inventory', { reason, models: host.getModels().length, persisted_inferred_role_models: false }); };
+        const settleCanonicalParentWake = async (m, source) => { const decision = evaluateIdle(m, Date.now(), projectRoot); appendLedger(m, 'runtime.decision', { payload: { decision: decision.decision, reason: decision.reason, reason_code: decision.reason_code, source, stagnation_count: m.continuation.stagnation_count } }); if (decision.decision === 'STOP') {
+            const completion = evaluateCompletion(m, projectRoot);
             if (completion.complete)
                 store.complete(m.identity.session_id);
             return;
@@ -48,11 +46,19 @@ export class RuntimeEventController {
         } if (decision.prompt && ['CONTINUE', 'RECONCILE', 'VERIFY', 'RECOVER'].includes(decision.decision))
             await dispatchContinuation(host, m, decision.prompt, decision.reason); };
         if (ev.kind === 'installation-updated') {
-            await refreshRuntimeInventoryAndRecommendedRouting('installation-updated');
+            await refreshRuntimeInventory('installation-updated');
             return;
         }
         if (ev.rawType === 'server.connected') {
-            await refreshRuntimeInventoryAndRecommendedRouting('server-connected');
+            await refreshRuntimeInventory('server-connected');
+            let reconciled = 0;
+            for (const restored of store.all())
+                reconciled += await tasks.reconcileRestoredChildren(restored);
+            if (reconciled) {
+                for (const restored of store.all())
+                    store.updateProgress(restored);
+                persistence.save(store.all());
+            }
             return;
         }
         const sid = ev.sessionID;
@@ -80,11 +86,6 @@ export class RuntimeEventController {
             persistence.save(store.all());
             return;
         }
-        if (child && mission && tasks.childCallbackDisposition(mission, child) === 'restart-reconcile-pending') {
-            appendLedger(mission, 'worker.callback.pre-reconcile-ignored', { worker_id: child.id, payload: { session_id: sid, event: ev.rawType, reason: 'runtime-restart-reconcile-pending' } });
-            persistence.save(store.all());
-            return;
-        }
         if (child && mission && tasks.childCallbackDisposition(mission, child) === 'stale-mission') {
             appendLedger(mission, 'worker.callback.stale-mission-ignored', { worker_id: child?.id, payload: { worker_mission_id: child?.parent_mission_id, mission_id: mission.identity.mission_id, worker_generation: child?.generation_at_spawn, mission_generation: mission.continuation.generation, event: ev.rawType } });
             persistence.save(store.all());
@@ -95,6 +96,12 @@ export class RuntimeEventController {
             persistence.save(store.all());
             return;
         }
+        // Terminal missions are immutable with respect to late host progress/callback events. OpenCode may
+        // publish session.diff/file/idle/status callbacks after the tool that canonically completed the mission.
+        // A new user message starts a fresh mission for this session, so late callbacks must not retroactively
+        // reopen obligations or mutate finalized evidence. session-deleted remains lifecycle cleanup below.
+        if (mission?.identity.status === 'completed' && ev.kind !== 'session-deleted')
+            return;
         if (ev.kind === 'permission-asked' && mission) {
             const pid = ev.permission?.id;
             mission.authority.pending_permission_ids ??= [];
@@ -135,6 +142,15 @@ export class RuntimeEventController {
             const m = childMission;
             if (!m)
                 return;
+            const afterChildWake = async (result, source, detail, failureKind) => { appendLedger(m, 'parent.wake', { worker_id: child.id, payload: { result, event: ev.rawType } }); if (result === 'RUNTIME_FALLBACK')
+                return; const siblingPending = tasks.pendingExecutionWorkers(m, child.id); if (failureKind === 'permission') {
+                m.continuation.stagnation_count = 0;
+                openHumanDecision(m, { semantic_type: 'operational_action', reason_code: 'permission-failure', summary: `Native child permission failure requires user/runtime intervention before retry. ${(detail ?? '').slice(0, 240)}`, task_id: child.task_id, worker_id: child.id, response_schema: { kind: 'external-action' } });
+            }
+            else if (automaticContinuationEnabled(state.config.executionPolicy) && !m.continuation.user_interrupted && !siblingPending.length)
+                await settleCanonicalParentWake(m, source);
+            else if (siblingPending.length)
+                appendLedger(m, 'parent.wake.deferred', { worker_id: child.id, payload: { reason: 'sibling-workers-pending', pending: siblingPending.map(w => w.id).slice(0, 20) } }); };
             if (ev.kind === 'file-edited' || ev.kind === 'file-watcher-updated' || ev.kind === 'session-diff') {
                 const files = ev.filePaths;
                 const stateHash = ev.kind === 'session-diff' ? createHash('sha256').update(JSON.stringify(ev.properties ?? {})).digest('hex') : undefined;
@@ -160,73 +176,69 @@ export class RuntimeEventController {
                 persistence.save(store.all());
                 return;
             }
-            if (ev.kind === 'session-error' || ev.kind === 'session-deleted') {
-                const detail = String(ev.properties?.error?.message ?? ev.properties?.error ?? ev.rawType);
-                await tasks.cleanupBrowserForTask(m, child.task_id, child.id);
-                if (ev.kind === 'session-error' && await tasks.recoverRuntimeFailure(m, child.id, detail)) {
-                    store.updateProgress(m);
-                    appendLedger(m, 'parent.wake', { worker_id: child.id, payload: { result: 'RUNTIME_FALLBACK', event: ev.rawType } });
+            if (ev.kind === 'session-compacted') {
+                resetCompactionSensitiveRecovery(m, sid, child.id);
+                persistence.save(store.all());
+                return;
+            }
+            if (ev.kind === 'session-error') {
+                const rawError = ev.properties?.error, hostError = ev.error ?? { ...(typeof rawError?.name === 'string' ? { name: rawError.name } : {}), message: String(rawError?.message ?? rawError?.data?.message ?? rawError?.name ?? ev.rawType) }, detail = hostError.message;
+                const admission = await tasks.admitTerminalEvent(m, child);
+                if (admission.decision !== 'ACCEPT') {
+                    const type = admission.decision === 'WAIT' ? 'worker.error-deferred-host-active' : admission.decision === 'STALE' ? 'worker.error-stale-binding' : 'worker.error-unverified-host-status';
+                    appendLedger(m, type, { task_id: child.task_id, worker_id: child.id, payload: { session_id: sid, event: ev.rawType, decision: admission.decision, reason: admission.reason, host_status: admission.hostStatus, attempt_id: admission.binding?.attempt.attemptId, generation: admission.binding?.generation, error: detail.slice(0, 500) } });
                     persistence.save(store.all());
                     return;
                 }
+                const settled = await tasks.settleHostIdleRuntimeError(m, child, hostError);
+                if (!settled.applied) {
+                    appendLedger(m, 'worker.error-settlement-deferred', { task_id: child.task_id, worker_id: child.id, payload: { session_id: sid, reason: settled.reason } });
+                    persistence.save(store.all());
+                    return;
+                }
+                store.updateProgress(m);
+                await afterChildWake(settled.wakeResult ?? 'FAILED', 'child-error', detail, settled.failureKind);
+                persistence.save(store.all());
+                return;
+            }
+            if (ev.kind === 'session-deleted') {
+                const detail = String(ev.properties?.error?.message ?? ev.properties?.error?.data?.message ?? ev.rawType);
+                await tasks.cleanupBrowserForTask(m, child.task_id, child.id);
                 tasks.fail(m, child.id, detail);
                 await tasks.cleanupWorkspaceForTask(m, child.task_id);
                 store.updateProgress(m);
-                appendLedger(m, 'parent.wake', { worker_id: child.id, payload: { result: 'FAILED', event: ev.rawType } });
-                const siblingPending = background.pendingFor(m.identity.session_id).filter(w => w.id !== child.id), permissionFailure = child.last_runtime_failure_kind === 'permission';
-                if (permissionFailure) {
-                    m.continuation.stagnation_count = 0;
-                    openHumanDecision(m, { semantic_type: 'operational_action', reason_code: 'permission-failure', summary: `Native child permission failure requires user/runtime intervention before retry. ${detail.slice(0, 240)}`, task_id: child.task_id, worker_id: child.id, response_schema: { kind: 'external-action' } });
-                }
-                else if (automaticContinuationEnabled(state.config.executionPolicy) && !m.continuation.user_interrupted && !siblingPending.length)
-                    await settleCanonicalParentWake(m, 'child-failed');
-                else if (siblingPending.length)
-                    appendLedger(m, 'parent.wake.deferred', { worker_id: child.id, payload: { reason: 'sibling-workers-pending', pending: siblingPending.map(w => w.id).slice(0, 20) } });
+                await afterChildWake('FAILED', 'child-deleted', detail, child.last_runtime_failure_kind);
                 persistence.save(store.all());
                 return;
             }
             if (ev.kind !== 'session-idle')
                 return;
-            if (child.runtime_recovery_pending) {
-                appendLedger(m, 'worker.callback.pre-fallback-active-ignored', { task_id: child.task_id, worker_id: child.id, payload: { session_id: sid, attempt: child.runtime_recovery_attempt ?? 0, event: ev.rawType } });
+            const terminalAdmission = await tasks.admitTerminalEvent(m, child);
+            if (terminalAdmission.decision !== 'ACCEPT') {
+                const type = terminalAdmission.decision === 'WAIT' ? 'worker.terminal-event-deferred-host-active' : terminalAdmission.decision === 'STALE' ? 'worker.terminal-event-stale-binding' : 'worker.terminal-event-unverified-host-status';
+                appendLedger(m, type, { task_id: child.task_id, worker_id: child.id, payload: { session_id: sid, event: ev.rawType, decision: terminalAdmission.decision, reason: terminalAdmission.reason, host_status: terminalAdmission.hostStatus, attempt_id: terminalAdmission.binding?.attempt.attemptId, generation: terminalAdmission.binding?.generation } });
                 persistence.save(store.all());
                 return;
             }
             if (child.status === 'completed' || child.status === 'failed' || child.status === 'cancelled')
                 return;
             try {
-                const assistant = await host.readAssistantResult(sid, 12), modelEvidence = assistant.model, text = assistant.text;
-                if (assistant.usage)
-                    tasks.noteUsage(m, child.id, assistant.usage);
-                if (!modelEvidence && !text) {
-                    appendLedger(m, 'worker.idle.pre-assistant-ignored', { task_id: child.task_id, worker_id: child.id, payload: { session_id: sid } });
+                const assistant = await host.readAssistantResult(sid, 12), settled = await tasks.settleHostIdleAssistantResult(m, child, assistant);
+                if (!settled.applied) {
+                    appendLedger(m, 'worker.idle.pre-assistant-ignored', { task_id: child.task_id, worker_id: child.id, payload: { session_id: sid, reason: settled.reason } });
                     persistence.save(store.all());
                     return;
                 }
-                const effective = tasks.noteEffectiveModel(m, child.id, modelEvidence ? { ...modelEvidence, source: 'assistant-message-metadata' } : undefined);
-                let result = parseWorkerResult(text);
-                if (!effective.ok)
-                    result = { ...result, status: 'BLOCKED', summary: `Effective child model could not be verified against the selected execution model. ${effective.reason}`, open_issues: [...new Set([...(result.open_issues ?? []), effective.reason])], needs_context: [...new Set([...(result.needs_context ?? []), 'effective-model-reconcile: refresh runtime inventory/provider policy and resume with a verified role-selected model'])] };
-                result = await tasks.reconcileNativeResult(m, child.id, result);
-                result = await tasks.reintegrateWorkspaceResult(m, child.id, result);
-                tasks.applyResult(m, child.id, result);
-                if (['completed', 'failed', 'cancelled'].includes(child.status)) {
-                    await tasks.cleanupBrowserForTask(m, child.task_id, child.id);
-                    await tasks.cleanupWorkspaceForTask(m, child.task_id);
-                }
-                ;
-                if (['completed', 'failed', 'cancelled'].includes(child.status))
-                    background.delete(child.id);
-                else
-                    background.set(child);
                 store.updateProgress(m);
-                appendLedger(m, 'parent.wake', { worker_id: child.id, payload: { result: result.status } });
-                if (automaticContinuationEnabled(state.config.executionPolicy) && !m.continuation.user_interrupted && !background.pendingFor(m.identity.session_id).length)
-                    await settleCanonicalParentWake(m, 'child-result-ready');
+                const wakeResult = settled.wakeResult ?? settled.result?.status ?? 'UNKNOWN';
+                await afterChildWake(wakeResult, 'child-result-ready', assistant.error?.message, settled.failureKind);
             }
             catch (e) {
                 tasks.fail(m, child.id, String(e));
+                await tasks.cleanupWorkspaceForTask(m, child.task_id);
+                store.updateProgress(m);
                 appendLedger(m, 'worker.result.failed', { worker_id: child.id, payload: { error: String(e) } });
+                await afterChildWake('FAILED', 'child-result-failed', String(e), child.last_runtime_failure_kind);
             }
             persistence.save(store.all());
             return;
@@ -272,7 +284,7 @@ export class RuntimeEventController {
             return;
         }
         if (ev.kind === 'session-compacted' && mission) {
-            appendLedger(mission, 'session.compacted', { payload: { source: 'native-event' } });
+            resetCompactionSensitiveRecovery(mission, sid);
             persistence.save(store.all());
             return;
         }
@@ -283,14 +295,14 @@ export class RuntimeEventController {
             return;
         const progressed = store.updateProgress(m, false);
         void eventSink(runtimeSignal('mission.idle', m.identity.mission_id));
-        let decision = evaluateIdle(m);
+        let decision = evaluateIdle(m, Date.now(), projectRoot);
         if (!progressed && shouldCountStagnation(decision)) {
             store.updateProgress(m, true);
-            decision = evaluateIdle(m);
+            decision = evaluateIdle(m, Date.now(), projectRoot);
         }
         appendLedger(m, 'runtime.decision', { payload: { decision: decision.decision, reason: decision.reason, reason_code: decision.reason_code, progressed, stagnation_count: m.continuation.stagnation_count } });
         if (decision.decision === 'STOP') {
-            const c = evaluateCompletion(m);
+            const c = evaluateCompletion(m, projectRoot);
             if (c.complete)
                 store.complete(sid);
             persistence.save(store.all());

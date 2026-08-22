@@ -3,22 +3,22 @@
   "kind": "PROMPT_B_DEPENDENCY_SUPPLY_CHAIN_LICENSE_AUDIT",
   "program": "PROMPT_B",
   "section": 27,
-  "status": "PASS",
+  "status": "FAIL",
   "summary": {
     "required": 8,
-    "covered": 8,
-    "violations": 0
+    "covered": 7,
+    "violations": 1
   },
   "invariants": [
     {
       "invariant": "dependency-versions",
       "status": "PASS",
       "owner": "package.json",
-      "owner_sha256": "cf54e799329ca45c3a05e87192b67c4efb879f0bc5e79b7ddada0e16bc2c677d",
-      "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.19\"",
+      "owner_sha256": "252124a59c15a661891c9ef41100c7718094c40eefc89fb4e22a00b3d7187d15",
+      "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.20\"",
       "proof": "package-lock.json",
-      "proof_sha256": "6db0b63a847200c028a8adfe5ea0db951a487a461f9203100d7ad2d299f44a94",
-      "proof_anchor": "\"version\": \"1.18.19\""
+      "proof_sha256": "7b20a51cb11092597df4096e8986b1ec1b6ed2bb33ae4cea84577041da953c91",
+      "proof_anchor": "\"version\": \"1.18.20\""
     },
     {
       "invariant": "lockfiles",
@@ -27,27 +27,27 @@
       "owner_sha256": "72572d3cb90e53147cb079e8ecdefc2abff7e75c0a55d1b1d5bf0adad027707b",
       "owner_anchor": "def dependency_lock_paths(root:Path)",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "b1317f9e31eb69a204b09dd8a3f758e81b9ddcce72b1520ef6f674e64606ad10",
+      "proof_sha256": "3996254a759df4b40234960abf251f31c55102b463f00d73c3cc6456b981764e",
       "proof_anchor": "manifest['supply_chain']['dependency_locks']==['package-lock.json','plugin/package-lock.json']"
     },
     {
       "invariant": "direct-dependency-usage",
-      "status": "PASS",
+      "status": "FAIL",
       "owner": "plugin/src/opencode/client-adapter.ts",
-      "owner_sha256": "4a9b21b80d1ec752dbc442e234f808cde7ff7e332cd5f7284da36d9e6bb180c7",
+      "owner_sha256": "065181f8a5c370a1ef9977c31557e5dbc9763992bf0aafda6dac86d252c502a9",
       "owner_anchor": "@opencode-ai/sdk/v2/client",
-      "proof": "data/validation/fresh-consumer-opencode-1.18.19.json",
-      "proof_sha256": "57af8b131469f2fba2ea4f3fd17c4db73a611c1ebd2a00fef15473910d2b2a1b",
+      "proof": "data/validation/fresh-consumer-opencode-1.18.20.json",
+      "proof_sha256": null,
       "proof_anchor": "\"consumer_resolution\": true"
     },
     {
       "invariant": "risky-install-scripts",
       "status": "PASS",
       "owner": "plugin/package-lock.json",
-      "owner_sha256": "8d6492dc6b1a528cf302ac7942024e084ebc1301a30290b799846a1eda9a853f",
+      "owner_sha256": "9c25498828b4e19cd74529f245f4488b4e2be5433160554450364f61df1a82c7",
       "owner_anchor": "\"hasInstallScript\": true",
       "proof": "THIRD_PARTY_NOTICES.md",
-      "proof_sha256": "9d1212a0bae8cb0235713b396ac3e11933a0998388f2ec15ca1ba4305481e569",
+      "proof_sha256": "6db57e2a0c414bf615ced39bad654b41a59c76a36c27e737e25d2d6be06271c4",
       "proof_anchor": "msgpackr-extract"
     },
     {
@@ -57,27 +57,27 @@
       "owner_sha256": "72572d3cb90e53147cb079e8ecdefc2abff7e75c0a55d1b1d5bf0adad027707b",
       "owner_anchor": "dependency_graph_sha256",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "b1317f9e31eb69a204b09dd8a3f758e81b9ddcce72b1520ef6f674e64606ad10",
+      "proof_sha256": "3996254a759df4b40234960abf251f31c55102b463f00d73c3cc6456b981764e",
       "proof_anchor": "manifest['supply_chain']['dependency_graph_sha256']"
     },
     {
       "invariant": "dependency-licenses",
       "status": "PASS",
       "owner": "THIRD_PARTY_NOTICES.md",
-      "owner_sha256": "9d1212a0bae8cb0235713b396ac3e11933a0998388f2ec15ca1ba4305481e569",
+      "owner_sha256": "6db57e2a0c414bf615ced39bad654b41a59c76a36c27e737e25d2d6be06271c4",
       "owner_anchor": "`playwright-core`",
       "proof": "package-lock.json",
-      "proof_sha256": "6db0b63a847200c028a8adfe5ea0db951a487a461f9203100d7ad2d299f44a94",
+      "proof_sha256": "7b20a51cb11092597df4096e8986b1ec1b6ed2bb33ae4cea84577041da953c91",
       "proof_anchor": "\"license\": \"Apache-2.0\""
     },
     {
       "invariant": "source-reuse",
       "status": "PASS",
       "owner": "THIRD_PARTY_NOTICES.md",
-      "owner_sha256": "9d1212a0bae8cb0235713b396ac3e11933a0998388f2ec15ca1ba4305481e569",
+      "owner_sha256": "6db57e2a0c414bf615ced39bad654b41a59c76a36c27e737e25d2d6be06271c4",
       "owner_anchor": "license/provenance boundaries",
       "proof": "docs/SECURITY-MODEL.md",
-      "proof_sha256": "a3d4a84cc6a4ff1a886829e0433672eafa3e0168854fc1482e810f7dd24b8ef5",
+      "proof_sha256": "9fc923843bce328cfbb0df2fb84b50882965aef7ee512eb203eda1cea1a74df5",
       "proof_anchor": "trust boundaries"
     },
     {
@@ -87,7 +87,7 @@
       "owner_sha256": "fddeff0ad498142ab454a0df576328bdb061106ce7eddec3ae553e3f653572b5",
       "owner_anchor": "id-token: write",
       "proof": "plugin/test/r1-npm-oidc-workflow.test.mjs",
-      "proof_sha256": "8a1a06418567696e211d842e9be6686d381df50c31033bc3439dac53a310af35",
+      "proof_sha256": "1ca8c0897dbe46e06475ecce0cb1d2131889aac7426b8ca2107195274cbe6891",
       "proof_anchor": "no long-lived npm token surface"
     }
   ],
@@ -142,9 +142,11 @@
     },
     {
       "id": "native-direct-git-pacote-preparation-trigger",
-      "fix": "Public root package removes npm/Pacote Git-preparation trigger script names, moves the explicit developer build to build:plugin, keeps the OpenCode host peer optional, and cross-platform Release Readiness exercises the M16 packed npm bootstrap plus exact-SHA Git compatibility loading against exact OpenCode 1.18.19."
+      "fix": "Public root package removes npm/Pacote Git-preparation trigger script names, moves the explicit developer build to build:plugin, keeps the OpenCode host peer optional, and cross-platform Release Readiness exercises the packed npm bootstrap plus exact-SHA Git compatibility loading against the exact OpenCode host target from package metadata."
     }
   ],
-  "violations": [],
+  "violations": [
+    "direct-dependency-usage"
+  ],
   "claim_boundary": "Local deterministic supply-chain/license certification. npm audit is separately re-runnable against registry metadata; public npm publish remains authority-gated and is not performed by this audit."
 }

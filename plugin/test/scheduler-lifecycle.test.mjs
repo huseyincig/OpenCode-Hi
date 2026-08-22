@@ -58,7 +58,7 @@ test('host binding and settlement reject stale attempt or host execution fences'
 })
 
 test('restart quarantine fails closed until an exact reconciliation outcome is supplied',()=>{
-  const m=mission('restart-reconcile'),a=createTask(m,{objective:'pre-host',role:'coder',category:'standard'}),wa=createWorker(m,a,'p/m'),b=createTask(m,{objective:'bound-host',role:'coder',category:'standard'}),wb=createWorker(m,b,'p/m')
+  const m=mission('restart-reconcile'),a=createTask(m,{objective:'pre-host',role:'coder',category:'standard',scope:['src/a.ts']}),wa=createWorker(m,a,'p/m'),b=createTask(m,{objective:'bound-host',role:'coder',category:'standard',scope:['src/b.ts']}),wb=createWorker(m,b,'p/m')
   const snap=snapshot(m),aa=nextAttempt(a,wa),ab=nextAttempt(b,wb)
   let state=createSchedulerLifecycleState(m.identity.mission_id)
   let out=reserveSchedulerUnit(snap,state,{executionUnitId:unitID(a),workerId:wa.id,attempt:aa,at:10});state=out.state;const ra=out.reservation.reservationId
@@ -94,4 +94,18 @@ test('mutable-surface conflicts admit only the deterministic predecessor and unb
   assert.equal(plan.executionUnitIds.includes(unitID(a)),true)
   assert.equal(plan.executionUnitIds.includes(unitID(b)),false)
   a.status='completed';plan=planSchedulerAdmissions(snapshot(m),createSchedulerLifecycleState(m.identity.mission_id));assert.equal(plan.executionUnitIds.includes(unitID(b)),true)
+})
+
+
+test('unknown mutable write surfaces serialize before dispatch while read-only unknown surfaces may still fan out',()=>{
+  const m=mission('unknown-mutable-surface'),a=createTask(m,{objective:'unknown writer a',role:'coder',category:'standard',scope:[]}),b=createTask(m,{objective:'unknown writer b',role:'coder',category:'standard',scope:[]})
+  a.created_at=10;a.updated_at=10;b.created_at=20;b.updated_at=20
+  let plan=planSchedulerAdmissions(snapshot(m),createSchedulerLifecycleState(m.identity.mission_id))
+  assert.deepEqual(plan.executionUnitIds,[unitID(a)])
+  a.status='completed';plan=planSchedulerAdmissions(snapshot(m),createSchedulerLifecycleState(m.identity.mission_id));assert.equal(plan.executionUnitIds.includes(unitID(b)),true)
+
+  const readMission=mission('unknown-readonly-surface'),x=createTask(readMission,{objective:'read a',role:'repository-explorer',category:'quick',scope:[]}),y=createTask(readMission,{objective:'read b',role:'architect',category:'quick',scope:[]})
+  x.created_at=10;x.updated_at=10;y.created_at=20;y.updated_at=20
+  const readPlan=planSchedulerAdmissions(snapshot(readMission,{traits:{[unitID(x)]:{readOnly:true},[unitID(y)]:{readOnly:true}}}),createSchedulerLifecycleState(readMission.identity.mission_id))
+  assert.deepEqual(new Set(readPlan.executionUnitIds),new Set([unitID(x),unitID(y)]))
 })

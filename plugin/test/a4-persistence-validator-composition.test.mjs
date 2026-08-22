@@ -33,3 +33,14 @@ test('A4 each Mission slice validator fails closed independently',()=>{
   assert.equal(validateContextState({context_artifacts:[{id:3}]}),false)
   assert.equal(validateMethodologyState({methodology_needs:'bad',parent_loaded_methodologies:[]}),false)
 })
+
+
+test('A4 required implementation targets persist only as bounded project-relative implementation metadata',()=>{
+  const store=new MissionStore();store.start('a4-required-targets','Change src/a.ts and src/b.ts. Both are required.')
+  const m=store.applyInitialSemanticAssessment('a4-required-targets',{material:true,message_kind:'mission',task_kind:'implementation',scope:'multi-file',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:['src/a.ts','src/b.ts'],intent_signals:[],suppressed_intent_signals:[]})
+  assert.equal(validateMissionEnvelope(m),true)
+  const implementation=m.execution.obligations.find(o=>o.kind==='implementation');assert.ok(implementation);assert.deepEqual(implementation.requiredTargets,['src/a.ts','src/b.ts'])
+  const traversal=structuredClone(m);traversal.execution.obligations.find(o=>o.kind==='implementation').requiredTargets=['../outside.ts'];assert.equal(validateMissionEnvelope(traversal),false)
+  const absolute=structuredClone(m);absolute.execution.obligations.find(o=>o.kind==='implementation').requiredTargets=['/tmp/outside.ts'];assert.equal(validateMissionEnvelope(absolute),false)
+  const wrongKind=structuredClone(m);const verification=wrongKind.execution.obligations.find(o=>o.kind==='verification');verification.requiredTargets=['src/a.ts'];assert.equal(validateMissionEnvelope(wrongKind),false)
+})

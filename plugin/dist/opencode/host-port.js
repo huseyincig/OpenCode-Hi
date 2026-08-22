@@ -1,7 +1,7 @@
 import { normalizeModelCapabilityProfile } from '../contracts/model.js';
 import { detectOpenCodeCapabilities } from './capabilities.js';
 import { NativeOpenCodeAdapter } from './native-adapter.js';
-import { lastAssistantModel, lastAssistantText, lastAssistantUsage, listMessages, listProviders, sendSyntheticContinuation } from './client-adapter.js';
+import { lastAssistantError, lastAssistantModel, lastAssistantText, lastAssistantUsage, listAvailableModels, listMessages, listProviders, sendSyntheticContinuation } from './client-adapter.js';
 function providerModels(raw) {
     const edge = raw;
     const root = edge?.all ?? edge?.providers ?? edge ?? [];
@@ -30,6 +30,24 @@ function providerModels(raw) {
     }
     return out;
 }
+function availableModels(raw) {
+    const out = [];
+    for (const model of raw) {
+        if (model?.enabled !== true)
+            continue;
+        const provider = typeof model?.providerID === 'string' && model.providerID.trim() ? model.providerID.trim() : undefined;
+        const id = typeof model?.id === 'string' && model.id.trim() ? model.id.trim() : undefined;
+        if (!provider || !id)
+            continue;
+        const canonical = id.startsWith(`${provider}/`) ? id : `${provider}/${id}`;
+        const input = model?.capabilities?.input;
+        const visionCapable = Array.isArray(input) ? input.some((x) => String(x).toLowerCase() === 'image') : input?.image === true;
+        const variants = Array.isArray(model?.variants) ? model.variants.map((x) => typeof x === 'string' ? x : x?.id).filter((x) => typeof x === 'string' && x.trim()).map((x) => x.trim()) : [];
+        const tags = [typeof model?.family === 'string' ? model.family : undefined, typeof model?.status === 'string' ? model.status : undefined].filter((x) => Boolean(x && x.trim()));
+        out.push(normalizeModelCapabilityProfile({ id: canonical, provider, cost: 0, quality: 0, writeCapable: true, visionCapable, tags, variants }, 'runtime-inventory', `available-model:${canonical}`));
+    }
+    return out;
+}
 export function createHostPort(ctx) {
     const capabilities = detectOpenCodeCapabilities(ctx.client);
     const native = new NativeOpenCodeAdapter(ctx.client);
@@ -42,22 +60,29 @@ export function createHostPort(ctx) {
     const refreshRuntimeInventory = async (reason) => {
         if (inventoryRefresh)
             return inventoryRefresh;
-        inventoryRefresh = (async () => { try {
-            const raw = await listProviders(ctx.client);
-            models = providerModels(raw);
-            await log('info', 'Hi runtime inventory refreshed', { reason, models: models.length });
-            return models.length;
-        }
-        catch (error) {
-            await log('warn', 'Hi runtime inventory refresh failed', { reason, error: String(error) });
-            return models.length;
-        }
-        finally {
-            inventoryRefresh = undefined;
-        } })();
+        inventoryRefresh = (async () => {
+            try {
+                const scoped = await listAvailableModels({ serverUrl: ctx.serverUrl ? String(ctx.serverUrl) : undefined, directory: ctx.directory });
+                if (scoped !== undefined)
+                    models = availableModels(scoped);
+                else {
+                    const raw = await listProviders(ctx.client);
+                    models = providerModels(raw);
+                }
+                await log('info', 'Hi runtime inventory refreshed', { reason, models: models.length, source: scoped !== undefined ? 'directory-available-models' : 'connected-provider-catalog-fallback' });
+                return models.length;
+            }
+            catch (error) {
+                await log('warn', 'Hi runtime inventory refresh failed', { reason, error: String(error) });
+                return models.length;
+            }
+            finally {
+                inventoryRefresh = undefined;
+            }
+        })();
         return inventoryRefresh;
     };
-    const readAssistantResult = async (sessionID, limit = 12) => { const messages = await listMessages(ctx.client, sessionID, limit); return { text: lastAssistantText(messages), model: lastAssistantModel(messages), usage: lastAssistantUsage(messages) }; };
+    const readAssistantResult = async (sessionID, limit = 12) => { const messages = await listMessages(ctx.client, sessionID, limit); return { text: lastAssistantText(messages), model: lastAssistantModel(messages), usage: lastAssistantUsage(messages), error: lastAssistantError(messages) }; };
     const continueSession = (sessionID, text, metadata) => sendSyntheticContinuation(ctx.client, sessionID, text, metadata);
     return { capabilities, nativeSession: { diff: (sessionID) => native.diff(sessionID), revert: (sessionID, messageID) => native.revert(sessionID, messageID) }, log, refreshRuntimeInventory, getModels: () => models, readAssistantResult, continueSession };
 }

@@ -2,7 +2,7 @@ import { renderSemanticAssessmentGate } from '../runtime/intent/semantic-assessm
 import { buildMissionRuntimeProjection, renderMissionRuntimeProjection } from '../runtime/context/mission-runtime-projection.js';
 import { redactProviderContext } from '../runtime/privacy/boundary.js';
 import { appendLedger } from '../runtime/ledger/ledger.js';
-export function createSystemTransformHook(store, background, _projectRoot) { return async (input, output) => { if (isNativeHousekeeping(input, output))
+export function createSystemTransformHook(store, background, projectRoot) { return async (input, output) => { if (isNativeHousekeeping(input, output))
     return; const sid = input?.sessionID ?? input?.sessionId, child = sid && background ? background.list().find(w => w.session_id === sid) : undefined, m = child ? store.get(child.parent_session_id) : store.get(sid); if (!m || !Array.isArray(output?.system))
     return; if (!child && m.identity.status === 'completed') {
     const terminal = 'Hi MISSION COMPLETE: required evidence and obligations are closed. Stop; do not invoke more tools.';
@@ -19,7 +19,7 @@ export function createSystemTransformHook(store, background, _projectRoot) { ret
     output.system.push(gate);
     return;
 } if (child && ((child.parent_mission_id !== undefined && child.parent_mission_id !== m.identity.mission_id) || (child.generation_at_spawn !== undefined && child.generation_at_spawn !== m.continuation.generation)))
-    return; const worker = child ? m.execution.workers.find(w => w.id === child.id) : undefined, projection = buildMissionRuntimeProjection(m, worker), text = redactProviderContext(renderMissionRuntimeProjection(projection)).providerText; if (output.system.includes(text))
+    return; const worker = child ? m.execution.workers.find(w => w.id === child.id) : undefined, projection = buildMissionRuntimeProjection(m, worker, projectRoot), text = redactProviderContext(renderMissionRuntimeProjection(projection)).providerText; if (output.system.includes(text))
     return; if (output.system.some((x) => typeof x === 'string' && x.includes('Hi MISSION RUNTIME PROJECTION')))
     appendLedger(m, 'host.composition-collision', { task_id: worker?.task_id, worker_id: worker?.id, payload: { surface: 'system-transform', reason: 'hi-runtime-marker-without-canonical-projection' } }); output.system.push(text); }; }
 const NATIVE_HOUSEKEEPING_AGENTS = new Set(['title', 'summary', 'compaction']);

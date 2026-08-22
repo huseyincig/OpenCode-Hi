@@ -5,7 +5,7 @@ export interface ReadinessItem {
     status: ReadinessStatus;
     reason: string;
 }
-export declare function evaluatePreconditions(m: MissionState): {
+export declare function evaluatePreconditions(m: MissionState, projectRoot?: string): {
     ready: boolean;
     items: ReadinessItem[];
 };

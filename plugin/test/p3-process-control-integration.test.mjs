@@ -12,7 +12,7 @@ import {HI_CONTROL_TOOL_IDS,promptToolOverrides} from '../dist/runtime/routing/e
 
 const INITIAL={material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]}
 function assessed(store,id='parent') {const m=store.start(id,'opaque');store.applyInitialSemanticAssessment(id,INITIAL);return m}
-function state(){return{config:structuredClone(DEFAULT_HI_CONFIG),hostConfig:{},configResolution:undefined,openCodeVersion:'1.18.18'}}
+function state(){return{config:structuredClone(DEFAULT_HI_CONFIG),hostConfig:{},configResolution:undefined,openCodeVersion:'1.18.20'}}
 function scoped(){return{contextArtifacts:{}}}
 
 test('P3 parent surface exposes bounded process controls and child overrides disable every process control',()=>{
@@ -95,4 +95,32 @@ test('native-revert registration missing session-revert capability is terminal a
   assert.equal(first.status,'USER_ACTION_REQUIRED');assert.equal(first.blocker,'capability-unavailable:session-revert');assert.deepEqual(second,first)
   assert.equal(m.execution.blockers.filter(x=>x==='capability-unavailable:session-revert').length,1);assert.equal(m.execution.ledger.filter(e=>e.type==='capability.unavailable'&&e.payload?.capability==='session-revert').length,1)
   const decision=(await import('../dist/runtime/continuation/evaluator.js')).evaluateIdle(m);assert.equal(decision.decision,'USER_ACTION_REQUIRED');assert.equal(decision.reason_code,'capability-unavailable')
+})
+
+
+test('OpenCode compaction resets only context-sensitive parent recovery state',async()=>{
+  const store=new MissionStore(),m=assessed(store,'compact-parent'),saves=[]
+  const signature=m.continuation.last_progress_signature,obligationCount=m.execution.obligations.length
+  m.authority.pending_permissions=2;m.authority.pending_permission_ids=['p1','p2'];m.continuation.stagnation_count=3
+  m.continuation.recovery_history=[{fingerprint:'rg1:deadbeef',level:1,action:'same-worker-resume',progress_signature:signature,generation:m.continuation.generation,attempted_at:1,outcome:'started'}]
+  m.continuation.pending_nudge={id:'n1',reason:'stagnation-level-1',instruction:'old recovery instruction',created_at:1,generation:m.continuation.generation}
+  const services={store,background:{},persistence:{save:()=>saves.push('save')},tasks:{resolveChildCallback:()=>undefined},processRuntime:{},workspaceRuntime:undefined,eventSink:()=>{},scopedStores:{}}
+  const controller=new RuntimeEventController({state:state(),host:{refreshRuntimeInventory:async()=>{},log:async()=>{},getModels:()=>[]},services,projectAuthority:{grant:()=>{}},pendingNativePermissions:new Map(),projectRoot:'/repo'})
+  await controller.handle(normalizeOpenCodeEvent({type:'session.compacted',properties:{sessionID:'compact-parent'}}))
+  assert.equal(m.continuation.stagnation_count,0);assert.deepEqual(m.continuation.recovery_history,[]);assert.equal(m.continuation.pending_nudge,undefined)
+  assert.equal(m.continuation.last_progress_signature,signature);assert.equal(m.authority.pending_permissions,2);assert.deepEqual(m.authority.pending_permission_ids,['p1','p2']);assert.equal(m.execution.obligations.length,obligationCount)
+  const event=m.execution.ledger.findLast(e=>e.type==='session.compacted');assert.equal(event.payload.recovery_history_cleared,1);assert.equal(event.payload.semantic_progress_preserved,true);assert.ok(saves.length)
+})
+
+test('child compaction invalidates stale recovery replay history but preserves non-stagnation nudge and mission truth',async()=>{
+  const store=new MissionStore(),m=assessed(store,'compact-child-parent'),signature=m.continuation.last_progress_signature,saves=[]
+  const child={id:'w-compact',task_id:'t-compact',role:'coder',category:'standard',session_id:'child-compact',parent_session_id:'compact-child-parent',parent_mission_id:m.identity.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'busy',generation_at_spawn:m.continuation.generation}
+  m.execution.workers.push(child);m.continuation.stagnation_count=2;m.continuation.recovery_history=[{fingerprint:'rg1:cafebabe',level:2,action:'same-worker-resume',progress_signature:signature,generation:m.continuation.generation,attempted_at:2,outcome:'started'}]
+  m.continuation.pending_nudge={id:'n2',reason:'verification-pending',instruction:'keep verification nudge',created_at:2,generation:m.continuation.generation};m.execution.evidence.fresh=true
+  const services={store,background:{},persistence:{save:()=>saves.push('save')},tasks:{resolveChildCallback:sid=>sid==='child-compact'?child:undefined,childCallbackDisposition:()=> 'current'},processRuntime:{},workspaceRuntime:undefined,eventSink:()=>{},scopedStores:{}}
+  const controller=new RuntimeEventController({state:state(),host:{refreshRuntimeInventory:async()=>{},log:async()=>{},getModels:()=>[]},services,projectAuthority:{grant:()=>{}},pendingNativePermissions:new Map(),projectRoot:'/repo'})
+  await controller.handle(normalizeOpenCodeEvent({type:'session.compacted',properties:{sessionID:'child-compact'}}))
+  assert.equal(m.continuation.stagnation_count,0);assert.deepEqual(m.continuation.recovery_history,[]);assert.equal(m.continuation.pending_nudge.reason,'verification-pending')
+  assert.equal(m.continuation.last_progress_signature,signature);assert.equal(m.execution.evidence.fresh,true);assert.equal(child.status,'busy')
+  const event=m.execution.ledger.findLast(e=>e.type==='session.compacted');assert.equal(event.worker_id,'w-compact');assert.equal(event.payload.session_id,'child-compact');assert.equal(event.payload.stagnation_nudge_cleared,false);assert.ok(saves.length)
 })

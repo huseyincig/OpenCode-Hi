@@ -59,3 +59,9 @@ test('policy ablation must expose a bounded simulation/ablation claim boundary',
   const r=receipt({episode_kind:'POLICY_ABLATION',claim_boundary:'Policy ablation simulation only; not a real-host superiority claim.'});assert.equal(isComparativeBenchmarkReceipt(r),true)
   r.claim_boundary='Hi is better';assert.equal(isComparativeBenchmarkReceipt(r),false)
 })
+
+
+test('Phase 7 receipt vocabulary names unavailable-verifier and independent-review scenarios exactly',()=>{
+  const noRoute=receipt();noRoute.task.scenario_class='verification-route-unavailable';assert.equal(isComparativeBenchmarkReceipt(noRoute),true)
+  const review=receipt();review.task.scenario_class='independent-review-required';assert.equal(isComparativeBenchmarkReceipt(review),true)
+})

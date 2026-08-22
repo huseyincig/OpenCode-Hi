@@ -23,7 +23,10 @@ test('same recovery strategy cannot replay on unchanged semantic state and deter
   const first=recoveryPlan(m);assert.equal(first.action,'same-worker-resume');assert.equal(recoveryStrategyEligibility(m,first).allowed,true)
   recordRecoveryStrategy(m,first,'started',10)
   assert.equal(recoveryStrategyEligibility(m,first).allowed,false)
-  const next=recoveryPlan(m);assert.equal(next.level,2);assert.equal(next.action,'model-escalation')
+  const next=recoveryPlan(m);assert.equal(next.level,2);assert.equal(next.action,'same-worker-resume')
+  assert.notEqual(next.level,first.level)
+  assert.notEqual(recoveryStrategyEligibility(m,next).fingerprint,recoveryStrategyEligibility(m,first).fingerprint)
+  assert.match(next.prompt,/materially different corrective hypothesis or action/i)
 })
 
 test('material semantic delta permits the same recovery strategy again',()=>{

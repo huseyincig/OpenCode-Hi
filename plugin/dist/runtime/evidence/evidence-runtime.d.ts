@@ -1,4 +1,5 @@
 import type { EvidenceItem, MissionState } from '../mission/types.js';
+import type { EvidenceProducerAttempt, EvidenceSourceClass } from '../../contracts/evidence.js';
 import type { MissionEvidenceKind } from '../../contracts/evidence.js';
 export declare function shellMayMutate(command: string): boolean;
 export declare function verificationCommandKind(command: string): MissionEvidenceKind | undefined;
@@ -10,4 +11,13 @@ export declare function addEvidence(mission: MissionState, input: Omit<EvidenceI
     observed_at?: number;
 }): EvidenceItem;
 export declare function observeToolBefore(mission: MissionState, tool: string, args: any, projectRoot?: string): void;
-export declare function observeToolAfter(mission: MissionState, tool: string, args: any, output: any, projectRoot?: string): void;
+export interface ToolEvidenceOwner {
+    source: string;
+    trusted_source_class: EvidenceSourceClass;
+    source_session_id: string;
+    task_id: string;
+    obligation_ids: string[];
+    scope: string[];
+    producer_attempt: EvidenceProducerAttempt;
+}
+export declare function observeToolAfter(mission: MissionState, tool: string, args: any, output: any, projectRoot?: string, owner?: ToolEvidenceOwner): void;

@@ -105,7 +105,7 @@ export function methodologyExitCheck(m, name, input = {}) {
                 ok = hasEvidenceKind(m, task, ['targeted-tests']);
                 break;
             case 'fresh-verification':
-                ok = verificationSatisfied(m).ok;
+                ok = verificationSatisfied(m, undefined, input.projectRoot).ok;
                 break;
             case 'review-evidence':
                 ok = hasEvidenceKind(m, task, ['review-evidence'], input.obligationId);

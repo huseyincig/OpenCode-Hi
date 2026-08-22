@@ -29,7 +29,7 @@ export interface SemanticIntentAssessment{
   suppressed_intent_signals:HiMethodologySignalName[]
 }
 
-const PATH=/((?:[\w@.-]+\/[\w@./-]+|[\w@.-]+\.(?:tsx|jsx|json|scss|html|yaml|toml|sql|ts|js|py|go|rs|php|md|css|yml)))(?![\w.-])/gi
+const PATH=/((?:[\w@.-]+\/[\w@./-]+|[\w@.-]+\.(?:tsx|jsx|json|scss|html|yaml|toml|sql|ts|js|py|go|rs|php|md|txt|css|yml)))(?![\w.-])/gi
 const HTTP_TARGET=/^https?:\/\/[^\s]+$/i
 const TECHNICAL_VERIFIER_PATTERNS:ReadonlyArray<[SemanticVerificationKind,RegExp]>=[
   ['targeted-tests',/\b(?:(?:npm|pnpm|yarn|bun)\s+(?:(?:run\s+)?test(?:\b|:))|node\s+--test\b|(?:python(?:3)?\s+-m\s+)?pytest\b|vitest\b|jest\b|go\s+test\b|cargo\s+test\b|dotnet\s+test\b|mvnw?\s+[^`\n;]*\btest\b|(?:gradle|\.\/gradlew)\s+[^`\n;]*\btest\b)/i],
@@ -38,8 +38,32 @@ const TECHNICAL_VERIFIER_PATTERNS:ReadonlyArray<[SemanticVerificationKind,RegExp
   ['build',/\b(?:(?:npm|pnpm|yarn|bun)\s+(?:(?:run\s+)?build(?:\b|:))|cargo\s+check\b|go\s+build\b|dotnet\s+build\b)/i],
   ['changed-surface-sanity',/\b(?:npm|pnpm|yarn|bun)\s+(?:(?:run\s+)?check(?:\b|:))/i],
 ]
-export function technicalTargets(text:string):string[]{return[...text.matchAll(PATH)].map(m=>m[1]).filter(Boolean).slice(0,12)}
+function trimTerminalProseDots(value:string):string{let end=value.length;while(end>0&&value[end-1]==='.')end--;return value.slice(0,end)}
+export function technicalTargets(text:string):string[]{return[...text.matchAll(PATH)].map(m=>trimTerminalProseDots(m[1])).filter(Boolean).slice(0,12)}
 export function technicalVerificationKinds(text:string):SemanticVerificationKind[]{return TECHNICAL_VERIFIER_PATTERNS.filter(([,pattern])=>pattern.test(text)).map(([kind])=>kind)}
+export interface AdaptiveVerificationResolution{
+  assessment:SemanticIntentAssessment
+  explicitUserVerification:SemanticVerificationKind[]
+  ceilingApplied:boolean
+  policy:'explicit-user-verifier'|'minimum-sufficient-review'|'assessment'
+}
+/**
+ * Reconcile model-proposed verification with mechanically observable user intent.
+ * The host primary may recommend checks, but a bounded low/medium-risk read-only review
+ * does not inherit code-test/build ceremony unless the user named an executable verifier.
+ */
+export function resolveAdaptiveVerificationAssessment(assessment:SemanticIntentAssessment,userText:string):AdaptiveVerificationResolution{
+  const explicitUserVerification=technicalVerificationKinds(userText)
+  const boundedExplicit=explicitUserVerification.length>0&&assessment.scope==='local'&&['low','medium'].includes(assessment.risk)&&assessment.task_kind!=='release-readiness'
+  if(boundedExplicit)return{assessment:{...assessment,likely_verification:[...explicitUserVerification],user_verification:[...explicitUserVerification],verification_ceiling:true},explicitUserVerification,ceilingApplied:true,policy:'explicit-user-verifier'}
+  const boundedReview=assessment.task_kind==='review'&&assessment.scope==='local'&&['low','medium'].includes(assessment.risk)
+  if(boundedReview){
+    const surfaceSpecific=assessment.likely_verification.filter(kind=>kind==='visual-check')
+    const likelyVerification=[...new Set<SemanticVerificationKind>(['review-evidence',...surfaceSpecific])]
+    return{assessment:{...assessment,likely_verification:likelyVerification,user_verification:[],verification_ceiling:false},explicitUserVerification:[],ceilingApplied:false,policy:'minimum-sufficient-review'}
+  }
+  return{assessment,explicitUserVerification,ceilingApplied:false,policy:'assessment'}
+}
 export function semanticTargets(value:unknown,max=20):string[]{
   const out:string[]=[]
   for(const raw of stringList(value,max)){
@@ -52,6 +76,11 @@ export function semanticTargets(value:unknown,max=20):string[]{
 }
 function testLikeTarget(path:string):boolean{return /(^|\/)(?:test|tests|__tests__)(?:\/|$)|\.(?:test|spec)\.[^/]+$/i.test(path)}
 export function materialSemanticTargets(assessment:Pick<SemanticIntentAssessment,'likely_targets'|'likely_verification'|'intent_signals'>):string[]{const verificationOwnsTests=assessment.likely_verification.includes('targeted-tests')&&!assessment.intent_signals.includes('intent.tdd');return assessment.likely_targets.filter(path=>!(verificationOwnsTests&&testLikeTarget(path)))}
+export function userRequiredMaterialTargets(userText:string,assessment:Pick<SemanticIntentAssessment,'likely_targets'|'likely_verification'|'intent_signals'>):string[]{
+  const material=new Set(materialSemanticTargets(assessment).map(path=>normalizeBoundedProjectPath(path)).filter((path):path is string=>Boolean(path)))
+  const explicit=technicalTargets(userText).map(path=>normalizeBoundedProjectPath(path)).filter((path):path is string=>Boolean(path))
+  return[...new Set(explicit.filter(path=>material.has(path)))]
+}
 export function provisionalIntent(text:string,repo?:RepoContext):NormalizedMissionIntent{
   const objective=text.trim().replace(/\s+/g,' '),targets=technicalTargets(text),explicitVerification=technicalVerificationKinds(text)
   const avoid=['unnecessary-agents','unnecessary-skills','full-chat-child-context','unrequested-external-effects']
@@ -96,6 +125,9 @@ export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessm
     intent_signals:intentSignalList(v.intent_signals),suppressed_intent_signals:intentSignalList(v.suppressed_intent_signals),
   }
   const materialTargets=materialSemanticTargets(assessment),localSequential=assessment.scope==='local'&&assessment.dependency_class==='sequential',boundedSingleMaterialTarget=assessment.scope==='multi-file'&&assessment.ambiguity==='none'&&assessment.dependency_class==='sequential'&&materialTargets.length===1&&assessment.likely_verification.length>0&&!assessment.required_capabilities.some(cap=>['multi-stream-delegation','source-verification','dependency-change','design-exploration'].includes(cap))
+  const materialChange=['implementation','bug-fix','performance'].includes(assessment.task_kind),resolvedMultiFile=materialChange&&assessment.scope==='multi-file'&&assessment.ambiguity==='none',resolvedLocal=materialChange&&assessment.scope==='local'&&assessment.ambiguity==='none'
+  if(resolvedMultiFile&&materialTargets.length<2&&!boundedSingleMaterialTarget)throw new Error('multi-file ambiguity=none material change requires at least two material targets')
+  if(resolvedLocal&&materialTargets.length>1&&!assessment.intent_signals.includes('intent.tdd'))throw new Error('local ambiguity=none material change cannot declare multiple material targets')
   return localSequential||boundedSingleMaterialTarget?{...assessment,scope:'local',dependency_class:'independent'}:assessment
 }
 export function assessedIntent(current:NormalizedMissionIntent,assessment:SemanticIntentAssessment):NormalizedMissionIntent{

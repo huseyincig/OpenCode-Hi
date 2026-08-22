@@ -21,6 +21,14 @@ The block below is generator-owned. Do not hand-edit current release status, cur
 <!-- END GENERATED RELEASE STATUS -->
 
 
+## OpenCode upstream-version gate
+
+OpenCode publishes stable versions frequently, so the candidate keeps **two separate truths** instead of silently following `latest`: the exact SDK/plugin host target in `package.json`, and a read-only observation of the current stable upstream release. Run `npm run host:check-update` to compare the exact target with `opencode-ai`, `@opencode-ai/sdk`, and `@opencode-ai/plugin`, bind exact upstream tags, and classify the source delta. Run `npm run host:observe-update` when the observation should also be refreshed under `data/validation/`.
+
+A newer upstream version never promotes support automatically. Metadata/test/document-only deltas require no host re-certification; known capability-surface deltas select only the affected fresh-consumer/T3 boundaries; changes under an unclassified critical OpenCode source root require manual review. Registry skew between the CLI, SDK, and plugin fails closed. Release preflight also requires the exact candidate target to equal the current stable registry version before it performs the expensive canonical release checks.
+
+Exact host downloads are integrity-bound by `data/opencode-host-assets.json`, generated from an immutable official OpenCode GitHub release and tied to the exact package target/tag/source commit. This keeps platform SHA-256 data centralized while preserving exact-version T3 provenance.
+
 ## npm Trusted Publishing / OIDC boundary
 
 R1 adds a dedicated `.github/workflows/npm-publish.yml` executor for future npm releases. It is intentionally not a second release-state owner: Hi's canonical release-chain remains responsible for fresh pack identity/integrity and registry equality, while the GitHub workflow supplies the external OIDC execution path. The workflow is restricted to a non-prerelease GitHub `release.published` event in `huseyincig/OpenCode-Hi`, uses a GitHub-hosted Ubuntu runner, grants only `contents: read` plus job-scoped `id-token: write`, carries no npm write token secret, requires Node/npm versions compatible with npm Trusted Publishing, checks out the exact release tag, and fails closed unless that tag is annotated, resolves to checked-out HEAD, and exactly matches `VERSION`, root/runtime/lock package versions, and the canonical repository URL. A fresh `npm pack --dry-run --json` proof is captured before `npm publish`; publication is not accepted until `npm view` returns the same version, integrity and shasum and a fresh consumer can install/import the registry package.

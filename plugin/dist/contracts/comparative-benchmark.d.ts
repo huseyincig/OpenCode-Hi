@@ -2,7 +2,7 @@ import type { ExecutionTokenUsage } from './execution-usage.js';
 export declare const COMPARATIVE_BENCHMARK_SCHEMA: 1;
 export type BenchmarkSystemKind = 'VANILLA_OPENCODE' | 'OPENCODE_HI_BASELINE' | 'OPENCODE_HI_CURRENT' | 'EXTERNAL_BASELINE';
 export type BenchmarkEpisodeKind = 'DETERMINISTIC_FIXTURE' | 'REAL_HOST_EPISODE' | 'POLICY_ABLATION';
-export type BenchmarkScenarioClass = 'trivial-localized-work' | 'failing-test-fix' | 'independent-parallel-work' | 'dependency-fan-in' | 'mutable-surface-conflict' | 'misleading-done' | 'mutation-after-verification' | 'provider-child-failure' | 'restart-stale-callback' | 'authority-ambiguous-replay' | 'context-heavy-investigation' | 'plugin-config-coexistence' | 'production-commit-task';
+export type BenchmarkScenarioClass = 'trivial-localized-work' | 'failing-test-fix' | 'independent-parallel-work' | 'dependency-fan-in' | 'mutable-surface-conflict' | 'verification-route-unavailable' | 'independent-review-required' | 'misleading-done' | 'mutation-after-verification' | 'provider-child-failure' | 'restart-stale-callback' | 'authority-ambiguous-replay' | 'context-heavy-investigation' | 'plugin-config-coexistence' | 'production-commit-task';
 export type BenchmarkCheckStatus = 'PASS' | 'FAIL' | 'BLOCKED' | 'NOT_RUN';
 export type BenchmarkResultClassification = 'VERIFIED_SUCCESS' | 'VERIFIED_FAILURE' | 'BLOCKED_ENVIRONMENT' | 'BLOCKED_AUTHORITY' | 'TIMEOUT' | 'INVALID_RECEIPT';
 export interface BenchmarkSystemIdentity {

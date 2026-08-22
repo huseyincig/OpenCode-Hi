@@ -45,7 +45,7 @@ Canlı provider/model inventory ve runtime capability doğrulaması için yükle
 
 Direct Git/local loading source development ve CI compatibility için kullanılabilir; normal kullanıcı onboarding yolu değildir. Tekrarlanabilir acceptance için exact repository SHA/spec kullanın ve OpenCode'un plugin'i gerçekten yüklediğini doğrulayın.
 
-> OpenCode 1.18.19 model gerçeği: Hi structured provider inventory kullanır ve host `connected` provider kimliklerini sunuyorsa bunlarla kesiştirir. Bu host sürümünde model-level `disabled: true` picker filtresi yoktur; OpenCode tarafındaki model filtresi provider `whitelist` / `blacklist` üzerinden çalışır. Hi katalog fallback'i üretmez ve sekiz modelde kesmez. `visual-qa` yalnız host'un açıkça image-input capability verdiği modelle çalışır; text-only veya capability'si doğrulanmamış `host-default` kabul edilmez.
+> OpenCode 1.18.21 model gerçeği: Hi structured provider inventory kullanır ve host `connected` provider kimliklerini sunuyorsa bunlarla kesiştirir. Bu host sürümünde model-level `disabled: true` picker filtresi yoktur; OpenCode tarafındaki model filtresi provider `whitelist` / `blacklist` üzerinden çalışır. Hi katalog fallback'i üretmez ve sekiz modelde kesmez. `visual-qa` yalnız host'un açıkça image-input capability verdiği modelle çalışır; text-only veya capability'si doğrulanmamış `host-default` kabul edilmez.
 
 ## 1. Windows, Linux ve macOS ayar yolu
 
@@ -75,9 +75,9 @@ Ayar değişikliğinden sonra host hot-reload yapmıyorsa OpenCode'u yeniden ba�
 
 ## 2. Ayar dosyası zorunlu mu?
 
-Hayır. Hi elle yazılmış bir routing dosyası olmadan çalışabilir. İlk effective runtime model inventory geldiğinde yalnız gerçekten enabled/policy-allowed ve role-eligible modelleri alır; aynı canonical cost/quality scoring mantığıyla altı child role için tek seferlik başlangıç önerilerini hesaplar. Kod içinde sabit provider/model ID önerisi yoktur.
+Hayır. Hi elle yazılmış bir routing dosyası olmadan çalışabilir. Runtime'da OpenCode'un gerçekten bağlı/effective model inventory'sini provider/model policy ve hard role capability filtrelerinden geçirir. Explicit task model, sıralı `routing.roleModels` tercihi veya OpenCode agent modeli yoksa Hi canlı inventory üzerinden **ephemeral capability/variant önerisi** yapar. Kod içinde sabit provider/model ID önerisi yoktur; otomatik seçim proje tercihine yazılmaz ve cost/quality/feedback telemetrisi seçimi sessizce yeniden sıralamaz.
 
-Bu ilk seçimler hard lock değildir. `routing.json` oluşturulduktan sonra kullanıcı tercihi olarak düzenlenebilir; sonraki inventory refresh veya update geçerli mevcut role seçimlerini ezmez. `visual-qa` için ayrıca host tarafından doğrulanmış image-input capability gerekir.
+`visual-qa` için ayrıca host tarafından doğrulanmış image-input capability gerekir. Kalıcı role tercihi yalnız kullanıcı açıkça `hi_role_models` veya `roles/role-models --set` ile yazdığında oluşur.
 
 Proje dosyasının envelope'u:
 
@@ -202,15 +202,15 @@ visual-qa
 
 Bunun dışındaki role key'lerini model map'e koymayın.
 
-### `models.mode`
+### Legacy model-mode alanları
 
-- `adaptive`: normal Hi scoring/routing.
-- `fixed`: `models.default` bütün Hi child task'lar için tercih edilen model olur.
-- `role-mapped`: `models.roles` ile child role başına tek tercih modeli verilir.
+`models.mode`, `models.default`, `models.roles`, `routing.strategy` ve `routing.categoryModels` `0.2.4` içinde eski proje dosyaları okunabilsin diye parse edilir; fakat **yalnız compatibility diagnostic** alanlarıdır ve model seçimini yönetmez.
+
+Kalıcı Hi child tercihi için `routing.roleModels` / `routing.roleVariants`; host-owned agent modeli için OpenCode agent ayarı; executable daraltma için `routing.allowedProviders` / `routing.deniedModels` kullanın.
 
 ### `routing.roleModels`
 
-Child role başına sıralı model aday/fallback listesi verir.
+Child role başına authoritative sıralı model aday/fallback listesi verir.
 
 ```json
 {
@@ -229,59 +229,47 @@ Child role başına sıralı model aday/fallback listesi verir.
 }
 ```
 
-Liste bir routing prior'dır; hard security allowlist değildir. Runtime availability, provider policy ve yeterli empirical feedback sonucu eligible candidate sıralaması değişebilir.
+Liste explicit kullanıcı tercihidir: hard eligibility filtrelerinden sonra sırası korunur. Unavailable/policy-rejected entry atlanabilir fakat cost/quality/feedback telemetrisi kalan adayları rerank etmez ve Hi listeye kullanıcı tarafından yazılmamış otomatik fallback eklemez. Hiç eligible aday kalmazsa seçim fail-closed olur.
 
 ## 8. Bütün Hi child'larda tek model
+
+Aynı explicit modeli her child role için `routing.roleModels` altında yazın:
 
 ```json
 {
   "schema": 1,
   "type": "hi-routing",
-  "models": {
-    "mode": "fixed",
-    "default": "provider/model-x"
-  },
   "routing": {
+    "roleModels": {
+      "coder": ["provider/model-x"],
+      "architect": ["provider/model-x"],
+      "repository-explorer": ["provider/model-x"],
+      "qa-reviewer": ["provider/model-x"],
+      "security-reviewer": ["provider/model-x"],
+      "visual-qa": ["provider/model-x"]
+    },
     "maxFallbacks": 0
   }
 }
 ```
 
-Bu yalnız Hi child task modelini tercih eder. Primary session modelini değiştirmez.
-
-`maxFallbacks: 0` fallback listesini kaldırır fakat **hard model whitelist oluşturmaz**. Current Hi'de genel `allowedModels` whitelist alanı yoktur.
+Bu yalnız Hi child seçimlerini etkiler; primary session modelini değiştirmez. `visual-qa` için modelin image-input capability'si yine zorunludur. Bir role ait explicit listede eligible model kalmazsa Hi başka model uydurmaz, fail-closed olur.
 
 ## 9. Aynı model primary + bütün child'larda
 
-İki ownership katmanında aynı model ID'yi yazın.
+İki ownership katmanında aynı model ID'yi açıkça yazın.
 
-`opencode.json`:
+`opencode.json` primary modeli OpenCode'a verir:
 
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["opencode-hi@0.2.2"],
+  "plugin": ["opencode-hi@0.2.4"],
   "model": "provider/model-x"
 }
 ```
 
-`.opencode/hi/policy/routing.json`:
-
-```json
-{
-  "schema": 1,
-  "type": "hi-routing",
-  "models": {
-    "mode": "fixed",
-    "default": "provider/model-x"
-  },
-  "routing": {
-    "maxFallbacks": 0
-  }
-}
-```
-
-OpenCode primary modeli; Hi ise child modeli yönetir.
+Hi child'lar için `.opencode/hi/policy/routing.json` içinde aynı `routing.roleModels` listesini kullanın. OpenCode primary modeli; Hi yalnız child-role tercihlerini yönetir.
 
 ## 10. Her child role ayrı tek model
 
@@ -289,21 +277,20 @@ OpenCode primary modeli; Hi ise child modeli yönetir.
 {
   "schema": 1,
   "type": "hi-routing",
-  "models": {
-    "mode": "role-mapped",
-    "roles": {
-      "coder": "provider/model-code",
-      "architect": "provider/model-reasoning",
-      "repository-explorer": "provider/model-fast",
-      "qa-reviewer": "provider/model-review",
-      "security-reviewer": "provider/model-security",
-      "visual-qa": "provider/model-vision"
+  "routing": {
+    "roleModels": {
+      "coder": ["provider/model-code"],
+      "architect": ["provider/model-reasoning"],
+      "repository-explorer": ["provider/model-fast"],
+      "qa-reviewer": ["provider/model-review"],
+      "security-reviewer": ["provider/model-security"],
+      "visual-qa": ["provider/model-vision"]
     }
   }
 }
 ```
 
-Eksik child role normal routing'e düşer.
+Explicit mapping olmayan child role, OpenCode agent modeli varsa onu kullanır; yoksa live inventory üzerinden ephemeral capability/variant önerisine düşer.
 
 ## 11. Role başına çoklu model/fallback
 
@@ -425,15 +412,11 @@ Variant ancak model runtime inventory'sinde gerçekten mevcutsa seçilir.
 }
 ```
 
-## 16. Routing strategy
+## 16. Legacy routing strategy compatibility
 
-`routing.strategy`:
+`routing.strategy` `0.2.4` içinde eski proje dosyaları okunabilsin diye parse edilir ancak **diagnostic-only**'dir; model seçimini kontrol etmez. Normal otomatik seçim live inventory üzerinde capability/variant odaklı ve ephemeral'dır. Explicit task model, sıralı Hi role mapping ve explicit OpenCode agent modeli daha yüksek ownership'e sahiptir.
 
-- `cost-quality`: default; kalite ile expected completion cost arasında denge.
-- `quality`: quality ağırlıklı.
-- `cost`: expected completion cost ağırlıklı.
-
-Bu cost provider faturası değildir; Hi/OpenCode-derived routing heuristic'tir.
+Cost/quality ölçümleri evaluation/telemetry için tutulabilir fakat kullanıcı tercihlerini veya otomatik öneriyi sessizce yeniden sıralayamaz.
 
 ## 17. Provider ve model sınırları
 
@@ -801,8 +784,8 @@ Olası sebepler:
 - denylist'te
 - OpenCode native provider policy reddediyor
 - write-capable route için model uygun değil
-- explicit task model daha güçlü precedence
-- admitted feedback normal routing'i rerank ediyor
+- explicit task model, explicit sıralı role mapping veya OpenCode agent modeli otomatik öneriden önce ownership alıyor
+- explicit role mapping'de kalan hiçbir candidate live/policy-eligible değilse Hi unconfigured model eklemeden fail-closed oluyor
 
 ### `parallel.max=8` ama tek worker var
 
@@ -839,11 +822,11 @@ Aşağıdaki tablo `data/hi-config-options.json` kaynağından generated edilir.
 | `execution.topology` | runtime | `adaptive` | constraint |
 | `execution.maxAgents` | runtime | `4` | capacity |
 | `execution.parallelism` | runtime | `2` | capacity |
-| `models.mode` | runtime | `adaptive` | preference |
-| `models.default` | runtime | `auto` | preference |
-| `models.roles` | runtime | `{}` | preference |
-| `routing.strategy` | runtime | `cost-quality` | preference |
-| `routing.categoryModels` | runtime | `{}` | preference |
+| `models.mode` | diagnostic | `adaptive` | preference |
+| `models.default` | diagnostic | `auto` | preference |
+| `models.roles` | diagnostic | `{}` | preference |
+| `routing.strategy` | diagnostic | `cost-quality` | preference |
+| `routing.categoryModels` | diagnostic | `{}` | preference |
 | `routing.categoryVariants` | runtime | `{}` | preference |
 | `routing.roleModels` | runtime | `{}` | preference |
 | `routing.roleVariants` | runtime | `{}` | preference |

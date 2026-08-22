@@ -13,7 +13,7 @@ function baseClient(created=[],prompts=[]){
   return {session:{
     create:async req=>{const id=`child-${++n}`;created.push({id,req});return {data:{id}}},
     promptAsync:async req=>{prompts.push(req);return {data:{}}},
-    abort:async()=>({data:{}}),diff:async()=>({data:[]}),
+    abort:async()=>({data:true}),diff:async()=>({data:[]}),
   }}
 }
 
@@ -61,12 +61,12 @@ test('fallback reason persists on worker lifecycle for dispatch and runtime fall
   assert.equal(w.projected_model_variant,'low')
   assert.equal(w.fallback_history.length,1)
   assert.equal(w.fallback_history[0].phase,'dispatch')
-  assert.match(w.fallback_history[0].reason,/role-configured alternative/)
+  assert.match(w.fallback_history[0].reason,/explicit role-mapping order/)
   assert.ok(t.execution_profile.fallback_reasons.some(x=>x.model==='p/fallback'))
 
   // Re-arm the same worker with a primary->fallback runtime chain and prove the reason survives.
   w.model='p/primary';w.model_variant='medium';w.fallbacks=['p/fallback'];w.session_id='child-fallback';w.status='busy';w.fallback_history=[]
-  assert.equal(await runtime.recoverRuntimeFailure(m,w.id,'429 provider rate limit'),true)
+  assert.equal((await runtime.settleHostIdleRuntimeError(m,w,{name:'APIError',message:'429 provider rate limit',isRetryable:true,statusCode:429})).wakeResult,'RUNTIME_FALLBACK')
   assert.equal(w.model,'p/fallback')
   assert.equal(w.projected_model,'p/fallback')
   assert.equal(w.projected_model_variant,'low')

@@ -8,18 +8,18 @@ function upsert(m, id, kind, summary, status, reason) { const now = Date.now(); 
 }
 else
     m.execution.gates.push({ id, kind, summary, status, reason, updated_at: now }); }
-export function syncMissionGates(m) {
+export function syncMissionGates(m, projectRoot, claims) {
     m.execution.gates ??= [];
     const semanticPending = m.identity.semantic_assessment?.status !== 'assessed';
     upsert(m, 'gate-semantic-assessment', 'precondition', 'Natural-language intent must be normalized into the host-agnostic Hi semantic contract before execution', semanticPending ? 'blocked' : 'closed', semanticPending ? 'semantic-assessment-pending' : undefined);
     const authorityOpen = m.execution.obligations.some(o => o.kind === 'authority' && o.status !== 'closed') || Boolean(m.authority.authority?.pending || m.authority.authority?.executing);
     upsert(m, 'gate-authority', 'user-authority', 'Privileged external effect requires exact authority and confirmed completion', authorityOpen ? (m.authority.authority?.approved ? 'ready' : 'blocked') : 'closed', authorityOpen ? 'authority-open' : undefined);
-    const verificationObligations = m.execution.obligations.filter(o => o.kind === 'verification'), verifyOpen = verificationObligations.some(o => o.status !== 'closed'), verify = verificationClaimsSatisfied(m);
+    const verificationObligations = m.execution.obligations.filter(o => o.kind === 'verification'), verifyOpen = verificationObligations.some(o => o.status !== 'closed'), verify = claims?.verification ?? verificationClaimsSatisfied(m, projectRoot);
     upsert(m, 'gate-verification', 'verification', 'Required verification evidence must be fresh and policy-complete', verificationObligations.length ? (verify.ok ? (verifyOpen ? 'ready' : 'closed') : 'open') : 'closed', verificationObligations.length && !verify.ok ? verify.missing.join(',') : undefined);
     const ambiguity = m.identity.intent.ambiguity === 'contract-critical' && m.execution.obligations.some(o => o.kind === 'implementation' && o.status === 'open');
     upsert(m, 'gate-contract-ambiguity', 'precondition', 'Contract-critical ambiguity must be resolved from repo/evidence before implementation', ambiguity ? 'blocked' : 'closed', ambiguity ? 'contract-critical-ambiguity' : undefined);
-    const reviewObligations = m.execution.obligations.filter(o => o.kind === 'review'), hasReview = reviewObligations.length > 0 || m.execution.verification_policy.requireReview, reviewOpen = reviewObligations.some(o => o.status !== 'closed'), review = reviewClaimsSatisfied(m);
-    upsert(m, 'gate-reviewer', 'reviewer', 'Required independent review must be completed', hasReview ? (review.ok ? (reviewOpen ? 'ready' : 'closed') : 'open') : 'closed', hasReview && !review.ok ? `review-claims:${review.missing.join(',')}` : undefined);
+    const reviewRequired = m.execution.verification_policy.requireReview, reviewObligations = m.execution.obligations.filter(o => o.kind === 'review'), reviewOpen = reviewObligations.some(o => o.status !== 'closed'), review = claims?.review ?? reviewClaimsSatisfied(m, projectRoot);
+    upsert(m, 'gate-reviewer', 'reviewer', 'Required independent review must be completed', reviewRequired ? (review.ok ? (reviewOpen ? 'ready' : 'closed') : 'open') : 'closed', reviewRequired && !review.ok ? `review-claims:${review.missing.join(',')}` : undefined);
     const prereq = m.execution.tasks.filter(t => t.dependencies.some(id => m.execution.tasks.find(x => x.id === id)?.status !== 'completed') && !['completed', 'failed', 'cancelled'].includes(t.status));
     upsert(m, 'gate-prerequisites', 'prerequisite-task', 'Task prerequisites must complete before dependent worker dispatch', prereq.length ? 'open' : 'closed', prereq.length ? `waiting:${prereq.map(t => t.id).join(',')}` : undefined);
     const rollbackOpen = (m.vcs.temporary_mutations ?? []).some(x => x.status === 'active' || x.status === 'failed');

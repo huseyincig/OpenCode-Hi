@@ -57,11 +57,42 @@ function permissionCompatible(actual, expected, path = []) {
     }
     return true;
 }
+function validAgentModel(value) { if (typeof value !== 'string')
+    return false; const model = value.trim(), slash = model.indexOf('/'); return slash > 0 && slash < model.length - 1; }
+function validAgentVariant(value) { return typeof value === 'string' && value.trim().length > 0; }
+const HOST_ROUTING_METADATA = new Set(['model', 'variant']);
+const HARMLESS_AGENT_METADATA = new Set(['description', 'hidden', 'color']);
+function emptyRecord(value) { const r = record(value); return Boolean(r) && Object.keys(r).length === 0; }
+function routingOnlyHostOverride(actual) {
+    const a = record(actual);
+    if (!a || !validAgentModel(a.model))
+        return undefined;
+    for (const key of Object.keys(a)) {
+        if (HOST_ROUTING_METADATA.has(key) || HARMLESS_AGENT_METADATA.has(key))
+            continue;
+        if ((key === 'permission' || key === 'options') && emptyRecord(a[key]))
+            continue;
+        return undefined;
+    }
+    if (a.variant !== undefined && !validAgentVariant(a.variant))
+        return undefined;
+    return a;
+}
+function mergeRoutingOnlyHostOverride(actual, expected) {
+    const e = record(expected);
+    if (!e)
+        throw new Error('Canonical Hi agent definition is not an object');
+    const merged = structuredClone(e);
+    for (const key of [...HARMLESS_AGENT_METADATA, ...HOST_ROUTING_METADATA])
+        if (actual[key] !== undefined)
+            merged[key] = structuredClone(actual[key]);
+    return merged;
+}
 /**
  * Compatibility check for a pre-existing host agent occupying a canonical Hi name.
- * Hi execution-critical semantics remain fixed, while harmless display metadata and
- * permission narrowings are allowed. Permission widening or host-level model/tool
- * constraints are collisions because they can invalidate Hi routing/authority semantics.
+ * Hi execution-critical semantics remain fixed. Harmless display metadata, permission
+ * narrowings, and OpenCode-owned model/variant routing metadata are allowed. Foreign
+ * prompt/tool/disable/options semantics or permission widening remain collisions.
  */
 export function matchesHiOpenCodeAgent(actual, expected) {
     const a = record(actual), e = record(expected);
@@ -83,26 +114,45 @@ export function matchesHiOpenCodeAgent(actual, expected) {
         if (!same(a[key], value))
             return false;
     }
-    const harmless = new Set(['description', 'hidden', 'color']);
     for (const key of Object.keys(a)) {
-        if (key in e || harmless.has(key))
+        if (key in e || HARMLESS_AGENT_METADATA.has(key))
             continue;
-        // Agent-level routing/tool/disable/options changes are not treated as metadata.
+        if (key === 'model') {
+            if (!validAgentModel(a[key]))
+                return false;
+            continue;
+        }
+        if (key === 'variant') {
+            if (!validAgentVariant(a[key]))
+                return false;
+            continue;
+        }
         return false;
     }
     return true;
 }
 export function projectHiOpenCodeAgents(hostConfig, packaged) {
-    const existing = record(hostConfig.agent), agents = existing ?? {}, collisions = [], inserted = [], compatibleExisting = [];
+    const existing = record(hostConfig.agent), agents = existing ?? {}, collisions = [], inserted = [], compatibleExisting = [], routingMerges = new Map();
     for (const [name, definition] of Object.entries(packaged))
         if (agents[name] !== undefined) {
             if (matchesHiOpenCodeAgent(agents[name], definition))
                 compatibleExisting.push(name);
-            else
-                collisions.push(name);
+            else {
+                const override = routingOnlyHostOverride(agents[name]);
+                if (override) {
+                    routingMerges.set(name, mergeRoutingOnlyHostOverride(override, definition));
+                    compatibleExisting.push(name);
+                }
+                else
+                    collisions.push(name);
+            }
         }
     if (collisions.length)
         return { collisions: collisions.sort(), inserted: [], compatibleExisting: compatibleExisting.sort() };
+    for (const [name, merged] of routingMerges) {
+        agents[name] = merged;
+        HI_INJECTED_AGENTS.add(merged);
+    }
     for (const [name, definition] of Object.entries(packaged))
         if (agents[name] === undefined) {
             agents[name] = structuredClone(definition);
@@ -110,7 +160,7 @@ export function projectHiOpenCodeAgents(hostConfig, packaged) {
                 HI_INJECTED_AGENTS.add(agents[name]);
             inserted.push(name);
         }
-    if (!existing && inserted.length)
+    if (!existing && (inserted.length || routingMerges.size))
         hostConfig.agent = agents;
     return { collisions: [], inserted: inserted.sort(), compatibleExisting: compatibleExisting.sort() };
 }

@@ -71,7 +71,7 @@ export function methodologyExitCheck(m:MissionState,name:string,input:{task?:Mis
       case'accessibility-evidence':ok=hasEvidenceKind(m,task,['accessibility-evidence']);break
       case'source-provenance-evidence':ok=hasEvidenceKind(m,task,['source-provenance-evidence']);break
       case'targeted-test-evidence':ok=hasEvidenceKind(m,task,['targeted-tests']);break
-      case'fresh-verification':ok=verificationSatisfied(m).ok;break
+      case'fresh-verification':ok=verificationSatisfied(m,undefined,input.projectRoot).ok;break
       case'review-evidence':ok=hasEvidenceKind(m,task,['review-evidence'],input.obligationId);break
       case'release-evidence':ok=releaseEvidence(m);break
       case'methodology-admission':ok=methodologyAdmissionEvidence(task,input.projectRoot,result);break

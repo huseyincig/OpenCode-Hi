@@ -28,7 +28,6 @@ export class BackgroundRegistry {
                 finish(true);
         });
     }
-    pendingFor(parent) { return this.list().filter(w => w.parent_session_id === parent && ['created', 'queued', 'starting', 'busy'].includes(w.status)); }
     async dedupeSpawn(fingerprint, spawn) {
         const existing = this.#spawn.get(fingerprint);
         if (existing)

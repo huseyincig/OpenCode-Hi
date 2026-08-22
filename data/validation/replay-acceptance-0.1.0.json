@@ -5,8 +5,8 @@
   "section": 33,
   "status": "PASS",
   "source_binding": {
-    "tested_git_commit": "03a816f930e3172ec84f733bae081768e2ea1a14",
-    "tested_git_tree": "705f5832a7673cd1eafce87a3fa3dee6aebbff74"
+    "tested_git_commit": "c3bc16ae42ecb06ded7ecb187794e56cb0a2e83d",
+    "tested_git_tree": "30128a37406974116f52ca087658bf3ed376d4e2"
   },
   "inputs": {
     "data/validation/replay-corpus.json": "a41d2de33a4aad392f2a3b554cbb3bd3ab8deb63973ce63b9f6c1d2857973033",
@@ -15,7 +15,7 @@
   "owner_hashes": {
     "plugin/src/runtime/routing/category.ts": "42aa9fa2d6a12a71c353b6d1f5852bfb474309ee9a44647138da9cb89235a088",
     "plugin/src/runtime/routing/execution-mode.ts": "fd8fe07e960ec2e148d5b8935ad34e0efcecb290a6e819eb6581e03f92f62f51",
-    "plugin/src/runtime/routing/minimum-team.ts": "1c6aa8f3eea64e6c22f3f4c88616e3bba7ea90e1979686ee5c5aee6b93a45649",
+    "plugin/src/runtime/routing/minimum-team.ts": "08f40b0bd9dc5a9f044b53bacccad68118dc61791f2645ca7bf910f7742a643e",
     "plugin/src/runtime/execution/topology-policy.ts": "7d5fdb628c9ef4ba96be5bf6de876f291e28775bd47e2ea5438a0c57680b4ffe",
     "plugin/src/runtime/verification/policy.ts": "68a5068adfeb60ebd19832e4def06caf1e0392802d278c789669c68ed7be8fb0",
     "plugin/src/runtime/scheduler/concurrency.ts": "2f462e70c8701a5896b8986eccaa3a617a9de7d1c0cff6f0c4ed5c2bd1fe6a7f",

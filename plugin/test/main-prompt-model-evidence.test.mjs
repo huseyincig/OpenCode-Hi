@@ -22,8 +22,8 @@ test('role primary missing does not claim recommended fast path; configured live
   const cfg=resolveHiConfig({routing:{roleModels:{coder:['p/missing','p/live']}}})
   const r=resolveModel('standard',inventory,cfg,undefined,'coder',{})
   assert.equal(r.primary,'p/live')
-  assert.ok(r.reason.some(x=>x.includes('role-primary-unavailable-or-policy-rejected:p/missing')))
-  assert.ok(!r.reason.some(x=>x.includes('configured-role-prior-fast-path')))
+  assert.ok(r.reason.some(x=>x.includes('role-mapped-model-unavailable-or-policy-rejected:p/missing')))
+  assert.ok(r.reason.includes('explicit ordered role mapping:coder'))
 })
 
 test('dispatch revalidates provider policy and skips a provider denied after initial role resolution',async()=>{
@@ -46,13 +46,13 @@ test('dispatch revalidates provider policy and skips a provider denied after ini
 test('runtime provider fallback revalidates current model policy before sending the fallback prompt',async()=>{
   const calls=[]
   let cfg=resolveHiConfig({})
-  const client={session:{promptAsync:async req=>{calls.push(req)},abort:async()=>{},create:async()=>({data:{id:'recovery-child'}}),diff:async()=>({data:[]})}}
+  const client={session:{promptAsync:async req=>{calls.push(req)},abort:async()=>({data:true}),create:async()=>({data:{id:'recovery-child'}}),diff:async()=>({data:[]})}}
   const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:3,providers:{},models:{}})),process.cwd(),process.cwd(),()=>cfg,()=>[{id:'p/f1',provider:'p'},{id:'q/f2',provider:'q'}],()=>({}))
   const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'s','opaque fallback task')
   m.execution.tasks.push({id:'t',objective:'x',status:'running',role:'coder',category:'standard',scope:[],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],worker_id:'w',created_at:Date.now(),updated_at:Date.now()})
   m.execution.workers.push({id:'w',task_id:'t',role:'coder',category:'standard',session_id:'child',parent_session_id:'s',parent_mission_id:m.identity.mission_id,model:'p/primary',fallbacks:['p/f1','q/f2'],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'busy',generation_at_spawn:m.continuation.generation})
   cfg=resolveHiConfig({routing:{allowedProviders:['q']}})
-  assert.equal(await runtime.recoverRuntimeFailure(m,'w','429 provider rate limit'),true)
+  assert.equal((await runtime.settleHostIdleRuntimeError(m,m.execution.workers[0],{name:'APIError',message:'429 provider rate limit',isRetryable:true,statusCode:429})).wakeResult,'RUNTIME_FALLBACK')
   assert.equal(m.execution.workers[0].model,'q/f2')
   assert.equal(m.execution.workers[0].session_id,'recovery-child')
   assert.deepEqual(m.execution.workers[0].loaded_methodologies,[])
@@ -64,7 +64,7 @@ async function pluginScenario(observedModel,includeModelMetadata=true){
   const dir=mkdtempSync(join(tmpdir(),'hi-effective-model-'))
   const result={status:'DONE',summary:'done',changed_files:[],evidence:[],open_issues:[],needs_context:[]}
   const client={app:{log:async()=>{}},provider:{list:async()=>({data:[{id:'p',models:[{id:'expected',write:true},{id:'other',write:true}]}]})},session:{
-    create:async()=>({data:{id:'child-model'}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:{}}),diff:async()=>({data:[]}),
+    create:async()=>({data:{id:'child-model'}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:{}}),status:async()=>({data:{}}),diff:async()=>({data:[]}),
     messages:async()=>({data:[{info:{id:'msg1',role:'assistant',...(includeModelMetadata?{providerID:'p',modelID:observedModel}:{})},parts:[{type:'text',text:JSON.stringify(result)}]}]}),
   }}
   const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client});await hooks.config({});await hooks['chat.message']({sessionID:'parent',message:{role:'user',parts:[{type:'text',text:'fix it'}]}},{parts:[]});await assessPluginMission(hooks,'parent')
@@ -109,7 +109,7 @@ test('pre-assistant child idle is ignored until native assistant model evidence 
   const result={status:'DONE',summary:'done',changed_files:[],evidence:[],open_issues:[],needs_context:[]}
   let messageReads=0
   const client={app:{log:async()=>{}},provider:{list:async()=>({data:[{id:'p',models:[{id:'expected',write:true}]}]})},session:{
-    create:async()=>({data:{id:'child-race'}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:{}}),diff:async()=>({data:[]}),
+    create:async()=>({data:{id:'child-race'}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:{}}),status:async()=>({data:{}}),diff:async()=>({data:[]}),
     messages:async()=>({data:++messageReads===1
       ?[{info:{id:'u1',role:'user'},parts:[{type:'text',text:'handoff'}]}]
       :[{info:{id:'u1',role:'user'},parts:[{type:'text',text:'handoff'}]},{info:{id:'a1',role:'assistant',providerID:'p',modelID:'expected'},parts:[{type:'text',text:JSON.stringify(result)}]}]}),

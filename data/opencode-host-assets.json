@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "kind": "OPENCODE_EXACT_HOST_ASSET_MANIFEST",
+  "version": "1.18.21",
+  "tag": "v1.18.21",
+  "source_commit": "826d9ad46a22bef0294998e08daa3c4904fea28f",
+  "release_immutable": true,
+  "published_at": "2026-08-21T14:51:11Z",
+  "assets": {
+    "linux-x64": {
+      "name": "opencode-linux-x64.tar.gz",
+      "sha256": "d910c3ed7613bb5791a328904615d41cc25b7d3a6b470e3199ab0426a995b38a",
+      "size": 60498987,
+      "url": "https://github.com/anomalyco/opencode/releases/download/v1.18.21/opencode-linux-x64.tar.gz"
+    },
+    "linux-arm64": {
+      "name": "opencode-linux-arm64.tar.gz",
+      "sha256": "d30d2cba74617f4e7b96e25563c9572ffe453f9eae70fc0df16286813537ee72",
+      "size": 60312400,
+      "url": "https://github.com/anomalyco/opencode/releases/download/v1.18.21/opencode-linux-arm64.tar.gz"
+    },
+    "windows-x64": {
+      "name": "opencode-windows-x64.zip",
+      "sha256": "f8cc5477f478fa129ece99b550d508363ceff612f99d859042e526b13b951542",
+      "size": 60622013,
+      "url": "https://github.com/anomalyco/opencode/releases/download/v1.18.21/opencode-windows-x64.zip"
+    },
+    "windows-arm64": {
+      "name": "opencode-windows-arm64.zip",
+      "sha256": "f0470c160152ee23175d3e489018a927e8eedc7de7832f71654b2bede1807637",
+      "size": 58781343,
+      "url": "https://github.com/anomalyco/opencode/releases/download/v1.18.21/opencode-windows-arm64.zip"
+    }
+  },
+  "claim_boundary": "Committed integrity metadata for exact OpenCode host acceptance. A newer upstream release never rewrites this target automatically."
+}

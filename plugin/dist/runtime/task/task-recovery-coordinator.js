@@ -1,5 +1,4 @@
-import { resolveModel, runtimeModelCandidateStatus } from '../routing/model-resolver.js';
-import { deriveMissionModelFeedback } from '../routing/model-feedback.js';
+import { runtimeModelCandidateStatus } from '../routing/model-resolver.js';
 import { classifyWorkerFailure } from '../worker/failure-classifier.js';
 import { methodologyCatalog } from '../methodology/catalog.js';
 import { ownershipContract } from '../skills/methodology.js';
@@ -24,8 +23,7 @@ export class TaskRecoveryCoordinator {
     child;
     drainQueueCallback;
     workspaceBinding;
-    callbackDisposition(m, worker) { if (worker.restart_reconcile_pending)
-        return 'restart-reconcile-pending'; if ((worker.parent_mission_id !== undefined && worker.parent_mission_id !== m.identity.mission_id) || (worker.generation_at_spawn !== undefined && worker.generation_at_spawn !== m.continuation.generation))
+    callbackDisposition(m, worker) { if ((worker.parent_mission_id !== undefined && worker.parent_mission_id !== m.identity.mission_id) || (worker.generation_at_spawn !== undefined && worker.generation_at_spawn !== m.continuation.generation))
         return 'stale-mission'; return 'accept'; }
     constructor(scheduler, registry, projectRoot, getConfig, getModels, getHostConfig, events, child, drainQueueCallback, workspaceBinding) {
         this.scheduler = scheduler;
@@ -57,18 +55,7 @@ export class TaskRecoveryCoordinator {
             appendLedger(m, 'worker.recovery.workspace-blocked', { task_id: task.id, worker_id: worker.id, payload: { error: String(error) } });
             return false;
         }
-        let model = worker.model, variant = worker.model_variant, action = 'same-worker-resume';
-        if (level === 2) {
-            const stronger = { quick: 'standard', standard: 'deep', visual: 'deep', deep: 'critical', critical: 'critical' };
-            const target = stronger[worker.category];
-            const selected = resolveModel(target, this.getModels(), this.getConfig(), undefined, worker.role, this.getHostConfig(), deriveMissionModelFeedback(m, worker.role, target));
-            const next = [selected.primary, ...selected.fallbacks].find(x => Boolean(x) && x !== worker.model);
-            if (!next)
-                return false;
-            model = next;
-            variant = next === selected.primary ? selected.primaryVariant : selected.fallbackVariants[next];
-            action = 'model-escalation';
-        }
+        const model = worker.model, variant = worker.model_variant, action = 'same-worker-resume';
         if (!model)
             return false;
         const previousWorkerStatus = worker.status, previousTaskStatus = task.status;
@@ -110,11 +97,11 @@ export class TaskRecoveryCoordinator {
             this.registry.set(worker);
             const instruction = level === 1
                 ? 'Hi stagnation recovery: continue the SAME task/session with one narrowly scoped corrective attempt. Preserve completed work and evidence. Do not restart planning.'
-                : `Hi stagnation recovery: continue the SAME task/session with policy escalation from ${previous ?? 'default'} to ${model ?? 'default'}. Preserve completed work and evidence. Do not restart planning.`;
+                : 'Hi stagnation recovery: continue the SAME task/session/model, but use a materially different corrective hypothesis or action from the prior attempt. Preserve completed work and evidence. Do not restart planning or change models.';
             beginWorkerAttempt(task, worker);
             this.child.recordModelProjection(worker, model, variant);
             await this.child.sendProviderPrompt(worker.session_id, clipText(`${instruction}\nReturn the normal structured WorkerResult.`, DEFAULT_CONTEXT_BUDGET.max_handoff_chars), worker.role, model === 'host-default' ? undefined : model, variant, taskPromptToolOverrides(task.execution_profile?.tools ?? [], this.getHostConfig(), task.execution_profile?.mcp_servers ?? []));
-            recordRecoveryStrategy(m, { level: level, action: action }, 'started');
+            recordRecoveryStrategy(m, { level: level, action }, 'started');
             appendLedger(m, 'worker.stagnation-recovery', { task_id: task.id, worker_id: worker.id, payload: { level, action, from: previous, to: model, variant, generation: m.continuation.generation } });
             void this.events?.(runtimeSignal('worker.recovered', m.identity.mission_id, { task_id: task.id, worker_id: worker.id, payload: { level, action, from: previous, to: model, variant } }));
             return true;
@@ -145,32 +132,25 @@ export class TaskRecoveryCoordinator {
             return false;
         }
     }
-    async recoverRuntimeFailure(m, workerID, error) {
+    async recoverHostTerminalFailure(m, workerID, error) {
         const worker = m.execution.workers.find(w => w.id === workerID);
         if (!worker)
-            return false;
+            return 'NOT_RECOVERED';
         const task = m.execution.tasks.find(t => t.id === worker.task_id), failure = classifyWorkerFailure(error);
         worker.last_runtime_failure_kind = failure.kind;
         worker.runtime_fallback_exhausted = false;
         appendLedger(m, 'worker.failure.classified', { task_id: task?.id, worker_id: worker.id, payload: { kind: failure.kind, stagnation: failure.stagnation, retryable: failure.retryable, reason: failure.reason } });
-        if (!failure.retryable || !['provider-transport', 'tool-incompatibility', 'context-overflow'].includes(failure.kind) || !worker.session_id || !task)
-            return false;
+        // OpenCode owns transient provider retry/backoff and context compaction. Hi may only
+        // start an alternate-model child after a host-terminal, retryable provider failure.
+        // Context/tool failures need explicit capability proof before model switching.
+        if (!failure.retryable || failure.kind !== 'provider-transport' || !worker.session_id || !task)
+            return 'NOT_RECOVERED';
         const failedSession = worker.session_id, candidates = worker.fallbacks.filter(x => x && x !== worker.model);
-        let stopped = false;
-        try {
-            stopped = await this.child.abortNativeSession(m, failedSession, 'terminal-runtime-fallback', worker.id, task.id);
-        }
-        catch { }
-        if (!stopped) {
-            const marker = `runtime-fallback-abort-unavailable:${task.id}:${worker.id}`;
-            m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
-            worker.runtime_fallback_exhausted = true;
-            appendLedger(m, 'worker.runtime-fallback.abort-blocked', { task_id: task.id, worker_id: worker.id, payload: { session_id: failedSession, failure_class: failure.kind, marker } });
-            return false;
-        }
+        appendLedger(m, 'worker.runtime-fallback.host-terminal-confirmed', { task_id: task.id, worker_id: worker.id, payload: { session_id: failedSession, failure_class: failure.kind, action: 'release-without-abort' } });
         this.scheduler.release(worker.id);
         releaseTaskRuntimeReservation(m, worker.id);
         worker.session_id = undefined;
+        worker.restart_reconcile_pending = false;
         worker.status = 'ready';
         task.status = 'waiting';
         this.registry.set(worker);
@@ -219,7 +199,7 @@ export class TaskRecoveryCoordinator {
                 beginWorkerAttempt(task, worker);
                 await this.child.sendProviderPrompt(recoverySessionID, prompt, worker.role, model === 'host-default' ? undefined : model, variant, taskPromptToolOverrides(task.execution_profile?.tools ?? [], this.getHostConfig(), task.execution_profile?.mcp_servers ?? []));
                 appendLedger(m, 'worker.runtime-fallback', { task_id: task.id, worker_id: worker.id, payload: { from: previous, to: model, variant, reason: fallbackReason, failure_class: failure.kind, attempt: worker.runtime_recovery_attempt, from_session: failedSession, to_session: worker.session_id, session_mode: 'fresh' } });
-                return true;
+                return 'RECOVERED';
             }
             catch (nextError) {
                 worker.runtime_recovery_pending = false;
@@ -248,7 +228,7 @@ export class TaskRecoveryCoordinator {
                 }
                 appendLedger(m, 'worker.runtime-fallback.failed', { task_id: task.id, worker_id: worker.id, payload: { model, error: String(nextError), failure_class: failure.kind, from_session: failedSession, host_stopped: recoveryStopped } });
                 if (!recoveryStopped)
-                    return false;
+                    return 'QUARANTINED';
             }
         }
         worker.runtime_fallback_exhausted = true;
@@ -259,19 +239,40 @@ export class TaskRecoveryCoordinator {
         task.updated_at = Date.now();
         task.result = { status: 'BLOCKED', summary: 'Runtime provider/model fallback chain exhausted.', changed_files: [], evidence: [], open_issues: [blocker], needs_context: ['provider/model availability or alternate execution path'] };
         appendLedger(m, 'worker.runtime-fallback.exhausted', { task_id: task.id, worker_id: worker.id, payload: { failure_class: failure.kind, attempted: [worker.model, ...candidates].filter(Boolean) } });
-        return false;
+        return 'NOT_RECOVERED';
     }
-    fail(m, workerID, error) { const worker = m.execution.workers.find(w => w.id === workerID); if (!worker)
-        return; if (worker.generation_at_spawn !== undefined && worker.generation_at_spawn !== m.continuation.generation) {
-        appendLedger(m, 'worker.failure.stale-generation-ignored', { worker_id: worker.id });
-        return;
-    } const settlement = beginTaskRuntimeSettlement(m, worker); if (!settlement.accepted && settlement.reason !== 'reservation-not-found') {
-        appendLedger(m, 'worker.failure.scheduler-fence-rejected', { worker_id: worker.id, payload: { reason: settlement.reason } });
-        return;
-    } const task = m.execution.tasks.find(t => t.id === worker.task_id), permissionFailure = worker.last_runtime_failure_kind === 'permission', marker = permissionFailure ? `permission-failure:${worker.id}` : error; worker.status = 'failed'; worker.completed_at = Date.now(); this.scheduler.release(worker.id); releaseTaskRuntimeReservation(m, worker.id); this.registry.delete(worker.id); if (permissionFailure)
-        m.continuation.stagnation_count = 0; if (task) {
-        task.status = 'failed';
-        task.updated_at = Date.now();
-        task.result = { status: 'FAILED', summary: error, changed_files: [], evidence: [], open_issues: [marker], needs_context: permissionFailure ? ['resolve OpenCode permission/authority and explicitly resume the mission'] : [] };
-    } m.execution.blockers = [...new Set([...m.execution.blockers, marker])]; appendLedger(m, 'worker.failed', { task_id: task?.id, worker_id: worker.id, payload: { error, failure_class: worker.last_runtime_failure_kind ?? 'unknown', blocker: marker } }); void this.events?.(runtimeSignal('worker.failed', m.identity.mission_id, { task_id: task?.id, worker_id: worker.id, payload: { error, failure_class: worker.last_runtime_failure_kind ?? 'unknown' } })); syncMissionGates(m); this.drainQueueCallback(); }
+    fail(m, workerID, error) {
+        const worker = m.execution.workers.find(w => w.id === workerID);
+        if (!worker)
+            return;
+        if (worker.generation_at_spawn !== undefined && worker.generation_at_spawn !== m.continuation.generation) {
+            appendLedger(m, 'worker.failure.stale-generation-ignored', { worker_id: worker.id });
+            return;
+        }
+        const settlement = beginTaskRuntimeSettlement(m, worker);
+        if (!settlement.accepted && settlement.reason !== 'reservation-not-found') {
+            appendLedger(m, 'worker.failure.scheduler-fence-rejected', { worker_id: worker.id, payload: { reason: settlement.reason } });
+            return;
+        }
+        const task = m.execution.tasks.find(t => t.id === worker.task_id), failureClass = worker.last_runtime_failure_kind, permissionFailure = failureClass === 'permission', providerFailure = failureClass === 'provider-transport', contextFailure = failureClass === 'context-overflow', toolFailure = failureClass === 'tool-incompatibility', model = worker.model ?? 'unknown';
+        const marker = permissionFailure ? `permission-failure:${worker.id}` : providerFailure ? `provider-failure:provider-transport:${model}` : contextFailure ? `capability-unavailable:context-capacity:${model}` : toolFailure ? `capability-unavailable:tool-compatibility:${model}` : error;
+        const needsContext = permissionFailure ? ['resolve OpenCode permission/authority and explicitly resume the mission'] : providerFailure ? ['provider/model availability or alternate execution path'] : contextFailure ? ['OpenCode context compaction was exhausted or could not resolve terminal context capacity; reduce bounded context/task scope or explicitly choose a model with known sufficient context capacity'] : toolFailure ? ['terminal tool/model compatibility failure was observed; repair tool availability or explicitly choose a model with proven required tool capability'] : [];
+        worker.status = 'failed';
+        worker.completed_at = Date.now();
+        this.scheduler.release(worker.id);
+        releaseTaskRuntimeReservation(m, worker.id);
+        this.registry.delete(worker.id);
+        if (permissionFailure || providerFailure || contextFailure || toolFailure)
+            m.continuation.stagnation_count = 0;
+        if (task) {
+            task.status = 'failed';
+            task.updated_at = Date.now();
+            task.result = { status: 'FAILED', summary: error, changed_files: [], evidence: [], open_issues: [marker], needs_context: needsContext };
+        }
+        m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+        appendLedger(m, 'worker.failed', { task_id: task?.id, worker_id: worker.id, payload: { error, failure_class: failureClass ?? 'unknown', blocker: marker } });
+        void this.events?.(runtimeSignal('worker.failed', m.identity.mission_id, { task_id: task?.id, worker_id: worker.id, payload: { error, failure_class: failureClass ?? 'unknown' } }));
+        syncMissionGates(m);
+        this.drainQueueCallback();
+    }
 }

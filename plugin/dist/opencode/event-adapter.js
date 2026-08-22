@@ -1,4 +1,4 @@
-import { eventSessionID } from './client-adapter.js';
+import { assistantErrorEvidence, eventSessionID } from './client-adapter.js';
 const MAP = {
     'session.idle': 'session-idle', 'session.error': 'session-error', 'session.deleted': 'session-deleted', 'session.status': 'session-status', 'session.diff': 'session-diff', 'session.compacted': 'session-compacted',
     'todo.updated': 'todo-updated', 'permission.asked': 'permission-asked', 'permission.replied': 'permission-replied', 'file.edited': 'file-edited', 'file.watcher.updated': 'file-watcher-updated',
@@ -33,5 +33,6 @@ export function permissionReply(event) { const v = String(event.properties?.resp
 export function permissionDecision(event) { const v = permissionReply(event); return v === 'once' || v === 'always' ? 'allow' : v === 'reject' ? 'deny' : 'unknown'; }
 export function permissionPatterns(event) { const p = event.properties ?? {}; const raw = p.patterns ?? p.always ?? p.permission?.patterns ?? p.request?.patterns; return Array.isArray(raw) ? raw.filter((x) => typeof x === 'string') : []; }
 export function permissionEventID(event) { const p = event.properties ?? {}; const raw = p.id ?? p.permissionID ?? p.permissionId ?? p.requestID ?? p.requestId ?? p.permission?.id ?? p.request?.id; return typeof raw === 'string' && raw.trim() ? raw.trim() : undefined; }
-export function normalizeOpenCodeEvent(event) { const rawType = String(event?.type ?? ''), base = { kind: MAP[rawType] ?? 'unknown', rawType, sessionID: eventSessionID(event), properties: event?.properties ?? {}, filePaths: [], status: 'unknown' }; base.filePaths = eventFilePaths(base); base.status = eventStatus(base); const id = permissionEventID(base), reply = permissionReply(base), decision = permissionDecision(base), patterns = permissionPatterns(base); if (id || patterns.length || base.kind === 'permission-asked' || base.kind === 'permission-replied')
+export function normalizeOpenCodeEvent(event) { const rawType = String(event?.type ?? ''), base = { kind: MAP[rawType] ?? 'unknown', rawType, sessionID: eventSessionID(event), properties: event?.properties ?? {}, filePaths: [], status: 'unknown' }; base.filePaths = eventFilePaths(base); base.status = eventStatus(base); if (base.kind === 'session-error')
+    base.error = assistantErrorEvidence(base.properties?.error); const id = permissionEventID(base), reply = permissionReply(base), decision = permissionDecision(base), patterns = permissionPatterns(base); if (id || patterns.length || base.kind === 'permission-asked' || base.kind === 'permission-replied')
     base.permission = { id, reply, decision, patterns }; return base; }

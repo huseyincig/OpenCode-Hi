@@ -142,3 +142,57 @@ test('M10 high-risk initial assessment may widen beyond an explicit user verifie
   store.applyInitialSemanticAssessment('phase2-explicit-high',parseSemanticIntentAssessment({...assessment,risk:'high',likely_verification:['targeted-tests','typecheck'],user_verification:[],verification_ceiling:false,likely_targets:['src/auth/token.ts']}))
   assert.deepEqual(mission.identity.intent.likelyVerification,['targeted-tests','typecheck'])
 })
+
+
+test('precert adaptive verification does not promote inferred code tests for bounded read-only review',()=>{
+  const store=new MissionStore(process.cwd())
+  const mission=store.start('precert-review-economy','Review note.md read-only and report whether it contains alpha and beta.')
+  store.applyInitialSemanticAssessment('precert-review-economy',parseSemanticIntentAssessment({...assessment,task_kind:'review',scope:'local',risk:'low',required_capabilities:['review','verification'],likely_verification:['targeted-tests'],user_verification:[],verification_ceiling:false,likely_targets:['note.md']}))
+  assert.deepEqual(mission.identity.intent.likelyVerification,['review-evidence'])
+  assert.deepEqual(mission.execution.verification_policy.requiredKinds,['review-evidence'])
+  assert.deepEqual(mission.execution.obligations.find(o=>o.id==='o-review')?.requiredEvidence,['review-evidence'])
+  assert.deepEqual(mission.execution.obligations.find(o=>o.id==='o-verification')?.requiredEvidence,['review-evidence'])
+})
+
+test('precert adaptive verification preserves exact user verifier and high-risk or visual widening',()=>{
+  const explicitStore=new MissionStore(process.cwd())
+  const explicit=explicitStore.start('precert-review-explicit','Review note.md read-only. Run `node --test test/note.test.mjs` and report the result.')
+  explicitStore.applyInitialSemanticAssessment('precert-review-explicit',parseSemanticIntentAssessment({...assessment,task_kind:'review',scope:'local',risk:'low',required_capabilities:['review','verification'],likely_verification:['targeted-tests','typecheck'],user_verification:[],verification_ceiling:false,likely_targets:['note.md']}))
+  assert.deepEqual(explicit.identity.intent.likelyVerification,['targeted-tests'])
+
+  const highStore=new MissionStore(process.cwd())
+  const high=highStore.start('precert-review-high','Security review src/auth.ts read-only.')
+  highStore.applyInitialSemanticAssessment('precert-review-high',parseSemanticIntentAssessment({...assessment,task_kind:'review',scope:'local',risk:'high',required_capabilities:['review','security-review','independent-review'],likely_verification:['targeted-tests','typecheck','review-evidence'],user_verification:[],verification_ceiling:false,likely_targets:['src/auth.ts']}))
+  assert.deepEqual(high.identity.intent.likelyVerification,['targeted-tests','typecheck','review-evidence'])
+
+  const visualStore=new MissionStore(process.cwd())
+  const visual=visualStore.start('precert-review-visual','Visually review page.html without modifying it.')
+  visualStore.applyInitialSemanticAssessment('precert-review-visual',parseSemanticIntentAssessment({...assessment,task_kind:'review',scope:'local',risk:'low',required_capabilities:['review','visual-qa'],likely_verification:['visual-check'],user_verification:[],verification_ceiling:false,likely_targets:['page.html']}))
+  assert.deepEqual(visual.identity.intent.likelyVerification,['review-evidence','visual-check'])
+})
+
+
+test('precert adaptive verification applies the same minimum-sufficient and explicit-user rules to follow-ups',()=>{
+  const store=new MissionStore(process.cwd())
+  const mission=store.start('precert-review-followup','Review note.md read-only and report whether it contains alpha and beta.')
+  store.applyInitialSemanticAssessment('precert-review-followup',parseSemanticIntentAssessment({...assessment,task_kind:'review',scope:'local',risk:'low',required_capabilities:['review','verification'],likely_verification:['targeted-tests'],user_verification:[],verification_ceiling:false,likely_targets:['note.md']}))
+  assert.deepEqual(mission.execution.obligations.find(o=>o.kind==='verification')?.requiredEvidence,['review-evidence'])
+
+  store.beginFollowupSemanticAssessment('precert-review-followup','Please re-check the same read-only review carefully.')
+  store.applyFollowupSemanticAssessment('precert-review-followup',parseSemanticIntentAssessment({...assessment,message_kind:'verification',task_kind:'review',scope:'local',risk:'low',required_capabilities:['review','verification'],likely_verification:['targeted-tests'],user_verification:[],verification_ceiling:false,likely_targets:['note.md']}))
+  assert.deepEqual(mission.execution.obligations.find(o=>o.kind==='verification')?.requiredEvidence,['review-evidence'])
+
+  store.beginFollowupSemanticAssessment('precert-review-followup','Run `node --test test/note.test.mjs` as the requested verifier.')
+  store.applyFollowupSemanticAssessment('precert-review-followup',parseSemanticIntentAssessment({...assessment,message_kind:'verification',task_kind:'review',scope:'local',risk:'low',required_capabilities:['review','verification'],likely_verification:['targeted-tests','typecheck'],user_verification:[],verification_ceiling:false,likely_targets:['note.md']}))
+  assert.deepEqual(mission.execution.obligations.find(o=>o.kind==='verification')?.requiredEvidence,['targeted-tests'])
+  assert.deepEqual(mission.execution.verification_policy.requiredKinds,['targeted-tests'])
+})
+
+
+test('precert semantic target keeps plain-text project files instead of falling back to slash-shaped prose',()=>{
+  const store=new MissionStore(process.cwd())
+  const mission=store.start('precert-review-txt-target','Review note.txt read-only. Use the Hi semantic/evidence flow.')
+  store.applyInitialSemanticAssessment('precert-review-txt-target',parseSemanticIntentAssessment({...assessment,task_kind:'review',scope:'local',risk:'low',required_capabilities:['review','verification'],likely_verification:['targeted-tests'],user_verification:[],verification_ceiling:false,likely_targets:['note.txt']}))
+  assert.deepEqual(mission.identity.intent.likelyTargets,['note.txt'])
+  assert.deepEqual(mission.identity.intent.likelyVerification,['review-evidence'])
+})

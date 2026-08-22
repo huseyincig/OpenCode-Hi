@@ -1,0 +1,108 @@
+{
+  "schema": 1,
+  "kind": "OPENCODE_UPSTREAM_OBSERVATION",
+  "observed_at": "2026-08-22T10:28:19.790688+00:00",
+  "target": "1.18.21",
+  "registry": {
+    "status": "CURRENT",
+    "latest": "1.18.21",
+    "target": "1.18.21",
+    "versions": {
+      "opencode-ai": "1.18.21",
+      "@opencode-ai/sdk": "1.18.21",
+      "@opencode-ai/plugin": "1.18.21"
+    },
+    "target_current": true,
+    "support_promotion_allowed": false
+  },
+  "cadence": {
+    "status": "OBSERVED",
+    "stable_releases_7d": 3,
+    "stable_releases_30d": 17,
+    "recent": [
+      {
+        "version": "1.18.21",
+        "published_at": "2026-08-21T14:51:28.536000+00:00"
+      },
+      {
+        "version": "1.18.20",
+        "published_at": "2026-08-21T08:09:54.390000+00:00"
+      },
+      {
+        "version": "1.18.19",
+        "published_at": "2026-08-20T06:21:26.028000+00:00"
+      },
+      {
+        "version": "1.18.18",
+        "published_at": "2026-08-13T01:13:43.814000+00:00"
+      },
+      {
+        "version": "1.18.17",
+        "published_at": "2026-08-12T20:23:26.825000+00:00"
+      },
+      {
+        "version": "1.18.16",
+        "published_at": "2026-08-10T06:05:51.110000+00:00"
+      },
+      {
+        "version": "1.18.15",
+        "published_at": "2026-08-07T06:51:43.689000+00:00"
+      },
+      {
+        "version": "1.18.14",
+        "published_at": "2026-08-05T20:56:10.249000+00:00"
+      },
+      {
+        "version": "1.18.13",
+        "published_at": "2026-08-04T12:10:08.635000+00:00"
+      },
+      {
+        "version": "1.18.12",
+        "published_at": "2026-08-04T00:57:12.613000+00:00"
+      },
+      {
+        "version": "1.18.11",
+        "published_at": "2026-08-01T11:43:30.238000+00:00"
+      },
+      {
+        "version": "1.18.10",
+        "published_at": "2026-07-30T14:39:51.235000+00:00"
+      }
+    ]
+  },
+  "policy": "data/opencode-host-compatibility-policy.json",
+  "support_promotion_allowed": false,
+  "upstream_delta": {
+    "from_ref": "v1.18.21",
+    "from_commit": "826d9ad46a22bef0294998e08daa3c4904fea28f",
+    "to_ref": "v1.18.21",
+    "to_commit": "826d9ad46a22bef0294998e08daa3c4904fea28f",
+    "changed_files": [],
+    "impact": {
+      "classification": "METADATA_ONLY",
+      "changed_files": [],
+      "surface_ids": [],
+      "surface_changes": {},
+      "ignored": [],
+      "other_noncritical": [],
+      "unclassified": [],
+      "t3_capabilities": [],
+      "fresh_consumer_required": false,
+      "full_t3_required": false,
+      "manual_review_required": false,
+      "support_promotion_allowed": false
+    }
+  },
+  "latest_release": {
+    "tag_name": "v1.18.21",
+    "immutable": true,
+    "published_at": "2026-08-21T14:51:11Z",
+    "html_url": "https://github.com/anomalyco/opencode/releases/tag/v1.18.21",
+    "asset_digests": {
+      "opencode-linux-arm64.tar.gz": "d30d2cba74617f4e7b96e25563c9572ffe453f9eae70fc0df16286813537ee72",
+      "opencode-linux-x64.tar.gz": "d910c3ed7613bb5791a328904615d41cc25b7d3a6b470e3199ab0426a995b38a",
+      "opencode-windows-arm64.zip": "f0470c160152ee23175d3e489018a927e8eedc7de7832f71654b2bede1807637",
+      "opencode-windows-x64.zip": "f8cc5477f478fa129ece99b550d508363ceff612f99d859042e526b13b951542"
+    }
+  }
+}

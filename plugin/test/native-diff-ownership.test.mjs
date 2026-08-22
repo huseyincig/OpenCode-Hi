@@ -57,7 +57,7 @@ test('plugin session.idle path converts DONE to FIX_REQUIRED when native diff ex
   const {default:HiPlugin}=await import('../dist/plugin.js')
   let diffs=[];const childResult={status:'DONE',summary:'done',changed_files:['src/a.ts'],evidence:[],open_issues:[],needs_context:[]}
   const client={app:{log:async()=>{}},provider:{list:async()=>({data:[]})},session:{
-    create:async()=>({data:{id:'child-native'}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:{}}),
+    create:async()=>({data:{id:'child-native'}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:{}}),status:async()=>({data:{}}),
     diff:async()=>({data:diffs}),messages:async()=>({data:[{info:{role:'assistant'},parts:[{type:'text',text:JSON.stringify(childResult)}]}]})
   }}
   const root=mkdtempSync(join(tmpdir(),'hi-native-diff-'))

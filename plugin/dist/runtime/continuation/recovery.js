@@ -5,7 +5,7 @@ function planForLevel(level) {
     if (level === 1)
         return { level: 1, action: 'same-worker-resume', prompt: 'Resume the latest reusable worker session with a narrowly scoped corrective instruction.' };
     if (level === 2)
-        return { level: 2, action: 'model-escalation', prompt: 'Keep the same task/session when possible, but escalate to the next policy-allowed stronger category/model. Preserve current context and evidence.' };
+        return { level: 2, action: 'same-worker-resume', prompt: 'Resume the SAME task/session/model with a materially different corrective hypothesis or action. Preserve completed work and evidence; do not restart top-level planning or change models.' };
     if (level === 3)
         return { level: 3, action: 'narrow-task', prompt: 'Decompose the blocked obligation into one smaller independently verifiable task.' };
     if (level === 4)

@@ -172,7 +172,7 @@ export interface WorkGraphValidation {
 export declare function validateWorkGraph(graph: WorkGraph): WorkGraphValidation;
 export declare function isCapabilityResolution(value: unknown): value is CapabilityResolution;
 export type SchedulingDisposition = 'RUNNABLE' | 'ACTIVE' | 'WAITING_DEPENDENCY' | 'BLOCKED_DEPENDENCY' | 'BLOCKED_STATE' | 'DEFERRED_CONFLICT' | 'DEFERRED_CAPACITY' | 'TERMINAL';
-export type SchedulingReasonCode = 'ready' | 'already-active' | 'terminal-work' | 'unknown-dependency' | 'dependency-incomplete' | 'dependency-failed' | 'dependency-cancelled' | 'task-blocked' | 'mutable-surface-conflict' | 'shared-mutable-surface' | 'topology-capacity' | 'global-capacity' | 'provider-capacity' | 'model-capacity';
+export type SchedulingReasonCode = 'ready' | 'already-active' | 'terminal-work' | 'unknown-dependency' | 'dependency-incomplete' | 'dependency-failed' | 'dependency-cancelled' | 'task-blocked' | 'mutable-surface-conflict' | 'unknown-mutable-surface' | 'shared-mutable-surface' | 'topology-capacity' | 'global-capacity' | 'provider-capacity' | 'model-capacity';
 export interface SchedulingResourceBinding {
     provider?: string;
     model?: string;

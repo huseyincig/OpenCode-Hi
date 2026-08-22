@@ -1,5 +1,8 @@
 import type { OpenCodeClient } from './types.js';
 export type NativeCapabilityName = 'session-create' | 'prompt-async' | 'prompt-sync' | 'abort' | 'status' | 'children' | 'todo' | 'diff' | 'fork' | 'summarize' | 'revert' | 'unrevert' | 'provider-inventory' | 'structured-log';
+export type NativeOperationName = NativeCapabilityName | 'version';
+export type NativeOperationEffect = 'read-only' | 'mutating';
+export declare function nativeOperationEffect(name: NativeOperationName): NativeOperationEffect;
 export interface NativeSessionSnapshot {
     status?: unknown;
     children?: unknown[];

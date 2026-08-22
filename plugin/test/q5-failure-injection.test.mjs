@@ -34,3 +34,13 @@ test('Q5 injected disk write failure throws synchronously and never fabricates c
     assert.equal(existsSync(p.path),false)
   }finally{if(prior===undefined)delete process.env.OPENCODE_HI_STATE_DIR;else process.env.OPENCODE_HI_STATE_DIR=prior;rmSync(root,{recursive:true,force:true})}
 })
+
+
+test('Q5 exact OpenCode 1.18.20 named errors outrank legacy text heuristics',()=>{
+  const auth=classifyWorkerFailure({name:'ProviderAuthError',message:'provider failed'});assert.deepEqual([auth.kind,auth.retryable,auth.stagnation],['permission',false,false])
+  const overflow=classifyWorkerFailure({name:'ContextOverflowError',message:'maximum context length exceeded'});assert.deepEqual([overflow.kind,overflow.retryable,overflow.stagnation],['context-overflow',true,false])
+  const retryable=classifyWorkerFailure({name:'APIError',message:'network_error',isRetryable:true,statusCode:503});assert.deepEqual([retryable.kind,retryable.retryable,retryable.stagnation],['provider-transport',true,false])
+  const terminal4xx=classifyWorkerFailure({name:'APIError',message:'invalid request',isRetryable:false,statusCode:400});assert.deepEqual([terminal4xx.kind,terminal4xx.retryable,terminal4xx.stagnation],['provider-transport',false,false])
+  const terminal5xx=classifyWorkerFailure({name:'APIError',message:'server error',isRetryable:false,statusCode:503});assert.deepEqual([terminal5xx.kind,terminal5xx.retryable,terminal5xx.stagnation],['provider-transport',true,false])
+  const aborted=classifyWorkerFailure({name:'MessageAbortedError',message:'aborted'});assert.deepEqual([aborted.kind,aborted.retryable,aborted.stagnation],['unknown',false,false])
+})

@@ -13,3 +13,10 @@ test('OpenCode 1.18 object-shaped session status is normalized', () => {
   assert.equal(eventStatus(normalizeOpenCodeEvent({type:'session.status',properties:{status:{type:'idle'}}})),'idle')
   assert.equal(eventStatus(normalizeOpenCodeEvent({type:'session.status',properties:{status:'completed'}})),'completed')
 })
+
+
+test('OpenCode 1.18.20 session.error normalization preserves bounded API retry metadata only',()=>{
+  const ev=normalizeOpenCodeEvent({type:'session.error',properties:{sessionID:'s-1',error:{name:'APIError',data:{message:'network_error',isRetryable:true,statusCode:503,responseBody:'provider-secret-body'}}}})
+  assert.deepEqual(ev.error,{name:'APIError',message:'network_error',isRetryable:true,statusCode:503})
+  assert.equal('responseBody' in ev.error,false)
+})

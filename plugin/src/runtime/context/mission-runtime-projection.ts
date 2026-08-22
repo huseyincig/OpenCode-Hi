@@ -1,7 +1,7 @@
 import type { MissionState,WorkerState } from '../mission/types.js'
 import { clipText } from './budget.js'
 import { syncMissionGates } from '../gates/gates.js'
-import { userMissionStatus } from '../ledger/status.js'
+import { projectControlDecision } from '../completion/control-projection.js'
 
 export interface MissionRuntimeProjection {
   objective:string
@@ -24,18 +24,20 @@ function methodologySummary(m:MissionState,worker?:WorkerState):string[]{
   if(worker)return compactList(worker.selected_methodologies??[],8)
   return compactList(m.methodology.parent_loaded_methodologies??[],8)
 }
-function nextAction(m:MissionState,worker?:WorkerState):string{
-  if(m.continuation.pending_nudge?.instruction)return clipText(m.continuation.pending_nudge.instruction,600)
-  const openDecision=m.authority.human_decision?.status==='OPEN'?m.authority.human_decision:undefined
-  if(openDecision)return `user-action:${openDecision.semantic_type}:${openDecision.reason_code}`
-  if(m.authority.pending_permissions>0||m.authority.authority?.pending||m.authority.authority?.executing)return 'user-action:authority-or-native-permission'
+function nextAction(m:MissionState,worker?:WorkerState,projectRoot?:string):string{
+  if(m.continuation.pending_nudge?.instruction){syncMissionGates(m,projectRoot);return clipText(m.continuation.pending_nudge.instruction,600)}
+  const decision=projectControlDecision(m,projectRoot)
+  if(decision.action==='WAIT'){const exact=worker&&['created','queued','starting','busy'].includes(worker.status)?`worker:${worker.id}:${worker.status}`:decision.wait_for[0];return `wait:${exact??'active-runtime'}`}
+  if(decision.action==='VERIFY'){const missing=[...new Set(decision.missing_evidence.map(x=>x.kind))].join(',')||'required-evidence',route=decision.verification_route_status==='available'?`route=${decision.verification_routes.map(x=>x.command).join(' || ')}`:decision.verification_route_status==='none'?'route=none; no-admissible-repo-native-verifier; report-gap-and-stop':'route=unknown';return `verify:${missing}; ${route}; evidence-owned; do-not-use=${decision.ineffective_actions.join(',')}`}
+  if(decision.action==='USER_ACTION_REQUIRED')return 'user-action:canonical-gate'
+  if(decision.action==='RECONCILE')return 'reconcile:canonical-state'
+  if(decision.action==='DONE')return 'stop:mission-complete'
   if(!worker&&m.execution.execution_mode==='parallel'&&m.execution.tasks.length===0)return 'delegate:parallel-work-via-hi_task_start'
   if(!worker&&m.methodology.methodology_needs.length){const need=m.methodology.methodology_needs[0];return `methodology:${need.name}:${clipText(need.reason,260)}`}
-  const s=userMissionStatus(m)
-  return worker&&['busy','starting','queued'].includes(worker.status)?`wait:${worker.id}:${worker.status}`:s.next_action
+  return 'continue:canonical-open-obligation'
 }
 function blockerSummary(m:MissionState):string[]{
-  const gates=syncMissionGates(m).filter(g=>g.status!=='closed').map(g=>`gate:${g.id}:${g.status}:${g.reason??g.summary}`)
+  const gates=m.execution.gates.filter(g=>g.status!=='closed').map(g=>`gate:${g.id}:${g.status}:${g.reason??g.summary}`)
   return compactList([...m.execution.blockers,...gates],8).map(x=>clipText(x,320))
 }
 function executionSummary(m:MissionState,worker?:WorkerState):string{
@@ -46,7 +48,8 @@ function executionSummary(m:MissionState,worker?:WorkerState):string{
 function verificationSummary(m:MissionState):string{
   const required=m.execution.verification_policy.requiredKinds.join(',')||'none'
   const review=m.execution.verification_policy.requireReview?'independent-review-required':'no-independent-review-required'
-  return `evidence=${m.execution.evidence.fresh?'fresh':'stale'}; required=${required}; ${review}`
+  const verifyGate=m.execution.gates.find(g=>g.id==='gate-verification'),reviewGate=m.execution.gates.find(g=>g.id==='gate-reviewer'),claimsCurrent=verifyGate?.status!=='open'&&(!m.execution.verification_policy.requireReview||reviewGate?.status!=='open')
+  return `evidence=${m.execution.evidence.fresh&&claimsCurrent?'fresh':'stale'}; required=${required}; ${review}`
 }
 function authoritySummary(m:MissionState):string{
   const human=m.authority.human_decision?.status==='OPEN'?`${m.authority.human_decision.semantic_type}:${m.authority.human_decision.reason_code}`:'none'
@@ -66,12 +69,12 @@ function taskWorkerSummary(m:MissionState,worker?:WorkerState):string{
   return `tasks=${activeTasks.join('|')||'none'}; workers=${activeWorkers.join('|')||'none'}`
 }
 
-export function buildMissionRuntimeProjection(m:MissionState,worker?:WorkerState):MissionRuntimeProjection{
+export function buildMissionRuntimeProjection(m:MissionState,worker?:WorkerState,projectRoot?:string):MissionRuntimeProjection{
   const constraints=m.execution.constraints.slice(-6).map(x=>clipText(x,260))
-  const objective=clipText(`${m.identity.objective}${constraints.length?` | constraints: ${constraints.join(' | ')}`:''}`,1200)
+  const objective=clipText(`${m.identity.objective}${constraints.length?` | constraints: ${constraints.join(' | ')}`:''}`,1200),next=nextAction(m,worker,projectRoot)
   return{
     objective,
-    next_action:nextAction(m,worker),
+    next_action:next,
     execution:executionSummary(m,worker),
     blockers:blockerSummary(m),
     obligations:m.execution.obligations.filter(o=>o.status==='open').slice(0,8).map(o=>`id=${o.id}; summary=${clipText(o.summary,300)}`),

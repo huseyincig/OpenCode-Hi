@@ -26,9 +26,12 @@ test('public package manifest stays native direct-Git install friendly', async()
   const gitPreparationTriggers=['postinstall','build','preinstall','install','prepack','prepare']
   for(const name of gitPreparationTriggers) assert.equal(pkg.scripts?.[name],undefined,`root script ${name} forces pacote git dependency preparation`)
   assert.equal(pkg.scripts?.['build:plugin'],'npm --prefix plugin run build')
-  assert.equal(pkg.peerDependencies?.['@opencode-ai/plugin'],'1.18.19')
+  const hostTarget=pkg.dependencies?.['@opencode-ai/sdk']
+  assert.match(hostTarget,/^\d+\.\d+\.\d+$/)
+  assert.equal(pkg.peerDependencies?.['@opencode-ai/plugin'],hostTarget)
   assert.equal(pkg.peerDependenciesMeta?.['@opencode-ai/plugin']?.optional,true)
-  assert.equal(pkg.dependencies?.['@opencode-ai/sdk'],'1.18.19')
+  assert.match(pkg.scripts?.['host:check-update']??'',/opencode_upstream_tracker\.py --fetch/)
+  assert.match(pkg.scripts?.['host:observe-update']??'',/opencode_upstream_tracker\.py --fetch --write/)
 })
 
 test('final canonical gates use the explicit Git-safe plugin build command', async()=>{
@@ -57,7 +60,7 @@ test('release readiness exercises exact-sha native direct-Git install on every p
 test('release readiness runs exact OpenCode native direct-Git host acceptance', async()=>{
   const fs=await import('node:fs/promises')
   const workflow=await fs.readFile(new URL('../../.github/workflows/release-readiness.yml',import.meta.url),'utf8')
-  assert.match(workflow,/Exact OpenCode 1\.18\.19 native direct-Git host load/)
+  assert.match(workflow,/Exact package-target OpenCode native direct-Git host load/)
   assert.match(workflow,/npm run test:direct-git-host/)
 })
 

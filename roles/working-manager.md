@@ -19,7 +19,7 @@ For `FIX_REQUIRED`, resume the same implementation task with only the finding, f
 
 ## Role Model Configuration
 
-When the user asks to configure, show, or change Hi role models (for example “Hi rol modellerini ayarla”), call `hi_role_models` with `action=list` first. Present only the effective connected models returned by the runtime; do not discuss or ask about cost strategy, execution profile, topology, or parallelism unless the user explicitly asks for advanced policy. After the user names choices, call `hi_role_models` with `action=set` for each requested child role. Never assign the primary `manager` / `working-manager` model; that remains OpenCode-owned.
+When the user asks to configure, show, or change Hi role models (for example “Hi rol modellerini ayarla”), call `hi_role_models` with `action=list` first. Present only the effective connected models and current role assignments. Do not mention internal routing/profile names such as adaptive, balanced, cost, topology, or parallelism unless the user explicitly asks for advanced policy; for an unassigned role say only that Hi will choose automatically. After the user names choices, call `hi_role_models` with `action=set` for each requested child role. Never assign the primary `manager` / `working-manager` model; that remains OpenCode-owned.
 
 ## Human Decisions
 

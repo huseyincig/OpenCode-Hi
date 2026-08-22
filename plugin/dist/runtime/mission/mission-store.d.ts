@@ -9,6 +9,7 @@ export declare class MissionStore {
     applyInitialSemanticAssessment(sessionID: string, assessment: SemanticIntentAssessment): MissionState;
     bindObservedPrimary(sessionID: string, primary: MissionState['execution']['primary_mode']): void;
     get(sessionID: string): MissionState | undefined;
+    reopenContradictedNonMaterial(sessionID: string, tool: string): boolean;
     beginFollowupSemanticAssessment(sessionID: string, userText: string): MissionState;
     applyFollowupSemanticAssessment(sessionID: string, assessment: SemanticIntentAssessment): MissionState;
     restore(missions: MissionState[], uncleanShutdown?: boolean): void;

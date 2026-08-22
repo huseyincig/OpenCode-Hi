@@ -20,9 +20,20 @@ test('ArtifactContract rejects hash drift, unknown fields and malformed provenan
   assert.equal(isArtifactContract({...a,unexpected:true}),false)
 })
 
-test('artifact IDs do not encode content or provenance and each stored artifact keeps its own identity',()=>{
-  const s=new ContextArtifactStore(),a=s.add('analysis','same','same',['src/a.ts']),b=s.add('analysis','same','same',['src/a.ts'])
-  assert.notEqual(a.artifact_id,b.artifact_id)
+test('semantic duplicate artifacts reuse one identity while artifact IDs remain non-content-derived',()=>{
+  const s=new ContextArtifactStore(),a=s.add('analysis','same','same',['./src\\a.ts'],{producer:'worker:a',consumerRefs:['task-a']}),b=s.add('analysis','same','same',['src/a.ts'],{producer:'worker:a',consumerRefs:['task-b']})
+  assert.equal(a.artifact_id,b.artifact_id)
   assert.equal(a.content_hash,b.content_hash)
+  assert.deepEqual(b.provenance.source_files,['src/a.ts'])
+  assert.deepEqual(new Set(b.consumer_refs),new Set(['task-a','task-b']))
   assert.notEqual(newArtifactId(),newArtifactId())
+})
+
+test('artifact dedupe preserves provenance boundaries and never revives stale observations',()=>{
+  const s=new ContextArtifactStore(),a=s.add('analysis','same','same',['src/a.ts'],{producer:'worker:a'}),differentProducer=s.add('analysis','same','same',['src/a.ts'],{producer:'worker:b'}),differentSource=s.add('analysis','same','same',['src/b.ts'],{producer:'worker:a'})
+  assert.notEqual(a.artifact_id,differentProducer.artifact_id)
+  assert.notEqual(a.artifact_id,differentSource.artifact_id)
+  assert.equal(s.invalidateChanged(['./src\\a.ts']),2)
+  const fresh=s.add('analysis','same','same',['src/a.ts'],{producer:'worker:a'})
+  assert.notEqual(fresh.artifact_id,a.artifact_id,'stale observation must not be silently reused as fresh')
 })

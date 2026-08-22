@@ -28,7 +28,7 @@
         "id": "hi.role.guidance",
         "hash": {
           "algorithm": "sha256",
-          "value": "6824161a41456af193a8cc7136bb938425c2473afb0311479d764e1d8845fc1e"
+          "value": "11d0b8e51511a80097938e69de0f7c38a553b2de2da18b4e50523bc8281a8f2d"
         }
       }
     ],
@@ -37,7 +37,7 @@
     "outputPath": "plugin/src/generated/agent-config.ts",
     "outputHash": {
       "algorithm": "sha256",
-      "value": "48482f76621c540338f323798b1d7667cd062a8061af66819f063d1149697c39"
+      "value": "20cd92d431e35d1f5293eef5110f692410792045433cf1f2cb40c73988473f59"
     }
   },
   {
@@ -48,7 +48,7 @@
         "id": "hi.config.catalog",
         "hash": {
           "algorithm": "sha256",
-          "value": "03b7215ead614457cbeb8cd8f3aeadb9d6e4ce7543f4e2de5fb9e1164b0bcf26"
+          "value": "b93734ecfa3c84a17683df976045c474e765bd263d30e4e85669303c1bb7bded"
         }
       }
     ],
@@ -57,7 +57,7 @@
     "outputPath": "plugin/src/generated/config-policy.ts",
     "outputHash": {
       "algorithm": "sha256",
-      "value": "bd331fc6e93a0104e08617c54c8e894def1814750e2625dfaea128de6b84cc25"
+      "value": "28b20340318e5cc8f4a62b30b7960c74c1d900e379d71d9a9cc6a82c402b2afb"
     }
   },
   {

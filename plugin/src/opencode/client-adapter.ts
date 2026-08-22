@@ -55,21 +55,74 @@ function lifecycleHeaders(directory?:string):Record<string,string>{
   if(password){const username=process.env.OPENCODE_SERVER_USERNAME??'opencode';headers.Authorization=`Basic ${btoa(`${username}:${password}`)}`}
   return headers
 }
-export async function abortSession(client:OpenCodeClient,sessionID:string,endpoint:OpenCodeLifecycleEndpoint={}):Promise<'server'|'client'|'unavailable'>{
+export type AbortSessionResult='server'|'server-reconciled'|'client'|'client-reconciled'|'unavailable'
+export type SessionRuntimeStatus='idle'|'busy'|'retry'|'unknown'
+export function sessionRuntimeStatusFromStatus(value:unknown,sessionID:string):SessionRuntimeStatus{
+  const statusMap=dataOf<any>(value)
+  if(!statusMap||typeof statusMap!=='object'||Array.isArray(statusMap))return'unknown'
+  const status=statusMap[sessionID]
+  // Exact OpenCode 1.18.19 removes idle sessions from the status map; absence is canonical idle.
+  if(status===undefined)return'idle'
+  if(!status||typeof status!=='object')return'unknown'
+  const type=String(status.type??'').toLowerCase()
+  return type==='idle'||type==='busy'||type==='retry'?type:'unknown'
+}
+function sessionIdleFromStatus(value:unknown,sessionID:string):boolean|undefined{const status=sessionRuntimeStatusFromStatus(value,sessionID);return status==='idle'?true:status==='busy'||status==='retry'?false:undefined}
+export async function readSessionRuntimeStatus(client:OpenCodeClient,sessionID:string,endpoint:OpenCodeLifecycleEndpoint={}):Promise<SessionRuntimeStatus>{
+  const edge=client as any,call=edge?.session?.status
+  if(typeof call==='function'){
+    try{const status=sessionRuntimeStatusFromStatus(await call.call(edge.session),sessionID);if(status!=='unknown')return status}catch{}
+  }
+  if(endpoint.serverUrl){
+    try{const base=endpoint.serverUrl.replace(/\/$/,''),url=new URL(`${base}/session/status`);if(endpoint.directory)url.searchParams.set('directory',endpoint.directory);const response=await fetch(url,{method:'GET',headers:lifecycleHeaders(),signal:AbortSignal.timeout(5000)});if(!response.ok)return'unknown';return sessionRuntimeStatusFromStatus(await response.json(),sessionID)}catch{return'unknown'}
+  }
+  return'unknown'
+}
+async function reconcileServerAbort(base:string,sessionID:string,directory?:string):Promise<boolean>{
+  try{
+    const response=await fetch(`${base}/session/status`,{method:'GET',headers:lifecycleHeaders(directory),signal:AbortSignal.timeout(5000)})
+    if(!response.ok)return false
+    return sessionIdleFromStatus(await response.json(),sessionID)===true
+  }catch{return false}
+}
+async function reconcileClientAbort(edge:any,sessionID:string):Promise<boolean>{
+  if(typeof edge?.session?.status!=='function')return false
+  try{return sessionIdleFromStatus(await edge.session.status(),sessionID)===true}catch{return false}
+}
+export async function abortSession(client:OpenCodeClient,sessionID:string,endpoint:OpenCodeLifecycleEndpoint={}):Promise<AbortSessionResult>{
   const edge=client as any
   if(endpoint.serverUrl){
+    const base=endpoint.serverUrl.replace(/\/$/,'')
     try{
-      const base=endpoint.serverUrl.replace(/\/$/,'')
       const response=await fetch(`${base}/session/${encodeURIComponent(sessionID)}/abort`,{method:'POST',headers:lifecycleHeaders(endpoint.directory),signal:AbortSignal.timeout(5000)})
-      if(response.ok)return'server'
+      if(response.ok){try{if(await response.json()===true)return'server'}catch{}}
     }catch{}
+    return await reconcileServerAbort(base,sessionID,endpoint.directory)?'server-reconciled':'unavailable'
   }
-  if(typeof edge?.session?.abort==='function'){await edge.session.abort({path:{id:sessionID}});return'client'}
-  return'unavailable'
+  if(typeof edge?.session?.abort!=='function')return'unavailable'
+  try{
+    const result=await edge.session.abort({path:{id:sessionID}})
+    if((result===true||dataOf(result)===true)&&!(result&&typeof result==='object'&&result.error))return'client'
+  }catch{}
+  return await reconcileClientAbort(edge,sessionID)?'client-reconciled':'unavailable'
 }
 export async function listProviders(client:OpenCodeClient):Promise<unknown>{const edge=client as any;if(typeof edge?.provider?.list==='function')return dataOf(await edge.provider.list());if(typeof edge?.config?.providers==='function')return dataOf(await edge.config.providers());return undefined}
+export async function listAvailableModels(endpoint:OpenCodeLifecycleEndpoint={}):Promise<unknown[]|undefined>{
+  if(!endpoint.serverUrl)return undefined
+  try{
+    const client=createOpenCodeV2Client({baseUrl:endpoint.serverUrl,directory:endpoint.directory,headers:lifecycleHeaders(endpoint.directory)}),model=client?.v2?.model
+    if(!model||typeof model.list!=='function')return undefined
+    const payload=dataOf<any>(await model.list(endpoint.directory?{location:{directory:endpoint.directory}}:undefined))
+    if(Array.isArray(payload))return payload
+    return Array.isArray(payload?.data)?payload.data:undefined
+  }catch{return undefined}
+}
 export function eventSessionID(event:any):string|undefined{return event?.properties?.sessionID??event?.properties?.sessionId??event?.properties?.id??event?.properties?.info?.id??event?.sessionID}
 export function lastAssistantText(messages:any[]):string{for(let i=messages.length-1;i>=0;i--){const msg=messages[i];const info=msg?.info??msg?.message??msg;if(info?.role&&info.role!=='assistant')continue;const parts=msg?.parts??info?.parts??[];const text=parts.filter((p:any)=>p?.type==='text'&&typeof p.text==='string').map((p:any)=>p.text).join('\n').trim();if(text)return text}return''}
+
+export interface AssistantErrorEvidence{name?:string;message:string;isRetryable?:boolean;statusCode?:number}
+export function assistantErrorEvidence(value:any):AssistantErrorEvidence|undefined{if(value==null)return undefined;if(typeof value==='string'){const message=value.trim();return message?{message}:undefined}if(typeof value!=='object')return undefined;const name=typeof value.name==='string'&&value.name.trim()?value.name.trim():undefined,data=value.data&&typeof value.data==='object'?value.data:value,messageCandidates=[value.message,data?.message,value.error?.message,value.cause?.message],message=messageCandidates.find(x=>typeof x==='string'&&x.trim())?.trim(),isRetryable=typeof data?.isRetryable==='boolean'?data.isRetryable:undefined,statusCode=Number.isInteger(data?.statusCode)&&data.statusCode>=0?data.statusCode:undefined;if(!message&&!name)return undefined;return{...(name?{name}:{}),message:message??name!,...(isRetryable!==undefined?{isRetryable}:{}),...(statusCode!==undefined?{statusCode}:{})}}
+export function lastAssistantError(messages:any[]):AssistantErrorEvidence|undefined{for(let i=messages.length-1;i>=0;i--){const msg=messages[i],info=msg?.info??msg?.message??msg;if(info?.role&&info.role!=='assistant')continue;return assistantErrorEvidence(info?.error??msg?.error)}return undefined}
 
 export interface AssistantModelEvidence{model?:string;variant?:string;message_id?:string}
 export function lastAssistantModel(messages:any[]):AssistantModelEvidence|undefined{

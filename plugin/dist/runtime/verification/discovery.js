@@ -114,3 +114,48 @@ export function discoverTargetedVerification(root, targets) {
 }
 export function targetedVerificationHint(root, targets) { const plans = discoverTargetedVerification(root, targets); if (!plans.length)
     return undefined; const useful = plans.filter(p => p.commands.length || p.testFiles.length); const rows = (useful.length ? useful : plans).slice(0, 6).map(p => `${p.target} -> package=${p.packageRoot}; tests=${p.testFiles.join(', ') || 'none'}; command=${p.commands.join(' && ') || 'none'}; ${p.reason}`); return `TARGETED VERIFICATION DISCOVERY (deterministic hint; validate against repo scripts before execution): ${rows.join(' | ')}`; }
+function packageScriptCommand(repoRoot, pkgRoot, script) {
+    const pm = manager(pkgRoot), pkgRel = norm(relative(repoRoot, pkgRoot));
+    if (pm === 'pnpm')
+        return pkgRel ? `pnpm --dir ${pkgRel} ${script}` : `pnpm ${script}`;
+    if (pm === 'yarn')
+        return pkgRel ? `yarn --cwd ${pkgRel} ${script}` : `yarn ${script}`;
+    if (pm === 'bun')
+        return pkgRel ? `bun --cwd ${pkgRel} run ${script}` : `bun run ${script}`;
+    return pkgRel ? `npm --prefix ${pkgRel} run ${script}` : `npm run ${script}`;
+}
+/**
+ * Read-only projection of deterministic repo-native verification routes.
+ * Targeted tests stay narrow; a generic full test suite is never invented when
+ * no nearby deterministic test exists. Static/build/check scripts are surfaced
+ * only when the owning package actually declares a usable script.
+ */
+export function discoverVerificationRoutes(root, targets) {
+    const repoRoot = resolve(root), routes = [];
+    for (const plan of discoverTargetedVerification(repoRoot, targets))
+        for (const command of plan.commands)
+            routes.push({ evidenceKind: 'targeted-tests', command, source: 'targeted-test', packageRoot: plan.packageRoot });
+    const roots = new Set();
+    if (existsSync(join(repoRoot, 'package.json')))
+        roots.add(repoRoot);
+    for (const target of [...new Set(targets.map(norm))].slice(0, 12)) {
+        if (!target || target.startsWith('..'))
+            continue;
+        const abs = resolve(repoRoot, target);
+        if (!within(repoRoot, abs))
+            continue;
+        const pkgRoot = nearestPackageRoot(repoRoot, target);
+        if (existsSync(join(pkgRoot, 'package.json')))
+            roots.add(pkgRoot);
+    }
+    const scriptKinds = { check: 'changed-surface-sanity', typecheck: 'typecheck', lint: 'lint', build: 'build' };
+    for (const pkgRoot of roots) {
+        const pkg = json(join(pkgRoot, 'package.json')), scripts = pkg?.scripts && typeof pkg.scripts === 'object' ? pkg.scripts : {};
+        for (const [script, evidenceKind] of Object.entries(scriptKinds)) {
+            if (!usableScript(scripts?.[script]))
+                continue;
+            routes.push({ evidenceKind, command: packageScriptCommand(repoRoot, pkgRoot, script), source: 'package-script', packageRoot: norm(relative(repoRoot, pkgRoot)) || '.' });
+        }
+    }
+    return routes.filter((route, index, all) => all.findIndex(other => other.evidenceKind === route.evidenceKind && other.command === route.command) === index).slice(0, 12);
+}

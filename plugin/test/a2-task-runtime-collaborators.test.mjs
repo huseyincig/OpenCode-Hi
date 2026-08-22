@@ -17,7 +17,8 @@ test('A2 TaskRuntime remains the canonical façade over exactly three extracted 
   assert.match(taskRuntime,/readonly #results:TaskResultReconciler/)
   assert.match(taskRuntime,/readonly #recovery:TaskRecoveryCoordinator/)
   assert.match(taskRuntime,/applyResult\([^]*?this\.#results\.applyResult/)
-  assert.match(taskRuntime,/recoverRuntimeFailure\([^]*?this\.#recovery\.recoverRuntimeFailure/)
+  assert.match(taskRuntime,/settleHostIdleRuntimeError\([^]*?this\.#recovery\.recoverHostTerminalFailure/)
+  assert.doesNotMatch(taskRuntime,/async recoverRuntimeFailure\(/,'host-active runtime failure recovery must not be exposed as a second retry owner')
   assert.match(taskRuntime,/noteEffectiveModel\([^]*?this\.#child\.noteEffectiveModel/)
   assert.doesNotMatch(child,/new MissionStore|MissionState\[\]|Map<[^>]*Task/)
   assert.doesNotMatch(result,/new MissionStore|MissionState\[\]|Map<[^>]*Task/)
@@ -35,7 +36,7 @@ test('A2 result reconciler owns result/diff/evidence reconciliation without a se
 })
 
 test('A2 recovery coordinator owns retry/fallback and stale callback quarantine decisions',()=>{
-  for(const anchor of ['callbackDisposition(','recoverStagnation(','recoverRuntimeFailure(','fail('])assert.ok(recovery.includes(anchor),anchor)
+  for(const anchor of ['callbackDisposition(','recoverStagnation(','recoverHostTerminalFailure(','fail('])assert.ok(recovery.includes(anchor),anchor)
   assert.match(events,/tasks\.resolveChildCallback\(sid\)/)
   assert.match(events,/tasks\.childCallbackDisposition\(mission,child\)/)
   assert.doesNotMatch(events,/generation_at_spawn!==undefined&&child\.generation_at_spawn!==mission\.generation/)

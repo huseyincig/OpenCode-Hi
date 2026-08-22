@@ -1,16 +1,26 @@
+function structured(error) {
+    const value = error && typeof error === 'object' ? error : undefined, name = String(value?.name ?? '').trim(), message = String(value?.message ?? error ?? '').trim(), isRetryable = typeof value?.isRetryable === 'boolean' ? value.isRetryable : undefined, statusCode = Number.isInteger(value?.statusCode) && value.statusCode >= 0 ? value.statusCode : undefined;
+    return { name, text: message.toLowerCase(), ...(isRetryable !== undefined ? { isRetryable } : {}), ...(statusCode !== undefined ? { statusCode } : {}) };
+}
 export function classifyWorkerFailure(error) {
-    const text = String(error?.message ?? error ?? '').toLowerCase();
-    if (/rate.?limit|429|quota|provider|upstream|gateway|503|502|network|connection|timeout|timed out|transport|socket|econn|temporar/.test(text))
-        return { kind: 'provider-transport', stagnation: false, retryable: true, reason: 'provider-or-transport-failure' };
-    if (/permission|denied|forbidden|unauthori[sz]ed|approval|oauth|mfa/.test(text))
-        return { kind: 'permission', stagnation: false, retryable: false, reason: 'permission-or-authority-boundary' };
-    if (/context.*(limit|overflow|length)|too many tokens|maximum context/.test(text))
-        return { kind: 'context-overflow', stagnation: false, retryable: true, reason: 'context-capacity-failure' };
+    const observed = structured(error), name = observed.name, text = observed.text;
+    if (name === 'ProviderAuthError' || /permission|denied|forbidden|unauthori[sz]ed|approval|oauth|mfa/.test(text))
+        return { kind: 'permission', stagnation: false, retryable: false, reason: name === 'ProviderAuthError' ? 'opencode-provider-auth-error' : 'permission-or-authority-boundary' };
+    if (name === 'ContextOverflowError' || /context.*(limit|overflow|length)|too many tokens|maximum context/.test(text))
+        return { kind: 'context-overflow', stagnation: false, retryable: true, reason: name === 'ContextOverflowError' ? 'opencode-terminal-context-overflow' : 'context-capacity-failure' };
+    if (name === 'MessageAbortedError')
+        return { kind: 'unknown', stagnation: false, retryable: false, reason: 'opencode-message-aborted' };
+    if (name === 'APIError') {
+        const fallbackEligible = observed.isRetryable === true || observed.statusCode === 429 || (observed.statusCode !== undefined && observed.statusCode >= 500);
+        return { kind: 'provider-transport', stagnation: false, retryable: fallbackEligible, reason: fallbackEligible ? 'opencode-terminal-api-error-fallback-eligible' : 'opencode-terminal-api-error-nonretryable' };
+    }
     if (/command not found|missing dependency|cannot find module|no module named|enoent|environment/.test(text))
         return { kind: 'environment', stagnation: false, retryable: false, reason: 'environment-failure' };
     if (/tool.*(unsupported|unavailable|invalid)|model.*tool|function calling/.test(text))
         return { kind: 'tool-incompatibility', stagnation: false, retryable: true, reason: 'model-tool-compatibility-failure' };
+    if (/rate.?limit|429|quota|provider|upstream|gateway|503|502|network[-_\s]?error|connection|timeout|timed out|transport|socket|econn|temporar/.test(text))
+        return { kind: 'provider-transport', stagnation: false, retryable: true, reason: 'legacy-provider-or-transport-failure' };
     if (/test|assert|logic|incorrect|failed expectation|compile/.test(text))
         return { kind: 'reasoning-task', stagnation: true, retryable: true, reason: 'task-or-reasoning-failure' };
-    return { kind: 'unknown', stagnation: true, retryable: true, reason: 'unclassified-worker-failure' };
+    return { kind: 'unknown', stagnation: true, retryable: false, reason: 'unclassified-worker-failure' };
 }

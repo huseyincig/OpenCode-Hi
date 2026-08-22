@@ -88,3 +88,14 @@ test('start rejects a dependency that is already failed/cancelled',async()=>{
   const pre=createTask(m,{objective:'prerequisite',role:'coder',category:'standard'});pre.status='failed'
   await assert.rejects(()=>runtime().start(m,{objective:'dependent',role:'coder',dependencies:[pre.id]}),/Unavailable task dependencies/)
 })
+
+
+test('legacy parallel safety also serializes unknown writer surfaces but not two read-only unknown surfaces',()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'unknown-surface-parallel-safety','opaque parallel safety')
+  const writer=createTask(m,{objective:'unknown writer',role:'coder',category:'standard',scope:[]});writer.status='running'
+  const blocked=parallelSafety(m.execution.tasks,{scope:[],dependencies:[],role:'coder'})
+  assert.equal(blocked.safe,false);assert.match(blocked.reasons.join('|'),/unknown-mutable-surface/)
+  writer.role='repository-explorer'
+  const readOnly=parallelSafety(m.execution.tasks,{scope:[],dependencies:[],role:'architect'})
+  assert.equal(readOnly.safe,true,readOnly.reasons.join('; '))
+})

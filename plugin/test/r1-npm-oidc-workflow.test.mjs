@@ -37,7 +37,13 @@ test('R1 workflow fails closed on exact annotated tag/source/package identity be
   assert.equal(pkg.repository.url,'git+https://github.com/huseyincig/OpenCode-Hi.git')
   assert.equal(pkg.publishConfig.access,'public')
   assert.match(verifier,/rootLockVersion/)
-  assert.match(verifier,/root @opencode-ai\/sdk dependency must equal accepted 1\.18\.19/)
+  assert.match(verifier,/root @opencode-ai\/sdk must be exact/)
+  assert.match(verifier,/root @opencode-ai\/plugin peer must equal exact host target/)
+  const hostTarget=pkg.dependencies['@opencode-ai/sdk']
+  assert.match(hostTarget,/^\d+\.\d+\.\d+$/)
+  assert.equal(pkg.peerDependencies['@opencode-ai/plugin'],hostTarget)
+  const preflight=readFileSync(resolve(root,'scripts/release-preflight.mjs'),'utf8')
+  assert.match(preflight,/opencode_upstream_tracker\.py','--registry-only','--require-current'/)
 })
 
 test('R1 registry proof requires fresh pack integrity and shasum equality before fresh-consumer acceptance',()=>{

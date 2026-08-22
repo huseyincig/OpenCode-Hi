@@ -4,7 +4,7 @@ import { appendLedger } from '../ledger/ledger.js'
 import { addEvidence,markMutation } from '../evidence/evidence-runtime.js'
 import type { RuntimeScopedStores } from '../application/runtime-scoped-stores.js'
 import { isHiReadOnlyChildRole,isHiReviewerRole } from '../roles/catalog.js'
-import { assessDiffOwnership } from './diff-ownership.js'
+import { assessDiffOwnership,assessRequiredTargetCoverage } from './diff-ownership.js'
 import { applyWorkerResult,beginWorkerAttempt } from '../worker/worker-runtime.js'
 import { replanVerificationForChangedSurface,verificationSatisfied,reviewObligationSatisfied } from '../verification/policy.js'
 import { collectRepoContext } from '../intent/repo-context.js'
@@ -24,6 +24,7 @@ import { ChildExecutionCoordinator,diffDelta,normFile } from './child-execution-
 import { taskRuntimeAdmittedModel,reserveTaskRuntimeDispatch,bindTaskRuntimeHost,beginTaskRuntimeSettlement,releaseTaskRuntimeReservation } from '../scheduler/task-runtime-adapter.js'
 import { executionAttemptIdentity } from '../../contracts/orchestration-core.js'
 import { evidenceClaimApplicability } from '../evidence/applicability.js'
+import { captureEvidenceScopeState } from '../evidence/scope-state.js'
 
 function providerOf(model:string|undefined):string|undefined{return model&&model!=='host-default'&&model.includes('/')?model.slice(0,model.indexOf('/')):undefined}
 function resultDigest(result:WorkerResult):string{return createHash('sha256').update(JSON.stringify(result)).digest('hex')}
@@ -98,7 +99,7 @@ export class TaskResultReconciler{
       this.queueTask(m,loser,resume)
       appendLedger(m,'parallel.write-conflict.quarantined',{task_id:loserTask.id,worker_id:loser.id,payload:{winner_worker_id:winner.id,winner_task_id:winnerTask.id,files:overlap.slice(0,30),policy:'verified-abort-then-serialize'}});void this.events?.(runtimeSignal('parallel.write-conflict',m.identity.mission_id,{task_id:loserTask.id,worker_id:loser.id,payload:{other_worker_id:winner.id,files:overlap.slice(0,30),action:'quarantined'}}));break
     }
-    syncMissionGates(m)
+    syncMissionGates(m,this.projectRoot)
   }
   noteNativeStatus(m:MissionState,workerID:string,status:string):void{const worker=m.execution.workers.find(w=>w.id===workerID);if(!worker)return;appendLedger(m,'worker.native-status',{worker_id:worker.id,payload:{status}})}
   applyResult(m:MissionState,workerID:string,result:WorkerResult):void{
@@ -176,8 +177,10 @@ export class TaskResultReconciler{
 
 
     const browserProofKinds=new Set(['browser-evidence','visual-evidence','accessibility-evidence'])
+    const genericVerifierClaimKinds=new Set(['targeted-tests','typecheck','lint','build','changed-surface-sanity'])
     const reconciledEvidence=effectiveResult.evidence.map(e=>{
       const claimedPassed=e.outcome==='passed'||e.pass===true
+      if(claimedPassed&&genericVerifierClaimKinds.has(e.kind)){appendLedger(m,'verification.worker-claim-unverified',{task_id:task.id,worker_id:worker.id,payload:{kind:e.kind,reason:'worker-result-is-claim-not-host-observation'}});const {pass:_pass,outcome:_outcome,...rest}=e;return{...rest,outcome:'pending' as const,reason:'worker-claim-unverified: canonical PASS requires an exact runtime/host verification observation'}}
       if(!claimedPassed||!browserProofKinds.has(e.kind))return e
       const requested=[...new Set(e.evidence_refs??[])],support=requested.map(id=>m.execution.evidence.items.find(item=>item.id===id)).filter((item):item is NonNullable<typeof item>=>Boolean(item))
       const valid=requested.length>0&&support.length===requested.length&&support.every(item=>String(item.source??'').startsWith('browser:')&&item.kind==='browser-evidence'&&!item.invalidated_at&&item.outcome!=='failed'&&item.pass!==false&&item.task_id===task.id&&evidenceClaimApplicability(m,item).applicable)
@@ -188,13 +191,29 @@ export class TaskResultReconciler{
     })
     effectiveResult={...effectiveResult,evidence:reconciledEvidence}
 
-    // Proof ownership: ingest worker-reported proof into the canonical Evidence owner before
-    // methodology exit evaluation. A WorkerResult is not itself proof. If changed files were
-    // only reported after the fact, mark that mutation first so same-result evidence is stale.
+    // Claim ownership: WorkerResult evidence stays task-result provenance. It is never copied wholesale
+    // into canonical Evidence. Only explicitly admitted observation owners below may create EvidenceItem.
     const nativeAttemptDelta=worker.native_diff_final?diffDelta(worker.native_diff_baseline??{},worker.native_diff_final):undefined,fallbackMutationFiles=nativeAttemptDelta??effectiveResult.changed_files,fallbackMutation=fallbackMutationFiles.length>0&&!observedMutationDuringWorker
     if(fallbackMutation)markMutation(m,fallbackMutationFiles,'worker-result-fallback')
-    const evidenceSource=isHiReadOnlyChildRole(worker.role)?`worker:${worker.id}:reviewer`:`worker:${worker.id}`,attemptIdentity=executionAttemptIdentity({executionUnitId:`eu:${task.id}`,workerId:worker.id,ordinal:worker.attempt,generation:worker.generation_at_spawn??m.continuation.generation}),producer_attempt={worker_id:worker.id,execution_unit_id:attemptIdentity.executionUnitId,attempt_id:attemptIdentity.attemptId,run_id:attemptIdentity.runId,ordinal:attemptIdentity.ordinal,generation:attemptIdentity.generation}
-    for(const e of effectiveResult.evidence){const refs=[...new Set(e.evidence_refs??[])],support=refs.map(id=>m.execution.evidence.items.find(item=>item.id===id)).filter((item):item is NonNullable<typeof item>=>Boolean(item)),browserStateHash=browserProofKinds.has(e.kind)&&refs.length&&support.length===refs.length?createHash('sha256').update(support.map(item=>`${item.id}:${item.source_state_hash??''}`).join('\n')).digest('hex'):undefined;addEvidence(m,{kind:e.kind,summary:e.summary,scope:e.scope??effectiveResult.changed_files,source:evidenceSource,source_session_id:worker.session_id,source_state_hash:browserStateHash??worker.native_state_hash,task_id:task.id,obligation_ids:task.obligation_ids,evidence_refs:refs.length?refs:undefined,producer_attempt,pass:e.pass,outcome:e.outcome,reason:e.reason,invalidated_at:(cleanlinessMarker||fallbackMutation&&!isHiReadOnlyChildRole(worker.role))?(m.execution.evidence.last_mutation_at??Date.now()):undefined})}
+    const attemptIdentity=executionAttemptIdentity({executionUnitId:`eu:${task.id}`,workerId:worker.id,ordinal:worker.attempt,generation:worker.generation_at_spawn??m.continuation.generation}),producer_attempt={worker_id:worker.id,execution_unit_id:attemptIdentity.executionUnitId,attempt_id:attemptIdentity.attemptId,run_id:attemptIdentity.runId,ordinal:attemptIdentity.ordinal,generation:attemptIdentity.generation}
+    for(const e of effectiveResult.evidence){
+      const refs=[...new Set(e.evidence_refs??[])]
+      appendLedger(m,'worker.evidence-claim-recorded',{task_id:task.id,worker_id:worker.id,payload:{kind:e.kind,claimed_outcome:e.outcome,claimed_pass:e.pass,observation_refs:refs.slice(0,20)}})
+      if(e.kind==='review-evidence'&&isHiReviewerRole(worker.role)){
+        const stateHash=worker.native_state_hash,scope=e.scope?.length?e.scope:task.scope,scopeStateHash=captureEvidenceScopeState(this.projectRoot,scope)
+        if(!worker.session_id||!stateHash||!/^[a-f0-9]{64}$/i.test(stateHash)){appendLedger(m,'review.evidence-unbound',{task_id:task.id,worker_id:worker.id,payload:{reason:'reviewer-observation-requires-exact-session-state',session_id:worker.session_id}});continue}
+        if(!scopeStateHash){appendLedger(m,'review.evidence-unbound',{task_id:task.id,worker_id:worker.id,payload:{reason:'reviewer-observation-requires-current-bounded-scope-state',scope:scope.slice(0,40)}});continue}
+        addEvidence(m,{kind:e.kind,summary:e.summary,scope,source:`reviewer:${worker.id}`,trusted_source_class:'reviewer-observation',source_session_id:worker.session_id,source_state_hash:stateHash,scope_state_hash:scopeStateHash,task_id:task.id,obligation_ids:task.obligation_ids,evidence_refs:refs.length?refs:undefined,producer_attempt,pass:e.pass,outcome:e.outcome,reason:e.reason,invalidated_at:cleanlinessMarker?(m.execution.evidence.last_mutation_at??Date.now()):undefined})
+        continue
+      }
+      if(browserProofKinds.has(e.kind)&&(e.outcome==='passed'||e.pass===true)){
+        const support=refs.map(id=>m.execution.evidence.items.find(item=>item.id===id)).filter((item):item is NonNullable<typeof item>=>Boolean(item))
+        const valid=refs.length>0&&support.length===refs.length&&support.every(item=>item.trusted_source_class==='browser-observation'&&item.kind==='browser-evidence'&&!item.invalidated_at&&item.outcome!=='failed'&&item.pass!==false&&item.task_id===task.id&&evidenceClaimApplicability(m,item).applicable)
+        if(!valid){appendLedger(m,'browser.evidence-admission-rejected',{task_id:task.id,worker_id:worker.id,payload:{kind:e.kind,requested_refs:refs.slice(0,20),reason:'canonical-browser-observation-required'}});continue}
+        const browserStateHash=createHash('sha256').update(support.map(item=>`${item.id}:${item.source_state_hash??''}`).join('\n')).digest('hex')
+        addEvidence(m,{kind:e.kind,summary:e.summary,scope:e.scope??task.scope,source:`browser-derived:${worker.id}`,trusted_source_class:'browser-observation',source_session_id:worker.session_id,source_state_hash:browserStateHash,task_id:task.id,obligation_ids:task.obligation_ids,evidence_refs:refs,producer_attempt,pass:e.pass,outcome:e.outcome,reason:e.reason,invalidated_at:cleanlinessMarker?(m.execution.evidence.last_mutation_at??Date.now()):undefined})
+      }
+    }
 
     if(effectiveResult.status==='DONE'&&(worker.loaded_methodologies?.length??0)>0){
       const missingExit=[...new Set((worker.loaded_methodologies??[]).flatMap(name=>methodologyExitCheck(m,name,{task,worker,result:effectiveResult,projectRoot:this.projectRoot,scope:'worker'}).missing))]
@@ -215,12 +234,12 @@ export class TaskResultReconciler{
     }
     if(ownership.accepted.length){task.scope=[...new Set([...task.scope,...ownership.accepted])];appendLedger(m,'task.scope-expanded',{task_id:task.id,worker_id:worker.id,payload:{files:ownership.accepted.slice(0,40),policy:'bounded-explicit-ownership'}})}
     if(effectiveResult.status==='DONE'&&effectiveResult.methodology_observations?.length){const evidenceRefs=m.execution.evidence.items.filter(e=>e.task_id===task.id&&!e.invalidated_at&&(e.outcome==='passed'||e.pass===true)&&e.producer_attempt?.worker_id===worker.id&&e.producer_attempt.ordinal===worker.attempt&&e.producer_attempt.generation===(worker.generation_at_spawn??m.continuation.generation)).map(e=>e.kind);for(const observation of effectiveResult.methodology_observations)this.methodologyLearning.observe(m,worker,observation,evidenceRefs)}
-    const reviewEvidenceSatisfied=(obligationID:string)=>reviewObligationSatisfied(m,obligationID).ok
+    const reviewEvidenceSatisfied=(obligationID:string)=>reviewObligationSatisfied(m,obligationID,this.projectRoot).ok
     if(effectiveResult.status==='DONE'){
       const now=Date.now();if(worker.role==='repository-explorer'&&m.identity.intent.ambiguity!=='none'){m.identity.intent.ambiguity='none';appendLedger(m,'intent.ambiguity.resolved',{task_id:task.id,worker_id:worker.id,payload:{source:'repository-explorer-result'}})}
-      for(const id of task.obligation_ids){const owned=m.execution.obligations.find(o=>o.id===id&&o.status==='open');if(!owned)continue;if(owned.kind==='verification'){if(verificationSatisfied(m,owned.id).ok){owned.status='closed';owned.closedAt=now}}else if(owned.kind==='review'){if(reviewEvidenceSatisfied(owned.id)){owned.status='closed';owned.closedAt=now}else appendLedger(m,'review.claim-unproven',{task_id:task.id,worker_id:worker.id,payload:{obligation:owned.id,reason:'explicit-fresh-source-bound-review-evidence-required'}})}else{owned.status='closed';owned.closedAt=now}if(owned.status==='closed')appendLedger(m,'obligation.closed',{task_id:task.id,worker_id:worker.id,payload:{obligation:owned.id,owner:'task'}})}
+      for(const id of task.obligation_ids){const owned=m.execution.obligations.find(o=>o.id===id&&o.status==='open');if(!owned)continue;if(owned.kind==='verification'){if(verificationSatisfied(m,owned.id,this.projectRoot).ok){owned.status='closed';owned.closedAt=now}}else if(owned.kind==='review'){if(reviewEvidenceSatisfied(owned.id)){owned.status='closed';owned.closedAt=now}else appendLedger(m,'review.claim-unproven',{task_id:task.id,worker_id:worker.id,payload:{obligation:owned.id,reason:'explicit-fresh-source-bound-review-evidence-required'}})}else if(owned.kind==='implementation'){const changed=[...new Set([...m.vcs.changed_files,...effectiveResult.changed_files])],coverage=assessRequiredTargetCoverage(owned.requiredTargets??[],changed);if(!coverage.missing.length){owned.status='closed';owned.closedAt=now}else appendLedger(m,'implementation.required-targets-uncovered',{task_id:task.id,worker_id:worker.id,payload:{obligation:owned.id,required:coverage.required,covered:coverage.covered,missing:coverage.missing,changed_files:changed.slice(0,60)}})}else{owned.status='closed';owned.closedAt=now}if(owned.status==='closed')appendLedger(m,'obligation.closed',{task_id:task.id,worker_id:worker.id,payload:{obligation:owned.id,owner:'task'}})}
       reconcileMethodologyExits(m,this.projectRoot)
     }
-    syncMissionGates(m);this.drainQueue()
+    syncMissionGates(m,this.projectRoot);this.drainQueue()
   }
 }

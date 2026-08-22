@@ -14,7 +14,7 @@ import type { SemanticProgressSnapshot } from '../progress/semantic-progress.js'
 import type { RecoveryStrategyRecord } from '../continuation/recovery-governor.js';
 export type { EvidenceItem } from '../../contracts/evidence.js';
 export { WORKER_EVIDENCE_KINDS } from '../../contracts/worker-result.js';
-export type { EvidenceOutcome, MethodologyObservation, WorkerEvidenceKind, WorkerResult, WorkerResultStatus } from '../../contracts/worker-result.js';
+export type { EvidenceOutcome, MethodologyObservation, WorkerEvidenceClaim, WorkerEvidenceKind, WorkerResult, WorkerResultStatus } from '../../contracts/worker-result.js';
 export type MissionStatus = 'active' | 'waiting-user' | 'completed' | 'stopped' | 'failed';
 export type Risk = 'low' | 'medium' | 'high' | 'authority-boundary';
 export type ExecutionMode = 'single' | 'parallel' | 'team';
@@ -32,6 +32,7 @@ export interface Obligation {
     kind: ObligationKind;
     summary: string;
     requiredEvidence?: string[];
+    requiredTargets?: string[];
     blocker?: string;
     closedAt?: number;
 }

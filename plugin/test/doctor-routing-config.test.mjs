@@ -63,8 +63,8 @@ test('doctor routing-config check is present and surface the roleModels file', (
     const r = checks.find(c => c.id === 'routing-config')
     assert.ok(r, 'routing-config check must be present in 2.0.3+')
     assert.equal(r.status, 'pass', 'valid schema 1 with 5 roles must pass')
-    assert.match(r.detail, /strategy=quality/)
-    assert.match(r.detail, /roles=coder,security-reviewer,qa-reviewer,architect,repository-explorer/)
+    assert.match(r.detail, /legacyStrategy=quality \(diagnostic-only\)/)
+    assert.match(r.detail, /explicitRoles=coder,security-reviewer,qa-reviewer,architect,repository-explorer/)
   } finally { rmSync(project, { recursive: true, force: true }) }
 })
 
@@ -77,7 +77,7 @@ test('doctor routing-config: no file yields info (not warn)', () => {
     assert.ok(r)
     assert.equal(r.status, 'info')
     assert.match(r.detail, /no \.opencode\/hi\/policy\/routing\.json/)
-    assert.match(r.detail, /scoring fallback/)
+    assert.match(r.detail, /automatic child selection is ephemeral capability routing/)
   } finally { rmSync(project, { recursive: true, force: true }) }
 })
 

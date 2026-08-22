@@ -13,10 +13,23 @@ export interface OpenCodeLifecycleEndpoint {
     serverUrl?: string;
     directory?: string;
 }
-export declare function abortSession(client: OpenCodeClient, sessionID: string, endpoint?: OpenCodeLifecycleEndpoint): Promise<'server' | 'client' | 'unavailable'>;
+export type AbortSessionResult = 'server' | 'server-reconciled' | 'client' | 'client-reconciled' | 'unavailable';
+export type SessionRuntimeStatus = 'idle' | 'busy' | 'retry' | 'unknown';
+export declare function sessionRuntimeStatusFromStatus(value: unknown, sessionID: string): SessionRuntimeStatus;
+export declare function readSessionRuntimeStatus(client: OpenCodeClient, sessionID: string, endpoint?: OpenCodeLifecycleEndpoint): Promise<SessionRuntimeStatus>;
+export declare function abortSession(client: OpenCodeClient, sessionID: string, endpoint?: OpenCodeLifecycleEndpoint): Promise<AbortSessionResult>;
 export declare function listProviders(client: OpenCodeClient): Promise<unknown>;
+export declare function listAvailableModels(endpoint?: OpenCodeLifecycleEndpoint): Promise<unknown[] | undefined>;
 export declare function eventSessionID(event: any): string | undefined;
 export declare function lastAssistantText(messages: any[]): string;
+export interface AssistantErrorEvidence {
+    name?: string;
+    message: string;
+    isRetryable?: boolean;
+    statusCode?: number;
+}
+export declare function assistantErrorEvidence(value: any): AssistantErrorEvidence | undefined;
+export declare function lastAssistantError(messages: any[]): AssistantErrorEvidence | undefined;
 export interface AssistantModelEvidence {
     model?: string;
     variant?: string;

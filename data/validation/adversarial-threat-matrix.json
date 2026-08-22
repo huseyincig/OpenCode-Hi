@@ -32,7 +32,7 @@
       "proof_tests": [
         {
           "file": "plugin/test/agent-binding-contract.test.mjs",
-          "contains": "canonical Hi agent names fail binding on prompt mode or permission collisions"
+          "contains": "canonical Hi agent names still fail binding on prompt mode or permission collisions"
         }
       ],
       "evidence": []
@@ -89,7 +89,7 @@
         },
         {
           "file": "plugin/test/agent-binding-contract.test.mjs",
-          "contains": "canonical Hi agent names fail binding on prompt mode or permission collisions"
+          "contains": "canonical Hi agent names still fail binding on prompt mode or permission collisions"
         }
       ],
       "evidence": []

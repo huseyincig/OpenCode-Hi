@@ -14,7 +14,7 @@ function stringArray(v) { return Array.isArray(v) && v.every(x => typeof x === '
 function onlyKeys(v, allowed) { return Object.keys(v).every(k => allowed.has(k)); }
 function clip(v, max) { return String(v ?? '').slice(0, max); }
 function cleanKey(v) { return String(v ?? '').trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, ''); }
-export function isWorkerEvidenceContract(v) {
+export function isWorkerEvidenceClaimContract(v) {
     if (!record(v) || !onlyKeys(v, EVIDENCE_KEYS) || typeof v.kind !== 'string' || !KIND_SET.has(v.kind) || typeof v.summary !== 'string')
         return false;
     if (v.scope !== undefined && !stringArray(v.scope))
@@ -33,7 +33,7 @@ export function isMethodologyObservationContract(v) {
 export function isWorkerResultContract(v) {
     if (!record(v) || !onlyKeys(v, RESULT_KEYS) || typeof v.status !== 'string' || !Object.values(STATUS_ALIAS).includes(v.status) || typeof v.summary !== 'string')
         return false;
-    if (!stringArray(v.changed_files) || !v.changed_files.every(x => normalizeBoundedProjectPath(x) === x.replace(/\\/g, '/').replace(/^\.\//, '')) || !Array.isArray(v.evidence) || !v.evidence.every(isWorkerEvidenceContract) || !stringArray(v.open_issues) || !stringArray(v.needs_context))
+    if (!stringArray(v.changed_files) || !v.changed_files.every(x => normalizeBoundedProjectPath(x) === x.replace(/\\/g, '/').replace(/^\.\//, '')) || !Array.isArray(v.evidence) || !v.evidence.every(isWorkerEvidenceClaimContract) || !stringArray(v.open_issues) || !stringArray(v.needs_context))
         return false;
     if (v.scope_expansions !== undefined && (!Array.isArray(v.scope_expansions) || !v.scope_expansions.every(x => record(x) && onlyKeys(x, EXPANSION_KEYS) && typeof x.file === 'string' && normalizeBoundedProjectPath(x.file) !== undefined && typeof x.reason === 'string' && typeof x.necessary === 'boolean')))
         return false;

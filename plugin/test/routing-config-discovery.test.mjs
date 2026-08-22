@@ -14,7 +14,7 @@ function writeRouting(project, body) {
   writeFileSync(join(project, '.opencode', 'hi', 'policy', 'routing.json'), JSON.stringify(body), 'utf8')
 }
 
-test('no project routing config: defaults to empty roleModels (scoring fallback)', () => {
+test('no project routing config: defaults to empty explicit roleModels for ephemeral automatic selection', () => {
   const project = makeProject()
   try {
     const cfg = resolveHiConfig({}, project)

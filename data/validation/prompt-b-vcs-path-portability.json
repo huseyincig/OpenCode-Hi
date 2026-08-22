@@ -12,10 +12,10 @@
       "section": 18,
       "invariant": "user-dirty-files",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "14da681b14b058aa3104cfb2f8f1cb78dfc2c75c2a7dc975748e1a49748d53d7",
+      "owner_sha256": "58ca8a5f218cd2b6120fd5f190be728356eaf3052f67b4ce9ae8a93bf006fbe2",
       "owner_anchor": "user-diff.preserved",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
-      "proof_sha256": "5852e6f963942e284c3e4d1fa418a75367c7e418e9ebe6ed51176371774a4f8a",
+      "proof_sha256": "7327fe78731d41853b8d3897794cc5955395cd98e08f662c8bb1af86edd6d71e",
       "proof_anchor": "pre-existing user dirty file unchanged from worker baseline"
     },
     {
@@ -42,27 +42,27 @@
       "section": 18,
       "invariant": "worker-changes",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "14da681b14b058aa3104cfb2f8f1cb78dfc2c75c2a7dc975748e1a49748d53d7",
+      "owner_sha256": "58ca8a5f218cd2b6120fd5f190be728356eaf3052f67b4ce9ae8a93bf006fbe2",
       "owner_anchor": "native.diff.reconciled",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
-      "proof_sha256": "5852e6f963942e284c3e4d1fa418a75367c7e418e9ebe6ed51176371774a4f8a",
+      "proof_sha256": "7327fe78731d41853b8d3897794cc5955395cd98e08f662c8bb1af86edd6d71e",
       "proof_anchor": "observed native write omitted from WorkerResult forces reconciliation"
     },
     {
       "section": 18,
       "invariant": "independent-worker-changes",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "14da681b14b058aa3104cfb2f8f1cb78dfc2c75c2a7dc975748e1a49748d53d7",
+      "owner_sha256": "58ca8a5f218cd2b6120fd5f190be728356eaf3052f67b4ce9ae8a93bf006fbe2",
       "owner_anchor": "parallel.write-conflict.quarantined",
       "proof": "plugin/test/runtime-write-conflict.test.mjs",
-      "proof_sha256": "c79dc13def3bc9a9c129a81908b27e7252263b5f21ff69b1a181a77fd22340af",
+      "proof_sha256": "47c8d2778e0f69da9c2f14bf8f0e1c1f3a76fb3fe32b25dcfc4b2af4ebcef682",
       "proof_anchor": "overlapping writes quarantine the later writer"
     },
     {
       "section": 18,
       "invariant": "verification-touching-files",
       "owner": "plugin/src/runtime/evidence/evidence-runtime.ts",
-      "owner_sha256": "5146ed0b607cf79d564abcdc358e7dcf5be7df8030ef1f9f50382232f62d10b3",
+      "owner_sha256": "27c7a33baae420ac094fec2bbd638ef3ab1bf67793936cdd39aff76f3b588219",
       "owner_anchor": "shellMayMutate(command)",
       "proof": "plugin/test/prompt-b-vcs-path-portability.test.mjs",
       "proof_sha256": "cd9db87fa287d03c7ea993726674bb186de9f0cb4e69f301b14b8fa0812657a1",
@@ -72,7 +72,7 @@
       "section": 18,
       "invariant": "failed-task",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "14da681b14b058aa3104cfb2f8f1cb78dfc2c75c2a7dc975748e1a49748d53d7",
+      "owner_sha256": "58ca8a5f218cd2b6120fd5f190be728356eaf3052f67b4ce9ae8a93bf006fbe2",
       "owner_anchor": "FIX_REQUIRED",
       "proof": "plugin/test/diff-cleanliness-hardening.test.mjs",
       "proof_sha256": "c93d22065705dd835351a418b7598089f6b8d5ec6f9431b332c6d36bb5e5275f",
@@ -82,10 +82,10 @@
       "section": 18,
       "invariant": "recovery",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "14da681b14b058aa3104cfb2f8f1cb78dfc2c75c2a7dc975748e1a49748d53d7",
+      "owner_sha256": "58ca8a5f218cd2b6120fd5f190be728356eaf3052f67b4ce9ae8a93bf006fbe2",
       "owner_anchor": "diff.cleanup.verified",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
-      "proof_sha256": "5852e6f963942e284c3e4d1fa418a75367c7e418e9ebe6ed51176371774a4f8a",
+      "proof_sha256": "7327fe78731d41853b8d3897794cc5955395cd98e08f662c8bb1af86edd6d71e",
       "proof_anchor": "native diff must prove collateral reverted before cleanup blocker can close"
     },
     {
@@ -95,7 +95,7 @@
       "owner_sha256": "bf299f887e618d824b9099281cd6e9e6321ff942faec9bba95d548d3e27c964b",
       "owner_anchor": "rollback",
       "proof": "plugin/test/forensic-hardening.test.mjs",
-      "proof_sha256": "28c5eaac0b621d1e7de12b824b15a25ba93480725df359791a1bc87866288f64",
+      "proof_sha256": "0d67118e1cfc2ed85853bf2d157ad8ffdc963636b84d1203d757b637381026ed",
       "proof_anchor": "command rollback with unknown exit cannot close rollback gate"
     },
     {
@@ -132,10 +132,10 @@
       "section": 18,
       "invariant": "no-blind-reset-stash-restore",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "b74685c24dd9e3ffc8b2e40d898f07c80d93a11a1c1ac58c4984f567d8a5663b",
+      "owner_sha256": "5e2abe1f85175657a15e2d0ca8d3004a4fe7ead87e27386c1e475a4b1ddb6843",
       "owner_anchor": "never use git checkout/reset/restore",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
-      "proof_sha256": "5852e6f963942e284c3e4d1fa418a75367c7e418e9ebe6ed51176371774a4f8a",
+      "proof_sha256": "7327fe78731d41853b8d3897794cc5955395cd98e08f662c8bb1af86edd6d71e",
       "proof_anchor": "never use git checkout\\/reset\\/restore"
     },
     {
@@ -155,7 +155,7 @@
       "owner_sha256": "863617a6ee01a66bbbcb04e4eae07c7ab3fdf565d6e02ace05817adc45aea470",
       "owner_anchor": "resolve(projectRoot)",
       "proof": "plugin/test/main-prompt-coexistence-platform-batch.test.mjs",
-      "proof_sha256": "d3ea35923d606a78bbee80c1f682615814ad82f645d8b39593040b0df43b2a75",
+      "proof_sha256": "e5cf9669fbaaf97d8693aedbad0f52aa25a23612e764cbf87312d9b4a8237f36",
       "proof_anchor": "worktree-first"
     },
     {

@@ -59,6 +59,8 @@
     "build:plugin": "npm --prefix plugin run build",
     "test:direct-git-install": "node scripts/run-direct-git-install-acceptance.mjs",
     "test:direct-git-host": "node scripts/run-python.mjs scripts/run-direct-git-host-acceptance.py",
+    "host:check-update": "node scripts/run-python.mjs scripts/opencode_upstream_tracker.py --fetch",
+    "host:observe-update": "node scripts/run-python.mjs scripts/opencode_upstream_tracker.py --fetch --write",
     "release:preflight": "node scripts/release-preflight.mjs"
   },
   "publishConfig": {
@@ -70,10 +72,10 @@
     "opencode-hi-setup": "scripts/native_plugin_setup.py"
   },
   "peerDependencies": {
-    "@opencode-ai/plugin": "1.18.19"
+    "@opencode-ai/plugin": "1.18.21"
   },
   "dependencies": {
-    "@opencode-ai/sdk": "1.18.19"
+    "@opencode-ai/sdk": "1.18.21"
   },
   "optionalDependencies": {
     "playwright-core": "1.62.1"

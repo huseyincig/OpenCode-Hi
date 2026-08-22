@@ -10,6 +10,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { activateMethodologySignal } from '../dist/runtime/methodology/activation.js'
 import { parseSemanticIntentAssessment } from '../dist/runtime/intent/semantic-assessment.js'
+import { addEvidence } from '../dist/runtime/evidence/evidence-runtime.js'
 import {fileURLToPath} from 'node:url'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 
@@ -98,7 +99,8 @@ test('loaded methodology need resolves after the bounded worker completes succes
   activateMethodologySignal(m,root,{signal:'intent.tdd',producer:'intent',reason:'TDD explicitly required'})
   m.execution.workers[0].selected_methodologies=['hi-test-driven-development']
   m.execution.workers[0].loaded_methodologies=['hi-test-driven-development']
-  runtime().applyResult(m,'w1',{status:'DONE',summary:'TDD loop completed.',changed_files:[],evidence:[{kind:'targeted-tests',summary:'focused TDD test passed',pass:true}],open_issues:[],needs_context:[]})
+  addEvidence(m,{kind:'targeted-tests',summary:'focused TDD host observation passed',scope:['plugin/src/internal.ts'],source:'bash',trusted_source_class:'host-tool-observation',task_id:'t1',pass:true,outcome:'passed'})
+  runtime().applyResult(m,'w1',{status:'DONE',summary:'TDD loop completed.',changed_files:[],evidence:[{kind:'targeted-tests',summary:'worker reports the focused TDD test passed',pass:true}],open_issues:[],needs_context:[]})
   assert.equal(m.execution.tasks[0].result.status,'DONE')
   assert.ok(!m.methodology.methodology_needs.some(x=>x.name==='hi-test-driven-development'))
   assert.ok(m.execution.ledger.some(x=>x.type==='methodology.resolved'&&x.payload?.name==='hi-test-driven-development'))

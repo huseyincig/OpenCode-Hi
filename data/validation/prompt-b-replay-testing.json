@@ -3,14 +3,14 @@
   "kind": "PROMPT_B_REPLAY_TESTING_AUDIT",
   "program": "PROMPT_B",
   "section": 33,
-  "status": "PASS",
+  "status": "FAIL",
   "acceptance_receipt": "data/validation/replay-acceptance-0.1.0.json",
   "summary": {
     "required_surfaces": 5,
     "covered_surfaces": 5,
     "cases": 28,
     "nondeterministic_drift": 0,
-    "violations": 0
+    "violations": 4
   },
   "surface_counts": {
     "semantic_routing": 5,
@@ -33,6 +33,11 @@
     "recovery": true,
     "two-pass-drift-detection": true
   },
-  "violations": [],
+  "violations": [
+    "owner-hash:plugin/src/runtime/verification/policy.ts",
+    "owner-hash:plugin/src/opencode/event-adapter.ts",
+    "owner-hash:plugin/src/runtime/completion/evaluator.ts",
+    "owner-hash:plugin/src/runtime/continuation/recovery.ts"
+  ],
   "claim_boundary": "Replay certification covers deterministic semantic/routing decisions, worker scheduler decisions, host event normalization, completion decisions, and bounded recovery. Any replay output mismatch or two-pass digest drift fails the audit; this is not live-host/provider evidence."
 }

@@ -7,7 +7,7 @@
     13,
     14
   ],
-  "status": "PASS",
+  "status": "FAIL",
   "invariants": [
     {
       "section": 12,
@@ -16,8 +16,8 @@
       "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
       "owner_sha256": "68d4da52acac49163aa7d4aaa8eb09269c04def8d136d0d3c0493a51701eb4fb",
       "owner_anchor": "async spawn(",
-      "proof": "data/validation/external-opencode-hi-0.2.3-process-1.18.19-head-03a816f.json",
-      "proof_sha256": "0fc769223850c000ba64bb1d455bdb6c543705f998e3f08ab04c9a265a28a151",
+      "proof": "data/validation/external-opencode-hi-0.2.4-process-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "5a95a28696f907eb7b5409370071abf9d62a8de54aa88810446370714ade4126",
       "proof_anchor": "process_spawn_pid"
     },
     {
@@ -27,8 +27,8 @@
       "owner": "plugin/src/contracts/process.ts",
       "owner_sha256": "baa22ab538d5b0e16c09d2f5234d8fa13253881a608e3fbb6102833adff963fd",
       "owner_anchor": "pid:number",
-      "proof": "data/validation/external-opencode-hi-0.2.3-process-1.18.19-head-03a816f.json",
-      "proof_sha256": "0fc769223850c000ba64bb1d455bdb6c543705f998e3f08ab04c9a265a28a151",
+      "proof": "data/validation/external-opencode-hi-0.2.4-process-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "5a95a28696f907eb7b5409370071abf9d62a8de54aa88810446370714ade4126",
       "proof_anchor": "process_spawn_pid"
     },
     {
@@ -38,8 +38,8 @@
       "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
       "owner_sha256": "68d4da52acac49163aa7d4aaa8eb09269c04def8d136d0d3c0493a51701eb4fb",
       "owner_anchor": "process_group_id",
-      "proof": "data/validation/external-opencode-hi-0.2.3-process-1.18.19-head-03a816f.json",
-      "proof_sha256": "0fc769223850c000ba64bb1d455bdb6c543705f998e3f08ab04c9a265a28a151",
+      "proof": "data/validation/external-opencode-hi-0.2.4-process-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "5a95a28696f907eb7b5409370071abf9d62a8de54aa88810446370714ade4126",
       "proof_anchor": "process_group_identity"
     },
     {
@@ -49,8 +49,8 @@
       "owner": "plugin/src/contracts/process.ts",
       "owner_sha256": "baa22ab538d5b0e16c09d2f5234d8fa13253881a608e3fbb6102833adff963fd",
       "owner_anchor": "cwd:string",
-      "proof": "data/validation/external-opencode-hi-0.2.3-process-1.18.19-head-03a816f.json",
-      "proof_sha256": "0fc769223850c000ba64bb1d455bdb6c543705f998e3f08ab04c9a265a28a151",
+      "proof": "data/validation/external-opencode-hi-0.2.4-process-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "5a95a28696f907eb7b5409370071abf9d62a8de54aa88810446370714ade4126",
       "proof_anchor": "process_spawn_pid"
     },
     {
@@ -91,7 +91,7 @@
       "invariant": "wait",
       "level": "CONTROLLED",
       "owner": "plugin/src/runtime/continuation/evaluator.ts",
-      "owner_sha256": "820518f3b793092f208421295492bae3a441dfc1f50db49311dbee198c48bd94",
+      "owner_sha256": "cef8bf1b17b3f5c057279625ccce42dc59941ed5d4e1a63d7528638205e769e7",
       "owner_anchor": "waiting-process",
       "proof": "plugin/test/p3-process-runtime-lifecycle.test.mjs",
       "proof_sha256": "8bb01962004d090b1bc93ab5afff1897590f834d2fb04d4d05d5a494b9e277ba",
@@ -115,8 +115,8 @@
       "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
       "owner_sha256": "68d4da52acac49163aa7d4aaa8eb09269c04def8d136d0d3c0493a51701eb4fb",
       "owner_anchor": "#requestTimeout",
-      "proof": "data/validation/external-opencode-hi-0.2.3-process-1.18.19-head-03a816f.json",
-      "proof_sha256": "0fc769223850c000ba64bb1d455bdb6c543705f998e3f08ab04c9a265a28a151",
+      "proof": "data/validation/external-opencode-hi-0.2.4-process-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "5a95a28696f907eb7b5409370071abf9d62a8de54aa88810446370714ade4126",
       "proof_anchor": "process_timeout_group_signal"
     },
     {
@@ -126,8 +126,8 @@
       "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
       "owner_sha256": "68d4da52acac49163aa7d4aaa8eb09269c04def8d136d0d3c0493a51701eb4fb",
       "owner_anchor": "async kill(",
-      "proof": "data/validation/external-opencode-hi-0.2.3-process-1.18.19-head-03a816f.json",
-      "proof_sha256": "0fc769223850c000ba64bb1d455bdb6c543705f998e3f08ab04c9a265a28a151",
+      "proof": "data/validation/external-opencode-hi-0.2.4-process-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "5a95a28696f907eb7b5409370071abf9d62a8de54aa88810446370714ade4126",
       "proof_anchor": "process_kill_cleanup"
     },
     {
@@ -137,8 +137,8 @@
       "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
       "owner_sha256": "68d4da52acac49163aa7d4aaa8eb09269c04def8d136d0d3c0493a51701eb4fb",
       "owner_anchor": "async cleanup(",
-      "proof": "data/validation/external-opencode-hi-0.2.3-process-1.18.19-head-03a816f.json",
-      "proof_sha256": "0fc769223850c000ba64bb1d455bdb6c543705f998e3f08ab04c9a265a28a151",
+      "proof": "data/validation/external-opencode-hi-0.2.4-process-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "5a95a28696f907eb7b5409370071abf9d62a8de54aa88810446370714ade4126",
       "proof_anchor": "process_host_cleanup_empty"
     },
     {
@@ -148,8 +148,8 @@
       "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
       "owner_sha256": "68d4da52acac49163aa7d4aaa8eb09269c04def8d136d0d3c0493a51701eb4fb",
       "owner_anchor": "async reconcile(",
-      "proof": "data/validation/external-opencode-hi-0.2.3-process-1.18.19-head-03a816f.json",
-      "proof_sha256": "0fc769223850c000ba64bb1d455bdb6c543705f998e3f08ab04c9a265a28a151",
+      "proof": "data/validation/external-opencode-hi-0.2.4-process-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "5a95a28696f907eb7b5409370071abf9d62a8de54aa88810446370714ade4126",
       "proof_anchor": "process_restart_adoption"
     },
     {
@@ -181,8 +181,8 @@
       "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
       "owner_sha256": "68d4da52acac49163aa7d4aaa8eb09269c04def8d136d0d3c0493a51701eb4fb",
       "owner_anchor": "#applyInfo",
-      "proof": "data/validation/external-opencode-hi-0.2.3-process-1.18.19-head-03a816f.json",
-      "proof_sha256": "0fc769223850c000ba64bb1d455bdb6c543705f998e3f08ab04c9a265a28a151",
+      "proof": "data/validation/external-opencode-hi-0.2.4-process-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "5a95a28696f907eb7b5409370071abf9d62a8de54aa88810446370714ade4126",
       "proof_anchor": "process_quick_exit_before_observation"
     },
     {
@@ -193,7 +193,7 @@
       "owner_sha256": "84d4598bead6be2b9cbf43ee4fb23d5381419a26cb8b5dc27b4e53bda21449b7",
       "owner_anchor": "stopMission",
       "proof": "plugin/test/p3-process-control-integration.test.mjs",
-      "proof_sha256": "2f9011d0ae6dcf9f45c415a0f9c36865e92bd0284789d315c5c050bfb0bb7d14",
+      "proof_sha256": "4bfac4b006fc1205397c91fb1cae10140f7bde3cd4d01ece9e1fac01cc4e0a4b",
       "proof_anchor": "parent session deletion stops mission and process runtime"
     },
     {
@@ -214,8 +214,8 @@
       "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
       "owner_sha256": "68d4da52acac49163aa7d4aaa8eb09269c04def8d136d0d3c0493a51701eb4fb",
       "owner_anchor": "#signalTarget",
-      "proof": "data/validation/external-opencode-hi-0.2.3-process-1.18.19-head-03a816f.json",
-      "proof_sha256": "0fc769223850c000ba64bb1d455bdb6c543705f998e3f08ab04c9a265a28a151",
+      "proof": "data/validation/external-opencode-hi-0.2.4-process-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "5a95a28696f907eb7b5409370071abf9d62a8de54aa88810446370714ade4126",
       "proof_anchor": "process_group_identity"
     },
     {
@@ -247,8 +247,8 @@
       "owner": "plugin/src/opencode/open-code-pty-adapter.ts",
       "owner_sha256": "68d4da52acac49163aa7d4aaa8eb09269c04def8d136d0d3c0493a51701eb4fb",
       "owner_anchor": "exit_code",
-      "proof": "data/validation/external-opencode-hi-0.2.3-process-1.18.19-head-03a816f.json",
-      "proof_sha256": "0fc769223850c000ba64bb1d455bdb6c543705f998e3f08ab04c9a265a28a151",
+      "proof": "data/validation/external-opencode-hi-0.2.4-process-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "5a95a28696f907eb7b5409370071abf9d62a8de54aa88810446370714ade4126",
       "proof_anchor": "process_nonzero_exit"
     },
     {
@@ -256,7 +256,7 @@
       "invariant": "long-running-and-concurrent",
       "level": "CONTROLLED",
       "owner": "plugin/src/runtime/continuation/evaluator.ts",
-      "owner_sha256": "820518f3b793092f208421295492bae3a441dfc1f50db49311dbee198c48bd94",
+      "owner_sha256": "cef8bf1b17b3f5c057279625ccce42dc59941ed5d4e1a63d7528638205e769e7",
       "owner_anchor": "waiting-process",
       "proof": "plugin/test/p2-opencode-pty-executor.test.mjs",
       "proof_sha256": "e35c47f6deb71d4e2f8a3f7e14dde04513e7a7cb569d274e2804ecc8831e840c",
@@ -291,8 +291,8 @@
       "owner": "plugin/src/runtime/workspace/runtime.ts",
       "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "async provision(",
-      "proof": "data/validation/external-opencode-hi-0.2.3-workspace-1.18.19-head-03a816f.json",
-      "proof_sha256": "6c5201fc9722a238e3c36183d8e80afde6060a8d0661b159a160125de666d03d",
+      "proof": "data/validation/external-opencode-hi-0.2.4-workspace-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "76c61bf8b121256f89b736b2500bafa41da6114d4ce8cab0c2eadc9a6ecff8a5",
       "proof_anchor": "workspace_create"
     },
     {
@@ -313,8 +313,8 @@
       "owner": "plugin/src/runtime/task/child-execution-coordinator.ts",
       "owner_sha256": "669f3cdcfc0d2eb1a39686af77d8f84a8f37cfdc07bc6c831def91cee690c293",
       "owner_anchor": "workspaceID",
-      "proof": "data/validation/external-opencode-hi-0.2.3-workspace-1.18.19-head-03a816f.json",
-      "proof_sha256": "6c5201fc9722a238e3c36183d8e80afde6060a8d0661b159a160125de666d03d",
+      "proof": "data/validation/external-opencode-hi-0.2.4-workspace-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "76c61bf8b121256f89b736b2500bafa41da6114d4ce8cab0c2eadc9a6ecff8a5",
       "proof_anchor": "workspace_child_id_directory_binding"
     },
     {
@@ -324,8 +324,8 @@
       "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
       "owner_sha256": "24e803722ab51227b5c61799484fcbac507583902680ec1ee07c817211015731",
       "owner_anchor": "workspacePath",
-      "proof": "data/validation/external-opencode-hi-0.2.3-workspace-1.18.19-head-03a816f.json",
-      "proof_sha256": "6c5201fc9722a238e3c36183d8e80afde6060a8d0661b159a160125de666d03d",
+      "proof": "data/validation/external-opencode-hi-0.2.4-workspace-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "76c61bf8b121256f89b736b2500bafa41da6114d4ce8cab0c2eadc9a6ecff8a5",
       "proof_anchor": "workspace_observed_cwd_identity"
     },
     {
@@ -335,8 +335,8 @@
       "owner": "plugin/src/runtime/workspace/runtime.ts",
       "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "workspace_path",
-      "proof": "data/validation/external-opencode-hi-0.2.3-workspace-1.18.19-head-03a816f.json",
-      "proof_sha256": "6c5201fc9722a238e3c36183d8e80afde6060a8d0661b159a160125de666d03d",
+      "proof": "data/validation/external-opencode-hi-0.2.4-workspace-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "76c61bf8b121256f89b736b2500bafa41da6114d4ce8cab0c2eadc9a6ecff8a5",
       "proof_anchor": "workspace_write_isolation"
     },
     {
@@ -346,8 +346,8 @@
       "owner": "plugin/src/opencode/open-code-workspace-adapter.ts",
       "owner_sha256": "24e803722ab51227b5c61799484fcbac507583902680ec1ee07c817211015731",
       "owner_anchor": "sourceBaseline",
-      "proof": "data/validation/external-opencode-hi-0.2.3-workspace-1.18.19-head-03a816f.json",
-      "proof_sha256": "6c5201fc9722a238e3c36183d8e80afde6060a8d0661b159a160125de666d03d",
+      "proof": "data/validation/external-opencode-hi-0.2.4-workspace-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "76c61bf8b121256f89b736b2500bafa41da6114d4ce8cab0c2eadc9a6ecff8a5",
       "proof_anchor": "workspace_verification"
     },
     {
@@ -357,8 +357,8 @@
       "owner": "plugin/src/runtime/workspace/runtime.ts",
       "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "reconcileRestored",
-      "proof": "data/validation/external-opencode-hi-0.2.3-workspace-1.18.19-head-03a816f.json",
-      "proof_sha256": "6c5201fc9722a238e3c36183d8e80afde6060a8d0661b159a160125de666d03d",
+      "proof": "data/validation/external-opencode-hi-0.2.4-workspace-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "76c61bf8b121256f89b736b2500bafa41da6114d4ce8cab0c2eadc9a6ecff8a5",
       "proof_anchor": "workspace_restart_adoption"
     },
     {
@@ -368,8 +368,8 @@
       "owner": "plugin/src/runtime/workspace/runtime.ts",
       "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "async cleanup(",
-      "proof": "data/validation/external-opencode-hi-0.2.3-workspace-1.18.19-head-03a816f.json",
-      "proof_sha256": "6c5201fc9722a238e3c36183d8e80afde6060a8d0661b159a160125de666d03d",
+      "proof": "data/validation/external-opencode-hi-0.2.4-workspace-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "76c61bf8b121256f89b736b2500bafa41da6114d4ce8cab0c2eadc9a6ecff8a5",
       "proof_anchor": "workspace_cleanup"
     },
     {
@@ -454,7 +454,7 @@
       "invariant": "persisted-duplicate-lease-identity",
       "level": "CONTROLLED",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "61ce2e9002580c6c12a7df3f3f5dc5894c92aaebce6a96b8676c72d7f791a6f4",
+      "owner_sha256": "b6e42d86a0101167104fc773cb8f70dd3b69a137c4974f536373fe65e214aa9b",
       "owner_anchor": "activeWorkspacePaths",
       "proof": "plugin/test/w1-workspace-contract.test.mjs",
       "proof_sha256": "954b7fce272007e14bd42c7897a049c8dc8abcbbccdb29e7cf2d281c725771c3",
@@ -478,8 +478,8 @@
       "owner": "plugin/src/runtime/workspace/runtime.ts",
       "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "reconcileRestored",
-      "proof": "data/validation/external-opencode-hi-0.2.3-workspace-1.18.19-head-03a816f.json",
-      "proof_sha256": "6c5201fc9722a238e3c36183d8e80afde6060a8d0661b159a160125de666d03d",
+      "proof": "data/validation/external-opencode-hi-0.2.4-workspace-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "76c61bf8b121256f89b736b2500bafa41da6114d4ce8cab0c2eadc9a6ecff8a5",
       "proof_anchor": "workspace_restart_adoption"
     },
     {
@@ -533,8 +533,8 @@
       "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
       "owner_sha256": "938b1b917a20921df9849c2945a5f33033a26c1924ab702006a9f1e081ff99e6",
       "owner_anchor": "async navigate(",
-      "proof": "data/validation/external-opencode-hi-0.2.3-browser-1.18.19-head-03a816f.json",
-      "proof_sha256": "0ac388daa0c4467d4f4bb0e63a8d0f226559fc7d22c505c613561905e4799f4a",
+      "proof": "data/validation/external-opencode-hi-0.2.4-browser-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "5b5416c8b34a01e07f342c69a9a34a94e460f40b9bfc7acdcf6061ef3863519e",
       "proof_anchor": "browser_dynamic_route_state"
     },
     {
@@ -588,8 +588,8 @@
       "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
       "owner_sha256": "938b1b917a20921df9849c2945a5f33033a26c1924ab702006a9f1e081ff99e6",
       "owner_anchor": "persistScreenshot",
-      "proof": "data/validation/external-opencode-hi-0.2.3-browser-1.18.19-head-03a816f.json",
-      "proof_sha256": "0ac388daa0c4467d4f4bb0e63a8d0f226559fc7d22c505c613561905e4799f4a",
+      "proof": "data/validation/external-opencode-hi-0.2.4-browser-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "5b5416c8b34a01e07f342c69a9a34a94e460f40b9bfc7acdcf6061ef3863519e",
       "proof_anchor": "browser_screenshot_artifact"
     },
     {
@@ -621,8 +621,8 @@
       "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
       "owner_sha256": "938b1b917a20921df9849c2945a5f33033a26c1924ab702006a9f1e081ff99e6",
       "owner_anchor": "latest bounded observation",
-      "proof": "data/validation/external-opencode-hi-0.2.3-browser-1.18.19-head-03a816f.json",
-      "proof_sha256": "0ac388daa0c4467d4f4bb0e63a8d0f226559fc7d22c505c613561905e4799f4a",
+      "proof": "data/validation/external-opencode-hi-0.2.4-browser-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "5b5416c8b34a01e07f342c69a9a34a94e460f40b9bfc7acdcf6061ef3863519e",
       "proof_anchor": "browser_stale_element_rejection"
     },
     {
@@ -632,8 +632,8 @@
       "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
       "owner_sha256": "938b1b917a20921df9849c2945a5f33033a26c1924ab702006a9f1e081ff99e6",
       "owner_anchor": "executionOwnerRef",
-      "proof": "data/validation/external-opencode-hi-0.2.3-browser-1.18.19-head-03a816f.json",
-      "proof_sha256": "0ac388daa0c4467d4f4bb0e63a8d0f226559fc7d22c505c613561905e4799f4a",
+      "proof": "data/validation/external-opencode-hi-0.2.4-browser-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "5b5416c8b34a01e07f342c69a9a34a94e460f40b9bfc7acdcf6061ef3863519e",
       "proof_anchor": "browser_auth_state_reset"
     },
     {
@@ -643,8 +643,8 @@
       "owner": "plugin/src/opencode/playwright-browser-adapter.ts",
       "owner_sha256": "938b1b917a20921df9849c2945a5f33033a26c1924ab702006a9f1e081ff99e6",
       "owner_anchor": "outside supported local scope",
-      "proof": "data/validation/external-opencode-hi-0.2.3-browser-1.18.19-head-03a816f.json",
-      "proof_sha256": "0ac388daa0c4467d4f4bb0e63a8d0f226559fc7d22c505c613561905e4799f4a",
+      "proof": "data/validation/external-opencode-hi-0.2.4-browser-1.18.19-head-c3bc16a.json",
+      "proof_sha256": "5b5416c8b34a01e07f342c69a9a34a94e460f40b9bfc7acdcf6061ef3863519e",
       "proof_anchor": "browser_external_target_rejection"
     },
     {
@@ -663,7 +663,7 @@
       "invariant": "methodology-interpretation",
       "level": "CONTROLLED",
       "owner": "plugin/src/runtime/methodology/exit.ts",
-      "owner_sha256": "fce41d3c3ba5498e9de68a339f861858b1f11d3e0242e7b15a9b689df39fa86b",
+      "owner_sha256": "3cfe2c34bbf83a71c52b8999cf581b28b09575b3181c1625e149b051fe72da1b",
       "owner_anchor": "methodologyExitCheck",
       "proof": "plugin/test/b3-methodology-exit-evidence.test.mjs",
       "proof_sha256": "6a215a74640f03732efceb56c688686865e9d1b2652f7551e308655fce51a2e4",
@@ -674,41 +674,48 @@
       "invariant": "model-prose-not-visual-verification",
       "level": "CONTROLLED",
       "owner": "plugin/src/runtime/completion/evaluator.ts",
-      "owner_sha256": "a84becde3d024c4ef0242d916c83e644b4ad6c6bd3ba953f39086f5920254222",
+      "owner_sha256": "b3afcdaa1ab177368b06d44192ba5de90d3f8ddfca646f6892a15e11cf935f6d",
       "owner_anchor": "open-obligations",
       "proof": "plugin/test/prompt-b-evidence-verification-completion-hostile.test.mjs",
-      "proof_sha256": "3315d64cdcd5e24a8e87fb02effd71cd487445d36146942372c751e5248685b1",
+      "proof_sha256": "bec96bd818a6cc0343fc76379100041c52eacabbecab998acb9c4959aac85f22",
       "proof_anchor": "DONE. all tests passed. safe to release."
     }
   ],
   "capability_source_equivalence": {
     "process-lifecycle": {
-      "receipt": "data/validation/external-opencode-hi-0.2.3-process-1.18.19-head-03a816f.json",
+      "receipt": "data/validation/external-opencode-hi-0.2.4-process-1.18.19-head-c3bc16a.json",
       "status": "SUPPORTED_T3",
-      "tested_git_commit": "03a816f930e3172ec84f733bae081768e2ea1a14",
+      "tested_git_commit": "c3bc16ae42ecb06ded7ecb187794e56cb0a2e83d",
       "runtime_hash_drift": [],
       "equivalent": true
     },
     "workspace-isolation-binding": {
-      "receipt": "data/validation/external-opencode-hi-0.2.3-workspace-1.18.19-head-03a816f.json",
+      "receipt": "data/validation/external-opencode-hi-0.2.4-workspace-1.18.19-head-c3bc16a.json",
       "status": "SUPPORTED_T3",
-      "tested_git_commit": "03a816f930e3172ec84f733bae081768e2ea1a14",
-      "runtime_hash_drift": [],
-      "equivalent": true
+      "tested_git_commit": "c3bc16ae42ecb06ded7ecb187794e56cb0a2e83d",
+      "runtime_hash_drift": [
+        "plugin/src/runtime/mission/validators.ts"
+      ],
+      "equivalent": false
     },
     "browser-execution": {
-      "receipt": "data/validation/external-opencode-hi-0.2.3-browser-1.18.19-head-03a816f.json",
+      "receipt": "data/validation/external-opencode-hi-0.2.4-browser-1.18.19-head-c3bc16a.json",
       "status": "SUPPORTED_T3",
-      "tested_git_commit": "03a816f930e3172ec84f733bae081768e2ea1a14",
-      "runtime_hash_drift": [],
-      "equivalent": true
+      "tested_git_commit": "c3bc16ae42ecb06ded7ecb187794e56cb0a2e83d",
+      "runtime_hash_drift": [
+        "plugin/src/runtime/application/hi-tool-surface.ts"
+      ],
+      "equivalent": false
     }
   },
-  "violations": [],
+  "violations": [
+    "workspace-isolation-binding:selected-T3-source-drift:['plugin/src/runtime/mission/validators.ts']",
+    "browser-execution:selected-T3-source-drift:['plugin/src/runtime/application/hi-tool-surface.ts']"
+  ],
   "summary": {
     "required": 61,
     "covered": 61,
-    "violations": 0,
+    "violations": 2,
     "by_section": {
       "12": {
         "required": 23,
@@ -746,5 +753,5 @@
       "fix": "Different Tasks cannot own the same active workspace path or host workspace ID; collision is cleaned/rejected and persisted duplicates fail validation."
     }
   ],
-  "claim_boundary": "SUPPORTED_T3 is accepted only with exact OpenCode 1.18.19 receipt evidence and byte-identical current capability owner/executor hashes. The target is derived from the exact root SDK/plugin pin. Controlled hostile tests close deterministic local semantics that do not require a live host."
+  "claim_boundary": "SUPPORTED_T3 is accepted only with exact OpenCode 1.18.20 receipt evidence and byte-identical current capability owner/executor hashes. The target is derived from the exact root SDK/plugin pin. Controlled hostile tests close deterministic local semantics that do not require a live host."
 }

@@ -9,14 +9,18 @@ export interface EvidenceProducerAttempt {
     ordinal: number;
     generation: number;
 }
+export declare const EVIDENCE_SOURCE_CLASSES: readonly ["host-tool-observation", "host-diff-observation", "browser-observation", "reviewer-observation", "user-admitted-observation", "runtime-observation"];
+export type EvidenceSourceClass = typeof EVIDENCE_SOURCE_CLASSES[number];
 export interface EvidenceItem {
     id: string;
     kind: MissionEvidenceKind;
     summary: string;
     scope: string[];
     source?: string;
+    trusted_source_class?: EvidenceSourceClass;
     source_session_id?: string;
     source_state_hash?: string;
+    scope_state_hash?: string;
     task_id?: string;
     obligation_ids?: string[];
     evidence_refs?: string[];

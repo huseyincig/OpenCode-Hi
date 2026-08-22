@@ -14,6 +14,6 @@ export interface MissionRuntimeProjection {
 export interface MissionRuntimeProjectionMeasurement {
     dynamic_chars: number;
 }
-export declare function buildMissionRuntimeProjection(m: MissionState, worker?: WorkerState): MissionRuntimeProjection;
+export declare function buildMissionRuntimeProjection(m: MissionState, worker?: WorkerState, projectRoot?: string): MissionRuntimeProjection;
 export declare function renderMissionRuntimeProjection(p: MissionRuntimeProjection): string;
 export declare function measureMissionRuntimeProjection(projection: MissionRuntimeProjection): MissionRuntimeProjectionMeasurement;

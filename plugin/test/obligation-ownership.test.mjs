@@ -1,5 +1,8 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
 import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
@@ -11,8 +14,8 @@ import { DEFAULT_HI_CONFIG } from '../dist/config/defaults.js'
 import { methodologyExitCheck } from '../dist/runtime/methodology/exit.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 
-function runtime(){
-  return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
+function runtime(root=process.cwd()){
+  return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),root,root,()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
 }
 function assessedMission(id,objective,overrides={}){
   const store=new MissionStore(); const m=store.start(id,objective)
@@ -40,7 +43,7 @@ test('coder DONE cannot close an implementation obligation it does not own',()=>
   assert.equal(base.status,'open','task-owned completion must not consume the other open implementation obligation')
 })
 
-test('worker evidence is scoped to its owned verification obligation',()=>{
+test('worker verification claim satisfies neither its owned nor another verification obligation',()=>{
   const m=assessedMission('ownership-2','fix bug and test it',{task_kind:'bug-fix',likely_verification:['targeted-tests']})
   m.execution.verification_policy={requiredKinds:['targeted-tests'],requireFresh:true,requireReview:false,allowWorkerReportedEvidence:true}
   const v1=m.execution.obligations.find(o=>o.kind==='verification'); assert.ok(v1)
@@ -49,7 +52,8 @@ test('worker evidence is scoped to its owned verification obligation',()=>{
   const task=createTask(m,{objective:'verify alpha',role:'coder',category:'standard',scope:['src/alpha.ts'],requiredEvidence:['targeted-tests'],obligationIds:[v1.id]})
   const worker=createWorker(m,task,'host-default');worker.status='busy';worker.started_at=Date.now()-5;worker.session_id='s-worker';worker.native_state_hash='b'.repeat(64)
   runtime().applyResult(m,worker.id,{status:'DONE',summary:'alpha verified',changed_files:[],evidence:[{kind:'targeted-tests',summary:'alpha tests pass',scope:['src/alpha.ts'],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
-  assert.deepEqual(verificationSatisfied(m,v1.id),{ok:true,missing:[]})
+  assert.equal(task.result?.evidence[0]?.outcome,'pending');assert.equal(m.execution.evidence.items.some(e=>e.kind==='targeted-tests'),false)
+  assert.deepEqual(verificationSatisfied(m,v1.id),{ok:false,missing:['targeted-tests']})
   assert.deepEqual(verificationSatisfied(m,'o-verification-followup'),{ok:false,missing:['targeted-tests']})
 })
 
@@ -79,13 +83,17 @@ test('reviewer explicit PASS without source-state identity remains inadmissible'
 })
 
 test('source-bound explicit reviewer evidence can close its owned review and verification obligations',()=>{
-  const m=assessedMission('ownership-review-proof','Review src/a.ts',{task_kind:'review',required_capabilities:['review','independent-review'],likely_verification:['review-evidence'],likely_targets:['src/a.ts']})
-  m.execution.verification_policy={requiredKinds:['review-evidence'],requireFresh:true,requireReview:true,allowWorkerReportedEvidence:true}
-  const review=m.execution.obligations.find(o=>o.kind==='review'),verification=m.execution.obligations.find(o=>o.kind==='verification');verification.requiredEvidence=['review-evidence']
-  const task=createTask(m,{objective:'review src/a.ts',role:'qa-reviewer',category:'standard',requiredEvidence:['review-evidence'],obligationIds:[review.id,verification.id]})
-  const worker=createWorker(m,task,'host-default');worker.status='busy';worker.started_at=Date.now()-5;worker.session_id='review-session';worker.native_state_hash='a'.repeat(64)
-  runtime().applyResult(m,worker.id,{status:'DONE',summary:'bounded review complete',changed_files:[],evidence:[{kind:'review-evidence',summary:'reviewed target',scope:['src/a.ts'],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
-  assert.equal(review.status,'closed');assert.equal(verification.status,'closed');assert.deepEqual(verificationSatisfied(m,verification.id),{ok:true,missing:[]})
+  const root=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-review-proof-'))
+  try{
+    mkdirSync(join(root,'src'),{recursive:true});writeFileSync(join(root,'src','a.ts'),'export const reviewed = true\n')
+    const m=assessedMission('ownership-review-proof','Review src/a.ts',{task_kind:'review',required_capabilities:['review','independent-review'],likely_verification:['review-evidence'],likely_targets:['src/a.ts']})
+    m.execution.verification_policy={requiredKinds:['review-evidence'],requireFresh:true,requireReview:true,allowWorkerReportedEvidence:true}
+    const review=m.execution.obligations.find(o=>o.kind==='review'),verification=m.execution.obligations.find(o=>o.kind==='verification');verification.requiredEvidence=['review-evidence']
+    const task=createTask(m,{objective:'review src/a.ts',role:'qa-reviewer',category:'standard',scope:['src/a.ts'],requiredEvidence:['review-evidence'],obligationIds:[review.id,verification.id]})
+    const worker=createWorker(m,task,'host-default');worker.status='busy';worker.started_at=Date.now()-5;worker.session_id='review-session';worker.native_state_hash='a'.repeat(64)
+    runtime(root).applyResult(m,worker.id,{status:'DONE',summary:'bounded review complete',changed_files:[],evidence:[{kind:'review-evidence',summary:'reviewed target',scope:['src/a.ts'],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
+    assert.equal(review.status,'closed');assert.equal(verification.status,'closed');assert.deepEqual(verificationSatisfied(m,verification.id,root),{ok:true,missing:[]})
+  }finally{rmSync(root,{recursive:true,force:true})}
 })
 
 
@@ -108,4 +116,42 @@ test('methodology review exit rejects unrelated mission review proof and accepts
   assert.equal(methodologyExitCheck(m,'hi-code-review',{task,result:task.result,projectRoot:process.cwd()}).ok,false)
   addEvidence(m,{kind:'review-evidence',summary:'independent review of target surface',scope:['src/a.ts'],source:'parent:direct-review',pass:true,outcome:'passed'})
   assert.equal(methodologyExitCheck(m,'hi-code-review',{task,result:task.result,projectRoot:process.cwd()}).ok,true)
+})
+
+
+test('implementation required-target traceability is user-grounded and excludes verifier-only or model-only targets',()=>{
+  const both=assessedMission('ownership-required-targets-both','Change src/a.ts and src/b.ts. Both are required.',{scope:'multi-file',risk:'low',likely_targets:['src/a.ts','src/b.ts']})
+  assert.deepEqual(both.execution.obligations.find(o=>o.kind==='implementation')?.requiredTargets,['src/a.ts','src/b.ts'])
+  assert.deepEqual(both.execution.ledger.findLast(e=>e.type==='semantic.assessed')?.payload?.required_material_targets,['src/a.ts','src/b.ts'])
+
+  const verifierOnly=assessedMission('ownership-required-targets-test','Change src/a.ts and run test/a.test.ts; keep the test unchanged.',{scope:'multi-file',risk:'low',likely_verification:['targeted-tests'],likely_targets:['src/a.ts','test/a.test.ts']})
+  assert.deepEqual(verifierOnly.execution.obligations.find(o=>o.kind==='implementation')?.requiredTargets,['src/a.ts'])
+
+  const modelExtra=assessedMission('ownership-required-targets-model','Change src/a.ts only.',{scope:'multi-file',risk:'low',likely_targets:['src/a.ts','src/model-inferred.ts']})
+  assert.deepEqual(modelExtra.execution.obligations.find(o=>o.kind==='implementation')?.requiredTargets,['src/a.ts'])
+
+  const contextOnly=assessedMission('ownership-required-targets-context','Inspect src/b.ts for context, but change only src/a.ts.',{scope:'local',risk:'low',likely_targets:['src/a.ts']})
+  assert.deepEqual(contextOnly.execution.obligations.find(o=>o.kind==='implementation')?.requiredTargets,['src/a.ts'])
+})
+
+test('worker implementation completion accumulates required-target coverage without prematurely closing the mission obligation',()=>{
+  const m=assessedMission('ownership-required-target-worker','Change src/a.ts and src/b.ts. Both are required.',{scope:'multi-file',risk:'low',likely_targets:['src/a.ts','src/b.ts']})
+  const implementation=m.execution.obligations.find(o=>o.kind==='implementation');assert.ok(implementation);assert.deepEqual(implementation.requiredTargets,['src/a.ts','src/b.ts'])
+  const first=createTask(m,{objective:'change a',role:'coder',category:'quick',scope:['src/a.ts'],requiredEvidence:[],obligationIds:[implementation.id]})
+  const w1=createWorker(m,first,'host-default');w1.status='busy';w1.started_at=Date.now()-5
+  runtime().applyResult(m,w1.id,{status:'DONE',summary:'a done',changed_files:['src/a.ts'],evidence:[],open_issues:[],needs_context:[]})
+  assert.equal(first.status,'completed');assert.equal(implementation.status,'open');assert.deepEqual(m.execution.ledger.findLast(e=>e.type==='implementation.required-targets-uncovered')?.payload?.missing,['src/b.ts'])
+  const second=createTask(m,{objective:'change b',role:'coder',category:'quick',scope:['src/b.ts'],requiredEvidence:[],obligationIds:[implementation.id]})
+  const w2=createWorker(m,second,'host-default');w2.status='busy';w2.started_at=Date.now()-5
+  runtime().applyResult(m,w2.id,{status:'DONE',summary:'b done',changed_files:['src/b.ts'],evidence:[],open_issues:[],needs_context:[]})
+  assert.equal(second.status,'completed');assert.equal(implementation.status,'closed');assert.deepEqual(new Set(m.vcs.changed_files),new Set(['src/a.ts','src/b.ts']))
+})
+
+test('completion evaluator refuses a legacy-closed implementation claim while a required target is still uncovered',async()=>{
+  const {evaluateCompletion}=await import('../dist/runtime/completion/evaluator.js')
+  const m=assessedMission('ownership-required-target-defense','Change src/a.ts and src/b.ts. Both are required.',{scope:'multi-file',risk:'low',likely_targets:['src/a.ts','src/b.ts']})
+  const implementation=m.execution.obligations.find(o=>o.kind==='implementation'),verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(implementation);assert.ok(verification)
+  implementation.status='closed';implementation.closedAt=Date.now();verification.status='closed';verification.closedAt=Date.now();m.vcs.changed_files=['src/a.ts']
+  const completion=evaluateCompletion(m)
+  assert.equal(completion.complete,false);assert.ok(completion.reasons.some(reason=>reason.includes('required-targets-uncovered:o-implementation:src/b.ts')))
 })

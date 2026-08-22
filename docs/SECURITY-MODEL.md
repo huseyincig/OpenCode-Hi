@@ -5,8 +5,10 @@ OpenCode-Hi treats host permissions, user-owned files, credentials, external eff
 ## Trust boundaries
 
 - OpenCode host denial is authoritative. Hi may narrow authority but never widen a deny.
+- Shell safety classification uses a bounded execution-semantic projection so executable nested substitutions/wrappers, CWD-sensitive destructive operations, PowerShell recursion, and nested external effects cannot hide behind inert command text. Uncertain destructive execution fails closed; quoted/heredoc prose remains data. This projection does not grant permission: OpenCode remains the host permission owner and Hi keeps its separate exact authority/staging/user-dirty boundaries.
 - Push, tag, publish, deploy, paid actions, credential operations, and other supported external effects require the matching authority path.
 - Reviewer roles are read-only; child workers cannot invoke Hi control-plane tools.
+- Required independent-review PASS evidence is admissible only when reviewer role/source, child session, native source-state hash, task, generation, and execution attempt match the canonical reviewer worker. Persisted or stale review claims may remain readable but cannot certify completion, and a relevant later mutation invalidates the review.
 - User dirty/staged/unrelated files are preserved and cannot be silently absorbed into Hi-owned changes.
 - Workspace, process, and browser ownership are identity-bound and fail closed on substitution or stale ownership.
 - Provider-facing context passes through the privacy boundary; secrets must not become durable logs, mission state, telemetry, or artifacts.

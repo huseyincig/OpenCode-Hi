@@ -11,6 +11,11 @@ declare module 'node:fs' {
   export function readdirSync(path:any, options?:any): any[]
   export function realpathSync(path:any): string
   export function mkdirSync(path:any, options?:any): any
+  export function openSync(path:any, flags:any): number
+  export function readSync(fd:number, buffer:any, offset:number, length:number, position:number|null): number
+  export function closeSync(fd:number): void
+  export function fstatSync(fd:number, options?:any): any
+  export function lstatSync(path:any, options?:any): any
   export function renameSync(oldPath:any,newPath:any): void
   export function writeFileSync(path:any,data:any,encoding?:any): void
   export function statSync(path:any): any
@@ -32,3 +37,4 @@ declare module 'node:child_process' {
   export function spawnSync(command:string,args:string[],options?:any):{status:number|null;stdout?:string|Buffer;stderr?:string|Buffer}
 }
 declare module 'node:os' { export function tmpdir(): string; export function homedir(): string; export function platform(): string }
+declare const Buffer: { allocUnsafe(size:number): any }

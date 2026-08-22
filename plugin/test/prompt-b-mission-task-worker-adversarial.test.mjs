@@ -25,12 +25,12 @@ test('PROMPT B reordered callback from superseded child session cannot bind the 
   assert.equal(child.resolveCallbackWorker('new-session')?.id,'w1')
 })
 
-test('PROMPT B callback disposition rejects stale mission generation and restart-pending worker before accepting current owner',()=>{
+test('PROMPT B callback disposition fences stale mission identity but does not let restart quarantine hide native callbacks',()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'pb-callback-order','verify',{task_kind:'implementation',likely_verification:[]})
   const task=createTask(m,{objective:'x',role:'coder',category:'standard'}),w=createWorker(m,task,'host-default')
   const recovery=new TaskRecoveryCoordinator({},{},process.cwd(),()=>({}),()=>[],()=>({}),undefined,{},()=>{})
   w.parent_mission_id=m.identity.mission_id;w.generation_at_spawn=m.continuation.generation
-  w.restart_reconcile_pending=true;assert.equal(recovery.callbackDisposition(m,w),'restart-reconcile-pending')
-  w.restart_reconcile_pending=false;w.generation_at_spawn=m.continuation.generation-1;assert.equal(recovery.callbackDisposition(m,w),'stale-mission')
-  w.generation_at_spawn=m.continuation.generation;assert.equal(recovery.callbackDisposition(m,w),'accept')
+  w.restart_reconcile_pending=true;assert.equal(recovery.callbackDisposition(m,w),'accept','restart quarantine is scheduler state, not a callback lifecycle owner')
+  w.generation_at_spawn=m.continuation.generation-1;assert.equal(recovery.callbackDisposition(m,w),'stale-mission')
+  w.restart_reconcile_pending=false;w.generation_at_spawn=m.continuation.generation;assert.equal(recovery.callbackDisposition(m,w),'accept')
 })

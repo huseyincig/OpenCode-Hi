@@ -1,4 +1,11 @@
 import { dataOf, modelIdentity } from './client-adapter.js';
+const NATIVE_OPERATION_EFFECT = {
+    'session-create': 'mutating', 'prompt-async': 'mutating', 'prompt-sync': 'mutating', 'abort': 'mutating',
+    status: 'read-only', children: 'read-only', todo: 'read-only', diff: 'read-only',
+    fork: 'mutating', summarize: 'mutating', revert: 'mutating', unrevert: 'mutating',
+    'provider-inventory': 'read-only', 'structured-log': 'mutating', version: 'read-only',
+};
+export function nativeOperationEffect(name) { return NATIVE_OPERATION_EFFECT[name]; }
 function fn(root, ...names) {
     for (const name of names) {
         const v = root?.[name];

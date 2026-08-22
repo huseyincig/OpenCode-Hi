@@ -2,7 +2,7 @@ import type { HiConfig } from '../../config/schema.js';
 import type { AvailableModel } from '../routing/model-resolver.js';
 import type { RuntimeSignalSink } from '../events/event-sink.js';
 import type { NativeProjectContext } from '../intent/repo-context.js';
-import type { ChildSessionPort } from '../host/port.js';
+import type { ChildSessionPort, HostAssistantResult } from '../host/port.js';
 import type { HostCapabilityContract } from '../../contracts/host-capability.js';
 import type { ProcessExecutor } from '../process/executor.js';
 import type { WorkspaceExecutor } from '../workspace/executor.js';
@@ -18,6 +18,7 @@ import { ChatHumanDecisionTransport } from '../human-decision/transport.js';
 export interface RuntimeServicePorts {
     nativeContext: NativeProjectContext;
     childSession: ChildSessionPort;
+    readAssistantResult?: (sessionID: string, limit?: number) => Promise<HostAssistantResult>;
     hostCapabilities: readonly HostCapabilityContract[];
     process: ProcessExecutor;
     workspace: WorkspaceExecutor;

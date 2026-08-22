@@ -81,11 +81,11 @@
     },
     "product": {
       "path": "data/product.json",
-      "sha256": "5c4eb2fbe45429e196e12336b8bfbe6c7300a8e10e01c6a9301b20fb26d77977"
+      "sha256": "bfddb099280b5d4f1976a694f5f22cd6bce16377150fd4f556c42aafa4893b6a"
     },
     "config_catalog": {
       "path": "data/hi-config-options.json",
-      "sha256": "60bd659fc9f34da7a1165f617d5266ced845d91879768566a523833e0943625f"
+      "sha256": "88fda63b50b4402b2d72268032cdf33548bee3121082177a689afdfb7dfa3967"
     },
     "role_catalog": {
       "path": "data/hi-roles.json",

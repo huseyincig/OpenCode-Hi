@@ -43,7 +43,7 @@ test('structured constraint follow-up rebases a busy worker onto a fresh session
   const worker=createWorker(m,task,'p/code');worker.session_id='child-old';worker.status='busy';worker.started_at=Date.now();task.status='running'
   const background=new BackgroundRegistry();background.set(worker)
   const calls={aborts:0,creates:0,prompts:0}
-  const client={session:{abort:async()=>{calls.aborts++},create:async()=>{calls.creates++;return{data:{id:'child-new'}}},promptAsync:async()=>{calls.prompts++}}}
+  const client={session:{abort:async()=>{calls.aborts++;return{data:true}},create:async()=>{calls.creates++;return{data:{id:'child-new'}}},promptAsync:async()=>{calls.prompts++}}}
   const runtime=new TaskRuntime(opencodeChildPort(client),background,new ConcurrencyScheduler(()=>({global:4,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:5,cost:1,tags:['coding']}],()=>({}))
   const taskCount=m.execution.tasks.length,workerCount=m.execution.workers.length
   await callHook(createChatMessageHook(store),'constraint-runtime','任意の制約テキスト')

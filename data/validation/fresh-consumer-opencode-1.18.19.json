@@ -5,8 +5,8 @@
   "section": 26,
   "status": "PASS",
   "source": {
-    "commit": "324e79c9670287d46757ff13e9944e299c4c126c",
-    "tree": "8391a9d35ed50859761eec1748260e4734e9096c"
+    "commit": "c3bc16ae42ecb06ded7ecb187794e56cb0a2e83d",
+    "tree": "30128a37406974116f52ca087658bf3ed376d4e2"
   },
   "host": {
     "opencode": "1.18.19",
@@ -17,13 +17,13 @@
     "registry_observation": {
       "opencode_ai_latest": "1.18.19",
       "sdk_latest": "1.18.19",
-      "observed_at": "2026-08-20T21:34:24.162359+00:00"
+      "observed_at": "2026-08-20T22:33:36.237792+00:00"
     }
   },
   "package": {
-    "release": "0.2.3",
-    "tarball_name": "opencode-hi-0.2.3.tgz",
-    "tarball_sha256": "759257b22e3fcc46e5e4f6c0c21557dd032757d952860de105cfa8cfcc758fe5",
+    "release": "0.2.4",
+    "tarball_name": "opencode-hi-0.2.4.tgz",
+    "tarball_sha256": "5e539a076b329326a89023756b4c9fc3745aa3427d62026aa7d655391f565928",
     "installed_from_tarball": true,
     "resolved_entrypoint": "file://<acceptance>/consumer/node_modules/opencode-hi/plugin/dist/plugin.js"
   },
@@ -34,7 +34,7 @@
     "node_setup_rc": 0
   },
   "material_runtime": {
-    "hi_tool_count": 31,
+    "hi_tool_count": 32,
     "hi_tools": [
       "hi_browser_click",
       "hi_browser_close",
@@ -59,6 +59,7 @@
       "hi_process_wait",
       "hi_process_write",
       "hi_readiness",
+      "hi_role_models",
       "hi_status",
       "hi_task_await",
       "hi_task_cancel",

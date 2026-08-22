@@ -13,8 +13,8 @@ export const makeHostPort=(overrides={})=>({
 })
 
 export const makeChildSessionPort=(overrides={})=>({
-  capabilities:{create:true,prompt:true,abort:true,diff:false,summarize:false,fork:false},
+  capabilities:{create:true,prompt:true,abort:true,status:true,diff:false,summarize:false,fork:false},
   create:async()=>({child:{id:'child-test'},fork:{requested:false,nativeAvailable:false,used:false}}),
-  prompt:async()=>undefined,abort:async()=>'client',diff:async()=>undefined,summarize:async()=>undefined,
+  prompt:async()=>undefined,abort:async()=>'client',status:async()=>'idle',diff:async()=>undefined,summarize:async()=>undefined,
   ...overrides,
 })

@@ -43,6 +43,11 @@ function conflictDecision(snapshot, unit, nodeByID) {
         if (unit.dependencies.includes(other.workNodeId))
             continue;
         const overlap = overlaps(other.scope, unit.scope), otherRead = snapshot.unitTraits[other.id]?.readOnly ?? false;
+        if (!candidateRead && !otherRead && (!unit.scope.length || !other.scope.length)) {
+            blocking.push(other.id);
+            reasons.push(reason('unknown-mutable-surface', other.id));
+            continue;
+        }
         if (overlap.length && !(candidateRead && otherRead)) {
             blocking.push(other.id);
             reasons.push(reason('mutable-surface-conflict', `${other.id}:${overlap.join(',')}`));

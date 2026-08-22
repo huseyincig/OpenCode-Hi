@@ -16,6 +16,7 @@ const rootLockVersion=rootLock?.packages?.['']?.version
 const lockVersion=lock?.packages?.['']?.version
 const version=text('VERSION')
 const expectedRepository='git+https://github.com/huseyincig/OpenCode-Hi.git'
+const hostTarget=String(pkg.dependencies?.['@opencode-ai/sdk']??'').trim()
 
 function identity(){
   if(pkg.name!=='opencode-hi')fail(`unexpected package name ${pkg.name}`)
@@ -23,8 +24,8 @@ function identity(){
   if(runtime.version!==version)fail(`runtime package version ${runtime.version} != VERSION ${version}`)
   if(rootLockVersion!==version)fail(`root distribution lock version ${rootLockVersion} != VERSION ${version}`)
   if(lockVersion!==version)fail(`runtime lock version ${lockVersion} != VERSION ${version}`)
-  if(pkg.peerDependencies?.['@opencode-ai/plugin']!=='1.18.19')fail('root @opencode-ai/plugin peer must equal accepted 1.18.19')
-  if(pkg.dependencies?.['@opencode-ai/sdk']!=='1.18.19')fail('root @opencode-ai/sdk dependency must equal accepted 1.18.19')
+  if(!/^\d+\.\d+\.\d+$/.test(hostTarget))fail(`root @opencode-ai/sdk must be exact, observed ${hostTarget||'<missing>'}`)
+  if(pkg.peerDependencies?.['@opencode-ai/plugin']!==hostTarget)fail(`root @opencode-ai/plugin peer must equal exact host target ${hostTarget}`)
   if(pkg.optionalDependencies?.['playwright-core']!=='1.62.1')fail('root playwright-core optional dependency must equal accepted 1.62.1')
   if(pkg.repository?.url!==expectedRepository)fail(`repository.url must exactly equal ${expectedRepository}`)
   if(pkg.publishConfig?.access!=='public')fail('publishConfig.access must be public')

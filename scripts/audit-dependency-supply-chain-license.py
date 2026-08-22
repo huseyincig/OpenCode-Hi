@@ -50,7 +50,7 @@ out={'schema':1,'kind':'PROMPT_B_DEPENDENCY_SUPPLY_CHAIN_LICENSE_AUDIT','program
  {'id':'third-party-notices-runtime-drift','fix':'Notices now enumerate direct runtime SDK, host peer, optional Playwright, build TypeScript, and the audited optional msgpackr-extract install-script boundary.'},
  {'id':'release-pack-proof-prepack-output-corruption','fix':'Canonical check/build runs before a scripts-disabled pack proof; publish also uses --ignore-scripts against the same built tree.'},
  {'id':'single-lock-sbom-omitted-distribution-runtime','fix':'Release SBOM and release-chain verification deterministically bind both root distribution and plugin build/test lock graphs.'},
- {'id':'native-direct-git-pacote-preparation-trigger','fix':'Public root package removes npm/Pacote Git-preparation trigger script names, moves the explicit developer build to build:plugin, keeps the OpenCode host peer optional, and cross-platform Release Readiness exercises the M16 packed npm bootstrap plus exact-SHA Git compatibility loading against exact OpenCode 1.18.19.'}],
+ {'id':'native-direct-git-pacote-preparation-trigger','fix':'Public root package removes npm/Pacote Git-preparation trigger script names, moves the explicit developer build to build:plugin, keeps the OpenCode host peer optional, and cross-platform Release Readiness exercises the packed npm bootstrap plus exact-SHA Git compatibility loading against the exact OpenCode host target from package metadata.'}],
  'violations':viol,
  'claim_boundary':'Local deterministic supply-chain/license certification. npm audit is separately re-runnable against registry metadata; public npm publish remains authority-gated and is not performed by this audit.'}
 OUT.write_text(json.dumps(out,indent=2)+'\n')

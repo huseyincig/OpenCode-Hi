@@ -19,6 +19,14 @@ function topology(raw:unknown):HiConfig['execution']['topology']|undefined{retur
 function modelMode(raw:unknown):HiConfig['models']['mode']|undefined{return raw==='adaptive'||raw==='fixed'||raw==='role-mapped'?raw:undefined}
 function stringValue(raw:unknown):string|undefined{return typeof raw==='string'&&raw.trim()?raw.trim():undefined}
 function booleanLayer(high:unknown,low:unknown,fallback:boolean):boolean{return typeof high==='boolean'?high:typeof low==='boolean'?low:fallback}
+function legacyRoutingDiagnostics(hostModels:Record<string,unknown>,projectModels:Record<string,unknown>,hostRouting:Record<string,unknown>,projectRouting:Record<string,unknown>):string[]{
+  const seen:string[]=[]
+  for(const [scope,models,routing] of [['host',hostModels,hostRouting],['project',projectModels,projectRouting]] as const){
+    for(const key of ['mode','default','roles'] as const)if(key in models)seen.push(`${scope}:models.${key}`)
+    for(const key of ['strategy','categoryModels'] as const)if(key in routing)seen.push(`${scope}:routing.${key}`)
+  }
+  return seen.map(path=>`legacy model-routing compatibility field ${path} is parsed for diagnostics only and does not control 0.2.4 model choice; use routing.roleModels/roleVariants or the OpenCode agent model`)
+}
 function profileLayer(low:unknown,high:unknown,fallback:HiConfig['profile']['balanced']):HiConfig['profile']['balanced']{
   const l=isRecord(low)?low:{},h=isRecord(high)?high:{}
   return{specialistThreshold:threshold(h.specialistThreshold)??threshold(l.specialistThreshold)??fallback.specialistThreshold,reviewThreshold:threshold(h.reviewThreshold)??threshold(l.reviewThreshold)??fallback.reviewThreshold}
@@ -36,6 +44,7 @@ export function resolveHiConfigWithReport(raw:unknown,projectRoot?:string):{conf
   const hostExecution=isRecord(input.execution)?input.execution:{},projectExecution=isRecord(fromProject?.execution)?fromProject!.execution as unknown as Record<string,unknown>:{}
   const hostModels=isRecord(input.models)?input.models:{},projectModels=isRecord(fromProject?.models)?fromProject!.models as unknown as Record<string,unknown>:{}
   const hostProfile=isRecord(input.profile)?input.profile:{},projectProfile=isRecord(fromProject?.profile)?fromProject!.profile as unknown as Record<string,unknown>:{}
+  notes.push(...legacyRoutingDiagnostics(hostModels,projectModels,hostRouting,projectRouting))
 
   const hostAllowed=modelList(hostRouting.allowedProviders),projectAllowed=modelList(projectRouting.allowedProviders)
   const hostDenied=modelList(hostRouting.deniedModels),projectDenied=modelList(projectRouting.deniedModels)

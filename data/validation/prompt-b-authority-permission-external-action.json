@@ -20,7 +20,7 @@
       "owner_sha256": "eeb7ca51d9f0e32593de2769fd4604732be71fd2b95449bc32f8a497e61b7c7a",
       "owner_anchor": "openDecision?.semantic_type==='authority_request'",
       "proof": "plugin/test/threat-model.test.mjs",
-      "proof_sha256": "b8a17395fa90e84150eac450d842c6ee9ae3b4524f739d4f7669cabc594ffb32",
+      "proof_sha256": "221e2b8e05a39370c874bf637a124828f779578fb7c83b2589412a760ef4d15b",
       "proof_anchor": "T01 generic continuation cannot approve privileged action"
     },
     {
@@ -89,10 +89,10 @@
     {
       "invariant": "lower-level-cannot-widen-safety",
       "owner": "plugin/src/runtime/routing/execution-profile.ts",
-      "owner_sha256": "b10cec6b7dc467a5fb61a818084f8be3140216a8c76b1b52afd718f44e071bad",
+      "owner_sha256": "b8b62e49253eb366f35c7644a9d256aa2e9ad0b40dd8ce10cd4da9068c282d97",
       "owner_anchor": "promptToolOverrides",
       "proof": "plugin/test/main-prompt-execution-profile-tools.test.mjs",
-      "proof_sha256": "e6eeafc888e82f75df1a2e6273ba54d01cc94f3284c82168449f16eb52326e6f",
+      "proof_sha256": "57e415301089787f75c457e6ccf6ccf1b3901f71ec9b0ef7b6c674183bcfbdf7",
       "proof_anchor": "prompt tool overrides only disable tools; they never turn a denied native permission into allow"
     },
     {
@@ -116,7 +116,7 @@
     {
       "invariant": "credential-mfa-oauth-boundary",
       "owner": "plugin/src/runtime/process/shell-policy.ts",
-      "owner_sha256": "29542ce82a0849afb32e3a3b483a8c03af02733dd3b5b20526c5db922f8065fe",
+      "owner_sha256": "c281a49ad87d8cb843c5028e17dbb5c8f462715ea2a348693245e1db078fdf7b",
       "owner_anchor": "aws\\s+(?:sso\\s+login|configure\\s+sso|login)",
       "proof": "plugin/test/prompt-b-authority-destructive-boundary.test.mjs",
       "proof_sha256": "70903fc68efe2119a6e8708c85e272ccda3d9a0cc7d9696e7750364f78da5b90",
@@ -125,7 +125,7 @@
     {
       "invariant": "paid-irreversible-boundary",
       "owner": "plugin/src/runtime/process/shell-policy.ts",
-      "owner_sha256": "29542ce82a0849afb32e3a3b483a8c03af02733dd3b5b20526c5db922f8065fe",
+      "owner_sha256": "c281a49ad87d8cb843c5028e17dbb5c8f462715ea2a348693245e1db078fdf7b",
       "owner_anchor": "IRREVERSIBLE_EXTERNAL",
       "proof": "plugin/test/prompt-b-authority-destructive-boundary.test.mjs",
       "proof_sha256": "70903fc68efe2119a6e8708c85e272ccda3d9a0cc7d9696e7750364f78da5b90",
@@ -134,7 +134,7 @@
     {
       "invariant": "push-tag-release-publish-deploy-authority",
       "owner": "plugin/src/runtime/safety/command-classifier.ts",
-      "owner_sha256": "e42c5fa0a7e35ed1d1eb14ea4363c26029ceac8c552d495d221761a401e2814c",
+      "owner_sha256": "41902ba5041b422c45fb7ba998048b2cfe116545b6c7511da989f1b1933a3fb3",
       "owner_anchor": "ExternalCommandKind",
       "proof": "plugin/test/project-authority-persistence.test.mjs",
       "proof_sha256": "44811b24d3aea72279145ede5da44f4e40af305b7cdbb82e077463945075ec05",
@@ -143,7 +143,7 @@
     {
       "invariant": "destructive-filesystem-boundary",
       "owner": "plugin/src/runtime/process/shell-policy.ts",
-      "owner_sha256": "29542ce82a0849afb32e3a3b483a8c03af02733dd3b5b20526c5db922f8065fe",
+      "owner_sha256": "c281a49ad87d8cb843c5028e17dbb5c8f462715ea2a348693245e1db078fdf7b",
       "owner_anchor": "CATASTROPHIC_FILESYSTEM",
       "proof": "plugin/test/prompt-b-authority-destructive-boundary.test.mjs",
       "proof_sha256": "70903fc68efe2119a6e8708c85e272ccda3d9a0cc7d9696e7750364f78da5b90",
@@ -152,7 +152,7 @@
     {
       "invariant": "secret-sensitive-boundary",
       "owner": "plugin/src/runtime/process/shell-policy.ts",
-      "owner_sha256": "29542ce82a0849afb32e3a3b483a8c03af02733dd3b5b20526c5db922f8065fe",
+      "owner_sha256": "c281a49ad87d8cb843c5028e17dbb5c8f462715ea2a348693245e1db078fdf7b",
       "owner_anchor": "SECRET_SENSITIVE",
       "proof": "plugin/test/prompt-b-authority-destructive-boundary.test.mjs",
       "proof_sha256": "70903fc68efe2119a6e8708c85e272ccda3d9a0cc7d9696e7750364f78da5b90",

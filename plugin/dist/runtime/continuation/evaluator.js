@@ -4,7 +4,7 @@ import { evaluatePreconditions } from '../readiness/preconditions.js';
 import { latestBlockingVerificationEvidence } from '../verification/policy.js';
 import { setRuntimeNudge } from '../nudge/runtime-nudge.js';
 import { ambiguousConsequentialEffect } from './recovery-governor.js';
-export function evaluateIdle(m, now = Date.now()) {
+export function evaluateIdle(m, now = Date.now(), projectRoot) {
     if (!m)
         return { decision: 'NOTHING', reason: 'no-active-mission', reason_code: 'no-active-mission' };
     if (m.continuation.user_interrupted || m.identity.status === 'stopped')
@@ -53,7 +53,7 @@ export function evaluateIdle(m, now = Date.now()) {
         setRuntimeNudge(m, instruction, 'worker-result-unreconciled');
         return { decision: 'RECONCILE', reason: 'worker-result-unreconciled', reason_code: 'worker-result-unreconciled', prompt: continuationPrompt(m, instruction) };
     }
-    const pre = evaluatePreconditions(m);
+    const pre = evaluatePreconditions(m, projectRoot);
     const contractOnly = pre.items.filter(x => x.status === 'blocked').every(x => x.id === 'gate-contract-ambiguity') && pre.items.some(x => x.id === 'gate-contract-ambiguity' && x.status === 'blocked');
     if (!pre.ready && contractOnly) {
         const instruction = 'Resolve the contract-critical ambiguity from repository structure, existing contracts, tests, or evidence before asking the user. Do not implement until resolved.';
@@ -78,7 +78,7 @@ export function evaluateIdle(m, now = Date.now()) {
         m.continuation.stagnation_count = 0;
         return { decision: 'USER_ACTION_REQUIRED', reason: capabilityBlocker, reason_code: 'capability-unavailable' };
     }
-    const completion = evaluateCompletion(m);
+    const completion = evaluateCompletion(m, projectRoot);
     if (completion.complete)
         return { decision: 'STOP', reason: 'complete', reason_code: 'complete' };
     const uncertainEffect = ambiguousConsequentialEffect(m);

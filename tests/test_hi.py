@@ -6,6 +6,7 @@ ROOT=Path(__file__).resolve().parents[1]
 V=(ROOT/'VERSION').read_text(encoding='utf-8').strip()
 PKG=json.loads((ROOT/'package.json').read_text(encoding='utf-8'))
 HOST_TARGET=PKG['dependencies']['@opencode-ai/sdk']
+assert re.fullmatch(r'\d+\.\d+\.\d+',HOST_TARGET)
 assert PKG['peerDependencies']['@opencode-ai/plugin']==HOST_TARGET
 
 def run(*args):return subprocess.run([sys.executable,*map(str,args)],text=True,capture_output=True)
@@ -612,9 +613,9 @@ def test_m16_python_recommended_defaults_defer_to_runtime_scoring_without_vendor
     mod=load_module('native_plugin_setup_m16_recommended',ROOT/'scripts/native_plugin_setup.py')
     monkeypatch.setattr(mod,'discover_available_models',lambda:['alpha/model-a','beta/model-b','vision/model-c'])
     out=mod.role_models(tmp_path,defaults=True,policy='recommended')
-    assert out['status']=='DEFERRED' and out['reason']=='runtime-ranking-required'
+    assert out['status']=='DEFERRED' and out['reason']=='live-runtime-selection-required'
     assert out['roleModels']=={} and out['available_models_observed']==['alpha/model-a','beta/model-b','vision/model-c']
-    assert 'canonical runtime scoring logic' in out['action']
+    assert 'hi_role_models' in out['action'] and 'never persisted as user preferences' in out['action']
     assert not (tmp_path/'.opencode/hi/policy/routing.json').exists()
 
 
@@ -974,7 +975,7 @@ def test_prompt_b_host_port_portability_audit_is_host_agnostic_source_bound_and_
 def test_prompt_b_configuration_audit_covers_every_leaf_and_is_source_bound():
     d=json.loads((ROOT/'data/validation/prompt-b-configuration.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='PROMPT_B_CONFIGURATION_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['section']==23 and d['status']=='PASS'
-    assert d['violations']==[] and d['summary']=={'required':29,'covered':29,'violations':0,'runtime':26,'diagnostic':2,'schema_marker':1}
+    assert d['violations']==[] and d['summary']=={'required':29,'covered':29,'violations':0,'runtime':21,'diagnostic':7,'schema_marker':1}
     assert len(d['leaves'])==29 and len({x['path'] for x in d['leaves']})==29
     for row in d['leaves']:
         for key in ('schema','consumer','documentation','proof'):
@@ -1040,8 +1041,8 @@ def test_prompt_b_publishable_package_carries_node_bootstrap_legacy_cli_and_dire
     pkg=json.loads((ROOT/'package.json').read_text(encoding='utf-8'))
     assert pkg['bin']=={'opencode-hi':'scripts/opencode-hi.mjs','hi':'scripts/opencode-hi.mjs','opencode-hi-setup':'scripts/native_plugin_setup.py'}
     assert {'plugin/dist','skills','scripts/opencode-hi.mjs','scripts/native_plugin_setup.py','VERSION'}<=set(pkg['files'])
-    assert pkg['peerDependencies']['@opencode-ai/plugin']=='1.18.19'
-    assert pkg['dependencies']['@opencode-ai/sdk']=='1.18.19'
+    assert pkg['peerDependencies']['@opencode-ai/plugin']==HOST_TARGET
+    assert pkg['dependencies']['@opencode-ai/sdk']==HOST_TARGET
     assert pkg['optionalDependencies']['playwright-core']=='1.62.1'
     setup=ROOT/'scripts/native_plugin_setup.py'
     if os.name=='nt':
@@ -1383,3 +1384,56 @@ def test_prompt_b_final_certification_chain_is_truthful_coherent_and_tier_bound(
     f45=json.loads((ROOT/'data/validation/prompt-b-certification-vocabulary.json').read_text(encoding='utf-8')); assert f45['status']=='PASS' and f45['current_label']==f44['status'] and f45['violations']==[]
     f46=json.loads((ROOT/'data/validation/prompt-b-final-product-quality.json').read_text(encoding='utf-8')); assert f46['status']=='PASS' and all(f46['checks'].values())
     f47=json.loads((ROOT/'data/validation/prompt-b-final-mandatory-state.json').read_text(encoding='utf-8')); assert f47['status']=='PASS' and all(f47['coherence'].values())
+
+
+# OpenCode upstream churn control: frequent stable releases are observed separately
+# from exact certified target state, and only capability-relevant upstream deltas
+# may expand recertification scope.
+def test_opencode_upstream_tracker_classifies_capability_delta_without_full_t3():
+    m=load_module('opencode_upstream_tracker',ROOT/'scripts/opencode_upstream_tracker.py')
+    policy=json.loads((ROOT/'data/opencode-host-compatibility-policy.json').read_text(encoding='utf-8'))
+    result=m.classify_changed_paths(policy,[
+        'packages/opencode/src/provider/provider.ts',
+        'packages/opencode/src/session/prompt.ts',
+        'packages/plugin/package.json',
+        'packages/sdk/js/package.json',
+        'packages/opencode/test/session/prompt.test.ts',
+    ])
+    assert result['classification']=='CAPABILITY_RELEVANT'
+    assert result['surface_ids']==['provider-runtime','session-lifecycle']
+    assert result['t3_capabilities']==['process-lifecycle','workspace-isolation-binding']
+    assert result['fresh_consumer_required'] is True
+    assert result['full_t3_required'] is False
+    assert result['manual_review_required'] is False
+    assert result['unclassified']==[]
+
+
+def test_opencode_upstream_tracker_metadata_only_patch_does_not_recertify():
+    m=load_module('opencode_upstream_tracker_metadata',ROOT/'scripts/opencode_upstream_tracker.py')
+    policy=json.loads((ROOT/'data/opencode-host-compatibility-policy.json').read_text(encoding='utf-8'))
+    result=m.classify_changed_paths(policy,[
+        'packages/opencode/package.json',
+        'packages/plugin/package.json',
+        'packages/sdk/js/package.json',
+        'packages/server/package.json',
+        'packages/opencode/test/provider/provider.test.ts',
+    ])
+    assert result['classification']=='METADATA_ONLY'
+    assert result['surface_ids']==[]
+    assert result['t3_capabilities']==[]
+    assert result['fresh_consumer_required'] is False
+    assert result['full_t3_required'] is False
+    assert result['manual_review_required'] is False
+
+
+def test_opencode_upstream_tracker_registry_skew_fails_closed():
+    m=load_module('opencode_upstream_tracker_skew',ROOT/'scripts/opencode_upstream_tracker.py')
+    state=m.resolve_registry_state('1.18.20',{
+        'opencode-ai':'1.18.21',
+        '@opencode-ai/sdk':'1.18.21',
+        '@opencode-ai/plugin':'1.18.20',
+    })
+    assert state['status']=='REGISTRY_SKEW'
+    assert state['latest'] is None
+    assert state['target_current'] is False
+    assert state['support_promotion_allowed'] is False

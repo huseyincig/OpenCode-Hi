@@ -295,8 +295,8 @@ def doctor(project:Path)->dict:
 def discover_available_models()->list[str]:
     """Enumerate the effective OpenCode model IDs without catalog fallback.
 
-    OpenCode 1.18.19 does not implement `models --json`; `models --pure`
-    prints the runtime-filtered IDs after provider allow/deny and model
+    The current OpenCode host contract uses `models --pure` rather than an
+    assumed `models --json` shape. It prints runtime-filtered IDs after provider allow/deny and model
     whitelist/blacklist handling. If that host query is unavailable, return an
     empty inventory rather than pretending a bundled catalog is enabled.
     """
@@ -372,7 +372,7 @@ def role_models(project:Path,list_available:bool=False,defaults:bool=False,print
         return {'status':'OK','product':PRODUCT,'available':available,'config':str(cfg),'note':'Use without --list-available to assign models.'}
 
     if defaults and policy=='recommended':
-        return {'status':'DEFERRED','product':PRODUCT,'config':str(cfg),'roleModels':{k:list(v) for k,v in existing_models.items() if k in ROLES_WITH_HINT and isinstance(v,list)},'modelPolicy':existing_routing.get('modelPolicy','adaptive'),'reason':'runtime-ranking-required','action':'Restart OpenCode. Hi will rank effective-enabled role-eligible models with the canonical runtime scoring logic and persist one-shot initial recommendations only when no user model routing already exists.','available_models_observed':available}
+        return {'status':'DEFERRED','product':PRODUCT,'config':str(cfg),'roleModels':{k:list(v) for k,v in existing_models.items() if k in ROLES_WITH_HINT and isinstance(v,list)},'modelPolicy':existing_routing.get('modelPolicy','adaptive'),'reason':'live-runtime-selection-required','action':'Restart OpenCode and use hi_role_models to inspect the effective connected inventory. Automatic capability/variant recommendations are ephemeral and are never persisted as user preferences; use explicit --set ROLE=... only when you want to save an ordered child-role mapping.','available_models_observed':available}
 
     if not sets and not defaults:
         print(f"\n=== {PRODUCT} — Role Models Setup ===")

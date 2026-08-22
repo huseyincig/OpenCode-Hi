@@ -4,6 +4,15 @@ import { dataOf, modelIdentity } from './client-adapter.js'
 export type NativeCapabilityName =
   | 'session-create'|'prompt-async'|'prompt-sync'|'abort'|'status'|'children'|'todo'|'diff'|'fork'|'summarize'|'revert'|'unrevert'
   | 'provider-inventory'|'structured-log'
+export type NativeOperationName=NativeCapabilityName|'version'
+export type NativeOperationEffect='read-only'|'mutating'
+const NATIVE_OPERATION_EFFECT:Record<NativeOperationName,NativeOperationEffect>={
+  'session-create':'mutating','prompt-async':'mutating','prompt-sync':'mutating','abort':'mutating',
+  status:'read-only',children:'read-only',todo:'read-only',diff:'read-only',
+  fork:'mutating',summarize:'mutating',revert:'mutating',unrevert:'mutating',
+  'provider-inventory':'read-only','structured-log':'mutating',version:'read-only',
+}
+export function nativeOperationEffect(name:NativeOperationName):NativeOperationEffect{return NATIVE_OPERATION_EFFECT[name]}
 
 export interface NativeSessionSnapshot {
   status?: unknown

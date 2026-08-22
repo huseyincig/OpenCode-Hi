@@ -17,7 +17,7 @@
     {
       "invariant": "unknown-context-handle-fail-close",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "b74685c24dd9e3ffc8b2e40d898f07c80d93a11a1c1ac58c4984f567d8a5663b",
+      "owner_sha256": "5e2abe1f85175657a15e2d0ca8d3004a4fe7ead87e27386c1e475a4b1ddb6843",
       "owner_anchor": "Unknown context artifact id(s)",
       "proof": "plugin/test/context-survival-hardening.test.mjs",
       "proof_sha256": "238c6269ef500468db62f379ff2296a81e5e802a35de6e9925ac060f313a29cd",
@@ -26,7 +26,7 @@
     {
       "invariant": "stale-context-exclusion",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "b74685c24dd9e3ffc8b2e40d898f07c80d93a11a1c1ac58c4984f567d8a5663b",
+      "owner_sha256": "5e2abe1f85175657a15e2d0ca8d3004a4fe7ead87e27386c1e475a4b1ddb6843",
       "owner_anchor": "stored?.freshness==='FRESH'",
       "proof": "plugin/test/context-survival-hardening.test.mjs",
       "proof_sha256": "238c6269ef500468db62f379ff2296a81e5e802a35de6e9925ac060f313a29cd",
@@ -35,16 +35,16 @@
     {
       "invariant": "durable-artifact-source-provenance",
       "owner": "plugin/src/runtime/context/artifact-store.ts",
-      "owner_sha256": "c4161c1d09c84f507290b093078a857ac4832c59eac4aea296a2085c87733b2a",
+      "owner_sha256": "0cc243493d938f86090cfa084550c68189df3fdcf196aebb4c673b12b0f579f5",
       "owner_anchor": "provenance:{source_files:",
       "proof": "plugin/test/artifact-contract.test.mjs",
-      "proof_sha256": "5cd04ca0a7f79e1365c88cfdae19af2047f3e585e70a7b3a4f791f182d757ebd",
+      "proof_sha256": "a75144b136876511c962c5e4b131b2e9219eea0076eff02f31a05d0f2635bc36",
       "proof_anchor": "assert.deepEqual(a.provenance.source_files,['src/a.ts'])"
     },
     {
       "invariant": "durable-artifact-consumer-binding",
       "owner": "plugin/src/runtime/context/artifact-store.ts",
-      "owner_sha256": "c4161c1d09c84f507290b093078a857ac4832c59eac4aea296a2085c87733b2a",
+      "owner_sha256": "0cc243493d938f86090cfa084550c68189df3fdcf196aebb4c673b12b0f579f5",
       "owner_anchor": "bindConsumer",
       "proof": "plugin/test/context-survival-hardening.test.mjs",
       "proof_sha256": "238c6269ef500468db62f379ff2296a81e5e802a35de6e9925ac060f313a29cd",
@@ -53,7 +53,7 @@
     {
       "invariant": "durable-artifact-freshness-invalidation",
       "owner": "plugin/src/runtime/context/artifact-store.ts",
-      "owner_sha256": "c4161c1d09c84f507290b093078a857ac4832c59eac4aea296a2085c87733b2a",
+      "owner_sha256": "0cc243493d938f86090cfa084550c68189df3fdcf196aebb4c673b12b0f579f5",
       "owner_anchor": "a.freshness='POTENTIALLY_STALE'",
       "proof": "plugin/test/hi-core-evolution.test.mjs",
       "proof_sha256": "794ad3473cc7749e87b9a53594e702d18ae008418971258b6d82a6e6eb69d38b",
@@ -62,16 +62,16 @@
     {
       "invariant": "artifact-privacy-boundary",
       "owner": "plugin/src/runtime/context/artifact-store.ts",
-      "owner_sha256": "c4161c1d09c84f507290b093078a857ac4832c59eac4aea296a2085c87733b2a",
+      "owner_sha256": "0cc243493d938f86090cfa084550c68189df3fdcf196aebb4c673b12b0f579f5",
       "owner_anchor": "privacyClass??'project-private'",
       "proof": "plugin/test/artifact-contract.test.mjs",
-      "proof_sha256": "5cd04ca0a7f79e1365c88cfdae19af2047f3e585e70a7b3a4f791f182d757ebd",
+      "proof_sha256": "a75144b136876511c962c5e4b131b2e9219eea0076eff02f31a05d0f2635bc36",
       "proof_anchor": "ArtifactContract keeps identity, content hash and provenance as distinct fields"
     },
     {
       "invariant": "mission-runtime-projection-bounded",
       "owner": "plugin/src/runtime/context/mission-runtime-projection.ts",
-      "owner_sha256": "4f6089ab74dce4238c79afaeb079918b49c0a1c68a4a762d6eb8dcd110172f28",
+      "owner_sha256": "cd1211557db86d81fd4ca3c353a23597a82bf672d8185dc1a10039fe83e73c2c",
       "owner_anchor": "clipText",
       "proof": "plugin/test/c1-mission-runtime-projection.test.mjs",
       "proof_sha256": "438e644f81400755e7ce7800d7bdcf5f74a9c91346163b0ab472c356489784bf",
@@ -92,7 +92,7 @@
       "owner_sha256": "67cf632cdfa368ebb471c040eb85c840457ad979d0b7720d1129a97789d6ae75",
       "owner_anchor": "if(!referenced.length)",
       "proof": "plugin/test/methodology-signal-contract.test.mjs",
-      "proof_sha256": "3398eeac613b36af81bae176f105ac0e55ea187b2adabcb6901d24c70f543c56",
+      "proof_sha256": "9222804364ba9bdfe7a0f9464cc79c1b08588ecc11e30be235fa23ec875fcecd",
       "proof_anchor": "project methodology learning rejects an observation whose claimed evidence is not in worker result evidence"
     },
     {
@@ -101,7 +101,7 @@
       "owner_sha256": "67cf632cdfa368ebb471c040eb85c840457ad979d0b7720d1129a97789d6ae75",
       "owner_anchor": "if(independentTasks>=2)item.state='READY'",
       "proof": "plugin/test/methodology-signal-contract.test.mjs",
-      "proof_sha256": "3398eeac613b36af81bae176f105ac0e55ea187b2adabcb6901d24c70f543c56",
+      "proof_sha256": "9222804364ba9bdfe7a0f9464cc79c1b08588ecc11e30be235fa23ec875fcecd",
       "proof_anchor": "project methodology learning requires repeated independent evidence and survives store restart"
     },
     {
@@ -110,7 +110,7 @@
       "owner_sha256": "67cf632cdfa368ebb471c040eb85c840457ad979d0b7720d1129a97789d6ae75",
       "owner_anchor": "activateMethodologySignal",
       "proof": "plugin/test/methodology-signal-contract.test.mjs",
-      "proof_sha256": "3398eeac613b36af81bae176f105ac0e55ea187b2adabcb6901d24c70f543c56",
+      "proof_sha256": "9222804364ba9bdfe7a0f9464cc79c1b08588ecc11e30be235fa23ec875fcecd",
       "proof_anchor": "project.methodology-gap"
     }
   ],
@@ -126,5 +126,5 @@
     "covered": 12,
     "violations": 0
   },
-  "claim_boundary": "Current 0.2.3 context architecture: explicit consumer-bound ContextReference/Artifact state, bounded Mission runtime projection, deterministic duplicate pruning, and evidence-bound project methodology learning. Removed general Project Intelligence retrieval and CompressionArtifact subsystems are not certified as current product surfaces."
+  "claim_boundary": "Current 0.2.4 context architecture: explicit consumer-bound ContextReference/Artifact state, bounded Mission runtime projection, deterministic duplicate pruning, and evidence-bound project methodology learning. Removed general Project Intelligence retrieval and CompressionArtifact subsystems are not certified as current product surfaces."
 }

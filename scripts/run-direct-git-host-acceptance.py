@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import hashlib,json,os,platform,shutil,socket,subprocess,sys,tarfile,time,urllib.parse,urllib.request,zipfile
+import hashlib,json,os,platform,re,shutil,socket,subprocess,sys,tarfile,time,urllib.parse,urllib.request,zipfile
 from pathlib import Path,PurePosixPath
 
 ROOT=Path(__file__).resolve().parents[1]
-HOST_VERSION='1.18.19'
-ASSETS={
- ('linux','x86_64'):('opencode-linux-x64.tar.gz','7bb35487c55f9957f5d91ae60be6fa49fc8f74629c210c1719ed75fdbf7e2bd9','opencode'),
- ('linux','amd64'):('opencode-linux-x64.tar.gz','7bb35487c55f9957f5d91ae60be6fa49fc8f74629c210c1719ed75fdbf7e2bd9','opencode'),
- ('linux','aarch64'):('opencode-linux-arm64.tar.gz','506f98a1f618551f1f6fc5dcf591f824bef9d6819d40b27928ad7febcb7c363b','opencode'),
- ('linux','arm64'):('opencode-linux-arm64.tar.gz','506f98a1f618551f1f6fc5dcf591f824bef9d6819d40b27928ad7febcb7c363b','opencode'),
- ('win32','amd64'):('opencode-windows-x64.zip','4381328bf6d611996c33d98daef27e89d274cb8391709fa1e36723f1d2899877','opencode.exe'),
- ('win32','x86_64'):('opencode-windows-x64.zip','4381328bf6d611996c33d98daef27e89d274cb8391709fa1e36723f1d2899877','opencode.exe'),
- ('win32','arm64'):('opencode-windows-arm64.zip','2e74619988a54f76837370862c0761c6595a1224ce4cd6da588975e1396a33a7','opencode.exe'),
+PKG=json.loads((ROOT/'package.json').read_text(encoding='utf-8'))
+HOST_VERSION=str((PKG.get('dependencies') or {}).get('@opencode-ai/sdk') or '').strip()
+if not re.fullmatch(r'\d+\.\d+\.\d+',HOST_VERSION) or (PKG.get('peerDependencies') or {}).get('@opencode-ai/plugin')!=HOST_VERSION:raise RuntimeError(f'exact current host target drift: {HOST_VERSION or "<missing>"}')
+ASSET_MANIFEST=json.loads((ROOT/'data/opencode-host-assets.json').read_text(encoding='utf-8'))
+if ASSET_MANIFEST.get('schema')!=1 or ASSET_MANIFEST.get('kind')!='OPENCODE_EXACT_HOST_ASSET_MANIFEST' or ASSET_MANIFEST.get('version')!=HOST_VERSION or ASSET_MANIFEST.get('tag')!=f'v{HOST_VERSION}' or ASSET_MANIFEST.get('release_immutable') is not True:raise RuntimeError('exact OpenCode host asset manifest drift')
+PLATFORM_ASSET_KEYS={
+ ('linux','x86_64'):'linux-x64',
+ ('linux','amd64'):'linux-x64',
+ ('linux','aarch64'):'linux-arm64',
+ ('linux','arm64'):'linux-arm64',
+ ('win32','amd64'):'windows-x64',
+ ('win32','x86_64'):'windows-x64',
+ ('win32','arm64'):'windows-arm64',
 }
 
 def sha256(path:Path)->str:
@@ -52,14 +56,17 @@ def exact_binary()->Path:
   if not p.is_file():raise RuntimeError(f'HI_EXACT_OPENCODE_BIN missing: {p}')
   return p
  key=(sys.platform,platform.machine().lower())
- if key not in ASSETS:raise RuntimeError(f'unsupported exact-host platform: {key}')
- asset,digest,exe=ASSETS[key]
+ if key not in PLATFORM_ASSET_KEYS:raise RuntimeError(f'unsupported exact-host platform: {key}')
+ asset_key=PLATFORM_ASSET_KEYS[key];meta=(ASSET_MANIFEST.get('assets') or {}).get(asset_key) or {}
+ asset=str(meta.get('name') or '');digest=str(meta.get('sha256') or '');url=str(meta.get('url') or '')
+ exe='opencode.exe' if sys.platform=='win32' else 'opencode'
+ expected_prefix=f'https://github.com/anomalyco/opencode/releases/download/v{HOST_VERSION}/'
+ if not asset or not re.fullmatch(r'[a-f0-9]{64}',digest) or not url.startswith(expected_prefix) or not url.endswith('/'+asset):raise RuntimeError(f'invalid exact OpenCode asset manifest entry: {asset_key}')
  tools=ROOT/'.agent-work/tools'/f'opencode-{HOST_VERSION}'
  tools.mkdir(parents=True,exist_ok=True)
  archive=tools/asset;binary=tools/exe
  if not archive.is_file() or sha256(archive)!=digest:
   if archive.exists():archive.unlink()
-  url=f'https://github.com/anomalyco/opencode/releases/download/v{HOST_VERSION}/{asset}'
   req=urllib.request.Request(url,headers={'User-Agent':'OpenCode-Hi direct-Git acceptance'})
   with urllib.request.urlopen(req,timeout=180) as src, archive.open('wb') as dst:shutil.copyfileobj(src,dst)
  if sha256(archive)!=digest:raise RuntimeError(f'exact OpenCode archive digest mismatch: {asset}')

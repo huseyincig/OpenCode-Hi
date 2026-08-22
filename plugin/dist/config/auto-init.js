@@ -1,65 +1,19 @@
-// Runtime routing bootstrap for projects that do not yet have
-// `.opencode/hi/policy/routing.json`.
+// Project-local persistence for explicit Hi child-role model preferences.
 //
-// M16 deliberately does not persist catalog guesses or vendor/model IDs.
-// Initial child-role recommendations are supplied by the runtime only after
-// OpenCode exposes the effective inventory and Hi ranks eligible models.
+// Automatic model recommendations are deliberately ephemeral in 0.2.4. This
+// module has no inventory/bootstrap writer: only an explicit user `set`/`clear`
+// operation may mutate `.opencode/hi/policy/routing.json`.
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { MODEL_ROUTED_CHILD_ROLES } from './schema.js';
 import { dirname, join } from 'node:path';
-export const DEFAULT_STRATEGY = 'cost-quality';
-function normalizeRecommendations(input) {
+function normalizeRoleModels(input) {
     const out = {};
     for (const role of MODEL_ROUTED_CHILD_ROLES) {
-        const ids = [...new Set(input[role] ?? [])].filter(Boolean);
+        const ids = [...new Set(input[role] ?? [])].map(String).map(x => x.trim()).filter(Boolean);
         if (ids.length)
             out[role] = ids;
     }
     return out;
-}
-export function defaultProjectRoutingConfig(initialRecommendations = {}) {
-    const roleModels = normalizeRecommendations(initialRecommendations);
-    const adaptiveRoles = MODEL_ROUTED_CHILD_ROLES.filter(role => !roleModels[role]?.length);
-    return {
-        schema: 1,
-        type: 'hi-routing',
-        routing: {
-            strategy: DEFAULT_STRATEGY,
-            modelPolicy: 'recommended',
-            roleModels,
-            roleVariants: {},
-            adaptiveRoles,
-        },
-        applied_at: Date.now(),
-        applied_by: 'opencode-hi',
-    };
-}
-export function ensureProjectRoutingConfig(projectRoot, initialRecommendations) {
-    const path = join(projectRoot, '.opencode', 'hi', 'policy', 'routing.json');
-    if (existsSync(path)) {
-        try {
-            const current = JSON.parse(readFileSync(path, 'utf8'));
-            if (current?.schema === 1 && current?.type === 'hi-routing' && current.routing && typeof current.routing === 'object')
-                return { created: false, path };
-            if (current?.schema === 1 && current?.type === 'hi-routing' && initialRecommendations !== undefined) {
-                const next = defaultProjectRoutingConfig(initialRecommendations), configuredRoles = Object.keys(next.routing.roleModels).length;
-                current.routing = next.routing;
-                current.applied_at = next.applied_at;
-                current.applied_by = next.applied_by;
-                writeFileSync(path, JSON.stringify(current, null, 2) + '\n', 'utf8');
-                return { created: true, path, configuredRoles, reason: 'inventory-ranked-initial-policy-merged-with-project-settings' };
-            }
-        }
-        catch { }
-        return { created: false, path };
-    }
-    if (initialRecommendations === undefined)
-        return { created: false, path, configuredRoles: 0, reason: 'runtime-inventory-required-for-initial-recommendation' };
-    const next = defaultProjectRoutingConfig(initialRecommendations);
-    const configuredRoles = Object.keys(next.routing.roleModels).length;
-    mkdirSync(dirname(path), { recursive: true });
-    writeFileSync(path, JSON.stringify(next, null, 2) + '\n', 'utf8');
-    return { created: true, path, configuredRoles, reason: 'inventory-ranked-initial-policy' };
 }
 export function setProjectRoleModels(projectRoot, role, models) {
     const path = join(projectRoot, '.opencode', 'hi', 'policy', 'routing.json');
@@ -82,15 +36,15 @@ export function setProjectRoleModels(projectRoot, role, models) {
         roleModels[role] = normalized;
     else
         delete roleModels[role];
-    const adaptive = new Set(Array.isArray(routing.adaptiveRoles) ? routing.adaptiveRoles.map(String) : []);
+    const automaticRoles = new Set(Array.isArray(routing.adaptiveRoles) ? routing.adaptiveRoles.map(String) : []);
     if (normalized.length)
-        adaptive.delete(role);
+        automaticRoles.delete(role);
     else
-        adaptive.add(role);
-    const next = { ...current, schema: 1, type: 'hi-routing', routing: { ...routing, modelPolicy: 'manual', roleModels, adaptiveRoles: [...adaptive].map(String).filter(x => MODEL_ROUTED_CHILD_ROLES.includes(x)) }, applied_at: Date.now(), applied_by: 'opencode-hi' };
+        automaticRoles.add(role);
+    const next = { ...current, schema: 1, type: 'hi-routing', routing: { ...routing, modelPolicy: 'manual', roleModels, adaptiveRoles: [...automaticRoles].map(String).filter(x => MODEL_ROUTED_CHILD_ROLES.includes(x)) }, applied_at: Date.now(), applied_by: 'opencode-hi' };
     mkdirSync(dirname(path), { recursive: true });
     const tmp = `${path}.tmp-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     writeFileSync(tmp, JSON.stringify(next, null, 2) + '\n', 'utf8');
     renameSync(tmp, path);
-    return { path, roleModels: normalizeRecommendations(roleModels) };
+    return { path, roleModels: normalizeRoleModels(roleModels) };
 }

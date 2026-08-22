@@ -115,7 +115,7 @@ test('parent direct progress can close an explicit analysis obligation without b
   const root=mkdtempSync(join(tmpdir(),'hi-direct-analysis-'))
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
-    await hooks['chat.message']({sessionID:'s-analysis',message:{role:'user',parts:[{type:'text',text:'Fix the parser bug and verify it'}]}},{parts:[]});await assessPluginMission(hooks,'s-analysis',{task_kind:'bug-fix',scope:'multi-file',dependency_class:'independent-multi',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/parser.ts']})
+    await hooks['chat.message']({sessionID:'s-analysis',message:{role:'user',parts:[{type:'text',text:'Fix the parser bug and verify it'}]}},{parts:[]});await assessPluginMission(hooks,'s-analysis',{task_kind:'bug-fix',scope:'local',ambiguity:'resolvable',dependency_class:'independent',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/parser.ts']})
     const empty=String(await hooks.tool.hi_direct_progress.execute({summary:'   ',obligation_id:'o-analysis'},{sessionID:'s-analysis'}));assert.match(empty,/non-empty bounded summary/)
     const wrong=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Root cause known.',obligation_id:'o-analysis:Root cause understood'},{sessionID:'s-analysis'}));assert.equal(wrong.reason,'unknown-obligation-id');assert.deepEqual(wrong.candidate_ids,['o-analysis','o-implementation'])
     const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Root cause isolated to the parser branch condition.',obligation_id:'o-analysis'},{sessionID:'s-analysis'}));assert.equal(result.status,'RECORDED');assert.deepEqual(result.changed_files,[]);assert.equal(result.completion_ready,false);assert.equal(result.next,'VERIFY');assert.equal(result.verification_required,true);assert.deepEqual(result.remaining_obligations,[{id:'o-implementation',kind:'implementation'},{id:'o-verification',kind:'verification'}]);assert.deepEqual(result.methodology_needs,[])
@@ -130,8 +130,56 @@ test('direct progress on o-verification returns EVIDENCE_REQUIRED and cannot clo
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
     await hooks['chat.message']({sessionID:'s-verification-owned',message:{role:'user',parts:[{type:'text',text:'Verify the focused behavior'}]}},{parts:[]});await assessPluginMission(hooks,'s-verification-owned',{task_kind:'review',required_capabilities:['review','verification'],likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
     const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'I checked it manually and it is fine.',obligation_id:'o-verification'},{sessionID:'s-verification-owned'}))
-    assert.equal(result.status,'EVIDENCE_REQUIRED');assert.equal(result.reason,'verification-is-evidence-owned');assert.equal(result.obligation_id,'o-verification');assert.ok(result.missing_kinds.includes('targeted-tests'))
+    assert.equal(result.status,'EVIDENCE_REQUIRED');assert.equal(result.reason,'verification-is-evidence-owned');assert.equal(result.obligation_id,'o-verification');assert.ok(result.missing_kinds.includes('review-evidence'))
     const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:120},{sessionID:'s-verification-owned'}));const verify=ledger.obligations.find(o=>o.id==='o-verification');assert.equal(verify.status,'open');assert.ok(ledger.events.some(e=>e.type==='verification.direct-progress-rejected'))
+    await hooks.dispose?.()
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+test('review-evidence-only verification handle collapses to direct review after fresh review input',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-direct-review-alias-'))
+  try{
+    const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
+    await hooks['chat.message']({sessionID:'s-review-alias',message:{role:'user',parts:[{type:'text',text:'Review src/a.ts read-only for correctness'}]}},{parts:[]});await assessPluginMission(hooks,'s-review-alias',{task_kind:'review',scope:'local',risk:'low',required_capabilities:['review','verification'],likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
+    const beforeReview=JSON.parse(await hooks.tool.hi_readiness.execute({},{sessionID:'s-review-alias'}));assert.equal(beforeReview.items.find(x=>x.id==='gate-reviewer')?.status,'not-applicable');assert.equal(beforeReview.items.find(x=>x.id==='gate-verification')?.status,'waiting')
+    await hooks['tool.execute.after']({sessionID:'s-review-alias',tool:'read',args:{filePath:'src/a.ts'}},'const x = 1')
+    const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Reviewed src/a.ts; no correctness findings.',obligation_id:'o-verification'},{sessionID:'s-review-alias'}))
+    assert.equal(result.status,'RECORDED');assert.equal(result.completion_ready,true);assert.equal(result.mission_status,'completed');assert.equal(result.next,'STOP');assert.deepEqual(result.remaining_obligations,[])
+    const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:120},{sessionID:'s-review-alias'}));assert.equal(ledger.status,'completed');assert.ok(ledger.obligations.every(o=>o.status==='closed'));assert.ok(ledger.events.some(e=>e.type==='review.direct-progress'));assert.ok(ledger.events.some(e=>e.type==='verification.pass'&&e.payload?.kind==='review-evidence'));assert.ok(ledger.events.some(e=>e.type==='mission.completed'))
+    const redundant=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Already complete.',obligation_id:'o-review'},{sessionID:'s-review-alias'}));assert.equal(redundant.status,'ALREADY_COMPLETED');assert.equal(redundant.completion_ready,true);assert.equal(redundant.mission_status,'completed');assert.equal(redundant.next,'STOP')
+    await hooks.dispose?.()
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+test('completed mission ignores late host progress events while a new user message starts a fresh mission',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-terminal-host-event-'))
+  try{
+    const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
+    const sid='s-terminal-host-event'
+    await hooks['chat.message']({sessionID:sid,message:{role:'user',parts:[{type:'text',text:'Review src/a.ts read-only for correctness'}]}},{parts:[]});await assessPluginMission(hooks,sid,{task_kind:'review',scope:'local',risk:'low',required_capabilities:['review','verification'],likely_verification:['review-evidence'],likely_targets:['src/a.ts']})
+    await hooks['tool.execute.after']({sessionID:sid,tool:'read',args:{filePath:'src/a.ts'}},'const x = 1')
+    const done=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Reviewed src/a.ts; no correctness findings.',obligation_id:'o-verification'},{sessionID:sid}));assert.equal(done.next,'STOP')
+    const terminal=JSON.parse(await hooks.tool.hi_ledger.execute({limit:200},{sessionID:sid}));const terminalEventCount=terminal.events.length,terminalMissionID=terminal.mission_id
+    await hooks.event({event:{type:'session.diff',properties:{sessionID:sid,diff:[{file:'src/a.ts',before:'const x = 1',after:'const x = 2'}]}}})
+    await hooks.event({event:{type:'session.idle',properties:{sessionID:sid}}})
+    const afterLate=JSON.parse(await hooks.tool.hi_ledger.execute({limit:200},{sessionID:sid}));assert.equal(afterLate.status,'completed');assert.equal(afterLate.mission_id,terminalMissionID);assert.equal(afterLate.events.length,terminalEventCount);assert.ok(afterLate.obligations.every(o=>o.status==='closed'));assert.equal(afterLate.evidence.fresh,true);assert.ok(!afterLate.events.some(e=>e.type==='file.changed'&&e.at>terminal.events.at?.(-1)?.at))
+    await hooks['chat.message']({sessionID:sid,message:{role:'user',parts:[{type:'text',text:'Now update src/a.ts to use x = 2'}]}},{parts:[]})
+    const fresh=JSON.parse(await hooks.tool.hi_ledger.execute({limit:200},{sessionID:sid}));assert.notEqual(fresh.mission_id,terminalMissionID);assert.equal(fresh.status,'active')
+    await assessPluginMission(hooks,sid,{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['implementation'],likely_verification:[],likely_targets:['src/a.ts']})
+    await hooks.event({event:{type:'session.diff',properties:{sessionID:sid,diff:[{file:'src/a.ts',before:'const x = 1',after:'const x = 2'}]}}})
+    const active=JSON.parse(await hooks.tool.hi_ledger.execute({limit:200},{sessionID:sid}));assert.ok(active.events.some(e=>e.type==='file.changed'));assert.equal(active.status,'active')
+    await hooks.dispose?.()
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+test('explicit technical verifier never aliases to direct review even after fresh review input',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-direct-review-explicit-verifier-'))
+  try{
+    const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
+    await hooks['chat.message']({sessionID:'s-review-explicit',message:{role:'user',parts:[{type:'text',text:'Review src/a.ts read-only and run `node --test test/a.test.mjs`.'}]}},{parts:[]});await assessPluginMission(hooks,'s-review-explicit',{task_kind:'review',scope:'local',risk:'low',required_capabilities:['review','verification'],likely_verification:['targeted-tests','typecheck'],likely_targets:['src/a.ts']})
+    await hooks['tool.execute.after']({sessionID:'s-review-explicit',tool:'read',args:{filePath:'src/a.ts'}},'const x = 1')
+    const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'The read looks correct.',obligation_id:'o-verification'},{sessionID:'s-review-explicit'}))
+    assert.equal(result.status,'EVIDENCE_REQUIRED');assert.deepEqual(result.required_kinds,['targeted-tests']);assert.deepEqual(result.missing_kinds,['targeted-tests'])
     await hooks.dispose?.()
   }finally{rmSync(root,{recursive:true,force:true})}
 })
@@ -163,6 +211,25 @@ test('parent direct progress cannot close implementation from an unrelated chang
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
+
+test('parent direct progress closes multi-target implementation only after every user-grounded required target is covered',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-direct-required-targets-'))
+  try{
+    const c=client();c.session.diff=async()=>({data:[{file:'src/a.ts'},{file:'src/b.ts'}]})
+    const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:c});await hooks.config({})
+    const sid='s-required-targets'
+    await hooks['chat.message']({sessionID:sid,message:{role:'user',parts:[{type:'text',text:'Change src/a.ts and src/b.ts. Both are required. Run node --test test/a.test.ts.'}]}},{parts:[]})
+    await assessPluginMission(hooks,sid,{task_kind:'implementation',scope:'multi-file',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/a.ts','src/b.ts']})
+    await hooks['tool.execute.before']({sessionID:sid,tool:'edit'},{args:{filePath:'src/a.ts'}})
+    await hooks['tool.execute.before']({sessionID:sid,tool:'edit'},{args:{filePath:'src/b.ts'}})
+    await hooks['tool.execute.after']({sessionID:sid,tool:'bash',args:{command:'node --test test/a.test.ts'}},{stdout:'1 pass\n0 fail',metadata:{exit:0}})
+    const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Both required implementation targets are changed.',obligation_id:'o-implementation'},{sessionID:sid}))
+    assert.equal(result.status,'RECORDED');assert.equal(result.completion_ready,true);assert.equal(result.mission_status,'completed');assert.equal(result.next,'STOP');assert.deepEqual(new Set(result.changed_files),new Set(['src/a.ts','src/b.ts']))
+    const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:120},{sessionID:sid}))
+    assert.equal(ledger.status,'completed');assert.ok(ledger.obligations.every(o=>o.status==='closed'));assert.ok(!ledger.events.some(e=>e.type==='implementation.required-targets-uncovered'))
+    await hooks.dispose?.()
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
 
 test('parent direct progress normalizes native absolute project paths before ownership comparison',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-direct-absolute-path-'))
@@ -237,6 +304,21 @@ test('bounded DIRECT bugfix completes from current owned diff plus fresh post-mu
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
+test('DIRECT evidence reconciliation cannot substitute an automatically related sibling test for the required implementation target',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-direct-evidence-required-target-'))
+  try{
+    mkdirSync(join(root,'src'),{recursive:true});writeFileSync(join(root,'src','a.ts'),'export const value = 1\n');writeFileSync(join(root,'src','a.test.ts'),'// baseline test\n')
+    for(const args of [['init','-q'],['config','user.name','Hi Test'],['config','user.email','hi@example.invalid'],['add','-A'],['commit','-qm','baseline']]){const r=spawnSync('git',['-C',root,...args],{encoding:'utf8'});assert.equal(r.status,0,String(r.stderr??''))}
+    const c=client();delete c.session.diff
+    const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:c});await hooks.config({});const sid='s-direct-evidence-required-target'
+    await hooks['chat.message']({sessionID:sid,message:{role:'user',parts:[{type:'text',text:'Update src/a.ts and run node --test src/a.test.ts.'}]}},{parts:[]});await assessPluginMission(hooks,sid,{task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
+    writeFileSync(join(root,'src','a.test.ts'),'// changed test only\n');await hooks['tool.execute.before']({sessionID:sid,tool:'edit'},{args:{filePath:'src/a.test.ts'}})
+    await hooks['tool.execute.after']({sessionID:sid,tool:'bash',args:{command:'node --test src/a.test.ts'}},{stdout:'1 pass\n0 fail',metadata:{exit:0}})
+    const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:140},{sessionID:sid}));assert.equal(ledger.status,'active');assert.ok(ledger.obligations.some(o=>o.kind==='implementation'&&o.status==='open'));assert.ok(ledger.obligations.some(o=>o.kind==='verification'&&o.status==='closed'));assert.ok(!ledger.events.some(e=>e.type==='implementation.direct-evidence-reconciled'));assert.ok(ledger.events.some(e=>e.type==='implementation.required-targets-uncovered'&&e.payload?.owner==='parent-direct-evidence'&&e.payload?.missing?.includes('src/a.ts')))
+    await hooks.dispose?.()
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
 test('DIRECT evidence reconciliation does not complete when required verification predates the mutation',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-direct-evidence-ordering-'))
   try{
@@ -267,7 +349,7 @@ test('read-only manager cannot close implementation through hi_direct_progress e
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('parent direct ownership accepts an automatically related sibling test file',async()=>{
+test('automatically related sibling test is allowed scope but cannot substitute for the required implementation target',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-direct-related-'))
   const c=client();c.session.diff=async()=>({data:[{file:'src/a.test.ts'}]})
   try{
@@ -275,7 +357,8 @@ test('parent direct ownership accepts an automatically related sibling test file
     await hooks['chat.message']({sessionID:'s-related',message:{role:'user',parts:[{type:'text',text:'Update src/a.ts to add a greeting'}]}},{parts:[]}); await assessPluginMission(hooks,'s-related',{likely_targets:['src/a.ts']})
     await hooks['tool.execute.before']({sessionID:'s-related',tool:'write'},{args:{filePath:'src/a.test.ts'}})
     const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'implemented with focused test'},{sessionID:'s-related'}))
-    assert.equal(result.status,'RECORDED')
+    assert.equal(result.status,'BLOCKED');assert.equal(result.reason,'required-targets-uncovered');assert.deepEqual(result.missing_targets,['src/a.ts']);assert.deepEqual(result.changed_files,['src/a.test.ts'])
+    const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:'s-related'}));assert.ok(!ledger.events.some(e=>e.type==='implementation.direct-progress-blocked'&&e.payload?.reason==='changed-files-outside-requested-scope'));assert.ok(ledger.events.some(e=>e.type==='implementation.required-targets-uncovered'))
     await hooks.dispose?.()
   }finally{rmSync(root,{recursive:true,force:true})}
 })

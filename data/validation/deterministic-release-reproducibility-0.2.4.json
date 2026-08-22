@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "kind": "DETERMINISTIC_RELEASE_REPRODUCIBILITY",
+  "release": "0.2.4",
+  "status": "PASS",
+  "source": {
+    "commit": "c3bc16ae42ecb06ded7ecb187794e56cb0a2e83d",
+    "tree": "30128a37406974116f52ca087658bf3ed376d4e2"
+  },
+  "artifacts": {
+    "source/OpenCode-Hi-0.2.4-SOURCE.zip": "519176ecd6b7afd65bee73dcfff48e21567a4b53d3959488eafa4695e8fa8e29",
+    "dist/RELEASE-MANIFEST-0.2.4.json": "acb4d0b535f491da17bf80411f01f64eb0a40d1c9f159beebb93aa387a7eac24",
+    "dist/OpenCode-Hi-0.2.4-DISTRIBUTABLE.zip": "097b213500e5b9769c829e32d0c3dbdf8aebcab5386ec8bbb984e002c262a6d5",
+    "dist/SBOM-0.2.4.json": "f0c734a2f7b7376d4233e302897d0b98b308a894d1220650e6313889af9f9fda"
+  },
+  "method": "two independent exact-source release builds; all four release outputs are byte-identical",
+  "claim_boundary": "Local deterministic release reproducibility only. This does not certify Windows CI or T4 publication."
+}

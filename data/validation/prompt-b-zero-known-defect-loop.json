@@ -2,11 +2,11 @@
   "schema": 2,
   "kind": "PROMPT_B_ZERO_KNOWN_DEFECT_CLOSURE_LOOP",
   "source_checkpoint": {
-    "commit": "324e79c9670287d46757ff13e9944e299c4c126c"
+    "commit": "c3bc16ae42ecb06ded7ecb187794e56cb0a2e83d"
   },
   "program": "PROMPT_B",
   "section": 40,
-  "status": "PASS",
+  "status": "FAIL",
   "defects": [
     {
       "id": "natural-language-regex-owned-authority",
@@ -222,7 +222,7 @@
       "root_cause_record": "publishable-root-lock-missing",
       "resolution": "Publishable distribution dependency graph now has canonical root package-lock.json v3 with exact accepted runtime versions and registry integrity.",
       "regression_receipt": "data/validation/prompt-b-dependency-supply-chain-license.json",
-      "regression_receipt_sha256": "af8c20dfdc9aa1863d73f6605066bcf50c30d723d5326fd6879ad7cb4ba7ffc8",
+      "regression_receipt_sha256": "2bdb3b37b30a882ae61d97912e7af9d2e03c87d9e91e27c46bcd19808bed6d9b",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -245,7 +245,7 @@
       "root_cause_record": "third-party-notices-runtime-drift",
       "resolution": "Notices now enumerate direct runtime SDK, host peer, optional Playwright, build TypeScript, and the audited optional msgpackr-extract install-script boundary.",
       "regression_receipt": "data/validation/prompt-b-dependency-supply-chain-license.json",
-      "regression_receipt_sha256": "af8c20dfdc9aa1863d73f6605066bcf50c30d723d5326fd6879ad7cb4ba7ffc8",
+      "regression_receipt_sha256": "2bdb3b37b30a882ae61d97912e7af9d2e03c87d9e91e27c46bcd19808bed6d9b",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -268,7 +268,7 @@
       "root_cause_record": "release-pack-proof-prepack-output-corruption",
       "resolution": "Canonical check/build runs before a scripts-disabled pack proof; publish also uses --ignore-scripts against the same built tree.",
       "regression_receipt": "data/validation/prompt-b-dependency-supply-chain-license.json",
-      "regression_receipt_sha256": "af8c20dfdc9aa1863d73f6605066bcf50c30d723d5326fd6879ad7cb4ba7ffc8",
+      "regression_receipt_sha256": "2bdb3b37b30a882ae61d97912e7af9d2e03c87d9e91e27c46bcd19808bed6d9b",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -291,7 +291,7 @@
       "root_cause_record": "single-lock-sbom-omitted-distribution-runtime",
       "resolution": "Release SBOM and release-chain verification deterministically bind both root distribution and plugin build/test lock graphs.",
       "regression_receipt": "data/validation/prompt-b-dependency-supply-chain-license.json",
-      "regression_receipt_sha256": "af8c20dfdc9aa1863d73f6605066bcf50c30d723d5326fd6879ad7cb4ba7ffc8",
+      "regression_receipt_sha256": "2bdb3b37b30a882ae61d97912e7af9d2e03c87d9e91e27c46bcd19808bed6d9b",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -312,9 +312,9 @@
       "classification": "PRODUCT_OR_ARCHITECTURE_DEFECT",
       "canonical_owner": "Dependency/release supply chain",
       "root_cause_record": "native-direct-git-pacote-preparation-trigger",
-      "resolution": "Public root package removes npm/Pacote Git-preparation trigger script names, moves the explicit developer build to build:plugin, keeps the OpenCode host peer optional, and cross-platform Release Readiness exercises the M16 packed npm bootstrap plus exact-SHA Git compatibility loading against exact OpenCode 1.18.19.",
+      "resolution": "Public root package removes npm/Pacote Git-preparation trigger script names, moves the explicit developer build to build:plugin, keeps the OpenCode host peer optional, and cross-platform Release Readiness exercises the packed npm bootstrap plus exact-SHA Git compatibility loading against the exact OpenCode host target from package metadata.",
       "regression_receipt": "data/validation/prompt-b-dependency-supply-chain-license.json",
-      "regression_receipt_sha256": "af8c20dfdc9aa1863d73f6605066bcf50c30d723d5326fd6879ad7cb4ba7ffc8",
+      "regression_receipt_sha256": "2bdb3b37b30a882ae61d97912e7af9d2e03c87d9e91e27c46bcd19808bed6d9b",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -358,7 +358,7 @@
       "classification": "PRODUCT_OR_ARCHITECTURE_DEFECT",
       "canonical_owner": "Evidence/Verification/Completion",
       "root_cause_record": "worker-pass-without-source-state",
-      "resolution": "Passed worker-sourced verification Evidence requires exact worker session plus 64-hex source-state identity; final native diff deterministically binds worker.native_state_hash.",
+      "resolution": "Generic WorkerResult verification claims never become canonical Evidence; trusted reviewer/browser observation admission remains exact session/state/attempt bound, and final native diff deterministically binds worker.native_state_hash.",
       "regression_receipt": "data/validation/prompt-b-evidence-verification-completion.json",
       "regression_receipt_sha256": "b8415cd33cf8f4adb53342947fa58e0a51a5e7c36aff143d127bf6dfbe798444",
       "closure_pipeline": [
@@ -1806,8 +1806,8 @@
       "id": "config-validator-stale-second-leaf-count",
       "classification": "VALIDATION_SCHEMA_DRIFT",
       "canonical_owner": "scripts/validate.py",
-      "root_cause_record": "a second validator block retained the pre-TeamMode-removal 32-leaf config count after the canonical catalog and primary audit moved to 29 leaves",
-      "resolution": "all living config validation now requires the canonical 29-leaf split: 26 runtime, 2 diagnostic and 1 schema marker",
+      "root_cause_record": "config classification counts must follow the canonical 29-leaf catalog as model-routing authorities are simplified",
+      "resolution": "all living config validation now requires the canonical 29-leaf split: 21 runtime, 7 diagnostic compatibility leaves and 1 schema marker",
       "regression_receipt": "scripts/validate.py",
       "regression_receipt_sha256": "478e104443c77289f6cd5fcf01a0cd44280b8c57bd2832620098a4ec277d7d87",
       "closure_pipeline": [
@@ -1989,12 +1989,17 @@
   ],
   "summary": {
     "recorded_findings": 86,
-    "unresolved_known_defects": 0,
+    "unresolved_known_defects": 4,
     "closure_receipts_checked": 86,
     "documentation_parity_violations": 0,
     "exact_t3_capabilities": 3,
     "lifecycle_invariants_pass": 61
   },
-  "violations": [],
+  "violations": [
+    "source-receipt-not-closed:prompt-b-dependency-supply-chain-license.json:FAIL",
+    "source-receipt-not-closed:prompt-b-install-update-lifecycle.json:FAIL",
+    "source-receipt-not-closed:prompt-b-process-workspace-browser-lifecycle.json:FAIL",
+    "transient-proof-anchor-drift:project-local-tmp-direct-progress-fixture"
+  ],
   "claim_boundary": "ZERO KNOWN DEFECT means no unresolved defect in the audited Prompt B scope after explicit closure and adjacent evidence re-audit. Full-suite terminal counts belong to fresh final-gates evidence, not this defect ledger; unknown future defects remain possible."
 }

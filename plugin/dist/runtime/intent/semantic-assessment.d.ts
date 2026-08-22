@@ -27,8 +27,21 @@ export interface SemanticIntentAssessment {
 }
 export declare function technicalTargets(text: string): string[];
 export declare function technicalVerificationKinds(text: string): SemanticVerificationKind[];
+export interface AdaptiveVerificationResolution {
+    assessment: SemanticIntentAssessment;
+    explicitUserVerification: SemanticVerificationKind[];
+    ceilingApplied: boolean;
+    policy: 'explicit-user-verifier' | 'minimum-sufficient-review' | 'assessment';
+}
+/**
+ * Reconcile model-proposed verification with mechanically observable user intent.
+ * The host primary may recommend checks, but a bounded low/medium-risk read-only review
+ * does not inherit code-test/build ceremony unless the user named an executable verifier.
+ */
+export declare function resolveAdaptiveVerificationAssessment(assessment: SemanticIntentAssessment, userText: string): AdaptiveVerificationResolution;
 export declare function semanticTargets(value: unknown, max?: number): string[];
 export declare function materialSemanticTargets(assessment: Pick<SemanticIntentAssessment, 'likely_targets' | 'likely_verification' | 'intent_signals'>): string[];
+export declare function userRequiredMaterialTargets(userText: string, assessment: Pick<SemanticIntentAssessment, 'likely_targets' | 'likely_verification' | 'intent_signals'>): string[];
 export declare function provisionalIntent(text: string, repo?: RepoContext): NormalizedMissionIntent;
 export declare function parseSemanticIntentAssessment(raw: unknown): SemanticIntentAssessment;
 export declare function assessedIntent(current: NormalizedMissionIntent, assessment: SemanticIntentAssessment): NormalizedMissionIntent;

@@ -9,7 +9,7 @@ import {createTask,createWorker} from "../dist/runtime/worker/worker-runtime.js"
 import {executionAttemptIdentity} from "../dist/contracts/orchestration-core.js"
 
 function closeNonVerification(m){for(const o of m.execution.obligations)if(o.kind!=="verification"&&o.kind!=="review"){o.status="closed";o.closedAt=Date.now()}}
-function verificationMission(id){const m=startAssessedMission(new MissionStore(),id,"fix src/a.ts",{task_kind:"implementation",likely_verification:["targeted-tests"],likely_targets:["src/a.ts"]});closeNonVerification(m);const v=m.execution.obligations.find(o=>o.kind==="verification");v.requiredEvidence=["targeted-tests"];return{m,v}}
+function verificationMission(id){const m=startAssessedMission(new MissionStore(),id,"fix src/a.ts",{task_kind:"implementation",likely_verification:["targeted-tests"],likely_targets:["src/a.ts"]});markMutation(m,["src/a.ts"],"fixture-implementation");closeNonVerification(m);const v=m.execution.obligations.find(o=>o.kind==="verification");v.requiredEvidence=["targeted-tests"];return{m,v}}
 
 test("closed verification claim survives unrelated mutation but reopens completion after relevant mutation",()=>{
   const {m,v}=verificationMission("claim-completion-scope")
@@ -28,7 +28,7 @@ test("closed review claim becomes incomplete when its claim-linked evidence is i
   const review=m.execution.obligations.find(o=>o.kind==="review"),verification=m.execution.obligations.find(o=>o.kind==="verification");assert.ok(review);assert.ok(verification);verification.requiredEvidence=["review-evidence"]
   const task=createTask(m,{objective:"independent review",role:"qa-reviewer",category:"standard",scope:["src/a.ts"],obligationIds:[review.id,verification.id],requiredEvidence:["review-evidence"]}),worker=createWorker(m,task,"host-default");worker.session_id="review-child";worker.native_state_hash="e".repeat(64);worker.attempt=1;worker.generation_at_spawn=m.continuation.generation;worker.status="completed";task.status="completed"
   const identity=executionAttemptIdentity({executionUnitId:`eu:${task.id}`,workerId:worker.id,ordinal:worker.attempt,generation:worker.generation_at_spawn})
-  addEvidence(m,{kind:"review-evidence",summary:"independent review passed",scope:["src/a.ts"],source:`worker:${worker.id}:reviewer`,source_session_id:worker.session_id,source_state_hash:worker.native_state_hash,task_id:task.id,obligation_ids:[review.id,verification.id],producer_attempt:{worker_id:worker.id,execution_unit_id:identity.executionUnitId,attempt_id:identity.attemptId,run_id:identity.runId,ordinal:identity.ordinal,generation:identity.generation},pass:true,outcome:"passed"})
+  addEvidence(m,{kind:"review-evidence",summary:"independent review passed",scope:["src/a.ts"],source:`reviewer:${worker.id}`,trusted_source_class:'reviewer-observation',source_session_id:worker.session_id,source_state_hash:worker.native_state_hash,task_id:task.id,obligation_ids:[review.id,verification.id],producer_attempt:{worker_id:worker.id,execution_unit_id:identity.executionUnitId,attempt_id:identity.attemptId,run_id:identity.runId,ordinal:identity.ordinal,generation:identity.generation},pass:true,outcome:"passed"})
   review.status="closed";review.closedAt=Date.now();verification.status="closed";verification.closedAt=Date.now();syncMissionGates(m)
   assert.equal(evaluateCompletion(m).complete,true)
   markMutation(m,["src/a.ts"],"post-review-change");syncMissionGates(m)

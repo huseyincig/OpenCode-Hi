@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "release": "0.2.3",
+  "release": "0.2.4",
   "kind": "DOCUMENTATION_PARITY",
   "status": "PASS",
   "inputs": {
@@ -10,11 +10,11 @@
     },
     "compatibility": {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
-      "sha256": "5c729eeec5916bb1d7f367f5d81b4a054f993c7436cc408e998d0fdd8576005a"
+      "sha256": "e1204ba72a2116c40b86b00f21c004307b6fe129e7a7767f0fbfe6e355fd9504"
     },
     "release_status": {
-      "path": "data/validation/release-status-0.2.3.json",
-      "sha256": "3d2d9041ee947513a4c43e87b28548602caa8bf06ecf2e0475343a1ffdd5a7de"
+      "path": "data/validation/release-status-0.2.4.json",
+      "sha256": "1a8abf6b61b5f3b6ee0a1b286dbf8d0729c6661070e65459497918d67ea436a0"
     }
   },
   "checked_current_documents": [

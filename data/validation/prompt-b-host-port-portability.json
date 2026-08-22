@@ -8,19 +8,19 @@
     {
       "invariant": "host-port-hi-needs-not-sdk",
       "owner": "plugin/src/runtime/host/port.ts",
-      "owner_sha256": "c8fe676b993d08e42478e6ccbf97bb9810c1a57a1263b6601baee6ca5370c144",
+      "owner_sha256": "83cfb53545046c37fbd216cc3a6927f941b671dabd1656a8edd4add42c134fe9",
       "owner_anchor": "export interface HostPort",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
-      "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",
+      "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
       "proof_anchor": "generic HostPort expresses Hi host needs without importing OpenCode SDK types"
     },
     {
       "invariant": "semantic-core-sdk-confinement",
       "owner": "plugin/src/runtime/application/runtime-event-controller.ts",
-      "owner_sha256": "9688df8d5962961d2b1dd6f33548e2c318c74ea566c3e581eec68554bff0037c",
+      "owner_sha256": "1ed8186467717b0fb3fd871ad0e8ed52dd5533093765cd4a6b533a8a8f46fa57",
       "owner_anchor": "import type { HostEvent,HostPort } from '../host/port.js'",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
-      "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",
+      "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
       "proof_anchor": "semantic runtime core has no raw OpenCode SDK/client lifecycle dependency"
     },
     {
@@ -29,7 +29,7 @@
       "owner_sha256": "c3c208e4e18d6b6d81efd225b2ddb54a54f68cf6f7e5aed5a377f722e6a52688",
       "owner_anchor": "eventController.handle(normalizeOpenCodeEvent(input?.event??input))",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
-      "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",
+      "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
       "proof_anchor": "raw host event normalization occurs at OpenCode hook boundary"
     },
     {
@@ -38,7 +38,7 @@
       "owner_sha256": "18b196c5c3dc5f197a679926fd728f3f0ae05e945034f083ee050904386d7424",
       "owner_anchor": "Pick<HostPort,'continueSession'>",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
-      "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",
+      "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
       "proof_anchor": "alternate host continuation port preserves Mission continuation semantics without OpenCode shapes"
     },
     {
@@ -47,16 +47,16 @@
       "owner_sha256": "669f3cdcfc0d2eb1a39686af77d8f84a8f37cfdc07bc6c831def91cee690c293",
       "owner_anchor": "constructor(private readonly host:ChildSessionPort",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
-      "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",
+      "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
       "proof_anchor": "alternate host child-session port can execute a Hi task without OpenCode client structure"
     },
     {
       "invariant": "runtime-service-injection",
       "owner": "plugin/src/runtime/application/runtime-services.ts",
-      "owner_sha256": "49d7824634a072da13f27f8ea225e496f333a1112a92ac0545d92190bf260745",
+      "owner_sha256": "7edd3d7a0b85f5a52edb0687f3ae3491ca5213e5d02d1c7042e3bd19b460ae07",
       "owner_anchor": "export interface RuntimeServicePorts",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
-      "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",
+      "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
       "proof_anchor": "runtime composition accepts injected host-semantic executors instead of constructing OpenCode adapters"
     },
     {
@@ -80,7 +80,7 @@
     {
       "invariant": "missing-capability-fail-closed",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "b74685c24dd9e3ffc8b2e40d898f07c80d93a11a1c1ac58c4984f567d8a5663b",
+      "owner_sha256": "5e2abe1f85175657a15e2d0ca8d3004a4fe7ead87e27386c1e475a4b1ddb6843",
       "owner_anchor": "hostCapabilitySource:(()=>readonly HostCapabilityContract[])|readonly HostCapabilityContract[]=[]",
       "proof": "plugin/test/methodology-host-capability.test.mjs",
       "proof_sha256": "f4bec6d8e7e07e0f2901e9c6059af9e1e9773cf2feec184f43726a77f75ac74a",
@@ -89,19 +89,19 @@
     {
       "invariant": "alternate-host-continuation-feasible",
       "owner": "plugin/src/runtime/host/port.ts",
-      "owner_sha256": "c8fe676b993d08e42478e6ccbf97bb9810c1a57a1263b6601baee6ca5370c144",
+      "owner_sha256": "83cfb53545046c37fbd216cc3a6927f941b671dabd1656a8edd4add42c134fe9",
       "owner_anchor": "continueSession(sessionID:string,text:string,metadata:Record<string,unknown>):Promise<boolean>",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
-      "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",
+      "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
       "proof_anchor": "alternate host continuation port preserves Mission continuation semantics without OpenCode shapes"
     },
     {
       "invariant": "alternate-host-task-feasible",
       "owner": "plugin/src/runtime/host/port.ts",
-      "owner_sha256": "c8fe676b993d08e42478e6ccbf97bb9810c1a57a1263b6601baee6ca5370c144",
+      "owner_sha256": "83cfb53545046c37fbd216cc3a6927f941b671dabd1656a8edd4add42c134fe9",
       "owner_anchor": "export interface ChildSessionPort",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
-      "proof_sha256": "29793560adc98320e8a5ec2368511950b8dc5358215aa9efacee0bc221044c91",
+      "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
       "proof_anchor": "alternate host child-session port can execute a Hi task without OpenCode client structure"
     }
   ],

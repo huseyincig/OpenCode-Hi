@@ -60,9 +60,9 @@ TaskRuntime                                |
    |       +--> VerificationEnvelope
    |
    +--> TaskRecoveryCoordinator
-   |       +--> retry/fallback
-   |       +--> stale callback quarantine
-   |       +--> restart reconciliation
+   |       +--> bounded same-session semantic correction
+   |       +--> host-terminal explicit model fallback
+   |       +--> stale callback / restart reconciliation
    |
    v
 Continuation / WAIT / STOP
@@ -100,6 +100,8 @@ OpenCode owns native host primitives such as sessions, child sessions, provider/
 `TaskRuntime` is the canonical Task application facade. Mechanical child execution, result reconciliation and recovery are delegated to bounded collaborators; none owns a second Task store.
 
 A Worker is one execution attempt bound to a Task. `WorkerResult` is boundary-untrusted input and does not own completion.
+
+Completed DAG dependencies feed successors through a bounded direct-edge outcome projection at actual dispatch time. Each projected item is fenced to the accepted producer worker attempt/run/generation and result digest, excludes worker evidence claims/findings, and is explicitly non-Evidence. The projection is recomputed after child creation and before the first provider prompt so an await-time generation/result race cannot leak stale predecessor output into a new execution.
 
 Team is a bounded process-ephemeral projection over the same TaskRuntime/Task/Worker semantics. It is not a second orchestration database. Restart preserves durable Task/Worker identity and can reset the Team projection without inventing a new trajectory.
 
@@ -187,7 +189,7 @@ Core receives normalized Hi-compatible structures; OpenCode SDK uncertainty stay
 Portability is an architecture property, not a claim that alternate hosts are currently implemented or certified.
 ## Execution policy
 
-Execution topology and model selection are bounded structured decisions. Small/local work prefers the direct minimum-sufficient path; parallel or specialist execution requires explicit structured benefit/risk/capability signals. Provider/model fallback is bounded and never substitutes for evidence or authority.
+Execution topology and model selection are bounded structured decisions. Small/local work prefers the direct minimum-sufficient path; parallel or specialist execution requires explicit structured benefit/risk/capability signals. Parallel write admission is fail-closed on uncertain mutable ownership: known-disjoint writer scopes may share the primary checkout, overlapping writer scopes serialize, and two writers cannot fan out when either scope is unknown. Read-only workers are exempt from the unknown-write fence. Isolation is therefore selective rather than blanket: a worktree is used only when the Task owns an explicit isolation decision, while ordinary safe disjoint work avoids worktree/merge overhead. OpenCode owns transient provider retry/backoff and live `busy`/`retry` state. Hi may use an explicitly configured alternate child model only after host-terminal provider failure; generic context/tool failure is not sufficient proof for automatic model switching. A fallback prompt is a mutating host call and is never speculatively replayed: if its acknowledgement is ambiguous and the recovery child cannot be proven quiescent, the exact child/session/attempt reservation remains quarantined until explicit reconciliation. Provider/model fallback is bounded and never substitutes for evidence or authority.
 
 ## Context and Project Intelligence
 

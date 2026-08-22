@@ -1,3 +1,4 @@
+import { projectExecutionSurface } from './execution-projection.js'
 import { externalActionTypeFromTechnicalKind,type ExternalActionType } from '../../contracts/external-action.js'
 export type ExternalCommandKind='git-push'|'package-publish'|'gh-release-create'|'docker-push'|'kubectl-mutate'|'terraform-apply'|'vercel-deploy'|'netlify-deploy'|'other'
 export interface CommandInvocation{exe?:string;args:string[];tokens:string[]}
@@ -27,15 +28,17 @@ function shellWords(command:string):string[]{
 function skipOption(tokens:string[],i:number,valueOptions:Set<string>):number{const t=tokens[i];if(!t?.startsWith('-'))return i;if(t.includes('='))return i+1;return valueOptions.has(t)?Math.min(tokens.length,i+2):i+1}
 function unwrap(tokens:string[]):CommandInvocation{
   let i=0
+  while(i<tokens.length&&/^[A-Za-z_][A-Za-z0-9_]*=/.test(tokens[i]))i++
   if(tokens[i]==='sudo'){i++;while(i<tokens.length&&tokens[i].startsWith('-'))i=skipOption(tokens,i,new Set(['-u','--user','-g','--group','-h','--host','-C','--chdir']))}
   if(tokens[i]==='env'){i++;while(i<tokens.length){const t=tokens[i];if(t==='-i'||t==='--ignore-environment'){i++;continue}if(t==='-u'||t==='--unset'){i+=2;continue}if(t.startsWith('-')){i++;continue}if(/^[A-Za-z_][A-Za-z0-9_]*=/.test(t)){i++;continue}break}}
   return{exe:tokens[i],args:tokens.slice(i+1),tokens}
 }
 function splitInvocations(command:string):CommandInvocation[]{
-  const words=shellWords(command),parts:string[][]=[];let part:string[]=[]
-  for(const w of words){if(['&&','||',';','|'].includes(w)){if(part.length)parts.push(part);part=[]}else part.push(w)}if(part.length)parts.push(part)
   const out:CommandInvocation[]=[]
-  for(const p of parts){const inv=unwrap(p);if(!inv.exe)continue;out.push(inv);if(['sh','bash','zsh','dash'].includes(inv.exe)){const ci=inv.args.findIndex(x=>x==='-c');if(ci>=0&&inv.args[ci+1])out.push(...splitInvocations(inv.args[ci+1]))}}
+  for(const fragment of projectExecutionSurface(command).fragments){
+    const tokens=shellWords(fragment.text).filter(token=>!['&&','||',';','|'].includes(token));if(!tokens.length)continue
+    const inv=unwrap(tokens);if(inv.exe)out.push(inv)
+  }
   return out
 }
 export function commandInvocations(command:string):CommandInvocation[]{return splitInvocations(command)}

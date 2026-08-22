@@ -10,7 +10,7 @@ import { opencodeChildPort } from './helpers/host-port.mjs'
 import { evaluateIdle } from '../dist/runtime/continuation/evaluator.js'
 
 function workerResult(status='DONE'){return{status,summary:'done',changed_files:[],scope_expansions:[],evidence:[],open_issues:[],needs_context:[]}}
-function setup({prompt=async()=>{},abort=async()=>{},withAbort=true,onCreate}={}){
+function setup({prompt=async()=>{},abort=async()=>({data:true}),withAbort=true,onCreate}={}){
   let seq=0
   const session={create:async()=>{onCreate?.();return{data:{id:`child-${++seq}`}}},promptAsync:prompt,diff:async()=>({data:[]})}
   if(withAbort)session.abort=abort
@@ -38,7 +38,7 @@ test('TaskRuntime rejects stale attempt settlement before result/evidence mutati
 })
 
 test('TaskRuntime cancellation releases the exact scheduler reservation only after host abort',async()=>{
-  let aborted=0;const {runtime,m,scheduler}=setup({abort:async()=>{aborted++}});const started=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
+  let aborted=0;const {runtime,m,scheduler}=setup({abort:async()=>{aborted++;return{data:true}}});const started=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
   assert.equal(await runtime.cancel(m,started.worker_id),true);assert.equal(aborted,1);assert.equal(m.execution.scheduler.reservations.length,0);assert.equal(scheduler.running(),0)
 })
 
@@ -65,7 +65,7 @@ test('TaskRuntime retains host-bound reservation when prompt failure cannot veri
 
 test('semantic quarantine releases the active reservation and resume creates the next exact attempt',async()=>{
   let aborts=0
-  const {runtime,m}=setup({abort:async()=>{aborts++}})
+  const {runtime,m}=setup({abort:async()=>{aborts++;return{data:true}}})
   const started=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
   const worker=m.execution.workers.find(w=>w.id===started.worker_id)
   assert.equal(worker.attempt,1);assert.equal(m.execution.scheduler.reservations[0].attempt.ordinal,1)

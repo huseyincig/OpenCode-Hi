@@ -15,7 +15,7 @@ function harness(){
   const client={session:{
     create:async()=>({data:{id:`child-${++n}`}}),
     promptAsync:async req=>{calls.prompts.push(req)},
-    abort:async req=>{calls.aborts.push(req)},
+    abort:async req=>{calls.aborts.push(req);return{data:true}},
   }}
   const registry=new BackgroundRegistry()
   const scheduler=new ConcurrencyScheduler(()=>({global:4}))

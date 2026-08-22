@@ -1,0 +1,159 @@
+{
+  "schema": 1,
+  "kind": "OPENCODE_HOST_COMPATIBILITY_POLICY",
+  "upstream": {
+    "repository": "https://github.com/anomalyco/opencode.git",
+    "github_repository": "anomalyco/opencode",
+    "stable_tag_prefix": "v",
+    "registry_packages": [
+      "opencode-ai",
+      "@opencode-ai/sdk",
+      "@opencode-ai/plugin"
+    ]
+  },
+  "target_ownership": {
+    "exact_sdk": "package.json#dependencies.@opencode-ai/sdk",
+    "exact_plugin_peer": "package.json#peerDependencies.@opencode-ai/plugin",
+    "runtime_plugin_dev": "plugin/package.json#devDependencies.@opencode-ai/plugin",
+    "rule": "The exact certified target is source-controlled. A newer upstream observation never promotes support by itself."
+  },
+  "ignored_change_patterns": [
+    "packages/*/package.json",
+    "packages/opencode/test/*",
+    "packages/core/test/*",
+    "packages/server/test/*",
+    "packages/protocol/test/*",
+    "packages/sdk/js/test/*",
+    "packages/plugin/test/*",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.md"
+  ],
+  "critical_roots": [
+    "packages/opencode/src/",
+    "packages/core/src/",
+    "packages/server/src/",
+    "packages/protocol/src/",
+    "packages/sdk/js/src/",
+    "packages/plugin/src/"
+  ],
+  "surface_groups": [
+    {
+      "id": "sdk-plugin-api",
+      "patterns": [
+        "packages/sdk/js/src/*",
+        "packages/plugin/src/*"
+      ],
+      "fresh_consumer_required": true,
+      "full_t3_required": true,
+      "t3_capabilities": [
+        "browser-execution",
+        "process-lifecycle",
+        "workspace-isolation-binding"
+      ]
+    },
+    {
+      "id": "session-lifecycle",
+      "patterns": [
+        "packages/opencode/src/session/*",
+        "packages/core/src/session/*",
+        "packages/server/src/handlers/session*",
+        "packages/protocol/src/groups/session.ts",
+        "packages/opencode/src/server/routes/*session*"
+      ],
+      "fresh_consumer_required": true,
+      "full_t3_required": false,
+      "t3_capabilities": [
+        "process-lifecycle",
+        "workspace-isolation-binding"
+      ]
+    },
+    {
+      "id": "provider-runtime",
+      "patterns": [
+        "packages/opencode/src/provider/*",
+        "packages/core/src/plugin/provider/*",
+        "packages/core/src/config/provider.ts",
+        "packages/core/src/config/plugin/provider.ts",
+        "packages/server/src/handlers/provider.ts",
+        "packages/protocol/src/groups/provider.ts",
+        "packages/opencode/src/server/routes/*provider*"
+      ],
+      "fresh_consumer_required": true,
+      "full_t3_required": false,
+      "t3_capabilities": []
+    },
+    {
+      "id": "model-inventory",
+      "patterns": [
+        "packages/core/src/catalog.ts",
+        "packages/core/src/plugin/models-dev.ts",
+        "packages/opencode/src/provider/model-status.ts",
+        "packages/opencode/src/cli/cmd/models.ts",
+        "packages/server/src/handlers/model.ts",
+        "packages/protocol/src/groups/model.ts"
+      ],
+      "fresh_consumer_required": true,
+      "full_t3_required": false,
+      "t3_capabilities": []
+    },
+    {
+      "id": "process-pty",
+      "patterns": [
+        "packages/core/src/pty/*",
+        "packages/opencode/src/plugin/pty-environment.ts",
+        "packages/opencode/src/server/routes/*pty*",
+        "packages/opencode/src/server/shared/pty-ticket.ts",
+        "packages/server/src/handlers/pty.ts",
+        "packages/protocol/src/groups/pty.ts"
+      ],
+      "fresh_consumer_required": false,
+      "full_t3_required": false,
+      "t3_capabilities": [
+        "process-lifecycle"
+      ]
+    },
+    {
+      "id": "workspace-isolation",
+      "patterns": [
+        "packages/core/src/control-plane/*workspace*",
+        "packages/opencode/src/control-plane/*workspace*",
+        "packages/opencode/src/control-plane/*worktree*",
+        "packages/opencode/src/server/routes/*workspace*",
+        "packages/opencode/src/server/shared/workspace-routing.ts"
+      ],
+      "fresh_consumer_required": false,
+      "full_t3_required": false,
+      "t3_capabilities": [
+        "workspace-isolation-binding"
+      ]
+    },
+    {
+      "id": "permission-human-decision",
+      "patterns": [
+        "packages/core/src/tool/question.ts",
+        "packages/core/src/v1/permission.ts",
+        "packages/opencode/src/acp/permission.ts",
+        "packages/opencode/src/agent/subagent-permissions.ts",
+        "packages/opencode/src/tool/question*",
+        "packages/opencode/src/server/routes/*permission*",
+        "packages/opencode/src/server/routes/*question*",
+        "packages/server/src/handlers/permission.ts",
+        "packages/server/src/handlers/question.ts",
+        "packages/protocol/src/groups/permission.ts",
+        "packages/protocol/src/groups/question.ts"
+      ],
+      "fresh_consumer_required": true,
+      "full_t3_required": false,
+      "t3_capabilities": []
+    }
+  ],
+  "decision_rules": {
+    "registry_skew": "FAIL_CLOSED",
+    "unclassified_critical_change": "MANUAL_REVIEW_REQUIRED",
+    "metadata_only": "NO_RECERTIFICATION",
+    "support_promotion": "NEVER_AUTOMATIC",
+    "release_preflight": "The exact candidate target must equal the current stable registry version before publication preflight can pass."
+  }
+}

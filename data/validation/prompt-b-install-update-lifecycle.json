@@ -3,38 +3,38 @@
   "kind": "PROMPT_B_INSTALL_UPDATE_LIFECYCLE_ADVERSARIAL_AUDIT",
   "program": "PROMPT_B",
   "section": 25,
-  "status": "PASS",
+  "status": "FAIL",
   "summary": {
     "required": 14,
-    "covered": 14,
-    "violations": 0
+    "covered": 13,
+    "violations": 1
   },
   "invariants": [
     {
       "invariant": "fresh-install",
       "status": "PASS",
       "owner": "scripts/opencode-hi.mjs",
-      "owner_sha256": "768a2dbb83136c4b3f873d0494ecd5095916643d980cf0154ce25f361f6033fc",
+      "owner_sha256": "19fc56566736d821c727b741bd60c35634a1503bd5d68d6c56d262dec92688b7",
       "owner_anchor": "function setup(project,version)",
       "proof": "tests/test_node_setup.mjs",
-      "proof_sha256": "4217f7ca55f5e069e750d49dea20b6be446f9a204aab29ec3e0585de3e9ab757",
+      "proof_sha256": "1b88f55788f07eccb616811dbaf7ef9d453cbe348286cca5bd929588979d0dc1",
       "proof_anchor": "M16 Node setup preserves foreign OpenCode config"
     },
     {
       "invariant": "first-run-doctor",
       "status": "PASS",
       "owner": "scripts/opencode-hi.mjs",
-      "owner_sha256": "768a2dbb83136c4b3f873d0494ecd5095916643d980cf0154ce25f361f6033fc",
+      "owner_sha256": "19fc56566736d821c727b741bd60c35634a1503bd5d68d6c56d262dec92688b7",
       "owner_anchor": "function doctor(project)",
       "proof": "tests/test_node_setup.mjs",
-      "proof_sha256": "4217f7ca55f5e069e750d49dea20b6be446f9a204aab29ec3e0585de3e9ab757",
+      "proof_sha256": "1b88f55788f07eccb616811dbaf7ef9d453cbe348286cca5bd929588979d0dc1",
       "proof_anchor": "M16 Node doctor distinguishes package registration truth from pending effective runtime routing"
     },
     {
       "invariant": "configure-reconfigure",
       "status": "PASS",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "05d0ac7352c100c56ab67c077938dedbea504dea437c7e800678a30d99f57f19",
+      "owner_sha256": "ba0607d82d669781cc9557e68f0467c789978ed6f983bb6aa1eeda89815c7cb4",
       "owner_anchor": "def reconfigure(",
       "proof": "data/validation/install-lifecycle-0.1.0.json",
       "proof_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
@@ -44,17 +44,17 @@
       "invariant": "owned-update-version-detection",
       "status": "PASS",
       "owner": "scripts/opencode-hi.mjs",
-      "owner_sha256": "768a2dbb83136c4b3f873d0494ecd5095916643d980cf0154ce25f361f6033fc",
+      "owner_sha256": "19fc56566736d821c727b741bd60c35634a1503bd5d68d6c56d262dec92688b7",
       "owner_anchor": "function update(project,version)",
       "proof": "tests/test_node_setup.mjs",
-      "proof_sha256": "4217f7ca55f5e069e750d49dea20b6be446f9a204aab29ec3e0585de3e9ab757",
+      "proof_sha256": "1b88f55788f07eccb616811dbaf7ef9d453cbe348286cca5bd929588979d0dc1",
       "proof_anchor": "M16 Node setup is idempotent and update changes only the owned Hi spec"
     },
     {
       "invariant": "uninstall",
       "status": "PASS",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "05d0ac7352c100c56ab67c077938dedbea504dea437c7e800678a30d99f57f19",
+      "owner_sha256": "ba0607d82d669781cc9557e68f0467c789978ed6f983bb6aa1eeda89815c7cb4",
       "owner_anchor": "def uninstall(",
       "proof": "data/validation/install-lifecycle-0.1.0.json",
       "proof_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
@@ -74,20 +74,20 @@
       "invariant": "rollback-truth",
       "status": "PASS",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "05d0ac7352c100c56ab67c077938dedbea504dea437c7e800678a30d99f57f19",
+      "owner_sha256": "ba0607d82d669781cc9557e68f0467c789978ed6f983bb6aa1eeda89815c7cb4",
       "owner_anchor": "def rollback(",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "b1317f9e31eb69a204b09dd8a3f758e81b9ddcce72b1520ef6f674e64606ad10",
+      "proof_sha256": "3996254a759df4b40234960abf251f31c55102b463f00d73c3cc6456b981764e",
       "proof_anchor": "test_r2_rollback_fails_closed_after_unrelated_post_operation_config_drift"
     },
     {
       "invariant": "partial-install-recovery",
       "status": "PASS",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "05d0ac7352c100c56ab67c077938dedbea504dea437c7e800678a30d99f57f19",
+      "owner_sha256": "ba0607d82d669781cc9557e68f0467c789978ed6f983bb6aa1eeda89815c7cb4",
       "owner_anchor": "def recover(",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "b1317f9e31eb69a204b09dd8a3f758e81b9ddcce72b1520ef6f674e64606ad10",
+      "proof_sha256": "3996254a759df4b40234960abf251f31c55102b463f00d73c3cc6456b981764e",
       "proof_anchor": "test_r2_recover_completes_interrupted_upgrade_when_config_matches_recorded_after_state"
     },
     {
@@ -114,7 +114,7 @@
       "invariant": "setup-state-permissions",
       "status": "PASS",
       "owner": "scripts/native_plugin_setup.py",
-      "owner_sha256": "05d0ac7352c100c56ab67c077938dedbea504dea437c7e800678a30d99f57f19",
+      "owner_sha256": "ba0607d82d669781cc9557e68f0467c789978ed6f983bb6aa1eeda89815c7cb4",
       "owner_anchor": "def _write_state(",
       "proof": "data/validation/install-lifecycle-0.1.0.json",
       "proof_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
@@ -124,30 +124,30 @@
       "invariant": "publishable-setup-cli-contract",
       "status": "PASS",
       "owner": "package.json",
-      "owner_sha256": "cf54e799329ca45c3a05e87192b67c4efb879f0bc5e79b7ddada0e16bc2c677d",
+      "owner_sha256": "252124a59c15a661891c9ef41100c7718094c40eefc89fb4e22a00b3d7187d15",
       "owner_anchor": "\"opencode-hi\": \"scripts/opencode-hi.mjs\"",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "b1317f9e31eb69a204b09dd8a3f758e81b9ddcce72b1520ef6f674e64606ad10",
+      "proof_sha256": "3996254a759df4b40234960abf251f31c55102b463f00d73c3cc6456b981764e",
       "proof_anchor": "test_prompt_b_publishable_package_carries_node_bootstrap_legacy_cli_and_direct_runtime_dependency_contract"
     },
     {
       "invariant": "no-source-tree-runtime-dependency",
       "status": "PASS",
       "owner": "package.json",
-      "owner_sha256": "cf54e799329ca45c3a05e87192b67c4efb879f0bc5e79b7ddada0e16bc2c677d",
-      "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.19\"",
+      "owner_sha256": "252124a59c15a661891c9ef41100c7718094c40eefc89fb4e22a00b3d7187d15",
+      "owner_anchor": "\"@opencode-ai/sdk\": \"1.18.20\"",
       "proof": "tests/test_hi.py",
-      "proof_sha256": "b1317f9e31eb69a204b09dd8a3f758e81b9ddcce72b1520ef6f674e64606ad10",
+      "proof_sha256": "3996254a759df4b40234960abf251f31c55102b463f00d73c3cc6456b981764e",
       "proof_anchor": "test_prompt_b_publishable_package_carries_node_bootstrap_legacy_cli_and_direct_runtime_dependency_contract"
     },
     {
       "invariant": "runtime-run-is-separate-exact-host-boundary",
-      "status": "PASS",
+      "status": "FAIL",
       "owner": "data/validation/install-lifecycle-0.1.0.json",
       "owner_sha256": "50c6002d47168f640246f938c3e0f72f9d2a9788d757660f9d586b1d189cfcf6",
       "owner_anchor": "\"external_host_status\": \"SEPARATE_T3_BOUNDARY\"",
       "proof": "data/validation/prompt-b-process-workspace-browser-lifecycle.json",
-      "proof_sha256": "aa1dc1634aa9bf768afa286ae2374fbc2399096dbb362a0621093c3940ce428c",
+      "proof_sha256": "cd1a00230fd527cd39b8802fa12a74fb745749f43b562b1da11b3bea9f6c5818",
       "proof_anchor": "\"status\": \"PASS\""
     }
   ],
@@ -175,5 +175,7 @@
     }
   ],
   "claim_boundary": "Local lifecycle/package-content contract plus exact-host runtime proof reference. This does not claim npm publication or replace §26 fresh-consumer exact-host acceptance.",
-  "violations": []
+  "violations": [
+    "runtime-run-is-separate-exact-host-boundary:anchor-drift"
+  ]
 }

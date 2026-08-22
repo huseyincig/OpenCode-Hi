@@ -2,9 +2,10 @@ import type { EvidenceItem,MissionState,MissionTask,NormalizedMissionIntent,Veri
 import type { RepoContext } from '../intent/repo-context.js'
 import type { VerificationEnvelope,VerificationCheckResult } from '../../contracts/verification-envelope.js'
 import { evidenceClaimApplicability } from '../evidence/applicability.js'
+import { evidenceScopeStateIsCurrent } from '../evidence/scope-state.js'
 const VERIFICATION_KIND_ALIASES:Readonly<Record<string,string>>={test:'targeted-tests',tests:'targeted-tests','targeted-tests':'targeted-tests',pytest:'targeted-tests','go test':'targeted-tests','cargo test':'targeted-tests','npm test':'targeted-tests','pnpm test':'targeted-tests','bun test':'targeted-tests',vitest:'targeted-tests',jest:'targeted-tests',spec:'targeted-tests',typecheck:'typecheck',tsc:'typecheck',mypy:'typecheck',pyright:'typecheck',lint:'lint',eslint:'lint',ruff:'lint',build:'build',compile:'build','cargo check':'build',check:'changed-surface-sanity',sanity:'changed-surface-sanity','changed-surface-sanity':'changed-surface-sanity','visual-check':'visual-check','visual-evidence':'visual-evidence','review-evidence':'review-evidence'}
 function canonical(kind:string):string{const k=kind.toLowerCase().trim();return VERIFICATION_KIND_ALIASES[k]??k}
-export function verificationPolicyFor(intent:NormalizedMissionIntent):VerificationPolicy{const independentReview=intent.risk==='high'||intent.requiredCapabilities.includes('independent-review')||intent.requiredCapabilities.includes('security-review');return{requiredKinds:[...new Set(intent.likelyVerification.map(canonical))],requireFresh:true,requireReview:independentReview,allowWorkerReportedEvidence:intent.risk!=='high'}}
+export function verificationPolicyFor(intent:NormalizedMissionIntent):VerificationPolicy{const independentReview=intent.risk==='high'||intent.requiredCapabilities.includes('independent-review')||intent.requiredCapabilities.includes('security-review');return{requiredKinds:[...new Set(intent.likelyVerification.map(canonical))],requireFresh:true,requireReview:independentReview,allowWorkerReportedEvidence:false}}
 
 
 function normPath(p:string):string{return p.trim().replace(/\\/g,'/').replace(/^\.\//,'')}
@@ -37,9 +38,12 @@ export function verificationEconomyInstruction(m:MissionState):string{
 const STRONGER_EVIDENCE:Readonly<Record<string,readonly string[]>>={'changed-surface-sanity':['changed-surface-sanity','targeted-tests','typecheck','lint','build'],'visual-check':['visual-check','visual-evidence'],'review-evidence':['review-evidence']}
 export function verificationKindSatisfiesRequirement(required:string,actual:string):boolean{const r=canonical(required),a=canonical(actual);if(r===a)return true;return Boolean(STRONGER_EVIDENCE[r]?.includes(a))}
 export function verificationKindAdmittedForMission(m:MissionState,actual:string):boolean{const required=[...new Set(m.execution.verification_policy.requiredKinds.map(canonical))];return required.length===0||required.some(kind=>verificationKindSatisfiesRequirement(kind,actual))}
-function evidenceAllowedForVerification(m:MissionState,e:EvidenceItem,obligationID?:string):boolean{
-  const workerSource=String(e.source??'').startsWith('worker:')
-  if(workerSource&&!m.execution.verification_policy.allowWorkerReportedEvidence&&!String(e.source??'').includes(':reviewer'))return false
+function evidenceAllowedForVerification(m:MissionState,e:EvidenceItem,obligationID?:string,projectRoot?:string):boolean{
+  // Legacy allowWorkerReportedEvidence remains schema-only. A worker claim never gains PASS authority.
+  // Unclassified legacy evidence is accepted only when it was not worker-produced; new evidence should
+  // declare its trusted observation class explicitly.
+  if(e.trusted_source_class===undefined&&String(e.source??'').startsWith('worker:'))return false
+  if(e.trusted_source_class==='reviewer-observation'&&projectRoot&&!evidenceScopeStateIsCurrent(projectRoot,e.scope,e.scope_state_hash))return false
   return evidenceClaimApplicability(m,e,obligationID).applicable
 }
 function verificationResult(e:EvidenceItem):VerificationCheckResult{
@@ -48,10 +52,10 @@ function verificationResult(e:EvidenceItem):VerificationCheckResult{
   if(e.outcome==='environment-issue')return'environment-issue'
   return'pending'
 }
-export function verificationEnvelopeFor(m:MissionState,obligationID?:string):VerificationEnvelope{
+export function verificationEnvelopeFor(m:MissionState,obligationID?:string,projectRoot?:string):VerificationEnvelope{
   const p=m.execution.verification_policy,obligation=obligationID?m.execution.obligations.find(o=>o.id===obligationID):undefined
   const requiredKinds=[...new Set((obligation?.requiredEvidence?.length?obligation.requiredEvidence:p.requiredKinds).map(canonical))]
-  const candidates=m.execution.evidence.items.filter(e=>evidenceAllowedForVerification(m,e,obligationID))
+  const candidates=m.execution.evidence.items.filter(e=>evidenceAllowedForVerification(m,e,obligationID,projectRoot))
   const checks=requiredKinds.map(kind=>{
     const matching=candidates.filter(e=>verificationKindSatisfiesRequirement(kind,e.kind)).sort((a,b)=>b.observed_at-a.observed_at)
     if(!matching.length)return{kind,subject:obligation?.summary??m.identity.objective,result:'not_run' as const,evidence_refs:[],explanation:`No admissible evidence recorded for required verification kind: ${kind}`}
@@ -75,8 +79,8 @@ export function verificationEnvelopeFor(m:MissionState,obligationID?:string):Ver
   for(const check of checks)if(check.result!=='passed')limitations.push(`${check.kind}:${check.result}`)
   return{checks,scope,freshness,limitations:[...new Set(limitations)],independent_review:independentReview}
 }
-export function verificationSatisfied(m:MissionState,obligationID?:string):{ok:boolean;missing:string[]}{
-  const envelope=verificationEnvelopeFor(m,obligationID),missing:string[]=[]
+export function verificationSatisfied(m:MissionState,obligationID?:string,projectRoot?:string):{ok:boolean;missing:string[]}{
+  const envelope=verificationEnvelopeFor(m,obligationID,projectRoot),missing:string[]=[]
   const incompleteChecks=envelope.checks.filter(check=>check.result!=='passed')
   for(const check of incompleteChecks)missing.push(check.kind)
   if(!incompleteChecks.length&&envelope.freshness==='stale')missing.push('fresh-evidence')
@@ -85,25 +89,25 @@ export function verificationSatisfied(m:MissionState,obligationID?:string):{ok:b
 }
 
 
-export function verificationClaimsSatisfied(m:MissionState):{ok:boolean;missing:string[]}{
+export function verificationClaimsSatisfied(m:MissionState,projectRoot?:string):{ok:boolean;missing:string[]}{
   const obligations=m.execution.obligations.filter(o=>o.kind==='verification')
   if(!obligations.length)return{ok:true,missing:[]}
-  const missing=obligations.flatMap(o=>verificationSatisfied(m,o.id).missing.map(item=>`${o.id}:${item}`))
+  const missing=obligations.flatMap(o=>verificationSatisfied(m,o.id,projectRoot).missing.map(item=>`${o.id}:${item}`))
   return{ok:missing.length===0,missing:[...new Set(missing)]}
 }
 
-export function reviewObligationSatisfied(m:MissionState,obligationID:string):{ok:boolean;reason?:string;evidence_id?:string}{
+export function reviewObligationSatisfied(m:MissionState,obligationID:string,projectRoot?:string):{ok:boolean;reason?:string;evidence_id?:string}{
   const obligation=m.execution.obligations.find(o=>o.id===obligationID&&o.kind==='review')
   if(!obligation)return{ok:false,reason:'review-obligation-missing'}
-  const evidence=[...m.execution.evidence.items].filter(e=>canonical(e.kind)==='review-evidence'&&!e.invalidated_at&&(e.outcome==='passed'||e.pass===true)&&(!m.execution.verification_policy.requireReview||(String(e.source??'').startsWith('worker:')&&String(e.source??'').includes(':reviewer')))&&evidenceClaimApplicability(m,e,obligationID).applicable).sort((a,b)=>b.observed_at-a.observed_at)
+  const evidence=[...m.execution.evidence.items].filter(e=>canonical(e.kind)==='review-evidence'&&!e.invalidated_at&&(e.outcome==='passed'||e.pass===true)&&(!m.execution.verification_policy.requireReview||e.trusted_source_class==='reviewer-observation')&&evidenceAllowedForVerification(m,e,obligationID,projectRoot)).sort((a,b)=>b.observed_at-a.observed_at)
   const exact=evidence[0]
-  return exact?{ok:true,evidence_id:exact.id}:{ok:false,reason:'fresh-claim-linked-review-evidence-required'}
+  return exact?{ok:true,evidence_id:exact.id}:{ok:false,reason:projectRoot?'fresh-current-scope-review-evidence-required':'fresh-claim-linked-review-evidence-required'}
 }
 
-export function reviewClaimsSatisfied(m:MissionState):{ok:boolean;missing:string[]}{
+export function reviewClaimsSatisfied(m:MissionState,projectRoot?:string):{ok:boolean;missing:string[]}{
   const reviews=m.execution.obligations.filter(o=>o.kind==='review')
   if(!reviews.length)return{ok:!m.execution.verification_policy.requireReview,missing:m.execution.verification_policy.requireReview?['review-obligation-missing']:[]}
-  const missing=reviews.filter(o=>!reviewObligationSatisfied(m,o.id).ok).map(o=>o.id)
+  const missing=reviews.filter(o=>!reviewObligationSatisfied(m,o.id,projectRoot).ok).map(o=>o.id)
   return{ok:missing.length===0,missing}
 }
 

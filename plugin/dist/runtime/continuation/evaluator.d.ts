@@ -7,6 +7,6 @@ export interface DecisionResult {
     reason_code: IdleReasonCode;
     prompt?: string;
 }
-export declare function evaluateIdle(m: MissionState | undefined, now?: number): DecisionResult;
+export declare function evaluateIdle(m: MissionState | undefined, now?: number, projectRoot?: string): DecisionResult;
 export declare function continuationPrompt(m: MissionState, action: string): string;
 export declare function shouldCountStagnation(decision: DecisionResult): boolean;

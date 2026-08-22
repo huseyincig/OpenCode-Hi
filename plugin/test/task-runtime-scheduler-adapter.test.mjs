@@ -30,7 +30,7 @@ test('adapter projects legacy resource tracker into host-neutral SchedulingSnaps
 })
 
 test('adapter model admission is scheduler-owned and respects resource ceilings',()=>{
-  const m=mission('adapter-model'),a=createTask(m,{objective:'a',role:'coder',category:'standard'}),wa=createWorker(m,a,'p/same'),b=createTask(m,{objective:'b',role:'coder',category:'standard'}),wb=createWorker(m,b,'p/same')
+  const m=mission('adapter-model'),a=createTask(m,{objective:'a',role:'coder',category:'standard',scope:['src/a.ts']}),wa=createWorker(m,a,'p/same'),b=createTask(m,{objective:'b',role:'coder',category:'standard',scope:['src/b.ts']}),wb=createWorker(m,b,'p/same')
   wa.status='busy';a.status='running'
   const scheduler=new ConcurrencyScheduler(()=>({global:3,providers:{p:3},models:{'p/same':1,'p/other':2}}));scheduler.acquire(wa.id,'p','p/same')
   assert.equal(taskRuntimeAdmittedModel(m,wb,['p/same'],scheduler),undefined)

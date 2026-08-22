@@ -35,6 +35,22 @@ function persistedBusyWithReservation({session=true}={}){
   return m
 }
 
+function restartHarness(m,{status='unknown',assistant}={}){
+  const calls={aborts:[],prompts:[],reads:0}
+  const statusMap=status==='idle'?{}:{'child-old':{type:status==='unknown'?'mystery':status}}
+  const client={session:{
+    status:async()=>({data:statusMap}),
+    abort:async req=>{calls.aborts.push(req);return{data:true}},
+    prompt_async:async req=>{calls.prompts.push(req);return{data:{}}},
+    diff:async()=>({data:[]}),
+  }}
+  const registry=new BackgroundRegistry();for(const w of m.execution.workers)registry.set(w)
+  const scheduler=new ConcurrencyScheduler(()=>({global:2}))
+  const reader=assistant===undefined?undefined:async()=>{calls.reads++;return assistant}
+  const runtime=new TaskRuntime(opencodeChildPort(client),registry,scheduler,process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>({}),undefined,[],undefined,undefined,undefined,undefined,undefined,reader)
+  return{runtime,registry,scheduler,calls}
+}
+
 test('unclean restart quarantines in-flight child, resets ephemeral permission wait, and invalidates evidence',()=>{
   const restored=new MissionStore(); restored.restore([persistedBusy()],true)
   const m=restored.get('parent-1'); assert.ok(m)
@@ -62,25 +78,50 @@ test('restart without an established child session allows a fresh bounded worker
   assert.deepEqual(m.execution.tasks[0].result?.needs_context,['runtime-restart-fresh-worker'])
 })
 
-test('explicit task restart quiesces and reconciles the durable reservation before the next same-session attempt',async()=>{
-  const restored=new MissionStore(); restored.restore([persistedBusyWithReservation()],true)
-  const m=restored.get('parent-1'); assert.ok(m)
-  assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(m.execution.scheduler.reservations[0].phase,'RECONCILING')
-  const calls=[],aborts=[]
-  const client={session:{abort:async req=>{aborts.push(req)},prompt_async:async body=>{calls.push(body)}}}
-  const registry=new BackgroundRegistry(); for(const w of m.execution.workers)registry.set(w)
-  const scheduler=new ConcurrencyScheduler(()=>({global:2}))
-  const runtime=new TaskRuntime(opencodeChildPort(client),registry,scheduler,process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>({}))
-  const old=m.execution.workers[0]
+test('restart observes live host-active child and waits without aborting or dispatching a duplicate prompt',async()=>{
+  const restored=new MissionStore();restored.restore([persistedBusyWithReservation()],true)
+  const m=restored.get('parent-1');assert.ok(m)
+  const {runtime,calls}=restartHarness(m,{status:'busy'}),old=m.execution.workers[0]
   const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:[],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:m.execution.tasks[0].obligation_ids})
-  assert.equal(out.worker_id,old.id);assert.equal(out.session_id,'child-old')
-  assert.equal(aborts.length,1,'old in-flight host run must be quiesced before a new attempt is admitted')
-  assert.equal(m.execution.workers[0].attempt,2);assert.equal(m.execution.workers[0].restart_reconcile_pending,false)
-  assert.equal(m.execution.tasks[0].status,'running');assert.equal(calls.length,1)
-  assert.equal(m.execution.scheduler.reservations.length,1,'old reservation must be replaced, not leaked alongside the new attempt')
-  const reservation=m.execution.scheduler.reservations[0];assert.equal(reservation.phase,'RUNNING');assert.equal(reservation.attempt.ordinal,2);assert.equal(reservation.hostExecutionId,'child-old')
-  assert.ok(m.execution.ledger.some(e=>e.type==='scheduler.restart-reconciled'&&e.payload?.outcome==='terminal-aborted-before-resume'))
-  assert.match(JSON.stringify(calls[0]),/corrective resume|runtime-restart-reconcile/i)
+  assert.equal(out.worker_id,old.id);assert.equal(out.readiness,'WAIT');assert.equal(calls.aborts.length,0);assert.equal(calls.prompts.length,0)
+  assert.equal(old.attempt,1);assert.equal(old.status,'busy');assert.equal(old.restart_reconcile_pending,false);assert.equal(m.execution.tasks[0].status,'running')
+  const reservation=m.execution.scheduler.reservations[0];assert.equal(reservation.phase,'RUNNING');assert.equal(reservation.attempt.ordinal,1);assert.equal(reservation.hostExecutionId,'child-old')
+  assert.ok(m.execution.ledger.some(e=>e.type==='scheduler.restart-reconciled'&&e.payload?.outcome==='host-active'))
+})
+
+test('restart ingests an idle completed attempt and does not repeat already-finished work',async()=>{
+  const restored=new MissionStore();restored.restore([persistedBusyWithReservation()],true)
+  const m=restored.get('parent-1');assert.ok(m)
+  const assistant={text:JSON.stringify({status:'DONE',summary:'completed before restart',changed_files:[],evidence:[],open_issues:[],needs_context:[]})}
+  const {runtime,calls}=restartHarness(m,{status:'idle',assistant}),old=m.execution.workers[0]
+  const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:[],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:m.execution.tasks[0].obligation_ids})
+  assert.equal(out.worker_id,old.id);assert.equal(out.readiness,'READY');assert.equal(calls.reads,1);assert.equal(calls.aborts.length,0);assert.equal(calls.prompts.length,0)
+  assert.equal(old.attempt,1);assert.equal(old.status,'completed');assert.equal(old.restart_reconcile_pending,false);assert.equal(m.execution.tasks[0].status,'completed');assert.equal(m.execution.tasks[0].result?.summary,'completed before restart')
+  assert.equal(m.execution.scheduler.reservations.length,0,'recovered terminal attempt must release its durable reservation exactly once')
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.restart-result-recovered'&&e.payload?.result==='DONE'))
+})
+
+test('restart opens attempt 2 only after an idle FIX_REQUIRED result is ingested from attempt 1',async()=>{
+  const restored=new MissionStore();restored.restore([persistedBusyWithReservation()],true)
+  const m=restored.get('parent-1');assert.ok(m)
+  const assistant={text:JSON.stringify({status:'FIX_REQUIRED',summary:'one correction remains',changed_files:[],evidence:[],open_issues:['fix-one'],needs_context:[]})}
+  const {runtime,calls}=restartHarness(m,{status:'idle',assistant}),old=m.execution.workers[0]
+  const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:[],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:m.execution.tasks[0].obligation_ids})
+  assert.equal(out.worker_id,old.id);assert.equal(out.readiness,'READY');assert.equal(calls.reads,1);assert.equal(calls.aborts.length,0);assert.equal(calls.prompts.length,1)
+  assert.equal(old.attempt,2);assert.equal(old.status,'busy');assert.equal(old.restart_reconcile_pending,false);assert.equal(m.execution.tasks[0].status,'running');assert.equal(m.execution.tasks[0].result?.summary,'one correction remains')
+  assert.equal(m.execution.scheduler.reservations.length,1);const reservation=m.execution.scheduler.reservations[0];assert.equal(reservation.phase,'RUNNING');assert.equal(reservation.attempt.ordinal,2);assert.equal(reservation.hostExecutionId,'child-old')
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.restart-result-recovered'&&e.payload?.result==='FIX_REQUIRED'))
+  assert.match(JSON.stringify(calls.prompts[0]),/corrective resume|one correction remains/i)
+})
+
+test('restart with unverified host status stays quarantined without abort or prompt replay',async()=>{
+  const restored=new MissionStore();restored.restore([persistedBusyWithReservation()],true)
+  const m=restored.get('parent-1');assert.ok(m)
+  const {runtime,calls}=restartHarness(m,{status:'unknown'}),old=m.execution.workers[0]
+  const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:[],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:m.execution.tasks[0].obligation_ids})
+  assert.equal(out.readiness,'WAIT');assert.equal(calls.aborts.length,0);assert.equal(calls.prompts.length,0);assert.equal(calls.reads,0)
+  assert.equal(old.status,'ready');assert.equal(old.attempt,1);assert.equal(old.restart_reconcile_pending,true);assert.equal(m.execution.scheduler.reservations[0].phase,'RECONCILING')
+  assert.ok(m.execution.ledger.some(e=>e.type==='scheduler.restart-reconcile-deferred'&&e.payload?.host_status==='unknown'))
 })
 
 test('restart before host creation reconciles pre-spawn reservation as NOT_STARTED without leaking capacity',()=>{
@@ -113,4 +154,22 @@ test('legacy team execution snapshot normalizes to scheduler-owned parallel mode
   assert.equal(reset.payload.from,'team');assert.equal(reset.payload.to,'parallel');assert.equal(reset.payload.reason,'scheduler-owned-topology')
   assert.deepEqual(reset.payload.durable_tasks,taskIDs)
   assert.deepEqual(reset.payload.durable_workers,workerIDs)
+})
+
+
+test('restart-pending child idle can settle directly before server.connected reconciliation',async()=>{
+  const restored=new MissionStore();restored.restore([persistedBusyWithReservation()],true)
+  const m=restored.get('parent-1');assert.ok(m);const worker=m.execution.workers[0]
+  const assistant={text:JSON.stringify({status:'DONE',summary:'idle arrived before server connect',changed_files:[],evidence:[],open_issues:[],needs_context:[]})}
+  const {runtime,calls}=restartHarness(m,{status:'idle',assistant})
+  const admission=await runtime.admitTerminalEvent(m,worker);assert.equal(admission.decision,'ACCEPT')
+  const settled=await runtime.settleHostIdleAssistantResult(m,worker,assistant);assert.equal(settled.applied,true);assert.equal(settled.result?.status,'DONE')
+  assert.equal(worker.restart_reconcile_pending,false);assert.equal(worker.status,'completed');assert.equal(m.execution.scheduler.reservations.length,0);assert.equal(calls.aborts.length,0);assert.equal(calls.prompts.length,0)
+})
+
+test('restart reconciliation reports scheduler-only terminal fencing as durable progress when assistant read is unavailable',async()=>{
+  const restored=new MissionStore();restored.restore([persistedBusyWithReservation()],true)
+  const m=restored.get('parent-1');assert.ok(m);const {runtime}=restartHarness(m,{status:'idle'})
+  const before=m.execution.scheduler.revision,count=await runtime.reconcileRestoredChildren(m)
+  assert.equal(count,1);assert.ok(m.execution.scheduler.revision>before);assert.equal(m.execution.scheduler.reservations[0].phase,'SETTLING');assert.equal(m.execution.workers[0].restart_reconcile_pending,true)
 })

@@ -1,165 +1,126 @@
-// Per-role routing runtime regression guard (2.0.4).
-// Verifies that `resolveModel` uses `config.routing.roleModels[role]`
-// as primary when the role is configured AND the model is in the
-// runtime inventory, before falling back to scoring.
-//
-// Bug: lab evidence in 2.0.3 showed host-default path as the only
-// verified path. Per-role routing was not exercised against a real
-// provider inventory. This file locks the per-role path so that
-// regressions in merge ordering or scoring fast-path are caught.
-
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { resolveModel } from '../dist/runtime/routing/model-resolver.js'
-import { resolveHiConfig } from '../dist/config/resolver.js'
+import {resolveModel} from '../dist/runtime/routing/model-resolver.js'
+import {resolveHiConfig} from '../dist/config/resolver.js'
 
-const OPENCODE_GO_INVENTORY = [
-  { id: 'opencode-go/minimax-m3', provider: 'opencode-go', tags: ['balanced', 'coding'], variants: ['medium', 'low', 'none'] },
-  { id: 'opencode-go/minimax-m3-high', provider: 'opencode-go', tags: ['reasoning', 'coding', 'high-assurance'], variants: ['high', 'xhigh'] },
-  { id: 'opencode-go/minimax-m3-low', provider: 'opencode-go', tags: ['fast', 'cheap'], variants: ['low', 'minimal', 'none'] },
+const INVENTORY=[
+  {id:'p/fast',provider:'p',tags:['fast'],quality:99,cost:.01,variants:['low']},
+  {id:'p/code',provider:'p',tags:['coding','balanced'],quality:2,cost:10,variants:['low','medium']},
+  {id:'p/reason',provider:'p',tags:['reasoning','coding'],quality:3,cost:20,variants:['medium','high']},
+  {id:'p/assured',provider:'p',tags:['high-assurance','reasoning','coding'],quality:1,cost:50,variants:['high','xhigh']},
 ]
+const cfgWith=roleModels=>resolveHiConfig({routing:{roleModels}})
 
-function cfgWith(roleModels) {
-  return resolveHiConfig({ routing: { roleModels } })
-}
-
-test('per-role primary: roleModels supplies primary when role model is in inventory', () => {
-  const cfg = cfgWith({ coder: ['opencode-go/minimax-m3'] })
-  const m = resolveModel('standard', OPENCODE_GO_INVENTORY, cfg, undefined, 'coder', {})
-  assert.equal(m.primary, 'opencode-go/minimax-m3')
-  assert.ok(m.reason.some(r => /role override|coder/.test(r)), 'reason must include role override')
+test('explicit ordered role mapping is authoritative and preserves eligible fallback order',()=>{
+  const cfg=cfgWith({coder:['p/code','p/reason','p/fast']})
+  const r=resolveModel('standard',INVENTORY,cfg,undefined,'coder',{})
+  assert.equal(r.primary,'p/code')
+  assert.deepEqual(r.fallbacks,['p/reason','p/fast'])
+  assert.ok(r.reason.includes('explicit ordered role mapping:coder'))
+  assert.deepEqual(r.fallbackReasons.map(x=>x.model),['p/reason','p/fast'])
 })
 
-test('per-role fast-path: when roleConfig primary is available, primary is the configured one', () => {
-  const cfg = cfgWith({ coder: ['opencode-go/minimax-m3'] })
-  const m = resolveModel('standard', OPENCODE_GO_INVENTORY, cfg, undefined, 'coder', {})
-  // When roleConfig is available in inventory, role override wins over scoring.
-  assert.equal(m.primary, 'opencode-go/minimax-m3')
-  // The configured role model appears in the role-override reason trail.
-  assert.ok(m.reason.some(r => r.includes('role override') || r.includes('coder')))
+test('ordered role mapping skips unavailable entries but never invents an unconfigured fallback',()=>{
+  const cfg=cfgWith({coder:['p/missing','p/reason','p/code']})
+  const r=resolveModel('standard',INVENTORY,cfg,undefined,'coder',{})
+  assert.equal(r.primary,'p/reason')
+  assert.deepEqual(r.fallbacks,['p/code'])
+  assert.ok(r.reason.includes('role-mapped-model-unavailable-or-policy-rejected:p/missing'))
 })
 
-test('per-role fallback: when roleModel is NOT in inventory, scoring fallback applies', () => {
-  const cfg = cfgWith({ coder: ['opencode-go/nonexistent-model'] })
-  const m = resolveModel('standard', OPENCODE_GO_INVENTORY, cfg, undefined, 'coder', {})
-  // Primary must NOT be the non-existent model.
-  assert.notEqual(m.primary, 'opencode-go/nonexistent-model')
-  // The scoring fallback must select one of the actually-available models.
-  assert.ok(OPENCODE_GO_INVENTORY.some(x => x.id === m.primary),
-    `primary ${m.primary} must be from runtime inventory`)
+test('explicit role mapping with no eligible model fails closed',()=>{
+  const cfg=cfgWith({coder:['p/missing']})
+  const r=resolveModel('standard',INVENTORY,cfg,undefined,'coder',{})
+  assert.equal(r.primary,undefined)
+  assert.deepEqual(r.fallbacks,[])
+  assert.ok(r.reason.includes('explicit role mapping has no eligible model:coder'))
 })
 
-test('per-role variant: configured role model variant honored for critical category', () => {
-  const cfg = cfgWith({ 'security-reviewer': ['opencode-go/minimax-m3-high'] })
-  const m = resolveModel('critical', OPENCODE_GO_INVENTORY, cfg, undefined, 'security-reviewer', {})
-  assert.equal(m.primary, 'opencode-go/minimax-m3-high')
-  // For critical category, variant preference is xhigh/max/high.
-  // The chosen model exposes those variants.
-  assert.match(m.primaryVariant ?? '', /xhigh|max|high/)
+test('explicit task model outranks role mapping and host agent model',()=>{
+  const cfg=cfgWith({coder:['p/code']})
+  const host={agent:{coder:{model:'p/reason'}}}
+  const r=resolveModel('standard',INVENTORY,cfg,'p/fast','coder',host)
+  assert.equal(r.primary,'p/fast')
+  assert.ok(r.reason.includes('explicit task model'))
 })
 
-test('per-role: missing role config falls back to scoring', () => {
-  const cfg = cfgWith({}) // empty
-  const m = resolveModel('standard', OPENCODE_GO_INVENTORY, cfg, undefined, 'coder', {})
-  // No roleModels config, scoring-based primary.
-  assert.ok(OPENCODE_GO_INVENTORY.some(x => x.id === m.primary))
+test('unavailable explicit task model fails closed instead of substituting another model',()=>{
+  const cfg=cfgWith({coder:['p/code']})
+  const r=resolveModel('standard',INVENTORY,cfg,'p/missing','coder',{agent:{coder:{model:'p/reason'}}})
+  assert.equal(r.primary,undefined)
+  assert.ok(r.reason.includes('explicit task model unavailable'))
 })
 
-test('per-role: explicit user override (input.model) wins over roleModels', () => {
-  const cfg = cfgWith({ coder: ['opencode-go/minimax-m3'] })
-  const m = resolveModel('standard', OPENCODE_GO_INVENTORY, cfg, 'opencode-go/minimax-m3-low', 'coder', {})
-  assert.equal(m.primary, 'opencode-go/minimax-m3-low')
+test('OpenCode explicit agent model is the fallback owner when Hi has no role preference',()=>{
+  const cfg=cfgWith({})
+  const r=resolveModel('deep',INVENTORY,cfg,undefined,'coder',{agent:{coder:{model:'p/reason',variant:'high'}}})
+  assert.equal(r.primary,'p/reason')
+  assert.equal(r.primaryVariant,'high')
+  assert.ok(r.reason.includes('OpenCode agent explicit model'))
 })
 
-test('per-role: empty inventory falls back to host-default', () => {
-  const cfg = cfgWith({ coder: ['opencode-go/minimax-m3'] })
-  const m = resolveModel('standard', [], cfg, undefined, 'coder', {})
-  assert.equal(m.primary, 'host-default')
+test('Hi explicit role mapping outranks OpenCode agent model without mutating host choice',()=>{
+  const cfg=cfgWith({coder:['p/code']})
+  const host={agent:{coder:{model:'p/reason'}}}
+  const r=resolveModel('standard',INVENTORY,cfg,undefined,'coder',host)
+  assert.equal(r.primary,'p/code')
+  assert.equal(host.agent.coder.model,'p/reason')
 })
 
-test('per-role: native provider policy deny removes role model', () => {
-  const cfg = cfgWith({ coder: ['opencode-go/minimax-m3'] })
-  // native-adapter reads disabled_providers from host config.
-  const hostConfig = { disabled_providers: ['opencode-go'] }
-  const m = resolveModel('standard', OPENCODE_GO_INVENTORY, cfg, undefined, 'coder', hostConfig)
-  // The roleModel's provider is denied, so it must not be primary.
-  assert.notEqual(m.primary, 'opencode-go/minimax-m3')
+test('unavailable OpenCode explicit agent model fails closed instead of falling into automatic selection',()=>{
+  const r=resolveModel('standard',INVENTORY,cfgWith({}),undefined,'coder',{agent:{coder:{model:'p/missing'}}})
+  assert.equal(r.primary,undefined)
+  assert.ok(r.reason.includes('OpenCode agent explicit model unavailable-or-policy-rejected:p/missing'))
 })
 
-test('M11 admitted empirical feedback may rerank configured role priors without leaving the configured set', () => {
-  const inventory = [
-    { id: 'p/a', provider: 'p', tags: ['balanced'], quality: 5, cost: .2 },
-    { id: 'p/b', provider: 'p', tags: ['balanced'], quality: 5, cost: .2 },
-    { id: 'p/outside', provider: 'p', tags: ['balanced'], quality: 20, cost: .01 },
+test('automatic recommendation uses ordered capability priorities, not quality or cost',()=>{
+  const r=resolveModel('critical',INVENTORY,cfgWith({}),undefined,'security-reviewer',{})
+  assert.equal(r.primary,'p/assured','high-assurance must outrank cheaper/higher-quality metadata for critical work')
+  assert.ok(r.reason.includes('capability-priority:high-assurance>reasoning>coding'))
+  assert.ok(r.reason.includes('cost/quality/feedback are not routing authority'))
+  assert.ok(r.reason.includes('not persisted as user preference'))
+})
+
+test('automatic recommendation uses category-compatible variant fit as deterministic tie-break',()=>{
+  const inventory=[
+    {id:'p/a',provider:'p',tags:['reasoning','coding'],variants:['low']},
+    {id:'p/b',provider:'p',tags:['reasoning','coding'],variants:['high']},
   ]
-  const cfg = cfgWith({ coder: ['p/a', 'p/b'] })
-  const feedback = {
-    samples: { 'p/a': 2, 'p/b': 2 }, confidence: { 'p/a': 'low', 'p/b': 'low' },
-    failures: { 'p/a': 2 }, successes: { 'p/b': 2 },
-    verification_failures: { 'p/a': 2 }, verification_passes: { 'p/b': 2 },
-  }
-  const r = resolveModel('standard', inventory, cfg, undefined, 'coder', undefined, feedback)
-  assert.equal(r.primary, 'p/b')
-  assert.ok(r.reason.includes('empirical-feedback-reranked-configured-priors'))
-  assert.ok(!r.reason.some(x => x.includes('configured-role-prior-fast-path')))
-  assert.deepEqual([r.primary, ...r.fallbacks].slice(0, 2), ['p/b', 'p/a'])
+  const r=resolveModel('deep',inventory,cfgWith({}),undefined,'architect',{})
+  assert.equal(r.primary,'p/b')
+  assert.equal(r.primaryVariant,'high')
+  assert.ok(r.reason.includes('variant-fit:high'))
 })
 
-test('M11 sparse feedback keeps configured role prior on the no-scoring fast path', () => {
-  const inventory = [
-    { id: 'p/a', provider: 'p', tags: ['balanced'], quality: 5, cost: .2 },
-    { id: 'p/b', provider: 'p', tags: ['balanced'], quality: 5, cost: .2 },
+test('mission feedback telemetry cannot reorder explicit mapping or automatic recommendation',()=>{
+  const feedback={samples:{'p/code':8,'p/reason':8},confidence:{'p/code':'high','p/reason':'high'},failures:{'p/code':8},successes:{'p/reason':8},verification_failures:{'p/code':8},verification_passes:{'p/reason':8}}
+  const explicit=resolveModel('standard',INVENTORY,cfgWith({coder:['p/code','p/reason']}),undefined,'coder',undefined,feedback)
+  assert.equal(explicit.primary,'p/code');assert.deepEqual(explicit.fallbacks,['p/reason'])
+  const automatic=resolveModel('deep',INVENTORY,cfgWith({}),undefined,'architect',undefined,feedback)
+  assert.equal(automatic.primary,'p/reason')
+  assert.ok(automatic.reason.includes('cost/quality/feedback are not routing authority'))
+})
+
+test('native provider deny is a hard eligibility filter before explicit role selection',()=>{
+  const cfg=cfgWith({coder:['p/code']})
+  const r=resolveModel('standard',INVENTORY,cfg,undefined,'coder',{disabled_providers:['p']})
+  assert.equal(r.primary,undefined)
+  assert.ok(r.rejected.some(x=>x.id==='p/code'&&x.reason==='host-provider-policy-deny:p'))
+})
+
+test('empty runtime inventory permits host-default only when no explicit model owner exists',()=>{
+  assert.equal(resolveModel('standard',[],cfgWith({}),undefined,'coder',{}).primary,'host-default')
+  assert.equal(resolveModel('standard',[],cfgWith({coder:['p/code']}),undefined,'coder',{}).primary,undefined)
+  assert.equal(resolveModel('standard',[],cfgWith({}),'p/code','coder',{}).primary,undefined)
+})
+
+test('visual-qa requires proven image capability before every selection path',()=>{
+  const inventory=[
+    {id:'p/text',provider:'p',tags:['coding'],visionCapable:false},
+    {id:'p/vision',provider:'p',tags:['coding'],visionCapable:true},
   ]
-  const cfg = cfgWith({ coder: ['p/a', 'p/b'] })
-  const feedback = { samples: { 'p/a': 1 }, failures: { 'p/a': 1 }, confidence: { 'p/a': 'insufficient' } }
-  const r = resolveModel('standard', inventory, cfg, undefined, 'coder', undefined, feedback)
-  assert.equal(r.primary, 'p/a')
-  assert.ok(r.reason.some(x => x.includes('configured-role-prior-fast-path')))
-})
-
-test('M11 explicit model override remains authoritative over admitted empirical role feedback', () => {
-  const inventory = [
-    { id: 'p/a', provider: 'p', tags: ['balanced'], quality: 5, cost: .2 },
-    { id: 'p/b', provider: 'p', tags: ['balanced'], quality: 5, cost: .2 },
-  ]
-  const cfg = cfgWith({ coder: ['p/a', 'p/b'] })
-  const feedback = { samples: { 'p/a': 2, 'p/b': 2 }, failures: { 'p/a': 2 }, successes: { 'p/b': 2 }, confidence: { 'p/a': 'low', 'p/b': 'low' } }
-  const r = resolveModel('standard', inventory, cfg, 'p/a', 'coder', undefined, feedback)
-  assert.equal(r.primary, 'p/a')
-  assert.ok(r.reason.includes('explicit override'))
-  assert.ok(!r.reason.includes('empirical-feedback-reranked-configured-priors'))
-})
-
-test('M16 no persisted role mapping means normal scoring can choose any effective provider', () => {
-  const inventory = [
-    { id: 'opencode-go/mimo-v2.5', provider: 'opencode-go', tags: ['fast','cheap','balanced'], quality: 5 },
-    { id: 'opencode-go/deepseek-v4-flash', provider: 'opencode-go', tags: ['fast','cheap','coding'], quality: 5 },
-    { id: 'opencode-go/qwen3.7-plus', provider: 'opencode-go', tags: ['reasoning','coding'], quality: 5 },
-    { id: 'opencode-go/mimo-v2.5-pro', provider: 'opencode-go', tags: ['reasoning','high-assurance'], quality: 5 },
-    { id: 'opencode/laguna-s-2.1-free', provider: 'opencode', tags: ['fast','cheap'], quality: 99, cost: 0 },
-  ]
-  const cfg = cfgWith({})
-  const r = resolveModel('quick', inventory, cfg, undefined, 'coder', {})
-  assert.equal(r.primary, 'opencode/laguna-s-2.1-free')
-  assert.ok(r.reason.includes('cost-quality scoring'))
-  assert.ok(!r.reason.some(x => x.includes('role prior')))
-  assert.ok(!r.reason.some(x => x.includes('configured-role-prior-fast-path')))
-})
-
-
-test('M16 visual-qa rejects non-vision runtime models before ranking and admits only explicit vision capability', () => {
-  const inventory = [
-    { id: 'p/text-only', provider: 'p', tags: ['coding'], quality: 100, visionCapable: false },
-    { id: 'p/vision', provider: 'p', tags: ['coding'], quality: 1, visionCapable: true },
-  ]
-  const cfg = cfgWith({ 'visual-qa': ['p/text-only', 'p/vision'] })
-  const r = resolveModel('visual', inventory, cfg, undefined, 'visual-qa', {})
-  assert.equal(r.primary, 'p/vision')
-  assert.ok(r.rejected.some(x => x.id === 'p/text-only' && x.reason === 'role-capability-missing:vision'))
-})
-
-test('M16 visual-qa does not fall through to unverified host-default when runtime inventory is unavailable', () => {
-  const cfg = cfgWith({})
-  const r = resolveModel('visual', [], cfg, undefined, 'visual-qa', {})
-  assert.equal(r.primary, undefined)
+  const mapped=resolveModel('visual',inventory,cfgWith({'visual-qa':['p/text','p/vision']}),undefined,'visual-qa',{})
+  assert.equal(mapped.primary,'p/vision')
+  assert.ok(mapped.rejected.some(x=>x.id==='p/text'&&x.reason==='role-capability-missing:vision'))
+  assert.equal(resolveModel('visual',[],cfgWith({}),undefined,'visual-qa',{}).primary,undefined)
 })

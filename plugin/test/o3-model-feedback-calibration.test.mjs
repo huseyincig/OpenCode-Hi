@@ -27,26 +27,29 @@ test('O3 derives observed latency and verification outcome without raw payload o
   assert.equal(f.samples['p/a'],2);assert.equal(f.average_latency_ms['p/a'],200);assert.equal(f.verification_passes['p/a'],1);assert.equal(f.verification_failures['p/a'],1);assert.equal(f.retries['p/a'],1);assert.equal(f.confidence['p/a'],'low');assert.equal(f.window_size,2)
 })
 
-test('O3 sparse single success is insufficient confidence and does not manufacture a routing credit',()=>{
-  const models=[{id:'p/a',provider:'p',quality:5,cost:.5,expectedTurns:3,contextOverhead:1,tags:['balanced']},{id:'p/b',provider:'p',quality:5,cost:.6,expectedTurns:3,contextOverhead:1,tags:['balanced']}]
+test('O3 sparse success remains telemetry-only and cannot manufacture routing authority',()=>{
+  const models=[{id:'p/code',provider:'p',quality:1,cost:50,tags:['coding']},{id:'p/b',provider:'p',quality:100,cost:.01,tags:['balanced']}]
   const m=mission();add(m,{id:'one',model:'p/b'})
-  const f=deriveMissionModelFeedback(m,'coder','standard'),r=resolveModel('standard',models,cfg,undefined,'coder',undefined,f),b=r.scores.find(x=>x.model==='p/b')
-  assert.equal(f.confidence['p/b'],'insufficient');assert.equal(b.success_credit,0);assert.equal(b.verification_adjustment,0);assert.equal(b.feedback_confidence,'insufficient')
+  const f=deriveMissionModelFeedback(m,'coder','standard'),r=resolveModel('standard',models,cfg,undefined,'coder',undefined,f)
+  assert.equal(f.confidence['p/b'],'insufficient');assert.equal(r.primary,'p/code');assert.equal('scores' in r,false)
+  assert.ok(r.reason.includes('cost/quality/feedback are not routing authority'))
 })
 
-test('O3 one failed sample plus retry stays insufficient and cannot manufacture routing confidence',()=>{
-  const models=[{id:'p/cheap',provider:'p',quality:5,cost:.1,expectedTurns:3,contextOverhead:1,tags:['balanced']},{id:'p/robust',provider:'p',quality:5,cost:1,expectedTurns:3,contextOverhead:1,tags:['balanced']}]
-  const m=mission();add(m,{id:'bad',model:'p/cheap',status:'failed',verification:'failed',retry:1})
-  const f=deriveMissionModelFeedback(m,'coder','standard'),r=resolveModel('standard',models,cfg,undefined,'coder',undefined,f),cheap=r.scores.find(x=>x.model==='p/cheap')
-  assert.equal(f.samples['p/cheap'],1);assert.equal(f.retries['p/cheap'],1);assert.equal(f.confidence['p/cheap'],'insufficient');assert.equal(cheap.failure_penalty,0);assert.equal(cheap.verification_adjustment,0);assert.equal(cheap.observed_latency_ms,100)
-  assert.ok(r.reason.includes('bounded-window-model-feedback-aware'))
+test('O3 failed sample plus retry remains observable without changing capability routing',()=>{
+  const models=[{id:'p/code',provider:'p',tags:['coding']},{id:'p/generic',provider:'p',tags:['balanced']}]
+  const m=mission();add(m,{id:'bad',model:'p/code',status:'failed',verification:'failed',retry:1})
+  const f=deriveMissionModelFeedback(m,'coder','standard'),r=resolveModel('standard',models,cfg,undefined,'coder',undefined,f)
+  assert.equal(f.samples['p/code'],1);assert.equal(f.retries['p/code'],1);assert.equal(f.confidence['p/code'],'insufficient');assert.equal(f.average_latency_ms['p/code'],100)
+  assert.equal(r.primary,'p/code');assert.ok(r.reason.includes('cost/quality/feedback are not routing authority'))
 })
 
-test('O3 two independent failed attempts reach low confidence and may steer current bounded selection',()=>{
-  const models=[{id:'p/cheap',provider:'p',quality:5,cost:.1,expectedTurns:3,contextOverhead:1,tags:['balanced']},{id:'p/robust',provider:'p',quality:5,cost:1,expectedTurns:3,contextOverhead:1,tags:['balanced']}]
-  const m=mission();add(m,{id:'bad1',model:'p/cheap',status:'failed',verification:'failed'});add(m,{id:'bad2',model:'p/cheap',status:'failed',verification:'failed',completed:300})
-  const f=deriveMissionModelFeedback(m,'coder','standard'),r=resolveModel('standard',models,cfg,undefined,'coder',undefined,f),cheap=r.scores.find(x=>x.model==='p/cheap')
-  assert.equal(f.samples['p/cheap'],2);assert.equal(f.confidence['p/cheap'],'low');assert.equal(r.primary,'p/robust');assert.ok(cheap.failure_penalty>0);assert.ok(cheap.verification_adjustment<0)
+test('O3 repeated failures may reach confidence for analysis but still cannot silently reroute',()=>{
+  const models=[{id:'p/code',provider:'p',tags:['coding']},{id:'p/other',provider:'p',tags:['coding']}]
+  const m=mission();add(m,{id:'bad1',model:'p/code',status:'failed',verification:'failed'});add(m,{id:'bad2',model:'p/code',status:'failed',verification:'failed',completed:300})
+  const f=deriveMissionModelFeedback(m,'coder','standard'),r=resolveModel('standard',models,cfg,undefined,'coder',undefined,f)
+  assert.equal(f.samples['p/code'],2);assert.equal(f.confidence['p/code'],'low');assert.equal(f.verification_failures['p/code'],2)
+  assert.equal(r.primary,'p/code','feedback confidence is analysis data, not user-preference authority')
+  assert.equal('scores' in r,false)
 })
 
 

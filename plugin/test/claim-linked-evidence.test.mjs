@@ -7,7 +7,9 @@ import {TaskRuntime} from "../dist/runtime/task/task-runtime.js"
 import {BackgroundRegistry} from "../dist/runtime/background/registry.js"
 import {ConcurrencyScheduler} from "../dist/runtime/scheduler/concurrency.js"
 import {DEFAULT_HI_CONFIG} from "../dist/config/defaults.js"
+import {verificationSatisfied} from "../dist/runtime/verification/policy.js"
 import {opencodeChildPort} from "./helpers/host-port.mjs"
+import {startAssessedMission} from "./helpers/semantic.mjs"
 
 function runtime(){return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
 
@@ -31,14 +33,19 @@ test("unknown mutation surface invalidates every live proof fail-closed",()=>{
   assert.ok(a.invalidated_at);assert.ok(b.invalidated_at);assert.equal(m.execution.evidence.fresh,false)
 })
 
-test("worker evidence records exact host-neutral execution attempt producer identity",()=>{
-  const store=new MissionStore(),m=store.start("claim-attempt","verify worker")
+test("worker PASS remains a claim and cannot become canonical verification evidence",()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,"claim-attempt","verify worker",{task_kind:"implementation",scope:"local",risk:"low",ambiguity:"none",dependency_class:"independent",required_capabilities:["implementation","verification"],likely_verification:["targeted-tests"],likely_targets:["src/a.ts"]})
+  const verification=m.execution.obligations.find(o=>o.kind==="verification");assert.ok(verification);verification.requiredEvidence=["targeted-tests"]
+  // Persisted legacy state may still carry this flag. It must never restore PASS authority to WorkerResult claims.
   m.execution.verification_policy={requiredKinds:["targeted-tests"],requireFresh:true,requireReview:false,allowWorkerReportedEvidence:true}
-  const task=createTask(m,{objective:"verify worker",role:"coder",category:"standard",scope:["src/a.ts"],requiredEvidence:["targeted-tests"]})
+  const task=createTask(m,{objective:"verify worker",role:"coder",category:"standard",scope:["src/a.ts"],requiredEvidence:["targeted-tests"],obligationIds:[verification.id]})
   const worker=createWorker(m,task,"host-default");worker.status="busy";worker.session_id="child-1";worker.native_state_hash="a".repeat(64);worker.attempt=2;worker.generation_at_spawn=m.continuation.generation
   runtime().applyResult(m,worker.id,{status:"DONE",summary:"done",changed_files:[],evidence:[{kind:"targeted-tests",summary:"pass",pass:true,outcome:"passed",scope:["src/a.ts"]}],open_issues:[],needs_context:[]})
-  const evidence=m.execution.evidence.items.at(-1);assert.ok(evidence?.producer_attempt)
-  assert.equal(evidence.producer_attempt.worker_id,worker.id);assert.equal(evidence.producer_attempt.execution_unit_id,`eu:${task.id}`)
-  assert.equal(evidence.producer_attempt.ordinal,2);assert.equal(evidence.producer_attempt.generation,m.continuation.generation)
-  assert.match(evidence.producer_attempt.attempt_id,/^eu:/);assert.match(evidence.producer_attempt.run_id,/^worker:/)
+  assert.equal(task.result?.status,"DONE")
+  assert.equal(task.result?.evidence[0]?.outcome,"pending");assert.equal(task.result?.evidence[0]?.pass,undefined)
+  assert.match(task.result?.evidence[0]?.reason??"",/worker-claim-unverified/)
+  assert.equal(m.execution.evidence.items.some(e=>e.kind==="targeted-tests"),false,"WorkerResult claim must not be copied into canonical Evidence")
+  assert.equal(verification.status,"open");assert.deepEqual(verificationSatisfied(m,verification.id),{ok:false,missing:["targeted-tests"]})
+  assert.ok(m.execution.ledger.some(e=>e.type==="verification.worker-claim-unverified"&&e.worker_id===worker.id))
+  assert.ok(m.execution.ledger.some(e=>e.type==="worker.evidence-claim-recorded"&&e.worker_id===worker.id))
 })

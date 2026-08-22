@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "release": "0.2.3",
+  "release": "0.2.4",
   "kind": "DOCUMENTATION_TRUTH_INVENTORY",
   "status": "PASS",
   "policy": {
@@ -147,7 +147,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "8d9befeb115096038bdc982d218a7794d809f5f79b6408c551ea10a8d7591bee",
+      "sha256": "518a7a77841d450ad51b97d6c34d762097cd4b03ed6cdd969822332565a00a5e",
       "area": "product-overview",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -155,7 +155,7 @@
     },
     {
       "path": "docs/ARCHITECTURE.md",
-      "sha256": "ba94877ada3bbaae560d41e8cb1b9688dccda1ed6a95b93b1380a9eff7bc1ef7",
+      "sha256": "7c7c50329300b90691e13c1ec3f4dded3e4f697448021c40820f71ae4794a1e4",
       "area": "architecture-execution-context-storage-privacy",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
@@ -163,7 +163,7 @@
     },
     {
       "path": "docs/CONFIGURATION.md",
-      "sha256": "6570178da280c20edcd9262a6907a8a6c55f6fea5b943efe4b0a0a57fe310818",
+      "sha256": "3ef7d42fe2f4df1460731607887dc0de0891c56467ce66c5b8522ce38b04b968",
       "area": "configuration-guide",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -171,7 +171,7 @@
     },
     {
       "path": "docs/HOSTS.md",
-      "sha256": "d5bfdd1359032baa2e2655597814773990d3e292dd29a62e747e91694fda23c5",
+      "sha256": "5867479d99d7644ee3fd27876c2027c227bb539b546e550f3ca70cb8b9894eda",
       "area": "host-support",
       "audience": "OPERATOR",
       "lifecycle": "CANONICAL_CURRENT",
@@ -187,7 +187,7 @@
     },
     {
       "path": "docs/INSTALLATION.md",
-      "sha256": "8fd90de97931599e51a966991807d3308f046e902c08c3bce6121fe16286585c",
+      "sha256": "690a42a6443eb419d3fc2644fba89f7fd9cba21d86b601553413b19bcb7aeb5e",
       "area": "installation-configuration-lifecycle",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -203,7 +203,7 @@
     },
     {
       "path": "docs/RELEASE.md",
-      "sha256": "b54fcd14677d5329d50840a0d8395cb72d302c0a4ae7f088c6af363b1410f9e3",
+      "sha256": "152b04add5c0972486ac79e03fa0d47de4bf9d41cd35840d408993691651887b",
       "area": "release",
       "audience": "RELEASE_ENGINEER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -211,7 +211,7 @@
     },
     {
       "path": "docs/SECURITY-MODEL.md",
-      "sha256": "a3d4a84cc6a4ff1a886829e0433672eafa3e0168854fc1482e810f7dd24b8ef5",
+      "sha256": "9fc923843bce328cfbb0df2fb84b50882965aef7ee512eb203eda1cea1a74df5",
       "area": "security-privacy-threat-boundaries",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -227,7 +227,7 @@
     },
     {
       "path": "docs/VERIFICATION.md",
-      "sha256": "6c770e912dbc7ba02be7eb833202a6563d606867e04952cc43212e7a05937f3b",
+      "sha256": "11b2ac80be7e4b286d5d334898b55ccc062c2aa24255a2cd582b4f400bdc72e3",
       "area": "verification-validation-certification",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
@@ -235,7 +235,7 @@
     },
     {
       "path": "docs/locales/tr/CONFIGURATION.md",
-      "sha256": "21babc883e08a79c1c76574bcd1c83c1aba3968dd41450701ab5fdaa9677c710",
+      "sha256": "48bf6cfde3433f1e49022f1d8124f8c8c249b0416b092627821864d698b445e8",
       "area": "turkish-configuration-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",
@@ -243,7 +243,7 @@
     },
     {
       "path": "docs/locales/tr/README.md",
-      "sha256": "bd8397a1df40da85cea94df3a864a5016db6d64b797fd96f88a07353d324e302",
+      "sha256": "c17ac2632d860647bdd769bfdbce7d56fa7ec12c22d3c2c12cffe1f0965e2047",
       "area": "turkish-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",
@@ -253,7 +253,7 @@
   "machine_owners": [
     {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
-      "sha256": "5c729eeec5916bb1d7f367f5d81b4a054f993c7436cc408e998d0fdd8576005a",
+      "sha256": "e1204ba72a2116c40b86b00f21c004307b6fe129e7a7767f0fbfe6e355fd9504",
       "area": "supported-host-matrix",
       "lifecycle": "MACHINE_OWNER"
     },

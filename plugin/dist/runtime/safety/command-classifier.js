@@ -1,3 +1,4 @@
+import { projectExecutionSurface } from './execution-projection.js';
 import { externalActionTypeFromTechnicalKind } from '../../contracts/external-action.js';
 function shellWords(command) {
     const out = [];
@@ -65,6 +66,8 @@ function skipOption(tokens, i, valueOptions) { const t = tokens[i]; if (!t?.star
     return i + 1; return valueOptions.has(t) ? Math.min(tokens.length, i + 2) : i + 1; }
 function unwrap(tokens) {
     let i = 0;
+    while (i < tokens.length && /^[A-Za-z_][A-Za-z0-9_]*=/.test(tokens[i]))
+        i++;
     if (tokens[i] === 'sudo') {
         i++;
         while (i < tokens.length && tokens[i].startsWith('-'))
@@ -96,30 +99,14 @@ function unwrap(tokens) {
     return { exe: tokens[i], args: tokens.slice(i + 1), tokens };
 }
 function splitInvocations(command) {
-    const words = shellWords(command), parts = [];
-    let part = [];
-    for (const w of words) {
-        if (['&&', '||', ';', '|'].includes(w)) {
-            if (part.length)
-                parts.push(part);
-            part = [];
-        }
-        else
-            part.push(w);
-    }
-    if (part.length)
-        parts.push(part);
     const out = [];
-    for (const p of parts) {
-        const inv = unwrap(p);
-        if (!inv.exe)
+    for (const fragment of projectExecutionSurface(command).fragments) {
+        const tokens = shellWords(fragment.text).filter(token => !['&&', '||', ';', '|'].includes(token));
+        if (!tokens.length)
             continue;
-        out.push(inv);
-        if (['sh', 'bash', 'zsh', 'dash'].includes(inv.exe)) {
-            const ci = inv.args.findIndex(x => x === '-c');
-            if (ci >= 0 && inv.args[ci + 1])
-                out.push(...splitInvocations(inv.args[ci + 1]));
-        }
+        const inv = unwrap(tokens);
+        if (inv.exe)
+            out.push(inv);
     }
     return out;
 }

@@ -243,7 +243,7 @@ try:
         for ref in x.get('behavioral_acceptance_refs',[]):
             if not (ROOT/'plugin/test'/ref).is_file():err(f'{oid}: missing config acceptance {ref}')
     if len(ids)!=len(set(ids)) or len(paths)!=len(set(paths)):err('duplicate Hi config option id/path')
-    if (sum(1 for x in options if x.get('classification')=='runtime'),sum(1 for x in options if x.get('classification')=='diagnostic'),sum(1 for x in options if x.get('classification')=='schema-marker'))!=(26,2,1):err('Hi config option classification inventory drift')
+    if (sum(1 for x in options if x.get('classification')=='runtime'),sum(1 for x in options if x.get('classification')=='diagnostic'),sum(1 for x in options if x.get('classification')=='schema-marker'))!=(21,7,1):err('Hi config option classification inventory drift')
 except Exception as e:err(f'bad Hi config option catalog: {e}')
 roles=sorted((ROOT/'roles').glob('*.md')); skills=sorted((ROOT/'skills').glob('*/SKILL.md'))
 try:
@@ -581,7 +581,7 @@ except Exception as e:err(f'bad PROMPT B HostPort portability receipt: {e}')
 try:
     cfg=json.loads((ROOT/'data/validation/prompt-b-configuration.json').read_text(encoding='utf-8'))
     if cfg.get('schema')!=1 or cfg.get('kind')!='PROMPT_B_CONFIGURATION_ADVERSARIAL_AUDIT' or cfg.get('program')!='PROMPT_B' or cfg.get('section')!=23 or cfg.get('status')!='PASS':err('bad PROMPT B Configuration audit receipt')
-    if cfg.get('violations')!=[] or cfg.get('summary')!={'required':29,'covered':29,'violations':0,'runtime':26,'diagnostic':2,'schema_marker':1}:err('PROMPT B Configuration coverage drift')
+    if cfg.get('violations')!=[] or cfg.get('summary')!={'required':29,'covered':29,'violations':0,'runtime':21,'diagnostic':7,'schema_marker':1}:err('PROMPT B Configuration coverage drift')
     rows=cfg.get('leaves') or []
     if len(rows)!=29 or len({x.get('path') for x in rows if isinstance(x,dict)})!=29:err('PROMPT B Configuration leaf inventory drift')
     import hashlib

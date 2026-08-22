@@ -75,7 +75,7 @@ Restart OpenCode after changing project routing configuration when the host does
 
 ## 2. Do I need to configure anything?
 
-No. Hi can operate without a hand-written routing file. On the first effective runtime inventory, Hi filters to effective-enabled, role-eligible models and uses the same runtime cost/quality scoring logic to create one-shot initial child-role recommendations. There are **no built-in provider/model IDs** in that recommendation step. The persisted choices are preferences and remain user-editable; later automatic refresh/update does not overwrite a valid existing routing file.
+No. Hi can operate without a hand-written routing file. At runtime it filters OpenCode's effective connected inventory through provider/model policy and hard role capability requirements. If there is no explicit task model, explicit ordered role mapping, or OpenCode agent model, Hi makes an **ephemeral capability/variant recommendation**. There are no built-in provider/model IDs, the automatic result is never persisted as a user preference, and cost/quality/feedback telemetry does not silently rerank it.
 
 Core built-in defaults are:
 
@@ -244,7 +244,7 @@ OpenCode's supported project/global default-model control is the root `model` fi
 
 See the official OpenCode model guide: <https://opencode.ai/docs/models/>. OpenCode also supports model properties on user-defined agent configurations, but **do not redeclare canonical Hi agent IDs** such as `manager` or `working-manager` just to set a model: Hi protects its injected role contracts and rejects incompatible same-name agent definitions as collisions. See <https://opencode.ai/docs/agents/> for the host's generic agent model mechanism.
 
-M16 auto-init waits for OpenCode's effective runtime inventory before writing any initial role recommendation. For each Hi-routed child role, it applies provider/model policy and hard role-capability filters first, then uses the canonical runtime cost/quality scorer to choose the initial model from the models that are actually effective-enabled at that moment. No provider or model ID is hard-coded as the recommendation. `visual-qa` can only receive a recommendation from models with explicit image-input capability. Once the routing file exists, its role choices are user-owned preferences: later inventory refreshes and updates do not replace them. The retained advanced `opencode-hi-setup role-models --set manager=...` / `working-manager=...` commands are still blocked with an action telling you to choose the primary model in OpenCode instead.
+Hi does **not** auto-write an initial role recommendation. For each Hi-routed child role, runtime selection applies host/provider/model policy and hard role-capability filters first. Precedence is: explicit task model → explicit ordered `routing.roleModels` mapping → explicit OpenCode agent model → ephemeral capability/variant recommendation from the effective live inventory. No provider/model ID is hard-coded, automatic recommendations are never persisted as user preference, and cost/quality/feedback telemetry cannot silently reorder the result. `visual-qa` additionally requires explicit image-input capability. The retained advanced `opencode-hi-setup role-models --set manager=...` / `working-manager=...` commands remain blocked with an action telling you to choose the primary model in OpenCode instead.
 
 ## 7. Model-routing controls: which mechanism should I use?
 
@@ -263,27 +263,23 @@ visual-qa
 
 `manager` and `working-manager` remain valid values of `primaryMode`, but they are not valid model-map targets.
 
-### 7.0 Effective runtime inventory on OpenCode 1.18.19
+### 7.0 Effective runtime inventory on OpenCode 1.18.21
 
-Hi does not treat the full provider/model catalog as usable inventory. It consumes OpenCode's structured provider state, intersects the provider set with the host's `connected` IDs when exposed, preserves host model capability metadata, and then applies Hi's own provider/model/role policy. OpenCode 1.18.19 has already applied `enabled_providers`, `disabled_providers`, provider `whitelist` / `blacklist`, alpha/deprecated filtering and provider runtime overrides before this ranking step.
+Hi does not treat the full provider/model catalog as usable inventory. It consumes OpenCode's structured provider state, intersects the provider set with the host's `connected` IDs when exposed, preserves host model capability metadata, and then applies Hi's own provider/model/role policy. OpenCode 1.18.21 has already applied `enabled_providers`, `disabled_providers`, provider `whitelist` / `blacklist`, alpha/deprecated filtering and provider runtime overrides before Hi selection.
 
 For this exact host version, model-level `disabled: true` is not the picker filter; use the provider `whitelist` / `blacklist` mechanism for OpenCode-side model filtering. Hi also has no arbitrary eight-model display or routing cap.
 
 A model being present in the inventory is not proof that credentials are valid or that a remote inference has succeeded. Conversely, when inventory is unavailable Hi does not invent a bundled fallback catalog. `visual-qa` has a stronger rule: the chosen model must explicitly report image-input capability. Text-only candidates and an unverified `host-default` are rejected before ranking and revalidated again at dispatch/fallback time.
 
-### 7.1 `models.mode`: project-level child-model preference
+### 7.1 Legacy model-mode fields: compatibility diagnostics only
 
-`models.mode` accepts `adaptive`, `fixed`, or `role-mapped`.
+`models.mode`, `models.default`, `models.roles`, `routing.strategy`, and `routing.categoryModels` remain parseable in `0.2.4` so older project files do not become unreadable. They are **diagnostic compatibility fields**, not model-routing authorities. When explicitly supplied, config resolution reports that boundary; changing them does not change the selected child model.
 
-- `adaptive`: normal Hi routing/scoring.
-- `fixed`: `models.default` becomes the preferred model for Hi-dispatched child tasks.
-- `role-mapped`: `models.roles[role]` becomes the preferred model for a supported child role.
+Use `routing.roleModels` / `routing.roleVariants` for explicit Hi child preferences, OpenCode agent configuration for a host-owned agent model, and `routing.allowedProviders` / `routing.deniedModels` for executable narrowing.
 
-These are **child-routing preferences/overrides**, not model allowlists. If the preferred model is unavailable or rejected by policy, routing may continue with another eligible model.
+### 7.2 `routing.roleModels`: authoritative ordered role candidates
 
-### 7.2 `routing.roleModels`: ordered role candidates and fallback priors
-
-`routing.roleModels` accepts an ordered array for each supported child role. It is an ordered **routing prior**, not an unconditional hard order. The first runtime-generated recommendation is written here too, so after that point the same field becomes the user's editable preference surface. When all configured candidates are live/policy-allowed and bounded feedback is still sparse, the configured-role prior fast path preserves the configured order. If candidates are unavailable/rejected or enough admitted feedback exists, eligible configured candidates can be reranked by the normal routing logic. Fallback output is still bounded by `routing.maxFallbacks`.
+`routing.roleModels` accepts an ordered array for each supported child role. Among live, policy-allowed, role-capable entries, the configured order is authoritative: Hi does not rerank it using cost, quality, or feedback telemetry. Unavailable or policy-rejected entries are skipped; Hi never invents an unconfigured fallback for an explicit role mapping. If no configured candidate remains eligible, that explicit mapping fails closed. Returned configured fallbacks are still bounded by `routing.maxFallbacks`.
 
 Example:
 
@@ -304,24 +300,30 @@ Example:
 }
 ```
 
-Use `models.roles` when you want **one preferred model per child role**. Use `routing.roleModels` when you want **an ordered child-role candidate/fallback list**.
+Use `routing.roleModels` when you want an explicit ordered child-role model/fallback list. There is no separate active `models.roles` routing path in `0.2.4`.
 
-## 8. Recipe: prefer one model for all Hi-dispatched child tasks
+## 8. Recipe: prefer one model for all Hi-dispatched child roles
 
-Use fixed mode for Hi-dispatched child TaskRuntime work:
+Apply the same explicit model to each child role you want to constrain:
 
 ```json
 {
   "schema": 1,
   "type": "hi-routing",
-  "models": {
-    "mode": "fixed",
-    "default": "provider/model-x"
+  "routing": {
+    "roleModels": {
+      "coder": ["provider/model-x"],
+      "architect": ["provider/model-x"],
+      "repository-explorer": ["provider/model-x"],
+      "qa-reviewer": ["provider/model-x"],
+      "security-reviewer": ["provider/model-x"],
+      "visual-qa": ["provider/model-x"]
+    }
   }
 }
 ```
 
-Important: this means **prefer `provider/model-x` for Hi-dispatched child tasks**, not “force the OpenCode primary session to this model” and not “forbid every other model”. If it is unavailable or policy-rejected, Hi can choose another eligible model.
+Important: this affects only Hi-dispatched child roles, not the OpenCode primary session. `visual-qa` still requires proven image-input capability. If a role's explicit list has no eligible candidate, that role selection fails closed instead of silently substituting an unconfigured model.
 
 If you want no fallback entries to be returned after a selected primary, also set:
 
@@ -512,23 +514,11 @@ Variant preference order is:
 
 Variant names are provider/model-specific. Unsupported names are skipped rather than manufactured.
 
-## 15. Routing strategy
+## 15. Legacy routing strategy compatibility
 
-`routing.strategy` controls scoring among eligible models:
+`routing.strategy` is still parsed in `0.2.4` so older project files remain readable, but it is **diagnostic-only** and does not control model selection. Normal automatic selection is capability/variant based and ephemeral; explicit task/role/host model ownership has precedence.
 
-- `cost-quality` — default; balances quality against heuristic expected completion cost.
-- `quality` — biases more strongly toward quality.
-- `cost` — biases more strongly toward expected completion cost.
-
-```json
-{
-  "schema": 1,
-  "type": "hi-routing",
-  "routing": { "strategy": "quality" }
-}
-```
-
-The cost signal used by routing is a Hi/OpenCode-derived heuristic for selection. It is not a claim of provider-billed cost.
+If an older file contains `cost-quality`, `quality`, or `cost`, Hi reports the legacy field through config diagnostics rather than turning it into hidden routing authority. Cost/quality measurements may still be retained as telemetry for evaluation, but they cannot silently reorder explicit user preferences or the normal automatic recommendation.
 
 ## 16. Provider and model restrictions
 
@@ -856,7 +846,7 @@ List models visible to the helper:
 ./node_modules/.bin/opencode-hi-setup role-models /path/to/MyApp --list-available
 ```
 
-On OpenCode 1.18.19 this legacy helper calls `opencode models --pure`. It returns the complete host-filtered ID list it can observe and returns an empty list if the host query is unavailable; it does not fall back to a bundled OpenCode-Go catalog. This helper list is still not authentication proof; live Hi routing uses the structured runtime provider inventory described above.
+On OpenCode 1.18.21 this legacy helper calls `opencode models --pure`. It returns the complete host-filtered ID list it can observe and returns an empty list if the host query is unavailable; it does not fall back to a bundled OpenCode-Go catalog. This helper list is still not authentication proof; live Hi routing uses the structured runtime provider inventory described above.
 
 Set one or multiple candidates for roles:
 
@@ -874,7 +864,7 @@ On PowerShell use the same arguments with `.cmd` and Windows path syntax.
 
 Primary-role assignments are intentionally rejected. For example, `--set manager=provider/model` returns `BLOCKED` with reason `role-model-primary-owned-by-opencode`.
 
-`--defaults --policy recommended` in the legacy Python helper no longer invents or duplicates model ranking from an ID-only CLI list. It returns `DEFERRED` and tells you to restart OpenCode so the canonical runtime can rank the effective-enabled model metadata and create the one-shot initial recommendations. Use `--set ROLE=...` when you want to replace those recommendations manually.
+`--defaults --policy recommended` in the legacy Python helper returns `DEFERRED` because ID-only CLI discovery is not authoritative model availability. Restart OpenCode and inspect the effective connected inventory with `hi_role_models`. Automatic capability/variant recommendations remain ephemeral and are not written to project policy; use `--set ROLE=...` only when you explicitly want to persist an ordered child-role mapping.
 
 The role-model CLI accepts only `coder`, `architect`, `repository-explorer`, `qa-reviewer`, `security-reviewer`, and `visual-qa`. Attempts to assign `manager` or `working-manager` are blocked because primary model ownership belongs to OpenCode.
 
@@ -925,12 +915,12 @@ Possible reasons include:
 - model is in `deniedModels`;
 - native OpenCode provider policy denies/disables the provider;
 - model is marked non-write-capable for a write-capable route;
-- an explicit task model or stronger project model mode takes precedence;
-- bounded feedback/scoring reorders candidates when the configured-role prior fast path no longer applies.
+- an explicit task model, explicit ordered role mapping, or explicit OpenCode agent model owns the selection before automatic recommendation;
+- an explicit role mapping has no remaining live/policy-eligible candidate and therefore fails closed instead of inventing another model.
 
 ### My first role model is unavailable
 
-Hi records that the role primary was unavailable/policy-rejected and continues with eligible configured/scored candidates. Reduce `maxFallbacks` if you want fewer reported fallback alternatives, but remember that this is not a hard single-model whitelist.
+Hi records that the unavailable/policy-rejected entry was skipped and continues only with the remaining **explicitly configured** eligible candidates, preserving their order. It never appends an unconfigured automatic model to rescue that explicit mapping. If none remain, selection fails closed. `maxFallbacks` only bounds the reported configured fallback list.
 
 ### I set `parallel.max` to 8 but only one worker runs
 
@@ -965,13 +955,13 @@ Generated from `data/hi-config-options.json`. Do not hand-edit this table.
 | `execution.topology` | runtime | `adaptive` | constraint | forces/adapts single-agent versus multi-agent mission topology |
 | `execution.maxAgents` | runtime | `4` | capacity | caps topology agent count; value 1 is an executable single-agent ceiling |
 | `execution.parallelism` | runtime | `2` | capacity | caps parallel streams inside selected mission topology |
-| `models.mode` | runtime | `adaptive` | preference | switches adaptive scoring versus fixed or role-mapped model preference |
-| `models.default` | runtime | `auto` | preference | provides fixed project model when models.mode=fixed |
-| `models.roles` | runtime | `{}` | preference | provides project child-role-specific model when models.mode=role-mapped; primary manager models remain OpenCode-owned |
-| `routing.strategy` | runtime | `cost-quality` | preference | changes model scoring between quality, cost, and cost-quality |
-| `routing.categoryModels` | runtime | `{}` | preference | prepends configured category candidates before scored models |
+| `models.mode` | diagnostic | `adaptive` | preference | parses the legacy model-selection mode for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority |
+| `models.default` | diagnostic | `auto` | preference | parses the legacy fixed-model value for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority |
+| `models.roles` | diagnostic | `{}` | preference | parses the legacy role-model map for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority |
+| `routing.strategy` | diagnostic | `cost-quality` | preference | parses the legacy cost/quality strategy for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority |
+| `routing.categoryModels` | diagnostic | `{}` | preference | parses legacy category model lists for compatibility, reports them in config resolution diagnostics, and gives them no model-routing authority |
 | `routing.categoryVariants` | runtime | `{}` | preference | changes selected native model variant by task category |
-| `routing.roleModels` | runtime | `{}` | preference | prepends configured child-role candidates before category/scored models; primary manager roles are excluded |
+| `routing.roleModels` | runtime | `{}` | preference | selects configured child-role candidates in explicit order after hard eligibility filters and before host-agent/automatic selection; primary manager roles are excluded |
 | `routing.roleVariants` | runtime | `{}` | preference | changes selected native variant for a specific child-role/model pair; primary manager roles are excluded |
 | `routing.maxFallbacks` | runtime | `3` | capacity | bounds fallback candidate count |
 | `routing.allowedProviders` | runtime | `[]` | constraint | narrows eligible providers and disables unconstrained host-default fallback when nonempty |

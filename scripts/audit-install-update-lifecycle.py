@@ -9,6 +9,7 @@ def row(inv,owner,oa,proof,pa):
     ok=(ROOT/owner).is_file() and (ROOT/proof).is_file() and oa in (ROOT/owner).read_text(errors='replace') and pa in (ROOT/proof).read_text(errors='replace')
     return {'invariant':inv,'status':'PASS' if ok else 'FAIL','owner':owner,'owner_sha256':sha(owner) if (ROOT/owner).is_file() else None,'owner_anchor':oa,'proof':proof,'proof_sha256':sha(proof) if (ROOT/proof).is_file() else None,'proof_anchor':pa}
 lifecycle=json.loads((ROOT/'data/validation/install-lifecycle-0.1.0.json').read_text())
+pkg=json.loads((ROOT/'package.json').read_text()); target=str((pkg.get('dependencies') or {}).get('@opencode-ai/sdk') or '').strip()
 ops=lifecycle.get('operations',{}); assertions=lifecycle.get('assertions',{}); sec=lifecycle.get('state_security',{})
 rows=[
  row('fresh-install','scripts/opencode-hi.mjs','function setup(project,version)','tests/test_node_setup.mjs','M16 Node setup preserves foreign OpenCode config'),
@@ -23,7 +24,7 @@ rows=[
  row('stale-state-cleanup','scripts/run-install-lifecycle.py','no_stale_setup_ownership_after_cleanup','data/validation/install-lifecycle-0.1.0.json','"no_stale_setup_ownership_after_cleanup": true'),
  row('setup-state-permissions','scripts/native_plugin_setup.py','def _write_state(','data/validation/install-lifecycle-0.1.0.json','"reinstall_setup_json_mode": "0o600"'),
  row('publishable-setup-cli-contract','package.json','"opencode-hi": "scripts/opencode-hi.mjs"','tests/test_hi.py','test_prompt_b_publishable_package_carries_node_bootstrap_legacy_cli_and_direct_runtime_dependency_contract'),
- row('no-source-tree-runtime-dependency','package.json','"@opencode-ai/sdk": "1.18.19"','tests/test_hi.py','test_prompt_b_publishable_package_carries_node_bootstrap_legacy_cli_and_direct_runtime_dependency_contract'),
+ row('no-source-tree-runtime-dependency','package.json',f'"@opencode-ai/sdk": "{target}"','tests/test_hi.py','test_prompt_b_publishable_package_carries_node_bootstrap_legacy_cli_and_direct_runtime_dependency_contract'),
  row('runtime-run-is-separate-exact-host-boundary','data/validation/install-lifecycle-0.1.0.json','"external_host_status": "SEPARATE_T3_BOUNDARY"','data/validation/prompt-b-process-workspace-browser-lifecycle.json','"status": "PASS"'),
 ]
 # dynamic lifecycle truth guards

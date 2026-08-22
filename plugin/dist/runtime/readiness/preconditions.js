@@ -1,5 +1,5 @@
 import { syncMissionGates } from '../gates/gates.js';
-export function evaluatePreconditions(m) { const gates = syncMissionGates(m); const items = gates.map(g => ({ id: g.id, status: (g.status === 'closed' ? 'not-applicable' : g.status === 'ready' ? 'ready' : g.status === 'blocked' ? 'blocked' : 'waiting'), reason: g.reason ?? g.summary })); return { ready: !items.some(x => x.status === 'blocked'), items }; }
+export function evaluatePreconditions(m, projectRoot) { const gates = syncMissionGates(m, projectRoot); const items = gates.map(g => ({ id: g.id, status: (g.status === 'closed' ? 'not-applicable' : g.status === 'ready' ? 'ready' : g.status === 'blocked' ? 'blocked' : 'waiting'), reason: g.reason ?? g.summary })); return { ready: !items.some(x => x.status === 'blocked'), items }; }
 function toolDecision(permission, name) {
     if (!permission || typeof permission !== 'object')
         return 'unknown';

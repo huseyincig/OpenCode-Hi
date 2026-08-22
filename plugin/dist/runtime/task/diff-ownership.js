@@ -13,6 +13,11 @@ function autoRelated(file, scope) {
         return true;
     return false;
 }
+export function assessRequiredTargetCoverage(requiredInput, changedInput) {
+    const required = [...new Set(requiredInput.map(norm).filter(Boolean))], changed = [...new Set(changedInput.map(norm).filter(Boolean))];
+    const covered = required.filter(target => changed.some(file => within(file, target)));
+    return { required, covered, missing: required.filter(target => !covered.includes(target)) };
+}
 export function assessChangedFileOwnership(scopeInput, changedInput, scopeExpansions = [], authority = 'worker-proposal') {
     const changed = [...new Set(changedInput.map(norm).filter(Boolean))], scope = [...new Set(scopeInput.map(norm).filter(Boolean))];
     if (!scope.length)

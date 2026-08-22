@@ -33,7 +33,7 @@
     {
       "area": "schemas",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "61ce2e9002580c6c12a7df3f3f5dc5894c92aaebce6a96b8676c72d7f791a6f4",
+      "owner_sha256": "b6e42d86a0101167104fc773cb8f70dd3b69a137c4974f536373fe65e214aa9b",
       "owner_anchor": "validateMissionEnvelope",
       "proof": "plugin/test/q4-property-fuzz.test.mjs",
       "proof_sha256": "5b73eee33e6a745e2b740878a3619685fd2ad3cd98224d68f855bfb5717409dd",
@@ -42,7 +42,7 @@
     {
       "area": "event-ordering",
       "owner": "plugin/src/runtime/application/runtime-event-controller.ts",
-      "owner_sha256": "9688df8d5962961d2b1dd6f33548e2c318c74ea566c3e581eec68554bff0037c",
+      "owner_sha256": "1ed8186467717b0fb3fd871ad0e8ed52dd5533093765cd4a6b533a8a8f46fa57",
       "owner_anchor": "ev.kind==='permission-asked'",
       "proof": "plugin/test/q4-property-fuzz.test.mjs",
       "proof_sha256": "5b73eee33e6a745e2b740878a3619685fd2ad3cd98224d68f855bfb5717409dd",
@@ -51,7 +51,7 @@
     {
       "area": "host-observations",
       "owner": "plugin/src/opencode/event-adapter.ts",
-      "owner_sha256": "59ffd9afcdda8f293484bcd1b5ba9672e7687f1f431f1b19bfd2dac2f158aca4",
+      "owner_sha256": "ca5ff8a07a7e94ca5fe484a0e3caca9f987d628d3396a806e7e35a56036dc6dd",
       "owner_anchor": "normalizeOpenCodeEvent",
       "proof": "plugin/test/q4-property-fuzz.test.mjs",
       "proof_sha256": "5b73eee33e6a745e2b740878a3619685fd2ad3cd98224d68f855bfb5717409dd",
@@ -60,7 +60,7 @@
     {
       "area": "config",
       "owner": "plugin/src/config/resolver.ts",
-      "owner_sha256": "ce27c09e189d3ffb70473af8d8ca57cc6343a7b51d3fa21a5f7ac802c69e223f",
+      "owner_sha256": "16070a6b509421cc2a8c4ad3cf643e924adce14523b91adc77cec44c38dd4b86",
       "owner_anchor": "resolveHiConfigWithReport",
       "proof": "plugin/test/q4-property-fuzz.test.mjs",
       "proof_sha256": "5b73eee33e6a745e2b740878a3619685fd2ad3cd98224d68f855bfb5717409dd",

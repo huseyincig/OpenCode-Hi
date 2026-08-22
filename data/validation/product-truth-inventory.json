@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "release": "0.2.3",
+  "release": "0.2.4",
   "kind": "PRODUCT_TRUTH_TRACE_INVENTORY",
   "status": "PASS",
   "claim_boundary": "Derived documentation/reconstruction trace map only; listed runtime/contracts remain semantic owners.",
@@ -9,7 +9,7 @@
       "area": "mission",
       "canonical_owner": "MissionStore",
       "owner_path": "plugin/src/runtime/mission/mission-store.ts",
-      "owner_sha256": "43be1f33d97be5e5be09d1ad80caa2f2ea95b8dcbf3dce693ac50a3534a50f0c",
+      "owner_sha256": "3a0dc35143aa67d18b6ed1fef90f08937083d686d5623c42027811e72ab03a1b",
       "producer_or_contract_paths": [
         "plugin/src/runtime/mission/types.ts",
         "plugin/src/runtime/mission/validators.ts"
@@ -27,7 +27,7 @@
       "area": "task-runtime",
       "canonical_owner": "TaskRuntime",
       "owner_path": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "b74685c24dd9e3ffc8b2e40d898f07c80d93a11a1c1ac58c4984f567d8a5663b",
+      "owner_sha256": "5e2abe1f85175657a15e2d0ca8d3004a4fe7ead87e27386c1e475a4b1ddb6843",
       "producer_or_contract_paths": [
         "plugin/src/runtime/task/contracts.ts"
       ],
@@ -101,7 +101,7 @@
       "area": "routing-models",
       "canonical_owner": "Hi routing/model resolver",
       "owner_path": "plugin/src/runtime/routing/model-resolver.ts",
-      "owner_sha256": "818ed7d62c6473b969dbf9760edef25ec020709725c0feaa64e89167a4284ba9",
+      "owner_sha256": "52bdaaa9b382d34c2dbf8c1be064f326e39ad0c6b9204bdbd9e44b169115685e",
       "producer_or_contract_paths": [
         "plugin/src/runtime/routing/execution-profile.ts",
         "plugin/src/runtime/routing/minimum-team.ts",
@@ -120,7 +120,7 @@
       "area": "configuration",
       "canonical_owner": "Hi config catalog/resolver",
       "owner_path": "data/hi-config-options.json",
-      "owner_sha256": "60bd659fc9f34da7a1165f617d5266ced845d91879768566a523833e0943625f",
+      "owner_sha256": "88fda63b50b4402b2d72268032cdf33548bee3121082177a689afdfb7dfa3967",
       "producer_or_contract_paths": [
         "plugin/src/config/schema.ts",
         "plugin/src/config/resolver.ts"
@@ -194,7 +194,7 @@
       "area": "context",
       "canonical_owner": "MissionRuntimeProjection + ContextArtifactStore",
       "owner_path": "plugin/src/runtime/context/mission-runtime-projection.ts",
-      "owner_sha256": "4f6089ab74dce4238c79afaeb079918b49c0a1c68a4a762d6eb8dcd110172f28",
+      "owner_sha256": "cd1211557db86d81fd4ca3c353a23597a82bf672d8185dc1a10039fe83e73c2c",
       "producer_or_contract_paths": [
         "plugin/src/runtime/context/budget-estimator.ts",
         "plugin/src/runtime/context/artifact-store.ts",
@@ -252,7 +252,7 @@
       "area": "evidence-verification",
       "canonical_owner": "EvidenceRuntime + VerificationEnvelope",
       "owner_path": "plugin/src/runtime/evidence/evidence-runtime.ts",
-      "owner_sha256": "5146ed0b607cf79d564abcdc358e7dcf5be7df8030ef1f9f50382232f62d10b3",
+      "owner_sha256": "27c7a33baae420ac094fec2bbd638ef3ab1bf67793936cdd39aff76f3b588219",
       "producer_or_contract_paths": [
         "plugin/src/contracts/evidence.ts",
         "plugin/src/contracts/verification-envelope.ts",
@@ -272,7 +272,7 @@
       "area": "completion-continuation",
       "canonical_owner": "Completion + continuation",
       "owner_path": "plugin/src/runtime/completion/evaluator.ts",
-      "owner_sha256": "a84becde3d024c4ef0242d916c83e644b4ad6c6bd3ba953f39086f5920254222",
+      "owner_sha256": "b3afcdaa1ab177368b06d44192ba5de90d3f8ddfca646f6892a15e11cf935f6d",
       "producer_or_contract_paths": [
         "plugin/src/runtime/continuation/evaluator.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
@@ -348,7 +348,7 @@
       "area": "host-port",
       "canonical_owner": "OpenCodeHostPort",
       "owner_path": "plugin/src/opencode/host-port.ts",
-      "owner_sha256": "a11e0780e1fa1734547f0b28690d30f5977e88912430ef8d92a550338c90d202",
+      "owner_sha256": "30d727dea653299af37ed0d4fb180d8c0b60373655e72c144e3a7a21cc56749e",
       "producer_or_contract_paths": [
         "plugin/src/opencode/client-adapter.ts",
         "plugin/src/opencode/event-adapter.ts",
@@ -385,7 +385,7 @@
       "area": "install-lifecycle",
       "canonical_owner": "opencode-hi Node package runner",
       "owner_path": "scripts/opencode-hi.mjs",
-      "owner_sha256": "768a2dbb83136c4b3f873d0494ecd5095916643d980cf0154ce25f361f6033fc",
+      "owner_sha256": "19fc56566736d821c727b741bd60c35634a1503bd5d68d6c56d262dec92688b7",
       "producer_or_contract_paths": [
         "scripts/native_plugin_setup.py"
       ],

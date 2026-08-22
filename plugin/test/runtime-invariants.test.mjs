@@ -168,7 +168,7 @@ test('Gap #mission-identity: workers bind to spawning mission even when generati
   assert.notEqual(worker.parent_mission_id, second.identity.mission_id)
 })
 
-test('Gap #recovery-runtime: level-2 escalation resumes same child session with a different stronger-category model', async () => {
+test('Gap #recovery-runtime: level-2 reasoning correction preserves the exact child session and model', async () => {
   const { createTask, createWorker } = await import('../dist/runtime/worker/worker-runtime.js')
   const { TaskRuntime } = await import('../dist/runtime/task/task-runtime.js')
   const { BackgroundRegistry } = await import('../dist/runtime/background/registry.js')
@@ -192,13 +192,15 @@ test('Gap #recovery-runtime: level-2 escalation resumes same child session with 
   const ok=await runtime.recoverStagnation(m,2)
   assert.equal(ok,true)
   assert.equal(worker.session_id,'child-1','must preserve same child session')
-  assert.equal(worker.model,'p/strong')
+  assert.equal(worker.model,'p/cheap','reasoning recovery must not invent model-routing authority')
   assert.equal(worker.status,'busy')
   assert.equal(calls.length,1)
   assert.deepEqual(calls[0].path,{id:'child-1'})
-  assert.deepEqual(calls[0].body.model,{providerID:'p',modelID:'strong'})
-  assert.equal(calls[0].body.variant,'high')
-  assert.equal(m.continuation.recovery_history?.at(-1)?.action,'model-escalation')
+  assert.deepEqual(calls[0].body.model,{providerID:'p',modelID:'cheap'})
+  assert.equal(calls[0].body.variant,undefined)
+  assert.match(calls[0].body.parts[0].text,/materially different corrective hypothesis or action/i)
+  assert.match(calls[0].body.parts[0].text,/do not.*change models/i)
+  assert.equal(m.continuation.recovery_history?.at(-1)?.action,'same-worker-resume')
   assert.equal(m.continuation.recovery_history?.at(-1)?.level,2)
 })
 

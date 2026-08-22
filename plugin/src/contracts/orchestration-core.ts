@@ -270,6 +270,7 @@ export type SchedulingReasonCode=
   |'dependency-cancelled'
   |'task-blocked'
   |'mutable-surface-conflict'
+  |'unknown-mutable-surface'
   |'shared-mutable-surface'
   |'topology-capacity'
   |'global-capacity'

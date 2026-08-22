@@ -8,10 +8,11 @@ import { noteLocalReleaseMutation, notePrivilegedReleaseOutcome, recordRemoteRel
 import { syncMissionGates } from '../runtime/gates/gates.js';
 import { recordChildMethodologyLoad, recordParentMethodologyLoad, requestedMethodologyName } from '../runtime/methodology/native-loading.js';
 import { reconcileMethodologyExits } from '../runtime/methodology/exit.js';
-import { assessChangedFileOwnership } from '../runtime/task/diff-ownership.js';
+import { assessChangedFileOwnership, assessRequiredTargetCoverage } from '../runtime/task/diff-ownership.js';
 import { primaryRoleCanDirectImplementation } from '../runtime/roles/catalog.js';
 import { evaluateCompletion } from '../runtime/completion/evaluator.js';
 import { appendLedger } from '../runtime/ledger/ledger.js';
+import { evidenceProducerAttemptForWorker } from '../runtime/evidence/applicability.js';
 function outputText(output) { try {
     if (typeof output === 'string')
         return output;
@@ -47,9 +48,9 @@ function reconcileDeterministicDirectImplementation(m, projectRoot) {
     if (m.execution.obligations.some(o => o.kind === 'analysis' && o.status === 'open') || m.execution.verification_policy.requireReview || m.execution.obligations.some(o => ['review', 'authority'].includes(o.kind) && o.status === 'open') || m.methodology.methodology_needs.length)
         return false;
     const mutationAt = m.execution.evidence.last_mutation_at;
-    if (!mutationAt || !m.vcs.changed_files.length || !m.execution.verification_policy.requiredKinds.length || !verificationSatisfied(m).ok)
+    if (!mutationAt || !m.vcs.changed_files.length || !m.execution.verification_policy.requiredKinds.length || !verificationSatisfied(m, undefined, projectRoot).ok)
         return false;
-    const envelope = verificationEnvelopeFor(m), postMutation = envelope.checks.length > 0 && envelope.checks.every(check => check.result === 'passed' && check.evidence_refs.some(ref => { const e = m.execution.evidence.items.find(item => item.id === ref); return Boolean(e && !e.invalidated_at && e.observed_at >= mutationAt); }));
+    const envelope = verificationEnvelopeFor(m, undefined, projectRoot), postMutation = envelope.checks.length > 0 && envelope.checks.every(check => check.result === 'passed' && check.evidence_refs.some(ref => { const e = m.execution.evidence.items.find(item => item.id === ref); return Boolean(e && !e.invalidated_at && e.observed_at >= mutationAt); }));
     if (!postMutation)
         return false;
     const current = inspectCurrentGitChangedFiles(projectRoot);
@@ -61,7 +62,11 @@ function reconcileDeterministicDirectImplementation(m, projectRoot) {
     const ownership = assessChangedFileOwnership(m.identity.intent.likelyTargets ?? [], directFiles, [], 'control-plane');
     if (ownership.collateral.length)
         return false;
-    const o = implementations[0];
+    const o = implementations[0], coverage = assessRequiredTargetCoverage(o.requiredTargets ?? [], directFiles);
+    if (coverage.missing.length) {
+        appendLedger(m, 'implementation.required-targets-uncovered', { payload: { obligation: o.id, required: coverage.required, covered: coverage.covered, missing: coverage.missing, changed_files: directFiles.slice(0, 60), owner: 'parent-direct-evidence' } });
+        return false;
+    }
     o.status = 'closed';
     o.closedAt = Date.now();
     appendLedger(m, 'implementation.direct-evidence-reconciled', { payload: { obligation: o.id, files: directFiles.slice(0, 30), evidence_refs: envelope.checks.flatMap(check => check.evidence_refs).slice(0, 30), source: 'current-git-diff+fresh-required-verification' } });
@@ -75,7 +80,8 @@ export function createToolAfterHook(store, background, events, projectRoot) {
         if (child && ((child.parent_mission_id !== undefined && child.parent_mission_id !== m.identity.mission_id) || (child.generation_at_spawn !== undefined && child.generation_at_spawn !== m.continuation.generation)))
             return;
         const tool = String(input?.tool ?? ''), args = input?.args ?? {}, text = outputText(output);
-        observeToolAfter(m, tool, args, output, projectRoot);
+        const childTask = child ? m.execution.tasks.find(t => t.id === child.task_id) : undefined, childVerificationOwner = child && childTask ? { source: `bash:child:${child.id}`, trusted_source_class: 'host-tool-observation', source_session_id: String(sid), task_id: childTask.id, obligation_ids: childTask.obligation_ids.filter(id => m.execution.obligations.some(o => o.id === id && o.kind === 'verification')), scope: [...childTask.scope], producer_attempt: evidenceProducerAttemptForWorker(m, child) } : undefined;
+        observeToolAfter(m, tool, args, output, projectRoot, childVerificationOwner);
         if (tool === 'skill') {
             const name = requestedMethodologyName(args);
             if (name) {
@@ -114,15 +120,15 @@ export function createToolAfterHook(store, background, events, projectRoot) {
             }
         }
         for (const o of m.execution.obligations.filter(x => x.kind === 'verification' && x.status === 'open'))
-            if (verificationSatisfied(m, o.id).ok) {
+            if (verificationSatisfied(m, o.id, projectRoot).ok) {
                 o.status = 'closed';
                 o.closedAt = Date.now();
                 appendLedger(m, 'obligation.closed', { payload: { obligation: o.id, owner: 'tool-after-verification-evidence' } });
             }
         const directReconciled = !child && reconcileDeterministicDirectImplementation(m, projectRoot);
         reconcileMethodologyExits(m, projectRoot);
-        syncMissionGates(m);
-        if (directReconciled && evaluateCompletion(m).complete)
+        syncMissionGates(m, projectRoot);
+        if (directReconciled && evaluateCompletion(m, projectRoot).complete)
             store.complete(sid);
         store.updateProgress(m);
         void events?.(runtimeSignal('evidence.updated', m.identity.mission_id, { worker_id: child?.id, payload: { fresh: m.execution.evidence.fresh, items: m.execution.evidence.items.length, direct_reconciled: directReconciled } }));

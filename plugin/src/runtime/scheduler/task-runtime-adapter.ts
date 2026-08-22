@@ -62,14 +62,13 @@ export function releaseTaskRuntimeReservation(m:MissionState,workerID:string,kin
   const out=reduceSchedulerLifecycle(lifecycle(m),{type:kind,reservationId:reservation.reservationId,attempt:reservation.attempt,hostExecutionId:reservation.hostExecutionId,at});if(out.accepted)m.execution.scheduler=out.state;return out
 }
 
-export function reconcileStoppedTaskRuntimeRestart(m:MissionState,worker:WorkerState,at=Date.now()):SchedulerLifecycleResult{
+export function reconcileTaskRuntimeRestart(m:MissionState,worker:WorkerState,outcome:'ACTIVE'|'TERMINAL'|'UNKNOWN',at=Date.now()):SchedulerLifecycleResult{
   const reservation=workerReservation(m,worker.id);if(!reservation)return{accepted:true,reason:'reservation-absent',state:lifecycle(m)}
-  if(reservation.phase!=='RECONCILING')return{accepted:false,reason:`restart-reservation-not-reconciling:${reservation.phase}`,state:lifecycle(m),reservation}
   if(!worker.session_id||reservation.hostExecutionId!==worker.session_id)return{accepted:false,reason:'restart-host-execution-mismatch',state:lifecycle(m),reservation}
-  let out=reduceSchedulerLifecycle(lifecycle(m),{type:'RECONCILE',reservationId:reservation.reservationId,attempt:reservation.attempt,hostExecutionId:worker.session_id,outcome:'TERMINAL',at})
-  if(!out.accepted)return out
-  m.execution.scheduler=out.state
-  out=reduceSchedulerLifecycle(m.execution.scheduler,{type:'RELEASE',reservationId:reservation.reservationId,attempt:reservation.attempt,hostExecutionId:worker.session_id,at:at+1})
+  if(outcome==='TERMINAL'&&reservation.phase==='SETTLING')return{accepted:true,reason:'restart-already-terminal',state:lifecycle(m),reservation}
+  if(outcome==='ACTIVE'&&reservation.phase==='RUNNING')return{accepted:true,reason:'restart-already-active',state:lifecycle(m),reservation}
+  if(reservation.phase!=='RECONCILING')return{accepted:false,reason:`restart-reservation-not-reconciling:${reservation.phase}`,state:lifecycle(m),reservation}
+  const out=reduceSchedulerLifecycle(lifecycle(m),{type:'RECONCILE',reservationId:reservation.reservationId,attempt:reservation.attempt,hostExecutionId:worker.session_id,outcome,at})
   if(out.accepted)m.execution.scheduler=out.state
   return out
 }

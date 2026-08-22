@@ -3,7 +3,7 @@ import { syncMissionGates } from '../gates/gates.js'
 
 export type ReadinessStatus='ready'|'waiting'|'blocked'|'not-applicable'
 export interface ReadinessItem{id:string;status:ReadinessStatus;reason:string}
-export function evaluatePreconditions(m:MissionState):{ready:boolean;items:ReadinessItem[]}{const gates=syncMissionGates(m);const items=gates.map(g=>({id:g.id,status:(g.status==='closed'?'not-applicable':g.status==='ready'?'ready':g.status==='blocked'?'blocked':'waiting') as ReadinessStatus,reason:g.reason??g.summary}));return{ready:!items.some(x=>x.status==='blocked'),items}}
+export function evaluatePreconditions(m:MissionState,projectRoot?:string):{ready:boolean;items:ReadinessItem[]}{const gates=syncMissionGates(m,projectRoot);const items=gates.map(g=>({id:g.id,status:(g.status==='closed'?'not-applicable':g.status==='ready'?'ready':g.status==='blocked'?'blocked':'waiting') as ReadinessStatus,reason:g.reason??g.summary}));return{ready:!items.some(x=>x.status==='blocked'),items}}
 
 export type TaskPreconditionDecision='READY'|'WAIT'|'RESOLVE'|'USER_ACTION_REQUIRED'
 export interface TaskPreconditionItem{id:string;decision:TaskPreconditionDecision;reason:string}

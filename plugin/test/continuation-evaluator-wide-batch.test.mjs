@@ -87,7 +87,7 @@ function baseClient(createIDs=[]){
   const promptCalls=[];let n=0
   const client={app:{log:async()=>{}},provider:{list:async()=>({data:[]})},session:{
     create:async()=>({data:{id:createIDs[n++]??`child-${n}`}}),
-    promptAsync:async req=>{promptCalls.push(req);return {data:{}}},abort:async()=>({data:{}}),diff:async()=>({data:[]}),
+    promptAsync:async req=>{promptCalls.push(req);return {data:{}}},abort:async()=>({data:{}}),status:async()=>({data:{}}),diff:async()=>({data:[]}),
     messages:async()=>({data:[]}),
   }}
   return {client,promptCalls}
@@ -224,7 +224,7 @@ test('child permission session-error becomes explicit user action and never pare
   await assessPluginMission(hooks,'parent-perm',{task_kind:'review',required_capabilities:['repository-analysis']})
   const started=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'inspect repository',role:'repository-explorer',category:'quick'},{sessionID:'parent-perm'}))
   assert.ok(started.worker_id)
-  await hooks.event({event:{type:'session.error',properties:{sessionID:'child-perm',error:{message:'permission denied by effective OpenCode policy'}}}})
+  await hooks.event({event:{type:'session.error',properties:{sessionID:'child-perm',error:{name:'ProviderAuthError',data:{providerID:'p',message:'authentication required'}}}}})
   assert.equal(promptCalls.filter(x=>x.path?.id==='parent-perm').length,0)
   const rows=JSON.parse(await hooks.tool.hi_task_list.execute({},{sessionID:'parent-perm'})),row=rows.find(x=>x.task.id===started.task_id)
   assert.equal(row.task.status,'failed')
@@ -233,4 +233,25 @@ test('child permission session-error becomes explicit user action and never pare
   assert.ok(ledger.events.some(e=>e.type==='user.action.required'&&e.payload.reason_code==='permission-failure'&&e.payload.semantic_type==='operational_action'))
   assert.equal(ledger.stagnation_count,0)
   await hooks.dispose?.();rmSync(dir,{recursive:true,force:true})
+})
+
+
+test('session.error defers to OpenCode while the exact child remains busy or retrying',async()=>{
+  for(const hostStatus of ['busy','retry']){
+    const dir=mkdtempSync(join(tmpdir(),`hi-error-${hostStatus}-`))
+    const {client,promptCalls}=baseClient(['child-error']);let aborts=0
+    client.session.status=async()=>({data:{'child-error':{type:hostStatus}}});client.session.abort=async()=>{aborts++;return{data:true}}
+    const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client});await hooks.config({})
+    try{
+      await hooks['chat.message']({sessionID:'parent-error',message:{role:'user',parts:[{type:'text',text:'inspect the repository'}]}},{parts:[]})
+      await assessPluginMission(hooks,'parent-error',{task_kind:'review',required_capabilities:['repository-analysis'],likely_verification:[]})
+      const started=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'inspect repository',role:'repository-explorer',category:'quick'},{sessionID:'parent-error'}));assert.ok(started.worker_id)
+      await hooks.event({event:{type:'session.error',properties:{sessionID:'child-error',error:{name:'ContextOverflowError',data:{message:'maximum context length exceeded'}}}}})
+      const rows=JSON.parse(await hooks.tool.hi_task_list.execute({},{sessionID:'parent-error'})),row=rows.find(x=>x.task.id===started.task_id)
+      assert.ok(['starting','busy'].includes(row.worker.status));assert.equal(row.task.status,'running');assert.equal(aborts,0)
+      assert.equal(promptCalls.filter(x=>x.path?.id==='parent-error').length,0)
+      const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:160},{sessionID:'parent-error'}))
+      assert.ok(ledger.events.some(e=>e.type==='worker.error-deferred-host-active'&&e.payload?.host_status===hostStatus&&e.payload?.error==='maximum context length exceeded'))
+    }finally{await hooks.dispose?.();rmSync(dir,{recursive:true,force:true})}
+  }
 })

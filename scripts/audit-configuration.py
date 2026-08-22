@@ -22,6 +22,7 @@ def consumer_for(path):
     if path=='primaryMode': return ('plugin/src/runtime/application/runtime-services.ts','primaryMode')
     if path.startswith('compatibility.'): return ('plugin/src/doctor/checks.ts','config.compatibility')
     if path.startswith('execution.'): return ('plugin/src/runtime/execution/topology-policy.ts','config.')
+    if path in {'models.mode','models.default','models.roles','routing.strategy','routing.categoryModels'}: return ('plugin/src/config/resolver.ts','legacyRoutingDiagnostics')
     if path.startswith('models.') or path.startswith('routing.'): return ('plugin/src/runtime/routing/model-resolver.ts','config.')
     if path.startswith('parallel.'): return ('plugin/src/runtime/application/runtime-services.ts','getConfig().parallel')
     if path.startswith('profile.'): return ('plugin/src/runtime/task/task-runtime.ts','cfg.profile')
