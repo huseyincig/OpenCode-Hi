@@ -91,6 +91,3 @@ export function projectHiOpenCodeAgents(hostConfig:Record<string,unknown>,packag
   if(!existing&&(inserted.length||routingMerges.size))hostConfig.agent=agents
   return{collisions:[],inserted:inserted.sort(),compatibleExisting:compatibleExisting.sort()}
 }
-
-/** Backward-compatible helper retained for narrow callers/tests. */
-export function bindHiOpenCodeAgents(hostConfig:Record<string,unknown>,packaged:Record<string,unknown>):string[]{return projectHiOpenCodeAgents(hostConfig,packaged).collisions}

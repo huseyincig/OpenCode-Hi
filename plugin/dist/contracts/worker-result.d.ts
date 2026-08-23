@@ -13,8 +13,6 @@ export interface WorkerEvidenceClaim {
     outcome?: EvidenceOutcome;
     reason?: string;
 }
-/** @deprecated Use WorkerEvidenceClaim. Kept as a compatibility alias for existing consumers. */
-export type WorkerEvidence = WorkerEvidenceClaim;
 export interface MethodologyObservation {
     key: string;
     procedure: string;

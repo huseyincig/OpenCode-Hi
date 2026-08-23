@@ -12,5 +12,3 @@ export interface HiAgentProjectionResult {
     compatibleExisting: string[];
 }
 export declare function projectHiOpenCodeAgents(hostConfig: Record<string, unknown>, packaged: Record<string, unknown>): HiAgentProjectionResult;
-/** Backward-compatible helper retained for narrow callers/tests. */
-export declare function bindHiOpenCodeAgents(hostConfig: Record<string, unknown>, packaged: Record<string, unknown>): string[];

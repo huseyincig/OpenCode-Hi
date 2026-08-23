@@ -1,13 +1,14 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {bindHiOpenCodeAgents,matchesHiOpenCodeAgent,projectHiOpenCodeAgents} from '../dist/opencode/agent-binding.js'
+import {matchesHiOpenCodeAgent,projectHiOpenCodeAgents} from '../dist/opencode/agent-binding.js'
 import {PACKAGED_HI_AGENTS} from '../dist/generated/agent-config.js'
 
 const clone=x=>structuredClone(x)
+const collisions=(config,agents)=>projectHiOpenCodeAgents(config,agents).collisions
 
 test('OpenCode adapter injects absent canonical Hi agents and accepts idempotent binding',()=>{
-  const cfg={};assert.deepEqual(bindHiOpenCodeAgents(cfg,PACKAGED_HI_AGENTS),[]);assert.deepEqual(Object.keys(cfg.agent).sort(),Object.keys(PACKAGED_HI_AGENTS).sort())
-  assert.deepEqual(bindHiOpenCodeAgents(cfg,PACKAGED_HI_AGENTS),[])
+  const cfg={};assert.deepEqual(collisions(cfg,PACKAGED_HI_AGENTS),[]);assert.deepEqual(Object.keys(cfg.agent).sort(),Object.keys(PACKAGED_HI_AGENTS).sort())
+  assert.deepEqual(collisions(cfg,PACKAGED_HI_AGENTS),[])
 })
 
 test('admitted hi-project skill permission is the only tolerated canonical agent permission extension',()=>{
@@ -23,7 +24,7 @@ test('canonical Hi agent names still fail binding on prompt mode or permission c
     a=>{a.coder.permission.skill['foreign-skill']='allow'},
   ]){
     const cfg={agent:clone(PACKAGED_HI_AGENTS)};mutate(cfg.agent)
-    assert.deepEqual(bindHiOpenCodeAgents(cfg,PACKAGED_HI_AGENTS),['coder'])
+    assert.deepEqual(collisions(cfg,PACKAGED_HI_AGENTS),['coder'])
   }
 })
 
@@ -34,7 +35,7 @@ test('OpenCode-owned model and variant metadata are compatible with canonical Hi
     actual.model='p/host-selected';actual.variant='high'
     assert.equal(matchesHiOpenCodeAgent(actual,expected),true)
     const cfg={agent:{[role]:actual}}
-    assert.deepEqual(bindHiOpenCodeAgents(cfg,{[role]:expected}),[])
+    assert.deepEqual(collisions(cfg,{[role]:expected}),[])
     assert.equal(cfg.agent[role].model,'p/host-selected');assert.equal(cfg.agent[role].variant,'high')
   }
 })
@@ -58,7 +59,7 @@ test('canonical Hi agent permits harmless metadata and permission narrowing with
   actual.permission.bash['rm -rf *']='deny'
   assert.equal(matchesHiOpenCodeAgent(actual,PACKAGED_HI_AGENTS.coder),true)
   const cfg={agent:{coder:actual,external:{description:'foreign agent',mode:'subagent'}}}
-  assert.deepEqual(bindHiOpenCodeAgents(cfg,{coder:PACKAGED_HI_AGENTS.coder}),[])
+  assert.deepEqual(collisions(cfg,{coder:PACKAGED_HI_AGENTS.coder}),[])
   assert.equal(cfg.agent.coder,actual,'compatible full host agent is preserved rather than replaced')
   assert.deepEqual(cfg.agent.external,{description:'foreign agent',mode:'subagent'})
 })

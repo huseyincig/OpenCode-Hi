@@ -164,5 +164,3 @@ export function projectHiOpenCodeAgents(hostConfig, packaged) {
         hostConfig.agent = agents;
     return { collisions: [], inserted: inserted.sort(), compatibleExisting: compatibleExisting.sort() };
 }
-/** Backward-compatible helper retained for narrow callers/tests. */
-export function bindHiOpenCodeAgents(hostConfig, packaged) { return projectHiOpenCodeAgents(hostConfig, packaged).collisions; }

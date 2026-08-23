@@ -4,5 +4,5 @@ export interface InstanceLease {
     token: string;
     release: () => void;
 }
-export declare function acquireHiRuntimeInstance(projectKey: string, owner?: Owner): InstanceLease;
+export declare function acquireHiRuntimeInstance(projectKey: string, owner: Owner): InstanceLease;
 export {};

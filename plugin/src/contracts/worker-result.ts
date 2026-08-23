@@ -6,8 +6,6 @@ export type { EvidenceOutcome,WorkerEvidenceKind } from './evidence-kinds.js'
 export type WorkerResultStatus = 'DONE'|'FIX_REQUIRED'|'NEEDS_CONTEXT'|'BLOCKED'|'FAILED'
 /** Worker-produced evidence is a claim/candidate only. It is never canonical verification proof by itself. */
 export interface WorkerEvidenceClaim { kind:WorkerEvidenceKind; summary:string; scope?:string[]; evidence_refs?:string[]; pass?:boolean; outcome?:EvidenceOutcome; reason?:string }
-/** @deprecated Use WorkerEvidenceClaim. Kept as a compatibility alias for existing consumers. */
-export type WorkerEvidence = WorkerEvidenceClaim
 export interface MethodologyObservation { key:string; procedure:string; trigger:string; do_not_trigger:string; exit_condition:string; evidence:WorkerEvidenceKind[] }
 export interface ScopeExpansion { file:string; reason:string; necessary:boolean }
 export interface WorkerResult { status:WorkerResultStatus; summary:string; changed_files:string[]; scope_expansions?:ScopeExpansion[]; evidence:WorkerEvidenceClaim[]; findings?:ReviewFinding[]; open_issues:string[]; needs_context:string[]; context_gap?:'scope'|'iterative'|'none'; failure_finding?:'ci-build'|'unknown-root-cause'|'none'; methodology_observations?:MethodologyObservation[] }
@@ -41,7 +39,7 @@ export function isWorkerResultContract(v:unknown):v is WorkerResult{
   if(!stringArray(v.changed_files)||!v.changed_files.every(x=>normalizeBoundedProjectPath(x)===x.replace(/\\/g,'/').replace(/^\.\//,''))||!Array.isArray(v.evidence)||!v.evidence.every(isWorkerEvidenceClaimContract)||!stringArray(v.open_issues)||!stringArray(v.needs_context))return false
   if(v.scope_expansions!==undefined&&(!Array.isArray(v.scope_expansions)||!v.scope_expansions.every(x=>record(x)&&onlyKeys(x,EXPANSION_KEYS)&&typeof x.file==='string'&&normalizeBoundedProjectPath(x.file)!==undefined&&typeof x.reason==='string'&&typeof x.necessary==='boolean')))return false
   if(v.findings!==undefined&&(!Array.isArray(v.findings)||!v.findings.every(isReviewFindingContract)))return false
-  if(Array.isArray(v.findings)){const evidenceKinds=new Set((v.evidence as WorkerEvidence[]).map(x=>x.kind));if(v.findings.some(f=>f.evidence_refs.some(ref=>!evidenceKinds.has(ref))))return false}
+  if(Array.isArray(v.findings)){const evidenceKinds=new Set((v.evidence as WorkerEvidenceClaim[]).map(x=>x.kind));if(v.findings.some(f=>f.evidence_refs.some(ref=>!evidenceKinds.has(ref))))return false}
   if(v.context_gap!==undefined&&!['scope','iterative','none'].includes(String(v.context_gap)))return false
   if(v.failure_finding!==undefined&&!['ci-build','unknown-root-cause','none'].includes(String(v.failure_finding)))return false
   return v.methodology_observations===undefined||(Array.isArray(v.methodology_observations)&&v.methodology_observations.every(isMethodologyObservationContract))
