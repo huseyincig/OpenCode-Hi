@@ -5,7 +5,7 @@ import {join} from 'node:path'
 import {tmpdir} from 'node:os'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {recommendInitialRoleModels} from '../dist/runtime/routing/model-resolver.js'
-import {setProjectRoleModels} from '../dist/config/auto-init.js'
+import {applyProjectSettings} from '../dist/config/project-settings.js'
 
 function makeProject(){return mkdtempSync(join(tmpdir(),'hi-routing-defaults-'))}
 function cfg(){return structuredClone(DEFAULT_HI_CONFIG)}
@@ -35,14 +35,14 @@ test('automatic recommendation preview never creates project state',()=>{
 
 test('only explicit user role persistence creates routing state',()=>{
   const project=makeProject();try{
-    const applied=setProjectRoleModels(project,'coder',['p/code','p/fallback','p/code'])
+    const applied=applyProjectSettings(project,{roleModels:{coder:['p/code','p/fallback','p/code']}})
     assert.equal(existsSync(applied.path),true)
     assert.deepEqual(applied.roleModels.coder,['p/code','p/fallback'])
     const doc=JSON.parse(readFileSync(applied.path,'utf8'))
     assert.equal(doc.routing.modelPolicy,'manual')
     assert.deepEqual(doc.routing.roleModels.coder,['p/code','p/fallback'])
     assert.equal(doc.routing.adaptiveRoles.includes('coder'),false)
-    setProjectRoleModels(project,'coder',[])
+    applyProjectSettings(project,{roleModels:{coder:null}})
     const cleared=JSON.parse(readFileSync(applied.path,'utf8'))
     assert.equal(cleared.routing.roleModels.coder,undefined)
     assert.equal(cleared.routing.adaptiveRoles.includes('coder'),true)
