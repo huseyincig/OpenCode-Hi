@@ -4,6 +4,7 @@ export interface ProjectSettingsPatch {
     workMode?: HiWorkMode;
     maxAgents?: number;
     parallelism?: number;
+    allowedModels?: string[] | null;
     roleModels?: Partial<Record<ModelRoutedChildRole, string[] | null>>;
     resetRoleModels?: boolean;
 }
@@ -16,6 +17,7 @@ export interface ProjectSettingsResult {
         parallelism?: number;
     };
     roleModels: Record<string, string[]>;
+    allowedModels: string[];
 }
 export declare function projectSettingsPath(projectRoot: string): string;
 export declare function hasProjectSettings(projectRoot: string): boolean;

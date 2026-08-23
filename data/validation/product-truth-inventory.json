@@ -101,7 +101,7 @@
       "area": "routing-models",
       "canonical_owner": "Hi routing/model resolver",
       "owner_path": "plugin/src/runtime/routing/model-resolver.ts",
-      "owner_sha256": "e59fbc058f95e457acdcf53f74d69c9706a24a7da8c4f6e8aae4b45705c450bc",
+      "owner_sha256": "6e339437cb4074bbddba0aeab7623f626cb02b4f62bb5ed87c8f7d8429e2e996",
       "producer_or_contract_paths": [
         "plugin/src/runtime/routing/execution-profile.ts",
         "plugin/src/runtime/routing/minimum-team.ts",
@@ -120,7 +120,7 @@
       "area": "configuration",
       "canonical_owner": "Hi config catalog/resolver",
       "owner_path": "data/hi-config-options.json",
-      "owner_sha256": "88fda63b50b4402b2d72268032cdf33548bee3121082177a689afdfb7dfa3967",
+      "owner_sha256": "9b6f299767a1554977815b6073f090ee63c759726d94e484118ebc45ab962617",
       "producer_or_contract_paths": [
         "plugin/src/config/schema.ts",
         "plugin/src/config/resolver.ts"
@@ -385,7 +385,7 @@
       "area": "install-lifecycle",
       "canonical_owner": "opencode-hi Node package runner",
       "owner_path": "scripts/opencode-hi.mjs",
-      "owner_sha256": "15ad2d2e94c5d27d89ea415ee724868707d27c4827992ce5b18916bfaa9817cf",
+      "owner_sha256": "c95b3ae2bf7a09957b7a2e9042b144095df77439b29de1b3d96585028d0191e2",
       "producer_or_contract_paths": [
         "scripts/native_plugin_setup.py"
       ],

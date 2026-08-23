@@ -64,6 +64,11 @@ export function applyProjectSettings(projectRoot, patch) {
         throw new Error("Hi settings patch must be an object");
     if (patch.workMode !== undefined && !["adaptive", "single", "multi"].includes(patch.workMode))
         throw new Error("workMode must be adaptive, single, or multi");
+    const normalizedAllowedModels = patch.allowedModels === null ? [] : patch.allowedModels === undefined ? undefined : uniqueModels(patch.allowedModels);
+    if (patch.allowedModels !== undefined && patch.allowedModels !== null && !Array.isArray(patch.allowedModels))
+        throw new Error("allowedModels must be an array or null");
+    if (Array.isArray(patch.allowedModels) && !normalizedAllowedModels?.length)
+        throw new Error("allowedModels cannot be empty; use null to clear the pool");
     const maxAgents = boundedInteger(patch.maxAgents, "maxAgents"), parallelism = boundedInteger(patch.parallelism, "parallelism");
     if (patch.roleModels !== undefined && !record(patch.roleModels))
         throw new Error("roleModels must be an object");
@@ -120,9 +125,15 @@ export function applyProjectSettings(projectRoot, patch) {
             execution.parallelism = 1;
     }
     routing.roleModels = roleModels;
+    if (normalizedAllowedModels !== undefined) {
+        if (normalizedAllowedModels.length)
+            routing.allowedModels = normalizedAllowedModels;
+        else
+            delete routing.allowedModels;
+    }
     routing.adaptiveRoles = [...foreignAdaptiveRoles, ...automaticRoles];
-    routing.modelPolicy = Object.keys(roleModels).some(isModelRoutedChildRole) ? "manual" : "adaptive";
+    routing.modelPolicy = Object.keys(roleModels).some(isModelRoutedChildRole) || Array.isArray(routing.allowedModels) && routing.allowedModels.length ? "manual" : "adaptive";
     const next = { ...doc, schema: 1, type: "hi-routing", execution, routing, applied_at: Date.now(), applied_by: "opencode-hi" };
     atomicWrite(path, JSON.stringify(next, null, 2) + "\n");
-    return { path, workMode, execution: { topology: (execution.topology ?? "adaptive"), maxAgents: typeof execution.maxAgents === "number" ? execution.maxAgents : undefined, parallelism: typeof execution.parallelism === "number" ? execution.parallelism : undefined }, roleModels: Object.fromEntries(MODEL_ROUTED_CHILD_ROLES.flatMap(role => Array.isArray(roleModels[role]) ? [[role, uniqueModels(roleModels[role])]] : [])) };
+    return { path, workMode, execution: { topology: (execution.topology ?? "adaptive"), maxAgents: typeof execution.maxAgents === "number" ? execution.maxAgents : undefined, parallelism: typeof execution.parallelism === "number" ? execution.parallelism : undefined }, roleModels: Object.fromEntries(MODEL_ROUTED_CHILD_ROLES.flatMap(role => Array.isArray(roleModels[role]) ? [[role, uniqueModels(roleModels[role])]] : [])), allowedModels: uniqueModels(routing.allowedModels) };
 }

@@ -28,6 +28,7 @@ export interface HiConfig {
         roleModels: Record<string, string[]>;
         roleVariants: Record<string, Record<string, string>>;
         maxFallbacks: number;
+        allowedModels: string[];
         allowedProviders: string[];
         deniedModels: string[];
     };

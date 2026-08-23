@@ -46,6 +46,8 @@ export function resolveHiConfigWithReport(raw:unknown,projectRoot?:string):{conf
   const hostProfile=isRecord(input.profile)?input.profile:{},projectProfile=isRecord(fromProject?.profile)?fromProject!.profile as unknown as Record<string,unknown>:{}
   notes.push(...legacyRoutingDiagnostics(hostModels,projectModels,hostRouting,projectRouting))
 
+  const hostAllowedModels=modelList(hostRouting.allowedModels),projectAllowedModels=modelList(projectRouting.allowedModels)
+  const allowedModels=hostAllowedModels.length&&projectAllowedModels.length?projectAllowedModels.filter(x=>hostAllowedModels.includes(x)):projectAllowedModels.length?projectAllowedModels:hostAllowedModels
   const hostAllowed=modelList(hostRouting.allowedProviders),projectAllowed=modelList(projectRouting.allowedProviders)
   const hostDenied=modelList(hostRouting.deniedModels),projectDenied=modelList(projectRouting.deniedModels)
   const allowedProviders=hostAllowed.length&&projectAllowed.length?hostAllowed.filter(x=>projectAllowed.includes(x)):projectAllowed.length?projectAllowed:hostAllowed
@@ -54,7 +56,7 @@ export function resolveHiConfigWithReport(raw:unknown,projectRoot?:string):{conf
   const config:HiConfig={
     schemaVersion:HI_CONFIG_SCHEMA,
     executionPolicy:executionPolicy((fromProject as any)?.executionPolicy)??executionPolicy(input.executionPolicy)??DEFAULT_HI_CONFIG.executionPolicy,
-    primaryMode:primaryMode(fromProject?.primaryMode)??primaryMode(input.primaryMode)??DEFAULT_HI_CONFIG.primaryMode,
+    primaryMode:(topology(projectExecution.topology)??topology(hostExecution.topology)??DEFAULT_HI_CONFIG.execution.topology)==='single-agent'?'working-manager':primaryMode(fromProject?.primaryMode)??primaryMode(input.primaryMode)??DEFAULT_HI_CONFIG.primaryMode,
     compatibility:{mode:compatibility.mode==='strict'?'strict':DEFAULT_HI_CONFIG.compatibility.mode,validatedOpenCodeVersions:modelList(compatibility.validatedOpenCodeVersions)},
     execution:{
       topology:topology(projectExecution.topology)??topology(hostExecution.topology)??DEFAULT_HI_CONFIG.execution.topology,
@@ -73,7 +75,7 @@ export function resolveHiConfigWithReport(raw:unknown,projectRoot?:string):{conf
       roleModels:{...roleModels(hostRouting.roleModels),...roleModels(projectRouting.roleModels)},
       roleVariants:{...roleVariants(hostRouting.roleVariants),...roleVariants(projectRouting.roleVariants)},
       maxFallbacks:boundedLayer(projectRouting.maxFallbacks,hostRouting.maxFallbacks,DEFAULT_HI_CONFIG.routing.maxFallbacks,0,6),
-      allowedProviders,deniedModels,
+      allowedModels,allowedProviders,deniedModels,
     },
     parallel:{
       enabled:booleanLayer(projectParallel.enabled,hostParallel.enabled,DEFAULT_HI_CONFIG.parallel.enabled),

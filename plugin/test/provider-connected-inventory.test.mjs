@@ -5,6 +5,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import HiPlugin from '../dist/plugin.js'
 import { createHostPort } from '../dist/opencode/host-port.js'
+import { resolveModel } from '../dist/runtime/routing/model-resolver.js'
+import { resolveHiConfig } from '../dist/config/resolver.js'
 
 function clientWithProviderShape(raw){
   return {
@@ -121,7 +123,7 @@ test('hi_settings applies one validated settings transaction and hot-reloads wor
   const applied=JSON.parse(String(await hooks.tool.hi_settings.execute({action:'apply',settings_json:JSON.stringify({work_mode:'multi',max_agents:3,parallelism:2,roles:{coder:['p/code','p/fallback'],'visual-qa':['p/vision']}})},{})))
   assert.equal(applied.status,'APPLIED');assert.equal(applied.work_mode,'multi');assert.equal(applied.execution.maxAgents,3);assert.deepEqual(applied.role_models.coder,['p/code','p/fallback']);assert.deepEqual(applied.role_models['visual-qa'],['p/vision']);assert.equal(applied.restart_required,false)
   const after=JSON.parse(String(await hooks.tool.hi_settings.execute({action:'show'},{})));assert.equal(after.work_mode,'multi');assert.equal(after.onboarding.pending,false);assert.deepEqual(after.models.roles.coder,['p/code','p/fallback'])
-  const reset=JSON.parse(String(await hooks.tool.hi_settings.execute({action:'reset'},{})));assert.equal(reset.status,'APPLIED');assert.equal(reset.work_mode,'adaptive');assert.deepEqual(reset.role_models,{})
+  const reset=JSON.parse(String(await hooks.tool.hi_settings.execute({action:'reset'},{})));assert.equal(reset.status,'APPLIED');assert.equal(reset.work_mode,'adaptive');assert.deepEqual(reset.allowed_models,[]);assert.deepEqual(reset.role_models,{})
   await hooks.dispose?.();rmSync(root,{recursive:true,force:true})
 })
 
@@ -177,4 +179,25 @@ test('successful directory-scoped empty available-model list stays empty instead
     assert.equal(await host.refreshRuntimeInventory('test-empty'),0)
     assert.deepEqual(host.getModels(),[])
   }finally{globalThis.fetch=priorFetch;rmSync(root,{recursive:true,force:true})}
+})
+
+
+test('hi_settings global allowed model pool keeps OpenCode inventory truth but limits automatic child routing in exact order',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-settings-model-pool-'))
+  const raw={connected:['p'],all:[{id:'p',models:[{id:'outside'},{id:'second'},{id:'first'},{id:'vision',capabilities:{input:{image:true}}}]}]}
+  const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:clientWithProviderShape(raw)})
+  await hooks.config({});await hooks.event({event:{type:'server.connected',properties:{}}})
+  const applied=JSON.parse(String(await hooks.tool.hi_settings.execute({input:{action:'apply',settings_json:JSON.stringify({work_mode:'adaptive',allowed_models:['p/first','p/second','p/vision']})}},{})))
+  assert.equal(applied.status,'APPLIED');assert.deepEqual(applied.allowed_models,['p/first','p/second','p/vision'])
+  const shown=JSON.parse(String(await hooks.tool.hi_settings.execute({action:'show'},{})));assert.deepEqual(shown.models.available.map(x=>x.id),['p/outside','p/second','p/first','p/vision']);assert.deepEqual(shown.models.allowed,['p/first','p/second','p/vision'])
+  const routing=JSON.parse(readFileSync(join(root,'.opencode','hi','policy','routing.json'),'utf8'));assert.deepEqual(routing.routing.allowedModels,['p/first','p/second','p/vision']);assert.deepEqual(routing.routing.roleModels,{})
+  await hooks.dispose?.();rmSync(root,{recursive:true,force:true})
+})
+
+
+test('ordered global model pool is routing authority for automatic child selection while capability gates still apply',()=>{
+  const cfg=resolveHiConfig({routing:{allowedModels:['p/first','p/second','p/vision']}})
+  const available=[{id:'p/outside',provider:'p',writeCapable:true},{id:'p/second',provider:'p',writeCapable:true},{id:'p/first',provider:'p',writeCapable:true},{id:'p/vision',provider:'p',writeCapable:true,visionCapable:true}]
+  const coder=resolveModel('standard',available,cfg,undefined,'coder');assert.equal(coder.primary,'p/first');assert.deepEqual(coder.fallbacks,['p/second','p/vision']);assert.ok(coder.rejected.some(x=>x.id==='p/outside'&&x.reason==='hi-model-not-allowed'))
+  const visual=resolveModel('visual',available,cfg,undefined,'visual-qa');assert.equal(visual.primary,'p/vision');assert.ok(visual.rejected.some(x=>x.id==='p/first'&&/vision/.test(x.reason)))
 })

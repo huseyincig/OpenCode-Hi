@@ -7,6 +7,7 @@ export interface ProjectSettingsPatch{
   workMode?:HiWorkMode
   maxAgents?:number
   parallelism?:number
+  allowedModels?:string[]|null
   roleModels?:Partial<Record<ModelRoutedChildRole,string[]|null>>
   resetRoleModels?:boolean
 }
@@ -16,6 +17,7 @@ export interface ProjectSettingsResult{
   workMode:HiWorkMode
   execution:{topology:TopologyMode;maxAgents?:number;parallelism?:number}
   roleModels:Record<string,string[]>
+  allowedModels:string[]
 }
 
 export function projectSettingsPath(projectRoot:string){return join(projectRoot,".opencode","hi","policy","routing.json")}
@@ -52,6 +54,9 @@ function atomicWrite(path:string,text:string){
 export function applyProjectSettings(projectRoot:string,patch:ProjectSettingsPatch):ProjectSettingsResult{
   if(!record(patch))throw new Error("Hi settings patch must be an object")
   if(patch.workMode!==undefined&&!(["adaptive","single","multi"] as const).includes(patch.workMode))throw new Error("workMode must be adaptive, single, or multi")
+  const normalizedAllowedModels=patch.allowedModels===null?[]:patch.allowedModels===undefined?undefined:uniqueModels(patch.allowedModels)
+  if(patch.allowedModels!==undefined&&patch.allowedModels!==null&&!Array.isArray(patch.allowedModels))throw new Error("allowedModels must be an array or null")
+  if(Array.isArray(patch.allowedModels)&&!normalizedAllowedModels?.length)throw new Error("allowedModels cannot be empty; use null to clear the pool")
   const maxAgents=boundedInteger(patch.maxAgents,"maxAgents"),parallelism=boundedInteger(patch.parallelism,"parallelism")
   if(patch.roleModels!==undefined&&!record(patch.roleModels))throw new Error("roleModels must be an object")
   const normalizedRolePatch:Partial<Record<ModelRoutedChildRole,string[]|null>>={}
@@ -75,9 +80,10 @@ export function applyProjectSettings(projectRoot:string,patch:ProjectSettingsPat
   if(workMode==="single"){execution.maxAgents=1;execution.parallelism=1}
   if(workMode==="multi"){if(Number(execution.maxAgents??4)<2)execution.maxAgents=2;if(Number(execution.parallelism??2)<1)execution.parallelism=1}
   routing.roleModels=roleModels
+  if(normalizedAllowedModels!==undefined){if(normalizedAllowedModels.length)routing.allowedModels=normalizedAllowedModels;else delete routing.allowedModels}
   routing.adaptiveRoles=[...foreignAdaptiveRoles,...automaticRoles]
-  routing.modelPolicy=Object.keys(roleModels).some(isModelRoutedChildRole)?"manual":"adaptive"
+  routing.modelPolicy=Object.keys(roleModels).some(isModelRoutedChildRole)||Array.isArray(routing.allowedModels)&&routing.allowedModels.length?"manual":"adaptive"
   const next={...doc,schema:1,type:"hi-routing",execution,routing,applied_at:Date.now(),applied_by:"opencode-hi"}
   atomicWrite(path,JSON.stringify(next,null,2)+"\n")
-  return{path,workMode,execution:{topology:(execution.topology??"adaptive") as TopologyMode,maxAgents:typeof execution.maxAgents==="number"?execution.maxAgents:undefined,parallelism:typeof execution.parallelism==="number"?execution.parallelism:undefined},roleModels:Object.fromEntries(MODEL_ROUTED_CHILD_ROLES.flatMap(role=>Array.isArray(roleModels[role])?[[role,uniqueModels(roleModels[role])]]:[]))}
+  return{path,workMode,execution:{topology:(execution.topology??"adaptive") as TopologyMode,maxAgents:typeof execution.maxAgents==="number"?execution.maxAgents:undefined,parallelism:typeof execution.parallelism==="number"?execution.parallelism:undefined},roleModels:Object.fromEntries(MODEL_ROUTED_CHILD_ROLES.flatMap(role=>Array.isArray(roleModels[role])?[[role,uniqueModels(roleModels[role])]]:[])),allowedModels:uniqueModels(routing.allowedModels)}
 }

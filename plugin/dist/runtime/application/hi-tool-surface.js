@@ -104,12 +104,12 @@ export function createHiToolSurface(input) {
             state.configResolution = resolved.report;
             return JSON.stringify({ status: 'APPLIED', role, models: requested, role_models: state.config.routing.roleModels, restart_required: false, note: 'The active Hi runtime now uses this explicit child-role mapping for new worker dispatches.' });
         } });
-    const settingsTool = tool({ description: 'Show or change OpenCode-Hi project settings through one transactional control plane. Actions: show/setup; apply with settings_json for any request changing multiple settings; set-role-model (set alias) and clear-role-model (clear alias) for one role; set-mode; set-limits; reset-models; reset. Work mode controls Adaptive/Single/Multi topology; child model choices are validated only against the effective connected OpenCode runtime inventory. Primary Manager/Working Manager model ownership remains OpenCode-owned.', args: { action: tool.schema.string(), role: tool.schema.string().optional(), models: tool.schema.string().optional(), work_mode: tool.schema.string().optional(), max_agents: tool.schema.number().optional(), parallelism: tool.schema.number().optional(), settings_json: tool.schema.string().optional() }, execute: async (a) => {
+    const settingsTool = tool({ description: 'Show or change OpenCode-Hi project settings through one transactional control plane. Actions: show/setup; apply with settings_json for any request changing multiple settings, including ordered allowed_models global child-model pool; set-role-model (set alias) and clear-role-model (clear alias) for one role; set-mode; set-limits; reset-models; reset. Work mode controls Adaptive/Single/Multi topology; child model choices are validated only against the effective connected OpenCode runtime inventory. Primary Manager/Working Manager model ownership remains OpenCode-owned.', args: { action: tool.schema.string(), role: tool.schema.string().optional(), models: tool.schema.string().optional(), allowed_models: tool.schema.string().optional(), work_mode: tool.schema.string().optional(), max_agents: tool.schema.number().optional(), parallelism: tool.schema.number().optional(), settings_json: tool.schema.string().optional() }, execute: async (a) => {
             const rawArgs = a?.input && typeof a.input === 'object' && !Array.isArray(a.input) ? { ...a, ...a.input } : a, action = String(rawArgs?.action ?? 'show').trim().toLowerCase();
             if (refreshModels)
                 await refreshModels('hi-settings');
             const available = getModels(), configured = state.config.routing.roleModels ?? {}, modelRows = available.map(model => ({ id: model.id, provider: model.provider ?? null, vision: model.visionCapable === true, variants: model.variants ?? [] })), reload = () => { const resolved = resolveHiConfigWithReport(state.hostConfig.hi, projectRoot); state.config = resolved.config; state.configResolution = resolved.report; return state.config; };
-            const show = () => JSON.stringify({ status: 'OK', work_mode: state.config.execution.topology === 'single-agent' ? 'single' : state.config.execution.topology === 'multi-agent' ? 'multi' : 'adaptive', execution: { max_agents: state.config.execution.maxAgents, parallelism: state.config.execution.parallelism }, models: { available: modelRows, roles: Object.fromEntries(MODEL_ROUTED_CHILD_ROLES.map(role => [role, configured[role] ?? []])) }, health: { unavailable_assignments: MODEL_ROUTED_CHILD_ROLES.flatMap(role => (configured[role] ?? []).filter(id => !runtimeModelCandidateStatus(id, available, state.config, state.hostConfig, role).ok).map(id => ({ role, id }))) }, onboarding: { pending: !hasProjectSettings(projectRoot), default_work_mode: 'adaptive', default_models: 'automatic' }, restart_required: false, note: 'Runtime truth comes from OpenCode connected models; empty role lists mean Automatic.' });
+            const show = () => JSON.stringify({ status: 'OK', primary_behavior: state.config.primaryMode, work_mode: state.config.execution.topology === 'single-agent' ? 'single' : state.config.execution.topology === 'multi-agent' ? 'multi' : 'adaptive', execution: { max_agents: state.config.execution.maxAgents, parallelism: state.config.execution.parallelism }, models: { available: modelRows, allowed: [...state.config.routing.allowedModels], roles: Object.fromEntries(MODEL_ROUTED_CHILD_ROLES.map(role => [role, configured[role] ?? []])) }, health: { unavailable_assignments: MODEL_ROUTED_CHILD_ROLES.flatMap(role => (configured[role] ?? []).filter(id => !runtimeModelCandidateStatus(id, available, state.config, state.hostConfig, role).ok).map(id => ({ role, id }))) }, onboarding: { pending: !hasProjectSettings(projectRoot), default_work_mode: 'adaptive', default_models: 'automatic' }, restart_required: false, note: 'Runtime truth comes from OpenCode connected models; empty role lists mean Automatic.' });
             if (action === 'show' || action === 'setup')
                 return show();
             if (action === 'apply') {
@@ -122,6 +122,16 @@ export function createHiToolSurface(input) {
                 }
                 if (!patch || typeof patch !== 'object' || Array.isArray(patch))
                     return JSON.stringify({ status: 'BLOCKED', reason: 'invalid-settings-patch' });
+                if (patch.allowed_models !== undefined && patch.allowed_models !== null && !Array.isArray(patch.allowed_models))
+                    return JSON.stringify({ status: 'BLOCKED', reason: 'invalid-allowed-model-pool' });
+                const allowedModels = patch.allowed_models === null ? null : patch.allowed_models === undefined ? undefined : [...new Set(patch.allowed_models.map(String).map((x) => x.trim()).filter(Boolean))];
+                if (Array.isArray(allowedModels) && !allowedModels.length)
+                    return JSON.stringify({ status: 'BLOCKED', reason: 'model-list-empty' });
+                if (Array.isArray(allowedModels)) {
+                    const rejected = allowedModels.filter((id) => !available.some(m => m.id === id));
+                    if (rejected.length)
+                        return JSON.stringify({ status: 'BLOCKED', reason: 'model-unavailable', rejected, available_models: modelRows });
+                }
                 if (patch.roles !== undefined && (!patch.roles || typeof patch.roles !== 'object' || Array.isArray(patch.roles)))
                     return JSON.stringify({ status: 'BLOCKED', reason: 'invalid-role-model-patch' });
                 const rolePatch = {};
@@ -137,20 +147,39 @@ export function createHiToolSurface(input) {
                     }
                     if (!Array.isArray(value) || !value.length)
                         return JSON.stringify({ status: 'BLOCKED', reason: 'model-list-empty', role: candidate });
-                    const ids = [...new Set(value.map(String).map(x => x.trim()).filter(Boolean))], rejected = ids.map(id => ({ id, ...runtimeModelCandidateStatus(id, available, state.config, state.hostConfig, candidate) })).filter(x => !x.ok);
+                    const ids = [...new Set(value.map(String).map(x => x.trim()).filter(Boolean))];
+                    if (Array.isArray(allowedModels) && ids.some(id => !allowedModels.includes(id)))
+                        return JSON.stringify({ status: 'BLOCKED', reason: 'role-model-outside-allowed-model-pool', role: candidate });
+                    const rejected = ids.map(id => ({ id, ...runtimeModelCandidateStatus(id, available, state.config, state.hostConfig, candidate) })).filter(x => !x.ok);
                     if (rejected.length)
                         return JSON.stringify({ status: 'BLOCKED', reason: rejected.some(x => String(x.reason).includes('vision')) ? 'role-requires-vision-capable-model' : 'model-unavailable-or-policy-rejected', role: candidate, rejected, available_models: modelRows });
                     rolePatch[candidate] = ids;
                 }
                 try {
                     const workMode = patch.work_mode === undefined ? undefined : String(patch.work_mode).trim().toLowerCase();
-                    applyProjectSettings(projectRoot, { workMode: workMode, maxAgents: patch.max_agents === undefined ? undefined : Number(patch.max_agents), parallelism: patch.parallelism === undefined ? undefined : Number(patch.parallelism), roleModels: rolePatch, resetRoleModels: patch.reset_models === true });
+                    applyProjectSettings(projectRoot, { workMode: workMode, allowedModels: allowedModels, maxAgents: patch.max_agents === undefined ? undefined : Number(patch.max_agents), parallelism: patch.parallelism === undefined ? undefined : Number(patch.parallelism), roleModels: rolePatch, resetRoleModels: patch.reset_models === true });
                     reload();
-                    return JSON.stringify({ status: 'APPLIED', work_mode: state.config.execution.topology === 'single-agent' ? 'single' : state.config.execution.topology === 'multi-agent' ? 'multi' : 'adaptive', execution: state.config.execution, role_models: state.config.routing.roleModels, restart_required: false });
+                    return JSON.stringify({ status: 'APPLIED', work_mode: state.config.execution.topology === 'single-agent' ? 'single' : state.config.execution.topology === 'multi-agent' ? 'multi' : 'adaptive', execution: state.config.execution, allowed_models: state.config.routing.allowedModels, role_models: state.config.routing.roleModels, restart_required: false });
                 }
                 catch (error) {
                     return JSON.stringify({ status: 'BLOCKED', reason: 'invalid-settings-patch', detail: String(error) });
                 }
+            }
+            if (action === 'set-model-pool') {
+                const requested = [...new Set(String(rawArgs?.allowed_models ?? rawArgs?.models ?? '').split(',').map((x) => x.trim()).filter(Boolean))];
+                if (!requested.length)
+                    return JSON.stringify({ status: 'BLOCKED', reason: 'model-list-empty' });
+                const rejected = requested.filter(id => !available.some(m => m.id === id));
+                if (rejected.length)
+                    return JSON.stringify({ status: 'BLOCKED', reason: 'model-unavailable', rejected, available_models: modelRows });
+                applyProjectSettings(projectRoot, { allowedModels: requested });
+                reload();
+                return JSON.stringify({ status: 'APPLIED', allowed_models: state.config.routing.allowedModels, restart_required: false });
+            }
+            if (action === 'clear-model-pool') {
+                applyProjectSettings(projectRoot, { allowedModels: null });
+                reload();
+                return JSON.stringify({ status: 'APPLIED', allowed_models: [], restart_required: false });
             }
             if (action === 'set-mode') {
                 const workMode = String(rawArgs?.work_mode ?? '').trim().toLowerCase();
@@ -171,14 +200,14 @@ export function createHiToolSurface(input) {
                 }
             }
             if (action === 'reset-models') {
-                applyProjectSettings(projectRoot, { resetRoleModels: true });
+                applyProjectSettings(projectRoot, { allowedModels: null, resetRoleModels: true });
                 reload();
-                return JSON.stringify({ status: 'APPLIED', role_models: state.config.routing.roleModels, restart_required: false, note: 'All child roles returned to Automatic.' });
+                return JSON.stringify({ status: 'APPLIED', allowed_models: [], role_models: state.config.routing.roleModels, restart_required: false, note: 'Global model pool and all child-role mappings returned to Automatic.' });
             }
             if (action === 'reset') {
-                applyProjectSettings(projectRoot, { workMode: 'adaptive', resetRoleModels: true });
+                applyProjectSettings(projectRoot, { workMode: 'adaptive', allowedModels: null, resetRoleModels: true });
                 reload();
-                return JSON.stringify({ status: 'APPLIED', work_mode: 'adaptive', role_models: state.config.routing.roleModels, execution: state.config.execution, restart_required: false });
+                return JSON.stringify({ status: 'APPLIED', work_mode: 'adaptive', allowed_models: [], role_models: state.config.routing.roleModels, execution: state.config.execution, restart_required: false });
             }
             const role = userFacingChildRole(rawArgs?.role);
             if (!isModelRoutedChildRole(role))
@@ -189,7 +218,7 @@ export function createHiToolSurface(input) {
                 return JSON.stringify({ status: 'APPLIED', role, role_models: state.config.routing.roleModels, restart_required: false });
             }
             if (action !== 'set-role-model' && action !== 'set')
-                return JSON.stringify({ status: 'BLOCKED', reason: 'unsupported-action', allowed_actions: ['show', 'setup', 'apply', 'set-mode', 'set-role-model', 'clear-role-model', 'reset-models', 'set-limits', 'reset'] });
+                return JSON.stringify({ status: 'BLOCKED', reason: 'unsupported-action', allowed_actions: ['show', 'setup', 'apply', 'set-model-pool', 'clear-model-pool', 'set-mode', 'set-role-model', 'clear-role-model', 'reset-models', 'set-limits', 'reset'] });
             const requested = [...new Set(String(rawArgs?.models ?? '').split(',').map((x) => x.trim()).filter(Boolean))];
             if (!requested.length)
                 return JSON.stringify({ status: 'BLOCKED', reason: 'model-list-empty' });

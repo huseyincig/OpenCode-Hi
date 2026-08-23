@@ -18,8 +18,9 @@ function providerOf(m:AvailableModel):string|undefined{return m.provider??(m.id.
 function requiredRoleCapability(role?:string):'vision'|undefined{return role==='visual-qa'?'vision':undefined}
 function roleCapabilityEligible(model:AvailableModel,role?:string):{ok:boolean;reason?:string}{const required=requiredRoleCapability(role);if(required==='vision'&&model.visionCapable!==true)return{ok:false,reason:'role-capability-missing:vision'};return{ok:true}}
 function policyFilter(available:AvailableModel[],config:HiConfig,hostConfig?:Record<string,unknown>,role?:string){
-  const explicitAllowed=new Set(config.routing.allowedProviders),deniedModels=new Set(config.routing.deniedModels),native=providerPolicyView(hostConfig),rejected:Array<{id:string;reason:string}>=[],allowed:AvailableModel[]=[]
+  const allowedModelOrder=config.routing.allowedModels??[],explicitAllowedModels=new Set(allowedModelOrder),explicitAllowed=new Set(config.routing.allowedProviders),deniedModels=new Set(config.routing.deniedModels),native=providerPolicyView(hostConfig),rejected:Array<{id:string;reason:string}>=[],allowed:AvailableModel[]=[]
   for(const m of available){const provider=providerOf(m)
+    if(explicitAllowedModels.size&&!explicitAllowedModels.has(m.id)){rejected.push({id:m.id,reason:'hi-model-not-allowed'});continue}
     if(deniedModels.has(m.id)){rejected.push({id:m.id,reason:'hi-denied-model'});continue}
     if(explicitAllowed.size&&(!provider||!explicitAllowed.has(provider))){rejected.push({id:m.id,reason:`hi-provider-not-allowed:${provider??'unknown'}`});continue}
     if(provider&&native.denied.has(provider)){rejected.push({id:m.id,reason:`host-provider-policy-deny:${provider}`});continue}
@@ -28,11 +29,13 @@ function policyFilter(available:AvailableModel[],config:HiConfig,hostConfig?:Rec
     const roleCapability=roleCapabilityEligible(m,role);if(!roleCapability.ok){rejected.push({id:m.id,reason:roleCapability.reason??'role-capability-missing'});continue}
     allowed.push(m)
   }
+  if(allowedModelOrder.length)allowed.sort((a,b)=>allowedModelOrder.indexOf(a.id)-allowedModelOrder.indexOf(b.id))
   return{allowed,rejected,nativePolicySources:native.source}
 }
 export function runtimeModelCandidateStatus(id:string,availableInput:AvailableModel[],config:HiConfig,hostConfig?:Record<string,unknown>,role?:string):RuntimeModelCandidateStatus{
   if(id==='host-default'){
     if(requiredRoleCapability(role))return{ok:false,reason:`host-default-unverified-role-capability:${requiredRoleCapability(role)}`}
+    if((config.routing.allowedModels??[]).length)return{ok:false,reason:'host-default-disallowed-by-explicit-model-allowlist'}
     if(config.routing.deniedModels.includes('host-default'))return{ok:false,reason:'hi-denied-model:host-default'}
     if(config.routing.allowedProviders.length)return{ok:false,reason:'host-default-disallowed-by-explicit-provider-allowlist'}
     const native=providerPolicyView(hostConfig);if(native.allowed.size)return{ok:false,reason:'host-default-disallowed-by-host-provider-allowlist'}
@@ -84,7 +87,7 @@ function resolution(primary:string|undefined,category:Category,available:Availab
 }
 export function resolveModel(category:Category,availableInput:AvailableModel[],config:HiConfig,explicit?:string,role?:string,hostConfig?:Record<string,unknown>,_feedback?:MissionModelFeedback):ModelResolution{
   const {allowed:available,rejected,nativePolicySources}=policyFilter(availableInput,config,hostConfig,role),reason:string[]=[]
-  if(!availableInput.length){const deniedDefault=config.routing.deniedModels.includes('host-default');if(!explicit&&!config.routing.roleModels[role??'']?.length&&!deniedDefault&&!config.routing.allowedProviders.length&&!requiredRoleCapability(role))return resolution('host-default',category,available,config,role,['runtime inventory unavailable','policy permits host-default compatibility delegation'],rejected,[],undefined,nativePolicySources)}
+  if(!availableInput.length){const deniedDefault=config.routing.deniedModels.includes('host-default');if(!explicit&&!config.routing.roleModels[role??'']?.length&&!deniedDefault&&!(config.routing.allowedModels??[]).length&&!config.routing.allowedProviders.length&&!requiredRoleCapability(role))return resolution('host-default',category,available,config,role,['runtime inventory unavailable','policy permits host-default compatibility delegation'],rejected,[],undefined,nativePolicySources)}
   const roleConfigured=role?config.routing.roleModels[role]??[]:[]
   if(roleConfigured.length){
     if(explicit&&explicit!==roleConfigured[0])reason.push(`task model override ignored because explicit role mapping is authoritative:${explicit}`)
@@ -104,6 +107,7 @@ export function resolveModel(category:Category,availableInput:AvailableModel[],c
     reason.push(availableInput.some(m=>m.id===explicit)?'explicit task model rejected by routing/provider policy':'explicit task model unavailable')
     return resolution(undefined,category,available,config,role,reason,rejected,[],undefined,nativePolicySources)
   }
+  if((config.routing.allowedModels??[]).length){const primary=available[0]?.id,fallbacks=available.slice(1,1+config.routing.maxFallbacks).map(m=>m.id);reason.push('explicit ordered global model pool','runtime available','policy allowed');return resolution(primary,category,available,config,role,reason,rejected,fallbacks,undefined,nativePolicySources)}
   const host=hostAgentModel(hostConfig,role)
   if(host?.model){
     if(available.some(m=>m.id===host.model)){

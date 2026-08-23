@@ -184,8 +184,8 @@ The package runner and the loaded OpenCode plugin are deliberately separate comm
 
 The post-`0.2.4` `dev` line adds one user-facing settings model without replacing OpenCode model ownership or Hi routing internals:
 
-- **Work Mode:** `Adaptive`, `Single`, or `Multi`. `Single` means one active agent at a time; it does not mean one fixed model.
-- **Models:** Automatic by default, or explicit ordered child-role primary/fallback choices from OpenCode's effective connected inventory.
+- **Work Mode:** `Adaptive`, `Single`, or `Multi`. `Single` is a one-agent topology and therefore uses effective `working-manager` for new missions; a saved `manager` preference is preserved for non-Single modes. It still does not mean one fixed model.
+- **Models:** Automatic by default, an optional ordered global child-model pool (`routing.allowedModels`), or explicit per-role primary/fallback choices from OpenCode's effective connected inventory. The pool narrows child eligibility without replacing OpenCode runtime inventory truth.
 - **Settings surfaces:** runtime `hi_settings` for live inventory-aware changes and `npx opencode-hi config` for deterministic project preferences. Multi-field runtime changes use one transaction and either all persist or none persist.
 - **Natural-language changes:** settings-only chat requests go directly to `hi_settings` rather than mission execution. OpenCode-style nested tool arguments are accepted for mutations, and user-facing `review` is normalized to canonical `qa-reviewer`.
 - **First use:** when no explicit project settings exist and effective models are available, one bounded onboarding hint is projected for the first pending chat session. Greetings/settings requests can open setup; material work is not interrupted and uses `Adaptive + Automatic`.

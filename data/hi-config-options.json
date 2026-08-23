@@ -413,6 +413,31 @@
       ]
     },
     {
+      "id": "config.routing-allowed-models",
+      "path": "routing.allowedModels",
+      "classification": "runtime",
+      "type": "string-list",
+      "default": [],
+      "owner": "hi-config",
+      "source_surfaces": [
+        "host-hi-config",
+        "project-routing-policy"
+      ],
+      "precedence_order": [
+        "default",
+        "host-hi-config",
+        "project-routing-policy:narrowing-compose"
+      ],
+      "validator": "bounded-model-list",
+      "safety_semantics": "constraint",
+      "runtime_consumer": "runtime/routing/model-resolver.policyFilter/resolveModel",
+      "executor_effect": "narrows child routing to one ordered explicit model pool; automatic selection uses that pool order after capability eligibility",
+      "behavioral_acceptance_refs": [
+        "project-settings-control-plane.test.mjs",
+        "provider-connected-inventory.test.mjs"
+      ]
+    },
+    {
       "id": "config.routing-allowed-providers",
       "path": "routing.allowedProviders",
       "classification": "runtime",

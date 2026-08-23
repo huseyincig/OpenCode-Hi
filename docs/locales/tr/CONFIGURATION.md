@@ -15,7 +15,7 @@ Canonical proje ayar dosyası:
 
 ## Güncel `dev`: tek Settings yüzeyi
 
-Normal kullanıcı Work Mode olarak `Adaptive`, `Single` veya `Multi` seçer. Bu seçim topology tercihidir; primary `manager` / `working-manager` model ownership'i ve provider authentication OpenCode'da kalır. Runtime `hi_settings` canlı effective connected inventory ile mode + limit + birden fazla child-role model/fallback değişikliğini tek transaction içinde doğrular. `npx opencode-hi config` aynı proje tercihlerini CLI'dan yönetir; CLI canlı provider inventory uydurmaz. `hi_role_models` compatibility surface olarak korunur. Explicit routing dosyası olmaması hata değildir: Adaptive + Automatic varsayılanı geçerlidir. İlk pending sohbet, canlı model varsa setup yönlendirmesini bir kez alır; material iş kesilmez. Runtime settings açılışı inventory refresh ettiği için sonradan bağlanan provider yeni OpenCode oturumu gerektirmeden görünür.
+Normal kullanıcı Work Mode olarak `Adaptive`, `Single` veya `Multi` seçer. Provider authentication ve primary session model ownership'i OpenCode'da kalır. `Single` tek-ajan topology olduğu için yeni missionlarda effective primary davranış `working-manager` olur; kayıtlı `manager` tercihi silinmez ve Single dışına çıkınca yeniden geçerli olur. Runtime `hi_settings` canlı effective connected inventory ile mode + limit + ordered global child-model pool (`routing.allowedModels`) + birden fazla child-role model/fallback değişikliğini tek transaction içinde doğrular. `allowedModels` yalnız child eligibility'yi daraltır; OpenCode inventory gerçeğini kopyalamaz. `npx opencode-hi config` aynı proje tercihlerini CLI'dan yönetir; CLI canlı provider inventory uydurmaz. `hi_role_models` compatibility surface olarak korunur. Explicit routing dosyası olmaması hata değildir: Adaptive + Automatic varsayılanı geçerlidir. İlk pending sohbet, canlı model varsa setup yönlendirmesini bir kez alır; material iş kesilmez. Runtime settings açılışı inventory refresh ettiği için sonradan bağlanan provider yeni OpenCode oturumu gerektirmeden görünür.
 
 > En önemli kural: `manager` ve `working-manager` primary rollerdir. Hi tarafında bu iki role model atanmaz. Primary modeli OpenCode seçer. Hi model routing yalnız altı child role uygulanır: `coder`, `architect`, `repository-explorer`, `qa-reviewer`, `security-reviewer`, `visual-qa`.
 
@@ -835,6 +835,7 @@ Aşağıdaki tablo `data/hi-config-options.json` kaynağından generated edilir.
 | `routing.roleModels` | runtime | `{}` | preference |
 | `routing.roleVariants` | runtime | `{}` | preference |
 | `routing.maxFallbacks` | runtime | `3` | capacity |
+| `routing.allowedModels` | runtime | `[]` | constraint |
 | `routing.allowedProviders` | runtime | `[]` | constraint |
 | `routing.deniedModels` | runtime | `[]` | constraint |
 | `parallel.enabled` | runtime | `true` | capacity |

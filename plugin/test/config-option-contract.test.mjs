@@ -15,7 +15,7 @@ function setPath(root,path,value){const parts=path.split('.');let cur=root;for(c
 test('canonical ConfigOption catalog validates, covers every default leaf and owns DEFAULT_HI_CONFIG',()=>{
   const options=validateConfigOptionCatalog(sourceOptions())
   assert.deepEqual(options,structuredClone(HI_CONFIG_OPTIONS))
-  assert.equal(options.filter(x=>x.classification==='runtime').length,21)
+  assert.equal(options.filter(x=>x.classification==='runtime').length,22)
   assert.equal(options.filter(x=>x.classification==='diagnostic').length,7)
   assert.equal(options.filter(x=>x.classification==='schema-marker').length,1)
   const rebuilt={};for(const option of options)setPath(rebuilt,option.path,option.defaultValue)

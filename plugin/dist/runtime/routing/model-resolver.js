@@ -9,9 +9,13 @@ function requiredRoleCapability(role) { return role === 'visual-qa' ? 'vision' :
 function roleCapabilityEligible(model, role) { const required = requiredRoleCapability(role); if (required === 'vision' && model.visionCapable !== true)
     return { ok: false, reason: 'role-capability-missing:vision' }; return { ok: true }; }
 function policyFilter(available, config, hostConfig, role) {
-    const explicitAllowed = new Set(config.routing.allowedProviders), deniedModels = new Set(config.routing.deniedModels), native = providerPolicyView(hostConfig), rejected = [], allowed = [];
+    const allowedModelOrder = config.routing.allowedModels ?? [], explicitAllowedModels = new Set(allowedModelOrder), explicitAllowed = new Set(config.routing.allowedProviders), deniedModels = new Set(config.routing.deniedModels), native = providerPolicyView(hostConfig), rejected = [], allowed = [];
     for (const m of available) {
         const provider = providerOf(m);
+        if (explicitAllowedModels.size && !explicitAllowedModels.has(m.id)) {
+            rejected.push({ id: m.id, reason: 'hi-model-not-allowed' });
+            continue;
+        }
         if (deniedModels.has(m.id)) {
             rejected.push({ id: m.id, reason: 'hi-denied-model' });
             continue;
@@ -39,12 +43,16 @@ function policyFilter(available, config, hostConfig, role) {
         }
         allowed.push(m);
     }
+    if (allowedModelOrder.length)
+        allowed.sort((a, b) => allowedModelOrder.indexOf(a.id) - allowedModelOrder.indexOf(b.id));
     return { allowed, rejected, nativePolicySources: native.source };
 }
 export function runtimeModelCandidateStatus(id, availableInput, config, hostConfig, role) {
     if (id === 'host-default') {
         if (requiredRoleCapability(role))
             return { ok: false, reason: `host-default-unverified-role-capability:${requiredRoleCapability(role)}` };
+        if ((config.routing.allowedModels ?? []).length)
+            return { ok: false, reason: 'host-default-disallowed-by-explicit-model-allowlist' };
         if (config.routing.deniedModels.includes('host-default'))
             return { ok: false, reason: 'hi-denied-model:host-default' };
         if (config.routing.allowedProviders.length)
@@ -131,7 +139,7 @@ export function resolveModel(category, availableInput, config, explicit, role, h
     const { allowed: available, rejected, nativePolicySources } = policyFilter(availableInput, config, hostConfig, role), reason = [];
     if (!availableInput.length) {
         const deniedDefault = config.routing.deniedModels.includes('host-default');
-        if (!explicit && !config.routing.roleModels[role ?? '']?.length && !deniedDefault && !config.routing.allowedProviders.length && !requiredRoleCapability(role))
+        if (!explicit && !config.routing.roleModels[role ?? '']?.length && !deniedDefault && !(config.routing.allowedModels ?? []).length && !config.routing.allowedProviders.length && !requiredRoleCapability(role))
             return resolution('host-default', category, available, config, role, ['runtime inventory unavailable', 'policy permits host-default compatibility delegation'], rejected, [], undefined, nativePolicySources);
     }
     const roleConfigured = role ? config.routing.roleModels[role] ?? [] : [];
@@ -161,6 +169,11 @@ export function resolveModel(category, availableInput, config, explicit, role, h
             return resolution(explicit, category, available, config, role, ['explicit task model', 'runtime available', 'policy allowed'], rejected, [], undefined, nativePolicySources);
         reason.push(availableInput.some(m => m.id === explicit) ? 'explicit task model rejected by routing/provider policy' : 'explicit task model unavailable');
         return resolution(undefined, category, available, config, role, reason, rejected, [], undefined, nativePolicySources);
+    }
+    if ((config.routing.allowedModels ?? []).length) {
+        const primary = available[0]?.id, fallbacks = available.slice(1, 1 + config.routing.maxFallbacks).map(m => m.id);
+        reason.push('explicit ordered global model pool', 'runtime available', 'policy allowed');
+        return resolution(primary, category, available, config, role, reason, rejected, fallbacks, undefined, nativePolicySources);
     }
     const host = hostAgentModel(hostConfig, role);
     if (host?.model) {

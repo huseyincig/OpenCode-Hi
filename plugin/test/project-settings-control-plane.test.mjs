@@ -46,3 +46,23 @@ test("reset returns all managed child roles to automatic without deleting foreig
     const doc=JSON.parse(readFileSync(routing(root),"utf8"));assert.equal(doc.execution.topology,"adaptive");assert.equal(doc.routing.roleModels.coder,undefined);assert.equal(doc.routing.roleModels.architect,undefined);assert.deepEqual(doc.routing.roleModels["future-role"],["p/future"]);assert.equal(doc.routing.modelPolicy,"adaptive")
   }finally{rmSync(root,{recursive:true,force:true})}
 })
+
+
+test("ordered allowed model pool is persisted once and narrows runtime routing",()=>{
+  const root=fixture();try{
+    const pool=["p/one","p/two","p/three"]
+    applyProjectSettings(root,{workMode:"adaptive",allowedModels:pool})
+    const doc=JSON.parse(readFileSync(routing(root),"utf8"));assert.deepEqual(doc.routing.allowedModels,pool);assert.deepEqual(doc.routing.roleModels,{})
+    const cfg=resolveHiConfigWithReport({},root).config;assert.deepEqual(cfg.routing.allowedModels,pool)
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+test("single work mode forces effective working-manager without deleting configured manager preference",()=>{
+  const root=fixture();try{
+    mkdirSync(join(root,".opencode","hi","policy"),{recursive:true})
+    writeFileSync(routing(root),JSON.stringify({schema:1,type:"hi-routing",primaryMode:"manager",execution:{topology:"single-agent",maxAgents:1,parallelism:1},routing:{}}))
+    let cfg=resolveHiConfigWithReport({},root).config;assert.equal(cfg.primaryMode,"working-manager")
+    const doc=JSON.parse(readFileSync(routing(root),"utf8"));assert.equal(doc.primaryMode,"manager","single effective override must preserve the saved non-single preference")
+    applyProjectSettings(root,{workMode:"adaptive"});cfg=resolveHiConfigWithReport({},root).config;assert.equal(cfg.primaryMode,"manager")
+  }finally{rmSync(root,{recursive:true,force:true})}
+})

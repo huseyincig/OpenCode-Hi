@@ -244,6 +244,20 @@ export declare const HI_CONFIG_OPTIONS: readonly [{
     readonly runtimeConsumer: "runtime/routing/model-resolver.resolveModel";
     readonly executorEffect: "bounds fallback candidate count";
 }, {
+    readonly id: "config.routing-allowed-models";
+    readonly path: "routing.allowedModels";
+    readonly classification: "runtime";
+    readonly type: "string-list";
+    readonly defaultValue: readonly [];
+    readonly owner: "hi-config";
+    readonly sourceSurfaces: readonly ["host-hi-config", "project-routing-policy"];
+    readonly precedenceOrder: readonly ["default", "host-hi-config", "project-routing-policy:narrowing-compose"];
+    readonly validator: "bounded-model-list";
+    readonly safetySemantics: "constraint";
+    readonly behavioralAcceptanceRefs: readonly ["project-settings-control-plane.test.mjs", "provider-connected-inventory.test.mjs"];
+    readonly runtimeConsumer: "runtime/routing/model-resolver.policyFilter/resolveModel";
+    readonly executorEffect: "narrows child routing to one ordered explicit model pool; automatic selection uses that pool order after capability eligibility";
+}, {
     readonly id: "config.routing-allowed-providers";
     readonly path: "routing.allowedProviders";
     readonly classification: "runtime";
@@ -437,6 +451,7 @@ export declare const HI_CONFIG_DEFAULTS: {
         readonly roleModels: {};
         readonly roleVariants: {};
         readonly maxFallbacks: 3;
+        readonly allowedModels: readonly [];
         readonly allowedProviders: readonly [];
         readonly deniedModels: readonly [];
     };
