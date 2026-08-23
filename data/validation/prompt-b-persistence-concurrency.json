@@ -205,7 +205,7 @@
       "owner_sha256": "c8fc05afe5032b76da7f86dd078d617b7b22093be95aafdacc08f88cf9af4050",
       "owner_anchor": "worker.result.terminal-ignored",
       "proof": "plugin/test/prompt-b-concurrency-races.test.mjs",
-      "proof_sha256": "059f6ae53ef3d56c6ca14017114a92a7a08a57e8fa92171ee804113216254690",
+      "proof_sha256": "719c2aa99adedeec60d26ade0ed05eb1a4f02fe8cdd2ae167e28dba0bcf3dab5",
       "proof_anchor": "simultaneous distinct task completions reconcile without double-closing"
     },
     {
@@ -215,7 +215,7 @@
       "owner_sha256": "0c256968797ba957046f1e1745d6b30a73c84d3eecae157b6628290dc97ddaa7",
       "owner_anchor": "mission.execution.evidence.fresh=",
       "proof": "plugin/test/prompt-b-concurrency-races.test.mjs",
-      "proof_sha256": "059f6ae53ef3d56c6ca14017114a92a7a08a57e8fa92171ee804113216254690",
+      "proof_sha256": "719c2aa99adedeec60d26ade0ed05eb1a4f02fe8cdd2ae167e28dba0bcf3dab5",
       "proof_anchor": "evidence/mutation race ordering is deterministic"
     },
     {
@@ -225,17 +225,17 @@
       "owner_sha256": "c8fc05afe5032b76da7f86dd078d617b7b22093be95aafdacc08f88cf9af4050",
       "owner_anchor": "worker.result.terminal-ignored",
       "proof": "plugin/test/prompt-b-concurrency-races.test.mjs",
-      "proof_sha256": "059f6ae53ef3d56c6ca14017114a92a7a08a57e8fa92171ee804113216254690",
+      "proof_sha256": "719c2aa99adedeec60d26ade0ed05eb1a4f02fe8cdd2ae167e28dba0bcf3dab5",
       "proof_anchor": "cancellation wins over a late different worker result"
     },
     {
       "section": 17,
       "invariant": "permission-decision-race",
       "owner": "plugin/src/runtime/application/runtime-event-controller.ts",
-      "owner_sha256": "acd0cd4bfac1805154035bbc7099b089c59f73b43d7e283c1456f651a7bbac1a",
+      "owner_sha256": "b6cf95f3f9141a4989b2f43a6ded5cba6b20a18970a1aea51993f5d28b11d65e",
       "owner_anchor": "permission.stale-ask-ignored",
       "proof": "plugin/test/prompt-b-concurrency-races.test.mjs",
-      "proof_sha256": "059f6ae53ef3d56c6ca14017114a92a7a08a57e8fa92171ee804113216254690",
+      "proof_sha256": "719c2aa99adedeec60d26ade0ed05eb1a4f02fe8cdd2ae167e28dba0bcf3dab5",
       "proof_anchor": "permission reply-before-ask reorder cannot create a phantom pending permission"
     },
     {
@@ -255,7 +255,7 @@
       "owner_sha256": "87772dc2b33303d573a6ed8e1ad973dfafc8c3396788efc1ef19107d741a2b4c",
       "owner_anchor": "this.#queue.splice(i--,1)",
       "proof": "plugin/test/prompt-b-concurrency-races.test.mjs",
-      "proof_sha256": "059f6ae53ef3d56c6ca14017114a92a7a08a57e8fa92171ee804113216254690",
+      "proof_sha256": "719c2aa99adedeec60d26ade0ed05eb1a4f02fe8cdd2ae167e28dba0bcf3dab5",
       "proof_anchor": "bounded task queue is FIFO among runnable workers"
     },
     {
@@ -265,7 +265,7 @@
       "owner_sha256": "87772dc2b33303d573a6ed8e1ad973dfafc8c3396788efc1ef19107d741a2b4c",
       "owner_anchor": "while(progress)",
       "proof": "plugin/test/prompt-b-concurrency-races.test.mjs",
-      "proof_sha256": "059f6ae53ef3d56c6ca14017114a92a7a08a57e8fa92171ee804113216254690",
+      "proof_sha256": "719c2aa99adedeec60d26ade0ed05eb1a4f02fe8cdd2ae167e28dba0bcf3dab5",
       "proof_anchor": "later entries are not starved"
     },
     {
@@ -275,7 +275,7 @@
       "owner_sha256": "970d898efa78774f4ebfe8692959243b2bca968c50ab5ef28970d407d5fbe16b",
       "owner_anchor": "continuation_failure_count",
       "proof": "plugin/test/continuation-evaluator-wide-batch.test.mjs",
-      "proof_sha256": "b9849f3830f9af1f2860bdcb015346378c55434e89641033fb935f45843767f1",
+      "proof_sha256": "ae6d45171a211818e340da7713aab29106caffcef57a067c274de80174e98827",
       "proof_anchor": "continuation transport failures use a separate bounded runtime retry budget"
     },
     {

@@ -125,7 +125,7 @@
     {
       "invariant": "idle-does-not-reclassify-open-decision",
       "owner": "plugin/src/runtime/application/runtime-event-controller.ts",
-      "owner_sha256": "acd0cd4bfac1805154035bbc7099b089c59f73b43d7e283c1456f651a7bbac1a",
+      "owner_sha256": "b6cf95f3f9141a4989b2f43a6ded5cba6b20a18970a1aea51993f5d28b11d65e",
       "owner_anchor": "m.authority.human_decision?.status!=='OPEN'",
       "proof": "plugin/test/p3-process-control-integration.test.mjs",
       "proof_sha256": "daf4d4f0aec9c29c01af306ff9ecce149811cdf9469bda8881e7378f14dc11dc",

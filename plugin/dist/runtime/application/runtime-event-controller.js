@@ -17,11 +17,21 @@ function resetCompactionSensitiveRecovery(m, sessionID, workerID) {
         m.continuation.pending_nudge = undefined;
     appendLedger(m, 'session.compacted', { worker_id: workerID, payload: { source: 'native-event', session_id: sessionID, stagnation_reset_from: priorStagnation, recovery_history_cleared: priorRecoveryCount, stagnation_nudge_cleared: stagnationNudgeCleared, semantic_progress_preserved: true } });
 }
+function nativePermissionKey(sessionID, permissionID) { return `${sessionID}\0${permissionID}`; }
 export class RuntimeEventController {
     deps;
     constructor(deps) {
         this.deps = deps;
     }
+    clearNativePermissionsForSession(sessionID) { const prefix = `${sessionID}\0`; let cleared = 0; for (const key of this.deps.pendingNativePermissions.keys())
+        if (key.startsWith(prefix)) {
+            this.deps.pendingNativePermissions.delete(key);
+            cleared++;
+        } return cleared; }
+    clearNativePermissionsForMission(m) { let cleared = this.clearNativePermissionsForSession(m.identity.session_id); for (const worker of m.execution.workers)
+        if (worker.session_id)
+            cleared += this.clearNativePermissionsForSession(worker.session_id); return cleared; }
+    clearAllNativePermissions() { this.deps.pendingNativePermissions.clear(); }
     async handle(ev) {
         const { state, host, services, projectAuthority, pendingNativePermissions, projectRoot } = this.deps;
         const { store, persistence, tasks, processRuntime, workspaceRuntime, eventSink, scopedStores } = services;
@@ -65,33 +75,23 @@ export class RuntimeEventController {
         if (!sid)
             return;
         const nativePermissionID = ev.permission?.id;
-        if (ev.kind === 'permission-asked' && nativePermissionID)
-            pendingNativePermissions.set(nativePermissionID, ev.permission?.patterns ?? []);
-        if (ev.kind === 'permission-replied' && nativePermissionID) {
-            const patterns = [...new Set([...pendingNativePermissions.get(nativePermissionID) ?? [], ...(ev.permission?.patterns ?? [])])];
-            if (ev.permission?.reply === 'always') {
-                const cls = authorityClassForPatterns(patterns);
-                if (cls) {
-                    projectAuthority.grant(cls);
-                    await host.log('info', 'Hi project authority persisted from native always approval', { authority_class: cls, patterns });
-                }
-            }
-            pendingNativePermissions.delete(nativePermissionID);
-        }
         const child = tasks.resolveChildCallback(sid);
         const childMission = child ? store.get(child.parent_session_id) : undefined;
         const mission = childMission ?? store.get(sid);
         if (mission && child?.status === 'cancelled') {
+            this.clearNativePermissionsForSession(sid);
             appendLedger(mission, 'worker.callback.after-cancel-ignored', { worker_id: child.id, payload: { session_id: sid, event: ev.rawType } });
             persistence.save(store.all());
             return;
         }
         if (child && mission && tasks.childCallbackDisposition(mission, child) === 'stale-mission') {
+            this.clearNativePermissionsForSession(sid);
             appendLedger(mission, 'worker.callback.stale-mission-ignored', { worker_id: child?.id, payload: { worker_mission_id: child?.parent_mission_id, mission_id: mission.identity.mission_id, worker_generation: child?.generation_at_spawn, mission_generation: mission.continuation.generation, event: ev.rawType } });
             persistence.save(store.all());
             return;
         }
         if (mission && (mission.continuation.user_interrupted || mission.identity.status === 'stopped')) {
+            this.clearNativePermissionsForMission(mission);
             appendLedger(mission, 'runtime.event.after-user-stop-ignored', { worker_id: child?.id, payload: { session_id: sid, event: ev.rawType } });
             persistence.save(store.all());
             return;
@@ -100,15 +100,30 @@ export class RuntimeEventController {
         // publish session.diff/file/idle/status callbacks after the tool that canonically completed the mission.
         // A new user message starts a fresh mission for this session, so late callbacks must not retroactively
         // reopen obligations or mutate finalized evidence. session-deleted remains lifecycle cleanup below.
-        if (mission?.identity.status === 'completed' && ev.kind !== 'session-deleted')
+        if (mission?.identity.status === 'completed' && ev.kind !== 'session-deleted') {
+            this.clearNativePermissionsForMission(mission);
             return;
+        }
+        if (ev.kind === 'permission-asked' && nativePermissionID && mission)
+            pendingNativePermissions.set(nativePermissionKey(sid, nativePermissionID), ev.permission?.patterns ?? []);
+        if (ev.kind === 'permission-replied' && nativePermissionID && mission) {
+            const key = nativePermissionKey(sid, nativePermissionID), patterns = [...new Set([...(pendingNativePermissions.get(key) ?? []), ...(ev.permission?.patterns ?? [])])];
+            if (ev.permission?.reply === 'always') {
+                const cls = authorityClassForPatterns(patterns);
+                if (cls) {
+                    projectAuthority.grant(cls);
+                    await host.log('info', 'Hi project authority persisted from native always approval', { authority_class: cls, patterns });
+                }
+            }
+            pendingNativePermissions.delete(key);
+        }
         if (ev.kind === 'permission-asked' && mission) {
             const pid = ev.permission?.id;
             mission.authority.pending_permission_ids ??= [];
             const alreadyReplied = Boolean(pid && mission.execution.ledger.some(e => e.type === 'permission.replied' && e.payload?.permission_id === pid || e.type === 'permission.duplicate-ignored' && e.payload?.permission_id === pid && e.payload?.event === 'replied'));
             if (alreadyReplied) {
                 if (pid)
-                    pendingNativePermissions.delete(pid);
+                    pendingNativePermissions.delete(nativePermissionKey(sid, pid));
                 appendLedger(mission, 'permission.stale-ask-ignored', { worker_id: child?.id, payload: { session_id: sid, permission_id: pid, reason: 'reply-observed-first' } });
             }
             else if (!pid || !mission.authority.pending_permission_ids.includes(pid)) {
@@ -202,6 +217,7 @@ export class RuntimeEventController {
                 return;
             }
             if (ev.kind === 'session-deleted') {
+                this.clearNativePermissionsForSession(sid);
                 const detail = String(ev.properties?.error?.message ?? ev.properties?.error?.data?.message ?? ev.rawType);
                 await tasks.cleanupBrowserForTask(m, child.task_id, child.id);
                 tasks.fail(m, child.id, detail);
@@ -247,6 +263,7 @@ export class RuntimeEventController {
         if (ev.kind === 'session-deleted') {
             const parent = store.get(sid);
             if (parent) {
+                this.clearNativePermissionsForMission(parent);
                 store.stop(sid, 'parent-session-deleted');
                 await processRuntime.stopMission(parent);
                 await tasks.cancelAll(parent);
@@ -254,6 +271,8 @@ export class RuntimeEventController {
                     await workspaceRuntime.cleanupMission(parent);
                 persistence.save(store.all());
             }
+            else
+                this.clearNativePermissionsForSession(sid);
             return;
         }
         if (ev.kind === 'todo-updated') {

@@ -17,7 +17,7 @@
     {
       "invariant": "semantic-core-sdk-confinement",
       "owner": "plugin/src/runtime/application/runtime-event-controller.ts",
-      "owner_sha256": "acd0cd4bfac1805154035bbc7099b089c59f73b43d7e283c1456f651a7bbac1a",
+      "owner_sha256": "b6cf95f3f9141a4989b2f43a6ded5cba6b20a18970a1aea51993f5d28b11d65e",
       "owner_anchor": "import type { HostEvent,HostPort } from '../host/port.js'",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",
@@ -26,7 +26,7 @@
     {
       "invariant": "normalized-event-boundary",
       "owner": "plugin/src/opencode/open-code-hooks.ts",
-      "owner_sha256": "ef31c58f9ae5874350446ac32c7a339562cb71b084d5313623255093842af60d",
+      "owner_sha256": "2628f121a57a82df6f1744825859cfeff2a95beb24fa2f1c49a42af8b0ebb924",
       "owner_anchor": "eventController.handle(normalizeOpenCodeEvent(input?.event??input))",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",

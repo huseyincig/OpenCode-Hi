@@ -63,3 +63,15 @@ test('PROMPT B bounded task queue is FIFO among runnable workers and later entri
   rt.applyResult(m,second.worker_id,done('second done'));await new Promise(r=>setImmediate(r))
   assert.equal(m.execution.workers.find(w=>w.id===third.worker_id).status,'busy');assert.equal(rt.queueDepth(),0)
 })
+
+
+test('late native permission events after STOP cannot retain patterns or persist project authority',async()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'stopped-permission-owner','permission stop fence'),pending=new Map(),grants=[]
+  m.identity.status='stopped';m.continuation.user_interrupted=true
+  const services={store,background:{},persistence:{save:()=>{}},tasks:{resolveChildCallback:()=>undefined},teams:{expireMission:async()=>{},reconcileMission:async()=>{}},processRuntime:{},eventSink:()=>{},scopedStores:{}}
+  const controller=new RuntimeEventController({state:{config:DEFAULT_HI_CONFIG},host:{refreshRuntimeInventory:async()=>{},log:async()=>{},client:{}},services,projectAuthority:{grant:cls=>grants.push(cls)},pendingNativePermissions:pending,projectRoot:process.cwd()})
+  await controller.handle(normalizeOpenCodeEvent({type:'permission.asked',properties:{id:'perm-after-stop',sessionID:m.identity.session_id,patterns:['git push origin *']}}))
+  assert.equal(pending.has('perm-after-stop'),false,'STOP must fence process-local permission pattern retention')
+  await controller.handle(normalizeOpenCodeEvent({type:'permission.replied',properties:{id:'perm-after-stop',sessionID:m.identity.session_id,response:'always'}}))
+  assert.deepEqual(grants,[],'late native always reply after STOP must not persist Hi project authority')
+})

@@ -75,8 +75,11 @@ export function createOpenCodeHooks(input) {
             await createToolAfterHook(store, background, eventSink, projectRoot, workingDirectory)(input, output);
         }
         finally {
-            for (const m of store.all())
+            for (const m of store.all()) {
+                if (['stopped', 'completed'].includes(m.identity.status))
+                    eventController.clearNativePermissionsForMission(m);
                 syncHumanDecisionTransport(m.authority.human_decision, humanDecisionTransport);
+            }
             persistence.save(store.all());
         } },
         dispose: async () => { try {
@@ -86,6 +89,7 @@ export function createOpenCodeHooks(input) {
                     await processRuntime.stopMission(m);
                     await tasks.cancelAll(m);
                 }
+            eventController.clearAllNativePermissions();
             const browserDisposable = browserExecutor;
             if (browserDisposable.dispose)
                 await browserDisposable.dispose();

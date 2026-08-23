@@ -2,6 +2,7 @@ import type { PluginRuntimeState } from './hi-tool-surface.js';
 import type { HostEvent, HostPort } from '../host/port.js';
 import type { createRuntimeServices } from './runtime-services.js';
 import type { ProjectAuthorityStore } from '../safety/project-authority.js';
+import type { MissionState } from '../mission/types.js';
 export declare class RuntimeEventController {
     private readonly deps;
     constructor(deps: {
@@ -12,5 +13,8 @@ export declare class RuntimeEventController {
         pendingNativePermissions: Map<string, string[]>;
         projectRoot: string;
     });
+    clearNativePermissionsForSession(sessionID: string): number;
+    clearNativePermissionsForMission(m: MissionState): number;
+    clearAllNativePermissions(): void;
     handle(ev: HostEvent): Promise<void>;
 }
