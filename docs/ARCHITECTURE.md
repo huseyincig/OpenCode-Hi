@@ -137,7 +137,7 @@ Generic “yes”, continuation, a Methodology, a browser click, or a host permi
 
 ## Evidence, verification and completion
 
-Model prose, WorkerResult, Project Intelligence, Context summaries and BrowserObservation are not proof by themselves.
+Model prose, WorkerResult, Project Intelligence, Context summaries and BrowserObservation are not proof by themselves. Diagnosis follows the same rule: parent prose cannot synthesize passed diagnostic evidence. `hi_direct_progress` may close a diagnosis analysis obligation only from a structured falsifiable hypothesis (`hypothesis`, `falsifier`, `SUPPORTED|FALSIFIED|INCONCLUSIVE`) bound to exact current canonical Evidence IDs. `SUPPORTED` requires every referenced observation to be fresh, terminal, and applicable; `FALSIFIED` and `INCONCLUSIVE` remain durable Mission-ledger history while analysis stays open. This is evidence support, not a probabilistic or intervention-causal confirmation, so generic task/model/provider/environment failure never becomes harmful methodology credit.
 
 Evidence is typed, source/scoped and freshness-aware. `VerificationEnvelope` derives required check state from admissible Evidence. Mutation can invalidate affected proof.
 

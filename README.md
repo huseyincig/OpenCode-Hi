@@ -78,6 +78,7 @@ Hi adds deterministic semantics around native AI execution:
 - exact Authority and monotonic host Permission boundaries;
 - revision-bound structured user Constraint/Decision atoms with explicit supersession and fail-closed mutation enforcement;
 - advisory counterfactual decision-stability diagnostics that expose local semantic sensitivity without pretending to be probabilistic confidence or routing authority;
+- evidence-bound falsifiable diagnosis hypotheses; root-cause prose cannot self-certify completion or create harmful learning credit;
 - bounded Mission runtime projection, durable context artifacts, TypeScript Semantic Context, and evidence-backed project methodology learning with confidence/freshness-gated admission;
 - lazy methodology/skill discovery and loading;
 - structured Evidence, VerificationEnvelope and deterministic completion;

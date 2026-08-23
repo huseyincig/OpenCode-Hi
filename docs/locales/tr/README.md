@@ -26,6 +26,7 @@ OpenCode-Hi native AI execution çevresine deterministic ürün semantiği ekler
 - exact Authority ve monotonic host Permission sınırları;
 - explicit supersession ve fail-closed mutation enforcement taşıyan revision-bound structured kullanıcı Constraint/Decision atomları;
 - olasılıksal confidence veya routing authority iddiası üretmeden local semantic sensitivity gösteren advisory counterfactual decision-stability diagnostics;
+- kanıta bağlı falsifiable diagnosis hipotezleri; root-cause prose tek başına completion veya harmful learning credit üretemez;
 - bounded Mission runtime projection, durable context artifactları, TypeScript Semantic Context ve confidence/freshness gate'li evidence-backed project methodology learning;
 - lazy Methodology/skill discovery ve loading;
 - structured Evidence, VerificationEnvelope ve deterministic completion;

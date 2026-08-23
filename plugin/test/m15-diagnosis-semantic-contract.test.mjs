@@ -35,20 +35,36 @@ test('M15 diagnosis is read-only and local low-risk diagnosis stays parent-direc
   assert.equal(d.topology.mode,'single-agent')
 })
 
-test('M15 diagnosis parent progress emits canonical diagnostic evidence and completes without implementation mutation or passing-test obligation',async()=>{
+test('M15 diagnosis parent progress requires an evidence-bound falsifiable hypothesis and completes without implementation mutation',async()=>{
   const hooks=await HiPlugin({directory:process.cwd(),worktree:process.cwd(),project:{},client:client()});await hooks.config({})
   const sid='diag-direct';await hooks['chat.message']({sessionID:sid,message:{role:'user',parts:[{type:'text',text:'Investigate the root cause only; do not fix it.'}]}},{parts:[]})
   const assessed=await assessPluginMission(hooks,sid,diagnosis);assert.equal(assessed.task_kind,'diagnosis')
-  const out=JSON.parse(await hooks.tool.hi_direct_progress.execute({obligation_id:'o-analysis',summary:'Root cause proven at the truncation expression and UTF-16 surrogate boundary.'},{sessionID:sid}))
+  const proseOnly=JSON.parse(await hooks.tool.hi_direct_progress.execute({obligation_id:'o-analysis',summary:'Root cause proven at the truncation expression and UTF-16 surrogate boundary.'},{sessionID:sid}));assert.equal(proseOnly.status,'EVIDENCE_REQUIRED');assert.equal(proseOnly.reason,'diagnosis-hypothesis-contract-required')
+  await hooks['tool.execute.after']({sessionID:sid,tool:'bash',args:{command:'node --test packages/core/test/ripgrep.test.ts'}},{stdout:'1 pass\n0 fail',metadata:{exit:0}})
+  const before=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:sid})),proof=before.evidence.items.find(e=>e.kind==='targeted-tests');assert.ok(proof?.id);assert.equal(proof.outcome,'passed')
+  const out=JSON.parse(await hooks.tool.hi_direct_progress.execute({obligation_id:'o-analysis',summary:'Root cause supported at the truncation expression and UTF-16 surrogate boundary.',hypothesis:'The truncation expression splits a UTF-16 surrogate pair.',falsifier:'A focused reproduction crossing the surrogate boundary succeeds without splitting the pair.',diagnostic_outcome:'SUPPORTED',diagnostic_evidence_refs:proof.id},{sessionID:sid}))
   assert.equal(out.status,'RECORDED');assert.equal(out.completion_ready,true);assert.deepEqual(out.remaining_obligations,[])
   await hooks.event({event:{type:'session.idle',properties:{sessionID:sid}}})
   const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:sid}))
   assert.equal(ledger.status,'completed')
-  assert.ok(ledger.events.some(e=>e.type==='verification.pass'&&e.payload?.kind==='diagnostic-evidence'))
+  assert.ok(ledger.events.some(e=>e.type==='diagnosis.hypothesis-assessed'&&e.payload?.outcome==='SUPPORTED'&&e.payload?.evidence_refs?.includes(proof.id)))
+  assert.ok(!ledger.evidence.items.some(e=>e.source==='parent:direct-diagnosis'),'parent prose must not synthesize passed diagnostic evidence')
   assert.ok(!ledger.obligations.some(o=>o.kind==='implementation'||o.kind==='verification'))
   await hooks.dispose?.()
 })
 
+
+
+test('M15 falsified diagnosis hypothesis is retained as evidence-bound history but cannot close analysis',async()=>{
+  const hooks=await HiPlugin({directory:process.cwd(),worktree:process.cwd(),project:{},client:client()});await hooks.config({});const sid='diag-falsified'
+  await hooks['chat.message']({sessionID:sid,message:{role:'user',parts:[{type:'text',text:'Investigate the root cause only.'}]}},{parts:[]});await assessPluginMission(hooks,sid,diagnosis)
+  await hooks['tool.execute.after']({sessionID:sid,tool:'bash',args:{command:'node --test packages/core/test/ripgrep.test.ts'}},{stdout:'1 pass\n0 fail',metadata:{exit:0}})
+  const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:sid})),proof=ledger.evidence.items.find(e=>e.kind==='targeted-tests');assert.ok(proof?.id)
+  const out=JSON.parse(await hooks.tool.hi_direct_progress.execute({obligation_id:'o-analysis',summary:'The candidate cause was refuted.',hypothesis:'The regex branch alone causes the failure.',falsifier:'The focused case passes while that branch remains active.',diagnostic_outcome:'FALSIFIED',diagnostic_evidence_refs:proof.id},{sessionID:sid}))
+  assert.equal(out.status,'EVIDENCE_REQUIRED');assert.equal(out.reason,'diagnosis-hypothesis-not-supported');assert.equal(out.outcome,'FALSIFIED');assert.deepEqual(out.remaining_obligations,[{id:'o-analysis',kind:'analysis'}])
+  const after=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:sid}));assert.ok(after.events.some(e=>e.type==='diagnosis.hypothesis-assessed'&&e.payload?.outcome==='FALSIFIED'));assert.equal(after.obligations.find(o=>o.id==='o-analysis').status,'open')
+  await hooks.dispose?.()
+})
 
 test('M15 diagnosis owns root-cause semantics and suppresses redundant intent.debugging methodology activation',()=>{
   const store=new MissionStore(),m=store.start('diag-method','diagnose root cause only')

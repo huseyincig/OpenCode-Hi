@@ -16,6 +16,7 @@ import { registerTemporaryMutation, resolveRollback } from '../mutations/tempora
 import { markMutation, normalizeProjectPath, addEvidence } from '../evidence/evidence-runtime.js';
 import { evidenceProducerAttemptForWorker } from '../evidence/applicability.js';
 import { assessChangedFileOwnership, assessRequiredTargetCoverage } from '../task/diff-ownership.js';
+import { assessDiagnosticHypothesis, DIAGNOSTIC_HYPOTHESIS_OUTCOMES } from '../diagnosis/hypothesis.js';
 import { replanVerificationForChangedSurface, verificationEnvelopeFor, verificationSatisfied } from '../verification/policy.js';
 import { collectRepoContext } from '../intent/repo-context.js';
 import { bindParentMethodologyNeeds } from '../methodology/activation.js';
@@ -293,114 +294,149 @@ export function createHiToolSurface(input) {
             }
             return `Native revert failed: ${detail}`;
         } } });
-    const directProgressTool = tool({ description: 'Record one bounded parent/Working-Manager direct obligation. obligation_id must be the exact ID only (for example o-analysis), never ID+summary. Call separately for each completed obligation. scope_expansions, when needed, is a JSON array of {file,necessary,reason}. The result reports exact remaining obligations/methodology needs. Implementation requires owned mutation; direct review requires fresh review input. Does not bypass verification/review gates.', args: { summary: tool.schema.string(), obligation_id: tool.schema.string().optional(), scope_expansions: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
-            return 'No active Hi mission'; const missionRoot = m.identity.intent.scope === 'local' ? (workingDirectory ?? projectRoot) : projectRoot; if (m.identity.status === 'completed')
-            return JSON.stringify({ status: 'ALREADY_COMPLETED', completion_ready: true, mission_status: 'completed', next: 'STOP', verification_required: false, remaining_obligations: [], methodology_needs: [] }); const rawArgs = a?.input && typeof a.input === 'object' && !Array.isArray(a.input) ? { ...a, ...a.input } : a, requested = rawArgs?.obligation_id ? String(rawArgs.obligation_id) : undefined, requestedOpen = requested ? m.execution.obligations.find(x => x.id === requested && x.status === 'open') : undefined, candidates = m.execution.obligations.filter(x => ['analysis', 'implementation', 'review'].includes(x.kind) && x.status === 'open'), exact = requested ? candidates.find(x => x.id === requested) : undefined, requestedVerificationKinds = requestedOpen?.kind === 'verification' ? [...(requestedOpen.requiredEvidence ?? m.execution.verification_policy.requiredKinds)].map(x => String(x).toLowerCase().trim()) : [], directReviewAlias = requestedOpen?.kind === 'verification' && !m.execution.verification_policy.requireReview && requestedVerificationKinds.length === 1 && requestedVerificationKinds[0] === 'review-evidence' && m.execution.evidence.items.some(e => e.kind === 'review-input' && !e.invalidated_at) ? candidates.find(x => x.kind === 'review') : undefined, semanticSingle = requested && !requested.startsWith('o-') && candidates.length === 1 ? candidates[0] : undefined, o = exact ?? directReviewAlias ?? semanticSingle ?? (!requested && candidates.length === 1 ? candidates[0] : undefined), summary = String(rawArgs?.summary ?? '').trim().slice(0, 1000), candidateIDs = candidates.map(x => x.id); if (!summary)
-            return 'BLOCKED: direct progress requires a non-empty bounded summary'; if (requestedOpen?.kind === 'verification' && !directReviewAlias) {
-            const envelope = verificationEnvelopeFor(m, requestedOpen.id, missionRoot), missing = envelope.checks.filter(check => check.result !== 'passed').map(check => check.kind);
-            appendLedger(m, 'verification.direct-progress-rejected', { payload: { obligation: requestedOpen.id, missing, reason: 'verification-is-evidence-owned' } });
-            return JSON.stringify({ status: 'EVIDENCE_REQUIRED', reason: 'verification-is-evidence-owned', obligation_id: requestedOpen.id, required_kinds: [...requestedOpen.requiredEvidence ?? m.execution.verification_policy.requiredKinds], missing_kinds: missing, checks: envelope.checks });
-        } if (requested && !requestedOpen && requested.startsWith('o-'))
-            return JSON.stringify({ status: 'BLOCKED', reason: 'unknown-obligation-id', requested, candidate_ids: candidateIDs }); if (requestedOpen && !exact && !directReviewAlias)
-            return JSON.stringify({ status: 'BLOCKED', reason: `direct-progress-does-not-own-${requestedOpen.kind}`, requested, candidate_ids: candidateIDs }); if (!o)
-            return candidates.length > 1 ? JSON.stringify({ status: 'BLOCKED', reason: 'obligation-id-required', candidate_ids: candidateIDs }) : 'No open direct-progress obligation'; if (o.kind === 'review' && m.execution.verification_policy.requireReview)
-            return 'BLOCKED: independent reviewer required; direct parent progress cannot close this review obligation'; let directFiles = [...m.vcs.changed_files], currentSource = 'historical-write-events'; if (o.kind === 'implementation') {
-            if (!primaryRoleCanDirectImplementation(m.execution.primary_mode))
-                return `BLOCKED: primary role ${m.execution.primary_mode} lacks canonical repository write authority for direct implementation progress`;
-            if (!m.execution.evidence.last_mutation_at)
-                return 'BLOCKED: no observed mutation for direct implementation progress';
-            if (!m.vcs.changed_files.length) {
-                const recovered = inspectCurrentGitChangedFiles(missionRoot);
-                if (recovered === undefined)
-                    return 'BLOCKED: mutation observed but changed-file surface is unknown; use file-aware native tools or wait for native file/diff evidence before recording direct progress';
-                if (recovered.length) {
-                    directFiles = [...new Set(recovered)];
-                    m.vcs.changed_files = [...new Set([...m.vcs.changed_files, ...directFiles])];
-                    currentSource = 'git-status-recovery';
-                    appendLedger(m, 'implementation.changed-surface-recovered', { payload: { source: 'current-git-status', files: directFiles.slice(0, 30) } });
-                }
-                else
-                    return 'BLOCKED: mutation observed but no current Git changed surface exists; reconcile the mutation before recording direct progress';
+    const directProgressTool = tool({ description: 'Record one bounded parent/Working-Manager direct obligation. obligation_id must be the exact ID only (for example o-analysis), never ID+summary. Call separately for each completed obligation. scope_expansions, when needed, is a JSON array of {file,necessary,reason}. The result reports exact remaining obligations/methodology needs. Implementation requires owned mutation; direct review requires fresh review input. Does not bypass verification/review gates. Diagnosis analysis additionally requires a falsifiable hypothesis, falsifier, diagnostic_outcome, and canonical diagnostic_evidence_refs; prose alone cannot prove root cause.', args: { summary: tool.schema.string(), obligation_id: tool.schema.string().optional(), scope_expansions: tool.schema.string().optional(), hypothesis: tool.schema.string().optional(), falsifier: tool.schema.string().optional(), diagnostic_outcome: tool.schema.string().optional(), diagnostic_evidence_refs: tool.schema.string().optional() }, execute: async (a, c) => {
+            const m = store.get(c?.sessionID);
+            if (!m)
+                return 'No active Hi mission';
+            const missionRoot = m.identity.intent.scope === 'local' ? (workingDirectory ?? projectRoot) : projectRoot;
+            if (m.identity.status === 'completed')
+                return JSON.stringify({ status: 'ALREADY_COMPLETED', completion_ready: true, mission_status: 'completed', next: 'STOP', verification_required: false, remaining_obligations: [], methodology_needs: [] });
+            const rawArgs = a?.input && typeof a.input === 'object' && !Array.isArray(a.input) ? { ...a, ...a.input } : a, requested = rawArgs?.obligation_id ? String(rawArgs.obligation_id) : undefined, requestedOpen = requested ? m.execution.obligations.find(x => x.id === requested && x.status === 'open') : undefined, candidates = m.execution.obligations.filter(x => ['analysis', 'implementation', 'review'].includes(x.kind) && x.status === 'open'), exact = requested ? candidates.find(x => x.id === requested) : undefined, requestedVerificationKinds = requestedOpen?.kind === 'verification' ? [...(requestedOpen.requiredEvidence ?? m.execution.verification_policy.requiredKinds)].map(x => String(x).toLowerCase().trim()) : [], directReviewAlias = requestedOpen?.kind === 'verification' && !m.execution.verification_policy.requireReview && requestedVerificationKinds.length === 1 && requestedVerificationKinds[0] === 'review-evidence' && m.execution.evidence.items.some(e => e.kind === 'review-input' && !e.invalidated_at) ? candidates.find(x => x.kind === 'review') : undefined, semanticSingle = requested && !requested.startsWith('o-') && candidates.length === 1 ? candidates[0] : undefined, o = exact ?? directReviewAlias ?? semanticSingle ?? (!requested && candidates.length === 1 ? candidates[0] : undefined), summary = String(rawArgs?.summary ?? '').trim().slice(0, 1000), candidateIDs = candidates.map(x => x.id);
+            if (!summary)
+                return 'BLOCKED: direct progress requires a non-empty bounded summary';
+            if (requestedOpen?.kind === 'verification' && !directReviewAlias) {
+                const envelope = verificationEnvelopeFor(m, requestedOpen.id, missionRoot), missing = envelope.checks.filter(check => check.result !== 'passed').map(check => check.kind);
+                appendLedger(m, 'verification.direct-progress-rejected', { payload: { obligation: requestedOpen.id, missing, reason: 'verification-is-evidence-owned' } });
+                return JSON.stringify({ status: 'EVIDENCE_REQUIRED', reason: 'verification-is-evidence-owned', obligation_id: requestedOpen.id, required_kinds: [...requestedOpen.requiredEvidence ?? m.execution.verification_policy.requiredKinds], missing_kinds: missing, checks: envelope.checks });
             }
-            let expansions = [];
-            if (rawArgs.scope_expansions) {
-                try {
-                    const parsed = JSON.parse(String(rawArgs.scope_expansions));
-                    if (!Array.isArray(parsed))
-                        throw new Error('scope_expansions must be a JSON array');
-                    expansions = parsed.filter(x => x && typeof x === 'object').map(x => ({ file: String(x.file ?? ''), reason: String(x.reason ?? ''), necessary: x.necessary === true })).filter(x => x.file);
+            if (requested && !requestedOpen && requested.startsWith('o-'))
+                return JSON.stringify({ status: 'BLOCKED', reason: 'unknown-obligation-id', requested, candidate_ids: candidateIDs });
+            if (requestedOpen && !exact && !directReviewAlias)
+                return JSON.stringify({ status: 'BLOCKED', reason: `direct-progress-does-not-own-${requestedOpen.kind}`, requested, candidate_ids: candidateIDs });
+            if (!o)
+                return candidates.length > 1 ? JSON.stringify({ status: 'BLOCKED', reason: 'obligation-id-required', candidate_ids: candidateIDs }) : 'No open direct-progress obligation';
+            if (o.kind === 'review' && m.execution.verification_policy.requireReview)
+                return 'BLOCKED: independent reviewer required; direct parent progress cannot close this review obligation';
+            let directFiles = [...m.vcs.changed_files], currentSource = 'historical-write-events';
+            if (o.kind === 'implementation') {
+                if (!primaryRoleCanDirectImplementation(m.execution.primary_mode))
+                    return `BLOCKED: primary role ${m.execution.primary_mode} lacks canonical repository write authority for direct implementation progress`;
+                if (!m.execution.evidence.last_mutation_at)
+                    return 'BLOCKED: no observed mutation for direct implementation progress';
+                if (!m.vcs.changed_files.length) {
+                    const recovered = inspectCurrentGitChangedFiles(missionRoot);
+                    if (recovered === undefined)
+                        return 'BLOCKED: mutation observed but changed-file surface is unknown; use file-aware native tools or wait for native file/diff evidence before recording direct progress';
+                    if (recovered.length) {
+                        directFiles = [...new Set(recovered)];
+                        m.vcs.changed_files = [...new Set([...m.vcs.changed_files, ...directFiles])];
+                        currentSource = 'git-status-recovery';
+                        appendLedger(m, 'implementation.changed-surface-recovered', { payload: { source: 'current-git-status', files: directFiles.slice(0, 30) } });
+                    }
+                    else
+                        return 'BLOCKED: mutation observed but no current Git changed surface exists; reconcile the mutation before recording direct progress';
                 }
-                catch (e) {
-                    return `BLOCKED: invalid scope_expansions: ${String(e)}`;
+                let expansions = [];
+                if (rawArgs.scope_expansions) {
+                    try {
+                        const parsed = JSON.parse(String(rawArgs.scope_expansions));
+                        if (!Array.isArray(parsed))
+                            throw new Error('scope_expansions must be a JSON array');
+                        expansions = parsed.filter(x => x && typeof x === 'object').map(x => ({ file: String(x.file ?? ''), reason: String(x.reason ?? ''), necessary: x.necessary === true })).filter(x => x.file);
+                    }
+                    catch (e) {
+                        return `BLOCKED: invalid scope_expansions: ${String(e)}`;
+                    }
                 }
-            }
-            if (currentSource === 'historical-write-events' && capabilities.sessionDiff && directFiles.length)
-                try {
-                    const raw = await native.diff(m.identity.session_id);
-                    if (raw !== undefined && raw !== null) {
-                        const current = new Set(nativeDiffFiles(raw, missionRoot));
-                        if (current.size) {
-                            directFiles = directFiles.filter(file => current.has(file.replace(/\\/g, '/').replace(/^\.\//, '')));
-                            currentSource = 'native-session-diff';
+                if (currentSource === 'historical-write-events' && capabilities.sessionDiff && directFiles.length)
+                    try {
+                        const raw = await native.diff(m.identity.session_id);
+                        if (raw !== undefined && raw !== null) {
+                            const current = new Set(nativeDiffFiles(raw, missionRoot));
+                            if (current.size) {
+                                directFiles = directFiles.filter(file => current.has(file.replace(/\\/g, '/').replace(/^\.\//, '')));
+                                currentSource = 'native-session-diff';
+                            }
+                        }
+                    }
+                    catch { }
+                ;
+                if (currentSource === 'historical-write-events') {
+                    const current = inspectCurrentGitChangedFiles(missionRoot);
+                    if (current !== undefined) {
+                        if (current.length || resolve(missionRoot) === resolve(projectRoot)) {
+                            const set = new Set(current);
+                            directFiles = directFiles.filter(file => set.has(file.replace(/\\/g, '/').replace(/^\.\//, '')));
+                            currentSource = 'git-status-fallback';
+                        }
+                        else {
+                            directFiles = directFiles.filter(file => existsSync(resolve(missionRoot, file)));
+                            currentSource = 'working-directory-current-files';
                         }
                     }
                 }
-                catch { }
-            ;
-            if (currentSource === 'historical-write-events') {
-                const current = inspectCurrentGitChangedFiles(missionRoot);
-                if (current !== undefined) {
-                    if (current.length || resolve(missionRoot) === resolve(projectRoot)) {
-                        const set = new Set(current);
-                        directFiles = directFiles.filter(file => set.has(file.replace(/\\/g, '/').replace(/^\.\//, '')));
-                        currentSource = 'git-status-fallback';
-                    }
-                    else {
-                        directFiles = directFiles.filter(file => existsSync(resolve(missionRoot, file)));
-                        currentSource = 'working-directory-current-files';
-                    }
+                if (!directFiles.length) {
+                    appendLedger(m, 'implementation.direct-progress-blocked', { payload: { reason: 'no-current-owned-diff', source: currentSource, historical: m.vcs.changed_files.slice(0, 30) } });
+                    return JSON.stringify({ status: 'BLOCKED', reason: 'no-current-owned-diff', source: currentSource });
                 }
+                if (currentSource !== 'historical-write-events')
+                    appendLedger(m, 'implementation.current-diff-reconciled', { payload: { source: currentSource, files: directFiles.slice(0, 30) } });
+                const ownership = assessChangedFileOwnership(m.identity.intent.likelyTargets ?? [], directFiles, expansions, 'control-plane');
+                if (m.identity.intent.scope === 'local' && ownership.collateral.length) {
+                    const marker = `direct-diff-cleanliness:${ownership.collateral.slice(0, 12).sort().join(',')}`;
+                    m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+                    appendLedger(m, 'implementation.direct-progress-blocked', { payload: { reason: 'changed-files-outside-requested-scope', collateral: ownership.collateral.slice(0, 30), expected: (m.identity.intent.likelyTargets ?? []).slice(0, 30) } });
+                    syncMissionGates(m, projectRoot);
+                    return JSON.stringify({ status: 'BLOCKED', reason: 'changed-files-outside-requested-scope', collateral: ownership.collateral, expected: m.identity.intent.likelyTargets ?? [], scope_expansions_schema: [{ file: 'project/relative/path', necessary: true, reason: 'why this file is required for the requested change' }] });
+                }
+                const targetCoverage = assessRequiredTargetCoverage(o.requiredTargets ?? [], directFiles);
+                if (targetCoverage.missing.length) {
+                    appendLedger(m, 'implementation.required-targets-uncovered', { payload: { obligation: o.id, required: targetCoverage.required, covered: targetCoverage.covered, missing: targetCoverage.missing, changed_files: directFiles.slice(0, 40), owner: 'parent-direct' } });
+                    return JSON.stringify({ status: 'BLOCKED', reason: 'required-targets-uncovered', obligation_id: o.id, required_targets: targetCoverage.required, covered_targets: targetCoverage.covered, missing_targets: targetCoverage.missing, changed_files: directFiles });
+                }
+                if (ownership.accepted.length)
+                    appendLedger(m, 'scope.expansion.accepted', { payload: { owner: 'parent-direct', files: ownership.accepted.slice(0, 30) } });
+                const pseudo = { id: 'parent-direct', scope: [...(m.identity.intent.likelyTargets ?? [])], requiredEvidence: [...m.execution.verification_policy.requiredKinds] };
+                const replan = replanVerificationForChangedSurface(m, pseudo, directFiles, collectRepoContext(missionRoot));
+                if (replan.changed)
+                    appendLedger(m, 'verification.replanned', { payload: { owner: 'parent-direct', changed_files: m.vcs.changed_files.slice(0, 30), added_kinds: replan.addedKinds, scope_expanded: replan.scopeExpanded, risk_escalated: replan.riskEscalated, reason: replan.reason } });
+                m.execution.blockers = m.execution.blockers.filter(b => !b.startsWith('direct-diff-cleanliness:'));
             }
-            if (!directFiles.length) {
-                appendLedger(m, 'implementation.direct-progress-blocked', { payload: { reason: 'no-current-owned-diff', source: currentSource, historical: m.vcs.changed_files.slice(0, 30) } });
-                return JSON.stringify({ status: 'BLOCKED', reason: 'no-current-owned-diff', source: currentSource });
+            else if (o.kind === 'review') {
+                const freshInput = m.execution.evidence.items.filter(e => e.kind === 'review-input' && !e.invalidated_at);
+                if (!freshInput.length)
+                    return 'BLOCKED: no fresh review input observed';
+                const reviewVerification = m.execution.obligations.find(x => x.kind === 'verification' && x.status === 'open');
+                addEvidence(m, { kind: 'review-evidence', summary, scope: [...new Set(freshInput.flatMap(e => e.scope ?? []))].slice(0, 50), source: 'parent:direct-review', obligation_ids: [o.id, ...(reviewVerification ? [reviewVerification.id] : [])], pass: true, outcome: 'passed' });
             }
-            if (currentSource !== 'historical-write-events')
-                appendLedger(m, 'implementation.current-diff-reconciled', { payload: { source: currentSource, files: directFiles.slice(0, 30) } });
-            const ownership = assessChangedFileOwnership(m.identity.intent.likelyTargets ?? [], directFiles, expansions, 'control-plane');
-            if (m.identity.intent.scope === 'local' && ownership.collateral.length) {
-                const marker = `direct-diff-cleanliness:${ownership.collateral.slice(0, 12).sort().join(',')}`;
-                m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
-                appendLedger(m, 'implementation.direct-progress-blocked', { payload: { reason: 'changed-files-outside-requested-scope', collateral: ownership.collateral.slice(0, 30), expected: (m.identity.intent.likelyTargets ?? []).slice(0, 30) } });
-                syncMissionGates(m, projectRoot);
-                return JSON.stringify({ status: 'BLOCKED', reason: 'changed-files-outside-requested-scope', collateral: ownership.collateral, expected: m.identity.intent.likelyTargets ?? [], scope_expansions_schema: [{ file: 'project/relative/path', necessary: true, reason: 'why this file is required for the requested change' }] });
+            if (o.kind === 'analysis' && m.identity.intent.taskKind === 'diagnosis') {
+                const outcome = String(rawArgs?.diagnostic_outcome ?? '').toUpperCase(), hypothesis = String(rawArgs?.hypothesis ?? ''), falsifier = String(rawArgs?.falsifier ?? ''), refs = String(rawArgs?.diagnostic_evidence_refs ?? '').split(/[;,]/).map((x) => x.trim()).filter(Boolean);
+                if (!DIAGNOSTIC_HYPOTHESIS_OUTCOMES.includes(outcome) || !hypothesis.trim() || !falsifier.trim())
+                    return JSON.stringify({ status: 'EVIDENCE_REQUIRED', reason: 'diagnosis-hypothesis-contract-required', required: { hypothesis: 'falsifiable root-cause statement', falsifier: 'observation that would refute the hypothesis', diagnostic_outcome: [...DIAGNOSTIC_HYPOTHESIS_OUTCOMES], diagnostic_evidence_refs: 'comma-separated canonical Evidence IDs' } });
+                const assessed = assessDiagnosticHypothesis(m, { hypothesis, falsifier, outcome: outcome, evidence_refs: refs });
+                appendLedger(m, 'diagnosis.hypothesis-assessed', { payload: { hypothesis_id: assessed.id, outcome: assessed.outcome, hypothesis: assessed.hypothesis, falsifier: assessed.falsifier, evidence_refs: assessed.evidence_refs, admissible_evidence_refs: assessed.admissible_evidence_refs, rejected_evidence_refs: assessed.rejected_evidence_refs } });
+                if (!assessed.supported)
+                    return JSON.stringify({ status: 'EVIDENCE_REQUIRED', reason: assessed.outcome === 'SUPPORTED' ? 'diagnosis-evidence-not-admissible' : 'diagnosis-hypothesis-not-supported', hypothesis_id: assessed.id, outcome: assessed.outcome, admissible_evidence_refs: assessed.admissible_evidence_refs, rejected_evidence_refs: assessed.rejected_evidence_refs, remaining_obligations: [{ id: o.id, kind: o.kind }] });
             }
-            const targetCoverage = assessRequiredTargetCoverage(o.requiredTargets ?? [], directFiles);
-            if (targetCoverage.missing.length) {
-                appendLedger(m, 'implementation.required-targets-uncovered', { payload: { obligation: o.id, required: targetCoverage.required, covered: targetCoverage.covered, missing: targetCoverage.missing, changed_files: directFiles.slice(0, 40), owner: 'parent-direct' } });
-                return JSON.stringify({ status: 'BLOCKED', reason: 'required-targets-uncovered', obligation_id: o.id, required_targets: targetCoverage.required, covered_targets: targetCoverage.covered, missing_targets: targetCoverage.missing, changed_files: directFiles });
+            o.status = 'closed';
+            o.closedAt = Date.now();
+            const progressEvent = o.kind === 'review' ? 'review.direct-progress' : o.kind === 'analysis' ? 'analysis.direct-progress' : 'implementation.direct-progress';
+            appendLedger(m, progressEvent, { payload: { summary: summary.slice(0, 500), obligation: o.id, changed_files: o.kind === 'implementation' ? directFiles.slice(-30) : [] } });
+            if (m.methodology.parent_loaded_methodologies.length)
+                bindParentMethodologyNeeds(m, m.methodology.parent_loaded_methodologies, o.id);
+            const verify = m.execution.obligations.find(x => x.kind === 'verification' && x.status === 'open');
+            if (verify && verificationSatisfied(m, verify.id, missionRoot).ok) {
+                verify.status = 'closed';
+                verify.closedAt = Date.now();
             }
-            if (ownership.accepted.length)
-                appendLedger(m, 'scope.expansion.accepted', { payload: { owner: 'parent-direct', files: ownership.accepted.slice(0, 30) } });
-            const pseudo = { id: 'parent-direct', scope: [...(m.identity.intent.likelyTargets ?? [])], requiredEvidence: [...m.execution.verification_policy.requiredKinds] };
-            const replan = replanVerificationForChangedSurface(m, pseudo, directFiles, collectRepoContext(missionRoot));
-            if (replan.changed)
-                appendLedger(m, 'verification.replanned', { payload: { owner: 'parent-direct', changed_files: m.vcs.changed_files.slice(0, 30), added_kinds: replan.addedKinds, scope_expanded: replan.scopeExpanded, risk_escalated: replan.riskEscalated, reason: replan.reason } });
-            m.execution.blockers = m.execution.blockers.filter(b => !b.startsWith('direct-diff-cleanliness:'));
-        }
-        else if (o.kind === 'review') {
-            const freshInput = m.execution.evidence.items.filter(e => e.kind === 'review-input' && !e.invalidated_at);
-            if (!freshInput.length)
-                return 'BLOCKED: no fresh review input observed';
-            const reviewVerification = m.execution.obligations.find(x => x.kind === 'verification' && x.status === 'open');
-            addEvidence(m, { kind: 'review-evidence', summary, scope: [...new Set(freshInput.flatMap(e => e.scope ?? []))].slice(0, 50), source: 'parent:direct-review', obligation_ids: [o.id, ...(reviewVerification ? [reviewVerification.id] : [])], pass: true, outcome: 'passed' });
-        } if (o.kind === 'analysis' && m.identity.intent.taskKind === 'diagnosis')
-            addEvidence(m, { kind: 'diagnostic-evidence', summary, scope: [...(m.identity.intent.likelyTargets ?? [])].slice(0, 50), source: 'parent:direct-diagnosis', obligation_ids: [o.id], pass: true, outcome: 'passed' }); o.status = 'closed'; o.closedAt = Date.now(); const progressEvent = o.kind === 'review' ? 'review.direct-progress' : o.kind === 'analysis' ? 'analysis.direct-progress' : 'implementation.direct-progress'; appendLedger(m, progressEvent, { payload: { summary: summary.slice(0, 500), obligation: o.id, changed_files: o.kind === 'implementation' ? directFiles.slice(-30) : [] } }); if (m.methodology.parent_loaded_methodologies.length)
-            bindParentMethodologyNeeds(m, m.methodology.parent_loaded_methodologies, o.id); const verify = m.execution.obligations.find(x => x.kind === 'verification' && x.status === 'open'); if (verify && verificationSatisfied(m, verify.id, missionRoot).ok) {
-            verify.status = 'closed';
-            verify.closedAt = Date.now();
-        } reconcileMethodologyExits(m, missionRoot); syncMissionGates(m, missionRoot); const completion = evaluateCompletion(m, missionRoot); if (completion.complete)
-            store.complete(String(c?.sessionID ?? m.identity.session_id)); const remaining = m.execution.obligations.filter(x => x.status === 'open').slice(0, 12).map(x => ({ id: x.id, kind: x.kind })), methodologyNeeds = [...new Set(m.methodology.methodology_needs.map(x => x.name))].slice(0, 12); return JSON.stringify({ status: 'RECORDED', completion_ready: completion.complete, mission_status: completion.complete ? 'completed' : m.identity.status, next: completion.complete ? 'STOP' : completion.next ?? null, verification_required: completion.next === 'VERIFY' || remaining.some(x => x.kind === 'verification'), remaining_obligations: remaining, methodology_needs: methodologyNeeds, changed_files: o.kind === 'implementation' ? directFiles.slice(-30) : [] }); } });
+            reconcileMethodologyExits(m, missionRoot);
+            syncMissionGates(m, missionRoot);
+            const completion = evaluateCompletion(m, missionRoot);
+            if (completion.complete)
+                store.complete(String(c?.sessionID ?? m.identity.session_id));
+            const remaining = m.execution.obligations.filter(x => x.status === 'open').slice(0, 12).map(x => ({ id: x.id, kind: x.kind })), methodologyNeeds = [...new Set(m.methodology.methodology_needs.map(x => x.name))].slice(0, 12);
+            return JSON.stringify({ status: 'RECORDED', completion_ready: completion.complete, mission_status: completion.complete ? 'completed' : m.identity.status, next: completion.complete ? 'STOP' : completion.next ?? null, verification_required: completion.next === 'VERIFY' || remaining.some(x => x.kind === 'verification'), remaining_obligations: remaining, methodology_needs: methodologyNeeds, changed_files: o.kind === 'implementation' ? directFiles.slice(-30) : [] });
+        } });
     const startTool = tool({ description: 'Start one bounded Hi worker task, or resume the exact existing task when task_id is supplied. When creating a NEW task, omit task_id; task_id is only for an exact canonical t_... id previously returned by Hi. For multiple scope paths, pass comma-separated project-relative paths; semicolon-separated paths are accepted for compatibility. task_id resume never creates a replacement task.', args: { task_id: tool.schema.string().optional(), objective: tool.schema.string().optional(), role: tool.schema.string().optional(), category: tool.schema.string().optional(), model: tool.schema.string().optional(), model_variant: tool.schema.string().optional(), scope: tool.schema.string().optional(), constraints: tool.schema.string().optional(), dependencies: tool.schema.string().optional(), required_evidence: tool.schema.string().optional(), obligation_ids: tool.schema.string().optional(), context_artifact_ids: tool.schema.string().optional(), fork_from_session: tool.schema.string().optional(), isolation_required: tool.schema.boolean().optional(), isolation_reason: tool.schema.string().optional(), mcp_servers: tool.schema.string().optional(), browser_backend: tool.schema.string().optional(), browser_allowed_origins: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
             return 'No active Hi mission'; try {
             const missionRoot = m.identity.intent.scope === 'local' ? (workingDirectory ?? projectRoot) : projectRoot, rawArgs = a?.input && typeof a.input === 'object' && !Array.isArray(a.input) ? { ...a, ...a.input } : a;
