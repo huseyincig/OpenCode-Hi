@@ -6,9 +6,9 @@ export declare function modelIdentity(model?: string): {
     providerID: string;
     modelID: string;
 } | undefined;
-export declare function sendPromptAsync(client: OpenCodeClient, sessionID: string, text: string, agent?: string, model?: string, variant?: string, tools?: Record<string, boolean>): Promise<void>;
+export declare function sendPromptAsync(client: OpenCodeClient, sessionID: string, text: string, agent?: string, model?: string, variant?: string, tools?: Record<string, boolean>, ackTimeoutMs?: number): Promise<void>;
 export declare function listMessages(client: OpenCodeClient, sessionID: string, limit?: number): Promise<any[]>;
-export declare function sendSyntheticContinuation(client: OpenCodeClient, sessionID: string, text: string, metadata: Record<string, unknown>): Promise<boolean>;
+export declare function sendSyntheticContinuation(client: OpenCodeClient, sessionID: string, text: string, metadata: Record<string, unknown>, ackTimeoutMs?: number): Promise<boolean>;
 export interface OpenCodeLifecycleEndpoint {
     serverUrl?: string;
     directory?: string;

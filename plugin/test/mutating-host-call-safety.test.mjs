@@ -62,3 +62,40 @@ test('child create is dispatched once while read-only compatibility may fall bac
   assert.equal(await adapter.version(),'1.18.19')
   assert.deepEqual({appVersion,serverVersion},{appVersion:1,serverVersion:1})
 })
+
+
+test('prompt_async acknowledgement is bounded, abort-signalled, and never replayed after a hung host transport',async()=>{
+  let asyncCalls=0,syncCalls=0,capturedSignal
+  const client={session:{
+    promptAsync:arg=>{asyncCalls++;capturedSignal=arg.signal;return new Promise(()=>{})},
+    prompt:async()=>{syncCalls++},
+  }}
+  await assert.rejects(()=>sendPromptAsync(client,'child-hung','x',undefined,undefined,undefined,undefined,20),/acknowledgement timed out after 20ms/)
+  assert.equal(asyncCalls,1);assert.equal(syncCalls,0);assert.equal(capturedSignal instanceof AbortSignal,true);assert.equal(capturedSignal.aborted,true)
+
+  asyncCalls=0;syncCalls=0;capturedSignal=undefined
+  await assert.rejects(()=>sendSyntheticContinuation(client,'parent-hung','continue',{},20),/acknowledgement timed out after 20ms/)
+  assert.equal(asyncCalls,1);assert.equal(syncCalls,0);assert.equal(capturedSignal instanceof AbortSignal,true);assert.equal(capturedSignal.aborted,true)
+})
+
+
+test('mutating prompt result tuples fail closed and are never replayed after host rejection',async()=>{
+  let asyncCalls=0,syncCalls=0,requestedThrowOnError=false
+  const rejection={name:'BadRequestError',data:{message:'prompt rejected'}}
+  const client={session:{
+    promptAsync:async arg=>{asyncCalls++;requestedThrowOnError=arg.throwOnError===true;return{data:undefined,error:rejection}},
+    prompt:async()=>{syncCalls++;return{data:{}}},
+  }}
+  await assert.rejects(()=>sendPromptAsync(client,'child-rejected','x',undefined,undefined,undefined,undefined,50),/prompt rejected/)
+  assert.equal(requestedThrowOnError,true);assert.equal(asyncCalls,1);assert.equal(syncCalls,0)
+
+  asyncCalls=0;syncCalls=0;requestedThrowOnError=false
+  await assert.rejects(()=>sendSyntheticContinuation(client,'parent-rejected','x',{},50),/prompt rejected/)
+  assert.equal(requestedThrowOnError,true);assert.equal(asyncCalls,1);assert.equal(syncCalls,0)
+
+  let syncThrowOnError=false
+  const syncOnly={session:{prompt:async arg=>{syncCalls++;syncThrowOnError=arg.throwOnError===true;return{data:undefined,error:rejection}}}}
+  syncCalls=0
+  await assert.rejects(()=>sendPromptAsync(syncOnly,'child-sync-rejected','x'),/prompt rejected/)
+  assert.equal(syncThrowOnError,true);assert.equal(syncCalls,1)
+})

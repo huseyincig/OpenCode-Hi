@@ -3,6 +3,19 @@ import { createOpencodeClient as createOpenCodeV2Client } from '@opencode-ai/sdk
 import { EMPTY_TOKEN_USAGE,addTokenUsage,type ExecutionTokenUsage,type HostUsageObservation } from '../contracts/execution-usage.js'
 export function dataOf<T=any>(value:any):T { return (value && typeof value==='object' && 'data' in value) ? value.data as T : value as T }
 
+// `prompt_async` is an immediate OpenCode host-acceptance mutation. This bounds only that acknowledgement; provider execution remains OpenCode-owned.
+const HOST_MUTATION_ACK_TIMEOUT_MS=15_000
+class OpenCodeMutationAckTimeoutError extends Error{readonly code='ETIMEDOUT';constructor(operation:string,timeoutMs:number){super(`OpenCode ${operation} acknowledgement timed out after ${timeoutMs}ms`);this.name='OpenCodeMutationAckTimeoutError'}}
+async function awaitPromptAsyncAck<T>(invoke:(signal:AbortSignal)=>Promise<T>,operation:string,timeoutMs:number):Promise<T>{
+  const bounded=Number.isFinite(timeoutMs)&&timeoutMs>0?Math.floor(timeoutMs):HOST_MUTATION_ACK_TIMEOUT_MS,controller=new AbortController(),pending=Promise.resolve().then(()=>invoke(controller.signal));pending.catch(()=>{})
+  let timer:ReturnType<typeof setTimeout>|undefined
+  try{return await Promise.race([pending,new Promise<T>((_resolve,reject)=>{timer=setTimeout(()=>{const error=new OpenCodeMutationAckTimeoutError(operation,bounded);controller.abort(error);reject(error)},bounded)})])}
+  finally{if(timer)clearTimeout(timer)}
+}
+function mutationResultError(value:any):unknown{return value&&typeof value==='object'&&'error' in value&&value.error?value.error:undefined}
+function mutationErrorText(value:unknown):string{if(value instanceof Error&&value.message.trim())return value.message.trim();if(value&&typeof value==='object'){const v=value as any;for(const item of [v?.data?.message,v?.message,v?.name])if(typeof item==='string'&&item.trim())return item.trim()}return String(value)}
+function assertMutationAccepted(value:any,operation:string):void{const rejected=mutationResultError(value);if(rejected===undefined)return;if(rejected instanceof Error)throw rejected;const error=new Error(`OpenCode ${operation} rejected: ${mutationErrorText(rejected)}`);(error as any).cause=rejected;throw error}
+
 export async function createChildSession(client:OpenCodeClient,parentID:string,title:string,agent?:string,model?:string,variant?:string,workspaceID?:string,endpoint:OpenCodeLifecycleEndpoint={}):Promise<any>{
   const identity=modelIdentity(model)
   if(workspaceID&&endpoint.serverUrl&&endpoint.directory){
@@ -23,11 +36,11 @@ export function modelIdentity(model?:string):{providerID:string;modelID:string}|
   return{providerID:model.slice(0,slash),modelID:model.slice(slash+1)}
 }
 
-export async function sendPromptAsync(client:OpenCodeClient,sessionID:string,text:string,agent?:string,model?:string,variant?:string,tools?:Record<string,boolean>):Promise<void>{
+export async function sendPromptAsync(client:OpenCodeClient,sessionID:string,text:string,agent?:string,model?:string,variant?:string,tools?:Record<string,boolean>,ackTimeoutMs=HOST_MUTATION_ACK_TIMEOUT_MS):Promise<void>{
   const edge=client as any
   const body:any={parts:[{type:'text',text}]};if(agent)body.agent=agent;const identity=modelIdentity(model);if(identity)body.model=identity;if(variant)body.variant=variant;if(tools&&Object.keys(tools).length)body.tools=tools
-  if(typeof edge?.session?.promptAsync==='function'){await edge.session.promptAsync({path:{id:sessionID},body});return}
-  if(typeof edge?.session?.prompt==='function'){await edge.session.prompt({path:{id:sessionID},body});return}
+  if(typeof edge?.session?.promptAsync==='function'){const result=await awaitPromptAsyncAck(signal=>edge.session.promptAsync({path:{id:sessionID},body,signal,throwOnError:true}),`session.prompt_async:${sessionID}`,ackTimeoutMs);assertMutationAccepted(result,`session.prompt_async:${sessionID}`);return}
+  if(typeof edge?.session?.prompt==='function'){const result=await edge.session.prompt({path:{id:sessionID},body,throwOnError:true});assertMutationAccepted(result,`session.prompt:${sessionID}`);return}
   throw new Error('OpenCode session prompt API unavailable')
 }
 
@@ -37,12 +50,11 @@ export async function listMessages(client:OpenCodeClient,sessionID:string,limit=
   return []
 }
 
-export async function sendSyntheticContinuation(client:OpenCodeClient,sessionID:string,text:string,metadata:Record<string,unknown>):Promise<boolean>{
-  const edge=client as any
-  const fn=typeof edge?.session?.promptAsync==='function'?edge.session.promptAsync.bind(edge.session):typeof edge?.session?.prompt==='function'?edge.session.prompt.bind(edge.session):undefined
-  if(!fn)return false
-  await fn({path:{id:sessionID},body:{parts:[{type:'text',text,synthetic:true,metadata}],noReply:false}})
-  return true
+export async function sendSyntheticContinuation(client:OpenCodeClient,sessionID:string,text:string,metadata:Record<string,unknown>,ackTimeoutMs=HOST_MUTATION_ACK_TIMEOUT_MS):Promise<boolean>{
+  const edge=client as any,body={parts:[{type:'text',text,synthetic:true,metadata}],noReply:false}
+  if(typeof edge?.session?.promptAsync==='function'){const result=await awaitPromptAsyncAck(signal=>edge.session.promptAsync({path:{id:sessionID},body,signal,throwOnError:true}),`session.prompt_async:${sessionID}`,ackTimeoutMs);assertMutationAccepted(result,`session.prompt_async:${sessionID}`);return true}
+  if(typeof edge?.session?.prompt==='function'){const result=await edge.session.prompt({path:{id:sessionID},body,throwOnError:true});assertMutationAccepted(result,`session.prompt:${sessionID}`);return true}
+  return false
 }
 
 export interface OpenCodeLifecycleEndpoint{serverUrl?:string;directory?:string}

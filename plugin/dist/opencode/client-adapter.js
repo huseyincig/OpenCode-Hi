@@ -1,6 +1,35 @@
 import { createOpencodeClient as createOpenCodeV2Client } from '@opencode-ai/sdk/v2/client';
 import { EMPTY_TOKEN_USAGE, addTokenUsage } from '../contracts/execution-usage.js';
 export function dataOf(value) { return (value && typeof value === 'object' && 'data' in value) ? value.data : value; }
+// `prompt_async` is an immediate OpenCode host-acceptance mutation. This bounds only that acknowledgement; provider execution remains OpenCode-owned.
+const HOST_MUTATION_ACK_TIMEOUT_MS = 15_000;
+class OpenCodeMutationAckTimeoutError extends Error {
+    code = 'ETIMEDOUT';
+    constructor(operation, timeoutMs) { super(`OpenCode ${operation} acknowledgement timed out after ${timeoutMs}ms`); this.name = 'OpenCodeMutationAckTimeoutError'; }
+}
+async function awaitPromptAsyncAck(invoke, operation, timeoutMs) {
+    const bounded = Number.isFinite(timeoutMs) && timeoutMs > 0 ? Math.floor(timeoutMs) : HOST_MUTATION_ACK_TIMEOUT_MS, controller = new AbortController(), pending = Promise.resolve().then(() => invoke(controller.signal));
+    pending.catch(() => { });
+    let timer;
+    try {
+        return await Promise.race([pending, new Promise((_resolve, reject) => { timer = setTimeout(() => { const error = new OpenCodeMutationAckTimeoutError(operation, bounded); controller.abort(error); reject(error); }, bounded); })]);
+    }
+    finally {
+        if (timer)
+            clearTimeout(timer);
+    }
+}
+function mutationResultError(value) { return value && typeof value === 'object' && 'error' in value && value.error ? value.error : undefined; }
+function mutationErrorText(value) { if (value instanceof Error && value.message.trim())
+    return value.message.trim(); if (value && typeof value === 'object') {
+    const v = value;
+    for (const item of [v?.data?.message, v?.message, v?.name])
+        if (typeof item === 'string' && item.trim())
+            return item.trim();
+} return String(value); }
+function assertMutationAccepted(value, operation) { const rejected = mutationResultError(value); if (rejected === undefined)
+    return; if (rejected instanceof Error)
+    throw rejected; const error = new Error(`OpenCode ${operation} rejected: ${mutationErrorText(rejected)}`); error.cause = rejected; throw error; }
 export async function createChildSession(client, parentID, title, agent, model, variant, workspaceID, endpoint = {}) {
     const identity = modelIdentity(model);
     if (workspaceID && endpoint.serverUrl && endpoint.directory) {
@@ -34,7 +63,7 @@ export function modelIdentity(model) {
         return undefined;
     return { providerID: model.slice(0, slash), modelID: model.slice(slash + 1) };
 }
-export async function sendPromptAsync(client, sessionID, text, agent, model, variant, tools) {
+export async function sendPromptAsync(client, sessionID, text, agent, model, variant, tools, ackTimeoutMs = HOST_MUTATION_ACK_TIMEOUT_MS) {
     const edge = client;
     const body = { parts: [{ type: 'text', text }] };
     if (agent)
@@ -47,11 +76,13 @@ export async function sendPromptAsync(client, sessionID, text, agent, model, var
     if (tools && Object.keys(tools).length)
         body.tools = tools;
     if (typeof edge?.session?.promptAsync === 'function') {
-        await edge.session.promptAsync({ path: { id: sessionID }, body });
+        const result = await awaitPromptAsyncAck(signal => edge.session.promptAsync({ path: { id: sessionID }, body, signal, throwOnError: true }), `session.prompt_async:${sessionID}`, ackTimeoutMs);
+        assertMutationAccepted(result, `session.prompt_async:${sessionID}`);
         return;
     }
     if (typeof edge?.session?.prompt === 'function') {
-        await edge.session.prompt({ path: { id: sessionID }, body });
+        const result = await edge.session.prompt({ path: { id: sessionID }, body, throwOnError: true });
+        assertMutationAccepted(result, `session.prompt:${sessionID}`);
         return;
     }
     throw new Error('OpenCode session prompt API unavailable');
@@ -62,13 +93,19 @@ export async function listMessages(client, sessionID, limit = 20) {
         return dataOf(await edge.session.messages({ path: { id: sessionID }, query: { limit } })) ?? [];
     return [];
 }
-export async function sendSyntheticContinuation(client, sessionID, text, metadata) {
-    const edge = client;
-    const fn = typeof edge?.session?.promptAsync === 'function' ? edge.session.promptAsync.bind(edge.session) : typeof edge?.session?.prompt === 'function' ? edge.session.prompt.bind(edge.session) : undefined;
-    if (!fn)
-        return false;
-    await fn({ path: { id: sessionID }, body: { parts: [{ type: 'text', text, synthetic: true, metadata }], noReply: false } });
-    return true;
+export async function sendSyntheticContinuation(client, sessionID, text, metadata, ackTimeoutMs = HOST_MUTATION_ACK_TIMEOUT_MS) {
+    const edge = client, body = { parts: [{ type: 'text', text, synthetic: true, metadata }], noReply: false };
+    if (typeof edge?.session?.promptAsync === 'function') {
+        const result = await awaitPromptAsyncAck(signal => edge.session.promptAsync({ path: { id: sessionID }, body, signal, throwOnError: true }), `session.prompt_async:${sessionID}`, ackTimeoutMs);
+        assertMutationAccepted(result, `session.prompt_async:${sessionID}`);
+        return true;
+    }
+    if (typeof edge?.session?.prompt === 'function') {
+        const result = await edge.session.prompt({ path: { id: sessionID }, body, throwOnError: true });
+        assertMutationAccepted(result, `session.prompt:${sessionID}`);
+        return true;
+    }
+    return false;
 }
 function lifecycleHeaders(directory) {
     const headers = {};
