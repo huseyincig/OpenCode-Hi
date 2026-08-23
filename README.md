@@ -82,6 +82,7 @@ Hi adds deterministic semantics around native AI execution:
 - structured Evidence, VerificationEnvelope and deterministic completion;
 - bounded recovery, WAIT and authoritative STOP;
 - exact attempt-level usage diagnostics with lifecycle-bound causal repeat/context attribution, without turning cost/telemetry into routing authority;
+- advisory benchmark uncertainty diagnostics (95% sample interval, optional Fleiss judge agreement, explicit evidence-family diversity) that never override exact deterministic certification;
 - Hi-owned process, isolated-workspace and browser executor surfaces backed by exact-host acceptance;
 - restart-safe durable state for lifecycle-significant Hi semantics;
 - ownership-aware install, upgrade, reconfigure, uninstall, rollback and crash recovery.

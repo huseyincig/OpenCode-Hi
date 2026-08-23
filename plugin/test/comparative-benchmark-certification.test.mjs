@@ -61,3 +61,29 @@ test('series rejects malformed environment hashes duplicate repetitions and unkn
   assert.throws(()=>build(base,dup),/repetition/i)
   const valid=build(base,[sample(receipt({episode:'p2'}))]);assert.equal(isComparativeBenchmarkCertificationSeries({...valid,magic:true}),false)
 })
+
+
+test('uncertainty diagnostics add CI judge agreement and explicit evidence diversity without changing exact verdict authority',()=>{
+  const base=receipt(),current=[1,2,3].map((i)=>{const r=receipt({episode:`p${i}`,repetition:i});r.economics.wall_time_ms=[900,1000,1100][i-1];return sample(r)})
+  const plain=build(base,current)
+  const judged=buildComparativeBenchmarkCertificationSeries({series_id:'series-a',claim_boundary:'Certification aggregation only; exact episode receipts remain authoritative.',baseline:sample(base),current,judge_scores:[[1,1,0],[0,1,0],[1,0,1]],evidence_families:['runtime','runtime','git','browser']})
+  assert.equal(judged.verdict,plain.verdict);assert.equal(judged.verdict,'NO_REGRESSION')
+  assert.equal(judged.uncertainty.advisory_only,true);assert.equal(judged.uncertainty.wall_time_ms.sample_count,3);assert.equal(judged.uncertainty.wall_time_ms.mean,1000)
+  assert.equal(judged.uncertainty.judge_agreement.status,'MEASURED');assert.ok(judged.uncertainty.flags.includes('JUDGE_DISAGREEMENT'))
+  assert.equal(judged.uncertainty.evidence_family_diversity.unique_family_count,3)
+  assert.equal(isComparativeBenchmarkCertificationSeries(judged),true)
+})
+
+test('judge consensus cannot convert deterministic receipt failure or success into a different certification verdict',()=>{
+  const base=receipt(),fail=[1,2,3].map(i=>sample(receipt({episode:`f${i}`,repetition:i,result:'VERIFIED_FAILURE',check:'FAIL'})))
+  const allPassJudges=buildComparativeBenchmarkCertificationSeries({series_id:'series-a',claim_boundary:'Certification aggregation only; exact episode receipts remain authoritative.',baseline:sample(base),current:fail,judge_scores:[[1,1,1],[1,1,1]],evidence_families:['judge','judge']})
+  assert.equal(allPassJudges.uncertainty.judge_agreement.fleiss_kappa,1);assert.equal(allPassJudges.verdict,'STABLE_REGRESSION')
+  const success=[1,2,3].map(i=>sample(receipt({episode:`s${i}`,repetition:i})))
+  const allFailJudges=buildComparativeBenchmarkCertificationSeries({series_id:'series-b',claim_boundary:'Certification aggregation only; exact episode receipts remain authoritative.',baseline:sample(base),current:success,judge_scores:[[0,0,0],[0,0,0]],evidence_families:['judge','judge']})
+  assert.equal(allFailJudges.uncertainty.judge_agreement.fleiss_kappa,1);assert.equal(allFailJudges.verdict,'NO_REGRESSION')
+})
+
+test('legacy schema-1 series without uncertainty remains validator-compatible',()=>{
+  const built=build(receipt(),[sample(receipt({episode:'p2'}))]),legacy={...built};delete legacy.uncertainty
+  assert.equal(isComparativeBenchmarkCertificationSeries(legacy),true)
+})

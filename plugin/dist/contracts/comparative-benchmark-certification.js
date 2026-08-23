@@ -1,12 +1,13 @@
 import { createHash } from 'node:crypto';
 import { stableJson } from './common.js';
 import { isComparativeBenchmarkReceipt } from './comparative-benchmark.js';
+import { buildEvalUncertaintyDiagnostics } from './eval-uncertainty.js';
 export const COMPARATIVE_BENCHMARK_CERTIFICATION_SCHEMA = 1;
 const SHA = /^[a-f0-9]{64}$/i;
 const GIT_SHA = /^[a-f0-9]{7,64}$/i;
 const VERDICTS = new Set(['NO_REGRESSION', 'STABLE_REGRESSION', 'FLAKY', 'BLOCKED_ENVIRONMENT', 'BLOCKED_AUTHORITY', 'INCONCLUSIVE']);
 const ATTRIBUTIONS = new Set(['SOURCE_CHANGED', 'FIXTURE_CHANGED', 'CONFIG_CHANGED', 'HOST_CHANGED', 'MODEL_CHANGED', 'RUNTIME_CHANGED', 'UNKNOWN_DRIFT']);
-const SERIES_KEYS = new Set(['schema', 'series_id', 'claim_boundary', 'baseline', 'current', 'stability', 'environment_stable', 'environment_delta', 'attribution', 'verdict']);
+const SERIES_KEYS = new Set(['schema', 'series_id', 'claim_boundary', 'baseline', 'current', 'stability', 'environment_stable', 'environment_delta', 'attribution', 'uncertainty', 'verdict']);
 const SAMPLE_KEYS = new Set(['receipt_sha256', 'episode_id', 'repetition', 'episode_kind', 'result', 'outcome_sha256', 'environment']);
 const ENV_KEYS = new Set(['source_inputs_sha256', 'fixture_sha256', 'config_sha256', 'opencode_version', 'opencode_commit', 'model_requested', 'model_effective', 'provider_effective', 'platform', 'node_version']);
 const STABILITY_KEYS = new Set(['required_samples', 'observed_samples', 'performed', 'stable', 'outcome_hashes']);
@@ -166,8 +167,8 @@ export function buildComparativeBenchmarkCertificationSeries(input) {
     else {
         reason = 'Current samples do not form a single stable success, blocked state, or failure class.';
     }
-    const attribution = attributionFor(environmentDelta, reliableContext, reason);
-    return { schema: COMPARATIVE_BENCHMARK_CERTIFICATION_SCHEMA, series_id: input.series_id, claim_boundary: input.claim_boundary, baseline, current, stability, environment_stable: environmentStable, environment_delta: environmentDelta, attribution, verdict };
+    const attribution = attributionFor(environmentDelta, reliableContext, reason), uncertainty = buildEvalUncertaintyDiagnostics({ wall_times_ms: input.current.map(item => item.receipt.economics.wall_time_ms), judge_scores: input.judge_scores, evidence_families: input.evidence_families });
+    return { schema: COMPARATIVE_BENCHMARK_CERTIFICATION_SCHEMA, series_id: input.series_id, claim_boundary: input.claim_boundary, baseline, current, stability, environment_stable: environmentStable, environment_delta: environmentDelta, attribution, uncertainty, verdict };
 }
 function validEnvironment(v) {
     if (!record(v) || !exactKeys(v, ENV_KEYS) || !SHA.test(String(v.source_inputs_sha256)) || !SHA.test(String(v.fixture_sha256)) || !SHA.test(String(v.config_sha256)) || !nonEmpty(v.opencode_version))
@@ -194,8 +195,14 @@ function validStability(v) { return record(v) && exactKeys(v, STABILITY_KEYS) &&
 function isAttributionClass(v) { return typeof v === 'string' && ATTRIBUTIONS.has(v); }
 function isVerdict(v) { return typeof v === 'string' && VERDICTS.has(v); }
 function validAttribution(v) { return record(v) && exactKeys(v, ATTR_KEYS) && isAttributionClass(v.top) && Array.isArray(v.also_observed) && v.also_observed.every(isAttributionClass) && typeof v.reliable === 'boolean' && nonEmpty(v.reason) && validDelta(v.evidence); }
+function validDistribution(v) { return record(v) && Object.keys(v).every(k => ['sample_count', 'mean', 'sample_stddev', 'confidence_level', 'confidence_interval_95'].includes(k)) && Object.keys(v).length === 5 && integer(v.sample_count) && Number(v.sample_count) >= 1 && typeof v.mean === 'number' && Number.isFinite(v.mean) && Number(v.mean) >= 0 && typeof v.sample_stddev === 'number' && Number.isFinite(v.sample_stddev) && Number(v.sample_stddev) >= 0 && v.confidence_level === 0.95 && Array.isArray(v.confidence_interval_95) && v.confidence_interval_95.length === 2 && v.confidence_interval_95.every(x => typeof x === 'number' && Number.isFinite(x) && x >= 0) && Number(v.confidence_interval_95[0]) <= Number(v.confidence_interval_95[1]); }
+function validJudge(v) { if (!record(v) || Object.keys(v).some(k => !['status', 'item_count', 'judge_count', 'fleiss_kappa', 'band'].includes(k)) || !['NOT_PROVIDED', 'INSUFFICIENT', 'MEASURED'].includes(String(v.status)) || !integer(v.item_count) || !integer(v.judge_count))
+    return false; if (v.status === 'MEASURED')
+    return typeof v.fleiss_kappa === 'number' && Number.isFinite(v.fleiss_kappa) && v.fleiss_kappa >= -1 && v.fleiss_kappa <= 1 && ['LESS_THAN_CHANCE', 'SLIGHT', 'FAIR', 'MODERATE', 'SUBSTANTIAL', 'ALMOST_PERFECT'].includes(String(v.band)); return v.fleiss_kappa === undefined && v.band === undefined; }
+function validDiversity(v) { return record(v) && Object.keys(v).every(k => ['status', 'evidence_count', 'unique_family_count', 'largest_family_count', 'largest_family_share', 'families'].includes(k)) && Object.keys(v).length === 6 && ['NOT_PROVIDED', 'INSUFFICIENT', 'MEASURED'].includes(String(v.status)) && integer(v.evidence_count) && integer(v.unique_family_count) && integer(v.largest_family_count) && typeof v.largest_family_share === 'number' && Number.isFinite(v.largest_family_share) && v.largest_family_share >= 0 && v.largest_family_share <= 1 && record(v.families) && Object.values(v.families).every(integer); }
+function validUncertainty(v) { return record(v) && Object.keys(v).every(k => ['advisory_only', 'wall_time_ms', 'judge_agreement', 'evidence_family_diversity', 'flags'].includes(k)) && Object.keys(v).length === 5 && v.advisory_only === true && validDistribution(v.wall_time_ms) && validJudge(v.judge_agreement) && validDiversity(v.evidence_family_diversity) && Array.isArray(v.flags) && v.flags.every(x => ['JUDGE_DISAGREEMENT', 'INSUFFICIENT_JUDGE_DATA', 'INSUFFICIENT_EVIDENCE_DIVERSITY', 'LOW_EVIDENCE_FAMILY_DIVERSITY'].includes(String(x))); }
 export function isComparativeBenchmarkCertificationSeries(v) {
-    if (!record(v) || !exactKeys(v, SERIES_KEYS) || v.schema !== COMPARATIVE_BENCHMARK_CERTIFICATION_SCHEMA || !nonEmpty(v.series_id) || !nonEmpty(v.claim_boundary) || !validSample(v.baseline) || !Array.isArray(v.current) || v.current.length === 0 || !v.current.every(validSample) || !validStability(v.stability) || typeof v.environment_stable !== 'boolean' || !validDelta(v.environment_delta) || !validAttribution(v.attribution) || !isVerdict(v.verdict))
+    if (!record(v) || !exactKeys(v, SERIES_KEYS) || v.schema !== COMPARATIVE_BENCHMARK_CERTIFICATION_SCHEMA || !nonEmpty(v.series_id) || !nonEmpty(v.claim_boundary) || !validSample(v.baseline) || !Array.isArray(v.current) || v.current.length === 0 || !v.current.every(validSample) || !validStability(v.stability) || typeof v.environment_stable !== 'boolean' || !validDelta(v.environment_delta) || !validAttribution(v.attribution) || (v.uncertainty !== undefined && !validUncertainty(v.uncertainty)) || !isVerdict(v.verdict))
         return false;
     if (stableJson(v.environment_delta) !== stableJson(v.attribution.evidence))
         return false;

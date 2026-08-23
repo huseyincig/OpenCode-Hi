@@ -1,4 +1,5 @@
 import { type BenchmarkEpisodeKind, type BenchmarkResultClassification, type ComparativeBenchmarkReceipt } from './comparative-benchmark.js';
+import { type EvalUncertaintyDiagnostics } from './eval-uncertainty.js';
 export declare const COMPARATIVE_BENCHMARK_CERTIFICATION_SCHEMA: 1;
 export type BenchmarkCertificationVerdict = 'NO_REGRESSION' | 'STABLE_REGRESSION' | 'FLAKY' | 'BLOCKED_ENVIRONMENT' | 'BLOCKED_AUTHORITY' | 'INCONCLUSIVE';
 export type BenchmarkFailureAttributionClass = 'SOURCE_CHANGED' | 'FIXTURE_CHANGED' | 'CONFIG_CHANGED' | 'HOST_CHANGED' | 'MODEL_CHANGED' | 'RUNTIME_CHANGED' | 'UNKNOWN_DRIFT';
@@ -63,6 +64,7 @@ export interface ComparativeBenchmarkCertificationSeries {
     environment_stable: boolean;
     environment_delta: BenchmarkEnvironmentDelta;
     attribution: BenchmarkFailureAttribution;
+    uncertainty?: EvalUncertaintyDiagnostics;
     verdict: BenchmarkCertificationVerdict;
 }
 export interface BuildComparativeBenchmarkCertificationSeriesInput {
@@ -70,6 +72,8 @@ export interface BuildComparativeBenchmarkCertificationSeriesInput {
     claim_boundary: string;
     baseline: BenchmarkCertificationSampleInput;
     current: BenchmarkCertificationSampleInput[];
+    judge_scores?: number[][];
+    evidence_families?: string[];
 }
 export declare function buildComparativeBenchmarkCertificationSeries(input: BuildComparativeBenchmarkCertificationSeriesInput): ComparativeBenchmarkCertificationSeries;
 export declare function isComparativeBenchmarkCertificationSeries(v: unknown): v is ComparativeBenchmarkCertificationSeries;
