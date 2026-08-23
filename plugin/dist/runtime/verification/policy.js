@@ -57,7 +57,7 @@ export function verificationEconomyInstruction(m) {
         return `Verification contract: ${required}. Use the smallest repo-native check that covers the changed surface. Prefer a targeted test or changed-surface sanity; do not run a full repository suite unless targeted verification is unavailable or the change proves broader than expected.`;
     return `Verification contract: ${required}. Use repo-native commands with minimum sufficient scope; broaden only when changed surface, dependency impact, or a failed targeted check justifies it.`;
 }
-const STRONGER_EVIDENCE = { 'changed-surface-sanity': ['changed-surface-sanity', 'targeted-tests', 'typecheck', 'lint', 'build'], 'visual-check': ['visual-check', 'visual-evidence'], 'review-evidence': ['review-evidence'] };
+const STRONGER_EVIDENCE = { 'changed-surface-sanity': ['changed-surface-sanity', 'targeted-tests', 'typecheck', 'lint', 'build', 'visual-evidence'], 'visual-check': ['visual-check', 'visual-evidence'], 'review-evidence': ['review-evidence'] };
 export function verificationKindSatisfiesRequirement(required, actual) { const r = canonical(required), a = canonical(actual); if (r === a)
     return true; return Boolean(STRONGER_EVIDENCE[r]?.includes(a)); }
 export function verificationKindAdmittedForMission(m, actual) { const required = [...new Set(m.execution.verification_policy.requiredKinds.map(canonical))]; return required.length === 0 || required.some(kind => verificationKindSatisfiesRequirement(kind, actual)); }

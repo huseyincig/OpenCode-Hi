@@ -28,6 +28,16 @@ test('VerificationEnvelope derives a passed check only from explicit passed evid
   assert.deepEqual(verificationSatisfied(m),{ok:true,missing:[]})
 })
 
+test('scope-bound canonical visual evidence can satisfy changed-surface sanity for a visual surface',()=>{
+  const store=new MissionStore(process.cwd())
+  const m=startAssessedMission(store,'ve-visual-sanity','verify index.html',{task_kind:'implementation',likely_verification:['changed-surface-sanity','visual-check'],likely_targets:['index.html']})
+  m.execution.evidence.last_mutation_at=Date.now()-100
+  addEvidence(m,{kind:'visual-evidence',summary:'browser-observed UI flow passed',scope:['index.html'],source:'browser-derived:w_visual',trusted_source_class:'browser-observation',source_session_id:'visual-session',source_state_hash:'a'.repeat(64),task_id:'t_visual',obligation_ids:m.execution.obligations.filter(o=>o.kind==='verification').map(o=>o.id),pass:true,outcome:'passed'})
+  const env=verificationEnvelopeFor(m)
+  assert.deepEqual(env.checks.map(x=>[x.kind,x.result]),[['changed-surface-sanity','passed'],['visual-check','passed']])
+  assert.deepEqual(verificationSatisfied(m),{ok:true,missing:[]})
+})
+
 test('outcome-less evidence is pending and cannot silently satisfy verification',()=>{
   const m=mission('ve-implicit')
   addEvidence(m,{kind:'targeted-tests',summary:'claim without explicit outcome',scope:['src/a.ts'],source:'test-fixture'})
