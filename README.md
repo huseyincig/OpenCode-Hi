@@ -194,7 +194,7 @@ The post-`0.2.4` `dev` line adds one user-facing settings model without replacin
 
 - **Work Mode:** `Adaptive`, `Single`, or `Multi`. `Single` is a one-agent topology and therefore uses effective `working-manager` for new missions; a saved `manager` preference is preserved for non-Single modes. It still does not mean one fixed model.
 - **Models:** Automatic by default, an optional strict global child-model allowlist (`routing.allowedModels`), or explicit per-role primary/fallback choices from OpenCode's effective connected inventory. The allowlist narrows child eligibility without replacing OpenCode runtime inventory truth; list order does not become Adaptive routing priority. Automatic routing also records bounded capability-ranked **recovery-only** candidates (never normal fallbacks or preferences): only after two same-model corrective attempts make no semantic gain may recovery open a fresh alternate-model child, still inside the allowlist/capability boundary.
-- **Settings surfaces:** runtime `hi_settings` for live inventory-aware changes and `npx opencode-hi config` for deterministic project preferences. Multi-field runtime changes use one transaction and either all persist or none persist.
+- **Settings surfaces:** runtime `hi_settings` for live inventory-aware changes. In the current source checkout, deterministic project preferences use `node scripts/opencode-hi.mjs config <project>`; the immutable published `0.2.4` CLI does not expose the dev-only `config` command. Multi-field runtime changes use one transaction and either all persist or none persist.
 - **Natural-language changes:** settings-only chat requests go directly to `hi_settings` rather than mission execution. OpenCode-style nested tool arguments are accepted for mutations, and user-facing `review` is normalized to canonical `qa-reviewer`.
 - **First use:** when no explicit project settings exist and effective models are available, one bounded onboarding hint is projected for the first pending chat session. Greetings/settings requests can open setup; material work is not interrupted and uses `Adaptive + Automatic`.
 - **Live refresh:** opening runtime settings refreshes OpenCode model inventory first, so a newly connected provider can appear without restarting Hi even though exact OpenCode 1.18.21 does not expose a dedicated provider/config-updated plugin event.
@@ -213,8 +213,8 @@ Examples for the `0.2.4` candidate:
 npx --yes opencode-hi@0.2.4 reconfigure .
 npx --yes opencode-hi@0.2.4 state .
 # Current dev package/source:
-npx opencode-hi config . --mode adaptive
-npx opencode-hi config . --mode multi --max-agents 3 --parallelism 2
+node scripts/opencode-hi.mjs config . --mode adaptive
+node scripts/opencode-hi.mjs config . --mode multi --max-agents 3 --parallelism 2
 npx --yes opencode-hi@0.2.4 reprofile . --profile balanced
 npx --yes opencode-hi@0.2.4 roles . --set coder=provider/model-a,provider/model-b
 npx --yes opencode-hi@0.2.4 rotate . --role coder

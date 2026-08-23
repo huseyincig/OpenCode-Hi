@@ -147,7 +147,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "607c85a3e346a353a8fa59592b12be6b99f2afc61c049d30ba877cc8c4891e85",
+      "sha256": "a5b5ef32dc7ad84d876f9387f9ed91eb521610a16f9adfca62bf7669dcb715a7",
       "area": "product-overview",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -163,7 +163,7 @@
     },
     {
       "path": "docs/CONFIGURATION.md",
-      "sha256": "5767b334b7dcdf945ed9fa333a272a4ffeecd7cfca54ef1fb610d320ccba3855",
+      "sha256": "c72fcd23a6b1d56520b3427def078182f0084582036f5252fd7993fbd219a304",
       "area": "configuration-guide",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -187,7 +187,7 @@
     },
     {
       "path": "docs/INSTALLATION.md",
-      "sha256": "48c1e2f1072f614785c096791aa0177dd128234b9b30ea55b33af04ce18dce7c",
+      "sha256": "96ee781aa6a579a0a0f81270ae2a0063bb633816558483b817ff22b3dd2e0588",
       "area": "installation-configuration-lifecycle",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -235,7 +235,7 @@
     },
     {
       "path": "docs/locales/tr/CONFIGURATION.md",
-      "sha256": "a2ae3bdbf55499795e2811ff786caccadb610c621691b2969360c81d44217c82",
+      "sha256": "b59edee9c155b6cd83c7bebddb1c10459a532145906536b88e0eacda95605cf8",
       "area": "turkish-configuration-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",
@@ -243,7 +243,7 @@
     },
     {
       "path": "docs/locales/tr/README.md",
-      "sha256": "8707f00592f8ed79b8ed9662a30e0f1fc609d52df532879dc9eaac39ddd10103",
+      "sha256": "9d9269a6319c9f4283b8871d3df45c647c6750ed097b5380f70121105f0885ac",
       "area": "turkish-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",

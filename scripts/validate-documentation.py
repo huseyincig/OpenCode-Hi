@@ -20,6 +20,7 @@ def markdown_section(text:str,heading:str)->str:
     tail=text[start+len(heading):]
     match=re.search(rf'(?m)^#{{1,{max(1,level)}}}\s+',tail)
     return tail[:match.start()] if match else tail
+def cli_usage_commands(text:str)->set[str]:return set(re.findall(r'npx \$\{PACKAGE\} ([a-z-]+)',text))
 def main():
     errors=[]; cfg=json.loads(POLICY.read_text(encoding='utf-8'))
     docs=[]
@@ -109,6 +110,27 @@ def main():
         if 'hi_settings' not in section:errors.append({'code':'DOC_CURRENT_DEV_SETTINGS_OWNER_DRIFT','path':path,'expected':'hi_settings'})
         if 'Hi rol modellerini ayarla' in section:errors.append({'code':'DOC_CURRENT_DEV_LEGACY_SETTINGS_GUIDANCE','path':path,'legacy':'Hi rol modellerini ayarla'})
         if 'hi_role_models' in section and 'compatibility' not in section.lower():errors.append({'code':'DOC_CURRENT_DEV_LEGACY_SETTINGS_ROLE_DRIFT','path':path,'expected':'compatibility-only'})
+    publication_path=ROOT/f'data/validation/release-publication-{version}.json'
+    if publication_path.is_file():
+        publication=json.loads(publication_path.read_text(encoding='utf-8'));released_commit=((publication.get('released_source') or {}).get('git_commit'))
+        released_source=subprocess.run(['git','show',f'{released_commit}:scripts/opencode-hi.mjs'],cwd=ROOT,text=True,capture_output=True) if isinstance(released_commit,str) and released_commit else None
+        if released_source is None or released_source.returncode!=0:errors.append({'code':'DOC_PUBLISHED_CLI_SOURCE_UNAVAILABLE','release':version,'commit':released_commit})
+        else:
+            current_cli=cli_usage_commands((ROOT/'scripts/opencode-hi.mjs').read_text(encoding='utf-8'));published_cli=cli_usage_commands(released_source.stdout)
+            if 'config' in current_cli and 'config' not in published_cli:
+                publication_sections=[
+                  ('README.md',readme,'### Current development settings control plane'),
+                  ('README.md',readme,'# Current dev package/source:'),
+                  ('docs/INSTALLATION.md',install,'### Current `dev` settings flow'),
+                  ('docs/CONFIGURATION.md',configuration,'## Current development: one Settings control plane'),
+                  ('docs/locales/tr/README.md',tr,'### Güncel `dev` Settings control plane'),
+                  ('docs/locales/tr/CONFIGURATION.md',configuration_tr,'## Güncel `dev`: tek Settings yüzeyi'),
+                ]
+                npm_config=re.compile(r'npx(?:\s+--yes)?\s+opencode-hi(?:@[^\s`]+)?\s+config\b')
+                for path,text,heading in publication_sections:
+                    section=markdown_section(text,heading)
+                    if not section:errors.append({'code':'DOC_DEV_PUBLICATION_SECTION_MISSING','path':path,'heading':heading});continue
+                    if npm_config.search(section):errors.append({'code':'DOC_DEV_UNPUBLISHED_NPM_COMMAND','path':path,'command':'config','published_release':version})
     if '[Configuration Guide](docs/CONFIGURATION.md)' not in readme:errors.append({'code':'README_CONFIGURATION_GUIDE_LINK_MISSING'})
     if '[Türkçe Kurulum ve Yapılandırma Rehberi](CONFIGURATION.md)' not in tr:errors.append({'code':'TR_README_CONFIGURATION_GUIDE_LINK_MISSING'})
     for cap,row in caps.items():
@@ -122,7 +144,7 @@ def main():
     out={'schema':1,'release':version,'kind':'DOCUMENTATION_PARITY','status':status,
       'inputs':{'documentation_ownership':{'path':rel(POLICY),'sha256':sha(POLICY)},'compatibility':{'path':'data/validation/compatibility-matrix-0.1.0.json','sha256':sha(ROOT/'data/validation/compatibility-matrix-0.1.0.json')},'release_status':{'path':f'data/validation/release-status-{version}.json','sha256':sha(ROOT/f'data/validation/release-status-{version}.json')}},
       'checked_current_documents':[rel(p) for p in docs],
-      'checks':{'bounded_public_surface':True,'local_markdown_links':True,'stale_current_status_patterns':True,'release_availability':True,'localized_version_parity':True,'localized_release_status':True,'host_capabilities':True,'generated_config_host_projections':True,'community_health_files':True,'current_dev_settings_owner':True},'violations':errors}
+      'checks':{'bounded_public_surface':True,'local_markdown_links':True,'stale_current_status_patterns':True,'release_availability':True,'localized_version_parity':True,'localized_release_status':True,'host_capabilities':True,'generated_config_host_projections':True,'community_health_files':True,'current_dev_settings_owner':True,'current_dev_publication_boundary':True},'violations':errors}
     OUT.write_text(json.dumps(out,indent=2,ensure_ascii=False)+'\n',encoding='utf-8',newline='\n')
     print(f'documentation parity {status}: docs={len(docs)} violations={len(errors)}')
     if errors:print(json.dumps(errors,indent=2,ensure_ascii=False))
