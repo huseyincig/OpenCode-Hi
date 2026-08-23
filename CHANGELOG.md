@@ -3,6 +3,7 @@
 All notable changes to OpenCode-Hi are documented here.
 
 ## Unreleased
+- Consolidated the compatibility `hi_role_models` set/clear path behind the same canonical role-model mutation policy used by `hi_settings`; the legacy tool ID/list response remains available, but it no longer owns a second live model-validation/persistence implementation. Current `dev` exposes 35 `hi_*` tools while immutable published `0.2.4` evidence remains 34.
 - Removed an Evidence freshness duplicate-truth edge: verification/status/runtime projections now derive freshness from current canonical Evidence items, and persisted `execution.evidence.fresh` is validated as cache-only so a forged/stale boolean cannot satisfy verification without Evidence.
 - Consolidated scheduler capacity ownership: production TaskRuntime now derives all active global/provider/model occupancy from durable Mission scheduler reservations and uses only a stateless policy source for limits, removing the duplicate process-local allocation backstop while preserving OpenCode child/session execution ownership.
 - Repository exploration ambiguity clearance is now evidence-bound and freshness-aware: `DONE` alone cannot unlock implementation; Hi requires same-attempt OpenCode read receipts, explicit bounded source provenance, `context_gap: none`, and (for contract-critical ambiguity) a read-grounded decision claim. Source drift blocks implementation until bounded exploration is refreshed; read/decision claims are not promoted to verification or authority.

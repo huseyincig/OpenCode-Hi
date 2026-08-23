@@ -112,6 +112,22 @@ test('chat-facing hi_role_models lists only effective connected models and persi
 })
 
 
+test('compatibility hi_role_models mutations are state-equivalent to canonical hi_settings role mutations',async()=>{
+  const roots=[mkdtempSync(join(tmpdir(),'hi-role-compat-a-')),mkdtempSync(join(tmpdir(),'hi-role-compat-b-'))]
+  const raw={connected:['p'],all:[{id:'p',models:[{id:'code'},{id:'fallback'}]}]}
+  const normalized=root=>{const doc=JSON.parse(readFileSync(join(root,'.opencode','hi','policy','routing.json'),'utf8'));delete doc.applied_at;return doc}
+  const a=await HiPlugin({directory:roots[0],worktree:roots[0],project:{},client:clientWithProviderShape(raw)}),b=await HiPlugin({directory:roots[1],worktree:roots[1],project:{},client:clientWithProviderShape(raw)})
+  try{
+    await a.config({});await b.config({});await a.event({event:{type:'server.connected',properties:{}}});await b.event({event:{type:'server.connected',properties:{}}})
+    const compatSet=JSON.parse(String(await a.tool.hi_role_models.execute({action:'set',role:'coder',models:'p/code,p/fallback'},{})))
+    const canonicalSet=JSON.parse(String(await b.tool.hi_settings.execute({action:'set-role-model',role:'coder',models:'p/code,p/fallback'},{})))
+    assert.equal(compatSet.status,'APPLIED');assert.equal(canonicalSet.status,'APPLIED');assert.deepEqual(compatSet.role_models,canonicalSet.role_models);assert.deepEqual(normalized(roots[0]),normalized(roots[1]))
+    const compatClear=JSON.parse(String(await a.tool.hi_role_models.execute({action:'clear',role:'coder'},{})))
+    const canonicalClear=JSON.parse(String(await b.tool.hi_settings.execute({action:'clear-role-model',role:'coder'},{})))
+    assert.equal(compatClear.status,'APPLIED');assert.equal(canonicalClear.status,'APPLIED');assert.deepEqual(compatClear.role_models,canonicalClear.role_models);assert.deepEqual(normalized(roots[0]),normalized(roots[1]))
+  }finally{await a.dispose?.();await b.dispose?.();for(const root of roots)rmSync(root,{recursive:true,force:true})}
+})
+
 test('hi_settings applies one validated settings transaction and hot-reloads work mode plus role mappings',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-settings-runtime-'))
   const raw={connected:['p'],all:[{id:'p',models:[{id:'code'},{id:'fallback'},{id:'vision',capabilities:{input:{image:true}}},{id:'text',capabilities:{input:{image:false}}}]}]}

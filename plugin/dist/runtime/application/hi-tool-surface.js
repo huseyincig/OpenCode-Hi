@@ -61,7 +61,6 @@ function optionalScopeList(value) {
     return out.length ? [...new Set(out)] : undefined;
 }
 import { runtimeModelCandidateStatus } from '../routing/model-resolver.js';
-import { setProjectRoleModels } from '../../config/auto-init.js';
 import { applyProjectSettings, hasProjectSettings } from '../../config/project-settings.js';
 import { resolveHiConfigWithReport } from '../../config/resolver.js';
 import { resolveBrowserExecutionOwner } from '../browser/ownership.js';
@@ -71,46 +70,45 @@ export function createHiToolSurface(input) {
     const { state, store, tasks, processRuntime, workspaceRuntime, browserExecutor, previewManager, projectRoot, workingDirectory, capabilities, native, getModels, refreshModels, scopedStores, getBrowserBootstrapStatus } = input;
     const doctorTool = tool({ description: 'Run OpenCode-Hi runtime/configuration health checks', args: {}, execute: async () => { const browserHealth = browserExecutor ? await browserExecutor.health() : { available: false }, runtimeHostResources = new Set(browserHealth.available ? ['host-capability:browser-execution'] : []); return formatDoctor(runDoctor(state.config, store, projectRoot, { models: getModels(), resolution: state.configResolution, capabilities, hostConfig: state.hostConfig, openCodeVersion: state.openCodeVersion, runtimeHostResources, browserBootstrap: getBrowserBootstrapStatus?.() })); } });
     const statusTool = tool({ description: 'Show compact user-facing Hi mission status. This intentionally excludes diagnostic logs and ledger payloads.', args: {}, execute: async (_args, c) => { const m = store.get(c?.sessionID); return m ? formatUserMissionStatus(m) : 'Hi: no active mission'; } });
-    const roleModelsTool = tool({ description: 'Configure Hi child-role models from chat using only the effective connected OpenCode runtime inventory. Use action=list first when the user asks to configure role models; action=set persists an explicit role model/fallback list; action=clear returns one role to automatic routing. Primary manager/working-manager models remain OpenCode-owned.', args: { action: tool.schema.string(), role: tool.schema.string().optional(), models: tool.schema.string().optional() }, execute: async (a) => {
+    const reloadConfig = () => { const resolved = resolveHiConfigWithReport(state.hostConfig.hi, projectRoot); state.config = resolved.config; state.configResolution = resolved.report; return state.config; };
+    const modelRows = (available) => available.map(model => ({ id: model.id, provider: model.provider ?? null, vision: model.visionCapable === true, variants: model.variants ?? [] }));
+    const roleModelChange = (rawArgs, action, available, rows) => {
+        const role = userFacingChildRole(rawArgs?.role);
+        if (!isModelRoutedChildRole(role))
+            return { status: 'BLOCKED', reason: 'unsupported-child-role', allowed_roles: MODEL_ROUTED_CHILD_ROLES };
+        if (action === 'clear') {
+            applyProjectSettings(projectRoot, { roleModels: { [role]: null } });
+            reloadConfig();
+            return { status: 'APPLIED', role, role_models: state.config.routing.roleModels, restart_required: false, note: 'Role returned to automatic runtime selection; no inferred preference is persisted.' };
+        }
+        const requested = [...new Set(String(rawArgs?.models ?? '').split(',').map((x) => x.trim()).filter(Boolean))];
+        if (!requested.length)
+            return { status: 'BLOCKED', reason: 'model-list-empty' };
+        const rejected = requested.map(id => ({ id, ...runtimeModelCandidateStatus(id, available, state.config, state.hostConfig, role) })).filter(x => !x.ok);
+        if (rejected.length)
+            return { status: 'BLOCKED', reason: rejected.some(x => String(x.reason).includes('vision')) ? 'role-requires-vision-capable-model' : 'model-unavailable-or-policy-rejected', role, rejected, available_models: rows };
+        applyProjectSettings(projectRoot, { roleModels: { [role]: requested } });
+        reloadConfig();
+        return { status: 'APPLIED', role, models: requested, role_models: state.config.routing.roleModels, restart_required: false, note: 'New worker dispatches use this mapping immediately.' };
+    };
+    const roleModelsTool = tool({ description: 'Compatibility surface for older Hi child-role model callers. New configuration flows use hi_settings. action=list shows only the effective connected OpenCode inventory; set/clear delegate to the same canonical role-model mutation policy as hi_settings. Primary manager/working-manager models remain OpenCode-owned.', args: { action: tool.schema.string(), role: tool.schema.string().optional(), models: tool.schema.string().optional() }, execute: async (a) => {
             const rawArgs = a?.input && typeof a.input === 'object' && !Array.isArray(a.input) ? { ...a, ...a.input } : a, action = String(rawArgs?.action ?? 'list').trim().toLowerCase();
             if (refreshModels)
                 await refreshModels('hi-role-models');
-            const available = getModels(), configured = state.config.routing.roleModels ?? {}, modelRows = available.map(model => ({ id: model.id, provider: model.provider ?? null, vision: model.visionCapable === true, variants: model.variants ?? [] }));
+            const available = getModels(), configured = state.config.routing.roleModels ?? {}, rows = modelRows(available);
             const roles = Object.fromEntries(MODEL_ROUTED_CHILD_ROLES.map(role => [role, configured[role]?.[0] ?? null]));
             if (action === 'list')
-                return JSON.stringify({ status: 'OK', models: modelRows, roles, role_models: Object.fromEntries(MODEL_ROUTED_CHILD_ROLES.map(role => [role, configured[role] ?? []])), note: 'Only effective connected OpenCode models are listed. Tell me which model(s) each child role should use; primary Manager/Working Manager model selection stays in OpenCode.' });
-            const role = userFacingChildRole(rawArgs?.role);
-            if (!isModelRoutedChildRole(role))
-                return JSON.stringify({ status: 'BLOCKED', reason: 'unsupported-child-role', allowed_roles: MODEL_ROUTED_CHILD_ROLES });
-            if (action === 'clear') {
-                setProjectRoleModels(projectRoot, role, []);
-                const resolved = resolveHiConfigWithReport(state.hostConfig.hi, projectRoot);
-                state.config = resolved.config;
-                state.configResolution = resolved.report;
-                return JSON.stringify({ status: 'APPLIED', role, role_models: state.config.routing.roleModels, note: 'Role returned to automatic runtime selection; no inferred preference is persisted.' });
-            }
-            if (action !== 'set')
+                return JSON.stringify({ status: 'OK', models: rows, roles, role_models: Object.fromEntries(MODEL_ROUTED_CHILD_ROLES.map(role => [role, configured[role] ?? []])), note: 'Compatibility view only. New configuration flows use hi_settings. Only effective connected OpenCode models are listed; primary Manager/Working Manager model selection stays in OpenCode.' });
+            if (action !== 'set' && action !== 'clear')
                 return JSON.stringify({ status: 'BLOCKED', reason: 'unsupported-action', allowed_actions: ['list', 'set', 'clear'] });
-            const requested = [...new Set(String(rawArgs?.models ?? '').split(',').map((x) => x.trim()).filter(Boolean))];
-            if (!requested.length)
-                return JSON.stringify({ status: 'BLOCKED', reason: 'model-list-empty' });
-            const rejected = requested.map(id => ({ id, ...runtimeModelCandidateStatus(id, available, state.config, state.hostConfig, role) })).filter(x => !x.ok);
-            if (rejected.length) {
-                const vision = rejected.some(x => String(x.reason).includes('vision'));
-                return JSON.stringify({ status: 'BLOCKED', reason: vision ? 'role-requires-vision-capable-model' : 'model-unavailable-or-policy-rejected', role, rejected, available_models: modelRows });
-            }
-            setProjectRoleModels(projectRoot, role, requested);
-            const resolved = resolveHiConfigWithReport(state.hostConfig.hi, projectRoot);
-            state.config = resolved.config;
-            state.configResolution = resolved.report;
-            return JSON.stringify({ status: 'APPLIED', role, models: requested, role_models: state.config.routing.roleModels, restart_required: false, note: 'The active Hi runtime now uses this explicit child-role mapping for new worker dispatches.' });
+            return JSON.stringify(roleModelChange(rawArgs, action, available, rows));
         } });
     const settingsTool = tool({ description: 'Show or change OpenCode-Hi project settings through one transactional control plane. Actions: show/setup; apply with settings_json for any request changing multiple settings, including ordered allowed_models global child-model pool; set-role-model (set alias) and clear-role-model (clear alias) for one role; set-mode; set-limits; reset-models; reset. Work mode controls Adaptive/Single/Multi topology; child model choices are validated only against the effective connected OpenCode runtime inventory. Primary Manager/Working Manager model ownership remains OpenCode-owned.', args: { action: tool.schema.string(), role: tool.schema.string().optional(), models: tool.schema.string().optional(), allowed_models: tool.schema.string().optional(), work_mode: tool.schema.string().optional(), max_agents: tool.schema.number().optional(), parallelism: tool.schema.number().optional(), settings_json: tool.schema.string().optional() }, execute: async (a) => {
             const rawArgs = a?.input && typeof a.input === 'object' && !Array.isArray(a.input) ? { ...a, ...a.input } : a, action = String(rawArgs?.action ?? 'show').trim().toLowerCase();
             if (refreshModels)
                 await refreshModels('hi-settings');
-            const available = getModels(), configured = state.config.routing.roleModels ?? {}, modelRows = available.map(model => ({ id: model.id, provider: model.provider ?? null, vision: model.visionCapable === true, variants: model.variants ?? [] })), reload = () => { const resolved = resolveHiConfigWithReport(state.hostConfig.hi, projectRoot); state.config = resolved.config; state.configResolution = resolved.report; return state.config; };
-            const show = () => JSON.stringify({ status: 'OK', primary_behavior: state.config.primaryMode, work_mode: state.config.execution.topology === 'single-agent' ? 'single' : state.config.execution.topology === 'multi-agent' ? 'multi' : 'adaptive', execution: { max_agents: state.config.execution.maxAgents, parallelism: state.config.execution.parallelism }, models: { available: modelRows, allowed: [...state.config.routing.allowedModels], roles: Object.fromEntries(MODEL_ROUTED_CHILD_ROLES.map(role => [role, configured[role] ?? []])) }, health: { unavailable_assignments: MODEL_ROUTED_CHILD_ROLES.flatMap(role => (configured[role] ?? []).filter(id => !runtimeModelCandidateStatus(id, available, state.config, state.hostConfig, role).ok).map(id => ({ role, id }))) }, onboarding: { pending: !hasProjectSettings(projectRoot), default_work_mode: 'adaptive', default_models: 'automatic' }, restart_required: false, note: 'Runtime truth comes from OpenCode connected models; empty role lists mean Automatic.' });
+            const available = getModels(), configured = state.config.routing.roleModels ?? {}, rows = modelRows(available), reload = reloadConfig;
+            const show = () => JSON.stringify({ status: 'OK', primary_behavior: state.config.primaryMode, work_mode: state.config.execution.topology === 'single-agent' ? 'single' : state.config.execution.topology === 'multi-agent' ? 'multi' : 'adaptive', execution: { max_agents: state.config.execution.maxAgents, parallelism: state.config.execution.parallelism }, models: { available: rows, allowed: [...state.config.routing.allowedModels], roles: Object.fromEntries(MODEL_ROUTED_CHILD_ROLES.map(role => [role, configured[role] ?? []])) }, health: { unavailable_assignments: MODEL_ROUTED_CHILD_ROLES.flatMap(role => (configured[role] ?? []).filter(id => !runtimeModelCandidateStatus(id, available, state.config, state.hostConfig, role).ok).map(id => ({ role, id }))) }, onboarding: { pending: !hasProjectSettings(projectRoot), default_work_mode: 'adaptive', default_models: 'automatic' }, restart_required: false, note: 'Runtime truth comes from OpenCode connected models; empty role lists mean Automatic.' });
             if (action === 'show' || action === 'setup')
                 return show();
             if (action === 'apply') {
@@ -131,7 +129,7 @@ export function createHiToolSurface(input) {
                 if (Array.isArray(allowedModels)) {
                     const rejected = allowedModels.filter((id) => !available.some(m => m.id === id));
                     if (rejected.length)
-                        return JSON.stringify({ status: 'BLOCKED', reason: 'model-unavailable', rejected, available_models: modelRows });
+                        return JSON.stringify({ status: 'BLOCKED', reason: 'model-unavailable', rejected, available_models: rows });
                 }
                 if (patch.roles !== undefined && (!patch.roles || typeof patch.roles !== 'object' || Array.isArray(patch.roles)))
                     return JSON.stringify({ status: 'BLOCKED', reason: 'invalid-role-model-patch' });
@@ -153,7 +151,7 @@ export function createHiToolSurface(input) {
                         return JSON.stringify({ status: 'BLOCKED', reason: 'role-model-outside-allowed-model-pool', role: candidate });
                     const rejected = ids.map(id => ({ id, ...runtimeModelCandidateStatus(id, available, state.config, state.hostConfig, candidate) })).filter(x => !x.ok);
                     if (rejected.length)
-                        return JSON.stringify({ status: 'BLOCKED', reason: rejected.some(x => String(x.reason).includes('vision')) ? 'role-requires-vision-capable-model' : 'model-unavailable-or-policy-rejected', role: candidate, rejected, available_models: modelRows });
+                        return JSON.stringify({ status: 'BLOCKED', reason: rejected.some(x => String(x.reason).includes('vision')) ? 'role-requires-vision-capable-model' : 'model-unavailable-or-policy-rejected', role: candidate, rejected, available_models: rows });
                     rolePatch[candidate] = ids;
                 }
                 try {
@@ -172,7 +170,7 @@ export function createHiToolSurface(input) {
                     return JSON.stringify({ status: 'BLOCKED', reason: 'model-list-empty' });
                 const rejected = requested.filter(id => !available.some(m => m.id === id));
                 if (rejected.length)
-                    return JSON.stringify({ status: 'BLOCKED', reason: 'model-unavailable', rejected, available_models: modelRows });
+                    return JSON.stringify({ status: 'BLOCKED', reason: 'model-unavailable', rejected, available_models: rows });
                 applyProjectSettings(projectRoot, { allowedModels: requested });
                 reload();
                 return JSON.stringify({ status: 'APPLIED', allowed_models: state.config.routing.allowedModels, restart_required: false });
@@ -210,25 +208,11 @@ export function createHiToolSurface(input) {
                 reload();
                 return JSON.stringify({ status: 'APPLIED', work_mode: 'adaptive', allowed_models: [], role_models: state.config.routing.roleModels, execution: state.config.execution, restart_required: false });
             }
-            const role = userFacingChildRole(rawArgs?.role);
-            if (!isModelRoutedChildRole(role))
-                return JSON.stringify({ status: 'BLOCKED', reason: 'unsupported-child-role', allowed_roles: MODEL_ROUTED_CHILD_ROLES });
-            if (action === 'clear-role-model' || action === 'clear') {
-                applyProjectSettings(projectRoot, { roleModels: { [role]: null } });
-                reload();
-                return JSON.stringify({ status: 'APPLIED', role, role_models: state.config.routing.roleModels, restart_required: false });
-            }
-            if (action !== 'set-role-model' && action !== 'set')
-                return JSON.stringify({ status: 'BLOCKED', reason: 'unsupported-action', allowed_actions: ['show', 'setup', 'apply', 'set-model-pool', 'clear-model-pool', 'set-mode', 'set-role-model', 'clear-role-model', 'reset-models', 'set-limits', 'reset'] });
-            const requested = [...new Set(String(rawArgs?.models ?? '').split(',').map((x) => x.trim()).filter(Boolean))];
-            if (!requested.length)
-                return JSON.stringify({ status: 'BLOCKED', reason: 'model-list-empty' });
-            const rejected = requested.map(id => ({ id, ...runtimeModelCandidateStatus(id, available, state.config, state.hostConfig, role) })).filter(x => !x.ok);
-            if (rejected.length)
-                return JSON.stringify({ status: 'BLOCKED', reason: rejected.some(x => String(x.reason).includes('vision')) ? 'role-requires-vision-capable-model' : 'model-unavailable-or-policy-rejected', role, rejected, available_models: modelRows });
-            applyProjectSettings(projectRoot, { roleModels: { [role]: requested } });
-            reload();
-            return JSON.stringify({ status: 'APPLIED', role, models: requested, role_models: state.config.routing.roleModels, restart_required: false, note: 'New worker dispatches use this mapping immediately.' });
+            if (action === 'clear-role-model' || action === 'clear')
+                return JSON.stringify(roleModelChange(rawArgs, 'clear', available, rows));
+            if (action === 'set-role-model' || action === 'set')
+                return JSON.stringify(roleModelChange(rawArgs, 'set', available, rows));
+            return JSON.stringify({ status: 'BLOCKED', reason: 'unsupported-action', allowed_actions: ['show', 'setup', 'apply', 'set-model-pool', 'clear-model-pool', 'set-mode', 'set-role-model', 'clear-role-model', 'reset-models', 'set-limits', 'reset'] });
         } });
     const metricsTool = tool({ description: 'Show aggregate Hi runtime metrics derived from bounded mission state. Token/cost telemetry is omitted unless the host provides it.', args: {}, execute: async () => JSON.stringify(aggregateMissionMetrics(store.all())) });
     const ledgerTool = tool({ description: 'Show a bounded Hi execution ledger/report on demand.', args: { limit: tool.schema.number().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(compactLedgerReport(m, a?.limit ?? 40)) : 'No active Hi mission'; } });

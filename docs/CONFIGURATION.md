@@ -19,7 +19,7 @@ Current `dev` presents three normal-user Work Modes: `Adaptive`, `Single`, and `
 
 Use runtime `hi_settings show` / `hi_settings apply` for live connected-inventory-aware settings. One `apply` transaction can change mode, limits, and multiple role mappings together; the whole patch is validated before persistence. Use `npx opencode-hi config` for the same project preference model when a deterministic CLI is preferable. The CLI does not invent or validate live provider availability outside OpenCode runtime.
 
-`hi_role_models` remains compatibility-only; new multi-setting flows should use `hi_settings`. With no explicit routing file, Adaptive + Automatic is valid and no model preference is fabricated. The first pending session can offer setup once live models exist, while material work proceeds without interruption. Each runtime settings open refreshes OpenCode inventory before presenting models.
+`hi_role_models` remains compatibility-only and delegates role-model set/clear to the same canonical mutation policy; new configuration flows should use `hi_settings`. With no explicit routing file, Adaptive + Automatic is valid and no model preference is fabricated. The first pending session can offer setup once live models exist, while material work proceeds without interruption. Each runtime settings open refreshes OpenCode inventory before presenting models.
 
 The mechanical option inventory is `data/hi-config-options.json`. The generated appendix at the end of this document is derived from that inventory.
 
@@ -874,7 +874,7 @@ On PowerShell use the same arguments with `.cmd` and Windows path syntax.
 
 Primary-role assignments are intentionally rejected. For example, `--set manager=provider/model` returns `BLOCKED` with reason `role-model-primary-owned-by-opencode`.
 
-`--defaults --policy recommended` in the legacy Python helper returns `DEFERRED` because ID-only CLI discovery is not authoritative model availability. Restart OpenCode and inspect the effective connected inventory with `hi_role_models`. Automatic capability/variant recommendations remain ephemeral and are not written to project policy; use `--set ROLE=...` only when you explicitly want to persist an ordered child-role mapping.
+`--defaults --policy recommended` in the legacy Python helper returns `DEFERRED` because ID-only CLI discovery is not authoritative model availability. Restart OpenCode and inspect the effective connected inventory with `hi_settings show`; `hi_role_models list` remains an older compatibility view. Automatic capability/variant recommendations remain ephemeral and are not written to project policy; use `--set ROLE=...` only when you explicitly want to persist an ordered child-role mapping.
 
 The role-model CLI accepts only `coder`, `architect`, `repository-explorer`, `qa-reviewer`, `security-reviewer`, and `visual-qa`. Attempts to assign `manager` or `working-manager` are blocked because primary model ownership belongs to OpenCode.
 

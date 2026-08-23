@@ -201,9 +201,9 @@ The post-`0.2.4` `dev` line adds one user-facing settings model without replacin
 - **Hot reload:** successful runtime settings changes affect new worker dispatches without restarting OpenCode.
 - **Ownership:** provider authentication and primary `manager` / `working-manager` model selection remain OpenCode-owned. `hi_role_models` remains supported for compatibility.
 
-The immutable published `0.2.4` runtime evidence below remains **34 tools**. Current `dev` adds `hi_settings`; that development-source count must not be back-written into the `0.2.4` release evidence.
+The immutable published `0.2.4` runtime evidence below remains **34 tools**. Current `dev` adds `hi_settings` for **35 `hi_*` tools**; that development-source count must not be back-written into the `0.2.4` release evidence. `hi_settings` is the current settings owner; `hi_role_models` is a compatibility adapter that preserves its older ID/response surface while delegating role-model mutation policy to the same canonical settings path.
 
-After OpenCode loads the plugin, the runtime exposes **34 `hi_*` tools**. The main user-facing diagnostics are `hi_doctor`, `hi_status`, `hi_readiness`, `hi_metrics`, and `hi_ledger`. The remaining tools are bounded control-plane primitives for task/worker dispatch, process execution, browser execution, context artifacts, temporary mutations, semantic assessment, and direct progress. The exact loaded tool IDs are host-verifiable through OpenCode's documented `/experimental/tool/ids` endpoint.
+Published `0.2.4` exposes **34 `hi_*` tools**. The main user-facing diagnostics are `hi_doctor`, `hi_status`, `hi_readiness`, `hi_metrics`, and `hi_ledger`. The remaining tools are bounded control-plane primitives for task/worker dispatch, process execution, browser execution, context artifacts, temporary mutations, semantic assessment, and direct progress. The exact loaded tool IDs are host-verifiable through OpenCode's documented `/experimental/tool/ids` endpoint.
 
 For current published `0.2.4`, installation ownership is inspected with package `doctor`; live Mission state is inspected with runtime `hi_status`, `hi_readiness`, and `hi_ledger`. Published `0.2.4` additionally exposes Node-only `state`, `reprofile`, `roles`, `rotate`, and `check-update` package commands so common project configuration no longer requires the legacy Python helper.
 
