@@ -231,11 +231,21 @@ Ayrıntı için [Architecture](../../ARCHITECTURE.md#storage-and-filesystem-owne
 
 Repository root'tan canonical kontroller:
 
+Aktif geliştirmede önce güncel ürün kapısını çalıştırın:
+
 ```bash
-npm run check
-python -m pytest -q tests/test_hi.py
-python scripts/validate.py
+npm run check:product
 ```
+
+Exact-source evidence katmanı ayrı tutulur:
+
+```bash
+python scripts/evidence-validation-readiness.py
+# yalnız evidence_ready=true ise
+npm run check:evidence
+```
+
+`npm run check`, evidence-ready aday için strict birleşik product + evidence kapısıdır; material source son external CI receipt’inden ilerideyse bloklaması beklenir. Gerektiğinde Python product acceptance için `npm run test:python:product` kullanın.
 
 Fresh test count dokümana elle yazılmaz; command output onun sahibidir. Host-bound claim T3, gerçek external publication claim T4 evidence gerektirir.
 

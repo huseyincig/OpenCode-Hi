@@ -314,15 +314,21 @@ See [Architecture](docs/ARCHITECTURE.md#storage-and-filesystem-ownership).
 
 ## Verification
 
-Canonical repository checks are run from the repository root:
+During active development, run the product/source/runtime/documentation gate from the repository root:
 
 ```bash
-npm run check
-python -m pytest -q tests/test_hi.py
-python scripts/validate.py
+npm run check:product
 ```
 
-Fresh test counts belong to command output, not hand-maintained documentation. Host-bound capability claims require exact T3 receipts; real external publication claims require T4 evidence.
+Evidence certification is intentionally source-bound. Check whether the current commit is eligible before running it:
+
+```bash
+python scripts/evidence-validation-readiness.py
+# only when evidence_ready=true
+npm run check:evidence
+```
+
+`npm run check` remains the strict combined product + evidence gate for an evidence-ready candidate; it is expected to block while material source has moved beyond the latest exact-source external CI receipt. Run Python product acceptance separately when needed with `npm run test:python:product`. Fresh test counts belong to command output, not hand-maintained documentation. Host-bound capability claims require exact T3 receipts; real external publication claims require T4 evidence.
 
 See [Verification Strategy](docs/VERIFICATION.md).
 

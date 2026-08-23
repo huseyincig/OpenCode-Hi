@@ -4,19 +4,33 @@ OpenCode-Hi separates static checks, deterministic tests, integration behavior, 
 
 ## Local gates
 
-Run the combined source/runtime/documentation gate:
+For active development, run the product/source/runtime/documentation gate:
 
 ```sh
-npm run check
+npm run check:product
 ```
 
-Run Python acceptance when the changed boundary is covered there:
+The evidence layer is a separate exact-source certification gate. Determine readiness first:
 
 ```sh
-python -m pytest -q tests/test_hi.py
+python scripts/evidence-validation-readiness.py
 ```
 
-Use focused tests while editing; run the broader gate before a coherent checkpoint when shipped behavior, generated projections, or public documentation changed.
+When that command reports `evidence_ready=true`, run:
+
+```sh
+npm run check:evidence
+```
+
+`npm run check` is the strict combined product + evidence gate for an evidence-ready candidate. It is deliberately not the normal material-development checkpoint: after source changes, exact-source external CI evidence is stale until the corresponding Release Readiness run exists. CI follows the same split and records evidence certification as pending rather than treating a newer product commit as a failed T3/T4 claim.
+
+Run Python product acceptance when the changed boundary is covered there:
+
+```sh
+npm run test:python:product
+```
+
+Use focused tests while editing; run `check:product` before a coherent checkpoint when shipped behavior, generated projections, or public documentation changed.
 
 ## Evidence tiers
 

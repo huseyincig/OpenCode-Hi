@@ -21,16 +21,18 @@ Public documentation is intentionally small: one current page per product area. 
 
 ## Verification
 
-Use the smallest sufficient focused proof while editing. Before a coherent checkpoint, run the repository gates appropriate to the change; the canonical combined Node/documentation/source check is:
+Use the smallest sufficient focused proof while editing. Before a coherent material-development checkpoint, run the current product gate:
 
 ```sh
-npm run check
+npm run check:product
 ```
 
-Run the Python acceptance suite as well when the changed boundary is covered there:
+Exact-source evidence certification is a separate lifecycle. Run `python scripts/evidence-validation-readiness.py`; only when it reports `evidence_ready=true` run `npm run check:evidence`. `npm run check` remains the strict combined gate for an evidence-ready candidate and may correctly block after material source moves beyond the latest external CI receipt.
+
+Run Python product acceptance as well when the changed boundary is covered there:
 
 ```sh
-python -m pytest -q tests/test_hi.py
+npm run test:python:product
 ```
 
 Host-dependent support needs exact T3 evidence. A future release/publication must be proven against its exact unchanged source/ref; if source changes, affected proof must be rerun. Real publication requires T4 and explicit authority.
