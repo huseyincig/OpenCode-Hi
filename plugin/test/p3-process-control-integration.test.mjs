@@ -124,3 +124,26 @@ test('child compaction invalidates stale recovery replay history but preserves n
   assert.equal(m.continuation.last_progress_signature,signature);assert.equal(m.execution.evidence.fresh,true);assert.equal(child.status,'busy')
   const event=m.execution.ledger.findLast(e=>e.type==='session.compacted');assert.equal(event.worker_id,'w-compact');assert.equal(event.payload.session_id,'child-compact');assert.equal(event.payload.stagnation_nudge_cleared,false);assert.ok(saves.length)
 })
+
+
+test('browser cleanup runs when child idle assistant settlement throws before terminal reconciliation',async()=>{
+  const store=new MissionStore(),m=assessed(store,'browser-idle-error-parent'),order=[]
+  const child={id:'w-browser-error',task_id:'t-browser-error',role:'visual-qa',category:'visual',session_id:'child-browser-error',parent_session_id:m.identity.session_id,parent_mission_id:m.identity.mission_id,fallbacks:[],selected_methodologies:['hi-browser-testing'],loaded_methodologies:['hi-browser-testing'],methodologies:[],fingerprint:'f-browser-error',status:'busy',generation_at_spawn:m.continuation.generation}
+  const task={id:'t-browser-error',objective:'inspect local UI',role:'visual-qa',category:'visual',scope:['src/view.tsx'],dependencies:[],requiredEvidence:[],obligation_ids:[],constraints:[],status:'running',worker_id:child.id,created_at:Date.now(),updated_at:Date.now(),execution_profile:{browser_allowed_origins:['http://127.0.0.1:4173']}}
+  m.execution.tasks.push(task);m.execution.workers.push(child)
+  const tasks={
+    resolveChildCallback:sid=>sid===child.session_id?child:undefined,
+    childCallbackDisposition:()=> 'current',
+    admitTerminalEvent:async()=>({decision:'ACCEPT',reason:'host-session-idle-confirmed',hostStatus:'idle'}),
+    cleanupBrowserForTask:async()=>{order.push('browser');return true},
+    settleHostIdleAssistantResult:async()=>{throw new Error('assistant settlement boom')},
+    fail:()=>{order.push('fail');child.status='failed';task.status='failed'},
+    cleanupWorkspaceForTask:async()=>{order.push('workspace');return true},
+    pendingExecutionWorkers:()=>[],
+  }
+  const services={store,background:{},persistence:{save:()=>order.push('save')},tasks,processRuntime:{},workspaceRuntime:undefined,eventSink:()=>{},scopedStores:{}}
+  const st=state();st.config.executionPolicy='manual'
+  const controller=new RuntimeEventController({state:st,host:{refreshRuntimeInventory:async()=>{},log:async()=>{},readAssistantResult:async()=>({text:'irrelevant'})},services,projectAuthority:{grant:()=>{}},pendingNativePermissions:new Map(),projectRoot:'/repo'})
+  await controller.handle(normalizeOpenCodeEvent({type:'session.idle',properties:{sessionID:child.session_id}}))
+  assert.deepEqual(order.slice(0,3),['browser','fail','workspace'])
+})

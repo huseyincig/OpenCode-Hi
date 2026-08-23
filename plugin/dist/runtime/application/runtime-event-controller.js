@@ -234,6 +234,7 @@ export class RuntimeEventController {
                 await afterChildWake(wakeResult, 'child-result-ready', assistant.error?.message, settled.failureKind);
             }
             catch (e) {
+                await tasks.cleanupBrowserForTask(m, child.task_id, child.id);
                 tasks.fail(m, child.id, String(e));
                 await tasks.cleanupWorkspaceForTask(m, child.task_id);
                 store.updateProgress(m);

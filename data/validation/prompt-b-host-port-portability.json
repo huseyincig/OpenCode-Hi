@@ -17,7 +17,7 @@
     {
       "invariant": "semantic-core-sdk-confinement",
       "owner": "plugin/src/runtime/application/runtime-event-controller.ts",
-      "owner_sha256": "49826510d74c16cde0fa9cfb4379a80520264506346f59693485b24af0bc3bc2",
+      "owner_sha256": "acd0cd4bfac1805154035bbc7099b089c59f73b43d7e283c1456f651a7bbac1a",
       "owner_anchor": "import type { HostEvent,HostPort } from '../host/port.js'",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",
