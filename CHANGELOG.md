@@ -3,6 +3,7 @@
 All notable changes to OpenCode-Hi are documented here.
 
 ## Unreleased
+- Fixes visual verification admission when a semantic assessment requests `visual-check` but omits the redundant `visual-qa` capability. Current `dev` now derives `visual-qa` mechanically from the canonical visual verification contract, so required browser/visual evidence routes to the bounded `visual-qa` child instead of falling through to `route=none`.
 - Bounds the process-local first-use settings onboarding dedupe to 128 recent sessions. Same-session onboarding remains one-shot in normal use, while long-lived OpenCode processes no longer retain every historical onboarding session ID indefinitely.
 - Bounds process-local HumanDecision chat transport history to the newest 64 terminal entries after waiters settle. Canonical HumanDecision state remains Mission-owned; immediate response/await behavior is preserved while long-lived OpenCode processes no longer retain every cancelled/responded transport contract indefinitely.
 - Acquires the per-OpenCode-client/project runtime instance lease before shared persistence/reconciliation/bootstrap initialization and releases it on any initialization failure. Concurrent duplicate plugin initialization is now fenced before it can rewrite runtime boot state or run duplicate resource reconciliation, while failed initialization still permits a clean retry.

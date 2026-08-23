@@ -11,6 +11,8 @@ import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
 import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {resolveHiConfig} from '../dist/config/resolver.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
+import {parseSemanticIntentAssessment} from '../dist/runtime/intent/semantic-assessment.js'
+import {buildMissionRuntimeProjection} from '../dist/runtime/context/mission-runtime-projection.js'
 
 const VISUAL_ASSESSMENT={
   material:true,
@@ -27,6 +29,15 @@ const VISUAL_ASSESSMENT={
   intent_signals:[],
   suppressed_intent_signals:[],
 }
+
+test('P0 visual-check canonically implies visual-qa capability when the semantic model omits it',()=>{
+  const store=new MissionStore(process.cwd()),m=store.start('visual-implied-capability','build a local HTML game')
+  store.applyInitialSemanticAssessment('visual-implied-capability',parseSemanticIntentAssessment({...VISUAL_ASSESSMENT,required_capabilities:['implementation','verification']}))
+  assert.ok(m.identity.intent.requiredCapabilities.includes('visual-qa'),'visual-check must mechanically imply visual-qa capability')
+  const implementation=m.execution.obligations.find(o=>o.kind==='implementation');assert.ok(implementation);implementation.status='closed';implementation.closedAt=Date.now()
+  const instruction=buildMissionRuntimeProjection(m,undefined,process.cwd()).next_action
+  assert.match(instruction,/call hi_task_start with role=visual-qa, category=visual/)
+})
 
 test('P0 visual-check activates canonical visual verification methodology before any worker is spawned',()=>{
   const store=new MissionStore(process.cwd()),m=store.start('visual-initial','build a local HTML game')

@@ -116,10 +116,13 @@ export function parseSemanticIntentAssessment(raw) {
     if (verificationCeiling && !userVerification.length)
         throw new Error('verification_ceiling requires at least one explicit user_verification kind');
     const effectiveVerification = verificationCeiling ? userVerification : [...new Set([...userVerification, ...inferredVerification])];
+    const requiredCapabilities = enumList(v.required_capabilities, SEMANTIC_CAPABILITIES, 40, 'required_capabilities');
+    if (effectiveVerification.includes('visual-check') && !requiredCapabilities.includes('visual-qa'))
+        requiredCapabilities.push('visual-qa');
     const assessment = {
         material: v.material, message_kind: messageKind,
         task_kind: take('task_kind', taskKinds), scope: take('scope', scopes), risk, ambiguity: take('ambiguity', ambiguities), dependency_class: take('dependency_class', dependencies),
-        required_capabilities: enumList(v.required_capabilities, SEMANTIC_CAPABILITIES, 40, 'required_capabilities'), requested_external_actions: externalActions, likely_verification: effectiveVerification, user_verification: userVerification, verification_ceiling: verificationCeiling, likely_targets: semanticTargets(v.likely_targets, 20),
+        required_capabilities: requiredCapabilities, requested_external_actions: externalActions, likely_verification: effectiveVerification, user_verification: userVerification, verification_ceiling: verificationCeiling, likely_targets: semanticTargets(v.likely_targets, 20),
         intent_signals: intentSignalList(v.intent_signals), suppressed_intent_signals: intentSignalList(v.suppressed_intent_signals),
         constraint_atoms: Array.isArray(v.constraint_atoms) ? v.constraint_atoms.slice(0, 20).map(item => { if (!isConstraintAtomDraft(item))
             throw new Error('invalid constraint_atoms entry'); return item; }) : [],
