@@ -3,6 +3,7 @@ import { relative, resolve, sep } from 'node:path';
 import { appendLedger } from '../ledger/ledger.js';
 import { normalizeBoundedProjectPath } from '../../contracts/common.js';
 import { verificationSatisfied } from '../verification/policy.js';
+import { hasFreshPassedEvidence } from './freshness.js';
 function id() { return `ev_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`; }
 const WRITE_TOOLS = new Set(['write', 'edit', 'patch', 'apply_patch', 'multiedit']);
 const SHELL_MUTATION_COMMAND = /(?:^|[;&|]\s*)(?:rm|mv|cp|touch|mkdir|rmdir|chmod|chown|chgrp|ln|truncate|dd|install|patch|rsync|tee|sed\s+-i|perl\s+-pi|python[^\n]*(?:\bwrite\b|\bopen\s*\([^)]*,\s*['"]?[wa+])|node[^\n]*(?:writeFileSync|writeFile|appendFileSync|appendFile|renameSync|rename|unlinkSync|unlink|mkdirSync|mkdir|rmSync|chmodSync|chmod)|git\s+(?:apply|am|checkout|switch|merge|rebase|cherry-pick|restore|reset|clean|stash)|npm\s+(?:install|uninstall|update|run\s+build)|pnpm\s+(?:add|remove|install|update|build)|yarn\s+(?:add|remove|install|build)|bun\s+(?:add|remove|install|build)|make(?:\s|$)|cmake\s+--build)\b/i;
@@ -40,7 +41,7 @@ function evidencePath(value) { return value.trim().replace(/\\/g, '/').replace(/
 function sameEvidenceSurface(a, b) { const x = evidencePath(a), y = evidencePath(b); return Boolean(x && y && (x === y || x.startsWith(`${y}/`) || y.startsWith(`${x}/`))); }
 function mutationAffectsEvidence(scope, files) { if (!files.length || !scope.length)
     return true; return scope.some(s => files.some(f => sameEvidenceSurface(s, f))); }
-function refreshCompatibilityFreshness(mission) { mission.execution.evidence.fresh = mission.execution.evidence.items.some(e => (e.outcome === 'passed' || e.pass === true) && !e.invalidated_at); }
+function refreshCompatibilityFreshness(mission) { mission.execution.evidence.fresh = hasFreshPassedEvidence(mission.execution.evidence.items); }
 export function normalizeProjectPath(value, projectRoot) { const raw = value.trim(); if (!raw)
     return ''; if (!absolutePath(raw))
     return normalizeBoundedProjectPath(raw) ?? ''; if (!projectRoot)

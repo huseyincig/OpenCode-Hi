@@ -194,7 +194,7 @@
       "area": "context",
       "canonical_owner": "MissionRuntimeProjection + ContextArtifactStore",
       "owner_path": "plugin/src/runtime/context/mission-runtime-projection.ts",
-      "owner_sha256": "b69ccbc0f5fb97fbe25b37b91b02bcdbd610391fc3e6b1e31bb17ccd42f17688",
+      "owner_sha256": "2e1e710c8d5485df871ad8c993c4d1394367f2f2f0a92a02b17b863ca085d83c",
       "producer_or_contract_paths": [
         "plugin/src/runtime/context/budget-estimator.ts",
         "plugin/src/runtime/context/artifact-store.ts",
@@ -252,7 +252,7 @@
       "area": "evidence-verification",
       "canonical_owner": "EvidenceRuntime + VerificationEnvelope",
       "owner_path": "plugin/src/runtime/evidence/evidence-runtime.ts",
-      "owner_sha256": "70a1392610f0ceb8553cbee14a959a557ffc621a8c965f6a4edfe290a642c20f",
+      "owner_sha256": "0c256968797ba957046f1e1745d6b30a73c84d3eecae157b6628290dc97ddaa7",
       "producer_or_contract_paths": [
         "plugin/src/contracts/evidence.ts",
         "plugin/src/contracts/verification-envelope.ts",

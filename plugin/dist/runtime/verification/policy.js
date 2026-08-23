@@ -1,5 +1,6 @@
 import { evidenceClaimApplicability } from '../evidence/applicability.js';
 import { evidenceScopeStateIsCurrent } from '../evidence/scope-state.js';
+import { hasFreshPassedEvidence } from '../evidence/freshness.js';
 const VERIFICATION_KIND_ALIASES = { test: 'targeted-tests', tests: 'targeted-tests', 'targeted-tests': 'targeted-tests', pytest: 'targeted-tests', 'go test': 'targeted-tests', 'cargo test': 'targeted-tests', 'npm test': 'targeted-tests', 'pnpm test': 'targeted-tests', 'bun test': 'targeted-tests', vitest: 'targeted-tests', jest: 'targeted-tests', spec: 'targeted-tests', typecheck: 'typecheck', tsc: 'typecheck', mypy: 'typecheck', pyright: 'typecheck', lint: 'lint', eslint: 'lint', ruff: 'lint', build: 'build', compile: 'build', 'cargo check': 'build', check: 'changed-surface-sanity', sanity: 'changed-surface-sanity', 'changed-surface-sanity': 'changed-surface-sanity', 'visual-check': 'visual-check', 'visual-evidence': 'visual-evidence', 'review-evidence': 'review-evidence' };
 function canonical(kind) { const k = kind.toLowerCase().trim(); return VERIFICATION_KIND_ALIASES[k] ?? k; }
 export function verificationPolicyFor(intent) { const independentReview = intent.risk === 'high' || intent.requiredCapabilities.includes('independent-review') || intent.requiredCapabilities.includes('security-review'); return { requiredKinds: [...new Set(intent.likelyVerification.map(canonical))], requireFresh: true, requireReview: independentReview, allowWorkerReportedEvidence: false }; }
@@ -97,7 +98,7 @@ export function verificationEnvelopeFor(m, obligationID, projectRoot) {
     });
     const referencedEvidence = checks.flatMap(check => check.evidence_refs.map(ref => m.execution.evidence.items.find(e => e.id === ref)).filter((e) => Boolean(e)));
     const scope = [...new Set(referencedEvidence.flatMap(e => e.scope ?? []))].slice(0, 100);
-    const requiredEvidenceFresh = checks.length === 0 ? m.execution.evidence.fresh : checks.every(check => {
+    const requiredEvidenceFresh = checks.length === 0 ? hasFreshPassedEvidence(m.execution.evidence.items) : checks.every(check => {
         if (check.result !== 'passed' || check.evidence_refs.length === 0)
             return false;
         return check.evidence_refs.some(ref => { const e = m.execution.evidence.items.find(item => item.id === ref); return Boolean(e && !e.invalidated_at); });

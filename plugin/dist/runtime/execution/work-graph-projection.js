@@ -1,4 +1,5 @@
 import { executionAttemptIdentity } from '../../contracts/orchestration-core.js';
+import { hasFreshPassedEvidence } from '../evidence/freshness.js';
 function clone(value) { return structuredClone(value); }
 function projectNode(task, missionId) {
     return {
@@ -103,7 +104,7 @@ export function projectMissionToWorkGraph(mission, observedAt = Date.now()) {
         nodes,
         edges,
         executionUnits,
-        evidence: { fresh: mission.execution.evidence.fresh, ...(mission.execution.evidence.last_mutation_at === undefined ? {} : { lastMutationAt: mission.execution.evidence.last_mutation_at }), items: clone(mission.execution.evidence.items) },
+        evidence: { fresh: hasFreshPassedEvidence(mission.execution.evidence.items), ...(mission.execution.evidence.last_mutation_at === undefined ? {} : { lastMutationAt: mission.execution.evidence.last_mutation_at }), items: clone(mission.execution.evidence.items) },
         authority: { pendingPermissions: mission.authority.pending_permissions, pendingPermissionIds: [...(mission.authority.pending_permission_ids ?? [])], ...(mission.authority.authority ? { state: clone(mission.authority.authority) } : {}) },
         blockers: [...mission.execution.blockers],
         progress: { missionId: mission.identity.mission_id, generation: mission.continuation.generation, iteration: mission.continuation.iteration, signature: mission.continuation.last_progress_signature, stagnationCount: mission.continuation.stagnation_count, continuationBudget: mission.continuation.continuation_budget, continuationActive: mission.continuation.continuation_active, ...(mission.continuation.continuation_reason ? { reason: mission.continuation.continuation_reason } : {}), observedAt, ...(mission.continuation.last_progress_delta ? { delta: clone(mission.continuation.last_progress_delta) } : {}) },

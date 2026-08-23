@@ -1,6 +1,7 @@
 import { clipText } from './budget.js';
 import { syncMissionGates } from '../gates/gates.js';
 import { controlDecisionInstruction, projectControlDecision } from '../completion/control-projection.js';
+import { hasFreshPassedEvidence } from '../evidence/freshness.js';
 function currentWorker(m, worker) { return worker ?? m.execution.workers.find(w => ['created', 'queued', 'starting', 'busy', 'ready'].includes(w.status)); }
 function compactList(items, limit) { return [...new Set(items.filter(Boolean))].slice(0, limit); }
 function methodologySummary(m, worker) {
@@ -39,7 +40,7 @@ function verificationSummary(m) {
     const required = m.execution.verification_policy.requiredKinds.join(',') || 'none';
     const review = m.execution.verification_policy.requireReview ? 'independent-review-required' : 'no-independent-review-required';
     const verifyGate = m.execution.gates.find(g => g.id === 'gate-verification'), reviewGate = m.execution.gates.find(g => g.id === 'gate-reviewer'), claimsCurrent = verifyGate?.status !== 'open' && (!m.execution.verification_policy.requireReview || reviewGate?.status !== 'open');
-    return `evidence=${m.execution.evidence.fresh && claimsCurrent ? 'fresh' : 'stale'}; required=${required}; ${review}`;
+    return `evidence=${hasFreshPassedEvidence(m.execution.evidence.items) && claimsCurrent ? 'fresh' : 'stale'}; required=${required}; ${review}`;
 }
 function authoritySummary(m) {
     const human = m.authority.human_decision?.status === 'OPEN' ? `${m.authority.human_decision.semantic_type}:${m.authority.human_decision.reason_code}` : 'none';

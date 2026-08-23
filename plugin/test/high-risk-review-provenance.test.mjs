@@ -7,6 +7,7 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { RuntimePersistence } from '../dist/runtime/state/persistence.js'
 import { createTask, createWorker } from '../dist/runtime/worker/worker-runtime.js'
 import { evidenceProducerAttemptForWorker } from '../dist/runtime/evidence/applicability.js'
+import { addEvidence } from '../dist/runtime/evidence/evidence-runtime.js'
 import { reviewObligationSatisfied } from '../dist/runtime/verification/policy.js'
 
 function highRiskMission(sessionID='review-parent'){
@@ -48,15 +49,13 @@ function roundTrip(m){
 }
 
 function addReviewerEvidence(m,review,overrides={}){
-  m.execution.evidence.items.push({
-    id:`review-${m.execution.evidence.items.length+1}`,
+  addEvidence(m,{
     kind:'review-evidence',
     summary:'independent review passed',
     scope:['src/auth.ts'],
     source:'reviewer:legacy',
     trusted_source_class:'reviewer-observation',
     obligation_ids:[review.id],
-    observed_at:Date.now(),
     pass:true,
     outcome:'passed',
     ...overrides,

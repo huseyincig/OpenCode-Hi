@@ -102,3 +102,14 @@ test('VerificationEnvelope validator rejects a passed check with no evidence ref
   assert.equal(isVerificationEnvelopeContract({checks:[{kind:'targeted-tests',subject:'x',result:'passed',evidence_refs:[]}],scope:[],freshness:'fresh',limitations:[],independent_review:true}),false)
   assert.equal(isVerificationEnvelopeContract({checks:[{kind:'targeted-tests',subject:'x',result:'not_run',evidence_refs:[]}],scope:[],freshness:'fresh',limitations:[],independent_review:true}),false)
 })
+
+test('compatibility evidence fresh cache cannot substitute for canonical Evidence items',()=>{
+  const m=mission('ve-fresh-cache-authority')
+  m.execution.verification_policy={requiredKinds:[],requireFresh:true,requireReview:false,allowWorkerReportedEvidence:false}
+  const verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(verification);verification.requiredEvidence=[]
+  m.execution.evidence.items=[]
+  m.execution.evidence.fresh=true
+  const env=verificationEnvelopeFor(m,verification.id)
+  assert.equal(env.freshness,'stale')
+  assert.deepEqual(verificationSatisfied(m,verification.id),{ok:false,missing:['fresh-evidence']})
+})

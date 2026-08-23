@@ -6,6 +6,7 @@ import type { MissionEvidenceKind } from '../../contracts/evidence.js'
 import { appendLedger } from '../ledger/ledger.js'
 import { normalizeBoundedProjectPath } from '../../contracts/common.js'
 import { verificationSatisfied } from '../verification/policy.js'
+import { hasFreshPassedEvidence } from './freshness.js'
 function id():string{return`ev_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`}
 const WRITE_TOOLS=new Set(['write','edit','patch','apply_patch','multiedit'])
 const SHELL_MUTATION_COMMAND=/(?:^|[;&|]\s*)(?:rm|mv|cp|touch|mkdir|rmdir|chmod|chown|chgrp|ln|truncate|dd|install|patch|rsync|tee|sed\s+-i|perl\s+-pi|python[^\n]*(?:\bwrite\b|\bopen\s*\([^)]*,\s*['"]?[wa+])|node[^\n]*(?:writeFileSync|writeFile|appendFileSync|appendFile|renameSync|rename|unlinkSync|unlink|mkdirSync|mkdir|rmSync|chmodSync|chmod)|git\s+(?:apply|am|checkout|switch|merge|rebase|cherry-pick|restore|reset|clean|stash)|npm\s+(?:install|uninstall|update|run\s+build)|pnpm\s+(?:add|remove|install|update|build)|yarn\s+(?:add|remove|install|build)|bun\s+(?:add|remove|install|build)|make(?:\s|$)|cmake\s+--build)\b/i
@@ -29,7 +30,7 @@ function absolutePath(value:string):boolean{return value.startsWith('/')||/^[A-Z
 function evidencePath(value:string):string{return value.trim().replace(/\\/g,'/').replace(/^\.\//,'').replace(/\/+$/,'')}
 function sameEvidenceSurface(a:string,b:string):boolean{const x=evidencePath(a),y=evidencePath(b);return Boolean(x&&y&&(x===y||x.startsWith(`${y}/`)||y.startsWith(`${x}/`)))}
 function mutationAffectsEvidence(scope:string[],files:string[]):boolean{if(!files.length||!scope.length)return true;return scope.some(s=>files.some(f=>sameEvidenceSurface(s,f)))}
-function refreshCompatibilityFreshness(mission:MissionState):void{mission.execution.evidence.fresh=mission.execution.evidence.items.some(e=>(e.outcome==='passed'||e.pass===true)&&!e.invalidated_at)}
+function refreshCompatibilityFreshness(mission:MissionState):void{mission.execution.evidence.fresh=hasFreshPassedEvidence(mission.execution.evidence.items)}
 export function normalizeProjectPath(value:string,projectRoot?:string):string{const raw=value.trim();if(!raw)return'';if(!absolutePath(raw))return normalizeBoundedProjectPath(raw)??'';if(!projectRoot)return'';const root=resolve(projectRoot),abs=resolve(raw),rel=relative(root,abs);if(!rel)return'';if(rel==='..'||rel.startsWith(`..${sep}`)||absolutePath(rel))return'';return normalizeBoundedProjectPath(rel.replace(/\\/g,'/'))??''}
 export function markMutation(mission:MissionState,files:string[]=[],source='tool'):void{
   const now=Date.now(),changed=[...new Set(files.map(evidencePath).filter(Boolean))];mission.execution.evidence.last_mutation_at=now

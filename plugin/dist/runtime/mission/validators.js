@@ -13,6 +13,7 @@ import { isProgressDelta, isSemanticProgressSnapshot } from '../progress/semanti
 import { isRecoveryStrategyRecord } from '../continuation/recovery-governor.js';
 import { normalizeBoundedProjectPath } from '../../contracts/common.js';
 import { isConstraintAtom } from '../../contracts/constraint-atom.js';
+import { hasFreshPassedEvidence } from '../evidence/freshness.js';
 function isRecord(value) { return Boolean(value) && typeof value === 'object' && !Array.isArray(value); }
 function stringArray(value) { return Array.isArray(value) && value.every(item => typeof item === 'string'); }
 function recordArray(value) { return Array.isArray(value) && value.every(isRecord); }
@@ -242,7 +243,7 @@ export function validateMissionExecutionState(identity, execution, methodology) 
             }
         }
     }
-    return isRecord(execution.evidence) && typeof execution.evidence.fresh === 'boolean' && Array.isArray(execution.evidence.items) && execution.evidence.items.every(isEvidenceItemContract) && (execution.evidence.last_mutation_at === undefined || typeof execution.evidence.last_mutation_at === 'number');
+    return isRecord(execution.evidence) && typeof execution.evidence.fresh === 'boolean' && Array.isArray(execution.evidence.items) && execution.evidence.items.every(isEvidenceItemContract) && execution.evidence.fresh === hasFreshPassedEvidence(execution.evidence.items) && (execution.evidence.last_mutation_at === undefined || typeof execution.evidence.last_mutation_at === 'number');
 }
 export function validateContinuationState(continuation) {
     if (!isRecord(continuation) || typeof continuation.generation !== 'number' || typeof continuation.iteration !== 'number' || typeof continuation.continuation_budget !== 'number' || typeof continuation.continuation_active !== 'boolean')

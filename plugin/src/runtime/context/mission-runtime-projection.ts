@@ -2,6 +2,7 @@ import type { MissionState,WorkerState } from '../mission/types.js'
 import { clipText } from './budget.js'
 import { syncMissionGates } from '../gates/gates.js'
 import { controlDecisionInstruction,projectControlDecision } from '../completion/control-projection.js'
+import { hasFreshPassedEvidence } from '../evidence/freshness.js'
 
 export interface MissionRuntimeProjection {
   objective:string
@@ -46,7 +47,7 @@ function verificationSummary(m:MissionState):string{
   const required=m.execution.verification_policy.requiredKinds.join(',')||'none'
   const review=m.execution.verification_policy.requireReview?'independent-review-required':'no-independent-review-required'
   const verifyGate=m.execution.gates.find(g=>g.id==='gate-verification'),reviewGate=m.execution.gates.find(g=>g.id==='gate-reviewer'),claimsCurrent=verifyGate?.status!=='open'&&(!m.execution.verification_policy.requireReview||reviewGate?.status!=='open')
-  return `evidence=${m.execution.evidence.fresh&&claimsCurrent?'fresh':'stale'}; required=${required}; ${review}`
+  return `evidence=${hasFreshPassedEvidence(m.execution.evidence.items)&&claimsCurrent?'fresh':'stale'}; required=${required}; ${review}`
 }
 function authoritySummary(m:MissionState):string{
   const human=m.authority.human_decision?.status==='OPEN'?`${m.authority.human_decision.semantic_type}:${m.authority.human_decision.reason_code}`:'none'

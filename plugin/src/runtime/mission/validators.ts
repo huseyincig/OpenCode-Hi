@@ -14,6 +14,7 @@ import { isProgressDelta,isSemanticProgressSnapshot } from '../progress/semantic
 import { isRecoveryStrategyRecord } from '../continuation/recovery-governor.js'
 import { normalizeBoundedProjectPath } from '../../contracts/common.js'
 import { isConstraintAtom } from '../../contracts/constraint-atom.js'
+import { hasFreshPassedEvidence } from '../evidence/freshness.js'
 
 function isRecord(value:unknown):value is Record<string,unknown>{return Boolean(value)&&typeof value==='object'&&!Array.isArray(value)}
 function stringArray(value:unknown):value is string[]{return Array.isArray(value)&&value.every(item=>typeof item==='string')}
@@ -152,7 +153,7 @@ export function validateMissionExecutionState(identity:unknown,execution:unknown
   }
   const processIDs=new Set<string>();for(const process of execution.processes as any[]){if(processIDs.has(process.process_id))return false;processIDs.add(process.process_id);if(process.mission_id!==identity.mission_id)return false;const task=(execution.tasks as any[]).find(t=>t.id===process.task_id),worker=(execution.workers as any[]).find(w=>w.id===process.worker_id);if(!task||!worker||worker.task_id!==task.id)return false}
   const leaseIDs=new Set<string>(),activeWorkspacePaths=new Set<string>(),activeHostWorkspaceIDs=new Set<string>();for(const lease of execution.workspace_leases as any[]){if(leaseIDs.has(lease.lease_id))return false;leaseIDs.add(lease.lease_id);if(lease.mission_id!==identity.mission_id)return false;if(!(execution.tasks as any[]).some(t=>t.id===lease.task_id))return false;if(lease.status!=='CLOSED'){if(activeWorkspacePaths.has(lease.workspace_path))return false;activeWorkspacePaths.add(lease.workspace_path);if(lease.host_workspace_id){if(activeHostWorkspaceIDs.has(lease.host_workspace_id))return false;activeHostWorkspaceIDs.add(lease.host_workspace_id)}}}
-  return isRecord(execution.evidence)&&typeof execution.evidence.fresh==='boolean'&&Array.isArray(execution.evidence.items)&&execution.evidence.items.every(isEvidenceItemContract)&&(execution.evidence.last_mutation_at===undefined||typeof execution.evidence.last_mutation_at==='number')
+  return isRecord(execution.evidence)&&typeof execution.evidence.fresh==='boolean'&&Array.isArray(execution.evidence.items)&&execution.evidence.items.every(isEvidenceItemContract)&&execution.evidence.fresh===hasFreshPassedEvidence(execution.evidence.items as any[])&&(execution.evidence.last_mutation_at===undefined||typeof execution.evidence.last_mutation_at==='number')
 }
 
 export function validateContinuationState(continuation:unknown):boolean{
