@@ -20,7 +20,7 @@
       "owner_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
       "owner_anchor": "Unknown context artifact id(s)",
       "proof": "plugin/test/context-survival-hardening.test.mjs",
-      "proof_sha256": "238c6269ef500468db62f379ff2296a81e5e802a35de6e9925ac060f313a29cd",
+      "proof_sha256": "cc2ffdf3ed2cbc0e5401d41c3d9b8b7cc859d826fae71ee9b79b97f7d38dce38",
       "proof_anchor": "unknown task context artifact id fails closed instead of widening context"
     },
     {
@@ -29,7 +29,7 @@
       "owner_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
       "owner_anchor": "stored?.freshness==='FRESH'",
       "proof": "plugin/test/context-survival-hardening.test.mjs",
-      "proof_sha256": "238c6269ef500468db62f379ff2296a81e5e802a35de6e9925ac060f313a29cd",
+      "proof_sha256": "cc2ffdf3ed2cbc0e5401d41c3d9b8b7cc859d826fae71ee9b79b97f7d38dce38",
       "proof_anchor": "fresh durable context artifact content is loaded only while source-bound freshness holds"
     },
     {
@@ -47,7 +47,7 @@
       "owner_sha256": "0cc243493d938f86090cfa084550c68189df3fdcf196aebb4c673b12b0f579f5",
       "owner_anchor": "bindConsumer",
       "proof": "plugin/test/context-survival-hardening.test.mjs",
-      "proof_sha256": "238c6269ef500468db62f379ff2296a81e5e802a35de6e9925ac060f313a29cd",
+      "proof_sha256": "cc2ffdf3ed2cbc0e5401d41c3d9b8b7cc859d826fae71ee9b79b97f7d38dce38",
       "proof_anchor": "consumer_refs.includes(started.task_id)"
     },
     {

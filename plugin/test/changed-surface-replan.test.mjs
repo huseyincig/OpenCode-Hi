@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
-import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {createTask,createWorker} from '../dist/runtime/worker/worker-runtime.js'
 import {collectRepoContext} from '../dist/runtime/intent/repo-context.js'
@@ -15,7 +15,7 @@ import {startAssessedMission} from './helpers/semantic.mjs'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 
 function repo(){const root=mkdtempSync(join(tmpdir(),'hi-replan-'));writeFileSync(join(root,'package.json'),JSON.stringify({scripts:{test:'vitest run',typecheck:'tsc --noEmit',build:'vite build'}}));mkdirSync(join(root,'src','auth'),{recursive:true});writeFileSync(join(root,'src/auth/token.ts'),'x');writeFileSync(join(root,'src/other.ts'),'x');writeFileSync(join(root,'src/extra.ts'),'x');return root}
-function runtime(root){return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),root,root,()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
+function runtime(root){return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),root,root,()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
 
 test('unexpected multi-file changed surface strengthens a local verification contract with one static check',()=>{
   const root=repo(),s=new MissionStore(),m=startAssessedMission(s,'p','opaque bug',{task_kind:'bug-fix',risk:'low',likely_verification:['targeted-tests'],likely_targets:['src/other.ts']})
@@ -62,7 +62,7 @@ test('follow-up reviewer defaults to actual changed surface and replanned requir
   m.execution.verification_policy.requiredKinds=['targeted-tests','typecheck','build']
   const prompts=[];let seq=0
   const client={session:{create:async()=>({data:{id:`child-${++seq}`}}),promptAsync:async(x)=>{prompts.push(x);return{data:{}}},abort:async()=>({data:{}})}}
-  const rt=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),root,root,()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
+  const rt=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),root,root,()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
   const out=await rt.start(m,{objective:'review actual changed surface',role:'qa-reviewer',category:'standard'})
   const t=m.execution.tasks.find(x=>x.id===out.task_id)
   assert.deepEqual(t?.scope,['src/other.ts','src/auth/token.ts'])

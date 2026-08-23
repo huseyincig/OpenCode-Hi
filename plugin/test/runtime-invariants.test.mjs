@@ -172,7 +172,7 @@ test('Gap #recovery-runtime: level-2 reasoning correction preserves the exact ch
   const { createTask, createWorker } = await import('../dist/runtime/worker/worker-runtime.js')
   const { TaskRuntime } = await import('../dist/runtime/task/task-runtime.js')
   const { BackgroundRegistry } = await import('../dist/runtime/background/registry.js')
-  const { ConcurrencyScheduler } = await import('../dist/runtime/scheduler/concurrency.js')
+  const { createConcurrencyPolicySource } = await import('../dist/runtime/scheduler/concurrency.js')
   const { resolveHiConfig } = await import('../dist/config/resolver.js')
   const calls=[]
   const client={session:{promptAsync:async req=>{calls.push(req)}}}
@@ -183,7 +183,7 @@ test('Gap #recovery-runtime: level-2 reasoning correction preserves the exact ch
   const worker=createWorker(m,task,'p/cheap',['p/strong'])
   worker.session_id='child-1'; worker.status='completed'; task.status='completed'
   const registry=new BackgroundRegistry()
-  const scheduler=new ConcurrencyScheduler(()=>({global:4}))
+  const scheduler=createConcurrencyPolicySource(()=>({global:4}))
   const models=[
     {id:'p/cheap',provider:'p',quality:1,cost:1,tags:['balanced','cheap'],variants:['medium']},
     {id:'p/strong',provider:'p',quality:10,cost:3,tags:['reasoning','coding'],variants:['high']},
@@ -224,13 +224,13 @@ test('TaskRuntime awaitTask returns terminal immediately and wakes on the canoni
   const { createTask, createWorker } = await import('../dist/runtime/worker/worker-runtime.js')
   const { TaskRuntime } = await import('../dist/runtime/task/task-runtime.js')
   const { BackgroundRegistry } = await import('../dist/runtime/background/registry.js')
-  const { ConcurrencyScheduler } = await import('../dist/runtime/scheduler/concurrency.js')
+  const { createConcurrencyPolicySource } = await import('../dist/runtime/scheduler/concurrency.js')
   const { resolveHiConfig } = await import('../dist/config/resolver.js')
   const store=new MissionStore(),m=store.start('await-runtime','wait for worker')
   store.applyInitialSemanticAssessment('await-runtime',{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]})
   const task=createTask(m,{objective:'work',role:'coder',category:'quick'}),worker=createWorker(m,task,'host-default'),registry=new BackgroundRegistry()
   worker.status='busy';task.status='running';registry.set(worker)
-  const runtime=new TaskRuntime(opencodeChildPort({}),registry,new ConcurrencyScheduler(()=>({global:2})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>({}))
+  const runtime=new TaskRuntime(opencodeChildPort({}),registry,createConcurrencyPolicySource(()=>({global:2})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>({}))
   const waiting=runtime.awaitTask(m,task.id,1000)
   setTimeout(()=>{worker.status='completed';worker.completed_at=Date.now();task.status='completed';task.updated_at=Date.now();registry.delete(worker.id)},10)
   const done=await waiting

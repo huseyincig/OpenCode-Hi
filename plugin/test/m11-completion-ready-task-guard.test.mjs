@@ -11,12 +11,12 @@ import {evaluateCompletion} from '../dist/runtime/completion/evaluator.js'
 import {createTask,createWorker} from '../dist/runtime/worker/worker-runtime.js'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
-import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 
 const ASSESSMENT={material:true,message_kind:'mission',task_kind:'review',scope:'local',risk:'high',ambiguity:'none',dependency_class:'independent',required_capabilities:['review','security-review','independent-review'],requested_external_actions:[],likely_verification:['review-evidence'],likely_targets:['src/security.js'],intent_signals:[],suppressed_intent_signals:[]}
 function state(){return{config:structuredClone(DEFAULT_HI_CONFIG),hostConfig:{},configResolution:undefined,openCodeVersion:'1.18.18'}}
-function taskRuntime(root){return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),root,root,()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
+function taskRuntime(root){return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),root,root,()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
 
 test('completion-ready mission skips redundant task start before TaskRuntime dispatch',async()=>{
   const root=mkdtempSync(join(process.env.TMPDIR??tmpdir(),'hi-completion-review-'))

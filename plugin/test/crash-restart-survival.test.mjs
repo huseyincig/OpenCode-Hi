@@ -4,7 +4,7 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { createTask, createWorker } from '../dist/runtime/worker/worker-runtime.js'
 import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
-import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
+import { createConcurrencyPolicySource } from '../dist/runtime/scheduler/concurrency.js'
 import { resolveHiConfig } from '../dist/config/resolver.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 import {executionAttemptIdentity} from '../dist/contracts/orchestration-core.js'
@@ -45,7 +45,7 @@ function restartHarness(m,{status='unknown',assistant}={}){
     diff:async()=>({data:[]}),
   }}
   const registry=new BackgroundRegistry();for(const w of m.execution.workers)registry.set(w)
-  const scheduler=new ConcurrencyScheduler(()=>({global:2}))
+  const scheduler=createConcurrencyPolicySource(()=>({global:2}))
   const reader=assistant===undefined?undefined:async()=>{calls.reads++;return assistant}
   const runtime=new TaskRuntime(opencodeChildPort(client),registry,scheduler,process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>({}),undefined,[],undefined,undefined,undefined,undefined,undefined,reader)
   return{runtime,registry,scheduler,calls}

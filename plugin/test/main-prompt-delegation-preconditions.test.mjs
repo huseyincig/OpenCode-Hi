@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
-import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
+import { createConcurrencyPolicySource } from '../dist/runtime/scheduler/concurrency.js'
 import { resolveHiConfig } from '../dist/config/resolver.js'
 import { PACKAGED_HI_AGENTS } from '../dist/generated/agent-config.js'
 import { evaluateTaskPreconditions } from '../dist/runtime/readiness/preconditions.js'
@@ -12,7 +12,7 @@ import { startAssessedMission } from './helpers/semantic.mjs'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 
 function runtime(client,hostConfig={agent:structuredClone(PACKAGED_HI_AGENTS)}){
-  return new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:8})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>hostConfig)
+  return new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:8})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>hostConfig)
 }
 function nativeClient(){
   const creates=[],prompts=[];let n=0

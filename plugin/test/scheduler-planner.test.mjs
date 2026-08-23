@@ -4,7 +4,6 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { createTask,createWorker } from '../dist/runtime/worker/worker-runtime.js'
 import { projectMissionToWorkGraph } from '../dist/runtime/execution/work-graph-projection.js'
 import { planScheduling } from '../dist/runtime/scheduler/planner.js'
-import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
 import { parallelSafety } from '../dist/runtime/scheduler/parallel-safety.js'
 import { startAssessedMission } from './helpers/semantic.mjs'
 
@@ -38,12 +37,11 @@ test('topology capacity is independent from provider/model resolution',()=>{
   m.execution.topology.parallelism=3;plan=planScheduling(snapshot(m,{global:10}));assert.equal(decision(plan,unitID(c)).disposition,'RUNNABLE')
 })
 
-test('resolved provider/model capacities preserve ConcurrencyScheduler decisions and allow shared model below cap',()=>{
+test('resolved provider/model capacities allow shared model below cap and defer at the exact ceiling',()=>{
   const m=mission('resource'),a=createTask(m,{objective:'a',role:'coder',category:'standard',scope:['a']}),b=createTask(m,{objective:'b',role:'coder',category:'standard',scope:['b']});m.execution.topology.parallelism=4
-  const scheduler=new ConcurrencyScheduler(()=>({global:3,providers:{p:3},models:{'p/same':2}}));assert.equal(scheduler.acquire(unitID(a),'p','p/same'),true)
   const resources={[unitID(b)]:{provider:'p',model:'p/same'}},oneRunning=[{executionUnitId:unitID(a),provider:'p',model:'p/same'}]
-  let plan=planScheduling(snapshot(m,{resources,global:3,providers:{p:3},models:{'p/same':2},running:oneRunning}));assert.equal(decision(plan,unitID(b)).disposition,'RUNNABLE');assert.equal(scheduler.canStart(unitID(b),'p','p/same').ok,true)
-  scheduler.acquire('eu:other','p','p/same');const twoRunning=[...oneRunning,{executionUnitId:'eu:other',provider:'p',model:'p/same'}];plan=planScheduling(snapshot(m,{resources,global:3,providers:{p:3},models:{'p/same':2},running:twoRunning}));assert.equal(decision(plan,unitID(b)).disposition,'DEFERRED_CAPACITY');assert.equal(decision(plan,unitID(b)).reasons[0].code,'model-capacity');assert.equal(scheduler.canStart(unitID(b),'p','p/same').reason,'model-capacity:p/same')
+  let plan=planScheduling(snapshot(m,{resources,global:3,providers:{p:3},models:{'p/same':2},running:oneRunning}));assert.equal(decision(plan,unitID(b)).disposition,'RUNNABLE')
+  const twoRunning=[...oneRunning,{executionUnitId:'eu:other',provider:'p',model:'p/same'}];plan=planScheduling(snapshot(m,{resources,global:3,providers:{p:3},models:{'p/same':2},running:twoRunning}));assert.equal(decision(plan,unitID(b)).disposition,'DEFERRED_CAPACITY');assert.equal(decision(plan,unitID(b)).reasons[0].code,'model-capacity')
 })
 
 
@@ -73,13 +71,11 @@ test('blocked task fails closed instead of becoming implicitly runnable',()=>{
   assert.equal(decision(plan,unitID(task)).reasons[0].code,'task-blocked')
 })
 
-test('global and provider resource ceilings match current ConcurrencyScheduler policy semantics',()=>{
+test('global and provider resource ceilings are enforced by the canonical planner',()=>{
   const m=mission('resource-ceilings'),a=createTask(m,{objective:'a',role:'coder',category:'standard',scope:['a']}),b=createTask(m,{objective:'b',role:'coder',category:'standard',scope:['b']});m.execution.topology.parallelism=8
   const resource={[unitID(b)]:{provider:'p',model:'p/b'}}
-  const globalScheduler=new ConcurrencyScheduler(()=>({global:1}));globalScheduler.acquire(unitID(a),'q','q/a')
-  let plan=planScheduling(snapshot(m,{resources:resource,global:1,running:[{executionUnitId:unitID(a),provider:'q',model:'q/a'}]}));assert.equal(decision(plan,unitID(b)).reasons[0].code,'global-capacity');assert.equal(globalScheduler.canStart(unitID(b),'p','p/b').reason,'global-capacity')
-  const providerScheduler=new ConcurrencyScheduler(()=>({global:4,providers:{p:1}}));providerScheduler.acquire(unitID(a),'p','p/a')
-  plan=planScheduling(snapshot(m,{resources:resource,global:4,providers:{p:1},running:[{executionUnitId:unitID(a),provider:'p',model:'p/a'}]}));assert.equal(decision(plan,unitID(b)).reasons[0].code,'provider-capacity');assert.equal(providerScheduler.canStart(unitID(b),'p','p/b').reason,'provider-capacity:p')
+  let plan=planScheduling(snapshot(m,{resources:resource,global:1,running:[{executionUnitId:unitID(a),provider:'q',model:'q/a'}]}));assert.equal(decision(plan,unitID(b)).reasons[0].code,'global-capacity')
+  plan=planScheduling(snapshot(m,{resources:resource,global:4,providers:{p:1},running:[{executionUnitId:unitID(a),provider:'p',model:'p/a'}]}));assert.equal(decision(plan,unitID(b)).reasons[0].code,'provider-capacity')
 })
 
 test('planner is side-effect-free and does not mutate graph or running capacity',()=>{

@@ -6,7 +6,7 @@ import {createTask,createWorker,beginWorkerAttempt} from '../dist/runtime/worker
 import {createHiToolSurface} from '../dist/runtime/application/hi-tool-surface.js'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
-import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {detectOpenCodeCapabilities} from '../dist/opencode/capabilities.js'
 import {browserObservationId} from '../dist/contracts/browser-observation.js'
@@ -20,7 +20,7 @@ function fixture(id='m13-browser-proof'){
   const worker=createWorker(m,task,'host-default',[],['hi-browser-testing']);worker.session_id=`${id}-child`;worker.status='busy';worker.loaded_methodologies=['hi-browser-testing'];beginWorkerAttempt(task,worker,Date.now()-10)
   return{store,m,task,worker}
 }
-function runtime(){const client={session:{abort:async()=>({data:true}),diff:async()=>({data:[]})}};return new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}),undefined,{},undefined)}
+function runtime(){const client={session:{abort:async()=>({data:true}),diff:async()=>({data:[]})}};return new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}),undefined,{},undefined)}
 function observation(taskID){const x={task_id:taskID,executor_version:'hi-playwright-browser@1',url:'http://127.0.0.1:4173/',action:'inspect',timestamp:Date.now(),document_identity:createHash('sha256').update(`doc:${taskID}`).digest('hex'),dom_summary:'Ready',console_errors:[],network_errors:[],result:'OBSERVED'};return{...x,observation_id:browserObservationId(x)}}
 function surface(f,browserExecutor){return createHiToolSurface({state:{config:structuredClone(DEFAULT_HI_CONFIG),hostConfig:{},openCodeVersion:'1.18.18'},store:f.store,tasks:{},processRuntime:{},browserExecutor,projectRoot:process.cwd(),capabilities:detectOpenCodeCapabilities({}),native:{},getModels:()=>[],scopedStores:{contextArtifacts:{}}}).toolSurface}
 

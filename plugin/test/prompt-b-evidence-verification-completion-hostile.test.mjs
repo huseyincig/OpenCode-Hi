@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
-import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {createTask,createWorker} from '../dist/runtime/worker/worker-runtime.js'
 import {verificationSatisfied} from '../dist/runtime/verification/policy.js'
@@ -13,7 +13,7 @@ import {startAssessedMission} from './helpers/semantic.mjs'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 import {executionAttemptIdentity} from '../dist/contracts/orchestration-core.js'
 
-function runtime(){return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
+function runtime(){return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
 
 test('PROMPT B hostile DONE and all-tests-passed prose cannot replace verification Evidence',()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'pb9-done','fix src/a.ts',{task_kind:'bug-fix',likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})

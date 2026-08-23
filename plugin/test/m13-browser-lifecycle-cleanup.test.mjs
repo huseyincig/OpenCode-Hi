@@ -6,7 +6,7 @@ import {PlaywrightBrowserAdapter} from '../dist/opencode/playwright-browser-adap
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
-import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {PACKAGED_HI_AGENTS} from '../dist/generated/agent-config.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
@@ -54,7 +54,7 @@ test('M13 TaskRuntime cancel cleans the exact active visual worker browser owner
     health:async()=>({available:true}),open:async()=>{throw new Error('unused')},navigate:async()=>{throw new Error('unused')},click:async()=>{throw new Error('unused')},type:async()=>{throw new Error('unused')},inspect:async()=>{throw new Error('unused')},screenshot:async()=>{throw new Error('unused')},wait:async()=>{throw new Error('unused')},close:async()=>{throw new Error('unused')},
     cleanup:async c=>{cleanupCalls.push(c);return{cleaned:true,reason:'cleaned'}}
   }
-  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>({agent:PACKAGED_HI_AGENTS}),undefined,{},undefined,undefined,()=>new Set(['host-capability:browser-execution']),browserExecutor)
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>({agent:PACKAGED_HI_AGENTS}),undefined,{},undefined,undefined,()=>new Set(['host-capability:browser-execution']),browserExecutor)
   const store=new MissionStore(repoRoot),m=store.start('m13-cancel','verify local browser')
   store.applyInitialSemanticAssessment('m13-cancel',{material:true,message_kind:'mission',task_kind:'review',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['visual-review'],requested_external_actions:[],likely_verification:['visual-evidence'],likely_targets:['src/view.tsx'],intent_signals:['intent.browser'],suppressed_intent_signals:[]})
   m.methodology.methodology_needs.push({name:'hi-browser-testing',signal:'intent.browser',trigger_source:'task-intent',producer:'intent',reason:'browser acceptance',created_at:Date.now()})

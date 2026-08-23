@@ -11,7 +11,7 @@
       "owner_sha256": "a4b2e1c08156513c4f80c305b3ea9f9b39674d484950f96e93a522d448e04e7b",
       "owner_anchor": "evidenceAllowedForVerification",
       "proof": "plugin/test/obligation-ownership.test.mjs",
-      "proof_sha256": "c83e91c8e32f919be12e16d33f692d964038e90fb1002346aeb19e96f2950a30",
+      "proof_sha256": "a72a5d90698d721cc34965013104ecc65d6f631ceb82b8e3d6305de65c13d648",
       "proof_anchor": "worker verification claim satisfies neither its owned nor another verification obligation"
     },
     {
@@ -29,7 +29,7 @@
       "owner_sha256": "669f3cdcfc0d2eb1a39686af77d8f84a8f37cfdc07bc6c831def91cee690c293",
       "owner_anchor": "worker.native_state_hash=stateHash",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
-      "proof_sha256": "dfc5518039f30d731b7e5157beaa2a3949a0f4f37179262fdf20950ad95707f9",
+      "proof_sha256": "451cef54368d6b2805ad45ed3c00d816f35bb122a94dfb293c973f1672e5d36e",
       "proof_anchor": "PROMPT B final native diff deterministically binds worker evidence source-state identity"
     },
     {
@@ -38,7 +38,7 @@
       "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
       "owner_anchor": "native.diff.mismatch",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
-      "proof_sha256": "dfc5518039f30d731b7e5157beaa2a3949a0f4f37179262fdf20950ad95707f9",
+      "proof_sha256": "451cef54368d6b2805ad45ed3c00d816f35bb122a94dfb293c973f1672e5d36e",
       "proof_anchor": "plugin session.idle path converts DONE to FIX_REQUIRED when native diff exposes an undeclared file"
     },
     {
@@ -47,7 +47,7 @@
       "owner_sha256": "0c256968797ba957046f1e1745d6b30a73c84d3eecae157b6628290dc97ddaa7",
       "owner_anchor": "markMutation",
       "proof": "plugin/test/evidence-freshness-ordering.test.mjs",
-      "proof_sha256": "d73f0529bc8d22da9382535c7c70b0c02d2cd6bc17c36f6cc0298ced49124d54",
+      "proof_sha256": "743393d1ab011b6b38e96d76afaa0bfad5eedf88708a4b3bac68023dd271a082",
       "proof_anchor": "worker-reported verification remains non-canonical when changed_files is learned from the same result"
     },
     {
@@ -65,7 +65,7 @@
       "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
       "owner_anchor": "WorkerResult evidence stays task-result provenance. It is never copied wholesale",
       "proof": "plugin/test/prompt-b-evidence-verification-completion-hostile.test.mjs",
-      "proof_sha256": "cbc59f605a1a205fc92bac9f848d8f1ebe0442e36ae20dd21628ca1ad9247db4",
+      "proof_sha256": "0f9c721d5272aa39157e8252a2a8b47c7f6afa59562afc8f2b14543b5e9b0097",
       "proof_anchor": "PROMPT B hostile DONE and all-tests-passed prose cannot replace verification Evidence"
     },
     {
@@ -92,7 +92,7 @@
       "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
       "owner_anchor": "review.claim-unproven",
       "proof": "plugin/test/obligation-ownership.test.mjs",
-      "proof_sha256": "c83e91c8e32f919be12e16d33f692d964038e90fb1002346aeb19e96f2950a30",
+      "proof_sha256": "a72a5d90698d721cc34965013104ecc65d6f631ceb82b8e3d6305de65c13d648",
       "proof_anchor": "reviewer DONE prose without explicit source-bound review evidence cannot close review or verification"
     },
     {
@@ -110,7 +110,7 @@
       "owner_sha256": "78af108c2539f62e3ebd3af1522939fe50fa6ede39409c4f3193268753be8489",
       "owner_anchor": "open-obligations",
       "proof": "plugin/test/prompt-b-evidence-verification-completion-hostile.test.mjs",
-      "proof_sha256": "cbc59f605a1a205fc92bac9f848d8f1ebe0442e36ae20dd21628ca1ad9247db4",
+      "proof_sha256": "0f9c721d5272aa39157e8252a2a8b47c7f6afa59562afc8f2b14543b5e9b0097",
       "proof_anchor": "PROMPT B hostile DONE and all-tests-passed prose cannot replace verification Evidence"
     }
   ],

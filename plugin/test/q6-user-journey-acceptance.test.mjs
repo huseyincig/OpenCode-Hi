@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
-import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {resolveHiConfig} from '../dist/config/resolver.js'
 import {startAssessedMission} from './helpers/semantic.mjs'
 import {opencodeChildPort} from './helpers/host-port.mjs'
@@ -15,7 +15,7 @@ import {plantPendingAuthority,authorityProtocolResponse} from './helpers/authori
 import {approvePendingAuthority,isAuthorized,requireAuthority} from '../dist/runtime/safety/authority.js'
 
 function native(){const creates=[],prompts=[];let n=0;return{creates,prompts,client:{session:{create:async req=>{creates.push(req);return{data:{id:`child-${++n}`}}},promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async()=>({data:true}),diff:async()=>({data:[]})}}}}
-function runtime(client,global=2){return new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>({}))}
+function runtime(client,global=2){return new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[],()=>({}))}
 
 test('Q6 small task stays single/minimal, asks nothing unnecessary, and completion requires real verification',async()=>{
  const n=native(),store=new MissionStore(),m=startAssessedMission(store,'q6-small','change one local constant',{task_kind:'bug-fix',scope:'local',risk:'low',likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})

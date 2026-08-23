@@ -4,7 +4,7 @@
   "known_node_teardown_normalized": false,
   "program": "PROMPT_B",
   "proof": "plugin/test/q6-user-journey-acceptance.test.mjs",
-  "proof_sha256": "1efc55999653aab673d180271435a1fc8c4770fd12f45bf3d1b98fbe3f891c4f",
+  "proof_sha256": "569af6841d0815d4a3c2903b709a003f46144409d8fcf7fd93668ef71f9b9838",
   "scenarios": [
     "small-task",
     "medium-feature",
@@ -17,8 +17,8 @@
   "schema": 1,
   "section": 36,
   "source_binding": {
-    "tested_git_commit": "03a816f930e3172ec84f733bae081768e2ea1a14",
-    "tested_git_tree": "705f5832a7673cd1eafce87a3fa3dee6aebbff74"
+    "tested_git_commit": "8ba16fccfe502326a2491d3e78a574ac1a248824",
+    "tested_git_tree": "5408dffdd71b65708a7e1dff87e28cffa09e4292"
   },
   "status": "PASS",
   "terminal": {

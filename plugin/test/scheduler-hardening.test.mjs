@@ -5,14 +5,15 @@ import {startAssessedMission} from './helpers/semantic.mjs'
 import {evaluateIdle} from '../dist/runtime/continuation/evaluator.js'
 import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
-import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
+import { createConcurrencyPolicySource } from '../dist/runtime/scheduler/concurrency.js'
+import { evaluateSchedulingResourceCapacity } from '../dist/runtime/scheduler/planner.js'
 import { parallelSafety } from '../dist/runtime/scheduler/parallel-safety.js'
 import { createTask } from '../dist/runtime/worker/worker-runtime.js'
 import { resolveHiConfig } from '../dist/config/resolver.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 
 function client(){let n=0;return {session:{create:async()=>({data:{id:`child-${++n}`}}),promptAsync:async()=>{}}}}
-function runtime(scheduler=new ConcurrencyScheduler(()=>({global:4}))){return new TaskRuntime(opencodeChildPort(client()),new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced']}],()=>({}))}
+function runtime(scheduler=createConcurrencyPolicySource(()=>({global:4}))){return new TaskRuntime(opencodeChildPort(client()),new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced']}],()=>({}))}
 
 test('dedupe fingerprint preserves distinct task contracts with same objective/role/model',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'sched-dedupe','opaque parallel work');m.execution.execution_mode='parallel'
@@ -48,17 +49,12 @@ test('unknown dependency IDs fail preflight instead of queueing forever',async()
 })
 
 test('model rebind cannot oversubscribe target model capacity',()=>{
-  const scheduler=new ConcurrencyScheduler(()=>({global:3,providers:{p:3},models:{'p/cheap':3,'p/strong':1}}))
-  assert.equal(scheduler.acquire('w1','p','p/cheap'),true)
-  assert.equal(scheduler.acquire('w2','p','p/strong'),true)
-  const move=scheduler.canStart('w1','p','p/strong')
-  assert.equal(move.ok,false)
-  assert.equal(move.reason,'model-capacity:p/strong')
-  assert.equal(scheduler.acquire('w1','p','p/strong'),false)
-  assert.equal(scheduler.running(),2)
-  scheduler.release('w2')
-  assert.equal(scheduler.acquire('w1','p','p/strong'),true)
-  assert.equal(scheduler.running(),1,'rebind must keep one slot for the same worker')
+  const base={topology:3,global:3,providers:{p:3},models:{'p/cheap':3,'p/strong':1},running:[{executionUnitId:'w1',provider:'p',model:'p/cheap'},{executionUnitId:'w2',provider:'p',model:'p/strong'}]}
+  const blocked=evaluateSchedulingResourceCapacity(base,'w1',{provider:'p',model:'p/strong'})
+  assert.equal(blocked.ok,false);assert.equal(blocked.reason?.code,'model-capacity');assert.equal(blocked.reason?.detail,'p/strong')
+  const afterRelease={...base,running:base.running.filter(x=>x.executionUnitId!=='w2')}
+  const admitted=evaluateSchedulingResourceCapacity(afterRelease,'w1',{provider:'p',model:'p/strong'})
+  assert.equal(admitted.ok,true,'current unit is excluded while evaluating its target rebind capacity')
 })
 
 test('queued dependent is removed from queue when prerequisite fails',async()=>{

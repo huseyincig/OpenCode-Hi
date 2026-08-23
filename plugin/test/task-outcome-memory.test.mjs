@@ -11,7 +11,7 @@ import {createTask,createWorker} from '../dist/runtime/worker/worker-runtime.js'
 import {startAssessedMission} from './helpers/semantic.mjs'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
-import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {createRuntimeScopedStores} from '../dist/runtime/application/runtime-scoped-stores.js'
 import {ContextArtifactStore} from '../dist/runtime/context/artifact-store.js'
@@ -98,11 +98,11 @@ test('TaskRuntime injects matching prior outcome only at actual dispatch and sou
   try{writeSource(root);const first=fixture(root,'prior'),scoped=createRuntimeScopedStores(root);scoped.taskOutcomeMemory.observe(first.m,first.task,first.worker,result())
     const prompts=[];let seq=0;const client={session:{create:async()=>({data:{id:`child-memory-${++seq}`}}),promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async()=>({data:{}})}}
     const m2=startAssessedMission(new MissionStore(root),'current','opaque current',{likely_targets:['src/a.ts'],required_capabilities:['implementation']})
-    const rt2=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2})),root,process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}),undefined,[],scoped)
+    const rt2=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2})),root,process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}),undefined,[],scoped)
     await rt2.start(m2,{objective:'small fix',role:'coder',category:'quick',scope:['src/a.ts']});assert.match(prompts[0].body.parts[0].text,/PRIOR TASK OUTCOME MEMORY/);assert.ok(m2.execution.ledger.some(e=>e.type==='task-outcome-memory.recalled'))
     writeSource(root,'export const value = 99\n')
     const m3=startAssessedMission(new MissionStore(root),'drifted','opaque drifted',{likely_targets:['src/a.ts'],required_capabilities:['implementation']})
-    const rt3=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2})),root,process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}),undefined,[],createRuntimeScopedStores(root))
+    const rt3=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2})),root,process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}),undefined,[],createRuntimeScopedStores(root))
     await rt3.start(m3,{objective:'small fix',role:'coder',category:'quick',scope:['src/a.ts']});assert.doesNotMatch(prompts[1].body.parts[0].text,/PRIOR TASK OUTCOME MEMORY/)
   }finally{rmSync(root,{recursive:true,force:true})}
 })
@@ -110,7 +110,7 @@ test('TaskRuntime injects matching prior outcome only at actual dispatch and sou
 test('task outcome bookkeeping failure is advisory and cannot prevent accepted Task settlement',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-task-memory-failopen-'))
   try{writeSource(root);const {m,task,worker}=fixture(root),scoped={contextArtifacts:new ContextArtifactStore(root),taskOutcomeMemory:{observe(){throw new Error('synthetic memory write failure')},renderAdvisory(){return undefined}}}
-    const rt=new TaskRuntime(opencodeChildPort({session:{}}),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2})),root,process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}),undefined,[],scoped)
+    const rt=new TaskRuntime(opencodeChildPort({session:{}}),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2})),root,process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}),undefined,[],scoped)
     rt.applyResult(m,worker.id,result('DONE',{summary:'done',open_issues:[]}));assert.equal(task.status,'completed');assert.equal(worker.status,'completed');assert.ok(m.execution.ledger.some(e=>e.type==='task-outcome-memory.write-failed'&&e.payload?.policy==='advisory-bookkeeping-fail-open'))
   }finally{rmSync(root,{recursive:true,force:true})}
 })

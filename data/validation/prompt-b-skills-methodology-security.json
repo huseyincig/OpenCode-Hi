@@ -56,7 +56,7 @@
       "owner_sha256": "afced18738d3b1c99f18b698da29e219778a322037150618fb217508836724d7",
       "owner_anchor": "provenance.skill_sha256!==digest(skillText)",
       "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
-      "proof_sha256": "8b33c18919eafd99397f03b02b329c91fca22324f7a87ec5577c58387a9dcdf5",
+      "proof_sha256": "ac9faf937198bb0fc60d60d484f64ab4b323cd0b68a4821a3fe4cf9ec12ebdfe",
       "proof_anchor": "project methodology is admitted only when skill, policy and hash-bound provenance are coherent"
     },
     {
@@ -65,7 +65,7 @@
       "owner_sha256": "afced18738d3b1c99f18b698da29e219778a322037150618fb217508836724d7",
       "owner_anchor": "provenance.policy_sha256!==digest(policyText)",
       "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
-      "proof_sha256": "8b33c18919eafd99397f03b02b329c91fca22324f7a87ec5577c58387a9dcdf5",
+      "proof_sha256": "ac9faf937198bb0fc60d60d484f64ab4b323cd0b68a4821a3fe4cf9ec12ebdfe",
       "proof_anchor": "project methodology update requires fresh provenance hash before re-admission"
     },
     {
@@ -74,7 +74,7 @@
       "owner_sha256": "afced18738d3b1c99f18b698da29e219778a322037150618fb217508836724d7",
       "owner_anchor": "methodologyCandidateAssessment(candidate).eligible",
       "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
-      "proof_sha256": "8b33c18919eafd99397f03b02b329c91fca22324f7a87ec5577c58387a9dcdf5",
+      "proof_sha256": "ac9faf937198bb0fc60d60d484f64ab4b323cd0b68a4821a3fe4cf9ec12ebdfe",
       "proof_anchor": "project-learning admission decays a historically READY candidate until fresh evidence restores confidence"
     },
     {
@@ -92,7 +92,7 @@
       "owner_sha256": "a59a6aeeee54eb1a2d82793de3e77e7e901413dd7eef6ac1057919fb8522e346",
       "owner_anchor": "if(exact==='deny'||exact==='ask'||exact==='allow')",
       "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
-      "proof_sha256": "8b33c18919eafd99397f03b02b329c91fca22324f7a87ec5577c58387a9dcdf5",
+      "proof_sha256": "ac9faf937198bb0fc60d60d484f64ab4b323cd0b68a4821a3fe4cf9ec12ebdfe",
       "proof_anchor": "explicit native deny is preserved even for an admitted compatible project methodology"
     },
     {

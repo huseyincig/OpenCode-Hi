@@ -5,7 +5,7 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
-import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
+import { createConcurrencyPolicySource } from '../dist/runtime/scheduler/concurrency.js'
 import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { createTask, createWorker } from '../dist/runtime/worker/worker-runtime.js'
 import { DEFAULT_HI_CONFIG } from '../dist/config/defaults.js'
@@ -17,7 +17,7 @@ const REQUIRED=['prompt-injection','role-prompt-drift','host-permission-widening
 
 function row(name){return matrix.threats.find(x=>x.threat===name)}
 
-function runtime(){return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),ROOT,ROOT,()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
+function runtime(){return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),ROOT,ROOT,()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
 
 test('Q3 threat matrix is closed, complete, stable-ID and tests-only verification metadata',()=>{
   assert.equal(matrix.schema,1);assert.equal(matrix.type,'hi-adversarial-threat-matrix')

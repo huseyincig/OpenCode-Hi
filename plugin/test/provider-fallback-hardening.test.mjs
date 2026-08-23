@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
-import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {startAssessedMission} from './helpers/semantic.mjs'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
@@ -13,13 +13,13 @@ import {recordRecoveryStrategy} from '../dist/runtime/continuation/recovery-gove
 function setup(promptImpl=async()=>{},withAbort=true,models=[]){
   const calls=[],aborts=[]
   let seq=0;const session={promptAsync:async arg=>{calls.push(arg);return promptImpl(arg)},create:async()=>({data:{id:`recovery-${++seq}`}}),diff:async()=>({data:[]})};if(withAbort)session.abort=async req=>{aborts.push(req);return{data:true}};const client={session}
-  const scheduler=new ConcurrencyScheduler(()=>({global:4,providers:{},models:{}}))
+  const scheduler=createConcurrencyPolicySource(()=>({global:4,providers:{},models:{}}))
   const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>models,()=>({}))
   const store=new MissionStore(process.cwd())
   const m=startAssessedMission(store,'parent','opaque provider task')
   m.execution.tasks.push({id:'t1',mission_id:m.identity.mission_id,objective:'fix it',status:'running',role:'coder',category:'standard',scope:['src/a.ts'],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],execution_profile:{role:'coder',category:'standard',model:'p/primary',fallback_models:['p/fallback1','p/fallback2'],fallback_variants:{'p/fallback1':'high','p/fallback2':'medium'},methodologies:[],permission_profile:{skill_tool_enabled:true,skill_permissions:{},external_effects:'parent-only',recursive_task:'deny'},verification_policy:m.execution.verification_policy,max_context_chars:1000,max_handoff_chars:1000,max_result_chars:1000,max_artifacts:4},worker_id:'w1',external_action_requirements:[],created_at:Date.now(),updated_at:Date.now()})
   m.execution.workers.push({id:'w1',task_id:'t1',role:'coder',category:'standard',session_id:'child1',parent_session_id:'parent',parent_mission_id:m.identity.mission_id,model:'p/primary',fallbacks:['p/fallback1','p/fallback2'],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'busy',attempt:0,generation_at_spawn:m.continuation.generation,updated_at:Date.now()})
-  return {runtime,scheduler,m,calls,aborts}
+  return {runtime,m,calls,aborts}
 }
 
 test('provider failure creates a fresh child on first fallback without stagnation',async()=>{
@@ -136,9 +136,9 @@ test('uncertain fallback dispatch preserves active ownership',async()=>{
 
 test('behavioral hazard opens one fresh recovery-only model after two same-model corrections without semantic gain',async()=>{
   const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding','balanced']}]
-  const {runtime,scheduler,m,calls,aborts}=setup(async()=>{},true,models)
+  const {runtime,m,calls,aborts}=setup(async()=>{},true,models)
   const worker=m.execution.workers[0],task=m.execution.tasks[0]
-  scheduler.release(worker.id);worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/recovery'];worker.fallbacks=[]
+  worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/recovery'];worker.fallbacks=[]
   recordRecoveryStrategy(m,{level:1,action:'same-worker-resume'},'started',10,{task_id:task.id,worker_id:worker.id,model:'p/primary'})
   recordRecoveryStrategy(m,{level:2,action:'same-worker-resume'},'started',11,{task_id:task.id,worker_id:worker.id,model:'p/primary'})
   m.continuation.stagnation_count=3
@@ -152,9 +152,9 @@ test('behavioral hazard opens one fresh recovery-only model after two same-model
 
 test('behavioral model escalation is fail-closed before the hazard threshold',async()=>{
   const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding']}]
-  const {runtime,scheduler,m,calls}=setup(async()=>{},true,models)
+  const {runtime,m,calls}=setup(async()=>{},true,models)
   const worker=m.execution.workers[0],task=m.execution.tasks[0]
-  scheduler.release(worker.id);worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/recovery'];worker.fallbacks=[]
+  worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/recovery'];worker.fallbacks=[]
   recordRecoveryStrategy(m,{level:1,action:'same-worker-resume'},'started',10,{task_id:task.id,worker_id:worker.id,model:'p/primary'})
   assert.equal(await runtime.recoverStagnation(m,3,'model-escalation'),false);assert.equal(worker.model,'p/primary');assert.equal(calls.length,0)
   assert.ok(m.execution.ledger.some(e=>e.type==='worker.behavioral-model-escalation.rejected'))
@@ -162,7 +162,7 @@ test('behavioral model escalation is fail-closed before the hazard threshold',as
 
 
 test('unparseable terminal assistant output stays fail-closed but becomes resumable FIX_REQUIRED for bounded behavioral recovery',async()=>{
-  const {runtime,scheduler,m}=setup()
+  const {runtime,m}=setup()
   const worker=m.execution.workers[0],task=m.execution.tasks[0]
   worker.projected_model='p/primary'
   const settled=await runtime.settleHostIdleAssistantResult(m,worker,{text:'I finished the task successfully but forgot the WorkerResult envelope.',model:{model:'p/primary'}})
@@ -180,9 +180,9 @@ test('normal task_id corrective resumes feed the behavioral hazard circuit and t
     {id:'p/primary',provider:'p',writeCapable:true,tags:['coding','balanced']},
     {id:'p/recovery',provider:'p',writeCapable:true,tags:['coding','balanced']},
   ]
-  const {runtime,scheduler,m,calls}=setup(async()=>{},true,models)
+  const {runtime,m,calls}=setup(async()=>{},true,models)
   const worker=m.execution.workers[0],task=m.execution.tasks[0]
-  scheduler.release(worker.id);worker.status='ready';task.status='waiting';worker.fallbacks=[];worker.recovery_candidates=['p/recovery'];worker.requested_model=undefined
+  worker.status='ready';task.status='waiting';worker.fallbacks=[];worker.recovery_candidates=['p/recovery'];worker.requested_model=undefined
   task.result={status:'FIX_REQUIRED',summary:'contract correction required',changed_files:[],evidence:[],open_issues:['worker-result-contract-invalid'],needs_context:['return structured WorkerResult']}
 
   const first=await runtime.resume(m,task.id)

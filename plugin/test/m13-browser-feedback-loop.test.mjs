@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto'
 import path from 'node:path'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
-import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {resolveHiConfig} from '../dist/config/resolver.js'
 import {PACKAGED_HI_AGENTS} from '../dist/generated/agent-config.js'
@@ -26,7 +26,7 @@ const repoRoot=path.resolve(process.cwd(),'..')
 test('M13 browser finding feeds the same visual task/session correction loop and requires fresh attempt proof',async()=>{
   const created=[],prompts=[],c=client(created,prompts),host={agent:PACKAGED_HI_AGENTS}
   const browser={health:async()=>({available:true}),inspect:async cx=>observation(cx.task_id),cleanup:async()=>({cleaned:true,reason:'closed'})}
-  const registry=new BackgroundRegistry(),scheduler=new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}}))
+  const registry=new BackgroundRegistry(),scheduler=createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}}))
   const runtime=new TaskRuntime(opencodeChildPort(c),registry,scheduler,repoRoot,repoRoot,()=>resolveHiConfig({},repoRoot),()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>host,undefined,[],undefined,undefined,()=>new Set(['host-capability:browser-execution']),browser)
   const store=new MissionStore(repoRoot),m=store.start('m13-feedback','verify the local UI and report regressions')
   store.applyInitialSemanticAssessment('m13-feedback',{material:true,message_kind:'mission',task_kind:'review',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['review','visual-qa'],requested_external_actions:[],likely_verification:['browser-evidence'],likely_targets:['src/ui.tsx'],intent_signals:['intent.browser'],suppressed_intent_signals:[]})
@@ -50,7 +50,7 @@ test('M13 browser finding feeds the same visual task/session correction loop and
 
 test('read-only worker self-reported changed_files is ignored when native diff proves zero mutation',async()=>{
   const created=[],prompts=[],c=client(created,prompts),host={agent:PACKAGED_HI_AGENTS}
-  const registry=new BackgroundRegistry(),scheduler=new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}}))
+  const registry=new BackgroundRegistry(),scheduler=createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}}))
   const runtime=new TaskRuntime(opencodeChildPort(c),registry,scheduler,repoRoot,repoRoot,()=>resolveHiConfig({},repoRoot),()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>host)
   const store=new MissionStore(repoRoot),m=store.start('readonly-claim-zero-diff','inspect one file without changing it')
   store.applyInitialSemanticAssessment('readonly-claim-zero-diff',{material:true,message_kind:'mission',task_kind:'analysis',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['repository-exploration'],requested_external_actions:[],likely_verification:[],likely_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[]})
@@ -64,7 +64,7 @@ test('read-only worker self-reported changed_files is ignored when native diff p
 
 test('read-only worker still fails closed when native diff proves a real mutation',async()=>{
   const created=[],prompts=[],c=client(created,prompts),host={agent:PACKAGED_HI_AGENTS}
-  const registry=new BackgroundRegistry(),scheduler=new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}}))
+  const registry=new BackgroundRegistry(),scheduler=createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}}))
   const runtime=new TaskRuntime(opencodeChildPort(c),registry,scheduler,repoRoot,repoRoot,()=>resolveHiConfig({},repoRoot),()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>host)
   const store=new MissionStore(repoRoot),m=store.start('readonly-claim-real-diff','inspect one file without changing it')
   store.applyInitialSemanticAssessment('readonly-claim-real-diff',{material:true,message_kind:'mission',task_kind:'analysis',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['repository-exploration'],requested_external_actions:[],likely_verification:[],likely_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[]})

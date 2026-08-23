@@ -6,7 +6,7 @@ import {createTask,createWorker} from '../dist/runtime/worker/worker-runtime.js'
 import {projectDirectDependencyOutcomes,renderDirectDependencyOutcomeContext,DependencyOutcomeProjectionError} from '../dist/runtime/execution/dependency-outcome-projection.js'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
-import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {resolveHiConfig} from '../dist/config/resolver.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 
@@ -28,7 +28,7 @@ function nativeClient(){
     diff:async()=>({data:[]}),
   }}}
 }
-function runtime(client){return new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:4})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced'],writeCapable:true}],()=>({}))}
+function runtime(client){return new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:4})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced'],writeCapable:true}],()=>({}))}
 
 test('Phase 7 dependency projection binds direct DONE result to exact accepted attempt/digest and excludes worker proof claims',()=>{
   const m=mission('dep-projection'),pre=createTask(m,{objective:'define schema',role:'coder',category:'standard',scope:['src/schema.ts']}),worker=done(m,pre,{summary:'Schema exposes User and Session tables.'}),next=createTask(m,{objective:'implement API',role:'coder',category:'standard',dependencies:[pre.id]})

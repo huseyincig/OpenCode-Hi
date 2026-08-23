@@ -5,7 +5,7 @@ import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {RuntimeEventController} from '../dist/runtime/application/runtime-event-controller.js'
 import {normalizeOpenCodeEvent} from '../dist/opencode/event-adapter.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
-import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {createTask,createWorker} from '../dist/runtime/worker/worker-runtime.js'
 import {addEvidence,markMutation} from '../dist/runtime/evidence/evidence-runtime.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
@@ -13,8 +13,8 @@ import {startAssessedMission} from './helpers/semantic.mjs'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 
 const done=summary=>({status:'DONE',summary,changed_files:[],evidence:[],open_issues:[],needs_context:[]})
-function bareRuntime(global=2){return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
-function nativeRuntime(global=1){let n=0;const starts=[];const client={session:{create:async()=>({data:{id:`child-${++n}`}}),promptAsync:async req=>{starts.push(req)},diff:async()=>({data:[]}),abort:async()=>({data:true})}};const rt=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global,providers:{p:global},models:{'p/code':global}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced']}],()=>({}));return{rt,starts}}
+function bareRuntime(global=2){return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
+function nativeRuntime(global=1){let n=0;const starts=[];const client={session:{create:async()=>({data:{id:`child-${++n}`}}),promptAsync:async req=>{starts.push(req)},diff:async()=>({data:[]}),abort:async()=>({data:true})}};const rt=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global,providers:{p:global},models:{'p/code':global}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced']}],()=>({}));return{rt,starts}}
 
 test('PROMPT B cancellation wins over a late different worker result and terminal state cannot resurrect',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'race-cancel','cancel race'),rt=bareRuntime()

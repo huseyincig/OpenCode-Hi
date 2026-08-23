@@ -414,17 +414,19 @@
     },
     {
       "area": "scheduler",
-      "canonical_owner": "ConcurrencyScheduler",
-      "owner_path": "plugin/src/runtime/scheduler/concurrency.ts",
-      "owner_sha256": "57ecaecc5619c81e07a973b5a96e307184f57fa25684f116b1acceb9ace0d6c8",
+      "canonical_owner": "SchedulingPlanner",
+      "owner_path": "plugin/src/runtime/scheduler/planner.ts",
+      "owner_sha256": "1757eb404c8a8df7a25d7ad975c7c1b9efc1f2207108f7e5ebc8a15abc8372ba",
       "producer_or_contract_paths": [
-        "plugin/src/runtime/scheduler/parallel-safety.ts"
+        "plugin/src/runtime/scheduler/lifecycle.ts",
+        "plugin/src/runtime/scheduler/task-runtime-adapter.ts"
       ],
       "consumer_or_executor_paths": [
         "plugin/src/runtime/task/task-runtime.ts"
       ],
       "proof_paths": [
-        "plugin/test/scheduler-hardening.test.mjs"
+        "plugin/test/scheduler-planner.test.mjs",
+        "plugin/test/task-runtime-scheduler-adapter.test.mjs"
       ],
       "canonical_doc": "docs/VERIFICATION.md"
     },

@@ -92,7 +92,7 @@
       "owner_sha256": "124a3e3555101658e889cd4406ae4b7719144af0d36ac776dc8d2befd15d5957",
       "owner_anchor": "promptToolOverrides",
       "proof": "plugin/test/main-prompt-execution-profile-tools.test.mjs",
-      "proof_sha256": "5426239e93a6134ecdc7c54ae961b5007b7be8513af8e19e818a50488ce75e71",
+      "proof_sha256": "01e540cbf266a0dd203815c54b2a42c7b8fd1024b9ee40ecd52b7af206811d94",
       "proof_anchor": "prompt tool overrides only disable tools; they never turn a denied native permission into allow"
     },
     {

@@ -12,7 +12,7 @@ import {PACKAGED_HI_AGENTS} from '../dist/generated/agent-config.js'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
-import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {activateMethodologySignal} from '../dist/runtime/methodology/activation.js'
 import {fileURLToPath} from 'node:url'
@@ -128,7 +128,7 @@ test('TaskRuntime hot-refreshes an admitted project methodology permission befor
     const host={};projectHiOpenCodeAgents(host,{coder:PACKAGED_HI_AGENTS.coder})
     assert.equal(host.agent.coder.permission.skill[f.name],undefined)
     const client={session:{create:async()=>({data:{id:'child-hot'}}),promptAsync:async()=>({data:{}}),diff:async()=>({data:[]})}}
-    const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),f.root,hiRoot,()=>DEFAULT_HI_CONFIG,()=>[],()=>host)
+    const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),f.root,hiRoot,()=>DEFAULT_HI_CONFIG,()=>[],()=>host)
     const store=new MissionStore(f.root),m=store.start('s-hot-project-methodology','Update dependency metadata')
     store.applyInitialSemanticAssessment('s-hot-project-methodology',{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:['package.json'],intent_signals:[],suppressed_intent_signals:[]})
     m.methodology.methodology_needs=[]

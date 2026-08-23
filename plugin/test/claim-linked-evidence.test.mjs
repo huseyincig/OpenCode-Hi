@@ -5,13 +5,13 @@ import {addEvidence,markMutation} from "../dist/runtime/evidence/evidence-runtim
 import {createTask,createWorker} from "../dist/runtime/worker/worker-runtime.js"
 import {TaskRuntime} from "../dist/runtime/task/task-runtime.js"
 import {BackgroundRegistry} from "../dist/runtime/background/registry.js"
-import {ConcurrencyScheduler} from "../dist/runtime/scheduler/concurrency.js"
+import {createConcurrencyPolicySource} from "../dist/runtime/scheduler/concurrency.js"
 import {DEFAULT_HI_CONFIG} from "../dist/config/defaults.js"
 import {verificationSatisfied} from "../dist/runtime/verification/policy.js"
 import {opencodeChildPort} from "./helpers/host-port.mjs"
 import {startAssessedMission} from "./helpers/semantic.mjs"
 
-function runtime(){return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
+function runtime(){return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
 
 test("known-surface mutation invalidates only overlapping or mission-wide evidence",()=>{
   const m=new MissionStore().start("claim-scope","verify independent surfaces")

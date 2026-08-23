@@ -20,7 +20,7 @@
       "owner_sha256": "ea83119c25739539ff915339271c1bad899a1926f21f3fbec761aaeefe0648ec",
       "owner_anchor": "reconcileModelExecutionIdentity",
       "proof": "plugin/test/main-prompt-model-evidence.test.mjs",
-      "proof_sha256": "f944aaf106bd8b28a9e0c02898b8c9b3e4affb8ce813ae755e2b9b2c92e56620",
+      "proof_sha256": "9c19e48c5a1a636f900e13acea22272ac3f36f356e013e10a95e0b996c9a1cfc",
       "proof_anchor": "projected model mismatch is a first-class blocker even when observed model matches selection"
     },
     {
@@ -29,7 +29,7 @@
       "owner_sha256": "669f3cdcfc0d2eb1a39686af77d8f84a8f37cfdc07bc6c831def91cee690c293",
       "owner_anchor": "identity.status==='model-mismatch'",
       "proof": "plugin/test/main-prompt-model-evidence.test.mjs",
-      "proof_sha256": "f944aaf106bd8b28a9e0c02898b8c9b3e4affb8ce813ae755e2b9b2c92e56620",
+      "proof_sha256": "9c19e48c5a1a636f900e13acea22272ac3f36f356e013e10a95e0b996c9a1cfc",
       "proof_anchor": "effective model mismatch blocks DONE and preserves the obligation for reconciliation"
     },
     {
@@ -38,7 +38,7 @@
       "owner_sha256": "c441c37ffb71f7d55157cda52c71bd02a4b3b555e78d43cc8f96a04e0e56fb9e",
       "owner_anchor": "No permitted/available runtime model satisfies this task",
       "proof": "plugin/test/main-prompt-delegation-preconditions.test.mjs",
-      "proof_sha256": "73f749171d427a7524b2b105002b786bce5d25a84085ba20d394a851395cb3db",
+      "proof_sha256": "c3aa5cf2f0148d9ff036b638ac4aff9900e6f493b9921d0139f018c286510a51",
       "proof_anchor": "missing native worker capability is RESOLVE before creating task or trying model fallbacks"
     },
     {
@@ -47,7 +47,7 @@
       "owner_sha256": "cf695207826ba5ad8c1e5899250ed52ed1c865d37c468d07eacc8356bc128603",
       "owner_anchor": "recoverHostTerminalFailure",
       "proof": "plugin/test/provider-fallback-hardening.test.mjs",
-      "proof_sha256": "4956f914f8415fa4cb2c1cf01dc37c1bad7825f29d1c763b8086ed7f1826f6c2",
+      "proof_sha256": "473665f04bf7526638f2db50c199d655afc1857b0346570167d261275e94d70b",
       "proof_anchor": "second provider failure advances to next fallback rather than returning to prior model"
     },
     {
@@ -56,7 +56,7 @@
       "owner_sha256": "032129401c9bca75326de27eea0ff7fff9d0d357d5952dce9fca14edea423296",
       "owner_anchor": "resolveSkillPlan",
       "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
-      "proof_sha256": "8b33c18919eafd99397f03b02b329c91fca22324f7a87ec5577c58387a9dcdf5",
+      "proof_sha256": "ac9faf937198bb0fc60d60d484f64ab4b323cd0b68a4821a3fe4cf9ec12ebdfe",
       "proof_anchor": "admitted project methodology reaches native lazy selection as project provider"
     },
     {
@@ -101,7 +101,7 @@
       "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
       "owner_anchor": "reconcileMethodologyExits",
       "proof": "plugin/test/forensic-hardening.test.mjs",
-      "proof_sha256": "02e2c7ccae26a29e5ed49397962906ad9acd33b49badfb2d705f13539aab34d1",
+      "proof_sha256": "f323914acd1419a80ba359afad62e517da00c139d313504bc5f3304e96af4230",
       "proof_anchor": "parent direct methodology remains active until mission-scope fresh verification satisfies its exit contract"
     },
     {
@@ -119,7 +119,7 @@
       "owner_sha256": "124a3e3555101658e889cd4406ae4b7719144af0d36ac776dc8d2befd15d5957",
       "owner_anchor": "promptToolOverrides",
       "proof": "plugin/test/main-prompt-execution-profile-tools.test.mjs",
-      "proof_sha256": "5426239e93a6134ecdc7c54ae961b5007b7be8513af8e19e818a50488ce75e71",
+      "proof_sha256": "01e540cbf266a0dd203815c54b2a42c7b8fd1024b9ee40ecd52b7af206811d94",
       "proof_anchor": "prompt tool overrides only disable tools; they never turn a denied native permission into allow"
     }
   ],

@@ -5,7 +5,7 @@ import {parseSemanticIntentAssessment} from '../dist/runtime/intent/semantic-ass
 import {activeConstraintAtoms,applyConstraintAtomDrafts,constraintAtomMatchesPath} from '../dist/runtime/constraint/constraint-atoms.js'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
-import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {resolveHiConfig} from '../dist/config/resolver.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 import {createTask,createWorker} from '../dist/runtime/worker/worker-runtime.js'
@@ -20,7 +20,7 @@ function assessed(store,id='constraint-atoms'){
   store.applyInitialSemanticAssessment(id,{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[],constraint_atoms:[]})
   return m
 }
-function runtime(){const client={session:{create:async()=>({data:{id:'child'}}),promptAsync:async()=>({data:{}}),diff:async()=>({data:[]})}};return new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:5,cost:1,tags:['coding']}],()=>({}))}
+function runtime(){const client={session:{create:async()=>({data:{id:'child'}}),promptAsync:async()=>({data:{}}),diff:async()=>({data:[]})}};return new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:5,cost:1,tags:['coding']}],()=>({}))}
 
 test('semantic assessment accepts only structured constraint atoms on constraint follow-ups',()=>{
   const parsed=parseSemanticIntentAssessment({material:true,message_kind:'constraint',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],user_verification:[],verification_ceiling:false,likely_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[],constraint_atoms:[draft()]})

@@ -1,4 +1,11 @@
-import type { SchedulingDecision, SchedulingSnapshot } from '../../contracts/orchestration-core.js';
+import type { SchedulingDecision, SchedulingReasonCode, SchedulingResourceBinding, SchedulingSnapshot } from '../../contracts/orchestration-core.js';
+export declare function evaluateSchedulingResourceCapacity(capacity: SchedulingSnapshot['capacity'], unitID: string, binding: SchedulingResourceBinding | undefined): {
+    ok: boolean;
+    reason?: {
+        code: SchedulingReasonCode;
+        detail?: string;
+    };
+};
 /**
  * Prepare graph-derived scheduling decisions once. The returned planner is pure and
  * call-scoped: only capacity.running may vary between invocations. No runtime state is cached.

@@ -4,7 +4,7 @@ import {resolveBrowserBackend} from '../dist/runtime/browser/backend-policy.js'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
-import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {PACKAGED_HI_AGENTS} from '../dist/generated/agent-config.js'
 import {HI_BROWSER_EXECUTION_TOOL_IDS} from '../dist/runtime/browser/executor.js'
@@ -19,7 +19,7 @@ const repoRoot=resolve(dirname(fileURLToPath(import.meta.url)),'../..')
 const HOST={agent:PACKAGED_HI_AGENTS,mcp:{browser:{type:'remote',url:'http://127.0.0.1:9/mcp',enabled:true},docs:{type:'local',command:['node','docs.mjs'],enabled:true}}}
 function client(prompts=[]){let n=0;return{session:{create:async()=>({data:{id:`child-${++n}`}}),promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async()=>({data:true}),diff:async()=>({data:[]})}}}
 function mission(id,caps){const store=new MissionStore(),m=store.start(id,'browser backend fixture');store.applyInitialSemanticAssessment(id,{material:true,message_kind:'mission',task_kind:'review',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:caps,requested_external_actions:[],likely_verification:['visual-check'],likely_targets:['src/view.tsx'],intent_signals:['intent.browser'],suppressed_intent_signals:[]});m.methodology.methodology_needs.push({name:'hi-browser-testing',signal:'intent.browser',trigger_source:'task-intent',producer:'intent',reason:'browser acceptance',created_at:Date.now()});return m}
-function runtime(prompts,resources=new Set()){return new TaskRuntime(opencodeChildPort(client(prompts)),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>structuredClone(HOST),undefined,{},undefined,undefined,()=>resources)}
+function runtime(prompts,resources=new Set()){return new TaskRuntime(opencodeChildPort(client(prompts)),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>structuredClone(HOST),undefined,{},undefined,undefined,()=>resources)}
 
 test('M13 browser backend policy prefers healthy bounded Playwright and does not infer MCP from server names',()=>{
   assert.deepEqual(resolveBrowserBackend({role:'visual-qa',browserRequested:true,localBrowserAvailable:true,semanticCapabilities:['visual-qa','mcp'],selectedMcpServers:['browser']}),{backend:'bounded-playwright',reason:'healthy-bounded-playwright-default'})
@@ -65,7 +65,7 @@ test('M13 explicit local backend records one durable browser capability blocker 
 
 test('M13 local visual task can defer origin creation to Hi-owned preview and receives exact preview handoff',async()=>{
   const prompts=[],m=mission('m13-preview',['visual-qa']),preview=new LocalPreviewManager(repoRoot)
-  const rt=new TaskRuntime(opencodeChildPort(client(prompts)),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>structuredClone(HOST),undefined,{},undefined,undefined,()=>new Set(['host-capability:browser-execution']),undefined,undefined,undefined,preview)
+  const rt=new TaskRuntime(opencodeChildPort(client(prompts)),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>structuredClone(HOST),undefined,{},undefined,undefined,()=>new Set(['host-capability:browser-execution']),undefined,undefined,undefined,preview)
   const out=await rt.start(m,{objective:'verify local static UI',role:'visual-qa',category:'visual',scope:['src/view.tsx']})
   const task=m.execution.tasks.find(t=>t.id===out.task_id);assert.equal(task.execution_profile.browser_backend,'bounded-playwright');assert.deepEqual(task.execution_profile.browser_allowed_origins,undefined)
   const prompt=JSON.stringify(prompts[0]);assert.match(prompt,new RegExp(`LOCAL STATIC PREVIEW: task_id=${out.task_id}`));assert.match(prompt,/hi_browser_preview_open/)

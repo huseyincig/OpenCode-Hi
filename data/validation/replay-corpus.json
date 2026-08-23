@@ -252,7 +252,7 @@
     {
       "expected": {
         "ok": true,
-        "reason": "capacity-available"
+        "reason": "ready"
       },
       "id": "scheduler-fresh-capacity",
       "operations": [],
@@ -333,7 +333,7 @@
     {
       "expected": {
         "ok": true,
-        "reason": "capacity-available"
+        "reason": "ready"
       },
       "id": "scheduler-release-readmits",
       "operations": [
@@ -364,7 +364,7 @@
     {
       "expected": {
         "ok": true,
-        "reason": "already-acquired"
+        "reason": "ready"
       },
       "id": "scheduler-idempotent-current-slot",
       "operations": [

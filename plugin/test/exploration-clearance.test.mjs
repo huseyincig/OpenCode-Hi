@@ -7,7 +7,7 @@ import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {createTask,createWorker} from '../dist/runtime/worker/worker-runtime.js'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
-import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {PACKAGED_HI_AGENTS} from '../dist/generated/agent-config.js'
 import {explorationClearanceFreshness} from '../dist/runtime/execution/exploration-clearance.js'
@@ -23,7 +23,7 @@ function mission(r,sid='s',ambiguity='resolvable'){
   store.applyInitialSemanticAssessment(sid,{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity,dependency_class:'independent',required_capabilities:['implementation','repository-analysis'],requested_external_actions:[],likely_verification:[],likely_targets:['src/contract.ts'],intent_signals:[],suppressed_intent_signals:[]})
   return m
 }
-function runtime(r,client={}){return new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2})),r,r,()=>DEFAULT_HI_CONFIG,()=>[],()=>({agent:PACKAGED_HI_AGENTS}))}
+function runtime(r,client={}){return new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2})),r,r,()=>DEFAULT_HI_CONFIG,()=>[],()=>({agent:PACKAGED_HI_AGENTS}))}
 function explorer(m){const analysis=m.execution.obligations.find(o=>o.kind==='analysis');assert.ok(analysis);const task=createTask(m,{objective:'resolve contract from repository evidence',role:'repository-explorer',category:'standard',scope:['src/contract.ts'],requiredEvidence:[],obligationIds:[analysis.id]}),worker=createWorker(m,task,'host-default');worker.status='busy';worker.session_id='explorer-session';worker.started_at=Date.now()-10;worker.native_diff_baseline={};worker.native_diff_final={};worker.native_state_hash='a'.repeat(64);worker.attempt=1;return{task,worker,analysis}}
 function sourceClaimWithReceipt(r,m,task,worker){const state=captureEvidenceScopeState(r,['src/contract.ts']);assert.ok(state);const receipt=addEvidence(m,{kind:'source-read-observation',summary:'Explorer read src/contract.ts',scope:['src/contract.ts'],source:`explorer-read:${worker.id}`,trusted_source_class:'host-tool-observation',source_session_id:worker.session_id,source_state_hash:state,scope_state_hash:state,task_id:task.id,obligation_ids:task.obligation_ids,producer_attempt:evidenceProducerAttemptForWorker(m,worker),outcome:'pending',reason:'test read receipt'});return{kind:'source-provenance-evidence',summary:'current contract source inspected',scope:['src/contract.ts'],evidence_refs:[receipt.id],pass:true,outcome:'passed'}}
 const decisionClaim=receiptID=>({kind:'decision-evidence',summary:'existing contract fixes the implementation choice',scope:['src/contract.ts'],evidence_refs:[receiptID],pass:true,outcome:'passed'})

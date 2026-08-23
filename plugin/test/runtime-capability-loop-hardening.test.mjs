@@ -8,7 +8,7 @@ import {startAssessedMission} from './helpers/semantic.mjs'
 import {continuationPort} from './helpers/host-port.mjs'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
-import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {resolveHiConfig} from '../dist/config/resolver.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 
@@ -70,7 +70,7 @@ test('P0 unavailable verifier environment is terminal operational state, not an 
 test('P0 dispatch-time model inventory drift becomes terminal capability state',async()=>{
   const initial=[{id:'p/code',provider:'p',writeCapable:true,tags:['balanced']}],drifted=[{id:'p/other',provider:'p',writeCapable:true,tags:['balanced']}];let calls=0
   const getModels=()=>++calls===1?initial:drifted,client={session:{create:async()=>({data:{id:'unexpected-child'}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:{}}),diff:async()=>({data:[]})}}
-  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({routing:{roleModels:{coder:['p/code']}}}),getModels,()=>({}))
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({routing:{roleModels:{coder:['p/code']}}}),getModels,()=>({}))
   const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'model-drift','implement bounded change',{required_capabilities:['implementation'],likely_targets:['src/a.ts']})
   await assert.rejects(()=>runtime.start(m,{objective:'change a',role:'coder',category:'standard',scope:['src/a.ts']}),/Runtime model candidate rejected at dispatch/)
   assert.ok(m.execution.blockers.includes('capability-unavailable:model-dispatch'))

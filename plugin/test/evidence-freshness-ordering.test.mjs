@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
-import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
+import { createConcurrencyPolicySource } from '../dist/runtime/scheduler/concurrency.js'
 import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { createTask, createWorker } from '../dist/runtime/worker/worker-runtime.js'
 import { verificationSatisfied } from '../dist/runtime/verification/policy.js'
@@ -10,7 +10,7 @@ import { DEFAULT_HI_CONFIG } from '../dist/config/defaults.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 
 function runtime(){
-  return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
+  return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
 }
 
 test('worker-reported verification remains non-canonical when changed_files is learned from the same result',()=>{

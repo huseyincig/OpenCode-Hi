@@ -110,7 +110,7 @@
       "owner_sha256": "d0a98cf7a643d736acb385da8cc837e8df9d469fad13858a45a59e8076fba5b9",
       "owner_anchor": "Resolve the contract-critical ambiguity from repository structure",
       "proof": "plugin/test/main-prompt-delegation-preconditions.test.mjs",
-      "proof_sha256": "73f749171d427a7524b2b105002b786bce5d25a84085ba20d394a851395cb3db",
+      "proof_sha256": "c3aa5cf2f0148d9ff036b638ac4aff9900e6f493b9921d0139f018c286510a51",
       "proof_anchor": "source-resolvable ambiguity must not ask the user"
     },
     {

@@ -12,17 +12,17 @@ function overlaps(a, b) { const out = []; for (const x of a)
             break;
         } return [...new Set(out)]; }
 function reason(code, detail) { return detail === undefined ? { code } : { code, detail }; }
-function resourceCapacity(snapshot, unitID, binding) {
-    const running = snapshot.capacity.running.filter(item => item.executionUnitId !== unitID);
-    if (running.length >= snapshot.capacity.global)
+export function evaluateSchedulingResourceCapacity(capacity, unitID, binding) {
+    const running = capacity.running.filter(item => item.executionUnitId !== unitID);
+    if (running.length >= capacity.global)
         return { ok: false, reason: reason('global-capacity') };
     if (binding?.provider) {
-        const cap = snapshot.capacity.providers[binding.provider] ?? snapshot.capacity.global;
+        const cap = capacity.providers[binding.provider] ?? capacity.global;
         if (running.filter(x => x.provider === binding.provider).length >= cap)
             return { ok: false, reason: reason('provider-capacity', binding.provider) };
     }
     if (binding?.model) {
-        const cap = snapshot.capacity.models[binding.model] ?? snapshot.capacity.global;
+        const cap = capacity.models[binding.model] ?? capacity.global;
         if (running.filter(x => x.model === binding.model).length >= cap)
             return { ok: false, reason: reason('model-capacity', binding.model) };
     }
@@ -108,7 +108,7 @@ export function createSchedulingPlanner(snapshot) {
             const activeOthers = active.size - (active.has(unit.id) ? 1 : 0);
             if (activeOthers >= capacity.topology)
                 return { executionUnitId: unit.id, disposition: 'DEFERRED_CAPACITY', reasons: [reason('topology-capacity', String(capacity.topology))], blockingUnitIds: [], blockingDependencyIds: [] };
-            const resource = resourceCapacity(working, unit.id, snapshot.resolvedResources[unit.id]);
+            const resource = evaluateSchedulingResourceCapacity(working.capacity, unit.id, snapshot.resolvedResources[unit.id]);
             if (!resource.ok)
                 return { executionUnitId: unit.id, disposition: 'DEFERRED_CAPACITY', reasons: [resource.reason], blockingUnitIds: [], blockingDependencyIds: [] };
             return { executionUnitId: unit.id, disposition: 'RUNNABLE', reasons: [reason('ready')], blockingUnitIds: [], blockingDependencyIds: [] };

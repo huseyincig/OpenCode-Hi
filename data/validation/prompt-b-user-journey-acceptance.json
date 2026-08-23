@@ -1,6 +1,6 @@
 {
   "acceptance_receipt": "data/validation/user-journey-acceptance-0.1.0.json",
-  "acceptance_sha256": "93770b01f1ff1d71a0cb1e284bdc45252235df9d164cc5330f107a688747546c",
+  "acceptance_sha256": "838ede20d7b26a6076811c85d49b6379b2081080e0bf4ed6c51faf886e4ab3e0",
   "claim_boundary": "User journey acceptance verifies externally understandable behavior without requiring internal orchestration knowledge.",
   "kind": "PROMPT_B_USER_JOURNEY_ACCEPTANCE_AUDIT",
   "program": "PROMPT_B",

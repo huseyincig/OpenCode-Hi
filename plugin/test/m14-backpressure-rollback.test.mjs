@@ -6,7 +6,7 @@ import {join} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
-import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {PACKAGED_HI_AGENTS} from '../dist/generated/agent-config.js'
@@ -32,7 +32,7 @@ function mission(root,id='m14-backpressure'){
   return m
 }
 function runtime(root,{workspaceRuntime,global=1,scoped=createRuntimeScopedStores(root,hiRoot),created=[],prompts=[],aborts=[]}={}){
-  const registry=new BackgroundRegistry(),scheduler=new ConcurrencyScheduler(()=>({global,providers:{},models:{}}))
+  const registry=new BackgroundRegistry(),scheduler=createConcurrencyPolicySource(()=>({global,providers:{},models:{}}))
   const rt=new TaskRuntime(opencodeChildPort(client(created,prompts,aborts)),registry,scheduler,root,hiRoot,()=>DEFAULT_HI_CONFIG,()=>[],()=>structuredClone(host),undefined,[],scoped,workspaceRuntime)
   return{rt,registry,scheduler,scoped,created,prompts,aborts}
 }

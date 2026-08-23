@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import {resolveHiConfig,resolveHiConfigWithReport} from '../dist/config/resolver.js'
 import {decideTopology} from '../dist/runtime/execution/topology-policy.js'
 import {resolveModel} from '../dist/runtime/routing/model-resolver.js'
-import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {evaluateSchedulingResourceCapacity} from '../dist/runtime/scheduler/planner.js'
 import {routeCapabilities} from '../dist/runtime/routing/capability-router.js'
 import {executionProfileFor} from '../dist/config/execution-policy.js'
 
@@ -16,12 +16,11 @@ test('BA03 execution capacity config changes real topology and scheduler decisio
   const d2=decideTopology(intent,{mode:many.execution.topology,maxAgents:many.execution.maxAgents,parallelism:many.execution.parallelism})
   assert.equal(d1.executionMode,'single');assert.equal(d1.agentCount,1)
   assert.equal(d2.executionMode,'parallel');assert.ok(d2.agentCount>=2)
-  const global=new ConcurrencyScheduler(()=>({global:one.parallel.enabled?one.parallel.max:1,providers:one.parallel.providers,models:one.parallel.models}))
-  assert.equal(global.acquire('a','p','p/a'),true);assert.equal(global.canStart('b','q','q/b').ok,false)
-  const scoped=new ConcurrencyScheduler(()=>({global:many.parallel.max,providers:many.parallel.providers,models:many.parallel.models}))
-  assert.equal(scoped.acquire('a','p','p/m'),true)
-  assert.match(scoped.canStart('b','p','p/other').reason,/provider-capacity/)
-  assert.match(scoped.canStart('c','q','p\/m').reason,/model-capacity/)
+  const globalCapacity={topology:1,global:one.parallel.enabled?one.parallel.max:1,providers:one.parallel.providers,models:one.parallel.models,running:[{executionUnitId:'a',provider:'p',model:'p/a'}]}
+  assert.equal(evaluateSchedulingResourceCapacity(globalCapacity,'b',{provider:'q',model:'q/b'}).ok,false)
+  const scopedCapacity={topology:many.execution.parallelism,global:many.parallel.max,providers:many.parallel.providers,models:many.parallel.models,running:[{executionUnitId:'a',provider:'p',model:'p/m'}]}
+  assert.equal(evaluateSchedulingResourceCapacity(scopedCapacity,'b',{provider:'p',model:'p/other'}).reason?.code,'provider-capacity')
+  assert.equal(evaluateSchedulingResourceCapacity(scopedCapacity,'c',{provider:'q',model:'p/m'}).reason?.code,'model-capacity')
 })
 
 test('BA03 routing constraints execute while legacy scoring/model-mode fields are diagnostic-only',()=>{

@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
-import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
+import { createConcurrencyPolicySource } from '../dist/runtime/scheduler/concurrency.js'
 import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { createTask, createWorker } from '../dist/runtime/worker/worker-runtime.js'
 import { addEvidence } from '../dist/runtime/evidence/evidence-runtime.js'
@@ -15,7 +15,7 @@ import { methodologyExitCheck } from '../dist/runtime/methodology/exit.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 
 function runtime(root=process.cwd()){
-  return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),root,root,()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
+  return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),root,root,()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
 }
 function assessedMission(id,objective,overrides={}){
   const store=new MissionStore(); const m=store.start(id,objective)

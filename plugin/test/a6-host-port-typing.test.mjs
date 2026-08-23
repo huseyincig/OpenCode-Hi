@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { makeHostPort,makeChildSessionPort } from './helpers/host-port.mjs'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
-import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
+import { createConcurrencyPolicySource } from '../dist/runtime/scheduler/concurrency.js'
 import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { DEFAULT_HI_CONFIG } from '../dist/config/defaults.js'
 import { dispatchContinuation } from '../dist/runtime/continuation/dispatcher.js'
@@ -67,7 +67,7 @@ test('A6 alternate host child-session port can execute a Hi task without OpenCod
     create:async()=>({child:{id:`alt-child-${++creates}`},fork:{requested:false,nativeAvailable:false,used:false}}),
     prompt:async()=>{prompts++},
   })
-  const runtime=new TaskRuntime(child,new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
+  const runtime=new TaskRuntime(child,new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
   const store=new MissionStore(),m=store.start('alt-parent','Implement a bounded change')
   store.applyInitialSemanticAssessment('alt-parent',{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:['x.ts'],intent_signals:[],suppressed_intent_signals:[]})
   const started=await runtime.start(m,{objective:'Implement x',role:'coder',scope:['x.ts']})

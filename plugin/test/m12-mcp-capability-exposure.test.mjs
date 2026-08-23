@@ -4,7 +4,7 @@ import {resolveMcpServerExposure,taskPromptToolOverrides} from '../dist/runtime/
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
-import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 import {evaluateIdle} from '../dist/runtime/continuation/evaluator.js'
@@ -12,7 +12,7 @@ import {evaluateIdle} from '../dist/runtime/continuation/evaluator.js'
 const HOST={mcp:{docs:{type:'local',command:['node','docs.mjs'],enabled:true},browser:{type:'remote',url:'http://127.0.0.1:9/mcp',enabled:true},off:{type:'local',command:['node','off.mjs'],enabled:false}}}
 function assessed(store,id,caps=['implementation']){const m=store.start(id,'mcp exposure fixture');store.applyInitialSemanticAssessment(id,{material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:caps,requested_external_actions:[],likely_verification:[],likely_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[]});return m}
 function client(prompts=[]){let n=0;return{session:{create:async()=>({data:{id:`child-${++n}`}}),promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async()=>({data:{}}),diff:async()=>({data:[]})}}}
-function runtime(c){return new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>structuredClone(HOST))}
+function runtime(c){return new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>structuredClone(HOST))}
 
 test('M12 MCP exposure disables every configured active server when no server is selected',()=>{const x=resolveMcpServerExposure(HOST,[]);assert.deepEqual(x.configured,['browser','docs']);assert.deepEqual(x.disabledPatterns,['browser_*','docs_*']);const tools=taskPromptToolOverrides(['read'],HOST,[]);assert.equal(tools['browser_*'],false);assert.equal(tools['docs_*'],false);assert.equal(tools.read,undefined);assert.ok(!Object.values(tools).includes(true))})
 
@@ -28,7 +28,7 @@ test('M12 MCP request fails before task creation without semantic capability',as
 
 
 test('M12 unavailable selected MCP server becomes one durable terminal capability state',async()=>{
-  const store=new MissionStore(),m=assessed(store,'m12-mcp-missing',['implementation','mcp']),rt=new TaskRuntime(opencodeChildPort(client([])),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({mcp:{}}))
+  const store=new MissionStore(),m=assessed(store,'m12-mcp-missing',['implementation','mcp']),rt=new TaskRuntime(opencodeChildPort(client([])),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({mcp:{}}))
   await assert.rejects(()=>rt.start(m,{objective:'lookup docs',role:'coder',category:'quick',scope:['src/a.ts'],mcpServers:['missing']}),/USER_ACTION_REQUIRED:.*MCP server/i)
   assert.equal(m.execution.tasks.length,0);assert.ok(m.execution.blockers.includes('capability-unavailable:mcp-server-missing'))
   const decision=evaluateIdle(m);assert.equal(decision.decision,'USER_ACTION_REQUIRED');assert.equal(decision.reason_code,'capability-unavailable');assert.equal(decision.prompt,undefined)

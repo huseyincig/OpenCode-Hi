@@ -18,11 +18,11 @@ function norm(value:string):string{return value.trim().replace(/\\/g,'/').replac
 function sameSurface(a:string,b:string):boolean{const x=norm(a),y=norm(b);return Boolean(x&&y&&(x===y||x.startsWith(`${y}/`)||y.startsWith(`${x}/`)))}
 function overlaps(a:string[],b:string[]):string[]{const out:string[]=[];for(const x of a)for(const y of b)if(sameSurface(x,y)){out.push(norm(x)===norm(y)?norm(x):`${norm(x)}~${norm(y)}`);break}return[...new Set(out)]}
 function reason(code:SchedulingReasonCode,detail?:string){return detail===undefined?{code}:{code,detail}}
-function resourceCapacity(snapshot:SchedulingSnapshot,unitID:string,binding:SchedulingResourceBinding|undefined):{ok:boolean;reason?:{code:SchedulingReasonCode;detail?:string}}{
-  const running=snapshot.capacity.running.filter(item=>item.executionUnitId!==unitID)
-  if(running.length>=snapshot.capacity.global)return{ok:false,reason:reason('global-capacity')}
-  if(binding?.provider){const cap=snapshot.capacity.providers[binding.provider]??snapshot.capacity.global;if(running.filter(x=>x.provider===binding.provider).length>=cap)return{ok:false,reason:reason('provider-capacity',binding.provider)}}
-  if(binding?.model){const cap=snapshot.capacity.models[binding.model]??snapshot.capacity.global;if(running.filter(x=>x.model===binding.model).length>=cap)return{ok:false,reason:reason('model-capacity',binding.model)}}
+export function evaluateSchedulingResourceCapacity(capacity:SchedulingSnapshot['capacity'],unitID:string,binding:SchedulingResourceBinding|undefined):{ok:boolean;reason?:{code:SchedulingReasonCode;detail?:string}}{
+  const running=capacity.running.filter(item=>item.executionUnitId!==unitID)
+  if(running.length>=capacity.global)return{ok:false,reason:reason('global-capacity')}
+  if(binding?.provider){const cap=capacity.providers[binding.provider]??capacity.global;if(running.filter(x=>x.provider===binding.provider).length>=cap)return{ok:false,reason:reason('provider-capacity',binding.provider)}}
+  if(binding?.model){const cap=capacity.models[binding.model]??capacity.global;if(running.filter(x=>x.model===binding.model).length>=cap)return{ok:false,reason:reason('model-capacity',binding.model)}}
   return{ok:true}
 }
 function conflictDecision(snapshot:SchedulingSnapshot,unit:ExecutionUnit,nodeByID:Map<string,WorkNode>):{blocking:string[];reasons:Array<{code:SchedulingReasonCode;detail?:string}>}{
@@ -79,7 +79,7 @@ export function createSchedulingPlanner(snapshot:SchedulingSnapshot):(capacity?:
       const fixed=staticDecisions.get(unit.id);if(fixed)return fixed
       const activeOthers=active.size-(active.has(unit.id)?1:0)
       if(activeOthers>=capacity.topology)return{executionUnitId:unit.id,disposition:'DEFERRED_CAPACITY' as const,reasons:[reason('topology-capacity',String(capacity.topology))],blockingUnitIds:[],blockingDependencyIds:[]}
-      const resource=resourceCapacity(working,unit.id,snapshot.resolvedResources[unit.id])
+      const resource=evaluateSchedulingResourceCapacity(working.capacity,unit.id,snapshot.resolvedResources[unit.id])
       if(!resource.ok)return{executionUnitId:unit.id,disposition:'DEFERRED_CAPACITY' as const,reasons:[resource.reason!],blockingUnitIds:[],blockingDependencyIds:[]}
       return{executionUnitId:unit.id,disposition:'RUNNABLE' as const,reasons:[reason('ready')],blockingUnitIds:[],blockingDependencyIds:[]}
     })

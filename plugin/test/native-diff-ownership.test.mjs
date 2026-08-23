@@ -6,7 +6,7 @@ import {join} from 'node:path'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {startAssessedMission,assessPluginMission} from './helpers/semantic.mjs'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
-import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {createTask,createWorker} from '../dist/runtime/worker/worker-runtime.js'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
@@ -15,7 +15,7 @@ import {opencodeChildPort} from './helpers/host-port.mjs'
 function harness(){
   let diffs=[]
   const client={session:{diff:async()=>({data:diffs})}}
-  const rt=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
+  const rt=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
   return {rt,setDiffs:value=>{diffs=value}}
 }
 function done(files){return {status:'DONE',summary:'done',changed_files:files,evidence:[],open_issues:[],needs_context:[]}}
@@ -112,7 +112,7 @@ test('cleanup cannot be accepted when native diff capability is unavailable',asy
   const s=new MissionStore(),m=startAssessedMission(s,'native-cleanup-3','opaque change',{likely_targets:['src/a.ts']})
   const t=createTask(m,{objective:'change a',role:'coder',category:'quick',scope:['src/a.ts'],requiredEvidence:[]})
   const w=createWorker(m,t,'host-default');w.status='busy';w.session_id='child-no-diff';w.native_diff_baseline={}
-  const rt=new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
+  const rt=new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
   rt.applyResult(m,w.id,{status:'DONE',summary:'first attempt',changed_files:['src/a.ts','docs/random.md'],evidence:[],open_issues:[],needs_context:[]})
   w.status='busy';t.status='running';w.started_at=Date.now()-5
   const reconciled=await rt.reconcileNativeResult(m,w.id,{status:'DONE',summary:'claimed cleanup',changed_files:['src/a.ts'],evidence:[],open_issues:[],needs_context:[]})
@@ -159,7 +159,7 @@ test('initial child handoff warns that pre-existing dirty paths are user-owned a
   let prompt='';const diff=[{file:'notes/user.md',before:'HEAD',after:'USER EDIT',additions:1,deletions:0}]
   const client={session:{create:async()=>({data:{id:'child-prompt-dirty'}}),promptAsync:async(args)=>{prompt=String(args?.body?.parts?.[0]?.text??args?.body?.text??JSON.stringify(args));return {data:{}}},abort:async()=>({data:{}}),diff:async()=>({data:diff})}}
   const s=new MissionStore(),m=startAssessedMission(s,'native-user-dirty-3','opaque change',{likely_targets:['src/a.ts']})
-  const rt=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
+  const rt=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
   await rt.start(m,{objective:'change a',role:'coder',category:'quick',scope:['src/a.ts']})
   assert.match(prompt,/pre-existing user dirty paths/i)
   assert.match(prompt,/notes\/user\.md/)

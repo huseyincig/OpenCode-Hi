@@ -5,11 +5,11 @@
   "section": 33,
   "status": "PASS",
   "source_binding": {
-    "tested_git_commit": "0c38b65d65444d68cfb295f7024bab13745052fa",
-    "tested_git_tree": "19994d8497fde6cbb64388757c4a4f27f7b34281"
+    "tested_git_commit": "8ba16fccfe502326a2491d3e78a574ac1a248824",
+    "tested_git_tree": "5408dffdd71b65708a7e1dff87e28cffa09e4292"
   },
   "inputs": {
-    "data/validation/replay-corpus.json": "8a391d6a71b6cb5fb96c0a76aad7443da5f2b94cb66cb5619938891ec477a0a7",
+    "data/validation/replay-corpus.json": "60ca528508cf1c3dc546139999bf9a4c6f0671d2e70104ee9a71c7a8df3cd0a9",
     "data/validation/decision-replay/semantic-routing.jsonl": "07d461dc8b088db319ae2bb1816a875914f2db4a3aec1f4d8e0a71c1f8fd1bf0"
   },
   "owner_hashes": {
@@ -18,7 +18,7 @@
     "plugin/src/runtime/routing/minimum-team.ts": "08f40b0bd9dc5a9f044b53bacccad68118dc61791f2645ca7bf910f7742a643e",
     "plugin/src/runtime/execution/topology-policy.ts": "7d5fdb628c9ef4ba96be5bf6de876f291e28775bd47e2ea5438a0c57680b4ffe",
     "plugin/src/runtime/verification/policy.ts": "a4b2e1c08156513c4f80c305b3ea9f9b39674d484950f96e93a522d448e04e7b",
-    "plugin/src/runtime/scheduler/concurrency.ts": "57ecaecc5619c81e07a973b5a96e307184f57fa25684f116b1acceb9ace0d6c8",
+    "plugin/src/runtime/scheduler/planner.ts": "1757eb404c8a8df7a25d7ad975c7c1b9efc1f2207108f7e5ebc8a15abc8372ba",
     "plugin/src/opencode/event-adapter.ts": "ca5ff8a07a7e94ca5fe484a0e3caca9f987d628d3396a806e7e35a56036dc6dd",
     "plugin/src/runtime/completion/evaluator.ts": "78af108c2539f62e3ebd3af1522939fe50fa6ede39409c4f3193268753be8489",
     "plugin/src/runtime/continuation/recovery.ts": "465b31872f8efaea16b1be46ca0f633e88f5b9c61ccb427c902502d1b5a484d7"
@@ -31,8 +31,8 @@
     "recovery": 8
   },
   "total_cases": 28,
-  "first_pass_digest": "5b0aa4c698995172e378802fdddc125b4622931f52b1abcae0c8f10d797ea86b",
-  "second_pass_digest": "5b0aa4c698995172e378802fdddc125b4622931f52b1abcae0c8f10d797ea86b",
+  "first_pass_digest": "714e1cea99720c5c8e442285a25ada6aaface4174fbc4686f05352c874d17cc2",
+  "second_pass_digest": "714e1cea99720c5c8e442285a25ada6aaface4174fbc4686f05352c874d17cc2",
   "nondeterministic_semantic_drift": false,
   "mismatches": [],
   "claim_boundary": "Machine-readable deterministic replay over canonical semantic/routing, scheduler, host-event normalization, completion, and recovery owners. Replay detects semantic output drift; it is not live-provider/T3 evidence."

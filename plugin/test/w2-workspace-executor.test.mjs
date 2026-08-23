@@ -9,7 +9,7 @@ import {WorkspaceRuntime} from '../dist/runtime/workspace/runtime.js'
 import {ChildExecutionCoordinator} from '../dist/runtime/task/child-execution-coordinator.js'
 import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
-import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {resolveHiConfig} from '../dist/config/resolver.js'
 import {PACKAGED_HI_AGENTS} from '../dist/generated/agent-config.js'
@@ -33,7 +33,7 @@ function client(created=[],prompts=[],aborted=[],workspacePath='/tmp/hi-w2-works
   create:async req=>{const id=`child-${++n}`,workspaceID=req.body.workspaceID;created.push(req);return{data:{id,...(workspaceID?{workspaceID,directory:mismatch?'/tmp/wrong-workspace':workspacePath}:{directory:process.cwd()})}}},
   promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async req=>{aborted.push(req);return{data:true}},diff:async()=>({data:[]})
 }}}
-function runtimeWithWorkspace(c,workspaceRuntime,root=process.cwd()){return new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),root,root,()=>resolveHiConfig({}),()=>[],()=>host,undefined,{},undefined,workspaceRuntime)}
+function runtimeWithWorkspace(c,workspaceRuntime,root=process.cwd()){return new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),root,root,()=>resolveHiConfig({}),()=>[],()=>host,undefined,{},undefined,workspaceRuntime)}
 
 test('W3 OpenCode experimental workspace flag semantics and adapter preflight fail closed',async()=>{
   assert.equal(openCodeExperimentalWorkspacesEnabled({}),false)
@@ -280,7 +280,7 @@ test('PROMPT B symlinked workspace escape is canonicalized and rejected when it 
 test('required isolation without a workspace runtime becomes one durable terminal capability state',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-w2-no-runtime-')),created=[]
   try{
-    const rt=new TaskRuntime(opencodeChildPort(client(created,[],[],root)),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}})),root,root,()=>resolveHiConfig({}),()=>[],()=>host),store=new MissionStore(root),m=store.start('w2-no-runtime','isolated implementation');assess(store,'w2-no-runtime')
+    const rt=new TaskRuntime(opencodeChildPort(client(created,[],[],root)),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),root,root,()=>resolveHiConfig({}),()=>[],()=>host),store=new MissionStore(root),m=store.start('w2-no-runtime','isolated implementation');assess(store,'w2-no-runtime')
     await assert.rejects(()=>rt.start(m,{objective:'isolated change',role:'coder',category:'quick',scope:['src/a.ts'],isolationRequired:true,isolationReason:'protect user dirty state'}),/USER_ACTION_REQUIRED: Hi WorkspaceExecutor is unavailable/)
     assert.equal(created.length,0);assert.ok(m.execution.blockers.includes('capability-unavailable:workspace-isolation-binding'))
     const decision=evaluateIdle(m);assert.equal(decision.decision,'USER_ACTION_REQUIRED');assert.equal(decision.reason_code,'capability-unavailable');assert.equal(decision.prompt,undefined)

@@ -12,7 +12,7 @@ import {methodologySkillCandidates,resolveSkillPlan} from '../plugin/dist/runtim
 import {ProjectMethodologyLearningStore} from '../plugin/dist/runtime/project-intelligence/methodology-learning.js'
 import {buildMissionRuntimeProjection,measureMissionRuntimeProjection} from '../plugin/dist/runtime/context/mission-runtime-projection.js'
 import {RuntimePersistence} from '../plugin/dist/runtime/state/persistence.js'
-import {ConcurrencyScheduler} from '../plugin/dist/runtime/scheduler/concurrency.js'
+import {evaluateSchedulingResourceCapacity} from '../plugin/dist/runtime/scheduler/planner.js'
 import {OpenCodePtyAdapter} from '../plugin/dist/opencode/open-code-pty-adapter.js'
 import {providerUsageObservation,contextBudgetEstimator} from '../plugin/dist/runtime/context/budget-estimator.js'
 
@@ -32,7 +32,7 @@ const projectionStore=new MissionStore('/tmp/hi-bench-projection'),projectionMis
 
 const stateRoot=mkdtempSync(join(tmpdir(),'hi-bench-state-'));let persistenceMs=0,stateBytes=0
 try{const store=new MissionStore(stateRoot);store.start('bench-persist','benchmark persistence');const p=new RuntimePersistence(stateRoot);t=now();for(let i=0;i<30;i++){p.save(store.all(),i===29);if(p.load().length!==1)throw new Error('persistence benchmark load drift')}persistenceMs=now()-t;stateBytes=statSync(p.path).size}finally{rmSync(stateRoot,{recursive:true,force:true})}
-const scheduler=new ConcurrencyScheduler(()=>({global:8,providers:{p:4},models:{'p/m':2}}));scheduler.acquire('held','p','p/m');t=now();let schedulingChecks=0;for(let i=0;i<100000;i++){scheduler.canStart(`w-${i}`,'p','p/m');schedulingChecks++}const schedulingMs=now()-t;scheduler.release('held')
+const schedulingCapacity={topology:8,global:8,providers:{p:4},models:{'p/m':2},running:[{executionUnitId:'held',provider:'p',model:'p/m'}]};t=now();let schedulingChecks=0;for(let i=0;i<100000;i++){evaluateSchedulingResourceCapacity(schedulingCapacity,`w-${i}`,{provider:'p',model:'p/m'});schedulingChecks++}const schedulingMs=now()-t
 const pty=new OpenCodePtyAdapter({},new URL('http://127.0.0.1:1'),ROOT,ROOT,()=>({})),processOutput={max_buffered_chars:pty.maxBufferedChars,max_read_chars:pty.maxReadChars,injected_output_chars:1024*1024,bounded_ratio:Number((pty.maxBufferedChars/(1024*1024)).toFixed(4))}
 global.gc?.();const heapBefore=process.memoryUsage().heapUsed
 for(let i=0;i<1000;i++){const store=new MissionStore(`/tmp/hi-bench-mem-${i}`),m=store.start(`mem-${i}`,'memory benchmark');buildMissionRuntimeProjection(m)}

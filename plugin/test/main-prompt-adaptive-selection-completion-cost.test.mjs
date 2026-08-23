@@ -7,7 +7,7 @@ import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {startAssessedMission} from './helpers/semantic.mjs'
 import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
-import {ConcurrencyScheduler} from '../dist/runtime/scheduler/concurrency.js'
+import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 
 const cfg=resolveHiConfig({routing:{roleModels:{},categoryModels:{}}})
@@ -47,7 +47,7 @@ test('TaskRuntime no longer emits model-scoring authority from mission feedback'
     promptAsync:async()=>({data:{}}),abort:async()=>({data:true}),diff:async()=>({data:[]}),
   }}
   const models=[{id:'p/code',provider:'p',tags:['coding']},{id:'p/generic',provider:'p',tags:['balanced']}]
-  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:3,providers:{p:3},models:{}})),process.cwd(),process.cwd(),()=>cfg,()=>models,()=>({}))
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:3,providers:{p:3},models:{}})),process.cwd(),process.cwd(),()=>cfg,()=>models,()=>({}))
   const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'runtime-no-score','implement a standard change',{task_kind:'implementation',required_capabilities:['implementation']})
   const out=await runtime.start(m,{objective:'implement one bounded file',role:'coder',category:'standard',scope:['src/new.ts']})
   assert.equal(out.model,'p/code')

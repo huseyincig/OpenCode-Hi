@@ -11,7 +11,7 @@
       "owner_sha256": "ada6a0ea214b68be4c067d0e24c6c43ea6b5bfc7384fa1332bb85989f941f7f0",
       "owner_anchor": "export interface HostPort",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
-      "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
+      "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",
       "proof_anchor": "generic HostPort expresses Hi host needs without importing OpenCode SDK types"
     },
     {
@@ -20,7 +20,7 @@
       "owner_sha256": "49826510d74c16cde0fa9cfb4379a80520264506346f59693485b24af0bc3bc2",
       "owner_anchor": "import type { HostEvent,HostPort } from '../host/port.js'",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
-      "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
+      "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",
       "proof_anchor": "semantic runtime core has no raw OpenCode SDK/client lifecycle dependency"
     },
     {
@@ -29,7 +29,7 @@
       "owner_sha256": "e78379775b986db21382d568f6e08221199a1b2f2b1156df803702069b78750f",
       "owner_anchor": "eventController.handle(normalizeOpenCodeEvent(input?.event??input))",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
-      "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
+      "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",
       "proof_anchor": "raw host event normalization occurs at OpenCode hook boundary"
     },
     {
@@ -38,7 +38,7 @@
       "owner_sha256": "970d898efa78774f4ebfe8692959243b2bca968c50ab5ef28970d407d5fbe16b",
       "owner_anchor": "Pick<HostPort,'continueSession'|'sessionStatus'>",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
-      "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
+      "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",
       "proof_anchor": "alternate host continuation port preserves Mission continuation semantics without OpenCode shapes"
     },
     {
@@ -47,7 +47,7 @@
       "owner_sha256": "669f3cdcfc0d2eb1a39686af77d8f84a8f37cfdc07bc6c831def91cee690c293",
       "owner_anchor": "constructor(private readonly host:ChildSessionPort",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
-      "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
+      "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",
       "proof_anchor": "alternate host child-session port can execute a Hi task without OpenCode client structure"
     },
     {
@@ -56,7 +56,7 @@
       "owner_sha256": "d3369337395345117f920fad9e597c93832b5d51e6079f7533c2e6d28bf8da8a",
       "owner_anchor": "export interface RuntimeServicePorts",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
-      "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
+      "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",
       "proof_anchor": "runtime composition accepts injected host-semantic executors instead of constructing OpenCode adapters"
     },
     {
@@ -83,7 +83,7 @@
       "owner_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
       "owner_anchor": "hostCapabilitySource:(()=>readonly HostCapabilityContract[])|readonly HostCapabilityContract[]=[]",
       "proof": "plugin/test/methodology-host-capability.test.mjs",
-      "proof_sha256": "f4bec6d8e7e07e0f2901e9c6059af9e1e9773cf2feec184f43726a77f75ac74a",
+      "proof_sha256": "ace5df77cf44c6a9b2ec9d87284e1385e9c532a7edd12dc322ae62b2adaf45c0",
       "proof_anchor": "browser and visual methodologies require canonical runtime browser-execution resource"
     },
     {
@@ -92,7 +92,7 @@
       "owner_sha256": "ada6a0ea214b68be4c067d0e24c6c43ea6b5bfc7384fa1332bb85989f941f7f0",
       "owner_anchor": "continueSession(sessionID:string,text:string,metadata:Record<string,unknown>):Promise<boolean>",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
-      "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
+      "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",
       "proof_anchor": "alternate host continuation port preserves Mission continuation semantics without OpenCode shapes"
     },
     {
@@ -101,7 +101,7 @@
       "owner_sha256": "ada6a0ea214b68be4c067d0e24c6c43ea6b5bfc7384fa1332bb85989f941f7f0",
       "owner_anchor": "export interface ChildSessionPort",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
-      "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
+      "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",
       "proof_anchor": "alternate host child-session port can execute a Hi task without OpenCode client structure"
     }
   ],

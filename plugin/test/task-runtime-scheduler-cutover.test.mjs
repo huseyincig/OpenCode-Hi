@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
-import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
+import { createConcurrencyPolicySource } from '../dist/runtime/scheduler/concurrency.js'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { startAssessedMission } from './helpers/semantic.mjs'
 import { resolveHiConfig } from '../dist/config/resolver.js'
@@ -14,7 +14,7 @@ function setup({prompt=async()=>{},abort=async()=>({data:true}),withAbort=true,o
   let seq=0
   const session={create:async()=>{onCreate?.();return{data:{id:`child-${++seq}`}}},promptAsync:prompt,diff:async()=>({data:[]})}
   if(withAbort)session.abort=abort
-  const scheduler=new ConcurrencyScheduler(()=>({global:2,providers:{p:2},models:{'p/code':2}}))
+  const scheduler=createConcurrencyPolicySource(()=>({global:2,providers:{p:2},models:{'p/code':2}}))
   const runtime=new TaskRuntime(opencodeChildPort({session}),new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced']}],()=>({}))
   const m=startAssessedMission(new MissionStore(),'cutover-parent','implement bounded change',{task_kind:'implementation',scope:'local',required_capabilities:['implementation'],likely_verification:[]})
   return{runtime,scheduler,m}

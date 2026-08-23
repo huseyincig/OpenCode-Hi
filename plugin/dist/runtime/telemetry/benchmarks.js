@@ -2,7 +2,7 @@ import { decideAdaptiveExecution } from '../execution/adaptive-policy.js';
 import { decideTopology } from '../execution/topology-policy.js';
 import { extractTypeScriptSemanticContext } from '../semantic/typescript-context.js';
 import { deriveEfficiencyMetrics } from './execution.js';
-import { ConcurrencyScheduler } from '../scheduler/concurrency.js';
+import { evaluateSchedulingResourceCapacity } from '../scheduler/planner.js';
 import { parallelSafety } from '../scheduler/parallel-safety.js';
 import { recoveryPlan } from '../continuation/recovery.js';
 import { recordRecoveryStrategy } from '../continuation/recovery-governor.js';
@@ -56,12 +56,11 @@ export function runDeterministicBenchmarks() {
 }
 const schedulerClaim = 'Deterministic in-process scheduler units/events; not wall-clock provider latency, provider billing, or external OpenCode host telemetry.';
 export function runSchedulerEconomicsBenchmarks() {
-    const scheduler = new ConcurrencyScheduler(() => ({ global: 3, providers: { alpha: 1, beta: 2 }, models: { 'alpha/m1': 1, 'beta/m1': 1 } }));
-    scheduler.acquire('w1', 'alpha', 'alpha/m1');
-    const providerBlocked = scheduler.canStart('w2', 'alpha', 'alpha/m2');
-    const modelBlocked = scheduler.canStart('w3', 'beta', 'alpha/m1');
-    scheduler.release('w1');
-    const admitted = scheduler.canStart('w2', 'alpha', 'alpha/m2');
+    const capacity = { topology: 3, global: 3, providers: { alpha: 1, beta: 2 }, models: { 'alpha/m1': 1, 'beta/m1': 1 }, running: [{ executionUnitId: 'w1', provider: 'alpha', model: 'alpha/m1' }] };
+    const providerBlocked = evaluateSchedulingResourceCapacity(capacity, 'w2', { provider: 'alpha', model: 'alpha/m2' });
+    const modelBlocked = evaluateSchedulingResourceCapacity(capacity, 'w3', { provider: 'beta', model: 'alpha/m1' });
+    const admitted = evaluateSchedulingResourceCapacity({ ...capacity, running: [] }, 'w2', { provider: 'alpha', model: 'alpha/m2' });
+    const reasonText = (x) => x.ok ? 'ready' : `${x.reason?.code ?? 'blocked'}${x.reason?.detail ? `:${x.reason.detail}` : ''}`;
     const recoveryMission = { continuation: { stagnation_count: 1 } };
     const same = recoveryPlan(recoveryMission);
     recoveryMission.continuation.stagnation_count = 2;
@@ -70,7 +69,7 @@ export function runSchedulerEconomicsBenchmarks() {
     const conflict = parallelSafety(existing, { scope: ['src/shared/file.ts'], dependencies: [], role: 'coder' });
     const independent = parallelSafety(existing, { scope: ['src/independent/file.ts'], dependencies: [], role: 'coder' });
     return [
-        { id: 'capacity-saturation', kind: 'DETERMINISTIC_SCHEDULER_SIMULATION', claimBoundary: schedulerClaim, metrics: { queueWaitUnits: Number(!providerBlocked.ok) + Number(!modelBlocked.ok), providerSaturationEvents: Number(providerBlocked.reason.startsWith('provider-capacity:')), modelSaturationEvents: Number(modelBlocked.reason.startsWith('model-capacity:')), taskDurationUnits: 4, retries: 0, contextChars: 0, sessionReuseSavedUnits: 0, writeConflictEvents: 0 }, evidence: [`provider=${providerBlocked.reason}`, `model=${modelBlocked.reason}`, `after-release=${admitted.reason}`] },
+        { id: 'capacity-saturation', kind: 'DETERMINISTIC_SCHEDULER_SIMULATION', claimBoundary: schedulerClaim, metrics: { queueWaitUnits: Number(!providerBlocked.ok) + Number(!modelBlocked.ok), providerSaturationEvents: Number(providerBlocked.reason?.code === 'provider-capacity'), modelSaturationEvents: Number(modelBlocked.reason?.code === 'model-capacity'), taskDurationUnits: 4, retries: 0, contextChars: 0, sessionReuseSavedUnits: 0, writeConflictEvents: 0 }, evidence: [`provider=${reasonText(providerBlocked)}`, `model=${reasonText(modelBlocked)}`, `after-release=${reasonText(admitted)}`] },
         { id: 'session-reuse', kind: 'DETERMINISTIC_SCHEDULER_SIMULATION', claimBoundary: schedulerClaim, metrics: { queueWaitUnits: 0, providerSaturationEvents: 0, modelSaturationEvents: 0, taskDurationUnits: 2, retries: 1, contextChars: 1200, sessionReuseSavedUnits: same.level === 1 && same.action === 'same-worker-resume' && escalated.level === 2 && escalated.action === 'same-worker-resume' ? 2 : 0, writeConflictEvents: 0 }, evidence: [`level1=${same.level}:${same.action}`, `level2=${escalated.level}:${escalated.action}`, 'reuse benefit is expressed as avoided fresh-session/model-handoff units, not token billing'] },
         { id: 'write-conflict', kind: 'DETERMINISTIC_SCHEDULER_SIMULATION', claimBoundary: schedulerClaim, metrics: { queueWaitUnits: conflict.safe ? 0 : 1, providerSaturationEvents: 0, modelSaturationEvents: 0, taskDurationUnits: 2, retries: 0, contextChars: 0, sessionReuseSavedUnits: 0, writeConflictEvents: conflict.safe ? 0 : 1 }, evidence: [`conflict=${conflict.reasons.join('|')}`, `independent-safe=${independent.safe}`] }
     ];

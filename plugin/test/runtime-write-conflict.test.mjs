@@ -4,7 +4,7 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import {startAssessedMission} from './helpers/semantic.mjs'
 import { TaskRuntime } from '../dist/runtime/task/task-runtime.js'
 import { BackgroundRegistry } from '../dist/runtime/background/registry.js'
-import { ConcurrencyScheduler } from '../dist/runtime/scheduler/concurrency.js'
+import { createConcurrencyPolicySource } from '../dist/runtime/scheduler/concurrency.js'
 import { resolveHiConfig } from '../dist/config/resolver.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 import {evaluateIdle} from '../dist/runtime/continuation/evaluator.js'
@@ -18,7 +18,7 @@ function harness(){
     abort:async req=>{calls.aborts.push(req);return{data:true}},
   }}
   const registry=new BackgroundRegistry()
-  const scheduler=new ConcurrencyScheduler(()=>({global:4}))
+  const scheduler=createConcurrencyPolicySource(()=>({global:4}))
   const runtime=new TaskRuntime(opencodeChildPort(client),registry,scheduler,process.cwd(),process.cwd(),()=>resolveHiConfig({parallel:{enabled:true,max:4}}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced']}],()=>({}))
   return {runtime,calls,registry,scheduler}
 }
@@ -72,7 +72,7 @@ test('successful worker result does not clear unrelated mission blockers',async(
 
 test('parallel write conflict with unavailable abort becomes terminal quiescence state',async()=>{
   let n=0;const client={session:{create:async()=>({data:{id:`child-no-abort-${++n}`}}),promptAsync:async()=>({data:{}})}}
-  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),new ConcurrencyScheduler(()=>({global:4})),process.cwd(),process.cwd(),()=>resolveHiConfig({parallel:{enabled:true,max:4}}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced']}],()=>({}))
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:4})),process.cwd(),process.cwd(),()=>resolveHiConfig({parallel:{enabled:true,max:4}}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced']}],()=>({}))
   const m=startAssessedMission(new MissionStore(),'runtime-conflict-no-abort','opaque parallel edits',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation']})
   const a=await runtime.start(m,{objective:'edit A',role:'coder',category:'standard',scope:['src/a.ts']}),b=await runtime.start(m,{objective:'edit B',role:'coder',category:'standard',scope:['src/b.ts']})
   const wa=m.execution.workers.find(w=>w.id===a.worker_id),wb=m.execution.workers.find(w=>w.id===b.worker_id);for(const w of [wa,wb]){w.selected_methodologies=[];w.loaded_methodologies=[];w.methodologies=[]}
