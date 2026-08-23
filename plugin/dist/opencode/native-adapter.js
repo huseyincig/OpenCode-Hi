@@ -23,28 +23,28 @@ export class NativeOpenCodeAdapter {
         const s = this.client?.session;
         switch (name) {
             case 'session-create': return Boolean(fn(s, 'create'));
-            case 'prompt-async': return Boolean(fn(s, 'promptAsync', 'prompt_async'));
+            case 'prompt-async': return Boolean(fn(s, 'promptAsync'));
             case 'prompt-sync': return Boolean(fn(s, 'prompt'));
             case 'abort': return Boolean(fn(s, 'abort'));
-            case 'status': return Boolean(fn(s, 'status', 'getStatus'));
-            case 'children': return Boolean(fn(s, 'children', 'child', 'listChildren'));
-            case 'todo': return Boolean(fn(s, 'todo', 'todos'));
+            case 'status': return Boolean(fn(s, 'status'));
+            case 'children': return Boolean(fn(s, 'children'));
+            case 'todo': return Boolean(fn(s, 'todo'));
             case 'diff': return Boolean(fn(s, 'diff'));
             case 'fork': return Boolean(fn(s, 'fork'));
-            case 'summarize': return Boolean(fn(s, 'summarize', 'summary'));
+            case 'summarize': return Boolean(fn(s, 'summarize'));
             case 'revert': return Boolean(fn(s, 'revert'));
             case 'unrevert': return Boolean(fn(s, 'unrevert'));
-            case 'provider-inventory': return Boolean(fn(this.client?.provider, 'list') || fn(this.client?.config, 'providers'));
+            case 'provider-inventory': return Boolean(fn(this.client?.provider, 'list'));
             case 'structured-log': return Boolean(fn(this.client?.app, 'log'));
         }
     }
-    async status(sessionID) { const call = fn(this.client?.session, 'status', 'getStatus'); return call ? dataOf(await call({ path: { id: sessionID } })) : undefined; }
-    async children(sessionID) { const call = fn(this.client?.session, 'children', 'child', 'listChildren'); const value = call ? dataOf(await call({ path: { id: sessionID } })) : []; return Array.isArray(value) ? value : (Array.isArray(value?.children) ? value.children : []); }
-    async todo(sessionID) { const call = fn(this.client?.session, 'todo', 'todos'); const value = call ? dataOf(await call({ path: { id: sessionID } })) : []; return Array.isArray(value) ? value : (Array.isArray(value?.todos) ? value.todos : []); }
+    async status(sessionID) { const call = fn(this.client?.session, 'status'); return call ? dataOf(await call({ path: { id: sessionID } })) : undefined; }
+    async children(sessionID) { const call = fn(this.client?.session, 'children'); const value = call ? dataOf(await call({ path: { id: sessionID } })) : []; return Array.isArray(value) ? value : (Array.isArray(value?.children) ? value.children : []); }
+    async todo(sessionID) { const call = fn(this.client?.session, 'todo'); const value = call ? dataOf(await call({ path: { id: sessionID } })) : []; return Array.isArray(value) ? value : (Array.isArray(value?.todos) ? value.todos : []); }
     async diff(sessionID) { const call = fn(this.client?.session, 'diff'); return call ? dataOf(await call({ path: { id: sessionID } })) : undefined; }
     async fork(sessionID, title) { const call = fn(this.client?.session, 'fork'); if (!call)
         throw new Error('OpenCode session.fork unavailable'); return dataOf(await call({ path: { id: sessionID }, body: title ? { title } : {} })); }
-    async summarize(sessionID) { const call = fn(this.client?.session, 'summarize', 'summary'); if (!call)
+    async summarize(sessionID) { const call = fn(this.client?.session, 'summarize'); if (!call)
         throw new Error('OpenCode session.summarize unavailable'); return dataOf(await call({ path: { id: sessionID } })); }
     async revert(sessionID, messageID) { const call = fn(this.client?.session, 'revert'); if (!call)
         throw new Error('OpenCode session.revert unavailable'); return dataOf(await call({ path: { id: sessionID }, body: messageID ? { messageID } : {} })); }
@@ -59,7 +59,7 @@ export class NativeOpenCodeAdapter {
             body.model = identity;
         if (variant)
             body.variant = variant;
-        const call = fn(this.client?.session, 'promptAsync', 'prompt_async') ?? fn(this.client?.session, 'prompt');
+        const call = fn(this.client?.session, 'promptAsync') ?? fn(this.client?.session, 'prompt');
         if (!call)
             throw new Error('OpenCode session prompt API unavailable');
         await call({ path: { id: sessionID }, body });

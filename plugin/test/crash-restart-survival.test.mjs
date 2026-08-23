@@ -41,7 +41,7 @@ function restartHarness(m,{status='unknown',assistant}={}){
   const client={session:{
     status:async()=>({data:statusMap}),
     abort:async req=>{calls.aborts.push(req);return{data:true}},
-    prompt_async:async req=>{calls.prompts.push(req);return{data:{}}},
+    promptAsync:async req=>{calls.prompts.push(req);return{data:{}}},
     diff:async()=>({data:[]}),
   }}
   const registry=new BackgroundRegistry();for(const w of m.execution.workers)registry.set(w)

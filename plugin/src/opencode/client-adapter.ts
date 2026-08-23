@@ -27,7 +27,6 @@ export async function sendPromptAsync(client:OpenCodeClient,sessionID:string,tex
   const edge=client as any
   const body:any={parts:[{type:'text',text}]};if(agent)body.agent=agent;const identity=modelIdentity(model);if(identity)body.model=identity;if(variant)body.variant=variant;if(tools&&Object.keys(tools).length)body.tools=tools
   if(typeof edge?.session?.promptAsync==='function'){await edge.session.promptAsync({path:{id:sessionID},body});return}
-  if(typeof edge?.session?.prompt_async==='function'){await edge.session.prompt_async({path:{id:sessionID},body});return}
   if(typeof edge?.session?.prompt==='function'){await edge.session.prompt({path:{id:sessionID},body});return}
   throw new Error('OpenCode session prompt API unavailable')
 }
@@ -35,13 +34,12 @@ export async function sendPromptAsync(client:OpenCodeClient,sessionID:string,tex
 export async function listMessages(client:OpenCodeClient,sessionID:string,limit=20):Promise<any[]>{
   const edge=client as any
   if(typeof edge?.session?.messages==='function') return dataOf(await edge.session.messages({path:{id:sessionID},query:{limit}})) ?? []
-  if(typeof edge?.session?.message?.list==='function') return dataOf(await edge.session.message.list({path:{id:sessionID},query:{limit}})) ?? []
   return []
 }
 
 export async function sendSyntheticContinuation(client:OpenCodeClient,sessionID:string,text:string,metadata:Record<string,unknown>):Promise<boolean>{
   const edge=client as any
-  const fn=typeof edge?.session?.promptAsync==='function'?edge.session.promptAsync.bind(edge.session):typeof edge?.session?.prompt_async==='function'?edge.session.prompt_async.bind(edge.session):typeof edge?.session?.prompt==='function'?edge.session.prompt.bind(edge.session):undefined
+  const fn=typeof edge?.session?.promptAsync==='function'?edge.session.promptAsync.bind(edge.session):typeof edge?.session?.prompt==='function'?edge.session.prompt.bind(edge.session):undefined
   if(!fn)return false
   await fn({path:{id:sessionID},body:{parts:[{type:'text',text,synthetic:true,metadata}],noReply:false}})
   return true
@@ -106,7 +104,7 @@ export async function abortSession(client:OpenCodeClient,sessionID:string,endpoi
   }catch{}
   return await reconcileClientAbort(edge,sessionID)?'client-reconciled':'unavailable'
 }
-export async function listProviders(client:OpenCodeClient):Promise<unknown>{const edge=client as any;if(typeof edge?.provider?.list==='function')return dataOf(await edge.provider.list());if(typeof edge?.config?.providers==='function')return dataOf(await edge.config.providers());return undefined}
+export async function listProviders(client:OpenCodeClient):Promise<unknown>{const edge=client as any;if(typeof edge?.provider?.list==='function')return dataOf(await edge.provider.list());return undefined}
 export async function listAvailableModels(endpoint:OpenCodeLifecycleEndpoint={}):Promise<unknown[]|undefined>{
   if(!endpoint.serverUrl)return undefined
   try{

@@ -50,10 +50,6 @@ export async function sendPromptAsync(client, sessionID, text, agent, model, var
         await edge.session.promptAsync({ path: { id: sessionID }, body });
         return;
     }
-    if (typeof edge?.session?.prompt_async === 'function') {
-        await edge.session.prompt_async({ path: { id: sessionID }, body });
-        return;
-    }
     if (typeof edge?.session?.prompt === 'function') {
         await edge.session.prompt({ path: { id: sessionID }, body });
         return;
@@ -64,13 +60,11 @@ export async function listMessages(client, sessionID, limit = 20) {
     const edge = client;
     if (typeof edge?.session?.messages === 'function')
         return dataOf(await edge.session.messages({ path: { id: sessionID }, query: { limit } })) ?? [];
-    if (typeof edge?.session?.message?.list === 'function')
-        return dataOf(await edge.session.message.list({ path: { id: sessionID }, query: { limit } })) ?? [];
     return [];
 }
 export async function sendSyntheticContinuation(client, sessionID, text, metadata) {
     const edge = client;
-    const fn = typeof edge?.session?.promptAsync === 'function' ? edge.session.promptAsync.bind(edge.session) : typeof edge?.session?.prompt_async === 'function' ? edge.session.prompt_async.bind(edge.session) : typeof edge?.session?.prompt === 'function' ? edge.session.prompt.bind(edge.session) : undefined;
+    const fn = typeof edge?.session?.promptAsync === 'function' ? edge.session.promptAsync.bind(edge.session) : typeof edge?.session?.prompt === 'function' ? edge.session.prompt.bind(edge.session) : undefined;
     if (!fn)
         return false;
     await fn({ path: { id: sessionID }, body: { parts: [{ type: 'text', text, synthetic: true, metadata }], noReply: false } });
@@ -176,8 +170,7 @@ export async function abortSession(client, sessionID, endpoint = {}) {
     return await reconcileClientAbort(edge, sessionID) ? 'client-reconciled' : 'unavailable';
 }
 export async function listProviders(client) { const edge = client; if (typeof edge?.provider?.list === 'function')
-    return dataOf(await edge.provider.list()); if (typeof edge?.config?.providers === 'function')
-    return dataOf(await edge.config.providers()); return undefined; }
+    return dataOf(await edge.provider.list()); return undefined; }
 export async function listAvailableModels(endpoint = {}) {
     if (!endpoint.serverUrl)
         return undefined;

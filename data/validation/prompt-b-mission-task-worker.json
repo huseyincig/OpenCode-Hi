@@ -100,7 +100,7 @@
       "owner": "plugin/src/runtime/task/task-runtime.ts",
       "owner_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
       "proof": "plugin/test/crash-restart-survival.test.mjs",
-      "proof_sha256": "fd10117c2ac47bb84468a5240cd2a111e7e2dd30e163fe3bd45c8a1775200053",
+      "proof_sha256": "e44338e372cea4e42d78fd8fcbff284f6b40d9b83afd34ca975f16a7b2b5e6f5",
       "owner_anchor": "reconcileRestartBeforeResume",
       "proof_anchor": "restart opens attempt 2 only after an idle FIX_REQUIRED result is ingested from attempt 1"
     },
@@ -127,7 +127,7 @@
       "owner": "plugin/src/runtime/state/persistence.ts",
       "owner_sha256": "f611defb9fe0f1a0d9370f789f524bf59de2c1f770e52572f9f8161b3c012ab2",
       "proof": "plugin/test/crash-restart-survival.test.mjs",
-      "proof_sha256": "fd10117c2ac47bb84468a5240cd2a111e7e2dd30e163fe3bd45c8a1775200053",
+      "proof_sha256": "e44338e372cea4e42d78fd8fcbff284f6b40d9b83afd34ca975f16a7b2b5e6f5",
       "owner_anchor": "RUNTIME_STATE_SCHEMA = 10",
       "proof_anchor": "unclean restart quarantines in-flight child, resets ephemeral permission wait, and invalidates evidence"
     },
