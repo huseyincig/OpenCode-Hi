@@ -1,4 +1,4 @@
-import { recoveryStrategyEligibility } from './recovery-governor.js';
+import { recoveryModelHazard, recoveryStrategyEligibility } from './recovery-governor.js';
 function planForLevel(level) {
     if (level === 0)
         return { level: 0, action: 'continue', prompt: 'Continue the next open obligation from current state.' };
@@ -20,6 +20,11 @@ export function recoveryPlan(m) {
     if (n <= 0)
         return planForLevel(0);
     const start = Math.min(6, Math.max(1, n));
+    if (start >= 3) {
+        const hazard = recoveryModelHazard(m), escalation = { level: 3, action: 'model-escalation', prompt: `Same-model recovery is exhausted without semantic gain. Switch this SAME task to one fresh recovery-only model candidate (${hazard.recovery_candidates.join(', ')}) while preserving current files and canonical evidence; do not restart top-level planning.` };
+        if (hazard.open && recoveryStrategyEligibility(m, escalation).allowed)
+            return escalation;
+    }
     for (let level = start; level <= 5; level++) {
         const plan = planForLevel(level);
         if (recoveryStrategyEligibility(m, plan).allowed)

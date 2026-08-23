@@ -10,7 +10,7 @@ import { appendLedger } from '../ledger/ledger.js';
 import { runtimeSignal } from '../events/event-sink.js';
 import { syncMissionGates } from '../gates/gates.js';
 import { taskRuntimeAdmittedModel, reserveTaskRuntimeDispatch, bindTaskRuntimeHost, beginTaskRuntimeSettlement, releaseTaskRuntimeReservation } from '../scheduler/task-runtime-adapter.js';
-import { recordRecoveryStrategy } from '../continuation/recovery-governor.js';
+import { recordRecoveryStrategy, recoveryModelHazard } from '../continuation/recovery-governor.js';
 function providerOf(model) { return model && model !== 'host-default' && model.includes('/') ? model.slice(0, model.indexOf('/')) : undefined; }
 export class TaskRecoveryCoordinator {
     scheduler;
@@ -37,8 +37,8 @@ export class TaskRecoveryCoordinator {
         this.drainQueueCallback = drainQueueCallback;
         this.workspaceBinding = workspaceBinding;
     }
-    async recoverStagnation(m, level) {
-        if (![1, 2].includes(level) || m.identity.status !== 'active' || m.continuation.user_interrupted)
+    async recoverStagnation(m, level, action = 'same-worker-resume') {
+        if ((action === 'same-worker-resume' && ![1, 2].includes(level)) || (action === 'model-escalation' && level !== 3) || m.identity.status !== 'active' || m.continuation.user_interrupted)
             return false;
         const worker = [...m.execution.workers].reverse().find(w => Boolean(w.session_id) && !['failed', 'cancelled', 'busy', 'starting', 'queued'].includes(w.status));
         if (!worker?.session_id)
@@ -55,9 +55,97 @@ export class TaskRecoveryCoordinator {
             appendLedger(m, 'worker.recovery.workspace-blocked', { task_id: task.id, worker_id: worker.id, payload: { error: String(error) } });
             return false;
         }
-        const model = worker.model, variant = worker.model_variant, action = 'same-worker-resume';
+        const model = worker.model, variant = worker.model_variant;
         if (!model)
             return false;
+        if (action === 'model-escalation') {
+            const hazard = recoveryModelHazard(m);
+            if (!hazard.open || hazard.worker_id !== worker.id || hazard.model !== model) {
+                appendLedger(m, 'worker.behavioral-model-escalation.rejected', { task_id: task.id, worker_id: worker.id, payload: { reason: hazard.reason, attempts: hazard.attempts } });
+                return false;
+            }
+            const candidates = hazard.recovery_candidates;
+            const next = candidates.find(id => runtimeModelCandidateStatus(id, this.getModels(), this.getConfig(), this.getHostConfig(), worker.role).ok);
+            if (!next) {
+                appendLedger(m, 'worker.behavioral-model-escalation.unavailable', { task_id: task.id, worker_id: worker.id, payload: { from: model, candidates } });
+                return false;
+            }
+            const previousSession = worker.session_id, previousFork = worker.forked_from_session_id, previousStatus = worker.status, previousTaskStatus = task.status, nextVariant = task.execution_profile?.fallback_variants?.[next];
+            worker.status = 'ready';
+            task.status = 'waiting';
+            const reservation = reserveTaskRuntimeDispatch(m, worker, next, this.scheduler);
+            if (!reservation.accepted) {
+                worker.status = previousStatus;
+                task.status = previousTaskStatus;
+                return false;
+            }
+            if (!this.scheduler.acquire(worker.id, providerOf(next), next === 'host-default' ? undefined : next)) {
+                releaseTaskRuntimeReservation(m, worker.id);
+                worker.status = previousStatus;
+                task.status = previousTaskStatus;
+                return false;
+            }
+            try {
+                this.child.recordModelProjection(worker, next, nextVariant);
+                const child = await this.child.create(m.identity.session_id, `Hi · ${worker.role} · behavioral recovery · ${task.objective.slice(0, 40)}`, worker.role, next === 'host-default' ? undefined : next, nextVariant, this.workspaceBinding?.(m, task.id));
+                if (!child?.id)
+                    throw new Error('Behavioral recovery child session id missing');
+                const recoverySessionID = String(child.id);
+                worker.session_id = recoverySessionID;
+                worker.forked_from_session_id = previousSession;
+                const bound = bindTaskRuntimeHost(m, worker.id, recoverySessionID);
+                if (!bound.accepted)
+                    throw new Error(`Scheduler host binding failed during behavioral recovery: ${bound.reason}`);
+                worker.loaded_methodologies = [];
+                worker.model = next;
+                worker.model_variant = nextVariant;
+                worker.fallback_history = [...(worker.fallback_history ?? []), { from: model, to: next, variant: nextVariant, reason: 'recovery-only model escalation after two same-model corrections without semantic gain', phase: 'runtime', at: Date.now() }];
+                worker.status = 'busy';
+                worker.generation_at_spawn = m.continuation.generation;
+                worker.parent_mission_id = m.identity.mission_id;
+                worker.started_at = Date.now();
+                task.status = 'running';
+                this.registry.set(worker);
+                recordPreexistingUserBaseline(m, await this.child.captureNativeDiff(worker, 'baseline'));
+                const exitRequirements = worker.selected_methodologies.flatMap(name => { const item = methodologyCatalog(this.projectRoot).find(x => x.name === name); return item ? [`${name}: ${item.exitRequirements.join(', ')}`] : []; });
+                const prompt = clipText([ownershipContract('child', worker.selected_methodologies), `Hi behavioral recovery for existing task ${task.id}.`, `The prior model ${model} received two bounded corrective attempts without semantic progress.`, `Recovery model: ${next}. This is recovery-only and does not change user routing preferences.`, `OBJECTIVE: ${task.objective}`, `SCOPE: ${task.scope.join(', ') || 'bounded by objective'}`, `CURRENT USER CONSTRAINTS: ${(task.constraints ?? []).join(' | ') || 'none'}.`, `OBSERVED CHANGED FILES SO FAR: ${m.vcs.changed_files.slice(-30).join(', ') || 'none'}`, `METHODOLOGY EXIT REQUIREMENTS: ${exitRequirements.join(' | ') || 'none'}`, worker.selected_methodologies.length ? 'Fresh context: reload every still-selected methodology through the native skill tool before applying it.' : 'No methodology is selected for this recovery.', 'Independently inspect the minimum current repository/evidence state needed to continue the SAME task. Do not trust or repeat the prior model strategy, do not restart top-level planning, and return the normal structured WorkerResult.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars);
+                beginWorkerAttempt(task, worker);
+                await this.child.sendProviderPrompt(recoverySessionID, prompt, worker.role, next === 'host-default' ? undefined : next, nextVariant, taskPromptToolOverrides(task.execution_profile?.tools ?? [], this.getHostConfig(), task.execution_profile?.mcp_servers ?? []));
+                recordRecoveryStrategy(m, { level: 3, action: 'model-escalation' }, 'started', Date.now(), { task_id: task.id, worker_id: worker.id, model, failure_signature: worker.last_runtime_failure_kind });
+                appendLedger(m, 'worker.behavioral-model-escalation', { task_id: task.id, worker_id: worker.id, payload: { level, action, from: model, to: next, from_session: previousSession, to_session: recoverySessionID, generation: m.continuation.generation, reason: 'same-model-bounded-corrections-exhausted' } });
+                void this.events?.(runtimeSignal('worker.recovered', m.identity.mission_id, { task_id: task.id, worker_id: worker.id, payload: { level, action, from: model, to: next } }));
+                return true;
+            }
+            catch (error) {
+                let stopped = true;
+                if (worker.session_id && worker.session_id !== previousSession)
+                    try {
+                        stopped = await this.child.abortNativeSession(m, worker.session_id, 'behavioral-model-escalation-failed', worker.id, task.id);
+                    }
+                    catch {
+                        stopped = false;
+                    }
+                if (stopped) {
+                    this.scheduler.release(worker.id);
+                    releaseTaskRuntimeReservation(m, worker.id);
+                    worker.session_id = previousSession;
+                    worker.forked_from_session_id = previousFork;
+                    worker.model = model;
+                    worker.model_variant = variant;
+                    worker.status = previousStatus;
+                    task.status = previousTaskStatus;
+                }
+                else {
+                    const marker = `behavioral-recovery-abort-unavailable:${task.id}:${worker.id}`;
+                    m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+                    worker.status = 'busy';
+                    task.status = 'running';
+                }
+                this.registry.set(worker);
+                appendLedger(m, 'worker.behavioral-model-escalation.failed', { task_id: task.id, worker_id: worker.id, payload: { level, action, from: model, to: next, error: String(error), host_stopped: stopped } });
+                return false;
+            }
+        }
         const previousWorkerStatus = worker.status, previousTaskStatus = task.status;
         worker.status = 'ready';
         task.status = 'waiting';
@@ -101,7 +189,7 @@ export class TaskRecoveryCoordinator {
             beginWorkerAttempt(task, worker);
             this.child.recordModelProjection(worker, model, variant);
             await this.child.sendProviderPrompt(worker.session_id, clipText(`${instruction}\nReturn the normal structured WorkerResult.`, DEFAULT_CONTEXT_BUDGET.max_handoff_chars), worker.role, model === 'host-default' ? undefined : model, variant, taskPromptToolOverrides(task.execution_profile?.tools ?? [], this.getHostConfig(), task.execution_profile?.mcp_servers ?? []));
-            recordRecoveryStrategy(m, { level: level, action }, 'started');
+            recordRecoveryStrategy(m, { level: level, action }, 'started', Date.now(), { task_id: task.id, worker_id: worker.id, model, failure_signature: worker.last_runtime_failure_kind });
             appendLedger(m, 'worker.stagnation-recovery', { task_id: task.id, worker_id: worker.id, payload: { level, action, from: previous, to: model, variant, generation: m.continuation.generation } });
             void this.events?.(runtimeSignal('worker.recovered', m.identity.mission_id, { task_id: task.id, worker_id: worker.id, payload: { level, action, from: previous, to: model, variant } }));
             return true;

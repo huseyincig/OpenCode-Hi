@@ -8,12 +8,13 @@ import {startAssessedMission} from './helpers/semantic.mjs'
 import {DEFAULT_HI_CONFIG} from '../dist/config/defaults.js'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 import {evaluateIdle} from '../dist/runtime/continuation/evaluator.js'
+import {recordRecoveryStrategy} from '../dist/runtime/continuation/recovery-governor.js'
 
-function setup(promptImpl=async()=>{},withAbort=true){
+function setup(promptImpl=async()=>{},withAbort=true,models=[]){
   const calls=[],aborts=[]
   let seq=0;const session={promptAsync:async arg=>{calls.push(arg);return promptImpl(arg)},create:async()=>({data:{id:`recovery-${++seq}`}}),diff:async()=>({data:[]})};if(withAbort)session.abort=async req=>{aborts.push(req);return{data:true}};const client={session}
   const scheduler=new ConcurrencyScheduler(()=>({global:4,providers:{},models:{}}))
-  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>models,()=>({}))
   const store=new MissionStore(process.cwd())
   const m=startAssessedMission(store,'parent','opaque provider task')
   m.execution.tasks.push({id:'t1',mission_id:m.identity.mission_id,objective:'fix it',status:'running',role:'coder',category:'standard',scope:['src/a.ts'],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],execution_profile:{role:'coder',category:'standard',model:'p/primary',fallback_models:['p/fallback1','p/fallback2'],fallback_variants:{'p/fallback1':'high','p/fallback2':'medium'},methodologies:[],permission_profile:{skill_tool_enabled:true,skill_permissions:{},external_effects:'parent-only',recursive_task:'deny'},verification_policy:m.execution.verification_policy,max_context_chars:1000,max_handoff_chars:1000,max_result_chars:1000,max_artifacts:4},worker_id:'w1',external_action_requirements:[],created_at:Date.now(),updated_at:Date.now()})
@@ -132,4 +133,75 @@ test('uncertain fallback dispatch preserves active ownership',async()=>{
   assert.equal(scheduler.running(),1)
   assert.equal(m.execution.scheduler.reservations.length,1)
   assert.equal(m.execution.ledger.some(x=>x.type==='worker.failed'),false)
+})
+
+
+test('behavioral hazard opens one fresh recovery-only model after two same-model corrections without semantic gain',async()=>{
+  const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding','balanced']}]
+  const {runtime,scheduler,m,calls,aborts}=setup(async()=>{},true,models)
+  const worker=m.execution.workers[0],task=m.execution.tasks[0]
+  scheduler.release(worker.id);worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/recovery'];worker.fallbacks=[]
+  recordRecoveryStrategy(m,{level:1,action:'same-worker-resume'},'started',10,{task_id:task.id,worker_id:worker.id,model:'p/primary'})
+  recordRecoveryStrategy(m,{level:2,action:'same-worker-resume'},'started',11,{task_id:task.id,worker_id:worker.id,model:'p/primary'})
+  m.continuation.stagnation_count=3
+  const recovered=await runtime.recoverStagnation(m,3,'model-escalation')
+  assert.equal(recovered,true);assert.equal(worker.model,'p/recovery');assert.equal(worker.session_id,'recovery-1');assert.equal(worker.forked_from_session_id,'child1')
+  assert.equal(calls.length,1);assert.deepEqual(calls[0].body.model,{providerID:'p',modelID:'recovery'});assert.equal(aborts.length,0,'idle prior child is not destructively replayed or aborted')
+  assert.equal(worker.fallbacks.length,0,'recovery-only candidate must not become a normal provider fallback')
+  assert.match(worker.fallback_history.at(-1).reason,/two same-model corrections without semantic gain/)
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.behavioral-model-escalation'&&e.payload?.from==='p/primary'&&e.payload?.to==='p/recovery'))
+})
+
+test('behavioral model escalation is fail-closed before the hazard threshold',async()=>{
+  const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding']}]
+  const {runtime,scheduler,m,calls}=setup(async()=>{},true,models)
+  const worker=m.execution.workers[0],task=m.execution.tasks[0]
+  scheduler.release(worker.id);worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/recovery'];worker.fallbacks=[]
+  recordRecoveryStrategy(m,{level:1,action:'same-worker-resume'},'started',10,{task_id:task.id,worker_id:worker.id,model:'p/primary'})
+  assert.equal(await runtime.recoverStagnation(m,3,'model-escalation'),false);assert.equal(worker.model,'p/primary');assert.equal(calls.length,0)
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.behavioral-model-escalation.rejected'))
+})
+
+
+test('unparseable terminal assistant output stays fail-closed but becomes resumable FIX_REQUIRED for bounded behavioral recovery',async()=>{
+  const {runtime,scheduler,m}=setup()
+  const worker=m.execution.workers[0],task=m.execution.tasks[0]
+  worker.projected_model='p/primary'
+  const settled=await runtime.settleHostIdleAssistantResult(m,worker,{text:'I finished the task successfully but forgot the WorkerResult envelope.',model:{model:'p/primary'}})
+  assert.equal(settled.applied,true);assert.equal(settled.result?.status,'FIX_REQUIRED')
+  assert.equal(task.status,'waiting');assert.equal(worker.status,'ready')
+  assert.ok(task.result.open_issues.includes('Worker did not return parseable structured result'))
+  assert.ok(task.result.open_issues.includes('worker-result-contract-invalid'))
+  assert.ok(task.result.needs_context.some(x=>x.startsWith('worker-result-contract-retry:')))
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.result-contract-retryable'&&e.worker_id===worker.id))
+  assert.equal(scheduler.running(),0,'terminal attempt releases execution capacity before same-session corrective resume')
+})
+
+test('normal task_id corrective resumes feed the behavioral hazard circuit and third no-gain resume switches to a fresh recovery-only model',async()=>{
+  const models=[
+    {id:'p/primary',provider:'p',writeCapable:true,tags:['coding','balanced']},
+    {id:'p/recovery',provider:'p',writeCapable:true,tags:['coding','balanced']},
+  ]
+  const {runtime,scheduler,m,calls}=setup(async()=>{},true,models)
+  const worker=m.execution.workers[0],task=m.execution.tasks[0]
+  scheduler.release(worker.id);worker.status='ready';task.status='waiting';worker.fallbacks=[];worker.recovery_candidates=['p/recovery'];worker.requested_model=undefined
+  task.result={status:'FIX_REQUIRED',summary:'contract correction required',changed_files:[],evidence:[],open_issues:['worker-result-contract-invalid'],needs_context:['return structured WorkerResult']}
+
+  const first=await runtime.resume(m,task.id)
+  assert.equal(first.session_id,'child1');assert.equal(first.model,'p/primary');assert.equal(calls.length,1)
+  let history=m.continuation.recovery_history?.filter(x=>x.task_id===task.id&&x.worker_id===worker.id&&x.action==='same-worker-resume')??[]
+  assert.deepEqual(history.map(x=>x.level),[1])
+  runtime.applyResult(m,worker.id,{status:'FIX_REQUIRED',summary:'still invalid',changed_files:[],evidence:[],open_issues:['worker-result-contract-invalid'],needs_context:['return structured WorkerResult']})
+
+  const second=await runtime.resume(m,task.id)
+  assert.equal(second.session_id,'child1');assert.equal(second.model,'p/primary');assert.equal(calls.length,2)
+  history=m.continuation.recovery_history?.filter(x=>x.task_id===task.id&&x.worker_id===worker.id&&x.action==='same-worker-resume')??[]
+  assert.deepEqual(history.map(x=>x.level),[1,2]);assert.equal(history[0].progress_signature,history[1].progress_signature)
+  assert.match(JSON.stringify(calls[1]),/materially different corrective hypothesis or action/i)
+  runtime.applyResult(m,worker.id,{status:'FIX_REQUIRED',summary:'still invalid after materially different correction',changed_files:[],evidence:[],open_issues:['worker-result-contract-invalid'],needs_context:['return structured WorkerResult']})
+
+  const third=await runtime.resume(m,task.id)
+  assert.equal(third.worker_id,worker.id);assert.equal(third.model,'p/recovery');assert.equal(third.session_id,'recovery-1');assert.equal(calls.length,3)
+  assert.deepEqual(worker.fallbacks,[]);assert.equal(worker.forked_from_session_id,'child1')
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.behavioral-model-escalation'&&e.payload?.from==='p/primary'&&e.payload?.to==='p/recovery'))
 })

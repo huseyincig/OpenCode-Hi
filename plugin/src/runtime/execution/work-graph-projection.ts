@@ -40,6 +40,7 @@ function projectResources(task:MissionTask,worker:WorkerState|undefined):Executi
     ...(worker?.effective_model_variant_verified===undefined?{}:{effectiveModelVariantVerified:worker.effective_model_variant_verified}),
     ...(worker?.effective_model_source?{effectiveModelSource:worker.effective_model_source}:{}),
     fallbacks:[...(worker?.fallbacks??profile?.fallback_models??[])],
+    recoveryCandidates:[...(worker?.recovery_candidates??[])],
     modelSelectionReason:[...(worker?.model_selection_reason??[])],
   }
 }

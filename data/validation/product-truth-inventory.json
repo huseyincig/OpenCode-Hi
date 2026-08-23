@@ -27,7 +27,7 @@
       "area": "task-runtime",
       "canonical_owner": "TaskRuntime",
       "owner_path": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "9bece4d1cf209e71da5565d667ec5f0c5eedaba41e7a3a5738788730100bf2d5",
+      "owner_sha256": "f8bcc5ab05b45ca973b9acc17c020c0437a3286b8fa78201e8b99a594c2e3539",
       "producer_or_contract_paths": [
         "plugin/src/runtime/task/contracts.ts"
       ],
@@ -101,7 +101,7 @@
       "area": "routing-models",
       "canonical_owner": "Hi routing/model resolver",
       "owner_path": "plugin/src/runtime/routing/model-resolver.ts",
-      "owner_sha256": "603852cf8e818a5807d8aa5bc339f640755ee19f6fafabe1b7de992134eb2832",
+      "owner_sha256": "e72a011b7b13ff74afd527de3a6c8cc9fd96a0dc5772c4668c626ad6f16dbff8",
       "producer_or_contract_paths": [
         "plugin/src/runtime/routing/execution-profile.ts",
         "plugin/src/runtime/routing/minimum-team.ts",

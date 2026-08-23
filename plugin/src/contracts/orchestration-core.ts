@@ -59,6 +59,7 @@ export interface ExecutionResourceSelection {
   effectiveModelVariantVerified?:boolean
   effectiveModelSource?:string
   fallbacks:string[]
+  recoveryCandidates:string[]
   modelSelectionReason:string[]
 }
 

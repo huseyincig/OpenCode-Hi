@@ -6,7 +6,7 @@ import type { ModelCapabilityProfile } from '../../contracts/model.js'
 
 export type AvailableModel=ModelCapabilityProfile
 export interface ModelFallbackReason{model:string;variant?:string;reason:string}
-export interface ModelResolution{primary?:string;primaryVariant?:string;fallbacks:string[];fallbackVariants:Record<string,string|undefined>;reason:string[];fallbackReasons:ModelFallbackReason[];rejected:Array<{id:string;reason:string}>}
+export interface ModelResolution{primary?:string;primaryVariant?:string;fallbacks:string[];recoveryCandidates:string[];fallbackVariants:Record<string,string|undefined>;reason:string[];fallbackReasons:ModelFallbackReason[];rejected:Array<{id:string;reason:string}>}
 /** Telemetry shape retained for compatibility; it is not routing authority in the 0.2.4 resolver. */
 export interface MissionModelFeedback{failures?:Record<string,number>;successes?:Record<string,number>;retries?:Record<string,number>;samples?:Record<string,number>;confidence?:Record<string,'insufficient'|'low'|'medium'|'high'>;average_latency_ms?:Record<string,number>;verification_passes?:Record<string,number>;verification_failures?:Record<string,number>;window_size?:number}
 export interface RuntimeModelCandidateStatus{ok:boolean;reason?:string}
@@ -77,12 +77,12 @@ function automaticRecommendation(category:Category,available:AvailableModel[]):{
   const explanation=top?.matched.length?`capability-priority:${top.matched.join('>')}`:'capability-priority:inventory-order'
   return{ordered:ranked.map(x=>x.model),reason:[`${category} capability recommendation`,'ephemeral automatic selection',explanation,...(top?.variantFit?[`variant-fit:${top.variantFit}`]:[]),'cost/quality/feedback are not routing authority','not persisted as user preference']}
 }
-function resolution(primary:string|undefined,category:Category,available:AvailableModel[],config:HiConfig,role:string|undefined,reason:string[],rejected:Array<{id:string;reason:string}>,fallbacks:string[]=[],hostVariant?:string,nativePolicySources:string[]=[]):ModelResolution{
+function resolution(primary:string|undefined,category:Category,available:AvailableModel[],config:HiConfig,role:string|undefined,reason:string[],rejected:Array<{id:string;reason:string}>,fallbacks:string[]=[],hostVariant?:string,nativePolicySources:string[]=[],recoveryCandidates:string[]=[]):ModelResolution{
   const byId=new Map(available.map(m=>[m.id,m])),primaryModel=primary?byId.get(primary):undefined,primaryVariant=primary?chooseVariant(category,primaryModel,config,role,hostVariant):undefined,fallbackVariants:Record<string,string|undefined>={}
   for(const id of fallbacks)fallbackVariants[id]=chooseVariant(category,byId.get(id),config,role)
   if(nativePolicySources.length)reason.push(`host-provider-policy:${nativePolicySources.join('+')}`)
   const fallbackReasons=fallbacks.map((model,i)=>({model,variant:fallbackVariants[model],reason:`fallback-${i+1}: explicit role-mapping order${fallbackVariants[model]?`; variant=${fallbackVariants[model]}`:''}`}))
-  return{primary,primaryVariant,fallbacks,fallbackVariants,reason,fallbackReasons,rejected}
+  return{primary,primaryVariant,fallbacks,recoveryCandidates:[...new Set(recoveryCandidates.filter(id=>id&&id!==primary))],fallbackVariants,reason,fallbackReasons,rejected}
 }
 export function resolveModel(category:Category,availableInput:AvailableModel[],config:HiConfig,explicit?:string,role?:string,hostConfig?:Record<string,unknown>,_feedback?:MissionModelFeedback):ModelResolution{
   const {allowed:available,rejected,nativePolicySources}=policyFilter(availableInput,config,hostConfig,role),reason:string[]=[]
@@ -118,7 +118,8 @@ export function resolveModel(category:Category,availableInput:AvailableModel[],c
   }
   const automatic=automaticRecommendation(category,available),primary=automatic.ordered[0]?.id
   reason.push(...automatic.reason)
-  return resolution(primary,category,available,config,role,reason,rejected,[],undefined,nativePolicySources)
+  const recoveryCandidates=automatic.ordered.slice(1,1+config.routing.maxFallbacks).map(model=>model.id)
+  return resolution(primary,category,available,config,role,reason,rejected,[],undefined,nativePolicySources,recoveryCandidates)
 }
 
 /** Pure preview only. Runtime inventory refresh must never persist these inferred choices. */

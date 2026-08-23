@@ -17,6 +17,7 @@ export interface WorkerContract {
     projected_model?: string;
     projected_model_variant?: string;
     fallbacks: string[];
+    recovery_candidates?: string[];
     selected_methodologies: string[];
     loaded_methodologies: string[];
     methodologies: unknown[];

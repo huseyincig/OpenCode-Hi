@@ -23,7 +23,7 @@ export declare class TaskRecoveryCoordinator {
         generation_at_spawn?: number;
     }): ChildCallbackDisposition;
     constructor(scheduler: ConcurrencyScheduler, registry: BackgroundRegistry, projectRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events: RuntimeSignalSink | undefined, child: ChildExecutionCoordinator, drainQueueCallback: () => void, workspaceBinding?: ((m: MissionState, taskID: string) => ChildWorkspaceBinding | undefined) | undefined);
-    recoverStagnation(m: MissionState, level: number): Promise<boolean>;
+    recoverStagnation(m: MissionState, level: number, action?: 'same-worker-resume' | 'model-escalation'): Promise<boolean>;
     recoverHostTerminalFailure(m: MissionState, workerID: string, error: unknown): Promise<HostTerminalRecoveryDisposition>;
     fail(m: MissionState, workerID: string, error: string): void;
 }

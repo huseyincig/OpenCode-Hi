@@ -12,6 +12,7 @@ export interface ModelResolution {
     primary?: string;
     primaryVariant?: string;
     fallbacks: string[];
+    recoveryCandidates: string[];
     fallbackVariants: Record<string, string | undefined>;
     reason: string[];
     fallbackReasons: ModelFallbackReason[];

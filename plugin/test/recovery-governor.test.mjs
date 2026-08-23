@@ -6,10 +6,11 @@ import {tmpdir} from 'node:os'
 import {MissionStore} from '../dist/runtime/mission/mission-store.js'
 import {RuntimePersistence} from '../dist/runtime/state/persistence.js'
 import {recoveryPlan} from '../dist/runtime/continuation/recovery.js'
-import {recordRecoveryStrategy,recoveryStrategyEligibility} from '../dist/runtime/continuation/recovery-governor.js'
+import {recordRecoveryStrategy,recoveryModelHazard,recoverySemanticSignature,recoveryStrategyEligibility} from '../dist/runtime/continuation/recovery-governor.js'
 import {dispatchContinuation} from '../dist/runtime/continuation/dispatcher.js'
 import {evaluateIdle} from '../dist/runtime/continuation/evaluator.js'
 import {startAssessedMission} from './helpers/semantic.mjs'
+import {createTask,createWorker} from '../dist/runtime/worker/worker-runtime.js'
 
 function mission(id='recovery-governor'){
   const store=new MissionStore(process.cwd()),m=startAssessedMission(store,id,'opaque implementation',{task_kind:'implementation',likely_verification:[]})
@@ -60,7 +61,7 @@ test('delivered stagnation continuation records the exact strategy decision stat
   const calls=[];const host={sessionStatus:async()=>'idle',continueSession:async(...args)=>{calls.push(args);return true}}
   const ok=await dispatchContinuation(host,m,plan.prompt,`stagnation-level-${plan.level}:${plan.action}`)
   assert.equal(ok,true);assert.equal(calls.length,1)
-  const last=m.continuation.recovery_history?.at(-1);assert.equal(last.action,'narrow-task');assert.equal(last.level,3);assert.equal(last.outcome,'started');assert.equal(last.progress_signature,m.continuation.semantic_progress_snapshot.state_hash)
+  const last=m.continuation.recovery_history?.at(-1);assert.equal(last.action,'narrow-task');assert.equal(last.level,3);assert.equal(last.outcome,'started');assert.equal(last.progress_signature,recoverySemanticSignature(m))
 })
 
 test('recovery history is bounded and malformed durable records fail closed',()=>{
@@ -72,4 +73,32 @@ test('recovery history is bounded and malformed durable records fail closed',()=
     const persistence=new RuntimePersistence(root);persistence.save(store.all(),true);assert.equal(persistence.load().length,1)
     const raw=JSON.parse(readFileSync(persistence.path,'utf8'));raw.missions[0].continuation.recovery_history[0].fingerprint='forged';writeFileSync(persistence.path,JSON.stringify(raw));assert.equal(persistence.load().length,0);assert.match(String(persistence.lastLoadReport.error),/invalid mission state/i)
   }finally{rmSync(root,{recursive:true,force:true})}
+})
+
+
+test('recovery semantic signature ignores activity-only worker attempt churn',()=>{
+  const {store,m}=mission('rg-activity-churn')
+  const task=createTask(m,{objective:'fix',role:'coder',category:'standard'}),worker=createWorker(m,task,'p/a');worker.session_id='child';worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/b'];store.updateProgress(m,false)
+  const before=recoverySemanticSignature(m)
+  worker.attempt+=1;worker.status='busy';task.status='running';assert.equal(store.updateProgress(m,false),false);worker.status='ready';task.status='waiting';assert.equal(store.updateProgress(m,false),false)
+  assert.equal(recoverySemanticSignature(m),before,'activity churn must not manufacture a fresh recovery epoch')
+})
+
+test('two same-model bounded corrections open recovery-only model escalation on unchanged semantic gain state',()=>{
+  const {store,m}=mission('rg-model-hazard')
+  const task=createTask(m,{objective:'fix',role:'coder',category:'standard'}),worker=createWorker(m,task,'p/a');worker.session_id='child';worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/b','p/c'];store.updateProgress(m,false)
+  recordRecoveryStrategy(m,{level:1,action:'same-worker-resume'},'started',10,{task_id:task.id,worker_id:worker.id,model:'p/a'})
+  worker.attempt+=1;store.updateProgress(m,false)
+  recordRecoveryStrategy(m,{level:2,action:'same-worker-resume'},'started',11,{task_id:task.id,worker_id:worker.id,model:'p/a'})
+  worker.attempt+=1;store.updateProgress(m,false);m.continuation.stagnation_count=3
+  const hazard=recoveryModelHazard(m);assert.equal(hazard.open,true);assert.equal(hazard.attempts,2);assert.deepEqual(hazard.recovery_candidates,['p/b','p/c'])
+  const plan=recoveryPlan(m);assert.equal(plan.level,3);assert.equal(plan.action,'model-escalation');assert.match(plan.prompt,/recovery-only model candidate/i)
+})
+
+test('explicit task model without authorized fallback never opens automatic model hazard escape',()=>{
+  const {store,m}=mission('rg-explicit-model')
+  const task=createTask(m,{objective:'fix',role:'coder',category:'standard'}),worker=createWorker(m,task,'p/a');worker.session_id='child';worker.status='ready';task.status='waiting';worker.requested_model='p/a';worker.recovery_candidates=['p/b'];store.updateProgress(m,false)
+  for(const [level,at] of [[1,10],[2,11]])recordRecoveryStrategy(m,{level,action:'same-worker-resume'},'started',at,{task_id:task.id,worker_id:worker.id,model:'p/a'})
+  m.continuation.stagnation_count=3
+  const hazard=recoveryModelHazard(m);assert.equal(hazard.open,false);assert.equal(hazard.reason,'explicit-task-model-has-no-authorized-fallback');assert.equal(recoveryPlan(m).action,'narrow-task')
 })

@@ -85,6 +85,8 @@ Restart OpenCode after changing project routing configuration when the host does
 
 No. Hi can operate without a hand-written routing file. At runtime it filters OpenCode's effective connected inventory through provider/model policy and hard role capability requirements. If there is no explicit task model, explicit ordered role mapping, or OpenCode agent model, Hi makes an **ephemeral capability/variant recommendation**. There are no built-in provider/model IDs, the automatic result is never persisted as a user preference, and cost/quality/feedback telemetry does not silently rerank it.
 
+For Automatic routing, Hi may also retain a bounded capability-ranked recovery-only candidate list. It is not a normal fallback chain and is not used during healthy execution. Only after the same Task/generation/model receives two bounded corrective resumes with no semantic gain can the recovery circuit use one fresh alternate child. The candidate is revalidated against current OpenCode inventory, `routing.allowedModels`, provider policy, hard role capabilities and scheduler capacity. An explicit per-task model without an explicit fallback cannot escape through this mechanism. If a child returns unparseable prose instead of the required WorkerResult contract, Hi does not treat that prose as success; the task becomes resumable `FIX_REQUIRED`, and repeated no-gain contract corrections are governed by the same circuit.
+
 Core built-in defaults are:
 
 ```json

@@ -27,6 +27,7 @@ test('host-neutral WorkGraph projection preserves DAG, execution allocation and 
   assert.equal(graph.nodes.length,2);assert.equal(graph.executionUnits.length,2)
   assert.deepEqual(graph.edges,[{from:a.id,to:b.id,kind:'requires'}])
   assert.equal(graph.executionUnits[0].resourceSelection.selectedModel,'provider/same')
+  assert.deepEqual(graph.executionUnits[0].resourceSelection.recoveryCandidates,[])
   assert.equal(graph.executionUnits[1].resourceSelection.selectedModel,'provider/same')
   assert.notEqual(graph.executionUnits[0].id,graph.executionUnits[1].id)
   assert.equal(graph.executionUnits[0].attempt.ordinal,1)

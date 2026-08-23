@@ -1,5 +1,5 @@
 import type { MissionState } from '../mission/types.js'
-import { recoveryStrategyEligibility } from './recovery-governor.js'
+import { recoveryModelHazard,recoveryStrategyEligibility } from './recovery-governor.js'
 
 export interface RecoveryPlan{
   level:0|1|2|3|4|5|6
@@ -22,6 +22,7 @@ export function recoveryPlan(m:MissionState):RecoveryPlan{
   const n=m.continuation.stagnation_count
   if(n<=0)return planForLevel(0)
   const start=Math.min(6,Math.max(1,n)) as 1|2|3|4|5|6
+  if(start>=3){const hazard=recoveryModelHazard(m),escalation:RecoveryPlan={level:3,action:'model-escalation',prompt:`Same-model recovery is exhausted without semantic gain. Switch this SAME task to one fresh recovery-only model candidate (${hazard.recovery_candidates.join(', ')}) while preserving current files and canonical evidence; do not restart top-level planning.`};if(hazard.open&&recoveryStrategyEligibility(m,escalation).allowed)return escalation}
   for(let level=start;level<=5;level++){
     const plan=planForLevel(level as 1|2|3|4|5)
     if(recoveryStrategyEligibility(m,plan).allowed)return plan

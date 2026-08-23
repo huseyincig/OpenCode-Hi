@@ -81,6 +81,8 @@ Ayar değişikliğinden sonra host hot-reload yapmıyorsa OpenCode'u yeniden ba�
 
 Hayır. Hi elle yazılmış bir routing dosyası olmadan çalışabilir. Runtime'da OpenCode'un gerçekten bağlı/effective model inventory'sini provider/model policy ve hard role capability filtrelerinden geçirir. Sıralı `routing.roleModels` kullanıcı tercihi, agent tarafından verilen task-model ipucu veya OpenCode agent modeli yoksa Hi canlı inventory üzerinden **ephemeral capability/variant önerisi** yapar. Kalıcı `routing.roleModels` tercihi modelin ürettiği task-model ipucundan üstündür ve onun tarafından bypass edilemez. Kod içinde sabit provider/model ID önerisi yoktur; otomatik seçim proje tercihine yazılmaz ve cost/quality/feedback telemetrisi seçimi sessizce yeniden sıralamaz.
 
+Automatic routing ayrıca sınırlı sayıda capability-ranked **yalnız-recovery** adayını geçici olarak tutabilir. Bu liste normal fallback zinciri veya kullanıcı tercihi değildir ve sağlıklı execution sırasında kullanılmaz. Aynı Task/generation/model iki bounded corrective resume sonrasında hâlâ semantic ilerleme üretmezse recovery circuit fresh bir alternate child açabilir. Aday o anda OpenCode inventory, `routing.allowedModels`, provider policy, hard role capability ve scheduler capacity kurallarıyla yeniden doğrulanır. Explicit per-task model, explicit fallback yetkisi yoksa bu mekanizma üzerinden başka modele kaçamaz. Child gerekli WorkerResult contract yerine parse edilemeyen prose döndürürse Hi bunu başarı kabul etmez; task resumable `FIX_REQUIRED` olur ve ilerleme üretmeyen tekrar contract düzeltmeleri aynı circuit tarafından yönetilir.
+
 `visual-qa` için ayrıca host tarafından doğrulanmış image-input capability gerekir. Kalıcı role tercihi yalnız kullanıcı açıkça `hi_role_models` veya `roles/role-models --set` ile yazdığında oluşur.
 
 Proje dosyasının envelope'u:
@@ -316,7 +318,7 @@ Explicit mapping olmayan child role, OpenCode agent modeli varsa onu kullanır; 
 }
 ```
 
-`maxFallbacks` aralığı `0..6`.
+`maxFallbacks` aralığı `0..6`. Aynı sınır Automatic için tutulan recovery-only aday sayısını da sınırlar; bu adaylar normal fallback veya routing önceliği değildir.
 
 ## 12. Ortak primary child modeli + role-specific fallback
 

@@ -38,8 +38,8 @@ export class RuntimeEventController {
             }
             return;
         } if (decision.decision === 'RECOVER' && decision.reason_code === 'stagnation-recovery') {
-            const match = /^stagnation-level-(\d+):/.exec(decision.reason), level = match ? Number(match[1]) : 0;
-            if (level && await tasks.recoverStagnation(m, level)) {
+            const match = /^stagnation-level-(\d+):(same-worker-resume|model-escalation|narrow-task|alternate-plan|fresh-worker)$/.exec(decision.reason), level = match ? Number(match[1]) : 0, action = match?.[2];
+            if (level && (action === 'same-worker-resume' || action === 'model-escalation') && await tasks.recoverStagnation(m, level, action)) {
                 store.updateProgress(m);
                 return;
             }
@@ -317,9 +317,9 @@ export class RuntimeEventController {
             return;
         }
         if (decision.decision === 'RECOVER' && decision.reason_code === 'stagnation-recovery') {
-            const match = /^stagnation-level-(\d+):/.exec(decision.reason);
-            const level = match ? Number(match[1]) : 0;
-            if (level && await tasks.recoverStagnation(m, level)) {
+            const match = /^stagnation-level-(\d+):(same-worker-resume|model-escalation|narrow-task|alternate-plan|fresh-worker)$/.exec(decision.reason);
+            const level = match ? Number(match[1]) : 0, action = match?.[2];
+            if (level && (action === 'same-worker-resume' || action === 'model-escalation') && await tasks.recoverStagnation(m, level, action)) {
                 store.updateProgress(m);
                 persistence.save(store.all());
                 return;

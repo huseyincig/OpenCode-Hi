@@ -78,6 +78,14 @@ test('same-session corrective resume preserves the original execution tool surfa
   assert.equal(resumeTools.task,false);assert.equal(resumeTools.hi_direct_progress,false);assert.equal(resumeTools.hi_task_start,false)
   assert.equal(resumeTools.edit,undefined);assert.equal(resumeTools.write,undefined)
   assert.match(JSON.stringify(prompts[1]),/METHODOLOGY EXIT REQUIREMENTS: hi-test-driven-development: task-success, no-open-issues, targeted-test-evidence/)
+  let records=m.continuation.recovery_history?.filter(x=>x.action==='same-worker-resume'&&x.task_id===first.task_id&&x.worker_id===first.worker_id)??[]
+  assert.equal(records.length,1);assert.equal(records[0].level,1);assert.equal(records[0].model,m.execution.workers.find(w=>w.id===first.worker_id).model)
+  runtime.applyResult(m,first.worker_id,{status:'FIX_REQUIRED',summary:'same correction still needed',changed_files:['src/parser.ts'],evidence:[],open_issues:['fix:x'],needs_context:[]})
+  const third=await runtime.resume(m,first.task_id)
+  assert.equal(third.worker_id,first.worker_id);assert.equal(third.session_id,first.session_id);assert.equal(created.length,1);assert.equal(prompts.length,3)
+  records=m.continuation.recovery_history?.filter(x=>x.action==='same-worker-resume'&&x.task_id===first.task_id&&x.worker_id===first.worker_id)??[]
+  assert.equal(records.length,2);assert.deepEqual(records.map(x=>x.level),[1,2]);assert.equal(records[0].progress_signature,records[1].progress_signature)
+  assert.match(JSON.stringify(prompts[2]),/materially different corrective hypothesis or action/i)
 })
 
 test('parent can open chat role-model configuration before semantic mission assessment while other execution tools stay gated',async()=>{

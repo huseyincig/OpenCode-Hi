@@ -124,14 +124,14 @@ function automaticRecommendation(category, available) {
     const explanation = top?.matched.length ? `capability-priority:${top.matched.join('>')}` : 'capability-priority:inventory-order';
     return { ordered: ranked.map(x => x.model), reason: [`${category} capability recommendation`, 'ephemeral automatic selection', explanation, ...(top?.variantFit ? [`variant-fit:${top.variantFit}`] : []), 'cost/quality/feedback are not routing authority', 'not persisted as user preference'] };
 }
-function resolution(primary, category, available, config, role, reason, rejected, fallbacks = [], hostVariant, nativePolicySources = []) {
+function resolution(primary, category, available, config, role, reason, rejected, fallbacks = [], hostVariant, nativePolicySources = [], recoveryCandidates = []) {
     const byId = new Map(available.map(m => [m.id, m])), primaryModel = primary ? byId.get(primary) : undefined, primaryVariant = primary ? chooseVariant(category, primaryModel, config, role, hostVariant) : undefined, fallbackVariants = {};
     for (const id of fallbacks)
         fallbackVariants[id] = chooseVariant(category, byId.get(id), config, role);
     if (nativePolicySources.length)
         reason.push(`host-provider-policy:${nativePolicySources.join('+')}`);
     const fallbackReasons = fallbacks.map((model, i) => ({ model, variant: fallbackVariants[model], reason: `fallback-${i + 1}: explicit role-mapping order${fallbackVariants[model] ? `; variant=${fallbackVariants[model]}` : ''}` }));
-    return { primary, primaryVariant, fallbacks, fallbackVariants, reason, fallbackReasons, rejected };
+    return { primary, primaryVariant, fallbacks, recoveryCandidates: [...new Set(recoveryCandidates.filter(id => id && id !== primary))], fallbackVariants, reason, fallbackReasons, rejected };
 }
 export function resolveModel(category, availableInput, config, explicit, role, hostConfig, _feedback) {
     const { allowed: available, rejected, nativePolicySources } = policyFilter(availableInput, config, hostConfig, role), reason = [];
@@ -183,7 +183,8 @@ export function resolveModel(category, availableInput, config, explicit, role, h
     }
     const automatic = automaticRecommendation(category, available), primary = automatic.ordered[0]?.id;
     reason.push(...automatic.reason);
-    return resolution(primary, category, available, config, role, reason, rejected, [], undefined, nativePolicySources);
+    const recoveryCandidates = automatic.ordered.slice(1, 1 + config.routing.maxFallbacks).map(model => model.id);
+    return resolution(primary, category, available, config, role, reason, rejected, [], undefined, nativePolicySources, recoveryCandidates);
 }
 /** Pure preview only. Runtime inventory refresh must never persist these inferred choices. */
 export function recommendInitialRoleModels(available, config, hostConfig) {
