@@ -182,7 +182,7 @@ test('successful directory-scoped empty available-model list stays empty instead
 })
 
 
-test('hi_settings global allowed model pool keeps OpenCode inventory truth but limits automatic child routing in exact order',async()=>{
+test('hi_settings strict allowed model pool keeps OpenCode inventory truth without inventing routing priority',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-settings-model-pool-'))
   const raw={connected:['p'],all:[{id:'p',models:[{id:'outside'},{id:'second'},{id:'first'},{id:'vision',capabilities:{input:{image:true}}}]}]}
   const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:clientWithProviderShape(raw)})
@@ -195,9 +195,9 @@ test('hi_settings global allowed model pool keeps OpenCode inventory truth but l
 })
 
 
-test('ordered global model pool is routing authority for automatic child selection while capability gates still apply',()=>{
-  const cfg=resolveHiConfig({routing:{allowedModels:['p/first','p/second','p/vision']}})
-  const available=[{id:'p/outside',provider:'p',writeCapable:true},{id:'p/second',provider:'p',writeCapable:true},{id:'p/first',provider:'p',writeCapable:true},{id:'p/vision',provider:'p',writeCapable:true,visionCapable:true}]
-  const coder=resolveModel('standard',available,cfg,undefined,'coder');assert.equal(coder.primary,'p/first');assert.deepEqual(coder.fallbacks,['p/second','p/vision']);assert.ok(coder.rejected.some(x=>x.id==='p/outside'&&x.reason==='hi-model-not-allowed'))
+test('global model allowlist is membership authority while automatic selection remains capability-first',()=>{
+  const cfg=resolveHiConfig({routing:{allowedModels:['p/second','p/first','p/vision']}})
+  const available=[{id:'p/outside',provider:'p',writeCapable:true,tags:['coding']},{id:'p/second',provider:'p',writeCapable:true},{id:'p/first',provider:'p',writeCapable:true,tags:['coding']},{id:'p/vision',provider:'p',writeCapable:true,visionCapable:true,tags:['coding']}]
+  const coder=resolveModel('standard',available,cfg,undefined,'coder');assert.equal(coder.primary,'p/first','allowlist order must not override capability-first automatic selection');assert.deepEqual(coder.fallbacks,[]);assert.ok(coder.rejected.some(x=>x.id==='p/outside'&&x.reason==='hi-model-not-allowed'))
   const visual=resolveModel('visual',available,cfg,undefined,'visual-qa');assert.equal(visual.primary,'p/vision');assert.ok(visual.rejected.some(x=>x.id==='p/first'&&/vision/.test(x.reason)))
 })

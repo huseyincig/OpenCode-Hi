@@ -18,7 +18,7 @@ function providerOf(m:AvailableModel):string|undefined{return m.provider??(m.id.
 function requiredRoleCapability(role?:string):'vision'|undefined{return role==='visual-qa'?'vision':undefined}
 function roleCapabilityEligible(model:AvailableModel,role?:string):{ok:boolean;reason?:string}{const required=requiredRoleCapability(role);if(required==='vision'&&model.visionCapable!==true)return{ok:false,reason:'role-capability-missing:vision'};return{ok:true}}
 function policyFilter(available:AvailableModel[],config:HiConfig,hostConfig?:Record<string,unknown>,role?:string){
-  const allowedModelOrder=config.routing.allowedModels??[],explicitAllowedModels=new Set(allowedModelOrder),explicitAllowed=new Set(config.routing.allowedProviders),deniedModels=new Set(config.routing.deniedModels),native=providerPolicyView(hostConfig),rejected:Array<{id:string;reason:string}>=[],allowed:AvailableModel[]=[]
+  const allowedModels=config.routing.allowedModels??[],explicitAllowedModels=new Set(allowedModels),explicitAllowed=new Set(config.routing.allowedProviders),deniedModels=new Set(config.routing.deniedModels),native=providerPolicyView(hostConfig),rejected:Array<{id:string;reason:string}>=[],allowed:AvailableModel[]=[]
   for(const m of available){const provider=providerOf(m)
     if(explicitAllowedModels.size&&!explicitAllowedModels.has(m.id)){rejected.push({id:m.id,reason:'hi-model-not-allowed'});continue}
     if(deniedModels.has(m.id)){rejected.push({id:m.id,reason:'hi-denied-model'});continue}
@@ -29,7 +29,6 @@ function policyFilter(available:AvailableModel[],config:HiConfig,hostConfig?:Rec
     const roleCapability=roleCapabilityEligible(m,role);if(!roleCapability.ok){rejected.push({id:m.id,reason:roleCapability.reason??'role-capability-missing'});continue}
     allowed.push(m)
   }
-  if(allowedModelOrder.length)allowed.sort((a,b)=>allowedModelOrder.indexOf(a.id)-allowedModelOrder.indexOf(b.id))
   return{allowed,rejected,nativePolicySources:native.source}
 }
 export function runtimeModelCandidateStatus(id:string,availableInput:AvailableModel[],config:HiConfig,hostConfig?:Record<string,unknown>,role?:string):RuntimeModelCandidateStatus{
@@ -107,7 +106,6 @@ export function resolveModel(category:Category,availableInput:AvailableModel[],c
     reason.push(availableInput.some(m=>m.id===explicit)?'explicit task model rejected by routing/provider policy':'explicit task model unavailable')
     return resolution(undefined,category,available,config,role,reason,rejected,[],undefined,nativePolicySources)
   }
-  if((config.routing.allowedModels??[]).length){const primary=available[0]?.id,fallbacks=available.slice(1,1+config.routing.maxFallbacks).map(m=>m.id);reason.push('explicit ordered global model pool','runtime available','policy allowed');return resolution(primary,category,available,config,role,reason,rejected,fallbacks,undefined,nativePolicySources)}
   const host=hostAgentModel(hostConfig,role)
   if(host?.model){
     if(available.some(m=>m.id===host.model)){

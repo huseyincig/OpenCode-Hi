@@ -101,7 +101,7 @@
       "area": "routing-models",
       "canonical_owner": "Hi routing/model resolver",
       "owner_path": "plugin/src/runtime/routing/model-resolver.ts",
-      "owner_sha256": "6e339437cb4074bbddba0aeab7623f626cb02b4f62bb5ed87c8f7d8429e2e996",
+      "owner_sha256": "603852cf8e818a5807d8aa5bc339f640755ee19f6fafabe1b7de992134eb2832",
       "producer_or_contract_paths": [
         "plugin/src/runtime/routing/execution-profile.ts",
         "plugin/src/runtime/routing/minimum-team.ts",
@@ -120,7 +120,7 @@
       "area": "configuration",
       "canonical_owner": "Hi config catalog/resolver",
       "owner_path": "data/hi-config-options.json",
-      "owner_sha256": "9b6f299767a1554977815b6073f090ee63c759726d94e484118ebc45ab962617",
+      "owner_sha256": "89567322de6d46796cc3cbae3793b2667e7621eaa67a27ac23c6b612d491be3d",
       "producer_or_contract_paths": [
         "plugin/src/config/schema.ts",
         "plugin/src/config/resolver.ts"

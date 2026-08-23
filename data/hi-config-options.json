@@ -431,7 +431,7 @@
       "validator": "bounded-model-list",
       "safety_semantics": "constraint",
       "runtime_consumer": "runtime/routing/model-resolver.policyFilter/resolveModel",
-      "executor_effect": "narrows child routing to one ordered explicit model pool; automatic selection uses that pool order after capability eligibility",
+      "executor_effect": "strictly constrains Hi child routing membership to explicitly allowed runtime models; selection among eligible allowed models remains role/capability/routing driven",
       "behavioral_acceptance_refs": [
         "project-settings-control-plane.test.mjs",
         "provider-connected-inventory.test.mjs"

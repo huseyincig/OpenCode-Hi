@@ -9,7 +9,7 @@ function requiredRoleCapability(role) { return role === 'visual-qa' ? 'vision' :
 function roleCapabilityEligible(model, role) { const required = requiredRoleCapability(role); if (required === 'vision' && model.visionCapable !== true)
     return { ok: false, reason: 'role-capability-missing:vision' }; return { ok: true }; }
 function policyFilter(available, config, hostConfig, role) {
-    const allowedModelOrder = config.routing.allowedModels ?? [], explicitAllowedModels = new Set(allowedModelOrder), explicitAllowed = new Set(config.routing.allowedProviders), deniedModels = new Set(config.routing.deniedModels), native = providerPolicyView(hostConfig), rejected = [], allowed = [];
+    const allowedModels = config.routing.allowedModels ?? [], explicitAllowedModels = new Set(allowedModels), explicitAllowed = new Set(config.routing.allowedProviders), deniedModels = new Set(config.routing.deniedModels), native = providerPolicyView(hostConfig), rejected = [], allowed = [];
     for (const m of available) {
         const provider = providerOf(m);
         if (explicitAllowedModels.size && !explicitAllowedModels.has(m.id)) {
@@ -43,8 +43,6 @@ function policyFilter(available, config, hostConfig, role) {
         }
         allowed.push(m);
     }
-    if (allowedModelOrder.length)
-        allowed.sort((a, b) => allowedModelOrder.indexOf(a.id) - allowedModelOrder.indexOf(b.id));
     return { allowed, rejected, nativePolicySources: native.source };
 }
 export function runtimeModelCandidateStatus(id, availableInput, config, hostConfig, role) {
@@ -169,11 +167,6 @@ export function resolveModel(category, availableInput, config, explicit, role, h
             return resolution(explicit, category, available, config, role, ['explicit task model', 'runtime available', 'policy allowed'], rejected, [], undefined, nativePolicySources);
         reason.push(availableInput.some(m => m.id === explicit) ? 'explicit task model rejected by routing/provider policy' : 'explicit task model unavailable');
         return resolution(undefined, category, available, config, role, reason, rejected, [], undefined, nativePolicySources);
-    }
-    if ((config.routing.allowedModels ?? []).length) {
-        const primary = available[0]?.id, fallbacks = available.slice(1, 1 + config.routing.maxFallbacks).map(m => m.id);
-        reason.push('explicit ordered global model pool', 'runtime available', 'policy allowed');
-        return resolution(primary, category, available, config, role, reason, rejected, fallbacks, undefined, nativePolicySources);
     }
     const host = hostAgentModel(hostConfig, role);
     if (host?.model) {

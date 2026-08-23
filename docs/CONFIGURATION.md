@@ -15,7 +15,7 @@ OpenCode plugin registration and Hi runtime configuration are different concerns
 
 ## Current development: one Settings control plane
 
-Current `dev` presents three normal-user Work Modes: `Adaptive`, `Single`, and `Multi`. OpenCode still owns provider authentication and the primary session model. `Single` is a one-agent topology, so its effective primary behavior is `working-manager`; a persisted `manager` preference is preserved and becomes effective again after leaving Single. Child roles remain Automatic unless the user persists an ordered global model pool or a per-role model/fallback list. `hi_settings apply` accepts `allowed_models`, and `npx opencode-hi config --model-pool MODEL[,MODEL...]` writes the same canonical project setting.
+Current `dev` presents three normal-user Work Modes: `Adaptive`, `Single`, and `Multi`. OpenCode still owns provider authentication and the primary session model. `Single` is a one-agent topology, so its effective primary behavior is `working-manager`; a persisted `manager` preference is preserved and becomes effective again after leaving Single. Child roles remain Automatic unless the user persists a strict global model allowlist or a per-role model/fallback list. `hi_settings apply` accepts `allowed_models`, and `npx opencode-hi config --model-pool MODEL[,MODEL...]` writes the same canonical project setting.
 
 Use runtime `hi_settings show` / `hi_settings apply` for live connected-inventory-aware settings. One `apply` transaction can change mode, limits, and multiple role mappings together; the whole patch is validated before persistence. Use `npx opencode-hi config` for the same project preference model when a deterministic CLI is preferable. The CLI does not invent or validate live provider availability outside OpenCode runtime.
 
@@ -339,7 +339,7 @@ If you want no fallback entries to be returned after a selected primary, also se
 "routing": { "maxFallbacks": 0 }
 ```
 
-That still does **not** turn `models.default` into a hard allowlist. Current `dev` uses `routing.allowedModels` for an explicit ordered child-model pool, alongside provider allowlisting and exact model denylisting. The pool is a Hi preference/constraint over OpenCode runtime inventory; it does not create a second model catalog and does not control the OpenCode-owned primary session model.
+That still does **not** turn `models.default` into a hard allowlist. Current `dev` uses `routing.allowedModels` for an explicit strict child-model allowlist, alongside provider allowlisting and exact model denylisting. The allowlist is a Hi constraint over OpenCode runtime inventory; its array order is not Adaptive routing priority; it does not create a second model catalog and does not control the OpenCode-owned primary session model.
 
 ### Use the same model for the primary session and every Hi child
 
@@ -972,7 +972,7 @@ Generated from `data/hi-config-options.json`. Do not hand-edit this table.
 | `routing.roleModels` | runtime | `{}` | preference | selects configured child-role candidates in explicit order after hard eligibility filters and before host-agent/automatic selection; primary manager roles are excluded |
 | `routing.roleVariants` | runtime | `{}` | preference | changes selected native variant for a specific child-role/model pair; primary manager roles are excluded |
 | `routing.maxFallbacks` | runtime | `3` | capacity | bounds fallback candidate count |
-| `routing.allowedModels` | runtime | `[]` | constraint | narrows child routing to one ordered explicit model pool; automatic selection uses that pool order after capability eligibility |
+| `routing.allowedModels` | runtime | `[]` | constraint | strictly constrains Hi child routing membership to explicitly allowed runtime models; selection among eligible allowed models remains role/capability/routing driven |
 | `routing.allowedProviders` | runtime | `[]` | constraint | narrows eligible providers and disables unconstrained host-default fallback when nonempty |
 | `routing.deniedModels` | runtime | `[]` | constraint | denies exact models and composes project/raw denies monotonically |
 | `parallel.enabled` | runtime | `true` | capacity | sets global scheduler capacity to one when disabled |

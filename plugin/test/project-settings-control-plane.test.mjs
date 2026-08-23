@@ -48,7 +48,7 @@ test("reset returns all managed child roles to automatic without deleting foreig
 })
 
 
-test("ordered allowed model pool is persisted once and narrows runtime routing",()=>{
+test("allowed model set is persisted once and narrows runtime routing",()=>{
   const root=fixture();try{
     const pool=["p/one","p/two","p/three"]
     applyProjectSettings(root,{workMode:"adaptive",allowedModels:pool})

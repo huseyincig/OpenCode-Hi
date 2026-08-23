@@ -194,7 +194,7 @@ Generated from `data/hi-config-options.json`. Do not hand-edit this table.
 | `routing.roleModels` | runtime | `{}` | preference | selects configured child-role candidates in explicit order after hard eligibility filters and before host-agent/automatic selection; primary manager roles are excluded |
 | `routing.roleVariants` | runtime | `{}` | preference | changes selected native variant for a specific child-role/model pair; primary manager roles are excluded |
 | `routing.maxFallbacks` | runtime | `3` | capacity | bounds fallback candidate count |
-| `routing.allowedModels` | runtime | `[]` | constraint | narrows child routing to one ordered explicit model pool; automatic selection uses that pool order after capability eligibility |
+| `routing.allowedModels` | runtime | `[]` | constraint | strictly constrains Hi child routing membership to explicitly allowed runtime models; selection among eligible allowed models remains role/capability/routing driven |
 | `routing.allowedProviders` | runtime | `[]` | constraint | narrows eligible providers and disables unconstrained host-default fallback when nonempty |
 | `routing.deniedModels` | runtime | `[]` | constraint | denies exact models and composes project/raw denies monotonically |
 | `parallel.enabled` | runtime | `true` | capacity | sets global scheduler capacity to one when disabled |
