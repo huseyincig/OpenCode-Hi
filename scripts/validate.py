@@ -908,6 +908,7 @@ try:
     zs=z40.get('summary') or {}
     if zs.get('recorded_findings')!=len(z40.get('defects') or []) or zs.get('unresolved_known_defects')!=0 or zs.get('closure_receipts_checked')!=len(z40.get('defects') or []) or zs.get('exact_t3_capabilities')!=3 or zs.get('lifecycle_invariants_pass')!=61 or zs.get('documentation_parity_violations')!=0:err('PROMPT B zero-known-defect summary drift')
     if z40.get('violations')!=[] or len({x.get('id') for x in z40.get('defects') or []})!=len(z40.get('defects') or []):err('PROMPT B zero-known-defect ledger drift')
+    if z40.get('recurrence_claim')!='NOT_CERTIFIED_WITHOUT_EXPLICIT_DEFECT_CLASS_SWEEP' or 'adjacent evidence re-audit' in str(z40.get('claim_boundary','')):err('PROMPT B zero-known-defect recurrence claim boundary drift')
     required_post_t4={'npm-view-json-shape-verifier-drift','npm-postpublish-registry-read-after-write-race','post-t4-documentation-stale-publication-state','npm-packed-public-document-links-incomplete','windows-packed-doc-audit-npm-shim-resolution'}
     if not required_post_t4<={x.get('id') for x in z40.get('defects') or []}:err('PROMPT B zero-known-defect post-T4 closure drift')
     zcommit=(z40.get('source_checkpoint') or {}).get('commit')
@@ -917,7 +918,7 @@ try:
         try:
             if git_blob_sha256(zcommit,rel)!=expected:err('PROMPT B zero-known-defect checkpoint proof drift: '+str(rel))
         except Exception:err('PROMPT B zero-known-defect checkpoint proof unavailable: '+str(rel))
-        if len(row.get('closure_pipeline') or [])!=12:err('PROMPT B zero-known-defect closure pipeline incomplete: '+str(row.get('id')))
+        if len(row.get('closure_pipeline') or [])!=11 or 'adjacent-reaudit' in (row.get('closure_pipeline') or []):err('PROMPT B zero-known-defect closure pipeline truth drift: '+str(row.get('id')))
 except Exception as e:err(f'bad PROMPT B zero-known-defect loop: {e}')
 
 # PROMPT B §39 exact-current OpenCode T3 certification

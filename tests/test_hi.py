@@ -1354,17 +1354,19 @@ def test_prompt_b_exact_current_opencode_t3_is_fresh_source_bound_and_not_inferr
     assert 'API presence alone is insufficient' in d['claim_boundary'] and 'never relabeled as current' in d['claim_boundary']
 
 
-def test_prompt_b_zero_known_defect_loop_closes_every_recorded_finding_and_reaudits_adjacent_systems():
+@pytest.mark.evidence
+def test_prompt_b_zero_known_defect_loop_closes_every_recorded_finding_without_claiming_unproven_recurrence():
     d=json.loads((ROOT/'data/validation/prompt-b-zero-known-defect-loop.json').read_text(encoding='utf-8'))
     assert d['schema']==2 and d['kind']=='PROMPT_B_ZERO_KNOWN_DEFECT_CLOSURE_LOOP' and d['section']==40 and d['status']=='PASS'
     assert d['summary']['recorded_findings']==len(d['defects']) and d['summary']['unresolved_known_defects']==0 and d['summary']['closure_receipts_checked']==len(d['defects'])
     assert d['summary']['exact_t3_capabilities']==3 and d['summary']['lifecycle_invariants_pass']==61 and d['summary']['documentation_parity_violations']==0
     assert d['violations']==[] and len({x['id'] for x in d['defects']})==len(d['defects'])
+    assert d['recurrence_claim']=='NOT_CERTIFIED_WITHOUT_EXPLICIT_DEFECT_CLASS_SWEEP' and 'adjacent evidence re-audit' not in d['claim_boundary']
     assert {'short-lived-pty-output-before-attach','release-certification-stale-phase1-performance-primitives','test-harness-stale-fixed-suite-count'}<={x['id'] for x in d['defects']}
     assert {'npm-view-json-shape-verifier-drift','npm-postpublish-registry-read-after-write-race','post-t4-documentation-stale-publication-state','npm-packed-public-document-links-incomplete','windows-packed-doc-audit-npm-shim-resolution'}<={x['id'] for x in d['defects']}
     commit=d['source_checkpoint']['commit']
     for row in d['defects']:
-        assert len(row['closure_pipeline'])==12
+        assert len(row['closure_pipeline'])==11 and 'adjacent-reaudit' not in row['closure_pipeline']
         assert git_blob_sha256(commit,row['regression_receipt'])==row['regression_receipt_sha256']
 
 
@@ -1451,3 +1453,14 @@ def test_opencode_upstream_tracker_registry_skew_fails_closed():
     assert state['latest'] is None
     assert state['target_current'] is False
     assert state['support_promotion_allowed'] is False
+
+
+def test_zero_known_defect_loop_producer_does_not_claim_unproven_recurrence():
+    """Living producer/validator must not certify a sweep they do not record."""
+    producer=(ROOT / "scripts/audit-zero-known-defect-loop.py").read_text(encoding="utf-8")
+    validator=(ROOT / "scripts/validate.py").read_text(encoding="utf-8")
+    assert "adjacent-reaudit" not in producer
+    assert "NOT_CERTIFIED_WITHOUT_EXPLICIT_DEFECT_CLASS_SWEEP" in producer
+    assert "predicates, hits/dispositions, and a guardrail proof" in producer
+    assert "!=11 or 'adjacent-reaudit'" in validator
+    assert "zero-known-defect recurrence claim boundary drift" in validator
