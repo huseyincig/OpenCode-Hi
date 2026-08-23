@@ -67,7 +67,7 @@ async function pluginScenario(observedModel,includeModelMetadata=true){
     create:async()=>({data:{id:'child-model'}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:{}}),status:async()=>({data:{}}),diff:async()=>({data:[]}),
     messages:async()=>({data:[{info:{id:'msg1',role:'assistant',...(includeModelMetadata?{providerID:'p',modelID:observedModel}:{})},parts:[{type:'text',text:JSON.stringify(result)}]}]}),
   }}
-  const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client});await hooks.config({});await hooks['chat.message']({sessionID:'parent',message:{role:'user',parts:[{type:'text',text:'fix it'}]}},{parts:[]});await assessPluginMission(hooks,'parent')
+  const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client});await hooks.config({});await hooks['chat.message']({sessionID:'parent'},{message:{role:'user'},parts:[{type:'text',text:'fix it'}]});await assessPluginMission(hooks,'parent')
   const started=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'implementation',role:'coder',category:'standard',model:'p/expected'},{sessionID:'parent'}))
   await hooks.event({event:{type:'session.idle',properties:{sessionID:'child-model'}}})
   const state=JSON.parse(await hooks.tool.hi_task_peek.execute({id:started.task_id},{sessionID:'parent'}))
@@ -114,7 +114,7 @@ test('pre-assistant child idle is ignored until native assistant model evidence 
       ?[{info:{id:'u1',role:'user'},parts:[{type:'text',text:'handoff'}]}]
       :[{info:{id:'u1',role:'user'},parts:[{type:'text',text:'handoff'}]},{info:{id:'a1',role:'assistant',providerID:'p',modelID:'expected'},parts:[{type:'text',text:JSON.stringify(result)}]}]}),
   }}
-  const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client});await hooks.config({});await hooks['chat.message']({sessionID:'parent-race',message:{role:'user',parts:[{type:'text',text:'fix it'}]}},{parts:[]});await assessPluginMission(hooks,'parent-race')
+  const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client});await hooks.config({});await hooks['chat.message']({sessionID:'parent-race'},{message:{role:'user'},parts:[{type:'text',text:'fix it'}]});await assessPluginMission(hooks,'parent-race')
   const started=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'implementation',role:'coder',category:'standard',model:'p/expected'},{sessionID:'parent-race'}))
   await hooks.event({event:{type:'session.idle',properties:{sessionID:'child-race'}}})
   const first=JSON.parse(await hooks.tool.hi_task_peek.execute({id:started.task_id},{sessionID:'parent-race'}))

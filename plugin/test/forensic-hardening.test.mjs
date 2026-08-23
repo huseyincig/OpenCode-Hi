@@ -22,7 +22,7 @@ test('a read is review input only; direct review completion requires explicit pa
   const root=mkdtempSync(join(tmpdir(),'hi-direct-review-'))
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
-    await hooks['chat.message']({sessionID:'s',message:{role:'user',parts:[{type:'text',text:'Review src/a.ts for correctness'}]}},{parts:[]}); await assessPluginMission(hooks,'s',{task_kind:'review',required_capabilities:['review'],likely_verification:['review-evidence'],likely_targets:['src/a.ts']})
+    await hooks['chat.message']({sessionID:'s'},{message:{role:'user'},parts:[{type:'text',text:'Review src/a.ts for correctness'}]}); await assessPluginMission(hooks,'s',{task_kind:'review',required_capabilities:['review'],likely_verification:['review-evidence'],likely_targets:['src/a.ts']})
     await hooks['tool.execute.after']({sessionID:'s',tool:'read',args:{filePath:'src/a.ts'}},'const x = 1')
     const beforeStatus=String(await hooks.tool.hi_status.execute({},{sessionID:'s'}))
     assert.match(beforeStatus,/2 obligation open|2 obligations open|2 obligation/)
@@ -43,7 +43,7 @@ test('command rollback with unknown exit cannot close rollback gate',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-rollback-exit-'))
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
-    await hooks['chat.message']({sessionID:'s-rb',message:{role:'user',parts:[{type:'text',text:'Fix a local bug'}]}},{parts:[]}); await assessPluginMission(hooks,'s-rb',{task_kind:'bug-fix',required_capabilities:['implementation'],likely_verification:['targeted-tests']})
+    await hooks['chat.message']({sessionID:'s-rb'},{message:{role:'user'},parts:[{type:'text',text:'Fix a local bug'}]}); await assessPluginMission(hooks,'s-rb',{task_kind:'bug-fix',required_capabilities:['implementation'],likely_verification:['targeted-tests']})
     await hooks.tool.hi_temporary_mutation_register.execute({kind:'env',description:'temporary',rollback_command:'git restore foo'},{sessionID:'s-rb'})
     await hooks['tool.execute.after']({sessionID:'s-rb',tool:'bash',args:{command:'git restore foo'}},{stdout:''})
     const readiness=JSON.parse(await hooks.tool.hi_readiness.execute({},{sessionID:'s-rb'}))
@@ -86,7 +86,7 @@ test('noncanonical external-effect commands are rejected before native permissio
   const root=mkdtempSync(join(tmpdir(),'hi-command-boundary-'))
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
-    await hooks['chat.message']({sessionID:'s-cmd',message:{role:'user',parts:[{type:'text',text:'Prepare a release push'}]}},{parts:[]}); await assessPluginMission(hooks,'s-cmd',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',required_capabilities:['verification'],requested_external_actions:['git-push']})
+    await hooks['chat.message']({sessionID:'s-cmd'},{message:{role:'user'},parts:[{type:'text',text:'Prepare a release push'}]}); await assessPluginMission(hooks,'s-cmd',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',required_capabilities:['verification'],requested_external_actions:['git-push']})
     await assert.rejects(()=>hooks['tool.execute.before']({sessionID:'s-cmd',tool:'bash'},{args:{command:'git -C /tmp/repo push origin main'}}),/canonical command form/)
     await assert.rejects(()=>hooks['tool.execute.before']({sessionID:'s-cmd',tool:'bash'},{args:{command:'cd /tmp/repo && git push origin main'}}),/canonical command form/)
     await assert.rejects(()=>hooks['tool.execute.before']({sessionID:'s-cmd',tool:'bash'},{args:{command:'npm --registry=https:\/\/registry.npmjs.org publish'}}),/canonical command form/)
@@ -115,7 +115,7 @@ test('parent direct progress can close an explicit analysis obligation without b
   const root=mkdtempSync(join(tmpdir(),'hi-direct-analysis-'))
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
-    await hooks['chat.message']({sessionID:'s-analysis',message:{role:'user',parts:[{type:'text',text:'Fix the parser bug and verify it'}]}},{parts:[]});await assessPluginMission(hooks,'s-analysis',{task_kind:'bug-fix',scope:'local',ambiguity:'resolvable',dependency_class:'independent',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/parser.ts']})
+    await hooks['chat.message']({sessionID:'s-analysis'},{message:{role:'user'},parts:[{type:'text',text:'Fix the parser bug and verify it'}]});await assessPluginMission(hooks,'s-analysis',{task_kind:'bug-fix',scope:'local',ambiguity:'resolvable',dependency_class:'independent',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/parser.ts']})
     const empty=String(await hooks.tool.hi_direct_progress.execute({summary:'   ',obligation_id:'o-analysis'},{sessionID:'s-analysis'}));assert.match(empty,/non-empty bounded summary/)
     const wrong=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Root cause known.',obligation_id:'o-analysis:Root cause understood'},{sessionID:'s-analysis'}));assert.equal(wrong.reason,'unknown-obligation-id');assert.deepEqual(wrong.candidate_ids,['o-analysis','o-implementation'])
     const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Root cause isolated to the parser branch condition.',obligation_id:'o-analysis'},{sessionID:'s-analysis'}));assert.equal(result.status,'RECORDED');assert.deepEqual(result.changed_files,[]);assert.equal(result.completion_ready,false);assert.equal(result.next,'CONTINUE');assert.equal(result.verification_required,true);assert.deepEqual(result.remaining_obligations,[{id:'o-implementation',kind:'implementation'},{id:'o-verification',kind:'verification'}]);assert.deepEqual(result.methodology_needs,[])
@@ -128,7 +128,7 @@ test('direct progress on o-verification returns EVIDENCE_REQUIRED and cannot clo
   const root=mkdtempSync(join(tmpdir(),'hi-direct-verification-owned-'))
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
-    await hooks['chat.message']({sessionID:'s-verification-owned',message:{role:'user',parts:[{type:'text',text:'Verify the focused behavior'}]}},{parts:[]});await assessPluginMission(hooks,'s-verification-owned',{task_kind:'review',required_capabilities:['review','verification'],likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
+    await hooks['chat.message']({sessionID:'s-verification-owned'},{message:{role:'user'},parts:[{type:'text',text:'Verify the focused behavior'}]});await assessPluginMission(hooks,'s-verification-owned',{task_kind:'review',required_capabilities:['review','verification'],likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
     const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'I checked it manually and it is fine.',obligation_id:'o-verification'},{sessionID:'s-verification-owned'}))
     assert.equal(result.status,'EVIDENCE_REQUIRED');assert.equal(result.reason,'verification-is-evidence-owned');assert.equal(result.obligation_id,'o-verification');assert.ok(result.missing_kinds.includes('review-evidence'))
     const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:120},{sessionID:'s-verification-owned'}));const verify=ledger.obligations.find(o=>o.id==='o-verification');assert.equal(verify.status,'open');assert.ok(ledger.events.some(e=>e.type==='verification.direct-progress-rejected'))
@@ -140,7 +140,7 @@ test('review-evidence-only verification handle collapses to direct review after 
   const root=mkdtempSync(join(tmpdir(),'hi-direct-review-alias-'))
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
-    await hooks['chat.message']({sessionID:'s-review-alias',message:{role:'user',parts:[{type:'text',text:'Review src/a.ts read-only for correctness'}]}},{parts:[]});await assessPluginMission(hooks,'s-review-alias',{task_kind:'review',scope:'local',risk:'low',required_capabilities:['review','verification'],likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
+    await hooks['chat.message']({sessionID:'s-review-alias'},{message:{role:'user'},parts:[{type:'text',text:'Review src/a.ts read-only for correctness'}]});await assessPluginMission(hooks,'s-review-alias',{task_kind:'review',scope:'local',risk:'low',required_capabilities:['review','verification'],likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
     const beforeReview=JSON.parse(await hooks.tool.hi_readiness.execute({},{sessionID:'s-review-alias'}));assert.equal(beforeReview.items.find(x=>x.id==='gate-reviewer')?.status,'not-applicable');assert.equal(beforeReview.items.find(x=>x.id==='gate-verification')?.status,'waiting')
     await hooks['tool.execute.after']({sessionID:'s-review-alias',tool:'read',args:{filePath:'src/a.ts'}},'const x = 1')
     const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Reviewed src/a.ts; no correctness findings.',obligation_id:'o-verification'},{sessionID:'s-review-alias'}))
@@ -156,14 +156,14 @@ test('completed mission ignores late host progress events while a new user messa
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
     const sid='s-terminal-host-event'
-    await hooks['chat.message']({sessionID:sid,message:{role:'user',parts:[{type:'text',text:'Review src/a.ts read-only for correctness'}]}},{parts:[]});await assessPluginMission(hooks,sid,{task_kind:'review',scope:'local',risk:'low',required_capabilities:['review','verification'],likely_verification:['review-evidence'],likely_targets:['src/a.ts']})
+    await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text:'Review src/a.ts read-only for correctness'}]});await assessPluginMission(hooks,sid,{task_kind:'review',scope:'local',risk:'low',required_capabilities:['review','verification'],likely_verification:['review-evidence'],likely_targets:['src/a.ts']})
     await hooks['tool.execute.after']({sessionID:sid,tool:'read',args:{filePath:'src/a.ts'}},'const x = 1')
     const done=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Reviewed src/a.ts; no correctness findings.',obligation_id:'o-verification'},{sessionID:sid}));assert.equal(done.next,'STOP')
     const terminal=JSON.parse(await hooks.tool.hi_ledger.execute({limit:200},{sessionID:sid}));const terminalEventCount=terminal.events.length,terminalMissionID=terminal.mission_id
     await hooks.event({event:{type:'session.diff',properties:{sessionID:sid,diff:[{file:'src/a.ts',before:'const x = 1',after:'const x = 2'}]}}})
     await hooks.event({event:{type:'session.idle',properties:{sessionID:sid}}})
     const afterLate=JSON.parse(await hooks.tool.hi_ledger.execute({limit:200},{sessionID:sid}));assert.equal(afterLate.status,'completed');assert.equal(afterLate.mission_id,terminalMissionID);assert.equal(afterLate.events.length,terminalEventCount);assert.ok(afterLate.obligations.every(o=>o.status==='closed'));assert.equal(afterLate.evidence.fresh,true);assert.ok(!afterLate.events.some(e=>e.type==='file.changed'&&e.at>terminal.events.at?.(-1)?.at))
-    await hooks['chat.message']({sessionID:sid,message:{role:'user',parts:[{type:'text',text:'Now update src/a.ts to use x = 2'}]}},{parts:[]})
+    await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text:'Now update src/a.ts to use x = 2'}]})
     const fresh=JSON.parse(await hooks.tool.hi_ledger.execute({limit:200},{sessionID:sid}));assert.notEqual(fresh.mission_id,terminalMissionID);assert.equal(fresh.status,'active')
     await assessPluginMission(hooks,sid,{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['implementation'],likely_verification:[],likely_targets:['src/a.ts']})
     await hooks.event({event:{type:'session.diff',properties:{sessionID:sid,diff:[{file:'src/a.ts',before:'const x = 1',after:'const x = 2'}]}}})
@@ -176,7 +176,7 @@ test('explicit technical verifier never aliases to direct review even after fres
   const root=mkdtempSync(join(tmpdir(),'hi-direct-review-explicit-verifier-'))
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
-    await hooks['chat.message']({sessionID:'s-review-explicit',message:{role:'user',parts:[{type:'text',text:'Review src/a.ts read-only and run `node --test test/a.test.mjs`.'}]}},{parts:[]});await assessPluginMission(hooks,'s-review-explicit',{task_kind:'review',scope:'local',risk:'low',required_capabilities:['review','verification'],likely_verification:['targeted-tests','typecheck'],likely_targets:['src/a.ts']})
+    await hooks['chat.message']({sessionID:'s-review-explicit'},{message:{role:'user'},parts:[{type:'text',text:'Review src/a.ts read-only and run `node --test test/a.test.mjs`.'}]});await assessPluginMission(hooks,'s-review-explicit',{task_kind:'review',scope:'local',risk:'low',required_capabilities:['review','verification'],likely_verification:['targeted-tests','typecheck'],likely_targets:['src/a.ts']})
     await hooks['tool.execute.after']({sessionID:'s-review-explicit',tool:'read',args:{filePath:'src/a.ts'}},'const x = 1')
     const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'The read looks correct.',obligation_id:'o-verification'},{sessionID:'s-review-explicit'}))
     assert.equal(result.status,'EVIDENCE_REQUIRED');assert.deepEqual(result.required_kinds,['targeted-tests']);assert.deepEqual(result.missing_kinds,['targeted-tests'])
@@ -188,7 +188,7 @@ test('direct analysis progress reports implementation as the remaining obligatio
   const root=mkdtempSync(join(tmpdir(),'hi-direct-analysis-after-verify-'))
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
-    await hooks['chat.message']({sessionID:'s-analysis-after-verify',message:{role:'user',parts:[{type:'text',text:'Fix the parser bug and run the focused test'}]}},{parts:[]});await assessPluginMission(hooks,'s-analysis-after-verify',{task_kind:'bug-fix',scope:'local',risk:'low',ambiguity:'resolvable',dependency_class:'independent',required_capabilities:['repository-analysis','implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/parser.ts']})
+    await hooks['chat.message']({sessionID:'s-analysis-after-verify'},{message:{role:'user'},parts:[{type:'text',text:'Fix the parser bug and run the focused test'}]});await assessPluginMission(hooks,'s-analysis-after-verify',{task_kind:'bug-fix',scope:'local',risk:'low',ambiguity:'resolvable',dependency_class:'independent',required_capabilities:['repository-analysis','implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/parser.ts']})
     await hooks['tool.execute.after']({sessionID:'s-analysis-after-verify',tool:'bash',args:{command:'bun test test/parser.test.ts'}},{stdout:'3 pass\n0 fail',metadata:{exit:0}})
     const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Root cause is proven by the focused regression test.',obligation_id:'o-analysis'},{sessionID:'s-analysis-after-verify'}))
     assert.equal(result.status,'RECORDED');assert.equal(result.completion_ready,false);assert.equal(result.next,'CONTINUE');assert.equal(result.verification_required,false)
@@ -202,7 +202,7 @@ test('parent direct progress cannot close implementation from an unrelated chang
   try{
     const c=client();c.session.diff=async()=>({data:[{file:'docs/unrelated.md'}]})
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:c});await hooks.config({})
-    await hooks['chat.message']({sessionID:'s-owned',message:{role:'user',parts:[{type:'text',text:'Update src/a.ts to add a greeting'}]}},{parts:[]}); await assessPluginMission(hooks,'s-owned',{likely_targets:['src/a.ts']})
+    await hooks['chat.message']({sessionID:'s-owned'},{message:{role:'user'},parts:[{type:'text',text:'Update src/a.ts to add a greeting'}]}); await assessPluginMission(hooks,'s-owned',{likely_targets:['src/a.ts']})
     await hooks['tool.execute.before']({sessionID:'s-owned',tool:'write'},{args:{filePath:'docs/unrelated.md'}})
     const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'done'},{sessionID:'s-owned'}))
     assert.equal(result.status,'BLOCKED');assert.deepEqual(result.collateral,['docs/unrelated.md'])
@@ -218,7 +218,7 @@ test('parent direct progress closes multi-target implementation only after every
     const c=client();c.session.diff=async()=>({data:[{file:'src/a.ts'},{file:'src/b.ts'}]})
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:c});await hooks.config({})
     const sid='s-required-targets'
-    await hooks['chat.message']({sessionID:sid,message:{role:'user',parts:[{type:'text',text:'Change src/a.ts and src/b.ts. Both are required. Run node --test test/a.test.ts.'}]}},{parts:[]})
+    await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text:'Change src/a.ts and src/b.ts. Both are required. Run node --test test/a.test.ts.'}]})
     await assessPluginMission(hooks,sid,{task_kind:'implementation',scope:'multi-file',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/a.ts','src/b.ts']})
     await hooks['tool.execute.before']({sessionID:sid,tool:'edit'},{args:{filePath:'src/a.ts'}})
     await hooks['tool.execute.before']({sessionID:sid,tool:'edit'},{args:{filePath:'src/b.ts'}})
@@ -238,7 +238,7 @@ test('parent direct progress uses the OpenCode working directory as local eviden
     for(const args of [['init','-q'],['config','user.name','Hi Test'],['config','user.email','hi@example.invalid'],['add','.gitignore'],['commit','-qm','baseline']]){const r=spawnSync('git',['-C',worktree,...args],{encoding:'utf8'});assert.equal(r.status,0,String(r.stderr??''))}
     const c=client();delete c.session.diff
     const hooks=await HiPlugin({directory,worktree,project:{vcs:'git'},client:c});await hooks.config({})
-    const sid='s-working-root';await hooks['chat.message']({sessionID:sid,message:{role:'user',parts:[{type:'text',text:'Create index.html only'}]}},{parts:[]});await assessPluginMission(hooks,sid,{task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],likely_targets:['index.html'],likely_verification:[]})
+    const sid='s-working-root';await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text:'Create index.html only'}]});await assessPluginMission(hooks,sid,{task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],likely_targets:['index.html'],likely_verification:[]})
     writeFileSync(join(directory,'index.html'),'<!doctype html><canvas></canvas>\n');await hooks['tool.execute.before']({sessionID:sid,tool:'write'},{args:{filePath:join(directory,'index.html')}})
     const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Created the requested single-file HTML.',obligation_id:'o-implementation'},{sessionID:sid}))
     assert.equal(result.status,'RECORDED',JSON.stringify(result));assert.deepEqual(result.changed_files,['index.html'])
@@ -252,7 +252,7 @@ test('parent direct progress normalizes native absolute project paths before own
   try{
     const absolute=join(root,'src','a.ts'),c=client();c.session.diff=async()=>({data:[{file:absolute}]})
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:c});await hooks.config({})
-    await hooks['chat.message']({sessionID:'s-absolute',message:{role:'user',parts:[{type:'text',text:'Update src/a.ts to add a greeting'}]}},{parts:[]});await assessPluginMission(hooks,'s-absolute',{likely_targets:['src/a.ts']})
+    await hooks['chat.message']({sessionID:'s-absolute'},{message:{role:'user'},parts:[{type:'text',text:'Update src/a.ts to add a greeting'}]});await assessPluginMission(hooks,'s-absolute',{likely_targets:['src/a.ts']})
     await hooks['tool.execute.before']({sessionID:'s-absolute',tool:'write'},{args:{filePath:absolute}})
     const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'done'},{sessionID:'s-absolute'}))
     assert.equal(result.status,'RECORDED');assert.deepEqual(result.changed_files,['src/a.ts'])
@@ -271,7 +271,7 @@ test('parent direct ownership reconciles a reverted historical file through read
     for(const args of [['init','-q'],['config','user.name','Hi Test'],['config','user.email','hi@example.invalid'],['add','-A'],['commit','-qm','baseline']]){const r=spawnSync('git',['-C',root,...args],{encoding:'utf8'});assert.equal(r.status,0,String(r.stderr??''))}
     const c=client();delete c.session.diff
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:c});await hooks.config({})
-    await hooks['chat.message']({sessionID:'s-git-fallback',message:{role:'user',parts:[{type:'text',text:'Update src/a.ts to add a greeting'}]}},{parts:[]});await assessPluginMission(hooks,'s-git-fallback',{likely_targets:['src/a.ts']})
+    await hooks['chat.message']({sessionID:'s-git-fallback'},{message:{role:'user'},parts:[{type:'text',text:'Update src/a.ts to add a greeting'}]});await assessPluginMission(hooks,'s-git-fallback',{likely_targets:['src/a.ts']})
     writeFileSync(join(root,'src','a.ts'),'after\n');await hooks['tool.execute.before']({sessionID:'s-git-fallback',tool:'write'},{args:{filePath:'src/a.ts'}})
     writeFileSync(join(root,'docs','temp.md'),'temporary\n');await hooks['tool.execute.before']({sessionID:'s-git-fallback',tool:'write'},{args:{filePath:'docs/temp.md'}})
     writeFileSync(join(root,'docs','temp.md'),'before\n');await hooks['tool.execute.before']({sessionID:'s-git-fallback',tool:'write'},{args:{filePath:'docs/temp.md'}})
@@ -290,7 +290,7 @@ test('parent direct progress stays blocked when every observed mutation was reve
     for(const args of [['init','-q'],['config','user.name','Hi Test'],['config','user.email','hi@example.invalid'],['add','-A'],['commit','-qm','baseline']]){const r=spawnSync('git',['-C',root,...args],{encoding:'utf8'});assert.equal(r.status,0,String(r.stderr??''))}
     const c=client();delete c.session.diff
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:c});await hooks.config({})
-    await hooks['chat.message']({sessionID:'s-fully-reverted',message:{role:'user',parts:[{type:'text',text:'Update src/a.ts'}]}},{parts:[]});await assessPluginMission(hooks,'s-fully-reverted',{likely_targets:['src/a.ts']})
+    await hooks['chat.message']({sessionID:'s-fully-reverted'},{message:{role:'user'},parts:[{type:'text',text:'Update src/a.ts'}]});await assessPluginMission(hooks,'s-fully-reverted',{likely_targets:['src/a.ts']})
     writeFileSync(join(root,'src','a.ts'),'after\n');await hooks['tool.execute.before']({sessionID:'s-fully-reverted',tool:'write'},{args:{filePath:'src/a.ts'}})
     writeFileSync(join(root,'src','a.ts'),'before\n');await hooks['tool.execute.before']({sessionID:'s-fully-reverted',tool:'write'},{args:{filePath:'src/a.ts'}})
     const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'nothing remains'},{sessionID:'s-fully-reverted'}))
@@ -309,7 +309,7 @@ test('bounded DIRECT bugfix completes from current owned diff plus fresh post-mu
     const c=client();delete c.session.diff
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:c});await hooks.config({})
     const sid='s-direct-evidence-completion'
-    await hooks['chat.message']({sessionID:sid,message:{role:'user',parts:[{type:'text',text:'Fix src/a.ts. Run `bun test test/a.test.ts` and stop when it passes.'}]}},{parts:[]})
+    await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text:'Fix src/a.ts. Run `bun test test/a.test.ts` and stop when it passes.'}]})
     await assessPluginMission(hooks,sid,{task_kind:'bug-fix',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests','typecheck'],likely_targets:['src/a.ts'],intent_signals:[]})
     const before=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:sid}));assert.ok(!before.obligations.some(o=>o.id==='o-analysis'));assert.deepEqual(before.obligations.filter(o=>o.kind==='verification').map(o=>o.summary),['targeted-tests'])
     writeFileSync(join(root,'src','a.ts'),'export const value = 2\n');await hooks['tool.execute.before']({sessionID:sid,tool:'edit'},{args:{filePath:'src/a.ts'}})
@@ -327,7 +327,7 @@ test('DIRECT evidence reconciliation cannot substitute an automatically related 
     for(const args of [['init','-q'],['config','user.name','Hi Test'],['config','user.email','hi@example.invalid'],['add','-A'],['commit','-qm','baseline']]){const r=spawnSync('git',['-C',root,...args],{encoding:'utf8'});assert.equal(r.status,0,String(r.stderr??''))}
     const c=client();delete c.session.diff
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:c});await hooks.config({});const sid='s-direct-evidence-required-target'
-    await hooks['chat.message']({sessionID:sid,message:{role:'user',parts:[{type:'text',text:'Update src/a.ts and run node --test src/a.test.ts.'}]}},{parts:[]});await assessPluginMission(hooks,sid,{task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
+    await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text:'Update src/a.ts and run node --test src/a.test.ts.'}]});await assessPluginMission(hooks,sid,{task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
     writeFileSync(join(root,'src','a.test.ts'),'// changed test only\n');await hooks['tool.execute.before']({sessionID:sid,tool:'edit'},{args:{filePath:'src/a.test.ts'}})
     await hooks['tool.execute.after']({sessionID:sid,tool:'bash',args:{command:'node --test src/a.test.ts'}},{stdout:'1 pass\n0 fail',metadata:{exit:0}})
     const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:140},{sessionID:sid}));assert.equal(ledger.status,'active');assert.ok(ledger.obligations.some(o=>o.kind==='implementation'&&o.status==='open'));assert.ok(ledger.obligations.some(o=>o.kind==='verification'&&o.status==='closed'));assert.ok(!ledger.events.some(e=>e.type==='implementation.direct-evidence-reconciled'));assert.ok(ledger.events.some(e=>e.type==='implementation.required-targets-uncovered'&&e.payload?.owner==='parent-direct-evidence'&&e.payload?.missing?.includes('src/a.ts')))
@@ -342,7 +342,7 @@ test('DIRECT evidence reconciliation does not complete when required verificatio
     for(const args of [['init','-q'],['config','user.name','Hi Test'],['config','user.email','hi@example.invalid'],['add','-A'],['commit','-qm','baseline']]){const r=spawnSync('git',['-C',root,...args],{encoding:'utf8'});assert.equal(r.status,0,String(r.stderr??''))}
     const c=client();delete c.session.diff
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:c});await hooks.config({});const sid='s-direct-evidence-ordering'
-    await hooks['chat.message']({sessionID:sid,message:{role:'user',parts:[{type:'text',text:'Fix src/a.ts. Run `bun test test/a.test.ts`.'}]}},{parts:[]});await assessPluginMission(hooks,sid,{task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
+    await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text:'Fix src/a.ts. Run `bun test test/a.test.ts`.'}]});await assessPluginMission(hooks,sid,{task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
     await hooks['tool.execute.after']({sessionID:sid,tool:'bash',args:{command:'bun test test/a.test.ts'}},{stdout:'1 pass',metadata:{exit:0}})
     writeFileSync(join(root,'src','a.ts'),'after\n');await hooks['tool.execute.before']({sessionID:sid,tool:'edit'},{args:{filePath:'src/a.ts'}})
     const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:sid}));assert.notEqual(ledger.status,'completed');assert.ok(ledger.obligations.some(o=>o.kind==='implementation'&&o.status==='open'));assert.ok(ledger.obligations.some(o=>o.kind==='verification'&&o.status==='open'));assert.ok(!ledger.events.some(e=>e.type==='implementation.direct-evidence-reconciled'))
@@ -354,7 +354,7 @@ test('read-only manager cannot close implementation through hi_direct_progress e
   const root=mkdtempSync(join(tmpdir(),'hi-direct-manager-authority-'))
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({hi:{primaryMode:'manager'}})
-    await hooks['chat.message']({sessionID:'s-manager-direct',agent:'manager',message:{role:'user',parts:[{type:'text',text:'Update src/a.ts to add a greeting'}]}},{parts:[]});await assessPluginMission(hooks,'s-manager-direct',{likely_targets:['src/a.ts']})
+    await hooks['chat.message']({sessionID:'s-manager-direct',agent:'manager'},{message:{role:'user'},parts:[{type:'text',text:'Update src/a.ts to add a greeting'}]});await assessPluginMission(hooks,'s-manager-direct',{likely_targets:['src/a.ts']})
     await hooks['tool.execute.before']({sessionID:'s-manager-direct',tool:'write'},{args:{filePath:'src/a.ts'}})
     const result=String(await hooks.tool.hi_direct_progress.execute({summary:'done'},{sessionID:'s-manager-direct'}))
     assert.match(result,/primary role manager lacks canonical repository write authority/)
@@ -370,7 +370,7 @@ test('automatically related sibling test is allowed scope but cannot substitute 
   const c=client();c.session.diff=async()=>({data:[{file:'src/a.test.ts'}]})
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:c});await hooks.config({})
-    await hooks['chat.message']({sessionID:'s-related',message:{role:'user',parts:[{type:'text',text:'Update src/a.ts to add a greeting'}]}},{parts:[]}); await assessPluginMission(hooks,'s-related',{likely_targets:['src/a.ts']})
+    await hooks['chat.message']({sessionID:'s-related'},{message:{role:'user'},parts:[{type:'text',text:'Update src/a.ts to add a greeting'}]}); await assessPluginMission(hooks,'s-related',{likely_targets:['src/a.ts']})
     await hooks['tool.execute.before']({sessionID:'s-related',tool:'write'},{args:{filePath:'src/a.test.ts'}})
     const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'implemented with focused test'},{sessionID:'s-related'}))
     assert.equal(result.status,'BLOCKED');assert.equal(result.reason,'required-targets-uncovered');assert.deepEqual(result.missing_targets,['src/a.ts']);assert.deepEqual(result.changed_files,['src/a.test.ts'])
@@ -384,7 +384,7 @@ test('parent direct ownership ignores an observed file that native current diff 
   const c=client();c.session.diff=async()=>({data:[{file:'src/a.ts'}]})
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:c});await hooks.config({})
-    await hooks['chat.message']({sessionID:'s-reverted',message:{role:'user',parts:[{type:'text',text:'Update src/a.ts to add a greeting'}]}},{parts:[]}); await assessPluginMission(hooks,'s-reverted',{likely_targets:['src/a.ts']})
+    await hooks['chat.message']({sessionID:'s-reverted'},{message:{role:'user'},parts:[{type:'text',text:'Update src/a.ts to add a greeting'}]}); await assessPluginMission(hooks,'s-reverted',{likely_targets:['src/a.ts']})
     await hooks['tool.execute.before']({sessionID:'s-reverted',tool:'write'},{args:{filePath:'src/a.ts'}})
     await hooks['tool.execute.before']({sessionID:'s-reverted',tool:'write'},{args:{filePath:'docs/temp.md'}})
     const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'final owned change only'},{sessionID:'s-reverted'}))
@@ -405,7 +405,7 @@ test('path-unknown bash mutation cannot be used as direct implementation ownersh
   const root=mkdtempSync(join(tmpdir(),'hi-direct-unknown-surface-'))
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
-    await hooks['chat.message']({sessionID:'s-unknown',message:{role:'user',parts:[{type:'text',text:'Update src/a.ts to add a greeting'}]}},{parts:[]}); await assessPluginMission(hooks,'s-unknown',{likely_targets:['src/a.ts']})
+    await hooks['chat.message']({sessionID:'s-unknown'},{message:{role:'user'},parts:[{type:'text',text:'Update src/a.ts to add a greeting'}]}); await assessPluginMission(hooks,'s-unknown',{likely_targets:['src/a.ts']})
     await hooks['tool.execute.before']({sessionID:'s-unknown',tool:'bash'},{args:{command:'printf x > src/a.ts'}})
     const result=String(await hooks.tool.hi_direct_progress.execute({summary:'done'},{sessionID:'s-unknown'}))
     assert.match(result,/changed-file surface is unknown/)
@@ -418,7 +418,7 @@ test('direct progress accepts native nested input shape and a semantic label whe
   const root=mkdtempSync(join(tmpdir(),'hi-direct-native-shape-'))
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
-    await hooks['chat.message']({sessionID:'s',message:{role:'user',parts:[{type:'text',text:'Review src/a.ts for correctness'}]}},{parts:[]}); await assessPluginMission(hooks,'s',{task_kind:'review',required_capabilities:['review'],likely_verification:['review-evidence'],likely_targets:['src/a.ts']})
+    await hooks['chat.message']({sessionID:'s'},{message:{role:'user'},parts:[{type:'text',text:'Review src/a.ts for correctness'}]}); await assessPluginMission(hooks,'s',{task_kind:'review',required_capabilities:['review'],likely_verification:['review-evidence'],likely_targets:['src/a.ts']})
     await hooks['tool.execute.after']({sessionID:'s',tool:'read',args:{filePath:'src/a.ts'}},'const x = 1')
     const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({input:{summary:'Review complete; no findings.',obligation_id:'review-evidence'}},{sessionID:'s'}))
     assert.equal(result.status,'RECORDED')
@@ -433,7 +433,7 @@ test('direct progress cannot close a review obligation that requires an independ
   const root=mkdtempSync(join(tmpdir(),'hi-direct-independent-review-'))
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()});await hooks.config({})
-    await hooks['chat.message']({sessionID:'s-independent',message:{role:'user',parts:[{type:'text',text:'Perform an independent review of src/a.ts for correctness'}]}},{parts:[]}); await assessPluginMission(hooks,'s-independent',{task_kind:'review',required_capabilities:['review','independent-review'],likely_verification:['review-evidence'],likely_targets:['src/a.ts']})
+    await hooks['chat.message']({sessionID:'s-independent'},{message:{role:'user'},parts:[{type:'text',text:'Perform an independent review of src/a.ts for correctness'}]}); await assessPluginMission(hooks,'s-independent',{task_kind:'review',required_capabilities:['review','independent-review'],likely_verification:['review-evidence'],likely_targets:['src/a.ts']})
     await hooks['tool.execute.after']({sessionID:'s-independent',tool:'read',args:{filePath:'src/a.ts'}},'const x = 1')
     const result=String(await hooks.tool.hi_direct_progress.execute({input:{summary:'Parent review complete.',obligation_id:'review-evidence'}},{sessionID:'s-independent'}))
     assert.match(result,/independent reviewer required/)
@@ -479,7 +479,7 @@ test('non-mutating bash can provide review input for a read-only review mission'
   const root=mkdtempSync(join(tmpdir(),'hi-review-bash-'))
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()}); await hooks.config({})
-    await hooks['chat.message']({sessionID:'s-bash-review',message:{role:'user',parts:[{type:'text',text:'Run pwd once and report the current directory. Do not modify files.'}]}},{parts:[]}); await assessPluginMission(hooks,'s-bash-review',{task_kind:'review',required_capabilities:['review'],likely_verification:['review-evidence']})
+    await hooks['chat.message']({sessionID:'s-bash-review'},{message:{role:'user'},parts:[{type:'text',text:'Run pwd once and report the current directory. Do not modify files.'}]}); await assessPluginMission(hooks,'s-bash-review',{task_kind:'review',required_capabilities:['review'],likely_verification:['review-evidence']})
     await hooks['tool.execute.after']({sessionID:'s-bash-review',tool:'bash',args:{command:'pwd'}},{stdout:root,metadata:{exit:0}})
     const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Reported current directory from read-only pwd output.'},{sessionID:'s-bash-review'}))
     assert.equal(result.status,'RECORDED')
@@ -494,7 +494,7 @@ test('native skill content can provide review input for a read-only review missi
   const root=mkdtempSync(join(tmpdir(),'hi-review-skill-'))
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:client()}); await hooks.config({})
-    await hooks['chat.message']({sessionID:'s-skill-review',message:{role:'user',parts:[{type:'text',text:'Load the hi-test-strategy skill and summarize it. Do not modify files.'}]}},{parts:[]}); await assessPluginMission(hooks,'s-skill-review',{task_kind:'review',required_capabilities:['review'],likely_verification:['review-evidence'],intent_signals:['intent.test-strategy']})
+    await hooks['chat.message']({sessionID:'s-skill-review'},{message:{role:'user'},parts:[{type:'text',text:'Load the hi-test-strategy skill and summarize it. Do not modify files.'}]}); await assessPluginMission(hooks,'s-skill-review',{task_kind:'review',required_capabilities:['review'],likely_verification:['review-evidence'],intent_signals:['intent.test-strategy']})
     await hooks['tool.execute.after']({sessionID:'s-skill-review',tool:'skill',args:{name:'hi-test-strategy'}},'<skill_content name="hi-test-strategy">methodology</skill_content>')
     const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Summarized the loaded native skill methodology.'},{sessionID:'s-skill-review'}))
     assert.equal(result.status,'RECORDED')
@@ -510,7 +510,7 @@ test('parent direct methodology remains active until mission-scope fresh verific
   const c=client();c.session.diff=async()=>({data:[{file:'src/a.ts'}]})
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:c});await hooks.config({})
-    await hooks['chat.message']({sessionID:'s-parent-method',message:{role:'user',parts:[{type:'text',text:'Refactor src/a.ts without changing behavior'}]}},{parts:[]}); await assessPluginMission(hooks,'s-parent-method',{likely_targets:['src/a.ts'],likely_verification:['targeted-tests'],intent_signals:['intent.refactor']})
+    await hooks['chat.message']({sessionID:'s-parent-method'},{message:{role:'user'},parts:[{type:'text',text:'Refactor src/a.ts without changing behavior'}]}); await assessPluginMission(hooks,'s-parent-method',{likely_targets:['src/a.ts'],likely_verification:['targeted-tests'],intent_signals:['intent.refactor']})
     await hooks['tool.execute.before']({sessionID:'s-parent-method',tool:'skill',args:{name:'hi-safe-refactoring'}},{args:{name:'hi-safe-refactoring'}})
     await hooks['tool.execute.after']({sessionID:'s-parent-method',tool:'skill',args:{name:'hi-safe-refactoring'}},'loaded methodology')
     await hooks['tool.execute.before']({sessionID:'s-parent-method',tool:'edit',args:{filePath:'src/a.ts'}},{args:{filePath:'src/a.ts'}})
@@ -541,5 +541,5 @@ test('direct progress recovers current Git changed surface after mutating shell 
   const root=mkdtempSync(join(tmpdir(),'hi-shell-surface-'));mkdirSync(join(root,'.opencode'),{recursive:true});writeFileSync(join(root,'.gitignore'),'.opencode/\n')
   for(const args of [['init','-q'],['config','user.name','Hi Test'],['config','user.email','hi@example.invalid'],['add','.gitignore'],['commit','-qm','baseline']]){const r=spawnSync('git',['-C',root,...args],{encoding:'utf8'});assert.equal(r.status,0,String(r.stderr??''))}
   const client={app:{log:async()=>{}},provider:{list:async()=>({data:[]})},session:{diff:async()=>({data:[]}),create:async()=>({data:{id:'child'}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:true})}}
-  try{const hooks=await HiPlugin({directory:root,worktree:root,project:{vcs:'git'},client});await hooks.config({});const sid='shell-surface';await hooks['chat.message']({sessionID:sid,message:{role:'user',parts:[{type:'text',text:'Create index.html only'}]}},{parts:[]});const {assessPluginMission}=await import('./helpers/semantic.mjs');await assessPluginMission(hooks,sid,{task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],likely_targets:['index.html'],likely_verification:[]});await hooks['tool.execute.before']({sessionID:sid,tool:'bash'},{args:{command:"cat > index.html <<'EOF'\n<html></html>\nEOF"}});writeFileSync(join(root,'index.html'),'<html></html>\n');const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Created index.html',obligation_id:'o-implementation'},{sessionID:sid}));assert.equal(result.status,'RECORDED',JSON.stringify(result));assert.deepEqual(result.changed_files,['index.html']);const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:sid}));assert.ok(ledger.events.some(e=>e.type==='implementation.changed-surface-recovered'&&e.payload?.files?.includes('index.html')));await hooks.dispose?.()}finally{rmSync(root,{recursive:true,force:true})}
+  try{const hooks=await HiPlugin({directory:root,worktree:root,project:{vcs:'git'},client});await hooks.config({});const sid='shell-surface';await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text:'Create index.html only'}]});const {assessPluginMission}=await import('./helpers/semantic.mjs');await assessPluginMission(hooks,sid,{task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],likely_targets:['index.html'],likely_verification:[]});await hooks['tool.execute.before']({sessionID:sid,tool:'bash'},{args:{command:"cat > index.html <<'EOF'\n<html></html>\nEOF"}});writeFileSync(join(root,'index.html'),'<html></html>\n');const result=JSON.parse(await hooks.tool.hi_direct_progress.execute({summary:'Created index.html',obligation_id:'o-implementation'},{sessionID:sid}));assert.equal(result.status,'RECORDED',JSON.stringify(result));assert.deepEqual(result.changed_files,['index.html']);const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:sid}));assert.ok(ledger.events.some(e=>e.type==='implementation.changed-surface-recovered'&&e.payload?.files?.includes('index.html')));await hooks.dispose?.()}finally{rmSync(root,{recursive:true,force:true})}
 })

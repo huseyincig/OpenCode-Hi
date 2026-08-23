@@ -12,7 +12,7 @@ import { requireAuthority } from '../dist/runtime/safety/authority.js'
 import { startAssessedMission } from './helpers/semantic.mjs'
 import {authorityProtocolJson} from './helpers/authority.mjs'
 
-function userOutput(text){return{message:{role:'user',parts:[{type:'text',text}]}}}
+function userOutput(text){return{message:{role:'user'},parts:[{type:'text',text}]}}
 
 test('H1 chat transport opens idempotently and awaits one exact bounded response',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'h1-transport','small task')

@@ -11,13 +11,13 @@
       "owner_sha256": "e81c16ad08a0392b4cb5094500dd046a2ef0d9bf731159817fc67d0a4c4c6378",
       "owner_anchor": "approvePendingAuthority(m:MissionState,input:unknown)",
       "proof": "plugin/test/authority-input-split.test.mjs",
-      "proof_sha256": "d3eb04a2e2646f8d86b54422b0afed4a8b07e9e53c8c181ffe8e38a195c6c5fa",
+      "proof_sha256": "83b7a9d2c1fe05d451874baa10c6711634d0c4b95ff2949c939156656aae9913",
       "proof_anchor": "plain approval prose is not an authority response"
     },
     {
       "invariant": "continuation-not-approval",
       "owner": "plugin/src/hooks/chat-message.ts",
-      "owner_sha256": "eeb7ca51d9f0e32593de2769fd4604732be71fd2b95449bc32f8a497e61b7c7a",
+      "owner_sha256": "aa41b8f064611eebd0cc148d7a2b3bceb24c5c3562541ba14154713a7316a133",
       "owner_anchor": "openDecision?.semantic_type==='authority_request'",
       "proof": "plugin/test/threat-model.test.mjs",
       "proof_sha256": "221e2b8e05a39370c874bf637a124828f779578fb7c83b2589412a760ef4d15b",
@@ -56,7 +56,7 @@
       "owner_sha256": "51915d3dbf4d5051e1e60c2cc0726b892f9b97b1d58c8067c0afc03cf59fe175",
       "owner_anchor": "PersistentAuthorityClass",
       "proof": "plugin/test/project-authority-persistence.test.mjs",
-      "proof_sha256": "44811b24d3aea72279145ede5da44f4e40af305b7cdbb82e077463945075ec05",
+      "proof_sha256": "0f99ccca9c666fa542303d09572005462f5fde442fc97b7d59bbdb7778421e9a",
       "proof_anchor": "release-create persistent authority is distinct from git-push authority"
     },
     {
@@ -83,7 +83,7 @@
       "owner_sha256": "51915d3dbf4d5051e1e60c2cc0726b892f9b97b1d58c8067c0afc03cf59fe175",
       "owner_anchor": "applyProjectAuthorityPermissions",
       "proof": "plugin/test/project-authority-persistence.test.mjs",
-      "proof_sha256": "44811b24d3aea72279145ede5da44f4e40af305b7cdbb82e077463945075ec05",
+      "proof_sha256": "0f99ccca9c666fa542303d09572005462f5fde442fc97b7d59bbdb7778421e9a",
       "proof_anchor": "user explicit deny is never weakened by persistent Hi grant"
     },
     {
@@ -110,7 +110,7 @@
       "owner_sha256": "e81c16ad08a0392b4cb5094500dd046a2ef0d9bf731159817fc67d0a4c4c6378",
       "owner_anchor": "AUTHORITY_APPROVAL_TTL_MS",
       "proof": "plugin/test/authority-input-split.test.mjs",
-      "proof_sha256": "d3eb04a2e2646f8d86b54422b0afed4a8b07e9e53c8c181ffe8e38a195c6c5fa",
+      "proof_sha256": "83b7a9d2c1fe05d451874baa10c6711634d0c4b95ff2949c939156656aae9913",
       "proof_anchor": "expired pending authority request rejects even a structurally exact response"
     },
     {
@@ -137,7 +137,7 @@
       "owner_sha256": "41902ba5041b422c45fb7ba998048b2cfe116545b6c7511da989f1b1933a3fb3",
       "owner_anchor": "ExternalCommandKind",
       "proof": "plugin/test/project-authority-persistence.test.mjs",
-      "proof_sha256": "44811b24d3aea72279145ede5da44f4e40af305b7cdbb82e077463945075ec05",
+      "proof_sha256": "0f99ccca9c666fa542303d09572005462f5fde442fc97b7d59bbdb7778421e9a",
       "proof_anchor": "global host ASK remains authoritative for local and external actions even when Hi has a persistent grant"
     },
     {
@@ -164,7 +164,7 @@
       "owner_sha256": "2db615c4592412e6a6aaf91356007746c339530711bf053208940ef2b043a44e",
       "owner_anchor": "kind==='authority-protocol'",
       "proof": "plugin/test/authority-input-split.test.mjs",
-      "proof_sha256": "d3eb04a2e2646f8d86b54422b0afed4a8b07e9e53c8c181ffe8e38a195c6c5fa",
+      "proof_sha256": "83b7a9d2c1fe05d451874baa10c6711634d0c4b95ff2949c939156656aae9913",
       "proof_anchor": "structured exact authority response advances only the matching pending action"
     }
   ],

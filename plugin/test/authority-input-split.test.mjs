@@ -14,8 +14,9 @@ import {join} from 'node:path'
 import {startAssessedMission,applyStructuredFollowup} from './helpers/semantic.mjs'
 import {authorityProtocolJson,authorityProtocolResponse,plantPendingAuthority,plantExecutingAuthority} from './helpers/authority.mjs'
 
-function callHook(hook, sessionID, userText, assistantText='') {
-  return hook({ sessionID, message: { role: 'user', parts: [{ type: 'text', text: userText }] } },{ parts: [{ type: 'text', text: assistantText }] })
+function callHook(hook, sessionID, userText, _assistantText='') {
+  // Exact OpenCode chat.message carries the user message only; assistant prose is not an authority input surface.
+  return hook({ sessionID },{ message: { role: 'user' }, parts: [{ type: 'text', text: userText }] })
 }
 function authorityHook(store){const transport=new ChatHumanDecisionTransport(100);return{transport,hook:createChatMessageHook(store,undefined,transport)}}
 

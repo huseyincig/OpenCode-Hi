@@ -37,7 +37,7 @@ test('M15 diagnosis is read-only and local low-risk diagnosis stays parent-direc
 
 test('M15 diagnosis parent progress requires an evidence-bound falsifiable hypothesis and completes without implementation mutation',async()=>{
   const hooks=await HiPlugin({directory:process.cwd(),worktree:process.cwd(),project:{},client:client()});await hooks.config({})
-  const sid='diag-direct';await hooks['chat.message']({sessionID:sid,message:{role:'user',parts:[{type:'text',text:'Investigate the root cause only; do not fix it.'}]}},{parts:[]})
+  const sid='diag-direct';await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text:'Investigate the root cause only; do not fix it.'}]})
   const assessed=await assessPluginMission(hooks,sid,diagnosis);assert.equal(assessed.task_kind,'diagnosis')
   const proseOnly=JSON.parse(await hooks.tool.hi_direct_progress.execute({obligation_id:'o-analysis',summary:'Root cause proven at the truncation expression and UTF-16 surrogate boundary.'},{sessionID:sid}));assert.equal(proseOnly.status,'EVIDENCE_REQUIRED');assert.equal(proseOnly.reason,'diagnosis-hypothesis-contract-required')
   await hooks['tool.execute.after']({sessionID:sid,tool:'bash',args:{command:'node --test packages/core/test/ripgrep.test.ts'}},{stdout:'1 pass\n0 fail',metadata:{exit:0}})
@@ -57,7 +57,7 @@ test('M15 diagnosis parent progress requires an evidence-bound falsifiable hypot
 
 test('M15 falsified diagnosis hypothesis is retained as evidence-bound history but cannot close analysis',async()=>{
   const hooks=await HiPlugin({directory:process.cwd(),worktree:process.cwd(),project:{},client:client()});await hooks.config({});const sid='diag-falsified'
-  await hooks['chat.message']({sessionID:sid,message:{role:'user',parts:[{type:'text',text:'Investigate the root cause only.'}]}},{parts:[]});await assessPluginMission(hooks,sid,diagnosis)
+  await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text:'Investigate the root cause only.'}]});await assessPluginMission(hooks,sid,diagnosis)
   await hooks['tool.execute.after']({sessionID:sid,tool:'bash',args:{command:'node --test packages/core/test/ripgrep.test.ts'}},{stdout:'1 pass\n0 fail',metadata:{exit:0}})
   const ledger=JSON.parse(await hooks.tool.hi_ledger.execute({limit:100},{sessionID:sid})),proof=ledger.evidence.items.find(e=>e.kind==='targeted-tests');assert.ok(proof?.id)
   const out=JSON.parse(await hooks.tool.hi_direct_progress.execute({obligation_id:'o-analysis',summary:'The candidate cause was refuted.',hypothesis:'The regex branch alone causes the failure.',falsifier:'The focused case passes while that branch remains active.',diagnostic_outcome:'FALSIFIED',diagnostic_evidence_refs:proof.id},{sessionID:sid}))

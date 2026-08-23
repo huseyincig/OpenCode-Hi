@@ -27,11 +27,11 @@ test('pure greeting becomes provisional until semantic assessment marks it non-m
   assert.equal(m.identity.status,'completed')
 })
 
-test('legacy input.message fixture remains supported for older hosts/tests', async()=>{
+test('non-contract input.message payload cannot create a mission on exact OpenCode 1.18.21', async()=>{
   const store=new MissionStore(process.cwd())
   const hook=createChatMessageHook(store)
-  await hook({sessionID:'legacy',message:{role:'user',parts:[{type:'text',text:'fix the README typo'}]}},{parts:[]})
-  assert.ok(store.get('legacy'))
+  await hook({sessionID:'stale-shape',message:{role:'user',parts:[{type:'text',text:'fix the README typo'}]}},{parts:[]})
+  assert.equal(store.get('stale-shape'),undefined)
 })
 
 

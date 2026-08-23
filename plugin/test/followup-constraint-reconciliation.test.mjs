@@ -15,7 +15,7 @@ function initial(store,id,overrides={}){
   store.applyInitialSemanticAssessment(id,{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:['src/auth.ts'],intent_signals:[],suppressed_intent_signals:[],...overrides})
   return m
 }
-function callHook(hook,sessionID,userText){return hook({sessionID,message:{role:'user',parts:[{type:'text',text:userText}]}},{parts:[]})}
+function callHook(hook,sessionID,userText){return hook({sessionID},{message:{role:'user'},parts:[{type:'text',text:userText}]})}
 
 test('chat hook opens a semantic follow-up revision without classifying prose',async()=>{
   const store=new MissionStore(),m=initial(store,'followup-pending')

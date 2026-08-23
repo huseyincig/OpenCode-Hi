@@ -64,7 +64,7 @@ test('plugin session.idle path converts DONE to FIX_REQUIRED when native diff ex
   let hooks
   try{
     hooks=await HiPlugin({directory:root,worktree:root,project:{},client});const config={};await hooks.config(config)
-    await hooks['chat.message']({sessionID:'parent-native',message:{role:'user',parts:[{type:'text',text:'opaque task'}]}},{parts:[]});await assessPluginMission(hooks,'parent-native',{likely_targets:['src/a.ts']})
+    await hooks['chat.message']({sessionID:'parent-native'},{message:{role:'user'},parts:[{type:'text',text:'opaque task'}]});await assessPluginMission(hooks,'parent-native',{likely_targets:['src/a.ts']})
     const started=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'change a',role:'coder',category:'quick',scope:['src/a.ts']},{sessionID:'parent-native'}))
     diffs=[{file:'src/a.ts',before:'a',after:'b',additions:1,deletions:1},{file:'src/hidden.ts',before:'x',after:'y',additions:1,deletions:1}]
     await hooks.event({event:{type:'session.idle',properties:{sessionID:'child-native'}}})

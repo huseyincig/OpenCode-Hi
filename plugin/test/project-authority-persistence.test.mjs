@@ -74,7 +74,7 @@ test('plugin persists native always reply and applies it on the next project boo
     const first={permission:{bash:{'*':'allow'}}}
     await hooks.config(first)
     assert.equal(first.permission.bash['git push *'],'ask')
-    await hooks['chat.message']({sessionID:'s',message:{role:'user',parts:[{type:'text',text:'release and push'}]}},{parts:[]})
+    await hooks['chat.message']({sessionID:'s'},{message:{role:'user'},parts:[{type:'text',text:'release and push'}]})
     await hooks.event({event:{type:'permission.asked',properties:{id:'per-1',sessionID:'s',permission:'bash',patterns:['git push origin *'],always:['git push origin *']}}})
     await hooks.event({event:{type:'permission.replied',properties:{id:'per-1',sessionID:'s',response:'always'}}})
     await hooks.dispose?.()

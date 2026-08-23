@@ -29,7 +29,7 @@
       "owner_sha256": "669f3cdcfc0d2eb1a39686af77d8f84a8f37cfdc07bc6c831def91cee690c293",
       "owner_anchor": "worker.native_state_hash=stateHash",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
-      "proof_sha256": "7327fe78731d41853b8d3897794cc5955395cd98e08f662c8bb1af86edd6d71e",
+      "proof_sha256": "dfc5518039f30d731b7e5157beaa2a3949a0f4f37179262fdf20950ad95707f9",
       "proof_anchor": "PROMPT B final native diff deterministically binds worker evidence source-state identity"
     },
     {
@@ -38,7 +38,7 @@
       "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
       "owner_anchor": "native.diff.mismatch",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
-      "proof_sha256": "7327fe78731d41853b8d3897794cc5955395cd98e08f662c8bb1af86edd6d71e",
+      "proof_sha256": "dfc5518039f30d731b7e5157beaa2a3949a0f4f37179262fdf20950ad95707f9",
       "proof_anchor": "plugin session.idle path converts DONE to FIX_REQUIRED when native diff exposes an undeclared file"
     },
     {

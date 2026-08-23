@@ -28,8 +28,7 @@ test('runtime inventory -> project routing -> child uses effective per-role mode
     const config={}
     await hooks.config(config)
     await hooks['chat.message'](
-      {sessionID:'parent-1',message:{role:'user',parts:[{type:'text',text:'fix the login bug and test it'}]}},
-      {parts:[]},
+      {sessionID:'parent-1'},{message:{role:'user'},parts:[{type:'text',text:'fix the login bug and test it'}]},
     ); await assessPluginMission(hooks,'parent-1',{task_kind:'bug-fix',risk:'low',required_capabilities:['implementation'],likely_verification:['targeted-tests']})
 
     assert.equal(existsSync(join(dir,'.opencode','hi','policy','routing.json')),false,'runtime inventory must not silently persist project policy')

@@ -1,8 +1,8 @@
 import { approvePendingAuthority, resolveUncertainAuthority } from '../runtime/safety/authority.js';
 import { isHiPrimaryRole } from '../runtime/roles/catalog.js';
 import { syncHumanDecisionTransport } from '../runtime/human-decision/transport.js';
-function isHiInternal(output) { const parts = output?.parts ?? output?.message?.parts ?? []; return parts.some((p) => p?.type === 'text' && (p?.metadata?.hiInternalContinuation === true || (p?.synthetic === true && p?.metadata?.hiInternalContinuation))); }
-function extractText(value) { const parts = value?.parts ?? value?.message?.parts ?? []; return parts.filter((p) => p?.type === 'text' && typeof p.text === 'string').map((p) => p.text).join('\n').trim(); }
+function isHiInternal(output) { const parts = Array.isArray(output?.parts) ? output.parts : []; return parts.some((p) => p?.type === 'text' && (p?.metadata?.hiInternalContinuation === true || (p?.synthetic === true && p?.metadata?.hiInternalContinuation))); }
+function extractText(output) { const parts = Array.isArray(output?.parts) ? output.parts : []; return parts.filter((p) => p?.type === 'text' && typeof p.text === 'string').map((p) => p.text).join('\n').trim(); }
 function normalizeNativeUserText(text) {
     const trimmed = text.trim();
     if (trimmed.length >= 2 && trimmed[0] === trimmed.at(-1)) {
@@ -19,15 +19,11 @@ function normalizeNativeUserText(text) {
     }
     return trimmed;
 }
-function extractNativeUserText(input, output) {
-    // OpenCode 1.18.x chat.message exposes the current user message on output.message/output.parts.
+function extractNativeUserText(output) {
+    // Exact OpenCode 1.18.21 chat.message contract: user identity is output.message; text parts are output.parts.
     // CLI `opencode run` may wrap the entire text in one JSON-style quote layer; normalize only that outer layer.
-    // Keep input.message only as a compatibility fallback for older hosts and unit fixtures.
-    if (output?.message?.role === 'user' || output?.role === 'user')
+    if (output?.message?.role === 'user')
         return normalizeNativeUserText(extractText(output));
-    const legacy = input?.message;
-    if (legacy?.role === 'user' || legacy?.role === undefined)
-        return normalizeNativeUserText(extractText(legacy));
     return '';
 }
 export function createChatMessageHook(store, onFollowupPending, humanDecisionTransport) {
@@ -37,7 +33,7 @@ export function createChatMessageHook(store, onFollowupPending, humanDecisionTra
             return;
         if (isHiInternal(output))
             return;
-        const userText = extractNativeUserText(input, output);
+        const userText = extractNativeUserText(output);
         if (!userText)
             return;
         const agent = typeof input?.agent === 'string' ? input.agent : '';

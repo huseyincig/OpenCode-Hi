@@ -20,7 +20,7 @@
       "owner_sha256": "ea83119c25739539ff915339271c1bad899a1926f21f3fbec761aaeefe0648ec",
       "owner_anchor": "reconcileModelExecutionIdentity",
       "proof": "plugin/test/main-prompt-model-evidence.test.mjs",
-      "proof_sha256": "9ecc2eeff7484d3f34473c566ed17df75cb960c1766b36a352aa845e6ca321f7",
+      "proof_sha256": "f944aaf106bd8b28a9e0c02898b8c9b3e4affb8ce813ae755e2b9b2c92e56620",
       "proof_anchor": "projected model mismatch is a first-class blocker even when observed model matches selection"
     },
     {
@@ -29,7 +29,7 @@
       "owner_sha256": "669f3cdcfc0d2eb1a39686af77d8f84a8f37cfdc07bc6c831def91cee690c293",
       "owner_anchor": "identity.status==='model-mismatch'",
       "proof": "plugin/test/main-prompt-model-evidence.test.mjs",
-      "proof_sha256": "9ecc2eeff7484d3f34473c566ed17df75cb960c1766b36a352aa845e6ca321f7",
+      "proof_sha256": "f944aaf106bd8b28a9e0c02898b8c9b3e4affb8ce813ae755e2b9b2c92e56620",
       "proof_anchor": "effective model mismatch blocks DONE and preserves the obligation for reconciliation"
     },
     {
@@ -101,7 +101,7 @@
       "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
       "owner_anchor": "reconcileMethodologyExits",
       "proof": "plugin/test/forensic-hardening.test.mjs",
-      "proof_sha256": "cefbddd78d222690b3a34681e406c42bed30267f4fdb6a6f494522b5fa334a9c",
+      "proof_sha256": "02e2c7ccae26a29e5ed49397962906ad9acd33b49badfb2d705f13539aab34d1",
       "proof_anchor": "parent direct methodology remains active until mission-scope fresh verification satisfies its exit contract"
     },
     {

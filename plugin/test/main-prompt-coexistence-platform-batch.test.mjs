@@ -17,7 +17,7 @@ function writeSkill(root,name){const d=join(root,name);mkdirSync(d,{recursive:tr
 
 test('native project context is worktree-first and plugin state/config persist in the active worktree',async()=>{
   const directory=temp('hi-main-checkout-'),worktree=temp('hi-worktree-')
-  try{writeFileSync(join(directory,'package.json'),JSON.stringify({name:'wrong-root'}));writeFileSync(join(worktree,'package.json'),JSON.stringify({name:'active-worktree',scripts:{test:'node --test'}}));const repo=collectRepoContext(directory,{directory,worktree,project:{name:'native-project',vcs:'git'}});assert.equal(repo.root,worktree);const c=client();c.provider.list=async()=>({data:[{id:'opencode-go',models:[{id:'minimax-m3',write:true}]}]});const hooks=await HiPlugin({directory,worktree,project:{name:'native-project',vcs:'git'},client:c});const cfg={};await hooks.config(cfg);await hooks['chat.message']({sessionID:'worktree-parent',message:{role:'user',parts:[{type:'text',text:'fix the README typo'}]}},{parts:[]});assert.equal(existsSync(join(worktree,'.opencode','hi','policy','routing.json')),false);assert.equal(existsSync(join(directory,'.opencode','hi','policy','routing.json')),false);assert.equal(existsSync(runtimeStatePath(worktree)),true);await hooks.dispose?.()}finally{rmSync(directory,{recursive:true,force:true});rmSync(worktree,{recursive:true,force:true})}
+  try{writeFileSync(join(directory,'package.json'),JSON.stringify({name:'wrong-root'}));writeFileSync(join(worktree,'package.json'),JSON.stringify({name:'active-worktree',scripts:{test:'node --test'}}));const repo=collectRepoContext(directory,{directory,worktree,project:{name:'native-project',vcs:'git'}});assert.equal(repo.root,worktree);const c=client();c.provider.list=async()=>({data:[{id:'opencode-go',models:[{id:'minimax-m3',write:true}]}]});const hooks=await HiPlugin({directory,worktree,project:{name:'native-project',vcs:'git'},client:c});const cfg={};await hooks.config(cfg);await hooks['chat.message']({sessionID:'worktree-parent'},{message:{role:'user'},parts:[{type:'text',text:'fix the README typo'}]});assert.equal(existsSync(join(worktree,'.opencode','hi','policy','routing.json')),false);assert.equal(existsSync(join(directory,'.opencode','hi','policy','routing.json')),false);assert.equal(existsSync(runtimeStatePath(worktree)),true);await hooks.dispose?.()}finally{rmSync(directory,{recursive:true,force:true});rmSync(worktree,{recursive:true,force:true})}
 })
 
 test('Hi config hook registers packaged native skill path without depending on another plugin',async()=>{
@@ -45,7 +45,7 @@ test('non-git filesystem-root worktree sentinel does not collapse Hi state/confi
     const c=client();c.provider.list=async()=>({data:[{id:'opencode-go',models:[{id:'minimax-m3',write:true}]}]})
     const hooks=await HiPlugin({directory,worktree:sentinel,project:{name:'nongit-project'},client:c})
     const cfg={};await hooks.config(cfg)
-    await hooks['chat.message']({sessionID:'nongit-parent',message:{role:'user',parts:[{type:'text',text:'fix the README typo'}]}},{parts:[]})
+    await hooks['chat.message']({sessionID:'nongit-parent'},{message:{role:'user'},parts:[{type:'text',text:'fix the README typo'}]})
     assert.equal(existsSync(join(directory,'.opencode','hi','policy','routing.json')),false)
     assert.equal(existsSync(join(directory,'.opencode','hi','runtime','runtime-state.json')),false)
     assert.equal(existsSync(runtimeStatePath(directory)),true)
@@ -63,7 +63,7 @@ test('plugin-wired worker skill resolution preserves Hi-native provider provenan
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{name:'native-provider'},client:c})
     const cfg={};await hooks.config(cfg)
-    await hooks['chat.message']({sessionID:'native-provider-parent',message:{role:'user',parts:[{type:'text',text:'fix the parser bug with TDD'}]}},{parts:[]}); await assessPluginMission(hooks,'native-provider-parent',{task_kind:'bug-fix',required_capabilities:['implementation'],likely_targets:['src/parser.ts'],intent_signals:['intent.tdd']})
+    await hooks['chat.message']({sessionID:'native-provider-parent'},{message:{role:'user'},parts:[{type:'text',text:'fix the parser bug with TDD'}]}); await assessPluginMission(hooks,'native-provider-parent',{task_kind:'bug-fix',required_capabilities:['implementation'],likely_targets:['src/parser.ts'],intent_signals:['intent.tdd']})
     const start=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'fix the parser bug with TDD',role:'coder',category:'bug-fix',scope:'Only src/parser.ts may be modified.',dependencies:'none'},{sessionID:'native-provider-parent'}))
     assert.ok(start.methodologies.includes('hi-test-driven-development'))
     const listed=JSON.parse(await hooks.tool.hi_task_list.execute({},{sessionID:'native-provider-parent'}));assert.deepEqual(listed.find(x=>x.task.id===start.task_id)?.task.dependencies,[]);assert.deepEqual(listed.find(x=>x.task.id===start.task_id)?.task.scope,['src/parser.ts'])
@@ -94,7 +94,7 @@ test('hi_task_start scope prose fails closed when it ambiguously names multiple 
   const c={app:{log:async()=>{}},provider:{list:async()=>({data:[]})},session:{create:async()=>({data:{id:`scope-child-${++child}`}}),promptAsync:async()=>({data:{}}),diff:async()=>({data:[]}),abort:async()=>({data:{}})}}
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{name:'scope-ambiguous'},client:c});const cfg={};await hooks.config(cfg)
-    await hooks['chat.message']({sessionID:'scope-parent',message:{role:'user',parts:[{type:'text',text:'fix one bounded file'}]}},{parts:[]});await assessPluginMission(hooks,'scope-parent',{task_kind:'bug-fix',required_capabilities:['implementation']})
+    await hooks['chat.message']({sessionID:'scope-parent'},{message:{role:'user'},parts:[{type:'text',text:'fix one bounded file'}]});await assessPluginMission(hooks,'scope-parent',{task_kind:'bug-fix',required_capabilities:['implementation']})
     const out=await hooks.tool.hi_task_start.execute({objective:'bounded change',role:'coder',scope:'Only src/a.ts may be modified; do not modify src/b.ts'},{sessionID:'scope-parent'})
     assert.match(String(out),/scope prose must identify exactly one bounded project-relative path/i)
     const listed=JSON.parse(await hooks.tool.hi_task_list.execute({},{sessionID:'scope-parent'}));assert.deepEqual(listed,[]);assert.equal(child,0)
@@ -108,7 +108,7 @@ test('hi_task_start canonicalizes semicolon-separated multi-path scope before sc
   const c={app:{log:async()=>{}},provider:{list:async()=>({data:[]})},session:{create:async()=>({data:{id:`scope-child-${++child}`}}),promptAsync:async()=>({data:{}}),diff:async()=>({data:[]}),abort:async()=>({data:{}})}}
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{name:'scope-semicolon'},client:c});const cfg={};await hooks.config(cfg)
-    await hooks['chat.message']({sessionID:'scope-parent-semicolon',message:{role:'user',parts:[{type:'text',text:'fix two bounded files'}]}},{parts:[]});await assessPluginMission(hooks,'scope-parent-semicolon',{task_kind:'implementation',scope:'multi-file',ambiguity:'resolvable',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation']})
+    await hooks['chat.message']({sessionID:'scope-parent-semicolon'},{message:{role:'user'},parts:[{type:'text',text:'fix two bounded files'}]});await assessPluginMission(hooks,'scope-parent-semicolon',{task_kind:'implementation',scope:'multi-file',ambiguity:'resolvable',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation']})
     const first=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'bounded A',role:'coder',scope:'src/alpha.js;src/shared.js'},{sessionID:'scope-parent-semicolon'}))
     const second=JSON.parse(await hooks.tool.hi_task_start.execute({objective:'bounded B',role:'coder',scope:'src/beta.js;src/shared.js'},{sessionID:'scope-parent-semicolon'}))
     assert.ok(first.task_id);assert.equal(second.readiness,'WAIT');const listed=JSON.parse(await hooks.tool.hi_task_list.execute({},{sessionID:'scope-parent-semicolon'}));assert.equal(listed.length,2)
@@ -124,7 +124,7 @@ test('hi_task_start accepts OpenCode nested input shape without losing role cate
   const c={app:{log:async()=>{}},provider:{list:async()=>({data:[]})},session:{create:async()=>({data:{id:`nested-child-${++child}`}}),promptAsync:async()=>({data:{}}),diff:async()=>({data:[]}),abort:async()=>({data:{}})}}
   try{
     const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:c});await hooks.config({})
-    const sid='nested-parent';await hooks['chat.message']({sessionID:sid,message:{role:'user',parts:[{type:'text',text:'Change src/a.ts'}]}},{parts:[]});await assessPluginMission(hooks,sid,{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['implementation'],likely_verification:[],likely_targets:['src/a.ts']})
+    const sid='nested-parent';await hooks['chat.message']({sessionID:sid},{message:{role:'user'},parts:[{type:'text',text:'Change src/a.ts'}]});await assessPluginMission(hooks,sid,{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['implementation'],likely_verification:[],likely_targets:['src/a.ts']})
     const out=JSON.parse(await hooks.tool.hi_task_start.execute({input:{objective:'bounded change',role:'coder',category:'quick',scope:'src/a.ts',obligation_ids:'o-implementation'}},{sessionID:sid}))
     assert.ok(out.task_id);assert.equal(out.control.action,'WAIT')
     const listed=JSON.parse(await hooks.tool.hi_task_list.execute({},{sessionID:sid})),task=listed.find(x=>x.task.id===out.task_id)?.task

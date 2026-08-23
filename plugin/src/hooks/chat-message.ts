@@ -3,8 +3,8 @@ import { approvePendingAuthority,resolveUncertainAuthority } from '../runtime/sa
 import { isHiPrimaryRole } from '../runtime/roles/catalog.js'
 import type { ChatHumanDecisionTransport } from '../runtime/human-decision/transport.js'
 import { syncHumanDecisionTransport } from '../runtime/human-decision/transport.js'
-function isHiInternal(output:any):boolean{const parts=output?.parts??output?.message?.parts??[];return parts.some((p:any)=>p?.type==='text'&&(p?.metadata?.hiInternalContinuation===true||(p?.synthetic===true&&p?.metadata?.hiInternalContinuation))) }
-function extractText(value:any):string{const parts=value?.parts??value?.message?.parts??[];return parts.filter((p:any)=>p?.type==='text'&&typeof p.text==='string').map((p:any)=>p.text).join('\n').trim()}
+function isHiInternal(output:any):boolean{const parts=Array.isArray(output?.parts)?output.parts:[];return parts.some((p:any)=>p?.type==='text'&&(p?.metadata?.hiInternalContinuation===true||(p?.synthetic===true&&p?.metadata?.hiInternalContinuation))) }
+function extractText(output:any):string{const parts=Array.isArray(output?.parts)?output.parts:[];return parts.filter((p:any)=>p?.type==='text'&&typeof p.text==='string').map((p:any)=>p.text).join('\n').trim()}
 function normalizeNativeUserText(text:string):string{
   const trimmed=text.trim()
   if(trimmed.length>=2&&trimmed[0]===trimmed.at(-1)){
@@ -13,19 +13,16 @@ function normalizeNativeUserText(text:string):string{
   }
   return trimmed
 }
-function extractNativeUserText(input:any,output:any):string{
-  // OpenCode 1.18.x chat.message exposes the current user message on output.message/output.parts.
+function extractNativeUserText(output:any):string{
+  // Exact OpenCode 1.18.21 chat.message contract: user identity is output.message; text parts are output.parts.
   // CLI `opencode run` may wrap the entire text in one JSON-style quote layer; normalize only that outer layer.
-  // Keep input.message only as a compatibility fallback for older hosts and unit fixtures.
-  if(output?.message?.role==='user'||output?.role==='user')return normalizeNativeUserText(extractText(output))
-  const legacy=input?.message
-  if(legacy?.role==='user'||legacy?.role===undefined)return normalizeNativeUserText(extractText(legacy))
+  if(output?.message?.role==='user')return normalizeNativeUserText(extractText(output))
   return ''
 }
 export function createChatMessageHook(store:MissionStore,onFollowupPending?: (sessionID:string,text:string)=>Promise<void>,humanDecisionTransport?:ChatHumanDecisionTransport){return async(input:any,output:any)=>{
   const sid=input?.sessionID;if(!sid)return
   if(isHiInternal(output))return
-  const userText=extractNativeUserText(input,output);if(!userText)return
+  const userText=extractNativeUserText(output);if(!userText)return
   const agent=typeof input?.agent==='string'?input.agent:''
   const observedPrimary=isHiPrimaryRole(agent)?agent:undefined
   // Host agent identity is not Hi execution-policy ownership. A user may keep OpenCode's

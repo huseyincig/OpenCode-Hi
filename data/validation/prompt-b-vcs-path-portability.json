@@ -15,7 +15,7 @@
       "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
       "owner_anchor": "user-diff.preserved",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
-      "proof_sha256": "7327fe78731d41853b8d3897794cc5955395cd98e08f662c8bb1af86edd6d71e",
+      "proof_sha256": "dfc5518039f30d731b7e5157beaa2a3949a0f4f37179262fdf20950ad95707f9",
       "proof_anchor": "pre-existing user dirty file unchanged from worker baseline"
     },
     {
@@ -45,7 +45,7 @@
       "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
       "owner_anchor": "native.diff.reconciled",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
-      "proof_sha256": "7327fe78731d41853b8d3897794cc5955395cd98e08f662c8bb1af86edd6d71e",
+      "proof_sha256": "dfc5518039f30d731b7e5157beaa2a3949a0f4f37179262fdf20950ad95707f9",
       "proof_anchor": "observed native write omitted from WorkerResult forces reconciliation"
     },
     {
@@ -85,7 +85,7 @@
       "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
       "owner_anchor": "diff.cleanup.verified",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
-      "proof_sha256": "7327fe78731d41853b8d3897794cc5955395cd98e08f662c8bb1af86edd6d71e",
+      "proof_sha256": "dfc5518039f30d731b7e5157beaa2a3949a0f4f37179262fdf20950ad95707f9",
       "proof_anchor": "native diff must prove collateral reverted before cleanup blocker can close"
     },
     {
@@ -95,7 +95,7 @@
       "owner_sha256": "bf299f887e618d824b9099281cd6e9e6321ff942faec9bba95d548d3e27c964b",
       "owner_anchor": "rollback",
       "proof": "plugin/test/forensic-hardening.test.mjs",
-      "proof_sha256": "cefbddd78d222690b3a34681e406c42bed30267f4fdb6a6f494522b5fa334a9c",
+      "proof_sha256": "02e2c7ccae26a29e5ed49397962906ad9acd33b49badfb2d705f13539aab34d1",
       "proof_anchor": "command rollback with unknown exit cannot close rollback gate"
     },
     {
@@ -135,7 +135,7 @@
       "owner_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
       "owner_anchor": "never use git checkout/reset/restore",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
-      "proof_sha256": "7327fe78731d41853b8d3897794cc5955395cd98e08f662c8bb1af86edd6d71e",
+      "proof_sha256": "dfc5518039f30d731b7e5157beaa2a3949a0f4f37179262fdf20950ad95707f9",
       "proof_anchor": "never use git checkout\\/reset\\/restore"
     },
     {
@@ -155,7 +155,7 @@
       "owner_sha256": "863617a6ee01a66bbbcb04e4eae07c7ab3fdf565d6e02ace05817adc45aea470",
       "owner_anchor": "resolve(projectRoot)",
       "proof": "plugin/test/main-prompt-coexistence-platform-batch.test.mjs",
-      "proof_sha256": "4924eacef79ff1b920899c9b55c1eb73f24232f9ec08e5a06c9778cfaecd699d",
+      "proof_sha256": "51a83d32a1368243e544e5b9ed658cd4a7ba2ca6578541116386bbb0843edb4a",
       "proof_anchor": "worktree-first"
     },
     {
