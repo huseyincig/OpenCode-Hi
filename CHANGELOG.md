@@ -3,6 +3,7 @@
 All notable changes to OpenCode-Hi are documented here.
 
 ## Unreleased
+- Fail closed on child-session cancellation when OpenCode still reports a pending native permission for that exact child after abort acknowledgement; Hi never auto-replies to the permission, and unrelated sessions remain unaffected.
 - Projects Hi browser screenshots into OpenCode 1.18.21 native image tool-result attachments while retaining `hi-artifact:` as opaque canonical provenance. Screenshot bytes remain owned by `ContextArtifactStore`, are re-read only through hash/size-validated canonical storage, and visual-worker handoffs now explicitly forbid treating artifact refs as filesystem paths.
 - Fixes visual verification admission when a semantic assessment requests `visual-check` but omits the redundant `visual-qa` capability. Current `dev` now derives `visual-qa` mechanically from the canonical visual verification contract, so required browser/visual evidence routes to the bounded `visual-qa` child instead of falling through to `route=none`.
 - Bounds the process-local first-use settings onboarding dedupe to 128 recent sessions. Same-session onboarding remains one-shot in normal use, while long-lived OpenCode processes no longer retain every historical onboarding session ID indefinitely.

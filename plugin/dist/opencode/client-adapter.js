@@ -160,12 +160,35 @@ export async function readSessionRuntimeStatus(client, sessionID, endpoint = {})
     }
     return 'unknown';
 }
+async function serverPendingPermissionForSession(base, sessionID, directory) {
+    try {
+        const url = new URL(`${base}/permission`);
+        if (directory)
+            url.searchParams.set('directory', directory);
+        const response = await fetch(url, { method: 'GET', headers: lifecycleHeaders(directory), signal: AbortSignal.timeout(5000) });
+        if (!response.ok)
+            return undefined;
+        const pending = dataOf(await response.json());
+        if (!Array.isArray(pending))
+            return undefined;
+        return pending.some(item => String(item?.sessionID ?? item?.sessionId ?? '') === sessionID);
+    }
+    catch {
+        return undefined;
+    }
+}
+async function serverAbortSettled(base, sessionID, directory) {
+    const pending = await serverPendingPermissionForSession(base, sessionID, directory);
+    return pending !== true;
+}
 async function reconcileServerAbort(base, sessionID, directory) {
     try {
         const response = await fetch(`${base}/session/status`, { method: 'GET', headers: lifecycleHeaders(directory), signal: AbortSignal.timeout(5000) });
         if (!response.ok)
             return false;
-        return sessionIdleFromStatus(await response.json(), sessionID) === true;
+        if (sessionIdleFromStatus(await response.json(), sessionID) !== true)
+            return false;
+        return serverAbortSettled(base, sessionID, directory);
     }
     catch {
         return false;
@@ -190,7 +213,7 @@ export async function abortSession(client, sessionID, endpoint = {}) {
             if (response.ok) {
                 try {
                     if (await response.json() === true)
-                        return 'server';
+                        return await serverAbortSettled(base, sessionID, endpoint.directory) ? 'server' : 'unavailable';
                 }
                 catch { }
             }

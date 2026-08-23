@@ -88,11 +88,25 @@ export async function readSessionRuntimeStatus(client:OpenCodeClient,sessionID:s
   }
   return'unknown'
 }
+async function serverPendingPermissionForSession(base:string,sessionID:string,directory?:string):Promise<boolean|undefined>{
+  try{
+    const url=new URL(`${base}/permission`);if(directory)url.searchParams.set('directory',directory)
+    const response=await fetch(url,{method:'GET',headers:lifecycleHeaders(directory),signal:AbortSignal.timeout(5000)})
+    if(!response.ok)return undefined
+    const pending=dataOf<any>(await response.json());if(!Array.isArray(pending))return undefined
+    return pending.some(item=>String(item?.sessionID??item?.sessionId??'')===sessionID)
+  }catch{return undefined}
+}
+async function serverAbortSettled(base:string,sessionID:string,directory?:string):Promise<boolean>{
+  const pending=await serverPendingPermissionForSession(base,sessionID,directory)
+  return pending!==true
+}
 async function reconcileServerAbort(base:string,sessionID:string,directory?:string):Promise<boolean>{
   try{
     const response=await fetch(`${base}/session/status`,{method:'GET',headers:lifecycleHeaders(directory),signal:AbortSignal.timeout(5000)})
     if(!response.ok)return false
-    return sessionIdleFromStatus(await response.json(),sessionID)===true
+    if(sessionIdleFromStatus(await response.json(),sessionID)!==true)return false
+    return serverAbortSettled(base,sessionID,directory)
   }catch{return false}
 }
 async function reconcileClientAbort(edge:any,sessionID:string):Promise<boolean>{
@@ -105,7 +119,7 @@ export async function abortSession(client:OpenCodeClient,sessionID:string,endpoi
     const base=endpoint.serverUrl.replace(/\/$/,'')
     try{
       const response=await fetch(`${base}/session/${encodeURIComponent(sessionID)}/abort`,{method:'POST',headers:lifecycleHeaders(endpoint.directory),signal:AbortSignal.timeout(5000)})
-      if(response.ok){try{if(await response.json()===true)return'server'}catch{}}
+      if(response.ok){try{if(await response.json()===true)return await serverAbortSettled(base,sessionID,endpoint.directory)?'server':'unavailable'}catch{}}
     }catch{}
     return await reconcileServerAbort(base,sessionID,endpoint.directory)?'server-reconciled':'unavailable'
   }

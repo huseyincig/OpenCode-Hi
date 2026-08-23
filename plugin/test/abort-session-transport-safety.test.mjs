@@ -20,6 +20,7 @@ test('server abort ambiguity reconciles through status without replaying SDK abo
     assert.deepEqual(calls,[
       {method:'POST',url:'http://127.0.0.1:9/session/child-1/abort'},
       {method:'GET',url:'http://127.0.0.1:9/session/status'},
+      {method:'GET',url:'http://127.0.0.1:9/permission'},
     ])
   }finally{globalThis.fetch=originalFetch}
 })
@@ -38,6 +39,37 @@ test('server abort ambiguity fails closed while host still reports busy',async()
     assert.equal(await abortSession(client,'child-2',{serverUrl:'http://127.0.0.1:9'}),'unavailable')
     assert.equal(sdkAbort,0,'busy reconciliation must fail closed instead of replaying the mutation')
   }finally{globalThis.fetch=originalFetch}
+})
+
+
+test('acknowledged server abort fails closed while the cancelled child still owns a pending native permission',async()=>{
+  const originalFetch=globalThis.fetch
+  const calls=[]
+  globalThis.fetch=async(input,init={})=>{
+    const url=String(input),method=String(init.method??'GET').toUpperCase();calls.push({method,url})
+    if(method==='POST'&&url==='http://127.0.0.1:9/session/child-permission/abort')return new Response('true',{status:200,headers:{'content-type':'application/json'}})
+    if(method==='GET'&&url==='http://127.0.0.1:9/permission')return new Response(JSON.stringify([{id:'per-stale',sessionID:'child-permission',permission:'bash',patterns:['pwd'],metadata:{},always:['pwd']}]),{status:200,headers:{'content-type':'application/json'}})
+    throw new Error(`unexpected request: ${method} ${url}`)
+  }
+  try{
+    assert.equal(await abortSession({session:{}},'child-permission',{serverUrl:'http://127.0.0.1:9'}),'unavailable')
+    assert.deepEqual(calls,[
+      {method:'POST',url:'http://127.0.0.1:9/session/child-permission/abort'},
+      {method:'GET',url:'http://127.0.0.1:9/permission'},
+    ])
+  }finally{globalThis.fetch=originalFetch}
+})
+
+test('acknowledged server abort ignores pending native permissions owned by other sessions',async()=>{
+  const originalFetch=globalThis.fetch
+  globalThis.fetch=async(input,init={})=>{
+    const url=String(input),method=String(init.method??'GET').toUpperCase()
+    if(method==='POST'&&url==='http://127.0.0.1:9/session/child-clean/abort')return new Response('true',{status:200,headers:{'content-type':'application/json'}})
+    if(method==='GET'&&url==='http://127.0.0.1:9/permission')return new Response(JSON.stringify([{id:'per-other',sessionID:'other-child',permission:'bash',patterns:['pwd'],metadata:{},always:['pwd']}]),{status:200,headers:{'content-type':'application/json'}})
+    throw new Error(`unexpected request: ${method} ${url}`)
+  }
+  try{assert.equal(await abortSession({session:{}},'child-clean',{serverUrl:'http://127.0.0.1:9'}),'server')}
+  finally{globalThis.fetch=originalFetch}
 })
 
 test('SDK abort chooses one mutation and uses SDK status only for ambiguous acknowledgement',async()=>{
