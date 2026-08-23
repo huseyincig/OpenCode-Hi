@@ -59,6 +59,15 @@ test('first-use settings onboarding is offered once per pending session only whe
   const otherStore=new MissionStore(process.cwd());otherStore.start('c1-no-onboarding','hello');const none={system:[]};await createSystemTransformHook(otherStore,new BackgroundRegistry(),process.cwd(),undefined,()=>({pending:true,modelCount:0}))({sessionID:'c1-no-onboarding'},none);assert.equal(none.system.length,1,'no live models means no model-settings onboarding claim')
 })
 
+test('first-use onboarding dedupe is process-bounded instead of retaining every historical session',async()=>{
+  const store=new MissionStore(process.cwd()),hook=createSystemTransformHook(store,new BackgroundRegistry(),process.cwd(),undefined,()=>({pending:true,modelCount:6}))
+  const first='c1-onboarding-bounded-0';store.start(first,'hello')
+  let out={system:[]};await hook({sessionID:first},out);assert.equal(out.system.length,2)
+  for(let i=1;i<=160;i++){const sid=`c1-onboarding-bounded-${i}`;store.start(sid,'hello');out={system:[]};await hook({sessionID:sid},out);assert.equal(out.system.length,2)}
+  out={system:[]};await hook({sessionID:first},out)
+  assert.equal(out.system.length,2,'old cosmetic onboarding dedupe entries must be evictable instead of process-lifetime retained')
+})
+
 test('C1 representative provider-bound system projection reduces A6 character baseline',()=>{
   const {m}=fixture(),projection=buildMissionRuntimeProjection(m),measurement=measureMissionRuntimeProjection(projection)
   assert.ok(measurement.dynamic_chars<900,'dynamic runtime block must stay bounded')

@@ -3,6 +3,14 @@ import { buildMissionRuntimeProjection, renderMissionRuntimeProjection } from '.
 import { redactProviderContext } from '../runtime/privacy/boundary.js';
 import { appendLedger } from '../runtime/ledger/ledger.js';
 import { resolve } from 'node:path';
+const ONBOARDING_DEDUPE_LIMIT = 128;
+function rememberOnboarding(set, sessionID) { if (set.has(sessionID))
+    return; while (set.size >= ONBOARDING_DEDUPE_LIMIT) {
+    const oldest = set.values().next().value;
+    if (oldest === undefined)
+        break;
+    set.delete(oldest);
+} set.add(sessionID); }
 export function createSystemTransformHook(store, background, projectRoot, workingDirectory, getSettingsOnboarding) { const onboardingOffered = new Set(); return async (input, output) => { if (isNativeHousekeeping(input, output))
     return; const sid = input?.sessionID ?? input?.sessionId, child = sid && background ? background.list().find(w => w.session_id === sid) : undefined, m = child ? store.get(child.parent_session_id) : store.get(sid); if (!m || !Array.isArray(output?.system))
     return; if (!child && m.identity.status === 'completed') {
@@ -20,7 +28,7 @@ export function createSystemTransformHook(store, background, projectRoot, workin
     output.system.push(gate);
     const onboarding = getSettingsOnboarding?.();
     if (sid && !onboardingOffered.has(String(sid)) && onboarding?.pending && onboarding.modelCount > 0) {
-        onboardingOffered.add(String(sid));
+        rememberOnboarding(onboardingOffered, String(sid));
         output.system.push(`Hi FIRST-USE SETTINGS: ${onboarding.modelCount} effective connected model(s) are available and no explicit Hi project settings exist. After semantic assessment, if this message is a greeting or settings request, call hi_settings setup and offer Work Mode Adaptive/Single/Multi with child models Automatic by default. If this is material work, do not interrupt it; use Adaptive + Automatic defaults.`);
     }
     return;

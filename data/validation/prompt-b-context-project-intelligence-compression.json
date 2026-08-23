@@ -74,7 +74,7 @@
       "owner_sha256": "2e1e710c8d5485df871ad8c993c4d1394367f2f2f0a92a02b17b863ca085d83c",
       "owner_anchor": "clipText",
       "proof": "plugin/test/c1-mission-runtime-projection.test.mjs",
-      "proof_sha256": "7c8397a865ab486dd43639b760a67c5d18931e83633323e14c8d977d0bcb94c0",
+      "proof_sha256": "62857cf8111301dd61a1409a19183556acb9c334a30c04191a470904338209f1",
       "proof_anchor": "Hi MISSION RUNTIME PROJECTION"
     },
     {

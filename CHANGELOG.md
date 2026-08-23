@@ -3,6 +3,7 @@
 All notable changes to OpenCode-Hi are documented here.
 
 ## Unreleased
+- Bounds the process-local first-use settings onboarding dedupe to 128 recent sessions. Same-session onboarding remains one-shot in normal use, while long-lived OpenCode processes no longer retain every historical onboarding session ID indefinitely.
 - Bounds process-local HumanDecision chat transport history to the newest 64 terminal entries after waiters settle. Canonical HumanDecision state remains Mission-owned; immediate response/await behavior is preserved while long-lived OpenCode processes no longer retain every cancelled/responded transport contract indefinitely.
 - Acquires the per-OpenCode-client/project runtime instance lease before shared persistence/reconciliation/bootstrap initialization and releases it on any initialization failure. Concurrent duplicate plugin initialization is now fenced before it can rewrite runtime boot state or run duplicate resource reconciliation, while failed initialization still permits a clean retry.
 - Drops only the process-local child callback index when OpenCode confirms `session.deleted` after a Mission has already STOPped (and on cancelled/stale callback fences). Late deletion no longer leaves a dead Worker lookup for the plugin lifetime, while canonical stopped Task/Worker outcomes remain immutable.
