@@ -61,6 +61,17 @@ export declare const STORAGE_OWNERSHIP_CATALOG: readonly [{
     readonly retention: "candidate lifecycle through archive/admission";
     readonly privacy: "project-private";
 }, {
+    readonly data_class: "project-task-outcome-memory";
+    readonly canonical_owner: "hi-project-task-outcome-memory";
+    readonly scope: "project";
+    readonly lifecycle: "derived";
+    readonly path_provider: ".opencode/hi/project-intelligence/task-outcomes.jsonl";
+    readonly schema_ref: "TaskOutcomeMemoryRecord@1";
+    readonly write_owner: "ProjectTaskOutcomeMemoryStore";
+    readonly readers: readonly ["ProjectTaskOutcomeMemoryStore", "TaskRuntime"];
+    readonly retention: "bounded newest 128 accepted task outcome receipts";
+    readonly privacy: "project-private; no raw provider payload or free-form result prose";
+}, {
     readonly data_class: "durable-context-artifact";
     readonly canonical_owner: "hi-context-artifact";
     readonly scope: "project";

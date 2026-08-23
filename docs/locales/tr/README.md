@@ -28,6 +28,7 @@ OpenCode-Hi native AI execution çevresine deterministic ürün semantiği ekler
 - olasılıksal confidence veya routing authority iddiası üretmeden local semantic sensitivity gösteren advisory counterfactual decision-stability diagnostics;
 - kanıta bağlı falsifiable diagnosis hipotezleri; root-cause prose tek başına completion veya harmful learning credit üretemez;
 - bounded Mission runtime projection, durable context artifactları, TypeScript Semantic Context ve confidence/freshness gate'li evidence-backed project methodology learning;
+- yalnız aynı structured task/dependency shape ve birebir güncel source byte'ları için runtime receipt'li failure class'larını hatırlayan bounded prior Task outcome memory; bu geçmiş optional advisory context'tir, Evidence/routing/model reputation/Authority/completion değildir;
 - lazy Methodology/skill discovery ve loading;
 - structured Evidence, VerificationEnvelope ve deterministic completion;
 - bounded recovery, WAIT ve authoritative STOP;

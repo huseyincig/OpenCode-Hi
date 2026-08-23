@@ -9,6 +9,7 @@ function safeSegment(value:string):string{
 export function hiProjectRoot(projectRoot:string):string{return join(resolve(projectRoot),'.opencode','hi')}
 export function projectPolicyPath(projectRoot:string,name:string):string{return join(hiProjectRoot(projectRoot),'policy',`${safeSegment(name)}.json`)}
 export function projectMethodologyCandidatePath(projectRoot:string,id:string):string{return join(hiProjectRoot(projectRoot),'project-intelligence','methodology-candidates',`${safeSegment(id)}.json`)}
+export function projectTaskOutcomeMemoryPath(projectRoot:string):string{return join(hiProjectRoot(projectRoot),'project-intelligence','task-outcomes.jsonl')}
 export function durableArtifactPath(projectRoot:string,kind:string,id:string):string{return join(hiProjectRoot(projectRoot),'artifacts',safeSegment(kind),`${safeSegment(id)}.json`)}
 export function durableArtifactBinaryPath(projectRoot:string,kind:string,id:string,extension:string):string{return join(hiProjectRoot(projectRoot),'artifacts',safeSegment(kind),`${safeSegment(id)}.${safeSegment(extension).replace(/^\.+/,'')}`)}
 export function projectMethodologyPolicyDir(projectRoot:string):string{return join(hiProjectRoot(projectRoot),'policy','methodologies')}

@@ -80,6 +80,7 @@ Hi adds deterministic semantics around native AI execution:
 - advisory counterfactual decision-stability diagnostics that expose local semantic sensitivity without pretending to be probabilistic confidence or routing authority;
 - evidence-bound falsifiable diagnosis hypotheses; root-cause prose cannot self-certify completion or create harmful learning credit;
 - bounded Mission runtime projection, durable context artifacts, TypeScript Semantic Context, and evidence-backed project methodology learning with confidence/freshness-gated admission;
+- bounded prior Task outcome memory that recalls only runtime-receipted failure classes for the same structured task/dependency shape and exact current source bytes; recalled history is optional advisory context, never Evidence, routing/model reputation, Authority, or completion state;
 - lazy methodology/skill discovery and loading;
 - structured Evidence, VerificationEnvelope and deterministic completion;
 - bounded recovery, WAIT and authoritative STOP;

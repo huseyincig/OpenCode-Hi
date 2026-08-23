@@ -424,6 +424,14 @@ export class TaskResultReconciler {
             task.scope = [...new Set([...task.scope, ...ownership.accepted])];
             appendLedger(m, 'task.scope-expanded', { task_id: task.id, worker_id: worker.id, payload: { files: ownership.accepted.slice(0, 40), policy: 'bounded-explicit-ownership' } });
         }
+        try {
+            const memory = this.scopedStores.taskOutcomeMemory.observe(m, task, worker, effectiveResult);
+            if (memory)
+                appendLedger(m, 'task-outcome-memory.recorded', { task_id: task.id, worker_id: worker.id, payload: { fingerprint: memory.fingerprint.slice(0, 16), source_state_hash: memory.source_state_hash.slice(0, 16), outcome: memory.outcome, issue_classes: memory.issue_classes, failure_finding: memory.failure_finding } });
+        }
+        catch (error) {
+            appendLedger(m, 'task-outcome-memory.write-failed', { task_id: task.id, worker_id: worker.id, payload: { error: String(error).slice(0, 300), policy: 'advisory-bookkeeping-fail-open' } });
+        }
         if (effectiveResult.status === 'DONE' && effectiveResult.methodology_observations?.length) {
             const evidenceRefs = m.execution.evidence.items.filter(e => e.task_id === task.id && !e.invalidated_at && (e.outcome === 'passed' || e.pass === true) && e.producer_attempt?.worker_id === worker.id && e.producer_attempt.ordinal === worker.attempt && e.producer_attempt.generation === (worker.generation_at_spawn ?? m.continuation.generation)).map(e => e.kind);
             for (const observation of effectiveResult.methodology_observations)

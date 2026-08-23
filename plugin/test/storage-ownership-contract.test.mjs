@@ -4,7 +4,7 @@ import { existsSync,mkdtempSync,readFileSync,rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { STORAGE_OWNERSHIP_CATALOG,assertStorageOwnershipCatalog,isStorageOwnershipContract } from '../dist/contracts/storage-ownership.js'
-import { durableArtifactPath,projectMethodologyCandidatePath,projectMethodologyPolicyPath,projectMethodologyProvenancePath,projectPolicyPath,projectSkillRoot } from '../dist/runtime/storage/ownership.js'
+import { durableArtifactPath,projectMethodologyCandidatePath,projectMethodologyPolicyPath,projectMethodologyProvenancePath,projectPolicyPath,projectSkillRoot,projectTaskOutcomeMemoryPath } from '../dist/runtime/storage/ownership.js'
 import { runtimeStatePath } from '../dist/runtime/storage/locations.js'
 import { RuntimePersistence,RUNTIME_STATE_SCHEMA } from '../dist/runtime/state/persistence.js'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
@@ -25,6 +25,7 @@ test('catalog path providers match the real project storage resolvers',()=>{
   assert.equal(projectPolicyPath(root,'routing'),join(root,'.opencode','hi','policy','routing.json'))
   assert.equal(projectPolicyPath(root,'authority'),join(root,'.opencode','hi','policy','authority.json'))
   assert.equal(projectMethodologyCandidatePath(root,'mc_1'),join(root,'.opencode','hi','project-intelligence','methodology-candidates','mc_1.json'))
+  assert.equal(projectTaskOutcomeMemoryPath(root),join(root,'.opencode','hi','project-intelligence','task-outcomes.jsonl'))
   assert.equal(durableArtifactPath(root,'review','a_1'),join(root,'.opencode','hi','artifacts','review','a_1.json'))
   assert.equal(projectMethodologyPolicyPath(root,name),join(root,'.opencode','hi','policy','methodologies',`${name}.json`))
   assert.equal(projectMethodologyProvenancePath(root,name),join(root,'.opencode','hi','provenance','methodologies',`${name}.json`))
@@ -37,6 +38,8 @@ test('catalog keeps host-native project skills outside Hi internal storage and r
   assert.equal(byClass('project-methodology-skill').canonical_owner,'OpenCode-project-skill')
   assert.match(byClass('project-methodology-skill').path_provider,/\.opencode\/skills\/hi-project-/)
   assert.doesNotMatch(byClass('project-methodology-skill').path_provider,/\.opencode\/hi/)
+  assert.equal(byClass('project-task-outcome-memory').lifecycle,'derived')
+  assert.equal(byClass('project-task-outcome-memory').canonical_owner,'hi-project-task-outcome-memory')
   assert.equal(byClass('mission-survival-state').scope,'runtime')
   const root=mkdtempSync(join(tmpdir(),'hi-storage-runtime-'))
   try{assert.equal(runtimeStatePath(root).startsWith(root),false)}finally{rmSync(root,{recursive:true,force:true})}
