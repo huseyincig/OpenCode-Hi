@@ -297,7 +297,7 @@ export declare const HI_CONFIG_OPTIONS: readonly [{
     readonly validator: "boolean";
     readonly safetySemantics: "capacity";
     readonly behavioralAcceptanceRefs: readonly ["config-executable-effect.test.mjs"];
-    readonly runtimeConsumer: "plugin ConcurrencyScheduler policy";
+    readonly runtimeConsumer: "runtime/scheduler/task-runtime-adapter -> SchedulingPlanner capacity policy";
     readonly executorEffect: "sets global scheduler capacity to one when disabled";
 }, {
     readonly id: "config.parallel-max";
@@ -311,8 +311,8 @@ export declare const HI_CONFIG_OPTIONS: readonly [{
     readonly validator: "bounded-integer:1..8";
     readonly safetySemantics: "capacity";
     readonly behavioralAcceptanceRefs: readonly ["config.test.mjs", "config-executable-effect.test.mjs"];
-    readonly runtimeConsumer: "plugin ConcurrencyScheduler policy";
-    readonly executorEffect: "caps total concurrently acquired workers";
+    readonly runtimeConsumer: "runtime/scheduler/task-runtime-adapter -> SchedulingPlanner capacity policy";
+    readonly executorEffect: "caps total concurrently reserved execution units";
 }, {
     readonly id: "config.parallel-providers";
     readonly path: "parallel.providers";
@@ -325,7 +325,7 @@ export declare const HI_CONFIG_OPTIONS: readonly [{
     readonly validator: "positive-integer-limit-map";
     readonly safetySemantics: "capacity";
     readonly behavioralAcceptanceRefs: readonly ["config-executable-effect.test.mjs"];
-    readonly runtimeConsumer: "runtime/scheduler/ConcurrencyScheduler.canStart";
+    readonly runtimeConsumer: "runtime/scheduler/SchedulingPlanner capacity policy";
     readonly executorEffect: "caps concurrent workers per provider";
 }, {
     readonly id: "config.parallel-models";
@@ -339,7 +339,7 @@ export declare const HI_CONFIG_OPTIONS: readonly [{
     readonly validator: "positive-integer-limit-map";
     readonly safetySemantics: "capacity";
     readonly behavioralAcceptanceRefs: readonly ["main-prompt-variant-fallback-concurrency.test.mjs", "config-executable-effect.test.mjs"];
-    readonly runtimeConsumer: "runtime/scheduler/ConcurrencyScheduler.canStart";
+    readonly runtimeConsumer: "runtime/scheduler/SchedulingPlanner capacity policy";
     readonly executorEffect: "caps concurrent workers per model";
 }, {
     readonly id: "config.profile-minimal-specialist-threshold";

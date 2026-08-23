@@ -1,3 +1,4 @@
+export function createConcurrencyPolicySource(policy) { return { policySnapshot() { const p = policy(); return { global: p.global, providers: { ...(p.providers ?? {}) }, models: { ...(p.models ?? {}) } }; } }; }
 export class ConcurrencyScheduler {
     policy;
     #running = new Map();

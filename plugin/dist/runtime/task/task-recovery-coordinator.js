@@ -11,7 +11,6 @@ import { runtimeSignal } from '../events/event-sink.js';
 import { syncMissionGates } from '../gates/gates.js';
 import { taskRuntimeAdmittedModel, reserveTaskRuntimeDispatch, bindTaskRuntimeHost, beginTaskRuntimeSettlement, releaseTaskRuntimeReservation } from '../scheduler/task-runtime-adapter.js';
 import { recordRecoveryStrategy, recoveryModelHazard } from '../continuation/recovery-governor.js';
-function providerOf(model) { return model && model !== 'host-default' && model.includes('/') ? model.slice(0, model.indexOf('/')) : undefined; }
 export class TaskRecoveryCoordinator {
     scheduler;
     registry;
@@ -79,12 +78,6 @@ export class TaskRecoveryCoordinator {
                 task.status = previousTaskStatus;
                 return false;
             }
-            if (!this.scheduler.acquire(worker.id, providerOf(next), next === 'host-default' ? undefined : next)) {
-                releaseTaskRuntimeReservation(m, worker.id);
-                worker.status = previousStatus;
-                task.status = previousTaskStatus;
-                return false;
-            }
             try {
                 this.child.recordModelProjection(worker, next, nextVariant);
                 const child = await this.child.create(m.identity.session_id, `Hi · ${worker.role} · behavioral recovery · ${task.objective.slice(0, 40)}`, worker.role, next === 'host-default' ? undefined : next, nextVariant, this.workspaceBinding?.(m, task.id));
@@ -126,7 +119,6 @@ export class TaskRecoveryCoordinator {
                         stopped = false;
                     }
                 if (stopped) {
-                    this.scheduler.release(worker.id);
                     releaseTaskRuntimeReservation(m, worker.id);
                     worker.session_id = previousSession;
                     worker.forked_from_session_id = previousFork;
@@ -161,15 +153,8 @@ export class TaskRecoveryCoordinator {
             return false;
         }
         try {
-            if (!this.scheduler.acquire(worker.id, providerOf(model), model === 'host-default' ? undefined : model)) {
-                releaseTaskRuntimeReservation(m, worker.id);
-                worker.status = previousWorkerStatus;
-                task.status = previousTaskStatus;
-                return false;
-            }
             const bound = bindTaskRuntimeHost(m, worker.id, worker.session_id);
             if (!bound.accepted) {
-                this.scheduler.release(worker.id);
                 releaseTaskRuntimeReservation(m, worker.id);
                 worker.status = previousWorkerStatus;
                 task.status = previousTaskStatus;
@@ -204,7 +189,6 @@ export class TaskRecoveryCoordinator {
                     stopped = false;
                 }
             if (stopped) {
-                this.scheduler.release(worker.id);
                 releaseTaskRuntimeReservation(m, worker.id);
                 worker.status = 'ready';
                 task.status = task.result?.status === 'DONE' ? 'completed' : task.result ? 'waiting' : 'blocked';
@@ -235,7 +219,6 @@ export class TaskRecoveryCoordinator {
             return 'NOT_RECOVERED';
         const failedSession = worker.session_id, candidates = worker.fallbacks.filter(x => x && x !== worker.model);
         appendLedger(m, 'worker.runtime-fallback.host-terminal-confirmed', { task_id: task.id, worker_id: worker.id, payload: { session_id: failedSession, failure_class: failure.kind, action: 'release-without-abort' } });
-        this.scheduler.release(worker.id);
         releaseTaskRuntimeReservation(m, worker.id);
         worker.session_id = undefined;
         worker.restart_reconcile_pending = false;
@@ -248,15 +231,10 @@ export class TaskRecoveryCoordinator {
                 appendLedger(m, 'worker.runtime-fallback.skipped', { task_id: task.id, worker_id: worker.id, payload: { model, reason: runtimeCandidate.reason, failure_class: failure.kind, phase: 'runtime-policy-revalidation' } });
                 continue;
             }
-            const provider = providerOf(model), variant = task.execution_profile?.fallback_variants?.[model], previous = worker.model, fallbackReason = task.execution_profile?.fallback_reasons?.find(x => x.model === model)?.reason ?? `runtime fallback after ${failure.kind}`;
+            const variant = task.execution_profile?.fallback_variants?.[model], previous = worker.model, fallbackReason = task.execution_profile?.fallback_reasons?.find(x => x.model === model)?.reason ?? `runtime fallback after ${failure.kind}`;
             const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler);
             if (!reservation.accepted) {
                 appendLedger(m, 'worker.runtime-fallback.skipped', { task_id: task.id, worker_id: worker.id, payload: { model, reason: reservation.reason, failure_class: failure.kind, source: 'scheduler' } });
-                continue;
-            }
-            if (!this.scheduler.acquire(worker.id, provider, model === 'host-default' ? undefined : model)) {
-                releaseTaskRuntimeReservation(m, worker.id);
-                appendLedger(m, 'scheduler.resource-tracker-mismatch', { task_id: task.id, worker_id: worker.id, payload: { model, phase: 'runtime-fallback' } });
                 continue;
             }
             try {
@@ -300,7 +278,6 @@ export class TaskRecoveryCoordinator {
                         recoveryStopped = false;
                     }
                 if (recoveryStopped) {
-                    this.scheduler.release(worker.id);
                     releaseTaskRuntimeReservation(m, worker.id);
                     worker.session_id = undefined;
                     worker.status = 'ready';
@@ -347,7 +324,6 @@ export class TaskRecoveryCoordinator {
         const needsContext = permissionFailure ? ['resolve OpenCode permission/authority and explicitly resume the mission'] : providerFailure ? ['provider/model availability or alternate execution path'] : contextFailure ? ['OpenCode context compaction was exhausted or could not resolve terminal context capacity; reduce bounded context/task scope or explicitly choose a model with known sufficient context capacity'] : toolFailure ? ['terminal tool/model compatibility failure was observed; repair tool availability or explicitly choose a model with proven required tool capability'] : [];
         worker.status = 'failed';
         worker.completed_at = Date.now();
-        this.scheduler.release(worker.id);
         releaseTaskRuntimeReservation(m, worker.id);
         this.registry.delete(worker.id);
         if (permissionFailure || providerFailure || contextFailure || toolFailure)

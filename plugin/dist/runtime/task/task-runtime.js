@@ -67,7 +67,6 @@ function inferObligationIds(m, role, requiredEvidence, explicit = []) {
     }
     return [...new Set(out)];
 }
-function providerOf(model) { return model && model !== 'host-default' && model.includes('/') ? model.slice(0, model.indexOf('/')) : undefined; }
 export class TaskRuntime {
     childHost;
     registry;
@@ -222,7 +221,7 @@ export class TaskRuntime {
         return false;
     } appendLedger(m, result.reason === 'owner-mismatch' ? 'browser.cleanup-stale-owner' : 'browser.cleanup', { task_id: taskID, worker_id: worker.id, payload: { reason: result.reason, cleaned: result.cleaned } }); return true; }
     failedDeps(m, deps) { return deps.filter(id => { const status = m.execution.tasks.find(t => t.id === id)?.status; return status === 'failed' || status === 'cancelled'; }); }
-    async blockDependencyOutcome(m, task, worker, error) { worker.status = 'failed'; task.status = 'blocked'; task.updated_at = Date.now(); const marker = `dependency-outcome-unavailable:${task.id}`; task.result = { status: 'BLOCKED', summary: `Direct dependency outcome could not be projected safely before dispatch: ${error.message}`.slice(0, 1200), changed_files: [], evidence: [], open_issues: [marker], needs_context: ['reconcile completed dependency result/worker attempt identity before dispatch'] }; m.execution.blockers = [...new Set([...m.execution.blockers, marker])]; this.registry.delete(worker.id); this.scheduler.release(worker.id); releaseTaskRuntimeReservation(m, worker.id); await this.cleanupWorkspaceForTask(m, task.id); appendLedger(m, 'worker.dependency-outcome-blocked', { task_id: task.id, worker_id: worker.id, payload: { reason: error.message, dependencies: [...task.dependencies] } }); syncMissionGates(m); }
+    async blockDependencyOutcome(m, task, worker, error) { worker.status = 'failed'; task.status = 'blocked'; task.updated_at = Date.now(); const marker = `dependency-outcome-unavailable:${task.id}`; task.result = { status: 'BLOCKED', summary: `Direct dependency outcome could not be projected safely before dispatch: ${error.message}`.slice(0, 1200), changed_files: [], evidence: [], open_issues: [marker], needs_context: ['reconcile completed dependency result/worker attempt identity before dispatch'] }; m.execution.blockers = [...new Set([...m.execution.blockers, marker])]; this.registry.delete(worker.id); releaseTaskRuntimeReservation(m, worker.id); await this.cleanupWorkspaceForTask(m, task.id); appendLedger(m, 'worker.dependency-outcome-blocked', { task_id: task.id, worker_id: worker.id, payload: { reason: error.message, dependencies: [...task.dependencies] } }); syncMissionGates(m); }
     admittedModel(m, worker, chain) { return taskRuntimeAdmittedModel(m, worker, chain, this.scheduler); }
     reserveExistingSessionAttempt(m, worker, model) {
         if (!model || !worker.session_id)
@@ -232,14 +231,8 @@ export class TaskRuntime {
         const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler);
         if (!reservation.accepted)
             return { ok: false, reason: reservation.reason };
-        const provider = providerOf(model);
-        if (!this.scheduler.acquire(worker.id, provider, model === 'host-default' ? undefined : model)) {
-            releaseTaskRuntimeReservation(m, worker.id);
-            return { ok: false, reason: 'legacy-resource-backstop' };
-        }
         const bound = bindTaskRuntimeHost(m, worker.id, worker.session_id);
         if (!bound.accepted) {
-            this.scheduler.release(worker.id);
             releaseTaskRuntimeReservation(m, worker.id);
             return { ok: false, reason: bound.reason };
         }
@@ -319,7 +312,6 @@ export class TaskRuntime {
         m.execution.workspace_leases = m.execution.workspace_leases.filter(lease => lease.task_id !== task.id);
         m.execution.isolation_decisions = m.execution.isolation_decisions.filter(decision => decision.requested_by !== `task:${task.id}`);
         this.registry.delete(worker.id);
-        this.scheduler.release(worker.id);
         releaseTaskRuntimeReservation(m, worker.id, 'CANCEL');
         m.execution.workers = m.execution.workers.filter(item => item.id !== worker.id);
         m.execution.tasks = m.execution.tasks.filter(item => item.id !== task.id);
@@ -592,7 +584,7 @@ export class TaskRuntime {
                 task.status = 'cancelled';
                 throw new Error('Mission stopped before worker dispatch');
             }
-            const model = chain[i], variant = model === selected.primary ? (input.modelVariant ?? selected.primaryVariant) : selected.fallbackVariants[model], provider = providerOf(model), runtimeCandidate = runtimeModelCandidateStatus(model, this.getModels(), this.getConfig(), this.getHostConfig(), role);
+            const model = chain[i], variant = model === selected.primary ? (input.modelVariant ?? selected.primaryVariant) : selected.fallbackVariants[model], runtimeCandidate = runtimeModelCandidateStatus(model, this.getModels(), this.getConfig(), this.getHostConfig(), role);
             if (!runtimeCandidate.ok) {
                 lastError = new Error(`Runtime model candidate rejected at dispatch: ${model}: ${runtimeCandidate.reason}`);
                 appendLedger(m, 'model.fallback.skipped', { task_id: task.id, worker_id: worker.id, payload: { model, reason: runtimeCandidate.reason, index: i, phase: 'dispatch-revalidation' } });
@@ -603,12 +595,6 @@ export class TaskRuntime {
             if (!reservation.accepted) {
                 lastError = new Error(`Worker scheduler admission unavailable: ${reservation.reason}`);
                 appendLedger(m, 'model.fallback.skipped', { task_id: task.id, worker_id: worker.id, payload: { model, reason: reservation.reason, index: i, source: 'scheduler' } });
-                continue;
-            }
-            if (!this.scheduler.acquire(worker.id, provider, model === 'host-default' ? undefined : model)) {
-                releaseTaskRuntimeReservation(m, worker.id);
-                lastError = new Error('Legacy resource tracker disagreed with scheduler admission');
-                appendLedger(m, 'scheduler.resource-tracker-mismatch', { task_id: task.id, worker_id: worker.id, payload: { model, index: i } });
                 continue;
             }
             worker.model = model;
@@ -675,7 +661,6 @@ export class TaskRuntime {
                     appendLedger(m, 'worker.start.abort-blocked', { task_id: task.id, worker_id: worker.id, payload: { model, index: i, error: String(error) } });
                     throw new Error(`Scheduler reservation retained because host abort could not be verified for worker ${worker.id}`);
                 }
-                this.scheduler.release(worker.id);
                 releaseTaskRuntimeReservation(m, worker.id);
                 if (error instanceof DependencyOutcomeProjectionError) {
                     await this.blockDependencyOutcome(m, task, worker, error);
@@ -756,7 +741,6 @@ export class TaskRuntime {
             if (!worker.session_id) {
                 worker.status = 'cancelled';
                 task.status = 'cancelled';
-                this.scheduler.release(worker.id);
                 releaseTaskRuntimeReservation(m, worker.id, 'CANCEL');
                 this.registry.delete(worker.id);
                 this.#queue = this.#queue.filter(q => q.worker.id !== worker.id);
@@ -774,7 +758,6 @@ export class TaskRuntime {
                     continue;
                 }
                 await this.cleanupBrowserForTask(m, task.id, worker.id);
-                this.scheduler.release(worker.id);
                 releaseTaskRuntimeReservation(m, worker.id);
             }
             worker.status = 'ready';
@@ -882,7 +865,6 @@ export class TaskRuntime {
                 this.registry.set(worker);
                 continue;
             }
-            this.scheduler.release(worker.id);
             releaseTaskRuntimeReservation(m, worker.id);
             worker.session_id = undefined;
             worker.status = 'ready';
@@ -895,11 +877,6 @@ export class TaskRuntime {
             const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler);
             if (!reservation.accepted) {
                 appendLedger(m, 'worker.constraint-rebase.deferred', { task_id: task.id, worker_id: worker.id, payload: { reason: reservation.reason } });
-                continue;
-            }
-            if (!this.scheduler.acquire(worker.id, providerOf(model), model === 'host-default' ? undefined : model)) {
-                releaseTaskRuntimeReservation(m, worker.id);
-                appendLedger(m, 'worker.constraint-rebase.deferred', { task_id: task.id, worker_id: worker.id, payload: { reason: 'legacy-resource-backstop' } });
                 continue;
             }
             try {
@@ -940,7 +917,6 @@ export class TaskRuntime {
                     }
                 ;
                 if (stopped) {
-                    this.scheduler.release(worker.id);
                     releaseTaskRuntimeReservation(m, worker.id);
                     worker.session_id = undefined;
                     worker.status = 'ready';
@@ -984,6 +960,6 @@ export class TaskRuntime {
     } const reservationRelease = releaseTaskRuntimeReservation(m, worker.id, 'CANCEL'); if (!reservationRelease.accepted) {
         appendLedger(m, 'worker.cancel.scheduler-blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: reservationRelease.reason } });
         return false;
-    } worker.status = 'cancelled'; this.scheduler.release(worker.id); const t = m.execution.tasks.find(x => x.id === worker.task_id); if (t)
+    } worker.status = 'cancelled'; const t = m.execution.tasks.find(x => x.id === worker.task_id); if (t)
         t.status = 'cancelled'; this.registry.delete(worker.id); this.#queue = this.#queue.filter(q => q.worker.id !== worker.id); await this.cleanupWorkspaceForTask(m, worker.task_id); appendLedger(m, 'worker.cancelled', { task_id: t?.id, worker_id: worker.id }); syncMissionGates(m); this.drainQueue(); return true; }
 }

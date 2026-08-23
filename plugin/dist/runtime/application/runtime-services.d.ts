@@ -10,7 +10,6 @@ import type { BrowserExecutor, BrowserExecutionContext } from '../browser/execut
 import { MissionStore } from '../mission/mission-store.js';
 import { BackgroundRegistry } from '../background/registry.js';
 import { RuntimePersistence } from '../state/persistence.js';
-import { ConcurrencyScheduler } from '../scheduler/concurrency.js';
 import { TaskRuntime } from '../task/task-runtime.js';
 import { ProcessRuntime } from '../process/runtime.js';
 import { WorkspaceRuntime } from '../workspace/runtime.js';
@@ -46,7 +45,7 @@ export declare function createRuntimeServices(input: {
     background: BackgroundRegistry;
     humanDecisionTransport: ChatHumanDecisionTransport;
     persistence: RuntimePersistence;
-    scheduler: ConcurrencyScheduler;
+    scheduler: import("../scheduler/concurrency.js").ConcurrencyPolicySource;
     eventSink: RuntimeSignalSink;
     tasks: TaskRuntime;
     processExecutor: ProcessExecutor;

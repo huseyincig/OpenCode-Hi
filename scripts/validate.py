@@ -584,9 +584,12 @@ except Exception as e:err(f'bad PROMPT B HostPort portability receipt: {e}')
 try:
     cfg=json.loads((ROOT/'data/validation/prompt-b-configuration.json').read_text(encoding='utf-8'))
     if cfg.get('schema')!=1 or cfg.get('kind')!='PROMPT_B_CONFIGURATION_ADVERSARIAL_AUDIT' or cfg.get('program')!='PROMPT_B' or cfg.get('section')!=23 or cfg.get('status')!='PASS':err('bad PROMPT B Configuration audit receipt')
-    if cfg.get('violations')!=[] or cfg.get('summary')!={'required':29,'covered':29,'violations':0,'runtime':21,'diagnostic':7,'schema_marker':1}:err('PROMPT B Configuration coverage drift')
-    rows=cfg.get('leaves') or []
-    if len(rows)!=29 or len({x.get('path') for x in rows if isinstance(x,dict)})!=29:err('PROMPT B Configuration leaf inventory drift')
+    config_catalog=json.loads((ROOT/'data/hi-config-options.json').read_text(encoding='utf-8')).get('options',[])
+    expected_config_paths=[x.get('path') for x in config_catalog if isinstance(x,dict)]
+    expected_config_summary={'required':len(config_catalog),'covered':len(config_catalog),'violations':0,'runtime':sum(x.get('classification')=='runtime' for x in config_catalog if isinstance(x,dict)),'diagnostic':sum(x.get('classification')=='diagnostic' for x in config_catalog if isinstance(x,dict)),'schema_marker':sum(x.get('classification')=='schema-marker' for x in config_catalog if isinstance(x,dict))}
+    if cfg.get('violations')!=[] or cfg.get('summary')!=expected_config_summary:err('PROMPT B Configuration coverage drift')
+    rows=cfg.get('leaves') or []; receipt_paths=[x.get('path') for x in rows if isinstance(x,dict)]
+    if len(rows)!=len(config_catalog) or set(receipt_paths)!=set(expected_config_paths) or len(receipt_paths)!=len(set(receipt_paths)):err('PROMPT B Configuration leaf inventory drift')
     import hashlib
     for row in rows:
         for key in ('schema','consumer','documentation','proof'):

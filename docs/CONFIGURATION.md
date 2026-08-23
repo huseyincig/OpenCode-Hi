@@ -586,7 +586,7 @@ Maximum parallel streams allowed by the mission topology. Range `1..8`.
 
 ### `parallel.max`
 
-Global scheduler capacity for concurrently acquired workers. Range `1..8`. If `parallel.enabled` is `false`, effective global scheduler capacity becomes `1` regardless of `parallel.max`.
+Global scheduler capacity for concurrently reserved execution units. Range `1..8`. If `parallel.enabled` is `false`, effective global scheduler capacity becomes `1` regardless of `parallel.max`.
 
 Example:
 
@@ -978,7 +978,7 @@ Generated from `data/hi-config-options.json`. Do not hand-edit this table.
 | `routing.allowedProviders` | runtime | `[]` | constraint | narrows eligible providers and disables unconstrained host-default fallback when nonempty |
 | `routing.deniedModels` | runtime | `[]` | constraint | denies exact models and composes project/raw denies monotonically |
 | `parallel.enabled` | runtime | `true` | capacity | sets global scheduler capacity to one when disabled |
-| `parallel.max` | runtime | `3` | capacity | caps total concurrently acquired workers |
+| `parallel.max` | runtime | `3` | capacity | caps total concurrently reserved execution units |
 | `parallel.providers` | runtime | `{}` | capacity | caps concurrent workers per provider |
 | `parallel.models` | runtime | `{}` | capacity | caps concurrent workers per model |
 | `profile.minimal.specialistThreshold` | runtime | `high` | preference | changes specialist dispatch threshold for the selected execution profile |

@@ -27,7 +27,7 @@
       "area": "task-runtime",
       "canonical_owner": "TaskRuntime",
       "owner_path": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "55a6c89d981e5a7db242bd3f57819db8b26b98d63677857b459368bcde9170a1",
+      "owner_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
       "producer_or_contract_paths": [
         "plugin/src/runtime/task/contracts.ts"
       ],
@@ -120,7 +120,7 @@
       "area": "configuration",
       "canonical_owner": "Hi config catalog/resolver",
       "owner_path": "data/hi-config-options.json",
-      "owner_sha256": "89567322de6d46796cc3cbae3793b2667e7621eaa67a27ac23c6b612d491be3d",
+      "owner_sha256": "26335f700abe4af1590ea2ff6ccde8a9101c71078d7bf477b80119e8f0f7705c",
       "producer_or_contract_paths": [
         "plugin/src/config/schema.ts",
         "plugin/src/config/resolver.ts"
@@ -416,7 +416,7 @@
       "area": "scheduler",
       "canonical_owner": "ConcurrencyScheduler",
       "owner_path": "plugin/src/runtime/scheduler/concurrency.ts",
-      "owner_sha256": "2f462e70c8701a5896b8986eccaa3a617a9de7d1c0cff6f0c4ed5c2bd1fe6a7f",
+      "owner_sha256": "57ecaecc5619c81e07a973b5a96e307184f57fa25684f116b1acceb9ace0d6c8",
       "producer_or_contract_paths": [
         "plugin/src/runtime/scheduler/parallel-safety.ts"
       ],

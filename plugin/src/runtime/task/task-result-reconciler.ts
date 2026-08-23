@@ -18,7 +18,7 @@ import { syncMissionGates } from '../gates/gates.js'
 import { DEFAULT_CONTEXT_BUDGET,clipText } from '../context/budget.js'
 import { taskPromptToolOverrides } from '../routing/execution-profile.js'
 import type { BackgroundRegistry } from '../background/registry.js'
-import type { ConcurrencyScheduler } from '../scheduler/concurrency.js'
+import type { ConcurrencyPolicySource } from '../scheduler/concurrency.js'
 import type { ProjectMethodologyLearningStore } from '../project-intelligence/methodology-learning.js'
 import { ChildExecutionCoordinator,diffDelta,normFile } from './child-execution-coordinator.js'
 import { taskRuntimeAdmittedModel,reserveTaskRuntimeDispatch,bindTaskRuntimeHost,beginTaskRuntimeSettlement,releaseTaskRuntimeReservation } from '../scheduler/task-runtime-adapter.js'
@@ -28,12 +28,11 @@ import { captureEvidenceScopeState } from '../evidence/scope-state.js'
 import { deniedMutationAtoms } from '../constraint/constraint-atoms.js'
 import { assessExplorationClearance,explorationClearanceEvidenceSource } from '../execution/exploration-clearance.js'
 
-function providerOf(model:string|undefined):string|undefined{return model&&model!=='host-default'&&model.includes('/')?model.slice(0,model.indexOf('/')):undefined}
 function resultDigest(result:WorkerResult):string{return createHash('sha256').update(JSON.stringify(result)).digest('hex')}
 
 type QueueTask=(m:MissionState,worker:WorkerState,run:()=>Promise<WorkerState>)=>void
 export class TaskResultReconciler{
-  constructor(private readonly scheduler:ConcurrencyScheduler,private readonly registry:BackgroundRegistry,private readonly projectRoot:string,private readonly events:RuntimeSignalSink|undefined,private readonly methodologyLearning:ProjectMethodologyLearningStore,private readonly child:ChildExecutionCoordinator,private readonly getHostConfig:()=>Record<string,unknown>,private readonly queueTaskCallback:QueueTask,private readonly drainQueueCallback:()=>void,private readonly scopedStores:RuntimeScopedStores){}
+  constructor(private readonly scheduler:ConcurrencyPolicySource,private readonly registry:BackgroundRegistry,private readonly projectRoot:string,private readonly events:RuntimeSignalSink|undefined,private readonly methodologyLearning:ProjectMethodologyLearningStore,private readonly child:ChildExecutionCoordinator,private readonly getHostConfig:()=>Record<string,unknown>,private readonly queueTaskCallback:QueueTask,private readonly drainQueueCallback:()=>void,private readonly scopedStores:RuntimeScopedStores){}
   private queueTask(m:MissionState,worker:WorkerState,run:()=>Promise<WorkerState>):void{this.queueTaskCallback(m,worker,run)}
   private drainQueue():void{this.drainQueueCallback()}
   async reconcileNativeResult(m:MissionState,workerID:string,result:WorkerResult):Promise<WorkerResult>{
@@ -87,16 +86,15 @@ export class TaskResultReconciler{
       this.registry.delete(loser.id)
       const stopped=loser.session_id?await this.child.abortNativeSession(m,loser.session_id,'parallel-write-conflict',loser.id,loserTask.id):false
       if(!stopped){const abortMarker=`parallel-conflict-abort-unavailable:${loserTask.id}:${loser.id}`;m.execution.blockers=[...new Set([...m.execution.blockers,abortMarker])];loser.status='busy';loserTask.status='running';loserTask.result={...loserTask.result,status:'BLOCKED',open_issues:[...new Set([...loserTask.result.open_issues,abortMarker])],needs_context:[...new Set([...loserTask.result.needs_context,'OpenCode lifecycle abort is unavailable; do not assume the conflicting writer is quarantined'])]};this.registry.set(loser);appendLedger(m,'parallel.write-conflict.abort-blocked',{task_id:loserTask.id,worker_id:loser.id,payload:{winner_worker_id:winner.id,files:overlap.slice(0,30)}});break}
-      this.scheduler.release(loser.id);releaseTaskRuntimeReservation(m,loser.id);loser.status='queued'
+      releaseTaskRuntimeReservation(m,loser.id);loser.status='queued'
       const resume=async()=>{
         const model=loser.model;if(!model||taskRuntimeAdmittedModel(m,loser,[model],this.scheduler)!==model)throw new Error('Conflict resume scheduler admission unavailable')
         const reservation=reserveTaskRuntimeDispatch(m,loser,model,this.scheduler);if(!reservation.accepted)throw new Error(`Conflict resume reservation unavailable: ${reservation.reason}`)
-        const provider=providerOf(model);if(!this.scheduler.acquire(loser.id,provider,model==='host-default'?undefined:model)){releaseTaskRuntimeReservation(m,loser.id);throw new Error('Legacy resource tracker disagreed with conflict resume admission')}
-        if(!loser.session_id){this.scheduler.release(loser.id);releaseTaskRuntimeReservation(m,loser.id);throw new Error('Conflict resume child session missing')}
-        const bound=bindTaskRuntimeHost(m,loser.id,loser.session_id);if(!bound.accepted){this.scheduler.release(loser.id);releaseTaskRuntimeReservation(m,loser.id);throw new Error(`Conflict resume host binding failed: ${bound.reason}`)}
+        if(!loser.session_id){releaseTaskRuntimeReservation(m,loser.id);throw new Error('Conflict resume child session missing')}
+        const bound=bindTaskRuntimeHost(m,loser.id,loser.session_id);if(!bound.accepted){releaseTaskRuntimeReservation(m,loser.id);throw new Error(`Conflict resume host binding failed: ${bound.reason}`)}
         loser.status='busy';loser.started_at=Date.now();loser.generation_at_spawn=m.continuation.generation;loser.parent_mission_id=m.identity.mission_id;loserTask.status='running';this.registry.set(loser)
         try{beginWorkerAttempt(loserTask,loser);this.child.recordModelProjection(loser,model,loser.model_variant);await this.child.sendProviderPrompt(loser.session_id,clipText([`Hi runtime write-conflict reconciliation for existing task ${loserTask.id}.`,`Conflicting task ${winnerTask.id} has completed before this resume gate opened.`,`Conflicting files: ${overlap.join(', ')}`,`Current task objective: ${loserTask.objective}`,`Current user constraints: ${(loserTask.constraints??[]).join(' | ')||'none'}.`,'Inspect the current diff/state first. Preserve valid work from the completed task. Reconcile only this task sequentially; do not blindly overwrite or restart planning. Re-run the required scoped verification and return the structured WorkerResult.'].join('\n'),DEFAULT_CONTEXT_BUDGET.max_handoff_chars),loser.role,model==='host-default'?undefined:model,loser.model_variant,taskPromptToolOverrides(loserTask.execution_profile?.tools??[],this.getHostConfig(),loserTask.execution_profile?.mcp_servers??[]));appendLedger(m,'parallel.write-conflict.resumed',{task_id:loserTask.id,worker_id:loser.id,payload:{after_task:winnerTask.id,files:overlap.slice(0,30)}});return loser}
-        catch(error){let stopped=true;try{stopped=await this.child.abortNativeSession(m,loser.session_id,'parallel-write-conflict-resume-failed',loser.id,loserTask.id)}catch{stopped=false};if(stopped){this.scheduler.release(loser.id);releaseTaskRuntimeReservation(m,loser.id);loser.status='ready';loserTask.status='waiting'}else{const abortMarker=`parallel-conflict-resume-abort-unavailable:${loserTask.id}:${loser.id}`;m.execution.blockers=[...new Set([...m.execution.blockers,abortMarker])];loser.status='busy';loserTask.status='running'}this.registry.set(loser);throw error}
+        catch(error){let stopped=true;try{stopped=await this.child.abortNativeSession(m,loser.session_id,'parallel-write-conflict-resume-failed',loser.id,loserTask.id)}catch{stopped=false};if(stopped){releaseTaskRuntimeReservation(m,loser.id);loser.status='ready';loserTask.status='waiting'}else{const abortMarker=`parallel-conflict-resume-abort-unavailable:${loserTask.id}:${loser.id}`;m.execution.blockers=[...new Set([...m.execution.blockers,abortMarker])];loser.status='busy';loserTask.status='running'}this.registry.set(loser);throw error}
       }
       this.queueTask(m,loser,resume)
       appendLedger(m,'parallel.write-conflict.quarantined',{task_id:loserTask.id,worker_id:loser.id,payload:{winner_worker_id:winner.id,winner_task_id:winnerTask.id,files:overlap.slice(0,30),policy:'verified-abort-then-serialize'}});void this.events?.(runtimeSignal('parallel.write-conflict',m.identity.mission_id,{task_id:loserTask.id,worker_id:loser.id,payload:{other_worker_id:winner.id,files:overlap.slice(0,30),action:'quarantined'}}));break
@@ -239,7 +237,7 @@ export class TaskResultReconciler{
       const missingExit=[...new Set((worker.loaded_methodologies??[]).flatMap(name=>methodologyExitCheck(m,name,{task,worker,result:effectiveResult,projectRoot:this.projectRoot,scope:'worker'}).missing))]
       if(missingExit.length){const exitMarker=`methodology-exit-unsatisfied:${task.id}:${missingExit.join(',')}`;effectiveResult={...effectiveResult,status:'FIX_REQUIRED',summary:`Hi methodology exit contract is not satisfied: ${missingExit.join(', ')}.`,open_issues:[...new Set([...effectiveResult.open_issues,exitMarker])],needs_context:[...new Set([...effectiveResult.needs_context,`methodology-exit: provide the required evidence/result for ${missingExit.join(', ')}`])]};appendLedger(m,'methodology.exit-unsatisfied',{task_id:task.id,worker_id:worker.id,payload:{methodologies:worker.loaded_methodologies,missing:missingExit}})}
     }
-    applyWorkerResult(m,task,worker,effectiveResult);this.scheduler.release(worker.id);releaseTaskRuntimeReservation(m,worker.id);this.registry.delete(worker.id)
+    applyWorkerResult(m,task,worker,effectiveResult);releaseTaskRuntimeReservation(m,worker.id);this.registry.delete(worker.id)
     for(const signal of changedSurfaceMethodologySignals(effectiveResult.changed_files))activateMethodologySignal(m,this.projectRoot,{signal:signal.name,producer:'changed-surface',reason:signal.reason})
     for(const signal of workerResultMethodologySignals({status:effectiveResult.status,needsContext:effectiveResult.needs_context,contextGap:effectiveResult.context_gap,failureFinding:effectiveResult.failure_finding})){
       const producer=signal.name.startsWith('context.')?'context':'runtime-failure'

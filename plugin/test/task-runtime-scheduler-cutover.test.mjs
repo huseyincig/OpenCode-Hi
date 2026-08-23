@@ -25,9 +25,9 @@ test('TaskRuntime reserves before host spawn, binds host identity, and releases 
   const setupResult=setup({onCreate:()=>{assert.equal(mRef.execution.scheduler.reservations.length,1);assert.equal(mRef.execution.scheduler.reservations[0].phase,'RESERVED');assert.equal(mRef.execution.scheduler.reservations[0].hostExecutionId,undefined)}})
   const {runtime,m,scheduler}=setupResult;mRef=m
   const started=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
-  assert.equal(started.readiness,'READY');assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(m.execution.scheduler.reservations[0].phase,'RUNNING');assert.equal(m.execution.scheduler.reservations[0].hostExecutionId,started.session_id);assert.equal(scheduler.running(),1)
+  assert.equal(started.readiness,'READY');assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(m.execution.scheduler.reservations[0].phase,'RUNNING');assert.equal(m.execution.scheduler.reservations[0].hostExecutionId,started.session_id)
   runtime.applyResult(m,started.worker_id,workerResult())
-  assert.equal(m.execution.scheduler.reservations.length,0);assert.equal(scheduler.running(),0);assert.equal(m.execution.tasks.find(t=>t.id===started.task_id)?.status,'completed')
+  assert.equal(m.execution.scheduler.reservations.length,0);assert.equal(m.execution.tasks.find(t=>t.id===started.task_id)?.status,'completed')
 })
 
 test('TaskRuntime rejects stale attempt settlement before result/evidence mutation',async()=>{
@@ -39,12 +39,12 @@ test('TaskRuntime rejects stale attempt settlement before result/evidence mutati
 
 test('TaskRuntime cancellation releases the exact scheduler reservation only after host abort',async()=>{
   let aborted=0;const {runtime,m,scheduler}=setup({abort:async()=>{aborted++;return{data:true}}});const started=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
-  assert.equal(await runtime.cancel(m,started.worker_id),true);assert.equal(aborted,1);assert.equal(m.execution.scheduler.reservations.length,0);assert.equal(scheduler.running(),0)
+  assert.equal(await runtime.cancel(m,started.worker_id),true);assert.equal(aborted,1);assert.equal(m.execution.scheduler.reservations.length,0)
 })
 
 test('TaskRuntime unavailable abort during cancellation is terminal instead of permanent worker WAIT',async()=>{
   const {runtime,m,scheduler}=setup({withAbort:false});const started=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
-  assert.equal(await runtime.cancel(m,started.worker_id),false);assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(scheduler.running(),1)
+  assert.equal(await runtime.cancel(m,started.worker_id),false);assert.equal(m.execution.scheduler.reservations.length,1)
   const decision=evaluateIdle(m);assert.equal(decision.decision,'USER_ACTION_REQUIRED');assert.equal(decision.reason,'capability-unavailable:session-abort')
 })
 
@@ -58,7 +58,7 @@ test('semantic quarantine with unavailable abort is terminal instead of hiding b
 test('TaskRuntime retains host-bound reservation when prompt failure cannot verify abort',async()=>{
   const {runtime,m,scheduler}=setup({prompt:async()=>{throw new Error('prompt transport failed')},withAbort:false})
   await assert.rejects(()=>runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']}),/reservation retained because host abort could not be verified/i)
-  assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(m.execution.scheduler.reservations[0].phase,'RUNNING');assert.equal(scheduler.running(),1);assert.ok(m.execution.ledger.some(e=>e.type==='worker.start.abort-blocked'))
+  assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(m.execution.scheduler.reservations[0].phase,'RUNNING');assert.ok(m.execution.ledger.some(e=>e.type==='worker.start.abort-blocked'))
   const decision=evaluateIdle(m);assert.equal(decision.decision,'USER_ACTION_REQUIRED');assert.equal(decision.reason_code,'capability-unavailable');assert.equal(decision.reason,'capability-unavailable:session-abort')
 })
 

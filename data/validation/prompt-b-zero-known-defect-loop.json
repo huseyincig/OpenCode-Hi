@@ -2,7 +2,7 @@
   "schema": 2,
   "kind": "PROMPT_B_ZERO_KNOWN_DEFECT_CLOSURE_LOOP",
   "source_checkpoint": {
-    "commit": "aab0eed0763fe36d846fb9559090a5604f018a74"
+    "commit": "04f0b4afb33236b180fb6d9150476c8dec6c638a"
   },
   "program": "PROMPT_B",
   "section": 40,
@@ -1671,7 +1671,7 @@
       "root_cause_record": "documentation parity did not reject prepublication npm/bootstrap wording after real T4 publication completed",
       "resolution": "current README/installation/release/continuation truth is updated and documentation parity rejects stale npm prepublication wording",
       "regression_receipt": "scripts/validate-documentation.py",
-      "regression_receipt_sha256": "85298e6a9869f3ad199cdfaec0d6435c2daf84abb8770b14e1c53586df145aba",
+      "regression_receipt_sha256": "87cba21c14c325f8611a45e9a91bc07ac4a364aea0f28bb959e1636bd301db09",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1694,7 +1694,7 @@
       "root_cause_record": "public prose retained the historical 31-tool count after the canonical 0.2.4 runtime inventory expanded to 34 tools even though source-bound acceptance already observed the correct inventory",
       "resolution": "current development documentation reports the source-bound 34-tool inventory for exact OpenCode 1.18.21 and documentation parity binds all public prose counts to release-gate fresh-consumer expected_hi_tool_count",
       "regression_receipt": "scripts/validate-documentation.py",
-      "regression_receipt_sha256": "85298e6a9869f3ad199cdfaec0d6435c2daf84abb8770b14e1c53586df145aba",
+      "regression_receipt_sha256": "87cba21c14c325f8611a45e9a91bc07ac4a364aea0f28bb959e1636bd301db09",
       "closure_pipeline": [
         "discover",
         "classify",
@@ -1829,8 +1829,8 @@
       "id": "config-validator-stale-second-leaf-count",
       "classification": "VALIDATION_SCHEMA_DRIFT",
       "canonical_owner": "scripts/validate.py",
-      "root_cause_record": "config classification counts must follow the canonical 29-leaf catalog as model-routing authorities are simplified",
-      "resolution": "all living config validation now requires the canonical 29-leaf split: 21 runtime, 7 diagnostic compatibility leaves and 1 schema marker",
+      "root_cause_record": "living configuration validation encoded a historical literal leaf/classification count, so later canonical catalog growth could make the receipt stale even when every leaf remained uniquely owned and behaviorally proven",
+      "resolution": "configuration audit and validation now derive required leaf identity and classification counts from the canonical data/hi-config-options.json catalog; no historical cardinality is a second schema owner",
       "regression_receipt": "scripts/validate.py",
       "regression_receipt_sha256": "390c5809bbed2b7ca8b62f258a908e276fe72e0378f630fa9b3692cfbc26d20d",
       "closure_pipeline": [

@@ -1,5 +1,7 @@
 export interface ConcurrencyPolicy { global:number; providers?:Record<string,number>; models?:Record<string,number> }
-export class ConcurrencyScheduler{
+export interface ConcurrencyPolicySource { policySnapshot():ConcurrencyPolicy }
+export function createConcurrencyPolicySource(policy:()=>ConcurrencyPolicy):ConcurrencyPolicySource{return{policySnapshot(){const p=policy();return{global:p.global,providers:{...(p.providers??{})},models:{...(p.models??{})}}}}}
+export class ConcurrencyScheduler implements ConcurrencyPolicySource{
   #running=new Map<string,{provider?:string;model?:string}>()
   constructor(private policy:()=>ConcurrencyPolicy){}
   canStart(id:string,provider?:string,model?:string):{ok:boolean;reason:string}{

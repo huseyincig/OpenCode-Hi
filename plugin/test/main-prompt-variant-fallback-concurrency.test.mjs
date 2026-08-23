@@ -83,7 +83,7 @@ test('role-specific children respect model capacity and second worker remains qu
   const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>cfg,()=>models,()=>({}))
   const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'s','opaque parallel inspection',{task_kind:'review',required_capabilities:['repository-analysis']});m.execution.execution_mode='parallel'
   const a=await runtime.start(m,{objective:'inspect alpha',role:'repository-explorer',category:'standard',scope:['src/a.ts']})
-  assert.equal(a.readiness,'READY');assert.equal(scheduler.running(),1)
+  assert.equal(a.readiness,'READY');assert.equal(m.execution.scheduler.reservations.length,1)
   const b=await runtime.start(m,{objective:'inspect beta',role:'architect',category:'standard',scope:['src/b.ts']})
   assert.equal(b.readiness,'WAIT')
   assert.equal(runtime.queueDepth(),1)
@@ -94,5 +94,5 @@ test('role-specific children respect model capacity and second worker remains qu
   const wb=m.execution.workers.find(w=>w.id===b.worker_id)
   assert.equal(wb.status,'busy')
   assert.equal(wb.model,'p/shared')
-  assert.equal(scheduler.running(),1)
+  assert.equal(m.execution.scheduler.reservations.length,1)
 })

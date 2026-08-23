@@ -22,7 +22,6 @@ import { evidenceClaimApplicability } from '../evidence/applicability.js';
 import { captureEvidenceScopeState } from '../evidence/scope-state.js';
 import { deniedMutationAtoms } from '../constraint/constraint-atoms.js';
 import { assessExplorationClearance, explorationClearanceEvidenceSource } from '../execution/exploration-clearance.js';
-function providerOf(model) { return model && model !== 'host-default' && model.includes('/') ? model.slice(0, model.indexOf('/')) : undefined; }
 function resultDigest(result) { return createHash('sha256').update(JSON.stringify(result)).digest('hex'); }
 export class TaskResultReconciler {
     scheduler;
@@ -146,7 +145,6 @@ export class TaskResultReconciler {
                 appendLedger(m, 'parallel.write-conflict.abort-blocked', { task_id: loserTask.id, worker_id: loser.id, payload: { winner_worker_id: winner.id, files: overlap.slice(0, 30) } });
                 break;
             }
-            this.scheduler.release(loser.id);
             releaseTaskRuntimeReservation(m, loser.id);
             loser.status = 'queued';
             const resume = async () => {
@@ -156,19 +154,12 @@ export class TaskResultReconciler {
                 const reservation = reserveTaskRuntimeDispatch(m, loser, model, this.scheduler);
                 if (!reservation.accepted)
                     throw new Error(`Conflict resume reservation unavailable: ${reservation.reason}`);
-                const provider = providerOf(model);
-                if (!this.scheduler.acquire(loser.id, provider, model === 'host-default' ? undefined : model)) {
-                    releaseTaskRuntimeReservation(m, loser.id);
-                    throw new Error('Legacy resource tracker disagreed with conflict resume admission');
-                }
                 if (!loser.session_id) {
-                    this.scheduler.release(loser.id);
                     releaseTaskRuntimeReservation(m, loser.id);
                     throw new Error('Conflict resume child session missing');
                 }
                 const bound = bindTaskRuntimeHost(m, loser.id, loser.session_id);
                 if (!bound.accepted) {
-                    this.scheduler.release(loser.id);
                     releaseTaskRuntimeReservation(m, loser.id);
                     throw new Error(`Conflict resume host binding failed: ${bound.reason}`);
                 }
@@ -195,7 +186,6 @@ export class TaskResultReconciler {
                     }
                     ;
                     if (stopped) {
-                        this.scheduler.release(loser.id);
                         releaseTaskRuntimeReservation(m, loser.id);
                         loser.status = 'ready';
                         loserTask.status = 'waiting';
@@ -409,7 +399,6 @@ export class TaskResultReconciler {
             }
         }
         applyWorkerResult(m, task, worker, effectiveResult);
-        this.scheduler.release(worker.id);
         releaseTaskRuntimeReservation(m, worker.id);
         this.registry.delete(worker.id);
         for (const signal of changedSurfaceMethodologySignals(effectiveResult.changed_files))

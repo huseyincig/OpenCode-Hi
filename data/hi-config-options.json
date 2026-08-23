@@ -505,7 +505,7 @@
       ],
       "validator": "boolean",
       "safety_semantics": "capacity",
-      "runtime_consumer": "plugin ConcurrencyScheduler policy",
+      "runtime_consumer": "runtime/scheduler/task-runtime-adapter -> SchedulingPlanner capacity policy",
       "executor_effect": "sets global scheduler capacity to one when disabled",
       "behavioral_acceptance_refs": [
         "config-executable-effect.test.mjs"
@@ -529,8 +529,8 @@
       ],
       "validator": "bounded-integer:1..8",
       "safety_semantics": "capacity",
-      "runtime_consumer": "plugin ConcurrencyScheduler policy",
-      "executor_effect": "caps total concurrently acquired workers",
+      "runtime_consumer": "runtime/scheduler/task-runtime-adapter -> SchedulingPlanner capacity policy",
+      "executor_effect": "caps total concurrently reserved execution units",
       "behavioral_acceptance_refs": [
         "config.test.mjs",
         "config-executable-effect.test.mjs"
@@ -554,7 +554,7 @@
       ],
       "validator": "positive-integer-limit-map",
       "safety_semantics": "capacity",
-      "runtime_consumer": "runtime/scheduler/ConcurrencyScheduler.canStart",
+      "runtime_consumer": "runtime/scheduler/SchedulingPlanner capacity policy",
       "executor_effect": "caps concurrent workers per provider",
       "behavioral_acceptance_refs": [
         "config-executable-effect.test.mjs"
@@ -578,7 +578,7 @@
       ],
       "validator": "positive-integer-limit-map",
       "safety_semantics": "capacity",
-      "runtime_consumer": "runtime/scheduler/ConcurrencyScheduler.canStart",
+      "runtime_consumer": "runtime/scheduler/SchedulingPlanner capacity policy",
       "executor_effect": "caps concurrent workers per model",
       "behavioral_acceptance_refs": [
         "main-prompt-variant-fallback-concurrency.test.mjs",

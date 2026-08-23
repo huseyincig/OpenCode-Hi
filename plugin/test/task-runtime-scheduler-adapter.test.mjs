@@ -19,10 +19,10 @@ function mission(id='runtime-scheduler-adapter'){
   m.execution.execution_mode='parallel';m.execution.topology={mode:'multi-agent',parallelism:2,reason:['test']};return m
 }
 
-test('adapter projects legacy resource tracker into host-neutral SchedulingSnapshot',()=>{
-  const m=mission('adapter-snapshot'),a=createTask(m,{objective:'a',role:'coder',category:'standard'}),wa=createWorker(m,a,'p/m1'),b=createTask(m,{objective:'b',role:'coder',category:'standard'}),wb=createWorker(m,b,'p/m2')
-  wa.status='busy';a.status='running'
-  const scheduler=new ConcurrencyScheduler(()=>({global:3,providers:{p:2},models:{'p/m1':1,'p/m2':2}}));assert.equal(scheduler.acquire(wa.id,'p','p/m1'),true)
+test('adapter projects durable scheduler reservations into host-neutral SchedulingSnapshot',()=>{
+  const m=mission('adapter-snapshot'),a=createTask(m,{objective:'a',role:'coder',category:'standard'}),wa=createWorker(m,a,'p/m1')
+  const scheduler=new ConcurrencyScheduler(()=>({global:3,providers:{p:2},models:{'p/m1':1,'p/m2':2}}));assert.equal(reserveTaskRuntimeDispatch(m,wa,'p/m1',scheduler,10).accepted,true);wa.status='busy';a.status='running'
+  const b=createTask(m,{objective:'b',role:'coder',category:'standard'}),wb=createWorker(m,b,'p/m2')
   const snap=taskRuntimeSchedulingSnapshot(m,scheduler,{workerId:wb.id,model:'p/m2'})
   assert.equal(snap.capacity.topology,2);assert.equal(snap.capacity.global,3);assert.equal(snap.capacity.providers.p,2);assert.equal(snap.capacity.models['p/m1'],1)
   assert.deepEqual(snap.capacity.running,[{executionUnitId:`eu:${a.id}`,provider:'p',model:'p/m1'}])
@@ -30,13 +30,28 @@ test('adapter projects legacy resource tracker into host-neutral SchedulingSnaps
 })
 
 test('adapter model admission is scheduler-owned and respects resource ceilings',()=>{
-  const m=mission('adapter-model'),a=createTask(m,{objective:'a',role:'coder',category:'standard',scope:['src/a.ts']}),wa=createWorker(m,a,'p/same'),b=createTask(m,{objective:'b',role:'coder',category:'standard',scope:['src/b.ts']}),wb=createWorker(m,b,'p/same')
-  wa.status='busy';a.status='running'
-  const scheduler=new ConcurrencyScheduler(()=>({global:3,providers:{p:3},models:{'p/same':1,'p/other':2}}));scheduler.acquire(wa.id,'p','p/same')
+  const m=mission('adapter-model'),a=createTask(m,{objective:'a',role:'coder',category:'standard',scope:['src/a.ts']}),wa=createWorker(m,a,'p/same')
+  const scheduler=new ConcurrencyScheduler(()=>({global:3,providers:{p:3},models:{'p/same':1,'p/other':2}}));assert.equal(reserveTaskRuntimeDispatch(m,wa,'p/same',scheduler,10).accepted,true);wa.status='busy';a.status='running'
+  const b=createTask(m,{objective:'b',role:'coder',category:'standard',scope:['src/b.ts']}),wb=createWorker(m,b,'p/same')
   assert.equal(taskRuntimeAdmittedModel(m,wb,['p/same'],scheduler),undefined)
   assert.equal(taskRuntimeAdmittedModel(m,wb,['p/same','p/other'],scheduler),'p/other')
 })
 
+
+
+test('durable reservation alone is the running resource truth for later admission and release',()=>{
+  const m=mission('adapter-reservation-capacity'),a=createTask(m,{objective:'a',role:'coder',category:'standard',scope:['src/a.ts']}),wa=createWorker(m,a,'p/same')
+  const scheduler=new ConcurrencyScheduler(()=>({global:3,providers:{p:3},models:{'p/same':1,'p/other':2}}))
+  const reserved=reserveTaskRuntimeDispatch(m,wa,'p/same',scheduler,10);assert.equal(reserved.accepted,true);wa.status='busy';a.status='running'
+  assert.equal(scheduler.running(),0,'legacy in-memory tracker must not be required for the durable reservation')
+  const b=createTask(m,{objective:'b',role:'coder',category:'standard',scope:['src/b.ts']}),wb=createWorker(m,b,'p/same')
+  const snap=taskRuntimeSchedulingSnapshot(m,scheduler,{workerId:wb.id,model:'p/same'})
+  assert.deepEqual(snap.capacity.running,[{executionUnitId:`eu:${a.id}`,provider:'p',model:'p/same'}])
+  assert.equal(taskRuntimeAdmittedModel(m,wb,['p/same'],scheduler),undefined)
+  assert.equal(taskRuntimeAdmittedModel(m,wb,['p/same','p/other'],scheduler),'p/other')
+  const released=releaseTaskRuntimeReservation(m,wa.id,'RELEASE',11);assert.equal(released.accepted,true);wa.status='completed';a.status='completed'
+  assert.equal(taskRuntimeAdmittedModel(m,wb,['p/same'],scheduler),'p/same')
+})
 test('adapter reserves exact next attempt before host binding and releases the same reservation',()=>{
   const m=mission('adapter-lifecycle'),task=createTask(m,{objective:'x',role:'coder',category:'standard'}),worker=createWorker(m,task,'p/m')
   const scheduler=new ConcurrencyScheduler(()=>({global:2,providers:{p:2},models:{'p/m':2}}))

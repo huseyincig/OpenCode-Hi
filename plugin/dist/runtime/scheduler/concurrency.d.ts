@@ -3,7 +3,11 @@ export interface ConcurrencyPolicy {
     providers?: Record<string, number>;
     models?: Record<string, number>;
 }
-export declare class ConcurrencyScheduler {
+export interface ConcurrencyPolicySource {
+    policySnapshot(): ConcurrencyPolicy;
+}
+export declare function createConcurrencyPolicySource(policy: () => ConcurrencyPolicy): ConcurrencyPolicySource;
+export declare class ConcurrencyScheduler implements ConcurrencyPolicySource {
     #private;
     private policy;
     constructor(policy: () => ConcurrencyPolicy);

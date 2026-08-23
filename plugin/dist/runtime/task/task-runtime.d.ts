@@ -2,7 +2,7 @@ import type { HiConfig } from '../../config/schema.js';
 import type { Category, MissionState, WorkerResult, WorkerState } from '../mission/types.js';
 import { type AvailableModel } from '../routing/model-resolver.js';
 import { BackgroundRegistry } from '../background/registry.js';
-import { ConcurrencyScheduler } from '../scheduler/concurrency.js';
+import type { ConcurrencyPolicySource } from '../scheduler/concurrency.js';
 import type { RuntimeSignalSink } from '../events/event-sink.js';
 import { type BrowserExecutor } from '../browser/executor.js';
 import { type BrowserBackend } from '../browser/backend-policy.js';
@@ -52,7 +52,7 @@ export declare class TaskRuntime {
     private readonly ensureBrowserResource?;
     private readonly readAssistantResult?;
     private readonly previewManager?;
-    constructor(childHost: ChildSessionPort, registry: BackgroundRegistry, scheduler: ConcurrencyScheduler, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined, hostCapabilitySource?: (() => readonly HostCapabilityContract[]) | readonly HostCapabilityContract[], scopedStores?: RuntimeScopedStores, workspaceRuntime?: WorkspaceRuntime | undefined, extraHostResources?: () => ReadonlySet<string>, browserExecutor?: BrowserExecutor | undefined, ensureBrowserResource?: (() => Promise<{
+    constructor(childHost: ChildSessionPort, registry: BackgroundRegistry, scheduler: ConcurrencyPolicySource, projectRoot: string, hiRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events?: RuntimeSignalSink | undefined, hostCapabilitySource?: (() => readonly HostCapabilityContract[]) | readonly HostCapabilityContract[], scopedStores?: RuntimeScopedStores, workspaceRuntime?: WorkspaceRuntime | undefined, extraHostResources?: () => ReadonlySet<string>, browserExecutor?: BrowserExecutor | undefined, ensureBrowserResource?: (() => Promise<{
         available: boolean;
         attempted?: boolean;
         reason?: string;

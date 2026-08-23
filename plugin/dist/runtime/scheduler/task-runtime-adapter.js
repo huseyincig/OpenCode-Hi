@@ -15,7 +15,7 @@ export function taskRuntimeSchedulingSnapshot(m, scheduler, override) {
         const model = worker.id === override?.workerId ? override.model : worker.model, unit = unitID(worker);
         resolvedResources[unit] = { ...(providerOf(model) ? { provider: providerOf(model) } : {}), ...(model && model !== 'host-default' ? { model } : {}) };
     }
-    const policy = scheduler.policySnapshot(), running = scheduler.allocations().map(slot => { const worker = m.execution.workers.find(item => item.id === slot.id); return { executionUnitId: worker ? unitID(worker) : `legacy:${slot.id}`, ...(slot.provider ? { provider: slot.provider } : {}), ...(slot.model ? { model: slot.model } : {}) }; });
+    const policy = scheduler.policySnapshot(), running = lifecycle(m).reservations.map(reservation => ({ executionUnitId: reservation.executionUnitId, ...(reservation.resource.provider ? { provider: reservation.resource.provider } : {}), ...(reservation.resource.model ? { model: reservation.resource.model } : {}) }));
     return { graph, unitTraits, resolvedResources, capacity: { topology: m.execution.execution_mode === 'single' ? 1 : Math.max(1, m.execution.topology?.parallelism ?? 1), global: policy.global, providers: { ...(policy.providers ?? {}) }, models: { ...(policy.models ?? {}) }, running } };
 }
 export function taskRuntimeUnitDecision(m, worker, model, scheduler) {

@@ -1,7 +1,7 @@
 import { MissionStore } from '../mission/mission-store.js';
 import { BackgroundRegistry } from '../background/registry.js';
 import { RuntimePersistence } from '../state/persistence.js';
-import { ConcurrencyScheduler } from '../scheduler/concurrency.js';
+import { createConcurrencyPolicySource } from '../scheduler/concurrency.js';
 import { TaskRuntime } from '../task/task-runtime.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { createRuntimeScopedStores } from './runtime-scoped-stores.js';
@@ -25,7 +25,7 @@ export function createRuntimeServices(input) {
             if (!['completed', 'failed', 'cancelled'].includes(w.status))
                 background.set(w);
     persistence.markRunning(store.all());
-    const scheduler = new ConcurrencyScheduler(() => ({ global: getConfig().parallel.enabled ? getConfig().parallel.max : 1, providers: getConfig().parallel.providers, models: getConfig().parallel.models }));
+    const scheduler = createConcurrencyPolicySource(() => ({ global: getConfig().parallel.enabled ? getConfig().parallel.max : 1, providers: getConfig().parallel.providers, models: getConfig().parallel.models }));
     const eventSink = ev => { const m = store.all().find(x => x.identity.mission_id === ev.mission_id); if (m)
         appendLedger(m, `event.${ev.type}`, { task_id: ev.task_id, worker_id: ev.worker_id, payload: ev.payload }); };
     const browserExecutor = ports.createBrowser((bytes, c) => { const a = scopedStores.contextArtifacts.addBinary('browser-screenshot', `Browser screenshot for ${c.task_id}`, bytes, { extension: 'png', mediaType: 'image/png', producer: 'hi-browser-executor', consumerRefs: [`task:${c.task_id}`] }); return `hi-artifact:${a.artifact_id}`; });

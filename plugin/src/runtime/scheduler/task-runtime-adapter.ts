@@ -3,7 +3,7 @@ import { createSchedulerLifecycleState,executionAttemptIdentity } from '../../co
 import type { MissionState,WorkerState } from '../mission/types.js'
 import { projectMissionToWorkGraph } from '../execution/work-graph-projection.js'
 import { isHiReadOnlyChildRole } from '../roles/catalog.js'
-import type { ConcurrencyScheduler } from './concurrency.js'
+import type { ConcurrencyPolicySource } from './concurrency.js'
 import { planSchedulerAdmissions,reduceSchedulerLifecycle,reserveSchedulerUnit } from './lifecycle.js'
 import { planScheduling } from './planner.js'
 
@@ -13,23 +13,23 @@ function lifecycle(m:MissionState){return m.execution.scheduler??(m.execution.sc
 
 export interface TaskRuntimeSchedulingOverride {workerId:string;model?:string}
 
-export function taskRuntimeSchedulingSnapshot(m:MissionState,scheduler:ConcurrencyScheduler,override?:TaskRuntimeSchedulingOverride):SchedulingSnapshot{
+export function taskRuntimeSchedulingSnapshot(m:MissionState,scheduler:ConcurrencyPolicySource,override?:TaskRuntimeSchedulingOverride):SchedulingSnapshot{
   const graph=projectMissionToWorkGraph(m,Date.now()),unitTraits:SchedulingSnapshot['unitTraits']={},resolvedResources:SchedulingSnapshot['resolvedResources']={}
   for(const unit of graph.executionUnits){unitTraits[unit.id]={readOnly:isHiReadOnlyChildRole(unit.role)}}
   for(const worker of m.execution.workers){
     const model=worker.id===override?.workerId?override.model:worker.model,unit=unitID(worker)
     resolvedResources[unit]={...(providerOf(model)?{provider:providerOf(model)}:{}),...(model&&model!=='host-default'?{model}:{})}
   }
-  const policy=scheduler.policySnapshot(),running=scheduler.allocations().map(slot=>{const worker=m.execution.workers.find(item=>item.id===slot.id);return{executionUnitId:worker?unitID(worker):`legacy:${slot.id}`,...(slot.provider?{provider:slot.provider}:{}),...(slot.model?{model:slot.model}:{})}})
+  const policy=scheduler.policySnapshot(),running=lifecycle(m).reservations.map(reservation=>({executionUnitId:reservation.executionUnitId,...(reservation.resource.provider?{provider:reservation.resource.provider}:{}),...(reservation.resource.model?{model:reservation.resource.model}:{})}))
   return{graph,unitTraits,resolvedResources,capacity:{topology:m.execution.execution_mode==='single'?1:Math.max(1,m.execution.topology?.parallelism??1),global:policy.global,providers:{...(policy.providers??{})},models:{...(policy.models??{})},running}}
 }
 
-export function taskRuntimeUnitDecision(m:MissionState,worker:WorkerState,model:string|undefined,scheduler:ConcurrencyScheduler):SchedulingUnitDecision|undefined{
+export function taskRuntimeUnitDecision(m:MissionState,worker:WorkerState,model:string|undefined,scheduler:ConcurrencyPolicySource):SchedulingUnitDecision|undefined{
   const snapshot=taskRuntimeSchedulingSnapshot(m,scheduler,{workerId:worker.id,model})
   return planScheduling(snapshot).units.find(item=>item.executionUnitId===unitID(worker))
 }
 
-export function taskRuntimeAdmittedModel(m:MissionState,worker:WorkerState,models:string[],scheduler:ConcurrencyScheduler):string|undefined{
+export function taskRuntimeAdmittedModel(m:MissionState,worker:WorkerState,models:string[],scheduler:ConcurrencyPolicySource):string|undefined{
   if(m.identity.status!=='active'||m.continuation.user_interrupted||m.identity.semantic_assessment.status!=='assessed'||worker.status==='cancelled')return undefined
   const state=lifecycle(m),id=unitID(worker)
   return models.find(model=>planSchedulerAdmissions(taskRuntimeSchedulingSnapshot(m,scheduler,{workerId:worker.id,model}),state).executionUnitIds.includes(id))
@@ -37,7 +37,7 @@ export function taskRuntimeAdmittedModel(m:MissionState,worker:WorkerState,model
 
 export interface TaskRuntimeReservationResult extends SchedulerLifecycleResult {attempt?:ExecutionAttemptIdentity;reservation?:SchedulerReservation}
 
-export function reserveTaskRuntimeDispatch(m:MissionState,worker:WorkerState,model:string|undefined,scheduler:ConcurrencyScheduler,at=Date.now()):TaskRuntimeReservationResult{
+export function reserveTaskRuntimeDispatch(m:MissionState,worker:WorkerState,model:string|undefined,scheduler:ConcurrencyPolicySource,at=Date.now()):TaskRuntimeReservationResult{
   const state=lifecycle(m),snapshot=taskRuntimeSchedulingSnapshot(m,scheduler,{workerId:worker.id,model}),attempt=executionAttemptIdentity({executionUnitId:unitID(worker),workerId:worker.id,ordinal:(worker.attempt??0)+1,generation:m.continuation.generation})
   const out=reserveSchedulerUnit(snapshot,state,{executionUnitId:unitID(worker),workerId:worker.id,attempt,at})
   if(out.accepted)m.execution.scheduler=out.state

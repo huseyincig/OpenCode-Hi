@@ -155,7 +155,7 @@
     },
     {
       "path": "docs/ARCHITECTURE.md",
-      "sha256": "0fce71fcc1a0b655f2a03059d9bafd1dbd4e79a4a66a6dff34f7a32fabc0b0a9",
+      "sha256": "a9a7c519628a9e324ddc62357c5d3b20fa6bbcdd7d2ea2e9c30819ac68b0a8ec",
       "area": "architecture-execution-context-storage-privacy",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
@@ -163,7 +163,7 @@
     },
     {
       "path": "docs/CONFIGURATION.md",
-      "sha256": "5d21f4d5c9ecce5d8991c39cc3232762cf0ffdf01a5fbb193be62309a9eb57ab",
+      "sha256": "65911ed8b4e1066250da9c4d513ccc27c8cd44539e89090ad5bedd32f0d958aa",
       "area": "configuration-guide",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -187,7 +187,7 @@
     },
     {
       "path": "docs/INSTALLATION.md",
-      "sha256": "dff7cbd803ad3889946648d3b70bbd7c89f8ea159dda7f25c9f6bea2b80305fe",
+      "sha256": "bd864735c720ac9560bb783fb7e1a4f93c7bf55986fa196312294a9ed35c98ba",
       "area": "installation-configuration-lifecycle",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",

@@ -19,7 +19,6 @@ function setup(promptImpl=async()=>{},withAbort=true,models=[]){
   const m=startAssessedMission(store,'parent','opaque provider task')
   m.execution.tasks.push({id:'t1',mission_id:m.identity.mission_id,objective:'fix it',status:'running',role:'coder',category:'standard',scope:['src/a.ts'],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],execution_profile:{role:'coder',category:'standard',model:'p/primary',fallback_models:['p/fallback1','p/fallback2'],fallback_variants:{'p/fallback1':'high','p/fallback2':'medium'},methodologies:[],permission_profile:{skill_tool_enabled:true,skill_permissions:{},external_effects:'parent-only',recursive_task:'deny'},verification_policy:m.execution.verification_policy,max_context_chars:1000,max_handoff_chars:1000,max_result_chars:1000,max_artifacts:4},worker_id:'w1',external_action_requirements:[],created_at:Date.now(),updated_at:Date.now()})
   m.execution.workers.push({id:'w1',task_id:'t1',role:'coder',category:'standard',session_id:'child1',parent_session_id:'parent',parent_mission_id:m.identity.mission_id,model:'p/primary',fallbacks:['p/fallback1','p/fallback2'],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'busy',attempt:0,generation_at_spawn:m.continuation.generation,updated_at:Date.now()})
-  scheduler.acquire('w1','p','p/primary')
   return {runtime,scheduler,m,calls,aborts}
 }
 
@@ -130,7 +129,6 @@ test('uncertain fallback dispatch preserves active ownership',async()=>{
   assert.equal(calls.length,1)
   assert.equal(worker.status,'busy');assert.equal(task.status,'running')
   assert.equal(worker.session_id,'recovery-1')
-  assert.equal(scheduler.running(),1)
   assert.equal(m.execution.scheduler.reservations.length,1)
   assert.equal(m.execution.ledger.some(x=>x.type==='worker.failed'),false)
 })
@@ -174,7 +172,7 @@ test('unparseable terminal assistant output stays fail-closed but becomes resuma
   assert.ok(task.result.open_issues.includes('worker-result-contract-invalid'))
   assert.ok(task.result.needs_context.some(x=>x.startsWith('worker-result-contract-retry:')))
   assert.ok(m.execution.ledger.some(e=>e.type==='worker.result-contract-retryable'&&e.worker_id===worker.id))
-  assert.equal(scheduler.running(),0,'terminal attempt releases execution capacity before same-session corrective resume')
+  assert.equal(m.execution.scheduler.reservations.length,0,'terminal attempt releases execution capacity before same-session corrective resume')
 })
 
 test('normal task_id corrective resumes feed the behavioral hazard circuit and third no-gain resume switches to a fresh recovery-only model',async()=>{

@@ -111,8 +111,8 @@ test('M14 queued dependency work below the topology ceiling does not block an in
   try{
     const m=mission(root,'m14-queue-fairness'),x=runtime(root,{global:8}),dependency=createTask(m,{objective:'unresolved external prerequisite',role:'coder',category:'quick',scope:['src/prereq.ts']})
     for(let i=0;i<6;i++){const out=await x.rt.start(m,{objective:`dependency-wait-${i}`,role:'coder',category:'quick',scope:[`src/wait-${i}.ts`],dependencies:[dependency.id]});assert.equal(out.readiness,'WAIT')}
-    assert.equal(x.rt.queueDepth(),6);assert.equal(x.scheduler.running(),0)
+    assert.equal(x.rt.queueDepth(),6);assert.equal(m.execution.scheduler.reservations.length,0)
     const independent=await x.rt.start(m,{objective:'independent-runnable',role:'coder',category:'quick',scope:['src/free.ts']})
-    assert.equal(independent.readiness,'READY');assert.equal(x.rt.queueDepth(),6);assert.equal(x.scheduler.running(),1);assert.ok(x.created.length>=1)
+    assert.equal(independent.readiness,'READY');assert.equal(x.rt.queueDepth(),6);assert.equal(m.execution.scheduler.reservations.length,1);assert.ok(x.created.length>=1)
   }finally{rmSync(root,{recursive:true,force:true})}
 })

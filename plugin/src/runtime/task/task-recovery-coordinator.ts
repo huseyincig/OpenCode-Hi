@@ -13,17 +13,16 @@ import { appendLedger } from '../ledger/ledger.js'
 import { runtimeSignal,type RuntimeSignalSink } from '../events/event-sink.js'
 import { syncMissionGates } from '../gates/gates.js'
 import type { BackgroundRegistry } from '../background/registry.js'
-import type { ConcurrencyScheduler } from '../scheduler/concurrency.js'
+import type { ConcurrencyPolicySource } from '../scheduler/concurrency.js'
 import { ChildExecutionCoordinator,type ChildWorkspaceBinding } from './child-execution-coordinator.js'
 import { taskRuntimeAdmittedModel,reserveTaskRuntimeDispatch,bindTaskRuntimeHost,beginTaskRuntimeSettlement,releaseTaskRuntimeReservation } from '../scheduler/task-runtime-adapter.js'
 import { recordRecoveryStrategy,recoveryModelHazard } from '../continuation/recovery-governor.js'
 
-function providerOf(model:string|undefined):string|undefined{return model&&model!=='host-default'&&model.includes('/')?model.slice(0,model.indexOf('/')):undefined}
 export type ChildCallbackDisposition='accept'|'stale-mission'
 export type HostTerminalRecoveryDisposition='RECOVERED'|'QUARANTINED'|'NOT_RECOVERED'
 export class TaskRecoveryCoordinator{
   callbackDisposition(m:MissionState,worker:{parent_mission_id?:string;generation_at_spawn?:number}):ChildCallbackDisposition{if((worker.parent_mission_id!==undefined&&worker.parent_mission_id!==m.identity.mission_id)||(worker.generation_at_spawn!==undefined&&worker.generation_at_spawn!==m.continuation.generation))return'stale-mission';return'accept'}
-  constructor(private readonly scheduler:ConcurrencyScheduler,private readonly registry:BackgroundRegistry,private readonly projectRoot:string,private readonly getConfig:()=>HiConfig,private readonly getModels:()=>AvailableModel[],private readonly getHostConfig:()=>Record<string,unknown>,private readonly events:RuntimeSignalSink|undefined,private readonly child:ChildExecutionCoordinator,private readonly drainQueueCallback:()=>void,private readonly workspaceBinding?:(m:MissionState,taskID:string)=>ChildWorkspaceBinding|undefined){}
+  constructor(private readonly scheduler:ConcurrencyPolicySource,private readonly registry:BackgroundRegistry,private readonly projectRoot:string,private readonly getConfig:()=>HiConfig,private readonly getModels:()=>AvailableModel[],private readonly getHostConfig:()=>Record<string,unknown>,private readonly events:RuntimeSignalSink|undefined,private readonly child:ChildExecutionCoordinator,private readonly drainQueueCallback:()=>void,private readonly workspaceBinding?:(m:MissionState,taskID:string)=>ChildWorkspaceBinding|undefined){}
   async recoverStagnation(m:MissionState,level:number,action:'same-worker-resume'|'model-escalation'='same-worker-resume'):Promise<boolean>{
     if((action==='same-worker-resume'&&![1,2].includes(level))||(action==='model-escalation'&&level!==3)||m.identity.status!=='active'||m.continuation.user_interrupted)return false
     const worker=[...m.execution.workers].reverse().find(w=>Boolean(w.session_id)&&!['failed','cancelled','busy','starting','queued'].includes(w.status))
@@ -40,7 +39,6 @@ export class TaskRecoveryCoordinator{
       const previousSession=worker.session_id,previousFork=worker.forked_from_session_id,previousStatus=worker.status,previousTaskStatus=task.status,nextVariant=task.execution_profile?.fallback_variants?.[next]
       worker.status='ready';task.status='waiting'
       const reservation=reserveTaskRuntimeDispatch(m,worker,next,this.scheduler);if(!reservation.accepted){worker.status=previousStatus;task.status=previousTaskStatus;return false}
-      if(!this.scheduler.acquire(worker.id,providerOf(next),next==='host-default'?undefined:next)){releaseTaskRuntimeReservation(m,worker.id);worker.status=previousStatus;task.status=previousTaskStatus;return false}
       try{
         this.child.recordModelProjection(worker,next,nextVariant)
         const child=await this.child.create(m.identity.session_id,`Hi · ${worker.role} · behavioral recovery · ${task.objective.slice(0,40)}`,worker.role,next==='host-default'?undefined:next,nextVariant,this.workspaceBinding?.(m,task.id))
@@ -58,7 +56,7 @@ export class TaskRecoveryCoordinator{
         return true
       }catch(error){
         let stopped=true;if(worker.session_id&&worker.session_id!==previousSession)try{stopped=await this.child.abortNativeSession(m,worker.session_id,'behavioral-model-escalation-failed',worker.id,task.id)}catch{stopped=false}
-        if(stopped){this.scheduler.release(worker.id);releaseTaskRuntimeReservation(m,worker.id);worker.session_id=previousSession;worker.forked_from_session_id=previousFork;worker.model=model;worker.model_variant=variant;worker.status=previousStatus;task.status=previousTaskStatus}else{const marker=`behavioral-recovery-abort-unavailable:${task.id}:${worker.id}`;m.execution.blockers=[...new Set([...m.execution.blockers,marker])];worker.status='busy';task.status='running'}this.registry.set(worker)
+        if(stopped){releaseTaskRuntimeReservation(m,worker.id);worker.session_id=previousSession;worker.forked_from_session_id=previousFork;worker.model=model;worker.model_variant=variant;worker.status=previousStatus;task.status=previousTaskStatus}else{const marker=`behavioral-recovery-abort-unavailable:${task.id}:${worker.id}`;m.execution.blockers=[...new Set([...m.execution.blockers,marker])];worker.status='busy';task.status='running'}this.registry.set(worker)
         appendLedger(m,'worker.behavioral-model-escalation.failed',{task_id:task.id,worker_id:worker.id,payload:{level,action,from:model,to:next,error:String(error),host_stopped:stopped}})
         return false
       }
@@ -68,8 +66,7 @@ export class TaskRecoveryCoordinator{
     if(taskRuntimeAdmittedModel(m,worker,[model],this.scheduler)!==model){worker.status=previousWorkerStatus;task.status=previousTaskStatus;return false}
     const reservation=reserveTaskRuntimeDispatch(m,worker,model,this.scheduler);if(!reservation.accepted){worker.status=previousWorkerStatus;task.status=previousTaskStatus;return false}
     try{
-      if(!this.scheduler.acquire(worker.id,providerOf(model),model==='host-default'?undefined:model)){releaseTaskRuntimeReservation(m,worker.id);worker.status=previousWorkerStatus;task.status=previousTaskStatus;return false}
-      const bound=bindTaskRuntimeHost(m,worker.id,worker.session_id);if(!bound.accepted){this.scheduler.release(worker.id);releaseTaskRuntimeReservation(m,worker.id);worker.status=previousWorkerStatus;task.status=previousTaskStatus;return false}
+      const bound=bindTaskRuntimeHost(m,worker.id,worker.session_id);if(!bound.accepted){releaseTaskRuntimeReservation(m,worker.id);worker.status=previousWorkerStatus;task.status=previousTaskStatus;return false}
       const previous=worker.model
       worker.model=model;worker.model_variant=variant;worker.generation_at_spawn=m.continuation.generation;worker.parent_mission_id=m.identity.mission_id;worker.status='busy';task.status='running';this.registry.set(worker)
       const instruction=level===1
@@ -82,7 +79,7 @@ export class TaskRecoveryCoordinator{
       return true
     }catch(error){
       let stopped=true;if(worker.session_id)try{stopped=await this.child.abortNativeSession(m,worker.session_id,'stagnation-recovery-failed',worker.id,task.id)}catch{stopped=false}
-      if(stopped){this.scheduler.release(worker.id);releaseTaskRuntimeReservation(m,worker.id);worker.status='ready';task.status=task.result?.status==='DONE'?'completed':task.result?'waiting':'blocked'}else{const marker=`stagnation-recovery-abort-unavailable:${task.id}:${worker.id}`;m.execution.blockers=[...new Set([...m.execution.blockers,marker])];worker.status='busy';task.status='running'}this.registry.set(worker)
+      if(stopped){releaseTaskRuntimeReservation(m,worker.id);worker.status='ready';task.status=task.result?.status==='DONE'?'completed':task.result?'waiting':'blocked'}else{const marker=`stagnation-recovery-abort-unavailable:${task.id}:${worker.id}`;m.execution.blockers=[...new Set([...m.execution.blockers,marker])];worker.status='busy';task.status='running'}this.registry.set(worker)
       appendLedger(m,'worker.stagnation-recovery.failed',{task_id:task.id,worker_id:worker.id,payload:{level,action,error:String(error),host_stopped:stopped}})
       return false
     }
@@ -98,12 +95,11 @@ export class TaskRecoveryCoordinator{
     if(!failure.retryable||failure.kind!=='provider-transport'||!worker.session_id||!task)return'NOT_RECOVERED'
     const failedSession=worker.session_id,candidates=worker.fallbacks.filter(x=>x&&x!==worker.model)
     appendLedger(m,'worker.runtime-fallback.host-terminal-confirmed',{task_id:task.id,worker_id:worker.id,payload:{session_id:failedSession,failure_class:failure.kind,action:'release-without-abort'}})
-    this.scheduler.release(worker.id);releaseTaskRuntimeReservation(m,worker.id);worker.session_id=undefined;worker.restart_reconcile_pending=false;worker.status='ready';task.status='waiting';this.registry.set(worker)
+    releaseTaskRuntimeReservation(m,worker.id);worker.session_id=undefined;worker.restart_reconcile_pending=false;worker.status='ready';task.status='waiting';this.registry.set(worker)
     for(const model of candidates){
       const runtimeCandidate=runtimeModelCandidateStatus(model,this.getModels(),this.getConfig(),this.getHostConfig(),worker.role);if(!runtimeCandidate.ok){appendLedger(m,'worker.runtime-fallback.skipped',{task_id:task.id,worker_id:worker.id,payload:{model,reason:runtimeCandidate.reason,failure_class:failure.kind,phase:'runtime-policy-revalidation'}});continue}
-      const provider=providerOf(model),variant=task.execution_profile?.fallback_variants?.[model],previous=worker.model,fallbackReason=task.execution_profile?.fallback_reasons?.find(x=>x.model===model)?.reason??`runtime fallback after ${failure.kind}`
+      const variant=task.execution_profile?.fallback_variants?.[model],previous=worker.model,fallbackReason=task.execution_profile?.fallback_reasons?.find(x=>x.model===model)?.reason??`runtime fallback after ${failure.kind}`
       const reservation=reserveTaskRuntimeDispatch(m,worker,model,this.scheduler);if(!reservation.accepted){appendLedger(m,'worker.runtime-fallback.skipped',{task_id:task.id,worker_id:worker.id,payload:{model,reason:reservation.reason,failure_class:failure.kind,source:'scheduler'}});continue}
-      if(!this.scheduler.acquire(worker.id,provider,model==='host-default'?undefined:model)){releaseTaskRuntimeReservation(m,worker.id);appendLedger(m,'scheduler.resource-tracker-mismatch',{task_id:task.id,worker_id:worker.id,payload:{model,phase:'runtime-fallback'}});continue}
       try{
         this.child.recordModelProjection(worker,model,variant);const child=await this.child.create(m.identity.session_id,`Hi · ${worker.role} · runtime recovery · ${task.objective.slice(0,45)}`,worker.role,model==='host-default'?undefined:model,variant,this.workspaceBinding?.(m,task.id))
         if(!child?.id)throw new Error('Runtime fallback child session id missing')
@@ -117,7 +113,7 @@ export class TaskRecoveryCoordinator{
         return'RECOVERED'
       }catch(nextError){
         worker.runtime_recovery_pending=false;let recoveryStopped=true;if(worker.session_id)try{recoveryStopped=await this.child.abortNativeSession(m,worker.session_id,'runtime-fallback-failed',worker.id,task.id)}catch{recoveryStopped=false}
-        if(recoveryStopped){this.scheduler.release(worker.id);releaseTaskRuntimeReservation(m,worker.id);worker.session_id=undefined;worker.status='ready';task.status='waiting';this.registry.set(worker)}else{const marker=`runtime-fallback-recovery-abort-unavailable:${task.id}:${worker.id}`;m.execution.blockers=[...new Set([...m.execution.blockers,marker])];worker.status='busy';task.status='running';this.registry.set(worker)}
+        if(recoveryStopped){releaseTaskRuntimeReservation(m,worker.id);worker.session_id=undefined;worker.status='ready';task.status='waiting';this.registry.set(worker)}else{const marker=`runtime-fallback-recovery-abort-unavailable:${task.id}:${worker.id}`;m.execution.blockers=[...new Set([...m.execution.blockers,marker])];worker.status='busy';task.status='running';this.registry.set(worker)}
         appendLedger(m,'worker.runtime-fallback.failed',{task_id:task.id,worker_id:worker.id,payload:{model,error:String(nextError),failure_class:failure.kind,from_session:failedSession,host_stopped:recoveryStopped}});if(!recoveryStopped)return'QUARANTINED'
       }
     }
@@ -130,7 +126,7 @@ export class TaskRecoveryCoordinator{
     const task=m.execution.tasks.find(t=>t.id===worker.task_id),failureClass=worker.last_runtime_failure_kind,permissionFailure=failureClass==='permission',providerFailure=failureClass==='provider-transport',contextFailure=failureClass==='context-overflow',toolFailure=failureClass==='tool-incompatibility',model=worker.model??'unknown'
     const marker=permissionFailure?`permission-failure:${worker.id}`:providerFailure?`provider-failure:provider-transport:${model}`:contextFailure?`capability-unavailable:context-capacity:${model}`:toolFailure?`capability-unavailable:tool-compatibility:${model}`:error
     const needsContext=permissionFailure?['resolve OpenCode permission/authority and explicitly resume the mission']:providerFailure?['provider/model availability or alternate execution path']:contextFailure?['OpenCode context compaction was exhausted or could not resolve terminal context capacity; reduce bounded context/task scope or explicitly choose a model with known sufficient context capacity']:toolFailure?['terminal tool/model compatibility failure was observed; repair tool availability or explicitly choose a model with proven required tool capability']:[]
-    worker.status='failed';worker.completed_at=Date.now();this.scheduler.release(worker.id);releaseTaskRuntimeReservation(m,worker.id);this.registry.delete(worker.id)
+    worker.status='failed';worker.completed_at=Date.now();releaseTaskRuntimeReservation(m,worker.id);this.registry.delete(worker.id)
     if(permissionFailure||providerFailure||contextFailure||toolFailure)m.continuation.stagnation_count=0
     if(task){task.status='failed';task.updated_at=Date.now();task.result={status:'FAILED',summary:error,changed_files:[],evidence:[],open_issues:[marker],needs_context:needsContext}}
     m.execution.blockers=[...new Set([...m.execution.blockers,marker])];appendLedger(m,'worker.failed',{task_id:task?.id,worker_id:worker.id,payload:{error,failure_class:failureClass??'unknown',blocker:marker}});void this.events?.(runtimeSignal('worker.failed',m.identity.mission_id,{task_id:task?.id,worker_id:worker.id,payload:{error,failure_class:failureClass??'unknown'}}));syncMissionGates(m);this.drainQueueCallback()
