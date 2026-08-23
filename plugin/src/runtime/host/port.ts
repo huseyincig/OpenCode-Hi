@@ -19,7 +19,7 @@ export interface HostEvent{
   error?:HostAssistantError
 }
 export interface HostAssistantError{name?:string;message:string;isRetryable?:boolean;statusCode?:number}
-export interface HostAssistantResult{text:string;model?:{model?:string;variant?:string;message_id?:string};usage?:HostUsageObservation;error?:HostAssistantError}
+export interface HostAssistantResult{text:string;model?:{model?:string;variant?:string;message_id?:string;parent_id?:string;created_at?:number};usage?:HostUsageObservation;error?:HostAssistantError}
 export interface HostCapabilityView{
   childSessions:boolean;asyncPrompt:boolean;syncPrompt:boolean;abort:boolean;providerInventory:boolean;appLog:boolean
   sessionStatus:boolean;childSessionList:boolean;sessionTodo:boolean;sessionDiff:boolean;sessionFork:boolean;sessionSummarize:boolean;sessionRevert:boolean;sessionUnrevert:boolean
@@ -44,7 +44,7 @@ export type HostChildSessionStatus='idle'|'busy'|'retry'|'unknown'
 export interface ChildSessionPort{
   capabilities:{create:boolean;prompt:boolean;abort:boolean;status:boolean;diff:boolean;summarize:boolean;fork:boolean}
   create(request:ChildSessionCreateRequest):Promise<ChildSessionCreateResult>
-  prompt(sessionID:string,text:string,role?:string,model?:string,variant?:string,tools?:Record<string,boolean>):Promise<unknown>
+  prompt(sessionID:string,text:string,role?:string,model?:string,variant?:string,tools?:Record<string,boolean>,messageID?:string):Promise<unknown>
   abort(sessionID:string):Promise<'server'|'server-reconciled'|'client'|'client-reconciled'|'unavailable'>
   status(sessionID:string):Promise<HostChildSessionStatus>
   diff(sessionID:string):Promise<unknown>

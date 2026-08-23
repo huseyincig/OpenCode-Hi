@@ -8,7 +8,7 @@
     {
       "invariant": "host-port-hi-needs-not-sdk",
       "owner": "plugin/src/runtime/host/port.ts",
-      "owner_sha256": "ada6a0ea214b68be4c067d0e24c6c43ea6b5bfc7384fa1332bb85989f941f7f0",
+      "owner_sha256": "8f8e9f35bae34af7af12eae99185f867e4795d35ff306df446b37c0d8ae260bd",
       "owner_anchor": "export interface HostPort",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",
@@ -44,7 +44,7 @@
     {
       "invariant": "child-session-port",
       "owner": "plugin/src/runtime/task/child-execution-coordinator.ts",
-      "owner_sha256": "669f3cdcfc0d2eb1a39686af77d8f84a8f37cfdc07bc6c831def91cee690c293",
+      "owner_sha256": "509bf2b00df8ab61a86d38c8ba967d392bfa27188174693e9348420dc0096c05",
       "owner_anchor": "constructor(private readonly host:ChildSessionPort",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",
@@ -80,7 +80,7 @@
     {
       "invariant": "missing-capability-fail-closed",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "64beb34d0e3455c1b11a4d0b7fc91643c126148d0205f5d0e023a88d6b5846c5",
+      "owner_sha256": "87772dc2b33303d573a6ed8e1ad973dfafc8c3396788efc1ef19107d741a2b4c",
       "owner_anchor": "hostCapabilitySource:(()=>readonly HostCapabilityContract[])|readonly HostCapabilityContract[]=[]",
       "proof": "plugin/test/methodology-host-capability.test.mjs",
       "proof_sha256": "ace5df77cf44c6a9b2ec9d87284e1385e9c532a7edd12dc322ae62b2adaf45c0",
@@ -89,7 +89,7 @@
     {
       "invariant": "alternate-host-continuation-feasible",
       "owner": "plugin/src/runtime/host/port.ts",
-      "owner_sha256": "ada6a0ea214b68be4c067d0e24c6c43ea6b5bfc7384fa1332bb85989f941f7f0",
+      "owner_sha256": "8f8e9f35bae34af7af12eae99185f867e4795d35ff306df446b37c0d8ae260bd",
       "owner_anchor": "continueSession(sessionID:string,text:string,metadata:Record<string,unknown>):Promise<boolean>",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",
@@ -98,7 +98,7 @@
     {
       "invariant": "alternate-host-task-feasible",
       "owner": "plugin/src/runtime/host/port.ts",
-      "owner_sha256": "ada6a0ea214b68be4c067d0e24c6c43ea6b5bfc7384fa1332bb85989f941f7f0",
+      "owner_sha256": "8f8e9f35bae34af7af12eae99185f867e4795d35ff306df446b37c0d8ae260bd",
       "owner_anchor": "export interface ChildSessionPort",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",

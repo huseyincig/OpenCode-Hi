@@ -8,7 +8,7 @@
     {
       "invariant": "role-agent-model-methodology-separation",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "64beb34d0e3455c1b11a4d0b7fc91643c126148d0205f5d0e023a88d6b5846c5",
+      "owner_sha256": "87772dc2b33303d573a6ed8e1ad973dfafc8c3396788efc1ef19107d741a2b4c",
       "owner_anchor": "worker.requested_model=input.model",
       "proof": "plugin/test/model-contract.test.mjs",
       "proof_sha256": "c4550067e1f883572c3e7b77d254853f95904a4c7e8b44ef9e5a53b084115f45",
@@ -26,7 +26,7 @@
     {
       "invariant": "host-contradiction-handling",
       "owner": "plugin/src/runtime/task/child-execution-coordinator.ts",
-      "owner_sha256": "669f3cdcfc0d2eb1a39686af77d8f84a8f37cfdc07bc6c831def91cee690c293",
+      "owner_sha256": "509bf2b00df8ab61a86d38c8ba967d392bfa27188174693e9348420dc0096c05",
       "owner_anchor": "identity.status==='model-mismatch'",
       "proof": "plugin/test/main-prompt-model-evidence.test.mjs",
       "proof_sha256": "9c19e48c5a1a636f900e13acea22272ac3f36f356e013e10a95e0b996c9a1cfc",
@@ -44,7 +44,7 @@
     {
       "invariant": "model-fallback",
       "owner": "plugin/src/runtime/task/task-recovery-coordinator.ts",
-      "owner_sha256": "cf695207826ba5ad8c1e5899250ed52ed1c865d37c468d07eacc8356bc128603",
+      "owner_sha256": "02adbd3be70f19da94aee2be02255e316676e3c7801a9ac6e070d36abe459736",
       "owner_anchor": "recoverHostTerminalFailure",
       "proof": "plugin/test/provider-fallback-hardening.test.mjs",
       "proof_sha256": "473665f04bf7526638f2db50c199d655afc1857b0346570167d261275e94d70b",
@@ -62,7 +62,7 @@
     {
       "invariant": "methodology-lazy-load",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
+      "owner_sha256": "c8fc05afe5032b76da7f86dd078d617b7b22093be95aafdacc08f88cf9af4050",
       "owner_anchor": "methodology-not-loaded",
       "proof": "plugin/test/methodology-signal-contract.test.mjs",
       "proof_sha256": "9222804364ba9bdfe7a0f9464cc79c1b08588ecc11e30be235fa23ec875fcecd",
@@ -98,7 +98,7 @@
     {
       "invariant": "methodology-cannot-own-completion",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
+      "owner_sha256": "c8fc05afe5032b76da7f86dd078d617b7b22093be95aafdacc08f88cf9af4050",
       "owner_anchor": "reconcileMethodologyExits",
       "proof": "plugin/test/forensic-hardening.test.mjs",
       "proof_sha256": "f323914acd1419a80ba359afad62e517da00c139d313504bc5f3304e96af4230",

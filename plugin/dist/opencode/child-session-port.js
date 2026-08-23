@@ -12,7 +12,7 @@ export function createOpenCodeChildSessionPort(client, lifecycle = {}) {
             const child = await createChildSession(client, parentSessionID, title, role, model, variant, workspace?.workspaceID, lifecycle);
             return { child, fork: { requested: Boolean(forkFromSession), nativeAvailable: Boolean(forkFromSession) && native.has('fork'), used: false, reason: forkFromSession ? 'native fork cannot set specialist agent; created isolated child instead' : undefined } };
         },
-        prompt: (sessionID, text, role, model, variant, tools) => sendPromptAsync(client, sessionID, text, role, model, variant, tools),
+        prompt: (sessionID, text, role, model, variant, tools, messageID) => sendPromptAsync(client, sessionID, text, role, model, variant, tools, undefined, messageID),
         abort: (sessionID) => abortSession(client, sessionID, lifecycle),
         status: (sessionID) => readSessionRuntimeStatus(client, sessionID, lifecycle),
         diff: (sessionID) => native.diff(sessionID),

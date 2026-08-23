@@ -30,6 +30,8 @@ export interface HostAssistantResult {
         model?: string;
         variant?: string;
         message_id?: string;
+        parent_id?: string;
+        created_at?: number;
     };
     usage?: HostUsageObservation;
     error?: HostAssistantError;
@@ -105,7 +107,7 @@ export interface ChildSessionPort {
         fork: boolean;
     };
     create(request: ChildSessionCreateRequest): Promise<ChildSessionCreateResult>;
-    prompt(sessionID: string, text: string, role?: string, model?: string, variant?: string, tools?: Record<string, boolean>): Promise<unknown>;
+    prompt(sessionID: string, text: string, role?: string, model?: string, variant?: string, tools?: Record<string, boolean>, messageID?: string): Promise<unknown>;
     abort(sessionID: string): Promise<'server' | 'server-reconciled' | 'client' | 'client-reconciled' | 'unavailable'>;
     status(sessionID: string): Promise<HostChildSessionStatus>;
     diff(sessionID: string): Promise<unknown>;

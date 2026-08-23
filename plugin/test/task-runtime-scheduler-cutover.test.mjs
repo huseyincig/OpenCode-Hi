@@ -83,3 +83,55 @@ test('corrective same-session resume is scheduler-reserved as the next attempt',
   const resumed=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
   assert.equal(resumed.worker_id,worker.id);assert.equal(worker.attempt,2);assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(m.execution.scheduler.reservations[0].attempt.ordinal,2);assert.equal(m.execution.scheduler.reservations[0].phase,'RUNNING')
 })
+
+
+test('same-session newer attempt ignores an exact duplicate prior result before scheduler settlement',async()=>{
+  const {runtime,m}=setup();const started=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
+  const prior=workerResult('FIX_REQUIRED');runtime.applyResult(m,started.worker_id,prior)
+  const worker=m.execution.workers.find(w=>w.id===started.worker_id),task=m.execution.tasks.find(t=>t.id===started.task_id)
+  await runtime.resume(m,task.id);assert.equal(worker.attempt,2);assert.equal(m.execution.scheduler.reservations[0].phase,'RUNNING')
+  runtime.applyResult(m,worker.id,prior)
+  assert.equal(worker.status,'busy');assert.equal(task.status,'running');assert.equal(m.execution.scheduler.reservations.length,1)
+  assert.equal(m.execution.scheduler.reservations[0].attempt.ordinal,2);assert.equal(m.execution.scheduler.reservations[0].phase,'RUNNING','duplicate prior result must be a scheduler no-op')
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.result.duplicate-ignored'&&e.payload?.attempt===2))
+})
+
+test('same-session attempt prompt IDs bind OpenCode assistant ancestry and stale prior result/error cannot settle the newer attempt',async()=>{
+  const prompts=[]
+  const {runtime,m}=setup({prompt:async req=>{prompts.push(req);return{data:{}}}})
+  const started=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
+  const worker=m.execution.workers.find(w=>w.id===started.worker_id),task=m.execution.tasks.find(t=>t.id===started.task_id)
+  const attempt1=worker.attempt_prompt_message_id
+  assert.match(attempt1,/^msg_[0-9a-f]{26}$/i);assert.equal(prompts[0].body.messageID,attempt1)
+
+  m.identity.semantic_assessment={status:'pending',phase:'followup',revision:m.identity.semantic_assessment.revision+1,source:'host-primary',pending_text:'constraint'}
+  assert.equal(await runtime.pauseForSemanticAssessment(m),1)
+  m.identity.semantic_assessment={...m.identity.semantic_assessment,status:'assessed',assessed_at:Date.now()}
+  assert.equal(await runtime.resumeAfterSemanticAssessment(m,'constraint'),1)
+  const attempt2=worker.attempt_prompt_message_id
+  assert.match(attempt2,/^msg_[0-9a-f]{26}$/i);assert.notEqual(attempt2,attempt1);assert.equal(prompts[1].body.messageID,attempt2);assert.equal(worker.attempt,2)
+
+  const staleResult={text:JSON.stringify(workerResult('FIX_REQUIRED')),model:{model:'p/code',message_id:'msg_old_assistant',parent_id:attempt1,created_at:worker.started_at}}
+  const stale=await runtime.settleHostIdleAssistantResult(m,worker,staleResult)
+  assert.equal(stale.applied,false);assert.equal(stale.reason,'assistant-result-stale-attempt-message')
+  assert.equal(worker.status,'busy');assert.equal(task.status,'running');assert.equal(m.execution.scheduler.reservations[0].phase,'RUNNING')
+
+  const staleError={text:'',model:{model:'p/code',message_id:'msg_old_error',parent_id:attempt1,created_at:worker.started_at},error:{name:'APIError',message:'old attempt failed',isRetryable:false}}
+  const rejectedError=await runtime.settleHostIdleAssistantResult(m,worker,staleError)
+  assert.equal(rejectedError.applied,false);assert.equal(rejectedError.reason,'assistant-result-stale-attempt-message');assert.equal(worker.last_runtime_failure_kind,undefined)
+  assert.equal(m.execution.scheduler.reservations[0].phase,'RUNNING')
+
+  const current={text:JSON.stringify(workerResult('FIX_REQUIRED')),model:{model:'p/code',message_id:'msg_current_assistant',parent_id:attempt2,created_at:(worker.started_at??0)+1}}
+  const accepted=await runtime.settleHostIdleAssistantResult(m,worker,current)
+  assert.equal(accepted.applied,true);assert.equal(accepted.reason,'assistant-result-applied');assert.equal(accepted.result?.status,'FIX_REQUIRED')
+  assert.equal(worker.status,'ready');assert.equal(task.status,'waiting');assert.equal(m.execution.scheduler.reservations.length,0)
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.assistant-result.stale-attempt-message'&&e.payload?.expected_parent_id===attempt2&&e.payload?.parent_id===attempt1))
+})
+
+test('assistant creation time is a secondary stale-attempt fence when host ancestry metadata is absent',async()=>{
+  const {runtime,m}=setup();const started=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
+  const worker=m.execution.workers.find(w=>w.id===started.worker_id),task=m.execution.tasks.find(t=>t.id===started.task_id)
+  const stale={text:JSON.stringify(workerResult('DONE')),model:{model:'p/code',message_id:'msg_time_old',created_at:(worker.started_at??1)-1}}
+  const out=await runtime.settleHostIdleAssistantResult(m,worker,stale)
+  assert.equal(out.applied,false);assert.equal(out.reason,'assistant-result-stale-attempt-message');assert.equal(worker.status,'busy');assert.equal(task.status,'running');assert.equal(m.execution.scheduler.reservations[0].phase,'RUNNING')
+})

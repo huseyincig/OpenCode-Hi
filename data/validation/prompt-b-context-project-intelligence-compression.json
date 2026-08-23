@@ -17,7 +17,7 @@
     {
       "invariant": "unknown-context-handle-fail-close",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "64beb34d0e3455c1b11a4d0b7fc91643c126148d0205f5d0e023a88d6b5846c5",
+      "owner_sha256": "87772dc2b33303d573a6ed8e1ad973dfafc8c3396788efc1ef19107d741a2b4c",
       "owner_anchor": "Unknown context artifact id(s)",
       "proof": "plugin/test/context-survival-hardening.test.mjs",
       "proof_sha256": "cc2ffdf3ed2cbc0e5401d41c3d9b8b7cc859d826fae71ee9b79b97f7d38dce38",
@@ -26,7 +26,7 @@
     {
       "invariant": "stale-context-exclusion",
       "owner": "plugin/src/runtime/task/queued-worker-dispatcher.ts",
-      "owner_sha256": "9103a135e3a602c57e93990b623c7370e86214da23e211359ea33bd219debdc0",
+      "owner_sha256": "389164c73642f122b145eba506b67401a25aa82709238c9e0f02c8112cd816ed",
       "owner_anchor": "stored?.freshness==='FRESH'",
       "proof": "plugin/test/context-survival-hardening.test.mjs",
       "proof_sha256": "cc2ffdf3ed2cbc0e5401d41c3d9b8b7cc859d826fae71ee9b79b97f7d38dce38",

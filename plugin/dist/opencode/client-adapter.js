@@ -63,9 +63,11 @@ export function modelIdentity(model) {
         return undefined;
     return { providerID: model.slice(0, slash), modelID: model.slice(slash + 1) };
 }
-export async function sendPromptAsync(client, sessionID, text, agent, model, variant, tools, ackTimeoutMs = HOST_MUTATION_ACK_TIMEOUT_MS) {
+export async function sendPromptAsync(client, sessionID, text, agent, model, variant, tools, ackTimeoutMs = HOST_MUTATION_ACK_TIMEOUT_MS, messageID) {
     const edge = client;
     const body = { parts: [{ type: 'text', text }] };
+    if (messageID)
+        body.messageID = messageID;
     if (agent)
         body.agent = agent;
     const identity = modelIdentity(model);
@@ -256,8 +258,10 @@ export function lastAssistantModel(messages) {
         const provider = info?.providerID ?? info?.providerId ?? info?.model?.providerID ?? info?.model?.providerId ?? info?.provider;
         const modelID = info?.modelID ?? info?.modelId ?? info?.model?.modelID ?? info?.model?.modelId ?? info?.model?.id ?? (typeof info?.model === 'string' ? info.model : undefined);
         const canonical = provider && modelID ? `${String(provider)}/${String(modelID)}` : (typeof modelID === 'string' && modelID.includes('/') ? modelID : undefined);
-        if (canonical)
-            return { model: canonical, variant: info?.variant ?? info?.model?.variant, message_id: info?.id ?? msg?.id };
+        if (canonical) {
+            const created = Number(info?.time?.created), parent = info?.parentID ?? info?.parentId;
+            return { model: canonical, variant: info?.variant ?? info?.model?.variant, message_id: info?.id ?? msg?.id, ...(typeof parent === 'string' && parent ? { parent_id: parent } : {}), ...(Number.isFinite(created) && created >= 0 ? { created_at: created } : {}) };
+        }
     }
     return undefined;
 }

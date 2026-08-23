@@ -30,6 +30,7 @@ export interface WorkerContract {
     completed_at?: number;
     last_result_digest?: string;
     last_result_at?: number;
+    attempt_prompt_message_id?: string;
     write_set?: string[];
     native_state_hash?: string;
     native_diff_baseline?: Record<string, string>;

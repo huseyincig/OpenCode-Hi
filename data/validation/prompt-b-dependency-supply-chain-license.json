@@ -34,7 +34,7 @@
       "invariant": "direct-dependency-usage",
       "status": "PASS",
       "owner": "plugin/src/opencode/client-adapter.ts",
-      "owner_sha256": "971775c28e75058d33109c4634fe51ed2ba7ebcd2a0f53f4503610b93a15faec",
+      "owner_sha256": "922ac6bc416e870cfa4799865b3482505a19bd66ea4ddfa45db963ed131bcc33",
       "owner_anchor": "@opencode-ai/sdk/v2/client",
       "proof": "data/validation/fresh-consumer-opencode-1.18.21.json",
       "proof_sha256": "a171b1ac1cbfcd3749bc3dacfff98018a8bff01cb2e48383a52998c1710ec9ea",

@@ -303,7 +303,7 @@
       "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "task_id:task.id",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "202bb2686ca843c5ce838dfe098727f5a83e3d6afa5a496aaf73d2464e497c51",
+      "proof_sha256": "10a95dd4fb8df61068f76fedc62ab4a31046a51fe34e3af3de200b5ed83e8586",
       "proof_anchor": "explicit isolated task provisions one lease"
     },
     {
@@ -311,7 +311,7 @@
       "invariant": "host-session-binding",
       "level": "T3",
       "owner": "plugin/src/runtime/task/child-execution-coordinator.ts",
-      "owner_sha256": "669f3cdcfc0d2eb1a39686af77d8f84a8f37cfdc07bc6c831def91cee690c293",
+      "owner_sha256": "509bf2b00df8ab61a86d38c8ba967d392bfa27188174693e9348420dc0096c05",
       "owner_anchor": "workspaceID",
       "proof": "data/validation/external-opencode-hi-0.2.4-workspace-1.18.21-head-46b5dd7.json",
       "proof_sha256": "2925f6c24f860d08410ac5935984fc090abdac330c65de432aa78092c4fea370",
@@ -380,7 +380,7 @@
       "owner_sha256": "24e803722ab51227b5c61799484fcbac507583902680ec1ee07c817211015731",
       "owner_anchor": "realpathSync",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "202bb2686ca843c5ce838dfe098727f5a83e3d6afa5a496aaf73d2464e497c51",
+      "proof_sha256": "10a95dd4fb8df61068f76fedc62ab4a31046a51fe34e3af3de200b5ed83e8586",
       "proof_anchor": "symlinked workspace escape is canonicalized and rejected"
     },
     {
@@ -391,7 +391,7 @@
       "owner_sha256": "24e803722ab51227b5c61799484fcbac507583902680ec1ee07c817211015731",
       "owner_anchor": "canonicalExisting",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "202bb2686ca843c5ce838dfe098727f5a83e3d6afa5a496aaf73d2464e497c51",
+      "proof_sha256": "10a95dd4fb8df61068f76fedc62ab4a31046a51fe34e3af3de200b5ed83e8586",
       "proof_anchor": "default Git inspector accepts an actual detached registered worktree"
     },
     {
@@ -402,7 +402,7 @@
       "owner_sha256": "24e803722ab51227b5c61799484fcbac507583902680ec1ee07c817211015731",
       "owner_anchor": "type:'worktree'",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "202bb2686ca843c5ce838dfe098727f5a83e3d6afa5a496aaf73d2464e497c51",
+      "proof_sha256": "10a95dd4fb8df61068f76fedc62ab4a31046a51fe34e3af3de200b5ed83e8586",
       "proof_anchor": "branch,undefined"
     },
     {
@@ -413,7 +413,7 @@
       "owner_sha256": "24e803722ab51227b5c61799484fcbac507583902680ec1ee07c817211015731",
       "owner_anchor": "sameRepository",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "202bb2686ca843c5ce838dfe098727f5a83e3d6afa5a496aaf73d2464e497c51",
+      "proof_sha256": "10a95dd4fb8df61068f76fedc62ab4a31046a51fe34e3af3de200b5ed83e8586",
       "proof_anchor": "same Git common repository"
     },
     {
@@ -424,7 +424,7 @@
       "owner_sha256": "24e803722ab51227b5c61799484fcbac507583902680ec1ee07c817211015731",
       "owner_anchor": "defaultInspect",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "202bb2686ca843c5ce838dfe098727f5a83e3d6afa5a496aaf73d2464e497c51",
+      "proof_sha256": "10a95dd4fb8df61068f76fedc62ab4a31046a51fe34e3af3de200b5ed83e8586",
       "proof_anchor": "preserves pre-staged and unstaged user changes exactly"
     },
     {
@@ -435,7 +435,7 @@
       "owner_sha256": "24e803722ab51227b5c61799484fcbac507583902680ec1ee07c817211015731",
       "owner_anchor": "defaultInspect",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "202bb2686ca843c5ce838dfe098727f5a83e3d6afa5a496aaf73d2464e497c51",
+      "proof_sha256": "10a95dd4fb8df61068f76fedc62ab4a31046a51fe34e3af3de200b5ed83e8586",
       "proof_anchor": "pre-staged and unstaged user changes exactly"
     },
     {
@@ -446,7 +446,7 @@
       "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "identityConflict",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "202bb2686ca843c5ce838dfe098727f5a83e3d6afa5a496aaf73d2464e497c51",
+      "proof_sha256": "10a95dd4fb8df61068f76fedc62ab4a31046a51fe34e3af3de200b5ed83e8586",
       "proof_anchor": "concurrent lease identity collision is cleaned and rejected"
     },
     {
@@ -468,7 +468,7 @@
       "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "status:'ORPHANED'",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "202bb2686ca843c5ce838dfe098727f5a83e3d6afa5a496aaf73d2464e497c51",
+      "proof_sha256": "10a95dd4fb8df61068f76fedc62ab4a31046a51fe34e3af3de200b5ed83e8586",
       "proof_anchor": "restart adopts exact lease, quarantines missing owner"
     },
     {
@@ -490,7 +490,7 @@
       "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "workspace.cleanup-failed",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "202bb2686ca843c5ce838dfe098727f5a83e3d6afa5a496aaf73d2464e497c51",
+      "proof_sha256": "10a95dd4fb8df61068f76fedc62ab4a31046a51fe34e3af3de200b5ed83e8586",
       "proof_anchor": "workspace cleanup failure quarantines lease"
     },
     {
@@ -501,7 +501,7 @@
       "owner_sha256": "24e803722ab51227b5c61799484fcbac507583902680ec1ee07c817211015731",
       "owner_anchor": "Source baseline changed",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "202bb2686ca843c5ce838dfe098727f5a83e3d6afa5a496aaf73d2464e497c51",
+      "proof_sha256": "10a95dd4fb8df61068f76fedc62ab4a31046a51fe34e3af3de200b5ed83e8586",
       "proof_anchor": "source-baseline substitution"
     },
     {
@@ -512,7 +512,7 @@
       "owner_sha256": "24e803722ab51227b5c61799484fcbac507583902680ec1ee07c817211015731",
       "owner_anchor": "worktree",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "202bb2686ca843c5ce838dfe098727f5a83e3d6afa5a496aaf73d2464e497c51",
+      "proof_sha256": "10a95dd4fb8df61068f76fedc62ab4a31046a51fe34e3af3de200b5ed83e8586",
       "proof_anchor": "preserves pre-staged and unstaged user changes exactly"
     },
     {
@@ -523,7 +523,7 @@
       "owner_sha256": "e1917a2d7e2e77e099b6639abe9616bad1c38aded3487f1fd50955f6baa881f4",
       "owner_anchor": "WorkspaceRuntime",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
-      "proof_sha256": "202bb2686ca843c5ce838dfe098727f5a83e3d6afa5a496aaf73d2464e497c51",
+      "proof_sha256": "10a95dd4fb8df61068f76fedc62ab4a31046a51fe34e3af3de200b5ed83e8586",
       "proof_anchor": "no broad auto-snapshot staging"
     },
     {
@@ -545,7 +545,7 @@
       "owner_sha256": "2e288fd3361c9f77e52f9e761b7c1e4b91eb2b50ca2489853ffa3568c6804856",
       "owner_anchor": "dom_summary",
       "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
-      "proof_sha256": "d0c1c65c6902bd64fa717b6a7983ef94b98f1497179679ac0fe1c9ea53c8f545",
+      "proof_sha256": "c5f24c4d2fd7ddc7a0b6bef51886de2ab30ecb8b5a42ececed40f1ff60b12bc9",
       "proof_anchor": "emits bounded observations"
     },
     {
@@ -556,7 +556,7 @@
       "owner_sha256": "2e288fd3361c9f77e52f9e761b7c1e4b91eb2b50ca2489853ffa3568c6804856",
       "owner_anchor": "targetRef",
       "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
-      "proof_sha256": "d0c1c65c6902bd64fa717b6a7983ef94b98f1497179679ac0fe1c9ea53c8f545",
+      "proof_sha256": "c5f24c4d2fd7ddc7a0b6bef51886de2ab30ecb8b5a42ececed40f1ff60b12bc9",
       "proof_anchor": "local-scope, task-isolated"
     },
     {
@@ -567,7 +567,7 @@
       "owner_sha256": "2e288fd3361c9f77e52f9e761b7c1e4b91eb2b50ca2489853ffa3568c6804856",
       "owner_anchor": "consoleErrors",
       "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
-      "proof_sha256": "d0c1c65c6902bd64fa717b6a7983ef94b98f1497179679ac0fe1c9ea53c8f545",
+      "proof_sha256": "c5f24c4d2fd7ddc7a0b6bef51886de2ab30ecb8b5a42ececed40f1ff60b12bc9",
       "proof_anchor": "capture bounded console and network failures"
     },
     {
@@ -578,7 +578,7 @@
       "owner_sha256": "2e288fd3361c9f77e52f9e761b7c1e4b91eb2b50ca2489853ffa3568c6804856",
       "owner_anchor": "networkErrors",
       "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
-      "proof_sha256": "d0c1c65c6902bd64fa717b6a7983ef94b98f1497179679ac0fe1c9ea53c8f545",
+      "proof_sha256": "c5f24c4d2fd7ddc7a0b6bef51886de2ab30ecb8b5a42ececed40f1ff60b12bc9",
       "proof_anchor": "capture bounded console and network failures"
     },
     {
@@ -600,7 +600,7 @@
       "owner_sha256": "2e288fd3361c9f77e52f9e761b7c1e4b91eb2b50ca2489853ffa3568c6804856",
       "owner_anchor": "timeoutMs",
       "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
-      "proof_sha256": "d0c1c65c6902bd64fa717b6a7983ef94b98f1497179679ac0fe1c9ea53c8f545",
+      "proof_sha256": "c5f24c4d2fd7ddc7a0b6bef51886de2ab30ecb8b5a42ececed40f1ff60b12bc9",
       "proof_anchor": "navigation timeout and browser crash become explicit FAILED"
     },
     {
@@ -611,7 +611,7 @@
       "owner_sha256": "2e288fd3361c9f77e52f9e761b7c1e4b91eb2b50ca2489853ffa3568c6804856",
       "owner_anchor": "result:'OBSERVED'|'FAILED'",
       "proof": "plugin/test/b3-playwright-browser-runtime.test.mjs",
-      "proof_sha256": "d0c1c65c6902bd64fa717b6a7983ef94b98f1497179679ac0fe1c9ea53c8f545",
+      "proof_sha256": "c5f24c4d2fd7ddc7a0b6bef51886de2ab30ecb8b5a42ececed40f1ff60b12bc9",
       "proof_anchor": "browser crash become explicit FAILED observations"
     },
     {
@@ -677,7 +677,7 @@
       "owner_sha256": "78af108c2539f62e3ebd3af1522939fe50fa6ede39409c4f3193268753be8489",
       "owner_anchor": "open-obligations",
       "proof": "plugin/test/prompt-b-evidence-verification-completion-hostile.test.mjs",
-      "proof_sha256": "cbc59f605a1a205fc92bac9f848d8f1ebe0442e36ae20dd21628ca1ad9247db4",
+      "proof_sha256": "0f9c721d5272aa39157e8252a2a8b47c7f6afa59562afc8f2b14543b5e9b0097",
       "proof_anchor": "DONE. all tests passed. safe to release."
     }
   ],
@@ -694,7 +694,8 @@
       "status": "SUPPORTED_T3",
       "tested_git_commit": "46b5dd71bb18378e9436a3ad4f74221fce6c9d6a",
       "runtime_hash_drift": [
-        "plugin/src/runtime/mission/validators.ts"
+        "plugin/src/runtime/mission/validators.ts",
+        "plugin/src/runtime/task/child-execution-coordinator.ts"
       ],
       "equivalent": false
     },
@@ -709,7 +710,7 @@
     }
   },
   "violations": [
-    "workspace-isolation-binding:selected-T3-source-drift:['plugin/src/runtime/mission/validators.ts']",
+    "workspace-isolation-binding:selected-T3-source-drift:['plugin/src/runtime/mission/validators.ts', 'plugin/src/runtime/task/child-execution-coordinator.ts']",
     "browser-execution:selected-T3-source-drift:['plugin/src/runtime/application/hi-tool-surface.ts']"
   ],
   "summary": {

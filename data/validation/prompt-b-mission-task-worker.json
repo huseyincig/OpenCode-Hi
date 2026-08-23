@@ -62,7 +62,7 @@
     {
       "invariant": "no-duplicate-completion",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
+      "owner_sha256": "c8fc05afe5032b76da7f86dd078d617b7b22093be95aafdacc08f88cf9af4050",
       "proof": "plugin/test/q3-adversarial-threat-matrix.test.mjs",
       "proof_sha256": "848c1a26603c2fb5b2841b261aa359cef2d585d5282f66815a5bc360fbd7cc65",
       "owner_anchor": "worker.result.duplicate-ignored",
@@ -71,7 +71,7 @@
     {
       "invariant": "out-of-order-callback",
       "owner": "plugin/src/runtime/task/child-execution-coordinator.ts",
-      "owner_sha256": "669f3cdcfc0d2eb1a39686af77d8f84a8f37cfdc07bc6c831def91cee690c293",
+      "owner_sha256": "509bf2b00df8ab61a86d38c8ba967d392bfa27188174693e9348420dc0096c05",
       "proof": "plugin/test/prompt-b-mission-task-worker-adversarial.test.mjs",
       "proof_sha256": "399659105806ddeca310bf43ecba5017a5d923920ae7816fd063ac0776fba9f2",
       "owner_anchor": "matches.length===1",
@@ -80,7 +80,7 @@
     {
       "invariant": "stale-worker-result",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
+      "owner_sha256": "c8fc05afe5032b76da7f86dd078d617b7b22093be95aafdacc08f88cf9af4050",
       "proof": "plugin/test/prompt-b-mission-task-worker-adversarial.test.mjs",
       "proof_sha256": "399659105806ddeca310bf43ecba5017a5d923920ae7816fd063ac0776fba9f2",
       "owner_anchor": "worker.result.stale-generation-ignored",
@@ -89,7 +89,7 @@
     {
       "invariant": "task-cancellation",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "64beb34d0e3455c1b11a4d0b7fc91643c126148d0205f5d0e023a88d6b5846c5",
+      "owner_sha256": "87772dc2b33303d573a6ed8e1ad973dfafc8c3396788efc1ef19107d741a2b4c",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
       "proof_sha256": "10a95dd4fb8df61068f76fedc62ab4a31046a51fe34e3af3de200b5ed83e8586",
       "owner_anchor": "async cancel(m:MissionState",
@@ -98,7 +98,7 @@
     {
       "invariant": "task-recovery",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "64beb34d0e3455c1b11a4d0b7fc91643c126148d0205f5d0e023a88d6b5846c5",
+      "owner_sha256": "87772dc2b33303d573a6ed8e1ad973dfafc8c3396788efc1ef19107d741a2b4c",
       "proof": "plugin/test/crash-restart-survival.test.mjs",
       "proof_sha256": "5ac360cba69a02f2e86a343ce4139d7241c09a9edbd0594cd6a22758be6fde13",
       "owner_anchor": "reconcileRestartBeforeResume",
@@ -107,7 +107,7 @@
     {
       "invariant": "dependency-unblock",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "64beb34d0e3455c1b11a4d0b7fc91643c126148d0205f5d0e023a88d6b5846c5",
+      "owner_sha256": "87772dc2b33303d573a6ed8e1ad973dfafc8c3396788efc1ef19107d741a2b4c",
       "proof": "plugin/test/scheduler-hardening.test.mjs",
       "proof_sha256": "f51aa7ba84c0030f286f7e90828fc9e0779d8f2f8ad370fd264b91781c271fa1",
       "owner_anchor": "drainQueue",
@@ -116,7 +116,7 @@
     {
       "invariant": "concurrent-write-safety",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
+      "owner_sha256": "c8fc05afe5032b76da7f86dd078d617b7b22093be95aafdacc08f88cf9af4050",
       "proof": "plugin/test/runtime-write-conflict.test.mjs",
       "proof_sha256": "8c4feb8475f9b4f5bd807b0debdbe6bd7d0b416e887f8aaf72c8b78e3c2d189a",
       "owner_anchor": "parallel.write-conflict.quarantined",
@@ -134,7 +134,7 @@
     {
       "invariant": "terminal-state-correctness",
       "owner": "plugin/src/runtime/worker/worker-runtime.ts",
-      "owner_sha256": "03708a10149b15668f3674ab7e64d2272cd491f1f9db101289798c6b080c10f8",
+      "owner_sha256": "a08038c9e64aa11329984e37222aa2960641e7e7b802ec8aa7c616a93e6c4712",
       "proof": "plugin/test/task-worker-contract.test.mjs",
       "proof_sha256": "06d94312c3165fccb0a2e539f753500f1103cf7370cd9cbadd21f64c6e26bf43",
       "owner_anchor": "task.status='completed'",

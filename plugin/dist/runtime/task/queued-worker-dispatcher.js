@@ -155,7 +155,7 @@ export class QueuedWorkerDispatcher {
                     const handoff = buildHandoff(dependencyContext);
                     appendLedger(m, 'worker.handoff', { task_id: task.id, worker_id: worker.id, payload: { chars: handoff.length, methodologies: worker.selected_methodologies.length, tools: profile.tools.slice(0, 20), permission_source: profile.permission_profile.native?.source, context_budget: profile.max_context_chars, handoff_budget: profile.max_handoff_chars, result_budget: profile.max_result_chars } });
                     beginWorkerAttempt(task, worker);
-                    await this.child.sendProviderPrompt(worker.session_id, handoff, role, model === 'host-default' ? undefined : model, variant, taskPromptToolOverrides(profile.tools, this.getHostConfig(), profile.mcp_servers ?? []));
+                    await this.child.sendProviderPrompt(worker.session_id, handoff, role, model === 'host-default' ? undefined : model, variant, taskPromptToolOverrides(profile.tools, this.getHostConfig(), profile.mcp_servers ?? []), worker.attempt_prompt_message_id);
                     return worker;
                 }
                 catch (error) {

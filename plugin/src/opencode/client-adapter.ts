@@ -36,9 +36,9 @@ export function modelIdentity(model?:string):{providerID:string;modelID:string}|
   return{providerID:model.slice(0,slash),modelID:model.slice(slash+1)}
 }
 
-export async function sendPromptAsync(client:OpenCodeClient,sessionID:string,text:string,agent?:string,model?:string,variant?:string,tools?:Record<string,boolean>,ackTimeoutMs=HOST_MUTATION_ACK_TIMEOUT_MS):Promise<void>{
+export async function sendPromptAsync(client:OpenCodeClient,sessionID:string,text:string,agent?:string,model?:string,variant?:string,tools?:Record<string,boolean>,ackTimeoutMs=HOST_MUTATION_ACK_TIMEOUT_MS,messageID?:string):Promise<void>{
   const edge=client as any
-  const body:any={parts:[{type:'text',text}]};if(agent)body.agent=agent;const identity=modelIdentity(model);if(identity)body.model=identity;if(variant)body.variant=variant;if(tools&&Object.keys(tools).length)body.tools=tools
+  const body:any={parts:[{type:'text',text}]};if(messageID)body.messageID=messageID;if(agent)body.agent=agent;const identity=modelIdentity(model);if(identity)body.model=identity;if(variant)body.variant=variant;if(tools&&Object.keys(tools).length)body.tools=tools
   if(typeof edge?.session?.promptAsync==='function'){const result=await awaitPromptAsyncAck(signal=>edge.session.promptAsync({path:{id:sessionID},body,signal,throwOnError:true}),`session.prompt_async:${sessionID}`,ackTimeoutMs);assertMutationAccepted(result,`session.prompt_async:${sessionID}`);return}
   if(typeof edge?.session?.prompt==='function'){const result=await edge.session.prompt({path:{id:sessionID},body,throwOnError:true});assertMutationAccepted(result,`session.prompt:${sessionID}`);return}
   throw new Error('OpenCode session prompt API unavailable')
@@ -134,14 +134,14 @@ export interface AssistantErrorEvidence{name?:string;message:string;isRetryable?
 export function assistantErrorEvidence(value:any):AssistantErrorEvidence|undefined{if(value==null)return undefined;if(typeof value==='string'){const message=value.trim();return message?{message}:undefined}if(typeof value!=='object')return undefined;const name=typeof value.name==='string'&&value.name.trim()?value.name.trim():undefined,data=value.data&&typeof value.data==='object'?value.data:value,messageCandidates=[value.message,data?.message,value.error?.message,value.cause?.message],message=messageCandidates.find(x=>typeof x==='string'&&x.trim())?.trim(),isRetryable=typeof data?.isRetryable==='boolean'?data.isRetryable:undefined,statusCode=Number.isInteger(data?.statusCode)&&data.statusCode>=0?data.statusCode:undefined;if(!message&&!name)return undefined;return{...(name?{name}:{}),message:message??name!,...(isRetryable!==undefined?{isRetryable}:{}),...(statusCode!==undefined?{statusCode}:{})}}
 export function lastAssistantError(messages:any[]):AssistantErrorEvidence|undefined{for(let i=messages.length-1;i>=0;i--){const msg=messages[i],info=msg?.info??msg?.message??msg;if(info?.role&&info.role!=='assistant')continue;return assistantErrorEvidence(info?.error??msg?.error)}return undefined}
 
-export interface AssistantModelEvidence{model?:string;variant?:string;message_id?:string}
+export interface AssistantModelEvidence{model?:string;variant?:string;message_id?:string;parent_id?:string;created_at?:number}
 export function lastAssistantModel(messages:any[]):AssistantModelEvidence|undefined{
   for(let i=messages.length-1;i>=0;i--){
     const msg=messages[i],info=msg?.info??msg?.message??msg;if(info?.role&&info.role!=='assistant')continue
     const provider=info?.providerID??info?.providerId??info?.model?.providerID??info?.model?.providerId??info?.provider
     const modelID=info?.modelID??info?.modelId??info?.model?.modelID??info?.model?.modelId??info?.model?.id??(typeof info?.model==='string'?info.model:undefined)
     const canonical=provider&&modelID?`${String(provider)}/${String(modelID)}`:(typeof modelID==='string'&&modelID.includes('/')?modelID:undefined)
-    if(canonical)return{model:canonical,variant:info?.variant??info?.model?.variant,message_id:info?.id??msg?.id}
+    if(canonical){const created=Number(info?.time?.created),parent=info?.parentID??info?.parentId;return{model:canonical,variant:info?.variant??info?.model?.variant,message_id:info?.id??msg?.id,...(typeof parent==='string'&&parent?{parent_id:parent}:{}),...(Number.isFinite(created)&&created>=0?{created_at:created}:{})}}
   }
   return undefined
 }

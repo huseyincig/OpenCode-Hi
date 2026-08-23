@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {lastAssistantError} from '../dist/opencode/client-adapter.js'
+import {lastAssistantError,lastAssistantModel} from '../dist/opencode/client-adapter.js'
 
 test('OpenCode assistant error projection preserves exact V1 named-error identity and message',()=>{
   const error=lastAssistantError([{info:{id:'m1',role:'assistant',error:{name:'ContextOverflowError',data:{message:'maximum context length exceeded'}}},parts:[]}])
@@ -31,4 +31,10 @@ test('OpenCode 1.18.20 APIError projection preserves bounded retry truth without
   assert.deepEqual(error,{name:'APIError',message:'network_error',isRetryable:true,statusCode:503})
   assert.equal('responseBody' in error,false)
   assert.equal('responseHeaders' in error,false)
+})
+
+
+test('OpenCode assistant projection preserves exact prompt ancestry and creation time',()=>{
+  const model=lastAssistantModel([{info:{id:'msg_000000000002bbbbbbbbbbbbbb',role:'assistant',providerID:'p',modelID:'m',variant:'fast',parentID:'msg_000000000001aaaaaaaaaaaaaa',time:{created:123,completed:456}},parts:[{type:'text',text:'ok'}]}])
+  assert.deepEqual(model,{model:'p/m',variant:'fast',message_id:'msg_000000000002bbbbbbbbbbbbbb',parent_id:'msg_000000000001aaaaaaaaaaaaaa',created_at:123})
 })

@@ -99,3 +99,11 @@ test('mutating prompt result tuples fail closed and are never replayed after hos
   await assert.rejects(()=>sendPromptAsync(syncOnly,'child-sync-rejected','x'),/prompt rejected/)
   assert.equal(syncThrowOnError,true);assert.equal(syncCalls,1)
 })
+
+
+test('worker prompt forwards caller-owned OpenCode messageID without changing single-dispatch mutation safety',async()=>{
+  const calls=[];const client={session:{promptAsync:async arg=>{calls.push(arg);return{data:{}}},prompt:async()=>{throw new Error('must not replay')}}}
+  const messageID='msg_000000000001aaaaaaaaaaaaaa'
+  await sendPromptAsync(client,'child-message-id','x','coder','p/m',undefined,{bash:false},50,messageID)
+  assert.equal(calls.length,1);assert.equal(calls[0].body.messageID,messageID);assert.equal(calls[0].throwOnError,true);assert.equal(calls[0].body.model.providerID,'p');assert.equal(calls[0].body.model.modelID,'m')
+})

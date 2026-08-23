@@ -172,7 +172,7 @@ export class TaskResultReconciler {
                 try {
                     beginWorkerAttempt(loserTask, loser);
                     this.child.recordModelProjection(loser, model, loser.model_variant);
-                    await this.child.sendProviderPrompt(loser.session_id, clipText([`Hi runtime write-conflict reconciliation for existing task ${loserTask.id}.`, `Conflicting task ${winnerTask.id} has completed before this resume gate opened.`, `Conflicting files: ${overlap.join(', ')}`, `Current task objective: ${loserTask.objective}`, `Current user constraints: ${(loserTask.constraints ?? []).join(' | ') || 'none'}.`, 'Inspect the current diff/state first. Preserve valid work from the completed task. Reconcile only this task sequentially; do not blindly overwrite or restart planning. Re-run the required scoped verification and return the structured WorkerResult.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), loser.role, model === 'host-default' ? undefined : model, loser.model_variant, taskPromptToolOverrides(loserTask.execution_profile?.tools ?? [], this.getHostConfig(), loserTask.execution_profile?.mcp_servers ?? []));
+                    await this.child.sendProviderPrompt(loser.session_id, clipText([`Hi runtime write-conflict reconciliation for existing task ${loserTask.id}.`, `Conflicting task ${winnerTask.id} has completed before this resume gate opened.`, `Conflicting files: ${overlap.join(', ')}`, `Current task objective: ${loserTask.objective}`, `Current user constraints: ${(loserTask.constraints ?? []).join(' | ') || 'none'}.`, 'Inspect the current diff/state first. Preserve valid work from the completed task. Reconcile only this task sequentially; do not blindly overwrite or restart planning. Re-run the required scoped verification and return the structured WorkerResult.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), loser.role, model === 'host-default' ? undefined : model, loser.model_variant, taskPromptToolOverrides(loserTask.execution_profile?.tools ?? [], this.getHostConfig(), loserTask.execution_profile?.mcp_servers ?? []), loser.attempt_prompt_message_id);
                     appendLedger(m, 'parallel.write-conflict.resumed', { task_id: loserTask.id, worker_id: loser.id, payload: { after_task: winnerTask.id, files: overlap.slice(0, 30) } });
                     return loser;
                 }
@@ -220,18 +220,18 @@ export class TaskResultReconciler {
         const task = m.execution.tasks.find(t => t.id === worker.task_id);
         if (!task)
             return;
-        const settlement = beginTaskRuntimeSettlement(m, worker);
-        if (!settlement.accepted && settlement.reason !== 'reservation-not-found') {
-            appendLedger(m, 'worker.result.scheduler-fence-rejected', { task_id: task.id, worker_id: worker.id, payload: { reason: settlement.reason, attempt: worker.attempt, generation: worker.generation_at_spawn, session_id: worker.session_id } });
-            return;
-        }
         const digest = resultDigest(result);
         if (worker.last_result_digest === digest) {
-            appendLedger(m, 'worker.result.duplicate-ignored', { task_id: task.id, worker_id: worker.id, payload: { digest } });
+            appendLedger(m, 'worker.result.duplicate-ignored', { task_id: task.id, worker_id: worker.id, payload: { digest, attempt: worker.attempt, generation: worker.generation_at_spawn } });
             return;
         }
         if (['completed', 'failed', 'cancelled'].includes(worker.status)) {
-            appendLedger(m, 'worker.result.terminal-ignored', { task_id: task.id, worker_id: worker.id, payload: { status: worker.status, digest } });
+            appendLedger(m, 'worker.result.terminal-ignored', { task_id: task.id, worker_id: worker.id, payload: { status: worker.status, digest, attempt: worker.attempt, generation: worker.generation_at_spawn } });
+            return;
+        }
+        const settlement = beginTaskRuntimeSettlement(m, worker);
+        if (!settlement.accepted && settlement.reason !== 'reservation-not-found') {
+            appendLedger(m, 'worker.result.scheduler-fence-rejected', { task_id: task.id, worker_id: worker.id, payload: { reason: settlement.reason, attempt: worker.attempt, generation: worker.generation_at_spawn, session_id: worker.session_id } });
             return;
         }
         worker.last_result_digest = digest;

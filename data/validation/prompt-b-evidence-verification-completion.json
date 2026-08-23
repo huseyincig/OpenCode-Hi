@@ -26,7 +26,7 @@
     {
       "invariant": "source-revision",
       "owner": "plugin/src/runtime/task/child-execution-coordinator.ts",
-      "owner_sha256": "669f3cdcfc0d2eb1a39686af77d8f84a8f37cfdc07bc6c831def91cee690c293",
+      "owner_sha256": "509bf2b00df8ab61a86d38c8ba967d392bfa27188174693e9348420dc0096c05",
       "owner_anchor": "worker.native_state_hash=stateHash",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
       "proof_sha256": "451cef54368d6b2805ad45ed3c00d816f35bb122a94dfb293c973f1672e5d36e",
@@ -35,7 +35,7 @@
     {
       "invariant": "changed-file-ownership",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
+      "owner_sha256": "c8fc05afe5032b76da7f86dd078d617b7b22093be95aafdacc08f88cf9af4050",
       "owner_anchor": "native.diff.mismatch",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
       "proof_sha256": "451cef54368d6b2805ad45ed3c00d816f35bb122a94dfb293c973f1672e5d36e",
@@ -62,7 +62,7 @@
     {
       "invariant": "worker-result-not-evidence",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
+      "owner_sha256": "c8fc05afe5032b76da7f86dd078d617b7b22093be95aafdacc08f88cf9af4050",
       "owner_anchor": "WorkerResult evidence stays task-result provenance. It is never copied wholesale",
       "proof": "plugin/test/prompt-b-evidence-verification-completion-hostile.test.mjs",
       "proof_sha256": "0f9c721d5272aa39157e8252a2a8b47c7f6afa59562afc8f2b14543b5e9b0097",
@@ -89,7 +89,7 @@
     {
       "invariant": "review-disposition",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
+      "owner_sha256": "c8fc05afe5032b76da7f86dd078d617b7b22093be95aafdacc08f88cf9af4050",
       "owner_anchor": "review.claim-unproven",
       "proof": "plugin/test/obligation-ownership.test.mjs",
       "proof_sha256": "a72a5d90698d721cc34965013104ecc65d6f631ceb82b8e3d6305de65c13d648",
