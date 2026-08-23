@@ -358,7 +358,7 @@ export class TaskRuntime {
                     this.#queue.splice(i--, 1);
                     continue;
                 }
-                if (e.mission.identity.status !== 'active')
+                if (e.mission.identity.status !== 'active' || e.mission.identity.semantic_assessment.status !== 'assessed')
                     continue;
                 if (!t) {
                     this.#queue.splice(i--, 1);
@@ -635,6 +635,13 @@ export class TaskRuntime {
                 continue;
             worker.semantic_pause_revision = m.identity.semantic_assessment.revision;
             if (!worker.session_id) {
+                const acceptedQueued = worker.status === 'queued' && task.status === 'queued' && this.#queue.some(q => q.worker.id === worker.id);
+                if (acceptedQueued) {
+                    this.registry.set(worker);
+                    appendLedger(m, 'worker.semantic-queue-paused', { task_id: task.id, worker_id: worker.id, payload: { revision: m.identity.semantic_assessment.revision, reason: 'followup-meaning-pending' } });
+                    paused++;
+                    continue;
+                }
                 worker.status = 'cancelled';
                 task.status = 'cancelled';
                 releaseTaskRuntimeReservation(m, worker.id, 'CANCEL');
@@ -670,6 +677,34 @@ export class TaskRuntime {
         if (m.identity.semantic_assessment.status !== 'assessed' || m.identity.status !== 'active')
             return 0;
         let resumed = 0;
+        const pausedQueued = m.execution.workers.filter(w => w.semantic_pause_revision === m.identity.semantic_assessment.revision && w.status === 'queued' && !w.session_id);
+        if (['non-material', 'resume'].includes(messageKind)) {
+            for (const worker of pausedQueued) {
+                const task = m.execution.tasks.find(t => t.id === worker.task_id);
+                if (!task)
+                    continue;
+                worker.generation_at_spawn = m.continuation.generation;
+                worker.parent_mission_id = m.identity.mission_id;
+                worker.semantic_pause_revision = undefined;
+                this.registry.set(worker);
+                appendLedger(m, 'worker.semantic-queue-resumed', { task_id: task.id, worker_id: worker.id, payload: { revision: m.identity.semantic_assessment.revision, message_kind: messageKind, generation: m.continuation.generation } });
+                resumed++;
+            }
+        }
+        else
+            for (const worker of pausedQueued) {
+                const task = m.execution.tasks.find(t => t.id === worker.task_id);
+                if (!task)
+                    continue;
+                worker.status = 'cancelled';
+                task.status = 'cancelled';
+                worker.semantic_pause_revision = undefined;
+                releaseTaskRuntimeReservation(m, worker.id, 'CANCEL');
+                this.registry.delete(worker.id);
+                this.#queue = this.#queue.filter(q => q.worker.id !== worker.id);
+                await this.cleanupWorkspaceForTask(m, task.id);
+                appendLedger(m, 'worker.semantic-cancelled-before-start', { task_id: task.id, worker_id: worker.id, payload: { revision: m.identity.semantic_assessment.revision, message_kind: messageKind, reason: 'material-followup-invalidated-queued-recipe' } });
+            }
         for (const worker of m.execution.workers.filter(w => w.semantic_pause_revision === m.identity.semantic_assessment.revision && w.status === 'ready' && Boolean(w.session_id))) {
             const task = m.execution.tasks.find(t => t.id === worker.task_id);
             if (!task || !worker.session_id)
@@ -701,6 +736,8 @@ export class TaskRuntime {
             appendLedger(m, 'worker.semantic-resumed', { task_id: task.id, worker_id: worker.id, payload: { revision: m.identity.semantic_assessment.revision, message_kind: messageKind, session_id: worker.session_id } });
             resumed++;
         }
+        this.#queue = this.#queue.filter(q => q.mission.identity.mission_id !== m.identity.mission_id || q.worker.status !== 'cancelled');
+        this.drainQueue();
         return resumed;
     }
     async reconcileUserConstraint(m, text) {
@@ -737,6 +774,7 @@ export class TaskRuntime {
             if (!worker.session_id || ['created', 'queued'].includes(worker.status) || (worker.status === 'ready' && !worker.semantic_pause_revision)) {
                 worker.generation_at_spawn = m.continuation.generation;
                 worker.parent_mission_id = m.identity.mission_id;
+                worker.semantic_pause_revision = undefined;
                 appendLedger(m, 'worker.constraint-updated', { task_id: task.id, worker_id: worker.id, payload: { mode: 'deferred', generation: m.continuation.generation, constraint: text.slice(0, 300) } });
                 reconciled++;
                 continue;
@@ -829,6 +867,7 @@ export class TaskRuntime {
             }
         }
         syncMissionGates(m);
+        this.drainQueue();
         return reconciled;
     }
     async noteNativeWriteSet(m, workerID, files, source = 'session-diff', stateHash) { return this.#results.noteNativeWriteSet(m, workerID, files, source, stateHash); }

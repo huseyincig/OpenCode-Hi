@@ -78,3 +78,35 @@ test('Phase B lifecycle: restored bounded-playwright queue waits for live browse
   resources.add('host-capability:browser-execution');next.wakeQueued();await new Promise(resolve=>setImmediate(resolve))
   assert.equal(next.queueDepth(),0);assert.deepEqual(created,['child-1']);assert.equal(after.execution.tasks[0].status,'running');assert.equal(after.execution.workers[0].status,'busy');assert.equal(after.execution.blockers.includes('capability-unavailable:browser-execution'),false)
 })
+
+
+test('Phase B ablation: non-material follow-up does not discard an accepted sessionless queued task',async()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'durable-queue-nonmaterial','two independent implementation streams',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation'],likely_verification:[]})
+  m.execution.execution_mode='parallel';m.execution.topology={mode:'multi-agent',parallelism:2,reason:['ablation']}
+  const created=[],rt=runtime(created),first=await rt.start(m,{objective:'first',role:'coder',scope:['src/a.ts'],requiredEvidence:[]}),second=await rt.start(m,{objective:'second',role:'coder',scope:['src/b.ts'],requiredEvidence:[]})
+  assert.equal(first.readiness,'READY');assert.equal(second.readiness,'WAIT');assert.equal(rt.queueDepth(),1)
+  const queuedTask=m.execution.tasks.find(t=>t.id===second.task_id),queuedWorker=m.execution.workers.find(w=>w.id===second.worker_id)
+  store.beginFollowupSemanticAssessment(m.identity.session_id,'thanks')
+  assert.equal(await rt.pauseForSemanticAssessment(m),2)
+  assert.equal(queuedTask.status,'queued','semantic quarantine should retain accepted queued work until follow-up meaning is known')
+  assert.equal(queuedWorker.status,'queued')
+  store.applyFollowupSemanticAssessment(m.identity.session_id,{material:false,message_kind:'non-material',task_kind:'implementation',scope:'multi-stream',risk:'low',ambiguity:'none',dependency_class:'independent-multi',required_capabilities:[],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]})
+  await rt.resumeAfterSemanticAssessment(m,'non-material')
+  rt.applyResult(m,first.worker_id,{status:'DONE',summary:'first done',changed_files:[],evidence:[],open_issues:[],needs_context:[]})
+  await new Promise(resolve=>setImmediate(resolve))
+  assert.equal(queuedTask.status,'running');assert.equal(queuedWorker.status,'busy');assert.equal(queuedWorker.id,second.worker_id);assert.equal(created.length,2)
+})
+
+
+test('Phase B safety: material verification follow-up still invalidates a sessionless queued recipe before dispatch',async()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'durable-queue-material-followup','two independent implementation streams',{scope:'multi-stream',dependency_class:'independent-multi',required_capabilities:['implementation','multi-stream-delegation'],likely_verification:[]})
+  m.execution.execution_mode='parallel';m.execution.topology={mode:'multi-agent',parallelism:2,reason:['ablation']}
+  const created=[],rt=runtime(created),first=await rt.start(m,{objective:'first',role:'coder',scope:['src/a.ts'],requiredEvidence:[]}),second=await rt.start(m,{objective:'second',role:'coder',scope:['src/b.ts'],requiredEvidence:[]})
+  const queuedTask=m.execution.tasks.find(t=>t.id===second.task_id),queuedWorker=m.execution.workers.find(w=>w.id===second.worker_id)
+  store.beginFollowupSemanticAssessment(m.identity.session_id,'verify with targeted tests')
+  await rt.pauseForSemanticAssessment(m);assert.equal(queuedWorker.status,'queued')
+  store.applyFollowupSemanticAssessment(m.identity.session_id,{material:true,message_kind:'verification',task_kind:'implementation',scope:'multi-stream',risk:'low',ambiguity:'none',dependency_class:'independent-multi',required_capabilities:['verification'],requested_external_actions:[],likely_verification:['targeted-tests'],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]})
+  await rt.resumeAfterSemanticAssessment(m,'verification')
+  assert.equal(queuedTask.status,'cancelled');assert.equal(queuedWorker.status,'cancelled');assert.equal(rt.queueDepth(),0);assert.equal(created.length,1)
+  assert.equal(m.execution.workers.find(w=>w.id===first.worker_id)?.status,'busy')
+})

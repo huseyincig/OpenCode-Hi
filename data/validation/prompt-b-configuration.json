@@ -49,7 +49,7 @@
       "documentation": "docs/INSTALLATION.md",
       "documentation_sha256": "48c1e2f1072f614785c096791aa0177dd128234b9b30ea55b33af04ce18dce7c",
       "proof": "plugin/test/stage2-role-contract.test.mjs",
-      "proof_sha256": "d058c527e63d4c8c9ecff85ad6c8457cd03d3d1af7edaf36c211dee58afd18cb",
+      "proof_sha256": "bbdb17d7a55c6ea697e49237d1fe63e10a724e1bd1e78bfd806ad02422181afd",
       "safety_semantics": "preference"
     },
     {
@@ -90,7 +90,7 @@
         "host-hi-config"
       ],
       "consumer": "plugin/src/doctor/checks.ts",
-      "consumer_sha256": "c67b65e9d7283967a32d1e9488d0ae7c3c7e8d0c8c9d0a6383decfd8f53ad4bc",
+      "consumer_sha256": "a12dbd4abd10ee425ada8f1c7a8d0e8ab8bc7db44a5e2d16f00d40f4b7b12a49",
       "consumer_anchor": "config.compatibility",
       "observable_effect": "changes unsupported/unvalidated host compatibility findings from warning to failure under strict mode",
       "documentation": "docs/INSTALLATION.md",
@@ -113,7 +113,7 @@
         "host-hi-config"
       ],
       "consumer": "plugin/src/doctor/checks.ts",
-      "consumer_sha256": "c67b65e9d7283967a32d1e9488d0ae7c3c7e8d0c8c9d0a6383decfd8f53ad4bc",
+      "consumer_sha256": "a12dbd4abd10ee425ada8f1c7a8d0e8ab8bc7db44a5e2d16f00d40f4b7b12a49",
       "consumer_anchor": "config.compatibility",
       "observable_effect": "matches observed OpenCode version against the validated-version inventory",
       "documentation": "docs/INSTALLATION.md",
@@ -287,7 +287,7 @@
       "documentation": "docs/INSTALLATION.md",
       "documentation_sha256": "48c1e2f1072f614785c096791aa0177dd128234b9b30ea55b33af04ce18dce7c",
       "proof": "plugin/test/main-prompt-variant-fallback-concurrency.test.mjs",
-      "proof_sha256": "12b98a6791e2d2f09c9904bc3db3bc2f6c980f59dc2eefd296d4c5db527f922b",
+      "proof_sha256": "1e39722f4768e91ceea1448c96af4f7d7db8f92a615b6c167dc0d2168b5ae3db",
       "safety_semantics": "capacity"
     },
     {
@@ -383,7 +383,7 @@
       "documentation": "docs/INSTALLATION.md",
       "documentation_sha256": "48c1e2f1072f614785c096791aa0177dd128234b9b30ea55b33af04ce18dce7c",
       "proof": "plugin/test/config-executable-effect.test.mjs",
-      "proof_sha256": "d555be0fe6ed75b54684623b51e28f419d787f8a723a8837d825f953a2112244",
+      "proof_sha256": "8b72db1e6a29686554de525d89209fcbf9e5c0974617a79ba3566cb6c2e584dc",
       "safety_semantics": "capacity"
     },
     {
@@ -431,7 +431,7 @@
       "documentation": "docs/INSTALLATION.md",
       "documentation_sha256": "48c1e2f1072f614785c096791aa0177dd128234b9b30ea55b33af04ce18dce7c",
       "proof": "plugin/test/config-executable-effect.test.mjs",
-      "proof_sha256": "d555be0fe6ed75b54684623b51e28f419d787f8a723a8837d825f953a2112244",
+      "proof_sha256": "8b72db1e6a29686554de525d89209fcbf9e5c0974617a79ba3566cb6c2e584dc",
       "safety_semantics": "capacity"
     },
     {
@@ -455,7 +455,7 @@
       "documentation": "docs/INSTALLATION.md",
       "documentation_sha256": "48c1e2f1072f614785c096791aa0177dd128234b9b30ea55b33af04ce18dce7c",
       "proof": "plugin/test/main-prompt-variant-fallback-concurrency.test.mjs",
-      "proof_sha256": "12b98a6791e2d2f09c9904bc3db3bc2f6c980f59dc2eefd296d4c5db527f922b",
+      "proof_sha256": "1e39722f4768e91ceea1448c96af4f7d7db8f92a615b6c167dc0d2168b5ae3db",
       "safety_semantics": "capacity"
     },
     {
@@ -473,7 +473,7 @@
         "project-routing-policy"
       ],
       "consumer": "plugin/src/runtime/task/task-runtime.ts",
-      "consumer_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
+      "consumer_sha256": "64beb34d0e3455c1b11a4d0b7fc91643c126148d0205f5d0e023a88d6b5846c5",
       "consumer_anchor": "cfg.profile",
       "observable_effect": "changes specialist dispatch threshold for the selected execution profile",
       "documentation": "docs/INSTALLATION.md",
@@ -497,7 +497,7 @@
         "project-routing-policy"
       ],
       "consumer": "plugin/src/runtime/task/task-runtime.ts",
-      "consumer_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
+      "consumer_sha256": "64beb34d0e3455c1b11a4d0b7fc91643c126148d0205f5d0e023a88d6b5846c5",
       "consumer_anchor": "cfg.profile",
       "observable_effect": "changes reviewer dispatch threshold for the selected execution profile",
       "documentation": "docs/INSTALLATION.md",
@@ -521,7 +521,7 @@
         "project-routing-policy"
       ],
       "consumer": "plugin/src/runtime/task/task-runtime.ts",
-      "consumer_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
+      "consumer_sha256": "64beb34d0e3455c1b11a4d0b7fc91643c126148d0205f5d0e023a88d6b5846c5",
       "consumer_anchor": "cfg.profile",
       "observable_effect": "changes specialist dispatch threshold for the selected execution profile",
       "documentation": "docs/INSTALLATION.md",
@@ -545,7 +545,7 @@
         "project-routing-policy"
       ],
       "consumer": "plugin/src/runtime/task/task-runtime.ts",
-      "consumer_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
+      "consumer_sha256": "64beb34d0e3455c1b11a4d0b7fc91643c126148d0205f5d0e023a88d6b5846c5",
       "consumer_anchor": "cfg.profile",
       "observable_effect": "changes reviewer dispatch threshold for the selected execution profile",
       "documentation": "docs/INSTALLATION.md",
@@ -569,7 +569,7 @@
         "project-routing-policy"
       ],
       "consumer": "plugin/src/runtime/task/task-runtime.ts",
-      "consumer_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
+      "consumer_sha256": "64beb34d0e3455c1b11a4d0b7fc91643c126148d0205f5d0e023a88d6b5846c5",
       "consumer_anchor": "cfg.profile",
       "observable_effect": "changes specialist dispatch threshold for the selected execution profile",
       "documentation": "docs/INSTALLATION.md",
@@ -593,7 +593,7 @@
         "project-routing-policy"
       ],
       "consumer": "plugin/src/runtime/task/task-runtime.ts",
-      "consumer_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
+      "consumer_sha256": "64beb34d0e3455c1b11a4d0b7fc91643c126148d0205f5d0e023a88d6b5846c5",
       "consumer_anchor": "cfg.profile",
       "observable_effect": "changes reviewer dispatch threshold for the selected execution profile",
       "documentation": "docs/INSTALLATION.md",
