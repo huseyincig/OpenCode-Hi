@@ -13,7 +13,7 @@ Keep changes small, evidence-backed, and aligned with canonical ownership. Do no
 - Preserve user dirty/staged/unrelated work. Do not use broad reset/stash/restore or `git add -A` as ownership shortcuts.
 - External source reuse requires explicit source/license/ownership treatment before code is copied/adapted.
 - Never commit secrets or provider/private runtime state.
-- Push, tag, publish, deploy, paid actions and other external effects remain explicit authority-gated operations.
+- Normal product development is committed on `dev`; after the relevant verification passes, maintainers/authorized agents push each coherent development commit to `origin/dev` so the canonical development state is recoverable remotely. Pushes or promotions to `main`, tags, releases, npm publication, deploys, paid actions and other higher-impact external effects remain separately authority-gated.
 
 ## Documentation ownership
 
