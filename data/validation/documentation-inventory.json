@@ -147,7 +147,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "bdbdb2e16ca60387a5fd518b7e7ced6e0d207b3c6bb3beec7c32fb3200614ca1",
+      "sha256": "08374e573758c3b08c46c103a69578e11e1d90ae754bb1e1ef1c28c7bb25744b",
       "area": "product-overview",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -155,7 +155,7 @@
     },
     {
       "path": "docs/ARCHITECTURE.md",
-      "sha256": "55c9f8b0dc366e8d06720c6c766c5d7c9644406f9a623ef388a48e1593fc1dbf",
+      "sha256": "9d2843e59fa7d696154ae92dfca4a104cc03340e3c8038537a110e14b22a0e9d",
       "area": "architecture-execution-context-storage-privacy",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
@@ -163,7 +163,7 @@
     },
     {
       "path": "docs/CONFIGURATION.md",
-      "sha256": "1555124357db8006a3282278e3a3b15dd3349fc2c492af125fac91c0a4e6bfa9",
+      "sha256": "ad9a353c7675cc7f539e76393a50ef7a104f32aed39d6027c45b5a53ef5f5b40",
       "area": "configuration-guide",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -171,7 +171,7 @@
     },
     {
       "path": "docs/HOSTS.md",
-      "sha256": "a30b3b69795448c1d0751959f1fc5b589bc10931569f317584aabb2ef6d7323c",
+      "sha256": "ab315fe146f792df8d5b75a1eb76b45b08bc477e6ea33ec94aeff7b7a86b6238",
       "area": "host-support",
       "audience": "OPERATOR",
       "lifecycle": "CANONICAL_CURRENT",
@@ -187,7 +187,7 @@
     },
     {
       "path": "docs/INSTALLATION.md",
-      "sha256": "e8e31b06d4796cbed8a5edf345e6bf740f9b42164e4ef1dd09faf2078aace722",
+      "sha256": "91f56912c7a06eb9a20f80963f2ccdac08c7d714ca84712863f8453cce18fb45",
       "area": "installation-configuration-lifecycle",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -235,7 +235,7 @@
     },
     {
       "path": "docs/locales/tr/CONFIGURATION.md",
-      "sha256": "376d1e4c477319e431d2eb79cf18eb65a03296ec123275994d0375451577da42",
+      "sha256": "9657a790fb12e4909708204eb3cdbf19ddf51c9d967f36e44338e37dadd6eabe",
       "area": "turkish-configuration-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",
@@ -243,7 +243,7 @@
     },
     {
       "path": "docs/locales/tr/README.md",
-      "sha256": "06d742b316fce86629ef8ee34fbdbfefb461f6e2abdb354c7e2f6c07df05a829",
+      "sha256": "b78a64451cfe9982c1a02dee7cc617253a3c509d1b4f1f4e8e7e89f7ddc17247",
       "area": "turkish-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",

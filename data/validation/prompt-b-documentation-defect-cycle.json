@@ -17,7 +17,7 @@
       "owner_sha256": "850d8f1e9d83e8236df06ff2fe70e097404534935c548c1cd8f52d8ba2ec6c9d",
       "owner_anchor": "owner_sha256",
       "proof": "data/validation/product-truth-inventory.json",
-      "proof_sha256": "0a0d64d5560cb99989e20a1d8b67d3ae7fa42314f0531108916698e3b9efe11f",
+      "proof_sha256": "ed5eb9b2e92f659105f6b2be4eee909528550f795f0dee4a5d39f095f50c4574",
       "proof_anchor": "\"owner_sha256\""
     },
     {
@@ -27,7 +27,7 @@
       "owner_sha256": "850d8f1e9d83e8236df06ff2fe70e097404534935c548c1cd8f52d8ba2ec6c9d",
       "owner_anchor": "proof_paths",
       "proof": "data/validation/product-truth-inventory.json",
-      "proof_sha256": "0a0d64d5560cb99989e20a1d8b67d3ae7fa42314f0531108916698e3b9efe11f",
+      "proof_sha256": "ed5eb9b2e92f659105f6b2be4eee909528550f795f0dee4a5d39f095f50c4574",
       "proof_anchor": "\"proof_paths\""
     },
     {
@@ -37,7 +37,7 @@
       "owner_sha256": "5be69641560b78658322356840e5ef90ad8e036f7d753dd771bb21a127e7e1d2",
       "owner_anchor": "one-current-area-one-public-owner",
       "proof": "data/validation/documentation-inventory.json",
-      "proof_sha256": "fd1f534269dac0069f6b162fa4f9f2292c59a9904a042e919c98734bf92ec302",
+      "proof_sha256": "6373cfc4d6d58492faadba1c8cb8cd603d44cda7168ed54fc72f2936f01f7214",
       "proof_anchor": "\"canonical_ownership\""
     },
     {

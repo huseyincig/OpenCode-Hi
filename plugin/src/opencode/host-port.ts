@@ -50,11 +50,14 @@ function availableModels(raw:unknown[]):AvailableModel[]{
   return out
 }
 
-function connectedProviderSupplements(raw:unknown,scoped:AvailableModel[]):AvailableModel[]{
+function reconcileConnectedProviderModels(raw:unknown,scoped:AvailableModel[]):{models:AvailableModel[];supplements:number;removed:number;constrained:boolean}{
   const edge=raw as any
-  if(!Array.isArray(edge?.connected))return[]
-  const scopedProviders=new Set(scoped.map(model=>model.provider).filter((provider):provider is string=>Boolean(provider)))
-  return providerModels(raw).filter(model=>Boolean(model.provider)&&!scopedProviders.has(model.provider!))
+  if(!Array.isArray(edge?.connected))return{models:scoped,supplements:0,removed:0,constrained:false}
+  const connected=new Set(edge.connected.map((x:any)=>typeof x==='string'?x:String(x?.id??x?.providerID??x?.name??'')).filter(Boolean))
+  const kept=scoped.filter(model=>Boolean(model.provider)&&connected.has(model.provider!))
+  const scopedProviders=new Set(kept.map(model=>model.provider).filter((provider):provider is string=>Boolean(provider)))
+  const extra=providerModels(raw).filter(model=>Boolean(model.provider)&&!scopedProviders.has(model.provider!))
+  return{models:[...kept,...extra],supplements:extra.length,removed:scoped.length-kept.length,constrained:true}
 }
 
 export function createHostPort(ctx:OpenCodePluginContext):HostPort{
@@ -67,13 +70,14 @@ export function createHostPort(ctx:OpenCodePluginContext):HostPort{
     if(inventoryRefresh)return inventoryRefresh
     inventoryRefresh=(async()=>{try{
       const scoped=await listAvailableModels({serverUrl:ctx.serverUrl?String(ctx.serverUrl):undefined,directory:ctx.directory})
-      let source='connected-provider-catalog-fallback',supplements=0
+      let source='connected-provider-catalog-fallback',supplements=0,connectedFiltered=0
       if(scoped!==undefined){
-        const scopedModels=availableModels(scoped);let extra:AvailableModel[]=[]
-        try{extra=connectedProviderSupplements(await listProviders(ctx.client),scopedModels)}catch{}
-        models=[...scopedModels,...extra];supplements=extra.length;source=extra.length?'directory-available-models+connected-provider-supplement':'directory-available-models'
+        const scopedModels=availableModels(scoped);let reconciled={models:scopedModels,supplements:0,removed:0,constrained:false}
+        try{reconciled=reconcileConnectedProviderModels(await listProviders(ctx.client),scopedModels)}catch{}
+        models=reconciled.models;supplements=reconciled.supplements;connectedFiltered=reconciled.removed
+        source=reconciled.constrained&&(supplements||connectedFiltered)?'directory-available-models+connected-provider-reconciliation':'directory-available-models'
       }else{const raw=await listProviders(ctx.client);models=providerModels(raw)}
-      await log('info','Hi runtime inventory refreshed',{reason,models:models.length,source,supplements})
+      await log('info','Hi runtime inventory refreshed',{reason,models:models.length,source,supplements,connected_filtered:connectedFiltered})
       return models.length
     }catch(error){await log('warn','Hi runtime inventory refresh failed',{reason,error:String(error)});return models.length}finally{inventoryRefresh=undefined}})()
     return inventoryRefresh

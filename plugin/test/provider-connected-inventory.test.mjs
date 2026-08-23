@@ -204,6 +204,36 @@ test('directory-scoped inventory supplements connected providers missing from th
   }finally{globalThis.fetch=priorFetch;rmSync(root,{recursive:true,force:true})}
 })
 
+test('explicit connected-provider set removes scoped models from providers OpenCode says are disconnected',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-provider-v2-connected-intersection-'))
+  const raw={connected:['opencode-go'],all:[{id:'opencode-go',models:[{id:'ox-alpha-free',capabilities:{input:{image:true}}}]}]}
+  const client=clientWithProviderShape(raw),priorFetch=globalThis.fetch
+  globalThis.fetch=async(request)=>{
+    const url=new URL(typeof request==='string'?request:request.url);assert.equal(url.pathname,'/api/model')
+    return new Response(JSON.stringify({location:{directory:root},data:[{id:'scoped-free',providerID:'opencode',family:'free',name:'Scoped Free',api:{id:'scoped-free',type:'native',settings:{}},capabilities:{tools:true,input:['text'],output:['text']},request:{headers:{},body:{}},variants:[],time:{released:Date.now()},cost:[],status:'active',enabled:true,limit:{context:1000,output:100}}]}),{status:200,headers:{'content-type':'application/json'}})
+  }
+  try{
+    const host=createHostPort({directory:root,worktree:root,project:{},serverUrl:new URL('http://opencode.test'),client,experimental_workspace:{register(){}},$:()=>{}})
+    assert.equal(await host.refreshRuntimeInventory('test-connected-intersection'),1)
+    assert.deepEqual(host.getModels().map(x=>x.id),['opencode-go/ox-alpha-free'])
+  }finally{globalThis.fetch=priorFetch;rmSync(root,{recursive:true,force:true})}
+})
+
+test('explicit empty connected-provider set removes all scoped models',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-provider-v2-connected-empty-'))
+  const raw={connected:[],all:[{id:'p',models:[{id:'catalog'}]}]}
+  const client=clientWithProviderShape(raw),priorFetch=globalThis.fetch
+  globalThis.fetch=async(request)=>{
+    const url=new URL(typeof request==='string'?request:request.url);assert.equal(url.pathname,'/api/model')
+    return new Response(JSON.stringify({location:{directory:root},data:[{id:'scoped',providerID:'p',family:'code',name:'Scoped',api:{id:'scoped',type:'native',settings:{}},capabilities:{tools:true,input:['text'],output:['text']},request:{headers:{},body:{}},variants:[],time:{released:Date.now()},cost:[],status:'active',enabled:true,limit:{context:1000,output:100}}]}),{status:200,headers:{'content-type':'application/json'}})
+  }
+  try{
+    const host=createHostPort({directory:root,worktree:root,project:{},serverUrl:new URL('http://opencode.test'),client,experimental_workspace:{register(){}},$:()=>{}})
+    assert.equal(await host.refreshRuntimeInventory('test-connected-empty'),0)
+    assert.deepEqual(host.getModels(),[])
+  }finally{globalThis.fetch=priorFetch;rmSync(root,{recursive:true,force:true})}
+})
+
 test('directory-scoped inventory remains usable when connected-provider supplement read fails',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-provider-v2-supplement-failure-'))
   const client=clientWithProviderShape({connected:['p'],all:[]}),priorFetch=globalThis.fetch

@@ -348,7 +348,7 @@
       "area": "host-port",
       "canonical_owner": "OpenCodeHostPort",
       "owner_path": "plugin/src/opencode/host-port.ts",
-      "owner_sha256": "ce6289d940c8fcda8c9051af7b1f5d1752e7a98781b9950867567a97c24a2130",
+      "owner_sha256": "7727d467b803b39043bdbaa5f9823dcd5bbba0415029d33ee4bbe88343c4a2d0",
       "producer_or_contract_paths": [
         "plugin/src/opencode/client-adapter.ts",
         "plugin/src/opencode/event-adapter.ts",
