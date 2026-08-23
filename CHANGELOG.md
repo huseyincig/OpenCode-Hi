@@ -3,6 +3,7 @@
 All notable changes to OpenCode-Hi are documented here.
 
 ## Unreleased
+- Acquires the per-OpenCode-client/project runtime instance lease before shared persistence/reconciliation/bootstrap initialization and releases it on any initialization failure. Concurrent duplicate plugin initialization is now fenced before it can rewrite runtime boot state or run duplicate resource reconciliation, while failed initialization still permits a clean retry.
 - Drops only the process-local child callback index when OpenCode confirms `session.deleted` after a Mission has already STOPped (and on cancelled/stale callback fences). Late deletion no longer leaves a dead Worker lookup for the plugin lifetime, while canonical stopped Task/Worker outcomes remain immutable.
 - Scopes in-flight Worker spawn deduplication to the exact Hi Mission. Identical task contracts in different parent sessions can no longer collapse onto one native child Worker; same-Mission fingerprint dedupe remains intact as an ephemeral spawn optimization.
 - Fences OpenCode native permission reconstruction state by exact session lifecycle. Pending permission patterns are now keyed by `sessionID + permissionID`, permission persistence occurs only after current Mission/Worker lifecycle guards, and stopped/completed/deleted/disposed missions clear their process-local entries. Late `permission.asked`/`permission.replied: always` events after STOP can no longer retain stale patterns or create persistent Hi project authority.

@@ -19,33 +19,38 @@ export const HiPlugin = async (ctx) => {
     const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
     const packagedSkillsDir = resolve(packageRoot, 'skills');
     const projectRoot = resolveNativeProjectRoot(process.cwd(), { project: ctx.project, directory: ctx.directory, worktree: ctx.worktree });
-    const state = { config: DEFAULT_HI_CONFIG, hostConfig: {} };
-    const host = createHostPort(ctx);
-    const projectAuthority = new ProjectAuthorityStore(projectRoot);
-    const childSession = createOpenCodeChildSessionPort(ctx.client, { serverUrl: ctx.serverUrl?.toString?.(), directory: ctx.directory });
-    const processExecutor = new OpenCodePtyAdapter(ctx.client, ctx.serverUrl, ctx.directory, projectRoot, () => state.hostConfig);
-    const workspaceExecutor = new OpenCodeWorkspaceAdapter(ctx.client, ctx.serverUrl, ctx.directory);
-    const browserBootstrap = new PlaywrightBrowserBootstrap({ package_root: packageRoot });
-    const hostCapabilities = host.capabilities.contracts;
-    let processAvailable = false, workspaceAvailable = false, browserAvailable = false;
-    const refreshOwnedCapabilities = () => { const observed = detectOpenCodeCapabilities(ctx.client, { processLifecycle: processAvailable, workspaceIsolation: workspaceAvailable, browserExecution: browserAvailable }); hostCapabilities.splice(0, hostCapabilities.length, ...observed.contracts); };
-    refreshOwnedCapabilities();
-    const services = createRuntimeServices({ ports: { nativeContext: { project: ctx.project, directory: ctx.directory, worktree: ctx.worktree }, childSession, readAssistantResult: host.readAssistantResult, hostCapabilities, process: processExecutor, workspace: workspaceExecutor, createBrowser: persist => new PlaywrightBrowserAdapter({ persist_screenshot: persist, browser_cache_paths: [browserBootstrap.cachePath] }), bootstrapBrowser: () => browserBootstrap.ensure(), onBrowserAvailability: value => { browserAvailable = value; refreshOwnedCapabilities(); } }, projectRoot, packageRoot, getConfig: () => state.config, getModels: host.getModels, getHostConfig: () => state.hostConfig });
-    await services.workspaceRuntime.reconcileRestored(services.store.all());
-    await services.processRuntime.reconcileRestored(services.store.all());
-    const browserHealth = await services.browserExecutor.health();
-    browserAvailable = browserHealth.available;
-    services.setBrowserAvailable(browserAvailable);
-    refreshOwnedCapabilities();
-    services.tasks.rehydrateQueued(services.store.all());
-    setTimeout(() => { void Promise.all([processExecutor.health(), workspaceExecutor.health()]).then(([processHealth, workspaceHealth]) => { processAvailable = processHealth.available; workspaceAvailable = workspaceHealth.available; refreshOwnedCapabilities(); }).catch(() => { }); }, 0);
-    services.persistence.save(services.store.all());
-    const pendingNativePermissions = new Map();
-    const eventController = new RuntimeEventController({ state, host, services, projectAuthority, pendingNativePermissions, projectRoot });
-    const { toolSurface } = createHiToolSurface({ state, store: services.store, tasks: services.tasks, processRuntime: services.processRuntime, workspaceRuntime: services.workspaceRuntime, browserExecutor: services.browserExecutor, previewManager: services.previewManager, projectRoot, workingDirectory: ctx.directory, capabilities: host.capabilities, native: host.nativeSession, getModels: host.getModels, refreshModels: host.refreshRuntimeInventory, scopedStores: services.scopedStores, getBrowserBootstrapStatus: services.getBrowserBootstrapStatus });
-    void host.log('info', 'OpenCode-Hi plugin initialized', { directory: ctx.directory, models: host.getModels().length, restored: services.store.all().length, uncleanShutdown: services.persistence.lastLoadReport.uncleanShutdown === true, capabilities: host.capabilities, browser: browserHealth });
-    // Acquire only after initialization succeeds so a failed init cannot leave a stale process-global lease.
     const instanceLease = acquireHiRuntimeInstance(String(projectRoot), ctx.client);
-    return createOpenCodeHooks({ state, host, services, projectRoot, workingDirectory: ctx.directory, packagedSkillsDir, projectAuthority, toolSurface, eventController, instanceLease });
+    try {
+        const state = { config: DEFAULT_HI_CONFIG, hostConfig: {} };
+        const host = createHostPort(ctx);
+        const projectAuthority = new ProjectAuthorityStore(projectRoot);
+        const childSession = createOpenCodeChildSessionPort(ctx.client, { serverUrl: ctx.serverUrl?.toString?.(), directory: ctx.directory });
+        const processExecutor = new OpenCodePtyAdapter(ctx.client, ctx.serverUrl, ctx.directory, projectRoot, () => state.hostConfig);
+        const workspaceExecutor = new OpenCodeWorkspaceAdapter(ctx.client, ctx.serverUrl, ctx.directory);
+        const browserBootstrap = new PlaywrightBrowserBootstrap({ package_root: packageRoot });
+        const hostCapabilities = host.capabilities.contracts;
+        let processAvailable = false, workspaceAvailable = false, browserAvailable = false;
+        const refreshOwnedCapabilities = () => { const observed = detectOpenCodeCapabilities(ctx.client, { processLifecycle: processAvailable, workspaceIsolation: workspaceAvailable, browserExecution: browserAvailable }); hostCapabilities.splice(0, hostCapabilities.length, ...observed.contracts); };
+        refreshOwnedCapabilities();
+        const services = createRuntimeServices({ ports: { nativeContext: { project: ctx.project, directory: ctx.directory, worktree: ctx.worktree }, childSession, readAssistantResult: host.readAssistantResult, hostCapabilities, process: processExecutor, workspace: workspaceExecutor, createBrowser: persist => new PlaywrightBrowserAdapter({ persist_screenshot: persist, browser_cache_paths: [browserBootstrap.cachePath] }), bootstrapBrowser: () => browserBootstrap.ensure(), onBrowserAvailability: value => { browserAvailable = value; refreshOwnedCapabilities(); } }, projectRoot, packageRoot, getConfig: () => state.config, getModels: host.getModels, getHostConfig: () => state.hostConfig });
+        await services.workspaceRuntime.reconcileRestored(services.store.all());
+        await services.processRuntime.reconcileRestored(services.store.all());
+        const browserHealth = await services.browserExecutor.health();
+        browserAvailable = browserHealth.available;
+        services.setBrowserAvailable(browserAvailable);
+        refreshOwnedCapabilities();
+        services.tasks.rehydrateQueued(services.store.all());
+        setTimeout(() => { void Promise.all([processExecutor.health(), workspaceExecutor.health()]).then(([processHealth, workspaceHealth]) => { processAvailable = processHealth.available; workspaceAvailable = workspaceHealth.available; refreshOwnedCapabilities(); }).catch(() => { }); }, 0);
+        services.persistence.save(services.store.all());
+        const pendingNativePermissions = new Map();
+        const eventController = new RuntimeEventController({ state, host, services, projectAuthority, pendingNativePermissions, projectRoot });
+        const { toolSurface } = createHiToolSurface({ state, store: services.store, tasks: services.tasks, processRuntime: services.processRuntime, workspaceRuntime: services.workspaceRuntime, browserExecutor: services.browserExecutor, previewManager: services.previewManager, projectRoot, workingDirectory: ctx.directory, capabilities: host.capabilities, native: host.nativeSession, getModels: host.getModels, refreshModels: host.refreshRuntimeInventory, scopedStores: services.scopedStores, getBrowserBootstrapStatus: services.getBrowserBootstrapStatus });
+        void host.log('info', 'OpenCode-Hi plugin initialized', { directory: ctx.directory, models: host.getModels().length, restored: services.store.all().length, uncleanShutdown: services.persistence.lastLoadReport.uncleanShutdown === true, capabilities: host.capabilities, browser: browserHealth });
+        return createOpenCodeHooks({ state, host, services, projectRoot, workingDirectory: ctx.directory, packagedSkillsDir, projectAuthority, toolSurface, eventController, instanceLease });
+    }
+    catch (error) {
+        instanceLease.release();
+        throw error;
+    }
 };
 export default HiPlugin;

@@ -34,6 +34,43 @@ test('doctor reports primary-model drift separately when fallback is still avail
   assert.match(drift?.detail??'',/fallback=p\/live/)
 })
 
+
+test('duplicate plugin initialization is fenced before shared runtime-state side effects',async()=>{
+  const {mkdtempSync,readFileSync,rmSync}=await import('node:fs')
+  const {tmpdir}=await import('node:os')
+  const {join}=await import('node:path')
+  const {default:HiPlugin}=await import('../dist/plugin.js')
+  const {RuntimePersistence}=await import('../dist/runtime/state/persistence.js')
+  const root=mkdtempSync(join(tmpdir(),'hi-instance-preinit-fence-'))
+  const client={app:{log:async()=>{}},provider:{list:async()=>({data:[]})},session:{create:async()=>({data:{id:'unused'}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:{}}),diff:async()=>({data:[]})}}
+  let hooks
+  try{
+    hooks=await HiPlugin({directory:root,worktree:root,project:{},client})
+    const statePath=new RuntimePersistence(root).path,before=readFileSync(statePath,'utf8')
+    await assert.rejects(()=>HiPlugin({directory:root,worktree:root,project:{},client}),/Duplicate OpenCode-Hi runtime/)
+    const after=readFileSync(statePath,'utf8')
+    assert.equal(after,before,'duplicate runtime must be rejected before persistence/reconciliation/bootstrap can mutate shared runtime state')
+  }finally{await hooks?.dispose?.();rmSync(root,{recursive:true,force:true})}
+})
+
+test('failed plugin initialization releases the early runtime instance lease for a clean retry',async()=>{
+  const {mkdtempSync,mkdirSync,writeFileSync,rmSync}=await import('node:fs')
+  const {tmpdir}=await import('node:os')
+  const {dirname,join}=await import('node:path')
+  const {default:HiPlugin}=await import('../dist/plugin.js')
+  const {RuntimePersistence}=await import('../dist/runtime/state/persistence.js')
+  const root=mkdtempSync(join(tmpdir(),'hi-instance-init-failure-release-'))
+  const client={app:{log:async()=>{}},provider:{list:async()=>({data:[]})},session:{create:async()=>({data:{id:'unused'}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:{}}),diff:async()=>({data:[]})}}
+  let hooks
+  try{
+    const persistence=new RuntimePersistence(root);mkdirSync(dirname(persistence.path),{recursive:true});writeFileSync(persistence.path,'{"schema":99,"missions":[]}\n')
+    await assert.rejects(()=>HiPlugin({directory:root,worktree:root,project:{},client}),/runtime state is invalid and was not discarded/)
+    rmSync(persistence.path,{force:true})
+    hooks=await HiPlugin({directory:root,worktree:root,project:{},client})
+    assert.ok(hooks?.tool?.hi_status,'same owner/project must be able to retry after failed initialization')
+  }finally{await hooks?.dispose?.();rmSync(root,{recursive:true,force:true})}
+})
+
 test('runtime instance guard prevents duplicate hooks per host context while permitting distinct OpenCode instance contexts and reacquire',()=>{
   const ownerA={},ownerB={}
   const a=acquireHiRuntimeInstance('/tmp/hi-project-a',ownerA)

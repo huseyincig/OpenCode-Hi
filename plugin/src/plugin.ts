@@ -20,6 +20,8 @@ export const HiPlugin:Plugin=async(ctx)=>{
   const packageRoot=resolve(dirname(fileURLToPath(import.meta.url)),'../..')
   const packagedSkillsDir=resolve(packageRoot,'skills')
   const projectRoot=resolveNativeProjectRoot(process.cwd(),{project:ctx.project,directory:ctx.directory,worktree:ctx.worktree})
+  const instanceLease=acquireHiRuntimeInstance(String(projectRoot),ctx.client as object)
+  try{
   const state:PluginRuntimeState={config:DEFAULT_HI_CONFIG,hostConfig:{}}
   const host=createHostPort(ctx)
   const projectAuthority=new ProjectAuthorityStore(projectRoot)
@@ -41,9 +43,7 @@ export const HiPlugin:Plugin=async(ctx)=>{
   const eventController=new RuntimeEventController({state,host,services,projectAuthority,pendingNativePermissions,projectRoot})
   const {toolSurface}=createHiToolSurface({state,store:services.store,tasks:services.tasks,processRuntime:services.processRuntime,workspaceRuntime:services.workspaceRuntime,browserExecutor:services.browserExecutor,previewManager:services.previewManager,projectRoot,workingDirectory:ctx.directory,capabilities:host.capabilities,native:host.nativeSession,getModels:host.getModels,refreshModels:host.refreshRuntimeInventory,scopedStores:services.scopedStores,getBrowserBootstrapStatus:services.getBrowserBootstrapStatus})
   void host.log('info','OpenCode-Hi plugin initialized',{directory:ctx.directory,models:host.getModels().length,restored:services.store.all().length,uncleanShutdown:services.persistence.lastLoadReport.uncleanShutdown===true,capabilities:host.capabilities,browser:browserHealth})
-  // Acquire only after initialization succeeds so a failed init cannot leave a stale process-global lease.
-  const instanceLease=acquireHiRuntimeInstance(String(projectRoot),ctx.client as object)
   return createOpenCodeHooks({state,host,services,projectRoot,workingDirectory:ctx.directory,packagedSkillsDir,projectAuthority,toolSurface,eventController,instanceLease}) as any
+  }catch(error){instanceLease.release();throw error}
 }
-
 export default HiPlugin
