@@ -102,6 +102,17 @@ test('PROMPT B restart reopens persisted semantic decision but never replays sta
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
+test('H1 ephemeral transport retires old terminal entries instead of growing without bound',()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'h1-bounded-history','small task'),transport=new ChatHumanDecisionTransport(100)
+  let firstID,lastID
+  for(let i=0;i<200;i++){
+    const d=openHumanDecision(m,{semantic_type:'preference',reason_code:`bounded-${i}`,summary:`pick ${i}`,response_schema:{kind:'choice',choices:['a','b']}})
+    transport.open(d);if(i===0)firstID=d.decision_id;lastID=d.decision_id
+  }
+  assert.equal(transport.handle(lastID)?.state,'OPEN')
+  assert.equal(transport.handle(firstID),undefined,'old cancelled transport history must be retired from process-local memory')
+})
+
 test('PROMPT B stale answer to a replaced HumanDecision cannot resolve the replacement',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'h1-stale-answer','small task'),transport=new ChatHumanDecisionTransport(100)
   const old=openHumanDecision(m,{semantic_type:'preference',reason_code:'old',summary:'old',response_schema:{kind:'choice',choices:['a','b']}});transport.open(old)

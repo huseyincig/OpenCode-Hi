@@ -1,3 +1,4 @@
+var _a;
 function boundedText(value, max = 1000) { return value.trim().slice(0, max); }
 function responseFor(decision, value) {
     const kind = decision.response_schema.kind;
@@ -33,9 +34,12 @@ function responseFor(decision, value) {
 export class ChatHumanDecisionTransport {
     timeoutMs;
     #entries = new Map();
+    static TERMINAL_HISTORY_LIMIT = 64;
     constructor(timeoutMs = 300_000) {
         this.timeoutMs = timeoutMs;
     }
+    #pruneTerminal() { const terminal = [...this.#entries].filter(([, entry]) => entry.handle.state !== 'OPEN' && entry.waiters.size === 0); for (const [id] of terminal.slice(0, Math.max(0, terminal.length - _a.TERMINAL_HISTORY_LIMIT)))
+        this.#entries.delete(id); }
     open(decision) {
         for (const [id, entry] of this.#entries)
             if (id !== decision.decision_id && entry.handle.state === 'OPEN' && entry.decision.blocking_scope.mission_id === decision.blocking_scope.mission_id)
@@ -47,6 +51,7 @@ export class ChatHumanDecisionTransport {
         }
         const handle = { decision_id: decision.decision_id, transport: 'chat', state: 'OPEN', opened_at: Date.now() };
         this.#entries.set(decision.decision_id, { decision: structuredClone(decision), handle, waiters: new Set() });
+        this.#pruneTerminal();
         return structuredClone(handle);
     }
     async await(decisionId) {
@@ -73,6 +78,7 @@ export class ChatHumanDecisionTransport {
         for (const waiter of [...entry.waiters])
             waiter({ status: 'CANCELLED', decision_id: decisionId });
         entry.waiters.clear();
+        this.#pruneTerminal();
     }
     respond(decisionId, value) {
         const entry = this.#entries.get(decisionId);
@@ -86,10 +92,12 @@ export class ChatHumanDecisionTransport {
         for (const waiter of [...entry.waiters])
             waiter({ status: 'RESPONDED', response: structuredClone(response) });
         entry.waiters.clear();
+        this.#pruneTerminal();
         return structuredClone(response);
     }
     handle(decisionId) { const x = this.#entries.get(decisionId)?.handle; return x ? structuredClone(x) : undefined; }
 }
+_a = ChatHumanDecisionTransport;
 export function syncHumanDecisionTransport(decision, transport) { if (!decision)
     return undefined; if (decision.status === 'OPEN')
     return transport.open(decision); transport.cancel(decision.decision_id); return undefined; }

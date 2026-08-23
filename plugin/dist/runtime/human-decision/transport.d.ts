@@ -30,6 +30,7 @@ export interface HumanDecisionTransport {
 export declare class ChatHumanDecisionTransport implements HumanDecisionTransport {
     #private;
     private readonly timeoutMs;
+    static readonly TERMINAL_HISTORY_LIMIT = 64;
     constructor(timeoutMs?: number);
     open(decision: HumanDecisionContract): HumanDecisionTransportHandle;
     await(decisionId: string): Promise<HumanDecisionAwaitResult>;

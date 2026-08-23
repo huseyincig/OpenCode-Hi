@@ -11,16 +11,16 @@
       "owner_sha256": "11dd4505ce66b339a5fc9b44200431de37d96b96b2fd494a1872a8528b415618",
       "owner_anchor": "m.authority.human_decision=decision",
       "proof": "plugin/test/h1-human-decision-transport.test.mjs",
-      "proof_sha256": "6c17f2755dc987a66731bee012fda9eca903e7cfe97bcd0b3e4772c703c86056",
+      "proof_sha256": "6fa3506b6722e4e3fbd7311bdb377b15c4d5045fe0430835a0f018e95cb16f8a",
       "proof_anchor": "transport-only and never resolve canonical HumanDecision state"
     },
     {
       "invariant": "typed-choice",
       "owner": "plugin/src/runtime/human-decision/transport.ts",
-      "owner_sha256": "2db615c4592412e6a6aaf91356007746c339530711bf053208940ef2b043a44e",
+      "owner_sha256": "ad321e33013c83d282f653e6ffaef148460631d7105db7a732e4c9b8135eeadd",
       "owner_anchor": "if(kind==='choice')",
       "proof": "plugin/test/h1-human-decision-transport.test.mjs",
-      "proof_sha256": "6c17f2755dc987a66731bee012fda9eca903e7cfe97bcd0b3e4772c703c86056",
+      "proof_sha256": "6fa3506b6722e4e3fbd7311bdb377b15c4d5045fe0430835a0f018e95cb16f8a",
       "proof_anchor": "typed choice rejects invalid chat input"
     },
     {
@@ -35,46 +35,46 @@
     {
       "invariant": "timeout-is-transport-only",
       "owner": "plugin/src/runtime/human-decision/transport.ts",
-      "owner_sha256": "2db615c4592412e6a6aaf91356007746c339530711bf053208940ef2b043a44e",
+      "owner_sha256": "ad321e33013c83d282f653e6ffaef148460631d7105db7a732e4c9b8135eeadd",
       "owner_anchor": "status:'TIMEOUT'",
       "proof": "plugin/test/h1-human-decision-transport.test.mjs",
-      "proof_sha256": "6c17f2755dc987a66731bee012fda9eca903e7cfe97bcd0b3e4772c703c86056",
+      "proof_sha256": "6fa3506b6722e4e3fbd7311bdb377b15c4d5045fe0430835a0f018e95cb16f8a",
       "proof_anchor": "timeout and cancel are transport-only"
     },
     {
       "invariant": "cancellation-is-transport-only",
       "owner": "plugin/src/runtime/human-decision/transport.ts",
-      "owner_sha256": "2db615c4592412e6a6aaf91356007746c339530711bf053208940ef2b043a44e",
+      "owner_sha256": "ad321e33013c83d282f653e6ffaef148460631d7105db7a732e4c9b8135eeadd",
       "owner_anchor": "cancel(decisionId:string)",
       "proof": "plugin/test/h1-human-decision-transport.test.mjs",
-      "proof_sha256": "6c17f2755dc987a66731bee012fda9eca903e7cfe97bcd0b3e4772c703c86056",
+      "proof_sha256": "6fa3506b6722e4e3fbd7311bdb377b15c4d5045fe0430835a0f018e95cb16f8a",
       "proof_anchor": "timeout and cancel are transport-only"
     },
     {
       "invariant": "stale-answer-rejected",
       "owner": "plugin/src/runtime/human-decision/transport.ts",
-      "owner_sha256": "2db615c4592412e6a6aaf91356007746c339530711bf053208940ef2b043a44e",
+      "owner_sha256": "ad321e33013c83d282f653e6ffaef148460631d7105db7a732e4c9b8135eeadd",
       "owner_anchor": "entry.handle.state!=='OPEN'",
       "proof": "plugin/test/h1-human-decision-transport.test.mjs",
-      "proof_sha256": "6c17f2755dc987a66731bee012fda9eca903e7cfe97bcd0b3e4772c703c86056",
+      "proof_sha256": "6fa3506b6722e4e3fbd7311bdb377b15c4d5045fe0430835a0f018e95cb16f8a",
       "proof_anchor": "stale answer to a replaced HumanDecision"
     },
     {
       "invariant": "duplicate-answer-idempotency",
       "owner": "plugin/src/runtime/human-decision/transport.ts",
-      "owner_sha256": "2db615c4592412e6a6aaf91356007746c339530711bf053208940ef2b043a44e",
+      "owner_sha256": "ad321e33013c83d282f653e6ffaef148460631d7105db7a732e4c9b8135eeadd",
       "owner_anchor": "state:'RESPONDED'",
       "proof": "plugin/test/h1-human-decision-transport.test.mjs",
-      "proof_sha256": "6c17f2755dc987a66731bee012fda9eca903e7cfe97bcd0b3e4772c703c86056",
+      "proof_sha256": "6fa3506b6722e4e3fbd7311bdb377b15c4d5045fe0430835a0f018e95cb16f8a",
       "proof_anchor": "duplicate/conflicting replies are inert"
     },
     {
       "invariant": "conflicting-answer-first-wins",
       "owner": "plugin/src/runtime/human-decision/transport.ts",
-      "owner_sha256": "2db615c4592412e6a6aaf91356007746c339530711bf053208940ef2b043a44e",
+      "owner_sha256": "ad321e33013c83d282f653e6ffaef148460631d7105db7a732e4c9b8135eeadd",
       "owner_anchor": "entry.response=response",
       "proof": "plugin/test/h1-human-decision-transport.test.mjs",
-      "proof_sha256": "6c17f2755dc987a66731bee012fda9eca903e7cfe97bcd0b3e4772c703c86056",
+      "proof_sha256": "6fa3506b6722e4e3fbd7311bdb377b15c4d5045fe0430835a0f018e95cb16f8a",
       "proof_anchor": "duplicate/conflicting replies are inert"
     },
     {
@@ -83,7 +83,7 @@
       "owner_sha256": "d3369337395345117f920fad9e597c93832b5d51e6079f7533c2e6d28bf8da8a",
       "owner_anchor": "new ChatHumanDecisionTransport()",
       "proof": "plugin/test/h1-human-decision-transport.test.mjs",
-      "proof_sha256": "6c17f2755dc987a66731bee012fda9eca903e7cfe97bcd0b3e4772c703c86056",
+      "proof_sha256": "6fa3506b6722e4e3fbd7311bdb377b15c4d5045fe0430835a0f018e95cb16f8a",
       "proof_anchor": "restart reopens persisted semantic decision but never replays stale ephemeral transport response"
     },
     {

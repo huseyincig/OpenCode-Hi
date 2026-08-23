@@ -38,14 +38,16 @@ function responseFor(decision:HumanDecisionContract,value:string|string[]):Human
 
 export class ChatHumanDecisionTransport implements HumanDecisionTransport{
   readonly #entries=new Map<string,Entry>()
+  static readonly TERMINAL_HISTORY_LIMIT=64
   constructor(private readonly timeoutMs=300_000){}
+  #pruneTerminal():void{const terminal=[...this.#entries].filter(([,entry])=>entry.handle.state!=='OPEN'&&entry.waiters.size===0);for(const [id] of terminal.slice(0,Math.max(0,terminal.length-ChatHumanDecisionTransport.TERMINAL_HISTORY_LIMIT)))this.#entries.delete(id)}
   open(decision:HumanDecisionContract):HumanDecisionTransportHandle{
     for(const [id,entry] of this.#entries)if(id!==decision.decision_id&&entry.handle.state==='OPEN'&&entry.decision.blocking_scope.mission_id===decision.blocking_scope.mission_id)this.cancel(id)
     const existing=this.#entries.get(decision.decision_id)
     if(existing&&existing.handle.state==='OPEN'){existing.decision=structuredClone(decision);return structuredClone(existing.handle)}
     const handle:HumanDecisionTransportHandle={decision_id:decision.decision_id,transport:'chat',state:'OPEN',opened_at:Date.now()}
     this.#entries.set(decision.decision_id,{decision:structuredClone(decision),handle,waiters:new Set()})
-    return structuredClone(handle)
+    this.#pruneTerminal();return structuredClone(handle)
   }
   async await(decisionId:string):Promise<HumanDecisionAwaitResult>{
     const entry=this.#entries.get(decisionId)
@@ -63,14 +65,14 @@ export class ChatHumanDecisionTransport implements HumanDecisionTransport{
     const entry=this.#entries.get(decisionId);if(!entry||entry.handle.state!=='OPEN')return
     entry.handle={...entry.handle,state:'CANCELLED'}
     for(const waiter of [...entry.waiters])waiter({status:'CANCELLED',decision_id:decisionId})
-    entry.waiters.clear()
+    entry.waiters.clear();this.#pruneTerminal()
   }
   respond(decisionId:string,value:string|string[]):HumanDecisionTransportResponse|undefined{
     const entry=this.#entries.get(decisionId);if(!entry||entry.handle.state!=='OPEN'||entry.decision.status!=='OPEN')return undefined
     const response=responseFor(entry.decision,value);if(!response)return undefined
     entry.response=response;entry.handle={...entry.handle,state:'RESPONDED'}
     for(const waiter of [...entry.waiters])waiter({status:'RESPONDED',response:structuredClone(response)})
-    entry.waiters.clear();return structuredClone(response)
+    entry.waiters.clear();this.#pruneTerminal();return structuredClone(response)
   }
   handle(decisionId:string):HumanDecisionTransportHandle|undefined{const x=this.#entries.get(decisionId)?.handle;return x?structuredClone(x):undefined}
 }
