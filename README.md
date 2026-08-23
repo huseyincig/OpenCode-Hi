@@ -171,6 +171,7 @@ The package runner and the loaded OpenCode plugin are deliberately separate comm
 | `doctor` | static registration/ownership/drift/transaction check |
 | `reconfigure` | published `0.2.4`: reopen the bounded project configuration wizard |
 | `state` | read-only package/project registration + routing summary; live Mission state remains runtime-owned |
+| `config` | current development: show/change Work Mode, execution limits and explicit child-role preferences in one project settings surface |
 | `reprofile` | change only `executionPolicy` in project-owned routing state |
 | `roles` | print/set explicit child-role model/fallback/variant mappings |
 | `rotate` | rotate one child role's configured fallback order; never credentials/provider keys |
@@ -178,6 +179,20 @@ The package runner and the loaded OpenCode plugin are deliberately separate comm
 | `plan` | preview the exact registration mutation without applying it |
 | `rollback` | restore the one recorded lifecycle rollback point when hashes still match |
 | `recover` | reconcile a recorded interrupted setup/update transaction |
+
+### Current development settings control plane
+
+The post-`0.2.4` `dev` line adds one user-facing settings model without replacing OpenCode model ownership or Hi routing internals:
+
+- **Work Mode:** `Adaptive`, `Single`, or `Multi`. `Single` means one active agent at a time; it does not mean one fixed model.
+- **Models:** Automatic by default, or explicit ordered child-role primary/fallback choices from OpenCode's effective connected inventory.
+- **Settings surfaces:** runtime `hi_settings` for live inventory-aware changes and `npx opencode-hi config` for deterministic project preferences. Multi-field runtime changes use one transaction and either all persist or none persist.
+- **First use:** when no explicit project settings exist and effective models are available, one bounded onboarding hint is projected for the first pending chat session. Greetings/settings requests can open setup; material work is not interrupted and uses `Adaptive + Automatic`.
+- **Live refresh:** opening runtime settings refreshes OpenCode model inventory first, so a newly connected provider can appear without restarting Hi even though exact OpenCode 1.18.21 does not expose a dedicated provider/config-updated plugin event.
+- **Hot reload:** successful runtime settings changes affect new worker dispatches without restarting OpenCode.
+- **Ownership:** provider authentication and primary `manager` / `working-manager` model selection remain OpenCode-owned. `hi_role_models` remains supported for compatibility.
+
+The immutable published `0.2.4` runtime evidence below remains **34 tools**. Current `dev` adds `hi_settings`; that development-source count must not be back-written into the `0.2.4` release evidence.
 
 After OpenCode loads the plugin, the runtime exposes **34 `hi_*` tools**. The main user-facing diagnostics are `hi_doctor`, `hi_status`, `hi_readiness`, `hi_metrics`, and `hi_ledger`. The remaining tools are bounded control-plane primitives for task/worker dispatch, process execution, browser execution, context artifacts, temporary mutations, semantic assessment, and direct progress. The exact loaded tool IDs are host-verifiable through OpenCode's documented `/experimental/tool/ids` endpoint.
 
@@ -188,6 +203,9 @@ Examples for the `0.2.4` candidate:
 ```bash
 npx --yes opencode-hi@0.2.4 reconfigure .
 npx --yes opencode-hi@0.2.4 state .
+# Current dev package/source:
+npx opencode-hi config . --mode adaptive
+npx opencode-hi config . --mode multi --max-agents 3 --parallelism 2
 npx --yes opencode-hi@0.2.4 reprofile . --profile balanced
 npx --yes opencode-hi@0.2.4 roles . --set coder=provider/model-a,provider/model-b
 npx --yes opencode-hi@0.2.4 rotate . --role coder

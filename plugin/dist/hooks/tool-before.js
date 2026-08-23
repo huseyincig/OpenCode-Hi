@@ -13,7 +13,7 @@ import { verificationKindAdmittedForMission } from '../runtime/verification/poli
 import { HI_BROWSER_EXECUTION_TOOL_IDS } from '../runtime/browser/executor.js';
 import { resolveBrowserExecutionOwner } from '../runtime/browser/ownership.js';
 import { isHiReadOnlyChildRole } from '../runtime/roles/catalog.js';
-const NON_MATERIAL_CONTROL_TOOLS = new Set(['hi_intent_assess', 'hi_status', 'hi_ledger', 'hi_readiness', 'hi_role_models']);
+const NON_MATERIAL_CONTROL_TOOLS = new Set(['hi_intent_assess', 'hi_status', 'hi_ledger', 'hi_readiness', 'hi_settings', 'hi_role_models']);
 export function createToolBeforeHook(store, background, projectRoot, workingDirectory) {
     return async (input, output) => {
         const sid = input?.sessionID ?? input?.sessionId, child = sid && background ? background.list().find(w => w.session_id === sid) : undefined, m = child ? store.get(child.parent_session_id) : store.get(sid);
@@ -53,12 +53,12 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
             throw new Error(`Hi topology guard: parent direct mutation via '${tool}' is disabled for parallel execution; create bounded disjoint work units with hi_task_start.`);
         }
         if (m.identity.semantic_assessment.status === 'pending') {
-            const allowed = new Set(['hi_intent_assess', 'hi_status', 'hi_ledger', 'hi_readiness', 'hi_role_models']);
+            const allowed = new Set(['hi_intent_assess', 'hi_status', 'hi_ledger', 'hi_readiness', 'hi_settings', 'hi_role_models']);
             if (!allowed.has(tool))
                 throw new Error(`Hi semantic gate: '${tool}' is blocked until the host primary submits the structured semantic assessment.`);
         }
-        if (tool === 'hi_role_models' && m.identity.semantic_assessment.status === 'assessed' && m.identity.status === 'active')
-            throw new Error(`Hi model-tool economy: hi_role_models is a user configuration surface, not a runtime discovery step. Runtime child routing consumes the connected model inventory internally; do not list models during an assessed mission.`);
+        if (['hi_settings', 'hi_role_models'].includes(tool) && m.identity.semantic_assessment.status === 'assessed' && m.identity.status === 'active')
+            throw new Error(`Hi settings-tool economy: hi_settings/hi_role_models are user configuration surfaces, not runtime discovery steps. Runtime child routing consumes the connected model inventory internally; do not list models during an assessed mission.`);
         if (!child && tool === 'todowrite' && m.identity.status === 'active' && m.identity.semantic_assessment.status === 'assessed' && m.identity.intent.scope === 'local' && m.identity.risk === 'low' && m.execution.execution_mode === 'single' && ['DIRECT', 'EVIDENCE'].includes(m.execution.adaptive_execution?.path ?? '')) {
             appendLedger(m, 'tool.economy-blocked', { payload: { tool: 'todowrite', reason: 'low-risk-local-direct-mission-uses-canonical-obligations' } });
             throw new Error(`Hi tool economy: native todos are unnecessary for this low-risk local direct mission. Use Hi canonical obligations/control state instead; do not create a parallel todo plan.`);

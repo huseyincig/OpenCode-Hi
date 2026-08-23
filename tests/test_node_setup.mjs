@@ -85,9 +85,9 @@ test('M16 Node doctor distinguishes package registration truth from pending effe
   const root=project();try{
     config(root,{plugin:[]});assert.equal(run('setup',root,'--version','1.0.0').status,0)
     const d=run('doctor',root);assert.equal(d.status,0);assert.equal(d.json.status,'WARN')
-    assert.ok(d.json.warnings.includes('routing-policy-pending-effective-runtime'))
+    assert.ok(d.json.warnings.includes('settings-policy-not-yet-persisted'));assert.equal(d.json.routing.initialization,'automatic-unpersisted')
     assert.match(d.json.note,/Effective provider\/model capability truth/)
-    assert.ok(d.json.actions.some(x=>x.includes('Restart OpenCode')))
+    assert.ok(d.json.actions.some(x=>x.includes('Adaptive + Automatic')&&x.includes('hi_settings')))
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
@@ -140,6 +140,19 @@ test('0.2.4 roles and rotate mutate only explicit child routing leaves and rejec
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
+test('config control plane shows and atomically changes work mode, limits and role preferences while preserving unknown fields',()=>{
+  const root=project();try{
+    config(root,{plugin:[]});assert.equal(run('install',root,'--version','1.0.0').status,0)
+    const routing=join(root,'.opencode','hi','policy','routing.json');mkdirSync(join(root,'.opencode','hi','policy'),{recursive:true});writeFileSync(routing,JSON.stringify({schema:1,type:'hi-routing',unknownTop:{keep:true},execution:{topology:'adaptive',maxAgents:4,parallelism:2,future:'keep'},routing:{futureField:{keep:true},roleModels:{architect:['p/old'],'future-role':['p/future']}}},null,2)+'\n')
+    const shown=run('config',root);assert.equal(shown.status,0);assert.equal(shown.json.work_mode,'adaptive');assert.equal(shown.json.execution.max_agents,4);assert.deepEqual(shown.json.role_models.architect,['p/old'])
+    const changed=run('config',root,'--mode','multi','--max-agents','3','--parallelism','2','--set','coder=p/a,p/b','--clear-role','architect');assert.equal(changed.status,0);assert.equal(changed.json.status,'APPLIED');assert.equal(changed.json.work_mode,'multi');assert.deepEqual(changed.json.role_models.coder,['p/a','p/b']);assert.equal(changed.json.role_models.architect,undefined);assert.equal(changed.json.restart_required,false)
+    const doc=JSON.parse(readFileSync(routing,'utf8'));assert.deepEqual(doc.unknownTop,{keep:true});assert.equal(doc.execution.future,'keep');assert.deepEqual(doc.routing.futureField,{keep:true});assert.deepEqual(doc.routing.roleModels['future-role'],['p/future'])
+    const before=readFileSync(routing,'utf8'),bad=run('config',root,'--mode','single','--max-agents','99','--set','coder=p/x');assert.equal(bad.status,2);assert.equal(bad.json.reason,'invalid-execution-limit');assert.equal(readFileSync(routing,'utf8'),before)
+    const single=run('config',root,'--mode','single','--max-agents','8','--parallelism','8');assert.equal(single.status,0);assert.equal(single.json.execution.max_agents,1);assert.equal(single.json.execution.parallelism,1)
+    const reset=run('config',root,'--reset');assert.equal(reset.status,0);assert.equal(reset.json.work_mode,'adaptive');assert.deepEqual(reset.json.role_models,{});assert.deepEqual(JSON.parse(readFileSync(routing,'utf8')).routing.roleModels['future-role'],['p/future'])
+  }finally{rmSync(root,{recursive:true,force:true})}
+})
+
 test('0.2.4 check-update uses npm registry metadata without mutating project state',async()=>{
   const root=project(),server=createServer((req,res)=>{assert.equal(req.url,'/opencode-hi/latest');res.setHeader('content-type','application/json');res.end(JSON.stringify({name:'opencode-hi',version:'1.2.0'}))})
   try{
@@ -172,7 +185,7 @@ test('interactive setup asks only primary mode; specialist/model policy stays in
     const doc=JSON.parse(readFileSync(join(root,'.opencode','hi','policy','routing.json'),'utf8'))
     assert.equal(doc.primaryMode,'manager');assert.equal(doc.executionPolicy,undefined);assert.equal(doc.execution,undefined);assert.equal(doc.models,undefined);assert.equal(doc.routing?.strategy,undefined)
     assert.deepEqual(JSON.parse(readFileSync(join(root,'opencode.json'),'utf8')).custom,{keep:true})
-    assert.match(r.json.configuration.next,/Hi rol modellerini ayarla|hi_role_models/i)
+    assert.match(r.json.configuration.next,/Hi ayarlarını göster|hi_settings/i)
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 

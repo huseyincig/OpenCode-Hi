@@ -51,6 +51,14 @@ test('C1 system transform splits stable policy and dynamic runtime block',async(
   assert.match(out.system[0],/^Hi MISSION RUNTIME PROJECTION/)
 })
 
+test('first-use settings onboarding is offered once per pending session only when live models exist',async()=>{
+  const store=new MissionStore(process.cwd());store.start('c1-onboarding','hello')
+  const hook=createSystemTransformHook(store,new BackgroundRegistry(),process.cwd(),undefined,()=>({pending:true,modelCount:6}))
+  const first={system:[]};await hook({sessionID:'c1-onboarding'},first);assert.equal(first.system.length,2);assert.match(first.system[0],/^Hi SEMANTIC ASSESSMENT GATE/);assert.match(first.system[1],/^Hi FIRST-USE SETTINGS: 6 effective connected model/);assert.match(first.system[1],/Adaptive\/Single\/Multi/);assert.match(first.system[1],/do not interrupt/)
+  const second={system:[]};await hook({sessionID:'c1-onboarding'},second);assert.equal(second.system.length,1,'same pending session must not repeat the onboarding projection')
+  const otherStore=new MissionStore(process.cwd());otherStore.start('c1-no-onboarding','hello');const none={system:[]};await createSystemTransformHook(otherStore,new BackgroundRegistry(),process.cwd(),undefined,()=>({pending:true,modelCount:0}))({sessionID:'c1-no-onboarding'},none);assert.equal(none.system.length,1,'no live models means no model-settings onboarding claim')
+})
+
 test('C1 representative provider-bound system projection reduces A6 character baseline',()=>{
   const {m}=fixture(),projection=buildMissionRuntimeProjection(m),measurement=measureMissionRuntimeProjection(projection)
   assert.ok(measurement.dynamic_chars<900,'dynamic runtime block must stay bounded')

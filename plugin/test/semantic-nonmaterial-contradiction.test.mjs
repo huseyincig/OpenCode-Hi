@@ -62,7 +62,7 @@ test('non-material conclusion permits only control inspection and reassessment s
   const store=new MissionStore(process.cwd()),m=store.start('nonmaterial-control','thanks')
   store.applyInitialSemanticAssessment(m.identity.session_id,parseSemanticIntentAssessment(cleanNonMaterial))
   const before=createToolBeforeHook(store,undefined,process.cwd())
-  for(const tool of ['hi_status','hi_ledger','hi_readiness','hi_role_models','hi_intent_assess'])await before({sessionID:m.identity.session_id,tool},{args:{}})
+  for(const tool of ['hi_status','hi_ledger','hi_readiness','hi_settings','hi_role_models','hi_intent_assess'])await before({sessionID:m.identity.session_id,tool},{args:{}})
   assert.equal(m.identity.status,'completed')
   assert.equal(m.identity.semantic_assessment.revision,1)
 })

@@ -27,6 +27,7 @@ export declare function createHiToolSurface(input: {
     capabilities: HostCapabilityView;
     native: HostNativeSessionPort;
     getModels: () => AvailableModel[];
+    refreshModels?: (reason: string) => Promise<number>;
     scopedStores: RuntimeScopedStores;
     getBrowserBootstrapStatus?: () => {
         available: boolean;

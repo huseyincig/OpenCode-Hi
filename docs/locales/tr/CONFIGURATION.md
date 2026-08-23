@@ -13,6 +13,10 @@ Canonical proje ayar dosyası:
 - `opencode.json` / `opencode.jsonc`: OpenCode plugin kaydı ve **primary session modeli** gibi host ayarları.
 - `.opencode/hi/policy/routing.json`: Hi'nin proje içindeki execution, child model routing, fallback ve concurrency davranışı.
 
+## Güncel `dev`: tek Settings yüzeyi
+
+Normal kullanıcı Work Mode olarak `Adaptive`, `Single` veya `Multi` seçer. Bu seçim topology tercihidir; primary `manager` / `working-manager` model ownership'i ve provider authentication OpenCode'da kalır. Runtime `hi_settings` canlı effective connected inventory ile mode + limit + birden fazla child-role model/fallback değişikliğini tek transaction içinde doğrular. `npx opencode-hi config` aynı proje tercihlerini CLI'dan yönetir; CLI canlı provider inventory uydurmaz. `hi_role_models` compatibility surface olarak korunur. Explicit routing dosyası olmaması hata değildir: Adaptive + Automatic varsayılanı geçerlidir. İlk pending sohbet, canlı model varsa setup yönlendirmesini bir kez alır; material iş kesilmez. Runtime settings açılışı inventory refresh ettiği için sonradan bağlanan provider yeni OpenCode oturumu gerektirmeden görünür.
+
 > En önemli kural: `manager` ve `working-manager` primary rollerdir. Hi tarafında bu iki role model atanmaz. Primary modeli OpenCode seçer. Hi model routing yalnız altı child role uygulanır: `coder`, `architect`, `repository-explorer`, `qa-reviewer`, `security-reviewer`, `visual-qa`.
 
 ## 0. Önce Hi'yi kurun/yükleyin

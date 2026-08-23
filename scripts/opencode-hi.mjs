@@ -20,6 +20,7 @@ import { fileURLToPath } from 'node:url'
 import { get as httpGet } from 'node:http'
 import { get as httpsGet } from 'node:https'
 import { createInterface } from 'node:readline/promises'
+import { applyProjectSettings } from '../plugin/dist/config/project-settings.js'
 
 const PRODUCT='OpenCode-Hi'
 const SHORT='HI'
@@ -151,7 +152,7 @@ function setup(project,version){
   const afterDoc={...data,plugin:afterPlugins},afterText=dump(afterDoc),afterIndex=afterPlugins.indexOf(target)
   const nextOwnership=ownershipDoc(project,cfg,target,sha(beforeText),sha(afterText))
   const out=applyLifecycle(project,'install',cfg,beforeText,afterDoc,beforeSpec,target,beforeIndex,afterIndex,null,nextOwnership)
-  return {...out,product:PRODUCT,routing_initialization:'pending-effective-runtime-inventory',next:'Restart OpenCode. Hi will initialize recommended child routing only from the effective runtime inventory; then run npx opencode-hi doctor <project> and the in-runtime hi_doctor tool.'}
+  return {...out,product:PRODUCT,routing_initialization:'pending-effective-runtime-settings',next:'Restart OpenCode, then ask “Hi ayarlarını göster” or use runtime hi_settings. Hi will show only OpenCode effective connected models; Adaptive + Automatic requires no persisted role mapping. Then run npx opencode-hi doctor <project> and runtime hi_doctor if diagnostics are needed.'}
 }
 
 function install(project,version){
@@ -222,15 +223,15 @@ function doctor(project){
   if(configDrift===true)warnings.push('managed-config-drift')
   if(existsSync(routingPath)&&routingSchema!==ROUTING_SCHEMA)issues.push('unsupported-routing-schema')
   if(existsSync(txPath))issues.push('pending-setup-transaction')
-  if(!existsSync(routingPath)&&hi.length)warnings.push('routing-policy-pending-effective-runtime')
+  if(!existsSync(routingPath)&&hi.length)warnings.push('settings-policy-not-yet-persisted')
   if(issues.includes('hi-plugin-not-registered'))actions.push(`Run: npx ${PACKAGE} setup ${project}`)
   if(issues.includes('duplicate-hi-registration'))actions.push('Remove the duplicate/conflicting Hi registration; keep one exact owned plugin entry.')
   if(issues.includes('unsupported-routing-schema'))actions.push(`Repair or regenerate ${routingPath}; only routing schema ${ROUTING_SCHEMA} is supported.`)
   if(issues.includes('pending-setup-transaction'))actions.push(`Run: npx ${PACKAGE} recover ${project}`)
   if(warnings.includes('ownership-proof-missing'))actions.push('Do not update/rollback as Hi-owned until ownership is re-established; inspect the existing registration first.')
   if(warnings.includes('managed-config-drift'))actions.push('Review user changes before rollback/update; Hi will not overwrite drift blindly.')
-  if(warnings.includes('routing-policy-pending-effective-runtime'))actions.push('Restart OpenCode once. Hi initializes recommended routing only after the host exposes the effective runtime provider/model inventory; then run the in-runtime hi_doctor tool.')
-  return{status:issues.length?'FAIL':warnings.length?'WARN':'OK',product:PRODUCT,short:SHORT,config:cfg,hi_specs:hi,ownership:{state:!existsSync(ownPath)?'missing':ownership&&Object.keys(ownership).length?'healthy':'invalid',schema:ownership.schema,config_drift:configDrift},lifecycle:{transaction_pending:existsSync(txPath),rollback_available:existsSync(rbPath)},routing:{path:routingPath,schema:routingSchema,valid:!existsSync(routingPath)||routingSchema===ROUTING_SCHEMA,initialization:!existsSync(routingPath)?'pending-effective-runtime':'present'},issues,warnings,actions,note:'This package CLI verifies registration/ownership. Effective provider/model capability truth is verified by the loaded OpenCode runtime and the hi_doctor tool.'}
+  if(warnings.includes('settings-policy-not-yet-persisted'))actions.push('No explicit Hi settings are persisted yet. This is valid: Adaptive + Automatic can run without a routing file. After OpenCode starts, use runtime hi_settings to inspect effective connected models or save explicit preferences.')
+  return{status:issues.length?'FAIL':warnings.length?'WARN':'OK',product:PRODUCT,short:SHORT,config:cfg,hi_specs:hi,ownership:{state:!existsSync(ownPath)?'missing':ownership&&Object.keys(ownership).length?'healthy':'invalid',schema:ownership.schema,config_drift:configDrift},lifecycle:{transaction_pending:existsSync(txPath),rollback_available:existsSync(rbPath)},routing:{path:routingPath,schema:routingSchema,valid:!existsSync(routingPath)||routingSchema===ROUTING_SCHEMA,initialization:!existsSync(routingPath)?'automatic-unpersisted':'present'},issues,warnings,actions,note:'This package CLI verifies registration/ownership. Effective provider/model capability truth is verified by the loaded OpenCode runtime and the hi_doctor tool.'}
 }
 
 function routingState(project){
@@ -321,7 +322,7 @@ async function collectWizard(project){
   try{
     process.stderr.write(`\n${PRODUCT} project configuration\nProject: ${project}\n\n`)
     const primaryMode=await askChoice(rl,'Primary working mode',[{value:'auto',label:'Auto — Hi chooses Manager/Working Manager behavior from the task'},{value:'working-manager',label:'Working Manager — work directly when appropriate and delegate specialists when useful'},{value:'manager',label:'Manager — coordinate work and delegate implementation to child agents'}],current.primaryMode)
-    process.stderr.write('\nSpecialist selection, topology, verification depth and model scoring are Hi runtime internals. They are not normal-user setup questions.\nAfter OpenCode starts, type “Hi rol modellerini ayarla” in chat to assign effective connected models to child roles.\n\n')
+    process.stderr.write('\nSpecialist selection, topology, verification depth and model scoring are Hi runtime internals. They are not normal-user setup questions.\nAfter OpenCode starts, ask “Hi ayarlarını göster” in chat. Runtime hi_settings presents Work Mode and effective connected child-model choices; Adaptive + Automatic needs no persisted model mapping.\n\n')
     const confirmed=await askConfirm(rl,'Apply this project configuration?',true)
     return{state,answers:{primaryMode},confirmed}
   }finally{rl.close()}
@@ -329,9 +330,9 @@ async function collectWizard(project){
 function applyWizardRouting(project,wizard){
   const {state,answers}=wizard,doc=state.doc
   const before=canonicalChoice(doc.primaryMode,['auto','working-manager','manager'],'auto')
-  if(state.exists&&before===answers.primaryMode)return{status:'NOOP',product:PRODUCT,project,config:state.path,configuration:{primaryMode:answers.primaryMode},reason:'configuration-already-matches',restart_required:false,next:'In OpenCode chat, type “Hi rol modellerini ayarla” to view effective connected models and assign child roles.'}
+  if(state.exists&&before===answers.primaryMode)return{status:'NOOP',product:PRODUCT,project,config:state.path,configuration:{primaryMode:answers.primaryMode},reason:'configuration-already-matches',restart_required:false,next:'In OpenCode chat, ask “Hi ayarlarını göster”. Runtime hi_settings shows Work Mode plus effective connected models; explicit changes apply to new worker dispatches without restart.'}
   const next=writeRouting(project,state,{...doc,primaryMode:answers.primaryMode})
-  return{status:'APPLIED',product:PRODUCT,project,config:state.path,configuration:{primaryMode:next.primaryMode},restart_required:true,next:'Restart OpenCode, then type “Hi rol modellerini ayarla” in chat. Hi will show only effective connected models and can assign them to coder/architect/repository-explorer/qa-reviewer/security-reviewer/visual-qa.'}
+  return{status:'APPLIED',product:PRODUCT,project,config:state.path,configuration:{primaryMode:next.primaryMode},restart_required:true,next:'Restart OpenCode, then ask “Hi ayarlarını göster” in chat. Runtime hi_settings shows Work Mode and only effective connected models; it can atomically update child roles and execution limits.'}
 }
 async function configureWizard(project){
   const d=doctor(project)
@@ -339,6 +340,20 @@ async function configureWizard(project){
   const wizard=await collectWizard(project)
   if(!wizard.confirmed)return{status:'CANCELLED',product:PRODUCT,project,mutation_performed:false}
   return applyWizardRouting(project,wizard)
+}
+
+function workModeFromRouting(doc){const topology=doc?.execution?.topology;return topology==='single-agent'?'single':topology==='multi-agent'?'multi':'adaptive'}
+function configControl(project,{mode,maxAgents,parallelism,sets,clearRoles,resetModels,reset}={}){
+  const state=routingState(project),doc=state.doc,requestedMode=mode===undefined?undefined:String(mode).trim().toLowerCase()
+  if(requestedMode!==undefined&&!['adaptive','single','multi'].includes(requestedMode))throw new SetupError('unsupported-work-mode',{detail:requestedMode,action:'Use --mode adaptive|single|multi.'})
+  const bounded=(value,name)=>{if(value===undefined)return undefined;const n=Number(value);if(!Number.isInteger(n)||n<1||n>8)throw new SetupError('invalid-execution-limit',{detail:`${name}=${value}`,action:`Use ${name} in 1..8.`});return n}
+  const nextMax=bounded(maxAgents,'max-agents'),nextParallel=bounded(parallelism,'parallelism'),roleModels={}
+  for(const role of clearRoles??[]){assertChildRole(role);roleModels[role]=null}
+  for(const item of sets??[]){const at=item.indexOf('=');if(at<1)throw new SetupError('invalid-role-set',{detail:item,action:'Use --set ROLE=MODEL[,FALLBACK...].'});const role=item.slice(0,at).trim();assertChildRole(role);const models=[...new Set(item.slice(at+1).split(',').map(x=>x.trim()).filter(Boolean))];if(!models.length)throw new SetupError('role-model-list-empty',{detail:role});roleModels[role]=models}
+  const hasMutation=Boolean(requestedMode!==undefined||nextMax!==undefined||nextParallel!==undefined||(sets?.length)||(clearRoles?.length)||resetModels||reset)
+  if(!hasMutation){const view=roleView(doc);return{status:state.exists?'OK':'NOT_CONFIGURED',product:PRODUCT,project,config:state.path,work_mode:workModeFromRouting(doc),execution:{max_agents:doc.execution?.maxAgents??4,parallelism:doc.execution?.parallelism??2},role_models:view.roleModels,note:'Project preferences only. Effective connected model availability is OpenCode-owned and is shown/validated by runtime hi_settings.'}}
+  const result=applyProjectSettings(project,{workMode:reset?'adaptive':requestedMode,maxAgents:nextMax,parallelism:nextParallel,roleModels,resetRoleModels:Boolean(resetModels||reset)}),next=routingState(project).doc
+  return{status:'APPLIED',product:PRODUCT,project,config:result.path,work_mode:result.workMode,execution:{max_agents:result.execution.maxAgents??next.execution?.maxAgents??4,parallelism:result.execution.parallelism??next.execution?.parallelism??2},role_models:result.roleModels,restart_required:false,note:'Project settings changed through the canonical transactional writer. Runtime hi_settings refreshes and validates effective connected models before live model changes.'}
 }
 
 function registeredVersion(spec){const m=typeof spec==='string'?spec.match(/^opencode-hi@(\d+\.\d+\.\d+)$/):null;return m?.[1]}
@@ -355,17 +370,17 @@ async function checkUpdate(project){
 }
 
 function parseArgs(argv){
-  const args=[...argv],command=args.shift()??'help';let project='.',version,profile,role,interactive;const sets=[],variants=[];let printOnly=false
+  const args=[...argv],command=args.shift()??'help';let project='.',version,profile,role,interactive,mode,maxAgents,parallelism;const sets=[],variants=[],clearRoles=[];let printOnly=false,resetModels=false,reset=false
   if(args[0]&&!args[0].startsWith('-'))project=args.shift()
-  while(args.length){const flag=args.shift();if(flag==='--version'){version=args.shift();if(!version)throw new SetupError('missing-version-value',{action:'Use --version <exact-version>.'})}else if(flag==='--profile'){profile=args.shift();if(!profile)throw new SetupError('profile-required')}else if(flag==='--role'){role=args.shift();if(!role)throw new SetupError('role-required')}else if(flag==='--set'){const v=args.shift();if(!v)throw new SetupError('invalid-role-set');sets.push(v)}else if(flag==='--variant'){const v=args.shift();if(!v)throw new SetupError('invalid-role-variant');variants.push(v)}else if(flag==='--interactive'){if(interactive===false)throw new SetupError('conflicting-interactive-flags');interactive=true}else if(flag==='--non-interactive'){if(interactive===true)throw new SetupError('conflicting-interactive-flags');interactive=false}else if(flag==='--print'){printOnly=true}else throw new SetupError('unsupported-cli-argument',{detail:String(flag),action:'Run: npx opencode-hi --help'})}
-  return{command,project:projectPath(project),version,profile,role,sets,variants,printOnly,interactive}
+  while(args.length){const flag=args.shift();if(flag==='--version'){version=args.shift();if(!version)throw new SetupError('missing-version-value',{action:'Use --version <exact-version>.'})}else if(flag==='--profile'){profile=args.shift();if(!profile)throw new SetupError('profile-required')}else if(flag==='--role'){role=args.shift();if(!role)throw new SetupError('role-required')}else if(flag==='--set'){const v=args.shift();if(!v)throw new SetupError('invalid-role-set');sets.push(v)}else if(flag==='--variant'){const v=args.shift();if(!v)throw new SetupError('invalid-role-variant');variants.push(v)}else if(flag==='--mode'){mode=args.shift();if(!mode)throw new SetupError('unsupported-work-mode')}else if(flag==='--max-agents'){maxAgents=args.shift();if(!maxAgents)throw new SetupError('invalid-execution-limit')}else if(flag==='--parallelism'){parallelism=args.shift();if(!parallelism)throw new SetupError('invalid-execution-limit')}else if(flag==='--clear-role'){const v=args.shift();if(!v)throw new SetupError('role-required');clearRoles.push(v)}else if(flag==='--reset-models'){resetModels=true}else if(flag==='--reset'){reset=true}else if(flag==='--interactive'){if(interactive===false)throw new SetupError('conflicting-interactive-flags');interactive=true}else if(flag==='--non-interactive'){if(interactive===true)throw new SetupError('conflicting-interactive-flags');interactive=false}else if(flag==='--print'){printOnly=true}else throw new SetupError('unsupported-cli-argument',{detail:String(flag),action:'Run: npx opencode-hi --help'})}
+  return{command,project:projectPath(project),version,profile,role,sets,variants,clearRoles,mode,maxAgents,parallelism,resetModels,reset,printOnly,interactive}
 }
-function usage(){return `${PRODUCT} npm bootstrap and project controls\n\nUsage:\n  npx ${PACKAGE} install [project] [--version X]   # ensure exact Hi registration (setup or safe owned update)\n  npx ${PACKAGE} setup [project] [--version X]     # strict first installation; interactive in a terminal\n  npx ${PACKAGE} reconfigure [project]               # reopen the project configuration wizard\n  npx ${PACKAGE} update [project] [--version X]\n  npx ${PACKAGE} doctor [project]\n  npx ${PACKAGE} state [project]\n  npx ${PACKAGE} reprofile [project] --profile <minimal|balanced|thorough|adaptive|manual>\n  npx ${PACKAGE} roles [project] [--set ROLE=MODEL[,FALLBACK...]] [--variant ROLE:MODEL=VARIANT]\n  npx ${PACKAGE} rotate [project] --role <child-role>\n  npx ${PACKAGE} check-update [project]\n  npx ${PACKAGE} plan [project] [--version X]\n  npx ${PACKAGE} rollback [project]\n  npx ${PACKAGE} recover [project]\n\nThe friendly path is setup/install (interactive in a terminal) -> restart OpenCode -> doctor/state. Use --non-interactive for automation. install is idempotent and safely updates only a matching Hi-owned older registration. The package runner never creates project-root node_modules. Provider authentication and primary model selection remain OpenCode-owned.\n`}
+function usage(){return `${PRODUCT} npm bootstrap and project controls\n\nUsage:\n  npx ${PACKAGE} install [project] [--version X]   # ensure exact Hi registration (setup or safe owned update)\n  npx ${PACKAGE} setup [project] [--version X]     # strict first installation; interactive in a terminal\n  npx ${PACKAGE} reconfigure [project]               # reopen the project configuration wizard\n  npx ${PACKAGE} update [project] [--version X]\n  npx ${PACKAGE} doctor [project]\n  npx ${PACKAGE} state [project]\n  npx ${PACKAGE} config [project] [--mode adaptive|single|multi] [--max-agents N] [--parallelism N] [--set ROLE=MODEL[,FALLBACK...]] [--clear-role ROLE] [--reset-models|--reset]\n  npx ${PACKAGE} reprofile [project] --profile <minimal|balanced|thorough|adaptive|manual>\n  npx ${PACKAGE} roles [project] [--set ROLE=MODEL[,FALLBACK...]] [--variant ROLE:MODEL=VARIANT]\n  npx ${PACKAGE} rotate [project] --role <child-role>\n  npx ${PACKAGE} check-update [project]\n  npx ${PACKAGE} plan [project] [--version X]\n  npx ${PACKAGE} rollback [project]\n  npx ${PACKAGE} recover [project]\n\nThe friendly path is setup/install (interactive in a terminal) -> restart OpenCode -> config/doctor. Runtime hi_settings is the authoritative live connected-model settings surface. Use --non-interactive for automation. install is idempotent and safely updates only a matching Hi-owned older registration. The package runner never creates project-root node_modules. Provider authentication and primary model selection remain OpenCode-owned.\n`}
 
 async function main(){
   let out
   try{
-    const {command,project,version,profile,role,sets,variants,interactive}=parseArgs(process.argv.slice(2))
+    const {command,project,version,profile,role,sets,variants,clearRoles,mode,maxAgents,parallelism,resetModels,reset,interactive}=parseArgs(process.argv.slice(2))
     if(command==='help'||command==='--help'||command==='-h'){process.stdout.write(usage());return 0}
     const terminalInteractive=interactive??Boolean(process.stdin.isTTY&&process.stderr.isTTY)
     if(command==='install'||command==='setup'){
@@ -377,6 +392,7 @@ async function main(){
     else if(command==='update'||command==='upgrade')out=update(project,version)
     else if(command==='doctor')out=doctor(project)
     else if(command==='state')out=stateView(project)
+    else if(command==='config')out=configControl(project,{mode,maxAgents,parallelism,sets,clearRoles,resetModels,reset})
     else if(command==='reprofile')out=reprofile(project,profile)
     else if(command==='roles')out=roles(project,sets,variants)
     else if(command==='rotate')out=rotateRole(project,role)

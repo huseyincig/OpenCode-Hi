@@ -1,4 +1,5 @@
 import { resolveHiConfigWithReport } from '../config/resolver.js'
+import { hasProjectSettings } from '../config/project-settings.js'
 import { PACKAGED_HI_AGENTS } from '../generated/agent-config.js'
 import { projectHiOpenCodeComposition } from './composition-adapter.js'
 import { createChatMessageHook } from '../hooks/chat-message.js'
@@ -30,7 +31,7 @@ export function createOpenCodeHooks(input:{state:PluginRuntimeState;host:HostPor
     },
     'chat.message':async(input:any,output:any)=>{try{const messageSession=String(input?.sessionID??input?.sessionId??'');if(messageSession&&background.list().some((w:any)=>w.session_id===messageSession)){await host.log('debug','Hi child chat message ignored by parent intent hook',{session_id:messageSession});return}if(!host.getModels().length)void host.refreshRuntimeInventory('chat-message');await createChatMessageHook(store,async(sid,text)=>{const m=store.get(sid);if(!m)return;const workersPaused=await tasks.pauseForSemanticAssessment(m);appendLedger(m,'semantic.execution-quarantined',{payload:{revision:m.identity.semantic_assessment.revision,workers:workersPaused,preview:text.slice(0,180)}})},humanDecisionTransport)(input,output)}finally{for(const m of store.all())syncHumanDecisionTransport(m.authority.human_decision,humanDecisionTransport);persistence.save(store.all())}},
     'experimental.chat.messages.transform':createMessagesTransformHook(store,background),
-    'experimental.chat.system.transform':createSystemTransformHook(store,background,projectRoot,workingDirectory),
+    'experimental.chat.system.transform':createSystemTransformHook(store,background,projectRoot,workingDirectory,()=>({pending:!hasProjectSettings(projectRoot),modelCount:host.getModels().length})),
     'experimental.text.complete':async(input:any,output:any)=>{try{await createTextCompleteHook(store,background,projectRoot)(input,output)}finally{persistence.save(store.all())}},
     'experimental.session.compacting':async(input:any,output:any)=>{try{await experimental.compacting()(input,output)}finally{persistence.save(store.all())}},
     'tool.execute.before':async(input:any,output:any)=>{try{await createToolBeforeHook(store,background,projectRoot,workingDirectory)(input,output)}finally{for(const m of store.all())syncHumanDecisionTransport(m.authority.human_decision,humanDecisionTransport);persistence.save(store.all())}},

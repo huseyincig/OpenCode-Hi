@@ -6,7 +6,7 @@ OUT=ROOT/'data/validation/prompt-b-cli-developer-tooling-ux.json'
 def sha(rel):return hashlib.sha256((ROOT/rel).read_bytes()).hexdigest()
 checks=[
  ('installation','scripts/opencode-hi.mjs','function install(project,version)','tests/test_node_setup.mjs','0.2.4 friendly install ensures an owned registration while setup remains strict first-install'),
- ('first-run','scripts/opencode-hi.mjs',"routing_initialization:'pending-effective-runtime-inventory'",'tests/test_node_setup.mjs','M16 Node doctor distinguishes package registration truth from pending effective runtime routing'),
+ ('first-run','scripts/opencode-hi.mjs',"routing_initialization:'pending-effective-runtime-settings'",'tests/test_node_setup.mjs','M16 Node doctor distinguishes package registration truth from pending effective runtime routing'),
  ('doctor-diagnostics','scripts/opencode-hi.mjs','function doctor(project)', 'tests/test_node_setup.mjs','M16 Node doctor distinguishes package registration truth from pending effective runtime routing'),
  ('help','scripts/opencode-hi.mjs','function usage()', 'tests/test_node_setup.mjs','M16 package-runner help is Node-native'),
  ('command-inventory','scripts/opencode-hi.mjs','npx ${PACKAGE} check-update [project]','tests/test_node_setup.mjs','M16 package-runner help is Node-native'),

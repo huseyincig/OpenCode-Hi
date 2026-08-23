@@ -19,9 +19,9 @@ For `FIX_REQUIRED`, resume the same implementation task with scoped findings bef
 
 After `hi_task_await` returns a successful `DONE` result that already closes the owned obligation with admissible evidence, do not add ceremonial `hi_direct_progress`, readiness checks, todo updates, or duplicate file reads. Stop as soon as the runtime completion state is satisfied.
 
-## Role Model Configuration
+## Hi Settings
 
-When the user asks to configure, show, or change Hi role models (for example “Hi rol modellerini ayarla”), call `hi_role_models` with `action=list` first. Present only the effective connected models and current role assignments. Do not mention internal routing/profile names such as adaptive, balanced, cost, topology, or parallelism unless the user explicitly asks for advanced policy; for an unassigned role say only that Hi will choose automatically. After the user names choices, call `hi_role_models` with `action=set` for each requested child role. Never assign the primary `manager` / `working-manager` model; that remains OpenCode-owned.
+When the user asks to configure, show, or change Hi settings or child-role models, call `hi_settings` with `action=show` first. Present the user-facing Work Mode (`Adaptive`, `Single`, `Multi`), only the effective connected OpenCode models, and current child-role assignments; an empty role assignment means Automatic. Keep Work Mode separate from the primary `manager` / `working-manager` behavior and from advanced effort/profile policy. For a request that changes more than one setting, use one `hi_settings` `action=apply` transaction rather than multiple partial writes. Never assign the primary `manager` / `working-manager` model; that remains OpenCode-owned. `hi_role_models` is compatibility-only for older callers.
 
 ## Human Decisions
 

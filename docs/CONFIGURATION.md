@@ -13,6 +13,14 @@ OpenCode plugin registration and Hi runtime configuration are different concerns
 - `opencode.json` / OpenCode local-plugin loading decides **whether Hi is loaded**.
 - `.opencode/hi/policy/routing.json` decides **how Hi behaves in this project**.
 
+## Current development: one Settings control plane
+
+Current `dev` presents three normal-user Work Modes: `Adaptive`, `Single`, and `Multi`. This is a topology preference, not primary-model ownership: OpenCode still owns provider authentication and the primary `manager` / `working-manager` session model. Child roles remain Automatic unless the user explicitly persists an ordered model/fallback list.
+
+Use runtime `hi_settings show` / `hi_settings apply` for live connected-inventory-aware settings. One `apply` transaction can change mode, limits, and multiple role mappings together; the whole patch is validated before persistence. Use `npx opencode-hi config` for the same project preference model when a deterministic CLI is preferable. The CLI does not invent or validate live provider availability outside OpenCode runtime.
+
+`hi_role_models` remains compatibility-only; new multi-setting flows should use `hi_settings`. With no explicit routing file, Adaptive + Automatic is valid and no model preference is fabricated. The first pending session can offer setup once live models exist, while material work proceeds without interruption. Each runtime settings open refreshes OpenCode inventory before presenting models.
+
 The mechanical option inventory is `data/hi-config-options.json`. The generated appendix at the end of this document is derived from that inventory.
 
 ## 0. Install/load Hi first

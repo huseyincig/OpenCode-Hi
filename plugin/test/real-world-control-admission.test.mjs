@@ -42,17 +42,19 @@ test('visual verification projects canonical visual-qa delegation instead of arb
   assert.doesNotMatch(runtime.next_action,/redundant-verifier-child/)
 })
 
-test('assessed implementation mission blocks ceremonial hi_role_models discovery',async()=>{
+test('assessed implementation mission blocks ceremonial settings discovery',async()=>{
   const {createToolBeforeHook}=await import('../dist/hooks/tool-before.js')
   const {store,m}=visualMission('rw-role-model-economy')
   const before=createToolBeforeHook(store)
-  await assert.rejects(()=>before({sessionID:m.identity.session_id,tool:'hi_role_models'},{args:{action:'list'}}),/user configuration surface, not a runtime discovery step/)
+  await assert.rejects(()=>before({sessionID:m.identity.session_id,tool:'hi_settings'},{args:{action:'show'}}),/user configuration surfaces, not runtime discovery steps/)
+  await assert.rejects(()=>before({sessionID:m.identity.session_id,tool:'hi_role_models'},{args:{action:'list'}}),/user configuration surfaces, not runtime discovery steps/)
 })
 
-test('semantic gate still admits hi_role_models for explicit pre-assessment configuration flow',async()=>{
+test('semantic gate admits unified settings and compatibility role-model surfaces for explicit pre-assessment configuration flow',async()=>{
   const {createToolBeforeHook}=await import('../dist/hooks/tool-before.js')
   const store=new MissionStore(process.cwd()),m=store.start('rw-role-config','Configure my Hi child-role models')
   const before=createToolBeforeHook(store)
+  await assert.doesNotReject(()=>before({sessionID:m.identity.session_id,tool:'hi_settings'},{args:{action:'show'}}))
   await assert.doesNotReject(()=>before({sessionID:m.identity.session_id,tool:'hi_role_models'},{args:{action:'list'}}))
 })
 

@@ -83,6 +83,12 @@ The npm package runner owns installation lifecycle only. Its canonical commands 
 
 Published `0.2.4` gives `install` ensure semantics while keeping `setup` strict; `upgrade` remains an `update` alias.
 
+### Current `dev` settings flow
+
+After the published `0.2.4` baseline, current development adds unified settings while preserving OpenCode ownership boundaries. Use runtime `hi_settings` when live connected-model validation matters; use `npx opencode-hi config` for deterministic project preference inspection/change. Work Mode is `Adaptive`, `Single`, or `Multi`; it is separate from the primary Manager/Working Manager behavior and from advanced effort/profile policy. A runtime multi-field update is validated completely before `.opencode/hi/policy/routing.json` is replaced, so an unavailable model or non-vision `visual-qa` selection cannot leave a partially changed mode/role configuration. Successful runtime changes apply to new worker dispatches without restart. When no explicit settings file exists, the first pending chat session receives one bounded setup hint if live models are already available; a material task is never blocked by that hint and uses Adaptive + Automatic defaults. Opening `hi_settings` performs an explicit inventory refresh, so newly connected providers can appear without relying on a host event that OpenCode 1.18.21 does not expose.
+
+The published `0.2.4` exact-host evidence below remains immutable and therefore still observes 34 tools; current `dev` additionally exposes `hi_settings`.
+
 The loaded plugin is a different surface. Exact OpenCode 1.18.21 acceptance observes 34 runtime tools:
 
 - diagnostics/state: `hi_doctor`, `hi_status`, `hi_readiness`, `hi_metrics`, `hi_ledger`;

@@ -385,7 +385,7 @@
       "area": "install-lifecycle",
       "canonical_owner": "opencode-hi Node package runner",
       "owner_path": "scripts/opencode-hi.mjs",
-      "owner_sha256": "19fc56566736d821c727b741bd60c35634a1503bd5d68d6c56d262dec92688b7",
+      "owner_sha256": "15ad2d2e94c5d27d89ea415ee724868707d27c4827992ce5b18916bfaa9817cf",
       "producer_or_contract_paths": [
         "scripts/native_plugin_setup.py"
       ],

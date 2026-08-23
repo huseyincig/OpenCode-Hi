@@ -129,6 +129,10 @@ Package lifecycle ile yüklü OpenCode runtime yüzeyi ayrıdır. Published `0.2
 - `rollback`: hash'ler hâlâ eşleşiyorsa tek kayıtlı rollback noktasını geri alır.
 - `recover`: yalnız kayıtlı yarım setup/update transaction'ını uzlaştırır.
 
+### Güncel `dev` Settings control plane
+
+Yayınlanmış `0.2.4` kanıtı immutable olarak 34 tool'da kalır. Güncel `dev` buna `hi_settings` yüzeyini ekler: Work Mode `Adaptive`, `Single`, `Multi`; child roller varsayılan Automatic; canlı model seçenekleri yalnız OpenCode'un effective connected inventory'sinden gelir. Çok alanlı değişiklikler tek transaction olarak doğrulanır ve ya tamamen yazılır ya hiç yazılmaz. Runtime ayar değişikliği yeni worker dispatch'lerinde restart olmadan uygulanır. Provider auth ve primary `manager` / `working-manager` model seçimi OpenCode-owned kalır. CLI karşılığı `npx opencode-hi config` komutudur; `hi_role_models` geriye dönük uyumluluk için korunur. Explicit settings dosyası yoksa Adaptive + Automatic geçerli defaulttur; canlı model varsa ilk pending sohbet oturumunda bounded onboarding bir kez sunulur, gerçek iş kesilmez. `hi_settings` açılırken inventory yeniden refresh edildiği için sonradan bağlanan provider restart olmadan görünür.
+
 Plugin yüklendikten sonra **34 adet `hi_*` runtime tool** vardır. Kullanıcıya en yakın durum/diagnostic araçları `hi_doctor`, `hi_status`, `hi_readiness`, `hi_metrics` ve `hi_ledger`'dır; diğerleri task/worker, process, browser, context artifact, temporary mutation ve semantic control için bounded primitive'lerdir.
 
 Güncel published `0.2.4` sürümünde kurulum ownership/drift durumu package `doctor` ile; canlı Mission durumu runtime `hi_status`, `hi_readiness` ve `hi_ledger` ile görülür. `0.2.4` normal setup/reconfigure akışını yalnız primary mode sorusuna indirir; rol-model eşlemesi OpenCode sohbetinde `hi_role_models` üzerinden yapılır. `state`, `reprofile`, `roles`, `rotate`, `check-update` deterministik CLI fallback olarak kalır.

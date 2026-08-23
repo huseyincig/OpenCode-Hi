@@ -83,6 +83,7 @@ test('same-session corrective resume preserves the original execution tool surfa
 test('parent can open chat role-model configuration before semantic mission assessment while other execution tools stay gated',async()=>{
   const store=new MissionStore(process.cwd());store.start('parent-config','Hi rol modellerini ayarla')
   const hook=createToolBeforeHook(store)
+  await hook({sessionID:'parent-config',tool:'hi_settings'},{args:{action:'show'}})
   await hook({sessionID:'parent-config',tool:'hi_role_models'},{args:{action:'list'}})
   await assert.rejects(()=>hook({sessionID:'parent-config',tool:'hi_task_start'},{args:{objective:'x'}}),/semantic gate/)
 })

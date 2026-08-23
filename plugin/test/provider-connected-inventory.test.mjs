@@ -110,6 +110,33 @@ test('chat-facing hi_role_models lists only effective connected models and persi
 })
 
 
+test('hi_settings applies one validated settings transaction and hot-reloads work mode plus role mappings',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-settings-runtime-'))
+  const raw={connected:['p'],all:[{id:'p',models:[{id:'code'},{id:'fallback'},{id:'vision',capabilities:{input:{image:true}}},{id:'text',capabilities:{input:{image:false}}}]}]}
+  const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:clientWithProviderShape(raw)})
+  await hooks.config({});await hooks.event({event:{type:'server.connected',properties:{}}})
+  const shown=JSON.parse(String(await hooks.tool.hi_settings.execute({action:'show'},{})));assert.equal(shown.status,'OK');assert.equal(shown.work_mode,'adaptive');assert.equal(shown.onboarding.pending,true);assert.equal(shown.onboarding.default_models,'automatic');assert.deepEqual(shown.models.available.map(x=>x.id),['p/code','p/fallback','p/vision','p/text'])
+  const blocked=JSON.parse(String(await hooks.tool.hi_settings.execute({action:'apply',settings_json:JSON.stringify({work_mode:'multi',max_agents:3,parallelism:2,roles:{coder:['p/code','p/fallback'],'visual-qa':['p/text']}})},{})))
+  assert.equal(blocked.status,'BLOCKED');assert.match(blocked.reason,/vision/);assert.equal(existsSync(join(root,'.opencode','hi','policy','routing.json')),false,'failed settings transaction must not persist a partial work-mode or coder change')
+  const applied=JSON.parse(String(await hooks.tool.hi_settings.execute({action:'apply',settings_json:JSON.stringify({work_mode:'multi',max_agents:3,parallelism:2,roles:{coder:['p/code','p/fallback'],'visual-qa':['p/vision']}})},{})))
+  assert.equal(applied.status,'APPLIED');assert.equal(applied.work_mode,'multi');assert.equal(applied.execution.maxAgents,3);assert.deepEqual(applied.role_models.coder,['p/code','p/fallback']);assert.deepEqual(applied.role_models['visual-qa'],['p/vision']);assert.equal(applied.restart_required,false)
+  const after=JSON.parse(String(await hooks.tool.hi_settings.execute({action:'show'},{})));assert.equal(after.work_mode,'multi');assert.equal(after.onboarding.pending,false);assert.deepEqual(after.models.roles.coder,['p/code','p/fallback'])
+  const reset=JSON.parse(String(await hooks.tool.hi_settings.execute({action:'reset'},{})));assert.equal(reset.status,'APPLIED');assert.equal(reset.work_mode,'adaptive');assert.deepEqual(reset.role_models,{})
+  await hooks.dispose?.();rmSync(root,{recursive:true,force:true})
+})
+
+test('hi_settings refreshes live inventory on open so newly connected providers appear without restarting Hi',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-settings-refresh-'))
+  let raw={connected:['p'],all:[{id:'p',models:[{id:'one'}]}]}
+  const client=clientWithProviderShape(raw);client.provider.list=async()=>({data:raw})
+  const hooks=await HiPlugin({directory:root,worktree:root,project:{},client})
+  await hooks.config({});await hooks.event({event:{type:'server.connected',properties:{}}})
+  let shown=JSON.parse(String(await hooks.tool.hi_settings.execute({action:'show'},{})));assert.deepEqual(shown.models.available.map(x=>x.id),['p/one'])
+  raw={connected:['p','q'],all:[{id:'p',models:[{id:'one'}]},{id:'q',models:[{id:'new'}]}]}
+  shown=JSON.parse(String(await hooks.tool.hi_settings.execute({action:'show'},{})));assert.deepEqual(shown.models.available.map(x=>x.id),['p/one','q/new'])
+  await hooks.dispose?.();rmSync(root,{recursive:true,force:true})
+})
+
 test('runtime inventory prefers OpenCode directory-scoped available models over connected provider catalog models',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-provider-v2-available-'))
   const raw={connected:['p'],all:[{id:'p',models:[{id:'active'},{id:'disabled'}]}]}

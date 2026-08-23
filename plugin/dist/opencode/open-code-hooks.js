@@ -1,4 +1,5 @@
 import { resolveHiConfigWithReport } from '../config/resolver.js';
+import { hasProjectSettings } from '../config/project-settings.js';
 import { PACKAGED_HI_AGENTS } from '../generated/agent-config.js';
 import { projectHiOpenCodeComposition } from './composition-adapter.js';
 import { createChatMessageHook } from '../hooks/chat-message.js';
@@ -49,7 +50,7 @@ export function createOpenCodeHooks(input) {
             persistence.save(store.all());
         } },
         'experimental.chat.messages.transform': createMessagesTransformHook(store, background),
-        'experimental.chat.system.transform': createSystemTransformHook(store, background, projectRoot, workingDirectory),
+        'experimental.chat.system.transform': createSystemTransformHook(store, background, projectRoot, workingDirectory, () => ({ pending: !hasProjectSettings(projectRoot), modelCount: host.getModels().length })),
         'experimental.text.complete': async (input, output) => { try {
             await createTextCompleteHook(store, background, projectRoot)(input, output);
         }

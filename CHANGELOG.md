@@ -4,6 +4,9 @@ All notable changes to OpenCode-Hi are documented here.
 
 ## Unreleased
 
+- Adds a unified project settings control plane. Runtime `hi_settings` shows only OpenCode-owned effective connected models and can atomically change Work Mode (`Adaptive`, `Single`, `Multi`), child-role model/fallback preferences, and execution limits. A rejected multi-field request performs no partial write; `visual-qa` remains vision-gated; successful project settings reload immediately for new worker dispatches without changing OpenCode-owned primary Manager/Working Manager model selection. Legacy `hi_role_models` remains a compatibility surface. When explicit project settings do not yet exist and live models are available, the first pending chat session receives one bounded onboarding projection; material work is not interrupted and continues with Adaptive + Automatic defaults. Opening the settings surface explicitly refreshes OpenCode runtime inventory so newly connected providers appear without relying on unsupported host events.
+- Adds `npx opencode-hi config` as the simple project settings CLI for Work Mode, execution limits, role mappings, reset-to-Automatic, and read-only settings inspection. Offline CLI model IDs remain explicit preferences only; live availability validation belongs to runtime `hi_settings` and OpenCode inventory truth.
+
 ## 0.2.4
 
 - Simplifies normal setup/reconfigure UX: the terminal wizard now asks only which primary behavior to use (`Auto`, `Working Manager`, or `Manager`). Topology, execution profile, parallelism, and specialist thresholds remain internal Hi runtime policy rather than normal-user setup questions; legacy cost/quality routing strategy fields remain compatibility diagnostics rather than model-selection authority.
