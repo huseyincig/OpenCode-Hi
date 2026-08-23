@@ -210,7 +210,7 @@ Bunun dışındaki role key'lerini model map'e koymayın.
 
 ### Legacy model-mode alanları
 
-`models.mode`, `models.default`, `models.roles`, `routing.strategy` ve `routing.categoryModels` `0.2.4` içinde eski proje dosyaları okunabilsin diye parse edilir; fakat **yalnız compatibility diagnostic** alanlarıdır ve model seçimini yönetmez.
+Eski dosyalarda `models.mode`, `models.default`, `models.roles`, `routing.strategy` veya `routing.categoryModels` bulunabilir. Güncel `dev` bu isimleri compatibility sınırında tanıyıp **diagnostic-only legacy input** olarak raporlar; canonical resolved `HiConfig` içine taşımaz ve model seçimini yönetmelerine izin vermez.
 
 Kalıcı Hi child tercihi için `routing.roleModels` / `routing.roleVariants`; host-owned agent modeli için OpenCode agent ayarı; executable daraltma için `routing.allowedProviders` / `routing.deniedModels` kullanın.
 
@@ -420,7 +420,7 @@ Variant ancak model runtime inventory'sinde gerçekten mevcutsa seçilir.
 
 ## 16. Legacy routing strategy compatibility
 
-`routing.strategy` `0.2.4` içinde eski proje dosyaları okunabilsin diye parse edilir ancak **diagnostic-only**'dir; model seçimini kontrol etmez. Normal otomatik seçim live inventory üzerinde capability/variant odaklı ve ephemeral'dır. Explicit task model, sıralı Hi role mapping ve explicit OpenCode agent modeli daha yüksek ownership'e sahiptir.
+Eski proje dosyasındaki `routing.strategy` güncel `dev` tarafından compatibility input olarak tanınır ve diagnostic raporlanır; canonical `HiConfig` içine alınmaz. Normal otomatik seçim live inventory üzerinde capability/variant odaklı ve ephemeral'dır. Explicit task model, sıralı Hi role mapping ve explicit OpenCode agent modeli daha yüksek ownership'e sahiptir.
 
 Cost/quality ölçümleri evaluation/telemetry için tutulabilir fakat kullanıcı tercihlerini veya otomatik öneriyi sessizce yeniden sıralayamaz.
 
@@ -625,7 +625,7 @@ built-in default
 
 - `routing.allowedProviders`: narrowing/intersection.
 - `routing.deniedModels`: union.
-- child `models.roles`, `roleModels`, `roleVariants`, category maps ve concurrency maps: matching project key host key'i override eder; unrelated host key korunur.
+- child `roleModels`, `roleVariants`, `categoryVariants` ve concurrency maps: matching project key host key'i override eder; unrelated host key korunur.
 - primary/unknown role-model key'leri child map'e alınmaz.
 - invalid/unknown alanlar yeni destek yüzeyi oluşturmaz.
 
@@ -635,7 +635,7 @@ built-in default
 
 ```powershell
 $Project = "C:\Projects\MyApp"
-.\node_modules\.bin\opencode-hi-setup.cmd reconfigure $Project --execution-policy adaptive --primary-mode auto --routing-strategy cost-quality --parallel enabled --parallel-max 3
+.\node_modules\.bin\opencode-hi-setup.cmd reconfigure $Project --execution-policy adaptive --primary-mode auto --parallel enabled --parallel-max 3
 ```
 
 ### Linux / macOS
@@ -645,7 +645,6 @@ PROJECT=/path/to/MyApp
 ./node_modules/.bin/opencode-hi-setup reconfigure "$PROJECT" \
   --execution-policy adaptive \
   --primary-mode auto \
-  --routing-strategy cost-quality \
   --parallel enabled \
   --parallel-max 3
 ```
@@ -655,7 +654,6 @@ PROJECT=/path/to/MyApp
 ```text
 --execution-policy minimal|balanced|thorough|adaptive|manual
 --primary-mode auto|working-manager|manager
---routing-strategy cost-quality|quality|cost
 --allow-provider PROVIDER
 --deny-model PROVIDER/MODEL
 --max-fallbacks 0..6
@@ -828,11 +826,6 @@ Aşağıdaki tablo `data/hi-config-options.json` kaynağından generated edilir.
 | `execution.topology` | runtime | `adaptive` | constraint |
 | `execution.maxAgents` | runtime | `4` | capacity |
 | `execution.parallelism` | runtime | `2` | capacity |
-| `models.mode` | diagnostic | `adaptive` | preference |
-| `models.default` | diagnostic | `auto` | preference |
-| `models.roles` | diagnostic | `{}` | preference |
-| `routing.strategy` | diagnostic | `cost-quality` | preference |
-| `routing.categoryModels` | diagnostic | `{}` | preference |
 | `routing.categoryVariants` | runtime | `{}` | preference |
 | `routing.roleModels` | runtime | `{}` | preference |
 | `routing.roleVariants` | runtime | `{}` | preference |

@@ -18,8 +18,6 @@ export function loadProjectRoutingConfig(projectRoot) {
         return undefined;
     const r = raw?.routing && typeof raw.routing === 'object' ? raw.routing : {};
     const routing = {};
-    if (r.strategy === 'cost-quality' || r.strategy === 'quality' || r.strategy === 'cost')
-        routing.strategy = r.strategy;
     if (r.roleModels && typeof r.roleModels === 'object') {
         const roleModels = {};
         for (const [k, v] of Object.entries(r.roleModels))
@@ -46,7 +44,7 @@ export function loadProjectRoutingConfig(projectRoot) {
         if (Object.keys(roleVariants).length)
             routing.roleVariants = roleVariants;
     }
-    for (const key of ['categoryModels', 'categoryVariants']) {
+    for (const key of ['categoryVariants']) {
         const source = r[key];
         if (source && typeof source === 'object' && !Array.isArray(source)) {
             const mapped = {};
@@ -89,20 +87,6 @@ export function loadProjectRoutingConfig(projectRoot) {
         if (Object.keys(e).length)
             out.execution = e;
     }
-    if (raw.models && typeof raw.models === 'object' && !Array.isArray(raw.models)) {
-        const m = {};
-        if (['adaptive', 'fixed', 'role-mapped'].includes(String(raw.models.mode)))
-            m.mode = raw.models.mode;
-        if (typeof raw.models.default === 'string' && raw.models.default.trim())
-            m.default = raw.models.default.trim();
-        if (raw.models.roles && typeof raw.models.roles === 'object' && !Array.isArray(raw.models.roles)) {
-            const roles = Object.fromEntries(Object.entries(raw.models.roles).filter(([k, v]) => isModelRoutedChildRole(k) && typeof v === 'string' && v.trim()).map(([k, v]) => [k, String(v).trim()]));
-            if (Object.keys(roles).length)
-                m.roles = roles;
-        }
-        if (Object.keys(m).length)
-            out.models = m;
-    }
     if (raw.parallel && typeof raw.parallel === 'object' && !Array.isArray(raw.parallel)) {
         const x = {};
         if (typeof raw.parallel.enabled === 'boolean')
@@ -139,5 +123,13 @@ export function loadProjectRoutingConfig(projectRoot) {
         if (Object.keys(profiles).length)
             out.profile = profiles;
     }
-    return out;
+    const legacyModelRoutingFields = [];
+    const rawModels = raw.models && typeof raw.models === 'object' && !Array.isArray(raw.models) ? raw.models : {};
+    for (const key of ['mode', 'default', 'roles'])
+        if (key in rawModels)
+            legacyModelRoutingFields.push(`models.${key}`);
+    for (const key of ['strategy', 'categoryModels'])
+        if (key in r)
+            legacyModelRoutingFields.push(`routing.${key}`);
+    return { config: out, legacyModelRoutingFields };
 }

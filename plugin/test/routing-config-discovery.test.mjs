@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { resolveHiConfig } from '../dist/config/resolver.js'
+import { resolveHiConfig,resolveHiConfigWithReport } from '../dist/config/resolver.js'
 
 function makeProject() {
   return mkdtempSync(join(tmpdir(), 'hi-routing-'))
@@ -41,7 +41,7 @@ test('project routing config: roleModels merged into resolved config', () => {
     assert.deepEqual(cfg.routing.roleModels['coder'], ['opencode-go/minimax-m3'])
     assert.deepEqual(cfg.routing.roleModels['security-reviewer'], ['opencode-go/minimax-m3-high'])
     assert.equal(cfg.routing.roleModels['qa-reviewer'], undefined)
-    assert.equal(cfg.routing.strategy, 'quality')
+    assert.equal('strategy' in cfg.routing,false)
   } finally { rmSync(project, { recursive: true, force: true }) }
 })
 
@@ -142,12 +142,14 @@ test('native_plugin_setup.py role-models --defaults produces valid schema 1 file
 })
 
 
-test('project routing strategy is authoritative over raw/native input', () => {
+test('legacy routing strategy remains diagnostic-only at both host and project input boundaries', () => {
   const project = makeProject()
   try {
     writeRouting(project, { schema: 1, type: 'hi-routing', routing: { strategy: 'quality' } })
-    const cfg = resolveHiConfig({ routing: { strategy: 'cost' } }, project)
-    assert.equal(cfg.routing.strategy, 'quality')
+    const resolved = resolveHiConfigWithReport({ routing: { strategy: 'cost' } }, project)
+    assert.equal('strategy' in resolved.config.routing,false)
+    assert.ok(resolved.report.notes.some(note=>note.includes('host:routing.strategy')))
+    assert.ok(resolved.report.notes.some(note=>note.includes('project:routing.strategy')))
   } finally { rmSync(project, { recursive: true, force: true }) }
 })
 
@@ -191,9 +193,9 @@ test('PROMPT B §23 project precedence is leaf-scoped and absent project sibling
     assert.deepEqual(cfg.parallel,{enabled:true,max:1,providers:{p:1},models:{'p/m':1}})
     assert.deepEqual(cfg.execution,{topology:'multi-agent',maxAgents:2,parallelism:1})
     assert.equal('teamMode' in cfg,false)
-    assert.deepEqual(cfg.models,{mode:'role-mapped',default:'host/default',roles:{'qa-reviewer':'host/reviewer'}})
+    assert.equal('models' in cfg,false)
     assert.deepEqual(cfg.profile.balanced,{specialistThreshold:'high',reviewThreshold:'high'})
-    assert.equal(cfg.routing.strategy,'quality')
+    assert.equal('strategy' in cfg.routing,false)
     assert.equal(cfg.routing.maxFallbacks,1)
     assert.deepEqual(cfg.routing.roleModels,{'qa-reviewer':['host/reviewer'],coder:['project/coder']})
   } finally { rmSync(project,{recursive:true,force:true}) }
@@ -223,7 +225,7 @@ test('PROMPT B §23 invalid or unknown project leaves cannot replace valid host 
     assert.equal('teamMode' in cfg,false)
     assert.deepEqual(cfg.profile.balanced,{specialistThreshold:'low',reviewThreshold:'high'})
     assert.equal('surprise' in cfg.profile.balanced,false)
-    assert.equal(cfg.routing.strategy,'cost')
+    assert.equal('strategy' in cfg.routing,false)
   } finally { rmSync(project,{recursive:true,force:true}) }
 })
 

@@ -480,7 +480,7 @@ def _kv_limits(items:list[str]|None)->dict[str,int]:
         out[key]=value
     return out
 
-def reconfigure(project:Path,*,print_only:bool=False,execution_policy:str|None=None,primary_mode:str|None=None,routing_strategy:str|None=None,allow_providers:list[str]|None=None,deny_models:list[str]|None=None,max_fallbacks:int|None=None,parallel_state:str|None=None,parallel_max:int|None=None,provider_limits:list[str]|None=None,model_limits:list[str]|None=None,profile_target:str='balanced',specialist_threshold:str|None=None,review_threshold:str|None=None,team_state:str|None=None,team_max_members:int|None=None,team_wall_minutes:int|None=None)->dict:
+def reconfigure(project:Path,*,print_only:bool=False,execution_policy:str|None=None,primary_mode:str|None=None,allow_providers:list[str]|None=None,deny_models:list[str]|None=None,max_fallbacks:int|None=None,parallel_state:str|None=None,parallel_max:int|None=None,provider_limits:list[str]|None=None,model_limits:list[str]|None=None,profile_target:str='balanced',specialist_threshold:str|None=None,review_threshold:str|None=None,team_state:str|None=None,team_max_members:int|None=None,team_wall_minutes:int|None=None)->dict:
     """Ownership-safe project reconfiguration for main-prompt runtime knobs.
 
     OpenCode 1.18.x canonical config strips unknown top-level `hi` fields before
@@ -524,7 +524,6 @@ def reconfigure(project:Path,*,print_only:bool=False,execution_policy:str|None=N
     if team:merged['teamMode']=team
     rr=dict(merged.get('routing',{})) if isinstance(merged.get('routing'),dict) else {}
     if max_fallbacks is not None:rr['maxFallbacks']=max(0,min(6,int(max_fallbacks)));changed.append('routing.maxFallbacks')
-    if routing_strategy is not None:rr['strategy']=routing_strategy;changed.append('routing.strategy')
     if allow_providers is not None:rr['allowedProviders']=[x for x in allow_providers if x];changed.append('routing.allowedProviders')
     if deny_models is not None:rr['deniedModels']=[x for x in deny_models if x];changed.append('routing.deniedModels')
     if rr:merged['routing']=rr
@@ -552,7 +551,6 @@ def main()->int:
     ap.add_argument('--policy',choices=['recommended','adaptive','manual'],help='For role-models: persisted project model policy')
     ap.add_argument('--execution-policy',choices=['minimal','balanced','thorough','adaptive','manual'])
     ap.add_argument('--primary-mode',choices=['auto','working-manager','manager'])
-    ap.add_argument('--routing-strategy',choices=['cost-quality','quality','cost'])
     ap.add_argument('--allow-provider',dest='allow_providers',action='append')
     ap.add_argument('--deny-model',dest='deny_models',action='append')
     ap.add_argument('--max-fallbacks',type=_bounded_cli_int('max-fallbacks',0,6))
@@ -576,7 +574,7 @@ def main()->int:
       'rollback':lambda:rollback(project),
       'recover':lambda:recover(project),
       'role-models':lambda:role_models(project,list_available=a.list_available,defaults=a.defaults,print_only=a.print,sets=a.sets,variants=a.variants,policy=a.policy),
-      'reconfigure':lambda:reconfigure(project,print_only=a.print,execution_policy=a.execution_policy,primary_mode=a.primary_mode,routing_strategy=a.routing_strategy,allow_providers=a.allow_providers,deny_models=a.deny_models,max_fallbacks=a.max_fallbacks,parallel_state=a.parallel_state,parallel_max=a.parallel_max,provider_limits=a.provider_limit,model_limits=a.model_limit,profile_target=a.profile_target,specialist_threshold=a.specialist_threshold,review_threshold=a.review_threshold,team_state=a.team_state,team_max_members=a.team_max_members,team_wall_minutes=a.team_wall_minutes),
+      'reconfigure':lambda:reconfigure(project,print_only=a.print,execution_policy=a.execution_policy,primary_mode=a.primary_mode,allow_providers=a.allow_providers,deny_models=a.deny_models,max_fallbacks=a.max_fallbacks,parallel_state=a.parallel_state,parallel_max=a.parallel_max,provider_limits=a.provider_limit,model_limits=a.model_limit,profile_target=a.profile_target,specialist_threshold=a.specialist_threshold,review_threshold=a.review_threshold,team_state=a.team_state,team_max_members=a.team_max_members,team_wall_minutes=a.team_wall_minutes),
     }
     try:out=cmds[a.command]()
     except SetupInputError as e:

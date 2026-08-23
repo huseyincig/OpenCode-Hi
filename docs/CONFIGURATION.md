@@ -241,7 +241,7 @@ Primary role selection uses `primaryMode`. Model maps are narrower: current Hi r
 
 Current project model routing is applied by `TaskRuntime` when Hi dispatches **child workers**. The active child role IDs are `coder`, `architect`, `repository-explorer`, `qa-reviewer`, `security-reviewer`, and `visual-qa`.
 
-`manager` and `working-manager` are primary OpenCode agents. Their current session model is selected/owned by the OpenCode host/session-agent layer, not by Hi's child `resolveModel()` path. They are therefore **not valid Hi role-model targets**: project `models.roles`, `routing.roleModels`, and `routing.roleVariants` admit child roles only. The setup CLI rejects primary-role model assignments explicitly.
+`manager` and `working-manager` are primary OpenCode agents. Their current session model is selected/owned by the OpenCode host/session-agent layer, not by Hi's child `resolveModel()` path. They are therefore **not valid Hi role-model targets**: `routing.roleModels` and `routing.roleVariants` admit child roles only. The setup CLI rejects primary-role model assignments explicitly.
 
 OpenCode's supported project/global default-model control is the root `model` field in `opencode.json`/`opencode.jsonc`:
 
@@ -283,7 +283,7 @@ A model being present in the inventory is not proof that credentials are valid o
 
 ### 7.1 Legacy model-mode fields: compatibility diagnostics only
 
-`models.mode`, `models.default`, `models.roles`, `routing.strategy`, and `routing.categoryModels` remain parseable in `0.2.4` so older project files do not become unreadable. They are **diagnostic compatibility fields**, not model-routing authorities. When explicitly supplied, config resolution reports that boundary; changing them does not change the selected child model.
+Older inputs may still contain `models.mode`, `models.default`, `models.roles`, `routing.strategy`, or `routing.categoryModels`. Current `dev` recognizes those names at the compatibility boundary and reports them as **diagnostic-only legacy input**, but omits them from canonical resolved `HiConfig`; they never control model selection. The immutable published `0.2.4` behavior remains historical evidence, not a reason to keep inert leaves in the current option catalog.
 
 Use `routing.roleModels` / `routing.roleVariants` for explicit Hi child preferences, OpenCode agent configuration for a host-owned agent model, and `routing.allowedProviders` / `routing.deniedModels` for executable narrowing.
 
@@ -310,7 +310,7 @@ Example:
 }
 ```
 
-Use `routing.roleModels` when you want an explicit ordered child-role model/fallback list. There is no separate active `models.roles` routing path in `0.2.4`.
+Use `routing.roleModels` when you want an explicit ordered child-role model/fallback list. There is no separate active legacy role-model routing path in current `dev`.
 
 ## 8. Recipe: prefer one model for all Hi-dispatched child roles
 
@@ -341,7 +341,7 @@ If you want no fallback entries to be returned after a selected primary, also se
 "routing": { "maxFallbacks": 0 }
 ```
 
-That still does **not** turn `models.default` into a hard allowlist. Current `dev` uses `routing.allowedModels` for an explicit strict child-model allowlist, alongside provider allowlisting and exact model denylisting. The allowlist is a Hi constraint over OpenCode runtime inventory; its array order is not Adaptive routing priority; it does not create a second model catalog and does not control the OpenCode-owned primary session model.
+Current `dev` uses `routing.allowedModels` for an explicit strict child-model allowlist, alongside provider allowlisting and exact model denylisting. The allowlist is a Hi constraint over OpenCode runtime inventory; its array order is not Adaptive routing priority; it does not create a second model catalog and does not control the OpenCode-owned primary session model.
 
 ### Use the same model for the primary session and every Hi child
 
@@ -526,9 +526,7 @@ Variant names are provider/model-specific. Unsupported names are skipped rather 
 
 ## 15. Legacy routing strategy compatibility
 
-`routing.strategy` is still parsed in `0.2.4` so older project files remain readable, but it is **diagnostic-only** and does not control model selection. Normal automatic selection is capability/variant based and ephemeral; explicit task/role/host model ownership has precedence.
-
-If an older file contains `cost-quality`, `quality`, or `cost`, Hi reports the legacy field through config diagnostics rather than turning it into hidden routing authority. Cost/quality measurements may still be retained as telemetry for evaluation, but they cannot silently reorder explicit user preferences or the normal automatic recommendation.
+An older project file may still contain `routing.strategy`. Current `dev` preserves file readability, reports that key as a legacy compatibility input, and omits it from canonical `HiConfig`. Normal automatic selection is capability/variant based and ephemeral; explicit task/role/host model ownership has precedence. Cost/quality measurements may remain telemetry for evaluation, but they cannot silently reorder user preferences or automatic recommendation.
 
 ## 16. Provider and model restrictions
 
@@ -770,7 +768,7 @@ Important exceptions/composition rules:
 
 - `routing.allowedProviders`: project narrows host policy; if both are non-empty, effective value is their intersection.
 - `routing.deniedModels`: host and project values are unioned.
-- `routing.roleModels`, `roleVariants`, `categoryModels`, `categoryVariants`, `models.roles`, `parallel.providers`, and `parallel.models`: project keys override matching host keys while unrelated host keys remain.
+- `routing.roleModels`, `roleVariants`, `categoryVariants`, `parallel.providers`, and `parallel.models`: project keys override matching host keys while unrelated host keys remain.
 - invalid enum/string/number values do not become new behavior; recognized canonical fields fall back/are bounded according to the resolver.
 - unknown project fields do not become supported configuration merely because JSON accepts them.
 
@@ -796,7 +794,7 @@ If installed from npm into the project:
 
 ```powershell
 $Project = "C:\Projects\MyApp"
-.\node_modules\.bin\opencode-hi-setup.cmd reconfigure $Project --execution-policy adaptive --primary-mode auto --routing-strategy cost-quality --parallel enabled --parallel-max 3
+.\node_modules\.bin\opencode-hi-setup.cmd reconfigure $Project --execution-policy adaptive --primary-mode auto --parallel enabled --parallel-max 3
 ```
 
 ### Linux / macOS
@@ -806,7 +804,6 @@ PROJECT=/path/to/MyApp
 ./node_modules/.bin/opencode-hi-setup reconfigure "$PROJECT" \
   --execution-policy adaptive \
   --primary-mode auto \
-  --routing-strategy cost-quality \
   --parallel enabled \
   --parallel-max 3
 ```
@@ -816,7 +813,6 @@ Useful `reconfigure` flags:
 ```text
 --execution-policy minimal|balanced|thorough|adaptive|manual
 --primary-mode auto|working-manager|manager
---routing-strategy cost-quality|quality|cost
 --allow-provider PROVIDER          (repeatable)
 --deny-model PROVIDER/MODEL        (repeatable)
 --max-fallbacks 0..6
@@ -883,8 +879,8 @@ The role-model CLI accepts only `coder`, `architect`, `repository-explorer`, `qa
 Use manual JSON when you need the full project routing surface, including:
 
 - `execution.topology`, `execution.maxAgents`, `execution.parallelism`;
-- `models.mode`, `models.default`, `models.roles`;
-- category models/variants;
+- `routing.roleModels`, `routing.roleVariants`, `routing.categoryVariants`;
+- provider/model narrowing and concurrency maps;
 - complete profile definitions.
 
 Use `reconfigure` for common runtime knobs and concurrency/provider limits. Use `role-models` for role candidate lists and role variants.
@@ -965,11 +961,6 @@ Generated from `data/hi-config-options.json`. Do not hand-edit this table.
 | `execution.topology` | runtime | `adaptive` | constraint | forces/adapts single-agent versus multi-agent mission topology |
 | `execution.maxAgents` | runtime | `4` | capacity | caps topology agent count; value 1 is an executable single-agent ceiling |
 | `execution.parallelism` | runtime | `2` | capacity | caps parallel streams inside selected mission topology |
-| `models.mode` | diagnostic | `adaptive` | preference | parses the legacy model-selection mode for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority |
-| `models.default` | diagnostic | `auto` | preference | parses the legacy fixed-model value for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority |
-| `models.roles` | diagnostic | `{}` | preference | parses the legacy role-model map for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority |
-| `routing.strategy` | diagnostic | `cost-quality` | preference | parses the legacy cost/quality strategy for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority |
-| `routing.categoryModels` | diagnostic | `{}` | preference | parses legacy category model lists for compatibility, reports them in config resolution diagnostics, and gives them no model-routing authority |
 | `routing.categoryVariants` | runtime | `{}` | preference | changes selected native model variant by task category |
 | `routing.roleModels` | runtime | `{}` | preference | selects configured child-role candidates in explicit order after hard eligibility filters and before host-agent/automatic selection; primary manager roles are excluded |
 | `routing.roleVariants` | runtime | `{}` | preference | changes selected native variant for a specific child-role/model pair; primary manager roles are excluded |

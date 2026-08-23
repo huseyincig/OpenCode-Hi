@@ -16,7 +16,7 @@ test('canonical ConfigOption catalog validates, covers every default leaf and ow
   const options=validateConfigOptionCatalog(sourceOptions())
   assert.deepEqual(options,structuredClone(HI_CONFIG_OPTIONS))
   assert.equal(options.filter(x=>x.classification==='runtime').length,22)
-  assert.equal(options.filter(x=>x.classification==='diagnostic').length,7)
+  assert.equal(options.filter(x=>x.classification==='diagnostic').length,2)
   assert.equal(options.filter(x=>x.classification==='schema-marker').length,1)
   const rebuilt={};for(const option of options)setPath(rebuilt,option.path,option.defaultValue)
   assert.deepEqual(rebuilt,structuredClone(HI_CONFIG_DEFAULTS))

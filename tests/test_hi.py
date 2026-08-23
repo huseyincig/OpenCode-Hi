@@ -661,9 +661,9 @@ def test_configuration_guide_covers_supported_variations_and_is_readme_linked():
         assert f'`{role}`' in guide
     for category in ['quick','standard','deep','visual','critical']:
         assert f'`{category}`' in guide
-    for phrase in ['models.mode','models.default','models.roles','routing.roleModels','routing.roleVariants','routing.categoryModels','routing.categoryVariants','routing.allowedProviders','routing.deniedModels','parallel.max','execution.parallelism','maxFallbacks']:
+    for phrase in ['routing.roleModels','routing.roleVariants','routing.allowedModels','routing.categoryVariants','routing.allowedProviders','routing.deniedModels','parallel.max','execution.parallelism','maxFallbacks']:
         assert phrase in guide
-    assert 'no general `allowedModels` whitelist' in guide
+    assert '`routing.allowedModels`' in guide
     assert 'The setup CLI rejects primary-role model assignments explicitly.' in guide
     assert 'role-model-primary-owned-by-opencode' in guide_tr
     assert '"model": "provider/model-x"' in guide

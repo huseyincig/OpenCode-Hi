@@ -161,7 +161,7 @@ setup/install (TTY) -> project wizard -> OpenCode restart -> package doctor -> r
 setup/install (CI/non-TTY) -> deterministic registration -> restart -> doctor -> hi_doctor
 ```
 
-Wizard yalnız mevcut canonical Hi ayarlarını sorar: `primaryMode`, `execution.topology`, `executionPolicy`, child-model policy ve `routing.strategy`. Provider authentication ve primary `manager` / `working-manager` model seçimi OpenCode-owned kalır. Setup anında live OpenCode model inventory yoksa wizard model ID uydurmaz. Adaptive seçen kullanıcıda Hi ilk effective runtime inventory'den eligible modelleri rank eder; manuel role mapping seçilirse otomatik ilk recommendation persistence bastırılır ve restart sonrası `hi_doctor` + `roles` ile exact child model adayları ayarlanır. Aynı wizard `reconfigure` ile tekrar açılır. Legacy Python helper yalnız advanced/compatibility alanları içindir.
+Güncel Node interactive setup yalnız `primaryMode` kararını sorar; provider authentication ve primary `manager` / `working-manager` model seçimi OpenCode-owned kalır. Work mode, child-model pool/role mapping ve runtime limitleri OpenCode içindeki `hi_settings` control plane üzerinden ayarlanır. Setup live model inventory uydurmaz. Legacy Python helper yalnız düşük frekanslı advanced/source-checkout alanları içindir; eski inert model-routing key'leri current canonical config değildir.
 
 `0.2.2` yayınlanmıştır; npm Trusted Publishing ve fresh-registry exact OpenCode `1.18.19` T4 doğrulaması tamamlanmıştır.
 

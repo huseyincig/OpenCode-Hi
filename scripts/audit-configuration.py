@@ -22,7 +22,6 @@ def consumer_for(path):
     if path=='primaryMode': return ('plugin/src/runtime/application/runtime-services.ts','primaryMode')
     if path.startswith('compatibility.'): return ('plugin/src/doctor/checks.ts','config.compatibility')
     if path.startswith('execution.'): return ('plugin/src/runtime/execution/topology-policy.ts','config.')
-    if path in {'models.mode','models.default','models.roles','routing.strategy','routing.categoryModels'}: return ('plugin/src/config/resolver.ts','legacyRoutingDiagnostics')
     if path.startswith('models.') or path.startswith('routing.'): return ('plugin/src/runtime/routing/model-resolver.ts','config.')
     if path.startswith('parallel.'): return ('plugin/src/runtime/application/runtime-services.ts','getConfig().parallel')
     if path.startswith('profile.'): return ('plugin/src/runtime/task/task-runtime.ts','cfg.profile')
@@ -51,7 +50,7 @@ guards={
  'single_semantic_owner':all(x.get('owner')=='hi-config' for x in options),
  'generated_defaults_owned_by_catalog':'HI_CONFIG_DEFAULTS' in defaults_src and 'structuredClone' in defaults_src,
  'resolver_uses_canonical_defaults':'DEFAULT_HI_CONFIG.' in resolver,
- 'project_loader_sparse_overrides':"const out:Partial<HiConfig> = {}" in discovery and "routing.strategy = r.strategy" in discovery,
+ 'project_loader_sparse_overrides':"const out:Partial<HiConfig> = {}" in discovery and "legacyModelRoutingFields" in discovery and "routing.roleModels=roleModels" in discovery,
  'profile_known_leaf_enum_projection':'function threshold(value:unknown)' in resolver and 'profileLayer' in resolver,
  'unknown_host_config_confined':'unknown and invalid host profile leaves never enter canonical runtime config' in configtest,
  'per_leaf_precedence_proved':'project precedence is leaf-scoped and absent project siblings preserve host constraints' in hostile,

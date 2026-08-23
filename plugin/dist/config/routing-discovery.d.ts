@@ -1,2 +1,6 @@
 import { type HiConfig } from './schema.js';
-export declare function loadProjectRoutingConfig(projectRoot: string): Partial<HiConfig> | undefined;
+export interface ProjectRoutingConfigLoad {
+    config: Partial<HiConfig>;
+    legacyModelRoutingFields: string[];
+}
+export declare function loadProjectRoutingConfig(projectRoot: string): ProjectRoutingConfigLoad | undefined;

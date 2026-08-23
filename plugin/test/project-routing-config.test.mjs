@@ -43,10 +43,10 @@ test('project model routing admits child roles only and ignores primary/unknown 
       routing:{roleModels:{manager:['p/manager'],'working-manager':['p/wm'],coder:['p/code','p/fallback'],unknown:['p/nope']},roleVariants:{manager:{'p/manager':'high'},coder:{'p/code':'high'},unknown:{'p/nope':'low'}}}
     }))
     const cfg=resolveHiConfig({},p)
-    assert.deepEqual(cfg.models.roles,{coder:'p/code'})
+    assert.equal('models' in cfg,false)
     assert.deepEqual(cfg.routing.roleModels,{coder:['p/code','p/fallback']})
     assert.deepEqual(cfg.routing.roleVariants,{coder:{'p/code':'high'}})
     const host=resolveHiConfig({models:{mode:'role-mapped',roles:{manager:'h/manager',coder:'h/code',unknown:'h/nope'}},routing:{roleModels:{manager:['h/manager'],coder:['h/code'],unknown:['h/nope']},roleVariants:{manager:{'h/manager':'high'},coder:{'h/code':'low'},unknown:{'h/nope':'high'}}}})
-    assert.deepEqual(host.models.roles,{coder:'h/code'});assert.deepEqual(host.routing.roleModels,{coder:['h/code']});assert.deepEqual(host.routing.roleVariants,{coder:{'h/code':'low'}})
+    assert.equal('models' in host,false);assert.deepEqual(host.routing.roleModels,{coder:['h/code']});assert.deepEqual(host.routing.roleVariants,{coder:{'h/code':'low'}})
   }finally{rmSync(p,{recursive:true,force:true})}
 })

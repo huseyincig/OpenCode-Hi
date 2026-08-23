@@ -1,11 +1,9 @@
 export const HI_CONFIG_SCHEMA = 2 as const
 export type ExecutionPolicyMode = 'minimal' | 'balanced' | 'thorough' | 'adaptive' | 'manual'
 export type PrimaryModePolicy = 'auto'|'working-manager'|'manager'
-export type RoutingStrategy = 'cost-quality' | 'quality' | 'cost'
 export type CategoryName = 'quick'|'standard'|'deep'|'visual'|'critical'
 export type CompatibilityMode = 'compatible'|'strict'
 export type TopologyMode = 'adaptive'|'single-agent'|'multi-agent'
-export type ModelSelectionMode = 'adaptive'|'fixed'|'role-mapped'
 export const MODEL_ROUTED_CHILD_ROLES = ['coder','architect','repository-explorer','qa-reviewer','security-reviewer','visual-qa'] as const
 export type ModelRoutedChildRole = typeof MODEL_ROUTED_CHILD_ROLES[number]
 export function isModelRoutedChildRole(value:unknown):value is ModelRoutedChildRole{return typeof value==='string'&&(MODEL_ROUTED_CHILD_ROLES as readonly string[]).includes(value)}
@@ -21,8 +19,6 @@ export interface HiConfig {
   primaryMode: PrimaryModePolicy
   compatibility: { mode: CompatibilityMode; validatedOpenCodeVersions?: string[] }
   routing: {
-    strategy: RoutingStrategy
-    categoryModels: Partial<Record<CategoryName,string[]>>
     categoryVariants: Partial<Record<CategoryName,string[]>>
     roleModels: Record<string,string[]>
     roleVariants: Record<string,Record<string,string>>
@@ -32,7 +28,6 @@ export interface HiConfig {
     deniedModels: string[]
   }
   execution: { topology: TopologyMode; maxAgents: number; parallelism: number }
-  models: { mode: ModelSelectionMode; default: string; roles: Record<string,string> }
   parallel: { enabled: boolean; max: number; providers: Record<string,number>; models: Record<string,number> }
   profile: { minimal: ProfileSettings; balanced: ProfileSettings; thorough: ProfileSettings }
 }

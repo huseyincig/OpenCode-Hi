@@ -57,7 +57,7 @@ guard('HI003','CONFIG_EXECUTOR_MISSING',()=>{
   const catalogPaths=[...new Set(options.map(x=>x.path))].sort(), defaultPaths=leafPaths(structuredClone(HI_CONFIG_DEFAULTS)).sort()
   assert(JSON.stringify(catalogPaths)===JSON.stringify(defaultPaths),'HiConfig leaf/default catalog coverage drift')
   assert(options.filter(x=>x.classification==='runtime').length===22,'runtime option inventory must remain explicit (22)')
-  assert(options.filter(x=>x.classification==='diagnostic').length===7,'diagnostic option inventory must remain explicit (7)')
+  assert(options.filter(x=>x.classification==='diagnostic').length===2,'diagnostic option inventory must remain explicit (2)')
   assert(options.filter(x=>x.classification==='schema-marker').length===1,'schema marker inventory must remain explicit (1)')
   for(const x of options){
     if(x.classification==='runtime')assert(Boolean(x.runtimeConsumer&&x.executorEffect),`${x.path}: runtime option has no executable effect`)

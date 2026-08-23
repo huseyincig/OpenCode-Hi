@@ -158,7 +158,7 @@ npx --yes opencode-hi@0.2.4 reconfigure /path/to/project
 
 The wizard covers the common executable policy decisions and preserves unrelated routing fields. Cancelling it makes no mutation. For automation use the explicit bounded commands (`reprofile`, `roles`) or non-interactive setup/install.
 
-The retained Python helper is an **advanced/source-checkout compatibility surface** for lower-frequency executable fields not yet mirrored by the Node wizard, such as provider/model narrowing, fallback limits, detailed concurrency maps and profile thresholds. Legacy `models.mode`, `models.default`, `models.roles`, `routing.strategy`, and `routing.categoryModels` inputs are accepted only for compatibility diagnostics in `0.2.4`; they do not control model choice:
+The retained Python helper is an **advanced/source-checkout compatibility surface** for lower-frequency executable fields not yet mirrored by the Node wizard, such as provider/model narrowing, fallback limits, detailed concurrency maps and profile thresholds. Older files may still contain legacy model-routing keys; current `dev` recognizes those names for diagnostics but does not include them in the canonical option catalog or resolved `HiConfig`:
 
 ```bash
 python3 scripts/native_plugin_setup.py reconfigure /path/to/project --execution-policy adaptive --primary-mode auto --max-fallbacks 2
@@ -185,11 +185,6 @@ Generated from `data/hi-config-options.json`. Do not hand-edit this table.
 | `execution.topology` | runtime | `adaptive` | constraint | forces/adapts single-agent versus multi-agent mission topology |
 | `execution.maxAgents` | runtime | `4` | capacity | caps topology agent count; value 1 is an executable single-agent ceiling |
 | `execution.parallelism` | runtime | `2` | capacity | caps parallel streams inside selected mission topology |
-| `models.mode` | diagnostic | `adaptive` | preference | parses the legacy model-selection mode for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority |
-| `models.default` | diagnostic | `auto` | preference | parses the legacy fixed-model value for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority |
-| `models.roles` | diagnostic | `{}` | preference | parses the legacy role-model map for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority |
-| `routing.strategy` | diagnostic | `cost-quality` | preference | parses the legacy cost/quality strategy for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority |
-| `routing.categoryModels` | diagnostic | `{}` | preference | parses legacy category model lists for compatibility, reports them in config resolution diagnostics, and gives them no model-routing authority |
 | `routing.categoryVariants` | runtime | `{}` | preference | changes selected native model variant by task category |
 | `routing.roleModels` | runtime | `{}` | preference | selects configured child-role candidates in explicit order after hard eligibility filters and before host-agent/automatic selection; primary manager roles are excluded |
 | `routing.roleVariants` | runtime | `{}` | preference | changes selected native variant for a specific child-role/model pair; primary manager roles are excluded |

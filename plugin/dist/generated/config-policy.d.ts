@@ -113,81 +113,6 @@ export declare const HI_CONFIG_OPTIONS: readonly [{
     readonly runtimeConsumer: "runtime/execution/decideTopology -> TaskRuntime.canRun";
     readonly executorEffect: "caps parallel streams inside selected mission topology";
 }, {
-    readonly id: "config.models-mode";
-    readonly path: "models.mode";
-    readonly classification: "diagnostic";
-    readonly type: "enum";
-    readonly defaultValue: "adaptive";
-    readonly owner: "hi-config";
-    readonly sourceSurfaces: readonly ["host-hi-config", "project-routing-policy"];
-    readonly precedenceOrder: readonly ["default", "host-hi-config", "project-routing-policy"];
-    readonly validator: "model-selection-mode-enum";
-    readonly safetySemantics: "preference";
-    readonly behavioralAcceptanceRefs: readonly ["config-executable-effect.test.mjs"];
-    readonly diagnosticConsumer: "config/resolver.resolveHiConfigWithReport -> legacyRoutingDiagnostics";
-    readonly diagnosticEffect: "parses the legacy model-selection mode for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority";
-    readonly doctorProjection: "config-resolution-notes";
-}, {
-    readonly id: "config.models-default";
-    readonly path: "models.default";
-    readonly classification: "diagnostic";
-    readonly type: "string";
-    readonly defaultValue: "auto";
-    readonly owner: "hi-config";
-    readonly sourceSurfaces: readonly ["host-hi-config", "project-routing-policy"];
-    readonly precedenceOrder: readonly ["default", "host-hi-config", "project-routing-policy"];
-    readonly validator: "non-empty-model-id-or-auto";
-    readonly safetySemantics: "preference";
-    readonly behavioralAcceptanceRefs: readonly ["config-executable-effect.test.mjs"];
-    readonly diagnosticConsumer: "config/resolver.resolveHiConfigWithReport -> legacyRoutingDiagnostics";
-    readonly diagnosticEffect: "parses the legacy fixed-model value for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority";
-    readonly doctorProjection: "config-resolution-notes";
-}, {
-    readonly id: "config.models-roles";
-    readonly path: "models.roles";
-    readonly classification: "diagnostic";
-    readonly type: "string-map";
-    readonly defaultValue: {};
-    readonly owner: "hi-config";
-    readonly sourceSurfaces: readonly ["host-hi-config", "project-routing-policy"];
-    readonly precedenceOrder: readonly ["default", "host-hi-config", "project-routing-policy"];
-    readonly validator: "model-id-map";
-    readonly safetySemantics: "preference";
-    readonly behavioralAcceptanceRefs: readonly ["config-executable-effect.test.mjs"];
-    readonly diagnosticConsumer: "config/resolver.resolveHiConfigWithReport -> legacyRoutingDiagnostics";
-    readonly diagnosticEffect: "parses the legacy role-model map for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority";
-    readonly doctorProjection: "config-resolution-notes";
-}, {
-    readonly id: "config.routing-strategy";
-    readonly path: "routing.strategy";
-    readonly classification: "diagnostic";
-    readonly type: "enum";
-    readonly defaultValue: "cost-quality";
-    readonly owner: "hi-config";
-    readonly sourceSurfaces: readonly ["host-hi-config", "project-routing-policy"];
-    readonly precedenceOrder: readonly ["default", "host-hi-config", "project-routing-policy"];
-    readonly validator: "routing-strategy-enum";
-    readonly safetySemantics: "preference";
-    readonly behavioralAcceptanceRefs: readonly ["config-executable-effect.test.mjs"];
-    readonly diagnosticConsumer: "config/resolver.resolveHiConfigWithReport -> legacyRoutingDiagnostics";
-    readonly diagnosticEffect: "parses the legacy cost/quality strategy for compatibility, reports it in config resolution diagnostics, and gives it no model-routing authority";
-    readonly doctorProjection: "config-resolution-notes";
-}, {
-    readonly id: "config.routing-category-models";
-    readonly path: "routing.categoryModels";
-    readonly classification: "diagnostic";
-    readonly type: "string-list-map";
-    readonly defaultValue: {};
-    readonly owner: "hi-config";
-    readonly sourceSurfaces: readonly ["host-hi-config", "project-routing-policy"];
-    readonly precedenceOrder: readonly ["default", "host-hi-config", "project-routing-policy"];
-    readonly validator: "category-model-map";
-    readonly safetySemantics: "preference";
-    readonly behavioralAcceptanceRefs: readonly ["config-executable-effect.test.mjs"];
-    readonly diagnosticConsumer: "config/resolver.resolveHiConfigWithReport -> legacyRoutingDiagnostics";
-    readonly diagnosticEffect: "parses legacy category model lists for compatibility, reports them in config resolution diagnostics, and gives them no model-routing authority";
-    readonly doctorProjection: "config-resolution-notes";
-}, {
     readonly id: "config.routing-category-variants";
     readonly path: "routing.categoryVariants";
     readonly classification: "runtime";
@@ -439,14 +364,7 @@ export declare const HI_CONFIG_DEFAULTS: {
         readonly maxAgents: 4;
         readonly parallelism: 2;
     };
-    readonly models: {
-        readonly mode: "adaptive";
-        readonly default: "auto";
-        readonly roles: {};
-    };
     readonly routing: {
-        readonly strategy: "cost-quality";
-        readonly categoryModels: {};
         readonly categoryVariants: {};
         readonly roleModels: {};
         readonly roleVariants: {};

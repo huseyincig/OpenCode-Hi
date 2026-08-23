@@ -28,6 +28,7 @@ test('BA03 routing constraints execute while legacy scoring/model-mode fields ar
   const models=[{id:'p/code',provider:'p',tags:['coding'],quality:1,cost:50,writeCapable:true},{id:'q/generic',provider:'q',tags:['balanced'],quality:99,cost:.01,writeCapable:true}]
   const legacy=resolveHiConfigWithReport({models:{mode:'fixed',default:'q/generic',roles:{coder:'q/generic'}},routing:{strategy:'cost',categoryModels:{standard:['q/generic']},allowedProviders:[]}})
   assert.equal(resolveModel('standard',models,legacy.config,undefined,'coder').primary,'p/code','legacy cost/fixed/category fields cannot override capability routing')
+  assert.equal('models' in legacy.config,false);assert.equal('strategy' in legacy.config.routing,false);assert.equal('categoryModels' in legacy.config.routing,false)
   for(const path of ['models.mode','models.default','models.roles','routing.strategy','routing.categoryModels'])assert.ok(legacy.report.notes.some(note=>note.includes(path)&&note.includes('diagnostics only')),path)
   const constrained=resolveHiConfig({routing:{allowedProviders:['q']}})
   assert.equal(resolveModel('standard',models,constrained,undefined,'coder').primary,'q/generic','provider constraint remains executable')
