@@ -828,7 +828,7 @@ Useful `reconfigure` flags:
 
 `reconfigure` changes only explicitly supplied supported fields and preserves unrelated project/OpenCode configuration.
 
-Current CLI help may also expose legacy `--team-mode`, `--team-max-members`, and `--team-wall-minutes` arguments. Generic TeamMode is **not** part of the current canonical `HiConfig` or project-routing loader, so those legacy fields are not documented as supported runtime configuration and should not be used to infer active team semantics. Current topology/concurrency controls are `execution.*` and `parallel.*`.
+Generic TeamMode is **not** part of current canonical `HiConfig` or project routing. Current `dev` no longer exposes the old `--team-mode`, `--team-max-members`, or `--team-wall-minutes` source-checkout flags. If an older routing file still contains a `teamMode` object, supported updates preserve that unknown legacy data without treating it as runtime authority. Current topology/concurrency controls are `execution.*` and `parallel.*`.
 
 ## 24. Role-model CLI
 

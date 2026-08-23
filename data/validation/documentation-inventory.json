@@ -163,7 +163,7 @@
     },
     {
       "path": "docs/CONFIGURATION.md",
-      "sha256": "b6758ea1b4e7cfd4115312455e0315cac1237a587d72aa5d4cb92fdf699a38a2",
+      "sha256": "27e57b323c5557cf8f8e42f8335b417cd400041273378c76565bd79b4c7a6c3c",
       "area": "configuration-guide",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
