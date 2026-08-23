@@ -3,6 +3,7 @@ import { decideAdaptiveExecution, type ExecutionPath } from '../execution/adapti
 import { decideTopology, type TopologyDecision, type TopologyPolicyConfig } from '../execution/topology-policy.js'
 import { minimumTeamFor } from '../routing/minimum-team.js'
 import { continuationBudget, resolveCategory } from '../routing/category.js'
+import { counterfactualDecisionStability,type CounterfactualDecisionStability } from './counterfactual-stability.js'
 
 export type IsolationIntent='NONE'|'CANDIDATE'
 export type ProviderSurfacePhase='DIRECT_CONTROL'|'EVIDENCE_CONTROL'|'GRAPH_CONTROL'|'ESCALATED_CONTROL'
@@ -30,6 +31,7 @@ export interface SemanticDecisionEnvelope {
   isolation: { intent:IsolationIntent; reason:string[] }
   capabilities: SemanticCapabilityIntent
   providerSurfacePhase: ProviderSurfacePhase
+  stability: CounterfactualDecisionStability
   reasons: string[]
 }
 
@@ -95,6 +97,7 @@ export function decideSemanticExecution(input:SemanticDecisionInput):SemanticDec
     isolation,
     capabilities,
     providerSurfacePhase:providerSurfacePhase(adaptive.path),
+    stability:counterfactualDecisionStability({intent,verification,primaryMode:input.primaryMode??'auto',topology:topologyPolicy}),
     reasons:[
       `execution:${adaptive.path.toLowerCase()}`,
       `topology:${topology.mode}:${topology.executionMode}`,

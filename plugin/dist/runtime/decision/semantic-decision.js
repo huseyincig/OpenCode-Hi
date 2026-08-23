@@ -2,6 +2,7 @@ import { decideAdaptiveExecution } from '../execution/adaptive-policy.js';
 import { decideTopology } from '../execution/topology-policy.js';
 import { minimumTeamFor } from '../routing/minimum-team.js';
 import { continuationBudget, resolveCategory } from '../routing/category.js';
+import { counterfactualDecisionStability } from './counterfactual-stability.js';
 function providerSurfacePhase(path) {
     if (path === 'DIRECT')
         return 'DIRECT_CONTROL';
@@ -57,6 +58,7 @@ export function decideSemanticExecution(input) {
         isolation,
         capabilities,
         providerSurfacePhase: providerSurfacePhase(adaptive.path),
+        stability: counterfactualDecisionStability({ intent, verification, primaryMode: input.primaryMode ?? 'auto', topology: topologyPolicy }),
         reasons: [
             `execution:${adaptive.path.toLowerCase()}`,
             `topology:${topology.mode}:${topology.executionMode}`,

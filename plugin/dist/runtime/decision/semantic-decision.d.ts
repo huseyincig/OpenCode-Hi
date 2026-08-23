@@ -1,6 +1,7 @@
 import type { Category, MissionState, NormalizedMissionIntent, PrimaryMode, VerificationPolicy } from '../mission/types.js';
 import { type ExecutionPath } from '../execution/adaptive-policy.js';
 import { type TopologyDecision, type TopologyPolicyConfig } from '../execution/topology-policy.js';
+import { type CounterfactualDecisionStability } from './counterfactual-stability.js';
 export type IsolationIntent = 'NONE' | 'CANDIDATE';
 export type ProviderSurfacePhase = 'DIRECT_CONTROL' | 'EVIDENCE_CONTROL' | 'GRAPH_CONTROL' | 'ESCALATED_CONTROL';
 export interface SemanticCapabilityIntent {
@@ -30,6 +31,7 @@ export interface SemanticDecisionEnvelope {
     };
     capabilities: SemanticCapabilityIntent;
     providerSurfacePhase: ProviderSurfacePhase;
+    stability: CounterfactualDecisionStability;
     reasons: string[];
 }
 export interface SemanticDecisionInput {
