@@ -66,6 +66,8 @@ import { resolveHiConfigWithReport } from '../../config/resolver.js';
 import { resolveBrowserExecutionOwner } from '../browser/ownership.js';
 function nativeDiffFiles(raw, projectRoot) { const items = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : []; return [...new Set(items.map((x) => typeof x?.file === 'string' ? x.file : typeof x?.path === 'string' ? x.path : '').filter((x) => Boolean(x)).map((x) => normalizeProjectPath(x, projectRoot)).filter(Boolean))]; }
 function userFacingChildRole(value) { const role = String(value ?? '').trim().toLowerCase(); return role === 'review' ? 'qa-reviewer' : role; }
+function base64Bytes(bytes) { let binary = ''; for (let offset = 0; offset < bytes.length; offset += 0x8000)
+    binary += String.fromCharCode(...bytes.subarray(offset, Math.min(bytes.length, offset + 0x8000))); return btoa(binary); }
 export function createHiToolSurface(input) {
     const { state, store, tasks, processRuntime, workspaceRuntime, browserExecutor, previewManager, projectRoot, workingDirectory, capabilities, native, getModels, refreshModels, scopedStores, getBrowserBootstrapStatus } = input;
     const doctorTool = tool({ description: 'Run OpenCode-Hi runtime/configuration health checks', args: {}, execute: async () => { const browserHealth = browserExecutor ? await browserExecutor.health() : { available: false }, runtimeHostResources = new Set(browserHealth.available ? ['host-capability:browser-execution'] : []); return formatDoctor(runDoctor(state.config, store, projectRoot, { models: getModels(), resolution: state.configResolution, capabilities, hostConfig: state.hostConfig, openCodeVersion: state.openCodeVersion, runtimeHostResources, browserBootstrap: getBrowserBootstrapStatus?.() })); } });
@@ -549,11 +551,13 @@ export function createHiToolSurface(input) {
         catch (e) {
             return `Browser inspect blocked: ${String(e)}`;
         } } });
-    const browserScreenshotTool = tool({ description: 'Capture the current page into the canonical Hi artifact owner and return a BrowserObservation reference.', args: { task_id: tool.schema.string() }, execute: async (a, c) => { try {
+    const browserScreenshotTool = tool({ description: 'Capture the current page into the canonical Hi artifact owner and return a BrowserObservation plus a native image attachment for visual inspection. screenshot_artifact_ref is opaque Hi provenance, not a filesystem path; do not read/glob/search it.', args: { task_id: tool.schema.string() }, execute: async (a, c) => { try {
             if (!browserExecutor)
                 return 'BLOCKED: browser executor unavailable';
-            const x = browserContext(String(a.task_id), c);
-            return browserObservationResult(x, await browserExecutor.screenshot(x.cx));
+            const x = browserContext(String(a.task_id), c), observation = await browserExecutor.screenshot(x.cx), output = browserObservationResult(x, observation), ref = typeof observation?.screenshot_artifact_ref === 'string' && observation.screenshot_artifact_ref.startsWith('hi-artifact:') ? observation.screenshot_artifact_ref.slice('hi-artifact:'.length) : undefined, binary = ref ? scopedStores.contextArtifacts.getBinary(ref) : undefined;
+            if (!binary)
+                return output;
+            return { title: 'Hi browser screenshot', output, metadata: { screenshot_artifact_ref: observation.screenshot_artifact_ref }, attachments: [{ type: 'file', mime: binary.mime, url: `data:${binary.mime};base64,${base64Bytes(binary.bytes)}`, filename: binary.filename }] };
         }
         catch (e) {
             return `Browser screenshot blocked: ${String(e)}`;

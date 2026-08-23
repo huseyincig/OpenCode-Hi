@@ -35,16 +35,16 @@
     {
       "invariant": "durable-artifact-source-provenance",
       "owner": "plugin/src/runtime/context/artifact-store.ts",
-      "owner_sha256": "0cc243493d938f86090cfa084550c68189df3fdcf196aebb4c673b12b0f579f5",
+      "owner_sha256": "7210aa531f4dd10ee82bb069e94b9dd84e1dcc274a76352c2496b60d18b0fb67",
       "owner_anchor": "provenance:{source_files:",
       "proof": "plugin/test/artifact-contract.test.mjs",
-      "proof_sha256": "a75144b136876511c962c5e4b131b2e9219eea0076eff02f31a05d0f2635bc36",
+      "proof_sha256": "f84f0960b65efa7fce3c79666e4ffebd7671d055e51d3323eb2af3e0dacaa3fe",
       "proof_anchor": "assert.deepEqual(a.provenance.source_files,['src/a.ts'])"
     },
     {
       "invariant": "durable-artifact-consumer-binding",
       "owner": "plugin/src/runtime/context/artifact-store.ts",
-      "owner_sha256": "0cc243493d938f86090cfa084550c68189df3fdcf196aebb4c673b12b0f579f5",
+      "owner_sha256": "7210aa531f4dd10ee82bb069e94b9dd84e1dcc274a76352c2496b60d18b0fb67",
       "owner_anchor": "bindConsumer",
       "proof": "plugin/test/context-survival-hardening.test.mjs",
       "proof_sha256": "cc2ffdf3ed2cbc0e5401d41c3d9b8b7cc859d826fae71ee9b79b97f7d38dce38",
@@ -53,7 +53,7 @@
     {
       "invariant": "durable-artifact-freshness-invalidation",
       "owner": "plugin/src/runtime/context/artifact-store.ts",
-      "owner_sha256": "0cc243493d938f86090cfa084550c68189df3fdcf196aebb4c673b12b0f579f5",
+      "owner_sha256": "7210aa531f4dd10ee82bb069e94b9dd84e1dcc274a76352c2496b60d18b0fb67",
       "owner_anchor": "a.freshness='POTENTIALLY_STALE'",
       "proof": "plugin/test/hi-core-evolution.test.mjs",
       "proof_sha256": "794ad3473cc7749e87b9a53594e702d18ae008418971258b6d82a6e6eb69d38b",
@@ -62,10 +62,10 @@
     {
       "invariant": "artifact-privacy-boundary",
       "owner": "plugin/src/runtime/context/artifact-store.ts",
-      "owner_sha256": "0cc243493d938f86090cfa084550c68189df3fdcf196aebb4c673b12b0f579f5",
+      "owner_sha256": "7210aa531f4dd10ee82bb069e94b9dd84e1dcc274a76352c2496b60d18b0fb67",
       "owner_anchor": "privacyClass??'project-private'",
       "proof": "plugin/test/artifact-contract.test.mjs",
-      "proof_sha256": "a75144b136876511c962c5e4b131b2e9219eea0076eff02f31a05d0f2635bc36",
+      "proof_sha256": "f84f0960b65efa7fce3c79666e4ffebd7671d055e51d3323eb2af3e0dacaa3fe",
       "proof_anchor": "ArtifactContract keeps identity, content hash and provenance as distinct fields"
     },
     {

@@ -40,6 +40,7 @@ test('Phase 6 methodology and visual proof rules are lazy and task-specific',()=
   assert.match(visual,/evidence\.outcome="passed"/)
   assert.match(visual,/Never manufacture PASS from a BrowserObservation or screenshot alone/)
   assert.match(visual,/actual Hi browser evidence_ref/)
+  assert.match(visual,/native image attachment/);assert.match(visual,/opaque canonical provenance/);assert.match(visual,/never read\/glob\/find it/)
   assert.match(visual,/Return the WorkerResult directly in assistant text/)
 })
 

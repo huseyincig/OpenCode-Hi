@@ -80,10 +80,10 @@
     {
       "invariant": "context-artifact-not-evidence",
       "owner": "plugin/src/runtime/context/artifact-store.ts",
-      "owner_sha256": "0cc243493d938f86090cfa084550c68189df3fdcf196aebb4c673b12b0f579f5",
+      "owner_sha256": "7210aa531f4dd10ee82bb069e94b9dd84e1dcc274a76352c2496b60d18b0fb67",
       "owner_anchor": "export class ContextArtifactStore",
       "proof": "plugin/test/artifact-contract.test.mjs",
-      "proof_sha256": "a75144b136876511c962c5e4b131b2e9219eea0076eff02f31a05d0f2635bc36",
+      "proof_sha256": "f84f0960b65efa7fce3c79666e4ffebd7671d055e51d3323eb2af3e0dacaa3fe",
       "proof_anchor": "ArtifactContract keeps identity, content hash and provenance as distinct fields"
     },
     {

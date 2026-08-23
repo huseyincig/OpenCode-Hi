@@ -16,6 +16,11 @@ export declare class ContextArtifactStore {
         consumerRefs?: string[];
     }): ArtifactContract;
     get(id: string): ArtifactContract | undefined;
+    getBinary(id: string): {
+        mime: string;
+        filename: string;
+        bytes: Uint8Array;
+    } | undefined;
     bindConsumer(id: string, consumerRef: string): ArtifactContract | undefined;
     invalidateChanged(files: string[]): number;
 }

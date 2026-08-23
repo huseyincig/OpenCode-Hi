@@ -83,7 +83,7 @@
       "owner_sha256": "3cfe2c34bbf83a71c52b8999cf581b28b09575b3181c1625e149b051fe72da1b",
       "owner_anchor": "methodologyExitCheck",
       "proof": "plugin/test/b3-methodology-exit-evidence.test.mjs",
-      "proof_sha256": "60847768015d7fa7215c99be3f33818221b599c6125559a424af44ea7149a74b",
+      "proof_sha256": "aa36db1a64321701669af059ffd5a0e570ec002d82577b717b0f884ce5e43742",
       "proof_anchor": "fresh explicit passed browser/visual evidence satisfies only the matching methodology exit"
     },
     {

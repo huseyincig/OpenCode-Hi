@@ -52,6 +52,19 @@ export class ContextArtifactStore{
     return this.#put(item)
   }
   get(id:string):ArtifactContract|undefined{const a=this.#items.get(id);return a?structuredClone(a):undefined}
+  getBinary(id:string):{mime:string;filename:string;bytes:Uint8Array}|undefined{
+    if(!this.projectRoot)return undefined
+    const item=this.#items.get(id);if(!item||item.content_ref!=='inline-body')return undefined
+    let manifest:unknown;try{manifest=JSON.parse(item.content)}catch{return undefined}
+    if(!manifest||typeof manifest!=='object'||Array.isArray(manifest))return undefined
+    const x=manifest as Record<string,unknown>,mime=typeof x.media_type==='string'?x.media_type:'',sha=typeof x.byte_sha256==='string'?x.byte_sha256:'',size=x.byte_size,filename=typeof x.file==='string'?x.file:''
+    if(!mime||mime.length>120||!/^[a-f0-9]{64}$/.test(sha)||!Number.isInteger(size)||Number(size)<=0||Number(size)>10*1024*1024)return undefined
+    const prefix=`${id}.`;if(!filename.startsWith(prefix))return undefined
+    const extension=filename.slice(prefix.length);if(!/^[A-Za-z0-9]{1,12}$/.test(extension))return undefined
+    const path=durableArtifactBinaryPath(this.projectRoot,item.kind,id,extension);if(!existsSync(path))return undefined
+    const bytes=readFileSync(path);if(bytes.byteLength!==Number(size)||createHash('sha256').update(bytes).digest('hex')!==sha)return undefined
+    return{mime,filename,bytes:new Uint8Array(bytes)}
+  }
   bindConsumer(id:string,consumerRef:string):ArtifactContract|undefined{const a=this.#items.get(id);if(!a)return undefined;a.consumer_refs=[...new Set([...a.consumer_refs,consumerRef])].slice(0,64);this.#persist(a);return structuredClone(a)}
   invalidateChanged(files:string[]):number{
     const changed=new Set(canonicalSources(files));let n=0
