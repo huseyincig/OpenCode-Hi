@@ -112,10 +112,10 @@
       "section": 16,
       "invariant": "human-decision-survival",
       "owner": "plugin/src/runtime/human-decision/transport.ts",
-      "owner_sha256": "ad321e33013c83d282f653e6ffaef148460631d7105db7a732e4c9b8135eeadd",
+      "owner_sha256": "7d7e92e2adbd3310058bd0773ab7a64fec2a42470a33f8059aaa08e8d4f01895",
       "owner_anchor": "readonly #entries=new Map<string,Entry>()",
       "proof": "plugin/test/h1-human-decision-transport.test.mjs",
-      "proof_sha256": "6fa3506b6722e4e3fbd7311bdb377b15c4d5045fe0430835a0f018e95cb16f8a",
+      "proof_sha256": "0d72271e55aa56d5668dd6cf5430e28e005b0fc98f7931fce503ee0f04b36f74",
       "proof_anchor": "restart reopens persisted semantic decision but never replays stale ephemeral transport response"
     },
     {

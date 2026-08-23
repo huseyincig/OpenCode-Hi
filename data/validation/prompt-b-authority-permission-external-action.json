@@ -161,7 +161,7 @@
     {
       "invariant": "no-natural-language-regex-authority",
       "owner": "plugin/src/runtime/human-decision/transport.ts",
-      "owner_sha256": "ad321e33013c83d282f653e6ffaef148460631d7105db7a732e4c9b8135eeadd",
+      "owner_sha256": "7d7e92e2adbd3310058bd0773ab7a64fec2a42470a33f8059aaa08e8d4f01895",
       "owner_anchor": "kind==='authority-protocol'",
       "proof": "plugin/test/authority-input-split.test.mjs",
       "proof_sha256": "83b7a9d2c1fe05d451874baa10c6711634d0c4b95ff2949c939156656aae9913",

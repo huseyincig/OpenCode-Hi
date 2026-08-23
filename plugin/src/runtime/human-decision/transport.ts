@@ -9,6 +9,7 @@ export interface HumanDecisionTransport{
   open(decision:HumanDecisionContract):HumanDecisionTransportHandle
   await(decisionId:string):Promise<HumanDecisionAwaitResult>
   cancel(decisionId:string):void
+  dispose():void
 }
 
 type Entry={decision:HumanDecisionContract;handle:HumanDecisionTransportHandle;response?:HumanDecisionTransportResponse;waiters:Set<(result:HumanDecisionAwaitResult)=>void>}
@@ -75,6 +76,7 @@ export class ChatHumanDecisionTransport implements HumanDecisionTransport{
     entry.waiters.clear();this.#pruneTerminal();return structuredClone(response)
   }
   handle(decisionId:string):HumanDecisionTransportHandle|undefined{const x=this.#entries.get(decisionId)?.handle;return x?structuredClone(x):undefined}
+  dispose():void{for(const [id,entry] of [...this.#entries])if(entry.handle.state==='OPEN')this.cancel(id);this.#entries.clear()}
 }
 
 export function syncHumanDecisionTransport(decision:HumanDecisionContract|undefined,transport:HumanDecisionTransport):HumanDecisionTransportHandle|undefined{if(!decision)return undefined;if(decision.status==='OPEN')return transport.open(decision);transport.cancel(decision.decision_id);return undefined}

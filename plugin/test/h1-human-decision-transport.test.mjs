@@ -120,3 +120,34 @@ test('PROMPT B stale answer to a replaced HumanDecision cannot resolve the repla
   assert.equal(transport.respond(old.decision_id,'a'),undefined);assert.equal(transport.handle(old.decision_id)?.state,'CANCELLED');assert.equal(transport.handle(fresh.decision_id)?.state,'OPEN')
   assert.equal(transport.respond(fresh.decision_id,'x')?.value,'x')
 })
+
+test('H1 transport dispose cancels every open waiter and rejects late replies',async()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'h1-dispose-transport','small task'),transport=new ChatHumanDecisionTransport(60_000)
+  const decision=openHumanDecision(m,{semantic_type:'preference',reason_code:'dispose-choice',summary:'pick',response_schema:{kind:'choice',choices:['safe','fast']}});transport.open(decision)
+  const waiting=transport.await(decision.decision_id)
+  transport.dispose()
+  assert.deepEqual(await waiting,{status:'CANCELLED',decision_id:decision.decision_id})
+  assert.equal(transport.respond(decision.decision_id,'safe'),undefined,'disposed transport must never accept a late reply')
+  transport.dispose()
+})
+
+test('H1 plugin dispose resolves and stops a waiting-user Mission before clean persistence',async()=>{
+  const {default:HiPlugin}=await import('../dist/plugin.js')
+  const {assessPluginMission}=await import('./helpers/semantic.mjs')
+  const root=mkdtempSync(join(tmpdir(),'hi-hd-plugin-dispose-'))
+  const client={app:{log:async()=>{}},provider:{list:async()=>({data:[]})},session:{create:async()=>({data:{id:'unused'}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:true}),status:async()=>({data:{}}),diff:async()=>({data:[]}),messages:async()=>({data:[]})}}
+  let hooks
+  try{
+    hooks=await HiPlugin({directory:root,worktree:root,project:{},client});await hooks.config({})
+    await hooks['chat.message']({sessionID:'h1-dispose-parent',agent:'working-manager'},userOutput('inspect local credentials'))
+    await assessPluginMission(hooks,'h1-dispose-parent',{task_kind:'diagnosis',required_capabilities:['verification']})
+    await assert.rejects(()=>hooks['tool.execute.before']({sessionID:'h1-dispose-parent',tool:'bash'},{args:{command:'gh auth login'}}),/interactive credential/i)
+    let before=new RuntimePersistence(root).load().find(x=>x.identity.session_id==='h1-dispose-parent')
+    assert.equal(before?.identity.status,'waiting-user');assert.equal(before?.authority.human_decision?.status,'OPEN')
+    await hooks.dispose();hooks=undefined
+    const after=new RuntimePersistence(root).load().find(x=>x.identity.session_id==='h1-dispose-parent')
+    assert.equal(after?.identity.status,'stopped')
+    assert.equal(after?.authority.human_decision?.status,'RESOLVED')
+    assert.equal(after?.authority.human_decision?.resolution,'mission-stopped')
+  }finally{await hooks?.dispose?.();rmSync(root,{recursive:true,force:true})}
+})

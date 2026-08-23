@@ -26,7 +26,7 @@
     {
       "invariant": "normalized-event-boundary",
       "owner": "plugin/src/opencode/open-code-hooks.ts",
-      "owner_sha256": "2628f121a57a82df6f1744825859cfeff2a95beb24fa2f1c49a42af8b0ebb924",
+      "owner_sha256": "b1969abbf5dd8bee46c938cae8afb9179855a940c7a7daecba9c7291fa490cf0",
       "owner_anchor": "eventController.handle(normalizeOpenCodeEvent(input?.event??input))",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",

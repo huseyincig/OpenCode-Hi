@@ -26,6 +26,7 @@ export interface HumanDecisionTransport {
     open(decision: HumanDecisionContract): HumanDecisionTransportHandle;
     await(decisionId: string): Promise<HumanDecisionAwaitResult>;
     cancel(decisionId: string): void;
+    dispose(): void;
 }
 export declare class ChatHumanDecisionTransport implements HumanDecisionTransport {
     #private;
@@ -37,5 +38,6 @@ export declare class ChatHumanDecisionTransport implements HumanDecisionTranspor
     cancel(decisionId: string): void;
     respond(decisionId: string, value: string | string[]): HumanDecisionTransportResponse | undefined;
     handle(decisionId: string): HumanDecisionTransportHandle | undefined;
+    dispose(): void;
 }
 export declare function syncHumanDecisionTransport(decision: HumanDecisionContract | undefined, transport: HumanDecisionTransport): HumanDecisionTransportHandle | undefined;

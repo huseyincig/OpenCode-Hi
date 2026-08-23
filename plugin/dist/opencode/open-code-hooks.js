@@ -84,11 +84,12 @@ export function createOpenCodeHooks(input) {
         } },
         dispose: async () => { try {
             for (const m of store.all())
-                if (m.identity.status === 'active') {
+                if (['active', 'waiting-user'].includes(m.identity.status)) {
                     store.stop(m.identity.session_id, 'plugin-dispose');
                     await processRuntime.stopMission(m);
                     await tasks.cancelAll(m);
                 }
+            humanDecisionTransport.dispose();
             eventController.clearAllNativePermissions();
             const browserDisposable = browserExecutor;
             if (browserDisposable.dispose)

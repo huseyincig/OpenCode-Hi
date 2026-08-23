@@ -96,6 +96,9 @@ export class ChatHumanDecisionTransport {
         return structuredClone(response);
     }
     handle(decisionId) { const x = this.#entries.get(decisionId)?.handle; return x ? structuredClone(x) : undefined; }
+    dispose() { for (const [id, entry] of [...this.#entries])
+        if (entry.handle.state === 'OPEN')
+            this.cancel(id); this.#entries.clear(); }
 }
 _a = ChatHumanDecisionTransport;
 export function syncHumanDecisionTransport(decision, transport) { if (!decision)
