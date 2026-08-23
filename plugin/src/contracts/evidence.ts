@@ -1,6 +1,6 @@
 import { WORKER_EVIDENCE_KINDS,type EvidenceOutcome } from './evidence-kinds.js'
 
-export const MISSION_EVIDENCE_KINDS=[...WORKER_EVIDENCE_KINDS,'review-input','lsp-diagnostics'] as const
+export const MISSION_EVIDENCE_KINDS=[...WORKER_EVIDENCE_KINDS,'review-input','lsp-diagnostics','source-read-observation'] as const
 export type MissionEvidenceKind = typeof MISSION_EVIDENCE_KINDS[number]
 
 export interface EvidenceProducerAttempt {

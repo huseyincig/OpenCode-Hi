@@ -1,5 +1,5 @@
 import { runtimeSignal } from '../runtime/events/event-sink.js';
-import { observeToolAfter } from '../runtime/evidence/evidence-runtime.js';
+import { addEvidence, normalizeProjectPath, observeToolAfter } from '../runtime/evidence/evidence-runtime.js';
 import { verificationEnvelopeFor, verificationSatisfied } from '../runtime/verification/policy.js';
 import { completeAuthorizedAction, privilegedAction } from '../runtime/safety/authority.js';
 import { recordStagingInspection, recordGitStatusInspection, invalidateStagingProof, invalidateGitTopologyProof, completeGitTopologyMutation, clearGitTopologyOwnershipAfterCommit, isGitCommit, isGitTopologyMutation, inspectCurrentGitChangedFiles } from '../runtime/safety/staging-safety.js';
@@ -13,6 +13,7 @@ import { primaryRoleCanDirectImplementation } from '../runtime/roles/catalog.js'
 import { evaluateCompletion } from '../runtime/completion/evaluator.js';
 import { appendLedger } from '../runtime/ledger/ledger.js';
 import { evidenceProducerAttemptForWorker } from '../runtime/evidence/applicability.js';
+import { captureEvidenceScopeState } from '../runtime/evidence/scope-state.js';
 function outputText(output) { try {
     if (typeof output === 'string')
         return output;
@@ -83,6 +84,12 @@ export function createToolAfterHook(store, background, events, projectRoot, work
         const childTask = child ? m.execution.tasks.find(t => t.id === child.task_id) : undefined, childVerificationOwner = child && childTask ? { source: `bash:child:${child.id}`, trusted_source_class: 'host-tool-observation', source_session_id: String(sid), task_id: childTask.id, obligation_ids: childTask.obligation_ids.filter(id => m.execution.obligations.some(o => o.id === id && o.kind === 'verification')), scope: [...childTask.scope], producer_attempt: evidenceProducerAttemptForWorker(m, child) } : undefined;
         const evidenceRoot = m.identity.intent.scope === 'local' ? (workingDirectory ?? projectRoot) : projectRoot;
         observeToolAfter(m, tool, args, output, evidenceRoot, childVerificationOwner);
+        if (child?.role === 'repository-explorer' && childTask && tool === 'read') {
+            const rawPath = typeof args?.filePath === 'string' ? args.filePath : typeof args?.path === 'string' ? args.path : undefined, path = rawPath ? normalizeProjectPath(rawPath, evidenceRoot) : '', scopeState = path ? captureEvidenceScopeState(evidenceRoot ?? '', [path]) : undefined;
+            if (path && scopeState && text.trim()) {
+                addEvidence(m, { kind: 'source-read-observation', summary: `Explorer read ${path}`, scope: [path], source: `explorer-read:${child.id}`, trusted_source_class: 'host-tool-observation', source_session_id: String(sid), source_state_hash: scopeState, scope_state_hash: scopeState, task_id: childTask.id, obligation_ids: childTask.obligation_ids, producer_attempt: evidenceProducerAttemptForWorker(m, child), outcome: 'pending', reason: 'OpenCode read tool completed for this bounded file during the current repository-explorer attempt' });
+            }
+        }
         if (tool === 'skill') {
             const name = requestedMethodologyName(args);
             if (name) {

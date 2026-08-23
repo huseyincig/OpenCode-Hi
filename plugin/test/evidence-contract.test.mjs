@@ -9,6 +9,7 @@ test('mission evidence catalog strictly contains worker proof kinds plus host/co
   for(const kind of WORKER_EVIDENCE_KINDS)assert.ok(MISSION_EVIDENCE_KINDS.includes(kind))
   assert.ok(MISSION_EVIDENCE_KINDS.includes('review-input'))
   assert.ok(MISSION_EVIDENCE_KINDS.includes('lsp-diagnostics'))
+  assert.ok(MISSION_EVIDENCE_KINDS.includes('source-read-observation'))
   assert.ok(!WORKER_EVIDENCE_KINDS.includes('review-input'))
 })
 

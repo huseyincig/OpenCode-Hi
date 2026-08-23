@@ -21,6 +21,7 @@ import { executionAttemptIdentity } from '../../contracts/orchestration-core.js'
 import { evidenceClaimApplicability } from '../evidence/applicability.js';
 import { captureEvidenceScopeState } from '../evidence/scope-state.js';
 import { deniedMutationAtoms } from '../constraint/constraint-atoms.js';
+import { assessExplorationClearance, explorationClearanceEvidenceSource } from '../execution/exploration-clearance.js';
 function providerOf(model) { return model && model !== 'host-default' && model.includes('/') ? model.slice(0, model.indexOf('/')) : undefined; }
 function resultDigest(result) { return createHash('sha256').update(JSON.stringify(result)).digest('hex'); }
 export class TaskResultReconciler {
@@ -389,6 +390,16 @@ export class TaskResultReconciler {
                 addEvidence(m, { kind: e.kind, summary: e.summary, scope: e.scope ?? task.scope, source: `browser-derived:${worker.id}`, trusted_source_class: 'browser-observation', source_session_id: worker.session_id, source_state_hash: browserStateHash, task_id: task.id, obligation_ids: task.obligation_ids, evidence_refs: refs, producer_attempt, pass: e.pass, outcome: e.outcome, reason: e.reason, invalidated_at: cleanlinessMarker ? (m.execution.evidence.last_mutation_at ?? Date.now()) : undefined });
             }
         }
+        const explorationClearance = assessExplorationClearance(this.projectRoot, m, task, worker, effectiveResult);
+        if (explorationClearance.applicable && !explorationClearance.admitted && effectiveResult.status === 'DONE') {
+            const marker = `exploration-clearance-unsatisfied:${task.id}:${explorationClearance.reason}`;
+            effectiveResult = { ...effectiveResult, status: 'FIX_REQUIRED', summary: `Repository exploration cannot clear ${explorationClearance.ambiguity} ambiguity yet: ${explorationClearance.reason}.`, open_issues: [...new Set([...effectiveResult.open_issues, marker])], needs_context: [...new Set([...effectiveResult.needs_context, 'exploration-clearance: return DONE only when context_gap=none, no unresolved context/issues remain, and passed source-provenance-evidence names the exact bounded source files inspected and references same-attempt OpenCode read receipts for those files; contract-critical ambiguity also requires passed decision-evidence on that same source-bound scope'])] };
+            appendLedger(m, 'exploration.clearance-rejected', { task_id: task.id, worker_id: worker.id, payload: { ambiguity: explorationClearance.ambiguity, reason: explorationClearance.reason, source_scope: explorationClearance.source_scope.slice(0, 40), decision_scope: explorationClearance.decision_scope.slice(0, 40) } });
+        }
+        if (explorationClearance.admitted && explorationClearance.ambiguity !== 'none' && explorationClearance.source_state_hash) {
+            const clearanceEvidence = addEvidence(m, { kind: 'source-provenance-evidence', summary: `Runtime-bound repository exploration clearance for ${explorationClearance.ambiguity} ambiguity.`, scope: explorationClearance.source_scope, source: explorationClearanceEvidenceSource(explorationClearance.ambiguity, task.id), trusted_source_class: 'runtime-observation', source_session_id: worker.session_id, source_state_hash: explorationClearance.source_state_hash, scope_state_hash: explorationClearance.source_state_hash, task_id: task.id, obligation_ids: task.obligation_ids, producer_attempt, outcome: 'passed', pass: true, reason: 'current bounded source bytes were captured by Hi at explorer settlement; this proves source provenance/freshness, not semantic correctness' });
+            appendLedger(m, 'exploration.clearance-admitted', { task_id: task.id, worker_id: worker.id, payload: { ambiguity: explorationClearance.ambiguity, source_scope: explorationClearance.source_scope.slice(0, 40), source_state_hash: explorationClearance.source_state_hash, decision_scope: explorationClearance.decision_scope.slice(0, 40), clearance_evidence_id: clearanceEvidence.id, decision_claim_authority: false } });
+        }
         if (effectiveResult.status === 'DONE' && (worker.loaded_methodologies?.length ?? 0) > 0) {
             const missingExit = [...new Set((worker.loaded_methodologies ?? []).flatMap(name => methodologyExitCheck(m, name, { task, worker, result: effectiveResult, projectRoot: this.projectRoot, scope: 'worker' }).missing))];
             if (missingExit.length) {
@@ -440,9 +451,9 @@ export class TaskResultReconciler {
         const reviewEvidenceSatisfied = (obligationID) => reviewObligationSatisfied(m, obligationID, this.projectRoot).ok;
         if (effectiveResult.status === 'DONE') {
             const now = Date.now();
-            if (worker.role === 'repository-explorer' && m.identity.intent.ambiguity !== 'none') {
+            if (explorationClearance.admitted && worker.role === 'repository-explorer' && m.identity.intent.ambiguity !== 'none') {
                 m.identity.intent.ambiguity = 'none';
-                appendLedger(m, 'intent.ambiguity.resolved', { task_id: task.id, worker_id: worker.id, payload: { source: 'repository-explorer-result' } });
+                appendLedger(m, 'intent.ambiguity.resolved', { task_id: task.id, worker_id: worker.id, payload: { source: 'repository-explorer-clearance', source_state_hash: explorationClearance.source_state_hash, evidence_authority: false } });
             }
             for (const id of task.obligation_ids) {
                 const owned = m.execution.obligations.find(o => o.id === id && o.status === 'open');

@@ -1,5 +1,5 @@
 import { WORKER_EVIDENCE_KINDS } from './evidence-kinds.js';
-export const MISSION_EVIDENCE_KINDS = [...WORKER_EVIDENCE_KINDS, 'review-input', 'lsp-diagnostics'];
+export const MISSION_EVIDENCE_KINDS = [...WORKER_EVIDENCE_KINDS, 'review-input', 'lsp-diagnostics', 'source-read-observation'];
 export const EVIDENCE_SOURCE_CLASSES = ['host-tool-observation', 'host-diff-observation', 'browser-observation', 'reviewer-observation', 'user-admitted-observation', 'runtime-observation'];
 const KIND_SET = new Set(MISSION_EVIDENCE_KINDS);
 const OUTCOME_SET = new Set(['pending', 'passed', 'failed', 'environment-issue']);

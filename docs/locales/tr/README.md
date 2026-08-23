@@ -29,6 +29,7 @@ OpenCode-Hi native AI execution çevresine deterministic ürün semantiği ekler
 - kanıta bağlı falsifiable diagnosis hipotezleri; root-cause prose tek başına completion veya harmful learning credit üretemez;
 - bounded Mission runtime projection, durable context artifactları, TypeScript Semantic Context ve confidence/freshness gate'li evidence-backed project methodology learning;
 - yalnız aynı structured task/dependency shape ve birebir güncel source byte'ları için runtime receipt'li failure class'larını hatırlayan bounded prior Task outcome memory; bu geçmiş optional advisory context'tir, Evidence/routing/model reputation/Authority/completion değildir;
+- evidence-bound repository exploration clearance: yalnız `DONE` sonucu `resolvable` veya `contract-critical` belirsizliği temizleyemez; Hi current-attempt OpenCode `read` gözlemleri, bounded source-provenance claim ve contract-critical seçimlerde aynı read receipt’lerine bağlı decision claim ister. Kaynak değişirse bounded exploration yenilenene kadar implementation admission kapanır; read observation ve decision claim verification veya Authority değildir;
 - lazy Methodology/skill discovery ve loading;
 - structured Evidence, VerificationEnvelope ve deterministic completion;
 - bounded recovery, WAIT ve authoritative STOP;

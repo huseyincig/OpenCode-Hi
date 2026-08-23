@@ -28,7 +28,7 @@
         "id": "hi.role.guidance",
         "hash": {
           "algorithm": "sha256",
-          "value": "279faa715223f2080fafc9185d53610ca64e3f620060d4e967b0d1b381f80a25"
+          "value": "8c3e219c172403e4fa1a1a017c2232435bdf3458974f9575ba5de04adabedea8"
         }
       }
     ],
@@ -37,7 +37,7 @@
     "outputPath": "plugin/src/generated/agent-config.ts",
     "outputHash": {
       "algorithm": "sha256",
-      "value": "e725aefbffe7ec8446c80e7510428ad79856dea88f8bdce099fcd0ba231981fc"
+      "value": "d1db6497f5c66dc8ff60618d41f2e5359eff1df01c010e72055060cbcd9de1f6"
     }
   },
   {

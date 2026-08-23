@@ -81,6 +81,7 @@ Hi adds deterministic semantics around native AI execution:
 - evidence-bound falsifiable diagnosis hypotheses; root-cause prose cannot self-certify completion or create harmful learning credit;
 - bounded Mission runtime projection, durable context artifacts, TypeScript Semantic Context, and evidence-backed project methodology learning with confidence/freshness-gated admission;
 - bounded prior Task outcome memory that recalls only runtime-receipted failure classes for the same structured task/dependency shape and exact current source bytes; recalled history is optional advisory context, never Evidence, routing/model reputation, Authority, or completion state;
+- evidence-bound repository exploration clearance: `DONE` alone cannot erase `resolvable` or `contract-critical` ambiguity; Hi requires current-attempt OpenCode `read` observations, bounded source-provenance claims, and for contract-critical choices a read-grounded decision claim. Source drift closes implementation admission until bounded exploration is refreshed; read observations and decision claims are not verification or Authority;
 - lazy methodology/skill discovery and loading;
 - structured Evidence, VerificationEnvelope and deterministic completion;
 - bounded recovery, WAIT and authoritative STOP;

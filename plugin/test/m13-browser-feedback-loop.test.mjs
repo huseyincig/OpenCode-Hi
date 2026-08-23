@@ -53,7 +53,7 @@ test('read-only worker self-reported changed_files is ignored when native diff p
   const registry=new BackgroundRegistry(),scheduler=new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}}))
   const runtime=new TaskRuntime(opencodeChildPort(c),registry,scheduler,repoRoot,repoRoot,()=>resolveHiConfig({},repoRoot),()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>host)
   const store=new MissionStore(repoRoot),m=store.start('readonly-claim-zero-diff','inspect one file without changing it')
-  store.applyInitialSemanticAssessment('readonly-claim-zero-diff',{material:true,message_kind:'mission',task_kind:'analysis',scope:'local',risk:'low',ambiguity:'high',dependency_class:'independent',required_capabilities:['repository-exploration'],requested_external_actions:[],likely_verification:[],likely_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[]})
+  store.applyInitialSemanticAssessment('readonly-claim-zero-diff',{material:true,message_kind:'mission',task_kind:'analysis',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['repository-exploration'],requested_external_actions:[],likely_verification:[],likely_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[]})
   const started=await runtime.start(m,{objective:'inspect src/a.ts',role:'repository-explorer',category:'quick',scope:['src/a.ts']})
   const task=m.execution.tasks.find(t=>t.id===started.task_id),worker=m.execution.workers.find(w=>w.id===started.worker_id);assert.ok(task);assert.ok(worker)
   worker.native_diff_baseline={};worker.native_diff_final={};worker.write_set=[]
@@ -67,7 +67,7 @@ test('read-only worker still fails closed when native diff proves a real mutatio
   const registry=new BackgroundRegistry(),scheduler=new ConcurrencyScheduler(()=>({global:2,providers:{},models:{}}))
   const runtime=new TaskRuntime(opencodeChildPort(c),registry,scheduler,repoRoot,repoRoot,()=>resolveHiConfig({},repoRoot),()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>host)
   const store=new MissionStore(repoRoot),m=store.start('readonly-claim-real-diff','inspect one file without changing it')
-  store.applyInitialSemanticAssessment('readonly-claim-real-diff',{material:true,message_kind:'mission',task_kind:'analysis',scope:'local',risk:'low',ambiguity:'high',dependency_class:'independent',required_capabilities:['repository-exploration'],requested_external_actions:[],likely_verification:[],likely_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[]})
+  store.applyInitialSemanticAssessment('readonly-claim-real-diff',{material:true,message_kind:'mission',task_kind:'analysis',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['repository-exploration'],requested_external_actions:[],likely_verification:[],likely_targets:['src/a.ts'],intent_signals:[],suppressed_intent_signals:[]})
   const started=await runtime.start(m,{objective:'inspect src/a.ts',role:'repository-explorer',category:'quick',scope:['src/a.ts']})
   const task=m.execution.tasks.find(t=>t.id===started.task_id),worker=m.execution.workers.find(w=>w.id===started.worker_id);assert.ok(task);assert.ok(worker)
   worker.native_diff_baseline={};worker.native_diff_final={'src/a.ts':'changed'};worker.write_set=['src/a.ts']
