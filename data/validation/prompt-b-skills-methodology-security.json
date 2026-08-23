@@ -44,7 +44,7 @@
     {
       "invariant": "project-policy-symlink-confinement",
       "owner": "plugin/src/runtime/methodology/project-policy.ts",
-      "owner_sha256": "8e7b3f9f0840c36dcfb24361219e02f228cb2a141d29a3a795adb9a0bc95c830",
+      "owner_sha256": "afced18738d3b1c99f18b698da29e219778a322037150618fb217508836724d7",
       "owner_anchor": "exactConfinedFile",
       "proof": "plugin/test/prompt-b-skills-methodology-security-hostile.test.mjs",
       "proof_sha256": "c0686cd0712593810f9c994480acbe6c6b380d688a60ebd381e78768928f9004",
@@ -53,29 +53,29 @@
     {
       "invariant": "project-skill-provenance-hash",
       "owner": "plugin/src/runtime/methodology/project-policy.ts",
-      "owner_sha256": "8e7b3f9f0840c36dcfb24361219e02f228cb2a141d29a3a795adb9a0bc95c830",
+      "owner_sha256": "afced18738d3b1c99f18b698da29e219778a322037150618fb217508836724d7",
       "owner_anchor": "provenance.skill_sha256!==digest(skillText)",
       "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
-      "proof_sha256": "6ce8447f1eaa2cde2e389d76e2843d431ad5c6a0bf31e8a9f654053b556283bc",
+      "proof_sha256": "8b33c18919eafd99397f03b02b329c91fca22324f7a87ec5577c58387a9dcdf5",
       "proof_anchor": "project methodology is admitted only when skill, policy and hash-bound provenance are coherent"
     },
     {
       "invariant": "project-policy-provenance-hash",
       "owner": "plugin/src/runtime/methodology/project-policy.ts",
-      "owner_sha256": "8e7b3f9f0840c36dcfb24361219e02f228cb2a141d29a3a795adb9a0bc95c830",
+      "owner_sha256": "afced18738d3b1c99f18b698da29e219778a322037150618fb217508836724d7",
       "owner_anchor": "provenance.policy_sha256!==digest(policyText)",
       "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
-      "proof_sha256": "6ce8447f1eaa2cde2e389d76e2843d431ad5c6a0bf31e8a9f654053b556283bc",
+      "proof_sha256": "8b33c18919eafd99397f03b02b329c91fca22324f7a87ec5577c58387a9dcdf5",
       "proof_anchor": "project methodology update requires fresh provenance hash before re-admission"
     },
     {
       "invariant": "project-learning-ready",
       "owner": "plugin/src/runtime/methodology/project-policy.ts",
-      "owner_sha256": "8e7b3f9f0840c36dcfb24361219e02f228cb2a141d29a3a795adb9a0bc95c830",
-      "owner_anchor": "candidate.state!=='READY'",
+      "owner_sha256": "afced18738d3b1c99f18b698da29e219778a322037150618fb217508836724d7",
+      "owner_anchor": "methodologyCandidateAssessment(candidate).eligible",
       "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
-      "proof_sha256": "6ce8447f1eaa2cde2e389d76e2843d431ad5c6a0bf31e8a9f654053b556283bc",
-      "proof_anchor": "project-learning provenance without a READY repeated-evidence candidate is not admitted"
+      "proof_sha256": "8b33c18919eafd99397f03b02b329c91fca22324f7a87ec5577c58387a9dcdf5",
+      "proof_anchor": "project-learning admission decays a historically READY candidate until fresh evidence restores confidence"
     },
     {
       "invariant": "project-default-trust-ask",
@@ -92,7 +92,7 @@
       "owner_sha256": "a59a6aeeee54eb1a2d82793de3e77e7e901413dd7eef6ac1057919fb8522e346",
       "owner_anchor": "if(exact==='deny'||exact==='ask'||exact==='allow')",
       "proof": "plugin/test/project-methodology-admission-contract.test.mjs",
-      "proof_sha256": "6ce8447f1eaa2cde2e389d76e2843d431ad5c6a0bf31e8a9f654053b556283bc",
+      "proof_sha256": "8b33c18919eafd99397f03b02b329c91fca22324f7a87ec5577c58387a9dcdf5",
       "proof_anchor": "explicit native deny is preserved even for an admitted compatible project methodology"
     },
     {

@@ -17,7 +17,7 @@
     {
       "invariant": "unknown-context-handle-fail-close",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "9bece4d1cf209e71da5565d667ec5f0c5eedaba41e7a3a5738788730100bf2d5",
+      "owner_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
       "owner_anchor": "Unknown context artifact id(s)",
       "proof": "plugin/test/context-survival-hardening.test.mjs",
       "proof_sha256": "238c6269ef500468db62f379ff2296a81e5e802a35de6e9925ac060f313a29cd",
@@ -26,7 +26,7 @@
     {
       "invariant": "stale-context-exclusion",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "9bece4d1cf209e71da5565d667ec5f0c5eedaba41e7a3a5738788730100bf2d5",
+      "owner_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
       "owner_anchor": "stored?.freshness==='FRESH'",
       "proof": "plugin/test/context-survival-hardening.test.mjs",
       "proof_sha256": "238c6269ef500468db62f379ff2296a81e5e802a35de6e9925ac060f313a29cd",
@@ -71,10 +71,10 @@
     {
       "invariant": "mission-runtime-projection-bounded",
       "owner": "plugin/src/runtime/context/mission-runtime-projection.ts",
-      "owner_sha256": "b69ccbc0f5fb97fbe25b37b91b02bcdbd610391fc3e6b1e31bb17ccd42f17688",
+      "owner_sha256": "2e1e710c8d5485df871ad8c993c4d1394367f2f2f0a92a02b17b863ca085d83c",
       "owner_anchor": "clipText",
       "proof": "plugin/test/c1-mission-runtime-projection.test.mjs",
-      "proof_sha256": "5f42e49e753207086b5e26b7f17ed66887d3535c3d5168008c387d70b420ea30",
+      "proof_sha256": "7c8397a865ab486dd43639b760a67c5d18931e83633323e14c8d977d0bcb94c0",
       "proof_anchor": "Hi MISSION RUNTIME PROJECTION"
     },
     {
@@ -89,7 +89,7 @@
     {
       "invariant": "project-methodology-learning-evidence-binding",
       "owner": "plugin/src/runtime/project-intelligence/methodology-learning.ts",
-      "owner_sha256": "67cf632cdfa368ebb471c040eb85c840457ad979d0b7720d1129a97789d6ae75",
+      "owner_sha256": "1fcb0804ea9112958d987e4b3dd024a7fe5e3266b60625f61aba5000760ccc41",
       "owner_anchor": "if(!referenced.length)",
       "proof": "plugin/test/methodology-signal-contract.test.mjs",
       "proof_sha256": "9222804364ba9bdfe7a0f9464cc79c1b08588ecc11e30be235fa23ec875fcecd",
@@ -98,7 +98,7 @@
     {
       "invariant": "project-methodology-independent-readiness",
       "owner": "plugin/src/runtime/project-intelligence/methodology-learning.ts",
-      "owner_sha256": "67cf632cdfa368ebb471c040eb85c840457ad979d0b7720d1129a97789d6ae75",
+      "owner_sha256": "1fcb0804ea9112958d987e4b3dd024a7fe5e3266b60625f61aba5000760ccc41",
       "owner_anchor": "if(independentTasks>=2)item.state='READY'",
       "proof": "plugin/test/methodology-signal-contract.test.mjs",
       "proof_sha256": "9222804364ba9bdfe7a0f9464cc79c1b08588ecc11e30be235fa23ec875fcecd",
@@ -107,7 +107,7 @@
     {
       "invariant": "context-project-learning-not-evidence",
       "owner": "plugin/src/runtime/project-intelligence/methodology-learning.ts",
-      "owner_sha256": "67cf632cdfa368ebb471c040eb85c840457ad979d0b7720d1129a97789d6ae75",
+      "owner_sha256": "1fcb0804ea9112958d987e4b3dd024a7fe5e3266b60625f61aba5000760ccc41",
       "owner_anchor": "activateMethodologySignal",
       "proof": "plugin/test/methodology-signal-contract.test.mjs",
       "proof_sha256": "9222804364ba9bdfe7a0f9464cc79c1b08588ecc11e30be235fa23ec875fcecd",

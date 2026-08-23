@@ -20,8 +20,8 @@
     "recovery": 8
   },
   "proof_hashes": {
-    "scripts/run-replay-acceptance.mjs": "14dbcbee9ec5de34e967ed2e9ced9946fb093c0a1d535beb060e5ed7d110c13f",
-    "data/validation/replay-corpus.json": "6130969ed538e9a8893ba45fbb2318c2e05ec0138f6ac5b20af166fdb1fd5c15",
+    "scripts/run-replay-acceptance.mjs": "ca6d58c5710deef9ebefa8ab9d459ec83571979d8833641acd602ff4453acf00",
+    "data/validation/replay-corpus.json": "8a391d6a71b6cb5fb96c0a76aad7443da5f2b94cb66cb5619938891ec477a0a7",
     "data/validation/decision-replay/semantic-routing.jsonl": "07d461dc8b088db319ae2bb1816a875914f2db4a3aec1f4d8e0a71c1f8fd1bf0"
   },
   "static_guards": {

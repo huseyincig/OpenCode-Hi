@@ -112,7 +112,7 @@ def test_validate_passes():
 def test_validator_rejects_incomplete_dependency_lock_metadata(tmp_path):
     import shutil
     probe=tmp_path/'repo'
-    shutil.copytree(ROOT,probe,ignore=shutil.ignore_patterns('node_modules','dist','.pytest_cache','__pycache__'))
+    shutil.copytree(ROOT,probe,ignore=shutil.ignore_patterns('node_modules','dist','.pytest_cache','__pycache__','.agent-work'))
     lock_path=probe/'plugin'/'package-lock.json'
     lock=json.loads(lock_path.read_text(encoding='utf-8'))
     target=next(k for k,v in lock['packages'].items() if k and not v.get('link'))
@@ -874,6 +874,7 @@ def test_prompt_b_context_project_learning_audit_is_consumer_bound_and_complete(
     assert (ROOT/'scripts/audit-context-project-intelligence-compression.py').is_file()
 
 
+@pytest.mark.evidence
 def test_prompt_b_process_workspace_browser_lifecycle_audit_is_complete_and_source_equivalent():
     d=json.loads((ROOT/'data/validation/prompt-b-process-workspace-browser-lifecycle.json').read_text(encoding='utf-8'))
     assert d['schema']==1 and d['kind']=='PROMPT_B_PROCESS_WORKSPACE_BROWSER_LIFECYCLE_ADVERSARIAL_AUDIT' and d['program']=='PROMPT_B' and d['sections']==[12,13,14] and d['status']=='PASS'

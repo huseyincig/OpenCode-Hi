@@ -30,7 +30,8 @@
         "complete": false,
         "next": "CONTINUE",
         "reason_classes": [
-          "active-worker"
+          "active-worker",
+          "pending-task"
         ]
       },
       "id": "completion-active-worker",

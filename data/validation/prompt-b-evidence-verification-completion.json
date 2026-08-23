@@ -8,7 +8,7 @@
     {
       "invariant": "evidence-scope",
       "owner": "plugin/src/runtime/verification/policy.ts",
-      "owner_sha256": "e086871427160e9b2f5d2677c8964ecea0d24965f298f48295b56bff2341a669",
+      "owner_sha256": "a4b2e1c08156513c4f80c305b3ea9f9b39674d484950f96e93a522d448e04e7b",
       "owner_anchor": "evidenceAllowedForVerification",
       "proof": "plugin/test/obligation-ownership.test.mjs",
       "proof_sha256": "c83e91c8e32f919be12e16d33f692d964038e90fb1002346aeb19e96f2950a30",
@@ -17,7 +17,7 @@
     {
       "invariant": "evidence-freshness",
       "owner": "plugin/src/runtime/verification/policy.ts",
-      "owner_sha256": "e086871427160e9b2f5d2677c8964ecea0d24965f298f48295b56bff2341a669",
+      "owner_sha256": "a4b2e1c08156513c4f80c305b3ea9f9b39674d484950f96e93a522d448e04e7b",
       "owner_anchor": "freshness=p.requireFresh&&!requiredEvidenceFresh?'stale':'fresh'",
       "proof": "plugin/test/q2-critical-invariant-guards.test.mjs",
       "proof_sha256": "da74cbdd01a1498851ca49fa8a7d669d80e52970ec8b332c97f37da7e9107c9d",
@@ -35,7 +35,7 @@
     {
       "invariant": "changed-file-ownership",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "f9b11a41519943fb4fde8f3dd09b8f45647434b6a1aac330fccff28875a831c0",
+      "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
       "owner_anchor": "native.diff.mismatch",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
       "proof_sha256": "7327fe78731d41853b8d3897794cc5955395cd98e08f662c8bb1af86edd6d71e",
@@ -44,7 +44,7 @@
     {
       "invariant": "mutation-invalidation",
       "owner": "plugin/src/runtime/evidence/evidence-runtime.ts",
-      "owner_sha256": "27c7a33baae420ac094fec2bbd638ef3ab1bf67793936cdd39aff76f3b588219",
+      "owner_sha256": "0c256968797ba957046f1e1745d6b30a73c84d3eecae157b6628290dc97ddaa7",
       "owner_anchor": "markMutation",
       "proof": "plugin/test/evidence-freshness-ordering.test.mjs",
       "proof_sha256": "d73f0529bc8d22da9382535c7c70b0c02d2cd6bc17c36f6cc0298ced49124d54",
@@ -53,16 +53,16 @@
     {
       "invariant": "not-run-not-passed",
       "owner": "plugin/src/runtime/verification/policy.ts",
-      "owner_sha256": "e086871427160e9b2f5d2677c8964ecea0d24965f298f48295b56bff2341a669",
+      "owner_sha256": "a4b2e1c08156513c4f80c305b3ea9f9b39674d484950f96e93a522d448e04e7b",
       "owner_anchor": "result:'not_run' as const",
       "proof": "plugin/test/verification-envelope-contract.test.mjs",
-      "proof_sha256": "a7c74fe98f74bafe5f1b97c635d5e20036d4c5c4b4e301b1b71ee883107b3243",
+      "proof_sha256": "ddf847c8ff1278b83197f3ae5abf4faac9984676f46764b988a7156a3877ebf2",
       "proof_anchor": "missing required check is not_run with explanation and never a pass"
     },
     {
       "invariant": "worker-result-not-evidence",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "f9b11a41519943fb4fde8f3dd09b8f45647434b6a1aac330fccff28875a831c0",
+      "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
       "owner_anchor": "WorkerResult evidence stays task-result provenance. It is never copied wholesale",
       "proof": "plugin/test/prompt-b-evidence-verification-completion-hostile.test.mjs",
       "proof_sha256": "cbc59f605a1a205fc92bac9f848d8f1ebe0442e36ae20dd21628ca1ad9247db4",
@@ -71,7 +71,7 @@
     {
       "invariant": "project-methodology-learning-not-evidence",
       "owner": "plugin/src/runtime/project-intelligence/methodology-learning.ts",
-      "owner_sha256": "67cf632cdfa368ebb471c040eb85c840457ad979d0b7720d1129a97789d6ae75",
+      "owner_sha256": "1fcb0804ea9112958d987e4b3dd024a7fe5e3266b60625f61aba5000760ccc41",
       "owner_anchor": "project-methodology.observation-rejected",
       "proof": "plugin/test/methodology-signal-contract.test.mjs",
       "proof_sha256": "9222804364ba9bdfe7a0f9464cc79c1b08588ecc11e30be235fa23ec875fcecd",
@@ -89,7 +89,7 @@
     {
       "invariant": "review-disposition",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "f9b11a41519943fb4fde8f3dd09b8f45647434b6a1aac330fccff28875a831c0",
+      "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
       "owner_anchor": "review.claim-unproven",
       "proof": "plugin/test/obligation-ownership.test.mjs",
       "proof_sha256": "c83e91c8e32f919be12e16d33f692d964038e90fb1002346aeb19e96f2950a30",
@@ -98,10 +98,10 @@
     {
       "invariant": "required-evidence-coverage",
       "owner": "plugin/src/runtime/verification/policy.ts",
-      "owner_sha256": "e086871427160e9b2f5d2677c8964ecea0d24965f298f48295b56bff2341a669",
+      "owner_sha256": "a4b2e1c08156513c4f80c305b3ea9f9b39674d484950f96e93a522d448e04e7b",
       "owner_anchor": "requiredKinds",
       "proof": "plugin/test/verification-envelope-contract.test.mjs",
-      "proof_sha256": "a7c74fe98f74bafe5f1b97c635d5e20036d4c5c4b4e301b1b71ee883107b3243",
+      "proof_sha256": "ddf847c8ff1278b83197f3ae5abf4faac9984676f46764b988a7156a3877ebf2",
       "proof_anchor": "VerificationEnvelope derives a passed check only from explicit passed evidence"
     },
     {

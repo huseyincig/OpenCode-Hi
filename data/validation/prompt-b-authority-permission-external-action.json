@@ -89,10 +89,10 @@
     {
       "invariant": "lower-level-cannot-widen-safety",
       "owner": "plugin/src/runtime/routing/execution-profile.ts",
-      "owner_sha256": "a6a6b1ab21a68381818645c495023fffc6d8b623c7c704885764bae0ff5b043c",
+      "owner_sha256": "124a3e3555101658e889cd4406ae4b7719144af0d36ac776dc8d2befd15d5957",
       "owner_anchor": "promptToolOverrides",
       "proof": "plugin/test/main-prompt-execution-profile-tools.test.mjs",
-      "proof_sha256": "57e415301089787f75c457e6ccf6ccf1b3901f71ec9b0ef7b6c674183bcfbdf7",
+      "proof_sha256": "5426239e93a6134ecdc7c54ae961b5007b7be8513af8e19e818a50488ce75e71",
       "proof_anchor": "prompt tool overrides only disable tools; they never turn a denied native permission into allow"
     },
     {

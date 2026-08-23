@@ -17,7 +17,7 @@
     {
       "invariant": "semantic-core-sdk-confinement",
       "owner": "plugin/src/runtime/application/runtime-event-controller.ts",
-      "owner_sha256": "1ed8186467717b0fb3fd871ad0e8ed52dd5533093765cd4a6b533a8a8f46fa57",
+      "owner_sha256": "49826510d74c16cde0fa9cfb4379a80520264506346f59693485b24af0bc3bc2",
       "owner_anchor": "import type { HostEvent,HostPort } from '../host/port.js'",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
@@ -26,7 +26,7 @@
     {
       "invariant": "normalized-event-boundary",
       "owner": "plugin/src/opencode/open-code-hooks.ts",
-      "owner_sha256": "2a84e5bb86d818d204d779887ff439f13b57f499f990b82920dff89848d90a03",
+      "owner_sha256": "e78379775b986db21382d568f6e08221199a1b2f2b1156df803702069b78750f",
       "owner_anchor": "eventController.handle(normalizeOpenCodeEvent(input?.event??input))",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
@@ -53,7 +53,7 @@
     {
       "invariant": "runtime-service-injection",
       "owner": "plugin/src/runtime/application/runtime-services.ts",
-      "owner_sha256": "053eceb9239e3fbfffec9b2832b390663fc365a5eff897f5bd7ffb1952a31910",
+      "owner_sha256": "d3369337395345117f920fad9e597c93832b5d51e6079f7533c2e6d28bf8da8a",
       "owner_anchor": "export interface RuntimeServicePorts",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "7569ed31da6df309c97d794b9abe3952760030057e49d92b7c2a7de28c935206",
@@ -80,7 +80,7 @@
     {
       "invariant": "missing-capability-fail-closed",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "9bece4d1cf209e71da5565d667ec5f0c5eedaba41e7a3a5738788730100bf2d5",
+      "owner_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
       "owner_anchor": "hostCapabilitySource:(()=>readonly HostCapabilityContract[])|readonly HostCapabilityContract[]=[]",
       "proof": "plugin/test/methodology-host-capability.test.mjs",
       "proof_sha256": "f4bec6d8e7e07e0f2901e9c6059af9e1e9773cf2feec184f43726a77f75ac74a",

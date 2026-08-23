@@ -8,7 +8,7 @@
     {
       "invariant": "unique-identities",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "b6e42d86a0101167104fc773cb8f70dd3b69a137c4974f536373fe65e214aa9b",
+      "owner_sha256": "583a7cb2da40359386b5af9ff5fabd615ea67cc371de31647b46ff4d09b0579e",
       "proof": "plugin/test/task-worker-contract.test.mjs",
       "proof_sha256": "06d94312c3165fccb0a2e539f753500f1103cf7370cd9cbadd21f64c6e26bf43",
       "owner_anchor": "new Set(taskIDs).size",
@@ -17,7 +17,7 @@
     {
       "invariant": "mission-ownership",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "b6e42d86a0101167104fc773cb8f70dd3b69a137c4974f536373fe65e214aa9b",
+      "owner_sha256": "583a7cb2da40359386b5af9ff5fabd615ea67cc371de31647b46ff4d09b0579e",
       "proof": "plugin/test/task-worker-contract.test.mjs",
       "proof_sha256": "06d94312c3165fccb0a2e539f753500f1103cf7370cd9cbadd21f64c6e26bf43",
       "owner_anchor": "worker.parent_mission_id!==missionID",
@@ -26,7 +26,7 @@
     {
       "invariant": "task-dag-validity",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "b6e42d86a0101167104fc773cb8f70dd3b69a137c4974f536373fe65e214aa9b",
+      "owner_sha256": "583a7cb2da40359386b5af9ff5fabd615ea67cc371de31647b46ff4d09b0579e",
       "proof": "plugin/test/task-worker-contract.test.mjs",
       "proof_sha256": "06d94312c3165fccb0a2e539f753500f1103cf7370cd9cbadd21f64c6e26bf43",
       "owner_anchor": "const cyclic=",
@@ -35,7 +35,7 @@
     {
       "invariant": "worker-binding",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "b6e42d86a0101167104fc773cb8f70dd3b69a137c4974f536373fe65e214aa9b",
+      "owner_sha256": "583a7cb2da40359386b5af9ff5fabd615ea67cc371de31647b46ff4d09b0579e",
       "proof": "plugin/test/task-worker-contract.test.mjs",
       "proof_sha256": "06d94312c3165fccb0a2e539f753500f1103cf7370cd9cbadd21f64c6e26bf43",
       "owner_anchor": "ownerTask.worker_id!==worker.id",
@@ -44,7 +44,7 @@
     {
       "invariant": "no-ghost-workers",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "b6e42d86a0101167104fc773cb8f70dd3b69a137c4974f536373fe65e214aa9b",
+      "owner_sha256": "583a7cb2da40359386b5af9ff5fabd615ea67cc371de31647b46ff4d09b0579e",
       "proof": "plugin/test/task-worker-contract.test.mjs",
       "proof_sha256": "06d94312c3165fccb0a2e539f753500f1103cf7370cd9cbadd21f64c6e26bf43",
       "owner_anchor": "ownerTask.worker_id!==worker.id",
@@ -53,7 +53,7 @@
     {
       "invariant": "no-orphan-tasks",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "b6e42d86a0101167104fc773cb8f70dd3b69a137c4974f536373fe65e214aa9b",
+      "owner_sha256": "583a7cb2da40359386b5af9ff5fabd615ea67cc371de31647b46ff4d09b0579e",
       "proof": "plugin/test/task-worker-contract.test.mjs",
       "proof_sha256": "06d94312c3165fccb0a2e539f753500f1103cf7370cd9cbadd21f64c6e26bf43",
       "owner_anchor": "task.worker_id!==undefined",
@@ -62,7 +62,7 @@
     {
       "invariant": "no-duplicate-completion",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "f9b11a41519943fb4fde8f3dd09b8f45647434b6a1aac330fccff28875a831c0",
+      "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
       "proof": "plugin/test/q3-adversarial-threat-matrix.test.mjs",
       "proof_sha256": "d2a3478267f374594c90a29a458ed2938a343826be6e79d621e8430e66f274d2",
       "owner_anchor": "worker.result.duplicate-ignored",
@@ -80,7 +80,7 @@
     {
       "invariant": "stale-worker-result",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "f9b11a41519943fb4fde8f3dd09b8f45647434b6a1aac330fccff28875a831c0",
+      "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
       "proof": "plugin/test/prompt-b-mission-task-worker-adversarial.test.mjs",
       "proof_sha256": "399659105806ddeca310bf43ecba5017a5d923920ae7816fd063ac0776fba9f2",
       "owner_anchor": "worker.result.stale-generation-ignored",
@@ -89,7 +89,7 @@
     {
       "invariant": "task-cancellation",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "9bece4d1cf209e71da5565d667ec5f0c5eedaba41e7a3a5738788730100bf2d5",
+      "owner_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
       "proof_sha256": "202bb2686ca843c5ce838dfe098727f5a83e3d6afa5a496aaf73d2464e497c51",
       "owner_anchor": "async cancel(m:MissionState",
@@ -98,7 +98,7 @@
     {
       "invariant": "task-recovery",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "9bece4d1cf209e71da5565d667ec5f0c5eedaba41e7a3a5738788730100bf2d5",
+      "owner_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
       "proof": "plugin/test/crash-restart-survival.test.mjs",
       "proof_sha256": "fd10117c2ac47bb84468a5240cd2a111e7e2dd30e163fe3bd45c8a1775200053",
       "owner_anchor": "reconcileRestartBeforeResume",
@@ -107,7 +107,7 @@
     {
       "invariant": "dependency-unblock",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "9bece4d1cf209e71da5565d667ec5f0c5eedaba41e7a3a5738788730100bf2d5",
+      "owner_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
       "proof": "plugin/test/scheduler-hardening.test.mjs",
       "proof_sha256": "7a303c49dd0f1606e07a48c3e6970aacd6ae081218854d1ab165ab831128ed7d",
       "owner_anchor": "drainQueue",
@@ -116,7 +116,7 @@
     {
       "invariant": "concurrent-write-safety",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "f9b11a41519943fb4fde8f3dd09b8f45647434b6a1aac330fccff28875a831c0",
+      "owner_sha256": "24f8c6c84848d11a3483ff6926b7d6062dc718ea8f20320c2a690a456db41449",
       "proof": "plugin/test/runtime-write-conflict.test.mjs",
       "proof_sha256": "47c8d2778e0f69da9c2f14bf8f0e1c1f3a76fb3fe32b25dcfc4b2af4ebcef682",
       "owner_anchor": "parallel.write-conflict.quarantined",

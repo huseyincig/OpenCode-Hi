@@ -7,7 +7,7 @@
     13,
     14
   ],
-  "status": "PASS",
+  "status": "FAIL",
   "invariants": [
     {
       "section": 12,
@@ -454,7 +454,7 @@
       "invariant": "persisted-duplicate-lease-identity",
       "level": "CONTROLLED",
       "owner": "plugin/src/runtime/mission/validators.ts",
-      "owner_sha256": "b6e42d86a0101167104fc773cb8f70dd3b69a137c4974f536373fe65e214aa9b",
+      "owner_sha256": "583a7cb2da40359386b5af9ff5fabd615ea67cc371de31647b46ff4d09b0579e",
       "owner_anchor": "activeWorkspacePaths",
       "proof": "plugin/test/w1-workspace-contract.test.mjs",
       "proof_sha256": "954b7fce272007e14bd42c7897a049c8dc8abcbbccdb29e7cf2d281c725771c3",
@@ -693,22 +693,29 @@
       "receipt": "data/validation/external-opencode-hi-0.2.4-workspace-1.18.21-head-46b5dd7.json",
       "status": "SUPPORTED_T3",
       "tested_git_commit": "46b5dd71bb18378e9436a3ad4f74221fce6c9d6a",
-      "runtime_hash_drift": [],
-      "equivalent": true
+      "runtime_hash_drift": [
+        "plugin/src/runtime/mission/validators.ts"
+      ],
+      "equivalent": false
     },
     "browser-execution": {
       "receipt": "data/validation/external-opencode-hi-0.2.4-browser-1.18.21-head-46b5dd7.json",
       "status": "SUPPORTED_T3",
       "tested_git_commit": "46b5dd71bb18378e9436a3ad4f74221fce6c9d6a",
-      "runtime_hash_drift": [],
-      "equivalent": true
+      "runtime_hash_drift": [
+        "plugin/src/runtime/application/hi-tool-surface.ts"
+      ],
+      "equivalent": false
     }
   },
-  "violations": [],
+  "violations": [
+    "workspace-isolation-binding:selected-T3-source-drift:['plugin/src/runtime/mission/validators.ts']",
+    "browser-execution:selected-T3-source-drift:['plugin/src/runtime/application/hi-tool-surface.ts']"
+  ],
   "summary": {
     "required": 61,
     "covered": 61,
-    "violations": 0,
+    "violations": 2,
     "by_section": {
       "12": {
         "required": 23,

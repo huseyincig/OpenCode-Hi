@@ -31,8 +31,11 @@ for name,owner,oa,proof,pa in checks:
 pi_paths=list((ROOT/'plugin/src/runtime/project-intelligence').glob('*.ts'))
 ctx_paths=list((ROOT/'plugin/src/runtime/context').glob('*.ts'))
 worker_contract=(ROOT/'plugin/src/contracts/worker-result.ts').read_text(errors='replace')
-pi_evidence_owner=[str(x.relative_to(ROOT)) for x in pi_paths if 'addEvidence(' in x.read_text(errors='replace') or "../evidence/" in x.read_text(errors='replace')]
-context_evidence_owner=[str(x.relative_to(ROOT)) for x in ctx_paths if 'addEvidence(' in x.read_text(errors='replace') or "../evidence/" in x.read_text(errors='replace')]
+def evidence_writer(path):
+ text=path.read_text(errors='replace')
+ return 'addEvidence(' in text or 'execution.evidence.items.push(' in text or 'execution.evidence.items.splice(' in text or 'execution.evidence.items=' in text
+pi_evidence_owner=[str(x.relative_to(ROOT)) for x in pi_paths if evidence_writer(x)]
+context_evidence_owner=[str(x.relative_to(ROOT)) for x in ctx_paths if evidence_writer(x)]
 if pi_evidence_owner:violations.append('project-intelligence-became-evidence-owner:'+','.join(pi_evidence_owner))
 if context_evidence_owner:violations.append('context-became-evidence-owner:'+','.join(context_evidence_owner))
 if 'EvidenceItem' in worker_contract or "runtime/evidence" in worker_contract:violations.append('worker-result-contract-became-mission-evidence-owner')

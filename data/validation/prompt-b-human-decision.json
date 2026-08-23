@@ -80,7 +80,7 @@
     {
       "invariant": "restart-no-transport-replay",
       "owner": "plugin/src/runtime/application/runtime-services.ts",
-      "owner_sha256": "053eceb9239e3fbfffec9b2832b390663fc365a5eff897f5bd7ffb1952a31910",
+      "owner_sha256": "d3369337395345117f920fad9e597c93832b5d51e6079f7533c2e6d28bf8da8a",
       "owner_anchor": "new ChatHumanDecisionTransport()",
       "proof": "plugin/test/h1-human-decision-transport.test.mjs",
       "proof_sha256": "9567c851068b6472e0a704d561143bcfdfa11860d8367b01527d729cdd8e6250",
@@ -125,7 +125,7 @@
     {
       "invariant": "idle-does-not-reclassify-open-decision",
       "owner": "plugin/src/runtime/application/runtime-event-controller.ts",
-      "owner_sha256": "1ed8186467717b0fb3fd871ad0e8ed52dd5533093765cd4a6b533a8a8f46fa57",
+      "owner_sha256": "49826510d74c16cde0fa9cfb4379a80520264506346f59693485b24af0bc3bc2",
       "owner_anchor": "m.authority.human_decision?.status!=='OPEN'",
       "proof": "plugin/test/p3-process-control-integration.test.mjs",
       "proof_sha256": "4bfac4b006fc1205397c91fb1cae10140f7bde3cd4d01ece9e1fac01cc4e0a4b",

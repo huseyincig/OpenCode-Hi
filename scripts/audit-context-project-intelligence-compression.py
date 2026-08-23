@@ -29,8 +29,11 @@ for name,owner,oa,proof,pa in checks:
  if pa not in pt:violations.append(f'{name}:proof-anchor-drift:{pa}')
  rows.append({'invariant':name,'owner':owner,'owner_sha256':sha(owner),'owner_anchor':oa,'proof':proof,'proof_sha256':sha(proof),'proof_anchor':pa})
 learning=list((ROOT/'plugin/src/runtime/project-intelligence').glob('*.ts'));ctx=list((ROOT/'plugin/src/runtime/context').glob('*.ts'))
-learning_bad=[str(x.relative_to(ROOT)) for x in learning if 'addEvidence(' in x.read_text(errors='replace') or "../evidence/" in x.read_text(errors='replace')]
-ctx_bad=[str(x.relative_to(ROOT)) for x in ctx if 'addEvidence(' in x.read_text(errors='replace') or "../evidence/" in x.read_text(errors='replace')]
+def evidence_writer(path):
+ text=path.read_text(errors='replace')
+ return 'addEvidence(' in text or 'execution.evidence.items.push(' in text or 'execution.evidence.items.splice(' in text or 'execution.evidence.items=' in text
+learning_bad=[str(x.relative_to(ROOT)) for x in learning if evidence_writer(x)]
+ctx_bad=[str(x.relative_to(ROOT)) for x in ctx if evidence_writer(x)]
 if learning_bad:violations.append('project-methodology-learning-evidence-ownership:'+','.join(learning_bad))
 if ctx_bad:violations.append('context-evidence-ownership:'+','.join(ctx_bad))
 status='PASS' if not violations and len(rows)==len(checks) else 'FAIL'
