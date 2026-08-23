@@ -751,7 +751,7 @@ npx --yes opencode-hi@0.2.4 check-update .
 - `rotate` yalnız seçilen child role fallback model sırasını döndürür; credential, API key, provider hesabı veya primary model rotation değildir.
 - `check-update` npm registry metadata'sını read-only kontrol eder; project dosyalarını değiştirmez.
 
-`setup` / `install` gerçek terminalde yalnız primary mode (`Auto`, `Working Manager`, `Manager`) sorar; CI/non-TTY deterministic kalır ve `--non-interactive` kullanılabilir. OpenCode açıldıktan sonra sohbete **“Hi rol modellerini ayarla”** yaz. Runtime `hi_role_models` yalnız gerçekten bağlı/aktif modelleri listeler ve `coder`, `architect`, `repository-explorer`, `qa-reviewer`, `security-reviewer`, `visual-qa` rollerine istediğin model/fallback sırasını kaydeder. `visual-qa` için vision capability zorunludur.
+`setup` / `install` gerçek terminalde yalnız primary mode (`Auto`, `Working Manager`, `Manager`) sorar; CI/non-TTY deterministic kalır ve `--non-interactive` kullanılabilir. Güncel development runtime açıldıktan sonra sohbete **“Hi ayarlarını göster”** yaz. Runtime `hi_settings` tek canlı settings owner olarak yalnız gerçekten bağlı/aktif modelleri, Work Mode'u ve mevcut child-role atamalarını gösterir; explicit model/fallback değişikliklerini aynı transactional yüzeyden uygular. `hi_role_models` yalnız eski caller'lar için compatibility surface olarak kalır. `visual-qa` için vision capability zorunludur.
 
 ## 27. Değişiklikten sonra doğrulama
 

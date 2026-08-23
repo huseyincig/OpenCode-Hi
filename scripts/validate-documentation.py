@@ -13,6 +13,13 @@ def links(text:str):
         target=m.group(1).strip().split()[0].strip('<>')
         if not target or target.startswith(('#','http://','https://','mailto:')):continue
         yield target.split('#',1)[0]
+def markdown_section(text:str,heading:str)->str:
+    start=text.find(heading)
+    if start<0:return''
+    level=len(heading)-len(heading.lstrip('#'))
+    tail=text[start+len(heading):]
+    match=re.search(rf'(?m)^#{{1,{max(1,level)}}}\s+',tail)
+    return tail[:match.start()] if match else tail
 def main():
     errors=[]; cfg=json.loads(POLICY.read_text(encoding='utf-8'))
     docs=[]
@@ -91,6 +98,17 @@ def main():
         if marker not in install:errors.append({'code':'DOC_CONFIG_OPTION_OMITTED','detail':option.get('path')})
         if marker not in configuration:errors.append({'code':'DOC_CONFIGURATION_GUIDE_OPTION_OMITTED','detail':option.get('path')})
         if marker not in configuration_tr:errors.append({'code':'DOC_CONFIGURATION_GUIDE_TR_OPTION_OMITTED','detail':option.get('path')})
+    current_settings_sections=[
+      ('README.md',readme,'# Current dev package/source:'),
+      ('docs/CONFIGURATION.md',configuration,'## 23. Node configuration wizard and advanced legacy Python CLI'),
+      ('docs/locales/tr/CONFIGURATION.md',configuration_tr,'## 26.1 Development `0.2.4` Node package komutları'),
+    ]
+    for path,text,heading in current_settings_sections:
+        section=markdown_section(text,heading)
+        if not section:errors.append({'code':'DOC_CURRENT_DEV_SETTINGS_SECTION_MISSING','path':path,'heading':heading});continue
+        if 'hi_settings' not in section:errors.append({'code':'DOC_CURRENT_DEV_SETTINGS_OWNER_DRIFT','path':path,'expected':'hi_settings'})
+        if 'Hi rol modellerini ayarla' in section:errors.append({'code':'DOC_CURRENT_DEV_LEGACY_SETTINGS_GUIDANCE','path':path,'legacy':'Hi rol modellerini ayarla'})
+        if 'hi_role_models' in section and 'compatibility' not in section.lower():errors.append({'code':'DOC_CURRENT_DEV_LEGACY_SETTINGS_ROLE_DRIFT','path':path,'expected':'compatibility-only'})
     if '[Configuration Guide](docs/CONFIGURATION.md)' not in readme:errors.append({'code':'README_CONFIGURATION_GUIDE_LINK_MISSING'})
     if '[Türkçe Kurulum ve Yapılandırma Rehberi](CONFIGURATION.md)' not in tr:errors.append({'code':'TR_README_CONFIGURATION_GUIDE_LINK_MISSING'})
     for cap,row in caps.items():
@@ -104,7 +122,7 @@ def main():
     out={'schema':1,'release':version,'kind':'DOCUMENTATION_PARITY','status':status,
       'inputs':{'documentation_ownership':{'path':rel(POLICY),'sha256':sha(POLICY)},'compatibility':{'path':'data/validation/compatibility-matrix-0.1.0.json','sha256':sha(ROOT/'data/validation/compatibility-matrix-0.1.0.json')},'release_status':{'path':f'data/validation/release-status-{version}.json','sha256':sha(ROOT/f'data/validation/release-status-{version}.json')}},
       'checked_current_documents':[rel(p) for p in docs],
-      'checks':{'bounded_public_surface':True,'local_markdown_links':True,'stale_current_status_patterns':True,'release_availability':True,'localized_version_parity':True,'localized_release_status':True,'host_capabilities':True,'generated_config_host_projections':True,'community_health_files':True},'violations':errors}
+      'checks':{'bounded_public_surface':True,'local_markdown_links':True,'stale_current_status_patterns':True,'release_availability':True,'localized_version_parity':True,'localized_release_status':True,'host_capabilities':True,'generated_config_host_projections':True,'community_health_files':True,'current_dev_settings_owner':True},'violations':errors}
     OUT.write_text(json.dumps(out,indent=2,ensure_ascii=False)+'\n',encoding='utf-8',newline='\n')
     print(f'documentation parity {status}: docs={len(docs)} violations={len(errors)}')
     if errors:print(json.dumps(errors,indent=2,ensure_ascii=False))

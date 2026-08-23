@@ -44,7 +44,8 @@
     "localized_release_status": true,
     "host_capabilities": true,
     "generated_config_host_projections": true,
-    "community_health_files": true
+    "community_health_files": true,
+    "current_dev_settings_owner": true
   },
   "violations": []
 }
