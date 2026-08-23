@@ -17,7 +17,7 @@
     {
       "invariant": "semantic-core-sdk-confinement",
       "owner": "plugin/src/runtime/application/runtime-event-controller.ts",
-      "owner_sha256": "b6cf95f3f9141a4989b2f43a6ded5cba6b20a18970a1aea51993f5d28b11d65e",
+      "owner_sha256": "797802e30a1e8aafb5ccbfc087eb08e7fb6f890c1de1d628789550d550207b1c",
       "owner_anchor": "import type { HostEvent,HostPort } from '../host/port.js'",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",
@@ -80,7 +80,7 @@
     {
       "invariant": "missing-capability-fail-closed",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "87772dc2b33303d573a6ed8e1ad973dfafc8c3396788efc1ef19107d741a2b4c",
+      "owner_sha256": "87113c4133e23b482b7a853bfcb046bbbb2f62b9ace068d170963bd02ae16167",
       "owner_anchor": "hostCapabilitySource:(()=>readonly HostCapabilityContract[])|readonly HostCapabilityContract[]=[]",
       "proof": "plugin/test/methodology-host-capability.test.mjs",
       "proof_sha256": "ace5df77cf44c6a9b2ec9d87284e1385e9c532a7edd12dc322ae62b2adaf45c0",

@@ -141,6 +141,8 @@ export class TaskRuntime {
         bindWorkerUsageObservation(m, worker, usage); }
     noteEffectiveModel(m, workerID, observed) { return this.#child.noteEffectiveModel(m, workerID, observed); }
     resolveChildCallback(sessionID) { return this.#child.resolveCallbackWorker(sessionID); }
+    forgetChildCallback(sessionID) { const worker = this.#child.resolveCallbackWorker(sessionID); if (!worker)
+        return false; this.registry.delete(worker.id); return true; }
     admitTerminalEvent(m, worker) { return admitHostTerminalEvent(m, worker, this.childHost); }
     async settleHostIdleRuntimeError(m, worker, error) {
         const task = m.execution.tasks.find(t => t.id === worker.task_id);

@@ -3,6 +3,7 @@
 All notable changes to OpenCode-Hi are documented here.
 
 ## Unreleased
+- Drops only the process-local child callback index when OpenCode confirms `session.deleted` after a Mission has already STOPped (and on cancelled/stale callback fences). Late deletion no longer leaves a dead Worker lookup for the plugin lifetime, while canonical stopped Task/Worker outcomes remain immutable.
 - Scopes in-flight Worker spawn deduplication to the exact Hi Mission. Identical task contracts in different parent sessions can no longer collapse onto one native child Worker; same-Mission fingerprint dedupe remains intact as an ephemeral spawn optimization.
 - Fences OpenCode native permission reconstruction state by exact session lifecycle. Pending permission patterns are now keyed by `sessionID + permissionID`, permission persistence occurs only after current Mission/Worker lifecycle guards, and stopped/completed/deleted/disposed missions clear their process-local entries. Late `permission.asked`/`permission.replied: always` events after STOP can no longer retain stale patterns or create persistent Hi project authority.
 - Refreshes the Hi-owned local preview lease when a live visual Task's bounded scope changes. Same-task preview reuse now requires the same canonical root **and** canonical scope policy, so a resumable Task that accepts a bounded scope expansion cannot keep serving through a stale loopback-server closure that rejects the newly admitted target (or preserves an obsolete access policy).

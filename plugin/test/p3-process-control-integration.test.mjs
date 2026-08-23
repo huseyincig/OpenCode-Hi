@@ -46,6 +46,22 @@ test('P3 parent session deletion stops mission and process runtime before worker
 })
 
 
+
+test('stopped mission drops only the ephemeral child callback index when native session deletion is confirmed',async()=>{
+  const store=new MissionStore(),m=assessed(store,'stopped-child-delete-parent'),forgot=[]
+  const child={id:'w-stopped-delete',task_id:'t-stopped-delete',role:'coder',category:'standard',session_id:'child-stopped-delete',parent_session_id:m.identity.session_id,parent_mission_id:m.identity.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f-stopped-delete',status:'busy',generation_at_spawn:m.continuation.generation}
+  const task={id:'t-stopped-delete',objective:'bounded work',role:'coder',category:'standard',scope:['src/a.ts'],dependencies:[],requiredEvidence:[],obligation_ids:[],constraints:[],status:'running',worker_id:child.id,created_at:Date.now(),updated_at:Date.now()}
+  m.execution.tasks.push(task);m.execution.workers.push(child);m.identity.status='stopped';m.continuation.user_interrupted=true
+  const tasks={resolveChildCallback:sid=>sid===child.session_id?child:undefined,childCallbackDisposition:()=> 'accept',forgetChildCallback:sid=>{forgot.push(sid);return true}}
+  const services={store,background:{},persistence:{save:()=>{}},tasks,processRuntime:{},workspaceRuntime:undefined,eventSink:()=>{},scopedStores:{}}
+  const controller=new RuntimeEventController({state:state(),host:{refreshRuntimeInventory:async()=>{},log:async()=>{},client:{}},services,projectAuthority:{grant:()=>{}},pendingNativePermissions:new Map(),projectRoot:'/repo'})
+  await controller.handle(normalizeOpenCodeEvent({type:'session.deleted',properties:{info:{id:child.session_id}}}))
+  assert.deepEqual(forgot,[child.session_id],'confirmed host deletion must drop the dead process-local callback index')
+  assert.equal(child.status,'busy','late deletion after STOP must not rewrite canonical Worker outcome')
+  assert.equal(task.status,'running','late deletion after STOP must not rewrite canonical Task outcome')
+  assert.equal(m.identity.status,'stopped')
+})
+
 test('PROMPT B parent idle preserves an existing canonical operational HumanDecision instead of reclassifying it as Authority',async()=>{
   const store=new MissionStore(),m=assessed(store,'human-idle-preserve')
   m.execution.obligations=[];m.execution.evidence.fresh=true

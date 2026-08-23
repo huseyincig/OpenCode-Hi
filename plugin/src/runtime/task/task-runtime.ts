@@ -84,6 +84,7 @@ export class TaskRuntime{
   noteUsage(m:MissionState,workerID:string,usage:HostUsageObservation):void{const worker=m.execution.workers.find(w=>w.id===workerID);if(worker)bindWorkerUsageObservation(m,worker,usage)}
   noteEffectiveModel(m:MissionState,workerID:string,observed?:{model?:string;variant?:string;source?:string}):{ok:boolean;expected?:string;observed?:string;reason:string}{return this.#child.noteEffectiveModel(m,workerID,observed)}
   resolveChildCallback(sessionID:string):WorkerState|undefined{return this.#child.resolveCallbackWorker(sessionID)}
+  forgetChildCallback(sessionID:string):boolean{const worker=this.#child.resolveCallbackWorker(sessionID);if(!worker)return false;this.registry.delete(worker.id);return true}
   admitTerminalEvent(m:MissionState,worker:WorkerState):Promise<HostTerminalEventAdmission>{return admitHostTerminalEvent(m,worker,this.childHost)}
   async settleHostIdleRuntimeError(m:MissionState,worker:WorkerState,error:HostAssistantError):Promise<{applied:boolean;reason:string;wakeResult?:'RUNTIME_FALLBACK'|'QUARANTINED'|'FAILED'|'BLOCKED';failureKind?:WorkerState['last_runtime_failure_kind']}>{
     const task=m.execution.tasks.find(t=>t.id===worker.task_id);if(!task)return{applied:false,reason:'task-not-found'}

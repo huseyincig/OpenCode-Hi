@@ -80,19 +80,22 @@ export class RuntimeEventController {
         const mission = childMission ?? store.get(sid);
         if (mission && child?.status === 'cancelled') {
             this.clearNativePermissionsForSession(sid);
-            appendLedger(mission, 'worker.callback.after-cancel-ignored', { worker_id: child.id, payload: { session_id: sid, event: ev.rawType } });
+            const callback_index_cleared = ev.kind === 'session-deleted' ? tasks.forgetChildCallback(sid) : false;
+            appendLedger(mission, 'worker.callback.after-cancel-ignored', { worker_id: child.id, payload: { session_id: sid, event: ev.rawType, callback_index_cleared } });
             persistence.save(store.all());
             return;
         }
         if (child && mission && tasks.childCallbackDisposition(mission, child) === 'stale-mission') {
             this.clearNativePermissionsForSession(sid);
-            appendLedger(mission, 'worker.callback.stale-mission-ignored', { worker_id: child?.id, payload: { worker_mission_id: child?.parent_mission_id, mission_id: mission.identity.mission_id, worker_generation: child?.generation_at_spawn, mission_generation: mission.continuation.generation, event: ev.rawType } });
+            const callback_index_cleared = ev.kind === 'session-deleted' ? tasks.forgetChildCallback(sid) : false;
+            appendLedger(mission, 'worker.callback.stale-mission-ignored', { worker_id: child?.id, payload: { worker_mission_id: child?.parent_mission_id, mission_id: mission.identity.mission_id, worker_generation: child?.generation_at_spawn, mission_generation: mission.continuation.generation, event: ev.rawType, callback_index_cleared } });
             persistence.save(store.all());
             return;
         }
         if (mission && (mission.continuation.user_interrupted || mission.identity.status === 'stopped')) {
             this.clearNativePermissionsForMission(mission);
-            appendLedger(mission, 'runtime.event.after-user-stop-ignored', { worker_id: child?.id, payload: { session_id: sid, event: ev.rawType } });
+            const callback_index_cleared = Boolean(child && ev.kind === 'session-deleted' && tasks.forgetChildCallback(sid));
+            appendLedger(mission, callback_index_cleared ? 'worker.callback.after-stop-deleted' : 'runtime.event.after-user-stop-ignored', { worker_id: child?.id, payload: { session_id: sid, event: ev.rawType, callback_index_cleared } });
             persistence.save(store.all());
             return;
         }

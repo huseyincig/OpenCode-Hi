@@ -8,7 +8,7 @@
     {
       "invariant": "role-agent-model-methodology-separation",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "87772dc2b33303d573a6ed8e1ad973dfafc8c3396788efc1ef19107d741a2b4c",
+      "owner_sha256": "87113c4133e23b482b7a853bfcb046bbbb2f62b9ace068d170963bd02ae16167",
       "owner_anchor": "worker.requested_model=input.model",
       "proof": "plugin/test/model-contract.test.mjs",
       "proof_sha256": "c4550067e1f883572c3e7b77d254853f95904a4c7e8b44ef9e5a53b084115f45",

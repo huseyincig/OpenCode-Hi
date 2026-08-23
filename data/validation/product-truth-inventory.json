@@ -27,7 +27,7 @@
       "area": "task-runtime",
       "canonical_owner": "TaskRuntime",
       "owner_path": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "87772dc2b33303d573a6ed8e1ad973dfafc8c3396788efc1ef19107d741a2b4c",
+      "owner_sha256": "87113c4133e23b482b7a853bfcb046bbbb2f62b9ace068d170963bd02ae16167",
       "producer_or_contract_paths": [
         "plugin/src/runtime/task/contracts.ts"
       ],

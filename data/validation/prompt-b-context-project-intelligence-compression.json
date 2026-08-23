@@ -17,7 +17,7 @@
     {
       "invariant": "unknown-context-handle-fail-close",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "87772dc2b33303d573a6ed8e1ad973dfafc8c3396788efc1ef19107d741a2b4c",
+      "owner_sha256": "87113c4133e23b482b7a853bfcb046bbbb2f62b9ace068d170963bd02ae16167",
       "owner_anchor": "Unknown context artifact id(s)",
       "proof": "plugin/test/context-survival-hardening.test.mjs",
       "proof_sha256": "cc2ffdf3ed2cbc0e5401d41c3d9b8b7cc859d826fae71ee9b79b97f7d38dce38",
