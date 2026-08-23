@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { methodologyCandidateDigest, methodologyCandidateID, validProjectMethodologyCandidate } from './methodology-candidate.js';
+import { methodologyCandidateAssessment, methodologyCandidateDigest, methodologyCandidateID, validProjectMethodologyCandidate, withDerivedMethodologyLearning } from './methodology-candidate.js';
 import { hiProjectRoot, projectMethodologyCandidatePath } from '../storage/ownership.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { activateMethodologySignal } from '../methodology/activation.js';
@@ -20,12 +20,12 @@ export class ProjectMethodologyLearningStore {
         try {
             const raw = JSON.parse(readFileSync(join(dir, entry.name), 'utf8'));
             if (validProjectMethodologyCandidate(raw) && entry.name === `${raw.id}.json`)
-                this.#items.set(raw.id, raw);
+                this.#items.set(raw.id, withDerivedMethodologyLearning(raw));
         }
         catch { }
     } }
-    #persist(item) { const path = projectMethodologyCandidatePath(this.projectRoot, item.id); mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, JSON.stringify(item, null, 2) + '\n', 'utf8'); }
-    all() { return [...this.#items.values()].map(x => ({ ...x, observations: x.observations.map(o => ({ ...o, evidence: [...o.evidence] })) })); }
+    #persist(item) { const path = projectMethodologyCandidatePath(this.projectRoot, item.id); mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, JSON.stringify(withDerivedMethodologyLearning(item), null, 2) + '\n', 'utf8'); }
+    all() { return [...this.#items.values()].map(withDerivedMethodologyLearning); }
     observe(mission, worker, observation, resultEvidence) {
         const available = new Set(resultEvidence.map(item => String(item).trim().toLowerCase()).filter(Boolean));
         const referenced = [...new Set(observation.evidence.map(ref => String(ref).trim().toLowerCase()).filter(ref => available.has(ref)))].slice(0, 12);
@@ -34,26 +34,28 @@ export class ProjectMethodologyLearningStore {
             return undefined;
         }
         const id = methodologyCandidateID(observation), contractSha = methodologyCandidateDigest(observation), now = Date.now(), existing = this.#items.get(id);
-        const item = existing ?? { schema: 1, id, key: observation.key, contract_sha256: contractSha, procedure: observation.procedure, trigger: observation.trigger, do_not_trigger: observation.do_not_trigger, exit_condition: observation.exit_condition, state: 'CANDIDATE', observations: [], created_at: now, updated_at: now };
+        let item = existing ?? { schema: 1, id, key: observation.key, contract_sha256: contractSha, procedure: observation.procedure, trigger: observation.trigger, do_not_trigger: observation.do_not_trigger, exit_condition: observation.exit_condition, state: 'CANDIDATE', observations: [], created_at: now, updated_at: now };
         if (item.state === 'ARCHIVED')
-            return item;
+            return withDerivedMethodologyLearning(item);
         const taskKey = `${mission.identity.mission_id}:${worker.task_id}`;
         if (!item.observations.some(o => `${o.mission_id}:${o.task_id}` === taskKey))
-            item.observations.push({ mission_id: mission.identity.mission_id, task_id: worker.task_id, worker_id: worker.id, evidence: referenced, observed_at: now });
+            item.observations.push({ mission_id: mission.identity.mission_id, task_id: worker.task_id, worker_id: worker.id, evidence: referenced, observed_at: now, outcome: 'helpful' });
         const independentTasks = new Set(item.observations.map(o => `${o.mission_id}:${o.task_id}`)).size;
         if (independentTasks >= 2)
             item.state = 'READY';
         item.updated_at = now;
+        item = withDerivedMethodologyLearning(item);
         this.#items.set(id, item);
         this.#persist(item);
-        appendLedger(mission, item.state === 'READY' ? 'project-methodology.candidate-ready' : 'project-methodology.observed', { task_id: worker.task_id, worker_id: worker.id, payload: { candidate_id: item.id, key: item.key, observations: item.observations.length, independent_tasks: independentTasks, state: item.state } });
-        if (item.state === 'READY') {
+        const assessment = methodologyCandidateAssessment(item, now), event = assessment.eligible ? 'project-methodology.candidate-ready' : 'project-methodology.observed';
+        appendLedger(mission, event, { task_id: worker.task_id, worker_id: worker.id, payload: { candidate_id: item.id, key: item.key, observations: item.observations.length, independent_tasks: independentTasks, state: item.state, positive: assessment.positive, negative: assessment.negative, posterior_confidence: assessment.posterior_confidence, effective_confidence: assessment.effective_confidence, freshness: assessment.freshness, admission: assessment.reason } });
+        if (assessment.eligible) {
             const covered = methodologyCatalog(this.projectRoot).filter(entry => entry.provider === 'project').some(entry => readProjectMethodologyProvenance(this.projectRoot, entry.name)?.candidate_id === item.id);
             if (covered)
                 appendLedger(mission, 'project-methodology.candidate-covered', { task_id: worker.task_id, worker_id: worker.id, payload: { candidate_id: item.id, key: item.key } });
             else
-                activateMethodologySignal(mission, this.projectRoot, { signal: 'project.methodology-gap', producer: 'project-intelligence', reason: `Repeated evidence-backed reusable HOW candidate '${item.key}' requires methodology authoring/admission review.` });
+                activateMethodologySignal(mission, this.projectRoot, { signal: 'project.methodology-gap', producer: 'project-intelligence', reason: `Repeated evidence-backed reusable HOW candidate '${item.key}' passed independent-evidence, confidence and freshness admission gates and requires methodology authoring/admission review.` });
         }
-        return { ...item, observations: item.observations.map(o => ({ ...o, evidence: [...o.evidence] })) };
+        return withDerivedMethodologyLearning(item);
     }
 }

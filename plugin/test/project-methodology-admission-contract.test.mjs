@@ -45,6 +45,16 @@ test('project methodology is admitted only when skill, policy and hash-bound pro
   }finally{rmSync(f.root,{recursive:true,force:true})}
 })
 
+
+test('project-learning admission decays a historically READY candidate until fresh evidence restores confidence',()=>{
+  const f=fixture();try{
+    const candidate=JSON.parse(readFileSync(f.candidatePath,'utf8')),old=Date.now()-365*24*60*60*1000
+    candidate.observations=candidate.observations.map((o,i)=>({...o,observed_at:old+i}));candidate.created_at=old-10;candidate.updated_at=old+2;delete candidate.learning
+    writeFileSync(f.candidatePath,JSON.stringify(candidate,null,2)+'\n')
+    assert.deepEqual(discoverProjectMethodologyPolicies(f.root),[],'historical READY maturity is not enough after confidence/freshness decay')
+  }finally{rmSync(f.root,{recursive:true,force:true})}
+})
+
 test('project-learning admission rejects an incoherent READY candidate contract hash',()=>{
   const f=fixture();try{
     const candidate=JSON.parse(readFileSync(f.candidatePath,'utf8'))

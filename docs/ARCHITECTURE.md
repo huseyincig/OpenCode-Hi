@@ -196,7 +196,7 @@ Execution topology and model selection are bounded structured decisions. Small/l
 
 The first-class semantic adapter currently supports `typescript` and `typescriptreact` only. JavaScript, LSP-backed and Tree-sitter-backed semantic adapters are not implemented or advertised.
 
-Context is consumer-bound and budgeted. Durable context artifacts and semantic TypeScript context are distinct from Evidence. Project-scoped learning is limited to evidence-bound methodology candidates under canonical storage ownership; it does not provide a general knowledge retrieval layer. Provider projection/pruning never widens privacy or consumer scope.
+Context is consumer-bound and budgeted. Durable context artifacts and semantic TypeScript context are distinct from Evidence. Project-scoped learning is limited to evidence-bound methodology candidates under canonical storage ownership; it does not provide a general knowledge retrieval layer. Candidate maturity and runtime admission are distinct: repeated independent exact evidence establishes READY maturity, while a deterministic Beta posterior plus frequency-aware freshness decay controls whether that learned HOW is currently admissible. Historical observations are preserved rather than deleted; stale confidence can fall below admission and fresh exact evidence can restore it. Task/model failure is never automatically attributed as harmful methodology evidence without a causally bound receipt. Provider projection/pruning never widens privacy or consumer scope.
 
 ## Storage and filesystem ownership
 

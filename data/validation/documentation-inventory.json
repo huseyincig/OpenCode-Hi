@@ -123,7 +123,7 @@
   "artifacts": [
     {
       "path": ".github/CONTRIBUTING.md",
-      "sha256": "ef7b7d6548b259c707d6c641c3ea978d9da8833683b5040efb1f2772a75da75b",
+      "sha256": "387d751a3276b6e306401e07fc9a79d3382b9b4334dbd29f90adb4ba4cc61978",
       "area": "contribution",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
@@ -147,7 +147,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "a6968539b4f6076ed1306c07bf50e8fc69b7f9a72571ef532024e3642f53961e",
+      "sha256": "c2f7c38fb9d11809d051ad8711a9eae47044063bdb3256e20305bc4423351d1d",
       "area": "product-overview",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -155,7 +155,7 @@
     },
     {
       "path": "docs/ARCHITECTURE.md",
-      "sha256": "087ea43e90ee935484d69c9ceacc4d9d49cdba539a13d9bd28ef6fe8f23fefda",
+      "sha256": "53e4ba0f06077d78a68cbdc2e4df0ad1001fe2bfc8c8a3056d0ff40f8c0844c8",
       "area": "architecture-execution-context-storage-privacy",
       "audience": "CONTRIBUTOR",
       "lifecycle": "CANONICAL_CURRENT",
@@ -243,7 +243,7 @@
     },
     {
       "path": "docs/locales/tr/README.md",
-      "sha256": "daffd85925e9e7a5402f7bf57280e14dae8229a36262774b367cc6dd1a9e8757",
+      "sha256": "6169dbdf1af083e862f6936bf8f4a8b7f8a9ff6a09801d05ea1561296d72fb27",
       "area": "turkish-translation",
       "audience": "USER",
       "lifecycle": "DERIVED_CURRENT",

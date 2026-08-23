@@ -5,7 +5,7 @@ import { projectMethodologyCandidatePath, projectMethodologyPolicyDir as methodo
 import { PACKAGED_HI_AGENTS } from '../../generated/agent-config.js';
 import { HI_METHODOLOGY_EXIT_REQUIREMENTS, HI_METHODOLOGY_SIGNAL_CATALOG } from '../../generated/methodology-policy.js';
 import { readProjectMethodologyProvenance } from './provenance.js';
-import { readProjectMethodologyCandidate } from '../project-intelligence/methodology-candidate.js';
+import { methodologyCandidateAssessment, readProjectMethodologyCandidate } from '../project-intelligence/methodology-candidate.js';
 const ROLE_IDS = new Set(Object.keys(PACKAGED_HI_AGENTS));
 function canonical(path) { try {
     return realpathSync(path);
@@ -107,7 +107,7 @@ export function discoverProjectMethodologyPolicies(projectRoot) {
                 if (!exactConfinedFile(projectRoot, candidatePath, dirname(candidatePath)))
                     continue;
                 const candidate = readProjectMethodologyCandidate(projectRoot, provenance.candidate_id);
-                if (!candidate || candidate.state !== 'READY')
+                if (!candidate || !methodologyCandidateAssessment(candidate).eligible)
                     continue;
             }
             out.push(policy);

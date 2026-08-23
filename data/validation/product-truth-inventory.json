@@ -233,7 +233,7 @@
       "area": "project-intelligence",
       "canonical_owner": "ProjectMethodologyLearningStore",
       "owner_path": "plugin/src/runtime/project-intelligence/methodology-learning.ts",
-      "owner_sha256": "67cf632cdfa368ebb471c040eb85c840457ad979d0b7720d1129a97789d6ae75",
+      "owner_sha256": "1fcb0804ea9112958d987e4b3dd024a7fe5e3266b60625f61aba5000760ccc41",
       "producer_or_contract_paths": [
         "plugin/src/runtime/project-intelligence/methodology-candidate.ts",
         "plugin/src/contracts/storage-ownership.ts"
