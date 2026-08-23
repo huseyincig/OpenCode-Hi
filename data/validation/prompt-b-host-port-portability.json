@@ -26,7 +26,7 @@
     {
       "invariant": "normalized-event-boundary",
       "owner": "plugin/src/opencode/open-code-hooks.ts",
-      "owner_sha256": "5917b05317def1cd36018f0b90745eac66033fa3c140a3fcee536c82627e68ad",
+      "owner_sha256": "ef31c58f9ae5874350446ac32c7a339562cb71b084d5313623255093842af60d",
       "owner_anchor": "eventController.handle(normalizeOpenCodeEvent(input?.event??input))",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",
@@ -80,7 +80,7 @@
     {
       "invariant": "missing-capability-fail-closed",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
+      "owner_sha256": "42e2eefdd659d6325b0d21e5760c4646cf065cf9ae667ab4d079bd07e1ecf449",
       "owner_anchor": "hostCapabilitySource:(()=>readonly HostCapabilityContract[])|readonly HostCapabilityContract[]=[]",
       "proof": "plugin/test/methodology-host-capability.test.mjs",
       "proof_sha256": "ace5df77cf44c6a9b2ec9d87284e1385e9c532a7edd12dc322ae62b2adaf45c0",

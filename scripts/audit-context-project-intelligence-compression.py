@@ -8,7 +8,7 @@ def sha(path):return hashlib.sha256((ROOT/path).read_bytes()).hexdigest()
 checks=[
  ('context-consumer-binding','plugin/src/contracts/context-reference.ts','consumer_ref','plugin/test/context-reference-contract.test.mjs','ContextReference binds one available source to an explicit consumer'),
  ('unknown-context-handle-fail-close','plugin/src/runtime/task/task-runtime.ts','Unknown context artifact id(s)','plugin/test/context-survival-hardening.test.mjs','unknown task context artifact id fails closed instead of widening context'),
- ('stale-context-exclusion','plugin/src/runtime/task/task-runtime.ts',"stored?.freshness==='FRESH'",'plugin/test/context-survival-hardening.test.mjs','fresh durable context artifact content is loaded only while source-bound freshness holds'),
+ ('stale-context-exclusion','plugin/src/runtime/task/queued-worker-dispatcher.ts',"stored?.freshness==='FRESH'",'plugin/test/context-survival-hardening.test.mjs','fresh durable context artifact content is loaded only while source-bound freshness holds'),
  ('durable-artifact-source-provenance','plugin/src/runtime/context/artifact-store.ts','provenance:{source_files:','plugin/test/artifact-contract.test.mjs',"assert.deepEqual(a.provenance.source_files,['src/a.ts'])"),
  ('durable-artifact-consumer-binding','plugin/src/runtime/context/artifact-store.ts','bindConsumer','plugin/test/context-survival-hardening.test.mjs','consumer_refs.includes(started.task_id)'),
  ('durable-artifact-freshness-invalidation','plugin/src/runtime/context/artifact-store.ts',"a.freshness='POTENTIALLY_STALE'",'plugin/test/hi-core-evolution.test.mjs',"freshness,'POTENTIALLY_STALE'"),

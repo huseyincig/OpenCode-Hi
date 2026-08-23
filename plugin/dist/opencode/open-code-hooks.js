@@ -42,6 +42,7 @@ export function createOpenCodeHooks(input) {
                 void host.refreshRuntimeInventory('chat-message');
             await createChatMessageHook(store, async (sid, text) => { const m = store.get(sid); if (!m)
                 return; const workersPaused = await tasks.pauseForSemanticAssessment(m); appendLedger(m, 'semantic.execution-quarantined', { payload: { revision: m.identity.semantic_assessment.revision, workers: workersPaused, preview: text.slice(0, 180) } }); }, humanDecisionTransport)(input, output);
+            tasks.wakeQueued();
         }
         finally {
             for (const m of store.all())

@@ -416,7 +416,13 @@ export class MissionStore {
                             t.status = t.result?.status === 'DONE' ? 'completed' : 'waiting';
                     }
                     else {
-                        const reservation = m.execution.scheduler?.reservations.find(r => r.workerId === w.id);
+                        const reservation = m.execution.scheduler?.reservations.find(r => r.workerId === w.id), durableQueued = w.status === 'queued' && t?.status === 'queued' && Boolean(t.execution_profile) && !reservation;
+                        if (durableQueued) {
+                            w.generation_at_spawn = m.continuation.generation;
+                            w.parent_mission_id = m.identity.mission_id;
+                            appendLedger(m, 'worker.restart-queue-preserved', { task_id: t.id, worker_id: w.id, payload: { reason: 'accepted-sessionless-queue', execution_profile: true } });
+                            continue;
+                        }
                         if (reservation?.phase === 'RECONCILING' && !reservation.hostExecutionId) {
                             const reconciled = reduceSchedulerLifecycle(m.execution.scheduler, { type: 'RECONCILE', reservationId: reservation.reservationId, attempt: reservation.attempt, outcome: 'NOT_STARTED', at: now });
                             if (reconciled.accepted) {
@@ -440,8 +446,12 @@ export class MissionStore {
                 }
             }
             for (const t of m.execution.tasks)
-                if (['queued', 'running'].includes(t.status))
-                    t.status = t.result?.status === 'DONE' ? 'completed' : t.result ? 'waiting' : 'blocked';
+                if (['queued', 'running'].includes(t.status)) {
+                    const w = m.execution.workers.find(worker => worker.task_id === t.id), durableQueued = t.status === 'queued' && w?.status === 'queued' && !w.session_id && Boolean(t.execution_profile);
+                    if (!durableQueued)
+                        t.status = t.result?.status === 'DONE' ? 'completed' : t.result ? 'waiting' : 'blocked';
+                }
+            ;
             m.continuation.continuation_lock_until = undefined;
             if (uncleanShutdown) {
                 const pendingBefore = m.authority.pending_permissions;

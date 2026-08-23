@@ -34,7 +34,7 @@ export const HiPlugin:Plugin=async(ctx)=>{
   const services=createRuntimeServices({ports:{nativeContext:{project:ctx.project,directory:ctx.directory,worktree:ctx.worktree},childSession,readAssistantResult:host.readAssistantResult,hostCapabilities,process:processExecutor,workspace:workspaceExecutor,createBrowser:persist=>new PlaywrightBrowserAdapter({persist_screenshot:persist,browser_cache_paths:[browserBootstrap.cachePath]}),bootstrapBrowser:()=>browserBootstrap.ensure(),onBrowserAvailability:value=>{browserAvailable=value;refreshOwnedCapabilities()}},projectRoot,packageRoot,getConfig:()=>state.config,getModels:host.getModels,getHostConfig:()=>state.hostConfig})
   await services.workspaceRuntime.reconcileRestored(services.store.all())
   await services.processRuntime.reconcileRestored(services.store.all())
-  const browserHealth=await services.browserExecutor.health();browserAvailable=browserHealth.available;services.setBrowserAvailable(browserAvailable);refreshOwnedCapabilities()
+  const browserHealth=await services.browserExecutor.health();browserAvailable=browserHealth.available;services.setBrowserAvailable(browserAvailable);refreshOwnedCapabilities();services.tasks.rehydrateQueued(services.store.all())
   setTimeout(()=>{void Promise.all([processExecutor.health(),workspaceExecutor.health()]).then(([processHealth,workspaceHealth])=>{processAvailable=processHealth.available;workspaceAvailable=workspaceHealth.available;refreshOwnedCapabilities()}).catch(()=>{})},0)
   services.persistence.save(services.store.all())
   const pendingNativePermissions=new Map<string,string[]>()

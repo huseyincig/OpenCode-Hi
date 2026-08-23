@@ -210,7 +210,7 @@ Ayrıntı için [Human Decisions and Authority](../../HUMAN-DECISIONS.md), [Veri
 
 ## State ve recovery
 
-Hi-owned project state explicit storage ownership kurallarına göre `.opencode/hi/` altında yaşar. OpenCode-native plugin/skill dizinleri OpenCode-owned kalır. Durable state current-schema only'dir; restart reconciliation exact owned resource'u adopt eder veya mismatch'i quarantine eder, continuity uydurmaz.
+Hi-owned project state explicit storage ownership kurallarına göre `.opencode/hi/` altında yaşar. OpenCode-native plugin/skill dizinleri OpenCode-owned kalır. Durable state current-schema only'dir; restart reconciliation exact owned resource'u adopt eder veya mismatch'i quarantine eder, continuity uydurmaz. Kabul edilmiş sessionless queued Task/Worker işi de restart boyunca exact persisted kimliğini korur: Hi yalnız bounded process-local dispatch cache'ini host resource reconciliation sonrasında yeniden kurar, `waiting-user` beklemesini korur ve child oluşturmadan önce gerekli browser capability'sini yeniden doğrular.
 
 Ayrıntı için [Architecture](../../ARCHITECTURE.md#storage-and-filesystem-ownership) kullanın.
 

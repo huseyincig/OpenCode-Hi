@@ -102,7 +102,10 @@ export declare class TaskRuntime {
     private reserveExistingSessionAttempt;
     private reconcileRestartBeforeResume;
     private queueTask;
+    rehydrateQueued(input: MissionState | MissionState[]): number;
+    wakeQueued(): void;
     private rollbackQueueCapacityRejection;
+    private queuedRuntimeResourcesReady;
     private drainQueue;
     start(m: MissionState, input?: StartTaskInput): Promise<{
         task_id: string;

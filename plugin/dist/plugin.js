@@ -37,6 +37,7 @@ export const HiPlugin = async (ctx) => {
     browserAvailable = browserHealth.available;
     services.setBrowserAvailable(browserAvailable);
     refreshOwnedCapabilities();
+    services.tasks.rehydrateQueued(services.store.all());
     setTimeout(() => { void Promise.all([processExecutor.health(), workspaceExecutor.health()]).then(([processHealth, workspaceHealth]) => { processAvailable = processHealth.available; workspaceAvailable = workspaceHealth.available; refreshOwnedCapabilities(); }).catch(() => { }); }, 0);
     services.persistence.save(services.store.all());
     const pendingNativePermissions = new Map();

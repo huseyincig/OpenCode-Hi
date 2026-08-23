@@ -46,12 +46,15 @@ test('C6 SemanticContextContract does not accept unsupported LSP Tree-sitter or 
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('C6 TaskRuntime consumes the generic adapter entrypoint and capability docs state the exact support boundary',()=>{
+test('C6 queued dispatch consumes the generic adapter entrypoint and capability docs state the exact support boundary',()=>{
   const task=readFileSync(new URL('../src/runtime/task/task-runtime.ts',import.meta.url),'utf8')
+  const dispatcher=readFileSync(new URL('../src/runtime/task/queued-worker-dispatcher.ts',import.meta.url),'utf8')
   const hosts=readFileSync(new URL('../../docs/HOSTS.md',import.meta.url),'utf8')
   const architecture=readFileSync(new URL('../../docs/ARCHITECTURE.md',import.meta.url),'utf8')
-  assert.match(task,/semanticContextsForTargets\(this\.projectRoot/)
-  assert.doesNotMatch(task,/typescriptSemanticContextsForTargets\(this\.projectRoot/)
+  assert.match(task,/new QueuedWorkerDispatcher\(/)
+  assert.match(task,/this\.#dispatcher\.run\(/)
+  assert.match(dispatcher,/semanticContextsForTargets\(this\.projectRoot/)
+  assert.doesNotMatch(dispatcher,/typescriptSemanticContextsForTargets\(this\.projectRoot/)
   assert.match(hosts,/only `TypeScriptSemanticContextAdapter`/)
   assert.match(hosts,/No LSP semantic adapter, Tree-sitter adapter, or JavaScript adapter is currently claimed/)
   assert.match(architecture,/`typescript` and `typescriptreact`/)

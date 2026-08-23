@@ -89,7 +89,7 @@
     {
       "invariant": "task-cancellation",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
+      "owner_sha256": "42e2eefdd659d6325b0d21e5760c4646cf065cf9ae667ab4d079bd07e1ecf449",
       "proof": "plugin/test/w2-workspace-executor.test.mjs",
       "proof_sha256": "10a95dd4fb8df61068f76fedc62ab4a31046a51fe34e3af3de200b5ed83e8586",
       "owner_anchor": "async cancel(m:MissionState",
@@ -98,7 +98,7 @@
     {
       "invariant": "task-recovery",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
+      "owner_sha256": "42e2eefdd659d6325b0d21e5760c4646cf065cf9ae667ab4d079bd07e1ecf449",
       "proof": "plugin/test/crash-restart-survival.test.mjs",
       "proof_sha256": "5ac360cba69a02f2e86a343ce4139d7241c09a9edbd0594cd6a22758be6fde13",
       "owner_anchor": "reconcileRestartBeforeResume",
@@ -107,7 +107,7 @@
     {
       "invariant": "dependency-unblock",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
+      "owner_sha256": "42e2eefdd659d6325b0d21e5760c4646cf065cf9ae667ab4d079bd07e1ecf449",
       "proof": "plugin/test/scheduler-hardening.test.mjs",
       "proof_sha256": "f51aa7ba84c0030f286f7e90828fc9e0779d8f2f8ad370fd264b91781c271fa1",
       "owner_anchor": "drainQueue",

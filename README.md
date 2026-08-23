@@ -295,7 +295,7 @@ See [Human Decisions and Authority](docs/HUMAN-DECISIONS.md), [Verification](doc
 
 ## State and recovery
 
-Hi-owned project state lives under `.opencode/hi/` according to explicit storage ownership. OpenCode-native plugin/skill directories remain OpenCode-owned. Durable state is current-schema only; restart reconciliation adopts exact owned resources or quarantines mismatches instead of inventing continuity.
+Hi-owned project state lives under `.opencode/hi/` according to explicit storage ownership. OpenCode-native plugin/skill directories remain OpenCode-owned. Durable state is current-schema only; restart reconciliation adopts exact owned resources or quarantines mismatches instead of inventing continuity. Accepted sessionless queued Task/Worker work also keeps its exact persisted identity across restart: Hi rebuilds only the bounded in-process dispatch cache after host resource reconciliation, preserves `waiting-user` pauses, and rechecks required browser capability before child creation.
 
 See [Architecture](docs/ARCHITECTURE.md#storage-and-filesystem-ownership).
 

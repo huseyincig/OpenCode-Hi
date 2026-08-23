@@ -18,7 +18,7 @@ checks=[
  (18,'workspace-reconcile','plugin/src/runtime/workspace/runtime.ts','reconcileRestored','plugin/test/w2-workspace-executor.test.mjs','restart adopts exact lease, quarantines missing owner without recreation'),
  (18,'commit-boundary','plugin/src/runtime/safety/staging-safety.ts','staged-files-not-hi-owned','plugin/test/staging-safety.test.mjs','commit requires a fresh staged-set proof'),
  (18,'user-ownership-never-reclassified','plugin/src/runtime/safety/staging-safety.ts','preexisting_user_baseline_captured','plugin/test/staging-safety.test.mjs','pre-existing user baseline is frozen once'),
- (18,'no-blind-reset-stash-restore','plugin/src/runtime/task/task-runtime.ts','never use git checkout/reset/restore','plugin/test/native-diff-ownership.test.mjs',r'never use git checkout\/reset\/restore'),
+ (18,'no-blind-reset-stash-restore','plugin/src/runtime/task/queued-worker-dispatcher.ts','never use git checkout/reset/restore','plugin/test/native-diff-ownership.test.mjs',r'never use git checkout\/reset\/restore'),
  # §19 Filesystem/path portability
  (19,'relative-vs-absolute','plugin/src/contracts/common.ts','normalizeBoundedProjectPath','plugin/test/prompt-b-vcs-path-portability.test.mjs','project path normalization drops absolute paths outside repository'),
  (19,'cwd-assumptions','plugin/src/runtime/storage/locations.ts','resolve(projectRoot)','plugin/test/main-prompt-coexistence-platform-batch.test.mjs','worktree-first'),

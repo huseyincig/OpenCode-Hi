@@ -131,8 +131,8 @@
     {
       "section": 18,
       "invariant": "no-blind-reset-stash-restore",
-      "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "6b4d6bab27e5d141f84c10f358422ca3dda19ba0194bc66190cf5a5abf12da36",
+      "owner": "plugin/src/runtime/task/queued-worker-dispatcher.ts",
+      "owner_sha256": "9103a135e3a602c57e93990b623c7370e86214da23e211359ea33bd219debdc0",
       "owner_anchor": "never use git checkout/reset/restore",
       "proof": "plugin/test/native-diff-ownership.test.mjs",
       "proof_sha256": "451cef54368d6b2805ad45ed3c00d816f35bb122a94dfb293c973f1672e5d36e",
