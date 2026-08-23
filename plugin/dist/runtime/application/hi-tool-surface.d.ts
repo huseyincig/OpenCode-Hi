@@ -39,5 +39,4 @@ export declare function createHiToolSurface(input: {
     } | undefined;
 }): {
     toolSurface: Record<string, unknown>;
-    reconfigure: () => void;
 };

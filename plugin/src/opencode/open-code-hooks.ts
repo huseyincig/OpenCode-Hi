@@ -18,8 +18,8 @@ import type { ProjectAuthorityStore } from '../runtime/safety/project-authority.
 import type { RuntimeEventController } from '../runtime/application/runtime-event-controller.js'
 import { syncHumanDecisionTransport } from '../runtime/human-decision/transport.js'
 
-export function createOpenCodeHooks(input:{state:PluginRuntimeState;host:HostPort;services:ReturnType<typeof createRuntimeServices>;projectRoot:string;workingDirectory?:string;packagedSkillsDir:string;projectAuthority:ProjectAuthorityStore;toolSurface:Record<string,unknown>;reconfigureToolSurface:()=>void;eventController:RuntimeEventController;instanceLease:{release:()=>void}}){
-  const {state,host,services,projectRoot,workingDirectory,packagedSkillsDir,projectAuthority,toolSurface,reconfigureToolSurface,eventController,instanceLease}=input
+export function createOpenCodeHooks(input:{state:PluginRuntimeState;host:HostPort;services:ReturnType<typeof createRuntimeServices>;projectRoot:string;workingDirectory?:string;packagedSkillsDir:string;projectAuthority:ProjectAuthorityStore;toolSurface:Record<string,unknown>;eventController:RuntimeEventController;instanceLease:{release:()=>void}}){
+  const {state,host,services,projectRoot,workingDirectory,packagedSkillsDir,projectAuthority,toolSurface,eventController,instanceLease}=input
   const {store,background,humanDecisionTransport,persistence,tasks,processRuntime,browserExecutor,previewManager,eventSink}=services
   const experimental=new ExperimentalOpenCodeAdapter(store,background)
   return {
@@ -27,7 +27,6 @@ export function createOpenCodeHooks(input:{state:PluginRuntimeState;host:HostPor
     tool:toolSurface,
     config:async(opencodeConfig:Record<string,unknown>)=>{state.hostConfig=opencodeConfig;const resolved=resolveHiConfigWithReport(opencodeConfig.hi,projectRoot);state.config=resolved.config;state.configResolution=resolved.report
       const composition=projectHiOpenCodeComposition({config:opencodeConfig,packagedAgents:PACKAGED_HI_AGENTS as unknown as Record<string,unknown>,packagedSkillsDir,projectRoot,projectAuthority});if(!composition.applied)throw new Error(`OpenCode-Hi host composition adapter unavailable for ${composition.mode}: ${composition.diagnostics.join(', ')}. V1 config projection is intentionally not applied to V2/mixed config shapes.`);const projection=composition.v1!;if(projection.agentProjection.collisions.length)throw new Error(`OpenCode-Hi agent binding collision: ${projection.agentProjection.collisions.join(', ')}. Canonical Hi role names may be narrowed by host policy, but execution-semantic widening/overrides require a distinct agent namespace.`);opencodeConfig.hi=state.config as unknown as Record<string,unknown>
-      reconfigureToolSurface()
     },
     'chat.message':async(input:any,output:any)=>{try{const messageSession=String(input?.sessionID??input?.sessionId??'');if(messageSession&&background.list().some((w:any)=>w.session_id===messageSession)){await host.log('debug','Hi child chat message ignored by parent intent hook',{session_id:messageSession});return}if(!host.getModels().length)void host.refreshRuntimeInventory('chat-message');await createChatMessageHook(store,async(sid,text)=>{const m=store.get(sid);if(!m)return;const workersPaused=await tasks.pauseForSemanticAssessment(m);appendLedger(m,'semantic.execution-quarantined',{payload:{revision:m.identity.semantic_assessment.revision,workers:workersPaused,preview:text.slice(0,180)}})},humanDecisionTransport)(input,output)}finally{for(const m of store.all())syncHumanDecisionTransport(m.authority.human_decision,humanDecisionTransport);persistence.save(store.all())}},
     'experimental.chat.messages.transform':createMessagesTransformHook(store,background),

@@ -12,7 +12,6 @@ export declare function createOpenCodeHooks(input: {
     packagedSkillsDir: string;
     projectAuthority: ProjectAuthorityStore;
     toolSurface: Record<string, unknown>;
-    reconfigureToolSurface: () => void;
     eventController: RuntimeEventController;
     instanceLease: {
         release: () => void;
