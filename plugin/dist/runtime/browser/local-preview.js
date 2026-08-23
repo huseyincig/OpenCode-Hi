@@ -7,7 +7,9 @@ function within(root, candidate) { const rel = relative(root, candidate); return
 function safeRealRoot(root) { const resolved = resolve(root); if (!existsSync(resolved) || !statSync(resolved).isDirectory())
     throw new Error(`Preview root is not a directory: ${resolved}`); return realpathSync(resolved); }
 function scopePath(value) { return normalizeBoundedProjectPath(value.trim().replace(/\/+$/, '')) ?? undefined; }
-function admittedPath(target, scope) { const admitted = scope.map(scopePath).filter((x) => Boolean(x)); return !admitted.length || admitted.some(item => target === item || target.startsWith(`${item}/`)); }
+function canonicalScope(scope) { return [...new Set(scope.map(scopePath).filter((x) => Boolean(x)))].sort(); }
+function sameScope(a, b) { return a.length === b.length && a.every((value, index) => value === b[index]); }
+function admittedPath(target, scope) { const admitted = canonicalScope(scope); return !admitted.length || admitted.some(item => target === item || target.startsWith(`${item}/`)); }
 function requestedTarget(raw, scope) {
     const target = normalizeBoundedProjectPath(raw);
     if (!target)
@@ -26,14 +28,14 @@ export class LocalPreviewManager {
         this.workingDirectory = workingDirectory;
     }
     async start(taskID, targetRaw, scope) {
-        const root = safeRealRoot(this.workingDirectory), target = requestedTarget(targetRaw, scope), targetAbs = resolve(root, target);
+        const root = safeRealRoot(this.workingDirectory), effectiveScope = canonicalScope(scope), target = requestedTarget(targetRaw, effectiveScope), targetAbs = resolve(root, target);
         if (!within(root, targetAbs) || !existsSync(targetAbs) || !statSync(targetAbs).isFile())
             throw new Error(`Preview target does not exist inside the working directory: ${target}`);
         const targetReal = realpathSync(targetAbs);
         if (!within(root, targetReal))
             throw new Error(`Preview target resolves outside the working directory: ${target}`);
         const current = this.#leases.get(taskID);
-        if (current && current.root === root)
+        if (current && current.root === root && sameScope(current.scope, effectiveScope))
             return { task_id: taskID, origin: current.origin, url: current.origin + encodedPath(target), root, target, reused: true };
         if (current)
             await this.stop(taskID);
@@ -53,7 +55,7 @@ export class LocalPreviewManager {
                 return;
             }
             const bounded = normalizeBoundedProjectPath(raw.replace(/^\/+/, ''));
-            if (!bounded || bounded.split('/').some(part => part.startsWith('.')) || !admittedPath(bounded, scope)) {
+            if (!bounded || bounded.split('/').some(part => part.startsWith('.')) || !admittedPath(bounded, effectiveScope)) {
                 res.writeHead(403);
                 res.end('Forbidden');
                 return;
@@ -97,7 +99,7 @@ export class LocalPreviewManager {
         }
         server.unref();
         const origin = `http://127.0.0.1:${address.port}`;
-        this.#leases.set(taskID, { taskID, root, server, origin, scope: [...scope] });
+        this.#leases.set(taskID, { taskID, root, server, origin, scope: effectiveScope });
         return { task_id: taskID, origin, url: origin + encodedPath(target), root, target, reused: false };
     }
     async stop(taskID) { const lease = this.#leases.get(taskID); if (!lease)

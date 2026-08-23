@@ -21,3 +21,16 @@ test('Hi local preview is loopback-only, scope-bounded, reusable, and cleanup-ow
     assert.equal(await preview.stop('t1'),true);assert.equal(preview.active('t1'),false)
   }finally{await preview.dispose();rmSync(root,{recursive:true,force:true})}
 })
+
+
+test('local preview reuse refreshes an expanded task scope instead of serving from the stale lease policy',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-preview-scope-refresh-'));mkdirSync(join(root,'assets'));writeFileSync(join(root,'index.html'),'index');writeFileSync(join(root,'assets/app.js'),'expanded')
+  const preview=new LocalPreviewManager(root)
+  try{
+    const first=await preview.start('scope-task','index.html',['index.html'])
+    assert.equal((await fetch(first.origin+'/assets/app.js')).status,403)
+    const expanded=await preview.start('scope-task','assets/app.js',['index.html','assets/'])
+    assert.equal(expanded.reused,false,'scope policy drift must replace the prior preview lease')
+    assert.equal((await fetch(expanded.url)).status,200,'same-task preview must enforce the current expanded task scope, not the stale creation scope')
+  }finally{await preview.dispose();rmSync(root,{recursive:true,force:true})}
+})
