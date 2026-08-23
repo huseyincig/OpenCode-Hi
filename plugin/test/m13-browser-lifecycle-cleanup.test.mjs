@@ -66,3 +66,29 @@ test('M13 TaskRuntime cancel cleans the exact active visual worker browser owner
   assert.deepEqual(cleanupCalls[0],{task_id:task.id,execution_owner_ref:`${m.identity.mission_id}:${worker.id}:child-browser:${worker.generation_at_spawn}`,executor_version:'hi-playwright-browser@1',allowed_origins:['http://127.0.0.1:4173']})
   assert.equal(worker.status,'cancelled');assert.equal(task.status,'cancelled')
 })
+
+
+test('M13 cancelled visual verification task releases open-obligation methodology ownership to its replacement',async()=>{
+  let childN=0
+  const prompts=[],client={session:{create:async()=>({data:{id:`child-replacement-${++childN}`}}),promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async()=>({data:true}),diff:async()=>({data:[]})}}
+  const browserExecutor={
+    health:async()=>({available:true}),open:async()=>{throw new Error('unused')},navigate:async()=>{throw new Error('unused')},click:async()=>{throw new Error('unused')},type:async()=>{throw new Error('unused')},inspect:async()=>{throw new Error('unused')},screenshot:async()=>{throw new Error('unused')},wait:async()=>{throw new Error('unused')},close:async()=>{throw new Error('unused')},cleanup:async()=>({cleaned:true,reason:'cleaned'})
+  }
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>({agent:PACKAGED_HI_AGENTS}),undefined,{},undefined,undefined,()=>new Set(['host-capability:browser-execution']),browserExecutor)
+  const store=new MissionStore(repoRoot),m=store.start('m13-cancel-replacement','verify local browser after implementation')
+  store.applyInitialSemanticAssessment('m13-cancel-replacement',{material:true,message_kind:'mission',task_kind:'review',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['visual-qa'],requested_external_actions:[],likely_verification:['visual-check'],likely_targets:['index.html'],intent_signals:[],suppressed_intent_signals:[]})
+  const verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(verification);assert.equal(verification.status,'open')
+  assert.ok(m.methodology.methodology_needs.some(n=>n.name==='hi-visual-qa'&&!n.task_id))
+  const first=await runtime.start(m,{objective:'verify local browser first attempt',role:'visual-qa',category:'visual',scope:['index.html'],requiredEvidence:['visual-check'],obligationIds:[verification.id],browserAllowedOrigins:['http://127.0.0.1:4173']})
+  const firstTask=m.execution.tasks.find(t=>t.id===first.task_id),firstWorker=m.execution.workers.find(w=>w.id===first.worker_id);assert.ok(firstTask);assert.ok(firstWorker)
+  assert.ok(first.methodologies.includes('hi-visual-qa'));assert.equal(firstTask.execution_profile.browser_backend,'bounded-playwright')
+  assert.ok(firstTask.execution_profile.tools.includes('hi_browser_screenshot'))
+  assert.ok(m.methodology.methodology_needs.some(n=>n.name==='hi-visual-qa'&&n.task_id===first.task_id&&n.obligation_id===verification.id))
+  assert.equal(await runtime.cancel(m,first.worker_id),true);assert.equal(verification.status,'open')
+  const replacement=await runtime.start(m,{objective:'verify local browser replacement attempt',role:'visual-qa',category:'visual',scope:['index.html'],requiredEvidence:['visual-check'],obligationIds:[verification.id],browserAllowedOrigins:['http://127.0.0.1:4173']})
+  const replacementTask=m.execution.tasks.find(t=>t.id===replacement.task_id);assert.ok(replacementTask)
+  assert.ok(replacement.methodologies.includes('hi-visual-qa'))
+  assert.equal(replacementTask.execution_profile.browser_backend,'bounded-playwright')
+  assert.ok(replacementTask.execution_profile.tools.includes('hi_browser_preview_open'))
+  assert.ok(replacementTask.execution_profile.tools.includes('hi_browser_screenshot'))
+})

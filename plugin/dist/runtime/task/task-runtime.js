@@ -6,7 +6,7 @@ import { createTask, createWorker, beginWorkerAttempt, workerFingerprint } from 
 import { parseWorkerResult } from './result-parser.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { routeCapabilities } from '../routing/capability-router.js';
-import { bindMethodologyNeeds, methodologyNames } from '../methodology/activation.js';
+import { bindMethodologyNeeds, methodologyNames, releaseCancelledTaskMethodologyNeeds } from '../methodology/activation.js';
 import { methodologyCatalog } from '../methodology/catalog.js';
 import { methodologyProvenance, ownershipContract } from '../skills/methodology.js';
 import { DEFAULT_CONTEXT_BUDGET, clipText } from '../context/budget.js';
@@ -903,5 +903,5 @@ export class TaskRuntime {
         appendLedger(m, 'worker.cancel.scheduler-blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: reservationRelease.reason } });
         return false;
     } worker.status = 'cancelled'; const t = m.execution.tasks.find(x => x.id === worker.task_id); if (t)
-        t.status = 'cancelled'; this.registry.delete(worker.id); this.#queue = this.#queue.filter(q => q.worker.id !== worker.id); await this.cleanupWorkspaceForTask(m, worker.task_id); appendLedger(m, 'worker.cancelled', { task_id: t?.id, worker_id: worker.id }); syncMissionGates(m); this.drainQueue(); return true; }
+        t.status = 'cancelled'; releaseCancelledTaskMethodologyNeeds(m, worker.task_id); this.registry.delete(worker.id); this.#queue = this.#queue.filter(q => q.worker.id !== worker.id); await this.cleanupWorkspaceForTask(m, worker.task_id); appendLedger(m, 'worker.cancelled', { task_id: t?.id, worker_id: worker.id }); syncMissionGates(m); this.drainQueue(); return true; }
 }

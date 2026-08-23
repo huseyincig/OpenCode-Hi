@@ -64,6 +64,20 @@ export function bindMethodologyNeeds(
   }
 }
 
+export function releaseCancelledTaskMethodologyNeeds(mission:MissionState,taskId:string):string[]{
+  if(mission.identity.status!=='active')return[]
+  const released:string[]=[]
+  for(const need of mission.methodology.methodology_needs){
+    if(need.task_id!==taskId||!need.obligation_id)continue
+    const obligation=mission.execution.obligations.find(item=>item.id===need.obligation_id)
+    if(!obligation||obligation.status!=='open')continue
+    delete need.task_id
+    released.push(need.name)
+    appendLedger(mission,'methodology.released',{task_id:taskId,payload:{name:need.name,signal:need.signal,producer:need.producer,obligation_id:need.obligation_id,reason:'cancelled-task-open-obligation'}})
+  }
+  return[...new Set(released)]
+}
+
 export function bindParentMethodologyNeeds(mission:MissionState,names:readonly string[],obligationId:string):void{
   const selected=new Set(names)
   for(const need of mission.methodology.methodology_needs){

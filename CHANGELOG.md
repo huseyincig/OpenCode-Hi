@@ -3,6 +3,7 @@
 All notable changes to OpenCode-Hi are documented here.
 
 ## Unreleased
+- Preserves open verification methodology ownership across visual-worker cancellation: when an active Task is cancelled but its exact obligation remains open, the Task-bound methodology need is released back to that obligation so a replacement `visual-qa` worker retains `hi-visual-qa`, bounded browser backend admission, and Hi browser tools instead of silently degrading to `methodologies=[]`.
 - Closes process-local HumanDecision transport state on plugin disposal and cleanly stops `waiting-user` Missions before persistence, so open chat waiters/timers cannot outlive the plugin and a clean shutdown cannot persist an OPEN decision as still awaiting a user.
 - Fail closed on child-session cancellation when OpenCode still reports a pending native permission for that exact child after abort acknowledgement; Hi never auto-replies to the permission, and unrelated sessions remain unaffected.
 - Projects Hi browser screenshots into OpenCode 1.18.21 native image tool-result attachments while retaining `hi-artifact:` as opaque canonical provenance. Screenshot bytes remain owned by `ContextArtifactStore`, are re-read only through hash/size-validated canonical storage, and visual-worker handoffs now explicitly forbid treating artifact refs as filesystem paths.
