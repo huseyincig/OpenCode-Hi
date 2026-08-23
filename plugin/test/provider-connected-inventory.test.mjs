@@ -125,6 +125,16 @@ test('hi_settings applies one validated settings transaction and hot-reloads wor
   await hooks.dispose?.();rmSync(root,{recursive:true,force:true})
 })
 
+test('OpenCode-style nested settings args preserve mutating actions on unified and compatibility surfaces',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-settings-nested-args-'))
+  const raw={connected:['p'],all:[{id:'p',models:[{id:'code'},{id:'fallback'}]}]}
+  const hooks=await HiPlugin({directory:root,worktree:root,project:{},client:clientWithProviderShape(raw)})
+  await hooks.config({});await hooks.event({event:{type:'server.connected',properties:{}}})
+  const nested=JSON.parse(String(await hooks.tool.hi_settings.execute({input:{action:'set',role:'review',models:'p/code'}},{})));assert.equal(nested.status,'APPLIED');assert.deepEqual(nested.role_models['qa-reviewer'],['p/code'],'natural-language review alias must persist the canonical qa-reviewer role')
+  const nestedCompat=JSON.parse(String(await hooks.tool.hi_role_models.execute({input:{action:'set',role:'architect',models:'p/fallback'}},{})));assert.equal(nestedCompat.status,'APPLIED');assert.deepEqual(nestedCompat.role_models.architect,['p/fallback'])
+  await hooks.dispose?.();rmSync(root,{recursive:true,force:true})
+})
+
 test('hi_settings refreshes live inventory on open so newly connected providers appear without restarting Hi',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-settings-refresh-'))
   let raw={connected:['p'],all:[{id:'p',models:[{id:'one'}]}]}

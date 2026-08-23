@@ -187,6 +187,7 @@ The post-`0.2.4` `dev` line adds one user-facing settings model without replacin
 - **Work Mode:** `Adaptive`, `Single`, or `Multi`. `Single` means one active agent at a time; it does not mean one fixed model.
 - **Models:** Automatic by default, or explicit ordered child-role primary/fallback choices from OpenCode's effective connected inventory.
 - **Settings surfaces:** runtime `hi_settings` for live inventory-aware changes and `npx opencode-hi config` for deterministic project preferences. Multi-field runtime changes use one transaction and either all persist or none persist.
+- **Natural-language changes:** settings-only chat requests go directly to `hi_settings` rather than mission execution. OpenCode-style nested tool arguments are accepted for mutations, and user-facing `review` is normalized to canonical `qa-reviewer`.
 - **First use:** when no explicit project settings exist and effective models are available, one bounded onboarding hint is projected for the first pending chat session. Greetings/settings requests can open setup; material work is not interrupted and uses `Adaptive + Automatic`.
 - **Live refresh:** opening runtime settings refreshes OpenCode model inventory first, so a newly connected provider can appear without restarting Hi even though exact OpenCode 1.18.21 does not expose a dedicated provider/config-updated plugin event.
 - **Hot reload:** successful runtime settings changes affect new worker dispatches without restarting OpenCode.

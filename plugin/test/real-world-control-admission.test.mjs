@@ -50,6 +50,14 @@ test('assessed implementation mission blocks ceremonial settings discovery',asyn
   await assert.rejects(()=>before({sessionID:m.identity.session_id,tool:'hi_role_models'},{args:{action:'list'}}),/user configuration surfaces, not runtime discovery steps/)
 })
 
+test('assessed explicit settings-only request remains admitted while ordinary assessed missions still block ceremonial settings discovery',async()=>{
+  const {createToolBeforeHook}=await import('../dist/hooks/tool-before.js')
+  const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'rw-assessed-settings','Change my Hi role models.',{task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:[],likely_targets:['hi_settings']})
+  const before=createToolBeforeHook(store)
+  await assert.doesNotReject(()=>before({sessionID:m.identity.session_id,tool:'hi_settings'},{args:{input:{action:'set-role-model',role:'coder',models:'p/code'}}}))
+  await assert.doesNotReject(()=>before({sessionID:m.identity.session_id,tool:'hi_role_models'},{args:{input:{action:'list'}}}))
+})
+
 test('semantic gate admits unified settings and compatibility role-model surfaces for explicit pre-assessment configuration flow',async()=>{
   const {createToolBeforeHook}=await import('../dist/hooks/tool-before.js')
   const store=new MissionStore(process.cwd()),m=store.start('rw-role-config','Configure my Hi child-role models')
