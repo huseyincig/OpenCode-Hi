@@ -109,7 +109,7 @@
       "owner": "plugin/src/runtime/task/task-runtime.ts",
       "owner_sha256": "87772dc2b33303d573a6ed8e1ad973dfafc8c3396788efc1ef19107d741a2b4c",
       "proof": "plugin/test/scheduler-hardening.test.mjs",
-      "proof_sha256": "f51aa7ba84c0030f286f7e90828fc9e0779d8f2f8ad370fd264b91781c271fa1",
+      "proof_sha256": "245a612c649b0276dd40b037c6e8c4786eb29d800c2bcf983ebd10a67bafc722",
       "owner_anchor": "drainQueue",
       "proof_anchor": "queued dependent is removed from queue when prerequisite fails"
     },

@@ -26,7 +26,7 @@
     {
       "invariant": "stale-context-exclusion",
       "owner": "plugin/src/runtime/task/queued-worker-dispatcher.ts",
-      "owner_sha256": "389164c73642f122b145eba506b67401a25aa82709238c9e0f02c8112cd816ed",
+      "owner_sha256": "28263f741a2accdf18fdf28f93af181e423c27990d196ced742c725c9284063e",
       "owner_anchor": "stored?.freshness==='FRESH'",
       "proof": "plugin/test/context-survival-hardening.test.mjs",
       "proof_sha256": "cc2ffdf3ed2cbc0e5401d41c3d9b8b7cc859d826fae71ee9b79b97f7d38dce38",

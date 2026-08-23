@@ -26,6 +26,32 @@ test('dedupe fingerprint preserves distinct task contracts with same objective/r
   assert.equal(m.execution.tasks.length,2)
 })
 
+
+test('spawn dedupe is mission-isolated for concurrent identical task contracts',async()=>{
+  const registry=new BackgroundRegistry(),created=[]
+  let releaseFirst
+  const firstGate=new Promise(resolve=>{releaseFirst=resolve})
+  let n=0
+  const c={session:{
+    create:async req=>{const id=`cross-mission-child-${++n}`;created.push({id,req});if(n===1)await firstGate;return{data:{id}}},
+    promptAsync:async()=>({data:{}}),
+    diff:async()=>({data:[]}),
+  }}
+  const rt=new TaskRuntime(opencodeChildPort(c),registry,createConcurrencyPolicySource(()=>({global:4})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced'],writeCapable:true}],()=>({}))
+  const a=startAssessedMission(new MissionStore(),'dedupe-mission-a','opaque implementation',{task_kind:'implementation',scope:'local',required_capabilities:['implementation'],likely_targets:['src/shared.ts']})
+  const b=startAssessedMission(new MissionStore(),'dedupe-mission-b','opaque implementation',{task_kind:'implementation',scope:'local',required_capabilities:['implementation'],likely_targets:['src/shared.ts']})
+  const pa=rt.start(a,{objective:'apply identical fix',role:'coder',category:'standard',scope:['src/shared.ts']})
+  while(created.length<1)await new Promise(resolve=>setImmediate(resolve))
+  const pb=rt.start(b,{objective:'apply identical fix',role:'coder',category:'standard',scope:['src/shared.ts']})
+  await new Promise(resolve=>setImmediate(resolve));releaseFirst()
+  const [ra,rb]=await Promise.all([pa,pb])
+  assert.equal(created.length,2,'identical task contracts in different missions must create distinct native child sessions')
+  assert.notEqual(ra.worker_id,rb.worker_id)
+  assert.notEqual(ra.task_id,rb.task_id)
+  assert.equal(a.execution.workers.some(w=>w.id===rb.worker_id),false)
+  assert.equal(b.execution.workers.some(w=>w.id===ra.worker_id),false)
+})
+
 test('parallel safety blocks parent/child write surfaces, not just exact path equality',()=>{
   const existing=[{id:'t1',objective:'x',status:'running',role:'coder',category:'standard',scope:['src/auth'],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],created_at:1,updated_at:1}]
   const decision=parallelSafety(existing,{scope:['src/auth/token.ts'],dependencies:[],role:'coder'})
