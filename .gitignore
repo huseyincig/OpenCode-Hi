@@ -15,6 +15,16 @@ venv/
 node_modules/
 .pnp.*
 
+# Local engineering/test/runtime artifacts; never repository source.
+/.agent-work/
+/.cache/
+/coverage/
+/tmp/
+/temp/
+*.log
+*.tmp
+*.bak
+
 # Local model/user configuration
 model-bindings.local.*
 .env
