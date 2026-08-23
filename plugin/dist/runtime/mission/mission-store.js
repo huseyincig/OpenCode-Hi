@@ -7,6 +7,7 @@ import { syncMissionGates } from '../gates/gates.js';
 import { decideSemanticExecution } from '../decision/semantic-decision.js';
 import { activateMethodologySignal, suppressIntentMethodologySignals } from '../methodology/activation.js';
 import { architectureMethodologySignals, requiredVerificationMethodologySignals } from '../methodology/signals.js';
+import { applyConstraintAtomDrafts, constraintAtomProjection } from '../constraint/constraint-atoms.js';
 import { resolveHumanDecision } from '../human-decision/runtime.js';
 import { createSchedulerLifecycleState } from '../../contracts/orchestration-core.js';
 import { reduceSchedulerLifecycle } from '../scheduler/lifecycle.js';
@@ -91,7 +92,7 @@ export class MissionStore {
         const missionID = `m_${now.toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
         const mission = {
             identity: { mission_id: missionID, session_id: sessionID, objective: intent.objective, intent, semantic_assessment: { status: 'pending', phase: 'initial', revision: 1, source: 'host-primary', pending_text: userText.slice(0, 12000) }, status: 'active', risk: intent.risk, created_at: now, updated_at: now },
-            execution: { execution_mode: 'single', primary_mode: primary, verification_policy: { requiredKinds: [], requireFresh: true, requireReview: false, allowWorkerReportedEvidence: false }, adaptive_execution: { path: 'DIRECT', reasons: ['semantic assessment pending'] }, topology: { mode: 'single-agent', parallelism: 1, reason: ['semantic assessment pending'] }, obligations: [], tasks: [], workers: [], processes: [], isolation_decisions: [], workspace_leases: [], evidence: { fresh: false, items: [] }, ledger: [], blockers: [], constraints: [], native_todos_incomplete: 0, gates: [], scheduler: createSchedulerLifecycleState(missionID) },
+            execution: { execution_mode: 'single', primary_mode: primary, verification_policy: { requiredKinds: [], requireFresh: true, requireReview: false, allowWorkerReportedEvidence: false }, adaptive_execution: { path: 'DIRECT', reasons: ['semantic assessment pending'] }, topology: { mode: 'single-agent', parallelism: 1, reason: ['semantic assessment pending'] }, obligations: [], tasks: [], workers: [], processes: [], isolation_decisions: [], workspace_leases: [], evidence: { fresh: false, items: [] }, ledger: [], blockers: [], constraints: [], constraint_atoms: [], native_todos_incomplete: 0, gates: [], scheduler: createSchedulerLifecycleState(missionID) },
             continuation: { generation: 1, iteration: 0, continuation_budget: continuationBudget('standard'), continuation_active: false, last_progress_signature: '', stagnation_count: 0, user_interrupted: false, resume_count: 0, last_user_message_at: now },
             context: { context_artifacts: [] },
             vcs: { changed_files: [], temporary_mutations: [] },
@@ -272,13 +273,46 @@ export class MissionStore {
         const verificationResolution = resolveAdaptiveVerificationAssessment(assessment, text, this.#workingRepo), effectiveAssessment = verificationResolution.assessment, kind = effectiveAssessment.message_kind;
         if (kind === 'constraint') {
             m.execution.constraints ??= [];
+            m.execution.constraint_atoms ??= [];
+            const applied = applyConstraintAtomDrafts(m.execution.constraint_atoms, effectiveAssessment.constraint_atoms, m.identity.semantic_assessment.revision, text, now);
+            m.execution.constraint_atoms = applied.atoms;
+            for (const old of applied.superseded) {
+                const projection = constraintAtomProjection(old);
+                m.execution.constraints = m.execution.constraints.filter(x => x !== projection && x !== old.source_text);
+                for (const task of m.execution.tasks)
+                    task.constraints = task.constraints.filter(x => x !== projection && x !== old.source_text);
+            }
             if (!m.execution.constraints.includes(text))
                 m.execution.constraints.push(text);
+            for (const atom of applied.added.filter(a => a.status === 'ACTIVE')) {
+                const projection = constraintAtomProjection(atom);
+                if (!m.execution.constraints.includes(projection))
+                    m.execution.constraints.push(projection);
+            }
+            for (const missing of applied.missing_supersedes) {
+                const marker = `constraint-supersedes-missing:${missing.incoming.id}:${missing.missing.join(',')}`;
+                m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+                appendLedger(m, 'constraint.atom-supersedes-missing', { payload: { incoming: missing.incoming.id, missing: missing.missing, reason: 'supersession requires an exact currently-active atom id' } });
+            }
+            for (const conflict of applied.conflicts) {
+                const marker = `constraint-conflict:${conflict.previous.id}:${conflict.incoming.id}`;
+                m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
+                appendLedger(m, 'constraint.atom-conflict', { payload: { previous: conflict.previous.id, incoming: conflict.incoming.id, subject: conflict.incoming.subject, predicate: conflict.incoming.predicate, reason: 'opposite active constraint requires explicit supersedes' } });
+            }
+            for (const atom of applied.added)
+                appendLedger(m, 'constraint.atom-added', { payload: { atom_id: atom.id, status: atom.status, subject_kind: atom.subject_kind, subject: atom.subject, predicate: atom.predicate, polarity: atom.polarity, scope: atom.scope, supersedes: atom.supersedes } });
+            for (const old of applied.superseded)
+                m.execution.blockers = m.execution.blockers.filter(b => !b.includes(old.id));
             m.identity.objective = `${m.identity.objective}\nConstraint: ${text}`.slice(0, 9000);
             for (const task of m.execution.tasks.filter(t => !['completed', 'failed', 'cancelled'].includes(t.status))) {
                 task.constraints ??= [];
                 if (!task.constraints.includes(text))
                     task.constraints.push(text);
+                for (const atom of applied.added.filter(a => a.status === 'ACTIVE')) {
+                    const projection = constraintAtomProjection(atom);
+                    if (!task.constraints.includes(projection))
+                        task.constraints.push(projection);
+                }
                 task.updated_at = now;
             }
         }
@@ -345,6 +379,7 @@ export class MissionStore {
         sessionIDs.add(candidate.identity.session_id);
         missionIDs.add(candidate.identity.mission_id);
     } for (const m of missions) {
+        m.execution.constraint_atoms ??= [];
         m.execution.scheduler ??= createSchedulerLifecycleState(m.identity.mission_id);
         if (m.execution.scheduler.reservations.length) {
             m.execution.scheduler = reduceSchedulerLifecycle(m.execution.scheduler, { type: 'RESTART_QUARANTINE', at: Date.now() }).state;

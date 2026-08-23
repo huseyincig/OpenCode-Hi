@@ -12,6 +12,7 @@ import type { IsolationDecisionContract, WorkspaceLeaseContract } from '../../co
 import type { ProgressDelta, SchedulerLifecycleState } from '../../contracts/orchestration-core.js';
 import type { SemanticProgressSnapshot } from '../progress/semantic-progress.js';
 import type { RecoveryStrategyRecord } from '../continuation/recovery-governor.js';
+import type { ConstraintAtom } from '../../contracts/constraint-atom.js';
 export type { EvidenceItem } from '../../contracts/evidence.js';
 export { WORKER_EVIDENCE_KINDS } from '../../contracts/worker-result.js';
 export type { EvidenceOutcome, MethodologyObservation, WorkerEvidenceClaim, WorkerEvidenceKind, WorkerResult, WorkerResultStatus } from '../../contracts/worker-result.js';
@@ -224,6 +225,7 @@ export interface MissionExecutionState {
     ledger: LedgerEvent[];
     blockers: string[];
     constraints: string[];
+    constraint_atoms?: ConstraintAtom[];
     native_todos_incomplete: number;
     gates: MissionGate[];
     scheduler?: SchedulerLifecycleState;

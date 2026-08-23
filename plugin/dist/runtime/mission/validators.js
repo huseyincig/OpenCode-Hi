@@ -12,6 +12,7 @@ import { isSchedulerLifecycleState } from '../../contracts/orchestration-core.js
 import { isProgressDelta, isSemanticProgressSnapshot } from '../progress/semantic-progress.js';
 import { isRecoveryStrategyRecord } from '../continuation/recovery-governor.js';
 import { normalizeBoundedProjectPath } from '../../contracts/common.js';
+import { isConstraintAtom } from '../../contracts/constraint-atom.js';
 function isRecord(value) { return Boolean(value) && typeof value === 'object' && !Array.isArray(value); }
 function stringArray(value) { return Array.isArray(value) && value.every(item => typeof item === 'string'); }
 function recordArray(value) { return Array.isArray(value) && value.every(isRecord); }
@@ -182,8 +183,24 @@ export function validateMissionExecutionState(identity, execution, methodology) 
         return false;
     if ((!Array.isArray(execution.obligations) || !execution.obligations.every(validObligation)) || !Array.isArray(execution.tasks) || !execution.tasks.every(isTaskContract) || !Array.isArray(execution.workers) || !execution.workers.every(isWorkerContract) || !Array.isArray(execution.processes) || !execution.processes.every(isProcessContract) || !Array.isArray(execution.isolation_decisions) || !execution.isolation_decisions.every(isIsolationDecisionContract) || !Array.isArray(execution.workspace_leases) || !execution.workspace_leases.every(isWorkspaceLeaseContract) || !recordArray(execution.ledger))
         return false;
-    if (!stringArray(execution.blockers) || !stringArray(execution.constraints) || typeof execution.native_todos_incomplete !== 'number' || !Array.isArray(execution.gates) || !execution.gates.every(validGate))
+    if (!stringArray(execution.blockers) || !stringArray(execution.constraints) || (execution.constraint_atoms !== undefined && (!Array.isArray(execution.constraint_atoms) || !execution.constraint_atoms.every(isConstraintAtom))) || typeof execution.native_todos_incomplete !== 'number' || !Array.isArray(execution.gates) || !execution.gates.every(validGate))
         return false;
+    if (Array.isArray(execution.constraint_atoms)) {
+        const atoms = execution.constraint_atoms, ids = atoms.map(a => a.id);
+        if (new Set(ids).size !== ids.length)
+            return false;
+        const known = new Set(ids);
+        for (const atom of atoms) {
+            if (atom.superseded_by !== undefined && !known.has(atom.superseded_by))
+                return false;
+            if ((atom.supersedes ?? []).some((id) => !known.has(id)))
+                return false;
+            if (atom.status === 'SUPERSEDED' && !atom.superseded_by)
+                return false;
+            if (atom.status === 'ACTIVE' && atom.superseded_by !== undefined)
+                return false;
+        }
+    }
     if (execution.scheduler !== undefined) {
         if (!isSchedulerLifecycleState(execution.scheduler) || execution.scheduler.missionId !== identity.mission_id)
             return false;

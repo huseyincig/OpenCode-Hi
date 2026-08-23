@@ -76,6 +76,7 @@ Hi adds deterministic semantics around native AI execution:
 - adaptive direct, delegated and bounded multi-agent execution;
 - independent Role, model, Methodology and topology decisions;
 - exact Authority and monotonic host Permission boundaries;
+- revision-bound structured user Constraint/Decision atoms with explicit supersession and fail-closed mutation enforcement;
 - bounded Mission runtime projection, durable context artifacts, TypeScript Semantic Context, and evidence-backed project methodology learning with confidence/freshness-gated admission;
 - lazy methodology/skill discovery and loading;
 - structured Evidence, VerificationEnvelope and deterministic completion;

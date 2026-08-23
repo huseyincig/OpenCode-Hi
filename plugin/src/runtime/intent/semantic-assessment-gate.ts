@@ -1,14 +1,17 @@
 import type { MissionState } from '../mission/types.js'
+import { activeConstraintAtoms } from '../constraint/constraint-atoms.js'
 import { SEMANTIC_CAPABILITIES, SEMANTIC_EXTERNAL_ACTIONS, SEMANTIC_VERIFICATION_KINDS } from './semantic-assessment.js'
 
 export function renderSemanticAssessmentGate(m:MissionState):string{
   const semantic=m.identity.semantic_assessment
   const messageKinds=semantic.phase==='initial'?'mission|non-material':'amendment|constraint|verification|stop|resume|non-material'
+  const activeAtoms=activeConstraintAtoms(m.execution.constraint_atoms),atomLines=semantic.phase==='followup'?[`constraint_atoms[] only for constraint: {subject_kind:path|capability|methodology|decision|generic,subject,predicate:mutate|read|use|require|preserve|verify,polarity:ALLOW|DENY|REQUIRE,scope:mission|task,supersedes:[ca_id]}; supersede only explicit user reversal; path=relative/glob.`,activeAtoms.length?`active_atoms=${activeAtoms.slice(-10).map(a=>`${a.id}:${a.polarity}:${a.predicate}:${a.subject_kind}:${a.subject}`).join('|')}`:'active_atoms=none']:[]
   const phaseRule=semantic.phase==='initial'?'Init: file/repo/tool work=>mission=true; pure chat=>non-material=false.':'Follow-up: preserve prior semantics unless changed; non-material=>false; others=>true.'
   return[
     'Hi SEMANTIC ASSESSMENT GATE',
     `rev=${semantic.revision};phase=${semantic.phase}; settings-only=>hi_settings(no assess); else call hi_intent_assess once; user language; no keyword heuristic.`,
-    `JSON(all keys required; []=empty): material:boolean;message_kind=${messageKinds};task_kind=implementation|bug-fix|diagnosis|review|performance|release-readiness;scope=local|multi-file|repo-wide|external|multi-stream;risk=low|medium|high|authority-boundary;ambiguity=none|resolvable|contract-critical;dependency_class=independent|sequential|external-gated|unknown|independent-multi;required_capabilities=C[];requested_external_actions=X[];likely_verification=V[];likely_targets[];intent_signals[].`,
+    `JSON(all keys required; []=empty): material:boolean;message_kind=${messageKinds};task_kind=implementation|bug-fix|diagnosis|review|performance|release-readiness;scope=local|multi-file|repo-wide|external|multi-stream;risk=low|medium|high|authority-boundary;ambiguity=none|resolvable|contract-critical;dependency_class=independent|sequential|external-gated|unknown|independent-multi;required_capabilities=C[];requested_external_actions=X[];likely_verification=V[];likely_targets[];intent_signals[]${semantic.phase==='followup'?';constraint_atoms[]':''}.`,
+    ...atomLines,
     `C=${SEMANTIC_CAPABILITIES.join('|')}; X=${SEMANTIC_EXTERNAL_ACTIONS.join('|')}; V=${SEMANTIC_VERIFICATION_KINDS.join('|')}. intent_signals=[] by default; intent.<slug> e.g. intent.tdd; unknown signals reject; capability-named signals reject.`,
     'scope and dependency_class describe material implementation/change work units; multi-file=>2+ material targets; not test files that the user says must remain unchanged; sequential=2+ ordered units; one implementation change followed by verification is not a sequential dependency.',
     'intent.tdd=test-first; test command=verification. diagnosis is read-only root cause/no fix; otherwise intent.debugging requires material diagnosis + repository-analysis. independent-review only for explicit user independence or risk/policy requirement. interactive-process=persistent; mcp=exact child MCP; bounded=native shell. X nonempty=>risk=authority-boundary.',

@@ -13,6 +13,7 @@ import { isSchedulerLifecycleState } from '../../contracts/orchestration-core.js
 import { isProgressDelta,isSemanticProgressSnapshot } from '../progress/semantic-progress.js'
 import { isRecoveryStrategyRecord } from '../continuation/recovery-governor.js'
 import { normalizeBoundedProjectPath } from '../../contracts/common.js'
+import { isConstraintAtom } from '../../contracts/constraint-atom.js'
 
 function isRecord(value:unknown):value is Record<string,unknown>{return Boolean(value)&&typeof value==='object'&&!Array.isArray(value)}
 function stringArray(value:unknown):value is string[]{return Array.isArray(value)&&value.every(item=>typeof item==='string')}
@@ -136,7 +137,11 @@ export function validateMissionExecutionState(identity:unknown,execution:unknown
   if((identity.semantic_assessment as any)?.status==='assessed'&&(identity.intent as any)?.taskKind==='unclassified')return false
   if((identity.semantic_assessment as any)?.status==='pending'&&(identity.semantic_assessment as any)?.phase==='initial'&&(((execution.obligations as unknown[])?.length??0)>0||((execution.tasks as unknown[])?.length??0)>0||((execution.workers as unknown[])?.length??0)>0||((execution.processes as unknown[])?.length??0)>0||((execution.isolation_decisions as unknown[])?.length??0)>0||((execution.workspace_leases as unknown[])?.length??0)>0||((methodology.methodology_needs as unknown[])?.length??0)>0))return false
   if((!Array.isArray(execution.obligations)||!execution.obligations.every(validObligation))||!Array.isArray(execution.tasks)||!execution.tasks.every(isTaskContract)||!Array.isArray(execution.workers)||!execution.workers.every(isWorkerContract)||!Array.isArray(execution.processes)||!execution.processes.every(isProcessContract)||!Array.isArray(execution.isolation_decisions)||!execution.isolation_decisions.every(isIsolationDecisionContract)||!Array.isArray(execution.workspace_leases)||!execution.workspace_leases.every(isWorkspaceLeaseContract)||!recordArray(execution.ledger))return false
-  if(!stringArray(execution.blockers)||!stringArray(execution.constraints)||typeof execution.native_todos_incomplete!=='number'||!Array.isArray(execution.gates)||!execution.gates.every(validGate))return false
+  if(!stringArray(execution.blockers)||!stringArray(execution.constraints)||(execution.constraint_atoms!==undefined&&(!Array.isArray(execution.constraint_atoms)||!execution.constraint_atoms.every(isConstraintAtom)))||typeof execution.native_todos_incomplete!=='number'||!Array.isArray(execution.gates)||!execution.gates.every(validGate))return false
+  if(Array.isArray(execution.constraint_atoms)){
+    const atoms=execution.constraint_atoms as any[],ids=atoms.map(a=>a.id);if(new Set(ids).size!==ids.length)return false
+    const known=new Set(ids);for(const atom of atoms){if(atom.superseded_by!==undefined&&!known.has(atom.superseded_by))return false;if((atom.supersedes??[]).some((id:string)=>!known.has(id)))return false;if(atom.status==='SUPERSEDED'&&!atom.superseded_by)return false;if(atom.status==='ACTIVE'&&atom.superseded_by!==undefined)return false}
+  }
   if(execution.scheduler!==undefined){
     if(!isSchedulerLifecycleState(execution.scheduler)||execution.scheduler.missionId!==identity.mission_id)return false
     const tasks=execution.tasks as any[],workers=execution.workers as any[]

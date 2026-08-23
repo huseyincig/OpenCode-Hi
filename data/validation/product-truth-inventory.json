@@ -9,7 +9,7 @@
       "area": "mission",
       "canonical_owner": "MissionStore",
       "owner_path": "plugin/src/runtime/mission/mission-store.ts",
-      "owner_sha256": "bfb38e6dda3c4b8f2dec4738add958ffac7e69f36177c84c08c2cde1e5e5c758",
+      "owner_sha256": "08d732469bd1a416b980903c9cc191304b6a3071278236e518c245dd964704c8",
       "producer_or_contract_paths": [
         "plugin/src/runtime/mission/types.ts",
         "plugin/src/runtime/mission/validators.ts"
@@ -27,7 +27,7 @@
       "area": "task-runtime",
       "canonical_owner": "TaskRuntime",
       "owner_path": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "f8bcc5ab05b45ca973b9acc17c020c0437a3286b8fa78201e8b99a594c2e3539",
+      "owner_sha256": "04fda3035af43703304f07d7d94f781bbe74eb702612ba765309ab0098cb2867",
       "producer_or_contract_paths": [
         "plugin/src/runtime/task/contracts.ts"
       ],

@@ -1,6 +1,7 @@
 import type { HiMethodologySignalName } from '../../generated/methodology-policy.js';
 import type { NormalizedMissionIntent, Risk } from '../mission/types.js';
 import type { RepoContext } from './repo-context.js';
+import { type ConstraintAtomDraft } from '../../contracts/constraint-atom.js';
 export type SemanticMessageKind = 'mission' | 'amendment' | 'constraint' | 'verification' | 'stop' | 'resume' | 'non-material';
 export declare const SEMANTIC_CAPABILITIES: readonly ["implementation", "repository-analysis", "review", "verification", "independent-review", "security-review", "visual-qa", "design-exploration", "multi-stream-delegation", "source-verification", "qa-review", "dependency-change", "interactive-process", "mcp"];
 export type SemanticCapability = typeof SEMANTIC_CAPABILITIES[number];
@@ -24,6 +25,7 @@ export interface SemanticIntentAssessment {
     likely_targets: string[];
     intent_signals: HiMethodologySignalName[];
     suppressed_intent_signals: HiMethodologySignalName[];
+    constraint_atoms: ConstraintAtomDraft[];
 }
 export declare function technicalTargets(text: string): string[];
 export declare function technicalVerificationKinds(text: string): SemanticVerificationKind[];

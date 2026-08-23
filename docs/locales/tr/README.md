@@ -24,6 +24,7 @@ OpenCode-Hi native AI execution çevresine deterministic ürün semantiği ekler
 - direct, delegated ve bounded multi-agent execution;
 - Role, model, Methodology ve topology'nin birbirinden bağımsız seçimi;
 - exact Authority ve monotonic host Permission sınırları;
+- explicit supersession ve fail-closed mutation enforcement taşıyan revision-bound structured kullanıcı Constraint/Decision atomları;
 - bounded Mission runtime projection, durable context artifactları, TypeScript Semantic Context ve confidence/freshness gate'li evidence-backed project methodology learning;
 - lazy Methodology/skill discovery ve loading;
 - structured Evidence, VerificationEnvelope ve deterministic completion;

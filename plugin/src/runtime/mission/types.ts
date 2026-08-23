@@ -12,6 +12,7 @@ import type { IsolationDecisionContract,WorkspaceLeaseContract } from '../../con
 import type { ProgressDelta,SchedulerLifecycleState } from '../../contracts/orchestration-core.js'
 import type { SemanticProgressSnapshot } from '../progress/semantic-progress.js'
 import type { RecoveryStrategyRecord } from '../continuation/recovery-governor.js'
+import type { ConstraintAtom } from '../../contracts/constraint-atom.js'
 export type { EvidenceItem } from '../../contracts/evidence.js'
 export { WORKER_EVIDENCE_KINDS } from '../../contracts/worker-result.js'
 export type { EvidenceOutcome,MethodologyObservation,WorkerEvidenceClaim,WorkerEvidenceKind,WorkerResult,WorkerResultStatus } from '../../contracts/worker-result.js'
@@ -50,7 +51,7 @@ export interface MissionExecutionState {
   execution_mode:ExecutionMode; primary_mode:PrimaryMode; verification_policy:VerificationPolicy;
   adaptive_execution?:{path:'DIRECT'|'EVIDENCE'|'PLANNED'|'ESCALATED';reasons:string[]}; topology?:{mode:'single-agent'|'multi-agent';parallelism:number;reason:string[]};
   obligations:Obligation[]; tasks:MissionTask[]; workers:WorkerState[]; processes:ProcessContract[]; isolation_decisions:IsolationDecisionContract[]; workspace_leases:WorkspaceLeaseContract[]; evidence:{fresh:boolean;items:EvidenceItem[];last_mutation_at?:number}; ledger:LedgerEvent[];
-  blockers:string[]; constraints:string[]; native_todos_incomplete:number; gates:MissionGate[]; scheduler?:SchedulerLifecycleState
+  blockers:string[]; constraints:string[]; constraint_atoms?:ConstraintAtom[]; native_todos_incomplete:number; gates:MissionGate[]; scheduler?:SchedulerLifecycleState
 }
 export interface MissionContinuationState {
   generation:number; iteration:number; continuation_budget:number; continuation_active:boolean; suppress_until?:number;

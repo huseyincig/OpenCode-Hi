@@ -35,6 +35,7 @@ import { clearCapabilityUnavailable, markCapabilityUnavailable, markVerification
 import { bindWorkerUsageObservation } from '../economics/usage-runtime.js';
 import { DependencyOutcomeProjectionError, projectDirectDependencyOutcomes, renderDirectDependencyOutcomeContext } from '../execution/dependency-outcome-projection.js';
 import { recordRecoveryStrategy, recoveryModelHazard } from '../continuation/recovery-governor.js';
+import { deniedMutationAtoms } from '../constraint/constraint-atoms.js';
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
 const MAX_QUEUE = 32;
 class TaskQueueCapacityError extends Error {
@@ -444,7 +445,15 @@ export class TaskRuntime {
         void this.events?.(runtimeSignal('skill.resolved', m.identity.mission_id, { payload: { role, requested: skillPlan.requested, outcomes: skillPlan.outcomes } }));
         if (skillPlan.missing.length)
             appendLedger(m, 'skill.fallback', { payload: { missing: skillPlan.missing, requested: skillPlan.requested, skillToolEnabled } });
-        const scope = input.scope ?? (isHiReadOnlyChildRole(role) && m.vcs.changed_files.length ? m.vcs.changed_files : taskIntent.likelyTargets ?? []), dependencies = [...new Set(input.dependencies ?? [])];
+        const scope = input.scope ?? (isHiReadOnlyChildRole(role) && m.vcs.changed_files.length ? m.vcs.changed_files : taskIntent.likelyTargets ?? []);
+        if (!isHiReadOnlyChildRole(role)) {
+            const denied = [...new Map(scope.flatMap(path => deniedMutationAtoms(m.execution.constraint_atoms, path)).map(atom => [atom.id, atom])).values()];
+            if (denied.length) {
+                appendLedger(m, 'task.constraint-preflight-blocked', { payload: { role, scope: scope.slice(0, 40), atoms: denied.map(a => a.id) } });
+                throw new Error(`Hi task scope conflicts with active user mutation constraint(s): ${denied.map(a => `${a.id}:${a.subject}`).join(', ')}`);
+            }
+        }
+        const dependencies = [...new Set(input.dependencies ?? [])];
         const unknownDependencies = dependencies.filter(id => !m.execution.tasks.some(t => t.id === id)), unavailableDependencies = this.failedDeps(m, dependencies), incompleteDependencies = dependencies.filter(id => { const t = m.execution.tasks.find(x => x.id === id); return Boolean(t) && t.status !== 'completed' && !unavailableDependencies.includes(id); });
         const isolationRequired = input.isolationRequired === true, isolationReason = String(input.isolationReason ?? '').trim();
         if (isolationRequired && !isolationReason)

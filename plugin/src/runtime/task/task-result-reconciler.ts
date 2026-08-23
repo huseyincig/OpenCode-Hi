@@ -25,6 +25,7 @@ import { taskRuntimeAdmittedModel,reserveTaskRuntimeDispatch,bindTaskRuntimeHost
 import { executionAttemptIdentity } from '../../contracts/orchestration-core.js'
 import { evidenceClaimApplicability } from '../evidence/applicability.js'
 import { captureEvidenceScopeState } from '../evidence/scope-state.js'
+import { deniedMutationAtoms } from '../constraint/constraint-atoms.js'
 
 function providerOf(model:string|undefined):string|undefined{return model&&model!=='host-default'&&model.includes('/')?model.slice(0,model.indexOf('/')):undefined}
 function resultDigest(result:WorkerResult):string{return createHash('sha256').update(JSON.stringify(result)).digest('hex')}
@@ -142,6 +143,13 @@ export class TaskResultReconciler{
       needs_context:[...new Set([...result.needs_context,'cleanup-verification: do not close collateral-diff blockers from WorkerResult claims alone; provide native/session diff confirmation'])]
     }:normalizedResult
     const missingMethodologyLoads=effectiveResult.status==='DONE'?(worker.selected_methodologies??[]).filter(name=>!(worker.loaded_methodologies??[]).includes(name)):[]
+    const constraintViolations=[...new Map(effectiveResult.changed_files.flatMap(file=>deniedMutationAtoms(m.execution.constraint_atoms,file).map(atom=>[`${atom.id}:${normFile(file)}`,{atom,file:normFile(file)}] as const))).values()]
+    if(constraintViolations.length){
+      const markers=constraintViolations.map(({atom,file})=>`constraint-violation:${atom.id}:${file}`)
+      effectiveResult={...effectiveResult,status:'FIX_REQUIRED',summary:`Active user mutation constraint violated by changed file(s): ${constraintViolations.map(x=>x.file).slice(0,12).join(', ')}.`,open_issues:[...new Set([...effectiveResult.open_issues,...markers])],needs_context:[...new Set([...effectiveResult.needs_context,'constraint-reconcile: restore prohibited mutation surfaces to their worker-start/user baseline or obtain an explicit superseding user constraint; do not hide the write'])]}
+      appendLedger(m,'constraint.mutation-violation',{task_id:task.id,worker_id:worker.id,payload:{violations:constraintViolations.slice(0,40).map(({atom,file})=>({atom_id:atom.id,file,subject:atom.subject,predicate:atom.predicate,polarity:atom.polarity}))}})
+      void this.events?.(runtimeSignal('constraint.mutation-violation',m.identity.mission_id,{task_id:task.id,worker_id:worker.id,payload:{atoms:[...new Set(constraintViolations.map(x=>x.atom.id))],files:[...new Set(constraintViolations.map(x=>x.file))].slice(0,40)}}))
+    }
     if(missingMethodologyLoads.length){
       const marker=`methodology-not-loaded:${task.id}:${missingMethodologyLoads.join(',')}`
       effectiveResult={...effectiveResult,status:'FIX_REQUIRED',summary:`Selected Hi methodology was not loaded through the native skill tool: ${missingMethodologyLoads.join(', ')}.`,open_issues:[...new Set([...effectiveResult.open_issues,marker])],needs_context:[...new Set([...effectiveResult.needs_context,'load the Hi-selected methodology through the OpenCode native skill tool before retrying the bounded task'])]}

@@ -50,6 +50,7 @@ export function semanticProgressSnapshot(m:MissionState):SemanticProgressSnapsho
     files:changedFiles,
     blockers:sorted(m.execution.blockers),
     constraints:sorted(m.execution.constraints),
+    constraint_atoms:(m.execution.constraint_atoms??[]).map(a=>[a.id,a.status,a.subject_kind,a.subject,a.predicate,a.polarity,a.scope,a.superseded_by??'']).sort((a,b)=>String(a[0]).localeCompare(String(b[0]))),
     tasks_constraints:m.execution.tasks.map(t=>[t.id,sorted(t.constraints)]),
     gates:m.execution.gates.map(g=>[g.id,g.status,g.reason]),
     temporary:m.vcs.temporary_mutations.map(x=>[x.id,x.status]),
