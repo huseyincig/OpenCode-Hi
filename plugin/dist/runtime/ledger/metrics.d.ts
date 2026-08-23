@@ -1,4 +1,5 @@
 import type { MissionState } from '../mission/types.js';
+import { type MissionCausalUsageAttribution } from '../economics/causal-attribution.js';
 export interface MissionMetrics {
     completed: boolean;
     duration_ms: number;
@@ -32,6 +33,7 @@ export interface MissionMetrics {
         };
         derived_opencode_cost_usd: number;
         monetary_basis: 'opencode-calculated-derived';
+        causal: MissionCausalUsageAttribution;
     };
 }
 export declare function missionMetrics(m: MissionState): MissionMetrics;

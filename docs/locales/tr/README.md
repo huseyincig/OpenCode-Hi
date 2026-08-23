@@ -29,6 +29,7 @@ OpenCode-Hi native AI execution çevresine deterministic ürün semantiği ekler
 - lazy Methodology/skill discovery ve loading;
 - structured Evidence, VerificationEnvelope ve deterministic completion;
 - bounded recovery, WAIT ve authoritative STOP;
+- cost/telemetry verisini routing authority yapmadan exact attempt-level usage ve lifecycle-bound causal repeat/context attribution;
 - exact-host kabulü bulunan Hi-owned process, isolated-workspace ve browser executor yüzeyleri;
 - restart-safe durable state;
 - ownership-aware install, upgrade, reconfigure, uninstall, rollback ve crash recovery.
