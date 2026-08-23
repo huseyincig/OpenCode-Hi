@@ -182,9 +182,46 @@ test('runtime inventory prefers OpenCode directory-scoped available models over 
 })
 
 
-test('successful directory-scoped empty available-model list stays empty instead of resurrecting provider catalog models',async()=>{
-  const root=mkdtempSync(join(tmpdir(),'hi-provider-v2-empty-'))
-  const raw={connected:['p'],all:[{id:'p',models:[{id:'catalog-only'}]}]}
+test('directory-scoped inventory supplements connected providers missing from the scoped surface without resurrecting scoped-filtered models',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-provider-v2-missing-connected-provider-'))
+  const raw={connected:['p','opencode-go'],all:[
+    {id:'p',models:[{id:'active'},{id:'disabled'}]},
+    {id:'opencode-go',models:[{id:'ox-alpha-free',status:'active',capabilities:{input:{image:true}},variants:{low:{},high:{}}}]},
+    {id:'offline',models:[{id:'nope'}]},
+  ]}
+  const client=clientWithProviderShape(raw),priorFetch=globalThis.fetch
+  globalThis.fetch=async(request)=>{
+    const url=new URL(typeof request==='string'?request:request.url);assert.equal(url.pathname,'/api/model')
+    return new Response(JSON.stringify({location:{directory:root},data:[{id:'active',providerID:'p',family:'code',name:'Active',api:{id:'active',type:'native',settings:{}},capabilities:{tools:true,input:['text'],output:['text']},request:{headers:{},body:{}},variants:[],time:{released:Date.now()},cost:[],status:'active',enabled:true,limit:{context:1000,output:100}}]}),{status:200,headers:{'content-type':'application/json'}})
+  }
+  try{
+    const host=createHostPort({directory:root,worktree:root,project:{},serverUrl:new URL('http://opencode.test'),client,experimental_workspace:{register(){}},$:()=>{}})
+    assert.equal(await host.refreshRuntimeInventory('test-missing-provider'),2)
+    assert.deepEqual(host.getModels().map(x=>x.id),['p/active','opencode-go/ox-alpha-free'])
+    assert.equal(host.getModels()[1]?.visionCapable,true);assert.deepEqual(host.getModels()[1]?.variants,['low','high'])
+    assert.ok(!host.getModels().some(x=>x.id==='p/disabled'),'scoped p inventory remains authoritative for provider p')
+    assert.ok(!host.getModels().some(x=>x.id==='offline/nope'),'unconnected provider never enters effective inventory')
+  }finally{globalThis.fetch=priorFetch;rmSync(root,{recursive:true,force:true})}
+})
+
+test('directory-scoped inventory remains usable when connected-provider supplement read fails',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-provider-v2-supplement-failure-'))
+  const client=clientWithProviderShape({connected:['p'],all:[]}),priorFetch=globalThis.fetch
+  client.provider.list=async()=>{throw new Error('provider registry temporarily unavailable')}
+  globalThis.fetch=async(request)=>{
+    const url=new URL(typeof request==='string'?request:request.url);assert.equal(url.pathname,'/api/model')
+    return new Response(JSON.stringify({location:{directory:root},data:[{id:'active',providerID:'p',family:'code',name:'Active',api:{id:'active',type:'native',settings:{}},capabilities:{tools:true,input:['text'],output:['text']},request:{headers:{},body:{}},variants:[],time:{released:Date.now()},cost:[],status:'active',enabled:true,limit:{context:1000,output:100}}]}),{status:200,headers:{'content-type':'application/json'}})
+  }
+  try{
+    const host=createHostPort({directory:root,worktree:root,project:{},serverUrl:new URL('http://opencode.test'),client,experimental_workspace:{register(){}},$:()=>{}})
+    assert.equal(await host.refreshRuntimeInventory('test-supplement-failure'),1)
+    assert.deepEqual(host.getModels().map(x=>x.id),['p/active'])
+  }finally{globalThis.fetch=priorFetch;rmSync(root,{recursive:true,force:true})}
+})
+
+test('directory-scoped empty list still admits models from explicitly connected providers',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-provider-v2-empty-connected-'))
+  const raw={connected:['p'],all:[{id:'p',models:[{id:'catalog-only'}]},{id:'offline',models:[{id:'nope'}]}]}
   const client=clientWithProviderShape(raw),priorFetch=globalThis.fetch
   globalThis.fetch=async(request)=>{
     const url=new URL(typeof request==='string'?request:request.url);assert.equal(url.pathname,'/api/model')
@@ -192,7 +229,22 @@ test('successful directory-scoped empty available-model list stays empty instead
   }
   try{
     const host=createHostPort({directory:root,worktree:root,project:{},serverUrl:new URL('http://opencode.test'),client,experimental_workspace:{register(){}},$:()=>{}})
-    assert.equal(await host.refreshRuntimeInventory('test-empty'),0)
+    assert.equal(await host.refreshRuntimeInventory('test-empty-connected'),1)
+    assert.deepEqual(host.getModels().map(x=>x.id),['p/catalog-only'])
+  }finally{globalThis.fetch=priorFetch;rmSync(root,{recursive:true,force:true})}
+})
+
+test('directory-scoped empty list does not widen from provider catalog without an explicit connected-provider set',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-provider-v2-empty-unproven-'))
+  const raw={all:[{id:'p',models:[{id:'catalog-only'}]}]}
+  const client=clientWithProviderShape(raw),priorFetch=globalThis.fetch
+  globalThis.fetch=async(request)=>{
+    const url=new URL(typeof request==='string'?request:request.url);assert.equal(url.pathname,'/api/model')
+    return new Response(JSON.stringify({location:{directory:root},data:[]}),{status:200,headers:{'content-type':'application/json'}})
+  }
+  try{
+    const host=createHostPort({directory:root,worktree:root,project:{},serverUrl:new URL('http://opencode.test'),client,experimental_workspace:{register(){}},$:()=>{}})
+    assert.equal(await host.refreshRuntimeInventory('test-empty-unproven'),0)
     assert.deepEqual(host.getModels(),[])
   }finally{globalThis.fetch=priorFetch;rmSync(root,{recursive:true,force:true})}
 })

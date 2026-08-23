@@ -50,6 +50,13 @@ function availableModels(raw:unknown[]):AvailableModel[]{
   return out
 }
 
+function connectedProviderSupplements(raw:unknown,scoped:AvailableModel[]):AvailableModel[]{
+  const edge=raw as any
+  if(!Array.isArray(edge?.connected))return[]
+  const scopedProviders=new Set(scoped.map(model=>model.provider).filter((provider):provider is string=>Boolean(provider)))
+  return providerModels(raw).filter(model=>Boolean(model.provider)&&!scopedProviders.has(model.provider!))
+}
+
 export function createHostPort(ctx:OpenCodePluginContext):HostPort{
   const capabilities=detectOpenCodeCapabilities(ctx.client)
   const native=new NativeOpenCodeAdapter(ctx.client)
@@ -60,9 +67,13 @@ export function createHostPort(ctx:OpenCodePluginContext):HostPort{
     if(inventoryRefresh)return inventoryRefresh
     inventoryRefresh=(async()=>{try{
       const scoped=await listAvailableModels({serverUrl:ctx.serverUrl?String(ctx.serverUrl):undefined,directory:ctx.directory})
-      if(scoped!==undefined)models=availableModels(scoped)
-      else{const raw=await listProviders(ctx.client);models=providerModels(raw)}
-      await log('info','Hi runtime inventory refreshed',{reason,models:models.length,source:scoped!==undefined?'directory-available-models':'connected-provider-catalog-fallback'})
+      let source='connected-provider-catalog-fallback',supplements=0
+      if(scoped!==undefined){
+        const scopedModels=availableModels(scoped);let extra:AvailableModel[]=[]
+        try{extra=connectedProviderSupplements(await listProviders(ctx.client),scopedModels)}catch{}
+        models=[...scopedModels,...extra];supplements=extra.length;source=extra.length?'directory-available-models+connected-provider-supplement':'directory-available-models'
+      }else{const raw=await listProviders(ctx.client);models=providerModels(raw)}
+      await log('info','Hi runtime inventory refreshed',{reason,models:models.length,source,supplements})
       return models.length
     }catch(error){await log('warn','Hi runtime inventory refresh failed',{reason,error:String(error)});return models.length}finally{inventoryRefresh=undefined}})()
     return inventoryRefresh

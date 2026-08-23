@@ -26,6 +26,10 @@ Hi Core role identity and authority live in `plugin/src/runtime/roles/catalog.ts
 
 `roles/*.md` are OpenCode reference-host adapter templates. Their frontmatter expresses OpenCode-native agent mode and permissions, and `scripts/generate_plugin_agents.py` derives the packaged OpenCode agent definitions. A future host adapter may bind the same Hi Core roles to different native primitives without changing Core role ownership.
 
+## Model inventory boundary
+
+OpenCode remains the sole owner of provider authentication and runtime model availability. Current `dev` normalizes two OpenCode-owned views without creating a Hi catalog: the directory-scoped enabled `/api/model` projection and the provider surface's explicit `connected` state. For any provider represented by `/api/model`, that scoped list is authoritative and broader provider metadata cannot reintroduce a model filtered from it. A provider absent from the scoped projection may contribute models only when OpenCode explicitly reports that provider as connected. If no explicit connected-provider set exists, Hi does not widen a successful scoped projection; if the supplementary provider read fails, the scoped projection remains usable. This provider-level union is a host-adapter completeness rule, not routing priority or a provider retry/fallback mechanism.
+
 ## Semantic context capability boundary
 
 Semantic Context is Hi Core context capability, not an OpenCode-native host capability. The current explicit adapter surface contains only `TypeScriptSemanticContextAdapter` for `.ts`/`.tsx` (`typescript`, `typescriptreact`). No LSP semantic adapter, Tree-sitter adapter, or JavaScript adapter is currently claimed. A future host-backed semantic adapter must be added behind `SemanticContextAdapter` and separately proven before documentation may advertise it.
