@@ -54,9 +54,14 @@ export function evaluateIdle(m, now = Date.now(), projectRoot) {
         setRuntimeNudge(m, instruction, 'worker-result-unreconciled');
         return { decision: 'RECONCILE', reason: 'worker-result-unreconciled', reason_code: 'worker-result-unreconciled', prompt: continuationPrompt(m, instruction) };
     }
-    const pre = evaluatePreconditions(m, projectRoot);
-    const contractOnly = pre.items.filter(x => x.status === 'blocked').every(x => x.id === 'gate-contract-ambiguity') && pre.items.some(x => x.id === 'gate-contract-ambiguity' && x.status === 'blocked');
-    if (!pre.ready && contractOnly) {
+    const pre = evaluatePreconditions(m, projectRoot), blockedPreconditions = pre.items.filter(x => x.status === 'blocked'), repoResolvable = blockedPreconditions.length > 0 && blockedPreconditions.every(x => ['gate-contract-ambiguity', 'gate-exploration-clearance'].includes(x.id));
+    if (!pre.ready && repoResolvable) {
+        const clearance = blockedPreconditions.find(x => x.id === 'gate-exploration-clearance');
+        if (clearance) {
+            const instruction = `Refresh bounded repository exploration for the stale clearance scope before implementation. ${clearance.reason}`;
+            setRuntimeNudge(m, instruction, 'exploration-clearance-refresh');
+            return { decision: 'CONTINUE', reason: 'exploration-clearance-refresh', reason_code: 'exploration-clearance-refresh', prompt: continuationPrompt(m, instruction) };
+        }
         const instruction = 'Resolve the contract-critical ambiguity from repository structure, existing contracts, tests, or evidence before asking the user. Do not implement until resolved.';
         setRuntimeNudge(m, instruction, 'contract-ambiguity-repo-first');
         return { decision: 'CONTINUE', reason: 'contract-ambiguity-repo-first', reason_code: 'contract-ambiguity-repo-first', prompt: continuationPrompt(m, instruction) };
@@ -124,4 +129,4 @@ export function evaluateIdle(m, now = Date.now(), projectRoot) {
     return { decision: 'CONTINUE', reason: 'open-obligation', reason_code: 'open-obligation', prompt: continuationPrompt(m, recovery.prompt) };
 }
 export function continuationPrompt(m, action) { const open = m.execution.obligations.filter(o => o.status === 'open').map(o => o.summary).slice(0, 3); return ['Hi runtime: mission is still active.', `Open obligation: ${open.join(' | ') || 'none'}.`, action, 'Resume from current state. Do not restart planning. Do not create duplicate tasks.'].join('\n'); }
-export function shouldCountStagnation(decision) { return ['open-obligation', 'contract-ambiguity-repo-first', 'stagnation-recovery', 'verification-pending', 'verification-failed', 'worker-result-unreconciled'].includes(decision.reason_code); }
+export function shouldCountStagnation(decision) { return ['open-obligation', 'contract-ambiguity-repo-first', 'exploration-clearance-refresh', 'stagnation-recovery', 'verification-pending', 'verification-failed', 'worker-result-unreconciled'].includes(decision.reason_code); }

@@ -1,4 +1,5 @@
 import { verificationClaimsSatisfied, reviewClaimsSatisfied } from '../verification/policy.js';
+import { explorationClearanceFreshness } from '../execution/exploration-clearance.js';
 function upsert(m, id, kind, summary, status, reason) { const now = Date.now(); const existing = m.execution.gates.find(g => g.id === id); if (existing) {
     existing.kind = kind;
     existing.summary = summary;
@@ -16,8 +17,17 @@ export function syncMissionGates(m, projectRoot, claims) {
     upsert(m, 'gate-authority', 'user-authority', 'Privileged external effect requires exact authority and confirmed completion', authorityOpen ? (m.authority.authority?.approved ? 'ready' : 'blocked') : 'closed', authorityOpen ? 'authority-open' : undefined);
     const verificationObligations = m.execution.obligations.filter(o => o.kind === 'verification'), verifyOpen = verificationObligations.some(o => o.status !== 'closed'), verify = claims?.verification ?? verificationClaimsSatisfied(m, projectRoot);
     upsert(m, 'gate-verification', 'verification', 'Required verification evidence must be fresh and policy-complete', verificationObligations.length ? (verify.ok ? (verifyOpen ? 'ready' : 'closed') : 'open') : 'closed', verificationObligations.length && !verify.ok ? verify.missing.join(',') : undefined);
-    const ambiguity = m.identity.intent.ambiguity === 'contract-critical' && m.execution.obligations.some(o => o.kind === 'implementation' && o.status === 'open');
+    const implementationOpen = m.execution.obligations.some(o => o.kind === 'implementation' && o.status === 'open'), ambiguity = m.identity.intent.ambiguity === 'contract-critical' && implementationOpen;
     upsert(m, 'gate-contract-ambiguity', 'precondition', 'Contract-critical ambiguity must be resolved from repo/evidence before implementation', ambiguity ? 'blocked' : 'closed', ambiguity ? 'contract-critical-ambiguity' : undefined);
+    const existingClearance = m.execution.gates.find(g => g.id === 'gate-exploration-clearance');
+    if (!implementationOpen)
+        upsert(m, 'gate-exploration-clearance', 'precondition', 'Previously admitted repository exploration must remain fresh before implementation', 'closed');
+    else if (projectRoot) {
+        const clearance = explorationClearanceFreshness(projectRoot, m), stale = clearance.required && !clearance.current, scope = clearance.source_scope.slice(0, 8).join(',') || 'unknown-scope';
+        upsert(m, 'gate-exploration-clearance', 'precondition', 'Previously admitted repository exploration must remain fresh before implementation', stale ? 'blocked' : 'closed', stale ? `exploration-clearance-${clearance.reason}:${scope}` : undefined);
+    }
+    else if (!existingClearance)
+        upsert(m, 'gate-exploration-clearance', 'precondition', 'Previously admitted repository exploration must remain fresh before implementation', 'closed');
     const reviewRequired = m.execution.verification_policy.requireReview, reviewObligations = m.execution.obligations.filter(o => o.kind === 'review'), reviewOpen = reviewObligations.some(o => o.status !== 'closed'), review = claims?.review ?? reviewClaimsSatisfied(m, projectRoot);
     upsert(m, 'gate-reviewer', 'reviewer', 'Required independent review must be completed', reviewRequired ? (review.ok ? (reviewOpen ? 'ready' : 'closed') : 'open') : 'closed', reviewRequired && !review.ok ? `review-claims:${review.missing.join(',')}` : undefined);
     const prereq = m.execution.tasks.filter(t => t.dependencies.some(id => m.execution.tasks.find(x => x.id === id)?.status !== 'completed') && !['completed', 'failed', 'cancelled'].includes(t.status));

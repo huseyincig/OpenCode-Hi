@@ -78,6 +78,8 @@ export function controlDecisionInstruction(m:MissionState,decision:ControlDecisi
     if(decision.verification_route_status==='none')return`verify:${missing.join(',')||'required-evidence'}; route=none; no-admissible-repo-native-verifier; report-gap-and-stop; use matching Hi-owned verifier only when the required capability explicitly owns this evidence; do not invent a verifier`
     return`verify:${missing.join(',')||'required-evidence'}; route=unknown; evidence-owned; do-not-use=${decision.ineffective_actions.join(',')}`
   }
+  const staleClearance=m.execution.gates.find(g=>g.id==='gate-exploration-clearance'&&g.status==='blocked')
+  if(staleClearance)return`continue:refresh-exploration-clearance; call hi_task_start with role=repository-explorer against the stale clearance scope; ${staleClearance.reason??'re-establish current source provenance'}; do not implement until current bounded repository evidence is re-established`
   const openWork=m.execution.obligations.find(o=>o.status==='open'&&(o.kind==='analysis'||o.kind==='implementation'))
   if(openWork){
     if(m.execution.execution_mode==='parallel')return`continue:${openWork.id}; delegate via hi_task_start; parent must not mutate`
