@@ -10,12 +10,11 @@ import { runtimeSignal } from '../events/event-sink.js';
 import { evaluateIdle, shouldCountStagnation } from '../continuation/evaluator.js';
 import { evaluateCompletion } from '../completion/evaluator.js';
 function resetCompactionSensitiveRecovery(m, sessionID, workerID) {
-    const priorStagnation = m.continuation.stagnation_count, priorRecoveryCount = m.continuation.recovery_history?.length ?? 0, stagnationNudgeCleared = Boolean(m.continuation.pending_nudge?.reason.startsWith('stagnation-level-'));
+    const priorStagnation = m.continuation.stagnation_count, recoveryHistoryPreserved = m.continuation.recovery_history?.length ?? 0, stagnationNudgeCleared = Boolean(m.continuation.pending_nudge?.reason.startsWith('stagnation-level-'));
     m.continuation.stagnation_count = 0;
-    m.continuation.recovery_history = [];
     if (stagnationNudgeCleared)
         m.continuation.pending_nudge = undefined;
-    appendLedger(m, 'session.compacted', { worker_id: workerID, payload: { source: 'native-event', session_id: sessionID, stagnation_reset_from: priorStagnation, recovery_history_cleared: priorRecoveryCount, stagnation_nudge_cleared: stagnationNudgeCleared, semantic_progress_preserved: true } });
+    appendLedger(m, 'session.compacted', { worker_id: workerID, payload: { source: 'native-event', session_id: sessionID, stagnation_reset_from: priorStagnation, recovery_history_preserved: recoveryHistoryPreserved, stagnation_nudge_cleared: stagnationNudgeCleared, semantic_progress_preserved: true } });
 }
 function nativePermissionKey(sessionID, permissionID) { return `${sessionID}\0${permissionID}`; }
 export class RuntimeEventController {
