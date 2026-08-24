@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import type { MethodologyObservation, MissionState, WorkerState } from '../mission/types.js'
+import type { EvidenceItem, MethodologyObservation, MissionState, WorkerState } from '../mission/types.js'
 import { methodologyCandidateAssessment, methodologyCandidateDigest, methodologyCandidateID, validProjectMethodologyCandidate, withDerivedMethodologyLearning, type ProjectMethodologyCandidate } from './methodology-candidate.js'
 import { hiProjectRoot, projectMethodologyCandidatePath } from '../storage/ownership.js'
 import { appendLedger } from '../ledger/ledger.js'
@@ -14,9 +14,9 @@ export class ProjectMethodologyLearningStore{
   #load():void{const dir=join(hiProjectRoot(this.projectRoot),'project-intelligence','methodology-candidates');if(!existsSync(dir))return;for(const entry of readdirSync(dir,{withFileTypes:true})){if(!entry.isFile()||!entry.name.endsWith('.json'))continue;try{const raw=JSON.parse(readFileSync(join(dir,entry.name),'utf8'));if(validProjectMethodologyCandidate(raw)&&entry.name===`${raw.id}.json`)this.#items.set(raw.id,withDerivedMethodologyLearning(raw))}catch{}}}
   #persist(item:ProjectMethodologyCandidate):void{const path=projectMethodologyCandidatePath(this.projectRoot,item.id);mkdirSync(dirname(path),{recursive:true});writeFileSync(path,JSON.stringify(withDerivedMethodologyLearning(item),null,2)+'\n','utf8')}
   all():ProjectMethodologyCandidate[]{return [...this.#items.values()].map(withDerivedMethodologyLearning)}
-  observe(mission:MissionState,worker:WorkerState,observation:MethodologyObservation,resultEvidence:readonly string[]):ProjectMethodologyCandidate|undefined{
-    const available=new Set(resultEvidence.map(item=>String(item).trim().toLowerCase()).filter(Boolean));const referenced=[...new Set(observation.evidence.map(ref=>String(ref).trim().toLowerCase()).filter(ref=>available.has(ref)))].slice(0,12)
-    if(!referenced.length){appendLedger(mission,'project-methodology.observation-rejected',{task_id:worker.task_id,worker_id:worker.id,payload:{key:observation.key,reason:'observation evidence kinds are not exactly bound to worker result evidence kinds'}});return undefined}
+  observe(mission:MissionState,worker:WorkerState,observation:MethodologyObservation,resultEvidence:readonly Pick<EvidenceItem,'id'|'kind'>[]):ProjectMethodologyCandidate|undefined{
+    const byKind=new Map<string,string[]>();for(const item of resultEvidence){const kind=String(item.kind).trim().toLowerCase(),id=String(item.id).trim();if(!kind||!id)continue;const ids=byKind.get(kind)??[];if(!ids.includes(id))ids.push(id);byKind.set(kind,ids)}const referenced=[...new Set(observation.evidence.flatMap(ref=>byKind.get(String(ref).trim().toLowerCase())??[]))].slice(0,12)
+    if(!referenced.length){appendLedger(mission,'project-methodology.observation-rejected',{task_id:worker.task_id,worker_id:worker.id,payload:{key:observation.key,reason:'observation evidence kinds have no exact canonical Evidence receipt'}});return undefined}
     const id=methodologyCandidateID(observation),contractSha=methodologyCandidateDigest(observation),now=Date.now(),existing=this.#items.get(id)
     let item:ProjectMethodologyCandidate=existing??{schema:1,id,key:observation.key,contract_sha256:contractSha,procedure:observation.procedure,trigger:observation.trigger,do_not_trigger:observation.do_not_trigger,exit_condition:observation.exit_condition,state:'CANDIDATE',observations:[],created_at:now,updated_at:now}
     if(item.state==='ARCHIVED')return withDerivedMethodologyLearning(item)

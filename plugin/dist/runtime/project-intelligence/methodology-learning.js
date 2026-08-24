@@ -27,10 +27,19 @@ export class ProjectMethodologyLearningStore {
     #persist(item) { const path = projectMethodologyCandidatePath(this.projectRoot, item.id); mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, JSON.stringify(withDerivedMethodologyLearning(item), null, 2) + '\n', 'utf8'); }
     all() { return [...this.#items.values()].map(withDerivedMethodologyLearning); }
     observe(mission, worker, observation, resultEvidence) {
-        const available = new Set(resultEvidence.map(item => String(item).trim().toLowerCase()).filter(Boolean));
-        const referenced = [...new Set(observation.evidence.map(ref => String(ref).trim().toLowerCase()).filter(ref => available.has(ref)))].slice(0, 12);
+        const byKind = new Map();
+        for (const item of resultEvidence) {
+            const kind = String(item.kind).trim().toLowerCase(), id = String(item.id).trim();
+            if (!kind || !id)
+                continue;
+            const ids = byKind.get(kind) ?? [];
+            if (!ids.includes(id))
+                ids.push(id);
+            byKind.set(kind, ids);
+        }
+        const referenced = [...new Set(observation.evidence.flatMap(ref => byKind.get(String(ref).trim().toLowerCase()) ?? []))].slice(0, 12);
         if (!referenced.length) {
-            appendLedger(mission, 'project-methodology.observation-rejected', { task_id: worker.task_id, worker_id: worker.id, payload: { key: observation.key, reason: 'observation evidence kinds are not exactly bound to worker result evidence kinds' } });
+            appendLedger(mission, 'project-methodology.observation-rejected', { task_id: worker.task_id, worker_id: worker.id, payload: { key: observation.key, reason: 'observation evidence kinds have no exact canonical Evidence receipt' } });
             return undefined;
         }
         const id = methodologyCandidateID(observation), contractSha = methodologyCandidateDigest(observation), now = Date.now(), existing = this.#items.get(id);

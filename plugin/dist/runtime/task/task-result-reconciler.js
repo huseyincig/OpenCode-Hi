@@ -432,7 +432,7 @@ export class TaskResultReconciler {
             appendLedger(m, 'task-outcome-memory.write-failed', { task_id: task.id, worker_id: worker.id, payload: { error: String(error).slice(0, 300), policy: 'advisory-bookkeeping-fail-open' } });
         }
         if (effectiveResult.status === 'DONE' && effectiveResult.methodology_observations?.length) {
-            const evidenceRefs = m.execution.evidence.items.filter(e => e.task_id === task.id && !e.invalidated_at && evidenceVerdictPassed(e.pass, e.outcome) && e.producer_attempt?.worker_id === worker.id && e.producer_attempt.ordinal === worker.attempt && e.producer_attempt.generation === (worker.generation_at_spawn ?? m.continuation.generation)).map(e => e.kind);
+            const evidenceRefs = m.execution.evidence.items.filter(e => e.task_id === task.id && !e.invalidated_at && evidenceVerdictPassed(e.pass, e.outcome) && e.producer_attempt?.worker_id === worker.id && e.producer_attempt.ordinal === worker.attempt && e.producer_attempt.generation === (worker.generation_at_spawn ?? m.continuation.generation)).map(e => ({ id: e.id, kind: e.kind }));
             for (const observation of effectiveResult.methodology_observations)
                 this.methodologyLearning.observe(m, worker, observation, evidenceRefs);
         }

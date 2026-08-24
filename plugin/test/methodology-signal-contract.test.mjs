@@ -213,18 +213,18 @@ test('release producer activates only when a concrete publish/release command re
 
 test('project methodology learning requires repeated independent evidence and survives store restart',()=>{
   const project=mkdtempSync(join(tmpdir(),'hi-methodology-learning-'))
-  const observation={key:'generated-client-contract-check',procedure:'After regenerating the project client, compare generated contract outputs and run the project contract verifier before accepting the change.',trigger:'Generated project client or schema output changes.',do_not_trigger:'No generated client/schema contract changed.',exit_condition:'Generated output and project contract verification agree.',evidence:['contract-verifier']}
+  const observation={key:'generated-client-contract-check',procedure:'After regenerating the project client, compare generated contract outputs and run the project contract verifier before accepting the change.',trigger:'Generated project client or schema output changes.',do_not_trigger:'No generated client/schema contract changed.',exit_condition:'Generated output and project contract verification agree.',evidence:['targeted-tests']}
   const m1=new MissionStore(project).start('s-learn-1','Update generated client contract')
   m1.methodology.methodology_needs=[]
   const w1={id:'w-learn-1',task_id:'t-learn-1',role:'coder',category:'standard',parent_session_id:m1.identity.session_id,parent_mission_id:m1.identity.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'learn-1',status:'completed',generation_at_spawn:m1.continuation.generation}
-  const first=new ProjectMethodologyLearningStore(project).observe(m1,w1,observation,['contract-verifier','contract verifier passed'])
+  const first=new ProjectMethodologyLearningStore(project).observe(m1,w1,observation,[{id:'ev-contract-verifier-1',kind:'targeted-tests'}])
   assert.equal(first?.state,'CANDIDATE')
   assert.ok(!m1.methodology.methodology_needs.some(x=>x.signal==='project.methodology-gap'))
 
   const m2=new MissionStore(project).start('s-learn-2','Regenerate the project client after schema update')
   m2.methodology.methodology_needs=[]
   const w2={...w1,id:'w-learn-2',task_id:'t-learn-2',parent_session_id:m2.identity.session_id,parent_mission_id:m2.identity.mission_id,fingerprint:'learn-2',generation_at_spawn:m2.continuation.generation}
-  const second=new ProjectMethodologyLearningStore(project).observe(m2,w2,observation,['contract-verifier','contract verifier passed again'])
+  const second=new ProjectMethodologyLearningStore(project).observe(m2,w2,observation,[{id:'ev-contract-verifier-2',kind:'targeted-tests'}])
   assert.equal(second?.state,'READY')
   assert.equal(second?.observations.length,2)
   assert.ok(m2.methodology.methodology_needs.some(x=>x.name==='hi-methodology-authoring'&&x.signal==='project.methodology-gap'&&x.producer==='project-intelligence'))
@@ -235,7 +235,7 @@ test('project methodology learning rejects an observation whose claimed evidence
   const m=new MissionStore(project).start('s-learn-reject','Update internal helper')
   m.methodology.methodology_needs=[]
   const w={id:'w-reject',task_id:'t-reject',role:'coder',category:'standard',parent_session_id:m.identity.session_id,parent_mission_id:m.identity.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'reject',status:'completed',generation_at_spawn:m.continuation.generation}
-  const result=new ProjectMethodologyLearningStore(project).observe(m,w,{key:'fake-how',procedure:'Always run the special project workflow after editing this surface.',trigger:'Surface changes.',do_not_trigger:'Surface does not change.',exit_condition:'Special workflow passes.',evidence:['special-proof']},['ordinary-test'])
+  const result=new ProjectMethodologyLearningStore(project).observe(m,w,{key:'fake-how',procedure:'Always run the special project workflow after editing this surface.',trigger:'Surface changes.',do_not_trigger:'Surface does not change.',exit_condition:'Special workflow passes.',evidence:['special-proof']},[{id:'ev-ordinary-test',kind:'targeted-tests'}])
   assert.equal(result,undefined)
   assert.ok(m.execution.ledger.some(x=>x.type==='project-methodology.observation-rejected'))
   assert.ok(!m.methodology.methodology_needs.some(x=>x.signal==='project.methodology-gap'))
