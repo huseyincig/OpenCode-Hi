@@ -163,6 +163,7 @@ export class QueuedWorkerDispatcher {
                 }
                 catch (error) {
                     lastError = error;
+                    const hostExecutionStarted = Boolean(worker.session_id);
                     let hostStopped = true;
                     if (worker.session_id) {
                         try {
@@ -189,9 +190,13 @@ export class QueuedWorkerDispatcher {
                         appendLedger(m, 'worker.start.cancelled', { task_id: task.id, worker_id: worker.id, payload: { model, index: i, error: String(error) } });
                         throw error;
                     }
-                    appendLedger(m, 'model.fallback.failed', { task_id: task.id, worker_id: worker.id, payload: { model, index: i, error: String(error) } });
                     worker.status = 'created';
                     task.status = 'created';
+                    if (hostExecutionStarted) {
+                        appendLedger(m, 'worker.start.post-child-failure', { task_id: task.id, worker_id: worker.id, payload: { model, index: i, error: String(error), fallback_allowed: false } });
+                        break;
+                    }
+                    appendLedger(m, 'model.fallback.failed', { task_id: task.id, worker_id: worker.id, payload: { model, index: i, error: String(error) } });
                 }
             }
             worker.status = 'failed';
