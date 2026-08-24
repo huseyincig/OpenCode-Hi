@@ -50,9 +50,11 @@ export class OpenCodePtyAdapter {
     maxBufferedChars;
     maxReadChars;
     resolveProcessGroup;
+    terminationGraceMs;
+    terminationVerifyMs;
     #states = new Map();
     #v2Client;
-    constructor(client, serverUrl, directory, projectRoot, getHostConfig, socketFactory = (url) => new WebSocket(url), signalProcess = (pid, signal) => process.kill(pid, signal), maxBufferedChars = 256 * 1024, maxReadChars = 64 * 1024, resolveProcessGroup = linuxProcessGroup) {
+    constructor(client, serverUrl, directory, projectRoot, getHostConfig, socketFactory = (url) => new WebSocket(url), signalProcess = (pid, signal) => process.kill(pid, signal), maxBufferedChars = 256 * 1024, maxReadChars = 64 * 1024, resolveProcessGroup = linuxProcessGroup, terminationGraceMs = 2000, terminationVerifyMs = 2000) {
         this.client = client;
         this.serverUrl = serverUrl;
         this.directory = directory;
@@ -63,6 +65,8 @@ export class OpenCodePtyAdapter {
         this.maxBufferedChars = maxBufferedChars;
         this.maxReadChars = maxReadChars;
         this.resolveProcessGroup = resolveProcessGroup;
+        this.terminationGraceMs = terminationGraceMs;
+        this.terminationVerifyMs = terminationVerifyMs;
     }
     #edge() { return this.client; }
     #pty() { const injected = this.#edge()?.v2?.pty; if (injected)
@@ -132,7 +136,7 @@ export class OpenCodePtyAdapter {
         }
         else if (state.killRequested) {
             state.contract.status = 'TERMINATED';
-            state.contract.termination_reason = `signal:${state.killRequested}`;
+            state.contract.termination_reason = `signal:${state.killRequested}${state.killEscalated ? '->SIGKILL' : ''}`;
         }
         else {
             state.contract.status = 'EXITED';
@@ -219,20 +223,56 @@ export class OpenCodePtyAdapter {
             this.#failExit(state, error);
         }
     }
-    async #requestTimeout(state) {
+    async #waitForExitWithin(state, windowMs) {
+        if (state.contract.status !== 'RUNNING')
+            return true;
+        const bounded = Math.max(10, Math.min(30_000, Math.floor(windowMs)));
+        let timer;
+        try {
+            return await Promise.race([state.exitPromise.then(() => true), new Promise(resolve => { timer = setTimeout(() => resolve(false), bounded); })]);
+        }
+        finally {
+            if (timer)
+                clearTimeout(timer);
+        }
+    }
+    async #terminateAndObserve(state, signal, mode) {
         if (state.contract.status !== 'RUNNING')
             return;
-        try {
-            const info = await this.#nativeInfo(state);
-            if (info.pid !== state.contract.pid)
-                throw new Error(`Refusing stale PID timeout signal for ${state.contract.process_id}`);
-            if (info.status === 'exited') {
-                this.#applyInfo(state, info);
-                return;
-            }
-            const target = this.#signalTarget(state);
-            this.signalProcess(target, 'SIGTERM');
+        let info = await this.#nativeInfo(state);
+        if (info.pid !== state.contract.pid)
+            throw new Error(`Refusing stale PID ${mode} signal for ${state.contract.process_id}`);
+        if (info.status === 'exited') {
+            this.#applyInfo(state, info);
+            return;
+        }
+        let target = this.#signalTarget(state);
+        this.signalProcess(target, signal);
+        if (mode === 'timeout')
             state.timeoutRequested = true;
+        else
+            state.killRequested = signal;
+        if (await this.#waitForExitWithin(state, this.terminationGraceMs))
+            return;
+        info = await this.#nativeInfo(state);
+        if (info.pid !== state.contract.pid)
+            throw new Error(`Refusing stale PID escalation for ${state.contract.process_id}`);
+        if (info.status === 'exited') {
+            this.#applyInfo(state, info);
+            return;
+        }
+        target = this.#signalTarget(state);
+        this.signalProcess(target, 'SIGKILL');
+        state.killEscalated = true;
+        if (await this.#waitForExitWithin(state, this.terminationVerifyMs))
+            return;
+        await this.#refresh(state);
+        if (state.contract.status === 'RUNNING')
+            throw new Error(`OpenCode PTY termination was not observed after bounded escalation for ${state.contract.process_id}`);
+    }
+    async #requestTimeout(state) {
+        try {
+            await this.#terminateAndObserve(state, 'SIGTERM', 'timeout');
         }
         catch (error) {
             this.#failExit(state, error);
@@ -259,7 +299,7 @@ export class OpenCodePtyAdapter {
         }
         let resolveExit, rejectExit;
         const exitPromise = new Promise((resolve, reject) => { resolveExit = resolve; rejectExit = reject; });
-        const state = { contract, ptyID: info.id, buffer: '', availableStart: 0, availableEnd: 0, cursorKnown: false, beforeMetaChars: 0, timeoutRequested: false, exitPromise, resolveExit, rejectExit, exitSettled: false, reconnects: 0 };
+        const state = { contract, ptyID: info.id, buffer: '', availableStart: 0, availableEnd: 0, cursorKnown: false, beforeMetaChars: 0, timeoutRequested: false, killEscalated: false, exitPromise, resolveExit, rejectExit, exitSettled: false, reconnects: 0 };
         this.#states.set(contract.process_id, state);
         try {
             await this.#connect(state, 0, launch.readyMarker);
@@ -297,8 +337,7 @@ export class OpenCodePtyAdapter {
     async wait(processId) { const state = this.#state(processId); await this.#refresh(state); if (state.contract.status !== 'RUNNING')
         return { contract: cloneContract(state.contract) }; return state.exitPromise; }
     async kill(processId, signal = 'SIGTERM') { const state = this.#state(processId); await this.#refresh(state); if (state.contract.status !== 'RUNNING')
-        return { contract: cloneContract(state.contract) }; const info = await this.#nativeInfo(state); if (info.pid !== state.contract.pid)
-        throw new Error(`Refusing stale PID kill for ${processId}`); const target = this.#signalTarget(state); this.signalProcess(target, signal); state.killRequested = signal; return this.wait(processId); }
+        return { contract: cloneContract(state.contract) }; await this.#terminateAndObserve(state, signal, 'kill'); return { contract: cloneContract(state.contract) }; }
     async cleanup(processId) { const state = this.#state(processId); await this.#refresh(state); if (state.contract.status === 'RUNNING')
         throw new Error(`Refusing cleanup of running process ${processId}; kill/exit must occur first`); await this.#pty().remove({ ptyID: state.ptyID, location: this.#location() }); state.socket?.close(1000, 'Hi cleanup'); state.contract.cleanup_state = 'CLEANED'; if (!isProcessContract(state.contract))
         throw new Error(`Invalid cleanup state for ${processId}`); this.#states.delete(processId); }
@@ -342,7 +381,7 @@ export class OpenCodePtyAdapter {
         }
         let resolveExit, rejectExit;
         const exitPromise = new Promise((resolve, reject) => { resolveExit = resolve; rejectExit = reject; });
-        const state = { contract: persisted, ptyID: exact.id, buffer: '', availableStart: 0, availableEnd: 0, cursorKnown: false, beforeMetaChars: 0, timeoutRequested: false, exitPromise, resolveExit, rejectExit, exitSettled: false, reconnects: 0 };
+        const state = { contract: persisted, ptyID: exact.id, buffer: '', availableStart: 0, availableEnd: 0, cursorKnown: false, beforeMetaChars: 0, timeoutRequested: false, killEscalated: false, exitPromise, resolveExit, rejectExit, exitSettled: false, reconnects: 0 };
         this.#states.set(persisted.process_id, state);
         if (exact.status === 'exited') {
             if (persisted.status === 'RUNNING') {

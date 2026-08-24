@@ -10,7 +10,7 @@ import { evaluateProcessSpawnAuthority,processCommandLine } from '../runtime/pro
 interface NativePtyInfo{id:string;title:string;command:string;args:string[];cwd:string;status:'running'|'exited';pid:number;exitCode?:number}
 interface ProcessSocket{readyState:number;send(data:string):void;close(code?:number,reason?:string):void;addEventListener(type:'open'|'message'|'close'|'error',listener:(event:any)=>void,options?:{once?:boolean}):void}
 export type ProcessSocketFactory=(url:string)=>ProcessSocket
-export type ProcessSignal=(pid:number,signal:'SIGTERM'|'SIGINT')=>void
+export type ProcessSignal=(pid:number,signal:'SIGTERM'|'SIGINT'|'SIGKILL')=>void
 export type ProcessGroupResolver=(pid:number)=>number|undefined
 interface RuntimeProcessState{
   contract:ProcessContract
@@ -24,6 +24,7 @@ interface RuntimeProcessState{
   timeoutTimer?:ReturnType<typeof setTimeout>
   timeoutRequested:boolean
   killRequested?:'SIGTERM'|'SIGINT'
+  killEscalated:boolean
   exitPromise:Promise<ProcessExit>
   resolveExit:(value:ProcessExit)=>void
   rejectExit:(error:unknown)=>void
@@ -66,6 +67,8 @@ export class OpenCodePtyAdapter implements ProcessExecutor{
     readonly maxBufferedChars=256*1024,
     readonly maxReadChars=64*1024,
     readonly resolveProcessGroup:ProcessGroupResolver=linuxProcessGroup,
+    readonly terminationGraceMs=2000,
+    readonly terminationVerifyMs=2000,
   ){}
   #edge():any{return this.client as any}
   #pty():any{const injected=this.#edge()?.v2?.pty;if(injected)return injected;if(!this.#v2Client&&this.serverUrl)this.#v2Client=createOpenCodeV2Client({baseUrl:this.serverUrl.toString(),directory:this.directory});const pty=this.#v2Client?.v2?.pty??this.#v2Client?.pty;if(!pty||typeof pty.create!=='function'||typeof pty.get!=='function'||typeof pty.remove!=='function'||typeof pty.connectToken!=='function')throw new Error('OpenCode canonical v2 PTY API unavailable');return pty}
@@ -93,7 +96,7 @@ export class OpenCodePtyAdapter implements ProcessExecutor{
     if(info.status!=='exited'||state.contract.status!=='RUNNING')return
     const now=Date.now();state.contract.ended_at=now;state.contract.cleanup_state='CLEANUP_PENDING'
     if(state.timeoutRequested){state.contract.status='TIMED_OUT';state.contract.termination_reason='timeout-policy';state.contract.timeout_at=state.contract.timeout_at??now}
-    else if(state.killRequested){state.contract.status='TERMINATED';state.contract.termination_reason=`signal:${state.killRequested}`}
+    else if(state.killRequested){state.contract.status='TERMINATED';state.contract.termination_reason=`signal:${state.killRequested}${state.killEscalated?'->SIGKILL':''}`}
     else{state.contract.status='EXITED';state.contract.exit_code=Number.isInteger(info.exitCode)?info.exitCode:0}
     const candidate=structuredClone(state.contract);if(!isProcessContract(candidate))throw new Error(`OpenCode PTY produced invalid Hi ProcessContract state for ${state.contract.process_id}`)
     this.#settleExit(state)
@@ -123,9 +126,24 @@ export class OpenCodePtyAdapter implements ProcessExecutor{
   async #onSocketClose(state:RuntimeProcessState):Promise<void>{
     try{await this.#refresh(state);if(state.contract.status!=='RUNNING')return;if(state.reconnects>=1){this.#failExit(state,new Error(`OpenCode PTY transport lost while process ${state.contract.process_id} remains running`));return}state.reconnects++;await this.#connect(state,state.availableEnd)}catch(error){try{await this.#refresh(state);if(state.contract.status!=='RUNNING')return}catch{}this.#failExit(state,error)}
   }
-  async #requestTimeout(state:RuntimeProcessState):Promise<void>{
+  async #waitForExitWithin(state:RuntimeProcessState,windowMs:number):Promise<boolean>{
+    if(state.contract.status!=='RUNNING')return true
+    const bounded=Math.max(10,Math.min(30_000,Math.floor(windowMs)))
+    let timer:ReturnType<typeof setTimeout>|undefined
+    try{return await Promise.race([state.exitPromise.then(()=>true),new Promise<boolean>(resolve=>{timer=setTimeout(()=>resolve(false),bounded)})])}finally{if(timer)clearTimeout(timer)}
+  }
+  async #terminateAndObserve(state:RuntimeProcessState,signal:'SIGTERM'|'SIGINT',mode:'kill'|'timeout'):Promise<void>{
     if(state.contract.status!=='RUNNING')return
-    try{const info=await this.#nativeInfo(state);if(info.pid!==state.contract.pid)throw new Error(`Refusing stale PID timeout signal for ${state.contract.process_id}`);if(info.status==='exited'){this.#applyInfo(state,info);return}const target=this.#signalTarget(state);this.signalProcess(target,'SIGTERM');state.timeoutRequested=true}catch(error){this.#failExit(state,error)}
+    let info=await this.#nativeInfo(state);if(info.pid!==state.contract.pid)throw new Error(`Refusing stale PID ${mode} signal for ${state.contract.process_id}`);if(info.status==='exited'){this.#applyInfo(state,info);return}
+    let target=this.#signalTarget(state);this.signalProcess(target,signal);if(mode==='timeout')state.timeoutRequested=true;else state.killRequested=signal
+    if(await this.#waitForExitWithin(state,this.terminationGraceMs))return
+    info=await this.#nativeInfo(state);if(info.pid!==state.contract.pid)throw new Error(`Refusing stale PID escalation for ${state.contract.process_id}`);if(info.status==='exited'){this.#applyInfo(state,info);return}
+    target=this.#signalTarget(state);this.signalProcess(target,'SIGKILL');state.killEscalated=true
+    if(await this.#waitForExitWithin(state,this.terminationVerifyMs))return
+    await this.#refresh(state);if(state.contract.status==='RUNNING')throw new Error(`OpenCode PTY termination was not observed after bounded escalation for ${state.contract.process_id}`)
+  }
+  async #requestTimeout(state:RuntimeProcessState):Promise<void>{
+    try{await this.#terminateAndObserve(state,'SIGTERM','timeout')}catch(error){this.#failExit(state,error)}
   }
   async spawn(request:ProcessSpawnRequest):Promise<ProcessHandle>{
     const auth=evaluateProcessSpawnAuthority(request,this.projectRoot,this.getHostConfig());if(auth.decision!=='ALLOW')throw new ProcessSpawnPermissionError(auth.decision,auth.reason)
@@ -136,7 +154,7 @@ export class OpenCodePtyAdapter implements ProcessExecutor{
     const started=Date.now(),processGroup=this.resolveProcessGroup(info.pid),contract:ProcessContract={process_id:processID(),mission_id:request.mission_id,task_id:request.task_id,worker_id:request.worker_id,host:'opencode',command_identity:processCommandIdentity({host:'opencode',command:processCommandLine({command:info.command,args:info.args}),cwd:info.cwd}),cwd:info.cwd,pid:info.pid,...(processGroup?{process_group_id:processGroup}:{}),status:'RUNNING',started_at:started,...(request.timeout_ms?{timeout_at:started+request.timeout_ms}:{}),output_artifact_refs:[],authority_ref:request.authority_ref,cleanup_state:'ACTIVE'}
     if(!isProcessContract(contract)){try{await this.#pty().remove({ptyID:info.id,location:this.#location()})}catch{}throw new Error('Hi ProcessExecutor created invalid ProcessContract')}
     let resolveExit!:(value:ProcessExit)=>void,rejectExit!:(error:unknown)=>void;const exitPromise=new Promise<ProcessExit>((resolve,reject)=>{resolveExit=resolve;rejectExit=reject})
-    const state:RuntimeProcessState={contract,ptyID:info.id,buffer:'',availableStart:0,availableEnd:0,cursorKnown:false,beforeMetaChars:0,timeoutRequested:false,exitPromise,resolveExit,rejectExit,exitSettled:false,reconnects:0};this.#states.set(contract.process_id,state)
+    const state:RuntimeProcessState={contract,ptyID:info.id,buffer:'',availableStart:0,availableEnd:0,cursorKnown:false,beforeMetaChars:0,timeoutRequested:false,killEscalated:false,exitPromise,resolveExit,rejectExit,exitSettled:false,reconnects:0};this.#states.set(contract.process_id,state)
     try{await this.#connect(state,0,launch.readyMarker);if(launch.readyMarker&&!this.#hideLaunchMarker(state,launch.readyMarker))throw new Error(`OpenCode PTY launch marker missing for ${state.ptyID}`);if(launch.release&&state.contract.status==='RUNNING'){if(!state.socket||state.socket.readyState!==1)throw new Error(`OpenCode PTY websocket unavailable at launch release for ${state.ptyID}`);state.socket.send(launch.release)}}catch(error){try{await this.#refresh(state)}catch{}if(state.contract.status==='RUNNING'){try{await this.#pty().remove({ptyID:state.ptyID,location:this.#location()})}catch{}this.#states.delete(contract.process_id);throw error}}
     if(request.timeout_ms)state.timeoutTimer=setTimeout(()=>{void this.#requestTimeout(state)},request.timeout_ms)
     return{contract:cloneContract(state.contract),host_process_id:state.ptyID}
@@ -144,7 +162,7 @@ export class OpenCodePtyAdapter implements ProcessExecutor{
   async write(processId:string,input:string):Promise<void>{const state=this.#state(processId);await this.#refresh(state);if(state.contract.status!=='RUNNING')throw new Error(`Cannot write to terminal process ${processId}`);if(typeof input!=='string'||input.length>64*1024)throw new Error('Process input exceeds 64KiB bound');if(!state.socket||state.socket.readyState!==1)await this.#connect(state,state.availableEnd);state.socket?.send(input)}
   async read(processId:string,window:ProcessOutputWindow={}):Promise<ProcessOutput>{const state=this.#state(processId);await this.#refresh(state);const requested=Number.isSafeInteger(window.cursor)?Math.max(0,window.cursor as number):state.availableStart,max=Math.max(1,Math.min(this.maxReadChars,Number.isFinite(window.max_chars)?Math.floor(window.max_chars as number):8192)),start=Math.min(state.availableEnd,Math.max(state.availableStart,requested)),offset=start-state.availableStart,text=state.buffer.slice(offset,offset+max),end=start+text.length;return{text,start_cursor:start,end_cursor:end,available_start_cursor:state.availableStart,available_end_cursor:state.availableEnd,truncated:requested<state.availableStart||end<state.availableEnd,status:state.contract.status}}
   async wait(processId:string):Promise<ProcessExit>{const state=this.#state(processId);await this.#refresh(state);if(state.contract.status!=='RUNNING')return{contract:cloneContract(state.contract)};return state.exitPromise}
-  async kill(processId:string,signal:'SIGTERM'|'SIGINT'='SIGTERM'):Promise<ProcessExit>{const state=this.#state(processId);await this.#refresh(state);if(state.contract.status!=='RUNNING')return{contract:cloneContract(state.contract)};const info=await this.#nativeInfo(state);if(info.pid!==state.contract.pid)throw new Error(`Refusing stale PID kill for ${processId}`);const target=this.#signalTarget(state);this.signalProcess(target,signal);state.killRequested=signal;return this.wait(processId)}
+  async kill(processId:string,signal:'SIGTERM'|'SIGINT'='SIGTERM'):Promise<ProcessExit>{const state=this.#state(processId);await this.#refresh(state);if(state.contract.status!=='RUNNING')return{contract:cloneContract(state.contract)};await this.#terminateAndObserve(state,signal,'kill');return{contract:cloneContract(state.contract)}}
   async cleanup(processId:string):Promise<void>{const state=this.#state(processId);await this.#refresh(state);if(state.contract.status==='RUNNING')throw new Error(`Refusing cleanup of running process ${processId}; kill/exit must occur first`);await this.#pty().remove({ptyID:state.ptyID,location:this.#location()});state.socket?.close(1000,'Hi cleanup');state.contract.cleanup_state='CLEANED';if(!isProcessContract(state.contract))throw new Error(`Invalid cleanup state for ${processId}`);this.#states.delete(processId)}
 
   async reconcile(contract:ProcessContract):Promise<ProcessReconcileResult>{
@@ -167,7 +185,7 @@ export class OpenCodePtyAdapter implements ProcessExecutor{
     if(persisted.process_group_id!==undefined){const observedGroup=this.resolveProcessGroup(persisted.pid);if(observedGroup!==persisted.process_group_id){persisted.status='ORPHANED';persisted.cleanup_state='QUARANTINED';persisted.termination_reason='restart-process-group-identity-mismatch';delete persisted.exit_code;return{disposition:'ORPHANED',contract:persisted}}}
     let resolveExit!:(value:ProcessExit)=>void,rejectExit!:(error:unknown)=>void
     const exitPromise=new Promise<ProcessExit>((resolve,reject)=>{resolveExit=resolve;rejectExit=reject})
-    const state:RuntimeProcessState={contract:persisted,ptyID:exact.id,buffer:'',availableStart:0,availableEnd:0,cursorKnown:false,beforeMetaChars:0,timeoutRequested:false,exitPromise,resolveExit,rejectExit,exitSettled:false,reconnects:0}
+    const state:RuntimeProcessState={contract:persisted,ptyID:exact.id,buffer:'',availableStart:0,availableEnd:0,cursorKnown:false,beforeMetaChars:0,timeoutRequested:false,killEscalated:false,exitPromise,resolveExit,rejectExit,exitSettled:false,reconnects:0}
     this.#states.set(persisted.process_id,state)
     if(exact.status==='exited'){
       if(persisted.status==='RUNNING'){persisted.status='EXITED';persisted.ended_at=Date.now();persisted.exit_code=Number.isInteger(exact.exitCode)?exact.exitCode:0;persisted.cleanup_state='CLEANUP_PENDING'}

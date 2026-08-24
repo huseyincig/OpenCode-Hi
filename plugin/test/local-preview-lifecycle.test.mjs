@@ -34,3 +34,21 @@ test('local preview reuse refreshes an expanded task scope instead of serving fr
     assert.equal((await fetch(expanded.url)).status,200,'same-task preview must enforce the current expanded task scope, not the stale creation scope')
   }finally{await preview.dispose();rmSync(root,{recursive:true,force:true})}
 })
+
+
+test('M18 local preview stop is bounded even when a client leaves an HTTP request incomplete',async()=>{
+  const {connect}=await import('node:net')
+  const root=mkdtempSync(join(tmpdir(),'hi-preview-stop-bound-'));writeFileSync(join(root,'index.html'),'preview')
+  const preview=new LocalPreviewManager(root)
+  let socket
+  try{
+    const lease=await preview.start('hang-task','index.html',['index.html']),port=Number(new URL(lease.origin).port)
+    socket=connect(port,'127.0.0.1');await new Promise((resolve,reject)=>{socket.once('connect',resolve);socket.once('error',reject)})
+    socket.write('GET /index.html HTTP/1.1\r\nHost: 127.0.0.1\r\n')
+    const pending=preview.stop('hang-task')
+    const outcome=await Promise.race([pending.then(()=> 'stopped'),new Promise(resolve=>setTimeout(()=>resolve('timeout'),800))])
+    if(outcome==='timeout'){socket.destroy();await pending}
+    assert.equal(outcome,'stopped','preview teardown must not wait indefinitely on an active client connection')
+    assert.equal(preview.active('hang-task'),false)
+  }finally{socket?.destroy();await preview.dispose();rmSync(root,{recursive:true,force:true})}
+})

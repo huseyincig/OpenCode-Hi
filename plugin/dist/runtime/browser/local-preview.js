@@ -3,6 +3,10 @@ import { createReadStream, existsSync, realpathSync, statSync } from 'node:fs';
 import { extname, relative, resolve, sep } from 'node:path';
 import { normalizeBoundedProjectPath } from '../../contracts/common.js';
 const MIME = { '.html': 'text/html; charset=utf-8', '.htm': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.webp': 'image/webp', '.ico': 'image/x-icon', '.woff': 'font/woff', '.woff2': 'font/woff2', '.ttf': 'font/ttf', '.txt': 'text/plain; charset=utf-8' };
+const PREVIEW_CLOSE_GRACE_MS = 250;
+async function closePreviewServer(server) { const bounded = server; await new Promise(resolve => { let settled = false, timer; const done = () => { if (settled)
+    return; settled = true; if (timer)
+    clearTimeout(timer); resolve(); }; server.close(() => done()); bounded.closeIdleConnections?.(); bounded.closeAllConnections?.(); timer = setTimeout(() => done(), PREVIEW_CLOSE_GRACE_MS); }); }
 function within(root, candidate) { const rel = relative(root, candidate); return rel === '' || (!rel.startsWith(`..${sep}`) && rel !== '..' && !rel.startsWith('/') && !/^[A-Za-z]:[\\/]/.test(rel)); }
 function safeRealRoot(root) { const resolved = resolve(root); if (!existsSync(resolved) || !statSync(resolved).isDirectory())
     throw new Error(`Preview root is not a directory: ${resolved}`); return realpathSync(resolved); }
@@ -103,7 +107,7 @@ export class LocalPreviewManager {
         return { task_id: taskID, origin, url: origin + encodedPath(target), root, target, reused: false };
     }
     async stop(taskID) { const lease = this.#leases.get(taskID); if (!lease)
-        return false; this.#leases.delete(taskID); await new Promise(resolve => lease.server.close(() => resolve())); return true; }
+        return false; this.#leases.delete(taskID); await closePreviewServer(lease.server); return true; }
     async dispose() { await Promise.all([...this.#leases.keys()].map(id => this.stop(id))); this.#leases.clear(); }
     active(taskID) { return this.#leases.has(taskID); }
 }

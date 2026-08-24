@@ -20,7 +20,7 @@ class FakeSocket {
 function meta(cursor){const body=new TextEncoder().encode(JSON.stringify({cursor}));const out=new Uint8Array(body.length+1);out[0]=0;out.set(body,1);return out}
 function host(permission={bash:{'*':'allow'},external_directory:{'*':'ask'}}){return{agent:{coder:{permission}}}}
 function baseRequest(extra={}){return{mission_id:'m_1',task_id:'t_1',worker_id:'w_1',role:'coder',command:'node',args:['-e','console.log(1)'],cwd:'/repo',authority_ref:'auth:unit',...extra}}
-function harness({permission,signal,processGroup,nativeArgsSuffix=[],initialMeta=true}={}){
+function harness({permission,signal,processGroup,nativeArgsSuffix=[],initialMeta=true,terminationGraceMs,terminationVerifyMs}={}){
   let nextPid=4100
   const sessions=new Map(),removed=[],sockets=[]
   const pty={
@@ -31,7 +31,7 @@ function harness({permission,signal,processGroup,nativeArgsSuffix=[],initialMeta
     async connectToken({ptyID}){assert.ok(sessions.has(ptyID));return{data:{data:{ticket:`ticket-${ptyID}`,expires_in:10}}}},
   }
   const client={v2:{pty}}
-  const adapter=new OpenCodePtyAdapter(client,new URL('http://127.0.0.1:4096'),'/repo','/repo',()=>host(permission),url=>{const ws=new FakeSocket(url);sockets.push(ws);if(initialMeta){const current=[...sessions.values()].at(-1),marker=current?.args?.find?.(x=>typeof x==='string'&&/^~HI:[a-f0-9]{16}~$/.test(x));queueMicrotask(()=>ws.message(meta(0)));if(marker)queueMicrotask(()=>ws.message(marker))}return ws},signal??(()=>{}),32,8,processGroup??(()=>undefined))
+  const adapter=new OpenCodePtyAdapter(client,new URL('http://127.0.0.1:4096'),'/repo','/repo',()=>host(permission),url=>{const ws=new FakeSocket(url);sockets.push(ws);if(initialMeta){const current=[...sessions.values()].at(-1),marker=current?.args?.find?.(x=>typeof x==='string'&&/^~HI:[a-f0-9]{16}~$/.test(x));queueMicrotask(()=>ws.message(meta(0)));if(marker)queueMicrotask(()=>ws.message(marker))}return ws},signal??(()=>{}),32,8,processGroup??(()=>undefined),terminationGraceMs,terminationVerifyMs)
   return{adapter,sessions,removed,sockets,exit(ptyID,code=0){const info=sessions.get(ptyID);Object.assign(info,{status:'exited',exitCode:code})}}
 }
 
@@ -304,4 +304,37 @@ test('P3 process-local PTY state rejects a cross-Mission process_id collision du
   await assert.rejects(()=>fresh.reconcile(colliding),/process_id.*already owned|process identity collision/i)
   const retained=fresh.snapshot(first.process_id)
   assert.equal(retained.mission_id,first.mission_id);assert.equal(retained.task_id,first.task_id);assert.equal(retained.worker_id,first.worker_id)
+})
+
+
+test('M18 stubborn owned process termination escalates after a bounded grace period without losing identity checks',async()=>{
+  const signals=[]
+  const h=harness({terminationGraceMs:20,terminationVerifyMs:20,signal:(target,signal)=>{signals.push({target,signal});if(signal==='SIGKILL'){const pid=Math.abs(target),info=[...h.sessions.values()].find(x=>x.pid===pid);Object.assign(info,{status:'exited',exitCode:137});queueMicrotask(()=>h.sockets[0].close())}}})
+  const handle=await spawned(h),pending=h.adapter.kill(handle.contract.process_id,'SIGTERM')
+  const outcome=await Promise.race([pending.then(result=>({kind:'result',result})),new Promise(resolve=>setTimeout(()=>resolve({kind:'timeout'}),250))])
+  if(outcome.kind==='timeout'){h.exit(handle.host_process_id,143);h.sockets[0].close();await pending}
+  assert.equal(outcome.kind,'result','owned process termination must not wait indefinitely after the graceful signal')
+  assert.deepEqual(signals,[{target:handle.contract.pid,signal:'SIGTERM'},{target:handle.contract.pid,signal:'SIGKILL'}])
+  assert.equal(outcome.result.contract.status,'TERMINATED')
+  assert.match(outcome.result.contract.termination_reason,/SIGTERM.*SIGKILL/)
+})
+
+
+test('M18 timeout escalation remains identity-bound and resolves TIMED_OUT only after forced native exit observation',async()=>{
+  const signals=[]
+  const h=harness({terminationGraceMs:20,terminationVerifyMs:20,signal:(target,signal)=>{signals.push({target,signal});if(signal==='SIGKILL'){const pid=Math.abs(target),info=[...h.sessions.values()].find(x=>x.pid===pid);Object.assign(info,{status:'exited',exitCode:137});queueMicrotask(()=>h.sockets[0].close())}}})
+  const handle=await spawned(h,baseRequest({timeout_ms:50})),result=await h.adapter.wait(handle.contract.process_id)
+  assert.deepEqual(signals,[{target:handle.contract.pid,signal:'SIGTERM'},{target:handle.contract.pid,signal:'SIGKILL'}])
+  assert.equal(result.contract.status,'TIMED_OUT');assert.equal(result.contract.termination_reason,'timeout-policy')
+})
+
+test('M18 escalation revalidates process-group identity before SIGKILL and fails closed on drift',async()=>{
+  let observedGroup,signals=[]
+  const h=harness({terminationGraceMs:20,terminationVerifyMs:20,processGroup:pid=>observedGroup??pid,signal:(target,signal)=>{signals.push({target,signal})}})
+  const handle=await spawned(h);observedGroup=handle.contract.process_group_id
+  const pending=h.adapter.kill(handle.contract.process_id,'SIGTERM')
+  await new Promise(resolve=>setTimeout(resolve,5));observedGroup=handle.contract.pid+77
+  await assert.rejects(()=>pending,/Refusing process-group signal/)
+  assert.deepEqual(signals,[{target:-handle.contract.pid,signal:'SIGTERM'}])
+  observedGroup=handle.contract.pid;h.exit(handle.host_process_id,143);h.sockets[0].close();await h.adapter.wait(handle.contract.process_id)
 })

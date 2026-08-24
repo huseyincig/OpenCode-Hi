@@ -11,7 +11,7 @@ interface ProcessSocket {
     }): void;
 }
 export type ProcessSocketFactory = (url: string) => ProcessSocket;
-export type ProcessSignal = (pid: number, signal: 'SIGTERM' | 'SIGINT') => void;
+export type ProcessSignal = (pid: number, signal: 'SIGTERM' | 'SIGINT' | 'SIGKILL') => void;
 export type ProcessGroupResolver = (pid: number) => number | undefined;
 export declare function linuxProcessGroup(pid: number): number | undefined;
 export declare class OpenCodePtyAdapter implements ProcessExecutor {
@@ -26,7 +26,9 @@ export declare class OpenCodePtyAdapter implements ProcessExecutor {
     readonly maxBufferedChars: number;
     readonly maxReadChars: number;
     readonly resolveProcessGroup: ProcessGroupResolver;
-    constructor(client: OpenCodeClient, serverUrl: URL, directory: string, projectRoot: string, getHostConfig: () => Record<string, unknown>, socketFactory?: ProcessSocketFactory, signalProcess?: ProcessSignal, maxBufferedChars?: number, maxReadChars?: number, resolveProcessGroup?: ProcessGroupResolver);
+    readonly terminationGraceMs: number;
+    readonly terminationVerifyMs: number;
+    constructor(client: OpenCodeClient, serverUrl: URL, directory: string, projectRoot: string, getHostConfig: () => Record<string, unknown>, socketFactory?: ProcessSocketFactory, signalProcess?: ProcessSignal, maxBufferedChars?: number, maxReadChars?: number, resolveProcessGroup?: ProcessGroupResolver, terminationGraceMs?: number, terminationVerifyMs?: number);
     health(): Promise<{
         available: boolean;
         detail: string;
