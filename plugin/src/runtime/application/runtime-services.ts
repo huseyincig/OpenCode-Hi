@@ -52,7 +52,7 @@ export function createRuntimeServices(input:{ports:RuntimeServicePorts;projectRo
   const getBrowserBootstrapStatus=()=>browserBootstrapStatus?{...browserBootstrapStatus}:undefined
   const workspaceRuntime=new WorkspaceRuntime(ports.workspace,projectRoot)
   const previewManager=new LocalPreviewManager(ports.nativeContext.directory??projectRoot)
-  const tasks=new TaskRuntime(ports.childSession,background,scheduler,projectRoot,packageRoot,getConfig,getModels,getHostConfig,eventSink,ports.hostCapabilities,scopedStores,workspaceRuntime,()=>browserAvailable?new Set(['host-capability:browser-execution']):new Set(),browserExecutor,ensureBrowserAvailable,ports.readAssistantResult,previewManager)
+  const tasks=new TaskRuntime(ports.childSession,background,scheduler,projectRoot,packageRoot,getConfig,getModels,getHostConfig,eventSink,ports.hostCapabilities,scopedStores,workspaceRuntime,()=>browserAvailable?new Set(['host-capability:browser-execution']):new Set(),browserExecutor,ensureBrowserAvailable,ports.readAssistantResult,previewManager,()=>store.all())
   for(const m of store.all())for(const w of m.execution.workers)if(w.session_id&&w.status==='ready')background.set(w)
   const processRuntime=new ProcessRuntime(ports.process,projectRoot,getHostConfig)
   return{store,background,humanDecisionTransport,persistence,scheduler,eventSink,tasks,processExecutor:ports.process,processRuntime,workspaceExecutor:ports.workspace,workspaceRuntime,browserExecutor,setBrowserAvailable,ensureBrowserAvailable,getBrowserBootstrapStatus,previewManager,scopedStores}

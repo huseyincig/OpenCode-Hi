@@ -5,6 +5,7 @@ import type { AvailableModel } from '../routing/model-resolver.js';
 import { type RuntimeSignalSink } from '../events/event-sink.js';
 import type { BackgroundRegistry } from '../background/registry.js';
 import type { ConcurrencyPolicySource } from '../scheduler/concurrency.js';
+import { type ProjectSchedulingPeerView } from '../scheduler/project-peer-view.js';
 import { ChildExecutionCoordinator, type ChildWorkspaceBinding } from './child-execution-coordinator.js';
 export type ChildCallbackDisposition = 'accept' | 'stale-mission';
 export type HostTerminalRecoveryDisposition = 'RECOVERED' | 'QUARANTINED' | 'NOT_RECOVERED';
@@ -21,11 +22,12 @@ export declare class TaskRecoveryCoordinator {
     private readonly workspaceBinding?;
     private readonly cleanupBrowser?;
     private readonly readAssistantResult?;
+    private readonly getProjectPeerView;
     callbackDisposition(m: MissionState, worker: {
         parent_mission_id?: string;
         generation_at_spawn?: number;
     }): ChildCallbackDisposition;
-    constructor(scheduler: ConcurrencyPolicySource, registry: BackgroundRegistry, projectRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events: RuntimeSignalSink | undefined, child: ChildExecutionCoordinator, drainQueueCallback: () => void, workspaceBinding?: ((m: MissionState, taskID: string) => ChildWorkspaceBinding | undefined) | undefined, cleanupBrowser?: ((m: MissionState, taskID: string, workerID?: string) => Promise<boolean>) | undefined, readAssistantResult?: ((sessionID: string, limit?: number) => Promise<HostAssistantResult>) | undefined);
+    constructor(scheduler: ConcurrencyPolicySource, registry: BackgroundRegistry, projectRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events: RuntimeSignalSink | undefined, child: ChildExecutionCoordinator, drainQueueCallback: () => void, workspaceBinding?: ((m: MissionState, taskID: string) => ChildWorkspaceBinding | undefined) | undefined, cleanupBrowser?: ((m: MissionState, taskID: string, workerID?: string) => Promise<boolean>) | undefined, readAssistantResult?: ((sessionID: string, limit?: number) => Promise<HostAssistantResult>) | undefined, getProjectPeerView?: (m: MissionState) => ProjectSchedulingPeerView);
     recoverStalledAwaitWorker(m: MissionState): Promise<{
         disposition: 'NOOP' | 'RECOVERED' | 'QUARANTINED' | 'BLOCKED';
         reason: string;

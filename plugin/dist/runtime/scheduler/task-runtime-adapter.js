@@ -3,10 +3,11 @@ import { projectMissionToWorkGraph } from '../execution/work-graph-projection.js
 import { isHiReadOnlyChildRole } from '../roles/catalog.js';
 import { planSchedulerAdmissions, reduceSchedulerLifecycle, reserveSchedulerUnit } from './lifecycle.js';
 import { planScheduling } from './planner.js';
+import { EMPTY_PROJECT_SCHEDULING_PEER_VIEW } from './project-peer-view.js';
 function providerOf(model) { return model && model !== 'host-default' && model.includes('/') ? model.slice(0, model.indexOf('/')) : undefined; }
 function unitID(worker) { return `eu:${worker.task_id}`; }
 function lifecycle(m) { return m.execution.scheduler ?? (m.execution.scheduler = createSchedulerLifecycleState(m.identity.mission_id)); }
-export function taskRuntimeSchedulingSnapshot(m, scheduler, override) {
+export function taskRuntimeSchedulingSnapshot(m, scheduler, override, peerView = EMPTY_PROJECT_SCHEDULING_PEER_VIEW) {
     const graph = projectMissionToWorkGraph(m, Date.now()), unitTraits = {}, resolvedResources = {};
     for (const unit of graph.executionUnits) {
         unitTraits[unit.id] = { readOnly: isHiReadOnlyChildRole(unit.role) };
@@ -15,21 +16,21 @@ export function taskRuntimeSchedulingSnapshot(m, scheduler, override) {
         const model = worker.id === override?.workerId ? override.model : worker.model, unit = unitID(worker);
         resolvedResources[unit] = { ...(providerOf(model) ? { provider: providerOf(model) } : {}), ...(model && model !== 'host-default' ? { model } : {}) };
     }
-    const policy = scheduler.policySnapshot(), running = lifecycle(m).reservations.map(reservation => ({ executionUnitId: reservation.executionUnitId, ...(reservation.resource.provider ? { provider: reservation.resource.provider } : {}), ...(reservation.resource.model ? { model: reservation.resource.model } : {}) }));
-    return { graph, unitTraits, resolvedResources, capacity: { topology: m.execution.execution_mode === 'single' ? 1 : Math.max(1, m.execution.topology?.parallelism ?? 1), global: policy.global, providers: { ...(policy.providers ?? {}) }, models: { ...(policy.models ?? {}) }, running } };
+    const policy = scheduler.policySnapshot(), running = [...lifecycle(m).reservations.map(reservation => ({ executionUnitId: reservation.executionUnitId, ...(reservation.resource.provider ? { provider: reservation.resource.provider } : {}), ...(reservation.resource.model ? { model: reservation.resource.model } : {}) })), ...peerView.running];
+    return { graph, unitTraits, resolvedResources, peerUnits: peerView.peerUnits, capacity: { topology: m.execution.execution_mode === 'single' ? 1 : Math.max(1, m.execution.topology?.parallelism ?? 1), global: policy.global, providers: { ...(policy.providers ?? {}) }, models: { ...(policy.models ?? {}) }, running } };
 }
-export function taskRuntimeUnitDecision(m, worker, model, scheduler) {
-    const snapshot = taskRuntimeSchedulingSnapshot(m, scheduler, { workerId: worker.id, model });
+export function taskRuntimeUnitDecision(m, worker, model, scheduler, peerView = EMPTY_PROJECT_SCHEDULING_PEER_VIEW) {
+    const snapshot = taskRuntimeSchedulingSnapshot(m, scheduler, { workerId: worker.id, model }, peerView);
     return planScheduling(snapshot).units.find(item => item.executionUnitId === unitID(worker));
 }
-export function taskRuntimeAdmittedModel(m, worker, models, scheduler) {
+export function taskRuntimeAdmittedModel(m, worker, models, scheduler, peerView = EMPTY_PROJECT_SCHEDULING_PEER_VIEW) {
     if (m.identity.status !== 'active' || m.continuation.user_interrupted || m.identity.semantic_assessment.status !== 'assessed' || worker.status === 'cancelled')
         return undefined;
     const state = lifecycle(m), id = unitID(worker);
-    return models.find(model => planSchedulerAdmissions(taskRuntimeSchedulingSnapshot(m, scheduler, { workerId: worker.id, model }), state).executionUnitIds.includes(id));
+    return models.find(model => planSchedulerAdmissions(taskRuntimeSchedulingSnapshot(m, scheduler, { workerId: worker.id, model }, peerView), state).executionUnitIds.includes(id));
 }
-export function reserveTaskRuntimeDispatch(m, worker, model, scheduler, at = Date.now()) {
-    const state = lifecycle(m), snapshot = taskRuntimeSchedulingSnapshot(m, scheduler, { workerId: worker.id, model }), attempt = executionAttemptIdentity({ executionUnitId: unitID(worker), workerId: worker.id, ordinal: (worker.attempt ?? 0) + 1, generation: m.continuation.generation });
+export function reserveTaskRuntimeDispatch(m, worker, model, scheduler, at = Date.now(), peerView = EMPTY_PROJECT_SCHEDULING_PEER_VIEW) {
+    const state = lifecycle(m), snapshot = taskRuntimeSchedulingSnapshot(m, scheduler, { workerId: worker.id, model }, peerView), attempt = executionAttemptIdentity({ executionUnitId: unitID(worker), workerId: worker.id, ordinal: (worker.attempt ?? 0) + 1, generation: m.continuation.generation });
     const out = reserveSchedulerUnit(snapshot, state, { executionUnitId: unitID(worker), workerId: worker.id, attempt, at });
     if (out.accepted)
         m.execution.scheduler = out.state;

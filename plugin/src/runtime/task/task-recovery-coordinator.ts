@@ -16,6 +16,7 @@ import { runtimeSignal,type RuntimeSignalSink } from '../events/event-sink.js'
 import { syncMissionGates } from '../gates/gates.js'
 import type { BackgroundRegistry } from '../background/registry.js'
 import type { ConcurrencyPolicySource } from '../scheduler/concurrency.js'
+import {EMPTY_PROJECT_SCHEDULING_PEER_VIEW,type ProjectSchedulingPeerView} from '../scheduler/project-peer-view.js'
 import { ChildExecutionCoordinator,type ChildWorkspaceBinding } from './child-execution-coordinator.js'
 import { taskRuntimeAdmittedModel,reserveTaskRuntimeDispatch,bindTaskRuntimeHost,beginTaskRuntimeSettlement,releaseTaskRuntimeReservation } from '../scheduler/task-runtime-adapter.js'
 import { recordRecoveryStrategy,recoveryModelHazard } from '../continuation/recovery-governor.js'
@@ -24,7 +25,7 @@ export type ChildCallbackDisposition='accept'|'stale-mission'
 export type HostTerminalRecoveryDisposition='RECOVERED'|'QUARANTINED'|'NOT_RECOVERED'
 export class TaskRecoveryCoordinator{
   callbackDisposition(m:MissionState,worker:{parent_mission_id?:string;generation_at_spawn?:number}):ChildCallbackDisposition{if((worker.parent_mission_id!==undefined&&worker.parent_mission_id!==m.identity.mission_id)||(worker.generation_at_spawn!==undefined&&worker.generation_at_spawn!==m.continuation.generation))return'stale-mission';return'accept'}
-  constructor(private readonly scheduler:ConcurrencyPolicySource,private readonly registry:BackgroundRegistry,private readonly projectRoot:string,private readonly getConfig:()=>HiConfig,private readonly getModels:()=>AvailableModel[],private readonly getHostConfig:()=>Record<string,unknown>,private readonly events:RuntimeSignalSink|undefined,private readonly child:ChildExecutionCoordinator,private readonly drainQueueCallback:()=>void,private readonly workspaceBinding?:(m:MissionState,taskID:string)=>ChildWorkspaceBinding|undefined,private readonly cleanupBrowser?:(m:MissionState,taskID:string,workerID?:string)=>Promise<boolean>,private readonly readAssistantResult?:(sessionID:string,limit?:number)=>Promise<HostAssistantResult>){}
+  constructor(private readonly scheduler:ConcurrencyPolicySource,private readonly registry:BackgroundRegistry,private readonly projectRoot:string,private readonly getConfig:()=>HiConfig,private readonly getModels:()=>AvailableModel[],private readonly getHostConfig:()=>Record<string,unknown>,private readonly events:RuntimeSignalSink|undefined,private readonly child:ChildExecutionCoordinator,private readonly drainQueueCallback:()=>void,private readonly workspaceBinding?:(m:MissionState,taskID:string)=>ChildWorkspaceBinding|undefined,private readonly cleanupBrowser?:(m:MissionState,taskID:string,workerID?:string)=>Promise<boolean>,private readonly readAssistantResult?:(sessionID:string,limit?:number)=>Promise<HostAssistantResult>,private readonly getProjectPeerView:(m:MissionState)=>ProjectSchedulingPeerView=()=>EMPTY_PROJECT_SCHEDULING_PEER_VIEW){}
   async recoverStalledAwaitWorker(m:MissionState):Promise<{disposition:'NOOP'|'RECOVERED'|'QUARANTINED'|'BLOCKED';reason:string;worker_id?:string;task_id?:string;from_model?:string;to_model?:string}>{
     if(m.identity.status!=='active'||m.continuation.user_interrupted)return{disposition:'NOOP',reason:'mission-not-active'}
     const candidates=[...m.execution.workers].reverse().filter(w=>w.status==='busy'&&Boolean(w.session_id)&&Boolean(w.model))
@@ -51,7 +52,7 @@ export class TaskRecoveryCoordinator{
       if(!next)return blockAfterAbort('no-admissible-recovery-model',`No recovery-only candidate is currently admissible from ${fromModel}.`)
       if(!browserClean)return blockAfterAbort('browser-cleanup-failed','The prior visual execution owner could not be cleaned after its host session was aborted.')
       const priorFork=worker.forked_from_session_id,priorVariant=worker.model_variant,nextVariant=task.execution_profile?.fallback_variants?.[next]
-      const reservation=reserveTaskRuntimeDispatch(m,worker,next,this.scheduler)
+      const reservation=reserveTaskRuntimeDispatch(m,worker,next,this.scheduler,Date.now(),this.getProjectPeerView(m))
       if(!reservation.accepted)return blockAfterAbort('replacement-reservation-unavailable',reservation.reason)
       try{
         this.child.recordModelProjection(worker,next,nextVariant)
@@ -83,7 +84,7 @@ export class TaskRecoveryCoordinator{
       if(!next){appendLedger(m,'worker.behavioral-model-escalation.unavailable',{task_id:task.id,worker_id:worker.id,payload:{from:model,candidates}});return false}
       const previousSession=worker.session_id,previousFork=worker.forked_from_session_id,previousStatus=worker.status,previousTaskStatus=task.status,nextVariant=task.execution_profile?.fallback_variants?.[next]
       worker.status='ready';task.status='waiting'
-      const reservation=reserveTaskRuntimeDispatch(m,worker,next,this.scheduler);if(!reservation.accepted){worker.status=previousStatus;task.status=previousTaskStatus;return false}
+      const reservation=reserveTaskRuntimeDispatch(m,worker,next,this.scheduler,Date.now(),this.getProjectPeerView(m));if(!reservation.accepted){worker.status=previousStatus;task.status=previousTaskStatus;return false}
       try{
         this.child.recordModelProjection(worker,next,nextVariant)
         const child=await this.child.create(m.identity.session_id,`Hi · ${worker.role} · behavioral recovery · ${task.objective.slice(0,40)}`,worker.role,next==='host-default'?undefined:next,nextVariant,this.workspaceBinding?.(m,task.id))
@@ -108,8 +109,8 @@ export class TaskRecoveryCoordinator{
     }
     const previousWorkerStatus=worker.status,previousTaskStatus=task.status
     worker.status='ready';task.status='waiting'
-    if(taskRuntimeAdmittedModel(m,worker,[model],this.scheduler)!==model){worker.status=previousWorkerStatus;task.status=previousTaskStatus;return false}
-    const reservation=reserveTaskRuntimeDispatch(m,worker,model,this.scheduler);if(!reservation.accepted){worker.status=previousWorkerStatus;task.status=previousTaskStatus;return false}
+    if(taskRuntimeAdmittedModel(m,worker,[model],this.scheduler,this.getProjectPeerView(m))!==model){worker.status=previousWorkerStatus;task.status=previousTaskStatus;return false}
+    const reservation=reserveTaskRuntimeDispatch(m,worker,model,this.scheduler,Date.now(),this.getProjectPeerView(m));if(!reservation.accepted){worker.status=previousWorkerStatus;task.status=previousTaskStatus;return false}
     try{
       const bound=bindTaskRuntimeHost(m,worker.id,worker.session_id);if(!bound.accepted){releaseTaskRuntimeReservation(m,worker.id);worker.status=previousWorkerStatus;task.status=previousTaskStatus;return false}
       const previous=worker.model
@@ -144,7 +145,7 @@ export class TaskRecoveryCoordinator{
     for(const model of candidates){
       const runtimeCandidate=runtimeModelCandidateStatus(model,this.getModels(),this.getConfig(),this.getHostConfig(),worker.role);if(!runtimeCandidate.ok){appendLedger(m,'worker.runtime-fallback.skipped',{task_id:task.id,worker_id:worker.id,payload:{model,reason:runtimeCandidate.reason,failure_class:failure.kind,phase:'runtime-policy-revalidation'}});continue}
       const variant=task.execution_profile?.fallback_variants?.[model],previous=worker.model,fallbackReason=task.execution_profile?.fallback_reasons?.find(x=>x.model===model)?.reason??`runtime fallback after ${failure.kind}`
-      const reservation=reserveTaskRuntimeDispatch(m,worker,model,this.scheduler);if(!reservation.accepted){appendLedger(m,'worker.runtime-fallback.skipped',{task_id:task.id,worker_id:worker.id,payload:{model,reason:reservation.reason,failure_class:failure.kind,source:'scheduler'}});continue}
+      const reservation=reserveTaskRuntimeDispatch(m,worker,model,this.scheduler,Date.now(),this.getProjectPeerView(m));if(!reservation.accepted){appendLedger(m,'worker.runtime-fallback.skipped',{task_id:task.id,worker_id:worker.id,payload:{model,reason:reservation.reason,failure_class:failure.kind,source:'scheduler'}});continue}
       try{
         this.child.recordModelProjection(worker,model,variant);const child=await this.child.create(m.identity.session_id,`Hi · ${worker.role} · runtime recovery · ${task.objective.slice(0,45)}`,worker.role,model==='host-default'?undefined:model,variant,this.workspaceBinding?.(m,task.id))
         if(!child?.id)throw new Error('Runtime fallback child session id missing')

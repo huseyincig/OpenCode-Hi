@@ -3,6 +3,7 @@ import type { RuntimeScopedStores } from '../application/runtime-scoped-stores.j
 import { type RuntimeSignalSink } from '../events/event-sink.js';
 import type { BackgroundRegistry } from '../background/registry.js';
 import type { ConcurrencyPolicySource } from '../scheduler/concurrency.js';
+import { type ProjectSchedulingPeerView } from '../scheduler/project-peer-view.js';
 import type { ProjectMethodologyLearningStore } from '../project-intelligence/methodology-learning.js';
 import { ChildExecutionCoordinator } from './child-execution-coordinator.js';
 type QueueTask = (m: MissionState, worker: WorkerState, run: () => Promise<WorkerState>) => void;
@@ -17,7 +18,8 @@ export declare class TaskResultReconciler {
     private readonly queueTaskCallback;
     private readonly drainQueueCallback;
     private readonly scopedStores;
-    constructor(scheduler: ConcurrencyPolicySource, registry: BackgroundRegistry, projectRoot: string, events: RuntimeSignalSink | undefined, methodologyLearning: ProjectMethodologyLearningStore, child: ChildExecutionCoordinator, getHostConfig: () => Record<string, unknown>, queueTaskCallback: QueueTask, drainQueueCallback: () => void, scopedStores: RuntimeScopedStores);
+    private readonly getProjectPeerView;
+    constructor(scheduler: ConcurrencyPolicySource, registry: BackgroundRegistry, projectRoot: string, events: RuntimeSignalSink | undefined, methodologyLearning: ProjectMethodologyLearningStore, child: ChildExecutionCoordinator, getHostConfig: () => Record<string, unknown>, queueTaskCallback: QueueTask, drainQueueCallback: () => void, scopedStores: RuntimeScopedStores, getProjectPeerView?: (m: MissionState) => ProjectSchedulingPeerView);
     private queueTask;
     private drainQueue;
     reconcileNativeResult(m: MissionState, workerID: string, result: WorkerResult): Promise<WorkerResult>;

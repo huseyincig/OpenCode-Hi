@@ -3,6 +3,7 @@ import type {MissionState,MissionTask,WorkerState} from '../mission/types.js'
 import type {AvailableModel} from '../routing/model-resolver.js'
 import {runtimeModelCandidateStatus} from '../routing/model-resolver.js'
 import type {ConcurrencyPolicySource} from '../scheduler/concurrency.js'
+import {EMPTY_PROJECT_SCHEDULING_PEER_VIEW,type ProjectSchedulingPeerView} from '../scheduler/project-peer-view.js'
 import type {ChildSessionPort} from '../host/port.js'
 import type {RuntimeSignalSink} from '../events/event-sink.js'
 import {runtimeSignal} from '../events/event-sink.js'
@@ -50,6 +51,7 @@ export class QueuedWorkerDispatcher{
     private readonly blockDependencyOutcome:(m:MissionState,task:MissionTask,worker:WorkerState,error:DependencyOutcomeProjectionError)=>Promise<void>,
     private readonly events?:RuntimeSignalSink,
     private readonly previewManager?:LocalPreviewManager,
+    private readonly getProjectPeerView:(m:MissionState)=>ProjectSchedulingPeerView=()=>EMPTY_PROJECT_SCHEDULING_PEER_VIEW,
   ){}
 
   run(m:MissionState,task:MissionTask,worker:WorkerState,transient:QueuedDispatchTransient={}):Promise<WorkerState>{
@@ -73,7 +75,7 @@ export class QueuedWorkerDispatcher{
         if(m.identity.status!=='active'||m.continuation.user_interrupted||(worker as WorkerState).status==='cancelled'){worker.status='cancelled';task.status='cancelled';throw new Error('Mission stopped before worker dispatch')}
         const model=chain[i],variant=model===primary?profile.model_variant:profile.fallback_variants?.[model],runtimeCandidate=runtimeModelCandidateStatus(model,this.getModels(),this.getConfig(),this.getHostConfig(),role)
         if(!runtimeCandidate.ok){lastError=new Error(`Runtime model candidate rejected at dispatch: ${model}: ${runtimeCandidate.reason}`);appendLedger(m,'model.fallback.skipped',{task_id:task.id,worker_id:worker.id,payload:{model,reason:runtimeCandidate.reason,index:i,phase:'dispatch-revalidation'}});continue}
-        clearCapabilityUnavailable(m,'model-dispatch');const reservation=reserveTaskRuntimeDispatch(m,worker,model,this.scheduler);if(!reservation.accepted){lastError=new Error(`Worker scheduler admission unavailable: ${reservation.reason}`);appendLedger(m,'model.fallback.skipped',{task_id:task.id,worker_id:worker.id,payload:{model,reason:reservation.reason,index:i,source:'scheduler'}});continue}
+        clearCapabilityUnavailable(m,'model-dispatch');const reservation=reserveTaskRuntimeDispatch(m,worker,model,this.scheduler,Date.now(),this.getProjectPeerView(m));if(!reservation.accepted){lastError=new Error(`Worker scheduler admission unavailable: ${reservation.reason}`);appendLedger(m,'model.fallback.skipped',{task_id:task.id,worker_id:worker.id,payload:{model,reason:reservation.reason,index:i,source:'scheduler'}});continue}
         worker.model=model;worker.model_variant=variant
         try{
           worker.status='starting';task.status='queued';this.child.recordModelProjection(worker,model,variant);const spawned=await this.child.createForTask(m.identity.session_id,`Hi · ${role} · ${objective.slice(0,60)}`,role,model==='host-default'?undefined:model,variant,transient.forkFromSession,this.workspaceBinding(m,task.id)),child=spawned.child

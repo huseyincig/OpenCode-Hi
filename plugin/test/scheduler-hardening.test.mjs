@@ -27,7 +27,7 @@ test('dedupe fingerprint preserves distinct task contracts with same objective/r
 })
 
 
-test('spawn dedupe is mission-isolated for concurrent identical task contracts',async()=>{
+test('mission-isolated identity still serializes cross-mission writers that share the same project surface',async()=>{
   const registry=new BackgroundRegistry(),created=[]
   let releaseFirst
   const firstGate=new Promise(resolve=>{releaseFirst=resolve})
@@ -35,21 +35,20 @@ test('spawn dedupe is mission-isolated for concurrent identical task contracts',
   const c={session:{
     create:async req=>{const id=`cross-mission-child-${++n}`;created.push({id,req});if(n===1)await firstGate;return{data:{id}}},
     promptAsync:async()=>({data:{}}),
+    abort:async()=>({data:true}),
     diff:async()=>({data:[]}),
   }}
-  const rt=new TaskRuntime(opencodeChildPort(c),registry,createConcurrencyPolicySource(()=>({global:4})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced'],writeCapable:true}],()=>({}))
-  const a=startAssessedMission(new MissionStore(),'dedupe-mission-a','opaque implementation',{task_kind:'implementation',scope:'local',required_capabilities:['implementation'],likely_targets:['src/shared.ts']})
-  const b=startAssessedMission(new MissionStore(),'dedupe-mission-b','opaque implementation',{task_kind:'implementation',scope:'local',required_capabilities:['implementation'],likely_targets:['src/shared.ts']})
+  const store=new MissionStore(),a=startAssessedMission(store,'dedupe-mission-a','opaque implementation',{task_kind:'implementation',scope:'local',required_capabilities:['implementation'],likely_targets:['src/shared.ts']}),b=startAssessedMission(store,'dedupe-mission-b','opaque implementation',{task_kind:'implementation',scope:'local',required_capabilities:['implementation'],likely_targets:['src/shared.ts']})
+  const rt=new TaskRuntime(opencodeChildPort(c),registry,createConcurrencyPolicySource(()=>({global:4})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced'],writeCapable:true}],()=>({}),undefined,[],undefined,undefined,undefined,undefined,undefined,undefined,undefined,()=>store.all())
   const pa=rt.start(a,{objective:'apply identical fix',role:'coder',category:'standard',scope:['src/shared.ts']})
   while(created.length<1)await new Promise(resolve=>setImmediate(resolve))
-  const pb=rt.start(b,{objective:'apply identical fix',role:'coder',category:'standard',scope:['src/shared.ts']})
-  await new Promise(resolve=>setImmediate(resolve));releaseFirst()
-  const [ra,rb]=await Promise.all([pa,pb])
-  assert.equal(created.length,2,'identical task contracts in different missions must create distinct native child sessions')
-  assert.notEqual(ra.worker_id,rb.worker_id)
-  assert.notEqual(ra.task_id,rb.task_id)
-  assert.equal(a.execution.workers.some(w=>w.id===rb.worker_id),false)
-  assert.equal(b.execution.workers.some(w=>w.id===ra.worker_id),false)
+  const rb=await rt.start(b,{objective:'apply identical fix',role:'coder',category:'standard',scope:['src/shared.ts']})
+  assert.equal(rb.readiness,'WAIT');assert.equal(created.length,1,'peer writer must not spawn while conflicting project surface is active')
+  releaseFirst();const ra=await pa
+  assert.notEqual(ra.worker_id,rb.worker_id);assert.notEqual(ra.task_id,rb.task_id)
+  assert.equal(a.execution.workers.some(w=>w.id===rb.worker_id),false);assert.equal(b.execution.workers.some(w=>w.id===ra.worker_id),false)
+  assert.equal(await rt.cancel(a,ra.worker_id),true);await new Promise(resolve=>setImmediate(resolve))
+  assert.equal(created.length,2,'queued peer writer starts after the prior project writer releases ownership')
 })
 
 test('parallel safety blocks parent/child write surfaces, not just exact path equality',()=>{

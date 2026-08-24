@@ -4,6 +4,7 @@ import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { createTask,createWorker,beginWorkerAttempt } from '../dist/runtime/worker/worker-runtime.js'
 import { createConcurrencyPolicySource } from '../dist/runtime/scheduler/concurrency.js'
 import { startAssessedMission } from './helpers/semantic.mjs'
+import {projectSchedulingPeerView} from '../dist/runtime/scheduler/project-peer-view.js'
 import {
   taskRuntimeSchedulingSnapshot,
   taskRuntimeAdmittedModel,
@@ -70,4 +71,20 @@ test('adapter refuses a newer attempt while the execution unit remains reserved'
   worker.attempt=1
   const newer=reserveTaskRuntimeDispatch(m,worker,'p/m',scheduler,11);assert.equal(newer.accepted,false);assert.equal(newer.reason,'unit-not-admitted')
   assert.equal(m.execution.scheduler.reservations.length,1)
+})
+
+
+test('adapter counts peer-mission durable reservations toward project global/model capacity without consuming local topology',()=>{
+  const a=mission('peer-cap-a'),b=mission('peer-cap-b')
+  a.execution.topology.parallelism=1;b.execution.topology.parallelism=1
+  const ta=createTask(a,{objective:'a',role:'coder',category:'standard',scope:['src/a.ts']}),wa=createWorker(a,ta,'p/same')
+  const scheduler=createConcurrencyPolicySource(()=>({global:1,providers:{p:1},models:{'p/same':1}}))
+  assert.equal(reserveTaskRuntimeDispatch(a,wa,'p/same',scheduler,10).accepted,true);wa.status='busy';ta.status='running'
+  const tb=createTask(b,{objective:'b',role:'coder',category:'standard',scope:['src/b.ts']}),wb=createWorker(b,tb,'p/same')
+  const snap=taskRuntimeSchedulingSnapshot(b,scheduler,{workerId:wb.id,model:'p/same'},projectSchedulingPeerView(b,[a,b]))
+  assert.equal(snap.capacity.running.length,1)
+  assert.equal(snap.capacity.running[0].missionId,a.identity.mission_id)
+  assert.equal(taskRuntimeAdmittedModel(b,wb,['p/same'],scheduler,projectSchedulingPeerView(b,[a,b])),undefined,'peer reservation must consume project-global/model capacity')
+  const localOnly=taskRuntimeSchedulingSnapshot(b,createConcurrencyPolicySource(()=>({global:4})),{workerId:wb.id,model:'p/same'},projectSchedulingPeerView(b,[a,b]))
+  assert.equal(localOnly.capacity.topology,1,'peer work must not consume this mission topology limit')
 })

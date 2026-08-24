@@ -84,3 +84,13 @@ test('planner is side-effect-free and does not mutate graph or running capacity'
   const first=planScheduling(snap),second=planScheduling(snap)
   assert.deepEqual(first,second);assert.deepEqual(snap,before)
 })
+
+
+test('project peer conflict projection preserves read-only overlap while blocking foreign writers',()=>{
+  const m=mission('peer-conflict'),task=createTask(m,{objective:'inspect',role:'architect',category:'deep',scope:['src/shared.ts']})
+  const base=snapshot(m),peer={executionUnitId:'peer-mission::eu:t_peer',missionId:'peer-mission',workNodeId:'t_peer',status:'running',scope:['src/shared.ts'],writeSet:[],readOnly:true,createdAt:1}
+  let plan=planScheduling({...base,unitTraits:{...base.unitTraits,[unitID(task)]:{readOnly:true}},peerUnits:[peer]})
+  assert.equal(decision(plan,unitID(task)).disposition,'RUNNABLE','two read-only project peers may overlap')
+  plan=planScheduling({...base,unitTraits:{...base.unitTraits,[unitID(task)]:{readOnly:false}},peerUnits:[peer]})
+  assert.equal(decision(plan,unitID(task)).disposition,'DEFERRED_CONFLICT','writer must serialize against overlapping peer surface')
+})

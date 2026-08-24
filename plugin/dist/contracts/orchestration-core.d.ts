@@ -183,6 +183,18 @@ export interface SchedulingUnitTraits {
 }
 export interface SchedulingRunningAllocation extends SchedulingResourceBinding {
     executionUnitId: string;
+    /** Present for project-peer allocations; absent means the snapshot's own mission. */
+    missionId?: string;
+}
+export interface SchedulingConflictPeer {
+    executionUnitId: string;
+    missionId: string;
+    workNodeId: string;
+    status: TaskContractStatus;
+    scope: string[];
+    writeSet: string[];
+    readOnly: boolean;
+    createdAt: number;
 }
 export interface SchedulingCapacityState {
     topology: number;
@@ -195,6 +207,8 @@ export interface SchedulingSnapshot {
     graph: WorkGraph;
     unitTraits: Record<string, SchedulingUnitTraits>;
     resolvedResources: Record<string, SchedulingResourceBinding | undefined>;
+    /** Read-only projection of other Missions in the same project runtime. Never a second work graph owner. */
+    peerUnits?: SchedulingConflictPeer[];
     capacity: SchedulingCapacityState;
 }
 export interface SchedulingUnitDecision {

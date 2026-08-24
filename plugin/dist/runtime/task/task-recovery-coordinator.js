@@ -10,6 +10,7 @@ import { recordPreexistingUserBaseline } from '../safety/staging-safety.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { runtimeSignal } from '../events/event-sink.js';
 import { syncMissionGates } from '../gates/gates.js';
+import { EMPTY_PROJECT_SCHEDULING_PEER_VIEW } from '../scheduler/project-peer-view.js';
 import { taskRuntimeAdmittedModel, reserveTaskRuntimeDispatch, bindTaskRuntimeHost, beginTaskRuntimeSettlement, releaseTaskRuntimeReservation } from '../scheduler/task-runtime-adapter.js';
 import { recordRecoveryStrategy, recoveryModelHazard } from '../continuation/recovery-governor.js';
 export class TaskRecoveryCoordinator {
@@ -25,9 +26,10 @@ export class TaskRecoveryCoordinator {
     workspaceBinding;
     cleanupBrowser;
     readAssistantResult;
+    getProjectPeerView;
     callbackDisposition(m, worker) { if ((worker.parent_mission_id !== undefined && worker.parent_mission_id !== m.identity.mission_id) || (worker.generation_at_spawn !== undefined && worker.generation_at_spawn !== m.continuation.generation))
         return 'stale-mission'; return 'accept'; }
-    constructor(scheduler, registry, projectRoot, getConfig, getModels, getHostConfig, events, child, drainQueueCallback, workspaceBinding, cleanupBrowser, readAssistantResult) {
+    constructor(scheduler, registry, projectRoot, getConfig, getModels, getHostConfig, events, child, drainQueueCallback, workspaceBinding, cleanupBrowser, readAssistantResult, getProjectPeerView = () => EMPTY_PROJECT_SCHEDULING_PEER_VIEW) {
         this.scheduler = scheduler;
         this.registry = registry;
         this.projectRoot = projectRoot;
@@ -40,6 +42,7 @@ export class TaskRecoveryCoordinator {
         this.workspaceBinding = workspaceBinding;
         this.cleanupBrowser = cleanupBrowser;
         this.readAssistantResult = readAssistantResult;
+        this.getProjectPeerView = getProjectPeerView;
     }
     async recoverStalledAwaitWorker(m) {
         if (m.identity.status !== 'active' || m.continuation.user_interrupted)
@@ -103,7 +106,7 @@ export class TaskRecoveryCoordinator {
             if (!browserClean)
                 return blockAfterAbort('browser-cleanup-failed', 'The prior visual execution owner could not be cleaned after its host session was aborted.');
             const priorFork = worker.forked_from_session_id, priorVariant = worker.model_variant, nextVariant = task.execution_profile?.fallback_variants?.[next];
-            const reservation = reserveTaskRuntimeDispatch(m, worker, next, this.scheduler);
+            const reservation = reserveTaskRuntimeDispatch(m, worker, next, this.scheduler, Date.now(), this.getProjectPeerView(m));
             if (!reservation.accepted)
                 return blockAfterAbort('replacement-reservation-unavailable', reservation.reason);
             try {
@@ -199,7 +202,7 @@ export class TaskRecoveryCoordinator {
             const previousSession = worker.session_id, previousFork = worker.forked_from_session_id, previousStatus = worker.status, previousTaskStatus = task.status, nextVariant = task.execution_profile?.fallback_variants?.[next];
             worker.status = 'ready';
             task.status = 'waiting';
-            const reservation = reserveTaskRuntimeDispatch(m, worker, next, this.scheduler);
+            const reservation = reserveTaskRuntimeDispatch(m, worker, next, this.scheduler, Date.now(), this.getProjectPeerView(m));
             if (!reservation.accepted) {
                 worker.status = previousStatus;
                 task.status = previousTaskStatus;
@@ -268,12 +271,12 @@ export class TaskRecoveryCoordinator {
         const previousWorkerStatus = worker.status, previousTaskStatus = task.status;
         worker.status = 'ready';
         task.status = 'waiting';
-        if (taskRuntimeAdmittedModel(m, worker, [model], this.scheduler) !== model) {
+        if (taskRuntimeAdmittedModel(m, worker, [model], this.scheduler, this.getProjectPeerView(m)) !== model) {
             worker.status = previousWorkerStatus;
             task.status = previousTaskStatus;
             return false;
         }
-        const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler);
+        const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler, Date.now(), this.getProjectPeerView(m));
         if (!reservation.accepted) {
             worker.status = previousWorkerStatus;
             task.status = previousTaskStatus;
@@ -359,7 +362,7 @@ export class TaskRecoveryCoordinator {
                 continue;
             }
             const variant = task.execution_profile?.fallback_variants?.[model], previous = worker.model, fallbackReason = task.execution_profile?.fallback_reasons?.find(x => x.model === model)?.reason ?? `runtime fallback after ${failure.kind}`;
-            const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler);
+            const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler, Date.now(), this.getProjectPeerView(m));
             if (!reservation.accepted) {
                 appendLedger(m, 'worker.runtime-fallback.skipped', { task_id: task.id, worker_id: worker.id, payload: { model, reason: reservation.reason, failure_class: failure.kind, source: 'scheduler' } });
                 continue;

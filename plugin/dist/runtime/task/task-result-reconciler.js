@@ -15,6 +15,7 @@ import { runtimeSignal } from '../events/event-sink.js';
 import { syncMissionGates } from '../gates/gates.js';
 import { DEFAULT_CONTEXT_BUDGET, clipText } from '../context/budget.js';
 import { taskPromptToolOverrides } from '../routing/execution-profile.js';
+import { EMPTY_PROJECT_SCHEDULING_PEER_VIEW } from '../scheduler/project-peer-view.js';
 import { diffDelta, normFile } from './child-execution-coordinator.js';
 import { taskRuntimeAdmittedModel, reserveTaskRuntimeDispatch, bindTaskRuntimeHost, beginTaskRuntimeSettlement, releaseTaskRuntimeReservation } from '../scheduler/task-runtime-adapter.js';
 import { executionAttemptIdentity } from '../../contracts/orchestration-core.js';
@@ -34,7 +35,8 @@ export class TaskResultReconciler {
     queueTaskCallback;
     drainQueueCallback;
     scopedStores;
-    constructor(scheduler, registry, projectRoot, events, methodologyLearning, child, getHostConfig, queueTaskCallback, drainQueueCallback, scopedStores) {
+    getProjectPeerView;
+    constructor(scheduler, registry, projectRoot, events, methodologyLearning, child, getHostConfig, queueTaskCallback, drainQueueCallback, scopedStores, getProjectPeerView = () => EMPTY_PROJECT_SCHEDULING_PEER_VIEW) {
         this.scheduler = scheduler;
         this.registry = registry;
         this.projectRoot = projectRoot;
@@ -45,6 +47,7 @@ export class TaskResultReconciler {
         this.queueTaskCallback = queueTaskCallback;
         this.drainQueueCallback = drainQueueCallback;
         this.scopedStores = scopedStores;
+        this.getProjectPeerView = getProjectPeerView;
     }
     queueTask(m, worker, run) { this.queueTaskCallback(m, worker, run); }
     drainQueue() { this.drainQueueCallback(); }
@@ -86,8 +89,7 @@ export class TaskResultReconciler {
             task.diff_cleanliness = { collateral: [...(task.diff_cleanliness?.collateral ?? [])], accepted_expansions: [...(task.diff_cleanliness?.accepted_expansions ?? [])], native_verified_reverts: [...previousCollateral] };
             appendLedger(m, 'diff.cleanup.verified', { task_id: task.id, worker_id: worker.id, payload: { reverted: previousCollateral.slice(0, 40), source: 'native-session-diff-baseline' } });
         }
-        const activeWriters = m.execution.workers.filter(w => !isHiReadOnlyChildRole(w.role) && ['starting', 'busy'].includes(w.status));
-        const soleWriter = activeWriters.length <= 1 || activeWriters.every(w => w.id === worker.id);
+        const activeWriters = this.getProjectPeerView(m).activeWriters, soleWriter = activeWriters.length <= 1 || activeWriters.every(item => item.missionId === m.identity.mission_id && item.workerId === worker.id);
         const attributedNative = nativeDelta.filter(file => observed.includes(file) || task.scope.map(normFile).includes(file) || (soleWriter && !reported.includes(file)));
         const actual = [...new Set([...observed, ...attributedNative])];
         const missing = actual.filter(file => !reported.includes(file));
@@ -111,26 +113,22 @@ export class TaskResultReconciler {
         this.scopedStores.contextArtifacts.invalidateChanged(files);
         if (isHiReadOnlyChildRole(worker.role))
             return;
-        for (const other of m.execution.workers) {
-            if (other.id === worker.id || isHiReadOnlyChildRole(other.role) || !(other.write_set ?? []).length || !['starting', 'busy'].includes(other.status) || !['starting', 'busy'].includes(worker.status))
+        outer: for (const winner of this.getProjectPeerView(m).activeWriters) {
+            if (winner.missionId === m.identity.mission_id && winner.workerId === worker.id || !winner.writeSet.length || !['starting', 'busy'].includes(winner.status) || !['starting', 'busy'].includes(worker.status))
                 continue;
-            const overlap = (worker.write_set ?? []).filter(x => (other.write_set ?? []).includes(x));
+            const overlap = (worker.write_set ?? []).filter(x => winner.writeSet.includes(x));
             if (!overlap.length)
                 continue;
-            // The worker whose overlapping write is observed second is quarantined. The already-running
-            // writer is allowed to finish, then the quarantined task resumes in the SAME child session
-            // after an explicit dependency gate. This prevents blind concurrent merging while preserving
-            // task/worker identity and context.
-            const winner = other, loser = worker, winnerTask = m.execution.tasks.find(t => t.id === winner.task_id), loserTask = m.execution.tasks.find(t => t.id === loser.task_id);
-            if (!winnerTask || !loserTask)
+            const loser = worker, winnerTaskID = winner.taskId, loserTask = m.execution.tasks.find(t => t.id === loser.task_id);
+            if (!loserTask)
                 continue;
-            const pair = [winner.id, loser.id].sort().join(':');
+            const crossMission = winner.missionId !== m.identity.mission_id, pair = [`${winner.missionId}:${winner.workerId}`, `${m.identity.mission_id}:${loser.id}`].sort().join(':');
             const marker = `parallel-write-conflict:${pair}:${overlap.slice(0, 8).sort().join(',')}`;
             if (!m.execution.blockers.includes(marker))
                 m.execution.blockers.push(marker);
-            if (!loserTask.dependencies.includes(winnerTask.id))
-                loserTask.dependencies.push(winnerTask.id);
-            loserTask.result = { status: 'FIX_REQUIRED', summary: `Runtime write conflict detected with ${winner.id}; serialized reconciliation required.`, changed_files: [...new Set(loser.write_set ?? [])], evidence: [], open_issues: [marker], needs_context: [] };
+            if (!crossMission && !loserTask.dependencies.includes(winnerTaskID))
+                loserTask.dependencies.push(winnerTaskID);
+            loserTask.result = { status: 'FIX_REQUIRED', summary: `Runtime write conflict detected with ${winner.workerId}; serialized reconciliation required.`, changed_files: [...new Set(loser.write_set ?? [])], evidence: [], open_issues: [marker], needs_context: [] };
             loserTask.updated_at = Date.now();
             loser.completed_at = undefined;
             this.registry.delete(loser.id);
@@ -142,16 +140,16 @@ export class TaskResultReconciler {
                 loserTask.status = 'running';
                 loserTask.result = { ...loserTask.result, status: 'BLOCKED', open_issues: [...new Set([...loserTask.result.open_issues, abortMarker])], needs_context: [...new Set([...loserTask.result.needs_context, 'OpenCode lifecycle abort is unavailable; do not assume the conflicting writer is quarantined'])] };
                 this.registry.set(loser);
-                appendLedger(m, 'parallel.write-conflict.abort-blocked', { task_id: loserTask.id, worker_id: loser.id, payload: { winner_worker_id: winner.id, files: overlap.slice(0, 30) } });
-                break;
+                appendLedger(m, 'parallel.write-conflict.abort-blocked', { task_id: loserTask.id, worker_id: loser.id, payload: { winner_mission_id: winner.missionId, winner_worker_id: winner.workerId, files: overlap.slice(0, 30) } });
+                break outer;
             }
             releaseTaskRuntimeReservation(m, loser.id);
             loser.status = 'queued';
             const resume = async () => {
-                const model = loser.model;
-                if (!model || taskRuntimeAdmittedModel(m, loser, [model], this.scheduler) !== model)
+                const peerView = this.getProjectPeerView(m), model = loser.model;
+                if (!model || taskRuntimeAdmittedModel(m, loser, [model], this.scheduler, peerView) !== model)
                     throw new Error('Conflict resume scheduler admission unavailable');
-                const reservation = reserveTaskRuntimeDispatch(m, loser, model, this.scheduler);
+                const reservation = reserveTaskRuntimeDispatch(m, loser, model, this.scheduler, Date.now(), peerView);
                 if (!reservation.accepted)
                     throw new Error(`Conflict resume reservation unavailable: ${reservation.reason}`);
                 if (!loser.session_id) {
@@ -172,8 +170,8 @@ export class TaskResultReconciler {
                 try {
                     beginWorkerAttempt(loserTask, loser);
                     this.child.recordModelProjection(loser, model, loser.model_variant);
-                    await this.child.sendProviderPrompt(loser.session_id, clipText([`Hi runtime write-conflict reconciliation for existing task ${loserTask.id}.`, `Conflicting task ${winnerTask.id} has completed before this resume gate opened.`, `Conflicting files: ${overlap.join(', ')}`, `Current task objective: ${loserTask.objective}`, `Current user constraints: ${(loserTask.constraints ?? []).join(' | ') || 'none'}.`, 'Inspect the current diff/state first. Preserve valid work from the completed task. Reconcile only this task sequentially; do not blindly overwrite or restart planning. Re-run the required scoped verification and return the structured WorkerResult.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), loser.role, model === 'host-default' ? undefined : model, loser.model_variant, taskPromptToolOverrides(loserTask.execution_profile?.tools ?? [], this.getHostConfig(), loserTask.execution_profile?.mcp_servers ?? []), loser.attempt_prompt_message_id);
-                    appendLedger(m, 'parallel.write-conflict.resumed', { task_id: loserTask.id, worker_id: loser.id, payload: { after_task: winnerTask.id, files: overlap.slice(0, 30) } });
+                    await this.child.sendProviderPrompt(loser.session_id, clipText([`Hi runtime write-conflict reconciliation for existing task ${loserTask.id}.`, `Conflicting task ${winnerTaskID} from mission ${winner.missionId} is no longer active before this resume gate opened.`, `Conflicting files: ${overlap.join(', ')}`, `Current task objective: ${loserTask.objective}`, `Current user constraints: ${(loserTask.constraints ?? []).join(' | ') || 'none'}.`, 'Inspect the current diff/state first. Preserve valid prior work. Reconcile only this task sequentially; do not blindly overwrite or restart planning. Re-run the required scoped verification and return the structured WorkerResult.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars), loser.role, model === 'host-default' ? undefined : model, loser.model_variant, taskPromptToolOverrides(loserTask.execution_profile?.tools ?? [], this.getHostConfig(), loserTask.execution_profile?.mcp_servers ?? []), loser.attempt_prompt_message_id);
+                    appendLedger(m, 'parallel.write-conflict.resumed', { task_id: loserTask.id, worker_id: loser.id, payload: { after_mission: winner.missionId, after_task: winnerTaskID, files: overlap.slice(0, 30) } });
                     return loser;
                 }
                 catch (error) {
@@ -201,9 +199,9 @@ export class TaskResultReconciler {
                 }
             };
             this.queueTask(m, loser, resume);
-            appendLedger(m, 'parallel.write-conflict.quarantined', { task_id: loserTask.id, worker_id: loser.id, payload: { winner_worker_id: winner.id, winner_task_id: winnerTask.id, files: overlap.slice(0, 30), policy: 'verified-abort-then-serialize' } });
-            void this.events?.(runtimeSignal('parallel.write-conflict', m.identity.mission_id, { task_id: loserTask.id, worker_id: loser.id, payload: { other_worker_id: winner.id, files: overlap.slice(0, 30), action: 'quarantined' } }));
-            break;
+            appendLedger(m, 'parallel.write-conflict.quarantined', { task_id: loserTask.id, worker_id: loser.id, payload: { winner_mission_id: winner.missionId, winner_worker_id: winner.workerId, winner_task_id: winnerTaskID, files: overlap.slice(0, 30), policy: crossMission ? 'verified-abort-then-project-peer-serialize' : 'verified-abort-then-dependency-serialize' } });
+            void this.events?.(runtimeSignal('parallel.write-conflict', m.identity.mission_id, { task_id: loserTask.id, worker_id: loser.id, payload: { other_mission_id: winner.missionId, other_worker_id: winner.workerId, files: overlap.slice(0, 30), action: 'quarantined' } }));
+            break outer;
         }
         syncMissionGates(m, this.projectRoot);
     }

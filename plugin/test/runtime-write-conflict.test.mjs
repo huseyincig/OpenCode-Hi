@@ -80,3 +80,23 @@ test('parallel write conflict with unavailable abort becomes terminal quiescence
   assert.equal(wb.status,'busy');assert.ok(m.execution.blockers.includes('capability-unavailable:session-abort'));assert.ok(m.execution.blockers.some(x=>x.startsWith('parallel-conflict-abort-unavailable:')))
   const decision=evaluateIdle(m);assert.equal(decision.decision,'USER_ACTION_REQUIRED');assert.equal(decision.reason,'capability-unavailable:session-abort')
 })
+
+
+test('runtime-discovered cross-mission write expansion quarantines the later writer without creating an invalid dependency edge',async()=>{
+  let n=0
+  const calls={aborts:[],prompts:[]}
+  const client={session:{create:async()=>({data:{id:`peer-child-${++n}`}}),promptAsync:async req=>{calls.prompts.push(req);return{data:{}}},abort:async req=>{calls.aborts.push(req);return{data:true}},diff:async()=>({data:[]})}}
+  const store=new MissionStore(),a=startAssessedMission(store,'peer-runtime-a','opaque parallel edit A',{scope:'local',required_capabilities:['implementation'],likely_targets:['src/a.ts']}),b=startAssessedMission(store,'peer-runtime-b','opaque parallel edit B',{scope:'local',required_capabilities:['implementation'],likely_targets:['src/b.ts']})
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:4})),process.cwd(),process.cwd(),()=>resolveHiConfig({parallel:{enabled:true,max:4}}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced']}],()=>({}),undefined,[],undefined,undefined,undefined,undefined,undefined,undefined,undefined,()=>store.all())
+  const sa=await runtime.start(a,{objective:'edit A',role:'coder',category:'standard',scope:['src/a.ts']}),sb=await runtime.start(b,{objective:'edit B',role:'coder',category:'standard',scope:['src/b.ts']})
+  const wa=a.execution.workers.find(w=>w.id===sa.worker_id),wb=b.execution.workers.find(w=>w.id===sb.worker_id);for(const w of [wa,wb]){w.selected_methodologies=[];w.loaded_methodologies=[];w.methodologies=[]}
+  await runtime.noteNativeWriteSet(a,wa.id,['src/shared.ts'],'session-diff','ha')
+  await runtime.noteNativeWriteSet(b,wb.id,['src/shared.ts'],'session-diff','hb')
+  const tb=b.execution.tasks.find(t=>t.id===sb.task_id)
+  assert.equal(wb.status,'queued');assert.equal(tb.status,'queued');assert.equal(calls.aborts.length,1)
+  assert.deepEqual(tb.dependencies,[],'cross-mission conflict must not create a dependency edge to a foreign graph')
+  assert.ok(b.execution.blockers.some(x=>x.startsWith('parallel-write-conflict:')))
+  runtime.applyResult(a,wa.id,done);await new Promise(resolve=>setImmediate(resolve))
+  assert.equal(wb.status,'busy','peer-conflict loser resumes only after the foreign writer is no longer active')
+  assert.match(calls.prompts.at(-1).body.parts[0].text,/write-conflict reconciliation/i)
+})

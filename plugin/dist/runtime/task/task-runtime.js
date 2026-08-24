@@ -33,6 +33,7 @@ import { recordRecoveryStrategy, recoveryModelHazard } from '../continuation/rec
 import { deniedMutationAtoms } from '../constraint/constraint-atoms.js';
 import { explorationClearanceFreshness } from '../execution/exploration-clearance.js';
 import { QueuedWorkerDispatcher } from './queued-worker-dispatcher.js';
+import { projectSchedulingPeerView } from '../scheduler/project-peer-view.js';
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
 const MAX_QUEUE = 32;
 class TaskQueueCapacityError extends Error {
@@ -79,6 +80,7 @@ export class TaskRuntime {
     ensureBrowserResource;
     readAssistantResult;
     previewManager;
+    getProjectMissions;
     #queue = [];
     #draining = false;
     #methodologyLearning;
@@ -87,7 +89,7 @@ export class TaskRuntime {
     #results;
     #recovery;
     #scopedStores;
-    constructor(childHost, registry, scheduler, projectRoot, hiRoot, getConfig, getModels, getHostConfig, events, hostCapabilitySource = [], scopedStores, workspaceRuntime, extraHostResources = () => new Set(), browserExecutor, ensureBrowserResource, readAssistantResult, previewManager) {
+    constructor(childHost, registry, scheduler, projectRoot, hiRoot, getConfig, getModels, getHostConfig, events, hostCapabilitySource = [], scopedStores, workspaceRuntime, extraHostResources = () => new Set(), browserExecutor, ensureBrowserResource, readAssistantResult, previewManager, getProjectMissions = () => []) {
         this.childHost = childHost;
         this.registry = registry;
         this.scheduler = scheduler;
@@ -104,12 +106,13 @@ export class TaskRuntime {
         this.ensureBrowserResource = ensureBrowserResource;
         this.readAssistantResult = readAssistantResult;
         this.previewManager = previewManager;
+        this.getProjectMissions = getProjectMissions;
         this.#scopedStores = scopedStores ?? createRuntimeScopedStores(projectRoot, hiRoot);
         this.#methodologyLearning = new ProjectMethodologyLearningStore(projectRoot);
         this.#child = new ChildExecutionCoordinator(childHost, registry);
-        this.#dispatcher = new QueuedWorkerDispatcher(childHost, this.#child, registry, scheduler, projectRoot, this.#scopedStores, getConfig, getModels, getHostConfig, (m, taskID) => this.workspaceBinding(m, taskID), (m, taskID) => this.cleanupWorkspaceForTask(m, taskID), (m, task, worker, error) => this.blockDependencyOutcome(m, task, worker, error), events, previewManager);
-        this.#results = new TaskResultReconciler(scheduler, registry, projectRoot, events, this.#methodologyLearning, this.#child, getHostConfig, (m, w, run) => this.queueTask(m, w, run), () => this.drainQueue(), this.#scopedStores);
-        this.#recovery = new TaskRecoveryCoordinator(scheduler, registry, projectRoot, getConfig, getModels, getHostConfig, events, this.#child, () => this.drainQueue(), (m, taskID) => this.workspaceBinding(m, taskID), (m, taskID, workerID) => this.cleanupBrowserForTask(m, taskID, workerID), readAssistantResult);
+        this.#dispatcher = new QueuedWorkerDispatcher(childHost, this.#child, registry, scheduler, projectRoot, this.#scopedStores, getConfig, getModels, getHostConfig, (m, taskID) => this.workspaceBinding(m, taskID), (m, taskID) => this.cleanupWorkspaceForTask(m, taskID), (m, task, worker, error) => this.blockDependencyOutcome(m, task, worker, error), events, previewManager, (m) => this.projectPeerView(m));
+        this.#results = new TaskResultReconciler(scheduler, registry, projectRoot, events, this.#methodologyLearning, this.#child, getHostConfig, (m, w, run) => this.queueTask(m, w, run), () => this.drainQueue(), this.#scopedStores, (m) => this.projectPeerView(m));
+        this.#recovery = new TaskRecoveryCoordinator(scheduler, registry, projectRoot, getConfig, getModels, getHostConfig, events, this.#child, () => this.drainQueue(), (m, taskID) => this.workspaceBinding(m, taskID), (m, taskID, workerID) => this.cleanupBrowserForTask(m, taskID, workerID), readAssistantResult, (m) => this.projectPeerView(m));
     }
     async sendProviderPrompt(sessionID, text, role, model, variant, tools, messageID) { return this.#child.sendProviderPrompt(sessionID, text, role, model, variant, tools, messageID); }
     recordModelProjection(worker, model, variant) { this.#child.recordModelProjection(worker, model, variant); }
@@ -226,13 +229,14 @@ export class TaskRuntime {
     } appendLedger(m, result.reason === 'owner-mismatch' ? 'browser.cleanup-stale-owner' : 'browser.cleanup', { task_id: taskID, worker_id: worker.id, payload: { reason: result.reason, cleaned: result.cleaned } }); return true; }
     failedDeps(m, deps) { return deps.filter(id => { const status = m.execution.tasks.find(t => t.id === id)?.status; return status === 'failed' || status === 'cancelled'; }); }
     async blockDependencyOutcome(m, task, worker, error) { worker.status = 'failed'; task.status = 'blocked'; task.updated_at = Date.now(); const marker = `dependency-outcome-unavailable:${task.id}`; task.result = { status: 'BLOCKED', summary: `Direct dependency outcome could not be projected safely before dispatch: ${error.message}`.slice(0, 1200), changed_files: [], evidence: [], open_issues: [marker], needs_context: ['reconcile completed dependency result/worker attempt identity before dispatch'] }; m.execution.blockers = [...new Set([...m.execution.blockers, marker])]; this.registry.delete(worker.id); releaseTaskRuntimeReservation(m, worker.id); await this.cleanupWorkspaceForTask(m, task.id); appendLedger(m, 'worker.dependency-outcome-blocked', { task_id: task.id, worker_id: worker.id, payload: { reason: error.message, dependencies: [...task.dependencies] } }); syncMissionGates(m); }
-    admittedModel(m, worker, chain) { return taskRuntimeAdmittedModel(m, worker, chain, this.scheduler); }
+    projectPeerView(m) { return projectSchedulingPeerView(m, this.getProjectMissions()); }
+    admittedModel(m, worker, chain) { return taskRuntimeAdmittedModel(m, worker, chain, this.scheduler, this.projectPeerView(m)); }
     reserveExistingSessionAttempt(m, worker, model) {
         if (!model || !worker.session_id)
             return { ok: false, reason: 'model-or-session-missing' };
         if (this.admittedModel(m, worker, [model]) !== model)
             return { ok: false, reason: 'scheduler-not-admitted' };
-        const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler);
+        const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler, Date.now(), this.projectPeerView(m));
         if (!reservation.accepted)
             return { ok: false, reason: reservation.reason };
         const bound = bindTaskRuntimeHost(m, worker.id, worker.session_id);
@@ -373,7 +377,7 @@ export class TaskRuntime {
                 }
                 if (!await this.queuedRuntimeResourcesReady(e.mission, t, e.worker))
                     continue;
-                const decision = taskRuntimeUnitDecision(e.mission, e.worker, chain[0], this.scheduler), failed = decision?.disposition === 'BLOCKED_DEPENDENCY' ? decision.blockingDependencyIds.filter(id => { const status = e.mission.execution.tasks.find(task => task.id === id)?.status; return status === 'failed' || status === 'cancelled'; }) : [];
+                const decision = taskRuntimeUnitDecision(e.mission, e.worker, chain[0], this.scheduler, this.projectPeerView(e.mission)), failed = decision?.disposition === 'BLOCKED_DEPENDENCY' ? decision.blockingDependencyIds.filter(id => { const status = e.mission.execution.tasks.find(task => task.id === id)?.status; return status === 'failed' || status === 'cancelled'; }) : [];
                 if (failed.length) {
                     this.#queue.splice(i--, 1);
                     e.worker.status = 'failed';
@@ -815,7 +819,7 @@ export class TaskRuntime {
                 appendLedger(m, 'worker.constraint-rebase.deferred', { task_id: task.id, worker_id: worker.id, payload: { reason: 'model-missing' } });
                 continue;
             }
-            const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler);
+            const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler, Date.now(), this.projectPeerView(m));
             if (!reservation.accepted) {
                 appendLedger(m, 'worker.constraint-rebase.deferred', { task_id: task.id, worker_id: worker.id, payload: { reason: reservation.reason } });
                 continue;

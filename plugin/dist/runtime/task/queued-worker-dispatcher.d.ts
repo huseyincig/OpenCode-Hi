@@ -2,6 +2,7 @@ import type { HiConfig } from '../../config/schema.js';
 import type { MissionState, MissionTask, WorkerState } from '../mission/types.js';
 import type { AvailableModel } from '../routing/model-resolver.js';
 import type { ConcurrencyPolicySource } from '../scheduler/concurrency.js';
+import { type ProjectSchedulingPeerView } from '../scheduler/project-peer-view.js';
 import type { ChildSessionPort } from '../host/port.js';
 import type { RuntimeSignalSink } from '../events/event-sink.js';
 import type { RuntimeScopedStores } from '../application/runtime-scoped-stores.js';
@@ -33,6 +34,7 @@ export declare class QueuedWorkerDispatcher {
     private readonly blockDependencyOutcome;
     private readonly events?;
     private readonly previewManager?;
-    constructor(childHost: ChildSessionPort, child: ChildExecutionCoordinator, registry: BackgroundRegistry, scheduler: ConcurrencyPolicySource, projectRoot: string, scopedStores: RuntimeScopedStores, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, workspaceBinding: (m: MissionState, taskID: string) => ChildWorkspaceBinding | undefined, cleanupWorkspaceForTask: (m: MissionState, taskID: string) => Promise<boolean>, blockDependencyOutcome: (m: MissionState, task: MissionTask, worker: WorkerState, error: DependencyOutcomeProjectionError) => Promise<void>, events?: RuntimeSignalSink | undefined, previewManager?: LocalPreviewManager | undefined);
+    private readonly getProjectPeerView;
+    constructor(childHost: ChildSessionPort, child: ChildExecutionCoordinator, registry: BackgroundRegistry, scheduler: ConcurrencyPolicySource, projectRoot: string, scopedStores: RuntimeScopedStores, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, workspaceBinding: (m: MissionState, taskID: string) => ChildWorkspaceBinding | undefined, cleanupWorkspaceForTask: (m: MissionState, taskID: string) => Promise<boolean>, blockDependencyOutcome: (m: MissionState, task: MissionTask, worker: WorkerState, error: DependencyOutcomeProjectionError) => Promise<void>, events?: RuntimeSignalSink | undefined, previewManager?: LocalPreviewManager | undefined, getProjectPeerView?: (m: MissionState) => ProjectSchedulingPeerView);
     run(m: MissionState, task: MissionTask, worker: WorkerState, transient?: QueuedDispatchTransient): Promise<WorkerState>;
 }

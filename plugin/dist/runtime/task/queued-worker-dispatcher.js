@@ -1,4 +1,5 @@
 import { runtimeModelCandidateStatus } from '../routing/model-resolver.js';
+import { EMPTY_PROJECT_SCHEDULING_PEER_VIEW } from '../scheduler/project-peer-view.js';
 import { runtimeSignal } from '../events/event-sink.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { clearCapabilityUnavailable, markCapabilityUnavailable } from '../readiness/capability-failure.js';
@@ -35,7 +36,8 @@ export class QueuedWorkerDispatcher {
     blockDependencyOutcome;
     events;
     previewManager;
-    constructor(childHost, child, registry, scheduler, projectRoot, scopedStores, getConfig, getModels, getHostConfig, workspaceBinding, cleanupWorkspaceForTask, blockDependencyOutcome, events, previewManager) {
+    getProjectPeerView;
+    constructor(childHost, child, registry, scheduler, projectRoot, scopedStores, getConfig, getModels, getHostConfig, workspaceBinding, cleanupWorkspaceForTask, blockDependencyOutcome, events, previewManager, getProjectPeerView = () => EMPTY_PROJECT_SCHEDULING_PEER_VIEW) {
         this.childHost = childHost;
         this.child = child;
         this.registry = registry;
@@ -50,6 +52,7 @@ export class QueuedWorkerDispatcher {
         this.blockDependencyOutcome = blockDependencyOutcome;
         this.events = events;
         this.previewManager = previewManager;
+        this.getProjectPeerView = getProjectPeerView;
     }
     run(m, task, worker, transient = {}) {
         const profile = task.execution_profile;
@@ -105,7 +108,7 @@ export class QueuedWorkerDispatcher {
                     continue;
                 }
                 clearCapabilityUnavailable(m, 'model-dispatch');
-                const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler);
+                const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler, Date.now(), this.getProjectPeerView(m));
                 if (!reservation.accepted) {
                     lastError = new Error(`Worker scheduler admission unavailable: ${reservation.reason}`);
                     appendLedger(m, 'model.fallback.skipped', { task_id: task.id, worker_id: worker.id, payload: { model, reason: reservation.reason, index: i, source: 'scheduler' } });
