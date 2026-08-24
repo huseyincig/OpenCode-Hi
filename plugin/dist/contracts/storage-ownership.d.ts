@@ -126,4 +126,15 @@ export declare const STORAGE_OWNERSHIP_CATALOG: readonly [{
     readonly readers: readonly ["RuntimePersistence", "doctor"];
     readonly retention: "bounded restart survival; clean shutdown/runtime cleanup";
     readonly privacy: "operational-private";
+}, {
+    readonly data_class: "runtime-writer-lease";
+    readonly canonical_owner: "hi-runtime-instance";
+    readonly scope: "runtime";
+    readonly lifecycle: "ephemeral";
+    readonly path_provider: "runtimeInstanceLockPath(projectRoot) -> OS state/opencode-hi/projects/<project-hash>/runtime-instance.lock";
+    readonly schema_ref: "RuntimeInstanceLease@1";
+    readonly write_owner: "acquireHiRuntimeInstance";
+    readonly readers: readonly ["acquireHiRuntimeInstance"];
+    readonly retention: "active plugin runtime only; dead-owner lease is quarantined and reaped during recovery";
+    readonly privacy: "operational-private";
 }];

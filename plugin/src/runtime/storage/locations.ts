@@ -17,3 +17,6 @@ export function hiStateRoot(projectRoot:string):string{
 export function runtimeStatePath(projectRoot:string):string{
   return join(hiStateRoot(projectRoot),'runtime-state.json')
 }
+export function runtimeInstanceLockPath(projectRoot:string):string{
+  return join(hiStateRoot(projectRoot),'runtime-instance.lock')
+}

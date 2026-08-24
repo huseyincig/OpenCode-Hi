@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { STORAGE_OWNERSHIP_CATALOG,assertStorageOwnershipCatalog,isStorageOwnershipContract } from '../dist/contracts/storage-ownership.js'
 import { durableArtifactPath,projectMethodologyCandidatePath,projectMethodologyPolicyPath,projectMethodologyProvenancePath,projectPolicyPath,projectSkillRoot,projectTaskOutcomeMemoryPath } from '../dist/runtime/storage/ownership.js'
-import { runtimeStatePath } from '../dist/runtime/storage/locations.js'
+import { runtimeInstanceLockPath,runtimeStatePath } from '../dist/runtime/storage/locations.js'
 import { RuntimePersistence,RUNTIME_STATE_SCHEMA } from '../dist/runtime/state/persistence.js'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
 import { inspectProject } from '../dist/doctor/project-inspection.js'
@@ -41,8 +41,10 @@ test('catalog keeps host-native project skills outside Hi internal storage and r
   assert.equal(byClass('project-task-outcome-memory').lifecycle,'derived')
   assert.equal(byClass('project-task-outcome-memory').canonical_owner,'hi-project-task-outcome-memory')
   assert.equal(byClass('mission-survival-state').scope,'runtime')
+  assert.equal(byClass('runtime-writer-lease').canonical_owner,'hi-runtime-instance')
+  assert.equal(byClass('runtime-writer-lease').lifecycle,'ephemeral')
   const root=mkdtempSync(join(tmpdir(),'hi-storage-runtime-'))
-  try{assert.equal(runtimeStatePath(root).startsWith(root),false)}finally{rmSync(root,{recursive:true,force:true})}
+  try{assert.equal(runtimeStatePath(root).startsWith(root),false);assert.equal(runtimeInstanceLockPath(root).startsWith(root),false);assert.equal(runtimeInstanceLockPath(root).replace(/runtime-instance\.lock$/,'runtime-state.json'),runtimeStatePath(root))}finally{rmSync(root,{recursive:true,force:true})}
 })
 
 test('doctor consumes the canonical current runtime schema instead of a stale literal',()=>{

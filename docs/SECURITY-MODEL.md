@@ -17,7 +17,7 @@ OpenCode-Hi treats host permissions, user-owned files, credentials, external eff
 
 ## Persistence and privacy
 
-Hi persists semantic runtime state needed for recovery, but executable environment secrets are ephemeral. Durable state is schema-validated and rejects unsupported or malformed current-state envelopes. Project-local Hi data stays under the Hi-owned project storage boundary; host-native OpenCode directories remain host-owned.
+Hi persists semantic runtime state needed for recovery, but executable environment secrets are ephemeral. Durable state is schema-validated and rejects unsupported or malformed current-state envelopes. Runtime snapshot replacement is unique-temp + sync + atomic-rename based, and production startup acquires one project-scoped external-state writer lease: a live competing process is rejected before shared runtime-state mutation, while a dead-owner lease is quarantined and reaped before recovery. Orphan temp snapshots are non-canonical and never loaded. Project-local Hi data stays under the Hi-owned project storage boundary; host-native OpenCode directories remain host-owned.
 
 ## Reporting vulnerabilities
 

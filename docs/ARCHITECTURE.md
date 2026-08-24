@@ -174,7 +174,7 @@ The accepted OpenCode public API does not expose the deterministic question-open
 
 ## Persistence and restart
 
-Lifecycle-significant Hi state is persisted as one current-only Mission envelope with strict validation. Unknown/old schema is fail-closed unless a deliberate migration is separately designed. Writes use canonical storage owners and atomicity appropriate to each class.
+Lifecycle-significant Hi state is persisted as one current-only Mission envelope with strict validation. Unknown/old schema is fail-closed unless a deliberate migration is separately designed. The runtime snapshot keeps `RuntimePersistence` as its single write owner: each replacement uses an exclusive unique sibling temp, file sync before atomic rename, and parent-directory sync where the host filesystem supports it. Production plugin startup also holds one project-scoped runtime writer lease in the external Hi state root, so a second live process cannot concurrently replace the same Mission snapshot; a dead-owner lease is moved through a unique stale quarantine name before recovery. Orphan temp snapshots are never load candidates and cannot override the canonical `runtime-state.json`.
 
 Restart reconciliation validates external native identities before adoption. Missing or mismatched process/workspace/child ownership is quarantined rather than guessed.
 

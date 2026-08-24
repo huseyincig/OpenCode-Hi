@@ -2,6 +2,7 @@ import { DEFAULT_HI_CONFIG } from './config/defaults.js';
 import { resolveNativeProjectRoot } from './runtime/intent/repo-context.js';
 import { ProjectAuthorityStore } from './runtime/safety/project-authority.js';
 import { acquireHiRuntimeInstance } from './opencode/instance-guard.js';
+import { runtimeInstanceLockPath } from './runtime/storage/locations.js';
 import { createHostPort } from './opencode/host-port.js';
 import { createRuntimeServices } from './runtime/application/runtime-services.js';
 import { createHiToolSurface } from './runtime/application/hi-tool-surface.js';
@@ -19,7 +20,7 @@ export const HiPlugin = async (ctx) => {
     const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
     const packagedSkillsDir = resolve(packageRoot, 'skills');
     const projectRoot = resolveNativeProjectRoot(process.cwd(), { project: ctx.project, directory: ctx.directory, worktree: ctx.worktree });
-    const instanceLease = acquireHiRuntimeInstance(String(projectRoot), ctx.client);
+    const instanceLease = acquireHiRuntimeInstance(String(projectRoot), ctx.client, { lockPath: runtimeInstanceLockPath(projectRoot) });
     try {
         const state = { config: DEFAULT_HI_CONFIG, hostConfig: {} };
         const host = createHostPort(ctx);

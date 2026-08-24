@@ -1,4 +1,4 @@
-declare const process: { cwd(): string; env: Record<string,string|undefined>; platform:string; execPath:string; kill(pid:number,signal?:string):boolean }
+declare const process: { pid:number; cwd(): string; env: Record<string,string|undefined>; platform:string; execPath:string; kill(pid:number,signal?:string|number):boolean }
 declare module 'node:crypto' {
   export interface Hash { update(data:any): Hash; digest(encoding:'hex'): string }
   export function createHash(algorithm:string): Hash
@@ -12,7 +12,8 @@ declare module 'node:fs' {
   export function readdirSync(path:any, options?:any): any[]
   export function realpathSync(path:any): string
   export function mkdirSync(path:any, options?:any): any
-  export function openSync(path:any, flags:any): number
+  export function openSync(path:any, flags:any, mode?:number): number
+  export function fsyncSync(fd:number): void
   export function readSync(fd:number, buffer:any, offset:number, length:number, position:number|null): number
   export function closeSync(fd:number): void
   export function fstatSync(fd:number, options?:any): any

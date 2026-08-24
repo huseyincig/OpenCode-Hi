@@ -1,4 +1,5 @@
-import { mkdirSync, readFileSync, renameSync, writeFileSync, existsSync } from 'node:fs'
+import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
+import { randomUUID } from 'node:crypto'
 import { dirname } from 'node:path'
 import { runtimeStatePath } from '../storage/locations.js'
 import type { MissionState } from '../mission/types.js'
@@ -37,6 +38,18 @@ const RUNTIME_KEYS=new Set(['boot_id','started_at','clean_shutdown','last_saved_
 function finiteTimestamp(value:unknown):value is number{return typeof value==='number'&&Number.isFinite(value)&&value>0}
 
 function bootID():string{return `boot_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,10)}`}
+function errorCode(error:unknown):string|undefined{return typeof error==='object'&&error!==null&&'code'in error&&typeof (error as {code?:unknown}).code==='string'?(error as {code:string}).code:undefined}
+function syncDirectory(path:string):void{
+  let fd:number|undefined
+  try{fd=openSync(path,'r');fsyncSync(fd)}catch(error){if(!['EPERM','EACCES','ENOTSUP','EINVAL','EISDIR'].includes(errorCode(error)??''))throw error}finally{if(fd!==undefined)closeSync(fd)}
+}
+function atomicReplace(path:string,content:string,bootId:string):void{
+  const parent=dirname(path),tmp=`${path}.${process.pid}.${bootId}.${randomUUID()}.tmp`;let fd:number|undefined
+  try{
+    fd=openSync(tmp,'wx',0o600);writeFileSync(fd,content,{encoding:'utf8'});fsyncSync(fd);closeSync(fd);fd=undefined
+    renameSync(tmp,path);syncDirectory(parent)
+  }catch(error){if(fd!==undefined)try{closeSync(fd)}catch{};try{rmSync(tmp,{force:true})}catch{};throw error}
+}
 
 export class RuntimePersistence {
   readonly path:string
@@ -82,9 +95,7 @@ export class RuntimePersistence {
     mkdirSync(dirname(this.path),{recursive:true,mode:0o700})
     const now=Date.now()
     const payload:PersistedRuntimeState={schema:RUNTIME_STATE_SCHEMA,updated_at:now,runtime:{boot_id:this.bootId,started_at:this.startedAt,clean_shutdown:cleanShutdown,last_saved_at:now,previous_boot_id:this.previousBootId},missions}
-    const tmp=`${this.path}.tmp`
-    writeFileSync(tmp,`${JSON.stringify(payload,null,2)}\n`,{encoding:'utf8',mode:0o600})
-    renameSync(tmp,this.path)
+    atomicReplace(this.path,`${JSON.stringify(payload,null,2)}\n`,this.bootId)
   }
 
   markRunning(missions:MissionState[]):void{this.save(missions,false)}
