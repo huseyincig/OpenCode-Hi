@@ -13,7 +13,8 @@ export function evaluateCompletion(m, projectRoot) { const reasons = [], verific
     else if (!m.release.release_chain?.package?.remote_verified)
         reasons.push('release-chain:package-remote-unverified');
 } if (m.continuation.user_interrupted || m.identity.status === 'stopped')
-    return { complete: false, reasons: ['user-stopped'] }; if (m.authority.human_decision?.status === 'OPEN' && m.authority.human_decision.semantic_type !== 'authority_request')
+    return { complete: false, reasons: ['user-stopped'] }; if (m.identity.semantic_assessment.status !== 'assessed')
+    return { complete: false, reasons: ['semantic-assessment-pending'], next: 'CONTINUE' }; if (m.authority.human_decision?.status === 'OPEN' && m.authority.human_decision.semantic_type !== 'authority_request')
     return { complete: false, reasons: [`human-decision:${m.authority.human_decision.reason_code}`], next: 'USER_ACTION_REQUIRED' }; if (m.execution.workers.some(w => ['created', 'queued', 'starting', 'busy'].includes(w.status)))
     reasons.push('active-worker'); if (m.execution.tasks.some(t => ['created', 'queued', 'running', 'waiting'].includes(t.status)))
     reasons.push('pending-task'); if (m.execution.processes.some(p => p.status === 'RUNNING'))
