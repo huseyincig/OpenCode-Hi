@@ -306,6 +306,9 @@ export class OpenCodePtyAdapter {
         const persisted = structuredClone(contract);
         if (!isProcessContract(persisted) || persisted.host !== 'opencode')
             throw new Error('Hi ProcessExecutor reconcile requires a valid OpenCode ProcessContract');
+        const owned = this.#states.get(persisted.process_id);
+        if (owned && (owned.contract.mission_id !== persisted.mission_id || owned.contract.task_id !== persisted.task_id || owned.contract.worker_id !== persisted.worker_id))
+            throw new Error(`PTY process_id ${persisted.process_id} is already owned by another process identity`);
         const raw = await this.#pty().list({ location: this.#location() }), items = nativeData(raw) ?? [];
         const samePid = Array.isArray(items) ? items.filter(info => info && info.pid === persisted.pid) : [];
         const exact = samePid.find(info => info.cwd === persisted.cwd && processCommandIdentity({ host: 'opencode', command: processCommandLine({ command: info.command, args: info.args }), cwd: info.cwd }) === persisted.command_identity);

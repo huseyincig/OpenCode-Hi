@@ -3,6 +3,7 @@
 All notable changes to OpenCode-Hi are documented here.
 
 ## Unreleased
+- Rejects cross-Mission `process_id` collisions during OpenCode PTY restart reconciliation so process-local PTY ownership cannot be silently overwritten by another Mission/Task/Worker.
 - Bounds Hi-owned Playwright browser shutdown so a hung `browser.close()` cannot pin task cancellation indefinitely; exact visual-worker cancellation now fails closed when browser ownership cannot be cleaned.
 - Makes bounded child host-liveness recovery progress-aware instead of treating task-await timeouts as stall proof. Three `hi_task_await` timeouts / 120s can authorize destructive recovery only for the portion of the window after the last meaningful completed OpenCode assistant/tool activity on the exact session/attempt; active browser/tool/model progress resets that window. This keeps OpenCode `busy`/`retry` as live host state without killing a child that is still advancing, while true post-progress stalls can still be host-aborted and moved to an admitted recovery-only model.
 - Releases Task-bound methodology ownership when an active Task fails while its exact obligation remains open, matching the existing cancellation lifecycle. A replacement visual-verification Task therefore retains `hi-visual-qa` and bounded browser admission after a genuine failed attempt instead of degrading to `methodologies=[]`; closed obligations, stopped Missions, and Task-local needs are not widened.

@@ -289,3 +289,19 @@ test('P3 restart reconcile quarantines missing live owner and treats missing ter
   const terminal={...running,status:'EXITED',ended_at:Date.now(),exit_code:0,cleanup_state:'CLEANUP_PENDING'}
   const cleaned=await h.adapter.reconcile(terminal);assert.equal(cleaned.disposition,'TERMINAL');assert.equal(cleaned.contract.cleanup_state,'CLEANED')
 })
+
+test('P3 process-local PTY state rejects a cross-Mission process_id collision during restart reconcile',async()=>{
+  const h=harness(),handle=await spawned(h),first=structuredClone(handle.contract)
+  const fresh=new OpenCodePtyAdapter({v2:{pty:{
+    list:async()=>({data:{data:[...h.sessions.values()].map(x=>({...x}))}}),
+    get:async({ptyID})=>({data:{data:{...h.sessions.get(ptyID)}}}),
+    remove:async()=>({data:undefined}),
+    connectToken:async({ptyID})=>({data:{data:{ticket:`ticket-${ptyID}`,expires_in:10}}}),
+    create:async()=>{throw new Error('must not create during reconcile')},
+  }}},new URL('http://127.0.0.1:4096'),'/repo','/repo',()=>host(),url=>{const ws=new FakeSocket(url);queueMicrotask(()=>ws.message(meta(0)));return ws},()=>{},32,8)
+  assert.equal((await fresh.reconcile(first)).disposition,'ADOPTED')
+  const colliding={...first,mission_id:'m_other',task_id:'t_other',worker_id:'w_other'}
+  await assert.rejects(()=>fresh.reconcile(colliding),/process_id.*already owned|process identity collision/i)
+  const retained=fresh.snapshot(first.process_id)
+  assert.equal(retained.mission_id,first.mission_id);assert.equal(retained.task_id,first.task_id);assert.equal(retained.worker_id,first.worker_id)
+})
