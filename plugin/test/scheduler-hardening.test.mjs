@@ -51,6 +51,16 @@ test('mission-isolated identity still serializes cross-mission writers that shar
   assert.equal(created.length,2,'queued peer writer starts after the prior project writer releases ownership')
 })
 
+
+test('an earlier direct parent write claim blocks a foreign child writer on the same project surface',async()=>{
+  const created=[];let n=0
+  const c={session:{create:async req=>{created.push(req);return{data:{id:`direct-peer-child-${++n}`}}},promptAsync:async()=>({data:{}}),abort:async()=>({data:true}),diff:async()=>({data:[]})}}
+  const store=new MissionStore(),direct=startAssessedMission(store,'direct-claim-owner','direct shared edit',{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['implementation'],likely_targets:['src/shared.ts']}),delegated=startAssessedMission(store,'direct-claim-child','delegated shared edit',{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['implementation'],likely_targets:['src/shared.ts']})
+  direct.identity.created_at=10;delegated.identity.created_at=20
+  const rt=new TaskRuntime(opencodeChildPort(c),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:4})),process.cwd(),process.cwd(),()=>resolveHiConfig({}),()=>[{id:'p/code',provider:'p',quality:8,cost:1,tags:['coding','balanced'],writeCapable:true}],()=>({}),undefined,[],undefined,undefined,undefined,undefined,undefined,undefined,undefined,()=>store.all())
+  const out=await rt.start(delegated,{objective:'apply delegated shared edit',role:'coder',category:'standard',scope:['src/shared.ts']})
+  assert.equal(out.readiness,'WAIT');assert.equal(created.length,0,'foreign child must not spawn through an earlier direct parent claim')
+})
 test('parallel safety blocks parent/child write surfaces, not just exact path equality',()=>{
   const existing=[{id:'t1',objective:'x',status:'running',role:'coder',category:'standard',scope:['src/auth'],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],created_at:1,updated_at:1}]
   const decision=parallelSafety(existing,{scope:['src/auth/token.ts'],dependencies:[],role:'coder'})

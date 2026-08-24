@@ -12,6 +12,7 @@ import { evaluateShellCommand } from '../dist/runtime/process/shell-policy.js'
 import { capabilityProfile } from '../dist/runtime/capabilities/profiles.js'
 import { OPENCODE_REFERENCE_CAPABILITIES,resolveHostCapability } from '../dist/runtime/host/capability-manifest.js'
 import { createToolBeforeHook } from '../dist/hooks/tool-before.js'
+import { createTask,createWorker } from '../dist/runtime/worker/worker-runtime.js'
 
 const baseConfig=()=>resolveHiConfigWithReport({},undefined).config
 const models=[{id:'cheap/model',provider:'cheap',cost:1,quality:5,writeCapable:true,tags:['coding']},{id:'strong/model',provider:'strong',cost:3,quality:9,writeCapable:true,tags:['reasoning','coding']}]
@@ -23,5 +24,24 @@ test('shell policy is non-interactive and never fakes approval',()=>{assert.equa
 test('tool-before enforces shell rewrite and interactive user-action gate',async()=>{const store=new MissionStore(),m=startAssessedMission(store,'shell-live','opaque local task',{task_kind:'implementation',scope:'local',required_capabilities:['implementation']});const hook=createToolBeforeHook(store);const out={args:{command:'npm init'}};await hook({sessionID:'shell-live',tool:'bash',args:{command:'npm init'}},out);assert.equal(out.args.command,'npm init -y');await assert.rejects(()=>hook({sessionID:'shell-live',tool:'bash',args:{command:'gh auth login'}},{args:{command:'gh auth login'}}),/interactive credential/i);assert.equal(m.identity.status,'waiting-user')})
 test('active Hi mission blocks the competing native OpenCode task runtime',async()=>{const store=new MissionStore(),m=startAssessedMission(store,'single-owner','independent work',{task_kind:'implementation',scope:'repo-wide',dependency_class:'independent-multi',required_capabilities:['implementation','verification']});const hook=createToolBeforeHook(store);await assert.rejects(()=>hook({sessionID:'single-owner',tool:'task'},{args:{description:'delegate outside Hi'}}),/native OpenCode task delegation is disabled.*hi_task_start/i);assert.ok(m.execution.ledger.some(e=>e.type==='orchestration.native-task-blocked'))})
 test('parallel Hi topology blocks parent mutation while preserving read and verification commands',async()=>{const store=new MissionStore(),m=startAssessedMission(store,'parallel-owner','independent fixes',{task_kind:'bug-fix',scope:'multi-file',dependency_class:'independent-multi',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests']});assert.equal(m.execution.execution_mode,'parallel');const hook=createToolBeforeHook(store);await hook({sessionID:'parallel-owner',tool:'read'},{args:{filePath:'src/a.ts'}});await hook({sessionID:'parallel-owner',tool:'bash'},{args:{command:'npm test'}});await assert.rejects(()=>hook({sessionID:'parallel-owner',tool:'edit'},{args:{filePath:'src/a.ts'}}),/topology guard.*hi_task_start/i);await assert.rejects(()=>hook({sessionID:'parallel-owner',tool:'bash'},{args:{command:'printf x > src/a.ts'}}),/topology guard.*hi_task_start/i);assert.ok(m.execution.ledger.filter(e=>e.type==='orchestration.parent-mutation-blocked').length>=2)})
+
+test('project direct parents serialize overlapping mutation claims while disjoint direct work remains allowed',async()=>{
+  const store=new MissionStore(),a=startAssessedMission(store,'direct-peer-a','edit shared A',{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['implementation'],likely_targets:['src/shared.ts']}),b=startAssessedMission(store,'direct-peer-b','edit shared B',{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['implementation'],likely_targets:['src/shared.ts']}),c=startAssessedMission(store,'direct-peer-c','edit other',{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['implementation'],likely_targets:['src/other.ts']})
+  a.identity.created_at=10;b.identity.created_at=20;c.identity.created_at=30
+  assert.equal(a.execution.adaptive_execution?.path,'DIRECT');assert.equal(b.execution.adaptive_execution?.path,'DIRECT');assert.equal(c.execution.adaptive_execution?.path,'DIRECT')
+  const hook=createToolBeforeHook(store)
+  await hook({sessionID:'direct-peer-a',tool:'edit'},{args:{filePath:'src/shared.ts'}})
+  await assert.rejects(()=>hook({sessionID:'direct-peer-b',tool:'edit'},{args:{filePath:'src/shared.ts'}}),/project write conflict.*hi_task_start/i)
+  await hook({sessionID:'direct-peer-c',tool:'edit'},{args:{filePath:'src/other.ts'}})
+  assert.ok(b.execution.ledger.some(e=>e.type==='orchestration.parent-mutation-blocked'&&e.payload?.reason==='project-write-conflict'))
+})
+
+test('running foreign child writer blocks a direct parent mutation on the same project surface',async()=>{
+  const store=new MissionStore(),peer=startAssessedMission(store,'direct-vs-child-peer','delegated shared edit',{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['implementation'],likely_targets:['src/shared.ts']}),direct=startAssessedMission(store,'direct-vs-child-parent','direct shared edit',{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['implementation'],likely_targets:['src/shared.ts']})
+  const task=createTask(peer,{objective:'write shared',role:'coder',category:'standard',scope:['src/shared.ts']}),worker=createWorker(peer,task,'p/code');task.status='running';worker.status='busy';worker.write_set=['src/shared.ts']
+  const hook=createToolBeforeHook(store)
+  await assert.rejects(()=>hook({sessionID:'direct-vs-child-parent',tool:'edit'},{args:{filePath:'src/shared.ts'}}),/project write conflict.*hi_task_start/i)
+  assert.ok(direct.execution.ledger.some(e=>e.type==='orchestration.parent-mutation-blocked'&&e.payload?.reason==='project-write-conflict'))
+})
 test('capability profiles never expand release authority implicitly',()=>{const release=capabilityProfile('RELEASE'),research=capabilityProfile('RESEARCH'),sandbox=capabilityProfile('SANDBOX');assert.equal(release.externalSideEffects,true);assert.equal(release.requiresAuthority,true);assert.equal(research.write,false);assert.equal(sandbox.requiresIsolation,true)})
 test('reference host exposes owned native process events and workspace isolation primitives',()=>{assert.equal(resolveHostCapability(OPENCODE_REFERENCE_CAPABILITIES,'process_events'),'NATIVE');assert.equal(resolveHostCapability(OPENCODE_REFERENCE_CAPABILITIES,'workspace_isolation'),'NATIVE')})

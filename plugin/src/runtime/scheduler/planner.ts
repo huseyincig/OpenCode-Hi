@@ -19,6 +19,33 @@ function sameSurface(a:string,b:string):boolean{const x=norm(a),y=norm(b);return
 function overlaps(a:string[],b:string[]):string[]{const out:string[]=[];for(const x of a)for(const y of b)if(sameSurface(x,y)){out.push(norm(x)===norm(y)?norm(x):`${norm(x)}~${norm(y)}`);break}return[...new Set(out)]}
 function mutableSurface(scope:string[],writeSet:string[]=[]):string[]{return[...new Set([...scope,...writeSet].map(norm).filter(Boolean))]}
 function reason(code:SchedulingReasonCode,detail?:string){return detail===undefined?{code}:{code,detail}}
+
+export interface SchedulingConflictSurface {
+  executionUnitId:string
+  missionId:string
+  workNodeId:string
+  status:WorkNode['status']
+  scope:string[]
+  writeSet:string[]
+  readOnly:boolean
+  createdAt:number
+}
+
+/** One pure mutable-surface policy shared by child scheduling and parent direct-write admission. */
+export function evaluateSchedulingSurfaceConflicts(candidate:SchedulingConflictSurface,peers:readonly SchedulingConflictSurface[],dependencies:readonly string[]=[]):{blocking:string[];reasons:Array<{code:SchedulingReasonCode;detail?:string}>}{
+  const blocking:string[]=[],reasons:Array<{code:SchedulingReasonCode;detail?:string}>=[],candidateSurface=mutableSurface(candidate.scope,candidate.writeSet),candidateKey=`${candidate.missionId}:${candidate.executionUnitId}`
+  for(const peer of peers){
+    if(peer.missionId===candidate.missionId&&peer.executionUnitId===candidate.executionUnitId||!CONFLICT_TASK_STATUSES.has(peer.status))continue
+    const peerKey=`${peer.missionId}:${peer.executionUnitId}`,peerPrecedes=peer.createdAt<candidate.createdAt||(peer.createdAt===candidate.createdAt&&peerKey<candidateKey)
+    if(peer.status!=='running'&&!peerPrecedes)continue
+    if(peer.missionId===candidate.missionId&&dependencies.includes(peer.workNodeId))continue
+    const peerSurface=mutableSurface(peer.scope,peer.writeSet),overlap=overlaps(peerSurface,candidateSurface)
+    if(!candidate.readOnly&&!peer.readOnly&&(!candidateSurface.length||!peerSurface.length)){blocking.push(peer.executionUnitId);reasons.push(reason('unknown-mutable-surface',peer.executionUnitId));continue}
+    if(overlap.length&&!(candidate.readOnly&&peer.readOnly)){blocking.push(peer.executionUnitId);reasons.push(reason('mutable-surface-conflict',`${peer.executionUnitId}:${overlap.join(',')}`))}
+    if(!candidate.readOnly&&!peer.readOnly&&peerSurface.some(x=>MUTABLE_SHARED_HINT.test(x))&&candidateSurface.some(y=>peerSurface.some(x=>sameSurface(x,y)))){blocking.push(peer.executionUnitId);reasons.push(reason('shared-mutable-surface',peer.executionUnitId))}
+  }
+  return{blocking:[...new Set(blocking)],reasons}
+}
 export function evaluateSchedulingResourceCapacity(capacity:SchedulingSnapshot['capacity'],unitID:string,binding:SchedulingResourceBinding|undefined):{ok:boolean;reason?:{code:SchedulingReasonCode;detail?:string}}{
   const running=capacity.running.filter(item=>item.executionUnitId!==unitID)
   if(running.length>=capacity.global)return{ok:false,reason:reason('global-capacity')}
@@ -27,20 +54,10 @@ export function evaluateSchedulingResourceCapacity(capacity:SchedulingSnapshot['
   return{ok:true}
 }
 function conflictDecision(snapshot:SchedulingSnapshot,unit:ExecutionUnit,nodeByID:Map<string,WorkNode>):{blocking:string[];reasons:Array<{code:SchedulingReasonCode;detail?:string}>}{
-  const blocking:string[]=[],reasons:Array<{code:SchedulingReasonCode;detail?:string}>=[],candidateRead=snapshot.unitTraits[unit.id]?.readOnly??false,unitNode=nodeByID.get(unit.workNodeId)!,candidateSurface=mutableSurface(unit.scope,unit.writeSet)
-  const assess=(other:{id:string;workNodeId:string;status:string;scope:string[];writeSet?:string[];readOnly:boolean;createdAt:number;orderKey:string},foreign:boolean)=>{
-    if(other.id===unit.id&&!foreign||!CONFLICT_TASK_STATUSES.has(other.status))return
-    const candidateKey=`${snapshot.graph.missionId}:${unit.id}`,otherPrecedes=other.createdAt<unitNode.createdAt||(other.createdAt===unitNode.createdAt&&other.orderKey<candidateKey)
-    if(other.status!=='running'&&!otherPrecedes)return
-    if(!foreign&&unit.dependencies.includes(other.workNodeId))return
-    const otherSurface=mutableSurface(other.scope,other.writeSet),overlap=overlaps(otherSurface,candidateSurface)
-    if(!candidateRead&&!other.readOnly&&(!candidateSurface.length||!otherSurface.length)){blocking.push(other.id);reasons.push(reason('unknown-mutable-surface',other.id));return}
-    if(overlap.length&&!(candidateRead&&other.readOnly)){blocking.push(other.id);reasons.push(reason('mutable-surface-conflict',`${other.id}:${overlap.join(',')}`))}
-    if(!candidateRead&&!other.readOnly&&otherSurface.some(x=>MUTABLE_SHARED_HINT.test(x))&&candidateSurface.some(y=>otherSurface.some(x=>sameSurface(x,y)))){blocking.push(other.id);reasons.push(reason('shared-mutable-surface',other.id))}
-  }
-  for(const other of snapshot.graph.executionUnits){const otherNode=nodeByID.get(other.workNodeId);if(!otherNode)continue;assess({id:other.id,workNodeId:other.workNodeId,status:otherNode.status,scope:other.scope,writeSet:other.writeSet,readOnly:snapshot.unitTraits[other.id]?.readOnly??false,createdAt:otherNode.createdAt,orderKey:`${snapshot.graph.missionId}:${other.id}`},false)}
-  for(const peer of snapshot.peerUnits??[])assess({id:peer.executionUnitId,workNodeId:peer.workNodeId,status:peer.status,scope:peer.scope,writeSet:peer.writeSet,readOnly:peer.readOnly,createdAt:peer.createdAt,orderKey:`${peer.missionId}:${peer.executionUnitId}`},true)
-  return{blocking:[...new Set(blocking)],reasons}
+  const unitNode=nodeByID.get(unit.workNodeId)!,candidate:SchedulingConflictSurface={executionUnitId:unit.id,missionId:snapshot.graph.missionId,workNodeId:unit.workNodeId,status:unitNode.status,scope:[...unit.scope],writeSet:[...unit.writeSet],readOnly:snapshot.unitTraits[unit.id]?.readOnly??false,createdAt:unitNode.createdAt},peers:SchedulingConflictSurface[]=[]
+  for(const other of snapshot.graph.executionUnits){const otherNode=nodeByID.get(other.workNodeId);if(!otherNode)continue;peers.push({executionUnitId:other.id,missionId:snapshot.graph.missionId,workNodeId:other.workNodeId,status:otherNode.status,scope:[...other.scope],writeSet:[...other.writeSet],readOnly:snapshot.unitTraits[other.id]?.readOnly??false,createdAt:otherNode.createdAt})}
+  for(const peer of snapshot.peerUnits??[])peers.push({executionUnitId:peer.executionUnitId,missionId:peer.missionId,workNodeId:peer.workNodeId,status:peer.status,scope:[...peer.scope],writeSet:[...peer.writeSet],readOnly:peer.readOnly,createdAt:peer.createdAt})
+  return evaluateSchedulingSurfaceConflicts(candidate,peers,unit.dependencies)
 }
 function decideStaticUnit(snapshot:SchedulingSnapshot,unit:ExecutionUnit,nodeByID:Map<string,WorkNode>):SchedulingUnitDecision|undefined{
   const node=nodeByID.get(unit.workNodeId)

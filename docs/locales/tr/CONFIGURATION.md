@@ -469,9 +469,9 @@ Host + project composition:
 
 - `execution.maxAgents`: mission topology agent üst sınırı, `1..8`.
 - `execution.parallelism`: topology içindeki paralel stream üst sınırı, `1..8`.
-- `parallel.max`: global scheduler worker kapasitesi, `1..8`.
+- `parallel.max`: aynı Hi project runtime içindeki aktif Mission'ların concurrently reserved execution unit'ları için global scheduler kapasitesi, `1..8`; `execution.parallelism` ise Mission-local topology limitidir.
 
-`parallel.enabled: false` ise effective global kapasite `1` olur.
+`parallel.enabled: false` ise effective global kapasite `1` olur. Aynı project runtime içinde çakışan direct `working-manager` write scope'ları ile child writer scope'ları aynı fail-closed project write-conflict policy üzerinden serialize edilir; kanıtlanmış disjoint scope'lar paralel kalabilir.
 
 ## 19. Single-agent / multi-agent zorlamak
 

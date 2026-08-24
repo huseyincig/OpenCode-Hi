@@ -584,7 +584,7 @@ Maximum parallel streams allowed by the mission topology. Range `1..8`.
 
 ### `parallel.max`
 
-Global scheduler capacity for concurrently reserved execution units. Range `1..8`. If `parallel.enabled` is `false`, effective global scheduler capacity becomes `1` regardless of `parallel.max`.
+Global scheduler capacity for concurrently reserved execution units across active Missions inside the same Hi project runtime. Range `1..8`. Mission-local `execution.parallelism` remains a separate topology ceiling. If `parallel.enabled` is `false`, effective global scheduler capacity becomes `1` regardless of `parallel.max`.
 
 Example:
 
@@ -604,7 +604,7 @@ Example:
 }
 ```
 
-Actual concurrency can be lower than any configured maximum because dependency, authority, verification, isolation, provider, or model limits may serialize work.
+Actual concurrency can be lower than any configured maximum because dependency, authority, verification, isolation, provider, model, or mutable-surface limits may serialize work. Within one Hi project runtime, overlapping direct `working-manager` writes and child-writer scopes are serialized by the same fail-closed project write-conflict policy; provably disjoint scopes remain eligible for concurrency.
 
 ## 18. Force single-agent or multi-agent topology
 

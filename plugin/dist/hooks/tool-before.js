@@ -1,4 +1,4 @@
-import { isVerificationCommand, observeToolBefore, toolMayMutate, verificationCommandKind } from '../runtime/evidence/evidence-runtime.js';
+import { isVerificationCommand, normalizeProjectPath, observeToolBefore, toolMayMutate, verificationCommandKind } from '../runtime/evidence/evidence-runtime.js';
 import { beginAuthorizedAction, claimAuthorizedAction, privilegedAction } from '../runtime/safety/authority.js';
 import { canonicalExternalCommand } from '../runtime/safety/command-classifier.js';
 import { matchRollback } from '../runtime/mutations/temporary-mutations.js';
@@ -13,12 +13,14 @@ import { verificationKindAdmittedForMission } from '../runtime/verification/poli
 import { HI_BROWSER_EXECUTION_TOOL_IDS } from '../runtime/browser/executor.js';
 import { resolveBrowserExecutionOwner } from '../runtime/browser/ownership.js';
 import { isHiReadOnlyChildRole } from '../runtime/roles/catalog.js';
+import { projectDirectMutationDecision } from '../runtime/scheduler/project-peer-view.js';
 const NON_MATERIAL_CONTROL_TOOLS = new Set(['hi_intent_assess', 'hi_status', 'hi_ledger', 'hi_readiness', 'hi_settings', 'hi_role_models']);
 const SETTINGS_CONTROL_TARGETS = new Set(['hi_settings', 'hi_role_models']);
 function assessedExplicitSettingsRequest(m) {
     const targets = (m.identity.intent.likelyTargets ?? []).map((value) => String(value).trim().split('(')[0]);
     return targets.length > 0 && targets.every((target) => SETTINGS_CONTROL_TARGETS.has(target)) && m.identity.intent.requiredCapabilities.length === 0 && m.identity.intent.requestedExternalActions.length === 0;
 }
+function exactParentMutationSurface(args, projectRoot, workingDirectory) { const root = projectRoot ?? workingDirectory, raw = [args?.filePath, args?.path, args?.file].filter((value) => typeof value === 'string'); return [...new Set(raw.map(value => normalizeProjectPath(value, root)).filter(Boolean))]; }
 export function createToolBeforeHook(store, background, projectRoot, workingDirectory) {
     return async (input, output) => {
         const sid = input?.sessionID ?? input?.sessionId, child = sid && background ? background.list().find(w => w.session_id === sid) : undefined, m = child ? store.get(child.parent_session_id) : store.get(sid);
@@ -56,6 +58,13 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
         if (!child && m.identity.status === 'active' && m.execution.execution_mode === 'parallel' && toolMayMutate(tool, args) && !(tool === 'bash' && isVerificationCommand(String(args?.command ?? '')))) {
             appendLedger(m, 'orchestration.parent-mutation-blocked', { payload: { tool, reason: 'parallel-topology-requires-hi-task-owner', required_tool: 'hi_task_start' } });
             throw new Error(`Hi topology guard: parent direct mutation via '${tool}' is disabled for parallel execution; create bounded disjoint work units with hi_task_start.`);
+        }
+        if (!child && m.identity.status === 'active' && toolMayMutate(tool, args) && !(tool === 'bash' && isVerificationCommand(String(args?.command ?? '')))) {
+            const decision = projectDirectMutationDecision(m, store.all(), exactParentMutationSurface(args, projectRoot, workingDirectory));
+            if (decision.applicable && !decision.safe) {
+                appendLedger(m, 'orchestration.parent-mutation-blocked', { payload: { tool, reason: 'project-write-conflict', required_tool: 'hi_task_start', surface: decision.surface.slice(0, 40), blocking_units: decision.blockingUnitIds.slice(0, 20), conflict_reasons: decision.reasons.slice(0, 20) } });
+                throw new Error(`Hi project write conflict: parent direct mutation via '${tool}' conflicts with an earlier or active project write owner (${decision.blockingUnitIds.join(', ') || 'unknown surface'}). Delegate this mutation with hi_task_start so canonical scheduler ownership can serialize it.`);
+            }
         }
         if (m.identity.semantic_assessment.status === 'pending') {
             const allowed = new Set(['hi_intent_assess', 'hi_status', 'hi_ledger', 'hi_readiness', 'hi_settings', 'hi_role_models']);

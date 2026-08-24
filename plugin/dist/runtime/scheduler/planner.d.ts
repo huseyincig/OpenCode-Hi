@@ -1,4 +1,22 @@
-import type { SchedulingDecision, SchedulingReasonCode, SchedulingResourceBinding, SchedulingSnapshot } from '../../contracts/orchestration-core.js';
+import type { SchedulingDecision, SchedulingReasonCode, SchedulingResourceBinding, SchedulingSnapshot, WorkNode } from '../../contracts/orchestration-core.js';
+export interface SchedulingConflictSurface {
+    executionUnitId: string;
+    missionId: string;
+    workNodeId: string;
+    status: WorkNode['status'];
+    scope: string[];
+    writeSet: string[];
+    readOnly: boolean;
+    createdAt: number;
+}
+/** One pure mutable-surface policy shared by child scheduling and parent direct-write admission. */
+export declare function evaluateSchedulingSurfaceConflicts(candidate: SchedulingConflictSurface, peers: readonly SchedulingConflictSurface[], dependencies?: readonly string[]): {
+    blocking: string[];
+    reasons: Array<{
+        code: SchedulingReasonCode;
+        detail?: string;
+    }>;
+};
 export declare function evaluateSchedulingResourceCapacity(capacity: SchedulingSnapshot['capacity'], unitID: string, binding: SchedulingResourceBinding | undefined): {
     ok: boolean;
     reason?: {

@@ -13,6 +13,34 @@ function overlaps(a, b) { const out = []; for (const x of a)
         } return [...new Set(out)]; }
 function mutableSurface(scope, writeSet = []) { return [...new Set([...scope, ...writeSet].map(norm).filter(Boolean))]; }
 function reason(code, detail) { return detail === undefined ? { code } : { code, detail }; }
+/** One pure mutable-surface policy shared by child scheduling and parent direct-write admission. */
+export function evaluateSchedulingSurfaceConflicts(candidate, peers, dependencies = []) {
+    const blocking = [], reasons = [], candidateSurface = mutableSurface(candidate.scope, candidate.writeSet), candidateKey = `${candidate.missionId}:${candidate.executionUnitId}`;
+    for (const peer of peers) {
+        if (peer.missionId === candidate.missionId && peer.executionUnitId === candidate.executionUnitId || !CONFLICT_TASK_STATUSES.has(peer.status))
+            continue;
+        const peerKey = `${peer.missionId}:${peer.executionUnitId}`, peerPrecedes = peer.createdAt < candidate.createdAt || (peer.createdAt === candidate.createdAt && peerKey < candidateKey);
+        if (peer.status !== 'running' && !peerPrecedes)
+            continue;
+        if (peer.missionId === candidate.missionId && dependencies.includes(peer.workNodeId))
+            continue;
+        const peerSurface = mutableSurface(peer.scope, peer.writeSet), overlap = overlaps(peerSurface, candidateSurface);
+        if (!candidate.readOnly && !peer.readOnly && (!candidateSurface.length || !peerSurface.length)) {
+            blocking.push(peer.executionUnitId);
+            reasons.push(reason('unknown-mutable-surface', peer.executionUnitId));
+            continue;
+        }
+        if (overlap.length && !(candidate.readOnly && peer.readOnly)) {
+            blocking.push(peer.executionUnitId);
+            reasons.push(reason('mutable-surface-conflict', `${peer.executionUnitId}:${overlap.join(',')}`));
+        }
+        if (!candidate.readOnly && !peer.readOnly && peerSurface.some(x => MUTABLE_SHARED_HINT.test(x)) && candidateSurface.some(y => peerSurface.some(x => sameSurface(x, y)))) {
+            blocking.push(peer.executionUnitId);
+            reasons.push(reason('shared-mutable-surface', peer.executionUnitId));
+        }
+    }
+    return { blocking: [...new Set(blocking)], reasons };
+}
 export function evaluateSchedulingResourceCapacity(capacity, unitID, binding) {
     const running = capacity.running.filter(item => item.executionUnitId !== unitID);
     if (running.length >= capacity.global)
@@ -30,39 +58,16 @@ export function evaluateSchedulingResourceCapacity(capacity, unitID, binding) {
     return { ok: true };
 }
 function conflictDecision(snapshot, unit, nodeByID) {
-    const blocking = [], reasons = [], candidateRead = snapshot.unitTraits[unit.id]?.readOnly ?? false, unitNode = nodeByID.get(unit.workNodeId), candidateSurface = mutableSurface(unit.scope, unit.writeSet);
-    const assess = (other, foreign) => {
-        if (other.id === unit.id && !foreign || !CONFLICT_TASK_STATUSES.has(other.status))
-            return;
-        const candidateKey = `${snapshot.graph.missionId}:${unit.id}`, otherPrecedes = other.createdAt < unitNode.createdAt || (other.createdAt === unitNode.createdAt && other.orderKey < candidateKey);
-        if (other.status !== 'running' && !otherPrecedes)
-            return;
-        if (!foreign && unit.dependencies.includes(other.workNodeId))
-            return;
-        const otherSurface = mutableSurface(other.scope, other.writeSet), overlap = overlaps(otherSurface, candidateSurface);
-        if (!candidateRead && !other.readOnly && (!candidateSurface.length || !otherSurface.length)) {
-            blocking.push(other.id);
-            reasons.push(reason('unknown-mutable-surface', other.id));
-            return;
-        }
-        if (overlap.length && !(candidateRead && other.readOnly)) {
-            blocking.push(other.id);
-            reasons.push(reason('mutable-surface-conflict', `${other.id}:${overlap.join(',')}`));
-        }
-        if (!candidateRead && !other.readOnly && otherSurface.some(x => MUTABLE_SHARED_HINT.test(x)) && candidateSurface.some(y => otherSurface.some(x => sameSurface(x, y)))) {
-            blocking.push(other.id);
-            reasons.push(reason('shared-mutable-surface', other.id));
-        }
-    };
+    const unitNode = nodeByID.get(unit.workNodeId), candidate = { executionUnitId: unit.id, missionId: snapshot.graph.missionId, workNodeId: unit.workNodeId, status: unitNode.status, scope: [...unit.scope], writeSet: [...unit.writeSet], readOnly: snapshot.unitTraits[unit.id]?.readOnly ?? false, createdAt: unitNode.createdAt }, peers = [];
     for (const other of snapshot.graph.executionUnits) {
         const otherNode = nodeByID.get(other.workNodeId);
         if (!otherNode)
             continue;
-        assess({ id: other.id, workNodeId: other.workNodeId, status: otherNode.status, scope: other.scope, writeSet: other.writeSet, readOnly: snapshot.unitTraits[other.id]?.readOnly ?? false, createdAt: otherNode.createdAt, orderKey: `${snapshot.graph.missionId}:${other.id}` }, false);
+        peers.push({ executionUnitId: other.id, missionId: snapshot.graph.missionId, workNodeId: other.workNodeId, status: otherNode.status, scope: [...other.scope], writeSet: [...other.writeSet], readOnly: snapshot.unitTraits[other.id]?.readOnly ?? false, createdAt: otherNode.createdAt });
     }
     for (const peer of snapshot.peerUnits ?? [])
-        assess({ id: peer.executionUnitId, workNodeId: peer.workNodeId, status: peer.status, scope: peer.scope, writeSet: peer.writeSet, readOnly: peer.readOnly, createdAt: peer.createdAt, orderKey: `${peer.missionId}:${peer.executionUnitId}` }, true);
-    return { blocking: [...new Set(blocking)], reasons };
+        peers.push({ executionUnitId: peer.executionUnitId, missionId: peer.missionId, workNodeId: peer.workNodeId, status: peer.status, scope: [...peer.scope], writeSet: [...peer.writeSet], readOnly: peer.readOnly, createdAt: peer.createdAt });
+    return evaluateSchedulingSurfaceConflicts(candidate, peers, unit.dependencies);
 }
 function decideStaticUnit(snapshot, unit, nodeByID) {
     const node = nodeByID.get(unit.workNodeId);
