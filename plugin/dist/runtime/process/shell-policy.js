@@ -1,4 +1,5 @@
 import { projectExecutionSurface } from '../safety/execution-projection.js';
+import { gitCommandParts } from '../safety/command-classifier.js';
 const INTERACTIVE = [/\bssh\b(?!.*\s-[^\n]*T)/i, /\bpasswd\b/i, /\b(?:npm|pnpm|yarn)\s+login\b/i, /\bgh\s+auth\s+login\b/i, /\baz\s+login\b/i, /\bgcloud\s+(?:auth\s+)?login\b/i, /\baws\s+(?:sso\s+login|configure\s+sso|login)\b/i, /\bselect\s+/i];
 const CATASTROPHIC_FILESYSTEM = [
     /(?:^|[;&|]\s*)shred\s+[^;|&]*(?:\/dev\/|\/etc\/|\/home\/|~\/|\$HOME)/i,
@@ -60,6 +61,13 @@ function rmAssessment(fragment) {
         if (/(?:\$\(|`|<\(|>\(|\$\{|\$[A-Za-z_0-9@*?])/.test(target))
             return 'dynamic';
     }
+    for (const raw of targets) {
+        const target = raw.replace(/^['"]|['"]$/g, ''), absolute = target.startsWith('/') || /^[A-Za-z]:[\\/]/.test(target);
+        if (!absolute && ['root', 'home', 'system'].includes(fragment.cwdRisk))
+            return 'catastrophic';
+        if (!absolute && fragment.cwdRisk === 'unknown')
+            return 'dynamic';
+    }
     if (force && fragment.origin === 'pipeline-consumer')
         return 'dynamic';
     return;
@@ -71,7 +79,7 @@ function boundedGitClean(text) {
     return tokens.slice(marker + 1).every(path => /^\.\/[A-Za-z0-9_.@/-]+$/.test(path) && path !== './' && !path.includes('/../') && !path.endsWith('/..'));
 }
 function gitAssessment(fragment) {
-    const text = executableText(fragment.text);
+    const text = executableText(fragment.text), parts = gitCommandParts(fragment.text), sub = parts.sub, rest = parts.rest;
     if (!/^git\s+/i.test(text))
         return;
     if (/^git\s+reset\b/i.test(text)) {
@@ -89,6 +97,18 @@ function gitAssessment(fragment) {
         if (!staged || worktree)
             return 'destructive';
     }
+    if (sub === 'branch' && (rest.includes('-D') || rest.includes('--delete') && rest.includes('--force')))
+        return 'destructive';
+    if (sub === 'stash' && ['drop', 'clear'].includes(rest[0] ?? ''))
+        return 'destructive';
+    if (sub === 'tag' && rest.some(x => x === '-d' || x === '--delete'))
+        return 'destructive';
+    if (sub === 'reflog' && rest[0] === 'delete')
+        return 'destructive';
+    if (sub === 'worktree' && rest[0] === 'remove' && rest.some(x => x === '-f' || x === '--force' || /^-[^-]*f/.test(x)))
+        return 'destructive';
+    if (sub === 'rm' && rest.some(x => x === '-f' || x === '--force' || /^-[^-]*f/.test(x)))
+        return 'destructive';
     return;
 }
 function powershellAssessment(fragment) {
@@ -108,6 +128,13 @@ function powershellAssessment(fragment) {
             return 'destructive';
         if (/^\/(?:etc|usr|var|boot|root|home)(?:\/|$)/i.test(target))
             return 'destructive';
+    }
+    for (const raw of targets) {
+        const target = raw.replace(/^['"]|['"]$/g, ''), absolute = target.startsWith('/') || /^[A-Za-z]:[\\/]/.test(target);
+        if (!absolute && ['root', 'home', 'system'].includes(fragment.cwdRisk))
+            return 'destructive';
+        if (!absolute && fragment.cwdRisk === 'unknown')
+            return 'dynamic';
     }
     return;
 }

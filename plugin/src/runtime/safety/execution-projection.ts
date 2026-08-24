@@ -1,6 +1,6 @@
 export type ExecutionDialect='posix'|'powershell'
 export type ExecutionOrigin='root'|'command-substitution'|'process-substitution'|'backtick'|'shell-wrapper'|'transparent-wrapper'|'pipeline-consumer'|'embedded-execution'|'powershell-script-block'
-export type EffectiveCwdRisk='stable'|'root'|'home'|'unknown'
+export type EffectiveCwdRisk='stable'|'root'|'home'|'system'|'unknown'
 export interface ExecutionFragment{
   text:string
   dialect:ExecutionDialect
@@ -157,14 +157,25 @@ function splitSegments(source:string,dialect:ExecutionDialect,initialCwd:Effecti
   if(quote)pushUncertainty(state,`unterminated-${dialect}-quote`)
   return segments
 }
+function cwdTargetRisk(target:string|undefined,dialect:ExecutionDialect):EffectiveCwdRisk{
+  if(!target||tokenDynamic(target)&&!['~','$HOME','${HOME}'].includes(target))return'unknown'
+  const normalized=target.replaceAll('\\','/')
+  if(['~','$HOME','${HOME}'].includes(target)||normalized.startsWith('~/')||normalized.startsWith('$HOME/')||normalized.startsWith('${HOME}/'))return'home'
+  if(dialect==='powershell'){
+    if(/^[A-Za-z]:\/?$/.test(normalized))return'root'
+    if(/^[A-Za-z]:\/(?:Windows|Users|Program Files|ProgramData)(?:\/|$)/i.test(normalized))return'system'
+    if(/^[A-Za-z]:\//.test(normalized))return'stable'
+    return'unknown'
+  }
+  if(normalized==='/')return'root'
+  if(/^\/(?:etc|usr|var|boot|root|home|bin|sbin|lib|proc|sys|dev|run|opt)(?:\/|$)/.test(normalized))return'system'
+  return normalized.startsWith('/')?'stable':'unknown'
+}
 function nextCwdRisk(text:string,dialect:ExecutionDialect,current:EffectiveCwdRisk):EffectiveCwdRisk{
-  if(dialect==='powershell')return current
-  const tokens=stripAssignmentPrefix(shellTokens(text)),head=tokens[0]?.toLowerCase();if(!['cd','pushd'].includes(head??''))return current
-  const target=tokens[1];if(!target||tokenDynamic(target)&&!['$HOME','${HOME}'].includes(target))return'unknown'
-  if(target==='/')return'root'
-  if(['~','$HOME','${HOME}'].includes(target)||target.startsWith('~/')||target.startsWith('$HOME/')||target.startsWith('${HOME}/'))return'home'
-  if(target.startsWith('/'))return'stable'
-  return'unknown'
+  const tokens=stripAssignmentPrefix(shellTokens(text)),head=tokens[0]?.toLowerCase()
+  const locationHeads=dialect==='powershell'?['set-location','push-location','cd','chdir','sl','pushd']:['cd','pushd']
+  if(!locationHeads.includes(head??''))return current
+  return cwdTargetRisk(tokens[1],dialect)
 }
 function fragmentDynamic(text:string):boolean{
   if(!/[$`]|[<>]\(/.test(text))return false

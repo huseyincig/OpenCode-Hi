@@ -1,4 +1,5 @@
 import {projectExecutionSurface,type ExecutionFragment} from '../safety/execution-projection.js'
+import {gitCommandParts} from '../safety/command-classifier.js'
 
 export type ShellDecision='ALLOW'|'REWRITE'|'USER_ACTION_REQUIRED'|'DENY'
 export type ShellHumanDecisionType='credential_action'|'operational_action'
@@ -30,6 +31,7 @@ function rmAssessment(fragment:ExecutionFragment):'catastrophic'|'dynamic'|undef
   if(!recursive)return
   const targets=tokens.slice(i);if(!targets.length)return'dynamic'
   for(const raw of targets){const target=raw.replace(/^['"]|['"]$/g,'');if(/^(?:\/$|\/(?:etc|usr|var|boot|root|home)(?:\/|$)|~\/?(?:$|\/)|\$HOME(?:\/|$)|\$\{HOME\}(?:\/|$)|\.\.(?:\/|$)|\*(?:\/|$))/.test(target))return'catastrophic';if((target==='.'||target==='./')&&fragment.cwdRisk!=='stable')return'catastrophic';if(target==='.'||target==='./')return'catastrophic';if(/(?:\$\(|`|<\(|>\(|\$\{|\$[A-Za-z_0-9@*?])/.test(target))return'dynamic'}
+  for(const raw of targets){const target=raw.replace(/^['"]|['"]$/g,''),absolute=target.startsWith('/')||/^[A-Za-z]:[\\/]/.test(target);if(!absolute&&['root','home','system'].includes(fragment.cwdRisk))return'catastrophic';if(!absolute&&fragment.cwdRisk==='unknown')return'dynamic'}
   if(force&&fragment.origin==='pipeline-consumer')return'dynamic'
   return
 }
@@ -38,18 +40,25 @@ function boundedGitClean(text:string):boolean{
   return tokens.slice(marker+1).every(path=>/^\.\/[A-Za-z0-9_.@/-]+$/.test(path)&&path!=='./'&&!path.includes('/../')&&!path.endsWith('/..'))
 }
 function gitAssessment(fragment:ExecutionFragment):'destructive'|'dynamic'|undefined{
-  const text=executableText(fragment.text)
+  const text=executableText(fragment.text),parts=gitCommandParts(fragment.text),sub=parts.sub,rest=parts.rest
   if(!/^git\s+/i.test(text))return
   if(/^git\s+reset\b/i.test(text)){if(fragment.dynamic)return'dynamic';if(/(?:^|\s)--(?:hard|merge|keep)(?:\s|$)/i.test(text))return'destructive'}
   if(/^git\s+clean\b/i.test(text)&&/(?:^|\s)-(?:[^\s]*f[^\s]*)(?:\s|$)|(?:^|\s)--force(?:\s|$)/i.test(text)&&!boundedGitClean(text))return'destructive'
   if(/^git\s+checkout\s+--(?:\s|$)/i.test(text))return'destructive'
   if(/^git\s+restore\b/i.test(text)){const staged=/(?:^|\s)--staged(?:\s|$)/i.test(text),worktree=/(?:^|\s)--worktree(?:\s|$)/i.test(text);if(!staged||worktree)return'destructive'}
+  if(sub==='branch'&&(rest.includes('-D')||rest.includes('--delete')&&rest.includes('--force')))return'destructive'
+  if(sub==='stash'&&['drop','clear'].includes(rest[0]??''))return'destructive'
+  if(sub==='tag'&&rest.some(x=>x==='-d'||x==='--delete'))return'destructive'
+  if(sub==='reflog'&&rest[0]==='delete')return'destructive'
+  if(sub==='worktree'&&rest[0]==='remove'&&rest.some(x=>x==='-f'||x==='--force'||/^-[^-]*f/.test(x)))return'destructive'
+  if(sub==='rm'&&rest.some(x=>x==='-f'||x==='--force'||/^-[^-]*f/.test(x)))return'destructive'
   return
 }
 function powershellAssessment(fragment:ExecutionFragment):'destructive'|'dynamic'|undefined{
   const text=fragment.text.trim();if(fragment.dialect!=='powershell'||!/^Remove-Item\b/i.test(text)||!/(?:^|\s)-(?:Recurse|r)(?:\s|$)/i.test(text))return
   const tokens=words(text),targets=tokens.slice(1).filter(token=>!token.startsWith('-'));if(!targets.length)return'dynamic'
   for(const raw of targets){const target=raw.replace(/^['"]|['"]$/g,'');if(/(?:\$\(|`|\$\{|\$[A-Za-z_])/.test(target))return'dynamic';if(['.','./','~','$HOME','${HOME}','/'].includes(target))return'destructive';if(/^[A-Za-z]:[\\/]?$/.test(target)||/^[A-Za-z]:[\\/](?:Windows|Users|Program Files|ProgramData)(?:[\\/]|$)/i.test(target))return'destructive';if(/^\/(?:etc|usr|var|boot|root|home)(?:\/|$)/i.test(target))return'destructive'}
+  for(const raw of targets){const target=raw.replace(/^['"]|['"]$/g,''),absolute=target.startsWith('/')||/^[A-Za-z]:[\\/]/.test(target);if(!absolute&&['root','home','system'].includes(fragment.cwdRisk))return'destructive';if(!absolute&&fragment.cwdRisk==='unknown')return'dynamic'}
   return
 }
 function dynamicDestructiveShape(fragment:ExecutionFragment):boolean{

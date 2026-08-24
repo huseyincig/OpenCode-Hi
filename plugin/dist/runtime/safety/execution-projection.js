@@ -363,22 +363,33 @@ function splitSegments(source, dialect, initialCwd, state) {
         pushUncertainty(state, `unterminated-${dialect}-quote`);
     return segments;
 }
-function nextCwdRisk(text, dialect, current) {
-    if (dialect === 'powershell')
-        return current;
-    const tokens = stripAssignmentPrefix(shellTokens(text)), head = tokens[0]?.toLowerCase();
-    if (!['cd', 'pushd'].includes(head ?? ''))
-        return current;
-    const target = tokens[1];
-    if (!target || tokenDynamic(target) && !['$HOME', '${HOME}'].includes(target))
+function cwdTargetRisk(target, dialect) {
+    if (!target || tokenDynamic(target) && !['~', '$HOME', '${HOME}'].includes(target))
         return 'unknown';
-    if (target === '/')
-        return 'root';
-    if (['~', '$HOME', '${HOME}'].includes(target) || target.startsWith('~/') || target.startsWith('$HOME/') || target.startsWith('${HOME}/'))
+    const normalized = target.replaceAll('\\', '/');
+    if (['~', '$HOME', '${HOME}'].includes(target) || normalized.startsWith('~/') || normalized.startsWith('$HOME/') || normalized.startsWith('${HOME}/'))
         return 'home';
-    if (target.startsWith('/'))
-        return 'stable';
-    return 'unknown';
+    if (dialect === 'powershell') {
+        if (/^[A-Za-z]:\/?$/.test(normalized))
+            return 'root';
+        if (/^[A-Za-z]:\/(?:Windows|Users|Program Files|ProgramData)(?:\/|$)/i.test(normalized))
+            return 'system';
+        if (/^[A-Za-z]:\//.test(normalized))
+            return 'stable';
+        return 'unknown';
+    }
+    if (normalized === '/')
+        return 'root';
+    if (/^\/(?:etc|usr|var|boot|root|home|bin|sbin|lib|proc|sys|dev|run|opt)(?:\/|$)/.test(normalized))
+        return 'system';
+    return normalized.startsWith('/') ? 'stable' : 'unknown';
+}
+function nextCwdRisk(text, dialect, current) {
+    const tokens = stripAssignmentPrefix(shellTokens(text)), head = tokens[0]?.toLowerCase();
+    const locationHeads = dialect === 'powershell' ? ['set-location', 'push-location', 'cd', 'chdir', 'sl', 'pushd'] : ['cd', 'pushd'];
+    if (!locationHeads.includes(head ?? ''))
+        return current;
+    return cwdTargetRisk(tokens[1], dialect);
 }
 function fragmentDynamic(text) {
     if (!/[$`]|[<>]\(/.test(text))
