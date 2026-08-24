@@ -103,6 +103,27 @@ test('VerificationEnvelope validator rejects a passed check with no evidence ref
   assert.equal(isVerificationEnvelopeContract({checks:[{kind:'targeted-tests',subject:'x',result:'not_run',evidence_refs:[]}],scope:[],freshness:'fresh',limitations:[],independent_review:true}),false)
 })
 
+test('empty verification contract cannot be satisfied by unrelated fresh passed evidence',()=>{
+  const store=new MissionStore(process.cwd())
+  const m=startAssessedMission(store,'ve-empty-contract','change src/a.ts',{task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],likely_verification:[],likely_targets:['src/a.ts']})
+  const verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(verification)
+  addEvidence(m,{kind:'review-input',summary:'unrelated read observation passed',scope:['src/a.ts'],source:'read',trusted_source_class:'runtime-observation',outcome:'passed',pass:true})
+  const env=verificationEnvelopeFor(m,verification.id)
+  assert.deepEqual(env.checks.map(x=>[x.kind,x.result]),[['changed-surface-sanity','not_run']])
+  assert.deepEqual(verificationSatisfied(m,verification.id),{ok:false,missing:['changed-surface-sanity']})
+  addEvidence(m,{kind:'targeted-tests',summary:'focused host-observed test pass',scope:['src/a.ts'],source:'bash',trusted_source_class:'host-tool-observation',obligation_ids:[verification.id],outcome:'passed',pass:true})
+  assert.deepEqual(verificationSatisfied(m,verification.id),{ok:true,missing:[]},'a stronger canonical check can satisfy the minimum changed-surface contract')
+})
+
+test('legacy empty persisted verification policy also fails closed to changed-surface sanity',()=>{
+  const m=mission('ve-legacy-empty-contract'),verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(verification)
+  m.identity.intent.likelyVerification=[]
+  m.execution.verification_policy={requiredKinds:[],requireFresh:true,requireReview:false,allowWorkerReportedEvidence:false}
+  verification.requiredEvidence=[]
+  addEvidence(m,{kind:'review-input',summary:'unrelated fresh pass',scope:['src/a.ts'],source:'read',trusted_source_class:'runtime-observation',outcome:'passed',pass:true})
+  assert.deepEqual(verificationSatisfied(m,verification.id),{ok:false,missing:['changed-surface-sanity']})
+})
+
 test('compatibility evidence fresh cache cannot substitute for canonical Evidence items',()=>{
   const m=mission('ve-fresh-cache-authority')
   m.execution.verification_policy={requiredKinds:[],requireFresh:true,requireReview:false,allowWorkerReportedEvidence:false}
@@ -111,5 +132,5 @@ test('compatibility evidence fresh cache cannot substitute for canonical Evidenc
   m.execution.evidence.fresh=true
   const env=verificationEnvelopeFor(m,verification.id)
   assert.equal(env.freshness,'stale')
-  assert.deepEqual(verificationSatisfied(m,verification.id),{ok:false,missing:['fresh-evidence']})
+  assert.deepEqual(verificationSatisfied(m,verification.id),{ok:false,missing:['targeted-tests']},'legacy empty policy recovers the canonical intent requirement; the fresh cache still has no PASS authority')
 })
