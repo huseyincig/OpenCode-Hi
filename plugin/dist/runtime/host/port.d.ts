@@ -24,6 +24,14 @@ export interface HostAssistantError {
     isRetryable?: boolean;
     statusCode?: number;
 }
+export interface HostAssistantActivity {
+    message_id?: string;
+    observed_at: number;
+    output_tokens: number;
+    reasoning_tokens: number;
+    tool_calls: number;
+    text_chars: number;
+}
 export interface HostAssistantResult {
     text: string;
     model?: {
@@ -34,6 +42,7 @@ export interface HostAssistantResult {
         created_at?: number;
     };
     usage?: HostUsageObservation;
+    activity?: HostAssistantActivity;
     error?: HostAssistantError;
 }
 export interface HostCapabilityView {

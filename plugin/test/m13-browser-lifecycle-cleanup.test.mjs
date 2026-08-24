@@ -92,3 +92,22 @@ test('M13 cancelled visual verification task releases open-obligation methodolog
   assert.ok(replacementTask.execution_profile.tools.includes('hi_browser_preview_open'))
   assert.ok(replacementTask.execution_profile.tools.includes('hi_browser_screenshot'))
 })
+
+
+test('M13 failed visual verification task releases open-obligation methodology ownership to its replacement',async()=>{
+  let childN=0
+  const client={session:{create:async()=>({data:{id:`child-failed-replacement-${++childN}`}}),promptAsync:async()=>({data:{}}),abort:async()=>({data:true}),diff:async()=>({data:[]})}}
+  const browserExecutor={health:async()=>({available:true}),open:async()=>{throw new Error('unused')},navigate:async()=>{throw new Error('unused')},click:async()=>{throw new Error('unused')},type:async()=>{throw new Error('unused')},inspect:async()=>{throw new Error('unused')},screenshot:async()=>{throw new Error('unused')},wait:async()=>{throw new Error('unused')},close:async()=>{throw new Error('unused')},cleanup:async()=>({cleaned:true,reason:'cleaned'})}
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>({agent:PACKAGED_HI_AGENTS}),undefined,{},undefined,undefined,()=>new Set(['host-capability:browser-execution']),browserExecutor)
+  const store=new MissionStore(repoRoot),m=store.start('m13-failed-replacement','verify local browser after implementation')
+  store.applyInitialSemanticAssessment('m13-failed-replacement',{material:true,message_kind:'mission',task_kind:'review',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['visual-qa'],requested_external_actions:[],likely_verification:['visual-check'],likely_targets:['index.html'],intent_signals:[],suppressed_intent_signals:[]})
+  const verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(verification);assert.equal(verification.status,'open')
+  const first=await runtime.start(m,{objective:'verify local browser failing attempt',role:'visual-qa',category:'visual',scope:['index.html'],requiredEvidence:['visual-check'],obligationIds:[verification.id],browserAllowedOrigins:['http://127.0.0.1:4173']})
+  assert.ok(first.methodologies.includes('hi-visual-qa'))
+  runtime.applyResult(m,first.worker_id,{status:'FAILED',summary:'host visual run failed',changed_files:[],evidence:[],open_issues:['visual-run-failed'],needs_context:[]})
+  const firstTask=m.execution.tasks.find(t=>t.id===first.task_id);assert.equal(firstTask.status,'failed');assert.equal(verification.status,'open')
+  assert.ok(m.methodology.methodology_needs.some(n=>n.name==='hi-visual-qa'&&!n.task_id&&n.obligation_id===verification.id),'failed Task must release an open verification methodology need')
+  const replacement=await runtime.start(m,{objective:'verify local browser after failed attempt',role:'visual-qa',category:'visual',scope:['index.html'],requiredEvidence:['visual-check'],obligationIds:[verification.id],browserAllowedOrigins:['http://127.0.0.1:4173']})
+  const replacementTask=m.execution.tasks.find(t=>t.id===replacement.task_id);assert.ok(replacementTask)
+  assert.ok(replacement.methodologies.includes('hi-visual-qa'));assert.equal(replacementTask.execution_profile.browser_backend,'bounded-playwright');assert.ok(replacementTask.execution_profile.tools.includes('hi_browser_screenshot'))
+})

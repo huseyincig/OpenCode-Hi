@@ -14,5 +14,6 @@ export declare function bindMethodologyNeeds(mission: MissionState, names: reado
     obligationIds?: readonly string[];
 }): void;
 export declare function releaseCancelledTaskMethodologyNeeds(mission: MissionState, taskId: string): string[];
+export declare function releaseFailedTaskMethodologyNeeds(mission: MissionState, taskId: string): string[];
 export declare function bindParentMethodologyNeeds(mission: MissionState, names: readonly string[], obligationId: string): void;
 export declare function suppressIntentMethodologySignals(mission: MissionState, signals: readonly HiMethodologySignalName[], reason: string): string[];

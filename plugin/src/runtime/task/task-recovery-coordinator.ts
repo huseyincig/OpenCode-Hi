@@ -1,9 +1,11 @@
 import type { HiConfig } from '../../config/schema.js'
 import type { MissionState } from '../mission/types.js'
+import type { HostAssistantResult } from '../host/port.js'
 import type { AvailableModel } from '../routing/model-resolver.js'
 import { runtimeModelCandidateStatus } from '../routing/model-resolver.js'
 import { classifyWorkerFailure } from '../worker/failure-classifier.js'
 import { methodologyCatalog } from '../methodology/catalog.js'
+import { releaseFailedTaskMethodologyNeeds } from '../methodology/activation.js'
 import { ownershipContract } from '../skills/methodology.js'
 import { DEFAULT_CONTEXT_BUDGET,clipText } from '../context/budget.js'
 import { taskPromptToolOverrides } from '../routing/execution-profile.js'
@@ -22,15 +24,21 @@ export type ChildCallbackDisposition='accept'|'stale-mission'
 export type HostTerminalRecoveryDisposition='RECOVERED'|'QUARANTINED'|'NOT_RECOVERED'
 export class TaskRecoveryCoordinator{
   callbackDisposition(m:MissionState,worker:{parent_mission_id?:string;generation_at_spawn?:number}):ChildCallbackDisposition{if((worker.parent_mission_id!==undefined&&worker.parent_mission_id!==m.identity.mission_id)||(worker.generation_at_spawn!==undefined&&worker.generation_at_spawn!==m.continuation.generation))return'stale-mission';return'accept'}
-  constructor(private readonly scheduler:ConcurrencyPolicySource,private readonly registry:BackgroundRegistry,private readonly projectRoot:string,private readonly getConfig:()=>HiConfig,private readonly getModels:()=>AvailableModel[],private readonly getHostConfig:()=>Record<string,unknown>,private readonly events:RuntimeSignalSink|undefined,private readonly child:ChildExecutionCoordinator,private readonly drainQueueCallback:()=>void,private readonly workspaceBinding?:(m:MissionState,taskID:string)=>ChildWorkspaceBinding|undefined,private readonly cleanupBrowser?:(m:MissionState,taskID:string,workerID?:string)=>Promise<boolean>){}
+  constructor(private readonly scheduler:ConcurrencyPolicySource,private readonly registry:BackgroundRegistry,private readonly projectRoot:string,private readonly getConfig:()=>HiConfig,private readonly getModels:()=>AvailableModel[],private readonly getHostConfig:()=>Record<string,unknown>,private readonly events:RuntimeSignalSink|undefined,private readonly child:ChildExecutionCoordinator,private readonly drainQueueCallback:()=>void,private readonly workspaceBinding?:(m:MissionState,taskID:string)=>ChildWorkspaceBinding|undefined,private readonly cleanupBrowser?:(m:MissionState,taskID:string,workerID?:string)=>Promise<boolean>,private readonly readAssistantResult?:(sessionID:string,limit?:number)=>Promise<HostAssistantResult>){}
   async recoverStalledAwaitWorker(m:MissionState):Promise<{disposition:'NOOP'|'RECOVERED'|'QUARANTINED'|'BLOCKED';reason:string;worker_id?:string;task_id?:string;from_model?:string;to_model?:string}>{
     if(m.identity.status!=='active'||m.continuation.user_interrupted)return{disposition:'NOOP',reason:'mission-not-active'}
     const candidates=[...m.execution.workers].reverse().filter(w=>w.status==='busy'&&Boolean(w.session_id)&&Boolean(w.model))
     for(const worker of candidates){
       const task=m.execution.tasks.find(t=>t.id===worker.task_id);if(!task||task.status!=='running'||!worker.session_id||!worker.model)continue
-      const timeouts=m.execution.ledger.filter(e=>e.type==='worker.await-timeout'&&e.task_id===task.id&&e.worker_id===worker.id&&String(e.payload?.session_id??'')===worker.session_id&&Number(e.payload?.attempt)===worker.attempt).slice(-8)
-      const total=timeouts.reduce((n,e)=>n+Math.max(0,Number(e.payload?.timeout_ms??0)),0)
-      if(timeouts.length<3||total<120_000)continue
+      const allTimeouts=m.execution.ledger.filter(e=>e.type==='worker.await-timeout'&&e.task_id===task.id&&e.worker_id===worker.id&&String(e.payload?.session_id??'')===worker.session_id&&Number(e.payload?.attempt)===worker.attempt).slice(-8)
+      const allWait=allTimeouts.reduce((n,e)=>n+Math.max(0,Number(e.payload?.timeout_ms??0)),0)
+      if(allTimeouts.length<3||allWait<120_000)continue
+      if(!this.readAssistantResult){appendLedger(m,'worker.busy-stall-recovery.skipped',{task_id:task.id,worker_id:worker.id,payload:{session_id:worker.session_id,attempt:worker.attempt,reason:'host-activity-reader-unavailable'}});return{disposition:'NOOP',reason:'host-activity-reader-unavailable',worker_id:worker.id,task_id:task.id,from_model:worker.model}}
+      let activity:HostAssistantResult['activity']
+      try{activity=(await this.readAssistantResult(worker.session_id,24)).activity}catch(error){appendLedger(m,'worker.busy-stall-recovery.skipped',{task_id:task.id,worker_id:worker.id,payload:{session_id:worker.session_id,attempt:worker.attempt,reason:'host-activity-read-failed',error:String(error).slice(0,500)}});return{disposition:'NOOP',reason:'host-activity-read-failed',worker_id:worker.id,task_id:task.id,from_model:worker.model}}
+      const attemptStart=worker.started_at??0,activityAt=activity&&Number.isFinite(activity.observed_at)&&activity.observed_at>=attemptStart?activity.observed_at:0
+      const timeouts=activityAt?allTimeouts.filter(e=>e.at>activityAt):allTimeouts,total=timeouts.reduce((n,e)=>n+Math.max(0,Number(e.payload?.timeout_ms??0)),0)
+      if(timeouts.length<3||total<120_000){if(activityAt){const already=m.execution.ledger.some(e=>e.type==='worker.await-progress-observed'&&e.task_id===task.id&&e.worker_id===worker.id&&String(e.payload?.session_id??'')===worker.session_id&&Number(e.payload?.attempt)===worker.attempt&&String(e.payload?.activity_message_id??'')===String(activity?.message_id??''));if(!already)appendLedger(m,'worker.await-progress-observed',{task_id:task.id,worker_id:worker.id,payload:{session_id:worker.session_id,attempt:worker.attempt,activity_at:activityAt,activity_message_id:activity?.message_id,output_tokens:activity?.output_tokens,reasoning_tokens:activity?.reasoning_tokens,tool_calls:activity?.tool_calls,text_chars:activity?.text_chars,await_timeouts_after_progress:timeouts.length,observed_wait_ms_after_progress:total}});return{disposition:'NOOP',reason:'meaningful-host-progress-observed',worker_id:worker.id,task_id:task.id,from_model:worker.model}}continue}
       const hostStatus=await this.child.status(worker.session_id)
       if(hostStatus!=='busy'&&hostStatus!=='retry'){appendLedger(m,'worker.busy-stall-recovery.skipped',{task_id:task.id,worker_id:worker.id,payload:{session_id:worker.session_id,attempt:worker.attempt,host_status:hostStatus,await_timeouts:timeouts.length,observed_wait_ms:total,reason:'host-not-active'}});continue}
       const fromModel=worker.model,fromSession=worker.session_id,next=(worker.recovery_candidates??[]).find(id=>id!==fromModel&&runtimeModelCandidateStatus(id,this.getModels(),this.getConfig(),this.getHostConfig(),worker.role).ok)
@@ -165,7 +173,7 @@ export class TaskRecoveryCoordinator{
     const needsContext=permissionFailure?['resolve OpenCode permission/authority and explicitly resume the mission']:providerFailure?['provider/model availability or alternate execution path']:contextFailure?['OpenCode context compaction was exhausted or could not resolve terminal context capacity; reduce bounded context/task scope or explicitly choose a model with known sufficient context capacity']:toolFailure?['terminal tool/model compatibility failure was observed; repair tool availability or explicitly choose a model with proven required tool capability']:[]
     worker.status='failed';worker.completed_at=Date.now();releaseTaskRuntimeReservation(m,worker.id);this.registry.delete(worker.id)
     if(permissionFailure||providerFailure||contextFailure||toolFailure)m.continuation.stagnation_count=0
-    if(task){task.status='failed';task.updated_at=Date.now();task.result={status:'FAILED',summary:error,changed_files:[],evidence:[],open_issues:[marker],needs_context:needsContext}}
+    if(task){task.status='failed';task.updated_at=Date.now();task.result={status:'FAILED',summary:error,changed_files:[],evidence:[],open_issues:[marker],needs_context:needsContext};releaseFailedTaskMethodologyNeeds(m,task.id)}
     m.execution.blockers=[...new Set([...m.execution.blockers,marker])];appendLedger(m,'worker.failed',{task_id:task?.id,worker_id:worker.id,payload:{error,failure_class:failureClass??'unknown',blocker:marker}});void this.events?.(runtimeSignal('worker.failed',m.identity.mission_id,{task_id:task?.id,worker_id:worker.id,payload:{error,failure_class:failureClass??'unknown'}}));syncMissionGates(m);this.drainQueueCallback()
   }
 }

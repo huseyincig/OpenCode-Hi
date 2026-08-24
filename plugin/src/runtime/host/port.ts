@@ -19,7 +19,8 @@ export interface HostEvent{
   error?:HostAssistantError
 }
 export interface HostAssistantError{name?:string;message:string;isRetryable?:boolean;statusCode?:number}
-export interface HostAssistantResult{text:string;model?:{model?:string;variant?:string;message_id?:string;parent_id?:string;created_at?:number};usage?:HostUsageObservation;error?:HostAssistantError}
+export interface HostAssistantActivity{message_id?:string;observed_at:number;output_tokens:number;reasoning_tokens:number;tool_calls:number;text_chars:number}
+export interface HostAssistantResult{text:string;model?:{model?:string;variant?:string;message_id?:string;parent_id?:string;created_at?:number};usage?:HostUsageObservation;activity?:HostAssistantActivity;error?:HostAssistantError}
 export interface HostCapabilityView{
   childSessions:boolean;asyncPrompt:boolean;syncPrompt:boolean;abort:boolean;providerInventory:boolean;appLog:boolean
   sessionStatus:boolean;childSessionList:boolean;sessionTodo:boolean;sessionDiff:boolean;sessionFork:boolean;sessionSummarize:boolean;sessionRevert:boolean;sessionUnrevert:boolean

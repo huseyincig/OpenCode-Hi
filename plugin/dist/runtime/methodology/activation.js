@@ -51,7 +51,7 @@ export function bindMethodologyNeeds(mission, names, input) {
         appendLedger(mission, 'methodology.bound', { task_id: input.taskId, payload: { name: need.name, signal: need.signal, producer: need.producer, obligation_id: need.obligation_id } });
     }
 }
-export function releaseCancelledTaskMethodologyNeeds(mission, taskId) {
+function releaseTerminalTaskMethodologyNeeds(mission, taskId, terminal) {
     if (mission.identity.status !== 'active')
         return [];
     const released = [];
@@ -63,10 +63,12 @@ export function releaseCancelledTaskMethodologyNeeds(mission, taskId) {
             continue;
         delete need.task_id;
         released.push(need.name);
-        appendLedger(mission, 'methodology.released', { task_id: taskId, payload: { name: need.name, signal: need.signal, producer: need.producer, obligation_id: need.obligation_id, reason: 'cancelled-task-open-obligation' } });
+        appendLedger(mission, 'methodology.released', { task_id: taskId, payload: { name: need.name, signal: need.signal, producer: need.producer, obligation_id: need.obligation_id, reason: `${terminal}-task-open-obligation` } });
     }
     return [...new Set(released)];
 }
+export function releaseCancelledTaskMethodologyNeeds(mission, taskId) { return releaseTerminalTaskMethodologyNeeds(mission, taskId, 'cancelled'); }
+export function releaseFailedTaskMethodologyNeeds(mission, taskId) { return releaseTerminalTaskMethodologyNeeds(mission, taskId, 'failed'); }
 export function bindParentMethodologyNeeds(mission, names, obligationId) {
     const selected = new Set(names);
     for (const need of mission.methodology.methodology_needs) {

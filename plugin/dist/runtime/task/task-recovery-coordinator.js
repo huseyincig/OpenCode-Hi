@@ -1,6 +1,7 @@
 import { runtimeModelCandidateStatus } from '../routing/model-resolver.js';
 import { classifyWorkerFailure } from '../worker/failure-classifier.js';
 import { methodologyCatalog } from '../methodology/catalog.js';
+import { releaseFailedTaskMethodologyNeeds } from '../methodology/activation.js';
 import { ownershipContract } from '../skills/methodology.js';
 import { DEFAULT_CONTEXT_BUDGET, clipText } from '../context/budget.js';
 import { taskPromptToolOverrides } from '../routing/execution-profile.js';
@@ -23,9 +24,10 @@ export class TaskRecoveryCoordinator {
     drainQueueCallback;
     workspaceBinding;
     cleanupBrowser;
+    readAssistantResult;
     callbackDisposition(m, worker) { if ((worker.parent_mission_id !== undefined && worker.parent_mission_id !== m.identity.mission_id) || (worker.generation_at_spawn !== undefined && worker.generation_at_spawn !== m.continuation.generation))
         return 'stale-mission'; return 'accept'; }
-    constructor(scheduler, registry, projectRoot, getConfig, getModels, getHostConfig, events, child, drainQueueCallback, workspaceBinding, cleanupBrowser) {
+    constructor(scheduler, registry, projectRoot, getConfig, getModels, getHostConfig, events, child, drainQueueCallback, workspaceBinding, cleanupBrowser, readAssistantResult) {
         this.scheduler = scheduler;
         this.registry = registry;
         this.projectRoot = projectRoot;
@@ -37,6 +39,7 @@ export class TaskRecoveryCoordinator {
         this.drainQueueCallback = drainQueueCallback;
         this.workspaceBinding = workspaceBinding;
         this.cleanupBrowser = cleanupBrowser;
+        this.readAssistantResult = readAssistantResult;
     }
     async recoverStalledAwaitWorker(m) {
         if (m.identity.status !== 'active' || m.continuation.user_interrupted)
@@ -46,10 +49,33 @@ export class TaskRecoveryCoordinator {
             const task = m.execution.tasks.find(t => t.id === worker.task_id);
             if (!task || task.status !== 'running' || !worker.session_id || !worker.model)
                 continue;
-            const timeouts = m.execution.ledger.filter(e => e.type === 'worker.await-timeout' && e.task_id === task.id && e.worker_id === worker.id && String(e.payload?.session_id ?? '') === worker.session_id && Number(e.payload?.attempt) === worker.attempt).slice(-8);
-            const total = timeouts.reduce((n, e) => n + Math.max(0, Number(e.payload?.timeout_ms ?? 0)), 0);
-            if (timeouts.length < 3 || total < 120_000)
+            const allTimeouts = m.execution.ledger.filter(e => e.type === 'worker.await-timeout' && e.task_id === task.id && e.worker_id === worker.id && String(e.payload?.session_id ?? '') === worker.session_id && Number(e.payload?.attempt) === worker.attempt).slice(-8);
+            const allWait = allTimeouts.reduce((n, e) => n + Math.max(0, Number(e.payload?.timeout_ms ?? 0)), 0);
+            if (allTimeouts.length < 3 || allWait < 120_000)
                 continue;
+            if (!this.readAssistantResult) {
+                appendLedger(m, 'worker.busy-stall-recovery.skipped', { task_id: task.id, worker_id: worker.id, payload: { session_id: worker.session_id, attempt: worker.attempt, reason: 'host-activity-reader-unavailable' } });
+                return { disposition: 'NOOP', reason: 'host-activity-reader-unavailable', worker_id: worker.id, task_id: task.id, from_model: worker.model };
+            }
+            let activity;
+            try {
+                activity = (await this.readAssistantResult(worker.session_id, 24)).activity;
+            }
+            catch (error) {
+                appendLedger(m, 'worker.busy-stall-recovery.skipped', { task_id: task.id, worker_id: worker.id, payload: { session_id: worker.session_id, attempt: worker.attempt, reason: 'host-activity-read-failed', error: String(error).slice(0, 500) } });
+                return { disposition: 'NOOP', reason: 'host-activity-read-failed', worker_id: worker.id, task_id: task.id, from_model: worker.model };
+            }
+            const attemptStart = worker.started_at ?? 0, activityAt = activity && Number.isFinite(activity.observed_at) && activity.observed_at >= attemptStart ? activity.observed_at : 0;
+            const timeouts = activityAt ? allTimeouts.filter(e => e.at > activityAt) : allTimeouts, total = timeouts.reduce((n, e) => n + Math.max(0, Number(e.payload?.timeout_ms ?? 0)), 0);
+            if (timeouts.length < 3 || total < 120_000) {
+                if (activityAt) {
+                    const already = m.execution.ledger.some(e => e.type === 'worker.await-progress-observed' && e.task_id === task.id && e.worker_id === worker.id && String(e.payload?.session_id ?? '') === worker.session_id && Number(e.payload?.attempt) === worker.attempt && String(e.payload?.activity_message_id ?? '') === String(activity?.message_id ?? ''));
+                    if (!already)
+                        appendLedger(m, 'worker.await-progress-observed', { task_id: task.id, worker_id: worker.id, payload: { session_id: worker.session_id, attempt: worker.attempt, activity_at: activityAt, activity_message_id: activity?.message_id, output_tokens: activity?.output_tokens, reasoning_tokens: activity?.reasoning_tokens, tool_calls: activity?.tool_calls, text_chars: activity?.text_chars, await_timeouts_after_progress: timeouts.length, observed_wait_ms_after_progress: total } });
+                    return { disposition: 'NOOP', reason: 'meaningful-host-progress-observed', worker_id: worker.id, task_id: task.id, from_model: worker.model };
+                }
+                continue;
+            }
             const hostStatus = await this.child.status(worker.session_id);
             if (hostStatus !== 'busy' && hostStatus !== 'retry') {
                 appendLedger(m, 'worker.busy-stall-recovery.skipped', { task_id: task.id, worker_id: worker.id, payload: { session_id: worker.session_id, attempt: worker.attempt, host_status: hostStatus, await_timeouts: timeouts.length, observed_wait_ms: total, reason: 'host-not-active' } });
@@ -433,6 +459,7 @@ export class TaskRecoveryCoordinator {
             task.status = 'failed';
             task.updated_at = Date.now();
             task.result = { status: 'FAILED', summary: error, changed_files: [], evidence: [], open_issues: [marker], needs_context: needsContext };
+            releaseFailedTaskMethodologyNeeds(m, task.id);
         }
         m.execution.blockers = [...new Set([...m.execution.blockers, marker])];
         appendLedger(m, 'worker.failed', { task_id: task?.id, worker_id: worker.id, payload: { error, failure_class: failureClass ?? 'unknown', blocker: marker } });

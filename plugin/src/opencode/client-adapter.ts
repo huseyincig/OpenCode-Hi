@@ -144,6 +144,21 @@ export async function listAvailableModels(endpoint:OpenCodeLifecycleEndpoint={})
 export function eventSessionID(event:any):string|undefined{return event?.properties?.sessionID??event?.properties?.sessionId??event?.properties?.id??event?.properties?.info?.id??event?.sessionID}
 export function lastAssistantText(messages:any[]):string{for(let i=messages.length-1;i>=0;i--){const msg=messages[i];const info=msg?.info??msg?.message??msg;if(info?.role&&info.role!=='assistant')continue;const parts=msg?.parts??info?.parts??[];const text=parts.filter((p:any)=>p?.type==='text'&&typeof p.text==='string').map((p:any)=>p.text).join('\n').trim();if(text)return text}return''}
 
+
+export interface AssistantActivityEvidence{message_id?:string;observed_at:number;output_tokens:number;reasoning_tokens:number;tool_calls:number;text_chars:number}
+export function lastMeaningfulAssistantActivity(messages:any[]):AssistantActivityEvidence|undefined{
+  for(let i=messages.length-1;i>=0;i--){
+    const msg=messages[i],info=msg?.info??msg?.message??msg;if(info?.role&&info.role!=='assistant')continue
+    const completed=Number(info?.time?.completed);if(!Number.isFinite(completed)||completed<0)continue
+    const parts=msg?.parts??info?.parts??[],toolCalls=parts.filter((p:any)=>p?.type==='tool').length,textChars=parts.filter((p:any)=>p?.type==='text'&&typeof p.text==='string').reduce((n:number,p:any)=>n+p.text.trim().length,0)
+    const output=Number(info?.tokens?.output??0),reasoning=Number(info?.tokens?.reasoning??0),outputTokens=Number.isFinite(output)&&output>0?output:0,reasoningTokens=Number.isFinite(reasoning)&&reasoning>0?reasoning:0
+    if(!toolCalls&&!textChars&&!outputTokens&&!reasoningTokens)continue
+    const messageID=info?.id??msg?.id
+    return{...(messageID?{message_id:String(messageID)}:{}),observed_at:completed,output_tokens:outputTokens,reasoning_tokens:reasoningTokens,tool_calls:toolCalls,text_chars:textChars}
+  }
+  return undefined
+}
+
 export interface AssistantErrorEvidence{name?:string;message:string;isRetryable?:boolean;statusCode?:number}
 export function assistantErrorEvidence(value:any):AssistantErrorEvidence|undefined{if(value==null)return undefined;if(typeof value==='string'){const message=value.trim();return message?{message}:undefined}if(typeof value!=='object')return undefined;const name=typeof value.name==='string'&&value.name.trim()?value.name.trim():undefined,data=value.data&&typeof value.data==='object'?value.data:value,messageCandidates=[value.message,data?.message,value.error?.message,value.cause?.message],message=messageCandidates.find(x=>typeof x==='string'&&x.trim())?.trim(),isRetryable=typeof data?.isRetryable==='boolean'?data.isRetryable:undefined,statusCode=Number.isInteger(data?.statusCode)&&data.statusCode>=0?data.statusCode:undefined;if(!message&&!name)return undefined;return{...(name?{name}:{}),message:message??name!,...(isRetryable!==undefined?{isRetryable}:{}),...(statusCode!==undefined?{statusCode}:{})}}
 export function lastAssistantError(messages:any[]):AssistantErrorEvidence|undefined{for(let i=messages.length-1;i>=0;i--){const msg=messages[i],info=msg?.info??msg?.message??msg;if(info?.role&&info.role!=='assistant')continue;return assistantErrorEvidence(info?.error??msg?.error)}return undefined}

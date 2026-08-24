@@ -260,6 +260,23 @@ export function lastAssistantText(messages) { for (let i = messages.length - 1; 
     if (text)
         return text;
 } return ''; }
+export function lastMeaningfulAssistantActivity(messages) {
+    for (let i = messages.length - 1; i >= 0; i--) {
+        const msg = messages[i], info = msg?.info ?? msg?.message ?? msg;
+        if (info?.role && info.role !== 'assistant')
+            continue;
+        const completed = Number(info?.time?.completed);
+        if (!Number.isFinite(completed) || completed < 0)
+            continue;
+        const parts = msg?.parts ?? info?.parts ?? [], toolCalls = parts.filter((p) => p?.type === 'tool').length, textChars = parts.filter((p) => p?.type === 'text' && typeof p.text === 'string').reduce((n, p) => n + p.text.trim().length, 0);
+        const output = Number(info?.tokens?.output ?? 0), reasoning = Number(info?.tokens?.reasoning ?? 0), outputTokens = Number.isFinite(output) && output > 0 ? output : 0, reasoningTokens = Number.isFinite(reasoning) && reasoning > 0 ? reasoning : 0;
+        if (!toolCalls && !textChars && !outputTokens && !reasoningTokens)
+            continue;
+        const messageID = info?.id ?? msg?.id;
+        return { ...(messageID ? { message_id: String(messageID) } : {}), observed_at: completed, output_tokens: outputTokens, reasoning_tokens: reasoningTokens, tool_calls: toolCalls, text_chars: textChars };
+    }
+    return undefined;
+}
 export function assistantErrorEvidence(value) { if (value == null)
     return undefined; if (typeof value === 'string') {
     const message = value.trim();

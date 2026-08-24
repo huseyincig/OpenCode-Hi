@@ -11,11 +11,12 @@ import {evaluateIdle} from '../dist/runtime/continuation/evaluator.js'
 import {recordRecoveryStrategy} from '../dist/runtime/continuation/recovery-governor.js'
 import {appendLedger} from '../dist/runtime/ledger/ledger.js'
 
-function setup(promptImpl=async()=>{},withAbort=true,models=[]){
+function setup(promptImpl=async()=>{},withAbort=true,models=[],assistantResultReader){
   const calls=[],aborts=[]
   let seq=0;const session={promptAsync:async arg=>{calls.push(arg);return promptImpl(arg)},create:async()=>({data:{id:`recovery-${++seq}`}}),diff:async()=>({data:[]}),status:async()=>({data:{child1:{type:'busy'}}})};if(withAbort)session.abort=async req=>{aborts.push(req);return{data:true}};const client={session}
   const scheduler=createConcurrencyPolicySource(()=>({global:4,providers:{},models:{}}))
-  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>models,()=>({}))
+  const activityReader=assistantResultReader===null?undefined:(assistantResultReader??(async()=>({text:''})))
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>models,()=>({}),undefined,[],undefined,undefined,undefined,undefined,undefined,activityReader)
   const store=new MissionStore(process.cwd())
   const m=startAssessedMission(store,'parent','opaque provider task')
   m.execution.tasks.push({id:'t1',mission_id:m.identity.mission_id,objective:'fix it',status:'running',role:'coder',category:'standard',scope:['src/a.ts'],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],execution_profile:{role:'coder',category:'standard',model:'p/primary',fallback_models:['p/fallback1','p/fallback2'],fallback_variants:{'p/fallback1':'high','p/fallback2':'medium'},methodologies:[],permission_profile:{skill_tool_enabled:true,skill_permissions:{},external_effects:'parent-only',recursive_task:'deny'},verification_policy:m.execution.verification_policy,max_context_chars:1000,max_handoff_chars:1000,max_result_chars:1000,max_artifacts:4},worker_id:'w1',external_action_requirements:[],created_at:Date.now(),updated_at:Date.now()})
@@ -221,6 +222,42 @@ test('busy child with three bounded await timeouts and 120s observed wait is hos
   assert.equal(calls.length,1);assert.deepEqual(calls[0].body.model,{providerID:'p',modelID:'recovery'});assert.notEqual(calls[0].body.tools.skill,false)
   assert.match(JSON.stringify(calls[0]),/host-liveness stall/i)
   assert.ok(m.execution.ledger.some(e=>e.type==='worker.busy-stall-recovery'&&e.payload?.from_session==='child1'&&e.payload?.to_session==='recovery-1'))
+})
+
+
+test('busy child watchdog treats meaningful OpenCode assistant progress inside the await window as liveness and does not abort',async()=>{
+  const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding','balanced']}]
+  let observedAt=0
+  const {runtime,m,calls,aborts}=setup(async()=>{},true,models,async()=>({text:'',activity:{message_id:'msg-progress',observed_at:observedAt,output_tokens:42,reasoning_tokens:7,tool_calls:1,text_chars:18}}))
+  const worker=m.execution.workers[0],task=m.execution.tasks[0]
+  worker.attempt=1;worker.recovery_candidates=['p/recovery'];worker.started_at=Date.now()-300_000
+  const events=[]
+  for(const timeout_ms of [60_000,60_000,60_000])events.push(appendLedger(m,'worker.await-timeout',{task_id:task.id,worker_id:worker.id,payload:{session_id:'child1',attempt:1,timeout_ms}}))
+  observedAt=events[1].at+1
+  const recovered=await runtime.recoverStalledAwaitWorker(m)
+  assert.equal(recovered.disposition,'NOOP');assert.equal(recovered.reason,'meaningful-host-progress-observed')
+  assert.equal(aborts.length,0,'await timeout count must not abort a child that progressed during the wait window');assert.equal(calls.length,0)
+  assert.equal(worker.session_id,'child1');assert.equal(worker.model,'p/primary');assert.equal(task.status,'running')
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.await-progress-observed'&&e.payload?.activity_message_id==='msg-progress'))
+})
+
+
+test('busy child watchdog fails closed when canonical host activity cannot be read',async()=>{
+  const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding']}]
+  const {runtime,m,calls,aborts}=setup(async()=>{},true,models,null)
+  const worker=m.execution.workers[0],task=m.execution.tasks[0];worker.attempt=1;worker.recovery_candidates=['p/recovery'];worker.started_at=Date.now()-300_000
+  for(const timeout_ms of [60_000,60_000,60_000])appendLedger(m,'worker.await-timeout',{task_id:task.id,worker_id:worker.id,payload:{session_id:'child1',attempt:1,timeout_ms}})
+  const recovered=await runtime.recoverStalledAwaitWorker(m)
+  assert.equal(recovered.disposition,'NOOP');assert.equal(recovered.reason,'host-activity-reader-unavailable');assert.equal(aborts.length,0);assert.equal(calls.length,0);assert.equal(worker.session_id,'child1')
+})
+
+test('busy child watchdog fails closed when canonical host activity read errors',async()=>{
+  const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding']}]
+  const {runtime,m,calls,aborts}=setup(async()=>{},true,models,async()=>{throw new Error('message surface unavailable')})
+  const worker=m.execution.workers[0],task=m.execution.tasks[0];worker.attempt=1;worker.recovery_candidates=['p/recovery'];worker.started_at=Date.now()-300_000
+  for(const timeout_ms of [60_000,60_000,60_000])appendLedger(m,'worker.await-timeout',{task_id:task.id,worker_id:worker.id,payload:{session_id:'child1',attempt:1,timeout_ms}})
+  const recovered=await runtime.recoverStalledAwaitWorker(m)
+  assert.equal(recovered.disposition,'NOOP');assert.equal(recovered.reason,'host-activity-read-failed');assert.equal(aborts.length,0);assert.equal(calls.length,0);assert.equal(worker.session_id,'child1')
 })
 
 test('busy child watchdog stays inert below the bounded wait threshold',async()=>{

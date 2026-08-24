@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {lastAssistantError,lastAssistantModel} from '../dist/opencode/client-adapter.js'
+import {lastAssistantError,lastAssistantModel,lastMeaningfulAssistantActivity} from '../dist/opencode/client-adapter.js'
 
 test('OpenCode assistant error projection preserves exact V1 named-error identity and message',()=>{
   const error=lastAssistantError([{info:{id:'m1',role:'assistant',error:{name:'ContextOverflowError',data:{message:'maximum context length exceeded'}}},parts:[]}])
@@ -37,4 +37,13 @@ test('OpenCode 1.18.20 APIError projection preserves bounded retry truth without
 test('OpenCode assistant projection preserves exact prompt ancestry and creation time',()=>{
   const model=lastAssistantModel([{info:{id:'msg_000000000002bbbbbbbbbbbbbb',role:'assistant',providerID:'p',modelID:'m',variant:'fast',parentID:'msg_000000000001aaaaaaaaaaaaaa',time:{created:123,completed:456}},parts:[{type:'text',text:'ok'}]}])
   assert.deepEqual(model,{model:'p/m',variant:'fast',message_id:'msg_000000000002bbbbbbbbbbbbbb',parent_id:'msg_000000000001aaaaaaaaaaaaaa',created_at:123})
+})
+
+
+test('meaningful assistant activity ignores a newer open zero-token turn and retains completed tool progress',()=>{
+  const activity=lastMeaningfulAssistantActivity([
+    {info:{id:'msg-progress',role:'assistant',time:{created:100,completed:220},tokens:{input:10,output:24,reasoning:3,cache:{read:0,write:0}}},parts:[{type:'text',text:'checking browser'},{type:'tool',tool:'hi_browser_click',state:{status:'completed'}}]},
+    {info:{id:'msg-open',role:'assistant',time:{created:230},tokens:{input:0,output:0,reasoning:0,cache:{read:0,write:0}}},parts:[{type:'step-start'}]},
+  ])
+  assert.deepEqual(activity,{message_id:'msg-progress',observed_at:220,output_tokens:24,reasoning_tokens:3,tool_calls:1,text_chars:16})
 })

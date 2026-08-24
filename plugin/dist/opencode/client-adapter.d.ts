@@ -22,6 +22,15 @@ export declare function listProviders(client: OpenCodeClient): Promise<unknown>;
 export declare function listAvailableModels(endpoint?: OpenCodeLifecycleEndpoint): Promise<unknown[] | undefined>;
 export declare function eventSessionID(event: any): string | undefined;
 export declare function lastAssistantText(messages: any[]): string;
+export interface AssistantActivityEvidence {
+    message_id?: string;
+    observed_at: number;
+    output_tokens: number;
+    reasoning_tokens: number;
+    tool_calls: number;
+    text_chars: number;
+}
+export declare function lastMeaningfulAssistantActivity(messages: any[]): AssistantActivityEvidence | undefined;
 export interface AssistantErrorEvidence {
     name?: string;
     message: string;
