@@ -13,9 +13,11 @@ test('budget view unifies existing hard limits without inventing monetary or tok
   const view=executionBudgetView(m,300)
   assert.equal(view.mission.find(x=>x.axis==='continuation-turns').enforcement,'hard')
   assert.equal(view.mission.find(x=>x.axis==='topology-concurrency').enforcement,'hard')
-  const token=view.workers[w.id].find(x=>x.axis==='exact-complete-token-usage'),cost=view.workers[w.id].find(x=>x.axis==='opencode-derived-cost')
+  const token=view.workers[w.id].find(x=>x.axis==='exact-complete-token-usage'),cost=view.workers[w.id].find(x=>x.axis==='opencode-derived-cost'),contextCap=view.workers[w.id].find(x=>x.axis==='context-cap'),resultCap=view.workers[w.id].find(x=>x.axis==='result-cap')
   assert.deepEqual([token.used,token.measurement,token.enforcement],[135,'exact','observed-only'])
   assert.deepEqual([cost.used,cost.measurement,cost.enforcement],[.25,'derived','observed-only'])
+  assert.deepEqual([contextCap.limit,contextCap.measurement,contextCap.enforcement,contextCap.status],[12000,'unavailable','hard','unavailable'])
+  assert.deepEqual([resultCap.limit,resultCap.measurement,resultCap.enforcement,resultCap.status],[16000,'unavailable','hard','unavailable'])
   assert.equal(view.workers[w.id].some(x=>x.axis==='provider-billed-cost'),false)
 })
 
