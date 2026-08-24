@@ -50,3 +50,15 @@ test('B1 failed observations may record bounded errors without fabricating DOM s
   const emptyObserved=observation({document_identity:undefined,dom_summary:undefined,console_errors:[],network_errors:[]})
   assert.equal(isBrowserObservationContract(emptyObserved),false)
 })
+
+
+test('M17 viewport identity is bounded and participates in BrowserObservation identity',()=>{
+  const desktop=observation({action:'viewport',viewport:{width:1280,height:800}})
+  const mobile=observation({action:'viewport',viewport:{width:390,height:844}})
+  assert.equal(isBrowserObservationContract(desktop),true)
+  assert.equal(isBrowserObservationContract(mobile),true)
+  assert.notEqual(desktop.observation_id,mobile.observation_id)
+  assert.equal(isBrowserObservationContract(observation({action:'viewport',viewport:{width:239,height:800}})),false)
+  assert.equal(isBrowserObservationContract(observation({action:'viewport',viewport:{width:390,height:2161}})),false)
+  assert.equal(isBrowserObservationContract(observation({action:'viewport',viewport:undefined})),false)
+})

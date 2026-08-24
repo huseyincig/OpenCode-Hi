@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
-export const BROWSER_OBSERVATION_ACTIONS = ['open', 'navigate', 'click', 'type', 'key', 'inspect', 'screenshot', 'wait', 'close'];
+export const BROWSER_OBSERVATION_ACTIONS = ['open', 'navigate', 'click', 'type', 'key', 'inspect', 'viewport', 'screenshot', 'wait', 'close'];
 export const BROWSER_OBSERVATION_RESULTS = ['OBSERVED', 'FAILED'];
-const KEYS = new Set(['observation_id', 'task_id', 'executor_version', 'url', 'action', 'timestamp', 'document_identity', 'dom_summary', 'console_errors', 'network_errors', 'screenshot_artifact_ref', 'result']);
+const KEYS = new Set(['observation_id', 'task_id', 'executor_version', 'url', 'action', 'timestamp', 'viewport', 'document_identity', 'dom_summary', 'console_errors', 'network_errors', 'screenshot_artifact_ref', 'result']);
 const ACTIONS = new Set(BROWSER_OBSERVATION_ACTIONS), RESULTS = new Set(BROWSER_OBSERVATION_RESULTS);
 function record(v) { return Boolean(v) && typeof v === 'object' && !Array.isArray(v); }
 function bounded(v, max) { return typeof v === 'string' && Boolean(v.trim()) && v.length <= max; }
@@ -16,8 +16,9 @@ function validUrl(v) { if (!bounded(v, 4096))
 catch {
     return false;
 } }
+function validViewport(v) { return record(v) && Object.keys(v).every(k => k === 'width' || k === 'height') && Number.isInteger(v.width) && Number(v.width) >= 240 && Number(v.width) <= 3840 && Number.isInteger(v.height) && Number(v.height) >= 240 && Number(v.height) <= 2160; }
 export function browserObservationId(input) {
-    const raw = [input.task_id, input.executor_version, input.url, input.action, String(input.timestamp), input.document_identity ?? '', input.screenshot_artifact_ref ?? '', input.result].join('\0');
+    const raw = [input.task_id, input.executor_version, input.url, input.action, String(input.timestamp), input.viewport ? `${input.viewport.width}x${input.viewport.height}` : '', input.document_identity ?? '', input.screenshot_artifact_ref ?? '', input.result].join('\0');
     return `bo_${createHash('sha256').update(raw).digest('hex').slice(0, 24)}`;
 }
 export function isBrowserObservationContract(v) {
@@ -29,6 +30,10 @@ export function isBrowserObservationContract(v) {
         return false;
     if (typeof v.timestamp !== 'number' || !Number.isFinite(v.timestamp) || v.timestamp <= 0)
         return false;
+    if (v.viewport !== undefined && !validViewport(v.viewport))
+        return false;
+    if (v.action === 'viewport' && v.result === 'OBSERVED' && !v.viewport)
+        return false;
     if (v.document_identity !== undefined && !sha(v.document_identity))
         return false;
     if (v.dom_summary !== undefined && (!bounded(v.dom_summary, 4000) || v.dom_summary.length > 4000))
@@ -39,8 +44,8 @@ export function isBrowserObservationContract(v) {
         return false;
     if (v.action === 'screenshot' && v.result === 'OBSERVED' && !v.screenshot_artifact_ref)
         return false;
-    if (v.result === 'OBSERVED' && !v.document_identity && !v.dom_summary && !v.screenshot_artifact_ref && v.console_errors.length === 0 && v.network_errors.length === 0)
+    if (v.result === 'OBSERVED' && !v.viewport && !v.document_identity && !v.dom_summary && !v.screenshot_artifact_ref && v.console_errors.length === 0 && v.network_errors.length === 0)
         return false;
-    const expected = browserObservationId({ task_id: v.task_id, executor_version: v.executor_version, url: v.url, action: v.action, timestamp: v.timestamp, document_identity: v.document_identity, screenshot_artifact_ref: v.screenshot_artifact_ref, result: v.result });
+    const expected = browserObservationId({ task_id: v.task_id, executor_version: v.executor_version, url: v.url, action: v.action, timestamp: v.timestamp, viewport: v.viewport, document_identity: v.document_identity, screenshot_artifact_ref: v.screenshot_artifact_ref, result: v.result });
     return v.observation_id === expected;
 }

@@ -552,6 +552,15 @@ export function createHiToolSurface(input) {
         catch (e) {
             return `Browser inspect blocked: ${String(e)}`;
         } } });
+    const browserViewportTool = tool({ description: 'Set one exact bounded viewport for responsive visual verification. The resulting BrowserObservation records the active width and height so later visual evidence can cite the exact rendered viewport.', args: { task_id: tool.schema.string(), width: tool.schema.number(), height: tool.schema.number() }, execute: async (a, c) => { try {
+            if (!browserExecutor)
+                return 'BLOCKED: browser executor unavailable';
+            const x = browserContext(String(a.task_id), c);
+            return browserObservationResult(x, await browserExecutor.viewport(x.cx, { width: Number(a.width), height: Number(a.height) }));
+        }
+        catch (e) {
+            return `Browser viewport blocked: ${String(e)}`;
+        } } });
     const browserScreenshotTool = tool({ description: 'Capture the current page into the canonical Hi artifact owner and return a BrowserObservation plus a native image attachment for visual inspection. screenshot_artifact_ref is opaque Hi provenance, not a filesystem path; do not read/glob/search it.', args: { task_id: tool.schema.string() }, execute: async (a, c) => { try {
             if (!browserExecutor)
                 return 'BLOCKED: browser executor unavailable';
@@ -641,7 +650,7 @@ export function createHiToolSurface(input) {
             return `Process cleanup failed: ${String(error)}`;
         } } });
     const processListTool = tool({ description: 'List bounded durable Hi process contracts for the current mission.', args: {}, execute: async (_a, c) => { const m = store.get(c?.sessionID); return m ? JSON.stringify(processRuntime.list(m)) : 'No active Hi mission'; } });
-    const toolSurface = { hi_doctor: doctorTool, hi_status: statusTool, hi_settings: settingsTool, hi_role_models: roleModelsTool, hi_metrics: metricsTool, hi_ledger: ledgerTool, hi_readiness: readinessTool, hi_intent_assess: intentAssessTool, hi_context_artifact_add: artifactAddTool, hi_context_artifacts: artifactsTool, hi_temporary_mutation_register: mutationTool, hi_temporary_mutation_revert: nativeRollbackTool, hi_direct_progress: directProgressTool, hi_task_start: startTool, hi_task_await: awaitTool, hi_task_peek: peekTool, hi_task_list: listTool, hi_task_cancel: cancelTool, hi_process_spawn: processSpawnTool, hi_process_read: processReadTool, hi_process_write: processWriteTool, hi_process_wait: processWaitTool, hi_process_kill: processKillTool, hi_process_cleanup: processCleanupTool, hi_process_list: processListTool, hi_browser_preview_open: browserPreviewOpenTool, hi_browser_open: browserOpenTool, hi_browser_navigate: browserNavigateTool, hi_browser_click: browserClickTool, hi_browser_type: browserTypeTool, hi_browser_key: browserKeyTool, hi_browser_inspect: browserInspectTool, hi_browser_screenshot: browserScreenshotTool, hi_browser_wait: browserWaitTool, hi_browser_close: browserCloseTool };
+    const toolSurface = { hi_doctor: doctorTool, hi_status: statusTool, hi_settings: settingsTool, hi_role_models: roleModelsTool, hi_metrics: metricsTool, hi_ledger: ledgerTool, hi_readiness: readinessTool, hi_intent_assess: intentAssessTool, hi_context_artifact_add: artifactAddTool, hi_context_artifacts: artifactsTool, hi_temporary_mutation_register: mutationTool, hi_temporary_mutation_revert: nativeRollbackTool, hi_direct_progress: directProgressTool, hi_task_start: startTool, hi_task_await: awaitTool, hi_task_peek: peekTool, hi_task_list: listTool, hi_task_cancel: cancelTool, hi_process_spawn: processSpawnTool, hi_process_read: processReadTool, hi_process_write: processWriteTool, hi_process_wait: processWaitTool, hi_process_kill: processKillTool, hi_process_cleanup: processCleanupTool, hi_process_list: processListTool, hi_browser_preview_open: browserPreviewOpenTool, hi_browser_open: browserOpenTool, hi_browser_navigate: browserNavigateTool, hi_browser_click: browserClickTool, hi_browser_type: browserTypeTool, hi_browser_key: browserKeyTool, hi_browser_inspect: browserInspectTool, hi_browser_viewport: browserViewportTool, hi_browser_screenshot: browserScreenshotTool, hi_browser_wait: browserWaitTool, hi_browser_close: browserCloseTool };
     assertHiToolNamespace(Object.keys(toolSurface));
     return { toolSurface };
 }

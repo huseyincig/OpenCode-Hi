@@ -268,7 +268,7 @@ export declare const HI_METHODOLOGY_POLICY: readonly [{
     readonly preferredRoles: readonly ["visual-qa"];
     readonly priority: "normal";
     readonly purpose: "Check user-interface changes for material accessibility regressions.";
-    readonly resourceRequirements: readonly [];
+    readonly resourceRequirements: readonly ["runtime-capability:browser-execution"];
     readonly trigger: "UI behavior or markup changed and accessibility can be affected.";
     readonly triggerSources: readonly ["task-intent", "changed-surface"];
     readonly usefulCoexistence: readonly ["hi-visual-qa"];

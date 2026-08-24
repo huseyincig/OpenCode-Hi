@@ -10,6 +10,7 @@ export interface BrowserExecutionContext {
 export interface BrowserTarget { value:string }
 export interface BrowserInspectRequest { selector?:string }
 export interface BrowserWaitRequest { milliseconds:number }
+export interface BrowserViewportRequest { width:number; height:number }
 export interface BrowserKeyRequest { key:string }
 export type BrowserCleanupReason='cleaned'|'not-found'|'owner-mismatch'|'close-failed'
 export interface BrowserCleanupResult { cleaned:boolean;reason:BrowserCleanupReason;error?:string }
@@ -21,6 +22,7 @@ export interface BrowserExecutor {
   type(context:BrowserExecutionContext,target:BrowserTarget,value:string):Promise<BrowserObservationContract>
   key(context:BrowserExecutionContext,request:BrowserKeyRequest):Promise<BrowserObservationContract>
   inspect(context:BrowserExecutionContext,request?:BrowserInspectRequest):Promise<BrowserObservationContract>
+  viewport(context:BrowserExecutionContext,request:BrowserViewportRequest):Promise<BrowserObservationContract>
   screenshot(context:BrowserExecutionContext):Promise<BrowserObservationContract>
   wait(context:BrowserExecutionContext,request:BrowserWaitRequest):Promise<BrowserObservationContract>
   close(context:BrowserExecutionContext):Promise<BrowserObservationContract>
@@ -28,4 +30,4 @@ export interface BrowserExecutor {
 }
 
 
-export const HI_BROWSER_EXECUTION_TOOL_IDS=['hi_browser_preview_open','hi_browser_open','hi_browser_navigate','hi_browser_click','hi_browser_type','hi_browser_key','hi_browser_inspect','hi_browser_screenshot','hi_browser_wait','hi_browser_close'] as const
+export const HI_BROWSER_EXECUTION_TOOL_IDS=['hi_browser_preview_open','hi_browser_open','hi_browser_navigate','hi_browser_click','hi_browser_type','hi_browser_key','hi_browser_inspect','hi_browser_viewport','hi_browser_screenshot','hi_browser_wait','hi_browser_close'] as const

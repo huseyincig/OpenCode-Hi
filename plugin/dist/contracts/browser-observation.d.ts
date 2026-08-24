@@ -1,7 +1,11 @@
-export declare const BROWSER_OBSERVATION_ACTIONS: readonly ["open", "navigate", "click", "type", "key", "inspect", "screenshot", "wait", "close"];
+export declare const BROWSER_OBSERVATION_ACTIONS: readonly ["open", "navigate", "click", "type", "key", "inspect", "viewport", "screenshot", "wait", "close"];
 export type BrowserObservationAction = typeof BROWSER_OBSERVATION_ACTIONS[number];
 export declare const BROWSER_OBSERVATION_RESULTS: readonly ["OBSERVED", "FAILED"];
 export type BrowserObservationResult = typeof BROWSER_OBSERVATION_RESULTS[number];
+export interface BrowserViewport {
+    width: number;
+    height: number;
+}
 export interface BrowserObservationContract {
     observation_id: string;
     task_id: string;
@@ -9,6 +13,7 @@ export interface BrowserObservationContract {
     url: string;
     action: BrowserObservationAction;
     timestamp: number;
+    viewport?: BrowserViewport;
     document_identity?: string;
     dom_summary?: string;
     console_errors: string[];
@@ -22,6 +27,7 @@ export declare function browserObservationId(input: {
     url: string;
     action: BrowserObservationAction;
     timestamp: number;
+    viewport?: BrowserViewport;
     document_identity?: string;
     screenshot_artifact_ref?: string;
     result: BrowserObservationResult;

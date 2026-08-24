@@ -29,7 +29,7 @@ test('browser runtime resource is supported only after live health observation; 
 
 test('browser and visual methodologies require canonical runtime browser-execution resource',()=>{
   const catalog=builtinMethodologyCatalog()
-  for(const name of ['hi-browser-testing','hi-visual-qa']){
+  for(const name of ['hi-browser-testing','hi-visual-qa','hi-accessibility-review']){
     const policy=catalog.find(x=>x.name===name)
     assert.deepEqual(policy?.resourceRequirements,['runtime-capability:browser-execution'])
     const candidate={name,provider:'hi',path:`/tmp/${name}/SKILL.md`,valid:true,enabled:true,orchestrationRisk:false}
@@ -55,4 +55,17 @@ test('TaskRuntime still fails visual methodology preflight before native child s
     return true
   })
   assert.equal(created.length,0)
+})
+
+
+test('M17 accessibility-only visual task receives bounded browser execution when runtime resource is healthy',async()=>{
+  const created=[],prompts=[],client={session:{create:async req=>{created.push(req);return{data:{id:'child-a11y'}}},promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async()=>({data:true}),diff:async()=>({data:[]})}}
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>({agent:PACKAGED_HI_AGENTS}),undefined,{},undefined,undefined,()=>new Set(['host-capability:browser-execution']))
+  const store=new MissionStore(repoRoot),m=store.start('accessibility-resource','verify accessible local UI')
+  store.applyInitialSemanticAssessment('accessibility-resource',{material:true,message_kind:'mission',task_kind:'review',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['visual-qa'],requested_external_actions:[],likely_verification:['accessibility-evidence'],likely_targets:['src/view.tsx'],intent_signals:['intent.accessibility'],suppressed_intent_signals:[]})
+  m.methodology.methodology_needs.push({name:'hi-accessibility-review',signal:'intent.accessibility',trigger_source:'task-intent',producer:'intent',reason:'explicit accessibility review',created_at:Date.now()})
+  const out=await runtime.start(m,{objective:'verify accessible local UI',role:'visual-qa',category:'visual',scope:['src/view.tsx'],browserAllowedOrigins:['http://127.0.0.1:4173']})
+  assert.equal(out.readiness,'READY');assert.deepEqual(out.methodologies,['hi-accessibility-review']);assert.equal(created.length,1);assert.equal(prompts.length,1)
+  const task=m.execution.tasks.find(t=>t.id===out.task_id);assert.equal(task?.execution_profile?.browser_backend,'bounded-playwright')
+  assert.equal(prompts[0].body.tools.hi_browser_inspect,undefined);assert.equal(prompts[0].body.tools.hi_browser_key,undefined);assert.equal(prompts[0].body.tools.hi_browser_viewport,undefined)
 })

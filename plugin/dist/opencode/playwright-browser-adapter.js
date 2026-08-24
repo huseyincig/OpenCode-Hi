@@ -65,7 +65,7 @@ export class PlaywrightBrowserAdapter {
         s.consoleErrors.push(bounded(String(msg.text()), 1000)); if (s.consoleErrors.length > MAX_ERRORS)
         s.consoleErrors.splice(0, s.consoleErrors.length - MAX_ERRORS); }); page.on('requestfailed', (req) => { s.networkErrors.push(bounded(`${req.method()} ${req.url()} ${req.failure()?.errorText ?? 'failed'}`, 1000)); if (s.networkErrors.length > MAX_ERRORS)
         s.networkErrors.splice(0, s.networkErrors.length - MAX_ERRORS); }); page.on('download', (download) => void download.cancel().catch(() => { })); this.sessions.set(c.task_id, s); return s; }
-    observation(c, s, action, url, result, dom, screenshotRef, error) { const timestamp = Date.now(), doc = dom ? sha(dom) : undefined, console_errors = s?.consoleErrors.slice(-MAX_ERRORS) ?? [], network_errors = [...(s?.networkErrors.slice(-MAX_ERRORS) ?? []), ...(error ? [bounded(error, 1000)] : [])].slice(-MAX_ERRORS), o = { observation_id: '', task_id: c.task_id, executor_version: c.executor_version, url, action, timestamp, ...(doc ? { document_identity: doc } : {}), ...(dom ? { dom_summary: bounded(dom) } : {}), console_errors, network_errors, ...(screenshotRef ? { screenshot_artifact_ref: screenshotRef } : {}), result }; o.observation_id = browserObservationId(o); return o; }
+    observation(c, s, action, url, result, dom, screenshotRef, error) { const timestamp = Date.now(), doc = dom ? sha(dom) : undefined, console_errors = s?.consoleErrors.slice(-MAX_ERRORS) ?? [], network_errors = [...(s?.networkErrors.slice(-MAX_ERRORS) ?? []), ...(error ? [bounded(error, 1000)] : [])].slice(-MAX_ERRORS), viewport = s?.page?.viewportSize?.() ?? undefined, o = { observation_id: '', task_id: c.task_id, executor_version: c.executor_version, url, action, timestamp, ...(viewport ? { viewport: { width: Number(viewport.width), height: Number(viewport.height) } } : {}), ...(doc ? { document_identity: doc } : {}), ...(dom ? { dom_summary: bounded(dom) } : {}), console_errors, network_errors, ...(screenshotRef ? { screenshot_artifact_ref: screenshotRef } : {}), result }; o.observation_id = browserObservationId(o); return o; }
     async snapshot(c, action) { const s = this.sessions.get(c.task_id); if (!s?.url || s.executionOwnerRef !== c.execution_owner_ref)
         throw new Error('Browser session is not owned by the current execution identity'); try {
         s.url = plannedUrl(c, String(s.page.url()));
@@ -135,6 +135,15 @@ export class PlaywrightBrowserAdapter {
     } }
     async inspect(c, request = {}) { if (request.selector)
         throw new Error('Playwright browser adapter does not expose arbitrary selector inspection'); return this.snapshot(c, 'inspect'); }
+    async viewport(c, request) { const s = this.sessions.get(c.task_id); if (!s?.url || s.executionOwnerRef !== c.execution_owner_ref)
+        throw new Error('Browser session is not owned by the current execution identity'); if (!Number.isInteger(request.width) || request.width < 240 || request.width > 3840 || !Number.isInteger(request.height) || request.height < 240 || request.height > 2160)
+        throw new Error('Browser viewport must be integer width 240..3840 and height 240..2160'); try {
+        await s.page.setViewportSize({ width: request.width, height: request.height });
+        return this.snapshot(c, 'viewport');
+    }
+    catch (error) {
+        return this.observation(c, s, 'viewport', s.url, 'FAILED', undefined, undefined, String(error));
+    } }
     async screenshot(c) { const s = this.sessions.get(c.task_id); if (!s?.url || s.executionOwnerRef !== c.execution_owner_ref)
         throw new Error('Browser session is not owned by the current execution identity'); try {
         const bytes = await s.page.screenshot({ type: 'png', fullPage: false });

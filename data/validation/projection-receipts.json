@@ -7,7 +7,7 @@
         "id": "hi.methodology.catalog",
         "hash": {
           "algorithm": "sha256",
-          "value": "1d47c3bea076789198c05d5e1caf7fe353b2f4bc27fe18c25cf6f983a572b66b"
+          "value": "27205d3edd50ebb8afd1db4de87c28efccb6ff1619a16b313e3aa774b4e92e28"
         }
       },
       {
@@ -68,7 +68,7 @@
         "id": "hi.methodology.catalog",
         "hash": {
           "algorithm": "sha256",
-          "value": "1d47c3bea076789198c05d5e1caf7fe353b2f4bc27fe18c25cf6f983a572b66b"
+          "value": "27205d3edd50ebb8afd1db4de87c28efccb6ff1619a16b313e3aa774b4e92e28"
         }
       },
       {
@@ -84,7 +84,7 @@
     "outputPath": "plugin/src/generated/methodology-policy.ts",
     "outputHash": {
       "algorithm": "sha256",
-      "value": "466a5592b02909dd5c4c80adf37fc8476fa260138da302d66f9c1d60fe3a59d7"
+      "value": "fb76135120777e6850cc7d0ac7ef587378911d3c8d36ebe1004653a1d86a968a"
     }
   },
   {
@@ -142,7 +142,7 @@
         "id": "hi.methodology.hi-accessibility-review",
         "hash": {
           "algorithm": "sha256",
-          "value": "aba80a0fd7e83372ad5ca85e6834b96250493f643e36ba55ce359e96d2b99e79"
+          "value": "ba8d94e053b8980d123e3de2eea97220a851270d8743a4e7c0482c7173180a37"
         }
       }
     ],

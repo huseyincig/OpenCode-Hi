@@ -19,7 +19,9 @@
         "hi-visual-qa"
       ],
       "conflicts": [],
-      "resource_requirements": [],
+      "resource_requirements": [
+        "runtime-capability:browser-execution"
+      ],
       "compatible_roles": [
         "visual-qa"
       ],

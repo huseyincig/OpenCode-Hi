@@ -448,7 +448,7 @@ export class TaskRuntime {
         }
         const requiredEvidence = input.requiredEvidence ?? m.execution.verification_policy.requiredKinds, obligationIds = inferObligationIds(m, role, requiredEvidence, input.obligationIds);
         let extraResources = this.extraHostResources();
-        const browserRequested = role === 'visual-qa' && requestedMethodologyNames.some(name => ['hi-browser-testing', 'hi-visual-qa'].includes(name));
+        const browserRequested = role === 'visual-qa' && requestedMethodologyNames.some(name => ['hi-browser-testing', 'hi-visual-qa', 'hi-accessibility-review'].includes(name));
         let browserBootstrap;
         if (browserRequested && !extraResources.has('host-capability:browser-execution') && this.ensureBrowserResource) {
             browserBootstrap = await this.ensureBrowserResource();

@@ -22,8 +22,8 @@ import {opencodeChildPort} from './helpers/host-port.mjs'
 function fakePlaywright(){
   const launches=[],sessions=[]
   const chromium={launch:async options=>{launches.push(options);const page={
-    _url:'about:blank',events:new Map(),lastFill:undefined,lastKey:undefined,closed:false,
-    url(){return this._url},setDefaultTimeout(){},on(name,fn){this.events.set(name,fn)},
+    _url:'about:blank',_viewport:{width:1280,height:720},events:new Map(),lastFill:undefined,lastKey:undefined,closed:false,
+    url(){return this._url},viewportSize(){return this._viewport},async setViewportSize(value){this._viewport={...value}},setDefaultTimeout(){},on(name,fn){this.events.set(name,fn)},
     async goto(url){this._url=url},
     waitForTimeout:async()=>{},
     keyboard:{press:async key=>{page.lastKey=key}},
@@ -150,4 +150,16 @@ test('PROMPT B browser wait bounds fail closed instead of permitting unbounded v
 test('B3 bounded browser keyboard primitive admits game/navigation keys and rejects arbitrary chords',async()=>{
   const pw=fakePlaywright(),adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module});const c=ctx('t-key')
   await adapter.open(c,'http://127.0.0.1:4173/');const left=await adapter.key(c,{key:'ArrowLeft'});const restart=await adapter.key(c,{key:'R'});assert.equal(left.action,'key');assert.equal(restart.result,'OBSERVED');assert.equal(pw.sessions[0].page.lastKey,'R');await assert.rejects(()=>adapter.key(c,{key:'Control+L'}),/bounded navigation\/action key/);await adapter.close(c)
+})
+
+
+test('M17 bounded viewport primitive records exact responsive dimensions and carries them into screenshots',async()=>{
+  const pw=fakePlaywright(),adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module,persist_screenshot:()=>`hi-artifact:a_${'a'.repeat(24)}`}),c=ctx('t-viewport')
+  await adapter.open(c,'http://127.0.0.1:4173/')
+  const mobile=await adapter.viewport(c,{width:390,height:844})
+  assert.equal(mobile.action,'viewport');assert.deepEqual(mobile.viewport,{width:390,height:844});assert.equal(isBrowserObservationContract(mobile),true)
+  const shot=await adapter.screenshot(c);assert.deepEqual(shot.viewport,{width:390,height:844});assert.equal(isBrowserObservationContract(shot),true)
+  await assert.rejects(()=>adapter.viewport(c,{width:200,height:844}),/240\.\.3840/)
+  await assert.rejects(()=>adapter.viewport(c,{width:390,height:2200}),/240\.\.2160/)
+  await adapter.close(c)
 })

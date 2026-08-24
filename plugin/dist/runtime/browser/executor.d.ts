@@ -15,6 +15,10 @@ export interface BrowserInspectRequest {
 export interface BrowserWaitRequest {
     milliseconds: number;
 }
+export interface BrowserViewportRequest {
+    width: number;
+    height: number;
+}
 export interface BrowserKeyRequest {
     key: string;
 }
@@ -36,9 +40,10 @@ export interface BrowserExecutor {
     type(context: BrowserExecutionContext, target: BrowserTarget, value: string): Promise<BrowserObservationContract>;
     key(context: BrowserExecutionContext, request: BrowserKeyRequest): Promise<BrowserObservationContract>;
     inspect(context: BrowserExecutionContext, request?: BrowserInspectRequest): Promise<BrowserObservationContract>;
+    viewport(context: BrowserExecutionContext, request: BrowserViewportRequest): Promise<BrowserObservationContract>;
     screenshot(context: BrowserExecutionContext): Promise<BrowserObservationContract>;
     wait(context: BrowserExecutionContext, request: BrowserWaitRequest): Promise<BrowserObservationContract>;
     close(context: BrowserExecutionContext): Promise<BrowserObservationContract>;
     cleanup(context: BrowserExecutionContext): Promise<BrowserCleanupResult>;
 }
-export declare const HI_BROWSER_EXECUTION_TOOL_IDS: readonly ["hi_browser_preview_open", "hi_browser_open", "hi_browser_navigate", "hi_browser_click", "hi_browser_type", "hi_browser_key", "hi_browser_inspect", "hi_browser_screenshot", "hi_browser_wait", "hi_browser_close"];
+export declare const HI_BROWSER_EXECUTION_TOOL_IDS: readonly ["hi_browser_preview_open", "hi_browser_open", "hi_browser_navigate", "hi_browser_click", "hi_browser_type", "hi_browser_key", "hi_browser_inspect", "hi_browser_viewport", "hi_browser_screenshot", "hi_browser_wait", "hi_browser_close"];
