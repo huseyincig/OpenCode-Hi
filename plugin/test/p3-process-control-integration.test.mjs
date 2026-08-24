@@ -163,3 +163,16 @@ test('browser cleanup runs when child idle assistant settlement throws before te
   await controller.handle(normalizeOpenCodeEvent({type:'session.idle',properties:{sessionID:child.session_id}}))
   assert.deepEqual(order.slice(0,3),['browser','fail','workspace'])
 })
+
+
+test('parent idle waiting-worker invokes bounded host-liveness recovery before indefinite WAIT',async()=>{
+  const store=new MissionStore(),m=assessed(store,'busy-liveness-parent')
+  m.execution.tasks.push({id:'t-live',mission_id:m.identity.mission_id,objective:'verify visual',status:'running',role:'visual-qa',category:'visual',scope:['index.html'],constraints:[],dependencies:[],requiredEvidence:['visual-evidence'],obligation_ids:[],context_artifacts:[],gate_ids:[],worker_id:'w-live',external_action_requirements:[],created_at:Date.now(),updated_at:Date.now()})
+  m.execution.workers.push({id:'w-live',task_id:'t-live',role:'visual-qa',category:'visual',session_id:'child-live',parent_session_id:m.identity.session_id,parent_mission_id:m.identity.mission_id,model:'p/a',fallbacks:[],selected_methodologies:['hi-visual-qa'],loaded_methodologies:['hi-visual-qa'],methodologies:[],fingerprint:'live',status:'busy',attempt:1,generation_at_spawn:m.continuation.generation,updated_at:Date.now()})
+  let recoveries=0,saves=0
+  const services={store,background:{},persistence:{save:()=>saves++},tasks:{resolveChildCallback:()=>undefined,recoverStalledAwaitWorker:async()=>{recoveries++;return{disposition:'RECOVERED',reason:'host-liveness-stall',worker_id:'w-live',task_id:'t-live',from_model:'p/a',to_model:'p/b'}}},processRuntime:{},workspaceRuntime:undefined,eventSink:()=>{},scopedStores:{}}
+  const controller=new RuntimeEventController({state:state(),host:{refreshRuntimeInventory:async()=>{},log:async()=>{},client:{}},services,projectAuthority:{grant:()=>{}},pendingNativePermissions:new Map(),projectRoot:'/repo'})
+  await controller.handle(normalizeOpenCodeEvent({type:'session.idle',properties:{sessionID:'busy-liveness-parent'}}))
+  assert.equal(recoveries,1);assert.ok(saves>=1)
+  assert.ok(m.execution.ledger.some(e=>e.type==='runtime.liveness-recovery'&&e.worker_id==='w-live'&&e.payload?.disposition==='RECOVERED'))
+})

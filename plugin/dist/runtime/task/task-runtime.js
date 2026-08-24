@@ -109,7 +109,7 @@ export class TaskRuntime {
         this.#child = new ChildExecutionCoordinator(childHost, registry);
         this.#dispatcher = new QueuedWorkerDispatcher(childHost, this.#child, registry, scheduler, projectRoot, this.#scopedStores, getConfig, getModels, getHostConfig, (m, taskID) => this.workspaceBinding(m, taskID), (m, taskID) => this.cleanupWorkspaceForTask(m, taskID), (m, task, worker, error) => this.blockDependencyOutcome(m, task, worker, error), events, previewManager);
         this.#results = new TaskResultReconciler(scheduler, registry, projectRoot, events, this.#methodologyLearning, this.#child, getHostConfig, (m, w, run) => this.queueTask(m, w, run), () => this.drainQueue(), this.#scopedStores);
-        this.#recovery = new TaskRecoveryCoordinator(scheduler, registry, projectRoot, getConfig, getModels, getHostConfig, events, this.#child, () => this.drainQueue(), (m, taskID) => this.workspaceBinding(m, taskID));
+        this.#recovery = new TaskRecoveryCoordinator(scheduler, registry, projectRoot, getConfig, getModels, getHostConfig, events, this.#child, () => this.drainQueue(), (m, taskID) => this.workspaceBinding(m, taskID), (m, taskID, workerID) => this.cleanupBrowserForTask(m, taskID, workerID));
     }
     async sendProviderPrompt(sessionID, text, role, model, variant, tools, messageID) { return this.#child.sendProviderPrompt(sessionID, text, role, model, variant, tools, messageID); }
     recordModelProjection(worker, model, variant) { this.#child.recordModelProjection(worker, model, variant); }
@@ -880,6 +880,7 @@ export class TaskRuntime {
     async noteNativeWriteSet(m, workerID, files, source = 'session-diff', stateHash) { return this.#results.noteNativeWriteSet(m, workerID, files, source, stateHash); }
     noteNativeStatus(m, workerID, status) { this.#results.noteNativeStatus(m, workerID, status); }
     applyResult(m, workerID, result) { this.#results.applyResult(m, workerID, result); }
+    async recoverStalledAwaitWorker(m) { return this.#recovery.recoverStalledAwaitWorker(m); }
     async recoverStagnation(m, level, action = 'same-worker-resume') { return this.#recovery.recoverStagnation(m, level, action); }
     fail(m, workerID, error) { this.#recovery.fail(m, workerID, error); }
     peek(m, id) { const task = m.execution.tasks.find(t => t.id === id), worker = m.execution.workers.find(w => w.id === id || w.id === task?.worker_id); return { task, worker }; }

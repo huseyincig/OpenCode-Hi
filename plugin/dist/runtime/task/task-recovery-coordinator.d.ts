@@ -18,11 +18,20 @@ export declare class TaskRecoveryCoordinator {
     private readonly child;
     private readonly drainQueueCallback;
     private readonly workspaceBinding?;
+    private readonly cleanupBrowser?;
     callbackDisposition(m: MissionState, worker: {
         parent_mission_id?: string;
         generation_at_spawn?: number;
     }): ChildCallbackDisposition;
-    constructor(scheduler: ConcurrencyPolicySource, registry: BackgroundRegistry, projectRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events: RuntimeSignalSink | undefined, child: ChildExecutionCoordinator, drainQueueCallback: () => void, workspaceBinding?: ((m: MissionState, taskID: string) => ChildWorkspaceBinding | undefined) | undefined);
+    constructor(scheduler: ConcurrencyPolicySource, registry: BackgroundRegistry, projectRoot: string, getConfig: () => HiConfig, getModels: () => AvailableModel[], getHostConfig: () => Record<string, unknown>, events: RuntimeSignalSink | undefined, child: ChildExecutionCoordinator, drainQueueCallback: () => void, workspaceBinding?: ((m: MissionState, taskID: string) => ChildWorkspaceBinding | undefined) | undefined, cleanupBrowser?: ((m: MissionState, taskID: string, workerID?: string) => Promise<boolean>) | undefined);
+    recoverStalledAwaitWorker(m: MissionState): Promise<{
+        disposition: 'NOOP' | 'RECOVERED' | 'QUARANTINED' | 'BLOCKED';
+        reason: string;
+        worker_id?: string;
+        task_id?: string;
+        from_model?: string;
+        to_model?: string;
+    }>;
     recoverStagnation(m: MissionState, level: number, action?: 'same-worker-resume' | 'model-escalation'): Promise<boolean>;
     recoverHostTerminalFailure(m: MissionState, workerID: string, error: unknown): Promise<HostTerminalRecoveryDisposition>;
     fail(m: MissionState, workerID: string, error: string): void;

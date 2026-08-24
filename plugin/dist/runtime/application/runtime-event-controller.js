@@ -319,6 +319,17 @@ export class RuntimeEventController {
         const progressed = store.updateProgress(m, false);
         void eventSink(runtimeSignal('mission.idle', m.identity.mission_id));
         let decision = evaluateIdle(m, Date.now(), projectRoot);
+        if (decision.decision === 'WAIT' && decision.reason_code === 'waiting-worker') {
+            const liveness = await tasks.recoverStalledAwaitWorker(m);
+            if (liveness.disposition !== 'NOOP') {
+                appendLedger(m, 'runtime.liveness-recovery', { worker_id: liveness.worker_id, task_id: liveness.task_id, payload: { disposition: liveness.disposition, reason: liveness.reason, from_model: liveness.from_model, to_model: liveness.to_model } });
+                if (liveness.disposition === 'RECOVERED' || liveness.disposition === 'QUARANTINED') {
+                    persistence.save(store.all());
+                    return;
+                }
+                decision = evaluateIdle(m, Date.now(), projectRoot);
+            }
+        }
         if (!progressed && shouldCountStagnation(decision)) {
             store.updateProgress(m, true);
             decision = evaluateIdle(m, Date.now(), projectRoot);

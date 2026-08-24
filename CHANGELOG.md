@@ -3,6 +3,7 @@
 All notable changes to OpenCode-Hi are documented here.
 
 ## Unreleased
+- Adds bounded host-liveness recovery for a child that remains OpenCode `busy`/`retry` after at least three explicit `hi_task_await` timeouts totaling at least 120 seconds and a subsequent parent idle. Hi revalidates the exact host status, aborts the stale child before replacement, preserves the same Task and methodology ownership, and may use only an already-admitted recovery-only model; abort uncertainty quarantines ownership, while unavailable replacement capability becomes canonical BLOCKED instead of infinite WAIT.
 - Preserves open verification methodology ownership across visual-worker cancellation: when an active Task is cancelled but its exact obligation remains open, the Task-bound methodology need is released back to that obligation so a replacement `visual-qa` worker retains `hi-visual-qa`, bounded browser backend admission, and Hi browser tools instead of silently degrading to `methodologies=[]`.
 - Closes process-local HumanDecision transport state on plugin disposal and cleanly stops `waiting-user` Missions before persistence, so open chat waiters/timers cannot outlive the plugin and a clean shutdown cannot persist an OPEN decision as still awaiting a user.
 - Fail closed on child-session cancellation when OpenCode still reports a pending native permission for that exact child after abort acknowledgement; Hi never auto-replies to the permission, and unrelated sessions remain unaffected.

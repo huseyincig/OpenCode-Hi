@@ -20,6 +20,7 @@ export declare class ChildExecutionCoordinator {
     }>;
     createForTask(parentSessionID: string, title: string, role: string, model?: string, variant?: string, forkFromSession?: string, workspace?: ChildWorkspaceBinding): Promise<import("../host/port.js").ChildSessionCreateResult>;
     sendProviderPrompt(sessionID: string, text: string, role?: string, model?: string, variant?: string, tools?: Record<string, boolean>, messageID?: string): Promise<unknown>;
+    status(sessionID: string): Promise<import("../host/port.js").HostChildSessionStatus>;
     recordModelProjection(worker: WorkerState, model?: string, variant?: string): void;
     abortNativeSession(m: MissionState, sessionID: string, reason: string, workerID?: string, taskID?: string): Promise<boolean>;
     captureNativeDiff(worker: WorkerState, phase: 'baseline' | 'final'): Promise<Record<string, string> | undefined>;

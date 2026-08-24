@@ -22,9 +22,10 @@ export class TaskRecoveryCoordinator {
     child;
     drainQueueCallback;
     workspaceBinding;
+    cleanupBrowser;
     callbackDisposition(m, worker) { if ((worker.parent_mission_id !== undefined && worker.parent_mission_id !== m.identity.mission_id) || (worker.generation_at_spawn !== undefined && worker.generation_at_spawn !== m.continuation.generation))
         return 'stale-mission'; return 'accept'; }
-    constructor(scheduler, registry, projectRoot, getConfig, getModels, getHostConfig, events, child, drainQueueCallback, workspaceBinding) {
+    constructor(scheduler, registry, projectRoot, getConfig, getModels, getHostConfig, events, child, drainQueueCallback, workspaceBinding, cleanupBrowser) {
         this.scheduler = scheduler;
         this.registry = registry;
         this.projectRoot = projectRoot;
@@ -35,6 +36,106 @@ export class TaskRecoveryCoordinator {
         this.child = child;
         this.drainQueueCallback = drainQueueCallback;
         this.workspaceBinding = workspaceBinding;
+        this.cleanupBrowser = cleanupBrowser;
+    }
+    async recoverStalledAwaitWorker(m) {
+        if (m.identity.status !== 'active' || m.continuation.user_interrupted)
+            return { disposition: 'NOOP', reason: 'mission-not-active' };
+        const candidates = [...m.execution.workers].reverse().filter(w => w.status === 'busy' && Boolean(w.session_id) && Boolean(w.model));
+        for (const worker of candidates) {
+            const task = m.execution.tasks.find(t => t.id === worker.task_id);
+            if (!task || task.status !== 'running' || !worker.session_id || !worker.model)
+                continue;
+            const timeouts = m.execution.ledger.filter(e => e.type === 'worker.await-timeout' && e.task_id === task.id && e.worker_id === worker.id && String(e.payload?.session_id ?? '') === worker.session_id && Number(e.payload?.attempt) === worker.attempt).slice(-8);
+            const total = timeouts.reduce((n, e) => n + Math.max(0, Number(e.payload?.timeout_ms ?? 0)), 0);
+            if (timeouts.length < 3 || total < 120_000)
+                continue;
+            const hostStatus = await this.child.status(worker.session_id);
+            if (hostStatus !== 'busy' && hostStatus !== 'retry') {
+                appendLedger(m, 'worker.busy-stall-recovery.skipped', { task_id: task.id, worker_id: worker.id, payload: { session_id: worker.session_id, attempt: worker.attempt, host_status: hostStatus, await_timeouts: timeouts.length, observed_wait_ms: total, reason: 'host-not-active' } });
+                continue;
+            }
+            const fromModel = worker.model, fromSession = worker.session_id, next = (worker.recovery_candidates ?? []).find(id => id !== fromModel && runtimeModelCandidateStatus(id, this.getModels(), this.getConfig(), this.getHostConfig(), worker.role).ok);
+            const blockAfterAbort = (reason, detail) => { const marker = `host-liveness-recovery:${reason}:${task.id}`; worker.status = 'ready'; worker.session_id = undefined; task.status = 'blocked'; task.updated_at = Date.now(); task.result = { status: 'BLOCKED', summary: `Bounded host-liveness recovery could not continue: ${detail ?? reason}`.slice(0, 1200), changed_files: [], evidence: [], open_issues: [marker], needs_context: ['an admissible recovery model or repaired runtime capability is required before this task can continue'] }; m.execution.blockers = [...new Set([...m.execution.blockers, marker])]; this.registry.set(worker); syncMissionGates(m); appendLedger(m, 'worker.busy-stall-recovery.blocked', { task_id: task.id, worker_id: worker.id, payload: { session_id: fromSession, attempt: worker.attempt, model: fromModel, reason, detail } }); return { disposition: 'BLOCKED', reason, worker_id: worker.id, task_id: task.id, from_model: fromModel }; };
+            const stopped = await this.child.abortNativeSession(m, fromSession, 'bounded-await-host-liveness-stall', worker.id, task.id);
+            if (!stopped) {
+                appendLedger(m, 'worker.busy-stall-recovery.quarantined', { task_id: task.id, worker_id: worker.id, payload: { session_id: fromSession, attempt: worker.attempt, model: fromModel, host_status: hostStatus, await_timeouts: timeouts.length, observed_wait_ms: total, reason: 'abort-unavailable' } });
+                return { disposition: 'QUARANTINED', reason: 'abort-unavailable', worker_id: worker.id, task_id: task.id, from_model: fromModel };
+            }
+            const browserClean = await this.cleanupBrowser?.(m, task.id, worker.id) ?? true;
+            const released = releaseTaskRuntimeReservation(m, worker.id);
+            worker.session_id = undefined;
+            worker.status = 'ready';
+            task.status = 'waiting';
+            this.registry.set(worker);
+            if (!released.accepted) {
+                appendLedger(m, 'worker.busy-stall-recovery.quarantined', { task_id: task.id, worker_id: worker.id, payload: { session_id: fromSession, attempt: worker.attempt, reason: released.reason } });
+                return { disposition: 'QUARANTINED', reason: released.reason, worker_id: worker.id, task_id: task.id, from_model: fromModel };
+            }
+            if (!next)
+                return blockAfterAbort('no-admissible-recovery-model', `No recovery-only candidate is currently admissible from ${fromModel}.`);
+            if (!browserClean)
+                return blockAfterAbort('browser-cleanup-failed', 'The prior visual execution owner could not be cleaned after its host session was aborted.');
+            const priorFork = worker.forked_from_session_id, priorVariant = worker.model_variant, nextVariant = task.execution_profile?.fallback_variants?.[next];
+            const reservation = reserveTaskRuntimeDispatch(m, worker, next, this.scheduler);
+            if (!reservation.accepted)
+                return blockAfterAbort('replacement-reservation-unavailable', reservation.reason);
+            try {
+                this.child.recordModelProjection(worker, next, nextVariant);
+                const created = await this.child.create(m.identity.session_id, `Hi · ${worker.role} · liveness recovery · ${task.objective.slice(0, 40)}`, worker.role, next === 'host-default' ? undefined : next, nextVariant, this.workspaceBinding?.(m, task.id));
+                if (!created.id)
+                    throw new Error('Host-liveness recovery child session id missing');
+                const recoverySessionID = String(created.id);
+                worker.session_id = recoverySessionID;
+                worker.forked_from_session_id = fromSession;
+                const bound = bindTaskRuntimeHost(m, worker.id, recoverySessionID);
+                if (!bound.accepted)
+                    throw new Error(`Scheduler host binding failed during host-liveness recovery: ${bound.reason}`);
+                worker.loaded_methodologies = [];
+                worker.model = next;
+                worker.model_variant = nextVariant;
+                worker.fallback_history = [...(worker.fallback_history ?? []), { from: fromModel, to: next, variant: nextVariant, reason: 'bounded host-liveness stall after repeated task await timeouts', phase: 'runtime', at: Date.now() }];
+                worker.runtime_recovery_pending = true;
+                worker.runtime_recovery_attempt = (worker.runtime_recovery_attempt ?? 0) + 1;
+                worker.status = 'busy';
+                worker.generation_at_spawn = m.continuation.generation;
+                worker.parent_mission_id = m.identity.mission_id;
+                task.status = 'running';
+                this.registry.set(worker);
+                recordPreexistingUserBaseline(m, await this.child.captureNativeDiff(worker, 'baseline'));
+                const exits = worker.selected_methodologies.flatMap(name => { const item = methodologyCatalog(this.projectRoot).find(x => x.name === name); return item ? [`${name}: ${item.exitRequirements.join(', ')}`] : []; });
+                const prompt = clipText([ownershipContract('child', worker.selected_methodologies), `Hi host-liveness stall recovery for existing task ${task.id}.`, `The prior child remained host ${hostStatus} after ${timeouts.length} bounded task-await timeouts totaling ${total}ms and was explicitly aborted before this replacement.`, `Previous session: ${fromSession}.`, `Recovery model: ${next}.`, `OBJECTIVE: ${task.objective}`, `SCOPE: ${task.scope.join(', ') || 'bounded by objective'}`, `CURRENT USER CONSTRAINTS: ${(task.constraints ?? []).join(' | ') || 'none'}.`, `OBSERVED CHANGED FILES SO FAR: ${m.vcs.changed_files.slice(-30).join(', ') || 'none'}`, `METHODOLOGY EXIT REQUIREMENTS: ${exits.join(' | ') || 'none'}`, worker.selected_methodologies.length ? 'This is a fresh recovery session for the SAME task. Reload every still-selected methodology through the native skill tool before continuing.' : 'No methodology is selected for this recovery.', 'Preserve already-observed project state/evidence, inspect only the minimum current state needed, do not restart top-level planning, and return the normal structured WorkerResult.'].join('\n'), DEFAULT_CONTEXT_BUDGET.max_handoff_chars);
+                beginWorkerAttempt(task, worker);
+                await this.child.sendProviderPrompt(recoverySessionID, prompt, worker.role, next === 'host-default' ? undefined : next, nextVariant, taskPromptToolOverrides(task.execution_profile?.tools ?? [], this.getHostConfig(), task.execution_profile?.mcp_servers ?? []), worker.attempt_prompt_message_id);
+                appendLedger(m, 'worker.busy-stall-recovery', { task_id: task.id, worker_id: worker.id, payload: { from: fromModel, to: next, from_session: fromSession, to_session: recoverySessionID, prior_attempt: worker.attempt - 1, current_attempt: worker.attempt, host_status: hostStatus, await_timeouts: timeouts.length, observed_wait_ms: total } });
+                void this.events?.(runtimeSignal('worker.recovered', m.identity.mission_id, { task_id: task.id, worker_id: worker.id, payload: { reason: 'host-liveness-stall', from: fromModel, to: next } }));
+                return { disposition: 'RECOVERED', reason: 'host-liveness-stall', worker_id: worker.id, task_id: task.id, from_model: fromModel, to_model: next };
+            }
+            catch (error) {
+                let replacementStopped = true;
+                if (worker.session_id)
+                    try {
+                        replacementStopped = await this.child.abortNativeSession(m, worker.session_id, 'host-liveness-recovery-failed', worker.id, task.id);
+                    }
+                    catch {
+                        replacementStopped = false;
+                    }
+                ;
+                if (replacementStopped) {
+                    releaseTaskRuntimeReservation(m, worker.id);
+                    worker.forked_from_session_id = priorFork;
+                    worker.model = fromModel;
+                    worker.model_variant = priorVariant;
+                    return { ...blockAfterAbort('replacement-dispatch-failed', String(error)), to_model: next };
+                }
+                worker.status = 'busy';
+                task.status = 'running';
+                this.registry.set(worker);
+                appendLedger(m, 'worker.busy-stall-recovery.failed', { task_id: task.id, worker_id: worker.id, payload: { from: fromModel, to: next, error: String(error), replacement_stopped: false } });
+                return { disposition: 'QUARANTINED', reason: String(error), worker_id: worker.id, task_id: task.id, from_model: fromModel, to_model: next };
+            }
+        }
+        return { disposition: 'NOOP', reason: 'bounded-await-threshold-not-met' };
     }
     async recoverStagnation(m, level, action = 'same-worker-resume') {
         if ((action === 'same-worker-resume' && ![1, 2].includes(level)) || (action === 'model-escalation' && level !== 3) || m.identity.status !== 'active' || m.continuation.user_interrupted)

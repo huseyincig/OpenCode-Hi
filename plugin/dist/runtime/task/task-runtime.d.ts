@@ -142,6 +142,14 @@ export declare class TaskRuntime {
     noteNativeWriteSet(m: MissionState, workerID: string, files: string[], source?: string, stateHash?: string): Promise<void>;
     noteNativeStatus(m: MissionState, workerID: string, status: string): void;
     applyResult(m: MissionState, workerID: string, result: WorkerResult): void;
+    recoverStalledAwaitWorker(m: MissionState): Promise<{
+        disposition: "NOOP" | "RECOVERED" | "QUARANTINED" | "BLOCKED";
+        reason: string;
+        worker_id?: string;
+        task_id?: string;
+        from_model?: string;
+        to_model?: string;
+    }>;
     recoverStagnation(m: MissionState, level: number, action?: 'same-worker-resume' | 'model-escalation'): Promise<boolean>;
     fail(m: MissionState, workerID: string, error: string): void;
     peek(m: MissionState, id: string): any;
