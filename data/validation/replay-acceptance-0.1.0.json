@@ -5,8 +5,8 @@
   "section": 33,
   "status": "PASS",
   "source_binding": {
-    "tested_git_commit": "8ba16fccfe502326a2491d3e78a574ac1a248824",
-    "tested_git_tree": "5408dffdd71b65708a7e1dff87e28cffa09e4292"
+    "tested_git_commit": "e0a7ec72bcacc7027712199795e020c7492ced78",
+    "tested_git_tree": "29792d132100ae7989e7559601c219a169dfddd3"
   },
   "inputs": {
     "data/validation/replay-corpus.json": "60ca528508cf1c3dc546139999bf9a4c6f0671d2e70104ee9a71c7a8df3cd0a9",
@@ -16,11 +16,11 @@
     "plugin/src/runtime/routing/category.ts": "42aa9fa2d6a12a71c353b6d1f5852bfb474309ee9a44647138da9cb89235a088",
     "plugin/src/runtime/routing/execution-mode.ts": "fd8fe07e960ec2e148d5b8935ad34e0efcecb290a6e819eb6581e03f92f62f51",
     "plugin/src/runtime/routing/minimum-team.ts": "08f40b0bd9dc5a9f044b53bacccad68118dc61791f2645ca7bf910f7742a643e",
-    "plugin/src/runtime/execution/topology-policy.ts": "7d5fdb628c9ef4ba96be5bf6de876f291e28775bd47e2ea5438a0c57680b4ffe",
-    "plugin/src/runtime/verification/policy.ts": "a4b2e1c08156513c4f80c305b3ea9f9b39674d484950f96e93a522d448e04e7b",
-    "plugin/src/runtime/scheduler/planner.ts": "1757eb404c8a8df7a25d7ad975c7c1b9efc1f2207108f7e5ebc8a15abc8372ba",
+    "plugin/src/runtime/execution/topology-policy.ts": "1a69205c6dbb6653dddf2a602574ae0e715c6824d937ee8e473fead349882ab3",
+    "plugin/src/runtime/verification/policy.ts": "8ee61a0a9f35f1c5b263a85f22076205bebf8fc54c58e5dbb3c73bf6cab6d3e0",
+    "plugin/src/runtime/scheduler/planner.ts": "49253e99725392ff6b5b174cfccf960fdd5578d51d3fe431d047475921c58449",
     "plugin/src/opencode/event-adapter.ts": "ca5ff8a07a7e94ca5fe484a0e3caca9f987d628d3396a806e7e35a56036dc6dd",
-    "plugin/src/runtime/completion/evaluator.ts": "78af108c2539f62e3ebd3af1522939fe50fa6ede39409c4f3193268753be8489",
+    "plugin/src/runtime/completion/evaluator.ts": "e462078037b1894ccdbcba27849080a183bb8075d0e93d39b15bb028a2e10578",
     "plugin/src/runtime/continuation/recovery.ts": "465b31872f8efaea16b1be46ca0f633e88f5b9c61ccb427c902502d1b5a484d7"
   },
   "surface_counts": {
