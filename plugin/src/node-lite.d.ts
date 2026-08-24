@@ -39,7 +39,7 @@ declare module 'node:child_process' {
   export function spawnSync(command:string,args:string[],options?:any):{status:number|null;stdout?:string|Buffer;stderr?:string|Buffer}
 }
 declare module 'node:os' { export function tmpdir(): string; export function homedir(): string; export function platform(): string }
-declare const Buffer: { allocUnsafe(size:number): any }
+declare const Buffer: { allocUnsafe(size:number): any; from(value:string,encoding:'base64'): { length:number; toString(encoding:'utf16le'):string } }
 declare module 'node:http' {
   export interface Server {
     listen(port:number,host:string,listener:()=>void):this

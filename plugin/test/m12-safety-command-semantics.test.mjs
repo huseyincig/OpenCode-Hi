@@ -33,3 +33,13 @@ test('M12 local Git data-loss commands share the existing destructive Git admiss
   assert.equal(evaluateShellCommand('git tag v1').decision,'ALLOW')
   assert.equal(evaluateShellCommand('git worktree remove ../feature').decision,'ALLOW')
 })
+
+
+test('M12 Windows command carriers cannot hide destructive execution from the bounded projection',()=>{
+  const encoded=Buffer.from('Remove-Item C:\\Windows -Recurse -Force','utf16le').toString('base64')
+  for(const command of [`powershell -EncodedCommand ${encoded}`,`pwsh -enc ${encoded}`])assert.equal(evaluateShellCommand(command).decision,'USER_ACTION_REQUIRED',command)
+  for(const command of ['cmd /c "rmdir /s /q C:\\Windows"','cmd.exe /c "del /s /q C:\\Users\\Public"'])assert.equal(evaluateShellCommand(command).decision,'USER_ACTION_REQUIRED',command)
+  const safeEncoded=Buffer.from("Write-Output 'hello'",'utf16le').toString('base64')
+  assert.equal(evaluateShellCommand(`powershell -EncodedCommand ${safeEncoded}`).decision,'ALLOW')
+  assert.equal(evaluateShellCommand('cmd /c "echo rmdir /s /q C:\\Windows"').decision,'ALLOW')
+})

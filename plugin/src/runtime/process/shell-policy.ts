@@ -61,6 +61,13 @@ function powershellAssessment(fragment:ExecutionFragment):'destructive'|'dynamic
   for(const raw of targets){const target=raw.replace(/^['"]|['"]$/g,''),absolute=target.startsWith('/')||/^[A-Za-z]:[\\/]/.test(target);if(!absolute&&['root','home','system'].includes(fragment.cwdRisk))return'destructive';if(!absolute&&fragment.cwdRisk==='unknown')return'dynamic'}
   return
 }
+function windowsCmdAssessment(fragment:ExecutionFragment):'destructive'|'dynamic'|undefined{
+  const tokens=words(fragment.text),head=tokens[0]?.toLowerCase();if(!['rmdir','rd','del','erase'].includes(head??''))return
+  const recursive=tokens.slice(1).some(token=>/^\/s$/i.test(token));if(!recursive)return
+  const targets=tokens.slice(1).filter(token=>!/^\/[A-Za-z]+$/.test(token));if(!targets.length)return'dynamic'
+  for(const raw of targets){const target=raw.replace(/^['"]|['"]$/g,'').replaceAll('/','\\');if(/%[A-Za-z_][A-Za-z0-9_]*%|![A-Za-z_][A-Za-z0-9_]*!/.test(target))return'dynamic';if(target==='.'||target==='.\\'||target.startsWith('..\\'))return'destructive';if(/^[A-Za-z]:\\?$/.test(target)||/^[A-Za-z]:\\(?:Windows|Users|Program Files|ProgramData)(?:\\|$)/i.test(target))return'destructive';const absolute=/^[A-Za-z]:\\/.test(target)||/^\\\\/.test(target);if(!absolute&&['root','home','system'].includes(fragment.cwdRisk))return'destructive';if(!absolute&&fragment.cwdRisk==='unknown')return'dynamic'}
+  return
+}
 function dynamicDestructiveShape(fragment:ExecutionFragment):boolean{
   if(!fragment.dynamic)return false
   const text=fragment.text
@@ -79,6 +86,7 @@ export function evaluateShellCommand(command:string):ShellPolicyResult{
     const rm=rmAssessment(fragment);if(rm==='catastrophic')return userAction(c,'catastrophic recursive filesystem mutation requires explicit user action','destructive-filesystem-action');if(rm==='dynamic')return userAction(c,'recursive filesystem mutation has a dynamically resolved target and requires explicit reconciliation','dynamic-destructive-target')
     const git=gitAssessment(fragment);if(git==='destructive')return userAction(c,'destructive Git worktree/index rewrite requires explicit user action','destructive-git-action');if(git==='dynamic')return userAction(c,'destructive Git operation contains dynamically resolved execution syntax','dynamic-destructive-git')
     const ps=powershellAssessment(fragment);if(ps==='destructive')return userAction(c,'recursive PowerShell filesystem mutation requires explicit user action','destructive-filesystem-action');if(ps==='dynamic')return userAction(c,'PowerShell filesystem mutation has dynamically resolved execution syntax','dynamic-destructive-target')
+    const win=windowsCmdAssessment(fragment);if(win==='destructive')return userAction(c,'recursive Windows filesystem mutation requires explicit user action','destructive-filesystem-action');if(win==='dynamic')return userAction(c,'Windows filesystem mutation has a dynamically resolved target and requires explicit reconciliation','dynamic-destructive-target')
     if(fragment.origin==='pipeline-consumer'&&/^rm\s+(?:-[^\s]*[rR][^\s]*|--recursive)(?:\s|$)/i.test(text))return userAction(c,'pipeline-derived recursive delete target is runtime-dependent and requires explicit user action','dynamic-destructive-target')
     if(CATASTROPHIC_FILESYSTEM.some(r=>r.test(executable)))return userAction(c,'catastrophic filesystem mutation requires explicit user action','destructive-filesystem-action')
     if(IRREVERSIBLE_EXTERNAL.some(r=>r.test(executable)))return userAction(c,'irreversible external deletion/destruction requires explicit user action','irreversible-external-action')

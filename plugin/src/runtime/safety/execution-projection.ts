@@ -246,6 +246,11 @@ function parallelJobs(tokens:string[]):string[]{
 function deriveParallelChildren(tokens:string[],depth:number,cwdRisk:EffectiveCwdRisk,state:WorkState):void{
   const jobs=parallelJobs(tokens);if(!jobs.length){pushUncertainty(state,'parallel-child-execution-unresolved');return}for(const child of jobs)scanProgram(child,'posix',depth+1,'embedded-execution',cwdRisk,state)
 }
+function decodePowerShellEncoded(value:string,state:WorkState):string|undefined{
+  if(value.length>MAX_INPUT_CHARS*2||value.length%4!==0||!/^[A-Za-z0-9+/]+={0,2}$/.test(value)){pushUncertainty(state,'powershell-encoded-command-invalid');return}
+  const bytes=Buffer.from(value,'base64');if(!bytes.length||bytes.length%2!==0){pushUncertainty(state,'powershell-encoded-command-invalid');return}
+  const decoded=bytes.toString('utf16le').replace(/\u0000+$/g,'').trim();if(!decoded){pushUncertainty(state,'powershell-encoded-command-empty');return}return decoded
+}
 function deriveChildren(text:string,dialect:ExecutionDialect,depth:number,cwdRisk:EffectiveCwdRisk,state:WorkState):void{
   if(depth>=MAX_DEPTH){pushUncertainty(state,'nested-execution-depth-exceeded');return}
   const tokens=stripAssignmentPrefix(shellTokens(text));if(!tokens.length)return
@@ -256,7 +261,12 @@ function deriveChildren(text:string,dialect:ExecutionDialect,depth:number,cwdRis
     const i=args.findIndex((x,index)=>index>0&&x==='-c');if(i>=0&&args[i+1])scanProgram(args[i+1],'posix',depth+1,'shell-wrapper',cwdRisk,state)
   }
   if(['powershell','powershell.exe','pwsh','pwsh.exe'].includes(head??'')){
-    const i=args.findIndex((x,index)=>index>0&&['-command','-c'].includes(x.toLowerCase()));if(i>=0&&args[i+1])scanProgram(args.slice(i+1).join(' '),'powershell',depth+1,'shell-wrapper',cwdRisk,state)
+    const encoded=args.findIndex((x,index)=>index>0&&['-encodedcommand','-enc','-e'].includes(x.toLowerCase()))
+    if(encoded>=0){if(encoded+2!==args.length)pushUncertainty(state,'powershell-encoded-command-shape');else{const decoded=decodePowerShellEncoded(args[encoded+1],state);if(decoded)scanProgram(decoded,'powershell',depth+1,'shell-wrapper',cwdRisk,state)}}
+    else{const i=args.findIndex((x,index)=>index>0&&['-command','-c'].includes(x.toLowerCase()));if(i>=0&&args[i+1])scanProgram(args.slice(i+1).join(' '),'powershell',depth+1,'shell-wrapper',cwdRisk,state)}
+  }
+  if(['cmd','cmd.exe'].includes(head??'')){
+    const i=args.findIndex((x,index)=>index>0&&['/c','/k'].includes(x.toLowerCase()));if(i>=0&&args[i+1])scanProgram(args.slice(i+1).join(' '),'powershell',depth+1,'shell-wrapper',cwdRisk,state)
   }
   if(['eval','source','.'].includes(head??'')){
     const source=args.slice(1).filter(x=>x!=='--').join(' ')

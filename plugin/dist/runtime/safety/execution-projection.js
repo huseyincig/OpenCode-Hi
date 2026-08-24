@@ -581,6 +581,23 @@ function deriveParallelChildren(tokens, depth, cwdRisk, state) {
     for (const child of jobs)
         scanProgram(child, 'posix', depth + 1, 'embedded-execution', cwdRisk, state);
 }
+function decodePowerShellEncoded(value, state) {
+    if (value.length > MAX_INPUT_CHARS * 2 || value.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(value)) {
+        pushUncertainty(state, 'powershell-encoded-command-invalid');
+        return;
+    }
+    const bytes = Buffer.from(value, 'base64');
+    if (!bytes.length || bytes.length % 2 !== 0) {
+        pushUncertainty(state, 'powershell-encoded-command-invalid');
+        return;
+    }
+    const decoded = bytes.toString('utf16le').replace(/\u0000+$/g, '').trim();
+    if (!decoded) {
+        pushUncertainty(state, 'powershell-encoded-command-empty');
+        return;
+    }
+    return decoded;
+}
 function deriveChildren(text, dialect, depth, cwdRisk, state) {
     if (depth >= MAX_DEPTH) {
         pushUncertainty(state, 'nested-execution-depth-exceeded');
@@ -602,7 +619,24 @@ function deriveChildren(text, dialect, depth, cwdRisk, state) {
             scanProgram(args[i + 1], 'posix', depth + 1, 'shell-wrapper', cwdRisk, state);
     }
     if (['powershell', 'powershell.exe', 'pwsh', 'pwsh.exe'].includes(head ?? '')) {
-        const i = args.findIndex((x, index) => index > 0 && ['-command', '-c'].includes(x.toLowerCase()));
+        const encoded = args.findIndex((x, index) => index > 0 && ['-encodedcommand', '-enc', '-e'].includes(x.toLowerCase()));
+        if (encoded >= 0) {
+            if (encoded + 2 !== args.length)
+                pushUncertainty(state, 'powershell-encoded-command-shape');
+            else {
+                const decoded = decodePowerShellEncoded(args[encoded + 1], state);
+                if (decoded)
+                    scanProgram(decoded, 'powershell', depth + 1, 'shell-wrapper', cwdRisk, state);
+            }
+        }
+        else {
+            const i = args.findIndex((x, index) => index > 0 && ['-command', '-c'].includes(x.toLowerCase()));
+            if (i >= 0 && args[i + 1])
+                scanProgram(args.slice(i + 1).join(' '), 'powershell', depth + 1, 'shell-wrapper', cwdRisk, state);
+        }
+    }
+    if (['cmd', 'cmd.exe'].includes(head ?? '')) {
+        const i = args.findIndex((x, index) => index > 0 && ['/c', '/k'].includes(x.toLowerCase()));
         if (i >= 0 && args[i + 1])
             scanProgram(args.slice(i + 1).join(' '), 'powershell', depth + 1, 'shell-wrapper', cwdRisk, state);
     }
