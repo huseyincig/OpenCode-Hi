@@ -28,6 +28,10 @@ export declare function createHiToolSurface(input: {
     native: HostNativeSessionPort;
     getModels: () => AvailableModel[];
     refreshModels?: (reason: string) => Promise<number>;
+    refreshOwnedHostCapability?: (id: 'process-lifecycle' | 'workspace-isolation-binding') => Promise<{
+        available: boolean;
+        detail?: string;
+    }>;
     scopedStores: RuntimeScopedStores;
     getBrowserBootstrapStatus?: () => {
         available: boolean;

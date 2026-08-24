@@ -69,8 +69,9 @@ function userFacingChildRole(value) { const role = String(value ?? '').trim().to
 function base64Bytes(bytes) { let binary = ''; for (let offset = 0; offset < bytes.length; offset += 0x8000)
     binary += String.fromCharCode(...bytes.subarray(offset, Math.min(bytes.length, offset + 0x8000))); return btoa(binary); }
 export function createHiToolSurface(input) {
-    const { state, store, tasks, processRuntime, workspaceRuntime, browserExecutor, previewManager, projectRoot, workingDirectory, capabilities, native, getModels, refreshModels, scopedStores, getBrowserBootstrapStatus } = input;
-    const doctorTool = tool({ description: 'Run OpenCode-Hi runtime/configuration health checks', args: {}, execute: async () => { const browserHealth = browserExecutor ? await browserExecutor.health() : { available: false }, runtimeHostResources = new Set(browserHealth.available ? ['host-capability:browser-execution'] : []); return formatDoctor(runDoctor(state.config, store, projectRoot, { models: getModels(), resolution: state.configResolution, capabilities, hostConfig: state.hostConfig, openCodeVersion: state.openCodeVersion, runtimeHostResources, browserBootstrap: getBrowserBootstrapStatus?.() })); } });
+    const { state, store, tasks, processRuntime, workspaceRuntime, browserExecutor, previewManager, projectRoot, workingDirectory, capabilities, native, getModels, refreshModels, refreshOwnedHostCapability, scopedStores, getBrowserBootstrapStatus } = input;
+    const doctorTool = tool({ description: 'Run OpenCode-Hi runtime/configuration health checks', args: {}, execute: async () => { if (refreshOwnedHostCapability)
+            await Promise.allSettled([refreshOwnedHostCapability('process-lifecycle'), refreshOwnedHostCapability('workspace-isolation-binding')]); const browserHealth = browserExecutor ? await browserExecutor.health() : { available: false }, runtimeHostResources = new Set(browserHealth.available ? ['host-capability:browser-execution'] : []); return formatDoctor(runDoctor(state.config, store, projectRoot, { models: getModels(), resolution: state.configResolution, capabilities, hostConfig: state.hostConfig, openCodeVersion: state.openCodeVersion, runtimeHostResources, browserBootstrap: getBrowserBootstrapStatus?.() })); } });
     const statusTool = tool({ description: 'Show compact user-facing Hi mission status. This intentionally excludes diagnostic logs and ledger payloads.', args: {}, execute: async (_args, c) => { const m = store.get(c?.sessionID); return m ? formatUserMissionStatus(m) : 'Hi: no active mission'; } });
     const reloadConfig = () => { const resolved = resolveHiConfigWithReport(state.hostConfig.hi, projectRoot); state.config = resolved.config; state.configResolution = resolved.report; return state.config; };
     const modelRows = (available) => available.map(model => ({ id: model.id, provider: model.provider ?? null, vision: model.visionCapable === true, variants: model.variants ?? [] }));
@@ -592,10 +593,16 @@ export function createHiToolSurface(input) {
         } } });
     const processSpawnTool = tool({ description: 'Spawn one owned long-running process for an existing Hi worker/task through the native OpenCode PTY lifecycle. Native permission ask remains a real OpenCode permission request.', args: { worker_id: tool.schema.string(), command: tool.schema.string(), args_json: tool.schema.string().optional(), cwd: tool.schema.string().optional(), timeout_ms: tool.schema.number().optional(), title: tool.schema.string().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)
             return 'No active Hi mission'; if (!m.identity.intent.requiredCapabilities.includes('interactive-process'))
-            return 'BLOCKED: persistent/interactive process lifecycle was not selected; use the native shell for bounded commands'; const processCapability = hostCapabilityByID(capabilities.contracts ?? [], 'process-lifecycle'); if (processCapability?.status !== 'SUPPORTED') {
-            const detail = 'native process lifecycle is unavailable on the active OpenCode host', marker = markCapabilityUnavailable(m, { capability: 'process-lifecycle', reason: detail, workerId: String(a.worker_id) });
+            return 'BLOCKED: persistent/interactive process lifecycle was not selected; use the native shell for bounded commands'; let observed; if (refreshOwnedHostCapability)
+            try {
+                observed = await refreshOwnedHostCapability('process-lifecycle');
+            }
+            catch (error) {
+                observed = { available: false, detail: String(error) };
+            } const processCapability = hostCapabilityByID(capabilities.contracts ?? [], 'process-lifecycle'); if (observed?.available === false || processCapability?.status !== 'SUPPORTED') {
+            const detail = observed?.detail ?? 'native process lifecycle is unavailable on the active OpenCode host', marker = markCapabilityUnavailable(m, { capability: 'process-lifecycle', reason: detail, workerId: String(a.worker_id) });
             return JSON.stringify({ status: 'USER_ACTION_REQUIRED', reason: 'capability-unavailable', capability: 'process-lifecycle', blocker: marker, detail });
-        } ; let args; if (a.args_json) {
+        } clearCapabilityUnavailable(m, 'process-lifecycle'); let args; if (a.args_json) {
             try {
                 const parsed = JSON.parse(String(a.args_json));
                 if (!Array.isArray(parsed) || !parsed.every(x => typeof x === 'string'))
@@ -609,6 +616,19 @@ export function createHiToolSurface(input) {
             return JSON.stringify(await processRuntime.spawn(m, { worker_id: String(a.worker_id), command: String(a.command), args, cwd: String(a.cwd ?? c?.directory ?? projectRoot), timeout_ms: a.timeout_ms === undefined ? undefined : Number(a.timeout_ms), title: a.title ? String(a.title) : undefined, ask: async (request) => c.ask({ permission: request.permission, patterns: request.patterns, always: request.always, metadata: request.metadata }) }));
         }
         catch (error) {
+            if (refreshOwnedHostCapability) {
+                let after;
+                try {
+                    after = await refreshOwnedHostCapability('process-lifecycle');
+                }
+                catch (probeError) {
+                    after = { available: false, detail: String(probeError) };
+                }
+                if (!after.available) {
+                    const detail = after.detail ?? String(error), marker = markCapabilityUnavailable(m, { capability: 'process-lifecycle', reason: detail, workerId: String(a.worker_id) });
+                    return JSON.stringify({ status: 'USER_ACTION_REQUIRED', reason: 'capability-unavailable', capability: 'process-lifecycle', blocker: marker, detail });
+                }
+            }
             return `Process spawn blocked: ${String(error)}`;
         } } });
     const processReadTool = tool({ description: 'Read one bounded cursor window from an owned Hi process. Output observation is hash-bound Evidence input, never implicit verification PASS.', args: { id: tool.schema.string(), cursor: tool.schema.number().optional(), max_chars: tool.schema.number().optional() }, execute: async (a, c) => { const m = store.get(c?.sessionID); if (!m)

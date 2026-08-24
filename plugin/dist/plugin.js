@@ -31,6 +31,9 @@ export const HiPlugin = async (ctx) => {
         const hostCapabilities = host.capabilities.contracts;
         let processAvailable = false, workspaceAvailable = false, browserAvailable = false;
         const refreshOwnedCapabilities = () => { const observed = detectOpenCodeCapabilities(ctx.client, { processLifecycle: processAvailable, workspaceIsolation: workspaceAvailable, browserExecution: browserAvailable }); hostCapabilities.splice(0, hostCapabilities.length, ...observed.contracts); };
+        const observeProcessCapability = async () => { const health = await processExecutor.health(); processAvailable = health.available; refreshOwnedCapabilities(); return health; };
+        const observeWorkspaceCapability = async () => { const health = await workspaceExecutor.health(); workspaceAvailable = health.available; refreshOwnedCapabilities(); return health; };
+        const refreshOwnedHostCapability = async (id) => id === 'process-lifecycle' ? observeProcessCapability() : observeWorkspaceCapability();
         refreshOwnedCapabilities();
         const services = createRuntimeServices({ ports: { nativeContext: { project: ctx.project, directory: ctx.directory, worktree: ctx.worktree }, childSession, readAssistantResult: host.readAssistantResult, hostCapabilities, process: processExecutor, workspace: workspaceExecutor, createBrowser: persist => new PlaywrightBrowserAdapter({ persist_screenshot: persist, browser_cache_paths: [browserBootstrap.cachePath] }), bootstrapBrowser: () => browserBootstrap.ensure(), onBrowserAvailability: value => { browserAvailable = value; refreshOwnedCapabilities(); } }, projectRoot, packageRoot, getConfig: () => state.config, getModels: host.getModels, getHostConfig: () => state.hostConfig });
         await services.workspaceRuntime.reconcileRestored(services.store.all());
@@ -40,11 +43,11 @@ export const HiPlugin = async (ctx) => {
         services.setBrowserAvailable(browserAvailable);
         refreshOwnedCapabilities();
         services.tasks.rehydrateQueued(services.store.all());
-        setTimeout(() => { void Promise.all([processExecutor.health(), workspaceExecutor.health()]).then(([processHealth, workspaceHealth]) => { processAvailable = processHealth.available; workspaceAvailable = workspaceHealth.available; refreshOwnedCapabilities(); }).catch(() => { }); }, 0);
+        setTimeout(() => { void Promise.all([observeProcessCapability(), observeWorkspaceCapability()]).catch(() => { }); }, 0);
         services.persistence.save(services.store.all());
         const pendingNativePermissions = new Map();
         const eventController = new RuntimeEventController({ state, host, services, projectAuthority, pendingNativePermissions, projectRoot });
-        const { toolSurface } = createHiToolSurface({ state, store: services.store, tasks: services.tasks, processRuntime: services.processRuntime, workspaceRuntime: services.workspaceRuntime, browserExecutor: services.browserExecutor, previewManager: services.previewManager, projectRoot, workingDirectory: ctx.directory, capabilities: host.capabilities, native: host.nativeSession, getModels: host.getModels, refreshModels: host.refreshRuntimeInventory, scopedStores: services.scopedStores, getBrowserBootstrapStatus: services.getBrowserBootstrapStatus });
+        const { toolSurface } = createHiToolSurface({ state, store: services.store, tasks: services.tasks, processRuntime: services.processRuntime, workspaceRuntime: services.workspaceRuntime, browserExecutor: services.browserExecutor, previewManager: services.previewManager, projectRoot, workingDirectory: ctx.directory, capabilities: host.capabilities, native: host.nativeSession, getModels: host.getModels, refreshModels: host.refreshRuntimeInventory, refreshOwnedHostCapability, scopedStores: services.scopedStores, getBrowserBootstrapStatus: services.getBrowserBootstrapStatus });
         void host.log('info', 'OpenCode-Hi plugin initialized', { directory: ctx.directory, models: host.getModels().length, restored: services.store.all().length, uncleanShutdown: services.persistence.lastLoadReport.uncleanShutdown === true, capabilities: host.capabilities, browser: browserHealth });
         return createOpenCodeHooks({ state, host, services, projectRoot, workingDirectory: ctx.directory, packagedSkillsDir, projectAuthority, toolSurface, eventController, instanceLease });
     }

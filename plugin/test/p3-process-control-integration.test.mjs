@@ -102,6 +102,23 @@ test('M12 interactive-process plus observed native PTY capability admits the exi
   assert.equal(out.process_id,'proc_1');assert.equal(calls.length,1);assert.equal(calls[0].command,'node')
 })
 
+test('M24 process spawn reobserves a stale SUPPORTED PTY capability and fails closed before native spawn',async()=>{
+  const store=new MissionStore(),m=store.start('m24-pty-drift-down','opaque persistent process');store.applyInitialSemanticAssessment('m24-pty-drift-down',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[],capabilities=detectOpenCodeCapabilities({}, {processLifecycle:true});let probes=0
+  const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async()=>{calls.push('spawn');return{process_id:'should-not-spawn',status:'RUNNING'}}}
+  const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities,native:{},getModels:()=>[],scopedStores:scoped(),refreshOwnedHostCapability:async id=>{assert.equal(id,'process-lifecycle');probes++;capabilities.contracts.splice(0,capabilities.contracts.length,...detectOpenCodeCapabilities({}).contracts);return{available:false,detail:'OpenCode canonical v2 PTY list unavailable'}}})
+  const out=JSON.parse(await toolSurface.hi_process_spawn.execute({worker_id:'w1',command:'node',args_json:'["server.js"]',cwd:'/repo'},{sessionID:m.identity.session_id,directory:'/repo'}))
+  assert.equal(probes,1);assert.deepEqual(calls,[]);assert.equal(out.status,'USER_ACTION_REQUIRED');assert.equal(out.blocker,'capability-unavailable:process-lifecycle');assert.match(out.detail,/PTY list unavailable|process lifecycle is unavailable/i)
+})
+
+test('M24 process spawn reobserves stale UNSUPPORTED PTY recovery and clears the old capability blocker',async()=>{
+  const store=new MissionStore(),m=store.start('m24-pty-drift-up','opaque persistent process');store.applyInitialSemanticAssessment('m24-pty-drift-up',{...INITIAL,required_capabilities:['implementation','interactive-process']});const calls=[],capabilities=detectOpenCodeCapabilities({});let probes=0
+  m.execution.blockers.push('capability-unavailable:process-lifecycle')
+  const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async(_m,input)=>{calls.push(input);return{process_id:'proc_recovered',status:'RUNNING'}}}
+  const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities,native:{},getModels:()=>[],scopedStores:scoped(),refreshOwnedHostCapability:async id=>{assert.equal(id,'process-lifecycle');probes++;capabilities.contracts.splice(0,capabilities.contracts.length,...detectOpenCodeCapabilities({}, {processLifecycle:true}).contracts);return{available:true,detail:'OpenCode canonical v2 PTY list observed'}}})
+  const out=JSON.parse(await toolSurface.hi_process_spawn.execute({worker_id:'w1',command:'node',args_json:'["server.js"]',cwd:'/repo'},{sessionID:m.identity.session_id,directory:'/repo'}))
+  assert.equal(probes,1);assert.equal(out.process_id,'proc_recovered');assert.equal(calls.length,1);assert.ok(!m.execution.blockers.includes('capability-unavailable:process-lifecycle'))
+})
+
 
 test('native-revert registration missing session-revert capability is terminal and deduped',async()=>{
   const store=new MissionStore(),m=assessed(store,'no-session-revert'),processRuntime={list:()=>[],stopMission:async()=>0}
