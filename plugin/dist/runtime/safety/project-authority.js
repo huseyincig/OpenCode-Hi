@@ -8,6 +8,23 @@ const CLASS_PATTERNS = {
     'deploy': ['docker push *', 'kubectl apply *', 'kubectl delete *', 'terraform apply *', 'vercel deploy*', 'netlify deploy*'],
 };
 function empty() { return { schema: 1, grants: {} }; }
+const AUTHORITY_CLASSES = new Set(['git-push', 'release-create', 'package-publish', 'deploy']);
+function authorityFile(value) {
+    if (!value || typeof value !== 'object' || Array.isArray(value))
+        return;
+    const raw = value;
+    if (Object.keys(raw).some(key => !['schema', 'grants'].includes(key)) || raw.schema !== 1 || !raw.grants || typeof raw.grants !== 'object' || Array.isArray(raw.grants))
+        return;
+    const grants = raw.grants;
+    for (const [key, value] of Object.entries(grants)) {
+        if (!AUTHORITY_CLASSES.has(key) || !value || typeof value !== 'object' || Array.isArray(value))
+            return;
+        const grant = value, keys = Object.keys(grant);
+        if (keys.length !== 2 || !keys.includes('approved_at') || !keys.includes('source') || typeof grant.approved_at !== 'number' || !Number.isFinite(grant.approved_at) || grant.approved_at <= 0 || grant.source !== 'native-always')
+            return;
+    }
+    return { schema: 1, grants: grants };
+}
 export class ProjectAuthorityStore {
     path;
     #state;
@@ -15,10 +32,7 @@ export class ProjectAuthorityStore {
     #load() { try {
         if (!existsSync(this.path))
             return empty();
-        const raw = JSON.parse(readFileSync(this.path, 'utf8'));
-        if (raw?.schema !== 1 || !raw?.grants || typeof raw.grants !== 'object')
-            return empty();
-        return raw;
+        return authorityFile(JSON.parse(readFileSync(this.path, 'utf8'))) ?? empty();
     }
     catch {
         return empty();

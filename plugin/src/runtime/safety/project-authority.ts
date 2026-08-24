@@ -12,11 +12,23 @@ const CLASS_PATTERNS:Record<PersistentAuthorityClass,string[]>={
   'deploy':['docker push *','kubectl apply *','kubectl delete *','terraform apply *','vercel deploy*','netlify deploy*'],
 }
 function empty():AuthorityFile{return{schema:1,grants:{}}}
+const AUTHORITY_CLASSES=new Set<PersistentAuthorityClass>(['git-push','release-create','package-publish','deploy'])
+function authorityFile(value:unknown):AuthorityFile|undefined{
+  if(!value||typeof value!=='object'||Array.isArray(value))return
+  const raw=value as Record<string,unknown>;if(Object.keys(raw).some(key=>!['schema','grants'].includes(key))||raw.schema!==1||!raw.grants||typeof raw.grants!=='object'||Array.isArray(raw.grants))return
+  const grants=raw.grants as Record<string,unknown>
+  for(const [key,value] of Object.entries(grants)){
+    if(!AUTHORITY_CLASSES.has(key as PersistentAuthorityClass)||!value||typeof value!=='object'||Array.isArray(value))return
+    const grant=value as Record<string,unknown>,keys=Object.keys(grant)
+    if(keys.length!==2||!keys.includes('approved_at')||!keys.includes('source')||typeof grant.approved_at!=='number'||!Number.isFinite(grant.approved_at)||grant.approved_at<=0||grant.source!=='native-always')return
+  }
+  return{schema:1,grants:grants as AuthorityFile['grants']}
+}
 export class ProjectAuthorityStore{
   readonly path:string
   #state:AuthorityFile
   constructor(root:string){this.path=projectPolicyPath(root,'authority');this.#state=this.#load()}
-  #load():AuthorityFile{try{if(!existsSync(this.path))return empty();const raw=JSON.parse(readFileSync(this.path,'utf8'));if(raw?.schema!==1||!raw?.grants||typeof raw.grants!=='object')return empty();return raw}catch{return empty()}}
+  #load():AuthorityFile{try{if(!existsSync(this.path))return empty();return authorityFile(JSON.parse(readFileSync(this.path,'utf8')))??empty()}catch{return empty()}}
   has(cls:PersistentAuthorityClass):boolean{return Boolean(this.#state.grants[cls])}
   grant(cls:PersistentAuthorityClass):void{this.#state.grants[cls]={approved_at:Date.now(),source:'native-always'};mkdirSync(dirname(this.path),{recursive:true});writeFileSync(this.path,JSON.stringify(this.#state,null,2)+'\n','utf8')}
   grants():PersistentAuthorityClass[]{return(Object.keys(this.#state.grants) as PersistentAuthorityClass[]).filter(x=>this.has(x))}

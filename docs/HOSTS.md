@@ -44,7 +44,7 @@ OpenCode 1.18.19 gates its experimental workspace control plane behind `OPENCODE
 
 ## HumanDecision transport surface
 
-Hi's H1 chat transport is host-independent and runtime-scoped. For an optional structured OpenCode UI adapter, the required primitive is stronger than question event visibility: the plugin must be able to directly open a typed request bound to the exact canonical `decision_id`, then receive/reject that same request without model mediation. OpenCode 1.18.19 public SDK exposes `question.list/reply/reject` but no plugin-callable `question.ask/open`, so `structured-human-decision-transport` remains `UNSUPPORTED`. The internal model `question` tool is not treated as an adapter seam. This question/UI limitation is independent from the separately accepted `browser-execution` capability; browser support does not create or widen HumanDecision transport authority.
+Hi's H1 chat transport is host-independent and runtime-scoped. For an optional structured OpenCode UI adapter, the required primitive is stronger than question event visibility: the plugin must be able to directly open a typed request bound to the exact canonical `decision_id`, then receive/reject that same request without model mediation. OpenCode 1.18.21 and the current fetched upstream public SDK surface expose `question.list/reply/reject` but no plugin-callable `question.ask/open`, so `structured-human-decision-transport` remains `UNSUPPORTED`. The internal model `question` tool is not treated as an adapter seam. This question/UI limitation is independent from the separately accepted `browser-execution` capability; browser support does not create or widen HumanDecision transport authority.
 
 ## Browser observation boundary
 

@@ -131,7 +131,9 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
                 throw new Error('Hi authority boundary: child workers may not execute publish/push/deploy or other privileged external effects. Parent Hi must own the exact authority contract.');
             const claim = claimAuthorizedAction(m, args.command, args?.cwd);
             if (claim === 'duplicate')
-                throw new Error('Hi idempotency guard: this exact privileged action is already in-flight or completed.');
+                throw new Error('Hi idempotency guard: this exact privileged action is already in-flight or completed, or is awaiting authority.');
+            if (claim === 'conflict')
+                throw new Error('Hi authority boundary: another exact privileged action already owns the pending/approved/executing authority slot. Resolve or invalidate it before starting a different external effect.');
             beginAuthorizedAction(m, args.command, args?.cwd);
         }
         if (m.identity.status !== 'active' && !matchRollback(m, String(args?.command ?? '')))
