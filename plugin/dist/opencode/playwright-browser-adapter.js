@@ -3,8 +3,18 @@ import { existsSync } from 'node:fs';
 import { browserObservationId } from '../contracts/browser-observation.js';
 import { discoverPlaywrightChromium } from '../runtime/browser/discovery.js';
 export { discoverPlaywrightChromium } from '../runtime/browser/discovery.js';
-const MAX_SUMMARY = 4000, MAX_ERRORS = 64;
+const MAX_SUMMARY = 4000, MAX_ERRORS = 64, BROWSER_CLOSE_TIMEOUT_MS = 2000;
 function bounded(v, max = MAX_SUMMARY) { return v.length <= max ? v : v.slice(0, max); }
+async function boundedBrowserClose(browser, timeoutMs = BROWSER_CLOSE_TIMEOUT_MS) {
+    let timer;
+    try {
+        await Promise.race([Promise.resolve().then(() => browser.close()), new Promise((_resolve, reject) => { timer = setTimeout(() => reject(new Error(`Playwright browser.close timed out after ${timeoutMs}ms`)), timeoutMs); })]);
+    }
+    finally {
+        if (timer)
+            clearTimeout(timer);
+    }
+}
 function localHost(hostname) { return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname === '[::1]'; }
 function safeLocalUrl(value) { let u; try {
     u = new URL(value);
@@ -38,7 +48,7 @@ export class PlaywrightBrowserAdapter {
     async ensure(c) { const current = this.sessions.get(c.task_id); if (current && current.executionOwnerRef === c.execution_owner_ref)
         return current; if (current) {
         try {
-            await current.browser.close();
+            await boundedBrowserClose(current.browser);
         }
         catch { }
         this.sessions.delete(c.task_id);
@@ -141,7 +151,7 @@ export class PlaywrightBrowserAdapter {
         throw new Error('Browser wait must be 0..30000ms'); await s.page.waitForTimeout(request.milliseconds); return this.snapshot(c, 'wait'); }
     async close(c) { const s = this.sessions.get(c.task_id); if (!s?.url || s.executionOwnerRef !== c.execution_owner_ref)
         throw new Error('Browser session is not owned by the current execution identity'); const url = s.url; try {
-        await s.browser.close();
+        await boundedBrowserClose(s.browser);
         if (this.sessions.get(c.task_id) === s)
             this.sessions.delete(c.task_id);
         return this.observation(c, s, 'close', url, 'OBSERVED', 'browser session closed');
@@ -152,7 +162,7 @@ export class PlaywrightBrowserAdapter {
     async cleanup(c) { const s = this.sessions.get(c.task_id); if (!s)
         return { cleaned: false, reason: 'not-found' }; if (s.executionOwnerRef !== c.execution_owner_ref)
         return { cleaned: false, reason: 'owner-mismatch' }; try {
-        await s.browser.close();
+        await boundedBrowserClose(s.browser);
         if (this.sessions.get(c.task_id) === s)
             this.sessions.delete(c.task_id);
         return { cleaned: true, reason: 'cleaned' };
@@ -162,7 +172,7 @@ export class PlaywrightBrowserAdapter {
     } }
     async dispose() { for (const [id, s] of this.sessions) {
         try {
-            await s.browser.close();
+            await boundedBrowserClose(s.browser);
         }
         catch { }
         this.sessions.delete(id);

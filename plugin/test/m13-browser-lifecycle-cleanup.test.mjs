@@ -111,3 +111,42 @@ test('M13 failed visual verification task releases open-obligation methodology o
   const replacementTask=m.execution.tasks.find(t=>t.id===replacement.task_id);assert.ok(replacementTask)
   assert.ok(replacement.methodologies.includes('hi-visual-qa'));assert.equal(replacementTask.execution_profile.browser_backend,'bounded-playwright');assert.ok(replacementTask.execution_profile.tools.includes('hi_browser_screenshot'))
 })
+
+
+test('M13 browser cleanup is bounded when Playwright browser.close never settles',async()=>{
+  const never=new Promise(()=>{})
+  const module={chromium:{launch:async()=>{
+    const page={_url:'about:blank',url(){return this._url},setDefaultTimeout(){},on(){},async goto(url){this._url=url},locator(){return{evaluate:async()=>({body:'ready',items:[]})}}}
+    return{newContext:async()=>({route:async()=>{},newPage:async()=>page}),close:async()=>never}
+  }}}
+  const adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>module,timeout_ms:1000})
+  const owner=context('hung-close','m:w:s:g1')
+  await adapter.open(owner,'http://127.0.0.1:4173/')
+  const outcome=await Promise.race([
+    adapter.cleanup(owner).then(value=>({kind:'result',value})),
+    new Promise(resolve=>setTimeout(()=>resolve({kind:'timeout'}),3500)),
+  ])
+  assert.equal(outcome.kind,'result','browser cleanup must not wait forever for Playwright browser.close')
+  assert.equal(outcome.value.cleaned,false)
+  assert.equal(outcome.value.reason,'close-failed')
+})
+
+
+test('M13 TaskRuntime cancel fails closed when exact browser cleanup cannot complete',async()=>{
+  const prompts=[],client={session:{create:async()=>({data:{id:'child-browser-fail'}}),promptAsync:async req=>{prompts.push(req);return{data:{}}},abort:async()=>({data:true}),diff:async()=>({data:[]})}}
+  const browserExecutor={
+    health:async()=>({available:true}),open:async()=>{throw new Error('unused')},navigate:async()=>{throw new Error('unused')},click:async()=>{throw new Error('unused')},type:async()=>{throw new Error('unused')},inspect:async()=>{throw new Error('unused')},screenshot:async()=>{throw new Error('unused')},wait:async()=>{throw new Error('unused')},close:async()=>{throw new Error('unused')},
+    cleanup:async()=>({cleaned:false,reason:'close-failed',error:'Playwright browser.close timed out after 2000ms'})
+  }
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>({agent:PACKAGED_HI_AGENTS}),undefined,{},undefined,undefined,()=>new Set(['host-capability:browser-execution']),browserExecutor)
+  const store=new MissionStore(repoRoot),m=store.start('m13-cancel-fail-closed','verify local browser')
+  store.applyInitialSemanticAssessment('m13-cancel-fail-closed',{material:true,message_kind:'mission',task_kind:'review',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['visual-review'],requested_external_actions:[],likely_verification:['visual-evidence'],likely_targets:['src/view.tsx'],intent_signals:['intent.browser'],suppressed_intent_signals:[]})
+  m.methodology.methodology_needs.push({name:'hi-browser-testing',signal:'intent.browser',trigger_source:'task-intent',producer:'intent',reason:'browser acceptance',created_at:Date.now()})
+  const started=await runtime.start(m,{objective:'verify local browser',role:'visual-qa',category:'visual',scope:['src/view.tsx'],browserAllowedOrigins:['http://127.0.0.1:4173']})
+  const worker=m.execution.workers.find(w=>w.id===started.worker_id),task=m.execution.tasks.find(t=>t.id===started.task_id)
+  assert.ok(worker?.session_id);assert.ok(task)
+  assert.equal(await runtime.cancel(m,worker.id),false)
+  assert.equal(worker.status,'busy');assert.equal(task.status,'running')
+  assert.ok(m.execution.ledger.some(e=>e.type==='browser.cleanup-failed'&&e.worker_id===worker.id))
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.cancel.blocked'&&e.worker_id===worker.id&&e.payload?.reason==='browser-cleanup-failed'))
+})

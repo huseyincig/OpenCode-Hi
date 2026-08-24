@@ -900,7 +900,11 @@ export class TaskRuntime {
             appendLedger(m, 'worker.cancel.blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: 'abort-unavailable' } });
             return false;
         }
-        await this.cleanupBrowserForTask(m, worker.task_id, worker.id);
+        const browserClean = await this.cleanupBrowserForTask(m, worker.task_id, worker.id);
+        if (!browserClean) {
+            appendLedger(m, 'worker.cancel.blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: 'browser-cleanup-failed' } });
+            return false;
+        }
     } const reservationRelease = releaseTaskRuntimeReservation(m, worker.id, 'CANCEL'); if (!reservationRelease.accepted) {
         appendLedger(m, 'worker.cancel.scheduler-blocked', { task_id: worker.task_id, worker_id: worker.id, payload: { reason: reservationRelease.reason } });
         return false;
