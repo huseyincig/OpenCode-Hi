@@ -1,5 +1,6 @@
 import type {Category,MissionState,WorkerState} from '../mission/types.js'
 import type {MissionModelFeedback} from './model-resolver.js'
+import { evidenceVerdictFailed,evidenceVerdictPassed } from '../../contracts/evidence-kinds.js'
 
 export type ModelFeedbackConfidence='insufficient'|'low'|'medium'|'high'
 export type ModelVerificationOutcome='passed'|'failed'|'not-observed'
@@ -42,8 +43,8 @@ function exactAttemptEvidence(m:MissionState,w:WorkerState){
 }
 function verificationOutcome(m:MissionState,w:WorkerState):ModelVerificationOutcome{
   const evidence=exactAttemptEvidence(m,w)
-  if(evidence.some(e=>e.outcome==='failed'||e.pass===false))return'failed'
-  if(evidence.some(e=>e.outcome==='passed'||e.pass===true))return'passed'
+  if(evidence.some(e=>evidenceVerdictFailed(e.pass,e.outcome)))return'failed'
+  if(evidence.some(e=>evidenceVerdictPassed(e.pass,e.outcome)))return'passed'
   return'not-observed'
 }
 function confidence(samples:number):ModelFeedbackConfidence{return samples>=8?'high':samples>=4?'medium':samples>=2?'low':'insufficient'}

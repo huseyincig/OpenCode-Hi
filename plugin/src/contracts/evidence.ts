@@ -1,4 +1,4 @@
-import { WORKER_EVIDENCE_KINDS,type EvidenceOutcome } from './evidence-kinds.js'
+import { WORKER_EVIDENCE_KINDS,evidenceVerdictConsistent,type EvidenceOutcome } from './evidence-kinds.js'
 
 export const MISSION_EVIDENCE_KINDS=[...WORKER_EVIDENCE_KINDS,'review-input','lsp-diagnostics','source-read-observation'] as const
 export type MissionEvidenceKind = typeof MISSION_EVIDENCE_KINDS[number]
@@ -52,5 +52,6 @@ export function isEvidenceItemContract(v:unknown):v is EvidenceItem{
   if(v.producer_attempt!==undefined){const p=v.producer_attempt;if(!record(p)||!Object.keys(p).every(k=>['worker_id','execution_unit_id','attempt_id','run_id','ordinal','generation'].includes(k))||Object.keys(p).length!==6||typeof p.worker_id!=='string'||!p.worker_id||typeof p.execution_unit_id!=='string'||!p.execution_unit_id||typeof p.attempt_id!=='string'||!p.attempt_id||typeof p.run_id!=='string'||!p.run_id||!Number.isInteger(p.ordinal)||Number(p.ordinal)<0||!Number.isInteger(p.generation)||Number(p.generation)<1)return false}
   if(v.invalidated_at!==undefined&&(typeof v.invalidated_at!=='number'||!Number.isFinite(v.invalidated_at)))return false
   if(v.pass!==undefined&&typeof v.pass!=='boolean')return false
-  return v.outcome===undefined||(typeof v.outcome==='string'&&OUTCOME_SET.has(v.outcome))
+  if(v.outcome!==undefined&&(typeof v.outcome!=='string'||!OUTCOME_SET.has(v.outcome)))return false
+  return evidenceVerdictConsistent(v.pass as boolean|undefined,v.outcome as EvidenceOutcome|undefined)
 }

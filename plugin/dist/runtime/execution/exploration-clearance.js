@@ -1,9 +1,10 @@
 import { normalizeBoundedProjectPath } from '../../contracts/common.js';
 import { captureEvidenceScopeState, evidenceScopeStateIsCurrent } from '../evidence/scope-state.js';
+import { evidenceVerdictPassed } from '../../contracts/evidence-kinds.js';
 const SOURCE_PREFIX = 'exploration-clearance:';
 function bounded(items = []) { return [...new Set(items.map(item => normalizeBoundedProjectPath(item)).filter((item) => Boolean(item)))].sort(); }
 function within(admitted, candidate) { return admitted.some(root => candidate === root || candidate.startsWith(`${root}/`)); }
-function passed(result, kind) { return result.evidence.filter(item => item.kind === kind && (item.outcome === 'passed' || item.pass === true)); }
+function passed(result, kind) { return result.evidence.filter(item => item.kind === kind && evidenceVerdictPassed(item.pass, item.outcome)); }
 function sourceAmbiguity(source) { const match = new RegExp(`^${SOURCE_PREFIX}(resolvable|contract-critical):`).exec(source ?? ''); return match?.[1]; }
 export function explorationClearanceEvidenceSource(ambiguity, taskID) { return `${SOURCE_PREFIX}${ambiguity}:${taskID}`; }
 /** Freshness fence for a previously admitted exploration clearance. */

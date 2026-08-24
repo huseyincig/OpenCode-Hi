@@ -4,6 +4,7 @@ import { methodologyCatalogEntry } from './catalog.js'
 import { appendLedger } from '../ledger/ledger.js'
 import { verificationSatisfied } from '../verification/policy.js'
 import { evidenceClaimApplicability } from '../evidence/applicability.js'
+import { evidenceVerdictPassed } from '../../contracts/evidence-kinds.js'
 import { missionRequiresPackagePublish, missionRequiresReleaseCreate } from '../safety/release-chain.js'
 import { discoverProjectMethodologyPolicies } from './project-policy.js'
 
@@ -13,7 +14,7 @@ function normScope(value:string):string{return value.trim().replace(/\\/g,'/').r
 function passedEvidence(m:MissionState,task?:MissionTask,obligationId?:string){
   const taskScope=new Set((task?.scope??[]).map(normScope).filter(Boolean))
   return m.execution.evidence.items.filter(e=>{
-    if(e.invalidated_at||!((e.outcome==='passed')||e.pass===true))return false
+    if(e.invalidated_at||!evidenceVerdictPassed(e.pass,e.outcome))return false
     if(!task&&!obligationId)return true
     if(task&&e.task_id===task.id)return true
     if(obligationId&&e.obligation_ids?.includes(obligationId))return true

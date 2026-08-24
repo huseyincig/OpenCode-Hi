@@ -1,3 +1,4 @@
+import { evidenceVerdictPassed } from '../../contracts/evidence-kinds.js';
 import { resolveCategory } from '../routing/category.js';
 import { resolveModel } from '../routing/model-resolver.js';
 import { methodologySkillCandidates, resolveSkillPlan } from '../skills/registry.js';
@@ -538,7 +539,7 @@ export class TaskRuntime {
                 existing.started_at = Date.now();
                 oldTask.status = 'running';
                 this.registry.set(existing);
-                const issues = oldTask.result.open_issues.join(' | '), missing = oldTask.result.needs_context.join(' | '), freshEvidence = m.execution.evidence.items.filter(e => !e.invalidated_at && ((e.outcome === 'passed') || e.pass === true) && (e.task_id === oldTask.id || e.obligation_ids?.some(id => oldTask.obligation_ids.includes(id)) || (e.scope ?? []).some(file => oldTask.scope.includes(file)))).slice(-8).map(e => `${e.kind}: ${e.summary}`).join(' | '), reviewScope = isHiReadOnlyChildRole(existing.role) ? `Scoped rereview only: previous findings=${issues || 'none'}; changed scope=${m.vcs.changed_files.slice(-20).join(',') || 'none'}; affected evidence=${freshEvidence || 'none'}.` : '', resumeExitRequirements = existing.selected_methodologies.flatMap(name => { const item = catalog.find(x => x.name === name); return item ? [`${name}: ${item.exitRequirements.join(', ')}`] : []; });
+                const issues = oldTask.result.open_issues.join(' | '), missing = oldTask.result.needs_context.join(' | '), freshEvidence = m.execution.evidence.items.filter(e => !e.invalidated_at && evidenceVerdictPassed(e.pass, e.outcome) && (e.task_id === oldTask.id || e.obligation_ids?.some(id => oldTask.obligation_ids.includes(id)) || (e.scope ?? []).some(file => oldTask.scope.includes(file)))).slice(-8).map(e => `${e.kind}: ${e.summary}`).join(' | '), reviewScope = isHiReadOnlyChildRole(existing.role) ? `Scoped rereview only: previous findings=${issues || 'none'}; changed scope=${m.vcs.changed_files.slice(-20).join(',') || 'none'}; affected evidence=${freshEvidence || 'none'}.` : '', resumeExitRequirements = existing.selected_methodologies.flatMap(name => { const item = catalog.find(x => x.name === name); return item ? [`${name}: ${item.exitRequirements.join(', ')}`] : []; });
                 const resumeVariant = nextModel === selected.primary ? selected.primaryVariant : selected.fallbackVariants[nextModel];
                 const protectedBaseline = Object.keys(m.vcs.preexisting_user_changes ?? {}).slice(0, 60);
                 const correctionLevel = Math.min(2, hazardBeforeResume.attempts + 1);

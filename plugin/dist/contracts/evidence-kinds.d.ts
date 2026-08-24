@@ -2,3 +2,13 @@ export type EvidenceOutcome = 'pending' | 'passed' | 'failed' | 'environment-iss
 export declare const WORKER_EVIDENCE_KINDS: readonly ["targeted-tests", "typecheck", "lint", "build", "changed-surface-sanity", "review-evidence", "decision-evidence", "diagnostic-evidence", "measurement-evidence", "browser-evidence", "visual-evidence", "accessibility-evidence", "source-provenance-evidence"];
 export type WorkerEvidenceKind = typeof WORKER_EVIDENCE_KINDS[number];
 export declare const EVIDENCE_OUTCOMES: readonly ["pending", "passed", "failed", "environment-issue"];
+/**
+ * `outcome` is the canonical structured verdict when present. `pass` is a legacy
+ * scalar compatibility projection only; it may agree with passed/failed or be
+ * omitted, but it cannot contradict the richer outcome vocabulary.
+ */
+export declare function evidenceVerdictConsistent(pass: boolean | undefined, outcome: EvidenceOutcome | undefined): boolean;
+export declare function resolvedEvidenceOutcome(pass: boolean | undefined, outcome: EvidenceOutcome | undefined): EvidenceOutcome | undefined;
+export declare function evidenceVerdictPassValue(pass: boolean | undefined, outcome: EvidenceOutcome | undefined): boolean | undefined;
+export declare function evidenceVerdictPassed(pass: boolean | undefined, outcome: EvidenceOutcome | undefined): boolean;
+export declare function evidenceVerdictFailed(pass: boolean | undefined, outcome: EvidenceOutcome | undefined): boolean;

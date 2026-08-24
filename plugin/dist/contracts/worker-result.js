@@ -1,5 +1,5 @@
 import { normalizeBoundedProjectPath } from './common.js';
-import { WORKER_EVIDENCE_KINDS } from './evidence-kinds.js';
+import { WORKER_EVIDENCE_KINDS, evidenceVerdictConsistent, evidenceVerdictFailed, evidenceVerdictPassValue, evidenceVerdictPassed } from './evidence-kinds.js';
 import { isReviewFindingContract } from './review-finding.js';
 export { WORKER_EVIDENCE_KINDS } from './evidence-kinds.js';
 const STATUS_ALIAS = { DONE: 'DONE', PASS: 'DONE', SUCCESS: 'DONE', SUCCEEDED: 'DONE', DONE_WITH_CONCERNS: 'DONE', FIX_REQUIRED: 'FIX_REQUIRED', NEEDS_CONTEXT: 'NEEDS_CONTEXT', USER_ACTION_REQUIRED: 'BLOCKED', BLOCKED: 'BLOCKED', NO_PROGRESS: 'FIX_REQUIRED', FAILED: 'FAILED', FAIL: 'FAILED' };
@@ -24,6 +24,8 @@ export function isWorkerEvidenceClaimContract(v) {
     if (v.pass !== undefined && typeof v.pass !== 'boolean')
         return false;
     if (v.outcome !== undefined && (typeof v.outcome !== 'string' || !OUTCOME_SET.has(v.outcome)))
+        return false;
+    if (!evidenceVerdictConsistent(v.pass, v.outcome))
         return false;
     return v.reason === undefined || typeof v.reason === 'string';
 }
@@ -54,7 +56,7 @@ function normalizeEvidence(raw) {
     const values = Array.isArray(raw) ? raw : (record(raw) ? Object.entries(raw).map(([kind, value]) => ({ kind, summary: typeof value === 'string' ? value : JSON.stringify(value) })) : []);
     return values.slice(0, 40).flatMap((v) => { if (!record(v))
         return []; const kind = String(v.kind ?? ''); if (!KIND_SET.has(kind))
-        return []; const outcome = typeof v.outcome === 'string' && OUTCOME_SET.has(v.outcome) ? v.outcome : undefined, rawRefs = Array.isArray(v.evidence_refs) ? v.evidence_refs : Array.isArray(v.refs) ? v.refs : undefined, summarySource = typeof v.summary === 'string' ? v.summary : typeof v.description === 'string' ? v.description : typeof v.detail === 'string' ? v.detail : ''; return [{ kind, summary: clip(summarySource, 1000), scope: Array.isArray(v.scope) ? v.scope.map(String).slice(0, 50) : undefined, evidence_refs: rawRefs ? [...new Set(rawRefs.map(String).filter(Boolean))].slice(0, 20) : undefined, pass: typeof v.pass === 'boolean' ? v.pass : undefined, outcome, reason: typeof v.reason === 'string' ? clip(v.reason, 1000) : undefined }]; });
+        return []; const outcome = typeof v.outcome === 'string' && OUTCOME_SET.has(v.outcome) ? v.outcome : undefined, rawPass = typeof v.pass === 'boolean' ? v.pass : undefined, rawRefs = Array.isArray(v.evidence_refs) ? v.evidence_refs : Array.isArray(v.refs) ? v.refs : undefined, summarySource = typeof v.summary === 'string' ? v.summary : typeof v.description === 'string' ? v.description : typeof v.detail === 'string' ? v.detail : ''; return [{ kind, summary: clip(summarySource, 1000), scope: Array.isArray(v.scope) ? v.scope.map(String).slice(0, 50) : undefined, evidence_refs: rawRefs ? [...new Set(rawRefs.map(String).filter(Boolean))].slice(0, 20) : undefined, pass: evidenceVerdictPassValue(rawPass, outcome), outcome, reason: typeof v.reason === 'string' ? clip(v.reason, 1000) : undefined }]; });
 }
 function normalizeMethodologyObservations(raw) {
     if (!Array.isArray(raw))
@@ -67,8 +69,8 @@ function normalizeMethodologyObservations(raw) {
 function normalizeFindings(raw, evidence) { if (!Array.isArray(raw))
     return undefined; const evidenceKinds = new Set(evidence.map(x => x.kind)); const out = raw.slice(0, 40).flatMap((v) => { if (!record(v))
     return []; const candidate = { id: clip(v.id, 80), reviewer_role: clip(v.reviewer_role, 64), subject: clip(v.subject, 1200), severity: String(v.severity ?? ''), causality: String(v.causality ?? ''), scope: Array.isArray(v.scope) ? v.scope.map(String).slice(0, 50) : [], evidence_refs: Array.isArray(v.evidence_refs) ? v.evidence_refs.map(String).filter(x => evidenceKinds.has(x)).slice(0, 20) : [], confidence: String(v.confidence ?? ''), disposition: String(v.disposition ?? ''), blocking: v.blocking === true }; return isReviewFindingContract(candidate) ? [candidate] : []; }); return out.length ? out : undefined; }
-function evidenceFailed(e) { return e.outcome === 'failed' || e.pass === false; }
-function evidencePassed(e) { return e.outcome === 'passed' || e.pass === true; }
+function evidenceFailed(e) { return evidenceVerdictFailed(e.pass, e.outcome); }
+function evidencePassed(e) { return evidenceVerdictPassed(e.pass, e.outcome); }
 function reconcileFailureFinding(finding, evidence) {
     if (finding === 'ci-build')
         return evidence.some(e => e.kind === 'build' && evidenceFailed(e)) ? 'ci-build' : undefined;

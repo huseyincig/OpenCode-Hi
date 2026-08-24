@@ -1,3 +1,4 @@
+import { evidenceVerdictFailed, evidenceVerdictPassed } from '../../contracts/evidence-kinds.js';
 const DEFAULT_WINDOW = 12;
 const MATERIAL_FEEDBACK_BOUNDARIES = new Set(['amendment', 'constraint']);
 function activeFeedbackGenerationFloor(m) {
@@ -30,9 +31,9 @@ function exactAttemptEvidence(m, w) {
 }
 function verificationOutcome(m, w) {
     const evidence = exactAttemptEvidence(m, w);
-    if (evidence.some(e => e.outcome === 'failed' || e.pass === false))
+    if (evidence.some(e => evidenceVerdictFailed(e.pass, e.outcome)))
         return 'failed';
-    if (evidence.some(e => e.outcome === 'passed' || e.pass === true))
+    if (evidence.some(e => evidenceVerdictPassed(e.pass, e.outcome)))
         return 'passed';
     return 'not-observed';
 }

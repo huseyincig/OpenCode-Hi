@@ -22,6 +22,7 @@ import { executionAttemptIdentity } from '../../contracts/orchestration-core.js'
 import { evidenceClaimApplicability } from '../evidence/applicability.js';
 import { captureEvidenceScopeState } from '../evidence/scope-state.js';
 import { deniedMutationAtoms } from '../constraint/constraint-atoms.js';
+import { evidenceVerdictPassed } from '../../contracts/evidence-kinds.js';
 import { assessExplorationClearance, explorationClearanceEvidenceSource } from '../execution/exploration-clearance.js';
 function resultDigest(result) { return createHash('sha256').update(JSON.stringify(result)).digest('hex'); }
 export class TaskResultReconciler {
@@ -324,7 +325,7 @@ export class TaskResultReconciler {
         const browserProofKinds = new Set(['browser-evidence', 'visual-evidence', 'accessibility-evidence']);
         const genericVerifierClaimKinds = new Set(['targeted-tests', 'typecheck', 'lint', 'build', 'changed-surface-sanity']);
         const reconciledEvidence = effectiveResult.evidence.map(e => {
-            const claimedPassed = e.outcome === 'passed' || e.pass === true;
+            const claimedPassed = evidenceVerdictPassed(e.pass, e.outcome);
             if (claimedPassed && genericVerifierClaimKinds.has(e.kind)) {
                 appendLedger(m, 'verification.worker-claim-unverified', { task_id: task.id, worker_id: worker.id, payload: { kind: e.kind, reason: 'worker-result-is-claim-not-host-observation' } });
                 const { pass: _pass, outcome: _outcome, ...rest } = e;
@@ -367,7 +368,7 @@ export class TaskResultReconciler {
                 addEvidence(m, { kind: e.kind, summary: e.summary, scope, source: `reviewer:${worker.id}`, trusted_source_class: 'reviewer-observation', source_session_id: worker.session_id, source_state_hash: stateHash, scope_state_hash: scopeStateHash, task_id: task.id, obligation_ids: task.obligation_ids, evidence_refs: refs.length ? refs : undefined, producer_attempt, pass: e.pass, outcome: e.outcome, reason: e.reason, invalidated_at: cleanlinessMarker ? (m.execution.evidence.last_mutation_at ?? Date.now()) : undefined });
                 continue;
             }
-            if (browserProofKinds.has(e.kind) && (e.outcome === 'passed' || e.pass === true)) {
+            if (browserProofKinds.has(e.kind) && evidenceVerdictPassed(e.pass, e.outcome)) {
                 const support = refs.map(id => m.execution.evidence.items.find(item => item.id === id)).filter((item) => Boolean(item));
                 const valid = refs.length > 0 && support.length === refs.length && support.every(item => item.trusted_source_class === 'browser-observation' && item.kind === 'browser-evidence' && !item.invalidated_at && item.outcome !== 'failed' && item.pass !== false && item.task_id === task.id && evidenceClaimApplicability(m, item).applicable);
                 if (!valid) {
@@ -431,7 +432,7 @@ export class TaskResultReconciler {
             appendLedger(m, 'task-outcome-memory.write-failed', { task_id: task.id, worker_id: worker.id, payload: { error: String(error).slice(0, 300), policy: 'advisory-bookkeeping-fail-open' } });
         }
         if (effectiveResult.status === 'DONE' && effectiveResult.methodology_observations?.length) {
-            const evidenceRefs = m.execution.evidence.items.filter(e => e.task_id === task.id && !e.invalidated_at && (e.outcome === 'passed' || e.pass === true) && e.producer_attempt?.worker_id === worker.id && e.producer_attempt.ordinal === worker.attempt && e.producer_attempt.generation === (worker.generation_at_spawn ?? m.continuation.generation)).map(e => e.kind);
+            const evidenceRefs = m.execution.evidence.items.filter(e => e.task_id === task.id && !e.invalidated_at && evidenceVerdictPassed(e.pass, e.outcome) && e.producer_attempt?.worker_id === worker.id && e.producer_attempt.ordinal === worker.attempt && e.producer_attempt.generation === (worker.generation_at_spawn ?? m.continuation.generation)).map(e => e.kind);
             for (const observation of effectiveResult.methodology_observations)
                 this.methodologyLearning.observe(m, worker, observation, evidenceRefs);
         }

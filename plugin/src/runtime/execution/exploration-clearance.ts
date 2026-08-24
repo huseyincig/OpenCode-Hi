@@ -1,6 +1,7 @@
 import type { MissionState,MissionTask,WorkerResult,WorkerState } from '../mission/types.js'
 import { normalizeBoundedProjectPath } from '../../contracts/common.js'
 import { captureEvidenceScopeState,evidenceScopeStateIsCurrent } from '../evidence/scope-state.js'
+import { evidenceVerdictPassed } from '../../contracts/evidence-kinds.js'
 
 export type ExplorationClearanceReason=
   |'not-applicable'
@@ -39,7 +40,7 @@ export interface ExplorationClearanceFreshness{
 const SOURCE_PREFIX='exploration-clearance:'
 function bounded(items:readonly string[]=[]):string[]{return[...new Set(items.map(item=>normalizeBoundedProjectPath(item)).filter((item):item is string=>Boolean(item)))].sort()}
 function within(admitted:string[],candidate:string):boolean{return admitted.some(root=>candidate===root||candidate.startsWith(`${root}/`))}
-function passed(result:WorkerResult,kind:'source-provenance-evidence'|'decision-evidence'){return result.evidence.filter(item=>item.kind===kind&&(item.outcome==='passed'||item.pass===true))}
+function passed(result:WorkerResult,kind:'source-provenance-evidence'|'decision-evidence'){return result.evidence.filter(item=>item.kind===kind&&evidenceVerdictPassed(item.pass,item.outcome))}
 function sourceAmbiguity(source:string|undefined):'resolvable'|'contract-critical'|undefined{const match=new RegExp(`^${SOURCE_PREFIX}(resolvable|contract-critical):`).exec(source??'');return match?.[1] as 'resolvable'|'contract-critical'|undefined}
 export function explorationClearanceEvidenceSource(ambiguity:'resolvable'|'contract-critical',taskID:string):string{return`${SOURCE_PREFIX}${ambiguity}:${taskID}`}
 

@@ -3,13 +3,14 @@ import { methodologyCatalogEntry } from './catalog.js';
 import { appendLedger } from '../ledger/ledger.js';
 import { verificationSatisfied } from '../verification/policy.js';
 import { evidenceClaimApplicability } from '../evidence/applicability.js';
+import { evidenceVerdictPassed } from '../../contracts/evidence-kinds.js';
 import { missionRequiresPackagePublish, missionRequiresReleaseCreate } from '../safety/release-chain.js';
 import { discoverProjectMethodologyPolicies } from './project-policy.js';
 function normScope(value) { return value.trim().replace(/\\/g, '/').replace(/^\.\//, ''); }
 function passedEvidence(m, task, obligationId) {
     const taskScope = new Set((task?.scope ?? []).map(normScope).filter(Boolean));
     return m.execution.evidence.items.filter(e => {
-        if (e.invalidated_at || !((e.outcome === 'passed') || e.pass === true))
+        if (e.invalidated_at || !evidenceVerdictPassed(e.pass, e.outcome))
             return false;
         if (!task && !obligationId)
             return true;

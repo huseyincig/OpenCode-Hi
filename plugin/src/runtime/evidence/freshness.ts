@@ -1,4 +1,5 @@
 import type { EvidenceItem } from '../mission/types.js'
+import { evidenceVerdictPassed } from '../../contracts/evidence-kinds.js'
 
 /**
  * Canonical compatibility freshness projection.
@@ -6,5 +7,5 @@ import type { EvidenceItem } from '../mission/types.js'
  * the persisted `execution.evidence.fresh` field is only a checked cache/projection.
  */
 export function hasFreshPassedEvidence(items:readonly EvidenceItem[]):boolean{
-  return items.some(item=>!item.invalidated_at&&(item.outcome==='passed'||item.pass===true))
+  return items.some(item=>!item.invalidated_at&&evidenceVerdictPassed(item.pass,item.outcome))
 }

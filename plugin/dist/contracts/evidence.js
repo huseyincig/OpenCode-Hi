@@ -1,4 +1,4 @@
-import { WORKER_EVIDENCE_KINDS } from './evidence-kinds.js';
+import { WORKER_EVIDENCE_KINDS, evidenceVerdictConsistent } from './evidence-kinds.js';
 export const MISSION_EVIDENCE_KINDS = [...WORKER_EVIDENCE_KINDS, 'review-input', 'lsp-diagnostics', 'source-read-observation'];
 export const EVIDENCE_SOURCE_CLASSES = ['host-tool-observation', 'host-diff-observation', 'browser-observation', 'reviewer-observation', 'user-admitted-observation', 'runtime-observation'];
 const KIND_SET = new Set(MISSION_EVIDENCE_KINDS);
@@ -31,5 +31,7 @@ export function isEvidenceItemContract(v) {
         return false;
     if (v.pass !== undefined && typeof v.pass !== 'boolean')
         return false;
-    return v.outcome === undefined || (typeof v.outcome === 'string' && OUTCOME_SET.has(v.outcome));
+    if (v.outcome !== undefined && (typeof v.outcome !== 'string' || !OUTCOME_SET.has(v.outcome)))
+        return false;
+    return evidenceVerdictConsistent(v.pass, v.outcome);
 }
