@@ -8,7 +8,7 @@
     {
       "invariant": "role-agent-model-methodology-separation",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "87113c4133e23b482b7a853bfcb046bbbb2f62b9ace068d170963bd02ae16167",
+      "owner_sha256": "eac96bcac7162273ba703fe45d8eebae333a6e879793e2c4f21b804031a33bef",
       "owner_anchor": "worker.requested_model=input.model",
       "proof": "plugin/test/model-contract.test.mjs",
       "proof_sha256": "c4550067e1f883572c3e7b77d254853f95904a4c7e8b44ef9e5a53b084115f45",
@@ -26,7 +26,7 @@
     {
       "invariant": "host-contradiction-handling",
       "owner": "plugin/src/runtime/task/child-execution-coordinator.ts",
-      "owner_sha256": "509bf2b00df8ab61a86d38c8ba967d392bfa27188174693e9348420dc0096c05",
+      "owner_sha256": "6d4b0c525fd8f47620d7138764b4d75523d6772b347a33d807c6dcbf5acf9309",
       "owner_anchor": "identity.status==='model-mismatch'",
       "proof": "plugin/test/main-prompt-model-evidence.test.mjs",
       "proof_sha256": "9c19e48c5a1a636f900e13acea22272ac3f36f356e013e10a95e0b996c9a1cfc",
@@ -35,7 +35,7 @@
     {
       "invariant": "unknown-model-capability",
       "owner": "plugin/src/runtime/readiness/preconditions.ts",
-      "owner_sha256": "c441c37ffb71f7d55157cda52c71bd02a4b3b555e78d43cc8f96a04e0e56fb9e",
+      "owner_sha256": "ce803d8c7d14871b8f88ab2becb389a9e2f9ee269c638bb71e44ea1ff5127537",
       "owner_anchor": "No permitted/available runtime model satisfies this task",
       "proof": "plugin/test/main-prompt-delegation-preconditions.test.mjs",
       "proof_sha256": "c3aa5cf2f0148d9ff036b638ac4aff9900e6f493b9921d0139f018c286510a51",
@@ -44,10 +44,10 @@
     {
       "invariant": "model-fallback",
       "owner": "plugin/src/runtime/task/task-recovery-coordinator.ts",
-      "owner_sha256": "02adbd3be70f19da94aee2be02255e316676e3c7801a9ac6e070d36abe459736",
+      "owner_sha256": "29584f0bf93a94efb18504286125362d5a92b23e83abc1285294d72217d3f480",
       "owner_anchor": "recoverHostTerminalFailure",
       "proof": "plugin/test/provider-fallback-hardening.test.mjs",
-      "proof_sha256": "473665f04bf7526638f2db50c199d655afc1857b0346570167d261275e94d70b",
+      "proof_sha256": "63eaeef2e775ee358f3a99ceb173e97aa8a816fddfde87750a088b9368ac74f8",
       "proof_anchor": "second provider failure advances to next fallback rather than returning to prior model"
     },
     {
@@ -62,10 +62,10 @@
     {
       "invariant": "methodology-lazy-load",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "c8fc05afe5032b76da7f86dd078d617b7b22093be95aafdacc08f88cf9af4050",
+      "owner_sha256": "e298ae24e607bf6ecdd5da4795fae49621ae8955ef0a6911771bafe6b24a7c81",
       "owner_anchor": "methodology-not-loaded",
       "proof": "plugin/test/methodology-signal-contract.test.mjs",
-      "proof_sha256": "9222804364ba9bdfe7a0f9464cc79c1b08588ecc11e30be235fa23ec875fcecd",
+      "proof_sha256": "c15c1604495ffb082831a93ee13098d035a600e63bfd0e4387921fe352c5f5be",
       "proof_anchor": "selected child methodology must be actually native-loaded before DONE can be accepted"
     },
     {
@@ -80,7 +80,7 @@
     {
       "invariant": "methodology-exit",
       "owner": "plugin/src/runtime/methodology/exit.ts",
-      "owner_sha256": "3cfe2c34bbf83a71c52b8999cf581b28b09575b3181c1625e149b051fe72da1b",
+      "owner_sha256": "717067308a0c6ee0b6d7672ffb96dafc01dfbbdba8d8f02891f74a49d39c620e",
       "owner_anchor": "methodologyExitCheck",
       "proof": "plugin/test/b3-methodology-exit-evidence.test.mjs",
       "proof_sha256": "aa36db1a64321701669af059ffd5a0e570ec002d82577b717b0f884ce5e43742",
@@ -98,7 +98,7 @@
     {
       "invariant": "methodology-cannot-own-completion",
       "owner": "plugin/src/runtime/task/task-result-reconciler.ts",
-      "owner_sha256": "c8fc05afe5032b76da7f86dd078d617b7b22093be95aafdacc08f88cf9af4050",
+      "owner_sha256": "e298ae24e607bf6ecdd5da4795fae49621ae8955ef0a6911771bafe6b24a7c81",
       "owner_anchor": "reconcileMethodologyExits",
       "proof": "plugin/test/forensic-hardening.test.mjs",
       "proof_sha256": "f323914acd1419a80ba359afad62e517da00c139d313504bc5f3304e96af4230",

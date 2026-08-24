@@ -34,7 +34,7 @@ checks=[
  (19,'non-ascii-paths','plugin/src/contracts/common.ts','return rel','plugin/test/prompt-b-vcs-path-portability.test.mjs','Unicode'),
  (19,'long-paths','plugin/src/contracts/common.ts','return rel','plugin/test/prompt-b-vcs-path-portability.test.mjs',"'a/'.repeat(120)"),
  (19,'unusable-readonly-root','plugin/src/runtime/state/persistence.ts','mkdirSync(dirname(this.path)','plugin/test/prompt-b-vcs-path-portability.test.mjs','unusable runtime state root fails visibly'),
- (19,'permission-denied-visible','plugin/src/runtime/state/persistence.ts','writeFileSync(tmp','plugin/test/prompt-b-vcs-path-portability.test.mjs','ENOTDIR'),
+ (19,'permission-denied-visible','plugin/src/runtime/state/persistence.ts',"openSync(tmp,'wx'",'plugin/test/prompt-b-vcs-path-portability.test.mjs','ENOTDIR'),
  (19,'home-xdg-localappdata','plugin/src/runtime/storage/locations.ts','XDG_STATE_HOME','plugin/test/prompt-b-vcs-path-portability.test.mjs','runtime state location honors explicit then XDG then LOCALAPPDATA'),
  (19,'browser-platform-cache','plugin/src/runtime/browser/discovery.ts','PLAYWRIGHT_BROWSERS_PATH','plugin/test/prompt-b-vcs-path-portability.test.mjs','browser executable discovery uses env/platform cache roots'),
  (19,'no-hardcoded-root-home','plugin/src/runtime/browser/discovery.ts','homedir()','plugin/test/prompt-b-vcs-path-portability.test.mjs','contains no host-user literal dependency'),

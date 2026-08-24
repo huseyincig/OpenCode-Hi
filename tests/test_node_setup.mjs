@@ -220,6 +220,7 @@ test('0.2.4 exact-SHA release preflight is fail-closed and contains no publicati
   for(const forbidden of ['npm publish','git push','gh release create','git tag -','git tag v'])assert.equal(source.includes(forbidden),false,forbidden)
   for(const required of ["['run','check']","['run','docs:pack-check']","['pack','--dry-run','--json','--ignore-scripts']","['scripts/verify-npm-oidc-release.mjs','identity']"])assert.equal(source.includes(required),true,required)
   const verifier=readFileSync(join(ROOT,'scripts','verify-npm-oidc-release.mjs'),'utf8');assert.match(verifier,/mode==='identity'/)
-  const r=spawnSync(process.execPath,[path,'--sha','0000000000000000000000000000000000000000'],{cwd:ROOT,encoding:'utf8'});assert.equal(r.status,2);const out=JSON.parse(r.stdout);assert.equal(out.status,'BLOCKED');assert.equal(out.reason,'head-sha-mismatch');assert.equal(out.mutation_performed,false)
+  const gitSafeEnv={...process.env,GIT_CONFIG_COUNT:'1',GIT_CONFIG_KEY_0:'safe.directory',GIT_CONFIG_VALUE_0:ROOT}
+  const r=spawnSync(process.execPath,[path,'--sha','0000000000000000000000000000000000000000'],{cwd:ROOT,encoding:'utf8',env:gitSafeEnv});assert.equal(r.status,2,`${r.stdout}\n${r.stderr}`);const out=JSON.parse(r.stdout);assert.equal(out.status,'BLOCKED');assert.equal(out.reason,'head-sha-mismatch');assert.equal(out.mutation_performed,false)
   assert.equal(JSON.parse(readFileSync(join(ROOT,'package.json'),'utf8')).scripts['release:preflight'],'node scripts/release-preflight.mjs')
 })

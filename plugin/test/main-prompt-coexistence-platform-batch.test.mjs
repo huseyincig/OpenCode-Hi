@@ -128,7 +128,7 @@ test('hi_task_start accepts OpenCode nested input shape without losing role cate
     const out=JSON.parse(await hooks.tool.hi_task_start.execute({input:{objective:'bounded change',role:'coder',category:'quick',scope:'src/a.ts',obligation_ids:'o-implementation'}},{sessionID:sid}))
     assert.ok(out.task_id);assert.equal(out.control.action,'WAIT')
     const listed=JSON.parse(await hooks.tool.hi_task_list.execute({},{sessionID:sid})),task=listed.find(x=>x.task.id===out.task_id)?.task
-    assert.equal(task.role,'coder');assert.equal(task.category,'quick');assert.deepEqual(task.scope,['src/a.ts']);assert.deepEqual(task.requiredEvidence,[]);assert.deepEqual(task.obligation_ids,['o-implementation'])
+    assert.equal(task.role,'coder');assert.equal(task.category,'quick');assert.deepEqual(task.scope,['src/a.ts']);assert.deepEqual(task.requiredEvidence,['changed-surface-sanity'],'M06 fail-closed minimum verification remains bound through nested input normalization');assert.deepEqual(task.obligation_ids,['o-implementation'])
     await hooks.dispose?.()
   }finally{rmSync(root,{recursive:true,force:true})}
 })

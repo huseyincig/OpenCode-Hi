@@ -8,7 +8,7 @@
     {
       "invariant": "host-port-hi-needs-not-sdk",
       "owner": "plugin/src/runtime/host/port.ts",
-      "owner_sha256": "8f8e9f35bae34af7af12eae99185f867e4795d35ff306df446b37c0d8ae260bd",
+      "owner_sha256": "c258d29c9cbe6fa1fb9e1683cb1ca3cf74490e4973b7c03d3612cd6a170af19a",
       "owner_anchor": "export interface HostPort",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",
@@ -17,7 +17,7 @@
     {
       "invariant": "semantic-core-sdk-confinement",
       "owner": "plugin/src/runtime/application/runtime-event-controller.ts",
-      "owner_sha256": "797802e30a1e8aafb5ccbfc087eb08e7fb6f890c1de1d628789550d550207b1c",
+      "owner_sha256": "7fdc3194cb3d9d1070ef98be8e9f53ec481be08e0696c1fa10fef022fbae1085",
       "owner_anchor": "import type { HostEvent,HostPort } from '../host/port.js'",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",
@@ -44,7 +44,7 @@
     {
       "invariant": "child-session-port",
       "owner": "plugin/src/runtime/task/child-execution-coordinator.ts",
-      "owner_sha256": "509bf2b00df8ab61a86d38c8ba967d392bfa27188174693e9348420dc0096c05",
+      "owner_sha256": "6d4b0c525fd8f47620d7138764b4d75523d6772b347a33d807c6dcbf5acf9309",
       "owner_anchor": "constructor(private readonly host:ChildSessionPort",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",
@@ -53,7 +53,7 @@
     {
       "invariant": "runtime-service-injection",
       "owner": "plugin/src/runtime/application/runtime-services.ts",
-      "owner_sha256": "d3369337395345117f920fad9e597c93832b5d51e6079f7533c2e6d28bf8da8a",
+      "owner_sha256": "8731879e73b1709fea2fef7de1570012e0d6e93e9d4336327b5404ddb2f50281",
       "owner_anchor": "export interface RuntimeServicePorts",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",
@@ -65,7 +65,7 @@
       "owner_sha256": "3a0f63b69b47b429b578489f1433a4170cf6fbd4c1a64c1ecd009f60bd2756b1",
       "owner_anchor": "export class ProcessSpawnPermissionError",
       "proof": "plugin/test/p2-opencode-pty-executor.test.mjs",
-      "proof_sha256": "e35c47f6deb71d4e2f8a3f7e14dde04513e7a7cb569d274e2804ecc8831e840c",
+      "proof_sha256": "f7c045e990027466f87f45cc0fe10cb75bc808bb4db188e8a59c21abfa0ca2a3",
       "proof_anchor": "P2 spawn never silently executes native permission ask/deny"
     },
     {
@@ -80,16 +80,16 @@
     {
       "invariant": "missing-capability-fail-closed",
       "owner": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "87113c4133e23b482b7a853bfcb046bbbb2f62b9ace068d170963bd02ae16167",
+      "owner_sha256": "eac96bcac7162273ba703fe45d8eebae333a6e879793e2c4f21b804031a33bef",
       "owner_anchor": "hostCapabilitySource:(()=>readonly HostCapabilityContract[])|readonly HostCapabilityContract[]=[]",
       "proof": "plugin/test/methodology-host-capability.test.mjs",
-      "proof_sha256": "ace5df77cf44c6a9b2ec9d87284e1385e9c532a7edd12dc322ae62b2adaf45c0",
+      "proof_sha256": "592f1940a007eeb46cff54c4ade43ccbebc0d61ecd776ffcc3a23cd7ca5d2892",
       "proof_anchor": "browser and visual methodologies require canonical runtime browser-execution resource"
     },
     {
       "invariant": "alternate-host-continuation-feasible",
       "owner": "plugin/src/runtime/host/port.ts",
-      "owner_sha256": "8f8e9f35bae34af7af12eae99185f867e4795d35ff306df446b37c0d8ae260bd",
+      "owner_sha256": "c258d29c9cbe6fa1fb9e1683cb1ca3cf74490e4973b7c03d3612cd6a170af19a",
       "owner_anchor": "continueSession(sessionID:string,text:string,metadata:Record<string,unknown>):Promise<boolean>",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",
@@ -98,7 +98,7 @@
     {
       "invariant": "alternate-host-task-feasible",
       "owner": "plugin/src/runtime/host/port.ts",
-      "owner_sha256": "8f8e9f35bae34af7af12eae99185f867e4795d35ff306df446b37c0d8ae260bd",
+      "owner_sha256": "c258d29c9cbe6fa1fb9e1683cb1ca3cf74490e4973b7c03d3612cd6a170af19a",
       "owner_anchor": "export interface ChildSessionPort",
       "proof": "plugin/test/a6-host-port-typing.test.mjs",
       "proof_sha256": "0ff8b0811f669f09c75497766914c24bcebf1f5b1d72ce5cbf2b5589b0c56bcd",

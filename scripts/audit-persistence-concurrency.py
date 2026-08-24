@@ -21,7 +21,7 @@ checks=[
  (16,'partial-corrupt-old-unknown','plugin/src/runtime/state/persistence.ts','unsupported runtime-state schema','plugin/test/prompt-b-persistence-restart-hostile.test.mjs','persistence rejects corrupt partial old and unknown schema'),
  (16,'duplicate-replay-fail-close','plugin/src/runtime/state/persistence.ts','duplicate persisted session identity','plugin/test/prompt-b-persistence-restart-hostile.test.mjs','duplicate persisted session or Mission identity fails closed'),
  (16,'restore-duplicate-defense','plugin/src/runtime/mission/mission-store.ts','Duplicate restored session identity','plugin/test/prompt-b-persistence-restart-hostile.test.mjs','Duplicate restored session identity'),
- (16,'atomic-primary-replace','plugin/src/runtime/state/persistence.ts','renameSync(tmp,this.path)','plugin/test/prompt-b-persistence-restart-hostile.test.mjs','orphan partial tmp file never overrides last committed primary state'),
+ (16,'atomic-primary-replace','plugin/src/runtime/state/persistence.ts','atomicReplace(this.path','plugin/test/prompt-b-persistence-restart-hostile.test.mjs','orphan partial tmp file never overrides last committed primary state'),
  (16,'prewrite-validation','plugin/src/runtime/state/persistence.ts','refusing to persist invalid mission state','plugin/test/prompt-b-persistence-restart-hostile.test.mjs','persistence refuses invalid Mission before replacing the last valid committed state'),
  (16,'strict-current-envelope','plugin/src/runtime/state/persistence.ts','runtime state envelope keys invalid','plugin/test/prompt-b-persistence-restart-hostile.test.mjs','malformed current-schema envelope metadata'),
  (16,'waiting-user-crash-reconcile','plugin/src/runtime/mission/mission-store.ts',"['active','waiting-user'].includes(m.identity.status)",'plugin/test/prompt-b-persistence-restart-hostile.test.mjs','unclean restore invalidates only ephemeral/freshness state'),
@@ -30,7 +30,7 @@ checks=[
  (17,'simultaneous-evidence-mutation','plugin/src/runtime/evidence/evidence-runtime.ts','mission.execution.evidence.fresh=','plugin/test/prompt-b-concurrency-races.test.mjs','evidence/mutation race ordering is deterministic'),
  (17,'worker-cancel-result-race','plugin/src/runtime/task/task-result-reconciler.ts','worker.result.terminal-ignored','plugin/test/prompt-b-concurrency-races.test.mjs','cancellation wins over a late different worker result'),
  (17,'permission-decision-race','plugin/src/runtime/application/runtime-event-controller.ts','permission.stale-ask-ignored','plugin/test/prompt-b-concurrency-races.test.mjs','permission reply-before-ask reorder cannot create a phantom pending permission'),
- (17,'restart-during-write','plugin/src/runtime/state/persistence.ts','writeFileSync(tmp','plugin/test/prompt-b-persistence-restart-hostile.test.mjs','orphan partial tmp file never overrides last committed primary state'),
+ (17,'restart-during-write','plugin/src/runtime/state/persistence.ts',"openSync(tmp,'wx'",'plugin/test/prompt-b-persistence-restart-hostile.test.mjs','orphan partial tmp file never overrides last committed primary state'),
  (17,'queue-ordering','plugin/src/runtime/task/task-runtime.ts','this.#queue.splice(i--,1)','plugin/test/prompt-b-concurrency-races.test.mjs','bounded task queue is FIFO among runnable workers'),
  (17,'starvation-prevention','plugin/src/runtime/task/task-runtime.ts','while(progress)','plugin/test/prompt-b-concurrency-races.test.mjs','later entries are not starved'),
  (17,'retry-circuit','plugin/src/runtime/continuation/dispatcher.ts','continuation_failure_count','plugin/test/continuation-evaluator-wide-batch.test.mjs','continuation transport failures use a separate bounded runtime retry budget'),
@@ -54,8 +54,8 @@ restore=(ROOT/'plugin/src/runtime/mission/mission-store.ts').read_text(errors='r
 reconciler=(ROOT/'plugin/src/runtime/task/task-result-reconciler.ts').read_text(errors='replace')
 events=(ROOT/'plugin/src/runtime/application/runtime-event-controller.ts').read_text(errors='replace')
 guards={
- 'save_validates_before_tmp_write':persistence.find('refusing to persist invalid mission state')<persistence.find('writeFileSync(tmp'),
- 'atomic_same_directory_rename':'renameSync(tmp,this.path)' in persistence,
+ 'save_validates_before_tmp_write':persistence.find('refusing to persist invalid mission state')<persistence.find('atomicReplace(this.path'),
+ 'atomic_same_directory_rename':'const parent=dirname(path),tmp=' in persistence and 'renameSync(tmp,path)' in persistence,
  'duplicate_session_and_mission_load_rejected':all(x in persistence for x in ['duplicate persisted session identity','duplicate persisted mission identity']),
  'waiting_user_restart_reconciled':"['active','waiting-user'].includes(m.identity.status)" in restore,
  'terminal_worker_result_rejected':'worker.result.terminal-ignored' in reconciler,

@@ -48,3 +48,14 @@ export function detectOpenCodeCapabilities(client:OpenCodeClient,owned:OpenCodeO
   const contracts=openCodeHostCapabilityContracts({childSessions,asyncPrompt,syncPrompt,abort,providerInventory,appLog,sessionStatus,childSessionList,sessionTodo,sessionDiff,sessionFork,sessionSummarize,sessionRevert,sessionUnrevert},owned)
   return{childSessions,asyncPrompt,syncPrompt,abort,providerInventory,appLog,sessionStatus,childSessionList,sessionTodo,sessionDiff,sessionFork,sessionSummarize,sessionRevert,sessionUnrevert,workerRuntime:childSessions&&(asyncPrompt||syncPrompt)&&abort,degraded,contracts}
 }
+
+
+export interface OwnedCapabilityHealthProbe{health:()=>Promise<{available:boolean;detail?:string}>}
+export function createOwnedCapabilityObserver(client:OpenCodeClient,contracts:HostCapabilityContract[],processProbe:OwnedCapabilityHealthProbe,workspaceProbe:OwnedCapabilityHealthProbe){
+  let processLifecycle=false,workspaceIsolation=false,browserExecution=false
+  const refresh=()=>{const observed=detectOpenCodeCapabilities(client,{processLifecycle,workspaceIsolation,browserExecution});contracts.splice(0,contracts.length,...observed.contracts)}
+  const observe=async(id:'process-lifecycle'|'workspace-isolation-binding')=>{const health=await(id==='process-lifecycle'?processProbe:workspaceProbe).health();if(id==='process-lifecycle')processLifecycle=health.available;else workspaceIsolation=health.available;refresh();return health}
+  const setBrowserAvailable=(available:boolean)=>{browserExecution=available;refresh()}
+  refresh()
+  return{observe,setBrowserAvailable}
+}

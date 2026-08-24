@@ -34,3 +34,14 @@ export function detectOpenCodeCapabilities(client, owned = {}) {
     const contracts = openCodeHostCapabilityContracts({ childSessions, asyncPrompt, syncPrompt, abort, providerInventory, appLog, sessionStatus, childSessionList, sessionTodo, sessionDiff, sessionFork, sessionSummarize, sessionRevert, sessionUnrevert }, owned);
     return { childSessions, asyncPrompt, syncPrompt, abort, providerInventory, appLog, sessionStatus, childSessionList, sessionTodo, sessionDiff, sessionFork, sessionSummarize, sessionRevert, sessionUnrevert, workerRuntime: childSessions && (asyncPrompt || syncPrompt) && abort, degraded, contracts };
 }
+export function createOwnedCapabilityObserver(client, contracts, processProbe, workspaceProbe) {
+    let processLifecycle = false, workspaceIsolation = false, browserExecution = false;
+    const refresh = () => { const observed = detectOpenCodeCapabilities(client, { processLifecycle, workspaceIsolation, browserExecution }); contracts.splice(0, contracts.length, ...observed.contracts); };
+    const observe = async (id) => { const health = await (id === 'process-lifecycle' ? processProbe : workspaceProbe).health(); if (id === 'process-lifecycle')
+        processLifecycle = health.available;
+    else
+        workspaceIsolation = health.available; refresh(); return health; };
+    const setBrowserAvailable = (available) => { browserExecution = available; refresh(); };
+    refresh();
+    return { observe, setBrowserAvailable };
+}

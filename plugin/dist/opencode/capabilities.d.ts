@@ -20,3 +20,16 @@ export interface OpenCodeCapabilities {
     contracts: HostCapabilityContract[];
 }
 export declare function detectOpenCodeCapabilities(client: OpenCodeClient, owned?: OpenCodeOwnedCapabilityObservation): OpenCodeCapabilities;
+export interface OwnedCapabilityHealthProbe {
+    health: () => Promise<{
+        available: boolean;
+        detail?: string;
+    }>;
+}
+export declare function createOwnedCapabilityObserver(client: OpenCodeClient, contracts: HostCapabilityContract[], processProbe: OwnedCapabilityHealthProbe, workspaceProbe: OwnedCapabilityHealthProbe): {
+    observe: (id: "process-lifecycle" | "workspace-isolation-binding") => Promise<{
+        available: boolean;
+        detail?: string;
+    }>;
+    setBrowserAvailable: (available: boolean) => void;
+};
