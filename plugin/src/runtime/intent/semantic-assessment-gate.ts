@@ -2,10 +2,15 @@ import type { MissionState } from '../mission/types.js'
 import { activeConstraintAtoms } from '../constraint/constraint-atoms.js'
 import { SEMANTIC_CAPABILITIES, SEMANTIC_EXTERNAL_ACTIONS, SEMANTIC_VERIFICATION_KINDS } from './semantic-assessment.js'
 
+function boundedRelevantActiveAtoms(m:MissionState,limit=10):ReturnType<typeof activeConstraintAtoms>{
+  const active=activeConstraintAtoms(m.execution.constraint_atoms),text=m.identity.semantic_assessment.pending_text?.toLowerCase()??'',recent=[...active].reverse(),relevant=recent.filter(atom=>{const subject=atom.subject.trim().toLowerCase();return subject.length>=3&&text.includes(subject)}),relevantIDs=new Set(relevant.map(atom=>atom.id))
+  return [...relevant,...recent.filter(atom=>!relevantIDs.has(atom.id))].slice(0,limit)
+}
+
 export function renderSemanticAssessmentGate(m:MissionState):string{
   const semantic=m.identity.semantic_assessment
   const messageKinds=semantic.phase==='initial'?'mission|non-material':'amendment|constraint|verification|stop|resume|non-material'
-  const activeAtoms=activeConstraintAtoms(m.execution.constraint_atoms),atomLines=semantic.phase==='followup'?[`constraint_atoms[] only for constraint: {subject_kind:path|capability|methodology|decision|generic,subject,predicate:mutate|read|use|require|preserve|verify,polarity:ALLOW|DENY|REQUIRE,scope:mission|task,supersedes:[ca_id]}; supersede only explicit user reversal; path=relative/glob.`,activeAtoms.length?`active_atoms=${activeAtoms.slice(-10).map(a=>`${a.id}:${a.polarity}:${a.predicate}:${a.subject_kind}:${a.subject}`).join('|')}`:'active_atoms=none']:[]
+  const activeAtoms=boundedRelevantActiveAtoms(m),atomLines=semantic.phase==='followup'?[`constraint_atoms[] only for constraint: {subject_kind:path|capability|methodology|decision|generic,subject,predicate:mutate|read|use|require|preserve|verify,polarity:ALLOW|DENY|REQUIRE,scope:mission|task,supersedes:[ca_id]}; supersede only explicit user reversal; path=relative/glob.`,activeAtoms.length?`active_atoms=${activeAtoms.map(a=>`${a.id}:${a.polarity}:${a.predicate}:${a.subject_kind}:${a.subject}`).join('|')}`:'active_atoms=none']:[]
   const phaseRule=semantic.phase==='initial'?'Init: file/repo/tool work=>mission=true; pure chat=>non-material=false.':'Follow-up: preserve prior semantics unless changed; non-material=>false; others=>true.'
   return[
     'Hi SEMANTIC ASSESSMENT GATE',

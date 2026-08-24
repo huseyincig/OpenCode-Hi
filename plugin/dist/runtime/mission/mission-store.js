@@ -238,7 +238,11 @@ export class MissionStore {
             throw new Error('Hi semantic assessment is not pending for a follow-up');
         if (assessment.message_kind === 'mission')
             throw new Error('A follow-up assessment cannot use message_kind=mission');
-        const text = m.identity.semantic_assessment.pending_text, now = Date.now();
+        const text = m.identity.semantic_assessment.pending_text, now = Date.now(), preparedConstraint = assessment.message_kind === 'constraint' ? applyConstraintAtomDrafts(m.execution.constraint_atoms ?? [], assessment.constraint_atoms, m.identity.semantic_assessment.revision, text, now) : undefined;
+        if (preparedConstraint?.conflicts.length || preparedConstraint?.missing_supersedes.length) {
+            const conflicting = [...new Set(preparedConstraint.conflicts.map(item => item.previous.id))], missing = [...new Set(preparedConstraint.missing_supersedes.flatMap(item => item.missing))], parts = [conflicting.length ? `explicit supersedes required for active atom(s): ${conflicting.join(',')}` : '', missing.length ? `unknown/non-active supersedes id(s): ${missing.join(',')}` : ''].filter(Boolean);
+            throw new Error(`Constraint semantic assessment rejected: ${parts.join('; ')}`);
+        }
         m.identity.semantic_assessment.status = 'assessed';
         m.identity.semantic_assessment.assessed_at = now;
         if (assessment.message_kind === 'non-material') {
@@ -274,7 +278,7 @@ export class MissionStore {
         if (kind === 'constraint') {
             m.execution.constraints ??= [];
             m.execution.constraint_atoms ??= [];
-            const applied = applyConstraintAtomDrafts(m.execution.constraint_atoms, effectiveAssessment.constraint_atoms, m.identity.semantic_assessment.revision, text, now);
+            const applied = preparedConstraint ?? applyConstraintAtomDrafts(m.execution.constraint_atoms, effectiveAssessment.constraint_atoms, m.identity.semantic_assessment.revision, text, now);
             m.execution.constraint_atoms = applied.atoms;
             for (const old of applied.superseded) {
                 const projection = constraintAtomProjection(old);
