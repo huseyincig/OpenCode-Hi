@@ -4,22 +4,22 @@ const F = { FRESH: 4, UNKNOWN: 2, POTENTIALLY_STALE: .5 };
 const R = { PROTECTED: 8, COMPRESSIBLE: 2, PURGEABLE: 0 };
 function text(g) { return g.items.filter(Boolean).join('\n'); }
 function cost(g) { return text(g).length; }
-function digest(g) { return g.content_hash ?? createHash('sha256').update(text(g)).digest('hex'); }
+// Projection dedupe is a byte-economy decision, so it must identify the bytes
+// actually sent to the Worker. source/content hashes remain provenance metadata
+// and may legitimately cover a wider source than the rendered projection.
+function digest(g) { return createHash('sha256').update(text(g)).digest('hex'); }
 function mandatory(g) { return g.required === true || g.protection === 'PROTECTED'; }
 function score(g) { return P[g.priority] + F[g.freshness] + R[g.protection]; }
 function canonicalGroups(groups) {
-    const seenOptional = new Set(), seenAny = new Set(), out = [], duplicates = [];
-    for (const raw of groups) {
-        const g = { ...raw, items: raw.items.map(String).filter(Boolean) };
-        if (!g.id || !g.items.length)
-            continue;
+    const normalized = groups.map(raw => ({ ...raw, items: raw.items.map(String).filter(Boolean) })).filter(g => Boolean(g.id) && g.items.length > 0);
+    const mandatoryDigests = new Set(normalized.filter(mandatory).map(digest)), seenOptional = new Set(), out = [], duplicates = [];
+    for (const g of normalized) {
         const key = digest(g), must = mandatory(g);
-        if (!must && seenAny.has(key)) {
+        if (!must && (mandatoryDigests.has(key) || seenOptional.has(key))) {
             duplicates.push(g.id);
             continue;
         }
         out.push(g);
-        seenAny.add(key);
         if (!must)
             seenOptional.add(key);
     }

@@ -21,7 +21,7 @@ import {appendLedger} from '../dist/runtime/ledger/ledger.js'
 const result=(status='FIX_REQUIRED',overrides={})=>({status,summary:'UNTRUSTED SUMMARY MUST NOT PERSIST',changed_files:[],evidence:[],open_issues:status==='DONE'?[]:['native-diff-mismatch:src/a.ts:SECRET_DETAIL'],needs_context:[],...overrides})
 function fixture(root,sid='m1',objective='small fix'){
   const store=new MissionStore(root),m=startAssessedMission(store,sid,'opaque task',{likely_targets:['src/a.ts'],required_capabilities:['implementation']})
-  const task=createTask(m,{objective,role:'coder',category:'quick',scope:['src/a.ts'],constraints:[],requiredEvidence:[],obligationIds:[]})
+  const task=createTask(m,{objective,role:'coder',category:'quick',scope:['src/a.ts'],constraints:[],requiredEvidence:['changed-surface-sanity'],obligationIds:[]})
   const worker=createWorker(m,task,'host-default');worker.attempt=1;appendLedger(m,'native.diff.mismatch',{task_id:task.id,worker_id:worker.id,payload:{test:true}})
   return{m,task,worker}
 }

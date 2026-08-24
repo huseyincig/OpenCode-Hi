@@ -18,7 +18,7 @@ test('ablation: whole-group projection preserves required coverage and avoids mi
 })
 
 test('ablation: byte-identical duplicate groups are paid once without losing required content',()=>{
-  const same='a'.repeat(64),groups=[g('required',1200,{priority:'high',protection:'PROTECTED',required:true}),g('dup-a',1500,{content_hash:same}),g('dup-b',1500,{content_hash:same}),g('useful',1700,{priority:'high'})]
+  const duplicateText='duplicate:'+('d'.repeat(1490)),groups=[g('required',1200,{priority:'high',protection:'PROTECTED',required:true}),{...g('dup-a',1500),items:[duplicateText]},{...g('dup-b',1500),items:[duplicateText]},g('useful',1700,{priority:'high'})]
   const b=baseline(groups,5000),p=projected(groups,5000)
   assert.equal(b.requiredCovered,true);assert.equal(p.requiredCovered,true)
   assert.deepEqual(p.decision.duplicate_groups,['dup-b'])
@@ -36,6 +36,15 @@ test('projection fails closed instead of partially emitting required atomic cont
 test('equal explicit utility preserves caller order and required duplicate content is never deduped away',()=>{
   const ordered=[g('first',1800,{priority:'high',freshness:'UNKNOWN'}),g('second',600,{priority:'high',freshness:'UNKNOWN'})],p=projected(ordered,2000)
   assert.equal(p.decision.selected[0].id,'first')
-  const same='b'.repeat(64),required=projectContextGroups([g('optional',900,{content_hash:same}),g('must',900,{content_hash:same,required:true,protection:'PROTECTED'})],2000)
-  assert.equal(required.complete,true);assert.ok(required.selected.some(x=>x.id==='must'));assert.equal(required.duplicate_groups.includes('must'),false)
+  const duplicateText='required-byte-identical',required=projectContextGroups([{...g('optional',900),items:[duplicateText]},{...g('must',900,{required:true,protection:'PROTECTED'}),items:[duplicateText]}],2000)
+  assert.equal(required.complete,true);assert.deepEqual(required.selected.map(x=>x.id),['must']);assert.deepEqual(required.duplicate_groups,['optional'])
+})
+
+test('source provenance hashes never dedupe different rendered Worker context bytes',()=>{
+  const sameSourceHash='b'.repeat(64),decision=projectContextGroups([
+    {...g('projection-a',900),content_hash:sameSourceHash,items:['same source, selected contract A']},
+    {...g('projection-b',900),content_hash:sameSourceHash,items:['same source, selected contract B']},
+  ],2000)
+  assert.deepEqual(decision.selected.map(x=>x.id),['projection-a','projection-b'])
+  assert.deepEqual(decision.duplicate_groups,[])
 })
