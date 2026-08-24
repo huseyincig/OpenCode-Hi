@@ -3,6 +3,7 @@ import type { HiConfig } from '../../config/schema.js'
 import { MODEL_ROUTED_CHILD_ROLES, type ModelRoutedChildRole } from '../../config/schema.js'
 import { providerPolicyView } from '../host/provider-policy.js'
 import type { ModelCapabilityProfile } from '../../contracts/model.js'
+import { isHiReadOnlyChildRole } from '../roles/catalog.js'
 
 export type AvailableModel=ModelCapabilityProfile
 export interface ModelFallbackReason{model:string;variant?:string;reason:string}
@@ -17,6 +18,7 @@ function record(value:unknown):Record<string,unknown>|undefined{return value&&ty
 function providerOf(m:AvailableModel):string|undefined{return m.provider??(m.id.includes('/')?m.id.slice(0,m.id.indexOf('/')):undefined)}
 function requiredRoleCapability(role?:string):'vision'|undefined{return role==='visual-qa'?'vision':undefined}
 function roleCapabilityEligible(model:AvailableModel,role?:string):{ok:boolean;reason?:string}{const required=requiredRoleCapability(role);if(required==='vision'&&model.visionCapable!==true)return{ok:false,reason:'role-capability-missing:vision'};return{ok:true}}
+function roleRequiresWriteCapability(role?:string):boolean{return !role||!isHiReadOnlyChildRole(role)}
 function policyFilter(available:AvailableModel[],config:HiConfig,hostConfig?:Record<string,unknown>,role?:string){
   const allowedModels=config.routing.allowedModels??[],explicitAllowedModels=new Set(allowedModels),explicitAllowed=new Set(config.routing.allowedProviders),deniedModels=new Set(config.routing.deniedModels),native=providerPolicyView(hostConfig),rejected:Array<{id:string;reason:string}>=[],allowed:AvailableModel[]=[]
   for(const m of available){const provider=providerOf(m)
@@ -25,7 +27,7 @@ function policyFilter(available:AvailableModel[],config:HiConfig,hostConfig?:Rec
     if(explicitAllowed.size&&(!provider||!explicitAllowed.has(provider))){rejected.push({id:m.id,reason:`hi-provider-not-allowed:${provider??'unknown'}`});continue}
     if(provider&&native.denied.has(provider)){rejected.push({id:m.id,reason:`host-provider-policy-deny:${provider}`});continue}
     if(native.allowed.size&&provider&&!native.allowed.has(provider)){rejected.push({id:m.id,reason:`host-provider-not-enabled:${provider}`});continue}
-    if(m.writeCapable===false){rejected.push({id:m.id,reason:'not-write-capable'});continue}
+    if(m.writeCapable===false&&roleRequiresWriteCapability(role)){rejected.push({id:m.id,reason:'not-write-capable'});continue}
     const roleCapability=roleCapabilityEligible(m,role);if(!roleCapability.ok){rejected.push({id:m.id,reason:roleCapability.reason??'role-capability-missing'});continue}
     allowed.push(m)
   }

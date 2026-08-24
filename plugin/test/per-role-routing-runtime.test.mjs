@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {resolveModel} from '../dist/runtime/routing/model-resolver.js'
+import {resolveModel,runtimeModelCandidateStatus} from '../dist/runtime/routing/model-resolver.js'
 import {resolveHiConfig} from '../dist/config/resolver.js'
 
 const INVENTORY=[
@@ -124,4 +124,24 @@ test('visual-qa requires proven image capability before every selection path',()
   assert.equal(mapped.primary,'p/vision')
   assert.ok(mapped.rejected.some(x=>x.id==='p/text'&&x.reason==='role-capability-missing:vision'))
   assert.equal(resolveModel('visual',[],cfgWith({}),undefined,'visual-qa',{}).primary,undefined)
+})
+
+test('read-only Hi child roles do not inherit coder write-capability requirements',()=>{
+  const inventory=[
+    {id:'p/read-only',provider:'p',tags:['reasoning','high-assurance'],writeCapable:false,visionCapable:true},
+    {id:'p/writer',provider:'p',tags:['coding'],writeCapable:true,visionCapable:false},
+  ]
+  const architect=resolveModel('deep',inventory,cfgWith({architect:['p/read-only']}),undefined,'architect',{})
+  assert.equal(architect.primary,'p/read-only')
+  const review=resolveModel('critical',inventory,cfgWith({'qa-reviewer':['p/read-only']}),undefined,'qa-reviewer',{})
+  assert.equal(review.primary,'p/read-only')
+  const visual=resolveModel('visual',inventory,cfgWith({'visual-qa':['p/read-only']}),undefined,'visual-qa',{})
+  assert.equal(visual.primary,'p/read-only','visual role still relies on proven vision capability, not repository write authority')
+  assert.equal(runtimeModelCandidateStatus('p/read-only',inventory,cfgWith({}),{},'repository-explorer').ok,true)
+
+  const coder=resolveModel('standard',inventory,cfgWith({coder:['p/read-only','p/writer']}),undefined,'coder',{})
+  assert.equal(coder.primary,'p/writer')
+  assert.ok(coder.rejected.some(x=>x.id==='p/read-only'&&x.reason==='not-write-capable'))
+  assert.equal(runtimeModelCandidateStatus('p/read-only',inventory,cfgWith({}),{},'coder').ok,false)
+  assert.equal(runtimeModelCandidateStatus('p/read-only',inventory,cfgWith({}),{}).ok,false,'legacy/unspecified role stays conservatively write-capable')
 })

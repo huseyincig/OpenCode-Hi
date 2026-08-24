@@ -1,5 +1,6 @@
 import { MODEL_ROUTED_CHILD_ROLES } from '../../config/schema.js';
 import { providerPolicyView } from '../host/provider-policy.js';
+import { isHiReadOnlyChildRole } from '../roles/catalog.js';
 const AUTOMATIC_CAPABILITY_PREFERENCE = { quick: ['fast', 'coding'], standard: ['coding', 'balanced'], deep: ['reasoning', 'coding'], visual: ['coding', 'reasoning'], critical: ['high-assurance', 'reasoning', 'coding'] };
 const VARIANT_PREFERENCE = { quick: ['low', 'minimal', 'none'], standard: ['medium', 'low', 'none'], deep: ['high', 'xhigh', 'medium'], visual: ['high', 'medium', 'xhigh'], critical: ['xhigh', 'max', 'high'] };
 const INITIAL_RECOMMENDATION_CATEGORY = { coder: 'standard', architect: 'deep', 'repository-explorer': 'standard', 'qa-reviewer': 'critical', 'security-reviewer': 'critical', 'visual-qa': 'visual' };
@@ -8,6 +9,7 @@ function providerOf(m) { return m.provider ?? (m.id.includes('/') ? m.id.slice(0
 function requiredRoleCapability(role) { return role === 'visual-qa' ? 'vision' : undefined; }
 function roleCapabilityEligible(model, role) { const required = requiredRoleCapability(role); if (required === 'vision' && model.visionCapable !== true)
     return { ok: false, reason: 'role-capability-missing:vision' }; return { ok: true }; }
+function roleRequiresWriteCapability(role) { return !role || !isHiReadOnlyChildRole(role); }
 function policyFilter(available, config, hostConfig, role) {
     const allowedModels = config.routing.allowedModels ?? [], explicitAllowedModels = new Set(allowedModels), explicitAllowed = new Set(config.routing.allowedProviders), deniedModels = new Set(config.routing.deniedModels), native = providerPolicyView(hostConfig), rejected = [], allowed = [];
     for (const m of available) {
@@ -32,7 +34,7 @@ function policyFilter(available, config, hostConfig, role) {
             rejected.push({ id: m.id, reason: `host-provider-not-enabled:${provider}` });
             continue;
         }
-        if (m.writeCapable === false) {
+        if (m.writeCapable === false && roleRequiresWriteCapability(role)) {
             rejected.push({ id: m.id, reason: 'not-write-capable' });
             continue;
         }
