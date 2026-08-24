@@ -7,8 +7,10 @@ export function decideTopology(intent, config = DEFAULT_TOPOLOGY_POLICY, m) {
         return { mode: 'single-agent', executionMode: 'single', agentCount: 1, parallelism: 1, reason: ['maxAgents=1 is an executable topology ceiling'] };
     if (config.mode === 'single-agent')
         return { mode: 'single-agent', executionMode: 'single', agentCount: 1, parallelism: 1, reason: ['explicit user/project single-agent override'] };
-    if (config.mode === 'multi-agent')
-        return { mode: 'multi-agent', executionMode: 'parallel', agentCount: Math.max(2, Math.min(config.maxAgents, 2)), parallelism: Math.max(1, Math.min(config.parallelism, 2)), reason: ['explicit user/project multi-agent override'] };
+    if (config.mode === 'multi-agent') {
+        const parallelism = Math.max(1, Math.min(config.parallelism, config.maxAgents)), agentCount = Math.max(2, Math.min(config.maxAgents, Math.max(2, parallelism)));
+        return { mode: 'multi-agent', executionMode: 'parallel', agentCount, parallelism, reason: ['explicit user/project multi-agent override honors configured mission capacity'] };
+    }
     const base = resolveExecutionMode(intent);
     const benefit = base.mode === 'parallel';
     if (!benefit)

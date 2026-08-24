@@ -23,6 +23,20 @@ test('BA03 execution capacity config changes real topology and scheduler decisio
   assert.equal(evaluateSchedulingResourceCapacity(scopedCapacity,'c',{provider:'q',model:'p/m'}).reason?.code,'model-capacity')
 })
 
+test('explicit Multi mode honors configured mission parallelism above the adaptive minimum while remaining maxAgents-bounded',()=>{
+  const explicit=decideTopology(intent,{mode:'multi-agent',maxAgents:4,parallelism:4})
+  assert.equal(explicit.executionMode,'parallel')
+  assert.equal(explicit.mode,'multi-agent')
+  assert.equal(explicit.agentCount,4)
+  assert.equal(explicit.parallelism,4)
+  const capped=decideTopology(intent,{mode:'multi-agent',maxAgents:3,parallelism:8})
+  assert.equal(capped.agentCount,3)
+  assert.equal(capped.parallelism,3)
+  const adaptive=decideTopology(intent,{mode:'adaptive',maxAgents:4,parallelism:4})
+  assert.equal(adaptive.agentCount,3,'adaptive policy keeps minimum-sufficient semantic fan-out instead of filling explicit capacity')
+  assert.equal(adaptive.parallelism,3)
+})
+
 test('BA03 routing constraints execute while legacy scoring/model-mode fields are diagnostic-only',()=>{
   const models=[{id:'p/code',provider:'p',tags:['coding'],quality:1,cost:50,writeCapable:true},{id:'q/generic',provider:'q',tags:['balanced'],quality:99,cost:.01,writeCapable:true}]
   const legacy=resolveHiConfigWithReport({models:{mode:'fixed',default:'q/generic',roles:{coder:'q/generic'}},routing:{strategy:'cost',categoryModels:{standard:['q/generic']},allowedProviders:[]}})

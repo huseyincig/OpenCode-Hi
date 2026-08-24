@@ -8,7 +8,7 @@ export function decideTopology(intent:NormalizedMissionIntent,config:TopologyPol
   if(m?.execution.execution_mode==='team')return{mode:'multi-agent',executionMode:'parallel',agentCount:Math.max(2,m.execution.topology?.parallelism??2),parallelism:Math.max(1,m.execution.topology?.parallelism??2),reason:['legacy team execution mode normalized to scheduler-owned parallel topology']}
   if(config.maxAgents<=1)return{mode:'single-agent',executionMode:'single',agentCount:1,parallelism:1,reason:['maxAgents=1 is an executable topology ceiling']}
   if(config.mode==='single-agent')return{mode:'single-agent',executionMode:'single',agentCount:1,parallelism:1,reason:['explicit user/project single-agent override']}
-  if(config.mode==='multi-agent')return{mode:'multi-agent',executionMode:'parallel',agentCount:Math.max(2,Math.min(config.maxAgents,2)),parallelism:Math.max(1,Math.min(config.parallelism,2)),reason:['explicit user/project multi-agent override']}
+  if(config.mode==='multi-agent'){const parallelism=Math.max(1,Math.min(config.parallelism,config.maxAgents)),agentCount=Math.max(2,Math.min(config.maxAgents,Math.max(2,parallelism)));return{mode:'multi-agent',executionMode:'parallel',agentCount,parallelism,reason:['explicit user/project multi-agent override honors configured mission capacity']}}
   const base=resolveExecutionMode(intent)
   const benefit=base.mode==='parallel'
   if(!benefit)return{mode:'single-agent',executionMode:'single',agentCount:1,parallelism:1,reason:['adaptive policy found no material fan-out benefit',...base.reason]}
