@@ -59,7 +59,7 @@ test('W3 OpenCode experimental workspace flag semantics and adapter preflight fa
 test('W2 OpenCode adapter provisions only the builtin worktree type and binds exact Git repository identity',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-w2-primary-')),work=mkdtempSync(join(tmpdir(),'hi-w2-worktree-')),common=mkdtempSync(join(tmpdir(),'hi-w2-common-')),calls=[]
   try{
-    const workspace={create:async p=>{calls.push(['create',p]);return{data:{id:'ws_1',type:'worktree',directory:work}}},list:async()=>({data:[{id:'ws_1',type:'worktree',directory:work}]}),remove:async p=>{calls.push(['remove',p]);return{data:{id:'ws_1',type:'worktree',directory:work}}}}
+    let createdWorkspace=false;const workspace={create:async p=>{calls.push(['create',p]);createdWorkspace=true;return{data:{id:'ws_1',type:'worktree',directory:work}}},list:async()=>({data:createdWorkspace?[{id:'ws_1',type:'worktree',directory:work}]:[]}),remove:async p=>{calls.push(['remove',p]);return{data:{id:'ws_1',type:'worktree',directory:work}}}}
     const inspect=dir=>({head:BASE,common_dir:resolve(common),worktrees:[resolve(root),resolve(work)]})
     const adapter=new OpenCodeWorkspaceAdapter({v2:{experimental:{workspace}}},new URL('http://127.0.0.1:1'),root,inspect)
     assert.equal(await adapter.sourceBaseline(root),BASE)
@@ -82,6 +82,44 @@ test('W3 real-host lost ACK on workspace create is reconciled only from one new 
   }finally{rmSync(root,{recursive:true,force:true});rmSync(work,{recursive:true,force:true});rmSync(common,{recursive:true,force:true})}
 })
 
+
+test('M05 successful create rejects a pre-existing native workspace identity without removing foreign ownership',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-m05-existing-primary-')),work=mkdtempSync(join(tmpdir(),'hi-m05-existing-work-')),common=mkdtempSync(join(tmpdir(),'hi-m05-existing-common-'));let removes=0
+  try{
+    const existing={id:'ws_existing',type:'worktree',directory:work},workspace={list:async()=>({data:[existing]}),create:async()=>({data:existing}),remove:async()=>{removes++;return{data:existing}}}
+    const inspect=()=>({head:BASE,common_dir:resolve(common),worktrees:[resolve(root),resolve(work)]})
+    const adapter=new OpenCodeWorkspaceAdapter({v2:{experimental:{workspace}}},new URL('http://127.0.0.1:1'),root,inspect)
+    await assert.rejects(()=>adapter.provision({mission_id:'m',task_id:'t',repository_root:root,source_baseline:BASE}),/pre-existing workspace identity/i)
+    assert.equal(removes,0,'a create response that aliases prior host ownership must never be cleaned up as Hi-owned')
+  }finally{for(const x of [root,work,common])rmSync(x,{recursive:true,force:true})}
+})
+
+
+test('M05 successful create rejects a fresh host id that aliases a pre-existing workspace path',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-m05-alias-primary-')),work=mkdtempSync(join(tmpdir(),'hi-m05-alias-work-')),common=mkdtempSync(join(tmpdir(),'hi-m05-alias-common-'));let removes=0
+  try{
+    let created=false
+    const prior={id:'ws_prior',type:'worktree',directory:work},fresh={id:'ws_fresh',type:'worktree',directory:work}
+    const workspace={list:async()=>({data:created?[prior,fresh]:[prior]}),create:async()=>{created=true;return{data:fresh}},remove:async()=>{removes++;return{data:fresh}}}
+    const inspect=()=>({head:BASE,common_dir:resolve(common),worktrees:[resolve(root),resolve(work)]})
+    const adapter=new OpenCodeWorkspaceAdapter({v2:{experimental:{workspace}}},new URL('http://127.0.0.1:1'),root,inspect)
+    await assert.rejects(()=>adapter.provision({mission_id:'m',task_id:'t',repository_root:root,source_baseline:BASE}),/pre-existing workspace path/i)
+    assert.equal(removes,0,'a fresh id that aliases a prior workspace path is not safe to remove')
+  }finally{for(const x of [root,work,common])rmSync(x,{recursive:true,force:true})}
+})
+
+test('M05 cleanup revalidates current host workspace id-to-path ownership before destructive remove',async()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-m05-clean-primary-')),owned=mkdtempSync(join(tmpdir(),'hi-m05-clean-owned-')),foreign=mkdtempSync(join(tmpdir(),'hi-m05-clean-foreign-')),common=mkdtempSync(join(tmpdir(),'hi-m05-clean-common-'));let removes=0
+  try{
+    const workspace={list:async()=>({data:[{id:'ws_recycled',type:'worktree',directory:foreign}]}),create:async()=>({data:{}}),remove:async()=>{removes++;return{data:{id:'ws_recycled',type:'worktree',directory:foreign}}}}
+    const inspect=()=>({head:BASE,common_dir:resolve(common),worktrees:[resolve(root),resolve(owned),resolve(foreign)]})
+    const adapter=new OpenCodeWorkspaceAdapter({v2:{experimental:{workspace}}},new URL('http://127.0.0.1:1'),root,inspect)
+    const lease={lease_id:'lease_recycled',mission_id:'m',task_id:'t',repository_root:root,base_ref:BASE,workspace_path:resolve(owned),host_workspace_id:'ws_recycled',created_at:1,status:'ACTIVE',cleanup_state:'ACTIVE',source_baseline:BASE}
+    await assert.rejects(()=>adapter.cleanup(lease),/workspace path mismatch/i)
+    assert.equal(removes,0,'cleanup must not remove a host ID whose current path no longer matches the lease')
+  }finally{for(const x of [root,owned,foreign,common])rmSync(x,{recursive:true,force:true})}
+})
+
 test('W3 lost ACK reconciliation fails closed when more than one new valid workspace appears',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-w3-amb-primary-')),a=mkdtempSync(join(tmpdir(),'hi-w3-amb-a-')),b=mkdtempSync(join(tmpdir(),'hi-w3-amb-b-')),common=mkdtempSync(join(tmpdir(),'hi-w3-amb-common-'));let listed=0
   try{
@@ -98,7 +136,7 @@ test('W2 default Git inspector accepts an actual detached registered worktree wi
   try{
     run(['init']);run(['config','user.email','hi@example.invalid']);run(['config','user.name','Hi Test']);
     const {writeFileSync}=await import('node:fs');writeFileSync(join(root,'a.txt'),'one\n');run(['add','a.txt']);run(['commit','-m','base']);const head=run(['rev-parse','HEAD']);writeFileSync(join(root,'a.txt'),'user-dirty\n');const dirtyBefore=run(['status','--porcelain']);assert.match(dirtyBefore,/a\.txt/);run(['worktree','add','--detach',work,'HEAD'])
-    const workspace={create:async p=>({data:{id:'ws_real',type:p.type,directory:work}}),list:async()=>({data:[{id:'ws_real',type:'worktree',directory:work}]}),remove:async()=>({data:{}})}
+    let createdWorkspace=false;const workspace={create:async p=>{createdWorkspace=true;return{data:{id:'ws_real',type:p.type,directory:work}}},list:async()=>({data:createdWorkspace?[{id:'ws_real',type:'worktree',directory:work}]:[]}),remove:async()=>({data:{}})}
     const adapter=new OpenCodeWorkspaceAdapter({v2:{experimental:{workspace}}},new URL('http://127.0.0.1:1'),root)
     assert.equal(await adapter.sourceBaseline(root),head)
     const out=await adapter.provision({mission_id:'m',task_id:'t',repository_root:root,source_baseline:head});assert.equal(out.workspace_path,resolve(work));assert.equal(run(['status','--porcelain']),dirtyBefore);assert.equal(readFileSync(join(root,'a.txt'),'utf8'),'user-dirty\n')
@@ -259,7 +297,7 @@ test('PROMPT B real Git workspace provisioning preserves pre-staged and unstaged
   try{
     const {writeFileSync}=await import('node:fs');run(['init']);run(['config','user.email','hi@example.invalid']);run(['config','user.name','Hi Test']);writeFileSync(join(root,'tracked.txt'),'base\n');writeFileSync(join(root,'staged.txt'),'base\n');run(['add','.']);run(['commit','-m','base']);const head=run(['rev-parse','HEAD'])
     writeFileSync(join(root,'tracked.txt'),'user-unstaged\n');writeFileSync(join(root,'staged.txt'),'user-staged\n');writeFileSync(join(root,'untracked user.txt'),'user-untracked\n');run(['add','staged.txt']);const before=run(['status','--porcelain=v1']);assert.match(before,/\?\? (?:\"untracked user\.txt\"|untracked user\.txt)/);run(['worktree','add','--detach',work,'HEAD'])
-    const workspace={create:async p=>({data:{id:'ws_staged',type:p.type,directory:work}}),list:async()=>({data:[{id:'ws_staged',type:'worktree',directory:work}]}),remove:async()=>({data:{}})}
+    let createdWorkspace=false;const workspace={create:async p=>{createdWorkspace=true;return{data:{id:'ws_staged',type:p.type,directory:work}}},list:async()=>({data:createdWorkspace?[{id:'ws_staged',type:'worktree',directory:work}]:[]}),remove:async()=>({data:{}})}
     const adapter=new OpenCodeWorkspaceAdapter({v2:{experimental:{workspace}}},new URL('http://127.0.0.1:1'),root);await adapter.provision({mission_id:'m',task_id:'t',repository_root:root,source_baseline:head})
     assert.equal(run(['status','--porcelain=v1']),before);assert.match(before,/ M tracked\.txt/);assert.match(before,/M  staged\.txt/)
   }finally{spawnSync('git',['worktree','remove','--force',work],{cwd:root,encoding:'utf8'});rmSync(work,{recursive:true,force:true});rmSync(root,{recursive:true,force:true})}

@@ -114,8 +114,27 @@ export class OpenCodeWorkspaceAdapter {
         return { host_workspace_id: native.id, workspace_path: workspacePath, ...(native.branch ? { branch: String(native.branch) } : {}) };
     }
     async #listNative() { const raw = await this.#workspace().list({ directory: this.directory }), items = nativeData(raw) ?? []; return Array.isArray(items) ? items : []; }
-    async #recoverLostCreate(beforeIDs, request, cause) {
-        const after = await this.#listNative(), newItems = after.filter(x => x?.id && !beforeIDs.has(x.id)), valid = [];
+    #creationBaseline(items) { const ids = new Set(), paths = []; for (const item of items) {
+        if (typeof item?.id === 'string' && item.id)
+            ids.add(item.id);
+        if (typeof item?.directory === 'string' && item.directory)
+            try {
+                const path = canonicalExisting(item.directory);
+                if (!paths.some(existing => sameGitPath(existing, path)))
+                    paths.push(path);
+            }
+            catch { }
+    } return { ids, paths }; }
+    #aliasesCreationPath(native, before) { if (typeof native?.directory !== 'string' || !native.directory)
+        return false; try {
+        const path = canonicalExisting(native.directory);
+        return before.paths.some(existing => sameGitPath(existing, path));
+    }
+    catch {
+        return false;
+    } }
+    async #recoverLostCreate(before, request, cause) {
+        const after = await this.#listNative(), newItems = after.filter(x => x?.id && !before.ids.has(x.id) && !this.#aliasesCreationPath(x, before)), valid = [];
         for (const item of newItems)
             try {
                 valid.push(this.#validate(item, { ...request, require_baseline: true }));
@@ -131,22 +150,26 @@ export class OpenCodeWorkspaceAdapter {
         const before = this.inspector(request.repository_root);
         if (before.head !== request.source_baseline)
             throw new Error('Source baseline changed before OpenCode workspace provisioning');
-        const beforeIDs = new Set((await this.#listNative()).map(x => x?.id).filter((x) => typeof x === 'string' && Boolean(x)));
+        const creationBaseline = this.#creationBaseline(await this.#listNative());
         let raw;
         try {
             raw = await this.#workspace().create({ directory: this.directory, type: 'worktree' });
         }
         catch (createError) {
-            return this.#recoverLostCreate(beforeIDs, request, createError);
+            return this.#recoverLostCreate(creationBaseline, request, createError);
         }
         const native = nativeData(raw);
         if (!native || typeof native.id !== 'string' || native.type !== 'worktree' || typeof native.directory !== 'string')
-            return this.#recoverLostCreate(beforeIDs, request, raw?.error ?? 'invalid create response');
+            return this.#recoverLostCreate(creationBaseline, request, raw?.error ?? 'invalid create response');
+        if (creationBaseline.ids.has(native.id))
+            throw new Error(`OpenCode workspace create returned pre-existing workspace identity ${native.id}`);
+        if (this.#aliasesCreationPath(native, creationBaseline))
+            throw new Error(`OpenCode workspace create returned pre-existing workspace path ${native.directory}`);
         try {
             return this.#validate(native, { ...request, require_baseline: true });
         }
         catch (error) {
-            if (native?.id)
+            if (native?.id && !creationBaseline.ids.has(native.id) && !this.#aliasesCreationPath(native, creationBaseline))
                 try {
                     await this.#workspace().remove({ id: native.id, directory: this.directory });
                 }
@@ -218,6 +241,10 @@ export class OpenCodeWorkspaceAdapter {
             throw new Error('Refusing cleanup of primary repository path');
         if (!primary.worktrees.some(path => sameGitPath(path, target)))
             throw new Error('Refusing workspace cleanup for path outside the registered Git worktree set');
+        const current = (await this.#listNative()).find(item => item?.id === lease.host_workspace_id);
+        if (!current)
+            throw new Error(`OpenCode workspace identity ${lease.host_workspace_id} is missing before cleanup`);
+        this.#validate(current, { repository_root: lease.repository_root, source_baseline: lease.source_baseline, expected_path: lease.workspace_path, expected_id: lease.host_workspace_id, require_baseline: false });
         await this.#workspace().remove({ id: lease.host_workspace_id, directory: this.directory });
         const raw = await this.#workspace().list({ directory: this.directory }), items = nativeData(raw) ?? [];
         if (Array.isArray(items) && items.some(x => x?.id === lease.host_workspace_id))

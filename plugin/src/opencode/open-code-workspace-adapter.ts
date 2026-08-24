@@ -7,6 +7,7 @@ import type {WorkspaceLeaseContract} from '../contracts/workspace.js'
 import type {WorkspaceExecutor,WorkspaceProvisionRequest,WorkspaceProvisioned,WorkspaceReintegrateRequest,WorkspaceReintegrated,WorkspaceReconcileResult} from '../runtime/workspace/executor.js'
 
 interface NativeWorkspace{id:string;type:string;name?:string;branch?:string|null;directory?:string|null;projectID?:string}
+interface WorkspaceCreationBaseline{ids:Set<string>;paths:string[]}
 export interface GitWorkspaceInspection{head:string;common_dir:string;worktrees:string[]}
 export type GitWorkspaceInspector=(directory:string)=>GitWorkspaceInspection
 function nativeData<T>(value:any):T{const first=value&&typeof value==='object'&&'data'in value?value.data:value;return(first&&typeof first==='object'&&'data'in first?first.data:first) as T}
@@ -75,8 +76,10 @@ export class OpenCodeWorkspaceAdapter implements WorkspaceExecutor{
     return{host_workspace_id:native.id,workspace_path:workspacePath,...(native.branch?{branch:String(native.branch)}:{})}
   }
   async #listNative():Promise<NativeWorkspace[]>{const raw=await this.#workspace().list({directory:this.directory}),items=nativeData<NativeWorkspace[]>(raw)??[];return Array.isArray(items)?items:[]}
-  async #recoverLostCreate(beforeIDs:Set<string>,request:WorkspaceProvisionRequest,cause:unknown):Promise<WorkspaceProvisioned>{
-    const after=await this.#listNative(),newItems=after.filter(x=>x?.id&&!beforeIDs.has(x.id)),valid:WorkspaceProvisioned[]=[]
+  #creationBaseline(items:NativeWorkspace[]):WorkspaceCreationBaseline{const ids=new Set<string>(),paths:string[]=[];for(const item of items){if(typeof item?.id==='string'&&item.id)ids.add(item.id);if(typeof item?.directory==='string'&&item.directory)try{const path=canonicalExisting(item.directory);if(!paths.some(existing=>sameGitPath(existing,path)))paths.push(path)}catch{}}return{ids,paths}}
+  #aliasesCreationPath(native:NativeWorkspace,before:WorkspaceCreationBaseline):boolean{if(typeof native?.directory!=='string'||!native.directory)return false;try{const path=canonicalExisting(native.directory);return before.paths.some(existing=>sameGitPath(existing,path))}catch{return false}}
+  async #recoverLostCreate(before:WorkspaceCreationBaseline,request:WorkspaceProvisionRequest,cause:unknown):Promise<WorkspaceProvisioned>{
+    const after=await this.#listNative(),newItems=after.filter(x=>x?.id&&!before.ids.has(x.id)&&!this.#aliasesCreationPath(x,before)),valid:WorkspaceProvisioned[]=[]
     for(const item of newItems)try{valid.push(this.#validate(item,{...request,require_baseline:true}))}catch{}
     if(valid.length===1)return valid[0]
     throw new Error(`OpenCode workspace create failed and lost-ack reconciliation was ${valid.length?'ambiguous':'unproven'}: ${String(cause)}`)
@@ -84,12 +87,14 @@ export class OpenCodeWorkspaceAdapter implements WorkspaceExecutor{
   async provision(request:WorkspaceProvisionRequest):Promise<WorkspaceProvisioned>{
     if(!openCodeExperimentalWorkspacesEnabled())throw new Error('OpenCode experimental workspace support is disabled; set OPENCODE_EXPERIMENTAL_WORKSPACES=true before starting OpenCode')
     const before=this.inspector(request.repository_root);if(before.head!==request.source_baseline)throw new Error('Source baseline changed before OpenCode workspace provisioning')
-    const beforeIDs=new Set((await this.#listNative()).map(x=>x?.id).filter((x):x is string=>typeof x==='string'&&Boolean(x)))
+    const creationBaseline=this.#creationBaseline(await this.#listNative())
     let raw:any
-    try{raw=await this.#workspace().create({directory:this.directory,type:'worktree'})}catch(createError){return this.#recoverLostCreate(beforeIDs,request,createError)}
+    try{raw=await this.#workspace().create({directory:this.directory,type:'worktree'})}catch(createError){return this.#recoverLostCreate(creationBaseline,request,createError)}
     const native=nativeData<NativeWorkspace>(raw)
-    if(!native||typeof native.id!=='string'||native.type!=='worktree'||typeof native.directory!=='string')return this.#recoverLostCreate(beforeIDs,request,raw?.error??'invalid create response')
-    try{return this.#validate(native,{...request,require_baseline:true})}catch(error){if(native?.id)try{await this.#workspace().remove({id:native.id,directory:this.directory})}catch{};throw error}
+    if(!native||typeof native.id!=='string'||native.type!=='worktree'||typeof native.directory!=='string')return this.#recoverLostCreate(creationBaseline,request,raw?.error??'invalid create response')
+    if(creationBaseline.ids.has(native.id))throw new Error(`OpenCode workspace create returned pre-existing workspace identity ${native.id}`)
+    if(this.#aliasesCreationPath(native,creationBaseline))throw new Error(`OpenCode workspace create returned pre-existing workspace path ${native.directory}`)
+    try{return this.#validate(native,{...request,require_baseline:true})}catch(error){if(native?.id&&!creationBaseline.ids.has(native.id)&&!this.#aliasesCreationPath(native,creationBaseline))try{await this.#workspace().remove({id:native.id,directory:this.directory})}catch{};throw error}
   }
   async reintegrate(request:WorkspaceReintegrateRequest):Promise<WorkspaceReintegrated>{
     const {lease}=request
@@ -120,6 +125,8 @@ export class OpenCodeWorkspaceAdapter implements WorkspaceExecutor{
     if(!lease.host_workspace_id)throw new Error('Workspace cleanup requires host_workspace_id')
     const primary=this.inspector(lease.repository_root),target=canonicalExisting(lease.workspace_path);if(target===canonicalExisting(lease.repository_root))throw new Error('Refusing cleanup of primary repository path')
     if(!primary.worktrees.some(path=>sameGitPath(path,target)))throw new Error('Refusing workspace cleanup for path outside the registered Git worktree set')
+    const current=(await this.#listNative()).find(item=>item?.id===lease.host_workspace_id);if(!current)throw new Error(`OpenCode workspace identity ${lease.host_workspace_id} is missing before cleanup`)
+    this.#validate(current,{repository_root:lease.repository_root,source_baseline:lease.source_baseline,expected_path:lease.workspace_path,expected_id:lease.host_workspace_id,require_baseline:false})
     await this.#workspace().remove({id:lease.host_workspace_id,directory:this.directory})
     const raw=await this.#workspace().list({directory:this.directory}),items=nativeData<NativeWorkspace[]>(raw)??[];if(Array.isArray(items)&&items.some(x=>x?.id===lease.host_workspace_id))throw new Error('OpenCode workspace still exists after cleanup');const after=this.inspector(lease.repository_root);if(after.worktrees.some(x=>sameGitPath(resolve(x),target)))throw new Error('Git worktree registry still contains workspace after cleanup')
   }
