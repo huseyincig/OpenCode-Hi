@@ -30,6 +30,7 @@ export interface TaskPreconditionInput {
     };
     hostConfig?: Record<string, unknown>;
     methodologyResourceFailures?: string[];
+    methodologyAdmissionFailures?: string[];
     contractCriticalAmbiguity?: boolean;
     staleExplorationClearance?: boolean;
     authorityRequired?: boolean;

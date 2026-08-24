@@ -47,6 +47,8 @@ export function evaluateTaskPreconditions(input) {
         add('user-authority', 'USER_ACTION_REQUIRED', 'Required user authority must be resolved before this task starts');
     if (input.methodologyResourceFailures?.length)
         add('methodology-resource', 'RESOLVE', `Required methodology host/resource capability is unavailable: ${input.methodologyResourceFailures.join(', ')}`);
+    if (input.methodologyAdmissionFailures?.length)
+        add('methodology-admission', 'RESOLVE', `No executable Hi methodology can satisfy this task/role selection: ${input.methodologyAdmissionFailures.join(', ')}`);
     const def = roleDefinition(input.hostConfig, input.role);
     // When the live config exposes an agent table, an Hi specialist must exist there as a native subagent.
     if (input.hostConfig?.agent && def === undefined)

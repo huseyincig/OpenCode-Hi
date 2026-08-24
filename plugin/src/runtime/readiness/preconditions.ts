@@ -15,6 +15,7 @@ export interface TaskPreconditionInput{
   native:{childSession:boolean;prompt:boolean}
   hostConfig?:Record<string,unknown>
   methodologyResourceFailures?:string[]
+  methodologyAdmissionFailures?:string[]
   contractCriticalAmbiguity?:boolean
   staleExplorationClearance?:boolean
   authorityRequired?:boolean
@@ -52,6 +53,7 @@ export function evaluateTaskPreconditions(input:TaskPreconditionInput):TaskPreco
   if(input.staleExplorationClearance&&input.implementation)add('exploration-clearance-stale','RESOLVE','Repository evidence that cleared prior ambiguity is stale; refresh bounded exploration before implementation starts')
   if(input.authorityRequired)add('user-authority','USER_ACTION_REQUIRED','Required user authority must be resolved before this task starts')
   if(input.methodologyResourceFailures?.length)add('methodology-resource','RESOLVE',`Required methodology host/resource capability is unavailable: ${input.methodologyResourceFailures.join(', ')}`)
+  if(input.methodologyAdmissionFailures?.length)add('methodology-admission','RESOLVE',`No executable Hi methodology can satisfy this task/role selection: ${input.methodologyAdmissionFailures.join(', ')}`)
 
   const def=roleDefinition(input.hostConfig,input.role)
   // When the live config exposes an agent table, an Hi specialist must exist there as a native subagent.
