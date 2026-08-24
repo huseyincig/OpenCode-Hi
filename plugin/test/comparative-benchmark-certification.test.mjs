@@ -4,8 +4,8 @@ import {COMPARATIVE_BENCHMARK_SCHEMA} from '../dist/contracts/comparative-benchm
 import {buildComparativeBenchmarkCertificationSeries,isComparativeBenchmarkCertificationSeries} from '../dist/contracts/comparative-benchmark-certification.js'
 
 const H='a'.repeat(64),S='b'.repeat(64),C='c'.repeat(40)
-function receipt({episode='ep-1',repetition=1,episodeKind='REAL_HOST_EPISODE',result='VERIFIED_SUCCESS',check='PASS',fixture=H,config=H,model='p/m',opencode='1.18.20',hi=C}={}){
-  return{schema:COMPARATIVE_BENCHMARK_SCHEMA,episode_kind:episodeKind,claim_boundary:'Bounded benchmark episode.',episode_id:episode,repetition,system:{kind:'OPENCODE_HI_CURRENT',label:'current-hi',opencode_version:opencode,hi_commit:hi,config_sha256:config},task:{task_id:'case-a',scenario_class:'failing-test-fix',fixture_sha256:fixture},model:{requested:model,effective:model,provider_effective:'p'},started_at:'2026-08-21T10:00:00.000Z',ended_at:'2026-08-21T10:00:01.000Z',deterministic_checks:[{id:'acceptance',status:check,exit_code:check==='PASS'?0:1,evidence_refs:check==='PASS'?['artifact:acceptance']:['artifact:failure']}],evidence:{required:1,satisfied:check==='PASS'?1:0,fresh:check==='PASS'?1:0,stale:0,wrong_task_accepted:0,wrong_attempt_accepted:0,false_completion:0},completion_decision:result==='VERIFIED_SUCCESS'?'DONE':'VERIFY',failure_injections:[],control_plane:{duplicate_dispatch_count:0,stale_callback_accept_count:0,ambiguous_side_effect_replay_count:0,deadlock_or_stall_count:0,orphan_or_cleanup_failure_count:0,workers_spawned:1,retries:0,replans:0,tool_calls:3,model_calls:1,polling_calls:0,peak_concurrent_workers:1,context_bytes_to_children:1000,mechanically_identified_redundant_actions:0},economics:{wall_time_ms:1000},artifacts:{receipt_inputs_sha256:S},result}
+function receipt({episode='ep-1',repetition=1,episodeKind='REAL_HOST_EPISODE',result='VERIFIED_SUCCESS',check='PASS',fixture=H,config=H,model='p/m',opencode='1.18.20',hi=C,inputs=S}={}){
+  return{schema:COMPARATIVE_BENCHMARK_SCHEMA,episode_kind:episodeKind,claim_boundary:'Bounded benchmark episode.',episode_id:episode,repetition,system:{kind:'OPENCODE_HI_CURRENT',label:'current-hi',opencode_version:opencode,hi_commit:hi,config_sha256:config},task:{task_id:'case-a',scenario_class:'failing-test-fix',fixture_sha256:fixture},model:{requested:model,effective:model,provider_effective:'p'},started_at:'2026-08-21T10:00:00.000Z',ended_at:'2026-08-21T10:00:01.000Z',deterministic_checks:[{id:'acceptance',status:check,exit_code:check==='PASS'?0:1,evidence_refs:check==='PASS'?['artifact:acceptance']:['artifact:failure']}],evidence:{required:1,satisfied:check==='PASS'?1:0,fresh:check==='PASS'?1:0,stale:0,wrong_task_accepted:0,wrong_attempt_accepted:0,false_completion:0},completion_decision:result==='VERIFIED_SUCCESS'?'DONE':'VERIFY',failure_injections:[],control_plane:{duplicate_dispatch_count:0,stale_callback_accept_count:0,ambiguous_side_effect_replay_count:0,deadlock_or_stall_count:0,orphan_or_cleanup_failure_count:0,workers_spawned:1,retries:0,replans:0,tool_calls:3,model_calls:1,polling_calls:0,peak_concurrent_workers:1,context_bytes_to_children:1000,mechanically_identified_redundant_actions:0},economics:{wall_time_ms:1000},artifacts:{receipt_inputs_sha256:inputs},result}
 }
 function sample(r,source=S,runtime={platform:'linux-x64',node_version:'22.0.0'}){return{receipt:r,environment:{source_inputs_sha256:source,...runtime}}}
 function build(baseline,current){return buildComparativeBenchmarkCertificationSeries({series_id:'series-a',claim_boundary:'Certification aggregation only; exact episode receipts remain authoritative.',baseline:sample(baseline),current})}
@@ -28,17 +28,17 @@ test('deterministic fixture failure does not pay a pointless three-sample tax',(
 })
 
 test('stable failure attributes one exact source-input delta reliably',()=>{
-  const base=receipt(),current=[1,2,3].map(i=>sample(receipt({episode:`f${i}`,repetition:i,result:'VERIFIED_FAILURE',check:'FAIL'}),'d'.repeat(64)))
+  const base=receipt(),current=[1,2,3].map(i=>sample(receipt({episode:`f${i}`,repetition:i,result:'VERIFIED_FAILURE',check:'FAIL',inputs:'d'.repeat(64)}),'d'.repeat(64)))
   const series=build(base,current);assert.equal(series.verdict,'STABLE_REGRESSION');assert.equal(series.attribution.top,'SOURCE_CHANGED');assert.deepEqual(series.attribution.also_observed,[]);assert.equal(series.attribution.reliable,true);assert.deepEqual(series.environment_delta.keys_changed,['source_inputs_sha256'])
 })
 
 test('multiple environment classes never masquerade as a singular causal attribution',()=>{
-  const base=receipt(),current=[1,2,3].map(i=>sample(receipt({episode:`f${i}`,repetition:i,result:'VERIFIED_FAILURE',check:'FAIL',fixture:'d'.repeat(64)}),'e'.repeat(64)))
+  const base=receipt(),current=[1,2,3].map(i=>sample(receipt({episode:`f${i}`,repetition:i,result:'VERIFIED_FAILURE',check:'FAIL',fixture:'d'.repeat(64),inputs:'e'.repeat(64)}),'e'.repeat(64)))
   const series=build(base,current);assert.equal(series.attribution.top,'SOURCE_CHANGED');assert.deepEqual(series.attribution.also_observed,['FIXTURE_CHANGED']);assert.equal(series.attribution.reliable,false);assert.match(series.attribution.reason,/multiple environment classes/i)
 })
 
 test('environment drift between stability samples makes the series inconclusive even when failure shape matches',()=>{
-  const base=receipt(),current=[sample(receipt({episode:'f1',repetition:1,result:'VERIFIED_FAILURE',check:'FAIL'}),'d'.repeat(64)),sample(receipt({episode:'f2',repetition:2,result:'VERIFIED_FAILURE',check:'FAIL'}),'e'.repeat(64)),sample(receipt({episode:'f3',repetition:3,result:'VERIFIED_FAILURE',check:'FAIL'}),'d'.repeat(64))]
+  const base=receipt(),current=[sample(receipt({episode:'f1',repetition:1,result:'VERIFIED_FAILURE',check:'FAIL',inputs:'d'.repeat(64)}),'d'.repeat(64)),sample(receipt({episode:'f2',repetition:2,result:'VERIFIED_FAILURE',check:'FAIL',inputs:'e'.repeat(64)}),'e'.repeat(64)),sample(receipt({episode:'f3',repetition:3,result:'VERIFIED_FAILURE',check:'FAIL',inputs:'d'.repeat(64)}),'d'.repeat(64))]
   const series=build(base,current);assert.equal(series.verdict,'INCONCLUSIVE');assert.equal(series.environment_stable,false);assert.equal(series.attribution.reliable,false)
 })
 
@@ -62,6 +62,15 @@ test('series rejects malformed environment hashes duplicate repetitions and unkn
   const valid=build(base,[sample(receipt({episode:'p2'}))]);assert.equal(isComparativeBenchmarkCertificationSeries({...valid,magic:true}),false)
 })
 
+test('certification environment input hash must be bound to the exact episode receipt input hash',()=>{
+  const base=receipt(),current=receipt({episode:'p2'})
+  assert.throws(()=>buildComparativeBenchmarkCertificationSeries({series_id:'series-a',claim_boundary:'certification only',baseline:sample(base,'d'.repeat(64)),current:[sample(current)]}),/receipt.*input|input.*receipt/i)
+})
+
+test('certification series cannot compare different episode semantics',()=>{
+  const base=receipt({episodeKind:'REAL_HOST_EPISODE'}),current=receipt({episode:'d2',episodeKind:'DETERMINISTIC_FIXTURE',result:'VERIFIED_FAILURE',check:'FAIL'})
+  assert.throws(()=>build(base,[sample(current)]),/episode.kind/i)
+})
 
 test('uncertainty diagnostics add CI judge agreement and explicit evidence diversity without changing exact verdict authority',()=>{
   const base=receipt(),current=[1,2,3].map((i)=>{const r=receipt({episode:`p${i}`,repetition:i});r.economics.wall_time_ms=[900,1000,1100][i-1];return sample(r)})

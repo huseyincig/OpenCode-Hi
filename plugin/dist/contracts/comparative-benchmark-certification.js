@@ -49,6 +49,8 @@ function environmentFrom(input) {
         throw new Error('comparative benchmark certification sample requires a valid ComparativeBenchmarkReceipt');
     if (!SHA.test(input.environment.source_inputs_sha256))
         throw new Error('source_inputs_sha256 must be an exact SHA-256');
+    if (input.environment.source_inputs_sha256 !== input.receipt.artifacts.receipt_inputs_sha256)
+        throw new Error('certification source input hash must match the exact episode receipt input hash');
     for (const key of ['platform', 'node_version'])
         if (input.environment[key] !== undefined && !nonEmpty(input.environment[key]))
             throw new Error(`${key} must be non-empty when supplied`);
@@ -97,6 +99,8 @@ function ensureComparable(baseline, current) {
     for (const r of current) {
         if (r.task.task_id !== baseline.task.task_id || r.task.scenario_class !== baseline.task.scenario_class)
             throw new Error('certification samples must bind the same task_id and scenario_class as baseline');
+        if (r.episode_kind !== baseline.episode_kind)
+            throw new Error('certification samples must bind the same episode kind as baseline');
         if (r.system.kind !== baseline.system.kind)
             throw new Error('certification samples must bind the same system kind as baseline');
         if (seen.has(r.repetition))
