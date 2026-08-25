@@ -13,7 +13,7 @@ import {assessHarnessLiveness} from '../scripts/workload-acceptance/liveness-ada
 import {OwnedProcessManager} from '../scripts/workload-acceptance/process-owner.mjs'
 import {classify,productRepairAuthorized} from '../scripts/workload-acceptance/classification.mjs'
 import {cleanupOwnedResources} from '../scripts/workload-acceptance/cleanup.mjs'
-import {normalizeLiveModels,parseVerboseModelInventory,missionTerminalStatus,modelIdentity,writeSourcePluginConfig,resolveExecutionContract} from '../scripts/workload-acceptance/execution-driver.mjs'
+import {normalizeLiveModels,parseVerboseModelInventory,missionTerminalStatus,modelIdentity,writeSourcePluginConfig,resolveExecutionContract,resolveRuntimeIdentity,assertOperatorRuntimeSeparation} from '../scripts/workload-acceptance/execution-driver.mjs'
 
 const temp=()=>mkdtempSync(join(process.cwd(),'.agent-work/tmp/w-harness-selftest-'))
 
@@ -106,3 +106,8 @@ test('common execution entrypoint is generic and binds dispatch, native sessions
 test('canonical W01 spec resolves exact immutable seed and proves baseline before lock admission',()=>{const spec=JSON.parse(readFileSync(new URL('../.agent-work/workload-acceptance/W01/spec.json',import.meta.url),'utf8'));const resolved=resolveExecutionContract('W01',spec);assert.equal(resolved.seedIdentity,spec.fixture.baseline.value);assert.match(resolved.seed,/fixture-seed$/);assert.match(resolved.promptPath,/W01\/prompt\.txt$/);assert.match(resolved.oraclePath,/control\/W01\/oracle\.mjs$/)})
 
 test('execution contract rejects seed drift before authoritative preflight',()=>{const spec=JSON.parse(readFileSync(new URL('../.agent-work/workload-acceptance/W01/spec.json',import.meta.url),'utf8'));assert.throws(()=>resolveExecutionContract('W01',{...spec,fixture:{...spec.fixture,baseline:{...spec.fixture.baseline,value:'deadbeef'}}}),/WORKLOAD_FIXTURE_SEED_BASELINE_MISMATCH/)})
+
+
+test('operator and model runtime are OS-separated so the hidden oracle stays unreadable to model execution',t=>{if(process.platform!=='linux'||process.getuid?.()!==0)return t.skip('requires Linux root operator');const identity=resolveRuntimeIdentity('node'),spec=JSON.parse(readFileSync(new URL('../.agent-work/workload-acceptance/W01/spec.json',import.meta.url),'utf8')),resolved=resolveExecutionContract('W01',spec);assert.equal(assertOperatorRuntimeSeparation(resolved.oraclePath,identity),true)})
+
+test('owned process identity binds and executes under the declared uid/gid',async t=>{if(process.platform!=='linux'||process.getuid?.()!==0)return t.skip('requires Linux root operator');const identity=resolveRuntimeIdentity('node'),root=temp();t.after(()=>rmSync(root,{recursive:true,force:true}));chmodSync(root,0o755);const pm=new OwnedProcessManager(root),p=await pm.spawn({runId:'r-uid',workloadId:'WT',command:process.execPath,args:['-e','setInterval(()=>{},1000)'],cwd:root,uid:identity.uid,gid:identity.gid,readiness:{kind:'delay',ms:30}});const status=readFileSync(`/proc/${p.pid}/status`,'utf8'),uid=Number(/^Uid:\s+(\d+)/m.exec(status)?.[1]),gid=Number(/^Gid:\s+(\d+)/m.exec(status)?.[1]);assert.equal(uid,identity.uid);assert.equal(gid,identity.gid);assert.equal(p.uid,identity.uid);assert.equal(p.gid,identity.gid);const x=await pm.terminate(p,{graceMs:100});assert.equal(x.signalled,true)})

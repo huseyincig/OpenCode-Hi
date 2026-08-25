@@ -1,6 +1,6 @@
 import {createServer} from 'node:http'
 import {createHash} from 'node:crypto'
-import {existsSync,mkdirSync,readFileSync,rmSync,writeFileSync} from 'node:fs'
+import {accessSync,chownSync,existsSync,lchownSync,lstatSync,mkdirSync,readFileSync,readdirSync,rmSync,writeFileSync,constants as fsConstants} from 'node:fs'
 import {dirname,join,resolve} from 'node:path'
 import {fileURLToPath,pathToFileURL} from 'node:url'
 import {spawnSync} from 'node:child_process'
@@ -9,7 +9,7 @@ import {WorkloadAcceptanceHarness} from './harness-core.mjs'
 import {OwnedProcessManager} from './process-owner.mjs'
 import {selectTestModel} from './model-pool.mjs'
 import {prepareOperatorControlRoot} from './isolation.mjs'
-import {assertWorkloadSpec,promptIdentity,oracleIdentity} from './workload-spec.mjs'
+import {assertHiddenOracle,assertWorkloadSpec,promptIdentity,oracleIdentity} from './workload-spec.mjs'
 import {fixtureIdentity} from './fixture-manager.mjs'
 import {runHiddenOracle} from './oracle-runner.mjs'
 import {assessHarnessLiveness} from './liveness-adapter.mjs'
@@ -23,7 +23,23 @@ const RUNTIME_ROOT=join(WROOT,'runtime')
 const sleep=ms=>new Promise(r=>setTimeout(r,ms))
 const dataOf=x=>x&&typeof x==='object'&&'data' in x?x.data:x
 const shaFile=p=>createHash('sha256').update(readFileSync(p)).digest('hex')
-const git=(args,cwd=ROOT)=>{const r=spawnSync('git',['-c',`safe.directory=${cwd}`,...args],{cwd,encoding:'utf8'});if(r.status!==0)throw new Error(String(r.stderr||`git ${args.join(' ')} failed`).trim());return r.stdout.trim()}
+const identityOptions=identity=>identity?{uid:identity.uid,gid:identity.gid,env:{...process.env,HOME:identity.home,USER:identity.name,LOGNAME:identity.name}}:{}
+const git=(args,cwd=ROOT,identity)=>{const io=identityOptions(identity),r=spawnSync('git',['-c',`safe.directory=${cwd}`,...args],{cwd,encoding:'utf8',...io});if(r.status!==0)throw new Error(String(r.stderr||`git ${args.join(' ')} failed`).trim());return r.stdout.trim()}
+export function resolveRuntimeIdentity(name=process.env.W_MODEL_RUNTIME_USER??'node'){
+  const row=spawnSync('getent',['passwd',name],{encoding:'utf8'});if(row.status!==0||!row.stdout.trim())throw new Error(`MODEL_RUNTIME_USER_NOT_FOUND:${name}`)
+  const parts=row.stdout.trim().split(':'),uid=Number(parts[2]),gid=Number(parts[3]),home=parts[5]
+  if(!Number.isInteger(uid)||!Number.isInteger(gid)||!home)throw new Error(`MODEL_RUNTIME_IDENTITY_INVALID:${name}`)
+  return{name,uid,gid,home}
+}
+export function assertOperatorRuntimeSeparation(oraclePath,identity){
+  accessSync(oraclePath,fsConstants.R_OK)
+  if(process.getuid?.()===identity.uid)throw new Error('MODEL_OPERATOR_UID_NOT_SEPARATED')
+  const probe=spawnSync(process.execPath,['-e','require("node:fs").accessSync(process.argv[1],require("node:fs").constants.R_OK)',oraclePath],{stdio:'ignore',...identityOptions(identity)})
+  if(probe.status===0)throw new Error('HIDDEN_ORACLE_READABLE_BY_MODEL_RUNTIME')
+  return true
+}
+function setTreeOwnership(path,identity){const s=lstatSync(path);if(s.isSymbolicLink()){lchownSync(path,identity.uid,identity.gid);return}if(s.isDirectory())for(const name of readdirSync(path))setTreeOwnership(join(path,name),identity);chownSync(path,identity.uid,identity.gid)}
+function prepareRuntimeSandbox(path,identity){mkdirSync(path,{recursive:true,mode:0o700});chownSync(path,identity.uid,identity.gid);return path}
 
 export function normalizeLiveModels(rows=[]){
   const out=[]
@@ -55,9 +71,9 @@ export function parseVerboseModelInventory(stdout){
   if(buffer||announced||depth!==0||inString)throw new Error('MODEL_INVENTORY_TRUNCATED')
   return rows
 }
-export function readLiveModelInventory(exactBin,pool){
+export function readLiveModelInventory(exactBin,pool,identity){
   const providers=[...new Set(pool.map(x=>String(x.id).split('/')[0]).filter(Boolean))],rows=[]
-  for(const provider of providers){const r=spawnSync(exactBin,['models',provider,'--verbose'],{encoding:'utf8'});if(r.status!==0)throw new Error(`MODEL_INVENTORY_FAILED:${provider}:${String(r.stderr||'').trim()}`);rows.push(...parseVerboseModelInventory(r.stdout))}
+  for(const provider of providers){const r=spawnSync(exactBin,['models',provider,'--verbose'],{encoding:'utf8',...identityOptions(identity)});if(r.status!==0)throw new Error(`MODEL_INVENTORY_FAILED:${provider}:${String(r.stderr||'').trim()}`);rows.push(...parseVerboseModelInventory(r.stdout))}
   return normalizeLiveModels(rows)
 }
 export function missionTerminalStatus(status){return ['completed','stopped','failed','waiting-user'].includes(String(status??''))}
@@ -69,10 +85,10 @@ export function writeSourcePluginConfig(fixtureRoot){
   const info=join(fixtureRoot,'.git','info');mkdirSync(info,{recursive:true});writeFileSync(join(info,'exclude'),'opencode.json\n.opencode/\n')
   return config
 }
-function copySeed(seed,dest){rmSync(dest,{recursive:true,force:true});mkdirSync(dirname(dest),{recursive:true});const r=spawnSync('cp',['-a',seed,dest],{encoding:'utf8'});if(r.status!==0)throw new Error(`FIXTURE_COPY_FAILED:${r.stderr}`)}
-function initFixtureGit(fixture){
-  git(['init','-q'],fixture);git(['config','user.email','w-harness@invalid.local'],fixture);git(['config','user.name','W Acceptance Harness'],fixture);git(['add','-A'],fixture);git(['commit','-q','-m','fixture baseline'],fixture)
-  return git(['rev-parse','HEAD'],fixture)
+function copySeed(seed,dest,identity){rmSync(dest,{recursive:true,force:true});mkdirSync(dirname(dest),{recursive:true});const r=spawnSync('cp',['-a',seed,dest],{encoding:'utf8'});if(r.status!==0)throw new Error(`FIXTURE_COPY_FAILED:${r.stderr}`);setTreeOwnership(dest,identity)}
+function initFixtureGit(fixture,identity){
+  git(['init','-q'],fixture,identity);git(['config','user.email','w-harness@invalid.local'],fixture,identity);git(['config','user.name','W Acceptance Harness'],fixture,identity);git(['add','-A'],fixture,identity);git(['commit','-q','-m','fixture baseline'],fixture,identity)
+  return git(['rev-parse','HEAD'],fixture,identity)
 }
 function findRuntimeState(stateRoot){
   const r=spawnSync('find',[stateRoot,'-path','*/projects/*/runtime-state.json','-type','f','-print','-quit'],{encoding:'utf8'});return r.status===0?r.stdout.trim():''
@@ -105,22 +121,23 @@ export async function executeWorkload(workloadId,{pollMs=1500}={}){
   const productHead=git(['rev-parse','HEAD']),originHead=git(['rev-parse','origin/dev']);if(productHead!==originHead)throw new Error('PRODUCT_ORIGIN_DIVERGED')
   const target=JSON.parse(readFileSync(join(ROOT,'package.json'),'utf8')).dependencies?.['@opencode-ai/sdk'];const exactBin=join(ROOT,'.agent-work','tools',`opencode-${target}`,'opencode')
   if(!existsSync(exactBin))throw new Error(`EXACT_OPENCODE_MISSING:${exactBin}`);const observed=spawnSync(exactBin,['--version'],{encoding:'utf8'}).stdout.trim();if(observed!==target)throw new Error(`EXACT_OPENCODE_VERSION_MISMATCH:${observed}:${target}`)
+  const runtimeIdentity=resolveRuntimeIdentity();assertHiddenOracle({oraclePath,fixtureRoot:fixture,harnessRoot:join(ROOT,'scripts','workload-acceptance')});assertOperatorRuntimeSeparation(oraclePath,runtimeIdentity)
   const harness=new WorkloadAcceptanceHarness({stateRoot:RUNTIME_ROOT,productIdentity:{head:productHead,origin_dev:originHead,opencode:target,opencode_binary_sha256:shaFile(exactBin)},liveInventory:[],sessionProbe:async()=> 'unknown',processProbe:processAlive})
-  const run=await harness.preflight(spec,{conditionFingerprint:`${productHead}:${target}:${spec.fixture.baseline.value}:${shaFile(promptPath)}:${shaFile(oraclePath)}`,prepareFixture:async()=>copySeed(seed,fixture)})
+  const run=await harness.preflight(spec,{conditionFingerprint:`${productHead}:${target}:${spec.fixture.baseline.value}:${shaFile(promptPath)}:${shaFile(oraclePath)}`,prepareFixture:async()=>copySeed(seed,fixture,runtimeIdentity)})
   if(run.disposition!=='READY_TO_EXECUTE')return run
-  const {runId,lock,receipts}=run,runDir=join(RUNTIME_ROOT,workloadId,'runs',runId),controlRoot=prepareOperatorControlRoot(join(runDir,'operator-control'),fixture),scratch=join(controlRoot,'oracle-scratch'),hiState=join(controlRoot,'hi-state'),tmp=join(controlRoot,'tmp');for(const p of [scratch,hiState,tmp])mkdirSync(p,{recursive:true,mode:0o700})
+  const {runId,lock,receipts}=run,runDir=join(RUNTIME_ROOT,workloadId,'runs',runId),controlRoot=prepareOperatorControlRoot(join(runDir,'operator-control'),fixture),scratch=join(controlRoot,'oracle-scratch'),runtimeSandbox=prepareRuntimeSandbox(join(runDir,'model-runtime'),runtimeIdentity),hiState=prepareRuntimeSandbox(join(runtimeSandbox,'hi-state'),runtimeIdentity),tmp=prepareRuntimeSandbox(join(runtimeSandbox,'tmp'),runtimeIdentity);mkdirSync(scratch,{recursive:true,mode:0o700})
   let serverRecord,pm,parentID,client,cleanupResult,finalMission,finalLiveness,selected
   const runMetaPath=join(runDir,'run-meta.json'),runtimeObservationPath=join(runDir,'runtime-observation.json')
   const writeMeta=patch=>{const current=readJsonMaybe(runMetaPath)??{schema:1,workload_id:workloadId,run_id:runId,predecessor_run_id:null,started_at:new Date().toISOString()};writeFileSync(runMetaPath,JSON.stringify({...current,...patch,updated_at:new Date().toISOString()},null,2)+'\n',{mode:0o600})}
   try{
-    const fixtureHead=initFixtureGit(fixture);writeSourcePluginConfig(fixture)
+    const fixtureHead=initFixtureGit(fixture,runtimeIdentity);writeSourcePluginConfig(fixture)
     receipts.write('prompt-identity',promptIdentity(promptPath));receipts.write('oracle-identity',oracleIdentity({path:oraclePath,version:spec.hiddenOracle.version,fixtureIdentity:spec.fixture.baseline.value}))
-    receipts.write('tool-preflight',{status:'PASS',exact_opencode:{path:exactBin,version:target,sha256:shaFile(exactBin)},plugin_entrypoint:join(ROOT,'plugin','dist','plugin.js'),fixture_seed_identity:seedIdentity,fixture_git_head:fixtureHead})
-    const port=await freePort(),base=`http://127.0.0.1:${port}`;pm=new OwnedProcessManager(runDir)
-    serverRecord=await pm.spawn({runId,workloadId,command:exactBin,args:['serve','--hostname','127.0.0.1','--port',String(port),'--print-logs','--log-level','INFO'],cwd:fixture,env:{OPENCODE_HI_STATE_DIR:hiState,TMPDIR:tmp,TMP:tmp,TEMP:tmp},readiness:{kind:'probe',timeoutMs:30000,intervalMs:250,probe:async()=>{const h=await health(base);return h?.healthy===true&&h?.version===target}}})
+    receipts.write('tool-preflight',{status:'PASS',exact_opencode:{path:exactBin,version:target,sha256:shaFile(exactBin)},plugin_entrypoint:join(ROOT,'plugin','dist','plugin.js'),fixture_seed_identity:seedIdentity,fixture_git_head:fixtureHead,operator_uid:process.getuid?.()??null,model_runtime:{user:runtimeIdentity.name,uid:runtimeIdentity.uid,gid:runtimeIdentity.gid,oracle_readable:false}})
+    const port=await freePort(),base=`http://127.0.0.1:${port}`;pm=new OwnedProcessManager(runDir),runtimeEnv={HOME:runtimeIdentity.home,USER:runtimeIdentity.name,LOGNAME:runtimeIdentity.name,OPENCODE_HI_STATE_DIR:hiState,TMPDIR:tmp,TMP:tmp,TEMP:tmp}
+    serverRecord=await pm.spawn({runId,workloadId,command:exactBin,args:['serve','--hostname','127.0.0.1','--port',String(port),'--print-logs','--log-level','INFO'],cwd:fixture,env:runtimeEnv,uid:runtimeIdentity.uid,gid:runtimeIdentity.gid,readiness:{kind:'probe',timeoutMs:30000,intervalMs:250,probe:async()=>{const h=await health(base);return h?.healthy===true&&h?.version===target}}})
     const ids=await toolIds(base,fixture);if(!ids.some(x=>String(x).startsWith('hi_')))throw new Error('HI_TOOL_SURFACE_NOT_LOADED')
     client=createOpencodeClient({baseUrl:base,directory:fixture})
-    const pool=JSON.parse(readFileSync(join(WROOT,'model-pool.json'),'utf8')).models,live=readLiveModelInventory(exactBin,pool)
+    const pool=JSON.parse(readFileSync(join(WROOT,'model-pool.json'),'utf8')).models,live=readLiveModelInventory(exactBin,pool,runtimeIdentity)
     selected=selectTestModel({liveInventory:live,pool,requiredCapabilities:spec.requiredCapabilities})
     receipts.write('model-role-selection',{scope:'w-development-test-only',required_capabilities:spec.requiredCapabilities,selected_model:selected.model.id,eligible:selected.eligible,rejected:selected.rejected,reason:selected.reason})
     const mi=modelIdentity(selected.model.id),created=dataOf(await client.session.create({directory:fixture,title:`W acceptance ${workloadId} ${runId}`,model:{id:mi.modelID,providerID:mi.providerID}}));if(!created?.id)throw new Error('PARENT_SESSION_CREATE_FAILED');parentID=created.id
@@ -147,7 +164,7 @@ export async function executeWorkload(workloadId,{pollMs=1500}={}){
     receipts.write('classification',classification)
     for(const child of (dataOf(await client.session.children({sessionID:parentID,directory:fixture}))??[]))try{await client.session.delete({sessionID:child.id,directory:fixture})}catch{}
     try{await client.session.delete({sessionID:parentID,directory:fixture})}catch{}
-    cleanupResult=await cleanupOwnedResources(runId,[{kind:'process',ownerRunId:runId,manager:pm,contract:serverRecord,options:{graceMs:1500}},{kind:'path',ownerRunId:runId,path:controlRoot,root:runDir},{kind:'lock',ownerRunId:runId,lock}])
+    cleanupResult=await cleanupOwnedResources(runId,[{kind:'process',ownerRunId:runId,manager:pm,contract:serverRecord,options:{graceMs:1500}},{kind:'path',ownerRunId:runId,path:runtimeSandbox,root:runDir},{kind:'path',ownerRunId:runId,path:controlRoot,root:runDir},{kind:'lock',ownerRunId:runId,lock}])
     receipts.write('cleanup',{cleaned:cleanupResult.cleaned.map(x=>({kind:x.kind,path:x.path??null,pid:x.contract?.pid??null})),skipped:cleanupResult.skipped.length,quarantined:cleanupResult.quarantined})
     const success=missionPass&&oraclePass&&cleanupResult.quarantined.length===0;receipts.write('summary',{status:success?'PASS':'FAIL',workload_id:workloadId,product_sha:productHead,model:selected.model.id,parent_session_id:parentID,mission_status:finalMission?.identity?.status??null,oracle_pass:oraclePass,classification:classification.class,fixture_preserved:spec.cleanup?.preserveFixtureAfterTerminalForInspection===true})
     writeMeta({status:success?'TERMINAL_PASS':'TERMINAL_FAIL',ended_at:new Date().toISOString(),mission_status:finalMission?.identity?.status??null,oracle_pass:oraclePass,classification:classification.class,cleanup_quarantined:cleanupResult.quarantined.length})
@@ -155,7 +172,7 @@ export async function executeWorkload(workloadId,{pollMs=1500}={}){
   }catch(error){
     writeMeta({status:'SUPERVISOR_ERROR',error:String(error?.stack??error)})
     if(parentID&&client)try{await client.session.abort({sessionID:parentID,directory:fixture})}catch{}
-    const resources=[];if(serverRecord&&pm)resources.push({kind:'process',ownerRunId:runId,manager:pm,contract:serverRecord,options:{graceMs:1500}});if(existsSync(controlRoot))resources.push({kind:'path',ownerRunId:runId,path:controlRoot,root:runDir});resources.push({kind:'lock',ownerRunId:runId,lock});try{cleanupResult=await cleanupOwnedResources(runId,resources)}catch{}
+    const resources=[];if(serverRecord&&pm)resources.push({kind:'process',ownerRunId:runId,manager:pm,contract:serverRecord,options:{graceMs:1500}});if(existsSync(runtimeSandbox))resources.push({kind:'path',ownerRunId:runId,path:runtimeSandbox,root:runDir});if(existsSync(controlRoot))resources.push({kind:'path',ownerRunId:runId,path:controlRoot,root:runDir});resources.push({kind:'lock',ownerRunId:runId,lock});try{cleanupResult=await cleanupOwnedResources(runId,resources)}catch{}
     try{receipts.write('classification',{result:'FAIL',class:'HARNESS_DEFECT',root_cause:String(error?.message??error),product_repair_authorized:false})}catch{}
     try{receipts.write('cleanup',{error_cleanup:true,quarantined:cleanupResult?.quarantined??[]})}catch{}
     try{receipts.write('summary',{status:'FAIL',workload_id:workloadId,classification:'HARNESS_DEFECT',error:String(error?.message??error)})}catch{}
