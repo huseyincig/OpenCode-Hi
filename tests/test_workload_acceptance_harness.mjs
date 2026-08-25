@@ -14,7 +14,7 @@ import {assessHarnessLiveness} from '../scripts/workload-acceptance/liveness-ada
 import {OwnedProcessManager} from '../scripts/workload-acceptance/process-owner.mjs'
 import {classify,productRepairAuthorized} from '../scripts/workload-acceptance/classification.mjs'
 import {cleanupOwnedResources} from '../scripts/workload-acceptance/cleanup.mjs'
-import {normalizeLiveModels,parseVerboseModelInventory,missionTerminalStatus,modelIdentity,writeSourcePluginConfig,resolveExecutionContract,resolveRuntimeIdentity,assertOperatorRuntimeSeparation,requireReadyAdmission,discoverTerminalPredecessor,buildRuntimeEnvironment} from '../scripts/workload-acceptance/execution-driver.mjs'
+import {normalizeLiveModels,parseVerboseModelInventory,missionTerminalStatus,modelIdentity,writeSourcePluginConfig,resolveExecutionContract,resolveRuntimeIdentity,assertOperatorRuntimeSeparation,requireReadyAdmission,discoverTerminalPredecessor,buildRuntimeEnvironment,classifyWPermissionRequest,W_PRIMARY_AGENT} from '../scripts/workload-acceptance/execution-driver.mjs'
 
 const temp=()=>mkdtempSync(join(process.cwd(),'.agent-work/tmp/w-harness-selftest-'))
 
@@ -106,9 +106,14 @@ test('common cleanup terminates exact owned process and releases exact owned loc
 
 test('common execution driver normalizes boolean-map and array model capabilities before pool selection',()=>{const rows=normalizeLiveModels([{id:'m',providerID:'p',capabilities:{input:{text:true,image:false},output:{text:true}}},{id:'n',providerID:'p',capabilities:{input:['text','image'],output:['text']},status:'active'}]);assert.deepEqual(rows,[{id:'p/m',capabilities:['text'],status:null},{id:'p/n',capabilities:['text','image'],status:'active'}]);assert.deepEqual(modelIdentity('p/m'),{providerID:'p',modelID:'m'})})
 
-test('common driver builds declared isolated model runtime environment as a pure contract',()=>{const identity={name:'node',home:'/home/node'},env=buildRuntimeEnvironment(identity,{hiState:'/run/hi',tmp:'/run/tmp'});assert.deepEqual(env,{HOME:'/home/node',USER:'node',LOGNAME:'node',OPENCODE_HI_STATE_DIR:'/run/hi',TMPDIR:'/run/tmp',TMP:'/run/tmp',TEMP:'/run/tmp'})})
+test('common driver builds declared isolated model runtime environment as a pure contract',()=>{const identity={name:'node',home:'/home/node'},env=buildRuntimeEnvironment(identity,{hiState:'/run/hi',tmp:'/run/tmp'});assert.deepEqual(env,{HOME:'/home/node',USER:'node',LOGNAME:'node',OPENCODE_HI_STATE_DIR:'/run/hi',OPENCODE_EXPERIMENTAL_WORKSPACES:'true',TMPDIR:'/run/tmp',TMP:'/run/tmp',TEMP:'/run/tmp'})})
 
 test('run-meta predecessor identity is sourced from the same discovered predecessor as immutable lineage',()=>{const src=readFileSync(new URL('../scripts/workload-acceptance/execution-driver.mjs',import.meta.url),'utf8');assert.match(src,/predecessor_run_id:predecessor\?\.run_id\?\?null/);assert.doesNotMatch(src,/predecessor_run_id:null,started_at/)})
+
+test('W execution binds the canonical Hi working primary instead of native build fallback',()=>{const src=readFileSync(new URL('../scripts/workload-acceptance/execution-driver.mjs',import.meta.url),'utf8');assert.equal(W_PRIMARY_AGENT,'working-manager');assert.ok(src.includes('session.create({directory:fixture,agent:W_PRIMARY_AGENT'));assert.ok(src.includes('promptAsync({sessionID:parentID,directory:fixture,agent:W_PRIMARY_AGENT'))})
+
+test('W permission policy allows only bounded fixture-local bash once and terminates scope escapes',()=>{const fixture='/sandbox/W01/fixture';assert.deepEqual(classifyWPermissionRequest({sessionID:'s1',permission:'bash',metadata:{command:'node --test test/public.test.mjs'}},{fixture,parentID:'s1'}),{action:'ALLOW_ONCE',reason:'fixture-local-bash'});for(const request of [{sessionID:'s1',permission:'external_directory',patterns:['/workspace/OpenCode-Hi/scripts/*']},{sessionID:'s1',permission:'bash',metadata:{command:'find /workspace -type f'}},{sessionID:'s1',permission:'bash',metadata:{command:'cat ../secret'}}])assert.equal(classifyWPermissionRequest(request,{fixture,parentID:'s1'}).action,'REJECT_TERMINAL');assert.equal(classifyWPermissionRequest({sessionID:'other',permission:'bash',metadata:{command:'node --test'}},{fixture,parentID:'s1'}).action,'IGNORE')})
+
 
 
 test('exact CLI verbose model inventory parser binds announced identity to metadata',()=>{const stdout='p/m\n{\n  "id": "m",\n  "providerID": "p",\n  "status": "active",\n  "capabilities": {"input":{"text":true},"output":{"text":true}}\n}\np/n\n{\n  "id": "n",\n  "providerID": "p",\n  "capabilities": {"input":["text"],"output":["text"]}\n}\n';const rows=parseVerboseModelInventory(stdout);assert.equal(rows.length,2);assert.equal(rows[0].id,'m');assert.throws(()=>parseVerboseModelInventory(stdout.replace('"providerID": "p"','"providerID": "other"')),/MODEL_INVENTORY_ID_MISMATCH/)})

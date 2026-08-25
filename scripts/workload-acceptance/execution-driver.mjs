@@ -22,6 +22,7 @@ const ROOT=resolve(fileURLToPath(new URL('../..',import.meta.url)))
 const WROOT=join(ROOT,'.agent-work','workload-acceptance')
 const RUNTIME_ROOT=join(WROOT,'runtime')
 const sleep=ms=>new Promise(r=>setTimeout(r,ms))
+export const W_PRIMARY_AGENT='working-manager'
 const dataOf=x=>x&&typeof x==='object'&&'data' in x?x.data:x
 const shaFile=p=>createHash('sha256').update(readFileSync(p)).digest('hex')
 const identityOptions=identity=>identity?{uid:identity.uid,gid:identity.gid,env:{...process.env,HOME:identity.home,USER:identity.name,LOGNAME:identity.name}}:{}
@@ -42,8 +43,27 @@ export function assertOperatorRuntimeSeparation(oraclePath,identity){
 
 export function buildRuntimeEnvironment(identity,{hiState,tmp}){
   if(!identity?.name||!identity?.home||!hiState||!tmp)throw new Error('MODEL_RUNTIME_ENVIRONMENT_INVALID')
-  return{HOME:identity.home,USER:identity.name,LOGNAME:identity.name,OPENCODE_HI_STATE_DIR:hiState,TMPDIR:tmp,TMP:tmp,TEMP:tmp}
+  return{HOME:identity.home,USER:identity.name,LOGNAME:identity.name,OPENCODE_HI_STATE_DIR:hiState,OPENCODE_EXPERIMENTAL_WORKSPACES:'true',TMPDIR:tmp,TMP:tmp,TEMP:tmp}
 }
+
+function containedPath(root,path){const base=resolve(root),target=resolve(path);return target===base||target.startsWith(base+'/')}
+function commandEscapesFixture(command,fixture){
+  if(/(^|\s)cd\s+\.\.(?:\s|$)/.test(command))return true
+  for(const raw of command.match(/(?:^|[\s'"=])((?:\.\.\/|\/)[^\s'";|&()<>]*)/g)??[]){const token=raw.trim().replace(/^['"=]/,'');if(!token)continue;const target=token.startsWith('/')?token:resolve(fixture,token);if(!containedPath(fixture,target))return true}
+  return false
+}
+export function classifyWPermissionRequest(request,{fixture,parentID}){
+  if(request?.sessionID!==parentID)return{action:'IGNORE',reason:'other-session'}
+  if(request?.permission==='bash'){
+    const command=String(request?.metadata?.command??'').trim()
+    if(command&&!commandEscapesFixture(command,fixture))return{action:'ALLOW_ONCE',reason:'fixture-local-bash'}
+    return{action:'REJECT_TERMINAL',reason:'bash-scope-escape-or-unclassified'}
+  }
+  return{action:'REJECT_TERMINAL',reason:`unexpected-permission:${String(request?.permission??'unknown')}`}
+}
+async function pendingPermissions(base,directory){const u=new URL(`${base}/permission`);u.searchParams.set('directory',directory);const r=await fetch(u,{signal:AbortSignal.timeout(3000)});if(!r.ok)throw new Error(`PERMISSION_LIST_FAILED:${r.status}`);const value=dataOf(await r.json());return Array.isArray(value)?value:[]}
+async function replyPermission(base,directory,id,reply){const u=new URL(`${base}/permission/${encodeURIComponent(id)}/reply`);u.searchParams.set('directory',directory);const r=await fetch(u,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({reply}),signal:AbortSignal.timeout(3000)});if(!r.ok)throw new Error(`PERMISSION_REPLY_FAILED:${id}:${r.status}`);return true}
+async function assertWPrimaryAgent(base,directory){const u=new URL(`${base}/agent`);u.searchParams.set('directory',directory);const r=await fetch(u,{signal:AbortSignal.timeout(3000)});if(!r.ok)throw new Error(`AGENT_INVENTORY_FAILED:${r.status}`);const rows=dataOf(await r.json()),agent=Array.isArray(rows)?rows.find(x=>x?.name===W_PRIMARY_AGENT):undefined;if(!agent||agent.mode!=='primary')throw new Error(`W_PRIMARY_AGENT_UNAVAILABLE:${W_PRIMARY_AGENT}`);const wildcard=(permission)=>[...(agent.permission??[])].filter(x=>x?.permission===permission&&x?.pattern==='*').at(-1)?.action;if(wildcard('external_directory')!=='deny')throw new Error('W_PRIMARY_AGENT_EXTERNAL_DIRECTORY_NOT_DENIED');if(!['ask','deny'].includes(wildcard('bash')))throw new Error('W_PRIMARY_AGENT_BASH_NOT_BOUNDED');return agent}
 function setTreeOwnership(path,identity){const s=lstatSync(path);if(s.isSymbolicLink()){lchownSync(path,identity.uid,identity.gid);return}if(s.isDirectory())for(const name of readdirSync(path))setTreeOwnership(join(path,name),identity);chownSync(path,identity.uid,identity.gid)}
 function prepareRuntimeSandbox(path,identity){mkdirSync(path,{recursive:true,mode:0o700});chownSync(path,identity.uid,identity.gid);return path}
 
@@ -185,16 +205,16 @@ export async function executeWorkload(workloadId,{pollMs=1500}={}){
     receipts.write('tool-preflight',{status:'PASS',exact_opencode:{path:exactBin,version:target,sha256:shaFile(exactBin)},plugin_entrypoint:join(ROOT,'plugin','dist','plugin.js'),fixture_seed_identity:seedIdentity,fixture_git_head:fixtureHead,operator_uid:process.getuid?.()??null,model_runtime:{user:runtimeIdentity.name,uid:runtimeIdentity.uid,gid:runtimeIdentity.gid,oracle_readable:false}})
     const port=await freePort(),base=`http://127.0.0.1:${port}`,runtimeEnv=buildRuntimeEnvironment(runtimeIdentity,{hiState,tmp});pm=new OwnedProcessManager(runDir)
     serverRecord=await pm.spawn({runId,workloadId,command:exactBin,args:['serve','--hostname','127.0.0.1','--port',String(port),'--print-logs','--log-level','INFO'],cwd:fixture,env:runtimeEnv,uid:runtimeIdentity.uid,gid:runtimeIdentity.gid,readiness:{kind:'probe',timeoutMs:30000,intervalMs:250,probe:async()=>{const h=await health(base);return h?.healthy===true&&h?.version===target}}})
-    const ids=await toolIds(base,fixture);if(!ids.some(x=>String(x).startsWith('hi_')))throw new Error('HI_TOOL_SURFACE_NOT_LOADED')
+    const ids=await toolIds(base,fixture);if(!ids.some(x=>String(x).startsWith('hi_')))throw new Error('HI_TOOL_SURFACE_NOT_LOADED');await assertWPrimaryAgent(base,fixture)
     client=createOpencodeClient({baseUrl:base,directory:fixture})
     const pool=JSON.parse(readFileSync(join(WROOT,'model-pool.json'),'utf8')).models,live=readLiveModelInventory(exactBin,pool,runtimeIdentity)
     selected=selectTestModel({liveInventory:live,pool,requiredCapabilities:spec.requiredCapabilities})
     receipts.write('model-role-selection',{scope:'w-development-test-only',required_capabilities:spec.requiredCapabilities,selected_model:selected.model.id,eligible:selected.eligible,rejected:selected.rejected,reason:selected.reason})
-    const mi=modelIdentity(selected.model.id),created=dataOf(await client.session.create({directory:fixture,title:`W acceptance ${workloadId} ${runId}`,model:{id:mi.modelID,providerID:mi.providerID}}));if(!created?.id)throw new Error('PARENT_SESSION_CREATE_FAILED');parentID=created.id
+    const mi=modelIdentity(selected.model.id),created=dataOf(await client.session.create({directory:fixture,agent:W_PRIMARY_AGENT,title:`W acceptance ${workloadId} ${runId}`,model:{id:mi.modelID,providerID:mi.providerID}}));if(!created?.id)throw new Error('PARENT_SESSION_CREATE_FAILED');parentID=created.id
     writeMeta({status:'ACTIVE',product_sha:productHead,opencode_version:target,model:selected.model.id,parent_session_id:parentID,server:serverRecord,base_url:base,runtime_state:null})
-    const prompt=readFileSync(promptPath,'utf8');const ack=await client.session.promptAsync({sessionID:parentID,directory:fixture,model:mi,parts:[{type:'text',text:prompt}]},{throwOnError:true});if(ack?.error)throw new Error(`PROMPT_ASYNC_REJECTED:${JSON.stringify(ack.error)}`)
+    const prompt=readFileSync(promptPath,'utf8');const ack=await client.session.promptAsync({sessionID:parentID,directory:fixture,agent:W_PRIMARY_AGENT,model:mi,parts:[{type:'text',text:prompt}]},{throwOnError:true});if(ack?.error)throw new Error(`PROMPT_ASYNC_REJECTED:${JSON.stringify(ack.error)}`)
     for(;;){
-      const statuses=hostStatusMap(await client.session.status({directory:fixture})),children=dataOf(await client.session.children({sessionID:parentID,directory:fixture}))??[],statePath=findRuntimeState(hiState),state=statePath?readJsonMaybe(statePath):undefined,mission=state?.missions?.[0]
+      const permissions=await pendingPermissions(base,fixture);let scopeViolation=null;for(const permission of permissions){const decision=classifyWPermissionRequest(permission,{fixture,parentID});if(decision.action==='ALLOW_ONCE')await replyPermission(base,fixture,permission.id,'once');else if(decision.action==='REJECT_TERMINAL'){await replyPermission(base,fixture,permission.id,'reject');scopeViolation={permission,decision};break}}if(scopeViolation){await client.session.abort({sessionID:parentID,directory:fixture});const statePath=findRuntimeState(hiState),state=statePath?readJsonMaybe(statePath):undefined;finalMission=state?.missions?.[0];finalLiveness={state:'TERMINAL',inflight:'NO',destructive_recovery_allowed:false,reasons:['w-scope-violation']};writeMeta({scope_violation:{permission_id:scopeViolation.permission.id,permission:scopeViolation.permission.permission,reason:scopeViolation.decision.reason}});break}const statuses=hostStatusMap(await client.session.status({directory:fixture})),children=dataOf(await client.session.children({sessionID:parentID,directory:fixture}))??[],statePath=findRuntimeState(hiState),state=statePath?readJsonMaybe(statePath):undefined,mission=state?.missions?.[0]
       const liveness=mission?assessHarnessLiveness(mission,{hostSessions:statuses}):{state:'RECONCILE',inflight:statuses[parentID]==='busy'||statuses[parentID]==='retry'?'YES':'UNKNOWN',destructive_recovery_allowed:false,reasons:['runtime-state-not-yet-observed']}
       const observation=runtimeProjection(parentID,mission,serverRecord,statuses);writeFileSync(runtimeObservationPath,JSON.stringify({schema:1,run_id:runId,observed_at:new Date().toISOString(),parent_session_id:parentID,child_sessions:(Array.isArray(children)?children:[]).map(x=>({id:x.id,parentID:x.parentID})),host_statuses:statuses,runtime_state:statePath||null,liveness,execution:observation},null,2)+'\n',{mode:0o600});writeMeta({runtime_state:statePath||null,parent_status:statuses[parentID]??'idle',child_session_ids:(Array.isArray(children)?children:[]).map(x=>x.id),liveness})
       if(missionTerminalStatus(mission?.identity?.status)){finalMission=mission;finalLiveness=liveness;break}
@@ -207,8 +227,9 @@ export async function executeWorkload(workloadId,{pollMs=1500}={}){
     const oracle=await runHiddenOracle({oraclePath,fixtureRoot:fixture,harnessRoot:join(ROOT,'scripts','workload-acceptance'),command:process.execPath,args:[oraclePath],cwd:ROOT,env:{W_FIXTURE_ROOT:fixture,W_ORACLE_SCRATCH_ROOT:scratch},identity:receipts.read('oracle-identity').identity,fixtureIdentity:spec.fixture.baseline.value,timeoutMs:30000})
     let parsed;try{parsed=JSON.parse(oracle.stdout)}catch{parsed=null}const oraclePass=oracle.exit_code===0&&parsed?.failed===0
     receipts.write('oracle-result',{passed:oraclePass,exit_code:oracle.exit_code,signal:oracle.signal,stdout_sha256:oracle.stdout_sha256,stderr_sha256:oracle.stderr_sha256,result:parsed})
-    const missionPass=finalMission?.identity?.status==='completed',stalled=finalLiveness?.state==='STALLED';let classification
-    if(missionPass&&oraclePass)classification={result:'PASS',class:null,root_cause:null,product_repair_authorized:false}
+    const missionPass=finalMission?.identity?.status==='completed',stalled=finalLiveness?.state==='STALLED',scopeViolated=finalLiveness?.reasons?.includes('w-scope-violation');let classification
+    if(scopeViolated)classification={result:'FAIL',class:'MODEL_BEHAVIOR',root_cause:'Model requested a permission outside the automated W fixture-local execution contract; request was rejected and the exact session was aborted.',product_repair_authorized:false}
+    else if(missionPass&&oraclePass)classification={result:'PASS',class:null,root_cause:null,product_repair_authorized:false}
     else if(stalled)classification={result:'FAIL',class:'INCONCLUSIVE',root_cause:'Canonical liveness declared STALLED with exact inflight NO; destructive replacement is not performed automatically by the common driver.',product_repair_authorized:false}
     else classification={result:'FAIL',class:'WORKLOAD_RESULT_FAILURE',root_cause:'Terminal workload result and/or hidden oracle did not pass. Oracle truth does not diagnose a product defect.',product_repair_authorized:false}
     receipts.write('classification',classification)
