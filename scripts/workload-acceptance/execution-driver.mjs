@@ -104,6 +104,15 @@ function roleRows(mission,selectedModel){
 }
 function runtimeProjection(parentID,mission,serverRecord,statusMap){return executionObservation({sessionId:parentID,tasks:mission?.execution?.tasks??[],workers:mission?.execution?.workers??[],processes:[{process_id:'opencode-server',status:serverRecord?.status??'RUNNING',pid:serverRecord?.pid,pgid:serverRecord?.pgid,run_id:serverRecord?.run_id,workload_id:serverRecord?.workload_id}],terminalStatus:mission?.identity?.status??null})}
 
+export function requireReadyAdmission(run){
+  if(run?.disposition!=='READY_TO_EXECUTE')throw new Error('READY_ADMISSION_DISPOSITION_INVALID')
+  const runId=run.run_id
+  if(typeof runId!=='string'||!runId.trim())throw new Error('READY_ADMISSION_RUN_ID_MISSING')
+  const receiptRunId=run.receipts?.read?.('run-identity')?.run_id,lockRunId=run.lock?.runId
+  if(receiptRunId!==runId||lockRunId!==runId)throw new Error(`READY_ADMISSION_RUN_ID_MISMATCH:${runId}:${String(receiptRunId)}:${String(lockRunId)}`)
+  return{runId,lock:run.lock,receipts:run.receipts}
+}
+
 export function resolveExecutionContract(workloadId,spec){
   assertWorkloadSpec(spec)
   if(spec.id!==workloadId)throw new Error('WORKLOAD_SPEC_ID_MISMATCH')
@@ -125,7 +134,7 @@ export async function executeWorkload(workloadId,{pollMs=1500}={}){
   const harness=new WorkloadAcceptanceHarness({stateRoot:RUNTIME_ROOT,productIdentity:{head:productHead,origin_dev:originHead,opencode:target,opencode_binary_sha256:shaFile(exactBin)},liveInventory:[],sessionProbe:async()=> 'unknown',processProbe:processAlive})
   const run=await harness.preflight(spec,{conditionFingerprint:`${productHead}:${target}:${spec.fixture.baseline.value}:${shaFile(promptPath)}:${shaFile(oraclePath)}`,prepareFixture:async()=>copySeed(seed,fixture,runtimeIdentity)})
   if(run.disposition!=='READY_TO_EXECUTE')return run
-  const {runId,lock,receipts}=run,runDir=join(RUNTIME_ROOT,workloadId,'runs',runId),controlRoot=prepareOperatorControlRoot(join(runDir,'operator-control'),fixture),scratch=join(controlRoot,'oracle-scratch'),runtimeSandbox=prepareRuntimeSandbox(join(runDir,'model-runtime'),runtimeIdentity),hiState=prepareRuntimeSandbox(join(runtimeSandbox,'hi-state'),runtimeIdentity),tmp=prepareRuntimeSandbox(join(runtimeSandbox,'tmp'),runtimeIdentity);mkdirSync(scratch,{recursive:true,mode:0o700})
+  const {runId,lock,receipts}=requireReadyAdmission(run),runDir=join(RUNTIME_ROOT,workloadId,'runs',runId),controlRoot=prepareOperatorControlRoot(join(runDir,'operator-control'),fixture),scratch=join(controlRoot,'oracle-scratch'),runtimeSandbox=prepareRuntimeSandbox(join(runDir,'model-runtime'),runtimeIdentity),hiState=prepareRuntimeSandbox(join(runtimeSandbox,'hi-state'),runtimeIdentity),tmp=prepareRuntimeSandbox(join(runtimeSandbox,'tmp'),runtimeIdentity);mkdirSync(scratch,{recursive:true,mode:0o700})
   let serverRecord,pm,parentID,client,cleanupResult,finalMission,finalLiveness,selected
   const runMetaPath=join(runDir,'run-meta.json'),runtimeObservationPath=join(runDir,'runtime-observation.json')
   const writeMeta=patch=>{const current=readJsonMaybe(runMetaPath)??{schema:1,workload_id:workloadId,run_id:runId,predecessor_run_id:null,started_at:new Date().toISOString()};writeFileSync(runMetaPath,JSON.stringify({...current,...patch,updated_at:new Date().toISOString()},null,2)+'\n',{mode:0o600})}
