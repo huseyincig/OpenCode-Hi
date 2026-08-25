@@ -1,0 +1,91 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,existsSync,chmodSync,rmSync} from 'node:fs'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
+import {AuthoritativeRunLock,reconcileAuthoritativeRun,reconcileContinuation} from '../scripts/workload-acceptance/authoritative-run.mjs'
+import {FixtureManager,fixtureIdentity} from '../scripts/workload-acceptance/fixture-manager.mjs'
+import {ImmutableReceiptWriter,admitRerunLineage} from '../scripts/workload-acceptance/receipts.mjs'
+import {selectTestModel} from '../scripts/workload-acceptance/model-pool.mjs'
+import {roleAcceptanceObservation} from '../scripts/workload-acceptance/role-observation.mjs'
+import {assertWorkloadSpec,assertHiddenOracle,oracleIdentity} from '../scripts/workload-acceptance/workload-spec.mjs'
+import {assessHarnessLiveness} from '../scripts/workload-acceptance/liveness-adapter.mjs'
+import {OwnedProcessManager} from '../scripts/workload-acceptance/process-owner.mjs'
+import {classify,productRepairAuthorized} from '../scripts/workload-acceptance/classification.mjs'
+import {cleanupOwnedResources} from '../scripts/workload-acceptance/cleanup.mjs'
+
+const temp=()=>mkdtempSync(join(process.cwd(),'.agent-work/tmp/w-harness-selftest-'))
+
+async function withLock(t,fn){const root=temp();t.after(()=>rmSync(root,{recursive:true,force:true}));const lock=new AuthoritativeRunLock(join(root,'run.lock'),{workloadId:'WT',runId:'run-a'});await lock.acquire();t.after(()=>lock.release());return fn({root,lock})}
+
+test('duplicate invocation is rejected before fixture mutation',async t=>withLock(t,async({root})=>{let mutated=false;const contender=new AuthoritativeRunLock(join(root,'run.lock'),{workloadId:'WT',runId:'run-b'});await assert.rejects(()=>contender.acquire(),/AUTHORITATIVE_RUN_LOCKED/);assert.equal(mutated,false)}))
+
+test('stale lock metadata plus dead owner reconciles without treating lock file existence as live',async t=>{const root=temp();t.after(()=>rmSync(root,{recursive:true,force:true}));const path=join(root,'run.lock');writeFileSync(path,'');writeFileSync(path+'.meta.json',JSON.stringify({workload_id:'WT',run_id:'old',holder_pid:99999999}));const r=await reconcileAuthoritativeRun({lockPath:path,workloadId:'WT',processProbe:()=>false,sessionProbe:async()=> 'idle'});assert.equal(r.disposition,'STALE_RECONCILED')})
+
+test('live authoritative run reconnect is adopted/waited, never duplicate-dispatched',async t=>withLock(t,async({root,lock})=>{const r=await reconcileAuthoritativeRun({lockPath:join(root,'run.lock'),workloadId:'WT',processProbe:pid=>pid===lock.holderPid,sessionProbe:async()=> 'busy'});assert.equal(r.disposition,'ADOPT_WAIT');assert.equal(r.run_id,'run-a')}))
+
+test('ambiguous owner blocks a new run fail-closed',async t=>withLock(t,async({root})=>{const meta=join(root,'run.lock.meta.json');const x=JSON.parse(readFileSync(meta));x.holder_pid=123456789;writeFileSync(meta,JSON.stringify(x));const r=await reconcileAuthoritativeRun({lockPath:join(root,'run.lock'),workloadId:'WT',processProbe:()=>false,sessionProbe:async()=> 'unknown'});assert.equal(r.disposition,'AMBIGUOUS_BLOCKED')}))
+
+test('fixture reset is impossible before authoritative lock ownership',async t=>{const root=temp();t.after(()=>rmSync(root,{recursive:true,force:true}));let calls=0;const fm=new FixtureManager({workloadId:'WT',fixtureRoot:join(root,'fixture'),baseline:{kind:'sha256',value:'abc'},reset:async()=>{calls++}});await assert.rejects(()=>fm.reset(),/AUTHORITATIVE_LOCK_REQUIRED/);assert.equal(calls,0)})
+
+test('immutable receipts and run lineage reject overwrite',async t=>{const root=temp();t.after(()=>rmSync(root,{recursive:true,force:true}));const w=new ImmutableReceiptWriter(join(root,'runs','r1','receipts'),'r1');const first=w.write('run-identity',{run_id:'r1'});assert.ok(first.sha256);assert.throws(()=>w.write('run-identity',{run_id:'r1'}),/IMMUTABLE_RECEIPT_EXISTS/)})
+
+test('same-condition blind rerun is rejected without repair or material transient change',()=>{assert.throws(()=>admitRerunLineage({predecessorRunId:'r1',predecessorCondition:'x',currentCondition:'x'}),/BLIND_RERUN_FORBIDDEN/);assert.equal(admitRerunLineage({predecessorRunId:'r1',predecessorCondition:'x',currentCondition:'x',repairReceipt:'repair.json'}).allowed,true)})
+
+test('development pool filters capabilities before test-only cost rank',()=>{const selected=selectTestModel({liveInventory:[{id:'cheap',capabilities:['text']},{id:'vision',capabilities:['text','image']}],pool:[{id:'cheap',costRank:1},{id:'vision',costRank:9}],requiredCapabilities:['image']});assert.equal(selected.model.id,'vision');assert.equal(selected.reason,'capability-eligible-test-cost-order')})
+
+test('test model pool remains a harness input and does not write product routing state',()=>{const cfg={pool:[{id:'x',costRank:1}]};const selected=selectTestModel({liveInventory:[{id:'x',capabilities:['text']}],pool:cfg.pool,requiredCapabilities:['text']});assert.equal(selected.model.id,'x');assert.deepEqual(Object.keys(selected).sort(),['eligible','model','reason','rejected'])})
+
+test('role observation records expected and actual independently without injecting role authority',()=>{const o=roleAcceptanceObservation({taskId:'t1',semantics:['external-research'],requiredCapabilities:['research'],expectedRole:'researcher',actualRole:'coder',permissionProfile:'read-only',methodologies:['m'],tools:['read'],evidenceOwner:'w1',selectedModel:'x'});assert.equal(o.expected_role,'researcher');assert.equal(o.actual_role,'coder');assert.equal(o.role_match,false)})
+
+test('hidden oracle must be outside fixture and inaccessible by group/world mode',t=>{const root=temp();t.after(()=>rmSync(root,{recursive:true,force:true}));const fixture=join(root,'fixture'),control=join(root,'control');mkdirSync(fixture);mkdirSync(control);const oracle=join(control,'oracle.mjs');writeFileSync(oracle,'process.exit(0)');chmodSync(oracle,0o600);assert.doesNotThrow(()=>assertHiddenOracle({oraclePath:oracle,fixtureRoot:fixture,harnessRoot:join(root,'harness')}));const leaked=join(fixture,'oracle.mjs');writeFileSync(leaked,'');chmodSync(leaked,0o600);assert.throws(()=>assertHiddenOracle({oraclePath:leaked,fixtureRoot:fixture,harnessRoot:join(root,'harness')}),/ORACLE_ISOLATION_VIOLATION/)})
+
+test('oracle identity binds exact version and fixture baseline',t=>{const root=temp();t.after(()=>rmSync(root,{recursive:true,force:true}));const p=join(root,'oracle');writeFileSync(p,'oracle-v1');const a=oracleIdentity({path:p,version:'v1',fixtureIdentity:'f1'}),b=oracleIdentity({path:p,version:'v2',fixtureIdentity:'f1'});assert.notEqual(a.identity,b.identity);assert.equal(a.fixture_identity,'f1')})
+
+test('workload spec contract is declarative and requires three-layer surfaces',()=>{assert.doesNotThrow(()=>assertWorkloadSpec({id:'WT',title:'self-test',difficulty:'test',visiblePrompt:'prompt.txt',fixture:{baseline:{kind:'sha256',value:'x'},allowedMutation:['**']},requiredCapabilities:['text'],hiddenOracle:{path:'control/oracle.mjs',version:'1'},requiredEvidence:['targeted-tests'],cleanup:{preserveFixture:true},seededConditions:[]}))})
+
+test('harness consumes product liveness: >120s busy is not stalled',async()=>{const m={identity:{status:'active',created_at:0},continuation:{generation:1},execution:{ledger:[],workers:[{id:'w',task_id:'t',status:'busy',session_id:'s',generation_at_spawn:1}],processes:[]}};const r=assessHarnessLiveness(m,{now:180000,hostSessions:{s:'busy'}});assert.notEqual(r.state,'STALLED');assert.equal(r.inflight,'YES')})
+
+test('harness exposes product liveness no-progress + inflight NO stall',()=>{const m={identity:{status:'active',created_at:0},continuation:{generation:1},execution:{ledger:[],workers:[],processes:[]}};const r=assessHarnessLiveness(m,{now:180000,hostSessions:{}});assert.equal(r.state,'STALLED');assert.equal(r.inflight,'NO')})
+
+test('PID alive alone is not harness inflight authority',()=>{const m={identity:{status:'active',created_at:0},continuation:{generation:1},execution:{ledger:[],workers:[],processes:[{process_id:'p',status:'RUNNING'}]}};const r=assessHarnessLiveness(m,{now:180000,processes:{p:{pid_alive:true,owner_verified:false,status:'running'}}});assert.equal(r.inflight,'UNKNOWN');assert.equal(r.destructive_recovery_allowed,false)})
+
+test('process owner mismatch quarantines instead of signalling',async t=>{const root=temp();t.after(()=>rmSync(root,{recursive:true,force:true}));const pm=new OwnedProcessManager(root);const p=await pm.spawn({runId:'r1',workloadId:'WT',command:process.execPath,args:['-e','setInterval(()=>{},1000)'],cwd:root,readiness:{kind:'delay',ms:20}});const result=await pm.terminate({...p,command_identity:'wrong'});assert.equal(result.disposition,'QUARANTINED');assert.equal(result.signalled,false);process.kill(-p.pgid,'SIGKILL')})
+
+test('cleanup touches only resources owned by the exact run',async t=>{const root=temp();t.after(()=>rmSync(root,{recursive:true,force:true}));const owned=join(root,'owned'),foreign=join(root,'foreign');mkdirSync(owned);mkdirSync(foreign);const result=await cleanupOwnedResources('r1',[{kind:'path',path:owned,ownerRunId:'r1',root},{kind:'path',path:foreign,ownerRunId:'r2',root}]);assert.equal(existsSync(owned),false);assert.equal(existsSync(foreign),true);assert.equal(result.skipped.length,1)})
+
+test('classification admits product repair only for mechanically evidenced PRODUCT_DEFECT',()=>{const c=classify('PRODUCT_DEFECT',{evidenceRefs:['e1'],rootCause:'canonical invariant violated'});assert.equal(productRepairAuthorized(c),true);assert.throws(()=>classify('PRODUCT_DEFECT',{evidenceRefs:[],rootCause:''}),/PRODUCT_DEFECT_REQUIRES_MECHANICAL_PROOF/)})
+
+test('MODEL_BEHAVIOR can be terminal workload evidence but never product mutation authority',()=>{const c=classify('MODEL_BEHAVIOR',{evidenceRefs:['run/result']});assert.equal(productRepairAuthorized(c),false);assert.equal(c.terminal_allowed,true)})
+
+import {resolveToolPreflight} from '../scripts/workload-acceptance/tool-preflight.mjs'
+import {promptIdentity} from '../scripts/workload-acceptance/workload-spec.mjs'
+import {runHiddenOracle,oracleInvalidationLineage} from '../scripts/workload-acceptance/oracle-runner.mjs'
+import {executionObservation} from '../scripts/workload-acceptance/execution-observation.mjs'
+
+test('tool preflight consumes a canonical resolver result instead of bypassing tool policy',async()=>{const r=await resolveToolPreflight(['browser','php'],async cap=>cap==='browser'?{status:'existing',implementationId:'playwright',smokeReceipt:'r1'}:{status:'blocked',reason:'missing'});assert.deepEqual(r.blocked,['php']);assert.equal(r.resolutions[0].smoke_receipt,'r1')})
+
+test('prompt identity hashes only the visible prompt source',t=>{const root=temp();t.after(()=>rmSync(root,{recursive:true,force:true}));const p=join(root,'prompt.txt');writeFileSync(p,'visible user request\n');const i=promptIdentity(p);assert.match(i.sha256,/^[a-f0-9]{64}$/);assert.equal(i.path,p)})
+
+test('oracle runner returns hash-bound immutable observation without classifying product defects',async t=>{const root=temp();t.after(()=>rmSync(root,{recursive:true,force:true}));const fixture=join(root,'fixture'),control=join(root,'control');mkdirSync(fixture);mkdirSync(control);const script=join(control,'oracle.mjs');writeFileSync(script,"console.log(JSON.stringify({pass:true,checks:3}))\n");chmodSync(script,0o600);const r=await runHiddenOracle({oraclePath:script,fixtureRoot:fixture,harnessRoot:join(root,'harness'),command:process.execPath,args:[script],cwd:root,identity:'oracle-id',fixtureIdentity:'fixture-id',timeoutMs:2000});assert.equal(r.exit_code,0);assert.equal(r.oracle_identity,'oracle-id');assert.equal('classification' in r,false);assert.match(r.stdout_sha256,/^[a-f0-9]{64}$/)})
+
+test('bounded process readiness probe gates acceptance without becoming a workload wall timeout',async t=>{const root=temp();t.after(()=>rmSync(root,{recursive:true,force:true}));const pm=new OwnedProcessManager(root);let probes=0;const p=await pm.spawn({runId:'r1',workloadId:'WT',command:process.execPath,args:['-e','setInterval(()=>{},1000)'],cwd:root,readiness:{kind:'probe',timeoutMs:500,intervalMs:10,probe:async()=>++probes>=2}});assert.ok(probes>=2);const x=await pm.terminate(p,{graceMs:100});assert.equal(x.signalled,true)})
+
+test('execution observation preserves runtime truth without inventing a second task/worker owner',()=>{const x=executionObservation({sessionId:'s',tasks:[{id:'t',status:'running',role:'coder',worker_id:'w'}],workers:[{id:'w',task_id:'t',status:'busy',role:'coder',session_id:'c',generation_at_spawn:2,attempt:1,model:'m'}],processes:[]});assert.deepEqual(x.tasks,[{id:'t',status:'running',role:'coder',worker_id:'w'}]);assert.equal(x.workers[0].generation,2)})
+
+
+test('continuation reconciliation blocks mismatched run-meta/runtime/receipt identity before a new run',async t=>{const root=temp();t.after(()=>rmSync(root,{recursive:true,force:true}));const r=await reconcileContinuation({lockPath:join(root,'run.lock'),workloadId:'WT',runMetaProbe:async()=>({status:'terminal',run_id:'r1'}),runtimeStateProbe:async()=>({status:'terminal',run_id:'r2'}),receiptProbe:async()=>({status:'terminal',run_id:'r1'})});assert.equal(r.disposition,'AMBIGUOUS_BLOCKED');assert.equal(r.reason,'continuation-run-id-mismatch')})
+
+test('oracle identity change requires explicit invalidation lineage',()=>{const x=oracleInvalidationLineage({priorRunId:'r1',oldOracleIdentity:'o1',newOracleIdentity:'o2',reason:'oracle defect repair'});assert.equal(x.prior_result_invalidated,true);assert.throws(()=>oracleInvalidationLineage({priorRunId:'r1',oldOracleIdentity:'o1',newOracleIdentity:'o1',reason:'x'}),/ORACLE_INVALIDATION_LINEAGE_INVALID/)})
+
+import {smokeOracleDeterminism} from '../scripts/workload-acceptance/oracle-runner.mjs'
+import {WorkloadAcceptanceHarness} from '../scripts/workload-acceptance/harness-core.mjs'
+
+test('common harness acquires OS lock before fixture reset and writes immutable preflight receipts',async t=>{const root=temp();t.after(()=>rmSync(root,{recursive:true,force:true}));const fixture=join(root,'fixture');mkdirSync(fixture);writeFileSync(join(fixture,'a.txt'),'baseline\n');const baseline=fixtureIdentity(fixture),stateRoot=join(root,'state');let resetObservedHeld=false;const harness=new WorkloadAcceptanceHarness({stateRoot,productIdentity:{head:'abc'},liveInventory:[],sessionProbe:async()=> 'idle',processProbe:()=>false});const spec={id:'WT',title:'self-test',difficulty:'test',visiblePrompt:'prompt.txt',fixture:{root:fixture,baseline:{kind:'sha256',value:baseline},allowedMutation:['a.txt']},requiredCapabilities:['text'],hiddenOracle:{path:'control/oracle.mjs',version:'1'},requiredEvidence:['targeted-tests'],cleanup:{preserveFixture:true},seededConditions:[]};const run=await harness.preflight(spec,{conditionFingerprint:'cond-1',prepareFixture:async()=>{const {spawnSync}=await import('node:child_process');resetObservedHeld=spawnSync('flock',['-n',join(stateRoot,'WT','authoritative.lock'),'true']).status!==0}});t.after(()=>run.lock.release());assert.equal(run.disposition,'READY_TO_EXECUTE');assert.equal(resetObservedHeld,true);assert.equal(run.receipts.read('run-identity').workload_id,'WT');assert.equal(run.receipts.read('fixture-identity').observed_identity,baseline)})
+
+test('oracle deterministic smoke compares immutable result signatures',async()=>{const fixed={exit_code:0,stdout_sha256:'a',stderr_sha256:'b',oracle_identity:'o',fixture_identity:'f'};const r=await smokeOracleDeterminism(async()=>({...fixed}));assert.equal(r.status,'PASS');let n=0;await assert.rejects(()=>smokeOracleDeterminism(async()=>({...fixed,stdout_sha256:String(++n)})),/ORACLE_NONDETERMINISTIC_SMOKE/)})
+
+import {prepareOperatorControlRoot} from '../scripts/workload-acceptance/isolation.mjs'
+test('operator control root is fixture-external and group/world inaccessible',t=>{const root=temp();t.after(()=>rmSync(root,{recursive:true,force:true}));const fixture=join(root,'fixture');mkdirSync(fixture);const control=prepareOperatorControlRoot(join(root,'control'),fixture);assert.equal(control.mode,0o700);assert.throws(()=>prepareOperatorControlRoot(join(fixture,'control'),fixture),/CONTROL_ROOT_ISOLATION_VIOLATION/)})
+
+test('common cleanup terminates exact owned process and releases exact owned lock only',async t=>{const root=temp();t.after(()=>rmSync(root,{recursive:true,force:true}));const lock=new AuthoritativeRunLock(join(root,'owned.lock'),{workloadId:'WT',runId:'r1'});await lock.acquire();const pm=new OwnedProcessManager(root);const p=await pm.spawn({runId:'r1',workloadId:'WT',command:process.execPath,args:['-e','setInterval(()=>{},1000)'],cwd:root,readiness:{kind:'delay',ms:20}});const c=await cleanupOwnedResources('r1',[{kind:'process',ownerRunId:'r1',manager:pm,contract:p,options:{graceMs:100}},{kind:'lock',ownerRunId:'r1',lock}]);assert.equal(c.quarantined.length,0);assert.equal(c.cleaned.length,2);const contender=new AuthoritativeRunLock(join(root,'owned.lock'),{workloadId:'WT',runId:'r2'});await contender.acquire();await contender.release()})
