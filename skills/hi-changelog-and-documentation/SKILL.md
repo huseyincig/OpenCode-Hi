@@ -10,7 +10,7 @@ description: Update user-facing documentation for observable behavior changes.
 - **Trigger:** A verified change affects users, installation, configuration, API, security, or supported behavior, or documentation/changelog alignment is explicitly requested.
 - **Do not trigger:** Internal refactor/cosmetic rename with no user-visible effect.
 - **Exit condition:** Canonical English documentation matches implemented behavior and translation does not add behavior.
-- **Role affinity:** working-manager
+- **Role affinity:** technical-writer
 - **Context cost:** medium
 - **Execution cost:** low
 

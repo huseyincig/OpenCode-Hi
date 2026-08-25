@@ -10,7 +10,7 @@ description: Inspect authoritative source before adapting an external implementa
 - **Trigger:** External repository/specification/implementation is material to the requested change.
 - **Do not trigger:** Task is fully internal and no external implementation evidence is relevant.
 - **Exit condition:** Source, license, primitive, ownership, reuse action, and test strategy are recorded before reuse.
-- **Role affinity:** repository-explorer
+- **Role affinity:** researcher
 - **Context cost:** medium
 - **Execution cost:** medium
 

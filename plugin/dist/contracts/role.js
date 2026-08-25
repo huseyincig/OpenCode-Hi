@@ -1,7 +1,7 @@
 import { assertCanonicalId, assertNonEmptyString, assertRecord, assertStrictKeys, ContractValidationError } from './common.js';
 const ROLE_CLASSES = new Set(['primary', 'child']);
 const WRITE_AUTH = new Set(['none', 'scoped', 'general']);
-const OBLIGATION_AUTH = new Set(['implementation', 'analysis', 'review', 'verification']);
+const OBLIGATION_AUTH = new Set(['implementation', 'analysis', 'review', 'verification', 'research', 'documentation', 'test-authoring']);
 function stringList(value, field, allowEmpty = false) {
     if (!Array.isArray(value) || (!allowEmpty && value.length === 0))
         throw new ContractValidationError(field, allowEmpty ? 'must be an array' : 'must be a non-empty array');

@@ -48,6 +48,6 @@ test('BA03 routing constraints execute while legacy scoring/model-mode fields ar
   const design={...intent,scope:'local',risk:'low',requiredCapabilities:['design-exploration']}
   const minimal=resolveHiConfig({executionPolicy:'minimal'}),thorough=resolveHiConfig({executionPolicy:'thorough'})
   const minProfile=minimal.profile[executionProfileFor(minimal.executionPolicy,design)],thoroughProfile=thorough.profile[executionProfileFor(thorough.executionPolicy,design)]
-  assert.equal(routeCapabilities(design,minProfile).role,'coder')
+  assert.equal(routeCapabilities(design,minProfile).role,'architect')
   assert.equal(routeCapabilities(design,thoroughProfile).role,'architect')
 })

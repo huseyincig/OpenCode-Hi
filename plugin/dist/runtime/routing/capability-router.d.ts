@@ -9,4 +9,8 @@ export interface ProfileSettingsLite {
     specialistThreshold: 'low' | 'medium' | 'high';
     reviewThreshold: 'low' | 'medium' | 'high';
 }
-export declare function routeCapabilities(intent: NormalizedMissionIntent, profile?: ProfileSettingsLite): CapabilityDecision;
+/**
+ * Canonical child ownership is semantic/capability-derived. Execution category/profile
+ * can tune effort, but may not substitute another child role for the semantic owner.
+ */
+export declare function routeCapabilities(intent: NormalizedMissionIntent, _profile?: ProfileSettingsLite): CapabilityDecision;

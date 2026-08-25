@@ -22,7 +22,7 @@ function onlyKeys(value, keys) { const allowed = new Set(keys); return Object.ke
 const IDENTITY_KEYS = ['mission_id', 'session_id', 'objective', 'intent', 'semantic_assessment', 'status', 'risk', 'created_at', 'updated_at'];
 const INTENT_KEYS = ['objective', 'likelyTargets', 'taskKind', 'scope', 'risk', 'ambiguity', 'dependencyClass', 'requiredCapabilities', 'requestedExternalActions', 'likelyVerification', 'avoid'];
 const SEMANTIC_ASSESSMENT_KEYS = ['status', 'phase', 'revision', 'source', 'pending_text', 'assessed_at'];
-const OBLIGATION_KINDS = new Set(['analysis', 'implementation', 'verification', 'review', 'authority']);
+const OBLIGATION_KINDS = new Set(['analysis', 'implementation', 'research', 'documentation', 'test-authoring', 'verification', 'review', 'authority']);
 const OBLIGATION_STATUSES = new Set(['open', 'closed', 'blocked']);
 const GATE_KINDS = new Set(['verification', 'user-authority', 'reviewer', 'prerequisite-task', 'precondition', 'rollback']);
 const GATE_STATUSES = new Set(['open', 'ready', 'blocked', 'closed']);
@@ -31,7 +31,7 @@ function validObligation(value) {
         return false;
     if (value.requiredEvidence !== undefined && (!stringArray(value.requiredEvidence) || !value.requiredEvidence.every(kind => SEMANTIC_VERIFICATION_KINDS.includes(kind))))
         return false;
-    if (value.requiredTargets !== undefined && (!stringArray(value.requiredTargets) || value.kind !== 'implementation' || !value.requiredTargets.every(target => normalizeBoundedProjectPath(target) === target)))
+    if (value.requiredTargets !== undefined && (!stringArray(value.requiredTargets) || !['implementation', 'documentation', 'test-authoring'].includes(String(value.kind)) || !value.requiredTargets.every(target => normalizeBoundedProjectPath(target) === target)))
         return false;
     if (value.blocker !== undefined && typeof value.blocker !== 'string')
         return false;

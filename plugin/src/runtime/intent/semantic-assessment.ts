@@ -6,7 +6,7 @@ import { normalizeBoundedProjectPath } from '../../contracts/common.js'
 import { isConstraintAtomDraft,type ConstraintAtomDraft } from '../../contracts/constraint-atom.js'
 
 export type SemanticMessageKind='mission'|'amendment'|'constraint'|'verification'|'stop'|'resume'|'non-material'
-export const SEMANTIC_CAPABILITIES=['implementation','repository-analysis','review','verification','independent-review','security-review','visual-qa','design-exploration','multi-stream-delegation','source-verification','qa-review','dependency-change','interactive-process','mcp'] as const
+export const SEMANTIC_CAPABILITIES=['implementation','repository-analysis','review','verification','independent-review','security-review','visual-qa','design-exploration','multi-stream-delegation','source-verification','external-research','documentation','test-authoring','qa-review','dependency-change','interactive-process','mcp'] as const
 export type SemanticCapability=typeof SEMANTIC_CAPABILITIES[number]
 export const SEMANTIC_EXTERNAL_ACTIONS=['git-push','release-create','package-publish','deploy'] as const
 export type SemanticExternalAction=typeof SEMANTIC_EXTERNAL_ACTIONS[number]
@@ -123,12 +123,16 @@ export function parseSemanticIntentAssessment(raw:unknown):SemanticIntentAssessm
   if(verificationCeiling&&!userVerification.length)throw new Error('verification_ceiling requires at least one explicit user_verification kind')
   const effectiveVerification=verificationCeiling?userVerification:[...new Set([...userVerification,...inferredVerification])]
   const requiredCapabilities=enumList(v.required_capabilities,SEMANTIC_CAPABILITIES,40,'required_capabilities')
+  const semanticSignals=intentSignalList(v.intent_signals)
+  if(semanticSignals.includes('intent.external-source')&&!requiredCapabilities.includes('external-research'))requiredCapabilities.push('external-research')
+  if(semanticSignals.includes('intent.documentation')&&!requiredCapabilities.includes('documentation'))requiredCapabilities.push('documentation')
+  if(semanticSignals.includes('intent.tdd')&&!requiredCapabilities.includes('test-authoring'))requiredCapabilities.push('test-authoring')
   if(effectiveVerification.includes('visual-check')&&!requiredCapabilities.includes('visual-qa'))requiredCapabilities.push('visual-qa')
   const assessment:SemanticIntentAssessment={
     material:v.material,message_kind:messageKind,
     task_kind:take('task_kind',taskKinds),scope:take('scope',scopes),risk,ambiguity:take('ambiguity',ambiguities),dependency_class:take('dependency_class',dependencies),
     required_capabilities:requiredCapabilities,requested_external_actions:externalActions,likely_verification:effectiveVerification,user_verification:userVerification,verification_ceiling:verificationCeiling,likely_targets:semanticTargets(v.likely_targets,20),
-    intent_signals:intentSignalList(v.intent_signals),suppressed_intent_signals:intentSignalList(v.suppressed_intent_signals),
+    intent_signals:semanticSignals,suppressed_intent_signals:intentSignalList(v.suppressed_intent_signals),
     constraint_atoms:Array.isArray(v.constraint_atoms)?v.constraint_atoms.slice(0,20).map(item=>{if(!isConstraintAtomDraft(item))throw new Error('invalid constraint_atoms entry');return item}):[],
   }
   if(messageKind!=='constraint'&&assessment.constraint_atoms.length)throw new Error('constraint_atoms are allowed only for message_kind=constraint')

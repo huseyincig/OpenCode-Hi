@@ -10,7 +10,7 @@ export declare const HI_ROLE_CONTRACTS: readonly [{
     readonly obligationAuthority: readonly [];
     readonly delegation: {
         readonly mayDelegate: true;
-        readonly allowedRoleRefs: readonly ["coder", "architect", "repository-explorer", "qa-reviewer", "security-reviewer", "visual-qa"];
+        readonly allowedRoleRefs: readonly ["coder", "architect", "repository-explorer", "researcher", "technical-writer", "test-engineer", "qa-reviewer", "security-reviewer", "visual-qa"];
     };
     readonly permissionProfileRef: "primary-manager";
 }, {
@@ -25,15 +25,15 @@ export declare const HI_ROLE_CONTRACTS: readonly [{
     readonly obligationAuthority: readonly [];
     readonly delegation: {
         readonly mayDelegate: true;
-        readonly allowedRoleRefs: readonly ["coder", "architect", "repository-explorer", "qa-reviewer", "security-reviewer", "visual-qa"];
+        readonly allowedRoleRefs: readonly ["coder", "architect", "repository-explorer", "researcher", "technical-writer", "test-engineer", "qa-reviewer", "security-reviewer", "visual-qa"];
     };
     readonly permissionProfileRef: "primary-working-manager";
 }, {
     readonly id: "coder";
-    readonly purpose: "Implements scoped changes and produces test and behavior evidence";
+    readonly purpose: "Implements scoped production changes, refactors, and bug fixes";
     readonly roleClass: "child";
-    readonly useWhen: readonly ["scoped implementation or correction requires repository mutation"];
-    readonly doNotUseWhen: readonly ["the task is review-only, exploration-only, or architecture-only"];
+    readonly useWhen: readonly ["scoped implementation, refactor, or bug-fix work requires production repository mutation"];
+    readonly doNotUseWhen: readonly ["the task is documentation authoring, test authoring, external research, review-only, exploration-only, or architecture-only"];
     readonly readOnly: false;
     readonly reviewer: false;
     readonly repositoryWriteAuthority: "scoped";
@@ -73,6 +73,51 @@ export declare const HI_ROLE_CONTRACTS: readonly [{
         readonly allowedRoleRefs: readonly [];
     };
     readonly permissionProfileRef: "child-repository-explorer";
+}, {
+    readonly id: "researcher";
+    readonly purpose: "Researches external references and synthesizes source-provenance evidence";
+    readonly roleClass: "child";
+    readonly useWhen: readonly ["external documentation, specifications, retained references, or upstream implementations must be researched"];
+    readonly doNotUseWhen: readonly ["the required evidence is entirely repository-local or the task requires repository mutation"];
+    readonly readOnly: true;
+    readonly reviewer: false;
+    readonly repositoryWriteAuthority: "none";
+    readonly obligationAuthority: readonly ["research", "analysis", "verification"];
+    readonly delegation: {
+        readonly mayDelegate: false;
+        readonly allowedRoleRefs: readonly [];
+    };
+    readonly permissionProfileRef: "child-researcher";
+}, {
+    readonly id: "technical-writer";
+    readonly purpose: "Authors and maintains documentation within documentation-bounded repository surfaces";
+    readonly roleClass: "child";
+    readonly useWhen: readonly ["README, docs, API documentation, changelog, or other documentation source must be authored or corrected"];
+    readonly doNotUseWhen: readonly ["production implementation or test-source mutation is the primary task"];
+    readonly readOnly: false;
+    readonly reviewer: false;
+    readonly repositoryWriteAuthority: "scoped";
+    readonly obligationAuthority: readonly ["documentation", "verification"];
+    readonly delegation: {
+        readonly mayDelegate: false;
+        readonly allowedRoleRefs: readonly [];
+    };
+    readonly permissionProfileRef: "child-technical-writer";
+}, {
+    readonly id: "test-engineer";
+    readonly purpose: "Authors test sources and performs targeted test execution for the assigned behavior";
+    readonly roleClass: "child";
+    readonly useWhen: readonly ["test-source mutation, adversarial test construction, or specialized targeted test execution is required"];
+    readonly doNotUseWhen: readonly ["only an already-known deterministic verifier needs to be executed or production implementation is the primary mutation"];
+    readonly readOnly: false;
+    readonly reviewer: false;
+    readonly repositoryWriteAuthority: "scoped";
+    readonly obligationAuthority: readonly ["test-authoring", "verification"];
+    readonly delegation: {
+        readonly mayDelegate: false;
+        readonly allowedRoleRefs: readonly [];
+    };
+    readonly permissionProfileRef: "child-test-engineer";
 }, {
     readonly id: "qa-reviewer";
     readonly purpose: "Independently reviews diffs, tests, and acceptance criteria for regressions";
@@ -119,10 +164,10 @@ export declare const HI_ROLE_CONTRACTS: readonly [{
     };
     readonly permissionProfileRef: "child-visual";
 }];
-export declare const HI_ROLE_IDS: readonly ["manager", "working-manager", "coder", "architect", "repository-explorer", "qa-reviewer", "security-reviewer", "visual-qa"];
+export declare const HI_ROLE_IDS: readonly ["manager", "working-manager", "coder", "architect", "repository-explorer", "researcher", "technical-writer", "test-engineer", "qa-reviewer", "security-reviewer", "visual-qa"];
 export declare const HI_ROLE_PRIMARY_IDS: readonly ["manager", "working-manager"];
-export declare const HI_ROLE_CHILD_IDS: readonly ["coder", "architect", "repository-explorer", "qa-reviewer", "security-reviewer", "visual-qa"];
-export declare const HI_ROLE_READ_ONLY_CHILD_IDS: readonly ["architect", "repository-explorer", "qa-reviewer", "security-reviewer", "visual-qa"];
+export declare const HI_ROLE_CHILD_IDS: readonly ["coder", "architect", "repository-explorer", "researcher", "technical-writer", "test-engineer", "qa-reviewer", "security-reviewer", "visual-qa"];
+export declare const HI_ROLE_READ_ONLY_CHILD_IDS: readonly ["architect", "repository-explorer", "researcher", "qa-reviewer", "security-reviewer", "visual-qa"];
 export declare const HI_ROLE_REVIEWER_IDS: readonly ["qa-reviewer", "security-reviewer", "visual-qa"];
 export type HiRole = typeof HI_ROLE_IDS[number];
 export type HiPrimaryRole = typeof HI_ROLE_PRIMARY_IDS[number];

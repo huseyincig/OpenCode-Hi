@@ -31,14 +31,14 @@ const minimal = { specialistThreshold: 'high', reviewThreshold: 'high' }
 const balanced = { specialistThreshold: 'medium', reviewThreshold: 'medium' }
 const thorough = { specialistThreshold: 'low', reviewThreshold: 'low' }
 
-test('minimal profile: explicit architecture keyword does NOT route to architect (high threshold)', () => {
+test('minimal profile cannot change canonical review ownership', () => {
   const m = intent('local', 'low', ['implementation'])
   m.taskKind = 'review'
   // Minimal profile (specialistThreshold=high) requires repo-wide scope or
   // combined signals to dispatch architect. A single explicit keyword on
   // a local quick task is not enough for the minimal profile.
   const d = routeCapabilities({ ...m, requiredCapabilities: ['migration'] }, minimal)
-  assert.equal(d.role, 'coder', 'minimal profile gates architect on repo-wide scope')
+  assert.equal(d.role, 'qa-reviewer', 'profile threshold cannot replace canonical review owner')
 })
 
 test('minimal profile: repo-wide scope does NOT route to architect without explicit keyword', () => {
@@ -67,10 +67,11 @@ test('minimal profile: high-risk review → qa-reviewer', () => {
     `minimal profile + high-risk review should dispatch QA (current: ${d.role})`)
 })
 
-test('minimal profile: low-risk review routes to coder (minimal favors direct implementation)', () => {
+test('minimal profile low-risk review still has qa-reviewer as child owner when delegation is required', () => {
   const m = intent('local', 'low', ['review'])
+  m.taskKind = 'review'
   const d = routeCapabilities(m, minimal)
-  assert.equal(d.role, 'coder', 'minimal profile is hands-off on low-risk review')
+  assert.equal(d.role, 'qa-reviewer', 'profile threshold cannot replace canonical review owner')
 })
 
 test('balanced profile: explicit design capability routes to architect', () => {
@@ -99,9 +100,9 @@ test('profile default matches power-mapped balanced thresholds', () => {
   assert.equal(routeCapabilities(m, thorough).role, 'coder')
 })
 
-test('architect dispatch differs across profiles only for structured design capability', () => {
+test('architect canonical ownership is invariant across execution profiles', () => {
   const m = intent('repo-wide', 'low', ['implementation','design-exploration'])
-  assert.notEqual(routeCapabilities(m, minimal).role, 'architect', 'minimal profile gates architect')
+  assert.equal(routeCapabilities(m, minimal).role, 'architect')
   assert.equal(routeCapabilities(m, balanced).role, 'architect')
   assert.equal(routeCapabilities(m, thorough).role, 'architect')
 })

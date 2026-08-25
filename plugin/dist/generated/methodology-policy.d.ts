@@ -370,7 +370,7 @@ export declare const HI_METHODOLOGY_POLICY: readonly [{
     readonly weight: 0.6;
 }, {
     readonly activationSignals: readonly ["intent.documentation", "release.boundary"];
-    readonly compatibleRoles: readonly ["working-manager", "coder"];
+    readonly compatibleRoles: readonly ["technical-writer", "working-manager"];
     readonly compositionCost: "low";
     readonly conflicts: readonly [];
     readonly contextCost: "medium";
@@ -379,7 +379,7 @@ export declare const HI_METHODOLOGY_POLICY: readonly [{
     readonly exitCondition: "Canonical English documentation matches implemented behavior and translation does not add behavior.";
     readonly exitRequirements: readonly ["task-success", "no-open-issues"];
     readonly name: "hi-changelog-and-documentation";
-    readonly preferredRoles: readonly ["working-manager"];
+    readonly preferredRoles: readonly ["technical-writer"];
     readonly priority: "low";
     readonly purpose: "Update user-facing documentation for observable behavior changes.";
     readonly resourceRequirements: readonly [];
@@ -693,7 +693,7 @@ export declare const HI_METHODOLOGY_POLICY: readonly [{
     readonly weight: 0.35;
 }, {
     readonly activationSignals: readonly ["intent.external-source"];
-    readonly compatibleRoles: readonly ["repository-explorer", "architect", "coder"];
+    readonly compatibleRoles: readonly ["researcher", "repository-explorer", "architect", "coder"];
     readonly compositionCost: "medium";
     readonly conflicts: readonly [];
     readonly contextCost: "medium";
@@ -702,7 +702,7 @@ export declare const HI_METHODOLOGY_POLICY: readonly [{
     readonly exitCondition: "Source, license, primitive, ownership, reuse action, and test strategy are recorded before reuse.";
     readonly exitRequirements: readonly ["task-success", "no-open-issues", "source-provenance-evidence"];
     readonly name: "hi-source-driven-development";
-    readonly preferredRoles: readonly ["repository-explorer"];
+    readonly preferredRoles: readonly ["researcher"];
     readonly priority: "high";
     readonly purpose: "Inspect authoritative source before adapting an external implementation or methodology.";
     readonly resourceRequirements: readonly [];
@@ -712,7 +712,7 @@ export declare const HI_METHODOLOGY_POLICY: readonly [{
     readonly weight: 0.9;
 }, {
     readonly activationSignals: readonly ["intent.tdd"];
-    readonly compatibleRoles: readonly ["coder"];
+    readonly compatibleRoles: readonly ["test-engineer", "coder"];
     readonly compositionCost: "low";
     readonly conflicts: readonly [];
     readonly contextCost: "medium";
@@ -721,7 +721,7 @@ export declare const HI_METHODOLOGY_POLICY: readonly [{
     readonly exitCondition: "Behavior is implemented with focused tests and no unnecessary test ceremony.";
     readonly exitRequirements: readonly ["task-success", "no-open-issues", "targeted-test-evidence"];
     readonly name: "hi-test-driven-development";
-    readonly preferredRoles: readonly ["coder"];
+    readonly preferredRoles: readonly ["test-engineer", "coder"];
     readonly priority: "normal";
     readonly purpose: "Use a failing test first when behavior can be specified economically before implementation.";
     readonly resourceRequirements: readonly [];
@@ -731,7 +731,7 @@ export declare const HI_METHODOLOGY_POLICY: readonly [{
     readonly weight: 0.6;
 }, {
     readonly activationSignals: readonly ["intent.test-strategy", "verification.strategy"];
-    readonly compatibleRoles: readonly ["qa-reviewer", "working-manager", "coder"];
+    readonly compatibleRoles: readonly ["test-engineer", "qa-reviewer", "working-manager", "coder"];
     readonly compositionCost: "low";
     readonly conflicts: readonly [];
     readonly contextCost: "medium";

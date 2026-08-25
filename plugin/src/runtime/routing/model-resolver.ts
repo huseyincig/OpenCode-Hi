@@ -13,7 +13,7 @@ export interface MissionModelFeedback{failures?:Record<string,number>;successes?
 export interface RuntimeModelCandidateStatus{ok:boolean;reason?:string}
 const AUTOMATIC_CAPABILITY_PREFERENCE:Record<Category,string[]>={quick:['fast','coding'],standard:['coding','balanced'],deep:['reasoning','coding'],visual:['coding','reasoning'],critical:['high-assurance','reasoning','coding']}
 const VARIANT_PREFERENCE:Record<Category,string[]>={quick:['low','minimal','none'],standard:['medium','low','none'],deep:['high','xhigh','medium'],visual:['high','medium','xhigh'],critical:['xhigh','max','high']}
-const INITIAL_RECOMMENDATION_CATEGORY:Record<ModelRoutedChildRole,Category>={coder:'standard',architect:'deep','repository-explorer':'standard','qa-reviewer':'critical','security-reviewer':'critical','visual-qa':'visual'}
+const INITIAL_RECOMMENDATION_CATEGORY:Record<ModelRoutedChildRole,Category>={coder:'standard',architect:'deep','repository-explorer':'standard',researcher:'standard','technical-writer':'standard','test-engineer':'standard','qa-reviewer':'critical','security-reviewer':'critical','visual-qa':'visual'}
 function record(value:unknown):Record<string,unknown>|undefined{return value&&typeof value==='object'&&!Array.isArray(value)?value as Record<string,unknown>:undefined}
 function providerOf(m:AvailableModel):string|undefined{return m.provider??(m.id.includes('/')?m.id.slice(0,m.id.indexOf('/')):undefined)}
 function requiredRoleCapability(role?:string):'vision'|undefined{return role==='visual-qa'?'vision':undefined}

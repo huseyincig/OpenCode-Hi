@@ -7,28 +7,28 @@
         "id": "hi.methodology.catalog",
         "hash": {
           "algorithm": "sha256",
-          "value": "27205d3edd50ebb8afd1db4de87c28efccb6ff1619a16b313e3aa774b4e92e28"
+          "value": "4efe3a5c52f82064cdb19e798f6bb5dd289cd5dcaa4d280ddd317c0f0f0f12a6"
         }
       },
       {
         "id": "hi.permission.catalog",
         "hash": {
           "algorithm": "sha256",
-          "value": "9b504aa1682ff1616e386eca33f7ff0babc09bf113e71d9b1476ce4eef45b0fc"
+          "value": "556c85850c63293f411450cbb89c84ee3032dd237bfa3fe9b2a8a052239243c9"
         }
       },
       {
         "id": "hi.role.catalog",
         "hash": {
           "algorithm": "sha256",
-          "value": "4cf728d77e576fe5d92fd79ad69e30620e52ce72622ae89d97bd34d8e80f2845"
+          "value": "62378456e74d2ced5f5236b1ca329ae27687843edef99918555ab84c96005161"
         }
       },
       {
         "id": "hi.role.guidance",
         "hash": {
           "algorithm": "sha256",
-          "value": "8c3e219c172403e4fa1a1a017c2232435bdf3458974f9575ba5de04adabedea8"
+          "value": "72d626249dff291a5b3dd2e5b4b6deb9f3cc58021f716184cd2bf3061904a912"
         }
       }
     ],
@@ -37,7 +37,7 @@
     "outputPath": "plugin/src/generated/agent-config.ts",
     "outputHash": {
       "algorithm": "sha256",
-      "value": "d1db6497f5c66dc8ff60618d41f2e5359eff1df01c010e72055060cbcd9de1f6"
+      "value": "edac27600948a0405d8372f0037d2d34366d5cc27bd19ebe3424424b70372d7d"
     }
   },
   {
@@ -68,14 +68,14 @@
         "id": "hi.methodology.catalog",
         "hash": {
           "algorithm": "sha256",
-          "value": "27205d3edd50ebb8afd1db4de87c28efccb6ff1619a16b313e3aa774b4e92e28"
+          "value": "4efe3a5c52f82064cdb19e798f6bb5dd289cd5dcaa4d280ddd317c0f0f0f12a6"
         }
       },
       {
         "id": "hi.role.catalog",
         "hash": {
           "algorithm": "sha256",
-          "value": "4cf728d77e576fe5d92fd79ad69e30620e52ce72622ae89d97bd34d8e80f2845"
+          "value": "62378456e74d2ced5f5236b1ca329ae27687843edef99918555ab84c96005161"
         }
       }
     ],
@@ -84,7 +84,7 @@
     "outputPath": "plugin/src/generated/methodology-policy.ts",
     "outputHash": {
       "algorithm": "sha256",
-      "value": "fb76135120777e6850cc7d0ac7ef587378911d3c8d36ebe1004653a1d86a968a"
+      "value": "4f535808c8e40ef064a5476713b1d94af888da4b2b994592a750018124e8eeda"
     }
   },
   {
@@ -95,7 +95,7 @@
         "id": "hi.permission.catalog",
         "hash": {
           "algorithm": "sha256",
-          "value": "9b504aa1682ff1616e386eca33f7ff0babc09bf113e71d9b1476ce4eef45b0fc"
+          "value": "556c85850c63293f411450cbb89c84ee3032dd237bfa3fe9b2a8a052239243c9"
         }
       }
     ],
@@ -104,7 +104,7 @@
     "outputPath": "plugin/src/generated/permission-policy.ts",
     "outputHash": {
       "algorithm": "sha256",
-      "value": "ceb7f062d58fdcacafceef5bf479b17d3efdacf473423b8d2cbca8c694c3a2b9"
+      "value": "82336acabb9d63b306906b062159ea64cffa1ac6948f66cd886408404830d49d"
     }
   },
   {
@@ -115,7 +115,7 @@
         "id": "hi.role.catalog",
         "hash": {
           "algorithm": "sha256",
-          "value": "4cf728d77e576fe5d92fd79ad69e30620e52ce72622ae89d97bd34d8e80f2845"
+          "value": "62378456e74d2ced5f5236b1ca329ae27687843edef99918555ab84c96005161"
         }
       }
     ],
@@ -124,7 +124,7 @@
     "outputPath": "plugin/src/generated/role-policy.ts",
     "outputHash": {
       "algorithm": "sha256",
-      "value": "4684499cbb8abe09b38085b7df53e66e0e0d2f4fb54ef085d4f3b087584f52b7"
+      "value": "7b69c13fea1a308a8d3e54fcbfd42423e54a0edec84eed9895367928e2ab8259"
     }
   },
   {
@@ -304,7 +304,7 @@
         "id": "hi.methodology.hi-changelog-and-documentation",
         "hash": {
           "algorithm": "sha256",
-          "value": "ee5775815b5536c8b474b2db221ae9c18b0abd16c3f59fb5e5d0c731f82539bd"
+          "value": "6ac188a7ce803ef887832097d436a317049dbe7c59e68bbe2d195c1fa98ac7de"
         }
       }
     ],
@@ -313,7 +313,7 @@
     "outputPath": "skills/hi-changelog-and-documentation/SKILL.md",
     "outputHash": {
       "algorithm": "sha256",
-      "value": "6f90adfe5ddbb047605cb635ce2d83ba694156eaf1aa6007e054a2f696b34373"
+      "value": "2f2086d03159c51acf3e9b207290f0351f4a30fcdf53dbb3fc1a88d9a214b55f"
     }
   },
   {
@@ -763,7 +763,7 @@
         "id": "hi.methodology.hi-source-driven-development",
         "hash": {
           "algorithm": "sha256",
-          "value": "5200b80e4e0f65a91033540a96ecb049b1ca32f215c0bc2bb9d056efd259710d"
+          "value": "1f30f6b6c22f022c3674bb7f40a093c1afa08bae42d7e85ee70b30bfde4adbb8"
         }
       }
     ],
@@ -772,7 +772,7 @@
     "outputPath": "skills/hi-source-driven-development/SKILL.md",
     "outputHash": {
       "algorithm": "sha256",
-      "value": "83e6c841976bccc61f25af599e1bcd043c6ee9545f0357765c34db68998cb788"
+      "value": "1da95148c8e16cd3cc1a34e7f92b9ab1fc72a152beda8d63a10893937649576e"
     }
   },
   {
@@ -790,7 +790,7 @@
         "id": "hi.methodology.hi-test-driven-development",
         "hash": {
           "algorithm": "sha256",
-          "value": "d7f8ab50439b5198470c94cdab398838d7ed42e301131b0bbee016c71cad77c3"
+          "value": "9320b0d304332a2cc81affd809cae0b8749512019c27af0e6ff8b41dede763d7"
         }
       }
     ],
@@ -799,7 +799,7 @@
     "outputPath": "skills/hi-test-driven-development/SKILL.md",
     "outputHash": {
       "algorithm": "sha256",
-      "value": "b5a15859983dd53610195dfd15e0a1ae985ed6a6c73c765a254c918870c98b03"
+      "value": "a2c81e91a721bbe1e251bf67cab64dec1bca61171041a04ae72dbb5ac3cf6623"
     }
   },
   {
@@ -817,7 +817,7 @@
         "id": "hi.methodology.hi-test-strategy",
         "hash": {
           "algorithm": "sha256",
-          "value": "6c071f4da15913250ace76712c57a0bd501ff4ecaa92e6b4d0d5fbcd7e56b804"
+          "value": "c1466ac22cc8e7e302a3adcc920232dfb0d5c68f7c332a3ae248a6f332d36540"
         }
       }
     ],

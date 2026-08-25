@@ -22,6 +22,9 @@
           "coder",
           "architect",
           "repository-explorer",
+          "researcher",
+          "technical-writer",
+          "test-engineer",
           "qa-reviewer",
           "security-reviewer",
           "visual-qa"
@@ -49,6 +52,9 @@
           "coder",
           "architect",
           "repository-explorer",
+          "researcher",
+          "technical-writer",
+          "test-engineer",
           "qa-reviewer",
           "security-reviewer",
           "visual-qa"
@@ -58,13 +64,13 @@
     },
     {
       "id": "coder",
-      "purpose": "Implements scoped changes and produces test and behavior evidence",
+      "purpose": "Implements scoped production changes, refactors, and bug fixes",
       "role_class": "child",
       "use_when": [
-        "scoped implementation or correction requires repository mutation"
+        "scoped implementation, refactor, or bug-fix work requires production repository mutation"
       ],
       "do_not_use_when": [
-        "the task is review-only, exploration-only, or architecture-only"
+        "the task is documentation authoring, test authoring, external research, review-only, exploration-only, or architecture-only"
       ],
       "read_only": false,
       "reviewer": false,
@@ -125,6 +131,76 @@
         "allowed_role_refs": []
       },
       "permission_profile_ref": "child-repository-explorer"
+    },
+    {
+      "id": "researcher",
+      "purpose": "Researches external references and synthesizes source-provenance evidence",
+      "role_class": "child",
+      "use_when": [
+        "external documentation, specifications, retained references, or upstream implementations must be researched"
+      ],
+      "do_not_use_when": [
+        "the required evidence is entirely repository-local or the task requires repository mutation"
+      ],
+      "read_only": true,
+      "reviewer": false,
+      "repository_write_authority": "none",
+      "obligation_authority": [
+        "research",
+        "analysis",
+        "verification"
+      ],
+      "delegation": {
+        "may_delegate": false,
+        "allowed_role_refs": []
+      },
+      "permission_profile_ref": "child-researcher"
+    },
+    {
+      "id": "technical-writer",
+      "purpose": "Authors and maintains documentation within documentation-bounded repository surfaces",
+      "role_class": "child",
+      "use_when": [
+        "README, docs, API documentation, changelog, or other documentation source must be authored or corrected"
+      ],
+      "do_not_use_when": [
+        "production implementation or test-source mutation is the primary task"
+      ],
+      "read_only": false,
+      "reviewer": false,
+      "repository_write_authority": "scoped",
+      "obligation_authority": [
+        "documentation",
+        "verification"
+      ],
+      "delegation": {
+        "may_delegate": false,
+        "allowed_role_refs": []
+      },
+      "permission_profile_ref": "child-technical-writer"
+    },
+    {
+      "id": "test-engineer",
+      "purpose": "Authors test sources and performs targeted test execution for the assigned behavior",
+      "role_class": "child",
+      "use_when": [
+        "test-source mutation, adversarial test construction, or specialized targeted test execution is required"
+      ],
+      "do_not_use_when": [
+        "only an already-known deterministic verifier needs to be executed or production implementation is the primary mutation"
+      ],
+      "read_only": false,
+      "reviewer": false,
+      "repository_write_authority": "scoped",
+      "obligation_authority": [
+        "test-authoring",
+        "verification"
+      ],
+      "delegation": {
+        "may_delegate": false,
+        "allowed_role_refs": []
+      },
+      "permission_profile_ref": "child-test-engineer"
     },
     {
       "id": "qa-reviewer",

@@ -209,7 +209,7 @@
       "do_not_trigger": "Internal refactor/cosmetic rename with no user-visible effect.",
       "exit_condition": "Canonical English documentation matches implemented behavior and translation does not add behavior.",
       "role_affinity": [
-        "working-manager"
+        "technical-writer"
       ],
       "context_cost": "medium",
       "execution_cost": "low",
@@ -222,8 +222,8 @@
       "conflicts": [],
       "resource_requirements": [],
       "compatible_roles": [
-        "working-manager",
-        "coder"
+        "technical-writer",
+        "working-manager"
       ],
       "activation_signals": [
         "intent.documentation",
@@ -771,7 +771,7 @@
       "do_not_trigger": "Task is fully internal and no external implementation evidence is relevant.",
       "exit_condition": "Source, license, primitive, ownership, reuse action, and test strategy are recorded before reuse.",
       "role_affinity": [
-        "repository-explorer"
+        "researcher"
       ],
       "context_cost": "medium",
       "execution_cost": "medium",
@@ -785,6 +785,7 @@
       "conflicts": [],
       "resource_requirements": [],
       "compatible_roles": [
+        "researcher",
         "repository-explorer",
         "architect",
         "coder"
@@ -805,6 +806,7 @@
       "do_not_trigger": "Pure documentation, exploratory diagnosis, or test-first cost exceeds value.",
       "exit_condition": "Behavior is implemented with focused tests and no unnecessary test ceremony.",
       "role_affinity": [
+        "test-engineer",
         "coder"
       ],
       "context_cost": "medium",
@@ -818,6 +820,7 @@
       "conflicts": [],
       "resource_requirements": [],
       "compatible_roles": [
+        "test-engineer",
         "coder"
       ],
       "activation_signals": [
@@ -849,6 +852,7 @@
       "conflicts": [],
       "resource_requirements": [],
       "compatible_roles": [
+        "test-engineer",
         "qa-reviewer",
         "working-manager",
         "coder"

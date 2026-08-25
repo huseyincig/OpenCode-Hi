@@ -1,6 +1,6 @@
 export type RoleClass = 'primary' | 'child';
 export type RepositoryWriteAuthority = 'none' | 'scoped' | 'general';
-export type RoleObligationAuthority = 'implementation' | 'analysis' | 'review' | 'verification';
+export type RoleObligationAuthority = 'implementation' | 'analysis' | 'review' | 'verification' | 'research' | 'documentation' | 'test-authoring';
 export interface RoleDelegationContract {
     mayDelegate: boolean;
     allowedRoleRefs: string[];

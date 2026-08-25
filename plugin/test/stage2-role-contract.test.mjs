@@ -14,7 +14,7 @@ const CHILD=['coder','architect','repository-explorer','qa-reviewer','security-r
 function runtime(policy){const created=[];const client={session:{create:async req=>{created.push(req);return{data:{id:'child-'+created.length}}},promptAsync:async()=>({data:{}}),abort:async()=>({data:{}}),diff:async()=>({data:[]})}};const cfg=resolveHiConfig({executionPolicy:policy,parallel:{enabled:true,max:4}});const rt=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:4})),process.cwd(),process.cwd(),()=>cfg,()=>[{id:'p/model',provider:'p',quality:8,cost:1,tags:['balanced'],writeCapable:true}],()=>({}));return{rt,created}}
 function designMission(id){const store=new MissionStore();return startAssessedMission(store,id,'opaque design work',{task_kind:'implementation',scope:'repo-wide',risk:'medium',required_capabilities:['design-exploration'],likely_verification:[]})}
 
-test('executionPolicy profile changes the actual default OpenCode child role',async()=>{const minimal=runtime('minimal'),m1=designMission('minimal-role');const a=await minimal.rt.start(m1,{objective:'bounded design-related task'});assert.equal(m1.execution.tasks.find(t=>t.id===a.task_id)?.role,'coder');assert.equal(minimal.created[0].body.agent,'coder');const thorough=runtime('thorough'),m2=designMission('thorough-role');const b=await thorough.rt.start(m2,{objective:'bounded design-related task'});assert.equal(m2.execution.tasks.find(t=>t.id===b.task_id)?.role,'architect');assert.equal(thorough.created[0].body.agent,'architect')})
+test('executionPolicy profile cannot change the canonical architecture owner',async()=>{const minimal=runtime('minimal'),m1=designMission('minimal-role');const a=await minimal.rt.start(m1,{objective:'bounded design-related task'});assert.equal(m1.execution.tasks.find(t=>t.id===a.task_id)?.role,'architect');assert.equal(minimal.created[0].body.agent,'architect');const thorough=runtime('thorough'),m2=designMission('thorough-role');const b=await thorough.rt.start(m2,{objective:'bounded design-related task'});assert.equal(m2.execution.tasks.find(t=>t.id===b.task_id)?.role,'architect');assert.equal(thorough.created[0].body.agent,'architect')})
 
 test('repo-wide bug default task role starts with repository exploration, not architecture',async()=>{const x=runtime('balanced'),store=new MissionStore(),m=startAssessedMission(store,'wide-bug-role','opaque wide bug',{task_kind:'bug-fix',scope:'repo-wide',risk:'medium',required_capabilities:['implementation','verification'],likely_verification:['targeted-tests']});const out=await x.rt.start(m,{objective:'bound the root-cause surface'});assert.equal(m.execution.tasks.find(t=>t.id===out.task_id)?.role,'repository-explorer');assert.equal(x.created[0].body.agent,'repository-explorer')})
 
@@ -35,11 +35,11 @@ test('child roles cannot claim obligations outside their authority class',async(
   await assert.rejects(()=>authorityRuntime.rt.start(authority,{objective:'child cannot own external authority',role:'coder',obligationIds:[authorityObligation.id]}),/coder cannot own obligation.*authority/)
 })
 
-test('review obligation auto-binding is limited to reviewer roles, not every read-only role',async()=>{
+test('read-only support role cannot auto-bind the canonical review obligation',async()=>{
   const x=runtime('balanced'),store=new MissionStore(),m=startAssessedMission(store,'role-review-auto','opaque review',{task_kind:'review',scope:'multi-file',risk:'medium',required_capabilities:['review','independent-review'],likely_verification:['review-evidence']})
   const out=await x.rt.start(m,{objective:'architecture context only',role:'architect',requiredEvidence:[]})
   const task=m.execution.tasks.find(t=>t.id===out.task_id)
-  assert.equal(task.obligation_ids.some(id=>m.execution.obligations.find(o=>o.id===id)?.kind==='review'),false)
+  assert.equal(task.role,'architect');assert.equal(task.obligation_ids.some(id=>m.execution.obligations.find(o=>o.id===id)?.kind==='review'),false)
 })
 
 

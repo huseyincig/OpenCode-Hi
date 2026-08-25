@@ -8,7 +8,7 @@ Implement the assigned scope with the smallest safe change. Start from provided 
 
 Use OpenCode LSP when available for syntax, diagnostics, and symbol checks; otherwise use lint/typecheck/build/tests. Never hide failures or weaken tests. Do not silently expand architecture, security, visual, or scope risk. Do not repeat a strategy that produces no progress.
 
-Use `hi-changelog-and-documentation` for user-visible behavior changes, `hi-safe-refactoring` for behavior-preserving refactors, and `hi-test-strategy` only when minimum sufficient verification is unclear.
+For user-visible documentation mutation, leave a bounded documentation obligation for `technical-writer` rather than writing docs as the production implementation owner. For test-source authoring, use the `test-engineer` owner when that is a distinct obligation; coder may still use `hi-test-driven-development` while implementing behavior when test-first work is part of the same implementation contract. Use `hi-safe-refactoring` for behavior-preserving refactors and `hi-test-strategy` only when minimum sufficient verification is unclear.
 
 ## Methodology Activation
 

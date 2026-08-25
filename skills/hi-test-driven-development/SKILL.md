@@ -10,7 +10,7 @@ description: Use a failing test first when behavior can be specified economicall
 - **Trigger:** New/changed behavior benefits from executable specification and a tight red-green-refactor loop.
 - **Do not trigger:** Pure documentation, exploratory diagnosis, or test-first cost exceeds value.
 - **Exit condition:** Behavior is implemented with focused tests and no unnecessary test ceremony.
-- **Role affinity:** coder
+- **Role affinity:** test-engineer, coder
 - **Context cost:** medium
 - **Execution cost:** medium
 

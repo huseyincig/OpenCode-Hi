@@ -21,6 +21,18 @@ function assessedExplicitSettingsRequest(m) {
     return targets.length > 0 && targets.every((target) => SETTINGS_CONTROL_TARGETS.has(target)) && m.identity.intent.requiredCapabilities.length === 0 && m.identity.intent.requestedExternalActions.length === 0;
 }
 function exactParentMutationSurface(args, projectRoot, workingDirectory) { const root = projectRoot ?? workingDirectory, raw = [args?.filePath, args?.path, args?.file].filter((value) => typeof value === 'string'); return [...new Set(raw.map(value => normalizeProjectPath(value, root)).filter(Boolean))]; }
+function specialistMutationAllowed(role, task, tool, args, projectRoot, workingDirectory) {
+    if (role !== 'technical-writer' && role !== 'test-engineer')
+        return true;
+    if (tool === 'bash' && typeof args?.command === 'string' && isVerificationCommand(args.command))
+        return true;
+    const root = projectRoot ?? workingDirectory, surfaces = exactParentMutationSurface(args, projectRoot, workingDirectory), scope = new Set((task?.scope ?? []).map((x) => normalizeProjectPath(x, root)).filter(Boolean));
+    if (!surfaces.length)
+        return false;
+    if (role === 'technical-writer')
+        return surfaces.every(path => scope.has(path) || /(^|\/)(?:docs?|documentation)(\/|$)|(^|\/)(?:README|CHANGELOG|CONTRIBUTING|SECURITY|SUPPORT)(?:\.[^/]*)?$|\.(?:md|mdx|rst|adoc)$/i.test(path));
+    return surfaces.every(path => /(^|\/)(?:test|tests|__tests__|spec|specs|fixtures?)(\/|$)|\.(?:test|spec)\.[^/]+$/i.test(path));
+}
 export function createToolBeforeHook(store, background, projectRoot, workingDirectory) {
     return async (input, output) => {
         const sid = input?.sessionID ?? input?.sessionId, child = sid && background ? background.list().find(w => w.session_id === sid) : undefined, m = child ? store.get(child.parent_session_id) : store.get(sid);
@@ -34,6 +46,13 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
         if (child && isHiReadOnlyChildRole(child.role) && toolMayMutate(tool, args)) {
             appendLedger(m, 'worker.read-only-mutation-blocked', { task_id: child.task_id, worker_id: child.id, payload: { role: child.role, tool, reason: 'read-only-role-contract' } });
             throw new Error(`Hi read-only role guard: ${child.role} cannot perform mutating '${tool}' execution. Use read/browser observations only and return the structured WorkerResult directly in assistant text; do not create temporary result files.`);
+        }
+        if (child && toolMayMutate(tool, args) && ['technical-writer', 'test-engineer'].includes(child.role)) {
+            const task = m.execution.tasks.find(t => t.id === child.task_id);
+            if (!specialistMutationAllowed(child.role, task, tool, args, projectRoot, workingDirectory)) {
+                appendLedger(m, 'worker.specialist-mutation-blocked', { task_id: child.task_id, worker_id: child.id, payload: { role: child.role, tool, reason: 'specialist-write-scope', scope: exactParentMutationSurface(args, projectRoot, workingDirectory) } });
+                throw new Error(`Hi specialist write guard: ${child.role} cannot mutate outside its canonical ${child.role === 'technical-writer' ? 'documentation' : 'test-source'} surface.`);
+            }
         }
         if (child && tool.startsWith('hi_')) {
             const browserTool = HI_BROWSER_EXECUTION_TOOL_IDS.includes(tool);

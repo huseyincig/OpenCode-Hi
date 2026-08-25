@@ -9,7 +9,7 @@ OUT=ROOT/'plugin'/'src'/'generated'/'role-policy.ts'
 ID_RE=re.compile(r'^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$')
 ROLE_CLASSES={'primary','child'}
 WRITE_AUTH={'none','scoped','general'}
-OBLIGATIONS={'implementation','analysis','review','verification'}
+OBLIGATIONS={'implementation','analysis','review','verification','research','documentation','test-authoring'}
 
 def fail(msg:str): raise ValueError(msg)
 def string_list(value,field,allow_empty=False):
@@ -49,7 +49,7 @@ def main():
     raw=json.loads(CATALOG.read_text(encoding='utf-8'))
     if raw.get('schema')!=2 or raw.get('type')!='hi-role-contract-catalog': fail('hi-roles catalog header invalid')
     roles=[validate_role(x,i) for i,x in enumerate(raw.get('roles',[]))]
-    if len(roles)!=8: fail(f'canonical role inventory must remain 8 during M2: {len(roles)}')
+    if len(roles)!=11: fail(f'canonical role inventory must contain 11 roles (2 primary + 9 child): {len(roles)}')
     ids=[r['id'] for r in roles]
     if len(ids)!=len(set(ids)): fail('duplicate canonical role IDs')
     known=set(ids)

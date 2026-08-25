@@ -3,7 +3,7 @@ import type { NormalizedMissionIntent, Risk } from '../mission/types.js';
 import type { RepoContext } from './repo-context.js';
 import { type ConstraintAtomDraft } from '../../contracts/constraint-atom.js';
 export type SemanticMessageKind = 'mission' | 'amendment' | 'constraint' | 'verification' | 'stop' | 'resume' | 'non-material';
-export declare const SEMANTIC_CAPABILITIES: readonly ["implementation", "repository-analysis", "review", "verification", "independent-review", "security-review", "visual-qa", "design-exploration", "multi-stream-delegation", "source-verification", "qa-review", "dependency-change", "interactive-process", "mcp"];
+export declare const SEMANTIC_CAPABILITIES: readonly ["implementation", "repository-analysis", "review", "verification", "independent-review", "security-review", "visual-qa", "design-exploration", "multi-stream-delegation", "source-verification", "external-research", "documentation", "test-authoring", "qa-review", "dependency-change", "interactive-process", "mcp"];
 export type SemanticCapability = typeof SEMANTIC_CAPABILITIES[number];
 export declare const SEMANTIC_EXTERNAL_ACTIONS: readonly ["git-push", "release-create", "package-publish", "deploy"];
 export type SemanticExternalAction = typeof SEMANTIC_EXTERNAL_ACTIONS[number];

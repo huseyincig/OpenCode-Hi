@@ -24,14 +24,14 @@ function onlyKeys(value:Record<string,unknown>,keys:readonly string[]):boolean{c
 const IDENTITY_KEYS=['mission_id','session_id','objective','intent','semantic_assessment','status','risk','created_at','updated_at'] as const
 const INTENT_KEYS=['objective','likelyTargets','taskKind','scope','risk','ambiguity','dependencyClass','requiredCapabilities','requestedExternalActions','likelyVerification','avoid'] as const
 const SEMANTIC_ASSESSMENT_KEYS=['status','phase','revision','source','pending_text','assessed_at'] as const
-const OBLIGATION_KINDS=new Set(['analysis','implementation','verification','review','authority'])
+const OBLIGATION_KINDS=new Set(['analysis','implementation','research','documentation','test-authoring','verification','review','authority'])
 const OBLIGATION_STATUSES=new Set(['open','closed','blocked'])
 const GATE_KINDS=new Set(['verification','user-authority','reviewer','prerequisite-task','precondition','rollback'])
 const GATE_STATUSES=new Set(['open','ready','blocked','closed'])
 function validObligation(value:unknown):boolean{
   if(!isRecord(value)||typeof value.id!=='string'||typeof value.status!=='string'||!OBLIGATION_STATUSES.has(value.status)||typeof value.kind!=='string'||!OBLIGATION_KINDS.has(value.kind)||typeof value.summary!=='string')return false
   if(value.requiredEvidence!==undefined&&(!stringArray(value.requiredEvidence)||!value.requiredEvidence.every(kind=>(SEMANTIC_VERIFICATION_KINDS as readonly string[]).includes(kind))))return false
-  if(value.requiredTargets!==undefined&&(!stringArray(value.requiredTargets)||value.kind!=='implementation'||!value.requiredTargets.every(target=>normalizeBoundedProjectPath(target)===target)))return false
+  if(value.requiredTargets!==undefined&&(!stringArray(value.requiredTargets)||!['implementation','documentation','test-authoring'].includes(String(value.kind))||!value.requiredTargets.every(target=>normalizeBoundedProjectPath(target)===target)))return false
   if(value.blocker!==undefined&&typeof value.blocker!=='string')return false
   if(value.closedAt!==undefined&&typeof value.closedAt!=='number')return false
   return true

@@ -3,7 +3,7 @@ import { providerPolicyView } from '../host/provider-policy.js';
 import { isHiReadOnlyChildRole } from '../roles/catalog.js';
 const AUTOMATIC_CAPABILITY_PREFERENCE = { quick: ['fast', 'coding'], standard: ['coding', 'balanced'], deep: ['reasoning', 'coding'], visual: ['coding', 'reasoning'], critical: ['high-assurance', 'reasoning', 'coding'] };
 const VARIANT_PREFERENCE = { quick: ['low', 'minimal', 'none'], standard: ['medium', 'low', 'none'], deep: ['high', 'xhigh', 'medium'], visual: ['high', 'medium', 'xhigh'], critical: ['xhigh', 'max', 'high'] };
-const INITIAL_RECOMMENDATION_CATEGORY = { coder: 'standard', architect: 'deep', 'repository-explorer': 'standard', 'qa-reviewer': 'critical', 'security-reviewer': 'critical', 'visual-qa': 'visual' };
+const INITIAL_RECOMMENDATION_CATEGORY = { coder: 'standard', architect: 'deep', 'repository-explorer': 'standard', researcher: 'standard', 'technical-writer': 'standard', 'test-engineer': 'standard', 'qa-reviewer': 'critical', 'security-reviewer': 'critical', 'visual-qa': 'visual' };
 function record(value) { return value && typeof value === 'object' && !Array.isArray(value) ? value : undefined; }
 function providerOf(m) { return m.provider ?? (m.id.includes('/') ? m.id.slice(0, m.id.indexOf('/')) : undefined); }
 function requiredRoleCapability(role) { return role === 'visual-qa' ? 'vision' : undefined; }

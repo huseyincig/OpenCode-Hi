@@ -4,7 +4,7 @@ export type PrimaryModePolicy = 'auto'|'working-manager'|'manager'
 export type CategoryName = 'quick'|'standard'|'deep'|'visual'|'critical'
 export type CompatibilityMode = 'compatible'|'strict'
 export type TopologyMode = 'adaptive'|'single-agent'|'multi-agent'
-export const MODEL_ROUTED_CHILD_ROLES = ['coder','architect','repository-explorer','qa-reviewer','security-reviewer','visual-qa'] as const
+export const MODEL_ROUTED_CHILD_ROLES = ['coder','architect','repository-explorer','researcher','technical-writer','test-engineer','qa-reviewer','security-reviewer','visual-qa'] as const
 export type ModelRoutedChildRole = typeof MODEL_ROUTED_CHILD_ROLES[number]
 export function isModelRoutedChildRole(value:unknown):value is ModelRoutedChildRole{return typeof value==='string'&&(MODEL_ROUTED_CHILD_ROLES as readonly string[]).includes(value)}
 

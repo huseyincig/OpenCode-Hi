@@ -184,6 +184,7 @@ export class TaskResultReconciler{
 
 
     const browserProofKinds=new Set(['browser-evidence','visual-evidence','accessibility-evidence'])
+    if(worker.role!=='visual-qa'&&effectiveResult.evidence.some(e=>browserProofKinds.has(e.kind))){appendLedger(m,'browser.evidence-owner-rejected',{task_id:task.id,worker_id:worker.id,payload:{role:worker.role,reason:'browser-derived evidence requires exact visual-qa worker ownership'}});effectiveResult={...effectiveResult,evidence:effectiveResult.evidence.filter(e=>!browserProofKinds.has(e.kind))}}
     const genericVerifierClaimKinds=new Set(['targeted-tests','typecheck','lint','build','changed-surface-sanity'])
     const reconciledEvidence=effectiveResult.evidence.map(e=>{
       const claimedPassed=evidenceVerdictPassed(e.pass,e.outcome)

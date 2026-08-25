@@ -1,0 +1,123 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import {routeCapabilities} from '../dist/runtime/routing/capability-router.js'
+import {minimumTeamFor} from '../dist/runtime/routing/minimum-team.js'
+import {HI_CHILD_ROLES,isHiReadOnlyChildRole} from '../dist/runtime/roles/catalog.js'
+import {PACKAGED_HI_AGENTS} from '../dist/generated/agent-config.js'
+import {resolveHiConfig} from '../dist/config/resolver.js'
+import {TaskRuntime} from '../dist/runtime/task/task-runtime.js'
+import {MissionStore} from '../dist/runtime/mission/mission-store.js'
+import {BackgroundRegistry} from '../dist/runtime/background/registry.js'
+import {createConcurrencyPolicySource} from '../dist/runtime/scheduler/concurrency.js'
+import {startAssessedMission} from './helpers/semantic.mjs'
+import {opencodeChildPort} from './helpers/host-port.mjs'
+import {parseSemanticIntentAssessment} from '../dist/runtime/intent/semantic-assessment.js'
+import {applyProjectSettings} from '../dist/config/project-settings.js'
+import {createToolBeforeHook} from '../dist/hooks/tool-before.js'
+import {mkdtempSync,rmSync} from 'node:fs'
+import {tmpdir} from 'node:os'
+import {join} from 'node:path'
+
+const FINAL_CHILD=['coder','architect','repository-explorer','researcher','technical-writer','test-engineer','qa-reviewer','security-reviewer','visual-qa']
+function intent(overrides={}){return{objective:'opaque',taskKind:'implementation',scope:'multi-file',risk:'medium',ambiguity:'none',dependencyClass:'independent',requiredCapabilities:['implementation'],requestedExternalActions:[],likelyVerification:[],avoid:[],...overrides}}
+function roleOf(overrides){return routeCapabilities(intent(overrides),{specialistThreshold:'medium',reviewThreshold:'medium'}).role}
+function runtime(){const created=[],registry=new BackgroundRegistry();const client={session:{create:async req=>{created.push(req);return{data:{id:'child-'+created.length}}},promptAsync:async()=>({data:{}}),abort:async()=>({data:{}}),diff:async()=>({data:[]})}};const cfg=resolveHiConfig({parallel:{enabled:true,max:4}});return{created,registry,rt:new TaskRuntime(opencodeChildPort(client),registry,createConcurrencyPolicySource(()=>({global:4})),process.cwd(),process.cwd(),()=>cfg,()=>[{id:'p/model',provider:'p',quality:8,cost:1,tags:['balanced'],writeCapable:true,visionCapable:true}],()=>({}))}}
+
+test('canonical catalog contains exactly the nine child roles and preserves the historical six',()=>{
+  assert.deepEqual([...HI_CHILD_ROLES],FINAL_CHILD)
+  for(const role of ['coder','architect','repository-explorer','qa-reviewer','security-reviewer','visual-qa'])assert.ok(HI_CHILD_ROLES.includes(role))
+  for(const role of FINAL_CHILD)assert.equal(PACKAGED_HI_AGENTS[role]?.mode,'subagent',role)
+})
+
+test('semantic owner routing covers research docs tests implementation diagnosis architecture QA security and visual',()=>{
+  assert.equal(roleOf({taskKind:'review',scope:'external',requiredCapabilities:['external-research','source-verification']}),'researcher')
+  assert.equal(roleOf({taskKind:'implementation',requiredCapabilities:['documentation']}),'technical-writer')
+  assert.equal(roleOf({taskKind:'implementation',requiredCapabilities:['test-authoring']}),'test-engineer')
+  assert.equal(roleOf({taskKind:'implementation',requiredCapabilities:['implementation']}),'coder')
+  assert.equal(roleOf({taskKind:'diagnosis',scope:'repo-wide',requiredCapabilities:['repository-analysis']}),'repository-explorer')
+  assert.equal(roleOf({taskKind:'implementation',scope:'repo-wide',requiredCapabilities:['design-exploration']}),'architect')
+  assert.equal(roleOf({taskKind:'review',requiredCapabilities:['review','independent-review']}),'qa-reviewer')
+  assert.equal(roleOf({taskKind:'review',requiredCapabilities:['review','security-review']}),'security-reviewer')
+  assert.equal(roleOf({taskKind:'review',requiredCapabilities:['visual-qa']}),'visual-qa')
+})
+
+test('unknown semantics fail closed instead of defaulting to coder',()=>{
+  assert.throws(()=>routeCapabilities(intent({taskKind:'unclassified',requiredCapabilities:[]})),/canonical role owner|unsupported task semantics/i)
+})
+
+test('mixed code docs tests semantics decompose into distinct child owners',()=>{
+  const d=minimumTeamFor(intent({taskKind:'implementation',requiredCapabilities:['implementation','documentation','test-authoring']}),undefined,'manager')
+  assert.deepEqual(d.roles,['coder','technical-writer','test-engineer'])
+})
+
+test('new roleModels are generic config keys and absent roles remain Automatic',()=>{
+  const cfg=resolveHiConfig({routing:{roleModels:{researcher:['p/research'],'technical-writer':['p/docs'],'test-engineer':['p/test'],coder:['p/code']}}})
+  assert.deepEqual(cfg.routing.roleModels.researcher,['p/research'])
+  assert.deepEqual(cfg.routing.roleModels['technical-writer'],['p/docs'])
+  assert.deepEqual(cfg.routing.roleModels['test-engineer'],['p/test'])
+  assert.equal(cfg.routing.roleModels.architect,undefined)
+  assert.deepEqual(cfg.routing.roleModels.coder,['p/code'])
+})
+
+test('new role permission classes reflect their mutation boundaries',()=>{
+  assert.equal(isHiReadOnlyChildRole('researcher'),true)
+  assert.equal(isHiReadOnlyChildRole('technical-writer'),false)
+  assert.equal(isHiReadOnlyChildRole('test-engineer'),false)
+})
+
+test('caller supplied incompatible role cannot override canonical visual owner',async()=>{
+  const x=runtime(),store=new MissionStore(),m=startAssessedMission(store,'canonical-visual-owner','verify rendered UI',{task_kind:'review',scope:'local',risk:'medium',required_capabilities:['visual-qa'],likely_verification:['visual-check'],likely_targets:['index.html']})
+  await assert.rejects(()=>x.rt.start(m,{objective:'verify rendered UI',role:'coder',category:'visual',scope:['index.html']}),/canonical role owner.*visual-qa|incompatible requested role/i)
+  assert.equal(x.created.length,0)
+})
+
+test('category visual cannot override a nonvisual semantic owner',()=>{
+  const routed=routeCapabilities(intent({taskKind:'implementation',requiredCapabilities:['documentation']}))
+  assert.equal(routed.role,'technical-writer')
+  assert.notEqual(routed.role,'visual-qa')
+})
+
+
+test('semantic assessment derives specialist capabilities from canonical intent signals',()=>{
+  const base={material:true,message_kind:'mission',task_kind:'implementation',scope:'local',risk:'low',ambiguity:'none',dependency_class:'independent',required_capabilities:[],requested_external_actions:[],likely_verification:[],user_verification:[],likely_targets:['README.md'],suppressed_intent_signals:[],constraint_atoms:[]}
+  assert.ok(parseSemanticIntentAssessment({...base,intent_signals:['intent.documentation']}).required_capabilities.includes('documentation'))
+  assert.ok(parseSemanticIntentAssessment({...base,intent_signals:['intent.tdd']}).required_capabilities.includes('test-authoring'))
+  assert.ok(parseSemanticIntentAssessment({...base,task_kind:'review',scope:'external',likely_targets:[],intent_signals:['intent.external-source']}).required_capabilities.includes('external-research'))
+})
+
+test('project settings generically persist new roleModels without copying coder mapping',()=>{
+  const root=mkdtempSync(join(tmpdir(),'hi-role-settings-'))
+  try{
+    const out=applyProjectSettings(root,{roleModels:{coder:['p/code'],researcher:['p/research'],'technical-writer':['p/docs'],'test-engineer':['p/test']}})
+    assert.deepEqual(out.roleModels.researcher,['p/research'])
+    assert.deepEqual(out.roleModels['technical-writer'],['p/docs'])
+    assert.deepEqual(out.roleModels['test-engineer'],['p/test'])
+    assert.deepEqual(out.roleModels.coder,['p/code'])
+    assert.equal(out.roleModels.architect,undefined)
+  } finally {rmSync(root,{recursive:true,force:true})}
+})
+
+test('technical-writer and test-engineer mutation guards reject production-source writes',async()=>{
+  for(const spec of [
+    {sid:'docs-write-guard',cap:'documentation',role:'technical-writer',scope:['README.md'],allowed:'README.md',denied:'src/app.ts'},
+    {sid:'tests-write-guard',cap:'test-authoring',role:'test-engineer',scope:['tests/app.test.ts'],allowed:'tests/app.test.ts',denied:'src/app.ts'},
+  ]){
+    const x=runtime(),store=new MissionStore(),m=startAssessedMission(store,spec.sid,'specialist mutation',{task_kind:'implementation',scope:'local',risk:'medium',required_capabilities:[spec.cap],likely_verification:[],likely_targets:spec.scope})
+    const out=await x.rt.start(m,{objective:'specialist mutation',scope:spec.scope})
+    const worker=m.execution.workers.find(w=>w.task_id===out.task_id);assert.equal(worker.role,spec.role)
+    const hook=createToolBeforeHook(store,x.registry,process.cwd(),process.cwd())
+    await hook({sessionID:worker.session_id,tool:'edit'},{args:{filePath:spec.allowed}})
+    await assert.rejects(()=>hook({sessionID:worker.session_id,tool:'edit'},{args:{filePath:spec.denied}}),/specialist write guard/)
+  }
+})
+
+test('non-visual worker cannot contribute browser-derived proof',async()=>{
+  const x=runtime(),store=new MissionStore(),m=startAssessedMission(store,'wrong-browser-proof','implement local code',{task_kind:'implementation',scope:'local',risk:'medium',required_capabilities:['implementation'],likely_verification:[],likely_targets:['src/app.ts']})
+  const out=await x.rt.start(m,{objective:'implement local code',scope:['src/app.ts']})
+  const worker=m.execution.workers.find(w=>w.task_id===out.task_id);assert.equal(worker.role,'coder')
+  x.rt.applyResult(m,worker.id,{status:'DONE',summary:'claims visual proof',changed_files:[],evidence:[{kind:'visual-evidence',summary:'not actually visual-owned',scope:['src/app.ts'],pass:true,outcome:'passed'}],open_issues:[],needs_context:[]})
+  assert.ok(m.execution.ledger.some(e=>e.type==='browser.evidence-owner-rejected'&&e.worker_id===worker.id))
+  assert.equal(m.execution.evidence.items.some(e=>e.kind==='visual-evidence'&&e.source_session_id===worker.session_id),false)
+  const task=m.execution.tasks.find(t=>t.id===out.task_id)
+  assert.equal(task.result?.evidence.some(e=>e.kind==='visual-evidence'),false,'wrong-role browser proof must be removed from the canonical Task result, not merely rejected from Evidence')
+})

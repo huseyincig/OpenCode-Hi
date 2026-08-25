@@ -1,52 +1,39 @@
 import type { Category, NormalizedMissionIntent } from '../mission/types.js'
 
 export interface CapabilityDecision { role: string; category: Category; capabilities: string[]; reason: string[] }
+export interface ProfileSettingsLite { specialistThreshold:'low'|'medium'|'high'; reviewThreshold:'low'|'medium'|'high' }
 
-export interface ProfileSettingsLite {
-  specialistThreshold: 'low' | 'medium' | 'high'
-  reviewThreshold: 'low' | 'medium' | 'high'
+function categoryFor(intent:NormalizedMissionIntent,preferred?:Category):Category{
+  if(preferred)return preferred
+  if(intent.risk==='high'||intent.risk==='authority-boundary')return'critical'
+  if(intent.scope==='repo-wide')return'deep'
+  if(intent.scope==='local'&&intent.risk==='low')return'quick'
+  return'standard'
 }
 
-// Default profile is `balanced` (matches DEFAULT_HI_CONFIG.profile.balanced).
-// Lower threshold → more specialist dispatch; higher threshold → fewer.
-function thresholdFrom(value: 'low' | 'medium' | 'high'): number {
-  return value === 'low' ? 1 : value === 'medium' ? 2 : 3
-}
+/**
+ * Canonical child ownership is semantic/capability-derived. Execution category/profile
+ * can tune effort, but may not substitute another child role for the semantic owner.
+ */
+export function routeCapabilities(intent:NormalizedMissionIntent,_profile:ProfileSettingsLite={specialistThreshold:'medium',reviewThreshold:'medium'}):CapabilityDecision{
+  const caps=[...new Set(intent.requiredCapabilities)],has=(name:string)=>caps.includes(name),implementation=intent.taskKind==='implementation'||intent.taskKind==='bug-fix'||has('implementation')
 
-export function routeCapabilities(intent: NormalizedMissionIntent, profile: ProfileSettingsLite = { specialistThreshold: 'medium', reviewThreshold: 'medium' }): CapabilityDecision {
-  const caps = [...new Set(intent.requiredCapabilities)]
-  const has=(name:string)=>caps.includes(name)
-  const specialistT = thresholdFrom(profile.specialistThreshold)
-  const reviewT = thresholdFrom(profile.reviewThreshold)
+  const visual=has('visual-qa')||has('visual-review')
+  if(has('security-review')&&intent.taskKind==='review')return{role:'security-reviewer',category:'critical',capabilities:caps,reason:['structured security-review capability dominates this review task; canonical security-review owner']}
+  if(visual&&intent.taskKind==='review')return{role:'visual-qa',category:'visual',capabilities:caps,reason:['structured visual-qa capability dominates this review task; canonical visual-qa owner']}
+  if(has('external-research')&&!implementation)return{role:'researcher',category:categoryFor(intent,intent.scope==='external'?'deep':undefined),capabilities:caps,reason:['canonical external/reference research owner']}
+  if(has('documentation')&&!has('implementation')&&intent.taskKind!=='bug-fix')return{role:'technical-writer',category:categoryFor(intent),capabilities:caps,reason:['canonical documentation authoring owner']}
+  if(has('test-authoring')&&!has('implementation')&&intent.taskKind!=='bug-fix')return{role:'test-engineer',category:categoryFor(intent),capabilities:caps,reason:['canonical test-authoring owner']}
 
-  if (has('security-review')) {
-    if (intent.taskKind === 'review') return { role:'security-reviewer', category:'critical', capabilities:caps, reason:['structured security-review capability dominates this review task'] }
-    return { role:'coder', category:'critical', capabilities:caps, reason:['security-sensitive implementation remains write-capable; independent security review is a separate obligation'] }
-  }
+  if(intent.taskKind==='analysis'||has('repository-analysis')||has('repository-exploration'))return{role:'repository-explorer',category:intent.scope==='repo-wide'?'deep':'standard',capabilities:caps,reason:['canonical repository analysis/exploration owner']}
+  if(intent.taskKind==='diagnosis')return{role:'repository-explorer',category:intent.scope==='repo-wide'?'deep':'standard',capabilities:caps,reason:['canonical repository diagnosis owner']}
+  if(intent.taskKind==='bug-fix'&&intent.scope!=='local')return{role:'repository-explorer',category:intent.scope==='repo-wide'?'deep':'standard',capabilities:caps,reason:['broad bug-fix starts with canonical repository diagnosis owner; implementation obligation remains coder-owned']}
+  if(has('design-exploration'))return{role:'architect',category:categoryFor(intent,intent.risk==='high'?'critical':'deep'),capabilities:caps,reason:['canonical architecture/design owner']}
+  if((intent.taskKind==='review'||has('review')||has('qa-review')||has('independent-review'))&&!implementation)return{role:'qa-reviewer',category:categoryFor(intent,intent.risk==='high'?'critical':'standard'),capabilities:caps,reason:['canonical independent QA/review owner']}
+  if(intent.taskKind==='performance'&&intent.scope==='repo-wide')return{role:'architect',category:'deep',capabilities:caps,reason:['repo-wide performance analysis requires system-context owner']}
+  if(intent.scope==='repo-wide'&&!implementation)return{role:'repository-explorer',category:categoryFor(intent,'deep'),capabilities:caps,reason:['canonical repo-wide context owner']}
+  if(intent.taskKind==='release-readiness')return{role:'qa-reviewer',category:'critical',capabilities:caps,reason:['release-readiness child work is independent verification/review']}
+  if(implementation||intent.taskKind==='performance')return{role:'coder',category:categoryFor(intent),capabilities:caps,reason:['canonical production implementation/refactor/bug-fix owner']}
 
-  if (has('visual-qa') && intent.taskKind === 'review') {
-    return { role:'visual-qa', category:'visual', capabilities:caps, reason:['structured visual-qa capability dominates this review task'] }
-  }
-
-  const reviewDominant=intent.taskKind==='review'||has('review')||has('qa-review')||has('independent-review')
-  const implementationDominant=intent.taskKind==='implementation'||intent.taskKind==='bug-fix'||has('implementation')
-  if(intent.taskKind==='diagnosis')return { role:'repository-explorer', category:intent.scope==='repo-wide'?'deep':'standard', capabilities:caps, reason:['structured diagnosis task is read-only root-cause analysis'] }
-  if (reviewDominant && !implementationDominant) {
-    if (reviewT <= 1) return { role:'qa-reviewer', category:intent.risk==='high'?'critical':'standard', capabilities:caps, reason:['structured review capability dominates task'] }
-    if (intent.risk === 'high' || has('qa-review') || has('independent-review')) return { role:'qa-reviewer', category:intent.risk==='high'?'critical':'standard', capabilities:caps, reason:['structured review capability requires specialist'] }
-  }
-
-  const designDominant=has('design-exploration')
-  if (designDominant) {
-    if (specialistT <= 2) return { role:'architect', category:intent.risk==='high'?'critical':'deep', capabilities:caps, reason:['structured design capability justifies architect'] }
-  }
-  if(intent.taskKind==='performance'&&intent.scope==='repo-wide')return { role:'architect', category:'deep', capabilities:caps, reason:['repo-wide performance analysis requires architecture-level system context'] }
-  if(intent.scope==='repo-wide'&&intent.taskKind!=='implementation')return { role:'repository-explorer', category:intent.risk==='high'?'critical':'deep', capabilities:caps, reason:['repo-wide non-implementation task starts with bounded repository context'] }
-
-  const base = { role:'coder' as const, category:intent.scope==='local'&&intent.risk==='low'?'quick' as const:intent.risk==='high'?'critical' as const:'standard' as const, capabilities:caps, reason:['default child implementation path'] as string[] }
-  if (intent.risk === 'low' && intent.scope === 'local' && has('verification')) {
-    const trimmed = caps.filter(c => c !== 'review' && c !== 'verification')
-    return { role:'coder', category:'quick', capabilities:trimmed.length ? trimmed : caps, reason:[...base.reason,'deterministic-evidence-skips-qa-reviewer'] }
-  }
-  return base
+  throw new Error(`Unsupported task semantics: no canonical role owner for taskKind=${intent.taskKind}; capabilities=${caps.join(',')||'none'}`)
 }

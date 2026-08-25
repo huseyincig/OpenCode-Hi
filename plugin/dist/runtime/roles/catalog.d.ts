@@ -1,8 +1,8 @@
 import { type HiRole, type HiPrimaryRole, type HiChildRole } from '../../generated/role-policy.js';
-export declare const HI_ROLES: readonly ["manager", "working-manager", "coder", "architect", "repository-explorer", "qa-reviewer", "security-reviewer", "visual-qa"];
+export declare const HI_ROLES: readonly ["manager", "working-manager", "coder", "architect", "repository-explorer", "researcher", "technical-writer", "test-engineer", "qa-reviewer", "security-reviewer", "visual-qa"];
 export declare const HI_PRIMARY_ROLES: readonly ["manager", "working-manager"];
-export declare const HI_CHILD_ROLES: readonly ["coder", "architect", "repository-explorer", "qa-reviewer", "security-reviewer", "visual-qa"];
-export declare const HI_READ_ONLY_CHILD_ROLES: readonly ["architect", "repository-explorer", "qa-reviewer", "security-reviewer", "visual-qa"];
+export declare const HI_CHILD_ROLES: readonly ["coder", "architect", "repository-explorer", "researcher", "technical-writer", "test-engineer", "qa-reviewer", "security-reviewer", "visual-qa"];
+export declare const HI_READ_ONLY_CHILD_ROLES: readonly ["architect", "repository-explorer", "researcher", "qa-reviewer", "security-reviewer", "visual-qa"];
 export declare const HI_REVIEWER_ROLES: readonly ["qa-reviewer", "security-reviewer", "visual-qa"];
 export type { HiRole, HiPrimaryRole, HiChildRole };
 export declare function isHiPrimaryRole(value: unknown): value is HiPrimaryRole;

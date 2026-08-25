@@ -2,7 +2,7 @@ import { assertCanonicalId, assertNonEmptyString, assertRecord, assertStrictKeys
 
 export type RoleClass='primary'|'child'
 export type RepositoryWriteAuthority='none'|'scoped'|'general'
-export type RoleObligationAuthority='implementation'|'analysis'|'review'|'verification'
+export type RoleObligationAuthority='implementation'|'analysis'|'review'|'verification'|'research'|'documentation'|'test-authoring'
 export interface RoleDelegationContract{mayDelegate:boolean;allowedRoleRefs:string[]}
 export interface RoleContract{
   id:string
@@ -19,7 +19,7 @@ export interface RoleContract{
 }
 const ROLE_CLASSES=new Set<RoleClass>(['primary','child'])
 const WRITE_AUTH=new Set<RepositoryWriteAuthority>(['none','scoped','general'])
-const OBLIGATION_AUTH=new Set<RoleObligationAuthority>(['implementation','analysis','review','verification'])
+const OBLIGATION_AUTH=new Set<RoleObligationAuthority>(['implementation','analysis','review','verification','research','documentation','test-authoring'])
 function stringList(value:unknown,field:string,allowEmpty=false):string[]{
   if(!Array.isArray(value)||(!allowEmpty&&value.length===0))throw new ContractValidationError(field,allowEmpty?'must be an array':'must be a non-empty array')
   return value.map((item,index)=>assertNonEmptyString(item,`${field}[${index}]`))

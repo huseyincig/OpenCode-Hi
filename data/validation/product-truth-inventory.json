@@ -9,7 +9,7 @@
       "area": "mission",
       "canonical_owner": "MissionStore",
       "owner_path": "plugin/src/runtime/mission/mission-store.ts",
-      "owner_sha256": "6bdfa9d337e32f38a72a629bbb6c9b700554466b6bc73be99fbf49cf295612a1",
+      "owner_sha256": "8f10a9b312512f37b99f623008aab27d4055206f066744394645d92a8692d289",
       "producer_or_contract_paths": [
         "plugin/src/runtime/mission/types.ts",
         "plugin/src/runtime/mission/validators.ts"
@@ -27,7 +27,7 @@
       "area": "task-runtime",
       "canonical_owner": "TaskRuntime",
       "owner_path": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "4969baa10c5ea9460ceea1cdc762b81d7404877f67423e13e70b0818eaa034f1",
+      "owner_sha256": "f69d0dce5e6d616e6d8e8f6e3a74fdb6947ff02abce9d056e454c8b0e1efeadd",
       "producer_or_contract_paths": [
         "plugin/src/runtime/task/contracts.ts"
       ],
@@ -64,7 +64,7 @@
       "area": "roles-permissions",
       "canonical_owner": "RoleContract + PermissionProfileContract",
       "owner_path": "data/hi-roles.json",
-      "owner_sha256": "2f9dbd6559fc4974a8cf2201767767133dae3e407adc883b6a019e6feb61ea0a",
+      "owner_sha256": "61017503de81cd458a385ad3b8252d605f10806ee79709f77f791bca9aa841e5",
       "producer_or_contract_paths": [
         "data/hi-permission-profiles.json",
         "plugin/src/runtime/roles/catalog.ts"
@@ -82,7 +82,7 @@
       "area": "methodologies-skills",
       "canonical_owner": "MethodologyContract + native skill selection",
       "owner_path": "data/hi-methodologies.json",
-      "owner_sha256": "2f22d5d91efcabb600ad154c4daf21214949965ad7d45e5826c687259e4e92d7",
+      "owner_sha256": "c16af829871a6862d745f8f10a21cc02efaa3831d358bde43e390283a4d44f67",
       "producer_or_contract_paths": [
         "plugin/src/runtime/methodology/catalog.ts",
         "plugin/src/runtime/skills/registry.ts"
@@ -101,7 +101,7 @@
       "area": "routing-models",
       "canonical_owner": "Hi routing/model resolver",
       "owner_path": "plugin/src/runtime/routing/model-resolver.ts",
-      "owner_sha256": "2cf365120d3e1bdb7fb5fe45a84312766e6c68a846af7fe96d1a40f226859067",
+      "owner_sha256": "9d2f380f8f46a7e57861e424293844310aaf48ebc9cec492e5904c3b3ca54a2d",
       "producer_or_contract_paths": [
         "plugin/src/runtime/routing/execution-profile.ts",
         "plugin/src/runtime/routing/minimum-team.ts",

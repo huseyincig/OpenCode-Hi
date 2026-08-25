@@ -141,8 +141,15 @@ export class MissionStore {
         const reconciledSignals = reconciledIntentMethodologySignals(effectiveAssessment, m.identity.semantic_assessment.pending_text), obligations = [], bugFixAnalysisRequired = m.identity.intent.taskKind === 'bug-fix' && (m.identity.intent.scope !== 'local' || m.identity.intent.ambiguity !== 'none' || reconciledSignals.active.includes('intent.debugging'));
         if (bugFixAnalysisRequired || m.identity.intent.taskKind === 'performance' || m.identity.intent.taskKind === 'diagnosis')
             obligations.push(obligation('o-analysis', 'analysis', m.identity.intent.taskKind === 'performance' ? 'Relevant performance bottleneck identified' : 'Root cause understood'));
-        if (!['diagnosis', 'review', 'release-readiness'].includes(m.identity.intent.taskKind))
+        const caps = new Set(m.identity.intent.requiredCapabilities), specialistOnly = caps.has('documentation') || caps.has('test-authoring') || caps.has('external-research'), productImplementation = caps.has('implementation') || m.identity.intent.taskKind === 'bug-fix' || m.identity.intent.taskKind === 'performance' || (!specialistOnly && m.identity.intent.taskKind === 'implementation');
+        if (productImplementation && !['diagnosis', 'review', 'release-readiness'].includes(m.identity.intent.taskKind))
             obligations.push(obligation('o-implementation', 'implementation', 'Requested change completed', [], requiredMaterialTargets));
+        if (caps.has('external-research'))
+            obligations.push(obligation('o-research', 'research', 'Required external/reference evidence synthesized'));
+        if (caps.has('documentation'))
+            obligations.push(obligation('o-documentation', 'documentation', 'Requested documentation change completed', [], requiredMaterialTargets));
+        if (caps.has('test-authoring'))
+            obligations.push(obligation('o-test-authoring', 'test-authoring', 'Requested test-source change completed', [], requiredMaterialTargets));
         if (m.identity.intent.taskKind === 'review')
             obligations.push(obligation('o-review', 'review', 'Requested review completed', m.identity.intent.likelyVerification));
         if (m.identity.intent.taskKind !== 'diagnosis')
