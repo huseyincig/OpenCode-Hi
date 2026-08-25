@@ -116,6 +116,39 @@ export declare const STORAGE_OWNERSHIP_CATALOG: readonly [{
     readonly retention: "project methodology lifetime";
     readonly privacy: "project-private";
 }, {
+    readonly data_class: "project-operational-tool-cache";
+    readonly canonical_owner: "hi-operational-tool-provisioner";
+    readonly scope: "project";
+    readonly lifecycle: "cache";
+    readonly path_provider: ".opencode/hi/tools/<capability>/<implementation>/**";
+    readonly schema_ref: "OperationalToolDefinition@1";
+    readonly write_owner: "OperationalToolProvisioner";
+    readonly readers: readonly ["OperationalToolProvisioner", "runtime-service-adapters", "doctor"];
+    readonly retention: "retain verified project-local operational tool cache until explicit cleanup/version replacement; never application dependency state";
+    readonly privacy: "operational-private";
+}, {
+    readonly data_class: "project-operational-tool-receipt";
+    readonly canonical_owner: "hi-operational-tool-provisioner";
+    readonly scope: "project";
+    readonly lifecycle: "derived";
+    readonly path_provider: ".opencode/hi/tools/receipts/<capability>/<implementation>.json";
+    readonly schema_ref: "OperationalToolProvisioningReceipt@1";
+    readonly write_owner: "OperationalToolProvisioner";
+    readonly readers: readonly ["OperationalToolProvisioner", "doctor"];
+    readonly retention: "latest bounded resolution/smoke receipt per code-owned implementation";
+    readonly privacy: "operational-private; no credentials or raw installer output";
+}, {
+    readonly data_class: "project-operational-tool-lock";
+    readonly canonical_owner: "hi-operational-tool-provisioner";
+    readonly scope: "project";
+    readonly lifecycle: "ephemeral";
+    readonly path_provider: ".opencode/hi/tools/.locks/<capability>--<implementation>.lock";
+    readonly schema_ref: "OperationalToolProvisionLock@1";
+    readonly write_owner: "OperationalToolProvisioner";
+    readonly readers: readonly ["OperationalToolProvisioner"];
+    readonly retention: "active provisioning only; dead/stale owner reaped";
+    readonly privacy: "operational-private";
+}, {
     readonly data_class: "mission-survival-state";
     readonly canonical_owner: "hi-runtime";
     readonly scope: "runtime";

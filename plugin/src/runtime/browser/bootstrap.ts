@@ -3,11 +3,13 @@ import {existsSync,mkdirSync,readFileSync} from 'node:fs'
 import {homedir,platform} from 'node:os'
 import {dirname,join,resolve} from 'node:path'
 import {discoverChromiumInRoots} from './discovery.js'
+import {projectOperationalToolImplementationRoot} from '../storage/ownership.js'
 
 export interface BrowserBootstrapRunResult{exitCode:number|null;stdout:string;stderr:string;timedOut:boolean}
 export interface BrowserBootstrapResult{available:boolean;attempted:boolean;cachePath:string;version?:string;executablePath?:string;reason?:string}
 export interface PlaywrightBrowserBootstrapOptions{
   package_root:string
+  project_root?:string
   cache_path?:string
   timeout_ms?:number
   run_process?:(command:string,args:string[],options:{cwd:string;env:Record<string,string|undefined>;timeoutMs:number})=>Promise<BrowserBootstrapRunResult>
@@ -59,9 +61,10 @@ export class PlaywrightBrowserBootstrap{
   #attempt?:Promise<BrowserBootstrapResult>
   #last?:BrowserBootstrapResult
   constructor(options:PlaywrightBrowserBootstrapOptions){
-    this.packageRoot=resolve(options.package_root);this.version=configuredPlaywrightCoreVersion(this.packageRoot);this.cachePath=options.cache_path??hiPlaywrightCachePath(this.version??'unresolved');this.#timeoutMs=Math.min(Math.max(options.timeout_ms??300_000,10_000),600_000);this.#run=options.run_process??runBounded;this.#packageJsonOverride=options.package_json_path;this.#cliOverride=options.cli_path;this.#findExecutable=options.find_executable??(cache=>discoverChromiumInRoots([cache]))
+    this.packageRoot=resolve(options.package_root);this.version=configuredPlaywrightCoreVersion(this.packageRoot);this.cachePath=options.cache_path??(options.project_root?join(projectOperationalToolImplementationRoot(options.project_root,'browser-execution','playwright-chromium'),this.version??'unresolved'):hiPlaywrightCachePath(this.version??'unresolved'));this.#timeoutMs=Math.min(Math.max(options.timeout_ms??300_000,10_000),600_000);this.#run=options.run_process??runBounded;this.#packageJsonOverride=options.package_json_path;this.#cliOverride=options.cli_path;this.#findExecutable=options.find_executable??(cache=>discoverChromiumInRoots([cache]))
   }
   status():BrowserBootstrapResult|undefined{return this.#last?{...this.#last}:undefined}
+  discover():string|undefined{return this.version?this.#findExecutable(this.cachePath):undefined}
   async ensure():Promise<BrowserBootstrapResult>{
     const existing=this.version?this.#findExecutable(this.cachePath):undefined
     if(existing){const ready={available:true,attempted:false,cachePath:this.cachePath,version:this.version,executablePath:existing};this.#last=ready;return{...ready}}

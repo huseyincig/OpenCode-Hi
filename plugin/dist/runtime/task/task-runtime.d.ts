@@ -57,6 +57,10 @@ export declare class TaskRuntime {
         available: boolean;
         attempted?: boolean;
         reason?: string;
+        implementationId?: string;
+        status?: string;
+        scope?: string;
+        receiptPath?: string;
     }>) | undefined, readAssistantResult?: ((sessionID: string, limit?: number) => Promise<HostAssistantResult>) | undefined, previewManager?: LocalPreviewManager | undefined, getProjectMissions?: () => readonly MissionState[]);
     private sendProviderPrompt;
     private recordModelProjection;

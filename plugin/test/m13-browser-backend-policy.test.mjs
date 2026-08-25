@@ -10,7 +10,7 @@ import {PACKAGED_HI_AGENTS} from '../dist/generated/agent-config.js'
 import {HI_BROWSER_EXECUTION_TOOL_IDS} from '../dist/runtime/browser/executor.js'
 import {resolveBrowserExecutionOwner} from '../dist/runtime/browser/ownership.js'
 import {LocalPreviewManager} from '../dist/runtime/browser/local-preview.js'
-import {resolve,dirname} from 'node:path'
+import {resolve,dirname,join} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {opencodeChildPort} from './helpers/host-port.mjs'
 
@@ -71,4 +71,14 @@ test('M13 local visual task can defer origin creation to Hi-owned preview and re
   const prompt=JSON.stringify(prompts[0]);assert.match(prompt,new RegExp(`LOCAL STATIC PREVIEW: task_id=${out.task_id}`));assert.match(prompt,/hi_browser_preview_open/)
   assert.equal(preview.active(out.task_id),false,'preview starts only when the visual worker requests the scoped local target')
   await preview.dispose()
+})
+
+test('browser requirement resolves operational-tool receipt even when live browser capability was already observed',async()=>{
+  const prompts=[],m=mission('m13-operational-tool-existing',['visual-qa']),calls=[]
+  const ensure=async()=>{calls.push('ensure');return{available:true,attempted:false,implementationId:'playwright-chromium',status:'existing',scope:'existing',receiptPath:join(repoRoot,'.opencode','hi','tools','receipts','browser-execution','playwright-chromium.json')}}
+  const rt=new TaskRuntime(opencodeChildPort(client(prompts)),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),repoRoot,repoRoot,()=>DEFAULT_HI_CONFIG,()=>[{id:'provider/vision',provider:'provider',visionCapable:true,writeCapable:true}],()=>structuredClone(HOST),undefined,{},undefined,undefined,()=>new Set(['host-capability:browser-execution']),undefined,ensure)
+  const out=await rt.start(m,{objective:'verify local UI with managed operational tool resolution',role:'visual-qa',category:'visual',scope:['src/view.tsx'],browserAllowedOrigins:['http://127.0.0.1:4173']})
+  assert.equal(out.readiness,'READY');assert.equal(calls.length,1)
+  const event=m.execution.ledger.find(e=>e.type==='operational-tool.resolved'&&e.payload?.phase==='task-requirement')
+  assert.ok(event);assert.equal(event.payload.capability,'browser-execution');assert.equal(event.payload.implementation,'playwright-chromium');assert.equal(event.payload.status,'existing');assert.equal(event.payload.scope,'existing');assert.match(String(event.payload.receipt_path),/\.opencode[\\/]hi[\\/]tools[\\/]receipts/)
 })

@@ -9,7 +9,7 @@
       "area": "mission",
       "canonical_owner": "MissionStore",
       "owner_path": "plugin/src/runtime/mission/mission-store.ts",
-      "owner_sha256": "7711681e3dd3e8cb10afab9fa2da8f9f1178a69ce85f919c8d46beffacdf3f9a",
+      "owner_sha256": "6bdfa9d337e32f38a72a629bbb6c9b700554466b6bc73be99fbf49cf295612a1",
       "producer_or_contract_paths": [
         "plugin/src/runtime/mission/types.ts",
         "plugin/src/runtime/mission/validators.ts"
@@ -27,7 +27,7 @@
       "area": "task-runtime",
       "canonical_owner": "TaskRuntime",
       "owner_path": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "87113c4133e23b482b7a853bfcb046bbbb2f62b9ace068d170963bd02ae16167",
+      "owner_sha256": "4969baa10c5ea9460ceea1cdc762b81d7404877f67423e13e70b0818eaa034f1",
       "producer_or_contract_paths": [
         "plugin/src/runtime/task/contracts.ts"
       ],
@@ -82,7 +82,7 @@
       "area": "methodologies-skills",
       "canonical_owner": "MethodologyContract + native skill selection",
       "owner_path": "data/hi-methodologies.json",
-      "owner_sha256": "99c3f4077187d58e83e96a6843727f163c0f4f3442e01e5ed9ebac89bbbd97fc",
+      "owner_sha256": "2f22d5d91efcabb600ad154c4daf21214949965ad7d45e5826c687259e4e92d7",
       "producer_or_contract_paths": [
         "plugin/src/runtime/methodology/catalog.ts",
         "plugin/src/runtime/skills/registry.ts"
@@ -101,7 +101,7 @@
       "area": "routing-models",
       "canonical_owner": "Hi routing/model resolver",
       "owner_path": "plugin/src/runtime/routing/model-resolver.ts",
-      "owner_sha256": "e72a011b7b13ff74afd527de3a6c8cc9fd96a0dc5772c4668c626ad6f16dbff8",
+      "owner_sha256": "2cf365120d3e1bdb7fb5fe45a84312766e6c68a846af7fe96d1a40f226859067",
       "producer_or_contract_paths": [
         "plugin/src/runtime/routing/execution-profile.ts",
         "plugin/src/runtime/routing/minimum-team.ts",
@@ -233,7 +233,7 @@
       "area": "project-intelligence",
       "canonical_owner": "ProjectMethodologyLearningStore",
       "owner_path": "plugin/src/runtime/project-intelligence/methodology-learning.ts",
-      "owner_sha256": "1fcb0804ea9112958d987e4b3dd024a7fe5e3266b60625f61aba5000760ccc41",
+      "owner_sha256": "5bc80cbdc56829e0d253d786614ba86a150bd096c831412f7a6ec8cec15cb6dd",
       "producer_or_contract_paths": [
         "plugin/src/runtime/project-intelligence/methodology-candidate.ts",
         "plugin/src/contracts/storage-ownership.ts"
@@ -252,7 +252,7 @@
       "area": "evidence-verification",
       "canonical_owner": "EvidenceRuntime + VerificationEnvelope",
       "owner_path": "plugin/src/runtime/evidence/evidence-runtime.ts",
-      "owner_sha256": "0c256968797ba957046f1e1745d6b30a73c84d3eecae157b6628290dc97ddaa7",
+      "owner_sha256": "838ffb29a4050631aa1c6367c2890dba11b7864523fe1364cc4952efef929af8",
       "producer_or_contract_paths": [
         "plugin/src/contracts/evidence.ts",
         "plugin/src/contracts/verification-envelope.ts",
@@ -272,7 +272,7 @@
       "area": "completion-continuation",
       "canonical_owner": "Completion + continuation",
       "owner_path": "plugin/src/runtime/completion/evaluator.ts",
-      "owner_sha256": "78af108c2539f62e3ebd3af1522939fe50fa6ede39409c4f3193268753be8489",
+      "owner_sha256": "e462078037b1894ccdbcba27849080a183bb8075d0e93d39b15bb028a2e10578",
       "producer_or_contract_paths": [
         "plugin/src/runtime/continuation/evaluator.ts",
         "plugin/src/runtime/continuation/dispatcher.ts",
@@ -327,7 +327,7 @@
       "area": "browser",
       "canonical_owner": "BrowserObservation + BrowserExecutor",
       "owner_path": "plugin/src/contracts/browser-observation.ts",
-      "owner_sha256": "aaf9308a7b91283a5450d3468919a1043c32291a6f3c85cc7fd72f20fde7bbae",
+      "owner_sha256": "e965bae08a395f6c325bc488a45a94988fe94a352f75921c6340aa8f0b6d69d3",
       "producer_or_contract_paths": [
         "plugin/src/runtime/browser/executor.ts",
         "plugin/src/runtime/browser/backend-policy.ts",
@@ -348,7 +348,7 @@
       "area": "host-port",
       "canonical_owner": "OpenCodeHostPort",
       "owner_path": "plugin/src/opencode/host-port.ts",
-      "owner_sha256": "7727d467b803b39043bdbaa5f9823dcd5bbba0415029d33ee4bbe88343c4a2d0",
+      "owner_sha256": "1b65f7d482ce48aeb487e17da3bf4233d647f8a1f70ed2252386677230f9e33f",
       "producer_or_contract_paths": [
         "plugin/src/opencode/client-adapter.ts",
         "plugin/src/opencode/event-adapter.ts",
@@ -366,7 +366,7 @@
       "area": "persistence-storage",
       "canonical_owner": "Mission persistence + storage ownership",
       "owner_path": "plugin/src/runtime/state/persistence.ts",
-      "owner_sha256": "f611defb9fe0f1a0d9370f789f524bf59de2c1f770e52572f9f8161b3c012ab2",
+      "owner_sha256": "3967810e81fcda6f7803fee767434161f8d1f1d67ce8ceeed0d2a6156b2d828f",
       "producer_or_contract_paths": [
         "plugin/src/runtime/state/snapshot.ts",
         "plugin/src/runtime/storage/ownership.ts",
@@ -416,7 +416,7 @@
       "area": "scheduler",
       "canonical_owner": "SchedulingPlanner",
       "owner_path": "plugin/src/runtime/scheduler/planner.ts",
-      "owner_sha256": "1757eb404c8a8df7a25d7ad975c7c1b9efc1f2207108f7e5ebc8a15abc8372ba",
+      "owner_sha256": "49253e99725392ff6b5b174cfccf960fdd5578d51d3fe431d047475921c58449",
       "producer_or_contract_paths": [
         "plugin/src/runtime/scheduler/lifecycle.ts",
         "plugin/src/runtime/scheduler/task-runtime-adapter.ts"

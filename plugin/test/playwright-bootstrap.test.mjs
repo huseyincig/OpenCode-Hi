@@ -4,6 +4,7 @@ import {mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs'
 import {join} from 'node:path'
 import {tmpdir} from 'node:os'
 import {PlaywrightBrowserBootstrap,hiPlaywrightCachePath} from '../dist/runtime/browser/bootstrap.js'
+import {projectOperationalToolImplementationRoot} from '../dist/runtime/storage/ownership.js'
 import {PlaywrightBrowserAdapter} from '../dist/opencode/playwright-browser-adapter.js'
 
 function fixture(){const root=mkdtempSync(join(tmpdir(),'hi-pw-bootstrap-')),pkg=join(root,'node_modules','playwright-core');mkdirSync(pkg,{recursive:true});writeFileSync(join(root,'package.json'),JSON.stringify({dependencies:{'playwright-core':'1.62.1'}}));writeFileSync(join(pkg,'package.json'),JSON.stringify({version:'1.62.1'}));writeFileSync(join(pkg,'cli.js'),'// fake');return{root,pkg,cleanup:()=>rmSync(root,{recursive:true,force:true})}}
@@ -28,12 +29,22 @@ test('adapter refreshes discovery after a lazy bootstrap creates the executable'
   try{const executable=join(f.root,'cache','chromium-1','chrome-linux','chrome'),adapter=new PlaywrightBrowserAdapter({browser_cache_paths:[join(f.root,'cache')],executable_exists:p=>ready&&p===executable,load_playwright:async()=>({chromium:{}})});assert.equal((await adapter.health()).available,false);mkdirSync(join(f.root,'cache','chromium-1','chrome-linux'),{recursive:true});writeFileSync(executable,'');ready=true;assert.equal((await adapter.health()).available,true)}finally{f.cleanup()}
 })
 
-test('Hi-owned browser cache is outside the application project by default',()=>{
+test('legacy standalone browser cache helper remains user-cache scoped when no project owner is supplied',()=>{
   const cache=hiPlaywrightCachePath('1.62.1',{...process.env,HI_BROWSER_CACHE:undefined,XDG_CACHE_HOME:undefined},'/home/tester','linux')
   assert.equal(cache,join('/home/tester','.cache','opencode-hi','playwright','1.62.1'))
 })
 
-test('Hi-owned browser cache honors an explicit XDG cache root without touching the application project',()=>{
+test('legacy standalone browser cache helper honors an explicit XDG cache root',()=>{
   const cache=hiPlaywrightCachePath('1.62.1',{HI_BROWSER_CACHE:undefined,XDG_CACHE_HOME:'/var/tmp/xdg-hi'},'/home/tester','linux')
   assert.equal(cache,join('/var/tmp/xdg-hi','opencode-hi','playwright','1.62.1'))
+})
+
+
+test('plugin-style Playwright bootstrap defaults managed Chromium under the project Hi operational-tool root',()=>{
+  const f=fixture()
+  try{
+    const bootstrap=new PlaywrightBrowserBootstrap({package_root:f.root,project_root:f.root})
+    assert.equal(bootstrap.cachePath,join(projectOperationalToolImplementationRoot(f.root,'browser-execution','playwright-chromium'),'1.62.1'))
+    assert.ok(bootstrap.cachePath.includes(join('.opencode','hi','tools','browser-execution','playwright-chromium')))
+  }finally{f.cleanup()}
 })

@@ -342,13 +342,15 @@ export class TaskRuntime {
         if (task.execution_profile?.browser_backend !== 'bounded-playwright')
             return true;
         let available = this.extraHostResources().has('host-capability:browser-execution'), reason = 'browser-execution-resource-unavailable-after-queue-admission';
-        if (!available && this.ensureBrowserResource)
+        if (this.ensureBrowserResource)
             try {
                 const refreshed = await this.ensureBrowserResource();
                 available = refreshed.available;
                 reason = refreshed.reason ?? reason;
+                appendLedger(m, 'operational-tool.resolved', { task_id: task.id, worker_id: worker.id, payload: { capability: 'browser-execution', available: refreshed.available, implementation: refreshed.implementationId, status: refreshed.status, scope: refreshed.scope, receipt_path: refreshed.receiptPath, phase: 'queued-readiness' } });
             }
             catch (error) {
+                available = false;
                 reason = String(error);
             }
         if (available) {
@@ -450,8 +452,9 @@ export class TaskRuntime {
         let extraResources = this.extraHostResources();
         const browserRequested = role === 'visual-qa' && requestedMethodologyNames.some(name => ['hi-browser-testing', 'hi-visual-qa', 'hi-accessibility-review'].includes(name));
         let browserBootstrap;
-        if (browserRequested && !extraResources.has('host-capability:browser-execution') && this.ensureBrowserResource) {
+        if (browserRequested && this.ensureBrowserResource) {
             browserBootstrap = await this.ensureBrowserResource();
+            appendLedger(m, 'operational-tool.resolved', { payload: { capability: 'browser-execution', available: browserBootstrap.available, implementation: browserBootstrap.implementationId, status: browserBootstrap.status, scope: browserBootstrap.scope, receipt_path: browserBootstrap.receiptPath, phase: 'task-requirement' } });
             appendLedger(m, 'browser.bootstrap', { payload: { available: browserBootstrap.available, attempted: browserBootstrap.attempted === true, reason: browserBootstrap.reason } });
             if (browserBootstrap.available) {
                 extraResources = new Set([...extraResources, 'host-capability:browser-execution']);

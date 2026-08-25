@@ -7,6 +7,8 @@ import type { HostCapabilityContract } from '../../contracts/host-capability.js'
 import type { ProcessExecutor } from '../process/executor.js';
 import type { WorkspaceExecutor } from '../workspace/executor.js';
 import type { BrowserExecutor, BrowserExecutionContext } from '../browser/executor.js';
+import { OperationalToolProvisioner } from '../tools/provisioning.js';
+import type { OperationalToolProvisioningReceipt } from '../../contracts/operational-tool.js';
 import { MissionStore } from '../mission/mission-store.js';
 import { BackgroundRegistry } from '../background/registry.js';
 import { RuntimePersistence } from '../state/persistence.js';
@@ -31,6 +33,12 @@ export interface RuntimeServicePorts {
         executablePath?: string;
         reason?: string;
     }>;
+    browserTool?: {
+        implementationId: string;
+        version?: string;
+        cachePath: string;
+        discover: () => string | undefined;
+    };
     onBrowserAvailability?: (available: boolean) => void;
 }
 export declare function createRuntimeServices(input: {
@@ -57,11 +65,35 @@ export declare function createRuntimeServices(input: {
     ensureBrowserAvailable: () => Promise<{
         available: boolean;
         attempted: boolean;
+        reason: string | undefined;
+        implementationId: string;
+        status: import("../../contracts/operational-tool.js").OperationalToolResolutionStatus;
+        scope: import("../../contracts/operational-tool.js").OperationalToolResolutionScope;
+        receiptPath: string;
+    } | {
+        available: boolean;
+        attempted: boolean | undefined;
+        reason: string;
+        implementationId: string;
+        receiptPath: string | undefined;
+        status?: undefined;
+        scope?: undefined;
+    } | {
+        available: boolean;
+        attempted: boolean;
         reason?: undefined;
+        implementationId?: undefined;
+        status?: undefined;
+        scope?: undefined;
+        receiptPath?: undefined;
     } | {
         available: boolean;
         attempted: boolean | undefined;
         reason: string | undefined;
+        implementationId?: undefined;
+        status?: undefined;
+        scope?: undefined;
+        receiptPath?: undefined;
     }>;
     getBrowserBootstrapStatus: () => {
         available: boolean;
@@ -71,6 +103,8 @@ export declare function createRuntimeServices(input: {
         executablePath?: string;
         reason?: string;
     } | undefined;
+    getBrowserToolReceipt: () => OperationalToolProvisioningReceipt | undefined;
+    operationalTools: OperationalToolProvisioner;
     previewManager: LocalPreviewManager;
     scopedStores: import("./runtime-scoped-stores.js").RuntimeScopedStores;
 };

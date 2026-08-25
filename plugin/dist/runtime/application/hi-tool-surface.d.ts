@@ -1,4 +1,5 @@
 import { type HiConfig, type ConfigResolutionReport } from '../../config/schema.js';
+import type { OperationalToolProvisioningReceipt } from '../../contracts/operational-tool.js';
 import { type AvailableModel } from '../routing/model-resolver.js';
 import type { MissionStore } from '../mission/mission-store.js';
 import type { TaskRuntime } from '../task/task-runtime.js';
@@ -41,6 +42,7 @@ export declare function createHiToolSurface(input: {
         executablePath?: string;
         reason?: string;
     } | undefined;
+    getBrowserToolReceipt?: () => OperationalToolProvisioningReceipt | undefined;
 }): {
     toolSurface: Record<string, unknown>;
 };

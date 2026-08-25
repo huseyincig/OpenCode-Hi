@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { homedir, platform } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { discoverChromiumInRoots } from './discovery.js';
+import { projectOperationalToolImplementationRoot } from '../storage/ownership.js';
 function bounded(text, max = 8000) { return text.length <= max ? text : text.slice(text.length - max); }
 export function configuredPlaywrightCoreVersion(packageRoot) {
     try {
@@ -73,7 +74,7 @@ export class PlaywrightBrowserBootstrap {
     constructor(options) {
         this.packageRoot = resolve(options.package_root);
         this.version = configuredPlaywrightCoreVersion(this.packageRoot);
-        this.cachePath = options.cache_path ?? hiPlaywrightCachePath(this.version ?? 'unresolved');
+        this.cachePath = options.cache_path ?? (options.project_root ? join(projectOperationalToolImplementationRoot(options.project_root, 'browser-execution', 'playwright-chromium'), this.version ?? 'unresolved') : hiPlaywrightCachePath(this.version ?? 'unresolved'));
         this.#timeoutMs = Math.min(Math.max(options.timeout_ms ?? 300_000, 10_000), 600_000);
         this.#run = options.run_process ?? runBounded;
         this.#packageJsonOverride = options.package_json_path;
@@ -81,6 +82,7 @@ export class PlaywrightBrowserBootstrap {
         this.#findExecutable = options.find_executable ?? (cache => discoverChromiumInRoots([cache]));
     }
     status() { return this.#last ? { ...this.#last } : undefined; }
+    discover() { return this.version ? this.#findExecutable(this.cachePath) : undefined; }
     async ensure() {
         const existing = this.version ? this.#findExecutable(this.cachePath) : undefined;
         if (existing) {

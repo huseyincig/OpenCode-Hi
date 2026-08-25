@@ -4,7 +4,7 @@ import { existsSync,mkdtempSync,readFileSync,rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { STORAGE_OWNERSHIP_CATALOG,assertStorageOwnershipCatalog,isStorageOwnershipContract } from '../dist/contracts/storage-ownership.js'
-import { durableArtifactPath,projectMethodologyCandidatePath,projectMethodologyPolicyPath,projectMethodologyProvenancePath,projectPolicyPath,projectSkillRoot,projectTaskOutcomeMemoryPath } from '../dist/runtime/storage/ownership.js'
+import { durableArtifactPath,projectMethodologyCandidatePath,projectMethodologyPolicyPath,projectMethodologyProvenancePath,projectPolicyPath,projectSkillRoot,projectTaskOutcomeMemoryPath,projectOperationalToolRoot,projectOperationalToolImplementationRoot,projectOperationalToolReceiptPath,projectOperationalToolLockPath } from '../dist/runtime/storage/ownership.js'
 import { runtimeInstanceLockPath,runtimeStatePath } from '../dist/runtime/storage/locations.js'
 import { RuntimePersistence,RUNTIME_STATE_SCHEMA } from '../dist/runtime/state/persistence.js'
 import { MissionStore } from '../dist/runtime/mission/mission-store.js'
@@ -26,6 +26,10 @@ test('catalog path providers match the real project storage resolvers',()=>{
   assert.equal(projectPolicyPath(root,'authority'),join(root,'.opencode','hi','policy','authority.json'))
   assert.equal(projectMethodologyCandidatePath(root,'mc_1'),join(root,'.opencode','hi','project-intelligence','methodology-candidates','mc_1.json'))
   assert.equal(projectTaskOutcomeMemoryPath(root),join(root,'.opencode','hi','project-intelligence','task-outcomes.jsonl'))
+  assert.equal(projectOperationalToolRoot(root),join(root,'.opencode','hi','tools'))
+  assert.equal(projectOperationalToolImplementationRoot(root,'browser-execution','playwright-chromium'),join(root,'.opencode','hi','tools','browser-execution','playwright-chromium'))
+  assert.equal(projectOperationalToolReceiptPath(root,'browser-execution','playwright-chromium'),join(root,'.opencode','hi','tools','receipts','browser-execution','playwright-chromium.json'))
+  assert.equal(projectOperationalToolLockPath(root,'browser-execution','playwright-chromium'),join(root,'.opencode','hi','tools','.locks','browser-execution--playwright-chromium.lock'))
   assert.equal(durableArtifactPath(root,'review','a_1'),join(root,'.opencode','hi','artifacts','review','a_1.json'))
   assert.equal(projectMethodologyPolicyPath(root,name),join(root,'.opencode','hi','policy','methodologies',`${name}.json`))
   assert.equal(projectMethodologyProvenancePath(root,name),join(root,'.opencode','hi','provenance','methodologies',`${name}.json`))

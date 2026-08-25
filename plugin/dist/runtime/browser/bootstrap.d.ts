@@ -14,6 +14,7 @@ export interface BrowserBootstrapResult {
 }
 export interface PlaywrightBrowserBootstrapOptions {
     package_root: string;
+    project_root?: string;
     cache_path?: string;
     timeout_ms?: number;
     run_process?: (command: string, args: string[], options: {
@@ -35,5 +36,6 @@ export declare class PlaywrightBrowserBootstrap {
     readonly cachePath: string;
     constructor(options: PlaywrightBrowserBootstrapOptions);
     status(): BrowserBootstrapResult | undefined;
+    discover(): string | undefined;
     ensure(): Promise<BrowserBootstrapResult>;
 }

@@ -9,6 +9,10 @@ export function hiProjectRoot(projectRoot) { return join(resolve(projectRoot), '
 export function projectPolicyPath(projectRoot, name) { return join(hiProjectRoot(projectRoot), 'policy', `${safeSegment(name)}.json`); }
 export function projectMethodologyCandidatePath(projectRoot, id) { return join(hiProjectRoot(projectRoot), 'project-intelligence', 'methodology-candidates', `${safeSegment(id)}.json`); }
 export function projectTaskOutcomeMemoryPath(projectRoot) { return join(hiProjectRoot(projectRoot), 'project-intelligence', 'task-outcomes.jsonl'); }
+export function projectOperationalToolRoot(projectRoot) { return join(hiProjectRoot(projectRoot), 'tools'); }
+export function projectOperationalToolImplementationRoot(projectRoot, capability, implementation) { return join(projectOperationalToolRoot(projectRoot), safeSegment(capability), safeSegment(implementation)); }
+export function projectOperationalToolReceiptPath(projectRoot, capability, implementation) { return join(projectOperationalToolRoot(projectRoot), 'receipts', safeSegment(capability), `${safeSegment(implementation)}.json`); }
+export function projectOperationalToolLockPath(projectRoot, capability, implementation) { return join(projectOperationalToolRoot(projectRoot), '.locks', `${safeSegment(capability)}--${safeSegment(implementation)}.lock`); }
 export function durableArtifactPath(projectRoot, kind, id) { return join(hiProjectRoot(projectRoot), 'artifacts', safeSegment(kind), `${safeSegment(id)}.json`); }
 export function durableArtifactBinaryPath(projectRoot, kind, id, extension) { return join(hiProjectRoot(projectRoot), 'artifacts', safeSegment(kind), `${safeSegment(id)}.${safeSegment(extension).replace(/^\.+/, '')}`); }
 export function projectMethodologyPolicyDir(projectRoot) { return join(hiProjectRoot(projectRoot), 'policy', 'methodologies'); }
