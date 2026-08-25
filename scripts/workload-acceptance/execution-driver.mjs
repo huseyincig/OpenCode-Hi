@@ -16,6 +16,7 @@ import {assessHarnessLiveness} from './liveness-adapter.mjs'
 import {executionObservation} from './execution-observation.mjs'
 import {roleAcceptanceObservation} from './role-observation.mjs'
 import {cleanupOwnedResources} from './cleanup.mjs'
+import {readEffectiveReceipt} from './receipts.mjs'
 
 const ROOT=resolve(fileURLToPath(new URL('../..',import.meta.url)))
 const WROOT=join(ROOT,'.agent-work','workload-acceptance')
@@ -108,7 +109,7 @@ export function discoverTerminalPredecessor(stateRoot,workloadId){
     if(!entry.isDirectory())continue
     const runId=entry.name,receiptsRoot=join(runsRoot,runId,'receipts'),summaryPath=join(receiptsRoot,'summary.json')
     if(!existsSync(summaryPath))continue
-    const read=name=>{const path=join(receiptsRoot,`${name}.json`);if(!existsSync(path))throw new Error(`TERMINAL_PREDECESSOR_RECEIPT_MISSING:${runId}:${name}`);return JSON.parse(readFileSync(path,'utf8'))}
+    const read=name=>{const path=join(receiptsRoot,`${name}.json`);if(!existsSync(path))throw new Error(`TERMINAL_PREDECESSOR_RECEIPT_MISSING:${runId}:${name}`);return readEffectiveReceipt(receiptsRoot,name,runId)}
     const identity=read('run-identity'),lineage=read('lineage'),classification=read('classification'),cleanup=read('cleanup'),summary=read('summary')
     for(const [kind,row] of [['run-identity',identity],['lineage',lineage],['classification',classification],['cleanup',cleanup],['summary',summary]])if(row.run_id!==runId)throw new Error(`PREDECESSOR_RUN_ID_MISMATCH:${runId}:${kind}:${String(row.run_id)}`)
     if(identity.workload_id!==workloadId||summary.workload_id!==workloadId)throw new Error(`PREDECESSOR_WORKLOAD_ID_MISMATCH:${runId}`)
@@ -121,7 +122,7 @@ export function discoverTerminalPredecessor(stateRoot,workloadId){
     const ordinal=Number.parseInt(match[1],36);if(!Number.isFinite(ordinal))throw new Error(`PREDECESSOR_RUN_ID_FORMAT_INVALID:${runId}`)
     let repairReceipt=null,repairPath=join(receiptsRoot,'repair.json')
     if(existsSync(repairPath)){
-      const repair=JSON.parse(readFileSync(repairPath,'utf8'))
+      const repair=readEffectiveReceipt(receiptsRoot,'repair',runId)
       if(repair.run_id!==runId||repair.predecessor_run_id!==runId)throw new Error(`PREDECESSOR_REPAIR_ID_MISMATCH:${runId}`)
       if(repair.verified===true)repairReceipt=repair
     }
