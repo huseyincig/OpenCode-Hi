@@ -97,7 +97,7 @@ function baseClient(createIDs=[]){
 
 test('plugin parent idle while permission/worker wait preserves stagnation_count=0',async()=>{
   const dir=mkdtempSync(join(tmpdir(),'hi-idle-wait-'))
-  const {client}=baseClient(['child-wait'])
+  const {client}=baseClient(['child-wait']);client.session.status=async()=>({data:{'child-wait':{type:'busy'}}})
   const hooks=await HiPlugin({directory:dir,worktree:dir,project:{},client});await hooks.config({})
   await hooks['chat.message']({sessionID:'p1'},{message:{role:'user'},parts:[{type:'text',text:'fix bug'}]})
   await assessPluginMission(hooks,'p1',{task_kind:'bug-fix',likely_verification:['targeted-tests']})

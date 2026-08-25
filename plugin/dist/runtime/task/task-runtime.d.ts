@@ -13,6 +13,7 @@ import type { ChildSessionPort, HostAssistantError, HostAssistantResult } from '
 import type { HostCapabilityContract } from '../../contracts/host-capability.js';
 import type { HostUsageObservation } from '../../contracts/execution-usage.js';
 import type { LocalPreviewManager } from '../browser/local-preview.js';
+import { type MissionLivenessAssessment, type ProcessLivenessObservation } from '../liveness/assessment.js';
 export interface StartTaskInput {
     objective?: string;
     role?: string;
@@ -147,15 +148,14 @@ export declare class TaskRuntime {
     reconcileUserConstraint(m: MissionState, text: string): Promise<number>;
     noteNativeWriteSet(m: MissionState, workerID: string, files: string[], source?: string, stateHash?: string): Promise<void>;
     noteNativeStatus(m: MissionState, workerID: string, status: string): void;
-    applyResult(m: MissionState, workerID: string, result: WorkerResult): void;
-    recoverStalledAwaitWorker(m: MissionState): Promise<{
-        disposition: "NOOP" | "RECOVERED" | "QUARANTINED" | "BLOCKED";
+    assessLiveness(m: MissionState, now?: number, processes?: Record<string, ProcessLivenessObservation>, knownHostSessions?: Record<string, 'idle' | 'busy' | 'retry' | 'unknown'>): Promise<MissionLivenessAssessment>;
+    recoverStalledExecution(m: MissionState, assessment: MissionLivenessAssessment): Promise<{
+        disposition: "NOOP" | "RECOVERED";
         reason: string;
         worker_id?: string;
         task_id?: string;
-        from_model?: string;
-        to_model?: string;
     }>;
+    applyResult(m: MissionState, workerID: string, result: WorkerResult): void;
     recoverStagnation(m: MissionState, level: number, action?: 'same-worker-resume' | 'model-escalation'): Promise<boolean>;
     fail(m: MissionState, workerID: string, error: string): void;
     peek(m: MissionState, id: string): any;

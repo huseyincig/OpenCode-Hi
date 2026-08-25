@@ -9,6 +9,7 @@ import { classifyRuntimeHumanDecision, openHumanDecision } from '../human-decisi
 import { runtimeSignal } from '../events/event-sink.js';
 import { evaluateIdle, shouldCountStagnation } from '../continuation/evaluator.js';
 import { evaluateCompletion } from '../completion/evaluator.js';
+import { assessMissionLiveness } from '../liveness/assessment.js';
 function resetCompactionSensitiveRecovery(m, sessionID, workerID) {
     const priorStagnation = m.continuation.stagnation_count, recoveryHistoryPreserved = m.continuation.recovery_history?.length ?? 0, stagnationNudgeCleared = Boolean(m.continuation.pending_nudge?.reason.startsWith('stagnation-level-'));
     m.continuation.stagnation_count = 0;
@@ -317,23 +318,35 @@ export class RuntimeEventController {
             return;
         const progressed = store.updateProgress(m, false);
         void eventSink(runtimeSignal('mission.idle', m.identity.mission_id));
-        let decision = evaluateIdle(m, Date.now(), projectRoot);
-        if (decision.decision === 'WAIT' && decision.reason_code === 'waiting-worker') {
-            const liveness = await tasks.recoverStalledAwaitWorker(m);
-            if (liveness.disposition !== 'NOOP') {
-                appendLedger(m, 'runtime.liveness-recovery', { worker_id: liveness.worker_id, task_id: liveness.task_id, payload: { disposition: liveness.disposition, reason: liveness.reason, from_model: liveness.from_model, to_model: liveness.to_model } });
-                if (liveness.disposition === 'RECOVERED' || liveness.disposition === 'QUARANTINED') {
-                    persistence.save(store.all());
-                    return;
-                }
-                decision = evaluateIdle(m, Date.now(), projectRoot);
+        const processLiveness = typeof processRuntime.livenessObservations === 'function' ? processRuntime.livenessObservations(m) : {};
+        let liveness = typeof tasks.assessLiveness === 'function' ? await tasks.assessLiveness(m, Date.now(), processLiveness, { [m.identity.session_id]: 'idle' }) : assessMissionLiveness(m, { now: Date.now(), processes: processLiveness, hostSessions: { [m.identity.session_id]: 'idle' } });
+        appendLedger(m, 'runtime.liveness-assessment', { payload: { state: liveness.state, inflight: liveness.inflight, last_durable_progress_at: liveness.last_durable_progress_at, no_progress_ms: liveness.no_progress_ms, no_progress_window_ms: liveness.no_progress_window_ms, reasons: liveness.reasons.slice(0, 12) } });
+        if (liveness.state === 'RECONCILE') {
+            const reconciled = typeof tasks.reconcileRestoredChildren === 'function' ? await tasks.reconcileRestoredChildren(m) : 0;
+            if (reconciled) {
+                store.updateProgress(m);
+                liveness = await tasks.assessLiveness(m, Date.now(), processRuntime.livenessObservations(m), { [m.identity.session_id]: 'idle' });
+            }
+            if (liveness.state === 'RECONCILE') {
+                persistence.save(store.all());
+                return;
             }
         }
+        if (liveness.state === 'STALLED') {
+            const recovery = typeof tasks.recoverStalledExecution === 'function' ? await tasks.recoverStalledExecution(m, liveness) : { disposition: 'NOOP', reason: 'liveness-recovery-port-unavailable' };
+            appendLedger(m, 'runtime.liveness-recovery', { worker_id: recovery.worker_id, task_id: recovery.task_id, payload: { disposition: recovery.disposition, reason: recovery.reason } });
+            if (recovery.disposition === 'RECOVERED') {
+                store.updateProgress(m);
+                persistence.save(store.all());
+                return;
+            }
+        }
+        let decision = evaluateIdle(m, Date.now(), projectRoot);
         if (!progressed && shouldCountStagnation(decision)) {
             store.updateProgress(m, true);
             decision = evaluateIdle(m, Date.now(), projectRoot);
         }
-        appendLedger(m, 'runtime.decision', { payload: { decision: decision.decision, reason: decision.reason, reason_code: decision.reason_code, progressed, stagnation_count: m.continuation.stagnation_count } });
+        appendLedger(m, 'runtime.decision', { payload: { decision: decision.decision, reason: decision.reason, reason_code: decision.reason_code, progressed, stagnation_count: m.continuation.stagnation_count, liveness_state: liveness.state, liveness_inflight: liveness.inflight } });
         if (decision.decision === 'STOP') {
             const c = evaluateCompletion(m, projectRoot);
             if (c.complete)

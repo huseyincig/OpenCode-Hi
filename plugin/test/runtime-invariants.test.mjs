@@ -175,7 +175,7 @@ test('Gap #recovery-runtime: level-2 reasoning correction preserves the exact ch
   const { createConcurrencyPolicySource } = await import('../dist/runtime/scheduler/concurrency.js')
   const { resolveHiConfig } = await import('../dist/config/resolver.js')
   const calls=[]
-  const client={session:{promptAsync:async req=>{calls.push(req)}}}
+  const client={session:{promptAsync:async req=>{calls.push(req)},status:async()=>({data:{'child-1':{type:'idle'}}})}}
   const store=new MissionStore()
   const m=store.start('recovery-runtime-session','fix bug')
   store.applyInitialSemanticAssessment('recovery-runtime-session',{material:true,message_kind:'mission',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',required_capabilities:['implementation'],requested_external_actions:[],likely_verification:[],likely_targets:[],intent_signals:[],suppressed_intent_signals:[]})

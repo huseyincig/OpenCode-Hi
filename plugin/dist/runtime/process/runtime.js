@@ -32,6 +32,7 @@ export class ProcessRuntime {
     executor;
     projectRoot;
     getHostConfig;
+    #verifiedRunningOwners = new Set();
     constructor(executor, projectRoot, getHostConfig) {
         this.executor = executor;
         this.projectRoot = projectRoot;
@@ -79,6 +80,8 @@ export class ProcessRuntime {
             try {
                 const handle = await this.executor.spawn(request);
                 replaceProcess(m, handle.contract);
+                if (handle.contract.status === 'RUNNING')
+                    this.#verifiedRunningOwners.add(handle.contract.process_id);
                 appendLedger(m, 'process.spawned', { task_id: task.id, worker_id: worker.id, payload: { process_id: handle.contract.process_id, pid: handle.contract.pid, host: handle.contract.host, timeout_at: handle.contract.timeout_at } });
                 return structuredClone(handle.contract);
             }
@@ -91,9 +94,17 @@ export class ProcessRuntime {
         throw new Error('Hi process native permission resolution exceeded bounded attempts');
     }
     async write(m, id, input) { this.contract(m, id); await this.executor.write(id, input); appendLedger(m, 'process.stdin', { payload: { process_id: id, chars: input.length } }); }
-    async read(m, id, cursor, maxChars) { const current = this.contract(m, id), out = await this.executor.read(id, { cursor, max_chars: maxChars }); const source = `process:${id}:${out.start_cursor}-${out.end_cursor}`, stateHash = hash(out.text); addEvidence(m, { kind: 'diagnostic-evidence', summary: `Bounded process output observed (${out.text.length} chars${out.truncated ? ', truncated' : ''})`, scope: m.execution.tasks.find(t => t.id === current.task_id)?.scope ?? [], source, source_state_hash: stateHash, task_id: current.task_id, obligation_ids: m.execution.tasks.find(t => t.id === current.task_id)?.obligation_ids ?? [], outcome: 'pending', reason: 'process-output-observation' }); appendLedger(m, 'process.output-observed', { task_id: current.task_id, worker_id: current.worker_id, payload: { process_id: id, start_cursor: out.start_cursor, end_cursor: out.end_cursor, available_start: out.available_start_cursor, available_end: out.available_end_cursor, truncated: out.truncated, state_hash: stateHash } }); return out; }
-    noteExit(m, contract) { replaceProcess(m, contract); if (contract.status !== 'RUNNING')
-        clearProcessBlockers(m, contract.process_id, ['process-termination-unverified', 'process-wait-failed']); appendLedger(m, 'process.exited', { task_id: contract.task_id, worker_id: contract.worker_id, payload: { process_id: contract.process_id, status: contract.status, exit_code: contract.exit_code, cleanup_state: contract.cleanup_state } }); }
+    async read(m, id, cursor, maxChars) { const current = this.contract(m, id), out = await this.executor.read(id, { cursor, max_chars: maxChars }), stateHash = hash(out.text), duplicate = !out.text.length || out.end_cursor <= out.start_cursor || m.execution.ledger.some(e => e.type === 'process.output-observed' && e.payload?.process_id === id && e.payload?.state_hash === stateHash); if (!duplicate) {
+        const source = `process:${id}:${out.start_cursor}-${out.end_cursor}`;
+        addEvidence(m, { kind: 'diagnostic-evidence', summary: `Bounded process output observed (${out.text.length} chars${out.truncated ? ', truncated' : ''})`, scope: m.execution.tasks.find(t => t.id === current.task_id)?.scope ?? [], source, source_state_hash: stateHash, task_id: current.task_id, obligation_ids: m.execution.tasks.find(t => t.id === current.task_id)?.obligation_ids ?? [], outcome: 'pending', reason: 'process-output-observation' });
+        appendLedger(m, 'process.output-observed', { task_id: current.task_id, worker_id: current.worker_id, payload: { process_id: id, start_cursor: out.start_cursor, end_cursor: out.end_cursor, available_start: out.available_start_cursor, available_end: out.available_end_cursor, truncated: out.truncated, state_hash: stateHash } });
+    }
+    else
+        appendLedger(m, 'process.output-repeat', { task_id: current.task_id, worker_id: current.worker_id, payload: { process_id: id, start_cursor: out.start_cursor, end_cursor: out.end_cursor, state_hash: stateHash } }); return out; }
+    noteExit(m, contract) { replaceProcess(m, contract); if (contract.status !== 'RUNNING') {
+        this.#verifiedRunningOwners.delete(contract.process_id);
+        clearProcessBlockers(m, contract.process_id, ['process-termination-unverified', 'process-wait-failed']);
+    } appendLedger(m, 'process.exited', { task_id: contract.task_id, worker_id: contract.worker_id, payload: { process_id: contract.process_id, status: contract.status, exit_code: contract.exit_code, cleanup_state: contract.cleanup_state } }); }
     async wait(m, id) { const before = this.contract(m, id); try {
         const result = await this.executor.wait(id);
         this.noteExit(m, result.contract);
@@ -143,6 +154,14 @@ export class ProcessRuntime {
         throw error;
     } }
     list(m) { return m.execution.processes.map(item => structuredClone(item)); }
+    livenessObservations(m) { const out = {}; for (const process of m.execution.processes) {
+        if (process.status === 'RUNNING')
+            out[process.process_id] = { owner_verified: this.#verifiedRunningOwners.has(process.process_id), status: this.#verifiedRunningOwners.has(process.process_id) ? 'running' : 'unknown' };
+        else if (process.status === 'ORPHANED')
+            out[process.process_id] = { owner_verified: false, status: 'unknown' };
+        else
+            out[process.process_id] = { owner_verified: true, status: 'exited' };
+    } return out; }
     async stopMission(m) { let stopped = 0; for (const process of [...m.execution.processes]) {
         if (process.status === 'RUNNING') {
             try {
@@ -179,6 +198,10 @@ export class ProcessRuntime {
             try {
                 const result = await this.executor.reconcile(stored);
                 replaceProcess(m, result.contract);
+                if (result.disposition === 'ADOPTED' && result.contract.status === 'RUNNING')
+                    this.#verifiedRunningOwners.add(stored.process_id);
+                else
+                    this.#verifiedRunningOwners.delete(stored.process_id);
                 if (result.disposition !== 'ORPHANED')
                     clearProcessBlockers(m, stored.process_id, ['process-termination-unverified', 'process-wait-failed']);
                 appendLedger(m, 'process.restart-reconciled', { task_id: stored.task_id, worker_id: stored.worker_id, payload: { process_id: stored.process_id, disposition: result.disposition, status: result.contract.status, cleanup_state: result.contract.cleanup_state } });
@@ -189,6 +212,7 @@ export class ProcessRuntime {
                 const orphan = { ...stored, status: 'ORPHANED', cleanup_state: 'QUARANTINED', termination_reason: 'restart-reconcile-error' };
                 delete orphan.exit_code;
                 replaceProcess(m, orphan);
+                this.#verifiedRunningOwners.delete(stored.process_id);
                 m.execution.blockers = [...new Set([...m.execution.blockers, `process-orphan:${stored.process_id}`])];
                 appendLedger(m, 'process.restart-reconcile-failed', { task_id: stored.task_id, worker_id: stored.worker_id, payload: { process_id: stored.process_id, error: String(error) } });
             }

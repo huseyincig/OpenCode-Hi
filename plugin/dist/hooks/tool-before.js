@@ -14,6 +14,7 @@ import { HI_BROWSER_EXECUTION_TOOL_IDS } from '../runtime/browser/executor.js';
 import { resolveBrowserExecutionOwner } from '../runtime/browser/ownership.js';
 import { isHiReadOnlyChildRole } from '../runtime/roles/catalog.js';
 import { projectDirectMutationDecision } from '../runtime/scheduler/project-peer-view.js';
+import { recordToolOperationProgress } from '../runtime/liveness/assessment.js';
 const NON_MATERIAL_CONTROL_TOOLS = new Set(['hi_intent_assess', 'hi_status', 'hi_ledger', 'hi_readiness', 'hi_settings', 'hi_role_models']);
 const SETTINGS_CONTROL_TARGETS = new Set(['hi_settings', 'hi_role_models']);
 function assessedExplicitSettingsRequest(m) {
@@ -157,6 +158,9 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
         }
         if (m.identity.status !== 'active' && !matchRollback(m, String(args?.command ?? '')))
             return;
+        const operationID = String(input?.callID ?? input?.callId ?? '').trim();
+        if (operationID)
+            recordToolOperationProgress(m, { operation_id: operationID, session_id: String(sid ?? ''), tool, generation: child?.generation_at_spawn ?? m.continuation.generation }, 'started');
         const evidenceRoot = m.identity.intent.scope === 'local' ? (workingDirectory ?? projectRoot) : projectRoot;
         observeToolBefore(m, tool, args, evidenceRoot);
         store.updateProgress(m);

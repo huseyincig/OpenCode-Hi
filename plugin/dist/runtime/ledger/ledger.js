@@ -1,4 +1,5 @@
 import { redactDurableText } from '../privacy/boundary.js';
+import { durableProgressKey } from '../liveness/progress-classifier.js';
 const MAX_EVENTS = 200;
 const MAX_STRING = 600;
 const MAX_ARRAY = 24;
@@ -29,9 +30,11 @@ function bounded(value, depth = 0) {
     }
     return redactDurableText(String(value)).slice(0, MAX_STRING);
 }
-function trimLedger(events) {
+function trimLedger(mission) {
+    const events = mission.execution.ledger;
     while (events.length > MAX_EVENTS) {
-        const removable = events.findIndex((e, i) => i < events.length - 1 && !CRITICAL.has(e.type));
+        const protectedProgress = [...events].reverse().find(e => Boolean(durableProgressKey(e, mission.continuation.generation)))?.id;
+        const removable = events.findIndex((e, i) => i < events.length - 1 && !CRITICAL.has(e.type) && e.id !== protectedProgress);
         events.splice(removable >= 0 ? removable : 0, 1);
     }
 }
@@ -39,7 +42,7 @@ export function appendLedger(mission, type, detail = {}) {
     const payload = detail.payload === undefined ? undefined : bounded(detail.payload);
     const event = { id: id(), at: Date.now(), mission_id: mission.identity.mission_id, type: type.slice(0, 160), task_id: detail.task_id?.slice(0, 160), worker_id: detail.worker_id?.slice(0, 160), payload };
     mission.execution.ledger.push(event);
-    trimLedger(mission.execution.ledger);
+    trimLedger(mission);
     mission.identity.updated_at = event.at;
     return event;
 }

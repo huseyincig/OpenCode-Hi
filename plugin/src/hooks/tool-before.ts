@@ -16,6 +16,7 @@ import { HI_BROWSER_EXECUTION_TOOL_IDS } from '../runtime/browser/executor.js'
 import { resolveBrowserExecutionOwner } from '../runtime/browser/ownership.js'
 import { isHiReadOnlyChildRole } from '../runtime/roles/catalog.js'
 import { projectDirectMutationDecision } from '../runtime/scheduler/project-peer-view.js'
+import { recordToolOperationProgress } from '../runtime/liveness/assessment.js'
 const NON_MATERIAL_CONTROL_TOOLS=new Set(['hi_intent_assess','hi_status','hi_ledger','hi_readiness','hi_settings','hi_role_models'])
 const SETTINGS_CONTROL_TARGETS=new Set(['hi_settings','hi_role_models'])
 function assessedExplicitSettingsRequest(m:any):boolean{
@@ -51,5 +52,6 @@ export function createToolBeforeHook(store:MissionStore,background?:BackgroundRe
   if(tool==='bash'&&typeof args?.command==='string'){assertSafeGitMutation(m,args.command);if(mutatesGitIndex(args.command))invalidateStagingProof(m);if(isGitTopologyMutation(args.command)){beginGitTopologyMutation(m,args.command);invalidateGitTopologyProof(m)}}
   if(tool==='bash'&&typeof args?.command==='string'&&privilegedAction(args.command)){if(!canonicalExternalCommand(args.command))throw new Error('Hi authority boundary: external-effect commands must use canonical command form so OpenCode native permission patterns remain authoritative. Use the bash tool cwd field instead of git -C/wrappers, and place supported CLI options after the privileged subcommand.');if(isReleaseCreate(args.command)||isPackagePublish(args.command))activateMethodologySignal(m,projectRoot,{signal:'release.boundary',producer:'release',reason:'A concrete release/package publication command reached the release safety boundary.'});assertReleaseChainPrecondition(m,args.command,projectRoot??args?.cwd);if(child)throw new Error('Hi authority boundary: child workers may not execute publish/push/deploy or other privileged external effects. Parent Hi must own the exact authority contract.');const claim=claimAuthorizedAction(m,args.command,args?.cwd);if(claim==='duplicate')throw new Error('Hi idempotency guard: this exact privileged action is already in-flight or completed, or is awaiting authority.');if(claim==='conflict')throw new Error('Hi authority boundary: another exact privileged action already owns the pending/approved/executing authority slot. Resolve or invalidate it before starting a different external effect.');beginAuthorizedAction(m,args.command,args?.cwd)}
   if(m.identity.status!=='active'&&!matchRollback(m,String(args?.command??'')))return
+  const operationID=String(input?.callID??input?.callId??'').trim();if(operationID)recordToolOperationProgress(m,{operation_id:operationID,session_id:String(sid??''),tool,generation:child?.generation_at_spawn??m.continuation.generation},'started')
   const evidenceRoot=m.identity.intent.scope==='local'?(workingDirectory??projectRoot):projectRoot;observeToolBefore(m,tool,args,evidenceRoot);store.updateProgress(m)
 }}

@@ -27,7 +27,7 @@
       "area": "task-runtime",
       "canonical_owner": "TaskRuntime",
       "owner_path": "plugin/src/runtime/task/task-runtime.ts",
-      "owner_sha256": "f69d0dce5e6d616e6d8e8f6e3a74fdb6947ff02abce9d056e454c8b0e1efeadd",
+      "owner_sha256": "984c2a09458b8aad12d96e6493cbe2207d8ae8fffd2436f6effe387b9c1163e8",
       "producer_or_contract_paths": [
         "plugin/src/runtime/task/contracts.ts"
       ],
@@ -434,7 +434,7 @@
       "area": "telemetry",
       "canonical_owner": "Mission-derived ledger metrics",
       "owner_path": "plugin/src/runtime/ledger/ledger.ts",
-      "owner_sha256": "774f4651d830b5ead4dc9b23e9d5b23cb5b006bcb840eb28ca19d04131191694",
+      "owner_sha256": "eaadeadb1e0225da40e4222aca8ff5998eda76b0987c84172c2e32ecceb3594b",
       "producer_or_contract_paths": [
         "plugin/src/runtime/ledger/metrics.ts",
         "plugin/src/runtime/ledger/report.ts",

@@ -11,9 +11,9 @@ import {evaluateIdle} from '../dist/runtime/continuation/evaluator.js'
 import {recordRecoveryStrategy} from '../dist/runtime/continuation/recovery-governor.js'
 import {appendLedger} from '../dist/runtime/ledger/ledger.js'
 
-function setup(promptImpl=async()=>{},withAbort=true,models=[],assistantResultReader){
+function setup(promptImpl=async()=>{},withAbort=true,models=[],assistantResultReader,hostStatus='busy'){
   const calls=[],aborts=[]
-  let seq=0;const session={promptAsync:async arg=>{calls.push(arg);return promptImpl(arg)},create:async()=>({data:{id:`recovery-${++seq}`}}),diff:async()=>({data:[]}),status:async()=>({data:{child1:{type:'busy'}}})};if(withAbort)session.abort=async req=>{aborts.push(req);return{data:true}};const client={session}
+  let seq=0;const session={promptAsync:async arg=>{calls.push(arg);return promptImpl(arg)},create:async()=>({data:{id:`recovery-${++seq}`}}),diff:async()=>({data:[]}),status:async()=>({data:{child1:{type:hostStatus}}})};if(withAbort)session.abort=async req=>{aborts.push(req);return{data:true}};const client={session}
   const scheduler=createConcurrencyPolicySource(()=>({global:4,providers:{},models:{}}))
   const activityReader=assistantResultReader===null?undefined:(assistantResultReader??(async()=>({text:''})))
   const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),scheduler,process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>models,()=>({}),undefined,[],undefined,undefined,undefined,undefined,undefined,activityReader)
@@ -138,7 +138,7 @@ test('uncertain fallback dispatch preserves active ownership',async()=>{
 
 test('behavioral hazard opens one fresh recovery-only model after two same-model corrections without semantic gain',async()=>{
   const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding','balanced']}]
-  const {runtime,m,calls,aborts}=setup(async()=>{},true,models)
+  const {runtime,m,calls,aborts}=setup(async()=>{},true,models,undefined,'idle')
   const worker=m.execution.workers[0],task=m.execution.tasks[0]
   worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/recovery'];worker.fallbacks=[]
   recordRecoveryStrategy(m,{level:1,action:'same-worker-resume'},'started',10,{task_id:task.id,worker_id:worker.id,model:'p/primary'})
@@ -154,7 +154,7 @@ test('behavioral hazard opens one fresh recovery-only model after two same-model
 
 test('behavioral model escalation is fail-closed before the hazard threshold',async()=>{
   const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding']}]
-  const {runtime,m,calls}=setup(async()=>{},true,models)
+  const {runtime,m,calls}=setup(async()=>{},true,models,undefined,'idle')
   const worker=m.execution.workers[0],task=m.execution.tasks[0]
   worker.status='ready';task.status='waiting';worker.recovery_candidates=['p/recovery'];worker.fallbacks=[]
   recordRecoveryStrategy(m,{level:1,action:'same-worker-resume'},'started',10,{task_id:task.id,worker_id:worker.id,model:'p/primary'})
@@ -182,7 +182,7 @@ test('normal task_id corrective resumes feed the behavioral hazard circuit and t
     {id:'p/primary',provider:'p',writeCapable:true,tags:['coding','balanced']},
     {id:'p/recovery',provider:'p',writeCapable:true,tags:['coding','balanced']},
   ]
-  const {runtime,m,calls}=setup(async()=>{},true,models)
+  const {runtime,m,calls}=setup(async()=>{},true,models,undefined,'idle')
   const worker=m.execution.workers[0],task=m.execution.tasks[0]
   worker.status='ready';task.status='waiting';worker.fallbacks=[];worker.recovery_candidates=['p/recovery'];worker.requested_model=undefined
   task.result={status:'FIX_REQUIRED',summary:'contract correction required',changed_files:[],evidence:[],open_issues:['worker-result-contract-invalid'],needs_context:['return structured WorkerResult']}
@@ -207,75 +207,46 @@ test('normal task_id corrective resumes feed the behavioral hazard circuit and t
 })
 
 
-test('busy child with three bounded await timeouts and 120s observed wait is host-aborted then escalated to the next recovery-only model',async()=>{
+test('busy/retry child remains verified inflight after repeated bounded await timeouts and is never stall-aborted',async()=>{
   const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding','balanced']}]
-  const {runtime,m,calls,aborts}=setup(async()=>{},true,models)
-  const worker=m.execution.workers[0],task=m.execution.tasks[0]
-  worker.attempt=1;worker.recovery_candidates=['p/recovery'];worker.selected_methodologies=['hi-debugging-root-cause'];worker.loaded_methodologies=['hi-debugging-root-cause'];task.execution_profile.tools=['read','skill'];task.execution_profile.methodologies=['hi-debugging-root-cause']
-  for(const timeout_ms of [30_000,60_000,60_000])appendLedger(m,'worker.await-timeout',{task_id:task.id,worker_id:worker.id,payload:{session_id:'child1',attempt:1,timeout_ms}})
-  const recovered=await runtime.recoverStalledAwaitWorker(m)
-  assert.equal(recovered.disposition,'RECOVERED')
-  assert.equal(recovered.from_model,'p/primary');assert.equal(recovered.to_model,'p/recovery')
-  assert.equal(aborts.length,1,'stale busy ownership must be host-aborted before replacement execution')
-  assert.equal(worker.model,'p/recovery');assert.equal(worker.session_id,'recovery-1');assert.equal(worker.forked_from_session_id,'child1');assert.equal(worker.status,'busy');assert.equal(task.status,'running')
-  assert.deepEqual(worker.selected_methodologies,['hi-debugging-root-cause'],'same Task keeps methodology ownership across liveness recovery')
-  assert.equal(calls.length,1);assert.deepEqual(calls[0].body.model,{providerID:'p',modelID:'recovery'});assert.notEqual(calls[0].body.tools.skill,false)
-  assert.match(JSON.stringify(calls[0]),/host-liveness stall/i)
-  assert.ok(m.execution.ledger.some(e=>e.type==='worker.busy-stall-recovery'&&e.payload?.from_session==='child1'&&e.payload?.to_session==='recovery-1'))
-})
-
-
-test('busy child watchdog treats meaningful OpenCode assistant progress inside the await window as liveness and does not abort',async()=>{
-  const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding','balanced']}]
-  let observedAt=0
-  const {runtime,m,calls,aborts}=setup(async()=>{},true,models,async()=>({text:'',activity:{message_id:'msg-progress',observed_at:observedAt,output_tokens:42,reasoning_tokens:7,tool_calls:1,text_chars:18}}))
-  const worker=m.execution.workers[0],task=m.execution.tasks[0]
-  worker.attempt=1;worker.recovery_candidates=['p/recovery'];worker.started_at=Date.now()-300_000
-  const events=[]
-  for(const timeout_ms of [60_000,60_000,60_000])events.push(appendLedger(m,'worker.await-timeout',{task_id:task.id,worker_id:worker.id,payload:{session_id:'child1',attempt:1,timeout_ms}}))
-  observedAt=events[1].at+1
-  const recovered=await runtime.recoverStalledAwaitWorker(m)
-  assert.equal(recovered.disposition,'NOOP');assert.equal(recovered.reason,'meaningful-host-progress-observed')
-  assert.equal(aborts.length,0,'await timeout count must not abort a child that progressed during the wait window');assert.equal(calls.length,0)
-  assert.equal(worker.session_id,'child1');assert.equal(worker.model,'p/primary');assert.equal(task.status,'running')
-  assert.ok(m.execution.ledger.some(e=>e.type==='worker.await-progress-observed'&&e.payload?.activity_message_id==='msg-progress'))
-})
-
-
-test('busy child watchdog fails closed when canonical host activity cannot be read',async()=>{
-  const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding']}]
-  const {runtime,m,calls,aborts}=setup(async()=>{},true,models,null)
-  const worker=m.execution.workers[0],task=m.execution.tasks[0];worker.attempt=1;worker.recovery_candidates=['p/recovery'];worker.started_at=Date.now()-300_000
-  for(const timeout_ms of [60_000,60_000,60_000])appendLedger(m,'worker.await-timeout',{task_id:task.id,worker_id:worker.id,payload:{session_id:'child1',attempt:1,timeout_ms}})
-  const recovered=await runtime.recoverStalledAwaitWorker(m)
-  assert.equal(recovered.disposition,'NOOP');assert.equal(recovered.reason,'host-activity-reader-unavailable');assert.equal(aborts.length,0);assert.equal(calls.length,0);assert.equal(worker.session_id,'child1')
-})
-
-test('busy child watchdog fails closed when canonical host activity read errors',async()=>{
-  const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding']}]
-  const {runtime,m,calls,aborts}=setup(async()=>{},true,models,async()=>{throw new Error('message surface unavailable')})
-  const worker=m.execution.workers[0],task=m.execution.tasks[0];worker.attempt=1;worker.recovery_candidates=['p/recovery'];worker.started_at=Date.now()-300_000
-  for(const timeout_ms of [60_000,60_000,60_000])appendLedger(m,'worker.await-timeout',{task_id:task.id,worker_id:worker.id,payload:{session_id:'child1',attempt:1,timeout_ms}})
-  const recovered=await runtime.recoverStalledAwaitWorker(m)
-  assert.equal(recovered.disposition,'NOOP');assert.equal(recovered.reason,'host-activity-read-failed');assert.equal(aborts.length,0);assert.equal(calls.length,0);assert.equal(worker.session_id,'child1')
-})
-
-test('busy child watchdog stays inert below the bounded wait threshold',async()=>{
-  const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding']}]
   const {runtime,m,calls,aborts}=setup(async()=>{},true,models)
   const worker=m.execution.workers[0],task=m.execution.tasks[0];worker.attempt=1;worker.recovery_candidates=['p/recovery']
-  for(const timeout_ms of [30_000,60_000])appendLedger(m,'worker.await-timeout',{task_id:task.id,worker_id:worker.id,payload:{session_id:'child1',attempt:1,timeout_ms}})
-  const recovered=await runtime.recoverStalledAwaitWorker(m)
-  assert.equal(recovered.disposition,'NOOP');assert.equal(calls.length,0);assert.equal(aborts.length,0);assert.equal(worker.session_id,'child1');assert.equal(worker.model,'p/primary')
+  for(const timeout_ms of [30_000,60_000,60_000])appendLedger(m,'worker.await-timeout',{task_id:task.id,worker_id:worker.id,payload:{session_id:'child1',attempt:1,timeout_ms}})
+  const assessment=await runtime.assessLiveness(m,Date.now()+180_000,{})
+  assert.equal(assessment.state,'ACTIVE');assert.equal(assessment.inflight,'YES');assert.equal(assessment.destructive_recovery_allowed,false)
+  assert.equal(aborts.length,0);assert.equal(calls.length,0);assert.equal(worker.session_id,'child1');assert.equal(worker.model,'p/primary');assert.equal(task.status,'running')
 })
 
+test('unique OpenCode assistant activity is durable progress while busy/retry remains inflight rather than stall',async()=>{
+  let observedAt=Date.now()+120_000
+  const {runtime,m,calls,aborts}=setup(async()=>{},true,[],async()=>({text:'',activity:{message_id:'msg-progress',observed_at:observedAt,output_tokens:42,reasoning_tokens:7,tool_calls:1,text_chars:18}}))
+  const task=m.execution.tasks[0],worker=m.execution.workers[0];for(const timeout_ms of [60_000,60_000,60_000])appendLedger(m,'worker.await-timeout',{task_id:task.id,worker_id:worker.id,payload:{session_id:'child1',attempt:worker.attempt,timeout_ms}})
+  const assessment=await runtime.assessLiveness(m,observedAt+1,{})
+  assert.equal(assessment.state,'ACTIVE');assert.equal(assessment.inflight,'YES');assert.equal(assessment.last_durable_progress_at,observedAt)
+  assert.ok(m.execution.ledger.some(e=>e.type==='assistant.progress-observed'&&e.payload?.message_id==='msg-progress'));assert.equal(aborts.length,0);assert.equal(calls.length,0)
+})
 
-test('busy child threshold with no admissible recovery model aborts stale ownership and becomes canonical BLOCKED',async()=>{
+test('busy host remains verified inflight when assistant activity is unavailable or unreadable',async()=>{
+  for(const reader of [null,async()=>{throw new Error('message surface unavailable')}]){
+    const {runtime,m,calls,aborts}=setup(async()=>{},true,[],reader)
+    const assessment=await runtime.assessLiveness(m,Date.now()+180_000,{})
+    assert.equal(assessment.state,'ACTIVE');assert.equal(assessment.inflight,'YES');assert.equal(assessment.destructive_recovery_allowed,false);assert.equal(aborts.length,0);assert.equal(calls.length,0)
+  }
+})
+
+test('lack of a recovery model never authorizes replacement while old exact execution is busy',async()=>{
   const {runtime,m,calls,aborts}=setup(async()=>{},true,[])
-  const worker=m.execution.workers[0],task=m.execution.tasks[0];worker.attempt=1;worker.recovery_candidates=[]
-  for(const timeout_ms of [60_000,60_000,60_000])appendLedger(m,'worker.await-timeout',{task_id:task.id,worker_id:worker.id,payload:{session_id:'child1',attempt:1,timeout_ms}})
-  const recovered=await runtime.recoverStalledAwaitWorker(m)
-  assert.equal(recovered.disposition,'BLOCKED');assert.equal(recovered.reason,'no-admissible-recovery-model')
-  assert.equal(aborts.length,1);assert.equal(calls.length,0);assert.equal(worker.session_id,undefined);assert.equal(worker.status,'ready');assert.equal(task.status,'blocked');assert.equal(task.result.status,'BLOCKED')
-  assert.ok(task.result.open_issues.some(x=>x.startsWith('host-liveness-recovery:no-admissible-recovery-model:')))
+  const worker=m.execution.workers[0],task=m.execution.tasks[0];worker.recovery_candidates=[]
+  const assessment=await runtime.assessLiveness(m,Date.now()+180_000,{})
+  const recovery=await runtime.recoverStalledExecution(m,assessment)
+  assert.equal(assessment.inflight,'YES');assert.equal(recovery.disposition,'NOOP');assert.equal(recovery.reason,'canonical-stall-not-admitted')
+  assert.equal(aborts.length,0);assert.equal(calls.length,0);assert.equal(worker.session_id,'child1');assert.equal(worker.status,'busy');assert.equal(task.status,'running')
+})
+test('canonical STALLED assessment on quiescent exact session unlocks bounded same-session recovery',async()=>{
+  const {runtime,m,calls,aborts}=setup(async()=>{},true,[],undefined,'idle')
+  const worker=m.execution.workers[0],task=m.execution.tasks[0];worker.status='ready';task.status='waiting'
+  const assessment=await runtime.assessLiveness(m,Date.now()+180_000,{})
+  assert.equal(assessment.state,'STALLED');assert.equal(assessment.inflight,'NO');assert.equal(assessment.destructive_recovery_allowed,true)
+  const recovery=await runtime.recoverStalledExecution(m,assessment)
+  assert.equal(recovery.disposition,'RECOVERED');assert.equal(recovery.reason,'canonical-stall-quiescent-resume');assert.equal(worker.session_id,'child1');assert.equal(worker.status,'busy');assert.equal(task.status,'running');assert.equal(aborts.length,0);assert.equal(calls.length,1)
 })

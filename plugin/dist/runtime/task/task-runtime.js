@@ -35,6 +35,7 @@ import { deniedMutationAtoms } from '../constraint/constraint-atoms.js';
 import { explorationClearanceFreshness } from '../execution/exploration-clearance.js';
 import { QueuedWorkerDispatcher } from './queued-worker-dispatcher.js';
 import { projectSchedulingPeerView } from '../scheduler/project-peer-view.js';
+import { assessMissionLiveness, recordAssistantProgress } from '../liveness/assessment.js';
 const CATEGORIES = new Set(['quick', 'standard', 'deep', 'visual', 'critical']);
 const MAX_QUEUE = 32;
 class TaskQueueCapacityError extends Error {
@@ -161,7 +162,7 @@ export class TaskRuntime {
         this.#child = new ChildExecutionCoordinator(childHost, registry);
         this.#dispatcher = new QueuedWorkerDispatcher(childHost, this.#child, registry, scheduler, projectRoot, this.#scopedStores, getConfig, getModels, getHostConfig, (m, taskID) => this.workspaceBinding(m, taskID), (m, taskID) => this.cleanupWorkspaceForTask(m, taskID), (m, task, worker, error) => this.blockDependencyOutcome(m, task, worker, error), events, previewManager, (m) => this.projectPeerView(m));
         this.#results = new TaskResultReconciler(scheduler, registry, projectRoot, events, this.#methodologyLearning, this.#child, getHostConfig, (m, w, run) => this.queueTask(m, w, run), () => this.drainQueue(), this.#scopedStores, (m) => this.projectPeerView(m));
-        this.#recovery = new TaskRecoveryCoordinator(scheduler, registry, projectRoot, getConfig, getModels, getHostConfig, events, this.#child, () => this.drainQueue(), (m, taskID) => this.workspaceBinding(m, taskID), (m, taskID, workerID) => this.cleanupBrowserForTask(m, taskID, workerID), readAssistantResult, (m) => this.projectPeerView(m));
+        this.#recovery = new TaskRecoveryCoordinator(scheduler, registry, projectRoot, getConfig, getModels, getHostConfig, events, this.#child, () => this.drainQueue(), (m, taskID) => this.workspaceBinding(m, taskID), (m) => this.projectPeerView(m));
     }
     async sendProviderPrompt(sessionID, text, role, model, variant, tools, messageID) { return this.#child.sendProviderPrompt(sessionID, text, role, model, variant, tools, messageID); }
     recordModelProjection(worker, model, variant) { this.#child.recordModelProjection(worker, model, variant); }
@@ -946,9 +947,26 @@ export class TaskRuntime {
     }
     async noteNativeWriteSet(m, workerID, files, source = 'session-diff', stateHash) { return this.#results.noteNativeWriteSet(m, workerID, files, source, stateHash); }
     noteNativeStatus(m, workerID, status) { this.#results.noteNativeStatus(m, workerID, status); }
+    async assessLiveness(m, now = Date.now(), processes = {}, knownHostSessions = {}) { const hostSessions = { ...knownHostSessions }; for (const worker of m.execution.workers) {
+        if (!worker.session_id || ['completed', 'failed', 'cancelled'].includes(worker.status) || worker.generation_at_spawn !== m.continuation.generation)
+            continue;
+        let status = 'unknown';
+        try {
+            status = await this.#child.status(worker.session_id);
+        }
+        catch { }
+        hostSessions[worker.session_id] = status;
+        if ((status === 'busy' || status === 'retry') && this.readAssistantResult)
+            try {
+                const activity = (await this.readAssistantResult(worker.session_id, 12)).activity;
+                if (activity)
+                    recordAssistantProgress(m, { worker_id: worker.id, task_id: worker.task_id, session_id: worker.session_id, generation: worker.generation_at_spawn ?? m.continuation.generation, message_id: activity.message_id, observed_at: activity.observed_at, output_tokens: activity.output_tokens, reasoning_tokens: activity.reasoning_tokens, tool_calls: activity.tool_calls, text_chars: activity.text_chars });
+            }
+            catch { }
+    } return assessMissionLiveness(m, { now, hostSessions, processes }); }
+    async recoverStalledExecution(m, assessment) { return this.#recovery.recoverCanonicalStall(m, assessment); }
     applyResult(m, workerID, result) { const worker = m.execution.workers.find(w => w.id === workerID), task = worker ? m.execution.tasks.find(t => t.id === worker.task_id) : undefined; this.#results.applyResult(m, workerID, result); if (task?.status === 'failed')
         releaseFailedTaskMethodologyNeeds(m, task.id); }
-    async recoverStalledAwaitWorker(m) { return this.#recovery.recoverStalledAwaitWorker(m); }
     async recoverStagnation(m, level, action = 'same-worker-resume') { return this.#recovery.recoverStagnation(m, level, action); }
     fail(m, workerID, error) { this.#recovery.fail(m, workerID, error); }
     peek(m, id) { const task = m.execution.tasks.find(t => t.id === id), worker = m.execution.workers.find(w => w.id === id || w.id === task?.worker_id); return { task, worker }; }

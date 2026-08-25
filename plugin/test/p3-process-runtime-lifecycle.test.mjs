@@ -72,6 +72,12 @@ test('P3 bounded process read records hash-bound pending Evidence without persis
   const out=await runtime.read(m,p.process_id,0,8);assert.equal(out.text,'secret-o');const ev=m.execution.evidence.items.at(-1);assert.equal(ev.kind,'diagnostic-evidence');assert.equal(ev.outcome,'pending');assert.match(ev.source,/^process:/);assert.match(ev.source_state_hash,/^[a-f0-9]{64}$/);assert.doesNotMatch(JSON.stringify(ev),/secret-output/)
 })
 
+test('P3 repeated identical process output is inert and does not mint duplicate evidence/progress',async()=>{
+  const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host()),p=await runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo'})
+  const before=m.execution.evidence.items.length;await runtime.read(m,p.process_id,0,8);const once=m.execution.evidence.items.length;await runtime.read(m,p.process_id,0,8);const twice=m.execution.evidence.items.length
+  assert.equal(once,before+1);assert.equal(twice,once);assert.equal(m.execution.ledger.filter(e=>e.type==='process.output-observed').length,1);assert.equal(m.execution.ledger.filter(e=>e.type==='process.output-repeat').length,1)
+})
+
 test('P3 STOP terminates and separately cleans all owned running processes and forbids new spawn',async()=>{
   const {store,m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host())
   const a=await runtime.spawn(m,{worker_id:worker.id,command:'node',args:['a'],cwd:'/repo'}),b=await runtime.spawn(m,{worker_id:worker.id,command:'node',args:['b'],cwd:'/repo'})

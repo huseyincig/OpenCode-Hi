@@ -14,6 +14,7 @@ import { evaluateCompletion } from '../runtime/completion/evaluator.js';
 import { appendLedger } from '../runtime/ledger/ledger.js';
 import { evidenceProducerAttemptForWorker } from '../runtime/evidence/applicability.js';
 import { captureEvidenceScopeState } from '../runtime/evidence/scope-state.js';
+import { recordToolOperationProgress } from '../runtime/liveness/assessment.js';
 function outputText(output) { try {
     if (typeof output === 'string')
         return output;
@@ -80,7 +81,9 @@ export function createToolAfterHook(store, background, events, projectRoot, work
             return;
         if (child && ((child.parent_mission_id !== undefined && child.parent_mission_id !== m.identity.mission_id) || (child.generation_at_spawn !== undefined && child.generation_at_spawn !== m.continuation.generation)))
             return;
-        const tool = String(input?.tool ?? ''), args = input?.args ?? {}, text = outputText(output);
+        const tool = String(input?.tool ?? ''), args = input?.args ?? {}, text = outputText(output), operationID = String(input?.callID ?? input?.callId ?? '').trim();
+        if (operationID)
+            recordToolOperationProgress(m, { operation_id: operationID, session_id: String(sid ?? ''), tool, generation: child?.generation_at_spawn ?? m.continuation.generation }, 'result');
         const childTask = child ? m.execution.tasks.find(t => t.id === child.task_id) : undefined, childVerificationOwner = child && childTask ? { source: `bash:child:${child.id}`, trusted_source_class: 'host-tool-observation', source_session_id: String(sid), task_id: childTask.id, obligation_ids: childTask.obligation_ids.filter(id => m.execution.obligations.some(o => o.id === id && o.kind === 'verification')), scope: [...childTask.scope], producer_attempt: evidenceProducerAttemptForWorker(m, child) } : undefined;
         const evidenceRoot = m.identity.intent.scope === 'local' ? (workingDirectory ?? projectRoot) : projectRoot;
         observeToolAfter(m, tool, args, output, evidenceRoot, childVerificationOwner);

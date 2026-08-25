@@ -2,6 +2,7 @@ import type { MissionState } from '../mission/types.js';
 import type { ProcessContract } from '../../contracts/process.js';
 import { type ProcessExecutor, type ProcessOutput } from './executor.js';
 import { type ProcessPermissionRequest } from './authority.js';
+import type { ProcessLivenessObservation } from '../liveness/assessment.js';
 export type NativePermissionPrompter = (request: ProcessPermissionRequest) => Promise<void>;
 export interface ProcessStartInput {
     worker_id: string;
@@ -14,6 +15,7 @@ export interface ProcessStartInput {
     ask?: NativePermissionPrompter;
 }
 export declare class ProcessRuntime {
+    #private;
     readonly executor: ProcessExecutor;
     readonly projectRoot: string;
     readonly getHostConfig: () => Record<string, unknown>;
@@ -27,6 +29,7 @@ export declare class ProcessRuntime {
     kill(m: MissionState, id: string, signal?: 'SIGTERM' | 'SIGINT'): Promise<ProcessContract>;
     cleanup(m: MissionState, id: string): Promise<void>;
     list(m: MissionState): ProcessContract[];
+    livenessObservations(m: MissionState): Record<string, ProcessLivenessObservation>;
     stopMission(m: MissionState): Promise<number>;
     reconcileRestored(missions: MissionState[]): Promise<void>;
 }
