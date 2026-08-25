@@ -47,19 +47,14 @@ export function buildRuntimeEnvironment(identity,{hiState,tmp,opencodeConfig}){
   return{HOME:identity.home,USER:identity.name,LOGNAME:identity.name,OPENCODE_HI_STATE_DIR:hiState,OPENCODE_EXPERIMENTAL_WORKSPACES:'true',OPENCODE_DISABLE_PROJECT_CONFIG:'true',...(opencodeConfig?{OPENCODE_CONFIG:opencodeConfig}:{}),TMPDIR:tmp,TMP:tmp,TEMP:tmp}
 }
 
-function containedPath(root,path){const base=resolve(root),target=resolve(path);return target===base||target.startsWith(base+'/')}
-function commandEscapesFixture(command,fixture){
-  if(/(^|\s)cd\s+\.\.(?:\s|$)/.test(command))return true
-  for(const raw of command.match(/(?:^|[\s'"=])((?:\.\.\/|\/)[^\s'";|&()<>]*)/g)??[]){const token=raw.trim().replace(/^['"=]/,'');if(!token)continue;const target=token.startsWith('/')?token:resolve(fixture,token);if(!containedPath(fixture,target))return true}
-  return false
-}
 export function classifyWPermissionRequest(request,{fixture,parentID,childSessionIDs=[]}){
   const owned=new Set([parentID,...childSessionIDs].filter(Boolean))
   if(!owned.has(request?.sessionID))return{action:'IGNORE',reason:'other-session'}
+  if(request?.permission==='external_directory')return{action:'REJECT_TERMINAL',reason:'external-directory-scope-escape'}
   if(request?.permission==='bash'){
     const command=String(request?.metadata?.command??'').trim()
-    if(command&&!commandEscapesFixture(command,fixture))return{action:'ALLOW_ONCE',reason:'fixture-local-bash'}
-    return{action:'REJECT_TERMINAL',reason:'bash-scope-escape-or-unclassified'}
+    if(command)return{action:'ALLOW_ONCE',reason:'fixture-local-bash-host-path-gated'}
+    return{action:'REJECT_TERMINAL',reason:'bash-unclassified'}
   }
   return{action:'REJECT_TERMINAL',reason:`unexpected-permission:${String(request?.permission??'unknown')}`}
 }
