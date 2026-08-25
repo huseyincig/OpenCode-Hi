@@ -13,6 +13,7 @@ import {assessHarnessLiveness} from '../scripts/workload-acceptance/liveness-ada
 import {OwnedProcessManager} from '../scripts/workload-acceptance/process-owner.mjs'
 import {classify,productRepairAuthorized} from '../scripts/workload-acceptance/classification.mjs'
 import {cleanupOwnedResources} from '../scripts/workload-acceptance/cleanup.mjs'
+import {normalizeLiveModels,missionTerminalStatus,modelIdentity,writeSourcePluginConfig} from '../scripts/workload-acceptance/execution-driver.mjs'
 
 const temp=()=>mkdtempSync(join(process.cwd(),'.agent-work/tmp/w-harness-selftest-'))
 
@@ -89,3 +90,12 @@ import {prepareOperatorControlRoot} from '../scripts/workload-acceptance/isolati
 test('operator control root is fixture-external and group/world inaccessible',t=>{const root=temp();t.after(()=>rmSync(root,{recursive:true,force:true}));const fixture=join(root,'fixture');mkdirSync(fixture);const control=prepareOperatorControlRoot(join(root,'control'),fixture);assert.equal(control.mode,0o700);assert.throws(()=>prepareOperatorControlRoot(join(fixture,'control'),fixture),/CONTROL_ROOT_ISOLATION_VIOLATION/)})
 
 test('common cleanup terminates exact owned process and releases exact owned lock only',async t=>{const root=temp();t.after(()=>rmSync(root,{recursive:true,force:true}));const lock=new AuthoritativeRunLock(join(root,'owned.lock'),{workloadId:'WT',runId:'r1'});await lock.acquire();const pm=new OwnedProcessManager(root);const p=await pm.spawn({runId:'r1',workloadId:'WT',command:process.execPath,args:['-e','setInterval(()=>{},1000)'],cwd:root,readiness:{kind:'delay',ms:20}});const c=await cleanupOwnedResources('r1',[{kind:'process',ownerRunId:'r1',manager:pm,contract:p,options:{graceMs:100}},{kind:'lock',ownerRunId:'r1',lock}]);assert.equal(c.quarantined.length,0);assert.equal(c.cleaned.length,2);const contender=new AuthoritativeRunLock(join(root,'owned.lock'),{workloadId:'WT',runId:'r2'});await contender.acquire();await contender.release()})
+
+
+test('common execution driver normalizes live model capabilities before pool selection',()=>{const rows=normalizeLiveModels([{id:'m',providerID:'p',capabilities:{input:{text:true,image:false},output:{text:true}}}]);assert.deepEqual(rows,[{id:'p/m',capabilities:['text'],status:null}]);assert.deepEqual(modelIdentity('p/m'),{providerID:'p',modelID:'m'})})
+
+test('common execution driver terminal boundary includes waiting-user without treating it as success',()=>{assert.equal(missionTerminalStatus('completed'),true);assert.equal(missionTerminalStatus('waiting-user'),true);assert.equal(missionTerminalStatus('active'),false)})
+
+test('common execution driver projects source plugin config as harness-owned git-excluded host state',t=>{const root=temp();t.after(()=>rmSync(root,{recursive:true,force:true}));mkdirSync(join(root,'.git','info'),{recursive:true});const config=writeSourcePluginConfig(root);assert.equal(existsSync(config),true);assert.match(readFileSync(config,'utf8'),/plugin\/dist\/plugin\.js/);assert.match(readFileSync(join(root,'.git','info','exclude'),'utf8'),/opencode\.json/)})
+
+test('common execution entrypoint is generic and binds dispatch, native sessions, liveness, oracle and exact cleanup',()=>{const src=readFileSync(new URL('../scripts/workload-acceptance/execution-driver.mjs',import.meta.url),'utf8');for(const needle of ['WorkloadAcceptanceHarness','session.create','session.promptAsync','session.children','assessHarnessLiveness','runHiddenOracle','cleanupOwnedResources'])assert.ok(src.includes(needle),needle);assert.doesNotMatch(src,/run-w0[1-9]\.sh|workloads\/W01|opencode-go\//)})
