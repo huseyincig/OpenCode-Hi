@@ -42,9 +42,9 @@ export function assertOperatorRuntimeSeparation(oraclePath,identity){
   return true
 }
 
-export function buildRuntimeEnvironment(identity,{hiState,tmp}){
+export function buildRuntimeEnvironment(identity,{hiState,tmp,opencodeConfig}){
   if(!identity?.name||!identity?.home||!hiState||!tmp)throw new Error('MODEL_RUNTIME_ENVIRONMENT_INVALID')
-  return{HOME:identity.home,USER:identity.name,LOGNAME:identity.name,OPENCODE_HI_STATE_DIR:hiState,OPENCODE_EXPERIMENTAL_WORKSPACES:'true',TMPDIR:tmp,TMP:tmp,TEMP:tmp}
+  return{HOME:identity.home,USER:identity.name,LOGNAME:identity.name,OPENCODE_HI_STATE_DIR:hiState,OPENCODE_EXPERIMENTAL_WORKSPACES:'true',OPENCODE_DISABLE_PROJECT_CONFIG:'true',...(opencodeConfig?{OPENCODE_CONFIG:opencodeConfig}:{}),TMPDIR:tmp,TMP:tmp,TEMP:tmp}
 }
 
 function containedPath(root,path){const base=resolve(root),target=resolve(path);return target===base||target.startsWith(base+'/')}
@@ -126,6 +126,7 @@ export function writeWModelConfinement(fixtureRoot,allowedModels){
   }
   const next={...doc,schema:1,type:'hi-routing',execution:{...(doc.execution??{}),topology:'adaptive'},routing:{...(doc.routing??{}),allowedModels:ids}}
   mkdirSync(dirname(path),{recursive:true});writeFileSync(path,JSON.stringify(next,null,2)+'\n')
+  const info=join(fixtureRoot,'.git','info'),exclude=join(info,'exclude');mkdirSync(info,{recursive:true});const current=existsSync(exclude)?readFileSync(exclude,'utf8'):'';if(!current.split(/\r?\n/).includes('.opencode/hi/policy/routing.json'))writeFileSync(exclude,current+(current&&!current.endsWith('\n')?'\n':'')+'.opencode/hi/policy/routing.json\n')
   return{path,allowed_models:ids,sha256:shaFile(path)}
 }
 export function outOfPoolWorkerModels(mission,allowedModels){
@@ -230,7 +231,7 @@ export async function executeWorkload(workloadId,{pollMs=1500}={}){
     receipts.write('prompt-identity',promptIdentity(promptPath));receipts.write('oracle-identity',oracleIdentity({path:oraclePath,version:spec.hiddenOracle.version,fixtureIdentity:spec.fixture.baseline.value}))
     receipts.write('tool-preflight',{status:'PASS',exact_opencode:{path:exactBin,version:target,sha256:shaFile(exactBin)},plugin_entrypoint:join(ROOT,'plugin','dist','plugin.js'),fixture_seed_identity:seedIdentity,fixture_git_head:fixtureHead,operator_uid:process.getuid?.()??null,model_runtime:{user:runtimeIdentity.name,uid:runtimeIdentity.uid,gid:runtimeIdentity.gid,oracle_readable:false},w_model_confinement:confinement})
     receipts.write('model-role-selection',{scope:'w-development-test-only',required_capabilities:spec.requiredCapabilities,selected_model:selected.model.id,eligible:selected.eligible,rejected:selected.rejected,reason:selected.reason,allowed_models:allowedWModels,confinement_sha256:confinement.sha256})
-    const port=await freePort(),base=`http://127.0.0.1:${port}`,runtimeEnv=buildRuntimeEnvironment(runtimeIdentity,{hiState,tmp});pm=new OwnedProcessManager(runDir)
+    const port=await freePort(),base=`http://127.0.0.1:${port}`,runtimeEnv=buildRuntimeEnvironment(runtimeIdentity,{hiState,tmp,opencodeConfig:join(fixture,'opencode.json')});pm=new OwnedProcessManager(runDir)
     serverRecord=await pm.spawn({runId,workloadId,command:exactBin,args:['serve','--hostname','127.0.0.1','--port',String(port),'--print-logs','--log-level','INFO'],cwd:fixture,env:runtimeEnv,uid:runtimeIdentity.uid,gid:runtimeIdentity.gid,readiness:{kind:'probe',timeoutMs:30000,intervalMs:250,probe:async()=>{const h=await health(base);return h?.healthy===true&&h?.version===target}}})
     const ids=await toolIds(base,fixture);if(!ids.some(x=>String(x).startsWith('hi_')))throw new Error('HI_TOOL_SURFACE_NOT_LOADED');await assertWPrimaryAgent(base,fixture)
     client=createOpencodeClient({baseUrl:base,directory:fixture})
