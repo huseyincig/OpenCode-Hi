@@ -17,6 +17,7 @@ import {executionObservation} from './execution-observation.mjs'
 import {roleAcceptanceObservation} from './role-observation.mjs'
 import {cleanupOwnedResources} from './cleanup.mjs'
 import {readEffectiveReceipt} from './receipts.mjs'
+import {resolveCatalogEntry} from './catalog.mjs'
 
 const ROOT=resolve(fileURLToPath(new URL('../..',import.meta.url)))
 const WROOT=join(ROOT,'.agent-work','workload-acceptance')
@@ -184,7 +185,7 @@ export function resolveExecutionContract(workloadId,spec){
 }
 
 export async function executeWorkload(workloadId,{pollMs=1500}={}){
-  const specPath=join(WROOT,workloadId,'spec.json'),spec=JSON.parse(readFileSync(specPath,'utf8')),{promptPath,fixture,seed,oraclePath,seedIdentity}=resolveExecutionContract(workloadId,spec)
+  const entry=resolveCatalogEntry(workloadId),spec=JSON.parse(readFileSync(entry.spec_path,'utf8')),{promptPath,fixture,seed,oraclePath,seedIdentity}=resolveExecutionContract(workloadId,spec)
   const productHead=git(['rev-parse','HEAD']),originHead=git(['rev-parse','origin/dev']);if(productHead!==originHead)throw new Error('PRODUCT_ORIGIN_DIVERGED')
   const target=JSON.parse(readFileSync(join(ROOT,'package.json'),'utf8')).dependencies?.['@opencode-ai/sdk'];const exactBin=join(ROOT,'.agent-work','tools',`opencode-${target}`,'opencode')
   if(!existsSync(exactBin))throw new Error(`EXACT_OPENCODE_MISSING:${exactBin}`);const observed=spawnSync(exactBin,['--version'],{encoding:'utf8'}).stdout.trim();if(observed!==target)throw new Error(`EXACT_OPENCODE_VERSION_MISMATCH:${observed}:${target}`)
