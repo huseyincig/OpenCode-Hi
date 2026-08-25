@@ -9,7 +9,8 @@ import {WorkloadAcceptanceHarness} from './harness-core.mjs'
 import {OwnedProcessManager} from './process-owner.mjs'
 import {selectTestModel} from './model-pool.mjs'
 import {prepareOperatorControlRoot} from './isolation.mjs'
-import {promptIdentity,oracleIdentity} from './workload-spec.mjs'
+import {assertWorkloadSpec,promptIdentity,oracleIdentity} from './workload-spec.mjs'
+import {fixtureIdentity} from './fixture-manager.mjs'
 import {runHiddenOracle} from './oracle-runner.mjs'
 import {assessHarnessLiveness} from './liveness-adapter.mjs'
 import {executionObservation} from './execution-observation.mjs'
@@ -31,14 +32,33 @@ export function normalizeLiveModels(rows=[]){
     const provider=String(row.providerID??row.provider_id??''),id=String(row.id??'')
     if(!provider||!id)continue
     const input=row.capabilities?.input??{},output=row.capabilities?.output??{},caps=[]
-    if(input.text===true||output.text===true)caps.push('text')
-    if(input.image===true||output.image===true)caps.push('image')
-    if(input.audio===true||output.audio===true)caps.push('audio')
-    if(input.video===true||output.video===true)caps.push('video')
-    if(input.pdf===true)caps.push('pdf')
+    const has=(surface,key)=>Array.isArray(surface)?surface.includes(key):surface?.[key]===true
+    if(has(input,'text')||has(output,'text'))caps.push('text')
+    if(has(input,'image')||has(output,'image'))caps.push('image')
+    if(has(input,'audio')||has(output,'audio'))caps.push('audio')
+    if(has(input,'video')||has(output,'video'))caps.push('video')
+    if(has(input,'pdf'))caps.push('pdf')
     out.push({id:`${provider}/${id}`,capabilities:caps,status:row.status??null})
   }
   return out
+}
+export function parseVerboseModelInventory(stdout){
+  const rows=[],lines=String(stdout??'').split(/\r?\n/);let announced=null,buffer='',depth=0,inString=false,escaped=false
+  const consume=line=>{for(const ch of line){if(escaped){escaped=false;continue}if(inString&&ch==='\\'){escaped=true;continue}if(ch==='"'){inString=!inString;continue}if(inString)continue;if(ch==='{')depth++;else if(ch==='}')depth--}}
+  for(const line of lines){
+    const trimmed=line.trim()
+    if(!buffer&&/^[^\s/]+\/[^\s/]+$/.test(trimmed)){announced=trimmed;continue}
+    if(announced&&!buffer&&trimmed.startsWith('{')){buffer=line;consume(line)}
+    else if(buffer){buffer+=`\n${line}`;consume(line)}
+    if(buffer&&depth===0&&!inString){const row=JSON.parse(buffer),id=`${row.providerID??''}/${row.id??''}`;if(id!==announced)throw new Error(`MODEL_INVENTORY_ID_MISMATCH:${announced}:${id}`);rows.push(row);announced=null;buffer=''}
+  }
+  if(buffer||announced||depth!==0||inString)throw new Error('MODEL_INVENTORY_TRUNCATED')
+  return rows
+}
+export function readLiveModelInventory(exactBin,pool){
+  const providers=[...new Set(pool.map(x=>String(x.id).split('/')[0]).filter(Boolean))],rows=[]
+  for(const provider of providers){const r=spawnSync(exactBin,['models',provider,'--verbose'],{encoding:'utf8'});if(r.status!==0)throw new Error(`MODEL_INVENTORY_FAILED:${provider}:${String(r.stderr||'').trim()}`);rows.push(...parseVerboseModelInventory(r.stdout))}
+  return normalizeLiveModels(rows)
 }
 export function missionTerminalStatus(status){return ['completed','stopped','failed','waiting-user'].includes(String(status??''))}
 export function modelIdentity(id){const at=id.indexOf('/');if(at<1||at===id.length-1)throw new Error(`INVALID_MODEL_ID:${id}`);return{providerID:id.slice(0,at),modelID:id.slice(at+1)}}
@@ -68,9 +88,20 @@ function roleRows(mission,selectedModel){
 }
 function runtimeProjection(parentID,mission,serverRecord,statusMap){return executionObservation({sessionId:parentID,tasks:mission?.execution?.tasks??[],workers:mission?.execution?.workers??[],processes:[{process_id:'opencode-server',status:serverRecord?.status??'RUNNING',pid:serverRecord?.pid,pgid:serverRecord?.pgid,run_id:serverRecord?.run_id,workload_id:serverRecord?.workload_id}],terminalStatus:mission?.identity?.status??null})}
 
-export async function executeWorkload(workloadId,{pollMs=1500}={}){
-  const specPath=join(WROOT,workloadId,'spec.json'),spec=JSON.parse(readFileSync(specPath,'utf8')),promptPath=join(ROOT,spec.visiblePrompt),fixture=join(ROOT,spec.fixture.root),seed=join(ROOT,spec.fixture.resetProcedure.immutableSeed),oraclePath=join(ROOT,spec.hiddenOracle.path)
+export function resolveExecutionContract(workloadId,spec){
+  assertWorkloadSpec(spec)
   if(spec.id!==workloadId)throw new Error('WORKLOAD_SPEC_ID_MISMATCH')
+  const promptPath=resolve(ROOT,spec.visiblePrompt),fixture=resolve(ROOT,spec.fixture.root),seed=resolve(ROOT,spec.fixture.seed),oraclePath=resolve(ROOT,spec.hiddenOracle.path)
+  if(!existsSync(promptPath))throw new Error(`WORKLOAD_PROMPT_MISSING:${promptPath}`)
+  if(!existsSync(seed))throw new Error(`WORKLOAD_FIXTURE_SEED_MISSING:${seed}`)
+  if(!existsSync(oraclePath))throw new Error(`WORKLOAD_ORACLE_MISSING:${oraclePath}`)
+  const seedIdentity=fixtureIdentity(seed)
+  if(seedIdentity!==spec.fixture.baseline.value)throw new Error(`WORKLOAD_FIXTURE_SEED_BASELINE_MISMATCH:${seedIdentity}`)
+  return{promptPath,fixture,seed,oraclePath,seedIdentity}
+}
+
+export async function executeWorkload(workloadId,{pollMs=1500}={}){
+  const specPath=join(WROOT,workloadId,'spec.json'),spec=JSON.parse(readFileSync(specPath,'utf8')),{promptPath,fixture,seed,oraclePath,seedIdentity}=resolveExecutionContract(workloadId,spec)
   const productHead=git(['rev-parse','HEAD']),originHead=git(['rev-parse','origin/dev']);if(productHead!==originHead)throw new Error('PRODUCT_ORIGIN_DIVERGED')
   const target=JSON.parse(readFileSync(join(ROOT,'package.json'),'utf8')).dependencies?.['@opencode-ai/sdk'];const exactBin=join(ROOT,'.agent-work','tools',`opencode-${target}`,'opencode')
   if(!existsSync(exactBin))throw new Error(`EXACT_OPENCODE_MISSING:${exactBin}`);const observed=spawnSync(exactBin,['--version'],{encoding:'utf8'}).stdout.trim();if(observed!==target)throw new Error(`EXACT_OPENCODE_VERSION_MISMATCH:${observed}:${target}`)
@@ -84,12 +115,12 @@ export async function executeWorkload(workloadId,{pollMs=1500}={}){
   try{
     const fixtureHead=initFixtureGit(fixture);writeSourcePluginConfig(fixture)
     receipts.write('prompt-identity',promptIdentity(promptPath));receipts.write('oracle-identity',oracleIdentity({path:oraclePath,version:spec.hiddenOracle.version,fixtureIdentity:spec.fixture.baseline.value}))
-    receipts.write('tool-preflight',{status:'PASS',exact_opencode:{path:exactBin,version:target,sha256:shaFile(exactBin)},plugin_entrypoint:join(ROOT,'plugin','dist','plugin.js'),fixture_git_head:fixtureHead})
+    receipts.write('tool-preflight',{status:'PASS',exact_opencode:{path:exactBin,version:target,sha256:shaFile(exactBin)},plugin_entrypoint:join(ROOT,'plugin','dist','plugin.js'),fixture_seed_identity:seedIdentity,fixture_git_head:fixtureHead})
     const port=await freePort(),base=`http://127.0.0.1:${port}`;pm=new OwnedProcessManager(runDir)
     serverRecord=await pm.spawn({runId,workloadId,command:exactBin,args:['serve','--hostname','127.0.0.1','--port',String(port),'--print-logs','--log-level','INFO'],cwd:fixture,env:{OPENCODE_HI_STATE_DIR:hiState,TMPDIR:tmp,TMP:tmp,TEMP:tmp},readiness:{kind:'probe',timeoutMs:30000,intervalMs:250,probe:async()=>{const h=await health(base);return h?.healthy===true&&h?.version===target}}})
     const ids=await toolIds(base,fixture);if(!ids.some(x=>String(x).startsWith('hi_')))throw new Error('HI_TOOL_SURFACE_NOT_LOADED')
     client=createOpencodeClient({baseUrl:base,directory:fixture})
-    const models=dataOf(await client.v2.model.list({location:{directory:fixture}}))??[],live=normalizeLiveModels(Array.isArray(models)?models:models?.data??[]),pool=JSON.parse(readFileSync(join(WROOT,'model-pool.json'),'utf8')).models
+    const pool=JSON.parse(readFileSync(join(WROOT,'model-pool.json'),'utf8')).models,live=readLiveModelInventory(exactBin,pool)
     selected=selectTestModel({liveInventory:live,pool,requiredCapabilities:spec.requiredCapabilities})
     receipts.write('model-role-selection',{scope:'w-development-test-only',required_capabilities:spec.requiredCapabilities,selected_model:selected.model.id,eligible:selected.eligible,rejected:selected.rejected,reason:selected.reason})
     const mi=modelIdentity(selected.model.id),created=dataOf(await client.session.create({directory:fixture,title:`W acceptance ${workloadId} ${runId}`,model:{id:mi.modelID,providerID:mi.providerID}}));if(!created?.id)throw new Error('PARENT_SESSION_CREATE_FAILED');parentID=created.id
@@ -118,7 +149,7 @@ export async function executeWorkload(workloadId,{pollMs=1500}={}){
     try{await client.session.delete({sessionID:parentID,directory:fixture})}catch{}
     cleanupResult=await cleanupOwnedResources(runId,[{kind:'process',ownerRunId:runId,manager:pm,contract:serverRecord,options:{graceMs:1500}},{kind:'path',ownerRunId:runId,path:controlRoot,root:runDir},{kind:'lock',ownerRunId:runId,lock}])
     receipts.write('cleanup',{cleaned:cleanupResult.cleaned.map(x=>({kind:x.kind,path:x.path??null,pid:x.contract?.pid??null})),skipped:cleanupResult.skipped.length,quarantined:cleanupResult.quarantined})
-    const success=missionPass&&oraclePass&&cleanupResult.quarantined.length===0;receipts.write('summary',{status:success?'PASS':'FAIL',workload_id:workloadId,product_sha:productHead,model:selected.model.id,parent_session_id:parentID,mission_status:finalMission?.identity?.status??null,oracle_pass:oraclePass,classification:classification.class,fixture_preserved:spec.cleanup?.preserveFixture===true})
+    const success=missionPass&&oraclePass&&cleanupResult.quarantined.length===0;receipts.write('summary',{status:success?'PASS':'FAIL',workload_id:workloadId,product_sha:productHead,model:selected.model.id,parent_session_id:parentID,mission_status:finalMission?.identity?.status??null,oracle_pass:oraclePass,classification:classification.class,fixture_preserved:spec.cleanup?.preserveFixtureAfterTerminalForInspection===true})
     writeMeta({status:success?'TERMINAL_PASS':'TERMINAL_FAIL',ended_at:new Date().toISOString(),mission_status:finalMission?.identity?.status??null,oracle_pass:oraclePass,classification:classification.class,cleanup_quarantined:cleanupResult.quarantined.length})
     return{disposition:success?'TERMINAL_PASS':'TERMINAL_FAIL',run_id:runId,run_dir:runDir,parent_session_id:parentID,model:selected.model.id,mission_status:finalMission?.identity?.status??null,oracle_pass:oraclePass,classification:classification.class,cleanup_quarantined:cleanupResult.quarantined.length}
   }catch(error){
