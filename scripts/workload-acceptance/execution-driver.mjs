@@ -246,7 +246,7 @@ export async function executeWorkload(workloadId,{pollMs=1500}={}){
     receipts.write('execution',{parent_session_id:parentID,terminal_status:finalMission?.identity?.status??null,liveness:finalLiveness,observation:runtimeProjection(parentID,finalMission,serverRecord,{})})
     receipts.write('liveness',finalLiveness)
     receipts.write('role-acceptance',{observations:roleRows(finalMission,selected.model.id)})
-    const oracle=await runHiddenOracle({oraclePath,fixtureRoot:fixture,harnessRoot:join(ROOT,'scripts','workload-acceptance'),command:process.execPath,args:[oraclePath],cwd:ROOT,env:{W_FIXTURE_ROOT:fixture,W_ORACLE_SCRATCH_ROOT:scratch},identity:receipts.read('oracle-identity').identity,fixtureIdentity:spec.fixture.baseline.value,timeoutMs:30000})
+    const oracle=await runHiddenOracle({oraclePath,fixtureRoot:fixture,harnessRoot:join(ROOT,'scripts','workload-acceptance'),command:process.execPath,args:[oraclePath],cwd:ROOT,env:{...(spec.certification?.oracleEnv??{}),W_FIXTURE_ROOT:fixture,W_ORACLE_SCRATCH_ROOT:scratch},identity:receipts.read('oracle-identity').identity,fixtureIdentity:spec.fixture.baseline.value,timeoutMs:30000})
     let parsed;try{parsed=JSON.parse(oracle.stdout)}catch{parsed=null}const oraclePass=oracle.exit_code===0&&parsed?.failed===0
     receipts.write('oracle-result',{passed:oraclePass,exit_code:oracle.exit_code,signal:oracle.signal,stdout_sha256:oracle.stdout_sha256,stderr_sha256:oracle.stderr_sha256,result:parsed})
     const missionPass=finalMission?.identity?.status==='completed',stalled=finalLiveness?.state==='STALLED',scopeViolated=finalLiveness?.reasons?.includes('w-scope-violation');let classification
