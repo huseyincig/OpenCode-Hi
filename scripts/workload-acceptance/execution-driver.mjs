@@ -94,6 +94,37 @@ function findRuntimeState(stateRoot){
   const r=spawnSync('find',[stateRoot,'-path','*/projects/*/runtime-state.json','-type','f','-print','-quit'],{encoding:'utf8'});return r.status===0?r.stdout.trim():''
 }
 function readJsonMaybe(path){try{return JSON.parse(readFileSync(path,'utf8'))}catch{return undefined}}
+
+export function discoverTerminalPredecessor(stateRoot,workloadId){
+  const runsRoot=join(stateRoot,workloadId,'runs')
+  if(!existsSync(runsRoot))return null
+  const candidates=[]
+  for(const entry of readdirSync(runsRoot,{withFileTypes:true})){
+    if(!entry.isDirectory())continue
+    const runId=entry.name,receiptsRoot=join(runsRoot,runId,'receipts'),summaryPath=join(receiptsRoot,'summary.json')
+    if(!existsSync(summaryPath))continue
+    const read=name=>{const path=join(receiptsRoot,`${name}.json`);if(!existsSync(path))throw new Error(`TERMINAL_PREDECESSOR_RECEIPT_MISSING:${runId}:${name}`);return JSON.parse(readFileSync(path,'utf8'))}
+    const identity=read('run-identity'),lineage=read('lineage'),classification=read('classification'),cleanup=read('cleanup'),summary=read('summary')
+    for(const [kind,row] of [['run-identity',identity],['lineage',lineage],['classification',classification],['cleanup',cleanup],['summary',summary]])if(row.run_id!==runId)throw new Error(`PREDECESSOR_RUN_ID_MISMATCH:${runId}:${kind}:${String(row.run_id)}`)
+    if(identity.workload_id!==workloadId||summary.workload_id!==workloadId)throw new Error(`PREDECESSOR_WORKLOAD_ID_MISMATCH:${runId}`)
+    if(!['PASS','FAIL'].includes(summary.status))throw new Error(`PREDECESSOR_SUMMARY_NOT_TERMINAL:${runId}:${String(summary.status)}`)
+    if(Array.isArray(cleanup.quarantined)&&cleanup.quarantined.length)throw new Error(`PREDECESSOR_CLEANUP_QUARANTINED:${runId}`)
+    const conditionFingerprint=lineage.condition_fingerprint??identity.condition_fingerprint
+    if(typeof conditionFingerprint!=='string'||!conditionFingerprint)throw new Error(`PREDECESSOR_CONDITION_MISSING:${runId}`)
+    const match=new RegExp(`^${workloadId}-([0-9a-z]+)-`).exec(runId)
+    if(!match)throw new Error(`PREDECESSOR_RUN_ID_FORMAT_INVALID:${runId}`)
+    const ordinal=Number.parseInt(match[1],36);if(!Number.isFinite(ordinal))throw new Error(`PREDECESSOR_RUN_ID_FORMAT_INVALID:${runId}`)
+    let repairReceipt=null,repairPath=join(receiptsRoot,'repair.json')
+    if(existsSync(repairPath)){
+      const repair=JSON.parse(readFileSync(repairPath,'utf8'))
+      if(repair.run_id!==runId||repair.predecessor_run_id!==runId)throw new Error(`PREDECESSOR_REPAIR_ID_MISMATCH:${runId}`)
+      if(repair.verified===true)repairReceipt=repair
+    }
+    candidates.push({run_id:runId,condition_fingerprint:conditionFingerprint,repair_receipt:repairReceipt,summary_status:summary.status,classification:classification.class,ordinal})
+  }
+  candidates.sort((a,b)=>b.ordinal-a.ordinal||b.run_id.localeCompare(a.run_id))
+  return candidates[0]??null
+}
 function processAlive(pid){try{process.kill(Number(pid),0);return true}catch{return false}}
 async function health(base){try{const r=await fetch(`${base}/global/health`,{signal:AbortSignal.timeout(2000)});return r.ok?await r.json():undefined}catch{return undefined}}
 async function toolIds(base,directory){try{const u=new URL(`${base}/experimental/tool/ids`);u.searchParams.set('directory',directory);const r=await fetch(u,{signal:AbortSignal.timeout(3000)});if(!r.ok)return[];const x=dataOf(await r.json());return Array.isArray(x)?x:[]}catch{return[]}}
@@ -132,7 +163,8 @@ export async function executeWorkload(workloadId,{pollMs=1500}={}){
   if(!existsSync(exactBin))throw new Error(`EXACT_OPENCODE_MISSING:${exactBin}`);const observed=spawnSync(exactBin,['--version'],{encoding:'utf8'}).stdout.trim();if(observed!==target)throw new Error(`EXACT_OPENCODE_VERSION_MISMATCH:${observed}:${target}`)
   const runtimeIdentity=resolveRuntimeIdentity();assertHiddenOracle({oraclePath,fixtureRoot:fixture,harnessRoot:join(ROOT,'scripts','workload-acceptance')});assertOperatorRuntimeSeparation(oraclePath,runtimeIdentity)
   const harness=new WorkloadAcceptanceHarness({stateRoot:RUNTIME_ROOT,productIdentity:{head:productHead,origin_dev:originHead,opencode:target,opencode_binary_sha256:shaFile(exactBin)},liveInventory:[],sessionProbe:async()=> 'unknown',processProbe:processAlive})
-  const run=await harness.preflight(spec,{conditionFingerprint:`${productHead}:${target}:${spec.fixture.baseline.value}:${shaFile(promptPath)}:${shaFile(oraclePath)}`,prepareFixture:async()=>copySeed(seed,fixture,runtimeIdentity)})
+  const conditionFingerprint=`${productHead}:${target}:${spec.fixture.baseline.value}:${shaFile(promptPath)}:${shaFile(oraclePath)}`,predecessor=discoverTerminalPredecessor(RUNTIME_ROOT,workloadId)
+  const run=await harness.preflight(spec,{predecessor:predecessor?{run_id:predecessor.run_id,condition_fingerprint:predecessor.condition_fingerprint}:undefined,conditionFingerprint,repairReceipt:predecessor?.repair_receipt??undefined,prepareFixture:async()=>copySeed(seed,fixture,runtimeIdentity)})
   if(run.disposition!=='READY_TO_EXECUTE')return run
   const {runId,lock,receipts}=requireReadyAdmission(run),runDir=join(RUNTIME_ROOT,workloadId,'runs',runId)
   let controlRoot,scratch,runtimeSandbox,hiState,tmp,serverRecord,pm,parentID,client,cleanupResult,finalMission,finalLiveness,selected
