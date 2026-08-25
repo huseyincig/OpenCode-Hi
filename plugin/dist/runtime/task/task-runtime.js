@@ -59,7 +59,18 @@ function ownerForObligation(m, kind) {
         return caps.has('visual-qa') ? 'visual-qa' : undefined;
     return undefined;
 }
-function canonicalRoleForTask(m, routedRole, explicit = [], requestedRole = '') {
+function readOnlySupportObjectiveIsInspection(objective) {
+    const text = objective.toLowerCase().replace(/\s+/g, ' ').trim();
+    if (!text)
+        return false;
+    // Read-only support is additive, but never a fallback mutation owner. Reject explicit mutation
+    // imperatives while preserving bounded architecture/exploration/review support whose wording is
+    // not required to match a small verb whitelist. Host read-only permissions remain defense-in-depth.
+    const mutationImperative = /(?:^|[;:.]\s*|\b(?:please|then|and)\s+)(?:revert|restore|reset|checkout|edit|modify|write|create|add|remove|delete|rename|move|fix|implement|patch|update|replace|format|generate|correct|make)\b/;
+    const explicitMutation = /\b(?:git\s+(?:checkout|restore|reset)|apply\s+(?:a\s+)?patch|write\s+(?:the\s+)?file|modify\s+(?:the\s+)?file|edit\s+(?:the\s+)?file)\b/;
+    return !mutationImperative.test(text) && !explicitMutation.test(text);
+}
+function canonicalRoleForTask(m, routedRole, explicit = [], requestedRole = '', objective = m.identity.objective) {
     const obligations = [...new Set(explicit)].map(id => m.execution.obligations.find(o => o.id === id && o.status === 'open')).filter(Boolean);
     const owners = [...new Set(obligations.map(o => ownerForObligation(m, o.kind)).filter((x) => Boolean(x)))];
     if (owners.length > 1)
@@ -73,10 +84,10 @@ function canonicalRoleForTask(m, routedRole, explicit = [], requestedRole = '') 
         const exactOpenOwner = m.execution.obligations.some(o => o.status === 'open' && ownerForObligation(m, o.kind) === requestedRole);
         if (exactOpenOwner)
             return requestedRole;
-        // Backward-compatible additive support tasks: historical read-only specialists may inspect
-        // without becoming the owner of implementation/review obligations. Their result remains
-        // obligation/evidence fenced and cannot close a different canonical owner's work.
-        if (isHiReadOnlyChildRole(requestedRole))
+        // Additive read-only specialists are admitted only for clearly inspection-only support.
+        // A mutating/ambiguous child objective must stay with the canonical write owner instead of
+        // relying on downstream host permissions to correct an invalid role assignment.
+        if (isHiReadOnlyChildRole(requestedRole) && readOnlySupportObjectiveIsInspection(objective))
             return requestedRole;
     }
     if (isHiChildRole(routedRole))
@@ -476,7 +487,7 @@ export class TaskRuntime {
             if (disallowed.length)
                 throw new Error(`Role ${requestedRole} cannot own obligation(s): ${disallowed.map(o => `${o.id}:${o.kind}`).join(', ')}`);
         }
-        const canonicalRole = canonicalRoleForTask(m, routed.role, input.obligationIds ?? [], requestedRole);
+        const canonicalRole = canonicalRoleForTask(m, routed.role, input.obligationIds ?? [], requestedRole, objective);
         if (!isHiChildRole(canonicalRole))
             throw new Error(`No canonical role owner for task semantics: ${canonicalRole}`);
         if (requestedRole && requestedRole !== canonicalRole)

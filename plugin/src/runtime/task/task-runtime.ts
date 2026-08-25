@@ -65,7 +65,17 @@ function ownerForObligation(m:MissionState,kind:string):string|undefined{
   if(kind==='verification')return caps.has('visual-qa')?'visual-qa':undefined
   return undefined
 }
-function canonicalRoleForTask(m:MissionState,routedRole:string,explicit:string[]=[],requestedRole=''):string{
+function readOnlySupportObjectiveIsInspection(objective:string):boolean{
+  const text=objective.toLowerCase().replace(/\s+/g,' ').trim()
+  if(!text)return false
+  // Read-only support is additive, but never a fallback mutation owner. Reject explicit mutation
+  // imperatives while preserving bounded architecture/exploration/review support whose wording is
+  // not required to match a small verb whitelist. Host read-only permissions remain defense-in-depth.
+  const mutationImperative=/(?:^|[;:.]\s*|\b(?:please|then|and)\s+)(?:revert|restore|reset|checkout|edit|modify|write|create|add|remove|delete|rename|move|fix|implement|patch|update|replace|format|generate|correct|make)\b/
+  const explicitMutation=/\b(?:git\s+(?:checkout|restore|reset)|apply\s+(?:a\s+)?patch|write\s+(?:the\s+)?file|modify\s+(?:the\s+)?file|edit\s+(?:the\s+)?file)\b/
+  return !mutationImperative.test(text)&&!explicitMutation.test(text)
+}
+function canonicalRoleForTask(m:MissionState,routedRole:string,explicit:string[]=[],requestedRole='',objective=m.identity.objective):string{
   const obligations=[...new Set(explicit)].map(id=>m.execution.obligations.find(o=>o.id===id&&o.status==='open')).filter(Boolean) as MissionState['execution']['obligations']
   const owners=[...new Set(obligations.map(o=>ownerForObligation(m,o.kind)).filter((x):x is string=>Boolean(x)))]
   if(owners.length>1)throw new Error(`Task spans multiple canonical role owners (${owners.join(', ')}); decompose the obligations into separate hi_task_start calls.`)
@@ -75,10 +85,10 @@ function canonicalRoleForTask(m:MissionState,routedRole:string,explicit:string[]
     if(hardVisual&&requestedRole!=='visual-qa')return routedRole
     const exactOpenOwner=m.execution.obligations.some(o=>o.status==='open'&&ownerForObligation(m,o.kind)===requestedRole)
     if(exactOpenOwner)return requestedRole
-    // Backward-compatible additive support tasks: historical read-only specialists may inspect
-    // without becoming the owner of implementation/review obligations. Their result remains
-    // obligation/evidence fenced and cannot close a different canonical owner's work.
-    if(isHiReadOnlyChildRole(requestedRole))return requestedRole
+    // Additive read-only specialists are admitted only for clearly inspection-only support.
+    // A mutating/ambiguous child objective must stay with the canonical write owner instead of
+    // relying on downstream host permissions to correct an invalid role assignment.
+    if(isHiReadOnlyChildRole(requestedRole)&&readOnlySupportObjectiveIsInspection(objective))return requestedRole
   }
   if(isHiChildRole(routedRole))return routedRole
   throw new Error(`No canonical role owner for task semantics; routed=${routedRole||'none'}`)
@@ -218,7 +228,7 @@ export class TaskRuntime{
     if(m.identity.semantic_assessment.status!=='assessed')throw new Error('Hi semantic assessment is pending; assess mission intent before starting a worker')
     const objective=input.objective?.trim()||m.identity.objective
     const taskIntent=m.identity.intent
-    const cfg=this.getConfig(),routingProfile=cfg.profile[executionProfileFor(cfg.executionPolicy,taskIntent)],routed=routeCapabilities(taskIntent,{specialistThreshold:routingProfile.specialistThreshold,reviewThreshold:routingProfile.reviewThreshold}),defaultCategory=resolveCategory(taskIntent),category=(CATEGORIES.has(String(input.category))?input.category:(routed.category??defaultCategory)) as Category,requestedRole=String(input.role??'').trim();if(requestedRole&&!isHiChildRole(requestedRole))throw new Error(`Unsupported Hi child role '${requestedRole}'. Use one of: ${HI_CHILD_ROLES.join(', ')}`);if(requestedRole&&(input.obligationIds?.length??0)>0){const requestedObligations=[...new Set(input.obligationIds??[])].map(id=>m.execution.obligations.find(o=>o.id===id&&o.status==='open')).filter(Boolean) as MissionState['execution']['obligations'];const disallowed=requestedObligations.filter(o=>!roleCanOwnObligation(requestedRole,o.kind));if(disallowed.length)throw new Error(`Role ${requestedRole} cannot own obligation(s): ${disallowed.map(o=>`${o.id}:${o.kind}`).join(', ')}`)}const canonicalRole=canonicalRoleForTask(m,routed.role,input.obligationIds??[],requestedRole);if(!isHiChildRole(canonicalRole))throw new Error(`No canonical role owner for task semantics: ${canonicalRole}`);if(requestedRole&&requestedRole!==canonicalRole)throw new Error(`Incompatible requested role '${requestedRole}': canonical role owner is '${canonicalRole}'. Category/model-supplied role hints cannot override semantic ownership.`);const role=canonicalRole
+    const cfg=this.getConfig(),routingProfile=cfg.profile[executionProfileFor(cfg.executionPolicy,taskIntent)],routed=routeCapabilities(taskIntent,{specialistThreshold:routingProfile.specialistThreshold,reviewThreshold:routingProfile.reviewThreshold}),defaultCategory=resolveCategory(taskIntent),category=(CATEGORIES.has(String(input.category))?input.category:(routed.category??defaultCategory)) as Category,requestedRole=String(input.role??'').trim();if(requestedRole&&!isHiChildRole(requestedRole))throw new Error(`Unsupported Hi child role '${requestedRole}'. Use one of: ${HI_CHILD_ROLES.join(', ')}`);if(requestedRole&&(input.obligationIds?.length??0)>0){const requestedObligations=[...new Set(input.obligationIds??[])].map(id=>m.execution.obligations.find(o=>o.id===id&&o.status==='open')).filter(Boolean) as MissionState['execution']['obligations'];const disallowed=requestedObligations.filter(o=>!roleCanOwnObligation(requestedRole,o.kind));if(disallowed.length)throw new Error(`Role ${requestedRole} cannot own obligation(s): ${disallowed.map(o=>`${o.id}:${o.kind}`).join(', ')}`)}const canonicalRole=canonicalRoleForTask(m,routed.role,input.obligationIds??[],requestedRole,objective);if(!isHiChildRole(canonicalRole))throw new Error(`No canonical role owner for task semantics: ${canonicalRole}`);if(requestedRole&&requestedRole!==canonicalRole)throw new Error(`Incompatible requested role '${requestedRole}': canonical role owner is '${canonicalRole}'. Category/model-supplied role hints cannot override semantic ownership.`);const role=canonicalRole
     const hostConfig=this.getHostConfig();applyAdmittedProjectMethodologyPermissions(hostConfig,this.projectRoot);const selected=resolveModel(category,this.getModels(),this.getConfig(),input.model,role,hostConfig);if(selected.rejected.length)appendLedger(m,'model.policy.rejected',{payload:{items:selected.rejected.slice(0,20)}})
     const taskMethodologyNeeds=m.methodology.methodology_needs.filter(need=>input.resumeTaskId?need.task_id===input.resumeTaskId||(!need.task_id&&(!need.obligation_id||input.obligationIds?.includes(need.obligation_id))):!need.task_id&&(!need.obligation_id||input.obligationIds?.includes(need.obligation_id)))
     const catalog=methodologyCatalog(this.projectRoot),requestedMethodologyNames=methodologyNames(taskMethodologyNeeds)
