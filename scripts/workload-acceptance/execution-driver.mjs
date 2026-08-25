@@ -7,7 +7,7 @@ import {spawnSync} from 'node:child_process'
 import {createOpencodeClient} from '../../plugin/node_modules/@opencode-ai/sdk/dist/v2/client.js'
 import {WorkloadAcceptanceHarness} from './harness-core.mjs'
 import {OwnedProcessManager} from './process-owner.mjs'
-import {expandTestPool,selectTestModel} from './model-pool.mjs'
+import {expandTestPool,selectTestModel,effectiveWModelIds} from './model-pool.mjs'
 import {prepareOperatorControlRoot} from './isolation.mjs'
 import {assertHiddenOracle,assertWorkloadSpec,promptIdentity,oracleIdentity} from './workload-spec.mjs'
 import {fixtureIdentity} from './fixture-manager.mjs'
@@ -114,6 +114,25 @@ export function writeSourcePluginConfig(fixtureRoot){
   const info=join(fixtureRoot,'.git','info');mkdirSync(info,{recursive:true});writeFileSync(join(info,'exclude'),'opencode.json\n.opencode/\n')
   return config
 }
+export function writeWModelConfinement(fixtureRoot,allowedModels){
+  const ids=[...new Set((allowedModels??[]).map(String).map(x=>x.trim()).filter(Boolean))]
+  if(!ids.length)throw new Error('W_MODEL_CONFINEMENT_EMPTY')
+  const path=join(fixtureRoot,'.opencode','hi','policy','routing.json')
+  let doc={schema:1,type:'hi-routing',routing:{}}
+  if(existsSync(path)){
+    const parsed=JSON.parse(readFileSync(path,'utf8'))
+    if(parsed?.schema!==1||parsed?.type!=='hi-routing'||!parsed?.routing||typeof parsed.routing!=='object'||Array.isArray(parsed.routing))throw new Error('W_MODEL_CONFINEMENT_ROUTING_SHAPE_INVALID')
+    doc=parsed
+  }
+  const next={...doc,schema:1,type:'hi-routing',execution:{...(doc.execution??{}),topology:'adaptive'},routing:{...(doc.routing??{}),allowedModels:ids}}
+  mkdirSync(dirname(path),{recursive:true});writeFileSync(path,JSON.stringify(next,null,2)+'\n')
+  return{path,allowed_models:ids,sha256:shaFile(path)}
+}
+export function outOfPoolWorkerModels(mission,allowedModels){
+  const allowed=new Set(allowedModels??[]),out=[]
+  for(const worker of mission?.execution?.workers??[]){const model=String(worker?.model??'').trim();if(model&&!allowed.has(model))out.push({worker_id:worker.id??null,task_id:worker.task_id??null,role:worker.role??null,model})}
+  return out
+}
 function copySeed(seed,dest,identity){rmSync(dest,{recursive:true,force:true});mkdirSync(dirname(dest),{recursive:true});const r=spawnSync('cp',['-a',seed,dest],{encoding:'utf8'});if(r.status!==0)throw new Error(`FIXTURE_COPY_FAILED:${r.stderr}`);setTreeOwnership(dest,identity)}
 function initFixtureGit(fixture,identity){
   git(['init','-q'],fixture,identity);git(['config','user.email','w-harness@invalid.local'],fixture,identity);git(['config','user.name','W Acceptance Harness'],fixture,identity);git(['add','-A'],fixture,identity);git(['commit','-q','-m','fixture baseline'],fixture,identity)
@@ -204,20 +223,24 @@ export async function executeWorkload(workloadId,{pollMs=1500}={}){
     scratch=join(controlRoot,'oracle-scratch');mkdirSync(scratch,{recursive:true,mode:0o700})
     runtimeSandbox=prepareRuntimeSandbox(join(runDir,'model-runtime'),runtimeIdentity);hiState=prepareRuntimeSandbox(join(runtimeSandbox,'hi-state'),runtimeIdentity);tmp=prepareRuntimeSandbox(join(runtimeSandbox,'tmp'),runtimeIdentity)
     const fixtureHead=initFixtureGit(fixture,runtimeIdentity);writeSourcePluginConfig(fixture)
+    const configuredPool=JSON.parse(readFileSync(join(WROOT,'model-pool.json'),'utf8')).models,live=readLiveModelInventory(exactBin,runtimeIdentity),pool=expandTestPool(configuredPool,live),allowedWModels=effectiveWModelIds(pool,live)
+    if(!allowedWModels.length)throw new Error('NO_LIVE_W_MODEL_POOL')
+    const confinement=writeWModelConfinement(fixture,allowedWModels)
+    selected=selectTestModel({liveInventory:live,pool,requiredCapabilities:spec.requiredCapabilities})
     receipts.write('prompt-identity',promptIdentity(promptPath));receipts.write('oracle-identity',oracleIdentity({path:oraclePath,version:spec.hiddenOracle.version,fixtureIdentity:spec.fixture.baseline.value}))
-    receipts.write('tool-preflight',{status:'PASS',exact_opencode:{path:exactBin,version:target,sha256:shaFile(exactBin)},plugin_entrypoint:join(ROOT,'plugin','dist','plugin.js'),fixture_seed_identity:seedIdentity,fixture_git_head:fixtureHead,operator_uid:process.getuid?.()??null,model_runtime:{user:runtimeIdentity.name,uid:runtimeIdentity.uid,gid:runtimeIdentity.gid,oracle_readable:false}})
+    receipts.write('tool-preflight',{status:'PASS',exact_opencode:{path:exactBin,version:target,sha256:shaFile(exactBin)},plugin_entrypoint:join(ROOT,'plugin','dist','plugin.js'),fixture_seed_identity:seedIdentity,fixture_git_head:fixtureHead,operator_uid:process.getuid?.()??null,model_runtime:{user:runtimeIdentity.name,uid:runtimeIdentity.uid,gid:runtimeIdentity.gid,oracle_readable:false},w_model_confinement:confinement})
+    receipts.write('model-role-selection',{scope:'w-development-test-only',required_capabilities:spec.requiredCapabilities,selected_model:selected.model.id,eligible:selected.eligible,rejected:selected.rejected,reason:selected.reason,allowed_models:allowedWModels,confinement_sha256:confinement.sha256})
     const port=await freePort(),base=`http://127.0.0.1:${port}`,runtimeEnv=buildRuntimeEnvironment(runtimeIdentity,{hiState,tmp});pm=new OwnedProcessManager(runDir)
     serverRecord=await pm.spawn({runId,workloadId,command:exactBin,args:['serve','--hostname','127.0.0.1','--port',String(port),'--print-logs','--log-level','INFO'],cwd:fixture,env:runtimeEnv,uid:runtimeIdentity.uid,gid:runtimeIdentity.gid,readiness:{kind:'probe',timeoutMs:30000,intervalMs:250,probe:async()=>{const h=await health(base);return h?.healthy===true&&h?.version===target}}})
     const ids=await toolIds(base,fixture);if(!ids.some(x=>String(x).startsWith('hi_')))throw new Error('HI_TOOL_SURFACE_NOT_LOADED');await assertWPrimaryAgent(base,fixture)
     client=createOpencodeClient({baseUrl:base,directory:fixture})
-    const configuredPool=JSON.parse(readFileSync(join(WROOT,'model-pool.json'),'utf8')).models,live=readLiveModelInventory(exactBin,runtimeIdentity),pool=expandTestPool(configuredPool,live)
-    selected=selectTestModel({liveInventory:live,pool,requiredCapabilities:spec.requiredCapabilities})
-    receipts.write('model-role-selection',{scope:'w-development-test-only',required_capabilities:spec.requiredCapabilities,selected_model:selected.model.id,eligible:selected.eligible,rejected:selected.rejected,reason:selected.reason})
     const mi=modelIdentity(selected.model.id),created=dataOf(await client.session.create({directory:fixture,agent:W_PRIMARY_AGENT,title:`W acceptance ${workloadId} ${runId}`,model:{id:mi.modelID,providerID:mi.providerID}}));if(!created?.id)throw new Error('PARENT_SESSION_CREATE_FAILED');parentID=created.id
     writeMeta({status:'ACTIVE',product_sha:productHead,opencode_version:target,model:selected.model.id,parent_session_id:parentID,server:serverRecord,base_url:base,runtime_state:null})
     const prompt=readFileSync(promptPath,'utf8');const ack=await client.session.promptAsync({sessionID:parentID,directory:fixture,agent:W_PRIMARY_AGENT,model:mi,parts:[{type:'text',text:prompt}]},{throwOnError:true});if(ack?.error)throw new Error(`PROMPT_ASYNC_REJECTED:${JSON.stringify(ack.error)}`)
     for(;;){
       const children=dataOf(await client.session.children({sessionID:parentID,directory:fixture}))??[],childSessionIDs=(Array.isArray(children)?children:[]).map(x=>x.id).filter(Boolean),permissions=await pendingPermissions(base,fixture);let scopeViolation=null;for(const permission of permissions){const decision=classifyWPermissionRequest(permission,{fixture,parentID,childSessionIDs});if(decision.action==='ALLOW_ONCE')await replyPermission(base,fixture,permission.id,'once');else if(decision.action==='REJECT_TERMINAL'){await replyPermission(base,fixture,permission.id,'reject');scopeViolation={permission,decision};break}}if(scopeViolation){await client.session.abort({sessionID:parentID,directory:fixture});const statePath=findRuntimeState(hiState),state=statePath?readJsonMaybe(statePath):undefined;finalMission=state?.missions?.[0];finalLiveness={state:'TERMINAL',inflight:'NO',destructive_recovery_allowed:false,reasons:['w-scope-violation']};writeMeta({scope_violation:{permission_id:scopeViolation.permission.id,permission:scopeViolation.permission.permission,reason:scopeViolation.decision.reason}});break}const statuses=hostStatusMap(await client.session.status({directory:fixture})),statePath=findRuntimeState(hiState),state=statePath?readJsonMaybe(statePath):undefined,mission=state?.missions?.[0]
+      const escapedModels=outOfPoolWorkerModels(mission,allowedWModels)
+      if(escapedModels.length)throw new Error(`W_MODEL_POOL_ESCAPE:${escapedModels.map(x=>`${x.role??'unknown'}:${x.model}`).join(',')}`)
       const liveness=mission?assessHarnessLiveness(mission,{hostSessions:statuses}):{state:'RECONCILE',inflight:statuses[parentID]==='busy'||statuses[parentID]==='retry'?'YES':'UNKNOWN',destructive_recovery_allowed:false,reasons:['runtime-state-not-yet-observed']}
       const observation=runtimeProjection(parentID,mission,serverRecord,statuses);writeFileSync(runtimeObservationPath,JSON.stringify({schema:1,run_id:runId,observed_at:new Date().toISOString(),parent_session_id:parentID,child_sessions:(Array.isArray(children)?children:[]).map(x=>({id:x.id,parentID:x.parentID})),host_statuses:statuses,runtime_state:statePath||null,liveness,execution:observation},null,2)+'\n',{mode:0o600});writeMeta({runtime_state:statePath||null,parent_status:statuses[parentID]??'idle',child_session_ids:(Array.isArray(children)?children:[]).map(x=>x.id),liveness})
       if(missionTerminalStatus(mission?.identity?.status)){finalMission=mission;finalLiveness=liveness;break}

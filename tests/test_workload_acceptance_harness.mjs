@@ -7,14 +7,14 @@ import {join} from 'node:path'
 import {AuthoritativeRunLock,reconcileAuthoritativeRun,reconcileContinuation} from '../scripts/workload-acceptance/authoritative-run.mjs'
 import {FixtureManager,fixtureIdentity} from '../scripts/workload-acceptance/fixture-manager.mjs'
 import {ImmutableReceiptWriter,admitRerunLineage} from '../scripts/workload-acceptance/receipts.mjs'
-import {selectTestModel,expandTestPool} from '../scripts/workload-acceptance/model-pool.mjs'
+import {selectTestModel,expandTestPool,effectiveWModelIds} from '../scripts/workload-acceptance/model-pool.mjs'
 import {roleAcceptanceObservation} from '../scripts/workload-acceptance/role-observation.mjs'
 import {assertWorkloadSpec,assertHiddenOracle,oracleIdentity} from '../scripts/workload-acceptance/workload-spec.mjs'
 import {assessHarnessLiveness} from '../scripts/workload-acceptance/liveness-adapter.mjs'
 import {OwnedProcessManager} from '../scripts/workload-acceptance/process-owner.mjs'
 import {classify,productRepairAuthorized} from '../scripts/workload-acceptance/classification.mjs'
 import {cleanupOwnedResources} from '../scripts/workload-acceptance/cleanup.mjs'
-import {normalizeLiveModels,parseVerboseModelInventory,missionTerminalStatus,modelIdentity,writeSourcePluginConfig,resolveExecutionContract,resolveRuntimeIdentity,assertOperatorRuntimeSeparation,requireReadyAdmission,discoverTerminalPredecessor,buildRuntimeEnvironment,classifyWPermissionRequest,W_PRIMARY_AGENT} from '../scripts/workload-acceptance/execution-driver.mjs'
+import {normalizeLiveModels,parseVerboseModelInventory,missionTerminalStatus,modelIdentity,writeSourcePluginConfig,writeWModelConfinement,outOfPoolWorkerModels,resolveExecutionContract,resolveRuntimeIdentity,assertOperatorRuntimeSeparation,requireReadyAdmission,discoverTerminalPredecessor,buildRuntimeEnvironment,classifyWPermissionRequest,W_PRIMARY_AGENT} from '../scripts/workload-acceptance/execution-driver.mjs'
 import {WORKLOAD_IDS,parseCanonicalPromptCatalog,buildCatalogManifest,resolveCatalogEntry} from '../scripts/workload-acceptance/catalog.mjs'
 
 
@@ -170,3 +170,10 @@ test('catalog certification treats known-broken concurrency baseline as determin
   assert.equal(observations.every(x=>x.failed>0),true)
   assert.notEqual(observations[0].failed,observations[1].failed)
 })
+
+
+test('W child model confinement uses only live canonical W pool members',()=>{const pool=[{id:'p/a'},{id:'p/b'},{id:'p/offline'}],live=[{id:'p/a'},{id:'p/b'},{id:'p/other'}];assert.deepEqual(effectiveWModelIds(pool,live),['p/a','p/b'])})
+
+test('W run writes an adaptive project-local strict child allowlist without changing global product routing',t=>{const root=temp();t.after(()=>rmSync(root,{recursive:true,force:true}));mkdirSync(join(root,'.git','info'),{recursive:true});writeSourcePluginConfig(root);const r=writeWModelConfinement(root,['p/a','p/b','p/a']);const doc=JSON.parse(readFileSync(r.path,'utf8'));assert.equal(doc.execution.topology,'adaptive');assert.deepEqual(doc.routing.allowedModels,['p/a','p/b']);assert.match(readFileSync(join(root,'.git','info','exclude'),'utf8'),/\.opencode\//)})
+
+test('W run detects any child model or host-default escape outside the confined pool',()=>{const mission={execution:{workers:[{id:'w1',task_id:'t1',role:'coder',model:'p/a'},{id:'w2',task_id:'t2',role:'test-engineer',model:'p/paid'},{id:'w3',task_id:'t3',role:'qa-reviewer',model:'host-default'}]}};assert.deepEqual(outOfPoolWorkerModels(mission,['p/a']),[{worker_id:'w2',task_id:'t2',role:'test-engineer',model:'p/paid'},{worker_id:'w3',task_id:'t3',role:'qa-reviewer',model:'host-default'}])})
