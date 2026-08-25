@@ -13,7 +13,7 @@ import {assessHarnessLiveness} from '../scripts/workload-acceptance/liveness-ada
 import {OwnedProcessManager} from '../scripts/workload-acceptance/process-owner.mjs'
 import {classify,productRepairAuthorized} from '../scripts/workload-acceptance/classification.mjs'
 import {cleanupOwnedResources} from '../scripts/workload-acceptance/cleanup.mjs'
-import {normalizeLiveModels,parseVerboseModelInventory,missionTerminalStatus,modelIdentity,writeSourcePluginConfig,resolveExecutionContract,resolveRuntimeIdentity,assertOperatorRuntimeSeparation,requireReadyAdmission,discoverTerminalPredecessor} from '../scripts/workload-acceptance/execution-driver.mjs'
+import {normalizeLiveModels,parseVerboseModelInventory,missionTerminalStatus,modelIdentity,writeSourcePluginConfig,resolveExecutionContract,resolveRuntimeIdentity,assertOperatorRuntimeSeparation,requireReadyAdmission,discoverTerminalPredecessor,buildRuntimeEnvironment} from '../scripts/workload-acceptance/execution-driver.mjs'
 
 const temp=()=>mkdtempSync(join(process.cwd(),'.agent-work/tmp/w-harness-selftest-'))
 
@@ -102,6 +102,11 @@ test('common cleanup terminates exact owned process and releases exact owned loc
 
 
 test('common execution driver normalizes boolean-map and array model capabilities before pool selection',()=>{const rows=normalizeLiveModels([{id:'m',providerID:'p',capabilities:{input:{text:true,image:false},output:{text:true}}},{id:'n',providerID:'p',capabilities:{input:['text','image'],output:['text']},status:'active'}]);assert.deepEqual(rows,[{id:'p/m',capabilities:['text'],status:null},{id:'p/n',capabilities:['text','image'],status:'active'}]);assert.deepEqual(modelIdentity('p/m'),{providerID:'p',modelID:'m'})})
+
+test('common driver builds declared isolated model runtime environment as a pure contract',()=>{const identity={name:'node',home:'/home/node'},env=buildRuntimeEnvironment(identity,{hiState:'/run/hi',tmp:'/run/tmp'});assert.deepEqual(env,{HOME:'/home/node',USER:'node',LOGNAME:'node',OPENCODE_HI_STATE_DIR:'/run/hi',TMPDIR:'/run/tmp',TMP:'/run/tmp',TEMP:'/run/tmp'})})
+
+test('run-meta predecessor identity is sourced from the same discovered predecessor as immutable lineage',()=>{const src=readFileSync(new URL('../scripts/workload-acceptance/execution-driver.mjs',import.meta.url),'utf8');assert.match(src,/predecessor_run_id:predecessor\?\.run_id\?\?null/);assert.doesNotMatch(src,/predecessor_run_id:null,started_at/)})
+
 
 test('exact CLI verbose model inventory parser binds announced identity to metadata',()=>{const stdout='p/m\n{\n  "id": "m",\n  "providerID": "p",\n  "status": "active",\n  "capabilities": {"input":{"text":true},"output":{"text":true}}\n}\np/n\n{\n  "id": "n",\n  "providerID": "p",\n  "capabilities": {"input":["text"],"output":["text"]}\n}\n';const rows=parseVerboseModelInventory(stdout);assert.equal(rows.length,2);assert.equal(rows[0].id,'m');assert.throws(()=>parseVerboseModelInventory(stdout.replace('"providerID": "p"','"providerID": "other"')),/MODEL_INVENTORY_ID_MISMATCH/)})
 

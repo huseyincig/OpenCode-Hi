@@ -38,6 +38,11 @@ export function assertOperatorRuntimeSeparation(oraclePath,identity){
   if(probe.status===0)throw new Error('HIDDEN_ORACLE_READABLE_BY_MODEL_RUNTIME')
   return true
 }
+
+export function buildRuntimeEnvironment(identity,{hiState,tmp}){
+  if(!identity?.name||!identity?.home||!hiState||!tmp)throw new Error('MODEL_RUNTIME_ENVIRONMENT_INVALID')
+  return{HOME:identity.home,USER:identity.name,LOGNAME:identity.name,OPENCODE_HI_STATE_DIR:hiState,TMPDIR:tmp,TMP:tmp,TEMP:tmp}
+}
 function setTreeOwnership(path,identity){const s=lstatSync(path);if(s.isSymbolicLink()){lchownSync(path,identity.uid,identity.gid);return}if(s.isDirectory())for(const name of readdirSync(path))setTreeOwnership(join(path,name),identity);chownSync(path,identity.uid,identity.gid)}
 function prepareRuntimeSandbox(path,identity){mkdirSync(path,{recursive:true,mode:0o700});chownSync(path,identity.uid,identity.gid);return path}
 
@@ -169,7 +174,7 @@ export async function executeWorkload(workloadId,{pollMs=1500}={}){
   const {runId,lock,receipts}=requireReadyAdmission(run),runDir=join(RUNTIME_ROOT,workloadId,'runs',runId)
   let controlRoot,scratch,runtimeSandbox,hiState,tmp,serverRecord,pm,parentID,client,cleanupResult,finalMission,finalLiveness,selected
   const runMetaPath=join(runDir,'run-meta.json'),runtimeObservationPath=join(runDir,'runtime-observation.json')
-  const writeMeta=patch=>{const current=readJsonMaybe(runMetaPath)??{schema:1,workload_id:workloadId,run_id:runId,predecessor_run_id:null,started_at:new Date().toISOString()};writeFileSync(runMetaPath,JSON.stringify({...current,...patch,updated_at:new Date().toISOString()},null,2)+'\n',{mode:0o600})}
+  const writeMeta=patch=>{const current=readJsonMaybe(runMetaPath)??{schema:1,workload_id:workloadId,run_id:runId,predecessor_run_id:predecessor?.run_id??null,started_at:new Date().toISOString()};writeFileSync(runMetaPath,JSON.stringify({...current,...patch,updated_at:new Date().toISOString()},null,2)+'\n',{mode:0o600})}
   try{
     controlRoot=prepareOperatorControlRoot(join(runDir,'operator-control'),fixture).path
     scratch=join(controlRoot,'oracle-scratch');mkdirSync(scratch,{recursive:true,mode:0o700})
@@ -177,7 +182,7 @@ export async function executeWorkload(workloadId,{pollMs=1500}={}){
     const fixtureHead=initFixtureGit(fixture,runtimeIdentity);writeSourcePluginConfig(fixture)
     receipts.write('prompt-identity',promptIdentity(promptPath));receipts.write('oracle-identity',oracleIdentity({path:oraclePath,version:spec.hiddenOracle.version,fixtureIdentity:spec.fixture.baseline.value}))
     receipts.write('tool-preflight',{status:'PASS',exact_opencode:{path:exactBin,version:target,sha256:shaFile(exactBin)},plugin_entrypoint:join(ROOT,'plugin','dist','plugin.js'),fixture_seed_identity:seedIdentity,fixture_git_head:fixtureHead,operator_uid:process.getuid?.()??null,model_runtime:{user:runtimeIdentity.name,uid:runtimeIdentity.uid,gid:runtimeIdentity.gid,oracle_readable:false}})
-    const port=await freePort(),base=`http://127.0.0.1:${port}`;pm=new OwnedProcessManager(runDir),runtimeEnv={HOME:runtimeIdentity.home,USER:runtimeIdentity.name,LOGNAME:runtimeIdentity.name,OPENCODE_HI_STATE_DIR:hiState,TMPDIR:tmp,TMP:tmp,TEMP:tmp}
+    const port=await freePort(),base=`http://127.0.0.1:${port}`,runtimeEnv=buildRuntimeEnvironment(runtimeIdentity,{hiState,tmp});pm=new OwnedProcessManager(runDir)
     serverRecord=await pm.spawn({runId,workloadId,command:exactBin,args:['serve','--hostname','127.0.0.1','--port',String(port),'--print-logs','--log-level','INFO'],cwd:fixture,env:runtimeEnv,uid:runtimeIdentity.uid,gid:runtimeIdentity.gid,readiness:{kind:'probe',timeoutMs:30000,intervalMs:250,probe:async()=>{const h=await health(base);return h?.healthy===true&&h?.version===target}}})
     const ids=await toolIds(base,fixture);if(!ids.some(x=>String(x).startsWith('hi_')))throw new Error('HI_TOOL_SURFACE_NOT_LOADED')
     client=createOpencodeClient({baseUrl:base,directory:fixture})
