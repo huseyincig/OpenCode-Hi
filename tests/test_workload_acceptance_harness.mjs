@@ -7,7 +7,7 @@ import {join} from 'node:path'
 import {AuthoritativeRunLock,reconcileAuthoritativeRun,reconcileContinuation} from '../scripts/workload-acceptance/authoritative-run.mjs'
 import {FixtureManager,fixtureIdentity} from '../scripts/workload-acceptance/fixture-manager.mjs'
 import {ImmutableReceiptWriter,admitRerunLineage} from '../scripts/workload-acceptance/receipts.mjs'
-import {selectTestModel} from '../scripts/workload-acceptance/model-pool.mjs'
+import {selectTestModel,expandTestPool} from '../scripts/workload-acceptance/model-pool.mjs'
 import {roleAcceptanceObservation} from '../scripts/workload-acceptance/role-observation.mjs'
 import {assertWorkloadSpec,assertHiddenOracle,oracleIdentity} from '../scripts/workload-acceptance/workload-spec.mjs'
 import {assessHarnessLiveness} from '../scripts/workload-acceptance/liveness-adapter.mjs'
@@ -37,6 +37,11 @@ test('same-condition blind rerun is rejected without repair or material transien
 test('development pool filters capabilities before test-only cost rank',()=>{const selected=selectTestModel({liveInventory:[{id:'cheap',capabilities:['text']},{id:'vision',capabilities:['text','image']}],pool:[{id:'cheap',costRank:1},{id:'vision',costRank:9}],requiredCapabilities:['image']});assert.equal(selected.model.id,'vision');assert.equal(selected.reason,'capability-eligible-test-cost-order')})
 
 test('test model pool remains a harness input and does not write product routing state',()=>{const cfg={pool:[{id:'x',costRank:1}]};const selected=selectTestModel({liveInventory:[{id:'x',capabilities:['text']}],pool:cfg.pool,requiredCapabilities:['text']});assert.equal(selected.model.id,'x');assert.deepEqual(Object.keys(selected).sort(),['eligible','model','reason','rejected'])})
+
+test('W test pool preserves configured ten preference entries and appends only objectively zero-cost live models provider-agnostically',()=>{const configured=[{id:'opencode-go/muse',costRank:1},{id:'opencode-go/pro',costRank:2}],live=[{id:'opencode-go/muse',capabilities:['text'],zeroCost:false},{id:'opencode/free-a',capabilities:['text'],zeroCost:true},{id:'openrouter/free-b',capabilities:['text'],zeroCost:true},{id:'zen/paid',capabilities:['text'],zeroCost:false}];const pool=expandTestPool(configured,live);assert.deepEqual(pool.map(x=>x.id),['opencode-go/muse','opencode-go/pro','opencode/free-a','openrouter/free-b']);assert.ok(pool.find(x=>x.id==='openrouter/free-b').costRank>2)})
+
+test('verbose inventory marks free only from numeric zero-cost metadata, never model naming',()=>{const rows=normalizeLiveModels([{id:'free-name-but-paid',providerID:'p',cost:{input:1,output:0},capabilities:{input:{text:true},output:{text:true}}},{id:'ordinary-name',providerID:'q',cost:{input:0,output:0,cache:{read:0,write:0}},capabilities:{input:{text:true},output:{text:true}}}]);assert.equal(rows[0].zeroCost,false);assert.equal(rows[1].zeroCost,true)})
+
 
 test('role observation records expected and actual independently without injecting role authority',()=>{const o=roleAcceptanceObservation({taskId:'t1',semantics:['external-research'],requiredCapabilities:['research'],expectedRole:'researcher',actualRole:'coder',permissionProfile:'read-only',methodologies:['m'],tools:['read'],evidenceOwner:'w1',selectedModel:'x'});assert.equal(o.expected_role,'researcher');assert.equal(o.actual_role,'coder');assert.equal(o.role_match,false)})
 
@@ -104,7 +109,7 @@ test('operator control root is fixture-external and group/world inaccessible',t=
 test('common cleanup terminates exact owned process and releases exact owned lock only',async t=>{const root=temp();t.after(()=>rmSync(root,{recursive:true,force:true}));const lock=new AuthoritativeRunLock(join(root,'owned.lock'),{workloadId:'WT',runId:'r1'});await lock.acquire();const pm=new OwnedProcessManager(root);const p=await pm.spawn({runId:'r1',workloadId:'WT',command:process.execPath,args:['-e','setInterval(()=>{},1000)'],cwd:root,readiness:{kind:'delay',ms:20}});const c=await cleanupOwnedResources('r1',[{kind:'process',ownerRunId:'r1',manager:pm,contract:p,options:{graceMs:100}},{kind:'lock',ownerRunId:'r1',lock}]);assert.equal(c.quarantined.length,0);assert.equal(c.cleaned.length,2);const contender=new AuthoritativeRunLock(join(root,'owned.lock'),{workloadId:'WT',runId:'r2'});await contender.acquire();await contender.release()})
 
 
-test('common execution driver normalizes boolean-map and array model capabilities before pool selection',()=>{const rows=normalizeLiveModels([{id:'m',providerID:'p',capabilities:{input:{text:true,image:false},output:{text:true}}},{id:'n',providerID:'p',capabilities:{input:['text','image'],output:['text']},status:'active'}]);assert.deepEqual(rows,[{id:'p/m',capabilities:['text'],status:null},{id:'p/n',capabilities:['text','image'],status:'active'}]);assert.deepEqual(modelIdentity('p/m'),{providerID:'p',modelID:'m'})})
+test('common execution driver normalizes boolean-map and array model capabilities before pool selection',()=>{const rows=normalizeLiveModels([{id:'m',providerID:'p',capabilities:{input:{text:true,image:false},output:{text:true}}},{id:'n',providerID:'p',capabilities:{input:['text','image'],output:['text']},status:'active'}]);assert.deepEqual(rows,[{id:'p/m',capabilities:['text'],status:null,zeroCost:false},{id:'p/n',capabilities:['text','image'],status:'active',zeroCost:false}]);assert.deepEqual(modelIdentity('p/m'),{providerID:'p',modelID:'m'})})
 
 test('common driver builds declared isolated model runtime environment as a pure contract',()=>{const identity={name:'node',home:'/home/node'},env=buildRuntimeEnvironment(identity,{hiState:'/run/hi',tmp:'/run/tmp'});assert.deepEqual(env,{HOME:'/home/node',USER:'node',LOGNAME:'node',OPENCODE_HI_STATE_DIR:'/run/hi',OPENCODE_EXPERIMENTAL_WORKSPACES:'true',TMPDIR:'/run/tmp',TMP:'/run/tmp',TEMP:'/run/tmp'})})
 

@@ -7,7 +7,7 @@ import {spawnSync} from 'node:child_process'
 import {createOpencodeClient} from '../../plugin/node_modules/@opencode-ai/sdk/dist/v2/client.js'
 import {WorkloadAcceptanceHarness} from './harness-core.mjs'
 import {OwnedProcessManager} from './process-owner.mjs'
-import {selectTestModel} from './model-pool.mjs'
+import {expandTestPool,selectTestModel} from './model-pool.mjs'
 import {prepareOperatorControlRoot} from './isolation.mjs'
 import {assertHiddenOracle,assertWorkloadSpec,promptIdentity,oracleIdentity} from './workload-spec.mjs'
 import {fixtureIdentity} from './fixture-manager.mjs'
@@ -80,7 +80,8 @@ export function normalizeLiveModels(rows=[]){
     if(has(input,'audio')||has(output,'audio'))caps.push('audio')
     if(has(input,'video')||has(output,'video'))caps.push('video')
     if(has(input,'pdf'))caps.push('pdf')
-    out.push({id:`${provider}/${id}`,capabilities:caps,status:row.status??null})
+    const cost=row.cost,zeroCost=Boolean(cost&&cost.input===0&&cost.output===0&&[...function* values(x){if(typeof x==='number')yield x;else if(x&&typeof x==='object')for(const v of Object.values(x))yield* values(v)}(cost)].every(x=>x===0))
+    out.push({id:`${provider}/${id}`,capabilities:caps,status:row.status??null,zeroCost})
   }
   return out
 }
@@ -97,10 +98,10 @@ export function parseVerboseModelInventory(stdout){
   if(buffer||announced||depth!==0||inString)throw new Error('MODEL_INVENTORY_TRUNCATED')
   return rows
 }
-export function readLiveModelInventory(exactBin,pool,identity){
-  const providers=[...new Set(pool.map(x=>String(x.id).split('/')[0]).filter(Boolean))],rows=[]
-  for(const provider of providers){const r=spawnSync(exactBin,['models',provider,'--verbose'],{encoding:'utf8',...identityOptions(identity)});if(r.status!==0)throw new Error(`MODEL_INVENTORY_FAILED:${provider}:${String(r.stderr||'').trim()}`);rows.push(...parseVerboseModelInventory(r.stdout))}
-  return normalizeLiveModels(rows)
+export function readLiveModelInventory(exactBin,identity){
+  const r=spawnSync(exactBin,['models','--verbose'],{encoding:'utf8',...identityOptions(identity),maxBuffer:64*1024*1024})
+  if(r.status!==0)throw new Error(`MODEL_INVENTORY_FAILED:${String(r.stderr||'').trim()}`)
+  return normalizeLiveModels(parseVerboseModelInventory(r.stdout))
 }
 export function missionTerminalStatus(status){return ['completed','stopped','failed','waiting-user'].includes(String(status??''))}
 export function modelIdentity(id){const at=id.indexOf('/');if(at<1||at===id.length-1)throw new Error(`INVALID_MODEL_ID:${id}`);return{providerID:id.slice(0,at),modelID:id.slice(at+1)}}
@@ -207,7 +208,7 @@ export async function executeWorkload(workloadId,{pollMs=1500}={}){
     serverRecord=await pm.spawn({runId,workloadId,command:exactBin,args:['serve','--hostname','127.0.0.1','--port',String(port),'--print-logs','--log-level','INFO'],cwd:fixture,env:runtimeEnv,uid:runtimeIdentity.uid,gid:runtimeIdentity.gid,readiness:{kind:'probe',timeoutMs:30000,intervalMs:250,probe:async()=>{const h=await health(base);return h?.healthy===true&&h?.version===target}}})
     const ids=await toolIds(base,fixture);if(!ids.some(x=>String(x).startsWith('hi_')))throw new Error('HI_TOOL_SURFACE_NOT_LOADED');await assertWPrimaryAgent(base,fixture)
     client=createOpencodeClient({baseUrl:base,directory:fixture})
-    const pool=JSON.parse(readFileSync(join(WROOT,'model-pool.json'),'utf8')).models,live=readLiveModelInventory(exactBin,pool,runtimeIdentity)
+    const configuredPool=JSON.parse(readFileSync(join(WROOT,'model-pool.json'),'utf8')).models,live=readLiveModelInventory(exactBin,runtimeIdentity),pool=expandTestPool(configuredPool,live)
     selected=selectTestModel({liveInventory:live,pool,requiredCapabilities:spec.requiredCapabilities})
     receipts.write('model-role-selection',{scope:'w-development-test-only',required_capabilities:spec.requiredCapabilities,selected_model:selected.model.id,eligible:selected.eligible,rejected:selected.rejected,reason:selected.reason})
     const mi=modelIdentity(selected.model.id),created=dataOf(await client.session.create({directory:fixture,agent:W_PRIMARY_AGENT,title:`W acceptance ${workloadId} ${runId}`,model:{id:mi.modelID,providerID:mi.providerID}}));if(!created?.id)throw new Error('PARENT_SESSION_CREATE_FAILED');parentID=created.id
