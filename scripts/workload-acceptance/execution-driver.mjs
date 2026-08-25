@@ -134,11 +134,14 @@ export async function executeWorkload(workloadId,{pollMs=1500}={}){
   const harness=new WorkloadAcceptanceHarness({stateRoot:RUNTIME_ROOT,productIdentity:{head:productHead,origin_dev:originHead,opencode:target,opencode_binary_sha256:shaFile(exactBin)},liveInventory:[],sessionProbe:async()=> 'unknown',processProbe:processAlive})
   const run=await harness.preflight(spec,{conditionFingerprint:`${productHead}:${target}:${spec.fixture.baseline.value}:${shaFile(promptPath)}:${shaFile(oraclePath)}`,prepareFixture:async()=>copySeed(seed,fixture,runtimeIdentity)})
   if(run.disposition!=='READY_TO_EXECUTE')return run
-  const {runId,lock,receipts}=requireReadyAdmission(run),runDir=join(RUNTIME_ROOT,workloadId,'runs',runId),controlRoot=prepareOperatorControlRoot(join(runDir,'operator-control'),fixture),scratch=join(controlRoot,'oracle-scratch'),runtimeSandbox=prepareRuntimeSandbox(join(runDir,'model-runtime'),runtimeIdentity),hiState=prepareRuntimeSandbox(join(runtimeSandbox,'hi-state'),runtimeIdentity),tmp=prepareRuntimeSandbox(join(runtimeSandbox,'tmp'),runtimeIdentity);mkdirSync(scratch,{recursive:true,mode:0o700})
-  let serverRecord,pm,parentID,client,cleanupResult,finalMission,finalLiveness,selected
+  const {runId,lock,receipts}=requireReadyAdmission(run),runDir=join(RUNTIME_ROOT,workloadId,'runs',runId)
+  let controlRoot,scratch,runtimeSandbox,hiState,tmp,serverRecord,pm,parentID,client,cleanupResult,finalMission,finalLiveness,selected
   const runMetaPath=join(runDir,'run-meta.json'),runtimeObservationPath=join(runDir,'runtime-observation.json')
   const writeMeta=patch=>{const current=readJsonMaybe(runMetaPath)??{schema:1,workload_id:workloadId,run_id:runId,predecessor_run_id:null,started_at:new Date().toISOString()};writeFileSync(runMetaPath,JSON.stringify({...current,...patch,updated_at:new Date().toISOString()},null,2)+'\n',{mode:0o600})}
   try{
+    controlRoot=prepareOperatorControlRoot(join(runDir,'operator-control'),fixture).path
+    scratch=join(controlRoot,'oracle-scratch');mkdirSync(scratch,{recursive:true,mode:0o700})
+    runtimeSandbox=prepareRuntimeSandbox(join(runDir,'model-runtime'),runtimeIdentity);hiState=prepareRuntimeSandbox(join(runtimeSandbox,'hi-state'),runtimeIdentity);tmp=prepareRuntimeSandbox(join(runtimeSandbox,'tmp'),runtimeIdentity)
     const fixtureHead=initFixtureGit(fixture,runtimeIdentity);writeSourcePluginConfig(fixture)
     receipts.write('prompt-identity',promptIdentity(promptPath));receipts.write('oracle-identity',oracleIdentity({path:oraclePath,version:spec.hiddenOracle.version,fixtureIdentity:spec.fixture.baseline.value}))
     receipts.write('tool-preflight',{status:'PASS',exact_opencode:{path:exactBin,version:target,sha256:shaFile(exactBin)},plugin_entrypoint:join(ROOT,'plugin','dist','plugin.js'),fixture_seed_identity:seedIdentity,fixture_git_head:fixtureHead,operator_uid:process.getuid?.()??null,model_runtime:{user:runtimeIdentity.name,uid:runtimeIdentity.uid,gid:runtimeIdentity.gid,oracle_readable:false}})
@@ -181,7 +184,7 @@ export async function executeWorkload(workloadId,{pollMs=1500}={}){
   }catch(error){
     writeMeta({status:'SUPERVISOR_ERROR',error:String(error?.stack??error)})
     if(parentID&&client)try{await client.session.abort({sessionID:parentID,directory:fixture})}catch{}
-    const resources=[];if(serverRecord&&pm)resources.push({kind:'process',ownerRunId:runId,manager:pm,contract:serverRecord,options:{graceMs:1500}});if(existsSync(runtimeSandbox))resources.push({kind:'path',ownerRunId:runId,path:runtimeSandbox,root:runDir});if(existsSync(controlRoot))resources.push({kind:'path',ownerRunId:runId,path:controlRoot,root:runDir});resources.push({kind:'lock',ownerRunId:runId,lock});try{cleanupResult=await cleanupOwnedResources(runId,resources)}catch{}
+    const resources=[];if(serverRecord&&pm)resources.push({kind:'process',ownerRunId:runId,manager:pm,contract:serverRecord,options:{graceMs:1500}});if(runtimeSandbox&&existsSync(runtimeSandbox))resources.push({kind:'path',ownerRunId:runId,path:runtimeSandbox,root:runDir});if(controlRoot&&existsSync(controlRoot))resources.push({kind:'path',ownerRunId:runId,path:controlRoot,root:runDir});resources.push({kind:'lock',ownerRunId:runId,lock});try{cleanupResult=await cleanupOwnedResources(runId,resources)}catch{}
     try{receipts.write('classification',{result:'FAIL',class:'HARNESS_DEFECT',root_cause:String(error?.message??error),product_repair_authorized:false})}catch{}
     try{receipts.write('cleanup',{error_cleanup:true,quarantined:cleanupResult?.quarantined??[]})}catch{}
     try{receipts.write('summary',{status:'FAIL',workload_id:workloadId,classification:'HARNESS_DEFECT',error:String(error?.message??error)})}catch{}
