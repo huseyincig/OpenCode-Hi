@@ -17,6 +17,17 @@ function trimTerminalProseDots(value) { let end = value.length; while (end > 0 &
     end--; return value.slice(0, end); }
 export function technicalTargets(text) { return [...text.matchAll(PATH)].map(m => trimTerminalProseDots(m[1])).filter(Boolean).slice(0, 12); }
 export function technicalVerificationKinds(text) { return TECHNICAL_VERIFIER_PATTERNS.filter(([, pattern]) => pattern.test(text)).map(([kind]) => kind); }
+function repoVerificationKind(kind) {
+    const normalized = kind.toLowerCase().trim();
+    if (['test', 'pytest', 'go test', 'cargo test'].includes(normalized))
+        return 'targeted-tests';
+    if (normalized === 'check')
+        return 'changed-surface-sanity';
+    if (['targeted-tests', 'typecheck', 'lint', 'build', 'changed-surface-sanity', 'visual-check', 'review-evidence'].includes(normalized))
+        return normalized;
+    return undefined;
+}
+function repoVerificationKinds(repo) { return new Set(repo.likelyVerification.map(repoVerificationKind).filter((kind) => Boolean(kind))); }
 /**
  * Reconcile model-proposed verification with mechanically observable user intent.
  * The host primary may recommend checks, but a bounded low/medium-risk read-only review
@@ -29,7 +40,7 @@ export function resolveAdaptiveVerificationAssessment(assessment, userText, repo
         return { assessment: { ...assessment, likely_verification: [...explicitUserVerification], user_verification: [...explicitUserVerification], verification_ceiling: true }, explicitUserVerification, ceilingApplied: true, policy: 'explicit-user-verifier' };
     const boundedLocalVisual = assessment.scope === 'local' && ['low', 'medium'].includes(assessment.risk) && assessment.task_kind !== 'release-readiness' && assessment.required_capabilities.includes('visual-qa') && assessment.likely_verification.includes('visual-check') && repo !== undefined && repo.markers.includes('.opencode/');
     if (boundedLocalVisual) {
-        const repoKinds = new Set(repo.likelyVerification.map(kind => kind === 'test' ? 'targeted-tests' : kind));
+        const repoKinds = repoVerificationKinds(repo);
         const reviewKinds = assessment.task_kind === 'review' ? ['review-evidence'] : [], likelyVerification = [...reviewKinds, ...assessment.likely_verification.filter(kind => kind === 'visual-check' || kind === 'review-evidence' || repoKinds.has(kind))];
         return { assessment: { ...assessment, likely_verification: [...new Set(likelyVerification)] }, explicitUserVerification, ceilingApplied: false, policy: 'local-capability-surface' };
     }
@@ -38,6 +49,11 @@ export function resolveAdaptiveVerificationAssessment(assessment, userText, repo
         const surfaceSpecific = assessment.likely_verification.filter(kind => kind === 'visual-check');
         const likelyVerification = [...new Set(['review-evidence', ...surfaceSpecific])];
         return { assessment: { ...assessment, likely_verification: likelyVerification, user_verification: [], verification_ceiling: false }, explicitUserVerification: [], ceilingApplied: false, policy: 'minimum-sufficient-review' };
+    }
+    const boundedLocalCapability = assessment.message_kind === 'mission' && assessment.task_kind !== 'review' && assessment.scope === 'local' && ['low', 'medium'].includes(assessment.risk) && assessment.task_kind !== 'release-readiness' && repo !== undefined && repo.likelyVerification.length > 0;
+    if (boundedLocalCapability) {
+        const repoKinds = repoVerificationKinds(repo), likelyVerification = assessment.likely_verification.filter(kind => kind === 'visual-check' || kind === 'review-evidence' || repoKinds.has(kind));
+        return { assessment: { ...assessment, likely_verification: likelyVerification }, explicitUserVerification, ceilingApplied: false, policy: 'local-capability-surface' };
     }
     return { assessment, explicitUserVerification, ceilingApplied: false, policy: 'assessment' };
 }
