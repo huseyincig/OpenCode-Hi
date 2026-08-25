@@ -1,7 +1,7 @@
 import {createHash,randomUUID} from 'node:crypto'
 import {existsSync,mkdirSync,writeFileSync,readFileSync} from 'node:fs'
 import {join} from 'node:path'
-export const RECEIPT_KINDS=Object.freeze(['run-identity','product-identity','fixture-identity','prompt-identity','oracle-identity','tool-preflight','model-role-selection','execution','liveness','role-acceptance','oracle-result','classification','reference','repair','lineage','cleanup','summary','receipt-correction'])
+export const RECEIPT_KINDS=Object.freeze(['run-identity','product-identity','fixture-identity','prompt-identity','oracle-identity','tool-preflight','model-role-selection','execution','liveness','role-acceptance','oracle-result','classification','reference','repair','lineage','cleanup','acceptance-gates','summary','receipt-correction'])
 const canonical=v=>JSON.stringify(v,Object.keys(v).sort(),2)+'\n'
 export class ImmutableReceiptWriter{
   constructor(root,runId){this.root=root;this.runId=runId;mkdirSync(root,{recursive:true})}

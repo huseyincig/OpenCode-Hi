@@ -18,6 +18,7 @@ import {roleAcceptanceObservation} from './role-observation.mjs'
 import {cleanupOwnedResources} from './cleanup.mjs'
 import {readEffectiveReceipt} from './receipts.mjs'
 import {resolveCatalogEntry} from './catalog.mjs'
+import {ACCEPTANCE_PASS,assertPassOnlyWorkloadAdmission,assertReceiptIntegrity} from './progression.mjs'
 
 const ROOT=resolve(fileURLToPath(new URL('../..',import.meta.url)))
 const WROOT=join(ROOT,'.agent-work','workload-acceptance')
@@ -201,6 +202,7 @@ export function resolveExecutionContract(workloadId,spec){
 }
 
 export async function executeWorkload(workloadId,{pollMs=1500}={}){
+  const state=JSON.parse(readFileSync(join(WROOT,'state.json'),'utf8'));assertPassOnlyWorkloadAdmission(workloadId,{state,runtimeRoot:RUNTIME_ROOT})
   const entry=resolveCatalogEntry(workloadId),spec=JSON.parse(readFileSync(entry.spec_path,'utf8')),{promptPath,fixture,seed,oraclePath,seedIdentity}=resolveExecutionContract(workloadId,spec)
   const productHead=git(['rev-parse','HEAD']),originHead=git(['rev-parse','origin/dev']);if(productHead!==originHead)throw new Error('PRODUCT_ORIGIN_DIVERGED')
   const target=JSON.parse(readFileSync(join(ROOT,'package.json'),'utf8')).dependencies?.['@opencode-ai/sdk'];const exactBin=join(ROOT,'.agent-work','tools',`opencode-${target}`,'opencode')
@@ -249,17 +251,25 @@ export async function executeWorkload(workloadId,{pollMs=1500}={}){
     const oracle=await runHiddenOracle({oraclePath,fixtureRoot:fixture,harnessRoot:join(ROOT,'scripts','workload-acceptance'),command:process.execPath,args:[oraclePath],cwd:ROOT,env:{...(spec.certification?.oracleEnv??{}),W_FIXTURE_ROOT:fixture,W_ORACLE_SCRATCH_ROOT:scratch},identity:receipts.read('oracle-identity').identity,fixtureIdentity:spec.fixture.baseline.value,timeoutMs:30000})
     let parsed;try{parsed=JSON.parse(oracle.stdout)}catch{parsed=null}const oraclePass=oracle.exit_code===0&&parsed?.failed===0
     receipts.write('oracle-result',{passed:oraclePass,exit_code:oracle.exit_code,signal:oracle.signal,stdout_sha256:oracle.stdout_sha256,stderr_sha256:oracle.stderr_sha256,result:parsed})
-    const missionPass=finalMission?.identity?.status==='completed',stalled=finalLiveness?.state==='STALLED',scopeViolated=finalLiveness?.reasons?.includes('w-scope-violation');let classification
-    if(scopeViolated)classification={result:'FAIL',class:'MODEL_BEHAVIOR',root_cause:'Model requested a permission outside the automated W fixture-local execution contract; request was rejected and the exact session was aborted.',product_repair_authorized:false}
-    else if(missionPass&&oraclePass)classification={result:'PASS',class:null,root_cause:null,product_repair_authorized:false}
-    else if(stalled)classification={result:'FAIL',class:'INCONCLUSIVE',root_cause:'Canonical liveness declared STALLED with exact inflight NO; destructive replacement is not performed automatically by the common driver.',product_repair_authorized:false}
-    else classification={result:'FAIL',class:'WORKLOAD_RESULT_FAILURE',root_cause:'Terminal workload result and/or hidden oracle did not pass. Oracle truth does not diagnose a product defect.',product_repair_authorized:false}
-    receipts.write('classification',classification)
+    const missionPass=finalMission?.identity?.status==='completed',stalled=finalLiveness?.state==='STALLED',scopeViolated=finalLiveness?.reasons?.includes('w-scope-violation')===true
     for(const child of (dataOf(await client.session.children({sessionID:parentID,directory:fixture}))??[]))try{await client.session.delete({sessionID:child.id,directory:fixture})}catch{}
     try{await client.session.delete({sessionID:parentID,directory:fixture})}catch{}
     cleanupResult=await cleanupOwnedResources(runId,[{kind:'process',ownerRunId:runId,manager:pm,contract:serverRecord,options:{graceMs:1500}},{kind:'path',ownerRunId:runId,path:runtimeSandbox,root:runDir},{kind:'path',ownerRunId:runId,path:controlRoot,root:runDir},{kind:'lock',ownerRunId:runId,lock}])
     receipts.write('cleanup',{cleaned:cleanupResult.cleaned.map(x=>({kind:x.kind,path:x.path??null,pid:x.contract?.pid??null})),skipped:cleanupResult.skipped.length,quarantined:cleanupResult.quarantined})
-    const success=missionPass&&oraclePass&&cleanupResult.quarantined.length===0;receipts.write('summary',{status:success?'PASS':'FAIL',workload_id:workloadId,product_sha:productHead,model:selected.model.id,parent_session_id:parentID,mission_status:finalMission?.identity?.status??null,oracle_pass:oraclePass,classification:classification.class,fixture_preserved:spec.cleanup?.preserveFixtureAfterTerminalForInspection===true})
+    const oracleFullPass=oraclePass&&parsed?.failed===0&&Number.isInteger(parsed?.total)&&parsed.total>0&&parsed.passed===parsed.total
+    const verificationObligations=finalMission?.execution?.obligations?.filter(o=>o.kind==='verification')??[],mandatoryEvidenceComplete=missionPass&&Boolean(finalMission?.execution?.evidence?.fresh)&&((spec.requiredEvidence?.length??0)===0||(verificationObligations.length>0&&verificationObligations.every(o=>o.status==='closed')))
+    const modelPoolConfined=outOfPoolWorkerModels(finalMission,allowedWModels).length===0&&allowedWModels.includes(selected.model.id),noUnresolvedBlocker=(finalMission?.execution?.blockers?.length??0)===0,cleanupValid=cleanupResult.quarantined.length===0
+    assertReceiptIntegrity(receipts,runId,['run-identity','product-identity','fixture-identity','prompt-identity','oracle-identity','tool-preflight','model-role-selection','execution','liveness','role-acceptance','oracle-result','lineage','cleanup'])
+    const checks={terminal_run:true,mission_completed:missionPass,hidden_oracle_full_pass:oracleFullPass,mandatory_acceptance_evidence_complete:mandatoryEvidenceComplete,model_pool_confined:modelPoolConfined,no_scope_violation:!scopeViolated,no_supervisor_error:true,no_unresolved_blocker:noUnresolvedBlocker,receipt_integrity:true,run_valid:true,cleanup_valid:cleanupValid}
+    const acceptancePass=Object.values(checks).every(Boolean);let classification
+    if(acceptancePass)classification={result:'PASS',class:ACCEPTANCE_PASS,root_cause:null,product_repair_authorized:false}
+    else if(scopeViolated)classification={result:'FAIL',class:'MODEL_BEHAVIOR',root_cause:'Model requested a permission outside the automated W fixture-local execution contract; request was rejected and the exact session was aborted.',product_repair_authorized:false}
+    else if(stalled)classification={result:'FAIL',class:'INCONCLUSIVE',root_cause:'Canonical liveness declared STALLED with exact inflight NO; destructive replacement is not performed automatically by the common driver.',product_repair_authorized:false}
+    else classification={result:'FAIL',class:'WORKLOAD_RESULT_FAILURE',root_cause:'Terminal workload result and/or hidden oracle did not satisfy full acceptance gates. Oracle truth alone does not diagnose a product defect.',product_repair_authorized:false}
+    receipts.write('classification',classification)
+    assertReceiptIntegrity(receipts,runId,['classification'])
+    receipts.write('acceptance-gates',{acceptance_pass:acceptancePass,checks,required_evidence:[...(spec.requiredEvidence??[])],oracle_total:parsed?.total??null,oracle_passed:parsed?.passed??null,oracle_failed:parsed?.failed??null})
+    const success=acceptancePass;receipts.write('summary',{status:success?'PASS':'FAIL',workload_id:workloadId,product_sha:productHead,model:selected.model.id,parent_session_id:parentID,mission_status:finalMission?.identity?.status??null,oracle_pass:oraclePass,classification:classification.class,acceptance_valid:success,fixture_preserved:spec.cleanup?.preserveFixtureAfterTerminalForInspection===true})
     writeMeta({status:success?'TERMINAL_PASS':'TERMINAL_FAIL',ended_at:new Date().toISOString(),mission_status:finalMission?.identity?.status??null,oracle_pass:oraclePass,classification:classification.class,cleanup_quarantined:cleanupResult.quarantined.length})
     return{disposition:success?'TERMINAL_PASS':'TERMINAL_FAIL',run_id:runId,run_dir:runDir,parent_session_id:parentID,model:selected.model.id,mission_status:finalMission?.identity?.status??null,oracle_pass:oraclePass,classification:classification.class,cleanup_quarantined:cleanupResult.quarantined.length}
   }catch(error){
