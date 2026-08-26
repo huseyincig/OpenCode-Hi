@@ -1,4 +1,4 @@
-// Gap #24: profile-aware specialist threshold (Phase 6).
+// Profile-aware specialist threshold.
 // Verifies that the capability router behavior respects the execution policy
 // profile:
 // - minimal: high specialist threshold; only explicit architecture

@@ -1,5 +1,5 @@
 // Doctor model-inventory regression guard.
-// M16 requires the effective inventory to remain visible without an arbitrary eight-model presentation cap.
+// The effective inventory remains visible without an arbitrary eight-model presentation cap.
 
 import test from 'node:test'
 import assert from 'node:assert/strict'

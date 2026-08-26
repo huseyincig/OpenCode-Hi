@@ -17,7 +17,7 @@ SETUP_STATE_SCHEMA=1
 HI_PROJECT_DIR=Path('.opencode/hi')
 ROUTING_CONFIG=HI_PROJECT_DIR/'policy'/'routing.json'
 
-# Roles with explicit per-role model mapping support. M16 does not fabricate
+# Roles with explicit per-role model mapping support. The helper does not fabricate
 # an offline provider/model catalog: availability comes from the effective
 # OpenCode runtime only.
 ROLES_WITH_HINT=['coder','architect','repository-explorer','researcher','technical-writer','test-engineer','qa-reviewer','security-reviewer','visual-qa']

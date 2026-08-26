@@ -7,10 +7,10 @@ import {spawnSync} from 'node:child_process'
 const root=path.resolve(fileURLToPath(new URL('..',import.meta.url)))
 const pkg=JSON.parse(await readFile(path.join(root,'package.json'),'utf8'))
 const version=pkg.version
-const work=path.join(root,'.agent-work','tmp','m16-packed-bootstrap-acceptance')
+const work=path.join(root,'.agent-work','tmp','packed-bootstrap-acceptance')
 const packDir=path.join(work,'pack')
 const project=path.join(work,'project')
-const cache=path.join(root,'.agent-work','cache','m16-packed-bootstrap-acceptance')
+const cache=path.join(root,'.agent-work','cache','packed-bootstrap-acceptance')
 await rm(work,{recursive:true,force:true})
 await mkdir(packDir,{recursive:true})
 await mkdir(project,{recursive:true})
@@ -53,7 +53,7 @@ async function tree(dir,prefix=''){
 const entries=await tree(project)
 const receipt={
   schema:1,
-  kind:'M16_PACKED_PACKAGE_RUNNER_BOOTSTRAP',
+  kind:'PACKED_PACKAGE_RUNNER_BOOTSTRAP',
   status:'PASS',
   platform:process.platform,
   architecture:process.arch,

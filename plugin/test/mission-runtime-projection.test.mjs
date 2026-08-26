@@ -68,7 +68,7 @@ test('first-use onboarding dedupe is process-bounded instead of retaining every 
   assert.equal(out.system.length,2,'old cosmetic onboarding dedupe entries must be evictable instead of process-lifetime retained')
 })
 
-test('representative provider-bound system projection reduces A6 character baseline',()=>{
+test('representative provider-bound system projection reduces the prior character baseline',()=>{
   const {m}=fixture(),projection=buildMissionRuntimeProjection(m),measurement=measureMissionRuntimeProjection(projection)
   assert.ok(measurement.dynamic_chars<900,'dynamic runtime block must stay bounded')
   const reduction=(LEGACY_A6_BASELINE_CHARS-measurement.dynamic_chars)/LEGACY_A6_BASELINE_CHARS

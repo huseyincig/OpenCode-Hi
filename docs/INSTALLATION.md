@@ -237,7 +237,7 @@ The command preserves foreign plugins, providers, MCP configuration, themes and 
 
 ## Uninstall — legacy/advanced helper
 
-Uninstall is not part of the M16 normal-user three-command surface. When explicit removal is required, the retained Python helper remains available from a source checkout or Python-capable package environment:
+Uninstall is not part of the normal-user three-command surface. When explicit removal is required, the retained Python helper remains available from a source checkout or Python-capable package environment:
 
 ```bash
 python3 scripts/native_plugin_setup.py uninstall /path/to/project

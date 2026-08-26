@@ -51,7 +51,7 @@
     "docs:check": "node scripts/run-python.mjs scripts/generate-product-truth-inventory.py && node scripts/run-python.mjs scripts/generate-documentation-projections.py && node scripts/run-python.mjs scripts/generate-documentation-inventory.py && node scripts/run-python.mjs scripts/validate-documentation.py",
     "check:product": "npm --prefix plugin run check && npm run test:node:setup && npm run docs:check",
     "test:node:setup": "node --test tests/test_node_setup.mjs",
-    "test:m16:packed-bootstrap": "node scripts/run-m16-packed-bootstrap-acceptance.mjs",
+    "test:packed-bootstrap": "node scripts/run-packed-bootstrap-acceptance.mjs",
     "docs:pack-check": "node scripts/run-python.mjs scripts/audit-packed-public-docs.py",
     "build:plugin": "npm --prefix plugin run build",
     "test:direct-git-install": "node scripts/run-direct-git-install-acceptance.mjs",

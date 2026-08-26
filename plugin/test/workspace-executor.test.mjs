@@ -266,7 +266,7 @@ test('orphaned restored lease quarantines its task/worker and cannot resume or r
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('implementation still has no broad auto-snapshot staging after W3 capability promotion',()=>{
+test('implementation still has no broad auto-snapshot staging after workspace capability promotion',()=>{
   const all={childSessions:true,asyncPrompt:true,syncPrompt:true,abort:true,providerInventory:true,appLog:true,sessionStatus:true,childSessionList:true,sessionTodo:true,sessionDiff:true,sessionFork:true,sessionSummarize:true,sessionRevert:true,sessionUnrevert:true}
   const source=readFileSync(new URL('../src/opencode/open-code-workspace-adapter.ts',import.meta.url),'utf8')+readFileSync(new URL('../src/runtime/workspace/runtime.ts',import.meta.url),'utf8')
   assert.doesNotMatch(source,/git\s+add\s+-A|\['add','-A'\]|\["add","-A"\]/)

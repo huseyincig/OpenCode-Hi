@@ -27,7 +27,7 @@ async function runAsync(args,{env=process.env}={}){
 function config(root,value={}){writeFileSync(join(root,'opencode.json'),JSON.stringify(value,null,2)+'\n')}
 
 
-test('M16 Node setup preserves foreign OpenCode config and writes exact owned registration without project node_modules',()=>{
+test('Node setup preserves foreign OpenCode config and writes exact owned registration without project node_modules',()=>{
   const root=project();try{
     config(root,{plugin:['foreign-plugin@9.1.0'],enabled_providers:['opencode','deepseek'],unknown_user_field:{keep:true}})
     const r=run('setup',root,'--version','9.8.7')
@@ -44,7 +44,7 @@ test('M16 Node setup preserves foreign OpenCode config and writes exact owned re
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('M16 Node setup is idempotent and update changes only the owned Hi spec',()=>{
+test('Node setup is idempotent and update changes only the owned Hi spec',()=>{
   const root=project();try{
     config(root,{plugin:['foreign@1'],enabled_providers:['deepseek'],custom:{x:1}})
     assert.equal(run('setup',root,'--version','1.0.0').json.status,'APPLIED')
@@ -57,7 +57,7 @@ test('M16 Node setup is idempotent and update changes only the owned Hi spec',()
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('M16 Node setup fails closed on malformed JSON and never rewrites it',()=>{
+test('Node setup fails closed on malformed JSON and never rewrites it',()=>{
   const root=project();try{
     const path=join(root,'opencode.json'),bad='{not-json';writeFileSync(path,bad)
     const r=run('setup',root);assert.equal(r.status,2);assert.equal(r.json.status,'BLOCKED');assert.equal(r.json.reason,'invalid-json-input')
@@ -65,7 +65,7 @@ test('M16 Node setup fails closed on malformed JSON and never rewrites it',()=>{
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('M16 Node setup fails closed on JSONC instead of dropping comments',()=>{
+test('Node setup fails closed on JSONC instead of dropping comments',()=>{
   const root=project();try{
     const path=join(root,'opencode.jsonc'),text='{\n  // keep me\n  "plugin": []\n}\n';writeFileSync(path,text)
     const r=run('setup',root);assert.equal(r.status,2);assert.equal(r.json.reason,'jsonc-safe-mutation-not-supported')
@@ -73,7 +73,7 @@ test('M16 Node setup fails closed on JSONC instead of dropping comments',()=>{
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('M16 Node update refuses user-owned or drifted registrations without ownership proof',()=>{
+test('Node update refuses user-owned or drifted registrations without ownership proof',()=>{
   const root=project();try{
     config(root,{plugin:['opencode-hi@1.0.0']})
     const r=run('update',root,'--version','1.0.1');assert.equal(r.status,2);assert.equal(r.json.reason,'ownership-proof-missing')
@@ -81,7 +81,7 @@ test('M16 Node update refuses user-owned or drifted registrations without owners
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('M16 Node doctor distinguishes package registration truth from pending effective runtime routing',()=>{
+test('Node doctor distinguishes package registration truth from pending effective runtime routing',()=>{
   const root=project();try{
     config(root,{plugin:[]});assert.equal(run('setup',root,'--version','1.0.0').status,0)
     const d=run('doctor',root);assert.equal(d.status,0);assert.equal(d.json.status,'WARN')
@@ -91,7 +91,7 @@ test('M16 Node doctor distinguishes package registration truth from pending effe
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('M16 Node managed-state symlink escape is rejected when the platform permits symlink creation',t=>{
+test('Node managed-state symlink escape is rejected when the platform permits symlink creation',t=>{
   const root=project(),outside=project();try{
     config(root,{plugin:[]});mkdirSync(join(root,'.opencode'),{recursive:true})
     try{symlinkSync(outside,join(root,'.opencode','hi'),'dir')}catch(error){t.skip(`symlink unavailable: ${error.code??error}`);return}
@@ -99,7 +99,7 @@ test('M16 Node managed-state symlink escape is rejected when the platform permit
   }finally{rmSync(root,{recursive:true,force:true});rmSync(outside,{recursive:true,force:true})}
 })
 
-test('M16 package-runner help is Node-native and exposes setup/update/doctor normal path',()=>{
+test('package-runner help is Node-native and exposes setup/update/doctor normal path',()=>{
   const out=execFileSync(process.execPath,[CLI,'--help'],{encoding:'utf8'})
   assert.match(out,/npx opencode-hi setup/);assert.match(out,/npx opencode-hi reconfigure/);assert.match(out,/--non-interactive/);assert.match(out,/npx opencode-hi update/);assert.match(out,/npx opencode-hi doctor/);for(const cmd of ['state','reprofile','roles','rotate','check-update'])assert.match(out,new RegExp(`npx opencode-hi ${cmd}`))
   assert.doesNotMatch(out,/python3/)

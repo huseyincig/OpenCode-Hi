@@ -872,7 +872,7 @@ Set one or multiple candidates for roles:
 
 On PowerShell use the same arguments with `.cmd` and Windows path syntax.
 
-`--set ROLE=PRIMARY,FALLBACK1,FALLBACK2` writes `routing.roleModels`. `--variant ROLE:MODEL=VARIANT` writes `routing.roleVariants`. Current M16 preserves the complete de-duplicated ordered role list rather than truncating it to an arbitrary seven/eight-entry limit, and it preserves routing fields it does not own.
+`--set ROLE=PRIMARY,FALLBACK1,FALLBACK2` writes `routing.roleModels`. `--variant ROLE:MODEL=VARIANT` writes `routing.roleVariants`. The current implementation preserves the complete de-duplicated ordered role list rather than truncating it to an arbitrary seven/eight-entry limit, and it preserves routing fields it does not own.
 
 Primary-role assignments are intentionally rejected. For example, `--set manager=provider/model` returns `BLOCKED` with reason `role-model-primary-owned-by-opencode`.
 

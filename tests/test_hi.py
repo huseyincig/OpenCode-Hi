@@ -396,7 +396,7 @@ def test_direct_git_host_acceptance_archive_extraction_is_python311_compatible_a
     with pytest.raises(RuntimeError,match='unsafe archive member path'):mod.safe_extract_zip(bad_zip,zip_out)
 
 
-def test_m16_first_use_docs_are_npm_runner_first_and_truthful_about_publication_state():
+def test_first_use_docs_are_npm_runner_first_and_truthful_about_publication_state():
     readme=(ROOT/'README.md').read_text(encoding='utf-8'); tr=(ROOT/'docs/locales/tr/README.md').read_text(encoding='utf-8'); arch=(ROOT/'docs/ARCHITECTURE.md').read_text(encoding='utf-8'); install=(ROOT/'docs/INSTALLATION.md').read_text(encoding='utf-8'); config=(ROOT/'docs/CONFIGURATION.md').read_text(encoding='utf-8'); tr_config=(ROOT/'docs/locales/tr/CONFIGURATION.md').read_text(encoding='utf-8')
     exact=f'opencode-hi@{V}'
     for text in (readme,tr,install,config,tr_config):
@@ -439,8 +439,8 @@ def test_role_models_cli_rejects_primary_role_model_assignment_and_accepts_child
     assert current['ignoredRoleModelRoles']==['manager','unknown']
 
 
-def test_m16_python_model_discovery_uses_plain_effective_opencode_inventory_without_catalog_fallback(monkeypatch):
-    mod=load_module('native_plugin_setup_m16_models',ROOT/'scripts/native_plugin_setup.py')
+def test_python_model_discovery_uses_plain_effective_opencode_inventory_without_catalog_fallback(monkeypatch):
+    mod=load_module('native_plugin_setup_models',ROOT/'scripts/native_plugin_setup.py')
     calls=[]
     class Result:
         returncode=0
@@ -456,8 +456,8 @@ def test_m16_python_model_discovery_uses_plain_effective_opencode_inventory_with
     assert mod.discover_available_models()==[]
 
 
-def test_m16_python_recommended_defaults_defer_to_runtime_scoring_without_vendor_model_ids(tmp_path,monkeypatch):
-    mod=load_module('native_plugin_setup_m16_recommended',ROOT/'scripts/native_plugin_setup.py')
+def test_python_recommended_defaults_defer_to_runtime_scoring_without_vendor_model_ids(tmp_path,monkeypatch):
+    mod=load_module('native_plugin_setup_recommended',ROOT/'scripts/native_plugin_setup.py')
     monkeypatch.setattr(mod,'discover_available_models',lambda:['alpha/model-a','beta/model-b','vision/model-c'])
     out=mod.role_models(tmp_path,defaults=True,policy='recommended')
     assert out['status']=='DEFERRED' and out['reason']=='live-runtime-selection-required'
@@ -466,8 +466,8 @@ def test_m16_python_recommended_defaults_defer_to_runtime_scoring_without_vendor
     assert not (tmp_path/'.opencode/hi/policy/routing.json').exists()
 
 
-def test_m16_python_recommended_defaults_never_overwrite_existing_user_role_models(tmp_path,monkeypatch):
-    mod=load_module('native_plugin_setup_m16_existing',ROOT/'scripts/native_plugin_setup.py')
+def test_python_recommended_defaults_never_overwrite_existing_user_role_models(tmp_path,monkeypatch):
+    mod=load_module('native_plugin_setup_existing',ROOT/'scripts/native_plugin_setup.py')
     cfg=tmp_path/'.opencode/hi/policy/routing.json';cfg.parent.mkdir(parents=True)
     original={'schema':1,'type':'hi-routing','routing':{'strategy':'quality','modelPolicy':'manual','roleModels':{'coder':['user/model']},'roleVariants':{},'adaptiveRoles':[]}}
     cfg.write_text(json.dumps(original,indent=2)+'\n',encoding='utf-8')
@@ -477,7 +477,7 @@ def test_m16_python_recommended_defaults_never_overwrite_existing_user_role_mode
     assert cfg.read_text(encoding='utf-8')==before
 
 
-def test_m16_python_manual_role_model_chain_is_not_arbitrarily_capped_at_seven(tmp_path):
+def test_python_manual_role_model_chain_is_not_arbitrarily_capped_at_seven(tmp_path):
     script=ROOT/'scripts/native_plugin_setup.py';models=[f'provider/model-{i}' for i in range(1,13)]
     r=run(script,'role-models',tmp_path,'--set','coder='+','.join(models),'--policy','manual');out=json.loads(r.stdout)
     assert r.returncode==0 and out['roleModels']['coder']==models

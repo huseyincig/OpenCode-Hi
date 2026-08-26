@@ -1,4 +1,4 @@
-// Phase 7 — gap locks:
+// Runtime evidence regression locks:
 // Gap #28: compaction survival (Section 80)
 // Gap #29: stagnation recovery ladder rungs (Section 51)
 // Gap #30: progress signature is real (Section 50)

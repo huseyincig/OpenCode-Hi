@@ -163,7 +163,7 @@
     },
     {
       "path": "docs/CONFIGURATION.md",
-      "sha256": "db56c101d943e19007bb245e8a12813c6781a19dd09acd45b82ccc5166e3fcbd",
+      "sha256": "51d72a9762d09b670348a865be6131aab791c0d173a3f71f2e2def0b4cad4348",
       "area": "configuration-guide",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -171,7 +171,7 @@
     },
     {
       "path": "docs/HOSTS.md",
-      "sha256": "2da74041c4f7dc3cf4d4b58131c2c41af483040c48ca63e09ae3ee884fb9fe94",
+      "sha256": "364ca8017cf1f2863c5c505d744996a3c467bf015674c7b91d26afd4235c4afb",
       "area": "host-support",
       "audience": "OPERATOR",
       "lifecycle": "CANONICAL_CURRENT",
@@ -179,7 +179,7 @@
     },
     {
       "path": "docs/HUMAN-DECISIONS.md",
-      "sha256": "54cf9e598bc27e590212148852f682d3e57a373668d05db7d4aebe2978f38e03",
+      "sha256": "6a68027e709f5d723b02e0434cfe53c92e3d778050698d142341c5f036b8de83",
       "area": "human-decisions-authority",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -187,7 +187,7 @@
     },
     {
       "path": "docs/INSTALLATION.md",
-      "sha256": "47e82dd9b13c31821502dcec45048e2da66f9cffa6cb7a13b68739260778254a",
+      "sha256": "f07416935cb7be925c840115479f666294e18f0a750c7e92b2ed068baf627752",
       "area": "installation-configuration-lifecycle",
       "audience": "USER",
       "lifecycle": "CANONICAL_CURRENT",
@@ -203,7 +203,7 @@
     },
     {
       "path": "docs/RELEASE.md",
-      "sha256": "593a56a3f819557ed784666acd87dcbfe5d85bf35cc3fbf8fc654ece6a088802",
+      "sha256": "7f113d4cfe9a40b41124f4123218909f56cd1b5bb5fcfe6c30e6d8226537fe47",
       "area": "release",
       "audience": "RELEASE_ENGINEER",
       "lifecycle": "CANONICAL_CURRENT",

@@ -58,11 +58,11 @@ test('release readiness runs exact OpenCode native direct-Git host acceptance', 
 })
 
 
-test('release readiness runs the M16 packed npm package-runner bootstrap on the cross-platform matrix', async()=>{
+test('release readiness runs the packed npm package-runner bootstrap on the cross-platform matrix', async()=>{
   const fs=await import('node:fs/promises')
   const workflow=await fs.readFile(new URL('../../.github/workflows/release-readiness.yml',import.meta.url),'utf8')
-  assert.match(workflow,/M16 packed npm package-runner bootstrap/)
-  assert.match(workflow,/npm run test:m16:packed-bootstrap/)
+  assert.match(workflow,/Packed npm package-runner bootstrap/)
+  assert.match(workflow,/npm run test:packed-bootstrap/)
   const pkg=JSON.parse(await fs.readFile(new URL('../../package.json',import.meta.url),'utf8'))
-  assert.equal(pkg.scripts?.['test:m16:packed-bootstrap'],'node scripts/run-m16-packed-bootstrap-acceptance.mjs')
+  assert.equal(pkg.scripts?.['test:packed-bootstrap'],'node scripts/run-packed-bootstrap-acceptance.mjs')
 })

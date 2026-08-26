@@ -42,10 +42,10 @@ export interface SemanticDecisionInput {
     mission?: MissionState;
 }
 /**
- * Host-neutral Phase 2 decision composition.
+ * Host-neutral semantic decision composition.
  *
  * This function deliberately performs no repository scan, host call, model call,
- * capability probe, mutation, or durable-state write. It composes bounded Phase 1
+ * capability probe, mutation, or durable-state write. It composes bounded semantic
  * policies into one inspectable decision target; concrete model/tool/backend
  * availability remains a downstream adapter/runtime concern.
  */
