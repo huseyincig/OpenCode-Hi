@@ -94,7 +94,10 @@ export class ProcessRuntime {
         throw new Error('Hi process native permission resolution exceeded bounded attempts');
     }
     async write(m, id, input) { this.contract(m, id); await this.executor.write(id, input); appendLedger(m, 'process.stdin', { payload: { process_id: id, chars: input.length } }); }
-    async read(m, id, cursor, maxChars) { const current = this.contract(m, id), out = await this.executor.read(id, { cursor, max_chars: maxChars }), stateHash = hash(out.text), duplicate = !out.text.length || out.end_cursor <= out.start_cursor || m.execution.ledger.some(e => e.type === 'process.output-observed' && e.payload?.process_id === id && e.payload?.state_hash === stateHash); if (!duplicate) {
+    async read(m, id, cursor, maxChars) { const current = this.contract(m, id), out = await this.executor.read(id, { cursor, max_chars: maxChars }); if (out.status !== 'RUNNING') {
+        const terminal = await this.executor.wait(id);
+        this.noteExit(m, terminal.contract);
+    } const stateHash = hash(out.text), duplicate = !out.text.length || out.end_cursor <= out.start_cursor || m.execution.ledger.some(e => e.type === 'process.output-observed' && e.payload?.process_id === id && e.payload?.state_hash === stateHash); if (!duplicate) {
         const source = `process:${id}:${out.start_cursor}-${out.end_cursor}`;
         addEvidence(m, { kind: 'diagnostic-evidence', summary: `Bounded process output observed (${out.text.length} chars${out.truncated ? ', truncated' : ''})`, scope: m.execution.tasks.find(t => t.id === current.task_id)?.scope ?? [], source, source_state_hash: stateHash, task_id: current.task_id, obligation_ids: m.execution.tasks.find(t => t.id === current.task_id)?.obligation_ids ?? [], outcome: 'pending', reason: 'process-output-observation' });
         appendLedger(m, 'process.output-observed', { task_id: current.task_id, worker_id: current.worker_id, payload: { process_id: id, start_cursor: out.start_cursor, end_cursor: out.end_cursor, available_start: out.available_start_cursor, available_end: out.available_end_cursor, truncated: out.truncated, state_hash: stateHash } });

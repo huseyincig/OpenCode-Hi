@@ -72,6 +72,15 @@ test('bounded process read records hash-bound pending Evidence without persistin
   const out=await runtime.read(m,p.process_id,0,8);assert.equal(out.text,'secret-o');const ev=m.execution.evidence.items.at(-1);assert.equal(ev.kind,'diagnostic-evidence');assert.equal(ev.outcome,'pending');assert.match(ev.source,/^process:/);assert.match(ev.source_state_hash,/^[a-f0-9]{64}$/);assert.doesNotMatch(JSON.stringify(ev),/secret-output/)
 })
 
+test('terminal status observed by bounded read reconciles the durable ProcessContract immediately',async()=>{
+  const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host()),p=await runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo'});worker.status='ready'
+  fake.exit(p.process_id,127)
+  const out=await runtime.read(m,p.process_id,0,8)
+  assert.equal(out.status,'EXITED');const durable=m.execution.processes.find(x=>x.process_id===p.process_id);assert.equal(durable.status,'EXITED');assert.equal(durable.exit_code,127);assert.equal(durable.cleanup_state,'CLEANUP_PENDING')
+  assert.ok(m.execution.ledger.some(e=>e.type==='process.exited'&&e.payload?.process_id===p.process_id&&e.payload?.exit_code===127))
+  const decision=evaluateIdle(m);assert.notEqual(decision.reason_code,'waiting-process','terminal read observation must retire the stale RUNNING wait hinge')
+})
+
 test('repeated identical process output is inert and does not mint duplicate evidence/progress',async()=>{
   const {m,worker}=mission(),fake=new FakeExecutor(),runtime=new ProcessRuntime(fake,'/repo',()=>host()),p=await runtime.spawn(m,{worker_id:worker.id,command:'node',cwd:'/repo'})
   const before=m.execution.evidence.items.length;await runtime.read(m,p.process_id,0,8);const once=m.execution.evidence.items.length;await runtime.read(m,p.process_id,0,8);const twice=m.execution.evidence.items.length
