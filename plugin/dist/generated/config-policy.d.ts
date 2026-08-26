@@ -23,7 +23,7 @@ export declare const HI_CONFIG_OPTIONS: readonly [{
     readonly precedenceOrder: readonly ["default", "host-hi-config", "project-routing-policy"];
     readonly validator: "execution-policy-enum";
     readonly safetySemantics: "preference";
-    readonly behavioralAcceptanceRefs: readonly ["stage2-role-contract.test.mjs", "profile-system.test.mjs"];
+    readonly behavioralAcceptanceRefs: readonly ["role-contract.test.mjs", "profile-system.test.mjs"];
     readonly runtimeConsumer: "config/execution-policy + plugin continuation controller";
     readonly executorEffect: "selects minimal/balanced/thorough routing profile and automatic/adaptive continuation behavior";
 }, {
@@ -277,7 +277,7 @@ export declare const HI_CONFIG_OPTIONS: readonly [{
     readonly precedenceOrder: readonly ["default", "host-hi-config", "project-routing-policy"];
     readonly validator: "threshold-enum";
     readonly safetySemantics: "preference";
-    readonly behavioralAcceptanceRefs: readonly ["profile-aware-router.test.mjs", "stage2-role-contract.test.mjs"];
+    readonly behavioralAcceptanceRefs: readonly ["profile-aware-router.test.mjs", "role-contract.test.mjs"];
     readonly runtimeConsumer: "TaskRuntime executionProfileFor -> runtime/routing/routeCapabilities";
     readonly executorEffect: "changes specialist dispatch threshold for the selected execution profile";
 }, {
@@ -305,7 +305,7 @@ export declare const HI_CONFIG_OPTIONS: readonly [{
     readonly precedenceOrder: readonly ["default", "host-hi-config", "project-routing-policy"];
     readonly validator: "threshold-enum";
     readonly safetySemantics: "preference";
-    readonly behavioralAcceptanceRefs: readonly ["profile-aware-router.test.mjs", "stage2-role-contract.test.mjs"];
+    readonly behavioralAcceptanceRefs: readonly ["profile-aware-router.test.mjs", "role-contract.test.mjs"];
     readonly runtimeConsumer: "TaskRuntime executionProfileFor -> runtime/routing/routeCapabilities";
     readonly executorEffect: "changes specialist dispatch threshold for the selected execution profile";
 }, {
@@ -333,7 +333,7 @@ export declare const HI_CONFIG_OPTIONS: readonly [{
     readonly precedenceOrder: readonly ["default", "host-hi-config", "project-routing-policy"];
     readonly validator: "threshold-enum";
     readonly safetySemantics: "preference";
-    readonly behavioralAcceptanceRefs: readonly ["profile-aware-router.test.mjs", "stage2-role-contract.test.mjs"];
+    readonly behavioralAcceptanceRefs: readonly ["profile-aware-router.test.mjs", "role-contract.test.mjs"];
     readonly runtimeConsumer: "TaskRuntime executionProfileFor -> runtime/routing/routeCapabilities";
     readonly executorEffect: "changes specialist dispatch threshold for the selected execution profile";
 }, {

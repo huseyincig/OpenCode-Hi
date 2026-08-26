@@ -73,7 +73,7 @@
         "plugin/src/opencode/agent-binding.ts"
       ],
       "proof_paths": [
-        "plugin/test/stage2-role-contract.test.mjs",
+        "plugin/test/role-contract.test.mjs",
         "plugin/test/agent-binding-contract.test.mjs"
       ],
       "canonical_doc": "docs/ARCHITECTURE.md"
@@ -120,7 +120,7 @@
       "area": "configuration",
       "canonical_owner": "Hi config catalog/resolver",
       "owner_path": "data/hi-config-options.json",
-      "owner_sha256": "38b17844c9979784132c4e9b25a13c9f916118d2d7bfd67b4df917dd0936b6d7",
+      "owner_sha256": "14c57f75a2ccba35c226d7997b5307f1fdd01dfa950576951b5731e9a3eb7271",
       "producer_or_contract_paths": [
         "plugin/src/config/schema.ts",
         "plugin/src/config/resolver.ts"

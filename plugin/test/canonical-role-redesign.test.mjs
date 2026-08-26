@@ -23,9 +23,8 @@ function intent(overrides={}){return{objective:'opaque',taskKind:'implementation
 function roleOf(overrides){return routeCapabilities(intent(overrides),{specialistThreshold:'medium',reviewThreshold:'medium'}).role}
 function runtime(){const created=[],registry=new BackgroundRegistry();const client={session:{create:async req=>{created.push(req);return{data:{id:'child-'+created.length}}},promptAsync:async()=>({data:{}}),abort:async()=>({data:{}}),diff:async()=>({data:[]})}};const cfg=resolveHiConfig({parallel:{enabled:true,max:4}});return{created,registry,rt:new TaskRuntime(opencodeChildPort(client),registry,createConcurrencyPolicySource(()=>({global:4})),process.cwd(),process.cwd(),()=>cfg,()=>[{id:'p/model',provider:'p',quality:8,cost:1,tags:['balanced'],writeCapable:true,visionCapable:true}],()=>({}))}}
 
-test('canonical catalog contains exactly the nine child roles and preserves the historical six',()=>{
+test('canonical catalog contains exactly the nine child roles with native subagent projections',()=>{
   assert.deepEqual([...HI_CHILD_ROLES],FINAL_CHILD)
-  for(const role of ['coder','architect','repository-explorer','qa-reviewer','security-reviewer','visual-qa'])assert.ok(HI_CHILD_ROLES.includes(role))
   for(const role of FINAL_CHILD)assert.equal(PACKAGED_HI_AGENTS[role]?.mode,'subagent',role)
 })
 

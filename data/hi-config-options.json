@@ -45,7 +45,7 @@
       "runtime_consumer": "config/execution-policy + plugin continuation controller",
       "executor_effect": "selects minimal/balanced/thorough routing profile and automatic/adaptive continuation behavior",
       "behavioral_acceptance_refs": [
-        "stage2-role-contract.test.mjs",
+        "role-contract.test.mjs",
         "profile-system.test.mjs"
       ]
     },
@@ -482,7 +482,7 @@
       "executor_effect": "changes specialist dispatch threshold for the selected execution profile",
       "behavioral_acceptance_refs": [
         "profile-aware-router.test.mjs",
-        "stage2-role-contract.test.mjs"
+        "role-contract.test.mjs"
       ]
     },
     {
@@ -531,7 +531,7 @@
       "executor_effect": "changes specialist dispatch threshold for the selected execution profile",
       "behavioral_acceptance_refs": [
         "profile-aware-router.test.mjs",
-        "stage2-role-contract.test.mjs"
+        "role-contract.test.mjs"
       ]
     },
     {
@@ -580,7 +580,7 @@
       "executor_effect": "changes specialist dispatch threshold for the selected execution profile",
       "behavioral_acceptance_refs": [
         "profile-aware-router.test.mjs",
-        "stage2-role-contract.test.mjs"
+        "role-contract.test.mjs"
       ]
     },
     {

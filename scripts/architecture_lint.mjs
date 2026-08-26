@@ -68,7 +68,7 @@ guard('HI003','CONFIG_EXECUTOR_MISSING',()=>{
 })
 
 const proofLinks={
-  HI004:['DECISION_EXECUTOR_MISSING',['stage2-role-contract.test.mjs','authority-side-effect-idempotency.test.mjs']],
+  HI004:['DECISION_EXECUTOR_MISSING',['role-contract.test.mjs','authority-side-effect-idempotency.test.mjs']],
   HI007:['SAFETY_CONSTRAINT_WIDENED',['agent-binding-contract.test.mjs','project-authority-persistence.test.mjs']],
   HI008:['AUTHORITY_SCOPE_MISMATCH',['authority-contract.test.mjs','authority-input-split.test.mjs']],
   HI009:['EVIDENCE_FRESHNESS_INVALID',['evidence-freshness-ordering.test.mjs','verification-envelope-contract.test.mjs']],
