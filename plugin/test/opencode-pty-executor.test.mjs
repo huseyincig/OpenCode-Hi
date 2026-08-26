@@ -45,6 +45,20 @@ async function spawned(h,request=baseRequest()){
   return handle
 }
 
+test('PTY health fails closed on resolved SDK error envelopes and invalid list shapes',async()=>{
+  const errorAdapter=new OpenCodePtyAdapter({v2:{pty:{async list(){return{error:new TypeError('fetch failed')}}}}},new URL('http://127.0.0.1:4096'),'/repo','/repo',()=>host())
+  const failed=await errorAdapter.health();assert.equal(failed.available,false);assert.match(failed.detail,/PTY list rejected: fetch failed/i)
+  const malformedAdapter=new OpenCodePtyAdapter({v2:{pty:{async list(){return{data:{data:{not:'a list'}}}}}}},new URL('http://127.0.0.1:4096'),'/repo','/repo',()=>host())
+  const malformed=await malformedAdapter.health();assert.equal(malformed.available,false);assert.match(malformed.detail,/list returned invalid data/i)
+})
+
+test('PTY create preserves native SDK rejection instead of converting transport failure into an invalid-session symptom',async()=>{
+  const pty={async list(){return{data:{data:[]}}},async create(){return{error:new TypeError('fetch failed')}},async get(){throw new Error('unused')},async remove(){throw new Error('unused')},async connectToken(){throw new Error('unused')}}
+  const adapter=new OpenCodePtyAdapter({v2:{pty}},new URL('http://127.0.0.1:4096'),'/repo','/repo',()=>host(),()=>new FakeSocket('ws://unused'),()=>{},32,8,()=>undefined)
+  await assert.rejects(()=>adapter.spawn(baseRequest()),/PTY create rejected: fetch failed/i)
+  assert.deepEqual(adapter.list(),[])
+})
+
 test('authority evaluator mirrors OpenCode last-match wildcard semantics and fails closed on ask/deny',()=>{
   const request=baseRequest()
   assert.equal(processCommandLine(request),"node -e 'console.log(1)'")

@@ -6,6 +6,16 @@ import { ProcessSpawnPermissionError } from '../runtime/process/executor.js';
 export { ProcessSpawnPermissionError } from '../runtime/process/executor.js';
 import { evaluateProcessSpawnAuthority, processCommandLine } from '../runtime/process/authority.js';
 function nativeData(value) { const first = value && typeof value === 'object' && 'data' in value ? value.data : value; return (first && typeof first === 'object' && 'data' in first ? first.data : first); }
+function nativeError(value) { return value && typeof value === 'object' && 'error' in value && value.error ? value.error : undefined; }
+function nativeErrorText(value) { if (value instanceof Error && value.message.trim())
+    return value.message.trim(); if (value && typeof value === 'object') {
+    const v = value;
+    for (const item of [v?.data?.message, v?.message, v?.name])
+        if (typeof item === 'string' && item.trim())
+            return item.trim();
+} return String(value); }
+function assertNativeAccepted(value, operation) { const rejected = nativeError(value); if (rejected === undefined)
+    return; const error = new Error(`OpenCode PTY ${operation} rejected: ${nativeErrorText(rejected)}`); error.cause = rejected; throw error; }
 function cloneContract(value) { return structuredClone(value); }
 function processID() { return `proc_${createHash('sha256').update(randomUUID()).digest('hex').slice(0, 24)}`; }
 function wsUrl(serverUrl, ptyID, directory, ticket, cursor) { const url = new URL(`/api/pty/${encodeURIComponent(ptyID)}/connect`, serverUrl); url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'; url.searchParams.set('location[directory]', directory); url.searchParams.set('cursor', String(cursor)); url.searchParams.set('ticket', ticket); return url.toString(); }
@@ -75,8 +85,11 @@ export class OpenCodePtyAdapter {
         throw new Error('OpenCode canonical v2 PTY API unavailable'); return pty; }
     #location() { return { directory: this.directory }; }
     async health() { try {
-        const pty = this.#pty();
-        await pty.list({ location: this.#location() });
+        const pty = this.#pty(), raw = await pty.list({ location: this.#location() });
+        assertNativeAccepted(raw, 'list');
+        const items = nativeData(raw);
+        if (!Array.isArray(items))
+            throw new Error('OpenCode PTY list returned invalid data');
         return { available: true, detail: 'OpenCode canonical v2 PTY list observed' };
     }
     catch (error) {
@@ -147,10 +160,10 @@ export class OpenCodePtyAdapter {
             throw new Error(`OpenCode PTY produced invalid Hi ProcessContract state for ${state.contract.process_id}`);
         this.#settleExit(state);
     }
-    async #nativeInfo(state) { const raw = await this.#pty().get({ ptyID: state.ptyID, location: this.#location() }); const info = nativeData(raw); if (!info || typeof info.id !== 'string')
+    async #nativeInfo(state) { const raw = await this.#pty().get({ ptyID: state.ptyID, location: this.#location() }); assertNativeAccepted(raw, `get:${state.ptyID}`); const info = nativeData(raw); if (!info || typeof info.id !== 'string')
         throw new Error(`OpenCode PTY get returned invalid data for ${state.ptyID}`); return info; }
     async #refresh(state) { this.#applyInfo(state, await this.#nativeInfo(state)); }
-    async #ticket(state) { const raw = await this.#pty().connectToken({ ptyID: state.ptyID, location: this.#location() }, { headers: { 'x-opencode-ticket': '1' } }); const token = nativeData(raw); if (!token?.ticket)
+    async #ticket(state) { const raw = await this.#pty().connectToken({ ptyID: state.ptyID, location: this.#location() }, { headers: { 'x-opencode-ticket': '1' } }); assertNativeAccepted(raw, `connect-token:${state.ptyID}`); const token = nativeData(raw); if (!token?.ticket)
         throw new Error(`OpenCode PTY connect token unavailable for ${state.ptyID}`); return token.ticket; }
     async #onFrame(state, data) {
         const raw = await bytes(data);
@@ -286,7 +299,9 @@ export class OpenCodePtyAdapter {
             throw new Error('Hi ProcessExecutor requires command, cwd and authority_ref');
         if (request.timeout_ms !== undefined && (!Number.isFinite(request.timeout_ms) || request.timeout_ms < 50 || request.timeout_ms > 24 * 60 * 60 * 1000))
             throw new Error('Hi ProcessExecutor timeout_ms must be between 50ms and 24h');
-        const launch = launchPlan(request), raw = await this.#pty().create({ location: this.#location(), command: launch.command, args: launch.args, cwd: request.cwd, title: request.title, env: request.env }), info = nativeData(raw);
+        const launch = launchPlan(request), raw = await this.#pty().create({ location: this.#location(), command: launch.command, args: launch.args, cwd: request.cwd, title: request.title, env: request.env });
+        assertNativeAccepted(raw, 'create');
+        const info = nativeData(raw);
         if (!info || info.status !== 'running' || !Number.isInteger(info.pid) || info.pid <= 0 || typeof info.id !== 'string')
             throw new Error('OpenCode PTY create did not return a running PID-bound session');
         const started = Date.now(), processGroup = this.resolveProcessGroup(info.pid), contract = { process_id: processID(), mission_id: request.mission_id, task_id: request.task_id, worker_id: request.worker_id, host: 'opencode', command_identity: processCommandIdentity({ host: 'opencode', command: processCommandLine({ command: info.command, args: info.args }), cwd: info.cwd }), cwd: info.cwd, pid: info.pid, ...(processGroup ? { process_group_id: processGroup } : {}), status: 'RUNNING', started_at: started, ...(request.timeout_ms ? { timeout_at: started + request.timeout_ms } : {}), output_artifact_refs: [], authority_ref: request.authority_ref, cleanup_state: 'ACTIVE' };
@@ -339,7 +354,7 @@ export class OpenCodePtyAdapter {
     async kill(processId, signal = 'SIGTERM') { const state = this.#state(processId); await this.#refresh(state); if (state.contract.status !== 'RUNNING')
         return { contract: cloneContract(state.contract) }; await this.#terminateAndObserve(state, signal, 'kill'); return { contract: cloneContract(state.contract) }; }
     async cleanup(processId) { const state = this.#state(processId); await this.#refresh(state); if (state.contract.status === 'RUNNING')
-        throw new Error(`Refusing cleanup of running process ${processId}; kill/exit must occur first`); await this.#pty().remove({ ptyID: state.ptyID, location: this.#location() }); state.socket?.close(1000, 'Hi cleanup'); state.contract.cleanup_state = 'CLEANED'; if (!isProcessContract(state.contract))
+        throw new Error(`Refusing cleanup of running process ${processId}; kill/exit must occur first`); const raw = await this.#pty().remove({ ptyID: state.ptyID, location: this.#location() }); assertNativeAccepted(raw, `remove:${state.ptyID}`); state.socket?.close(1000, 'Hi cleanup'); state.contract.cleanup_state = 'CLEANED'; if (!isProcessContract(state.contract))
         throw new Error(`Invalid cleanup state for ${processId}`); this.#states.delete(processId); }
     async reconcile(contract) {
         const persisted = structuredClone(contract);
@@ -348,7 +363,11 @@ export class OpenCodePtyAdapter {
         const owned = this.#states.get(persisted.process_id);
         if (owned && (owned.contract.mission_id !== persisted.mission_id || owned.contract.task_id !== persisted.task_id || owned.contract.worker_id !== persisted.worker_id))
             throw new Error(`PTY process_id ${persisted.process_id} is already owned by another process identity`);
-        const raw = await this.#pty().list({ location: this.#location() }), items = nativeData(raw) ?? [];
+        const raw = await this.#pty().list({ location: this.#location() });
+        assertNativeAccepted(raw, 'list');
+        const items = nativeData(raw) ?? [];
+        if (!Array.isArray(items))
+            throw new Error('OpenCode PTY list returned invalid data during reconcile');
         const samePid = Array.isArray(items) ? items.filter(info => info && info.pid === persisted.pid) : [];
         const exact = samePid.find(info => info.cwd === persisted.cwd && processCommandIdentity({ host: 'opencode', command: processCommandLine({ command: info.command, args: info.args }), cwd: info.cwd }) === persisted.command_identity);
         if (!exact) {
