@@ -13,7 +13,7 @@ export function shellMayMutate(command) { return SHELL_MUTATION_COMMAND.test(com
 const SHELL_BOUNDARY = '(?:^|[;&|]\\s*)';
 const PREFIX = '(?:(?:sudo|env(?:\\s+[A-Za-z_][A-Za-z0-9_]*=[^\\s]+)*)\\s+)?';
 const PACKAGE = '(?:npm|pnpm|yarn|bun)';
-const TEST_INVOCATION = new RegExp(`${SHELL_BOUNDARY}${PREFIX}(?:${PACKAGE}\\s+(?:(?:run\\s+)?test(?:\\b|:))|node\\s+--test\\b|(?:python(?:3)?\\s+-m\\s+)?pytest\\b|vitest\\b|jest\\b|go\\s+test\\b|cargo\\s+test\\b|dotnet\\s+test\\b|mvn(?:w)?\\s+(?:[^;&|]*\\s)?test\\b|(?:gradle|\\.\/gradlew)\\s+(?:[^;&|]*\\s)?test\\b)`, 'i');
+const TEST_INVOCATION = new RegExp(`${SHELL_BOUNDARY}${PREFIX}(?:${PACKAGE}\\s+(?:(?:run\\s+)?test(?:\\b|:))|node\\s+--test\\b|(?:python(?:3)?\\s+-m\\s+)?(?:pytest|unittest)\\b|vitest\\b|jest\\b|go\\s+test\\b|cargo\\s+test\\b|dotnet\\s+test\\b|mvn(?:w)?\\s+(?:[^;&|]*\\s)?test\\b|(?:gradle|\\.\/gradlew)\\s+(?:[^;&|]*\\s)?test\\b)`, 'i');
 const TYPECHECK_INVOCATION = new RegExp(`${SHELL_BOUNDARY}${PREFIX}(?:${PACKAGE}\\s+(?:(?:run\\s+)?(?:typecheck|type-check|check:types?)(?:\\b|:))|(?:npx\\s+)?tsc\\b|(?:python(?:3)?\\s+-m\\s+)?(?:mypy|pyright)\\b)`, 'i');
 const LINT_INVOCATION = new RegExp(`${SHELL_BOUNDARY}${PREFIX}(?:${PACKAGE}\\s+(?:(?:run\\s+)?lint(?:\\b|:))|(?:npx\\s+)?eslint\\b|(?:python(?:3)?\\s+-m\\s+)?ruff(?:\\s+check)?\\b)`, 'i');
 const BUILD_INVOCATION = new RegExp(`${SHELL_BOUNDARY}${PREFIX}(?:${PACKAGE}\\s+(?:(?:run\\s+)?build(?:\\b|:))|cargo\\s+check\\b|go\\s+build\\b|dotnet\\s+build\\b|mvn(?:w)?\\s+(?:[^;&|]*\\s)?(?:package|verify)\\b|(?:gradle|\\.\/gradlew)\\s+(?:[^;&|]*\\s)?build\\b)`, 'i');

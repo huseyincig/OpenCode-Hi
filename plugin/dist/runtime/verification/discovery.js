@@ -72,6 +72,32 @@ function nodeTestCandidates(root, target) {
 function pythonCandidates(root, target) { const abs = resolve(root, target), dir = dirname(abs), stem = basename(abs, '.py'), out = []; for (const p of [join(dir, `test_${stem}.py`), join(dir, `${stem}_test.py`), join(dir, 'tests', `test_${stem}.py`), join(dirname(dir), 'tests', `test_${stem}.py`)])
     if (existsSync(p))
         out.push(norm(relative(root, p))); return [...new Set(out)].slice(0, 6); }
+function declaredUnittestRoute(root) { for (const name of ['README.md', 'CONTRIBUTING.md']) {
+    const path = join(root, name);
+    if (!existsSync(path))
+        continue;
+    let text = '';
+    try {
+        text = readFileSync(path, 'utf8');
+    }
+    catch {
+        continue;
+    }
+    const match = /(?:^|[`\s])((?:python3|python)\s+-m\s+unittest\s+discover\s+-s\s+(test|tests)(?:\s+-v)?)(?=[`\s]|$)/im.exec(text);
+    if (!match)
+        continue;
+    const dir = join(root, match[2]);
+    if (!existsSync(dir))
+        continue;
+    let testFiles = [];
+    try {
+        testFiles = readdirSync(dir, { withFileTypes: true }).filter((x) => x.isFile() && /^test.*\.py$/i.test(x.name)).slice(0, 20).map((x) => norm(relative(root, join(dir, x.name))));
+    }
+    catch { }
+    if (!testFiles.length)
+        continue;
+    return { command: match[1].replace(/\s+/g, ' ').trim(), testFiles };
+} return undefined; }
 function nodeCommand(repoRoot, pkgRoot, testFile) { const pkg = json(join(pkgRoot, 'package.json')), script = pkg?.scripts?.test; if (!usableScript(script))
     return undefined; const pm = manager(pkgRoot), pkgRel = norm(relative(repoRoot, pkgRoot)), testRel = norm(relative(pkgRoot, resolve(repoRoot, testFile))); if (pm === 'pnpm')
     return pkgRel ? `pnpm --dir ${pkgRel} test -- ${testRel}` : `pnpm test -- ${testRel}`; if (pm === 'yarn')
@@ -97,9 +123,16 @@ export function discoverTargetedVerification(root, targets) {
             }
         }
         else if (ext === '.py') {
-            tests = pythonCandidates(repoRoot, raw);
-            if (tests[0])
-                commands.push(`python -m pytest ${tests[0]}`);
+            const unittest = declaredUnittestRoute(pkg);
+            if (unittest) {
+                tests = unittest.testFiles;
+                commands.push(unittest.command);
+            }
+            else {
+                tests = pythonCandidates(repoRoot, raw);
+                if (tests[0])
+                    commands.push(`python -m pytest ${tests[0]}`);
+            }
         }
         else if (ext === '.go') {
             const dirRel = norm(relative(pkg, dirname(abs))) || '.';

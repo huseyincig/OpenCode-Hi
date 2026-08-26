@@ -7,7 +7,7 @@ export const SEMANTIC_VERIFICATION_KINDS = ['targeted-tests', 'typecheck', 'lint
 const PATH = /((?:[\w@.-]+\/[\w@./-]+|[\w@.-]+\.(?:tsx|jsx|json|scss|html|yaml|toml|sql|ts|js|py|go|rs|php|md|txt|css|yml)))(?![\w.-])/gi;
 const HTTP_TARGET = /^https?:\/\/[^\s]+$/i;
 const TECHNICAL_VERIFIER_PATTERNS = [
-    ['targeted-tests', /\b(?:(?:npm|pnpm|yarn|bun)\s+(?:(?:run\s+)?test(?:\b|:))|node\s+--test\b|(?:python(?:3)?\s+-m\s+)?pytest\b|vitest\b|jest\b|go\s+test\b|cargo\s+test\b|dotnet\s+test\b|mvnw?\s+[^`\n;]*\btest\b|(?:gradle|\.\/gradlew)\s+[^`\n;]*\btest\b)/i],
+    ['targeted-tests', /\b(?:(?:npm|pnpm|yarn|bun)\s+(?:(?:run\s+)?test(?:\b|:))|node\s+--test\b|(?:python(?:3)?\s+-m\s+)?(?:pytest|unittest)\b|vitest\b|jest\b|go\s+test\b|cargo\s+test\b|dotnet\s+test\b|mvnw?\s+[^`\n;]*\btest\b|(?:gradle|\.\/gradlew)\s+[^`\n;]*\btest\b)/i],
     ['typecheck', /\b(?:(?:npm|pnpm|yarn|bun)\s+(?:(?:run\s+)?(?:typecheck|type-check|check:types?)(?:\b|:))|(?:npx\s+)?tsc\b|(?:python(?:3)?\s+-m\s+)?(?:mypy|pyright)\b)/i],
     ['lint', /\b(?:(?:npm|pnpm|yarn|bun)\s+(?:(?:run\s+)?lint(?:\b|:))|(?:npx\s+)?eslint\b|(?:python(?:3)?\s+-m\s+)?ruff(?:\s+check)?\b)/i],
     ['build', /\b(?:(?:npm|pnpm|yarn|bun)\s+(?:(?:run\s+)?build(?:\b|:))|cargo\s+check\b|go\s+build\b|dotnet\s+build\b)/i],
@@ -19,7 +19,7 @@ export function technicalTargets(text) { return [...text.matchAll(PATH)].map(m =
 export function technicalVerificationKinds(text) { return TECHNICAL_VERIFIER_PATTERNS.filter(([, pattern]) => pattern.test(text)).map(([kind]) => kind); }
 function repoVerificationKind(kind) {
     const normalized = kind.toLowerCase().trim();
-    if (['test', 'pytest', 'go test', 'cargo test'].includes(normalized))
+    if (['test', 'pytest', 'unittest', 'go test', 'cargo test'].includes(normalized))
         return 'targeted-tests';
     if (normalized === 'check')
         return 'changed-surface-sanity';
@@ -50,8 +50,8 @@ export function resolveAdaptiveVerificationAssessment(assessment, userText, repo
         const likelyVerification = [...new Set(['review-evidence', ...surfaceSpecific])];
         return { assessment: { ...assessment, likely_verification: likelyVerification, user_verification: [], verification_ceiling: false }, explicitUserVerification: [], ceilingApplied: false, policy: 'minimum-sufficient-review' };
     }
-    const boundedLocalCapability = assessment.message_kind === 'mission' && assessment.task_kind !== 'review' && assessment.scope === 'local' && ['low', 'medium'].includes(assessment.risk) && assessment.task_kind !== 'release-readiness' && repo !== undefined && repo.likelyVerification.length > 0;
-    if (boundedLocalCapability) {
+    const boundedRepoCapability = assessment.message_kind === 'mission' && ['implementation', 'bug-fix', 'performance'].includes(assessment.task_kind) && ['local', 'multi-file'].includes(assessment.scope) && assessment.task_kind !== 'release-readiness' && repo !== undefined && repo.likelyVerification.length > 0 && explicitUserVerification.length === 0 && (['low', 'medium'].includes(assessment.risk) || (assessment.risk === 'high' && assessment.scope === 'local'));
+    if (boundedRepoCapability) {
         const repoKinds = repoVerificationKinds(repo), likelyVerification = assessment.likely_verification.filter(kind => kind === 'visual-check' || kind === 'review-evidence' || repoKinds.has(kind));
         return { assessment: { ...assessment, likely_verification: likelyVerification }, explicitUserVerification, ceilingApplied: false, policy: 'local-capability-surface' };
     }
