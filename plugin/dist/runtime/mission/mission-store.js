@@ -413,12 +413,19 @@ export class MissionStore {
             }
             const now = Date.now();
             for (const w of m.execution.workers) {
-                if (['created', 'queued', 'starting', 'busy'].includes(w.status)) {
+                if (['created', 'queued', 'starting', 'busy'].includes(w.status) || (w.status === 'ready' && w.restart_reconcile_pending === true && Boolean(w.session_id))) {
                     const t = m.execution.tasks.find(x => x.id === w.task_id);
                     if (w.session_id) {
                         w.status = 'ready';
                         w.restart_reconcile_pending = true;
-                        w.generation_at_spawn = m.continuation.generation;
+                        const reservation = m.execution.scheduler?.reservations.find(r => r.workerId === w.id), reservationMatchesAttempt = Boolean(reservation && reservation.hostExecutionId === w.session_id && reservation.attempt.executionUnitId === `eu:${w.task_id}` && reservation.attempt.ordinal === w.attempt);
+                        if (reservationMatchesAttempt && w.generation_at_spawn !== reservation.attempt.generation) {
+                            const previous_generation = w.generation_at_spawn;
+                            w.generation_at_spawn = reservation.attempt.generation;
+                            appendLedger(m, 'scheduler.restart-attempt-identity-repaired', { task_id: t?.id, worker_id: w.id, payload: { previous_generation, reservation_generation: reservation.attempt.generation, attempt_id: reservation.attempt.attemptId, session_id: w.session_id, reason: 'persisted-reservation-authoritative' } });
+                        }
+                        else if (!Number.isInteger(w.generation_at_spawn) || Number(w.generation_at_spawn) < 1)
+                            w.generation_at_spawn = m.continuation.generation;
                         if (t && !t.result) {
                             t.status = 'waiting';
                             t.result = { status: 'NEEDS_CONTEXT', summary: 'Runtime restarted while this worker was in flight; reconcile the existing child session before continuing.', changed_files: [], evidence: [], open_issues: [], needs_context: ['runtime-restart-reconcile'] };

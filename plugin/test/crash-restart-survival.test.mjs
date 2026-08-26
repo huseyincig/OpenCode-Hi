@@ -173,3 +173,60 @@ test('restart reconciliation reports scheduler-only terminal fencing as durable 
   const before=m.execution.scheduler.revision,count=await runtime.reconcileRestoredChildren(m)
   assert.equal(count,1);assert.ok(m.execution.scheduler.revision>before);assert.equal(m.execution.scheduler.reservations[0].phase,'SETTLING');assert.equal(m.execution.workers[0].restart_reconcile_pending,true)
 })
+
+
+function historicalRestartState({corruptWorkerGeneration=true}={}){
+  const source=persistedBusyWithReservation(),worker=source.execution.workers[0],task=source.execution.tasks[0]
+  source.continuation.generation+=1
+  worker.status='ready';worker.restart_reconcile_pending=true
+  if(corruptWorkerGeneration)worker.generation_at_spawn=source.continuation.generation
+  task.status='waiting';task.result={status:'NEEDS_CONTEXT',summary:'restart pending',changed_files:[],evidence:[],open_issues:[],needs_context:['runtime-restart-reconcile']}
+  return source
+}
+
+test('restore repairs already-persisted restart identity drift from the exact scheduler reservation',()=>{
+  const source=historicalRestartState()
+  assert.equal(source.execution.workers[0].generation_at_spawn,2)
+  assert.equal(source.execution.scheduler.reservations[0].attempt.generation,1)
+  const restored=new MissionStore();restored.restore([source],true)
+  const m=restored.get('parent-1');assert.ok(m);const worker=m.execution.workers[0],reservation=m.execution.scheduler.reservations[0]
+  assert.equal(m.continuation.generation,2)
+  assert.equal(worker.generation_at_spawn,1,'host-bound historical attempt identity must not be relabeled as the new mission generation')
+  assert.equal(worker.restart_reconcile_pending,true)
+  assert.equal(reservation.attempt.generation,1)
+  assert.equal(reservation.phase,'RECONCILING')
+  assert.ok(m.execution.ledger.some(e=>e.type==='scheduler.restart-attempt-identity-repaired'&&e.payload?.previous_generation===2&&e.payload?.reservation_generation===1))
+})
+
+test('historical restart keeps a live old-generation host attempt quarantined instead of adopting it into the new mission generation',async()=>{
+  const restored=new MissionStore();restored.restore([historicalRestartState()],true)
+  const m=restored.get('parent-1');assert.ok(m);const {runtime,calls}=restartHarness(m,{status:'busy',assistant:{text:''}}),worker=m.execution.workers[0]
+  const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:[],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:m.execution.tasks[0].obligation_ids})
+  assert.equal(out.readiness,'WAIT');assert.equal(calls.prompts.length,0);assert.equal(calls.reads,0)
+  assert.equal(worker.generation_at_spawn,1);assert.equal(worker.restart_reconcile_pending,true);assert.equal(worker.status,'ready')
+  assert.equal(m.execution.scheduler.reservations[0].phase,'RECONCILING')
+  assert.ok(m.execution.ledger.some(e=>e.type==='scheduler.restart-reconcile-deferred'&&e.payload?.reason==='historical-attempt-host-active'))
+})
+
+test('historical idle attempt with no assistant evidence releases old reservation then resumes the same retained session as a new generation',async()=>{
+  const restored=new MissionStore();restored.restore([historicalRestartState()],true)
+  const m=restored.get('parent-1');assert.ok(m);const {runtime,calls}=restartHarness(m,{status:'idle',assistant:{text:''}}),worker=m.execution.workers[0]
+  const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:[],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:m.execution.tasks[0].obligation_ids})
+  assert.equal(out.readiness,'READY');assert.equal(out.session_id,'child-old');assert.equal(calls.reads,1);assert.equal(calls.prompts.length,1)
+  assert.equal(worker.session_id,'child-old');assert.equal(worker.attempt,2);assert.equal(worker.generation_at_spawn,2);assert.equal(worker.restart_reconcile_pending,false);assert.equal(worker.status,'busy')
+  assert.equal(m.execution.scheduler.reservations.length,1);const reservation=m.execution.scheduler.reservations[0]
+  assert.equal(reservation.phase,'RUNNING');assert.equal(reservation.attempt.ordinal,2);assert.equal(reservation.attempt.generation,2);assert.equal(reservation.hostExecutionId,'child-old')
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.restart-historical-result-quarantined'&&e.payload?.attempt_id?.includes(':g1:a1')&&e.payload?.generation===1&&e.payload?.assistant_result_present===false))
+})
+
+test('historical idle attempt with an assistant result quarantines stale semantics then resumes the retained session in the current generation',async()=>{
+  const restored=new MissionStore();restored.restore([historicalRestartState()],true)
+  const m=restored.get('parent-1');assert.ok(m);const assistant={text:JSON.stringify({status:'DONE',summary:'old attempt finished before restart',changed_files:[],evidence:[],open_issues:[],needs_context:[]})}
+  const {runtime,calls}=restartHarness(m,{status:'idle',assistant}),worker=m.execution.workers[0]
+  const out=await runtime.start(m,{objective:m.identity.objective,role:'coder',category:'quick',scope:[],dependencies:[],requiredEvidence:m.identity.intent.likelyVerification,obligationIds:m.execution.tasks[0].obligation_ids})
+  assert.equal(out.readiness,'READY');assert.equal(out.session_id,'child-old');assert.equal(calls.reads,1);assert.equal(calls.prompts.length,1)
+  assert.equal(worker.generation_at_spawn,2);assert.equal(worker.attempt,2);assert.equal(worker.status,'busy');assert.equal(worker.restart_reconcile_pending,false)
+  assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(m.execution.scheduler.reservations[0].attempt.generation,2);assert.equal(m.execution.scheduler.reservations[0].attempt.ordinal,2)
+  assert.notEqual(m.execution.tasks[0].result?.summary,'old attempt finished before restart','historical semantic output must not become current-generation task truth')
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.restart-historical-result-quarantined'&&e.payload?.assistant_result_present===true&&e.payload?.generation===1&&e.payload?.mission_generation===2))
+})

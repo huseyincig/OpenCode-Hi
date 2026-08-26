@@ -24,7 +24,7 @@ import { applyAdmittedProjectMethodologyPermissions } from '../methodology/host-
 import { HI_CHILD_ROLES, isHiChildRole, isHiReadOnlyChildRole, isHiReviewerRole, roleCanOwnObligation } from '../roles/catalog.js';
 import { createRuntimeScopedStores } from '../application/runtime-scoped-stores.js';
 import { ChildExecutionCoordinator } from './child-execution-coordinator.js';
-import { admitHostTerminalEvent, hostChildBindingMatches } from './host-child-binding.js';
+import { admitHostTerminalEvent, admitRestartHostTerminalEvent, hostChildBindingMatches, restartHostChildBindingMatches } from './host-child-binding.js';
 import { TaskResultReconciler } from './task-result-reconciler.js';
 import { TaskRecoveryCoordinator } from './task-recovery-coordinator.js';
 import { taskRuntimeAdmittedModel, taskRuntimeUnitDecision, reserveTaskRuntimeDispatch, bindTaskRuntimeHost, claimTaskRuntimeSettlement, releaseTaskRuntimeReservation, reconcileTaskRuntimeRestart } from '../scheduler/task-runtime-adapter.js';
@@ -202,7 +202,7 @@ export class TaskRuntime {
         if (!task)
             return { applied: false, reason: 'task-not-found' };
         if (binding) {
-            if (!hostChildBindingMatches(m, worker, binding)) {
+            if (!hostChildBindingMatches(m, worker, binding) && !restartHostChildBindingMatches(m, worker, binding)) {
                 appendLedger(m, 'worker.error-settlement-stale-binding', { task_id: task.id, worker_id: worker.id, payload: { session_id: binding.sessionId, attempt_id: binding.attempt.attemptId, current_session_id: worker.session_id, current_attempt: worker.attempt } });
                 return { applied: false, reason: 'host-terminal-binding-stale-before-settlement' };
             }
@@ -311,8 +311,12 @@ export class TaskRuntime {
     async reconcileRestartBeforeResume(m, worker, task) {
         if (!worker.restart_reconcile_pending)
             return 'CONTINUE';
-        const observed = await this.admitTerminalEvent(m, worker);
+        const observed = await admitRestartHostTerminalEvent(m, worker, this.childHost);
         if (observed.decision === 'WAIT') {
+            if (observed.binding?.generation !== m.continuation.generation) {
+                appendLedger(m, 'scheduler.restart-reconcile-deferred', { task_id: task.id, worker_id: worker.id, payload: { reason: 'historical-attempt-host-active', session_id: worker.session_id, host_status: observed.hostStatus, attempt_id: observed.binding?.attempt.attemptId, attempt_generation: observed.binding?.generation, mission_generation: m.continuation.generation } });
+                return 'WAIT';
+            }
             const reconciled = reconcileTaskRuntimeRestart(m, worker, 'ACTIVE');
             if (!reconciled.accepted) {
                 appendLedger(m, 'scheduler.restart-reconcile-blocked', { task_id: task.id, worker_id: worker.id, payload: { reason: reconciled.reason, session_id: worker.session_id, host_status: observed.hostStatus } });
@@ -348,7 +352,21 @@ export class TaskRuntime {
             appendLedger(m, 'worker.restart-result-deferred', { task_id: task.id, worker_id: worker.id, payload: { reason: 'assistant-result-read-failed', session_id: worker.session_id, error: String(error) } });
             return 'WAIT';
         }
-        const settled = await this.settleHostIdleAssistantResult(m, worker, assistant);
+        const historicalAttempt = observed.binding?.generation !== undefined && observed.binding.generation !== m.continuation.generation, noAssistantEvidence = !assistant.model && !assistant.text && !assistant.error && !assistant.activity && !assistant.usage;
+        if (historicalAttempt || noAssistantEvidence) {
+            const released = releaseTaskRuntimeReservation(m, worker.id);
+            if (!released.accepted) {
+                appendLedger(m, historicalAttempt ? 'worker.restart-historical-result-release-blocked' : 'worker.restart-no-result-release-blocked', { task_id: task.id, worker_id: worker.id, payload: { reason: released.reason, session_id: worker.session_id, attempt_id: observed.binding?.attempt.attemptId } });
+                return 'WAIT';
+            }
+            worker.restart_reconcile_pending = false;
+            worker.status = 'ready';
+            task.status = 'waiting';
+            this.registry.set(worker);
+            appendLedger(m, historicalAttempt ? 'worker.restart-historical-result-quarantined' : 'worker.restart-no-result-reconciled', { task_id: task.id, worker_id: worker.id, payload: { session_id: worker.session_id, attempt_id: observed.binding?.attempt.attemptId, generation: observed.binding?.generation, mission_generation: m.continuation.generation, host_status: observed.hostStatus, reason: historicalAttempt ? 'historical-attempt-result-not-authoritative-for-current-generation' : 'host-idle-without-assistant-evidence', assistant_message_id: assistant.model?.message_id, assistant_result_present: !noAssistantEvidence, reservation_release: released.reason } });
+            return 'CONTINUE';
+        }
+        const settled = await this.settleHostIdleAssistantResult(m, worker, assistant, observed.binding);
         if (!settled.applied) {
             appendLedger(m, 'worker.restart-result-deferred', { task_id: task.id, worker_id: worker.id, payload: { reason: settled.reason, session_id: worker.session_id } });
             return 'WAIT';
