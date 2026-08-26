@@ -145,6 +145,47 @@ function transparentChild(tokens) {
     }
     return undefined;
 }
+function maskPosixComments(source) {
+    const chars = [...source];
+    let quote, escape = false, inComment = false;
+    for (let i = 0; i < chars.length; i++) {
+        const ch = chars[i];
+        if (inComment) {
+            if (ch === '\n') {
+                inComment = false;
+                continue;
+            }
+            if (ch !== '\r')
+                chars[i] = ' ';
+            continue;
+        }
+        if (escape) {
+            escape = false;
+            continue;
+        }
+        if (ch === '\\' && quote !== "'") {
+            escape = true;
+            continue;
+        }
+        if (quote) {
+            if (ch === quote)
+                quote = undefined;
+            continue;
+        }
+        if (ch === '\"' || ch === "'") {
+            quote = ch;
+            continue;
+        }
+        if (ch === '#') {
+            const prev = i === 0 ? '\n' : chars[i - 1];
+            if (i === 0 || /[\s;&|()]/.test(prev)) {
+                chars[i] = ' ';
+                inComment = true;
+            }
+        }
+    }
+    return chars.join('');
+}
 function quotedHeredocMask(source, state, depth, cwdRisk) {
     if (!source.includes('<<'))
         return source;
@@ -703,7 +744,8 @@ function scanProgram(source, dialect, depth, origin, cwdRisk, state) {
             deriveChildren(text, 'posix', depth, cwdRisk, state);
         return;
     }
-    const masked = dialect === 'posix' ? quotedHeredocMask(bounded, state, depth, cwdRisk) : bounded;
+    const heredocMasked = dialect === 'posix' ? quotedHeredocMask(bounded, state, depth, cwdRisk) : bounded;
+    const masked = dialect === 'posix' ? maskPosixComments(heredocMasked) : heredocMasked;
     scanNestedCarriers(masked, dialect, depth, cwdRisk, state);
     for (const segment of splitSegments(masked, dialect, cwdRisk, state)) {
         addFragment(segment.text, dialect, origin, depth, segment.cwdRisk, state);

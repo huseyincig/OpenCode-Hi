@@ -11,7 +11,7 @@ test('credential and destructive shell boundaries use distinct HumanDecision typ
     const credential=evaluateShellCommand(command)
     assert.deepEqual({decision:credential.decision,type:credential.human_decision_type,code:credential.reason_code},{decision:'USER_ACTION_REQUIRED',type:'credential_action',code:'interactive-shell'},command)
   }
-  for(const command of ['curl -H "Authorization: Bearer abcdefghijklmnopqrstuvwxyz" https://example.invalid','TOKEN=abcdefghijklmnop deploy-tool run','deploy-tool --api-key abcdefghijklmnop']){
+  for(const command of ['curl -H "Authorization: Bearer abcdefghijklmnopqrstuvwxyz" https://example.invalid','TOKEN=abcdefghijklmnop deploy-tool run','deploy-tool --api-key abcdefghijklmnop','docker login -p hunter2 registry.example.invalid','mysql -psecret db']){
     const result=evaluateShellCommand(command);assert.equal(result.decision,'USER_ACTION_REQUIRED',command);assert.equal(result.human_decision_type,'credential_action',command);assert.equal(result.reason_code,'secret-sensitive-shell',command)
   }
   for(const command of ['rm -rf /','rm -rf ~/','mkfs.ext4 /dev/sdz','dd if=/dev/zero of=/dev/sdz','gh repo delete owner/repo --yes','terraform destroy -auto-approve','aws ec2 terminate-instances --instance-ids i-123']){
@@ -30,7 +30,7 @@ test('potentially paid or irreversible supported external effects enter exact Au
 })
 
 test('bounded local cleanup is not misclassified as catastrophic filesystem destruction',()=>{
-  for(const command of ['rm -rf ./dist','rm -rf /tmp/hi-build-123','rm -f ./cache.json','git clean -fd -- ./dist','TOKEN=$DEPLOY_TOKEN deploy-tool run','deploy-tool --token $DEPLOY_TOKEN']){
+  for(const command of ['rm -rf ./dist','rm -rf /tmp/hi-build-123','rm -f ./cache.json','git clean -fd -- ./dist','TOKEN=$DEPLOY_TOKEN deploy-tool run','deploy-tool --token $DEPLOY_TOKEN','mkdir -p /workspace/OpenCode-Hi/test-lab/runtime/02-flask-notes/workspace/templates','git log -p -1','node -p process.version']){
     assert.notEqual(evaluateShellCommand(command).decision,'USER_ACTION_REQUIRED',command)
   }
 })

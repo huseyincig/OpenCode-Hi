@@ -91,3 +91,15 @@ test('malformed destructive execution fails closed without unbounded recursive a
   assert.equal(evaluateShellCommand(command).decision,'USER_ACTION_REQUIRED')
   assert.ok(projection.workUnits<=524288)
 })
+
+
+test('POSIX comments are inert syntax and apostrophes inside comments do not create quote uncertainty',()=>{
+  const command=`echo safe
+# The template doesn't render note data - JS does via textContent
+HTML_ID=$(printf 7)
+echo "$HTML_ID"`
+  const projection=projectExecutionSurface(command)
+  assert.equal(projection.uncertain,false,JSON.stringify(projection.uncertainty))
+  assert.equal(projection.fragments.some(x=>x.text.includes("doesn't render")),false)
+  assert.ok(projection.fragments.some(x=>x.text==='printf 7'&&x.origin==='command-substitution'))
+})
