@@ -293,19 +293,31 @@ export class TaskRuntime {
     async blockDependencyOutcome(m, task, worker, error) { worker.status = 'failed'; task.status = 'blocked'; task.updated_at = Date.now(); const marker = `dependency-outcome-unavailable:${task.id}`; task.result = { status: 'BLOCKED', summary: `Direct dependency outcome could not be projected safely before dispatch: ${error.message}`.slice(0, 1200), changed_files: [], evidence: [], open_issues: [marker], needs_context: ['reconcile completed dependency result/worker attempt identity before dispatch'] }; m.execution.blockers = [...new Set([...m.execution.blockers, marker])]; this.registry.delete(worker.id); releaseTaskRuntimeReservation(m, worker.id); await this.cleanupWorkspaceForTask(m, task.id); appendLedger(m, 'worker.dependency-outcome-blocked', { task_id: task.id, worker_id: worker.id, payload: { reason: error.message, dependencies: [...task.dependencies] } }); syncMissionGates(m); }
     projectPeerView(m) { return projectSchedulingPeerView(m, this.getProjectMissions()); }
     admittedModel(m, worker, chain) { return taskRuntimeAdmittedModel(m, worker, chain, this.scheduler, this.projectPeerView(m)); }
-    reserveExistingSessionAttempt(m, worker, model) {
+    reserveExistingSessionAttempt(m, worker, model, task) {
         if (!model || !worker.session_id)
             return { ok: false, reason: 'model-or-session-missing' };
-        if (this.admittedModel(m, worker, [model]) !== model)
+        const previousTaskStatus = task?.status, resumableBlocked = Boolean(task && task.status === 'blocked' && task.result && ['BLOCKED', 'NEEDS_CONTEXT'].includes(task.result.status) && worker.status === 'ready');
+        if (resumableBlocked && task)
+            task.status = 'waiting';
+        const restoreBlocked = () => { if (resumableBlocked && task && previousTaskStatus)
+            task.status = previousTaskStatus; };
+        if (this.admittedModel(m, worker, [model]) !== model) {
+            restoreBlocked();
             return { ok: false, reason: 'scheduler-not-admitted' };
+        }
         const reservation = reserveTaskRuntimeDispatch(m, worker, model, this.scheduler, Date.now(), this.projectPeerView(m));
-        if (!reservation.accepted)
+        if (!reservation.accepted) {
+            restoreBlocked();
             return { ok: false, reason: reservation.reason };
+        }
         const bound = bindTaskRuntimeHost(m, worker.id, worker.session_id);
         if (!bound.accepted) {
             releaseTaskRuntimeReservation(m, worker.id);
+            restoreBlocked();
             return { ok: false, reason: bound.reason };
         }
+        if (resumableBlocked && task)
+            appendLedger(m, 'worker.blocked-resume-admission-staged', { task_id: task.id, worker_id: worker.id, payload: { from: previousTaskStatus, to: 'waiting', result_status: task.result?.status, reason: 'explicit-retained-session-resume' } });
         return { ok: true, reason: 'reserved-and-bound' };
     }
     async reconcileRestartBeforeResume(m, worker, task) {
@@ -619,7 +631,7 @@ export class TaskRuntime {
                 const nextModel = this.admittedModel(m, existing, chain) ?? existing.model;
                 if (!nextModel)
                     throw new Error('Worker resume scheduler admission unavailable');
-                const resumeAdmission = this.reserveExistingSessionAttempt(m, existing, nextModel);
+                const resumeAdmission = this.reserveExistingSessionAttempt(m, existing, nextModel, oldTask);
                 if (!resumeAdmission.ok)
                     throw new Error(`Worker resume scheduler admission unavailable: ${resumeAdmission.reason}`);
                 const previousModel = existing.model, attemptBaseline = await this.captureNativeDiff(existing, 'baseline');
@@ -839,7 +851,7 @@ export class TaskRuntime {
                 appendLedger(m, 'worker.semantic-resume-blocked', { task_id: task.id, worker_id: worker.id, payload: { reason: String(error) } });
                 continue;
             }
-            const model = worker.model, resumeAdmission = this.reserveExistingSessionAttempt(m, worker, model);
+            const model = worker.model, resumeAdmission = this.reserveExistingSessionAttempt(m, worker, model, task);
             if (!resumeAdmission.ok) {
                 appendLedger(m, 'worker.semantic-resume-deferred', { task_id: task.id, worker_id: worker.id, payload: { revision: m.identity.semantic_assessment.revision, reason: resumeAdmission.reason } });
                 continue;

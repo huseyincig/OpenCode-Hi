@@ -155,3 +155,26 @@ test('cancelling a ready retained FIX_REQUIRED session skips abort because host 
   assert.equal(await runtime.cancel(m,task.id),true);assert.equal(aborted,0);assert.equal(worker.status,'cancelled');assert.equal(task.status,'cancelled')
   assert.ok(m.execution.ledger.some(e=>e.type==='worker.cancel.abort-skipped'&&e.worker_id===worker.id&&e.payload?.reason==='retained-session-already-quiescent-no-active-reservation'))
 })
+
+
+test('explicit retained-session resume stages a correctable BLOCKED result for exact scheduler admission without weakening blocked planner defaults',async()=>{
+  const prompts=[];const {runtime,m}=setup({prompt:async req=>{prompts.push(req);return{data:{}}}})
+  const started=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
+  const worker=m.execution.workers.find(w=>w.id===started.worker_id),task=m.execution.tasks.find(t=>t.id===started.task_id),sessionID=worker.session_id,attempt=worker.attempt
+  runtime.applyResult(m,worker.id,{...workerResult('BLOCKED'),summary:'local execution prerequisite changed',needs_context:['retry after bounded runtime condition is corrected']})
+  assert.equal(task.status,'blocked');assert.equal(worker.status,'ready');assert.equal(m.execution.scheduler.reservations.length,0)
+  const resumed=await runtime.resume(m,task.id)
+  assert.equal(resumed.session_id,sessionID);assert.equal(worker.session_id,sessionID);assert.equal(worker.attempt,attempt+1);assert.equal(worker.status,'busy');assert.equal(task.status,'running')
+  assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(m.execution.scheduler.reservations[0].hostExecutionId,sessionID)
+  assert.equal(prompts.length,2);assert.ok(m.execution.ledger.some(e=>e.type==='worker.blocked-resume-admission-staged'&&e.task_id===task.id&&e.worker_id===worker.id))
+})
+
+test('failed explicit BLOCKED resume admission restores the durable blocked task state',async()=>{
+  const {runtime,m}=setup();const first=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
+  const firstWorker=m.execution.workers.find(w=>w.id===first.worker_id),firstTask=m.execution.tasks.find(t=>t.id===first.task_id)
+  runtime.applyResult(m,firstWorker.id,{...workerResult('BLOCKED'),summary:'correctable blocker'})
+  assert.equal(firstTask.status,'blocked');assert.equal(firstWorker.status,'ready')
+  const second=await runtime.start(m,{objective:'change y',role:'coder',category:'standard',scope:['src/y.ts']});assert.equal(m.execution.workers.find(w=>w.id===second.worker_id)?.status,'busy')
+  await assert.rejects(()=>runtime.resume(m,firstTask.id),/scheduler admission unavailable/)
+  assert.equal(firstTask.status,'blocked');assert.equal(firstWorker.status,'ready');assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(m.execution.scheduler.reservations[0].workerId,second.worker_id)
+})
