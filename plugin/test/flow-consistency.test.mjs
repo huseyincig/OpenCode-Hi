@@ -29,6 +29,18 @@ test('resume follow-up preserves the existing completion contract without synthe
   assert.ok(m.execution.ledger.some(e=>e.type==='mission.resumed'))
 })
 
+test('visual-review-only capability cannot manufacture an implementation predecessor',()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'s-visual-review','review existing UI',{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['visual-qa'],likely_verification:['visual-check'],likely_targets:['road-fighter.html']})
+  assert.equal(m.execution.obligations.some(o=>o.kind==='implementation'),false)
+  assert.equal(m.execution.obligations.some(o=>o.kind==='verification'),true)
+})
+
+test('visual implementation still keeps implementation when write capability is explicit',()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'s-visual-impl','build and review UI',{task_kind:'implementation',scope:'local',risk:'low',required_capabilities:['implementation','visual-qa'],likely_verification:['visual-check'],likely_targets:['road-fighter.html']})
+  assert.equal(m.execution.obligations.some(o=>o.kind==='implementation'),true)
+  assert.equal(m.execution.obligations.some(o=>o.kind==='verification'),true)
+})
+
 test('Flow-04 structured security follow-up escalates risk and verification policy',()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'s1','opaque',{risk:'low'})
   applyStructuredFollowup(store,'s1','opaque security update',{risk:'high',required_capabilities:['implementation','security-review','independent-review'],likely_verification:['targeted-tests','review-evidence']})

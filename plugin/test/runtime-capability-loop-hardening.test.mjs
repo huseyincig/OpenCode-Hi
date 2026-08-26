@@ -47,7 +47,7 @@ test('visual-check activates canonical visual verification methodology before an
 })
 
 test('unchanged verification-pending cannot bypass the hard continuation budget',async()=>{
-  const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'verification-loop','implement a UI',{likely_verification:['visual-check'],required_capabilities:['visual-qa']})
+  const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'verification-loop','implement a UI',{likely_verification:['visual-check'],required_capabilities:['implementation','visual-qa']})
   const implementation=m.execution.obligations.find(o=>o.kind==='implementation');assert.ok(implementation);implementation.status='closed';implementation.closedAt=Date.now()
   const host=continuationPort({session:{promptAsync:async()=>({data:{}})}})
   let terminal
@@ -67,7 +67,7 @@ test('unchanged verification-pending cannot bypass the hard continuation budget'
 })
 
 test('unavailable verifier environment is terminal operational state, not an open-ended RECOVER continuation',()=>{
-  const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'verification-env','fix a UI',{likely_verification:['visual-check'],required_capabilities:['visual-qa']})
+  const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'verification-env','fix a UI',{likely_verification:['visual-check'],required_capabilities:['implementation','visual-qa']})
   const implementation=m.execution.obligations.find(o=>o.kind==='implementation');assert.ok(implementation);implementation.status='closed';implementation.closedAt=Date.now()
   const obligation=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(obligation)
   addEvidence(m,{kind:'visual-check',summary:'Browser runtime unavailable',scope:['index.html'],source:'runtime:browser-preflight',obligation_ids:[obligation.id],outcome:'environment-issue',reason:'capability-unavailable:browser-execution'})
