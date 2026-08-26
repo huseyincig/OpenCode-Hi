@@ -1,7 +1,7 @@
 import type { HiConfig } from '../../config/schema.js'
 import type { MissionState } from '../mission/types.js'
 import type { AvailableModel } from '../routing/model-resolver.js'
-import { runtimeModelCandidateStatus } from '../routing/model-resolver.js'
+import { automaticRecoveryCandidates,runtimeModelCandidateStatus } from '../routing/model-resolver.js'
 import { classifyWorkerFailure } from '../worker/failure-classifier.js'
 import { methodologyCatalog } from '../methodology/catalog.js'
 import { releaseFailedTaskMethodologyNeeds } from '../methodology/activation.js'
@@ -11,6 +11,7 @@ import { taskPromptToolOverrides } from '../routing/execution-profile.js'
 import { beginWorkerAttempt } from '../worker/worker-runtime.js'
 import { recordPreexistingUserBaseline } from '../safety/staging-safety.js'
 import { appendLedger } from '../ledger/ledger.js'
+import { clearCapabilityUnavailable } from '../readiness/capability-failure.js'
 import { runtimeSignal,type RuntimeSignalSink } from '../events/event-sink.js'
 import { syncMissionGates } from '../gates/gates.js'
 import type { BackgroundRegistry } from '../background/registry.js'
@@ -102,7 +103,7 @@ export class TaskRecoveryCoordinator{
     const attempted=new Set<string>()
     if(worker.model)attempted.add(worker.model)
     for(const transition of worker.fallback_history??[]){if(transition.from)attempted.add(transition.from);attempted.add(transition.to)}
-    const automatic=worker.requested_model===undefined&&(worker.model_selection_reason??[]).includes('ephemeral automatic selection')?(worker.recovery_candidates??[]):[]
+    const automatic=automaticRecoveryCandidates(worker)
     return [...new Set([...(worker.fallbacks??[]),...automatic].filter(Boolean))].filter(model=>!attempted.has(model))
   }
   private async launchProviderRecoveryCandidate(m:MissionState,worker:MissionState['execution']['workers'][number],task:MissionState['execution']['tasks'][number],model:string,failedSession:string|undefined,failureKind:string,reason:string):Promise<'RECOVERED'|'QUARANTINED'|'FAILED'>{
@@ -128,10 +129,22 @@ export class TaskRecoveryCoordinator{
   }
   async resumeBlockedProviderFailure(m:MissionState,workerID:string):Promise<boolean>{
     const worker=m.execution.workers.find(w=>w.id===workerID),task=worker?m.execution.tasks.find(t=>t.id===worker.task_id):undefined
-    if(!worker||!task||m.identity.status!=='active'||m.continuation.user_interrupted||worker.status!=='ready'||worker.session_id||worker.last_runtime_failure_kind!=='provider-transport'||task.result?.status!=='BLOCKED'||!task.result.open_issues.some(issue=>issue.startsWith('provider-failure:provider-transport:')))return false
-    const candidates=this.providerRecoveryCandidates(worker),previousTaskStatus=task.status;task.status='waiting'
-    for(const model of candidates){const automatic=!(worker.fallbacks??[]).includes(model),reason=automatic?'bounded automatic recovery candidate after host-terminal provider failure':task.execution_profile?.fallback_reasons?.find(x=>x.model===model)?.reason??'explicit runtime fallback after provider-transport';const result=await this.launchProviderRecoveryCandidate(m,worker,task,model,undefined,'provider-transport',reason);if(result==='RECOVERED'){appendLedger(m,'worker.runtime-fallback.resumed-blocked',{task_id:task.id,worker_id:worker.id,payload:{model,reason}});return true}if(result==='QUARANTINED')return false}
-    task.status=previousTaskStatus;return false
+    if(!worker||!task||m.identity.status!=='active'||m.continuation.user_interrupted||worker.session_id||task.result?.status!=='BLOCKED')return false
+    const providerBlocked=worker.status==='ready'&&worker.last_runtime_failure_kind==='provider-transport'&&task.result.open_issues.some(issue=>issue.startsWith('provider-failure:provider-transport:'))
+    const preDispatchBlocked=worker.status==='failed'&&worker.attempt===0&&task.result.open_issues.some(issue=>issue===`model-dispatch-unavailable:${task.id}`)&&automaticRecoveryCandidates(worker).length>0
+    if(!providerBlocked&&!preDispatchBlocked)return false
+    const candidates=this.providerRecoveryCandidates(worker),previousTaskStatus=task.status,previousWorkerStatus=worker.status;worker.status='ready';task.status='waiting'
+    for(const model of candidates){
+      const automatic=!(worker.fallbacks??[]).includes(model),reason=preDispatchBlocked?'bounded automatic recovery candidate after pre-dispatch runtime model unavailability':automatic?'bounded automatic recovery candidate after host-terminal provider failure':task.execution_profile?.fallback_reasons?.find(x=>x.model===model)?.reason??'explicit runtime fallback after provider-transport',failureKind=preDispatchBlocked?'model-dispatch-unavailable':'provider-transport'
+      const result=await this.launchProviderRecoveryCandidate(m,worker,task,model,undefined,failureKind,reason)
+      if(result==='RECOVERED'){
+        if(preDispatchBlocked){clearCapabilityUnavailable(m,'model-dispatch');m.execution.blockers=m.execution.blockers.filter(blocker=>blocker!=='capability-unavailable:model-dispatch');appendLedger(m,'worker.pre-dispatch-model-recovered',{task_id:task.id,worker_id:worker.id,payload:{model,reason}})}
+        else appendLedger(m,'worker.runtime-fallback.resumed-blocked',{task_id:task.id,worker_id:worker.id,payload:{model,reason}})
+        return true
+      }
+      if(result==='QUARANTINED')return false
+    }
+    worker.status=previousWorkerStatus;task.status=previousTaskStatus;return false
   }
   async recoverHostTerminalFailure(m:MissionState,workerID:string,error:unknown):Promise<HostTerminalRecoveryDisposition>{
     const worker=m.execution.workers.find(w=>w.id===workerID);if(!worker)return'NOT_RECOVERED'

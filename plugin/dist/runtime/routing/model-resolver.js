@@ -1,6 +1,7 @@
 import { MODEL_ROUTED_CHILD_ROLES } from '../../config/schema.js';
 import { providerPolicyView } from '../host/provider-policy.js';
 import { isHiReadOnlyChildRole } from '../roles/catalog.js';
+export function automaticRecoveryCandidates(state) { return state.requested_model === undefined && (state.model_selection_reason ?? []).includes('ephemeral automatic selection') ? [...new Set(state.recovery_candidates ?? [])] : []; }
 const AUTOMATIC_CAPABILITY_PREFERENCE = { quick: ['fast', 'coding'], standard: ['coding', 'balanced'], deep: ['reasoning', 'coding'], visual: ['coding', 'reasoning'], critical: ['high-assurance', 'reasoning', 'coding'] };
 const VARIANT_PREFERENCE = { quick: ['low', 'minimal', 'none'], standard: ['medium', 'low', 'none'], deep: ['high', 'xhigh', 'medium'], visual: ['high', 'medium', 'xhigh'], critical: ['xhigh', 'max', 'high'] };
 const INITIAL_RECOMMENDATION_CATEGORY = { coder: 'standard', architect: 'deep', 'repository-explorer': 'standard', researcher: 'standard', 'technical-writer': 'standard', 'test-engineer': 'standard', 'qa-reviewer': 'critical', 'security-reviewer': 'critical', 'visual-qa': 'visual' };

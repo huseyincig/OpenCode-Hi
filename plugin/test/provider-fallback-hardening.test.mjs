@@ -317,3 +317,17 @@ test('canonical STALLED assessment on quiescent exact session unlocks bounded sa
   const recovery=await runtime.recoverStalledExecution(m,assessment)
   assert.equal(recovery.disposition,'RECOVERED');assert.equal(recovery.reason,'canonical-stall-quiescent-resume');assert.equal(worker.session_id,'child1');assert.equal(worker.status,'busy');assert.equal(task.status,'running');assert.equal(aborts.length,0);assert.equal(calls.length,1)
 })
+
+
+test('attempt-zero automatic model-dispatch blocker resumes the same task on a still-live recovery-only candidate',async()=>{
+  const models=[{id:'p/recovery',provider:'p',writeCapable:true,tags:['coding','balanced']}]
+  const {runtime,m,calls}=setup(async()=>{},true,models)
+  const worker=m.execution.workers[0],task=m.execution.tasks[0]
+  worker.session_id=undefined;worker.status='failed';worker.attempt=0;worker.fallbacks=[];worker.recovery_candidates=['p/recovery'];worker.model_selection_reason=['standard capability recommendation','ephemeral automatic selection'];worker.requested_model=undefined
+  task.execution_profile.fallback_models=[];task.execution_profile.fallback_variants={'p/recovery':'high'};task.status='blocked';task.result={status:'BLOCKED',summary:'No selected role model/fallback remains runtime-available and policy-permitted at dispatch time.',changed_files:[],evidence:[],open_issues:['model-dispatch-unavailable:t1'],needs_context:['refresh provider/model inventory or routing/provider permissions']};m.execution.blockers=['capability-unavailable:model-dispatch','unrelated-blocker']
+  const out=await runtime.resume(m,task.id)
+  assert.equal(out.task_id,task.id);assert.equal(out.worker_id,worker.id);assert.equal(out.model,'p/recovery');assert.equal(out.session_id,'recovery-1');assert.equal(task.status,'running');assert.equal(worker.status,'busy');assert.equal(worker.attempt,1);assert.equal(calls.length,1)
+  assert.deepEqual(m.execution.blockers,['unrelated-blocker'])
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.pre-dispatch-model-recovered'&&e.task_id===task.id&&e.payload?.model==='p/recovery'))
+  assert.match(worker.fallback_history.at(-1).reason,/pre-dispatch runtime model unavailability/)
+})

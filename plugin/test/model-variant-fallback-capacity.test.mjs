@@ -96,3 +96,25 @@ test('role-specific children respect model capacity and second worker remains qu
   assert.equal(wb.model,'p/shared')
   assert.equal(m.execution.scheduler.reservations.length,1)
 })
+
+
+test('automatic pre-dispatch revalidation advances to an authorized recovery-only candidate when the ephemeral primary disappears',async()=>{
+  const created=[],prompts=[],client=baseClient(created,prompts)
+  const primary={id:'p/primary',provider:'p',writeCapable:true,tags:['coding','balanced'],variants:['medium']},recovery={id:'p/recovery',provider:'p',writeCapable:true,tags:['coding','balanced'],variants:['medium']}
+  let reads=0
+  const runtime=new TaskRuntime(opencodeChildPort(client),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:3,providers:{p:3},models:{}})),process.cwd(),process.cwd(),()=>resolveHiConfig({routing:{maxFallbacks:2}}),()=>reads++===0?[primary,recovery]:[recovery],()=>({}))
+  const store=new MissionStore(process.cwd()),m=startAssessedMission(store,'s','opaque implementation')
+  const out=await runtime.start(m,{objective:'implement fix',role:'coder',category:'standard'})
+  const worker=m.execution.workers.find(x=>x.id===out.worker_id),task=m.execution.tasks.find(x=>x.id===out.task_id)
+  assert.equal(worker.requested_model,undefined)
+  assert.ok(worker.model_selection_reason.includes('ephemeral automatic selection'))
+  assert.deepEqual(worker.fallbacks,[])
+  assert.deepEqual(worker.recovery_candidates,['p/recovery'])
+  assert.equal(worker.model,'p/recovery')
+  assert.equal(worker.attempt,1)
+  assert.equal(task.status,'running')
+  assert.equal(created.length,1)
+  assert.equal(created[0].req.body.model.id,'recovery')
+  assert.match(worker.fallback_history.at(-1).reason,/automatic recovery candidate after pre-dispatch runtime revalidation/)
+  assert.ok(m.execution.ledger.some(e=>e.type==='model.fallback.skipped'&&e.payload?.model==='p/primary'&&e.payload?.reason==='runtime-model-unavailable'))
+})
