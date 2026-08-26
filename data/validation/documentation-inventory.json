@@ -5,7 +5,7 @@
   "status": "PASS",
   "policy": {
     "path": "data/documentation-ownership.json",
-    "sha256": "7e7a70c101581e586c91224808240fa16ac72f6737906624d1470548d84f698f"
+    "sha256": "0c8534877f6a6eb41e4afabefb3d1dbf0f596156c7a8db9748d2d10651a565e8"
   },
   "summary": {
     "public_documents": 16,
@@ -117,7 +117,7 @@
     },
     {
       "area": "current-release-status",
-      "path": "data/validation/release-status-0.2.2.json"
+      "path": "data/validation/release-status-0.2.4.json"
     }
   ],
   "artifacts": [
@@ -258,8 +258,8 @@
       "lifecycle": "MACHINE_OWNER"
     },
     {
-      "path": "data/validation/release-status-0.2.2.json",
-      "sha256": "f898b904b1f6e71b6ffbaac2cd05864694b2ebc81f8d60a98b6917db5dced1c5",
+      "path": "data/validation/release-status-0.2.4.json",
+      "sha256": "ddc698dfc6d874801bc2d6265f376c1f273f8e78252f51bf4303b93b877ccc5f",
       "area": "current-release-status",
       "lifecycle": "MACHINE_OWNER"
     }

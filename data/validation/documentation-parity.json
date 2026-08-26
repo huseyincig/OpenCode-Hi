@@ -6,7 +6,7 @@
   "inputs": {
     "documentation_ownership": {
       "path": "data/documentation-ownership.json",
-      "sha256": "7e7a70c101581e586c91224808240fa16ac72f6737906624d1470548d84f698f"
+      "sha256": "0c8534877f6a6eb41e4afabefb3d1dbf0f596156c7a8db9748d2d10651a565e8"
     },
     "compatibility": {
       "path": "data/validation/compatibility-matrix-0.1.0.json",
