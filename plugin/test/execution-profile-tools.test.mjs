@@ -140,10 +140,38 @@ test('child process admission is exact-task/same-worker and blocks native backgr
   await hook({sessionID:worker.session_id,tool:'hi_process_read'},{args:{id:'proc_hook'}})
   await assert.rejects(()=>hook({sessionID:worker.session_id,tool:'hi_process_spawn'},{args:{worker_id:'other',command:'node'}}),/another worker/i)
   await assert.rejects(()=>hook({sessionID:worker.session_id,tool:'hi_process_read'},{args:{id:'foreign'}}),/outside its own task/i)
-  await assert.rejects(()=>hook({sessionID:worker.session_id,tool:'bash'},{args:{command:'node server.js &'}}),/background shell jobs are outside ProcessContract ownership/i)
+  await assert.rejects(()=>hook({sessionID:worker.session_id,tool:'bash'},{args:{command:'node server.js &'}}),/active child workers cannot create native background shell jobs/i)
   await hook({sessionID:worker.session_id,tool:'bash'},{args:{command:'echo "a & b" && echo done'}})
 })
 
+
+
+test('active parent cannot escape ProcessContract ownership through native background shell regardless of semantic capability',async()=>{
+  const store=new MissionStore(process.cwd()),m=store.start('parent-background-guard','run app and verify it')
+  assess(store,'parent-background-guard',{required_capabilities:['implementation'],likely_targets:['app.py']})
+  const hook=createToolBeforeHook(store,undefined,()=>resolveHiConfig({}),process.cwd())
+  await assert.rejects(()=>hook({sessionID:m.identity.session_id,tool:'bash'},{args:{command:'python3 app.py &'}}),/Create or resume the exact Task with process_lifecycle=true/i)
+  await assert.rejects(()=>hook({sessionID:m.identity.session_id,tool:'bash'},{args:{command:'nohup python3 app.py > flask.log 2>&1 &'}}),/native background shell jobs/i)
+  await hook({sessionID:m.identity.session_id,tool:'bash'},{args:{command:'echo "a & b" && echo done'}})
+  assert.equal(m.execution.ledger.filter(e=>e.type==='process.native-background-blocked').length,2)
+  assert.deepEqual(m.execution.ledger.filter(e=>e.type==='process.native-background-blocked').map(e=>e.payload.owner),['parent','parent'])
+})
+
+test('active child without process_lifecycle cannot create an unowned native background job',async()=>{
+  const store=new MissionStore(process.cwd()),m=store.start('child-background-guard','inspect and run')
+  assess(store,'child-background-guard',{required_capabilities:['implementation']})
+  const task={id:'t_child_bg',mission_id:m.identity.mission_id,objective:'inspect',status:'running',role:'coder',category:'standard',scope:['app.py'],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],execution_profile:{role:'coder',category:'standard',task:{objective:'inspect',scope:['app.py'],dependencies:[],required_evidence:[]},tools:['bash'],fallback_models:[],methodologies:[],permission_profile:{skill_tool_enabled:false,skill_permissions:{},external_effects:'parent-only',recursive_task:'deny'},verification_policy:{requiredKinds:[],requireFresh:true,requireReview:false,allowWorkerReportedEvidence:false},max_context_chars:1000,max_handoff_chars:1000,max_result_chars:1000,max_artifacts:2},gate_ids:[],external_action_requirements:[],created_at:Date.now(),updated_at:Date.now(),worker_id:'w_child_bg'}
+  const worker={id:'w_child_bg',task_id:task.id,role:'coder',category:'standard',session_id:'child-bg',parent_session_id:m.identity.session_id,parent_mission_id:m.identity.mission_id,model:'host-default',fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'fp-child-bg',status:'busy',generation_at_spawn:m.continuation.generation}
+  m.execution.tasks.push(task);m.execution.workers.push(worker);const bg=new BackgroundRegistry();bg.set(worker)
+  const hook=createToolBeforeHook(store,bg,()=>resolveHiConfig({}),process.cwd())
+  await assert.rejects(()=>hook({sessionID:worker.session_id,tool:'bash'},{args:{command:'node server.js &'}}),/active child workers cannot create native background shell jobs/i)
+  assert.equal(m.execution.ledger.at(-1).type,'process.native-background-blocked');assert.equal(m.execution.ledger.at(-1).worker_id,worker.id)
+})
+
+test('background shell ownership guard is scoped to active Hi missions only',async()=>{
+  const store=new MissionStore(process.cwd()),hook=createToolBeforeHook(store,undefined,()=>resolveHiConfig({}),process.cwd())
+  await hook({sessionID:'not-a-hi-mission',tool:'bash'},{args:{command:'echo ok &'}})
+})
 test('prompt tool overrides only disable tools; they never turn a denied native permission into allow',()=>{
   const overrides=promptToolOverrides(['read','grep'])
   assert.equal(overrides.read,undefined);assert.equal(overrides.grep,undefined)

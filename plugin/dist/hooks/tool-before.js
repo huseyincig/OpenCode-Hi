@@ -158,10 +158,9 @@ export function createToolBeforeHook(store, background, projectRoot, workingDire
             else if (name)
                 assertParentMethodologyLoad(m, name, projectRoot);
         }
-        if (tool === 'bash' && typeof args?.command === 'string' && hasTopLevelBackgroundOperator(args.command)) {
-            const processTask = child ? m.execution.tasks.find(t => t.id === child.task_id) : undefined;
-            if (processTask?.execution_profile?.process_lifecycle === true || !child && m.identity.intent.requiredCapabilities.includes('interactive-process'))
-                throw new Error('Hi process ownership: background shell jobs are outside ProcessContract ownership; use the admitted hi_process_spawn lifecycle instead.');
+        if (m.identity.status === 'active' && tool === 'bash' && typeof args?.command === 'string' && hasTopLevelBackgroundOperator(args.command)) {
+            appendLedger(m, 'process.native-background-blocked', { task_id: child?.task_id, worker_id: child?.id, payload: { owner: child ? 'child' : 'parent', reason: 'process-contract-requires-task-worker-owner', command: String(args.command).slice(0, 180), required_tool: child ? 'hi_process_spawn' : 'hi_task_start' } });
+            throw new Error(child ? 'Hi process ownership: active child workers cannot create native background shell jobs. Return the long-running-process requirement to the parent unless this exact task owns process_lifecycle=true; process-owning workers must use hi_process_spawn.' : 'Hi process ownership: active parent sessions cannot create native background shell jobs. Create or resume the exact Task with process_lifecycle=true, then let that Task worker use hi_process_spawn.');
         }
         if (tool === 'bash' && typeof args?.command === 'string') {
             const shell = evaluateShellCommand(args.command);
