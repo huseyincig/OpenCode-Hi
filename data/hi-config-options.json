@@ -334,7 +334,7 @@
       "executor_effect": "narrows eligible providers and disables unconstrained host-default fallback when nonempty",
       "behavioral_acceptance_refs": [
         "routing-config-discovery.test.mjs",
-        "main-prompt-hardening.test.mjs"
+        "hardening.test.mjs"
       ]
     },
     {
@@ -359,7 +359,7 @@
       "executor_effect": "denies exact models and composes project/raw denies monotonically",
       "behavioral_acceptance_refs": [
         "routing-config-discovery.test.mjs",
-        "main-prompt-hardening.test.mjs"
+        "hardening.test.mjs"
       ]
     },
     {

@@ -193,7 +193,7 @@ export declare const HI_CONFIG_OPTIONS: readonly [{
     readonly precedenceOrder: readonly ["default", "host-hi-config", "project-routing-policy:narrowing-compose"];
     readonly validator: "bounded-model-list";
     readonly safetySemantics: "constraint";
-    readonly behavioralAcceptanceRefs: readonly ["routing-config-discovery.test.mjs", "main-prompt-hardening.test.mjs"];
+    readonly behavioralAcceptanceRefs: readonly ["routing-config-discovery.test.mjs", "hardening.test.mjs"];
     readonly runtimeConsumer: "runtime/routing/model-resolver.policyFilter/runtimeModelCandidateStatus";
     readonly executorEffect: "narrows eligible providers and disables unconstrained host-default fallback when nonempty";
 }, {
@@ -207,7 +207,7 @@ export declare const HI_CONFIG_OPTIONS: readonly [{
     readonly precedenceOrder: readonly ["default", "host-hi-config", "project-routing-policy:narrowing-compose"];
     readonly validator: "bounded-model-list";
     readonly safetySemantics: "constraint";
-    readonly behavioralAcceptanceRefs: readonly ["routing-config-discovery.test.mjs", "main-prompt-hardening.test.mjs"];
+    readonly behavioralAcceptanceRefs: readonly ["routing-config-discovery.test.mjs", "hardening.test.mjs"];
     readonly runtimeConsumer: "runtime/routing/model-resolver.policyFilter/runtimeModelCandidateStatus";
     readonly executorEffect: "denies exact models and composes project/raw denies monotonically";
 }, {

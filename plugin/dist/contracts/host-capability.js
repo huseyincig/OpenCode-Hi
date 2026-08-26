@@ -19,8 +19,8 @@ function observedOwned(id, available, native_primitive, adapter_entrypoint, acce
     };
 }
 export function openCodeHostCapabilityContracts(o, owned = {}) {
-    const prompt = o.asyncPrompt ? supported('session-prompt', 'session.promptAsync', 'NativeOpenCodeAdapter.prompt', 'main-prompt-hardening.test.mjs') :
-        o.syncPrompt ? degraded('session-prompt', 'session.prompt synchronous fallback', ['native async prompt primitive is unavailable'], 'main-prompt-hardening.test.mjs', 'session.prompt', 'NativeOpenCodeAdapter.prompt') :
+    const prompt = o.asyncPrompt ? supported('session-prompt', 'session.promptAsync', 'NativeOpenCodeAdapter.prompt', 'hardening.test.mjs') :
+        o.syncPrompt ? degraded('session-prompt', 'session.prompt synchronous fallback', ['native async prompt primitive is unavailable'], 'hardening.test.mjs', 'session.prompt', 'NativeOpenCodeAdapter.prompt') :
             unsupported('session-prompt', 'main-prompt-delegation-preconditions.test.mjs', 'Do not dispatch a worker when neither native async nor synchronous session prompt execution exists.');
     const worker = o.childSessions && (o.asyncPrompt || o.syncPrompt) && o.abort ? supported('worker-runtime', 'session.create + session.prompt + session.abort', 'TaskRuntime', 'stage2-role-contract.test.mjs') :
         unsupported('worker-runtime', 'main-prompt-delegation-preconditions.test.mjs', 'Do not advertise or expose Hi worker execution without create, prompt, and abort ownership primitives.');
