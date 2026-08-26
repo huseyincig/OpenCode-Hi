@@ -70,7 +70,7 @@
       "runtime_consumer": "plugin agent binding + runtime/routing/minimum-team",
       "executor_effect": "selects/forces primary agent and direct-vs-delegated minimum-team behavior",
       "behavioral_acceptance_refs": [
-        "main-prompt-final-reconfigure.test.mjs"
+        "primary-mode-routing.test.mjs"
       ]
     },
     {
@@ -260,7 +260,7 @@
       "runtime_consumer": "runtime/routing/model-resolver.chooseVariant",
       "executor_effect": "changes selected native variant for a specific child-role/model pair; primary manager roles are excluded",
       "behavioral_acceptance_refs": [
-        "main-prompt-model-setup-persistence.test.mjs"
+        "role-model-persistence.test.mjs"
       ]
     },
     {
@@ -284,7 +284,7 @@
       "runtime_consumer": "runtime/routing/model-resolver.resolveModel",
       "executor_effect": "bounds fallback candidate count",
       "behavioral_acceptance_refs": [
-        "main-prompt-variant-fallback-concurrency.test.mjs"
+        "model-variant-fallback-capacity.test.mjs"
       ]
     },
     {
@@ -456,7 +456,7 @@
       "runtime_consumer": "runtime/scheduler/SchedulingPlanner capacity policy",
       "executor_effect": "caps concurrent workers per model",
       "behavioral_acceptance_refs": [
-        "main-prompt-variant-fallback-concurrency.test.mjs",
+        "model-variant-fallback-capacity.test.mjs",
         "config-executable-effect.test.mjs"
       ]
     },

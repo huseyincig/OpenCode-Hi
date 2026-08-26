@@ -21,11 +21,11 @@ function observedOwned(id, available, native_primitive, adapter_entrypoint, acce
 export function openCodeHostCapabilityContracts(o, owned = {}) {
     const prompt = o.asyncPrompt ? supported('session-prompt', 'session.promptAsync', 'NativeOpenCodeAdapter.prompt', 'hardening.test.mjs') :
         o.syncPrompt ? degraded('session-prompt', 'session.prompt synchronous fallback', ['native async prompt primitive is unavailable'], 'hardening.test.mjs', 'session.prompt', 'NativeOpenCodeAdapter.prompt') :
-            unsupported('session-prompt', 'main-prompt-delegation-preconditions.test.mjs', 'Do not dispatch a worker when neither native async nor synchronous session prompt execution exists.');
+            unsupported('session-prompt', 'delegation-preconditions.test.mjs', 'Do not dispatch a worker when neither native async nor synchronous session prompt execution exists.');
     const worker = o.childSessions && (o.asyncPrompt || o.syncPrompt) && o.abort ? supported('worker-runtime', 'session.create + session.prompt + session.abort', 'TaskRuntime', 'stage2-role-contract.test.mjs') :
-        unsupported('worker-runtime', 'main-prompt-delegation-preconditions.test.mjs', 'Do not advertise or expose Hi worker execution without create, prompt, and abort ownership primitives.');
+        unsupported('worker-runtime', 'delegation-preconditions.test.mjs', 'Do not advertise or expose Hi worker execution without create, prompt, and abort ownership primitives.');
     return [
-        o.childSessions ? supported('child-session-create', 'session.create', 'NativeOpenCodeAdapter/client-adapter', 'stage2-role-contract.test.mjs') : unsupported('child-session-create', 'main-prompt-delegation-preconditions.test.mjs', 'Do not synthesize a child worker when OpenCode cannot create a child session.'),
+        o.childSessions ? supported('child-session-create', 'session.create', 'NativeOpenCodeAdapter/client-adapter', 'stage2-role-contract.test.mjs') : unsupported('child-session-create', 'delegation-preconditions.test.mjs', 'Do not synthesize a child worker when OpenCode cannot create a child session.'),
         prompt,
         o.abort ? supported('session-abort', 'session.abort', 'client-adapter.abortSession', 'provider-fallback-hardening.test.mjs') : unsupported('session-abort', 'provider-fallback-hardening.test.mjs', 'Do not open a replacement child while the previous execution owner cannot be terminated or reconciled.'),
         o.providerInventory ? supported('provider-inventory', 'provider.list/config.providers', 'plugin.providerModels', 'provider-connected-inventory.test.mjs') : degraded('provider-inventory', 'host-default compatibility delegation', ['adaptive inventory-aware model routing is unavailable'], 'external-provider-inventory-nonblocking.test.mjs'),

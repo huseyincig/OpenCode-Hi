@@ -120,7 +120,7 @@
       "area": "configuration",
       "canonical_owner": "Hi config catalog/resolver",
       "owner_path": "data/hi-config-options.json",
-      "owner_sha256": "d5e584da61489d0f3a33cf765be63fb75c5274d62950a46cb57f20ed2e3b73b1",
+      "owner_sha256": "38b17844c9979784132c4e9b25a13c9f916118d2d7bfd67b4df917dd0936b6d7",
       "producer_or_contract_paths": [
         "plugin/src/config/schema.ts",
         "plugin/src/config/resolver.ts"

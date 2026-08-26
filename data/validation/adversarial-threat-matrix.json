@@ -48,7 +48,7 @@
           "contains": "PermissionProfile safety is fail-closed for widening, duplicate rules, methodology ownership and read-only edit"
         },
         {
-          "file": "plugin/test/main-prompt-execution-profile-tools.test.mjs",
+          "file": "plugin/test/execution-profile-tools.test.mjs",
           "contains": "prompt tool overrides only disable tools; they never turn a denied native permission into allow"
         }
       ],

@@ -37,7 +37,7 @@ export declare const HI_CONFIG_OPTIONS: readonly [{
     readonly precedenceOrder: readonly ["default", "host-hi-config", "project-routing-policy"];
     readonly validator: "primary-mode-enum";
     readonly safetySemantics: "preference";
-    readonly behavioralAcceptanceRefs: readonly ["main-prompt-final-reconfigure.test.mjs"];
+    readonly behavioralAcceptanceRefs: readonly ["primary-mode-routing.test.mjs"];
     readonly runtimeConsumer: "plugin agent binding + runtime/routing/minimum-team";
     readonly executorEffect: "selects/forces primary agent and direct-vs-delegated minimum-team behavior";
 }, {
@@ -151,7 +151,7 @@ export declare const HI_CONFIG_OPTIONS: readonly [{
     readonly precedenceOrder: readonly ["default", "host-hi-config", "project-routing-policy"];
     readonly validator: "role-variant-map";
     readonly safetySemantics: "preference";
-    readonly behavioralAcceptanceRefs: readonly ["main-prompt-model-setup-persistence.test.mjs"];
+    readonly behavioralAcceptanceRefs: readonly ["role-model-persistence.test.mjs"];
     readonly runtimeConsumer: "runtime/routing/model-resolver.chooseVariant";
     readonly executorEffect: "changes selected native variant for a specific child-role/model pair; primary manager roles are excluded";
 }, {
@@ -165,7 +165,7 @@ export declare const HI_CONFIG_OPTIONS: readonly [{
     readonly precedenceOrder: readonly ["default", "host-hi-config", "project-routing-policy"];
     readonly validator: "bounded-integer:0..6";
     readonly safetySemantics: "capacity";
-    readonly behavioralAcceptanceRefs: readonly ["main-prompt-variant-fallback-concurrency.test.mjs"];
+    readonly behavioralAcceptanceRefs: readonly ["model-variant-fallback-capacity.test.mjs"];
     readonly runtimeConsumer: "runtime/routing/model-resolver.resolveModel";
     readonly executorEffect: "bounds fallback candidate count";
 }, {
@@ -263,7 +263,7 @@ export declare const HI_CONFIG_OPTIONS: readonly [{
     readonly precedenceOrder: readonly ["default", "host-hi-config", "project-routing-policy"];
     readonly validator: "positive-integer-limit-map";
     readonly safetySemantics: "capacity";
-    readonly behavioralAcceptanceRefs: readonly ["main-prompt-variant-fallback-concurrency.test.mjs", "config-executable-effect.test.mjs"];
+    readonly behavioralAcceptanceRefs: readonly ["model-variant-fallback-capacity.test.mjs", "config-executable-effect.test.mjs"];
     readonly runtimeConsumer: "runtime/scheduler/SchedulingPlanner capacity policy";
     readonly executorEffect: "caps concurrent workers per model";
 }, {
