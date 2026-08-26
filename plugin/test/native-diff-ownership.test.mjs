@@ -166,7 +166,7 @@ test('initial child handoff warns that pre-existing dirty paths are user-owned a
   assert.match(prompt,/never use git checkout\/reset\/restore/i)
 })
 
-test('PROMPT B final native diff deterministically binds worker evidence source-state identity',async()=>{
+test('final native diff deterministically binds worker evidence source-state identity',async()=>{
   const client={session:{diff:async()=>({data:[{file:'src/b.ts',additions:1,deletions:0,status:'modified',patch:'b'},{file:'src/a.ts',additions:2,deletions:1,status:'modified',patch:'a'}]})}}
   const {ChildExecutionCoordinator}=await import('../dist/runtime/task/child-execution-coordinator.js')
   const worker={session_id:'s-native-state'}

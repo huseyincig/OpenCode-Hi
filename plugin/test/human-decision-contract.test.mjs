@@ -79,7 +79,7 @@ test('temporary rollback USER_ACTION_REQUIRED is operational, not authority',()=
 })
 
 
-test('PROMPT B authority HumanDecision requires exact authority semantics and non-authority decisions cannot impersonate Authority',()=>{
+test('authority HumanDecision requires exact authority semantics and non-authority decisions cannot impersonate Authority',()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'human-coherence','small task')
   assert.throws(()=>openHumanDecision(m,{semantic_type:'authority_request',reason_code:'authority-generic',summary:'bad',response_schema:{kind:'authority-protocol',protocol:'approve-exact-action'}}),/semantically incoherent/)
   assert.throws(()=>openHumanDecision(m,{semantic_type:'authority_request',reason_code:'authority-generic',summary:'bad',response_schema:{kind:'external-action'},authority_ref:'abc'}),/semantically incoherent/)
@@ -88,7 +88,7 @@ test('PROMPT B authority HumanDecision requires exact authority semantics and no
   assert.equal(classifyRuntimeHumanDecision('authority-looking-runtime-label').semantic_type,'operational_action')
 })
 
-test('PROMPT B HumanDecision identity and provenance bind exact blocked task/worker scope',()=>{
+test('HumanDecision identity and provenance bind exact blocked task/worker scope',()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'human-scope','small task')
   const a=openHumanDecision(m,{semantic_type:'ambiguity',reason_code:'choose-contract',summary:'choose',task_id:'t_a',worker_id:'w_a',response_schema:{kind:'choice',choices:['one','two']}})
   assert.deepEqual(a.blocking_scope,{mission_id:m.identity.mission_id,task_id:'t_a',worker_id:'w_a'})
@@ -96,7 +96,7 @@ test('PROMPT B HumanDecision identity and provenance bind exact blocked task/wor
   assert.notEqual(b.decision_id,a.decision_id);assert.deepEqual(b.blocking_scope,{mission_id:m.identity.mission_id,task_id:'t_b',worker_id:'w_b'})
 })
 
-test('PROMPT B operational HumanDecision response never creates or approves Authority state',()=>{
+test('operational HumanDecision response never creates or approves Authority state',()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'human-no-authority','small task')
   openHumanDecision(m,{semantic_type:'operational_action',reason_code:'repair-env',summary:'repair',response_schema:{kind:'external-action'}})
   assert.equal(m.authority.authority,undefined)

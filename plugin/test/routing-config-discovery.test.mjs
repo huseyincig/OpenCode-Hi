@@ -169,7 +169,7 @@ test('project routing constraints narrow but never weaken raw/native Hi constrai
 })
 
 
-test('PROMPT B §23 project precedence is leaf-scoped and absent project siblings preserve host constraints', () => {
+test('§23 project precedence is leaf-scoped and absent project siblings preserve host constraints', () => {
   const project = makeProject()
   try {
     writeRouting(project, {
@@ -201,7 +201,7 @@ test('PROMPT B §23 project precedence is leaf-scoped and absent project sibling
   } finally { rmSync(project,{recursive:true,force:true}) }
 })
 
-test('PROMPT B §23 invalid or unknown project leaves cannot replace valid host config', () => {
+test('§23 invalid or unknown project leaves cannot replace valid host config', () => {
   const project = makeProject()
   try {
     writeRouting(project, {
@@ -229,7 +229,7 @@ test('PROMPT B §23 invalid or unknown project leaves cannot replace valid host 
   } finally { rmSync(project,{recursive:true,force:true}) }
 })
 
-test('PROMPT B §23 safety constraints compose monotonically across host and project layers', () => {
+test('§23 safety constraints compose monotonically across host and project layers', () => {
   const project=makeProject()
   try {
     writeRouting(project,{schema:1,type:'hi-routing',routing:{allowedProviders:['q','r'],deniedModels:['q/bad']},parallel:{providers:{q:2}}})

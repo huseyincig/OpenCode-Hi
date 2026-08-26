@@ -62,7 +62,7 @@ test('stopped mission drops only the ephemeral child callback index when native 
   assert.equal(m.identity.status,'stopped')
 })
 
-test('PROMPT B parent idle preserves an existing canonical operational HumanDecision instead of reclassifying it as Authority',async()=>{
+test('parent idle preserves an existing canonical operational HumanDecision instead of reclassifying it as Authority',async()=>{
   const store=new MissionStore(),m=assessed(store,'human-idle-preserve')
   m.execution.obligations=[];m.execution.evidence.fresh=true
   const original=openHumanDecision(m,{semantic_type:'operational_action',reason_code:'provider-repair',summary:'repair provider',response_schema:{kind:'external-action'}}),saves=[]

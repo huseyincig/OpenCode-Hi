@@ -24,7 +24,7 @@ function mission(store,id='persist-a'){
   return m
 }
 
-test('PROMPT B persistence round-trip preserves every durable control plane and unclean restore invalidates only ephemeral/freshness state',()=>{
+test('persistence round-trip preserves every durable control plane and unclean restore invalidates only ephemeral/freshness state',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-pb-persist-all-'))
   try{
     const store=new MissionStore(root),m=mission(store),p=new RuntimePersistence(root);p.save(store.all(),false)
@@ -38,7 +38,7 @@ test('PROMPT B persistence round-trip preserves every durable control plane and 
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('PROMPT B persistence rejects corrupt partial old and unknown schema without silently loading data',()=>{
+test('persistence rejects corrupt partial old and unknown schema without silently loading data',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-pb-persist-corrupt-'))
   try{
     const p=new RuntimePersistence(root);mkdirSync(dirname(p.path),{recursive:true})
@@ -48,7 +48,7 @@ test('PROMPT B persistence rejects corrupt partial old and unknown schema withou
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('PROMPT B orphan partial tmp file never overrides last committed primary state',()=>{
+test('orphan partial tmp file never overrides last committed primary state',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-pb-persist-tmp-'))
   try{
     const store=new MissionStore(root);mission(store);const p=new RuntimePersistence(root);p.save(store.all(),true);const primary=readFileSync(p.path,'utf8')
@@ -57,7 +57,7 @@ test('PROMPT B orphan partial tmp file never overrides last committed primary st
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('PROMPT B duplicate persisted session or Mission identity fails closed instead of last-write-wins replay',()=>{
+test('duplicate persisted session or Mission identity fails closed instead of last-write-wins replay',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-pb-persist-dupe-'))
   try{
     const store=new MissionStore(root),a=mission(store,'dup-a'),p=new RuntimePersistence(root)
@@ -70,7 +70,7 @@ test('PROMPT B duplicate persisted session or Mission identity fails closed inst
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('PROMPT B persistence refuses invalid Mission before replacing the last valid committed state',()=>{
+test('persistence refuses invalid Mission before replacing the last valid committed state',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-pb-persist-invalid-save-'))
   try{
     const store=new MissionStore(root),m=mission(store),p=new RuntimePersistence(root);p.save([m],true);const before=readFileSync(p.path,'utf8')
@@ -80,7 +80,7 @@ test('PROMPT B persistence refuses invalid Mission before replacing the last val
 })
 
 
-test('PROMPT B load rejects duplicate persisted identities and malformed current-schema envelope metadata',()=>{
+test('load rejects duplicate persisted identities and malformed current-schema envelope metadata',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-pb-persist-load-dupe-'))
   try{
     const store=new MissionStore(root),a=mission(store,'load-a'),p=new RuntimePersistence(root);p.save([a],true);const base=JSON.parse(readFileSync(p.path,'utf8'))

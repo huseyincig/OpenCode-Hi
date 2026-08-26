@@ -191,7 +191,7 @@ test('W2 ChildExecutionCoordinator binds workspaceID and exact returned director
 
 
 
-test('PROMPT B WorkspaceRuntime rejects forged or cross-task isolation decisions before host provision',async()=>{
+test('WorkspaceRuntime rejects forged or cross-task isolation decisions before host provision',async()=>{
   const fake=new FakeWorkspaceExecutor('/work'),wr=new WorkspaceRuntime(fake,'/repo'),store=new MissionStore('/repo'),m=store.start('workspace-owner','isolate exact task');assess(store,'workspace-owner')
   const task={id:'t_owner',mission_id:m.identity.mission_id,objective:'x',status:'created',role:'coder',category:'quick',scope:['src/a.ts'],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],external_action_requirements:[],created_at:1,updated_at:1};m.execution.tasks.push(task)
   const canonical=wr.decision(m,task,{required:true,reason:'exact owner'})
@@ -273,7 +273,7 @@ test('W2 implementation still has no broad auto-snapshot staging after W3 capabi
 })
 
 
-test('PROMPT B concurrent lease identity collision is cleaned and rejected before duplicate ownership enters Mission state',async()=>{
+test('concurrent lease identity collision is cleaned and rejected before duplicate ownership enters Mission state',async()=>{
   const fake=new FakeWorkspaceExecutor('/shared/work'),wr=new WorkspaceRuntime(fake,'/repo'),store=new MissionStore('/repo'),m=store.start('workspace-concurrency','two isolated tasks');assess(store,'workspace-concurrency')
   const mk=(id,scope)=>({id,mission_id:m.identity.mission_id,objective:id,status:'created',role:'coder',category:'quick',scope:[scope],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],external_action_requirements:[],created_at:1,updated_at:1})
   const a=mk('t_a','a'),b=mk('t_b','b');m.execution.tasks.push(a,b)
@@ -283,7 +283,7 @@ test('PROMPT B concurrent lease identity collision is cleaned and rejected befor
   assert.equal(m.execution.workspace_leases.length,1);assert.equal(m.execution.workspace_leases[0].task_id,'t_a');assert.equal(fake.cleaned.length,1,'colliding native workspace must be cleaned')
 })
 
-test('PROMPT B workspace cleanup failure quarantines lease and records an explicit blocker',async()=>{
+test('workspace cleanup failure quarantines lease and records an explicit blocker',async()=>{
   const fake=new FakeWorkspaceExecutor('/work');fake.cleanup=async()=>{throw new Error('remove-denied')}
   const wr=new WorkspaceRuntime(fake,'/repo'),store=new MissionStore('/repo'),m=store.start('workspace-cleanup-fail','cleanup fail');assess(store,'workspace-cleanup-fail')
   const task={id:'t_cleanup',mission_id:m.identity.mission_id,objective:'x',status:'created',role:'coder',category:'quick',scope:['a'],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],external_action_requirements:[],created_at:1,updated_at:1};m.execution.tasks.push(task)
@@ -291,7 +291,7 @@ test('PROMPT B workspace cleanup failure quarantines lease and records an explic
   assert.equal(lease.status,'ORPHANED');assert.equal(lease.cleanup_state,'QUARANTINED');assert.ok(m.execution.blockers.includes(`workspace-orphan:${lease.lease_id}`))
 })
 
-test('PROMPT B real Git workspace provisioning preserves pre-staged and unstaged user changes exactly',async()=>{
+test('real Git workspace provisioning preserves pre-staged and unstaged user changes exactly',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-pb-staged-primary-')),work=join(dirname(root),`${basename(root)}-work`)
   const run=(args,cwd=root)=>{const r=spawnSync('git',args,{cwd,encoding:'utf8'});assert.equal(r.status,0,String(r.stderr??r.stdout));return String(r.stdout??'').trim()}
   try{
@@ -304,7 +304,7 @@ test('PROMPT B real Git workspace provisioning preserves pre-staged and unstaged
 })
 
 
-test('PROMPT B symlinked workspace escape is canonicalized and rejected when it leaves the Git common repository',async()=>{
+test('symlinked workspace escape is canonicalized and rejected when it leaves the Git common repository',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-pb-link-primary-')),evil=mkdtempSync(join(tmpdir(),'hi-pb-link-evil-')),link=join(root,'linked-workspace'),common=mkdtempSync(join(tmpdir(),'hi-pb-link-common-'))
   try{
     const {symlinkSync}=await import('node:fs');symlinkSync(evil,link,'dir');const workspace={create:async()=>({data:{id:'ws_link',type:'worktree',directory:link}}),list:async()=>({data:[]}),remove:async()=>({data:{}})}

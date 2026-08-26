@@ -79,7 +79,7 @@ test('H1 runtime composition owns one ephemeral chat transport and does not pers
 })
 
 
-test('PROMPT B first HumanDecision transport response wins and duplicate/conflicting replies are inert',async()=>{
+test('first HumanDecision transport response wins and duplicate/conflicting replies are inert',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'h1-conflict','small task'),transport=new ChatHumanDecisionTransport(100)
   const decision=openHumanDecision(m,{semantic_type:'preference',reason_code:'pick',summary:'pick',response_schema:{kind:'choice',choices:['safe','fast']}});transport.open(decision)
   const first=transport.respond(decision.decision_id,'safe');assert.equal(first?.value,'safe')
@@ -88,7 +88,7 @@ test('PROMPT B first HumanDecision transport response wins and duplicate/conflic
   assert.equal(m.authority.human_decision.status,'OPEN','transport response alone never resolves semantic decision')
 })
 
-test('PROMPT B restart reopens persisted semantic decision but never replays stale ephemeral transport response',async()=>{
+test('restart reopens persisted semantic decision but never replays stale ephemeral transport response',async()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-hd-restart-'))
   try{
     const store=new MissionStore(root),m=startAssessedMission(store,'h1-restart','small task'),oldTransport=new ChatHumanDecisionTransport(100)
@@ -113,7 +113,7 @@ test('H1 ephemeral transport retires old terminal entries instead of growing wit
   assert.equal(transport.handle(firstID),undefined,'old cancelled transport history must be retired from process-local memory')
 })
 
-test('PROMPT B stale answer to a replaced HumanDecision cannot resolve the replacement',async()=>{
+test('stale answer to a replaced HumanDecision cannot resolve the replacement',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'h1-stale-answer','small task'),transport=new ChatHumanDecisionTransport(100)
   const old=openHumanDecision(m,{semantic_type:'preference',reason_code:'old',summary:'old',response_schema:{kind:'choice',choices:['a','b']}});transport.open(old)
   const fresh=openHumanDecision(m,{semantic_type:'preference',reason_code:'fresh',summary:'fresh',response_schema:{kind:'choice',choices:['x','y']}});transport.open(fresh)

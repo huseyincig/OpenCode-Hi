@@ -25,14 +25,14 @@ function processMission(){
   return{store,m,worker}
 }
 
-test('PROMPT B ProcessRuntime blocks secret-sensitive external action before Authority state mutation',async()=>{
+test('ProcessRuntime blocks secret-sensitive external action before Authority state mutation',async()=>{
   const {m,worker}=processMission();let spawned=false
   const runtime=new ProcessRuntime({spawn:async()=>{spawned=true;throw new Error('must not spawn')},write:async()=>{},read:async()=>({text:'',start_cursor:0,end_cursor:0,available_start_cursor:0,available_end_cursor:0,truncated:false,status:'RUNNING'}),wait:async()=>{throw new Error('unused')},kill:async()=>{throw new Error('unused')},cleanup:async()=>{},reconcile:async()=>{throw new Error('unused')}},process.cwd(),()=>({agent:{coder:{permission:{bash:{'*':'allow'}}}}}))
   await assert.rejects(()=>runtime.spawn(m,{worker_id:worker.id,command:'vercel',args:['deploy','--token',TOKEN],cwd:process.cwd()}),e=>e instanceof ProcessSpawnPermissionError&&e.decision==='ASK')
   assert.equal(spawned,false);assert.equal(m.authority.authority,undefined);assert.doesNotMatch(JSON.stringify(m),new RegExp(TOKEN))
 })
 
-test('PROMPT B durable Authority descriptors preserve raw hash identity without persisting secret values',()=>{
+test('durable Authority descriptors preserve raw hash identity without persisting secret values',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-sec-auth-'))
   try{
     const store=new MissionStore(root),m=startAssessedMission(store,'sec-auth','deploy',{task_kind:'release-readiness',scope:'external',risk:'authority-boundary',requested_external_actions:['deploy']})
@@ -45,7 +45,7 @@ test('PROMPT B durable Authority descriptors preserve raw hash identity without 
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('PROMPT B durable ledger redacts nested tokens, bearer credentials and CLI secret flags',()=>{
+test('durable ledger redacts nested tokens, bearer credentials and CLI secret flags',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-sec-ledger-'))
   try{
     const store=new MissionStore(root),m=store.start('sec-ledger','audit')
@@ -55,7 +55,7 @@ test('PROMPT B durable ledger redacts nested tokens, bearer credentials and CLI 
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('PROMPT B provider child prompt and system runtime projection redact secret-bearing context',async()=>{
+test('provider child prompt and system runtime projection redact secret-bearing context',async()=>{
   let sent='';const client={session:{promptAsync:async req=>{sent=String(req?.body?.parts?.[0]?.text??'')}}}
   await new ChildExecutionCoordinator(opencodeChildPort(client)).sendProviderPrompt('child',`diagnose token=${SECRET}`)
   assert.doesNotMatch(sent,new RegExp(SECRET));assert.match(sent,/<HI_REDACTED_1>/)
@@ -65,7 +65,7 @@ test('PROMPT B provider child prompt and system runtime projection redact secret
 })
 
 
-test('PROMPT B temporary mutation durable state rejects secret rollback commands and redacts durable descriptions/details',()=>{
+test('temporary mutation durable state rejects secret rollback commands and redacts durable descriptions/details',()=>{
   const store=new MissionStore(),m=store.start('sec-temp','temp mutation')
   assert.throws(()=>registerTemporaryMutation(m,{kind:'env',description:'rollback',rollback_command:`vercel logout --token ${TOKEN}`}),/must not contain credentials/)
   const item=registerTemporaryMutation(m,{kind:'env',description:`cleanup token=${SECRET}`,rollback_command:'git restore -- config.json'})
@@ -73,7 +73,7 @@ test('PROMPT B temporary mutation durable state rejects secret rollback commands
 })
 
 
-test('PROMPT B process environment is execution-ephemeral and never enters durable ProcessContract or ledger',async()=>{
+test('process environment is execution-ephemeral and never enters durable ProcessContract or ledger',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'sec-env','run process')
   const task=createTask(m,{objective:'run',role:'coder',category:'standard',scope:[],requiredEvidence:[]}),worker=createWorker(m,task,'host-default');worker.status='busy';task.status='running'
   let captured

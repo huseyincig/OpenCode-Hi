@@ -15,7 +15,7 @@ test('parallel max is clamped', () => {
 })
 
 
-test('PROMPT B §23 unknown and invalid host profile leaves never enter canonical runtime config',()=>{
+test('§23 unknown and invalid host profile leaves never enter canonical runtime config',()=>{
   const cfg=resolveHiConfig({surprise:'ignored',profile:{balanced:{specialistThreshold:'evil',reviewThreshold:'medium',surprise:'ignored'},unknown:{specialistThreshold:'low'}},routing:{surprise:true}})
   assert.deepEqual(cfg.profile.balanced,{specialistThreshold:'medium',reviewThreshold:'medium'})
   assert.deepEqual(Object.keys(cfg.profile).sort(),['balanced','minimal','thorough'])

@@ -117,7 +117,7 @@ test('P2 bounded output honors OpenCode absolute cursor metadata, pagination and
 
 
 
-test('PROMPT B huge unread PTY output remains bounded and cursor-addressable',async()=>{
+test('huge unread PTY output remains bounded and cursor-addressable',async()=>{
   const h=harness(),handle=await spawned(h),ws=h.sockets[0],id=handle.contract.process_id
   ws.message(meta(0));ws.message('Z'.repeat(1024*1024));await new Promise(r=>setTimeout(r,0))
   const out=await h.adapter.read(id,{cursor:0,max_chars:8})
@@ -125,7 +125,7 @@ test('PROMPT B huge unread PTY output remains bounded and cursor-addressable',as
   assert.equal('buffer' in handle.contract,false);assert.equal('stdout' in handle.contract,false)
 })
 
-test('PROMPT B concurrent owned PTYs keep output cursors and buffers isolated',async()=>{
+test('concurrent owned PTYs keep output cursors and buffers isolated',async()=>{
   const h=harness(),a=await spawned(h,baseRequest({args:['-e','A']})),b=await spawned(h,baseRequest({args:['-e','B'],task_id:'t_2',worker_id:'w_2'}))
   const [wa,wb]=h.sockets;wa.message(meta(0));wb.message(meta(0));wa.message('alpha-only');wb.message('beta-only');await new Promise(r=>setTimeout(r,0))
   const oa=await h.adapter.read(a.contract.process_id,{cursor:0,max_chars:32}),ob=await h.adapter.read(b.contract.process_id,{cursor:0,max_chars:32})
@@ -161,7 +161,7 @@ test('P2 kill validates PID identity, signals the owned PID, observes exit, then
 
 
 
-test('PROMPT B isolated owned process group is identity-bound and signalled as a group',async()=>{
+test('isolated owned process group is identity-bound and signalled as a group',async()=>{
   let signalCall
   const h=harness({processGroup:pid=>pid,signal:(target,signal)=>{signalCall={target,signal};const pid=Math.abs(target),info=[...h.sessions.values()].find(x=>x.pid===pid);Object.assign(info,{status:'exited',exitCode:143});queueMicrotask(()=>h.sockets[0].close())}})
   const handle=await spawned(h);assert.equal(handle.contract.process_group_id,handle.contract.pid)
@@ -169,14 +169,14 @@ test('PROMPT B isolated owned process group is identity-bound and signalled as a
   assert.deepEqual(signalCall,{target:-handle.contract.pid,signal:'SIGTERM'});assert.equal(result.contract.status,'TERMINATED')
 })
 
-test('PROMPT B process-group identity drift refuses signalling fail-closed',async()=>{
+test('process-group identity drift refuses signalling fail-closed',async()=>{
   let current,signals=0
   const h=harness({processGroup:pid=>current??pid,signal:()=>{signals++}}),handle=await spawned(h);assert.equal(handle.contract.process_group_id,handle.contract.pid)
   current=handle.contract.pid+99
   await assert.rejects(()=>h.adapter.kill(handle.contract.process_id),/Refusing process-group signal/);assert.equal(signals,0)
 })
 
-test('PROMPT B kill signalling failure does not fabricate TERMINATED semantics on later natural exit',async()=>{
+test('kill signalling failure does not fabricate TERMINATED semantics on later natural exit',async()=>{
   const h=harness({signal:()=>{throw new Error('signal-denied')}}),handle=await spawned(h),id=handle.contract.process_id
   await assert.rejects(()=>h.adapter.kill(id,'SIGTERM'),/signal-denied/)
   h.exit(handle.host_process_id,9);h.sockets[0].close();const result=await h.adapter.wait(id)

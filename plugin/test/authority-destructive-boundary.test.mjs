@@ -6,7 +6,7 @@ import { createToolBeforeHook } from '../dist/hooks/tool-before.js'
 import { privilegedAction,actionContract } from '../dist/runtime/safety/authority.js'
 import { startAssessedMission } from './helpers/semantic.mjs'
 
-test('PROMPT B credential and destructive shell boundaries use distinct HumanDecision types',()=>{
+test('credential and destructive shell boundaries use distinct HumanDecision types',()=>{
   for(const command of ['gh auth login','gcloud auth login','aws sso login','aws configure sso','az login','npm login']){
     const credential=evaluateShellCommand(command)
     assert.deepEqual({decision:credential.decision,type:credential.human_decision_type,code:credential.reason_code},{decision:'USER_ACTION_REQUIRED',type:'credential_action',code:'interactive-shell'},command)
@@ -22,20 +22,20 @@ test('PROMPT B credential and destructive shell boundaries use distinct HumanDec
   }
 })
 
-test('PROMPT B potentially paid or irreversible supported external effects enter exact Authority classification',()=>{
+test('potentially paid or irreversible supported external effects enter exact Authority classification',()=>{
   for(const command of ['terraform apply','kubectl apply -f infra.yaml','docker push acme/app:latest','vercel deploy']){
     assert.equal(privilegedAction(command),true,command)
     const contract=actionContract(command,'/repo');assert.equal(contract.one_shot,true);assert.equal(contract.target.command,command);assert.equal(contract.target.cwd,'/repo')
   }
 })
 
-test('PROMPT B bounded local cleanup is not misclassified as catastrophic filesystem destruction',()=>{
+test('bounded local cleanup is not misclassified as catastrophic filesystem destruction',()=>{
   for(const command of ['rm -rf ./dist','rm -rf /tmp/hi-build-123','rm -f ./cache.json','git clean -fd -- ./dist','TOKEN=$DEPLOY_TOKEN deploy-tool run','deploy-tool --token $DEPLOY_TOKEN']){
     assert.notEqual(evaluateShellCommand(command).decision,'USER_ACTION_REQUIRED',command)
   }
 })
 
-test('PROMPT B tool-before opens credential HumanDecision for interactive auth without executing shell',async()=>{
+test('tool-before opens credential HumanDecision for interactive auth without executing shell',async()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'pb-auth-credential','inspect auth state'),before=createToolBeforeHook(store)
   await assert.rejects(()=>before({sessionID:m.identity.session_id,tool:'bash',args:{command:'gh auth login'}},{args:{command:'gh auth login'}}),/interactive credential/i)
   assert.equal(m.authority.human_decision?.semantic_type,'credential_action')
@@ -43,7 +43,7 @@ test('PROMPT B tool-before opens credential HumanDecision for interactive auth w
   assert.equal(m.authority.human_decision?.response_schema.kind,'external-action')
 })
 
-test('PROMPT B tool-before opens operational HumanDecision for catastrophic or irreversible action',async()=>{
+test('tool-before opens operational HumanDecision for catastrophic or irreversible action',async()=>{
   for(const [suffix,command,code] of [
     ['filesystem','rm -rf /','destructive-filesystem-action'],
     ['external','gh repo delete owner/repo --yes','irreversible-external-action'],

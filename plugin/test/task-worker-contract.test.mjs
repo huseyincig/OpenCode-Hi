@@ -112,7 +112,7 @@ test('RuntimePersistence rejects invalid persisted topology shape and single exe
   }finally{rmSync(root,{recursive:true,force:true})}
 })
 
-test('PROMPT B Mission validator rejects ghost workers, cross-session worker binding and duplicate native session ownership',()=>{
+test('Mission validator rejects ghost workers, cross-session worker binding and duplicate native session ownership',()=>{
   const root=mkdtempSync(join(tmpdir(),'hi-pb-worker-binding-'))
   try{
     const store=new MissionStore(root),m=startAssessedMission(store,'pb-worker-binding','verify',{task_kind:'implementation',likely_verification:[]})

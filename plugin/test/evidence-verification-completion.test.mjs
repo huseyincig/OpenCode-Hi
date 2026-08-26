@@ -15,7 +15,7 @@ import {executionAttemptIdentity} from '../dist/contracts/orchestration-core.js'
 
 function runtime(){return new TaskRuntime(opencodeChildPort({}),new BackgroundRegistry(),createConcurrencyPolicySource(()=>({global:2,providers:{},models:{}})),process.cwd(),process.cwd(),()=>DEFAULT_HI_CONFIG,()=>[],()=>({}))}
 
-test('PROMPT B hostile DONE and all-tests-passed prose cannot replace verification Evidence',()=>{
+test('hostile DONE and all-tests-passed prose cannot replace verification Evidence',()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'pb9-done','fix src/a.ts',{task_kind:'bug-fix',likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
   const implementation=m.execution.obligations.find(o=>o.kind==='implementation'),verification=m.execution.obligations.find(o=>o.kind==='verification');assert.ok(implementation);assert.ok(verification);verification.requiredEvidence=['targeted-tests']
   const task=createTask(m,{objective:'fix src/a.ts',role:'coder',category:'standard',scope:['src/a.ts'],requiredEvidence:['targeted-tests'],obligationIds:[implementation.id,verification.id]})
@@ -27,7 +27,7 @@ test('PROMPT B hostile DONE and all-tests-passed prose cannot replace verificati
   const completion=evaluateCompletion(m);assert.equal(completion.complete,false);assert.equal(completion.next,'CONTINUE','open implementation ownership must precede verification even when hostile prose claims DONE')
 })
 
-test('PROMPT B worker PASS evidence without exact source-state identity cannot satisfy verification',()=>{
+test('worker PASS evidence without exact source-state identity cannot satisfy verification',()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'pb9-source','verify src/a.ts',{task_kind:'bug-fix',likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
   const verification=m.execution.obligations.find(o=>o.kind==='verification');verification.requiredEvidence=['targeted-tests']
   addEvidence(m,{kind:'targeted-tests',summary:'all tests passed',scope:['src/a.ts'],source:'worker:w-unbound',task_id:'t1',obligation_ids:[verification.id],pass:true,outcome:'passed'})
@@ -42,7 +42,7 @@ test('PROMPT B worker PASS evidence without exact source-state identity cannot s
   assert.deepEqual(verificationSatisfied(m,verification.id),{ok:false,missing:['targeted-tests']},'a stale worker claim remains inadmissible after the attempt advances')
 })
 
-test('PROMPT B mutation invalidates previously passed verification before completion',()=>{
+test('mutation invalidates previously passed verification before completion',()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'pb9-mutation','fix src/a.ts',{task_kind:'bug-fix',likely_verification:['targeted-tests'],likely_targets:['src/a.ts']})
   const verification=m.execution.obligations.find(o=>o.kind==='verification');verification.requiredEvidence=['targeted-tests']
   const evidence=addEvidence(m,{kind:'targeted-tests',summary:'targeted tests pass',scope:['src/a.ts'],source:'bash',obligation_ids:[verification.id],pass:true,outcome:'passed'})

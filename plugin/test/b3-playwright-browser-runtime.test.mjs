@@ -52,7 +52,7 @@ test('B3 Playwright adapter is local-scope, task-isolated and emits bounded obse
 
 
 
-test('PROMPT B browser session state cannot cross execution-owner identity for the same Task',async()=>{
+test('browser session state cannot cross execution-owner identity for the same Task',async()=>{
   const pw=fakePlaywright(),adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module})
   const first=ctx('t-owner','m:w:child-a:g1'),second=ctx('t-owner','m:w:child-b:g2')
   await adapter.open(first,'http://127.0.0.1:4173/')
@@ -68,7 +68,7 @@ test('PROMPT B browser session state cannot cross execution-owner identity for t
 
 
 
-test('PROMPT B browser snapshot refreshes client-side route state and fails closed on external SPA redirect',async()=>{
+test('browser snapshot refreshes client-side route state and fails closed on external SPA redirect',async()=>{
   const pw=fakePlaywright(),adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module}),c=ctx('t-spa')
   await adapter.open(c,'http://127.0.0.1:4173/')
   pw.sessions[0].page._url='http://127.0.0.1:4173/client-route?step=2'
@@ -122,7 +122,7 @@ test('B3 TaskRuntime admits browser methodology only when runtime health resourc
 })
 
 
-test('PROMPT B browser observations capture bounded console and network failures without promoting them to PASS evidence',async()=>{
+test('browser observations capture bounded console and network failures without promoting them to PASS evidence',async()=>{
   const pw=fakePlaywright(),adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module})
   await adapter.open(ctx('t-observe'),'http://127.0.0.1:4173/');const page=pw.sessions[0].page
   page.events.get('console')({type:()=> 'error',text:()=> 'console-boom'})
@@ -132,7 +132,7 @@ test('PROMPT B browser observations capture bounded console and network failures
   await adapter.close(ctx('t-observe'))
 })
 
-test('PROMPT B browser navigation timeout and browser crash become explicit FAILED observations',async()=>{
+test('browser navigation timeout and browser crash become explicit FAILED observations',async()=>{
   const timeoutModule={chromium:{launch:async()=>({newContext:async()=>({route:async()=>{},newPage:async()=>({setDefaultTimeout(){},on(){},goto:async()=>{throw new Error('Timeout 15000ms exceeded')},locator:()=>({evaluate:async()=>({body:'',items:[]})})})}),close:async()=>{}})}}
   const timed=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>timeoutModule}),timeoutResult=await timed.open(ctx('t-timeout'),'http://127.0.0.1:4173/')
   assert.equal(timeoutResult.result,'FAILED');assert.match(timeoutResult.network_errors.join(' '),/Timeout 15000ms exceeded/);await timed.dispose()
@@ -141,7 +141,7 @@ test('PROMPT B browser navigation timeout and browser crash become explicit FAIL
   const crashResult=await crashed.inspect(ctx('t-crash'));assert.equal(crashResult.result,'FAILED');assert.match(crashResult.network_errors.join(' '),/browser has been closed/);await crashed.dispose()
 })
 
-test('PROMPT B browser wait bounds fail closed instead of permitting unbounded visual execution',async()=>{
+test('browser wait bounds fail closed instead of permitting unbounded visual execution',async()=>{
   const pw=fakePlaywright(),adapter=new PlaywrightBrowserAdapter({executable_path:'/fake/chrome',executable_exists:()=>true,load_playwright:async()=>pw.module});await adapter.open(ctx('t-wait'),'http://127.0.0.1:4173/')
   await assert.rejects(()=>adapter.wait(ctx('t-wait'),{milliseconds:-1}),/0\.\.30000ms/);await assert.rejects(()=>adapter.wait(ctx('t-wait'),{milliseconds:30001}),/0\.\.30000ms/);await adapter.close(ctx('t-wait'))
 })

@@ -67,7 +67,7 @@
       "control": "Resource/provenance/archive paths are normalized and traversal/symlink escape is rejected.",
       "proof_tests": [
         {
-          "file": "plugin/test/prompt-b-skills-methodology-security-hostile.test.mjs",
+          "file": "plugin/test/skills-methodology-security-adversarial.test.mjs",
           "contains": "requested methodology preflight rejects a same-name project skill symlink escaping its native discovery root"
         },
         {

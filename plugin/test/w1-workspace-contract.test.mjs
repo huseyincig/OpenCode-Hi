@@ -65,7 +65,7 @@ test('W1 lease validator rejects cross-mission unknown-task and duplicate lease 
 })
 
 
-test('PROMPT B persisted active workspace leases cannot share host or filesystem identity across tasks',()=>{
+test('persisted active workspace leases cannot share host or filesystem identity across tasks',()=>{
   const store=new MissionStore('/repo'),m=store.start('lease-identity','workspace identity collision');m.identity.semantic_assessment.status='assessed';m.identity.intent.taskKind='implementation'
   const t1=createTask(m,{objective:'one',role:'coder',category:'quick',scope:['a'],dependencies:[],requiredEvidence:[]}),t2=createTask(m,{objective:'two',role:'coder',category:'quick',scope:['b'],dependencies:[],requiredEvidence:[]})
   const a={...lease,lease_id:'lease_a',mission_id:m.identity.mission_id,task_id:t1.id,workspace_path:'/tmp/a',host_workspace_id:'ws_shared'}
