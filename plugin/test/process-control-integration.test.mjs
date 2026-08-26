@@ -112,8 +112,11 @@ test('process spawn requires exact task-level process_lifecycle ownership even w
   m.execution.workers.push({id:'w1',task_id:'t1',role:'coder',category:'standard',parent_session_id:m.identity.session_id,parent_mission_id:m.identity.mission_id,fallbacks:[],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'busy',generation_at_spawn:m.continuation.generation})
   const processRuntime={list:()=>[],stopMission:async()=>0,spawn:async()=>{calls.push('spawn');return{}}}
   const {toolSurface}=createHiToolSurface({state:state(),store,tasks:{},processRuntime,projectRoot:'/repo',capabilities:detectOpenCodeCapabilities({}, {processLifecycle:true}),native:{},getModels:()=>[],scopedStores:scoped()})
-  const out=String(await toolSurface.hi_process_spawn.execute({worker_id:'w1',command:'npm',args_json:'["test"]'},{sessionID:m.identity.session_id,directory:'/repo'}))
-  assert.match(out,/does not own process_lifecycle/i);assert.deepEqual(calls,[])
+  const before={tasks:m.execution.tasks.length,workers:m.execution.workers.length,processes:m.execution.processes.length}
+  const out=JSON.parse(await toolSurface.hi_process_spawn.execute({worker_id:'w1',command:'npm',args_json:'["test"]'},{sessionID:m.identity.session_id,directory:'/repo'}))
+  assert.deepEqual(out,{status:'BLOCKED',reason:'process-lifecycle-task-required',required_owner:'exact-task-worker',next_tool:'hi_task_start',process_lifecycle_field_owner:'hi_task_start',retry_same_spawn:false,instruction:'Create or resume one exact task with hi_task_start and process_lifecycle=true. The admitted child worker then owns hi_process_spawn. Do not add process_lifecycle to hi_process_spawn and do not retry this spawn unchanged.'})
+  assert.doesNotMatch(JSON.stringify(out),/bounded native shell/i);assert.deepEqual(calls,[])
+  assert.deepEqual({tasks:m.execution.tasks.length,workers:m.execution.workers.length,processes:m.execution.processes.length},before,'blocked spawn must not fabricate ownership or process state')
 })
 
 test('interactive-process intent still fails closed when live native PTY capability is unavailable',async()=>{
