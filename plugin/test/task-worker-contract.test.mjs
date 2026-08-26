@@ -46,9 +46,12 @@ test('WorkerContract starts at attempt zero and beginWorkerAttempt preserves ide
   assert.equal(worker.attempt,1)
   assert.equal(worker.started_at,before+10)
   assert.equal(worker.updated_at,before+10)
+  worker.last_result_digest='attempt-1-result';worker.last_result_at=before+15
   beginWorkerAttempt(task,worker,before+20)
   assert.equal(worker.attempt,2)
   assert.equal(worker.id,id)
+  assert.equal(worker.last_result_digest,undefined,'a new attempt must not inherit prior-attempt content idempotency')
+  assert.equal(worker.last_result_at,undefined)
 })
 
 test('WorkerContract rejects malformed recovery/effective-model state instead of persistence ignoring it',()=>{

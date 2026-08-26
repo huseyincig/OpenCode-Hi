@@ -85,15 +85,17 @@ test('corrective same-session resume is scheduler-reserved as the next attempt',
 })
 
 
-test('same-session newer attempt ignores an exact duplicate prior result before scheduler settlement',async()=>{
+test('same-session newer attempt settles byte-identical current-attempt result independently of prior-attempt content',async()=>{
   const {runtime,m}=setup();const started=await runtime.start(m,{objective:'change x',role:'coder',category:'standard',scope:['src/x.ts']})
   const prior=workerResult('FIX_REQUIRED');runtime.applyResult(m,started.worker_id,prior)
   const worker=m.execution.workers.find(w=>w.id===started.worker_id),task=m.execution.tasks.find(t=>t.id===started.task_id)
-  await runtime.resume(m,task.id);assert.equal(worker.attempt,2);assert.equal(m.execution.scheduler.reservations[0].phase,'RUNNING')
+  const attempt1Digest=worker.last_result_digest;assert.ok(attempt1Digest)
+  await runtime.resume(m,task.id);assert.equal(worker.attempt,2);assert.equal(worker.last_result_digest,undefined);assert.equal(m.execution.scheduler.reservations[0].phase,'RUNNING')
   runtime.applyResult(m,worker.id,prior)
-  assert.equal(worker.status,'busy');assert.equal(task.status,'running');assert.equal(m.execution.scheduler.reservations.length,1)
-  assert.equal(m.execution.scheduler.reservations[0].attempt.ordinal,2);assert.equal(m.execution.scheduler.reservations[0].phase,'RUNNING','duplicate prior result must be a scheduler no-op')
-  assert.ok(m.execution.ledger.some(e=>e.type==='worker.result.duplicate-ignored'&&e.payload?.attempt===2))
+  assert.equal(worker.status,'ready');assert.equal(task.status,'waiting');assert.equal(task.result.status,'FIX_REQUIRED')
+  assert.equal(m.execution.scheduler.reservations.length,0,'current attempt must settle even when normalized result bytes equal the prior attempt')
+  assert.equal(worker.last_result_digest,attempt1Digest)
+  assert.equal(m.execution.ledger.filter(e=>e.type==='worker.result.duplicate-ignored'&&e.payload?.attempt===2).length,0)
 })
 
 test('same-session attempt prompt IDs bind OpenCode assistant ancestry and stale prior result/error cannot settle the newer attempt',async()=>{
