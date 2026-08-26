@@ -20,6 +20,15 @@ test('Flow-03 structured amendment widens completion contract and opens a new se
   assert.equal(m.execution.obligations.filter(o=>o.kind==='implementation').length,base+1)
 })
 
+test('resume follow-up preserves the existing completion contract without synthetic implementation obligations',()=>{
+  const store=new MissionStore(),m=startAssessedMission(store,'s-resume')
+  const before=m.execution.obligations.map(o=>({id:o.id,kind:o.kind,status:o.status,requiredTargets:o.requiredTargets}))
+  applyStructuredFollowup(store,'s-resume','Continue from the exact current point without restarting',{message_kind:'resume'})
+  assert.deepEqual(m.execution.obligations.map(o=>({id:o.id,kind:o.kind,status:o.status,requiredTargets:o.requiredTargets})),before)
+  assert.ok(!m.execution.obligations.some(o=>o.id.startsWith('o-followup-r')))
+  assert.ok(m.execution.ledger.some(e=>e.type==='mission.resumed'))
+})
+
 test('Flow-04 structured security follow-up escalates risk and verification policy',()=>{
   const store=new MissionStore(),m=startAssessedMission(store,'s1','opaque',{risk:'low'})
   applyStructuredFollowup(store,'s1','opaque security update',{risk:'high',required_capabilities:['implementation','security-review','independent-review'],likely_verification:['targeted-tests','review-evidence']})

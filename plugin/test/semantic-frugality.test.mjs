@@ -6,6 +6,7 @@ import { assessChangedFileOwnership } from '../dist/runtime/task/diff-ownership.
 import { createToolBeforeHook } from '../dist/hooks/tool-before.js'
 import { renderSemanticAssessmentGate } from '../dist/runtime/intent/semantic-assessment-gate.js'
 import { buildMissionRuntimeProjection } from '../dist/runtime/context/mission-runtime-projection.js'
+import { startAssessedMission } from './helpers/semantic.mjs'
 
 const assessment={
   material:true,message_kind:'mission',task_kind:'bug-fix',scope:'local',risk:'medium',ambiguity:'none',dependency_class:'independent',
@@ -75,6 +76,16 @@ test('semantic gate does not invent independent review for deterministic low-ris
   const mission=store.start('phase2-review-prior','Fix src/a.ts and stop after the targeted test passes')
   const gate=renderSemanticAssessmentGate(mission)
   assert.match(gate,/independent-review only for explicit user independence or risk\/policy requirement/)
+})
+
+test('follow-up semantic gate distinguishes resume from amendment to avoid duplicate continuation work',()=>{
+  const store=new MissionStore(process.cwd())
+  const mission=startAssessedMission(store,'semantic-resume-gate')
+  store.beginFollowupSemanticAssessment('semantic-resume-gate','Continue from the exact current point without restarting')
+  const gate=renderSemanticAssessmentGate(mission)
+  assert.match(gate,/resume=continue the existing unfinished contract/)
+  assert.match(gate,/amendment=add\/change an implementation outcome/)
+  assert.match(gate,/Continuation\/reconnect\/handoff wording alone is resume, not amendment/)
 })
 
 test('runtime projection separates exact obligation IDs from summaries',()=>{
