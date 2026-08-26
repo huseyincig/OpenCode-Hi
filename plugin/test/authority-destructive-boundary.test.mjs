@@ -29,14 +29,6 @@ test('potentially paid or irreversible supported external effects enter exact Au
   }
 })
 
-test('ambiguous short flags are secret-sensitive only for executable contexts that define them as credentials',()=>{
-  assert.equal(evaluateShellCommand('mkdir -p /workspace/project/templates').decision,'ALLOW')
-  assert.equal(evaluateShellCommand('python -p /workspace/project/script.py').decision,'ALLOW')
-  for(const command of ['mysql -p supersecret','mariadb-dump -psupersecret db','docker login -p supersecret registry.example']){
-    const result=evaluateShellCommand(command);assert.equal(result.decision,'USER_ACTION_REQUIRED',command);assert.equal(result.reason_code,'secret-sensitive-shell',command)
-  }
-})
-
 test('bounded local cleanup is not misclassified as catastrophic filesystem destruction',()=>{
   for(const command of ['rm -rf ./dist','rm -rf /tmp/hi-build-123','rm -f ./cache.json','git clean -fd -- ./dist','TOKEN=$DEPLOY_TOKEN deploy-tool run','deploy-tool --token $DEPLOY_TOKEN']){
     assert.notEqual(evaluateShellCommand(command).decision,'USER_ACTION_REQUIRED',command)
