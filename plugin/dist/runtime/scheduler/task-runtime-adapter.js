@@ -56,6 +56,13 @@ export function beginTaskRuntimeSettlement(m, worker, at = Date.now()) {
         m.execution.scheduler = out.state;
     return out;
 }
+/** Exclusive terminal-event claim layered over the idempotent scheduler transition. */
+export function claimTaskRuntimeSettlement(m, worker, at = Date.now()) {
+    const out = beginTaskRuntimeSettlement(m, worker, at);
+    if (out.accepted && out.reason === 'already-settling')
+        return { ...out, accepted: false, reason: 'settlement-already-claimed' };
+    return out;
+}
 export function releaseTaskRuntimeReservation(m, workerID, kind = 'RELEASE', at = Date.now()) {
     const reservation = workerReservation(m, workerID);
     if (!reservation)

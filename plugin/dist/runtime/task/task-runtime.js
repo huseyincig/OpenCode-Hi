@@ -24,10 +24,10 @@ import { applyAdmittedProjectMethodologyPermissions } from '../methodology/host-
 import { HI_CHILD_ROLES, isHiChildRole, isHiReadOnlyChildRole, isHiReviewerRole, roleCanOwnObligation } from '../roles/catalog.js';
 import { createRuntimeScopedStores } from '../application/runtime-scoped-stores.js';
 import { ChildExecutionCoordinator } from './child-execution-coordinator.js';
-import { admitHostTerminalEvent } from './host-child-binding.js';
+import { admitHostTerminalEvent, hostChildBindingMatches } from './host-child-binding.js';
 import { TaskResultReconciler } from './task-result-reconciler.js';
 import { TaskRecoveryCoordinator } from './task-recovery-coordinator.js';
-import { taskRuntimeAdmittedModel, taskRuntimeUnitDecision, reserveTaskRuntimeDispatch, bindTaskRuntimeHost, releaseTaskRuntimeReservation, reconcileTaskRuntimeRestart } from '../scheduler/task-runtime-adapter.js';
+import { taskRuntimeAdmittedModel, taskRuntimeUnitDecision, reserveTaskRuntimeDispatch, bindTaskRuntimeHost, claimTaskRuntimeSettlement, releaseTaskRuntimeReservation, reconcileTaskRuntimeRestart } from '../scheduler/task-runtime-adapter.js';
 import { clearCapabilityUnavailable, markCapabilityUnavailable, markVerificationCapabilityUnavailable, reconcileTaskCapabilityPreconditions } from '../readiness/capability-failure.js';
 import { bindWorkerUsageObservation } from '../economics/usage-runtime.js';
 import { recordRecoveryStrategy, recoveryModelHazard } from '../continuation/recovery-governor.js';
@@ -197,10 +197,22 @@ export class TaskRuntime {
     forgetChildCallback(sessionID) { const worker = this.#child.resolveCallbackWorker(sessionID); if (!worker)
         return false; this.registry.delete(worker.id); return true; }
     admitTerminalEvent(m, worker) { return admitHostTerminalEvent(m, worker, this.childHost); }
-    async settleHostIdleRuntimeError(m, worker, error) {
+    async settleHostIdleRuntimeError(m, worker, error, binding) {
         const task = m.execution.tasks.find(t => t.id === worker.task_id);
         if (!task)
             return { applied: false, reason: 'task-not-found' };
+        if (binding) {
+            if (!hostChildBindingMatches(m, worker, binding)) {
+                appendLedger(m, 'worker.error-settlement-stale-binding', { task_id: task.id, worker_id: worker.id, payload: { session_id: binding.sessionId, attempt_id: binding.attempt.attemptId, current_session_id: worker.session_id, current_attempt: worker.attempt } });
+                return { applied: false, reason: 'host-terminal-binding-stale-before-settlement' };
+            }
+            const claim = claimTaskRuntimeSettlement(m, worker);
+            if (!claim.accepted) {
+                appendLedger(m, 'worker.error-settlement-claim-rejected', { task_id: task.id, worker_id: worker.id, payload: { session_id: binding.sessionId, attempt_id: binding.attempt.attemptId, reason: claim.reason } });
+                return { applied: false, reason: claim.reason };
+            }
+            appendLedger(m, 'worker.error-settlement-claimed', { task_id: task.id, worker_id: worker.id, payload: { session_id: binding.sessionId, attempt_id: binding.attempt.attemptId, reservation_id: claim.reservation?.reservationId } });
+        }
         const detail = [error.name, error.message].filter(Boolean).join(': ');
         await this.cleanupBrowserForTask(m, worker.task_id, worker.id);
         const recovery = await this.#recovery.recoverHostTerminalFailure(m, worker.id, error);
@@ -217,7 +229,7 @@ export class TaskRuntime {
         await this.cleanupWorkspaceForTask(m, worker.task_id);
         return { applied: true, reason: 'host-idle-runtime-failed', wakeResult: 'FAILED', failureKind: worker.last_runtime_failure_kind };
     }
-    async settleHostIdleAssistantResult(m, worker, assistant) {
+    async settleHostIdleAssistantResult(m, worker, assistant, binding) {
         const task = m.execution.tasks.find(t => t.id === worker.task_id);
         if (!task)
             return { applied: false, reason: 'task-not-found' };
@@ -229,7 +241,7 @@ export class TaskRuntime {
         if (assistant.usage)
             this.noteUsage(m, worker.id, assistant.usage);
         if (assistant.error)
-            return this.settleHostIdleRuntimeError(m, worker, assistant.error);
+            return this.settleHostIdleRuntimeError(m, worker, assistant.error, binding);
         if (!assistant.model && !assistant.text)
             return { applied: false, reason: 'assistant-result-not-ready' };
         const effective = this.noteEffectiveModel(m, worker.id, assistant.model ? { ...assistant.model, source: 'assistant-message-metadata' } : undefined);

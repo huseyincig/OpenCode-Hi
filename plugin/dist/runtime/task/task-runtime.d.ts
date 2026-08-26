@@ -7,7 +7,7 @@ import type { RuntimeSignalSink } from '../events/event-sink.js';
 import { type BrowserExecutor } from '../browser/executor.js';
 import { type BrowserBackend } from '../browser/backend-policy.js';
 import { type RuntimeScopedStores } from '../application/runtime-scoped-stores.js';
-import { type HostTerminalEventAdmission } from './host-child-binding.js';
+import { type HostChildBinding, type HostTerminalEventAdmission } from './host-child-binding.js';
 import type { WorkspaceRuntime } from '../workspace/runtime.js';
 import type { ChildSessionPort, HostAssistantError, HostAssistantResult } from '../host/port.js';
 import type { HostCapabilityContract } from '../../contracts/host-capability.js';
@@ -83,13 +83,13 @@ export declare class TaskRuntime {
     resolveChildCallback(sessionID: string): WorkerState | undefined;
     forgetChildCallback(sessionID: string): boolean;
     admitTerminalEvent(m: MissionState, worker: WorkerState): Promise<HostTerminalEventAdmission>;
-    settleHostIdleRuntimeError(m: MissionState, worker: WorkerState, error: HostAssistantError): Promise<{
+    settleHostIdleRuntimeError(m: MissionState, worker: WorkerState, error: HostAssistantError, binding?: HostChildBinding): Promise<{
         applied: boolean;
         reason: string;
         wakeResult?: 'RUNTIME_FALLBACK' | 'QUARANTINED' | 'FAILED' | 'BLOCKED';
         failureKind?: WorkerState['last_runtime_failure_kind'];
     }>;
-    settleHostIdleAssistantResult(m: MissionState, worker: WorkerState, assistant: HostAssistantResult): Promise<{
+    settleHostIdleAssistantResult(m: MissionState, worker: WorkerState, assistant: HostAssistantResult, binding?: HostChildBinding): Promise<{
         applied: boolean;
         reason: string;
         result?: WorkerResult;

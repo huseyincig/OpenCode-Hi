@@ -10,6 +10,7 @@ import {opencodeChildPort} from './helpers/host-port.mjs'
 import {evaluateIdle} from '../dist/runtime/continuation/evaluator.js'
 import {recordRecoveryStrategy} from '../dist/runtime/continuation/recovery-governor.js'
 import {appendLedger} from '../dist/runtime/ledger/ledger.js'
+import {reserveTaskRuntimeDispatch,bindTaskRuntimeHost} from '../dist/runtime/scheduler/task-runtime-adapter.js'
 
 function setup(promptImpl=async()=>{},withAbort=true,models=[],assistantResultReader,hostStatus='busy'){
   const calls=[],aborts=[]
@@ -21,7 +22,7 @@ function setup(promptImpl=async()=>{},withAbort=true,models=[],assistantResultRe
   const m=startAssessedMission(store,'parent','opaque provider task')
   m.execution.tasks.push({id:'t1',mission_id:m.identity.mission_id,objective:'fix it',status:'running',role:'coder',category:'standard',scope:['src/a.ts'],constraints:[],dependencies:[],requiredEvidence:[],obligation_ids:[],context_artifacts:[],gate_ids:[],execution_profile:{role:'coder',category:'standard',model:'p/primary',fallback_models:['p/fallback1','p/fallback2'],fallback_variants:{'p/fallback1':'high','p/fallback2':'medium'},methodologies:[],permission_profile:{skill_tool_enabled:true,skill_permissions:{},external_effects:'parent-only',recursive_task:'deny'},verification_policy:m.execution.verification_policy,max_context_chars:1000,max_handoff_chars:1000,max_result_chars:1000,max_artifacts:4},worker_id:'w1',external_action_requirements:[],created_at:Date.now(),updated_at:Date.now()})
   m.execution.workers.push({id:'w1',task_id:'t1',role:'coder',category:'standard',session_id:'child1',parent_session_id:'parent',parent_mission_id:m.identity.mission_id,model:'p/primary',fallbacks:['p/fallback1','p/fallback2'],selected_methodologies:[],loaded_methodologies:[],methodologies:[],fingerprint:'f',status:'busy',attempt:0,generation_at_spawn:m.continuation.generation,updated_at:Date.now()})
-  return {runtime,m,calls,aborts}
+  return {runtime,m,calls,aborts,scheduler}
 }
 
 test('provider failure creates a fresh child on first fallback without stagnation',async()=>{
@@ -38,6 +39,29 @@ test('provider failure creates a fresh child on first fallback without stagnatio
   assert.equal(calls.length,1)
   assert.deepEqual(calls[0].body.model,{providerID:'p',modelID:'fallback1'})
   assert.equal(m.continuation.stagnation_count,4,'provider failure does not increment reasoning stagnation')
+})
+
+test('duplicate host-terminal callbacks claim one exact failed session and launch only one recovery child',async()=>{
+  const models=[{id:'p/fallback1',provider:'p',writeCapable:true,tags:['coding']},{id:'p/fallback2',provider:'p',writeCapable:true,tags:['coding']}]
+  const {runtime,m,calls,scheduler}=setup(async()=>{},true,models,undefined,'idle')
+  const worker=m.execution.workers[0],task=m.execution.tasks[0]
+  worker.status='ready';task.status='waiting'
+  const reserved=reserveTaskRuntimeDispatch(m,worker,worker.model,scheduler);assert.equal(reserved.accepted,true)
+  worker.attempt=reserved.attempt.ordinal;worker.status='busy';task.status='running'
+  assert.equal(bindTaskRuntimeHost(m,worker.id,'child1').accepted,true)
+  const admission=await runtime.admitTerminalEvent(m,worker);assert.equal(admission.decision,'ACCEPT');assert.ok(admission.binding)
+  const error={name:'APIError',message:'503 Endpoint is unavailable',isRetryable:true,statusCode:503}
+  const [first,duplicate]=await Promise.all([
+    runtime.settleHostIdleRuntimeError(m,worker,error,admission.binding),
+    runtime.settleHostIdleRuntimeError(m,worker,error,admission.binding),
+  ])
+  assert.deepEqual([first.applied,duplicate.applied].sort(),[false,true])
+  assert.equal([first,duplicate].filter(x=>x.wakeResult==='RUNTIME_FALLBACK').length,1)
+  assert.equal(calls.length,1,'one terminal host execution may launch only one recovery prompt')
+  assert.equal(worker.session_id,'recovery-1');assert.equal(worker.model,'p/fallback1');assert.equal(worker.runtime_recovery_attempt,1)
+  assert.deepEqual(worker.fallback_history.map(x=>x.to),['p/fallback1'])
+  assert.equal(m.execution.scheduler.reservations.length,1);assert.equal(m.execution.scheduler.reservations[0].hostExecutionId,'recovery-1')
+  assert.ok(m.execution.ledger.some(e=>e.type==='worker.error-settlement-claim-rejected'&&e.payload?.reason==='settlement-already-claimed'))
 })
 
 test('second provider failure advances to next fallback rather than returning to prior model',async()=>{

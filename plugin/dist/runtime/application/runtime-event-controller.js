@@ -208,7 +208,7 @@ export class RuntimeEventController {
                     persistence.save(store.all());
                     return;
                 }
-                const settled = await tasks.settleHostIdleRuntimeError(m, child, hostError);
+                const settled = await tasks.settleHostIdleRuntimeError(m, child, hostError, admission.binding);
                 if (!settled.applied) {
                     appendLedger(m, 'worker.error-settlement-deferred', { task_id: child.task_id, worker_id: child.id, payload: { session_id: sid, reason: settled.reason } });
                     persistence.save(store.all());
@@ -242,7 +242,7 @@ export class RuntimeEventController {
             if (child.status === 'completed' || child.status === 'failed' || child.status === 'cancelled')
                 return;
             try {
-                const assistant = await host.readAssistantResult(sid, 12), settled = await tasks.settleHostIdleAssistantResult(m, child, assistant);
+                const assistant = await host.readAssistantResult(sid, 12), settled = await tasks.settleHostIdleAssistantResult(m, child, assistant, terminalAdmission.binding);
                 if (!settled.applied) {
                     appendLedger(m, 'worker.idle.pre-assistant-ignored', { task_id: child.task_id, worker_id: child.id, payload: { session_id: sid, reason: settled.reason } });
                     persistence.save(store.all());

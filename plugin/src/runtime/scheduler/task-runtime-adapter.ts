@@ -58,6 +58,13 @@ export function beginTaskRuntimeSettlement(m:MissionState,worker:WorkerState,at=
   const out=reduceSchedulerLifecycle(lifecycle(m),{type:'BEGIN_SETTLEMENT',reservationId:reservation.reservationId,attempt,hostExecutionId:worker.session_id,at});if(out.accepted)m.execution.scheduler=out.state;return out
 }
 
+/** Exclusive terminal-event claim layered over the idempotent scheduler transition. */
+export function claimTaskRuntimeSettlement(m:MissionState,worker:WorkerState,at=Date.now()):SchedulerLifecycleResult{
+  const out=beginTaskRuntimeSettlement(m,worker,at)
+  if(out.accepted&&out.reason==='already-settling')return{...out,accepted:false,reason:'settlement-already-claimed'}
+  return out
+}
+
 export function releaseTaskRuntimeReservation(m:MissionState,workerID:string,kind:'RELEASE'|'CANCEL'='RELEASE',at=Date.now()):SchedulerLifecycleResult{
   const reservation=workerReservation(m,workerID);if(!reservation)return{accepted:true,reason:'reservation-absent',state:lifecycle(m)}
   const out=reduceSchedulerLifecycle(lifecycle(m),{type:kind,reservationId:reservation.reservationId,attempt:reservation.attempt,hostExecutionId:reservation.hostExecutionId,at});if(out.accepted)m.execution.scheduler=out.state;return out

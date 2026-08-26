@@ -29,14 +29,14 @@ import { applyAdmittedProjectMethodologyPermissions } from '../methodology/host-
 import { HI_CHILD_ROLES,isHiChildRole,isHiReadOnlyChildRole,isHiReviewerRole,roleCanOwnObligation } from '../roles/catalog.js'
 import { createRuntimeScopedStores,type RuntimeScopedStores } from '../application/runtime-scoped-stores.js'
 import { ChildExecutionCoordinator } from './child-execution-coordinator.js'
-import { admitHostTerminalEvent,type HostTerminalEventAdmission } from './host-child-binding.js'
+import { admitHostTerminalEvent,hostChildBindingMatches,type HostChildBinding,type HostTerminalEventAdmission } from './host-child-binding.js'
 import { TaskResultReconciler } from './task-result-reconciler.js'
 import { TaskRecoveryCoordinator } from './task-recovery-coordinator.js'
 import type { WorkspaceRuntime } from '../workspace/runtime.js'
 import type { ChildWorkspaceBinding } from './child-execution-coordinator.js'
 import type { ChildSessionPort,HostAssistantError,HostAssistantResult } from '../host/port.js'
 import type { HostCapabilityContract } from '../../contracts/host-capability.js'
-import { taskRuntimeAdmittedModel,taskRuntimeUnitDecision,reserveTaskRuntimeDispatch,bindTaskRuntimeHost,releaseTaskRuntimeReservation,reconcileTaskRuntimeRestart } from '../scheduler/task-runtime-adapter.js'
+import { taskRuntimeAdmittedModel,taskRuntimeUnitDecision,reserveTaskRuntimeDispatch,bindTaskRuntimeHost,claimTaskRuntimeSettlement,releaseTaskRuntimeReservation,reconcileTaskRuntimeRestart } from '../scheduler/task-runtime-adapter.js'
 import { clearCapabilityUnavailable,markCapabilityUnavailable,markVerificationCapabilityUnavailable,reconcileTaskCapabilityPreconditions } from '../readiness/capability-failure.js'
 import { bindWorkerUsageObservation } from '../economics/usage-runtime.js'
 import type { HostUsageObservation } from '../../contracts/execution-usage.js'
@@ -121,8 +121,14 @@ export class TaskRuntime{
   resolveChildCallback(sessionID:string):WorkerState|undefined{return this.#child.resolveCallbackWorker(sessionID)}
   forgetChildCallback(sessionID:string):boolean{const worker=this.#child.resolveCallbackWorker(sessionID);if(!worker)return false;this.registry.delete(worker.id);return true}
   admitTerminalEvent(m:MissionState,worker:WorkerState):Promise<HostTerminalEventAdmission>{return admitHostTerminalEvent(m,worker,this.childHost)}
-  async settleHostIdleRuntimeError(m:MissionState,worker:WorkerState,error:HostAssistantError):Promise<{applied:boolean;reason:string;wakeResult?:'RUNTIME_FALLBACK'|'QUARANTINED'|'FAILED'|'BLOCKED';failureKind?:WorkerState['last_runtime_failure_kind']}>{
+  async settleHostIdleRuntimeError(m:MissionState,worker:WorkerState,error:HostAssistantError,binding?:HostChildBinding):Promise<{applied:boolean;reason:string;wakeResult?:'RUNTIME_FALLBACK'|'QUARANTINED'|'FAILED'|'BLOCKED';failureKind?:WorkerState['last_runtime_failure_kind']}>{
     const task=m.execution.tasks.find(t=>t.id===worker.task_id);if(!task)return{applied:false,reason:'task-not-found'}
+    if(binding){
+      if(!hostChildBindingMatches(m,worker,binding)){appendLedger(m,'worker.error-settlement-stale-binding',{task_id:task.id,worker_id:worker.id,payload:{session_id:binding.sessionId,attempt_id:binding.attempt.attemptId,current_session_id:worker.session_id,current_attempt:worker.attempt}});return{applied:false,reason:'host-terminal-binding-stale-before-settlement'}}
+      const claim=claimTaskRuntimeSettlement(m,worker)
+      if(!claim.accepted){appendLedger(m,'worker.error-settlement-claim-rejected',{task_id:task.id,worker_id:worker.id,payload:{session_id:binding.sessionId,attempt_id:binding.attempt.attemptId,reason:claim.reason}});return{applied:false,reason:claim.reason}}
+      appendLedger(m,'worker.error-settlement-claimed',{task_id:task.id,worker_id:worker.id,payload:{session_id:binding.sessionId,attempt_id:binding.attempt.attemptId,reservation_id:claim.reservation?.reservationId}})
+    }
     const detail=[error.name,error.message].filter(Boolean).join(': ')
     await this.cleanupBrowserForTask(m,worker.task_id,worker.id)
     const recovery=await this.#recovery.recoverHostTerminalFailure(m,worker.id,error)
@@ -133,12 +139,12 @@ export class TaskRuntime{
     this.fail(m,worker.id,detail);await this.cleanupWorkspaceForTask(m,worker.task_id)
     return{applied:true,reason:'host-idle-runtime-failed',wakeResult:'FAILED',failureKind:worker.last_runtime_failure_kind}
   }
-  async settleHostIdleAssistantResult(m:MissionState,worker:WorkerState,assistant:HostAssistantResult):Promise<{applied:boolean;reason:string;result?:WorkerResult;wakeResult?:'RUNTIME_FALLBACK'|'QUARANTINED'|'FAILED'|'BLOCKED';failureKind?:WorkerState['last_runtime_failure_kind']}>{
+  async settleHostIdleAssistantResult(m:MissionState,worker:WorkerState,assistant:HostAssistantResult,binding?:HostChildBinding):Promise<{applied:boolean;reason:string;result?:WorkerResult;wakeResult?:'RUNTIME_FALLBACK'|'QUARANTINED'|'FAILED'|'BLOCKED';failureKind?:WorkerState['last_runtime_failure_kind']}>{
     const task=m.execution.tasks.find(t=>t.id===worker.task_id);if(!task)return{applied:false,reason:'task-not-found'}
     const expectedParent=worker.attempt_prompt_message_id,observedParent=assistant.model?.parent_id,createdAt=assistant.model?.created_at,parentMismatch=Boolean(expectedParent&&observedParent&&expectedParent!==observedParent),predatesAttempt=Boolean(Number.isFinite(createdAt)&&worker.started_at!==undefined&&Number(createdAt)<worker.started_at)
     if(parentMismatch||predatesAttempt){appendLedger(m,'worker.assistant-result.stale-attempt-message',{task_id:task.id,worker_id:worker.id,payload:{session_id:worker.session_id,message_id:assistant.model?.message_id,parent_id:observedParent,expected_parent_id:expectedParent,created_at:createdAt,attempt_started_at:worker.started_at,attempt:worker.attempt,generation:worker.generation_at_spawn,parent_mismatch:parentMismatch,predates_attempt:predatesAttempt}});return{applied:false,reason:'assistant-result-stale-attempt-message'}}
     if(assistant.usage)this.noteUsage(m,worker.id,assistant.usage)
-    if(assistant.error)return this.settleHostIdleRuntimeError(m,worker,assistant.error)
+    if(assistant.error)return this.settleHostIdleRuntimeError(m,worker,assistant.error,binding)
     if(!assistant.model&&!assistant.text)return{applied:false,reason:'assistant-result-not-ready'}
     const effective=this.noteEffectiveModel(m,worker.id,assistant.model?{...assistant.model,source:'assistant-message-metadata'}:undefined)
     let result=parseWorkerResult(assistant.text)
