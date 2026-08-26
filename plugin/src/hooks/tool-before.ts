@@ -17,6 +17,7 @@ import { resolveBrowserExecutionOwner } from '../runtime/browser/ownership.js'
 import { isHiReadOnlyChildRole } from '../runtime/roles/catalog.js'
 import { projectDirectMutationDecision } from '../runtime/scheduler/project-peer-view.js'
 import { recordToolOperationProgress } from '../runtime/liveness/assessment.js'
+import { minimumTeamFor } from '../runtime/routing/minimum-team.js'
 const NON_MATERIAL_CONTROL_TOOLS=new Set(['hi_intent_assess','hi_status','hi_ledger','hi_readiness','hi_settings','hi_role_models'])
 const SETTINGS_CONTROL_TARGETS=new Set(['hi_settings','hi_role_models'])
 function assessedExplicitSettingsRequest(m:any):boolean{
@@ -25,13 +26,26 @@ function assessedExplicitSettingsRequest(m:any):boolean{
 }
 function exactParentMutationSurface(args:any,projectRoot?:string,workingDirectory?:string):string[]{const root=projectRoot??workingDirectory,raw=[args?.filePath,args?.path,args?.file].filter((value):value is string=>typeof value==='string');return[...new Set(raw.map(value=>normalizeProjectPath(value,root)).filter(Boolean))]}
 
+function documentationSurface(path:string):boolean{return /(^|\/)(?:docs?|documentation)(\/|$)|(^|\/)(?:README|CHANGELOG|CONTRIBUTING|SECURITY|SUPPORT)(?:\.[^/]*)?$|\.(?:md|mdx|rst|adoc)$/i.test(path)}
+function testSourceSurface(path:string):boolean{return /(^|\/)(?:test|tests|__tests__|spec|specs|fixtures?)(\/|$)|\.(?:test|spec)\.[^/]+$/i.test(path)}
+function parentSpecialistMutationOwners(m:any,args:any,projectRoot?:string,workingDirectory?:string):string[]{
+  const surfaces=exactParentMutationSurface(args,projectRoot,workingDirectory)
+  if(!surfaces.length)return[]
+  const openKinds=new Set(m.execution.obligations.filter((o:any)=>o.status==='open'&&['documentation','test-authoring'].includes(o.kind)).map((o:any)=>o.kind))
+  if(!openKinds.size)return[]
+  const team=minimumTeamFor(m.identity.intent,m.execution.verification_policy,m.execution.primary_mode),owners:string[]=[]
+  if(openKinds.has('documentation')&&team.roles.includes('technical-writer')&&surfaces.some(documentationSurface))owners.push('technical-writer')
+  if(openKinds.has('test-authoring')&&team.roles.includes('test-engineer')&&surfaces.some(testSourceSurface))owners.push('test-engineer')
+  return [...new Set(owners)]
+}
+
 function specialistMutationAllowed(role:string,task:any,tool:string,args:any,projectRoot?:string,workingDirectory?:string):boolean{
   if(role!=='technical-writer'&&role!=='test-engineer')return true
   if(tool==='bash'&&typeof args?.command==='string'&&isVerificationCommand(args.command))return true
   const root=projectRoot??workingDirectory,surfaces=exactParentMutationSurface(args,projectRoot,workingDirectory),scope=new Set((task?.scope??[]).map((x:string)=>normalizeProjectPath(x,root)).filter(Boolean))
   if(!surfaces.length)return false
-  if(role==='technical-writer')return surfaces.every(path=>scope.has(path)||/(^|\/)(?:docs?|documentation)(\/|$)|(^|\/)(?:README|CHANGELOG|CONTRIBUTING|SECURITY|SUPPORT)(?:\.[^/]*)?$|\.(?:md|mdx|rst|adoc)$/i.test(path))
-  return surfaces.every(path=>/(^|\/)(?:test|tests|__tests__|spec|specs|fixtures?)(\/|$)|\.(?:test|spec)\.[^/]+$/i.test(path))
+  if(role==='technical-writer')return surfaces.every(path=>scope.has(path)||documentationSurface(path))
+  return surfaces.every(testSourceSurface)
 }
 export function createToolBeforeHook(store:MissionStore,background?:BackgroundRegistry,projectRoot?:string,workingDirectory?:string){return async(input:any,output:any)=>{const sid=input?.sessionID??input?.sessionId,child=sid&&background?background.list().find(w=>w.session_id===sid):undefined,m=child?store.get(child.parent_session_id):store.get(sid);if(!m)return;if(child&&((child.parent_mission_id!==undefined&&child.parent_mission_id!==m.identity.mission_id)||(child.generation_at_spawn!==undefined&&child.generation_at_spawn!==m.continuation.generation)))return;const tool=String(input?.tool??''),args=output?.args??input?.args??{}
   if(!child&&!NON_MATERIAL_CONTROL_TOOLS.has(tool)&&store.reopenContradictedNonMaterial(String(sid),tool))throw new Error(`Hi non-material conclusion contradicted by work tool '${tool}'; initial semantic assessment was reopened and the tool was blocked before execution.`)
@@ -41,6 +55,7 @@ export function createToolBeforeHook(store:MissionStore,background?:BackgroundRe
   if(!child&&m.identity.status==='active'&&(HI_BROWSER_EXECUTION_TOOL_IDS as readonly string[]).includes(tool)){const visual=m.execution.tasks.find(t=>t.role==='visual-qa'&&!['completed','failed','cancelled','blocked'].includes(t.status));if(visual)throw new Error(`Hi browser ownership: parent cannot invoke '${tool}' for visual task ${visual.id}; call hi_task_await with id=${visual.id} and let that visual-qa child own browser execution.`);throw new Error(`Hi browser ownership: parent cannot invoke '${tool}'; start the required visual-qa task with hi_task_start and let the child own browser execution.`)}
   if(m.identity.status==='active'&&tool==='task'){appendLedger(m,'orchestration.native-task-blocked',{worker_id:child?.id,payload:{owner:child?'child':'parent',required_tool:'hi_task_start'}});throw new Error(child?'Hi ownership guard: child workers cannot invoke the native OpenCode task runtime; parent Hi must delegate through hi_task_start.':'Hi ownership guard: native OpenCode task delegation is disabled while Hi owns the active mission; use hi_task_start.') }
   if(!child&&m.identity.status==='active'&&m.execution.execution_mode==='parallel'&&toolMayMutate(tool,args)&&!(tool==='bash'&&isVerificationCommand(String(args?.command??'')))){appendLedger(m,'orchestration.parent-mutation-blocked',{payload:{tool,reason:'parallel-topology-requires-hi-task-owner',required_tool:'hi_task_start'}});throw new Error(`Hi topology guard: parent direct mutation via '${tool}' is disabled for parallel execution; create bounded disjoint work units with hi_task_start.`)}
+  if(!child&&m.identity.status==='active'&&toolMayMutate(tool,args)&&!(tool==='bash'&&isVerificationCommand(String(args?.command??'')))){const owners=parentSpecialistMutationOwners(m,args,projectRoot,workingDirectory);if(owners.length){appendLedger(m,'orchestration.parent-mutation-blocked',{payload:{tool,reason:'semantic-specialist-writer-required',required_tool:'hi_task_start',canonical_roles:owners,surface:exactParentMutationSurface(args,projectRoot,workingDirectory)}});throw new Error(`Hi ownership guard: parent direct mutation targets a canonical specialist surface owned by ${owners.join(', ')} while its obligation is open. Use hi_task_start for that existing specialist obligation instead of duplicating its write.`)}}
   if(!child&&m.identity.status==='active'&&toolMayMutate(tool,args)&&!(tool==='bash'&&isVerificationCommand(String(args?.command??'')))){const decision=projectDirectMutationDecision(m,store.all(),exactParentMutationSurface(args,projectRoot,workingDirectory));if(decision.applicable&&!decision.safe){appendLedger(m,'orchestration.parent-mutation-blocked',{payload:{tool,reason:'project-write-conflict',required_tool:'hi_task_start',surface:decision.surface.slice(0,40),blocking_units:decision.blockingUnitIds.slice(0,20),conflict_reasons:decision.reasons.slice(0,20)}});throw new Error(`Hi project write conflict: parent direct mutation via '${tool}' conflicts with an earlier or active project write owner (${decision.blockingUnitIds.join(', ')||'unknown surface'}). Delegate this mutation with hi_task_start so canonical scheduler ownership can serialize it.`)}}
   if(m.identity.semantic_assessment.status==='pending'){const allowed=new Set(['hi_intent_assess','hi_status','hi_ledger','hi_readiness','hi_settings','hi_role_models']);if(!allowed.has(tool))throw new Error(`Hi semantic gate: '${tool}' is blocked until the host primary submits the structured semantic assessment.`)}
   if(['hi_settings','hi_role_models'].includes(tool)&&m.identity.semantic_assessment.status==='assessed'&&m.identity.status==='active'&&!assessedExplicitSettingsRequest(m))throw new Error(`Hi settings-tool economy: hi_settings/hi_role_models are user configuration surfaces, not runtime discovery steps. Runtime child routing consumes the connected model inventory internally; do not list models during an assessed mission.`)
