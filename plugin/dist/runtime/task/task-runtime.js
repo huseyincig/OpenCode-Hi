@@ -510,7 +510,7 @@ export class TaskRuntime {
         }
         const requiredEvidence = input.requiredEvidence ?? m.execution.verification_policy.requiredKinds, obligationIds = inferObligationIds(m, role, requiredEvidence, input.obligationIds);
         let extraResources = this.extraHostResources();
-        const browserRequested = role === 'visual-qa' && requestedMethodologyNames.some(name => ['hi-browser-testing', 'hi-visual-qa', 'hi-accessibility-review'].includes(name));
+        const browserEvidenceKinds = new Set(['visual-check', 'visual-evidence', 'browser-evidence', 'accessibility-evidence']), browserRequested = role === 'visual-qa' && (requestedMethodologyNames.some(name => ['hi-browser-testing', 'hi-visual-qa', 'hi-accessibility-review'].includes(name)) || requiredEvidence.some(kind => browserEvidenceKinds.has(kind)) || m.identity.intent.requiredCapabilities.includes('visual-qa') || Boolean(input.browserBackend) || Boolean(input.browserAllowedOrigins?.length));
         let browserBootstrap;
         if (browserRequested && this.ensureBrowserResource) {
             browserBootstrap = await this.ensureBrowserResource();
@@ -536,7 +536,7 @@ export class TaskRuntime {
         }
         else if (browserDecision.backend)
             clearCapabilityUnavailable(m, 'browser-execution');
-        const browserAllowedOrigins = normalizeBrowserAllowedOrigins(input.browserAllowedOrigins ?? browserOriginsFromTargets(taskIntent.likelyTargets ?? []));
+        const browserAllowedOrigins = normalizeBrowserAllowedOrigins(input.browserAllowedOrigins ?? browserOriginsFromTargets([objective, ...(taskIntent.likelyTargets ?? [])]));
         if (browserDecision.backend === 'bounded-playwright' && browserRequested && !browserAllowedOrigins.length && !this.previewManager)
             throw new Error('Bounded Playwright browser backend requires at least one exact allowed origin or the Hi-owned local preview capability');
         if (browserDecision.backend === 'mcp' && browserAllowedOrigins.length)
@@ -620,7 +620,7 @@ export class TaskRuntime {
         if (unknownArtifactIds.length)
             throw new Error(`Unknown context artifact id(s): ${unknownArtifactIds.join(', ')}`);
         const contextArtifactStore = this.#scopedStores.contextArtifacts, selectedContextHandles = requestedArtifactIds.map(id => m.context.context_artifacts.find(a => a.id === id)).filter(Boolean), selectedContextReferences = selectedContextHandles.map(a => { const durableId = a.uri?.startsWith('hi-artifact:') ? a.uri.slice('hi-artifact:'.length) : undefined, stored = durableId ? contextArtifactStore.get(durableId) : undefined; return { source_ref: a.uri ?? `mission-context:${a.id}`, reason: 'explicit-task-selection', priority: 'normal', protection: 'COMPRESSIBLE', budget_cost: stored ? Math.min(stored.content.length, 3000) : Math.min((a.summary ?? a.title ?? a.kind).length, 3000), freshness: stored?.freshness ?? 'UNKNOWN', retention: 'task', privacy_class: stored?.privacy_class ?? 'project-private', kind: a.kind, title: a.title, summary: a.summary, content_hash: stored?.content_hash ?? a.sha256, source_handle_id: a.id }; });
-        const browserTools = browserDecision.backend === 'bounded-playwright' && role === 'visual-qa' && methodologies.some(name => ['hi-browser-testing', 'hi-visual-qa', 'hi-accessibility-review'].includes(name)) ? [...HI_BROWSER_EXECUTION_TOOL_IDS] : [], taskTools = [...surface.tools.filter(t => (t !== 'skill' || methodologies.length > 0)), ...browserTools];
+        const browserTools = browserDecision.backend === 'bounded-playwright' && role === 'visual-qa' ? [...HI_BROWSER_EXECUTION_TOOL_IDS] : [], taskTools = [...surface.tools.filter(t => (t !== 'skill' || methodologies.length > 0)), ...browserTools];
         const profile = { role, category, task: { objective, scope: [...scope], dependencies: [...dependencies], required_evidence: [...requiredEvidence] }, tools: taskTools, ...(mcpExposure.selected.length ? { mcp_servers: mcpExposure.selected } : {}), ...(browserDecision.backend ? { browser_backend: browserDecision.backend } : {}), ...(browserAllowedOrigins.length ? { browser_allowed_origins: browserAllowedOrigins } : {}), model: selected.primary, model_variant: input.modelVariant ?? selected.primaryVariant, fallback_models: selected.fallbacks, fallback_variants: selected.fallbackVariants, fallback_reasons: selected.fallbackReasons, methodologies, permission_profile: { skill_tool_enabled: skillToolEnabled, skill_permissions: permissionMap ?? {}, external_effects: 'parent-only', recursive_task: 'deny', native: surface.permissions }, verification_policy: { ...m.execution.verification_policy, requiredKinds: [...m.execution.verification_policy.requiredKinds] }, max_context_chars: DEFAULT_CONTEXT_BUDGET.max_context_chars, max_handoff_chars: DEFAULT_CONTEXT_BUDGET.max_handoff_chars, max_result_chars: DEFAULT_CONTEXT_BUDGET.max_result_chars, max_artifacts: DEFAULT_CONTEXT_BUDGET.max_artifacts };
         const task = createTask(m, { objective, role, category, scope, constraints, dependencies, requiredEvidence, obligationIds, contextReferences: selectedContextReferences, executionProfile: profile });
         if (isolationRequired) {
