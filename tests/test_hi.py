@@ -657,7 +657,7 @@ def test_configuration_guide_covers_supported_variations_and_is_readme_linked():
     assert 'OpenCode-Hi Türkçe Kurulum ve Yapılandırma Rehberi' in guide_tr
     for platform in ['Windows','Linux','macOS']:
         assert platform in guide
-    for role in ['working-manager','manager','coder','architect','repository-explorer','qa-reviewer','security-reviewer','visual-qa']:
+    for role in ['working-manager','manager','coder','architect','repository-explorer','researcher','technical-writer','test-engineer','qa-reviewer','security-reviewer','visual-qa']:
         assert f'`{role}`' in guide
     for category in ['quick','standard','deep','visual','critical']:
         assert f'`{category}`' in guide

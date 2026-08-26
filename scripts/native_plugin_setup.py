@@ -20,7 +20,7 @@ ROUTING_CONFIG=HI_PROJECT_DIR/'policy'/'routing.json'
 # Roles with explicit per-role model mapping support. M16 does not fabricate
 # an offline provider/model catalog: availability comes from the effective
 # OpenCode runtime only.
-ROLES_WITH_HINT=['repository-explorer','architect','coder','qa-reviewer','security-reviewer','visual-qa']
+ROLES_WITH_HINT=['coder','architect','repository-explorer','researcher','technical-writer','test-engineer','qa-reviewer','security-reviewer','visual-qa']
 PRIMARY_ROLES={'working-manager','manager'}
 
 ROUTING_SCHEMA=1
@@ -336,7 +336,7 @@ def _prompt_model_selection(role:str,available:list[str],defaults_by_role:dict[s
 
 def _validate_model_routed_role(role:str)->None:
     if role in PRIMARY_ROLES:
-        raise SetupInputError('role-model-primary-owned-by-opencode',detail=f'{role} is a primary OpenCode agent and is not Hi child-model routed.',action='Choose the primary role/model in OpenCode. Use Hi role-models only for coder, architect, repository-explorer, qa-reviewer, security-reviewer, or visual-qa.')
+        raise SetupInputError('role-model-primary-owned-by-opencode',detail=f'{role} is a primary OpenCode agent and is not Hi child-model routed.',action='Choose the primary role/model in OpenCode. Use Hi role-models only for coder, architect, repository-explorer, researcher, technical-writer, test-engineer, qa-reviewer, security-reviewer, or visual-qa.')
     if role not in ROLES_WITH_HINT:
         raise SetupInputError('unsupported-role-model',detail=f'{role} is not a current Hi model-routed child role.',action='Use one of: '+', '.join(ROLES_WITH_HINT)+'.')
 
@@ -365,7 +365,7 @@ def role_models(project:Path,list_available:bool=False,defaults:bool=False,print
         supported_models={k:list(v) for k,v in existing_models.items() if k in ROLES_WITH_HINT and isinstance(v,list)}
         supported_variants={k:dict(v) for k,v in existing_variants.items() if k in ROLES_WITH_HINT and isinstance(v,dict)}
         ignored=sorted((set(existing_models)|set(existing_variants))-set(ROLES_WITH_HINT))
-        return {'status':'OK' if cfg.exists() else 'NOT_CONFIGURED','product':PRODUCT,'config':str(cfg),'roleModels':supported_models,'roleVariants':supported_variants,'ignoredRoleModelRoles':ignored,'modelPolicy':existing_routing.get('modelPolicy','adaptive'),'adaptiveRoles':[r for r in existing_routing.get('adaptiveRoles',[]) if r in ROLES_WITH_HINT],'note':'HI model routing applies only to the six child roles; primary manager models are OpenCode-owned.'}
+        return {'status':'OK' if cfg.exists() else 'NOT_CONFIGURED','product':PRODUCT,'config':str(cfg),'roleModels':supported_models,'roleVariants':supported_variants,'ignoredRoleModelRoles':ignored,'modelPolicy':existing_routing.get('modelPolicy','adaptive'),'adaptiveRoles':[r for r in existing_routing.get('adaptiveRoles',[]) if r in ROLES_WITH_HINT],'note':'HI model routing applies only to the nine canonical child roles; primary manager models are OpenCode-owned.'}
 
     available=discover_available_models()
     if list_available:

@@ -21,6 +21,7 @@ import { get as httpGet } from 'node:http'
 import { get as httpsGet } from 'node:https'
 import { createInterface } from 'node:readline/promises'
 import { applyProjectSettings } from '../plugin/dist/config/project-settings.js'
+import { MODEL_ROUTED_CHILD_ROLES } from '../plugin/dist/config/schema.js'
 
 const PRODUCT='OpenCode-Hi'
 const SHORT='HI'
@@ -32,7 +33,7 @@ const OWNERSHIP='.opencode/hi/provenance/setup.json'
 const TRANSACTION='.opencode/hi/provenance/setup-transaction.json'
 const ROLLBACK='.opencode/hi/provenance/setup-rollback.json'
 const ROUTING='.opencode/hi/policy/routing.json'
-const CHILD_ROLES=['coder','architect','repository-explorer','qa-reviewer','security-reviewer','visual-qa']
+const CHILD_ROLES=[...MODEL_ROUTED_CHILD_ROLES]
 const PRIMARY_ROLES=['manager','working-manager']
 const EXECUTION_POLICIES=['minimal','balanced','thorough','adaptive','manual']
 const scriptDir=dirname(fileURLToPath(import.meta.url))
@@ -267,7 +268,7 @@ function assertChildRole(role){
 function roleView(doc){const rr=doc.routing&&typeof doc.routing==='object'?doc.routing:{},models=rr.roleModels&&typeof rr.roleModels==='object'&&!Array.isArray(rr.roleModels)?rr.roleModels:{},variants=rr.roleVariants&&typeof rr.roleVariants==='object'&&!Array.isArray(rr.roleVariants)?rr.roleVariants:{};return{roleModels:Object.fromEntries(CHILD_ROLES.flatMap(role=>Array.isArray(models[role])?[[role,[...models[role]]]]:[])),roleVariants:Object.fromEntries(CHILD_ROLES.flatMap(role=>variants[role]&&typeof variants[role]==='object'&&!Array.isArray(variants[role])?[[role,{...variants[role]}]]:[]))}}
 function roles(project,sets=[],variants=[]){
   const state=routingState(project),view=roleView(state.doc)
-  if(!sets.length&&!variants.length)return{status:state.exists?'OK':'NOT_CONFIGURED',product:PRODUCT,project,config:state.path,...view,note:'Hi role-model routing applies only to six child roles; manager/working-manager primary model ownership stays in OpenCode.'}
+  if(!sets.length&&!variants.length)return{status:state.exists?'OK':'NOT_CONFIGURED',product:PRODUCT,project,config:state.path,...view,note:'Hi role-model routing applies only to the nine canonical child roles; manager/working-manager primary model ownership stays in OpenCode.'}
   const rr=state.doc.routing&&typeof state.doc.routing==='object'?{...state.doc.routing}:{},rawModels=rr.roleModels&&typeof rr.roleModels==='object'&&!Array.isArray(rr.roleModels)?rr.roleModels:{},rawVariants=rr.roleVariants&&typeof rr.roleVariants==='object'&&!Array.isArray(rr.roleVariants)?rr.roleVariants:{},roleModels={...rawModels},roleVariants={...rawVariants}
   for(const item of sets){const at=item.indexOf('=');if(at<1)throw new SetupError('invalid-role-set',{detail:item,action:'Use --set ROLE=MODEL[,FALLBACK...].'});const role=item.slice(0,at).trim();assertChildRole(role);const models=[...new Set(item.slice(at+1).split(',').map(x=>x.trim()).filter(Boolean))];if(!models.length)throw new SetupError('role-model-list-empty',{detail:role});roleModels[role]=models}
   for(const item of variants){const at=item.indexOf('='),colon=item.indexOf(':');if(at<1||colon<1||colon>at)throw new SetupError('invalid-role-variant',{detail:item,action:'Use --variant ROLE:MODEL=VARIANT.'});const role=item.slice(0,colon).trim(),model=item.slice(colon+1,at).trim(),variant=item.slice(at+1).trim();assertChildRole(role);if(!model||!variant)throw new SetupError('invalid-role-variant',{detail:item});roleVariants[role]={...(roleVariants[role]??{}),[model]:variant}}

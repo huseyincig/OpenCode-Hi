@@ -231,15 +231,18 @@ Example:
 | `coder` | child | Implementation/correction | scoped write |
 | `architect` | child | Architecture/contracts/data-model design | read-only |
 | `repository-explorer` | child | Bounded repository discovery | read-only |
+| `researcher` | child | External/reference research and source-provenance synthesis | read-only |
+| `technical-writer` | child | Documentation authoring/correction | scoped documentation write |
+| `test-engineer` | child | Test-source authoring and targeted test execution | scoped test-source write |
 | `qa-reviewer` | child reviewer | Regression/acceptance review | read-only |
 | `security-reviewer` | child reviewer | Security/trust/authority review | read-only |
 | `visual-qa` | child reviewer | Browser/visual/accessibility verification | read-only |
 
-Primary role selection uses `primaryMode`. Model maps are narrower: current Hi role-model configuration accepts only the six model-routed child role IDs listed below; primary or unknown role-model keys are ignored by the effective config loader.
+Primary role selection uses `primaryMode`. Model maps are narrower: current Hi role-model configuration accepts only the nine canonical model-routed child role IDs listed below; primary or unknown role-model keys are ignored by the effective config loader.
 
 ### Primary-role model ownership
 
-Current project model routing is applied by `TaskRuntime` when Hi dispatches **child workers**. The active child role IDs are `coder`, `architect`, `repository-explorer`, `qa-reviewer`, `security-reviewer`, and `visual-qa`.
+Current project model routing is applied by `TaskRuntime` when Hi dispatches **child workers**. The active child role IDs are `coder`, `architect`, `repository-explorer`, `researcher`, `technical-writer`, `test-engineer`, `qa-reviewer`, `security-reviewer`, and `visual-qa`.
 
 `manager` and `working-manager` are primary OpenCode agents. Their current session model is selected/owned by the OpenCode host/session-agent layer, not by Hi's child `resolveModel()` path. They are therefore **not valid Hi role-model targets**: `routing.roleModels` and `routing.roleVariants` admit child roles only. The setup CLI rejects primary-role model assignments explicitly.
 
@@ -266,6 +269,9 @@ Supported Hi role-model targets are exactly:
 coder
 architect
 repository-explorer
+researcher
+technical-writer
+test-engineer
 qa-reviewer
 security-reviewer
 visual-qa
@@ -377,7 +383,7 @@ The OpenCode `model` field controls the primary session/default host model; the 
 
 ## 9. Recipe: one different preferred model per child role
 
-This section applies only to the six Hi child workers. `manager` and `working-manager` are intentionally absent; their primary session model remains an OpenCode concern.
+This section applies only to the nine canonical Hi child workers. `manager` and `working-manager` are intentionally absent; their primary session model remains an OpenCode concern.
 
 ```json
 {
@@ -872,7 +878,7 @@ Primary-role assignments are intentionally rejected. For example, `--set manager
 
 `--defaults --policy recommended` in the legacy Python helper returns `DEFERRED` because ID-only CLI discovery is not authoritative model availability. Restart OpenCode and inspect the effective connected inventory with `hi_settings show`; `hi_role_models list` remains an older compatibility view. Automatic capability/variant recommendations remain ephemeral and are not written to project policy; use `--set ROLE=...` only when you explicitly want to persist an ordered child-role mapping.
 
-The role-model CLI accepts only `coder`, `architect`, `repository-explorer`, `qa-reviewer`, `security-reviewer`, and `visual-qa`. Attempts to assign `manager` or `working-manager` are blocked because primary model ownership belongs to OpenCode.
+The role-model CLI accepts only `coder`, `architect`, `repository-explorer`, `researcher`, `technical-writer`, `test-engineer`, `qa-reviewer`, `security-reviewer`, and `visual-qa`. Attempts to assign `manager` or `working-manager` are blocked because primary model ownership belongs to OpenCode.
 
 ## 25. Manual JSON vs CLI
 

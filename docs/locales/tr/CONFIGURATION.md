@@ -19,7 +19,7 @@ Normal kullanıcı Work Mode olarak `Adaptive`, `Single` veya `Multi` seçer. Pr
 
 OpenCode App “Manage Models” show/hide seçimi server availability değildir: exact 1.18.21 ve current fetched upstream bunu client-local persisted UI state olarak tutar ve HTTP/SDK model-visibility API sunmaz. OpenCode genelinde exact model seti için provider `whitelist`/`blacklist`; yalnız Hi child modelleri için `routing.allowedModels` kullanılır.
 
-> En önemli kural: `manager` ve `working-manager` primary rollerdir. Hi tarafında bu iki role model atanmaz. Primary modeli OpenCode seçer. Hi model routing yalnız altı child role uygulanır: `coder`, `architect`, `repository-explorer`, `qa-reviewer`, `security-reviewer`, `visual-qa`.
+> En önemli kural: `manager` ve `working-manager` primary rollerdir. Hi tarafında bu iki role model atanmaz. Primary modeli OpenCode seçer. Hi model routing yalnız dokuz canonical child role uygulanır: `coder`, `architect`, `repository-explorer`, `researcher`, `technical-writer`, `test-engineer`, `qa-reviewer`, `security-reviewer`, `visual-qa`.
 
 ## 0. Önce Hi'yi kurun/yükleyin
 
@@ -165,6 +165,9 @@ Geçerli değerler:
 | `coder` | child | **Hi** | implementation/fix |
 | `architect` | child | **Hi** | architecture/contract |
 | `repository-explorer` | child | **Hi** | bounded repository exploration |
+| `researcher` | child | **Hi** | external/reference research |
+| `technical-writer` | child | **Hi** | documentation authoring |
+| `test-engineer` | child | **Hi** | test-source authoring / targeted test execution |
 | `qa-reviewer` | child reviewer | **Hi** | regression/quality review |
 | `security-reviewer` | child reviewer | **Hi** | security review |
 | `visual-qa` | child reviewer | **Hi** | browser/visual/accessibility review |
@@ -203,6 +206,9 @@ Tam liste:
 coder
 architect
 repository-explorer
+researcher
+technical-writer
+test-engineer
 qa-reviewer
 security-reviewer
 visual-qa
@@ -749,7 +755,7 @@ npx --yes opencode-hi@0.2.4 check-update .
 - `reconfigure` normal kullanıcı için yalnız `primaryMode` sorusunu yeniden açar. Topology, execution profile, specialist threshold, parallelism ve model scoring normal kullanıcı ayarı değildir; Hi runtime bunları göreve göre yönetir. İptal edilirse mutation yapmaz.
 - `state` read-only registration/ownership/routing özetidir; live Mission/provider execution truth için runtime `hi_status`, `hi_readiness`, `hi_doctor` kullanılır.
 - `reprofile` yalnız `executionPolicy` alanını değiştirir ve diğer project-owned routing alanlarını korur.
-- `roles` yalnız altı model-routed child role (`coder`, `architect`, `repository-explorer`, `qa-reviewer`, `security-reviewer`, `visual-qa`) için explicit model/fallback/variant yapraklarını değiştirir. `manager` ve `working-manager` primary model ownership OpenCode'a aittir.
+- `roles` yalnız dokuz canonical model-routed child role (`coder`, `architect`, `repository-explorer`, `researcher`, `technical-writer`, `test-engineer`, `qa-reviewer`, `security-reviewer`, `visual-qa`) için explicit model/fallback/variant yapraklarını değiştirir. `manager` ve `working-manager` primary model ownership OpenCode'a aittir.
 - `rotate` yalnız seçilen child role fallback model sırasını döndürür; credential, API key, provider hesabı veya primary model rotation değildir.
 - `check-update` npm registry metadata'sını read-only kontrol eder; project dosyalarını değiştirmez.
 

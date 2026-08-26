@@ -124,7 +124,7 @@ npx --yes opencode-hi@0.2.4 rotate . --role coder
 npx --yes opencode-hi@0.2.4 check-update .
 ```
 
-`reconfigure` changes only canonical project routing policy and preserves unknown fields; cancelling it performs no mutation. `state` is read-only and does not replace runtime `hi_status` / `hi_doctor`. `roles` accepts only the six Hi model-routed child roles; `manager` and `working-manager` remain OpenCode-owned primary model choices. `rotate` changes only an ordered child-model fallback prior and never touches credentials or provider keys. The retained Python helper remains only for advanced/compatibility options not yet mirrored by the bounded Node CLI.
+`reconfigure` changes only canonical project routing policy and preserves unknown fields; cancelling it performs no mutation. `state` is read-only and does not replace runtime `hi_status` / `hi_doctor`. `roles` accepts only the nine canonical Hi model-routed child roles; `manager` and `working-manager` remain OpenCode-owned primary model choices. `rotate` changes only an ordered child-model fallback prior and never touches credentials or provider keys. The retained Python helper remains only for advanced/compatibility options not yet mirrored by the bounded Node CLI.
 
 ## Git/source path — contributor and CI compatibility
 
@@ -215,7 +215,7 @@ python3 scripts/native_plugin_setup.py role-models /path/to/project --print
 python3 scripts/native_plugin_setup.py role-models /path/to/project --list-available
 ```
 
-The command supports explicit model/fallback/variant mappings for the six Hi child roles only: `coder`, `architect`, `repository-explorer`, `qa-reviewer`, `security-reviewer`, and `visual-qa`. `manager` and `working-manager` remain primary OpenCode roles and are not valid Hi role-model targets; their primary model is selected through OpenCode. Role remains distinct from model; configuring one does not merge their semantic ownership.
+The command supports explicit model/fallback/variant mappings for the nine canonical Hi child roles only: `coder`, `architect`, `repository-explorer`, `researcher`, `technical-writer`, `test-engineer`, `qa-reviewer`, `security-reviewer`, and `visual-qa`. `manager` and `working-manager` remain primary OpenCode roles and are not valid Hi role-model targets; their primary model is selected through OpenCode. Role remains distinct from model; configuring one does not merge their semantic ownership.
 
 For OpenCode `1.18.21`, Hi's runtime inventory comes only from OpenCode-owned runtime surfaces. If provider state exposes an explicit `connected` set, that set first constrains provider membership in the directory `/api/model` projection. Within connected providers, the scoped enabled list is authoritative for model membership; models for a connected provider missing entirely from the scoped projection may supplement the inventory. Provider reconciliation cannot resurrect a model filtered out of an already represented connected provider. If `connected` is absent or provider-state reading fails, the valid scoped projection is preserved without inventing a wider catalog. Hi does not scrape the full models.dev catalog and does not fabricate an offline model list when host inventory is unavailable. OpenCode App model show/hide toggles are client-local UI persistence, not a server visibility API; use OpenCode provider `whitelist`/`blacklist` for server-wide filtering or Hi `routing.allowedModels` for a child-only pool.
 

@@ -120,7 +120,7 @@
       "area": "configuration",
       "canonical_owner": "Hi config catalog/resolver",
       "owner_path": "data/hi-config-options.json",
-      "owner_sha256": "e28f0e7785aba9ac18782147cb19cfa187f554dc72a8f6d7bdbe9062e30d3ebf",
+      "owner_sha256": "d5e584da61489d0f3a33cf765be63fb75c5274d62950a46cb57f20ed2e3b73b1",
       "producer_or_contract_paths": [
         "plugin/src/config/schema.ts",
         "plugin/src/config/resolver.ts"
@@ -385,7 +385,7 @@
       "area": "install-lifecycle",
       "canonical_owner": "opencode-hi Node package runner",
       "owner_path": "scripts/opencode-hi.mjs",
-      "owner_sha256": "c95b3ae2bf7a09957b7a2e9042b144095df77439b29de1b3d96585028d0191e2",
+      "owner_sha256": "8ab28079a9108dab783e55d84530e198b7baa1e9597aebbf95c9e6053f274baa",
       "producer_or_contract_paths": [
         "scripts/native_plugin_setup.py"
       ],

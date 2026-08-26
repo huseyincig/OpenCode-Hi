@@ -130,7 +130,7 @@ Package lifecycle ile yüklü OpenCode runtime yüzeyi ayrıdır. Published `0.2
 - `doctor`: registration, ownership, drift ve pending lifecycle state'i statik olarak kontrol eder.
 - `state`: package/project registration + routing state'ini read-only gösterir; live Mission state değildir.
 - `reprofile`: yalnız project-owned `executionPolicy` alanını değiştirir.
-- `roles`: altı Hi child role için explicit model/fallback/variant eşlemesini gösterir/değiştirir.
+- `roles`: dokuz canonical Hi child role için explicit model/fallback/variant eşlemesini gösterir/değiştirir.
 - `rotate`: yalnız seçilen child role model fallback sırasını döndürür; credential/API key rotation değildir.
 - `check-update`: npm latest metadata'yı okuyup advisory verir; project'i değiştirmez.
 - `plan`: değişikliği uygulamadan exact before/after planını gösterir.

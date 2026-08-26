@@ -113,7 +113,7 @@ def main():
     publication_path=ROOT/f'data/validation/release-publication-{version}.json'
     if publication_path.is_file():
         publication=json.loads(publication_path.read_text(encoding='utf-8'));released_commit=((publication.get('released_source') or {}).get('git_commit'))
-        released_source=subprocess.run(['git','show',f'{released_commit}:scripts/opencode-hi.mjs'],cwd=ROOT,text=True,capture_output=True) if isinstance(released_commit,str) and released_commit else None
+        released_source=subprocess.run(['git','-c',f'safe.directory={ROOT}','show',f'{released_commit}:scripts/opencode-hi.mjs'],cwd=ROOT,text=True,capture_output=True) if isinstance(released_commit,str) and released_commit else None
         if released_source is None or released_source.returncode!=0:errors.append({'code':'DOC_PUBLISHED_CLI_SOURCE_UNAVAILABLE','release':version,'commit':released_commit})
         else:
             current_cli=cli_usage_commands((ROOT/'scripts/opencode-hi.mjs').read_text(encoding='utf-8'));published_cli=cli_usage_commands(released_source.stdout)
